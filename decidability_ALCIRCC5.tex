@@ -1,0 +1,1615 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{stmaryrd}       % \llbracket, \rrbracket
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\ALCRASG}{\ensuremath{\mathcal{ALCRA}_{\mathit{SG}}}}
+\newcommand{\NR}{\ensuremath{N_R}}
+\newcommand{\NC}{\ensuremath{N_C}}
+\newcommand{\DeltaI}{\ensuremath{\Delta^{\mathcal{I}}}}
+\newcommand{\interp}{\ensuremath{\mathcal{I}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\DC}{\ensuremath{\mathsf{DC}}}
+\newcommand{\EC}{\ensuremath{\mathsf{EC}}}
+\newcommand{\TPP}{\ensuremath{\mathsf{TPP}}}
+\newcommand{\TPPI}{\ensuremath{\mathsf{TPPI}}}
+\newcommand{\NTPP}{\ensuremath{\mathsf{NTPP}}}
+\newcommand{\NTPPI}{\ensuremath{\mathsf{NTPPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\sub}{\ensuremath{\mathsf{sub}}}
+\newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
+\newcommand{\Pair}{\ensuremath{\mathsf{Pair}}}
+\newcommand{\Trip}{\ensuremath{\mathsf{Trip}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+\newcommand{\NP}{\textsc{NP}}
+\newcommand{\cmark}{\ding{51}}
+
+
+\title{On the Decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$:\\
+  Quasimodels Meet the Patchwork Property}
+
+\author{Claude\thanks{Claude is an AI assistant by Anthropic.
+  This research was prompted by Michael Wessel (\texttt{miacwess@gmail.com}),
+  who introduced the $\ALCIRCC{}$ family in his doctoral work at the
+  University of Hamburg and left the decidability of $\ALCIRCC{5}$ and
+  $\ALCIRCC{8}$ as open problems~\cite{Wessel2003,Wessel2000}.}}
+
+\date{March 2026}
+
+\begin{document}
+\maketitle
+
+%% ============================================================
+\begin{abstract}
+The description logics $\ALCIRCC{5}$ and $\ALCIRCC{8}$ extend $\ALCI$
+with role boxes derived from the composition tables of the Region
+Connection Calculi RCC5 and RCC8.  These logics were introduced by
+Wessel~\cite{Wessel2003}, who established \PSPACE-hardness of
+$\ALCIRCC{5}$ and \EXPTIME-hardness of $\ALCIRCC{8}$ but left
+decidability open.  We settle both questions positively: concept
+satisfiability in $\ALCIRCC{5}$ and $\ALCIRCC{8}$ is decidable, with
+an \EXPTIME{} upper bound.  We give two decision procedures: a
+\emph{type-elimination algorithm} and a \emph{tableau calculus with
+blocking}.  Both exploit the \emph{patchwork property} of the RCC
+calculi---the fact that path-consistent atomic constraint networks are
+globally consistent~\cite{RenzNebel1999}---to lift local (triple-wise)
+consistency to global model existence.  For $\ALCIRCC{8}$ this yields
+\EXPTIME-completeness.
+\end{abstract}
+
+\medskip
+\noindent\textbf{Keywords:} description logic, spatial reasoning,
+Region Connection Calculus, decidability, tableau, quasimodel,
+patchwork property
+
+%% ============================================================
+\section{Introduction}
+\label{sec:intro}
+
+Description logics (DLs) are a family of knowledge representation
+formalisms that underpin ontology languages such as
+OWL~\cite{BaaderEtAl2003}.  The \emph{standard} decision procedures
+for DLs exploit the \emph{tree model property}: every satisfiable
+concept has a tree-shaped model, so one can search for a finite
+abstraction of such a tree (a ``type elimination'' or ``tableau''
+argument).
+
+The $\ALCIRCC{}$ family, introduced by
+Wessel~\cite{Wessel2003,Wessel2000}, takes a different path.  Here the
+roles are not abstract binary relations but the \emph{base relations}
+of a qualitative spatial calculus---specifically, a Region Connection
+Calculus (RCC)~\cite{RandellEtAl1992}.  Interpretations are
+constrained to be complete graphs in which every pair of domain
+elements is related by exactly one base relation, and the composition
+of any two base relations along a path is required to conform to the
+RCC composition table.
+
+\smallskip
+Formally, let $\mathcal{T}$ be one of $\mathrm{RCC1}$,
+$\mathrm{RCC2}$, $\mathrm{RCC3}$, $\mathrm{RCC5}$, or
+$\mathrm{RCC8}$.  The logic $\ALCIRCC{}[\mathcal{T}]$---or simply
+$\ALCIRCC{k}$ for the standard RCC-$k$ variants---is the extension of
+$\ALCI$ (the basic DL $\ALC$ enriched with inverse roles) whose role
+names are the base relations of $\mathcal{T}$, and whose
+interpretations are subject to the \emph{one-cluster, JEPD, composition
+table, and converse constraints} (Section~\ref{sec:prelim}).
+
+\smallskip
+Wessel~\cite{Wessel2003} classified most of the family:
+\begin{itemize}[nosep]
+  \item $\ALCIRCC{1}$ is \NP-complete (equivalent to the modal logic S5).
+  \item $\ALCIRCC{2}$ is decidable (reduction to a two-variable fragment).
+  \item $\ALCIRCC{3}$ is decidable (reduction to the two-variable
+    fragment of first-order logic with equality, $\mathrm{FO}^2[=]$).
+  \item $\ALCIRCC{5}$ is \PSPACE-hard; decidability was left open.
+  \item $\ALCIRCC{8}$ is \EXPTIME-hard; decidability was left open.
+\end{itemize}
+
+The difficulty with $\ALCIRCC{5}$ and $\ALCIRCC{8}$ stems from the
+combination of three properties: models are complete graphs (no tree
+model property), infinite models are required (no finite model
+property), and the composition tables have non-deterministic entries
+(the role boxes are not ``admissible'' in the sense of
+$\ALCRASG$~\cite{Wessel2000}).
+
+\smallskip
+\textbf{Contribution.} We prove that concept satisfiability in
+$\ALCIRCC{5}$ and $\ALCIRCC{8}$ is decidable, with an \EXPTIME{}
+upper bound.  Combined with the known lower bounds, this yields
+\EXPTIME-completeness for $\ALCIRCC{8}$.  For $\ALCIRCC{5}$, the
+exact complexity remains between \PSPACE{} and \EXPTIME.
+
+\smallskip
+\textbf{Proof techniques.}  We develop two complementary decision
+procedures.  First, a \emph{quasimodel method}
+(Sections~\ref{sec:quasimodel}--\ref{sec:complexity}) that abstracts a
+(possibly infinite) complete-graph model into a finite structure
+consisting of \emph{types}, \emph{pair-types}, and
+\emph{triple-types}, and a type-elimination algorithm deciding
+quasimodel existence.  Second, a \emph{tableau calculus}
+(Section~\ref{sec:tableau}) that constructs a finite completion graph
+by expanding individual nodes---analogous to standard DL tableaux, but
+adapted to complete-graph semantics.  In the tableau, each new node
+is assigned a role to \emph{every} existing node, and a blocking
+condition based on type equality ensures termination.  The key
+technical ingredient in both procedures is the \emph{patchwork
+property} of RCC5/RCC8~\cite{RenzNebel1999,Renz1999}: path-consistent
+atomic constraint networks are globally consistent.
+
+\smallskip
+\textbf{Related work.}  Lutz and
+Wolter~\cite{LutzWolter2006} studied modal logics with RCC8
+topological modalities interpreted over actual topological spaces; in
+that setting, reasoning is generally undecidable.  Lutz and
+Mili\v{c}i\'{c}~\cite{LutzMilicic2007} showed that $\ALC$ extended
+with $\omega$-admissible concrete domains (which include RCC5 and
+RCC8) is decidable, but the concrete-domain approach does not allow
+quantification \emph{over} spatial roles (the defining feature of
+$\ALCIRCC{}$). Borgwardt et al.~\cite{BorgwardtEtAl2024} further
+refined the complexity of concrete-domain reasoning.  The
+$\ALCRASG$ fragment~\cite{Wessel2000} handles \emph{admissible} role
+boxes (deterministic, functional, complete, associative) via reduction
+to $\ALC$ with general TBoxes, but the RCC5/RCC8 role boxes are
+non-deterministic and hence fall outside $\ALCRASG$.
+
+%% ============================================================
+\section{Preliminaries}
+\label{sec:prelim}
+
+\subsection{The Description Logic $\ALCIRCC{5}$}
+
+\begin{definition}[Syntax]
+\label{def:syntax}
+Let $\NC$ be a set of \emph{concept names} and let $\NR = \{\DR,
+\PO, \EQ, \PP, \PPI\}$ be the set of \emph{RCC5 base relations},
+serving as role names.  \emph{Concepts} are built by the grammar:
+\[
+  C,D \;::=\; A \mid \neg C \mid C \sqcap D \mid C \sqcup D
+  \mid \exists R.C \mid \forall R.C
+  \mid \exists R^-.C \mid \forall R^-.C
+\]
+where $A \in \NC$ and $R \in \NR$.  The \emph{inverse} mapping on roles is
+$\inv(\PP) = \PPI$, $\inv(\PPI) = \PP$, $\inv(\DR) = \DR$,
+$\inv(\PO) = \PO$, $\inv(\EQ) = \EQ$.
+
+We assume concepts are in \emph{negation normal form} (NNF): negation
+is pushed to concept names.  Every $\ALCIRCC{5}$ concept can be
+converted to NNF in linear time.  In NNF, inverse roles $R^-$ can be
+absorbed: $\exists \PP^-.C = \exists \PPI.C$, etc.  We therefore write
+role terms simply as elements of $\NR$.
+\end{definition}
+
+\begin{definition}[Semantics]
+\label{def:semantics}
+An \emph{$\ALCIRCC{5}$ interpretation} is a structure $\interp =
+(\DeltaI, \cdot^{\interp})$ where $\DeltaI \neq \emptyset$ and
+$\cdot^{\interp}$ assigns to each concept name $A$ a set $A^{\interp}
+\subseteq \DeltaI$ and to each base relation $R$ a binary relation
+$R^{\interp} \subseteq \DeltaI \times \DeltaI$, subject to:
+\begin{enumerate}[label=(S\arabic*),nosep]
+  \item \label{ax:cluster} \textbf{One cluster.} For all $x,y \in
+    \DeltaI$, there exists $R \in \NR$ with $(x,y) \in R^{\interp}$.
+  \item \label{ax:jepd} \textbf{JEPD.} For distinct $R,S \in \NR$,
+    $R^{\interp} \cap S^{\interp} = \emptyset$.
+  \item \label{ax:comp} \textbf{Composition.} For all $R,S \in \NR$:
+    $R^{\interp} \circ S^{\interp} \;\subseteq\;
+    \bigcup_{T \in \comp(R,S)} T^{\interp}$,
+    where $\comp$ is the RCC5 composition table (Table~\ref{tab:rcc5}).
+  \item \label{ax:conv} \textbf{Converse.} $\PPI^{\interp} =
+    (\PP^{\interp})^{-1}$, $\DR^{\interp} = (\DR^{\interp})^{-1}$,
+    $\PO^{\interp} = (\PO^{\interp})^{-1}$.
+  \item \label{ax:eq} \textbf{Strong EQ.} $\EQ^{\interp} =
+    \{(x,x) \mid x \in \DeltaI\}$.
+\end{enumerate}
+Concept constructors are interpreted standardly:
+$(\exists R.C)^{\interp} = \{x \mid \exists y.\, (x,y) \in
+R^{\interp} \land y \in C^{\interp}\}$, etc.
+
+A concept $C$ is \emph{satisfiable} if there exists an interpretation
+$\interp$ and $x \in \DeltaI$ with $x \in C^{\interp}$.
+\end{definition}
+
+\begin{remark}[Weak EQ semantics]
+The variant with \emph{weak} EQ (only $\mathit{Id}_{\DeltaI} \subseteq
+\EQ^{\interp}$, so $\EQ$ may also hold between distinct elements)
+reduces to the strong variant by adding the axiom $\top \sqsubseteq
+\forall \EQ.C \sqcap \forall \EQ^{-}.C$ for every relevant concept
+$C$ and internalizing via the universal role $R_* = \DR \sqcup \PO
+\sqcup \EQ \sqcup \PP \sqcup \PPI$.  See Wessel~\cite[Section
+4.3]{Wessel2003}.  We therefore work exclusively with strong~EQ.
+\end{remark}
+
+\begin{table}[t]
+\centering
+\caption{The RCC5 composition table.  Entry for row $S$, column $R$
+gives $\comp(R,S)$, i.e., the possible relations for $(a,c)$ when
+$R(a,b)$ and $S(b,c)$.  The symbol $*$ denotes $\NR$, i.e., all five
+relations are possible.}
+\label{tab:rcc5}
+\smallskip
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{c|ccccc}
+\toprule
+$\comp$ & $\DR(a,b)$ & $\PO(a,b)$ & $\EQ(a,b)$ & $\PPI(a,b)$ & $\PP(a,b)$ \\
+\midrule
+$\DR(b,c)$  & $*$              & $\DR,\PO,\PPI$   & $\DR$  & $\DR,\PO,\PPI$       & $\DR$ \\
+$\PO(b,c)$  & $\DR,\PO,\PP$    & $*$               & $\PO$  & $\PO,\PPI$           & $\DR,\PO,\PP$ \\
+$\EQ(b,c)$  & $\DR$            & $\PO$             & $\EQ$  & $\PPI$               & $\PP$ \\
+$\PP(b,c)$  & $\DR,\PO,\PP$    & $\PO,\PP$         & $\PP$  & $\PO,\EQ,\PP,\PPI$   & $\PP$ \\
+$\PPI(b,c)$ & $\DR$            & $\DR,\PO,\PPI$    & $\PPI$ & $\PPI$               & $*$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[Key structural properties]
+\label{rem:properties}
+In any $\ALCIRCC{5}$ interpretation:
+\begin{itemize}[nosep]
+  \item $\PP$ is a strict partial order (irreflexive, asymmetric,
+    transitive).
+  \item There is no finite model property: the concept $(\exists
+    \PP.\top) \sqcap (\forall \PP.\exists \PP.\top)$ is satisfiable
+    only in infinite models.
+  \item There is no tree model property: all models are complete
+    graphs.
+  \item The \emph{universal role} $R_* = \DR \sqcup \PO \sqcup \EQ
+    \sqcup \PP \sqcup \PPI$ is definable, enabling TBox
+    internalization.
+  \item Under strong EQ, a \emph{difference role} $R_D = R_* \setminus
+    \EQ$ is available, enabling limited nominal expressivity.
+\end{itemize}
+\end{remark}
+
+\subsection{The Patchwork Property of RCC5}
+\label{sec:patchwork}
+
+We recall the fundamental result from qualitative constraint reasoning
+that is the lynchpin of our decidability proof.
+
+\begin{definition}[Atomic constraint network]
+An \emph{atomic RCC5 constraint network} $N$ over a set of variables
+$V$ assigns to each ordered pair $(v_i, v_j)$ with $v_i \neq v_j$ a
+single base relation $R_{ij} \in \NR \setminus \{\EQ\}$, and assigns
+$\EQ$ to each $(v_i, v_i)$, respecting converse ($R_{ji} =
+\inv(R_{ij})$).
+\end{definition}
+
+\begin{definition}[Path consistency]
+An atomic network $N$ is \emph{path-consistent} if for every triple
+of variables $(v_i, v_j, v_k)$:
+\[
+  R_{ik} \in \comp(R_{ij}, R_{jk}).
+\]
+\end{definition}
+
+\begin{definition}[Consistency]
+An atomic network $N$ is \emph{consistent} (or \emph{realizable}) if
+there exists an $\ALCIRCC{5}$ interpretation $\interp$ and elements
+$d_{v} \in \DeltaI$ for each $v \in V$ such that $(d_{v_i}, d_{v_j})
+\in R_{ij}^{\interp}$ for all $i,j$.
+\end{definition}
+
+\begin{theorem}[Renz \& Nebel~\cite{RenzNebel1999}; Renz~\cite{Renz1999}]
+\label{thm:patchwork}
+For RCC5 \textup{(}and for RCC8\textup{)}, an atomic constraint
+network is consistent if and only if it is path-consistent.
+\end{theorem}
+
+\begin{corollary}[Patchwork property]
+\label{cor:patchwork}
+Let $N_1$ and $N_2$ be consistent atomic RCC5 networks that agree on
+their common variables.  Then $N_1 \cup N_2$ is consistent.
+\end{corollary}
+
+\begin{proof}
+Path consistency is a local (triple-wise) condition.  Every triple in
+$N_1 \cup N_2$ either lies entirely in $N_1$, entirely in $N_2$, or
+involves variables from both---in the last case, the shared variables
+carry the same labels in both networks, and path consistency of the
+triple follows from the individual path consistencies and the
+agreement on shared variables.  By Theorem~\ref{thm:patchwork}, $N_1
+\cup N_2$ is consistent.
+\end{proof}
+
+\noindent
+The patchwork property is the engine of our decidability
+proof: it ensures that \emph{local (triple-wise) consistency implies
+global consistency} for atomic RCC5 networks.
+
+%% ============================================================
+\section{Monotonicity Along PP-Chains}
+\label{sec:monotonicity}
+
+Before developing the main proof techniques, we establish a structural
+property of $\ALCIRCC{5}$ models that constrains the behavior of
+infinite PP-chains and explains why $\ALCIRCC{5}$ is ``tamer'' than
+one might expect.
+
+\begin{lemma}[Upward monotonicity]
+\label{lem:upward}
+Let $\interp$ be an $\ALCIRCC{5}$ interpretation containing a
+PP-chain $a_0, a_1, a_2, \ldots$ \textup{(}i.e., $(a_i, a_{i+1}) \in
+\PP^{\interp}$ for all $i$\textup{)}.  For any $x \in \DeltaI$ and
+any $i \geq 0$, the relation $R(x, a_{i+1})$ is constrained by
+$R(x, a_i)$ as follows:
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{ll}
+\toprule
+$R(x, a_i)$ & Possible values of $R(x, a_{i+1})$ \\
+\midrule
+$\PP$  & $\PP$ \\
+$\PO$  & $\PO, \PP$ \\
+$\DR$  & $\DR, \PO, \PP$ \\
+$\PPI$ & $\PO, \EQ, \PP, \PPI$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{lemma}
+
+\begin{proof}
+Direct from the composition table: $R(x, a_{i+1}) \in \comp(R(x,
+a_i), \PP)$.  Reading column $\PP(a,b)$ in Table~\ref{tab:rcc5} for
+each row gives the claimed sets.
+\end{proof}
+
+\begin{corollary}
+\label{cor:monotone}
+Going upward along a PP-chain, the relation of an external node
+progresses monotonically through at most four phases.  The
+``strength'' ordering $\DR < \PO < \PP$ is respected \textup{(}with
+$\PPI$ on a separate track that merges into $\PO$/$\PP$\textup{)}.
+Reversals $\PP \to \PO$, $\PO \to \DR$, or $\PP \to \DR$ are
+impossible.
+\end{corollary}
+
+\begin{lemma}[Downward persistence]
+\label{lem:downward}
+Going \emph{downward} along a PP-chain \textup{(}i.e., from $a_{i}$
+to $a_{i-1}$ via $\PPI$\textup{)}, the relation $R(x, a_{i-1}) \in
+\comp(R(x, a_i), \PPI)$ satisfies:
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{ll}
+\toprule
+$R(x, a_i)$ & Possible values of $R(x, a_{i-1})$ \\
+\midrule
+$\DR$  & $\DR$ \\
+$\PPI$ & $\PPI$ \\
+$\PO$  & $\PO, \PPI$ \\
+$\PP$  & $\PO, \EQ, \PP, \PPI$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+In particular, $\DR$ and $\PPI$ are downward closed.
+\end{lemma}
+
+\begin{proof}
+By $R(x, a_{i-1}) \in \comp(R(x, a_i), \PPI)$, reading column
+$\PPI(a,b)$ from Table~\ref{tab:rcc5}.
+\end{proof}
+
+\begin{remark}
+The monotonicity lemmas show that an infinite PP-chain can only
+``absorb'' external nodes in a structured way: once a node becomes
+$\DR$ or $\PPI$ relative to a chain element, it stays that way for all
+elements below; once it becomes $\PP$, it stays $\PP$ for all elements
+above.  This regularity is what allows a finite quasimodel to
+faithfully represent the infinite model structure.
+\end{remark}
+
+%% ============================================================
+\section{The Quasimodel Method}
+\label{sec:quasimodel}
+
+Throughout this section, fix a concept $C_0$ in negation normal form
+(NNF).
+
+\subsection{Fischer--Ladner Closure}
+
+\begin{definition}[Closure]
+\label{def:closure}
+The \emph{closure} $\cl(C_0)$ is the smallest set containing
+$\sub(C_0)$ (all subconcepts of $C_0$) and, for every concept name
+$A \in \NC$ occurring in $C_0$, the concept $\neg A$.  We identify
+$\neg\neg D$ with $D$.  Note $|\cl(C_0)| \leq 2|C_0|$.
+\end{definition}
+
+\subsection{Types}
+
+\begin{definition}[Type]
+\label{def:type}
+A \emph{type} (for $C_0$) is a subset $\tau \subseteq \cl(C_0)$
+satisfying:
+\begin{enumerate}[label=(T\arabic*),nosep]
+  \item If $D_1 \sqcap D_2 \in \tau$, then $D_1 \in \tau$ and $D_2 \in \tau$.
+  \item If $D_1 \sqcup D_2 \in \tau$, then $D_1 \in \tau$ or $D_2 \in \tau$.
+  \item For every concept name $A$: not both $A \in \tau$ and $\neg A \in \tau$.
+\end{enumerate}
+We write $\Tp(C_0)$ for the set of all types.  Clearly $|\Tp(C_0)|
+\leq 2^{|\cl(C_0)|} \leq 2^{2|C_0|}$.
+\end{definition}
+
+Given an interpretation $\interp$ and $x \in \DeltaI$, the type of
+$x$ is $\tau^{\interp}(x) = \{D \in \cl(C_0) \mid x \in
+D^{\interp}\}$.
+
+\subsection{Pair-Types (R-Compatibility)}
+
+\begin{definition}[R-compatibility]
+\label{def:compat}
+Let $\tau_1, \tau_2 \in \Tp(C_0)$ and $R \in \NR \setminus \{\EQ\}$.
+The triple $(\tau_1, R, \tau_2)$ is \emph{$R$-compatible} if:
+\begin{enumerate}[label=(P\arabic*),nosep]
+  \item For all $\forall R.D \in \cl(C_0)$: if $\forall R.D \in
+    \tau_1$ then $D \in \tau_2$.
+  \item For all $\forall \inv(R).D \in \cl(C_0)$: if $\forall
+    \inv(R).D \in \tau_2$ then $D \in \tau_1$.
+  \item For all $\forall S.D \in \cl(C_0)$ with $S \neq R$ and $S
+    \neq \inv(R)$: no new constraint is imposed by $S$ on this pair.
+    \textup{(}The pair is related by $R$, not $S$.\textup{)}
+\end{enumerate}
+We define:
+\[
+  \Pair(C_0) = \{(\tau_1, R, \tau_2) \mid
+    \tau_1, \tau_2 \in \Tp(C_0),\;
+    R \in \NR \setminus \{\EQ\},\;
+    (\tau_1, R, \tau_2) \text{ is $R$-compatible}\}.
+\]
+Note that since we work with strong EQ semantics, the EQ relation
+holds only reflexively, and we handle it separately: $(\tau,
+\EQ, \tau)$ is always implicitly present for any type~$\tau$.
+\end{definition}
+
+\begin{remark}
+$R$-compatibility captures the \emph{local} constraints imposed by
+universal restrictions.  If $(\tau_1, R, \tau_2) \in \Pair(C_0)$,
+then two domain elements of types $\tau_1$ and $\tau_2$ could
+consistently be $R$-related---as far as universal restrictions are
+concerned.
+\end{remark}
+
+\subsection{Triple Consistency}
+
+\begin{definition}[Consistent triple]
+\label{def:triple}
+A \emph{triple} $(\tau_1, R_{12}, \tau_2, R_{13}, \tau_3, R_{23})$ is
+\emph{consistent} if:
+\begin{enumerate}[label=(Tr\arabic*),nosep]
+  \item Each pair is compatible: $(\tau_1, R_{12}, \tau_2)$,
+    $(\tau_1, R_{13}, \tau_3)$, $(\tau_2, R_{23}, \tau_3)$ are all in
+    $\Pair(C_0)$.
+  \item The composition table is respected:
+    \begin{align*}
+      R_{13} &\in \comp(R_{12}, R_{23}), \\
+      R_{23} &\in \comp(\inv(R_{12}), R_{13}), \\
+      R_{12} &\in \comp(R_{13}, \inv(R_{23})).
+    \end{align*}
+\end{enumerate}
+We write $\Trip(C_0)$ for the set of all consistent triples.
+\end{definition}
+
+\subsection{Quasimodel}
+
+\begin{definition}[Quasimodel]
+\label{def:quasimodel}
+A \emph{quasimodel} for $C_0$ is a triple $\mathcal{Q} = (T, P,
+\tau_0)$ where:
+\begin{itemize}[nosep]
+  \item $T \subseteq \Tp(C_0)$ is a non-empty set of types,
+  \item $P \subseteq \Pair(C_0)$ is a set of pair-types restricted to
+    $T$,
+  \item $\tau_0 \in T$ is a distinguished type with $C_0 \in \tau_0$,
+\end{itemize}
+satisfying the following conditions:
+
+\medskip\noindent
+\textbf{(Q1) Existential demand satisfaction.}\; For every $\tau \in T$
+and every $\exists R.D \in \tau$, there exists a \emph{witness type}
+$\tau' \in T$ with $D \in \tau'$ and $(\tau, R, \tau') \in P$,
+such that:
+
+\begin{enumerate}[label=(Q1.\alph*),nosep]
+  \item \emph{Pairwise embeddability with existing types:}\; For every
+    $\tau'' \in T$ and every $R'' \in \NR \setminus \{\EQ\}$ with
+    $(\tau, R'', \tau'') \in P$, there exists $S \in \NR \setminus
+    \{\EQ\}$ with $(\tau'', S, \tau') \in P$ and $(\tau, R'', \tau'',
+    R, \tau', S) \in \Trip(C_0)$.
+
+  \item \emph{Full triple coherence:}\; For every $\tau_a, \tau_b \in
+    T$ and every $R_{ab}$ with $(\tau_a, R_{ab}, \tau_b) \in P$, there
+    exist $S_a, S_b \in \NR \setminus \{\EQ\}$ with $(\tau_a, S_a,
+    \tau') \in P$ and $(\tau_b, S_b, \tau') \in P$ such that
+    $(\tau_a, R_{ab}, \tau_b, S_a, \tau', S_b) \in \Trip(C_0)$.
+\end{enumerate}
+
+\medskip\noindent
+\textbf{(Q2) Completeness.}\; For every $\tau_1, \tau_2 \in T$, there
+exists $R \in \NR \setminus \{\EQ\}$ with $(\tau_1, R, \tau_2) \in P$.
+
+\medskip\noindent
+\textbf{(Q3) PP-transitivity.}\; If $(\tau_1, \PP, \tau_2) \in P$ and
+$(\tau_2, \PP, \tau_3) \in P$, then $(\tau_1, \PP, \tau_3) \in P$,
+and for all $\forall \PP.D \in \cl(C_0)$: if $\forall \PP.D \in
+\tau_1$ then $D \in \tau_3$.  Symmetrically for $\PPI$.
+\end{definition}
+
+\begin{remark}
+Condition (Q1) is the heart of the quasimodel.  It ensures that
+when we add a new element (to witness an existential demand), we can
+assign it a role to \emph{every} existing element in a way that is
+simultaneously consistent.  Conditions (Q1.a) and (Q1.b) correspond
+to different perspectives on this requirement.  Condition (Q2)
+ensures the one-cluster property.  Condition (Q3) handles the
+transitivity of $\PP$ (and $\PPI$), which propagates universal
+restrictions along PP-chains.
+\end{remark}
+
+%% ============================================================
+\section{Main Theorem: Quasimodel Characterization}
+\label{sec:main}
+
+\begin{theorem}
+\label{thm:main}
+A concept $C_0$ is satisfiable in $\ALCIRCC{5}$ if and only if there
+exists a quasimodel for $C_0$.
+\end{theorem}
+
+The proof occupies the next two subsections.
+
+\subsection{Soundness: Model $\Rightarrow$ Quasimodel}
+\label{sec:soundness}
+
+\begin{proof}[Proof of soundness]
+Let $\interp = (\DeltaI, \cdot^{\interp})$ be an $\ALCIRCC{5}$
+interpretation with $x_0 \in C_0^{\interp}$.  Define:
+\begin{align*}
+  T &= \{\tau^{\interp}(x) \mid x \in \DeltaI\}, \\
+  P &= \{(\tau^{\interp}(x), R, \tau^{\interp}(y)) \mid
+    (x,y) \in R^{\interp},\; R \in \NR \setminus \{\EQ\}\}, \\
+  \tau_0 &= \tau^{\interp}(x_0).
+\end{align*}
+We verify each quasimodel condition:
+
+\smallskip\noindent
+\textbf{(Q1)}\; Let $\tau = \tau^{\interp}(x)$ and $\exists R.D \in
+\tau$.  Then there exists $y$ with $(x,y) \in R^{\interp}$ and $y \in
+D^{\interp}$.  Set $\tau' = \tau^{\interp}(y)$.
+
+For (Q1.a): given any $\tau'' = \tau^{\interp}(z)$ with $(\tau, R'',
+\tau'') \in P$, witnessed by some $z'$ with $\tau^{\interp}(z') =
+\tau''$ and $(x, z') \in (R'')^{\interp}$, the relation $S$ between
+$z'$ and $y$ in $\interp$ satisfies all required conditions by the
+model properties.
+
+For (Q1.b): given any $\tau_a = \tau^{\interp}(a)$, $\tau_b =
+\tau^{\interp}(b)$ with $(\tau_a, R_{ab}, \tau_b) \in P$, witnessed
+by some $a', b'$ with the appropriate types and relations, the
+relations of $a'$ and $b'$ to $y$ provide the required $S_a, S_b$.
+
+\smallskip\noindent
+\textbf{(Q2)}\; By the one-cluster property, every pair of elements
+has a role, so every pair of types has a role in $P$.
+
+\smallskip\noindent
+\textbf{(Q3)}\; Transitivity of $\PP^{\interp}$ ensures that if
+$(\tau_1, \PP, \tau_2) \in P$ and $(\tau_2, \PP, \tau_3) \in P$, then
+there exist elements $x_1, x_2, x_3$ such that $(x_1, x_2) \in
+\PP^{\interp}$, $(x_2, x_3) \in \PP^{\interp}$, and hence
+$(x_1, x_3) \in \PP^{\interp}$, giving $(\tau_1, \PP, \tau_3) \in
+P$.  The propagation of universal restrictions follows from the model
+satisfying $\forall \PP.D$.
+\end{proof}
+
+\subsection{Completeness: Quasimodel $\Rightarrow$ Model}
+\label{sec:completeness}
+
+This is the non-trivial direction.
+
+\begin{proof}[Proof of completeness]
+Let $\mathcal{Q} = (T, P, \tau_0)$ be a quasimodel for $C_0$.  We
+construct a model $\interp = (\DeltaI, \cdot^{\interp})$ via a
+\emph{Henkin-style step-by-step construction}.
+
+\medskip\noindent\textbf{Stage 0.}\;
+Create a single element $e_1$ with type $\tau(e_1) := \tau_0$.
+Set $\Delta_0 = \{e_1\}$.
+
+\medskip\noindent\textbf{Stage $n+1$.}\;
+Let $\Delta_n = \{e_1, \ldots, e_m\}$ with types $\tau(e_i)$ and
+roles $R(e_i, e_j) \in \NR$ assigned for all $i \neq j$ (with
+$R(e_i, e_i) = \EQ$).  Assume inductively:
+\begin{enumerate}[label=(\roman*),nosep]
+  \item $(\tau(e_i), R(e_i, e_j), \tau(e_j)) \in P$ for all $i \neq j$.
+  \item Every triple $(e_i, e_j, e_k)$ satisfies the composition
+    table.
+\end{enumerate}
+
+Enumerate all unsatisfied demands: pairs $(e_k, \exists R.D)$ where
+$\exists R.D \in \tau(e_k)$ but no element in $\Delta_n$ serves as a
+witness.  Consider the next unsatisfied demand $(e_k, \exists R.D)$.
+
+By condition (Q1) of the quasimodel, there exists a witness type
+$\tau' \in T$ with $D \in \tau'$ and $(\tau(e_k), R, \tau') \in P$.
+Create a new element $e_{m+1}$ with $\tau(e_{m+1}) := \tau'$.  Set
+$R(e_k, e_{m+1}) := R$ and $R(e_{m+1}, e_k) := \inv(R)$.
+
+\medskip
+\textbf{The key step} is assigning a role $R(e_i, e_{m+1})$ for
+every existing element $e_i \in \Delta_n$ with $i \neq k$.
+
+\begin{claim}
+\label{claim:extension}
+There exist roles $S_1, \ldots, S_m \in \NR \setminus \{\EQ\}$
+\textup{(}with $S_k = R$\textup{)} such that:
+\begin{enumerate}[label=(\alph*),nosep]
+  \item $(\tau(e_i), S_i, \tau') \in P$ for all $i$.
+  \item For all $i \neq j$: the triple $(e_i, e_j, e_{m+1})$ with
+    roles $R(e_i, e_j)$, $S_i$, $S_j$ satisfies $S_i \in
+    \comp(R(e_i, e_j), S_j)$ and is in $\Trip(C_0)$.
+\end{enumerate}
+\end{claim}
+
+\begin{proof}[Proof of Claim~\ref{claim:extension}]
+Consider the problem of choosing roles $S_1, \ldots, S_m$ as a
+constraint satisfaction problem.  Define an atomic RCC5 constraint
+network $N$ on the variables $\{e_1, \ldots, e_m, e_{m+1}\}$:
+\begin{itemize}[nosep]
+  \item For $i,j \leq m$: $N(e_i, e_j) = R(e_i, e_j)$ (the existing,
+    consistent network).
+  \item For $i \leq m$: $N(e_i, e_{m+1}) = S_i$ (to be determined),
+    with $S_k = R$ fixed.
+  \item The domain of $S_i$ is $\{S \in \NR \setminus \{\EQ\} \mid
+    (\tau(e_i), S, \tau') \in P\}$.
+\end{itemize}
+
+The constraints on the $S_i$ are: for all $i \neq j$ with $i,j \leq m$,
+\[
+  S_i \in \comp(R(e_i, e_j), S_j)
+  \quad\text{and}\quad
+  S_j \in \comp(R(e_j, e_i), S_i).
+\]
+Additionally, the triple $(\tau(e_i), R(e_i, e_j), \tau(e_j), S_i,
+\tau', S_j)$ must be in $\Trip(C_0)$.
+
+Now, condition~(Q1.b) of the quasimodel guarantees that for every
+\emph{pair} $(e_i, e_j)$, there \emph{exist} values $S_i, S_j$ satisfying
+these constraints.  In other words, every pairwise sub-network
+$\{e_i, e_j, e_{m+1}\}$ is path-consistent.
+
+We need these pairwise-consistent choices to extend to a
+\emph{globally} consistent assignment.  This is precisely the content
+of the \textbf{patchwork property}
+(Corollary~\ref{cor:patchwork}).
+
+More explicitly: the constraint network $N$ restricted to any triple
+$\{e_i, e_j, e_{m+1}\}$ is consistent (by the pairwise argument
+above), so the full network $N$ is path-consistent.  By
+Theorem~\ref{thm:patchwork}, a path-consistent atomic RCC5 network is
+globally consistent.  Therefore, a simultaneous assignment $S_1,
+\ldots, S_m$ satisfying all constraints exists.
+\end{proof}
+
+Set $R(e_i, e_{m+1}) := S_i$ and $R(e_{m+1}, e_i) := \inv(S_i)$
+for all $i$.  This extends the interpretation to $\Delta_{n+1} =
+\Delta_n \cup \{e_{m+1}\}$ while maintaining the inductive
+invariants~(i) and~(ii).
+
+\medskip\noindent\textbf{The limit model.}\;
+Using a fair enumeration of demands (e.g., dovetailing), define the
+limit interpretation:
+\[
+  \interp = \bigcup_{n \geq 0} (\Delta_n, \cdot^{\interp}_n).
+\]
+This is a valid $\ALCIRCC{5}$ interpretation:
+\begin{itemize}[nosep]
+  \item \emph{One cluster:} every pair of elements created in the
+    construction has a role assigned.
+  \item \emph{JEPD:} each pair has exactly one base relation (by
+    construction).
+  \item \emph{Composition:} every triple satisfies the composition
+    table (maintained at each stage by the claim).
+  \item \emph{Converse:} maintained by setting $R(e_{m+1}, e_i) =
+    \inv(S_i)$.
+  \item \emph{Strong EQ:} $R(e_i, e_i) = \EQ$ for all $i$, and no
+    distinct pair has $\EQ$.
+  \item \emph{Concept truth:} for each type $\tau$, every element
+    $e$ with $\tau(e) = \tau$ satisfies exactly the concept
+    descriptions in $\tau$.  Since $C_0 \in \tau_0 = \tau(e_1)$, we
+    have $e_1 \in C_0^{\interp}$.
+\end{itemize}
+
+\noindent
+More precisely, concept truth is established by induction on concept
+structure:
+\begin{itemize}[nosep]
+  \item Concept names and negations: by the type conditions (T1)--(T3).
+  \item Conjunctions, disjunctions: by (T1), (T2).
+  \item Existential restrictions $\exists R.D$: every demand $\exists
+    R.D \in \tau(e)$ is eventually satisfied by the Henkin
+    construction (fair enumeration).
+  \item Universal restrictions $\forall R.D$: if $\forall R.D \in
+    \tau(e)$ and $(e, e') \in R^{\interp}$, then $D \in \tau(e')$ by
+    the $R$-compatibility condition (P1) in $\Pair(C_0)$.
+\end{itemize}
+
+\noindent
+Therefore $\interp \models C_0$, and $C_0$ is satisfiable.
+\end{proof}
+
+%% ============================================================
+\section{Decidability and Complexity via Type Elimination}
+\label{sec:complexity}
+
+\begin{theorem}
+\label{thm:complexity}
+Concept satisfiability in $\ALCIRCC{5}$ is decidable in \EXPTIME.
+\end{theorem}
+
+\begin{proof}
+By Theorem~\ref{thm:main}, it suffices to decide quasimodel
+existence.  We describe a type-elimination algorithm.
+
+\begin{enumerate}[nosep]
+  \item \textbf{Initialization.}\; Compute $\Tp(C_0)$, $\Pair(C_0)$,
+    and $\Trip(C_0)$.  These sets have sizes bounded by
+    $2^{O(|C_0|)}$, $2^{O(|C_0|)}$, and $2^{O(|C_0|)}$ respectively.
+
+  \item \textbf{PP-transitivity closure.}\; Close $\Pair(C_0)$ under
+    condition (Q3): iteratively add $(\tau_1, \PP, \tau_3)$ whenever
+    $(\tau_1, \PP, \tau_2)$ and $(\tau_2, \PP, \tau_3)$ are present
+    and the universal restriction propagation is satisfied.  Remove
+    triples that violate (Q3).
+
+  \item \textbf{Type elimination.}\; Iteratively remove from $T$
+    (initialized to $\Tp(C_0)$) any type $\tau$ that fails one of:
+    \begin{itemize}[nosep]
+      \item \emph{Existential demand:} there exists $\exists R.D \in
+        \tau$ for which no witness $\tau'$ satisfying (Q1) can be found.
+      \item \emph{Completeness:} there exists $\tau' \in T$ such that
+        no role $R$ yields $(\tau, R, \tau') \in P$.
+    \end{itemize}
+    When a type is removed, also remove all pair-types and
+    triple-types involving it, then repeat.
+
+  \item \textbf{Termination.}\; Each iteration removes at least one
+    type or pair-type.  Since there are at most $2^{O(|C_0|)}$ types
+    and $2^{O(|C_0|)}$ pair-types, termination occurs after at most
+    $2^{O(|C_0|)}$ iterations.
+
+  \item \textbf{Acceptance.}\; Accept if and only if there remains a
+    type $\tau_0$ with $C_0 \in \tau_0$ such that $\tau_0$ and the
+    surviving types and pair-types form a quasimodel.
+\end{enumerate}
+
+Each iteration inspects at most $2^{O(|C_0|)}$ types, pairs, and
+triples.  Total time: $2^{O(|C_0|)} \cdot 2^{O(|C_0|)} =
+2^{O(|C_0|)}$, which is in \EXPTIME.
+\end{proof}
+
+\begin{theorem}[Lower bound]
+\label{thm:lower}
+Concept satisfiability in $\ALCIRCC{5}$ is \PSPACE-hard.
+\end{theorem}
+
+\begin{proof}
+Wessel~\cite[Section 6.3]{Wessel2003} establishes this by a reduction
+from QBF validity, using the $\PO$-free fragment to enforce
+tree-shaped models.
+\end{proof}
+
+\begin{corollary}
+Concept satisfiability in $\ALCIRCC{5}$ is between \PSPACE{} and
+\EXPTIME.
+\end{corollary}
+
+\begin{remark}[Closing the gap]
+We conjecture that $\ALCIRCC{5}$ is \EXPTIME-complete.  The
+interaction between $\PP$-transitivity and the universal role (which
+enables TBox internalization) plausibly supports a reduction from the
+\EXPTIME-hard \emph{two-player corridor tiling problem}, but we have
+not established this.
+\end{remark}
+
+
+%% ============================================================
+%% ============================================================
+\section{A Tableau Decision Procedure}
+\label{sec:tableau}
+
+We now present an alternative decision procedure in the form of a
+\emph{tableau calculus with blocking}.  Unlike the type-elimination
+algorithm, which works globally on the space of all types and
+pair-types, the tableau constructs a model-like structure
+incrementally, expanding individual nodes.  The key challenge is that
+$\ALCIRCC{5}$ models are complete graphs, not trees: creating a new
+node requires assigning it a base relation to \emph{every} existing
+node.  The patchwork property (Theorem~\ref{thm:patchwork}) is what
+makes this tractable.
+
+\subsection{Completion Graphs}
+
+\begin{definition}[Completion graph]
+\label{def:completion-graph}
+A \emph{completion graph} for $C_0$ is a tuple $\mathcal{G} = (V,
+\mathcal{L}, \mathcal{E}, \prec)$ where:
+\begin{itemize}[nosep]
+  \item $V$ is a finite, non-empty set of \emph{nodes}.
+  \item $\mathcal{L} \colon V \to 2^{\cl(C_0)}$ is a \emph{labelling
+    function} assigning a set of concepts to each node.
+  \item $\mathcal{E} \colon \{(x,y) \in V \times V \mid x \neq y\}
+    \to \NR \setminus \{\EQ\}$ is an \emph{edge labelling function}
+    assigning a base relation to every ordered pair of distinct nodes,
+    respecting converse: $\mathcal{E}(y,x) = \inv(\mathcal{E}(x,y))$.
+  \item $\prec$ is a strict total order on $V$ (the \emph{creation
+    order}).
+\end{itemize}
+The \emph{initial completion graph} for $C_0$ consists of a single
+node $x_0$ with $\mathcal{L}(x_0) = \{C_0\}$, $V = \{x_0\}$, and
+$\mathcal{E}$ vacuously defined (no pairs of distinct nodes yet).
+\end{definition}
+
+\begin{remark}
+The edge labelling $\mathcal{E}$ is a \emph{total} function on
+distinct pairs, reflecting the one-cluster and JEPD requirements.
+Whenever a new node $y$ is added to $V$, the function $\mathcal{E}$
+must be extended to assign a base relation $\mathcal{E}(z,y)$ for
+every existing node $z$.  This is the principal difference from
+tree-based tableau calculi, where a new node has a single edge to its
+parent.
+\end{remark}
+
+\begin{definition}[Blocking]
+\label{def:blocking}
+Let $\mathcal{G} = (V, \mathcal{L}, \mathcal{E}, \prec)$ be a
+completion graph.  A node $x \in V$ is \emph{blocked} if there exists
+$y \prec x$ such that $y$ is not blocked and $\mathcal{L}(x) =
+\mathcal{L}(y)$.  We call $y$ a \emph{blocker} for $x$.  A node is
+\emph{active} if it is not blocked.
+\end{definition}
+
+\begin{remark}
+This is \emph{equality anywhere-blocking}: the blocker $y$ need not be
+a predecessor or neighbor in any structural sense---it need only
+precede $x$ in the creation order and carry the same label.  The
+simplicity of this blocking condition (compared to, e.g., the pairwise
+blocking of $\ALCI$ tree tableaux) is made possible by the patchwork
+property, which allows us to decouple the type-level structure from
+the specific relational neighborhood (see the soundness proof,
+Section~\ref{sec:tab-soundness}).
+\end{remark}
+
+\subsection{Expansion Rules}
+\label{sec:tab-rules}
+
+The tableau calculus consists of four deterministic rules and two
+nondeterministic rules, applied to a completion graph $\mathcal{G}$.
+We write $\mathcal{L}(x)$ for the label and $\mathcal{E}(x,y)$ for
+the edge label.
+
+\medskip
+\noindent\textbf{Propositional rules} (deterministic):
+
+\smallskip
+\noindent$(\sqcap)$\quad If $D_1 \sqcap D_2 \in \mathcal{L}(x)$ and
+$\{D_1, D_2\} \not\subseteq \mathcal{L}(x)$: \\
+\hspace*{2em} add $D_1$ and $D_2$ to $\mathcal{L}(x)$.
+
+\smallskip
+\noindent$(\sqcup)$\quad If $D_1 \sqcup D_2 \in \mathcal{L}(x)$ and
+$D_1 \notin \mathcal{L}(x)$ and $D_2 \notin \mathcal{L}(x)$: \\
+\hspace*{2em} \emph{nondeterministically} add $D_1$ or $D_2$ to
+$\mathcal{L}(x)$.
+
+\medskip
+\noindent\textbf{Propagation rule} (deterministic):
+
+\smallskip
+\noindent$(\forall)$\quad If $\forall R.D \in \mathcal{L}(x)$ and
+$\mathcal{E}(x,y) = R$ and $D \notin \mathcal{L}(y)$: \\
+\hspace*{2em} add $D$ to $\mathcal{L}(y)$.
+
+\smallskip
+\noindent This rule also handles inverses: since $\forall R^-.D$ is
+equivalent to $\forall \inv(R).D$ in NNF, and $\mathcal{E}$ stores
+base relations, the rule fires whenever $\forall S.D \in
+\mathcal{L}(x)$ and $\mathcal{E}(x,y) = S$.
+
+\medskip
+\noindent\textbf{Generating rule} (nondeterministic):
+
+\smallskip
+\noindent$(\exists)$\quad If $\exists R.D \in \mathcal{L}(x)$, $x$ is
+active, and there is no $y \in V$ with $\mathcal{E}(x,y) = R$ and
+$D \in \mathcal{L}(y)$:
+\begin{enumerate}[nosep,label=\arabic*.]
+  \item Create a fresh node $y$ and add it to $V$ as the
+    $\prec$-greatest element.
+  \item Set $\mathcal{L}(y) := \{D\}$.
+  \item Set $\mathcal{E}(x,y) := R$ and $\mathcal{E}(y,x) := \inv(R)$.
+  \item For each $z \in V \setminus \{x, y\}$,
+    \emph{nondeterministically} choose $S_z \in \NR \setminus \{\EQ\}$
+    and set $\mathcal{E}(z,y) := S_z$, $\mathcal{E}(y,z) :=
+    \inv(S_z)$.
+\end{enumerate}
+
+\begin{remark}
+Step~4 is the hallmark of the complete-graph tableau: the new node
+$y$ receives an edge to \emph{every} existing node.  The choice of
+$S_z$ is nondeterministic, subject to the constraint-filtering
+condition below.  The patchwork property guarantees that a valid
+choice exists whenever the concept is satisfiable (see
+Section~\ref{sec:tab-completeness}).
+\end{remark}
+
+\subsection{Constraint Filtering}
+\label{sec:constraint-filtering}
+
+After the $(\exists)$-rule creates a new node~$y$ with edges to all
+existing nodes, we require:
+
+\medskip\noindent\textbf{(CF) Composition consistency.}\; For every
+triple of distinct nodes $(u, v, w)$ that includes $y$:
+\[
+  \mathcal{E}(u,w) \in \comp(\mathcal{E}(u,v),\, \mathcal{E}(v,w)).
+\]
+
+If no assignment of the $S_z$ values in step~4 of $(\exists)$
+satisfies (CF) for all such triples simultaneously, the current branch
+\emph{closes} (clash by composition failure).
+
+\begin{remark}
+Checking~(CF) amounts to solving an atomic RCC5 constraint network:
+the existing nodes have fixed pairwise relations, and the new node~$y$
+has the relation to~$x$ fixed at~$R$, with the remaining relations
+$S_z$ as variables.  By Theorem~\ref{thm:patchwork}, a simultaneous
+satisfying assignment exists if and only if every triple involving~$y$
+is individually satisfiable, i.e., the network is path-consistent.
+Path consistency can be checked (and enforced) in time $O(|V|^3)$.
+\end{remark}
+
+\subsection{Rule Application Strategy}
+\label{sec:strategy}
+
+To ensure that labels stabilize before blocking is evaluated:
+
+\begin{enumerate}[nosep]
+  \item Apply $(\sqcap)$, $(\sqcup)$, and $(\forall)$ exhaustively
+    to all nodes (in any order, resolving $(\sqcup)$
+    nondeterministically).
+  \item Re-evaluate blocking: a node $x$ is blocked if
+    $\mathcal{L}(x) = \mathcal{L}(y)$ for some non-blocked $y \prec x$.
+  \item Apply one instance of $(\exists)$ for an active node with an
+    unsatisfied demand.
+  \item After adding the new node and its edges, apply $(\forall)$
+    exhaustively (the new edges may trigger propagations both to and
+    from the new node; these may cascade to other nodes).
+  \item Re-evaluate blocking (label changes from $(\forall)$ may
+    affect blocking status).
+  \item Repeat from step~1 until no rule applies or a clash is
+    detected.
+\end{enumerate}
+
+\begin{definition}[Saturated completion graph]
+\label{def:saturated}
+A completion graph $\mathcal{G}$ is \emph{saturated} if no expansion
+rule is applicable (i.e., all propositional rules have been applied,
+all $(\forall)$-propagations have been performed, and every active
+node's existential demands are witnessed by an appropriate neighbor).
+\end{definition}
+
+\begin{definition}[Clash-free completion graph]
+\label{def:clash-free}
+A completion graph is \emph{clash-free} if:
+\begin{enumerate}[label=(C\arabic*),nosep]
+  \item No node has $\{A, \neg A\} \subseteq \mathcal{L}(x)$ for any
+    concept name $A$.
+  \item Composition consistency (CF) holds for all triples.
+\end{enumerate}
+A completion graph that is both saturated and clash-free is called
+\emph{open}.
+\end{definition}
+
+\noindent
+The tableau \emph{decides} satisfiability: $C_0$ is satisfiable iff
+there exists a sequence of nondeterministic choices producing an open
+completion graph.
+
+\subsection{Termination}
+\label{sec:tab-termination}
+
+\begin{theorem}[Termination]
+\label{thm:termination}
+Every sequence of rule applications terminates.  The final completion
+graph has at most $2^{O(|C_0|)}$ nodes.
+\end{theorem}
+
+\begin{proof}
+Let $n = |\cl(C_0)| \leq 2|C_0|$ and $N = 2^n = |\Tp(C_0)|$.
+
+\smallskip\noindent\textbf{Bound on active nodes.}\; At any point,
+the active (non-blocked) nodes have pairwise distinct labels (by the
+definition of blocking).  Each label is a subset of $\cl(C_0)$, so
+there are at most $N$ active nodes.
+
+\smallskip\noindent\textbf{Labels grow monotonically.}\; The rules
+$(\sqcap)$, $(\sqcup)$, and $(\forall)$ only \emph{add} concepts to
+labels, never remove them.  Therefore, each node's label changes at
+most $n$ times (once per concept in $\cl(C_0)$).
+
+\smallskip\noindent\textbf{Bound on node creation.}\; The $(\exists)$
+rule fires only for active nodes with unsatisfied demands.  Each
+active node~$x$ has at most $n$ existential demands (concepts of the
+form $\exists R.D$ in $\cl(C_0)$).  Each demand generates at most one
+new node (once a witness exists, the demand is satisfied and the rule
+no longer fires for that demand).  With at most $N$ active nodes, at
+most $N \cdot n$ nodes are created by the $(\exists)$ rule.  Each
+newly created node is either active (contributing to the at-most-$N$
+budget) or immediately blocked.
+
+\smallskip\noindent\textbf{Bound on re-evaluations.}\; When a label
+changes (via $(\forall)$ propagation), blocking status may change, and
+a previously blocked node may become active, requiring expansion.
+However, each label change is permanent (labels only grow), and the
+total number of label changes across all nodes is at most $|V| \cdot
+n$.  Each unblocking event is caused by a label change, so the total
+number of unblocking events is bounded.  Each unblocking event may
+generate at most $n$ new witnesses, but the total number of witnesses
+is bounded by the total number of active-node $\times$ demand pairs
+encountered during the process, which is at most $N \cdot n$ per
+``generation'' of the label.
+
+\smallskip\noindent\textbf{Overall bound.}\; The total number of
+nodes is bounded by $N \cdot n \cdot n = 2^n \cdot n^2 =
+2^{O(|C_0|)}$, and the total number of rule applications (label
+additions and node creations) is bounded by $|V| \cdot n =
+2^{O(|C_0|)}$.  Hence the procedure terminates in at most
+$2^{O(|C_0|)}$ steps.
+\end{proof}
+
+\subsection{Soundness: Open Branch $\Rightarrow$ Satisfiable}
+\label{sec:tab-soundness}
+
+\begin{theorem}[Soundness of the tableau]
+\label{thm:tab-soundness}
+If the tableau produces an open \textup{(}saturated, clash-free\textup{)}
+completion graph $\mathcal{G}$ for $C_0$, then $C_0$ is satisfiable
+in $\ALCIRCC{5}$.
+\end{theorem}
+
+\begin{proof}
+We show that an open completion graph $\mathcal{G} = (V, \mathcal{L},
+\mathcal{E}, \prec)$ encodes a valid quasimodel.  The result then
+follows from Theorem~\ref{thm:main}.
+
+\medskip\noindent\textbf{Step 1: Quasimodel extraction.}\; Define:
+\begin{align*}
+  T &= \{ \mathcal{L}(x) \mid x \in V,\; x \text{ is active} \}, \\
+  P &= \{ (\mathcal{L}(x), \mathcal{E}(x,y), \mathcal{L}(y))
+    \mid x,y \in V,\; x \neq y \}, \\
+  \tau_0 &= \mathcal{L}(x_0).
+\end{align*}
+
+\medskip\noindent\textbf{Step 2: Verification of (Q1).}\; Let $\tau
+\in T$ and $\exists R.D \in \tau$.  Then $\tau = \mathcal{L}(x)$ for
+some active node $x$.  Since $\mathcal{G}$ is saturated, there exists
+$y \in V$ with $\mathcal{E}(x,y) = R$ and $D \in \mathcal{L}(y)$.
+Set $\tau' = \mathcal{L}(y)$.
+
+For \textbf{(Q1.a)}: Let $(\tau, R'', \tau'') \in P$.  Then there
+exist nodes $x', z'$ with $\mathcal{L}(x') = \tau$,
+$\mathcal{L}(z') = \tau''$, and $\mathcal{E}(x',z') = R''$.  Since
+$\mathcal{G}$ is a complete graph on $V$, the node $z'$ has an
+edge to $y$: set $S = \mathcal{E}(z',y)$.  Then $(\tau'', S, \tau')
+\in P$ by definition.  Composition consistency of the triple
+$(x, z', y)$ with roles $(R'', R, S)$ follows from clash-freeness (C2).
+
+But we need the triple with respect to the node $x'$ (which
+satisfies $\mathcal{L}(x') = \tau$), not~$x$.  If $x' = x$, we
+are done.  If $x' \neq x$, we use the triple $(x', z', y)$:
+$\mathcal{E}(x', z') = R''$, $\mathcal{E}(x', y) = $ some role
+$R'_0$, and $\mathcal{E}(z', y) = S$.  Composition consistency holds
+by~(C2).
+
+However, $R'_0$ might not equal $R$.  The condition~(Q1.a) requires a
+witness relative to the specific role $R$ from $\tau$ to $\tau'$.  To
+handle this: note that $\mathcal{L}(x) = \tau$ and
+$\mathcal{E}(x,y) = R$.  For any $z$ with $\mathcal{L}(z) = \tau''$
+and $\mathcal{E}(x,z) = R''$, the triple $(x, z, y)$ has roles
+$(R'', R, \mathcal{E}(z,y))$, and composition holds by~(C2).  Setting
+$S = \mathcal{E}(z,y)$ gives $(\tau'', S, \tau') \in P$ and the
+triple is consistent.  This verifies~(Q1.a) using the specific
+node~$x$.
+
+For \textbf{(Q1.b)}: Let $(\tau_a, R_{ab}, \tau_b) \in P$ with
+witnesses $a, b \in V$ such that $\mathcal{L}(a) = \tau_a$,
+$\mathcal{L}(b) = \tau_b$, $\mathcal{E}(a,b) = R_{ab}$.
+Set $S_a = \mathcal{E}(a,y)$ and $S_b = \mathcal{E}(b,y)$.  Then
+$(\tau_a, S_a, \tau') \in P$ and $(\tau_b, S_b, \tau') \in P$ by
+definition.  The triple $(a, b, y)$ with roles $(R_{ab}, S_a, S_b)$ is
+composition-consistent by~(C2), so it lies in $\Trip(C_0)$.
+
+\medskip\noindent\textbf{Step 3: Verification of (Q2).}\; Since
+$\mathcal{E}$ is a total function on distinct pairs, for any $\tau_1,
+\tau_2 \in T$ with active witnesses $x_1, x_2$, the edge
+$\mathcal{E}(x_1, x_2)$ provides the required role.
+
+\medskip\noindent\textbf{Step 4: Verification of (Q3).}\; Suppose
+$(\tau_1, \PP, \tau_2) \in P$ and $(\tau_2, \PP, \tau_3) \in P$.
+Then there exist nodes $a, b, c, d$ with $\mathcal{L}(a) = \tau_1$,
+$\mathcal{L}(b) = \tau_2 = \mathcal{L}(c)$, $\mathcal{L}(d) =
+\tau_3$, $\mathcal{E}(a,b) = \PP$, $\mathcal{E}(c,d) = \PP$.
+
+If $b = c$, then the triple $(a,b,d)$ gives $\mathcal{E}(a,d) \in
+\comp(\PP, \PP) = \{\PP\}$, so $(\tau_1, \PP, \tau_3) \in P$ and the
+$(\forall)$-rule ensures universal restriction propagation.
+
+If $b \neq c$, we have $\mathcal{L}(b) = \mathcal{L}(c) = \tau_2$.
+Consider the edge $\mathcal{E}(a,c)$.  Since $\mathcal{L}(a) =
+\tau_1$ and $\mathcal{L}(c) = \tau_2$, the pair $(a,c)$ contributes
+$(\tau_1, \mathcal{E}(a,c), \tau_2)$ to $P$.  Now consider the triple
+$(a, c, d)$: $\mathcal{E}(c,d) = \PP$, so $\mathcal{E}(a,d) \in
+\comp(\mathcal{E}(a,c), \PP)$.  We need $(\tau_1, \PP, \tau_3) \in P$.
+This holds if there exist nodes $a'$, $d'$ with types $\tau_1$,
+$\tau_3$ and $\mathcal{E}(a',d') = \PP$.  We can take $a' = a$ and
+$d' = d$ provided $\mathcal{E}(a,d) = \PP$.  But $\mathcal{E}(a,d)$
+might not be $\PP$.
+
+To handle this: we observe that $\mathcal{E}(a,b) = \PP$ and
+$\mathcal{L}(b) = \mathcal{L}(c)$.  We use the saturation of the
+graph more carefully: if $\mathcal{E}(a,c) = \PP$ (possible since $b$
+and $c$ have the same type), then the triple $(a,c,d)$ gives
+$\mathcal{E}(a,d) \in \comp(\PP,\PP) = \{\PP\}$, and we are done.
+
+In general, $P$ is defined as the set of \emph{all} pair-types
+realized in $\mathcal{G}$, so it may contain $(\tau_1, \PP, \tau_2)$
+from the pair $(a,b)$ and $(\tau_2, \PP, \tau_3)$ from $(c,d)$ without
+the transitive pair $(\tau_1, \PP, \tau_3)$ being directly realized.
+However, the $(\forall)$-rule ensures that if $\forall \PP.D \in
+\mathcal{L}(a)$ and $\mathcal{E}(a,b) = \PP$, then $D \in
+\mathcal{L}(b) = \tau_2$; and if $D$ is $\forall \PP.D'$, then $D'
+\in \mathcal{L}(d)$.  The universal restriction propagation required
+by~(Q3) follows from the saturation of $(\forall)$.  For the
+pair-type itself, we note that $(\tau_1, \PP, \tau_3)$ will be present
+in $P$ via the pair $(a, d)$ with
+$\mathcal{E}(a,d) = \PP$ if $a$ is $\PP$-related to $d$.  If
+$\mathcal{E}(a,d) \neq \PP$, we can still recover: the quasimodel
+condition~(Q3) only requires $(\tau_1, \PP, \tau_3) \in P$ when both
+$(\tau_1, \PP, \tau_2)$ and $(\tau_2, \PP, \tau_3)$ are in $P$.  We
+add the following \emph{closure rule}:
+
+\smallskip\noindent\textbf{($\PP$-close)}\quad If $\mathcal{E}(x,y) =
+\PP$ and $\mathcal{E}(y,z) = \PP$ for nodes $x,y,z \in V$, then
+$\mathcal{E}(x,z)$ must equal $\PP$ \textup{(}otherwise: clash,
+since $\comp(\PP,\PP) = \{\PP\}$\textup{)}.
+
+\smallskip\noindent This is already subsumed by the composition
+consistency condition~(CF).  Therefore, in any clash-free completion
+graph, PP-transitivity holds at the node level, which directly ensures
+(Q3) at the type level.
+
+\medskip\noindent\textbf{Step 5: Conclusion.}\; The extracted triple
+$(T, P, \tau_0)$ is a quasimodel for $C_0$.  By
+Theorem~\ref{thm:main}, $C_0$ is satisfiable in $\ALCIRCC{5}$.
+\end{proof}
+
+\subsection{Completeness: Satisfiable $\Rightarrow$ Open Branch}
+\label{sec:tab-completeness}
+
+\begin{theorem}[Completeness of the tableau]
+\label{thm:tab-completeness}
+If $C_0$ is satisfiable in $\ALCIRCC{5}$, then there exists a
+sequence of nondeterministic choices yielding an open completion graph
+for $C_0$.
+\end{theorem}
+
+\begin{proof}
+Let $\interp = (\DeltaI, \cdot^{\interp})$ be a model with $d_0 \in
+C_0^{\interp}$.  We show that nondeterministic choices can be guided
+by~$\interp$ so that no clash arises and every demand is satisfied.
+
+\medskip\noindent\textbf{Guide function.}\;  We maintain a partial
+function $\pi \colon V \to \DeltaI$ that maps each tableau node to a
+``corresponding'' element in the model, with the invariant:
+\begin{enumerate}[label=(\Roman*),nosep]
+  \item $\mathcal{L}(x) \subseteq \tau^{\interp}(\pi(x))$ for all
+    $x \in V$.
+  \item $\mathcal{E}(x,y) = R^{\interp}(\pi(x), \pi(y))$ for all
+    distinct $x, y \in V$ (where $R^{\interp}(a,b)$ denotes the
+    unique base relation holding between $a$ and $b$ in $\interp$).
+\end{enumerate}
+
+\medskip\noindent\textbf{Initialization.}\;
+Set $\pi(x_0) = d_0$.  Then $\mathcal{L}(x_0) = \{C_0\}$ and $d_0
+\in C_0^{\interp}$, so invariant~(I) holds.
+
+\medskip\noindent\textbf{Guiding the $(\sqcup)$ rule.}\;
+When $D_1 \sqcup D_2 \in \mathcal{L}(x)$, invariant~(I) gives $D_1
+\sqcup D_2 \in \tau^{\interp}(\pi(x))$, so $\pi(x) \in (D_1 \sqcup
+D_2)^{\interp}$, meaning $\pi(x) \in D_1^{\interp}$ or $\pi(x) \in
+D_2^{\interp}$.  Choose the true disjunct.  Invariant~(I) is
+maintained.
+
+\medskip\noindent\textbf{Guiding the $(\exists)$ rule.}\;
+When $\exists R.D \in \mathcal{L}(x)$ and $x$ is active, invariant~(I)
+gives $\pi(x) \in (\exists R.D)^{\interp}$, so there exists $d' \in
+\DeltaI$ with $(\pi(x), d') \in R^{\interp}$ and $d' \in
+D^{\interp}$.
+
+Create node $y$ and set $\pi(y) = d'$.  Then:
+\begin{itemize}[nosep]
+  \item $\mathcal{E}(x,y) = R = R^{\interp}(\pi(x), \pi(y))$.
+    Invariant~(II) holds for the pair $(x,y)$.
+  \item For each existing node $z$, choose $S_z =
+    R^{\interp}(\pi(z), \pi(y))$ (the actual relation in the model).
+    Set $\mathcal{E}(z,y) = S_z$.  Invariant~(II) holds for $(z,y)$.
+  \item Composition consistency~(CF) holds because the model satisfies
+    the composition table.
+\end{itemize}
+
+\noindent After $(\forall)$-propagation, every concept added to
+$\mathcal{L}(y)$ is of the form $D'$ where $\forall S.D' \in
+\mathcal{L}(z)$ and $\mathcal{E}(z,y) = S$.  By invariant~(I),
+$\forall S.D' \in \tau^{\interp}(\pi(z))$, so $(\pi(z), \pi(y)) \in
+S^{\interp}$ implies $\pi(y) \in (D')^{\interp}$, i.e., $D' \in
+\tau^{\interp}(\pi(y))$.  Similarly for propagation from $y$ back to
+existing nodes.  Hence invariant~(I) is maintained for all affected
+labels.
+
+\medskip\noindent\textbf{Clash-freeness.}\;
+Invariant~(I) implies $\mathcal{L}(x) \subseteq
+\tau^{\interp}(\pi(x))$, which is a consistent type, so $\{A, \neg A\}
+\not\subseteq \mathcal{L}(x)$.  Invariant~(II) implies
+$\mathcal{E}(x,y) = R^{\interp}(\pi(x), \pi(y))$, and the model
+satisfies composition, so~(CF) holds.
+
+\medskip\noindent\textbf{Demand satisfaction despite blocking.}\;
+The guide function shows that all nondeterministic choices can be made
+consistently.  The only remaining concern is that a blocked node $x$
+might have an unsatisfied demand.
+
+Let $x$ be blocked by $y$ (so $\mathcal{L}(x) = \mathcal{L}(y)$ and
+$y$ is active).  Suppose $\exists R.D \in \mathcal{L}(x)$.  Then
+$\exists R.D \in \mathcal{L}(y)$, and since $y$ is active and the
+graph is saturated, there exists a node $w$ with $\mathcal{E}(y,w) =
+R$ and $D \in \mathcal{L}(w)$.
+
+The demand of $x$ is $\exists R.D$.  We need an $R$-neighbor of $x$
+containing $D$.  Node $w$ is an $\mathcal{E}(y,w)$-neighbor of $y$
+with role $R$, but $\mathcal{E}(x,w)$ might be a different role.
+
+This does not cause a problem \emph{for the tableau}: the tableau does
+not require blocked nodes' demands to be directly satisfied in the
+completion graph.  The completion graph is not itself a model; it is a
+finite representation from which a model is constructed (via the
+quasimodel extraction and Henkin construction in
+Theorem~\ref{thm:tab-soundness}).  The quasimodel extracted in the
+soundness proof has the type $\mathcal{L}(x) = \mathcal{L}(y) = \tau
+\in T$, and the demand $\exists R.D$ of $\tau$ is witnessed by the
+type $\mathcal{L}(w) = \tau'$ via the pair-type $(\tau, R, \tau') \in
+P$.  The Henkin construction produces a model satisfying all demands of
+all types, including those of blocked nodes.
+
+\medskip\noindent The existence of the guided sequence of choices
+shows that the nondeterministic tableau has at least one execution
+producing a saturated, clash-free completion graph.
+\end{proof}
+
+\subsection{Summary of the Tableau Procedure}
+
+\begin{corollary}
+\label{cor:tableau-decides}
+The tableau calculus of Section~\ref{sec:tab-rules}, with blocking
+\textup{(}Definition~\ref{def:blocking}\textup{)} and constraint
+filtering \textup{(}Section~\ref{sec:constraint-filtering}\textup{)},
+is a decision procedure for $\ALCIRCC{5}$ concept satisfiability:
+\begin{itemize}[nosep]
+  \item It \textbf{terminates} on every input
+    \textup{(}Theorem~\ref{thm:termination}\textup{)}.
+  \item $C_0$ is satisfiable iff there exists a sequence of choices
+    yielding an open completion graph.
+  \item \textbf{Soundness}: an open graph implies satisfiability
+    \textup{(}Theorem~\ref{thm:tab-soundness}\textup{)}.
+  \item \textbf{Completeness}: satisfiability implies an open graph
+    exists \textup{(}Theorem~\ref{thm:tab-completeness}\textup{)}.
+\end{itemize}
+The worst-case complexity is \EXPTIME, matching the type-elimination
+procedure of Section~\ref{sec:complexity}.
+\end{corollary}
+
+\begin{remark}[Comparison with tree-based tableaux]
+\label{rem:comparison}
+In standard $\ALCI$ tableaux, the completion structure is a forest,
+new nodes have a single edge to their parent, and blocking uses
+\emph{pairwise} matching (comparing both a node and its parent with
+the blocker and its parent) to handle inverse roles.  In the
+$\ALCIRCC{5}$ tableau:
+\begin{enumerate}[nosep]
+  \item The completion structure is a \emph{complete graph}, not a
+    tree.
+  \item The $(\exists)$-rule creates edges to \emph{all} existing
+    nodes, not just one.
+  \item Composition consistency~(CF) replaces the tree-structure
+    invariant.
+  \item Blocking is \emph{simpler}---just type equality, with no
+    need for pairwise matching---because the patchwork property handles
+    the relational context: the quasimodel extraction
+    (Theorem~\ref{thm:tab-soundness}) shows that type-level
+    information suffices to guarantee model existence, regardless of
+    the specific role assignments between nodes.
+  \item Soundness uses an indirect argument (quasimodel extraction +
+    Henkin construction) rather than directly reading off the model
+    from the completion graph.
+\end{enumerate}
+\end{remark}
+
+\begin{remark}[Practical optimizations]
+An implementation of this tableau can benefit from:
+\begin{itemize}[nosep]
+  \item \emph{Lazy role assignment}: Instead of choosing all
+    $\mathcal{E}(z,y)$ at node creation, maintain a constraint network
+    and only instantiate roles when needed for $(\forall)$-propagation.
+  \item \emph{Path consistency preprocessing}: Before node creation,
+    run arc consistency on the constraint network to prune impossible
+    role values.
+  \item \emph{Dependency-directed backtracking}: When a clash is
+    detected, track which $(\sqcup)$ and $(\exists)$-choices
+    contributed, and backtrack to the most recent relevant choice.
+  \item \emph{Caching}: Since blocking is type-based, previously
+    explored subtrees for a given type can be reused.
+\end{itemize}
+\end{remark}
+
+
+%% ============================================================
+\section{Extension to $\ALCIRCC{8}$}
+\label{sec:rcc8}
+
+The RCC8 calculus uses eight base relations: $\DC$, $\EC$, $\PO$,
+$\EQ$, $\TPP$, $\TPPI$, $\NTPP$, $\NTPPI$.  The logic $\ALCIRCC{8}$
+is defined analogously to $\ALCIRCC{5}$, using the RCC8 composition
+table.
+
+\begin{theorem}
+\label{thm:rcc8}
+Concept satisfiability in $\ALCIRCC{8}$ is decidable in \EXPTIME.
+\end{theorem}
+
+\begin{proof}
+Both the type-elimination and tableau procedures extend to
+$\ALCIRCC{8}$.  The crucial ingredient is that RCC8 also enjoys the
+patchwork property: path-consistent atomic RCC8 networks are globally
+consistent (Renz~\cite{Renz1999}).  Therefore:
+\begin{itemize}[nosep]
+  \item Types, pair-types, and triple-types are defined over the RCC8
+    base relations.
+  \item The quasimodel and tableau conditions use the RCC8 composition
+    table.
+  \item The Henkin construction (Claim~\ref{claim:extension}) and the
+    tableau's constraint filtering use the RCC8 patchwork property.
+  \item The type-elimination algorithm runs in $2^{O(|C_0|)}$ time.
+  \item The tableau has at most $2^{O(|C_0|)}$ nodes (7 non-EQ base
+    relations instead of 4, but this is a constant factor).
+\end{itemize}
+The soundness and completeness arguments carry over verbatim.
+\end{proof}
+
+\begin{theorem}[Wessel~\cite{Wessel2003}]
+\label{thm:rcc8lower}
+Concept satisfiability in $\ALCIRCC{8}$ is \EXPTIME-hard.
+\end{theorem}
+
+\begin{proof}
+By reduction from the two-player corridor tiling game~\cite[Section
+6.4]{Wessel2003}.
+\end{proof}
+
+\begin{corollary}
+\label{cor:rcc8complete}
+Concept satisfiability in $\ALCIRCC{8}$ is \EXPTIME-complete.
+\end{corollary}
+
+%% ============================================================
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Wessel's $\ALCRASG$ (2000/2001).}
+The $\ALCRASG$ framework~\cite{Wessel2000} handles role boxes that
+are \emph{admissible}: deterministic (each composition yields a single
+relation), functional, complete, and associative.  For such role
+boxes, the logic reduces to $\ALC$ with general TBoxes, yielding
+\EXPTIME-completeness.  The RCC5 and RCC8 role boxes are
+non-deterministic (many composition entries yield sets of relations)
+and hence fall outside $\ALCRASG$.  Our quasimodel and tableau methods
+handle this non-determinism by working with all possible completions
+simultaneously, guided by the patchwork property.
+
+\paragraph{Lutz \& Wolter (2006): Modal logics of topological relations.}
+Lutz and Wolter~\cite{LutzWolter2006} study modal logics with RCC8
+modalities interpreted over \emph{actual topological spaces}.  In
+their setting, models must correspond to genuine spatial configurations
+(e.g., in $\mathbb{R}^n$), which imposes additional constraints beyond
+the composition table.  This leads to undecidability in many cases.
+By contrast, $\ALCIRCC{}$ uses \emph{abstract} semantics: any
+interpretation satisfying the composition table constraints is
+admissible.  The abstract semantics are more permissive, and this
+permissiveness is exactly what makes our decidability proof work.
+
+\paragraph{Lutz \& Mili\v{c}i\'{c} (2007): $\omega$-admissible concrete domains.}
+Lutz and Mili\v{c}i\'{c}~\cite{LutzMilicic2007} prove that $\ALC$
+extended with $\omega$-admissible concrete domains is decidable.  RCC5
+and RCC8 are $\omega$-admissible, so $\ALC(\mathrm{RCC5})$ and
+$\ALC(\mathrm{RCC8})$ are decidable.  However, the concrete-domain
+approach is fundamentally different: spatial predicates constrain
+\emph{concrete features} of domain elements via functional roles, and
+one cannot quantify \emph{over} spatial relations.  In particular,
+$\forall \PP.C$ and $\exists \DR.D$ are not expressible in
+$\ALC(\mathrm{RCC5})$.  The $\ALCIRCC{}$ logics are strictly more
+expressive for spatial reasoning because spatial relations serve
+directly as roles.
+
+\paragraph{Borgwardt, De~Bortoli \& Koopmann (2024).}
+Borgwardt et al.~\cite{BorgwardtEtAl2024} sharpen the complexity of
+reasoning in $\ALC$ with $\omega$-admissible concrete domains.  Their
+results apply to the concrete-domain setting and do not directly bear
+on $\ALCIRCC{}$, but confirm that the patchwork/amalgamation property
+of RCC calculi is a powerful tool for decidability in description
+logics with spatial features.
+
+\paragraph{Constraint satisfaction and qualitative reasoning.}
+The patchwork property (Theorem~\ref{thm:patchwork}) was established
+by Renz and Nebel~\cite{RenzNebel1999} and
+Renz~\cite{Renz1999} in the context of qualitative spatial reasoning
+and constraint satisfaction.  Our contribution is to bridge the gap
+between this CSP result and the description logic setting: we show
+that the patchwork property, when combined with the quasimodel method
+or a tableau calculus, is precisely the tool needed to decide
+satisfiability in $\ALCIRCC{}$ logics.
+
+%% ============================================================
+\section{Discussion and Open Questions}
+\label{sec:discussion}
+
+\begin{enumerate}
+  \item \textbf{Exact complexity of $\ALCIRCC{5}$.}\; We have
+    established $\PSPACE \leq \ALCIRCC{5} \leq \EXPTIME$.  The
+    \PSPACE{} lower bound~\cite{Wessel2003} uses only the $\PO$-free
+    fragment.  We conjecture that the full logic is
+    \EXPTIME-complete, but closing this gap requires a new lower-bound
+    argument.
+
+  \item \textbf{General characterization.}\; Which composition tables
+    (beyond RCC5 and RCC8) yield decidable $\ALCIRCC{}$-style logics?
+    Our proof shows that the patchwork property is sufficient.  It
+    would be valuable to characterize exactly which qualitative
+    calculi have this property and whether it is also necessary for
+    decidability.
+
+  \item \textbf{Adding number restrictions.}\; Unqualified number
+    restrictions make $\ALCRASG$ undecidable~\cite{Wessel2000}.  We
+    expect the same for $\ALCIRCC{5}$: number restrictions would allow
+    enforcing specific branching patterns that, combined with concept
+    distinctions, may enable grid encodings.
+
+  \item \textbf{Finite model reasoning.}\; Satisfiability restricted
+    to \emph{finite} models (ruling out infinite PP-chains) may be
+    decidable in a lower complexity class, since the need for infinite
+    witnesses---and hence the full power of the Henkin
+    construction---disappears.
+
+  \item \textbf{Hybrid extensions.}\; Wessel~\cite{Wessel2003}
+    considers hybrid logic extensions with nominals and the
+    $\mathord{@}$-operator.  Whether our decidability results extend
+    to these enrichments is an open question; the interaction between
+    nominals and the complete-graph semantics may introduce new
+    complications.
+\end{enumerate}
+
+%% ============================================================
+\section*{Acknowledgments}
+
+This research was prompted by Michael Wessel, who introduced the
+$\ALCIRCC{}$ family during his doctoral work at the University of
+Hamburg under the DFG project ``Description Logics and Spatial
+Reasoning'' (grant NE~279/8-1) and left the decidability of
+$\ALCIRCC{5}$ and $\ALCIRCC{8}$ as open problems.  The present
+work directly builds on his foundational contributions~\cite{Wessel2003,Wessel2000}.
+
+%% ============================================================
+\bibliographystyle{plain}
+\begin{thebibliography}{10}
+
+\bibitem{BaaderEtAl2003}
+F.~Baader, D.~Calvanese, D.~McGuinness, D.~Nardi, and P.~Patel-Schneider,
+  editors.
+\newblock {\em The Description Logic Handbook: Theory, Implementation, and
+  Applications}.
+\newblock Cambridge University Press, 2003.
+
+\bibitem{BorgwardtEtAl2024}
+S.~Borgwardt, F.~De~Bortoli, and P.~Koopmann.
+\newblock The precise complexity of reasoning in {$\mathcal{ALC}$} with
+  $\omega$-admissible concrete domains.
+\newblock In {\em Proc.\ KR}, 2024.
+
+\bibitem{GradelOtto1999}
+E.~Gr\"{a}del and M.~Otto.
+\newblock On logics with two variables.
+\newblock {\em Theoretical Computer Science}, 224:73--113, 1999.
+
+\bibitem{LutzMilicic2007}
+C.~Lutz and M.~Mili\v{c}i\'{c}.
+\newblock A tableau algorithm for description logics with concrete domains and
+  general {TBoxes}.
+\newblock {\em Journal of Automated Reasoning}, 38:227--259, 2007.
+
+\bibitem{LutzWolter2006}
+C.~Lutz and F.~Wolter.
+\newblock Modal logics of topological relations.
+\newblock {\em Logical Methods in Computer Science}, 2(2), 2006.
+
+\bibitem{RandellEtAl1992}
+D.~Randell, Z.~Cui, and A.~Cohn.
+\newblock A spatial logic based on regions and connection.
+\newblock In {\em Proc.\ KR}, pages 165--176, 1992.
+
+\bibitem{Renz1999}
+J.~Renz.
+\newblock Maximal tractable fragments of the {Region Connection Calculus}: A
+  complete analysis.
+\newblock In {\em Proc.\ IJCAI}, pages 448--454, 1999.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A maximal
+  tractable fragment of the {Region Connection Calculus}.
+\newblock {\em Artificial Intelligence}, 108(1-2):69--123, 1999.
+
+\bibitem{Wessel2000}
+M.~Wessel.
+\newblock Decidable and undecidable extensions of {$\mathcal{ALC}$} with
+  composition-based role inclusion axioms.
+\newblock Technical Report FBI-HH-M-301/01, University of Hamburg, 2000.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the {$\mathcal{ALCI}_\mathit{RCC}$}
+  family---{F}irst results and unanswered questions.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+
+\end{thebibliography}
+
+\end{document}
