@@ -2,6 +2,8 @@
 
 **Quasimodels Meet the Patchwork Property**
 
+> **Disclaimer.** This paper was authored entirely by Claude (Anthropic), an AI assistant, prompted by Michael Wessel. The results and proofs presented here have **not been peer-reviewed or verified by human domain experts**. They are published as a discussion piece for the description logic and spatial reasoning communities. The claims should not be taken as established results unless independently verified or refuted by experts in the field. We invite scrutiny, corrections, and feedback.
+
 This repository contains a proof that concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8 is **decidable**, settling open problems from Wessel (2002/2003).
 
 - **ALCI\_RCC5**: decidable, between PSPACE and EXPTIME
