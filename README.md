@@ -11,6 +11,8 @@ This repository contains a proof that concept satisfiability in the description 
 
 Two decision procedures are given: a type-elimination algorithm and a tableau calculus with blocking.
 
+**[Read the full paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf)**
+
 ## Background
 
 The ALCI\_RCC family extends the description logic ALCI (ALC with inverse roles) with **role boxes derived from RCC composition tables**. The base relations of RCC5 ({DR, PO, EQ, PP, PPI}) serve as the role names, and interpretations are constrained to be **complete graphs** where every pair of domain elements is related by exactly one base relation, subject to the RCC5 composition table.
@@ -190,9 +192,9 @@ Clash-freeness follows from the model satisfying composition and type consistenc
 
 ## Files
 
-- **`decidability_ALCIRCC5.tex`** -- Full LaTeX paper with both decision procedures (quasimodel method + tableau calculus), soundness/completeness/termination proofs
-- **`decidability_ALCIRCC5.pdf`** -- Compiled paper (16 pages)
-- **`decidability_proof_ALCIRCC5.md`** -- Earlier proof sketch (quasimodel method only)
+- [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Compiled paper (16 pages)
+- [**`decidability_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.tex) -- LaTeX source
+- [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
 
 ## References
 
