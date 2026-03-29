@@ -651,30 +651,40 @@ satisfying $\forall \PP.D$.
 \subsection{Completeness: Quasimodel $\Rightarrow$ Model}
 \label{sec:completeness}
 
-This is the non-trivial direction.
+This is the non-trivial direction.  The proof requires care: the
+constructed model is typically infinite (e.g., when $C_0$ forces
+infinite $\PP$-chains), and we must ensure that edge assignments to
+newly created elements never trigger ``dormant'' universal restrictions
+in a way that introduces concepts not already present in the assigned
+types.  The key insight is that \emph{types are assigned once at
+element creation and never change}; pair-compatibility
+(Definition~\ref{def:compat}) pre-accounts for all universal
+restriction propagations.
 
 \begin{proof}[Proof of completeness]
 Let $\mathcal{Q} = (T, P, \tau_0)$ be a quasimodel for $C_0$.  We
 construct a model $\interp = (\DeltaI, \cdot^{\interp})$ via a
-\emph{Henkin-style step-by-step construction}.
+\emph{Henkin-style step-by-step construction} and then prove that the
+resulting limit structure is a valid $\ALCIRCC{5}$ model of $C_0$.
+
+\subsubsection*{The construction}
 
 \medskip\noindent\textbf{Stage 0.}\;
 Create a single element $e_1$ with type $\tau(e_1) := \tau_0$.
-Set $\Delta_0 = \{e_1\}$.
+Set $\Delta_0 = \{e_1\}$.  Define concept name interpretations:
+$A^{\interp}$ will contain exactly those elements $e$ with $A \in
+\tau(e)$.
 
 \medskip\noindent\textbf{Stage $n+1$.}\;
 Let $\Delta_n = \{e_1, \ldots, e_m\}$ with types $\tau(e_i)$ and
 roles $R(e_i, e_j) \in \NR$ assigned for all $i \neq j$ (with
-$R(e_i, e_i) = \EQ$).  Assume inductively:
-\begin{enumerate}[label=(\roman*),nosep]
-  \item $(\tau(e_i), R(e_i, e_j), \tau(e_j)) \in P$ for all $i \neq j$.
-  \item Every triple $(e_i, e_j, e_k)$ satisfies the composition
-    table.
-\end{enumerate}
+$R(e_i, e_i) = \EQ$).
 
 Enumerate all unsatisfied demands: pairs $(e_k, \exists R.D)$ where
 $\exists R.D \in \tau(e_k)$ but no element in $\Delta_n$ serves as a
-witness.  Consider the next unsatisfied demand $(e_k, \exists R.D)$.
+witness (i.e., no $e_j$ with $R(e_k, e_j) = R$ and $D \in
+\tau(e_j)$).  Consider the next unsatisfied demand $(e_k, \exists
+R.D)$.
 
 By condition (Q1) of the quasimodel, there exists a witness type
 $\tau' \in T$ with $D \in \tau'$ and $(\tau(e_k), R, \tau') \in P$.
@@ -706,8 +716,10 @@ network $N$ on the variables $\{e_1, \ldots, e_m, e_{m+1}\}$:
     consistent network).
   \item For $i \leq m$: $N(e_i, e_{m+1}) = S_i$ (to be determined),
     with $S_k = R$ fixed.
-  \item The domain of $S_i$ is $\{S \in \NR \setminus \{\EQ\} \mid
-    (\tau(e_i), S, \tau') \in P\}$.
+  \item The domain of $S_i$ is restricted to
+    $\{S \in \NR \setminus \{\EQ\} \mid
+    (\tau(e_i), S, \tau') \in P\}$
+    --- that is, only roles that form a valid pair-type with $\tau'$.
 \end{itemize}
 
 The constraints on the $S_i$ are: for all $i \neq j$ with $i,j \leq m$,
@@ -720,64 +732,283 @@ Additionally, the triple $(\tau(e_i), R(e_i, e_j), \tau(e_j), S_i,
 \tau', S_j)$ must be in $\Trip(C_0)$.
 
 Now, condition~(Q1.b) of the quasimodel guarantees that for every
-\emph{pair} $(e_i, e_j)$, there \emph{exist} values $S_i, S_j$ satisfying
-these constraints.  In other words, every pairwise sub-network
-$\{e_i, e_j, e_{m+1}\}$ is path-consistent.
+\emph{pair} $(e_i, e_j)$, there \emph{exist} values $S_i^{(j)},
+S_j^{(i)}$ satisfying these constraints.  Note the superscripts: the
+value of $S_i$ may differ depending on which $e_j$ is the third node.
+We need a \emph{single} $S_i$ for each~$i$.
 
-We need these pairwise-consistent choices to extend to a
-\emph{globally} consistent assignment.  This is precisely the content
-of the \textbf{patchwork property}
-(Corollary~\ref{cor:patchwork}).
+The constraint network $N$ restricted to any triple $\{e_i, e_j,
+e_{m+1}\}$ is consistent (by the pairwise argument above), so the
+full network $N$ is path-consistent.  By the \textbf{patchwork
+property} (Theorem~\ref{thm:patchwork}), a path-consistent atomic
+RCC5 network is globally consistent.  Therefore, a simultaneous
+assignment $S_1, \ldots, S_m$ satisfying all constraints exists.
 
-More explicitly: the constraint network $N$ restricted to any triple
-$\{e_i, e_j, e_{m+1}\}$ is consistent (by the pairwise argument
-above), so the full network $N$ is path-consistent.  By
-Theorem~\ref{thm:patchwork}, a path-consistent atomic RCC5 network is
-globally consistent.  Therefore, a simultaneous assignment $S_1,
-\ldots, S_m$ satisfying all constraints exists.
+Crucially, each $S_i$ in this global solution lies in the domain
+$\{S \mid (\tau(e_i), S, \tau') \in P\}$, because this domain
+restriction is part of the constraint network.  Hence condition~(a)
+holds, and all pair-types are in~$P$.
 \end{proof}
 
 Set $R(e_i, e_{m+1}) := S_i$ and $R(e_{m+1}, e_i) := \inv(S_i)$
 for all $i$.  This extends the interpretation to $\Delta_{n+1} =
-\Delta_n \cup \{e_{m+1}\}$ while maintaining the inductive
-invariants~(i) and~(ii).
+\Delta_n \cup \{e_{m+1}\}$.
 
 \medskip\noindent\textbf{The limit model.}\;
-Using a fair enumeration of demands (e.g., dovetailing), define the
-limit interpretation:
+Using a fair enumeration of demands (e.g., dovetailing), define:
 \[
   \interp = \bigcup_{n \geq 0} (\Delta_n, \cdot^{\interp}_n).
 \]
-This is a valid $\ALCIRCC{5}$ interpretation:
+
+\subsubsection*{The model invariant}
+
+We now prove that the construction maintains the following invariant at
+every stage, and that the limit model is a valid $\ALCIRCC{5}$
+interpretation satisfying~$C_0$.
+
+\begin{lemma}[Construction invariant]
+\label{lem:invariant}
+At every stage $n \geq 0$, the partial model $(\Delta_n,
+\cdot^{\interp}_n)$ satisfies:
+\begin{enumerate}[label=\textup{(I\arabic*)},nosep]
+  \item \label{inv:type} \textbf{Type membership.}\; For every $e \in
+    \Delta_n$: $\tau(e) \in T$.
+  \item \label{inv:pair} \textbf{Pair-type membership.}\; For every
+    distinct $e_i, e_j \in \Delta_n$: $(\tau(e_i), R(e_i, e_j),
+    \tau(e_j)) \in P$.
+  \item \label{inv:comp} \textbf{Composition consistency.}\; For every
+    triple of distinct elements $(e_i, e_j, e_k) \in \Delta_n$:
+    $R(e_i, e_k) \in \comp(R(e_i, e_j), R(e_j, e_k))$.
+  \item \label{inv:static} \textbf{Type permanence.}\; The type
+    $\tau(e)$ is assigned at the stage when $e$ is created and is
+    never subsequently modified.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+By induction on~$n$.
+
+\smallskip\noindent\textbf{Base case} ($n = 0$): $\Delta_0 =
+\{e_1\}$ with $\tau(e_1) = \tau_0 \in T$.  No pairs or triples
+exist, so \ref{inv:pair}--\ref{inv:comp} hold vacuously.
+\ref{inv:static} holds trivially.
+
+\smallskip\noindent\textbf{Inductive step} ($n \to n+1$): Assume
+\ref{inv:type}--\ref{inv:static} hold for $\Delta_n = \{e_1, \ldots,
+e_m\}$.  We add $e_{m+1}$ with type $\tau' \in T$
+(\ref{inv:type} maintained) and role assignments $S_1, \ldots, S_m$
+from Claim~\ref{claim:extension}.
+
+For \ref{inv:pair}: Claim~\ref{claim:extension}(a) gives
+$(\tau(e_i), S_i, \tau') \in P$ for all $i$.  By converse and $P
+\subseteq \Pair(C_0)$, $(\tau', \inv(S_i), \tau(e_i)) \in P$.
+Existing pairs are unchanged.
+
+For \ref{inv:comp}: Claim~\ref{claim:extension}(b) gives composition
+consistency for all new triples involving $e_{m+1}$.  Existing triples
+are unchanged.
+
+For \ref{inv:static}: the type of $e_{m+1}$ is set to $\tau'$ and
+never revisited; no existing type is modified.
+\end{proof}
+
+\subsubsection*{Why dormant universal restrictions cannot fire}
+
+A central concern is whether the edge assignments at stage $n+1$ can
+activate universal restrictions in existing elements, adding concepts
+to their types and potentially causing clashes.  The following lemma
+shows this cannot happen: pair-type membership~\ref{inv:pair}
+\emph{pre-accounts} for all universal restriction propagations.
+
+\begin{lemma}[No dormant activation]
+\label{lem:dormant}
+Let $e_i \in \Delta_n$ with $\forall S.D \in \tau(e_i)$, and let
+$e_{m+1}$ be the element added at stage $n+1$ with type $\tau'$ and
+edge $R(e_i, e_{m+1}) = S_i$.  Then:
+\begin{enumerate}[label=\textup{(\alph*)},nosep]
+  \item If $S_i = S$ \textup{(}the restriction matches the new
+    edge\textup{)}, then $D \in \tau'$.  No concept needs to be
+    ``propagated'' --- it is already in the type.
+  \item If $S_i \neq S$, the restriction $\forall S.D$ does not apply
+    to this edge.
+\end{enumerate}
+Symmetrically, if $\forall \inv(S_i).D \in \tau'$, then $D \in
+\tau(e_i)$ --- but $\tau(e_i)$ was assigned at an earlier stage and
+already contains~$D$.
+\end{lemma}
+
+\begin{proof}
+For part~(a): by \ref{inv:pair}, $(\tau(e_i), S_i, \tau') \in P
+\subseteq \Pair(C_0)$.  Since $S_i = S$, the $R$-compatibility
+condition~(P1) in Definition~\ref{def:compat} requires: if $\forall
+S.D \in \tau(e_i)$, then $D \in \tau'$.  So $D$ is already present
+in~$\tau'$ at the moment of creation.
+
+For part~(b): trivial, as $\forall S.D$ constrains only $S$-neighbors.
+
+For the symmetric case: $R$-compatibility condition~(P2) requires that
+if $\forall \inv(S_i).D \in \tau'$ and $(\tau(e_i), S_i, \tau') \in
+P$, then $D \in \tau(e_i)$.  By \ref{inv:static}, $\tau(e_i)$ was
+fixed at creation and already contains~$D$.
+\end{proof}
+
+\begin{remark}[Composition cannot force unexpected propagation]
+\label{rem:composition-force}
+One might worry that composition constraints could force an edge value
+that triggers an unaccounted-for universal restriction.  For instance:
+$R(e_a, e_b) = U$ and $R(e_b, e_{m+1}) = S_b$ might force $R(e_a,
+e_{m+1}) = S_a$ where $S_a$ is the unique element of $\comp(U, S_b)$.
+If $\forall S_a.D \in \tau(e_a)$ and $D \notin \tau'$, we would have
+a problem.
+
+This cannot happen.  The role $S_a$ was chosen from the domain $\{S
+\mid (\tau(e_a), S, \tau') \in P\}$ by Claim~\ref{claim:extension}.
+The patchwork property guarantees that a global assignment
+exists within these domains while satisfying all composition
+constraints.  Every role $S_a$ in the solution satisfies $(\tau(e_a),
+S_a, \tau') \in P$, which by $R$-compatibility implies $D \in \tau'$
+whenever $\forall S_a.D \in \tau(e_a)$.  The composition constraints
+and the pair-compatibility constraints are solved \emph{jointly}; the
+patchwork property ensures a simultaneous solution exists.
+\end{remark}
+
+\subsubsection*{Concept truth in the limit model}
+
+We now prove that types faithfully determine concept truth.
+
+\begin{lemma}[Concept truth]
+\label{lem:truth}
+In the limit model $\interp = \bigcup_{n} (\Delta_n,
+\cdot^{\interp}_n)$, for every $e \in \DeltaI$ and every $D \in
+\cl(C_0)$:
+\[
+  D \in \tau(e) \;\implies\; e \in D^{\interp}.
+\]
+\end{lemma}
+
+\begin{proof}
+By structural induction on~$D$.
+
+\smallskip\noindent\textbf{Case $D = A$ (concept name):}\;
+By construction, $A^{\interp} = \{e \in \DeltaI \mid A \in \tau(e)\}$.
+If $A \in \tau(e)$, then $e \in A^{\interp}$.
+
+\smallskip\noindent\textbf{Case $D = \neg A$:}\;
+If $\neg A \in \tau(e)$, then $A \notin \tau(e)$ (by type condition
+(T3): a type cannot contain both $A$ and $\neg A$).  So $e \notin
+A^{\interp}$, hence $e \in (\neg A)^{\interp}$.
+
+\smallskip\noindent\textbf{Case $D = D_1 \sqcap D_2$:}\;
+If $D_1 \sqcap D_2 \in \tau(e)$, then $D_1 \in \tau(e)$ and $D_2 \in
+\tau(e)$ by type condition~(T1).  By induction, $e \in
+D_1^{\interp}$ and $e \in D_2^{\interp}$, so $e \in (D_1 \sqcap
+D_2)^{\interp}$.
+
+\smallskip\noindent\textbf{Case $D = D_1 \sqcup D_2$:}\;
+If $D_1 \sqcup D_2 \in \tau(e)$, then $D_1 \in \tau(e)$ or $D_2 \in
+\tau(e)$ by type condition~(T2).  By induction, $e \in
+D_1^{\interp}$ or $e \in D_2^{\interp}$, so $e \in (D_1 \sqcup
+D_2)^{\interp}$.
+
+\smallskip\noindent\textbf{Case $D = \forall R.E$:}\;
+Suppose $\forall R.E \in \tau(e)$ and $(e, e') \in R^{\interp}$
+(i.e., $R(e, e') = R$ for some $e' \in \DeltaI$).  By
+invariant~\ref{inv:pair}, $(\tau(e), R, \tau(e')) \in P$.  By
+$R$-compatibility~(P1), $E \in \tau(e')$.  By induction hypothesis,
+$e' \in E^{\interp}$.
+
+Since this holds for \emph{every} $R$-neighbor $e'$, we have $e \in
+(\forall R.E)^{\interp}$.
+
+\emph{This is the step where dormant restrictions are handled.}  At
+the stage when $e'$ is created, the edge $R(e, e')$ triggers the
+universal restriction $\forall R.E \in \tau(e)$.  But
+Lemma~\ref{lem:dormant} guarantees $E \in \tau(e')$ --- the concept
+was placed in $\tau(e')$ at creation, not propagated after the fact.
+No concept is added to $\tau(e)$ or $\tau(e')$ at any later stage.
+
+\smallskip\noindent\textbf{Case $D = \exists R.E$:}\;
+Suppose $\exists R.E \in \tau(e)$.  By the Henkin construction with
+fair enumeration, there eventually exists a stage~$n$ at which the
+demand $(e, \exists R.E)$ is processed: a new element $e'$ is created
+with $\tau(e') = \tau'$ where $E \in \tau'$ and $R(e, e') = R$.  By
+induction hypothesis, $e' \in E^{\interp}$.  Hence $e \in (\exists
+R.E)^{\interp}$.
+\end{proof}
+
+\subsubsection*{The role of monotonicity along PP-chains}
+
+The model constructed above may contain infinite $\PP$-chains (e.g.,
+when $(\exists \PP.\top) \sqcap (\forall \PP.\exists \PP.\top) \in
+\tau_0$).  The monotonicity lemmas (Section~\ref{sec:monotonicity})
+explain why the finite quasimodel faithfully represents these infinite
+structures.
+
+Consider an infinite $\PP$-chain $e_0, e_1, e_2, \ldots$ in the
+limit model (with $R(e_i, e_{i+1}) = \PP$ for all~$i$) and an
+external element $x$.  By Lemma~\ref{lem:upward}, the relation $R(x,
+e_i)$ follows a monotone progression:
+\[
+  \DR \;\to\; \DR, \PO, \PP; \quad
+  \PO \;\to\; \PO, \PP; \quad
+  \PP \;\to\; \PP; \quad
+  \PPI \;\to\; \PO, \EQ, \PP, \PPI.
+\]
+After at most 3 transitions (e.g., $\DR \to \PO \to \PP$), the
+relation \emph{stabilizes}: once $R(x, e_k) = \PP$ for some~$k$,
+$R(x, e_i) = \PP$ for all $i \geq k$.  By Lemma~\ref{lem:downward},
+$\DR$ and $\PPI$ are downward persistent: once $R(x, e_k) = \DR$,
+$R(x, e_i) = \DR$ for all $i \leq k$.
+
+This has three consequences for the Henkin construction:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Bounded type variation.}\; Along the chain, only
+    finitely many distinct pair-types $(\tau(x), S, \tau(e_i))$ arise
+    (since the relation $S = R(x, e_i)$ takes at most $|\NR
+    \setminus \{\EQ\}| = 4$ values and stabilizes).  All such
+    pair-types are in~$P$.
+
+  \item \textbf{Uniform universal propagation.}\; Once $R(x, e_i)$
+    stabilizes to some role~$S$, the same set of concepts $\{E \mid
+    \forall S.E \in \tau(x)\}$ applies to all subsequent chain
+    elements.  No \emph{new} concept enters any $\tau(e_i)$ from $x$'s
+    perspective beyond the stabilization point.
+
+  \item \textbf{Finite representability.}\; The types $\tau(e_i)$
+    along the chain are drawn from~$T$ (finitely many).  The
+    monotonicity ensures that the ``relational profile'' of the chain
+    (the mapping from external elements to sequences of pair-types)
+    eventually becomes periodic.  The quasimodel captures all relevant
+    type/pair-type/triple-type information, so the infinite chain is
+    fully determined by its finite abstraction.
+\end{enumerate}
+
+Without monotonicity, the relations along a $\PP$-chain could
+potentially oscillate (e.g., $\DR \to \PO \to \DR \to \PO \to
+\cdots$), generating an unbounded variety of pair-type configurations.
+The monotonicity lemmas rule this out: the progression is
+one-directional, ensuring that the finite quasimodel is a faithful
+representation of the infinite model.
+
+\subsubsection*{Verification of model properties}
+
+The limit model $\interp = \bigcup_{n \geq 0} (\Delta_n,
+\cdot^{\interp}_n)$ is a valid $\ALCIRCC{5}$ interpretation:
 \begin{itemize}[nosep]
-  \item \emph{One cluster:} every pair of elements created in the
-    construction has a role assigned.
-  \item \emph{JEPD:} each pair has exactly one base relation (by
-    construction).
+  \item \emph{One cluster:} every pair of elements has a role
+    assigned (by construction, each new element receives edges to all
+    existing elements).
+  \item \emph{JEPD:} each pair has exactly one base relation (roles
+    are assigned uniquely and permanently).
   \item \emph{Composition:} every triple satisfies the composition
-    table (maintained at each stage by the claim).
+    table (invariant~\ref{inv:comp}, maintained at each stage).
   \item \emph{Converse:} maintained by setting $R(e_{m+1}, e_i) =
     \inv(S_i)$.
-  \item \emph{Strong EQ:} $R(e_i, e_i) = \EQ$ for all $i$, and no
-    distinct pair has $\EQ$.
-  \item \emph{Concept truth:} for each type $\tau$, every element
-    $e$ with $\tau(e) = \tau$ satisfies exactly the concept
-    descriptions in $\tau$.  Since $C_0 \in \tau_0 = \tau(e_1)$, we
-    have $e_1 \in C_0^{\interp}$.
-\end{itemize}
-
-\noindent
-More precisely, concept truth is established by induction on concept
-structure:
-\begin{itemize}[nosep]
-  \item Concept names and negations: by the type conditions (T1)--(T3).
-  \item Conjunctions, disjunctions: by (T1), (T2).
-  \item Existential restrictions $\exists R.D$: every demand $\exists
-    R.D \in \tau(e)$ is eventually satisfied by the Henkin
-    construction (fair enumeration).
-  \item Universal restrictions $\forall R.D$: if $\forall R.D \in
-    \tau(e)$ and $(e, e') \in R^{\interp}$, then $D \in \tau(e')$ by
-    the $R$-compatibility condition (P1) in $\Pair(C_0)$.
+  \item \emph{Strong EQ:} $R(e, e) = \EQ$ for all $e$, and no
+    distinct pair has $\EQ$ (since $S_i \in \NR \setminus \{\EQ\}$).
+  \item \emph{Concept truth:} by Lemma~\ref{lem:truth}, $C_0 \in
+    \tau_0 = \tau(e_1)$ implies $e_1 \in C_0^{\interp}$.
 \end{itemize}
 
 \noindent
