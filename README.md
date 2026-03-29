@@ -161,7 +161,75 @@ The quasimodel conditions are verified:
 - **(Q2)** Every pair of types has a role (the graph is complete).
 - **(Q3)** PP-transitivity follows from composition consistency: comp(PP,PP) = {PP}.
 
-By the main theorem (quasimodel <=> satisfiable), C\_0 is satisfiable. The actual (possibly infinite) model is obtained via a Henkin construction using the patchwork property.
+By the main theorem (quasimodel <=> satisfiable), C\_0 is satisfiable. The actual (possibly infinite) model is obtained via a Henkin construction using the patchwork property. The detailed model construction argument is given below.
+
+### Model Construction: Unfolding the Quasimodel
+
+The quasimodel (or blocked completion graph) is a finite structure. The actual model may be infinite (e.g., when infinite PP-chains are required). The Henkin construction builds this infinite model incrementally, one element at a time. The critical concern is: **can edge assignments to newly created elements trigger "dormant" universal restrictions on existing elements, introducing concepts not present in their types and causing clashes?**
+
+The answer is no. The proof relies on three layers of guarantees:
+
+#### Construction Invariant
+
+At every stage n of the Henkin construction, the partial model maintains:
+
+- **(I1) Type membership**: every element e has tau(e) in T.
+- **(I2) Pair-type membership**: for every distinct e\_i, e\_j: (tau(e\_i), R(e\_i,e\_j), tau(e\_j)) in P.
+- **(I3) Composition consistency**: every triple satisfies the composition table.
+- **(I4) Type permanence**: the type tau(e) is assigned at creation and **never subsequently modified**.
+
+**Proof**: By induction on stages. At stage n+1, the new element e\_{m+1} gets type tau' in T (I1). The edge assignments S\_1,...,S\_m from Claim 5.2 satisfy (tau(e\_i), S\_i, tau') in P for all i (I2), and all new triples are composition-consistent (I3). No existing type changes (I4).
+
+#### No Dormant Activation (Lemma 5.4 in the paper)
+
+Let e\_i be an existing element with `forall S.D` in tau(e\_i), and let e\_{m+1} be newly created with type tau' and edge R(e\_i, e\_{m+1}) = S\_i. Then:
+
+- **If S\_i = S** (the restriction matches the new edge): then D is already in tau', guaranteed by R-compatibility (condition P1). The concept was placed in tau' at creation. **No propagation occurs.**
+- **If S\_i != S**: the restriction does not apply. No issue.
+
+Symmetrically: if `forall inv(S\_i).D` is in tau', then D is already in tau(e\_i) by R-compatibility (P2). Since tau(e\_i) was fixed at an earlier stage (I4), D was already there. **No concept is added to any existing type.**
+
+#### Why Composition Cannot Force Unexpected Propagation (Remark 5.5)
+
+One might worry: what if R(e\_a, e\_b) = U and R(e\_b, e\_{m+1}) = T force R(e\_a, e\_{m+1}) = S where S is the unique element of comp(U, T), and `forall S.D` is in tau(e\_a) but D is not in tau'?
+
+This cannot happen. The role S\_a was chosen from the domain {S | (tau(e\_a), S, tau') in P}. The patchwork property guarantees a global assignment exists **within these domains** while satisfying all composition constraints. Every S\_a in the solution satisfies (tau(e\_a), S\_a, tau') in P, which by R-compatibility implies D in tau' whenever `forall S\_a.D` is in tau(e\_a). The composition constraints and pair-compatibility constraints are solved **jointly**.
+
+#### Concept Truth (Lemma 5.6 in the paper)
+
+**Lemma**: In the limit model, for every element e and every D in cl(C\_0): D in tau(e) implies e in D^I.
+
+**Proof by structural induction on D**:
+
+- **D = A** (concept name): A^I = {e | A in tau(e)} by construction.
+- **D = not A**: not A in tau(e) implies A not in tau(e) (clash-freeness), so e not in A^I, hence e in (not A)^I.
+- **D = D1 and D2**: by type condition T1, both D1, D2 in tau(e); by induction, both hold.
+- **D = D1 or D2**: by type condition T2, at least one in tau(e); by induction, at least one holds.
+- **D = forall R.E**: if forall R.E in tau(e) and (e,e') in R^I, then (tau(e), R, tau(e')) in P by (I2). R-compatibility gives E in tau(e'). By induction, e' in E^I. This holds for **every** R-neighbor, so e in (forall R.E)^I. **This is where Lemma 5.4 applies**: E was already in tau(e') at creation, not propagated.
+- **D = exists R.E**: the Henkin construction (fair enumeration) eventually creates a witness e' with R(e,e') = R and E in tau(e'). By induction, e' in E^I.
+
+#### The Role of Monotonicity Along PP-Chains
+
+The model may contain infinite PP-chains: e\_0 PP e\_1 PP e\_2 PP ... For any external element x, Lemma 3.1 (upward monotonicity) constrains the progression of R(x, e\_i):
+
+| R(x, e\_i) | Possible R(x, e\_{i+1}) |
+|---|---|
+| PP | PP (absorbing) |
+| PO | PO, PP (can strengthen, never weaken) |
+| DR | DR, PO, PP (can strengthen, never weaken) |
+| PPI | PO, EQ, PP, PPI (can transition, never to DR) |
+
+After at most 3 transitions (e.g., DR -> PO -> PP), the relation **stabilizes**. By Lemma 3.3 (downward persistence), DR and PPI are **permanent downward**: once R(x, e\_k) = DR, then R(x, e\_i) = DR for all i <= k.
+
+This has three consequences:
+
+1. **Bounded type variation**: along the chain, only finitely many distinct pair-types (tau(x), S, tau(e\_i)) arise (since S takes at most 4 values and stabilizes). All are in P.
+
+2. **Uniform universal propagation**: once R(x, e\_i) stabilizes to S, the same set of concepts {E | forall S.E in tau(x)} applies to all subsequent chain elements. **No new concept** enters any tau(e\_i) from x's perspective beyond stabilization.
+
+3. **Finite representability**: the types along the chain cycle through finitely many values from T. The monotonicity ensures the "relational profile" eventually becomes periodic. The quasimodel captures all relevant information; the infinite chain is fully determined by its finite abstraction.
+
+Without monotonicity, relations could oscillate (e.g., DR -> PO -> DR -> PO -> ...), generating unbounded pair-type variety. The monotonicity lemmas rule this out.
 
 ### Completeness
 
@@ -192,7 +260,7 @@ Clash-freeness follows from the model satisfying composition and type consistenc
 
 ## Files
 
-- [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Compiled paper (16 pages)
+- [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Compiled paper (19 pages)
 - [**`decidability_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.tex) -- LaTeX source
 - [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
 
