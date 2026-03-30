@@ -1734,6 +1734,32 @@ on $\ALCIRCC{}$, but confirm that the patchwork/amalgamation property
 of RCC calculi is a powerful tool for decidability in description
 logics with spatial features.
 
+\paragraph{Baader \& Rydval (2020): Concrete domains revisited.}
+Baader and Rydval~\cite{BaaderRydval2020} strengthened undecidability
+results for description logics with concrete domains and general
+concept inclusions, and generalized the $\omega$-admissibility
+conditions.  Their results refine the boundary between decidable and
+undecidable concrete-domain extensions, but remain within the
+concrete-domain paradigm (functional roles to concrete values) and do
+not address composition-based role boxes.
+
+\paragraph{Demri \& Gu (2026): Constraint automata with inverse roles.}
+Demri and Gu~\cite{DemriGu2026} extend the automata-based approach to
+description logics with concrete domains to handle \emph{inverse
+roles}, functional role names, and constraint assertions, establishing
+\EXPTIME{} membership.  This is the closest published result to
+$\ALCIRCC{}$, as it combines inverse roles with RCC-like spatial
+constraints.  However, it still operates within the concrete-domain
+formalism: spatial predicates constrain concrete features via
+functional roles, and one cannot quantify over spatial relations as
+roles.  In $\ALCIRCC{5}$, concepts like $\forall\PP.C$ and
+$\exists\DR.D$---which use spatial relations directly as
+roles---remain inexpressible in the concrete-domain setting.  The two
+formalisms are thus complementary: the concrete-domain approach is
+well-suited for reasoning about spatial \emph{attributes} of domain
+elements, while the $\ALCIRCC{}$ approach captures direct spatial
+\emph{relationships} between elements.
+
 \paragraph{Constraint satisfaction and qualitative reasoning.}
 The patchwork property (Theorem~\ref{thm:patchwork}) was established
 by Renz and Nebel~\cite{RenzNebel1999} and
@@ -1809,6 +1835,19 @@ S.~Borgwardt, F.~De~Bortoli, and P.~Koopmann.
 \newblock The precise complexity of reasoning in {$\mathcal{ALC}$} with
   $\omega$-admissible concrete domains.
 \newblock In {\em Proc.\ KR}, 2024.
+
+\bibitem{BaaderRydval2020}
+F.~Baader and M.~Rydval.
+\newblock Description logics with concrete domains and general concept
+  inclusions revisited.
+\newblock In {\em Proc.\ IJCAR}, volume 12166 of LNCS, pages 413--431.
+  Springer, 2020.
+
+\bibitem{DemriGu2026}
+S.~Demri and T.~Gu.
+\newblock Robustness of constraint automata for description logics with
+  concrete domains.
+\newblock In {\em Proc.\ CSL}, volume 363 of LIPIcs, 2026.
 
 \bibitem{GradelOtto1999}
 E.~Gr\"{a}del and M.~Otto.
