@@ -341,3 +341,87 @@ The completeness proof (Section 5.2) now includes:
 ### Claude
 
 *[Updated the README.md with the full model construction argument, mirroring the strengthened completeness proof: Construction Invariant (I1)-(I4), No Dormant Activation, composition-cannot-force-unexpected-propagation, Concept Truth lemma, and the role of monotonicity. Pushed to GitHub.]*
+
+---
+
+## Part 10: Concrete Domains vs. Composition-Based Role Boxes
+
+### Michael Wessel
+
+> Can you add a section that works out the differences to ALC with omega-admissible concrete domains from Lutz and Milicic? I want to make the point clear how the expressiveness is different. And push.
+
+### Claude
+
+*[Added Section 9.1 "Concrete Domains vs. Composition-Based Role Boxes" to the paper, expanding the Related Work section. Pushed to GitHub.]*
+
+The new section provides a detailed technical comparison between the concrete-domain approach (ALC(RCC5)) and the composition-based role-box approach (ALCI\_RCC5):
+
+- **Syntactic comparison**: In ALC(RCC5), spatial predicates constrain concrete features via functional roles (e.g., `∃u₁,u₂.PP(u₁,u₂)`). In ALCI\_RCC5, spatial relations ARE roles (`∃PP.C`, `∀DR.D`).
+- **Expressiveness gap**: ALCI\_RCC5 can express concepts inexpressible in ALC(RCC5): "every PP-part satisfies C" (`∀PP.C`), "something DR-disjoint satisfies D" (`∃DR.D`), chains like `∃PP.∃PP.C` (a part-of-a-part).
+- **Semantic difference**: ALC(RCC5) attaches spatial regions as attributes; ALCI\_RCC5 makes domain elements themselves spatial.
+- **Decidability mechanisms**: Both exploit the patchwork/ω-admissibility properties of RCC5, but via different proof architectures.
+
+---
+
+## Part 11: Technical Review and Revision
+
+### Michael Wessel
+
+> I asked OpenAI o3 to review the paper critically. Here is its review report. Can you address the 5 points that are being made? Please be careful — don't just make superficial fixes. Analyze each critique thoroughly and determine whether it is valid. Where it is, fix the proofs properly. Where the critique identifies a genuine gap, acknowledge it honestly rather than papering over it. Work through all 5 issues systematically without asking me further questions.
+
+### Claude
+
+*[Analyzed the review report identifying 5 technical criticisms, then systematically addressed each across three sessions. The revision involved 10 coordinated tasks touching nearly every section of the paper.]*
+
+The review identified these issues and the revision addressed them as follows:
+
+#### Issue 2.1: EQ in syntax but excluded from pair-types
+
+**Valid.** The original pair-type definition excluded EQ but the syntax allowed `∃EQ.C` and `∀EQ.D`, creating a soundness gap.
+
+**Fix:** Added Lemma (EQ normalization) showing that under strong EQ semantics, `∀EQ.D ≡ D` and `∃EQ.D ≡ D`. All concepts are EQ-normalized in linear time before the proof machinery applies. Pair-types and quasimodel conditions then correctly work over `NR \ {EQ}` only.
+
+#### Issue 2.2: Quasimodel condition (Q2) too strong for self-pairs
+
+**Valid.** The original (Q2) required triple-type existence for all type triples, but self-pairs (τ, EQ, τ) don't appear in the pair-type set.
+
+**Fix:** Replaced the original (Q2) with a simpler non-emptiness condition: `DN(τ₁, τ₂) ≠ ∅` for all distinct type pairs. The old (Q1.a)/(Q1.b) split was unified into a single (Q1). This simplified the overall quasimodel definition.
+
+#### Issue 2.3: Representative mismatch — (Q3) vs. (Q3s)
+
+**Valid and subtle.** The original proof conflated two versions of the algebraic closure condition:
+- **(Q3) Algebraic closure**: fixes one edge R₁₂, finds compatible R₁₃ and R₂₃. Extractable from models.
+- **(Q3s) Strong path-consistency**: fixes two edges, finds a compatible third. NOT extractable from models (different model elements may witness different types, causing a "representative mismatch").
+
+**Fix:** The paper now uses (Q3) (extractable) in the quasimodel definition. A new Remark (rem:q3-variants) explains both variants and why (Q3) is the correct choice. The trade-off is documented: (Q3) is extractable but leaves a gap in the completeness direction.
+
+#### Issue 2.4: Patchwork property misapplied
+
+**Valid.** The original Claim 5.2 proof invoked the atomic patchwork property on a disjunctive constraint network, which is incorrect — the patchwork property applies only to atomic networks.
+
+**Fix:** Completely rewrote Claim 5.2 using the correct tool: **full RCC5 tractability** (Renz 1999), which states that path-consistent disjunctive RCC5 networks are consistent. The proof now:
+1. Formulates the extension as a disjunctive constraint network
+2. Shows pairwise satisfiability from (Q3)
+3. Applies path-consistency enforcement
+4. Invokes full RCC5 tractability for global consistency
+5. Includes a careful non-emptiness argument for model-derived quasimodels
+
+A new Remark (rem:extension-gap) honestly documents the remaining gap: for model-derived quasimodels the construction works (the model provides surviving witnesses), but for abstract quasimodels the enforcement step may empty domains. The characterization theorem is established as an "if" (satisfiable → quasimodel) but the "only-if" direction has a gap for abstract quasimodels.
+
+#### Issue 2.5: Converse closure assumed but not required
+
+**Partially valid.** The original R-compatibility definition had a vacuous condition (P3). More importantly, it lacked chain propagation conditions for PP/PPI transitivity.
+
+**Fix:** Strengthened R-compatibility with conditions (P1')/(P2') capturing PP/PPI chain propagation: universal PP-restrictions propagate forward along PP-edges (by transitivity of PP), and universal PPI-restrictions propagate backward. Added explicit converse closure remark. Removed the vacuous (P3).
+
+#### Additional revisions triggered by the review:
+
+- **Type elimination algorithm** (Section 6): Replaced PP-transitivity step with algebraic closure enforcement. Updated acceptance criterion and correctness argument (the algorithm has no false negatives by soundness alone).
+
+- **Tableau soundness** (Section 7): Rewrote Steps 2–5 of the quasimodel extraction proof to match the revised (Q1)/(Q2)/(Q3) conditions. Removed old (Q1.a)/(Q1.b) verification blocks.
+
+- **RCC8 section** (Section 8): Expanded from a one-paragraph "carries over verbatim" to a structured analysis addressing the key tractability difference: RCC8's full algebra is NP-complete (unlike RCC5), so the disjunctive-network argument in Claim 5.2 is unavailable. Explains why decidability still holds: model-derived quasimodels bypass full tractability; the type elimination algorithm needs only soundness (no false negatives).
+
+- **Revision acknowledgment**: Added to the Acknowledgments section, crediting the technical review.
+
+The paper compiles cleanly at 22 pages (up from 19). The date was updated to "March 2026 (revised)".
