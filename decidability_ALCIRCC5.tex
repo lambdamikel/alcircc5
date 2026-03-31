@@ -84,6 +84,51 @@ independently verified or refuted by experts in the field.  We invite
 scrutiny, corrections, and feedback.}}
 \end{center}
 
+\medskip
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Status of the proof (March 2026, revised).}\;
+The decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$ is
+\textbf{not fully established} by this paper.  The proof contains a
+genuine gap---the \emph{extension gap}
+(Remark~\ref{rem:extension-gap})---summarized here:
+
+\smallskip
+\emph{What is proven.}\;
+(1)~\textbf{Soundness}: if $C_0$ is satisfiable, a quasimodel
+satisfying conditions (Q1)--(Q3) can be extracted from the model.
+(2)~A terminating \EXPTIME{} type-elimination algorithm with
+\textbf{no false negatives}: if $C_0$ is satisfiable, the algorithm
+accepts.
+(3)~By contrapositive: if the algorithm rejects, $C_0$ is definitely
+unsatisfiable.
+
+\smallskip
+\emph{What is not proven.}\;
+\textbf{Completeness} (quasimodel $\Rightarrow$ model): the Henkin
+construction solves a disjunctive constraint network at each extension
+step.  For \emph{model-derived} quasimodels, the model's own role
+assignments survive the construction.  For \emph{abstract} quasimodels
+satisfying (Q1)--(Q3) that do not arise from any model,
+path-consistency enforcement may empty constraint domains, causing the
+construction to fail.  Consequently, the algorithm may have
+\textbf{false positives}: acceptance does not guarantee satisfiability.
+
+\smallskip
+A correct decision procedure requires both directions (accept
+$\Leftrightarrow$ satisfiable).  We have: reject $\Rightarrow$
+unsatisfiable (proven); accept $\Rightarrow$ satisfiable (\textbf{not
+proven}).  The open problems from Wessel~\cite{Wessel2003} are
+\textbf{narrowed but not settled}.  Closing the gap requires showing
+that every abstract quasimodel yields a model, or finding an
+alternative model-construction argument.  Despite the gap, the proof
+machinery introduced here (quasimodel method + patchwork property,
+complete-graph tableau with equality blocking) and the precise
+identification of the extension gap may be useful for an eventual
+resolution.}}
+\end{center}
+
 \bigskip
 
 %% ============================================================
@@ -93,15 +138,19 @@ with role boxes derived from the composition tables of the Region
 Connection Calculi RCC5 and RCC8.  These logics were introduced by
 Wessel~\cite{Wessel2003}, who established \PSPACE-hardness of
 $\ALCIRCC{5}$ and \EXPTIME-hardness of $\ALCIRCC{8}$ but left
-decidability open.  We settle both questions positively: concept
-satisfiability in $\ALCIRCC{5}$ and $\ALCIRCC{8}$ is decidable, with
-an \EXPTIME{} upper bound.  We give two decision procedures: a
+decidability open.  We present two procedures---a
 \emph{type-elimination algorithm} and a \emph{tableau calculus with
-blocking}.  Both exploit the \emph{patchwork property} of the RCC
-calculi---the fact that path-consistent atomic constraint networks are
-globally consistent~\cite{RenzNebel1999}---to lift local (triple-wise)
-consistency to global model existence.  For $\ALCIRCC{8}$ this yields
-\EXPTIME-completeness.
+blocking}---that exploit the \emph{patchwork property} of the RCC
+calculi~\cite{RenzNebel1999} and the full tractability of the RCC5
+algebra~\cite{Renz1999}.  Both run in \EXPTIME{} and are
+\emph{sound for rejection}: if $C_0$ is satisfiable, the algorithm
+accepts (no false negatives).  However, the completeness direction
+(quasimodel $\Rightarrow$ model) contains a gap: the Henkin
+model construction may fail for abstract quasimodels not derived from
+actual models.  The decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$
+therefore remains open; this paper narrows the problem to a specific
+constraint-satisfaction question about RCC disjunctive networks
+(the ``extension gap'').
 \end{abstract}
 
 \medskip
