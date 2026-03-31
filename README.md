@@ -4,7 +4,7 @@
 
 > **Disclaimer.** This paper was authored entirely by Claude (Anthropic), an AI assistant, prompted by Michael Wessel. The results and proofs presented here have **not been peer-reviewed or verified by human domain experts**. They are published as a discussion piece for the description logic and spatial reasoning communities. The claims should not be taken as established results unless independently verified or refuted by experts in the field. We invite scrutiny, corrections, and feedback.
 
-> **Revision note (March 2026).** This is a revised version addressing issues identified in a technical review of the original manuscript. Key changes include: EQ normalization, strengthened R-compatibility with PP/PPI chain propagation, revised quasimodel conditions using algebraic closure, a corrected Henkin construction argument using full RCC5 tractability (not just the atomic patchwork property), an honest discussion of the extension gap for abstract quasimodels, and an expanded RCC8 section addressing the tractability difference. See the [conversation log](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) (Part 11) for details.
+> **Revision note (March 2026).** This is a revised version addressing issues identified in a technical review of the original manuscript. Key changes include: EQ normalization, strengthened R-compatibility with PP/PPI chain propagation, revised quasimodel conditions using algebraic closure, a corrected Henkin construction argument using full RCC5 tractability (not just the atomic patchwork property), an honest discussion of the extension gap for abstract quasimodels, and an expanded RCC8 section addressing the tractability difference. Additionally, a companion contextual tableau approach (GPT-5.4 Pro) has been evaluated, and its completeness conjecture FW(C,N) has been [shown to be false](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf). See the [conversation log](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) (Part 11) for details.
 
 ## Current Status of the Proof
 
@@ -32,9 +32,39 @@ A decision procedure requires both directions: accept if and only if satisfiable
 
 The open question from Wessel's thesis (2002/2003) is **narrowed but not settled**. Closing the gap requires showing that every abstract quasimodel satisfying (Q1)–(Q3) yields a model — either by a more refined Henkin construction, a direct model-building argument, or a proof that the type-level conditions are already sufficient. The paper conjectures this but does not prove it.
 
-### What the paper contributes
+### The contextual tableau approach and the FW(C,N) counterexample
 
-Despite the gap, the paper introduces proof machinery (quasimodel method + patchwork property, complete-graph tableau with equality blocking) that is likely to be part of any eventual decidability proof. The precise identification of the extension gap — and the conditions under which the construction succeeds vs. may fail — narrows the open problem to a specific constraint-satisfaction question about RCC5 disjunctive networks with partially fixed assignments.
+A companion note by GPT-5.4 Pro ([contextual tableau draft](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.tex)) proposed a different framework: a **contextual tableau calculus** where each tableau node is a finite local state — a bounded-width atomic RCC5 network with witness assignments and recentering maps. That note proves full **soundness** (every open tableau graph unfolds into a genuine model) but reduces completeness to the **finite-width extraction conjecture FW(C,N)**: every satisfiable concept admits a closed family of local states of bounded width N(C).
+
+**FW(C,N) is false.** The counterexample is the concept already noted in Wessel (2003) and in our paper (Remark 2.5):
+
+> C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤)
+
+This concept is satisfiable only in infinite models. The proof that FW(C∞, N) fails for **every** N is elementary:
+
+1. Transitive propagation (L2) forces every PP-descendant to have ∃PP.⊤ in its type — each needs a PP-successor.
+2. The recentering axiom (R3) forces the PP-witness in any successor state to map to a PP-successor of the corresponding item **in the parent state**.
+3. Iterating this produces an infinite PP-chain inside a single finite-width state.
+4. But PP is a **strict partial order** (irreflexive + transitive). Every finite strict partial order has maximal elements. Maximal elements have no PP-successor. Contradiction.
+
+See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) for details. The same argument applies to ALCI\_RCC8 using NTPP in place of PP.
+
+### Summary: two approaches, two complementary gaps
+
+| | Quasimodel approach (Claude) | Contextual tableau (GPT-5.4) |
+|---|---|---|
+| Satisfiable → representation | **Proven** | **False** (FW counterexample) |
+| Representation → model | **Gap** (extension gap) | **Proven** (soundness) |
+| Status | Incomplete | Incomplete |
+
+Neither approach, as formulated, yields a decision procedure. The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains open.
+
+### What the papers contribute
+
+Despite the gaps, the papers introduce proof machinery that narrows the open problem:
+- The quasimodel method + patchwork property identifies the extension gap as a specific constraint-satisfaction question about RCC5 disjunctive networks.
+- The contextual tableau cleanly separates the soundness (unfolding) argument from the completeness (extraction) argument. The FW counterexample shows that the extraction problem is fundamentally hard: infinite PP-chains cannot be finitely represented in the recentering framework.
+- The root cause is the combination of (i) transitivity of PP, (ii) universal propagation of ∀PP along PP-chains, and (iii) the complete-graph requirement. Any successful decidability proof — or undecidability reduction — must engage with this combination directly.
 
 ---
 
@@ -85,21 +115,19 @@ Reading: row = S(b,c), column = R(a,b), entry = possible relations for (a,c). Th
 
 ### Main Theorem
 
-**Concept satisfiability in ALCI\_RCC5 is decidable.**
+**The decidability of concept satisfiability in ALCI\_RCC5 is open.** The paper presents two proof attempts:
 
-The proof proceeds via two independent methods:
+1. **Quasimodel method + type elimination** — sound for rejection, but completeness has the extension gap
+2. **Tableau calculus with blocking** — same gap, via quasimodel extraction
 
-1. **Quasimodel method + type elimination** (EXPTIME upper bound)
-2. **Tableau calculus with blocking** (constructive decision procedure)
+A companion contextual tableau approach (GPT-5.4) has the opposite gap: soundness is proven but completeness (the FW(C,N) conjecture) is false.
 
-Both rely on the patchwork property of RCC5.
+### Known complexity bounds
 
-### Complexity
-
-| Logic      | Lower Bound          | Upper Bound | Exact        |
+| Logic      | Lower Bound          | Upper Bound | Status       |
 |------------|----------------------|-------------|--------------|
-| ALCI\_RCC5 | PSPACE-hard (Wessel) | EXPTIME     | Open         |
-| ALCI\_RCC8 | EXPTIME-hard (Wessel)| EXPTIME     | **EXPTIME-complete** |
+| ALCI\_RCC5 | PSPACE-hard (Wessel) | Unknown     | **Open**     |
+| ALCI\_RCC8 | EXPTIME-hard (Wessel)| Unknown     | **Open**     |
 
 **Note on RCC8.** The extension to ALCI\_RCC8 requires care because the full RCC8 algebra is **not** tractable: consistency of disjunctive RCC8 constraint networks is NP-complete (Renz & Nebel, 1999). Only the atomic patchwork property holds for RCC8. However, the decision procedures still work: the type elimination algorithm relies on the soundness direction only (no false negatives), and the model-derived quasimodel argument in the Henkin construction bypasses full tractability. The extension gap is the same as for RCC5, except that it cannot be closed by appeal to full tractability.
 
@@ -330,14 +358,17 @@ An important distinction must be drawn between two fundamentally different appro
 
 None of these results settle the decidability of ALCI\_RCC5 or ALCI\_RCC8, because the composition-based role box approach allows **quantification over spatial relations** --- concepts like ∀PP.C ("all proper parts satisfy C") and ∃DR.D ("some disconnected region satisfies D") --- which are inexpressible in the concrete domain setting. The two formalisms are complementary: concrete domains reason about spatial *attributes* of elements; ALCI\_RCC captures direct spatial *relationships* between elements.
 
-The key insight that bridges the gap is the **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), which was known contemporaneously with Wessel's original work but had not been connected to the description logic decidability question. Our proof shows that the patchwork property, combined with either the quasimodel method or a complete-graph tableau calculus, is precisely the tool needed.
+A key insight explored in these papers is the **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), which was known contemporaneously with Wessel's original work but had not been connected to the description logic decidability question. Our work shows that the patchwork property, combined with either the quasimodel method or a contextual tableau calculus, is a powerful tool — but not yet sufficient to close the gap. The combination of PP-transitivity, universal propagation, and the complete-graph requirement creates fundamental obstacles that no current approach has overcome.
 
 ---
 
 ## Files
 
-- [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Compiled paper (22 pages, revised)
-- [**`decidability_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.tex) -- LaTeX source
+- [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Main paper: quasimodel approach (22 pages, revised)
+- [**`decidability_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.tex) -- LaTeX source for main paper
+- [**`ALCI_RCC5_contextual_tableau_draft.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.tex) -- Contextual tableau paper by GPT-5.4 Pro (soundness proven, completeness open)
+- [**`FW_proof_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) -- Counterexample to FW(C,N): the contextual tableau's completeness conjecture is false (7 pages)
+- [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
 - [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
 - [**`CONVERSATION.md`**](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) -- Full conversation log between Michael Wessel and Claude
 
