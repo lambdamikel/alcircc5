@@ -34,7 +34,7 @@ The open question from Wessel's thesis (2002/2003) is **narrowed but not settled
 
 ### The contextual tableau approach and the FW(C,N) counterexample
 
-A companion note by GPT-5.4 Pro ([contextual tableau draft](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.tex)) proposed a different framework: a **contextual tableau calculus** where each tableau node is a finite local state — a bounded-width atomic RCC5 network with witness assignments and recentering maps. That note proves full **soundness** (every open tableau graph unfolds into a genuine model) but reduces completeness to the **finite-width extraction conjecture FW(C,N)**: every satisfiable concept admits a closed family of local states of bounded width N(C).
+A companion note by GPT-5.4 Pro ([A Contextual Tableau Calculus for ALCI\_RCC5 (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.pdf)) proposed a different framework: a **contextual tableau calculus** where each tableau node is a finite local state — a bounded-width atomic RCC5 network with witness assignments and recentering maps. That paper is the starting point for the FW(C,N) discussion below. It proves full **soundness** (every open tableau graph unfolds into a genuine model) but reduces completeness to the **finite-width extraction conjecture FW(C,N)**: every satisfiable concept admits a closed family of local states of bounded width N(C).
 
 **FW(C,N) is false.** The counterexample is the concept already noted in Wessel (2003) and in our paper (Remark 2.5):
 
@@ -366,7 +366,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 
 - [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Main paper: quasimodel approach (22 pages, revised)
 - [**`decidability_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.tex) -- LaTeX source for main paper
-- [**`ALCI_RCC5_contextual_tableau_draft.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.tex) -- Contextual tableau paper by GPT-5.4 Pro (soundness proven, completeness open)
+- [**`ALCI_RCC5_contextual_tableau_draft.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.pdf) -- Contextual tableau paper by GPT-5.4 Pro; starting point for the FW(C,N) discussion ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.tex))
 - [**`FW_proof_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) -- Counterexample to FW(C,N): the contextual tableau's completeness conjecture is false (7 pages)
 - [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
 - [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
