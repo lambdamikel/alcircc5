@@ -6,12 +6,44 @@
 
 > **Revision note (March 2026).** This is a revised version addressing issues identified in a technical review of the original manuscript. Key changes include: EQ normalization, strengthened R-compatibility with PP/PPI chain propagation, revised quasimodel conditions using algebraic closure, a corrected Henkin construction argument using full RCC5 tractability (not just the atomic patchwork property), an honest discussion of the extension gap for abstract quasimodels, and an expanded RCC8 section addressing the tractability difference. See the [conversation log](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) (Part 11) for details.
 
-This repository contains a proof that concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8 is **decidable**, settling open problems from Wessel (2002/2003).
+## Current Status of the Proof
 
-- **ALCI\_RCC5**: decidable, between PSPACE and EXPTIME
-- **ALCI\_RCC8**: decidable, **EXPTIME-complete**
+**The decidability of ALCI\_RCC5 and ALCI\_RCC8 is NOT fully established by this paper.** The proof has a genuine gap. Here is what is and is not proven:
 
-Two decision procedures are given: a type-elimination algorithm and a tableau calculus with blocking.
+### What IS proven
+
+- **Soundness** (satisfiable → quasimodel): If a concept C₀ is satisfiable, a quasimodel satisfying conditions (Q1)–(Q3) can be extracted from the model. This direction is solid.
+- **Terminating EXPTIME algorithm**: The type elimination algorithm always halts in EXPTIME and has **no false negatives** — if C₀ is satisfiable, the algorithm accepts.
+- **Sound rejection**: By contrapositive of the above, if the algorithm rejects, C₀ is definitely unsatisfiable.
+
+### What is NOT proven
+
+- **Completeness** (quasimodel → model): The Henkin construction builds a model from a quasimodel by iteratively adding elements. At each step, it must solve a disjunctive constraint network (the "extension problem"). For **model-derived** quasimodels (extracted from actual models), the model's own role assignments survive the construction. But for **abstract** quasimodels that satisfy (Q1)–(Q3) without arising from any model, the path-consistency enforcement may empty constraint domains, causing the construction to fail.
+- **No false positives**: If the algorithm accepts, we cannot guarantee C₀ is satisfiable. There may exist "spurious" quasimodels for unsatisfiable concepts.
+
+### Why this matters
+
+A decision procedure requires both directions: accept if and only if satisfiable. We have:
+
+| Algorithm says | Conclusion | Status |
+|---|---|---|
+| **reject** | C₀ is unsatisfiable | **Proven** |
+| **accept** | C₀ is satisfiable | **Not proven** (extension gap) |
+
+The open question from Wessel's thesis (2002/2003) is **narrowed but not settled**. Closing the gap requires showing that every abstract quasimodel satisfying (Q1)–(Q3) yields a model — either by a more refined Henkin construction, a direct model-building argument, or a proof that the type-level conditions are already sufficient. The paper conjectures this but does not prove it.
+
+### What the paper contributes
+
+Despite the gap, the paper introduces proof machinery (quasimodel method + patchwork property, complete-graph tableau with equality blocking) that is likely to be part of any eventual decidability proof. The precise identification of the extension gap — and the conditions under which the construction succeeds vs. may fail — narrows the open problem to a specific constraint-satisfaction question about RCC5 disjunctive networks with partially fixed assignments.
+
+---
+
+This repository contains a proof attempt for concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8, targeting open problems from Wessel (2002/2003).
+
+- **ALCI\_RCC5**: EXPTIME algorithm with no false negatives; decidability contingent on closing the extension gap
+- **ALCI\_RCC8**: same status; additionally, the full RCC8 algebra is NP-complete (unlike RCC5), so the gap cannot be closed by full tractability
+
+Two procedures are given: a type-elimination algorithm and a tableau calculus with blocking.
 
 **[Read the full paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf)**
 
