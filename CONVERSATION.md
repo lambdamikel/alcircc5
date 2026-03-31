@@ -425,3 +425,64 @@ A new Remark (rem:extension-gap) honestly documents the remaining gap: for model
 - **Revision acknowledgment**: Added to the Acknowledgments section, crediting the technical review.
 
 The paper compiles cleanly at 22 pages (up from 19). The date was updated to "March 2026 (revised)".
+
+---
+
+## Part 12: GPT-5.4's Contextual Tableau and the FW(C,N) Counterexample
+
+### Evaluating a companion approach
+
+Michael asked Claude to evaluate a companion paper by GPT-5.4 Pro: *"A Contextual Tableau Calculus for ALCI\_RCC5"*. This paper takes a fundamentally different approach from the quasimodel method. Instead of individual tableau nodes, each node is a **contextual local state** — a finite atomic RCC5 network of remembered items around a distinguished center, with witness assignments and recentering maps back to parent states.
+
+Key features of GPT's framework:
+- **Local states**: tuples (I_M, 0_M, tp_M, ρ_M, w_M) with bounded width N, saturation conditions (L1)–(L3)
+- **Recentering maps**: total maps u: I_{Succ(M,i)} → I_M satisfying axioms (R1)–(R4) — center preservation, type preservation, RCC5 relation preservation, successor preservation
+- **Unfolding**: occurrences form an infinite tree of witness-choices; quotient by EQ-congruence yields the model domain
+- **Soundness**: fully proven — every open N-tableau graph unfolds into a genuine strong-EQ model (Theorems 6.3, 6.5, Corollary 6.6)
+- **Completeness**: reduced to the conjecture **FW(C,N)** — every satisfiable concept admits a finite closed family of local states of bounded width
+
+Claude observed that the two approaches have **complementary gaps**: the quasimodel approach proves satisfiable → representation but has a gap in representation → model; the contextual tableau proves representation → model but has a gap in satisfiable → representation. They fail in opposite directions.
+
+### Attempting to prove FW(C,N)
+
+Michael asked Claude to prove FW(C,N) — the finite-width extraction theorem that would complete the decidability proof when combined with GPT's soundness theorem.
+
+Claude entered plan mode and analyzed the proof strategy in depth. The initial approach was:
+1. Fix a model and a canonical witness function
+2. Define bounded-depth witness trees as local states
+3. Use pigeonhole on local state signatures to bound the depth
+4. Handle boundary items via the RCC5 patchwork property
+
+### Discovery of the counterexample
+
+During the detailed analysis of the recentering requirement (R3), Claude discovered a fundamental obstruction. The critical insight:
+
+**PP defines a strict partial order** (irreflexive, transitive) on the items of any local state. Every finite strict partial order has maximal elements. Maximal elements have no PP-successor.
+
+But the concept C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤) — already noted in Wessel (2003) and in Section 2 of our paper as requiring infinite models — forces every element in the PP-chain to need a PP-successor:
+
+1. The center satisfies ∃PP.⊤ and ∀PP.∃PP.⊤
+2. Transitive propagation (L2) forces ∀PP.∃PP.⊤ onto every PP-descendant
+3. Universal propagation (L1) then gives ∃PP.⊤ to every PP-descendant
+4. So every item in the PP-chain needs a PP-witness in its successor state
+5. Recentering (R3) maps this witness to a PP-successor in the parent state
+6. Iterating produces an infinite PP-chain inside a single finite-width state — contradiction
+
+The argument is watertight: the recentering map must be relation-preserving (R3), and non-injective maps can't help (mapping two items to the same target forces EQ between them, which can't match PP). Multiple states don't help either — the obstruction traces back to a single parent state via (R4).
+
+**FW(C∞, N) is false for every N.** The same argument applies to ALCI\_RCC8 using NTPP.
+
+### Implications
+
+This is a **negative result** but a valuable one:
+- GPT's contextual tableau approach **cannot be completed** as formulated
+- The decidability of ALCI\_RCC5 and ALCI\_RCC8 **remains genuinely open**
+- The root cause is the combination of: (i) transitivity of PP, (ii) universal propagation of ∀PP along PP-chains, and (iii) the complete-graph requirement
+- Any future decidability proof (or undecidability reduction) must engage with this combination directly
+
+The counterexample was written up as a 7-page document (`FW_proof_ALCIRCC5.tex`) presenting the proof, a comparison of both approaches' gaps, and possible directions forward (variable-width representations, automata-theoretic approaches, closing the quasimodel gap, or an undecidability proof).
+
+### Files produced
+- `FW_proof_ALCIRCC5.tex` / `.pdf` — Counterexample to FW(C,N)
+- `ALCI_RCC5_contextual_tableau_draft.tex` / `.pdf` — GPT-5.4's contextual tableau paper (added to repository)
+- Updated `README.md` with FW counterexample section and revised status
