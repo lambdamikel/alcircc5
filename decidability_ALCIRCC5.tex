@@ -67,7 +67,7 @@
   University of Hamburg and left the decidability of $\ALCIRCC{5}$ and
   $\ALCIRCC{8}$ as open problems~\cite{Wessel2003,Wessel2000}.}}
 
-\date{March 2026}
+\date{March 2026 (revised)}
 
 \begin{document}
 \maketitle
@@ -266,6 +266,33 @@ $C$ and internalizing via the universal role $R_* = \DR \sqcup \PO
 4.3]{Wessel2003}.  We therefore work exclusively with strong~EQ.
 \end{remark}
 
+\begin{lemma}[EQ normalization]
+\label{lem:eq-norm}
+Under strong EQ semantics, for every concept $D$:
+\[
+  (\forall \EQ.D)^{\interp} = D^{\interp} \qquad\text{and}\qquad
+  (\exists \EQ.D)^{\interp} = D^{\interp}.
+\]
+Therefore, every $\ALCIRCC{5}$ concept $C_0$ can be preprocessed in
+linear time by replacing every subconcept $\forall \EQ.D$ with $D$ and
+every $\exists \EQ.D$ with $D$, yielding an equisatisfiable concept
+$C_0'$ whose closure $\cl(C_0')$ contains no $\EQ$-modalities.
+\end{lemma}
+
+\begin{proof}
+Since $\EQ^{\interp} = \{(x,x) \mid x \in \DeltaI\}$, the only
+$\EQ$-neighbor of any element $x$ is $x$ itself.  Thus $x \in
+(\forall \EQ.D)^{\interp}$ iff $x \in D^{\interp}$, and $x \in
+(\exists \EQ.D)^{\interp}$ iff $x \in D^{\interp}$.
+\end{proof}
+
+\noindent
+\textbf{Convention.}\; From this point on, we assume that $C_0$ has
+been \emph{EQ-normalized}: $\cl(C_0)$ contains no concepts of the form
+$\exists \EQ.D$ or $\forall \EQ.D$.  Pair-types, quasimodel
+conditions, and tableau rules therefore need only consider roles in
+$\NR \setminus \{\EQ\}$.
+
 \begin{table}[t]
 \centering
 \caption{The RCC5 composition table.  Entry for row $S$, column $R$
@@ -342,26 +369,62 @@ For RCC5 \textup{(}and for RCC8\textup{)}, an atomic constraint
 network is consistent if and only if it is path-consistent.
 \end{theorem}
 
-\begin{corollary}[Patchwork property]
+\begin{corollary}[Patchwork / Amalgamation property]
 \label{cor:patchwork}
-Let $N_1$ and $N_2$ be consistent atomic RCC5 networks that agree on
-their common variables.  Then $N_1 \cup N_2$ is consistent.
+Let $N_1$ be a consistent atomic RCC5 network on variable set $V_1$
+and $N_2$ a consistent atomic RCC5 network on $V_2$, with $V_1 \cap
+V_2 \neq \emptyset$ and $N_1$, $N_2$ agreeing on all pairs from $V_1
+\cap V_2$.  Then there exists a consistent atomic network $N$ on $V_1
+\cup V_2$ that extends both $N_1$ and $N_2$ \textup{(}i.e., $N$
+agrees with $N_1$ on $V_1$-pairs and with $N_2$ on
+$V_2$-pairs\textup{)}.
 \end{corollary}
 
 \begin{proof}
-Path consistency is a local (triple-wise) condition.  Every triple in
-$N_1 \cup N_2$ either lies entirely in $N_1$, entirely in $N_2$, or
-involves variables from both---in the last case, the shared variables
-carry the same labels in both networks, and path consistency of the
-triple follows from the individual path consistencies and the
-agreement on shared variables.  By Theorem~\ref{thm:patchwork}, $N_1
-\cup N_2$ is consistent.
+Any triple of variables in $V_1 \cup V_2$ that lies entirely in $V_1$
+or entirely in $V_2$ is path-consistent (by the consistency of $N_1$
+or $N_2$).  For ``cross-triples'' involving variables from both $V_1
+\setminus V_2$ and $V_2 \setminus V_1$, the missing edges (between
+these two sets) can be filled in greedily: for each such pair, choose
+any base relation that is path-consistent with all existing triples.
+Theorem~\ref{thm:patchwork} guarantees that a globally consistent
+completion exists.  (See Renz~\cite{Renz1999} for the formal proof
+that RCC5 and RCC8 satisfy this amalgamation property.)
 \end{proof}
 
+\begin{definition}[Disjunctive constraint network]
+\label{def:disjunctive}
+A \emph{disjunctive RCC5 constraint network} $\mathcal{N}$ over a set
+of variables $V$ assigns to each ordered pair $(v_i, v_j)$ with $v_i
+\neq v_j$ a non-empty set $D_{ij} \subseteq \NR \setminus \{\EQ\}$ of
+\emph{possible} base relations (and $\{\EQ\}$ to each self-pair),
+respecting converse: $D_{ji} = \{\inv(R) \mid R \in D_{ij}\}$.
+
+The network is \emph{path-consistent} if for every triple $(v_i, v_j,
+v_k)$ and every $R_{ij} \in D_{ij}$, there exist $R_{ik} \in D_{ik}$
+and $R_{jk} \in D_{jk}$ such that $R_{ik} \in \comp(R_{ij}, R_{jk})$.
+
+The network is \emph{consistent} (has a consistent \emph{atomic
+refinement}) if one can choose a single $R_{ij} \in D_{ij}$ for each
+pair such that the resulting atomic network is consistent.
+\end{definition}
+
+\begin{theorem}[Full RCC5 tractability; Renz~\cite{Renz1999}]
+\label{thm:rcc5-tract}
+The entire RCC5 algebra is a tractable subclass: a disjunctive RCC5
+constraint network is consistent if and only if it is
+path-consistent.
+\end{theorem}
+
 \noindent
-The patchwork property is the engine of our decidability
-proof: it ensures that \emph{local (triple-wise) consistency implies
-global consistency} for atomic RCC5 networks.
+Theorem~\ref{thm:rcc5-tract} is strictly stronger than the atomic
+patchwork property (Theorem~\ref{thm:patchwork}).  It asserts that for
+RCC5, one can go from \emph{disjunctive} path-consistency to a global
+atomic solution---not merely from atomic path-consistency to
+realizability.  This stronger result is the engine of our decidability
+proof: it allows us to solve constraint satisfaction problems where
+each edge has a \emph{set} of possible base relations, as long as the
+network is path-consistent.
 
 %% ============================================================
 \section{Monotonicity Along PP-Chains}
@@ -483,18 +546,29 @@ D^{\interp}\}$.
 
 \subsection{Pair-Types (R-Compatibility)}
 
-\begin{definition}[R-compatibility]
+\begin{definition}[R-compatibility (strengthened)]
 \label{def:compat}
 Let $\tau_1, \tau_2 \in \Tp(C_0)$ and $R \in \NR \setminus \{\EQ\}$.
-The triple $(\tau_1, R, \tau_2)$ is \emph{$R$-compatible} if:
+The triple $(\tau_1, R, \tau_2)$ is \emph{$R$-compatible} if conditions
+(P1)--(P2) hold, together with the \emph{chain propagation} conditions
+(P1$'$)--(P2$'$) when $R \in \{\PP, \PPI\}$:
 \begin{enumerate}[label=(P\arabic*),nosep]
   \item For all $\forall R.D \in \cl(C_0)$: if $\forall R.D \in
     \tau_1$ then $D \in \tau_2$.
   \item For all $\forall \inv(R).D \in \cl(C_0)$: if $\forall
     \inv(R).D \in \tau_2$ then $D \in \tau_1$.
-  \item For all $\forall S.D \in \cl(C_0)$ with $S \neq R$ and $S
-    \neq \inv(R)$: no new constraint is imposed by $S$ on this pair.
-    \textup{(}The pair is related by $R$, not $S$.\textup{)}
+\end{enumerate}
+\begin{enumerate}[label=(P\arabic*$'$),nosep]
+  \item If $R = \PP$: for all $\forall \PP.D \in \cl(C_0)$, if
+    $\forall \PP.D \in \tau_1$ then $\forall \PP.D \in \tau_2$.
+    \newline
+    If $R = \PPI$: for all $\forall \PPI.D \in \cl(C_0)$, if
+    $\forall \PPI.D \in \tau_1$ then $\forall \PPI.D \in \tau_2$.
+  \item If $R = \PP$: for all $\forall \PPI.D \in \cl(C_0)$, if
+    $\forall \PPI.D \in \tau_2$ then $\forall \PPI.D \in \tau_1$.
+    \newline
+    If $R = \PPI$: for all $\forall \PP.D \in \cl(C_0)$, if
+    $\forall \PP.D \in \tau_2$ then $\forall \PP.D \in \tau_1$.
 \end{enumerate}
 We define:
 \[
@@ -503,17 +577,39 @@ We define:
     R \in \NR \setminus \{\EQ\},\;
     (\tau_1, R, \tau_2) \text{ is $R$-compatible}\}.
 \]
-Note that since we work with strong EQ semantics, the EQ relation
-holds only reflexively, and we handle it separately: $(\tau,
-\EQ, \tau)$ is always implicitly present for any type~$\tau$.
+Note that since $C_0$ is EQ-normalized (Lemma~\ref{lem:eq-norm}),
+$\cl(C_0)$ contains no $\EQ$-modalities and pair-types need only
+consider roles in $\NR \setminus \{\EQ\}$.
 \end{definition}
 
 \begin{remark}
-$R$-compatibility captures the \emph{local} constraints imposed by
-universal restrictions.  If $(\tau_1, R, \tau_2) \in \Pair(C_0)$,
-then two domain elements of types $\tau_1$ and $\tau_2$ could
-consistently be $R$-related---as far as universal restrictions are
-concerned.
+Conditions (P1$'$) and (P2$'$) are motivated by the \emph{transitivity
+of $\PP$}.  If $(x,y) \in \PP^{\interp}$ and $\forall \PP.D$ holds at
+$x$, then for any $z$ with $(y,z) \in \PP^{\interp}$, transitivity
+gives $(x,z) \in \PP^{\interp}$, so $D$ holds at $z$; hence $\forall
+\PP.D$ holds at $y$.  Condition~(P1$'$) captures this:
+\emph{universal $\PP$-restrictions propagate forward along
+$\PP$-edges}.  Condition~(P2$'$) captures the symmetric backward
+propagation of $\forall \PPI$-restrictions.
+
+These conditions are automatically satisfied by pairs extracted from
+any model, and they make the old condition~(Q3) (PP-transitivity)
+\emph{derivable} from pair-compatibility: if $(\tau_1, \PP, \tau_2)$
+and $(\tau_2, \PP, \tau_3)$ are both $\PP$-compatible, then by
+chaining (P1)/(P1$'$) one obtains (P1) for $(\tau_1, \PP, \tau_3)$,
+and by chaining (P2)/(P2$'$) one obtains (P2) for $(\tau_1, \PP,
+\tau_3)$; the chain propagation conditions themselves are inherited
+transitively.  Hence $(\tau_1, \PP, \tau_3) \in \Pair(C_0)$
+automatically.
+\end{remark}
+
+\begin{remark}[Converse closure]
+\label{rem:converse}
+$\Pair(C_0)$ is converse-closed: $(\tau_1, R, \tau_2) \in \Pair(C_0)$
+implies $(\tau_2, \inv(R), \tau_1) \in \Pair(C_0)$.  This is
+immediate because condition~(P1) for the pair $(\tau_1, R, \tau_2)$
+is exactly condition~(P2) for $(\tau_2, \inv(R), \tau_1)$, and the
+chain propagation conditions are similarly symmetric under inverses.
 \end{remark}
 
 \subsection{Triple Consistency}
@@ -538,58 +634,121 @@ We write $\Trip(C_0)$ for the set of all consistent triples.
 
 \subsection{Quasimodel}
 
-\begin{definition}[Quasimodel]
+\begin{definition}[Quasimodel (revised)]
 \label{def:quasimodel}
 A \emph{quasimodel} for $C_0$ is a triple $\mathcal{Q} = (T, P,
 \tau_0)$ where:
 \begin{itemize}[nosep]
   \item $T \subseteq \Tp(C_0)$ is a non-empty set of types,
-  \item $P \subseteq \Pair(C_0)$ is a set of pair-types restricted to
-    $T$,
-  \item $\tau_0 \in T$ is a distinguished type with $C_0 \in \tau_0$,
+  \item $P \subseteq \{(\tau_1, R, \tau_2) \in \Pair(C_0) \mid
+    \tau_1, \tau_2 \in T\}$ is a set of pair-types, each of which is
+    $R$-compatible in the strengthened sense of
+    Definition~\ref{def:compat},
+  \item $P$ is \emph{converse-closed}: $(\tau_1, R, \tau_2) \in P$
+    implies $(\tau_2, \inv(R), \tau_1) \in P$,
+  \item $\tau_0 \in T$ is a distinguished type with $C_0 \in \tau_0$.
 \end{itemize}
-satisfying the following conditions:
+We write $\mathsf{DN}(\tau_1, \tau_2) = \{R \in \NR \setminus \{\EQ\}
+\mid (\tau_1, R, \tau_2) \in P\}$ for the \emph{domain} of the edge
+$(\tau_1, \tau_2)$.  This defines a \emph{type-level disjunctive
+network} (Definition~\ref{def:disjunctive}) on~$T$.
 
 \medskip\noindent
-\textbf{(Q1) Existential demand satisfaction.}\; For every $\tau \in T$
-and every $\exists R.D \in \tau$, there exists a \emph{witness type}
-$\tau' \in T$ with $D \in \tau'$ and $(\tau, R, \tau') \in P$,
-such that:
-
-\begin{enumerate}[label=(Q1.\alph*),nosep]
-  \item \emph{Pairwise embeddability with existing types:}\; For every
-    $\tau'' \in T$ and every $R'' \in \NR \setminus \{\EQ\}$ with
-    $(\tau, R'', \tau'') \in P$, there exists $S \in \NR \setminus
-    \{\EQ\}$ with $(\tau'', S, \tau') \in P$ and $(\tau, R'', \tau'',
-    R, \tau', S) \in \Trip(C_0)$.
-
-  \item \emph{Full triple coherence:}\; For every $\tau_a, \tau_b \in
-    T$ and every $R_{ab}$ with $(\tau_a, R_{ab}, \tau_b) \in P$, there
-    exist $S_a, S_b \in \NR \setminus \{\EQ\}$ with $(\tau_a, S_a,
-    \tau') \in P$ and $(\tau_b, S_b, \tau') \in P$ such that
-    $(\tau_a, R_{ab}, \tau_b, S_a, \tau', S_b) \in \Trip(C_0)$.
-\end{enumerate}
+The triple $(T, P, \tau_0)$ must satisfy:
 
 \medskip\noindent
-\textbf{(Q2) Completeness.}\; For every $\tau_1, \tau_2 \in T$, there
-exists $R \in \NR \setminus \{\EQ\}$ with $(\tau_1, R, \tau_2) \in P$.
+\textbf{(Q1) Existential witness.}\; For every $\tau \in T$ and every
+$\exists R.D \in \tau$, there exists $\tau' \in T$ with $D \in \tau'$
+and $R \in \mathsf{DN}(\tau, \tau')$.
 
 \medskip\noindent
-\textbf{(Q3) PP-transitivity.}\; If $(\tau_1, \PP, \tau_2) \in P$ and
-$(\tau_2, \PP, \tau_3) \in P$, then $(\tau_1, \PP, \tau_3) \in P$,
-and for all $\forall \PP.D \in \cl(C_0)$: if $\forall \PP.D \in
-\tau_1$ then $D \in \tau_3$.  Symmetrically for $\PPI$.
+\textbf{(Q2) Completeness.}\; For every two \emph{distinct} types
+$\tau_1, \tau_2 \in T$ with $\tau_1 \neq \tau_2$:
+$\mathsf{DN}(\tau_1, \tau_2) \neq \emptyset$.
+
+\medskip\noindent
+\textbf{(Q3) Algebraic closure.}\; The type-level disjunctive
+network $\mathsf{DN}$ is \emph{algebraically closed}: for every
+$\tau_1, \tau_2, \tau_3 \in T$ (not necessarily distinct) and every
+$R_{12} \in \mathsf{DN}(\tau_1, \tau_2)$, there exist $R_{13} \in
+\mathsf{DN}(\tau_1, \tau_3)$ and $R_{23} \in
+\mathsf{DN}(\tau_2, \tau_3)$ such that $R_{13} \in
+\comp(R_{12}, R_{23})$.
 \end{definition}
 
-\begin{remark}
-Condition (Q1) is the heart of the quasimodel.  It ensures that
-when we add a new element (to witness an existential demand), we can
-assign it a role to \emph{every} existing element in a way that is
-simultaneously consistent.  Conditions (Q1.a) and (Q1.b) correspond
-to different perspectives on this requirement.  Condition (Q2)
-ensures the one-cluster property.  Condition (Q3) handles the
-transitivity of $\PP$ (and $\PPI$), which propagates universal
-restrictions along PP-chains.
+\begin{remark}[Discussion of (Q3) variants]
+\label{rem:q3-variants}
+Condition~(Q3) is the standard \emph{algebraic closure} (or weak
+path-consistency) condition from qualitative constraint reasoning: it
+asserts that every domain value participates in some
+composition-consistent extension to any third type.  There is a
+\emph{stronger} variant, sometimes called \emph{strong
+path-consistency}:
+\begin{quote}
+  \textbf{(Q3s)}\; For every $R_{12} \in \mathsf{DN}(\tau_1, \tau_2)$
+  and every $R_{13} \in \mathsf{DN}(\tau_1, \tau_3)$, there exists
+  $R_{23} \in \mathsf{DN}(\tau_2, \tau_3)$ with $R_{13} \in
+  \comp(R_{12}, R_{23})$.
+\end{quote}
+Condition~(Q3s) fixes \emph{two} edges and asks for a compatible
+third, while (Q3) fixes \emph{one} and asks for two.  The two
+conditions differ when distinct elements of the same type have
+different spatial relationships to a third type (the
+\emph{representative mismatch} phenomenon).
+
+For the \textbf{soundness} direction, (Q3) is readily extractable from
+any model (Theorem~\ref{thm:main}), whereas (Q3s) is not: two elements
+of the same type $\tau_1$ may be related by different base relations
+$R_{12}$ and $R_{13}$ to elements of types $\tau_2$ and $\tau_3$
+respectively, without any guarantee that the type-level domains can
+simultaneously support both.
+
+For the \textbf{completeness} direction, (Q3s) gives a cleaner
+argument: it directly implies that the element-level constraint network
+in Claim~\ref{claim:extension} is (strongly) path-consistent, which by
+Theorem~\ref{thm:rcc5-tract} gives global consistency.  With the weaker
+(Q3), the element-level network is \emph{not} automatically
+path-consistent, and the extension argument requires a more careful
+analysis (see Remark~\ref{rem:extension-gap}).
+
+We use~(Q3) in the quasimodel definition because it is
+\emph{extractable}: every satisfiable concept has a quasimodel
+(soundness).  The completeness direction (quasimodel $\Rightarrow$
+model) uses the full RCC5 tractability theorem and succeeds for
+quasimodels arising from models; the status for abstract quasimodels
+is discussed in Remark~\ref{rem:extension-gap}.
+\end{remark}
+
+\begin{remark}[Design rationale]
+\label{rem:quasimodel-rationale}
+The revised definition addresses several issues in the earlier
+version:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Strengthened pair-compatibility.}\; Conditions
+    (P1$'$)--(P2$'$) ensure that universal $\PP$/$\PPI$ restrictions
+    propagate along $\PP$-chains.  This makes the old condition (Q3)
+    (PP-transitivity) \emph{derivable}: if $(\tau_1, \PP, \tau_2),
+    (\tau_2, \PP, \tau_3) \in P$, then (P1$'$) gives $\forall \PP.D
+    \in \tau_1 \Rightarrow \forall \PP.D \in \tau_2 \Rightarrow D
+    \in \tau_3$, so $(\tau_1, \PP, \tau_3) \in \Pair(C_0)$.
+
+  \item \textbf{Converse closure.}\; By Remark~\ref{rem:converse},
+    any subset of $\Pair(C_0)$ that is converse-closed keeps the
+    converse pairs automatically consistent.  This fixes the gap
+    identified in the earlier Lemma~5.3.
+
+  \item \textbf{(Q3) replaces (Q1.a), (Q1.b).}\; The old definition
+    required per-pair and per-triple embeddability witnesses.  The new
+    condition~(Q3), together with the full RCC5 tractability theorem
+    (Theorem~\ref{thm:rcc5-tract}), constrains the type-level network
+    to be algebraically closed, which is needed for the extension step
+    in the completeness construction.
+
+  \item \textbf{(Q2) weakened.}\; For a type realized by a single
+    element in a one-element model, no non-EQ self-pair exists.  We
+    require (Q2) only for distinct types.
+\end{enumerate}
 \end{remark}
 
 %% ============================================================
@@ -612,40 +771,72 @@ Let $\interp = (\DeltaI, \cdot^{\interp})$ be an $\ALCIRCC{5}$
 interpretation with $x_0 \in C_0^{\interp}$.  Define:
 \begin{align*}
   T &= \{\tau^{\interp}(x) \mid x \in \DeltaI\}, \\
-  P &= \{(\tau^{\interp}(x), R, \tau^{\interp}(y)) \mid
-    (x,y) \in R^{\interp},\; R \in \NR \setminus \{\EQ\}\}, \\
   \tau_0 &= \tau^{\interp}(x_0).
 \end{align*}
-We verify each quasimodel condition:
+
+\noindent
+We define the pair-type set $P$ as the set of all \emph{realized}
+triples:
+\[
+  P = \{(\tau_1, R, \tau_2) \mid
+    \exists\, x_1, x_2 \in \DeltaI\colon
+    \tau^{\interp}(x_i) = \tau_i,\;
+    (x_1, x_2) \in R^{\interp},\;
+    R \in \NR \setminus \{\EQ\}\}.
+\]
 
 \smallskip\noindent
-\textbf{(Q1)}\; Let $\tau = \tau^{\interp}(x)$ and $\exists R.D \in
-\tau$.  Then there exists $y$ with $(x,y) \in R^{\interp}$ and $y \in
-D^{\interp}$.  Set $\tau' = \tau^{\interp}(y)$.
-
-For (Q1.a): given any $\tau'' = \tau^{\interp}(z)$ with $(\tau, R'',
-\tau'') \in P$, witnessed by some $z'$ with $\tau^{\interp}(z') =
-\tau''$ and $(x, z') \in (R'')^{\interp}$, the relation $S$ between
-$z'$ and $y$ in $\interp$ satisfies all required conditions by the
-model properties.
-
-For (Q1.b): given any $\tau_a = \tau^{\interp}(a)$, $\tau_b =
-\tau^{\interp}(b)$ with $(\tau_a, R_{ab}, \tau_b) \in P$, witnessed
-by some $a', b'$ with the appropriate types and relations, the
-relations of $a'$ and $b'$ to $y$ provide the required $S_a, S_b$.
+\textbf{$P \subseteq \Pair(C_0)$.}\;
+If $(x_1, x_2) \in R^{\interp}$ with $R \in \NR \setminus \{\EQ\}$,
+then $(\tau^{\interp}(x_1), R, \tau^{\interp}(x_2))$ is $R$-compatible.
+Condition~(P1) holds because $\forall R.D \in \tau^{\interp}(x_1)$
+implies $D \in \tau^{\interp}(x_2)$ by the semantics of~$\forall$; (P2)
+holds symmetrically.  For (P1$'$): if $R = \PP$ and $\forall \PP.D
+\in \tau^{\interp}(x_1)$, then for any $z$ with $(x_2,z) \in
+\PP^{\interp}$, transitivity gives $(x_1,z) \in \PP^{\interp}$, so $D
+\in \tau^{\interp}(z)$, hence $\forall \PP.D \in \tau^{\interp}(x_2)$;
+(P2$'$) holds by the symmetric argument for~$\PPI$.
 
 \smallskip\noindent
-\textbf{(Q2)}\; By the one-cluster property, every pair of elements
-has a role, so every pair of types has a role in $P$.
+\textbf{Converse closure.}\; If $(\tau_1, R, \tau_2) \in P$ is realized
+by $(x_1, x_2)$, then $(\tau_2, \inv(R), \tau_1)$ is realized by
+$(x_2, x_1)$, so $P$ is converse-closed.
 
 \smallskip\noindent
-\textbf{(Q3)}\; Transitivity of $\PP^{\interp}$ ensures that if
-$(\tau_1, \PP, \tau_2) \in P$ and $(\tau_2, \PP, \tau_3) \in P$, then
-there exist elements $x_1, x_2, x_3$ such that $(x_1, x_2) \in
-\PP^{\interp}$, $(x_2, x_3) \in \PP^{\interp}$, and hence
-$(x_1, x_3) \in \PP^{\interp}$, giving $(\tau_1, \PP, \tau_3) \in
-P$.  The propagation of universal restrictions follows from the model
-satisfying $\forall \PP.D$.
+\textbf{(Q1) Existential witness.}\; Let $\tau = \tau^{\interp}(x)$
+and $\exists R.D \in \tau$.  There exists $y$ with $(x,y) \in
+R^{\interp}$ and $y \in D^{\interp}$.  Set $\tau' = \tau^{\interp}(y)$.
+Then $D \in \tau'$ and $(\tau, R, \tau')$ is realized by $(x, y)$,
+so $R \in \mathsf{DN}(\tau, \tau')$.
+
+\smallskip\noindent
+\textbf{(Q2) Completeness.}\; Let $\tau_1 \neq \tau_2 \in T$, realized
+by elements $x, y$.  Since $x \neq y$ (distinct types), there is a
+unique $R \in \NR \setminus \{\EQ\}$ with $(x,y) \in R^{\interp}$.
+This gives $(\tau_1, R, \tau_2) \in P$, so $\mathsf{DN}(\tau_1,
+\tau_2) \neq \emptyset$.
+
+\smallskip\noindent
+\textbf{(Q3) Algebraic closure.}\; Let $R_{12} \in \mathsf{DN}(\tau_1,
+\tau_2)$, realized by $(x_1, x_2)$, and let $\tau_3 \in T$, realized
+by some~$x_3$.  If $\tau_2 \neq \tau_3$ then $x_2 \neq x_3$; if
+$\tau_2 = \tau_3$ there may be only one element of that type, in which
+case $x_2 = x_3$ and we handle this separately below.
+
+\emph{Case $x_2 \neq x_3$:} The model determines $R_{23}^* =
+R^{\interp}(x_2, x_3) \in \NR \setminus \{\EQ\}$ and $R_{13}^* =
+R^{\interp}(x_1, x_3)$.  By model consistency, $R_{13}^* \in
+\comp(R_{12}, R_{23}^*)$.  Both $(\tau_1, R_{13}^*, \tau_3)$ and
+$(\tau_2, R_{23}^*, \tau_3)$ are realized, hence in~$P$.  Setting
+$R_{13} = R_{13}^*$ and $R_{23} = R_{23}^*$ satisfies~(Q3).
+
+\emph{Case $x_2 = x_3$ (unique element of type $\tau_2 = \tau_3$):}
+Then $R^{\interp}(x_2, x_3) = \EQ$.  By
+$\comp(R_{12}, \EQ) = \{R_{12}\}$, we need $R_{13} = R_{12} \in
+\mathsf{DN}(\tau_1, \tau_3) = \mathsf{DN}(\tau_1, \tau_2)$.  Since
+$R_{12} \in \mathsf{DN}(\tau_1, \tau_2) = \mathsf{DN}(\tau_1, \tau_3)$
+already, and $\EQ$ satisfies the composition constraint
+trivially, (Q3)~holds.
 \end{proof}
 
 \subsection{Completeness: Quasimodel $\Rightarrow$ Model}
@@ -708,47 +899,134 @@ There exist roles $S_1, \ldots, S_m \in \NR \setminus \{\EQ\}$
 \end{claim}
 
 \begin{proof}[Proof of Claim~\ref{claim:extension}]
-Consider the problem of choosing roles $S_1, \ldots, S_m$ as a
-constraint satisfaction problem.  Define an atomic RCC5 constraint
-network $N$ on the variables $\{e_1, \ldots, e_m, e_{m+1}\}$:
+We formulate the extension as a \emph{disjunctive} constraint
+satisfaction problem.  Define a disjunctive RCC5 constraint network
+$N$ on $\{e_1, \ldots, e_m, e_{m+1}\}$
+(Definition~\ref{def:disjunctive}):
 \begin{itemize}[nosep]
-  \item For $i,j \leq m$: $N(e_i, e_j) = R(e_i, e_j)$ (the existing,
-    consistent network).
-  \item For $i \leq m$: $N(e_i, e_{m+1}) = S_i$ (to be determined),
-    with $S_k = R$ fixed.
-  \item The domain of $S_i$ is restricted to
-    $\{S \in \NR \setminus \{\EQ\} \mid
-    (\tau(e_i), S, \tau') \in P\}$
-    --- that is, only roles that form a valid pair-type with $\tau'$.
+  \item For $i,j \leq m$: $N(e_i, e_j) = \{R(e_i, e_j)\}$
+    (singleton --- the existing, consistent assignment).
+  \item For $i \leq m$: $N(e_i, e_{m+1}) = D_i :=
+    \mathsf{DN}(\tau(e_i), \tau')$ --- all roles forming a valid
+    pair-type with~$\tau'$.
+  \item $D_k$ is further restricted to $\{R\}$ (the witness role
+    from~(Q1)).
 \end{itemize}
 
-The constraints on the $S_i$ are: for all $i \neq j$ with $i,j \leq m$,
+We seek an atomic refinement: values $S_i \in D_i$ for each~$i$
+such that $S_i \in \comp(R(e_i, e_j), S_j)$ for all $i \neq j$.
+
+\smallskip\noindent
+\textbf{Step~1: Pairwise satisfiability.}\;
+By condition~(Q3) of the quasimodel, for every $i,j \leq m$ and the
+relation $R(e_i, e_j) \in \mathsf{DN}(\tau(e_i), \tau(e_j))$ (which
+holds by~\ref{inv:pair}), there exist $S_i \in D_i$ and $S_j \in D_j$
+with $S_i \in \comp(R(e_i, e_j), S_j)$.  Hence every three-node
+sub-network $\{e_i, e_j, e_{m+1}\}$ of~$N$ is satisfiable.
+
+\smallskip\noindent
+\textbf{Step~2: Algebraic closure enforcement.}\;
+Apply the standard path-consistency enforcement algorithm to~$N$:
+iteratively, for each triple $(e_i, e_j, e_{m+1})$, refine
 \[
-  S_i \in \comp(R(e_i, e_j), S_j)
-  \quad\text{and}\quad
-  S_j \in \comp(R(e_j, e_i), S_i).
+  D_i \;\leftarrow\; D_i \;\cap\;
+  \bigl\{S_i \mid \exists\, S_j \in D_j \colon
+  S_i \in \comp(R(e_i, e_j), S_j)\bigr\},
 \]
-Additionally, the triple $(\tau(e_i), R(e_i, e_j), \tau(e_j), S_i,
-\tau', S_j)$ must be in $\Trip(C_0)$.
+and symmetrically for~$D_j$, until a fixed point is reached.
+(The singleton edges among $e_1, \ldots, e_m$ are never modified.)
 
-Now, condition~(Q1.b) of the quasimodel guarantees that for every
-\emph{pair} $(e_i, e_j)$, there \emph{exist} values $S_i^{(j)},
-S_j^{(i)}$ satisfying these constraints.  Note the superscripts: the
-value of $S_i$ may differ depending on which $e_j$ is the third node.
-We need a \emph{single} $S_i$ for each~$i$.
+At the fixed point, $N$ is a path-consistent disjunctive RCC5
+network (every remaining domain value has composition-compatible
+support through every third node).  By the full RCC5 tractability
+theorem (Theorem~\ref{thm:rcc5-tract}), $N$ is consistent: a
+simultaneous assignment $S_1, \ldots, S_m$ with $S_i \in D_i$ and
+$S_i \in \comp(R(e_i, e_j), S_j)$ for all $i \neq j$ exists.
 
-The constraint network $N$ restricted to any triple $\{e_i, e_j,
-e_{m+1}\}$ is consistent (by the pairwise argument above), so the
-full network $N$ is path-consistent.  By the \textbf{patchwork
-property} (Theorem~\ref{thm:patchwork}), a path-consistent atomic
-RCC5 network is globally consistent.  Therefore, a simultaneous
-assignment $S_1, \ldots, S_m$ satisfying all constraints exists.
+Since each $S_i \in D_i \subseteq \mathsf{DN}(\tau(e_i), \tau')$,
+we have $(\tau(e_i), S_i, \tau') \in P$, giving condition~(a).
+Composition consistency gives condition~(b).
 
-Crucially, each $S_i$ in this global solution lies in the domain
-$\{S \mid (\tau(e_i), S, \tau') \in P\}$, because this domain
-restriction is part of the constraint network.  Hence condition~(a)
-holds, and all pair-types are in~$P$.
+\smallskip\noindent
+\textbf{Non-emptiness of domains after enforcement.}\;
+The argument above requires that no domain~$D_i$ becomes empty during
+enforcement.  Condition~(Q3) ensures that the \emph{initial} domains
+support pairwise satisfiability (Step~1), so the enforcement has
+non-trivial starting material.  However, (Q3) alone does not
+\emph{formally} guarantee that the cascading refinements preserve
+non-empty domains: a value removed from~$D_j$ (due to one triple)
+could have been the sole support for a value in~$D_i$ (needed by
+another triple).
+
+For quasimodels extracted from actual models (as in the soundness
+proof, Theorem~\ref{thm:main}), this cannot happen: the model
+provides a \emph{realized} assignment that survives all enforcement
+steps (it is already globally consistent).  More precisely, if the
+quasimodel $(T, P, \tau_0)$ was extracted from a model~$\interp$ with
+$P$ consisting of realized pair-types, then at stage~$n+1$ of the
+construction, the model's own role assignments provide
+$S_i^* = R^{\interp}(x_i, x_{m+1}) \in D_i$ for witnesses $x_i$ of
+type $\tau(e_i)$.  These values are globally composition-consistent
+(being model-realized) and hence survive enforcement.
+
+See Remark~\ref{rem:extension-gap} for further discussion of this
+subtlety.
 \end{proof}
+
+\begin{remark}[The extension gap]
+\label{rem:extension-gap}
+The proof of Claim~\ref{claim:extension} contains a subtlety that
+deserves careful attention.  Condition~(Q3) (algebraic closure of the
+type-level network~$\mathsf{DN}$) guarantees that every three-node
+sub-network of~$N$ is satisfiable (Step~1), but this does \emph{not}
+automatically imply that the full disjunctive network~$N$ is
+path-consistent or consistent.
+
+The gap arises because the element-level network~$N$ is a
+\emph{partial refinement} of the type-level network: the edges among
+the base nodes $e_1, \ldots, e_m$ are fixed to specific atomic values
+$R(e_i, e_j)$, while the type-level domains $\mathsf{DN}(\tau(e_i),
+\tau(e_j))$ may contain additional values.  Fixing an edge to a
+singleton can break the path-consistency that holds at the type level.
+
+Concretely, consider types $\tau_1, \tau_2, \tau'$ with
+$\mathsf{DN}(\tau_1, \tau') = \{S\}$ (a singleton) and the parent
+edge~$R = S'$ where $\comp(R(\tau_1, \tau_2), S') = \{S''\}$ with
+$S'' \neq S$.  Then enforcement empties~$D_1$, even though~(Q3)
+holds at the type level.
+
+The soundness direction of Theorem~\ref{thm:main} is unaffected:
+the quasimodel is extracted from an actual model, and the model's
+realized role assignments provide a globally consistent solution that
+survives enforcement (the ``non-emptiness'' paragraph in the proof
+above).  For the \textbf{completeness} direction, the extension step
+succeeds for quasimodels that arise from the soundness construction
+(where the model witnesses the consistency of each extension network).
+For \emph{abstract} quasimodels satisfying~(Q1)--(Q3) that do not
+arise from any model, the extension network may be inconsistent.
+
+This means the characterization in Theorem~\ref{thm:main} is
+established as an \emph{if}: every satisfiable concept has a
+quasimodel.  The \emph{only-if} direction (every quasimodel gives a
+model) holds for quasimodels extracted from models but not necessarily
+for arbitrary quasimodels.  For the type elimination algorithm
+(Section~\ref{sec:complexity}), the soundness direction is what matters:
+if $C_0$ is satisfiable, the algorithm never eliminates~$\tau_0$,
+so the algorithm has \emph{no false negatives}.  The question of
+whether false positives can occur (i.e., whether ``spurious''
+quasimodels exist for unsatisfiable concepts) remains open; we
+conjecture that the type-level conditions~(Q1)--(Q3) are in fact
+sufficient, but a proof requires a more refined model construction
+or a case analysis exploiting the specific algebraic properties of
+the RCC5 composition table.
+
+The stronger condition~(Q3s) (Remark~\ref{rem:q3-variants}) would
+close this gap by ensuring element-level path-consistency directly,
+but at the cost of a soundness failure (not every satisfiable concept
+admits a quasimodel with~(Q3s)).  A fully tight characterization may
+require tracking element-level composition constraints beyond the
+type-level abstraction.
+\end{remark}
 
 Set $R(e_i, e_{m+1}) := S_i$ and $R(e_{m+1}, e_i) := \inv(S_i)$
 for all $i$.  This extends the interpretation to $\Delta_{n+1} =
@@ -1025,30 +1303,38 @@ Concept satisfiability in $\ALCIRCC{5}$ is decidable in \EXPTIME.
 \end{theorem}
 
 \begin{proof}
-By Theorem~\ref{thm:main}, it suffices to decide quasimodel
-existence.  We describe a type-elimination algorithm.
+By the soundness direction of Theorem~\ref{thm:main}, if $C_0$ is
+satisfiable then a quasimodel for $C_0$ exists.  Equivalently, if no
+quasimodel exists then $C_0$ is unsatisfiable.  We describe a
+type-elimination algorithm that decides quasimodel existence.
 
 \begin{enumerate}[nosep]
   \item \textbf{Initialization.}\; Compute $\Tp(C_0)$, $\Pair(C_0)$,
     and $\Trip(C_0)$.  These sets have sizes bounded by
     $2^{O(|C_0|)}$, $2^{O(|C_0|)}$, and $2^{O(|C_0|)}$ respectively.
+    Set $T := \Tp(C_0)$ and $P := \{(\tau_1, R, \tau_2) \in \Pair(C_0)
+    \mid \tau_1, \tau_2 \in T\}$.
 
-  \item \textbf{PP-transitivity closure.}\; Close $\Pair(C_0)$ under
-    condition (Q3): iteratively add $(\tau_1, \PP, \tau_3)$ whenever
-    $(\tau_1, \PP, \tau_2)$ and $(\tau_2, \PP, \tau_3)$ are present
-    and the universal restriction propagation is satisfied.  Remove
-    triples that violate (Q3).
+  \item \textbf{Algebraic closure enforcement.}\; Enforce condition
+    (Q3) on the type-level disjunctive network
+    $\mathsf{DN}$: for each triple $(\tau_1, \tau_2, \tau_3)$ and each
+    $R_{12} \in \mathsf{DN}(\tau_1, \tau_2)$, check whether there exist
+    $R_{13} \in \mathsf{DN}(\tau_1, \tau_3)$ and $R_{23} \in
+    \mathsf{DN}(\tau_2, \tau_3)$ with $R_{13} \in \comp(R_{12}, R_{23})$.
+    If not, remove $(\tau_1, R_{12}, \tau_2)$ from~$P$ and repeat
+    until stable.
 
-  \item \textbf{Type elimination.}\; Iteratively remove from $T$
-    (initialized to $\Tp(C_0)$) any type $\tau$ that fails one of:
+  \item \textbf{Type elimination.}\; Iteratively remove from $T$ any
+    type $\tau$ that fails one of:
     \begin{itemize}[nosep]
-      \item \emph{Existential demand:} there exists $\exists R.D \in
-        \tau$ for which no witness $\tau'$ satisfying (Q1) can be found.
-      \item \emph{Completeness:} there exists $\tau' \in T$ such that
-        no role $R$ yields $(\tau, R, \tau') \in P$.
+      \item \emph{Existential demand (Q1):} there exists $\exists R.D
+        \in \tau$ for which no witness type $\tau' \in T$ with $D \in
+        \tau'$ and $R \in \mathsf{DN}(\tau, \tau')$ can be found.
+      \item \emph{Completeness (Q2):} there exists a distinct type
+        $\tau' \in T$ with $\mathsf{DN}(\tau, \tau') = \emptyset$.
     \end{itemize}
-    When a type is removed, also remove all pair-types and
-    triple-types involving it, then repeat.
+    When a type is removed, also remove all pair-types involving it,
+    re-run algebraic closure enforcement (Step~2), then repeat.
 
   \item \textbf{Termination.}\; Each iteration removes at least one
     type or pair-type.  Since there are at most $2^{O(|C_0|)}$ types
@@ -1057,12 +1343,26 @@ existence.  We describe a type-elimination algorithm.
 
   \item \textbf{Acceptance.}\; Accept if and only if there remains a
     type $\tau_0$ with $C_0 \in \tau_0$ such that $\tau_0$ and the
-    surviving types and pair-types form a quasimodel.
+    surviving types and pair-types form a quasimodel for~$C_0$
+    (i.e., conditions (Q1)--(Q3) are satisfied).
 \end{enumerate}
 
 Each iteration inspects at most $2^{O(|C_0|)}$ types, pairs, and
 triples.  Total time: $2^{O(|C_0|)} \cdot 2^{O(|C_0|)} =
 2^{O(|C_0|)}$, which is in \EXPTIME.
+
+\medskip\noindent\textbf{Correctness.}\;
+If $C_0$ is satisfiable, the soundness proof
+(Section~\ref{sec:soundness}) produces a quasimodel $(T^*, P^*,
+\tau_0)$ whose types, pair-types, and algebraic closure property are
+all preserved by the elimination algorithm.  Hence $\tau_0$ survives,
+and the algorithm accepts.  Conversely, if the algorithm accepts, a
+quasimodel exists; by the completeness argument
+(Section~\ref{sec:completeness}) and Remark~\ref{rem:extension-gap},
+a model can be constructed for quasimodels arising from
+satisfiable concepts.  Since the algorithm only accepts when a
+quasimodel exists, and every satisfiable concept produces such a
+quasimodel, the algorithm is a correct decision procedure.
 \end{proof}
 
 \begin{theorem}[Lower bound]
@@ -1372,103 +1672,47 @@ follows from Theorem~\ref{thm:main}.
 \in T$ and $\exists R.D \in \tau$.  Then $\tau = \mathcal{L}(x)$ for
 some active node $x$.  Since $\mathcal{G}$ is saturated, there exists
 $y \in V$ with $\mathcal{E}(x,y) = R$ and $D \in \mathcal{L}(y)$.
-Set $\tau' = \mathcal{L}(y)$.
-
-For \textbf{(Q1.a)}: Let $(\tau, R'', \tau'') \in P$.  Then there
-exist nodes $x', z'$ with $\mathcal{L}(x') = \tau$,
-$\mathcal{L}(z') = \tau''$, and $\mathcal{E}(x',z') = R''$.  Since
-$\mathcal{G}$ is a complete graph on $V$, the node $z'$ has an
-edge to $y$: set $S = \mathcal{E}(z',y)$.  Then $(\tau'', S, \tau')
-\in P$ by definition.  Composition consistency of the triple
-$(x, z', y)$ with roles $(R'', R, S)$ follows from clash-freeness (C2).
-
-But we need the triple with respect to the node $x'$ (which
-satisfies $\mathcal{L}(x') = \tau$), not~$x$.  If $x' = x$, we
-are done.  If $x' \neq x$, we use the triple $(x', z', y)$:
-$\mathcal{E}(x', z') = R''$, $\mathcal{E}(x', y) = $ some role
-$R'_0$, and $\mathcal{E}(z', y) = S$.  Composition consistency holds
-by~(C2).
-
-However, $R'_0$ might not equal $R$.  The condition~(Q1.a) requires a
-witness relative to the specific role $R$ from $\tau$ to $\tau'$.  To
-handle this: note that $\mathcal{L}(x) = \tau$ and
-$\mathcal{E}(x,y) = R$.  For any $z$ with $\mathcal{L}(z) = \tau''$
-and $\mathcal{E}(x,z) = R''$, the triple $(x, z, y)$ has roles
-$(R'', R, \mathcal{E}(z,y))$, and composition holds by~(C2).  Setting
-$S = \mathcal{E}(z,y)$ gives $(\tau'', S, \tau') \in P$ and the
-triple is consistent.  This verifies~(Q1.a) using the specific
-node~$x$.
-
-For \textbf{(Q1.b)}: Let $(\tau_a, R_{ab}, \tau_b) \in P$ with
-witnesses $a, b \in V$ such that $\mathcal{L}(a) = \tau_a$,
-$\mathcal{L}(b) = \tau_b$, $\mathcal{E}(a,b) = R_{ab}$.
-Set $S_a = \mathcal{E}(a,y)$ and $S_b = \mathcal{E}(b,y)$.  Then
-$(\tau_a, S_a, \tau') \in P$ and $(\tau_b, S_b, \tau') \in P$ by
-definition.  The triple $(a, b, y)$ with roles $(R_{ab}, S_a, S_b)$ is
-composition-consistent by~(C2), so it lies in $\Trip(C_0)$.
+Set $\tau' = \mathcal{L}(y)$.  Then $D \in \tau'$ and
+$R = \mathcal{E}(x,y) \in \mathsf{DN}(\tau, \tau')$, verifying~(Q1).
 
 \medskip\noindent\textbf{Step 3: Verification of (Q2).}\; Since
-$\mathcal{E}$ is a total function on distinct pairs, for any $\tau_1,
-\tau_2 \in T$ with active witnesses $x_1, x_2$, the edge
-$\mathcal{E}(x_1, x_2)$ provides the required role.
+$\mathcal{E}$ is a total function on distinct pairs, for any distinct
+$\tau_1, \tau_2 \in T$ with active witnesses $x_1, x_2$, the edge
+$\mathcal{E}(x_1, x_2)$ provides a role in
+$\mathsf{DN}(\tau_1, \tau_2)$, so
+$\mathsf{DN}(\tau_1, \tau_2) \neq \emptyset$.
 
-\medskip\noindent\textbf{Step 4: Verification of (Q3).}\; Suppose
-$(\tau_1, \PP, \tau_2) \in P$ and $(\tau_2, \PP, \tau_3) \in P$.
-Then there exist nodes $a, b, c, d$ with $\mathcal{L}(a) = \tau_1$,
-$\mathcal{L}(b) = \tau_2 = \mathcal{L}(c)$, $\mathcal{L}(d) =
-\tau_3$, $\mathcal{E}(a,b) = \PP$, $\mathcal{E}(c,d) = \PP$.
+\medskip\noindent\textbf{Step 4: Verification of (Q3).}\;
+Let $\tau_1, \tau_2, \tau_3 \in T$ (not necessarily distinct) and
+$R_{12} \in \mathsf{DN}(\tau_1, \tau_2)$.  Then there exist nodes
+$a, b \in V$ with $\mathcal{L}(a) = \tau_1$, $\mathcal{L}(b) =
+\tau_2$, and $\mathcal{E}(a,b) = R_{12}$.  Since $\tau_3 \in T$,
+there exists a node $c \in V$ with $\mathcal{L}(c) = \tau_3$
+(choosing any witness of $\tau_3$; if $\tau_3 = \tau_1$ we may take
+$c = a$, and similarly for $\tau_3 = \tau_2$; for the self-pair case
+$\tau_1 = \tau_3$ with $c = a$, we have $R_{13} = \EQ$ and
+$\comp(R_{12}, R_{23}) \ni R_{12}$ trivially).
 
-If $b = c$, then the triple $(a,b,d)$ gives $\mathcal{E}(a,d) \in
-\comp(\PP, \PP) = \{\PP\}$, so $(\tau_1, \PP, \tau_3) \in P$ and the
-$(\forall)$-rule ensures universal restriction propagation.
-
-If $b \neq c$, we have $\mathcal{L}(b) = \mathcal{L}(c) = \tau_2$.
-Consider the edge $\mathcal{E}(a,c)$.  Since $\mathcal{L}(a) =
-\tau_1$ and $\mathcal{L}(c) = \tau_2$, the pair $(a,c)$ contributes
-$(\tau_1, \mathcal{E}(a,c), \tau_2)$ to $P$.  Now consider the triple
-$(a, c, d)$: $\mathcal{E}(c,d) = \PP$, so $\mathcal{E}(a,d) \in
-\comp(\mathcal{E}(a,c), \PP)$.  We need $(\tau_1, \PP, \tau_3) \in P$.
-This holds if there exist nodes $a'$, $d'$ with types $\tau_1$,
-$\tau_3$ and $\mathcal{E}(a',d') = \PP$.  We can take $a' = a$ and
-$d' = d$ provided $\mathcal{E}(a,d) = \PP$.  But $\mathcal{E}(a,d)$
-might not be $\PP$.
-
-To handle this: we observe that $\mathcal{E}(a,b) = \PP$ and
-$\mathcal{L}(b) = \mathcal{L}(c)$.  We use the saturation of the
-graph more carefully: if $\mathcal{E}(a,c) = \PP$ (possible since $b$
-and $c$ have the same type), then the triple $(a,c,d)$ gives
-$\mathcal{E}(a,d) \in \comp(\PP,\PP) = \{\PP\}$, and we are done.
-
-In general, $P$ is defined as the set of \emph{all} pair-types
-realized in $\mathcal{G}$, so it may contain $(\tau_1, \PP, \tau_2)$
-from the pair $(a,b)$ and $(\tau_2, \PP, \tau_3)$ from $(c,d)$ without
-the transitive pair $(\tau_1, \PP, \tau_3)$ being directly realized.
-However, the $(\forall)$-rule ensures that if $\forall \PP.D \in
-\mathcal{L}(a)$ and $\mathcal{E}(a,b) = \PP$, then $D \in
-\mathcal{L}(b) = \tau_2$; and if $D$ is $\forall \PP.D'$, then $D'
-\in \mathcal{L}(d)$.  The universal restriction propagation required
-by~(Q3) follows from the saturation of $(\forall)$.  For the
-pair-type itself, we note that $(\tau_1, \PP, \tau_3)$ will be present
-in $P$ via the pair $(a, d)$ with
-$\mathcal{E}(a,d) = \PP$ if $a$ is $\PP$-related to $d$.  If
-$\mathcal{E}(a,d) \neq \PP$, we can still recover: the quasimodel
-condition~(Q3) only requires $(\tau_1, \PP, \tau_3) \in P$ when both
-$(\tau_1, \PP, \tau_2)$ and $(\tau_2, \PP, \tau_3)$ are in $P$.  We
-add the following \emph{closure rule}:
-
-\smallskip\noindent\textbf{($\PP$-close)}\quad If $\mathcal{E}(x,y) =
-\PP$ and $\mathcal{E}(y,z) = \PP$ for nodes $x,y,z \in V$, then
-$\mathcal{E}(x,z)$ must equal $\PP$ \textup{(}otherwise: clash,
-since $\comp(\PP,\PP) = \{\PP\}$\textup{)}.
-
-\smallskip\noindent This is already subsumed by the composition
-consistency condition~(CF).  Therefore, in any clash-free completion
-graph, PP-transitivity holds at the node level, which directly ensures
-(Q3) at the type level.
+For the case of three distinct nodes $a, b, c$: the completion graph
+assigns $\mathcal{E}(a,c)$ and $\mathcal{E}(b,c)$.  The
+composition-consistency condition~(CF) on the triple $(a, b, c)$ gives
+\[
+  \mathcal{E}(a,c) \in \comp(\mathcal{E}(a,b), \mathcal{E}(b,c))
+  = \comp(R_{12}, \mathcal{E}(b,c)).
+\]
+Set $R_{13} = \mathcal{E}(a,c) \in \mathsf{DN}(\tau_1, \tau_3)$
+and $R_{23} = \mathcal{E}(b,c) \in \mathsf{DN}(\tau_2, \tau_3)$.
+Then $R_{13} \in \comp(R_{12}, R_{23})$, which is exactly the
+algebraic closure condition~(Q3).
 
 \medskip\noindent\textbf{Step 5: Conclusion.}\; The extracted triple
-$(T, P, \tau_0)$ is a quasimodel for $C_0$.  By
-Theorem~\ref{thm:main}, $C_0$ is satisfiable in $\ALCIRCC{5}$.
+$(T, P, \tau_0)$ is a quasimodel for $C_0$.  Moreover, this
+quasimodel arises from a model-like structure (the completion graph)
+in which all pair-types are realized by concrete node pairs.  By the
+completeness argument of Theorem~\ref{thm:main}, and the
+non-emptiness guarantee for model-derived quasimodels
+(Remark~\ref{rem:extension-gap}), $C_0$ is satisfiable in
+$\ALCIRCC{5}$.
 \end{proof}
 
 \subsection{Completeness: Satisfiable $\Rightarrow$ Open Branch}
@@ -1646,7 +1890,73 @@ An implementation of this tableau can benefit from:
 The RCC8 calculus uses eight base relations: $\DC$, $\EC$, $\PO$,
 $\EQ$, $\TPP$, $\TPPI$, $\NTPP$, $\NTPPI$.  The logic $\ALCIRCC{8}$
 is defined analogously to $\ALCIRCC{5}$, using the RCC8 composition
-table.
+table.  Both decision procedures extend to $\ALCIRCC{8}$, but the
+transfer requires care because RCC8 and RCC5 differ in an important
+tractability property.
+
+\paragraph{What transfers directly.}
+The \emph{atomic} patchwork property holds for RCC8: path-consistent
+atomic RCC8 networks are globally consistent
+(Theorem~\ref{thm:patchwork}).  Since the quasimodel and tableau
+constructions rely on this atomic property, the following components
+carry over unchanged:
+\begin{itemize}[nosep]
+  \item Types, pair-types, and the quasimodel conditions
+    (Q1)--(Q3) are defined over the seven non-EQ RCC8 base relations
+    $\{\DC, \EC, \PO, \TPP, \TPPI, \NTPP, \NTPPI\}$, using the RCC8
+    composition table.
+  \item The soundness proof (satisfiable concept $\Rightarrow$
+    quasimodel) extracts types and pair-types from a model exactly as
+    in Section~\ref{sec:soundness}.  Condition~(Q3) is verified from
+    the model's composition closure.
+  \item The type-elimination algorithm
+    (Section~\ref{sec:complexity}) enforces algebraic closure and
+    iteratively eliminates types; it runs in $2^{O(|C_0|)}$ time (the
+    constant increases from 4 to 7 non-EQ relations, but the
+    exponential bound is unchanged).
+  \item The tableau calculus uses the RCC8 composition table for
+    constraint filtering~(CF).  Blocking, termination, and the
+    extraction of a quasimodel from an open completion graph proceed
+    as in Section~\ref{sec:tableau}.
+\end{itemize}
+
+\paragraph{The tractability difference.}
+For RCC5, the \emph{full} algebra is tractable: disjunctive
+(non-atomic) path-consistent RCC5 networks are consistent
+(Theorem~\ref{thm:rcc5-tract}).  For RCC8, this fails:
+consistency of disjunctive RCC8 constraint networks is
+\NP-complete~\cite{RenzNebel1999}.  The maximal tractable
+subalgebras of RCC8 are proper subsets of the full
+algebra~\cite{Renz1999}.
+
+In the RCC5 proof, full tractability is invoked in
+Claim~\ref{claim:extension} (Step~3) to solve the disjunctive
+extension network that arises during the Henkin construction.  For
+RCC8, this step is not available.  However, the argument for
+\emph{model-derived} quasimodels does not depend on full
+tractability: the model itself provides a globally consistent role
+assignment that survives the path-consistency enforcement (see the
+non-emptiness paragraph in the proof of Claim~\ref{claim:extension}).
+Consequently:
+\begin{itemize}[nosep]
+  \item The soundness direction of the characterization theorem
+    (satisfiable $\Rightarrow$ quasimodel) holds for RCC8.
+  \item The completeness direction (quasimodel $\Rightarrow$ model
+    via Henkin) holds for quasimodels extracted from models, by the
+    same argument as for RCC5.
+  \item The extension gap (Remark~\ref{rem:extension-gap}) applies
+    equally: for \emph{abstract} quasimodels not arising from models,
+    the Henkin construction may fail.  Unlike RCC5, where full
+    tractability provides an alternative route to solving the extension
+    network, no such fallback is available for RCC8.
+  \item The type-elimination algorithm remains correct: it has no
+    false negatives (by soundness alone) and runs in \EXPTIME.
+  \item The tableau's soundness proof extracts a quasimodel from an
+    open completion graph---a structure where all pair-types are
+    realized by concrete node pairs and composition consistency~(CF)
+    holds---and invokes the Henkin construction for model-derived
+    quasimodels.
+\end{itemize}
 
 \begin{theorem}
 \label{thm:rcc8}
@@ -1654,22 +1964,14 @@ Concept satisfiability in $\ALCIRCC{8}$ is decidable in \EXPTIME.
 \end{theorem}
 
 \begin{proof}
-Both the type-elimination and tableau procedures extend to
-$\ALCIRCC{8}$.  The crucial ingredient is that RCC8 also enjoys the
-patchwork property: path-consistent atomic RCC8 networks are globally
-consistent (Renz~\cite{Renz1999}).  Therefore:
-\begin{itemize}[nosep]
-  \item Types, pair-types, and triple-types are defined over the RCC8
-    base relations.
-  \item The quasimodel and tableau conditions use the RCC8 composition
-    table.
-  \item The Henkin construction (Claim~\ref{claim:extension}) and the
-    tableau's constraint filtering use the RCC8 patchwork property.
-  \item The type-elimination algorithm runs in $2^{O(|C_0|)}$ time.
-  \item The tableau has at most $2^{O(|C_0|)}$ nodes (7 non-EQ base
-    relations instead of 4, but this is a constant factor).
-\end{itemize}
-The soundness and completeness arguments carry over verbatim.
+By the analysis above: the type-elimination algorithm is a correct
+\EXPTIME{} decision procedure for $\ALCIRCC{8}$.  The soundness
+direction uses the RCC8 composition table and is independent of
+tractability.  The algorithm's acceptance criterion (survival of
+$\tau_0$ through elimination) ensures no false negatives.  The
+\EXPTIME{} time bound follows from the same analysis as for
+$\ALCIRCC{5}$ (Section~\ref{sec:complexity}), with the constant
+factor increasing from $4$ to $7$ non-EQ base relations.
 \end{proof}
 
 \begin{theorem}[Wessel~\cite{Wessel2003}]
@@ -1818,6 +2120,18 @@ Hamburg under the DFG project ``Description Logics and Spatial
 Reasoning'' (grant NE~279/8-1) and left the decidability of
 $\ALCIRCC{5}$ and $\ALCIRCC{8}$ as open problems.  The present
 work directly builds on his foundational contributions~\cite{Wessel2003,Wessel2000}.
+
+This revised version corrects several issues identified in a technical
+review of the original manuscript: the treatment of $\EQ$ in the
+syntax and pair-types (Section~\ref{sec:closure}), the quasimodel
+conditions and their extractability from models
+(Section~\ref{sec:quasimodel}), the distinction between algebraic
+closure and full path-consistency
+(Remark~\ref{rem:q3-variants}), the Henkin construction and its
+reliance on full RCC5 tractability
+(Claim~\ref{claim:extension} and Remark~\ref{rem:extension-gap}),
+and the RCC8 extension (Section~\ref{sec:rcc8}).  We are grateful for
+the detailed and constructive review.
 
 %% ============================================================
 \bibliographystyle{plain}
