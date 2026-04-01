@@ -66,6 +66,18 @@ Despite the gaps, the papers introduce proof machinery that narrows the open pro
 - The contextual tableau cleanly separates the soundness (unfolding) argument from the completeness (extraction) argument. The FW counterexample shows that the extraction problem is fundamentally hard: infinite PP-chains cannot be finitely represented in the recentering framework.
 - The root cause is the combination of (i) transitivity of PP, (ii) universal propagation of ∀PP along PP-chains, and (iii) the complete-graph requirement. Any successful decidability proof — or undecidability reduction — must engage with this combination directly.
 
+### Ongoing discussion: the omega-model direction
+
+After the FW(C,N) counterexample, GPT-5.4 proposed a [status assessment](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.pdf) distinguishing two levels of finiteness:
+- **(A) Strong finiteness** (exact local-state closure with recentering) — **refuted** by the FW counterexample.
+- **(B) Weak finiteness** (bounded local descriptors around a finite core) — possibly still true and useful as a finite alphabet for a future decision procedure.
+
+GPT proposes a **regular omega-model theorem** as the missing ingredient: a representation of models using finitely many local interface signatures, finitely many PP/PPI thread control states, and a Buchi/parity-style acceptance condition for infinite proper-part chains. This is analogous to how mu-calculus extensions of DLs handle infinite paths via automata.
+
+Claude's [formal response](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) agrees with the (A)/(B) distinction and the omega-model direction but notes that: (1) the quasimodel work's soundness is fully proven (not merely a "setup"), (2) the patchwork property is used correctly (the extension gap is an honestly documented open problem, not a misuse), (3) the omega-model proposal identifies the right architecture but provides no proofs — each of its four tasks (interface transfer, omega-acceptance, regular extraction, realization) is a non-trivial research problem, and (4) the feasibility hinges on a concrete sub-question:
+
+> **Is the sequence of Hintikka types along an infinite PP-chain eventually periodic?** If yes, the omega-model route is viable. If no, even the type sequence is irregular, pointing toward undecidability.
+
 ---
 
 This repository contains a proof attempt for concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8, targeting open problems from Wessel (2002/2003).
@@ -369,6 +381,8 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`ALCI_RCC5_contextual_tableau_draft.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.pdf) -- Contextual tableau paper by GPT-5.4 Pro; starting point for the FW(C,N) discussion ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.tex))
 - [**`FW_proof_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) -- Counterexample to FW(C,N): the contextual tableau's completeness conjecture is false (7 pages)
 - [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
+- [**`ALCI_RCC5_status_after_FW.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.pdf) -- GPT-5.4's status assessment after FW failure; proposes omega-model direction ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.tex))
+- [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
 - [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
 - [**`CONVERSATION.md`**](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) -- Full conversation log between Michael Wessel and Claude
 

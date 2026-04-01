@@ -486,3 +486,68 @@ The counterexample was written up as a 7-page document (`FW_proof_ALCIRCC5.tex`)
 - `FW_proof_ALCIRCC5.tex` / `.pdf` — Counterexample to FW(C,N)
 - `ALCI_RCC5_contextual_tableau_draft.tex` / `.pdf` — GPT-5.4's contextual tableau paper (added to repository)
 - Updated `README.md` with FW counterexample section and revised status
+
+---
+
+## Part 13: GPT's Status Assessment and the Omega-Model Proposal
+
+### GPT-5.4's response to the FW counterexample
+
+After the FW(C,N) counterexample was published, GPT-5.4 Thinking wrote a status assessment note (`ALCI_RCC5_status_after_FW.tex`) integrating the result with all prior work. Key contributions of that note:
+
+**The (A)/(B) distinction.** GPT correctly distinguishes two levels of finiteness:
+- **(A) Strong finiteness** — exact local-state closure with recentering maps (R1)–(R4). This is what FW(C,N) asserted. **Refuted** by the counterexample.
+- **(B) Weak finiteness** — bounded local descriptors around a finite core. A separate GPT note claims the number of bounded-depth contextual signatures is computable. This is a local counting statement that is NOT refuted by the counterexample.
+
+**The omega-model proposal.** GPT proposes replacing the fixed-width closed family with a "regular omega-model theorem" — a representation using:
+1. A finite alphabet of local interface signatures
+2. Finitely many abstract control states for PP/PPI threads
+3. A Buchi/parity-style acceptance condition for infinite proper-part chains
+
+This is analogous to how mu-calculus extensions of DLs handle infinite paths via two-way alternating parity tree automata (2APTAs).
+
+**Four-task roadmap:**
+1. Replace exact recentering by interface transfer (preserve only the finite interface, not the full item set)
+2. Add an explicit omega-acceptance mechanism for PP/PPI threads
+3. Prove regular extraction (every model's PP-behavior is omega-regular at the signature level)
+4. Prove realization (accepted objects expand to genuine RCC5 models via patchwork)
+
+**Reference to Wessel's "infinity checker."** GPT notes that Wessel himself (2003, p. 49) suggested that something like an "infinity checker" would be needed, and the FW counterexample confirms this.
+
+### Claude's formal response
+
+Claude wrote a formal response (`response_to_status_note.tex`) addressing GPT's note point by point.
+
+**Points of agreement:**
+- The (A)/(B) distinction is the right conceptual move
+- The omega-model direction is architecturally plausible
+- The callback to Wessel's infinity checker is apt
+- Decidability remains open
+
+**Two corrections to GPT's characterization of the quasimodel work:**
+
+1. **The patchwork property is not "misused."** GPT's note claims the quasimodel proof "misuses patchwork at the global amalgamation step." This is inaccurate. The revised paper uses the atomic patchwork property for atomic networks and full RCC5 tractability (Renz 1999) for disjunctive networks — both correctly. The extension gap is that path-consistency enforcement may empty domains for abstract quasimodels. This is an honestly documented open problem, not a mathematical error.
+
+2. **Soundness is proven, not merely a "setup."** GPT's table describes the quasimodel work as providing only "a natural first abstraction." In fact: (a) soundness (satisfiable → quasimodel) is fully proven with no gap, and (b) the EXPTIME type-elimination algorithm has no false negatives — if C₀ is satisfiable, it accepts. These are non-trivial results.
+
+**Evaluation of the omega-model proposal:**
+
+The architecture is plausible but none of the four tasks are addressed:
+- **Interface transfer** — what replaces (R1)–(R4)? No formal definition is given.
+- **Omega-acceptance** — Buchi/parity conditions work on paths through a graph, but in complete-graph models, what is the "run"? The structure the acceptance condition operates on is undefined.
+- **Regular extraction** — this is essentially the same completeness problem in new clothing. Showing that every model's PP-behavior is "regular at the level of finite interface signatures" is the core difficulty, unproven.
+- **Realization** — depends entirely on the undefined framework.
+
+**A concrete sub-question posed to both sides:**
+
+> Is the sequence of Hintikka types along an infinite PP-chain eventually periodic? That is, do there exist computable n₀ and p (depending only on |C|) such that tp(e_{n+p}) = tp(e_n) for all n ≥ n₀?
+
+If **yes**: the omega-model route is viable (PP-chains are ultimately periodic).
+If **no**: even the type sequence along a PP-chain can be irregular, pointing toward undecidability.
+
+This question is answerable without building the full omega-model machinery. Its answer would determine which direction to pursue.
+
+### Files produced
+- `ALCI_RCC5_status_after_FW.tex` / `.pdf` — GPT-5.4's status assessment
+- `response_to_status_note.tex` / `.pdf` — Claude's formal response
+- Updated `README.md` with omega-model discussion section and new file listings
