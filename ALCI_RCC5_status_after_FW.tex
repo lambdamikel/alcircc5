@@ -1,0 +1,213 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{mdframed}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,citecolor=blue!45!black,urlcolor=blue!45!black}
+
+\definecolor{accent}{RGB}{34,71,120}
+\definecolor{lightaccent}{RGB}{236,242,249}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist[itemize]{topsep=0.25em,itemsep=0.2em,leftmargin=1.5em}
+\setlist[enumerate]{topsep=0.25em,itemsep=0.2em,leftmargin=1.8em}
+
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}[proposition]{Remark}
+\newtheorem{definition}[proposition]{Definition}
+
+\newcommand{\ALCIRCC}{\mathsf{ALCI}_{\mathsf{RCC5}}}
+\newcommand{\Eq}{\mathsf{EQ}}
+\newcommand{\Dr}{\mathsf{DR}}
+\newcommand{\Po}{\mathsf{PO}}
+\newcommand{\Pp}{\mathsf{PP}}
+\newcommand{\Ppi}{\mathsf{PPI}}
+\newcommand{\FW}{\mathsf{FW}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\cl}{\operatorname{cl}}
+
+\title{\textbf{What Is Still Missing for Decidability of $\ALCIRCC$?}\\[0.35em]
+\large After the failure of fixed-width extraction}
+\author{Prepared by GPT-5.4 Thinking}
+\date{31 March 2026}
+
+\begin{document}
+\maketitle
+
+\begin{mdframed}[backgroundcolor=lightaccent,linecolor=accent]
+\textbf{Purpose.}
+This short note integrates three strands of the current discussion around $\ALCIRCC$:
+Wessel's original open-problem report \cite{Wessel2003}, the later quasimodel draft \cite{Claude2026Quasi}, and the new counterexample showing that the fixed-width extraction conjecture $\FW(C,N)$ fails \cite{Claude2026FW}. It also records what still survives from the contextual-signature counting approach developed in the accompanying 2026 notes \cite{GPT2026Bound,GPT2026Tableau}.
+\end{mdframed}
+
+\begin{abstract}
+The decidability of $\ALCIRCC$ remains open. Two proposed 2026 routes are now blocked for different reasons. First, the quasimodel paper does not yet yield a correct completeness proof: the abstraction by unary types and pair-types is too coarse, and the patchwork step does not justify the needed global amalgamation \cite{Claude2026Quasi}. Second, the contextual tableau route is no longer merely incomplete: the attached counterexample proves that its key finite-width extraction conjecture $\FW(C,N)$ is false for every $N$ on the satisfiable concept
+\[
+C_\infty=(\exists \Pp.\top)\sqcap(\forall \Pp.\exists \Pp.\top),
+\]
+which has only infinite models \cite{Claude2026FW,Wessel2003}.
+
+What survives is a weaker local result: around a fixed finite designated core, one can still bound the number of bounded-depth contextual signatures by a computable function of $|C|$ \cite{GPT2026Bound}. What is missing now is a theorem that converts this local finiteness into a genuine decision procedure. In concrete terms, one needs a \emph{regular omega-model theorem}: every satisfiable concept should admit a representation by finitely many local interface signatures together with finitely many abstract $\Pp/\Ppi$ thread states and an acceptance condition handling infinite proper-part chains. Without such an omega-level regularity theorem, the current finite abstractions are either too weak (unary quasimodels) or too rigid (fixed-width exact recentering).
+\end{abstract}
+
+\section{Background}
+
+Wessel's report introduced the $\mathsf{ALCIRCC}$ family and explicitly left the decidability of $\ALCIRCC$ and $\mathsf{ALCI}_{\mathsf{RCC8}}$ open. The report also emphasizes the two structural obstacles that distinguish these logics from ordinary description logics: models are complete graphs rather than trees, and the concept
+\[
+(\exists \Pp.\top)\sqcap(\forall \Pp.\exists \Pp.\top)
+\]
+shows that there is no finite model property \cite[pp.~16--20, 48--50]{Wessel2003}. Any successful decision procedure therefore has to cope with infinite $\Pp$-chains directly.
+
+The later quasimodel draft claims positive decidability results for $\ALCIRCC$ and $\mathsf{ALCI}_{\mathsf{RCC8}}$ via a type-based abstraction and patchwork arguments \cite{Claude2026Quasi}. However, that route still has serious proof problems: the abstraction identifies elements by unary closure types and pair-types, which loses witness identity, and the argument from local compatibility to a single global assignment is not justified by the RCC patchwork property in the form used there.
+
+In response, the contextual tableau idea replaced plain unary types by finite contextual local states. Its soundness direction is plausible: an open tableau graph can be unfolded into a genuine model. Completeness, however, was reduced to a finite-width extraction conjecture $\FW(C,N)$ stating that every satisfiable concept has some bounded-width closed family of such local states \cite{GPT2026Tableau}.
+
+\section{What the new counterexample settles}
+
+The attached note proves that $\FW(C,N)$ is false for every $N$ on the concept
+\[
+C_\infty=(\exists \Pp.\top)\sqcap(\forall \Pp.\exists \Pp.\top).
+\]
+The mechanism is simple and convincing \cite{Claude2026FW}:
+\begin{itemize}
+\item In any local state, the relation $\Pp$ on the remembered items is a finite strict partial order.
+\item Every finite strict partial order has a maximal element.
+\item But the recentering axioms force every designated $\Pp$-witness to become the center of a successor state whose own $\exists\Pp.\top$ demand must again be witnessed.
+\item When those successor witnesses are transported back into the original root state, one obtains an arbitrarily long strictly ascending $\Pp$-chain inside one finite carrier, contradiction.
+\end{itemize}
+
+This is not a refutation of satisfiability of $C_\infty$; indeed $C_\infty$ has obvious infinite chain models. It is a refutation of the claim that such models can always be compressed into a \emph{finite closed family of exact local states with total recentering back into a finite parent carrier}. That is the crucial point.
+
+\begin{proposition}
+After \cite{Claude2026FW}, the fixed-width contextual tableau strategy is no longer an incomplete proof attempt. Its central completeness conjecture is false.
+\end{proposition}
+
+\section{How this interacts with the earlier 2026 notes}
+
+The main integration point is a distinction between two different finiteness claims.
+
+\subsection*{(A) Strong finiteness: exact local-state closure}
+This is the claim attacked by $\FW(C,N)$. It says, in effect, that every satisfiable concept can be represented by finitely many exact local states whose successor states recenter back into one another via literal item-by-item maps. The new counterexample shows that this is too strong.
+
+\subsection*{(B) Weak finiteness: bounded local descriptors}
+By contrast, the finite-width bound from the signature-counting note only asserts that, around a fixed finite designated core, there are only finitely many \emph{bounded-depth contextual signatures} relevant to formulas of modal depth at most $\md(C)$ \cite{GPT2026Bound}. This is a local counting statement, not a claim that all those signatures can be assembled into a finite exact closed family obeying the recentering axioms.
+
+So the new counterexample does \emph{not} automatically destroy the signature-counting result. What it destroys is the stronger step that tried to pass from local finite descriptors to a closed finite-state tableau object with exact recentering. The correct lesson is:
+\begin{quote}
+Local descriptor finiteness may still be true and useful, but it is not enough on its own. Infinite $\Pp$-progress cannot be encoded by exact finite recentering.
+\end{quote}
+
+\section{Current status of the three routes}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.26\textwidth}>{\raggedright\arraybackslash}p{0.26\textwidth}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Route} & \textbf{What works} & \textbf{Why it does not yet decide $\ALCIRCC$} \\
+\midrule
+Wessel 2003 \cite{Wessel2003} & Correct problem analysis; lower bounds; explicit identification of infinite $\Pp$-chains and lack of tree/finite model properties. & Leaves decidability open. \\
+\addlinespace
+Quasimodel draft \cite{Claude2026Quasi} & The type-level setup is a natural first abstraction. & The proof still loses witness identity and misuses patchwork at the global amalgamation step. \\
+\addlinespace
+Contextual tableau draft \cite{GPT2026Tableau} & Soundness direction is plausible: an accepted abstract object can be unfolded into a model. & Completeness rested on $\FW(C,N)$, now refuted by \cite{Claude2026FW}. \\
+\addlinespace
+Contextual-signature bound \cite{GPT2026Bound} & Provides a computable local descriptor bound around a fixed finite core. & Does not explain how to represent infinite $\Pp/\Ppi$ progress by a finite accepted object. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{What is now missing}
+
+The missing ingredient is not a small patch. It is a new \emph{regularity theorem} for infinite proper-part progress.
+
+\begin{definition}[informal target theorem]
+A \emph{regular omega-model theorem} for $\ALCIRCC$ would say that every satisfiable concept $C$ has a model representable by:
+\begin{enumerate}
+\item a finite alphabet of local interface signatures derived from $\cl(C)$,
+\item finitely many abstract control states for $\Pp/\Ppi$ threads, and
+\item an acceptance condition guaranteeing that infinite proper-part chains are realized by fresh progress rather than by illicit reuse inside a finite strict partial order.
+\end{enumerate}
+\end{definition}
+
+In practice, this means four separate tasks remain.
+
+\begin{enumerate}
+\item \textbf{Replace exact recentering by interface transfer.}
+A successor state should preserve only the finite interface to the old context, not embed its entire item set back into the parent.
+
+\item \textbf{Add an explicit omega-mechanism.}
+A calculus for $C_\infty$ must accept an infinite $\Pp$-thread. Wessel already suggested that something like an ``infinity checker'' would be needed here \cite[p.~49]{Wessel2003}. The new counterexample confirms that ordinary blocking is not enough.
+
+\item \textbf{Prove regular extraction.}
+One needs a theorem that every satisfiable concept admits a model whose infinite $\Pp$-behavior is regular at the level of the finite interface signatures.
+
+\item \textbf{Prove realization.}
+Given such a finite omega-regular abstract object, one must still show that it expands to a genuine RCC5 model. This is the point where the patchwork property should enter, but only after the abstraction has been designed correctly.
+\end{enumerate}
+
+\section{A plausible next route}
+
+The most promising route now seems to be the following hybrid strategy.
+
+\begin{enumerate}
+\item Keep the contextual-signature bound as the \emph{finite alphabet}. It still gives a computable repertoire of local interface types \cite{GPT2026Bound}.
+\item Abandon exact fixed-width recentering. The counterexample shows that literal finite carrier reuse is the wrong invariant \cite{Claude2026FW}.
+\item Replace it with a Buchi- or parity-style acceptance condition for $\Pp/\Ppi$ threads. Infinite proper-part progress should be handled semantically by accepted runs, not by embedding an infinite chain into one finite local state.
+\item Then prove a regular-model theorem and a realization theorem.
+\end{enumerate}
+
+This is also the route most consistent with Wessel's original diagnosis. The core issue was never merely ``how many local configurations are there?''; it was always ``how can a finite procedure soundly represent infinite $\Pp$-progress in complete-graph models?'' \cite{Wessel2003}. The new counterexample clarifies that the answer cannot be ``by exact finite recentering.''
+
+\section{Conclusion}
+
+The state of play is now clearer than before.
+
+\begin{itemize}
+\item The quasimodel proof is still not a finished decidability proof.
+\item The fixed-width contextual tableau completeness conjecture is false.
+\item A weaker finite local descriptor bound may still be correct and useful.
+\item The missing step is now sharply identifiable: a regular omega-model theorem handling infinite $\Pp/\Ppi$ chains.
+\end{itemize}
+
+So the decidability of $\ALCIRCC$ remains open, but the open problem is better focused than before. The right target is no longer a finite closed family of exact local states. It is a finite \emph{omega-regular} abstraction of complete-graph models with proper-part threads.
+
+\begin{thebibliography}{9}
+
+\bibitem{Claude2026FW}
+Claude (Anthropic).
+\newblock \emph{On the Failure of Finite-Width Extraction for $\mathsf{ALCI\_RCC5}$: A Counterexample to the $\mathsf{FW}(C,N)$ Conjecture and Its Implications for the Contextual Tableau Approach}.
+\newblock Discussion draft, 2026.
+
+\bibitem{Claude2026Quasi}
+Claude (Anthropic).
+\newblock \emph{On the Decidability of $\mathsf{ALCIRCC5}$ and $\mathsf{ALCIRCC8}$: Quasimodels Meet the Patchwork Property}.
+\newblock Discussion draft, 2026.
+
+\bibitem{GPT2026Bound}
+GPT-5.4 Pro.
+\newblock \emph{A Finite-Width Bound for Contextual Signatures in $\mathsf{ALCI}_{\mathsf{RCC5}}$}.
+\newblock Discussion draft, 2026.
+
+\bibitem{GPT2026Tableau}
+GPT-5.4 Pro.
+\newblock \emph{A Contextual Tableau Calculus for $\mathsf{ALCI}_{\mathsf{RCC5}}$}.
+\newblock Discussion draft, 2026.
+
+\bibitem{Wessel2003}
+Michael Wessel.
+\newblock \emph{Qualitative Spatial Reasoning with the ALCIRCC Family - First Results and Unanswered Questions}.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+
+\end{thebibliography}
+
+\end{document}
