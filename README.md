@@ -390,7 +390,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 
 1. M. Wessel. ["Qualitative Spatial Reasoning with the ALCI\_RCC Family -- First Results and Unanswered Questions."](https://github.com/lambdamikel/alcircc5/blob/master/report7.pdf) Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
 
-2. M. Wessel. "Decidable and Undecidable Extensions of ALC with Composition-Based Role Inclusion Axioms." Technical Report FBI-HH-M-301/01, University of Hamburg, 2000.
+2. M. Wessel. ["Decidable and Undecidable Extensions of ALC with Composition-Based Role Inclusion Axioms."](https://github.com/lambdamikel/alcircc5/blob/master/report5.pdf) Technical Report FBI-HH-M-301/01, University of Hamburg, 2000.
 
 3. J. Renz and B. Nebel. "On the Complexity of Qualitative Spatial Reasoning: A Maximal Tractable Fragment of the Region Connection Calculus." Artificial Intelligence, 108(1-2):69-123, 1999.
 
