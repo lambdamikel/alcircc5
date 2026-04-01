@@ -618,3 +618,42 @@ and asked whether combining them establishes decidability.
 - `report6.pdf` — Wessel (2001): Undecidability of ALC\_RA
 - `report4.pdf` — Wessel (2000): Undecidability of ALC\_RA⊖ (slightly revised)
 - Updated `README.md` with undecidability reduction analysis, non-composability explanation, and report references
+
+---
+
+## Part 15: The Alternating-Type Trick and the TPP/NTPP Distinction in RCC8
+
+### Michael Wessel
+
+> Consider TPP and NTPP in ALCI\_RCC8, so we can distinguish direct and indirect successor. Now, can we encode the tape (and machine state) of a Turing machine via Hintikka types on the potentially infinite TPP chain? Similar to the counter? And reduce it to the halting problem?
+
+### Claude
+
+*[Analyzed whether the TPP/NTPP distinction in RCC8 could enable a Turing machine encoding along a TPP-chain, potentially proving ALCI\_RCC8 undecidable.]*
+
+**The alternating-type trick (novel observation).** In RCC8, TPP∘TPP ⊆ {TPP, NTPP} — the composition is non-deterministic. But concept-level constraints can eliminate the TPP option for non-adjacent pairs. Using alternating concepts A, B (with A ⊓ B ⊑ ⊥) along a TPP-chain: if x₀ satisfies A ⊓ ∀TPP.B and x₂ satisfies A, then TPP(x₀, x₂) would force x₂ to satisfy B (from ∀TPP.B), contradicting A ⊓ B = ⊥. So NTPP(x₀, x₂) is forced.
+
+This means: on the chain, each element's TPP-successors are **exactly its immediate neighbors**. This is effectively functionality of TPP — achieved purely by concept constraints, without number restrictions. RCC5 cannot do this because PP has no finer subdivision.
+
+**What this enables for TM encoding:**
+- TPP serves as a "next cell" relation (immediate successor only)
+- TPPI = TPP⁻ gives backward navigation ("previous cell")
+- Tape symbols can be encoded as mutually exclusive concept names
+- Head position and machine state can be encoded as concept markers
+- Local transition rules can be expressed via ∀TPP constraints
+
+**What still blocks a full TM encoding:**
+- The standard encoding needs 2D (time × space); one TPP-chain gives only 1D
+- Linking corresponding tape cells across time steps requires either a second independent chain or row-major interleaving — both need some form of counting
+- Counter machine (Minsky machine) encodings face the same obstacle: verifying that a counter changed by exactly ±1 requires comparing chain lengths, which is counting in disguise
+
+**The omega-regularity question.** The trick also sharpens the decidability question. In RCC5, ∀PP propagates uniformly to all proper parts — an omega-regular constraint. In RCC8, the trick **separates** the constraints: ∀TPP applies only to the immediate successor, while ∀NTPP applies to all elements ≥ 2 steps away. This is more expressive. The critical question:
+
+> Can the interaction of ∀TPP and ∀NTPP constraints, combined with the RCC8 composition table, force non-regular patterns in the type sequence along a TPP-chain?
+
+If yes, ALCI\_RCC8 may be undecidable even if ALCI\_RCC5 is decidable. If no, the omega-model approach (Büchi automata) should work for both.
+
+**Key new insight.** This observation suggests that ALCI\_RCC5 and ALCI\_RCC8 may have **different decidability status** — a possibility not previously considered. The TPP/NTPP distinction gives ALCI\_RCC8 a structural advantage (distinguishable immediate vs. non-immediate successors) that ALCI\_RCC5 entirely lacks.
+
+### Files produced
+- Updated `README.md` with alternating-type trick analysis and omega-regularity question

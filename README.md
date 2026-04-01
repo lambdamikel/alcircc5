@@ -112,6 +112,36 @@ The following table surveys all standard candidate reductions:
 
 The fact that every standard technique is blocked is evidence *for* decidability — ALCI\_RCC5 sits below the known undecidability boundary. But it sits above the known decidable fragments (ALCI\_RCC1/2/3, ALC\_RA\_SG), making the question genuinely open from both directions.
 
+### The alternating-type trick: ALCI\_RCC8 may be structurally stronger than ALCI\_RCC5
+
+In RCC5, PP is a single undifferentiated "proper part" relation — there is no way to distinguish immediate from non-immediate successors on a PP-chain. In RCC8, PP splits into **TPP** (tangential proper part) and **NTPP** (non-tangential proper part), and concept-level constraints can force TPP to act as an **immediate-successor relation**.
+
+**The trick.** Consider a TPP-chain x₀ TPP x₁ TPP x₂ TPP ... with alternating concepts A, B (where A ⊓ B ⊑ ⊥):
+
+- x₀ satisfies A ⊓ ∀TPP.B
+- x₁ satisfies B ⊓ ∀TPP.A
+- x₂ satisfies A ⊓ ∀TPP.B, ...
+
+Now suppose TPP(x₀, x₂). Then x₂ must satisfy B (from x₀'s ∀TPP.B). But x₂ satisfies A, and A ⊓ B = ⊥. Contradiction. So **NTPP(x₀, x₂) is forced**. The same argument applies to any pair k ≥ 2 apart. The composition table allows TPP∘TPP ∈ {TPP, NTPP}, but the concept constraints eliminate the TPP option for non-adjacent pairs.
+
+**Consequence.** On the chain, each element's TPP-successors are **exactly its immediate neighbors**. This is effectively functionality of TPP on the chain — achieved purely by concept-level constraints, without number restrictions. RCC5 cannot do this because PP has no finer subdivision.
+
+**What this enables.** With TPP as "next cell" and TPPI = TPP⁻ as "previous cell":
+- Tape symbols can be encoded as mutually exclusive concept names at each chain element
+- Head position and machine state can be encoded as concept markers
+- Local transition rules can be expressed via ∀TPP constraints
+- Backward navigation is available via TPPI (inverse)
+
+**What still blocks a full TM encoding.** A Turing machine encoding needs **two dimensions** (time × space). One TPP-chain gives only one dimension. Linking corresponding tape cells across time steps requires either a second independent chain (with enforced cross-links) or row-major interleaving (requiring a "jump" of W positions, which needs counting). Both routes remain blocked without number restrictions.
+
+Counter machine (Minsky machine) encodings face the same obstacle: linking "the chain at time t has length n" to "the chain at time t+1 has length n±1" requires establishing a bijection between consecutive chain elements — counting in disguise.
+
+**The omega-regularity question.** The alternating-type trick also sharpens the decidability question. A TPP-chain with Hintikka types is an omega-word over a finite alphabet. In RCC5, ∀PP propagates to all proper parts uniformly — a "global" constraint that stays within omega-regular expressiveness. In RCC8, the trick **separates** the constraints: ∀TPP.C applies only to the immediate successor, while ∀NTPP.C applies to all elements from 2 steps onward. This separation is more expressive. The critical question:
+
+> Can the interaction of ∀TPP and ∀NTPP constraints, combined with the RCC8 composition table constraints on cross-links, force **non-regular** patterns in the type sequence? If yes, ALCI\_RCC8 may be undecidable even if ALCI\_RCC5 is decidable. If no, the omega-model approach (Büchi automata) should work for both.
+
+This observation suggests that **ALCI\_RCC5 and ALCI\_RCC8 may have different decidability status** — a possibility not previously considered.
+
 ---
 
 This repository contains a proof attempt for concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8, targeting open problems from Wessel (2002/2003).
