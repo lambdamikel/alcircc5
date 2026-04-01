@@ -551,3 +551,70 @@ This question is answerable without building the full omega-model machinery. Its
 - `ALCI_RCC5_status_after_FW.tex` / `.pdf` — GPT-5.4's status assessment
 - `response_to_status_note.tex` / `.pdf` — Claude's formal response
 - Updated `README.md` with omega-model discussion section and new file listings
+
+---
+
+## Part 14: Wessel's Earlier Reports and Undecidability Reduction Analysis
+
+### Michael Wessel
+
+> *[Uploaded Wessel's original technical reports to the repository: report7.pdf (ALCI\_RCC family, 2002/2003), report5.pdf (Decidable and Undecidable Extensions, 2000), report6.pdf (Undecidability of ALC\_RA, 2001), and report4.pdf (Undecidability of ALC\_RA⊖, 2000). Asked Claude to analyze which known undecidable problems could be reduced to ALCI\_RCC5/RCC8 satisfiability.]*
+
+### Claude
+
+*[Surveyed all standard undecidability reduction techniques used in description logic complexity theory. Analyzed 9 candidate undecidable problems and their reducibility to ALCI\_RCC5.]*
+
+**Finding: Every standard undecidability reduction is blocked for ALCI\_RCC5.** All known DL undecidability proofs ultimately encode a two-dimensional grid (the Z×Z domino tiling problem), which fundamentally requires either functional roles, number restrictions, role intersection, or role value maps — none of which are present in ALCI\_RCC5. The patchwork property further resists grid encoding by ensuring local consistency implies global consistency.
+
+The 9 candidates analyzed:
+
+| Candidate | Technique | Missing Feature | Verdict |
+|---|---|---|---|
+| Z×Z Domino (Berger 1966) | Grid via graded modalities + transitivity + converse | Number restrictions | Blocked |
+| ALC\_RA⊖ (Wessel 2000) | CFG intersection via PCP | Arbitrary role box | Blocked |
+| ALCN\_RASG (Wessel 2000) | Grid via domino + number restrictions | Number restrictions | Blocked |
+| ALCF⁻ (features + inverse) | Grid via functional roles | Functional roles | Blocked |
+| GrIK4 (Zolin 2015) | Grid via counting + transitivity + converse | Number restrictions | Blocked |
+| Role value maps (Schmidt-Schauß 1989) | PCP via path equality | Role value map constructor | Blocked |
+| SHIN⁺ (transitive closure) | Grid via closure + hierarchy | Transitive closure operator | Blocked |
+| FO² + two orders (Schwentick-Zeume 2012) | Grid via two successor functions | Second order relation | Blocked |
+| ALC + role intersection | Various | JEPD (intersection empty) | Blocked |
+
+### Wessel's ALCN\_RASG proof vs. Zolin's GrIK4 proof
+
+Michael asked Claude to compare his ALCN\_RASG undecidability proof (report5.pdf, Section 5) with Zolin's GrIK4 result.
+
+**Conclusion: Same core argument, different packaging.** Both reduce from the N×N domino tiling problem. Both use number restrictions/counting to enforce grid functionality (exactly one horizontal and one vertical successor per element). Wessel's proof is simpler because the admissible role box provides separate roles (R\_X, R\_Y) as grid directions; Zolin must encode both directions within a single transitive relation using 16 propositional type labels. Neither proof requires inverse roles. Both *fundamentally* require number restrictions — the one feature ALCI\_RCC5 lacks.
+
+Notably, Wessel conjectured (report5.pdf, p. 38) that ALCI\_RASG — adding inverse roles but not number restrictions — might still be decidable. This supports the hypothesis that counting, not inverse or transitivity, is the critical dividing line for undecidability.
+
+### Can ALC\_RASG decidability carry over to ALCI\_RCC5?
+
+Michael asked whether the ALC\_RASG decidability proof could be adapted for ALCI\_RCC5.
+
+**Answer: No, for three reasons:**
+
+1. **Non-deterministic composition (fundamental blocker).** ALC\_RASG requires deterministic role boxes (each composition S∘T has exactly one result). The RCC5 composition table has multi-valued entries (e.g., PP∘DR = {DR, PO, PP}). The ALC\_RASG tableau and TBox reduction both rely on determinism to propagate universal restrictions uniquely along paths.
+
+2. **Inverse roles.** ALC\_RASG has no inverse roles. ALCI\_RCC5 has PPI = PP⁻. Inverse roles break the one-directional path structure that makes ALC\_RASG's tree-model reasoning work.
+
+3. **Complete-graph models.** ALC\_RASG models are tree-shaped; ALCI\_RCC5 models are complete graphs. The tree structure is essential for ALC\_RASG: each element's context is uniquely determined by its root-path.
+
+**The patchwork property as compensating mechanism.** Where ALC\_RASG gets decidability from determinism (one composition result → one propagation path), ALCI\_RCC5 could potentially get it from patchwork (local consistency → global consistency). This is exactly what the quasimodel approach attempts — but whether patchwork fully compensates for non-determinism is the extension gap.
+
+### The "two proven results don't compose" observation
+
+Michael observed that the summary table shows two proven results with complementary gaps:
+- Quasimodel approach: satisfiable → quasimodel (proven)
+- Contextual tableau: open tableau → model (proven)
+
+and asked whether combining them establishes decidability.
+
+**Answer: No.** The chain would require a bridge: quasimodel → open contextual tableau. But the FW counterexample proves this bridge cannot exist in general. For C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤), a quasimodel exists (by Claude's proven soundness) but no finite-width contextual tableau exists (FW refuted for every N). The two results operate on *different* intermediate representations with gaps on *opposite* sides. If they were opposite sides of the *same* representation, they would compose — but they don't.
+
+### Files produced
+- `report7.pdf` — Wessel (2002/2003): ALCI\_RCC family, original open problems
+- `report5.pdf` — Wessel (2000): Decidable (ALC\_RASG) and undecidable (ALCN\_RASG, ALC\_RA⊖) extensions
+- `report6.pdf` — Wessel (2001): Undecidability of ALC\_RA
+- `report4.pdf` — Wessel (2000): Undecidability of ALC\_RA⊖ (slightly revised)
+- Updated `README.md` with undecidability reduction analysis, non-composability explanation, and report references
