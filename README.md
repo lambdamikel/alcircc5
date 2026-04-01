@@ -78,6 +78,35 @@ Claude's [formal response](https://github.com/lambdamikel/alcircc5/blob/master/r
 
 > **Is the sequence of Hintikka types along an infinite PP-chain eventually periodic?** If yes, the omega-model route is viable. If no, even the type sequence is irregular, pointing toward undecidability.
 
+### Why standard undecidability reductions fail for ALCI\_RCC5
+
+Every known undecidability proof for description logics ultimately encodes a **two-dimensional grid** (the Z×Z domino tiling problem). Grid encoding requires either functional roles, number restrictions, role intersection, or role value maps. ALCI\_RCC5 has **none of these**. Moreover, the patchwork property — local consistency implies global consistency — actively resists grid encoding, since tiling reductions need rigid global constraints that go beyond local consistency.
+
+The following table surveys all standard candidate reductions:
+
+| Candidate Problem | Reduction Technique | Key Feature Missing in ALCI\_RCC5 | Verdict |
+|---|---|---|---|
+| Z×Z Domino Tiling (Berger 1966) | Grid via graded modalities + transitivity + converse | Number restrictions (counting) | Blocked |
+| ALC\_RA undecidability (Wessel 2000/2001) | CFG intersection via Post Correspondence Problem | Arbitrary role box (fixed in RCC5) | Blocked |
+| ALCF⁻ (features + inverse) | Grid via functional roles | Functional roles | Blocked |
+| Unrestricted SIQ / GrIK4 (Zolin 2015) | Grid via counting + transitivity + converse | Number restrictions | Blocked |
+| Role value maps (Schmidt-Schauß 1989) | PCP via path equality | Role value map constructor | Blocked |
+| SHIN⁺ (transitive closure in concepts) | Grid via closure + role hierarchy | Transitive closure operator | Blocked |
+| FO² + two orders (Schwentick-Zeume 2012) | Grid via two successor functions | Second independent order relation | Blocked |
+| ALC + role intersection | Various | Roles are JEPD (intersection always empty) | Blocked |
+
+**Why Wessel's ALC\_RA proof doesn't transfer.** Wessel proved ALC\_RA undecidable by reducing from PCP: arbitrary role axioms encode context-free grammar productions, and satisfiability corresponds to non-intersection of the generated languages. This fails for ALCI\_RCC5 because the role box is *fixed* by the RCC5 composition table — it is not part of the input. With only 5 base relations and their predetermined compositions, one cannot encode arbitrary grammar productions.
+
+**What ALCI\_RCC5 does have.** The logic possesses two of the three ingredients of Zolin's GrIK4 undecidability proof: transitivity (PP∘PP ⊆ PP) and inverse roles (PPI = PP⁻). But the third — number restrictions — is entirely absent. Without counting, there is no way to enforce that a role has exactly one filler, which is essential for the commuting-square property of grid encoding. The complete-graph semantics compounds this: every element is PP/PO/DR/PPI-related to every other, so there is no way to isolate a unique "successor" among all neighbors.
+
+**Possible novel attack vectors.** Standard reductions are blocked, but undecidability is not ruled out. A proof would require a genuinely new technique, possibly exploiting:
+
+1. **Infinite PP-chains + universal propagation**: ∀PP propagates concepts transitively along the entire chain. If sufficiently complex patterns can be forced, this gives a 1D computation model. The question is whether the complete-graph cross-links (PO/DR edges between chain elements) can provide a second dimension.
+2. **Cross-chain synchronization**: In a model with multiple interacting PP-chains, the JEPD constraint forces relations between elements of different chains. The composition table constrains these cross-links. If two PP-chains can be forced to "synchronize" — one acting as the horizontal axis, another as the vertical — this could encode grid-like structure without explicit number restrictions.
+3. **Non-periodicity of type sequences**: If type sequences along infinite PP-chains can be non-periodic/non-regular, the logic has enough power to encode non-regular computation, suggesting undecidability. This connects to the periodicity sub-question above.
+
+The fact that every standard technique is blocked is evidence *for* decidability — ALCI\_RCC5 sits below the known undecidability boundary. But it sits above the known decidable fragments (ALCI\_RCC1/2/3, ALC\_RA\_SG), making the question genuinely open from both directions.
+
 ---
 
 This repository contains a proof attempt for concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8, targeting open problems from Wessel (2002/2003).
