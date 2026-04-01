@@ -239,6 +239,38 @@ The missing capabilities (4–6) are precisely what undecidable problems require
 
 However, this analysis does NOT rule out undecidability via a non-standard reduction. The specific gap between "what the ladder provides" and "what undecidability requires" is instructive: any undecidability proof would need to either (a) find a way to implement consumable communication without counting, or (b) exploit some feature of the complete-graph semantics not captured by the two-chain analysis.
 
+### Ramsey theory and graph-theoretic undecidability: the complete-graph connection
+
+ALCI\_RCC5 models are edge-colored complete graphs (4 colors: DR, PO, PP, PPI for distinct pairs) subject to the RCC5 composition table. This is natural Ramsey territory — Ramsey theory studies what patterns must appear in edge-colored complete graphs. Could undecidable Ramsey-type or graph-theoretic problems be reduced to ALCI\_RCC5 satisfiability?
+
+**The Bodirsky-Bodor dichotomy (2020/2024).** Bodirsky and Bodor proved a complete complexity dichotomy for constraint satisfaction problems (CSPs) of first-order expansions of the RCC5 basic relations, using Ramsey theory. **Every such CSP is either in P or NP-complete — never undecidable.** The proof exploits the fact that finite RCC5 models form a **Ramsey class** (via the Nešetřil-Rödl theorem and the KPT correspondence between the Ramsey property and extreme amenability of automorphism groups).
+
+This means the constraint layer of ALCI\_RCC5 — the RCC5 network consistency problem — is inherently tractable. The Ramsey property is the tool that *proves* tractability, not a source of undecidability.
+
+**Why Ramsey theory favors decidability.** Ramsey's theorem guarantees that any infinite ALCI\_RCC5 model must contain large monochromatic substructures: an infinite PP-chain, or an infinite PPI-chain, or an infinite pairwise-PO set, or an infinite pairwise-DR set. This forces **uniformity** in infinite models — exactly the opposite of the **positional diversity** needed for encoding computation. Undecidability reductions require that each cell/step in a computation has a distinct state; Ramsey uniformity forces large subsets to look alike.
+
+The patchwork property reinforces this: local (triple-wise) consistency implies global consistency, meaning long-range rigid constraints that depend on absolute position — the hallmark of grid/tiling encodings — cannot arise from local concept constraints.
+
+**Survey of graph-theoretic undecidability candidates:**
+
+| Problem | Why undecidable | Encoding in ALCI\_RCC5? |
+|---|---|---|
+| Edge-coloring extension on periodic graphs (Burr 1984) | Doubly-periodic structure encodes a grid | **Blocked**: ALCI\_RCC5 has complete graphs, no geometric/grid structure |
+| Product modal logics K×K (Gabbay-Shehtman) | Product frame creates a grid from two independent relations | **Blocked**: ALCI\_RCC5 has 4 relations on a single frame, not a product |
+| Interval temporal logic HS (Halpern-Shoham) | Rigid interval compositions enforce grid structure | **Blocked**: RCC5 composition is non-deterministic with patchwork; no rigid grid |
+| First-order modal logic ∀□ bundle | FO quantifiers + modal necessity | **Blocked**: ALCI has propositional modalities, no FO quantifiers |
+| MSO theory of the Rado graph | MSO can quantify over sets of vertices | **Blocked**: ALCI is much weaker than MSO |
+| Diophantine equations as CSP | Unbounded arithmetic constraints | **Blocked**: RCC5 CSP is P/NP-complete (Bodirsky-Bodor) |
+
+**The Fraïssé-theoretic perspective.** The class of finite RCC5 models is a Fraïssé class (amalgamation = patchwork property). Its Fraïssé limit — the **generic RCC5 model** — is a countable homogeneous relational structure analogous to the Rado graph. The theory of this structure admits quantifier elimination and is omega-categorical. The Ramsey property of the age enables the Bodirsky-Pinsker classification of all CSP reducts.
+
+The key remaining question: **does adding modal operators (∀R.C, ∃R.C) to this tractable CSP layer push into undecidability?** The evidence suggests not:
+- The modal operators are propositional (no FO quantifiers over domain elements)
+- The frame is a single complete graph (no product structure for grid encoding)
+- The composition table is non-deterministic with patchwork (no rigid composition for interval-style encoding)
+
+**Conclusion.** The Ramsey-theoretic analysis provides the strongest evidence yet for decidability of ALCI\_RCC5. At the constraint level, Ramsey theory proves tractability (Bodirsky-Bodor). At the model level, Ramsey uniformity opposes computation encoding. No known undecidable graph-coloring, Ramsey, or CSP problem has a plausible reduction to ALCI\_RCC5 satisfiability. The logic sits in a "tractability island" where the patchwork property prevents the rigid global constraints that undecidable problems require.
+
 ---
 
 This repository contains a proof attempt for concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8, targeting open problems from Wessel (2002/2003).
@@ -570,6 +602,10 @@ A key insight explored in these papers is the **patchwork property** from qualit
 10. F. Baader and M. Rydval. "Description Logics with Concrete Domains and General Concept Inclusions Revisited." IJCAR 2020, LNCS 12166, pp. 413-431.
 
 11. S. Demri and T. Gu. "Robustness of Constraint Automata for Description Logics with Concrete Domains." CSL 2026, LIPIcs Vol. 363.
+
+12. M. Bodirsky and V. Bodor. "A Complexity Dichotomy in Spatial Reasoning via Ramsey Theory." ACM Transactions on Computational Logic (TOCL), 25(2), 2024. (Earlier version: arXiv:2008.10261, 2020.)
+
+13. M. Bodirsky. *Complexity of Infinite-Domain Constraint Satisfaction.* Lecture Notes in Logic, vol. 52, Cambridge University Press, 2021.
 
 ## Acknowledgments
 

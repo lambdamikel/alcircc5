@@ -758,3 +758,35 @@ The visible announcement set grows **monotonically** with depth. Elements can de
 
 ### Files produced
 - Updated `README.md` with two-chain construction, coloring trick, PCP analysis, ∀NTPP queue investigation, and assessment
+
+---
+
+## Part 17: Ramsey Theory and Graph-Theoretic Undecidability
+
+### Michael Wessel
+
+> How about undecidable graph problems. Ramsey problems.
+
+### Claude
+
+*[Researched undecidable graph problems and Ramsey-theoretic problems in the context of ALCI\_RCC5's complete-graph semantics, investigating whether any could be reduced to ALCI\_RCC5/RCC8 satisfiability.]*
+
+**Key finding: the Bodirsky-Bodor dichotomy (2020/2024).** Bodirsky and Bodor proved a complete complexity dichotomy for CSPs of first-order expansions of the RCC5 basic relations, using Ramsey theory. Every such CSP is either in P or NP-complete — never undecidable. The proof exploits the Ramsey property of the class of finite RCC5 models (via the Nešetřil-Rödl theorem and the KPT correspondence). This is directly relevant: the constraint layer of ALCI\_RCC5 is inherently tractable.
+
+**Why Ramsey theory favors decidability.** ALCI\_RCC5 models are edge-colored complete graphs — natural Ramsey territory. But Ramsey's theorem forces **uniformity** in infinite models (large monochromatic substructures must exist), which opposes the positional diversity needed for computation. The patchwork property reinforces this: local consistency implies global consistency, preventing long-range rigid constraints.
+
+**Survey of graph-theoretic candidates:**
+- **Edge-coloring extension on periodic graphs** (Burr 1984): undecidable via grid encoding in doubly-periodic graphs. Blocked — ALCI\_RCC5 has complete graphs, no geometric structure.
+- **Product modal logics** K×K (Gabbay-Shehtman): undecidable via grid from product frame. Blocked — ALCI\_RCC5 has one frame, not a product.
+- **Interval temporal logic** HS (Halpern-Shoham): undecidable via rigid interval compositions. Blocked — RCC5 composition is non-deterministic with patchwork.
+- **First-order modal logic** ∀□ bundle: undecidable with FO quantifiers. Blocked — ALCI has propositional modalities only.
+- **MSO theory of the Rado graph**: undecidable. Blocked — ALCI is much weaker than MSO.
+- **Diophantine equations as CSP**: Blocked — RCC5 CSP is P/NP-complete (Bodirsky-Bodor).
+
+**The Fraïssé-theoretic perspective.** Finite RCC5 models form a Fraïssé class. The Fraïssé limit is the generic RCC5 model (analogous to the Rado graph). Its omega-categoricity and the Ramsey property of its age enable complete CSP classification. The remaining question: does adding modal operators (∀R.C, ∃R.C) to this tractable CSP layer push into undecidability? Evidence suggests not — propositional modalities on a single complete graph with non-deterministic patchwork composition lack the expressive power for grid encoding.
+
+**Conclusion.** The Ramsey-theoretic analysis provides the strongest evidence yet for decidability. At the constraint level, Ramsey theory proves tractability. At the model level, Ramsey uniformity opposes computation. No known undecidable graph, Ramsey, or CSP problem has a plausible reduction to ALCI\_RCC5.
+
+### Files produced
+- Updated `README.md` with Ramsey/graph-theory analysis section and Bodirsky-Bodor reference
+- Updated `CONVERSATION.md` with Part 17
