@@ -142,6 +142,103 @@ Counter machine (Minsky machine) encodings face the same obstacle: linking "the 
 
 This observation suggests that **ALCI\_RCC5 and ALCI\_RCC8 may have different decidability status** — a possibility not previously considered.
 
+### The two-chain construction: a 2×∞ ladder with functional operators
+
+The alternating-type trick gives one functional chain (TPP as immediate successor). For undecidability reductions, we typically need **two dimensions**. A natural construction uses two parallel TPP-chains connected by PO rungs.
+
+**Geometric motivation.** Start with a parent region containing two overlapping TPP-children (their overlap makes them PO to each other). Each child is again the parent of one TPP-child, placed so that the grandchildren are NTPP to the grandparent and PO to each other. Iterating gives:
+
+```
+Chain A:  a₀ —TPP→ a₁ —TPP→ a₂ —TPP→ a₃ —TPP→ ...
+           |         |         |         |
+          PO        PO        PO        PO
+           |         |         |         |
+Chain B:  b₀ —TPP→ b₁ —TPP→ b₂ —TPP→ b₃ —TPP→ ...
+```
+
+**The coloring trick for PO-functionality.** Without additional constraints, PO could connect elements at different depths. To enforce PO only between same-level elements, use an offset color scheme:
+
+- Chain A: Red, Blue, Red, Blue, ... (a₀ is Red, a₁ is Blue, ...)
+- Chain B: Blue, Red, Blue, Red, ... (b₀ is Blue, b₁ is Red, ...)
+
+Where Red ⊓ Blue ⊑ ⊥. Then ∀PO constraints from a Red element reach only Blue PO-neighbors. On chain A, a Red element's TPP-successor is Blue (same chain), but via PO, the same-level partner on chain B is also Blue (offset coloring). Elements at other levels on chain B have the *wrong* color for the constraint to propagate usefully. Combined with the alternating-type trick on each chain, this makes PO effectively connect only same-level pairs.
+
+**The three functional operators.** On this 2×∞ ladder:
+
+| Operator | Reaches | Functionality mechanism |
+|---|---|---|
+| ∀TPP | Immediate successor on same chain | Alternating-type trick |
+| ∀PO | Same-level element on other chain | Coloring trick |
+| ∀NTPP | ALL elements ≥ 2 steps deeper (both chains) | Broadcast (not functional) |
+
+This gives two functional "axes" (∀TPP = horizontal, ∀PO = vertical in the ladder) plus a broadcast channel (∀NTPP = "all future").
+
+**Counter encoding.** Each chain independently supports a binary counter using the alternating-type trick: concept markers at each depth encode counter bits, with ∀TPP enforcing the increment rule. This shows that each chain can track an unbounded integer — but the two counters are **independent**. Synchronizing them (e.g., ensuring both chains have the same counter value at some depth) requires cross-chain communication beyond what ∀PO provides.
+
+### PCP encoding attempt on the two-chain structure
+
+The **Post Correspondence Problem** (PCP) is a natural undecidability candidate for this structure: it requires matching two sequences symbol-by-symbol, which is exactly what the PO rungs provide.
+
+**Setup.** Given a PCP instance with pairs (u₁, v₁), ..., (uₚ, vₚ) over alphabet Σ, encode:
+- Chain A writes the u-components: u_{i₁}u_{i₂}u_{i₃}...
+- Chain B writes the v-components: v_{i₁}v_{i₂}v_{i₃}...
+- PO rungs enforce symbol-by-symbol equality (∀PO.σ for each symbol σ ∈ Σ)
+
+**What works:**
+- **Symbol matching**: PO at each depth forces the same symbol on both chains. ✓
+- **Pair decomposition**: local ∀TPP constraints on each chain enforce valid pair structure (each segment is a valid u_i or v_j). ✓
+- **String equality**: if both chains terminate at the same depth, the PO-enforced symbol equality gives u_{i₁}...u_{iₙ} = v_{j₁}...v_{jₘ}. ✓
+
+**What fails — pair-index synchronization:**
+
+PCP requires both chains to use the **same** sequence of pair indices. But |u_i| ≠ |v_i| in general, so the chains advance through pairs at different rates. After processing pair i₁:
+- Chain A has consumed |u_{i₁}| cells
+- Chain B has consumed |v_{i₁}| cells
+
+The pair boundaries are **misaligned**. Chain A might be starting pair i₃ while chain B is still in the middle of pair i₂. Synchronizing pair indices requires tracking the **lag** — the running difference Σ(|u_{iₖ}| - |v_{iₖ}|) — which can grow unboundedly.
+
+### The ∀NTPP queue investigation
+
+The most promising idea for synchronization: use ∀NTPP broadcasts from different depths as a "queue" of pair-index announcements.
+
+**Mechanism.** When chain A starts pair iₖ at depth d, it broadcasts via ∀NTPP from a_d. Since NTPP reaches all elements ≥ 2 steps deeper on both chains, this announcement becomes visible to all future elements. Multiple announcements from depths d₁ < d₂ < d₃ create **nested scopes**:
+
+| Depth range | Visible announcements |
+|---|---|
+| d₁+2 to d₂+1 | {i₁} |
+| d₂+2 to d₃+1 | {i₁, i₂} |
+| d₃+2 onward | {i₁, i₂, i₃} |
+
+The set of visible announcements **grows monotonically** with depth. An element can detect the *arrival* of each new announcement (the first depth where it becomes visible, detectable by a type change at the transition point).
+
+**Why this is NOT a queue.** A FIFO queue supports two operations: enqueue (add to back) and dequeue (remove from front). The ∀NTPP mechanism supports only enqueue — announcements accumulate but are **never consumed**. Once an ∀NTPP-propagated concept becomes visible, it remains visible at all greater depths. This is a **broadcast log**, not a consumable queue.
+
+For chain B to "process" announcements in order, it would need to track "which announcements I've already consumed" in its Hintikka type. But the Hintikka type is drawn from a finite set (bounded by 2^{|cl(C)|}). By pigeonhole: if the number of outstanding (unprocessed) announcements exceeds the number of distinct types, two chain B elements at different queue positions must have the **same type**, meaning they react identically to all constraints — they cannot distinguish their positions.
+
+**Formal argument.** Let K = |cl(C)| be the closure size (fixed for a given PCP reduction). The number of "queue state" concepts expressible in cl(C) is at most K. For a PCP instance whose shortest solution has n pairs with maximum running lag L, we need L distinct queue states. If L > 2^K, the types cannot distinguish all queue positions. Since L is unbounded across PCP instances (and even within solutions of a single instance), no fixed K suffices.
+
+**The bounded-lag special case.** For PCP instances where every solution has running lag bounded by L, the queue depth is ≤ L, and a concept vocabulary of size O(L) suffices. But **bounded-lag PCP is decidable** (it reduces to a finite-state reachability problem), so reducing from it yields no undecidability result.
+
+**Conclusion.** The ∀NTPP broadcast mechanism is fundamentally monotonic: announcements accumulate but cannot be consumed. This makes it insufficient for the unbounded synchronization required by general PCP. The two-chain construction with PO rungs can enforce symbol-by-symbol string equality, but cannot enforce pair-index synchronization — the step that makes PCP undecidable.
+
+### Assessment of the two-chain approach
+
+The 2×∞ ladder construction is the strongest encoding framework discovered so far for ALCI\_RCC8. It provides:
+
+1. **One-dimensional computation** on each chain (counters, finite automata, local transition rules) ✓
+2. **Cross-chain symbol matching** at each depth via PO ✓
+3. **Monotonic broadcast** to all future elements via ∀NTPP ✓
+
+But it **lacks**:
+
+4. **Cross-chain synchronization** of non-aligned boundaries ✗
+5. **Consumable communication** (queue, stack, or channel) ✗
+6. **Counting** (exactly n successors) ✗
+
+The missing capabilities (4–6) are precisely what undecidable problems require. This provides further evidence — though not proof — that ALCI\_RCC8 may be decidable: even the most favorable encoding structure (functional TPP chains with PO cross-links) falls short of the computational power needed for standard undecidability reductions.
+
+However, this analysis does NOT rule out undecidability via a non-standard reduction. The specific gap between "what the ladder provides" and "what undecidability requires" is instructive: any undecidability proof would need to either (a) find a way to implement consumable communication without counting, or (b) exploit some feature of the complete-graph semantics not captured by the two-chain analysis.
+
 ---
 
 This repository contains a proof attempt for concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8, targeting open problems from Wessel (2002/2003).
