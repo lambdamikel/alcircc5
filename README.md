@@ -59,6 +59,8 @@ See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc
 
 Neither approach, as formulated, yields a decision procedure. The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains open.
 
+**Why the two proven results don't compose.** A natural question is whether the two proven directions — (1) satisfiable → quasimodel exists (Claude) and (2) open contextual tableau → model exists (GPT-5.4) — can be chained into a decision procedure. They cannot. The chain would require a bridge step: quasimodel → open contextual tableau. But the FW counterexample proves this bridge cannot exist in general. Consider C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤): it is satisfiable, so a quasimodel for it exists (by Claude's proven soundness), but NO finite-width contextual tableau for it exists (FW refuted for every N). The two proven results operate on **different intermediate representations** with gaps on **opposite sides** — if they were opposite sides of the *same* representation they would compose, but as it stands, neither formalism serves as a bridge to the other.
+
 ### What the papers contribute
 
 Despite the gaps, the papers introduce proof machinery that narrows the open problem:
