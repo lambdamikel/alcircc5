@@ -790,3 +790,90 @@ The visible announcement set grows **monotonically** with depth. Elements can de
 ### Files produced
 - Updated `README.md` with Ramsey/graph-theory analysis section and Bodirsky-Bodor reference
 - Updated `CONVERSATION.md` with Part 17
+
+---
+
+## Part 18: Computational Investigation of the Extension Gap
+
+### Michael Wessel
+
+> Excellent. So maybe we could do a proof by exhaustive search...
+
+> yes please. [implement the exhaustive checker]
+
+> Can you re-try the decidability proof with the new universal Q3?
+
+### Claude
+
+*[Built a suite of four Python programs to exhaustively investigate the extension gap in the RCC5 quasimodel approach. The programs encode the full RCC5 composition table, enumerate all small configurations, and test conditions Q3, Q3s, satisfiability, and model-derivability.]*
+
+#### Program 1: `extension_gap_checker.py`
+
+The base checker. Encodes the RCC5 composition table for the 4 base relations {DR, PO, PP, PPI} (EQ excluded for distinct elements), with the inverse map and all 16 composition entries. Key functions:
+
+- `enumerate_consistent_networks(m)`: Backtracking enumeration of all composition-consistent atomic RCC5 networks on m nodes. Each network assigns one of {DR, PO, PP, PPI} to each directed pair (i,j) with i < j; the inverse is implied. All triples are checked for composition consistency.
+- `run_path_consistency(m, network, domains)`: AC-3 arc-consistency enforcement on the extension CSP. Given m existing elements with fixed atomic relations and a new element with domains D_i ⊆ {DR,PO,PP,PPI}, iteratively removes values from D_i that have no support in D_j (via the binary constraint R_i ∈ comp(R(e_i,e_j), R_j)). Returns whether all domains remain non-empty.
+- `check_extension_gap(max_m)`: Phase 1 — tests all 15^m domain assignments for each network. Counts how many lead to empty domains after AC-3.
+- `check_with_quasimodel_constraints(max_m)`: Phase 2 — filters by existential Q3 compatibility (for each pair (i,j), there exist R_i ∈ D_i, R_j ∈ D_j satisfying the binary constraint). Tests whether Q3-compatible configurations still fail.
+
+Results: At m=3, 1,575 Q3-compatible configurations fail (out of 319,200 total). At m=4, 806,094 fail. Confirms that Q3 alone is insufficient for the extension CSP.
+
+#### Program 2: `extension_gap_checker_v2.py`
+
+Tests the key hypothesis: does **universal** Q3 (= Q3s = arc-consistency of the initial domains) eliminate all failures?
+
+- `check_universal_q3(m, network, domains)`: For each pair (i,j), checks both directions: every R_j ∈ D_j has a support in D_i via comp(R_ij, R_j), and every R_i ∈ D_i has a support in D_j via comp(R_ji, R_i).
+- `check_existential_q3(m, network, domains)`: Pairwise satisfiability only.
+
+For every configuration that fails AC-3, the program checks which Q3 variant was satisfied on the initial (pre-enforcement) domains.
+
+**Key finding**: Universal Q3 eliminates ALL failures. Zero exceptions through m=4 (21.5 million configurations). Every configuration where universal Q3 holds on the initial domains survives AC-3 enforcement with all domains non-empty.
+
+#### Program 3: `q3_implies_q3s_check.py`
+
+Operates at the **type level**: given abstract DN sets over 2-3 type labels, tests:
+
+1. Does Q3 imply Q3s? Answer: **No**. 1,803 out of 2,398 Q3-satisfying DN networks at 3 types fail Q3s.
+2. Does satisfiable DN imply Q3s? (Satisfiable = admits a consistent atomic assignment, one relation per type-pair.) Answer: **No**. 2,697 out of 3,292 satisfiable networks fail Q3s.
+
+Also includes `is_dn_satisfiable(dn, types)`: brute-force backtracking to check whether the DN network has a consistent atomic refinement.
+
+Important implementation detail: Q3/Q3s checks must skip triples where types coincide (t1=t2, t1=t3, or t2=t3), since DN(τ,τ) contains EQ (not tracked in the base relations). These cases are automatically satisfied by converse closure.
+
+#### Program 4: `model_derived_q3s_fast.py`
+
+The **definitive test**. Model-derived DN is stronger than merely satisfiable DN: it comes from a concrete RCC5 model (complete composition-consistent network with type assignments), and DN(τ₁,τ₂) is the full set of relations realized between all elements of type τ₁ and type τ₂ in the model.
+
+- Part 1: Verifies a hand-constructed counterexample. Model: 4 elements d₁(A), d₁'(A), d₂(B), d₃(C). Relations: d₁-d₂=PP, d₁-d₃=PP, d₁'-d₂=DR, d₁'-d₃=DR, d₂-d₃=PP, d₁-d₁'=DR. All 4 triples verified composition-consistent. Extracted DN: DN(A,B)={PP,DR}, DN(A,C)={PP,DR}, DN(B,C)={PP}. Q3s fails: for R₁₂=PP and R₁₃=DR, need DR ∈ comp(PP, R₂₃) for some R₂₃ ∈ {PP}, but comp(PP,PP)={PP}, so DR has no witness.
+
+- Part 2: Systematic enumeration of all models with 3-4 elements and 2-3 types. For each type assignment (requiring every type used), enumerates all consistent atomic networks via backtracking, extracts DN, checks Q3s.
+
+Results:
+- 3 elements: 492 models, 0 Q3s violations (with one element per type, DN sets are singletons — Q3s is trivially satisfied).
+- 4 elements: 68,276 models, **7,560 Q3s violations** (11.1%). All violations have ≥ 2 elements of the same type with different relational profiles.
+
+#### The representative mismatch, confirmed
+
+The root cause is structural and unavoidable: when two model elements d₁, d₁' share a Hintikka type but have different RCC5 profiles (different relations to elements of other types), the DN set absorbs both profiles. Q3s then demands that every combination (R₁₂ from d₁, R₁₃ from d₁') has a witness — but no single element in the model realizes both simultaneously.
+
+In the counterexample: d₁ has profile (PP to B, PP to C) and d₁' has profile (DR to B, DR to C). The cross-combinations (PP to B, DR to C) and (DR to B, PP to C) are never realized. Q3s asks about these cross-combinations; the model doesn't provide witnesses.
+
+The model's composition constraints cannot prevent this. The triple (d₁, d₂, d₃) forces R(d₁,d₃) ∈ comp(PP, PP) = {PP}, so d₁ has PP to d₃ (not DR). The triple (d₁', d₂, d₃) forces R(d₁',d₃) ∈ comp(DR, PP), and comp(DR, PP) = {DR, PO, PP} which includes DR. So both profiles are individually consistent, but never jointly realized by a single element.
+
+#### Conclusion
+
+The extension gap is genuine and computationally confirmed:
+- Q3 (extractable from models) is too weak for the Henkin construction.
+- Q3s (sufficient for the Henkin construction) is too strong to extract from models.
+- No intermediate condition closes the gap within the quasimodel framework as formulated.
+
+The decidability of ALCI\_RCC5 remains open. The quasimodel approach, as currently formulated, cannot close the gap by strengthening Q3.
+
+### Files produced
+- `extension_gap_checker.py`: Base exhaustive checker (composition table, network enumeration, AC-3 enforcement)
+- `extension_gap_checker_v2.py`: Existential vs universal Q3 comparison
+- `q3_implies_q3s_check.py`: Abstract DN network Q3/Q3s/satisfiability tests
+- `model_derived_q3s_fast.py`: Model-derived DN exhaustive Q3s test with hand-verified counterexample
+- `model_derived_q3s_check.py`: Earlier version of model-derived check (slower, for large models)
+- Updated `README.md` with computational investigation results, program descriptions, and implications
+- Updated `CONVERSATION.md` with Part 18

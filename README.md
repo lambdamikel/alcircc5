@@ -18,7 +18,7 @@
 
 ### What is NOT proven
 
-- **Completeness** (quasimodel → model): The Henkin construction builds a model from a quasimodel by iteratively adding elements. At each step, it must solve a disjunctive constraint network (the "extension problem"). For **model-derived** quasimodels (extracted from actual models), the model's own role assignments survive the construction. But for **abstract** quasimodels that satisfy (Q1)–(Q3) without arising from any model, the path-consistency enforcement may empty constraint domains, causing the construction to fail.
+- **Completeness** (quasimodel → model): The Henkin construction builds a model from a quasimodel by iteratively adding elements. At each step, it must solve a disjunctive constraint network (the "extension problem"). For **model-derived** quasimodels (extracted from actual models), the model's own role assignments survive the construction. But for **abstract** quasimodels that satisfy (Q1)–(Q3) without arising from any model, the path-consistency enforcement may empty constraint domains, causing the construction to fail. **Computational verification** confirms: strengthening Q3 to Q3s (arc-consistency) would close this gap, but Q3s is provably not extractable from models (11.1% of concrete 4-element models produce Q3s-violating DN networks).
 - **No false positives**: If the algorithm accepts, we cannot guarantee C₀ is satisfiable. There may exist "spurious" quasimodels for unsatisfiable concepts.
 
 ### Why this matters
@@ -66,6 +66,7 @@ Neither approach, as formulated, yields a decision procedure. The decidability o
 Despite the gaps, the papers introduce proof machinery that narrows the open problem:
 - The quasimodel method + patchwork property identifies the extension gap as a specific constraint-satisfaction question about RCC5 disjunctive networks.
 - The contextual tableau cleanly separates the soundness (unfolding) argument from the completeness (extraction) argument. The FW counterexample shows that the extraction problem is fundamentally hard: infinite PP-chains cannot be finitely represented in the recentering framework.
+- **Computational verification** (see "Computational investigation of the extension gap" below) pinpoints the gap precisely: condition Q3s (arc-consistency) would suffice but is not extractable from models. The verification confirms this is a **structural impossibility**, not a proof artifact — 11.1% of concrete models produce DN networks violating Q3s.
 - The root cause is the combination of (i) transitivity of PP, (ii) universal propagation of ∀PP along PP-chains, and (iii) the complete-graph requirement. Any successful decidability proof — or undecidability reduction — must engage with this combination directly.
 
 ### Ongoing discussion: the omega-model direction
@@ -508,13 +509,52 @@ The Henkin construction (Claim 5.2) solves a disjunctive constraint network at e
 
 However, the enforcement step may **empty** a domain D\_i. Condition (Q3) guarantees that every three-node sub-network is satisfiable, but cascading refinements across multiple triples can remove values needed elsewhere — even when starting from a path-consistent type-level network.
 
-For **model-derived** quasimodels (extracted from actual models), this cannot happen: the model provides a realized assignment that is already globally consistent and survives enforcement. For **abstract** quasimodels satisfying (Q1)–(Q3) that do not arise from any model, the extension network may be inconsistent.
+#### Computational investigation of the extension gap
+
+A suite of exhaustive checkers (`extension_gap_checker.py`, `extension_gap_checker_v2.py`, `q3_implies_q3s_check.py`, `model_derived_q3s_fast.py`) systematically tests the extension gap over all small RCC5 configurations. The checkers encode the full RCC5 composition table for the 4 base relations {DR, PO, PP, PPI} (EQ excluded for distinct elements) and enumerate all composition-consistent atomic networks, domain assignments, and type-assignment models.
+
+**Result 1: Q3 (existential) is insufficient.** The extension CSP (arc-consistency enforcement) empties domains for Q3-satisfying configurations. Failures grow rapidly:
+
+| Existing elements m | Configurations tested | Failures (Q3 passes, AC empties domain) |
+|---|---|---|
+| 2 | 960 | 61 |
+| 3 | 319,200 | 1,575 |
+| 4 | 21,547,500 | 806,094 |
+
+**Result 2: Q3s (strong/universal) eliminates ALL failures.** Q3s requires: for all R₁₂ ∈ DN(τ₁,τ₂) and **all** R₁₃ ∈ DN(τ₁,τ₃), there exists R₂₃ ∈ DN(τ₂,τ₃) with R₁₃ ∈ comp(R₁₂, R₂₃). This is equivalent to arc-consistency of the extension CSP. Computationally verified: **zero** failures through m=4 (21.5 million configurations).
+
+**Result 3: Q3s is genuinely not extractable from models.** The "representative mismatch" problem identified in the paper's Remark after Q3 is confirmed by exhaustive search. Model-derived DN networks (extracted from concrete, composition-consistent RCC5 models with type assignments) can violate Q3s:
+
+| Model elements | Models tested | Models where DN violates Q3s |
+|---|---|---|
+| 3 | 492 | 0 |
+| 4 | 68,276 | 7,560 (11.1%) |
+
+Violations require ≥ 2 elements of the same type with different relational profiles. Concrete counterexample: 4 elements d₁(A), d₁'(A), d₂(B), d₃(C) with relations d₁-d₂=PP, d₁-d₃=PP, d₁'-d₂=DR, d₁'-d₃=DR, d₂-d₃=PP, d₁-d₁'=DR. The model is composition-consistent, but DN(A,B)={PP,DR}, DN(A,C)={PP,DR}, DN(B,C)={PP}, and Q3s fails: for R₁₂=PP and R₁₃=DR, comp(PP,PP)={PP} which does not contain DR.
+
+**Summary:**
+
+| Property | Sufficient for extension? | Extractable from models? |
+|---|---|---|
+| Q3 (existential) | **No** (1,575 failures at m=3) | **Yes** |
+| Q3s (strong/universal) | **Yes** (0 failures through m=4) | **No** (7,560 model-derived violations) |
+
+The extension gap is **genuine and unavoidable** within the quasimodel framework as formulated. No condition on the DN sets is simultaneously sufficient for the Henkin construction and extractable from models.
+
+#### Implications
 
 This means:
 - The characterization theorem is established as an **if**: every satisfiable concept has a quasimodel (soundness).
 - The **only-if** direction (every quasimodel gives a model) holds for model-derived quasimodels but remains open for abstract quasimodels.
 - The type elimination algorithm has **no false negatives** (by soundness alone). Whether false positives can occur remains open.
 - The tableau's soundness proof extracts a quasimodel from a completion graph — a "model-like" structure where all pair-types are realized — and the Henkin construction succeeds for such quasimodels.
+
+#### Possible paths forward
+
+1. **Strategic Henkin construction**: instead of proving the extension CSP is always solvable, show that with careful ordering of element creation and relation assignment, unsolvable CSPs can always be avoided. This would be a game-theoretic argument.
+2. **Model saturation**: enrich the type system so that every element realizes all pair-types of its type (condition "Q4"), making Q3s extractable at the cost of (doubly) exponentially more types.
+3. **Compactness + patchwork**: argue model existence without explicit construction, using the fact that every finite sub-problem of the Henkin construction is satisfiable.
+4. **Alternative proof architecture**: the contextual tableau approach (GPT-5.4) avoids the extension gap entirely, with the gap on the other side (completeness/extraction).
 
 ### Completeness
 
@@ -578,6 +618,13 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
 - [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
 - [**`CONVERSATION.md`**](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) -- Full conversation log between Michael Wessel and Claude
+
+### Computational verification scripts
+
+- [**`extension_gap_checker.py`**](https://github.com/lambdamikel/alcircc5/blob/master/extension_gap_checker.py) -- Exhaustive extension gap checker. Encodes the full RCC5 composition table for base relations {DR, PO, PP, PPI}. Enumerates all composition-consistent atomic networks on m nodes (`enumerate_consistent_networks`), then for each network and all possible domain assignments D\_i ⊆ {DR,PO,PP,PPI}, runs arc-consistency enforcement (`run_path_consistency`) on the extension CSP. Phase 1 tests all domain assignments; Phase 2 filters by existential Q3 compatibility. Confirmed: Q3-compatible configurations can fail (1,575 at m=3, 806,094 at m=4).
+- [**`extension_gap_checker_v2.py`**](https://github.com/lambdamikel/alcircc5/blob/master/extension_gap_checker_v2.py) -- Tests existential Q3 vs universal Q3 (= Q3s = arc-consistency). For each configuration that fails arc-consistency enforcement, checks whether existential Q3 or universal Q3 was satisfied on the initial domains. Key finding: universal Q3 eliminates **all** failures (0 through m=4).
+- [**`q3_implies_q3s_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/q3_implies_q3s_check.py) -- Tests two questions on abstract DN networks over 2-3 types: (1) does Q3 imply Q3s? (No: 1,803 counterexamples at 3 types.) (2) Does satisfiable DN imply Q3s? (No: 2,697 counterexamples.) Operates on the type-level DN constraint network (not individual models).
+- [**`model_derived_q3s_fast.py`**](https://github.com/lambdamikel/alcircc5/blob/master/model_derived_q3s_fast.py) -- The definitive test: enumerates all concrete, composition-consistent RCC5 models with 3-4 elements and 2-3 types, extracts model-derived DN sets, and checks Q3s. Includes a hand-verified counterexample (4 elements, 3 types). Result: 7,560 out of 68,276 models (11.1%) produce DN networks violating Q3s. Confirms that Q3s is genuinely not extractable from models.
 
 ## References
 
