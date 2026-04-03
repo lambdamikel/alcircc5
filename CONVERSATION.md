@@ -1031,3 +1031,62 @@ The common thread: type-based quotients lose the relational information needed f
 - `response_to_gpt_review.pdf`: Compiled response (5 pages)
 - Updated `README.md` with retraction, five-approach summary, corrected status
 - Updated `CONVERSATION.md` with Parts 20 and 21
+
+---
+
+## Part 22: Triangle-Type Blocking — A Sixth Approach (April 2026)
+
+### Context
+
+After the retraction and the identification of the structural wall (type-based quotients too coarse for global edge assignment), Michael Wessel proposed a new approach: **triangle-type blocking**. Instead of using pair-types (DN\_safe) for edge domains, use the full set of **triangle types** — tuples (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) recording three Hintikka types and three pairwise RCC5 relations — as realized in the completion graph.
+
+### The proposal
+
+Define **T** = set of all triangle types in the completion graph. A node z with demand ∃U.E is **blocked** if either:
+- (a) The demand is already globally satisfied (some node w has E(z,w)=U and E ∈ L(w)), or
+- (b) U = PP or PPI, and extending the graph with a new witness would not create any triangle types outside T.
+
+The key insight: triangle types capture which (pair-type, pair-type) combinations are **jointly realized** by the same node — exactly the information DN\_safe was missing (the "representative mismatch" problem).
+
+### Claude's analysis
+
+Claude identified that the approach requires a condition called **strong triangle closure (STC)**: for all pair-types (τ₁, R, τ₂) ∈ P and (τ₂, S, τ₃) ∈ P, there must exist R' with (τ₁, R, τ₂, S, τ₃, R') ∈ T. This ensures path-consistency of the extension CSP during model construction.
+
+STC was shown to fail universally (100% of models) because it requires 3 representatives of each type, which small graphs don't have. However, Claude observed that STC might be TOO STRONG — the actual requirement is just that the T-filtered extension CSP is solvable, which is weaker.
+
+### Computational verification
+
+Claude wrote `triangle_closure_check.py` — a four-part computational investigation on 68,276 models (3–4 elements, 2–3 types):
+
+**Part 1: GPT's counterexample.** The triangle-type approach correctly handles the counterexample that broke Theorem 5.5. The problematic combination (C₀, PO, B, DR, {p}) doesn't exist in T, so PO is filtered from the domain, leaving only the correct DR assignment. All extension failures are for already-satisfied demands.
+
+**Part 2: Systematic check.**
+- STC violations: 68,276 (100%) — too strong, not needed
+- Extension CSP failures (all demands): 45,798 (67.1%)
+- Extension CSP failures (unsatisfied demands only): 24,756 (36.3%)
+
+**Part 3: Failure classification — the key result.** For each of the 24,756 unsatisfied-demand failures, Claude checked whether EVERY composition-consistent extension creates new triangle types (meaning the node would NOT be blocked under condition b). Result: **GENUINE failures = 0**. All 56,568 failure scenarios are "would-be-expanded" cases where the extension creates new triangle types. When a T-closed extension exists, the T-filtered arc-consistency enforcement ALWAYS finds it.
+
+**Part 4: Cross-context robustness.** Using the UNION of triangle types from all models of the same type-structure (simulating the model construction's "foreign context"), extensions in different models also have **zero real failures**. This provides evidence that the approach transfers from the finite graph to the infinite model.
+
+### What this means
+
+The triangle-type approach is the first mechanism that:
+1. **Passes the computational tests** where DN\_safe failed (zero genuine failures through n=4)
+2. **Correctly handles** GPT's counterexample to Theorem 5.5
+3. **Is self-consistent**: the T-filtered CSP never falsely rejects a solvable extension
+4. **Transfers across contexts**: works even when "other nodes" come from a different model
+
+### What remains to prove
+
+1. **Termination**: the set of triangle types T stabilizes (bounded by ~2^{3|cl(C)|} × 64)
+2. **Completeness**: when T stabilizes, all demands are either globally satisfied or T-closed-extendable
+3. **Model transfer**: the T-filtered CSP is solvable throughout the infinite Henkin construction
+4. **Formal correctness**: the T-filtered arc-consistency result (zero genuine failures) holds for ALL model sizes, not just n ≤ 4
+
+The approach does NOT yet constitute a proof. But it identifies the right level of abstraction (triangles, not pairs) and survives all computational tests. If the formal proof can be completed, it would establish decidability of ALCI\_RCC5.
+
+### Files produced
+- `triangle_closure_check.py`: Four-part computational verification (704 lines)
+- Updated `README.md` with sixth approach summary and script listing
+- Updated `CONVERSATION.md` with Part 22

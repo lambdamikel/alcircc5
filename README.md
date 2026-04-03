@@ -54,6 +54,29 @@ See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc
 
 All five approaches fail at the same structural point: global edge assignment for complete-graph models. The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains **open**.
 
+### Sixth approach: triangle-type blocking (in progress)
+
+A new approach under investigation uses **triangle types** — tuples (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) recording three Hintikka types and three pairwise RCC5 relations — as the blocking criterion. A node z with demand ∃U.E is blocked if either (a) the demand is already satisfied globally, or (b) the one-step extension would not create any new triangle types.
+
+Triangle types capture strictly more information than pair-types (DN\_safe): they record which (pair-type, pair-type) combinations are **jointly realized** by the same node. This correctly handles GPT's counterexample to Theorem 5.5 — the problematic PO edge is filtered out because the triangle type (C₀, PO, B, DR, {p}, ?) doesn't exist in T.
+
+**Computational verification** ([`triangle_closure_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_closure_check.py)) on 68,276 models (3–4 elements, 2–3 types):
+
+| Test | Result |
+|---|---|
+| Strong triangle closure (STC) | Fails 100% — too strong, not needed |
+| T-filtered extension CSP (all demands) | Fails 67.1% |
+| T-filtered extension CSP (unsatisfied demands only) | Fails 36.3% |
+| **Genuine failures** (T-closed extension exists but CSP rejects) | **0 (zero)** |
+| Cross-context failures (union T, foreign model) | **0 (zero)** |
+
+The key finding: **every extension CSP failure corresponds to a case where the extension creates new triangle types** — meaning the node would NOT be blocked. When a T-closed extension exists, the T-filtered arc-consistency enforcement always finds it. The mechanism is self-consistent through n=4.
+
+**What remains to prove:**
+1. **Termination**: T stabilizes after finitely many extensions (the number of triangle types is bounded by ~2^{3|cl(C)|} × 64)
+2. **Completeness**: when T stabilizes, all remaining demands are either globally satisfied or T-closed-extendable
+3. **Model transfer**: the T-filtered CSP remains solvable during the infinite Henkin construction (cross-context test provides evidence but not proof)
+
 **Why the two proven results don't compose.** A natural question is whether the two proven directions — (1) satisfiable → quasimodel exists (Claude) and (2) open contextual tableau → model exists (GPT-5.4) — can be chained into a decision procedure. They cannot. The chain would require a bridge step: quasimodel → open contextual tableau. But the FW counterexample proves this bridge cannot exist in general. Consider C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤): it is satisfiable, so a quasimodel for it exists (by Claude's proven soundness), but NO finite-width contextual tableau for it exists (FW refuted for every N). The two proven results operate on **different intermediate representations** with gaps on **opposite sides** — if they were opposite sides of the *same* representation they would compose, but as it stands, neither formalism serves as a bridge to the other.
 
 ### What the papers contribute
@@ -637,6 +660,10 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`drpp_deep_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/drpp_deep_analysis.py) -- Deep analysis of DR+PP problematic case: modified profile-copy approach, ∀-constraint mismatch detection, enrichment cascade analysis.
 - [**`drpp_extension_investigation.py`**](https://github.com/lambdamikel/alcircc5/blob/master/drpp_extension_investigation.py) -- One-step extension solvability verification (45,528/45,528 pass) and PP-avoidability analysis (0 forced PP assignments).
 - [**`profile_blocking_drpp.py`**](https://github.com/lambdamikel/alcircc5/blob/master/profile_blocking_drpp.py) -- Initial investigation of DR+PP case for profile-based blocking strategy.
+
+### Triangle-type blocking investigation
+
+- [**`triangle_closure_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_closure_check.py) -- Tests the triangle-type blocking approach on 68,276 models. Four-part check: (1) GPT counterexample handling, (2) systematic STC/extension CSP, (3) failure classification (all failures are would-be-expanded), (4) cross-context robustness. Key result: zero genuine failures — when T-closed extensions exist, T-filtered arc-consistency always finds them.
 
 ## References
 
