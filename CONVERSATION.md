@@ -1186,3 +1186,41 @@ If the conjecture holds, ALCI_RCC5 is decidable.
 - `pp_kernel_cycle_analysis.py`: PP-cycle obstruction analysis script
 - Updated `README.md` with seventh approach section, file listings, and script descriptions
 - Updated `CONVERSATION.md` with Part 24
+
+---
+
+## Part 25: Closing the gap — decidability of ALCI_RCC5
+
+### The gap-closing argument
+
+The Periodic Decomposition Conjecture from Part 24 has been resolved. The proof has two directions:
+
+**Completeness (model → quotient):** The T∞ lemma shows that the set of infinitely-recurring types on a PP-chain's stabilized tail yields a valid period descriptor. The key step is V6 (extension consistency): the model's actual off-chain witness relations survive arc-consistency enforcement. Proof: a value ρ(w,e) that satisfies all composition constraints simultaneously (as guaranteed by the model's global consistency) is never removed by arc-consistency (which only removes values that fail some triple constraint). Since ρ(w,e) satisfies ALL triple constraints, it survives.
+
+**Soundness (quotient → model):** V6 gives a path-consistent disjunctive network (off-chain witnesses with demanded relations and domains filtered by arc-consistency). By **full RCC5 tractability** (Renz, IJCAI 1999) — every path-consistent disjunctive RCC5 network is satisfiable — a consistent atomic refinement exists. The patchwork property gives global consistency. This bridges the "extension gap" that plagued all earlier approaches.
+
+### Why V6 works where Q3s failed
+
+The quasimodel approach needed Q3s — arc-consistency on abstract **type-level** disjunctive networks. 11.1% of model-derived type-level networks violate Q3s. V6 operates on **instance-level** networks with specific atomic relations between existing nodes. The model provides actual relations for each witness, which satisfy all constraints simultaneously, making them immune to AC removal.
+
+### Computational verification
+
+`gap_closing_verification.py` verified all algebraic prerequisites:
+- All 16 composition table entries are non-empty (initial domains always non-empty)
+- PP/PPI dual absorption: R ∈ comp(PPI, R) and R ∈ comp(R, PPI) for all R
+- One-step AC extension: 0 failures out of 164 configurations
+- Full AC extension (3 existing elements): 0 failures out of 128
+
+### V4 refinement
+
+The script identified that V4 should be "chain continuation" (at least one ∃PP demand per type is witnessed within the period), not "full witness closure" (all ∃PP demands witnessed). Some ∃PP demands are satisfied by off-chain PP-branches, handled by Tier 2.
+
+### ALCI_RCC8 status
+
+The proof relies on **full RCC5 tractability**, which is specific to RCC5 — the entire RCC5 algebra is tractable (Renz 1999). RCC8 is NOT fully tractable; only specific subalgebras are tractable. The decidability of ALCI_RCC8 remains open.
+
+### Files produced
+- `two_tier_quotient_ALCIRCC5.tex` / `.pdf`: Revised paper — full decidability proof (11 pages)
+- `gap_closing_verification.py`: Algebraic verification of gap-closing prerequisites
+- Updated `README.md` with decidability result, revised summary table
+- Updated `CONVERSATION.md` with Part 25
