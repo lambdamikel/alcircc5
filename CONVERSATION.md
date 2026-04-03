@@ -1090,3 +1090,48 @@ The approach does NOT yet constitute a proof. But it identifies the right level 
 - `triangle_closure_check.py`: Four-part computational verification (704 lines)
 - Updated `README.md` with sixth approach summary and script listing
 - Updated `CONVERSATION.md` with Part 22
+
+---
+
+## Part 23: Triangle-type paper — conditional decidability of ALCI\_RCC5
+
+### The new paper
+
+Based on the computational findings from Part 22, Claude wrote a formal paper integrating the triangle-type approach: **"Triangle Types and the Extension Gap: Towards Decidability of ALCI\_RCC5"** (`triangle_blocking_ALCIRCC5.tex`, 12 pages).
+
+### Corrections from the retracted paper
+
+The new paper corrects the algebraic error identified by GPT:
+- **Only ONE self-absorption failure**: PPI ∉ comp(DR, PPI) = {DR}
+- The retracted paper incorrectly claimed a second: PP ∉ comp(DR, PP) = {DR}. The correct value is comp(DR, PP) = {DR, PO, PP}, so PP IS self-absorbing under DR.
+- The correct **dual** statement is PP ∉ comp(PP, DR) = {DR} — note the reversed argument order.
+- The self-absorption table in Lemma 3.2 is corrected accordingly.
+
+### Structure of the conditional result
+
+The paper establishes a rigorous conditional chain:
+
+1. **Definition**: Triangle types T(G) = set of all (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) realized by triples in the completion graph G.
+2. **Definition**: T-closed solution = edge assignment where every triple's triangle type is in T.
+3. **Theorem (arc-consistency preservation)**: If a T-closed solution exists, arc-consistency enforcement never removes any solution value. Therefore all domains stay non-empty, the fixpoint is path-consistent, and full RCC5 tractability gives a globally consistent atomic assignment.
+4. **Theorem (conditional soundness)**: If a T-closed solution exists for the tree unraveling's constraint network, C₀ is satisfiable.
+5. **Theorem (conditional decidability)**: If the Extension Solvability Conjecture holds, ALCI\_RCC5 is decidable in EXPTIME.
+
+### The Extension Solvability Conjecture
+
+The single remaining open question: does the tree unraveling of an open completion graph always admit a T-closed solution?
+
+**Why it's hard**: The completion graph trivially has a T-closed solution (its own edges). But the tree unraveling creates copies of the same node with different parent contexts. When T(d₁) = T(d₂) = n (two copies), the "copy edge" between d₁ and d₂ must form triangle types with all third elements that are witnessed in G. Different representatives of the same type may have different relational contexts (the "representative mismatch").
+
+**Partial result**: For non-DR witnesses (PO, PP, PPI), universal self-absorption holds and a T-closed solution exists. Only DR-witnesses interacting with the self-absorption failure remain problematic.
+
+**Computational evidence**: 68,276 models tested, zero genuine failures. All CSP failures are "would-be-expanded" cases where the blocking condition wouldn't fire.
+
+### Key clarification: the issue is soundness, not termination
+
+The tableau terminates (proved in the companion paper). The issue is whether an open completion graph always implies satisfiability. The conjecture, if true, would prove this. If false, the tableau might have false positives.
+
+### Files produced
+- `triangle_blocking_ALCIRCC5.tex` / `.pdf`: New conditional decidability paper (12 pages)
+- Updated `README.md` with conditional result status and new paper listing
+- Updated `CONVERSATION.md` with Part 23

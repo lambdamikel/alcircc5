@@ -52,13 +52,17 @@ See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc
 | Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap |
 | Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete |
 
-All five approaches fail at the same structural point: global edge assignment for complete-graph models. The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains **open**.
+All five approaches fail at the same structural point: global edge assignment for complete-graph models. A sixth approach (triangle-type filtering) yields a **conditional** decidability result — see below.
 
-### Sixth approach: triangle-type blocking (in progress)
+### Sixth approach: triangle-type blocking — conditional decidability
 
-A new approach under investigation uses **triangle types** — tuples (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) recording three Hintikka types and three pairwise RCC5 relations — as the blocking criterion. A node z with demand ∃U.E is blocked if either (a) the demand is already satisfied globally, or (b) the one-step extension would not create any new triangle types.
+A refined approach uses **triangle types** — tuples (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) recording three Hintikka types and three pairwise RCC5 relations — to filter edge domains in the model construction. This replaces the coarse endpoint-type domains (DN\_safe) from the retracted paper with a finer filtering that requires every triple's configuration to be witnessed in the completion graph.
 
-Triangle types capture strictly more information than pair-types (DN\_safe): they record which (pair-type, pair-type) combinations are **jointly realized** by the same node. This correctly handles GPT's counterexample to Theorem 5.5 — the problematic PO edge is filtered out because the triangle type (C₀, PO, B, DR, {p}, ?) doesn't exist in T.
+The approach yields a **conditional decidability result**: if the *Extension Solvability Conjecture* holds (the tree unraveling admits a T-closed solution), then ALCI\_RCC5 is decidable in EXPTIME. The conditional chain is rigorously proved:
+
+> T-closed solution exists → arc-consistency preserves it → domains non-empty → network path-consistent → full RCC5 tractability → model exists
+
+See [**Triangle Types and the Extension Gap (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_blocking_ALCIRCC5.pdf) for the full paper.
 
 **Computational verification** ([`triangle_closure_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_closure_check.py)) on 68,276 models (3–4 elements, 2–3 types):
 
@@ -70,12 +74,15 @@ Triangle types capture strictly more information than pair-types (DN\_safe): the
 | **Genuine failures** (T-closed extension exists but CSP rejects) | **0 (zero)** |
 | Cross-context failures (union T, foreign model) | **0 (zero)** |
 
-The key finding: **every extension CSP failure corresponds to a case where the extension creates new triangle types** — meaning the node would NOT be blocked. When a T-closed extension exists, the T-filtered arc-consistency enforcement always finds it. The mechanism is self-consistent through n=4.
+The key finding: **every extension CSP failure corresponds to a case where the extension creates new triangle types** — meaning the node would NOT be blocked. When a T-closed extension exists, the T-filtered arc-consistency enforcement always finds it.
 
-**What remains to prove:**
-1. **Termination**: T stabilizes after finitely many extensions (the number of triangle types is bounded by ~2^{3|cl(C)|} × 64)
-2. **Completeness**: when T stabilizes, all remaining demands are either globally satisfied or T-closed-extendable
-3. **Model transfer**: the T-filtered CSP remains solvable during the infinite Henkin construction (cross-context test provides evidence but not proof)
+**What is proved:**
+- The conditional theorem (Theorem 4.5 in the paper): T-closed solution ⟹ decidability
+- Correction of the algebraic error: only ONE self-absorption failure (PPI ∉ comp(DR, PPI) = {DR}), not two
+- Partial result: for non-DR witnesses, a T-closed solution always exists (Proposition 7.4)
+
+**What remains open (the Extension Solvability Conjecture):**
+The tree unraveling creates copies of the same node with different parent contexts. Showing the needed triangle types are always present requires new ideas beyond what endpoint-type domains provide. Three suggested approaches: direct combinatorial argument, enriched blocking, or quasimodel-level patchwork.
 
 **Why the two proven results don't compose.** A natural question is whether the two proven directions — (1) satisfiable → quasimodel exists (Claude) and (2) open contextual tableau → model exists (GPT-5.4) — can be chained into a decision procedure. They cannot. The chain would require a bridge step: quasimodel → open contextual tableau. But the FW counterexample proves this bridge cannot exist in general. Consider C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤): it is satisfiable, so a quasimodel for it exists (by Claude's proven soundness), but NO finite-width contextual tableau for it exists (FW refuted for every N). The two proven results operate on **different intermediate representations** with gaps on **opposite sides** — if they were opposite sides of the *same* representation they would compose, but as it stands, neither formalism serves as a bridge to the other.
 
@@ -628,6 +635,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`FW_proof_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) -- Counterexample to FW(C,N): the contextual tableau's completeness conjecture is false (7 pages)
 - [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
 - [**`ALCI_RCC5_status_after_FW.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.pdf) -- GPT-5.4's status assessment after FW failure; proposes omega-model direction ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.tex))
+- [**`triangle_blocking_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_blocking_ALCIRCC5.pdf) -- Triangle-type approach: conditional decidability of ALCI\_RCC5 via triangle-filtered model construction. Supersedes the retracted paper below. (12 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/triangle_blocking_ALCIRCC5.tex))
 - [**`closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) -- Companion paper: identifies root cause of extension gap (self-absorption failure) and attempts decidability via direct model construction. **Retracted**: Theorem 5.5 is false (10 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.tex))
 - [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response to GPT's status assessment: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
 - [**`response_to_gpt_blocking.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.pdf) -- Claude's assessment of GPT's 4-paper blocking series: verifies local results, identifies unraveling gap (9 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.tex))

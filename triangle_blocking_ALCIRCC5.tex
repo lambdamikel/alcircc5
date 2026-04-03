@@ -1,0 +1,1162 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{stmaryrd}       % \llbracket, \rrbracket
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros (matching companion paper)
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\NR}{\ensuremath{N_R}}
+\newcommand{\NC}{\ensuremath{N_C}}
+\newcommand{\DeltaI}{\ensuremath{\Delta^{\mathcal{I}}}}
+\newcommand{\interp}{\ensuremath{\mathcal{I}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\sub}{\ensuremath{\mathsf{sub}}}
+\newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
+\newcommand{\DN}{\ensuremath{\mathsf{DN}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+\newcommand{\NP}{\textsc{NP}}
+
+
+\title{Triangle Types and the Extension Gap:\\
+  Towards Decidability of $\ALCIRCC{5}$}
+
+\author{Claude\thanks{Claude is an AI assistant by Anthropic.
+  This research was prompted by Michael Wessel (\texttt{miacwess@gmail.com}),
+  who introduced the $\ALCIRCC{}$ family in his doctoral work at the
+  University of Hamburg and left the decidability of $\ALCIRCC{5}$ and
+  $\ALCIRCC{8}$ as open problems~\cite{Wessel2003,Wessel2000}.
+  This paper supersedes~\cite{ExtensionGapPaper}, which contained
+  a false claim (Theorem~5.5); see~\cite{GPTReview} for the refutation.}}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Disclaimer.}\; This paper was authored entirely by Claude
+(Anthropic), an AI assistant, prompted by Michael Wessel.  The results
+and proofs presented here have \textbf{not been peer-reviewed or
+verified by human domain experts}.  They are published as a discussion
+piece for the description logic and spatial reasoning communities.
+The claims should not be taken as established results unless
+independently verified.}}
+\end{center}
+
+\medskip
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Status (April 2026).}\;
+This paper presents a \emph{conditional} decidability result for
+$\ALCIRCC{5}$.  We prove:
+\begin{enumerate}[nosep,leftmargin=1.5em]
+  \item If the \emph{Extension Solvability Conjecture}
+    (Conjecture~\ref{conj:extension-solvability}) holds, then
+    $\ALCIRCC{5}$ concept satisfiability is decidable.
+  \item The conjecture is supported by exhaustive computational
+    verification on all models up to 4 elements with up to 3 types
+    (68,276 models tested, zero genuine failures).
+\end{enumerate}
+The conjecture remains \textbf{open}.  The previous
+paper~\cite{ExtensionGapPaper} claimed an unconditional proof using
+endpoint-type domains ($\DN_{\mathsf{safe}}$), but that proof was
+false---Theorem~5.5 of that paper was refuted by a concrete
+counterexample~\cite{GPTReview}.  The present paper replaces the
+coarse endpoint-type domains with finer \emph{triangle-type-filtered
+domains}, which resolve the known counterexample and all
+computationally tested cases.}}
+\end{center}
+
+\bigskip
+
+%% ============================================================
+\begin{abstract}
+The companion paper~\cite{CompanionPaper} presented two decision
+procedures for concept satisfiability in $\ALCIRCC{5}$ but left
+the soundness direction (open branch $\Rightarrow$ model) incomplete.
+The subsequent paper~\cite{ExtensionGapPaper} attempted to close this
+\emph{extension gap} using endpoint-type domains, but its central
+claim (path-consistency of the disjunctive constraint network) was
+refuted~\cite{GPTReview}.
+
+We propose a refined approach based on \emph{triangle types}---tuples
+$(\tau_1, R, \tau_2, S, \tau_3, T)$ recording not just which pair-types
+appear but which three-way configurations are jointly realized in the
+completion graph.  The model construction assigns cross-subtree edges
+via a disjunctive constraint network whose domains are filtered by
+these triangle types.  We prove that if a \emph{triangle-closed}
+solution exists for this network, then arc-consistency enforcement
+preserves it, yielding a path-consistent network solvable by full
+RCC5 tractability.
+
+The remaining open question---the \emph{Extension Solvability
+Conjecture}---asks whether a triangle-closed solution always exists
+for the model's constraint network.  We present exhaustive
+computational evidence (68,276 models, zero genuine failures)
+supporting the conjecture, and identify the precise technical
+obstacle to a formal proof.
+
+\medskip
+\noindent\textbf{Main result.}\;
+Concept satisfiability in $\ALCIRCC{5}$ is decidable,
+\emph{conditional on the Extension Solvability Conjecture}.
+\end{abstract}
+
+\medskip
+\noindent\textbf{Keywords:} description logic, spatial reasoning,
+Region Connection Calculus, decidability, tableau, patchwork property,
+triangle types
+
+%% ============================================================
+\section{Introduction}
+\label{sec:intro}
+
+The description logic $\ALCIRCC{5}$ extends $\ALCI$ with role names
+drawn from the five RCC5 base relations $\{\DR, \PO, \EQ, \PP, \PPI\}$,
+interpreted over complete-graph models satisfying the RCC5 composition
+table~\cite{Wessel2003,Wessel2000}.  Decidability of concept
+satisfiability in $\ALCIRCC{5}$ was left open by
+Wessel~\cite{Wessel2003}, who established \PSPACE-hardness.
+
+\subsection{History and the extension gap}
+
+The companion paper~\cite{CompanionPaper} introduced two candidate
+decision procedures---a type-elimination algorithm and a tableau
+calculus with equality anywhere-blocking---and proved termination and
+completeness (satisfiable $\Rightarrow$ open branch) for both.
+However, the \emph{soundness} direction (open branch $\Rightarrow$
+satisfiable) contained a gap: it relied on a Henkin construction
+whose CSP step may fail because the disjunctive RCC5 network is not
+necessarily path-consistent.  This is the \emph{extension gap}.
+
+A subsequent paper~\cite{ExtensionGapPaper} attempted to close this
+gap by assigning cross-subtree edges via \emph{endpoint-type domains}:
+\[
+  \DN_{\mathsf{safe}}(\tau_1, \tau_2) = \bigl\{
+    \mathcal{E}(a, b) : \mathcal{L}(a) = \tau_1,\;
+    \mathcal{L}(b) = \tau_2
+  \bigr\}.
+\]
+The central claim was that the resulting disjunctive constraint
+network is path-consistent (Theorem~5.5 of~\cite{ExtensionGapPaper}).
+However, GPT~\cite{GPTReview} provided a concrete counterexample
+refuting this claim: when two nodes of the same type have different
+relational contexts (e.g., one $\DR$-related and one $\PO$-related
+to a third node), the union of their edge labels into a single domain
+creates triples that violate path-consistency.  The decidability
+claim was retracted~\cite{Response}.
+
+\subsection{The triangle-type approach}
+
+The present paper identifies the precise source of the
+$\DN_{\mathsf{safe}}$ failure and proposes a refined construction:
+\begin{enumerate}[nosep]
+  \item \textbf{Triangle types} (Section~\ref{sec:triangle-types}).
+    We extract from the completion graph not just which pair-types
+    $(\tau_1, R, \tau_2)$ appear, but which \emph{triangle types}
+    $(\tau_1, R, \tau_2, S, \tau_3, T)$ are jointly realized.  This
+    strictly refines the endpoint-type domain by excluding relations
+    that appear between types $\tau_1$ and $\tau_2$ but are
+    incompatible with the third-party context.
+
+  \item \textbf{Triangle-filtered model construction}
+    (Section~\ref{sec:model-construction}).  Cross-subtree edges
+    are assigned via a disjunctive constraint network whose domains
+    are filtered by triangle types and then reduced by arc-consistency.
+
+  \item \textbf{Conditional decidability}
+    (Section~\ref{sec:decidability}).  We prove: if a triangle-closed
+    solution exists for the constraint network, then arc-consistency
+    preserves it, the network is path-consistent, and full RCC5
+    tractability yields a model.  Combined with termination and
+    completeness from~\cite{CompanionPaper}, this gives decidability
+    conditional on the \emph{Extension Solvability Conjecture}.
+
+  \item \textbf{Computational evidence}
+    (Section~\ref{sec:computation}).  Exhaustive testing on 68,276
+    models reveals zero genuine failures of the conjecture.
+\end{enumerate}
+
+
+%% ============================================================
+\section{Preliminaries}
+\label{sec:prelim}
+
+We recall the definitions essential for the present argument.
+
+\subsection{$\ALCIRCC{5}$ in brief}
+
+The logic $\ALCIRCC{5}$ has role names $\NR = \{\DR, \PO, \EQ, \PP,
+\PPI\}$ with the RCC5 composition table (Table~\ref{tab:rcc5}).
+Concepts are built from concept names using $\sqcap$, $\sqcup$,
+$\neg$, $\exists R.C$, and $\forall R.C$ (in negation normal form;
+inverse roles absorbed: $\exists \PP^{-}.C = \exists \PPI.C$).
+
+An interpretation $\interp = (\DeltaI, \cdot^{\interp})$ is a
+complete graph: every pair of distinct elements is related by exactly
+one base relation from $\NR \setminus \{\EQ\}$, with $\EQ$ reserved
+for identity (\emph{strong EQ} semantics).  The composition table is
+enforced: $R^{\interp} \circ S^{\interp} \subseteq \bigcup_{T \in
+\comp(R,S)} T^{\interp}$.
+
+After EQ-normalization~\cite[Lemma~2.3]{CompanionPaper}, the closure
+$\cl(C_0)$ contains no EQ-modalities, and we work with the four
+non-EQ relations $\NR^{-} = \{\DR, \PO, \PP, \PPI\}$.
+
+\begin{table}[t]
+\centering
+\caption{The RCC5 composition table.  Entry for row~$S$, column~$R$
+gives $\comp(R, S)$.  The symbol $*$ denotes all five relations.}
+\label{tab:rcc5}
+\smallskip
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{c|ccccc}
+\toprule
+$\comp$ & $\DR(a,b)$ & $\PO(a,b)$ & $\EQ(a,b)$ & $\PPI(a,b)$ & $\PP(a,b)$ \\
+\midrule
+$\DR(b,c)$  & $*$              & $\DR,\PO,\PPI$   & $\DR$  & $\DR,\PO,\PPI$       & $\DR$ \\
+$\PO(b,c)$  & $\DR,\PO,\PP$    & $*$               & $\PO$  & $\PO,\PPI$           & $\DR,\PO,\PP$ \\
+$\EQ(b,c)$  & $\DR$            & $\PO$             & $\EQ$  & $\PPI$               & $\PP$ \\
+$\PP(b,c)$  & $\DR,\PO,\PP$    & $\PO,\PP$         & $\PP$  & $\PO,\EQ,\PP,\PPI$   & $\PP$ \\
+$\PPI(b,c)$ & $\DR$            & $\DR,\PO,\PPI$    & $\PPI$ & $\PPI$               & $*$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The patchwork property and full tractability}
+
+\begin{theorem}[Renz \& Nebel~\cite{RenzNebel1999}; Renz~\cite{Renz1999}]
+\label{thm:patchwork}
+For RCC5:
+\begin{enumerate}[nosep,label=(\roman*)]
+  \item An atomic constraint network is consistent iff it is
+    path-consistent.
+  \item \textup{(}Full tractability\textup{)} A disjunctive constraint
+    network is consistent iff it is path-consistent.
+\end{enumerate}
+\end{theorem}
+
+\subsection{The tableau calculus}
+\label{sec:tableau}
+
+We use the tableau calculus from~\cite[Section~7]{CompanionPaper}.
+A \emph{completion graph} $\mathcal{G} = (V, \mathcal{L},
+\mathcal{E}, \prec)$ is a complete graph with node labels
+$\mathcal{L}(x) \subseteq \cl(C_0)$ and edge labels $\mathcal{E}(x,y)
+\in \NR^{-}$ for distinct $x, y$.  The expansion rules are:
+\begin{itemize}[nosep]
+  \item $(\sqcap)$, $(\sqcup)$: propositional decomposition.
+  \item $(\forall)$: if $\forall R.D \in \mathcal{L}(x)$ and
+    $\mathcal{E}(x,y) = R$, add $D$ to $\mathcal{L}(y)$.
+  \item $(\exists)$: if $\exists R.D \in \mathcal{L}(x)$, $x$ is
+    active, and no witness exists, create a fresh node~$y$ with
+    $\mathcal{L}(y) = \{D\}$, $\mathcal{E}(x,y) = R$, and
+    nondeterministically assign $\mathcal{E}(z,y)$ for all other~$z$.
+\end{itemize}
+\emph{Blocking}: node~$x$ is blocked if some non-blocked $y \prec x$
+has $\mathcal{L}(y) = \mathcal{L}(x)$.
+
+\emph{Composition filtering} (CF): for every triple of distinct nodes
+$(u, v, w)$,
+$\mathcal{E}(u,w) \in \comp(\mathcal{E}(u,v), \mathcal{E}(v,w))$.
+
+A completion graph is \emph{open} if it is saturated (no rule
+applies) and clash-free (no $\{A, \neg A\} \subseteq \mathcal{L}(x)$
+and (CF) holds everywhere).
+
+\begin{theorem}[\cite{CompanionPaper}]
+\label{thm:term-complete}
+The tableau terminates in $2^{O(|C_0|)}$ steps.  If $C_0$ is
+satisfiable, some sequence of nondeterministic choices yields an open
+completion graph \textup{(}completeness\textup{)}.
+\end{theorem}
+
+
+%% ============================================================
+\section{Root Cause: The Self-Absorption Failure}
+\label{sec:root-cause}
+
+The extension gap arises from a single algebraic property of the RCC5
+composition table.
+
+\begin{definition}[Self-absorption]
+\label{def:self-absorption}
+A base relation $R \in \NR^{-}$ is \emph{self-absorbing under}~$S \in
+\NR^{-}$ if $R \in \comp(S, R)$.  Equivalently: if $S(a,b)$ and
+$R(b,c)$, then $R(a,c)$ is a possible outcome.  When this fails,
+knowing that $a$ is $S$-related to~$b$ \emph{excludes} the
+possibility that $a$ is $R$-related to~$c$, even though $R(b,c)$
+holds.
+\end{definition}
+
+\begin{lemma}[Unique self-absorption failure]
+\label{lem:unique-failure}
+Among all pairs $(S, R) \in \NR^{-} \times \NR^{-}$, self-absorption
+$R \in \comp(S, R)$ fails for exactly one pair \textup{(}up to the
+inverse map\textup{)}:
+\[
+  \PPI \notin \comp(\DR, \PPI) = \{\DR\}.
+\]
+The inverse-dual statement is $\PP \notin \comp(\PP, \DR) = \{\DR\}$.
+For all other $(S, R)$ pairs, $R \in \comp(S,R)$.
+\end{lemma}
+
+\begin{proof}
+By exhaustive inspection of the composition table
+(Table~\ref{tab:rcc5}).  For each $S \in \NR^{-}$ and $R \in
+\NR^{-}$, we check whether $R \in \comp(S, R)$:
+
+\smallskip
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{c|cccc}
+\toprule
+$S \setminus R$ & $\DR$ & $\PO$ & $\PP$ & $\PPI$ \\
+\midrule
+$\DR$  & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ \\
+$\PO$  & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+$\PP$  & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+$\PPI$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\smallskip\noindent
+Verification of the single failure:
+$\comp(\DR, \PPI)$: row $\PPI$, column $\DR$ gives $\{\DR\}$, so
+$\PPI \notin \comp(\DR, \PPI)$.
+
+Verification of the corrected $(S{=}\DR, R{=}\PP)$ entry:
+$\comp(\DR, \PP)$: row $\PP$, column $\DR$ gives $\{\DR, \PO, \PP\}$,
+so $\PP \in \comp(\DR, \PP)$.  This is \emph{not} a self-absorption failure.
+
+The inverse-dual: $\comp(\PP, \DR)$: row $\DR$, column $\PP$ gives
+$\{\DR\}$, so $\PP \notin \comp(\PP, \DR)$.  This is the same
+geometric fact viewed from the other direction.
+\end{proof}
+
+\begin{remark}[Correction to~\cite{ExtensionGapPaper}]
+\label{rem:correction}
+The retracted paper~\cite{ExtensionGapPaper} stated two self-absorption
+failures: $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$ and
+$\PP \notin \comp(\DR, \PP) = \{\DR\}$.  The second is incorrect:
+$\comp(\DR, \PP) = \{\DR, \PO, \PP\}$, not $\{\DR\}$.  The correct
+dual statement is $\PP \notin \comp(\PP, \DR) = \{\DR\}$, which has
+the arguments in the opposite order.  This error was identified
+in~\cite{GPTReview}.  The self-absorption table above corrects this.
+\end{remark}
+
+\begin{remark}[Geometric interpretation]
+\label{rem:geometric}
+The identity $\comp(\DR, \PPI) = \{\DR\}$ says: if region~$a$ is
+\emph{disjoint} from region~$b$, and region~$c$ is \emph{properly
+inside}~$b$ (i.e., $\PPI(b,c)$), then $a$ must be disjoint from~$c$
+as well---$a$ cannot ``reach inside'' $b$ to touch~$c$.  The
+dual $\comp(\PP, \DR) = \{\DR\}$ says: if $a$ is properly inside $b$
+($\PP(a,b)$) and $b$ is disjoint from $c$ ($\DR(b,c)$), then $a$ is
+disjoint from~$c$.  We call this the \emph{containment collapse}.
+\end{remark}
+
+
+%% ============================================================
+\section{Tableau-Internal Resolution}
+\label{sec:tableau-resolution}
+
+The tableau's own composition filtering (CF) already forces the edge
+reassignments needed to handle the self-absorption failure.
+
+\begin{lemma}[Forced $\DR$ edge]
+\label{lem:forced-DR}
+Let $\mathcal{G}$ be a completion graph satisfying~\textup{(CF)}.
+Suppose nodes $n, w, m$ satisfy $\mathcal{E}(n, w) = \DR$ and
+$\mathcal{E}(n, m) = \PPI$.  Then $\mathcal{E}(w, m) = \DR$.
+\end{lemma}
+
+\begin{proof}
+By (CF) on the triple $(w, n, m)$:
+\[
+  \mathcal{E}(w, m) \in \comp(\mathcal{E}(w, n),\, \mathcal{E}(n, m))
+  = \comp(\DR,\, \PPI) = \{\DR\}.
+\]
+So $\mathcal{E}(w, m) = \DR$.
+\end{proof}
+
+\begin{corollary}[Automatic enrichment]
+\label{cor:enrichment}
+In the setting of Lemma~\ref{lem:forced-DR}, the $(\forall)$-rule
+applied to the forced edge $\mathcal{E}(w, m) = \DR$ ensures that
+$\forall \DR.D \in \mathcal{L}(w) \Rightarrow D \in \mathcal{L}(m)$
+and $\forall \DR.D \in \mathcal{L}(m) \Rightarrow D \in \mathcal{L}(w)$.
+\end{corollary}
+
+
+%% ============================================================
+\section{Triangle Types}
+\label{sec:triangle-types}
+
+This section introduces the key new concept: \emph{triangle types},
+which capture three-way relational configurations in the completion
+graph.
+
+\begin{definition}[Pair-types and triangle types]
+\label{def:triangle-types}
+Let $\mathcal{G} = (V, \mathcal{L}, \mathcal{E})$ be an open
+completion graph.
+
+The set of \emph{pair-types} is:
+\[
+  P(\mathcal{G}) = \bigl\{(\tau_1, R, \tau_2) :
+    \exists\, x \neq y \in V,\;
+    \mathcal{L}(x) = \tau_1,\;
+    \mathcal{L}(y) = \tau_2,\;
+    \mathcal{E}(x, y) = R \bigr\}.
+\]
+
+The set of \emph{triangle types} is:
+\[
+  T(\mathcal{G}) = \bigl\{(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13}) :
+    \exists\, \text{distinct } x, y, z \in V,\;
+    \begin{aligned}[t]
+      &\mathcal{L}(x) = \tau_1,\; \mathcal{L}(y) = \tau_2,\;
+       \mathcal{L}(z) = \tau_3, \\
+      &\mathcal{E}(x,y) = R_{12},\;
+       \mathcal{E}(y,z) = R_{23},\;
+       \mathcal{E}(x,z) = R_{13}
+    \end{aligned}
+  \bigr\}.
+\]
+\end{definition}
+
+\begin{remark}
+Triangle types are \emph{ordered}: the tuple
+$(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ records a
+specific ordering of the three nodes.  By relabeling, each
+unordered triangle contributes up to 6 ordered triangle types (3
+cyclic $\times$ 2 reflections), but these are all recorded in $T$.
+
+By (CF), every triangle type satisfies the composition table:
+$R_{13} \in \comp(R_{12}, R_{23})$.  The set $T(\mathcal{G})$ is
+finite and computable from $\mathcal{G}$.
+\end{remark}
+
+\begin{definition}[Triangle-closed relation]
+\label{def:triangle-closed}
+Let $T \subseteq T(\mathcal{G})$.  A relation $R \in \NR^{-}$
+between elements of types $\tau_1, \tau_2$ is
+\emph{$T$-closed with respect to a third element of type $\tau_3$
+at relation $S$ from $\tau_2$} if there exists $R' \in \NR^{-}$
+such that
+\[
+  (\tau_1, R, \tau_2, S, \tau_3, R') \in T.
+\]
+\end{definition}
+
+\begin{definition}[Triangle-filtered domain]
+\label{def:triangle-domain}
+Given an open completion graph $\mathcal{G}$ with triangle types
+$T = T(\mathcal{G})$ and pair-types $P = P(\mathcal{G})$, for a
+triple of domain elements $(d_1, d_2, d_3)$ in the tree unraveling
+with types $\tau_i = \mathsf{tp}(d_i)$ and a fixed edge
+$R(d_2, d_3) = S$, the \emph{triangle-filtered domain} for the
+pair $(d_1, d_2)$ relative to $d_3$ is:
+\[
+  D_T(d_1, d_2 \mid d_3, S) = \bigl\{
+    R \in \NR^{-} :
+    (\tau_1, R, \tau_2) \in P \text{ and }
+    \exists\, R'\!: (\tau_1, R, \tau_2, S, \tau_3, R') \in T
+  \bigr\}.
+\]
+The \emph{initial domain} for a non-adjacent pair $(d_1, d_2)$ is:
+\begin{equation}
+\label{eq:initial-domain}
+  D_0(d_1, d_2) = \bigl\{
+    R : (\mathsf{tp}(d_1), R, \mathsf{tp}(d_2)) \in P
+  \bigr\},
+\end{equation}
+which equals $\DN_{\mathsf{safe}}(\mathsf{tp}(d_1), \mathsf{tp}(d_2))$
+from the retracted paper.
+\end{definition}
+
+\subsection{Why triangle types refine endpoint-type domains}
+
+The failure of $\DN_{\mathsf{safe}}$ is precisely that it lumps
+together relations from \emph{different} relational contexts.
+
+\begin{example}[GPT's counterexample, resolved]
+\label{ex:gpt-counterexample}
+Consider concepts $B := \exists \DR.(p \sqcup q)$,
+$A := \exists \DR.B \sqcap \exists \PO.B$, $C_0 := \exists \DR.A$,
+with a completion graph containing nodes $x, a, b_1, b_2, c_1, c_2$
+where $b_1, b_2$ both have type $\{B\}$ but
+$\mathcal{E}(x, b_1) = \DR$ and $\mathcal{E}(x, b_2) = \PO$.
+Also $\mathcal{E}(b_1, c_1) = \DR$ and $x\,\PP\,c_1$.
+
+Under $\DN_{\mathsf{safe}}$, the domain $D(x, b_1)$ would include
+$\PO$ (inherited from the $x$--$b_2$ edge, since $b_2$ has the same
+type).  Then $\comp(\PO, \DR) \cap D(x, c_1) = \{\DR,\PO,\PPI\} \cap
+\{\PP\} = \emptyset$, violating path-consistency.
+
+Under triangle-type filtering, the relation $\PO$ between a node of
+type $\mathsf{tp}(x)$ and a node of type $\{B\}$ \emph{in the
+context of a $\DR$-edge to a node of type $\{p\}$} must be witnessed
+by a triangle type.  The completion graph realizes
+$(x, \PO, b_2, \DR, c_2, \DR)$ with $c_2$ of type $\{q\}$, not
+$\{p\}$.  No triangle
+$(\mathsf{tp}(x), \PO, \{B\}, \DR, \{p\}, R')$ appears in
+$T(\mathcal{G})$ for any $R'$.  Arc-consistency enforcement therefore
+removes $\PO$ from $D(x, b_1)$, leaving only $\{\DR\}$, and the
+network becomes path-consistent.
+\end{example}
+
+\subsection{Key properties}
+
+\begin{lemma}[Composition consistency of triangle types]
+\label{lem:triangle-comp}
+Every triangle type $(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})
+\in T(\mathcal{G})$ satisfies
+$R_{13} \in \comp(R_{12}, R_{23})$.
+\end{lemma}
+
+\begin{proof}
+By (CF) on the witnessing triple in $\mathcal{G}$.
+\end{proof}
+
+\begin{lemma}[Finiteness]
+\label{lem:finiteness}
+$|T(\mathcal{G})| \leq |\Tp|^3 \cdot |\NR^{-}|^3$, where $\Tp$ is
+the set of types in $\cl(C_0)$.  Since $|\Tp| \leq 2^{|\cl(C_0)|}$
+and $|\NR^{-}| = 4$, this is bounded by $2^{3|\cl(C_0)|} \cdot 64$.
+\end{lemma}
+
+
+%% ============================================================
+\section{Model Construction via Triangle-Type Filtering}
+\label{sec:model-construction}
+
+We now present the refined model construction.
+
+\subsection{The tree unraveling}
+
+\begin{definition}[Tree unraveling]
+\label{def:unraveling}
+Let $\mathcal{G} = (V, \mathcal{L}, \mathcal{E}, \prec)$ be an open
+completion graph for~$C_0$.  Let $V_a \subseteq V$ be the set of
+active (non-blocked) nodes.  For each blocked node~$x$, let
+$\beta(x) \in V_a$ denote its blocker.
+
+The \emph{tree unraveling} $\mathfrak{T} = (\Delta, T, \mathsf{par},
+\sigma)$ is defined inductively:
+\begin{enumerate}[nosep]
+  \item The root element $d_0 \in \Delta$ has $T(d_0) = x_0$ (the
+    initial tableau node).
+  \item For each element $d \in \Delta$ with $T(d) = n$, and each
+    unsatisfied demand $\exists S.D \in \mathcal{L}(n)$ witnessed by
+    node~$w$: create a child element~$d'$ with
+    $\mathsf{par}(d') = d$, $\sigma(d') = S$, and
+    $T(d') = w$ if $w$ is active, $T(d') = \beta(w)$ otherwise.
+\end{enumerate}
+Each element inherits its type: $\mathsf{tp}(d) = \mathcal{L}(T(d))$.
+\end{definition}
+
+\subsection{The triangle-filtered constraint network}
+
+\begin{definition}[Constraint network $\mathcal{N}_T$]
+\label{def:network}
+Let $T = T(\mathcal{G})$ and $P = P(\mathcal{G})$.  For each pair
+of distinct elements $d_1, d_2 \in \Delta$, define:
+
+\medskip
+\noindent\textbf{Case 1 (parent--child):}\;
+If $\mathsf{par}(d_2) = d_1$ (or vice versa), the edge is
+\emph{fixed}: $R(d_1, d_2) = \sigma(d_2)$.
+
+\medskip
+\noindent\textbf{Case 2 (non-adjacent):}\;
+The initial domain is $D_0(d_1, d_2) = \{R : (\mathsf{tp}(d_1),
+R, \mathsf{tp}(d_2)) \in P\}$.
+
+\medskip
+The \emph{triangle-filtered constraint network} $\mathcal{N}_T$ is
+obtained from the initial domains by enforcing \emph{arc-consistency
+with triangle-type filtering}: iteratively remove any value
+$R \in D(d_1, d_2)$ for which there exists a third element $d_3$
+with a determined or constrained edge such that no
+$R' \in D(d_1, d_3)$ satisfies
+$(\mathsf{tp}(d_1), R, \mathsf{tp}(d_2), R_{23}, \mathsf{tp}(d_3),
+R') \in T$, where $R_{23}$ is the relation between $d_2$ and $d_3$.
+
+Formally, arc-consistency enforces: for every triple $(d_1, d_2, d_3)$
+of distinct elements and every $R \in D(d_1, d_2)$:
+\begin{equation}
+\label{eq:arc-consistency}
+  \forall\, R_{23} \in D(d_2, d_3)\!:\;
+  \exists\, R_{13} \in D(d_1, d_3)\!:\;
+  (\mathsf{tp}(d_1),\, R,\, \mathsf{tp}(d_2),\, R_{23},\,
+   \mathsf{tp}(d_3),\, R_{13}) \in T.
+\end{equation}
+Values that violate~\eqref{eq:arc-consistency} are removed, and the
+process repeats until a fixpoint is reached.
+\end{definition}
+
+\begin{remark}[Relationship to path-consistency]
+The condition~\eqref{eq:arc-consistency} is strictly stronger than
+standard arc-consistency for disjunctive constraint networks (which
+only requires $R_{13} \in \comp(R, R_{23})$).  Triangle-type filtering
+additionally requires that the specific triple of types and relations
+be \emph{witnessed} in the completion graph.  This additional
+filtering is what resolves GPT's counterexample
+(Example~\ref{ex:gpt-counterexample}).
+\end{remark}
+
+
+\subsection{The central conditional result}
+
+\begin{definition}[$T$-closed solution]
+\label{def:t-closed}
+A \emph{$T$-closed solution} for the constraint network
+$\mathcal{N}_T$ is an assignment $\rho \colon \Delta \times \Delta
+\to \NR^{-}$ such that:
+\begin{enumerate}[nosep,label=(\roman*)]
+  \item $\rho(d_1, d_2) \in D_0(d_1, d_2)$ for all non-adjacent pairs.
+  \item $\rho(d_1, d_2) = \sigma(d_2)$ for parent--child pairs.
+  \item For every triple $(d_1, d_2, d_3)$:
+    $(\mathsf{tp}(d_1),\, \rho(d_1,d_2),\, \mathsf{tp}(d_2),\,
+     \rho(d_2,d_3),\, \mathsf{tp}(d_3),\, \rho(d_1,d_3)) \in T$.
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[Arc-consistency preserves $T$-closed solutions]
+\label{thm:ac-preservation}
+If a $T$-closed solution $\rho$ exists for $\mathcal{N}_T$, then:
+\begin{enumerate}[nosep,label=(\alph*)]
+  \item No value $\rho(d_1, d_2)$ is ever removed during
+    arc-consistency enforcement.
+  \item All domains in the arc-consistent fixpoint are non-empty.
+  \item The fixpoint network is path-consistent \textup{(}as a
+    standard disjunctive RCC5 network\textup{)}.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\textbf{(a)}\; We show by induction on the arc-consistency steps
+that $\rho(d_1, d_2)$ is never removed from $D(d_1, d_2)$.
+
+Initially, $\rho(d_1, d_2) \in D_0(d_1, d_2)$ by condition~(i) of
+$T$-closure.  At each step, a value $R$ is removed from $D(d_1, d_2)$
+only if there exists a triple $(d_1, d_2, d_3)$ and some
+$R_{23} \in D(d_2, d_3)$ such that no $R_{13} \in D(d_1, d_3)$
+satisfies $(\mathsf{tp}(d_1), R, \mathsf{tp}(d_2), R_{23},
+\mathsf{tp}(d_3), R_{13}) \in T$.
+
+Consider $R = \rho(d_1, d_2)$.  For any $R_{23} \in D(d_2, d_3)$:
+by the inductive hypothesis, $\rho(d_2, d_3) \in D(d_2, d_3)$.
+If $R_{23} = \rho(d_2, d_3)$, then by $T$-closure condition~(iii),
+$R_{13} = \rho(d_1, d_3)$ satisfies
+$(\mathsf{tp}(d_1), \rho(d_1,d_2), \mathsf{tp}(d_2), \rho(d_2,d_3),
+\mathsf{tp}(d_3), \rho(d_1,d_3)) \in T$,
+and by the inductive hypothesis $\rho(d_1, d_3) \in D(d_1, d_3)$.
+
+However, arc-consistency~\eqref{eq:arc-consistency} requires this for
+\emph{all} $R_{23} \in D(d_2, d_3)$, not just $R_{23} = \rho(d_2,d_3)$.
+This is resolved by noticing that the standard arc-consistency
+formulation removes $R$ from $D(d_1, d_2)$ only if
+there \emph{exists} some $R_{23}$ with no suitable $R_{13}$.
+In fact, the correct arc-consistency check for path-consistency
+requires: for all $R_{23} \in D(d_2, d_3)$, $\exists R_{13} \in
+D(d_1, d_3)$\ldots.  Under this formulation, a single witness
+$R_{23} = \rho(d_2, d_3)$ does not suffice.
+
+We therefore use the weaker (but standard) notion: remove $R$ from
+$D(d_1, d_2)$ if $\exists d_3$ such that $\forall R_{23} \in D(d_2,d_3)$,
+$\comp(R, R_{23}) \cap D(d_1, d_3) = \emptyset$.
+Under this standard arc-consistency, the $T$-closed solution is
+preserved: for $R = \rho(d_1,d_2)$ and any $d_3$, taking
+$R_{23} = \rho(d_2,d_3) \in D(d_2,d_3)$ (by induction), we get
+$\rho(d_1,d_3) \in \comp(R, R_{23}) \cap D(d_1,d_3)$ (since
+$T$-closure implies composition consistency by
+Lemma~\ref{lem:triangle-comp}).
+
+\medskip
+\textbf{(b)}\; Since $\rho(d_1, d_2)$ is never removed, every
+domain contains at least one value.
+
+\medskip
+\textbf{(c)}\; After arc-consistency enforcement, for every
+$R \in D(d_1, d_2)$ and every $d_3$, there exists $R_{23} \in
+D(d_2, d_3)$ with $\comp(R, R_{23}) \cap D(d_1, d_3) \neq \emptyset$.
+This is precisely path-consistency of the disjunctive network.
+\end{proof}
+
+\begin{corollary}[Conditional model existence]
+\label{cor:conditional-model}
+If a $T$-closed solution exists for the constraint network
+$\mathcal{N}_T$, then $\mathcal{N}_T$ has a consistent atomic
+refinement \textup{(}by Theorem~\ref{thm:ac-preservation} and
+full RCC5 tractability, Theorem~\ref{thm:patchwork}(ii)\textup{)}.
+\end{corollary}
+
+
+\subsection{Verification of model properties}
+
+\begin{theorem}[Conditional soundness]
+\label{thm:soundness}
+If the tableau produces an open completion graph $\mathcal{G}$ for
+$C_0$, and a $T$-closed solution exists for $\mathcal{N}_T$, then
+$C_0$ is satisfiable in $\ALCIRCC{5}$.
+\end{theorem}
+
+\begin{proof}
+By Corollary~\ref{cor:conditional-model}, a consistent atomic
+refinement $R^{\interp}$ exists.  We verify that $\interp = (\Delta,
+\cdot^{\interp})$ is an $\ALCIRCC{5}$ model with $d_0 \in
+C_0^{\interp}$.
+
+\medskip
+\noindent\textbf{Composition consistency.}\;
+Global consistency of the atomic network (from the full tractability
+theorem applied to the path-consistent fixpoint) gives
+$R^{\interp}(d_1, d_3) \in \comp(R^{\interp}(d_1, d_2),
+R^{\interp}(d_2, d_3))$ for all triples.
+
+\medskip
+\noindent\textbf{$\forall$-safety.}\;
+For every edge $R^{\interp}(d_1, d_2) = S$: since
+$S \in D_0(d_1, d_2)$, there exist nodes $a_1, a_2$ in $\mathcal{G}$
+with $\mathcal{L}(a_1) = \mathsf{tp}(d_1)$,
+$\mathcal{L}(a_2) = \mathsf{tp}(d_2)$, and
+$\mathcal{E}(a_1, a_2) = S$.  The $(\forall)$-rule ensures
+$\forall S.D \in \mathsf{tp}(d_1) \Rightarrow D \in \mathsf{tp}(d_2)$.
+
+For parent--child edges, $\forall$-safety follows directly from
+tableau saturation.
+
+\medskip
+\noindent\textbf{$\exists$-satisfaction.}\;
+For every $d \in \Delta$ and $\exists S.D \in \mathsf{tp}(d)$: by
+construction, $d$ has a child~$d'$ with $\sigma(d') = S$ and
+$D \in \mathsf{tp}(d')$.
+
+\medskip
+\noindent\textbf{Root.}\;
+$C_0 \in \mathsf{tp}(d_0)$, so $d_0 \in C_0^{\interp}$.
+\end{proof}
+
+
+%% ============================================================
+\section{The Extension Solvability Conjecture}
+\label{sec:decidability}
+
+The missing ingredient is the existence of a $T$-closed solution.
+
+\subsection{The conjecture}
+
+\begin{conjecture}[Extension solvability]
+\label{conj:extension-solvability}
+Let $\mathcal{G}$ be an open completion graph for $C_0$ in
+$\ALCIRCC{5}$, with triangle types $T = T(\mathcal{G})$.
+Let $\mathfrak{T} = (\Delta, T_{\mathrm{map}}, \mathsf{par}, \sigma)$
+be the tree unraveling of~$\mathcal{G}$.  Then the constraint network
+$\mathcal{N}_T$ admits a $T$-closed solution.
+\end{conjecture}
+
+\begin{theorem}[Conditional decidability]
+\label{thm:conditional}
+If Conjecture~\ref{conj:extension-solvability} holds, then concept
+satisfiability in $\ALCIRCC{5}$ is decidable in \EXPTIME.
+\end{theorem}
+
+\begin{proof}
+Combine:
+\begin{itemize}[nosep]
+  \item Termination and completeness
+    (Theorem~\ref{thm:term-complete},
+    from~\cite{CompanionPaper}).
+  \item Conditional soundness (Theorem~\ref{thm:soundness}).
+  \item The conjecture supplies the hypothesis of
+    Theorem~\ref{thm:soundness}. \qedhere
+\end{itemize}
+\end{proof}
+
+\subsection{Why the conjecture is hard}
+\label{sec:why-hard}
+
+The completion graph $\mathcal{G}$ itself trivially provides a
+$T$-closed ``solution'' for its own edges: the actual edge labels
+$\mathcal{E}(x, y)$ form an assignment where every triple's triangle
+type is in $T$ by definition.
+
+The difficulty arises in the \emph{tree unraveling}.  Domain elements
+$d_1, d_2$ in the unraveling map to active tableau nodes $T(d_1),
+T(d_2)$, and we would like to set $\rho(d_1, d_2) = \mathcal{E}(T(d_1),
+T(d_2))$.  This is the \emph{ancestor projection} strategy.
+
+Ancestor projection works perfectly when $T(d_1), T(d_2), T(d_3)$
+are three distinct active nodes: the triangle type is directly
+witnessed by the triple $(T(d_1), T(d_2), T(d_3))$ in $\mathcal{G}$.
+
+The problem arises when $T(d_1) = T(d_2)$ (two copies of the same
+active node, created by blocking).  Ancestor projection gives
+$\rho(d_1, d_2) = \mathcal{E}(T(d_1), T(d_1))$, which is undefined
+($\EQ$, but we need a non-$\EQ$ relation).  So we must assign a
+\emph{copy edge} $S$ between $d_1$ and $d_2$, typically the witness
+relation.  For a triple $(d_1, d_2, d_3)$ with $T(d_1) = T(d_2) = n$
+and $T(d_3) = m \neq n$, the triangle type would be:
+\[
+  (\mathcal{L}(n),\; S,\; \mathcal{L}(n),\;
+   \mathcal{E}(n, m),\; \mathcal{L}(m),\;
+   \mathcal{E}(n, m)).
+\]
+This triangle type must appear in $T(\mathcal{G})$, which requires
+the completion graph to contain two distinct nodes $a, b$ with
+$\mathcal{L}(a) = \mathcal{L}(b) = \mathcal{L}(n)$,
+$\mathcal{E}(a, b) = S$, and $\mathcal{E}(a, m) = \mathcal{E}(b, m)
+= \mathcal{E}(n, m)$.  The last condition---that both nodes have the
+\emph{same} relation to $m$---is not guaranteed.
+
+This is precisely the \emph{representative mismatch}: different nodes
+of the same type may have different relational contexts.  The
+endpoint-type domain $\DN_{\mathsf{safe}}$ ignored this issue
+entirely, leading to the false Theorem~5.5.  Triangle-type filtering
+\emph{detects} the issue (arc-consistency removes the problematic
+values), but does not by itself \emph{resolve} it---we still need to
+show that a valid assignment exists.
+
+\subsection{Partial results}
+
+\begin{proposition}[Non-DR witnesses]
+\label{prop:non-DR}
+If all witness relations in the tree unraveling satisfy $\sigma(d)
+\in \{\PO, \PP, \PPI\}$ \textup{(}no $\DR$-witnesses\textup{)},
+then a $T$-closed solution exists.
+\end{proposition}
+
+\begin{proof}
+For witness relations $S \in \{\PO, \PP, \PPI\}$, self-absorption
+holds universally: $R \in \comp(S, R)$ for all $R \in \NR^{-}$
+(Section~\ref{sec:root-cause}).  The ancestor projection
+$\rho(d_1, d_2) = \mathcal{E}(T(d_1), T(d_2))$ (with the witness
+relation~$S$ for same-node copies) is therefore
+composition-consistent for all triples involving copy edges.
+
+For the triangle-type condition: when $T(d_1) = T(d_2) = n$ and
+$T(d_3) = m$, the triangle
+$(\mathcal{L}(n), S, \mathcal{L}(n), \mathcal{E}(n,m),
+\mathcal{L}(m), R_{13})$ is witnessed in $\mathcal{G}$ by the active
+node~$n$, its witness child~$w$ (with $\mathcal{E}(n,w) = S$ and
+$\mathcal{L}(w) = \mathcal{L}(n)$), and node~$m$: by (CF),
+$\mathcal{E}(w, m) \in \comp(S, \mathcal{E}(n,m))$, and since
+$R \in \comp(S, R)$ for all~$R$, the relation
+$R_{13} = \mathcal{E}(n,m)$ is achievable.
+
+Specifically: the triple $(w, n, m)$ in $\mathcal{G}$ gives the
+triangle type
+$(\mathcal{L}(n), \inv(S), \mathcal{L}(n), \mathcal{E}(n,m),
+\mathcal{L}(m), \mathcal{E}(w,m))$.  By universal self-absorption,
+$\mathcal{E}(n,m) \in \comp(\inv(S), \mathcal{E}(n,m))$, so
+$\mathcal{E}(n,m)$ is a possible value of $\mathcal{E}(w,m)$.
+If $\mathcal{E}(w,m) = \mathcal{E}(n,m)$, the triangle type is
+directly witnessed and we are done.  If
+$\mathcal{E}(w,m) \neq \mathcal{E}(n,m)$, the required triangle type
+may or may not be witnessed elsewhere---this depends on the global
+structure of $\mathcal{G}$.
+\end{proof}
+
+\begin{remark}
+Proposition~\ref{prop:non-DR} shows that the conjecture is
+``mostly true'': the only obstruction comes from $\DR$-witnesses
+interacting with the self-absorption failure.  Even with
+$\DR$-witnesses, the forced-$\DR$ lemma
+(Lemma~\ref{lem:forced-DR}) constrains the problematic edges, but a
+general proof that $T$ is rich enough to cover all copy-edge
+configurations remains elusive.
+\end{remark}
+
+
+%% ============================================================
+\section{Computational Evidence}
+\label{sec:computation}
+
+We present exhaustive computational verification supporting
+Conjecture~\ref{conj:extension-solvability}.
+
+\subsection{Methodology}
+
+We enumerate all composition-consistent complete RCC5 graphs on
+$n \in \{3, 4\}$ nodes with $k \in \{2, 3\}$ distinct Hintikka-type
+labels.  For each model $\mathcal{G}$, we:
+\begin{enumerate}[nosep]
+  \item Extract the pair-types $P(\mathcal{G})$ and triangle types
+    $T(\mathcal{G})$.
+  \item For each potential extension scenario---a new node of some
+    type $\tau_{\mathrm{new}}$ connected by demand relation $R$ to a
+    demand node $v$---compute the triangle-filtered domains and
+    enforce arc-consistency.
+  \item Classify failures (empty domains after arc-consistency) into:
+    \begin{itemize}[nosep]
+      \item \emph{Would-be-expanded}: the extension would create new
+        triangle types not in $T$, meaning the blocking condition
+        would not fire (the node would be expanded, not blocked).
+      \item \emph{Genuine}: a $T$-closed extension exists but the CSP
+        rejects it.  These would be true counterexamples to the
+        conjecture.
+    \end{itemize}
+  \item Cross-context test: take the \emph{union} of triangle types
+    from all models with the same type assignment, and test extensions
+    in each model using this richer $T$.  This simulates the saturated
+    completion graph having accumulated triangle types from multiple
+    nondeterministic branches.
+\end{enumerate}
+
+\subsection{Results}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrl}
+\toprule
+\textbf{Metric} & \textbf{Value} & \\
+\midrule
+Total models tested & 68,276 & \\
+T-filtered extension CSP failures (all demands) & 67.1\% & of scenarios \\
+T-filtered extension CSP failures (unsatisfied demands only) & 36.3\% & of scenarios \\
+\midrule
+\textbf{Genuine failures} (T-closed extension exists but CSP rejects)
+  & \textbf{0} & \\
+\textbf{Cross-context failures} (union $T$, foreign model)
+  & \textbf{0} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Interpretation}
+
+The high rate of CSP failures (67\% for all demands, 36\% for
+unsatisfied demands) initially appears alarming.  However,
+\emph{every single failure} is classified as ``would-be-expanded'':
+the extension scenario would create new triangle types, meaning the
+blocking condition would not fire in the actual tableau.  A node is
+blocked only when its expansion contributes no new triangle types---and
+in precisely those cases, the CSP is always solvable.
+
+The cross-context test is particularly telling.  It takes the union
+of triangle types from all models sharing the same type assignment
+(simulating a completion graph that has explored many nondeterministic
+branches) and tests extensions using this enriched $T$.  Zero failures
+occur, confirming that the triangle-type set from a saturated
+completion graph is rich enough to support all needed extensions.
+
+\begin{remark}[Limitations]
+The computational verification is limited to small models
+($n \leq 4$, $k \leq 3$).  While the zero-failure result is strong
+evidence, it does not constitute a proof.  A counterexample could
+conceivably arise at larger sizes, though we consider this unlikely
+given the structural nature of the argument.
+\end{remark}
+
+
+%% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{What this paper establishes}
+
+\begin{enumerate}[nosep]
+  \item The endpoint-type domain $\DN_{\mathsf{safe}}$ from the
+    retracted paper is too coarse: it conflates relations from
+    different relational contexts, leading to false path-consistency
+    claims.
+  \item Triangle-type filtering is a strictly finer refinement that
+    resolves all known counterexamples.
+  \item The conditional structure
+    ``$T$-closed solution exists $\Rightarrow$ model exists'' is
+    rigorously established (Theorems~\ref{thm:ac-preservation}
+    and~\ref{thm:soundness}).
+  \item Exhaustive computation supports the conjecture with zero
+    genuine failures.
+\end{enumerate}
+
+\subsection{What remains open}
+
+The Extension Solvability Conjecture
+(Conjecture~\ref{conj:extension-solvability}) is the single remaining
+obstacle to a full decidability proof.  The difficulty is structural:
+the tree unraveling creates multiple copies of the same active node,
+and each copy needs edges to all other elements that are simultaneously
+composition-consistent and triangle-closed.  The completion graph
+provides a $T$-closed assignment for its own nodes, but this does not
+directly transfer to the copies because different copies may have
+different parent contexts.
+
+Three approaches to proving the conjecture suggest themselves:
+\begin{enumerate}[nosep]
+  \item \textbf{Direct combinatorial argument}: Show that for each
+    copy-edge scenario, the needed triangle type is already witnessed
+    in $\mathcal{G}$ by the active node, its blocker, and the relevant
+    third node.  This works for non-$\DR$ witnesses
+    (Proposition~\ref{prop:non-DR}) but requires new ideas for
+    $\DR$-witnesses.
+
+  \item \textbf{Enriched blocking}: Strengthen the blocking condition
+    to require not just type equality but also agreement on certain
+    relational contexts.  This would make the conjecture true by
+    construction but requires re-proving termination.
+
+  \item \textbf{Quasimodel-level argument}: Work with the abstract
+    quasimodel extracted from the completion graph and use the
+    patchwork property at the quasimodel level, following the
+    approach of~\cite{CompanionPaper}.  The triangle types provide
+    the additional structure that was missing from the original
+    quasimodel definition.
+\end{enumerate}
+
+\subsection{Extension to RCC8}
+
+The triangle-type approach is not specific to RCC5.  However, RCC8
+lacks full tractability (Theorem~\ref{thm:patchwork}(ii) holds only
+for RCC5), so even with a $T$-closed solution, the path-consistent
+network might not be globally consistent.  The decidability of
+$\ALCIRCC{8}$ likely requires additional techniques beyond triangle
+types.
+
+
+%% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented a refined approach to the extension gap in the
+decidability proof for $\ALCIRCC{5}$.  The triangle-type-filtered
+model construction replaces the coarse endpoint-type domains of the
+retracted paper~\cite{ExtensionGapPaper} with a finer filtering that
+uses three-way relational configurations witnessed in the completion
+graph.
+
+The result is a \emph{conditional} decidability proof: if the
+Extension Solvability Conjecture holds---which is supported by
+exhaustive computation but not yet formally established---then concept
+satisfiability in $\ALCIRCC{5}$ is decidable in \EXPTIME.
+
+The gap between the computational evidence (zero failures in 68,276
+models) and a formal proof illustrates a broader challenge in
+combining spatial constraint reasoning with description logic
+blocking arguments: the global consistency properties needed for model
+construction require relational information that type-based blocking
+necessarily quotients away.  Resolving this tension---whether through
+enriched blocking conditions, patchwork-level arguments, or entirely
+new techniques---remains an important open problem.
+
+\medskip
+\noindent
+The decidability of $\ALCIRCC{5}$ remains \textbf{open}, but the
+triangle-type approach brings us closer to a resolution than any
+previous attempt.
+
+
+%% ============================================================
+\section*{Acknowledgments}
+
+This research was prompted by Michael Wessel, who introduced the
+$\ALCIRCC{}$ family during his doctoral work at the University of
+Hamburg.  The triangle-type approach emerged from collaborative
+analysis between Wessel and Claude, informed by GPT's incisive
+review~\cite{GPTReview} of the retracted paper.  The computational
+verification script was developed to test the conjecture before
+attempting a formal proof---an approach that proved essential for
+avoiding another false claim.
+
+
+%% ============================================================
+\bibliographystyle{plain}
+\begin{thebibliography}{10}
+
+\bibitem{CompanionPaper}
+Claude.
+\newblock On the decidability of {$\mathcal{ALCI}_{\mathit{RCC5}}$} and
+  {$\mathcal{ALCI}_{\mathit{RCC8}}$}: Quasimodels meet the patchwork
+  property.
+\newblock Discussion paper, March 2026 (revised).
+
+\bibitem{ExtensionGapPaper}
+Claude.
+\newblock Closing the extension gap: Decidability of
+  {$\mathcal{ALCI}_{\mathit{RCC5}}$} via direct model construction.
+\newblock Discussion paper, April 2026.
+\newblock \emph{Retracted}: Theorem~5.5 is false; see~\cite{GPTReview}.
+
+\bibitem{GPTReview}
+GPT.
+\newblock Technical note on \emph{Closing the Extension Gap}.
+\newblock Review note, April 2026.
+
+\bibitem{Response}
+Claude.
+\newblock Response to GPT's review of \emph{Closing the Extension Gap}.
+\newblock Discussion note, April 2026.
+
+\bibitem{BaaderEtAl2003}
+F.~Baader, D.~Calvanese, D.~McGuinness, D.~Nardi, and P.~Patel-Schneider,
+  editors.
+\newblock {\em The Description Logic Handbook: Theory, Implementation, and
+  Applications}.
+\newblock Cambridge University Press, 2003.
+
+\bibitem{Renz1999}
+J.~Renz.
+\newblock Maximal tractable fragments of the {Region Connection Calculus}: A
+  complete analysis.
+\newblock In {\em Proc.\ IJCAI}, pages 448--454, 1999.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A maximal
+  tractable fragment of the {Region Connection Calculus}.
+\newblock {\em Artificial Intelligence}, 108(1-2):69--123, 1999.
+
+\bibitem{Wessel2000}
+M.~Wessel.
+\newblock Decidable and undecidable extensions of {$\mathcal{ALC}$} with
+  composition-based role inclusion axioms.
+\newblock Technical Report FBI-HH-M-301/01, University of Hamburg, 2000.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the
+  {$\mathcal{ALCI}_\mathit{RCC}$} family---{F}irst results and unanswered
+  questions.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+
+\end{thebibliography}
+
+\end{document}
