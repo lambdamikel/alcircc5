@@ -4,13 +4,15 @@
 
 > **Disclaimer.** This paper was authored entirely by Claude (Anthropic), an AI assistant, prompted by Michael Wessel. The results and proofs presented here have **not been peer-reviewed or verified by human domain experts**. They are published as a discussion piece for the description logic and spatial reasoning communities. The claims should not be taken as established results unless independently verified or refuted by experts in the field. We invite scrutiny, corrections, and feedback.
 
-> **Revision note (April 2026).** The decidability of ALCI\_RCC5 and ALCI\_RCC8 is **open**. Five independent proof attempts (three by Claude, two by GPT-5.4 Pro) all encounter the same structural wall at the global edge assignment step. Claude's companion paper "Closing the Extension Gap" has been **retracted** after GPT's [review](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.pdf) identified a false theorem (Theorem 5.5) with a concrete counterexample. GPT's profile-cached blocking series has a corresponding gap in the unraveling theorem. See the [conversation log](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) for the full exchange.
+> **Revision note (April 2026).** Claude's two-tier quotient paper claims **decidability of ALCI\_RCC5**. GPT-5.4 Pro [reviewed](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_two_tier_quotient_ALCIRCC5.pdf) the original version and raised five technical objections. Claude [responded](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_gpt_review.pdf) accepting three as valid (fixable) and two as partially valid (clarifiable). The [revised paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) incorporates all five fixes: (1) Union instead of Core for designated witnesses, (2) type-safety filter in V6, (3) explicit certificate-to-model framing, (4) blocking invariant lemma, (5) kernels indexed by (descriptor, external interface). The decidability claim is unverified — we invite scrutiny. The decidability of ALCI\_RCC8 remains **open**. See the [conversation log](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) for the full exchange.
 
 ## Current Status of the Proof
 
-### Status (April 2026): decidability remains OPEN
+### Status (April 2026): decidability proof claimed (unverified)
 
-The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains an **open problem**. Five independent approaches have been attempted; all encounter the same structural wall at the global edge assignment step for complete-graph models.
+A [revised two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) claims **decidability of ALCI\_RCC5** (13 pages). The proof was reviewed by GPT-5.4 Pro, who raised five objections; all have been addressed in the revision. The result is **unverified** by human experts.
+
+Earlier, five independent approaches were attempted; the first five all encounter the same structural wall at the global edge assignment step for complete-graph models.
 
 A companion paper ([Closing the Extension Gap (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf)) attempted to resolve the extension gap via **direct model construction** from open tableau branches. However, GPT-5.4's [technical review](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.pdf) identified two errors:
 
@@ -190,7 +192,9 @@ The approach works in two tiers:
 
 **Decision procedure:** Enumerate all quotient structures up to the computable size bound, check V1–V6 for each, accept iff any is valid.
 
-See [**Decidability of ALCI\_RCC5 via Two-Tier Quotient Construction (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) for the full paper (11 pages).
+See [**Decidability of ALCI\_RCC5 via Two-Tier Quotient Construction (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) for the full revised paper (13 pages).
+
+**GPT-5.4 Pro review and revision.** GPT-5.4 Pro [reviewed](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_two_tier_quotient_ALCIRCC5.pdf) the original version and raised five objections: (1) Core(Desc) = ∩τ_j loses phase-specific obligations, (2) V6 filters by RCC5 composition but not type-safety, (3) reflexive PP self-loops violate strong-EQ semantics, (4) blocking/redirection argument is under-specified, (5) period descriptor alone doesn't determine stabilized external behavior. Claude's [response](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_gpt_review.pdf) accepts (1), (2), (5) as valid and fixable, and (3), (4) as partially valid. The [revised paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) incorporates all five fixes: Union(Desc) for designated witnesses, Safe(τ_w, τ_e) type-safety filter in V6, explicit certificate-to-model framing, blocking invariant lemma, and (Desc, σ) kernel indexing.
 
 **Algebraic foundations (fully proven):**
 - Reflexive PP is **universally self-absorbing**: R ∈ comp(PP, R) and R ∈ comp(R, PP) for every base relation R, and PP ∈ comp(R, inv(R)) for all R. Therefore reflexive PP(k,k) is composition-consistent with all external edges.
@@ -390,13 +394,13 @@ Reading: row = S(b,c), column = R(a,b), entry = possible relations for (a,c). Th
 
 ### Main Result
 
-The decidability of concept satisfiability in ALCI\_RCC5 is **open**. No proof or disproof exists. The approaches explored in this repository establish useful partial results (see above) but all have gaps at the global edge assignment step.
+The [revised two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) claims **decidability of ALCI\_RCC5** via a finite quotient construction. The proof has been reviewed by GPT-5.4 Pro and revised to address all objections. The result is **unverified** by human experts.
 
 ### Known complexity bounds
 
 | Logic      | Lower Bound          | Upper Bound | Status       |
 |------------|----------------------|-------------|--------------|
-| ALCI\_RCC5 | PSPACE-hard (Wessel) | EXPTIME (if decidable) | **Open** |
+| ALCI\_RCC5 | PSPACE-hard (Wessel) | Decidable (computable, non-elementary) | **Claimed decidable** (unverified) |
 | ALCI\_RCC8 | EXPTIME-hard (Wessel)| EXPTIME (if decidable) | **Open** |
 
 ---
@@ -678,7 +682,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
 - [**`ALCI_RCC5_status_after_FW.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.pdf) -- GPT-5.4's status assessment after FW failure; proposes omega-model direction ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.tex))
 - [**`triangle_blocking_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_blocking_ALCIRCC5.pdf) -- Triangle-type approach: conditional decidability of ALCI\_RCC5 via triangle-filtered model construction. Supersedes the retracted paper below. (12 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/triangle_blocking_ALCIRCC5.tex))
-- [**`two_tier_quotient_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) -- Two-tier quotient: period descriptors + PP-kernel nodes for finite representation of infinite models (13 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.tex))
+- [**`two_tier_quotient_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) -- Two-tier quotient: period descriptors + PP-kernel nodes for decidability of ALCI\_RCC5. Revised April 2026 addressing GPT-5.4's five objections (13 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.tex))
 - [**`closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) -- Companion paper: identifies root cause of extension gap (self-absorption failure) and attempts decidability via direct model construction. **Retracted**: Theorem 5.5 is false (10 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.tex))
 - [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response to GPT's status assessment: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
 - [**`response_to_gpt_blocking.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.pdf) -- Claude's assessment of GPT's 4-paper blocking series: verifies local results, identifies unraveling gap (9 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.tex))
@@ -693,9 +697,11 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`gpt/alcircc5_blocking_explicit_signatures.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_explicit_signatures.pdf) -- Paper 3: Explicit depth-indexed signature construction, proves finite-index lemma (PDF only)
 - [**`gpt/alcircc5_blocking_replay_final.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_replay_final.pdf) -- Paper 4: Meet-semilattice approach, robust colorwise normalization — gap in blocked unraveling theorem ([source](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_replay_final.tex))
 
-### GPT-5.4 Pro review
+### GPT-5.4 Pro reviews
 
 - [**`review/review_closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.pdf) -- GPT's review of Claude's companion paper: identifies algebraic error in Lemma 3.2 and counterexample to Theorem 5.5 ([source](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.tex))
+- [**`review2/response_to_two_tier_quotient_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_two_tier_quotient_ALCIRCC5.pdf) -- GPT's review of Claude's two-tier quotient paper: five objections against the decidability claim ([source](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_two_tier_quotient_ALCIRCC5.tex))
+- [**`review2/response_to_gpt_review.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_gpt_review.pdf) -- Claude's response to GPT's review: accepts 3 objections as valid (fixable), 2 as partially valid; provides concrete fixes (8 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/review2/response_to_gpt_review.tex))
 
 ### Computational verification scripts
 

@@ -1224,3 +1224,58 @@ The proof relies on **full RCC5 tractability**, which is specific to RCC5 — th
 - `gap_closing_verification.py`: Algebraic verification of gap-closing prerequisites
 - Updated `README.md` with decidability result, revised summary table
 - Updated `CONVERSATION.md` with Part 25
+
+---
+
+## Part 26: GPT-5.4 Pro reviews the two-tier quotient paper
+
+### GPT's five objections
+
+GPT-5.4 Pro reviewed the two-tier quotient paper (`review2/response_to_two_tier_quotient_ALCIRCC5.tex`) and raised five technical objections:
+
+1. **Core loses phase-specific obligations.** Core(Desc) = ∩τ_j forgets demands like ∃DR.D ∈ τ_A \ τ_B. Designated witnesses only for Core means chain elements of type τ_A lack witnesses for phase-specific non-PP demands.
+
+2. **V6 not DL-safe.** The domain initialization D(w,e) = comp(demanded, ρ(parent,e)) filters by RCC5 composition but not by type-safety. Example: ∀PO.¬A ∈ tp(e) and A ∈ tp(w) should exclude PO(w,e), but composition alone doesn't catch this.
+
+3. **Reflexive PP not legal in strong-EQ.** Under strong-EQ semantics, ρ(d,d) = EQ for all domain elements. The quotient's PP self-loops are not legal RCC5 edges in the target semantics. Missing: translation theorem from abstract quotient to genuine strong-EQ model.
+
+4. **Blocking/redirection unproved.** The blocking key (type, demanded relation, kernel relations) ignores relations to earlier regular nodes, siblings, etc. Redirecting a subtree requires showing these additional constraints can be ignored.
+
+5. **Descriptor ≠ external interface.** Two chains may share the same period descriptor while differing in stabilized external relations. One kernel per descriptor is too coarse.
+
+GPT's conclusion: "promising progress rather than a completed decidability proof."
+
+### Claude's response
+
+Claude's response (`review2/response_to_gpt_review.tex`, 8 pages) addresses all five:
+
+| # | Objection | Verdict | Fix |
+|---|-----------|---------|-----|
+| 1 | Core loses phase obligations | **Valid** | Use Union(Desc) = ∪τ_j for designated witnesses |
+| 2 | V6 not DL-safe | **Valid** | Add Safe(τ_w, τ_e) type-safety filter: D(w,e) = comp(...) ∩ Safe(...) |
+| 3 | Reflexive PP not legal | Partially valid | Quotient is a certificate, not a model; PP self-loops unfolded to EQ diagonals before invoking Renz-Nebel |
+| 4 | Blocking unproved | Partially valid | Blocking is for completeness direction only; blocking key determines V6 domains (blocking invariant lemma) |
+| 5 | Descriptor ≠ interface | **Valid** | Index kernels by (Desc, σ) where σ is the stabilized external interface |
+
+**Key technical finding**: The RCC5 composition table has exactly 4 singleton entries: comp(DR,PPI)={DR}, comp(PP,DR)={DR}, comp(PP,PP)={PP}, comp(PPI,PPI)={PPI}. The type-safety filter could in principle empty these singleton domains. But in the completeness direction, the model's actual relation is always type-safe (Lemma: model relations are type-safe), so the filter never empties a domain derived from a genuine model.
+
+### Revised paper
+
+The two-tier quotient paper was revised to incorporate all five fixes:
+
+1. **New Definition 2.1 (Safe)**: Type-safe relations — R ∈ Safe(τ₁,τ₂) iff choosing ρ(d,e) = R respects all universal formulas in both types.
+2. **New Lemma 2.2**: Model relations are always type-safe (immediate from semantics).
+3. **Definition 5.5 expanded**: Union(Desc) = ∪τ_j alongside Core(Desc) = ∩τ_j.
+4. **(T2, item 4) revised**: Designated witnesses for all non-PP demands in Union(Desc), not just Core(Desc).
+5. **V6 revised**: D(w,e) = comp(demanded, ρ(parent,e)) ∩ Safe(tp(w), tp(e)).
+6. **(T1) revised**: Kernels indexed by (descriptor, external interface) pairs.
+7. **Remark 6.5**: Quotient is an abstract certificate; PP self-loops are bookkeeping.
+8. **Claim 7.2 (Blocking invariant)**: Witnesses with same blocking key have identical V6 domains.
+9. **Soundness Step 1**: Explicit EQ self-loops on unfolded chain elements.
+10. **Soundness Step 5**: Non-PP demands use Union; universal constraints use type-safety filter.
+
+### Files produced
+- `review2/response_to_gpt_review.tex` / `.pdf`: Claude's response to GPT's review (8 pages)
+- `two_tier_quotient_ALCIRCC5.tex` / `.pdf`: Revised paper with all five fixes (13 pages)
+- Updated `README.md` with review information and revised status
+- Updated `CONVERSATION.md` with Part 26
