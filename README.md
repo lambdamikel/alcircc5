@@ -4,21 +4,24 @@
 
 > **Disclaimer.** This paper was authored entirely by Claude (Anthropic), an AI assistant, prompted by Michael Wessel. The results and proofs presented here have **not been peer-reviewed or verified by human domain experts**. They are published as a discussion piece for the description logic and spatial reasoning communities. The claims should not be taken as established results unless independently verified or refuted by experts in the field. We invite scrutiny, corrections, and feedback.
 
-> **Revision note (March 2026).** This is a revised version addressing issues identified in a technical review of the original manuscript. Key changes include: EQ normalization, strengthened R-compatibility with PP/PPI chain propagation, revised quasimodel conditions using algebraic closure, a corrected Henkin construction argument using full RCC5 tractability (not just the atomic patchwork property), an honest discussion of the extension gap for abstract quasimodels, and an expanded RCC8 section addressing the tractability difference. Additionally, a companion contextual tableau approach (GPT-5.4 Pro) has been evaluated, and its completeness conjecture FW(C,N) has been [shown to be false](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf). See the [conversation log](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) (Part 11) for details.
+> **Revision note (April 2026).** The decidability of ALCI\_RCC5 and ALCI\_RCC8 is **open**. Five independent proof attempts (three by Claude, two by GPT-5.4 Pro) all encounter the same structural wall at the global edge assignment step. Claude's companion paper "Closing the Extension Gap" has been **retracted** after GPT's [review](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.pdf) identified a false theorem (Theorem 5.5) with a concrete counterexample. GPT's profile-cached blocking series has a corresponding gap in the unraveling theorem. See the [conversation log](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) for the full exchange.
 
 ## Current Status of the Proof
 
-### The extension gap and its resolution (April 2026)
+### Status (April 2026): decidability remains OPEN
 
-A companion paper ([Closing the Extension Gap (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf)) identifies the precise algebraic root cause of the extension gap and proposes a resolution via **direct model construction** from open tableau branches, bypassing the quasimodel abstraction.
+The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains an **open problem**. Five independent approaches have been attempted; all encounter the same structural wall at the global edge assignment step for complete-graph models.
 
-**Root cause.** The extension gap arises from a single algebraic property of the RCC5 composition table: the *self-absorption failure* `PPI ∉ comp(DR, PPI) = {DR}` (and its dual `PP ∉ comp(PP, DR) = {DR}`). This is the *only* self-absorption failure among the four non-EQ relations. Geometrically, it expresses the **containment collapse**: if region a is disjoint from region b, then a is disjoint from every region properly inside b.
+A companion paper ([Closing the Extension Gap (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf)) attempted to resolve the extension gap via **direct model construction** from open tableau branches. However, GPT-5.4's [technical review](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.pdf) identified two errors:
 
-**Resolution.** The tableau's own composition filtering (CF) already forces DR edges in the problematic configurations: when node n has a DR-witness w and a PPI-neighbor m, (CF) forces E(w,m) = DR, and the forall-rule propagates the consequences automatically. The companion paper constructs a model directly from the tree unraveling of the open completion graph, assigning cross-subtree edges via a disjunctive constraint network whose path-consistency follows from the tableau's properties. Full RCC5 tractability then yields a globally consistent atomic refinement.
+1. **Algebraic error in Lemma 3.2**: The paper claims comp(DR, PP) = {DR}, but the correct value is comp(DR, PP) = {DR, PO, PP}. The paper confused comp(DR, PP) with comp(PP, DR) = {DR}. There is only ONE self-absorption failure (PPI ∉ comp(DR, PPI) = {DR}), not two.
+2. **Theorem 5.5 is false**: The path-consistency claim for the disjunctive network from Definition 5.3 is false. GPT provided a concrete counterexample: DN\_safe domains based on endpoint types are too coarse — they aggregate relations from different representatives of the same type, and comp(PO, DR) ∩ {PP} = ∅ shows the network is not path-consistent.
 
-**Main Theorem.** Concept satisfiability in ALCI\_RCC5 is decidable. The tableau calculus is a sound and complete decision procedure running in EXPTIME.
+Both errors were [computationally verified](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_review.pdf) and accepted in full. The decidability claim from the companion paper is **retracted**.
 
-**Caveat.** The path-consistency proof for the constraint network (Theorem 5.3 in the companion paper) involves a delicate case analysis for triples involving parent-child tree edges. Cases involving only non-adjacent elements (Case A) are fully rigorous. Cases B and C could benefit from more explicit formalization. The paper is transparent about this.
+**What survives.** The root cause analysis remains valid: the unique self-absorption failure PPI ∉ comp(DR, PPI) = {DR} (containment collapse) is the algebraic source of difficulty. Lemma 4.1 (forced DR edge) is correct. The self-safety theorem (S ∈ comp(S,S) for all S) is correct. These local observations are useful building blocks for any future proof attempt.
+
+**The structural wall.** All five approaches — quasimodel method, contextual tableau, direct model construction, profile-cached blocking (GPT), and meet-based replay (GPT) — fail at the same point: assigning globally consistent edges in a complete-graph model. The obstacle is that type-based quotients are too coarse to preserve the relational information needed for path-consistency across the full unraveling.
 
 ### Background: the original extension gap
 
@@ -41,18 +44,15 @@ This concept is satisfiable only in infinite models. The proof that FW(C∞, N) 
 
 See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) for details. The same argument applies to ALCI\_RCC8 using NTPP in place of PP.
 
-### Summary: three approaches
+### Summary: five approaches
 
-| | Quasimodel approach (Claude) | Contextual tableau (GPT-5.4) | Direct model construction (Claude) |
-|---|---|---|---|
-| Satisfiable → representation | **Proven** | **False** (FW counterexample) | N/A (no intermediate representation) |
-| Representation → model | **Gap** (extension gap) | **Proven** (soundness) | N/A |
-| Tableau → model | N/A | N/A | **Proven** (companion paper) |
-| Status | Incomplete | Incomplete | **Decidability established** (with caveat) |
+| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) |
+|---|---|---|---|---|---|
+| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels |
+| Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap |
+| Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete |
 
-The direct model construction bypasses both the quasimodel abstraction and the contextual tableau's local-state framework. It constructs a model directly from the tree unraveling of an open completion graph, using full RCC5 tractability for cross-subtree edge assignment.
-
-Neither approach, as formulated, yields a decision procedure. The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains open.
+All five approaches fail at the same structural point: global edge assignment for complete-graph models. The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains **open**.
 
 **Why the two proven results don't compose.** A natural question is whether the two proven directions — (1) satisfiable → quasimodel exists (Claude) and (2) open contextual tableau → model exists (GPT-5.4) — can be chained into a decision procedure. They cannot. The chain would require a bridge step: quasimodel → open contextual tableau. But the FW counterexample proves this bridge cannot exist in general. Consider C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤): it is satisfiable, so a quasimodel for it exists (by Claude's proven soundness), but NO finite-width contextual tableau for it exists (FW refuted for every N). The two proven results operate on **different intermediate representations** with gaps on **opposite sides** — if they were opposite sides of the *same* representation they would compose, but as it stands, neither formalism serves as a bridge to the other.
 
@@ -60,7 +60,9 @@ Neither approach, as formulated, yields a decision procedure. The decidability o
 
 Despite the gaps, the papers introduce proof machinery that narrows the open problem:
 - The quasimodel method + patchwork property identifies the extension gap as a specific constraint-satisfaction question about RCC5 disjunctive networks.
-- The contextual tableau cleanly separates the soundness (unfolding) argument from the completeness (extraction) argument. The FW counterexample shows that the extraction problem is fundamentally hard: infinite PP-chains cannot be finitely represented in the recentering framework.
+- The contextual tableau (GPT) cleanly separates the soundness (unfolding) argument from the completeness (extraction) argument. The FW counterexample shows that the extraction problem is fundamentally hard: infinite PP-chains cannot be finitely represented in the recentering framework.
+- The profile-cached blocking series (GPT) develops correct local machinery — coherent predecessor blocks, depth-indexed signatures, meet-semilattice on labels — that may be useful components for a future proof. The gap is specifically in the unraveling step where the color structure changes.
+- The direct construction attempt (Claude) correctly identifies the forced DR edge phenomenon (Lemma 4.1) and the self-safety theorem, but its global step (DN\_safe-based edge domains) is too coarse, as GPT's counterexample shows.
 - **Computational verification** (see "Computational investigation of the extension gap" below) pinpoints the gap precisely: condition Q3s (arc-consistency) would suffice but is not extractable from models. The verification confirms this is a **structural impossibility**, not a proof artifact — 11.1% of concrete models produce DN networks violating Q3s.
 - The root cause is the combination of (i) transitivity of PP, (ii) universal propagation of ∀PP along PP-chains, and (iii) the complete-graph requirement. Any successful decidability proof — or undecidability reduction — must engage with this combination directly.
 
@@ -271,8 +273,8 @@ The key remaining question: **does adding modal operators (∀R.C, ∃R.C) to th
 
 This repository contains a proof attempt for concept satisfiability in the description logics ALCI\_RCC5 and ALCI\_RCC8, targeting open problems from Wessel (2002/2003).
 
-- **ALCI\_RCC5**: EXPTIME algorithm with no false negatives; decidability contingent on closing the extension gap
-- **ALCI\_RCC8**: same status; additionally, the full RCC8 algebra is NP-complete (unlike RCC5), so the gap cannot be closed by full tractability
+- **ALCI\_RCC5**: decidability **open**; PSPACE-hard lower bound (Wessel), EXPTIME upper bound if decidable
+- **ALCI\_RCC8**: decidability **open**; EXPTIME-hard lower bound (Wessel), EXPTIME upper bound if decidable
 
 Two procedures are given: a type-elimination algorithm and a tableau calculus with blocking.
 
@@ -314,18 +316,16 @@ Reading: row = S(b,c), column = R(a,b), entry = possible relations for (a,c). Th
 
 ## Results
 
-### Main Theorem
+### Main Result
 
-**Concept satisfiability in ALCI\_RCC5 is decidable.** The companion paper [Closing the Extension Gap](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) establishes this by constructing models directly from open tableau branches, bypassing the quasimodel abstraction that had the extension gap. The tableau calculus from the main paper serves as a sound and complete decision procedure.
+The decidability of concept satisfiability in ALCI\_RCC5 is **open**. No proof or disproof exists. The approaches explored in this repository establish useful partial results (see above) but all have gaps at the global edge assignment step.
 
 ### Known complexity bounds
 
 | Logic      | Lower Bound          | Upper Bound | Status       |
 |------------|----------------------|-------------|--------------|
-| ALCI\_RCC5 | PSPACE-hard (Wessel) | EXPTIME     | **Decidable** (caveat: Cases B/C in path-consistency proof need fuller formalization) |
-| ALCI\_RCC8 | EXPTIME-hard (Wessel)| EXPTIME     | **Decidable** (same caveat, plus RCC8 tractability limitation) |
-
-**Note on RCC8.** The extension to ALCI\_RCC8 requires care because the full RCC8 algebra is **not** tractable: consistency of disjunctive RCC8 constraint networks is NP-complete (Renz & Nebel, 1999). Only the atomic patchwork property holds for RCC8. The direct model construction in the companion paper relies on full tractability for the cross-subtree edge assignment, so the RCC8 case requires additional argument (restricting to tractable sub-algebras or using atomic patchwork directly).
+| ALCI\_RCC5 | PSPACE-hard (Wessel) | EXPTIME (if decidable) | **Open** |
+| ALCI\_RCC8 | EXPTIME-hard (Wessel)| EXPTIME (if decidable) | **Open** |
 
 ---
 
@@ -593,7 +593,7 @@ An important distinction must be drawn between two fundamentally different appro
 
 None of these results settle the decidability of ALCI\_RCC5 or ALCI\_RCC8, because the composition-based role box approach allows **quantification over spatial relations** --- concepts like ∀PP.C ("all proper parts satisfy C") and ∃DR.D ("some disconnected region satisfies D") --- which are inexpressible in the concrete domain setting. The two formalisms are complementary: concrete domains reason about spatial *attributes* of elements; ALCI\_RCC captures direct spatial *relationships* between elements.
 
-A key insight explored in these papers is the **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), which was known contemporaneously with Wessel's original work but had not been connected to the description logic decidability question. The companion paper [Closing the Extension Gap](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) shows that the patchwork property (specifically, full RCC5 tractability), combined with a direct model construction from open tableau branches, is sufficient to establish decidability — bypassing the quasimodel abstraction where the combination of PP-transitivity, universal propagation, and complete-graph semantics created the extension gap.
+A key insight explored in these papers is the **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), which was known contemporaneously with Wessel's original work but had not been connected to the description logic decidability question. The patchwork property (local consistency implies global consistency for atomic RCC5 networks) and full RCC5 tractability (extending this to disjunctive networks) are central tools in all proof attempts. However, applying them at the global level — assigning consistent edges across the entire unraveled complete-graph model — remains the unsolved step.
 
 ---
 
@@ -605,10 +605,23 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`FW_proof_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) -- Counterexample to FW(C,N): the contextual tableau's completeness conjecture is false (7 pages)
 - [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
 - [**`ALCI_RCC5_status_after_FW.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.pdf) -- GPT-5.4's status assessment after FW failure; proposes omega-model direction ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.tex))
-- [**`closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) -- Companion paper: identifies root cause of extension gap (self-absorption failure) and establishes decidability via direct model construction (10 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.tex))
-- [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
+- [**`closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) -- Companion paper: identifies root cause of extension gap (self-absorption failure) and attempts decidability via direct model construction. **Retracted**: Theorem 5.5 is false (10 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.tex))
+- [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response to GPT's status assessment: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
+- [**`response_to_gpt_blocking.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.pdf) -- Claude's assessment of GPT's 4-paper blocking series: verifies local results, identifies unraveling gap (9 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.tex))
+- [**`response_to_gpt_review.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_review.pdf) -- Claude's response to GPT's review: accepts both criticisms, retracts decidability claim, analyzes convergence (5 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_review.tex))
 - [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
 - [**`CONVERSATION.md`**](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) -- Full conversation log between Michael Wessel and Claude
+
+### GPT-5.4 Pro papers (profile-cached blocking series)
+
+- [**`gpt/alcircc5_blocking_draft.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_draft.pdf) -- Paper 1: Profile-cached global blocking, conditional on classwise normalization lemma ([source](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_draft.tex))
+- [**`gpt/alcircc5_blocking_revised.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_revised.pdf) -- Paper 2: Self-correction — flat normalization false, introduces coherent predecessor blocks ([source](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_revised.tex))
+- [**`gpt/alcircc5_blocking_explicit_signatures.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_explicit_signatures.pdf) -- Paper 3: Explicit depth-indexed signature construction, proves finite-index lemma (PDF only)
+- [**`gpt/alcircc5_blocking_replay_final.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_replay_final.pdf) -- Paper 4: Meet-semilattice approach, robust colorwise normalization — gap in blocked unraveling theorem ([source](https://github.com/lambdamikel/alcircc5/blob/master/gpt/alcircc5_blocking_replay_final.tex))
+
+### GPT-5.4 Pro review
+
+- [**`review/review_closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.pdf) -- GPT's review of Claude's companion paper: identifies algebraic error in Lemma 3.2 and counterexample to Theorem 5.5 ([source](https://github.com/lambdamikel/alcircc5/blob/master/review/review_closing_extension_gap_ALCIRCC5.tex))
 
 ### Computational verification scripts
 

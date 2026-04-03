@@ -1,0 +1,263 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\definecolor{TitleBlue}{HTML}{1F4E79}
+\definecolor{RuleGray}{HTML}{D9E1E8}
+\definecolor{SoftGray}{HTML}{4A4A4A}
+\definecolor{LightBlue}{HTML}{EEF5FB}
+\definecolor{BorderBlue}{HTML}{A9C2D9}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=TitleBlue,
+  urlcolor=TitleBlue,
+  citecolor=TitleBlue,
+  pdftitle={Technical note on Closing the Extension Gap: Decidability of ALCIRCC5 via Direct Model Construction},
+  pdfauthor={OpenAI}
+}
+
+\titleformat{\section}{\large\bfseries\color{TitleBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{TitleBlue}}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.2em}{0.55em}
+\titlespacing*{\subsection}{0pt}{0.9em}{0.4em}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}m{1.9cm}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize Technical note on \emph{Closing the Extension Gap}}
+\fancyhead[R]{\footnotesize Page \thepage\ of \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.25pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\comp}{\mathsf{comp}}
+\newcommand{\Llab}{\mathcal{L}}
+\newcommand{\Elab}{\mathcal{E}}
+\newcommand{\DNsafe}{\mathsf{DN}_{\mathsf{safe}}}
+
+\begin{document}
+
+{\centering
+  {\LARGE\bfseries\color{TitleBlue} Technical note on the manuscript}\par
+  \vspace{0.3em}
+  {\large\bfseries \emph{Closing the Extension Gap: Decidability of ALCIRCC5 via Direct Model Construction}}\par
+  \vspace{0.5em}
+  {\normalsize A concise written version of the assessment discussed in chat}\par
+}
+
+\vspace{1em}
+\noindent\fcolorbox{BorderBlue}{LightBlue}{%
+\parbox{0.965\linewidth}{%
+\textbf{Bottom line.}
+I do not agree that the manuscript proves decidability of $\mathcal{ALCI}_{RCC5}$.
+There is a useful local observation in the paper - the $\DR/\PPI$ configuration in Lemma 4.1 really does force a $\DR$ edge by composition filtering - but the headline theorem still fails for two independent reasons:
+\begin{enumerate}[leftmargin=1.5em,itemsep=0.2em,topsep=0.45em]
+  \item the algebraic analysis in Lemma 3.2 and Remark 4.3 misreads the RCC5 table, and
+  \item the key new step, Theorem 5.5 on path-consistency of the disjunctive network, is not proved and is in fact false for the network defined in Definition 5.3.
+\end{enumerate}
+}}
+
+\section{Context and verdict}
+
+The manuscript claims to close the open decidability problem for $ALCIRCC5$ by supplying the missing soundness step for the tableau construction \cite{Claude2026}. That is an important target: Wessel's report explicitly leaves $ALCIRCC5$ and $ALCIRCC8$ open, while giving only lower complexity bounds and noting that the missing ingredient is a convincing infinity-handling or blocking style argument for tableau-based reasoning \cite{Wessel2003}.
+
+My assessment is narrower. The paper contains a worthwhile local diagnosis - especially the observation that the tableau's own composition filtering already forces some of the edge adjustments one would want in an unraveling argument - but the manuscript does not yet deliver a correct proof of decidability.
+
+\section{First problem: the algebraic analysis is inconsistent}
+
+The RCC5 table used in the manuscript is indexed so that the entry in row $S(b,c)$ and column $R(a,b)$ is $\comp(R,S)$. With that indexing, Table~1 gives
+\[
+\comp(\DR,\PP)=\{\DR,\PO,\PP\},
+\qquad
+\comp(\PP,\DR)=\{\DR\}.
+\]
+But Lemma 3.2 states instead that
+\[
+\comp(\DR,\PP)=\{\DR\},
+\]
+which is false. The proof table printed immediately below the lemma repeats the same mistake.
+
+This matters again in Remark 4.3. The remark wants a dual to the true statement
+\[
+\PPI \notin \comp(\DR,\PPI)=\{\DR\},
+\]
+and then informally treats the ``dual'' $\DR/\PP$ configuration as if it were governed by the same singleton composition value. The correct dual-looking statement is
+\[
+\PP \notin \comp(\PP,\DR)=\{\DR\},
+\]
+not the false statement with arguments reversed. So the manuscript blends three different claims:
+\begin{align*}
+\PPI &\notin \comp(\DR,\PPI)=\{\DR\}, \\
+\PP &\notin \comp(\PP,\DR)=\{\DR\}, \\
+\PP &\notin \comp(\DR,\PP),
+\end{align*}
+where only the first two are true.
+
+This does not destroy Lemma 4.1 itself; that local lemma is correct. But it does show that the higher-level algebraic narrative in Section 3 is not reliable as written.
+
+\section{Second problem: Theorem 5.5 is not established}
+
+The manuscript's new global step is Definition 5.3 plus Theorem 5.5. For non-parent-child pairs in the unraveling, the domain of admissible relations is defined only from endpoint types:
+\[
+D(d_1,d_2)=\DNsafe(\operatorname{tp}(d_1),\operatorname{tp}(d_2)).
+\]
+So all information about which tableau representatives actually realized those types is discarded.
+
+That is exactly where the proof of Theorem 5.5 breaks. In Case B, the argument starts with an arbitrary
+\[
+R_{12}\in D(d_1,d_2),
+\]
+so there are tableau nodes $a_1,a_2$ of the correct types with
+\[
+\Elab(a_1,a_2)=R_{12}.
+\]
+The proof then introduces a witness node $w'$ coming from the actual tableau edge realizing the fixed tree relation
+\[
+R_{23}=S.
+\]
+However, nothing guarantees that $a_2=T(d_2)$. If $a_2\neq T(d_2)$, then one only knows
+\[
+\Elab(a_2,w')\in \text{some RCC5 value compatible with the older graph},
+\]
+not that $\Elab(a_2,w')=S$. Consequently composition filtering yields only
+\[
+\Elab(a_1,w')\in \comp\bigl(R_{12},\Elab(a_2,w')\bigr),
+\]
+not the required statement
+\[
+\Elab(a_1,w')\in \comp(R_{12},S).
+\]
+This is the missing step. The manuscript notices the issue informally in Section 7.4, where it says Cases B and C ``could benefit from a more explicit construction.'' In my view that caveat understates the problem: Cases B and C are precisely where the proof fails.
+
+\section{A concrete counterexample to Theorem 5.5}
+
+The failure is not just a proof gap. The network of Definition 5.3 is not path-consistent in general.
+
+Consider the concepts
+\[
+B := \exists \DR.(p \sqcup q),
+\qquad
+A := \exists \DR.B \sqcap \exists \PO.B,
+\qquad
+C_0 := \exists \DR.A.
+\]
+Take a saturated completion graph with node labels
+\[
+\Llab(x)=\{C_0\}, \quad \Llab(a)=\{A\}, \quad \Llab(b_1)=\Llab(b_2)=\{B\},
+\quad \Llab(c_1)=\{p\}, \quad \Llab(c_2)=\{q\},
+\]
+and with the following RCC5 edges on distinct nodes:
+
+\begin{center}
+\begin{tabularx}{0.96\linewidth}{@{}>{\bfseries}lYY@{}}
+\toprule
+Required witnesses & $x\,\DR\,a$, $a\,\DR\,b_1$, $a\,\PO\,b_2$, $b_1\,\DR\,c_1$, $b_2\,\DR\,c_2$ \\
+Type-coarse duplicates & $x\,\DR\,b_1$, $x\,\PO\,b_2$ \\
+Remaining edges & $x\,\PP\,c_1$, $x\,\DR\,c_2$, $a\,\DR\,c_1$, $a\,\DR\,c_2$, $b_1\,\DR\,b_2$, $b_1\,\DR\,c_2$, $b_2\,\PO\,c_1$, $c_1\,\DR\,c_2$ \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+This atomic RCC5 network is consistent; one can check that every triple satisfies the RCC5 composition table. Also, $b_2$ is blocked by $b_1$ under the manuscript's blocking test, since they have the same label $\{B\}$.
+
+Now move to the tree unraveling and consider:
+\begin{itemize}[leftmargin=1.5em]
+  \item $d_1$ = the root copy of $x$,
+  \item $d_2$ = the copy of the active $B$-node $b_1$ introduced under $a$,
+  \item $d_3$ = the $\DR$-child copy of $c_1$ under $d_2$.
+\end{itemize}
+
+By Definition 5.3 of the manuscript,
+\[
+D(d_1,d_2)=\DNsafe(\operatorname{tp}(d_1),\operatorname{tp}(d_2))=\{\DR,\PO\},
+\]
+because in the completion graph $x$ has both a $\DR$-edge to $b_1$ and a $\PO$-edge to $b_2$, and $b_1,b_2$ have the same type $B$.
+
+The tree edge from $d_2$ to $d_3$ is fixed, so
+\[
+R_{23}=\DR.
+\]
+Also,
+\[
+D(d_1,d_3)=\DNsafe(\operatorname{tp}(d_1),\operatorname{tp}(d_3))=\{\PP\},
+\]
+because $c_1$ is the unique node of its type and the completion graph contains the edge $x\,\PP\,c_1$.
+
+Now choose
+\[
+R_{12}=\PO\in D(d_1,d_2).
+\]
+Then the RCC5 table gives
+\[
+\comp(\PO,\DR)=\{\DR,\PO,\PPI\}.
+\]
+Therefore
+\[
+\comp(\PO,\DR)\cap D(d_1,d_3)
+=
+\{\DR,\PO,\PPI\}\cap\{\PP\}
+=
+\varnothing.
+\]
+So the network $\mathcal N$ from Definition 5.3 is \emph{not} path-consistent. This directly contradicts Theorem 5.5.
+
+\section{What survives, and what would need to change}
+
+The paper does isolate a real local phenomenon: the configuration
+\[
+\Elab(n,w)=\DR, \qquad \Elab(n,m)=\PPI
+\]
+does force $\Elab(w,m)=\DR$ by composition filtering. That is a sound and useful observation. But it is not enough to support the global model construction built in Section 5.
+
+The reason is structural: the domains $D(d_1,d_2)$ depend only on endpoint types. Once edges are quotiented that coarsely, the path-consistency argument loses the very information it needs in Cases B and C, namely which concrete predecessor context realized a given relation. The counterexample above shows that endpoint-type domains can accumulate incompatible relations from distinct tableau representatives of the same type.
+
+A plausible repair would have to refine the edge domains by richer blocker context than bare node type - for example by storing predecessor-color information, witness profile information, or another finite signature strong enough to guarantee replay of the fixed tree edge. But that is a different theorem from the one currently proved in the manuscript.
+
+\section{Conclusion}
+
+My conclusion is therefore:
+\begin{itemize}[leftmargin=1.5em]
+  \item I agree with the local forcing observation in Lemma 4.1.
+  \item I do \emph{not} agree that the manuscript proves decidability of $\mathcal{ALCI}_{RCC5}$.
+  \item The decisive obstacle is Theorem 5.5: the proof does not go through, and the theorem is false for the network defined in Definition 5.3.
+\end{itemize}
+
+So the manuscript is a useful discussion piece, but it does not yet close Wessel's original open problem.
+
+\vspace{0.7em}
+\noindent\rule{\linewidth}{0.4pt}
+
+\begin{thebibliography}{9}
+\bibitem{Claude2026}
+Claude.
+\newblock \emph{Closing the Extension Gap: Decidability of ALCIRCC5 via Direct Model Construction}.
+\newblock Discussion manuscript, April 2026.
+
+\bibitem{Wessel2003}
+Michael Wessel.
+\newblock \emph{Qualitative Spatial Reasoning with the ALCIRCC Family - First Results and Unanswered Questions}.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+\end{thebibliography}
+
+\end{document}

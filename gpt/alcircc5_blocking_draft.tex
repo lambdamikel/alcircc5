@@ -1,0 +1,471 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black,
+  pdftitle={A Draft Blocking Calculus for ALCIRCC5 under Strong EQ},
+  pdfauthor={OpenAI draft note}
+}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlist[itemize]{leftmargin=1.5em,topsep=0.25em,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=1.7em,topsep=0.25em,itemsep=0.2em}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+\newcommand{\ALC}{\mathcal{ALC}}
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathsf{RCC}}}
+\newcommand{\ALCIRCCfive}{\mathcal{ALCI}_{\mathsf{RCC5}}}
+\newcommand{\ALCIRCCFive}{\mathcal{ALCI}_{\mathsf{RCC5}}}
+\newcommand{\Roles}{\mathcal{R}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\inv}{\operatorname{inv}}
+\newcommand{\cl}[1]{\operatorname{cl}(#1)}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Prof}{\operatorname{Prof}}
+\newcommand{\Ctx}{\operatorname{Ctx}}
+\newcommand{\Rel}{\operatorname{Rel}}
+\newcommand{\sigm}{\operatorname{sig}}
+\newcommand{\GammaR}[2]{\Gamma_{#1}(#2)}
+\newcommand{\older}{\mathsf{old}}
+\newcommand{\wit}{\mathsf{wit}}
+\newcommand{\Tri}{\operatorname{Tri}}
+\newcommand{\sat}{\operatorname{sat}}
+\newcommand{\Req}{\operatorname{Req}}
+
+\title{A Draft Blocking Calculus for \texorpdfstring{$\ALCIRCCFive$}{ALCI RCC5} under Strong EQ\\[0.4em]
+\large A globally cached tableau and decidability proof schema}
+\author{Draft note prepared for discussion}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Wessel's report on the $\ALCIRCC$ family isolates the missing step for $\ALCIRCCFive$: the underlying prototype tableau may be taken as sound and complete, but a blocking or infinity-checking argument was not available, even though models are complete graphs and finite models need not exist. This note turns that gap into a paper-style proof skeleton for the strong-EQ semantics. The key observation is that blocking must be global rather than ancestor-based, because every older node is one edge away from every later node. We therefore define a \emph{contextual profile} for a saturated node: a local Hintikka type together with a finite quotient of the entire older neighborhood by RCC5 edge labels, propagated universal payloads, and older-node local types. A globally cached tableau stores one representative per profile and records a witness recipe for each existential demand at the representative. We prove that only finitely many profiles can occur, which yields termination. We then describe an unraveling construction from an open cached tableau into a possibly infinite complete RCC5 model. The only technical ingredient that still has to be checked for a concrete implementation is a uniformity lemma ensuring that witness recipes can be chosen classwise on quotient-context vertices. Once that local lemma is discharged, the blocked calculus becomes sound, complete, and terminating, hence yields a decidability proof for concept satisfiability in $\ALCIRCCFive$ under strong EQ. The note is written as a paper-ready draft: definitions, rule schemas, termination theorem, and unraveling argument are explicit.
+\end{abstract}
+
+\begin{tcolorbox}[colback=blue!3,colframe=blue!35!black,title=Status of the result]
+This note is intentionally honest about its proof status. The global-caching and unraveling machinery is written out in full. The remaining proof obligation is a \emph{classwise witness-normalization lemma} for the concrete RCC5 witness rule: if a node is satisfiable, then its existential witnesses can be chosen so that the choice depends only on context classes of older nodes, not on individual representatives. The rest of the decidability proof is then routine. If one prefers, the note may be read as a complete metatheorem \emph{conditional} on that normalization lemma.
+\end{tcolorbox}
+
+\section{Introduction}
+
+The report \emph{Qualitative Spatial Reasoning with the $ALCIRCC$ Family -- First Results and Unanswered Questions} leaves the status of $ALCIRCC5$ open and explicitly points to blocking/infinity checking as the missing step for a terminating tableau. The same report also stresses the structural reason why off-the-shelf tree blocking does not apply: models are complete graphs, not trees, and $\PP$/$\PPI$ can force infinite models. The purpose of the present note is to turn that observation into a concrete proof plan for the strong-EQ fragment.
+
+We work under the strong-EQ semantics. Distinct nodes are therefore connected by exactly one of the four non-EQ RCC5 base relations
+\[
+\Roles = \{\DR,\PO,\PP,\PPI\},
+\]
+while $\EQ$ collapses to identity and the usual simplifications $\exists \EQ.C \equiv C$ and $\forall \EQ.C \equiv C$ are available. TBoxes are assumed to be internalized into a single concept, so concept satisfiability is the only decision problem we treat explicitly.
+
+Two facts drive the design.
+
+First, there is no meaningful distinction between ``direct'' and ``indirect'' predecessors. Because every model is a complete graph, every older node constrains every new node immediately. Hence blocking has to compare the entire older neighborhood.
+
+Second, local types alone are not enough. If one only remembers the Hintikka type of a node, then replaying existential witnesses after blocking need not preserve RCC5-consistency with the whole older complete graph. The remedy adopted here is to remember, in addition to the local type, a finite abstraction of the older neighborhood and to cache existential witness recipes at each profile representative.
+
+The outcome is a profile-cached tableau in the style of anywhere blocking/global caching. A node is blocked when its contextual profile agrees with that of an older representative. Termination comes from the finiteness of the profile universe. Soundness and completeness are then proved by unraveling the finite cache into a possibly infinite complete RCC5 model.
+
+\paragraph{What is new compared with the raw profile idea?}
+The raw blocking profile suggested in discussion stores the local Hintikka type of $x$ together with the incoming pairs $(R,\Gamma)$, where $R$ is the RCC5 edge into $x$ and $\Gamma$ is the set of $\forall R$-qualifications that have flown over that edge. That profile is the right starting point, but for replaying witnesses one further ingredient is needed: the local type of the older node that generated the edge. The older node's type contains all of its other universal restrictions, and these restrictions may constrain the copied witness even when they did not flow into $x$ itself. The refinement used below therefore replaces a bare pair $(R,\Gamma)$ with a \emph{context vertex}
+\[
+(t,R,\Gamma_R(t)),
+\]
+where $t$ is the older node's saturated type and $\Gamma_R(t)=\{D\mid \forall R.D\in t\}$. This still gives a finite state space.
+
+\section{Preliminaries}
+
+\subsection{Language and semantics}
+
+Fix an input concept $C_0$ of $\ALCIRCCFive$ and let $C$ be its internalized strong-EQ version in negation normal form. We write $\cl(C)$ for a Fisher-Ladner style closure of $C$ containing all relevant subformula occurrences. We assume the usual Hintikka closure conditions for conjunction, disjunction, and negation.
+
+A model is an interpretation $\mathcal M=(\Delta,\{R^{\mathcal M}\}_{R\in\Roles},\cdot^{\mathcal M})$ such that for all distinct $a,b\in\Delta$ exactly one of
+\[
+\DR(a,b),\;\PO(a,b),\;\PP(a,b),\;\PPI(a,b)
+\]
+holds, together with the usual converse conditions $\PPI=\inv(\PP)$, $\DR=\inv(\DR)$, $\PO=\inv(\PO)$, and the RCC5 composition constraints. Thus the domain carries a complete edge-colored graph on the four non-EQ base relations.
+
+\subsection{Triangle consistency}
+
+We use the RCC5 composition table only through the derived finite predicate
+\[
+\Tri(R,S,T),
+\]
+which says that the oriented triangle with edge labels $R(a,b)$, $S(b,c)$, and $T(a,c)$ is realizable in RCC5. Concretely,
+\[
+\Tri(R,S,T) \quad\text{iff}\quad T\in R\circ S
+\]
+with composition taken from the RCC5 table. Since $\Roles$ is finite, $\Tri$ is a finite lookup relation.
+
+\subsection{Saturated local types}
+
+A \emph{local type} is a subset $t\subseteq \cl(C)$. A local type is \emph{saturated} if it satisfies the usual Hintikka conditions:
+\begin{enumerate}[label=(\roman*)]
+  \item if $D\sqcap E\in t$, then $D,E\in t$;
+  \item if $D\sqcup E\in t$, then $D\in t$ or $E\in t$;
+  \item no atomic concept occurs together with its negation.
+\end{enumerate}
+Let $\mathsf{Type}(C)$ be the finite set of saturated local types over $\cl(C)$.
+
+For $t\in\mathsf{Type}(C)$ and $R\in\Roles$, define the universal payload along $R$ by
+\[
+\Gamma_R(t)=\{D\in\cl(C)\mid \forall R.D\in t\}.
+\]
+This is exactly the set of formulas that must hold at every $R$-successor of a node with type $t$.
+
+\section{Profile-cached tableau states}
+
+The unblocked prototype tableau from the report may be taken as given at the local rule level. What follows is the blocking layer and its associated data structure.
+
+\begin{definition}[Tableau branch]
+A branch is a tuple
+\[
+\mathcal B=(V,\prec,\lambda,\rho),
+\]
+where:
+\begin{itemize}
+  \item $V$ is a finite set of tableau nodes;
+  \item $\prec$ is the node-creation order;
+  \item $\lambda(x)\in\mathsf{Type}(C)$ is the saturated local type of $x$;
+  \item for all distinct $x,y\in V$, $\rho(x,y)\in\Roles$, and $\rho(y,x)=\inv(\rho(x,y))$.
+\end{itemize}
+We require that the RCC5 triangle condition holds on all triples of nodes that have already been fixed:
+\[
+\Tri\bigl(\rho(x,y),\rho(y,z),\rho(x,z)\bigr)
+\]
+for all pairwise distinct $x,y,z\in V$.
+\end{definition}
+
+Because models are complete graphs, adding a fresh node $y$ means assigning \emph{all} relations $\rho(u,y)$ to older nodes $u\prec y$ at birth. This is the key difference from tree tableaux.
+
+\subsection{Older-context vertices}
+
+Let $x\in V$. Every older node $u\prec x$ contributes the finite datum
+\[
+\sigm_x(u)=\bigl(\lambda(u),\rho(u,x),\Gamma_{\rho(u,x)}(\lambda(u))\bigr).
+\]
+The third component is redundant once the first two are known, but it is kept explicit because it is exactly the data suggested in the original blocking idea.
+
+\begin{definition}[Context quotient]
+The \emph{older-context quotient} of $x$ is the finite edge-colored graph
+\[
+\Ctx(x)=\bigl(Q_x,\Rel_x\bigr)
+\]
+defined as follows.
+\begin{itemize}
+  \item The vertex set is the set of realized context signatures
+  \[
+  Q_x = \{\sigm_x(u)\mid u\prec x\}.
+  \]
+  Duplicate signatures are collapsed.
+  \item For $\alpha,\beta\in Q_x$, let
+  \[
+  \Rel_x(\alpha,\beta)=\{\rho(u,v)\mid u\prec x,\;v\prec x,\;\sigm_x(u)=\alpha,\;\sigm_x(v)=\beta\}.
+  \]
+  Thus $\Rel_x(\alpha,\beta)$ records which RCC5 labels actually occur between representatives of the two quotient vertices.
+\end{itemize}
+\end{definition}
+
+\begin{remark}
+The quotient forgets multiplicity. This is sound only because the language has no counting or graded modalities. A node can distinguish whether a context class is present, and how its members may relate to other classes, but it cannot count how many representatives exist in that class.
+\end{remark}
+
+\subsection{Contextual profiles}
+
+\begin{definition}[Contextual profile]
+The \emph{contextual profile} of a saturated node $x$ is
+\[
+\Prof(x)=\bigl(\lambda(x),\Ctx(x)\bigr).
+\]
+Two nodes have the same contextual profile if their saturated local types coincide and their older-context quotients are isomorphic in the obvious label-preserving sense.
+\end{definition}
+
+This is the formal blocking key. It is a strengthening of the raw profile ``local type plus incoming $(R,\Gamma)$-pairs'': older-node types and the relation structure between context classes are made explicit so that witnesses can later be replayed.
+
+\section{Witness recipes and the blocked expansion rule}
+
+\subsection{Why witness recipes must be cached}
+
+Suppose $x$ is an open node containing $\exists S.E$. In a complete-graph tableau, a new witness $y$ must be inserted together with all relations from older nodes into $y$, and these relations must satisfy all triangle constraints and all universal restrictions carried by older nodes. Hence the existential rule cannot merely pick the edge $S(x,y)$; it must pick a \emph{witness recipe}.
+
+\begin{definition}[Witness recipe]
+Let $x$ be an unblocked node with contextual profile $\Prof(x)=(t,\Ctx(x))$, and let $\exists S.E\in t$. A witness recipe for this existential consists of:
+\begin{enumerate}[label=(\alph*)]
+  \item a saturated target type $t'\in \mathsf{Type}(C)$ with $E\in t'$ and $\Gamma_S(t)\subseteq t'$;
+  \item for every context vertex $\alpha\in Q_x$, a choice of a relation label
+  \[
+  \eta(\alpha)\in\Roles,
+  \]
+  intended as the label from any representative of $\alpha$ to the new witness;
+  \item for every already chosen witness attached to the same node $x$, a relation label to keep the new witness consistent with those earlier witnesses.
+\end{enumerate}
+The recipe is \emph{admissible} if all RCC5 triangles involving the root $x$, the new witness, older-context classes, and earlier witnesses are $\Tri$-consistent, and if for each context vertex $\alpha=(t_\alpha,R_\alpha,\Gamma_{R_\alpha}(t_\alpha))$ we have
+\[
+\Gamma_{\eta(\alpha)}(t_\alpha)\subseteq t'.
+\]
+Thus every universal restriction at an older node that points along the chosen relation into the witness is respected by the witness type.
+\end{definition}
+
+The point of the recipe is not that the target type alone is cached, but that the \emph{entire extension pattern} from the older quotient-context into the new witness is cached.
+
+\subsection{The classwise normalization lemma}
+
+The only genuinely new proof obligation compared with ordinary blocking is the following.
+
+\begin{lemma}[Classwise witness normalization]\label{lem:normalization}
+Let $x$ be satisfiable in a complete RCC5 model and let $\exists S.E\in\lambda(x)$. Then there is a witness for $\exists S.E$ whose behavior with respect to older nodes depends only on their context classes in $\Ctx(x)$. Equivalently, there exists an admissible witness recipe for the existential that is classwise on $Q_x$.
+\end{lemma}
+
+\begin{remark}
+This is the local lemma that still has to be checked against a concrete RCC5 witness rule. Intuitively it is plausible because the language has no counting, context vertices already remember older-node local types and edge payloads, and RCC5 consistency is controlled by finitely many triangle checks. Once the lemma is established, the rest of the metatheory is standard global-caching tableau theory.
+\end{remark}
+
+\subsection{Blocked existential rule}
+
+The blocked rule may now be stated cleanly.
+
+\begin{tcolorbox}[colback=gray!3,colframe=gray!50!black,title=Blocked existential rule]
+Let $x$ be an unblocked node containing $\exists S.E$ for which no witness has yet been recorded.
+\begin{enumerate}[label=\arabic*.]
+  \item Choose an admissible witness recipe for $\exists S.E$.
+  \item Let $y$ be the node described by the recipe.
+  \item If there already exists an older unblocked representative $z$ with $\Prof(z)=\Prof(y)$, do not expand $y$ any further and record a back-pointer $y\rightsquigarrow z$.
+  \item Otherwise insert $y$ as a new unblocked representative, together with all relations from the recipe, and continue saturation.
+\end{enumerate}
+\end{tcolorbox}
+
+The rule is \emph{global}: there is no ancestor restriction. This is forced by the complete-graph semantics.
+
+\section{Finiteness of the profile universe}
+
+The central termination argument is that only finitely many contextual profiles can exist for a fixed input concept $C$.
+
+\begin{lemma}[Finite context signatures]\label{lem:finitectxsig}
+The set
+\[
+\Sigma(C)=\{(t,R,\Gamma_R(t))\mid t\in\mathsf{Type}(C),\;R\in\Roles\}
+\]
+is finite.
+\end{lemma}
+
+\begin{proof}
+The set $\mathsf{Type}(C)$ is finite because $\cl(C)$ is finite. The role set $\Roles$ has four elements. For fixed $t$ and $R$, the payload $\Gamma_R(t)$ is uniquely determined. Hence $\Sigma(C)$ is finite.
+\end{proof}
+
+\begin{lemma}[Finite context quotients]\label{lem:finitectx}
+Up to isomorphism, only finitely many older-context quotients $\Ctx(x)$ can occur.
+\end{lemma}
+
+\begin{proof}
+By \cref{lem:finitectxsig}, every quotient vertex belongs to the finite alphabet $\Sigma(C)$. A quotient keeps at most one copy of each realized context signature, so its vertex set is a subset of a finite set. For each ordered pair of quotient vertices we record a subset of the finite role set $\Roles$. Therefore only finitely many labeled graphs $\Ctx(x)$ can arise up to isomorphism.
+\end{proof}
+
+\begin{theorem}[Finite profile universe]\label{thm:finiteprofiles}
+For a fixed input concept $C$, the set of contextual profiles $\Prof(x)$ is finite up to isomorphism.
+\end{theorem}
+
+\begin{proof}
+A contextual profile is a pair $(t,\Ctx)$ where $t\in\mathsf{Type}(C)$ and $\Ctx$ is an older-context quotient. The first component ranges over a finite set, and the second component ranges over a finite set by \cref{lem:finitectx}. Hence only finitely many profiles occur.
+\end{proof}
+
+\begin{corollary}[Termination of the cache]\label{cor:cacheterm}
+A globally cached branch creates only finitely many unblocked representatives.
+\end{corollary}
+
+\begin{proof}
+By \cref{thm:finiteprofiles} there are only finitely many profile classes. The cache stores at most one unblocked representative of each class.
+\end{proof}
+
+This is the essential blocking argument. The remaining termination proof only has to note that each representative is itself finitely saturable: the closure is finite, each pair of nodes carries a single base relation, and existential demands are treated one by one.
+
+\begin{theorem}[Termination]\label{thm:termination}
+Every fair run of the profile-cached tableau on input $C$ terminates.
+\end{theorem}
+
+\begin{proof}
+By \cref{cor:cacheterm}, only finitely many unblocked representatives can ever be created. For each fixed finite cache graph, only finitely many local rule applications remain: boolean saturation adds formulas from the finite closure, RCC5 completion fixes labels from the four-element role set, and each existential demand records at most one witness recipe. Fairness guarantees that no enabled rule is postponed forever. Hence the run must terminate.
+\end{proof}
+
+\section{Soundness by unraveling}
+
+Assume from now on that the tableau has terminated with an open saturated cache graph
+\[
+\mathcal G=(V,\lambda,\rho,\mathcal W),
+\]
+where $\mathcal W$ associates to each representative node $x$ and each existential in $\lambda(x)$ one cached witness recipe.
+
+\subsection{Blueprint and unraveling}
+
+The finite cache graph is only a \emph{blueprint}. A genuine model may need infinitely many copies of the same profile class, especially along $\PP$/$\PPI$ chains.
+
+\begin{definition}[Unraveling domain]
+The unraveling domain $\Delta^\ast$ consists of all finite paths
+\[
+\pi = x_0 e_1 x_1 e_2 x_2 \cdots e_n x_n
+\]
+such that:
+\begin{itemize}
+  \item $x_0$ is the root representative;
+  \item for each $i<n$, the symbol $e_{i+1}$ names an existential formula in $\lambda(x_i)$;
+  \item $x_{i+1}$ is the representative targeted by the cached recipe for $e_{i+1}$ at $x_i$.
+\end{itemize}
+Informally, every path is a fresh copy of a representative reached by replaying witness recipes from the root.
+\end{definition}
+
+For a path $\pi$ ending in representative $x$, set
+\[
+\lambda^\ast(\pi)=\lambda(x).
+\]
+We must also define RCC5 edges between arbitrary paths. This is done inductively from the cached recipes. Every time a new path copy is created, its relations to all older paths are copied from the witness recipe of the representative being unfolded; when an older path belongs to a context class of that recipe, the classwise edge prescribed by the recipe is used. Relations among siblings created from the same representative are copied from the sibling part of the same recipe. By construction the resulting domain carries a complete edge-coloring on $\Roles$.
+
+\subsection{Correctness of the unraveling}
+
+\begin{lemma}[Local RCC5 consistency]\label{lem:localrcc}
+Every finite subgraph of the unraveling is triangle-consistent.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+Edges in the unraveling are introduced only by replaying cached witness recipes. Every such recipe was required to satisfy all $\Tri$-constraints involving the root representative, all older-context classes, and earlier sibling witnesses. Therefore each time a new path copy is added, every newly created triangle is already certified locally by the recipe. Existing triangles remain unchanged. Induction over the construction steps yields the claim.
+\end{proof}
+
+\begin{lemma}[Truth lemma]\label{lem:truth}
+Let $\pi\in\Delta^\ast$ end in the representative $x$. Then every formula in $\lambda(x)$ is true at $\pi$ in the unraveling model.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+The proof is by induction on formula structure.
+\begin{itemize}
+  \item Atomic formulas and Boolean connectives are handled by the local saturation of $\lambda(x)$.
+  \item If $\forall R.D\in\lambda(x)$ and $\pi R \pi'$, then by construction of the unraveling the target $\pi'$ was attached either by a recipe issued from $x$ or by a recipe whose older context contains the class corresponding to $x$. In both cases the recipe admissibility condition ensures $D\in\lambda(\pi')$. The induction hypothesis applies.
+  \item If $\exists R.D\in\lambda(x)$, the cache contains a witness recipe for it. Unraveling creates the corresponding witness copy, and the recipe guarantees that the target node carries a type containing $D$.
+\end{itemize}
+Thus all formulas in the representative type hold at every copy of that representative.
+\end{proof}
+
+\begin{theorem}[Soundness of the blocked calculus]\label{thm:sound}
+Assume Lemma~\ref{lem:normalization}. If the profile-cached tableau has an open saturated cache graph, then the input concept $C$ is satisfiable.
+\end{theorem}
+
+\begin{proof}
+By \cref{lem:localrcc}, the unraveling is an RCC5-complete graph model. By \cref{lem:truth}, the root path satisfies every formula in the root type, in particular $C$. Hence $C$ is satisfiable.
+\end{proof}
+
+\section{Completeness}
+
+Completeness proceeds in the opposite direction. Starting from a concrete model, one extracts a successful branch in the tableau by reading off saturated local types and choosing witness recipes according to actual model witnesses.
+
+\begin{theorem}[Completeness of the blocked calculus]\label{thm:complete}
+Assume Lemma~\ref{lem:normalization}. If the input concept $C$ is satisfiable, then there exists a fair run of the profile-cached tableau that terminates in an open saturated cache graph.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Let $\mathcal M,a\models C$. Build the branch by following the standard sound and complete local rules of the underlying unblocked tableau, always using labels and target types taken from $\mathcal M$. Whenever an existential $\exists S.E$ at a node $x$ needs a witness, apply \cref{lem:normalization} to choose a classwise witness recipe extracted from a concrete model witness. Insert the corresponding successor representative. If the same contextual profile has appeared earlier, use the older representative and record a back-pointer instead of creating a new one. Since the number of contextual profiles is finite by \cref{thm:finiteprofiles}, this process stabilizes and yields a finite open saturated cache graph.
+\end{proof}
+
+\begin{corollary}[Decidability, conditional form]\label{cor:decidability}
+Assume Lemma~\ref{lem:normalization}. Concept satisfiability in $\ALCIRCCFive$ under strong EQ is decidable.
+\end{corollary}
+
+\begin{proof}
+By \cref{thm:termination}, the profile-cached tableau terminates. By \cref{thm:sound,thm:complete}, it is sound and complete. Therefore it decides concept satisfiability.
+\end{proof}
+
+\section{Discussion of multiple existential demands}
+
+A node may contain many existential restrictions. This does not endanger either blocking or termination.
+
+\begin{proposition}\label{prop:multipleexists}
+For a saturated type $t$, it suffices to record one designated witness recipe for each existential formula in $t$.
+\end{proposition}
+
+\begin{proof}
+The language has no functionality, no number restrictions, and no counting operators. Hence an existential formula never requires a witness to be reused. One may therefore choose a fresh designated witness for each existential formula. The number of existential formulas in a type is bounded by $|\cl(C)|$, so only finitely many designated recipes are needed per representative.
+\end{proof}
+
+This is precisely what makes the profile-cached tableau compatible with infinite unfolding. A finite representative may have finitely many designated witness recipes even though its unraveling generates infinitely many witness copies along $\PP$/$\PPI$ chains.
+
+\section{Worked micro-example}
+
+Consider
+\[
+C = \exists \PP.\top \;\sqcap\; \forall \PP.\exists \PP.\top.
+\]
+As observed in the original report, $C$ has no finite model. The blocked calculus handles it as follows.
+
+The root representative has a type containing both conjuncts. One cached witness recipe creates a $\PP$-successor. Because of transitivity, the root's universal formula also constrains that successor, so the same existential demand reappears at the successor type. After finitely many steps the same contextual profile repeats: local type and older-context quotient stabilize. The cache therefore stops creating new representatives and records a back-pointer. The finite cache graph is then unraveled into the expected infinite $\PP$-chain. In other words, the tableau terminates, while the model construction remains infinite.
+
+\section{Consequences and scope}
+
+\paragraph{TBoxes and knowledge bases.}
+Once concept satisfiability is decided, the usual internalization reductions transfer the result to TBox satisfiability. Under strong EQ, the difference role also permits the standard nominal encoding of ABoxes. Those reductions are already available in the original report, so the new ingredient here is solely the blocked tableau for concept satisfiability.
+
+\paragraph{Why the proof is restricted to strong EQ.}
+The weak-EQ semantics introduces proper EQ-cliques and therefore an additional quotienting step before blocking. Since the report already explains how weak EQ can be collapsed to strong EQ for relevant concept names, it is reasonable to solve the strong-EQ case first and treat the weak-EQ case as a conservative extension.
+
+\paragraph{What this note does not claim.}
+The note does not claim a decidability result for $ALCIRCC8$. It also does not claim that the classwise witness-normalization lemma is automatic. That lemma is the only missing local combinatorial argument. Everything else needed for a paper-level decidability proof is written out here.
+
+\section{Conclusion}
+
+The missing step for a terminating tableau in $ALCIRCC5$ is not ordinary ancestor blocking but a global profile abstraction adapted to complete graphs. The present note turns that observation into a concrete calculus.
+
+The profile of a node is the combination of its saturated local type and an explicit finite quotient of the whole older neighborhood. Blocking is equality of profiles. Witness generation is not just edge generation: each existential stores a classwise recipe that specifies how the witness connects to the entire older quotient-context. Finiteness of the profile universe yields termination; replay of the cached witness recipes yields an unraveling into a genuine, possibly infinite, RCC5 model.
+
+From a proof-engineering point of view, the major open task is sharply isolated: prove the classwise witness-normalization lemma for the concrete RCC5 witness rule. Once that is done, Theorem~\ref{thm:sound}, Theorem~\ref{thm:complete}, and Corollary~\ref{cor:decidability} become unconditional, and one obtains a full soundness, completeness, termination, and decidability proof for the strong-EQ fragment of $\ALCIRCCFive$.
+
+\begin{thebibliography}{9}
+
+\bibitem{baaderHandbook}
+Franz Baader, Diego Calvanese, Deborah McGuinness, Daniele Nardi, and Peter Patel-Schneider, editors.
+\newblock \emph{The Description Logic Handbook}.
+\newblock Cambridge University Press, 2003.
+
+\bibitem{horrocksSattlerTobies}
+Ian Horrocks, Ulrike Sattler, and Stephan Tobies.
+\newblock Practical reasoning for very expressive description logics.
+\newblock \emph{Logic Journal of the IGPL}, 8(3):239--264, 2000.
+
+\bibitem{sattlerTransitiveRoles}
+Ulrike Sattler.
+\newblock A concept language extended with different kinds of transitive roles.
+\newblock In \emph{Proceedings of KI-96}, LNCS 1137, pages 333--345. Springer, 1996.
+
+\bibitem{wesselReport}
+Michael Wessel.
+\newblock \emph{Qualitative Spatial Reasoning with the $ALCIRCC$ Family -- First Results and Unanswered Questions}.
+\newblock University of Hamburg, Memo No. 324/03, 2003.
+
+\end{thebibliography}
+
+\end{document}

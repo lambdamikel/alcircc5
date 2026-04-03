@@ -1,0 +1,732 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
+\newcommand{\Tri}{\ensuremath{\mathsf{Tri}}}
+\newcommand{\Prof}{\ensuremath{\mathsf{Prof}}}
+\newcommand{\Col}{\ensuremath{\mathsf{Col}}}
+\newcommand{\Sig}{\ensuremath{\mathsf{Sig}}}
+\newcommand{\Req}{\ensuremath{\mathsf{Req}}}
+\newcommand{\Pay}{\ensuremath{\mathsf{Pay}}}
+\newcommand{\old}{\ensuremath{\mathsf{old}}}
+\newcommand{\Roles}{\ensuremath{\mathcal{R}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+\newcommand{\NP}{\textsc{NP}}
+
+\title{Assessment of the Profile-Cached Blocking Calculus\\
+  for \texorpdfstring{$\ALCIRCC{5}$}{ALCI\_RCC5} under Strong EQ\\[0.4em]
+  \large Response to GPT's draft series (April 2, 2026)}
+
+\author{Claude\thanks{Claude is an AI assistant by Anthropic.
+  This assessment was prepared at the request of Michael Wessel
+  (\texttt{miacwess@gmail.com}).  It evaluates four draft notes
+  by GPT proposing a profile-cached blocking calculus for
+  $\ALCIRCC{5}$ under strong EQ semantics.}}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Disclaimer.}\; This assessment was authored entirely by Claude
+(Anthropic), an AI assistant.  The evaluation and the claims made
+herein have \textbf{not been verified by human domain experts}.  Both
+the assessed drafts and this response are discussion pieces.}}
+\end{center}
+
+\bigskip
+
+\begin{abstract}
+GPT has produced a series of four draft notes proposing a
+profile-cached global blocking calculus for $\ALCIRCC{5}$ under strong
+EQ semantics.  The series exhibits an impressive self-correction cycle:
+an initial conditional result is refined through three revisions that
+correct a false lemma, provide an explicit finite signature system,
+and ultimately claim a full replay theorem based on a meet-semilattice
+structure on RCC5 witness labels.
+
+We assess each note in turn.  The \textbf{local combinatorial results
+are correct and novel}: the counterexample to flat normalization, the
+coherent-block normalization lemma, the meet-polymorphism property of
+the RCC5 composition table, and the robust colorwise normalization
+theorem all withstand scrutiny and computational verification.
+However, the \textbf{global unraveling argument in the final note has
+a genuine gap}: the unraveling changes the predecessor color structure
+(multiplicities, inter-color relations, and even the color alphabet
+itself), so the replay theorem---proved for nodes with equal
+signatures in the finite tableau---cannot be directly applied to the
+unraveling's copies.
+
+We exhibit this gap concretely on the canonical infinite-model concept
+$C_\infty = \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$.  We
+then discuss how the gap might be closed, noting that a
+patchwork-based argument for cross-chain edge assignment could
+complement GPT's local machinery.
+\end{abstract}
+
+\tableofcontents
+
+%% ================================================================
+\section{Introduction}
+\label{sec:intro}
+
+The decidability of concept satisfiability in $\ALCIRCC{5}$ under
+strong EQ semantics has been an open problem since Wessel's
+report~\cite{Wessel2003}.  Multiple approaches have been attempted:
+\begin{itemize}[nosep]
+\item A quasimodel method with type elimination~\cite{CompanionPaper},
+  which has the \emph{extension gap} in the soundness direction (open
+  quasimodel need not yield a model);
+\item A contextual tableau~\cite{GPTContextual}, whose completeness
+  conjecture FW$(C,N)$ is false~\cite{FWCounterexample};
+\item A direct model construction from open completion
+  graphs~\cite{ExtensionGap}, which identifies the root cause as the
+  self-absorption failure $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$
+  and proposes a resolution (with caveats on the path-consistency
+  argument).
+\end{itemize}
+
+GPT now proposes a fourth approach: a \textbf{profile-cached global
+blocking calculus} in the style of anywhere blocking / global caching,
+adapted to complete-graph semantics.  The approach is developed across
+four draft notes:
+\begin{enumerate}[nosep]
+\item \textbf{Blocking Draft} --- initial proposal, conditional on a
+  classwise witness-normalization lemma;
+\item \textbf{Blocking Revised} --- self-correction: flat
+  normalization is false; repaired via coherent predecessor blocks;
+\item \textbf{Explicit Signatures} --- concrete depth-indexed
+  signature system with finite-index proof;
+\item \textbf{Replay Final} --- claims full replay theorem via
+  meet-semilattice normalization, yielding decidability.
+\end{enumerate}
+
+This note assesses the four papers in order, verifies the local
+algebraic claims computationally, and identifies the remaining gap.
+
+
+%% ================================================================
+\section{Paper 1: The Initial Draft}
+\label{sec:paper1}
+
+\subsection{Architecture}
+
+The draft proposes a global blocking scheme for complete-graph
+tableaux.  Each saturated node~$x$ receives a \emph{contextual
+profile}
+\[
+  \Prof(x) = \bigl(\lambda(x),\; \mathsf{Ctx}(x)\bigr),
+\]
+where $\lambda(x)$ is the saturated Hintikka type and
+$\mathsf{Ctx}(x)$ is a finite quotient of the older neighborhood,
+collapsing nodes with identical \emph{context signatures}
+$(\lambda(u), \rho(u,x), \Gamma_{\rho(u,x)}(\lambda(u)))$.
+
+A node $y$ is blocked by an older node $x$ when $\Prof(y) =
+\Prof(x)$.  Existential witnesses are recorded as \emph{witness
+recipes}: a target type plus a classwise assignment of RCC5 labels
+from each context class to the new witness.  Termination follows from
+the finiteness of the profile universe.
+
+\subsection{Assessment}
+
+The architecture is sound and well-motivated.  The observation that
+blocking must be global (not ancestor-based) is correct: in
+complete-graph models, every older node constrains every newer node,
+so tree-based blocking is inapplicable.
+
+The paper is honest about its status: all results are conditional on
+a \textbf{classwise witness-normalization lemma} (Lemma~4.1 in the
+draft), which states that witnesses can be chosen so that their
+behavior depends only on context classes, not individual
+representatives.  This is correctly identified as the key proof
+obligation.
+
+\textbf{Verdict: clean conditional result.}  The metatheory is
+correct modulo the stated assumption.
+
+
+%% ================================================================
+\section{Paper 2: The Self-Correction}
+\label{sec:paper2}
+
+\subsection{The counterexample to flat normalization}
+
+The most important contribution of Paper~2 is
+Proposition~4.2: flat classwise normalization is \textbf{false}.
+
+\begin{example}[GPT's counterexample, verified]
+\label{ex:flat-false}
+Node $x$ carries $\exists\DR.(p \sqcap q \sqcap r)$.  Older nodes
+$a_1, a_2, b_1, b_2, c$ are all $\DR$-related to~$x$.  Types:
+\[
+  \tau_A\!: \forall\PO.\neg p,\, \forall\PP.\neg p,\,
+            \forall\PPI.\neg p;
+  \quad
+  \tau_B\!: \forall\PO.\neg q,\, \forall\PP.\neg q;
+  \quad
+  \tau_C\!: \forall\DR.\neg r,\, \forall\PP.\neg r,\,
+            \forall\PPI.\neg r.
+\]
+All inter-predecessor edges are $\DR$ except $b_2\;\PPI\;c$.
+Target type $t = \{p, q, r, \top\}$, witness labels $\eta(a_i) =
+\DR$, $\eta(b_1) = \DR$, $\eta(b_2) = \PPI$, $\eta(c) = \PO$.
+
+\smallskip\noindent
+\textbf{Verification.}  The payload constraints force:
+\begin{itemize}[nosep]
+\item From $\tau_A$: only $\DR$ is allowed (all other payloads
+  contain $\neg p$, but $p \in t$).
+\item From $\tau_B$: only $\DR$ or $\PPI$ are allowed ($\PO$ and
+  $\PP$ payloads contain $\neg q$).
+\item From $\tau_C$: only $\PO$ is allowed ($\DR$, $\PP$, $\PPI$
+  payloads contain $\neg r$).
+\end{itemize}
+The triangle constraint for $b_1$ (with $c$): $\Tri(\DR, \PO,
+\eta(b_1))$ requires $\eta(b_1) \in \comp(\DR, \PO) = \{\DR, \PO,
+\PP\}$.  Combined with the payload restriction to $\{\DR, \PPI\}$,
+we get $\eta(b_1) = \DR$ (forced).
+
+The triangle constraint for $b_2$ (with $c$): $\Tri(\PPI, \PO,
+\eta(b_2))$ requires $\eta(b_2) \in \comp(\PPI, \PO) = \{\PO,
+\PPI\}$.  Combined with the payload restriction to $\{\DR, \PPI\}$,
+we get $\eta(b_2) = \PPI$ (forced).
+
+Since $b_1$ and $b_2$ share the same flat class but are forced to
+different labels, no flat-classwise normalization exists.  $\square$
+\end{example}
+
+\begin{remark}[Connection to our self-absorption analysis]
+\label{rem:self-absorption}
+The root cause is precisely the self-absorption failure we identified
+independently: $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$.  The edge
+$b_2\;\PPI\;c$ (versus $b_1\;\DR\;c$) changes the triangle
+constraint, forcing different witness labels despite identical flat
+classes.  GPT's counterexample and our algebraic analysis converge on
+the same structural rigidity in the RCC5 composition table.
+\end{remark}
+
+
+\subsection{Coherent-block normalization}
+
+Paper~2 introduces \textbf{coherent predecessor blocks}: a refinement
+of flat classes where inter-block relations are uniform and
+intra-block relations are uniform symmetric ($\DR$ or $\PO$).
+
+\begin{proposition}[Coherent-block normalization --- verified]
+Every locally admissible symbolic extension $(t, \eta)$ can be
+normalized to $(t, \eta')$ that is constant on each coherent block,
+using only labels already realized in the original extension.
+\end{proposition}
+
+The proof proceeds by cases on the intra-block label:
+\begin{itemize}[nosep]
+\item \textbf{$\PO$-blocks}: Every label $r$ is self-stable under
+  $\PO$: $\Tri(\PO, r, r)$ holds for all $r \in \Roles$.  (Verified:
+  $r \in \comp(\PO, r)$ for all $r$.)  Any realized label works.
+
+\item \textbf{$\DR$-blocks}: $\PPI$ is the only unstable label:
+  $\Tri(\DR, \PPI, \PPI)$ fails because $\PPI \notin \comp(\DR, \PPI)
+  = \{\DR\}$.  So in a non-singleton $\DR$-block, not all members can
+  carry $\PPI$ (two $\PPI$-labeled members would violate the triangle
+  condition).  Therefore some label in $\{\DR, \PO, \PP\}$ is
+  realized, and all three are $\DR$-stable.
+
+\item \textbf{Inter-block}: By coherence (uniform edge $q_{BC}$),
+  one can pick representatives $u \in B$, $v \in C$ realizing the
+  chosen labels and appeal to the original admissibility.
+\end{itemize}
+
+\textbf{Verdict: correct and clean.}  This is the right local repair.
+
+
+%% ================================================================
+\section{Paper 3: Explicit Signatures and Finite Index}
+\label{sec:paper3}
+
+Paper~3 (the ``explicit signatures'' addendum) makes the depth-indexed
+signature construction concrete and proves the finite-index lemma.
+The construction uses:
+\begin{itemize}[nosep]
+\item Rank-0 signatures = propositional types $\mathsf{tp}_0(x)$.
+\item Rank-$(k{+}1)$ predecessor colors built from rank-$k$
+  signatures, incoming relation, truncated payload, refined through
+  $k{+}1$ rounds of relation-set profiling.
+\item Context tables: multiplicity map $\mu$ (values in $\{0, 1,
+  +\}$) and relation-set table~$Q$.
+\item Projected witness footprints recording which labels occur on
+  coherent blocks of each final color.
+\end{itemize}
+
+The finite-index lemma is correct: at each rank, all components range
+over finite domains, so the signature space is finite.
+
+The paper is deliberately cautious: it proves finiteness of the
+signature system but does \textbf{not} claim the replay theorem.  It
+explicitly states that turning projected footprints into functional
+replay recipes is the remaining step.
+
+\textbf{Verdict: correct.}  The finite-index part of the blocking
+program is settled.
+
+
+%% ================================================================
+\section{Paper 4: The Meet-Semilattice and Replay Theorem}
+\label{sec:paper4}
+
+Paper~4 claims to close the last gap.  The key innovations are:
+\begin{enumerate}[nosep]
+\item Predecessor colors now include the \textbf{full payload vector}
+  $(\Gamma_R(\lambda(u)) \cap \cl_k(C))_{R \in \Roles}$, not just
+  the incoming-edge payload.
+\item Witness footprints are sharpened to \textbf{robust colorwise
+  recipes} $\chi : A_{k+1} \to \Roles$ using a meet-normalization.
+\end{enumerate}
+
+\subsection{The meet-semilattice structure (verified)}
+\label{sec:meet}
+
+The four non-EQ RCC5 labels are partially ordered by the diamond:
+\[
+  \DR < \PO < \PP, \qquad \DR < \PO < \PPI,
+  \qquad \PP \text{ and } \PPI \text{ incomparable}.
+\]
+The meet (greatest lower bound) gives:
+\[
+  \DR \wedge r = \DR, \quad
+  \PO \wedge \PP = \PO, \quad
+  \PO \wedge \PPI = \PO, \quad
+  \PP \wedge \PPI = \PO.
+\]
+
+\begin{lemma}[Meet polymorphism --- computationally verified]
+\label{lem:meet-poly}
+For every $q \in \Roles$, the relation
+$R_q = \{(r,s) \mid \Tri(q, s, r)\}$
+is closed under componentwise meet.
+\end{lemma}
+
+\noindent
+We verified all $4 \times 16 \times 16 = 1{,}024$ cases
+computationally against the full RCC5 composition table under strong
+EQ.  Zero violations.
+
+\begin{lemma}[No $\PP/\PPI$ within one final color --- correct]
+If two predecessors of the same final color were related by~$\PP$,
+every node of that color would need an outgoing $\PP$-edge within the
+color class.  But $\PP$ on a finite set is a strict partial order,
+which has maximal elements with no outgoing $\PP$-edge.
+Contradiction.
+\end{lemma}
+
+\begin{lemma}[Realized labels cannot mix $\PP$ and $\PPI$ --- correct]
+If coherent blocks of the same color carried both $\PP$ and $\PPI$ as
+witness labels, the triangle condition would require
+$\Tri(q, \PPI, \PP)$ for $q \in \{\DR, \PO\}$ (the only possible
+intra-color relations by the previous lemma).  Verified: $\PP \notin
+\comp(q, \PPI)$ for both $q = \DR$ and $q = \PO$.  Contradiction.
+\end{lemma}
+
+\begin{theorem}[Robust colorwise normalization --- correct]
+For each final color~$a$, the meet
+$m(a) = \bigwedge \{\eta(B) \mid B \text{ coherent block of
+color } a\}$
+is in the realized set (by the previous lemma) and yields a locally
+admissible extension.  The proof uses the covering argument: for each
+pair of colors $a, b$ and relation $q \in Q(a,b)$, choose a covering
+family of block pairs, apply admissibility to each, and take the
+componentwise meet (which stays in $R_q$ by meet polymorphism).
+\end{theorem}
+
+\textbf{Verdict on local results: correct, elegant, and novel.}  The
+meet-semilattice structure is a genuinely nice algebraic insight that
+we had not identified in our own analysis.
+
+\subsection{A missing admissibility constraint (minor)}
+\label{sec:missing-constraint}
+
+The definition of \emph{locally admissible symbolic extension} in
+all four papers checks only:
+\begin{enumerate}[label=(\roman*),nosep]
+\item Payload preservation: $\Gamma_{\eta(u)}(\lambda(u)) \subseteq
+  t$ for $u \in \old(x)$.
+\item Pairwise triangles: $\Tri(\rho(u,v), \eta(v), \eta(u))$ for
+  distinct $u, v \in \old(x)$.
+\end{enumerate}
+
+\noindent
+However, when a witness~$y$ is created for $\exists S.E$ at node~$x$,
+there is also the triangle $(u, x, y)$ for each $u \in \old(x)$:
+\begin{equation}
+  \label{eq:missing-tri}
+  \eta(u) \in \comp(\rho(u,x),\; S).
+\end{equation}
+This constraint is not listed in the admissibility definition.
+
+\medskip
+This is a \textbf{presentation issue, not a correctness issue}.  We
+verified computationally that for every $q, S \in \Roles$, the set
+$\comp(q, S)$ is closed under the diamond meet.  Therefore the
+meet-normalization preserves this constraint even though it is not
+formally tracked.  Moreover, model-extracted recipes automatically
+satisfy~\eqref{eq:missing-tri}.  The fix is simply to add this
+constraint to the definition.
+
+
+%% ================================================================
+\section{The Unraveling Gap}
+\label{sec:gap}
+
+The critical issue is Theorem~6.2 of Paper~4 (the ``Blocked
+Unraveling Theorem''), which claims that an open saturated blocked
+branch can be unraveled into a genuine model.  The proof is a
+one-paragraph sketch asserting that ``standard induction on formula
+depth'' suffices.
+
+The replay theorem (Theorem~6.1) is correct: if two nodes in the
+finite tableau have equal rank-$d$ signatures, then robust recipes at
+one can be applied at the other.  The gap is that \textbf{nodes in the
+unraveling need not have the same signature as the representative they
+are copies of}.
+
+\subsection{Concrete demonstration: $C_\infty$}
+
+Consider $C_\infty = \exists\PP.\top \sqcap
+\forall\PP.\exists\PP.\top$, which requires an infinite model (every
+element must have a $\PP$-successor, and so must every
+$\PP$-descendant).
+
+\paragraph{The finite tableau.}
+\begin{itemize}[nosep]
+\item Node $r_0$: type $\tau = \{\exists\PP.\top,\;
+  \forall\PP.\exists\PP.\top\}$, no predecessors ($\old(r_0) =
+  \emptyset$).
+\item Node $r_1$: $\PP$-witness for $r_0$, type~$\tau$ (forced by the
+  $\forall\PP$-propagation), predecessor set $\old(r_1) = \{r_0\}$.
+\item $r_1$ is blocked by $r_0$ (same profile in a suitable sense).
+\end{itemize}
+The recipe at $r_1$ for the existential $\exists\PP.\top$ assigns a
+label to its sole predecessor~$r_0$.  The triangle $(r_0, r_1,
+\text{witness})$ with $\rho(r_0, r_1) = \PP$ and $S = \PP$ forces
+$\eta(r_0) \in \comp(\PP, \PP) = \{\PP\}$, so $\eta(r_0) = \PP$.
+
+\paragraph{The unraveling.}
+The unraveling creates an infinite $\PP$-chain:
+\[
+  c_0 \xrightarrow{\PP} c_1 \xrightarrow{\PP} c_2
+  \xrightarrow{\PP} c_3 \xrightarrow{\PP} \cdots
+\]
+At step~2, $c_2$ is created as a $\PP$-witness for $c_1$.  The recipe
+assigns $\rho(c_0, c_2) = \PP$ (from the recipe at $r_1$).
+
+At step~3, $c_3$ is created for $c_2$.  Now $\old(c_2) = \{c_0,
+c_1\}$.  Both predecessors have initial color
+$(\tau, \PP, \Pay(\tau))$ relative to~$c_2$ (since $\rho(c_0, c_2) =
+\PP$ and $\rho(c_1, c_2) = \PP$).  After one refinement round:
+\begin{itemize}[nosep]
+\item $c_0$ sees $c_1$ (same initial color) via $\PP$, so its
+  relation-set profile includes $\PP$ to its own initial color.
+\item $c_1$ sees $c_0$ (same initial color) via $\PPI$, so its
+  relation-set profile includes $\PPI$ to the same initial color.
+\end{itemize}
+Since $\PP \neq \PPI$, the two predecessors get \textbf{different
+final colors} after one refinement round.
+
+\paragraph{The mismatch.}
+In the finite tableau, the representative $r_1$ had \emph{one}
+predecessor ($r_0$) of one color, with multiplicity~1.  In the
+unraveling, $c_2$ has \emph{two} predecessors of \emph{two different}
+colors, each with multiplicity~1.  The multiplicity maps differ; the
+relation-set tables differ (the unraveling has a $\PP$/$\PPI$
+inter-color relation that did not exist in the finite tableau); and
+the recipe at~$r_1$ has no assignment for the new color because that
+color did not exist in~$r_1$'s context.
+
+At step~$n$, the situation is worse: $c_n$ has $n$ predecessors, which
+after color refinement split into $O(n)$ distinct final colors.  The
+recipe, designed for a bounded neighborhood, cannot cover them.
+
+\paragraph{Conclusion.}
+The replay theorem applies to nodes with \emph{equal signatures}.  But
+copies in the unraveling accumulate predecessors whose color structure
+diverges from the finite tableau's.  The replay theorem's
+prerequisites are not met, and the unraveling construction does not
+produce a certified model.
+
+\subsection{Why this gap is non-trivial}
+\label{sec:why-hard}
+
+The gap is structural, not cosmetic.  In tree-based DL tableaux,
+unraveling is straightforward because each node's neighborhood is its
+parent and children---a bounded, predictable structure.  In
+complete-graph tableaux for $\ALCIRCC{5}$, every node is connected to
+every other node.  The unraveling must assign RCC5 labels to
+\emph{all pairs} of copies, including cross-chain pairs whose
+existence was not anticipated by the finite tableau's recipes.
+
+This is the same fundamental difficulty that affects all three
+previous approaches:
+\begin{itemize}[nosep]
+\item In the quasimodel approach, it manifests as the extension gap
+  (abstract quasimodels need not yield models).
+\item In the contextual tableau, it manifests as the failure of
+  FW$(C,N)$ (local states of bounded width cannot capture
+  the global model).
+\item In our direct model construction, it manifests as the
+  path-consistency argument for the cross-subtree constraint network
+  (Cases~B and~C).
+\end{itemize}
+
+GPT's profile-cached approach elegantly handles the \emph{local}
+problem (what labels to assign from predecessors to a new witness)
+but does not fully address the \emph{global} problem (what labels to
+assign between copies that were not simultaneously present in the
+finite tableau).
+
+
+%% ================================================================
+\section{Possible Repairs}
+\label{sec:repairs}
+
+The gap is specific and the local machinery is strong.  Several
+repair strategies are conceivable.
+
+\subsection{Patchwork-based cross-chain assignment}
+\label{sec:repair-patchwork}
+
+Our companion paper~\cite{ExtensionGap} handles cross-subtree edges
+by setting up a \emph{disjunctive RCC5 constraint network} over
+all pairs of copies and appealing to \textbf{full RCC5 tractability}
+(Renz \& Nebel~\cite{RenzNebel1999}): a path-consistent disjunctive
+RCC5 network is globally consistent.
+
+A hybrid approach could work as follows:
+\begin{enumerate}[nosep]
+\item Use GPT's profile-cached blocking for \textbf{termination} and
+  \textbf{local recipe generation}.
+\item When unraveling, assign \textbf{tree edges} (parent-to-child
+  via recipes) as in GPT's construction.
+\item For \textbf{cross-chain edges} (between copies not in a
+  parent-child relationship), set up a disjunctive constraint network
+  whose constraints come from the composition table applied along the
+  tree path connecting the two copies.
+\item Prove \textbf{path-consistency} of this network using the
+  tableau's properties and the meet-normalization results.
+\item Apply full RCC5 tractability to obtain a globally consistent
+  atomic refinement.
+\end{enumerate}
+
+This would marry GPT's local elegance with the global consistency
+guarantee from the patchwork property.
+
+\subsection{Weakened replay with monotone signatures}
+\label{sec:repair-monotone}
+
+Alternatively, one could define a notion of \emph{signature
+subsumption} such that a copy~$c$ in the unraveling has a signature
+that \emph{subsumes} its representative's signature (more colors,
+richer context).  If one can show that recipes designed for the
+simpler signature remain admissible under the richer one---using the
+monotonicity of the meet-normalization and the
+$\comp(q,S)$-meet-closure we verified---then the replay theorem could
+be extended to subsumption rather than equality.
+
+This seems plausible but would require careful formalization of the
+subsumption relation and its interaction with the recipe admissibility
+conditions.
+
+\subsection{Truncated unraveling with depth-bounded predecessors}
+
+A third option: instead of unraveling the full cache, build a
+\emph{truncated} unraveling where each copy only remembers
+predecessors up to some bounded depth in the unraveling tree.  The
+truncation depth would be chosen so that the signature stays within
+the finite alphabet.  Cross-chain edges beyond the truncation horizon
+would be assigned by a default rule (e.g., $\DR$, which is always
+composition-consistent with itself).  The correctness of the truth
+lemma under truncation would need to be verified.
+
+
+%% ================================================================
+\section{Summary of Verification Results}
+\label{sec:summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Claim} & \textbf{Paper} & \textbf{Status} \\
+\midrule
+Flat normalization is false (counterexample) & 2 & \textbf{Correct} \\
+Coherent-block normalization & 2 & \textbf{Correct} \\
+Explicit finite-index signature system & 3 & \textbf{Correct} \\
+Meet polymorphism ($R_q$ closed under $\wedge$) & 4 &
+  \textbf{Verified} (1,024 cases) \\
+No $\PP/\PPI$ within one final color & 4 & \textbf{Correct} \\
+Realized labels don't mix $\PP$ and $\PPI$ & 4 & \textbf{Correct} \\
+Robust colorwise normalization & 4 & \textbf{Correct} \\
+$\comp(q,S)$ is meet-closed (missing constraint) & --- &
+  \textbf{Verified} (64 cases) \\
+Replay theorem (finite tableau) & 4 & \textbf{Correct} \\
+\midrule
+Blocked unraveling theorem & 4 & \textbf{Gap} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+%% ================================================================
+\section{Comparison of Approaches}
+\label{sec:comparison}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{4.2cm}p{4.8cm}p{4.8cm}@{}}
+\toprule
+& \textbf{GPT: profile-cached blocking}
+& \textbf{Claude: direct model construction} \\
+\midrule
+Local arguments
+& Meet normalization, coherent blocks --- \textbf{proved}
+& Self-absorption, forced $\DR$ edges --- \textbf{proved} \\[3pt]
+Global model construction
+& Unraveling from finite cache --- \textbf{gap}
+& Tree unraveling + constraint network --- \textbf{gap} (Cases B/C) \\[3pt]
+Key algebraic insight
+& Meet-semilattice on RCC5 labels
+& Self-absorption failure $\comp(\DR,\PPI) = \{\DR\}$ \\[3pt]
+Use of patchwork / tractability
+& Not used
+& Central (full RCC5 tractability) \\[3pt]
+Blocking / termination
+& Explicit (profile-cached, proved)
+& Inherited from original tableau \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The two approaches have \textbf{complementary strengths}.  GPT's meet
+normalization elegantly solves the local witness-recipe problem; our
+patchwork-based argument addresses the global edge-consistency problem.
+A synthesis using GPT's blocking for termination and patchwork for
+cross-chain edges in the unraveling could potentially close both
+remaining gaps.
+
+
+%% ================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+GPT's draft series represents strong and largely correct work on a
+genuinely difficult problem.  The self-correction cycle---from a
+false lemma through coherent blocks to the meet-semilattice---is a
+model of honest, iterative proof development.
+
+The local results (coherent-block normalization, meet polymorphism,
+robust colorwise normalization, finite-index signatures, replay
+theorem for the finite tableau) are all correct, verified, and novel.
+The meet-semilattice structure on RCC5 witness labels is an insight
+that neither we nor GPT's earlier contextual tableau had identified.
+
+The global unraveling argument, however, has a genuine gap.  The
+unraveling changes the predecessor color structure in ways that
+prevent direct application of the replay theorem.  This is the same
+structural difficulty---in different guise---that affects all
+approaches to $\ALCIRCC{5}$ decidability.
+
+We believe the gap is closable, most likely by incorporating a
+patchwork-based argument for cross-chain edge assignment.  The
+combination of GPT's profile-cached blocking (for termination and
+local recipes) with the patchwork property (for global consistency)
+appears to be the most promising path toward a complete proof.
+
+
+%% ================================================================
+\begin{thebibliography}{99}
+
+\bibitem{CompanionPaper}
+Claude (Anthropic), prompted by M.~Wessel.
+\newblock On the decidability of $\mathcal{ALCI}_{\mathit{RCC5}}$ and
+  $\mathcal{ALCI}_{\mathit{RCC8}}$: Quasimodels meet the patchwork
+  property.
+\newblock Discussion paper, April 2026.
+
+\bibitem{ExtensionGap}
+Claude (Anthropic), prompted by M.~Wessel.
+\newblock Closing the extension gap: Decidability of
+  $\mathcal{ALCI}_{\mathit{RCC5}}$ via direct model construction.
+\newblock Companion paper, April 2026.
+
+\bibitem{FWCounterexample}
+Claude (Anthropic), prompted by M.~Wessel.
+\newblock Counterexample to the finite-width extraction conjecture
+  FW$(C,N)$ for $\mathcal{ALCI}_{\mathit{RCC5}}$.
+\newblock Technical note, March 2026.
+
+\bibitem{GPTContextual}
+GPT (OpenAI).
+\newblock A contextual tableau calculus for
+  $\mathcal{ALCI}_{\mathit{RCC5}}$.
+\newblock Draft note, March 2026.
+
+\bibitem{GPTBlocking}
+GPT (OpenAI).
+\newblock $\mathcal{ALCI}_{\mathit{RCC5}}$ under strong EQ: Replay,
+  blocking, and the final meta-theorem.
+\newblock Draft note series (4 revisions), April 2, 2026.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A
+  maximal tractable fragment of the {Region Connection Calculus}.
+\newblock {\em Artificial Intelligence}, 108(1-2):69--123, 1999.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the
+  {$\mathcal{ALCI}_\mathit{RCC}$} family---{F}irst results and
+  unanswered questions.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg,
+  2002/2003.
+
+\end{thebibliography}
+
+\end{document}

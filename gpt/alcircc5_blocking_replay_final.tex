@@ -1,0 +1,587 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\usepackage[most]{tcolorbox}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black,
+  pdftitle={Strong-EQ ALCI RCC5: replay theorem and blocking},
+  pdfauthor={OpenAI technical note}
+}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlist[itemize]{leftmargin=1.5em,topsep=0.25em,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=1.7em,topsep=0.25em,itemsep=0.2em}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\crefname{theorem}{theorem}{theorems}
+\Crefname{theorem}{Theorem}{Theorems}
+\crefname{lemma}{lemma}{lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{proposition}{proposition}{propositions}
+\Crefname{proposition}{Proposition}{Propositions}
+\crefname{corollary}{corollary}{corollaries}
+\Crefname{corollary}{Corollary}{Corollaries}
+\crefname{definition}{definition}{definitions}
+\Crefname{definition}{Definition}{Definitions}
+\crefname{remark}{remark}{remarks}
+\Crefname{remark}{Remark}{Remarks}
+
+\newcommand{\ALC}{\mathcal{ALC}}
+\newcommand{\ALCIRCCFive}{\mathcal{ALCI}_{\mathsf{RCC5}}}
+\newcommand{\Roles}{\mathcal{R}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\cl}[1]{\operatorname{cl}(#1)}
+\newcommand{\cld}[2]{\operatorname{cl}_{#1}(#2)}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Prof}{\operatorname{Prof}}
+\newcommand{\Tri}{\operatorname{Tri}}
+\newcommand{\older}{\mathsf{old}}
+\newcommand{\Sig}{\operatorname{Sig}}
+\newcommand{\Col}{\operatorname{Col}}
+\newcommand{\Req}{\operatorname{Req}}
+\newcommand{\Pay}{\operatorname{Pay}}
+\newcommand{\meet}{\mathbin{\wedge}}
+\newcommand{\bigmeet}{\mathop{\bigwedge}}
+
+\title{\texorpdfstring{$\ALCIRCCFive$}{ALCI RCC5} under Strong EQ:\\[0.35em]
+Replay, Blocking, and the Final Meta-Theorem}
+\author{Technical note prepared for discussion}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note proves the missing replay step in the blocking program for strong-EQ $\ALCIRCCFive$. Two small changes are essential. First, predecessor colors must remember the full vector of truncated universal payloads, not only the payload on the incoming edge to the blocked node. Second, projected witness footprints can be sharpened to \emph{robust colorwise witness recipes}. The key algebraic fact is that the four non-EQ RCC5 witness labels form a finite meet-semilattice preserved by all one-point RCC5 extension constraints. This yields a colorwise meet-normalization theorem, from which the replay theorem follows. Combined with the finite-index construction from the previous note, this gives the missing blocking argument. Consequently, for any locally sound and complete one-point tableau calculus for strong-EQ $\ALCIRCCFive$, adding the present blocking rule yields a terminating sound and complete decision procedure.
+\end{abstract}
+
+\begin{tcolorbox}[colback=blue!3,colframe=blue!35!black,title=Main point]
+The previous note already supplied a finite family of depth-indexed signatures. The last gap was whether witness information stored at one node can be replayed at a blocked node with the same signature. The answer is yes, after strengthening predecessor colors by full payload vectors and replacing projected footprints by robust colorwise recipes.
+\end{tcolorbox}
+
+\section{Introduction}
+
+Wessel's report isolates the unresolved step for $\ALCIRCCFive$: the prototype tableau can be taken as locally sound and complete, but no blocking or infinity-checking argument was available to turn it into a terminating decision procedure. The obstruction is structural. Models are complete graphs rather than trees, so a fresh witness is constrained simultaneously by \emph{all} older nodes, and the proper-part relations may force infinite unfolding.
+
+The previous revisions of this note repaired the local combinatorial part of the problem in two stages. First, flat predecessor classes were shown to be too coarse, and coherent predecessor blocks were introduced. Second, an explicit depth-indexed finite signature system was given. What remained open was the replay theorem: do equal signatures carry enough witness information to replay existential choices at blocked nodes?
+
+This note answers that question positively. The proof reveals one further necessary strengthening: predecessor colors must remember the entire truncated payload vector
+\[
+(\Gamma_R(\lambda(u))\cap \cld{k}{C})_{R\in\Roles},
+\]
+not merely the payload on the incoming edge into the current node. With that patch, the witness part of a signature can be made functional and robust.
+
+\section{Setup}
+
+We work under strong EQ, so distinct nodes are connected by exactly one of the four non-EQ RCC5 base relations
+\[
+\Roles=\{\DR,\PO,\PP,\PPI\}.
+\]
+Here $\DR$ and $\PO$ are symmetric, while $\PP$ and $\PPI$ are converse strict partial orders.
+
+Fix an input concept $C$ in negation normal form. Let $d=\md(C)$ and, for each $k\le d$,
+\[
+\cld{k}{C}=\{D\in \cl(C)\mid \md(D)\le k\}.
+\]
+For a saturated tableau node $x$, write
+\[
+\tp_k(x)=\lambda(x)\cap \cld{k}{C}.
+\]
+For $R\in\Roles$ and a type $t$, let
+\[
+\Gamma_R(t)=\{D\in \cl(C)\mid \forall R.D\in t\}.
+\]
+
+We assume an underlying unblocked tableau branch consisting of a finite set of current nodes, a creation order $\prec$, a saturated type $\lambda(x)$ for each node, and a unique base relation $\rho(x,y)\in\Roles$ for each ordered pair of distinct current nodes. For a node $x$, put
+\[
+\older(x)=\{u\mid u\prec x\}.
+\]
+
+\begin{definition}[Triangle predicate]
+For $q,r,s\in\Roles$, write
+\[
+\Tri(q,s,r)
+\]
+iff the RCC5 composition table allows the oriented triangle
+\[
+q(a,b),\qquad s(b,c),\qquad r(a,c).
+\]
+Equivalently, $r\in q\circ s$.
+\end{definition}
+
+\begin{definition}[Locally admissible one-point extension]
+Let $x$ be saturated and let $\exists S.E\in\lambda(x)$. A symbolic one-point extension for this existential is a pair $(t,\eta)$ where:
+\begin{enumerate}[label=(\alph*)]
+  \item $t$ is a saturated target type with $E\in t$ and $\Gamma_S(\lambda(x))\subseteq t$;
+  \item $\eta$ maps every $u\in\older(x)$ to a role $\eta(u)\in\Roles$, intended as the label from $u$ to the new witness.
+\end{enumerate}
+It is \emph{locally admissible} if additionally:
+\begin{enumerate}[label=(\roman*)]
+  \item for every $u\in\older(x)$,
+  \[
+  \Gamma_{\eta(u)}(\lambda(u))\subseteq t;
+  \]
+  \item for all distinct $u,v\in\older(x)$,
+  \[
+  \Tri\bigl(\rho(u,v),\eta(v),\eta(u)\bigr).
+  \]
+\end{enumerate}
+\end{definition}
+
+\subsection*{Coherent blocks recalled}
+
+We use the coherent predecessor-block normalization established in the previous note. Concretely, for each saturated node $x$ there is a partition of $\older(x)$ into \emph{coherent predecessor blocks} such that:
+\begin{itemize}
+  \item all nodes in one block have the same local type;
+  \item between any two distinct blocks there is a unique RCC5 label;
+  \item inside any block of size at least two there is a unique symmetric label, hence $\DR$ or $\PO$.
+\end{itemize}
+Moreover, every locally admissible symbolic extension can be normalized, without changing its target type, so that the witness label is constant on each coherent block.
+
+We therefore fix, from now on, one coherent-block-normalized admissible extension $(t,\eta)$ for the existential currently under discussion, and write $\eta(B)$ for the common label on a coherent block $B$.
+
+\section{Strengthened predecessor colors}
+
+The replay proof needs one further piece of local information.
+
+\begin{definition}[Full payload vector]
+For a saturated node $u$ and $k<d$, define the truncated payload vector
+\[
+\Pay_k(u)=\bigl(\Gamma_R(\lambda(u))\cap \cld{k}{C}\bigr)_{R\in\Roles}.
+\]
+\end{definition}
+
+This remembers, at depth $k$, which formulas would be propagated into a fresh witness along \emph{each} possible RCC5 label.
+
+\begin{definition}[Rank-0 signatures]
+Let
+\[
+\Sig_0=\{\tp_0(x)\mid x\text{ saturated tableau node}\},
+\qquad
+\Prof_0(x)=\tp_0(x).
+\]
+\end{definition}
+
+Fix $k<d$ and assume $\Sig_k$ already defined.
+
+\begin{definition}[Global refinement alphabets]
+Define finite alphabets recursively by
+\[
+A_{k+1,0}=\Sig_k\times \Roles\times \bigl(\mathcal P(\cld{k}{C})\bigr)^{\Roles},
+\]
+and, for $0\le i<k+1$,
+\[
+A_{k+1,i+1}=A_{k+1,i}\times \bigl(\mathcal P(\Roles)\bigr)^{A_{k+1,i}}.
+\]
+Put $A_{k+1}=A_{k+1,k+1}$.
+\end{definition}
+
+\begin{definition}[Local predecessor colors]
+Fix a saturated node $x$ and $u\in\older(x)$.
+
+The initial rank-$(k+1)$ predecessor color of $u$ relative to $x$ is
+\[
+\Col^x_{k+1,0}(u)=\bigl(\Prof_k(u),\rho(u,x),\Pay_k(u)\bigr)\in A_{k+1,0}.
+\]
+
+Given colors $\Col^x_{k+1,i}$ at stage $i$, define for each $u\in\older(x)$ the relation-set profile
+\[
+\Theta^x_{k+1,i}(u):A_{k+1,i}\to \mathcal P(\Roles)
+\]
+by
+\[
+\Theta^x_{k+1,i}(u)(a)=\{\rho(u,v)\mid v\in\older(x),\ v\neq u,\ \Col^x_{k+1,i}(v)=a\}.
+\]
+Then let
+\[
+\Col^x_{k+1,i+1}(u)=\bigl(\Col^x_{k+1,i}(u),\Theta^x_{k+1,i}(u)\bigr).
+\]
+Finally,
+\[
+\Col^x_{k+1}(u)=\Col^x_{k+1,k+1}(u)\in A_{k+1}.
+\]
+\end{definition}
+
+\begin{lemma}[Coherent blocks are monochromatic]
+Let $B$ be a coherent predecessor block of $x$. Then all members of $B$ have the same final predecessor color $\Col^x_{k+1}$.
+\end{lemma}
+
+\begin{proof}
+At stage $0$, all members of $B$ have the same $\Prof_k$, the same incoming relation to $x$, and the same full payload vector, because coherent blocks refine the flat predecessor classes and the flat criterion uses the same local type on the block. For the inductive step, coherence guarantees that every member of $B$ sees exactly the same relation to every other coherent block, and the same internal relation to the rest of $B$. Hence its relation-set profile to stage-$i$ colors is the same for all members of $B$. Therefore all members of $B$ stay in the same color through all $k+1$ refinement rounds.
+\end{proof}
+
+\begin{definition}[Context tables]
+For a saturated node $x$, define the rank-$(k+1)$ multiplicity map
+\[
+\mu^x_{k+1}:A_{k+1}\to \{0,1,+\}
+\]
+and relation-set table
+\[
+Q^x_{k+1}:A_{k+1}\times A_{k+1}\to \mathcal P(\Roles)
+\]
+by
+\[
+\mu^x_{k+1}(a)=\begin{cases}
+0,&\text{if no predecessor of }x\text{ has final color }a,\\
+1,&\text{if exactly one predecessor of }x\text{ has final color }a,\\
++,&\text{otherwise,}
+\end{cases}
+\]
+and
+\[
+Q^x_{k+1}(a,b)=\{\rho(u,v)\mid u,v\in\older(x),\ u\neq v,\ \Col^x_{k+1}(u)=a,\ \Col^x_{k+1}(v)=b\}.
+\]
+\end{definition}
+
+If $a\in A_{k+1}$ and $R\in\Roles$, write $\Pay^R_k(a)\subseteq\cld{k}{C}$ for the $R$-component of the payload vector stored in the stage-$0$ part of $a$. This is well defined because the stage-$0$ base tuple is retained inside every later refinement color.
+
+\section{The RCC5 meet-semilattice}
+
+The key algebraic fact is very small and very rigid.
+
+\begin{definition}[Witness-label meet]
+Partially order the four witness labels by the diamond
+\[
+\DR < \PO < \PP,
+\qquad
+\DR < \PO < \PPI,
+\]
+with $\PP$ and $\PPI$ incomparable. Let $\meet$ be the greatest lower bound in this order. Equivalently:
+\[
+\DR\meet r=\DR,
+\qquad
+\PO\meet\PP=\PO,
+\qquad
+\PO\meet\PPI=\PO,
+\qquad
+\PP\meet\PPI=\PO,
+\]
+with idempotence and symmetry determining the remaining values.
+\end{definition}
+
+For $q\in\Roles$, define the binary relation
+\[
+R_q=\{(r,s)\in\Roles^2\mid \Tri(q,s,r)\}.
+\]
+
+\begin{lemma}[Meet polymorphism for one-point RCC5 constraints]\label{lem:meetpoly}
+For every $q\in\Roles$, the relation $R_q$ is closed under componentwise meet:
+\[
+(r_1,s_1)\in R_q\ \text{and}\ (r_2,s_2)\in R_q
+\quad\Longrightarrow\quad
+(r_1\meet r_2,\ s_1\meet s_2)\in R_q.
+\]
+Consequently every finite componentwise meet of members of $R_q$ again lies in $R_q$.
+\end{lemma}
+
+\begin{proof}
+This is a finite check against the RCC5 composition table. There are only four possible values of $q$ and $16$ pairs $(r,s)$ for each $q$. Writing out the allowed pairs $R_q$ from the table and checking closure under the diamond meet gives the claim. Since $\meet$ is associative and commutative, the binary statement immediately extends to finite meets.
+\end{proof}
+
+\section{Colorwise meet-normalization}
+
+The next lemma excludes one potentially problematic pattern inside a single final color.
+
+\begin{lemma}[No proper-part relation inside one final color]\label{lem:noPPsamecolor}
+Let $a\in A_{k+1}$ be a final predecessor color. Then
+\[
+Q^x_{k+1}(a,a)\subseteq \{\DR,\PO\}.
+\]
+In particular no two predecessors of the same final color are related by $\PP$ or $\PPI$.
+\end{lemma}
+
+\begin{proof}
+Assume $\PP\in Q^x_{k+1}(a,a)$. Then there are predecessors $u,v$ of color $a$ with $u\ \PP\ v$. Because all predecessors of color $a$ have the same final color, they have the same stage-$(k+1)$ relation-set profile to color $a$. Hence every predecessor of color $a$ must have at least one outgoing $\PP$-edge to color $a$.
+
+But the restriction of $\PP$ to the finite set of predecessors of color $a$ is a finite strict partial order: $\PP$ is irreflexive, asymmetric, and transitive. Every finite strict partial order has a maximal element, and such an element has no outgoing $\PP$-edge. Contradiction. Therefore $\PP\notin Q^x_{k+1}(a,a)$. The argument for $\PPI$ is dual, using a minimal element.
+\end{proof}
+
+\begin{lemma}[Realized label sets cannot mix $\PP$ and $\PPI$]\label{lem:noppppi}
+Fix a coherent-block-normalized admissible extension $(t,\eta)$ at $x$, and let $a$ be a final predecessor color with $\mu^x_{k+1}(a)\neq 0$. Define
+\[
+D_a=\{\eta(B)\mid B\text{ coherent predecessor block of }x,\ \Col^x_{k+1}(B)=a\}.
+\]
+Then $D_a$ does not contain both $\PP$ and $\PPI$. Hence the meet
+\[
+m(a)=\bigmeet D_a
+\]
+belongs to $D_a$.
+\end{lemma}
+
+\begin{proof}
+Suppose $\PP,\PPI\in D_a$. Then there are coherent predecessor blocks $B,C$ of the same final color $a$ with
+\[
+\eta(B)=\PP,
+\qquad
+\eta(C)=\PPI.
+\]
+By \Cref{lem:noPPsamecolor}, the relation between $B$ and $C$ is either $\DR$ or $\PO$. But the pair $(\PP,\PPI)$ is excluded from both corresponding one-point extension relations: it is not in $R_{\DR}$ and not in $R_{\PO}$. This contradicts local admissibility.
+
+Therefore $D_a$ cannot contain both incomparable top elements of the diamond. For any nonempty subset of the diamond that omits one of $\PP,\PPI$, the meet is one of its members. Hence $m(a)\in D_a$.
+\end{proof}
+
+\begin{theorem}[Robust colorwise normalization]\label{thm:robust-normalization}
+Let $x$ be saturated, let $\exists S.E\in\lambda(x)$, and let $(t,\eta)$ be a coherent-block-normalized admissible symbolic extension for this existential. For each final predecessor color $a$ with $\mu^x_{k+1}(a)\neq 0$, define
+\[
+D_a=\{\eta(B)\mid B\text{ coherent predecessor block of color }a\},
+\qquad
+m(a)=\bigmeet D_a.
+\]
+Then the blockwise constant assignment
+\[
+\eta^{\meet}(B)=m(a)
+\qquad\text{whenever }\Col^x_{k+1}(B)=a,
+\]
+is locally admissible. Moreover it is \emph{robust on final colors}: for all colors $a,b$ with nonzero multiplicity and every
+\[
+q\in Q^x_{k+1}(a,b)
+\]
+we have
+\[
+\Tri\bigl(q,m(b),m(a)\bigr).
+\]
+\end{theorem}
+
+\begin{proof}
+We first verify the unary conditions. By \Cref{lem:noppppi}, $m(a)\in D_a$. Thus there is some coherent block $B_a$ of color $a$ with $\eta(B_a)=m(a)$. Since all predecessors of final color $a$ have the same stage-$0$ payload vector, the test
+\[
+\Gamma_{m(a)}(\lambda(u))\cap \cld{k}{C}\subseteq t\cap \cld{k}{C}
+\]
+depends only on the final color $a$, not on the chosen predecessor $u$ of that color. Because it holds for some member of color $a$, it holds for all of them.
+
+Now fix colors $a,b$ and a role $q\in Q^x_{k+1}(a,b)$. Let $\mathcal B_a$ and $\mathcal B_b$ be the coherent predecessor blocks of colors $a$ and $b$, respectively. Since all blocks of color $a$ have the same final relation-set profile to color $b$, every block in $\mathcal B_a$ has at least one $q$-edge to some block in $\mathcal B_b$. Dually, every block in $\mathcal B_b$ is the target of a $q$-edge from some block in $\mathcal B_a$. Hence we can choose a finite set
+\[
+P_q(a,b)\subseteq \mathcal B_a\times \mathcal B_b
+\]
+of pairs $(B,C)$ satisfying $\rho(B,C)=q$ such that the first projection of $P_q(a,b)$ is all of $\mathcal B_a$ and the second projection is all of $\mathcal B_b$.
+
+For every $(B,C)\in P_q(a,b)$, local admissibility of $(t,\eta)$ gives
+\[
+\Tri\bigl(q,\eta(C),\eta(B)\bigr),
+\qquad\text{that is,}\qquad
+(\eta(B),\eta(C))\in R_q.
+\]
+By \Cref{lem:meetpoly}, the componentwise meet of all these pairs again lies in $R_q$. Because the chosen family covers all blocks of colors $a$ and $b$, the first coordinate of that meet is exactly $m(a)$ and the second coordinate is exactly $m(b)$. Therefore
+\[
+(m(a),m(b))\in R_q,
+\]
+which is equivalent to
+\[
+\Tri\bigl(q,m(b),m(a)\bigr).
+\]
+This proves the robust condition.
+
+Finally, if $B,C$ are any two coherent predecessor blocks, with colors $a,b$ and relation $q=\rho(B,C)$, then $q\in Q^x_{k+1}(a,b)$ and the robust condition yields
+\[
+\Tri\bigl(q,\eta^{\meet}(C),\eta^{\meet}(B)\bigr).
+\]
+Together with the unary part already verified, this shows that $\eta^{\meet}$ is locally admissible.
+\end{proof}
+
+\section{Robust witness recipes and finite signatures}
+
+\begin{definition}[Robust witness recipe]
+Fix $k<d$ and a saturated node $x$. A rank-$(k+1)$ robust witness recipe at $x$ is a triple
+\[
+\bigl(\exists S.E,\ \sigma,\ \chi\bigr)
+\]
+with the following meaning:
+\begin{itemize}
+  \item $\exists S.E\in \tp_{k+1}(x)$ is the source existential;
+  \item $\sigma\in\Sig_k$ is the target rank-$k$ signature of some actual witness created for that existential on the unblocked branch;
+  \item $\chi:A_{k+1}\to\Roles$ is the robust colorwise map produced by \Cref{thm:robust-normalization} from a coherent-block-normalized witness for that existential.
+\end{itemize}
+The recipe is \emph{admissible over} the context tables $(\mu^x_{k+1},Q^x_{k+1})$ if:
+\begin{enumerate}[label=(\roman*)]
+  \item $E\in \tp_k(\sigma)$ and $\Gamma_S(\lambda(x))\cap\cld{k}{C}\subseteq \tp_k(\sigma)$;
+  \item for every color $a$ with $\mu^x_{k+1}(a)\neq 0$,
+  \[
+  \Pay^{{\chi(a)}}_k(a)\subseteq \tp_k(\sigma);
+  \]
+  \item for all colors $a,b$ with nonzero multiplicity and every $q\in Q^x_{k+1}(a,b)$,
+  \[
+  \Tri\bigl(q,\chi(b),\chi(a)\bigr).
+  \]
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Explicit robust signatures]
+Define recursively:
+\begin{itemize}
+  \item $\Prof_0(x)=\tp_0(x)$ and $\Sig_0=\{\Prof_0(x)\mid x\text{ saturated}\}$;
+  \item for $k<d$,
+  \[
+  \Prof_{k+1}(x)=\Bigl(\tp_{k+1}(x),\ \mu^x_{k+1},\ Q^x_{k+1},\ \Req^x_{k+1}\Bigr),
+  \]
+  where $\Req^x_{k+1}$ is the set of all admissible robust witness recipes at $x$.
+\end{itemize}
+Finally put
+\[
+\Sig_{k+1}=\{\Prof_{k+1}(x)\mid x\text{ saturated tableau node}\}.
+\]
+\end{definition}
+
+\begin{theorem}[Finite-index lemma]\label{thm:finiteindex}
+For every $k\le d$, the set $\Sig_k$ is finite.
+\end{theorem}
+
+\begin{proof}
+The proof is the same finite-state argument as in the previous note, with two small changes.
+
+First, the stage-$0$ predecessor alphabet now contains the full payload vector. This is still finite because $\Roles$ and $\cld{k}{C}$ are finite. Hence every refinement alphabet $A_{k+1,i}$ remains finite by the same inductive argument as before.
+
+Second, projected witness footprints are replaced by robust recipes. A single recipe is determined by:
+\begin{enumerate}[label=(\alph*)]
+  \item an existential formula from the finite set $\cld{k+1}{C}$;
+  \item a target signature $\sigma\in\Sig_k$, finite by the outer induction on $k$;
+  \item a map $\chi:A_{k+1}\to\Roles$, chosen from a finite function space.
+\end{enumerate}
+So only finitely many single recipes exist, and the recipe set $\Req^x_{k+1}$ ranges over the powerset of a finite set. The remaining components $\tp_{k+1}(x)$, $\mu^x_{k+1}$, and $Q^x_{k+1}$ are again chosen from finite spaces. Therefore only finitely many rank-$(k+1)$ signatures exist.
+\end{proof}
+
+\section{Replay}
+
+We can now state and prove the missing theorem.
+
+\begin{theorem}[Replay theorem]\label{thm:replay}
+Let $k<d$, and let $x,y$ be saturated tableau nodes with
+\[
+\Prof_{k+1}(x)=\Prof_{k+1}(y).
+\]
+Let
+\[
+\bigl(\exists S.E,\ \sigma,\ \chi\bigr)\in \Req^x_{k+1}=\Req^y_{k+1}
+\]
+be a robust witness recipe. Then assigning to every predecessor $u\in\older(y)$ the label
+\[
+\eta_y(u)=\chi\bigl(\Col^y_{k+1}(u)\bigr)
+\]
+yields a locally admissible symbolic one-point extension for the existential $\exists S.E$ at $y$, with target rank-$k$ signature $\sigma$.
+\end{theorem}
+
+\begin{proof}
+Because the rank-$(k+1)$ signatures of $x$ and $y$ are equal, they have the same local rank-$(k+1)$ type, the same multiplicity map, the same relation-set table, and the same recipe set.
+
+The target side is immediate: $E\in\tp_k(\sigma)$ and the $S$-payload from the source node into the witness is the same at $x$ and $y$ because $\tp_{k+1}(x)=\tp_{k+1}(y)$.
+
+Now let $u\in\older(y)$ and put $a=\Col^y_{k+1}(u)$. Since the base payload vector is part of the color itself, the unary admissibility test for assigning role $\chi(a)$ to a predecessor of color $a$ depends only on $a$ and on the target signature $\sigma$. By recipe admissibility,
+\[
+\Pay_k^{\chi(a)}(a)\subseteq \tp_k(\sigma),
+\]
+so the unary condition is satisfied for every predecessor of color $a$.
+
+For the binary condition, let $u,v\in\older(y)$ be distinct, with colors $a,b$, and let
+\[
+q=\rho(u,v).
+\]
+Then, by definition of $Q^y_{k+1}$,
+\[
+q\in Q^y_{k+1}(a,b)=Q^x_{k+1}(a,b).
+\]
+Since the recipe is admissible over this table,
+\[
+\Tri\bigl(q,\chi(b),\chi(a)\bigr).
+\]
+But these are precisely the labels assigned to $v$ and $u$ under $\eta_y$. Hence the triangle condition for local admissibility holds for every pair of older predecessors of $y$.
+
+So $\eta_y$ is a locally admissible symbolic one-point extension at $y$ with target signature $\sigma$.
+\end{proof}
+
+\section{Blocking, unfolding, and decidability}
+
+We can now formulate the blocking rule on the explicit robust signatures.
+
+\begin{definition}[Signature blocking]
+A saturated node $y$ is blocked by an older saturated node $x$ if
+\[
+\Prof_d(y)=\Prof_d(x).
+\]
+Only older nodes may block younger ones.
+\end{definition}
+
+\begin{theorem}[Termination]
+Any fair tableau branch using signature blocking terminates after finitely many unblocked saturated nodes.
+\end{theorem}
+
+\begin{proof}
+By \Cref{thm:finiteindex}, only finitely many rank-$d$ signatures exist. Since blocking is by equality with an older representative, each signature can occur at most once as an unblocked saturated node on a branch. Fair saturation therefore terminates.
+\end{proof}
+
+\begin{theorem}[Blocked unraveling theorem]\label{thm:blocked-unraveling}
+Fix any one-point tableau calculus for strong-EQ $\ALCIRCCFive$ with the following properties:
+\begin{enumerate}[label=(\roman*)]
+  \item its unblocked saturation rules are locally sound and complete;
+  \item every existential at an unblocked saturated node is realized by some actual witness node on the branch;
+  \item branch labels are saturated Hintikka types and pairwise RCC5 labels are propagated correctly.
+\end{enumerate}
+Add the signature-blocking rule above. Then the resulting blocked calculus is sound and complete for concept satisfiability.
+\end{theorem}
+
+\begin{proof}
+Soundness is immediate: blocking never adds information; it only stops an explicit witness creation and replaces it by a recipe whose admissibility has already been proved at an older node of the same signature.
+
+For completeness, take an open saturated blocked branch. Build an unraveling whose nodes are finite occurrences of rank signatures, starting from the root signature. Whenever an occurrence of signature $\pi$ contains an existential $\exists S.E$, choose one stored recipe
+\[
+(\exists S.E,\sigma,\chi)\in\Req(\pi)
+\]
+and create a fresh occurrence of the target signature $\sigma$. Connect it to all older occurrences according to the label prescribed by $\chi$ on their colors relative to the source occurrence. By \Cref{thm:replay}, each such step is locally admissible. Hence every finite stage of the unraveling is an open pseudo-model, and the union of all stages is a (possibly infinite) model.
+
+A standard induction on formula depth shows that every occurrence of a signature $\pi$ satisfies all formulas in the local type component of $\pi$: boolean cases are immediate; existential cases follow by recipe choice; universal cases follow because every time a younger node is attached to an older one, the label chosen on the older side passes the appropriate payload test stored in the color. Therefore the root occurrence satisfies the input concept.
+\end{proof}
+
+\begin{corollary}[Decidability under strong EQ]
+Under the assumptions of \Cref{thm:blocked-unraveling}, concept satisfiability in strong-EQ $\ALCIRCCFive$ is decidable.
+\end{corollary}
+
+\begin{remark}
+This is exactly the missing meta-step isolated in Wessel's report: the report already treats the underlying tableau as sound and complete at the local level, but lacked a blocking or infinity-checking theorem for the RCC5 case. The present replay theorem supplies that missing part.
+\end{remark}
+
+\section{Conclusion}
+
+The last open step in the blocking program can be proved, but one technical correction is needed: predecessor colors must remember the full vector of truncated universal payloads, not just the payload traveling along the incoming edge to the current node. With that patch, witness information can be normalized by a small RCC5 meet-semilattice into robust colorwise recipes. Those recipes replay across equal signatures, and the finite-index argument then yields a terminating blocked tableau.
+
+So, at the level of the blocking theorem, the strong-EQ $\ALCIRCCFive$ case is now closed. Combined with the already assumed local soundness and completeness of the underlying one-point tableau rules, this gives a sound, complete, and terminating decision procedure.
+
+\begin{thebibliography}{9}
+
+\bibitem{wessel}
+Michael Wessel.
+\newblock \emph{Qualitative Spatial Reasoning with the ALCIRCC Family -- First Results and Unanswered Questions}.
+\newblock University of Hamburg Memo No. 324/03, 2003.
+
+\bibitem{baaderHandbook}
+Franz Baader, Diego Calvanese, Deborah McGuinness, Daniele Nardi, and Peter Patel-Schneider, editors.
+\newblock \emph{The Description Logic Handbook}.
+\newblock Cambridge University Press, 2003.
+
+\end{thebibliography}
+
+\end{document}

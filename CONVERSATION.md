@@ -941,3 +941,93 @@ Michael asked Claude to write up the proof as a LaTeX paper. The result is **`cl
 - `closing_extension_gap_ALCIRCC5.pdf`: Compiled companion paper (10 pages)
 - Updated `README.md` with decidability result, updated complexity bounds, new file listings
 - Updated `CONVERSATION.md` with Part 19
+
+---
+
+## Part 20: Assessment of GPT's Profile-Cached Blocking Series (April 2026)
+
+### Context
+
+In parallel with Claude's work on the companion paper, GPT-5.4 Pro produced a series of four papers developing a **profile-cached blocking** approach to ALCI\_RCC5 decidability. Michael asked Claude to assess these papers.
+
+### The four papers
+
+1. **`gpt/alcircc5_blocking_draft.tex`** — Introduces contextual profiles (local type + older-context quotient) and witness recipe caching per profile. Clean conditional result, but classwise normalization lemma is unproved.
+
+2. **`gpt/alcircc5_blocking_revised.tex`** — Self-correction: flat normalization is FALSE (Proposition 4.2 gives a counterexample, which Claude verified). Introduces **coherent predecessor blocks** (Definition 5.1) — a partition of the older neighborhood where elements within a block share a common relation, and elements across blocks have uniform inter-block relations. Proves coherent-block normalization (Lemma 5.3), which is correct. States the decidability result as a metatheorem parameterized by an abstract finite coherent signature system.
+
+3. **`gpt/alcircc5_blocking_explicit_signatures.pdf`** (PDF only) — Provides explicit depth-indexed signatures: rank-0 is just the local type, and rank-(k+1) additionally records the multiset of rank-k signatures of witnesses. Proves the **finite-index lemma** (Theorem 7.2): the number of signatures at each rank is finite and computable. This is correct.
+
+4. **`gpt/alcircc5_blocking_replay_final.tex`** — Claims to close the final gap via a **meet-semilattice** on RCC5 labels. Key results:
+   - Meet polymorphism (Lemma 5.1): R_q = {(r,s) | Tri(q,s,r)} is closed under componentwise meet. **Verified correct** (1024 cases checked computationally).
+   - No PP/PPI within one color (Lemma 5.2): **Correct**.
+   - Realized labels can't mix PP and PPI (Lemma 5.3): **Correct**.
+   - Robust colorwise normalization (Theorem 5.4): **Correct**.
+   - Replay theorem (Theorem 6.1): **Correct** for finite tableau.
+   - **Blocked unraveling theorem (Theorem 6.2): GAP**. The proof assumes that the color structure (predecessor colors) of a blocked node's copy in the unraveling matches the blocker's color structure in the original tableau. But copies of the same tableau node in different subtrees of the unraveling can have different older neighborhoods (different parents, different cross-subtree edges), so their color structures may differ.
+
+### The unraveling gap (C\_inf demonstration)
+
+Claude demonstrated the gap concretely with C\_inf = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤):
+- In the tableau: node n has type {B, ∃PP.⊤, ∀PP.∃PP.⊤} and its blocker m has the same type
+- In the unraveling: the copy of n at depth k has predecessors from the unraveling tree, not from the original tableau
+- The predecessor colors of n's copy depend on the cross-subtree edges to earlier nodes, which are not fixed until the global edge assignment — the very step that the blocking argument is supposed to justify
+
+### Assessment
+
+The local results (coherent blocks, signatures, meet-semilattice, normalization) are all correct and represent genuine technical contributions. The gap is specifically in Theorem 6.2, at the point where the proof moves from the finite tableau to the infinite unraveled model. This is the **same structural wall** encountered by all other approaches.
+
+### Files produced
+- `response_to_gpt_blocking.tex`: Assessment of GPT's 4-paper series (LaTeX source)
+- `response_to_gpt_blocking.pdf`: Compiled assessment (9 pages)
+
+---
+
+## Part 21: GPT's Review and the Retraction (April 2026)
+
+### Context
+
+GPT-5.4 Pro wrote a review of Claude's companion paper "Closing the Extension Gap." Michael asked Claude to digest and respond.
+
+### GPT's review claims
+
+1. **Algebraic error in Lemma 3.2**: The paper claims comp(DR, PP) = {DR}, but the correct value is comp(DR, PP) = {DR, PO, PP}. The paper confused comp(DR, PP) with comp(PP, DR) = {DR}. Consequently, there is only ONE self-absorption failure (PPI ∉ comp(DR, PPI) = {DR}), not the two claimed.
+
+2. **Theorem 5.5 is false**: The DN\_safe domains (based on endpoint types only) are too coarse. GPT provided a concrete counterexample with concepts B = ∃DR.(p ⊔ q), A = ∃DR.B ⊓ ∃PO.B, C₀ = ∃DR.A. In the completion graph, nodes b₁ and b₂ both have type {B} but b₁ is DR-related and b₂ is PO-related to x. The type-quotient gives D(d₁,d₂) = {DR, PO}, but choosing PO for d₁-d₂ and having the fixed tree edge d₂-d₃ = DR yields comp(PO, DR) ∩ D(d₁,d₃) = {DR,PO,PPI} ∩ {PP} = ∅.
+
+### Claude's verification
+
+Both claims were computationally verified:
+- **Claim 1**: From the RCC5 table, row PP (b,c), column DR (a,b): entry is {DR, PO, PP}. The paper's Table 1 itself shows this correctly, but Lemma 3.2 misreads it.
+- **Claim 2**: comp(PO, DR) = {DR, PO, PPI}, and {DR, PO, PPI} ∩ {PP} = ∅. The counterexample is valid.
+
+### Response and retraction
+
+Claude wrote a formal response (`response_to_gpt_review.tex`, 5 pages) that:
+1. **Accepts both criticisms in full** — no equivocation
+2. **Retracts the decidability claim** — Theorem 5.5 is false, so the main theorem is unsupported
+3. **Corrects the self-absorption analysis** — one failure, not two; corrected table provided
+4. **Analyzes what survives** — Lemma 4.1 (forced DR edge), self-safety theorem, the root cause diagnosis
+5. **Identifies the structural lesson** — DN\_safe is too coarse because it aggregates relations from different representatives of the same type
+6. **Discusses repair strategies** — enriching DN\_safe with predecessor context, maintaining witness provenance, using neighborhood-indexed domains
+7. **Notes the convergence** — both Claude's and GPT's approaches fail at the same structural point, suggesting the obstacle is fundamental
+
+### The structural wall
+
+All five approaches to ALCI\_RCC5 decidability now encounter the same obstacle:
+
+| Approach | Correct local results | Where it fails |
+|---|---|---|
+| Quasimodel (Claude) | Soundness, type elimination | Extension gap (Q3s not extractable) |
+| Contextual tableau (GPT) | Soundness (unfolding) | FW(C,N) false |
+| Direct construction (Claude) | Forced DR, self-safety | **Theorem 5.5 false** (DN\_safe too coarse) |
+| Profile-cached blocking (GPT) | Coherent blocks, signatures | Unraveling gap (color mismatch) |
+| Meet-based replay (GPT) | Meet polymorphism, normalization | Same unraveling gap |
+
+The common thread: type-based quotients lose the relational information needed for global consistency in complete-graph models. This suggests either (a) a fundamentally different proof architecture is needed, or (b) the problem is undecidable and the "structural wall" is evidence of genuine computational power in the logic.
+
+### Files produced
+- `response_to_gpt_review.tex`: Response to GPT's review (LaTeX source)
+- `response_to_gpt_review.pdf`: Compiled response (5 pages)
+- Updated `README.md` with retraction, five-approach summary, corrected status
+- Updated `CONVERSATION.md` with Parts 20 and 21

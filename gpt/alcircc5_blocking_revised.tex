@@ -1,0 +1,548 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black,
+  pdftitle={A Corrected Blocking Draft for ALCIRCC5 under Strong EQ},
+  pdfauthor={OpenAI revised draft note}
+}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlist[itemize]{leftmargin=1.5em,topsep=0.25em,itemsep=0.2em}
+\setlist[enumerate]{leftmargin=1.7em,topsep=0.25em,itemsep=0.2em}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+\crefname{theorem}{theorem}{theorems}
+\Crefname{theorem}{Theorem}{Theorems}
+\crefname{lemma}{lemma}{lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{proposition}{proposition}{propositions}
+\Crefname{proposition}{Proposition}{Propositions}
+\crefname{corollary}{corollary}{corollaries}
+\Crefname{corollary}{Corollary}{Corollaries}
+\crefname{definition}{definition}{definitions}
+\Crefname{definition}{Definition}{Definitions}
+\crefname{remark}{remark}{remarks}
+\Crefname{remark}{Remark}{Remarks}
+\crefname{example}{example}{examples}
+\Crefname{example}{Example}{Examples}
+
+\newcommand{\ALC}{\mathcal{ALC}}
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathsf{RCC}}}
+\newcommand{\ALCIRCCFive}{\mathcal{ALCI}_{\mathsf{RCC5}}}
+\newcommand{\Roles}{\mathcal{R}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\inv}{\operatorname{inv}}
+\newcommand{\cl}[1]{\operatorname{cl}(#1)}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Flat}{\operatorname{Flat}}
+\newcommand{\Ctx}{\operatorname{Ctx}}
+\newcommand{\Prof}{\operatorname{Prof}}
+\newcommand{\Tri}{\operatorname{Tri}}
+\newcommand{\older}{\mathsf{old}}
+\newcommand{\wit}{\mathsf{wit}}
+\newcommand{\Sig}{\operatorname{Sig}}
+\newcommand{\GammaR}[2]{\Gamma_{#1}(#2)}
+
+\title{A Corrected Blocking Draft for \texorpdfstring{$\ALCIRCCFive$}{ALCI RCC5} under Strong EQ\\[0.4em]
+\large Coherent predecessor blocks, normalized one-point extensions, and a revised caching schema}
+\author{Revised draft note prepared for discussion}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+An earlier draft proposed a global blocking condition for $\ALCIRCCFive$ under strong EQ based on local Hintikka types together with incoming RCC5 edge/payload pairs. Its missing local ingredient was a classwise witness-normalization lemma. That flat lemma is false. The present note patches the draft in two steps. First, it exhibits a counterexample showing that witnesses need not be uniform on flat predecessor classes. Second, it replaces the false statement by a proved \emph{coherent-block normalization lemma}: every locally admissible symbolic one-point extension can be transformed into one that is constant on a coherent partition of the older neighborhood. This closes the local combinatorial gap. The repair also changes the blocking architecture: the cache key cannot be the old flat profile any more, but must be built from a finite signature system that refines coherent predecessor behavior. We state a metatheorem showing that \emph{any} such finite coherent signature system yields a terminating globally cached tableau, and we explain the natural depth-indexed candidate for $\ALCIRCCFive$. The resulting note is explicit about proof status: the normalization step is proved here; the remaining design choice is the exact finite signature compression used for an implementation.
+\end{abstract}
+
+\begin{tcolorbox}[colback=blue!3,colframe=blue!35!black,title=What is corrected in this revision?]
+The previous draft overstated one local claim. Uniformizing witness behavior on \emph{flat} predecessor classes is impossible in general. \Cref{sec:flatfails} gives a concrete counterexample. The present revision proves a sharper replacement: witnesses can be normalized on \emph{coherent predecessor blocks}. This is enough to repair the local part of the blocking argument, but it forces a corresponding revision of the cache key. The note therefore now separates two issues clearly:
+\begin{itemize}
+  \item what is proved here: the coherent-block normalization lemma for symbolic one-point extensions;
+  \item what remains a design choice: the exact finite signature system used to compress coherent blocks for global caching.
+\end{itemize}
+\end{tcolorbox}
+
+\section{Introduction}
+
+Wessel's report isolates the missing step for $\ALCIRCCFive$: the prototype tableau may be taken as sound and complete at the local rule level, but there is no blocking or infinity-checking argument that turns it into a terminating decision procedure. The obstacle is structural. Models are complete graphs, not trees, so every older node constrains every new node immediately, and $\PP/\PPI$ may force genuine infinitary unfolding.
+
+The previous draft note tried to address this with a global profile built from the local Hintikka type of a node together with the incoming RCC5 edges and the universal restrictions that had flown over those edges. That idea was close, but one local lemma was too optimistic: witnesses cannot, in general, be normalized on those flat predecessor classes.
+
+This revision makes three changes.
+\begin{enumerate}
+  \item It spells out a counterexample to the flat normalization claim.
+  \item It proves the corrected local statement: normalization is possible on a \emph{coherent partition} of the older neighborhood.
+  \item It reformulates the global caching argument so that blocking is parameterized by an abstract finite \emph{coherent signature system}. The local lemma proved here supplies the replay property such a cache needs.
+\end{enumerate}
+
+The note is intentionally honest about scope. It proves the local normalization step. It does not pretend that the most economical finite signature compression has already been optimized. What the paper now does give is a clean metatheorem: once a finite coherent signature system is fixed, the standard termination and unraveling arguments become routine.
+
+\section{Preliminaries}
+
+We work in $\ALCIRCCFive$ under the strong-EQ semantics. Distinct nodes are therefore connected by exactly one of the four non-EQ RCC5 base relations
+\[
+\Roles = \{\DR,\PO,\PP,\PPI\},
+\]
+with $\DR$ and $\PO$ symmetric, $\PP$ and $\PPI$ converse to each other, and $\PP,\PPI$ strict partial orders. This is exactly the strong-EQ setting isolated in the report, where $\EQ$ collapses to identity and can be internalized away from non-root edges.
+
+Fix an input concept $C$ in negation normal form, with closure $\cl(C)$ and modal depth $\md(C)$. A saturated local type is a Hintikka set $t\subseteq \cl(C)$ satisfying the usual Boolean closure conditions. For $R\in\Roles$ and a saturated local type $t$, define the $R$-payload
+\[
+\Gamma_R(t)=\{D\in \cl(C)\mid \forall R.D\in t\}.
+\]
+This is the set of formulas that must hold at every $R$-successor of a node with type $t$.
+
+We assume an underlying unblocked tableau in which a branch contains:
+\begin{itemize}
+  \item a finite set of currently constructed tableau nodes,
+  \item a creation order $\prec$,
+  \item a saturated type $\lambda(x)$ at every node $x$,
+  \item a unique base relation $\rho(x,y)\in\Roles$ for every ordered pair of distinct branch nodes.
+\end{itemize}
+
+The branch is treated as a symbolic complete RCC5 graph. The local one-point extension rule for an existential $\exists S.E\in \lambda(x)$ chooses a target type $t$ and labels from older nodes into a fresh witness. The only assumption needed here is that the unblocked calculus checks its one-point extensions by the usual local constraints: payload preservation and the triangle conditions induced by the RCC5 composition table.
+
+\begin{definition}[Triangle predicate]
+For $R,S,T\in \Roles$, write
+\[
+\Tri(R,S,T)
+\]
+if and only if the RCC5 composition table allows the oriented triangle
+\[
+R(a,b),\quad S(b,c),\quad T(a,c).
+\]
+Equivalently, $T\in R\circ S$.
+\end{definition}
+
+Thus, if $u,v$ are old nodes and $y$ is a freshly added witness with
+\[
+\rho(u,v)=q,\qquad \eta(v)=s,\qquad \eta(u)=r,
+\]
+then the local admissibility test is exactly $\Tri(q,s,r)$.
+
+\section{Symbolic one-point extensions}
+
+Because models are complete graphs, an existential witness is never described by a single edge. The rule must specify how the new node sits with respect to \emph{all} older nodes.
+
+\begin{definition}[Locally admissible symbolic extension]
+Let $x$ be a saturated branch node and let
+\[
+\exists S.E\in \lambda(x).
+\]
+Write $\older(x)=\{u\mid u\prec x\}$. A \emph{symbolic one-point extension} for this existential is a pair $(t,\eta)$ where:
+\begin{enumerate}[label=(\alph*)]
+  \item $t$ is a saturated target type with $E\in t$ and $\Gamma_S(\lambda(x))\subseteq t$;
+  \item $\eta$ maps every $u\in \older(x)$ to a role $\eta(u)\in\Roles$, intended as the label from $u$ to the new witness.
+\end{enumerate}
+It is \emph{locally admissible} if, in addition,
+\begin{enumerate}[label=(\roman*)]
+  \item for every $u\in \older(x)$,
+  \[
+  \Gamma_{\eta(u)}(\lambda(u))\subseteq t;
+  \]
+  \item for all distinct $u,v\in\older(x)$,
+  \[
+  \Tri\bigl(\rho(u,v),\eta(v),\eta(u)\bigr)
+  \]
+  holds.
+\end{enumerate}
+\end{definition}
+
+This is the local object that the blocker must replay. The central question is therefore: on which predecessor classes can one normalize the function $\eta$ without losing local admissibility?
+
+\section{Why flat classes do not suffice}\label{sec:flatfails}
+
+The first patch is negative.
+
+\begin{definition}[Flat predecessor class]
+Relative to a fixed node $x$, two older nodes $u,v\prec x$ are in the same \emph{flat class} if they have the same local type and the same incoming data into $x$, i.e.
+\[
+\lambda(u)=\lambda(v),\qquad \rho(u,x)=\rho(v,x),\qquad \Gamma_{\rho(u,x)}(\lambda(u))=\Gamma_{\rho(v,x)}(\lambda(v)).
+\]
+\end{definition}
+
+This is exactly the granularity used by the previous draft. The following proposition shows that it is too coarse.
+
+\begin{proposition}[Flat classwise normalization is false]\label{prop:flatfalse}
+There is a satisfiable local branch configuration with a node $x$ and an admissible symbolic extension $(t,\eta)$ for some existential at $x$ such that no locally admissible symbolic extension with the same target type is constant on flat classes.
+\end{proposition}
+
+\begin{proof}
+Let $x$ carry the existential demand
+\[
+\exists \DR.(p\sqcap q\sqcap r).
+\]
+Assume the older neighborhood of $x$ consists of nodes
+\[
+a_1,a_2,b_1,b_2,c,
+\]
+all connected to $x$ by $\DR$.
+
+Assign local types so that
+\[
+\tau_A:\ \forall \PO.\neg p,\ \forall \PP.\neg p,\ \forall \PPI.\neg p,
+\]
+\[
+\tau_B:\ \forall \PO.\neg q,\ \forall \PP.\neg q,
+\]
+\[
+\tau_C:\ \forall \DR.\neg r,\ \forall \PP.\neg r,\ \forall \PPI.\neg r.
+\]
+Take
+\[
+\lambda(a_1)=\lambda(a_2)=\tau_A,\qquad
+\lambda(b_1)=\lambda(b_2)=\tau_B,\qquad
+\lambda(c)=\tau_C.
+\]
+
+Among the older nodes, let every edge be $\DR$ except
+\[
+b_2\ \PPI\ c
+\qquad\text{equivalently}\qquad
+c\ \PP\ b_2.
+\]
+
+Now consider the symbolic extension $(t,\eta)$ with target type
+\[
+t=\{p,q,r,\top\}
+\]
+and labels
+\[
+\eta(a_1)=\eta(a_2)=\DR,
+\qquad
+\eta(b_1)=\DR,
+\qquad
+\eta(b_2)=\PPI,
+\qquad
+\eta(c)=\PO.
+\]
+This extension is locally admissible: the payloads are respected by construction, and the needed triangle checks are exactly the ones enforced by the RCC5 composition table.
+
+The nodes $b_1$ and $b_2$ lie in the same flat predecessor class relative to $x$: they have the same local type $\tau_B$, the same relation $\DR$ into $x$, and the same incoming payload there. Nevertheless they cannot be uniformized.
+
+If both were changed to $\DR$, then the triangle with
+\[
+b_2\ \PPI\ c,
+\qquad
+c\ \PO\ \wit,
+\]
+would force $b_2$ not to be disjoint from the witness, contradicting local admissibility.
+
+If both were changed to $\PPI$, then the triangle with
+\[
+b_1\ \DR\ c,
+\qquad
+c\ \PO\ \wit,
+\]
+would force $b_1$ not to contain the witness, again contradicting local admissibility.
+
+So no locally admissible extension with target type $t$ can be constant on flat predecessor classes.\qedhere
+\end{proof}
+
+The moral is simple: equal incoming $(R,\Gamma)$-data at $x$ does not determine how an older node interacts with the rest of the older complete graph, and that interaction matters for witnesses.
+
+\section{Coherent predecessor blocks}
+
+The correct granularity is obtained by refining the older neighborhood until inter-block relations become uniform.
+
+\begin{definition}[Coherent partition of the older neighborhood]\label{def:coherent}
+Fix a saturated node $x$. A partition $P_x$ of $\older(x)$ is \emph{coherent} if:
+\begin{enumerate}[label=(\roman*)]
+  \item it refines the flat classes of \cref{sec:flatfails};
+  \item for every two distinct blocks $B,C\in P_x$ there is a single role
+  \[
+  q_{BC}\in\Roles
+  \]
+  such that for all $u\in B$ and $v\in C$,
+  \[
+  \rho(u,v)=q_{BC};
+  \]
+  \item for every block $B\in P_x$ with at least two nodes there is a single internal label
+  \[
+  q_B\in\{\DR,\PO\}
+  \]
+  such that for all distinct $u,v\in B$,
+  \[
+  \rho(u,v)=q_B.
+  \]
+\end{enumerate}
+\end{definition}
+
+\begin{proposition}[Existence of coherent refinements]\label{prop:coherentexists}
+Every finite older neighborhood admits a coherent partition refining the flat classes.
+\end{proposition}
+
+\begin{proof}
+Start from the partition into flat classes. Whenever a block $B$ violates coherence, split it.
+
+If two nodes in $B$ have different relations to some fixed external block $C$, separate them. If two nodes in $B$ have different internal relations to other members of $B$, separate them. Every split strictly refines the partition, and the older neighborhood is finite. Hence the process terminates after finitely many steps. By construction the terminal partition is coherent.
+\end{proof}
+
+\begin{remark}
+The coherent partition is a device for witness normalization, not yet the final blocking key. Its size may grow with the branch. Global caching therefore still needs an additional finite signature compression. The purpose of the next lemma is to identify exactly what that compression has to preserve.
+\end{remark}
+
+\section{The corrected normalization lemma}
+
+The previous draft tried to normalize on flat classes. The correct local statement is the following.
+
+\begin{lemma}[Coherent-block normalization]\label{lem:coherent-normalization}
+Let $x$ be a saturated branch node, let $P_x$ be any coherent partition of $\older(x)$, and let $(t,\eta)$ be a locally admissible symbolic one-point extension for an existential $\exists S.E\in\lambda(x)$. Then there is a locally admissible symbolic one-point extension $(t,\eta')$ with the same target type $t$ such that:
+\begin{enumerate}[label=(\alph*)]
+  \item $\eta'$ is constant on every block $B\in P_x$;
+  \item for every block $B\in P_x$, the common value $\eta'(B)$ is one already realized by some member of $B$ under $\eta$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+For each block $B\in P_x$, let
+\[
+L_B=\{\eta(u)\mid u\in B\}\subseteq \Roles
+\]
+be the set of witness labels actually used on that block in the original locally admissible extension.
+
+We choose one output label $\eta'(B)\in L_B$ for each block, and we do so so that every internal triangle inside $B$ remains admissible.
+
+\emph{Step 1: singleton blocks.}
+If $B$ is a singleton, choose its unique realized label.
+
+\emph{Step 2: non-singleton blocks with internal label $\PO$.}
+Suppose $|B|>1$ and $q_B=\PO$. Then every label in $\Roles$ is stable under $\PO$ in the sense that
+\[
+\Tri(\PO,r,r)
+\]
+for every $r\in\Roles$.
+Indeed, in the RCC5 composition table we have
+\[
+\DR\in \PO\circ\DR,
+\qquad
+\PO\in \PO\circ\PO,
+\qquad
+\PP\in \PO\circ\PP,
+\qquad
+\PPI\in \PO\circ\PPI.
+\]
+So any $r\in L_B$ may be taken as $\eta'(B)$.
+
+\emph{Step 3: non-singleton blocks with internal label $\DR$.}
+Suppose $|B|>1$ and $q_B=\DR$. Then $\PPI$ is \emph{not} stable under $\DR$, because
+\[
+\PPI\notin \DR\circ\PPI.
+\]
+Hence the original locally admissible extension cannot assign $\PPI$ to every member of a non-singleton $\DR$-block: if $u\neq v$ in $B$ both had label $\PPI$, the triangle condition
+\[
+\Tri\bigl(\rho(u,v),\eta(v),\eta(u)\bigr)
+\]
+would fail.
+Therefore some realized label in $L_B$ belongs to
+\[
+\{\DR,\PO,\PP\},
+\]
+and each of these is stable under $\DR$:
+\[
+\DR\in \DR\circ\DR,
+\qquad
+\PO\in \DR\circ\PO,
+\qquad
+\PP\in \DR\circ\PP.
+\]
+Choose such a stable label as $\eta'(B)$.
+
+This settles all internal block constraints, because for every non-singleton block $B$ we now have
+\[
+\Tri(q_B,\eta'(B),\eta'(B)).
+\]
+
+\emph{Step 4: compatibility between distinct blocks.}
+Let $B\neq C$ be coherent blocks. By coherence there is a single role $q_{BC}$ such that every edge from $B$ to $C$ carries $q_{BC}$. Choose $u\in B$ and $v\in C$ such that
+\[
+\eta(u)=\eta'(B),
+\qquad
+\eta(v)=\eta'(C).
+\]
+These choices are possible because $\eta'(B)\in L_B$ and $\eta'(C)\in L_C$. Since $(t,\eta)$ was locally admissible, the actual triangle on $u,v$ and the old witness satisfies
+\[
+\Tri\bigl(\rho(u,v),\eta(v),\eta(u)\bigr).
+\]
+But $\rho(u,v)=q_{BC}$ by coherence, so
+\[
+\Tri\bigl(q_{BC},\eta'(C),\eta'(B)\bigr)
+\]
+holds. Thus the constant choices remain mutually compatible for every ordered pair of distinct blocks.
+
+\emph{Step 5: payload preservation.}
+Every block refines flat classes. Hence all nodes in a fixed block have the same local type and therefore the same payload sets $\Gamma_R(\lambda(u))$ for every role $R$. If $\eta'(B)=r$ was realized by one member of $B$ in the original locally admissible extension, then
+\[
+\Gamma_r(\lambda(u))\subseteq t
+\]
+held for that member, and therefore for every member of $B$.
+
+Combining the five steps, the new map $\eta'$ is constant on every coherent block, uses only labels already realized in the original extension, preserves all payload constraints, and satisfies every triangle check demanded by the base tableau. Hence $(t,\eta')$ is a locally admissible symbolic one-point extension.\qedhere
+\end{proof}
+
+\begin{remark}
+This lemma is exactly the local repair that the previous draft was missing. It is purely combinatorial: no model surgery is used, only the local admissibility conditions of the symbolic complete graph and the RCC5 composition table.
+\end{remark}
+
+\section{What the cache key must now remember}
+
+Lemma~\ref{lem:coherent-normalization} changes the global blocking architecture.
+
+A blocker can no longer cache recipes only per flat incoming class. The replay object is now a \emph{coherent-block-normalized symbolic extension}. Therefore the final cache key must distinguish predecessor situations precisely enough that these normalized patterns can be replayed at a later blocked node.
+
+This leads to the following abstract notion.
+
+\begin{definition}[Finite coherent signature system]\label{def:signatures}
+Fix $d=\md(C)$. A \emph{finite coherent signature system} for the tableau consists of finite sets
+\[
+\Sig_0,\Sig_1,\dots,\Sig_d
+\]
+and an assignment of a signature $\Prof_k(x)\in\Sig_k$ to each saturated tableau node $x$, such that for every $k\le d$:
+\begin{enumerate}[label=(\roman*)]
+  \item equal signatures imply equal local types restricted to formulas of modal depth at most $k$;
+  \item the older neighborhood of $x$ is partitioned into finitely many classes determined by lower-rank signatures and the incoming edge/payload data relevant at rank $k$;
+  \item every locally admissible one-point extension for a formula of modal depth at most $k+1$ can, by Lemma~\ref{lem:coherent-normalization}, be replaced by one whose behavior depends only on those finitely many predecessor classes;
+  \item if $\Prof_k(x)=\Prof_k(y)$, then every normalized rank-$k$ symbolic witness recipe available at $x$ can be replayed at $y$.
+\end{enumerate}
+\end{definition}
+
+The definition is intentionally abstract. It says exactly what the blocking argument needs and nothing more. The local content is supplied by Lemma~\ref{lem:coherent-normalization}. The only remaining task is to choose a concrete finite presentation of the signature sets $\Sig_k$.
+
+\section{Blocked tableau as a metatheorem}
+
+Once a finite coherent signature system has been fixed, the blocked calculus is standard anywhere blocking/global caching over complete graphs.
+
+\begin{definition}[Global coherent cache]
+A saturated node $y$ is \emph{blocked} by an older saturated node $x$ if
+\[
+\Prof_d(y)=\Prof_d(x).
+\]
+For each unblocked representative $x$ and each existential formula in its type, the cache stores one coherent-block-normalized symbolic witness recipe.
+\end{definition}
+
+\begin{theorem}[Termination and replay for coherent caches]\label{thm:metatheorem}
+Fix a finite coherent signature system in the sense of Definition~\ref{def:signatures}. Then the globally cached tableau that blocks on equality of top-level signatures has the following properties.
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Termination.} Only finitely many unblocked representatives can ever be created.
+  \item \textbf{Replay.} Whenever $y$ is blocked by $x$, every cached normalized symbolic witness recipe of $x$ can be replayed at $y$.
+  \item \textbf{Soundness/completeness transfer.} If the underlying unblocked tableau is locally sound and complete, then the blocked calculus is sound and complete by the usual unraveling construction.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(1) Follows immediately from the finiteness of $\Sig_d$: at most one unblocked representative is stored for each top-level signature.
+
+(2) This is clause (iv) of Definition~\ref{def:signatures}. The local reason that such recipes exist in normalized form is exactly Lemma~\ref{lem:coherent-normalization}.
+
+(3) The unraveling argument is the same as in the previous draft. The finite cache graph is only a blueprint. Every time a blocked node would need a new witness, unraveling creates a fresh copy of the representative targeted by the stored normalized recipe. Because the stored recipe already prescribes all relations from the older finite context into the new copy, the local symbolic checks required by the base tableau continue to hold. Induction on formula depth proves the truth lemma for the unraveling. Hence every open saturated cache yields a model, and every model can be read back into a successful fair run by choosing witnesses according to the corresponding normalized symbolic recipes.
+\end{proof}
+
+\begin{corollary}[What remains to show for a concrete implementation]\label{cor:remains}
+For a concrete $\ALCIRCCFive$ implementation, the remaining non-routine task is no longer witness normalization. It is the choice of an explicit finite coherent signature system.
+\end{corollary}
+
+\section{The natural depth-indexed candidate}
+
+The corrected lemma also clarifies what the intended concrete signatures should look like.
+
+At depth $0$, the signature is just the propositional type:
+\[
+\Prof_0(x)=\tp_0(x).
+\]
+
+At depth $k+1$, the natural base data attached to an older node $u\prec x$ are:
+\begin{enumerate}[label=(\alph*)]
+  \item the lower-rank signature $\Prof_k(u)$,
+  \item the incoming relation $\rho(u,x)$,
+  \item the payload $\Gamma_{\rho(u,x)}(\lambda(u))$ relevant for formulas of depth $\le k$,
+  \item enough interaction data with the other older nodes to recover the coherent predecessor blocks needed by Lemma~\ref{lem:coherent-normalization}.
+\end{enumerate}
+
+The previous draft stopped after (a)--(c). \Cref{prop:flatfalse} shows that this is too coarse. The repair is to add (d): information sufficient to tell apart older nodes that behave differently with respect to the rest of the older complete graph.
+
+A practical way to do this is a bounded refinement procedure by modal depth. One starts with the flat colors from (a)--(c), repeatedly refines them by RCC5 interaction with already available lower-rank colors, and truncates the process at rank $k+1$. Because $k\le d$ and the lower-rank color alphabet is finite at every stage, only finitely many colors can be produced at each fixed rank. The resulting rank-$(k+1)$ colors are exactly the intended predecessor classes for storing normalized witness recipes. The precise most economical refinement policy is a matter of implementation, but the local lemma above tells us what any correct policy must preserve.
+
+\begin{remark}
+The key point is conceptual rather than algorithmic: the blocker cannot be based solely on ``same node type plus same incoming $(R,\Gamma)$-pairs''. It must reflect how those predecessors sit inside the older complete graph, at least up to the finite modal depth relevant for the input concept.
+\end{remark}
+
+\section{Consequences for the earlier draft}
+
+Relative to the earlier note, the repair can be summarized in one sentence:
+\begin{quote}
+replace \emph{flat predecessor classes} by \emph{coherent predecessor blocks}, and replace the old profile by any finite depth-indexed signature that refines the coherent-block behavior needed for replay.
+\end{quote}
+
+This changes the proof status in a useful way.
+\begin{itemize}
+  \item The local combinatorial gap is now closed: Lemma~\ref{lem:coherent-normalization} proves the right normalization statement.
+  \item The global blocking theorem is now parameterized by a finite coherent signature system, see \cref{thm:metatheorem}.
+  \item The remaining work is therefore sharply isolated. It is no longer ``prove some normalization lemma''. It is ``choose and optimize the explicit finite signature compression used by the cache''.
+\end{itemize}
+
+In particular, the earlier status box can be updated more positively. The local obstacle has been resolved. What remains is an implementation-level presentation issue, not an unidentified missing principle.
+
+\section{Conclusion}
+
+The earlier flat witness-normalization lemma was false. This revision patches the draft by replacing it with the correct local statement: witnesses can be normalized on coherent predecessor blocks. The proof is elementary but decisive. It shows that the real replay object for a blocker in strong-EQ $\ALCIRCCFive$ is not a flat bag of incoming edge/payload pairs, but a normalized one-point extension pattern over a coherent predecessor partition.
+
+Once this is recognized, the rest of the blocking story becomes modular. Any finite coherent signature system that remembers enough of those normalized patterns yields a terminating globally cached tableau; the underlying unblocked soundness/completeness then transfers by the standard unraveling argument. So the patch changes the shape of the open problem. The witness-normalization gap is no longer open. The remaining task is to settle on the best finite signature presentation for an implementation.
+
+\begin{thebibliography}{9}
+
+\bibitem{baaderHandbook}
+Franz Baader, Diego Calvanese, Deborah McGuinness, Daniele Nardi, and Peter Patel-Schneider, editors.
+\newblock \emph{The Description Logic Handbook}.
+\newblock Cambridge University Press, 2003.
+
+\bibitem{horrocksSattlerTobies}
+Ian Horrocks, Ulrike Sattler, and Stephan Tobies.
+\newblock Practical reasoning for very expressive description logics.
+\newblock \emph{Logic Journal of the IGPL}, 8(3):239--264, 2000.
+
+\bibitem{sattlerTransitiveRoles}
+Ulrike Sattler.
+\newblock A concept language extended with different kinds of transitive roles.
+\newblock In \emph{Proceedings of KI-96}, LNCS 1137, pages 333--345. Springer, 1996.
+
+\bibitem{wesselReport}
+Michael Wessel.
+\newblock \emph{Qualitative Spatial Reasoning with the $ALCIRCC$ Family -- First Results and Unanswered Questions}.
+\newblock University of Hamburg, Memo No. 324/03, 2003.
+
+\end{thebibliography}
+
+\end{document}
