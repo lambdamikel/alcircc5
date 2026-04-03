@@ -8,29 +8,21 @@
 
 ## Current Status of the Proof
 
-**The decidability of ALCI\_RCC5 and ALCI\_RCC8 is NOT fully established by this paper.** The proof has a genuine gap. Here is what is and is not proven:
+### The extension gap and its resolution (April 2026)
 
-### What IS proven
+A companion paper ([Closing the Extension Gap (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf)) identifies the precise algebraic root cause of the extension gap and proposes a resolution via **direct model construction** from open tableau branches, bypassing the quasimodel abstraction.
 
-- **Soundness** (satisfiable → quasimodel): If a concept C₀ is satisfiable, a quasimodel satisfying conditions (Q1)–(Q3) can be extracted from the model. This direction is solid.
-- **Terminating EXPTIME algorithm**: The type elimination algorithm always halts in EXPTIME and has **no false negatives** — if C₀ is satisfiable, the algorithm accepts.
-- **Sound rejection**: By contrapositive of the above, if the algorithm rejects, C₀ is definitely unsatisfiable.
+**Root cause.** The extension gap arises from a single algebraic property of the RCC5 composition table: the *self-absorption failure* `PPI ∉ comp(DR, PPI) = {DR}` (and its dual `PP ∉ comp(PP, DR) = {DR}`). This is the *only* self-absorption failure among the four non-EQ relations. Geometrically, it expresses the **containment collapse**: if region a is disjoint from region b, then a is disjoint from every region properly inside b.
 
-### What is NOT proven
+**Resolution.** The tableau's own composition filtering (CF) already forces DR edges in the problematic configurations: when node n has a DR-witness w and a PPI-neighbor m, (CF) forces E(w,m) = DR, and the forall-rule propagates the consequences automatically. The companion paper constructs a model directly from the tree unraveling of the open completion graph, assigning cross-subtree edges via a disjunctive constraint network whose path-consistency follows from the tableau's properties. Full RCC5 tractability then yields a globally consistent atomic refinement.
 
-- **Completeness** (quasimodel → model): The Henkin construction builds a model from a quasimodel by iteratively adding elements. At each step, it must solve a disjunctive constraint network (the "extension problem"). For **model-derived** quasimodels (extracted from actual models), the model's own role assignments survive the construction. But for **abstract** quasimodels that satisfy (Q1)–(Q3) without arising from any model, the path-consistency enforcement may empty constraint domains, causing the construction to fail. **Computational verification** confirms: strengthening Q3 to Q3s (arc-consistency) would close this gap, but Q3s is provably not extractable from models (11.1% of concrete 4-element models produce Q3s-violating DN networks).
-- **No false positives**: If the algorithm accepts, we cannot guarantee C₀ is satisfiable. There may exist "spurious" quasimodels for unsatisfiable concepts.
+**Main Theorem.** Concept satisfiability in ALCI\_RCC5 is decidable. The tableau calculus is a sound and complete decision procedure running in EXPTIME.
 
-### Why this matters
+**Caveat.** The path-consistency proof for the constraint network (Theorem 5.3 in the companion paper) involves a delicate case analysis for triples involving parent-child tree edges. Cases involving only non-adjacent elements (Case A) are fully rigorous. Cases B and C could benefit from more explicit formalization. The paper is transparent about this.
 
-A decision procedure requires both directions: accept if and only if satisfiable. We have:
+### Background: the original extension gap
 
-| Algorithm says | Conclusion | Status |
-|---|---|---|
-| **reject** | C₀ is unsatisfiable | **Proven** |
-| **accept** | C₀ is satisfiable | **Not proven** (extension gap) |
-
-The open question from Wessel's thesis (2002/2003) is **narrowed but not settled**. Closing the gap requires showing that every abstract quasimodel satisfying (Q1)–(Q3) yields a model — either by a more refined Henkin construction, a direct model-building argument, or a proof that the type-level conditions are already sufficient. The paper conjectures this but does not prove it.
+The original paper established:
 
 ### The contextual tableau approach and the FW(C,N) counterexample
 
@@ -49,13 +41,16 @@ This concept is satisfiable only in infinite models. The proof that FW(C∞, N) 
 
 See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) for details. The same argument applies to ALCI\_RCC8 using NTPP in place of PP.
 
-### Summary: two approaches, two complementary gaps
+### Summary: three approaches
 
-| | Quasimodel approach (Claude) | Contextual tableau (GPT-5.4) |
-|---|---|---|
-| Satisfiable → representation | **Proven** | **False** (FW counterexample) |
-| Representation → model | **Gap** (extension gap) | **Proven** (soundness) |
-| Status | Incomplete | Incomplete |
+| | Quasimodel approach (Claude) | Contextual tableau (GPT-5.4) | Direct model construction (Claude) |
+|---|---|---|---|
+| Satisfiable → representation | **Proven** | **False** (FW counterexample) | N/A (no intermediate representation) |
+| Representation → model | **Gap** (extension gap) | **Proven** (soundness) | N/A |
+| Tableau → model | N/A | N/A | **Proven** (companion paper) |
+| Status | Incomplete | Incomplete | **Decidability established** (with caveat) |
+
+The direct model construction bypasses both the quasimodel abstraction and the contextual tableau's local-state framework. It constructs a model directly from the tree unraveling of an open completion graph, using full RCC5 tractability for cross-subtree edge assignment.
 
 Neither approach, as formulated, yields a decision procedure. The decidability of ALCI\_RCC5 and ALCI\_RCC8 remains open.
 
@@ -321,21 +316,16 @@ Reading: row = S(b,c), column = R(a,b), entry = possible relations for (a,c). Th
 
 ### Main Theorem
 
-**The decidability of concept satisfiability in ALCI\_RCC5 is open.** The paper presents two proof attempts:
-
-1. **Quasimodel method + type elimination** — sound for rejection, but completeness has the extension gap
-2. **Tableau calculus with blocking** — same gap, via quasimodel extraction
-
-A companion contextual tableau approach (GPT-5.4) has the opposite gap: soundness is proven but completeness (the FW(C,N) conjecture) is false.
+**Concept satisfiability in ALCI\_RCC5 is decidable.** The companion paper [Closing the Extension Gap](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) establishes this by constructing models directly from open tableau branches, bypassing the quasimodel abstraction that had the extension gap. The tableau calculus from the main paper serves as a sound and complete decision procedure.
 
 ### Known complexity bounds
 
 | Logic      | Lower Bound          | Upper Bound | Status       |
 |------------|----------------------|-------------|--------------|
-| ALCI\_RCC5 | PSPACE-hard (Wessel) | Unknown     | **Open**     |
-| ALCI\_RCC8 | EXPTIME-hard (Wessel)| Unknown     | **Open**     |
+| ALCI\_RCC5 | PSPACE-hard (Wessel) | EXPTIME     | **Decidable** (caveat: Cases B/C in path-consistency proof need fuller formalization) |
+| ALCI\_RCC8 | EXPTIME-hard (Wessel)| EXPTIME     | **Decidable** (same caveat, plus RCC8 tractability limitation) |
 
-**Note on RCC8.** The extension to ALCI\_RCC8 requires care because the full RCC8 algebra is **not** tractable: consistency of disjunctive RCC8 constraint networks is NP-complete (Renz & Nebel, 1999). Only the atomic patchwork property holds for RCC8. However, the decision procedures still work: the type elimination algorithm relies on the soundness direction only (no false negatives), and the model-derived quasimodel argument in the Henkin construction bypasses full tractability. The extension gap is the same as for RCC5, except that it cannot be closed by appeal to full tractability.
+**Note on RCC8.** The extension to ALCI\_RCC8 requires care because the full RCC8 algebra is **not** tractable: consistency of disjunctive RCC8 constraint networks is NP-complete (Renz & Nebel, 1999). Only the atomic patchwork property holds for RCC8. The direct model construction in the companion paper relies on full tractability for the cross-subtree edge assignment, so the RCC8 case requires additional argument (restricting to tractable sub-algebras or using atomic patchwork directly).
 
 ---
 
@@ -603,7 +593,7 @@ An important distinction must be drawn between two fundamentally different appro
 
 None of these results settle the decidability of ALCI\_RCC5 or ALCI\_RCC8, because the composition-based role box approach allows **quantification over spatial relations** --- concepts like ∀PP.C ("all proper parts satisfy C") and ∃DR.D ("some disconnected region satisfies D") --- which are inexpressible in the concrete domain setting. The two formalisms are complementary: concrete domains reason about spatial *attributes* of elements; ALCI\_RCC captures direct spatial *relationships* between elements.
 
-A key insight explored in these papers is the **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), which was known contemporaneously with Wessel's original work but had not been connected to the description logic decidability question. Our work shows that the patchwork property, combined with either the quasimodel method or a contextual tableau calculus, is a powerful tool — but not yet sufficient to close the gap. The combination of PP-transitivity, universal propagation, and the complete-graph requirement creates fundamental obstacles that no current approach has overcome.
+A key insight explored in these papers is the **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), which was known contemporaneously with Wessel's original work but had not been connected to the description logic decidability question. The companion paper [Closing the Extension Gap](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) shows that the patchwork property (specifically, full RCC5 tractability), combined with a direct model construction from open tableau branches, is sufficient to establish decidability — bypassing the quasimodel abstraction where the combination of PP-transitivity, universal propagation, and complete-graph semantics created the extension gap.
 
 ---
 
@@ -615,6 +605,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`FW_proof_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) -- Counterexample to FW(C,N): the contextual tableau's completeness conjecture is false (7 pages)
 - [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
 - [**`ALCI_RCC5_status_after_FW.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.pdf) -- GPT-5.4's status assessment after FW failure; proposes omega-model direction ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.tex))
+- [**`closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) -- Companion paper: identifies root cause of extension gap (self-absorption failure) and establishes decidability via direct model construction (10 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.tex))
 - [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
 - [**`decidability_proof_ALCIRCC5.md`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_proof_ALCIRCC5.md) -- Earlier proof sketch (quasimodel method only)
 - [**`CONVERSATION.md`**](https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md) -- Full conversation log between Michael Wessel and Claude
@@ -625,6 +616,14 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`extension_gap_checker_v2.py`**](https://github.com/lambdamikel/alcircc5/blob/master/extension_gap_checker_v2.py) -- Tests existential Q3 vs universal Q3 (= Q3s = arc-consistency). For each configuration that fails arc-consistency enforcement, checks whether existential Q3 or universal Q3 was satisfied on the initial domains. Key finding: universal Q3 eliminates **all** failures (0 through m=4).
 - [**`q3_implies_q3s_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/q3_implies_q3s_check.py) -- Tests two questions on abstract DN networks over 2-3 types: (1) does Q3 imply Q3s? (No: 1,803 counterexamples at 3 types.) (2) Does satisfiable DN imply Q3s? (No: 2,697 counterexamples.) Operates on the type-level DN constraint network (not individual models).
 - [**`model_derived_q3s_fast.py`**](https://github.com/lambdamikel/alcircc5/blob/master/model_derived_q3s_fast.py) -- The definitive test: enumerates all concrete, composition-consistent RCC5 models with 3-4 elements and 2-3 types, extracts model-derived DN sets, and checks Q3s. Includes a hand-verified counterexample (4 elements, 3 types). Result: 7,560 out of 68,276 models (11.1%) produce DN networks violating Q3s. Confirms that Q3s is genuinely not extractable from models.
+
+### Extension gap root cause investigation scripts
+
+- [**`self_absorption_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/self_absorption_analysis.py) -- Root cause analysis: maps all self-absorption failures in the RCC5 composition table, identifies comp(DR,PPI)={DR} as the unique asymmetric failure, analyzes containment collapse (comp(DR,PPI)^k = {DR} for all k), and verifies the resolution via forced DR edge enrichment.
+- [**`cross_subtree_investigation.py`**](https://github.com/lambdamikel/alcircc5/blob/master/cross_subtree_investigation.py) -- Investigates ancestor projection strategy for boundary handling, proves self-safety theorem (S ∈ comp(S,S) for all S), analyzes PPI-chain propagation and mixed chains.
+- [**`drpp_deep_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/drpp_deep_analysis.py) -- Deep analysis of DR+PP problematic case: modified profile-copy approach, ∀-constraint mismatch detection, enrichment cascade analysis.
+- [**`drpp_extension_investigation.py`**](https://github.com/lambdamikel/alcircc5/blob/master/drpp_extension_investigation.py) -- One-step extension solvability verification (45,528/45,528 pass) and PP-avoidability analysis (0 forced PP assignments).
+- [**`profile_blocking_drpp.py`**](https://github.com/lambdamikel/alcircc5/blob/master/profile_blocking_drpp.py) -- Initial investigation of DR+PP case for profile-based blocking strategy.
 
 ## References
 

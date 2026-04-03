@@ -877,3 +877,67 @@ The decidability of ALCI\_RCC5 remains open. The quasimodel approach, as current
 - `model_derived_q3s_check.py`: Earlier version of model-derived check (slower, for large models)
 - Updated `README.md` with computational investigation results, program descriptions, and implications
 - Updated `CONVERSATION.md` with Part 18
+
+---
+
+## Part 19: Root Cause Analysis and Closing the Extension Gap (April 2026)
+
+### Context
+
+Following the computational confirmation that the extension gap is genuine (Part 18), Michael asked Claude to investigate deeper. The goal: understand the algebraic root cause and, if possible, find a resolution.
+
+### Investigation: self-absorption failures
+
+Claude wrote a series of Python investigation scripts to systematically map the algebraic structure of the extension gap:
+
+1. **`self_absorption_analysis.py`**: Mapped all "self-absorption failures" — cases where S ∉ comp(R, S) — across the RCC5 composition table. Found that `PPI ∉ comp(DR, PPI) = {DR}` (and its dual `PP ∉ comp(PP, DR) = {DR}`) is the **only** self-absorption failure among the four non-EQ relations that is asymmetric. This is the root cause: when a new DR-witness w is created for an existing node n that has a PPI-neighbor m, the composition constraint forces E(w,m) = DR, destroying the PPI relationship needed for the copy to match the blocked node's profile.
+
+2. **`cross_subtree_investigation.py`**: Investigated the ancestor projection strategy and proved the "self-safety theorem": S ∈ comp(S, S) for all RCC5 relations S. This means the witness relation is always self-safe — the problem is specifically about cross-relation interactions.
+
+3. **`drpp_extension_investigation.py`** and **`drpp_deep_analysis.py`**: Investigated the DR+PP case in detail, confirming one-step extension solvability (45,528/45,528 configurations pass) and analyzing the ∀-constraint mismatch that arises from forced DR edges.
+
+4. **`profile_blocking_drpp.py`**: Initial investigation of whether profile-based blocking could avoid the problematic configurations.
+
+### Key insight: containment collapse
+
+The self-absorption failure has a geometric interpretation: **containment collapse**. If region a is disjoint from region b, then a is disjoint from everything properly inside b (because PP is transitive and "inside" propagates). Algebraically: comp(DR, PPI)^k = {DR} for all k ≥ 1. DR propagates inward through arbitrary PPI-chains.
+
+But the crucial observation is that the tableau's own **constraint filtering (CF)** already handles this: when creating a DR-witness w for node n that has a PPI-neighbor m, (CF) forces E(w,m) = DR. The **forall-rule** then propagates all ∀DR.D consequences from m to w, automatically enriching w's type. This is exactly the enrichment needed.
+
+### Resolution: direct model construction
+
+Rather than trying to fix the quasimodel abstraction, Claude proposed bypassing it entirely with a **direct model construction** from open completion graphs:
+
+1. **Tree unraveling**: Unravel the open completion graph into an infinite tree (each path = a sequence of exist-rule applications).
+2. **Cross-subtree edge assignment**: For nodes in different subtrees, set up a disjunctive RCC5 constraint network. The constraints come from the composition table applied to the tree path connecting the two nodes.
+3. **Path-consistency**: Show the constraint network is path-consistent using the tableau's properties (CF, blocking, forall propagation).
+4. **Full RCC5 tractability**: By Renz & Nebel (1999), a path-consistent disjunctive RCC5 network is globally consistent. Refine to an atomic assignment satisfying all constraints.
+
+The **self-safety theorem** (S ∈ comp(S,S) for all S) and the **universal self-absorption for non-DR witnesses** (PO, PP, PPI all satisfy S ∈ comp(R,S) for all R) are key to establishing path-consistency. Only DR witnesses require special treatment, and the tableau's CF already provides it.
+
+### Companion paper
+
+Michael asked Claude to write up the proof as a LaTeX paper. The result is **`closing_extension_gap_ALCIRCC5.tex`** (10 pages), structured as:
+
+1. Introduction — states the problem and main result
+2. Preliminaries — RCC5, patchwork property, full tractability
+3. Root cause: the self-absorption failure — comp(DR,PPI) = {DR}, containment collapse
+4. Tableau-internal resolution — forced DR edges, self-safety, universal self-absorption for non-DR
+5. Direct model construction — tree unraveling, cross-subtree edge assignment, path-consistency theorem
+6. Decidability — main theorem (EXPTIME upper bound)
+7. Discussion — honest assessment of remaining formalization needs (Cases B/C in path-consistency)
+
+**Main theorem**: Concept satisfiability in ALCI\_RCC5 is decidable (EXPTIME upper bound, matching the PSPACE lower bound from Wessel up to a single exponential gap).
+
+**Caveat**: Cases B and C of the path-consistency proof (involving parent-child tree edges) could benefit from more explicit formalization. The paper is transparent about this.
+
+### Files produced
+- `self_absorption_analysis.py`: Root cause investigation
+- `cross_subtree_investigation.py`: Self-safety theorem and ancestor projection
+- `drpp_deep_analysis.py`: DR+PP deep analysis
+- `drpp_extension_investigation.py`: One-step extension verification
+- `profile_blocking_drpp.py`: Profile blocking investigation
+- `closing_extension_gap_ALCIRCC5.tex`: Companion paper (LaTeX source)
+- `closing_extension_gap_ALCIRCC5.pdf`: Compiled companion paper (10 pages)
+- Updated `README.md` with decidability result, updated complexity bounds, new file listings
+- Updated `CONVERSATION.md` with Part 19

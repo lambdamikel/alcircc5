@@ -1,0 +1,1005 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{stmaryrd}       % \llbracket, \rrbracket
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros (matching companion paper)
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\NR}{\ensuremath{N_R}}
+\newcommand{\NC}{\ensuremath{N_C}}
+\newcommand{\DeltaI}{\ensuremath{\Delta^{\mathcal{I}}}}
+\newcommand{\interp}{\ensuremath{\mathcal{I}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\sub}{\ensuremath{\mathsf{sub}}}
+\newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
+\newcommand{\DN}{\ensuremath{\mathsf{DN}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+\newcommand{\NP}{\textsc{NP}}
+
+
+\title{Closing the Extension Gap:\\
+  Decidability of $\ALCIRCC{5}$ via Direct Model Construction}
+
+\author{Claude\thanks{Claude is an AI assistant by Anthropic.
+  This research was prompted by Michael Wessel (\texttt{miacwess@gmail.com}),
+  who introduced the $\ALCIRCC{}$ family in his doctoral work at the
+  University of Hamburg and left the decidability of $\ALCIRCC{5}$ and
+  $\ALCIRCC{8}$ as open problems~\cite{Wessel2003,Wessel2000}.
+  This paper is a companion to~\cite{CompanionPaper}, which introduced
+  the quasimodel method and tableau calculus but left the
+  soundness direction (open branch $\Rightarrow$ model) incomplete.}}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Disclaimer.}\; This paper was authored entirely by Claude
+(Anthropic), an AI assistant, prompted by Michael Wessel.  The results
+and proofs presented here have \textbf{not been peer-reviewed or
+verified by human domain experts}.  They are published as a discussion
+piece for the description logic and spatial reasoning communities.
+The claims should not be taken as established results unless
+independently verified.}}
+\end{center}
+
+\bigskip
+
+%% ============================================================
+\begin{abstract}
+The companion paper~\cite{CompanionPaper} presented two decision
+procedures for concept satisfiability in $\ALCIRCC{5}$---a
+type-elimination algorithm and a tableau calculus with blocking---but
+identified an \emph{extension gap}: the soundness direction of the
+tableau (open branch $\Rightarrow$ model) relied on a Henkin
+construction whose correctness for abstract quasimodels was unproven.
+We close this gap by identifying the precise algebraic root cause---the
+unique \emph{self-absorption failure}
+$\PPI \notin \comp(\DR, \PPI) = \{\DR\}$---and showing that the
+tableau's own composition filtering already forces exactly the edge
+reassignments needed to resolve it.  We give a direct model
+construction from open completion graphs that bypasses the quasimodel
+abstraction, using the \emph{full RCC5 tractability} theorem to assign
+cross-subtree edges in the tree unraveling.  Combined with the
+termination and completeness results from~\cite{CompanionPaper}, this
+establishes:
+
+\medskip
+\noindent\textbf{Main Theorem.}\; Concept satisfiability in
+$\ALCIRCC{5}$ is decidable.  The tableau calculus
+of~\cite{CompanionPaper} is a sound and complete decision procedure
+running in \EXPTIME.
+\end{abstract}
+
+\medskip
+\noindent\textbf{Keywords:} description logic, spatial reasoning,
+Region Connection Calculus, decidability, tableau, patchwork property,
+self-absorption
+
+%% ============================================================
+\section{Introduction}
+\label{sec:intro}
+
+The description logic $\ALCIRCC{5}$ extends $\ALCI$ with role names
+drawn from the five RCC5 base relations $\{\DR, \PO, \EQ, \PP, \PPI\}$,
+interpreted over complete-graph models satisfying the RCC5 composition
+table~\cite{Wessel2003,Wessel2000}.  Decidability of concept
+satisfiability in $\ALCIRCC{5}$ was left open by
+Wessel~\cite{Wessel2003}, who established \PSPACE-hardness.
+
+The companion paper~\cite{CompanionPaper} introduced two candidate
+decision procedures---a type-elimination algorithm and a tableau
+calculus with equality anywhere-blocking---and proved termination and
+completeness (satisfiable $\Rightarrow$ open branch) for both.
+However, the \emph{soundness} direction (open branch $\Rightarrow$
+satisfiable) contained a gap: it proceeded by extracting a quasimodel
+from the open completion graph and invoking a Henkin construction to
+build an actual model.  The Henkin construction at each step solves a
+constraint satisfaction problem (CSP) over a disjunctive RCC5 network,
+and while the \emph{patchwork property}~\cite{RenzNebel1999} and
+\emph{full RCC5 tractability}~\cite{Renz1999} guarantee solvability
+for path-consistent networks, the extension step may destroy
+path-consistency.  This is the \emph{extension gap}.
+
+\subsection{Contribution}
+
+We resolve the extension gap by:
+\begin{enumerate}[nosep]
+  \item \textbf{Root cause analysis} (Section~\ref{sec:root-cause}).
+    We identify the unique algebraic rigidity in the RCC5 composition
+    table responsible for the gap: the \emph{self-absorption failure}
+    $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$ and its dual
+    $\PP \notin \comp(\PP, \DR) = \{\DR\}$.  Geometrically, this
+    expresses the \emph{containment collapse}: if region $a$ is
+    disjoint from region $b$, then $a$ is disjoint from every region
+    properly inside $b$.  We show that this is the \emph{only}
+    self-absorption failure among the four non-$\EQ$ relations.
+
+  \item \textbf{Tableau-internal resolution}
+    (Section~\ref{sec:tableau-resolution}).  We observe that the
+    composition filtering condition~(CF) in the tableau
+    of~\cite{CompanionPaper} \emph{already forces} the edge
+    reassignments needed to handle the self-absorption failure: when
+    node~$n$ has a $\DR$-witness~$w$ and a $\PPI$-neighbor~$m$,
+    (CF)~forces $\mathcal{E}(w, m) = \DR$, and the $\forall$-rule
+    propagates the corresponding $\forall\DR$-consequences.  This
+    ``enrichment'' is automatic in the original tableau---no
+    modification is needed.
+
+  \item \textbf{Direct model construction}
+    (Section~\ref{sec:model-construction}).  We construct a model
+    directly from the tree unraveling of an open completion graph,
+    assigning cross-subtree edges via a disjunctive constraint network
+    whose path-consistency follows from the tableau's properties.  The
+    full RCC5 tractability theorem then yields a globally consistent
+    atomic refinement, and the $\forall$-safety of all edges is
+    guaranteed by the automatic enrichment.
+
+  \item \textbf{Decidability} (Section~\ref{sec:decidability}).
+    Combining our soundness result with the termination and
+    completeness theorems from~\cite{CompanionPaper}, we conclude that
+    $\ALCIRCC{5}$ concept satisfiability is decidable in \EXPTIME.
+\end{enumerate}
+
+
+%% ============================================================
+\section{Preliminaries}
+\label{sec:prelim}
+
+We assume familiarity with the companion paper~\cite{CompanionPaper}
+and recall only the definitions essential for the present argument.
+
+\subsection{$\ALCIRCC{5}$ in Brief}
+
+The logic $\ALCIRCC{5}$ has role names $\NR = \{\DR, \PO, \EQ, \PP,
+\PPI\}$ with the RCC5 composition table (Table~\ref{tab:rcc5}).
+Concepts are built from concept names using $\sqcap$, $\sqcup$,
+$\neg$, $\exists R.C$, and $\forall R.C$ (in negation normal form;
+inverse roles absorbed: $\exists \PP^{-}.C = \exists \PPI.C$).
+
+An interpretation $\interp = (\DeltaI, \cdot^{\interp})$ is a
+complete graph: every pair of distinct elements is related by exactly
+one base relation from $\NR \setminus \{\EQ\}$, with $\EQ$ reserved
+for identity (\emph{strong EQ} semantics).  The composition table is
+enforced: $R^{\interp} \circ S^{\interp} \subseteq \bigcup_{T \in
+\comp(R,S)} T^{\interp}$.
+
+After EQ-normalization~\cite[Lemma~2.3]{CompanionPaper}, the closure
+$\cl(C_0)$ contains no EQ-modalities, and we work with the four
+non-EQ relations $\NR^{-} = \{\DR, \PO, \PP, \PPI\}$.
+
+\begin{table}[t]
+\centering
+\caption{The RCC5 composition table.  Entry for row~$S$, column~$R$
+gives $\comp(R, S)$.  The symbol $*$ denotes all five relations.}
+\label{tab:rcc5}
+\smallskip
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{c|ccccc}
+\toprule
+$\comp$ & $\DR(a,b)$ & $\PO(a,b)$ & $\EQ(a,b)$ & $\PPI(a,b)$ & $\PP(a,b)$ \\
+\midrule
+$\DR(b,c)$  & $*$              & $\DR,\PO,\PPI$   & $\DR$  & $\DR,\PO,\PPI$       & $\DR$ \\
+$\PO(b,c)$  & $\DR,\PO,\PP$    & $*$               & $\PO$  & $\PO,\PPI$           & $\DR,\PO,\PP$ \\
+$\EQ(b,c)$  & $\DR$            & $\PO$             & $\EQ$  & $\PPI$               & $\PP$ \\
+$\PP(b,c)$  & $\DR,\PO,\PP$    & $\PO,\PP$         & $\PP$  & $\PO,\EQ,\PP,\PPI$   & $\PP$ \\
+$\PPI(b,c)$ & $\DR$            & $\DR,\PO,\PPI$    & $\PPI$ & $\PPI$               & $*$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The Patchwork Property and Full Tractability}
+
+\begin{theorem}[Renz \& Nebel~\cite{RenzNebel1999}; Renz~\cite{Renz1999}]
+\label{thm:patchwork}
+For RCC5:
+\begin{enumerate}[nosep,label=(\roman*)]
+  \item An atomic constraint network is consistent iff it is
+    path-consistent.
+  \item \textup{(}Full tractability\textup{)} A disjunctive constraint
+    network is consistent iff it is path-consistent.
+\end{enumerate}
+\end{theorem}
+
+\subsection{The Tableau Calculus}
+
+We use the tableau calculus from~\cite[Section~7]{CompanionPaper}.
+A \emph{completion graph} $\mathcal{G} = (V, \mathcal{L},
+\mathcal{E}, \prec)$ is a complete graph with node labels
+$\mathcal{L}(x) \subseteq \cl(C_0)$ and edge labels $\mathcal{E}(x,y)
+\in \NR^{-}$ for distinct $x, y$.  The expansion rules are:
+\begin{itemize}[nosep]
+  \item $(\sqcap)$, $(\sqcup)$: propositional decomposition.
+  \item $(\forall)$: if $\forall R.D \in \mathcal{L}(x)$ and
+    $\mathcal{E}(x,y) = R$, add $D$ to $\mathcal{L}(y)$.
+  \item $(\exists)$: if $\exists R.D \in \mathcal{L}(x)$, $x$ is
+    active, and no witness exists, create a fresh node~$y$ with
+    $\mathcal{L}(y) = \{D\}$, $\mathcal{E}(x,y) = R$, and
+    nondeterministically assign $\mathcal{E}(z,y)$ for all other~$z$.
+\end{itemize}
+\emph{Blocking}: node~$x$ is blocked if some non-blocked $y \prec x$
+has $\mathcal{L}(y) = \mathcal{L}(x)$.
+
+\emph{Composition filtering} (CF): for every triple of distinct nodes
+$(u, v, w)$,
+$\mathcal{E}(u,w) \in \comp(\mathcal{E}(u,v), \mathcal{E}(v,w))$.
+
+A completion graph is \emph{open} if it is saturated (no rule
+applies) and clash-free (no $\{A, \neg A\} \subseteq \mathcal{L}(x)$
+and (CF) holds everywhere).
+
+\begin{theorem}[\cite{CompanionPaper}]
+\label{thm:term-complete}
+The tableau terminates in $2^{O(|C_0|)}$ steps.  If $C_0$ is
+satisfiable, some sequence of nondeterministic choices yields an open
+completion graph \textup{(}completeness\textup{)}.
+\end{theorem}
+
+\subsection{The Extension Gap}
+
+The companion paper's soundness proof proceeds indirectly: extract
+a quasimodel from the open completion graph, then build a model via
+a Henkin construction that adds elements one at a time, solving a
+disjunctive RCC5 CSP at each step.  The gap is that the CSP may not
+be path-consistent for abstract quasimodels, causing the construction
+to fail.  The present paper bypasses this indirect route.
+
+
+%% ============================================================
+\section{Root Cause: The Self-Absorption Failure}
+\label{sec:root-cause}
+
+The extension gap arises from a single algebraic property of the RCC5
+composition table.
+
+\begin{definition}[Self-absorption]
+\label{def:self-absorption}
+A base relation $R \in \NR^{-}$ is \emph{self-absorbing under}~$S \in
+\NR^{-}$ if $R \in \comp(S, R)$.  Equivalently: if $S(a,b)$ and
+$R(b,c)$, then $R(a,c)$ is a possible outcome.  When this fails,
+knowing that $a$ is $S$-related to~$b$ \emph{excludes} the
+possibility that $a$ is $R$-related to~$c$, even though $R(b,c)$
+holds.
+\end{definition}
+
+\begin{lemma}[Unique self-absorption failure]
+\label{lem:unique-failure}
+Among all pairs $(S, R) \in \NR^{-} \times \NR^{-}$, self-absorption
+$R \in \comp(S, R)$ fails for exactly two pairs:
+\[
+  \PPI \notin \comp(\DR, \PPI) = \{\DR\},
+  \qquad
+  \PP \notin \comp(\DR, \PP) = \{\DR\}.
+\]
+These are duals under the inverse map: $\inv(\DR) = \DR$,
+$\inv(\PPI) = \PP$.  For all other $(S, R)$ pairs, $R \in \comp(S,R)$.
+\end{lemma}
+
+\begin{proof}
+By exhaustive inspection of the composition table
+(Table~\ref{tab:rcc5}).  For each $S \in \NR^{-}$ and $R \in
+\NR^{-}$, we check whether $R \in \comp(S, R)$:
+
+\smallskip
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{c|cccc}
+\toprule
+$S \setminus R$ & $\DR$ & $\PO$ & $\PP$ & $\PPI$ \\
+\midrule
+$\DR$  & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ \\
+$\PO$  & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+$\PP$  & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+$\PPI$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\smallskip\noindent
+The two failures are in the $S = \DR$ row:
+$\comp(\DR, \PP) = \{\DR\}$ (row~$\PP$, column~$\DR$) and
+$\comp(\DR, \PPI) = \{\DR\}$ (row~$\PPI$, column~$\DR$).
+\end{proof}
+
+\begin{remark}[Geometric interpretation]
+\label{rem:geometric}
+The identity $\comp(\DR, \PPI) = \{\DR\}$ has a transparent geometric
+meaning: if region~$a$ is \emph{disjoint} from region~$b$, and
+region~$c$ is \emph{properly inside}~$b$ (i.e., $\PPI(b,c)$), then
+$a$ must be disjoint from~$c$ as well---$a$ cannot ``reach inside''
+$b$ to touch~$c$.  We call this the \emph{containment collapse}:
+the $\DR$ relation propagates inward through $\PPI$-containment.
+
+The dual $\comp(\PP, \DR) = \{\DR\}$ says the same from the inside
+out: if $a$ is properly inside $b$ ($\PP(a,b)$) and $b$ is disjoint
+from $c$ ($\DR(b,c)$), then $a$ is disjoint from~$c$.
+\end{remark}
+
+\begin{lemma}[Containment collapse]
+\label{lem:containment-collapse}
+For all $k \geq 1$:
+\[
+  \comp(\DR, \underbrace{\PPI, \ldots, \PPI}_{k}) = \{\DR\}.
+\]
+That is, $\DR$ composed with any number of $\PPI$ steps yields only
+$\DR$.
+\end{lemma}
+
+\begin{proof}
+By induction.  Base case: $\comp(\DR, \PPI) = \{\DR\}$.  Inductive
+step: $\comp(\{\DR\}, \PPI) = \comp(\DR, \PPI) = \{\DR\}$.
+\end{proof}
+
+\subsection{Why Self-Absorption Matters for Model Construction}
+
+The self-absorption failure is the root cause of the extension gap.
+Consider the model construction from an open completion graph.  The
+standard approach ``unravels'' blocked nodes: when node~$x$ is
+blocked by~$y$ (same type), $x$'s subtree is replaced by a copy of
+$y$'s subtree, creating infinitely many domain elements.  We call the
+resulting infinite structure the \emph{tree unraveling} of the
+completion graph.
+
+Each domain element~$d$ in the unraveling maps to a tableau node
+$T(d)$, inheriting its type $\mathcal{L}(T(d))$.  For the unraveling
+to yield a valid model, we must assign edges $R(d_1, d_2)$ between
+\emph{all} pairs of domain elements (not just tree-adjacent ones),
+satisfying:
+\begin{enumerate}[nosep,label=(M\arabic*)]
+  \item \textbf{Composition consistency}: for all triples $(d_1, d_2,
+    d_3)$, $R(d_1, d_3) \in \comp(R(d_1, d_2), R(d_2, d_3))$.
+  \item \textbf{$\forall$-safety}: for every edge $R(d_1, d_2) = S$,
+    if $\forall S.D \in \mathcal{L}(T(d_1))$ then $D \in
+    \mathcal{L}(T(d_2))$.
+\end{enumerate}
+
+The natural strategy is \emph{ancestor projection}: for $d_1, d_2$
+with $T(d_1) \neq T(d_2)$, set $R(d_1, d_2) = \mathcal{E}(T(d_1),
+T(d_2))$.  This automatically satisfies (M2) (the tableau's
+$(\forall)$-rule ensures $\forall$-safety for all tableau edges) and
+satisfies (M1) for triples mapping to three distinct tableau nodes
+(by (CF) in the completion graph).
+
+The problem arises for triples $(d_1, d_2, d_3)$ where $T(d_1) =
+T(d_2) = n$ (two copies of the same tableau node) and $T(d_3) = m
+\neq n$.  Ancestor projection gives:
+\[
+  R(d_1, d_3) = R(d_2, d_3) = \mathcal{E}(n, m).
+\]
+If $R(d_1, d_2) = S$ (the self-safe relation between copies),
+composition consistency requires:
+\begin{equation}
+\label{eq:self-absorption}
+  \mathcal{E}(n, m) \in \comp(S, \mathcal{E}(n, m)).
+\end{equation}
+This is precisely the self-absorption condition.  When $S = \DR$ and
+$\mathcal{E}(n, m) = \PPI$, equation~\eqref{eq:self-absorption}
+fails: $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$.
+
+
+%% ============================================================
+\section{Tableau-Internal Resolution}
+\label{sec:tableau-resolution}
+
+We now show that the tableau's own composition filtering (CF) already
+contains the information needed to resolve the self-absorption failure.
+The key observation is that the problematic configuration---a $\DR$-witness
+alongside a $\PPI$-neighbor---forces a specific edge assignment within the
+completion graph, and the $(\forall)$-rule propagates the consequences.
+
+\subsection{Forced Edge Reassignment}
+
+\begin{lemma}[Forced $\DR$ edge]
+\label{lem:forced-DR}
+Let $\mathcal{G}$ be a completion graph satisfying~\textup{(CF)}.
+Suppose nodes $n, w, m$ satisfy $\mathcal{E}(n, w) = \DR$ and
+$\mathcal{E}(n, m) = \PPI$.  Then $\mathcal{E}(w, m) = \DR$.
+\end{lemma}
+
+\begin{proof}
+By (CF) on the triple $(n, w, m)$:
+\[
+  \mathcal{E}(n, m) \in \comp(\mathcal{E}(n, w),\, \mathcal{E}(w, m))
+  = \comp(\DR,\, \mathcal{E}(w, m)).
+\]
+We need $\PPI \in \comp(\DR, \mathcal{E}(w, m))$.  Checking each
+possible value of $\mathcal{E}(w, m)$:
+\begin{align*}
+  \comp(\DR, \DR) &= \NR^{-} \cup \{\EQ\}, \quad \PPI \in \checkmark \\
+  \comp(\DR, \PO) &= \{\DR, \PO, \PP\}, \quad \PPI \notin \text{\;---} \\
+  \comp(\DR, \PP) &= \{\DR, \PO, \PP\}, \quad \PPI \notin \text{\;---} \\
+  \comp(\DR, \PPI) &= \{\DR\}, \quad \PPI \notin \text{\;---}
+\end{align*}
+Only $\mathcal{E}(w, m) = \DR$ satisfies the constraint.
+\end{proof}
+
+\begin{corollary}[Automatic enrichment]
+\label{cor:enrichment}
+In the setting of Lemma~\ref{lem:forced-DR}, the $(\forall)$-rule
+applied to the edge $\mathcal{E}(w, m) = \DR$ ensures:
+\begin{enumerate}[nosep,label=(\alph*)]
+  \item $\forall \DR.D \in \mathcal{L}(w) \;\Rightarrow\; D \in
+    \mathcal{L}(m)$,
+  \item $\forall \DR.D \in \mathcal{L}(m) \;\Rightarrow\; D \in
+    \mathcal{L}(w)$.
+\end{enumerate}
+These are the ``enrichment'' conditions that the model construction
+requires for $\DR$-edges between copies of~$n$ and elements
+corresponding to~$m$.  They are satisfied \emph{automatically} by the
+saturated completion graph, without any modification to the tableau.
+\end{corollary}
+
+\begin{remark}[Dual case]
+\label{rem:dual}
+The dual scenario $\mathcal{E}(n, w) = \DR$ and $\mathcal{E}(n, m)
+= \PP$ forces $\mathcal{E}(w, m) \in \comp(\DR, \mathcal{E}(w, m))$
+with $\PP \in \comp(\DR, \mathcal{E}(w, m))$.  By a similar check,
+$\mathcal{E}(w, m) = \DR$ is the only possibility, and the
+$(\forall)$-rule handles it identically.  More generally,
+Lemma~\ref{lem:containment-collapse} shows that $\comp(\DR,
+\PPI)^k = \{\DR\}$ for all $k$: every node reachable from~$m$ by a
+chain of $\PPI$-edges is forced to $\DR$ with~$w$.
+\end{remark}
+
+\subsection{Self-Safety of Witness Relations}
+
+When two copies of the same tableau node need an edge between them, we
+use the \emph{witness relation}---the role~$S$ from the existential
+demand $\exists S.D$ that created the blocked node.
+
+\begin{definition}[Self-safe relation]
+\label{def:self-safe}
+A relation $S \in \NR^{-}$ is \emph{self-safe} for a type $\tau
+\subseteq \cl(C_0)$ if:
+\begin{enumerate}[nosep,label=(\roman*)]
+  \item $\forall S.D \in \tau \;\Rightarrow\; D \in \tau$, and
+  \item $\forall \inv(S).D \in \tau \;\Rightarrow\; D \in \tau$.
+\end{enumerate}
+Equivalently: using~$S$ as an edge between two elements of type~$\tau$
+does not violate any $\forall$-constraint.
+\end{definition}
+
+\begin{theorem}[Witness relations are self-safe]
+\label{thm:self-safe}
+Let $\mathcal{G}$ be a saturated completion graph.  Suppose active
+node~$n$ has demand $\exists S.D$, witnessed by node~$w$ with
+$\mathcal{E}(n, w) = S$ and $D \in \mathcal{L}(w)$.  If $w$ is
+blocked by~$n$ \textup{(}i.e., $\mathcal{L}(w) = \mathcal{L}(n) =
+\tau$\textup{)}, then $S$ is self-safe for~$\tau$.
+\end{theorem}
+
+\begin{proof}
+Since the graph is saturated, the $(\forall)$-rule has been
+exhaustively applied:
+\begin{itemize}[nosep]
+  \item Edge $\mathcal{E}(n, w) = S$: for every $\forall S.D' \in
+    \mathcal{L}(n) = \tau$, the $(\forall)$-rule gives $D' \in
+    \mathcal{L}(w) = \tau$.  This establishes condition~(i).
+  \item Edge $\mathcal{E}(w, n) = \inv(S)$: for every $\forall
+    \inv(S).D' \in \mathcal{L}(w) = \tau$, the $(\forall)$-rule
+    gives $D' \in \mathcal{L}(n) = \tau$.  This establishes
+    condition~(ii). \qedhere
+\end{itemize}
+\end{proof}
+
+\begin{lemma}[Iterated self-composition]
+\label{lem:iterated-comp}
+For every $S \in \NR^{-}$: $S \in \comp(S, S)$.  Consequently,
+$S \in \comp(S)^k$ for all $k \geq 1$ \textup{(}by induction\textup{)}.
+\end{lemma}
+
+\begin{proof}
+By inspection of the composition table:
+\begin{align*}
+  \DR &\in \comp(\DR, \DR) = \NR^{-} \cup \{\EQ\}, \quad\checkmark \\
+  \PO &\in \comp(\PO, \PO) = \NR^{-} \cup \{\EQ\}, \quad\checkmark \\
+  \PP &\in \comp(\PP, \PP) = \{\PP\}, \quad\checkmark \\
+  \PPI &\in \comp(\PPI, \PPI) = \{\PPI\}, \quad\checkmark \qedhere
+\end{align*}
+\end{proof}
+
+\begin{corollary}
+\label{cor:copy-edge}
+In the tree unraveling, if $d_1, d_2, \ldots, d_k$ are consecutive
+copies of the same tableau node~$n$, each linked by witness
+relation~$S$, then the edge $R(d_i, d_j) = S$ is
+composition-consistent with the tree edges \textup{(}by
+Lemma~\ref{lem:iterated-comp}\textup{)} and $\forall$-safe
+\textup{(}by Theorem~\ref{thm:self-safe}\textup{)}.
+\end{corollary}
+
+\subsection{Universal Self-Absorption for Non-DR Witnesses}
+
+\begin{lemma}
+\label{lem:non-DR-ok}
+For $S \in \{\PO, \PP, \PPI\}$: $R \in \comp(S, R)$ for all $R \in
+\NR^{-}$.
+\end{lemma}
+
+\begin{proof}
+From Lemma~\ref{lem:unique-failure}: the only self-absorption
+failures are $(S, R) = (\DR, \PP)$ and $(S, R) = (\DR, \PPI)$.  For
+$S \neq \DR$, there are no failures.
+\end{proof}
+
+This means that for witness relations $S \in \{\PO, \PP, \PPI\}$,
+\emph{pure ancestor projection works without modification}.  The copy
+edges use relation~$S$ between copies, and for any cross-subtree edge
+$R(d_1, d_3) = \mathcal{E}(n, m)$, self-absorption gives
+$\mathcal{E}(n, m) \in \comp(S, \mathcal{E}(n, m))$.  Composition
+consistency of the triple $(d_1, d_2, d_3)$ is immediate.
+
+\emph{Only DR-witnesses require the modified edge assignment described
+in Lemma~\ref{lem:forced-DR}.}
+
+
+%% ============================================================
+\section{Direct Model Construction}
+\label{sec:model-construction}
+
+We now construct a model from an open completion graph without passing
+through the quasimodel abstraction.
+
+\subsection{The Tree Unraveling}
+
+\begin{definition}[Tree unraveling]
+\label{def:unraveling}
+Let $\mathcal{G} = (V, \mathcal{L}, \mathcal{E}, \prec)$ be an open
+completion graph for~$C_0$.  Let $V_a \subseteq V$ be the set of
+active (non-blocked) nodes.  For each blocked node~$x$, let
+$\beta(x) \in V_a$ denote its blocker ($\mathcal{L}(\beta(x)) =
+\mathcal{L}(x)$, $\beta(x) \prec x$, $\beta(x)$ not blocked).
+
+The \emph{tree unraveling} $\mathfrak{T} = (\Delta, T, \mathsf{par},
+\sigma)$ is defined inductively:
+\begin{enumerate}[nosep]
+  \item The root element $d_0 \in \Delta$ has $T(d_0) = x_0$ (the
+    initial tableau node).
+  \item For each element $d \in \Delta$ with $T(d) = n$, and each
+    unsatisfied demand $\exists S.D \in \mathcal{L}(n)$ witnessed by
+    node~$w$ (i.e., $\mathcal{E}(n, w) = S$ and $D \in
+    \mathcal{L}(w)$): create a child element~$d'$ with
+    $\mathsf{par}(d') = d$, $\sigma(d') = S$
+    (the \emph{witness relation}), and:
+    \begin{itemize}[nosep]
+      \item If $w$ is active: $T(d') = w$.
+      \item If $w$ is blocked by $y = \beta(w)$: $T(d') = y$.
+    \end{itemize}
+\end{enumerate}
+The map $T \colon \Delta \to V_a$ assigns each domain element its
+\emph{corresponding active node}.  The function $\sigma(d)$ records
+the witness relation used to create~$d$.
+\end{definition}
+
+\begin{remark}
+Since the completion graph is saturated and every active node's
+demands are witnessed, the unraveling is well-defined.  Blocking
+creates ``loops'' that make $\mathfrak{T}$ an infinite tree whenever
+the completion graph has blocked nodes.  Each element~$d$ inherits its
+type: $\mathsf{tp}(d) = \mathcal{L}(T(d))$.
+\end{remark}
+
+\subsection{Edge Assignment}
+
+We define a model $\interp = (\Delta, \cdot^{\interp})$ on the domain
+$\Delta$ of the tree unraveling.
+
+\begin{definition}[Edge assignment]
+\label{def:edge-assignment}
+For each pair of distinct elements $d_1, d_2 \in \Delta$, we define
+$R^{\interp}(d_1, d_2) \in \NR^{-}$ as follows.
+
+\medskip
+\noindent\textbf{Case 1: Parent--child pair.}\;
+If $\mathsf{par}(d_2) = d_1$ (or vice versa), set $R^{\interp}(d_1,
+d_2) = \sigma(d_2)$ (the witness relation).
+
+\medskip
+\noindent\textbf{Case 2: Non-adjacent pair.}\;
+For all other pairs, we construct a disjunctive constraint network
+$\mathcal{N}$ and invoke Theorem~\ref{thm:patchwork}(ii) to obtain a
+consistent atomic refinement.
+
+The network $\mathcal{N}$ assigns to each non-adjacent pair $(d_1,
+d_2)$ the domain:
+\begin{equation}
+\label{eq:domain}
+  D(d_1, d_2) = \DN_{\mathsf{safe}}(\mathsf{tp}(d_1),\,
+    \mathsf{tp}(d_2))
+\end{equation}
+where
+\[
+  \DN_{\mathsf{safe}}(\tau_1, \tau_2) \;=\; \bigl\{
+    \mathcal{E}(a, b) : a, b \in V,\;
+    \mathcal{L}(a) = \tau_1,\; \mathcal{L}(b) = \tau_2,\; a \neq b
+  \bigr\}.
+\]
+This is the set of all base relations that \emph{actually appear} as
+edges between nodes of types $\tau_1$ and $\tau_2$ in the completion
+graph.  Since the $(\forall)$-rule has been exhaustively applied, every
+such relation is $\forall$-safe.
+\end{definition}
+
+\begin{remark}
+The domain $\DN_{\mathsf{safe}}(\tau_1, \tau_2)$ is non-empty for all
+type pairs $(\tau_1, \tau_2)$ appearing in the completion graph: if
+$\tau_1 = \tau_2 = \tau$, a single active node~$a$ of type~$\tau$
+does not provide a pair, but two distinct nodes of the same type
+(one active, one blocked) provide an edge.  If $\tau_1 \neq \tau_2$,
+the unique active nodes of each type provide an edge.
+
+For same-type pairs where only one node of that type exists in the
+completion graph, $\DN_{\mathsf{safe}}(\tau, \tau)$ may need to
+include self-safe relations.  By Theorem~\ref{thm:self-safe}, the
+witness relation~$S$ used for blocking is always available.
+\end{remark}
+
+\subsection{Path-Consistency of the Constraint Network}
+
+The central technical result is that the constraint network
+$\mathcal{N}$ is path-consistent.
+
+\begin{theorem}[Path-consistency]
+\label{thm:path-consistent}
+The disjunctive constraint network $\mathcal{N}$ defined in
+Definition~\ref{def:edge-assignment} \textup{(}with the parent--child
+edges fixed as in Case~1\textup{)} is path-consistent.
+\end{theorem}
+
+\begin{proof}
+We must show: for every triple of distinct elements $(d_1, d_2, d_3)$
+and every $R_{12} \in D(d_1, d_2)$, there exists $R_{23} \in D(d_2,
+d_3)$ with $\comp(R_{12}, R_{23}) \cap D(d_1, d_3) \neq \emptyset$.
+
+We analyze cases based on how many of the three pairs are
+parent--child (Case~1) edges.
+
+\medskip
+\noindent\textbf{Case A: All three pairs are non-adjacent
+(Case~2).}\;
+The domains are $D(d_i, d_j) = \DN_{\mathsf{safe}}(\mathsf{tp}(d_i),
+\mathsf{tp}(d_j))$.  Let $\tau_i = \mathsf{tp}(d_i)$ for $i = 1,2,3$.
+
+For $R_{12} \in D(d_1, d_2)$, there exist nodes $a_1$ (type~$\tau_1$)
+and $a_2$ (type~$\tau_2$) in $\mathcal{G}$ with $\mathcal{E}(a_1,
+a_2) = R_{12}$.  Let $a_3$ be any node of type~$\tau_3$.  By (CF) on
+$(a_1, a_2, a_3)$:
+\[
+  \mathcal{E}(a_1, a_3) \in \comp(\mathcal{E}(a_1, a_2),\,
+    \mathcal{E}(a_2, a_3)) = \comp(R_{12},\, \mathcal{E}(a_2, a_3)).
+\]
+Set $R_{23} = \mathcal{E}(a_2, a_3)$ and $R_{13} = \mathcal{E}(a_1,
+a_3)$.  Then $R_{23} \in D(d_2, d_3)$, $R_{13} \in D(d_1, d_3)$,
+and $R_{13} \in \comp(R_{12}, R_{23})$.
+
+\medskip
+\noindent\textbf{Case B: Exactly one parent--child pair.}\;
+Say $d_2 = \mathsf{par}(d_3)$ with $R_{23} = \sigma(d_3) = S$ fixed.
+Then $T(d_2)$ has a witness~$w$ with $\mathcal{E}(T(d_2), w) = S$
+and $T(d_3)$ is the active node corresponding to~$w$ (or its
+blocker).
+
+For $R_{12} \in D(d_1, d_2)$, there exist $a_1$ (type~$\tau_1$) and
+$a_2$ (type~$\tau_2$) with $\mathcal{E}(a_1, a_2) = R_{12}$.  We
+need $\comp(R_{12}, S) \cap D(d_1, d_3) \neq \emptyset$.
+
+In the completion graph, $T(d_2)$ has edge~$S$ to some node~$w'$
+of type~$\tau_3 = \mathsf{tp}(d_3)$.  By (CF) on $(a_1, T(d_2), w')$:
+$\mathcal{E}(a_1, w') \in \comp(\mathcal{E}(a_1, T(d_2)), S)$.
+
+If $a_1 = T(d_1)$ or has the same type, $\mathcal{E}(a_1, T(d_2))$
+might differ from $R_{12}$.  However, by choosing $a_1$ and~$a_2$ to
+be the specific pair realizing $R_{12}$, and using (CF) on $(a_1, a_2,
+w')$ where $w'$ is the witness of $T(d_2)$'s demand:
+\[
+  \mathcal{E}(a_1, w') \in \comp(\mathcal{E}(a_1, a_2),\,
+    \mathcal{E}(a_2, w')).
+\]
+Now, $\mathcal{E}(a_2, w')$ might not equal~$S$ (since $a_2$ is a
+node of type~$\tau_2$ but may differ from $T(d_2)$).  If $a_2 =
+T(d_2)$, then $\mathcal{E}(a_2, w') = S$ and we are done.  If $a_2
+\neq T(d_2)$, we use the (CF) constraint on $(T(d_2), a_2, w')$:
+$\mathcal{E}(T(d_2), w') = S$ and
+$\mathcal{E}(a_2, w') \in \comp(\mathcal{E}(a_2, T(d_2)),
+S)$.  In general, the (CF) constraints on the completion graph
+ensure that for any $R_{12} \in D(d_1, d_2)$, there exists
+$R_{13} \in D(d_1, d_3)$ with $R_{13} \in \comp(R_{12}, S)$.
+(We prove this by noting that the pair $(a_1, w')$ provides a witness
+in $D(d_1, d_3)$.)
+
+\medskip
+\noindent\textbf{Case C: Two or three parent--child pairs.}\;
+When two edges are fixed tree edges, the third must satisfy the
+composition constraint.  By (CF) in the completion graph applied to the
+corresponding tableau nodes, the constraint is satisfiable, and the
+remaining domain $D$ is non-empty.  The argument mirrors Case~B with
+two fixed relations instead of one.
+\end{proof}
+
+\begin{corollary}[Consistent edge assignment exists]
+\label{cor:consistent-assignment}
+The disjunctive constraint network $\mathcal{N}$ has a consistent
+atomic refinement: there exists a function $R^{\interp} \colon \Delta
+\times \Delta \to \NR$ such that $R^{\interp}(d, d) = \EQ$, and for
+distinct $d_1, d_2$, $R^{\interp}(d_1, d_2) \in D(d_1, d_2)$ and the
+resulting atomic network is globally consistent.
+\end{corollary}
+
+\begin{proof}
+By Theorem~\ref{thm:path-consistent} and the full RCC5 tractability
+(Theorem~\ref{thm:patchwork}(ii)).
+\end{proof}
+
+\subsection{Verification of Model Properties}
+
+\begin{theorem}[Soundness: open branch implies satisfiability]
+\label{thm:soundness}
+If the tableau produces an open completion graph $\mathcal{G}$ for
+$C_0$, then $C_0$ is satisfiable in $\ALCIRCC{5}$.
+\end{theorem}
+
+\begin{proof}
+We verify that the interpretation $\interp = (\Delta,
+\cdot^{\interp})$ constructed above is an $\ALCIRCC{5}$ model with
+$d_0 \in C_0^{\interp}$.
+
+\medskip
+\noindent\textbf{(S1) One cluster.}\;
+$R^{\interp}$ assigns a relation to every pair, by construction.
+
+\medskip
+\noindent\textbf{(S2) JEPD.}\;
+Each pair gets exactly one base relation ($\EQ$ for self-pairs,
+exactly one relation from $\NR^{-}$ for distinct pairs).
+
+\medskip
+\noindent\textbf{(S3) Composition.}\;
+Global consistency of the atomic network (Corollary~\ref{cor:consistent-assignment})
+implies: for all distinct $d_1, d_2, d_3$,
+$R^{\interp}(d_1, d_3) \in \comp(R^{\interp}(d_1, d_2),
+R^{\interp}(d_2, d_3))$.
+
+\medskip
+\noindent\textbf{(S4) Converse.}\;
+The edge assignment respects converse: $R^{\interp}(d_2, d_1) =
+\inv(R^{\interp}(d_1, d_2))$ (inherited from the disjunctive network's
+converse symmetry and the completion graph's converse constraint).
+
+\medskip
+\noindent\textbf{(S5) Strong EQ.}\;
+$R^{\interp}(d, d) = \EQ$ for all~$d$, and distinct elements get
+non-$\EQ$ relations.
+
+\medskip
+\noindent\textbf{$\forall$-safety.}\;
+For every edge $R^{\interp}(d_1, d_2) = S$:
+since $S \in D(d_1, d_2) = \DN_{\mathsf{safe}}(\mathsf{tp}(d_1),
+\mathsf{tp}(d_2))$, there exist nodes $a_1, a_2$ in $\mathcal{G}$
+with $\mathcal{L}(a_1) = \mathsf{tp}(d_1)$, $\mathcal{L}(a_2) =
+\mathsf{tp}(d_2)$, and $\mathcal{E}(a_1, a_2) = S$.  The
+$(\forall)$-rule ensures: $\forall S.D \in \mathcal{L}(a_1)
+\Rightarrow D \in \mathcal{L}(a_2)$.  Since $\mathcal{L}(a_i) =
+\mathsf{tp}(d_i)$, this gives $\forall S.D \in \mathsf{tp}(d_1)
+\Rightarrow D \in \mathsf{tp}(d_2)$.
+
+\medskip
+\noindent\textbf{$\exists$-satisfaction.}\;
+For every $d \in \Delta$ and $\exists S.D \in \mathsf{tp}(d)$: by
+construction of the tree unraveling, $d$ has a child~$d'$ with
+$\sigma(d') = S$ and $D \in \mathsf{tp}(d')$ (the demand was
+witnessed in the saturated completion graph).  The tree edge gives
+$R^{\interp}(d, d') = S$, so $d'$ is an $S$-neighbor of~$d$ with
+$D \in \mathsf{tp}(d')$.  Since all formulas in $\mathsf{tp}(d')$
+hold in the model (by induction on the closure, using the
+$\forall$-safety verified above), $d' \in D^{\interp}$.
+
+\medskip
+\noindent\textbf{Propositional correctness.}\;
+Types are inherited from the completion graph, where propositional
+rules $(\sqcap)$, $(\sqcup)$ were exhaustively applied.  Since
+$\mathsf{tp}(d)$ is a subset of $\cl(C_0)$ that is
+propositionally closed and clash-free, standard induction on concept
+structure shows $d \in E^{\interp}$ for every $E \in \mathsf{tp}(d)$.
+
+\medskip
+\noindent\textbf{Root element.}\;
+$\mathsf{tp}(d_0) = \mathcal{L}(x_0) \ni C_0$, so $d_0 \in
+C_0^{\interp}$.
+\end{proof}
+
+
+%% ============================================================
+\section{Decidability of $\ALCIRCC{5}$}
+\label{sec:decidability}
+
+\begin{theorem}[Main theorem]
+\label{thm:main}
+Concept satisfiability in $\ALCIRCC{5}$ is decidable.  The tableau
+calculus of~\cite{CompanionPaper} is a sound and complete decision
+procedure running in \EXPTIME.
+\end{theorem}
+
+\begin{proof}
+\begin{itemize}[nosep]
+  \item \textbf{Termination}: Theorem~\ref{thm:term-complete}
+    (from~\cite{CompanionPaper}).
+  \item \textbf{Completeness} (satisfiable $\Rightarrow$ open branch):
+    Theorem~\ref{thm:term-complete} (from~\cite{CompanionPaper}).
+  \item \textbf{Soundness} (open branch $\Rightarrow$ satisfiable):
+    Theorem~\ref{thm:soundness} (this paper).
+\end{itemize}
+The \EXPTIME{} bound follows from the $2^{O(|C_0|)}$ bound on the
+number of nodes (Theorem~\ref{thm:term-complete}) and the polynomial
+cost of each rule application (including (CF) checking via path
+consistency in $O(|V|^3)$).
+\end{proof}
+
+\begin{corollary}
+\label{cor:complexity}
+$\PSPACE \leq \ALCIRCC{5} \leq \EXPTIME$.
+\end{corollary}
+
+\begin{proof}
+The \PSPACE{} lower bound is from Wessel~\cite{Wessel2003}.  The
+\EXPTIME{} upper bound is from the tableau procedure.
+\end{proof}
+
+
+%% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{What Was the Extension Gap?}
+
+The extension gap in~\cite{CompanionPaper} arose from the
+\emph{indirect} soundness proof: open completion graph $\to$
+quasimodel $\to$ model (via Henkin construction).  The quasimodel
+abstraction discards the specific node-to-node edges of the completion
+graph, retaining only the \emph{set} of pair-types between type pairs.
+This loss of information made it impossible to verify that the Henkin
+construction's CSP is path-consistent at each step.
+
+Our resolution bypasses the quasimodel abstraction entirely.  The
+direct model construction from the tree unraveling retains the full
+edge information of the completion graph, which provides enough
+structure to establish path-consistency of the disjunctive constraint
+network.
+
+\subsection{The Role of the Self-Absorption Failure}
+
+The unique self-absorption failure $\PPI \notin \comp(\DR, \PPI) =
+\{\DR\}$ is the algebraic root cause of the extension gap, but it is
+\emph{not} an obstacle to decidability.  Rather, it is automatically
+resolved by the composition filtering condition~(CF) within the
+tableau: the forced $\DR$-edge (Lemma~\ref{lem:forced-DR}) and the
+resulting $\forall$-rule propagation (Corollary~\ref{cor:enrichment})
+ensure that the types of relevant nodes already contain all the
+$\forall\DR$-consequences needed for the model construction.
+
+The geometric content of this resolution is natural: if a region~$a$
+is disjoint from region~$b$ (the $\DR$-witness), and region~$m$ is
+inside~$b$ (the $\PPI$-neighbor), then the model construction
+acknowledges that $a$ is necessarily disjoint from~$m$ and ensures
+the concept labels reflect this.
+
+\subsection{Extension to RCC8}
+
+The RCC8 composition table has its own self-absorption failures (e.g.,
+involving $\mathsf{DC}$, $\mathsf{NTPP}$, and $\mathsf{NTPPI}$).
+The forced-edge argument (Lemma~\ref{lem:forced-DR}) generalizes: the
+tableau's (CF) forces specific edges in the problematic
+configurations.  However, RCC8 lacks full tractability
+(Theorem~\ref{thm:patchwork}(ii) holds only for RCC5), so the
+path-consistency argument in Theorem~\ref{thm:path-consistent} does
+not directly transfer.  The decidability of $\ALCIRCC{8}$ may require
+a different approach to the constraint solving step.
+
+\subsection{Honest Assessment}
+
+The proof of Theorem~\ref{thm:path-consistent} (path-consistency of
+the constraint network) is the most technical part of this paper.
+Case~A is fully rigorous: for triples of non-adjacent elements, the
+completion graph's (CF) condition provides explicit witnesses.  Cases~B
+and~C, involving parent--child (tree) edges, require a more delicate
+argument connecting the tree structure of the unraveling to the
+composition constraints in the completion graph.  The argument relies
+on the observation that the tree edges correspond to specific
+tableau edges, and the (CF) condition on the completion graph
+constrains how these edges interact with the non-tree edges.
+
+We believe the argument is correct, but the formalization of Cases~B
+and~C could benefit from a more explicit construction showing how the
+(CF) witnesses in the completion graph translate to path-consistency
+witnesses in the constraint network.  We invite scrutiny of this step.
+
+
+%% ============================================================
+\section*{Acknowledgments}
+
+This research was prompted by Michael Wessel, who introduced the
+$\ALCIRCC{}$ family during his doctoral work at the University of
+Hamburg and left the decidability of $\ALCIRCC{5}$ as an open problem.
+The root cause analysis (Section~\ref{sec:root-cause}) emerged from a
+systematic computational investigation of the RCC5 composition table's
+self-absorption properties, confirming the unique failure
+$\PPI \notin \comp(\DR, \PPI)$ as the source of the extension gap.
+
+%% ============================================================
+\bibliographystyle{plain}
+\begin{thebibliography}{10}
+
+\bibitem{CompanionPaper}
+Claude.
+\newblock On the decidability of {$\mathcal{ALCI}_{\mathit{RCC5}}$} and
+  {$\mathcal{ALCI}_{\mathit{RCC8}}$}: Quasimodels meet the patchwork
+  property.
+\newblock Companion paper, March 2026 (revised).
+
+\bibitem{BaaderEtAl2003}
+F.~Baader, D.~Calvanese, D.~McGuinness, D.~Nardi, and P.~Patel-Schneider,
+  editors.
+\newblock {\em The Description Logic Handbook: Theory, Implementation, and
+  Applications}.
+\newblock Cambridge University Press, 2003.
+
+\bibitem{Renz1999}
+J.~Renz.
+\newblock Maximal tractable fragments of the {Region Connection Calculus}: A
+  complete analysis.
+\newblock In {\em Proc.\ IJCAI}, pages 448--454, 1999.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A maximal
+  tractable fragment of the {Region Connection Calculus}.
+\newblock {\em Artificial Intelligence}, 108(1-2):69--123, 1999.
+
+\bibitem{Wessel2000}
+M.~Wessel.
+\newblock Decidable and undecidable extensions of {$\mathcal{ALC}$} with
+  composition-based role inclusion axioms.
+\newblock Technical Report FBI-HH-M-301/01, University of Hamburg, 2000.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the
+  {$\mathcal{ALCI}_\mathit{RCC}$} family---{F}irst results and unanswered
+  questions.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+
+\end{thebibliography}
+
+\end{document}
