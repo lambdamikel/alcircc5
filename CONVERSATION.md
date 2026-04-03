@@ -1135,3 +1135,54 @@ The tableau terminates (proved in the companion paper). The issue is whether an 
 - `triangle_blocking_ALCIRCC5.tex` / `.pdf`: New conditional decidability paper (12 pages)
 - Updated `README.md` with conditional result status and new paper listing
 - Updated `CONVERSATION.md` with Part 23
+
+---
+
+## Part 24: PP-kernel quotient and two-tier quotient construction
+
+### The PP-kernel idea
+
+Michael proposed a model-theoretic approach: given an infinite RCC5 model, the only source of infinity is PP-chains. The idea: collapse same-Hintikka-type elements on PP-chains into single "kernel nodes" with reflexive PP-loops, then recursively collapse outgoing edges.
+
+### Algebraic analysis
+
+Three computational scripts explored this systematically:
+
+**pp_kernel_analysis.py**: Reflexive PP is universally self-absorbing — R ∈ comp(PP, R) and R ∈ comp(R, PP) for all R, and PP ∈ comp(R, inv(R)) for all R. This means reflexive PP(k,k) is fully composition-consistent with all external edges. Only DR fails as a reflexive loop (PPI ∉ comp(DR, PPI) = {DR}).
+
+**pp_kernel_quotient.py**: Explored the disjunctive {PP,PPI} quotient approach for multi-type periodic chains. Key finding: PP-transitivity (comp(PP,PP) = {PP}) forces a strict linear order on distinct kernel nodes, making PP-cycles impossible. This means multi-type periods cannot be represented as kernel-node RCC5 graphs. 6/15 two-type demand patterns are satisfiable; bidirectional demands systematically fail.
+
+**pp_kernel_cycle_analysis.py**: Exhaustive verification that no 3-node PP-cycle exists. Only ∃PP demands stay within the chain; all other demands (∃DR, ∃PO, ∃PPI) are satisfied by off-chain elements. Single-type chains collapse perfectly. Multi-type chains need a different representation.
+
+### The two-tier quotient resolution
+
+The resolution is a hybrid two-tier quotient:
+
+**Tier 1 (within-chain): Period descriptors.** Instead of representing the periodic tail as an RCC5 graph, represent it as a finite cyclic word (τ₁, ..., τ_p) of Hintikka types. This is a word, not a graph — no PP-cycles needed. The descriptor validates PP-demands internally: ∃PP.C ∈ τ_i implies C ∈ τ_j for some j (some period type contains the witness).
+
+**Tier 2 (between-chain): Kernel nodes + regular nodes.** One kernel per chain (type = stabilized core = ∩{τ₁,...,τ_p}), reflexive PP for self-interaction, atomic edges to other kernels/regular nodes. Cross-chain ∃-demands handled by non-chain witnesses.
+
+### Formalization as a paper
+
+The two-tier approach was formalized in `two_tier_quotient_ALCIRCC5.tex` (13 pages). The paper proves:
+- Universal self-absorption of PP (Theorem 3.1)
+- Composition-consistency of reflexive PP (Corollary 3.2)
+- PP-cycle impossibility (Theorem 3.4)
+- Single-type collapse (Theorem 4.5)
+- Multi-type obstruction (Theorem 4.6)
+- External relation monotonicity and stabilization (Lemma 3.8)
+
+The paper identifies the **Periodic Decomposition Conjecture** (Conjecture 6.1):
+- (P1) Every infinite PP-chain has an eventually periodic type sequence
+- (P2) Cross-chain kernel edges are composition-consistent
+- (P3) Bounded quotient size
+
+If the conjecture holds, ALCI_RCC5 is decidable.
+
+### Files produced
+- `two_tier_quotient_ALCIRCC5.tex` / `.pdf`: Two-tier quotient paper (13 pages)
+- `pp_kernel_analysis.py`: Reflexive PP analysis script
+- `pp_kernel_quotient.py`: Disjunctive quotient analysis script
+- `pp_kernel_cycle_analysis.py`: PP-cycle obstruction analysis script
+- Updated `README.md` with seventh approach section, file listings, and script descriptions
+- Updated `CONVERSATION.md` with Part 24

@@ -44,15 +44,15 @@ This concept is satisfiable only in infinite models. The proof that FW(C∞, N) 
 
 See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) for details. The same argument applies to ALCI\_RCC8 using NTPP in place of PP.
 
-### Summary: five approaches
+### Summary: seven approaches
 
-| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) |
-|---|---|---|---|---|---|
-| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels |
-| Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap |
-| Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete |
+| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) | Triangle-type (Claude) | Two-tier quotient (Claude) |
+|---|---|---|---|---|---|---|---|
+| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels | Triangle-filtered arc-consistency | Period descriptors + PP-kernels |
+| Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | Periodic Decomposition Conjecture |
+| Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | Conditional |
 
-All five approaches fail at the same structural point: global edge assignment for complete-graph models. A sixth approach (triangle-type filtering) yields a **conditional** decidability result — see below.
+The first five approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional decidability result. The seventh (two-tier quotient) takes a model-theoretic approach, representing infinite PP-chains finitely via period descriptors.
 
 ### Sixth approach: triangle-type blocking — conditional decidability
 
@@ -169,6 +169,40 @@ Counter machine (Minsky machine) encodings face the same obstacle: linking "the 
 > Can the interaction of ∀TPP and ∀NTPP constraints, combined with the RCC8 composition table constraints on cross-links, force **non-regular** patterns in the type sequence? If yes, ALCI\_RCC8 may be undecidable even if ALCI\_RCC5 is decidable. If no, the omega-model approach (Büchi automata) should work for both.
 
 This observation suggests that **ALCI\_RCC5 and ALCI\_RCC8 may have different decidability status** — a possibility not previously considered.
+
+### Seventh approach: two-tier quotient — period descriptors + PP-kernel nodes
+
+A model-theoretic approach that directly addresses the source of infinity in ALCI\_RCC5 models: infinite PP-chains. The key insight is that PP-chains have **regular structure** — the sequence of Hintikka types along any infinite PP-chain is eventually periodic (by finiteness of the type space and monotone accumulation of ∀PP-consequences).
+
+The approach works in two tiers:
+
+**Tier 1 (within-chain): Period descriptors.** Each infinite PP-chain's periodic tail is represented by a finite cyclic word (τ₁, ..., τ_p) of Hintikka types. This is a *word*, not an RCC5 graph — it circumvents the impossibility of PP-cycles among distinct nodes.
+
+**Tier 2 (between-chain): PP-kernel nodes.** Each chain is represented by a single kernel node with a reflexive PP-loop. Cross-chain interactions use atomic RCC5 edges between kernel nodes and regular (non-chain) nodes.
+
+**Algebraic foundations (fully proven):**
+- Reflexive PP is **universally self-absorbing**: R ∈ comp(PP, R) and R ∈ comp(R, PP) for every base relation R, and PP ∈ comp(R, inv(R)) for all R. Therefore reflexive PP(k,k) is composition-consistent with all external edges.
+- **PP-transitivity** (comp(PP,PP) = {PP}) forces a strict linear order on distinct nodes, ruling out PP-cycles. Multi-type periodic chains *cannot* be represented as kernel-node graphs.
+- **External relation stabilization**: relations from external elements to PP-chain elements stabilize monotonically, with PP as the unique absorbing state.
+- **Single-type collapse**: when all period types are identical (p=1), the chain collapses to one kernel node with full demand satisfaction.
+
+**What remains open (Periodic Decomposition Conjecture):**
+- (P1) Every infinite PP-chain has an eventually periodic type sequence — plausible but not fully proven; a Büchi automaton argument is sketched.
+- (P2) Cross-chain kernel edges are composition-consistent — essentially follows from model consistency + stabilization, needs careful formalization.
+- (P3) Bounded quotient size — follows from (P1) + finiteness of type space.
+
+See [**Two-Tier Quotient Construction (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) for the full paper (13 pages).
+
+**Computational verification** ([`pp_kernel_analysis.py`](https://github.com/lambdamikel/alcircc5/blob/master/pp_kernel_analysis.py), [`pp_kernel_quotient.py`](https://github.com/lambdamikel/alcircc5/blob/master/pp_kernel_quotient.py), [`pp_kernel_cycle_analysis.py`](https://github.com/lambdamikel/alcircc5/blob/master/pp_kernel_cycle_analysis.py)):
+
+| Test | Result |
+|---|---|
+| Reflexive PP composition-consistency | All 12 checks pass |
+| Which relations allow reflexive loops | PP and PPI pass; DR fails (PPI ∉ comp(DR, PPI)) |
+| PP-cycle among 3 distinct nodes | 0 out of 8 configurations — impossible |
+| Single-type PP-chain collapse | Perfect — one kernel node suffices |
+| Multi-type kernel node quotient | Fails — PP-transitivity forces linear order |
+| Valid 2-type period descriptors (toy vocabulary) | 56 found |
 
 ### The two-chain construction: a 2×∞ ladder with functional operators
 
@@ -636,6 +670,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`FW_proof_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.tex) -- LaTeX source for FW counterexample
 - [**`ALCI_RCC5_status_after_FW.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.pdf) -- GPT-5.4's status assessment after FW failure; proposes omega-model direction ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_status_after_FW.tex))
 - [**`triangle_blocking_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_blocking_ALCIRCC5.pdf) -- Triangle-type approach: conditional decidability of ALCI\_RCC5 via triangle-filtered model construction. Supersedes the retracted paper below. (12 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/triangle_blocking_ALCIRCC5.tex))
+- [**`two_tier_quotient_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) -- Two-tier quotient: period descriptors + PP-kernel nodes for finite representation of infinite models (13 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.tex))
 - [**`closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.pdf) -- Companion paper: identifies root cause of extension gap (self-absorption failure) and attempts decidability via direct model construction. **Retracted**: Theorem 5.5 is false (10 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/closing_extension_gap_ALCIRCC5.tex))
 - [**`response_to_status_note.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.pdf) -- Claude's response to GPT's status assessment: corrections, evaluation, and a concrete sub-question ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_status_note.tex))
 - [**`response_to_gpt_blocking.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.pdf) -- Claude's assessment of GPT's 4-paper blocking series: verifies local results, identifies unraveling gap (9 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/response_to_gpt_blocking.tex))
@@ -660,6 +695,12 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`extension_gap_checker_v2.py`**](https://github.com/lambdamikel/alcircc5/blob/master/extension_gap_checker_v2.py) -- Tests existential Q3 vs universal Q3 (= Q3s = arc-consistency). For each configuration that fails arc-consistency enforcement, checks whether existential Q3 or universal Q3 was satisfied on the initial domains. Key finding: universal Q3 eliminates **all** failures (0 through m=4).
 - [**`q3_implies_q3s_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/q3_implies_q3s_check.py) -- Tests two questions on abstract DN networks over 2-3 types: (1) does Q3 imply Q3s? (No: 1,803 counterexamples at 3 types.) (2) Does satisfiable DN imply Q3s? (No: 2,697 counterexamples.) Operates on the type-level DN constraint network (not individual models).
 - [**`model_derived_q3s_fast.py`**](https://github.com/lambdamikel/alcircc5/blob/master/model_derived_q3s_fast.py) -- The definitive test: enumerates all concrete, composition-consistent RCC5 models with 3-4 elements and 2-3 types, extracts model-derived DN sets, and checks Q3s. Includes a hand-verified counterexample (4 elements, 3 types). Result: 7,560 out of 68,276 models (11.1%) produce DN networks violating Q3s. Confirms that Q3s is genuinely not extractable from models.
+
+### PP-kernel quotient investigation
+
+- [**`pp_kernel_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/pp_kernel_analysis.py) -- Tests reflexive PP composition-consistency (universal self-absorption), determines which relations allow safe reflexive loops (DR fails, PP/PPI pass), analyzes PP-chain monotonicity and stabilization, and checks collapsing safety for all base relations.
+- [**`pp_kernel_quotient.py`**](https://github.com/lambdamikel/alcircc5/blob/master/pp_kernel_quotient.py) -- Tests the disjunctive {PP,PPI} quotient approach: path-consistency of disjunctive edges, ∀-safety in periodic tails, ∃-satisfaction analysis. Key finding: PP-transitivity forces linear order, preventing PP-cycles needed for multi-type periodic chains. 6/15 two-type demand patterns are satisfiable; bidirectional demands fail.
+- [**`pp_kernel_cycle_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/pp_kernel_cycle_analysis.py) -- Analyzes PP-cycle obstruction: exhaustive 3-node check (no PP-cycles possible), demand satisfaction analysis (only ∃PP stays in-chain), period descriptor approach (finite word representation), and the two-tier hybrid architecture. Generates and validates 56 toy 2-type period descriptors.
 
 ### Extension gap root cause investigation scripts
 
