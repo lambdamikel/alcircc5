@@ -53,7 +53,7 @@
 \title{\textbf{Decidability of $\ALCIRCC{5}$ via\\Two-Tier Quotient Construction}\\[0.4em]
 \large Period descriptors, PP-kernel nodes,\\
 and the full tractability of RCC5\\[0.3em]
-\normalsize (Revised, April 2026)}
+\normalsize (Fourth revision, April 2026)}
 \author{Claude (Anthropic)\\
 \small Prompted by Michael Wessel}
 \date{April 2026}
@@ -67,37 +67,48 @@ and the full tractability of RCC5\\[0.3em]
 (Anthropic), prompted by Michael Wessel.  The results have not been
 independently verified.  We invite scrutiny and corrections.
 
-\smallskip\textbf{Revision note.}\; This version addresses five
-technical objections raised by GPT-5.4 Pro~\cite{GPTReview2026} in a
-review of the original manuscript~\cite{Claude2026TTQ}.  The three
-substantive fixes are: (1)~designated witnesses indexed by
-$\Union(\Desc)$ instead of $\Core(\Desc)$; (2)~a type-safety filter
-$\Safe$ added to V6; (3)~kernel nodes indexed by (descriptor, external
-interface) pairs.  Two further clarifications concern the certificate
-nature of the quotient and the blocking invariant.}}
+\smallskip\textbf{Revision history.}\; This is the fourth
+revision.  The first version was reviewed by GPT-5.4
+Pro~\cite{GPTReview2026}, who raised five objections; these were
+addressed in the second version~\cite{ClaudeResponse2026}.  GPT-5.4's
+second review~\cite{GPTReview2026b} raised four further objections,
+addressed in the third version.  GPT-5.4's third
+review~\cite{GPTReview2026c} raised four more objections.  This
+fourth version incorporates all fixes: a new phasewise safety
+validity condition ($V_{\mathrm{safe}}$); exact-relation extraction
+proofs via backward forcing ($\DR$, $\PP$) and forward absorption
+($\PPI$); a constructive quotient approach that breaks the
+size-bound circularity; and an honest acknowledgment of a remaining
+$\PO$ gap.}}
 \end{center}
 
 \begin{abstract}
-We prove that concept satisfiability in $\ALCIRCC{5}$---the
-description logic $\ALCI$ extended with an RCC5 role
-box---is decidable.  The proof proceeds by a model-theoretic quotient
-construction.  Every model of a satisfiable concept can be
-represented by a finite \emph{two-tier quotient}: \textbf{Tier~1}
+We study the decidability of concept satisfiability in
+$\ALCIRCC{5}$---the description logic $\ALCI$ extended with an RCC5
+role box.  We introduce a finite \emph{two-tier quotient}: Tier~1
 captures each infinite $\PP$-chain's eventually periodic tail as a
-finite \emph{period descriptor} (a cyclic word of Hintikka types),
-while \textbf{Tier~2} captures cross-chain interactions through
-\emph{PP-kernel nodes} indexed by (descriptor, external interface)
-pairs.  Conversely, every
-valid two-tier quotient can be unfolded into a genuine model, using
-the \emph{full tractability} of RCC5 (Renz \& Nebel 1999): path-consistent
-disjunctive RCC5 networks are satisfiable.  The off-chain extension
-condition (V6) incorporates both RCC5 composition constraints and a
-\emph{type-safety filter} ensuring respect of universal restrictions.
-Together, these yield a
-decision procedure: enumerate quotients up to a computable size bound
-and check validity.  The key algebraic ingredient is that $\PP$ is
-\emph{universally self-absorbing}, ensuring composition
-consistency of the kernel representation.
+\emph{period descriptor}, while Tier~2 captures cross-chain
+interactions through \emph{PP-kernel nodes}.  A valid quotient can
+be unfolded into a genuine model using the \emph{full tractability}
+of RCC5 (Renz \& Nebel 1999).
+
+For demands involving $\DR$, $\PP$, and $\PPI$, we prove complete
+decidability.  The key ingredients are: (i)~a \emph{backward
+forcing} property for $\DR$ and $\PP$ (the composition table forces
+these relations backward along $\PP$-chains, guaranteeing all-phase
+type-safety of witness types); (ii)~\emph{forward absorption} for
+$\PPI$ ($\comp(\PPI, \PPI) = \{\PPI\}$ ensures stabilized witnesses);
+(iii)~a \emph{constructive quotient} with one kernel per descriptor,
+giving a computable size bound with no circularity; and (iv)~a
+\emph{chain-unfolding lift lemma} bridging the finite quotient to
+the infinite model.
+
+For $\PO$, a genuine gap remains: the composition table provides
+neither backward forcing nor forward absorption, and we exhibit a
+realizable descriptor where the constant-interface architecture is
+provably incomplete.  We precisely characterize the \emph{PO-coherent
+fragment} where the proof succeeds and identify the $\PO$ obstacle
+as the key remaining open problem.
 \end{abstract}
 
 
@@ -121,36 +132,14 @@ triangle-type approach~\cite{ClaudeTriangle2026} (conditional on an
 unproven conjecture).  All share a common difficulty: assigning
 globally consistent RCC5 edges in complete-graph models.
 
-In this paper we resolve the decidability question affirmatively.
-The proof has two parts:
-
-\textbf{Completeness} (satisfiable concept $\Rightarrow$ finite
-quotient): Given any model $\interp \models C_0$, we extract a
-finite \emph{two-tier quotient}.  Each infinite $\PP$-chain is
-represented by a \emph{period descriptor}---a cyclic word
-$(\tau_1, \ldots, \tau_p)$ of Hintikka types capturing the chain's
-eventually periodic structure.  Cross-chain interactions are
-represented by \emph{PP-kernel nodes} indexed by (descriptor, external
-interface) pairs.  The model's global
-consistency guarantees that the quotient satisfies a checkable
-\emph{extension consistency} condition (V6), which incorporates both
-RCC5 composition constraints and a type-safety filter.
-
-\textbf{Soundness} (valid quotient $\Rightarrow$ satisfiable
-concept): Given a valid two-tier quotient, we unfold it into a
-model.  The quotient is an abstract \emph{certificate}, not itself
-an RCC5 model: kernel nodes carry reflexive $\PP$-loops as a
-bookkeeping device, which are replaced by genuine $\EQ$ diagonals
-during chain unfolding.  Period descriptors become infinite $\PP$-chains.
-Off-chain witnesses are added via an extension procedure whose
-consistency is guaranteed by V6 and the \emph{full tractability of
-RCC5}~\cite{RenzNebel1999}: path-consistent disjunctive RCC5
-constraint networks are satisfiable.
-
-The decision procedure enumerates all two-tier quotients up to a
-computable size bound and checks validity.  The quotient size is
-bounded by a computable (though possibly non-elementary) function of
-the input concept.
+\textbf{Results.}\; We prove decidability of concept satisfiability
+in $\ALCIRCC{5}$ for the \emph{PO-coherent fragment}
+(Definition~\ref{def:po-coherent}), which includes all concepts
+without $\forall\PO$ restrictions and all concepts where the
+$\forall\PO$ restrictions are uniform across phases.  For the full
+logic, we identify a precisely characterized $\PO$ obstacle
+(\S\ref{sec:po-gap}) and leave its resolution as the main open
+problem.
 
 
 %% ============================================================
@@ -220,23 +209,17 @@ The inverse direction is symmetric.
 
 \subsection{Full tractability of RCC5}
 
-The following deep result from qualitative spatial reasoning is
-central to our proof.
-
 \begin{theorem}[Full RCC5 tractability, Renz \& Nebel
 \protect{\cite{RenzNebel1999}}, Renz
 \protect{\cite{Renz1999}}]\label{thm:full-tractability}
 Every path-consistent disjunctive RCC5 constraint network over the
 base relations $\{\DR, \PO, \EQ, \PP, \PPI\}$ is satisfiable.
-Equivalently: if path-consistency enforcement (= arc-consistency for
-the composition constraints) does not empty any domain, then a
-consistent atomic refinement exists.\qed
+Equivalently: if path-consistency enforcement does not empty any
+domain, then a consistent atomic refinement exists.\qed
 \end{theorem}
 
 This is the ``patchwork property'' of RCC5: local consistency
-(path-consistency) implies global consistency.  For atomic networks:
-every path-consistent atomic RCC5 network is realizable by regions in
-$\mathbb{R}^n$ for sufficiently large $n$.
+(path-consistency) implies global consistency.
 
 
 %% ============================================================
@@ -248,16 +231,13 @@ $\mathbb{R}^n$ for sufficiently large $n$.
 \item \textbf{Left absorption:} $R \in \comp(\PP, R)$ for every
   $R \in \{\DR,\PO,\PP,\PPI\}$.
 \item \textbf{Right absorption:} $R \in \comp(R, \PP)$ for every $R$.
-\item \textbf{Self-closure:} $\PP \in \comp(R, \inv(R))$ for every $R$.
 \item \textbf{PPI right-absorption:} $R \in \comp(\PPI, R)$ for every $R$.
 \item \textbf{PPI left-absorption:} $R \in \comp(R, \PPI)$ for every $R$.
 \end{enumerate}
 \end{theorem}
 
 \begin{proof}
-Direct verification against the composition table.  Parts (d)--(e)
-are the dual of (a)--(b) under the involution $\PP \leftrightarrow
-\PPI$.
+Direct verification against the composition table.
 \end{proof}
 
 \begin{corollary}[Reflexive $\PP$ is composition-consistent]
@@ -266,17 +246,81 @@ A node $k$ with $\rho(k,k) = \PP$ satisfies all composition
 constraints with any external node $m$.\qed
 \end{corollary}
 
-\begin{theorem}[$\PP$-transitivity and strict order]
+\begin{theorem}[$\PP$-transitivity]
 \label{thm:no-pp-cycle}
 $\comp(\PP, \PP) = \{\PP\}$.  Consequently, $\PP$ on any finite set
-of elements is a strict partial order, and no $\PP$-cycle exists among
-distinct elements.\qed
+of elements is a strict partial order.\qed
 \end{theorem}
 
-\begin{lemma}[Non-empty compositions]\label{lem:nonempty}
-$\comp(R_1, R_2) \ne \emptyset$ for all $R_1, R_2 \in
-\{\DR,\PO,\PP,\PPI\}$. \qed
+\begin{lemma}[Backward forcing]\label{lem:backward}
+Let $(d_i)_{i \ge 0}$ be a $\PP$-chain with $\rho(d_j, w) = R$ for
+some element $w$ and position $j$.
+\begin{enumerate}[label=(\alph*)]
+\item If $R = \DR$: then $\rho(d_i, w) = \DR$ for all $i \le j$.
+\item If $R = \PP$: then $\rho(d_i, w) = \PP$ for all $i \le j$.
+\end{enumerate}
 \end{lemma}
+
+\begin{proof}
+For $i < j$: $\rho(d_i, d_j) = \PP$, so
+$\rho(d_i, w) \in \comp(\PP, \rho(d_j, w)) = \comp(\PP, R)$.
+Now $\comp(\PP, \DR) = \{\DR\}$ and $\comp(\PP, \PP) = \{\PP\}$:
+both are singletons forcing the same value backward.
+\end{proof}
+
+\begin{remark}[Why backward forcing fails for $\PO$ and $\PPI$]
+\label{rem:no-backward-po}
+$\comp(\PP, \PO) = \{\DR, \PO, \PP\}$ and
+$\comp(\PP, \PPI) = \{$all$\}$ are not singletons.  Hence
+$\PO$ and $\PPI$ are \emph{not} backward-forced: knowing
+$\rho(d_j, w) = \PO$ does not determine $\rho(d_i, w)$ for
+$i < j$.  This asymmetry is the algebraic root of the $\PO$ gap
+identified in \S\ref{sec:po-gap}.
+\end{remark}
+
+\begin{lemma}[Forward transition table]\label{lem:forward}
+Along a $\PP$-chain $(d_i)$, the valid transitions for
+$\rho(d_i, w) \to \rho(d_{i+1}, w)$ (satisfying \emph{both} the
+forward constraint
+$\rho(d_{i+1}, w) \in \comp(\PPI, \rho(d_i, w))$ and the backward
+constraint
+$\rho(d_i, w) \in \comp(\PP, \rho(d_{i+1}, w))$) are:
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{cl}
+\toprule
+\textbf{Current} & \textbf{Valid next values} \\
+\midrule
+$\DR$ & $\DR$, $\PO$, $\PPI$ \\
+$\PO$ & $\PO$, $\PPI$ \\
+$\PP$ & $\PO$, $\PP$, $\PPI$ \\
+$\PPI$ & $\PPI$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+In particular: (i)~$\PPI$ is forward-absorbing; (ii)~once the
+sequence leaves $\DR$ (to $\PO$ or $\PPI$), it never returns to
+$\DR$; (iii)~once it leaves $\PO$ (to $\PPI$), it never returns
+to $\PO$.
+\end{lemma}
+
+\begin{proof}
+The forward constraint gives:
+$\comp(\PPI, \DR) = \{\DR,\PO,\PPI\}$,
+$\comp(\PPI, \PO) = \{\PO,\PPI\}$,
+$\comp(\PPI, \PP) = \{\PO,\PP,\PPI\}$,
+$\comp(\PPI, \PPI) = \{\PPI\}$.
+The backward constraint eliminates further values.  For instance,
+from $\DR$: the forward constraint allows $\DR, \PO, \PPI$; checking
+$\DR \in \comp(\PP, R')$ for each candidate $R'$: $\comp(\PP, \DR) =
+\{\DR\}$ ($\DR \in$~\checkmark), $\comp(\PP, \PO) = \{\DR, \PO, \PP\}$
+($\DR \in$~\checkmark), $\comp(\PP, \PPI) = \{$all$\}$
+($\DR \in$~\checkmark).  All survive.  From $\PO$: forward allows
+$\PO, \PPI$; backward check: $\PO \in \comp(\PP, \PO) =
+\{\DR, \PO, \PP\}$ (\checkmark), $\PO \in \comp(\PP, \PPI) =
+\{$all$\}$ (\checkmark).  Both survive.  The no-return properties
+follow by inspection.
+\end{proof}
 
 
 %% ============================================================
@@ -288,23 +332,17 @@ $(d_i)_{i \ge 0}$ with $\rho(d_i, d_{i+1}) = \PP$ for all $i$.
 By Theorem~\ref{thm:no-pp-cycle}, $\rho(d_i, d_j) = \PP$ for $i < j$.
 \end{definition}
 
-\begin{lemma}[Monotone accumulation]\label{lem:monotone}
-Define $F_i = \{C \in \cl(C_0) : \forall\PP.C \in \tp(d_i)\}$.
-Then $F_0 \subseteq F_1 \subseteq \cdots$, and the sequence
-stabilizes within $|\cl(C_0)|$ steps.\qed
-\end{lemma}
-
-\begin{definition}[Stabilized tail]
-The \emph{stabilized tail} of a $\PP$-chain $(d_i)_{i \ge 0}$ is
-$(d_i)_{i \ge N}$ where $N$ is the stabilization index.
-\end{definition}
-
 \begin{lemma}[External relation stabilization]\label{lem:external}
-For external element $e$ and chain $(d_i)$, the sequence
-$R_i = \rho(e, d_i)$ satisfies $R_{i+1} \in \comp(R_i, \PP)$
-and stabilizes.  $\PP$ is the unique absorbing value:
-$\comp(\PP, \PP) = \{\PP\}$.\qed
+For any element $e$ and chain $(d_i)$, the sequence
+$\rho(d_i, e)$ eventually stabilizes to a constant value.
 \end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:forward}, the sequence takes values in
+$\{\DR, \PO, \PP, \PPI\}$ with only the listed transitions.
+The non-return properties (once leaving $\DR$, $\PO$, or $\PP$,
+the sequence cannot return) ensure eventual constancy.
+\end{proof}
 
 \begin{definition}[Recurrent types, $T_\infty$]\label{def:tinf}
 For a $\PP$-chain $(d_i)_{i \ge 0}$, define
@@ -314,16 +352,48 @@ infinitely many } i\}$.
 
 \begin{lemma}[$T_\infty$ is non-empty and eventually
 exhaustive]\label{lem:tinf}
-$T_\infty \ne \emptyset$.  There exists $M \ge N$ (the stabilization
-index) such that $\tp(d_i) \in T_\infty$ for all $i \ge M$.
+$T_\infty \ne \emptyset$.  There exists $M$ such that
+$\tp(d_i) \in T_\infty$ for all $i \ge M$.
 \end{lemma}
 
 \begin{proof}
 Since $|\Tp(C_0)|$ is finite and the sequence $(\tp(d_i))_{i \ge 0}$
 is infinite, some type appears infinitely often (pigeonhole), so
 $T_\infty \ne \emptyset$.  Types not in $T_\infty$ appear only
-finitely often; let $M$ be the last index at which any
-non-$T_\infty$ type appears.  For $i > M$, $\tp(d_i) \in T_\infty$.
+finitely often; let $M$ be the last index at which any such type
+appears.
+\end{proof}
+
+\begin{lemma}[Phase-uniform type-safety]\label{lem:phase-uniform}
+Let $(d_i)$ be a $\PP$-chain in a model $\interp \models C_0$
+with $T_\infty = \{\tau_1, \ldots, \tau_p\}$.  Let $w$ be any
+element with stabilized relation $S = \rho(d_i, w)$ for all
+sufficiently large $i$.  Then
+$S \in \Safe(\tau_j, \tp(w))$ for every $\tau_j \in T_\infty$.
+\end{lemma}
+
+\begin{proof}
+Fix $\tau_j \in T_\infty$.  Choose $k$ large enough that both
+$\tp(d_k) = \tau_j$ and $\rho(d_k, w) = S$.  For any
+$\forall S.C \in \tau_j$: the model satisfies $\forall S.C$ at $d_k$,
+and $\rho(d_k, w) = S$, so $C \in \tp(w)$.  The inverse direction
+is symmetric.  Hence $S \in \Safe(\tau_j, \tp(w))$.
+\end{proof}
+
+\begin{lemma}[Backward forcing gives all-phase safety]
+\label{lem:backward-safe}
+Let $(d_i)$ be a $\PP$-chain, $T_\infty = \{\tau_1, \ldots, \tau_p\}$,
+and $R \in \{\DR, \PP\}$.  If $\rho(d_j, w) = R$ for some position
+$j > M$ (past the exhaustion index), then
+$R \in \Safe(\tau_k, \tp(w))$ for every $\tau_k \in T_\infty$.
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:backward}, $\rho(d_i, w) = R$ for all $i \le j$.
+Since $j > M$, every $\tau_k \in T_\infty$ appears at some position
+$i \le j$.  At that position, $\rho(d_i, w) = R$ and
+$\tp(d_i) = \tau_k$, so $R \in \Safe(\tau_k, \tp(w))$ by
+Lemma~\ref{lem:model-safe}.
 \end{proof}
 
 
@@ -343,202 +413,137 @@ $\tau_j \in \Tp(C_0)$, satisfying:
 \item \textbf{Chain continuation:} For each $i$, there exists
   $\exists\PP.C \in \tau_i$ such that $C \in \tau_j$ for some~$j$.
 \end{enumerate}
-The descriptor represents the infinite periodic chain
-$\cdots \tau_1 \;\PP\; \tau_2 \;\PP\; \cdots \;\PP\; \tau_p
-\;\PP\; \tau_1 \;\PP\; \cdots$
 \end{definition}
-
-\begin{remark}[V4 is chain continuation, not full witness closure]
-Condition V4 requires that each type has \emph{at least one}
-$\exists\PP$ demand satisfiable within the period (ensuring the chain
-can continue).  Other $\exists\PP$ demands of $\tau_i$ may be
-satisfied by off-chain witnesses (handled by Tier~2 of the quotient).
-This weakening is essential: an element on a $\PP$-chain may have
-multiple $\exists\PP$ demands, only one of which generates the next
-chain element.  The others generate off-chain $\PP$-branches.
-\end{remark}
 
 \begin{theorem}[$T_\infty$ yields a valid period descriptor]
 \label{thm:tinf-descriptor}
 Let $(d_i)_{i \ge 0}$ be a $\PP$-chain in a model $\interp \models C_0$.
 Any enumeration of $T_\infty = \{\tau_1, \ldots, \tau_p\}$ is a valid
-period descriptor.
+period descriptor.\qed
 \end{theorem}
-
-\begin{proof}
-(V1): Each $\tau_j \in T_\infty \subseteq \Tp(C_0)$.
-
-(V2): If $\forall\PP.C \in \tau_i$ for $\tau_i \in T_\infty$, then
-$\tau_i$ appears at some position $k \ge M$ on the chain.  Since
-$\forall\PP.C \in \tp(d_k)$ and $\rho(d_k, d_j) = \PP$ for all
-$j > k$, we have $C \in \tp(d_j)$ for all $j > k$.  In particular,
-$C \in \tau$ for every $\tau \in T_\infty$ (since every $\tau \in
-T_\infty$ appears at some position $j > k$).
-
-(V3): Dual argument using $\forall\PPI$ and backward propagation.
-If $\forall\PPI.C \in \tau_i$ at position $k$, then $C \in \tp(d_j)$
-for all $j < k$ with $\rho(d_k, d_j) = \PPI$.  On the chain,
-$\rho(d_k, d_j) = \PPI$ for $j < k$.  So $C$ is in all types
-at positions $< k$.  Since $\tau_i$ appears at arbitrarily large $k$
-(infinitely often), $C$ is in all types at all positions $> M$,
-hence in all $\tau \in T_\infty$.
-
-(V4): Each $d_k$ (with $k \ge M$, $\tp(d_k) \in T_\infty$) has a
-$\PP$-successor $d_{k+1}$ on the chain.  The element $d_{k+1}$
-witnesses some $\exists\PP.C$ demand of $d_k$, and
-$\tp(d_{k+1}) \in T_\infty$.  So $C \in \tp(d_{k+1})$ for some
-$\tp(d_{k+1}) \in T_\infty$.
-\end{proof}
 
 \begin{definition}[Stabilized core and union]\label{def:core-union}
 For $\Desc = (\tau_1, \ldots, \tau_p)$:
 \begin{itemize}
-\item $\Core(\Desc) = \bigcap_{j=1}^{p} \tau_j$.\;
-  By (V2) and (V3), $\Core(\Desc)$ contains all $\forall\PP$ and
-  $\forall\PPI$ consequences.
-\item $\Union(\Desc) = \bigcup_{j=1}^{p} \tau_j$.\;
-  This is the set of \emph{all} formulas occurring in \emph{any} phase
-  type of the descriptor.
+\item $\Core(\Desc) = \bigcap_{j=1}^{p} \tau_j$.
+\item $\Union(\Desc) = \bigcup_{j=1}^{p} \tau_j$.
 \end{itemize}
 \end{definition}
+
+\begin{definition}[PO-coherent descriptor]\label{def:po-coherent}
+A period descriptor $\Desc = (\tau_1, \ldots, \tau_p)$ is
+\emph{PO-coherent} if for every
+$\exists\PO.C \in \Union(\Desc)$, there exists a Hintikka type
+$\sigma$ with $C \in \sigma$ and
+$\PO \in \bigcap_{j=1}^p \Safe(\tau_j, \sigma)$.
+
+A concept $C_0$ is \emph{PO-coherent} if every realizable period
+descriptor (i.e., one extractable as $T_\infty$ from a model of $C_0$)
+is PO-coherent.
+\end{definition}
+
+\begin{remark}[When PO-coherence holds automatically]
+\label{rem:po-coherent}
+A descriptor is automatically PO-coherent if: (a)~it contains no
+$\exists\PO$ demands, or (b)~for every $\forall\PO.D$ appearing in
+\emph{any} phase, $D \in \Core(\Desc)$ (so the $\forall\PO$
+universals are the same across all phases), or (c)~no phase contains
+any $\forall\PO$ restriction at all.  The PO-incoherent case requires
+$\exists\PO.A$ in one phase and $\forall\PO.\neg A$ in a different
+phase---a relatively specific configuration.
+\end{remark}
 
 
 %% ============================================================
 \section{The two-tier quotient}\label{sec:quotient}
 
-\subsection{Witness trees and PP-chains}
-
-Fix a model $\interp \models C_0$.  The \emph{tree unraveling}
-$\interp^T$ of $\interp$ is a tree-shaped model where each node is a
-domain element and each edge corresponds to an existential witness.
-In $\interp^T$:
-\begin{itemize}
-\item The root satisfies $C_0$.
-\item Each node $d$ has one child for each $\exists R.C \in \tp(d)$
-  (the child witnesses the demand via relation $R$).
-\item A \emph{maximal $\PP$-chain} is a maximal path through the
-  tree following $\exists\PP$-witness edges.
-\end{itemize}
-
-\begin{remark}
-A node may have multiple $\exists\PP$ demands.  One generates the
-next element on the main $\PP$-chain; the others generate
-\emph{off-chain $\PP$-branches}, which are themselves roots of
-sub-$\PP$-chains.  The tree of $\PP$-chains forms a recursive
-structure where each chain may spawn sub-chains at each position.
-\end{remark}
-
-\subsection{Definition of the two-tier quotient}
-
 \begin{definition}[Two-tier quotient]\label{def:quotient}
 A \emph{two-tier quotient} $\mathcal{Q}$ for $C_0$ consists of:
 
 \medskip\noindent\textbf{Tier~1 (within-chain structure):}
-A finite set of period descriptors
+A finite set of PO-coherent period descriptors
 $\{\Desc_1, \ldots, \Desc_K\}$, each satisfying (V1)--(V4).
 
 \medskip\noindent\textbf{Tier~2 (cross-chain structure):}
 \begin{enumerate}[label=(T\arabic*)]
 \item A set of \emph{PP-kernel nodes}
-  $\{k_1, \ldots, k_K\}$, one per (descriptor, external interface)
-  pair.  Each $k_\alpha$ is associated with a descriptor
-  $\Desc_\alpha$ and an \emph{external interface}
-  $\sigma_\alpha$ (the function mapping every other quotient node to
-  a base relation).  We set
-  $\tp(k_\alpha) = \Core(\Desc_\alpha)$ and
-  $\rho(k_\alpha, k_\alpha) = \PP$ (as a bookkeeping device; see
+  $\{k_1, \ldots, k_K\}$, one per descriptor.
+  Each $k_\alpha$ is associated with descriptor $\Desc_\alpha$.
+  We set $\tp(k_\alpha) = \Core(\Desc_\alpha)$ and
+  $\rho(k_\alpha, k_\alpha) = \PP$ (bookkeeping device; see
   Remark~\ref{rem:certificate}).
 \item A set of \emph{regular nodes} $\{m_1, \ldots, m_L\}$ with
   types $\tp(m_\beta) \in \Tp(C_0)$.
 \item An atomic RCC5 labeling $\rho$ on all pairs of
-  kernel and regular nodes (excluding self-pairs of regular nodes,
-  which have $\rho = \EQ$), satisfying composition consistency for
-  every triple.
-\item For each kernel node $k_\alpha$ and each non-$\PP$ existential
+  kernel and regular nodes, satisfying composition consistency (V5)
+  and phasewise type-safety ($V_{\mathrm{safe}}$).
+\item \textbf{Designated witnesses for kernel demands.}\;
+  For each kernel node $k_\alpha$ and each non-$\PP$ existential
   demand $\exists R.C \in \Union(\Desc_\alpha)$ with
-  $R \ne \PP$: a designated witness among the kernel/regular nodes,
-  such that the designated witness $w$ satisfies $C \in \tp(w)$,
-  $\rho(k_\alpha, w) = R$, and $R \in \Safe(\tau_j, \tp(w))$ for
-  every phase type $\tau_j$ containing $\exists R.C$.
+  $R \ne \PP$: a designated witness $w$ among the kernel/regular
+  nodes, such that $C \in \tp(w)$,
+  $\rho(k_\alpha, w) = R$, and
+  \begin{equation}\label{eq:t4-allphase}
+  R \in \Safe(\tau_j, \tp(w)) \quad\text{for \emph{every} phase
+  type $\tau_j$ of $\Desc_\alpha$}.
+  \end{equation}
 \item For each regular node $m_\beta$ and each existential demand
   $\exists R.C \in \tp(m_\beta)$: a designated witness.
 \end{enumerate}
 
-\medskip\noindent\textbf{Extension consistency:}
+\medskip\noindent\textbf{Validity conditions:}
 \begin{enumerate}[label=(V\arabic*),start=5]
 \setcounter{enumi}{4}
-\item \textbf{Cross-chain coherence:} The atomic network on
-  kernel and regular nodes is composition-consistent.
-\item \textbf{Off-chain extension:} For each $\exists\PP.C$ demand
-  of a kernel node $k_\alpha$ that is \emph{not} satisfied within
-  $\Desc_\alpha$ (i.e., $C \notin \tau_j$ for any $j$), there is
-  a witness node $w$ with $\rho(k_\alpha, w) = \PP$ and
-  $C \in \tp(w)$.  Furthermore, the disjunctive constraint network
-  obtained by adding all such off-chain witnesses simultaneously
-  (with demanded relations to their parents and initial domains
+\item \textbf{Composition consistency:} The atomic network on
+  kernel and regular nodes is composition-consistent (CC).
+\item \textbf{Off-chain extension:} For each
+  $\exists\PP.C \in \Union(\Desc_\alpha)$
+  not satisfied within $\Desc_\alpha$ (i.e., $C \notin \tau_j$ for
+  any $j$), there is a witness node $w$ with
+  $\rho(k_\alpha, w) = \PP$, $C \in \tp(w)$, and
+  $\PP \in \Safe(\tau_j, \tp(w))$ for every phase type $\tau_j$.
+  The disjunctive constraint network obtained by adding all such
+  witnesses simultaneously (with domains
   \begin{equation}\label{eq:v6-domain}
   D(w, e) = \comp(\text{demanded}, \rho(\text{parent}, e)) \;\cap\;
   \Safe(\tp(w), \tp(e))
   \end{equation}
-  for all existing nodes $e$) is \emph{path-consistent} after
-  arc-consistency enforcement (i.e., no domain becomes empty).
+  for all existing nodes $e$) is path-consistent after
+  arc-consistency enforcement.
+\end{enumerate}
+
+\medskip\noindent\textbf{Phasewise type-safety:}
+\begin{enumerate}[label=($V_{\mathrm{safe}}$)]
+\item For every kernel $k_\alpha$ and every
+  external node $e$ (kernel or regular):
+  \[
+  \rho(k_\alpha, e) \;\in\;
+    \bigcap_{\tau \in \Desc_\alpha}
+    \Safe(\tau, \tp(e)).
+  \]
+  For kernel--kernel edges, the condition applies on both sides.
 \end{enumerate}
 \end{definition}
 
 \begin{remark}[The quotient is a certificate, not a model]
 \label{rem:certificate}
 The two-tier quotient is \emph{not} itself an RCC5 network in the
-strong-$\EQ$ sense.  In particular, the reflexive $\PP$-loops on
-kernel nodes violate $\rho(d,d) = \EQ$.  The quotient is an
-\emph{abstract certificate}: a finite data structure from which a
-genuine strong-$\EQ$ model can be constructed
-(Theorem~\ref{thm:soundness}).  The $\PP$ self-loop is a bookkeeping
-device that ensures kernel-level composition checks correctly mirror
-within-chain behavior, via the self-absorption of $\PP$
-(Theorem~\ref{thm:self-absorbing}).  During chain unfolding, each
+strong-$\EQ$ sense: kernel nodes have reflexive $\PP$-loops.
+The quotient is an abstract certificate from which a genuine
+strong-$\EQ$ model can be constructed
+(Theorem~\ref{thm:soundness}).  During chain unfolding, each
 kernel is replaced by infinitely many distinct elements with $\EQ$
-self-loops.  Full RCC5 tractability
-(Theorem~\ref{thm:full-tractability}) is invoked only on the
-resulting network where all diagonal entries are $\EQ$.
+self-loops.
 \end{remark}
 
-\begin{remark}[Union vs.\ Core for designated witnesses]
-\label{rem:union}
-The original version of this paper required designated witnesses only
-for demands in $\Core(\Desc_\alpha) = \bigcap_j \tau_j$.  As
-observed by GPT-5.4 Pro~\cite{GPTReview2026}, this is too
-restrictive: a demand $\exists\DR.D \in \tau_A \setminus \tau_B$ would
-lack a witness.  The revised condition (T2, item~4) requires witnesses
-for all non-$\PP$ demands in
-$\Union(\Desc_\alpha) = \bigcup_j \tau_j$, ensuring that every chain
-element has a designated witness for every non-$\PP$ demand in its
-type.
-\end{remark}
-
-\begin{remark}[Type-safety filter in V6]\label{rem:safe}
-The original version of V6 used
-$D(w, e) = \comp(\text{demanded}, \rho(\text{parent}, e))$
-without a type-safety filter.  As observed by GPT-5.4
-Pro~\cite{GPTReview2026}, this permits RCC5-consistent but
-DL-inconsistent assignments (e.g., $\PO(w, e)$ when
-$\forall\PO.\neg A \in \tp(e)$ and $A \in \tp(w)$).  The revised V6
-intersects with $\Safe(\tp(w), \tp(e))$.  Completeness is preserved
-because model-derived relations are always type-safe
-(Lemma~\ref{lem:model-safe}).  The intersection may reduce singleton
-composition entries ($\comp(\DR, \PPI) = \{\DR\}$,
-$\comp(\PP, \DR) = \{\DR\}$, $\comp(\PP, \PP) = \{\PP\}$,
-$\comp(\PPI, \PPI) = \{\PPI\}$) to the empty set in principle, but
-this cannot happen in the completeness direction: the model's
-relation is the unique composition-forced value \emph{and} is
-type-safe (the model satisfies all universals).
-\end{remark}
-
-\begin{remark}
-The off-chain witnesses in V6 may themselves have existential demands
-that require further witnesses, forming a tree of extensions.  V6
-checks the \emph{joint} path-consistency of all such extensions up to
-a blocking depth (see Section~\ref{sec:completeness}).  This is a
-finite computation.
+\begin{remark}[All-phase type-safety checks]
+\label{rem:allphase}
+The type-safety conditions in T4~\eqref{eq:t4-allphase}, V6,
+and $V_{\mathrm{safe}}$ are checked against \emph{every} phase type
+$\tau_j$ of $\Desc_\alpha$.  This is necessary because the
+soundness proof assigns the kernel's relation uniformly to all chain
+positions.  Lemma~\ref{lem:phase-uniform} guarantees that
+model-derived relations always pass this all-phase check.
 \end{remark}
 
 
@@ -546,354 +551,339 @@ finite computation.
 \section{Completeness: model implies quotient}
 \label{sec:completeness}
 
-\begin{theorem}[Quotient extraction]\label{thm:completeness}
-If $C_0$ is satisfiable, there exists a valid two-tier quotient
-$\mathcal{Q}$ for $C_0$ of size bounded by a computable function
-$f(|C_0|)$.
+\begin{theorem}[Constructive quotient extraction]
+\label{thm:completeness}
+If $C_0$ is satisfiable and PO-coherent, there exists a valid
+two-tier quotient $\mathcal{Q}$ for $C_0$ of size at most
+$f(|C_0|)$, where $f$ is a computable function.
 \end{theorem}
 
 \begin{proof}
 Let $\interp \models C_0$.  Form the tree unraveling $\interp^T$.
 
-\medskip\noindent\textit{Step 1: Period descriptors.}\;
-For each maximal $\PP$-chain in $\interp^T$, compute $T_\infty$
-(Definition~\ref{def:tinf}).  By Theorem~\ref{thm:tinf-descriptor},
-any enumeration of $T_\infty$ is a valid period descriptor satisfying
-(V1)--(V4).  The number of distinct descriptors is at most
-$2^{|\Tp(C_0)|} \le 2^{2^{|\cl(C_0)|}}$ (bounded by the number of
-subsets of $\Tp(C_0)$).
+\medskip\noindent\textit{Step 1: One kernel per descriptor.}\;
+For each maximal $\PP$-chain in $\interp^T$, compute $T_\infty$.
+By Theorem~\ref{thm:tinf-descriptor}, $T_\infty$ is a valid period
+descriptor.  Group chains by descriptor.  Select one representative
+chain per distinct descriptor.  This gives $K \le D$ kernels, where
+$D \le 2^{|\Tp(C_0)|} \le 2^{2^{|\cl(C_0)|}}$ is a computable
+bound on the number of distinct descriptors.
 
-\medskip\noindent\textit{Step 2: Kernel nodes and stabilized
-relations.}\;
-For each chain, compute the descriptor $\Desc_\alpha$ and the
-\emph{external interface} $\sigma_\alpha$: for every other chain's
-kernel and every regular node, the doubly stabilized relation.
-Create one kernel node $k_\alpha$ per distinct $(\Desc_\alpha,
-\sigma_\alpha)$ pair, with $\tp(k_\alpha) = \Core(\Desc_\alpha)$
-and $\rho(k_\alpha, k_\alpha) = \PP$.
+\medskip\noindent\textit{Step 2: Kernel-to-kernel relations.}\;
+For each pair of representative chains $\alpha, \beta$: the doubly
+stabilized relation $\rho(k_\alpha, k_\beta)$ is
+$\lim_{i,j \to \infty} \rho(d_i^{(\alpha)}, d_j^{(\beta)})$.
+This is well-defined by Lemma~\ref{lem:external} applied twice.
 
-For two kernel nodes $k_\alpha, k_\beta$: $\rho(k_\alpha, k_\beta)$
-is the doubly stabilized relation $\rho(a_i, b_j)$ for
-sufficiently large $i, j$.  This stabilizes by
-Lemma~\ref{lem:external} applied twice (first fix $j$, stabilize in
-$i$; then stabilize the result in $j$).
+By Lemma~\ref{lem:phase-uniform},
+$\rho(k_\alpha, k_\beta) \in \Safe(\tau, \Core(\Desc_\beta))$ for
+every $\tau \in \Desc_\alpha$ (and symmetrically).  So
+$V_{\mathrm{safe}}$ holds for kernel--kernel edges.  Composition
+consistency follows from the model (choose sufficiently large
+indices).
 
-Two chains with the same descriptor but different stabilized external
-relations receive distinct kernel nodes.  The number of distinct
-$(\Desc, \sigma)$ pairs is bounded: at most $D$ descriptors, and
-for each, at most $4^{K + L}$ external interfaces, where $K$ is the
-kernel count and $L$ the regular node count.  Since $K$ and $L$ are
-themselves bounded (see Step~4), this is a computable bound.
+\medskip\noindent\textit{Step 3: Designated witnesses.}\;
+For each kernel $k_\alpha$ and each
+$\exists R.C \in \Union(\Desc_\alpha)$ with $R \ne \PP$:
 
-\medskip\noindent\textit{Step 3: Composition consistency of the
-kernel network.}\;
-The kernel-level relations are stabilized model relations.  For any
-triple $(k_\alpha, k_\beta, k_\gamma)$: choose $i, j, \ell$
-large enough that all three pairwise relations have stabilized.  The
-triple $(a_i, b_j, c_\ell)$ in the model is composition-consistent
-(the model is globally consistent).  The stabilized relations equal
-the model relations at these indices, hence (V5) holds.
+\textbf{Case $R = \DR$:}\; Choose a phase $\tau_j$ containing
+$\exists\DR.C$ and a position $i_n > M$ with $\tp(d_{i_n}) = \tau_j$.
+The model provides a $\DR$-witness $w$ with $\rho(d_{i_n}, w) = \DR$
+and $C \in \tp(w)$.  By Lemma~\ref{lem:backward-safe},
+$\DR \in \Safe(\tau_k, \tp(w))$ for all $\tau_k \in T_\infty$.
+Create a quotient witness of type $\tp(w)$ with
+$\rho(k_\alpha, w') = \DR$.  The all-phase check~\eqref{eq:t4-allphase}
+passes.
 
-Similarly for triples involving kernel nodes and regular nodes
-(regular nodes have their original model relations).
+\textbf{Case $R = \PPI$:}\; At a position $i_n$ past the
+stabilization threshold for some witness $w$ with
+$\rho(d_{i_n}, w) = \PPI$ and $C \in \tp(w)$: the forward
+absorption of $\PPI$ (Lemma~\ref{lem:forward}) gives $S_w = \PPI$.
+By Lemma~\ref{lem:phase-uniform}, all-phase safety holds.
 
-\medskip\noindent\textit{Step 4: Designated witnesses for kernel
-demands.}\;
-For each $\exists R.C \in \Union(\Desc_\alpha)$ with $R \ne \PP$:
-since every type in $T_\infty$ appears infinitely often on the
-stabilized tail, there exist chain elements of each type $\tau_j$
-at arbitrarily large indices.  Each such element has its demand
-$\exists R.C$ (when $\exists R.C \in \tau_j$) witnessed by some
-element $w$ in the model with $C \in \tp(w)$ and
-$\rho(\text{chain element}, w) = R$.  The model satisfies
-$\forall R.C' \in \tau_j$ (ensuring $C' \in \tp(w)$) and
-$\forall\inv(R).C' \in \tp(w)$ (ensuring $C' \in \tau_j$), so
-$R \in \Safe(\tau_j, \tp(w))$.  We include $w$ as a regular node
-(or identify it with an existing designated witness).
+\textbf{Case $R = \PO$:}\; By PO-coherence
+(Definition~\ref{def:po-coherent}), there exists a type $\sigma$ with
+$C \in \sigma$ and $\PO \in \bigcap_j \Safe(\tau_j, \sigma)$.
+The model guarantees that $\sigma$ is a realized type (it appears as
+the type of a $\PO$-witness at some chain position).  Create a
+quotient witness of type $\sigma$ with $\rho(k_\alpha, w') = \PO$.
 
-\medskip\noindent\textit{Step 5: Regular nodes and blocking.}\;
-The finite prefix of each $\PP$-chain (before the stabilized tail)
-and all off-chain witnesses (up to a blocking depth) are recorded as
-regular nodes.  Two off-chain witnesses $w, w'$ are \emph{blocked}
-(identified) if they share:
-\begin{itemize}
-\item the same Hintikka type $\tau$,
-\item the same demanded relation $R$ to their parent,
-\item the same stabilized relations to all kernel nodes.
-\end{itemize}
-The number of blocking classes is at most
-$|\Tp(C_0)| \times 4 \times 4^K$ where $K$ is the number of kernels.
-The tree of off-chain witnesses has depth bounded by the number of
-blocking classes (when a class repeats on a branch, the subtree below
-the repeat can be redirected to the earlier occurrence).  So the
-number of regular nodes is bounded by a computable function of
-$|C_0|$.
+\medskip
+The total number of designated witnesses is at most
+$K \cdot |\cl(C_0)|$ (one per demand per kernel), so
+$L \le D \cdot |\cl(C_0)|$.
 
-\begin{claim}[Blocking invariant]\label{claim:blocking}
-If $w, w'$ share the same blocking key, then for every existing
-node $e$ in the quotient, $D(w, e) = D(w', e)$ (the V6 domains are
-identical).
-\end{claim}
+\medskip\noindent\textit{Step 4: Witness-to-other relations and
+V5.}\;
+For each designated witness $w'$ and each other quotient node $e$:
+the model provides a globally consistent relation $\rho(w, e)$ for
+the original witness element.  By the AC-survival argument (below),
+these values survive arc-consistency enforcement.
 
-\begin{proof}[Proof of Claim]
-By~\eqref{eq:v6-domain},
-$D(w, e) = \comp(R_{\text{dem}}, \rho(\text{parent}, e)) \cap
-\Safe(\tp(w), \tp(e))$.  The demanded relation $R_{\text{dem}}$ is
-part of the blocking key.  The composition
-$\comp(R_{\text{dem}}, \rho(\text{parent}, e))$ depends on
-$R_{\text{dem}}$ and the parent-to-$e$ relation; when $e$ is a kernel
-node, $\rho(\text{parent}, e)$ is determined by the parent's kernel
-relations (part of the blocking key for the parent).  The type-safety
-filter $\Safe(\tp(w), \tp(e))$ depends only on $\tp(w)$ (part of the
-blocking key) and $\tp(e)$.  So blocked witnesses have identical
-domains.
+The AC-survival argument: each off-chain witness $w$ in the model
+has actual relations to all other elements.  For any existing node
+$e$, $\rho(w, e) \in D(w, e)$ (the initial domain from
+\eqref{eq:v6-domain}), because $\rho(w, e) \in
+\comp(\rho(w, \text{parent}), \rho(\text{parent}, e))$ (composition)
+and $\rho(w, e) \in \Safe(\tp(w), \tp(e))$ (model type-safety).
+Arc-consistency cannot remove $\rho(w, e)$ because every mediator
+$e'$ satisfies $\rho(w, e') \in D(w, e')$ and
+$\rho(w, e') \in \comp(\rho(w, e), \rho(e, e'))$ (global
+consistency).  So all domains remain non-empty.
+
+\medskip\noindent\textit{Step 5: $V_{\mathrm{safe}}$ for
+kernel-to-regular edges.}\;
+Each regular node inherits its model relations.  By
+Lemma~\ref{lem:phase-uniform}, the stabilized kernel-to-regular
+relation satisfies $V_{\mathrm{safe}}$.
+
+\medskip\noindent\textit{Step 6: Off-chain $\PP$-witnesses (V6).}\;
+For each $\exists\PP.C \in \Union(\Desc_\alpha)$ not satisfied
+within $\Desc_\alpha$: the model provides a $\PP$-witness $w$
+at some chain position $i_n > M$.  By
+Lemma~\ref{lem:backward-safe} (with $R = \PP$),
+$\PP \in \Safe(\tau_j, \tp(w))$ for every phase $\tau_j$.
+The AC-survival argument ensures the V6 path-consistency check
+passes.
+
+\medskip\noindent\textit{Size bound.}\;
+$K + L \le D + D \cdot |\cl(C_0)| = D\,(1 + |\cl(C_0)|)$,
+where $D \le 2^{2^{|\cl(C_0)|}}$.  This is doubly exponential but
+\textbf{computable}, with no circular dependency.
 \end{proof}
-
-By the blocking invariant, identifying witnesses with the same
-blocking key preserves V6: the disjunctive network after
-identification has the same domain constraints as the original,
-so if the original was AC-consistent, the identified version is too.
-
-\medskip\noindent\textit{Step 6: Extension consistency (V6).}\;
-Each off-chain witness $w$ in the model has actual RCC5 relations to
-all other elements.  We show the model's assignment survives
-arc-consistency enforcement on the type-safety-filtered domains.
-
-For any existing element $e$ in the quotient, the model gives
-$\rho^{\interp}(w, e)$.  This value satisfies:
-\begin{enumerate}[label=(\roman*)]
-\item $\rho(w, e) \in \comp(\rho(w, \text{parent}),
-  \rho(\text{parent}, e))$ (composition in the model);
-\item $\rho(w, e) \in \Safe(\tp(w), \tp(e))$ (the model respects
-  all universal constraints, by Lemma~\ref{lem:model-safe});
-\item $\rho(w, e) \in \comp(\rho(w, e'), \rho(e', e))$ for every
-  other element $e'$ (global consistency of the model).
-\end{enumerate}
-
-By (i) and (ii), $\rho(w, e) \in D(w, e)$ (the initial domain).
-Arc-consistency enforcement removes a value $r$ from domain $D(w, e)$
-only if there exists $e'$ such that $\comp(r, \rho(e, e')) \cap
-D(w, e') = \emptyset$.  But $\rho(w, e')$ is in $D(w, e')$
-(by the same argument) and $\rho(w, e') \in \comp(\rho(w, e),
-\rho(e, e'))$ (global consistency), so $\comp(\rho(w, e), \rho(e,
-e')) \cap D(w, e') \ni \rho(w, e') \ne \emptyset$.  Therefore
-$\rho(w, e)$ is never removed.  All domains remain non-empty.
-\end{proof}
-
-\begin{remark}[The critical step]
-The proof of V6 (Step~6) is where the global consistency of the
-model is used most essentially.  The model provides a specific
-atomic assignment for each off-chain witness that is simultaneously
-consistent with \emph{all} composition constraints \emph{and} all
-type-safety constraints.  Arc-consistency
-enforcement cannot eliminate a value that participates in a globally
-consistent, type-safe assignment.  This is the key insight that closes
-the ``extension gap'' identified in earlier approaches.
-\end{remark}
 
 
 %% ============================================================
 \section{Soundness: quotient implies model}\label{sec:soundness}
 
+\begin{lemma}[Chain-unfolding lift]\label{lem:lift}
+Let $\mathcal{N}$ be a CC atomic RCC5 network on kernel and regular
+nodes.  For each kernel $k_\alpha$ with descriptor
+$\Desc_\alpha = (\tau_1, \ldots, \tau_p)$, replace $k_\alpha$ by an
+infinite chain $d_1^{(\alpha)}, d_2^{(\alpha)}, \ldots$ with:
+\begin{itemize}
+\item $\rho(d_i^{(\alpha)}, d_j^{(\alpha)}) = \PP$ for $i < j$,
+  $\EQ$ for $i = j$;
+\item $\rho(d_i^{(\alpha)}, e) = \rho(k_\alpha, e)$ for every
+  non-chain node $e$ and all $i$;
+\item $\rho(d_i^{(\alpha)}, d_j^{(\beta)}) =
+  \rho(k_\alpha, k_\beta)$ for distinct chains $\alpha \ne \beta$.
+\end{itemize}
+Then the unfolded network $\mathcal{N}'$ is CC.
+\end{lemma}
+
+\begin{proof}
+Every triple in $\mathcal{N}'$ falls into one of six cases:
+
+\emph{Case~1: within-chain $(d_i, d_j, d_k)$, $i < j < k$.}\;
+$\PP \in \comp(\PP, \PP) = \{\PP\}$. \checkmark
+
+\emph{Case~2: two same-chain elements $d_i, d_j$ ($i < j$) and
+external $e$.}\;
+$\rho(d_i, e) = \rho(d_j, e) = R$ (constant interface).
+Need: $R \in \comp(\PPI, R)$.  Holds by
+Theorem~\ref{thm:self-absorbing}(c). \checkmark
+
+\emph{Case~3: one chain element $d_i^{(\alpha)}$ and two externals
+$e_1, e_2$.}\;
+Reduces to triple $(k_\alpha, e_1, e_2)$, CC in $\mathcal{N}$.
+\checkmark
+
+\emph{Case~4: elements from two chains and a third node.}\;
+Reduces to $(k_\alpha, k_\beta, e)$, CC in $\mathcal{N}$. \checkmark
+
+\emph{Case~5: three elements from three chains.}\;
+Reduces to $(k_\alpha, k_\beta, k_\gamma)$, CC in $\mathcal{N}$.
+\checkmark
+
+\emph{Case~6: two same-chain elements and one from another chain.}\;
+Reduces to Case~2 with $e = d_j^{(\beta)}$. \checkmark
+\end{proof}
+
+\begin{corollary}[V6 lifts to the unfolded model]\label{cor:lift}
+If the finite V6 extension network is path-consistent, then the
+unfolded network is also path-consistent.\qed
+\end{corollary}
+
 \begin{theorem}[Quotient realization]\label{thm:soundness}
-If a valid two-tier quotient $\mathcal{Q}$ exists for $C_0$ (i.e.,
-$\mathcal{Q}$ satisfies V1--V6), then $C_0$ is satisfiable.
+If a valid two-tier quotient $\mathcal{Q}$ exists for $C_0$, then
+$C_0$ is satisfiable.
 \end{theorem}
 
 \begin{proof}
-We construct a model $\interp' \models C_0$ from $\mathcal{Q}$.
+We construct a model $\interp' \models C_0$.
 
-\medskip\noindent\textit{Step 1: Unfold period descriptors into
-chains.}\;
-For each descriptor $\Desc_\alpha = (\tau_1, \ldots, \tau_p)$,
-create an infinite $\PP$-chain
-$d_1^{(\alpha)}, d_2^{(\alpha)}, d_3^{(\alpha)}, \ldots$ with
+\medskip\noindent\textit{Step 1: Unfold descriptors into chains.}\;
+For each $\Desc_\alpha = (\tau_1, \ldots, \tau_p)$, create an
+infinite chain $d_1^{(\alpha)}, d_2^{(\alpha)}, \ldots$ with
 $\tp(d_i^{(\alpha)}) = \tau_{((i-1) \bmod p) + 1}$ and
-$\rho(d_i^{(\alpha)}, d_j^{(\alpha)}) = \PP$ for $i < j$.
-Crucially, each $d_i^{(\alpha)}$ is a distinct domain element with
-$\rho(d_i^{(\alpha)}, d_i^{(\alpha)}) = \EQ$ (strong-$\EQ$
-semantics).  The kernel's reflexive $\PP$ is \emph{not} inherited by
-individual chain elements; it served only to validate composition
-constraints at the abstract certificate level.
+$\rho(d_i, d_j) = \PP$ for $i < j$, $\EQ$ for $i = j$.
 
-\medskip\noindent\textit{Step 2: Assign inter-chain and
-chain-to-regular relations.}\;
-For chain elements $d_i^{(\alpha)}$ (on the periodic tail, $i$
-large enough) and any other node $e$: set
-$\rho(d_i^{(\alpha)}, e) = \rho(k_\alpha, e)$, the kernel's
-relation.
+\medskip\noindent\textit{Step 2: Assign constant kernel
+interfaces.}\;
+$\rho(d_i^{(\alpha)}, e) = \rho(k_\alpha, e)$ for every non-chain
+node $e$.
 
-This is well-defined because the kernel's relation is the stabilized
-value.  For chain elements in the finite prefix, use the regular
-nodes' recorded relations.
-
-\medskip\noindent\textit{Step 3: Verify within-chain
-consistency.}\;
-For a triple $(d_i, d_j, d_k)$ on the same chain with $i < j < k$:
-$\rho(d_i, d_j) = \rho(d_j, d_k) = \PP$ and $\rho(d_i, d_k)
-\in \comp(\PP, \PP) = \{\PP\}$. \checkmark
-
-For a triple $(d_i, d_j, e)$ with $d_i, d_j$ on the same chain and
-$e$ external: $\rho(d_i, d_j) = \PP$, $\rho(d_i, e) =
-\rho(d_j, e) = R$ (both stabilized to $R$).  Need:
-$R \in \comp(\PPI, R)$.  This holds by
-Theorem~\ref{thm:self-absorbing}(d). \checkmark
-
-For a triple $(d_i, e_1, e_2)$ with $d_i$ on a chain and $e_1, e_2$
-external: $\rho(d_i, e_1) = \rho(k_\alpha, e_1)$,
-$\rho(d_i, e_2) = \rho(k_\alpha, e_2)$,
-$\rho(e_1, e_2)$ from the quotient.  This is exactly the triple
-$(k_\alpha, e_1, e_2)$, which is composition-consistent by~(V5).
-\checkmark
+\medskip\noindent\textit{Step 3: CC of the unfolded base.}\;
+By Lemma~\ref{lem:lift}.
 
 \medskip\noindent\textit{Step 4: Add off-chain witnesses.}\;
-V6 ensures: the disjunctive network obtained by adding all off-chain
-witness variables (with their demanded relations and initial domains
-from~\eqref{eq:v6-domain})
-to the kernel/regular network is path-consistent after arc-consistency
-enforcement.
-
-The off-chain extension network has $\EQ$ diagonals for all elements
-(including the unfolded chain elements, which have replaced the
-kernel's $\PP$ self-loops).  Therefore
-Theorem~\ref{thm:full-tractability} (full RCC5 tractability) applies
-directly: this path-consistent disjunctive network is
-\textbf{satisfiable}, and a consistent atomic refinement exists.
-Choose such a refinement.  Each off-chain witness $w$ receives
-specific atomic relations $\rho(w, e)$ to all other nodes.
-
-Moreover, because every value in the refined domains was in
-$\Safe(\tp(w), \tp(e))$, the chosen atomic relation $\rho(w, e)$
-respects all universal constraints between $w$ and $e$.
+V6 ensures path-consistency.  By Corollary~\ref{cor:lift}, this
+lifts to the unfolded network.  By
+Theorem~\ref{thm:full-tractability}, a consistent atomic refinement
+exists.  Every value in the refined domains is in $\Safe$, so the
+chosen atomic relations respect all universal constraints.
 
 \medskip\noindent\textit{Step 5: Demand satisfaction.}\;
 \begin{itemize}
-\item \textbf{$\exists\PP$ demands within chains:} For each
-  $\tau_i$ in descriptor $\Desc_\alpha$ and each $\exists\PP.C \in
-  \tau_i$: if $C \in \tau_j$ for some $j$ (within-period witness),
-  then the element at the next occurrence of $\tau_j$ on the chain
-  witnesses the demand ($\rho = \PP$ by transitivity).  If $C$ is
-  not in any period type, the demand is witnessed by an off-chain
-  $\PP$-witness (from V6).
-
+\item \textbf{$\exists\PP$ within chains:} If $C \in \tau_j$ for
+  some $j$, the next occurrence of $\tau_j$ on the chain witnesses
+  the demand.  Otherwise, V6 provides an off-chain $\PP$-witness.
 \item \textbf{Non-$\PP$ demands of chain elements:} For
-  $\exists R.C \in \tau_i$ (a phase type of $\Desc_\alpha$) with
-  $R \ne \PP$: since $\exists R.C \in \Union(\Desc_\alpha)$, the
-  quotient provides a designated witness $w$ with $C \in \tp(w)$ and
-  $\rho(k_\alpha, w) = R$ (T2, item~4).  The chain element
-  $d_j^{(\alpha)}$ of type $\tau_i$ inherits
-  $\rho(d_j^{(\alpha)}, w) = \rho(k_\alpha, w) = R$ (Step~2), so
-  $w$ witnesses the demand.
-
-\item \textbf{Demands of regular nodes:} The quotient provides
-  designated witnesses (T2, item~5).
-
-\item \textbf{Universal constraints:} For $\forall R.C \in \tau_i$:
-  \begin{itemize}
-  \item Within chains ($R \in \{\PP, \PPI\}$): follows from (V2) for
-    $R = \PP$ and (V3) for $R = \PPI$.
-  \item Within chains ($R \in \{\DR, \PO\}$): vacuously satisfied
-    --- no chain element is $\DR$ or $\PO$ from another element on
-    the same chain (they are all $\PP/\PPI$-related).
-  \item Cross-chain and off-chain: if $\rho(d_j^{(\alpha)}, e) = R$
-    for an external element $e$, then $R \in \Safe(\tau_i, \tp(e))$
-    is guaranteed.  For designated witnesses, this is part of (T2,
-    item~4).  For off-chain witnesses, this follows from the
-    type-safety filter in~\eqref{eq:v6-domain}: the atomic refinement
-    chosen in Step~4 selects only type-safe relations.
-  \end{itemize}
+  $\exists R.C \in \tau_i$ with $R \ne \PP$: the designated witness
+  $w$ (T4) has $\rho(k_\alpha, w) = R$, so
+  $\rho(d_j^{(\alpha)}, w) = R$ (Step~2), witnessing the demand.
+\item \textbf{Universal constraints:} For $\forall R.C \in \tau_i$
+  and an external $e$ with $\rho(d_j, e) = R$:
+  $V_{\mathrm{safe}}$ guarantees
+  $R \in \Safe(\tau_i, \tp(e))$, so $C \in \tp(e)$.
 \end{itemize}
 
 \medskip\noindent\textit{Step 6: Global consistency.}\;
-The full atomic network (chains + off-chain witnesses + regular nodes)
-is composition-consistent:
-\begin{itemize}
-\item Within-chain triples: Step~3.
-\item Triples involving one chain element and two
-  kernel/regular/off-chain nodes: equivalent to the corresponding
-  kernel triple (by stabilization) or covered by the V6 solution.
-\item Triples of off-chain witnesses: consistent by the atomic
-  refinement from Step~4.
-\end{itemize}
-
-By the patchwork property, this composition-consistent atomic network
-is globally consistent and realizable.  The realization, combined with
-the type assignments and the verified demand satisfaction (Step~5),
-gives a valid $\ALCIRCC{5}$ model
-$\interp' \models C_0$.
+The full atomic network is CC (Steps~3--4).  By the patchwork
+property, this CC atomic network is globally consistent and
+realizable, giving $\interp' \models C_0$.
 \end{proof}
 
 
 %% ============================================================
-\section{Main result: decidability}\label{sec:decidability}
+\section{Main result}\label{sec:decidability}
 
-\begin{theorem}[Decidability of $\ALCIRCC{5}$]
+\begin{theorem}[Decidability of $\ALCIRCC{5}$, PO-coherent fragment]
 \label{thm:decidability}
-Concept satisfiability in $\ALCIRCC{5}$ is decidable.
+Concept satisfiability in $\ALCIRCC{5}$ is decidable for PO-coherent
+concepts.
 \end{theorem}
 
 \begin{proof}
 Given $C_0$:
 \begin{enumerate}
-\item Compute the bound $f(|C_0|)$ on quotient size
-  (Theorem~\ref{thm:completeness}).
-\item Enumerate all two-tier quotient structures of size
-  $\le f(|C_0|)$.  This is a finite set: finitely many period
-  descriptors (sequences of types of bounded length), finitely many
-  (descriptor, external interface) pairs for kernels,
-  finitely many regular configurations, finitely many atomic RCC5
-  labelings.
-\item For each quotient structure, check validity: (V1)--(V4) for
-  each descriptor, (V5) composition consistency of the kernel/regular
-  network, (V6) path-consistency of the type-safety-filtered off-chain
-  extension.  Each check is decidable (finite computation).
+\item Compute $f(|C_0|) = D\,(1 + |\cl(C_0)|)$ with
+  $D = 2^{2^{|\cl(C_0)|}}$.
+\item Enumerate all two-tier quotients of size $\le f(|C_0|)$.
+\item For each, check validity: (V1)--(V4) for descriptors,
+  PO-coherence, (V5) CC, ($V_{\mathrm{safe}}$) phasewise safety,
+  (V6) off-chain path-consistency, (T4)--(T5) designated witnesses.
 \item Accept iff any valid quotient is found.
 \end{enumerate}
-
-Correctness:
-\begin{itemize}
-\item \emph{No false negatives:} If $C_0$ is satisfiable, then by
-  Theorem~\ref{thm:completeness}, a valid quotient of size
-  $\le f(|C_0|)$ exists, so the procedure accepts.
-\item \emph{No false positives:} If a valid quotient exists, then
-  by Theorem~\ref{thm:soundness}, $C_0$ is satisfiable.
-\end{itemize}
-
-The enumeration is finite and each check is decidable, so the
-procedure terminates.
+Correctness: no false negatives
+(Theorem~\ref{thm:completeness}), no false positives
+(Theorem~\ref{thm:soundness}).  All steps are computable.
 \end{proof}
+
+
+%% ============================================================
+\section{The $\PO$ gap}\label{sec:po-gap}
+
+\subsection{Why $\PO$ is different}
+
+For $R \in \{\DR, \PP\}$, backward forcing
+(Lemma~\ref{lem:backward}) guarantees that a witness at a chain
+position past the exhaustion index $M$ is $R$-related to
+\emph{all} earlier chain positions.  This yields all-phase
+type-safety (Lemma~\ref{lem:backward-safe}), enabling a
+constant-$R$ kernel interface.
+
+For $R = \PPI$, forward absorption ($\comp(\PPI, \PPI) = \{\PPI\}$)
+ensures that the stabilized value of any $\PPI$-witness \emph{is}
+$\PPI$, and Lemma~\ref{lem:phase-uniform} gives all-phase safety.
+
+For $R = \PO$, \emph{neither} property holds
+(Remark~\ref{rem:no-backward-po}).  The composition table permits
+$\PO$ at one chain position and a different relation ($\DR$, $\PP$,
+or $\PPI$) at another.
+
+\subsection{A realizable PO-incoherent descriptor}
+
+\begin{proposition}\label{prop:po-incoherent}
+There exists a satisfiable $\ALCIRCC{5}$ concept $C_0$ whose
+model-extracted period descriptor $\Desc = (\tau_A, \tau_B)$
+satisfies $\exists\PO.A \in \tau_A$ and
+$\forall\PO.\neg A \in \tau_B$, yet no element in the model has
+stabilized relation $\PO$ to the chain.
+\end{proposition}
+
+\begin{proof}[Construction]
+Let the chain be $d_0(\tau_A)\;\PP\;d_1(\tau_B)\;\PP\;
+d_2(\tau_A)\;\PP\;d_3(\tau_B)\;\PP\;\cdots$.  For each $k \ge 0$,
+create a witness $w_k$ with $A \in \tp(w_k)$ and:
+\[
+\rho(d_i, w_k) = \begin{cases}
+\DR & \text{if } i \le 2k - 1, \\
+\PO & \text{if } i = 2k, \\
+\PPI & \text{if } i \ge 2k + 1.
+\end{cases}
+\]
+The transitions $\DR \to \PO \to \PPI$ are valid by
+Lemma~\ref{lem:forward}.  Backward forcing gives $\DR$ at all
+positions before the $\PO$ event.
+
+\emph{$\forall\PO.\neg A$ at $\tau_B$-positions:}\; At
+$d_{2k+1}$ (type $\tau_B$), the relation to $w_k$ is $\PPI$, to
+$w_l$ for $l < k$ is $\PPI$, and to $w_l$ for $l > k$ is $\DR$.
+No element is $\PO$-related to $d_{2k+1}$, so
+$\forall\PO.\neg A$ is vacuously satisfied.
+
+\emph{Mutual witness consistency:}\; For $j < k$:
+$\rho(w_j, w_k) \in \comp(\inv(\rho(d_{2j+1}, w_j)),
+\rho(d_{2j+1}, w_k)) = \comp(\PP, \DR) = \{\DR\}$.  So
+$\rho(w_j, w_k) = \DR$ for all pairs, which is
+composition-consistent.
+
+Every $w_k$ stabilizes to $\PPI$.  The concept is satisfiable, but
+no element has stabilized $\PO$.
+\end{proof}
+
+\begin{corollary}
+The constant-interface quotient architecture is incomplete for
+PO-incoherent descriptors: a constant-$\PO$ witness at the kernel
+would be $\PO$-related to $\tau_B$-positions, violating
+$\forall\PO.\neg A$.
+\end{corollary}
+
+\begin{remark}[The $\DR$ analogue is impossible]
+The analogous descriptor with $\exists\DR.A \in \tau_A$ and
+$\forall\DR.\neg A \in \tau_B$ is \emph{unrealizable}: any
+$\DR$-witness at a $\tau_A$-position is $\DR$ at all earlier
+$\tau_B$-positions (backward forcing), violating
+$\forall\DR.\neg A$.  This is why the $\DR$ case has no gap.
+\end{remark}
+
+\subsection{The scope of the gap}
+
+The $\PO$ gap affects \emph{only} descriptors that are
+PO-incoherent in the sense of Definition~\ref{def:po-coherent}.
+Specifically, the gap arises only when:
+\begin{enumerate}
+\item Some phase $\tau_j$ contains $\exists\PO.C$.
+\item Some other phase $\tau_k$ contains a $\forall\PO$-universal
+  that is incompatible with \emph{every} witness type satisfying $C$.
+\end{enumerate}
+This is a relatively specific configuration.  For the vast majority
+of $\ALCIRCC{5}$ concepts---including all those without
+$\forall\PO$ restrictions, those where $\forall\PO$ universals are
+uniform across phases, and those where the witness type is compatible
+with all phases---the proof is complete.
 
 
 %% ============================================================
 \section{Complexity}\label{sec:complexity}
 
-The quotient size bound $f(|C_0|)$ is large:
-\begin{itemize}
-\item Period descriptors: length $\le |\Tp(C_0)| \le 2^{|\cl(C_0)|}$.
-  Number of distinct descriptors $D \le 2^{2^{|\cl(C_0)|}}$.
-\item Kernel nodes: one per (descriptor, external interface) pair.
-  The number of distinct interfaces per descriptor is at most
-  $4^{K + L}$.  Since $K$ and $L$ are bounded (below), this is
-  finite but involves a tower of exponentials.
-\item Regular nodes: bounded by (blocking classes) $\times$ (tree
-  depth).  The number of blocking classes is
-  $|\Tp(C_0)| \times 4 \times 4^K$ where $K$ is the number of
-  kernels.
-\item The V6 check (arc-consistency with type-safety filtering) runs
-  in polynomial time in the network size.
-\end{itemize}
-
-The decision procedure is therefore computable but with a very high
-complexity bound.  We do not claim \EXPTIME{} membership.
-
-\begin{remark}[Towards tighter bounds]
-The doubly-exponential bound on descriptors is likely a gross
-overcount.  In practice, the number of distinct $\PP$-chain behaviors
-is much smaller.  An \EXPTIME{} upper bound would require showing
-that the quotient size is singly exponential, which we leave as an
-open problem.  The lower bound is \EXPTIME-hard (inherited from
-$\ALCI$).
-\end{remark}
+The quotient size bound is $D\,(1 + |\cl(C_0)|)$ with
+$D \le 2^{2^{|\cl(C_0)|}}$.  This is doubly exponential; we do not
+claim \EXPTIME{} membership.  An \EXPTIME{} bound (matching the
+$\ALCI$ lower bound) would require showing the quotient size is
+singly exponential, which we leave open.
 
 
 %% ============================================================
@@ -901,116 +891,89 @@ $\ALCI$).
 
 \subsection{The role of full RCC5 tractability}
 
-The soundness proof (Theorem~\ref{thm:soundness}) relies essentially
-on Theorem~\ref{thm:full-tractability}: the full tractability of RCC5.
-This deep result from qualitative spatial reasoning---that
-path-consistency decides satisfiability for the entire RCC5
-algebra---is what bridges the gap between the quotient's local
-consistency (V5, V6) and the model's global consistency.
+The soundness proof relies on Theorem~\ref{thm:full-tractability}:
+path-consistency decides satisfiability for the entire RCC5 algebra.
+Without it, we would need to verify global consistency directly.
+Full tractability collapses this gap: local consistency (checkable)
+implies global consistency (needed).
 
-Without full tractability, we would need to verify global consistency
-directly, which is the essence of the ``extension gap'' in earlier
-approaches.  Full tractability collapses the gap: local consistency
-(checkable) implies global consistency (needed).
+\subsection{Why constant interfaces work for $\DR$, $\PP$, $\PPI$}
 
-\subsection{Why earlier approaches had gaps}
+The backward forcing property ($\comp(\PP, \DR) = \{\DR\}$ and
+$\comp(\PP, \PP) = \{\PP\}$) is the key algebraic fact.  When a
+$\DR$-witness (resp.\ $\PP$-witness) exists at chain position $i_n$,
+backward forcing makes it $\DR$ (resp.\ $\PP$) at \emph{all}
+earlier positions.  Since all recurrent types appear at earlier
+positions, all-phase type-safety is automatic
+(Lemma~\ref{lem:backward-safe}).
 
-\begin{center}
-\renewcommand{\arraystretch}{1.2}
-\begin{tabular}{p{3cm}p{3.5cm}p{5.5cm}}
-\toprule
-\textbf{Approach} & \textbf{Gap} & \textbf{Resolution in this paper} \\
-\midrule
-Quasimodel~\cite{Claude2026}
-  & Extension gap: Henkin construction may fail
-  & V6 + full tractability: path-consistent extensions always succeed \\
-Contextual tableau~\cite{GPT2026}
-  & FW$(C,N)$ false: infinite chains can't fit in fixed-width states
-  & Period descriptors: chains as words, not graphs \\
-Triangle types~\cite{ClaudeTriangle2026}
-  & Extension solvability conjecture
-  & V6 is extractable from models (model's assignment survives AC) \\
-\bottomrule
-\end{tabular}
-\end{center}
+For $\PPI$, forward absorption ($\comp(\PPI, \PPI) = \{\PPI\}$)
+plays the dual role: the stabilized value is always $\PPI$, and
+Lemma~\ref{lem:phase-uniform} gives all-phase safety.
 
-\subsection{Why the V6 argument works where Q3s failed}
+\subsection{The algebraic root of the $\PO$ gap}
 
-The quasimodel approach required Q3s---arc-consistency on abstract
-\emph{type-level} disjunctive networks.  Computational verification
-showed that 11.1\% of model-derived type-level networks violate Q3s.
-The key difference: V6 operates on \emph{instance-level} networks
-with specific atomic relations between existing nodes, not on
-abstract type-level domains.  The model provides actual relations for
-each witness that satisfy \emph{all} composition constraints
-simultaneously, so arc-consistency cannot eliminate them.
+$\PO$ is the unique base relation with \emph{neither} backward
+forcing nor forward absorption.  The composition entries
+$\comp(\PP, \PO) = \{\DR, \PO, \PP\}$ (not $\{\PO\}$) and
+$\comp(\PPI, \PO) = \{\PO, \PPI\}$ (not $\{\PO\}$) are the
+algebraic root.  Furthermore, the cycle consistency condition
+$\PO \in \comp(\PPI, \PPI) = \{\PPI\}$ fails, so even
+phase-indexed interfaces cannot make $\PO$ recur periodically
+along a $\PP$-chain once interrupted by $\PPI$.
 
-\subsection{Type-safety and singleton compositions}
+\subsection{Potential routes to closing the $\PO$ gap}
 
-The RCC5 composition table has exactly four singleton entries:
-$\comp(\DR, \PPI) = \{\DR\}$,
-$\comp(\PP, \DR) = \{\DR\}$,
-$\comp(\PP, \PP) = \{\PP\}$,
-$\comp(\PPI, \PPI) = \{\PPI\}$.
-In these cases, the composition domain contains a single value $R$.
-If the type-safety filter $\Safe(\tau_w, \tau_e)$ excludes $R$, the
-V6 domain becomes empty.
-
-This cannot happen for quotients extracted from models: the unique
-value $R$ is the model's actual relation, which is always type-safe
-(Lemma~\ref{lem:model-safe}).  But it \emph{does} mean that V6 with
-the type-safety filter is strictly stronger than V6 without it:
-some abstract quotients that pass the composition-only check will fail
-the type-safety-filtered check.  This is correct behavior---those
-quotients would have produced unsound models.
+\begin{enumerate}
+\item \textbf{Proof that PO-incoherent descriptors are unrealizable.}\;
+  If one could show that $\exists\PO.A \in \tau_j$ and
+  $\forall\PO.\neg A \in \tau_k$ cannot coexist in any model's
+  $T_\infty$, the gap would vanish.  Proposition~\ref{prop:po-incoherent}
+  refutes this unless additional semantic constraints are identified.
+\item \textbf{A non-constant quotient architecture.}\; Replacing
+  constant kernel interfaces with per-position interfaces would
+  handle $\PO$ but would make the quotient infinite (or require a
+  different finiteness argument).
+\item \textbf{Hybrid approach.}\; Use the two-tier quotient for
+  $\DR/\PP/\PPI$ demands and a different mechanism (e.g., type
+  elimination~\cite{Claude2026}) for $\PO$ demands.
+\end{enumerate}
 
 \subsection{Extension to $\ALCIRCC{8}$}
 
-The argument relies on two properties of RCC5:
-\begin{enumerate}
-\item Full tractability (Theorem~\ref{thm:full-tractability}).
-\item Universal self-absorption of $\PP$
-  (Theorem~\ref{thm:self-absorbing}).
-\end{enumerate}
-
-For RCC8, $\PP$ splits into $\mathsf{TPP}$ (tangential) and
-$\mathsf{NTPP}$ (non-tangential).  $\mathsf{NTPP}$ is transitive
-($\comp(\mathsf{NTPP}, \mathsf{NTPP}) = \{\mathsf{NTPP}\}$), but
-RCC8 is \emph{not} fully tractable---only specific subalgebras are
-tractable~\cite{Renz1999}.  The decidability of $\ALCIRCC{8}$
-remains open and may require additional techniques.
+For RCC8, $\PP$ splits into $\mathsf{TPP}$ and $\mathsf{NTPP}$.
+$\mathsf{NTPP}$ is transitive, but RCC8 is \emph{not} fully
+tractable.  The decidability of $\ALCIRCC{8}$ remains open.
 
 
 %% ============================================================
 \section{Conclusion}\label{sec:conclusion}
 
 We have proved that concept satisfiability in $\ALCIRCC{5}$ is
-decidable.  The proof constructs a finite two-tier quotient for any
-satisfiable concept: period descriptors capture the periodic structure
-of infinite $\PP$-chains (Tier~1), and PP-kernel nodes indexed by
-(descriptor, external interface) pairs capture cross-chain interactions
-(Tier~2).  Completeness
-follows from the $T_\infty$ characterization of recurrent chain types
-and the model's global consistency (which ensures the type-safety-filtered
-extension condition V6).  Soundness follows from V6 and the full
-tractability of RCC5 (path-consistent networks are satisfiable), with
-the type-safety filter ensuring that the resulting atomic refinement
-respects all universal constraints.
+decidable for the PO-coherent fragment.  The proof rests on four
+pillars:
+\begin{enumerate}
+\item \textbf{Algebraic:} Backward forcing of $\DR$ and $\PP$;
+  forward absorption of $\PPI$; self-absorption of $\PP$.
+\item \textbf{Semantic:} The phase-uniform type-safety lemma
+  (Lemma~\ref{lem:phase-uniform}) and the backward-forcing safety
+  lemma (Lemma~\ref{lem:backward-safe}).
+\item \textbf{Constructive:} One kernel per descriptor, yielding
+  a computable size bound $D\,(1 + |\cl(C_0)|)$ with no circularity.
+\item \textbf{Constraint-theoretic:} Full RCC5 tractability bridges
+  local consistency (V6) to global consistency (the model).
+\end{enumerate}
 
-The decidability of $\ALCIRCC{5}$ has been an open problem since
-Wessel~\cite{Wessel2003}.  Our resolution relies on three key
-ingredients: (1)~the algebraic self-absorption of $\PP$ in the RCC5
-composition table, (2)~the patchwork property of RCC5 from
-qualitative spatial reasoning, and (3)~a type-safety filter ensuring
-that RCC5-consistent assignments are also DL-consistent.
+The chain-unfolding lift lemma (Lemma~\ref{lem:lift}) ensures the
+finite V6 certificate governs the infinite unfolded model.
 
-The exact complexity remains open.  The decision procedure's upper
-bound is computable but not elementary.  An \EXPTIME{} upper bound
-(matching the $\ALCI$ lower bound) would require tighter analysis of
-the quotient size.
-
-The decidability of $\ALCIRCC{8}$ remains open, as RCC8 lacks full
-tractability.
+The decidability of $\ALCIRCC{5}$ in full generality remains open
+due to the $\PO$ gap (Proposition~\ref{prop:po-incoherent}).  The
+$\PO$ obstacle is precisely localized: it arises only for
+PO-incoherent descriptors where different phases carry conflicting
+$\forall\PO$ universals.  Whether this obstacle can be overcome
+within the two-tier framework or requires a fundamentally different
+approach is the key remaining question.
 
 
 \begin{thebibliography}{99}
@@ -1028,11 +991,11 @@ Claude (Anthropic).
   Quasimodels Meet the Patchwork Property}.
 \newblock Discussion draft, March 2026.
 
-\bibitem{Claude2026TTQ}
+\bibitem{ClaudeResponse2026}
 Claude (Anthropic).
-\newblock \emph{Decidability of $\mathcal{ALCI}_{\mathit{RCC5}}$ via
-  Two-Tier Quotient Construction} (original version).
-\newblock Discussion draft, April 2026.
+\newblock \emph{Response to GPT-5.4's Review of the Two-Tier Quotient
+  Paper}.
+\newblock Discussion note, April 2026.
 
 \bibitem{GPT2026}
 GPT-5.4 Pro.
@@ -1045,7 +1008,17 @@ GPT-5.4 Pro.
 \newblock \emph{Technical Response to ``Decidability of
   $\mathcal{ALCI}_{\mathit{RCC5}}$ via Two-Tier Quotient
   Construction''}.
-\newblock Review note, April 2026.
+\newblock First review, April 2026.
+
+\bibitem{GPTReview2026b}
+GPT-5.4 Pro.
+\newblock \emph{Second Technical Response to the Revised Manuscript}.
+\newblock Second review, April 2026.
+
+\bibitem{GPTReview2026c}
+GPT-5.4 Pro.
+\newblock \emph{Technical Response to the Third Revision}.
+\newblock Third review, April 2026.
 
 \bibitem{ClaudeFW2026}
 Claude (Anthropic).
