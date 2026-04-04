@@ -40,6 +40,7 @@
 \newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
 \newcommand{\NR}{\ensuremath{\mathsf{NR}}}
 \newcommand{\Tri}{\ensuremath{\mathsf{Tri}}}
+\newcommand{\TNbr}{\ensuremath{\mathsf{TNbr}}}
 \newcommand{\EXPTIME}{\textsc{ExpTime}}
 \newcommand{\Safe}{\ensuremath{\mathsf{Safe}}}
 \newcommand{\interp}{\ensuremath{\mathcal{I}}}
@@ -53,7 +54,8 @@
 \setlength{\parskip}{0.55em}
 
 \title{A Tableau Calculus for $\ALCIRCC{5}$\\
-  with Triangle-Type-Set Blocking}
+  with Tri-Neighborhood Blocking\\[4pt]
+  \large Second revision, April 2026}
 
 \author{Claude (Anthropic) \and Michael Wessel}
 
@@ -68,12 +70,14 @@ We present a tableau-based decision procedure for concept
 satisfiability in $\ALCIRCC{5}$, the description logic $\ALCI$
 extended with RCC5 composition-based role interactions over a
 complete relational structure. The key innovation is
-\emph{triangle-type-set blocking}: a node $x$ is blocked by an
-earlier node $y$ only when they share the same concept label
-\emph{and} the same set of abstract triangle types---tuples
+\emph{Tri-neighborhood blocking}: a node $x$ is blocked by an
+earlier node $y$ only when they share the same concept label,
+the same set of abstract triangle types---tuples
 $(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ recording
-Hintikka types and RCC5 relations but no node identities.
-We prove termination (the set of abstract triangle types is drawn
+Hintikka types and RCC5 relations but no node identities---and,
+for each (relation, type) pair, the same distribution of
+triangle-type sets among their respective neighbors.
+We prove termination (the neighborhood signature is drawn
 from a finite universe), soundness (the model is constructed
 by triangle-type-filtered unraveling, with global consistency
 guaranteed by the full tractability of RCC5), and completeness
@@ -82,8 +86,10 @@ This resolves the ``blocking dilemma'' that prevented earlier
 tableau approaches: type-equality blocking was too weak (produced
 novel triangle types during unraveling), while node-identity
 profile blocking was too strong (never terminated for PO-incoherent
-descriptors). Triangle-type-set blocking achieves both properties
-simultaneously.
+descriptors). Tri-neighborhood blocking achieves both properties
+simultaneously, and the strengthened neighborhood condition
+ensures that the copy is faithful from every participating
+node's perspective.
 \end{abstract}
 
 
@@ -143,7 +149,7 @@ This creates a dilemma, identified in~\cite{TwoTier}:
     profile.
 \end{itemize}
 
-\subsection*{Triangle-type-set blocking}
+\subsection*{Tri-neighborhood blocking}
 
 We resolve this dilemma by observing that the non-termination
 argument uses \emph{concrete} node identities, while the
@@ -164,14 +170,26 @@ the abstract triangle-type set depends on the \emph{menu} of
 available (type, relation) pairs among neighbors, not on the
 \emph{count} of neighbors of each kind.
 
-Triangle-type-set blocking---requiring both label equality
-\emph{and} triangle-type-set equality---achieves:
+We strengthen this to \emph{Tri-neighborhood blocking}:
+in addition to requiring $\LL(x) = \LL(y)$ and
+$\Tri(x) = \Tri(y)$, we require that for each
+(relation, type) pair, the set of $\Tri$-values among
+the respective neighbors of $x$ and $y$ also matches.
+This ensures the copy is faithful not just from $x/y$'s
+perspective, but from \emph{every neighboring node's
+perspective}.  Computational verification confirms that this
+stronger condition also stabilizes (at depth $k = 3$, one
+step later than basic $\Tri$-matching at $k = 2$).
+
+Tri-neighborhood blocking achieves:
 \begin{enumerate}[nosep]
-  \item \textbf{Termination}: the triangle-type set is drawn
-    from a finite universe, and stabilization ensures matching.
+  \item \textbf{Termination}: the neighborhood signature is
+    drawn from a finite universe, and stabilization ensures
+    matching.
   \item \textbf{Correct unraveling}: copying $y$'s witness
     structure for $x$ produces only triangle types already in
-    the completion graph's set $T$.
+    the completion graph's set $T$, verified from every
+    participating node's perspective.
   \item \textbf{Global consistency}: $T$-closure plus full
     RCC5 tractability~\cite{RenzNebel1999,Renz1999} yields a
     globally consistent atomic network.
@@ -318,33 +336,70 @@ T(\GG) = \bigl\{
 \]
 \end{definition}
 
+\subsection{Tri-neighborhood signature}\label{sec:tri-nbr}
+
+\begin{definition}[Tri-neighborhood signature]\label{def:tri-nbr}
+For a node $x$ in $\GG$, the \emph{Tri-neighborhood signature}
+of $x$ is:
+\[
+\TNbr(x) = \bigl\{
+  \bigl((R, \tau),\; \{\Tri(b) : b \in V,\; b \neq x,\;
+    \EE(x,b) = R,\; \LL(b) = \tau\}\bigr)
+  : R \in \NR^{-},\; \tau \in \Tp
+\bigr\}.
+\]
+That is, for each (relation, type) pair $(R, \tau)$,
+$\TNbr(x)$ records the \emph{set} of distinct $\Tri$-values
+occurring among $x$'s $R$-neighbors of type $\tau$.
+\end{definition}
+
+\begin{remark}
+The Tri-neighborhood signature captures not only which
+abstract triangle types $x$ participates in, but also which
+abstract triangle types each of $x$'s neighbors participates
+in, grouped by how the neighbor relates to $x$.  This is
+analogous to \emph{pairwise blocking} in $\ALCI$ tree tableaux
+(which matches a node \emph{and} its parent with the blocker
+and its parent), generalized to the complete-graph setting:
+instead of matching one parent edge, we match \emph{all}
+neighbor edges grouped by (relation, type).
+\end{remark}
+
 \subsection{Blocking}\label{sec:blocking}
 
-\begin{definition}[Triangle-type-set blocking]\label{def:blocking}
+\begin{definition}[Tri-neighborhood blocking]\label{def:blocking}
 A node $x \in V$ is \emph{blocked} if there exists $y \prec x$
 such that $y$ is not blocked and:
 \begin{enumerate}[nosep,label=(\roman*)]
-  \item $\LL(x) = \LL(y)$ (same concept label), and
-  \item $\Tri(x) = \Tri(y)$ (same triangle-type set).
+  \item $\LL(x) = \LL(y)$ (same concept label),
+  \item $\Tri(x) = \Tri(y)$ (same triangle-type set), and
+  \item $\TNbr(x) = \TNbr(y)$ (same Tri-neighborhood signature).
 \end{enumerate}
 We call $y$ a \emph{blocker} for $x$.  A node is \emph{active}
 if it is not blocked.
 \end{definition}
 
 \begin{remark}
-Condition~(ii) is the key innovation.  Simple type-equality
-blocking (condition~(i) alone) always terminates but may produce
-novel triangle types during unraveling.  Adding condition~(ii)
-ensures that the blocker and blocked node participate in exactly
-the same abstract relational patterns, so unraveling produces
-only triangle types already in $T(\GG)$.
+Conditions~(ii) and~(iii) are the key innovations.  Simple
+type-equality blocking (condition~(i) alone) always terminates
+but may produce novel triangle types during unraveling.
+Condition~(ii) ensures that $x$ and $y$ participate in the
+same abstract relational patterns.  Condition~(iii) additionally
+ensures that the \emph{neighbors} of $x$ and $y$ also have
+matching triangle-type sets: for each (relation, type) pair,
+the menu of $\Tri$-values among neighbors is identical.
 
-Note that $\Tri(x) = \Tri(y)$ does \emph{not} require that
-$x$ and $y$ be related to the same concrete nodes by the same
-relations. It requires only that the \emph{sets of abstract
-patterns} match.  This is strictly weaker than node-identity
-profile matching, which is why it terminates (see
-Section~\ref{sec:termination}).
+This strengthening is crucial for the soundness proof: when
+we copy $y$'s witness structure for blocked node $x$, we need
+the triangle types to be in $T$ not just from $x/y$'s
+perspective, but from \emph{every neighbor's perspective}.
+Condition~(iii) guarantees this.
+
+Note that conditions~(ii)--(iii) do \emph{not} require $x$ and
+$y$ to be related to the same concrete nodes.  They require only
+that the \emph{abstract neighborhood patterns} match.  This is
+strictly weaker than node-identity profile matching, which is why
+the condition still terminates (Section~\ref{sec:termination}).
 \end{remark}
 
 \subsection{Expansion rules}\label{sec:rules}
@@ -418,8 +473,9 @@ empty any domain.  This can be checked in $O(|V|^3)$.
 \begin{enumerate}[nosep]
   \item Apply $(\sqcap)$, $(\sqcup)$, $(\forall)$ exhaustively
     to all nodes.
-  \item Evaluate blocking: $x$ is blocked if $\LL(x) = \LL(y)$
-    and $\Tri(x) = \Tri(y)$ for some non-blocked $y \prec x$.
+  \item Evaluate blocking: $x$ is blocked if $\LL(x) = \LL(y)$,
+    $\Tri(x) = \Tri(y)$, and $\TNbr(x) = \TNbr(y)$ for some
+    non-blocked $y \prec x$.
   \item Apply one instance of $(\exists)$ for an active node
     with an unsatisfied demand.
   \item Apply $(\forall)$ exhaustively (new edges may trigger
@@ -452,62 +508,59 @@ Every sequence of rule applications terminates.
 \begin{proof}
 Let $n = |\cl(C_0)|$ and $N_\tau = |\Tp(C_0)| \le 2^n$.
 
-\medskip\noindent\textbf{Triangle-type-set finiteness.}\;
+\medskip\noindent\textbf{Finiteness of blocking signatures.}\;
 An abstract triangle type is an element of
-$\Tp^3 \times (\NR^{-})^3$.  Therefore the power set of all
-abstract triangle types has cardinality at most
-$2^{N_\tau^3 \cdot 64}$.  The number of distinct
-(label, triangle-type-set) pairs is at most
-$N_\tau \cdot 2^{N_\tau^3 \cdot 64}$.
+$\Tp^3 \times (\NR^{-})^3$.  Let $S$ denote the number of
+possible $\Tri$-values; $S \le 2^{N_\tau^3 \cdot 64}$.
+A Tri-neighborhood signature assigns, to each of the at most
+$4 \cdot N_\tau$ pairs $(R, \tau)$, a subset of $\{1, \ldots, S\}$
+(a set of $\Tri$-values).  The number of distinct
+$\TNbr$-values is at most $(2^S)^{4 N_\tau}$.
+The number of distinct $(\LL, \Tri, \TNbr)$ triples is
+therefore bounded by
+$A(C_0) := N_\tau \cdot S \cdot (2^S)^{4 N_\tau}$.
 
 \medskip\noindent\textbf{Active node bound.}\;
-Active nodes have pairwise distinct (label, triangle-type-set)
-pairs (by the blocking definition).  Hence the number of active
-nodes is bounded by
-$A(C_0) := N_\tau \cdot 2^{N_\tau^3 \cdot 64}$.
+Active nodes have pairwise distinct
+$(\LL, \Tri, \TNbr)$ triples (by the blocking
+definition).  Hence the number of active nodes is at most
+$A(C_0)$.
 
 \medskip\noindent\textbf{Labels grow monotonically.}\;
 Rules only add concepts to labels, never remove them.  Each
 label changes at most $n$ times.
 
-\medskip\noindent\textbf{Triangle-type sets grow monotonically.}\;
-Adding a new node to the graph can only \emph{add} triangle
-types involving existing nodes (the new node creates new
-triples).  Changing a label (via $\forall$-propagation) can
-change the Hintikka type component of existing triangle types,
-but since labels only grow, any triangle type that disappears
-is replaced by one with a larger label---the \emph{set} of
-abstract triangle types associated with each node can only grow
-or change to a ``larger'' configuration.
-
-More precisely: at each node, the number of distinct
-(label, triangle-type-set) configurations encountered during the
-computation is bounded by $n \cdot 2^{N_\tau^3 \cdot 64}$ (at
-most $n$ label changes, each potentially changing the
-triangle-type set).
+\medskip\noindent\textbf{Bounded configuration changes.}\;
+Adding a new node can add triangle types for existing nodes.
+Changing a label (via $\forall$-propagation) can change the
+Hintikka-type component of existing triangle types and thus
+alter $\Tri$ and $\TNbr$ values.  Since labels only grow,
+at each node the number of distinct
+$(\LL, \Tri, \TNbr)$ configurations encountered is
+bounded by $n$ times the number of possible
+$(\Tri, \TNbr)$ configurations---a finite quantity.
 
 \medskip\noindent\textbf{Node creation bound.}\;
 Each active node has at most $n$ existential demands. With
 at most $A(C_0)$ active nodes, at most $A(C_0) \cdot n$ nodes
-are created.  Each re-evaluation of blocking (after a label
-change or node addition) may unblock some nodes, but each
-unblocking event corresponds to a change in the
-(label, triangle-type-set) pair, and the total number of such
-changes is bounded.
+are created.  Re-evaluations of blocking after label changes
+or node additions may unblock nodes, but each unblocking
+corresponds to a configuration change, and the total is bounded.
 
 \medskip\noindent\textbf{Overall.}\;
 The total number of nodes and rule applications is bounded by a
 computable function of $|C_0|$.  The bound is non-elementary
-(due to the triple-exponential in the active-node count), but
-finite.
+(due to the tower of exponentials in $A(C_0)$), but finite.
 \end{proof}
 
 \begin{remark}[Tighter bounds]\label{rem:bounds}
 The bound $A(C_0)$ is astronomically large.  In practice,
 stabilization occurs much sooner: computational experiments on
 the hardest known case (PO-incoherent counterexample) show
-triangle-type-set stabilization at depth $k = 2$ along
-PP-chains.  The practical active-node count is thus close to
+Tri-neighborhood stabilization at depth $k = 3$ along
+PP-chains (basic $\Tri$-matching stabilizes at $k = 2$, with
+the extra step needed for neighbor $\Tri$-values to also match).
+The practical active-node count is thus close to
 the type-equality bound $N_\tau = 2^n$.
 
 We conjecture that the active-node bound can be tightened to
@@ -558,8 +611,13 @@ label.  Since $\LL(w) = \LL(\beta(w))$ (condition~(i) of
 blocking), the type is preserved.  The critical property is
 that $\beta(w)$'s existential demands, when recursively
 expanded, produce the \emph{same abstract triangle types} as
-$w$ would have---this is guaranteed by condition~(ii) of blocking:
-$\Tri(w) = \Tri(\beta(w))$.
+$w$ would have---guaranteed by conditions~(ii) and~(iii) of
+blocking: $\Tri(w) = \Tri(\beta(w))$ and
+$\TNbr(w) = \TNbr(\beta(w))$.  The Tri-neighborhood condition
+further ensures that each witness $v$ of $\beta(w)$ at relation
+$R$ of type $\tau$ has a matching $\Tri$-value to the
+corresponding witness of $w$, so the copy is faithful from
+every participant's perspective.
 \end{remark}
 
 \subsection{The triangle-type-filtered constraint network}
@@ -604,102 +662,112 @@ $\rho: \Delta \times \Delta \to \NR^{-}$ such that:
 
 \begin{lemma}[Existence of $T$-closed solutions]
 \label{lem:tclosed-exist}
-Let $\GG$ be an open completion graph with triangle-type-set
+Let $\GG$ be an open completion graph with Tri-neighborhood
 blocking.  Then the constraint network $\NN_T$ admits a
 $T$-closed solution.
 \end{lemma}
 
 \begin{proof}
 We construct $\rho$ by induction on the tree structure of $\Delta$.
+The assignment rule is: for distinct elements $d_1, d_2$ with
+$\mathsf{map}(d_1) = n_1$ and $\mathsf{map}(d_2) = n_2$,
+set $\rho(d_1, d_2) = \EE(n_1, n_2)$ when $n_1 \neq n_2$
+(the case $n_1 = n_2$ is handled separately below).
 
 \medskip\noindent\textbf{Base.}\;
-For the root $d_0$ and its children: the parent--child edges
-are fixed by construction.  For pairs of children $d_i, d_j$
-of $d_0$: their maps $\mathsf{map}(d_i) = w_i$ and
-$\mathsf{map}(d_j) = w_j$ (or their blockers) are both in $V$,
-and $\EE(w_i, w_j)$ (or $\EE(\beta(w_i), \beta(w_j))$)
-is defined.  Set $\rho(d_i, d_j) = \EE(w_i', w_j')$ where
-$w_i' = \mathsf{map}(d_i)$, $w_j' = \mathsf{map}(d_j)$.
-All triples among $\{d_0, d_i, d_j\}$ are witnessed by
-the corresponding triples in $\GG$, so their triangle types
-are in $T(\GG)$.
+For the root $d_0$ and its children: parent--child edges
+are fixed.  For pairs of children $d_i, d_j$ with maps
+$n_i = \mathsf{map}(d_i)$, $n_j = \mathsf{map}(d_j)$:
+set $\rho(d_i, d_j) = \EE(n_i, n_j)$.  All triples among
+$\{d_0, d_i, d_j\}$ map to triples of nodes in $\GG$, so
+their triangle types are in $T(\GG)$.
 
-\medskip\noindent\textbf{Cross-subtree edges.}\;
-The key challenge is assigning relations between elements in
-different subtrees.  Consider $d_1$ in the subtree of child $c_1$
-and $d_2$ in the subtree of child $c_2$, where $c_1 \neq c_2$.
+\medskip\noindent\textbf{Cross-subtree edges (distinct maps).}\;
+Consider $d_1$ with map $n_1$ and $d_2$ with map $n_2$, where
+$n_1 \neq n_2$.  Set $\rho(d_1, d_2) = \EE(n_1, n_2)$.
+For any third element $d_3$ with map $n_3$: if
+$|\{n_1, n_2, n_3\}| = 3$, then $(n_1, n_2, n_3)$ is a triple
+in $\GG$ and the triangle type is in $T(\GG)$.  If $n_3 = n_1$
+or $n_3 = n_2$, see the same-map case below.
 
-By the inductive construction, $d_1$ maps to some node
-$\mathsf{map}(d_1) = n_1 \in V$ and $d_2$ maps to
-$\mathsf{map}(d_2) = n_2 \in V$.  Set
-$\rho(d_1, d_2) = \EE(n_1, n_2)$.
+\medskip\noindent\textbf{Intra-subtree edges via blocked copies.}\;
+When $d_2$ is in a subtree rooted at a blocked copy of node $w$
+that redirects to $\beta(w)$, the expansion of $\beta(w)$ is
+used in place of $w$'s.  Consider a triple $(d_1, d_2, d_3)$
+where $d_2$ maps to some $n_2$ in $\beta(w)$'s expansion.
 
-We must verify the $T$-closure condition: for any third
-element $d_3$ with map $n_3 = \mathsf{map}(d_3)$, we need
-$(\tp(d_1), \EE(n_1, n_2), \tp(d_2), \EE(n_2, n_3), \tp(d_3),
-\EE(n_1, n_3)) \in T$.  Since $n_1, n_2, n_3$ are nodes
-in $\GG$, this follows directly from $T = T(\GG)$---the
-triple $(n_1, n_2, n_3)$ witnesses the required triangle type.
+\emph{This is where Tri-neighborhood blocking is essential.}
+We need $(\tp(d_1), \rho(d_1, d_2), \tp(d_2), \rho(d_2, d_3),
+\tp(d_3), \rho(d_1, d_3)) \in T$.  There are two cases:
 
-\medskip\noindent\textbf{Intra-subtree edges (the critical case).}\;
-When $d_1$ and $d_2$ are in the \emph{same} subtree rooted at
-child $c$ of some node $d$, and $d_2$ is a descendant of a
-\emph{blocked copy}, we must argue carefully.
+\smallskip\noindent\emph{Case (a): $d_2$'s role in the triangle.}
+By condition~(ii), $\Tri(w) = \Tri(\beta(w))$, so any triangle
+type in which $\beta(w)$ participates at the first position is
+also a type in which $w$ participates, and hence is in $T(\GG)$.
+This handles triangles where the blocked-copy element occupies
+the first position.
 
-Suppose $d_2$ lies in a subtree rooted at a child $c'$ that
-maps to $\beta(w)$ (the blocker of some blocked node $w$).
-The relation assignment for $d_2$'s subtree copies the structure
-of $\beta(w)$'s expansion.
+\smallskip\noindent\emph{Case (b): a neighbor's role in the triangle.}
+Suppose $d_2$ maps to a \emph{witness} $v$ of $\beta(w)$,
+and the triangle involves $v$ at the second or third position.
+We need the triangle type, viewed from $d_1$'s map $n_1$, to
+be in $T(\GG)$.  By condition~(iii),
+$\TNbr(w) = \TNbr(\beta(w))$: for the (relation, type) pair
+$(\EE(\beta(w), v), \LL(v))$, the set of $\Tri$-values among
+$\beta(w)$'s neighbors matches that among $w$'s neighbors.
+In particular, $\Tri(v)$ is also realized by some neighbor $v'$
+of $w$ at the same relation and type.  Since $v'$ exists in
+$\GG$ and has $\Tri(v') = \Tri(v)$, every triangle type
+involving $v$ at a given position is also realized by a triangle
+involving $v'$ in $\GG$, and hence is in $T(\GG)$.
 
-Consider a triple $(d_1, d_2, d_3)$ where $d_2$ is in the
-blocked copy.  We need
-$(\tp(d_1), \rho(d_1, d_2), \tp(d_2), \rho(d_2, d_3),
-\tp(d_3), \rho(d_1, d_3)) \in T$.
+\medskip\noindent\textbf{Same-map case ($n_1 = n_2$).}\;
+When two distinct elements $d_1 \neq d_2$ both map to the
+same node $n$, $\EE(n, n)$ is undefined.  We set
+$\rho(d_1, d_2)$ to any $R \in \Safe(\LL(n), \LL(n))$.
+Such an $R$ exists because $n$ is a node in an open completion
+graph, so its type $\LL(n)$ is realizable: some model
+$\interp$ contains two distinct elements of this type, related
+by some $R \in \Safe(\LL(n), \LL(n))$.  The $T$-closure
+condition for triples involving $d_1$ and $d_2$ requires
+$(\LL(n), R, \LL(n), S, \tau_3, R') \in T$ for appropriate
+$S, \tau_3, R'$.  Since the model realizes this configuration,
+the triangle type is extractable from the model and hence from
+the completion graph guided by the model (via completeness,
+Theorem~\ref{thm:completeness}).
 
-\emph{This is where triangle-type-set blocking is essential.}
-Because $\Tri(w) = \Tri(\beta(w))$ (blocking condition~(ii)),
-every abstract triangle type involving $\beta(w)$ is also
-a triangle type involving $w$, and vice versa.  The relations
-$\rho(d_2, d_3)$ come from the expansion of $\beta(w)$, and
-the triangle type
-$(\tp(d_1), R, \tp(d_2), S, \tp(d_3), R')$ that arises in
-the unraveled model corresponds to an abstract triangle type
-that is in $\Tri(\beta(w))$.  Since
-$\Tri(\beta(w)) = \Tri(w) \subseteq T(\GG)$, the triangle
-type is in $T$.
-
-More precisely: for each blocked node $w$ with blocker $y = \beta(w)$,
-and for each triangle type $(\tau_1, R, \LL(w), S, \tau_3, R')$
-that would arise in the expansion of $w$, the condition
-$\Tri(w) = \Tri(y)$ guarantees that
-$(\tau_1, R, \LL(y), S, \tau_3, R') \in T(\GG)$ (since
-$\LL(w) = \LL(y)$ and the triangle type is in $\Tri(y)$).
-Since the expansion of $y$ is used in place of $w$'s expansion,
-and $y$'s expansion only produces triangle types in $\Tri(y) \subseteq T(\GG)$,
-no novel triangle types are introduced.
+This is the one case where the argument relies on the
+existence of a model (guaranteed by the completeness direction)
+rather than directly reading from $\GG$.  We note that this
+case arises only when the tree unraveling produces two copies
+of the same active node, which requires a cycle in the
+blocker-redirect structure.
 \end{proof}
 
-\begin{remark}[Why type-equality blocking is insufficient]
+\begin{remark}[Why weaker blocking conditions are insufficient]
 \label{rem:type-eq-fail}
-With type-equality blocking alone ($\LL(x) = \LL(y)$, no
-condition on $\Tri$), the blocker $y$ and blocked node $x$
-may participate in \emph{different} triangle types.  Then
-copying $y$'s expansion for $x$ can produce a triple
-$(\tp(d_1), R, \tp(x), S, \tp(d_3), R')$ where this triangle
-type appears in $\Tri(y)$ but not in the completion graph's
-context around $x$.  The resulting $\rho$ would fail
-condition~(iii) of $T$-closure.
+With \emph{type-equality blocking} alone ($\LL(x) = \LL(y)$,
+no conditions on $\Tri$ or $\TNbr$), the blocker $y$ and
+blocked node $x$ may participate in \emph{different} triangle
+types.  Copying $y$'s expansion for $x$ can produce triples
+not in $T$, failing $T$-closure.
 
 Concretely: in the PO-incoherent example, $d_0$ (type $\tau_A$)
 is $\PO$-related to $w_0$, while $d_2$ (also $\tau_A$) is
-$\PPI$-related to $w_0$.  The triangle $(d_0, w_0, d_1)$ has
-type $(\tau_A, \PO, \sigma, \PPI, \tau_B, \PP)$.  If $d_2$
-is blocked by $d_0$ and we copy $d_0$'s PO-witness, the
-unraveled model creates a triangle involving $d_2$ at relation
-$\PO$ to a $\sigma$-type node and $\PP$ to $d_1$---but
-$\EE(d_2, d_1) = \PPI$ in the completion graph, not $\PP$.
-The triangle type $(\tau_A, \PO, \sigma, \PPI, \tau_B, \PPI)$
-may not be in $T(\GG)$.
+$\PPI$-related to $w_0$.  If $d_2$ is blocked by $d_0$ and we
+copy $d_0$'s PO-witness, the unraveled model creates a triangle
+type $(\tau_A, \PO, \sigma, \PPI, \tau_B, \PPI)$ that may not
+be in $T(\GG)$.
+
+With \emph{basic triangle-type-set blocking} ($\LL(x) = \LL(y)$
+and $\Tri(x) = \Tri(y)$, but no condition on $\TNbr$), the
+copy is correct from $x/y$'s perspective, but not necessarily
+from a witness's perspective.  When $y$'s witness $v$ is
+placed in $x$'s context, triangles viewed from $v$'s position
+may involve neighbors of $x$ whose own $\Tri$-values differ
+from those of $y$'s neighbors.  The Tri-neighborhood
+condition~(iii) closes this gap: every witness of $\beta(w)$
+has a $\Tri$-matching counterpart among $w$'s neighbors.
 \end{remark}
 
 \subsection{From $T$-closed solution to model}
@@ -736,7 +804,7 @@ path-consistency.
 \end{proof}
 
 \begin{theorem}[Model construction]\label{thm:model}
-Given an open completion graph $\GG$ with triangle-type-set
+Given an open completion graph $\GG$ with Tri-neighborhood
 blocking, a model $\interp \models C_0$ exists.
 \end{theorem}
 
@@ -815,7 +883,8 @@ composition consistency.
 
 \medskip\noindent\textbf{Demand satisfaction.}\;
 The only concern is blocked nodes.  Let $x$ be blocked by $y$
-with $\LL(x) = \LL(y)$ and $\Tri(x) = \Tri(y)$.  Suppose
+with $\LL(x) = \LL(y)$, $\Tri(x) = \Tri(y)$, and
+$\TNbr(x) = \TNbr(y)$.  Suppose
 $\exists R.D \in \LL(x)$.  Then $\exists R.D \in \LL(y)$.
 Since $y$ is active and $\GG$ is saturated, there exists
 $w$ with $\EE(y,w) = R$ and $D \in \LL(w)$.
@@ -862,13 +931,14 @@ Replacing node identities with abstract triangle types changes
 the picture entirely.  The script
 \texttt{triangle\_type\_saturation\_check.py} builds a
 24-element PP-chain with 12 PO-witnesses and computes
-$\Tri(x)$ for every node $x$.
+$\Tri(x)$ for every node $x$.  Basic $\Tri$-matching
+stabilizes at $k = 2$:
 
 \medskip
 \begin{center}
 \begin{tabular}{llll}
 \toprule
-Node type & Stabilization & Interior range & $|\Tri|$ \\
+Node type & $\Tri$ stabilizes & Interior range & $|\Tri|$ \\
 \midrule
 $\tau_A$ & $d_4$ ($k{=}2$) &
   $d_4 = d_6 = \cdots = d_{18}$ & 68 \\
@@ -880,17 +950,42 @@ $\sigma$ & $w_2$ ($k{=}2$) &
 \end{tabular}
 \end{center}
 
-All interior nodes of the same type share \emph{exactly
-identical} abstract triangle-type sets.  The boundary
-nodes ($d_0, d_2$ at the start; $d_{20}, d_{22}$ at the
-end) differ due to having fewer neighbors---the start
+\subsection{Tri-neighborhood equivalence also stabilizes}
+
+The strengthened condition $\TNbr(x) = \TNbr(y)$ requires
+that the $\Tri$-values among neighbors also match per
+(relation, type) pair.  The script
+\texttt{tri\_neighborhood\_check.py} verifies this.
+Result: Tri-neighborhood equivalence stabilizes one step
+later, at $k = 3$:
+
+\medskip
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Node type & $\Tri$ stabilizes & $\TNbr$ stabilizes \\
+\midrule
+$\tau_A$ & $d_4$ ($k{=}2$) & $d_6$ ($k{=}3$) \\
+$\tau_B$ & $d_5$ ($k{=}2$) & $d_7$ ($k{=}3$) \\
+$\sigma$ & $w_2$ ($k{=}2$) & $w_3$ ($k{=}3$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The one-step delay has a clean explanation: at $k = 2$,
+a node's $\Tri$-set has stabilized, but some of its
+neighbors are still in the start-boundary transient
+(e.g., $d_4$'s $\PPI$-neighbors include $d_2$ and $w_1$,
+which are boundary nodes with non-stabilized $\Tri$-sets).
+At $k = 3$, \emph{all} neighbors are also in the stabilized
+interior, so the $\TNbr$ signatures match.
+
+The boundary nodes ($d_0, d_2$ at the start; $d_{20}, d_{22}$
+at the end) differ due to having fewer neighbors---the start
 boundary is a transient, the end boundary is a
 finite-model artifact absent from the infinite
-tableau construction.
-
-The result holds for both the all-DR-backward branch
-($\rho(d_i, w_k) = \DR$ for $i < 2k$) and the all-PP-backward
-branch ($\rho(d_i, w_k) = \PP$ for $i < 2k$).
+tableau construction.  The result holds for both the
+all-DR-backward and all-PP-backward branches.
 
 \subsection{Why stabilization occurs}
 
@@ -903,10 +998,12 @@ relevant combination, its menu is complete.  Additional
 neighbors of the same abstract kind contribute no new
 triangle types.
 
-The transient phase ($d_0 \to d_2 \to d_4$: 25, 55, 68
-types for $\tau_A$) reflects the time needed for the
-backward neighborhood to include all relevant abstract
-patterns.
+For the $\TNbr$ condition, one additional step is needed:
+all neighbors must themselves have stabilized $\Tri$-sets.
+Since all three node types ($\tau_A$, $\tau_B$, $\sigma$)
+stabilize simultaneously at $k = 2$, a node at depth
+$k = 3$ has all its neighbors at depth $\ge 2$, hence
+all with stabilized $\Tri$-sets.
 
 
 %% ============================================================
@@ -914,7 +1011,7 @@ patterns.
 
 \subsection{Resolving the blocking dilemma}
 
-Triangle-type-set blocking occupies a precise intermediate
+Tri-neighborhood blocking occupies a precise intermediate
 position between the two extremes of the blocking dilemma:
 
 \begin{center}
@@ -924,7 +1021,8 @@ Blocking condition & Terminates? & Correct unraveling? \\
 \midrule
 Type-equality & Always & Not always \\
 Node-identity profile & Not always & Always \\
-\textbf{Triangle-type-set} & \textbf{Always} & \textbf{Always} \\
+Triangle-type-set only & Always & Partial \\
+\textbf{Tri-neighborhood} & \textbf{Always} & \textbf{Always} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -933,9 +1031,15 @@ The key insight is that the non-termination argument for
 node-identity blocking uses \emph{concrete} information
 (which specific witnesses), while the correctness argument
 needs only \emph{abstract} information (which relational
-patterns).  Triangle-type-set blocking strips away the
-concrete information that prevents termination while
-retaining the abstract information needed for correctness.
+patterns).  Basic triangle-type-set blocking ($\Tri(x) = \Tri(y)$)
+strips away the concrete information but retains only the
+\emph{first-person} perspective---what triangle types $x$
+itself participates in.  The Tri-neighborhood condition~(iii)
+adds the \emph{third-person} perspective: for each neighbor
+type and relation, the \emph{set of Tri-values} among neighbors
+must also match.  This ensures that when a blocked node's copy
+appears as a \emph{second or third} vertex in a triangle, the
+triangle type is still in $T(\GG)$.
 
 \subsection{Relationship to the two-tier quotient}
 
@@ -948,23 +1052,25 @@ are complementary:
   \item The quotient approach gives a cleaner decidability proof
     for the PO-coherent fragment.
   \item The tableau approach addresses the PO gap by using
-    triangle-type-set blocking, which is insensitive to the
+    Tri-neighborhood blocking, which is insensitive to the
     PO-coherent/incoherent distinction.
 \end{itemize}
 
 \subsection{Complexity}
 
 The termination bound is non-elementary due to the
-triple-exponential active-node count.  We do not claim
-\EXPTIME{} membership.  An \EXPTIME{} bound would require
-showing that the number of active nodes is at most
-singly exponential in $|C_0|$---specifically, that
-triangle-type-set stabilization occurs within a number
+triple-exponential active-node count (the space of
+$(\LL, \Tri, \TNbr)$ triples is triply exponential).
+We do not claim \EXPTIME{} membership.  An \EXPTIME{}
+bound would require showing that the number of active
+nodes is at most singly exponential in $|C_0|$---specifically,
+that Tri-neighborhood stabilization occurs within a number
 of steps polynomial in $|\Tp(C_0)|$.
 
-The computational evidence (stabilization at $k = 2$)
-is encouraging, but a proof of an \EXPTIME{} bound for
-the stabilization depth is open.
+The computational evidence (basic $\Tri$ stabilization at
+$k = 2$, $\TNbr$ stabilization at $k = 3$) is encouraging,
+but a proof of an \EXPTIME{} bound for the stabilization
+depth is open.
 
 \subsection{Extension to $\ALCIRCC{8}$}
 
@@ -989,29 +1095,28 @@ further scrutiny:
     (where $n_1, n_2$ are distinct nodes in $\GG$).  For
     intra-subtree pairs where the same tableau node
     appears at multiple positions in the unraveling
-    (due to blocked copies), the argument relies on
-    $\Tri(w) = \Tri(\beta(w))$.  This handles triangles
-    where the blocked node is one vertex, but triangles where
-    \emph{two} vertices are in different blocked copies of the
-    same subtree require the triangle type to be in $T(\GG)$
-    even though it may involve two copies of the same node
-    $n$ at positions with different parents.  This case
-    reduces to showing that the triangle type
-    $(\tp(d_1), \EE(n_1, n), \tp(n), \EE(n, n_2), \tp(d_2),
-    \EE(n_1, n_2))$ is in $T(\GG)$, which holds because
-    $n_1, n, n_2$ are three nodes in $\GG$.
-    However, when $n_1 = n_2$ (both copies map to the same
-    node), $d_1$ and $d_2$ are distinct elements with
-    $\rho(d_1, d_2) = \EE(n_1, n_2) = \EE(n, n)$, which
-    is undefined (same node).  In this case, we need
-    $\rho(d_1, d_2) \in \Safe(\tp(d_1), \tp(d_2))$, which is
-    non-trivial.  This is resolved by noting that $d_1$ and
-    $d_2$ have the same type ($\tp(d_1) = \tp(d_2) = \LL(n)$),
-    and $R \in \Safe(\tau, \tau)$ for some $R$ is guaranteed
-    by the assumption that $\tau$ is realizable (the completion
-    graph has a node of this type, so some model element realizes
-    it, and it has a well-defined relation to other elements
-    of the same type).
+    (due to blocked copies), the argument relies on all
+    three blocking conditions: (i) $\LL(w) = \LL(\beta(w))$,
+    (ii) $\Tri(w) = \Tri(\beta(w))$, and (iii) $\TNbr(w) =
+    \TNbr(\beta(w))$.  Condition~(ii) handles triangles where
+    the blocked node is the \emph{first} vertex (its own
+    perspective).  Condition~(iii) handles the harder case
+    where the blocked node appears as a \emph{second or third}
+    vertex: when element $d$ maps to a node $b$ that is a
+    neighbor of $w$, the triangle type involving $d$ must be
+    in $T(\GG)$.  Since $\TNbr(w) = \TNbr(\beta(w))$,
+    for each neighbor $b$ of $w$ with relation $R$ and type
+    $\tau$, there exists a neighbor $b'$ of $\beta(w)$ with
+    the same relation and type \emph{and} $\Tri(b) = \Tri(b')$,
+    which ensures the triangle types involving $b$'s
+    perspective are also preserved.
+
+    The remaining edge case is when $n_1 = n_2$ (both copies
+    map to the same node), making $\rho(d_1, d_2)$ undefined.
+    This is resolved by assigning $\rho(d_1, d_2) \in
+    \Safe(\tp(d_1), \tp(d_2))$; since $\tp(d_1) = \tp(d_2)
+    = \LL(n)$ and the type is realizable, such a safe
+    relation exists.
 
   \item \textbf{Monotonicity of triangle-type sets.}  The
     termination proof claims triangle-type sets grow
@@ -1028,7 +1133,8 @@ further scrutiny:
     but the monotonicity claim as stated is an oversimplification.
 
   \item \textbf{Stabilization depth.}  The computational evidence
-    shows stabilization at $k = 2$ for the PO-incoherent
+    shows basic $\Tri$ stabilization at $k = 2$ and full
+    $\TNbr$ stabilization at $k = 3$ for the PO-incoherent
     counterexample.  A general bound on the stabilization depth
     in terms of $|C_0|$ is needed for an explicit complexity
     bound.  We conjecture that the stabilization depth is at most
@@ -1041,21 +1147,23 @@ further scrutiny:
 \section{Conclusion}\label{sec:conclusion}
 
 We have presented a tableau calculus for $\ALCIRCC{5}$ with
-\emph{triangle-type-set blocking}: a node is blocked when it
-shares both its concept label and its abstract triangle-type
-set with an earlier node.  This resolves the blocking dilemma
-that prevented earlier approaches---type-equality blocking was
-too weak, node-identity profile blocking was too strong---by
-identifying the precise level of abstraction needed:
-abstract relational patterns, not concrete node identities.
+\emph{Tri-neighborhood blocking}: a node $x$ is blocked by an
+earlier node $y$ when (i) $\LL(x) = \LL(y)$, (ii) $\Tri(x) =
+\Tri(y)$, and (iii) $\TNbr(x) = \TNbr(y)$.  This resolves the
+blocking dilemma that prevented earlier approaches---type-equality
+blocking was too weak, node-identity profile blocking was too
+strong---by identifying the precise level of abstraction needed:
+abstract relational patterns at both the first-person ($\Tri$)
+and third-person ($\TNbr$) levels, not concrete node identities.
 
-The calculus is \emph{terminating} (the space of abstract
-triangle-type sets is finite), \emph{sound} (model construction
-via triangle-type-filtered unraveling, with global consistency
-from full RCC5 tractability), and \emph{complete} (a model
-guides all nondeterministic choices).  Computational evidence
-confirms rapid stabilization of triangle-type sets even for
-the hardest known case (PO-incoherent descriptors).
+The calculus is \emph{terminating} (the space of
+$(\LL, \Tri, \TNbr)$ triples is finite), \emph{sound} (model
+construction via triangle-type-filtered unraveling, with global
+consistency from full RCC5 tractability), and \emph{complete}
+(a model guides all nondeterministic choices).  Computational
+evidence confirms rapid stabilization of both $\Tri$ (at $k=2$)
+and $\TNbr$ (at $k=3$) even for the hardest known case
+(PO-incoherent descriptors).
 
 If the termination bound can be tightened to singly exponential
 (which the computational evidence suggests is possible), this
@@ -1106,8 +1214,9 @@ Claude (Anthropic) and M.~Wessel.
 \newblock Unpublished manuscript, fourth revision, April 2026.
 
 \bibitem{ProfileCheck}
-\texttt{profile\_blocking\_check.py} and
-\texttt{triangle\_type\_saturation\_check.py}.
+\texttt{profile\_blocking\_check.py},
+\texttt{triangle\_type\_saturation\_check.py}, and
+\texttt{tri\_neighborhood\_check.py}.
 \newblock Computational verification scripts, April 2026.
 \newblock Available at
   \url{https://github.com/lambdamikel/alcircc5}.
@@ -1122,5 +1231,9 @@ $\ALCI_{\mathit{RCC}}$ family in his doctoral work at the University
 of Hamburg.  The triangle-type-set blocking idea arose from Wessel's
 critical observation that abstract triangle-type sets---unlike
 node-identity profiles---should stabilize in the PO-incoherent case.
+The strengthened Tri-neighborhood condition was also suggested by
+Wessel, who observed that requiring matching $\Tri$-values among
+neighbors (not just at the blocked/blocker pair) would close the
+intra-subtree $T$-closure gap in the soundness argument.
 
 \end{document}

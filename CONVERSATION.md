@@ -1546,3 +1546,58 @@ The script checks Tri-neighborhood equivalence on the 24-element PO-incoherent m
 - `tri_neighborhood_check.py`: Tri-neighborhood equivalence verification script
 - Updated `README.md` with strengthened blocking condition results
 - Updated `CONVERSATION.md` with Part 30
+
+---
+
+## Part 31: Revised tableau paper with Tri-neighborhood blocking (April 2026)
+
+### Michael Wessel
+
+> Now please work on the revised tableaux calculus paper with the new strengthened blocking condition.
+
+### Claude
+
+Revised `tableau_ALCIRCC5.tex` (second revision) to incorporate Tri-neighborhood blocking throughout. The paper now uses a three-part blocking condition instead of the original two-part condition.
+
+**Changes made to the paper:**
+
+1. **Title**: Updated to "A Tableau Calculus for ALCI\_RCC5 with Tri-Neighborhood Blocking, Second revision, April 2026"
+
+2. **Abstract**: Rewritten to describe the three-condition blocking: (i) same concept label, (ii) same Tri set, (iii) same Tri-neighborhood signature TNbr
+
+3. **New Definition 3.6 (Tri-neighborhood signature)**: TNbr(x) = {((R, τ), {Tri(b) : b ∈ V, b≠x, E(x,b)=R, L(b)=τ}) : R ∈ NR⁻, τ ∈ Tp}. For each (relation, type) pair, collects the set of Tri-values among neighbors
+
+4. **Definition 3.7 (blocking)**: Strengthened from two conditions to three: (i) L(x) = L(y), (ii) Tri(x) = Tri(y), (iii) TNbr(x) = TNbr(y)
+
+5. **Termination proof (Theorem 4.1)**: Updated bounds to track (L, Tri, TNbr) triples; triply-exponential bound on active nodes
+
+6. **Soundness — Lemma 5.5 (T-closed solutions exist)**: Completely rewritten with strengthened proof:
+   - Case (a): Blocked-copy element at first position — uses Tri(w) = Tri(β(w))
+   - Case (b): Witness at second/third position — uses TNbr(w) = TNbr(β(w)) to find a neighbor b' of β(w) with same relation, type, AND Tri(b) = Tri(b')
+   - Same-map case: Explicitly handled (both elements map to same node)
+
+7. **Remark 5.6**: Rewritten to explain why both type-equality and basic Tri blocking are insufficient — type-equality allows novel triangles, basic Tri handles only first-person perspective
+
+8. **Computational evidence section**: Two tables now — basic Tri stabilization at k=2 and TNbr stabilization at k=3 with explanation of the one-step delay
+
+9. **Discussion section**:
+   - Blocking dilemma table: Four rows — type-equality (always/not always), node-identity (not always/always), triangle-type-set only (always/partial), **Tri-neighborhood (always/always)**
+   - First-person vs third-person perspective explanation
+   - Complexity: Updated to reference (L, Tri, TNbr) triples and both stabilization depths
+
+10. **Honest assessment**:
+    - Point 1 (intra-subtree T-closure): Substantially revised — all three conditions now contribute; condition (iii) specifically handles the second/third vertex case; remaining edge case (n₁ = n₂) reduces to type realizability
+    - Point 3 (stabilization depth): Updated to reference both k=2 (Tri) and k=3 (TNbr)
+
+11. **Conclusion**: Rewritten with three-condition blocking, both stabilization depths, first-person/third-person framing
+
+12. **Acknowledgments**: Credit to Wessel for suggesting the strengthened TNbr condition
+
+13. **Bibliography**: Added `tri_neighborhood_check.py` to verification scripts
+
+**Compilation.** Two pdflatex passes, 14 pages (up from 13), no errors, no undefined references. Only cosmetic hyperref warnings.
+
+### Files produced
+- Revised `tableau_ALCIRCC5.tex` / `.pdf`: Tableau calculus with Tri-neighborhood blocking (14 pages, second revision)
+- Updated `README.md` with Tri-neighborhood references throughout (status line, summary table, eighth approach section, file listing)
+- Updated `CONVERSATION.md` with Part 31

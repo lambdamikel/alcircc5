@@ -8,11 +8,11 @@
 
 ## Current Status of the Proof
 
-### Status (April 2026): Full decidability claimed via triangle-type-set tableau
+### Status (April 2026): Full decidability claimed via Tri-neighborhood tableau
 
-A [tableau calculus with triangle-type-set blocking](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) **claims full decidability** of ALCI\_RCC5 (13 pages). The paper proves termination, soundness, and completeness, with three specific technical points flagged for further scrutiny (see "Eighth approach" below). The result is **unverified** by human experts.
+A [tableau calculus with Tri-neighborhood blocking](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) **claims full decidability** of ALCI\_RCC5 (14 pages, second revision). The paper proves termination, soundness, and completeness using a three-part blocking condition: (i) same concept label, (ii) same abstract triangle-type set Tri(x)=Tri(y), and (iii) same Tri-neighborhood signature TNbr(x)=TNbr(y). Three specific technical points are flagged for further scrutiny (see "Eighth approach" below). The result is **unverified** by human experts.
 
-Previously, a [fourth-revision two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) proved **decidability of the PO-coherent fragment** (12 pages, three rounds of GPT-5.4 Pro review). The remaining PO gap — PO has neither backward forcing (comp(PP,PO)={DR,PO,PP}) nor forward absorption (comp(PPI,PO)={PO,PPI}) — is now addressed by the triangle-type-set tableau.
+Previously, a [fourth-revision two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) proved **decidability of the PO-coherent fragment** (12 pages, three rounds of GPT-5.4 Pro review). The remaining PO gap — PO has neither backward forcing (comp(PP,PO)={DR,PO,PP}) nor forward absorption (comp(PPI,PO)={PO,PPI}) — is now addressed by the Tri-neighborhood tableau.
 
 **Key finding (April 2026): abstract triangle-type sets stabilize.** Computational verification ([`triangle_type_saturation_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py)) shows that abstract triangle-type sets — tuples (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) using only Hintikka types and RCC5 relations, no node identities — **stabilize after a bounded transient** for the PO-incoherent counterexample. All three node types (τ\_A, τ\_B, σ) reach identical abstract triangle-type sets by k=2, verified on a 24-element chain. This motivates triangle-type-set blocking: blocking when abstract triangle-type sets match achieves both termination AND correct unraveling, resolving the blocking dilemma. See "Resolution: abstract triangle-type sets DO stabilize" below for details.
 
@@ -52,13 +52,13 @@ See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc
 
 ### Summary: seven approaches
 
-| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) | Triangle-type (Claude) | Two-tier quotient (Claude) | TTS tableau (Claude) |
+| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) | Triangle-type (Claude) | Two-tier quotient (Claude) | Tri-nbr tableau (Claude) |
 |---|---|---|---|---|---|---|---|---|
-| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels | Triangle-filtered arc-consistency | Period descriptors + PP-kernels + full RCC5 tractability | Triangle-type-set blocking + filtered unraveling |
+| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels | Triangle-filtered arc-consistency | Period descriptors + PP-kernels + full RCC5 tractability | Tri-neighborhood blocking + filtered unraveling |
 | Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | **PO gap** (exact-relation extraction fails for PO) | See honest assessment (3 specific points) |
 | Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | **PO-coherent fragment decidable** | **Full decidability claimed** (under review) |
 
-The first five approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. The eighth approach (triangle-type-set tableau) uses the saturation finding to **claim full decidability** via triangle-type-set blocking, which resolves the blocking dilemma; three specific technical points are flagged for further scrutiny.
+The first five approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. The eighth approach (Tri-neighborhood tableau) uses the saturation finding to **claim full decidability** via Tri-neighborhood blocking — a three-part condition requiring matching concept labels, abstract triangle-type sets, and Tri-neighborhood signatures; three specific technical points are flagged for further scrutiny.
 
 ### Sixth approach: triangle-type blocking — conditional decidability
 
@@ -317,23 +317,23 @@ The one-step delay occurs because d₄'s PPI-neighbors include boundary nodes (d
 
 The strengthened condition makes the soundness proof (specifically the T-closure argument in Lemma 5.5) substantially more robust: triangles are guaranteed to be in T from **every participating node's perspective**, not just the blocked/blocker pair. This directly addresses scrutiny point 1 (intra-subtree T-closure) from the tableau paper.
 
-### Eighth approach: triangle-type-set tableau — FULL DECIDABILITY CLAIMED
+### Eighth approach: Tri-neighborhood tableau — FULL DECIDABILITY CLAIMED
 
-Building on the saturation finding above, a complete tableau calculus with triangle-type-set blocking is presented in [**A Tableau Calculus for ALCI\_RCC5 with Triangle-Type-Set Blocking (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) (13 pages).
+Building on the saturation finding above, a complete tableau calculus with Tri-neighborhood blocking is presented in [**A Tableau Calculus for ALCI\_RCC5 with Tri-Neighborhood Blocking (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) (14 pages, second revision).
 
-**The blocking condition.** A node $x$ is blocked by an earlier node $y$ when: (i) $\mathcal{L}(x) = \mathcal{L}(y)$ (same concept label), and (ii) $\mathrm{Tri}(x) = \mathrm{Tri}(y)$ (same abstract triangle-type set). This is strictly between type-equality blocking (condition (i) alone) and node-identity profile blocking (which additionally requires matching concrete relational contexts).
+**The blocking condition.** A node x is blocked by an earlier node y when three conditions hold: (i) L(x) = L(y) (same concept label), (ii) Tri(x) = Tri(y) (same abstract triangle-type set), and (iii) TNbr(x) = TNbr(y) (same Tri-neighborhood signature — for each (relation R, type τ) pair, the set of Tri-values among R-neighbors of type τ matches). This is strictly between type-equality blocking (condition (i) alone) and node-identity profile blocking (which requires matching concrete relational contexts). Condition (ii) ensures first-person perspective equivalence; condition (iii) ensures third-person perspective equivalence.
 
 **The proof structure:**
-- **Termination** (Theorem 4.1): Active nodes have pairwise distinct (label, triangle-type-set) pairs. Since the set of abstract triangle types is drawn from a finite universe (Tp³ × NR³), the number of active nodes is bounded by a computable (non-elementary) function. Computational evidence shows the practical bound is close to the type-equality bound 2^n.
-- **Soundness** (Theorem 5.8): Model construction via tree unraveling + triangle-type-filtered constraint network. The key lemma (Lemma 5.5) proves that T-closed solutions exist thanks to Tri(w) = Tri(β(w)) — the triangle-type-set equality between blocked nodes and their blockers guarantees that no novel triangle types arise during unraveling. Arc-consistency preserves the T-closed solution (Lemma 5.7), yielding a path-consistent network. Full RCC5 tractability (patchwork property) then gives a globally consistent model.
+- **Termination** (Theorem 4.1): Active nodes have pairwise distinct (L, Tri, TNbr) triples. Since the space of such triples is finite (though triply exponential), the number of active nodes is bounded by a computable function. Computational evidence shows the practical bound is close to the type-equality bound 2^n.
+- **Soundness** (Theorem 5.8): Model construction via tree unraveling + triangle-type-filtered constraint network. The key lemma (Lemma 5.5) proves that T-closed solutions exist using all three conditions: Tri(w) = Tri(β(w)) handles triangles where the blocked node is the first vertex (Case a), while TNbr(w) = TNbr(β(w)) handles the harder case where the blocked node appears as a second or third vertex (Case b) — for each neighbor b of w with relation R and type τ, there exists a neighbor b' of β(w) with the same relation, type, *and* Tri(b) = Tri(b'). Arc-consistency preserves the T-closed solution (Lemma 5.7), yielding a path-consistent network. Full RCC5 tractability (patchwork property) then gives a globally consistent model.
 - **Completeness** (Theorem 6.1): A model guides all nondeterministic choices, maintaining invariants that the labels are subsets of model types and edges match model relations.
 
 **Honest assessment.** The paper identifies three specific points requiring further scrutiny:
-1. **Intra-subtree T-closure**: When two copies in the unraveling map to the same tableau node, the relation between corresponding elements needs careful handling. The paper argues this reduces to the realizability of the shared type.
-2. **Monotonicity of triangle-type sets**: Under ∀-propagation, label changes replace (not augment) triangle types. The termination argument tracks (label, triangle-type-set) pairs rather than relying on strict monotonicity.
-3. **Stabilization depth bound**: Computational evidence shows stabilization at k=2, but a general bound in terms of |C₀| is needed for an explicit complexity result. The paper conjectures the depth is at most |Tp(C₀)| but does not prove this.
+1. **Intra-subtree T-closure**: When two copies in the unraveling map to the same tableau node, the relation between corresponding elements needs careful handling. The strengthened TNbr condition substantially addresses this: triangles are guaranteed to be in T from every participating node's perspective, not just the blocked/blocker pair. The remaining edge case (n₁ = n₂) reduces to realizability of the shared type.
+2. **Monotonicity of triangle-type sets**: Under ∀-propagation, label changes replace (not augment) triangle types. The termination argument tracks (L, Tri, TNbr) triples rather than relying on strict monotonicity.
+3. **Stabilization depth bound**: Computational evidence shows basic Tri stabilization at k=2 and full TNbr stabilization at k=3, but a general bound in terms of |C₀| is needed for an explicit complexity result. The paper conjectures the depth is at most |Tp(C₀)| but does not prove this.
 
-**Complexity.** The termination bound is non-elementary (triple-exponential active-node count). EXPTIME membership is conjectured but not proved. An EXPTIME bound would require showing that stabilization depth is polynomial in |Tp(C₀)|.
+**Complexity.** The termination bound is non-elementary (triply-exponential active-node count from the (L, Tri, TNbr) space). EXPTIME membership is conjectured but not proved. An EXPTIME bound would require showing that stabilization depth is polynomial in |Tp(C₀)|.
 
 ### Seventh approach: two-tier quotient — PO-COHERENT FRAGMENT DECIDABLE
 
@@ -846,7 +846,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 
 ## Files
 
-- [**`tableau_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) -- **Tableau calculus with triangle-type-set blocking**: claims full decidability of ALCI\_RCC5. Resolves the blocking dilemma via abstract triangle-type-set equality. Termination, soundness, completeness proofs with honest assessment of three specific scrutiny points. (13 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.tex))
+- [**`tableau_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) -- **Tableau calculus with Tri-neighborhood blocking** (second revision): claims full decidability of ALCI\_RCC5. Three-part blocking condition: (i) same label, (ii) same Tri set, (iii) same TNbr signature. Termination, soundness, completeness proofs with honest assessment of three specific scrutiny points. (14 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.tex))
 - [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Main paper: quasimodel approach (22 pages, revised)
 - [**`decidability_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.tex) -- LaTeX source for main paper
 - [**`ALCI_RCC5_contextual_tableau_draft.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.pdf) -- Contextual tableau paper by GPT-5.4 Pro; starting point for the FW(C,N) discussion ([source](https://github.com/lambdamikel/alcircc5/blob/master/ALCI_RCC5_contextual_tableau_draft.tex))
