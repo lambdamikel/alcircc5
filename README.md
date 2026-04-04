@@ -8,9 +8,11 @@
 
 ## Current Status of the Proof
 
-### Status (April 2026): PO-coherent fragment decidable, full decidability open
+### Status (April 2026): PO-coherent fragment decidable, PO gap potentially closeable
 
 A [fourth-revision two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) proves **decidability of the PO-coherent fragment** of ALCI\_RCC5 (12 pages). After three rounds of GPT-5.4 Pro review, three of four final objections have been fully resolved. The remaining issue — exact-relation extraction for PO — is an honest gap: PO has neither backward forcing (comp(PP,PO)={DR,PO,PP}) nor forward absorption (comp(PPI,PO)={PO,PPI}), and a concrete counterexample shows that PO-incoherent descriptors are realizable but cannot be represented by constant-interface quotients. The result is **unverified** by human experts.
+
+**New finding (April 2026): abstract triangle-type sets stabilize.** Computational verification ([`triangle_type_saturation_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py)) shows that abstract triangle-type sets — tuples (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) using only Hintikka types and RCC5 relations, no node identities — **stabilize after a bounded transient** for the PO-incoherent counterexample. All three node types (τ\_A, τ\_B, σ) reach identical abstract triangle-type sets by k=2, verified on a 24-element chain. This suggests that **triangle-type-set blocking** (blocking when abstract triangle-type sets match) achieves both termination AND correct unraveling, potentially resolving the blocking dilemma and closing the PO gap. See "Resolution: abstract triangle-type sets DO stabilize" below for full details.
 
 Earlier, five independent approaches were attempted; the first five all encounter the same structural wall at the global edge assignment step for complete-graph models.
 
@@ -54,7 +56,7 @@ See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc
 | Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | **PO gap** (exact-relation extraction fails for PO) |
 | Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | **PO-coherent fragment decidable** |
 
-The first five approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. Full decidability remains open due to the PO gap.
+The first five approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. Full decidability remains open due to the PO gap, but **computational evidence now shows that abstract triangle-type sets stabilize** for the PO-incoherent case (see "Resolution" section below), suggesting that triangle-type-set blocking can close the gap.
 
 ### Sixth approach: triangle-type blocking — conditional decidability
 
@@ -240,6 +242,53 @@ This is the tableau-theoretic manifestation of the **PO gap** from the two-tier 
 
 The **Extension Solvability Conjecture** asks whether the weak (type-equality) blocking, which guarantees termination, also happens to support correct unraveling. Computational evidence (zero genuine failures across 68,276 tested models) suggests yes, but no proof exists. The **PO-coherent fragment** is precisely the fragment where this dilemma does not arise: the relational profiles stabilize, both blocking conditions agree, and everything works.
 
+### Resolution: abstract triangle-type sets DO stabilize
+
+The blocking dilemma above appears to force a choice between termination and correct unraveling. But the dilemma rests on a subtle conflation: the non-termination argument uses **node-identity profiles** (which specific witnesses a node is related to), while the correctness argument only needs **abstract triangle-type sets** (which abstract relational patterns a node participates in). These are fundamentally different notions, and the abstract version stabilizes even when the concrete version does not.
+
+**The key distinction.** A node-identity profile records, for each pair of neighbors (b, c), the concrete identity of b and c together with the RCC5 relation. An abstract triangle type is a tuple (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) — three Hintikka types and three pairwise RCC5 relations, with no node identities. The abstract triangle-type set of a node d is the set of all abstract triangle types that d participates in.
+
+**Why node-identity profiles never match.** In the PO-incoherent chain, each τ\_A node d₂ₖ has a unique concrete relational context: PO to its own witness wₖ, DR to all earlier witnesses w₀,...,wₖ₋₁, and PPI to all later witnesses. Since k increases without bound, every d₂ₖ sees a different number of DR-related witnesses. The node-identity profile grows monotonically and never repeats.
+
+**Why abstract triangle-type sets DO match.** The abstract triangle-type set strips away node identities and retains only the relational pattern. Even though d₄ is DR to {w₀, w₁} while d₆ is DR to {w₀, w₁, w₂}, both see the same *abstract patterns*: both participate in triangles of the form (τ\_A, DR, σ, DR, σ, PPI), (τ\_A, PO, σ, DR, τ\_B, PPI), etc. The additional concrete witness at d₆ contributes only triangle types that d₄ already has via its own witnesses.
+
+**Computational verification** ([`triangle_type_saturation_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py)). The script builds the full PO-incoherent model (24-element PP-chain with 12 PO-witnesses), verifies composition consistency, and computes abstract triangle-type sets for every node. Results for the all-DR-backward branch:
+
+| Node type | Stabilizes at | Interior range (all identical) | Set size |
+|---|---|---|---|
+| τ\_A | d₄ (k=2) | d₄ = d₆ = d₈ = d₁₀ = d₁₂ = d₁₄ = d₁₆ = d₁₈ | 68 types |
+| τ\_B | d₅ (k=2) | d₅ = d₇ = d₉ = d₁₁ = d₁₃ = d₁₅ = d₁₇ = d₁₉ | 56 types |
+| σ | w₂ (k=2) | w₂ = w₃ = w₄ = w₅ = w₆ = w₇ = w₈ = w₉ | 57 types |
+
+The growth phase (d₀ → d₂ → d₄: 25 → 55 → 68 types for τ\_A) reflects the start boundary where early nodes have fewer backward neighbors. Nodes near the end of the finite model (d₂₀, d₂₂) have fewer types due to the end boundary — an artifact that would not exist in the infinite tableau construction. All interior nodes are **exactly identical**.
+
+The same stabilization holds for the all-PP-backward branch (verified in the script). This is not branch-dependent.
+
+**The full comparison matrix** (= means identical abstract triangle-type sets, numbers show symmetric-difference size):
+
+```
+τ_A:     d0    d2    d4    d6    d8   d10   d12   d14   d16   d18   d20   d22
+  d0      ·    30    43    43    43    43    43    43    43    43    50    54
+  d2     30     ·    13    13    13    13    13    13    13    13    20    48
+  d4     43    13     ·     =     =     =     =     =     =     =     7    35
+  d6     43    13     =     ·     =     =     =     =     =     =     7    35
+  d8     43    13     =     =     ·     =     =     =     =     =     7    35
+  ...    ...   ...    =     =     =     =     =     =     =     =    ...   ...
+  d18    43    13     =     =     =     =     =     =     =     ·     7    35
+```
+
+**Why stabilization occurs.** The abstract triangle-type set of a node depends on the menu of Hintikka types and RCC5 relations available among its neighbors — not on the number of neighbors of each kind. Once d₄ has at least one predecessor of each relevant type at each relevant relation (PPI to τ\_B, DR to σ, PPI to σ, etc.) and at least one successor of each relevant type at each relevant relation, its abstract triangle-type menu is complete. Additional predecessors or successors of the same abstract kind contribute no new triangle types. The transient phase (d₀ through d₂) simply reflects the time needed for the backward neighborhood to include all relevant abstract patterns.
+
+**Implication for the blocking dilemma.** Triangle-type-set blocking — blocking a node x by an earlier node y when their abstract triangle-type sets are identical — **resolves the dilemma**:
+
+| Property | Triangle-type-set blocking |
+|---|---|
+| **Termination** | Yes: the abstract triangle-type set is drawn from a finite universe (bounded by types × relations), and the stabilization result shows matching occurs after a bounded transient |
+| **Correct unraveling** | Yes: since x and y participate in exactly the same abstract triangle types, copying y's witness structure for x produces only triangles whose abstract types are already present in the completion graph's set T |
+| **Global consistency** | Follows from T-closure + full RCC5 tractability (patchwork property) |
+
+This suggests the **Extension Solvability Conjecture holds** and the PO gap may be closeable. The blocking condition that was missing is neither type-equality (too weak — allows novel triangles) nor node-identity-profile equality (too strong — prevents termination), but **abstract-triangle-type-set equality** — which achieves both termination and correct unraveling simultaneously.
+
 ### Seventh approach: two-tier quotient — PO-COHERENT FRAGMENT DECIDABLE
 
 A model-theoretic approach that **proves decidability of the PO-coherent fragment** of ALCI\_RCC5 by directly addressing the source of infinity: infinite PP-chains. The key insight is that PP-chains have **regular structure** — the sequence of Hintikka types along any infinite PP-chain is eventually periodic — and the **full tractability of RCC5** (Renz 1999: path-consistent disjunctive RCC5 networks are satisfiable) bridges local consistency to global consistency.
@@ -290,7 +339,7 @@ See [**Decidability of ALCI\_RCC5 via Two-Tier Quotient Construction (PDF)**](ht
 | One-step AC extension (2 existing elements) | 0 failures out of 164 |
 | Full AC extension (3 existing elements) | 0 failures out of 128 |
 
-**What remains open:** (1) The PO gap — closing it would give full decidability. Three potential routes: phase-indexed witnesses, PO-aware kernel interfaces, or a direct model-theoretic argument showing PO-incoherent descriptors are syntactically unrealizable. (2) The exact complexity (EXPTIME membership) — the quotient size bound is computable but possibly non-elementary. (3) The decidability of ALCI\_RCC8 (RCC8 lacks full tractability).
+**What remains open:** (1) The PO gap — closing it would give full decidability. The most promising route is now **triangle-type-set blocking**: computational evidence shows abstract triangle-type sets stabilize for PO-incoherent descriptors (see "Resolution: abstract triangle-type sets DO stabilize" above), suggesting a tableau with this blocking condition terminates and supports correct unraveling. A formal proof is needed. (2) The exact complexity (EXPTIME membership) — the quotient size bound is computable but possibly non-elementary. (3) The decidability of ALCI\_RCC8 (RCC8 lacks full tractability).
 
 ### The two-chain construction: a 2×∞ ladder with functional operators
 
@@ -808,6 +857,8 @@ A key insight explored in these papers is the **patchwork property** from qualit
 ### Triangle-type blocking investigation
 
 - [**`triangle_closure_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_closure_check.py) -- Tests the triangle-type blocking approach on 68,276 models. Four-part check: (1) GPT counterexample handling, (2) systematic STC/extension CSP, (3) failure classification (all failures are would-be-expanded), (4) cross-context robustness. Key result: zero genuine failures — when T-closed extensions exist, T-filtered arc-consistency always finds them.
+- [**`triangle_type_saturation_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py) -- Tests whether abstract triangle-type sets stabilize for the PO-incoherent counterexample. Builds a 24-element PP-chain with 12 PO-witnesses, verifies composition consistency, computes abstract triangle-type sets for every node, and generates comparison matrices. Key result: **all three node types stabilize at k=2** (τ\_A: 68 types, τ\_B: 56 types, σ: 57 types). Interior nodes have exactly identical abstract triangle-type sets. Verified for both DR-backward and PP-backward branches.
+- [**`profile_blocking_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/profile_blocking_check.py) -- Verifies that node-identity-based profile blocking does NOT terminate: enumerates all valid RCC5 assignments for chains of length 4/6/8 via arc-consistency propagation, confirms the sliding PO diagonal pattern, and shows that no two τ\_A nodes ever have matching node-identity profiles.
 
 ## References
 
