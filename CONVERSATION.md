@@ -1457,3 +1457,49 @@ This is strong computational evidence that the **Extension Solvability Conjectur
 - `profile_blocking_check.py`: Node-identity profile blocking non-termination verifier
 - Updated `README.md` with "Resolution: abstract triangle-type sets DO stabilize" section
 - Updated `CONVERSATION.md` with Part 28
+
+---
+
+## Part 29: Tableau calculus with triangle-type-set blocking (April 2026)
+
+### Michael Wessel's request
+
+After the saturation finding and README update, Michael asked Claude to "take a second crack at the blocking tableaux calculus, using the new triangle-set profile blocking you just found."
+
+### The paper: tableau_ALCIRCC5.tex
+
+Claude wrote a 13-page paper presenting a complete tableau calculus for ALCI_RCC5 with triangle-type-set blocking. This is the eighth approach to the decidability problem and the first to claim full decidability (not just the PO-coherent fragment).
+
+**Key innovation: triangle-type-set blocking (Definition 3.5).** A node x is blocked by an earlier node y when both conditions hold:
+1. L(x) = L(y) (same concept label)
+2. Tri(x) = Tri(y) (same abstract triangle-type set)
+
+This is strictly between type-equality blocking (condition 1 alone, which always terminates but may produce novel triangles) and node-identity profile blocking (which always supports correct unraveling but may not terminate).
+
+**Paper structure:**
+1. Introduction — the blocking dilemma and its resolution
+2. Preliminaries — ALCI_RCC5, types, composition table, type-safety, full RCC5 tractability
+3. The Tableau Calculus — completion graphs, triangle types (Definitions 3.2–3.4), blocking (Definition 3.5), expansion rules (∧, ∨, ∀, ∃), constraint filtering, strategy, clash conditions
+4. Termination (Theorem 4.1) — active nodes have distinct (label, Tri) pairs; finite universe of abstract triangle types gives computable (non-elementary) bound
+5. Soundness (Theorem 5.8) — three-step construction:
+   - Tree unraveling (Definition 5.1): blocked nodes redirect to blockers
+   - Triangle-filtered constraint network (Definition 5.3): arc-consistency with T-filtering
+   - Key lemma (Lemma 5.5): T-closed solutions exist because Tri(w) = Tri(β(w))
+   - Arc-consistency preservation (Lemma 5.7): T-closed solution survives enforcement
+   - Full RCC5 tractability gives globally consistent model
+6. Completeness (Theorem 6.1) — model-guided nondeterministic choices
+7. Computational Evidence — stabilization table (τ_A: 68 types at k=2, τ_B: 56, σ: 57)
+8. Discussion — blocking dilemma resolution table, relationship to two-tier quotient, complexity (non-elementary bound, EXPTIME conjectured), RCC8 extension, honest assessment
+9. Conclusion
+
+**Honest assessment (Section 8, three specific points):**
+1. **Intra-subtree T-closure**: When two unraveling copies map to the same tableau node, ρ(d₁, d₂) = E(n, n) is undefined. The paper argues this reduces to realizability of the shared type, but the argument deserves closer examination.
+2. **Monotonicity of triangle-type sets**: Label changes via ∀-propagation replace (not augment) triangle types. The termination proof tracks (label, Tri) pairs, but the monotonicity claim is an oversimplification.
+3. **Stabilization depth bound**: Computational evidence gives k=2 for the PO-incoherent case. A general bound of |Tp(C₀)| is conjectured but not proved. This matters for explicit complexity bounds.
+
+**Compilation.** Two pdflatex passes, 13 pages, no errors, no undefined references. Only cosmetic hyperref warnings (math tokens in PDF bookmarks).
+
+### Files produced
+- `tableau_ALCIRCC5.tex` / `.pdf`: Tableau calculus with triangle-type-set blocking (13 pages)
+- Updated `README.md` with eighth approach section, updated status line, file listing
+- Updated `CONVERSATION.md` with Part 29

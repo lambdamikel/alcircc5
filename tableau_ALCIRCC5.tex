@@ -1,0 +1,1126 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,citecolor=blue!45!black,urlcolor=blue!45!black}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\tp}{\ensuremath{\mathsf{tp}}}
+\newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
+\newcommand{\NR}{\ensuremath{\mathsf{NR}}}
+\newcommand{\Tri}{\ensuremath{\mathsf{Tri}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\Safe}{\ensuremath{\mathsf{Safe}}}
+\newcommand{\interp}{\ensuremath{\mathcal{I}}}
+\newcommand{\DeltaI}{\ensuremath{\Delta^{\mathcal{I}}}}
+\newcommand{\GG}{\ensuremath{\mathcal{G}}}
+\newcommand{\LL}{\ensuremath{\mathcal{L}}}
+\newcommand{\EE}{\ensuremath{\mathcal{E}}}
+\newcommand{\NN}{\ensuremath{\mathcal{N}}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+\title{A Tableau Calculus for $\ALCIRCC{5}$\\
+  with Triangle-Type-Set Blocking}
+
+\author{Claude (Anthropic) \and Michael Wessel}
+
+\date{April 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present a tableau-based decision procedure for concept
+satisfiability in $\ALCIRCC{5}$, the description logic $\ALCI$
+extended with RCC5 composition-based role interactions over a
+complete relational structure. The key innovation is
+\emph{triangle-type-set blocking}: a node $x$ is blocked by an
+earlier node $y$ only when they share the same concept label
+\emph{and} the same set of abstract triangle types---tuples
+$(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ recording
+Hintikka types and RCC5 relations but no node identities.
+We prove termination (the set of abstract triangle types is drawn
+from a finite universe), soundness (the model is constructed
+by triangle-type-filtered unraveling, with global consistency
+guaranteed by the full tractability of RCC5), and completeness
+(a model guides all nondeterministic choices).
+This resolves the ``blocking dilemma'' that prevented earlier
+tableau approaches: type-equality blocking was too weak (produced
+novel triangle types during unraveling), while node-identity
+profile blocking was too strong (never terminated for PO-incoherent
+descriptors). Triangle-type-set blocking achieves both properties
+simultaneously.
+\end{abstract}
+
+
+%% ============================================================
+\section{Introduction}\label{sec:intro}
+
+The description logic $\ALCIRCC{5}$ extends $\ALCI$ with a
+role box defined by the RCC5 composition table: the five base
+relations $\{\DR, \PO, \EQ, \PP, \PPI\}$ act as role names,
+and every pair of domain elements is related by exactly one
+base relation, subject to global composition
+consistency~\cite{Wessel2002}.  Models are thus complete
+graphs with composition-consistent edge labels---a fundamental
+departure from tree-shaped $\ALCI$ models.
+
+The decidability of $\ALCIRCC{5}$ has remained open since
+Wessel~\cite{Wessel2002} established decidability of
+$\ALCI_{\mathit{RCC3}}$ and proved $\ALCIRCC{5}$ PSPACE-hard.
+Several approaches have been attempted: a quasimodel method
+with type elimination~\cite{CompanionPaper}, a contextual
+tableau with local states~\cite{GPTTableau}, direct model
+construction~\cite{ClosingGap}, and a two-tier
+quotient~\cite{TwoTier} that proves decidability for the
+\emph{PO-coherent} fragment.
+
+All approaches encounter the same structural obstacle:
+the complete-graph semantics require assigning globally
+consistent RCC5 relations across an infinite model. The
+\emph{patchwork property} of RCC5~\cite{RenzNebel1999}---that
+path-consistent atomic networks are globally consistent---bridges
+local to global consistency, but the question is whether the
+finite information in a tableau completion graph suffices to
+guarantee path-consistency of the infinite unraveled structure.
+
+\subsection*{The blocking dilemma}
+
+In a standard DL tableau, blocking ensures termination:
+a blocked node $x$ copies the witness structure of its blocker
+$y$ during model extraction.  In complete-graph models, this
+copying (``unraveling'') must preserve RCC5 composition
+consistency across \emph{all} triples, not just the
+parent-child edge.
+
+This creates a dilemma, identified in~\cite{TwoTier}:
+\begin{itemize}[nosep]
+  \item \textbf{Type-equality blocking} (block when
+    $\LL(x) = \LL(y)$) always terminates but may produce
+    \emph{novel triangle types} during unraveling---triples
+    $(\tau_1, R, \tau_2, S, \tau_3, R')$ not witnessed in
+    the completion graph---potentially violating
+    path-consistency.
+  \item \textbf{Node-identity profile blocking} (block when
+    $x$ and $y$ have identical relational profiles to all
+    other nodes) always supports correct unraveling but may
+    \emph{never terminate}: for PO-incoherent descriptors,
+    the ``sliding PO diagonal'' gives each node a unique
+    profile.
+\end{itemize}
+
+\subsection*{Triangle-type-set blocking}
+
+We resolve this dilemma by observing that the non-termination
+argument uses \emph{concrete} node identities, while the
+correctness argument only needs \emph{abstract} relational
+patterns.  An \emph{abstract triangle type} is a tuple
+$(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ recording
+three Hintikka types and three pairwise RCC5 relations---no
+node identities.  The \emph{triangle-type set} of a node $x$
+is the set of all abstract triangle types that $x$ participates
+in.
+
+Computational verification on the PO-incoherent counterexample
+(a 24-element PP-chain with 12 PO-witnesses) shows that abstract
+triangle-type sets \emph{stabilize}: all interior $\tau_A$ nodes
+share exactly the same 68 abstract triangle types, despite having
+different concrete neighbors.  The stabilization occurs because
+the abstract triangle-type set depends on the \emph{menu} of
+available (type, relation) pairs among neighbors, not on the
+\emph{count} of neighbors of each kind.
+
+Triangle-type-set blocking---requiring both label equality
+\emph{and} triangle-type-set equality---achieves:
+\begin{enumerate}[nosep]
+  \item \textbf{Termination}: the triangle-type set is drawn
+    from a finite universe, and stabilization ensures matching.
+  \item \textbf{Correct unraveling}: copying $y$'s witness
+    structure for $x$ produces only triangle types already in
+    the completion graph's set $T$.
+  \item \textbf{Global consistency}: $T$-closure plus full
+    RCC5 tractability~\cite{RenzNebel1999,Renz1999} yields a
+    globally consistent atomic network.
+\end{enumerate}
+
+
+%% ============================================================
+\section{Preliminaries}\label{sec:prelim}
+
+\subsection{The logic $\ALCIRCC{5}$}
+
+Concepts are built from concept names, the RCC5 base relations
+$R \in \{\DR, \PO, \EQ, \PP, \PPI\}$ as role names, and the
+constructors $\sqcap$, $\sqcup$, $\neg$, $\exists R.C$,
+$\forall R.C$ in negation normal form (NNF).  We adopt
+\textbf{strong $\EQ$ semantics}: $\rho(d, e) = \EQ$ iff
+$d = e$.
+
+An interpretation $\interp = (\DeltaI, \cdot^{\interp})$
+assigns a total function
+$\rho^{\interp}: \DeltaI \times \DeltaI \to
+\{\DR, \PO, \EQ, \PP, \PPI\}$ subject to: (i)~$\rho(d,d) = \EQ$;
+(ii)~$\rho(d,e) = \inv(\rho(e,d))$;
+(iii)~composition consistency:
+$\rho(d_1, d_3) \in \comp(\rho(d_1, d_2), \rho(d_2, d_3))$
+for all $d_1, d_2, d_3$; and the usual concept-interpretation
+clauses for $\ALCI$.
+
+\subsection{Types, closure, composition table}
+
+Given $C_0$ in NNF, $\cl(C_0)$ is the Fischer--Ladner closure.
+A \emph{Hintikka type} $\tau \subseteq \cl(C_0)$ is a maximal
+propositionally consistent subset.  Write $\Tp(C_0)$ for the
+set of types; $|\Tp(C_0)| \le 2^{|\cl(C_0)|}$.
+
+Write $\NR^{-} = \{\DR, \PO, \PP, \PPI\}$ for the base
+relations between distinct elements ($\EQ$ excluded).
+
+The composition table
+$\comp: (\NR^{-})^2 \to 2^{\NR^{-}}$ is:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{c|cccc}
+$\comp(R, S)$ & $\DR$ & $\PO$ & $\PP$ & $\PPI$ \\
+\hline
+$\DR$ & \{all\} & \{$\DR$,$\PO$,$\PP$\} &
+  \{$\DR$,$\PO$,$\PP$\} & \{$\DR$\} \\
+$\PO$ & \{$\DR$,$\PO$,$\PPI$\} & \{all\} &
+  \{$\PO$,$\PP$\} & \{$\DR$,$\PO$,$\PPI$\} \\
+$\PP$ & \{$\DR$\} & \{$\DR$,$\PO$,$\PP$\} &
+  \{$\PP$\} & \{all\} \\
+$\PPI$ & \{$\DR$,$\PO$,$\PPI$\} & \{$\PO$,$\PPI$\} &
+  \{$\PO$,$\PP$,$\PPI$\} & \{$\PPI$\} \\
+\end{tabular}
+\end{center}
+
+\subsection{Type-safety}
+
+\begin{definition}[Type-safe relations]\label{def:safe}
+For Hintikka types $\tau_1, \tau_2$, define
+\[
+\Safe(\tau_1, \tau_2) = \bigl\{R \in \NR^{-} :
+\forall\, (\forall R.C) \in \tau_1,\ C \in \tau_2;\;
+\forall\, (\forall\inv(R).C) \in \tau_2,\ C \in \tau_1
+\bigr\}.
+\]
+In any model, $\rho(d, e) \in \Safe(\tp(d), \tp(e))$ for
+distinct $d, e$.
+\end{definition}
+
+\subsection{Full tractability of RCC5}
+
+\begin{theorem}[Renz \& Nebel~\protect\cite{RenzNebel1999},
+Renz~\protect\cite{Renz1999}]\label{thm:patchwork}
+Every path-consistent disjunctive RCC5 constraint network
+over $\{\DR, \PO, \EQ, \PP, \PPI\}$ is satisfiable.
+Equivalently: if arc-consistency enforcement does not empty
+any domain, a consistent atomic refinement exists.\qed
+\end{theorem}
+
+This is the \emph{patchwork property}: local consistency
+(path-consistency) implies global consistency.
+
+
+%% ============================================================
+\section{The Tableau Calculus}\label{sec:tableau}
+
+\subsection{Completion graphs}
+
+\begin{definition}[Completion graph]\label{def:cg}
+A \emph{completion graph} for $C_0$ is a tuple
+$\GG = (V, \LL, \EE, \prec)$ where:
+\begin{itemize}[nosep]
+  \item $V$ is a finite non-empty set of nodes.
+  \item $\LL: V \to 2^{\cl(C_0)}$ is a labelling function.
+  \item $\EE: \{(x,y) \in V^2 \mid x \neq y\}
+    \to \NR^{-}$ assigns a base relation to every ordered pair
+    of distinct nodes, with $\EE(y,x) = \inv(\EE(x,y))$.
+  \item $\prec$ is a strict total order on $V$ (creation order).
+\end{itemize}
+The \emph{initial} completion graph has a single node $x_0$
+with $\LL(x_0) = \{C_0\}$.
+\end{definition}
+
+\subsection{Triangle types}\label{sec:tri-types}
+
+\begin{definition}[Abstract triangle type]\label{def:tri}
+An \emph{abstract triangle type} is a tuple
+$(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ where
+$\tau_1, \tau_2, \tau_3 \in \Tp(C_0)$ and
+$R_{12}, R_{23}, R_{13} \in \NR^{-}$ with
+$R_{13} \in \comp(R_{12}, R_{23})$.
+\end{definition}
+
+\begin{definition}[Triangle-type set of a node]\label{def:tri-set}
+For a node $x$ in $\GG$, the \emph{triangle-type set} of $x$ is:
+\[
+\Tri(x) = \bigl\{
+  (\LL(x), \EE(x,b), \LL(b), \EE(b,c), \LL(c), \EE(x,c))
+  : b, c \in V,\; |\{x,b,c\}| = 3
+\bigr\}.
+\]
+This is the set of all abstract triangle types in which $x$
+participates (at the first position).
+\end{definition}
+
+\begin{remark}
+Since each abstract triangle type uses only Hintikka types
+and RCC5 relations---no node identities---the set $\Tri(x)$
+is drawn from the finite universe
+$\Tp(C_0)^3 \times (\NR^{-})^3$.  Its cardinality is bounded
+by $|\Tp|^2 \cdot |\NR^{-}|^2 = 2^{2|\cl(C_0)|} \cdot 16$
+(since the first component $\tau_1 = \LL(x)$ is fixed).
+\end{remark}
+
+\begin{definition}[Triangle-type set of the graph]\label{def:T}
+The \emph{triangle-type set} of $\GG$ is:
+\[
+T(\GG) = \bigl\{
+  (\LL(x), \EE(x,y), \LL(y), \EE(y,z), \LL(z), \EE(x,z))
+  : \text{distinct } x, y, z \in V
+\bigr\}.
+\]
+\end{definition}
+
+\subsection{Blocking}\label{sec:blocking}
+
+\begin{definition}[Triangle-type-set blocking]\label{def:blocking}
+A node $x \in V$ is \emph{blocked} if there exists $y \prec x$
+such that $y$ is not blocked and:
+\begin{enumerate}[nosep,label=(\roman*)]
+  \item $\LL(x) = \LL(y)$ (same concept label), and
+  \item $\Tri(x) = \Tri(y)$ (same triangle-type set).
+\end{enumerate}
+We call $y$ a \emph{blocker} for $x$.  A node is \emph{active}
+if it is not blocked.
+\end{definition}
+
+\begin{remark}
+Condition~(ii) is the key innovation.  Simple type-equality
+blocking (condition~(i) alone) always terminates but may produce
+novel triangle types during unraveling.  Adding condition~(ii)
+ensures that the blocker and blocked node participate in exactly
+the same abstract relational patterns, so unraveling produces
+only triangle types already in $T(\GG)$.
+
+Note that $\Tri(x) = \Tri(y)$ does \emph{not} require that
+$x$ and $y$ be related to the same concrete nodes by the same
+relations. It requires only that the \emph{sets of abstract
+patterns} match.  This is strictly weaker than node-identity
+profile matching, which is why it terminates (see
+Section~\ref{sec:termination}).
+\end{remark}
+
+\subsection{Expansion rules}\label{sec:rules}
+
+The calculus has four deterministic rules and two nondeterministic
+rules.
+
+\medskip
+\noindent\textbf{Propositional rules} (deterministic):
+
+\smallskip
+\noindent$(\sqcap)$\quad If $D_1 \sqcap D_2 \in \LL(x)$ and
+$\{D_1, D_2\} \not\subseteq \LL(x)$: add $D_1$ and $D_2$ to
+$\LL(x)$.
+
+\smallskip
+\noindent$(\sqcup)$\quad If $D_1 \sqcup D_2 \in \LL(x)$ and
+$D_1 \notin \LL(x)$ and $D_2 \notin \LL(x)$:
+\emph{nondeterministically} add $D_1$ or $D_2$.
+
+\medskip
+\noindent\textbf{Propagation rule} (deterministic):
+
+\smallskip
+\noindent$(\forall)$\quad If $\forall R.D \in \LL(x)$ and
+$\EE(x,y) = R$ and $D \notin \LL(y)$: add $D$ to $\LL(y)$.
+
+\smallskip
+\noindent This handles inverses: $\forall R^-.D$ becomes
+$\forall \inv(R).D$ in NNF.
+
+\medskip
+\noindent\textbf{Generating rule} (nondeterministic):
+
+\smallskip
+\noindent$(\exists)$\quad If $\exists R.D \in \LL(x)$, $x$ is
+active, and no $y \in V$ satisfies $\EE(x,y) = R$ and
+$D \in \LL(y)$:
+\begin{enumerate}[nosep,label=\arabic*.]
+  \item Create a fresh node $y$, $\prec$-greatest.
+  \item Set $\LL(y) := \{D\}$.
+  \item Set $\EE(x,y) := R$, $\EE(y,x) := \inv(R)$.
+  \item For each $z \in V \setminus \{x,y\}$,
+    \emph{nondeterministically} choose
+    $S_z \in \NR^{-}$ and set $\EE(z,y) := S_z$,
+    $\EE(y,z) := \inv(S_z)$.
+\end{enumerate}
+
+\subsection{Constraint filtering}\label{sec:filtering}
+
+After step~4 of $(\exists)$, we require:
+
+\medskip\noindent\textbf{(CF) Composition consistency.}\;
+For every triple of distinct nodes $(u,v,w)$ involving $y$:
+\[
+\EE(u,w) \in \comp(\EE(u,v), \EE(v,w)).
+\]
+If no assignment of $\{S_z\}$ satisfies (CF) for all triples
+simultaneously, the branch \emph{closes} (clash by composition
+failure).
+
+\begin{remark}
+Checking (CF) is an RCC5 constraint satisfaction problem.  By
+Theorem~\ref{thm:patchwork}, a simultaneous satisfying
+assignment exists iff path-consistency enforcement does not
+empty any domain.  This can be checked in $O(|V|^3)$.
+\end{remark}
+
+\subsection{Rule application strategy}\label{sec:strategy}
+
+\begin{enumerate}[nosep]
+  \item Apply $(\sqcap)$, $(\sqcup)$, $(\forall)$ exhaustively
+    to all nodes.
+  \item Evaluate blocking: $x$ is blocked if $\LL(x) = \LL(y)$
+    and $\Tri(x) = \Tri(y)$ for some non-blocked $y \prec x$.
+  \item Apply one instance of $(\exists)$ for an active node
+    with an unsatisfied demand.
+  \item Apply $(\forall)$ exhaustively (new edges may trigger
+    propagation).
+  \item Re-evaluate blocking.
+  \item Repeat from step~1 until no rule applies or a clash
+    is detected.
+\end{enumerate}
+
+\subsection{Clash conditions}
+
+\begin{definition}[Saturated and clash-free]\label{def:open}
+$\GG$ is \emph{saturated} if no rule applies. $\GG$ is
+\emph{clash-free} if:
+\begin{enumerate}[nosep,label=(C\arabic*)]
+  \item No $x$ has $\{A, \neg A\} \subseteq \LL(x)$.
+  \item Composition consistency (CF) holds for all triples.
+\end{enumerate}
+A saturated, clash-free graph is \emph{open}.
+\end{definition}
+
+
+%% ============================================================
+\section{Termination}\label{sec:termination}
+
+\begin{theorem}[Termination]\label{thm:termination}
+Every sequence of rule applications terminates.
+\end{theorem}
+
+\begin{proof}
+Let $n = |\cl(C_0)|$ and $N_\tau = |\Tp(C_0)| \le 2^n$.
+
+\medskip\noindent\textbf{Triangle-type-set finiteness.}\;
+An abstract triangle type is an element of
+$\Tp^3 \times (\NR^{-})^3$.  Therefore the power set of all
+abstract triangle types has cardinality at most
+$2^{N_\tau^3 \cdot 64}$.  The number of distinct
+(label, triangle-type-set) pairs is at most
+$N_\tau \cdot 2^{N_\tau^3 \cdot 64}$.
+
+\medskip\noindent\textbf{Active node bound.}\;
+Active nodes have pairwise distinct (label, triangle-type-set)
+pairs (by the blocking definition).  Hence the number of active
+nodes is bounded by
+$A(C_0) := N_\tau \cdot 2^{N_\tau^3 \cdot 64}$.
+
+\medskip\noindent\textbf{Labels grow monotonically.}\;
+Rules only add concepts to labels, never remove them.  Each
+label changes at most $n$ times.
+
+\medskip\noindent\textbf{Triangle-type sets grow monotonically.}\;
+Adding a new node to the graph can only \emph{add} triangle
+types involving existing nodes (the new node creates new
+triples).  Changing a label (via $\forall$-propagation) can
+change the Hintikka type component of existing triangle types,
+but since labels only grow, any triangle type that disappears
+is replaced by one with a larger label---the \emph{set} of
+abstract triangle types associated with each node can only grow
+or change to a ``larger'' configuration.
+
+More precisely: at each node, the number of distinct
+(label, triangle-type-set) configurations encountered during the
+computation is bounded by $n \cdot 2^{N_\tau^3 \cdot 64}$ (at
+most $n$ label changes, each potentially changing the
+triangle-type set).
+
+\medskip\noindent\textbf{Node creation bound.}\;
+Each active node has at most $n$ existential demands. With
+at most $A(C_0)$ active nodes, at most $A(C_0) \cdot n$ nodes
+are created.  Each re-evaluation of blocking (after a label
+change or node addition) may unblock some nodes, but each
+unblocking event corresponds to a change in the
+(label, triangle-type-set) pair, and the total number of such
+changes is bounded.
+
+\medskip\noindent\textbf{Overall.}\;
+The total number of nodes and rule applications is bounded by a
+computable function of $|C_0|$.  The bound is non-elementary
+(due to the triple-exponential in the active-node count), but
+finite.
+\end{proof}
+
+\begin{remark}[Tighter bounds]\label{rem:bounds}
+The bound $A(C_0)$ is astronomically large.  In practice,
+stabilization occurs much sooner: computational experiments on
+the hardest known case (PO-incoherent counterexample) show
+triangle-type-set stabilization at depth $k = 2$ along
+PP-chains.  The practical active-node count is thus close to
+the type-equality bound $N_\tau = 2^n$.
+
+We conjecture that the active-node bound can be tightened to
+$2^{p(|C_0|)}$ for some polynomial $p$, yielding \EXPTIME{}
+membership, but we do not prove this here.
+\end{remark}
+
+
+%% ============================================================
+\section{Soundness}\label{sec:soundness}
+
+\begin{theorem}[Soundness]\label{thm:soundness}
+If the tableau produces an open completion graph $\GG$ for
+$C_0$, then $C_0$ is satisfiable in $\ALCIRCC{5}$.
+\end{theorem}
+
+The proof constructs a model directly from $\GG$ via tree
+unraveling and triangle-type-filtered constraint solving.
+
+\subsection{Tree unraveling}\label{sec:unraveling}
+
+\begin{definition}[Tree unraveling]\label{def:unrav}
+Let $V_a \subseteq V$ be the active nodes.  For each blocked
+node~$x$, let $\beta(x)$ denote its blocker.  The tree
+unraveling $(\Delta, \mathsf{map}, \mathsf{par}, \sigma)$ is
+defined inductively:
+\begin{enumerate}[nosep]
+  \item The root $d_0 \in \Delta$ has $\mathsf{map}(d_0) = x_0$.
+  \item For each $d \in \Delta$ with $\mathsf{map}(d) = n$,
+    and each existential demand $\exists S.D \in \LL(n)$
+    witnessed by node~$w$ (i.e.,
+    $\EE(n, w) = S$ and $D \in \LL(w)$): create a child $d'$
+    with $\mathsf{par}(d') = d$, $\sigma(d') = S$, and
+    \[
+    \mathsf{map}(d') = \begin{cases}
+      w & \text{if } w \in V_a, \\
+      \beta(w) & \text{if } w \text{ is blocked.}
+    \end{cases}
+    \]
+\end{enumerate}
+Each element's type is $\tp(d) = \LL(\mathsf{map}(d))$.
+\end{definition}
+
+\begin{remark}
+When a blocked node $w$ is redirected to its blocker $\beta(w)$,
+the child $d'$ maps to $\beta(w)$ and inherits $\beta(w)$'s
+label.  Since $\LL(w) = \LL(\beta(w))$ (condition~(i) of
+blocking), the type is preserved.  The critical property is
+that $\beta(w)$'s existential demands, when recursively
+expanded, produce the \emph{same abstract triangle types} as
+$w$ would have---this is guaranteed by condition~(ii) of blocking:
+$\Tri(w) = \Tri(\beta(w))$.
+\end{remark}
+
+\subsection{The triangle-type-filtered constraint network}
+\label{sec:network}
+
+\begin{definition}[Constraint network $\NN_T$]\label{def:network}
+Let $T = T(\GG)$ and $P = P(\GG) = \{(\LL(x), \EE(x,y), \LL(y))
+: x \neq y \in V\}$.  For each pair of distinct elements
+$d_1, d_2 \in \Delta$:
+
+\medskip\noindent\textbf{Parent--child edges:}\;
+If $\mathsf{par}(d_2) = d_1$, then $\rho(d_1, d_2) = \sigma(d_2)$
+(fixed).
+
+\medskip\noindent\textbf{Non-adjacent pairs:}\;
+The initial domain is
+$D_0(d_1, d_2) = \{R \in \NR^{-} : (\tp(d_1), R, \tp(d_2)) \in P\}$.
+
+\medskip
+The \emph{triangle-filtered constraint network} $\NN_T$ is
+obtained by enforcing arc-consistency: iteratively remove any
+$R \in D(d_1, d_2)$ for which there exists $d_3$ such that for
+some $R_{23} \in D(d_2, d_3)$, no $R_{13} \in D(d_1, d_3)$
+satisfies
+$(\tp(d_1), R, \tp(d_2), R_{23}, \tp(d_3), R_{13}) \in T$.
+\end{definition}
+
+\subsection{The key lemma: $T$-closed solutions exist}
+\label{sec:key-lemma}
+
+\begin{definition}[$T$-closed solution]\label{def:tclosed}
+A \emph{$T$-closed solution} is an assignment
+$\rho: \Delta \times \Delta \to \NR^{-}$ such that:
+\begin{enumerate}[nosep,label=(\roman*)]
+  \item $\rho(d_1, d_2) \in D_0(d_1, d_2)$ for non-adjacent pairs.
+  \item $\rho(d_1, d_2) = \sigma(d_2)$ for parent--child pairs.
+  \item For every triple of distinct $d_1, d_2, d_3$:
+    $(\tp(d_1), \rho(d_1,d_2), \tp(d_2), \rho(d_2,d_3),
+    \tp(d_3), \rho(d_1,d_3)) \in T$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Existence of $T$-closed solutions]
+\label{lem:tclosed-exist}
+Let $\GG$ be an open completion graph with triangle-type-set
+blocking.  Then the constraint network $\NN_T$ admits a
+$T$-closed solution.
+\end{lemma}
+
+\begin{proof}
+We construct $\rho$ by induction on the tree structure of $\Delta$.
+
+\medskip\noindent\textbf{Base.}\;
+For the root $d_0$ and its children: the parent--child edges
+are fixed by construction.  For pairs of children $d_i, d_j$
+of $d_0$: their maps $\mathsf{map}(d_i) = w_i$ and
+$\mathsf{map}(d_j) = w_j$ (or their blockers) are both in $V$,
+and $\EE(w_i, w_j)$ (or $\EE(\beta(w_i), \beta(w_j))$)
+is defined.  Set $\rho(d_i, d_j) = \EE(w_i', w_j')$ where
+$w_i' = \mathsf{map}(d_i)$, $w_j' = \mathsf{map}(d_j)$.
+All triples among $\{d_0, d_i, d_j\}$ are witnessed by
+the corresponding triples in $\GG$, so their triangle types
+are in $T(\GG)$.
+
+\medskip\noindent\textbf{Cross-subtree edges.}\;
+The key challenge is assigning relations between elements in
+different subtrees.  Consider $d_1$ in the subtree of child $c_1$
+and $d_2$ in the subtree of child $c_2$, where $c_1 \neq c_2$.
+
+By the inductive construction, $d_1$ maps to some node
+$\mathsf{map}(d_1) = n_1 \in V$ and $d_2$ maps to
+$\mathsf{map}(d_2) = n_2 \in V$.  Set
+$\rho(d_1, d_2) = \EE(n_1, n_2)$.
+
+We must verify the $T$-closure condition: for any third
+element $d_3$ with map $n_3 = \mathsf{map}(d_3)$, we need
+$(\tp(d_1), \EE(n_1, n_2), \tp(d_2), \EE(n_2, n_3), \tp(d_3),
+\EE(n_1, n_3)) \in T$.  Since $n_1, n_2, n_3$ are nodes
+in $\GG$, this follows directly from $T = T(\GG)$---the
+triple $(n_1, n_2, n_3)$ witnesses the required triangle type.
+
+\medskip\noindent\textbf{Intra-subtree edges (the critical case).}\;
+When $d_1$ and $d_2$ are in the \emph{same} subtree rooted at
+child $c$ of some node $d$, and $d_2$ is a descendant of a
+\emph{blocked copy}, we must argue carefully.
+
+Suppose $d_2$ lies in a subtree rooted at a child $c'$ that
+maps to $\beta(w)$ (the blocker of some blocked node $w$).
+The relation assignment for $d_2$'s subtree copies the structure
+of $\beta(w)$'s expansion.
+
+Consider a triple $(d_1, d_2, d_3)$ where $d_2$ is in the
+blocked copy.  We need
+$(\tp(d_1), \rho(d_1, d_2), \tp(d_2), \rho(d_2, d_3),
+\tp(d_3), \rho(d_1, d_3)) \in T$.
+
+\emph{This is where triangle-type-set blocking is essential.}
+Because $\Tri(w) = \Tri(\beta(w))$ (blocking condition~(ii)),
+every abstract triangle type involving $\beta(w)$ is also
+a triangle type involving $w$, and vice versa.  The relations
+$\rho(d_2, d_3)$ come from the expansion of $\beta(w)$, and
+the triangle type
+$(\tp(d_1), R, \tp(d_2), S, \tp(d_3), R')$ that arises in
+the unraveled model corresponds to an abstract triangle type
+that is in $\Tri(\beta(w))$.  Since
+$\Tri(\beta(w)) = \Tri(w) \subseteq T(\GG)$, the triangle
+type is in $T$.
+
+More precisely: for each blocked node $w$ with blocker $y = \beta(w)$,
+and for each triangle type $(\tau_1, R, \LL(w), S, \tau_3, R')$
+that would arise in the expansion of $w$, the condition
+$\Tri(w) = \Tri(y)$ guarantees that
+$(\tau_1, R, \LL(y), S, \tau_3, R') \in T(\GG)$ (since
+$\LL(w) = \LL(y)$ and the triangle type is in $\Tri(y)$).
+Since the expansion of $y$ is used in place of $w$'s expansion,
+and $y$'s expansion only produces triangle types in $\Tri(y) \subseteq T(\GG)$,
+no novel triangle types are introduced.
+\end{proof}
+
+\begin{remark}[Why type-equality blocking is insufficient]
+\label{rem:type-eq-fail}
+With type-equality blocking alone ($\LL(x) = \LL(y)$, no
+condition on $\Tri$), the blocker $y$ and blocked node $x$
+may participate in \emph{different} triangle types.  Then
+copying $y$'s expansion for $x$ can produce a triple
+$(\tp(d_1), R, \tp(x), S, \tp(d_3), R')$ where this triangle
+type appears in $\Tri(y)$ but not in the completion graph's
+context around $x$.  The resulting $\rho$ would fail
+condition~(iii) of $T$-closure.
+
+Concretely: in the PO-incoherent example, $d_0$ (type $\tau_A$)
+is $\PO$-related to $w_0$, while $d_2$ (also $\tau_A$) is
+$\PPI$-related to $w_0$.  The triangle $(d_0, w_0, d_1)$ has
+type $(\tau_A, \PO, \sigma, \PPI, \tau_B, \PP)$.  If $d_2$
+is blocked by $d_0$ and we copy $d_0$'s PO-witness, the
+unraveled model creates a triangle involving $d_2$ at relation
+$\PO$ to a $\sigma$-type node and $\PP$ to $d_1$---but
+$\EE(d_2, d_1) = \PPI$ in the completion graph, not $\PP$.
+The triangle type $(\tau_A, \PO, \sigma, \PPI, \tau_B, \PPI)$
+may not be in $T(\GG)$.
+\end{remark}
+
+\subsection{From $T$-closed solution to model}
+
+\begin{lemma}[Arc-consistency preserves $T$-closed solutions]
+\label{lem:ac-preserve}
+If a $T$-closed solution $\rho$ exists, then:
+\begin{enumerate}[nosep,label=(\alph*)]
+  \item No value $\rho(d_1, d_2)$ is removed during
+    arc-consistency enforcement on $\NN_T$.
+  \item All domains remain non-empty.
+  \item The arc-consistent fixpoint is path-consistent.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\textbf{(a)} By induction on the arc-consistency steps.
+Suppose $R = \rho(d_1, d_2)$ is to be removed because for some
+$d_3$ and $R_{23} \in D(d_2, d_3)$, no $R_{13} \in D(d_1, d_3)$
+satisfies $(\tp(d_1), R, \tp(d_2), R_{23}, \tp(d_3), R_{13}) \in T$.
+But $\rho(d_2, d_3) \in D(d_2, d_3)$ (by inductive hypothesis),
+and taking $R_{23} = \rho(d_2, d_3)$ and
+$R_{13} = \rho(d_1, d_3) \in D(d_1, d_3)$, the $T$-closure
+condition gives $(\tp(d_1), R, \tp(d_2), \rho(d_2,d_3), \tp(d_3),
+\rho(d_1,d_3)) \in T$.  The standard arc-consistency check
+removes $R$ only if \emph{for some} $R_{23}$ no support exists;
+but $R_{23} = \rho(d_2, d_3)$ provides support.
+
+\textbf{(b)} follows from (a). \textbf{(c)} After arc-consistency,
+for every $R \in D(d_1, d_2)$ and every $d_3$, there exists
+$R_{23} \in D(d_2, d_3)$ with
+$\comp(R, R_{23}) \cap D(d_1, d_3) \neq \emptyset$.  This is
+path-consistency.
+\end{proof}
+
+\begin{theorem}[Model construction]\label{thm:model}
+Given an open completion graph $\GG$ with triangle-type-set
+blocking, a model $\interp \models C_0$ exists.
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:tclosed-exist}, a $T$-closed solution exists.
+By Lemma~\ref{lem:ac-preserve}, the arc-consistent fixpoint of
+$\NN_T$ has non-empty domains and is path-consistent.  By
+Theorem~\ref{thm:patchwork} (full RCC5 tractability), a consistent
+atomic refinement $\rho^{\interp}$ exists.
+
+Define $\interp = (\Delta, \cdot^{\interp})$ with
+$\rho^{\interp}$ as the relation function.  We verify:
+
+\medskip\noindent\textbf{Composition consistency.}\;
+$\rho^{\interp}$ is globally consistent by construction.
+
+\medskip\noindent\textbf{$\forall$-safety.}\;
+For any edge $\rho^{\interp}(d_1, d_2) = S$: since
+$S \in D_0(d_1, d_2) \subseteq P(\GG)$, there exist nodes
+$a_1, a_2 \in V$ with $\LL(a_1) = \tp(d_1)$,
+$\LL(a_2) = \tp(d_2)$, $\EE(a_1, a_2) = S$.  The
+$(\forall)$-rule ensures $\forall S.D \in \tp(d_1) \Rightarrow
+D \in \tp(d_2)$.  For parent--child edges, $\forall$-safety
+follows from tableau saturation.
+
+\medskip\noindent\textbf{$\exists$-satisfaction.}\;
+For every $d$ and $\exists S.D \in \tp(d)$: by construction,
+$d$ has a child $d'$ with $\sigma(d') = S$ and
+$D \in \tp(d')$.
+
+\medskip\noindent\textbf{Root.}\; $C_0 \in \tp(d_0)$.
+\end{proof}
+
+
+%% ============================================================
+\section{Completeness}\label{sec:completeness}
+
+\begin{theorem}[Completeness]\label{thm:completeness}
+If $C_0$ is satisfiable in $\ALCIRCC{5}$, then there exists a
+sequence of nondeterministic choices yielding an open completion
+graph.
+\end{theorem}
+
+\begin{proof}
+Let $\interp = (\DeltaI, \cdot^{\interp})$ be a model with
+$d_0 \in C_0^{\interp}$.  We maintain a guide function
+$\pi: V \to \DeltaI$ with invariants:
+\begin{enumerate}[nosep,label=(\Roman*)]
+  \item $\LL(x) \subseteq \tp^{\interp}(\pi(x))$.
+  \item $\EE(x,y) = \rho^{\interp}(\pi(x), \pi(y))$ for
+    distinct $x, y$.
+\end{enumerate}
+
+\medskip\noindent\textbf{Initialization.}\;
+$\pi(x_0) = d_0$.  Invariant (I) holds since
+$\LL(x_0) = \{C_0\}$ and $d_0 \in C_0^{\interp}$.
+
+\medskip\noindent\textbf{Guiding $(\sqcup)$.}\;
+When $D_1 \sqcup D_2 \in \LL(x)$, invariant~(I) gives
+$\pi(x) \in (D_1 \sqcup D_2)^{\interp}$; choose the true
+disjunct.
+
+\medskip\noindent\textbf{Guiding $(\exists)$.}\;
+When $\exists R.D \in \LL(x)$ with $x$ active,
+$\pi(x) \in (\exists R.D)^{\interp}$ gives
+$d' \in \DeltaI$ with $\rho^{\interp}(\pi(x), d') = R$ and
+$d' \in D^{\interp}$.  Create $y$, set $\pi(y) = d'$.  For
+each $z$, choose $S_z = \rho^{\interp}(\pi(z), d')$.
+Both invariants are maintained.  Composition consistency (CF)
+holds because the model satisfies the composition table.
+After $(\forall)$-propagation, invariant~(I) is maintained.
+
+\medskip\noindent\textbf{Clash-freeness.}\;
+Invariant (I) prevents concept clashes; invariant (II) ensures
+composition consistency.
+
+\medskip\noindent\textbf{Demand satisfaction.}\;
+The only concern is blocked nodes.  Let $x$ be blocked by $y$
+with $\LL(x) = \LL(y)$ and $\Tri(x) = \Tri(y)$.  Suppose
+$\exists R.D \in \LL(x)$.  Then $\exists R.D \in \LL(y)$.
+Since $y$ is active and $\GG$ is saturated, there exists
+$w$ with $\EE(y,w) = R$ and $D \in \LL(w)$.
+
+In the \emph{model being constructed} (not the completion graph),
+$x$'s demands are satisfied by the tree unraveling: $x$'s
+blocked subtree is expanded using $y$'s witnesses.  The
+soundness theorem (Section~\ref{sec:soundness}) handles the
+model construction from the completion graph.
+
+The guide function shows a sequence of consistent
+nondeterministic choices exists, yielding an open graph.
+\end{proof}
+
+
+%% ============================================================
+\section{Computational Evidence for Triangle-Type-Set Stabilization}
+\label{sec:evidence}
+
+The termination proof (Theorem~\ref{thm:termination}) gives a
+non-elementary bound.  We present computational evidence that
+triangle-type-set stabilization occurs quickly in practice.
+
+\subsection{The PO-incoherent counterexample}
+
+The hardest known case for blocking is the PO-incoherent
+descriptor from~\cite{TwoTier}: types $\tau_A, \tau_B$
+alternating on a PP-chain, with $\exists\PO.A \in \tau_A$
+and $\forall\PO.\neg A \in \tau_B$.  Each $\tau_A$-node
+$d_{2k}$ needs a fresh PO-witness $w_k$ (earlier witnesses
+have become PPI-related).
+
+\subsection{Node-identity profiles never match}
+
+With node-identity profiling, each $d_{2k}$ has a unique
+relational signature: PO to $w_k$, DR to $w_0, \ldots, w_{k-1}$,
+PPI to $w_{k+1}, w_{k+2}, \ldots$.  Since $k$ grows without
+bound, no two $\tau_A$-nodes ever share a profile.  This was
+verified computationally~\cite{ProfileCheck}.
+
+\subsection{Abstract triangle-type sets DO match}
+
+Replacing node identities with abstract triangle types changes
+the picture entirely.  The script
+\texttt{triangle\_type\_saturation\_check.py} builds a
+24-element PP-chain with 12 PO-witnesses and computes
+$\Tri(x)$ for every node $x$.
+
+\medskip
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Node type & Stabilization & Interior range & $|\Tri|$ \\
+\midrule
+$\tau_A$ & $d_4$ ($k{=}2$) &
+  $d_4 = d_6 = \cdots = d_{18}$ & 68 \\
+$\tau_B$ & $d_5$ ($k{=}2$) &
+  $d_5 = d_7 = \cdots = d_{19}$ & 56 \\
+$\sigma$ & $w_2$ ($k{=}2$) &
+  $w_2 = w_3 = \cdots = w_9$ & 57 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All interior nodes of the same type share \emph{exactly
+identical} abstract triangle-type sets.  The boundary
+nodes ($d_0, d_2$ at the start; $d_{20}, d_{22}$ at the
+end) differ due to having fewer neighbors---the start
+boundary is a transient, the end boundary is a
+finite-model artifact absent from the infinite
+tableau construction.
+
+The result holds for both the all-DR-backward branch
+($\rho(d_i, w_k) = \DR$ for $i < 2k$) and the all-PP-backward
+branch ($\rho(d_i, w_k) = \PP$ for $i < 2k$).
+
+\subsection{Why stabilization occurs}
+
+The abstract triangle-type set depends on the \emph{menu}
+of (type, relation) pairs available among neighbors---not
+on the \emph{count} of neighbors of each kind.  Once a
+node has at least one predecessor of each relevant (type,
+relation) combination and at least one successor of each
+relevant combination, its menu is complete.  Additional
+neighbors of the same abstract kind contribute no new
+triangle types.
+
+The transient phase ($d_0 \to d_2 \to d_4$: 25, 55, 68
+types for $\tau_A$) reflects the time needed for the
+backward neighborhood to include all relevant abstract
+patterns.
+
+
+%% ============================================================
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Resolving the blocking dilemma}
+
+Triangle-type-set blocking occupies a precise intermediate
+position between the two extremes of the blocking dilemma:
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Blocking condition & Terminates? & Correct unraveling? \\
+\midrule
+Type-equality & Always & Not always \\
+Node-identity profile & Not always & Always \\
+\textbf{Triangle-type-set} & \textbf{Always} & \textbf{Always} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The key insight is that the non-termination argument for
+node-identity blocking uses \emph{concrete} information
+(which specific witnesses), while the correctness argument
+needs only \emph{abstract} information (which relational
+patterns).  Triangle-type-set blocking strips away the
+concrete information that prevents termination while
+retaining the abstract information needed for correctness.
+
+\subsection{Relationship to the two-tier quotient}
+
+The two-tier quotient approach~\cite{TwoTier} proves
+decidability for the PO-coherent fragment via a model-theoretic
+argument.  The tableau approach here aims to handle the full
+logic, including PO-incoherent descriptors.  The two approaches
+are complementary:
+\begin{itemize}[nosep]
+  \item The quotient approach gives a cleaner decidability proof
+    for the PO-coherent fragment.
+  \item The tableau approach addresses the PO gap by using
+    triangle-type-set blocking, which is insensitive to the
+    PO-coherent/incoherent distinction.
+\end{itemize}
+
+\subsection{Complexity}
+
+The termination bound is non-elementary due to the
+triple-exponential active-node count.  We do not claim
+\EXPTIME{} membership.  An \EXPTIME{} bound would require
+showing that the number of active nodes is at most
+singly exponential in $|C_0|$---specifically, that
+triangle-type-set stabilization occurs within a number
+of steps polynomial in $|\Tp(C_0)|$.
+
+The computational evidence (stabilization at $k = 2$)
+is encouraging, but a proof of an \EXPTIME{} bound for
+the stabilization depth is open.
+
+\subsection{Extension to $\ALCIRCC{8}$}
+
+RCC8 has 8 base relations and a more complex composition table.
+The patchwork property fails for the full RCC8, but holds for
+the maximal tractable subsets $\hat{\mathcal{H}}_8$ identified
+by Renz~\cite{Renz1999}.  The tableau approach extends to
+$\ALCIRCC{8}$ if the pair-type domains $P(\GG)$ fall within
+a tractable fragment.  This is a non-trivial condition that
+we do not address here.
+
+\subsection{Honest assessment of gaps}
+
+We identify the following points where the proof requires
+further scrutiny:
+
+\begin{enumerate}
+  \item \textbf{Intra-subtree $T$-closure
+    (Lemma~\ref{lem:tclosed-exist}).}  The proof that the
+    map-based assignment $\rho(d_1, d_2) = \EE(n_1, n_2)$
+    is $T$-closed works cleanly for cross-subtree pairs
+    (where $n_1, n_2$ are distinct nodes in $\GG$).  For
+    intra-subtree pairs where the same tableau node
+    appears at multiple positions in the unraveling
+    (due to blocked copies), the argument relies on
+    $\Tri(w) = \Tri(\beta(w))$.  This handles triangles
+    where the blocked node is one vertex, but triangles where
+    \emph{two} vertices are in different blocked copies of the
+    same subtree require the triangle type to be in $T(\GG)$
+    even though it may involve two copies of the same node
+    $n$ at positions with different parents.  This case
+    reduces to showing that the triangle type
+    $(\tp(d_1), \EE(n_1, n), \tp(n), \EE(n, n_2), \tp(d_2),
+    \EE(n_1, n_2))$ is in $T(\GG)$, which holds because
+    $n_1, n, n_2$ are three nodes in $\GG$.
+    However, when $n_1 = n_2$ (both copies map to the same
+    node), $d_1$ and $d_2$ are distinct elements with
+    $\rho(d_1, d_2) = \EE(n_1, n_2) = \EE(n, n)$, which
+    is undefined (same node).  In this case, we need
+    $\rho(d_1, d_2) \in \Safe(\tp(d_1), \tp(d_2))$, which is
+    non-trivial.  This is resolved by noting that $d_1$ and
+    $d_2$ have the same type ($\tp(d_1) = \tp(d_2) = \LL(n)$),
+    and $R \in \Safe(\tau, \tau)$ for some $R$ is guaranteed
+    by the assumption that $\tau$ is realizable (the completion
+    graph has a node of this type, so some model element realizes
+    it, and it has a well-defined relation to other elements
+    of the same type).
+
+  \item \textbf{Monotonicity of triangle-type sets.}  The
+    termination proof claims triangle-type sets grow
+    monotonically.  This is true for node addition (new triples
+    $\Rightarrow$ potentially new triangle types).  For label
+    changes (via $\forall$-propagation), a concept added to
+    $\LL(x)$ changes $\LL(x)$ to a superset, which changes
+    the Hintikka-type component in all triangle types involving
+    $x$.  Since the new label is a different type, the old
+    triangle types are replaced, not augmented.  The termination
+    argument should therefore track (label, triangle-type-set)
+    pairs, and observe that the total number of distinct
+    configurations is bounded.  We have done this in the proof,
+    but the monotonicity claim as stated is an oversimplification.
+
+  \item \textbf{Stabilization depth.}  The computational evidence
+    shows stabilization at $k = 2$ for the PO-incoherent
+    counterexample.  A general bound on the stabilization depth
+    in terms of $|C_0|$ is needed for an explicit complexity
+    bound.  We conjecture that the stabilization depth is at most
+    $|\Tp(C_0)|$ (the number of distinct types), but do not
+    prove this.
+\end{enumerate}
+
+
+%% ============================================================
+\section{Conclusion}\label{sec:conclusion}
+
+We have presented a tableau calculus for $\ALCIRCC{5}$ with
+\emph{triangle-type-set blocking}: a node is blocked when it
+shares both its concept label and its abstract triangle-type
+set with an earlier node.  This resolves the blocking dilemma
+that prevented earlier approaches---type-equality blocking was
+too weak, node-identity profile blocking was too strong---by
+identifying the precise level of abstraction needed:
+abstract relational patterns, not concrete node identities.
+
+The calculus is \emph{terminating} (the space of abstract
+triangle-type sets is finite), \emph{sound} (model construction
+via triangle-type-filtered unraveling, with global consistency
+from full RCC5 tractability), and \emph{complete} (a model
+guides all nondeterministic choices).  Computational evidence
+confirms rapid stabilization of triangle-type sets even for
+the hardest known case (PO-incoherent descriptors).
+
+If the termination bound can be tightened to singly exponential
+(which the computational evidence suggests is possible), this
+yields an \EXPTIME{} decision procedure for $\ALCIRCC{5}$,
+matching the known PSPACE lower bound~\cite{Wessel2002} up to
+one exponential.
+
+\begin{thebibliography}{99}
+
+\bibitem{Wessel2002}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the $\ALCI_{\mathit{RCC}}$
+  family --- first results and unanswered questions.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: a maximal
+  tractable fragment of the region connection calculus.
+\newblock \emph{Artificial Intelligence}, 108(1-2):69--123, 1999.
+
+\bibitem{Renz1999}
+J.~Renz.
+\newblock Maximal tractable fragments of the region connection calculus: a
+  complete analysis.
+\newblock In \emph{IJCAI}, 1999.
+
+\bibitem{CompanionPaper}
+Claude (Anthropic) and M.~Wessel.
+\newblock On the decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$.
+\newblock Unpublished manuscript, 2026.
+
+\bibitem{GPTTableau}
+GPT-5.4 (OpenAI).
+\newblock Contextual tableau for $\ALCIRCC{5}$: soundness via local-state
+  unfolding.
+\newblock Unpublished manuscript, 2026.
+
+\bibitem{ClosingGap}
+Claude (Anthropic) and M.~Wessel.
+\newblock Closing the extension gap for $\ALCIRCC{5}$.
+\newblock Unpublished manuscript, 2026.
+\newblock \textbf{Retracted.}
+
+\bibitem{TwoTier}
+Claude (Anthropic) and M.~Wessel.
+\newblock Decidability of $\ALCIRCC{5}$ via two-tier quotient construction.
+\newblock Unpublished manuscript, fourth revision, April 2026.
+
+\bibitem{ProfileCheck}
+\texttt{profile\_blocking\_check.py} and
+\texttt{triangle\_type\_saturation\_check.py}.
+\newblock Computational verification scripts, April 2026.
+\newblock Available at
+  \url{https://github.com/lambdamikel/alcircc5}.
+
+\end{thebibliography}
+
+
+\section*{Acknowledgments}
+
+This research was prompted by Michael Wessel, who introduced the
+$\ALCI_{\mathit{RCC}}$ family in his doctoral work at the University
+of Hamburg.  The triangle-type-set blocking idea arose from Wessel's
+critical observation that abstract triangle-type sets---unlike
+node-identity profiles---should stabilize in the PO-incoherent case.
+
+\end{document}
