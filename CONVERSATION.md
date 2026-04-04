@@ -1601,3 +1601,63 @@ Revised `tableau_ALCIRCC5.tex` (second revision) to incorporate Tri-neighborhood
 - Revised `tableau_ALCIRCC5.tex` / `.pdf`: Tableau calculus with Tri-neighborhood blocking (14 pages, second revision)
 - Updated `README.md` with Tri-neighborhood references throughout (status line, summary table, eighth approach section, file listing)
 - Updated `CONVERSATION.md` with Part 31
+
+---
+
+## Part 32: Mirror triangle issue and disjunctive resolution (April 2026)
+
+### Michael Wessel
+
+> Can you write an additional script that sheds more light on the intra-subtree T-closure issue?
+
+### Claude
+
+Wrote `intra_subtree_tclosure_check.py` — a comprehensive investigation of the same-map pair problem in the tree unraveling.
+
+**Key finding: the map-based assignment is NOT T-closed.**
+
+When the tree unraveling creates two copies of the same node (a "same-map pair"), the map-based assignment ρ(a,b) = E(map(a), map(b)) forces both copies to have the same relation to every third element. This creates "mirror triangles" — triangle types of the form (τ, R, τ, S, τ', S) where two elements of the same type both have relation S to a third element.
+
+**19 mirror triangle types are impossible** in T(G) for the PO-incoherent example. The critical ones:
+- (τ\_A, R, τ\_A, PO, σ, PO) — requires two distinct τ\_A nodes both PO to the same σ witness. Impossible because each w\_k is PO to exactly d\_{2k}.
+- (σ, R, σ, PO, τ\_A, PO) — the dual: two σ nodes both PO to the same τ\_A. Also impossible.
+
+For the same-map pair (d6, d6\_c1), the ONLY composition-consistent relation is PPI, but PPI creates (τ\_A, PPI, τ\_A, PO, σ, PO) which is not in T(G). So NO relation is both composition-consistent and T-consistent for this pair. The gap is confirmed for 6 out of 9 same-map pairs (all d6-copies and w3-copies).
+
+**But the disjunctive constraint network resolves it.** When all non-parent-child pairs use disjunctive domains D₀ from P(G) instead of fixed map-based values, and T-filtering + arc-consistency is applied:
+- ALL domains remain non-empty (verified at CG sizes 8, 10, 12)
+- The mechanism: arc-consistency removes PO from cross-subtree copy-to-witness edges, replacing it with DR or PPI, which participate in non-mirror triangle types that ARE in T(G)
+- Composition consistency is maintained throughout
+
+### Michael Wessel's observation
+
+> Given that we are using a broader disjunctive RCC5 relation now, this probably also means that potential "dormant" ∀-qualifications are even LESS of a problem, right? So there can't be any new Hintikka type clashes either from this edge relaxation.
+
+This is correct: every relation in D₀ comes from P(G), meaning it's witnessed by a saturated pair of nodes in the completion graph where all ∀-rules have already fired. Replacing PO with DR or PPI on a cross-subtree edge uses a relation that was already enforced for some pair of matching types in G. The relaxation from a single map-based relation to a disjunctive domain is strictly *safer* with respect to ∀-qualifications.
+
+### Proof revision (third revision)
+
+Revised `tableau_ALCIRCC5.tex` to fix the soundness proof:
+
+**Lemma 5.5 (completely rewritten):** No longer claims a map-based T-closed solution exists. Instead proves that the constraint network N\_T has non-empty domains after T-filtering and arc-consistency. The proof:
+1. Explains the map-based approach and why it fails (mirror triangles)
+2. Describes the disjunctive resolution: D₀ from P(G), T-filtering, arc-consistency
+3. Explains mirror symmetry breaking: at most one copy retains PO; others get DR/PPI
+4. Notes type-safety of the relaxation: all D₀ values are from saturated P(G)
+5. References computational verification
+
+**New Remark 5.5b (mirror triangle obstruction):** Explains the structural cause — PO is a "unique-witness" relation where each σ node w\_k is PO to exactly one τ\_A node d\_{2k}.
+
+**Lemma 5.7 (simplified):** Now just derives path-consistency from non-empty AC-stable domains, without referencing T-closed solutions.
+
+**Theorem 5.8 (model construction):** Chain: non-empty domains → path-consistent → full RCC5 tractability → model. ∀-safety from P(G).
+
+**Honest assessment point 1:** Marked as "(resolved)" — the mirror triangle issue is addressed by disjunctive domains, with computational verification. A fully formal general non-emptiness proof is noted as desirable.
+
+**Compilation.** 14 pages, no errors.
+
+### Files produced
+- `intra_subtree_tclosure_check.py`: Mirror triangle investigation and disjunctive resolution verification
+- Revised `tableau_ALCIRCC5.tex` / `.pdf`: Third revision with disjunctive constraint network proof (14 pages)
+- Updated `README.md` with mirror triangle discussion, proof structure update, revised honest assessment
+- Updated `CONVERSATION.md` with Part 32

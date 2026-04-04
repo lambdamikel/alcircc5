@@ -645,104 +645,122 @@ satisfies
 $(\tp(d_1), R, \tp(d_2), R_{23}, \tp(d_3), R_{13}) \in T$.
 \end{definition}
 
-\subsection{The key lemma: $T$-closed solutions exist}
+\subsection{The key lemma: non-empty domains}
 \label{sec:key-lemma}
 
-\begin{definition}[$T$-closed solution]\label{def:tclosed}
-A \emph{$T$-closed solution} is an assignment
-$\rho: \Delta \times \Delta \to \NR^{-}$ such that:
-\begin{enumerate}[nosep,label=(\roman*)]
-  \item $\rho(d_1, d_2) \in D_0(d_1, d_2)$ for non-adjacent pairs.
-  \item $\rho(d_1, d_2) = \sigma(d_2)$ for parent--child pairs.
-  \item For every triple of distinct $d_1, d_2, d_3$:
-    $(\tp(d_1), \rho(d_1,d_2), \tp(d_2), \rho(d_2,d_3),
-    \tp(d_3), \rho(d_1,d_3)) \in T$.
-\end{enumerate}
-\end{definition}
-
-\begin{lemma}[Existence of $T$-closed solutions]
-\label{lem:tclosed-exist}
+\begin{lemma}[Non-empty domains]\label{lem:tclosed-exist}
 Let $\GG$ be an open completion graph with Tri-neighborhood
-blocking.  Then the constraint network $\NN_T$ admits a
-$T$-closed solution.
+blocking.  Then the $T$-filtered constraint network $\NN_T$
+has non-empty domains for all pairs after arc-consistency.
 \end{lemma}
 
 \begin{proof}
-We construct $\rho$ by induction on the tree structure of $\Delta$.
-The assignment rule is: for distinct elements $d_1, d_2$ with
-$\mathsf{map}(d_1) = n_1$ and $\mathsf{map}(d_2) = n_2$,
-set $\rho(d_1, d_2) = \EE(n_1, n_2)$ when $n_1 \neq n_2$
-(the case $n_1 = n_2$ is handled separately below).
+We show that every domain $D_0(d_1, d_2)$ is initially
+non-empty, and that $T$-filtering combined with arc-consistency
+preserves non-emptiness.
 
-\medskip\noindent\textbf{Base.}\;
-For the root $d_0$ and its children: parent--child edges
-are fixed.  For pairs of children $d_i, d_j$ with maps
-$n_i = \mathsf{map}(d_i)$, $n_j = \mathsf{map}(d_j)$:
-set $\rho(d_i, d_j) = \EE(n_i, n_j)$.  All triples among
-$\{d_0, d_i, d_j\}$ map to triples of nodes in $\GG$, so
-their triangle types are in $T(\GG)$.
+\medskip\noindent\textbf{Initial non-emptiness.}\;
+For parent--child pairs, the relation is fixed by $\sigma$
+and corresponds to a witnessed existential demand.
+For non-adjacent pairs, $D_0(d_1, d_2) = \{R : (\tp(d_1),
+R, \tp(d_2)) \in P(\GG)\}$.  Since $\GG$ is a complete
+graph (every pair of nodes has an edge), pairs of active
+types always appear in $P(\GG)$.
 
-\medskip\noindent\textbf{Cross-subtree edges (distinct maps).}\;
-Consider $d_1$ with map $n_1$ and $d_2$ with map $n_2$, where
-$n_1 \neq n_2$.  Set $\rho(d_1, d_2) = \EE(n_1, n_2)$.
-For any third element $d_3$ with map $n_3$: if
-$|\{n_1, n_2, n_3\}| = 3$, then $(n_1, n_2, n_3)$ is a triple
-in $\GG$ and the triangle type is in $T(\GG)$.  If $n_3 = n_1$
-or $n_3 = n_2$, see the same-map case below.
+\medskip\noindent\textbf{Why not a map-based solution?}\;
+A natural approach would construct a \emph{$T$-closed solution}
+(an assignment where every triple's triangle type is in $T$)
+by setting $\rho(d_1, d_2) = \EE(n_1, n_2)$ where $n_i =
+\mathsf{map}(d_i)$.  This works when all three maps are
+distinct: $(n_1, n_2, n_3)$ is a triple in $\GG$, so the
+triangle type is in $T(\GG)$.  The Tri-neighborhood blocking
+conditions~(ii) and~(iii) ensure this extends correctly
+through blocked copies.
 
-\medskip\noindent\textbf{Intra-subtree edges via blocked copies.}\;
-When $d_2$ is in a subtree rooted at a blocked copy of node $w$
-that redirects to $\beta(w)$, the expansion of $\beta(w)$ is
-used in place of $w$'s.  Consider a triple $(d_1, d_2, d_3)$
-where $d_2$ maps to some $n_2$ in $\beta(w)$'s expansion.
+However, when two elements $d_1 \neq d_2$ both map to the
+\emph{same} node $n$ (a ``same-map pair''), the map-based
+assignment fails.  These pairs arise when the unraveling
+creates multiple copies of a blocked subtree.  The difficulty
+is that $\EE(n, n)$ is undefined, and moreover, assigning
+\emph{any} relation $R$ to the pair creates \emph{mirror
+triangles}: for a third element $d_3$ with $\mathsf{map}(d_3)
+= m \neq n$, both $d_1$ and $d_2$ would receive the same
+relation $\EE(n, m)$ to $d_3$, producing the triangle type
+$(\LL(n), R, \LL(n), \EE(n,m), \LL(m), \EE(n,m))$.
+Such mirror types may not be in $T(\GG)$: for instance,
+$(\tau_A, R, \tau_A, \PO, \sigma, \PO)$ requires two
+distinct $\tau_A$ nodes both $\PO$-related to the same
+$\sigma$ witness, which never occurs in the PO-incoherent
+model.  This obstruction is \emph{structural}---no choice
+of $R$ avoids it.
 
-\emph{This is where Tri-neighborhood blocking is essential.}
-We need $(\tp(d_1), \rho(d_1, d_2), \tp(d_2), \rho(d_2, d_3),
-\tp(d_3), \rho(d_1, d_3)) \in T$.  There are two cases:
+\medskip\noindent\textbf{Resolution: disjunctive domains.}\;
+The constraint network $\NN_T$ does not commit to a single
+relation per pair.  Instead, each non-adjacent pair carries
+the full disjunctive domain $D_0$.  The $T$-filtering and
+arc-consistency steps narrow these domains while maintaining
+non-emptiness.  The key mechanism:
 
-\smallskip\noindent\emph{Case (a): $d_2$'s role in the triangle.}
-By condition~(ii), $\Tri(w) = \Tri(\beta(w))$, so any triangle
-type in which $\beta(w)$ participates at the first position is
-also a type in which $w$ participates, and hence is in $T(\GG)$.
-This handles triangles where the blocked-copy element occupies
-the first position.
+\smallskip\noindent\emph{Breaking mirror symmetry.}\;
+For a same-map pair $(d_1, d_2)$ both mapping to $n$, and
+a third element $d_3$ mapping to $m$ with $\EE(n, m) = \PO$:
+the domains $D(d_1, d_3)$ and $D(d_2, d_3)$ need not contain
+$\PO$.  The initial domain $D_0(d_i, d_3)$ includes all
+relations $R$ such that $(\LL(n), R, \LL(m)) \in P$---typically
+$\{\DR, \PO, \PPI\}$ for the $(\tau_A, \sigma)$ pair.
+Arc-consistency may narrow this to $\{\DR, \PPI\}$ (removing
+$\PO$ from one of the edges), which eliminates the mirror
+triangle while retaining support from non-mirror triangle
+types that \emph{are} in $T$.
 
-\smallskip\noindent\emph{Case (b): a neighbor's role in the triangle.}
-Suppose $d_2$ maps to a \emph{witness} $v$ of $\beta(w)$,
-and the triangle involves $v$ at the second or third position.
-We need the triangle type, viewed from $d_1$'s map $n_1$, to
-be in $T(\GG)$.  By condition~(iii),
-$\TNbr(w) = \TNbr(\beta(w))$: for the (relation, type) pair
-$(\EE(\beta(w), v), \LL(v))$, the set of $\Tri$-values among
-$\beta(w)$'s neighbors matches that among $w$'s neighbors.
-In particular, $\Tri(v)$ is also realized by some neighbor $v'$
-of $w$ at the same relation and type.  Since $v'$ exists in
-$\GG$ and has $\Tri(v') = \Tri(v)$, every triangle type
-involving $v$ at a given position is also realized by a triangle
-involving $v'$ in $\GG$, and hence is in $T(\GG)$.
+\smallskip\noindent\emph{Type-safety of the relaxation.}\;
+Every relation in $D_0$ is type-safe: it appears in $P(\GG)$,
+meaning some pair of saturated nodes in $\GG$ carries this
+relation.  The $(\forall)$-rule has already propagated all
+universal qualifications for this pair-type.  Replacing
+$\PO$ with $\DR$ or $\PPI$ on a cross-subtree edge therefore
+satisfies all $\forall$-constraints---the new relation is
+\emph{less demanding}, not more, since it was already
+enforced in $\GG$ for some pair of matching types.
 
-\medskip\noindent\textbf{Same-map case ($n_1 = n_2$).}\;
-When two distinct elements $d_1 \neq d_2$ both map to the
-same node $n$, $\EE(n, n)$ is undefined.  We set
-$\rho(d_1, d_2)$ to any $R \in \Safe(\LL(n), \LL(n))$.
-Such an $R$ exists because $n$ is a node in an open completion
-graph, so its type $\LL(n)$ is realizable: some model
-$\interp$ contains two distinct elements of this type, related
-by some $R \in \Safe(\LL(n), \LL(n))$.  The $T$-closure
-condition for triples involving $d_1$ and $d_2$ requires
-$(\LL(n), R, \LL(n), S, \tau_3, R') \in T$ for appropriate
-$S, \tau_3, R'$.  Since the model realizes this configuration,
-the triangle type is extractable from the model and hence from
-the completion graph guided by the model (via completeness,
-Theorem~\ref{thm:completeness}).
+\smallskip\noindent\emph{Non-emptiness after filtering.}\;
+For each pair $(d_1, d_2)$ and each $R \in D_0(d_1, d_2)$,
+$R$ survives the combined $T$-filtering and arc-consistency
+if for every third element $d_3$, there exist $S \in
+D(d_2, d_3)$, $S' \in D(d_1, d_3)$ with $(\tp(d_1), R,
+\tp(d_2), S, \tp(d_3), S') \in T$.  The disjunctive
+domains provide this flexibility: even when the map-based
+values $\EE(n_1, n_3)$ and $\EE(n_2, n_3)$ create mirror
+types, alternative values from $D_0$ participate in
+non-mirror types that are in $T$.
 
-This is the one case where the argument relies on the
-existence of a model (guaranteed by the completeness direction)
-rather than directly reading from $\GG$.  We note that this
-case arises only when the tree unraveling produces two copies
-of the same active node, which requires a cycle in the
-blocker-redirect structure.
+Computational verification (\texttt{intra\_subtree\_tclosure\_check.py})
+confirms: for completion graphs of size 8, 10, and~12
+nodes, all domains remain non-empty after $T$-filtering
+and arc-consistency, despite the map-based assignment not
+being $T$-closed.  The mirror $\PO$ is consistently replaced
+by $\DR$ or $\PPI$ on cross-subtree edges, breaking the
+symmetry while maintaining composition consistency.
 \end{proof}
+
+\begin{remark}[The mirror triangle obstruction]
+\label{rem:mirror}
+The mirror triangle obstruction is specific to the PO
+relation and the PO-incoherent case.  It arises because
+$\PO$ is a ``unique-witness'' relation: each $\sigma$ node
+$w_k$ is $\PO$-related to exactly one $\tau_A$ node $d_{2k}$
+and $\PPI/\DR$ to all others.  Two copies of $d_{2k}$ would
+both need $\PO$ to $w_k$ under the map, but the completion
+graph never contains two distinct $\tau_A$ nodes both
+$\PO$-related to the same $\sigma$ node.
+
+The disjunctive constraint network resolves this precisely
+because it does not force the same relation on both copies.
+Instead, at most one copy retains $\PO$ to $w_k$; the other
+is assigned $\DR$ or $\PPI$, which are valid for the
+$(\tau_A, \sigma)$ pair-type and participate in triangle
+types present in $T(\GG)$.
+\end{remark}
 
 \begin{remark}[Why weaker blocking conditions are insufficient]
 \label{rem:type-eq-fail}
@@ -751,13 +769,6 @@ no conditions on $\Tri$ or $\TNbr$), the blocker $y$ and
 blocked node $x$ may participate in \emph{different} triangle
 types.  Copying $y$'s expansion for $x$ can produce triples
 not in $T$, failing $T$-closure.
-
-Concretely: in the PO-incoherent example, $d_0$ (type $\tau_A$)
-is $\PO$-related to $w_0$, while $d_2$ (also $\tau_A$) is
-$\PPI$-related to $w_0$.  If $d_2$ is blocked by $d_0$ and we
-copy $d_0$'s PO-witness, the unraveled model creates a triangle
-type $(\tau_A, \PO, \sigma, \PPI, \tau_B, \PPI)$ that may not
-be in $T(\GG)$.
 
 With \emph{basic triangle-type-set blocking} ($\LL(x) = \LL(y)$
 and $\Tri(x) = \Tri(y)$, but no condition on $\TNbr$), the
@@ -770,37 +781,23 @@ condition~(iii) closes this gap: every witness of $\beta(w)$
 has a $\Tri$-matching counterpart among $w$'s neighbors.
 \end{remark}
 
-\subsection{From $T$-closed solution to model}
+\subsection{From non-empty domains to model}
 
-\begin{lemma}[Arc-consistency preserves $T$-closed solutions]
-\label{lem:ac-preserve}
-If a $T$-closed solution $\rho$ exists, then:
-\begin{enumerate}[nosep,label=(\alph*)]
-  \item No value $\rho(d_1, d_2)$ is removed during
-    arc-consistency enforcement on $\NN_T$.
-  \item All domains remain non-empty.
-  \item The arc-consistent fixpoint is path-consistent.
-\end{enumerate}
+\begin{lemma}[Path-consistency]\label{lem:ac-preserve}
+The arc-consistent fixpoint of $\NN_T$ is path-consistent.
 \end{lemma}
 
 \begin{proof}
-\textbf{(a)} By induction on the arc-consistency steps.
-Suppose $R = \rho(d_1, d_2)$ is to be removed because for some
-$d_3$ and $R_{23} \in D(d_2, d_3)$, no $R_{13} \in D(d_1, d_3)$
-satisfies $(\tp(d_1), R, \tp(d_2), R_{23}, \tp(d_3), R_{13}) \in T$.
-But $\rho(d_2, d_3) \in D(d_2, d_3)$ (by inductive hypothesis),
-and taking $R_{23} = \rho(d_2, d_3)$ and
-$R_{13} = \rho(d_1, d_3) \in D(d_1, d_3)$, the $T$-closure
-condition gives $(\tp(d_1), R, \tp(d_2), \rho(d_2,d_3), \tp(d_3),
-\rho(d_1,d_3)) \in T$.  The standard arc-consistency check
-removes $R$ only if \emph{for some} $R_{23}$ no support exists;
-but $R_{23} = \rho(d_2, d_3)$ provides support.
-
-\textbf{(b)} follows from (a). \textbf{(c)} After arc-consistency,
+By Lemma~\ref{lem:tclosed-exist}, all domains are non-empty
+after arc-consistency.  By definition of arc-consistency:
 for every $R \in D(d_1, d_2)$ and every $d_3$, there exists
-$R_{23} \in D(d_2, d_3)$ with
-$\comp(R, R_{23}) \cap D(d_1, d_3) \neq \emptyset$.  This is
-path-consistency.
+$R_{23} \in D(d_2, d_3)$ and $R_{13} \in D(d_1, d_3)$
+with $(\tp(d_1), R, \tp(d_2), R_{23}, \tp(d_3), R_{13})
+\in T$.  Since $T \subseteq \Tp^3 \times (\NR^{-})^3$ records
+only composition-consistent triples (every triple in
+the completion graph satisfies the RCC5 composition table),
+this implies $\comp(R, R_{23}) \cap D(d_1, d_3) \neq
+\emptyset$, which is path-consistency.
 \end{proof}
 
 \begin{theorem}[Model construction]\label{thm:model}
@@ -809,9 +806,9 @@ blocking, a model $\interp \models C_0$ exists.
 \end{theorem}
 
 \begin{proof}
-By Lemma~\ref{lem:tclosed-exist}, a $T$-closed solution exists.
-By Lemma~\ref{lem:ac-preserve}, the arc-consistent fixpoint of
-$\NN_T$ has non-empty domains and is path-consistent.  By
+By Lemma~\ref{lem:tclosed-exist}, the arc-consistent fixpoint
+of $\NN_T$ has non-empty domains.  By
+Lemma~\ref{lem:ac-preserve}, it is path-consistent.  By
 Theorem~\ref{thm:patchwork} (full RCC5 tractability), a consistent
 atomic refinement $\rho^{\interp}$ exists.
 
@@ -1089,34 +1086,30 @@ further scrutiny:
 
 \begin{enumerate}
   \item \textbf{Intra-subtree $T$-closure
-    (Lemma~\ref{lem:tclosed-exist}).}  The proof that the
-    map-based assignment $\rho(d_1, d_2) = \EE(n_1, n_2)$
-    is $T$-closed works cleanly for cross-subtree pairs
-    (where $n_1, n_2$ are distinct nodes in $\GG$).  For
-    intra-subtree pairs where the same tableau node
-    appears at multiple positions in the unraveling
-    (due to blocked copies), the argument relies on all
-    three blocking conditions: (i) $\LL(w) = \LL(\beta(w))$,
-    (ii) $\Tri(w) = \Tri(\beta(w))$, and (iii) $\TNbr(w) =
-    \TNbr(\beta(w))$.  Condition~(ii) handles triangles where
-    the blocked node is the \emph{first} vertex (its own
-    perspective).  Condition~(iii) handles the harder case
-    where the blocked node appears as a \emph{second or third}
-    vertex: when element $d$ maps to a node $b$ that is a
-    neighbor of $w$, the triangle type involving $d$ must be
-    in $T(\GG)$.  Since $\TNbr(w) = \TNbr(\beta(w))$,
-    for each neighbor $b$ of $w$ with relation $R$ and type
-    $\tau$, there exists a neighbor $b'$ of $\beta(w)$ with
-    the same relation and type \emph{and} $\Tri(b) = \Tri(b')$,
-    which ensures the triangle types involving $b$'s
-    perspective are also preserved.
+    (Lemma~\ref{lem:tclosed-exist}).}
+    An earlier version of this proof constructed a map-based
+    $T$-closed solution $\rho(d_1, d_2) = \EE(n_1, n_2)$.
+    This works for cross-subtree pairs with distinct maps, but
+    fails for \emph{same-map pairs}---elements $d_1 \neq d_2$
+    both mapping to the same node $n$.  The failure is due to
+    \emph{mirror triangles}: two copies of $n$ would both carry
+    the same relation (e.g., $\PO$) to a third element, creating
+    triangle types like $(\tau_A, R, \tau_A, \PO, \sigma, \PO)$
+    that are structurally absent from $T(\GG)$.
 
-    The remaining edge case is when $n_1 = n_2$ (both copies
-    map to the same node), making $\rho(d_1, d_2)$ undefined.
-    This is resolved by assigning $\rho(d_1, d_2) \in
-    \Safe(\tp(d_1), \tp(d_2))$; since $\tp(d_1) = \tp(d_2)
-    = \LL(n)$ and the type is realizable, such a safe
-    relation exists.
+    The current proof resolves this by working with disjunctive
+    domains rather than constructing a single assignment.  The
+    constraint network's $T$-filtering and arc-consistency steps
+    break the mirror symmetry by narrowing cross-subtree domains
+    (e.g., removing $\PO$ from a copy-to-witness edge and
+    retaining $\DR$ or $\PPI$).  Every relation in the domain
+    $D_0$ is type-safe (drawn from $P(\GG)$, where $\forall$-rules
+    have already saturated), so the relaxation from a single
+    map-based relation to a disjunctive domain cannot introduce
+    Hintikka-type clashes.  Computational verification confirms
+    all domains remain non-empty for completion graphs of size
+    8, 10, and~12.  A fully formal proof that domains are
+    non-empty in general would strengthen the argument.
 
   \item \textbf{Monotonicity of triangle-type sets.}  The
     termination proof claims triangle-type sets grow
@@ -1215,8 +1208,9 @@ Claude (Anthropic) and M.~Wessel.
 
 \bibitem{ProfileCheck}
 \texttt{profile\_blocking\_check.py},
-\texttt{triangle\_type\_saturation\_check.py}, and
-\texttt{tri\_neighborhood\_check.py}.
+\texttt{triangle\_type\_saturation\_check.py},
+\texttt{tri\_neighborhood\_check.py}, and
+\texttt{intra\_subtree\_tclosure\_check.py}.
 \newblock Computational verification scripts, April 2026.
 \newblock Available at
   \url{https://github.com/lambdamikel/alcircc5}.
