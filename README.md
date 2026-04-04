@@ -291,6 +291,32 @@ The same stabilization holds for the all-PP-backward branch (verified in the scr
 
 This suggests the **Extension Solvability Conjecture holds** and the PO gap may be closeable. The blocking condition that was missing is neither type-equality (too weak — allows novel triangles) nor node-identity-profile equality (too strong — prevents termination), but **abstract-triangle-type-set equality** — which achieves both termination and correct unraveling simultaneously.
 
+**Strengthened condition: Tri-neighborhood equivalence.** Michael Wessel proposed strengthening the blocking condition to require not only Tri(x) = Tri(y), but also that for each (relation, type) pair, the *set of Tri-values among neighbors* matches:
+
+> For each pair-type (L(x), R, τ), {Tri(b) : E(x,b)=R, L(b)=τ} = {Tri(b') : E(y,b')=R, L(b')=τ}
+
+This ensures the copy is faithful not just from x/y's perspective but from **every neighbor's perspective**. Computational verification ([`tri_neighborhood_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/tri_neighborhood_check.py)) confirms this stronger condition also stabilizes, at a slightly later point:
+
+| Node type | Basic Tri stabilizes | Tri-nbr stabilizes |
+|---|---|---|
+| τ\_A | d₄ (k=2) | **d₆ (k=3)** |
+| τ\_B | d₅ (k=2) | **d₇ (k=3)** |
+| σ | w₂ (k=2) | **w₃ (k=3)** |
+
+The one-step delay occurs because d₄'s PPI-neighbors include boundary nodes (d₂, w₁) with different Tri sets than the corresponding PPI-neighbors of d₆ (which are all interior). Once all neighbors are also in the stabilized interior (at d₆), full Tri-neighborhood equivalence holds. The comparison matrix shows the pattern clearly (= means full Tri-nbr equivalence, T means Tri-only match):
+
+```
+τ_A:     d4    d6    d8   d10   d12   d14   d16   d18
+  d4      ·     T     T     T     T     T     T     T
+  d6      T     ·     =     =     =     =     =     T
+  d8      T     =     ·     =     =     =     =     T
+  ...     T     =     =     =     =     =     =     T
+  d16     T     =     =     =     =     =     ·     T
+  d18     T     T     T     T     T     T     T     ·
+```
+
+The strengthened condition makes the soundness proof (specifically the T-closure argument in Lemma 5.5) substantially more robust: triangles are guaranteed to be in T from **every participating node's perspective**, not just the blocked/blocker pair. This directly addresses scrutiny point 1 (intra-subtree T-closure) from the tableau paper.
+
 ### Eighth approach: triangle-type-set tableau — FULL DECIDABILITY CLAIMED
 
 Building on the saturation finding above, a complete tableau calculus with triangle-type-set blocking is presented in [**A Tableau Calculus for ALCI\_RCC5 with Triangle-Type-Set Blocking (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) (13 pages).
@@ -880,6 +906,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`triangle_closure_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_closure_check.py) -- Tests the triangle-type blocking approach on 68,276 models. Four-part check: (1) GPT counterexample handling, (2) systematic STC/extension CSP, (3) failure classification (all failures are would-be-expanded), (4) cross-context robustness. Key result: zero genuine failures — when T-closed extensions exist, T-filtered arc-consistency always finds them.
 - [**`triangle_type_saturation_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py) -- Tests whether abstract triangle-type sets stabilize for the PO-incoherent counterexample. Builds a 24-element PP-chain with 12 PO-witnesses, verifies composition consistency, computes abstract triangle-type sets for every node, and generates comparison matrices. Key result: **all three node types stabilize at k=2** (τ\_A: 68 types, τ\_B: 56 types, σ: 57 types). Interior nodes have exactly identical abstract triangle-type sets. Verified for both DR-backward and PP-backward branches.
 - [**`profile_blocking_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/profile_blocking_check.py) -- Verifies that node-identity-based profile blocking does NOT terminate: enumerates all valid RCC5 assignments for chains of length 4/6/8 via arc-consistency propagation, confirms the sliding PO diagonal pattern, and shows that no two τ\_A nodes ever have matching node-identity profiles.
+- [**`tri_neighborhood_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/tri_neighborhood_check.py) -- Tests Wessel's strengthened blocking condition: Tri-neighborhood equivalence requires not only Tri(x) = Tri(y) but also that neighbors' Tri sets match per (relation, type) pair. Key result: the strengthened condition **also stabilizes**, at k=3 (one step later than basic Tri at k=2). Interior nodes d₆–d₁₆ (τ\_A), d₇–d₁₇ (τ\_B), w₃–w₈ (σ) are fully Tri-neighborhood equivalent.
 
 ## References
 

@@ -1503,3 +1503,46 @@ This is strictly between type-equality blocking (condition 1 alone, which always
 - `tableau_ALCIRCC5.tex` / `.pdf`: Tableau calculus with triangle-type-set blocking (13 pages)
 - Updated `README.md` with eighth approach section, updated status line, file listing
 - Updated `CONVERSATION.md` with Part 29
+
+---
+
+## Part 30: Tri-neighborhood equivalence — strengthened blocking condition (April 2026)
+
+### Michael Wessel's proposal
+
+Michael proposed strengthening the blocking condition: require not only Tri(x) = Tri(y), but also that the triangle-type sets of all nodes participating in x's and y's triangles match. Formally, for each pair-type (L(x), R, τ), the set of Tri-values among R-neighbors of type τ from x equals that from y:
+
+> {Tri(b) : E(x,b)=R, L(b)=τ} = {Tri(b') : E(y,b')=R, L(b')=τ}
+
+This is analogous to pairwise blocking in ALCI tree tableaux, generalized to complete-graph semantics.
+
+### Why it strengthens soundness
+
+The basic condition Tri(x) = Tri(y) guarantees that abstract triangle types match from x/y's perspective. But when y's witness w is copied for blocked x, triangles involving w and x's other neighbors z depend on Tri(w) — the witness's perspective. If w's Tri set doesn't match the corresponding witness in x's context, a novel triangle type could appear from w's viewpoint.
+
+The Tri-neighborhood condition closes this: every neighbor participating in x's triangles also has matching Tri sets with the corresponding neighbor of y. The copy is faithful from **every node's perspective**, directly addressing scrutiny point 1 (intra-subtree T-closure) from the tableau paper.
+
+### Computational verification: tri_neighborhood_check.py
+
+The script checks Tri-neighborhood equivalence on the 24-element PO-incoherent model:
+
+**Result: the strengthened condition also stabilizes, at k=3 (one step later than basic Tri at k=2):**
+
+| Node type | Basic Tri stabilizes | Tri-nbr stabilizes |
+|---|---|---|
+| τ_A | d₄ (k=2) | d₆ (k=3) |
+| τ_B | d₅ (k=2) | d₇ (k=3) |
+| σ | w₂ (k=2) | w₃ (k=3) |
+
+**Why the one-step delay.** d₄ has Tri(d₄) = Tri(d₆) = 68 types (basic matching holds). But d₄'s PPI-neighbors include boundary nodes (d₂, w₁) with different Tri sets than the corresponding PPI-neighbors of d₆ (d₄, w₂, which are interior nodes). Once all neighbors are also in the stabilized interior (at d₆), full Tri-neighborhood equivalence holds.
+
+**Detailed findings:**
+- d₄ vs d₆: Tri matches (T) but Tri-nbr differs — d₄'s PPI/σ neighbors have 2 distinct Tri values, d₆'s have 3
+- d₆ vs d₈ through d₁₆: full Tri-nbr equivalence (=)
+- d₄ and d₁₈ are boundary nodes that match on basic Tri but not Tri-nbr (their neighbors include other boundary nodes)
+- Same pattern for τ_B (d₅ boundary, d₇–d₁₇ interior) and σ (w₂ boundary, w₃–w₈ interior)
+
+### Files produced
+- `tri_neighborhood_check.py`: Tri-neighborhood equivalence verification script
+- Updated `README.md` with strengthened blocking condition results
+- Updated `CONVERSATION.md` with Part 30
