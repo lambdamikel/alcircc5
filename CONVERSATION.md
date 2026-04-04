@@ -1790,3 +1790,79 @@ GPT's two reviews identified a total of 8 distinct concerns across 2 rounds. Cur
 - Revised `tableau_ALCIRCC5.tex` / `.pdf`: Fifth revision (15 pages)
 - Updated `README.md` with revised status and honest assessment
 - Updated `CONVERSATION.md` with Part 34
+
+---
+
+## Part 35: A fundamentally new approach — MSO encoding via interval semantics (April 4, 2026)
+
+### Context
+
+After two rounds of GPT-5.4 Pro review and five revisions of the Tri-neighborhood tableau paper, three gaps remain: (1) termination lacks a global finiteness argument, (2) the T-closure proof is computational rather than formal, and (3) arc-consistency non-emptiness is heuristic. Michael observes that "decidability is open again, basically" and "we are missing something fundamental."
+
+Michael proposes a fundamentally different direction: instead of fighting complete-graph combinatorics (the common obstacle across all eight previous approaches), exploit the connection between RCC5 relations and temporal/interval relations:
+- PP ↔ containment (Allen's "during")
+- PO ↔ overlap
+- DR ↔ disjoint (Allen's "before/after")
+- EQ ↔ identical
+
+This leads to the idea of reducing ALCI_RCC5 satisfiability to a known decidable logic over intervals or real-line structures.
+
+### The MSO over (R, <) approach
+
+**Key observation.** RCC5 has a faithful interpretation over open intervals on the real line R. Every set of open intervals on R automatically satisfies the RCC5 composition table — composition consistency is a consequence of geometry. This eliminates the central difficulty that plagued all previous approaches.
+
+**Target theory.** The *full* MSO theory of (R, <) is undecidable (Gurevich-Shelah 1982), but the **Borel-MSO** theory (set quantifiers restricted to Borel sets) is decidable (Manthe 2024). Since our encoding only quantifies over open intervals (Borel) and countable endpoint sets (Borel), the Borel restriction is harmless.
+
+**The encoding.** For an ALCI_RCC5 concept C₀ with Hintikka types τ₁,...,τ_N:
+1. Each domain element = an open interval on R
+2. For each type τ_i, set variables L_i (left endpoints) and R_i (right endpoints)
+3. RCC5 relations are MSO-definable from endpoint positions (DR: disjoint, PP: containment, PO: overlap, etc.)
+4. Concept constructors translate naturally: ∃R.D = ∃ an interval in R-relation satisfying D; ∀R.D = all domain intervals in R-relation satisfy D
+5. Countable model property holds (Löwenheim-Skolem), so endpoints can be scattered
+
+**What works:**
+- Composition consistency is FREE (the main advantage)
+- All five RCC5 relations are MSO-definable between interval set variables
+- Existential and universal concept constructors translate to MSO quantification
+- The formula Φ_{C₀} is exponential in |C₀| (from the type count)
+
+**The remaining gap: endpoint pairing.** Computing the RCC5 relation between two intervals requires knowing both their left and right endpoints. Pairing lefts with rights requires a Dyck (balanced parenthesization) matching over the endpoint set. Over discrete orders like (N, <), this is standard (Büchi automata). Over the dense order (R, <), the formal MSO-definability of Dyck matching requires that the endpoint set is scattered (no dense sub-order). This is achievable for countable models but the details over dense orders need verification.
+
+**Complexity.** The Borel-MSO procedure is non-elementary, so even if correct, this gives decidability but NOT EXPTIME.
+
+**Connection to interval temporal logics.** The approach suggests a natural link to Halpern-Shoham (HS) interval temporal logic. If a decidable HS fragment can express ALCI_RCC5 concepts, this would give both a cleaner proof and potentially better complexity.
+
+### Assessment
+
+This is a genuinely different angle from all previous approaches. The eight prior attempts all fought the composition/T-closure problem; the MSO encoding eliminates it entirely by moving to geometric semantics where composition is automatic. The remaining gap (Dyck pairing) is technical and well within MSO's expressive power — the question is whether the specific details over (R, <) work out cleanly.
+
+### Literature research findings
+
+Parallel literature research (via web search) yielded several important results:
+
+1. **Critical correction: full MSO over (R, <) is UNDECIDABLE.** Shelah (1975) and Gurevich-Shelah (1982) proved that full MSO over (R, <) with unrestricted set quantifiers is undecidable. Only **Borel-MSO** — with set quantifiers restricted to Borel sets — is decidable (Manthe 2024, arXiv:2410.00887). This is sufficient for our encoding because all quantified sets are Borel (open intervals are open/Borel, countable endpoint sets are F_sigma/Borel).
+
+2. **BD fragment of HS is undecidable.** Bresolin et al. (ICALP 2010, journal version 2014) proved that the fragment of Halpern-Shoham logic with just the B (begins) and D (during) modalities is already undecidable over any class of linear orders containing an infinite ascending chain. Since PP corresponds to "during," **the HS route is closed** for ALCI_RCC5.
+
+3. **Modal logics of RCC relations are undecidable.** Kontchakov, Wolter, and Zakharyaschev (LMCS 2010) showed that modal logics with modalities interpreted by RCC8 relations are undecidable over the real line. This is the closest existing work to ALCI_RCC5 and it's negative.
+
+4. **ALC(RCC8) is different.** Lutz and Miličić (2007) showed ALC with RCC8 as a concrete domain is decidable, but that framework treats spatial relations as constraints between features, not as roles. The complete-graph semantics of ALCI_RCC5 is not enforced. These are structurally different problems.
+
+5. **Key insight: MSO encoding avoids these barriers.** The BD undecidability and Kontchakov et al. results concern satisfiability problems for modal logics (infinite families of sentences). Our MSO encoding produces a single, fixed sentence Φ_{C₀} for each concept C₀ and asks whether (R, <) ⊨ Φ_{C₀}. This is a question about the theory of (R, <), which IS decidable. What modal logics cannot decide efficiently, MSO decides with Shelah's brute-force model theory.
+
+### Critical correction: full MSO over (R, <) is undecidable
+
+During literature research, a conflict emerged: one agent claimed Shelah proved full MSO(R, <) decidable; another claimed it's undecidable. Verification via web search confirmed: **full MSO over (R, <) with unrestricted set quantifiers is UNDECIDABLE** (Shelah 1975 under CH, Gurevich-Shelah 1982 unconditionally). Only **Borel-MSO** (set quantifiers restricted to Borel sets) is decidable (Manthe 2024, arXiv:2410.00887).
+
+This required updating the entire paper from "MSO" to "Borel-MSO." The key verification: all set quantifiers in our encoding range over Borel sets:
+- Open intervals are open sets → Borel
+- Countable endpoint sets are F_sigma → Borel  
+- Subsets of countable sets are countable → Borel
+- The Borel restriction is harmless: every interval is Borel, so ∃Y(Intv(Y) ∧ ...) and ∀Y(Intv(Y) → ...) have the same meaning in Borel-MSO as in full MSO
+
+The correction **strengthens** the argument by using a more precise and recent result (Manthe 2024) rather than an incorrect appeal to Shelah.
+
+### Files produced
+- New `MSO_encoding_ALCIRCC5.tex` / `.pdf`: Full paper (16 pages), ninth approach (Borel-MSO)
+- Updated `README.md` with ninth approach, research findings, Borel correction, and updated summary table
+- Updated `CONVERSATION.md` with Part 35

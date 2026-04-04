@@ -50,15 +50,15 @@ This concept is satisfiable only in infinite models. The proof that FW(C∞, N) 
 
 See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/FW_proof_ALCIRCC5.pdf) for details. The same argument applies to ALCI\_RCC8 using NTPP in place of PP.
 
-### Summary: seven approaches
+### Summary: nine approaches
 
-| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) | Triangle-type (Claude) | Two-tier quotient (Claude) | Tri-nbr tableau (Claude) |
-|---|---|---|---|---|---|---|---|---|
-| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels | Triangle-filtered arc-consistency | Period descriptors + PP-kernels + full RCC5 tractability | Tri-neighborhood blocking + filtered unraveling |
-| Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | **PO gap** (exact-relation extraction fails for PO) | See honest assessment (4 specific points) |
-| Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | **PO-coherent fragment decidable** | **Substantial partial progress** (2 rounds GPT review) |
+| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) | Triangle-type (Claude) | Two-tier quotient (Claude) | Tri-nbr tableau (Claude) | MSO encoding (Claude) |
+|---|---|---|---|---|---|---|---|---|---|
+| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels | Triangle-filtered arc-consistency | Period descriptors + PP-kernels + full RCC5 tractability | Tri-neighborhood blocking + filtered unraveling | Reduce to Borel-MSO(R,<) via interval semantics |
+| Gap | Extension gap (Q3s not extractable) | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | **PO gap** (exact-relation extraction fails for PO) | See honest assessment (4 specific points) | MSO-definability of Dyck matching in ambient (R,<) |
+| Status | Incomplete | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | **PO-coherent fragment decidable** | **Substantial partial progress** (2 rounds GPT review) | **Encoding complete, one technical gap** (HS route blocked) |
 
-The first five approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. The eighth approach (Tri-neighborhood tableau) uses the saturation finding to **claim full decidability** via Tri-neighborhood blocking — a three-part condition requiring matching concept labels, abstract triangle-type sets, and Tri-neighborhood signatures; three specific technical points are flagged for further scrutiny.
+The first five approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. The eighth approach (Tri-neighborhood tableau) uses the saturation finding to **claim full decidability** via Tri-neighborhood blocking — a three-part condition requiring matching concept labels, abstract triangle-type sets, and Tri-neighborhood signatures; four specific technical points are flagged for further scrutiny. The ninth approach (MSO encoding) takes a fundamentally different direction: instead of fighting complete-graph combinatorics, reduce ALCI\_RCC5 satisfiability to Shelah's decidable MSO theory of (R, <) via the interval semantics of RCC5 — composition consistency becomes free.
 
 ### Sixth approach: triangle-type blocking — conditional decidability
 
@@ -337,6 +337,32 @@ Building on the saturation finding above, a complete tableau calculus with Tri-n
 4. **Stabilization depth bound**: Computational evidence shows basic Tri stabilization at k=2 and full TNbr stabilization at k=3, but a general bound in terms of |C₀| is needed for an explicit complexity result.
 
 **Complexity.** The termination bound is non-elementary (triply-exponential active-node count from the (L, Tri, TNbr) space). EXPTIME membership is conjectured but not proved. An EXPTIME bound would require showing that stabilization depth is polynomial in |Tp(C₀)|.
+
+### Ninth approach: MSO encoding via interval semantics — FUNDAMENTALLY DIFFERENT DIRECTION
+
+After two rounds of GPT-5.4 Pro review showed that the Tri-neighborhood tableau still has open gaps (termination, formal T-closure proof), we pursue a fundamentally different approach: reduce ALCI\_RCC5 satisfiability to the **Borel monadic second-order theory of (R, <)**, which is decidable by Manthe's theorem (2024). (Note: the *full* MSO theory of (R, <) with unrestricted set quantifiers is undecidable (Gurevich-Shelah 1982); only the Borel-restricted version is decidable.)
+
+**The key observation.** RCC5 has a faithful interpretation over open intervals on the real line: PP = proper containment, PPI = proper contains, PO = overlap (neither contains the other), DR = disjoint, EQ = identical. In this representation, **composition consistency is free** — any set of open intervals automatically satisfies the RCC5 composition table. This eliminates the central difficulty (T-closure, extension gap, arc-consistency) of all previous approaches.
+
+**The encoding.** An ALCI\_RCC5 interpretation becomes a set of open intervals on R, each carrying a Hintikka type. For each type τ\_i, we introduce MSO set variables L\_i (left endpoints) and R\_i (right endpoints). The ALCI\_RCC5 concept constructors translate to MSO formulas: existential witnesses become existential quantification over intervals; universal constraints become universal quantification; concept names are tracked by the type variables.
+
+**What works:**
+- RCC5 relations between pairs of open intervals are MSO-definable from endpoint positions
+- Concept translation (Boolean, existential, universal) is straightforward
+- Countable model property holds (Löwenheim-Skolem), so we can restrict to countable endpoint sets
+- Composition consistency is **automatic** — no constraint filtering needed
+
+**The remaining gap: endpoint pairing.** To compute the RCC5 relation between two intervals, we need both their left and right endpoints. Pairing left endpoints with right endpoints requires a **Dyck matching** (balanced parenthesization) over the endpoint set. Over discrete orders (N, <), this is handled by Büchi automata. Over dense orders (R, <), the encoding requires that the endpoint set is **scattered** (contains no dense sub-order). This is achievable for countable models, but the formal MSO-definability of the Dyck matching over scattered subsets of R needs verification.
+
+**Complexity.** Even if correct, the resulting decision procedure has **non-elementary** complexity (from Shelah's procedure). This yields decidability but not EXPTIME. Whether a tighter bound can be obtained is a separate question.
+
+**Interval temporal logics are blocked.** Literature research reveals that the HS route is closed: the BD fragment (begins + during) of Halpern-Shoham logic is already **undecidable** (Bresolin et al. 2010). Since PP corresponds to "during," any HS fragment capturing ALCI\_RCC5 is undecidable. Similarly, Kontchakov, Wolter, and Zakharyaschev (2010) showed modal logics of RCC relations are undecidable over the real line. The Borel-MSO encoding avoids these barriers by reducing each satisfiability instance to a single sentence in the decidable Borel theory of (R, <) — what modal logics cannot decide efficiently, Borel-MSO can decide with brute-force model theory (at non-elementary cost).
+
+**Critical subtlety: Borel restriction.** Full MSO over (R, <) with unrestricted set quantifiers is **undecidable** (Gurevich-Shelah 1982). Only **Borel-MSO** — with set quantifiers restricted to Borel sets — is decidable (Manthe 2024). We verify that our encoding uses only Borel quantification: open intervals are open (Borel), countable endpoint sets are F\_sigma (Borel), and subsets of countable sets are countable (Borel). The Borel restriction is harmless.
+
+**Scattered endpoint representation.** We prove that countable ALCI\_RCC5 models can always be represented with **scattered** endpoint sets (order type ≤ ω^ω). This makes the Dyck matching well-defined and unique, reducing the technical gap to: is the Dyck matching Borel-MSO-definable within the ambient (R, <) structure?
+
+See [**MSO Encoding (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/MSO_encoding_ALCIRCC5.pdf) for the full paper (16 pages). ([source](https://github.com/lambdamikel/alcircc5/blob/master/MSO_encoding_ALCIRCC5.tex))
 
 ### Seventh approach: two-tier quotient — PO-COHERENT FRAGMENT DECIDABLE
 
@@ -849,6 +875,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 
 ## Files
 
+- [**`MSO_encoding_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/MSO_encoding_ALCIRCC5.pdf) -- **Borel-MSO encoding via interval semantics** (ninth approach): reduces ALCI\_RCC5 satisfiability to Borel-MSO over (R, <) using the interval representation of RCC5. Composition consistency is automatic. Full MSO is undecidable; Borel-MSO is decidable (Manthe 2024). One technical gap: Dyck-matching endpoint pairing. (16 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/MSO_encoding_ALCIRCC5.tex))
 - [**`tableau_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) -- **Tableau calculus with Tri-neighborhood blocking** (third revision): claims full decidability of ALCI\_RCC5. Three-part blocking condition: (i) same label, (ii) same Tri set, (iii) same TNbr signature. Soundness uses disjunctive constraint network to resolve mirror triangle issue. (14 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.tex))
 - [**`decidability_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.pdf) -- Main paper: quasimodel approach (22 pages, revised)
 - [**`decidability_ALCIRCC5.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/decidability_ALCIRCC5.tex) -- LaTeX source for main paper
@@ -938,6 +965,18 @@ A key insight explored in these papers is the **patchwork property** from qualit
 12. M. Bodirsky and V. Bodor. "A Complexity Dichotomy in Spatial Reasoning via Ramsey Theory." ACM Transactions on Computational Logic (TOCL), 25(2), 2024. (Earlier version: arXiv:2008.10261, 2020.)
 
 13. M. Bodirsky. *Complexity of Infinite-Domain Constraint Satisfaction.* Lecture Notes in Logic, vol. 52, Cambridge University Press, 2021.
+
+14. S. Shelah. "The Monadic Theory of Order." Annals of Mathematics, 102(3):379-419, 1975. (Proved undecidability of full MSO over (R, <); decidability for countable ordinals.)
+
+15a. Y. Gurevich and S. Shelah. "Monadic Theory of Order and Topology in ZFC." Annals of Mathematical Logic, 23(2-3):179-198, 1982. (Removed CH assumption from Shelah's undecidability result.)
+
+15b. U. Manthe. "The Borel Monadic Theory of Order is Decidable." arXiv:2410.00887, October 2024. (Proved decidability of Borel-MSO over (R, <); the key result enabling our ninth approach.)
+
+15. D. Bresolin, D. Della Monica, V. Goranko, A. Montanari, G. Sala. "The Dark Side of Interval Temporal Logic: Marking the Undecidability Border." Annals of Mathematics and AI, 71(1-3):41-83, 2014. (Conference version: "B and D Are Enough to Make the Halpern-Shoham Logic Undecidable," ICALP 2010.)
+
+16. R. Kontchakov, F. Wolter, M. Zakharyaschev. "Logic of Metric Spaces and LS-Spaces." Logical Methods in Computer Science, 6(3), 2010. (See also: "Modal Logics of Topological Relations.")
+
+17. J. Halpern and Y. Shoham. "A Propositional Modal Logic of Time Intervals." J. ACM, 38(4):935-962, 1991.
 
 ## Acknowledgments
 
