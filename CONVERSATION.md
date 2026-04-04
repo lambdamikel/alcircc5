@@ -1884,3 +1884,45 @@ A deep dive into the Lutz & Wolter paper "Modal Logics of Topological Relations"
 - New `MSO_encoding_ALCIRCC5.tex` / `.pdf`: Full paper (16 pages), ninth approach (Borel-MSO)
 - Updated `README.md` with Lutz-Wolter findings, updated undecidability table, and research context
 - Updated `CONVERSATION.md` with Part 35
+
+## Part 36: L_RCC8 Undecidability Does Not Transfer to ALCI_RCC8 (April 2026)
+
+### Context
+
+Michael asked whether the Lutz-Wolter L_RCC8 undecidability proof can be applied to prove ALCI_RCC8 undecidable, and how it relates to his grid/domino construction in report7.pdf (Section 4.4.3).
+
+### Key finding: the reduction does not transfer
+
+L_RCC8 (Lutz-Wolter) and ALCI_RCC8 (Wessel) have the **same syntax** but **different model classes**:
+- L_RCC8: topological models (regular closed sets in R²)
+- ALCI_RCC8: abstract models (complete graphs with composition-table edge-coloring)
+
+Every topological model is an abstract model, but not vice versa. The Lutz-Wolter domino reduction requires a **grid coincidence condition** (east-of-north = north-of-east). Topological geometry forces this; the composition table does not. In abstract models, the "diagonal" nodes z and z' can have any relation in {PO, EQ, TPP, NTPP, TPPI, NTPPI} — "spurious" models satisfy the concept without encoding a valid tiling.
+
+### Wessel's priority: the coincidence obstruction (2002/2003)
+
+Wessel identified exactly this obstruction in report7.pdf (FBI-HH-M-324/03):
+1. **Even-odd chain** (Section 4.4.2): alternating even/odd markers along TPPI chain, exploiting (TPPI)⁺ - TPPI ⊆ NTPPI to create functional successors
+2. **Binary counter** (Section 4.4.2): n-bit counter encoding forcing paths of length ≥ 2^n → EXPTIME-hardness
+3. **Grid construction** (Figure 10): explicit n×n RCC8 network using TPP for H/V successors, PO within rows, NTPP for indirect containment — composition-consistent
+4. **Coincidence obstruction** (Figure 11): composition table allows {PO, EQ, TPP, NTPP, TPPI, NTPPI} at the diagonal point → no concept term can force z = z'
+5. **Undecidability boundary** (p. 43-44): adding hybrid logic binding operator ↓ would immediately yield undecidability, confirming coincidence is the precise boundary
+
+All of these constructions predate Lutz-Wolter (LMCS 2006) by 3-4 years.
+
+### Citation gap
+
+Lutz-Wolter cite only Wessel's DL2001 paper [Wes01], not the more comprehensive 2002/2003 technical report. They characterize Wessel's work as: "despite several efforts, to the best of our knowledge no results have been obtained so far" — which is factually incorrect (even [Wes01] contains undecidability results for ALC_RA⊖, and the uncited report proves decidability of ALCI_RCC1/2/3 and EXPTIME-hardness of ALCI_RCC8). The even-odd chain technique is credited to Marx-Reynolds and Rybina-Zakharyaschev, not to Wessel. The grid construction and coincidence obstruction are not acknowledged.
+
+### Parallel to RCC5
+
+The situation is structurally parallel: L_RCC5(RS^∃) is undecidable but doesn't transfer to ALCI_RCC5 = L_RCC5(RS) because abstract models lack supremum closure. Both non-transfers have the same shape: concrete semantics provides rigidity beyond the composition table.
+
+### Paper produced
+
+`LRCC8_vs_ALCIRCC8.tex` / `.pdf` (11 pages): proves non-transfer, documents technical priority with comparison table (Table 1), analyzes three natural adaptation attempts (nominals, patchwork, alternating-type trick — all fail), discusses implications for ALCI_RCC8 decidability.
+
+### Files produced
+- New `LRCC8_vs_ALCIRCC8.tex` / `.pdf`: Full paper (11 pages), tenth approach/analysis
+- Updated `README.md` with new file listing, new undecidability table row, and L_RCC8 → ALCI_RCC8 non-transfer paragraph
+- Updated `CONVERSATION.md` with Part 36

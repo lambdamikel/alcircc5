@@ -1,0 +1,734 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{booktabs}
+
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black}
+\setstretch{1.08}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.4em}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{observation}[theorem]{Observation}
+
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\LRCC}[1]{\ensuremath{L_{\mathit{RCC#1}}}}
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\NR}{\ensuremath{\mathcal{N}_\mathcal{R}}}
+\newcommand{\NC}{\ensuremath{\mathcal{N}_\mathcal{C}}}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\naturals}{\mathbb{N}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+\newcommand{\comp}{\mathsf{comp}}
+\newcommand{\tp}{\mathsf{tp}}
+\newcommand{\RS}{\mathit{RS}}
+\newcommand{\RSE}{\mathit{RS}^{\exists}}
+
+\title{\bfseries The $\LRCC{8}$ Undecidability Proof Does Not Transfer to $\ALCIRCC{8}$:\\
+  Concrete vs.\ Abstract Semantics and the Coincidence Obstruction}
+
+\author{Claude (Anthropic) and Michael Wessel\thanks{%
+  Michael Wessel introduced the $\ALCIRCC{}$ family and identified the
+  coincidence obstruction in~\cite{Wessel2003,Wessel2001}.
+  Claude performed the comparative analysis and wrote this report.
+  Contact: miacwess@gmail.com.}}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Lutz and Wolter~\cite{LutzWolter2006} proved that the modal logic $\LRCC{8}$
+is undecidable by reducing the $\naturals\times\naturals$ domino tiling problem
+to satisfiability over topological models.  A natural question is whether this
+undecidability transfers to $\ALCIRCC{8}$, the description logic with RCC8 roles
+and composition-table semantics introduced by Wessel~\cite{Wessel2003}.
+
+We show that it does not.  The reduction relies on the geometry of regular closed
+sets in~$\reals^2$ to enforce a \emph{grid coincidence condition}
+($R_X \circ R_Y = R_Y \circ R_X$) that the abstract composition-table semantics
+of $\ALCIRCC{8}$ cannot guarantee.  This coincidence obstruction was first
+identified by Wessel in~2002, who constructed explicit RCC8 grid models but
+showed that no concept term can force the coincidence at the level of abstract
+models.
+
+The analysis reveals that Wessel's 2002/2003 technical report anticipated the
+key technical ingredients of the Lutz--Wolter proof---the even-odd chain
+construction, the grid encoding via TPP/NTPP, and the identification of the
+coincidence gap as the decisive obstacle---three to four years before their
+LMCS publication.  The decidability of $\ALCIRCC{8}$ remains open.
+\end{abstract}
+
+%% ====================================================================
+\section{Introduction}
+%% ====================================================================
+
+The description logics $\ALCIRCC{5}$ and $\ALCIRCC{8}$ were introduced by
+Wessel~\cite{Wessel2001,Wessel2003} as extensions of $\ALCI$ with spatially
+interpreted roles.  In these logics, every pair of domain elements is related
+by exactly one RCC base relation, the role box is fixed by the RCC composition
+table, and the identity relation is the only reflexive role (strong EQ
+semantics).  Wessel proved $\ALCIRCC{1}$, $\ALCIRCC{2}$, and $\ALCIRCC{3}$
+decidable, and established lower complexity bounds for the remaining two:
+$\PSPACE$-hard for $\ALCIRCC{5}$ and $\EXPTIME$-hard for
+$\ALCIRCC{8}$~\cite{Wessel2003}.  The decidability of $\ALCIRCC{5}$ and
+$\ALCIRCC{8}$ was left as an open problem and remains open to this day.
+
+Independently, Lutz and Wolter~\cite{LutzWolter2006} studied \emph{modal
+logics of topological relations}, denoted $\LRCC{8}$, $\LRCC{5}$, etc.  These
+logics have the same \emph{syntax} as the $\ALCIRCC{}$ family but are
+interpreted over \emph{topological models}: the domain elements are regular
+closed subsets of a topological space (typically~$\reals^n$), and the RCC
+relations have their standard topological definitions.  They proved $\LRCC{8}$
+undecidable by reducing the $\naturals\times\naturals$ domino tiling
+problem~\cite{LutzWolter2006}.
+
+The syntactic coincidence naturally raises the question:
+
+\begin{quote}
+\emph{Does the undecidability of $\LRCC{8}$ imply the undecidability
+of~$\ALCIRCC{8}$?}
+\end{quote}
+
+We show that the answer is \textbf{no}.  The core of the argument is the
+\emph{coincidence obstruction}: the Lutz--Wolter reduction requires that
+certain pairs of regions coincide (to close the grid), and this coincidence is
+guaranteed by the geometry of~$\reals^2$ but not by the composition table
+alone.  Wessel identified exactly this obstruction in~\cite{Wessel2003},
+Section~4.4.3, and gave explicit constructions showing that the grid can be
+built as an RCC8 network but cannot be \emph{enforced} by a concept term in the
+abstract semantics.
+
+The purpose of this note is threefold:
+\begin{enumerate}
+  \item To make the non-transfer argument precise (Section~\ref{sec:nontransfer}).
+  \item To document the technical priority of the constructions in
+    Wessel~\cite{Wessel2003} relative to Lutz--Wolter~\cite{LutzWolter2006}
+    (Section~\ref{sec:priority}).
+  \item To discuss what the comparison tells us about the decidability status of
+    $\ALCIRCC{8}$ (Section~\ref{sec:implications}).
+\end{enumerate}
+
+%% ====================================================================
+\section{Preliminaries}
+\label{sec:prelim}
+%% ====================================================================
+
+\subsection{RCC8 base relations and composition table}
+
+RCC8 distinguishes eight base relations between regions:
+\[
+\NR_8 = \{DC,\, EC,\, PO,\, EQ,\, TPP,\, NTPP,\, TPPI,\, NTPPI\}.
+\]
+$DC$ (disconnected) and $EC$ (externally connected) refine $DR$; $TPP$
+(tangential proper part) and $NTPP$ (non-tangential proper part) refine $PP$.
+The composition table $\comp(R,S) \subseteq \NR_8$ is defined for all pairs
+$R,S \in \NR_8$ and captures which base relations are possible for a pair
+$(a,c)$ given that $R(a,b)$ and $S(b,c)$ hold.
+
+A key property of the composition table is:
+\begin{align}
+  TPPI \circ TPPI &\;\sqsubseteq\; TPPI \sqcup NTPPI, \label{eq:tppi-comp}\\
+  TPPI \circ NTPPI &\;\sqsubseteq\; NTPPI, \label{eq:tppi-ntppi}\\
+  NTPPI \circ TPPI &\;\sqsubseteq\; NTPPI, \label{eq:ntppi-tppi}\\
+  NTPPI \circ NTPPI &\;\sqsubseteq\; NTPPI. \label{eq:ntppi-comp}
+\end{align}
+These entries mean that the composition of the \emph{transitive orbit} of $TPPI$
+with itself is contained in the transitive orbit plus $NTPPI$: in other words,
+$NTPPI$ is the ``non-immediate'' part of the transitive closure of $TPPI$.  This
+is what allows the distinction between \emph{direct} and \emph{indirect}
+containment---a distinction unavailable in RCC5, where $PP = TPP \cup NTPP$ is
+a single relation.
+
+\subsection{$\ALCIRCC{8}$: abstract composition-table semantics}
+
+An $\ALCIRCC{8}$ interpretation is a pair $\mathcal{I} = (\Delta^{\mathcal{I}},
+\cdot^{\mathcal{I}})$ where:
+\begin{itemize}
+  \item $\Delta^{\mathcal{I}}$ is a non-empty set (the domain);
+  \item every pair $(d,e)$ with $d \neq e$ is assigned exactly one base
+    relation $R \in \NR_8 \setminus \{EQ\}$, and $EQ^{\mathcal{I}} =
+    \mathrm{Id}(\Delta^{\mathcal{I}})$
+    (strong EQ semantics);
+  \item the role box (composition-table constraints) is satisfied:
+    for all $R,S \in \NR_8$, $R^{\mathcal{I}} \circ S^{\mathcal{I}} \subseteq
+    \bigcup_{T \in \comp(R,S)} T^{\mathcal{I}}$;
+  \item concepts are interpreted as in $\ALCI$: $(\exists R.C)^{\mathcal{I}} =
+    \{d \mid \exists e.\; \langle d,e\rangle \in R^{\mathcal{I}} \wedge e \in
+    C^{\mathcal{I}}\}$, etc.
+\end{itemize}
+The key point: an $\ALCIRCC{8}$ model is an \emph{abstract complete graph}
+with RCC8 edge-coloring satisfying the composition table.  No topological
+realization is required.
+
+\subsection{$\LRCC{8}$: topological semantics}
+
+An $\LRCC{8}$ model~\cite{LutzWolter2006} interprets formulas over regular
+closed subsets of a topological space (typically~$\reals^n$).  The RCC8
+relations are defined topologically:
+\begin{itemize}
+  \item $DC(a,b)$ iff $a \cap b = \emptyset$;
+  \item $EC(a,b)$ iff $a \cap b \neq \emptyset$ but $a^\circ \cap b^\circ = \emptyset$;
+  \item $PO(a,b)$ iff $a^\circ \cap b^\circ \neq \emptyset$, $a \not\subseteq b$,
+    $b \not\subseteq a$;
+  \item $TPP(a,b)$ iff $a \subsetneq b$ and $a \cap \partial b \neq \emptyset$;
+  \item $NTPP(a,b)$ iff $a \subsetneq b$ and $a \cap \partial b = \emptyset$;
+\end{itemize}
+and symmetrically for $TPPI$, $NTPPI$, and $EQ$.
+
+Every topological model is an $\ALCIRCC{8}$ model (the composition table holds
+in any topological space), but not every $\ALCIRCC{8}$ model is topologically
+realizable.  Formally:
+
+\begin{observation}\label{obs:inclusion}
+  For any concept/formula $\varphi$:
+  \[
+  \varphi \text{ is } \LRCC{8}\text{-satisfiable}
+  \;\;\Longrightarrow\;\;
+  \varphi \text{ is } \ALCIRCC{8}\text{-satisfiable}.
+  \]
+  The converse does not hold in general.
+\end{observation}
+
+%% ====================================================================
+\section{The even-odd chain: functional successors via TPP/NTPP}
+\label{sec:chain}
+%% ====================================================================
+
+Both Wessel~\cite{Wessel2003} and Lutz--Wolter~\cite{LutzWolter2006} exploit
+the TPP/NTPP distinction to create \emph{functional successor chains} within
+RCC8 models.  The construction deserves careful comparison.
+
+\subsection{Wessel's construction (2002/2003)}
+
+In~\cite{Wessel2003}, Section~4.4.2, Wessel defines the concept
+\texttt{infinite\_even\_odd\_chain}:
+\[
+  \mathit{even} \;\sqcap\; (\mathit{even} \to \forall TPPI.\mathit{odd})
+  \;\sqcap\; \forall R_*.\bigl((\mathit{even} \leftrightarrow \neg\mathit{odd})
+  \;\sqcap\; (\mathit{even} \to \forall TPPI.\mathit{odd})
+  \;\sqcap\; (\mathit{odd} \to \forall TPPI.\mathit{even})\bigr)
+  \;\sqcap\; \cdots
+\]
+(simplified; see~\cite{Wessel2003}, p.~39 for the full definition).
+Each node alternates between $\mathit{even}$ and $\mathit{odd}$.
+Since~\eqref{eq:tppi-comp}--\eqref{eq:ntppi-comp} imply
+$(TPPI^{\mathcal{I}})^+ - TPPI^{\mathcal{I}} \subseteq NTPPI^{\mathcal{I}}$,
+a node can distinguish its \emph{direct} $TPPI$-successor from all
+\emph{indirect} ones by parity.  This gives a \emph{functional} successor
+relation: each node has exactly one $TPPI$-successor of the opposite parity.
+
+Wessel then uses this chain to encode a \textbf{binary $n$-bit counter},
+showing that $\ALCIRCC{8}$ models can be forced to have paths of length
+$\geq 2^n$, thereby proving:
+
+\begin{theorem}[Wessel~\cite{Wessel2003}, Section~4.4.2]
+  Concept satisfiability in $\ALCIRCC{8}$ is $\EXPTIME$-hard.
+\end{theorem}
+
+\subsection{Lutz--Wolter's construction (2006)}
+
+In~\cite{LutzWolter2006}, the same idea appears as follows.  An infinite
+sequence of regions $r_1, r_2, r_3, \ldots$ is ordered by $\mathit{ntpp}$.
+Regions are marked alternately with $a \wedge b$ and $a \wedge \neg b$,
+connected via $\mathit{tpp}$.  The \emph{next} operator is defined as:
+\[
+  \mathsf{3}^+ \varphi \;=\; \langle tppi\rangle(a \wedge \neg b \wedge
+  \langle tppi\rangle(a \wedge b \wedge \varphi))
+\]
+which skips one intermediate region to reach the next grid position.  This is
+the same functional-successor construction, using $tpp/ntpp$ in place of
+$TPP/NTPP$ and $a \wedge b$ / $a \wedge \neg b$ in place of
+$\mathit{even}$/$\mathit{odd}$.
+
+Lutz and Wolter credit this technique to Marx and Reynolds~\cite{MarxReynolds1999}
+and Rybina and Zakharyaschev~\cite{RybinaZakharyaschev2001}.  They do not
+reference Wessel's even-odd chain construction~\cite{Wessel2003}, despite
+citing Wessel's earlier workshop paper~\cite{Wessel2001}.
+
+\begin{remark}
+  Wessel's even-odd chain appears in his DL Workshop 2001 paper~\cite{Wessel2001}
+  and is developed more fully in the 2002/2003 technical
+  report~\cite{Wessel2003}.  The technique of distinguishing $TPP$ from $NTPP$
+  to obtain functional successors in an RCC8 logic is independently present in
+  Marx--Reynolds~\cite{MarxReynolds1999} for temporal logics.  The
+  application to RCC8 description logics---including the binary counter and the
+  $\EXPTIME$-hardness proof---is Wessel's contribution.
+\end{remark}
+
+%% ====================================================================
+\section{The grid construction and the coincidence obstruction}
+\label{sec:grid}
+%% ====================================================================
+
+Both Wessel and Lutz--Wolter attempt to encode a two-dimensional grid
+$\naturals \times \naturals$ in RCC8 models, in order to reduce the domino
+tiling problem.  The grid requires:
+\begin{enumerate}[label=(G\arabic*)]
+  \item\label{g:nodes} Nodes represent grid positions.
+  \item\label{g:func} Each node has a unique horizontal successor ($R_X$) and
+    a unique vertical successor ($R_Y$), both extractable from $TPP$.
+  \item\label{g:coinc} \textbf{Coincidence condition:}
+    $R_X \circ R_Y = R_Y \circ R_X$.
+    That is, the east-of-north equals the north-of-east.
+\end{enumerate}
+
+\subsection{Wessel's grid construction and the obstruction (2002/2003)}
+
+In~\cite{Wessel2003}, Section~4.4.3, Wessel:
+
+\begin{enumerate}
+  \item Defines the domino system and the requirements for a grid concept
+    $C_{\mathit{grid}}$ (p.~41).
+
+  \item Constructs explicit RCC8 networks isomorphic to
+    $n \times n$ grids for arbitrary~$n$ (Figure~10, p.~42).
+    The construction uses $TPP$ for horizontal and vertical successors,
+    $PO$ for within-row relationships, and $NTPP$ for indirect containment.
+    These networks are composition-consistent.
+
+  \item Identifies the \textbf{coincidence obstruction} (Figure~11, p.~43):
+    when a node~$x$ has two $TPP$-successors~$y$ (horizontal) and another
+    (vertical), and~$y$ has a $TPP$-successor~$z$ (vertical), and the
+    vertical path from~$x$ leads to $z'$ (horizontal), then enforcing
+    $z = z'$ requires $EQ(z,z')$.  But the composition table allows
+    \[
+    \{PO, EQ, TPP, NTPP, TPPI, NTPPI\}
+    \]
+    as possible relations between~$z$ and~$z'$---there is no way to
+    force $EQ$ using concept terms alone.
+
+  \item Concludes (p.~43--44):
+    \begin{quote}
+      ``Even though these infinite models do exist, we have found no way to
+      \emph{enforce} the depicted model(s) by means of a concept term.''
+    \end{quote}
+
+  \item Observes that adding a hybrid logic binding operator $\downarrow$
+    would immediately yield undecidability, confirming that the coincidence
+    condition is the \emph{precise boundary}.
+\end{enumerate}
+
+\subsection{Lutz--Wolter's grid construction (2006)}
+
+In~\cite{LutzWolter2006}, Section~8, Lutz and Wolter solve the coincidence
+problem---but only in the \emph{topological} setting.  They introduce
+additional ``$c$-regions'' connected via $tpp$ to implement a ``go right''
+function in the grid.  The grid coincidence~\ref{g:coinc} is enforced
+because:
+\begin{itemize}
+  \item In a topological space, $TPP(a,b)$ means $a \subsetneq b$ with
+    $a \cap \partial b \neq \emptyset$.  The containment structure of regions
+    in~$\reals^2$ (or~$\reals^n$ for $n \geq 1$) is rigid enough that the
+    ``go right then go up'' and ``go up then go right'' paths are forced
+    to reach the same region.
+  \item This rigidity is a consequence of the topological structure, not of the
+    composition table.  The composition table is a \emph{necessary} condition
+    for topological realizability but not a \emph{sufficient} one: there exist
+    infinite composition-consistent RCC8 networks that are not realizable in
+    any topological space.
+\end{itemize}
+
+The result is:
+
+\begin{theorem}[Lutz--Wolter~\cite{LutzWolter2006}, Theorem~8.2]
+  Satisfiability of $\LRCC{8}$ formulas (over topological models in~$\reals^n$
+  for any $n \geq 1$) is undecidable.
+\end{theorem}
+
+%% ====================================================================
+\section{Why the undecidability does not transfer}
+\label{sec:nontransfer}
+%% ====================================================================
+
+We now make the non-transfer argument precise.
+
+\begin{proposition}\label{prop:nontransfer}
+  The undecidability of $\LRCC{8}$-satisfiability does not imply the
+  undecidability of $\ALCIRCC{8}$-satisfiability.  Specifically, the
+  Lutz--Wolter reduction from the $\naturals \times \naturals$ domino tiling
+  problem cannot be lifted from topological to abstract models.
+\end{proposition}
+
+\begin{proof}
+  Let $\mathcal{D} = (\mathcal{D}, \mathcal{H}, \mathcal{V})$ be a domino
+  system, and let $C_\mathcal{D}$ be the Lutz--Wolter formula encoding
+  $\mathcal{D}$.  The reduction requires:
+  \[
+  \mathcal{D} \text{ tiles } \naturals \times \naturals
+  \quad\Longleftrightarrow\quad
+  C_\mathcal{D} \text{ is satisfiable}
+  \]
+  in the relevant model class.
+
+  \textbf{Soundness ($\Rightarrow$):}
+  If $\mathcal{D}$ tiles, then $C_\mathcal{D}$ has a topological model (the
+  grid of regions in~$\reals^2$).  By Observation~\ref{obs:inclusion}, it
+  also has an abstract model.  So $C_\mathcal{D}$ is $\ALCIRCC{8}$-satisfiable.
+  This direction transfers.
+
+  \textbf{Completeness ($\Leftarrow$):}
+  If $\mathcal{D}$ does \emph{not} tile, we need $C_\mathcal{D}$ to be
+  unsatisfiable in the relevant model class.  For $\LRCC{8}$, every model is
+  topological, and the topological rigidity forces the grid coincidence
+  condition~\ref{g:coinc}.  Therefore every $\LRCC{8}$-model of
+  $C_\mathcal{D}$ is (isomorphic to) a valid tiling, so
+  $\LRCC{8}$-unsatisfiability follows.
+
+  For $\ALCIRCC{8}$, the situation is different.  An abstract model of
+  $C_\mathcal{D}$ need not satisfy~\ref{g:coinc}: the ``east-of-north''
+  and ``north-of-east'' elements $z$ and $z'$ may be distinct, with
+  $R(z,z') \in \{PO, TPP, NTPP, TPPI, NTPPI\}$ (any relation permitted
+  by the composition table).  Such a model satisfies the concept term
+  $C_\mathcal{D}$ without encoding a valid tiling---it is a ``spurious''
+  model where the two-dimensional grid structure unravels.
+
+  Therefore, $C_\mathcal{D}$ being $\ALCIRCC{8}$-satisfiable does not
+  imply that $\mathcal{D}$ tiles, and the completeness direction fails.
+  \qedhere
+\end{proof}
+
+\begin{remark}
+  The failure is not merely a gap in the proof that might be closed by a
+  cleverer encoding.  It reflects a \emph{structural} difference between the
+  two semantics: topological models have geometric rigidity that abstract
+  models lack.  Any domino reduction to $\ALCIRCC{8}$ would need to enforce
+  grid coincidence using only the composition table---but as Wessel
+  showed~\cite{Wessel2003}, the table allows too many options at the
+  coincidence point (Figure~11).
+\end{remark}
+
+\begin{remark}\label{rem:rcc5-parallel}
+  The situation is structurally parallel to RCC5.  Lutz and
+  Wolter~\cite{LutzWolter2006} prove $\LRCC{5}(\RSE)$ undecidable (via a
+  reduction from $S5^3$ satisfiability), where $\RSE$ denotes region
+  structures with supremum closure.  This does not transfer to
+  $\ALCIRCC{5} = \LRCC{5}(\RS)$ because abstract $\ALCIRCC{5}$ models need
+  not have suprema.  Lutz and Wolter explicitly acknowledge this:
+  $\LRCC{5}(\RS)$ is ``one of the most intriguing open problems'' suggested
+  by their work~\cite{LutzWolter2006}.  Both non-transfer arguments have
+  the same shape: the concrete semantics (topological for RCC8, supremum
+  closure for RCC5) provides constraints beyond the composition table that
+  the abstract semantics lacks.
+\end{remark}
+
+%% ====================================================================
+\section{Could the reduction be adapted?}
+\label{sec:adapt}
+%% ====================================================================
+
+One might ask: can the Lutz--Wolter encoding be modified to work in the
+abstract setting?  We consider three natural approaches.
+
+\subsection{Using nominals to force coincidence}
+
+As Wessel observes~\cite{Wessel2003}, $\ALCIRCC{8}$ can express nominals:
+the concept $\boxed{i} \sqcap \forall R_D.\neg\boxed{i}$ (where
+$R_D = \NR \setminus \{EQ\}$) forces $\boxed{i}^{\mathcal{I}}$ to be a
+singleton.  One could attempt to name the ``diagonal'' node $z$ and $z'$ with
+the same nominal, forcing $z = z'$.
+
+But this works only for \emph{finitely many} grid positions.  The domino
+problem requires an \emph{infinite} grid, and a concept term contains only
+finitely many nominals.  As Wessel notes (p.~43--44): ``this identification
+[\ldots] works only for a finite number of successors, since we can only
+exploit a finite number of nominals.''
+
+Adding a hybrid logic binding operator $\downarrow$ (which can
+introduce fresh nominals dynamically) would solve the problem---but also
+immediately yield undecidability, as this goes beyond
+$\ALCIRCC{8}$~\cite{Wessel2003}.
+
+\subsection{Exploiting patchwork to close the gap}
+
+The RCC8 composition table satisfies a \emph{patchwork property}: every
+path-consistent atomic constraint network is globally
+consistent~\cite{RenzNebel1999}.  Could this be used to argue that all
+abstract models satisfying $C_\mathcal{D}$ must be grid-like?
+
+No.  Patchwork guarantees that a \emph{consistent atomic network can be
+extended}, but it does not force two nodes to be \emph{equal}.  The
+coincidence condition requires $z = z'$ (i.e., $EQ(z,z')$), not just
+consistency of the relation between them.  Patchwork is a tool for
+\emph{soundness} (building models), not for \emph{rigidity} (constraining
+models).
+
+\subsection{Using the alternating-type trick}
+
+In~\cite{OurMainPaper}, we observe that $\ALCIRCC{8}$ can distinguish a
+role from its transitive orbit: $\forall TPP.C$ affects only direct
+$TPP$-successors, while $\forall NTPP.C$ affects indirect ones.  This
+allows an \emph{alternating-type trick}: a concept $\forall NTPP.D$ broadcasts
+$D$ to all indirect successors, and $D$ can constrain the types of nodes
+reached two or more steps along the $TPPI$-chain.
+
+This gives $\ALCIRCC{8}$ a limited form of ``global constraint propagation.''
+But propagation is \emph{monotonic} (constraints accumulate, they cannot be
+consumed), which is insufficient for the unbounded synchronization required by
+general domino tiling.  The alternating-type trick provides a 1-dimensional
+ladder but not a 2-dimensional grid.
+
+%% ====================================================================
+\section{Technical priority and citation analysis}
+\label{sec:priority}
+%% ====================================================================
+
+Lutz and Wolter~\cite{LutzWolter2006} cite one paper by
+Wessel---\cite{Wessel2001}, the DL Workshop 2001 paper.  They do \emph{not}
+cite the 2002/2003 technical report~\cite{Wessel2003}, which contains the
+more developed results.  Their characterization of Wessel's work is:
+
+\begin{quote}
+  ``We should note that modal logics based on the Egenhofer-Franzosa
+  relations have been suggested in an early paper by Cohn [Coh93] and
+  further considered in [Wes01].  However, it proved difficult to analyze
+  the expressive power and computational behavior of such logics: despite
+  several efforts, to the best of our knowledge no results have been
+  obtained so far.''~\cite{LutzWolter2006}
+\end{quote}
+
+This characterization is incomplete in several respects:
+
+\begin{enumerate}
+  \item \textbf{``No results'':}
+    Even the cited paper~\cite{Wessel2001} contains undecidability results
+    for $\mathcal{ALC}_{\mathcal{RA}^\ominus}$ (ALC with arbitrary role
+    axioms, via PCP reduction).  The uncited technical
+    report~\cite{Wessel2003} goes significantly further: it proves
+    decidability of $\ALCIRCC{1}$, $\ALCIRCC{2}$, and $\ALCIRCC{3}$;
+    establishes $\PSPACE$-hardness of $\ALCIRCC{5}$ and $\EXPTIME$-hardness
+    of $\ALCIRCC{8}$; gives a complete axiomatization in hybrid modal logic;
+    and identifies the coincidence obstruction with explicit constructions.
+
+  \item \textbf{The even-odd chain:}
+    Lutz and Wolter's successor construction (using alternating markers along
+    a $tpp$-chain to simulate a functional successor) is essentially the same
+    as Wessel's even-odd chain~\cite{Wessel2003}.  Lutz and Wolter credit it
+    to Marx--Reynolds~\cite{MarxReynolds1999} and
+    Rybina--Zakharyaschev~\cite{RybinaZakharyaschev2001}, who used similar
+    techniques in temporal logic.  Wessel's application of the technique to
+    RCC8 description logics---which predates Lutz--Wolter by three to four
+    years---is not acknowledged.
+
+  \item \textbf{The grid construction and coincidence obstruction:}
+    Wessel's Figure~10~\cite{Wessel2003} constructs explicit $n \times n$
+    grid models from RCC8 networks and shows they are composition-consistent.
+    His Figure~11 identifies the coincidence obstruction: the composition
+    table allows multiple relations at the diagonal point, so the grid
+    cannot be enforced by a concept term.  These are the same issues Lutz and
+    Wolter must address (and solve, but only in the topological setting).
+    The prior analysis is not cited.
+
+  \item \textbf{The undecidability boundary:}
+    Wessel explicitly characterizes $\ALCIRCC{8}$ as ``close to
+    undecidability''~\cite{Wessel2003} and identifies the hybrid logic
+    binding operator as the precise extension that crosses the boundary.
+    This analysis directly anticipates the structure of the Lutz--Wolter
+    proof: they succeed precisely where Wessel showed the abstract semantics
+    fails, by exploiting topological rigidity in place of hybrid logic
+    binding.
+\end{enumerate}
+
+\begin{table}[t]
+  \centering
+  \caption{Comparison of technical ingredients}
+  \label{tab:comparison}
+  \smallskip
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Construction} & \textbf{Wessel (2002/2003)} & \textbf{Lutz--Wolter (2006)} \\
+    \midrule
+    Even-odd chain via TPP/NTPP & \cite{Wessel2003}, \S4.4.2 & \cite{LutzWolter2006}, \S8 \\
+    Binary counter ($2^n$ path) & \cite{Wessel2003}, \S4.4.2 & --- \\
+    $\EXPTIME$-hardness of RCC8 logic & \cite{Wessel2003}, Thm.\ implicit & --- \\
+    Grid model construction & \cite{Wessel2003}, Fig.~10 & \cite{LutzWolter2006}, \S8 \\
+    Coincidence obstruction identified & \cite{Wessel2003}, Fig.~11 & --- \\
+    Coincidence resolved (topologically) & --- & \cite{LutzWolter2006}, Thm.~8.2 \\
+    Domino reduction completed & --- & \cite{LutzWolter2006}, Thm.~8.2 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+We emphasize that the Lutz--Wolter contribution is genuine: showing that
+topological rigidity resolves the coincidence obstruction is a non-trivial
+result.  But the prior identification of the obstruction itself, the
+construction of explicit grid models, and the even-odd chain technique applied
+to RCC8 logics are Wessel's contributions and should have been cited
+accordingly.
+
+%% ====================================================================
+\section{Implications for $\ALCIRCC{8}$ decidability}
+\label{sec:implications}
+%% ====================================================================
+
+The non-transfer result has several implications.
+
+\subsection{The standard reduction is blocked}
+
+The domino tiling reduction---the most common tool for proving description
+logic undecidability---cannot be applied to $\ALCIRCC{8}$ via the
+Lutz--Wolter route.  The coincidence obstruction blocks it at the completeness
+step.
+
+\subsection{Other reductions are also blocked}
+
+More generally, every known undecidability proof for description logics
+ultimately encodes a two-dimensional grid.  Grid encoding requires either:
+\begin{itemize}
+  \item functional roles (not available: the role box is fixed),
+  \item number restrictions (not available),
+  \item role intersection or role composition beyond the fixed table (not available), or
+  \item topological/geometric rigidity (available in $\LRCC{8}$, not in $\ALCIRCC{8}$).
+\end{itemize}
+As observed in~\cite{OurMainPaper}, the patchwork property of RCC8 actively
+\emph{resists} grid encoding: local consistency implies global consistency,
+leaving no room for the rigid global constraints that tiling reductions require.
+
+\subsection{The alternating-type trick: what $\ALCIRCC{8}$ CAN do}
+
+While $\ALCIRCC{8}$ cannot encode grids, it is structurally more expressive
+than $\ALCIRCC{5}$ in one key respect: the $\forall TPP / \forall NTPP$
+distinction provides a limited form of counting along chains.  This is enough
+for:
+\begin{itemize}
+  \item Exponential-length paths (binary counter, $\EXPTIME$-hardness);
+  \item A ``1.5-dimensional'' structure: two parallel TPP-chains connected by PO
+    rungs (the ``$2 \times \infty$ ladder'' of~\cite{OurMainPaper});
+  \item Monotonic broadcast: $\forall NTPP.D$ propagates $D$ to all indirect
+    successors.
+\end{itemize}
+But it is \emph{not} enough for:
+\begin{itemize}
+  \item Two-dimensional grids (coincidence obstruction);
+  \item Consumable communication (monotonicity prevents it);
+  \item Unbounded synchronization (required by domino tiling and PCP).
+\end{itemize}
+
+This gap---enough for $\EXPTIME$-hardness but not enough for
+undecidability---places $\ALCIRCC{8}$ in a genuinely intermediate position.
+Whether the logic is decidable remains, after more than twenty years, one of
+the most interesting open problems in spatial description logics.
+
+\subsection{Relationship to $\ALCIRCC{5}$}
+
+The non-transfer result for $\ALCIRCC{8}$ is structurally parallel to the
+non-transfer of $\LRCC{5}(\RSE)$ undecidability to $\ALCIRCC{5} = \LRCC{5}(\RS)$
+(Remark~\ref{rem:rcc5-parallel}).  In both cases, the abstract
+composition-table semantics lacks a rigidity property that the concrete
+semantics provides:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+  \toprule
+  \textbf{Logic} & \textbf{Concrete rigidity} & \textbf{Missing in abstract} \\
+  \midrule
+  $\LRCC{8}$ & Topological geometry of $\reals^2$ & Grid coincidence \\
+  $\LRCC{5}(\RSE)$ & Supremum closure & Supremum regions \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Both $\ALCIRCC{5}$ and $\ALCIRCC{8}$ remain below the known undecidability
+boundary.  Whether they are also above the decidability boundary is the
+open question.
+
+%% ====================================================================
+\section{Conclusion}
+%% ====================================================================
+
+We have shown that the Lutz--Wolter undecidability proof for $\LRCC{8}$ does
+not transfer to $\ALCIRCC{8}$.  The obstruction is the
+\emph{grid coincidence condition}: topological geometry forces the east-of-north
+to equal the north-of-east, but the abstract composition table does not.
+
+This obstruction was first identified by Wessel in~\cite{Wessel2003}, who:
+\begin{itemize}
+  \item constructed explicit RCC8 grid models (Figure~10),
+  \item identified the coincidence gap (Figure~11),
+  \item developed the even-odd chain for functional successors and the binary
+    counter for $\EXPTIME$-hardness (Section~4.4.2),
+  \item characterized $\ALCIRCC{8}$ as ``close to undecidability'' (Section~4.4.3),
+  \item identified the hybrid logic binding operator as the precise boundary
+    (p.~43--44).
+\end{itemize}
+These contributions predate Lutz--Wolter~\cite{LutzWolter2006} by three to
+four years.  While the Lutz--Wolter result is genuinely new (resolving the
+coincidence in the topological setting is non-trivial), the prior analysis that
+\emph{identified} the obstruction and \emph{demonstrated} that it blocks the
+reduction in the abstract setting deserved more explicit
+acknowledgment.
+
+The decidability of $\ALCIRCC{8}$ remains open.  The coincidence obstruction
+is evidence \emph{for} decidability---it shows that the logic resists the
+standard undecidability machinery---but it is not a proof.  Settling the
+question will require either a genuinely new undecidability technique that
+bypasses the coincidence gap, or a decision procedure that tames the infinite
+complete-graph models.
+
+\bigskip
+
+\begin{thebibliography}{99}
+
+\bibitem{LutzWolter2006}
+C.~Lutz and F.~Wolter.
+\newblock Modal logics of topological relations.
+\newblock \emph{Logical Methods in Computer Science}, 2(2):Article~5, 2006.
+\newblock DOI: 10.2168/LMCS-2(2:5)2006.
+
+\bibitem{Wessel2001}
+M.~Wessel.
+\newblock Obstacles on the way to qualitative spatial reasoning with
+  description logics: Some undecidability results.
+\newblock In \emph{Proc.\ DL Workshop 2001}, CEUR-WS \#49, pp.~96--105, 2001.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the $\mathcal{ALCI}_{\mathit{RCC}}$
+  family -- first results and unanswered questions.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, Computer
+  Science Department, 2002/2003.
+
+\bibitem{MarxReynolds1999}
+M.~Marx and M.~Reynolds.
+\newblock Undecidability of compass logic.
+\newblock \emph{Journal of Logic and Computation}, 9(6):897--914, 1999.
+
+\bibitem{RybinaZakharyaschev2001}
+T.~Rybina and D.~Zakharyaschev.
+\newblock Computational complexity of spatial logics.
+\newblock Manuscript, 2001.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A maximal
+  tractable fragment of the Region Connection Calculus.
+\newblock \emph{Artificial Intelligence}, 108(1--2):69--123, 1999.
+
+\bibitem{OurMainPaper}
+Claude and M.~Wessel.
+\newblock Decidability of $\mathcal{ALCI}_{\mathit{RCC5}}$: An EXPTIME upper
+  bound via quasimodel elimination.
+\newblock Technical report, 2025.
+
+\end{thebibliography}
+
+\end{document}
