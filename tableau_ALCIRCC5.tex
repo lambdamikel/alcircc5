@@ -523,29 +523,78 @@ $A(C_0) := N_\tau \cdot S \cdot (2^S)^{4 N_\tau}$.
 \medskip\noindent\textbf{Active node bound.}\;
 Active nodes have pairwise distinct
 $(\LL, \Tri, \TNbr)$ triples (by the blocking
-definition).  Hence the number of active nodes is at most
-$A(C_0)$.
+definition).  Hence the number of \emph{simultaneously}
+active nodes is at most $A(C_0)$.
 
 \medskip\noindent\textbf{Labels grow monotonically.}\;
 Rules only add concepts to labels, never remove them.  Each
-label changes at most $n$ times.
+label changes at most $n$ times.  Edge labels $\EE(x,y)$ are
+set at node creation and never change.
 
-\medskip\noindent\textbf{Bounded configuration changes.}\;
-Adding a new node can add triangle types for existing nodes.
-Changing a label (via $\forall$-propagation) can change the
-Hintikka-type component of existing triangle types and thus
-alter $\Tri$ and $\TNbr$ values.  Since labels only grow,
-at each node the number of distinct
-$(\LL, \Tri, \TNbr)$ configurations encountered is
-bounded by $n$ times the number of possible
-$(\Tri, \TNbr)$ configurations---a finite quantity.
+\medskip\noindent\textbf{Bounded branching.}\;
+The $(\exists)$-rule for node $x$ and demand
+$\exists R.D$ fires only when no witness exists.  Once a
+witness $y$ is created (with $\EE(x,y)=R$, $D \in \LL(y)$),
+the demand is \emph{permanently} satisfied: $D$ remains in
+$\LL(y)$ (labels only grow) and $\EE(x,y)$ never changes.
+Therefore each node fires $(\exists)$ at most $n$ times,
+creating at most $n$ children in the creation tree.
 
-\medskip\noindent\textbf{Node creation bound.}\;
-Each active node has at most $n$ existential demands. With
-at most $A(C_0)$ active nodes, at most $A(C_0) \cdot n$ nodes
-are created.  Re-evaluations of blocking after label changes
-or node additions may unblock nodes, but each unblocking
-corresponds to a configuration change, and the total is bounded.
+\medskip\noindent\textbf{Bounded total node creation.}\;
+We must bound not just simultaneous active nodes but the
+\emph{total} number of nodes ever created.  (An earlier version
+of this proof appealed only to the active node bound, which
+is insufficient: a process with at most $A(C_0)$ active nodes
+could in principle cycle through blocking and unblocking,
+creating fresh successors each time.)
+
+The correct argument has two parts.
+
+\emph{Part~1: Permanent demand satisfaction limits re-expansion.}
+When a previously blocked node $x$ becomes unblocked
+(because its blocker's signature changed), $x$ may fire
+$(\exists)$ for its remaining unsatisfied demands.  But demands
+satisfied in earlier active periods remain satisfied (labels and
+edges are permanent).  So $x$ fires $(\exists)$ at most $n$ times
+\emph{total}, regardless of how many blocking/unblocking cycles
+it undergoes.
+
+\emph{Part~2: Blocking/unblocking cycles are bounded per node.}
+A node $x$ transitions from blocked to active only when its own
+signature or its blocker's signature changes.  Each such change
+requires either (a)~a label growth at some node (at most $n$ per
+node, irreversible), or (b)~a $\Tri$/$\TNbr$ change caused by a
+new node creation or a label growth at a neighbor.  In the
+\emph{label-stable regime} (after all labels have reached their
+final values), $\Tri(x)$ can only grow monotonically: new nodes
+may add new triangle types, but no types are replaced (since the
+Hintikka-type component of each triangle is now fixed).  Similarly,
+$\TNbr(x)$ can only grow.  Since $\Tri(x) \subseteq T_{\max}$
+(a finite set), $\Tri(x)$ changes at most $|T_{\max}|$ times in
+the label-stable regime.  Combined with at most $n$ label changes
+before the label-stable regime, each node's signature changes a
+bounded number of times.
+
+\emph{Combining both parts:} Each node has a bounded number of
+active periods (Part~2), and in each active period fires
+$(\exists)$ for at most $n$ demands (Part~1), each creating one
+child.  By K\"onig's lemma, the creation tree---with bounded
+branching (at most $n$) and bounded active periods per
+node---is finite.
+
+\medskip\noindent\textbf{Subtlety.}\;
+The argument above bounds $\Tri$-changes per node in the
+label-stable regime, but $\Tri$-changes \emph{before} label
+stability involve replacement (not just growth) of triangle
+types when Hintikka types change.  This pre-stable phase has
+at most $n$ label changes per node, each causing bounded
+$\Tri$-reconfiguration, so signature changes remain bounded
+but the precise bound is more complex.  The total creation
+count is therefore bounded by a computable (non-elementary)
+function of $|C_0|$, but extracting a clean closed-form bound
+requires tracking the interaction between label growth and
+$\Tri$-reconfiguration carefully.  We revisit this in the
+honest assessment (Section~\ref{sec:discussion}).
 
 \medskip\noindent\textbf{Overall.}\;
 The total number of nodes and rule applications is bounded by a
@@ -1111,19 +1160,27 @@ further scrutiny:
     8, 10, and~12.  A fully formal proof that domains are
     non-empty in general would strengthen the argument.
 
-  \item \textbf{Monotonicity of triangle-type sets.}  The
-    termination proof claims triangle-type sets grow
-    monotonically.  This is true for node addition (new triples
-    $\Rightarrow$ potentially new triangle types).  For label
-    changes (via $\forall$-propagation), a concept added to
-    $\LL(x)$ changes $\LL(x)$ to a superset, which changes
-    the Hintikka-type component in all triangle types involving
-    $x$.  Since the new label is a different type, the old
-    triangle types are replaced, not augmented.  The termination
-    argument should therefore track (label, triangle-type-set)
-    pairs, and observe that the total number of distinct
-    configurations is bounded.  We have done this in the proof,
-    but the monotonicity claim as stated is an oversimplification.
+  \item \textbf{Total node creation bound
+    (Theorem~\ref{thm:termination}).}
+    An earlier version of this proof claimed that
+    ``with at most $A(C_0)$ active nodes, at most $A(C_0) \cdot n$
+    nodes are created.''  As correctly observed by a
+    reviewer~\cite{GPTReview}, this does not follow: a bound on
+    \emph{simultaneous} active nodes does not, by itself, bound
+    \emph{cumulative} creation, because blocking/unblocking cycles
+    could in principle allow unbounded sequential node creation.
+
+    The revised proof (Theorem~\ref{thm:termination}) addresses this
+    by arguing that (1)~each demand is permanently satisfied once
+    witnessed, limiting re-expansion, and (2)~each node's signature
+    changes a bounded number of times, limiting blocking/unblocking
+    cycles.  Part~(2) is clean in the label-stable regime (where
+    $\Tri$ grows monotonically), but the pre-stable phase involves
+    $\Tri$-replacement (when Hintikka types change), making the
+    bound more complex.  Each node has at most $n$ label changes,
+    each causing bounded $\Tri$-reconfiguration, so the per-node
+    bound is finite---but we have not extracted a clean closed-form
+    expression for the total creation count.
 
   \item \textbf{Stabilization depth.}  The computational evidence
     shows basic $\Tri$ stabilization at $k = 2$ and full
@@ -1214,6 +1271,12 @@ Claude (Anthropic) and M.~Wessel.
 \newblock Computational verification scripts, April 2026.
 \newblock Available at
   \url{https://github.com/lambdamikel/alcircc5}.
+
+\bibitem{GPTReview}
+GPT-5.4 Pro (OpenAI).
+\newblock Technical response to ``A tableau calculus for
+  $\ALCIRCC{5}$ with triangle-type-set blocking.''
+\newblock Review memo, April 2026.
 
 \end{thebibliography}
 

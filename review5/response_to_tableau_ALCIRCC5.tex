@@ -1,0 +1,224 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{amsmath,amssymb}
+\usepackage{fancyhdr}
+
+\definecolor{Accent}{HTML}{1F4E79}
+\definecolor{Soft}{HTML}{F3F6FA}
+\definecolor{Rule}{HTML}{D6DEE8}
+\definecolor{TextGray}{HTML}{444444}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=Accent,
+  urlcolor=Accent,
+  citecolor=Accent,
+  pdftitle={Technical Response to A Tableau Calculus for ALCIRCC5 with Triangle-Type-Set Blocking},
+  pdfauthor={GPT-5.4 Pro}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\textcolor{TextGray}{Response memo}}
+\fancyhead[R]{\footnotesize\textcolor{TextGray}{ALCIRCC5 tableau}}
+\fancyfoot[C]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\Tri}{\mathrm{Tri}}
+\newcommand{\Safe}{\mathrm{Safe}}
+
+\begin{document}
+
+{\Large\bfseries\textcolor{Accent}{Technical Response to \\
+\emph{A Tableau Calculus for ALCIRCC5 with Triangle-Type-Set Blocking}}}
+
+\vspace{0.35em}
+{\normalsize GPT-5.4 Pro \hfill April 2026}
+
+\vspace{0.55em}
+\textcolor{Rule}{\rule{\linewidth}{0.8pt}}
+
+\vspace{0.55em}
+\noindent\fcolorbox{Accent}{Soft}{%
+\parbox{0.965\linewidth}{%
+\textbf{Overall judgment.} The manuscript contains a promising new blocking idea and useful computational evidence, but in my judgment it does \textbf{not yet prove decidability of \(\mathcal{ALCI}_{RCC5}\)}. The main outstanding issues are: (i) the proof of termination does not establish a bound on total node creation; (ii) the blocking invariant \(\Tri(x)\) is too one-sided for the soundness argument in Lemma 5.6; (iii) the ``same tableau node, different unraveling copies'' case remains unresolved; and (iv) Lemma 5.8 uses a weaker support condition than the deletion rule it is meant to justify. Consequently, Theorems 5.9 and 6.1 do not follow as stated.
+}}
+
+\vspace{1em}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{0.98\linewidth}{>{\raggedright\arraybackslash}p{0.31\linewidth} >{\raggedright\arraybackslash}p{0.16\linewidth} Y}
+\toprule
+\textbf{Manuscript claim} & \textbf{Assessment} & \textbf{Reason} \\
+\midrule
+Triangle-type-set blocking is an interesting abstraction & Positive & It targets exactly the right gap: blocking for tableaux over complete RCC5 graphs rather than trees. The computational evidence in Section 7 is also useful as heuristic support. \\
+Termination (Theorem 4.1) & Not established & The proof bounds the number of \emph{active} nodes at a given moment, but then jumps to a bound on the \emph{total} number of nodes ever created. That implication does not follow. \\
+T-closed solution existence (Lemma 5.6) & Not established & The invariant \(\Tri(x)\) records only triangles with \(x\) in first position, but the soundness proof needs control of arbitrary ordered triples in the unraveling. \\
+Arc-consistency preservation (Lemma 5.8) & Not established & The proof checks support only for the realized neighboring value, although the deletion rule removes a value if \emph{some other} value in the neighboring domain has no support. \\
+Model construction and completeness (Theorems 5.9 and 6.1) & Not established & Both depend on the unresolved points above, especially the same-node-copy case and Lemmas 5.6/5.8. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section*{1. Positive aspects of the paper}
+
+I want to start with the positive assessment, because there is real progress here.
+
+First, the paper aims at exactly the open point that Wessel's report leaves unresolved for \(ALCIRCC5\): a blocking or infinity-handling argument for a tableau calculus over complete graphs rather than tree models. That is the right target.
+
+Second, triangle-type-set blocking is a genuinely interesting idea. It sits between two unhelpful extremes: plain type-equality blocking, which is too coarse to protect the unraveling, and node-identity profile blocking, which is too fine to terminate on the known \(PO\)-incoherent patterns. Abstracting to triples of \emph{types and RCC5 relations}, while forgetting concrete node identities, is conceptually well-motivated.
+
+Third, the computational evidence in Section 7 is useful. Even though it is not a proof, it does support the author's central intuition that abstract triangle patterns may stabilize where identity-based profiles do not.
+
+My disagreement is therefore not with the direction of the paper, but with the present status of the main theorems.
+
+\section*{2. Main technical concerns}
+
+\subsection*{2.1. The termination proof does not bound total node creation}
+
+Theorem 4.1 proves that the space of possible \((\text{label},\Tri)\)-pairs is finite, hence that the number of \emph{simultaneously active} nodes is bounded. But the next step of the proof says, in effect:
+\begin{quote}
+with at most \(A(C_0)\) active nodes, at most \(A(C_0)\cdot n\) nodes are created.
+\end{quote}
+That implication is invalid as stated.
+
+A process may have only one active node at each stage and still generate an unbounded chain
+\[
+x_0 \to x_1 \to x_2 \to x_3 \to \cdots
+\]
+by repeatedly creating a fresh successor. So a bound on \emph{concurrent activity} is not, by itself, a bound on \emph{cumulative creation}.
+
+The proof also appeals to monotonic growth of triangle-type sets. But Section 8.5 of the paper itself later acknowledges that this monotonicity claim is an oversimplification: label changes can replace older triangle-types rather than merely add new ones. That admission is fair, but it means the proof of Theorem 4.1 does not currently supply a genuine global progress measure.
+
+I am not claiming that termination must fail. I am claiming that the present argument does not establish it.
+
+\subsection*{2.2. The blocking invariant is too one-sided for Lemma 5.6}
+
+Definition 3.3 sets
+\[
+\Tri(x)=\{(L(x),E(x,b),L(b),E(b,c),L(c),E(x,c)) : b,c\in V,\ |\{x,b,c\}|=3\}.
+\]
+So \(\Tri(x)\) records abstract triangles in which \(x\) appears \emph{only in the first position}.
+
+But Definition 5.5(iii) asks for a much stronger condition: a \(T\)-closed solution must satisfy, for \emph{every} triple of distinct unraveling elements \((d_1,d_2,d_3)\),
+\[
+(tp(d_1),\rho(d_1,d_2),tp(d_2),\rho(d_2,d_3),tp(d_3),\rho(d_1,d_3))\in T(G).
+\]
+That is an ordered condition on arbitrary triples, not just on triangles centered at the first node of a blocker.
+
+This matters in the critical intra-subtree step of Lemma 5.6. There the proof argues that, if a blocked node \(w\) is replaced by its blocker \(\beta(w)\), then equality
+\[
+\Tri(w)=\Tri(\beta(w))
+\]
+prevents new triangle types from appearing. But that equality only controls patterns with \(w\) (or \(\beta(w)\)) in first position. The new unraveling triangle that must be shown to lie in \(T(G)\) may have the blocked copy in second or third position. The current invariant does not speak to that case.
+
+So either the paper needs a stronger invariant---for example a fully ordered triangle signature, or a node invariant closed under the required vertex permutations---or it needs an additional argument showing that first-position control is enough. As written, Lemma 5.6 does not provide that argument.
+
+\subsection*{2.3. The same-node-copy case remains unresolved}
+
+The manuscript itself identifies this issue in Section 8.5, and I agree that it is serious.
+
+In the unraveling, two distinct domain elements \(d_1\neq d_2\) may map to the same tableau node \(n\). The natural assignment
+\[
+\rho(d_1,d_2)=E(\mathrm{map}(d_1),\mathrm{map}(d_2))
+\]
+then becomes
+\[
+\rho(d_1,d_2)=E(n,n),
+\]
+which is undefined in the completion graph because edge labels are given only for distinct tableau nodes.
+
+Section 8.5 proposes a repair: choose some relation \(R\in \mathrm{Safe}(\tau,\tau)\), where \(\tau=L(n)\), on the grounds that \(\tau\) is realizable. But that does not solve the problem needed by Theorem 5.5. A \(T\)-closed solution requires more than mere type-safety:
+\begin{enumerate}[leftmargin=1.5em,itemsep=0.25em]
+\item for non-adjacent pairs, the chosen relation must lie in the initial domain \(D_0(d_1,d_2)\), which is defined from actually realized pair-types in the completion graph, and
+\item every resulting ordered triple must lie in \(T(G)\).
+\end{enumerate}
+A relation can be safe without belonging to \(D_0\), and can belong to \(D_0\) without making all the needed triangles land in \(T(G)\). So the proposed repair is not strong enough.
+
+This is not a cosmetic issue. It is exactly the place where a finite blocked tableau must be turned into a genuine infinite model, and that is the hard part of the open problem.
+
+\subsection*{2.4. Lemma 5.8 proves a weaker statement than the deletion rule requires}
+
+The arc-consistency rule in Definition 5.4 removes a value \(R\in D(d_1,d_2)\) if there exists some third node \(d_3\) such that, for \emph{some} value \(R_{23}\in D(d_2,d_3)\), there is no supporting \(R_{13}\in D(d_1,d_3)\) with the required triangle in \(T\).
+
+But the proof of Lemma 5.8(a) only checks support for the \emph{single realized value}
+\[
+R_{23}=\rho(d_2,d_3)
+\]
+coming from the purported \(T\)-closed solution. That is weaker than what the deletion rule demands.
+
+A small symbolic example shows the gap in the proof pattern. Suppose
+\[
+D(d_1,d_2)=\{DR\},\qquad D(d_2,d_3)=\{PO,PPI\},\qquad D(d_1,d_3)=\{DR\},
+\]
+and suppose \(T\) contains the ordered triangle type \((DR,PPI,DR)\) but not \((DR,PO,DR)\). Then the assignment
+\[
+\rho(d_1,d_2)=DR,\qquad \rho(d_2,d_3)=PPI,\qquad \rho(d_1,d_3)=DR
+\]
+is a \(T\)-closed solution in the sense used by the proof. Nevertheless, arc-consistency still deletes \(DR\) from \(D(d_1,d_2)\), because the extra neighboring value \(PO\in D(d_2,d_3)\) has no support.
+
+This does not show that Lemma 5.8 is false for every network arising from the tableau construction. It does show that the proof strategy is invalid as written. At minimum, the manuscript needs an additional argument explaining why these problematic ``extra'' domain values cannot occur in the specific \(N_T\) built from an open completion graph.
+
+\subsection*{2.5. The paper's own caveats undercut the headline theorem}
+
+Section 8.5 is commendably candid. It explicitly identifies unresolved points about the intra-subtree \(T\)-closure argument, the same-node-copy case, and the oversimplified monotonicity claim.
+
+That candor is welcome. But it also means the abstract, Section 8.1 summary table, and the final conclusion are stronger than the body of the paper actually supports. The most accurate present claim is not ``termination, soundness, completeness, and decidability are proved,'' but rather:
+\begin{quote}
+triangle-type-set blocking is a promising proposal, and several technical lemmas are in place, but the final model-construction argument is still incomplete.
+\end{quote}
+
+\section*{3. Consequences for the main theorems}
+
+Once the issues above are taken seriously, the dependency structure of the paper becomes important.
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=0.3em]
+\item Theorem 5.9 (model construction) depends on Lemma 5.6 for existence of a \(T\)-closed solution and on Lemma 5.8 for preservation of that solution under arc-consistency.
+\item Theorem 6.1 (completeness) explicitly delegates satisfaction of blocked-node demands to the soundness/model-extraction machinery of Section 5.
+\item Therefore the final decidability claim depends on Section 5 working.
+\end{enumerate}
+
+Since Section 5 is exactly where the unresolved issues sit, I do not think the manuscript presently establishes Theorems 5.9 and 6.1, and therefore I do not think it establishes decidability of \(\mathcal{ALCI}_{RCC5}\).
+
+\section*{4. Suggested next step}
+
+The paper is still valuable, because it points to a plausible blocking abstraction. My recommendation would be to reframe the result as \emph{partial progress} and then strengthen the global construction in one of two ways.
+
+The first route is to strengthen the invariant. Instead of \(\Tri(x)\) as defined now, use a position-sensitive ordered triangle profile rich enough to support the exact triple conditions needed later in the proof.
+
+The second, and in my view more promising, route is hybrid: keep the local blocking idea, but assign the non-tree edges in the unraveling via a separate disjunctive RCC5 constraint network and appeal to full RCC5 tractability only after proving path-consistency of that larger network. That is precisely where the current proof still needs help.
+
+\section*{5. Conclusion}
+
+My bottom line is therefore:
+\begin{quote}
+\textbf{the manuscript contains a promising blocking proposal, but the current version does not yet prove the decidability of \(\mathcal{ALCI}_{RCC5}\).}
+\end{quote}
+
+I would encourage the authors to keep the triangle-type-set idea, but to present the present draft as an interesting incomplete attempt rather than a finished solution to the open problem.
+
+\vspace{1em}
+\textcolor{Rule}{\rule{\linewidth}{0.8pt}}
+
+\small
+\textbf{References}
+
+[1] Claude (Anthropic) and Michael Wessel. \emph{A Tableau Calculus for ALCIRCC5 with Triangle-Type-Set Blocking}. Discussion draft, April 2026.
+
+[2] Michael Wessel. \emph{Qualitative Spatial Reasoning with the ALCIRCC Family - First Results and Unanswered Questions}. Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+
+\end{document}

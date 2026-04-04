@@ -1661,3 +1661,61 @@ Revised `tableau_ALCIRCC5.tex` to fix the soundness proof:
 - Revised `tableau_ALCIRCC5.tex` / `.pdf`: Third revision with disjunctive constraint network proof (14 pages)
 - Updated `README.md` with mirror triangle discussion, proof structure update, revised honest assessment
 - Updated `CONVERSATION.md` with Part 32
+
+---
+
+## Part 33: Addressing GPT's termination proof concern (April 4, 2026)
+
+### Context
+
+GPT-5.4 Pro [reviewed](review5/response_to_tableau_ALCIRCC5.tex) the first version of the Tri-neighborhood tableau paper and raised five concerns. In Part 32, four were found to be addressed by the second/third revisions:
+- **Concern 2.2** (one-sided Tri invariant): addressed by TNbr condition (iii)
+- **Concern 2.3** (same-node copies): addressed by disjunctive constraint network
+- **Concern 2.4** (arc-consistency proof pattern): eliminated by new proof structure
+- **Concern 2.5** (caveats undercut headline): substantially addressed by honest assessment
+
+**Concern 2.1** (termination proof) was the only unaddressed issue. GPT correctly observed that the original proof said "With at most A(C₀) active nodes, at most A(C₀)·n nodes are created" — but a bound on *simultaneous* active nodes does not, by itself, bound *cumulative* creation. A process could cycle through blocking/unblocking, creating fresh successors at each cycle.
+
+### Analysis
+
+The termination of this specific calculus (complete-graph tableau with Tri-neighborhood blocking) is non-trivial to prove rigorously. The key challenges:
+
+1. **Bounded branching** (easy): Each demand ∃R.D is permanently satisfied once witnessed, so each node fires the ∃-rule at most n = |cl(C₀)| times.
+
+2. **Total node creation** (hard): Bounding the total requires controlling blocking/unblocking cycles. A node can be blocked, then unblocked when its blocker's signature changes, then fire ∃-rule, then be blocked again...
+
+3. **Label-stable vs. pre-stable regimes**: In the *label-stable regime* (after all labels have reached their final values), Tri(x) can only *grow* monotonically — new nodes add new triangle types, but no types are replaced (Hintikka types are fixed). This gives clean bounds on signature changes per node. In the *pre-stable phase*, label changes replace (not augment) triangle types, making Tri-reconfiguration more complex.
+
+### Revision (fourth revision)
+
+Rewrote the termination proof (Theorem 4.1) with a corrected argument:
+
+**Bounded branching.** Each node creates at most n children (permanent demand satisfaction). New paragraph, explicitly argued.
+
+**Bounded total node creation.** Two-part argument:
+- *Part 1 (permanent demand satisfaction)*: Even through blocking/unblocking cycles, demands satisfied in earlier active periods remain satisfied. So each node fires ∃-rule at most n times *total*.
+- *Part 2 (bounded blocking/unblocking cycles)*: A node transitions from blocked to active only when signatures change. In the label-stable regime, Tri grows monotonically (bounded by |T\_max| changes per node). Before label stability, at most n label changes per node, each causing bounded Tri-reconfiguration. Combined: each node's signature changes a bounded number of times.
+- *Combining*: By König's lemma, bounded branching + bounded active periods per node → finite creation tree.
+
+**Subtlety paragraph.** Explicitly acknowledges that the pre-stable phase involves replacement (not just growth) of triangle types, making the precise bound more complex. Notes that a clean closed-form bound has not been extracted.
+
+**Honest assessment point 2.** Replaced the old "monotonicity of triangle-type sets" point with a new point about the total node creation bound. Credits GPT-5.4 Pro's review (new bibliography entry \cite{GPTReview}) for identifying the gap.
+
+**Bibliography.** Added GPT-5.4 Pro's review as \cite{GPTReview}.
+
+**Compilation.** 15 pages, no errors.
+
+### Assessment of GPT's five concerns (final status)
+
+| Concern | Status | How addressed |
+|---|---|---|
+| 2.1 Termination bound | **Partially addressed** (4th revision) | Corrected argument structure; pre-stable phase subtlety acknowledged |
+| 2.2 One-sided Tri | **Fully addressed** (2nd revision) | TNbr condition (iii) |
+| 2.3 Same-node copies | **Fully addressed** (3rd revision) | Disjunctive constraint network |
+| 2.4 Lemma 5.8 pattern | **Fully addressed** (3rd revision) | New proof structure eliminates the issue |
+| 2.5 Caveats undercut | **Substantially addressed** (2nd–4th revisions) | Honest assessment with specific technical detail |
+
+### Files produced
+- Revised `tableau_ALCIRCC5.tex` / `.pdf`: Fourth revision with corrected termination proof (15 pages)
+- Updated `README.md` with revised termination description and honest assessment
+- Updated `CONVERSATION.md` with Part 33
