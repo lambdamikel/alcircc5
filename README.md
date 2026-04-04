@@ -172,6 +172,74 @@ Counter machine (Minsky machine) encodings face the same obstacle: linking "the 
 
 This observation suggests that **ALCI\_RCC5 and ALCI\_RCC8 may have different decidability status** — a possibility not previously considered.
 
+### Intricacies of blocking in complete-graph semantics
+
+In standard DL tableaux with tree-shaped models, blocking is straightforward: a blocked node x has the same type as an earlier node y, and unraveling works because the only connection between a subtree and the rest of the model is the single parent edge. In ALCI\_RCC5, the model is a complete graph — every element is related to every other — and this fundamentally changes the blocking/unraveling dynamic.
+
+**The naive expectation.** If x is blocked by y (same concept label), no new ∀-qualifications fire at x, and all triangles in the completion graph are already consistent. One might expect that copying y's witness structure for x produces only triangles already observed — so unraveling should succeed without introducing new triangle types.
+
+**Where this breaks down: a concrete trace.** Consider a PP-chain with alternating types:
+
+d₀(τ\_A) PP d₁(τ\_B) PP d₂(τ\_A) PP d₃(τ\_B) PP d₄(τ\_A) PP ...
+
+where ∃PO.A ∈ τ\_A and ∀PO.¬A ∈ τ\_B.
+
+d₀ needs a PO-witness w₀ for ∃PO.A: ρ(d₀, w₀) = PO, A ∈ tp(w₀).
+
+**Can d₂ reuse w₀?** Trace composition forward:
+
+- ρ(d₁, w₀) ∈ comp(PPI, PO) = {PO, PPI}. But ∀PO.¬A ∈ τ\_B and A ∈ tp(w₀) exclude PO. So **ρ(d₁, w₀) = PPI**.
+- ρ(d₂, w₀) ∈ comp(PPI, PPI) = {PPI}. So **ρ(d₂, w₀) = PPI**.
+
+Since ρ(d₂, w₀) = PPI ≠ PO, w₀ does not satisfy d₂'s ∃PO.A demand.
+
+**w₁ must exist as d₂'s PO-witness.** ρ(d₂, w₁) = PO, A ∈ tp(w₁). Its relations:
+
+Forward from d₂:
+- ρ(d₃, w₁) ∈ comp(PPI, PO) = {PO, PPI}. ∀PO.¬A excludes PO → **ρ(d₃, w₁) = PPI**.
+- ρ(d₄, w₁) ∈ comp(PPI, PPI) = {PPI}. **PPI forever after.**
+
+Backward from d₂:
+- ρ(d₁, w₁) ∈ comp(PP, PO) = {DR, PO, PP}. ∀PO.¬A excludes PO → **ρ(d₁, w₁) ∈ {DR, PP}**.
+- Taking DR: ρ(d₀, w₁) ∈ comp(PP, DR) = {DR} → **ρ(d₀, w₁) = DR**.
+
+Similarly, **w₂ is d₄'s PO-witness** (same pattern shifted by 2), and so on. The full relation table:
+
+| | w₀ | w₁ | w₂ |
+|---|---|---|---|
+| d₀ | **PO** | DR | DR |
+| d₁ | PPI | DR | DR |
+| d₂ | PPI | **PO** | DR |
+| d₃ | PPI | PPI | DR |
+| d₄ | PPI | PPI | **PO** |
+| d₅ | PPI | PPI | PPI |
+
+Each wₖ is PO to exactly one chain element (d₂ₖ), DR to all earlier ones, and PPI to all later ones. Every ∀PO.¬A at τ\_B positions is vacuously satisfied — no element is PO to any τ\_B position.
+
+**What happens in the tableau with type-equality blocking.** The finite completion graph has d₀(τ\_A), d₁(τ\_B), d₂(τ\_A) — blocked by d₀. Witness w₀ exists with ρ(d₀, w₀) = PO. Composition forces ρ(d₂, w₀) = PPI.
+
+During unraveling, we create w₀' (a copy of w₀) for d₂ with ρ(d₂, w₀') = PO (copying the demanded relation). Composition then forces:
+
+- ρ(d₁, w₀') ∈ comp(PP, PO) = {DR, PO, PP}; ∀PO.¬A excludes PO → ρ(d₁, w₀') ∈ {DR, PP}
+- ρ(d₀, w₀') ∈ {DR, PP} (not PO)
+
+So d₀ is DR or PP to the copy w₀' — but in the completion graph, d₀ was PO to w₀. **The triangle (d₀, w₀', d₂) has a shape that may not appear in the finite completion graph**, because d₀ was never DR-related to a tp(w₀)-type node. This is a potentially new triangle type.
+
+**Can stronger blocking fix this?** If we require that x is only blocked by y when all triangle-type profiles match (not just the concept label), then d₂ is NOT blocked by d₀ — their profiles differ because ρ(d₂, w₀) = PPI ≠ PO = ρ(d₀, w₀). With this stronger blocking, unraveling would be locally correct: every triangle produced during unraveling is already in T.
+
+**But stronger blocking prevents termination.** The tableau creates w₁ for d₂. Then d₄(τ\_A) isn't blocked either — it's PPI to both w₀ and w₁, while d₀ is PO to w₀ and DR to w₁. Different profile. Creates w₂. Each τ\_A-node at position d₂ₖ has a unique relational profile: PO to its own witness wₖ, DR to all earlier witnesses, PPI to all later ones. No two τ\_A-nodes ever match. **The completion graph grows forever on a satisfiable input.**
+
+**The blocking dilemma.** This reveals a fundamental tension:
+
+| Blocking condition | Termination | Unraveling |
+|---|---|---|
+| Type-equality (weak) | Always terminates | May produce new triangle types |
+| Triangle-profile (strong) | May not terminate (PO-incoherent case) | Always locally correct |
+
+This is the tableau-theoretic manifestation of the **PO gap** from the two-tier quotient paper. The constant-interface quotient (one kernel per descriptor) is analogous to "universal profile blocking" — one representative stands for all nodes of the same type. It works when the relational profile stabilizes: DR (backward forcing: comp(PP,DR)={DR}), PP (backward forcing: comp(PP,PP)={PP}), PPI (forward absorption: comp(PPI,PPI)={PPI}). It fails for PO because the profile never stabilizes — no single element has a permanent PO relation to the chain.
+
+The **Extension Solvability Conjecture** asks whether the weak (type-equality) blocking, which guarantees termination, also happens to support correct unraveling. Computational evidence (zero genuine failures across 68,276 tested models) suggests yes, but no proof exists. The **PO-coherent fragment** is precisely the fragment where this dilemma does not arise: the relational profiles stabilize, both blocking conditions agree, and everything works.
+
 ### Seventh approach: two-tier quotient — PO-COHERENT FRAGMENT DECIDABLE
 
 A model-theoretic approach that **proves decidability of the PO-coherent fragment** of ALCI\_RCC5 by directly addressing the source of infinity: infinite PP-chains. The key insight is that PP-chains have **regular structure** — the sequence of Hintikka types along any infinite PP-chain is eventually periodic — and the **full tractability of RCC5** (Renz 1999: path-consistent disjunctive RCC5 networks are satisfiable) bridges local consistency to global consistency.
