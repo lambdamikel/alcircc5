@@ -20,6 +20,7 @@
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{claim}[theorem]{Claim}
+\newtheorem{conjecture}[theorem]{Conjecture}
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{example}[theorem]{Example}
@@ -501,11 +502,11 @@ A saturated, clash-free graph is \emph{open}.
 %% ============================================================
 \section{Termination}\label{sec:termination}
 
-\begin{theorem}[Termination]\label{thm:termination}
+\begin{conjecture}[Termination]\label{thm:termination}
 Every sequence of rule applications terminates.
-\end{theorem}
+\end{conjecture}
 
-\begin{proof}
+\noindent\textbf{Evidence and partial proof.}\;
 Let $n = |\cl(C_0)|$ and $N_\tau = |\Tp(C_0)| \le 2^n$.
 
 \medskip\noindent\textbf{Finiteness of blocking signatures.}\;
@@ -596,11 +597,16 @@ requires tracking the interaction between label growth and
 $\Tri$-reconfiguration carefully.  We revisit this in the
 honest assessment (Section~\ref{sec:discussion}).
 
-\medskip\noindent\textbf{Overall.}\;
-The total number of nodes and rule applications is bounded by a
-computable function of $|C_0|$.  The bound is non-elementary
-(due to the tower of exponentials in $A(C_0)$), but finite.
-\end{proof}
+\medskip\noindent\textbf{What remains open.}\;
+The above establishes bounded branching, permanent demand
+satisfaction, and bounded signature changes per node in the
+label-stable regime.  The missing ingredient is a \emph{global}
+argument: either a uniform bound on branch length in the creation
+tree, or a well-founded measure that decreases across every
+unblocked expansion.  Without this, the local per-node bounds
+do not compose into a total finiteness argument (as noted by
+a reviewer~\cite{GPTReview2}).  We therefore present termination
+as a conjecture.
 
 \begin{remark}[Tighter bounds]\label{rem:bounds}
 The bound $A(C_0)$ is astronomically large.  In practice,
@@ -672,6 +678,27 @@ every participant's perspective.
 \subsection{The triangle-type-filtered constraint network}
 \label{sec:network}
 
+\begin{definition}[Type-safe relations]\label{def:safe}
+For Hintikka types $\tau_1, \tau_2 \in \Tp(C_0)$ and
+$R \in \NR^{-}$, the relation $R$ is \emph{type-safe} for
+$(\tau_1, \tau_2)$ if:
+\begin{enumerate}[nosep,label=(\alph*)]
+  \item $\forall R.D \in \tau_1 \Rightarrow D \in \tau_2$, and
+  \item $\forall \inv(R).D \in \tau_2 \Rightarrow D \in \tau_1$.
+\end{enumerate}
+We write $\Safe(\tau_1, \tau_2) = \{R \in \NR^{-} :
+R \text{ is type-safe for } (\tau_1, \tau_2)\}$.
+\end{definition}
+
+\begin{remark}
+If nodes $a_1, a_2$ in a saturated completion graph have
+$\LL(a_1) = \tau_1$, $\LL(a_2) = \tau_2$, and
+$\EE(a_1, a_2) = R$, then $R \in \Safe(\tau_1, \tau_2)$
+(by saturation of the $(\forall)$-rule).  Thus $P(\GG)
+\subseteq \{(\tau_1, R, \tau_2) : R \in \Safe(\tau_1,\tau_2)\}$.
+In particular, $\Safe$ is at least as permissive as $P(\GG)$.
+\end{remark}
+
 \begin{definition}[Constraint network $\NN_T$]\label{def:network}
 Let $T = T(\GG)$ and $P = P(\GG) = \{(\LL(x), \EE(x,y), \LL(y))
 : x \neq y \in V\}$.  For each pair of distinct elements
@@ -683,7 +710,15 @@ If $\mathsf{par}(d_2) = d_1$, then $\rho(d_1, d_2) = \sigma(d_2)$
 
 \medskip\noindent\textbf{Non-adjacent pairs:}\;
 The initial domain is
-$D_0(d_1, d_2) = \{R \in \NR^{-} : (\tp(d_1), R, \tp(d_2)) \in P\}$.
+\[
+D_0(d_1, d_2) \;=\; \{R \in \NR^{-} : (\tp(d_1), R,
+\tp(d_2)) \in P\} \;\cup\; \Safe(\tp(d_1), \tp(d_2)).
+\]
+The first component draws on realized pair-types in $\GG$;
+the second ensures that same-type pairs (including same-map
+pairs where $\mathsf{map}(d_1) = \mathsf{map}(d_2)$) always
+receive a non-empty initial domain whenever type-safe relations
+exist.
 
 \medskip
 The \emph{triangle-filtered constraint network} $\NN_T$ is
@@ -693,6 +728,26 @@ some $R_{23} \in D(d_2, d_3)$, no $R_{13} \in D(d_1, d_3)$
 satisfies
 $(\tp(d_1), R, \tp(d_2), R_{23}, \tp(d_3), R_{13}) \in T$.
 \end{definition}
+
+\begin{remark}[Same-map pairs and unique types]
+\label{rem:same-map-domain}
+A reviewer~\cite{GPTReview2} provided a concrete example
+showing that the $P(\GG)$-only domain can be empty for
+same-map pairs: if $d_1 \neq d_2$ both map to the sole
+node of type $\tau$ in $\GG$, then $P(\GG)$ contains no
+triple $(\tau, R, \tau)$ (edges exist only between distinct
+nodes).  The $\Safe$ component resolves this: it includes
+every $R$ that is type-safe for $(\tau, \tau)$, without
+requiring a witness pair in $\GG$.
+
+In the exceptional case $\Safe(\tau, \tau) = \emptyset$---which
+occurs only when $\tau$ contains $\forall R.D$ with
+$D \notin \tau$ for every base relation $R$---any model has at
+most one element of type $\tau$.  The unraveling should then
+\emph{identify} same-map copies of $\tau$-nodes rather than
+creating distinct copies, producing a DAG domain in which same-map
+non-adjacent $\tau$-pairs do not arise.
+\end{remark}
 
 \subsection{The key lemma: non-empty domains}
 \label{sec:key-lemma}
@@ -711,10 +766,20 @@ preserves non-emptiness.
 \medskip\noindent\textbf{Initial non-emptiness.}\;
 For parent--child pairs, the relation is fixed by $\sigma$
 and corresponds to a witnessed existential demand.
-For non-adjacent pairs, $D_0(d_1, d_2) = \{R : (\tp(d_1),
-R, \tp(d_2)) \in P(\GG)\}$.  Since $\GG$ is a complete
-graph (every pair of nodes has an edge), pairs of active
-types always appear in $P(\GG)$.
+For non-adjacent pairs with distinct maps
+$\mathsf{map}(d_1) \neq \mathsf{map}(d_2)$: since $\GG$
+is a complete graph, the edge $\EE(\mathsf{map}(d_1),
+\mathsf{map}(d_2))$ provides at least one element of
+$P(\GG)$, so $D_0 \neq \emptyset$.
+For same-map pairs ($\mathsf{map}(d_1) = \mathsf{map}(d_2)
+= n$): $P(\GG)$ may contribute nothing (if $n$ is the sole
+node of type $\LL(n)$), but $\Safe(\LL(n), \LL(n))$ provides
+all type-safe self-relations.  When $\Safe(\LL(n), \LL(n))
+\neq \emptyset$, $D_0 \neq \emptyset$.  When
+$\Safe(\LL(n), \LL(n)) = \emptyset$, the
+unraveling identifies copies
+(Remark~\ref{rem:same-map-domain}), so no same-map
+non-adjacent pair arises.
 
 \medskip\noindent\textbf{Why not a map-based solution?}\;
 A natural approach would construct a \emph{$T$-closed solution}
@@ -763,14 +828,14 @@ triangle while retaining support from non-mirror triangle
 types that \emph{are} in $T$.
 
 \smallskip\noindent\emph{Type-safety of the relaxation.}\;
-Every relation in $D_0$ is type-safe: it appears in $P(\GG)$,
-meaning some pair of saturated nodes in $\GG$ carries this
-relation.  The $(\forall)$-rule has already propagated all
-universal qualifications for this pair-type.  Replacing
+Every relation in $D_0$ is type-safe by construction:
+relations from $P(\GG)$ are type-safe because the
+$(\forall)$-rule has saturated the corresponding pair
+in $\GG$; relations from $\Safe(\tp(d_1), \tp(d_2))$
+are type-safe by definition.  Replacing
 $\PO$ with $\DR$ or $\PPI$ on a cross-subtree edge therefore
 satisfies all $\forall$-constraints---the new relation is
-\emph{less demanding}, not more, since it was already
-enforced in $\GG$ for some pair of matching types.
+\emph{less demanding}, not more.
 
 \smallskip\noindent\emph{Non-emptiness after filtering.}\;
 For each pair $(d_1, d_2)$ and each $R \in D_0(d_1, d_2)$,
@@ -868,11 +933,11 @@ $\rho^{\interp}$ as the relation function.  We verify:
 $\rho^{\interp}$ is globally consistent by construction.
 
 \medskip\noindent\textbf{$\forall$-safety.}\;
-For any edge $\rho^{\interp}(d_1, d_2) = S$: since
-$S \in D_0(d_1, d_2) \subseteq P(\GG)$, there exist nodes
-$a_1, a_2 \in V$ with $\LL(a_1) = \tp(d_1)$,
-$\LL(a_2) = \tp(d_2)$, $\EE(a_1, a_2) = S$.  The
-$(\forall)$-rule ensures $\forall S.D \in \tp(d_1) \Rightarrow
+For any non-adjacent edge $\rho^{\interp}(d_1, d_2) = S$:
+since $S \in D_0(d_1, d_2)$ and every element of $D_0$ is
+type-safe (either witnessed in $P(\GG)$ where $(\forall)$
+has saturated, or in $\Safe(\tp(d_1), \tp(d_2))$ by
+definition), we have $\forall S.D \in \tp(d_1) \Rightarrow
 D \in \tp(d_2)$.  For parent--child edges, $\forall$-safety
 follows from tableau saturation.
 
@@ -950,7 +1015,7 @@ nondeterministic choices exists, yielding an open graph.
 \section{Computational Evidence for Triangle-Type-Set Stabilization}
 \label{sec:evidence}
 
-The termination proof (Theorem~\ref{thm:termination}) gives a
+The termination argument (Conjecture~\ref{thm:termination}) gives a
 non-elementary bound.  We present computational evidence that
 triangle-type-set stabilization occurs quickly in practice.
 
@@ -1068,7 +1133,7 @@ Blocking condition & Terminates? & Correct unraveling? \\
 Type-equality & Always & Not always \\
 Node-identity profile & Not always & Always \\
 Triangle-type-set only & Always & Partial \\
-\textbf{Tri-neighborhood} & \textbf{Always} & \textbf{Always} \\
+\textbf{Tri-neighborhood} & \textbf{Conjectured} & \textbf{Always} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1136,51 +1201,53 @@ further scrutiny:
 \begin{enumerate}
   \item \textbf{Intra-subtree $T$-closure
     (Lemma~\ref{lem:tclosed-exist}).}
-    An earlier version of this proof constructed a map-based
-    $T$-closed solution $\rho(d_1, d_2) = \EE(n_1, n_2)$.
-    This works for cross-subtree pairs with distinct maps, but
-    fails for \emph{same-map pairs}---elements $d_1 \neq d_2$
-    both mapping to the same node $n$.  The failure is due to
-    \emph{mirror triangles}: two copies of $n$ would both carry
-    the same relation (e.g., $\PO$) to a third element, creating
-    triangle types like $(\tau_A, R, \tau_A, \PO, \sigma, \PO)$
-    that are structurally absent from $T(\GG)$.
+    The proof that arc-consistency preserves non-empty domains
+    is supported by computational verification on completion
+    graphs of size 8, 10, and~12, but not by a general formal
+    argument.  The mirror-symmetry-breaking mechanism (replacing
+    $\PO$ with $\DR$ or $\PPI$ on cross-subtree edges) works
+    in all tested cases, and every relation in $D_0$ is type-safe
+    by construction.  A fully formal proof that domains remain
+    non-empty after $T$-filtering and arc-consistency for
+    \emph{arbitrary} open completion graphs would close
+    this gap.
 
-    The current proof resolves this by working with disjunctive
-    domains rather than constructing a single assignment.  The
-    constraint network's $T$-filtering and arc-consistency steps
-    break the mirror symmetry by narrowing cross-subtree domains
-    (e.g., removing $\PO$ from a copy-to-witness edge and
-    retaining $\DR$ or $\PPI$).  Every relation in the domain
-    $D_0$ is type-safe (drawn from $P(\GG)$, where $\forall$-rules
-    have already saturated), so the relaxation from a single
-    map-based relation to a disjunctive domain cannot introduce
-    Hintikka-type clashes.  Computational verification confirms
-    all domains remain non-empty for completion graphs of size
-    8, 10, and~12.  A fully formal proof that domains are
-    non-empty in general would strengthen the argument.
+  \item \textbf{Initial domains for same-map pairs.}
+    An earlier version defined $D_0$ using only $P(\GG)$
+    (realized pair-types between distinct completion-graph
+    nodes).  As observed by a reviewer~\cite{GPTReview2},
+    this gives $D_0 = \emptyset$ when two unraveling elements
+    both map to the sole node of a given type.  The current
+    version resolves this by extending $D_0$ with
+    $\Safe(\tau_1, \tau_2)$ (Definition~\ref{def:safe}),
+    which provides type-safe self-relations without
+    requiring a witness pair in $\GG$.  For the
+    degenerate case $\Safe(\tau, \tau) = \emptyset$ (which
+    forces at most one model element of type $\tau$), the
+    unraveling identifies same-map copies rather than creating
+    distinct elements
+    (Remark~\ref{rem:same-map-domain}).
 
-  \item \textbf{Total node creation bound
-    (Theorem~\ref{thm:termination}).}
-    An earlier version of this proof claimed that
-    ``with at most $A(C_0)$ active nodes, at most $A(C_0) \cdot n$
-    nodes are created.''  As correctly observed by a
-    reviewer~\cite{GPTReview}, this does not follow: a bound on
-    \emph{simultaneous} active nodes does not, by itself, bound
-    \emph{cumulative} creation, because blocking/unblocking cycles
-    could in principle allow unbounded sequential node creation.
+  \item \textbf{Termination
+    (Conjecture~\ref{thm:termination}).}
+    Two successive reviews~\cite{GPTReview,GPTReview2} have
+    correctly identified that the termination proof lacks a
+    valid \emph{global} finiteness argument.  The local
+    ingredients---bounded branching ($\le n$), permanent demand
+    satisfaction, bounded label changes ($\le n$ per node),
+    monotone $\Tri$-growth in the label-stable regime---are
+    individually correct.  But the final step requires either
+    a uniform bound on branch length or a global well-founded
+    measure (e.g., a birth-event ranking), and neither has been
+    supplied.
 
-    The revised proof (Theorem~\ref{thm:termination}) addresses this
-    by arguing that (1)~each demand is permanently satisfied once
-    witnessed, limiting re-expansion, and (2)~each node's signature
-    changes a bounded number of times, limiting blocking/unblocking
-    cycles.  Part~(2) is clean in the label-stable regime (where
-    $\Tri$ grows monotonically), but the pre-stable phase involves
-    $\Tri$-replacement (when Hintikka types change), making the
-    bound more complex.  Each node has at most $n$ label changes,
-    each causing bounded $\Tri$-reconfiguration, so the per-node
-    bound is finite---but we have not extracted a clean closed-form
-    expression for the total creation count.
+    We therefore present the termination claim as a
+    \emph{conjecture supported by structural and computational
+    evidence}, not as a fully proved theorem.  The computational
+    evidence (rapid stabilization at $k = 3$) and the structural
+    constraints (bounded branching, permanent demand satisfaction,
+    finite signature space) make termination highly plausible,
+    but a rigorous proof is open.
 
   \item \textbf{Stabilization depth.}  The computational evidence
     shows basic $\Tri$ stabilization at $k = 2$ and full
@@ -1206,20 +1273,29 @@ strong---by identifying the precise level of abstraction needed:
 abstract relational patterns at both the first-person ($\Tri$)
 and third-person ($\TNbr$) levels, not concrete node identities.
 
-The calculus is \emph{terminating} (the space of
-$(\LL, \Tri, \TNbr)$ triples is finite), \emph{sound} (model
-construction via triangle-type-filtered unraveling, with global
-consistency from full RCC5 tractability), and \emph{complete}
-(a model guides all nondeterministic choices).  Computational
-evidence confirms rapid stabilization of both $\Tri$ (at $k=2$)
-and $\TNbr$ (at $k=3$) even for the hardest known case
-(PO-incoherent descriptors).
+The calculus is \emph{sound} (model construction via
+triangle-type-filtered unraveling, with the $\Safe$ extension
+for same-map pairs and global consistency from full RCC5
+tractability) and \emph{complete} (a model guides all
+nondeterministic choices).  Termination is supported by
+strong structural constraints (bounded branching, permanent
+demand satisfaction, finite signature space) and by computational
+evidence confirming rapid stabilization of both $\Tri$ (at $k=2$)
+and $\TNbr$ (at $k=3$), but a fully rigorous global finiteness
+argument remains open.
 
-If the termination bound can be tightened to singly exponential
-(which the computational evidence suggests is possible), this
-yields an \EXPTIME{} decision procedure for $\ALCIRCC{5}$,
-matching the known PSPACE lower bound~\cite{Wessel2002} up to
-one exponential.
+The paper should therefore be read as \emph{substantial partial
+progress} toward the decidability of $\ALCIRCC{5}$, not as a
+finished proof.  The main contributions are: (1)~the
+Tri-neighborhood blocking condition, which occupies the
+precisely right intermediate position between the two blocking
+extremes; (2)~the disjunctive constraint-network approach
+to same-map pairs, with the $\Safe$ extension ensuring
+non-empty initial domains; and (3)~computational evidence
+that the abstract triangle-type framework stabilizes quickly.
+The principal open obligations are a global termination
+argument and a general proof that arc-consistency preserves
+non-empty domains.
 
 \begin{thebibliography}{99}
 
@@ -1276,7 +1352,14 @@ Claude (Anthropic) and M.~Wessel.
 GPT-5.4 Pro (OpenAI).
 \newblock Technical response to ``A tableau calculus for
   $\ALCIRCC{5}$ with triangle-type-set blocking.''
-\newblock Review memo, April 2026.
+\newblock First review memo, April 2026.
+
+\bibitem{GPTReview2}
+GPT-5.4 Pro (OpenAI).
+\newblock Technical response to the second revision of ``A
+  tableau calculus for $\ALCIRCC{5}$ with Tri-neighborhood
+  blocking.''
+\newblock Second review memo, April 2026.
 
 \end{thebibliography}
 

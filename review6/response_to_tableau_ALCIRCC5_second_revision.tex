@@ -1,0 +1,243 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{parskip}
+
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black}
+\setstretch{1.06}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.4em}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+\newtheorem{prop}{Proposition}
+\newtheorem{claim}{Claim}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{RCC5}}}
+\newcommand{\Tri}{\mathrm{Tri}}
+\newcommand{\TNbr}{\mathrm{TNbr}}
+\newcommand{\Dzero}{D_0}
+\newcommand{\comp}{\mathrm{comp}}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE\bfseries Technical Response to the Second Revision of\\[2pt]
+    \emph{``A Tableau Calculus for ALCIRCC5 with Tri-Neighborhood Blocking''}}\\[10pt]
+    {\large April 2026}\par
+    \vspace{6pt}
+    {\normalsize Review memorandum}
+\end{center}
+
+\vspace{8pt}
+
+\begin{abstract}
+This revision is a meaningful improvement over the earlier tableau draft. The new
+Tri-neighborhood invariant is a better blocking candidate than plain triangle-type-set
+equality, the manuscript now treats the same-map obstruction explicitly, and Section~8.5
+is commendably candid about several weak points. Nevertheless, I do not think the main
+decidability claim is proved yet.
+
+Two issues remain decisive. First, the termination proof still lacks a valid global
+argument bounding the total number of node creations. Second, the soundness argument
+breaks already at the level of the initial domains in Definition~5.4: same-map pairs can
+have empty domains even before T-filtering begins. This gives a concrete counterexample
+to the initial non-emptiness claim in Lemma~5.5. Beyond that, the revised proof of
+Lemma~5.5 remains partly heuristic and partly experimental.
+
+My conclusion is therefore the same in substance as before, though for narrower reasons:
+the paper contains real progress, but Theorems~4.1,~5.9, and~6.1 should not yet be
+presented as established results.
+\end{abstract}
+
+\section{Overall assessment}
+
+The manuscript addresses exactly the right open problem. Wessel's report leaves the
+decidability of \ALCIRCC{} open, while already making clear that complete-graph
+semantics destroy the usual tree-model intuition behind standard tableau blocking.
+The present paper proposes \emph{Tri-neighborhood blocking} as a middle position
+between two known extremes:
+\begin{itemize}
+    \item type-equality blocking, which terminates but is too weak for sound unraveling, and
+    \item node-identity profile blocking, which supports sound replay but tends not to terminate.
+\end{itemize}
+That is a good and worthwhile idea.
+
+This second revision also improves on the first tableau draft in several important ways.
+The paper no longer relies on the simple map-based T-closed assignment that failed for
+same-map pairs; instead it introduces disjunctive pair domains and tries to let T-filtering
+plus arc-consistency resolve the obstruction. The strengthening from \(\Tri(x)=\Tri(y)\)
+to the neighborhood condition \(\TNbr(x)=\TNbr(y)\) is also a genuine improvement.
+In particular, I no longer regard my earlier objection about a purely first-person
+triangle invariant as the main difficulty.
+
+Even so, the present revision still falls short of a proof of decidability.
+
+\section{The termination theorem is still not proved}
+
+The revised proof of Theorem~4.1 is better than the previous one, because it explicitly
+recognizes that a bound on the \emph{number of simultaneously active nodes} does not by
+itself bound the \emph{total} number of created nodes. Unfortunately, the replacement
+argument still does not close the gap.
+
+The proof has two local ingredients:
+\begin{itemize}
+    \item each node can fire an existential demand only finitely many times, because once a
+    specific witness exists, that demand stays satisfied; and
+    \item each node is claimed to have only finitely many blocked/unblocked phases, because
+    its signature changes only finitely often.
+\end{itemize}
+Both points may well be true. But the final inference is invalid: from bounded branching
+and finitely many active periods \emph{per node}, the proof concludes by an appeal to
+K\"onig's lemma that the creation tree is finite.
+
+That does not follow. A rooted tree may be finitely branching and may give every node only
+one active period, yet still be infinite: the infinite unary chain is the simplest counterexample
+to that inference pattern. To deduce finiteness, one needs an additional \emph{global}
+well-founded measure, for example a uniform bound on branch length or a birth-event measure
+that decreases across every unblocked expansion. The manuscript does not supply such a
+measure.
+
+Section~8.5 itself essentially confirms this: it says that the interaction between label
+changes and Tri-reconfiguration in the pre-stable regime has not been fully controlled.
+That is not just a missing closed form for the complexity bound; it is the missing final
+step in the correctness of Theorem~4.1.
+
+\section{A concrete defect in the initial-domain construction}
+
+The sharper problem in the soundness part is Definition~5.4. The initial domain for a
+non-adjacent pair \((d_1,d_2)\) in the unraveling is defined as
+\[
+\Dzero(d_1,d_2)=\{R\in NR^- : (tp(d_1),R,tp(d_2))\in P(G)\},
+\]
+where \(P(G)\) records only relations between \emph{distinct tableau nodes}.
+
+That construction can already fail before any T-filtering takes place.
+
+\begin{prop}
+Definition~5.4 does not guarantee non-empty initial domains. In particular,
+Lemma~5.5's initial non-emptiness claim is false as stated.
+\end{prop}
+
+\begin{proof}
+Consider the concept
+\[
+C_0 := \exists PP.U \;\sqcap\; \exists DR.W,
+\qquad\text{where } U := \exists DR.W.
+\]
+A saturated clash-free completion graph may contain three active nodes
+\(r,u,w\) with labels
+\[
+L(r)=\{C_0\},\qquad L(u)=\{U\},\qquad L(w)=\{W\},
+\]
+and edges
+\[
+E(r,u)=PP,\qquad E(r,w)=DR,\qquad E(u,w)=DR.
+\]
+This is composition-consistent, since
+\(DR\in \comp(PP,DR)\).
+Node \(w\) witnesses the root's \(\exists DR.W\) demand, and the same node \(w\)
+also witnesses \(u\)'s \(\exists DR.W\) demand.
+
+Now unravel from the root copy \(d_0\). One child \(d_1\) is the direct DR-witness
+with \(\mathrm{map}(d_1)=w\). A second child \(e\) is the PP-copy of \(u\), and \(e\)
+has its own DR-child \(d_2\) with \(\mathrm{map}(d_2)=w\). Thus
+\[
+d_1\neq d_2,\qquad \mathrm{map}(d_1)=\mathrm{map}(d_2)=w,
+\]
+and \(d_1,d_2\) are non-adjacent in the unraveling.
+
+Assume moreover that \(w\) is the only tableau node of type \(L(w)\) in the completion
+graph. Then \(P(G)\) contains no triple of the form
+\((L(w),R,L(w))\), because Definition~5.4 only records edges between distinct tableau
+nodes. Therefore
+\[
+\Dzero(d_1,d_2)=\emptyset.
+\]
+So the initial-domain construction can already fail before T-filtering or arc-consistency is
+applied.
+\end{proof}
+
+This observation also shows that the paper's discussion of same-map pairs is still too narrow.
+Those pairs do not arise only from ``multiple copies of a blocked subtree''; they also arise
+whenever the same active witness is reused by different parents in the completion graph.
+
+\section{Lemma~5.5 remains heuristic even beyond the preceding defect}
+
+Suppose the defect above were repaired, for example by adding special same-type domains.
+Even then, Lemma~5.5 would remain unproved.
+
+The revised argument says that the disjunctive domains can ``break mirror symmetry'' because
+arc-consistency may narrow a problematic pair-type domain from something like
+\(\{DR,PO,PPI\}\) to a safe subdomain such as \(\{DR,PPI\}\), and it points to
+computational checks on graphs of size 8, 10, and 12 as evidence. That is useful evidence,
+but it is not a theorem.
+
+What is still missing is a general proof that for every pair \((d_1,d_2)\) and every third
+node \(d_3\), the T-filtered domains retain enough support to survive the manuscript's very
+strong arc-consistency rule. Section~8.5 says exactly this: a fully formal proof of
+intra-subtree T-closure would strengthen the argument. I agree with that assessment.
+
+Since Lemma~5.5 is the entry point to Lemma~5.8 and then to Theorem~5.9, the gap is not
+local to a side remark. It blocks the soundness theorem.
+
+\section{What the paper should claim at this stage}
+
+One point in the paper's favor is its honesty. Section~8.5 explicitly identifies the
+intra-subtree T-closure problem and the total-node-creation problem as places requiring
+further scrutiny. That is good mathematical practice.
+
+But those caveats are not minor. They concern the two central theorems needed for the main
+result:
+\begin{itemize}
+    \item Theorem~4.1 (termination), and
+    \item Theorem~5.9 (model construction from an open branch), hence also Theorem~6.1.
+\end{itemize}
+For that reason, the abstract, Section~8.1's summary table, and the conclusion still overstate
+what has been proved. The paper does not yet establish decidability of \ALCIRCC{}.
+
+A more accurate headline would be: the manuscript proposes a stronger blocking invariant,
+gives promising computational evidence on the PO-incoherent benchmark, and isolates the
+remaining global proof obligations more clearly than earlier drafts. That is meaningful progress,
+but it is not the final theorem.
+
+\section{Conclusion}
+
+My assessment of this last revision is therefore:
+\begin{itemize}
+    \item The move from plain triangle-type-set blocking to Tri-neighborhood blocking is a real
+    improvement.
+    \item The paper's treatment of same-map pairs is conceptually better than the original
+    map-based replay argument.
+    \item Nevertheless, the main result is still not proved. The termination theorem lacks a
+    valid global finiteness argument, and the soundness proof fails already at the initial-domain
+    construction for same-map pairs.
+\end{itemize}
+
+So I would still not accept the claim that the decidability of \ALCIRCC{} has now been
+settled. The manuscript is better, but it remains a substantial partial result rather than a
+finished proof.
+
+\vspace{10pt}
+\hrule
+\vspace{8pt}
+
+\noindent\textbf{References}
+
+\begin{enumerate}[label={[\arabic*]},leftmargin=2.2em]
+    \item Claude and Michael Wessel. \emph{A Tableau Calculus for ALCIRCC5 with
+    Tri-Neighborhood Blocking}. Second revision, April 2026.
+    \item Michael Wessel. \emph{Qualitative Spatial Reasoning with the ALCIRCC Family --
+    First Results and Unanswered Questions}. Technical Report FBI-HH-M-324/03,
+    University of Hamburg, 2002/2003.
+\end{enumerate}
+
+\end{document}
