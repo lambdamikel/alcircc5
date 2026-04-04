@@ -1844,7 +1844,7 @@ Parallel literature research (via web search) yielded several important results:
 
 2. **BD fragment of HS is undecidable.** Bresolin et al. (ICALP 2010, journal version 2014) proved that the fragment of Halpern-Shoham logic with just the B (begins) and D (during) modalities is already undecidable over any class of linear orders containing an infinite ascending chain. Since PP corresponds to "during," **the HS route is closed** for ALCI_RCC5.
 
-3. **Modal logics of RCC relations are undecidable.** Kontchakov, Wolter, and Zakharyaschev (LMCS 2010) showed that modal logics with modalities interpreted by RCC8 relations are undecidable over the real line. This is the closest existing work to ALCI_RCC5 and it's negative.
+3. **Modal logics of RCC relations: nuanced.** Lutz and Wolter (LMCS 2006) proved L_RCC8 undecidable and L_RCC5(RS^∃) undecidable, but **explicitly left L_RCC5(RS) open** — which is exactly ALCI_RCC5 satisfiability. The undecidability does NOT cover our problem. (The earlier attribution to "Kontchakov, Wolter, Zakharyaschev" was incorrect; the foundational paper is by Lutz and Wolter.)
 
 4. **ALC(RCC8) is different.** Lutz and Miličić (2007) showed ALC with RCC8 as a concrete domain is decidable, but that framework treats spatial relations as constraints between features, not as roles. The complete-graph semantics of ALCI_RCC5 is not enforced. These are structurally different problems.
 
@@ -1862,7 +1862,25 @@ This required updating the entire paper from "MSO" to "Borel-MSO." The key verif
 
 The correction **strengthens** the argument by using a more precise and recent result (Manthe 2024) rather than an incorrect appeal to Shelah.
 
+### Major discovery: Lutz & Wolter (LMCS 2006) explicitly left L_RCC5(RS) open
+
+A deep dive into the Lutz & Wolter paper "Modal Logics of Topological Relations" (LMCS 2006, 41 pages) revealed that:
+
+1. **L_RCC8 is undecidable** — via domino tiling. The proof uses the TPP/NTPP distinction to create discrete chains (the alternating-type trick). This CANNOT transfer to RCC5 because PP = TPP ∪ NTPP is undifferentiated.
+
+2. **L_RCC5(RS^∃) is undecidable** — via reduction from S5³ (undecidable by Maddux 1980). The reduction constructs "diagonal" regions d = Sup({w₁,w₂,w₃}) and "pair" regions d_{ij} = Sup({w_i,w_j}). The S5³ modalities are simulated by navigating through PP/PPI between these regions. **This requires RS^∃** — the model class must contain supremum regions for every 2- or 3-element set.
+
+3. **L_RCC5(RS) is explicitly left open.** Lutz & Wolter state (p. 31): "Perhaps the most interesting candidate is L_RCC5(RS) [...] to which the reduction exhibited in Section 8 does not apply."
+
+4. **ALCI_RCC5 satisfiability = L_RCC5(RS).** Our problem is exactly the problem Lutz & Wolter identified as their "most intriguing open problem" in 2006. It has been open for 20+ years (Wessel 2002/2003, Lutz-Wolter 2006).
+
+5. **The supremum-closure gap is the key.** RS^∃ requires that joins of regions exist; RS does not. In an ALCI_RCC5 model (arbitrary complete graph with composition table), there is no guarantee that the supremum of two elements exists as a third element. This is exactly what blocks the S5³ reduction.
+
+6. **The BD undecidability also does not transfer.** In HS, the D (during) modality corresponds to NTPP (strict containment on both sides), not PP. The B (begins) modality has no RCC5 counterpart. And the HS proof uses interval-specific structure.
+
+**Implication for our work:** The Borel-MSO encoding is the most promising path. If we close the Dyck gap, we settle a 20+ year open problem recognized by Wessel, Lutz, and Wolter. No known undecidability reduction can be adapted.
+
 ### Files produced
 - New `MSO_encoding_ALCIRCC5.tex` / `.pdf`: Full paper (16 pages), ninth approach (Borel-MSO)
-- Updated `README.md` with ninth approach, research findings, Borel correction, and updated summary table
+- Updated `README.md` with Lutz-Wolter findings, updated undecidability table, and research context
 - Updated `CONVERSATION.md` with Part 35

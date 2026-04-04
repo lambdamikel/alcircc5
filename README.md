@@ -118,6 +118,8 @@ Claude's [formal response](https://github.com/lambdamikel/alcircc5/blob/master/r
 
 Every known undecidability proof for description logics ultimately encodes a **two-dimensional grid** (the Z×Z domino tiling problem). Grid encoding requires either functional roles, number restrictions, role intersection, or role value maps. ALCI\_RCC5 has **none of these**. Moreover, the patchwork property — local consistency implies global consistency — actively resists grid encoding, since tiling reductions need rigid global constraints that go beyond local consistency.
 
+**Lutz & Wolter (LMCS 2006) explicitly left L\_RCC5(RS) open.** In their comprehensive study of modal logics of topological relations, Lutz and Wolter proved L\_RCC8 undecidable (via domino tiling using the TPP/NTPP distinction) and L\_RCC5 undecidable over RS^∃ (supremum-closed structures, via reduction from S5³). But they explicitly stated (p. 31): "Perhaps the most interesting candidate is L\_RCC5(RS) [...] to which the reduction exhibited in Section 8 does not apply." ALCI\_RCC5 satisfiability is exactly L\_RCC5(RS) — arbitrary complete-graph models. This problem has been recognized as open by leading researchers since 2006.
+
 The following table surveys all standard candidate reductions:
 
 | Candidate Problem | Reduction Technique | Key Feature Missing in ALCI\_RCC5 | Verdict |
@@ -131,12 +133,19 @@ The following table surveys all standard candidate reductions:
 | SHIN⁺ (transitive closure in concepts) | Grid via closure + role hierarchy | Transitive closure operator | Blocked |
 | FO² + two orders (Schwentick-Zeume 2012) | Grid via two successor functions | Second independent order relation | Blocked |
 | ALC + role intersection | Various | Roles are JEPD (intersection always empty) | Blocked |
+| L\_RCC8 undecidability (Lutz-Wolter 2006) | Domino tiling via discrete TPP-chains | TPP/NTPP distinction (RCC5 has only PP) | Blocked |
+| L\_RCC5(RS^∃) undecidability (Lutz-Wolter 2006) | S5³ satisfiability via supremum regions | Supremum closure (not guaranteed in RS) | Blocked |
+| BD fragment of HS (Bresolin et al. 2010) | Tiling via begins + during modalities | B modality has no RCC5 counterpart; D ≈ NTPP ≠ PP | Blocked |
 
 **Why Wessel's ALC\_RA⊖ proof doesn't transfer.** Wessel proved ALC\_RA⊖ undecidable by reducing from PCP: arbitrary role axioms encode context-free grammar productions, and satisfiability corresponds to non-intersection of the generated languages. This fails for ALCI\_RCC5 because the role box is *fixed* by the RCC5 composition table — it is not part of the input. With only 5 base relations and their predetermined compositions, one cannot encode arbitrary grammar productions.
 
 **Why Wessel's ALCN\_RASG proof doesn't transfer.** Wessel proved ALCN\_RASG undecidable by a direct reduction from the N×N domino tiling problem. The proof uses an admissible (deterministic, functional, associative) role box with four roles — R\_X (horizontal), R\_Y (vertical), R\_Z (diagonal = R\_X∘R\_Y), R\_U (everything else) — and number restrictions (≥ R\_X 1) ⊓ (≤ R\_X 1) ⊓ (≥ R\_Y 1) ⊓ (≤ R\_Y 1) to enforce that each element has *exactly one* horizontal and *exactly one* vertical successor, yielding a well-defined grid. Tile types are concept names; matching is enforced by ∀R\_X and ∀R\_Y. This proof is essentially the same mechanism as Zolin's GrIK4 proof — both encode a grid via counting — but Wessel's version is simpler because separate roles serve as separate grid directions, whereas Zolin must encode both directions within a single transitive relation using propositional type labels. Neither proof requires inverse roles or transitivity; both *fundamentally* require number restrictions. ALCI\_RCC5 has no number restrictions, so the grid cannot be enforced.
 
 **What ALCI\_RCC5 does have.** The logic possesses two of the three ingredients of Zolin's GrIK4 undecidability proof: transitivity (PP∘PP ⊆ PP) and inverse roles (PPI = PP⁻). But the third — number restrictions — is entirely absent. Without counting, there is no way to enforce that a role has exactly one filler, which is essential for the commuting-square property of grid encoding. The complete-graph semantics compounds this: every element is PP/PO/DR/PPI-related to every other, so there is no way to isolate a unique "successor" among all neighbors. Notably, Wessel's ALCN\_RASG proof does *not* use inverse roles, and he conjectured (report5.pdf, p. 38) that ALCI\_RASG — adding inverse but not counting — might still be decidable. This supports the hypothesis that counting, not inverse roles or transitivity, is the critical dividing line.
+
+**Why Lutz & Wolter's RCC5 undecidability proof doesn't transfer.** Lutz and Wolter (LMCS 2006) proved L\_RCC5(RS^∃) undecidable by reducing from S5³ (the 3-dimensional product of S5, undecidable by Maddux 1980). The reduction encodes three families of regions (a₁, a₂, a₃) pairwise DR-separated, with "diagonal" regions d representing triples (w₁,w₂,w₃) constructed as **suprema** Sup({w₁,w₂,w₃}) — the smallest region containing all three. The S5³ modalities are simulated by navigating from d up to pair-regions d\_{ij} = Sup({w\_i,w\_j}) and back down to d-regions. This reduction *requires* RS^∃ — the existence of supremum regions for every 2- or 3-element set. In an arbitrary ALCI\_RCC5 model (i.e., RS = complete graph with composition table), such suprema need not exist. The reduction therefore does not apply to L\_RCC5(RS) = ALCI\_RCC5 satisfiability.
+
+**Why Lutz & Wolter's RCC8 undecidability proof doesn't transfer.** The RCC8 undecidability uses the **alternating-type trick** (Section "The alternating-type trick" above) to create discrete TPP-chains via concept constraints. The formula forces a-regions to be PP-related only to other a-regions, then uses alternating b/¬b labels with ∀TPP constraints to ensure TPP holds only between adjacent chain elements and NTPP for all others. This creates a discrete linear ordering — the "cells" of a tiling grid. RCC5 cannot do this because PP = TPP ∪ NTPP is undifferentiated; there is no way to distinguish immediate from non-immediate proper parts.
 
 **Possible novel attack vectors.** Standard reductions are blocked, but undecidability is not ruled out. A proof would require a genuinely new technique, possibly exploiting:
 
@@ -952,7 +961,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
 
 6. J. Renz. "Maximal Tractable Fragments of the Region Connection Calculus: A Complete Analysis." IJCAI 1999.
 
-7. C. Lutz and F. Wolter. "Modal Logics of Topological Relations." Logical Methods in Computer Science, 2(2), 2006.
+7. C. Lutz and F. Wolter. "Modal Logics of Topological Relations." Logical Methods in Computer Science, 2(2), 2006. **Key result: L\_RCC8 undecidable (domino tiling via TPP/NTPP); L\_RCC5(RS^∃) undecidable (S5³ via supremum closure); L\_RCC5(RS) = ALCI\_RCC5 satisfiability explicitly left open (p. 31).**
 
 8. C. Lutz and M. Milicic. "A Tableau Algorithm for Description Logics with Concrete Domains and General TBoxes." Journal of Automated Reasoning, 38:227-259, 2007.
 

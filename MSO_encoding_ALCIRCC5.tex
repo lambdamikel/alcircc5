@@ -1331,11 +1331,17 @@ Unfortunately, the known results are largely negative:
     chain.  Since RCC5's $\PP$ corresponds to Allen's ``during''
     relation, any HS fragment expressive enough to capture
     $\exists\PP$ is undecidable.
-  \item \textbf{Modal logics of RCC relations are undecidable.}\;
-    Kontchakov, Wolter, and Zakharyaschev~\cite{KontchakovWZ2010}
-    defined modal logics with modalities interpreted by RCC8
-    relations.  These logics are undecidable over the real line,
-    including fragments involving containment and overlap.
+  \item \textbf{Modal logics of RCC relations: partially undecidable.}\;
+    Lutz and Wolter~\cite{LutzWolter2006} proved $L_{\mathsf{RCC8}}$
+    undecidable (via domino tiling using the TPP/NTPP distinction) and
+    $L_{\mathsf{RCC5}}(\mathsf{RS}^{\exists})$ undecidable (via
+    reduction from $S5^3$, requiring supremum-closed structures).
+    However, they \emph{explicitly left open} the decidability of
+    $L_{\mathsf{RCC5}}(\mathsf{RS})$---which is exactly
+    $\ALCIRCC{5}$ satisfiability.  The $S5^3$ reduction cannot be
+    adapted because it requires supremum regions
+    $\mathrm{Sup}(\{w_1,w_2,w_3\})$ that need not exist in arbitrary
+    complete-graph models.
   \item \textbf{ALC(RCC8) is decidable but different.}\;
     Lutz and Mili\v{c}i\'{c}~\cite{LutzMilicic2007} showed that
     ALC with RCC8 as a concrete domain is decidable.  However, in
@@ -1344,17 +1350,23 @@ Unfortunately, the known results are largely negative:
     is not enforced.
 \end{itemize}
 
-\begin{remark}[Why the BD undecidability does not block our approach]
-The undecidability of the BD fragment concerns the \emph{satisfiability
-problem for HS formulas}---an infinite family of sentences parameterized
-by modal nesting depth.  Our MSO encoding is different: for each fixed
-concept~$C_0$, we produce a \emph{single, fixed} $\MSO(\reals, <)$
-sentence~$\Phi_{C_0}$ and ask whether it is true in $(\reals, <)$.
-This is a question about the \emph{theory} of $(\reals, <)$, not about
-satisfiability of a modal logic.  The non-elementary complexity of
-Shelah's decision procedure compensates for the expressive gap: what
-HS fragments cannot decide efficiently, $\MSO(\reals, <)$ can decide
-with brute-force model theory.
+\begin{remark}[Why none of the undecidability results block our approach]
+Three negative results are relevant but none apply:
+\begin{enumerate}[nosep]
+  \item The BD fragment of HS is undecidable, but $D$ (during)
+    corresponds to NTPP, not $\PP$, and $B$ (begins) has no RCC5
+    counterpart.
+  \item $L_{\mathsf{RCC8}}$ is undecidable, but the proof requires the
+    TPP/NTPP distinction absent in RCC5.
+  \item $L_{\mathsf{RCC5}}(\mathsf{RS}^{\exists})$ is undecidable, but
+    the proof requires supremum-closed models, which $\ALCIRCC{5}$ does
+    not guarantee.
+\end{enumerate}
+Moreover, our Borel-MSO encoding is structurally different from all of
+these: for each fixed concept~$C_0$, we produce a \emph{single} sentence
+and ask whether it is true in $(\reals, <)$---a question about the
+decidable \emph{theory} of $(\reals, <)$, not about satisfiability of
+a parameterized modal logic.
 \end{remark}
 
 %% ============================================================
@@ -1396,7 +1408,7 @@ bound can be obtained remains a separate question.
 The interval temporal logic route (Halpern--Shoham fragments) is
 blocked: the BD fragment is already undecidable~\cite{BresolinBD2010},
 and modal logics of RCC relations are undecidable over the real
-line~\cite{KontchakovWZ2010}.  The MSO encoding avoids these
+line~\cite{LutzWolter2006}.  The MSO encoding avoids these
 barriers by reducing each satisfiability instance to a single
 sentence in the decidable theory of $(\reals, <)$.
 
@@ -1439,11 +1451,14 @@ J.~Halpern and Y.~Shoham.
 \newblock A propositional modal logic of time intervals.
 \newblock \emph{J.\ ACM}, 38(4):935--962, 1991.
 
-\bibitem{KontchakovWZ2010}
-R.~Kontchakov, F.~Wolter, and M.~Zakharyaschev.
-\newblock Logic of metric spaces and $\mathsf{LS}$-spaces.
-\newblock \emph{Logical Methods in Computer Science}, 6(3), 2010.
-\newblock (See also: ``Modal logics of topological relations.'')
+\bibitem{LutzWolter2006}
+C.~Lutz and F.~Wolter.
+\newblock Modal logics of topological relations.
+\newblock \emph{Logical Methods in Computer Science}, 2(2), 2006.
+\newblock (Proves $L_{\mathsf{RCC8}}$ undecidable;
+  $L_{\mathsf{RCC5}}(\mathsf{RS}^{\exists})$ undecidable via $S5^3$;
+  explicitly leaves $L_{\mathsf{RCC5}}(\mathsf{RS})$ open---which is
+  $\ALCIRCC{5}$ satisfiability.)
 
 \bibitem{LutzMilicic2007}
 C.~Lutz and M.~Mili\v{c}i\'{c}.
