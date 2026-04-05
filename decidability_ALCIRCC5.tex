@@ -13,6 +13,7 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usepackage[normalem]{ulem}    % \sout for strikethrough
 
 %%% Theorem environments
 \newtheorem{theorem}{Theorem}[section]
@@ -88,45 +89,51 @@ scrutiny, corrections, and feedback.}}
 
 \begin{center}
 \fbox{\parbox{0.92\textwidth}{%
-\textbf{Status of the proof (March 2026, revised).}\;
+\textbf{Status of the proof (April 2026, second revision).}\;
 The decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$ is
-\textbf{not fully established} by this paper.  The proof contains a
-genuine gap---the \emph{extension gap}
-(Remark~\ref{rem:extension-gap})---summarized here:
+\textbf{not established} by this paper.  The proof contains
+\textbf{two genuine errors} and the \emph{extension gap}
+(Remark~\ref{rem:extension-gap}):
 
 \smallskip
-\emph{What is proven.}\;
-(1)~\textbf{Soundness}: if $C_0$ is satisfiable, a quasimodel
-satisfying conditions (Q1)--(Q3) can be extracted from the model.
-(2)~A terminating \EXPTIME{} type-elimination algorithm with
-\textbf{no false negatives}: if $C_0$ is satisfiable, the algorithm
-accepts.
-(3)~By contrapositive: if the algorithm rejects, $C_0$ is definitely
-unsatisfiable.
+\textbf{Error 1: The type elimination algorithm is unsound
+(Theorem~\ref{thm:complexity}).}\;
+The concept $C_1 = \exists \PO.D \sqcap \exists \DR.(B \sqcap
+\forall \PO.\neg D) \sqcap \forall \DR.\neg D \sqcap \forall
+\PP.\neg D \sqcap \forall \PPI.\neg D$ is satisfiable (3-element
+model verified computationally), yet the algorithm eliminates all
+128 types to zero.  The root cause: condition~(Q3) is
+\emph{anti-monotone} in the type set---starting with all types
+makes (Q3) maximally restrictive, killing DN entries needed for~(Q1)
+witnesses, causing cascade elimination of \emph{all} types.  The
+model-extracted types form a valid quasimodel among themselves, but
+the greatest-fixpoint algorithm cannot find this subset.
+Theorem~\ref{thm:complexity} is \textbf{wrong}; see
+Remark~\ref{rem:type-elim-bug}.
 
 \smallskip
-\emph{What is not proven.}\;
-\textbf{Completeness} (quasimodel $\Rightarrow$ model): the Henkin
-construction solves a disjunctive constraint network at each extension
-step.  For \emph{model-derived} quasimodels, the model's own role
-assignments survive the construction.  For \emph{abstract} quasimodels
-satisfying (Q1)--(Q3) that do not arise from any model,
-path-consistency enforcement may empty constraint domains, causing the
-construction to fail.  Consequently, the algorithm may have
-\textbf{false positives}: acceptance does not guarantee satisfiability.
+\textbf{Error 2: (Q3) soundness proof gap.}\;
+The proof of~(Q3) in the soundness direction
+(Section~\ref{sec:soundness}) handles the case $\tau_2 = \tau_3$
+with a unique element by setting $R_{23} = \EQ$.  But
+$\mathsf{DN}$ is defined over $\NR \setminus \{\EQ\}$, so
+$\EQ \notin \mathsf{DN}(\tau_2, \tau_3)$.  The proof silently
+uses $\EQ$ in a domain that excludes it.
 
 \smallskip
-A correct decision procedure requires both directions (accept
-$\Leftrightarrow$ satisfiable).  We have: reject $\Rightarrow$
-unsatisfiable (proven); accept $\Rightarrow$ satisfiable (\textbf{not
-proven}).  The open problems from Wessel~\cite{Wessel2003} are
-\textbf{narrowed but not settled}.  Closing the gap requires showing
-that every abstract quasimodel yields a model, or finding an
-alternative model-construction argument.  Despite the gap, the proof
-machinery introduced here (quasimodel method + patchwork property,
-complete-graph tableau with equality blocking) and the precise
-identification of the extension gap may be useful for an eventual
-resolution.}}
+\emph{What survives.}\;
+The quasimodel extraction from a model (soundness direction) is
+correct for the case where all types have multiplicity $\geq 2$, or
+when~(Q3) is restricted to pairwise-distinct types.  The pair-type
+definitions, composition table analysis, patchwork property usage,
+and Henkin construction are individually correct.  The identification
+of the extension gap is accurate.
+
+\smallskip
+\emph{What fails.}\;
+The ``no false negatives'' claim is wrong.  The algorithm can reject
+satisfiable concepts.  The decidability of $\ALCIRCC{5}$ and
+$\ALCIRCC{8}$ remains \textbf{genuinely open}.}}
 \end{center}
 
 \bigskip
@@ -142,15 +149,16 @@ decidability open.  We present two procedures---a
 \emph{type-elimination algorithm} and a \emph{tableau calculus with
 blocking}---that exploit the \emph{patchwork property} of the RCC
 calculi~\cite{RenzNebel1999} and the full tractability of the RCC5
-algebra~\cite{Renz1999}.  Both run in \EXPTIME{} and are
-\emph{sound for rejection}: if $C_0$ is satisfiable, the algorithm
-accepts (no false negatives).  However, the completeness direction
-(quasimodel $\Rightarrow$ model) contains a gap: the Henkin
-model construction may fail for abstract quasimodels not derived from
-actual models.  The decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$
-therefore remains open; this paper narrows the problem to a specific
-constraint-satisfaction question about RCC disjunctive networks
-(the ``extension gap'').
+algebra~\cite{Renz1999}.
+\textbf{Erratum (April 2026):} The type-elimination algorithm is
+\textbf{unsound}---it rejects satisfiable concepts (see
+Remark~\ref{rem:type-elim-bug}).  The root cause is that
+condition~(Q3) is anti-monotone in the type set, causing cascade
+elimination when starting from all types.
+Additionally, the (Q3) soundness proof has a gap for
+singleton-multiplicity types ($\EQ \notin \mathsf{DN}$).  The
+decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$ remains
+\textbf{genuinely open}.
 \end{abstract}
 
 \medskip
@@ -886,6 +894,22 @@ $\comp(R_{12}, \EQ) = \{R_{12}\}$, we need $R_{13} = R_{12} \in
 $R_{12} \in \mathsf{DN}(\tau_1, \tau_2) = \mathsf{DN}(\tau_1, \tau_3)$
 already, and $\EQ$ satisfies the composition constraint
 trivially, (Q3)~holds.
+
+\medskip
+\noindent\textbf{Erratum.}\;
+The case $x_2 = x_3$ above is \textbf{incorrect}.  Condition~(Q3)
+requires $R_{23} \in \mathsf{DN}(\tau_2, \tau_3)$, but
+$\mathsf{DN}$ is defined over $\NR \setminus \{\EQ\}$
+(Definition~\ref{def:quasimodel}), so $\EQ \notin
+\mathsf{DN}(\tau_2, \tau_2)$.  When $\tau_2 = \tau_3$ and there is a
+unique element of that type, $\mathsf{DN}(\tau_2, \tau_2) = \emptyset$
+(no realized non-$\EQ$ pair), and~(Q3) fails for any $R_{12} \in
+\mathsf{DN}(\tau_1, \tau_2)$.  This means the soundness direction
+does \emph{not} establish~(Q3) as stated (with ``not necessarily
+distinct'' types) when a type has singleton multiplicity in the model.
+A correct statement would restrict~(Q3) to \emph{pairwise distinct}
+types, or add $\EQ$ as a distinguished element of
+$\mathsf{DN}(\tau, \tau)$ for all~$\tau \in T$.
 \end{proof}
 
 \subsection{Completeness: Quasimodel $\Rightarrow$ Model}
@@ -1056,18 +1080,22 @@ arise from any model, the extension network may be inconsistent.
 
 This means the characterization in Theorem~\ref{thm:main} is
 established as an \emph{if}: every satisfiable concept has a
-quasimodel.  The \emph{only-if} direction (every quasimodel gives a
-model) holds for quasimodels extracted from models but not necessarily
-for arbitrary quasimodels.  For the type elimination algorithm
-(Section~\ref{sec:complexity}), the soundness direction is what matters:
-if $C_0$ is satisfiable, the algorithm never eliminates~$\tau_0$,
-so the algorithm has \emph{no false negatives}.  The question of
-whether false positives can occur (i.e., whether ``spurious''
-quasimodels exist for unsatisfiable concepts) remains open; we
-conjecture that the type-level conditions~(Q1)--(Q3) are in fact
-sufficient, but a proof requires a more refined model construction
-or a case analysis exploiting the specific algebraic properties of
-the RCC5 composition table.
+quasimodel (extracted from its model).  The \emph{only-if} direction
+(every quasimodel gives a model) holds for quasimodels extracted from
+models but not necessarily for arbitrary quasimodels.
+
+\medskip
+\noindent\textbf{Erratum: The ``no false negatives'' claim is
+wrong.}\; The type elimination algorithm
+(Section~\ref{sec:complexity}) does \emph{not} preserve model-extracted
+quasimodels.  Although the model types form a valid quasimodel among
+themselves, the algorithm starts with \emph{all} types in $\Tp(C_0)$,
+and (Q3) enforcement with the full type set kills DN entries that the
+model types need for~(Q1) witnesses.  Concretely, the concept
+$C_1 = \exists \PO.D \sqcap \exists \DR.(B \sqcap \forall \PO.\neg D)
+\sqcap \forall \DR.\neg D \sqcap \forall \PP.\neg D \sqcap \forall
+\PPI.\neg D$ is satisfiable (3-element model) but the algorithm rejects
+it (0 types survive).  See Remark~\ref{rem:type-elim-bug}.
 
 The stronger condition~(Q3s) (Remark~\ref{rem:q3-variants}) would
 close this gap by ensuring element-level path-consistency directly,
@@ -1346,12 +1374,23 @@ Therefore $\interp \models C_0$, and $C_0$ is satisfiable.
 \section{Decidability and Complexity via Type Elimination}
 \label{sec:complexity}
 
-\begin{theorem}
+\begin{theorem}[\textbf{RETRACTED}]
 \label{thm:complexity}
-Concept satisfiability in $\ALCIRCC{5}$ is decidable in \EXPTIME.
+\sout{Concept satisfiability in $\ALCIRCC{5}$ is decidable in
+\EXPTIME.}
 \end{theorem}
 
-\begin{proof}
+\noindent
+\textbf{This theorem is wrong.}  The type-elimination algorithm
+described below rejects satisfiable concepts.  See
+Remark~\ref{rem:type-elim-bug} for the concrete counterexample and
+root cause analysis.
+
+\medskip
+\noindent
+\emph{The original proof is retained (struck through) for reference:}
+
+\begin{proof}[\textbf{Original proof (incorrect)}]
 By the soundness direction of Theorem~\ref{thm:main}, if $C_0$ is
 satisfiable then a quasimodel for $C_0$ exists.  Equivalently, if no
 quasimodel exists then $C_0$ is unsatisfiable.  We describe a
@@ -1400,19 +1439,77 @@ Each iteration inspects at most $2^{O(|C_0|)}$ types, pairs, and
 triples.  Total time: $2^{O(|C_0|)} \cdot 2^{O(|C_0|)} =
 2^{O(|C_0|)}$, which is in \EXPTIME.
 
-\medskip\noindent\textbf{Correctness.}\;
-If $C_0$ is satisfiable, the soundness proof
+\medskip\noindent\textbf{Correctness (INCORRECT).}\;
+\sout{If $C_0$ is satisfiable, the soundness proof
 (Section~\ref{sec:soundness}) produces a quasimodel $(T^*, P^*,
 \tau_0)$ whose types, pair-types, and algebraic closure property are
 all preserved by the elimination algorithm.  Hence $\tau_0$ survives,
-and the algorithm accepts.  Conversely, if the algorithm accepts, a
-quasimodel exists; by the completeness argument
-(Section~\ref{sec:completeness}) and Remark~\ref{rem:extension-gap},
-a model can be constructed for quasimodels arising from
-satisfiable concepts.  Since the algorithm only accepts when a
-quasimodel exists, and every satisfiable concept produces such a
-quasimodel, the algorithm is a correct decision procedure.
+and the algorithm accepts.}
+
+\medskip\noindent
+\textbf{The flaw:} The quasimodel $(T^*, P^*)$ extracted from a
+model is \emph{not} preserved by the elimination algorithm.  The
+algorithm starts with $T = \Tp(C_0) \supsetneq T^*$, and (Q3)
+enforcement with the full type set~$T$ removes pair-types that are
+valid within~$T^*$.  This is because (Q3) universally quantifies
+over \emph{all} $\tau_3 \in T$: types in $T \setminus T^*$ may have
+$\mathsf{DN}(\tau_2, \tau_3) = \emptyset$, causing (Q3) to remove
+$(\tau_1, R_{12}, \tau_2)$ even though the triple $(\tau_1, \tau_2,
+\tau_3)$ never arises in the model.  The resulting (Q1) and (Q2)
+cascade eliminates all types, including $\tau_0$.  See
+Remark~\ref{rem:type-elim-bug}.
 \end{proof}
+
+\begin{remark}[The type elimination bug]
+\label{rem:type-elim-bug}
+The correctness argument for Theorem~\ref{thm:complexity} fails because
+the greatest-fixpoint elimination does not preserve model-extracted
+quasimodels.  The flaw is subtle: condition~(Q3) is
+\emph{anti-monotone} in the type set~$T$ (larger $T$ makes (Q3)
+harder to satisfy), while~(Q1) is anti-monotone in the opposite
+direction (smaller $T$ makes (Q1) harder).  The greatest-fixpoint
+approach assumes these conditions are compatible, but they are not.
+
+\textbf{Concrete counterexample.}\;
+$C_1 = \exists \PO.D \sqcap \exists \DR.(B \sqcap \forall \PO.\neg D)
+\sqcap \forall \DR.\neg D \sqcap \forall \PP.\neg D \sqcap \forall
+\PPI.\neg D$
+is satisfiable: the model $\{e_0, e_1, e_2\}$ with $e_0$~(root,
+$\neg B, \neg D$), $e_1$~($B$-filler, $B, \neg D$), $e_2$~($D$-element,
+$D, \neg B$), and edges $R(e_0, e_1) = \DR$, $R(e_0, e_2) = \PO$,
+$R(e_1, e_2) = \DR$ satisfies $C_1$ at $e_0$ (composition-consistent,
+verified computationally).
+
+The three model-extracted types $\{\tau_0, \tau_1, \tau_2\}$ with
+compatible DN $=$ $\{(\tau_0, \tau_1): \{\DR, \PO, \PPI\},\;
+(\tau_0, \tau_2): \{\PO\},\; (\tau_1, \tau_2): \{\DR\}\}$ form a
+valid quasimodel: (Q1)~$\checkmark$, (Q2)~$\checkmark$,
+(Q3)~$\checkmark$ (pairwise-distinct triples).
+
+However, $|\Tp(C_1)| = 128$.  Among these, types with~$D$ and
+$\forall R.\neg D$ for all~$R$ have empty DN with all other $D$-types.
+The elimination cascade:
+\begin{enumerate}[nosep]
+  \item (Q3) with all 128 types prunes DN entries: $(\tau_0, \PP,
+    \tau_1)$ is removed because there exists $\tau_3$ (a $D$-type
+    in $\Tp(C_1)$ with empty DN to $\tau_1$).
+  \item (Q2) kills types whose DN to some surviving type becomes
+    empty.  This removes 78 types in the first iteration.
+  \item (Q1) kills types that lost their witnesses: 50~more types
+    in the second iteration.
+  \item After 2 iterations: $T = \emptyset$, 0~types survive.
+\end{enumerate}
+
+\textbf{The fundamental issue.}\;
+For standard $\ALCI$ (no spatial constraints), type elimination uses
+only~(Q1).  (Q1) is anti-monotone: the greatest fixpoint correctly
+finds the largest self-sustaining type set.  For $\ALCIRCC{5}$,
+(Q3) adds a condition that is anti-monotone in the \emph{opposite}
+direction.  These opposing forces make the greatest-fixpoint approach
+incorrect.  A correct algorithm would need \emph{subset search}
+(find $S \subseteq \Tp(C_0)$ where (Q1)--(Q3) hold internally),
+which is computationally harder.
+\end{remark}
 
 \begin{theorem}[Lower bound]
 \label{thm:lower}
@@ -1884,8 +1981,13 @@ is a decision procedure for $\ALCIRCC{5}$ concept satisfiability:
   \item \textbf{Completeness}: satisfiability implies an open graph
     exists \textup{(}Theorem~\ref{thm:tab-completeness}\textup{)}.
 \end{itemize}
-The worst-case complexity is \EXPTIME, matching the type-elimination
-procedure of Section~\ref{sec:complexity}.
+The worst-case complexity is \EXPTIME.
+\emph{Note:} The tableau's correctness is independent of the
+(retracted) type-elimination algorithm; it relies on its own
+soundness and completeness theorems.  However, the soundness proof
+(Theorem~\ref{thm:tab-soundness}) still depends on the Henkin
+construction (Theorem~\ref{thm:main}) and inherits the extension gap
+(Remark~\ref{rem:extension-gap}).
 \end{corollary}
 
 \begin{remark}[Comparison with tree-based tableaux]
@@ -1998,8 +2100,10 @@ Consequently:
     the Henkin construction may fail.  Unlike RCC5, where full
     tractability provides an alternative route to solving the extension
     network, no such fallback is available for RCC8.
-  \item The type-elimination algorithm remains correct: it has no
-    false negatives (by soundness alone) and runs in \EXPTIME.
+  \item \textbf{The type-elimination algorithm is unsound for RCC8
+    as well}, since the same anti-monotonicity of~(Q3) applies
+    (see Remark~\ref{rem:type-elim-bug}).  The RCC8 algorithm
+    inherits the cascade-elimination bug from the RCC5 version.
   \item The tableau's soundness proof extracts a quasimodel from an
     open completion graph---a structure where all pair-types are
     realized by concrete node pairs and composition consistency~(CF)
@@ -2007,12 +2111,18 @@ Consequently:
     quasimodels.
 \end{itemize}
 
-\begin{theorem}
+\begin{theorem}[\textbf{RETRACTED}]
 \label{thm:rcc8}
-Concept satisfiability in $\ALCIRCC{8}$ is decidable in \EXPTIME.
+\sout{Concept satisfiability in $\ALCIRCC{8}$ is decidable in \EXPTIME.}
 \end{theorem}
 
-\begin{proof}
+\noindent
+\textbf{This theorem is wrong.}  It depends on the type-elimination
+algorithm (Theorem~\ref{thm:complexity}), which is unsound.  The same
+anti-monotonicity of~(Q3) that invalidates the RCC5 algorithm also
+invalidates the RCC8 version.
+
+\begin{proof}[\textbf{Original proof (incorrect)}]
 By the analysis above: the type-elimination algorithm is a correct
 \EXPTIME{} decision procedure for $\ALCIRCC{8}$.  The soundness
 direction uses the RCC8 composition table and is independent of
@@ -2033,10 +2143,15 @@ By reduction from the two-player corridor tiling game~\cite[Section
 6.4]{Wessel2003}.
 \end{proof}
 
-\begin{corollary}
+\begin{corollary}[\textbf{RETRACTED}]
 \label{cor:rcc8complete}
-Concept satisfiability in $\ALCIRCC{8}$ is \EXPTIME-complete.
+\sout{Concept satisfiability in $\ALCIRCC{8}$ is \EXPTIME-complete.}
 \end{corollary}
+
+\noindent
+\textbf{Retracted:} depends on Theorem~\ref{thm:rcc8}, which is wrong.
+The \EXPTIME{} lower bound (Theorem~\ref{thm:rcc8lower}) remains valid.
+Decidability of $\ALCIRCC{8}$ is \textbf{open}.
 
 %% ============================================================
 \section{Related Work}
@@ -2126,12 +2241,15 @@ satisfiability in $\ALCIRCC{}$ logics.
 \label{sec:discussion}
 
 \begin{enumerate}
-  \item \textbf{Exact complexity of $\ALCIRCC{5}$.}\; We have
-    established $\PSPACE \leq \ALCIRCC{5} \leq \EXPTIME$.  The
-    \PSPACE{} lower bound~\cite{Wessel2003} uses only the $\PO$-free
-    fragment.  We conjecture that the full logic is
-    \EXPTIME-complete, but closing this gap requires a new lower-bound
-    argument.
+  \item \textbf{Decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$.}\;
+    Both problems remain \textbf{open}.
+    The \PSPACE{} lower bound for $\ALCIRCC{5}$~\cite{Wessel2003}
+    and the \EXPTIME{} lower bound for $\ALCIRCC{8}$~\cite{Wessel2003}
+    remain valid.  An \EXPTIME{} upper bound was claimed in this paper
+    but depends on the type-elimination algorithm
+    (Theorem~\ref{thm:complexity}), which is unsound
+    (Remark~\ref{rem:type-elim-bug}).  Finding a correct decision
+    procedure is the primary open problem.
 
   \item \textbf{General characterization.}\; Which composition tables
     (beyond RCC5 and RCC8) yield decidable $\ALCIRCC{}$-style logics?
