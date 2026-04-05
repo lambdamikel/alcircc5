@@ -2244,3 +2244,42 @@ Updated `README.md` with full counterexample analysis and cascade mechanism.
 - `quasimodel_debug.py` — Model type extraction and quasimodel condition verification
 - `extension_gap_liftability.py` — Liftability analysis for extension networks
 - `spurious_quasimodel_test.py` — Spurious quasimodel detection
+
+---
+
+## Part 42: Tableau Soundness Gap Acknowledged
+
+### Michael Wessel
+
+> I don't understand why you are still saying that the Tableau Decision procedure is sound, complete, and terminating?
+
+### Claude
+
+*[Michael correctly identified that the paper's Section 7 tableau was still being presented as a working decision procedure despite its soundness proof depending on the Henkin construction, which has the extension gap.]*
+
+#### The Problem
+
+The paper (`decidability_ALCIRCC5.tex`) Section 7 presents a tableau calculus with **equality-anywhere blocking** (just label equality: L(x)=L(y)). This is different from the Tri-neighborhood tableau (`tableau_ALCIRCC5.tex`) whose termination was disproved in Parts 39-40. The Section 7 tableau:
+
+- **Terminates**: Yes — label-equality blocking bounds active nodes to 2^n (experimentally confirmed: 14/14 concepts terminate with label-only blocking)
+- **Completeness**: Yes — model-guided open branch exists
+- **Soundness**: **NOT ESTABLISHED** — the proof extracts a quasimodel from the open completion graph and invokes the Henkin construction (Theorem 5.1), which has the **extension gap** (Remark 5.4)
+
+The Henkin construction must solve a disjunctive constraint network at each step: edges among existing elements are fixed, edges to the new element have disjunctive domains DN(τ(eᵢ), τ'). Path-consistency enforcement may empty domains — and 1,911 counterexamples to pairwise-implies-global solvability were found computationally at m=3 (`extension_gap_test.py`).
+
+Without closing the extension gap, the tableau cannot be shown to be a sound decision procedure. Corollary 7.11 ("the tableau is a decision procedure") is therefore **not established**.
+
+#### Paper Updates
+
+Updated `decidability_ALCIRCC5.tex`:
+- Status box: added **Error 3** (tableau soundness depends on Henkin construction with extension gap); changed "two genuine errors" to "three genuine errors"
+- Abstract erratum: now mentions all three errors (type elimination unsound, Q3 proof gap, tableau soundness unproven)
+- Corollary 7.11: marked **NOT ESTABLISHED** with strikethrough; itemized what is/isn't proven (termination ✓, completeness ✓, soundness ✗)
+- "What fails" section: added "The tableau cannot be shown sound"
+
+Updated `README.md`:
+- Heading: changed to "neither procedure works"
+- CRITICAL paragraph: now covers both procedures (type elimination unsound, tableau soundness unproven)
+- Summary table: updated Quasimodel column gap and status
+- Soundness section: renamed to "Soundness (NOT ESTABLISHED)" with prominent caveat
+- Extension gap implications: corrected claim about Henkin construction succeeding

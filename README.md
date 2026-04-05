@@ -18,9 +18,15 @@ Both problems — ALCI\_RCC5 and ALCI\_RCC8 satisfiability — have been **open 
 
 ## Current Status of the Proof
 
-### Status (April 2026): Decidability still open — Type elimination algorithm disproved, tableau does not terminate
+### Status (April 2026): Decidability still open — neither procedure works
 
-**CRITICAL (April 2026): Type elimination algorithm is unsound.** Computational investigation reveals the quasimodel type elimination algorithm (Section 6 of the paper) **rejects satisfiable concepts**. The concept C₁ = ∃PO.D ⊓ ∃DR.(B ⊓ ∀PO.¬D) ⊓ ∀DR.¬D ⊓ ∀PP.¬D ⊓ ∀PPI.¬D has a valid 3-element model but the algorithm eliminates all 128 types to 0. Root cause: Q3's universal quantification over all types in T makes the condition **anti-monotone** — larger T makes Q3 harder — causing cascade elimination that destroys valid quasimodels embedded in the full type set. Additionally, the Q3 soundness proof has a bug: the case τ₂=τ₃ with a singleton-multiplicity type uses EQ ∉ DN. See ["type elimination algorithm is unsound"](#computational-discovery-the-type-elimination-algorithm-is-unsound-rejects-satisfiable-concepts) below for full details. The paper's Theorem 6.1 (EXPTIME decidability) is **wrong**.
+**CRITICAL (April 2026): Neither decision procedure in the paper works.** The paper presents two procedures — a type elimination algorithm (Section 6) and a tableau calculus (Section 7) — and claims both decide ALCI\_RCC5 satisfiability in EXPTIME. Both claims are wrong:
+
+1. **Type elimination algorithm (Section 6): UNSOUND.** The algorithm **rejects satisfiable concepts**. The concept C₁ = ∃PO.D ⊓ ∃DR.(B ⊓ ∀PO.¬D) ⊓ ∀DR.¬D ⊓ ∀PP.¬D ⊓ ∀PPI.¬D has a valid 3-element model but the algorithm eliminates all 128 types to 0. Root cause: Q3's universal quantification over all types in T makes the condition **anti-monotone** — larger T makes Q3 harder — causing cascade elimination that destroys valid quasimodels embedded in the full type set. Additionally, the Q3 soundness proof has a bug: the case τ₂=τ₃ with a singleton-multiplicity type uses EQ ∉ DN. See ["type elimination algorithm is unsound"](#computational-discovery-the-type-elimination-algorithm-is-unsound-rejects-satisfiable-concepts) below for full details. Theorem 6.1 is **retracted**.
+
+2. **Tableau calculus (Section 7): SOUNDNESS UNPROVEN.** The tableau terminates (equality-anywhere blocking bounds active nodes) and is complete (model-guided open branch exists). However, the **soundness proof fails**: it extracts a quasimodel from an open completion graph and invokes the Henkin construction (Theorem 5.1), which has the **extension gap** (Remark 5.4). The Henkin construction must solve a disjunctive constraint network at each step, and 1,911 counterexamples to pairwise-implies-global solvability were found computationally at m=3. The tableau is therefore **not a proven decision procedure**. Corollary 7.11 is **not established**.
+
+3. **RCC8 results: RETRACTED.** The RCC8 theorem and corollary (Section 8) depend on the type elimination algorithm and inherit its unsoundness.
 
 A [tableau calculus with Tri-neighborhood blocking](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) presents **partial progress** toward decidability of ALCI\_RCC5 (16 pages, third revision, two rounds of GPT-5.4 Pro review). The paper proves soundness and completeness using a three-part blocking condition: (i) same concept label, (ii) same abstract triangle-type set Tri(x)=Tri(y), and (iii) same Tri-neighborhood signature TNbr(x)=TNbr(y). However, **termination is false**: a [full implementation](https://github.com/lambdamikel/alcircc5/blob/master/triangle_calculus.py) demonstrates non-termination on the concept `A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A ⊓ ∃DR.B)` via the frontier-advancement mechanism described below. The blocking dilemma remains open. The result is **unverified** by human experts.
 
@@ -121,10 +127,10 @@ See the [full counterexample proof (PDF)](https://github.com/lambdamikel/alcircc
 | | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) | Triangle-type (Claude) | Two-tier quotient (Claude) | Tri-nbr tableau (Claude) | MSO encoding (Claude) |
 |---|---|---|---|---|---|---|---|---|---|
 | Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels | Triangle-filtered arc-consistency | Period descriptors + PP-kernels + full RCC5 tractability | Tri-neighborhood blocking + filtered unraveling | Reduce to Borel-MSO(R,<) via interval semantics |
-| Gap | **Algorithm unsound** (rejects satisfiable concepts); extension gap; Q3 soundness bug | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | **PO gap** (exact-relation extraction fails for PO) | See honest assessment (4 specific points) | MSO-definability of Dyck matching in ambient (R,<) |
-| Status | **Algorithm disproved** | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | **PO-coherent fragment decidable** | **Termination disproved** (soundness/completeness valid) | **Encoding complete, one technical gap** (HS route blocked) |
+| Gap | **Algorithm unsound** (rejects satisfiable concepts); **tableau soundness unproven** (extension gap in Henkin construction); Q3 soundness bug | FW(C,N) false | Theorem 5.5 false (DN\_safe too coarse) | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | **PO gap** (exact-relation extraction fails for PO) | See honest assessment (4 specific points) | MSO-definability of Dyck matching in ambient (R,<) |
+| Status | **Algorithm disproved; tableau not established** | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | **PO-coherent fragment decidable** | **Termination disproved** (soundness/completeness valid) | **Encoding complete, one technical gap** (HS route blocked) |
 
-The first approach (quasimodel) is now **disproved**: the type elimination algorithm rejects satisfiable concepts due to Q2/Q3 cascade elimination (see "type elimination algorithm is unsound" below). The next four approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. The eighth approach (Tri-neighborhood tableau) proves soundness and completeness of Tri-neighborhood blocking, but **termination is disproved**: a full implementation shows unbounded node creation via frontier advancement. The blocking dilemma (termination vs. sound unraveling) remains open. The ninth approach (MSO encoding) takes a fundamentally different direction: instead of fighting complete-graph combinatorics, reduce ALCI\_RCC5 satisfiability to Shelah's decidable MSO theory of (R, <) via the interval semantics of RCC5 — composition consistency becomes free.
+The first approach (quasimodel) is now **disproved**: the type elimination algorithm rejects satisfiable concepts due to Q2/Q3 cascade elimination, and the paper's Section 7 tableau has **unproven soundness** (its soundness proof goes through the Henkin construction, which has the extension gap — 1,911 counterexamples at m=3). The next four approaches fail at global edge assignment for complete-graph models. The sixth (triangle-type) yields a conditional result. The seventh (two-tier quotient) **proves decidability of the PO-coherent fragment** by combining period descriptors for PP-chain finitization with the full tractability of RCC5 (Renz 1999) for soundness. The eighth approach (Tri-neighborhood tableau) proves soundness and completeness of Tri-neighborhood blocking, but **termination is disproved**: a full implementation shows unbounded node creation via frontier advancement. The blocking dilemma (termination vs. sound unraveling) remains open. The ninth approach (MSO encoding) takes a fundamentally different direction: instead of fighting complete-graph combinatorics, reduce ALCI\_RCC5 satisfiability to Shelah's decidable MSO theory of (R, <) via the interval semantics of RCC5 — composition consistency becomes free.
 
 ### Sixth approach: triangle-type blocking — conditional decidability
 
@@ -765,9 +771,11 @@ Every sequence of rule applications terminates. The final completion graph has a
 - Each active node has at most |cl(C\_0)| existential demands, each generating at most one witness.
 - Total nodes: at most 2^{|cl(C\_0)|} * |cl(C\_0)| = 2^{O(|C\_0|)}.
 
-### Soundness
+### Soundness (NOT ESTABLISHED)
 
-**Theorem**: If the tableau produces an open completion graph for C\_0, then C\_0 is satisfiable.
+**Claimed theorem**: If the tableau produces an open completion graph for C\_0, then C\_0 is satisfiable.
+
+**Status: NOT PROVEN.** The proof sketch below extracts a quasimodel and invokes the Henkin construction, which has the **extension gap** (see below). The quasimodel extraction is correct, but converting the quasimodel to an actual model requires solving a disjunctive constraint network at each Henkin step, and global solvability is not guaranteed (1,911 counterexamples at m=3).
 
 **Proof sketch**: Extract a quasimodel from the open completion graph:
 - T = {L(x) | x active}
@@ -959,7 +967,7 @@ A correct algorithm would need **subset search** (find S ⊆ Tp(C₀) where Q1+Q
 The extension gap results (prior to the type elimination unsoundness discovery) showed:
 - The characterization theorem is established as an **if**: every satisfiable concept has a quasimodel (soundness — modulo the Q3 bug for singleton-multiplicity types).
 - The **only-if** direction (every quasimodel gives a model) holds for model-derived quasimodels but remains open for abstract quasimodels.
-- The tableau's soundness proof extracts a quasimodel from a completion graph — a "model-like" structure where all pair-types are realized — and the Henkin construction succeeds for such quasimodels.
+- The tableau's soundness proof extracts a quasimodel from a completion graph — a "model-like" structure where all pair-types are realized — but the subsequent Henkin construction has the extension gap (global solvability of the disjunctive constraint network is not guaranteed).
 
 #### Possible paths forward
 
