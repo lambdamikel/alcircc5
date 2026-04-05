@@ -1926,3 +1926,49 @@ The situation is structurally parallel: L_RCC5(RS^∃) is undecidable but doesn'
 - New `LRCC8_vs_ALCIRCC8.tex` / `.pdf`: Full paper (11 pages), tenth approach/analysis
 - Updated `README.md` with new file listing, new undecidability table row, and L_RCC8 → ALCI_RCC8 non-transfer paragraph
 - Updated `CONVERSATION.md` with Part 36
+
+## Part 37: Computational Search for Blocking/Unblocking Oscillation (April 2026)
+
+### Context
+
+The Tri-neighborhood tableau's termination is a conjecture, not a theorem. The specific gap is the possibility of blocking/unblocking cascades: creating a new node changes Tri values, which can unblock previously blocked nodes, which create more nodes, etc. Michael asked whether a concrete oscillation example exists.
+
+### Analysis of the oscillation mechanism
+
+The cascade requires:
+1. Node y blocks node x (matching signatures: LL, Tri, TNbr)
+2. *After* blocking, something changes y's Tri (a new node forms a triangle with y)
+3. x gets unblocked, creates new nodes
+4. Those new nodes change other Tri values, triggering further unblockings
+
+Illustrated with `C₀ = ∃PP.A ⊓ ∀PP.(A ⊓ ∃PP.A ⊓ ∃DR.B)`: PP-chain of A-nodes, each with a DR-neighbor of type B. When a₂ is created as PP-successor of a₁, new triangles (r, a₁, a₂) form, growing Tri(a₁). If a₁' was blocked by a₁, the Tri growth breaks the match, unblocking a₁'.
+
+### Computational search
+
+Wrote two scripts:
+- `tableau_oscillation_search.py`: Full tableau simulator with Tri/TNbr blocking. Tests 14 hand-crafted concepts: PP-chains with DR/PO/PP witnesses, nested existentials, cross-referencing witnesses, backward ∀PPI propagation, PO-incoherent counterexample, mutual DR demands, three-role concepts, etc.
+- `tableau_oscillation_random.py`: Random concept generator with structured chain concepts, cross-witness concepts, and mutation of best candidates.
+
+### Result: zero oscillation found
+
+Across all tested concepts:
+- **Blocking occurs frequently** — downstream chain nodes get blocked by earlier ones with matching signatures
+- **Unblocking never occurs** — zero unblocking events in every test
+
+### Why oscillation doesn't manifest
+
+The reason is a **timing property of eager expansion**: the exists-rule creates witnesses for a node *before* downstream nodes get blocked by it. By the time n₆ gets blocked by n₅, n₅ already has all its witnesses — its Tri and TNbr are at their final values. For oscillation, the blocker would need an unsatisfied demand that fires *after* blocking occurs, but eager expansion prevents this.
+
+### Implications
+
+This is evidence **for** termination: the cascade mechanism may be an artifact of the proof gap rather than a real phenomenon. However, this is not a proof:
+- Only one expansion order tested (eager, first-demand-first)
+- Only one edge-assignment strategy (first valid assignment)
+- Finitely many concepts tested from an infinite space
+- A different expansion order might exhibit different behavior
+
+### Files produced
+- New `tableau_oscillation_search.py`: Core tableau simulator with 14 test concepts
+- New `tableau_oscillation_random.py`: Random/mutation search
+- Updated `README.md` with computational search results and analysis
+- Updated `CONVERSATION.md` with Part 37
