@@ -2153,3 +2153,94 @@ This confirms the blocking dilemma is specifically about the Tri component, not 
 
 ### Files created
 - `double_blocking_test.py` — Full implementation and experimental comparison
+
+---
+
+## Part 41: Type Elimination Algorithm Disproved
+
+### Michael Wessel
+
+> [Continuation from previous session investigating the extension gap and type elimination algorithm]
+
+### Claude
+
+*[Ran computational investigation of the type elimination algorithm from Section 6 of the paper]*
+
+#### The Counterexample
+
+The concept C₁ = ∃PO.D ⊓ ∃DR.(B ⊓ ∀PO.¬D) ⊓ ∀DR.¬D ⊓ ∀PP.¬D ⊓ ∀PPI.¬D is **satisfiable** — it has a 3-element model:
+
+| Element | Atoms | Role to e₁ | Role to e₂ |
+|---------|-------|-----------|-----------|
+| e₀ (root) | ∅ | DR | PO |
+| e₁ | {B} | — | DR |
+| e₂ | {D} | DR | — |
+
+Composition consistency: DR(e₀,e₁) ∘ DR(e₁,e₂) ∋ PO = R(e₀,e₂) ✓ (all 6 triples verified).
+
+#### Algorithm Result: UNSOUND
+
+Running the type elimination algorithm on C₁:
+- **128 valid Hintikka types** enumerated (from 4096 candidates, 12 free decision pairs)
+- **Iteration 1**: Q3 enforcement prunes DN entries → Q2 eliminates 78 types (empty DN with some surviving type)
+- **Iteration 2**: Q1 eliminates 50 types (lost witnesses due to smaller T and pruned DN)
+- **Final**: **0 types survive** — algorithm rejects a satisfiable concept
+
+#### Root Cause: Anti-Monotonicity Conflict
+
+The type elimination algorithm uses a **greatest-fixpoint** approach: start with all types T = Tp(C₀) and iteratively remove types that violate Q1–Q3. This works for standard ALCI (where only Q1 applies, which is anti-monotone downward — smaller T only makes Q1 harder).
+
+For ALCI_RCC5, condition Q3 is **anti-monotone in the opposite direction**: larger T makes Q3 harder to satisfy. Q3 universally quantifies over ALL τ₃ ∈ T — types outside the model's quasimodel have empty DN with model types, causing Q3 to prune DN entries that are valid within the model's quasimodel subset.
+
+The cascade:
+1. **Q3** (with full T=128 types): prunes DN entries because "alien" types τ₃ ∉ T* have DN(τ₂,τ₃) = ∅
+2. **Q2** (DN too sparse): eliminates types that now have empty DN with some remaining type
+3. **Q1** (lost witnesses): eliminates types whose existential witnesses were removed
+4. Repeat until T = ∅
+
+#### Verification: Model Types Form a Valid Quasimodel
+
+The 3 types extracted from the model ({τ₀, τ₁, τ₂}) satisfy Q1+Q2+Q3 when tested alone:
+
+| | τ₀ | τ₁ | τ₂ |
+|---|---|---|---|
+| **DN with τ₀** | {DR,PO,PP,PPI} | {DR,PO,PPI} | {PO} |
+| **DN with τ₁** | {DR,PO,PP} | {DR,PO,PP,PPI} | {DR} |
+| **DN with τ₂** | {PO} | {DR} | {DR,PO,PP,PPI} |
+
+- Q1: All existential demands have witnesses ✓
+- Q2: All pairwise DN non-empty ✓
+- Q3: All algebraic closure triples satisfied ✓
+
+The valid quasimodel **exists as a subset** of Tp(C₀), but the greatest-fixpoint algorithm **cannot find it** because it starts too large and Q3 destroys the evidence before Q1 can use it.
+
+#### Additional Bug: Q3 Soundness Proof
+
+The soundness proof for Q3 (Section 5) handles the case τ₂ = τ₃ by setting R₂₃ = EQ. But DN is defined over NR \ {EQ}, so EQ ∉ DN(τ₂, τ₂). The proof silently uses EQ in a domain that excludes it.
+
+#### Implications
+
+- **Theorem 6.1 (EXPTIME decidability of ALCI_RCC5)**: WRONG — retracted
+- **Theorem 8.1 (EXPTIME decidability of ALCI_RCC8)**: WRONG — retracted (depends on same algorithm)
+- **Corollary 8.3 (ALCI_RCC8 EXPTIME-complete)**: WRONG — retracted
+- A correct algorithm would need to **search for subsets** S ⊆ Tp(C₀) satisfying Q1+Q2+Q3 internally — computationally harder than greatest-fixpoint, unlikely EXPTIME
+- The decidability of both ALCI_RCC5 and ALCI_RCC8 remains **genuinely open**
+
+#### Paper Updates
+
+Updated `decidability_ALCIRCC5.tex`:
+- Status box: rewritten with Error 1 (algorithm unsound) and Error 2 (Q3 proof gap)
+- Abstract: added erratum paragraph
+- Theorem 6.1: marked RETRACTED with strikethrough, added detailed Remark 6.2
+- Theorem 8.1 and Corollary 8.3: marked RETRACTED
+- Discussion: rewritten to state both problems are open
+- Tableau corollary: clarified independence from type elimination
+
+Updated `README.md` with full counterexample analysis and cascade mechanism.
+
+### Files created
+- `extension_gap_concrete.py` — Type elimination algorithm implementation with counterexample verification
+- `extension_gap_test.py` — Star extension pairwise-vs-global satisfiability test (1,911 counterexamples at m=3)
+- `quasimodel_debug.py` — Model type extraction and quasimodel condition verification
+- `extension_gap_liftability.py` — Liftability analysis for extension networks
+- `spurious_quasimodel_test.py` — Spurious quasimodel detection
