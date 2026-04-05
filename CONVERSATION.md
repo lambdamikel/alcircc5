@@ -1972,3 +1972,91 @@ This is evidence **for** termination: the cascade mechanism may be an artifact o
 - New `tableau_oscillation_random.py`: Random/mutation search
 - Updated `README.md` with computational search results and analysis
 - Updated `CONVERSATION.md` with Part 37
+
+---
+
+## Part 38: Non-termination of Tri-neighborhood tableau — confirmed
+
+### The request
+Michael asked Claude to implement a full triangle calculus with blocking, caching, and run tests to see if non-termination occurs in practice.
+
+### The implementation
+
+A [full triangle calculus implementation](triangle_calculus.py) was written with:
+- Complete-graph completion structures (V, LL, EE, ≺) faithful to the paper
+- Fischer-Ladner closure, all expansion rules (⊓, ⊔, ∀, ∃)
+- Edge assignment via arc-consistency + backtracking (composition consistency only — no Safe filtering at creation time, matching the paper's ∃-rule which only requires CF)
+- Tri(x) and TNbr(x) computation with caching
+- Tri-neighborhood blocking: LL(x)=LL(y) ∧ Tri(x)=Tri(y) ∧ TNbr(x)=TNbr(y)
+- Clash detection and non-termination monitoring
+- 20 hand-crafted test concepts + 200 random concepts
+
+### Critical bug fix: Safe relation filtering
+
+The initial implementation enforced `Safe(τ₁, τ₂)` during edge assignment, which prevented most edge assignments and made all concepts terminate trivially with 2-3 nodes. This was incorrect: the paper's ∃-rule (Section 3.5) only requires **composition consistency** (CF), not Safe. Safe is a derived model property maintained by the ∀-rule, not a constraint on the ∃-rule. Removing the Safe filter fixed the implementation.
+
+### The counterexample
+
+The simplest non-terminating concept:
+
+```
+C₀ = A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A ⊓ ∃DR.B)
+```
+
+This forces an infinite PP-chain where each chain node has a DR-witness of type B. The Tri-neighborhood tableau does **not terminate** on this concept.
+
+### Non-termination mechanism (NOT oscillation)
+
+The non-termination is **not** blocking/unblocking oscillation. Zero unblocking events occur. Instead, it is **unbounded frontier advancement with bounded active nodes**:
+
+1. The tableau builds a PP-chain: n₀ →PP n₁ →PP n₂ →PP ... with one DR-witness
+2. Edge assignment gives each chain node: PPI edges to all predecessors, PP edges to all successors, DR to witness
+3. **Interior nodes** (e.g., n₅) have both PP-successors and PPI-predecessors → |Tri| = 16
+4. **Frontier node** (newest) has only PPI-predecessors (no PP-successors yet) → |Tri| = 8
+5. Since PP ≠ PPI, the 8 missing triangle types all involve PP edges
+6. Tri(frontier) ⊂ Tri(interior) → **frontier is never blocked**
+7. Frontier always has unsatisfied ∃PP.A → creates new node → pushes frontier → repeat
+
+With 100 nodes: active count stays at 9 (n0-n5 initial + 3 frontier), but creation is unbounded.
+
+### Tri content analysis
+
+Interior (n₅) has 16 triangle types = 8 involving PP-successors + 8 involving PPI-predecessors.
+Frontier (n₉₉) has 8 triangle types = only PPI-predecessor triangles.
+
+The 8 types in interior but not frontier:
+```
+(τ_5, PP, τ_5, PP, τ_5, PP)    — two PP-successors with PP between them
+(τ_5, PP, τ_5, PPI, τ_5, PP)   — PP-successor and PPI-predecessor
+(τ_5, DR, τ_2, DR, τ_5, PP)    — DR-witness and PP-successor
+... etc.
+```
+
+All involve PP as the third edge component, which the frontier node lacks.
+
+### Scope of non-termination
+
+Testing 20 hand-crafted concepts: **18 out of 20 show non-termination** (all concepts with ∀-propagation forcing infinite chains). Only concepts satisfiable by finite models (PO-chain with 3 nodes, multi-witness with 5 nodes) terminate.
+
+### The blocking dilemma — fully confirmed
+
+| Blocking criterion | Terminates? | Sound? |
+|---|---|---|
+| Type-equality (LL only) | ✓ (4 nodes) | ? (novel triangles risk) |
+| LL + Tri | ✗ (unbounded) | ✓ |
+| LL + Tri + TNbr | ✗ (unbounded) | ✓ |
+
+The root cause is structural: permanent edge assignment creates PP/PPI asymmetry between frontier and interior nodes. Stronger blocking conditions make this worse (more distinction = less blocking = more non-termination).
+
+### Implications
+
+1. The termination conjecture in the tableau paper is **false** for the Tri-neighborhood criterion
+2. The non-termination is NOT oscillation but frontier advancement — a different mechanism than what the paper analyzed
+3. Resolving the dilemma requires fundamentally different blocking (e.g., lazy blocking that defers Tri comparison until the frontier gets successors, or an entirely different approach to decidability)
+4. The decidability of ALCI_RCC5 remains open
+
+### Files produced
+- New `triangle_calculus.py`: Full triangle calculus implementation (500+ lines)
+- New `triangle_nonterm.py`: Clean non-termination demonstration
+- Updated `README.md` with non-termination finding and blocking dilemma table
+- Updated `CONVERSATION.md` with Part 38

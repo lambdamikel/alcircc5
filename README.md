@@ -37,11 +37,39 @@ new node created → Tri(x) grows → blocker mismatch →
 3. **Each node fires (∃) at most n times total** — demands once satisfied stay satisfied (permanent edges)
 4. **Each node's signature changes boundedly many times** — combining label changes and Tri/TNbr growth
 
-**What is NOT proved (the global gap):** The local per-node bounds don't compose into a global finiteness argument. The total number of nodes N is bounded by a function of N itself (each unblocking can create new nodes whose Tri-changes trigger further unblockings). The missing ingredient is either a **well-founded measure** that strictly decreases with every expansion step, or a **global bound** on branch length in the creation tree. No concrete non-terminating example is known — the concern is structural, not demonstrated.
+**What is NOT proved (the global gap):** The local per-node bounds don't compose into a global finiteness argument. The total number of nodes N is bounded by a function of N itself (each unblocking can create new nodes whose Tri-changes trigger further unblockings). The missing ingredient is either a **well-founded measure** that strictly decreases with every expansion step, or a **global bound** on branch length in the creation tree.
 
 **Computational search for oscillation: none found.** A [tableau simulator](https://github.com/lambdamikel/alcircc5/blob/master/tableau_oscillation_search.py) implements the full Tri-neighborhood blocking procedure and tests 14+ hand-crafted concepts designed to trigger oscillation, including PP-chains with DR/PO/PP witnesses, nested existential demands, cross-referencing witnesses, backward ∀PPI propagation, and the PO-incoherent counterexample. A companion [random search script](https://github.com/lambdamikel/alcircc5/blob/master/tableau_oscillation_random.py) generates and mutates random concepts. **Result: zero unblocking events across all tests.** Blocking occurs frequently (downstream chain nodes blocked by earlier ones), but no blocked node is ever unblocked.
 
 **Why oscillation doesn't manifest in practice.** The reason is a **timing property of eager expansion**: the exists-rule creates witnesses for a node *before* downstream nodes get blocked by it. By the time node n₆ gets blocked by n₅, n₅ already has all its DR/PO witnesses — its Tri and TNbr are at their final values, and nothing later changes n₅'s signature. For oscillation to occur, the blocker would need an unsatisfied demand that fires *after* the blocking event, but eager expansion prevents this. This observation is evidence **for** termination — the cascade mechanism may be an artifact of the proof gap rather than a real phenomenon. However, it does not constitute a proof: (a) the simulator uses one specific expansion order, not all possible orders; (b) different edge-assignment choices might matter; (c) only finitely many concepts were tested.
+
+**CRITICAL UPDATE (April 2026): Non-termination confirmed — the Tri-neighborhood blocking dilemma.** A [full triangle calculus implementation](https://github.com/lambdamikel/alcircc5/blob/master/triangle_calculus.py) with proper composition-consistent edge assignment (no Safe filtering at creation time — Safe is a derived model property, not a constraint on the ∃-rule) reveals **genuine non-termination** of the Tri-neighborhood tableau. The simplest counterexample is:
+
+```
+C₀ = A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A ⊓ ∃DR.B)
+```
+
+This concept forces an infinite PP-chain where each node has a DR-witness. The non-termination mechanism is **not oscillation** (zero unblocking events) but **unbounded frontier advancement**:
+
+1. The tableau builds a PP-chain: n₀ →PP n₁ →PP n₂ →PP ... with one DR-witness n₃
+2. Edge assignment: each chain node gets PPI edges to all predecessors, PP edges to all successors, DR to the witness
+3. **Interior nodes** (e.g., n₅) have both PP-successors and PPI-predecessors → |Tri| = 16
+4. **Frontier node** (newest, e.g., n₉₉) has only PPI-predecessors (no PP-successors yet) → |Tri| = 8
+5. Since PP ≠ PPI, the triangle types differ. The 8 missing types all involve PP-edge triangles
+6. Tri(frontier) ⊂ Tri(interior), so the **frontier is never blocked**
+7. The frontier always has unsatisfied ∃PP.A → creates new node → pushes frontier forward → repeat
+
+Active node count stays bounded (≈9), but total node creation is unbounded. This is exactly the gap identified in Section 4 of the tableau paper. Testing across 20 hand-crafted concepts: **18 out of 20 show non-termination** (all concepts requiring infinite chains via ∀-propagation). See [`triangle_nonterm.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_nonterm.py) for the analysis.
+
+**The blocking dilemma is now fully demonstrated:**
+
+| Blocking criterion | Terminates? | Sound? |
+|---|---|---|
+| Type-equality (LL only) | ✓ Yes (4 nodes) | ? Potentially unsound (novel triangles during unraveling) |
+| LL + Tri | ✗ No (unbounded) | ✓ Sound |
+| LL + Tri + TNbr (paper's criterion) | ✗ No (unbounded) | ✓ Sound |
+
+The root cause is structural: in complete-graph tableaux with permanent edge assignment, newly created nodes have PPI edges to all predecessors but no PP edges to successors (which don't exist yet). This PP/PPI asymmetry in the frontier node's Tri is inherent to the expansion strategy and cannot be resolved by strengthening the blocking condition — stronger blocking makes termination *harder*, not easier.
 
 Previously, a [fourth-revision two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) proved **decidability of the PO-coherent fragment** (12 pages, three rounds of GPT-5.4 Pro review). The remaining PO gap — PO has neither backward forcing (comp(PP,PO)={DR,PO,PP}) nor forward absorption (comp(PPI,PO)={PO,PPI}) — is now addressed by the Tri-neighborhood tableau.
 
