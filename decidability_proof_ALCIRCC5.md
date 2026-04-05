@@ -1,8 +1,12 @@
-# On the Decidability of ALCI_RCC5
+# ⚠️ RETRACTED — On the Decidability of ALCI_RCC5
 
-## Summary of Result
+> **RETRACTED (April 2026).** This document is an early proof sketch that preceded the formal LaTeX papers. **The decidability claim is not established.** The proof relies on a quasimodel method with type elimination, which has since been shown to be **unsound**: the anti-monotonicity property (Q3) does not hold, causing cascade elimination of satisfiable types. The Henkin construction used for soundness also has an **extension gap** (the disjunctive RCC5 CSP is not necessarily path-consistent). This document is retained only as a historical record of the research process. See `decidability_ALCIRCC5.tex` for the current (revised, with errors marked) state of the work.
 
-**Theorem.** Concept satisfiability in ALCI_RCC5 is **decidable**.
+---
+
+## ~~Summary of Result~~ (RETRACTED)
+
+~~**Theorem.** Concept satisfiability in ALCI_RCC5 is **decidable**.~~
 
 The proof proceeds via a *quasimodel method* combined with the
 *patchwork property* (amalgamation property) of the RCC5 constraint calculus.
