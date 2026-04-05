@@ -22,6 +22,23 @@ Both problems — ALCI\_RCC5 and ALCI\_RCC8 satisfiability — have been **open 
 
 A [tableau calculus with Tri-neighborhood blocking](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) presents **substantial partial progress** toward decidability of ALCI\_RCC5 (15 pages, fifth revision, two rounds of GPT-5.4 Pro review). The paper conjectures termination and proves soundness and completeness using a three-part blocking condition: (i) same concept label, (ii) same abstract triangle-type set Tri(x)=Tri(y), and (iii) same Tri-neighborhood signature TNbr(x)=TNbr(y). The fifth revision addresses GPT's second review: fixes the empty initial-domain defect for same-map pairs (via Safe(τ,τ) extension), downgrades termination from theorem to conjecture (global finiteness argument open), and presents the paper honestly as partial progress. Four specific technical points are flagged (see "Eighth approach" below). The result is **unverified** by human experts.
 
+**The termination gap: blocking/unblocking oscillation.** The paper proves soundness and completeness, but termination remains a conjecture. The specific concern is a **blocking/unblocking cascade**: when a new node is created, it forms triangles with existing nodes, causing Tri(x) to grow for some node x. If x was a blocker, the mismatch unblocks a previously blocked node y. Node y then fires its unsatisfied demands, creating further new nodes, which form new triangles, which change more Tri values, potentially unblocking more nodes:
+
+```
+new node created → Tri(x) grows → blocker mismatch →
+  node y unblocked → y creates new nodes → Tri(z) grows → ...
+```
+
+**Concrete illustration.** Consider `C₀ = ∃PP.A ⊓ ∀PP.(A ⊓ ∃PP.A ⊓ ∃DR.B)`, which forces an infinite PP-chain where every node has type A and a DR-neighbor of type B. When node a₂ (PP-successor of a₁) is created, the exists-rule assigns edges to ALL existing nodes, forming new triangles (r, a₁, a₂), (a₁, a₂, b₁), etc. This grows Tri(a₁). If some node a₁' was blocked by a₁ (same label, same Tri, same TNbr at blocking time), the Tri growth breaks the match — a₁' gets unblocked, fires its own demands, creates new nodes, which change Tri values of other nodes, potentially triggering further unblockings.
+
+**What IS proved (local per-node bounds):**
+1. **Labels grow monotonically** — at most n changes per node (irreversible)
+2. **Tri(x) grows monotonically** in the label-stable regime — bounded by |T\_max|
+3. **Each node fires (∃) at most n times total** — demands once satisfied stay satisfied (permanent edges)
+4. **Each node's signature changes boundedly many times** — combining label changes and Tri/TNbr growth
+
+**What is NOT proved (the global gap):** The local per-node bounds don't compose into a global finiteness argument. The total number of nodes N is bounded by a function of N itself (each unblocking can create new nodes whose Tri-changes trigger further unblockings). The missing ingredient is either a **well-founded measure** that strictly decreases with every expansion step, or a **global bound** on branch length in the creation tree. No concrete non-terminating example is known — the concern is structural, not demonstrated.
+
 Previously, a [fourth-revision two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) proved **decidability of the PO-coherent fragment** (12 pages, three rounds of GPT-5.4 Pro review). The remaining PO gap — PO has neither backward forcing (comp(PP,PO)={DR,PO,PP}) nor forward absorption (comp(PPI,PO)={PO,PPI}) — is now addressed by the Tri-neighborhood tableau.
 
 **Key finding (April 2026): abstract triangle-type sets stabilize.** Computational verification ([`triangle_type_saturation_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py)) shows that abstract triangle-type sets — tuples (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) using only Hintikka types and RCC5 relations, no node identities — **stabilize after a bounded transient** for the PO-incoherent counterexample. All three node types (τ\_A, τ\_B, σ) reach identical abstract triangle-type sets by k=2, verified on a 24-element chain. This motivates triangle-type-set blocking: blocking when abstract triangle-type sets match achieves both termination AND correct unraveling, resolving the blocking dilemma. See "Resolution: abstract triangle-type sets DO stabilize" below for details.
