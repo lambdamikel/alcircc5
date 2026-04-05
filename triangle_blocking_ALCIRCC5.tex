@@ -98,16 +98,28 @@ false---Theorem~5.5 of that paper was refuted by a concrete
 counterexample~\cite{GPTReview}.  The present paper replaces the
 coarse endpoint-type domains with finer \emph{triangle-type-filtered
 domains}, which resolve the known counterexample and all
-computationally tested cases.}}
+computationally tested cases.
+
+\medskip\noindent\textbf{Note on companion paper status.}\;
+The companion paper~\cite{CompanionPaper} has itself undergone
+significant revision: its type-elimination algorithm is
+\textbf{retracted} (unsound due to Q3 anti-monotonicity failure),
+and the tableau's own soundness proof is \textbf{unproven}
+(depends on the same Henkin construction with the extension gap).
+The conditional result in this paper depends only on the
+tableau's \emph{termination and completeness}, which remain
+established.}}
 \end{center}
 
 \bigskip
 
 %% ============================================================
 \begin{abstract}
-The companion paper~\cite{CompanionPaper} presented two decision
-procedures for concept satisfiability in $\ALCIRCC{5}$ but left
-the soundness direction (open branch $\Rightarrow$ model) incomplete.
+The companion paper~\cite{CompanionPaper} presented two candidate
+decision procedures for concept satisfiability in $\ALCIRCC{5}$.
+The type-elimination algorithm has since been retracted (unsound),
+and the tableau's soundness direction (open branch $\Rightarrow$
+model) remains incomplete due to the extension gap.
 The subsequent paper~\cite{ExtensionGapPaper} attempted to close this
 \emph{extension gap} using endpoint-type domains, but its central
 claim (path-consistency of the disjunctive constraint network) was
@@ -156,12 +168,16 @@ Wessel~\cite{Wessel2003}, who established \PSPACE-hardness.
 
 The companion paper~\cite{CompanionPaper} introduced two candidate
 decision procedures---a type-elimination algorithm and a tableau
-calculus with equality anywhere-blocking---and proved termination and
-completeness (satisfiable $\Rightarrow$ open branch) for both.
-However, the \emph{soundness} direction (open branch $\Rightarrow$
-satisfiable) contained a gap: it relied on a Henkin construction
-whose CSP step may fail because the disjunctive RCC5 network is not
-necessarily path-consistent.  This is the \emph{extension gap}.
+calculus with equality anywhere-blocking.  The type-elimination
+algorithm has since been \textbf{retracted}: the anti-monotonicity
+property (Q3) on which its soundness depended does not hold, leading
+to cascade elimination of satisfiable types.  For the tableau
+calculus, termination and completeness (satisfiable $\Rightarrow$
+open branch) are established, but the \emph{soundness} direction
+(open branch $\Rightarrow$ satisfiable) contained a gap: it relied
+on a Henkin construction whose CSP step may fail because the
+disjunctive RCC5 network is not necessarily path-consistent.  This
+is the \emph{extension gap}.
 
 A subsequent paper~\cite{ExtensionGapPaper} attempted to close this
 gap by assigning cross-subtree edges via \emph{endpoint-type domains}:
@@ -202,9 +218,11 @@ $\DN_{\mathsf{safe}}$ failure and proposes a refined construction:
     (Section~\ref{sec:decidability}).  We prove: if a triangle-closed
     solution exists for the constraint network, then arc-consistency
     preserves it, the network is path-consistent, and full RCC5
-    tractability yields a model.  Combined with termination and
-    completeness from~\cite{CompanionPaper}, this gives decidability
-    conditional on the \emph{Extension Solvability Conjecture}.
+    tractability yields a model.  Combined with the tableau's
+    termination and completeness from~\cite{CompanionPaper} (which
+    remain established despite that paper's other retractions),
+    this gives decidability conditional on the \emph{Extension
+    Solvability Conjecture}.
 
   \item \textbf{Computational evidence}
     (Section~\ref{sec:computation}).  Exhaustive testing on 68,276
@@ -298,12 +316,17 @@ A completion graph is \emph{open} if it is saturated (no rule
 applies) and clash-free (no $\{A, \neg A\} \subseteq \mathcal{L}(x)$
 and (CF) holds everywhere).
 
-\begin{theorem}[\cite{CompanionPaper}]
+\begin{theorem}[\cite{CompanionPaper}, Section~7 tableau]
 \label{thm:term-complete}
 The tableau terminates in $2^{O(|C_0|)}$ steps.  If $C_0$ is
 satisfiable, some sequence of nondeterministic choices yields an open
 completion graph \textup{(}completeness\textup{)}.
 \end{theorem}
+
+\noindent\textit{Note.}\; This theorem concerns the Section~7 tableau
+of~\cite{CompanionPaper}.  That paper's type-elimination algorithm
+has been retracted (unsound), but the tableau's termination and
+completeness remain established independently.
 
 
 %% ============================================================
@@ -802,10 +825,14 @@ satisfiability in $\ALCIRCC{5}$ is decidable in \EXPTIME.
 \begin{proof}
 Combine:
 \begin{itemize}[nosep]
-  \item Termination and completeness
+  \item Termination and completeness of the Section~7 tableau
     (Theorem~\ref{thm:term-complete},
-    from~\cite{CompanionPaper}).
-  \item Conditional soundness (Theorem~\ref{thm:soundness}).
+    from~\cite{CompanionPaper}---these properties are independent
+    of that paper's retracted type-elimination algorithm and its
+    unproven tableau soundness).
+  \item Conditional soundness (Theorem~\ref{thm:soundness}),
+    which provides an \emph{alternative} soundness argument
+    replacing the companion paper's Henkin-based proof.
   \item The conjecture supplies the hypothesis of
     Theorem~\ref{thm:soundness}. \qedhere
 \end{itemize}
@@ -1107,6 +1134,9 @@ Claude.
   {$\mathcal{ALCI}_{\mathit{RCC8}}$}: Quasimodels meet the patchwork
   property.
 \newblock Discussion paper, March 2026 (revised).
+\newblock \emph{Note}: type-elimination algorithm retracted (unsound);
+  tableau soundness unproven (extension gap).  Tableau termination and
+  completeness remain established.
 
 \bibitem{ExtensionGapPaper}
 Claude.
