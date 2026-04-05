@@ -92,8 +92,7 @@ scrutiny, corrections, and feedback.}}
 \textbf{Status of the proof (April 2026, second revision).}\;
 The decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$ is
 \textbf{not established} by this paper.  The proof contains
-\textbf{two genuine errors} and the \emph{extension gap}
-(Remark~\ref{rem:extension-gap}):
+\textbf{three genuine errors}:
 
 \smallskip
 \textbf{Error 1: The type elimination algorithm is unsound
@@ -121,19 +120,35 @@ $\EQ \notin \mathsf{DN}(\tau_2, \tau_3)$.  The proof silently
 uses $\EQ$ in a domain that excludes it.
 
 \smallskip
+\textbf{Error 3: Tableau soundness depends on the Henkin
+construction (Corollary~\ref{cor:tableau-decides}).}\;
+The tableau calculus (Section~\ref{sec:tableau}) terminates and is
+complete, but the soundness proof
+(Theorem~\ref{thm:tab-soundness}) extracts a quasimodel from an
+open completion graph and invokes the Henkin construction
+(Theorem~\ref{thm:main}).  The Henkin construction has the
+\emph{extension gap} (Remark~\ref{rem:extension-gap}): at each
+step, a disjunctive constraint network must be solved, and global
+solvability is not guaranteed---1,911 counterexamples to the
+pairwise-implies-global claim were found computationally at $m=3$.
+The tableau is therefore \textbf{not a proven decision procedure}.
+
+\smallskip
 \emph{What survives.}\;
 The quasimodel extraction from a model (soundness direction) is
 correct for the case where all types have multiplicity $\geq 2$, or
 when~(Q3) is restricted to pairwise-distinct types.  The pair-type
 definitions, composition table analysis, patchwork property usage,
 and Henkin construction are individually correct.  The identification
-of the extension gap is accurate.
+of the extension gap is accurate.  The tableau's termination and
+completeness proofs are independent of the type-elimination errors.
 
 \smallskip
 \emph{What fails.}\;
 The ``no false negatives'' claim is wrong.  The algorithm can reject
-satisfiable concepts.  The decidability of $\ALCIRCC{5}$ and
-$\ALCIRCC{8}$ remains \textbf{genuinely open}.}}
+satisfiable concepts.  The tableau cannot be shown sound.  The
+decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$ remains
+\textbf{genuinely open}.}}
 \end{center}
 
 \bigskip
@@ -150,15 +165,15 @@ decidability open.  We present two procedures---a
 blocking}---that exploit the \emph{patchwork property} of the RCC
 calculi~\cite{RenzNebel1999} and the full tractability of the RCC5
 algebra~\cite{Renz1999}.
-\textbf{Erratum (April 2026):} The type-elimination algorithm is
+\textbf{Erratum (April 2026):} Neither procedure establishes
+decidability.  The type-elimination algorithm is
 \textbf{unsound}---it rejects satisfiable concepts (see
-Remark~\ref{rem:type-elim-bug}).  The root cause is that
-condition~(Q3) is anti-monotone in the type set, causing cascade
-elimination when starting from all types.
-Additionally, the (Q3) soundness proof has a gap for
-singleton-multiplicity types ($\EQ \notin \mathsf{DN}$).  The
-decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$ remains
-\textbf{genuinely open}.
+Remark~\ref{rem:type-elim-bug}).  The (Q3) soundness proof has a gap
+for singleton-multiplicity types ($\EQ \notin \mathsf{DN}$).  The
+tableau calculus terminates and is complete, but its soundness proof
+depends on the Henkin construction, which has an unresolved extension
+gap (Remark~\ref{rem:extension-gap}).  The decidability of
+$\ALCIRCC{5}$ and $\ALCIRCC{8}$ remains \textbf{genuinely open}.
 \end{abstract}
 
 \medskip
@@ -1965,30 +1980,31 @@ producing a saturated, clash-free completion graph.
 
 \subsection{Summary of the Tableau Procedure}
 
-\begin{corollary}
+\begin{corollary}[\textbf{NOT ESTABLISHED}]
 \label{cor:tableau-decides}
-The tableau calculus of Section~\ref{sec:tab-rules}, with blocking
+\sout{The tableau calculus of Section~\ref{sec:tab-rules}, with blocking
 \textup{(}Definition~\ref{def:blocking}\textup{)} and constraint
 filtering \textup{(}Section~\ref{sec:constraint-filtering}\textup{)},
-is a decision procedure for $\ALCIRCC{5}$ concept satisfiability:
-\begin{itemize}[nosep]
-  \item It \textbf{terminates} on every input
-    \textup{(}Theorem~\ref{thm:termination}\textup{)}.
-  \item $C_0$ is satisfiable iff there exists a sequence of choices
-    yielding an open completion graph.
-  \item \textbf{Soundness}: an open graph implies satisfiability
-    \textup{(}Theorem~\ref{thm:tab-soundness}\textup{)}.
-  \item \textbf{Completeness}: satisfiability implies an open graph
-    exists \textup{(}Theorem~\ref{thm:tab-completeness}\textup{)}.
-\end{itemize}
-The worst-case complexity is \EXPTIME.
-\emph{Note:} The tableau's correctness is independent of the
-(retracted) type-elimination algorithm; it relies on its own
-soundness and completeness theorems.  However, the soundness proof
-(Theorem~\ref{thm:tab-soundness}) still depends on the Henkin
-construction (Theorem~\ref{thm:main}) and inherits the extension gap
-(Remark~\ref{rem:extension-gap}).
+is a decision procedure for $\ALCIRCC{5}$ concept satisfiability.}
 \end{corollary}
+
+\noindent
+\textbf{This corollary is not established.}  The individual components:
+\begin{itemize}[nosep]
+  \item \textbf{Termination}: established
+    (Theorem~\ref{thm:termination}).
+  \item \textbf{Completeness}: established
+    (Theorem~\ref{thm:tab-completeness}).
+  \item \textbf{Soundness}: \textbf{not established}.
+    Theorem~\ref{thm:tab-soundness} extracts a quasimodel from an
+    open completion graph and invokes the Henkin construction
+    (Theorem~\ref{thm:main}), which has the extension gap
+    (Remark~\ref{rem:extension-gap}).  The extension step requires
+    solving a disjunctive constraint network at each stage; 1,911
+    counterexamples to pairwise-implies-global solvability were found
+    computationally at $m = 3$.  Without closing the extension gap,
+    the tableau's soundness is unproven.
+\end{itemize}
 
 \begin{remark}[Comparison with tree-based tableaux]
 \label{rem:comparison}
