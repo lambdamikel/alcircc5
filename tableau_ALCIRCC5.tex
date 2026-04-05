@@ -56,7 +56,7 @@
 
 \title{A Tableau Calculus for $\ALCIRCC{5}$\\
   with Tri-Neighborhood Blocking\\[4pt]
-  \large Second revision, April 2026}
+  \large Third revision, April 2026}
 
 \author{Claude (Anthropic) \and Michael Wessel}
 
@@ -78,19 +78,23 @@ $(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ recording
 Hintikka types and RCC5 relations but no node identities---and,
 for each (relation, type) pair, the same distribution of
 triangle-type sets among their respective neighbors.
-We prove termination (the neighborhood signature is drawn
-from a finite universe), soundness (the model is constructed
+We prove soundness (the model is constructed
 by triangle-type-filtered unraveling, with global consistency
-guaranteed by the full tractability of RCC5), and completeness
+guaranteed by the full tractability of RCC5) and completeness
 (a model guides all nondeterministic choices).
-This resolves the ``blocking dilemma'' that prevented earlier
-tableau approaches: type-equality blocking was too weak (produced
-novel triangle types during unraveling), while node-identity
-profile blocking was too strong (never terminated for PO-incoherent
-descriptors). Tri-neighborhood blocking achieves both properties
-simultaneously, and the strengthened neighborhood condition
-ensures that the copy is faithful from every participating
-node's perspective.
+However, \textbf{termination fails}: a computational
+implementation reveals that the concept
+$A \sqcap \exists\PP.A \sqcap \forall\PP.(\exists\PP.A
+\sqcap \exists\DR.B)$ causes unbounded node creation.
+The mechanism is not blocking/unblocking oscillation (zero
+unblocking events occur) but \emph{frontier advancement}:
+the newest node in a PP-chain always lacks PP-successor
+triangle types ($|\Tri| = 8$) compared to interior
+nodes ($|\Tri| = 16$), so it is never blocked.
+This confirms the ``blocking dilemma'': type-equality
+blocking terminates but risks unsound unraveling, while
+Tri-neighborhood blocking ensures sound unraveling but
+does not terminate.  The dilemma remains open.
 \end{abstract}
 
 
@@ -152,10 +156,11 @@ This creates a dilemma, identified in~\cite{TwoTier}:
 
 \subsection*{Tri-neighborhood blocking}
 
-We resolve this dilemma by observing that the non-termination
-argument uses \emph{concrete} node identities, while the
-correctness argument only needs \emph{abstract} relational
-patterns.  An \emph{abstract triangle type} is a tuple
+We \emph{attempted} to resolve this dilemma by observing that
+the non-termination argument for node-identity blocking uses
+\emph{concrete} node identities, while the correctness argument
+only needs \emph{abstract} relational patterns.
+An \emph{abstract triangle type} is a tuple
 $(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ recording
 three Hintikka types and three pairwise RCC5 relations---no
 node identities.  The \emph{triangle-type set} of a node $x$
@@ -164,29 +169,21 @@ in.
 
 Computational verification on the PO-incoherent counterexample
 (a 24-element PP-chain with 12 PO-witnesses) shows that abstract
-triangle-type sets \emph{stabilize}: all interior $\tau_A$ nodes
-share exactly the same 68 abstract triangle types, despite having
-different concrete neighbors.  The stabilization occurs because
-the abstract triangle-type set depends on the \emph{menu} of
-available (type, relation) pairs among neighbors, not on the
-\emph{count} of neighbors of each kind.
+triangle-type sets \emph{stabilize for interior nodes}: all
+interior $\tau_A$ nodes share exactly the same 68 abstract
+triangle types, despite having different concrete neighbors.
 
-We strengthen this to \emph{Tri-neighborhood blocking}:
+We define \emph{Tri-neighborhood blocking}:
 in addition to requiring $\LL(x) = \LL(y)$ and
 $\Tri(x) = \Tri(y)$, we require that for each
 (relation, type) pair, the set of $\Tri$-values among
 the respective neighbors of $x$ and $y$ also matches.
 This ensures the copy is faithful not just from $x/y$'s
 perspective, but from \emph{every neighboring node's
-perspective}.  Computational verification confirms that this
-stronger condition also stabilizes (at depth $k = 3$, one
-step later than basic $\Tri$-matching at $k = 2$).
+perspective}.
 
 Tri-neighborhood blocking achieves:
 \begin{enumerate}[nosep]
-  \item \textbf{Termination}: the neighborhood signature is
-    drawn from a finite universe, and stabilization ensures
-    matching.
   \item \textbf{Correct unraveling}: copying $y$'s witness
     structure for $x$ produces only triangle types already in
     the completion graph's set $T$, verified from every
@@ -195,6 +192,12 @@ Tri-neighborhood blocking achieves:
     RCC5 tractability~\cite{RenzNebel1999,Renz1999} yields a
     globally consistent atomic network.
 \end{enumerate}
+However, a full implementation~\cite{NonTermScript} reveals
+that \textbf{termination fails}: frontier nodes in a
+chain always have a smaller $\Tri$ than interior nodes
+(they lack successor-edge triangles), so they are never
+blocked.  The blocking dilemma remains open
+(Section~\ref{sec:counterexample}).
 
 
 %% ============================================================
@@ -502,11 +505,21 @@ A saturated, clash-free graph is \emph{open}.
 %% ============================================================
 \section{Termination}\label{sec:termination}
 
-\begin{conjecture}[Termination]\label{thm:termination}
-Every sequence of rule applications terminates.
-\end{conjecture}
+\begin{theorem}[Non-termination]\label{thm:nonterm}
+The Tri-neighborhood tableau does not terminate on all inputs.
+In particular, the concept
+\[
+C_0 = A \sqcap \exists\PP.A \sqcap
+\forall\PP.(\exists\PP.A \sqcap \exists\DR.B)
+\]
+causes unbounded node creation.
+\end{theorem}
 
-\noindent\textbf{Evidence and partial proof.}\;
+The counterexample and its proof are given in
+Section~\ref{sec:counterexample} below.  We first record
+the partial termination arguments that remain valid.
+
+\medskip\noindent\textbf{Valid partial bounds.}\;
 Let $n = |\cl(C_0)|$ and $N_\tau = |\Tp(C_0)| \le 2^n$.
 
 \medskip\noindent\textbf{Finiteness of blocking signatures.}\;
@@ -597,30 +610,113 @@ requires tracking the interaction between label growth and
 $\Tri$-reconfiguration carefully.  We revisit this in the
 honest assessment (Section~\ref{sec:discussion}).
 
-\medskip\noindent\textbf{What remains open.}\;
+\medskip\noindent\textbf{Why these bounds are insufficient.}\;
 The above establishes bounded branching, permanent demand
 satisfaction, and bounded signature changes per node in the
-label-stable regime.  The missing ingredient is a \emph{global}
-argument: either a uniform bound on branch length in the creation
-tree, or a well-founded measure that decreases across every
-unblocked expansion.  Without this, the local per-node bounds
-do not compose into a total finiteness argument (as noted by
-a reviewer~\cite{GPTReview2}).  We therefore present termination
-as a conjecture.
+label-stable regime.  These local per-node bounds do
+\emph{not} compose into a global finiteness argument
+(as noted by a reviewer~\cite{GPTReview2}).  The
+counterexample below shows that the gap is real: the calculus
+fails to terminate despite all local bounds being satisfied.
 
-\begin{remark}[Tighter bounds]\label{rem:bounds}
-The bound $A(C_0)$ is astronomically large.  In practice,
-stabilization occurs much sooner: computational experiments on
-the hardest known case (PO-incoherent counterexample) show
-Tri-neighborhood stabilization at depth $k = 3$ along
-PP-chains (basic $\Tri$-matching stabilizes at $k = 2$, with
-the extra step needed for neighbor $\Tri$-values to also match).
-The practical active-node count is thus close to
-the type-equality bound $N_\tau = 2^n$.
+\subsection{Counterexample: the frontier advancement
+  problem}\label{sec:counterexample}
 
-We conjecture that the active-node bound can be tightened to
-$2^{p(|C_0|)}$ for some polynomial $p$, yielding \EXPTIME{}
-membership, but we do not prove this here.
+\begin{proof}[Proof of Theorem~\ref{thm:nonterm}]
+Consider
+$C_0 = A \sqcap \exists\PP.A \sqcap
+\forall\PP.(\exists\PP.A \sqcap \exists\DR.B)$.
+This concept forces an infinite $\PP$-chain where every
+chain node has type~$A$ and a $\DR$-neighbor of type~$B$.
+We show the tableau constructs such a chain without ever
+blocking the frontier node.
+
+\emph{The completion graph.}
+The tableau creates:
+\begin{itemize}[nosep]
+  \item $n_0$: the root, with $\LL(n_0) = \{C_0,
+    A, \exists\PP.A, \forall\PP.(\cdots), \top\}$.
+  \item $n_1$: $\PP$-successor of $n_0$, receiving
+    $\exists\PP.A \sqcap \exists\DR.B$ via $\forall$-propagation
+    from $n_0$.
+  \item $n_2$: the sole $\DR$-witness, with $\LL(n_2) = \{B, \top\}$.
+    By composition ($\comp(\PP, \DR) \supseteq \{\DR\}$), the
+    edge from $n_0$ to $n_2$ is assigned~$\DR$.
+  \item $n_3, n_4, n_5, \ldots$: further $\PP$-chain nodes.
+    Each $n_k$ receives $\exists\PP.A \sqcap \exists\DR.B$
+    via $\forall\PP$-propagation from $n_0$ (since
+    $\EE(n_0, n_k) = \PP$ by composition).  Each $n_k$'s
+    $\exists\DR.B$ demand is satisfied by $n_2$
+    (since $\EE(n_k, n_2) = \DR$ by composition).
+    But $\exists\PP.A$ requires a $\PP$-successor with
+    $A$ in its label.
+\end{itemize}
+
+\emph{Edge pattern.}
+By the composition rule $\comp(\PPI, \PPI) = \{\PPI\}$,
+every chain node $n_k$ has:
+\begin{itemize}[nosep]
+  \item $\EE(n_k, n_j) = \PPI$ for all $j < k$ (predecessors),
+  \item $\EE(n_k, n_j) = \PP$ for all $j > k$ (successors),
+  \item $\EE(n_k, n_2) = \DR$ (the witness).
+\end{itemize}
+
+\emph{The Tri asymmetry.}
+For an interior node $n_k$ ($k \ge 4$, with both predecessors
+\emph{and} successors), $\Tri(n_k)$ contains triangle types
+involving $\PP$-neighbors \emph{and} $\PPI$-neighbors:
+\[
+|\Tri(n_k)| = 16.
+\]
+For the frontier node $n_f$ (the newest, with no successors),
+$\Tri(n_f)$ contains only triangle types involving
+$\PPI$-neighbors and the $\DR$-witness:
+\[
+|\Tri(n_f)| = 8.
+\]
+The 8 missing types all involve $\PP$ as an edge label---e.g.,
+$(\tau_A, \PP, \tau_A, \PP, \tau_A, \PP)$---which the frontier
+node lacks because it has no $\PP$-edges.  Since
+$\PP \neq \PPI$, these types cannot be obtained by
+relabeling $\PPI$-triangles.
+
+\emph{Non-termination.}
+Since $\Tri(n_f) \subsetneq \Tri(n_k)$ for every interior
+node~$n_k$, the blocking condition $\Tri(n_f) = \Tri(n_k)$
+is never satisfied.  The frontier node remains active, its
+$\exists\PP.A$ demand fires, creating $n_{f+1}$.  The old
+frontier $n_f$ gains a $\PP$-successor and eventually reaches
+$|\Tri| = 16$, getting blocked by an earlier interior node.
+But $n_{f+1}$ is now the new frontier with $|\Tri| = 8$, and
+the cycle repeats.
+
+The active-node count stabilizes at approximately $9$
+(verified computationally up to $500$ nodes), but total
+node creation is unbounded.  Zero unblocking events occur:
+this is not oscillation but \emph{frontier advancement}.
+\end{proof}
+
+\begin{remark}[Scope of non-termination]
+Computational testing~\cite{NonTermScript} on 20 hand-crafted
+concepts and 200 random concepts shows that \emph{every}
+concept requiring an infinite chain via
+$\forall$-propagation exhibits the same frontier-advancement
+pattern.  The only concepts that terminate are those satisfiable
+by finite models.  The non-termination is therefore pervasive,
+not limited to a single pathological example.
+\end{remark}
+
+\begin{remark}[Why strengthening the blocking condition
+  does not help]\label{rem:stronger-fails}
+The frontier asymmetry arises because edges are assigned
+permanently at creation time: the new node gets $\PPI$-edges
+to all existing (predecessor) nodes but has no $\PP$-edges
+(successors do not yet exist).  Any blocking condition that
+uses $\Tri(x)$ inherits this problem---the frontier's $\Tri$
+is always strictly smaller.  Strengthening the blocking
+condition (e.g., adding $\TNbr$) makes non-termination
+\emph{worse}, not better: more distinctions = less blocking
+= more unbounded creation.
 \end{remark}
 
 
@@ -1015,9 +1111,11 @@ nondeterministic choices exists, yielding an open graph.
 \section{Computational Evidence for Triangle-Type-Set Stabilization}
 \label{sec:evidence}
 
-The termination argument (Conjecture~\ref{thm:termination}) gives a
-non-elementary bound.  We present computational evidence that
-triangle-type-set stabilization occurs quickly in practice.
+The non-termination result (Theorem~\ref{thm:nonterm}) shows
+that the calculus does not yield a decision procedure.
+Nevertheless, the computational evidence for triangle-type-set
+stabilization among \emph{interior} nodes remains relevant,
+as it informs potential fixes to the blocking criterion.
 
 \subsection{The PO-incoherent counterexample}
 
@@ -1120,37 +1218,49 @@ all with stabilized $\Tri$-sets.
 %% ============================================================
 \section{Discussion}\label{sec:discussion}
 
-\subsection{Resolving the blocking dilemma}
+\subsection{The blocking dilemma---confirmed}
 
-Tri-neighborhood blocking occupies a precise intermediate
-position between the two extremes of the blocking dilemma:
+The counterexample of Section~\ref{sec:counterexample}
+confirms that the blocking dilemma is genuine:
 
 \begin{center}
-\begin{tabular}{lccc}
+\begin{tabular}{lcc}
 \toprule
 Blocking condition & Terminates? & Correct unraveling? \\
 \midrule
-Type-equality & Always & Not always \\
+Type-equality ($\LL$ only) & Always & Not always \\
 Node-identity profile & Not always & Always \\
-Triangle-type-set only & Always & Partial \\
-\textbf{Tri-neighborhood} & \textbf{Conjectured} & \textbf{Always} \\
+Triangle-type-set ($\LL + \Tri$) & \textbf{Not always} & Yes \\
+\textbf{Tri-neighborhood ($\LL + \Tri + \TNbr$)}
+  & \textbf{Not always} & \textbf{Yes} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The key insight is that the non-termination argument for
-node-identity blocking uses \emph{concrete} information
-(which specific witnesses), while the correctness argument
-needs only \emph{abstract} information (which relational
-patterns).  Basic triangle-type-set blocking ($\Tri(x) = \Tri(y)$)
-strips away the concrete information but retains only the
-\emph{first-person} perspective---what triangle types $x$
-itself participates in.  The Tri-neighborhood condition~(iii)
-adds the \emph{third-person} perspective: for each neighbor
-type and relation, the \emph{set of Tri-values} among neighbors
-must also match.  This ensures that when a blocked node's copy
-appears as a \emph{second or third} vertex in a triangle, the
-triangle type is still in $T(\GG)$.
+No blocking condition based on $\Tri$ can resolve the
+dilemma: the frontier-advancement mechanism
+(Remark~\ref{rem:stronger-fails}) affects \emph{every}
+condition that compares $\Tri$-values, because the frontier
+node's $\Tri$ is inherently smaller than any interior node's.
+Weakening to type-equality recovers termination but loses
+the triangle-type-preservation guarantee needed for soundness.
+
+The key insight---that abstract relational patterns (not
+concrete node identities) are the right level of abstraction
+for both blocking and unraveling---remains valid.  What is
+needed is a mechanism that ensures the frontier node's $\Tri$
+matches interior nodes \emph{despite} the asymmetry in
+$\PP$/$\PPI$ edges.  Possible directions include:
+\begin{itemize}[nosep]
+  \item \emph{Lazy blocking}: defer the $\Tri$ comparison
+    until the frontier node acquires successors.
+  \item \emph{Prophetic Tri}: compute $\Tri$ assuming
+    the frontier's successors will mirror the blocker's.
+  \item \emph{Hybrid approach}: use type-equality for
+    termination, then verify soundness by checking that
+    the completed graph's triangle types support unraveling.
+\end{itemize}
+We leave these directions as open problems.
 
 \subsection{Relationship to the two-tier quotient}
 
@@ -1169,19 +1279,11 @@ are complementary:
 
 \subsection{Complexity}
 
-The termination bound is non-elementary due to the
-triple-exponential active-node count (the space of
-$(\LL, \Tri, \TNbr)$ triples is triply exponential).
-We do not claim \EXPTIME{} membership.  An \EXPTIME{}
-bound would require showing that the number of active
-nodes is at most singly exponential in $|C_0|$---specifically,
-that Tri-neighborhood stabilization occurs within a number
-of steps polynomial in $|\Tp(C_0)|$.
-
-The computational evidence (basic $\Tri$ stabilization at
-$k = 2$, $\TNbr$ stabilization at $k = 3$) is encouraging,
-but a proof of an \EXPTIME{} bound for the stabilization
-depth is open.
+Since the calculus does not terminate, complexity analysis
+is moot for the current blocking condition.  The active-node
+count is bounded (triply exponential in $|C_0|$), but total
+node creation is unbounded.  A terminating variant---if
+one can be found---would need separate complexity analysis.
 
 \subsection{Extension to $\ALCIRCC{8}$}
 
@@ -1229,34 +1331,33 @@ further scrutiny:
     (Remark~\ref{rem:same-map-domain}).
 
   \item \textbf{Termination
-    (Conjecture~\ref{thm:termination}).}
-    Two successive reviews~\cite{GPTReview,GPTReview2} have
-    correctly identified that the termination proof lacks a
-    valid \emph{global} finiteness argument.  The local
-    ingredients---bounded branching ($\le n$), permanent demand
-    satisfaction, bounded label changes ($\le n$ per node),
-    monotone $\Tri$-growth in the label-stable regime---are
-    individually correct.  But the final step requires either
-    a uniform bound on branch length or a global well-founded
-    measure (e.g., a birth-event ranking), and neither has been
-    supplied.
+    (Theorem~\ref{thm:nonterm}).}
+    The termination conjecture from the second revision is
+    \textbf{false}.  A full implementation of the calculus
+    (Section~\ref{sec:counterexample}) shows unbounded node
+    creation on the concept
+    $A \sqcap \exists\PP.A \sqcap
+    \forall\PP.(\exists\PP.A \sqcap \exists\DR.B)$.
+    The mechanism is frontier advancement, not oscillation.
+    The local per-node bounds (bounded branching, permanent
+    demand satisfaction, monotone $\Tri$-growth) are all
+    individually correct but insufficient: the frontier node
+    always escapes blocking because its $\Tri$ is strictly
+    smaller than any interior node's.
 
-    We therefore present the termination claim as a
-    \emph{conjecture supported by structural and computational
-    evidence}, not as a fully proved theorem.  The computational
-    evidence (rapid stabilization at $k = 3$) and the structural
-    constraints (bounded branching, permanent demand satisfaction,
-    finite signature space) make termination highly plausible,
-    but a rigorous proof is open.
+    Two reviewers~\cite{GPTReview,GPTReview2} correctly
+    identified the missing global argument.  The counterexample
+    vindicates their concern: the gap is not merely a proof
+    difficulty but reflects genuine non-termination.
 
-  \item \textbf{Stabilization depth.}  The computational evidence
-    shows basic $\Tri$ stabilization at $k = 2$ and full
-    $\TNbr$ stabilization at $k = 3$ for the PO-incoherent
-    counterexample.  A general bound on the stabilization depth
-    in terms of $|C_0|$ is needed for an explicit complexity
-    bound.  We conjecture that the stabilization depth is at most
-    $|\Tp(C_0)|$ (the number of distinct types), but do not
-    prove this.
+  \item \textbf{Stabilization depth.}
+    The earlier computational evidence showing $\Tri$
+    stabilization at $k = 2$ and $\TNbr$ stabilization at
+    $k = 3$ remains correct \emph{for interior nodes}.
+    The issue is that stabilization of interior nodes is
+    insufficient: the frontier node never stabilizes
+    because it never acquires $\PP$-successors before
+    its $\exists$-demands fire.
 \end{enumerate}
 
 
@@ -1266,36 +1367,39 @@ further scrutiny:
 We have presented a tableau calculus for $\ALCIRCC{5}$ with
 \emph{Tri-neighborhood blocking}: a node $x$ is blocked by an
 earlier node $y$ when (i) $\LL(x) = \LL(y)$, (ii) $\Tri(x) =
-\Tri(y)$, and (iii) $\TNbr(x) = \TNbr(y)$.  This resolves the
-blocking dilemma that prevented earlier approaches---type-equality
-blocking was too weak, node-identity profile blocking was too
-strong---by identifying the precise level of abstraction needed:
-abstract relational patterns at both the first-person ($\Tri$)
-and third-person ($\TNbr$) levels, not concrete node identities.
+\Tri(y)$, and (iii) $\TNbr(x) = \TNbr(y)$.  The calculus is
+\emph{sound} (model construction via triangle-type-filtered
+unraveling, with the $\Safe$ extension for same-map pairs
+and global consistency from full RCC5 tractability) and
+\emph{complete} (a model guides all nondeterministic choices).
 
-The calculus is \emph{sound} (model construction via
-triangle-type-filtered unraveling, with the $\Safe$ extension
-for same-map pairs and global consistency from full RCC5
-tractability) and \emph{complete} (a model guides all
-nondeterministic choices).  Termination is supported by
-strong structural constraints (bounded branching, permanent
-demand satisfaction, finite signature space) and by computational
-evidence confirming rapid stabilization of both $\Tri$ (at $k=2$)
-and $\TNbr$ (at $k=3$), but a fully rigorous global finiteness
-argument remains open.
+However, \textbf{termination fails.}  The concept
+$A \sqcap \exists\PP.A \sqcap
+\forall\PP.(\exists\PP.A \sqcap \exists\DR.B)$
+causes unbounded node creation via a frontier-advancement
+mechanism: the newest chain node always has $|\Tri| = 8$
+(only $\PPI$-predecessor triangles), while interior nodes
+have $|\Tri| = 16$ (both $\PP$ and $\PPI$ triangles), so
+the frontier is never blocked.  This confirms the
+\emph{blocking dilemma}: type-equality blocking terminates
+but risks unsound unraveling; $\Tri$-based blocking
+ensures sound unraveling but does not terminate.
 
-The paper should therefore be read as \emph{substantial partial
-progress} toward the decidability of $\ALCIRCC{5}$, not as a
-finished proof.  The main contributions are: (1)~the
-Tri-neighborhood blocking condition, which occupies the
-precisely right intermediate position between the two blocking
-extremes; (2)~the disjunctive constraint-network approach
-to same-map pairs, with the $\Safe$ extension ensuring
-non-empty initial domains; and (3)~computational evidence
-that the abstract triangle-type framework stabilizes quickly.
-The principal open obligations are a global termination
-argument and a general proof that arc-consistency preserves
-non-empty domains.
+The paper should therefore be read as \emph{partial progress}
+toward the decidability of $\ALCIRCC{5}$: the soundness and
+completeness proofs are valid, but the calculus is not a
+decision procedure.  The main contributions are:
+(1)~the Tri-neighborhood blocking condition and the proof
+that it ensures correct unraveling;
+(2)~the disjunctive constraint-network approach to same-map
+pairs, with the $\Safe$ extension;
+(3)~computational evidence confirming the frontier-advancement
+mechanism as the precise obstacle to termination; and
+(4)~three conjectured directions for resolving the dilemma
+(lazy blocking, prophetic Tri, hybrid approaches).
+
+The decidability of $\ALCIRCC{5}$ and $\ALCIRCC{8}$ remains
+open.
 
 \begin{thebibliography}{99}
 
@@ -1345,6 +1449,14 @@ Claude (Anthropic) and M.~Wessel.
 \texttt{tri\_neighborhood\_check.py}, and
 \texttt{intra\_subtree\_tclosure\_check.py}.
 \newblock Computational verification scripts, April 2026.
+\newblock Available at
+  \url{https://github.com/lambdamikel/alcircc5}.
+
+\bibitem{NonTermScript}
+\texttt{triangle\_calculus.py} and
+\texttt{triangle\_nonterm.py}.
+\newblock Full tableau implementation and non-termination analysis,
+  April 2026.
 \newblock Available at
   \url{https://github.com/lambdamikel/alcircc5}.
 
