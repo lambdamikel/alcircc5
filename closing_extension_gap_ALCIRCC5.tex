@@ -62,6 +62,8 @@
 
 \date{April 2026}
 
+\usepackage[normalem]{ulem}    % \sout for strikethrough
+
 \begin{document}
 \maketitle
 
@@ -76,6 +78,57 @@ The claims should not be taken as established results unless
 independently verified.}}
 \end{center}
 
+\medskip
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{RETRACTED (April 2026).}\;
+This paper contains \textbf{two errors} identified by GPT-5.4 Pro's
+technical review:
+
+\smallskip
+\textbf{Error 1: Algebraic error in Lemma~\ref{lem:unique-failure}.}\;
+The paper states $\PP \notin \comp(\DR, \PP) = \{\DR\}$, but the
+correct value is $\comp(\DR, \PP) = \{\DR, \PO, \PP\}$ (and
+$\PP \in \comp(\DR, \PP)$).  The paper confused $\comp(\DR, \PP)$
+with $\comp(\PP, \DR) = \{\DR\}$.  There is only \textbf{one}
+self-absorption failure pair involving $\PP$: $(\PP, \DR)$, not
+$(\DR, \PP)$.  The dual stated at line~305 is wrong; the correct
+dual is $\PP \notin \comp(\PP, \DR) = \{\DR\}$.
+
+\smallskip
+\textbf{Error 2: Theorem~\ref{thm:path-consistent}
+(path-consistency) is false.}\;
+The $\DN_{\mathsf{safe}}$ domains aggregate relations from
+\emph{different representatives} of the same type.  When two nodes
+of type $\tau_1$ have different relations ($\PO$ and $\DR$) to a
+node of type $\tau_2$, $\DN_{\mathsf{safe}}(\tau_1, \tau_2) =
+\{\PO, \DR\}$.  Path-consistency fails: for a third type $\tau_3$
+with $\DN_{\mathsf{safe}}(\tau_2, \tau_3) = \{\PP\}$,
+$\comp(\PO, \PP) = \{\PO, \PP\} \ni \PP$ but
+$\comp(\DR, \PP) = \{\DR, \PO, \PP\}$, and if
+$\DN_{\mathsf{safe}}(\tau_1, \tau_3) = \{\PP\}$ then
+$\{\PP\} \cap \comp(\DR, \PP) = \{\PP\} \neq \emptyset$ but
+$\{\PP\} \cap \comp(\DR, \PO) = \emptyset$---the network can fail
+arc-consistency.  GPT-5.4 provided a concrete counterexample
+confirming this.
+
+\smallskip
+\emph{The decidability claim (Theorem~\ref{thm:main}) is
+\textbf{wrong}.  The main theorem, the complexity corollary, and
+the soundness theorem are all retracted.}
+
+\smallskip
+\emph{What survives.}\;
+The root cause analysis (Section~\ref{sec:root-cause}) is
+correct after fixing the algebraic error: there is ONE
+self-absorption failure $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$
+(and its dual $\PP \notin \comp(\PP, \DR) = \{\DR\}$).
+Lemma~\ref{lem:forced-DR} (forced $\DR$ edge) and
+Theorem~\ref{thm:self-safe} (witness relations are self-safe) are
+correct.  These are useful building blocks for future work.}}
+\end{center}
+
 \bigskip
 
 %% ============================================================
@@ -86,22 +139,16 @@ type-elimination algorithm and a tableau calculus with blocking---but
 identified an \emph{extension gap}: the soundness direction of the
 tableau (open branch $\Rightarrow$ model) relied on a Henkin
 construction whose correctness for abstract quasimodels was unproven.
-We close this gap by identifying the precise algebraic root cause---the
-unique \emph{self-absorption failure}
-$\PPI \notin \comp(\DR, \PPI) = \{\DR\}$---and showing that the
-tableau's own composition filtering already forces exactly the edge
-reassignments needed to resolve it.  We give a direct model
-construction from open completion graphs that bypasses the quasimodel
-abstraction, using the \emph{full RCC5 tractability} theorem to assign
-cross-subtree edges in the tree unraveling.  Combined with the
-termination and completeness results from~\cite{CompanionPaper}, this
-establishes:
-
-\medskip
-\noindent\textbf{Main Theorem.}\; Concept satisfiability in
-$\ALCIRCC{5}$ is decidable.  The tableau calculus
-of~\cite{CompanionPaper} is a sound and complete decision procedure
-running in \EXPTIME.
+We attempted to close this gap by identifying the algebraic root
+cause---the self-absorption failure
+$\PPI \notin \comp(\DR, \PPI) = \{\DR\}$---and constructing a model
+directly from open completion graphs via the \emph{full RCC5
+tractability} theorem.
+\textbf{Erratum:} This paper is \textbf{retracted}.  The algebraic
+analysis contains an error ($\comp(\DR, \PP) \neq \{\DR\}$), and the
+path-consistency theorem (Theorem~\ref{thm:path-consistent}) is
+\textbf{false}: the $\DN_{\mathsf{safe}}$ domains are too coarse.
+See the status box for details.
 \end{abstract}
 
 \medskip
@@ -141,8 +188,8 @@ We resolve the extension gap by:
   \item \textbf{Root cause analysis} (Section~\ref{sec:root-cause}).
     We identify the unique algebraic rigidity in the RCC5 composition
     table responsible for the gap: the \emph{self-absorption failure}
-    $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$ and its dual
-    $\PP \notin \comp(\PP, \DR) = \{\DR\}$.  Geometrically, this
+    $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$ (and its dual
+    $\PP \notin \comp(\PP, \DR) = \{\DR\}$).  Geometrically, this
     expresses the \emph{containment collapse}: if region $a$ is
     disjoint from region $b$, then $a$ is disjoint from every region
     properly inside $b$.  We show that this is the \emph{only}
@@ -295,17 +342,22 @@ possibility that $a$ is $R$-related to~$c$, even though $R(b,c)$
 holds.
 \end{definition}
 
-\begin{lemma}[Unique self-absorption failure]
+\begin{lemma}[Unique self-absorption failure --- \textbf{corrected}]
 \label{lem:unique-failure}
 Among all pairs $(S, R) \in \NR^{-} \times \NR^{-}$, self-absorption
-$R \in \comp(S, R)$ fails for exactly two pairs:
+$R \in \comp(S, R)$ fails for exactly one pair:
 \[
-  \PPI \notin \comp(\DR, \PPI) = \{\DR\},
-  \qquad
-  \PP \notin \comp(\DR, \PP) = \{\DR\}.
+  \PPI \notin \comp(\DR, \PPI) = \{\DR\}.
 \]
-These are duals under the inverse map: $\inv(\DR) = \DR$,
-$\inv(\PPI) = \PP$.  For all other $(S, R)$ pairs, $R \in \comp(S,R)$.
+The dual under the inverse map is $\PP \notin \comp(\PP, \DR) =
+\{\DR\}$ (note: $\comp(\PP, \DR)$, not $\comp(\DR, \PP)$).  For all
+other $(S, R)$ pairs, $R \in \comp(S,R)$.
+
+\smallskip\noindent
+\textbf{Erratum:} The original version stated
+$\PP \notin \comp(\DR, \PP) = \{\DR\}$, but the correct value is
+$\comp(\DR, \PP) = \{\DR, \PO, \PP\}$ (and $\PP \in \comp(\DR, \PP)$).
+The paper confused $\comp(\DR, \PP)$ with $\comp(\PP, \DR)$.
 \end{lemma}
 
 \begin{proof}
@@ -329,9 +381,13 @@ $\PPI$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
 \end{center}
 
 \smallskip\noindent
-The two failures are in the $S = \DR$ row:
-$\comp(\DR, \PP) = \{\DR\}$ (row~$\PP$, column~$\DR$) and
-$\comp(\DR, \PPI) = \{\DR\}$ (row~$\PPI$, column~$\DR$).
+\textbf{Erratum:} The original proof claimed two failures in the
+$S = \DR$ row.  The failure $\comp(\DR, \PPI) = \{\DR\}$
+(row~$\PPI$, column~$\DR$) is correct.  But the claimed failure
+$\comp(\DR, \PP) = \{\DR\}$ is \textbf{wrong}: the correct value is
+$\comp(\DR, \PP) = \{\DR, \PO, \PP\}$ (row~$\PP$, column~$\DR$),
+and $\PP \in \comp(\DR, \PP)$.  The correct dual is
+$\PP \notin \comp(\PP, \DR) = \{\DR\}$.
 \end{proof}
 
 \begin{remark}[Geometric interpretation]
@@ -672,12 +728,20 @@ witness relation~$S$ used for blocking is always available.
 The central technical result is that the constraint network
 $\mathcal{N}$ is path-consistent.
 
-\begin{theorem}[Path-consistency]
+\begin{theorem}[\textbf{RETRACTED} --- Path-consistency]
 \label{thm:path-consistent}
-The disjunctive constraint network $\mathcal{N}$ defined in
+\sout{The disjunctive constraint network $\mathcal{N}$ defined in
 Definition~\ref{def:edge-assignment} \textup{(}with the parent--child
-edges fixed as in Case~1\textup{)} is path-consistent.
+edges fixed as in Case~1\textup{)} is path-consistent.}
 \end{theorem}
+
+\noindent
+\textbf{This theorem is false.}  The $\DN_{\mathsf{safe}}$ domains
+aggregate relations from different representatives of the same type.
+When two nodes of type $\tau_1$ have different relations to a node of
+type $\tau_2$, the domain contains both, and arc-consistency
+enforcement can empty domains.  GPT-5.4 provided a concrete
+counterexample.  See the status box for details.
 
 \begin{proof}
 We must show: for every triple of distinct elements $(d_1, d_2, d_3)$
@@ -765,11 +829,15 @@ By Theorem~\ref{thm:path-consistent} and the full RCC5 tractability
 
 \subsection{Verification of Model Properties}
 
-\begin{theorem}[Soundness: open branch implies satisfiability]
+\begin{theorem}[\textbf{RETRACTED} --- Soundness]
 \label{thm:soundness}
-If the tableau produces an open completion graph $\mathcal{G}$ for
-$C_0$, then $C_0$ is satisfiable in $\ALCIRCC{5}$.
+\sout{If the tableau produces an open completion graph $\mathcal{G}$ for
+$C_0$, then $C_0$ is satisfiable in $\ALCIRCC{5}$.}
 \end{theorem}
+
+\noindent
+\textbf{Retracted:} depends on Theorem~\ref{thm:path-consistent},
+which is false.
 
 \begin{proof}
 We verify that the interpretation $\interp = (\Delta,
@@ -845,37 +913,30 @@ C_0^{\interp}$.
 \section{Decidability of $\ALCIRCC{5}$}
 \label{sec:decidability}
 
-\begin{theorem}[Main theorem]
+\begin{theorem}[\textbf{RETRACTED} --- Main theorem]
 \label{thm:main}
-Concept satisfiability in $\ALCIRCC{5}$ is decidable.  The tableau
+\sout{Concept satisfiability in $\ALCIRCC{5}$ is decidable.  The tableau
 calculus of~\cite{CompanionPaper} is a sound and complete decision
-procedure running in \EXPTIME.
+procedure running in \EXPTIME.}
 \end{theorem}
 
-\begin{proof}
-\begin{itemize}[nosep]
-  \item \textbf{Termination}: Theorem~\ref{thm:term-complete}
-    (from~\cite{CompanionPaper}).
-  \item \textbf{Completeness} (satisfiable $\Rightarrow$ open branch):
-    Theorem~\ref{thm:term-complete} (from~\cite{CompanionPaper}).
-  \item \textbf{Soundness} (open branch $\Rightarrow$ satisfiable):
-    Theorem~\ref{thm:soundness} (this paper).
-\end{itemize}
-The \EXPTIME{} bound follows from the $2^{O(|C_0|)}$ bound on the
-number of nodes (Theorem~\ref{thm:term-complete}) and the polynomial
-cost of each rule application (including (CF) checking via path
-consistency in $O(|V|^3)$).
-\end{proof}
+\noindent
+\textbf{Retracted:} depends on Theorem~\ref{thm:soundness}, which
+depends on Theorem~\ref{thm:path-consistent}, which is false.
+Additionally, the companion paper's type-elimination algorithm is
+unsound (rejects satisfiable concepts), and the companion paper's
+tableau soundness itself depends on the Henkin construction, which
+has the extension gap that this paper attempted to close.
 
-\begin{corollary}
+\begin{corollary}[\textbf{RETRACTED}]
 \label{cor:complexity}
-$\PSPACE \leq \ALCIRCC{5} \leq \EXPTIME$.
+\sout{$\PSPACE \leq \ALCIRCC{5} \leq \EXPTIME$.}
 \end{corollary}
 
-\begin{proof}
-The \PSPACE{} lower bound is from Wessel~\cite{Wessel2003}.  The
-\EXPTIME{} upper bound is from the tableau procedure.
-\end{proof}
+\noindent
+\textbf{Retracted:} the \PSPACE{} lower bound
+(Wessel~\cite{Wessel2003}) remains valid, but the \EXPTIME{} upper
+bound is not established.
 
 
 %% ============================================================
@@ -927,23 +988,38 @@ path-consistency argument in Theorem~\ref{thm:path-consistent} does
 not directly transfer.  The decidability of $\ALCIRCC{8}$ may require
 a different approach to the constraint solving step.
 
-\subsection{Honest Assessment}
+\subsection{Post-Retraction Assessment}
 
-The proof of Theorem~\ref{thm:path-consistent} (path-consistency of
-the constraint network) is the most technical part of this paper.
-Case~A is fully rigorous: for triples of non-adjacent elements, the
-completion graph's (CF) condition provides explicit witnesses.  Cases~B
-and~C, involving parent--child (tree) edges, require a more delicate
-argument connecting the tree structure of the unraveling to the
-composition constraints in the completion graph.  The argument relies
-on the observation that the tree edges correspond to specific
-tableau edges, and the (CF) condition on the completion graph
-constrains how these edges interact with the non-tree edges.
+Theorem~\ref{thm:path-consistent} (path-consistency of the constraint
+network) is \textbf{false}.  The flaw is in the $\DN_{\mathsf{safe}}$
+domain definition: it aggregates all relations appearing between any
+pair of nodes of given types, but different representatives of the same
+type may have different relations to a third type.  This means the
+completion graph's (CF) witnesses used in the proof may come from
+different representatives, and the composition constraints between
+these witnesses need not be jointly satisfiable.
 
-We believe the argument is correct, but the formalization of Cases~B
-and~C could benefit from a more explicit construction showing how the
-(CF) witnesses in the completion graph translate to path-consistency
-witnesses in the constraint network.  We invite scrutiny of this step.
+\emph{What survives:}
+\begin{itemize}[nosep]
+  \item The root cause analysis (Section~\ref{sec:root-cause}):
+    the unique self-absorption failure
+    $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$ after fixing the
+    algebraic error.
+  \item Lemma~\ref{lem:forced-DR} (forced $\DR$ edge) and
+    Corollary~\ref{cor:enrichment} (automatic enrichment).
+  \item Theorem~\ref{thm:self-safe} (witness relations are self-safe)
+    and Lemma~\ref{lem:iterated-comp} (iterated self-composition).
+  \item The tree unraveling construction
+    (Definition~\ref{def:unraveling}).
+\end{itemize}
+
+\emph{What fails:}
+\begin{itemize}[nosep]
+  \item Theorem~\ref{thm:path-consistent}: $\DN_{\mathsf{safe}}$
+    domains are too coarse for path-consistency.
+  \item All results depending on it: Theorems~\ref{thm:soundness}
+    and~\ref{thm:main}, Corollary~\ref{cor:complexity}.
+\end{itemize}
 
 
 %% ============================================================
