@@ -2098,3 +2098,58 @@ The non-termination affects only the **Tri-neighborhood tableau paper** (`tablea
 - `tableau_ALCIRCC5.tex` / `.pdf` — third revision with non-termination theorem
 - `README.md` — comprehensive update reflecting non-termination throughout
 - `CONVERSATION.md` — Part 39
+
+---
+
+## Part 40: Double (Pairwise) Blocking Experiment
+
+### Michael Wessel
+
+> Please do one more round of non-termination / blocking experiment - this time use the standard "double blocking" from description logic theory. Change your tableaux calculus and test scripts to investigate and re-run.
+
+### Claude
+
+*[Implemented `PairwiseBlockingTableau` in `double_blocking_test.py`, extending `TriangleTableau` with 6 blocking modes:]*
+
+1. **`single_ll`** — L(x)=L(y) only (baseline)
+2. **`pair_ll`** — Standard DL double blocking: L(x)=L(y), L(parent(x))=L(parent(y)), E(parent(x),x)=E(parent(y),y)
+3. **`pair_tri`** — Double blocking + Tri(x)=Tri(y)
+4. **`single_tri`** — Single blocking + Tri(x)=Tri(y)
+5. **`pair_full`** — Double blocking + Tri + TNbr
+6. **`full_tnbr`** — Single blocking + Tri + TNbr (paper's criterion)
+
+### Results (14 test concepts, max_nodes=80, timeout=15s)
+
+The results divide into two sharp groups:
+
+| Mode | Terminates | Non-terminates | Oscillation |
+|------|-----------|---------------|-------------|
+| `single_ll` | **14/14** | 0 | 0 |
+| `pair_ll` | **14/14** | 0 | 0 |
+| `pair_tri` | 0 | **14/14** | 0 |
+| `single_tri` | 0 | **14/14** | 0 |
+| `pair_full` | 0 | **14/14** | 0 |
+| `full_tnbr` | 0 | **14/14** | 0 |
+
+### Analysis
+
+**The deciding factor is Tri, not single-vs-double.** Every mode that compares Tri(x)=Tri(y) fails to terminate on every concept. Both label-only modes (single and double) terminate on everything. Adding the pairwise (parent-matching) constraint to Tri-based blocking does not help at all.
+
+**Why double blocking doesn't help:** In standard DL tableaux, double blocking resolves problems where a child node develops differently from its "twin" because the *parent* provides a different context (different label or different edge). But in the ALCI_RCC5 frontier advancement problem, the parents already match — L(parent(frontier)) = L(parent(interior)) and the edge PP is the same. The problem is that the *children's neighborhood structure* differs: the frontier node has no PP-successors yet (|Tri|=8), while interior nodes gained PP-successors later (|Tri|=16). This is a forward-looking asymmetry that parent-matching cannot resolve.
+
+**Verbose trace (PP+DR with pair_ll):**
+```
+n0: root                 |LL|=6 |Tri|= 4  active
+n1: PP-succ of n0        |LL|=5 |Tri|= 8  active
+n2: DR-succ of n1        |LL|=2 |Tri|= 4  active
+n3: PP-succ of n1        |LL|=5 |Tri|=12  active
+n4: PP-succ of n3        |LL|=5 |Tri|= 8  BLOCKED by n3
+```
+n4 is blocked by n3 because L(n4)=L(n3)=5 concepts, L(parent n4)=L(n3)=L(parent n3)=L(n1)=5 concepts, and E(n3,n4)=E(n1,n3)=PP. The Tri mismatch (8 vs 12) is ignored. Zero oscillation.
+
+### Implications
+
+This confirms the blocking dilemma is specifically about the Tri component, not about the general blocking architecture. The standard DL approach (type-equality or pairwise blocking without spatial structure) terminates fine — the question is whether the resulting open branches yield *sound* models when unraveled. In standard ALCI (without RCC constraints), pairwise type-equality blocking is known to be sound. The open question for ALCI_RCC5 is whether the RCC5 constraints survive the unraveling — i.e., whether the complete-graph structure can be consistently maintained in an infinite unfolding.
+
+### Files created
+- `double_blocking_test.py` — Full implementation and experimental comparison

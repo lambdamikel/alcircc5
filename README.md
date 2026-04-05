@@ -61,13 +61,18 @@ This concept forces an infinite PP-chain where each node has a DR-witness. The n
 
 Active node count stays bounded (≈9), but total node creation is unbounded. This is exactly the gap identified in Section 4 of the tableau paper. Testing across 20 hand-crafted concepts: **18 out of 20 show non-termination** (all concepts requiring infinite chains via ∀-propagation). See [`triangle_nonterm.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_nonterm.py) for the analysis.
 
-**The blocking dilemma is now fully demonstrated:**
+**The blocking dilemma is now fully demonstrated** (including standard DL double blocking, [`double_blocking_test.py`](https://github.com/lambdamikel/alcircc5/blob/master/double_blocking_test.py)):
 
 | Blocking criterion | Terminates? | Sound? |
 |---|---|---|
-| Type-equality (LL only) | ✓ Yes (4 nodes) | ? Potentially unsound (novel triangles during unraveling) |
-| LL + Tri | ✗ No (unbounded) | ✓ Sound |
-| LL + Tri + TNbr (paper's criterion) | ✗ No (unbounded) | ✓ Sound |
+| Type-equality (LL only, single) | ✓ Yes (4 nodes) | ? Potentially unsound (novel triangles during unraveling) |
+| Type-equality (LL only, double/pairwise) | ✓ Yes (5 nodes) | ? Potentially unsound |
+| LL + Tri (single) | ✗ No (unbounded) | ✓ Sound |
+| LL + Tri (double/pairwise) | ✗ No (unbounded) | ✓ Sound |
+| LL + Tri + TNbr (single, paper's criterion) | ✗ No (unbounded) | ✓ Sound |
+| LL + Tri + TNbr (double/pairwise) | ✗ No (unbounded) | ✓ Sound |
+
+**The deciding factor is Tri, not single-vs-double blocking.** Standard DL pairwise blocking (matching parent labels and edge roles) does not help because in the frontier advancement problem, the parents already match — the asymmetry is in the *children's* neighborhood structure (forward-looking), not the parent context (backward-looking). On 14 test concepts: all 4 Tri-based modes show 14/14 non-termination; both label-only modes show 14/14 termination, zero oscillation.
 
 The root cause is structural: in complete-graph tableaux with permanent edge assignment, newly created nodes have PPI edges to all predecessors but no PP edges to successors (which don't exist yet). This PP/PPI asymmetry in the frontier node's Tri is inherent to the expansion strategy and cannot be resolved by strengthening the blocking condition — stronger blocking makes termination *harder*, not easier.
 
