@@ -62,9 +62,31 @@
 
 \date{April 2026}
 
+\usepackage[normalem]{ulem}    % \sout for strikethrough
+
 \begin{document}
 
 \maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Status (April 2026).}\;
+This paper proves \textbf{completeness} of the Tri-neighborhood
+tableau calculus.  \textbf{Termination} is \textbf{disproved}
+(Section~\ref{sec:counterexample}).  \textbf{Soundness} has a
+\textbf{formal gap}: Lemma~\ref{lem:tclosed-exist} (non-empty
+domains after arc-consistency) is supported by computational
+verification on completion graphs of size 8, 10, and~12, but
+lacks a general formal proof.  This is structurally analogous to
+the extension gap in the companion paper~\cite{CompanionPaper}:
+a disjunctive constraint network must be shown solvable, and no
+general argument is provided.  The calculus is therefore
+\textbf{not a proven decision procedure}: termination fails and
+soundness is incomplete.  Completeness is the only fully
+established component.}}
+\end{center}
+
+\bigskip
 
 \begin{abstract}
 We present a tableau-based decision procedure for concept
@@ -78,10 +100,15 @@ $(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$ recording
 Hintikka types and RCC5 relations but no node identities---and,
 for each (relation, type) pair, the same distribution of
 triangle-type sets among their respective neighbors.
-We prove soundness (the model is constructed
+We prove completeness
+(a model guides all nondeterministic choices) and present
+a soundness argument (model construction
 by triangle-type-filtered unraveling, with global consistency
-guaranteed by the full tractability of RCC5) and completeness
-(a model guides all nondeterministic choices).
+from the full tractability of RCC5).
+\textbf{However, the soundness proof has a formal gap}:
+the key lemma (non-empty domains after arc-consistency) is
+supported by computational verification but not by a general
+formal argument.
 However, \textbf{termination fails}: a computational
 implementation reveals that the concept
 $A \sqcap \exists\PP.A \sqcap \forall\PP.(\exists\PP.A
@@ -182,7 +209,7 @@ This ensures the copy is faithful not just from $x/y$'s
 perspective, but from \emph{every neighboring node's
 perspective}.
 
-Tri-neighborhood blocking achieves:
+Tri-neighborhood blocking is \emph{intended} to achieve:
 \begin{enumerate}[nosep]
   \item \textbf{Correct unraveling}: copying $y$'s witness
     structure for $x$ produces only triangle types already in
@@ -192,6 +219,10 @@ Tri-neighborhood blocking achieves:
     RCC5 tractability~\cite{RenzNebel1999,Renz1999} yields a
     globally consistent atomic network.
 \end{enumerate}
+However, the formal proof of item~2 is incomplete: the
+non-emptiness of constraint-network domains after
+arc-consistency (Lemma~\ref{lem:tclosed-exist}) relies on
+computational verification rather than a general argument.
 However, a full implementation~\cite{NonTermScript} reveals
 that \textbf{termination fails}: frontier nodes in a
 chain always have a smaller $\Tri$ than interior nodes
@@ -723,11 +754,19 @@ condition (e.g., adding $\TNbr$) makes non-termination
 %% ============================================================
 \section{Soundness}\label{sec:soundness}
 
-\begin{theorem}[Soundness]\label{thm:soundness}
+\begin{theorem}[Soundness --- \textbf{formal gap}]\label{thm:soundness}
 If the tableau produces an open completion graph $\GG$ for
 $C_0$, then $C_0$ is satisfiable in $\ALCIRCC{5}$.
 \end{theorem}
 
+\noindent
+\textbf{Gap.}\; The proof depends on
+Lemma~\ref{lem:tclosed-exist} (non-empty domains after
+arc-consistency), which is supported by computational
+verification but not by a complete formal argument.
+See Section~\ref{sec:gaps}, item~1.
+
+\medskip
 The proof constructs a model directly from $\GG$ via tree
 unraveling and triangle-type-filtered constraint solving.
 
@@ -848,11 +887,20 @@ non-adjacent $\tau$-pairs do not arise.
 \subsection{The key lemma: non-empty domains}
 \label{sec:key-lemma}
 
-\begin{lemma}[Non-empty domains]\label{lem:tclosed-exist}
+\begin{lemma}[Non-empty domains --- \textbf{not formally proved}]
+\label{lem:tclosed-exist}
 Let $\GG$ be an open completion graph with Tri-neighborhood
 blocking.  Then the $T$-filtered constraint network $\NN_T$
 has non-empty domains for all pairs after arc-consistency.
 \end{lemma}
+
+\noindent
+\textbf{Status.}\; The argument below establishes initial
+non-emptiness and explains the mechanism by which arc-consistency
+preserves non-emptiness (mirror-symmetry breaking via disjunctive
+domains).  However, the ``non-emptiness after filtering'' step is
+verified computationally, not proved for arbitrary open completion
+graphs.  This is the formal gap in the soundness proof.
 
 \begin{proof}
 We show that every domain $D_0(d_1, d_2)$ is initially
@@ -1295,7 +1343,7 @@ $\ALCIRCC{8}$ if the pair-type domains $P(\GG)$ fall within
 a tractable fragment.  This is a non-trivial condition that
 we do not address here.
 
-\subsection{Honest assessment of gaps}
+\subsection{Honest assessment of gaps}\label{sec:gaps}
 
 We identify the following points where the proof requires
 further scrutiny:
@@ -1368,12 +1416,15 @@ We have presented a tableau calculus for $\ALCIRCC{5}$ with
 \emph{Tri-neighborhood blocking}: a node $x$ is blocked by an
 earlier node $y$ when (i) $\LL(x) = \LL(y)$, (ii) $\Tri(x) =
 \Tri(y)$, and (iii) $\TNbr(x) = \TNbr(y)$.  The calculus is
-\emph{sound} (model construction via triangle-type-filtered
-unraveling, with the $\Safe$ extension for same-map pairs
-and global consistency from full RCC5 tractability) and
 \emph{complete} (a model guides all nondeterministic choices).
+The soundness argument (model construction via
+triangle-type-filtered unraveling, with the $\Safe$ extension
+for same-map pairs and global consistency from full RCC5
+tractability) has a \textbf{formal gap}: non-empty domains after
+arc-consistency (Lemma~\ref{lem:tclosed-exist}) is supported by
+computational verification but not by a general formal proof.
 
-However, \textbf{termination fails.}  The concept
+\textbf{Termination also fails.}  The concept
 $A \sqcap \exists\PP.A \sqcap
 \forall\PP.(\exists\PP.A \sqcap \exists\DR.B)$
 causes unbounded node creation via a frontier-advancement
@@ -1386,11 +1437,12 @@ but risks unsound unraveling; $\Tri$-based blocking
 ensures sound unraveling but does not terminate.
 
 The paper should therefore be read as \emph{partial progress}
-toward the decidability of $\ALCIRCC{5}$: the soundness and
-completeness proofs are valid, but the calculus is not a
-decision procedure.  The main contributions are:
-(1)~the Tri-neighborhood blocking condition and the proof
-that it ensures correct unraveling;
+toward the decidability of $\ALCIRCC{5}$: only completeness
+is fully established; soundness has a formal gap and the
+calculus does not terminate.  The main contributions are:
+(1)~the Tri-neighborhood blocking condition and the argument
+that it ensures correct unraveling (contingent on
+Lemma~\ref{lem:tclosed-exist});
 (2)~the disjunctive constraint-network approach to same-map
 pairs, with the $\Safe$ extension;
 (3)~computational evidence confirming the frontier-advancement
