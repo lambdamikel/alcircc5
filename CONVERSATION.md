@@ -2283,3 +2283,45 @@ Updated `README.md`:
 - Summary table: updated Quasimodel column gap and status
 - Soundness section: renamed to "Soundness (NOT ESTABLISHED)" with prominent caveat
 - Extension gap implications: corrected claim about Henkin construction succeeding
+
+---
+
+## Part 43: Audit of Remaining Claims
+
+### Michael Wessel
+
+> The README states: "The eighth approach (Tri-neighborhood tableau) proves soundness and completeness of Tri-neighborhood blocking, but termination is disproved." Is that still correct? Also, how about the PO-coherent fragment. Still valid?
+
+### Claude
+
+*[Audited both claims by reading the actual paper proofs.]*
+
+#### Tri-neighborhood tableau soundness: HAS A FORMAL GAP
+
+The README's claim that soundness is "valid" was overstated. The soundness proof (Theorem 5.8 in `tableau_ALCIRCC5.tex`) constructs a model via tree unraveling + triangle-type-filtered constraint network. The critical step is **Lemma 5.5 (non-empty domains after arc-consistency)**, and the paper's own honest assessment (Section 7.2, item 1) explicitly states:
+
+> "The proof that arc-consistency preserves non-empty domains is supported by computational verification on completion graphs of size 8, 10, and 12, but not by a general formal argument. [...] A fully formal proof that domains remain non-empty after T-filtering and arc-consistency for *arbitrary* open completion graphs would close this gap."
+
+This is **structurally the same issue** as the extension gap in the main paper: a disjunctive constraint network must be shown solvable. The mechanism differs (triangle-type filtering rather than Henkin/Q3), and computational evidence is stronger (zero failures), but a complete formal proof is missing.
+
+Updated README:
+- Soundness changed from "Valid" to "NOT FULLY PROVEN" with explanation
+- Summary table updated: "soundness has formal gap"
+- Honest assessment item 1 expanded with the paper's own caveat language
+
+#### PO-coherent fragment: APPEARS VALID
+
+The two-tier quotient paper (`two_tier_quotient_ALCIRCC5.tex`) uses a **structurally different proof architecture** that does NOT go through quasimodels or the Henkin construction:
+
+1. **Completeness** (Theorem 5.4): Model → two-tier quotient. Extracts period descriptors from PP-chains, constructs finite quotient with kernel nodes and regular witnesses. The PO-coherent restriction ensures all witness types are all-phase-safe.
+
+2. **Soundness** (Theorem 6.2): Two-tier quotient → model. Unfolds kernels into infinite PP-chains (Lemma 6.1, CC preservation by case analysis). Adds off-chain witnesses via disjunctive constraint network where:
+   - **V6** (path-consistency of the extension network) is an **explicit, checkable precondition** — not an assumed property
+   - **V_safe** (phasewise safety) ensures all domain values respect universal constraints
+   - Full RCC5 tractability (Renz 1999, an established result) converts path-consistency to global consistency
+
+The key difference from the other approaches: V6 path-consistency is CHECKED by the algorithm, not hoped for. If the constraint network isn't path-consistent, the quotient is rejected — no false positives. The algorithm only accepts quotients where the soundness proof goes through.
+
+The PO gap is honestly documented: PO-incoherent descriptors are excluded because constant kernel interfaces cannot handle the DR→PO→PPI transition pattern. The paper proves this is a genuine limitation (Proposition 7.1: concrete PO-incoherent model exists).
+
+**Assessment: the PO-coherent fragment result appears genuinely valid.** It's self-contained, doesn't depend on any retracted results, and its constraint-solving step is an explicit precondition rather than an implicit assumption.
