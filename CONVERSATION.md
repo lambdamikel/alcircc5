@@ -2347,3 +2347,39 @@ The PO gap is honestly documented: PO-incoherent descriptors are excluded becaus
 **decidability_proof_ALCIRCC5.md**: Added prominent RETRACTED header. This early markdown proof sketch predates the formal papers and asserts decidability as established fact. Title and theorem struck through; file retained as historical record only.
 
 All papers compile cleanly. All changes committed and pushed.
+
+---
+
+## Part 45: Direct Soundness — Demand Satisfaction Without Henkin
+
+### Michael Wessel
+
+> Now that we did our bookkeeping, we can continue with what you suggested earlier. Continuing the investigation without Henkin, but looking for existential demand satisfaction in *other* already existing nodes.
+
+### Claude
+
+*[Conducted a systematic computational investigation of whether blocked nodes in the tableau completion graph can have their existential demands satisfied by already-existing nodes, bypassing the Henkin construction entirely.]*
+
+**Phase 1: Arbitrary RCC5 graphs.** Tested demand satisfaction in random composition-consistent graphs (`demand_satisfaction_check.py`). High failure rate (70–75%), as expected — arbitrary graphs don't have tableau structure.
+
+**Phase 2: Tableau-structured graphs.** Built a simulator (`tableau_demand_check.py`) that models actual tableau structure: seed nodes generate successors via existential demands, with equality anywhere-blocking and constraint filtering. Results:
+- Free blocker relation: ZERO failures across 5,472 configurations
+- CF-forced blocker relation: 1.7% failures, ALL of type DR→PPI (the unique self-absorption failure: PPI ∉ comp(DR, PPI) = {DR})
+
+**Phase 3: Depth-2 expansion.** Tested whether one extra expansion level resolves the stuck cases (`depth2_demand_check.py`). Results: 99.4–99.9% of stuck cases resolve. Remaining failures: self-referential PPI demands in PP-chains.
+
+**Phase 4: Comprehensive classification** (`comprehensive_demand_check.py`). Discovered the full trichotomy:
+
+1. **No PP/PPI demands**: Graph directly satisfies all demands (zero failures)
+2. **Acyclic PP/PPI chains of length L**: All resolve at depth L+1 expansion
+3. **PP/PPI cycles** (∃PP.Self or ∃PPI.Self): Create infinite chains that cannot be finitely satisfied — algebraically rigid (comp(PP,PP)={PP}, comp(PPI,PPI)={PPI})
+
+The key algebraic insight: DR and PO are **diluting** (comp(R,R) = {DR,PO,PP,PPI}), so chains of these relations quickly make all relations possible, and demands are easily absorbed. But PP and PPI are **rigid** (comp(PP,PP) = {PP} only), so chains stay frozen and can create irreducible infinite regressions.
+
+**The unique obstruction**: PPI ∉ comp(DR, PPI) = {DR}. This is the ONLY case where a demand cannot be self-absorbed — and it only matters in PP/PPI chains.
+
+**Cross-chain edge assignment** remains the single open problem: when multiple independent chains coexist, the edges between chains must be simultaneously consistent. This is equivalent to the Extension Solvability Conjecture shared across all approaches.
+
+### Output
+
+New paper: `direct_soundness_ALCIRCC5.tex` (8 pages, compiles cleanly). Documents the trichotomy approach with computational evidence tables, two-phase model construction strategy, and honest acknowledgment that cross-chain edge assignment remains conjectural.

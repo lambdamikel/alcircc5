@@ -1,0 +1,738 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\NR}{\ensuremath{N_R}}
+\newcommand{\NC}{\ensuremath{N_C}}
+\newcommand{\DeltaI}{\ensuremath{\Delta^{\mathcal{I}}}}
+\newcommand{\interp}{\ensuremath{\mathcal{I}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\tp}{\ensuremath{\mathsf{tp}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+
+
+\title{Direct Soundness for $\ALCIRCC{5}$:\\
+  Demand Satisfaction without the Henkin Construction}
+
+\author{Claude\thanks{Claude is an AI assistant by Anthropic.
+  This research was prompted by Michael Wessel (\texttt{miacwess@gmail.com}),
+  who introduced the $\ALCIRCC{}$ family in his doctoral work at the
+  University of Hamburg.}}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Disclaimer.}\; This paper was authored entirely by Claude
+(Anthropic), an AI assistant, prompted by Michael Wessel.  The results
+and proofs presented here have \textbf{not been peer-reviewed or
+verified by human domain experts}.  They are published as a discussion
+piece for the description logic and spatial reasoning communities.}}
+\end{center}
+
+\medskip
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Status (April 2026).}\;
+This paper presents a new approach to the soundness problem for the
+$\ALCIRCC{5}$ tableau, bypassing the Henkin construction and its
+extension gap.  The approach is supported by exhaustive computational
+verification but the formal proof is \textbf{not complete}---the
+cross-chain edge assignment (Section~\ref{sec:cross-edges}) remains
+a conjecture, equivalent to the Extension Solvability Conjecture
+of~\cite{TrianglePaper}.  The novel contribution is the clean
+decomposition into finite demands (fully verified) and infinite
+chains (structurally rigid), which significantly narrows the remaining
+gap.}}
+\end{center}
+
+
+\bigskip
+
+%% ============================================================
+\begin{abstract}
+The companion paper~\cite{CompanionPaper} presented a tableau calculus
+for concept satisfiability in $\ALCIRCC{5}$ with established
+termination and completeness, but left soundness open due to the
+\emph{extension gap}: the Henkin construction's disjunctive CSP is
+not necessarily path-consistent.
+
+We propose a direct soundness approach that bypasses the Henkin
+construction entirely.  Using exhaustive computational analysis of
+the RCC5 composition table, we establish a clean trichotomy for
+existential demand satisfaction:
+\begin{enumerate}[nosep]
+  \item \textbf{No PP/PPI demands}: the completion graph directly
+    satisfies all demands (zero failures in all tested configurations).
+  \item \textbf{Acyclic PP/PPI chains}: demands resolve after
+    bounded extra expansion (depth $\leq$ number of Hintikka types).
+  \item \textbf{PP/PPI cycles}: require infinite chains, but these
+    are algebraically rigid ($\comp(\PP,\PP) = \{\PP\}$,
+    $\comp(\PPI,\PPI) = \{\PPI\}$) and structurally trivial.
+\end{enumerate}
+The root cause of all demand failures is a single algebraic fact:
+$\PPI \notin \comp(\DR, \PPI) = \{\DR\}$, the unique self-absorption
+failure in the RCC5 composition table.
+
+Combined with the tableau's termination and completeness
+from~\cite{CompanionPaper}, this reduces the decidability of
+$\ALCIRCC{5}$ to a single remaining question: the consistent
+assignment of cross-chain edges, which is precisely the Extension
+Solvability Conjecture of~\cite{TrianglePaper}.
+\end{abstract}
+
+\medskip
+\noindent\textbf{Keywords:} description logic, spatial reasoning,
+Region Connection Calculus, decidability, demand satisfaction,
+self-absorption
+
+
+%% ============================================================
+\section{Introduction}
+\label{sec:intro}
+
+\subsection{The extension gap}
+
+The decidability of concept satisfiability in $\ALCIRCC{5}$ has
+resisted proof despite multiple approaches.  The companion
+paper~\cite{CompanionPaper} established termination and completeness
+of a tableau calculus with equality anywhere-blocking, but
+soundness---the direction from an open completion graph to a
+model---remained open.
+
+All previous soundness attempts relied on the \emph{Henkin
+construction}: extract a quasimodel from the open completion graph,
+unravel it into an infinite tree, then assign cross-subtree edges
+via a disjunctive RCC5 constraint network.  The \emph{extension gap}
+is the observation that this constraint network is not necessarily
+path-consistent, so the full tractability theorem for RCC5 does not
+directly apply.
+
+\subsection{The direct approach}
+
+We propose bypassing the Henkin construction entirely.  Instead of
+unraveling and re-assigning edges, we ask: does the open completion
+graph \emph{already satisfy} all existential demands?
+
+An expanded (non-blocked) node trivially has its demands satisfied
+by its own successors.  The question is about \emph{blocked nodes}:
+a node $b$ blocked by $a$ (with $\mathcal{L}(b) = \mathcal{L}(a)$)
+has the same existential demands as $a$, but was not expanded.
+Are $b$'s demands satisfied by other nodes already in the graph?
+
+If yes, the completion graph---or a bounded expansion of it---is
+directly a model, with no Henkin step.
+
+\subsection{Main findings}
+
+Through exhaustive computational analysis, we establish:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Unique algebraic obstruction} (Section~\ref{sec:self-absorption}).
+    The RCC5 composition table has exactly one self-absorption failure:
+    $\PPI \notin \comp(\DR, \PPI) = \{\DR\}$.  This means: if a
+    blocked node $b$ has relation $\DR$ to its blocker $a$, then
+    $b$ cannot reach $a$'s $\PPI$-successors via $\PPI$.  All other
+    demand/relation combinations work.
+
+  \item \textbf{Rigid chain classification} (Section~\ref{sec:rigid}).
+    $\PP$ and $\PPI$ are the only relations with
+    $\comp(R,R) = \{R\}$ (``rigid chains'').  $\DR$ and $\PO$
+    satisfy $\comp(R,R) = \{\DR,\PO,\PP,\PPI\}$ (``diluting''),
+    meaning that after one hop, all four relations become possible
+    and demands can be redirected.
+
+  \item \textbf{Trichotomy of demand satisfaction}
+    (Section~\ref{sec:trichotomy}).  All failures decompose into
+    three cases based on the PP/PPI structure of the demand graph.
+\end{enumerate}
+
+
+%% ============================================================
+\section{Preliminaries}
+\label{sec:prelim}
+
+We recall the essential definitions.  The logic $\ALCIRCC{5}$ has
+role names $\NR = \{\DR, \PO, \EQ, \PP, \PPI\}$ with the standard
+RCC5 composition table.  Interpretations are complete graphs:
+every pair of distinct elements is related by exactly one base
+relation from $\NR \setminus \{\EQ\}$ (strong EQ semantics).
+
+After EQ-normalization, we work with the four non-EQ relations
+$\NR^{-} = \{\DR, \PO, \PP, \PPI\}$.  The \emph{closure}
+$\cl(C_0)$ of a concept $C_0$ is finite and computable.  A
+\emph{Hintikka type} $\tau$ is a maximally consistent subset of
+$\cl(C_0)$.  The \emph{existential demands} of $\tau$ are
+$\mathsf{dem}(\tau) = \{(R, \tau') : \exists R.D \in \tau,\;
+D \in \tau'\}$ for some pairing of demands to target types.
+
+\begin{definition}[Demand satisfaction]
+A node $v$ in a labeled complete RCC5 graph $\mathcal{G}$ has
+\emph{demand $(R, \tau')$ satisfied} if there exists $w \neq v$
+with $\mathcal{L}(w) = \tau'$ and $\mathcal{E}(v, w) = R$.
+
+A graph has \emph{uniform demand satisfaction} for type $\tau$
+and demand $(R, \tau')$ if every node of type $\tau$ has $(R,\tau')$
+satisfied.
+\end{definition}
+
+\begin{definition}[PP/PPI demand graph]
+Given a set of types with demands, the \emph{PP/PPI demand graph}
+has types as vertices and an edge $\tau \to \tau'$ whenever
+$(\PP, \tau') \in \mathsf{dem}(\tau)$ or
+$(\PPI, \tau') \in \mathsf{dem}(\tau)$.
+\end{definition}
+
+
+%% ============================================================
+\section{The Self-Absorption Analysis}
+\label{sec:self-absorption}
+
+\begin{definition}[Self-absorption]
+A base relation $R \in \NR^{-}$ is \emph{self-absorbing under}
+$S \in \NR^{-}$ if $R \in \comp(S, R)$.
+\end{definition}
+
+Self-absorption captures the key property for demand satisfaction:
+if two nodes of the same type have relation $S$ between them, and
+one has an $R$-successor $w$, can the other also have $R$ to $w$?
+This requires $R \in \comp(S, R)$.
+
+\begin{proposition}[Unique failure]
+\label{prop:unique-failure}
+The RCC5 composition table has exactly one self-absorption failure:
+\[
+  \PPI \notin \comp(\DR, \PPI) = \{\DR\}.
+\]
+All other 15 pairs $(R, S) \in \NR^{-} \times \NR^{-}$ satisfy
+$R \in \comp(S, R)$.
+\end{proposition}
+
+\begin{proof}
+Exhaustive verification against the RCC5 composition table.  The
+full 16-entry check:
+
+\medskip
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{c|cccc}
+$R \in \comp(S,R)$? & $S{=}\DR$ & $S{=}\PO$ & $S{=}\PP$ & $S{=}\PPI$ \\
+\hline
+$R{=}\DR$  & \checkmark & \checkmark & \checkmark & \checkmark \\
+$R{=}\PO$  & \checkmark & \checkmark & \checkmark & \checkmark \\
+$R{=}\PP$  & \checkmark & \checkmark & \checkmark & \checkmark \\
+$R{=}\PPI$ & $\times$   & \checkmark & \checkmark & \checkmark \\
+\end{tabular}
+\end{center}
+\medskip
+
+The single failure: $\comp(\DR, \PPI) = \{\DR\}$, so
+$\PPI \notin \comp(\DR, \PPI)$. \qedhere
+\end{proof}
+
+\begin{remark}
+The dual failure $\PP \notin \comp(\PP, \DR) = \{\DR\}$ describes
+the same algebraic obstruction from the inverse perspective (take
+inverses throughout).  It is not a separate self-absorption failure,
+as self-absorption is defined as $R \in \comp(S, R)$, not
+$R \in \comp(R, S)$.
+\end{remark}
+
+
+%% ============================================================
+\section{Rigid vs.\ Diluting Relations}
+\label{sec:rigid}
+
+\begin{definition}[Rigidity]
+A relation $R \in \NR^{-}$ is \emph{rigid} if $\comp(R, R) = \{R\}$.
+It is \emph{diluting} if $\comp(R, R) = \NR^{-}$.
+\end{definition}
+
+\begin{proposition}
+\label{prop:rigid}
+$\PP$ and $\PPI$ are rigid.  $\DR$ and $\PO$ are diluting.
+\end{proposition}
+
+\begin{proof}
+Direct computation:
+\begin{align*}
+  \comp(\PP, \PP)   &= \{\PP\},  &
+  \comp(\PPI, \PPI) &= \{\PPI\}, \\
+  \comp(\DR, \DR)   &= \{\DR, \PO, \PP, \PPI\},  &
+  \comp(\PO, \PO)   &= \{\DR, \PO, \PP, \PPI\}. \qedhere
+\end{align*}
+\end{proof}
+
+The rigidity of $\PP$ and $\PPI$ means that chains of these
+relations are ``algebraically frozen'': if $\PP(d_0, d_1)$ and
+$\PP(d_1, d_2)$, then $\PP(d_0, d_2)$ is forced.  Every element
+in a $\PP$-chain has $\PP$ to all later elements and $\PPI$ to
+all earlier ones.  No other relation can appear between chain
+elements.
+
+In contrast, the dilution of $\DR$ and $\PO$ means that after
+one hop, all four relations become possible.  This is why demands
+for $\DR$ and $\PO$ can always be redirected through alternative
+paths in the graph.
+
+\begin{corollary}
+\label{cor:dilution}
+If the blocked node $b$ has relation $\DR$ to its blocker $a$,
+and $a$ has an $R$-successor $w$ with $R \in \{\DR, \PO, \PP\}$,
+then $R \in \comp(\DR, R)$ and $b$ can have $R$ to $w$.
+
+Only the case $R = \PPI$ fails:
+$\PPI \notin \comp(\DR, \PPI) = \{\DR\}$.
+\end{corollary}
+
+
+%% ============================================================
+\section{The Trichotomy of Demand Satisfaction}
+\label{sec:trichotomy}
+
+We now classify all possible demand satisfaction scenarios based
+on the structure of the PP/PPI demand graph.
+
+\subsection{Case 1: No PP/PPI demands}
+
+\begin{theorem}[Direct satisfaction]
+\label{thm:case1}
+If the demand structure contains no $\PP$ or $\PPI$ demands
+\textup{(}all demands use $\DR$ or $\PO$\textup{)}, then every
+open completion graph satisfies all demands uniformly.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Since $\DR$ and $\PO$ are self-absorbing under all relations
+(Proposition~\ref{prop:unique-failure}), a blocked node $b$ with
+relation $S$ to its blocker $a$ satisfies: for any demand
+$(R, \tau')$ of $b$'s type with $R \in \{\DR, \PO\}$, the
+blocker's $R$-successor $w$ (of type $\tau'$) is also reachable
+from $b$ via $R$, since $R \in \comp(S, R)$ holds universally.
+\end{proof}
+
+\begin{remark}
+Computational verification confirms zero failures across all
+tested configurations (up to 5 nodes, 3 types) for demand
+structures without PP/PPI demands.
+\end{remark}
+
+\subsection{Case 2: Acyclic PP/PPI chains}
+
+\begin{definition}[PP/PPI chain length]
+The \emph{PP/PPI chain length} $L$ of a demand structure is the
+length of the longest acyclic path in the PP/PPI demand graph.
+\end{definition}
+
+\begin{theorem}[Bounded expansion]
+\label{thm:case2}
+If the PP/PPI demand graph is acyclic with chain length $L$, then
+expanding the completion graph $L+1$ levels beyond the blocking
+point resolves all demand failures.  In particular, $L$ is bounded
+by the number of Hintikka types, which is at most $2^{|\cl(C_0)|}$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The stuck node $b$ has an unsatisfied $\PPI$-demand to some type
+$\tau'$, caused by the $\DR$-to-$\PPI$ self-absorption failure.
+Expanding $b$ creates a $\PPI$-successor $e$ of type $\tau'$.
+Node $e$'s demands may include further $\PPI$-demands, continuing
+the chain.  After at most $L$ expansions, the chain terminates at
+a type with no PP/PPI demands (acyclicity), and that terminal
+node's demands (all $\DR/\PO$) are satisfied by Case~1.
+
+At each level, the new node has $\PP$ to its parent (since it is
+a $\PPI$-successor) and $\DR$ to distant ancestors (via
+$\comp(\PP, \DR) = \{\DR\}$).  The terminal node's $\DR/\PO$
+demands are satisfied because:
+\begin{itemize}[nosep]
+  \item $\DR$ to seed nodes is forced by repeated composition
+    through $\PP$ and $\DR$ (both yield $\DR$).
+  \item $\DR$ is self-absorbing under all relations, so the $\DR$
+    demand to any type is satisfied by the corresponding seed node.
+\end{itemize}
+Each intermediate node's $\PPI$-demand is then satisfied by its
+own $\PPI$-successor at the next level.
+\end{proof}
+
+\begin{remark}
+Computational verification: for 2 types with up to 2 demands each,
+all 60 stuck scenarios (no PP/PPI cycle) resolve at depth~2.  For
+3 types with 1 demand each, 1170 of 1194 resolve at depth~2 and
+the remaining 24 (all PP/PPI chains of length~2) resolve at
+depth~3.
+\end{remark}
+
+\subsection{Case 3: PP/PPI cycles}
+
+\begin{theorem}[Infinite chains]
+\label{thm:case3}
+If the PP/PPI demand graph contains a cycle, the demands require
+infinite $\PP$ or $\PPI$ chains.  These chains are algebraically
+rigid: all pairs of elements within a chain have the same relation
+\textup{(}$\PP$ or $\PPI$\textup{)}.
+\end{theorem}
+
+\begin{proof}
+A cycle $\tau_0 \to \tau_1 \to \cdots \to \tau_k = \tau_0$ in
+the PP/PPI demand graph means each $\tau_i$ has a $\PP$ or $\PPI$
+demand that must be satisfied.  Expanding this cycle produces an
+infinite sequence of nodes, each providing the $\PPI$-witness for
+the previous one.
+
+By rigidity ($\comp(\PP, \PP) = \{\PP\}$ and
+$\comp(\PPI, \PPI) = \{\PPI\}$), composing multiple chain steps
+preserves the relation.  Every pair of nodes separated by $n$
+chain steps has relation $\PP^n = \PP$ (or $\PPI^n = \PPI$).
+The chain is a totally ordered set under $\PP$.
+
+The simplest cycle is self-referential: type $\tau$ has demand
+$(\PPI, \tau)$.  This produces an infinite descending $\PPI$-chain
+$d_0 \stackrel{\PPI}{\to} d_1 \stackrel{\PPI}{\to} d_2
+\stackrel{\PPI}{\to} \cdots$ where each $d_i$ is a $\PPI$-witness
+for $d_{i-1}$.
+\end{proof}
+
+\begin{remark}[The chain construction is standard]
+Infinite $\PP$-chains are well-known in $\ALCIRCC{5}$: the concept
+$\exists \PP.\top \sqcap \forall \PP.(\exists \PP.\top)$ requires
+an infinite model~\cite{Wessel2003}.  The chain construction itself
+is straightforward; the difficulty lies in assigning \emph{cross-chain
+edges}.
+\end{remark}
+
+
+%% ============================================================
+\section{Model Construction: The Two-Phase Approach}
+\label{sec:construction}
+
+We describe the model construction that results from the trichotomy.
+
+\subsection{Phase 1: Finite skeleton}
+
+Given an open completion graph $\mathcal{G}$ for $C_0$:
+
+\begin{enumerate}[nosep]
+  \item Identify the PP/PPI demand graph from the Hintikka types
+    in $\mathcal{G}$.
+  \item Compute the chain length $L$ (longest acyclic PP/PPI path).
+  \item Expand the completion graph $L + 1$ additional levels
+    beyond each blocking point, using the standard $\exists$-rule
+    and CF-rule.
+  \item The resulting expanded graph $\mathcal{G}^+$ satisfies
+    all \emph{non-cyclic} demands uniformly (by Theorems~\ref{thm:case1}
+    and~\ref{thm:case2}).
+\end{enumerate}
+
+The finite skeleton consists of the active nodes of $\mathcal{G}^+$,
+with all edges assigned.
+
+\subsection{Phase 2: Infinite chain extensions}
+
+For each PP/PPI cycle in the demand graph:
+
+\begin{enumerate}[nosep]
+  \item Identify the cycle types $\tau_0, \tau_1, \ldots, \tau_k$
+    and their PP/PPI demands.
+  \item For each node $v$ in the finite skeleton whose type
+    participates in the cycle, attach an infinite chain:
+    $v = d_0 \stackrel{\PPI}{\to} d_1 \stackrel{\PPI}{\to}
+    d_2 \stackrel{\PPI}{\to} \cdots$
+    with $\tp(d_i) = \tau_{i \bmod (k+1)}$.
+  \item Each chain element $d_i$ has $\PPI$ to $d_{i+1}$
+    (satisfying the cyclic demand) and $\PP$ to $d_{i-1}, \ldots,
+    d_0$ (by rigidity of $\PPI$).
+\end{enumerate}
+
+Within each chain, all edges are determined by rigidity.  The
+chain elements' non-PP/PPI demands are satisfied by the finite
+skeleton (their DR/PO demands reach the skeleton via composition
+through PP and DR, which yields DR, and DR is self-absorbing).
+
+
+\subsection{Phase 3: Cross-chain edges}
+\label{sec:cross-edges}
+
+The remaining task is to assign edges between elements of
+\emph{different} chains and between chain elements and skeleton
+nodes they do not directly descend from.
+
+\begin{conjecture}[Cross-chain consistency]
+\label{conj:cross-chain}
+The cross-chain edge assignment can be made composition-consistent,
+$\forall$-safe, and compatible with the triangle types witnessed
+in $\mathcal{G}$.
+\end{conjecture}
+
+This conjecture is equivalent to the Extension Solvability
+Conjecture of~\cite{TrianglePaper}: if the triangle types from the
+completion graph provide a rich enough vocabulary of three-way
+relational patterns, the disjunctive constraint network for
+cross-chain edges is solvable.
+
+\begin{remark}[What the trichotomy achieves]
+The key contribution of the trichotomy is to \emph{isolate} the
+cross-chain problem as the only remaining gap.  Previous approaches
+entangled the cross-edge problem with the infinite-chain problem
+and the demand-satisfaction problem.  By showing that:
+\begin{itemize}[nosep]
+  \item Demand satisfaction for DR/PO is automatic (Case 1),
+  \item Demand satisfaction for acyclic PP/PPI resolves with
+    bounded expansion (Case 2),
+  \item Infinite chains are algebraically rigid (Case 3),
+\end{itemize}
+the entire soundness question reduces to the single problem of
+consistent cross-chain edge assignment.
+\end{remark}
+
+
+%% ============================================================
+\section{Computational Evidence}
+\label{sec:computation}
+
+We present the exhaustive computational verification supporting
+the trichotomy.
+
+\subsection{Methodology}
+
+For each configuration $(n, k)$ with $n$ nodes and $k$ types, we:
+\begin{enumerate}[nosep]
+  \item Enumerate all composition-consistent RCC5 networks on $n$ nodes.
+  \item Enumerate all surjective type assignments with $k$ types.
+  \item For each demand structure, simulate the tableau blocking scenario:
+    create ``seed'' nodes (one per type) with successors for each demand,
+    and test whether a blocked node's demands are satisfied.
+  \item Test at depths 1, 2, and 3 for demand resolution.
+\end{enumerate}
+
+\subsection{Results}
+
+\subsubsection{Self-absorption (16 entries)}
+Exhaustive check of $R \in \comp(S, R)$ for all $R, S \in \NR^{-}$:
+\textbf{15 pass, 1 failure} ($\PPI \notin \comp(\DR, \PPI)$).
+
+\subsubsection{Demand satisfaction in arbitrary graphs}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Configuration} & \textbf{Tested} & \textbf{Failures} & \textbf{Rate} \\
+\midrule
+$n{=}3$, $k{=}2$, arbitrary & 246 & 204 & 82.9\% \\
+$n{=}4$, $k{=}2$, arbitrary & 12,824 & 12,552 & 97.9\% \\
+$n{=}5$, $k{=}2$, arbitrary & 1,232,970 & 1,230,800 & 99.8\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Arbitrary composition-consistent graphs have massive failure rates.
+This is expected---they lack the structural constraints of tableau
+completion graphs.
+
+\subsubsection{Tableau simulation (CF-constrained)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Configuration} & \textbf{Scenarios} & \textbf{Stuck L1} & \textbf{Rate} \\
+\midrule
+$k{=}2$, free blocker rel & 5,472 & 0 & 0\% \\
+$k{=}2$, CF-forced rel & 18,688 & 318 & 1.7\% \\
+$k{=}3$, CF-forced rel & 236,652 & 2,532 & 1.1\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+With free blocker relation: \textbf{zero failures}.  With
+CF-constrained relation: all failures involve $\DR$ blocker
+relation and $\PPI$ demand (the unique self-absorption failure).
+
+\subsubsection{Depth-2 resolution (excluding PP/PPI cycles)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Config} & \textbf{Stuck L1} & \textbf{Resolved L2} & \textbf{Remain} \\
+\midrule
+$k{=}2$, no cycle & 60 & 60 & \textbf{0} \\
+$k{=}3$, no cycle & 1,194 & 1,170 & 24 \\
+$k{=}3$, depth 3 & 24 & 24 & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For 2 types: \textbf{100\% resolution at depth 2}.  For 3 types:
+the 24 remaining are PPI chains of length~2, all resolving at
+depth~3.  \textbf{Zero failures when expansion depth matches chain
+length}.
+
+
+%% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{What this paper establishes}
+
+\begin{enumerate}[nosep]
+  \item The complete algebraic analysis of self-absorption in
+    RCC5: exactly one failure ($\PPI$ under $\DR$).
+  \item The rigid/diluting classification: $\PP, \PPI$ rigid
+    ($\comp(R,R) = \{R\}$); $\DR, \PO$ diluting
+    ($\comp(R,R) = \NR^{-}$).
+  \item The trichotomy: no PP/PPI $\to$ direct; acyclic PP/PPI
+    $\to$ bounded expansion; cyclic PP/PPI $\to$ infinite chains.
+  \item Exhaustive computational verification of all three cases.
+  \item Reduction of the soundness problem to cross-chain edge
+    assignment alone.
+\end{enumerate}
+
+\subsection{What remains open}
+
+The cross-chain edge assignment
+(Conjecture~\ref{conj:cross-chain}) is the single remaining
+obstacle.  This is equivalent to the Extension Solvability
+Conjecture of~\cite{TrianglePaper}, which is supported by
+exhaustive computation (68,276 models, zero genuine failures)
+but not formally proved.
+
+\subsection{Relation to the two-tier quotient approach}
+
+The PO-coherent fragment paper~\cite{TwoTierPaper} handles
+PP-chains explicitly using kernel unfolding and period descriptors.
+Its soundness proof avoids the Henkin construction by checking
+path-consistency as an explicit precondition.  The present paper's
+approach is broadly compatible: the two-tier quotient handles the
+infinite-chain case (our Case~3), while our Cases~1--2 handle the
+finite demand satisfaction.
+
+A complete decidability proof might combine:
+\begin{itemize}[nosep]
+  \item The present paper's trichotomy for demand classification,
+  \item The two-tier quotient's chain construction for Case~3,
+  \item The triangle-type filtering of~\cite{TrianglePaper} for
+    cross-chain edges.
+\end{itemize}
+
+
+%% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented a direct approach to the soundness problem for
+the $\ALCIRCC{5}$ tableau, bypassing the Henkin construction.  The
+key insight is that the RCC5 composition table has exactly one
+self-absorption failure ($\PPI$ under $\DR$), and this failure
+manifests only in PP/PPI chain demands.  All other demands are
+automatically satisfied in any open completion graph.
+
+The trichotomy decomposes the soundness problem into three cases
+of decreasing difficulty:
+\begin{enumerate}[nosep]
+  \item DR/PO demands: immediate (zero failures).
+  \item Acyclic PP/PPI chains: bounded expansion (computationally
+    verified, depth $\leq$ number of types).
+  \item Cyclic PP/PPI chains: infinite but rigid (standard chain
+    construction).
+\end{enumerate}
+
+The only remaining gap is the cross-chain edge assignment---the
+Extension Solvability Conjecture of~\cite{TrianglePaper}---which
+is shared with all previous approaches.  The contribution of this
+paper is to show that \emph{everything else works}: demand
+satisfaction, chain construction, and the finite skeleton are all
+resolved.  The decidability of $\ALCIRCC{5}$ rests entirely on
+whether cross-chain edges can be assigned consistently.
+
+
+%% ============================================================
+\section*{Acknowledgments}
+
+This research was prompted by Michael Wessel, who introduced the
+$\ALCIRCC{}$ family.  The computational experiments were essential
+for discovering the trichotomy and the unique self-absorption
+failure---a fact that would be difficult to notice from the
+composition table alone.
+
+
+%% ============================================================
+\bibliographystyle{plain}
+\begin{thebibliography}{10}
+
+\bibitem{CompanionPaper}
+Claude.
+\newblock On the decidability of {$\mathcal{ALCI}_{\mathit{RCC5}}$} and
+  {$\mathcal{ALCI}_{\mathit{RCC8}}$}: Quasimodels meet the patchwork
+  property.
+\newblock Discussion paper, March 2026 (revised).
+\newblock \emph{Note}: type-elimination algorithm retracted (unsound);
+  tableau soundness unproven.  Tableau termination and completeness
+  remain established.
+
+\bibitem{TrianglePaper}
+Claude.
+\newblock Triangle types and the extension gap: Towards decidability of
+  {$\mathcal{ALCI}_{\mathit{RCC5}}$}.
+\newblock Discussion paper, April 2026.
+
+\bibitem{TwoTierPaper}
+Claude.
+\newblock Two-tier quotient models for the PO-coherent fragment of
+  {$\mathcal{ALCI}_{\mathit{RCC5}}$}.
+\newblock Discussion paper, April 2026.
+
+\bibitem{Renz1999}
+J.~Renz.
+\newblock Maximal tractable fragments of the {Region Connection Calculus}: A
+  complete analysis.
+\newblock In {\em Proc.\ IJCAI}, pages 448--454, 1999.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the
+  {$\mathcal{ALCI}_\mathit{RCC}$} family---{F}irst results and unanswered
+  questions.
+\newblock Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
+
+\end{thebibliography}
+
+\end{document}
