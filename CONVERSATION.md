@@ -2060,3 +2060,41 @@ The root cause is structural: permanent edge assignment creates PP/PPI asymmetry
 - New `triangle_nonterm.py`: Clean non-termination demonstration
 - Updated `README.md` with non-termination finding and blocking dilemma table
 - Updated `CONVERSATION.md` with Part 38
+
+---
+
+## Part 39: Paper revision and README overhaul after non-termination finding
+
+### The request
+Michael noted that the README still said "Full decidability claimed" and asked whether the paper needed retraction and rewriting.
+
+### Assessment
+The non-termination affects only the **Tri-neighborhood tableau paper** (`tableau_ALCIRCC5.tex`), which already presented termination as a conjecture. The soundness and completeness proofs remain valid. The main paper (`decidability_ALCIRCC5.tex`) uses independent approaches (quasimodel method, type-equality tableau) and is unaffected. No retraction is needed — but the paper and README required updates.
+
+### Changes to the tableau paper (third revision)
+- **Abstract**: Rewritten — now states termination fails with the counterexample
+- **Theorem 4.1**: Changed from "Conjecture (Termination)" to "Theorem (Non-termination)"
+- **New Section 4.1**: Formal proof of non-termination via frontier advancement, with edge pattern analysis, Tri asymmetry (|Tri|=8 vs 16), and two remarks (scope, why strengthening fails)
+- **Discussion table**: Tri-neighborhood now shows "Not always" for termination; three conjectured fix directions added (lazy blocking, prophetic Tri, hybrid approach)
+- **Honest assessment**: Gap 3 states the conjecture is false; gap 4 updated
+- **Complexity**: Simplified (moot for non-terminating calculus)
+- **Conclusion**: Rewritten — calculus is sound and complete but not a decision procedure
+- **Bibliography**: Added reference to implementation scripts
+- Compiles cleanly at 16 pages
+
+### Changes to README
+- **Status heading**: "Full decidability claimed" → "Decidability still open — Tri-neighborhood tableau does not terminate"
+- **Opening paragraph**: States termination is false with link to implementation
+- **Key finding section**: Renamed "Earlier finding" with frontier-node caveat
+- **Resolution section**: Renamed "Observation" — interior stabilization is insufficient
+- **Blocking dilemma table**: Updated for all Tri-based conditions
+- **"What remains open"**: Blocking dilemma is now the central obstacle
+- **Eighth approach heading**: "FULL DECIDABILITY CLAIMED" → "TERMINATION DISPROVED"
+- **Proof structure**: Termination marked FALSE, soundness/completeness marked Valid
+- **Approach comparison table**: Status updated to "Termination disproved"
+- **File listing**: Updated description for tableau PDF
+
+### Files modified
+- `tableau_ALCIRCC5.tex` / `.pdf` — third revision with non-termination theorem
+- `README.md` — comprehensive update reflecting non-termination throughout
+- `CONVERSATION.md` — Part 39
