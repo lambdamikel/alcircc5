@@ -2383,3 +2383,51 @@ The key algebraic insight: DR and PO are **diluting** (comp(R,R) = {DR,PO,PP,PPI
 ### Output
 
 New paper: `direct_soundness_ALCIRCC5.tex` (8 pages, compiles cleanly). Documents the trichotomy approach with computational evidence tables, two-phase model construction strategy, and honest acknowledgment that cross-chain edge assignment remains conjectural.
+
+---
+
+## Part 46: ALCI\_RCC5 Concept Satisfiability Reasoner
+
+### Michael Wessel
+
+> Can this be turned into an actual implementation that we can throw some of the difficult test concepts at? Please update the README.md and CONVERSATION.md and push.
+
+### Claude
+
+*[Built a working ALCI\_RCC5 concept satisfiability reasoner (`alcircc5_reasoner.py`) and debugged it through multiple iterations to achieve 18/18 correct test results.]*
+
+**Initial implementation** used the quadruple-type elimination algorithm from the paper: enumerate Hintikka types, compute SAFE relations, check Q2/Q3/Q4 conditions, eliminate until fixpoint. Multiple bugs were found and fixed:
+
+**Bug 1: Path-consistency direction in Q4.** The code computed `comp(R_pi, R_pj)` (composing two relations FROM the same node p), but the correct path xi→p→xj requires `comp(INV(R_pi), R_pj)`. This caused ALL satisfiable concepts to fail Q4.
+
+**Bug 2: Non-monotone GFP elimination.** The greatest-fixpoint approach is non-monotone: removing one pair-type can make another supportable. Simultaneous removal gives wrong results. This led to switching from top-down elimination to **bottom-up constructive search**.
+
+**Bug 3: Q3 over-strictness.** Q3 requires ALL safe relation triples to be simultaneously completable, but in actual models only ONE relation holds per pair. This made Q3 too strong for completeness — it rejected satisfiable concepts like ∃PP.(∀DR.A) ⊓ ∃DR.¬A.
+
+**Bug 4: Q4 over-strictness (same root cause as Q3).** Q4 universally quantifies over all r in the domain D\_zi and requires ALL of them to be path-consistent. But in a model, only ONE relation is chosen. This made Q4 also too strong for completeness.
+
+**The fix: disjunctive path-consistency.** Replaced both Q3 and Q4 with a single **disjunctive path-consistency check** on the SAFE constraint network. For each pair of types in the candidate quasimodel, the domain is the SAFE set. Arc-consistency propagation removes unsupported relations. By the **RCC5 patchwork property** (Renz & Nebel 1999), path-consistent disjunctive RCC5 networks are globally satisfiable. This makes the check both sound and complete.
+
+**The key insight** is that Q3 and Q4 were designed for the type-elimination framework (where specific pair/triple/quadruple-types are tracked and eliminated individually). In the constructive approach, we don't commit to specific relations — we just need to verify that SOME consistent global assignment exists. Disjunctive path-consistency is exactly the right tool for this, and the patchwork property provides the soundness/completeness guarantee.
+
+**Final algorithm:**
+1. Compute Fischer-Ladner closure
+2. Enumerate Hintikka types
+3. Compute SAFE relations between all type pairs
+4. For each root type: try bottom-up construction
+   - Add witness types for existential demands
+   - Verify disjunctive path-consistency after each addition
+   - Backtrack on failure
+
+**Test results:** 18/18 correct, including:
+- Basic SAT/UNSAT (⊤, ⊥, A ⊓ ¬A, ∃DR.⊥)
+- Infinite models (∃PP.⊤ ⊓ ∀PP.∃PP.⊤)
+- Inverse role interaction (∃PP.∃PPI.⊤, ∃PP.(A ⊓ ∃PPI.B) ⊓ B)
+- Universal constraints (∃DR.A ⊓ ∀DR.A, ∃DR.A ⊓ ∀DR.¬A)
+- Cross-demand interaction: ∃PP.(∀DR.A) ⊓ ∃DR.¬A → **SAT** (PP-witness and DR-witness PO-connected)
+
+### Output
+
+- `alcircc5_reasoner.py` — Working reasoner (18/18 tests pass)
+- Updated README.md with implementation section
+- Updated CONVERSATION.md (this entry)

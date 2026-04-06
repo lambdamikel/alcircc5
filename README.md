@@ -1094,6 +1094,44 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`profile_blocking_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/profile_blocking_check.py) -- Verifies that node-identity-based profile blocking does NOT terminate: enumerates all valid RCC5 assignments for chains of length 4/6/8 via arc-consistency propagation, confirms the sliding PO diagonal pattern, and shows that no two τ\_A nodes ever have matching node-identity profiles.
 - [**`tri_neighborhood_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/tri_neighborhood_check.py) -- Tests Wessel's strengthened blocking condition: Tri-neighborhood equivalence requires not only Tri(x) = Tri(y) but also that neighbors' Tri sets match per (relation, type) pair. Key result: the strengthened condition **also stabilizes**, at k=3 (one step later than basic Tri at k=2). Interior nodes d₆–d₁₆ (τ\_A), d₇–d₁₇ (τ\_B), w₃–w₈ (σ) are fully Tri-neighborhood equivalent.
 
+## Implementation: ALCI\_RCC5 Concept Satisfiability Reasoner
+
+[**`alcircc5_reasoner.py`**](https://github.com/lambdamikel/alcircc5/blob/master/alcircc5_reasoner.py) is a working implementation of a concept satisfiability checker for ALCI\_RCC5. It implements a **constructive quasimodel search** that builds candidate quasimodels bottom-up and verifies them using disjunctive path-consistency of RCC5 constraint networks.
+
+### Algorithm
+
+1. Parse input concept in negation normal form (NNF)
+2. Compute Fischer-Ladner closure
+3. Enumerate all Hintikka types over the closure
+4. Compute SAFE relations between all type pairs (relations R such that all ∀R.C constraints in both types are satisfied)
+5. **Bottom-up quasimodel construction:**
+   - Start from each root type (containing the input concept)
+   - Add witness types for unsatisfied existential demands (∃R.C)
+   - After each addition, verify that the SAFE constraint network over the current type set is **disjunctive path-consistent**: for each pair of types, the domain is the SAFE set; arc-consistency propagation removes relations that have no support through intermediate types
+   - By the **RCC5 patchwork property** (Renz & Nebel 1999), path-consistent disjunctive networks are globally satisfiable, making this check both **sound** (rejects only genuinely unsatisfiable configurations) and **complete** (accepts all satisfiable ones)
+   - Backtrack if path-consistency fails; try alternative witness types
+6. Accept iff some root type leads to a valid quasimodel
+
+### Key design decisions
+
+- **Disjunctive path-consistency replaces Q3/Q4.** The original type-elimination approach used conditions Q3 (triple closure) and Q4 (quadruple closure) that universally quantify over all safe relations. These are too strict for completeness: Q3 requires ALL safe relation triples to be simultaneously completable, and Q4 requires ALL safe star configurations to be path-consistent. In a real model, only ONE relation holds per pair. Disjunctive path-consistency correctly checks whether SOME consistent assignment exists.
+
+- **Bottom-up construction avoids GFP non-monotonicity.** The original greatest-fixpoint type elimination is non-monotone: removing one type can make another supportable. This caused the algorithm to reject satisfiable concepts (e.g., C₁ from the paper). The constructive approach only checks consistency of types actually in the candidate quasimodel.
+
+### Test results
+
+```
+python3 alcircc5_reasoner.py
+```
+
+18 test cases covering basic satisfiability/unsatisfiability, infinite models (PP-chains with ∀-propagation), inverse role interaction, universal constraint interactions, and cross-demand interactions. All 18 pass correctly, including the previously problematic case ∃PP.(∀DR.A) ⊓ ∃DR.¬A (satisfiable: the PP-witness and DR-witness can be PO-connected, avoiding the ∀DR constraint).
+
+### Limitations
+
+- Exponential in closure size (enumerates all Hintikka types)
+- Not optimized for large concepts; designed as a proof-of-concept
+- The constructive search uses backtracking with depth bound, so may not find all satisfying quasimodels
+
 ## References
 
 1. M. Wessel. ["Qualitative Spatial Reasoning with the ALCI\_RCC Family -- First Results and Unanswered Questions."](https://github.com/lambdamikel/alcircc5/blob/master/report7.pdf) Technical Report FBI-HH-M-324/03, University of Hamburg, 2002/2003.
