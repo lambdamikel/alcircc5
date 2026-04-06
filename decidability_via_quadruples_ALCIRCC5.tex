@@ -58,15 +58,25 @@ This paper was produced through conversation with Michael Wessel (miacwess@gmail
 \maketitle
 
 \begin{center}
-\fcolorbox{green!60!black}{green!5}{%
+\fcolorbox{red!60!black}{red!5}{%
 \parbox{0.92\textwidth}{%
-\textbf{Status: Decidability proof (under verification).}
-Concept satisfiability in $\ALCIRCC{5}$ is decidable
-(\EXPTIME\ upper bound) via quadruple-type elimination.
-The proof closes the ``extension gap'' from all previous approaches
-by using 4-element consistency instead of 3-element consistency.
-All algebraic properties are verified by exhaustive case analysis
-over the RCC5 composition table (finite proof by cases).
+\textbf{Status: Soundness gap identified --- decidability NOT established.}
+The completeness direction (Lemma~\ref{lem:extension}: quasimodel $\Rightarrow$ model)
+appears correct.  However, the \textbf{soundness direction}
+(Theorem~\ref{thm:soundness}: model $\Rightarrow$ quasimodel) has a gap:
+the proof of~(Q4) assumes one can choose four model elements with
+prescribed types \emph{and} prescribed pairwise relations, but
+in a complete-graph model the relations are determined by the model,
+not by the prover's choice.
+A \textbf{working implementation} (\texttt{alcircc5\_reasoner.py})
+confirms the gap: Q4 as stated rejects the satisfiable concept
+$\exists\PP.(\forall\DR.A) \sqcap \exists\DR.\neg A$.
+Replacing Q4 with \emph{disjunctive path-consistency} of the
+$\Safe$ constraint network fixes soundness (by the patchwork property)
+and passes 18/18~tests, but the completeness direction
+(one-point extension lemma) has not been re-proved under the weaker condition.
+The extension gap therefore \textbf{remains open}.
+See Section~\ref{sec:erratum} for details.
 }}
 \end{center}
 
@@ -626,20 +636,118 @@ leave the verification to future work.
 
 
 %% ============================================================
+\section{Erratum: Soundness Gap in (Q4)}
+\label{sec:erratum}
+
+\subsection{The gap}
+
+The proof of Theorem~\ref{thm:soundness}~(Q4) contains an error.
+The proof states: ``choose witnesses $z, p, x_i, x_j$ in the
+model with these types.''  This provides four elements with
+the types $\tau_z, \tau_p, \tau_i, \tau_j$.  However, Q4 also
+specifies \emph{particular relations} $R \in \Safe(\tau_z, \tau_p)$,
+$R_{pi} \in \Safe(\tau_p, \tau_i)$, etc., and the proof requires
+these to be the \emph{actual} pairwise relations between the
+chosen elements.
+
+In a complete-graph model, the relation between any two elements
+is determined by the model, not chosen by the prover.  Given
+elements $z, p$ with $\tp(z) = \tau_z$, $\tp(p) = \tau_p$,
+the actual relation $\rho(z, p)$ is some fixed $R' \in \Safe(\tau_z, \tau_p)$,
+which may or may not equal the $R$ specified in Q4.  The proof
+implicitly assumes that all safe relation combinations are
+realized in the model, which is not guaranteed.
+
+\subsection{Computational confirmation}
+
+A working implementation (\texttt{alcircc5\_reasoner.py})
+confirms the gap.  The concept
+\[
+  C_{15} \;=\; \exists\PP.(\forall\DR.A) \;\sqcap\; \exists\DR.\neg A
+\]
+is satisfiable (the $\PP$-witness with $\forall\DR.A$ and
+the $\DR$-witness with $\neg A$ can be $\PO$-connected,
+avoiding the $\forall\DR$ constraint).  However, Q4 as stated
+rejects all type sets containing these types: the universal
+quantification over all safe relations produces
+configurations where no consistent $r$ exists, even though
+the model only uses a subset of safe relations.
+
+\subsection{The disjunctive path-consistency alternative}
+
+Replacing Q4 with \emph{disjunctive path-consistency} of the
+$\Safe$ constraint network over the type set fixes the soundness
+direction: extracting types from a model always yields a
+path-consistent network (the model's atomic relations provide
+a satisfying assignment that refines the $\Safe$ domains).
+By the patchwork property, path-consistent disjunctive RCC5
+networks are satisfiable, so this check is both sound and
+complete at the type level.
+
+The implementation using this approach correctly decides
+all~18 test concepts, including $C_{15}$.
+
+\subsection{What survives and what does not}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lll}
+\toprule
+\textbf{Result} & \textbf{Status} & \textbf{Comment} \\
+\midrule
+Theorem~\ref{thm:soundness} (Q1--Q3) & Correct & Standard \\
+Theorem~\ref{thm:soundness} (Q4) & \textbf{Gap} & Unrealized relations \\
+Lemma~\ref{lem:extension} & Correct \emph{if} Q4 holds & Completeness direction \\
+Theorem~\ref{thm:completeness} & Correct \emph{if} Q4 holds & Follows from lemma \\
+Theorem~\ref{thm:decidability} & \textbf{Not established} & Requires both directions \\
+Properties 1--3 (Section~\ref{sec:computation}) & Correct & Pure algebraic facts \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The completeness direction (quasimodel $\Rightarrow$ model via
+the one-point extension lemma) is correct \emph{conditional on}
+Q4 holding.  The gap is exclusively in the soundness direction:
+a model does not necessarily yield a type set satisfying Q4.
+
+The disjunctive path-consistency check restores soundness
+but has not been shown to imply the star path-consistency
+needed for the one-point extension lemma.  Specifically:
+disjunctive PC ensures that for the \emph{type-level} constraint
+network, a path-consistent atomic assignment exists.  But the
+one-point extension lemma requires star path-consistency for the
+\emph{specific atomic relations} assigned in the partial model,
+which is a stronger condition.
+
+The extension gap therefore remains open, shifted from
+``Q4 too strong for soundness'' to ``disjunctive PC possibly
+too weak for completeness.''
+
+
+%% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-We have proved that concept satisfiability in $\ALCIRCC{5}$ is
-decidable with an \EXPTIME\ upper bound, settling the open
-question from Wessel~\cite{Wessel2002,Wessel2003}.
+The quadruple-type elimination approach to $\ALCIRCC{5}$
+satisfiability introduces the right structural idea ---
+star path-consistency captures the interaction that triple-types
+miss --- but condition (Q4) as formulated is too strong:
+models do not satisfy it (Section~\ref{sec:erratum}).
+Replacing Q4 with disjunctive path-consistency of the $\Safe$
+network fixes soundness but leaves the completeness direction
+(one-point extension) unproven under the weaker condition.
 
-The proof introduces \emph{quadruple-type elimination}, extending
-the standard quasimodel framework with 4-element consistency
-conditions.  The key technical contribution is the
-\emph{one-point extension lemma} (Lemma~\ref{lem:extension}),
-which shows that the quadruple-type condition ensures star
-path-consistency, enabling the RCC5 tractability result to close
-the Henkin construction's cross-edge gap.
+What survives: the one-point extension lemma
+(Lemma~\ref{lem:extension}) is correct conditional on its
+hypothesis.  The algebraic properties (Section~\ref{sec:computation})
+are unconditionally correct.  The computational verification
+(43{,}287 triple-type failures, zero quadruple-type failures)
+remains valid as evidence that 4-element consistency is the
+right granularity.  A working implementation using
+disjunctive path-consistency correctly decides all 18~test
+concepts.
+
+The decidability of $\ALCIRCC{5}$ remains \textbf{open}.
 
 All algebraic properties are verified by exhaustive case analysis
 over the RCC5 composition table (427 + 164 + 3{,}567{,}816

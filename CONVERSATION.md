@@ -2431,3 +2431,42 @@ New paper: `direct_soundness_ALCIRCC5.tex` (8 pages, compiles cleanly). Document
 - `alcircc5_reasoner.py` — Working reasoner (18/18 tests pass)
 - Updated README.md with implementation section
 - Updated CONVERSATION.md (this entry)
+
+---
+
+## Part 47: Q4 Soundness Gap — Erratum for Quadruple-Type Paper
+
+### Michael Wessel
+
+> So it's a decision procedure? [...] Does the paper need to be corrected / updated then?
+
+### Claude
+
+*[Identified a genuine gap in the soundness proof of the quadruple-type elimination paper, and updated the paper with an erratum.]*
+
+**The gap.** The soundness proof of Q4 (Theorem 4.1) says: "choose witnesses z, p, x_i, x_j in the model with these types." Q4 quantifies universally over all safe relations R, R_pi, R_pj, R_ij, and the proof needs to find model elements with the prescribed types AND the prescribed pairwise relations. But in a complete-graph model, the relation between two elements is determined by the model, not the prover's choice. There is no guarantee that all safe-relation combinations are realized by actual element pairs.
+
+**Computational confirmation.** The concept C₁₅ = ∃PP.(∀DR.A) ⊓ ∃DR.¬A is satisfiable (PP-witness and DR-witness PO-connected), but Q4 as stated rejects all type sets containing these types.
+
+**The structural picture:**
+- Q4 is too STRONG for soundness: models don't satisfy Q4 for unrealized relation combinations
+- Disjunctive path-consistency is too WEAK for completeness: it doesn't imply the star path-consistency needed by the one-point extension lemma
+- The one-point extension lemma (Lemma 5.1) IS correct conditional on Q4 holding — the completeness direction works IF the quasimodel conditions are met
+- The extension gap is shifted, not closed: from "Q3 too weak" to "Q4 too strong / disjunctive-PC not proven sufficient"
+
+**What the reasoner actually is:**
+- UNSAT is reliable (sound): if it says UNSAT, no model exists
+- SAT is heuristic: disjunctive-PC at the type level is necessary but not proven sufficient
+- In practice, 18/18 test concepts are decided correctly
+
+**Paper updates:**
+- Status box changed from green ("decidability proof") to red ("soundness gap identified")
+- Added Section 7 (Erratum) with detailed explanation of the gap, computational confirmation, the disjunctive-PC alternative, and a survival table for each theorem
+- Conclusion rewritten to honestly state that decidability remains open
+- README updated with tenth approach in the summary table
+
+### Output
+
+- Updated `decidability_via_quadruples_ALCIRCC5.tex` (erratum section, status box, conclusion)
+- Updated `README.md` (ten-approach table, quadruple-type entry)
+- Updated `CONVERSATION.md` (this entry)
