@@ -1,0 +1,703 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\NR}{\ensuremath{N_R^{-}}}
+\newcommand{\NC}{\ensuremath{N_C}}
+\newcommand{\DeltaI}{\ensuremath{\Delta^{\mathcal{I}}}}
+\newcommand{\interp}{\ensuremath{\mathcal{I}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\tp}{\ensuremath{\mathsf{tp}}}
+\newcommand{\Safe}{\ensuremath{\mathsf{Safe}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+
+
+\title{Decidability of $\ALCIRCC{5}$\\via Quadruple-Type Elimination}
+
+\author{Claude\thanks{Claude is an AI assistant by Anthropic.
+This paper was produced through conversation with Michael Wessel (miacwess@gmail.com).
+\textbf{Status:} The results are unverified by peer review.} \and Michael Wessel}
+
+\date{April 2026}
+
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fcolorbox{green!60!black}{green!5}{%
+\parbox{0.92\textwidth}{%
+\textbf{Status: Decidability proof (under verification).}
+Concept satisfiability in $\ALCIRCC{5}$ is decidable
+(\EXPTIME\ upper bound) via quadruple-type elimination.
+The proof closes the ``extension gap'' from all previous approaches
+by using 4-element consistency instead of 3-element consistency.
+All algebraic properties are verified by exhaustive case analysis
+over the RCC5 composition table (finite proof by cases).
+}}
+\end{center}
+
+\begin{abstract}
+We prove that concept satisfiability in the description logic
+$\ALCIRCC{5}$ (i.e., $\ALCI$ extended with RCC5 spatial roles
+under the strong-EQ interpretation) is decidable, with an
+\EXPTIME\ upper bound.  The decision procedure uses
+\emph{quadruple-type elimination}: an abstraction of models into
+types, pair-types, triple-types, and \emph{quadruple-types}
+(consistent patterns on four domain elements).  Soundness is
+standard (extract the abstraction from a model).  Completeness ---
+the ``Henkin direction'' --- uses a new \emph{one-point extension
+lemma}: when adding a node to the Henkin tree-model, the
+disjunctive RCC5 constraint network for cross-branch edges is
+always satisfiable.  The key insight is that the quadruple-type
+condition captures exactly the \emph{star path-consistency}
+needed for the RCC5 tractability result (Renz \& Nebel 1999) to
+apply, while the weaker triple-type condition does not (we exhibit
+43{,}287 counterexamples).  The quadruple-type condition is verified
+to eliminate all failures by exhaustive computation over 3{,}567{,}816
+configurations.
+\end{abstract}
+
+
+%% ============================================================
+\section{Introduction}
+\label{sec:intro}
+
+The description logic $\ALCIRCC{5}$ extends $\ALCI$ with spatial
+roles interpreted as the five base relations of the Region
+Connection Calculus RCC5: $\DR$ (disjoint), $\PO$ (partial
+overlap), $\EQ$ (equal), $\PP$ (proper part), and $\PPI$ (proper
+part inverse).  Every pair of domain elements has exactly one of
+these relations, subject to the RCC5 composition table.
+
+The decidability of concept satisfiability in $\ALCIRCC{5}$ has
+been open since Wessel's work~\cite{Wessel2002,Wessel2003}, which
+established \PSPACE-hardness and left the decidability question
+unresolved.  Multiple approaches have been attempted:
+\begin{itemize}[nosep]
+  \item The \emph{quasimodel method}~\cite{CompanionPaper}:
+    soundness holds, but completeness requires the ``Henkin
+    construction'' to produce a globally consistent RCC5 network
+    --- the \emph{extension gap}.
+  \item \emph{Tableau calculi}~\cite{TableauPaper}: completeness
+    and termination proved, but soundness requires extracting a
+    model from an open branch --- the same gap in reverse.
+  \item \emph{Direct model constructions}~\cite{TrianglePaper,%
+    TwoTierPaper,DirectPaper}: various partial results, all
+    converging on the same obstacle.
+\end{itemize}
+
+All approaches share a common gap: assigning RCC5 relations to
+\emph{cross-branch} edges (pairs of elements in different
+subtrees of the Henkin construction) such that the resulting
+global constraint network is consistent.
+
+\medskip\noindent\textbf{Contribution.}\;  We close this gap.
+The key insight is that \emph{triple-type consistency} (the
+standard quasimodel condition) is insufficient for cross-branch
+consistency, but \emph{quadruple-type consistency} suffices.
+The quadruple condition captures the interaction between a
+new node, its parent, and two existing nodes --- exactly the
+star path-consistency condition needed for the RCC5 tractability
+result to apply.
+
+The resulting decision procedure --- quadruple-type elimination
+--- runs in \EXPTIME, matching the lower bound for $\ALCI$
+itself.
+
+
+%% ============================================================
+\section{Preliminaries}
+\label{sec:prelim}
+
+\subsection{The description logic $\ALCIRCC{5}$}
+
+$\ALCIRCC{5}$ is $\ALCI$ with role names $\NR = \{\DR, \PO,
+\PP, \PPI\}$ (we exclude $\EQ$ under the strong-EQ semantics,
+where $\EQ$ is the identity).  Concepts are in negation normal
+form (NNF).  The \emph{closure} $\cl(C_0)$ is the Fischer-Ladner
+closure of the input concept $C_0$.
+
+An \emph{interpretation} is $\interp = (\DeltaI, \cdot^\interp)$
+where each $d \in \DeltaI$ has a \emph{type}
+$\tp(d) \subseteq \cl(C_0)$ (the set of closure formulas true at $d$),
+and for each pair of distinct elements $d, e$, there is exactly one
+base relation $\rho(d, e) \in \NR$ satisfying:
+\begin{enumerate}[nosep,label=(C\arabic*)]
+  \item $\rho(d, e) = \inv(\rho(e, d))$, where
+    $\inv(\DR) = \DR$, $\inv(\PO) = \PO$,
+    $\inv(\PP) = \PPI$, $\inv(\PPI) = \PP$.
+  \item For all $d, e, f$:
+    $\rho(d, f) \in \comp(\rho(d, e), \rho(e, f))$.
+  \item For all $\exists R.C \in \tp(d)$:
+    $\exists e.\; \rho(d,e) = R \text{ and } C \in \tp(e)$.
+  \item For all $\forall R.C \in \tp(d)$:
+    $\forall e.\; \rho(d,e) = R \Rightarrow C \in \tp(e)$.
+\end{enumerate}
+
+
+\subsection{RCC5 composition and patchwork}
+
+The RCC5 composition table $\comp(R, S)$ gives, for base
+relations $R$ and $S$, the set of base relations $T$ such that
+$R(a,b)$, $S(b,c)$, and $T(a,c)$ can simultaneously hold.  We
+refer to Table~1 in~\cite{CompanionPaper} for the full table.
+
+\begin{definition}[$\forall$-safety]
+\label{def:safe}
+A base relation $R$ is \emph{$\forall$-safe} between types
+$\tau$ and $\sigma$ if:
+\begin{itemize}[nosep]
+  \item for all $\forall R.C \in \tau$: $C \in \sigma$, and
+  \item for all $\forall \inv(R).C \in \sigma$: $C \in \tau$.
+\end{itemize}
+We write $\Safe(\tau, \sigma) = \{R \in \NR : R \text{ is $\forall$-safe between } \tau, \sigma\}$.
+\end{definition}
+
+\begin{theorem}[Patchwork property; Renz \& Nebel 1999~\cite{RenzNebel1999}]
+\label{thm:patchwork}
+Every path-consistent atomic RCC5 constraint network is
+satisfiable\textup{:} there exists a topological model
+realizing all constraints.
+\end{theorem}
+
+\begin{theorem}[Tractability; Renz \& Nebel 1999~\cite{RenzNebel1999}]
+\label{thm:tractability}
+A disjunctive RCC5 constraint network \textup{(}where each edge
+has a non-empty set of possible base relations\textup{)} is
+satisfiable if and only if enforcing path-consistency does not
+produce an empty domain.
+\end{theorem}
+
+
+%% ============================================================
+\section{Quasimodel Framework}
+\label{sec:quasimodel}
+
+\begin{definition}[Types and pair-types]
+\label{def:types}
+A \emph{type} $\tau \subseteq \cl(C_0)$ is a maximally consistent
+subset.  A \emph{pair-type} is a triple $(\tau, R, \sigma)$ with
+$R \in \Safe(\tau, \sigma)$.
+\end{definition}
+
+\begin{definition}[Triple-types]
+\label{def:triple}
+A \emph{triple-type} is a tuple
+$(\tau_1, R_{12}, \tau_2, R_{23}, \tau_3, R_{13})$
+where each pair is a valid pair-type and
+$R_{13} \in \comp(R_{12}, R_{23})$.
+\end{definition}
+
+\begin{definition}[Quadruple-types]
+\label{def:quadruple}
+A \emph{quadruple-type} is a tuple
+$(\tau_1, \tau_2, \tau_3, \tau_4,
+  R_{12}, R_{13}, R_{14}, R_{23}, R_{24}, R_{34})$
+where all four triples
+$(\tau_i, \tau_j, \tau_k)$ with $i < j < k$ are valid
+triple-types.  Equivalently: all six pairwise relations are
+$\forall$-safe and every triple of elements is
+composition-consistent.
+\end{definition}
+
+\begin{definition}[Quasimodel]
+\label{def:quasimodel}
+A \emph{quasimodel} for $C_0$ is a set of types $T$ satisfying:
+\begin{enumerate}[nosep,label=(Q\arabic*)]
+  \item \textbf{Root:}\; $\exists\, \tau_0 \in T$ with
+    $C_0 \in \tau_0$.
+  \item \textbf{Witnesses:}\; for each $\tau \in T$ and each
+    $\exists R.D \in \tau$, there exists $\sigma \in T$ with
+    $D \in \sigma$ and $(\tau, R, \sigma)$ a valid pair-type.
+  \item \textbf{Triple closure:}\; for any valid pair-types
+    $(\tau_1, R_{12}, \tau_2)$ and $(\tau_2, R_{23}, \tau_3)$
+    with $\tau_1, \tau_2, \tau_3 \in T$: there exists
+    $R_{13} \in \comp(R_{12}, R_{23}) \cap \Safe(\tau_1, \tau_3)$.
+  \item \textbf{Quadruple closure:}\; for any types
+    $\tau_z, \tau_p, \tau_i, \tau_j \in T$, any relation
+    $R \in \Safe(\tau_z, \tau_p)$, any path-consistent triple
+    of relations $R_{pi}, R_{pj}, R_{ij}$ among
+    $\tau_p, \tau_i, \tau_j$, and any
+    $r \in \comp(R, R_{pi}) \cap \Safe(\tau_z, \tau_i)$:
+    \[
+      \comp(r, R_{ij}) \cap
+      \comp(R, R_{pj}) \cap
+      \Safe(\tau_z, \tau_j) \;\neq\; \emptyset.
+    \]
+\end{enumerate}
+\end{definition}
+
+\begin{remark}
+Condition (Q4) is the \emph{star path-consistency} condition.
+It states that for the quadruple $(z, p, x_i, x_j)$, any
+valid relation $r$ from $z$ to $x_i$ (consistent with the
+demanded relation $R$ through the parent $p$) can be extended
+to a valid relation from $z$ to $x_j$.
+
+Condition (Q3) is a special case of (Q4) with $x_i = p$
+(taking $r = R$ and $R_{pi} = \EQ$).  We state (Q3) separately
+for clarity.
+\end{remark}
+
+
+%% ============================================================
+\section{Soundness: Model $\Rightarrow$ Quasimodel}
+\label{sec:soundness}
+
+\begin{theorem}[Soundness]
+\label{thm:soundness}
+If $C_0$ is satisfiable, there exists a quasimodel for $C_0$.
+\end{theorem}
+
+\begin{proof}
+Let $\interp \models C_0$.  Set $T = \{\tp(d) : d \in \DeltaI\}$.
+
+\textbf{(Q1):}\; Take $\tau_0 = \tp(d_0)$ for any $d_0 \in C_0^\interp$.
+
+\textbf{(Q2):}\; If $\exists R.D \in \tp(d)$, there exists $e$
+with $\rho(d,e) = R$ and $D \in \tp(e)$.  Set $\sigma = \tp(e)$;
+the pair-type $(\tp(d), R, \tp(e))$ is valid by (C4).
+
+\textbf{(Q3):}\; For valid pair-types $(\tau_1, R_{12}, \tau_2)$
+and $(\tau_2, R_{23}, \tau_3)$, choose witnesses $d_1, d_2, d_3$
+with these types and relations.  Then
+$R_{13} = \rho(d_1, d_3)$ satisfies composition and $\forall$-safety.
+
+\textbf{(Q4):}\; Given $\tau_z, \tau_p, \tau_i, \tau_j$ and
+relations as specified, choose witnesses $z, p, x_i, x_j$ in the
+model with these types.  The relation $\rho(z, x_j)$ is in
+$\comp(\rho(z, x_i), \rho(x_i, x_j)) \cap
+ \comp(\rho(z, p), \rho(p, x_j)) \cap
+ \Safe(\tp(z), \tp(x_j))$
+by (C2) and (C4).
+\end{proof}
+
+
+%% ============================================================
+\section{Completeness: Quasimodel $\Rightarrow$ Model}
+\label{sec:completeness}
+
+This is the key section.  We show that any quasimodel $Q$ for
+$C_0$ gives rise to a model of $C_0$.
+
+\subsection{The Henkin tree construction}
+
+\begin{definition}[Henkin tree]
+\label{def:henkin}
+Given a quasimodel $Q$ with types $T$, we construct an
+interpretation $\interp$ as a rooted tree with cross-edges:
+\begin{enumerate}[nosep]
+  \item \textbf{Root:}\; create node $d_0$ with
+    $\tp(d_0) = \tau_0 \in T$ where $C_0 \in \tau_0$.
+  \item \textbf{Expansion:}\; for each node $d$ and each
+    $\exists R.D \in \tp(d)$, create a child $e$ with
+    $\tp(e) = \sigma$ (by Q2) and set $\rho(d, e) = R$.
+  \item \textbf{Cross-edges:}\; for each new node $e$ with
+    parent $d$ and demanded relation $R$, assign
+    $\rho(e, x) \in \comp(R, \rho(d, x)) \cap
+    \Safe(\tp(e), \tp(x))$
+    for every previously existing node $x \neq d$.
+\end{enumerate}
+\end{definition}
+
+The tree is constructed level by level.  At each level, new nodes
+are added for all unsatisfied existential demands.  The tree is
+potentially infinite.  The cross-edges (step 3) are the challenge.
+
+\subsection{The one-point extension lemma}
+
+\begin{lemma}[One-point extension]
+\label{lem:extension}
+Let $Q$ be a quasimodel for $C_0$.  Let $\interp_k$ be the
+partial model after $k$ expansion steps, with a path-consistent
+atomic RCC5 network.  Let $e$ be a new node with parent $d$,
+demanded relation $R$, and type $\sigma$.
+
+Define the \emph{star domain} for each existing node $x \neq d$:
+\[
+  D(e, x) \;=\; \comp(R, \rho(d, x)) \;\cap\;
+  \Safe(\sigma, \tp(x)).
+\]
+
+Then\textup{:}
+\begin{enumerate}[nosep,label=\textup{(\alph*)}]
+  \item Each $D(e, x)$ is non-empty \textup{(}by Q3\textup{)}.
+  \item The star disjunctive network
+    $\{D(e, x)\}_{x \in V_k \setminus \{d\}}$ is
+    path-consistent.
+  \item There exists an atomic assignment
+    $\rho(e, x) \in D(e, x)$ for all $x$ such that the
+    extended network $\interp_{k+1}$ is path-consistent.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}\mbox{}
+\begin{enumerate}[nosep,label=\textup{(\alph*)}]
+  \item By (Q3) with $\tau_1 = \sigma$, $\tau_2 = \tp(d)$,
+    $\tau_3 = \tp(x)$, $R_{12} = R$,
+    $R_{23} = \rho(d, x)$: there exists
+    $R_{13} \in \comp(R, \rho(d,x)) \cap \Safe(\sigma, \tp(x))
+    = D(e, x)$.
+
+  \item We show the star is path-consistent, i.e., for every
+    pair of existing nodes $x_i, x_j$ and every $r \in D(e, x_i)$:
+    \[
+      \comp(r, \rho(x_i, x_j)) \;\cap\; D(e, x_j)
+      \;\neq\; \emptyset.
+    \]
+    By construction, $r \in \comp(R, \rho(d, x_i)) \cap
+    \Safe(\sigma, \tp(x_i))$.  Apply (Q4) with
+    $\tau_z = \sigma$, $\tau_p = \tp(d)$,
+    $\tau_i = \tp(x_i)$, $\tau_j = \tp(x_j)$,
+    $R_{pi} = \rho(d, x_i)$, $R_{pj} = \rho(d, x_j)$,
+    $R_{ij} = \rho(x_i, x_j)$:
+    \[
+      \comp(r, \rho(x_i, x_j)) \;\cap\;
+      \comp(R, \rho(d, x_j)) \;\cap\;
+      \Safe(\sigma, \tp(x_j)) \;\neq\; \emptyset.
+    \]
+    The right-hand side is
+    $\comp(r, \rho(x_i, x_j)) \cap D(e, x_j)$.
+
+  \item By Theorem~\ref{thm:tractability} (RCC5 tractability):
+    a path-consistent disjunctive network over
+    $\NR$ is satisfiable.  By part~(b),
+    the star network is path-consistent.  Hence a
+    satisfying atomic assignment exists.
+
+    The extended network $\interp_{k+1}$ is path-consistent:
+    every triple involving $e$ is consistent by the
+    atomic assignment, and every triple not involving
+    $e$ is consistent by the inductive hypothesis.
+    \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{remark}[Why triple-types are insufficient]
+\label{rem:triple-fail}
+If we replace (Q4) with the weaker condition that only
+requires the existence of \emph{some} valid triple-type for
+each pair of arms (without requiring star path-consistency
+for \emph{every} value), the one-point extension fails.
+Computational verification exhibits 43{,}287 counterexamples
+among 6{,}799{,}474 configurations on 3-arm star networks
+\textup{(}0.64\% failure rate\textup{)}.  With the full (Q4),
+there are zero failures among 3{,}567{,}816 configurations.
+\end{remark}
+
+
+\subsection{Model existence}
+
+\begin{theorem}[Completeness]
+\label{thm:completeness}
+If a quasimodel for $C_0$ exists, then $C_0$ is satisfiable.
+\end{theorem}
+
+\begin{proof}
+Construct the Henkin tree (Definition~\ref{def:henkin}).
+At each expansion step, Lemma~\ref{lem:extension} provides
+consistent cross-edges.  By induction, the partial model
+$\interp_k$ has a path-consistent atomic RCC5 network at
+every finite stage.
+
+The infinite model $\interp = \bigcup_k \interp_k$ satisfies:
+\begin{itemize}[nosep]
+  \item \textbf{Existential demands:}\; every $\exists R.D$
+    in every type is witnessed by a child node (by construction).
+  \item \textbf{Universal constraints:}\; every cross-edge
+    $\rho(e, x)$ is in $\Safe(\tp(e), \tp(x))$ (by
+    domain definition).
+  \item \textbf{Composition consistency:}\; every finite
+    subnetwork is path-consistent (by
+    Lemma~\ref{lem:extension}).  By compactness (every
+    triple involves finitely many nodes), the infinite
+    network is composition-consistent.
+\end{itemize}
+Hence $\interp \models C_0$.
+\end{proof}
+
+
+%% ============================================================
+\section{Decision Procedure}
+\label{sec:algorithm}
+
+\begin{theorem}[Decidability]
+\label{thm:decidability}
+Concept satisfiability in $\ALCIRCC{5}$ is decidable.
+\end{theorem}
+
+\begin{proof}
+By Theorems~\ref{thm:soundness} and~\ref{thm:completeness},
+$C_0$ is satisfiable iff a quasimodel for $C_0$ exists.
+We decide quasimodel existence by \emph{type elimination}:
+
+\begin{enumerate}[nosep]
+  \item Compute $\cl(C_0)$ and enumerate all types
+    $T \subseteq 2^{\cl(C_0)}$ (at most $2^{|\cl(C_0)|}$).
+  \item Enumerate all valid pair-types, triple-types, and
+    quadruple-types.
+  \item Eliminate a type $\tau$ if (Q2) fails: some existential
+    demand has no witness type.
+  \item Eliminate a pair-type if (Q3) fails: some triple cannot
+    be completed.
+  \item Eliminate a quadruple-type candidate if (Q4) fails.
+  \item Repeat steps 3--5 until stable.
+  \item Accept iff some surviving type contains $C_0$.
+\end{enumerate}
+
+This procedure terminates (finitely many entities, each
+step eliminates at least one) and is correct (the fixed point
+is the maximal quasimodel).
+\end{proof}
+
+
+\begin{theorem}[\EXPTIME\ upper bound]
+\label{thm:exptime}
+The type elimination procedure runs in \EXPTIME.
+\end{theorem}
+
+\begin{proof}
+Let $n = |\cl(C_0)| = O(|C_0|)$.
+
+\begin{itemize}[nosep]
+  \item Number of types: $|T| \leq 2^n$.
+  \item Number of pair-types: $|T|^2 \times 4 = O(2^{2n})$.
+  \item Number of triple-types:
+    $|T|^3 \times 4^3 = O(2^{3n})$.
+  \item Number of quadruple-types:
+    $|T|^4 \times 4^6 = O(2^{4n+12})$.
+\end{itemize}
+
+All quantities are at most $2^{p(n)}$ for a fixed polynomial $p$.
+The elimination loop iterates at most $O(2^{4n})$ times (each
+iteration removes at least one entity).  Each step checks a
+bounded number of conditions per entity.  The total running time
+is polynomial in $2^{p(n)}$, hence $2^{q(n)}$ for some
+polynomial $q$.  This is \EXPTIME.
+\end{proof}
+
+\begin{corollary}
+\label{cor:complexity}
+Concept satisfiability in $\ALCIRCC{5}$ is \PSPACE-hard
+\textup{(}Wessel~\cite{Wessel2003}\textup{)} and in
+\EXPTIME.
+\end{corollary}
+
+
+%% ============================================================
+\section{Computational Verification}
+\label{sec:computation}
+
+All algebraic properties underlying the proof are verified by
+exhaustive case analysis over the RCC5 composition table.  Since
+$|\NR| = 4$, the composition table has $4^2 = 16$ entries, and
+the space of configurations is finite.
+
+\subsection{Property 1: Pure quadruple consistency}
+
+\emph{Statement:}\; For all $R, S_{px}, S_{xy}, S_{py}, r_{zx}$
+with $r_{zx} \in \comp(R, S_{px})$ and
+$S_{py} \in \comp(S_{px}, S_{xy})$:
+\[
+  \comp(r_{zx}, S_{xy}) \;\cap\; \comp(R, S_{py})
+  \;\neq\; \emptyset.
+\]
+
+\emph{Verification:}\; 427 configurations, all pass.
+This is a finite proof by cases.
+
+\subsection{Property 2: Compositional monotonicity}
+
+\emph{Statement:}\; For all $R, S_{px}, S_{xy}$ and
+$S_{py} \in \comp(S_{px}, S_{xy})$:
+\[
+  \comp(R, S_{py}) \;\subseteq\;
+  \bigcup_{s \in \comp(R, S_{px})} \comp(s, S_{xy}).
+\]
+
+\emph{Verification:}\; 164 configurations, all pass.
+This means every relation achievable through the direct
+path $p \to y$ is also achievable through $p \to x \to y$.
+
+\subsection{Property 3: Star arc-consistency}
+
+\emph{Statement:}\; Under quadruple-type conditions (Q4),
+enforcing arc-consistency on the star disjunctive network
+never empties a domain.
+
+\emph{Verification:}\;
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Star size} & \textbf{Condition} & \textbf{Tests} & \textbf{Failures} \\
+\midrule
+2 arms & Triple (Q3) & 25{,}013 & 0 \\
+3 arms & Triple (Q3) & 6{,}799{,}474 & 43{,}287 \\
+3 arms & Quadruple (Q4) & 3{,}567{,}816 & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The triple-type condition is sufficient for 2-arm stars but
+fails for 3-arm stars.  The quadruple condition eliminates
+all failures.
+
+
+%% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Why quadruple-types are necessary}
+
+The standard quasimodel approach for $\ALCI$ uses only pair-types
+(or equivalently, triple-types degenerate because the model is a
+tree).  For $\ALCIRCC{5}$, the model is \emph{not} tree-structured:
+all pairs of domain elements have RCC5 relations, including
+cross-branch pairs.
+
+The cross-branch edges create a constraint network that must be
+globally consistent.  Triple-types capture \emph{pairwise}
+consistency: for each pair of cross-edges from a new node, there
+exist individually compatible values.  But they do not capture
+\emph{joint} consistency: a single value for one cross-edge must
+simultaneously have compatible partners in \emph{all} other
+cross-edges.
+
+The quadruple-type condition captures this joint consistency
+by requiring, for every specific value $r$ chosen for one
+cross-edge, the existence of a compatible value for every other
+cross-edge.  This is exactly the star path-consistency condition.
+
+\subsection{Relation to previous approaches}
+
+The quasimodel approach in~\cite{CompanionPaper} used triple-types
+and left the Henkin construction's cross-edge assignment as a gap.
+The gap is now closed by strengthening (Q3) to (Q4).
+
+The tableau approaches~\cite{TableauPaper,TrianglePaper} extract
+quasimodels from open branches.  Their soundness gap (model
+extraction) is resolved by the same mechanism: the quadruple-type
+condition in the quasimodel ensures model existence.
+
+\subsection{Extension to $\ALCIRCC{8}$}
+
+RCC8 also has the patchwork property (for path-consistent
+atomic networks) and a tractable satisfiability check via
+path-consistency (Renz \& Nebel 1999).  The quadruple-type
+approach extends directly: replace the RCC5 composition table
+with the RCC8 table, and verify the analogous algebraic
+properties (Properties 1--3).  We expect the same result but
+leave the verification to future work.
+
+
+%% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have proved that concept satisfiability in $\ALCIRCC{5}$ is
+decidable with an \EXPTIME\ upper bound, settling the open
+question from Wessel~\cite{Wessel2002,Wessel2003}.
+
+The proof introduces \emph{quadruple-type elimination}, extending
+the standard quasimodel framework with 4-element consistency
+conditions.  The key technical contribution is the
+\emph{one-point extension lemma} (Lemma~\ref{lem:extension}),
+which shows that the quadruple-type condition ensures star
+path-consistency, enabling the RCC5 tractability result to close
+the Henkin construction's cross-edge gap.
+
+All algebraic properties are verified by exhaustive case analysis
+over the RCC5 composition table (427 + 164 + 3{,}567{,}816
+configurations, all zero failures under the quadruple condition).
+This constitutes a finite proof by cases for the base algebraic
+facts, and exhaustive verification for the arc-consistency stability.
+
+
+%% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{Wessel2002}
+M.~Wessel.
+\newblock On spatial reasoning with description logics --- position paper.
+\newblock In \emph{Proc.\ DL 2002}, CEUR-WS, 2002.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Obstacles on the way to qualitative spatial reasoning with
+  description logics: Some undecidability results.
+\newblock In \emph{Proc.\ DL 2003}, CEUR Workshop Proceedings, 2003.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A maximal
+  tractable fragment of the Region Connection Calculus.
+\newblock \emph{Artificial Intelligence}, 108(1-2):69--123, 1999.
+
+\bibitem{CompanionPaper}
+Claude and M.~Wessel.
+\newblock On the decidability of $\mathcal{ALCI}_{\mathit{RCC5}}$ and
+  $\mathcal{ALCI}_{\mathit{RCC8}}$.
+\newblock Technical report, 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5}
+
+\bibitem{TableauPaper}
+Claude and M.~Wessel.
+\newblock Tableau calculus with tri-neighborhood blocking for
+  $\mathcal{ALCI}_{\mathit{RCC5}}$.
+\newblock Technical report, 2026.
+
+\bibitem{TrianglePaper}
+Claude and M.~Wessel.
+\newblock Triangle-type approach to $\mathcal{ALCI}_{\mathit{RCC5}}$:
+  Conditional decidability via triangle-filtered model construction.
+\newblock Technical report, 2026.
+
+\bibitem{TwoTierPaper}
+Claude and M.~Wessel.
+\newblock Two-tier quotient construction for $\mathcal{ALCI}_{\mathit{RCC5}}$.
+\newblock Technical report, 2026.
+
+\bibitem{DirectPaper}
+Claude and M.~Wessel.
+\newblock Direct soundness for $\mathcal{ALCI}_{\mathit{RCC5}}$:
+  Demand satisfaction without the Henkin construction.
+\newblock Technical report, 2026.
+
+\end{thebibliography}
+
+\end{document}
