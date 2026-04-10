@@ -288,6 +288,35 @@ A key insight explored in these papers is the **patchwork property** from qualit
 - [**`profile_blocking_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/profile_blocking_check.py) -- Verifies that node-identity-based profile blocking does NOT terminate: enumerates all valid RCC5 assignments for chains of length 4/6/8 via arc-consistency propagation, confirms the sliding PO diagonal pattern, and shows that no two τ\_A nodes ever have matching node-identity profiles.
 - [**`tri_neighborhood_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/tri_neighborhood_check.py) -- Tests Wessel's strengthened blocking condition: Tri-neighborhood equivalence requires not only Tri(x) = Tri(y) but also that neighbors' Tri sets match per (relation, type) pair. Key result: the strengthened condition **also stabilizes**, at k=3 (one step later than basic Tri at k=2). Interior nodes d₆–d₁₆ (τ\_A), d₇–d₁₇ (τ\_B), w₃–w₈ (σ) are fully Tri-neighborhood equivalent.
 
+## Implementation: Cover-Tree Tableau Reasoner
+
+[**`cover_tree_tableau.py`**](https://github.com/lambdamikel/alcircc5/blob/master/cover_tree_tableau.py) implements the cover-tree tableau calculus for ALCI\_RCC5 (≈350 lines Python). It builds on the same type/closure/safe infrastructure as the quasimodel reasoner below, but uses a **two-layer architecture** reflecting the cover-tree decomposition.
+
+### Algorithm
+
+1. Compute closure, enumerate Hintikka types, precompute SAFE relations (shared with quasimodel reasoner)
+2. Partition demands by role type: **tree demands** (PP/PPI) vs **cross demands** (DR/PO)
+3. Precompute **safe\_cross**: SAFE restricted to {DR, PO} — the open cross-edge domain
+4. Search for a type set T containing C₀ that passes four checks:
+   - **Demand closure**: every ∃R.C in every type has an R-safe witness type in T
+   - **Cross-edge compatibility**: every DR/PO demand has a witness type that is DR- or PO-safe
+   - **Cover-tree sibling compatibility**: for each type with multiple DR/PO demands, there exist joint witnesses j₁,...,jₖ such that comp(INV[Rₘ], Rₘ') ∩ {DR,PO} ∩ safe\_cross(jₘ, jₘ') ≠ ∅ for all pairs. Uses arc-consistency pruning + backtracking search.
+   - **Singleton-composition propagation**: when comp(INV[R₁], R₂) is a singleton {S}, the forced relation S must be type-safe between the corresponding witness types. Key cases: comp(PP, DR) = {DR} forces PPI-children to be DR to their parent's DR-witnesses; comp(PPI, PPI) = {PPI} forces PP-parents to be PPI to their parent's PPI-witnesses.
+
+### Key difference from the quasimodel reasoner
+
+The sibling compatibility check only applies to **DR/PO witness pairs** (not mixed PP/DR pairs), because in the cover tree, PP/PPI witnesses are ancestors/descendants — not siblings. The {DR, PO} cross-edge network is **trivially arc-consistent** (comp(R,S) ∩ {DR,PO} ≠ ∅ for all R,S ∈ {DR,PO}), which is the key simplification that the cover-tree approach provides.
+
+### Test results
+
+```
+python3 cover_tree_tableau.py
+```
+
+Built-in tests plus cross-validation via [`stress_test_cover_tree.py`](https://github.com/lambdamikel/alcircc5/blob/master/stress_test_cover_tree.py): **902 concepts** across six categories (known SAT, known UNSAT, adversarial, systematic triples, random depth-2, random depth-3) with **zero mismatches** against the quasimodel reasoner. Correctly handles all 7 cyclic-model concepts that lack tree models.
+
+---
+
 ## Implementation: ALCI\_RCC5 Concept Satisfiability Reasoner
 
 [**`alcircc5_reasoner.py`**](https://github.com/lambdamikel/alcircc5/blob/master/alcircc5_reasoner.py) is a working implementation of a concept satisfiability checker for ALCI\_RCC5. It implements a **constructive quasimodel search** that builds candidate quasimodels bottom-up and verifies them using disjunctive path-consistency of RCC5 constraint networks.
