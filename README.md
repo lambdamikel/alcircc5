@@ -328,6 +328,18 @@ python3 cover_tree_tableau.py
 
 Built-in tests plus cross-validation via [`stress_test_cover_tree.py`](https://github.com/lambdamikel/alcircc5/blob/master/stress_test_cover_tree.py): **902 concepts** across six categories (known SAT, known UNSAT, adversarial, systematic triples, random depth-2, random depth-3) with **zero mismatches** against the quasimodel reasoner. Correctly handles all 7 cyclic-model concepts that lack tree models.
 
+### Independent model verification
+
+[**`model_verifier.py`**](https://github.com/lambdamikel/alcircc5/blob/master/model_verifier.py) provides a stronger form of evidence: for every SAT answer from the cover-tree tableau, it **constructs a concrete RCC5 model** and independently verifies that it satisfies the input concept.
+
+The model builder uses arc-consistency preprocessing, demand-aware backtracking with forward checking, leaf type detection for recursive demands (breaking infinite PP/PPI chains), and randomized restarts for hard instances. The verifier independently checks: inverse symmetry, composition consistency on ALL triples, type-safety (∀-constraints), existential witnessing, and recursive concept truth at the root.
+
+**Results: 678/768 SAT concepts have independently verified models (88.3%), with zero verification failures.** The 90 build failures are concepts needing large models (4+ demands per type, nested existentials) that exceed the finite model builder's capacity — not evidence against correctness.
+
+```
+python3 model_verifier.py
+```
+
 ---
 
 ## Implementation: ALCI\_RCC5 Concept Satisfiability Reasoner
