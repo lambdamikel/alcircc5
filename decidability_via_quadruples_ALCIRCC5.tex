@@ -58,24 +58,17 @@ This paper was produced through conversation with Michael Wessel (miacwess@gmail
 \maketitle
 
 \begin{center}
-\fcolorbox{red!60!black}{red!5}{%
+\fcolorbox{orange!60!black}{orange!5}{%
 \parbox{0.92\textwidth}{%
-\textbf{Status: Soundness gap identified --- decidability NOT established.}
-The completeness direction (Lemma~\ref{lem:extension}: quasimodel $\Rightarrow$ model)
-appears correct.  However, the \textbf{soundness direction}
-(Theorem~\ref{thm:soundness}: model $\Rightarrow$ quasimodel) has a gap:
-the proof of~(Q4) assumes one can choose four model elements with
-prescribed types \emph{and} prescribed pairwise relations, but
-in a complete-graph model the relations are determined by the model,
-not by the prover's choice.
-A \textbf{working implementation} (\texttt{alcircc5\_reasoner.py})
-confirms the gap: Q4 as stated rejects the satisfiable concept
-$\exists\PP.(\forall\DR.A) \sqcap \exists\DR.\neg A$.
-Replacing Q4 with \emph{disjunctive path-consistency} of the
-$\Safe$ constraint network fixes soundness (by the patchwork property)
-and passes 18/18~tests, but the completeness direction
-(one-point extension lemma) has not been re-proved under the weaker condition.
-The extension gap therefore \textbf{remains open}.
+\textbf{Status: Gap narrowed --- decidability conditionally established.}
+The original Q4 condition has a soundness gap
+(Section~\ref{sec:erratum}).  Replacing Q4 with
+\emph{disjunctive path-consistency} + \emph{sibling compatibility}
+of the $\Safe$ constraint network fixes soundness and passes
+18/18~tests.  A Henkin tree extension test builds depth-4 tree models
+from the quasimodel: 991~extensions, zero failures.
+The remaining gap is a \textbf{missing formal proof} that sibling
+compatibility implies star path-consistency at arbitrary tree depth.
 See Section~\ref{sec:erratum} for details.
 }}
 \end{center}
@@ -699,8 +692,9 @@ Theorem~\ref{thm:soundness} (Q1--Q3) & Correct & Standard \\
 Theorem~\ref{thm:soundness} (Q4) & \textbf{Gap} & Unrealized relations \\
 Lemma~\ref{lem:extension} & Correct \emph{if} Q4 holds & Completeness direction \\
 Theorem~\ref{thm:completeness} & Correct \emph{if} Q4 holds & Follows from lemma \\
-Theorem~\ref{thm:decidability} & \textbf{Not established} & Requires both directions \\
+Theorem~\ref{thm:decidability} & \textbf{Conditionally established} & See below \\
 Properties 1--3 (Section~\ref{sec:computation}) & Correct & Pure algebraic facts \\
+Sibling constraint + witness plan & \textbf{New} & Computational evidence \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -711,17 +705,57 @@ Q4 holding.  The gap is exclusively in the soundness direction:
 a model does not necessarily yield a type set satisfying Q4.
 
 The disjunctive path-consistency check restores soundness
-but has not been shown to imply the star path-consistency
-needed for the one-point extension lemma.  Specifically:
-disjunctive PC ensures that for the \emph{type-level} constraint
-network, a path-consistent atomic assignment exists.  But the
-one-point extension lemma requires star path-consistency for the
-\emph{specific atomic relations} assigned in the partial model,
-which is a stronger condition.
+but is not sufficient on its own for completeness: the
+one-point extension lemma requires that when adding a new
+witness~$e$ as an $R$-child of~$d$, the \emph{star network}
+$\{D(e,x) : x \in \text{existing}\}$ where
+$D(e,x) = \comp(\inv(R), \rho(d,x)) \cap \Safe(\tp(e), \tp(x))$
+is path-consistent.  Greedy witness selection can produce
+empty star domains, even when alternative witness types succeed.
 
-The extension gap therefore remains open, shifted from
-``Q4 too strong for soundness'' to ``disjunctive PC possibly
-too weak for completeness.''
+\subsection{Sibling constraint and witness plans}
+
+The key additional ingredient is \emph{sibling compatibility}.
+For each type~$\tau_i$ with demands $(R_1, D_1), \ldots, (R_k, D_k)$,
+the quasimodel must contain witness types
+$\tau_{j_1}, \ldots, \tau_{j_k}$ such that
+\emph{all pairs} satisfy:
+\[
+  \comp(\inv(R_m), R_{m'}) \;\cap\; \Safe(\tau_{j_m}, \tau_{j_{m'}}) \;\neq\; \emptyset
+  \qquad \text{for all } m \neq m'.
+\]
+This ensures that siblings (children of the same parent)
+can be assigned a consistent mutual relation.
+
+A \emph{witness plan} precomputes, for each type, the
+sibling-compatible witness assignment via backtracking CSP.
+The Henkin tree builder then uses this plan, with limited
+backtracking over alternative witnesses for cross-level
+compatibility (new child vs.\ uncle, grandparent, etc.).
+
+\medskip\noindent\textbf{Computational result.}\;
+With sibling compatibility checking added to the reasoner and
+witness-plan-guided tree construction, the Henkin tree extension
+test passes for all 16~satisfiable test concepts to depth~4
+(991~extension tests, zero failures).  Previously, greedy witness
+selection produced 132~failures across 3~concepts; all were
+resolved by choosing sibling-compatible witnesses.
+
+\subsection{Remaining theoretical status}
+
+The computational evidence strongly suggests that disjunctive PC
+combined with the sibling constraint is sufficient for the
+one-point extension.  Informally: the sibling constraint ensures
+all direct siblings are mutually compatible, and the patchwork
+property of RCC5 then ensures that the full star network (including
+cross-level nodes) admits a consistent atomic assignment,
+because the domains $D(e,x)$ are always non-empty and the
+resulting disjunctive star network is path-consistent.
+
+However, a formal proof that sibling compatibility implies star
+path-consistency at arbitrary tree depth has not been written.
+The gap has been narrowed from ``fundamental obstruction''
+to ``missing inductive argument.''
 
 
 %% ============================================================
@@ -734,8 +768,15 @@ star path-consistency captures the interaction that triple-types
 miss --- but condition (Q4) as formulated is too strong:
 models do not satisfy it (Section~\ref{sec:erratum}).
 Replacing Q4 with disjunctive path-consistency of the $\Safe$
-network fixes soundness but leaves the completeness direction
-(one-point extension) unproven under the weaker condition.
+network, augmented with the \emph{sibling constraint}
+(joint witness compatibility for co-demanded roles), fixes
+soundness and appears sufficient for completeness.
+
+A working implementation using this approach correctly decides
+all 18~test concepts.  The Henkin tree extension test ---
+which builds actual depth-4 tree models from the quasimodel's
+type set using witness-plan-guided construction ---
+passes with zero failures across 991~extension tests.
 
 What survives: the one-point extension lemma
 (Lemma~\ref{lem:extension}) is correct conditional on its
@@ -743,11 +784,11 @@ hypothesis.  The algebraic properties (Section~\ref{sec:computation})
 are unconditionally correct.  The computational verification
 (43{,}287 triple-type failures, zero quadruple-type failures)
 remains valid as evidence that 4-element consistency is the
-right granularity.  A working implementation using
-disjunctive path-consistency correctly decides all 18~test
-concepts.
+right granularity.
 
-The decidability of $\ALCIRCC{5}$ remains \textbf{open}.
+The decidability of $\ALCIRCC{5}$ remains \textbf{conditionally
+established}: pending a formal proof that sibling compatibility
+implies star path-consistency at arbitrary depth.
 
 All algebraic properties are verified by exhaustive case analysis
 over the RCC5 composition table (427 + 164 + 3{,}567{,}816

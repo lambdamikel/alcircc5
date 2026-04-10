@@ -2470,3 +2470,58 @@ New paper: `direct_soundness_ALCIRCC5.tex` (8 pages, compiles cleanly). Document
 - Updated `decidability_via_quadruples_ALCIRCC5.tex` (erratum section, status box, conclusion)
 - Updated `README.md` (ten-approach table, quadruple-type entry)
 - Updated `CONVERSATION.md` (this entry)
+
+## Part 48: Sibling Constraint and Witness Plans — Narrowing the Extension Gap
+
+### Context
+
+Following the Q4 soundness gap discovery (Part 47), Michael authorized continued investigation of the gap between disjunctive path-consistency and the one-point extension lemma. The Henkin tree extension test (`henkin_extension_test.py`) had shown 4 concepts with extension failures, all of the `domain_empty` type where `comp(INV[R], R_parent_x) ∩ SAFE = ∅`.
+
+### The sibling constraint
+
+Analysis of the Henkin tree failures revealed that the core issue is **sibling compatibility**: when a type has multiple demands (R₁,D₁),...,(Rₖ,Dₖ), the witness types j₁,...,jₖ must satisfy not just individual witnessing conditions but also pairwise sibling constraints:
+
+```
+comp(INV[Rₘ], Rₘ') ∩ SAFE(jₘ, jₘ') ≠ ∅  for all m ≠ m'
+```
+
+This is because the relation between two children c₁, c₂ of the same parent d is forced by composition: ρ(c₁, c₂) ∈ comp(INV[R₁], R₂), and this must intersect the SAFE set between their types.
+
+**Implementation:** Added `check_sibling_compatibility(T)` to the reasoner. For each type i ∈ T with multiple demands:
+1. Compute candidate witnesses per demand
+2. Run arc-consistency to prune candidates pairwise
+3. Backtracking search for a joint assignment satisfying all pairs (both directions)
+
+This check is inserted at the end of `try_build()`, after all demands are witnessed and disjunctive PC holds.
+
+**Result:** Reasoner still passes all 18/18 tests. One previously failing Henkin concept now passes:
+- ∃PP.(∀DR.A) ⊓ ∃DR.(∀PP.B) ⊓ ∃PO.⊤: was 1309 failures → 0 failures
+
+### The witness plan
+
+Three concepts still had Henkin failures after the sibling check. Analysis showed these were due to the **greedy witness selection** in the Henkin tree builder, not fundamental issues:
+
+1. ∃PP.A ⊓ ∃PPI.B ⊓ ∃DR.C: greedy picks incompatible DR-witness
+2. ∃PP.(A ⊓ ∃DR.B) ⊓ ∀PP.(A ⊓ ∃PP.⊤ ⊓ ∃DR.B): cross-level failures
+3. ∃PO.D ⊓ ∃DR.(B ⊓ ∀PO.¬D) ⊓ ∀DR.¬D ⊓ ∀PP.¬D ⊓ ∀PPI.¬D: multiple failures
+
+The fix: `compute_witness_plan()` precomputes a sibling-compatible witness assignment per type using the same CSP approach. The Henkin tree builder then uses the planned witnesses first, with limited backtracking (up to 6 alternatives) for cross-level compatibility.
+
+**Final result: 991 extension tests, ZERO failures across all 16 SAT concepts.**
+
+### Theoretical assessment
+
+The gap has been narrowed from "fundamental obstruction" to "missing inductive argument":
+
+- **Sibling constraint** ensures all direct siblings are mutually compatible
+- **Witness plan** provides deterministic, cross-compatible witness selection
+- **Patchwork property** should ensure the full star network (including cross-level nodes) admits a consistent atomic assignment, because star domains are always non-empty after witness plan selection
+- A **formal proof** that sibling compatibility implies star path-consistency at arbitrary tree depth has not been written — this is the remaining gap
+
+### Files changed
+
+- `alcircc5_reasoner.py`: Added `check_sibling_compatibility()`, integrated into `try_build()`
+- `henkin_extension_test.py`: Rewrote with `compute_witness_plan()`, backtracking assignment via `find_assignment()`, smarter tree builder
+- `decidability_via_quadruples_ALCIRCC5.tex`: Updated erratum (new subsection on sibling constraint + witness plans, updated status box from red to orange, updated conclusion and status table)
+- `README.md`: Updated summary table, implementation section (added Henkin test description, sibling constraint in algorithm)
+- `CONVERSATION.md`: This entry

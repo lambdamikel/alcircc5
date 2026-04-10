@@ -387,6 +387,109 @@ def check_satisfiability(C0, verbose=False):
                     return False
         return True
 
+    def check_sibling_compatibility(T):
+        """Check sibling constraint: for each type i in T with multiple
+        demands, there exists a joint witness assignment such that all
+        sibling pairs are compatible.
+
+        For type i with demands (R_1,D_1),...,(R_k,D_k), we need
+        witnesses j_1,...,j_k in T such that:
+          - D_m in type_list[j_m] and R_m in safe[(i, j_m)]  (witnessing)
+          - comp(INV[R_m], R_m') ∩ safe[(j_m, j_m')] ≠ ∅    (sibling compat)
+
+        Uses arc-consistency + backtracking over the witness CSP.
+        """
+        for i in T:
+            dems = demands[i]
+            if len(dems) <= 1:
+                continue
+
+            # For each demand slot m, compute candidate witnesses
+            candidates = []
+            for R, D in dems:
+                cands = [j for j in T
+                         if D in type_list[j] and R in safe[(i, j)]]
+                if not cands:
+                    return False  # no witness at all
+                candidates.append(cands)
+
+            k = len(dems)
+
+            # Arc-consistency: prune candidates pairwise
+            # For slots m, m': keep j_m only if ∃ j_m' with
+            # comp(INV[R_m], R_m') ∩ safe[(j_m, j_m')] ≠ ∅
+            changed = True
+            while changed:
+                changed = False
+                for m in range(k):
+                    Rm = dems[m][0]
+                    new_cands = []
+                    for jm in candidates[m]:
+                        ok = True
+                        for mp in range(k):
+                            if mp == m:
+                                continue
+                            Rmp = dems[mp][0]
+                            comp_set = COMP[(INV[Rm], Rmp)]
+                            found = False
+                            for jmp in candidates[mp]:
+                                if jm == jmp:
+                                    # Same witness for two demands: sibling
+                                    # relation is EQ, which is always safe
+                                    # (reflexive). But in our model EQ only
+                                    # holds between identical elements; two
+                                    # demands may need distinct witnesses.
+                                    # For now, allow it — the witness can be
+                                    # the same element if types match.
+                                    found = True
+                                    break
+                                if comp_set & safe[(jm, jmp)]:
+                                    found = True
+                                    break
+                            if not found:
+                                ok = False
+                                break
+                        if ok:
+                            new_cands.append(jm)
+                    if len(new_cands) < len(candidates[m]):
+                        candidates[m] = new_cands
+                        changed = True
+                        if not new_cands:
+                            return False
+
+            # After arc-consistency, verify with backtracking search
+            # (arc-consistency alone doesn't guarantee a solution exists)
+            def bt_search(slot, assignment):
+                if slot == k:
+                    return True
+                Rm = dems[slot][0]
+                for jm in candidates[slot]:
+                    ok = True
+                    for prev_slot, jmp in enumerate(assignment):
+                        if jm == jmp:
+                            continue  # same witness, compatible
+                        Rmp = dems[prev_slot][0]
+                        if not (COMP[(INV[Rm], Rmp)] & safe[(jm, jmp)]):
+                            ok = False
+                            break
+                        # Also check reverse direction
+                        if not (COMP[(INV[Rmp], Rm)] & safe[(jmp, jm)]):
+                            ok = False
+                            break
+                    if ok:
+                        assignment.append(jm)
+                        if bt_search(slot + 1, assignment):
+                            return True
+                        assignment.pop()
+                return False
+
+            if not bt_search(0, []):
+                return False
+
+        return True
+
+    found_T = [None]  # mutable container for closure
+
     def try_build(T, depth=0):
         """Try to build a valid quasimodel from type set T.
         Returns True if T can be extended to a valid quasimodel."""
@@ -418,7 +521,14 @@ def check_satisfiability(C0, verbose=False):
                                 return True
                     return False  # no witness works
 
-        # All demands witnessed, disjunctive PC holds
+        # All demands witnessed, disjunctive PC holds.
+        # Now check sibling compatibility: for each type with multiple
+        # demands, witnesses must be jointly compatible via composition
+        # table constraints on sibling relations.
+        if not check_sibling_compatibility(T):
+            return False
+
+        found_T[0] = T
         return True
 
     # Step 5: Try each root type
@@ -433,6 +543,10 @@ def check_satisfiability(C0, verbose=False):
                 'surviving_types': -1,  # not computed in constructive mode
                 'root_types': len(root_types),
                 'time': elapsed,
+                'type_set': found_T[0],
+                'type_list': type_list,
+                'safe': safe,
+                'demands': demands,
             }
             return True, info
 
