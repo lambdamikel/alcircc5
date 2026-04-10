@@ -146,8 +146,6 @@ The following approaches have been **disproved, retracted, or shown incomplete**
 
 **The structural wall (approaches 1–5).** All five fail at global edge assignment in complete-graph models. The cover-tree tableau avoids this wall by decomposing models into trees with {DR,PO}-only cross-edges.
 
-**What survives.** The unique self-absorption failure PPI ∉ comp(DR, PPI) = {DR} is the algebraic source of difficulty. The forced DR edge and self-safety theorem are correct and reused in later approaches.
-
 See [OUTDATED.md](OUTDATED.md) for detailed investigation traces: blocking intricacies in complete-graph semantics, abstract triangle-type saturation, Tri-neighborhood equivalence, the two-chain/PCP/NTPP-queue investigations, and the Ramsey-theoretic analysis.
 
 ---
