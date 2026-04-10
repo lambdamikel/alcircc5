@@ -141,7 +141,12 @@ See [OUTDATED.md](OUTDATED.md) for detailed investigation traces: blocking intri
 
 The ALCI\_RCC family extends the description logic ALCI (ALC with inverse roles) with **role boxes derived from RCC composition tables**. The base relations of RCC5 ({DR, PO, EQ, PP, PPI}) serve as the role names, and interpretations are constrained to be **complete graphs** where every pair of domain elements is related by exactly one base relation, subject to the RCC5 composition table.
 
-These logics were introduced by Michael Wessel in his doctoral work at the University of Hamburg. He classified most of the family (ALCI\_RCC1 through ALCI\_RCC3) but left the decidability of ALCI\_RCC5 and ALCI\_RCC8 as open problems.
+These logics were introduced by Michael Wessel in his doctoral work at the University of Hamburg, under the DFG project "Description Logics and Spatial Reasoning" (grant NE 279/8-1). In a series of technical reports, Wessel:
+
+- **Proved decidability** of ALCI\_RCC1, ALCI\_RCC2, and ALCI\_RCC3 by showing that their composition tables yield deterministic or near-deterministic role boxes amenable to standard DL techniques ([report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/report7.pdf)).
+- **Proved undecidability** of ALC\_RA (ALC with arbitrary role algebras, i.e., unrestricted composition-based role inclusion axioms) via reduction from CFG intersection ([report6.pdf](https://github.com/lambdamikel/alcircc5/blob/master/report6.pdf)), and of ALC\_RA⊖ (the restriction to admissible role boxes) via the Post Correspondence Problem ([report4.pdf](https://github.com/lambdamikel/alcircc5/blob/master/report4.pdf)).
+- **Classified the decidability boundary** for ALC with composition-based role inclusion axioms: decidable when the role box is a subalgebra of a group (ALCRA\_SG), undecidable when graded modalities or non-admissible role boxes are added ([report5.pdf](https://github.com/lambdamikel/alcircc5/blob/master/report5.pdf)).
+- **Left open** the decidability of ALCI\_RCC5 and ALCI\_RCC8, noting that their composition tables are non-deterministic but satisfy the patchwork property — placing them between the decidable (ALCRA\_SG) and undecidable (ALC\_RA) cases.
 
 ### Key Difficulties
 
@@ -173,9 +178,15 @@ Reading: row = S(b,c), column = R(a,b), entry = possible relations for (a,c). Th
 
 ## Results
 
-### Main Result
+### Main Results
 
-The [fourth-revision two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) proves **decidability of the PO-coherent fragment** of ALCI\_RCC5 via a finite quotient construction (12 pages, fourth revision after three rounds of GPT-5.4 Pro review). Full decidability remains open due to the PO gap. The result is **unverified** by human experts.
+**Cover-tree tableau (Wessel/GPT-5.4/Claude) — most promising.** The [cover-tree tableau](https://github.com/lambdamikel/alcircc5/blob/master/cover_tree_tableau_ALCIRCC5.pdf) decomposes models into PPI-oriented cover trees with {DR,PO}-only cross-edges. A [working implementation](https://github.com/lambdamikel/alcircc5/blob/master/cover_tree_tableau.py) (Claude) agrees with an independent [quasimodel reasoner](https://github.com/lambdamikel/alcircc5/blob/master/alcircc5_reasoner.py) on **902 test concepts with zero mismatches**. Soundness is convincing (patchwork property); completeness direction has a condensed gap. No complexity bound established.
+
+**Two-tier quotient (Claude, reviewed by GPT-5.4) — PO-coherent fragment decidable.** The [two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/two_tier_quotient_ALCIRCC5.pdf) proves **decidability of the PO-coherent fragment** of ALCI\_RCC5 via a finite quotient construction (12 pages, fourth revision after three rounds of GPT-5.4 Pro review). Full decidability remains open due to the PO gap.
+
+**Quadruple-type reasoner (Claude) — strong computational evidence.** The [constructive quasimodel search](https://github.com/lambdamikel/alcircc5/blob/master/alcircc5_reasoner.py) correctly classifies **713 concepts** with zero errors. UNSAT answers are provably sound; SAT answers lack a formal sufficiency proof. See the [quadruple-type paper](https://github.com/lambdamikel/alcircc5/blob/master/decidability_via_quadruples_ALCIRCC5.pdf).
+
+All results are **unverified** by human experts.
 
 ### Known complexity bounds
 
