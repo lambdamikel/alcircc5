@@ -79,11 +79,26 @@ See [**MSO Encoding (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master
 
 ### Summary: eleven approaches
 
-| | Quasimodel (Claude) | Contextual tableau (GPT) | Direct construction (Claude) | Profile-cached blocking (GPT) | Meet-based replay (GPT) | Triangle-type (Claude) | Two-tier quotient (Claude) | Tri-nbr tableau (Claude) | MSO encoding (Claude) | Quadruple-type (Claude) | Cover-tree tableau (Wessel/GPT/Claude) |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Key idea | Type elimination | Local states + recentering | Tree unraveling + DN\_safe | Coherent predecessor blocks | Meet-semilattice on labels | Triangle-filtered arc-consistency | Period descriptors + PP-kernels + full RCC5 tractability | Tri-neighborhood blocking + filtered unraveling | Reduce to Borel-MSO(R,<) via interval semantics | 4-element star path-consistency for cross-branch edges | PPI-tree + EQ-splitting + {DR,PO}-only cross-edges + patchwork |
-| Gap | **Algorithm unsound**; tableau soundness unproven | FW(C,N) false | Theorem 5.5 false | Color structure changes in unraveling | Same unraveling gap | Extension Solvability Conjecture | **PO gap** | Termination false; soundness gap | MSO-definability of Dyck matching | Formal sufficiency proof pending | Completeness direction condensed |
-| Status | **Disproved** | Incomplete | **Retracted** | Incomplete | Incomplete | Conditional | **PO-coherent fragment decidable** | **Termination disproved** | One technical gap | **713 concepts, 0 errors** | **Most promising: 902 concepts, 0 errors** |
+**Promising and partially successful:**
+
+| Approach | Author(s) | Key idea | Gap | Status |
+|---|---|---|---|---|
+| Cover-tree tableau | Wessel/GPT/Claude | PPI-tree + EQ-splitting + {DR,PO}-only cross-edges + patchwork | Completeness direction condensed | **Most promising: 902 concepts, 0 errors** |
+| Quadruple-type | Claude | 4-element star path-consistency for cross-branch edges | Formal sufficiency proof pending | **713 concepts, 0 errors** |
+| Two-tier quotient | Claude | Period descriptors + PP-kernels + full RCC5 tractability | **PO gap** | **PO-coherent fragment decidable** |
+| MSO encoding | Claude | Reduce to Borel-MSO(R,<) via interval semantics | MSO-definability of Dyck matching | One technical gap |
+| Triangle-type | Claude | Triangle-filtered arc-consistency | Extension Solvability Conjecture | Conditional |
+
+**Disproved, retracted, or incomplete:**
+
+| Approach | Author(s) | Key idea | Gap | Status |
+|---|---|---|---|---|
+| Quasimodel | Claude | Type elimination | **Algorithm unsound**; tableau soundness unproven | **Disproved** |
+| Direct construction | Claude | Tree unraveling + DN\_safe | Theorem 5.5 false | **Retracted** |
+| Tri-nbr tableau | Claude | Tri-neighborhood blocking + filtered unraveling | Termination false; soundness gap | **Termination disproved** |
+| Contextual tableau | GPT | Local states + recentering | FW(C,N) false | Incomplete |
+| Profile-cached blocking | GPT | Coherent predecessor blocks | Color structure changes in unraveling | Incomplete |
+| Meet-based replay | GPT | Meet-semilattice on labels | Same unraveling gap | Incomplete |
 
 ### Why standard undecidability reductions fail for ALCI\_RCC5
 
