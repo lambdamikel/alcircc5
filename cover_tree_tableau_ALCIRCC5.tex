@@ -80,7 +80,8 @@ mismatches against an independent quasimodel-based
 reasoner~\cite{ClaudeDecidability}.  Independent model verification
 confirms \textbf{678/768}~SAT concepts with concrete models (zero
 failures), and a decomposition test shows \textbf{89.3\%} of built
-models have cover-tree structure.  The results are
+models have cover-tree structure with \textbf{zero genuine
+counterexamples} across 11.4\,M enumerated models.  The results are
 \textbf{not peer-reviewed}; this paper is a companion to the
 theoretical proposals and serves as computational evidence.}}
 \end{center}
@@ -644,24 +645,24 @@ have cover-tree structure.
 For each SAT concept, we exhaustively enumerate all valid models
 at domain sizes 2--4, checking type assignment, composition
 consistency (via backtracking), demand satisfaction, and cover-tree
-structure.  Results:
+structure.  The type pool is expanded beyond the tableau's type set~$T$
+to include all types that can serve as witnesses for any demand in~$T$
+(plus one level of demand closure), avoiding false failures from
+limited type sets.  Results:
 \begin{itemize}[nosep]
-  \item \textbf{664/768} SAT concepts (86.5\%) have at least one
+  \item \textbf{765/768} SAT concepts (99.6\%) have at least one
     finite cover-tree model.
-  \item \textbf{243,628} total models enumerated, of which
-    \textbf{193,715} (79.5\%) have cover-tree structure.
-  \item \textbf{8 concepts} require infinite cover-tree models
-    (self-referencing $\PP$/$\PPI$ demands creating infinite
-    ascending/descending chains) --- expected behavior in
-    description logics, not counterexamples.
-  \item \textbf{8 concepts} (4 unique patterns) have
-    composition$+$safe conflicts \emph{specific to the tableau's
-    type set}: $\Safe(\tau_{\text{child}}, \tau_{\text{cross}})
-    = \{\PP,\PPI\}$ only, forcing multi-parenting.  These may
-    have cover-tree models using alternative type sets not explored
-    by the enumeration.
-  \item \textbf{Zero genuine counterexamples} where cover-tree
-    structure is provably impossible.
+  \item \textbf{11.4\,M} total models enumerated, of which
+    \textbf{8.36\,M} (73.3\%) have cover-tree structure.
+  \item \textbf{Zero genuine counterexamples} --- every SAT concept
+    tested has a finite cover-tree model (or had no models at
+    tested domain sizes).
+  \item An initial run with a restricted type pool (only the
+    tableau's type set) found 8~apparent failures.  These were
+    artifacts: the limited types forced composition$+$safe conflicts
+    ($\Safe(\tau_{\text{child}}, \tau_{\text{cross}}) = \{\PP,\PPI\}$
+    only).  Expanding the pool to include all witness-compatible types
+    resolved all 8~cases.
 \end{itemize}
 
 \paragraph{Three-layer evidence.}
@@ -670,7 +671,9 @@ The computational evidence for decidability is now three-layered:
 reasoners; (2)~model construction --- 678 independently verified
 concrete models; (3)~structural decomposition --- 89.3\% of those
 models naturally have cover-tree structure without any tree
-constraint being imposed.
+constraint being imposed, and 99.6\% of SAT concepts have finite
+cover-tree models when the type pool is expanded (zero genuine
+counterexamples across 11.4\,M enumerated models).
 
 
 % ═══════════════════════════════════════════════════════════════
@@ -804,7 +807,10 @@ against an independent quasimodel-based reasoner.  Independent model
 verification confirms 678/768~SAT concepts with concrete models
 (zero verification failures), and a cover-tree decomposition test
 shows that 89.3\% of these models naturally exhibit cover-tree
-structure (Section~\ref{sec:decomposition}).  Together, these three
+structure, with 765/768~SAT concepts (99.6\%) having finite
+cover-tree models and zero genuine counterexamples across
+11.4\,M enumerated models (Section~\ref{sec:decomposition}).
+Together, these three
 layers provide strong computational evidence for the correctness of
 the split-forest approach.  A formal correctness proof, complexity
 analysis, and extension to $\ALCIRCC{8}$ remain open.

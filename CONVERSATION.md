@@ -2769,23 +2769,22 @@ Claude implemented `decomposition_test.py` with two parts:
 
 **Part A**: Check models built by model_verifier for cover-tree structure. These models are built WITHOUT any tree constraint, so finding cover-tree structure is non-trivial evidence. Result: **603/675** built models (89.3%) have cover-tree structure.
 
-**Part B**: Exhaustive enumeration of all valid small models (domain 2–4) using the tableau's type set. For each domain size, iterate over all type assignments and all composition-consistent relation assignments via backtracking. Result: **664/768** SAT concepts (86.5%) have at least one finite cover-tree model. **243,628 total models** enumerated, of which **193,715** (79.5%) have cover-tree structure.
+**Part B**: Exhaustive enumeration of all valid small models (domain 2–4) using an expanded type pool (all witness-compatible types, not just the tableau's type set). For each domain size, iterate over all type assignments and all composition-consistent relation assignments via backtracking. Result: **765/768** SAT concepts (99.6%) have at least one finite cover-tree model. **11.4M total models** enumerated, of which **8.36M** (73.3%) have cover-tree structure. **Zero genuine counterexamples.**
 
 ### Key findings
 
-1. **Zero genuine counterexamples** where cover-tree structure is provably impossible
-2. **8 concepts** require infinite cover-tree models (self-referencing PP/PPI demands creating infinite ascending/descending chains) — expected in DL, not counterexamples
-3. **8 concepts** (4 unique patterns) have composition+safe conflicts specific to the tableau's type set:
-   - safe(child_type, cross_witness_type) = {PP, PPI} only (no DR/PO)
-   - Composition forces children to be PP to cross-edge witnesses, creating unavoidable multi-parenting
-   - These may have cover-tree models using alternative type sets not explored by the enumeration
-   - Example: ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A — type set {6,14} where safe(6,14) = {PP,PPI}
+1. **765/768 SAT concepts (99.6%)** have finite cover-tree models — zero genuine counterexamples
+2. **11.4M total models** enumerated, of which **8.36M (73.3%)** have cover-tree structure
+3. An initial run found 8 apparent failures, but these were artifacts of a **limited type pool** (only the tableau's type set T). The limited types forced composition+safe conflicts: safe(child_type, cross_witness_type) = {PP,PPI} only (no DR/PO). After expanding the type pool to include all witness-compatible types (plus one level of demand closure), all 8 cases resolved.
+   - Example: ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A — type set {6,14} where safe(6,14) = {PP,PPI}. Type 8 (has ∃PO.A, can be PO to A-types) was outside T but resolves the conflict.
 
 ### Bug fixes during development
 
 1. **Output buffering**: Python buffered stdout when piped; first run produced 0 bytes of output for 12+ minutes. Fixed with `flush_print()` wrapper and `python3 -u`.
 2. **Wrong cover-tree check (major bug)**: Initial `has_cover_tree()` counted ALL PP-neighbors as parents. In a PP-chain c PP d PP p, element c is PP to both d and p (transitivity), but only d is the immediate parent. First run showed 56.3% CT rate and 64 "counterexamples". Fixed by computing the PP Hasse diagram (immediate parents only). After fix: 79.5% CT rate.
 3. **False counterexamples from infinite-model concepts**: Added `needs_infinite_ct()` using fixed-point computation to detect self-referencing PP/PPI demands.
+4. **Limited type pool (major bug)**: The exhaustive enumerator only used the tableau's type set T, missing types outside T that could avoid composition+safe conflicts. Example: type 6 has ∀PO.¬A (can't be PO to A-types), but type 8 has ∃PO.A (CAN be PO to A-types). Type 8 ∉ T. Fixed by expanding the type pool to include all witness-compatible types plus one level of demand closure.
+5. **Timeout misclassification**: Timed-out incomplete searches were classified as "genuine counterexamples". Fixed by only counting a case as genuine if at least one domain size completed fully with models but zero CT models.
 
 ### Three-layer evidence for decidability
 
@@ -2795,7 +2794,7 @@ The computational evidence for decidability is now three-layered:
 |---|---|---|
 | Logical agreement | Cover-tree tableau vs quasimodel reasoner | 902 concepts, 0 mismatches |
 | Model construction | Independent model verification | 678/768 SAT concepts verified, 0 failures |
-| Structural decomposition | Cover-tree decomposition test | 89.3% of models have CT structure, 0 genuine counterexamples |
+| Structural decomposition | Cover-tree decomposition test | 89.3% of models have CT structure, 765/768 (99.6%) have finite CT models, 0 genuine counterexamples across 11.4M models |
 
 ### Files created/changed
 

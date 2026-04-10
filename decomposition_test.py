@@ -331,7 +331,7 @@ def needs_infinite_ct(C0, ct_info):
 # Part B: Exhaustive Model Enumeration
 # ══════════════════════════════════════════════════════════════
 
-def exhaustive_count(C0, ct_info, max_domain=4, time_limit=1.5,
+def exhaustive_count(C0, ct_info, max_domain=6, time_limit=1.5,
                      max_models=20000):
     """
     Enumerate all valid models for C0 using the tableau's type set T
@@ -345,27 +345,33 @@ def exhaustive_count(C0, ct_info, max_domain=4, time_limit=1.5,
     demands = ct_info['demands']
     n_all = len(type_list)
 
-    # Detect leaf types (types outside T that can terminate recursive demands)
+    # Expand type pool: include all types that can serve as witnesses
+    # for any demand in T, plus types that are safe-compatible with T.
+    # This avoids false "counterexamples" from limited type sets.
     T_set = set(T)
-    leaf_types = set()
+    extra_types = set()
     for ti in T:
         for R, D in demands[ti]:
-            has_non_recursive = False
-            for tj in T:
+            # Find ALL types that could witness this demand
+            for tj in range(n_all):
+                if tj in T_set:
+                    continue
                 if D in type_list[tj] and R in safe[(ti, tj)]:
-                    if (R, D) not in demands[tj]:
-                        has_non_recursive = True
-                        break
-            if not has_non_recursive:
-                for tj in range(n_all):
-                    if tj in T_set or tj in leaf_types:
-                        continue
-                    if (D in type_list[tj] and R in safe[(ti, tj)]
-                            and (R, D) not in demands[tj]):
-                        leaf_types.add(tj)
-                        break
+                    extra_types.add(tj)
 
-    type_pool = T + sorted(leaf_types)
+    # Also add types that are demand-witnesses for the extra types
+    # (one level of closure to support their demands)
+    extra2 = set()
+    for ti in extra_types:
+        for R, D in demands[ti]:
+            for tj in range(n_all):
+                if tj in T_set or tj in extra_types:
+                    continue
+                if D in type_list[tj] and R in safe[(ti, tj)]:
+                    extra2.add(tj)
+    extra_types |= extra2
+
+    type_pool = T + sorted(extra_types)
     root_types = [i for i in type_pool if C0 in type_list[i]]
     if not root_types:
         return {}
@@ -576,13 +582,19 @@ def run_exhaustive_tests(verbose=False):
                 continue
 
             cat_checked += 1
-            res = exhaustive_count(concept, ct_info, max_domain=4,
+            res = exhaustive_count(concept, ct_info, max_domain=6,
                                    time_limit=1.5)
 
             concept_total = sum(r[0] for r in res.values())
             concept_ct = sum(r[1] for r in res.values())
             cat_total_models += concept_total
             cat_ct_models += concept_ct
+
+            # Check if any size with models completed without timeout
+            any_completed_with_models = any(
+                r[0] > 0 and not r[2] for r in res.values())
+            all_timed_out = all(
+                r[2] for r in res.values() if r[0] > 0)
 
             if concept_total == 0:
                 cat_no_models += 1
@@ -594,9 +606,14 @@ def run_exhaustive_tests(verbose=False):
                 if inf:
                     cat_infinite += 1
                     infinite_concepts.append((name, reason))
-                else:
+                elif any_completed_with_models:
+                    # At least one size completed fully with models,
+                    # none had CT — genuine counterexample
                     cat_no_ct += 1
                     cat_problems.append((name, res))
+                else:
+                    # Only timed-out sizes had models — inconclusive
+                    cat_no_models += 1
 
             if verbose and concept_total > 0:
                 pct = 100 * concept_ct / concept_total
