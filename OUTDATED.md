@@ -381,9 +381,72 @@ The blocking dilemma above appears to force a choice between termination and cor
 
 **The key distinction.** A node-identity profile records, for each pair of neighbors (b, c), the concrete identity of b and c together with the RCC5 relation. An abstract triangle type is a tuple (τ₁, R₁₂, τ₂, R₂₃, τ₃, R₁₃) — three Hintikka types and three pairwise RCC5 relations, with no node identities. The abstract triangle-type set of a node d is the set of all abstract triangle types that d participates in.
 
-**Computational verification** ([`triangle_type_saturation_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py)). The script builds the full PO-incoherent model (24-element PP-chain with 12 PO-witnesses), verifies composition consistency, and computes abstract triangle-type sets for every node. Results: all three node types stabilize at k=2 (τ\_A: 68 types, τ\_B: 56 types, σ: 57 types). Interior nodes have exactly identical abstract triangle-type sets.
+**Why node-identity profiles never match.** In the PO-incoherent chain, each τ\_A node d₂ₖ has a unique concrete relational context: PO to its own witness wₖ, DR to all earlier witnesses w₀,...,wₖ₋₁, and PPI to all later witnesses. Since k increases without bound, every d₂ₖ sees a different number of DR-related witnesses. The node-identity profile grows monotonically and never repeats.
 
-**Implication.** Interior-node stabilization is insufficient for termination: frontier nodes (chain endpoints without successors) always have a strictly smaller Tri, so they are never blocked. The blocking dilemma remains open.
+**Why abstract triangle-type sets DO match.** The abstract triangle-type set strips away node identities and retains only the relational pattern. Even though d₄ is DR to {w₀, w₁} while d₆ is DR to {w₀, w₁, w₂}, both see the same *abstract patterns*: both participate in triangles of the form (τ\_A, DR, σ, DR, σ, PPI), (τ\_A, PO, σ, DR, τ\_B, PPI), etc. The additional concrete witness at d₆ contributes only triangle types that d₄ already has via its own witnesses.
+
+**Computational verification** ([`triangle_type_saturation_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_type_saturation_check.py)). The script builds the full PO-incoherent model (24-element PP-chain with 12 PO-witnesses), verifies composition consistency, and computes abstract triangle-type sets for every node. Results for the all-DR-backward branch:
+
+| Node type | Stabilizes at | Interior range (all identical) | Set size |
+|---|---|---|---|
+| τ\_A | d₄ (k=2) | d₄ = d₆ = d₈ = d₁₀ = d₁₂ = d₁₄ = d₁₆ = d₁₈ | 68 types |
+| τ\_B | d₅ (k=2) | d₅ = d₇ = d₉ = d₁₁ = d₁₃ = d₁₅ = d₁₇ = d₁₉ | 56 types |
+| σ | w₂ (k=2) | w₂ = w₃ = w₄ = w₅ = w₆ = w₇ = w₈ = w₉ | 57 types |
+
+The growth phase (d₀ → d₂ → d₄: 25 → 55 → 68 types for τ\_A) reflects the start boundary where early nodes have fewer backward neighbors. Nodes near the end of the finite model (d₂₀, d₂₂) have fewer types due to the end boundary — an artifact that would not exist in the infinite tableau construction. All interior nodes are **exactly identical**.
+
+The same stabilization holds for the all-PP-backward branch (verified in the script). This is not branch-dependent.
+
+**The full comparison matrix** (= means identical abstract triangle-type sets, numbers show symmetric-difference size):
+
+```
+τ_A:     d0    d2    d4    d6    d8   d10   d12   d14   d16   d18   d20   d22
+  d0      ·    30    43    43    43    43    43    43    43    43    50    54
+  d2     30     ·    13    13    13    13    13    13    13    13    20    48
+  d4     43    13     ·     =     =     =     =     =     =     =     7    35
+  d6     43    13     =     ·     =     =     =     =     =     =     7    35
+  d8     43    13     =     =     ·     =     =     =     =     =     7    35
+  ...    ...   ...    =     =     =     =     =     =     =     =    ...   ...
+  d18    43    13     =     =     =     =     =     =     =     ·     7    35
+```
+
+**Why stabilization occurs.** The abstract triangle-type set of a node depends on the menu of Hintikka types and RCC5 relations available among its neighbors — not on the number of neighbors of each kind. Once d₄ has at least one predecessor of each relevant type at each relevant relation (PPI to τ\_B, DR to σ, PPI to σ, etc.) and at least one successor of each relevant type at each relevant relation, its abstract triangle-type menu is complete. Additional predecessors or successors of the same abstract kind contribute no new triangle types. The transient phase (d₀ through d₂) simply reflects the time needed for the backward neighborhood to include all relevant abstract patterns.
+
+**Implication for the blocking dilemma.** The interior-node stabilization suggests that abstract-triangle-type matching is the right level of abstraction for correct unraveling. However, a full implementation ([`triangle_calculus.py`](https://github.com/lambdamikel/alcircc5/blob/master/triangle_calculus.py)) revealed that **stabilization of interior nodes is insufficient for termination**: frontier nodes (chain endpoints without successors) always have a strictly smaller Tri (|Tri|=8 vs 16), so they are never blocked. The blocking dilemma remains open:
+
+| Blocking condition | Terminates? | Correct unraveling? |
+|---|---|---|
+| Type-equality (LL only) | Yes | Not always (novel triangles risk) |
+| LL + Tri | **No** (frontier advancement) | Yes |
+| LL + Tri + TNbr | **No** (frontier advancement) | Yes |
+
+Any blocking condition using Tri inherits the frontier problem. Resolving the dilemma requires a mechanism that handles the PP/PPI asymmetry at chain endpoints (see conjectured directions in the [tableau paper](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf), Section 7.1).
+
+**Strengthened condition: Tri-neighborhood equivalence.** Michael Wessel proposed strengthening the blocking condition to require not only Tri(x) = Tri(y), but also that for each (relation, type) pair, the *set of Tri-values among neighbors* matches:
+
+> For each pair-type (L(x), R, τ), {Tri(b) : E(x,b)=R, L(b)=τ} = {Tri(b') : E(y,b')=R, L(b')=τ}
+
+This ensures the copy is faithful not just from x/y's perspective but from **every neighbor's perspective**. Computational verification ([`tri_neighborhood_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/tri_neighborhood_check.py)) confirms this stronger condition also stabilizes, at a slightly later point:
+
+| Node type | Basic Tri stabilizes | Tri-nbr stabilizes |
+|---|---|---|
+| τ\_A | d₄ (k=2) | **d₆ (k=3)** |
+| τ\_B | d₅ (k=2) | **d₇ (k=3)** |
+| σ | w₂ (k=2) | **w₃ (k=3)** |
+
+The one-step delay occurs because d₄'s PPI-neighbors include boundary nodes (d₂, w₁) with different Tri sets than the corresponding PPI-neighbors of d₆ (which are all interior). Once all neighbors are also in the stabilized interior (at d₆), full Tri-neighborhood equivalence holds. The comparison matrix shows the pattern clearly (= means full Tri-nbr equivalence, T means Tri-only match):
+
+```
+τ_A:     d4    d6    d8   d10   d12   d14   d16   d18
+  d4      ·     T     T     T     T     T     T     T
+  d6      T     ·     =     =     =     =     =     T
+  d8      T     =     ·     =     =     =     =     T
+  ...     T     =     =     =     =     =     =     T
+  d16     T     =     =     =     =     =     ·     T
+  d18     T     T     T     T     T     T     T     ·
+```
+
+The strengthened condition makes the soundness proof (specifically the T-closure argument in Lemma 5.5) substantially more robust: triangles are guaranteed to be in T from **every participating node's perspective**, not just the blocked/blocker pair. This directly addresses scrutiny point 1 (intra-subtree T-closure) from the tableau paper.
 
 ---
 
@@ -391,9 +454,22 @@ The blocking dilemma above appears to force a choice between termination and cor
 
 Building on the saturation finding above, a complete tableau calculus with Tri-neighborhood blocking is presented in [**A Tableau Calculus for ALCI\_RCC5 with Tri-Neighborhood Blocking (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf) (16 pages, third revision, two rounds of GPT-5.4 Pro review).
 
-**The blocking condition.** A node x is blocked by an earlier node y when three conditions hold: (i) L(x) = L(y) (same concept label), (ii) Tri(x) = Tri(y) (same abstract triangle-type set), and (iii) TNbr(x) = TNbr(y) (same Tri-neighborhood signature). This is strictly between type-equality blocking and node-identity profile blocking.
+**The blocking condition.** A node x is blocked by an earlier node y when three conditions hold: (i) L(x) = L(y) (same concept label), (ii) Tri(x) = Tri(y) (same abstract triangle-type set), and (iii) TNbr(x) = TNbr(y) (same Tri-neighborhood signature — for each (relation R, type τ) pair, the set of Tri-values among R-neighbors of type τ matches). This is strictly between type-equality blocking (condition (i) alone) and node-identity profile blocking (which requires matching concrete relational contexts). Condition (ii) ensures first-person perspective equivalence; condition (iii) ensures third-person perspective equivalence.
 
-**Result:** Termination is **FALSE**. Non-termination confirmed on `A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A ⊓ ∃DR.B)` via frontier advancement. Soundness has a formal gap (Lemma 5.5). Completeness is valid. See the [full details in the paper](https://github.com/lambdamikel/alcircc5/blob/master/tableau_ALCIRCC5.pdf).
+**The proof structure:**
+- **Termination** (Theorem 4.1): **FALSE.** A [full implementation](https://github.com/lambdamikel/alcircc5/blob/master/triangle_calculus.py) demonstrates non-termination on `A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A ⊓ ∃DR.B)` via frontier advancement. 18/20 test concepts show non-termination. The local per-node bounds (bounded branching, permanent demand satisfaction, monotone Tri-growth) are individually correct but insufficient.
+- **Soundness** (Theorem 5.8): **NOT FULLY PROVEN.** The model construction goes via tree unraveling + triangle-type-filtered disjunctive constraint network. The critical step is Lemma 5.5 (non-empty domains after T-filtering and arc-consistency), which the paper's own honest assessment (Section 7.2, item 1) acknowledges is "supported by computational verification on completion graphs of size 8, 10, and 12, but not by a general formal argument." This is structurally the same issue as the extension gap: a disjunctive constraint network must be shown solvable. The mechanism differs (triangle-type filtering rather than Henkin/Q3), and the computational evidence is stronger (zero failures found), but a complete formal proof is missing.
+- **Completeness** (Theorem 6.1): **Valid.** A model guides all nondeterministic choices, maintaining invariants that the labels are subsets of model types and edges match model relations.
+
+**The mirror triangle issue and its resolution.** An earlier version of the soundness proof used a map-based assignment ρ(d₁,d₂) = E(map(d₁), map(d₂)). Computational investigation ([`intra_subtree_tclosure_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/intra_subtree_tclosure_check.py)) revealed that this assignment is NOT T-closed: when two elements both map to the same node (a "same-map pair"), they both carry the same PO relation to a shared witness, creating "mirror triangles" like (τ\_A, R, τ\_A, PO, σ, PO) that never appear in T(G) — because each σ witness is PO to exactly one τ\_A node. An earlier revision fixes this by working with disjunctive domains throughout: the constraint network's arc-consistency step removes the problematic PO from cross-subtree edges and replaces it with DR or PPI (which are type-safe alternatives from P(G)). Computational verification confirms all domains remain non-empty for completion graphs of size 8, 10, and 12.
+
+**Honest assessment.** The paper identifies four specific points:
+1. **Intra-subtree T-closure (Lemma 5.5)**: **Formal gap.** The proof that arc-consistency preserves non-empty domains is supported by computational verification on completion graphs of size 8, 10, and 12, but not by a general formal argument.
+2. **Initial domains for same-map pairs**: GPT's [second review](https://github.com/lambdamikel/alcircc5/blob/master/review6/response_to_tableau_ALCIRCC5_second_revision.pdf) identified that the P(G)-only domain is empty when two unraveling elements both map to the sole node of a given type. Fixed by extending D₀ with Safe(τ₁,τ₂). The degenerate case Safe(τ,τ)=∅ is handled by identifying same-map copies.
+3. **Termination**: **Disproved.** The concept `A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A ⊓ ∃DR.B)` causes unbounded node creation. The mechanism is frontier advancement, not oscillation: the frontier node's Tri is always strictly smaller than interior nodes' Tri (|Tri|=8 vs 16) because it lacks PP-successor triangles. Two reviewers correctly predicted this gap.
+4. **Stabilization depth**: The earlier computational evidence remains correct for interior nodes. The issue is that frontier nodes never stabilize before their ∃-demands fire.
+
+**Complexity.** Since the calculus does not terminate, complexity analysis is moot. A terminating variant would need separate analysis.
 
 ---
 
