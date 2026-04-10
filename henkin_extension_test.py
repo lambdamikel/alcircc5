@@ -55,15 +55,28 @@ def star_path_consistent(center_doms, existing_rels):
     return True, doms
 
 
+# Future-flexibility ordering: prefer relations whose compositions with
+# all roles give the widest domains.  PO averages 3.0 elements per
+# composition, DR 2.75, PP/PPI 2.25.  Using this order makes cross-level
+# constraints less likely to produce empty domains at deeper tree levels.
+_RELATION_PREFERENCE = [PO, DR, PP, PPI]
+
+
+def _sorted_rels(rel_set):
+    """Sort a set of relations by future-flexibility preference."""
+    return sorted(rel_set, key=lambda r: _RELATION_PREFERENCE.index(r))
+
+
 def find_assignment(doms, existing_rels):
-    """Backtracking atomic assignment from feasible star domains."""
+    """Backtracking atomic assignment from feasible star domains.
+    Tries relations in future-flexibility order (PO > DR > PP > PPI)."""
     nodes = list(doms.keys())
 
     def bt(idx, assignment):
         if idx == len(nodes):
             return dict(assignment)
         node = nodes[idx]
-        for r in doms[node]:
+        for r in _sorted_rels(doms[node]):
             ok = True
             for prev_node, prev_r in assignment:
                 R_ij = existing_rels.get((node, prev_node))
@@ -158,19 +171,20 @@ def compute_witness_plan(type_list, safe, demands, type_set):
     Returns: {type_i: [(R, D, witness_j), ...]} for each type
     """
     T = type_set
+    T_sorted = sorted(T)  # deterministic iteration order
     plan = {}
 
-    for i in T:
+    for i in T_sorted:
         dems = demands[i]
         if not dems:
             plan[i] = []
             continue
 
-        # For each demand, candidate witnesses
+        # For each demand, candidate witnesses (deterministic order)
         candidates = []
         for R, D in dems:
-            cands = [j for j in T
-                     if D in type_list[j] and R in safe[(i, j)]]
+            cands = sorted([j for j in T
+                            if D in type_list[j] and R in safe[(i, j)]])
             candidates.append(cands)
 
         k = len(dems)
@@ -213,7 +227,7 @@ def compute_witness_plan(type_list, safe, demands, type_set):
     return plan
 
 
-def build_henkin_tree(type_list, safe, demands, type_set, root_type, max_depth=4):
+def build_henkin_tree(type_list, safe, demands, type_set, root_type, max_depth=5):
     """Build a Henkin tree using ONLY types from the quasimodel's type_set.
 
     Uses precomputed witness plan for sibling-compatible witness selection,
@@ -274,8 +288,8 @@ def build_henkin_tree(type_list, safe, demands, type_set, root_type, max_depth=4
                     if j != planned_witness and D in type_list[j] and R in safe[(node_type, j)]:
                         all_candidates.append(j)
 
-                # Limit alternatives to avoid blowup
-                all_candidates = all_candidates[:6]
+                # Try all candidates (sorted for determinism)
+                all_candidates = sorted(set(all_candidates))
 
                 best_witness = None
                 best_assignment = None

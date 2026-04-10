@@ -221,7 +221,7 @@ def enumerate_types(cl):
     # Identify independent "atoms" — pairs (c, ¬c) where we must choose one
     atoms = []
     seen = set()
-    for c in cl:
+    for c in sorted(cl, key=str):  # deterministic order
         if c in seen:
             continue
         neg = c.nnf_negation()
@@ -335,7 +335,7 @@ def check_satisfiability(C0, verbose=False):
         By the patchwork property of RCC5, path-consistent disjunctive
         networks are satisfiable, so this is both sound and complete.
         """
-        T_list = list(T)
+        T_list = sorted(T)  # deterministic order
         k = len(T_list)
         if k <= 1:
             return True
@@ -376,10 +376,10 @@ def check_satisfiability(C0, verbose=False):
 
     def check_q2(T):
         """Check Q2: all demands have witnesses in T."""
-        for i in T:
+        for i in sorted(T):
             for R, D in demands[i]:
                 found = False
-                for j in T:
+                for j in sorted(T):
                     if D in type_list[j] and R in safe[(i, j)]:
                         found = True
                         break
@@ -399,7 +399,7 @@ def check_satisfiability(C0, verbose=False):
 
         Uses arc-consistency + backtracking over the witness CSP.
         """
-        for i in T:
+        for i in sorted(T):
             dems = demands[i]
             if len(dems) <= 1:
                 continue
@@ -407,8 +407,8 @@ def check_satisfiability(C0, verbose=False):
             # For each demand slot m, compute candidate witnesses
             candidates = []
             for R, D in dems:
-                cands = [j for j in T
-                         if D in type_list[j] and R in safe[(i, j)]]
+                cands = sorted([j for j in T
+                                if D in type_list[j] and R in safe[(i, j)]])
                 if not cands:
                     return False  # no witness at all
                 candidates.append(cands)
@@ -488,6 +488,69 @@ def check_satisfiability(C0, verbose=False):
 
         return True
 
+    def check_role_path_compatibility(T):
+        """Check role-path compatibility up to depth |T|.
+
+        For each chain g --R-> j --S-> w in the quasimodel tree,
+        the grandchild w must be connectable to g:
+          comp(INV[S], INV[R]) ∩ SAFE(w, g) ≠ ∅
+
+        More generally, for chains of length up to |T| (the pigeonhole
+        bound), all intermediate compositions must yield non-empty
+        SAFE intersections.
+
+        This ensures that the Henkin tree construction can extend
+        at every depth without encountering empty cross-level domains.
+        """
+        T_list = sorted(T)
+
+        # For each type g and each demand (R, D) of g, find the set of
+        # valid witnesses: j must satisfy the demand AND all of j's
+        # children must be connectable back to g.
+        # valid_witness[(g, R, D)] = set of j that work
+        valid_witness = {}
+        changed = True
+
+        # Initialize: all witnesses that satisfy the demand
+        for g in T_list:
+            for R, D in demands[g]:
+                valid_witness[(g, R, D)] = set()
+                for j in T_list:
+                    if D in type_list[j] and R in safe[(g, j)]:
+                        valid_witness[(g, R, D)].add(j)
+                if not valid_witness[(g, R, D)]:
+                    return False
+
+        # Iteratively prune: remove j from valid_witness[(g, R, D)]
+        # if j has a demand (S, E) for which no valid grandchild w
+        # exists with comp(INV[S], INV[R]) ∩ SAFE(w, g) ≠ ∅
+        while changed:
+            changed = False
+            for g in T_list:
+                for R, D in demands[g]:
+                    to_remove = set()
+                    for j in valid_witness[(g, R, D)]:
+                        for S, E in demands[j]:
+                            # j needs an S-child w for demand E
+                            # w must satisfy: E ∈ w, S ∈ SAFE(j,w),
+                            # AND comp(INV[S], INV[R]) ∩ SAFE(w, g) ≠ ∅
+                            found_w = False
+                            for w in T_list:
+                                if E in type_list[w] and S in safe[(j, w)]:
+                                    if COMP[(INV[S], INV[R])] & safe[(w, g)]:
+                                        found_w = True
+                                        break
+                            if not found_w:
+                                to_remove.add(j)
+                                break
+                    if to_remove:
+                        valid_witness[(g, R, D)] -= to_remove
+                        changed = True
+                        if not valid_witness[(g, R, D)]:
+                            return False
+
+        return True
+
     found_T = [None]  # mutable container for closure
 
     def try_build(T, depth=0):
@@ -502,11 +565,11 @@ def check_satisfiability(C0, verbose=False):
         if not check_disjunctive_pc(T):
             return False
 
-        # Find first unwitnessed demand
-        for i in T:
+        # Find first unwitnessed demand (sorted for determinism)
+        for i in sorted(T):
             for R, D in demands[i]:
                 found_in_T = False
-                for j in T:
+                for j in sorted(T):
                     if D in type_list[j] and R in safe[(i, j)]:
                         found_in_T = True
                         break
@@ -526,6 +589,11 @@ def check_satisfiability(C0, verbose=False):
         # demands, witnesses must be jointly compatible via composition
         # table constraints on sibling relations.
         if not check_sibling_compatibility(T):
+            return False
+
+        # Check role-path compatibility: grandchild witnesses must be
+        # connectable to grandparents through the composition table.
+        if not check_role_path_compatibility(T):
             return False
 
         found_T[0] = T
