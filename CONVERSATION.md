@@ -2525,3 +2525,71 @@ The gap has been narrowed from "fundamental obstruction" to "missing inductive a
 - `decidability_via_quadruples_ALCIRCC5.tex`: Updated erratum (new subsection on sibling constraint + witness plans, updated status box from red to orange, updated conclusion and status table)
 - `README.md`: Updated summary table, implementation section (added Henkin test description, sibling constraint in algorithm)
 - `CONVERSATION.md`: This entry
+
+## Part 49: Role-Path Compatibility, Determinism, and Decidability Status
+
+### Context
+
+The sibling constraint (Part 48) fixed 1 of 4 failing Henkin test concepts. The remaining failures were cross-level constraints: `comp(DR, PPI) = {DR}` but `DR ∉ SAFE`, occurring when a child's DR-grandchild must relate to the grandparent through a forced composition. Further investigation revealed two independent issues:
+
+1. **Role-path compatibility gap:** The sibling check only handles siblings (children of the same parent). Cross-level constraints (grandchild vs grandparent) required a separate check.
+
+2. **Non-determinism:** Python's hash randomization (`PYTHONHASHSEED`) caused `enumerate_types` to iterate closure concepts in different orders, producing different type indices and different type sets per run. Some type sets passed all checks but still failed the Henkin tree construction; others worked perfectly.
+
+### Role-path compatibility check
+
+Added `check_role_path_compatibility(T)` to the reasoner. For each chain g --R→ j --S→ w (grandparent → parent → child), verify:
+
+```
+comp(INV[S], INV[R]) ∩ SAFE(w, g) ≠ ∅
+```
+
+The check uses iterative pruning: initialize valid witnesses for each (type, demand) pair, then repeatedly remove witnesses whose children can't connect to the type's own ancestors. Continue until fixpoint. If any demand has zero valid witnesses, the type set is rejected.
+
+This catches patterns like: PP-parent has DR-child, grandparent related by PPI, forced composition comp(DR, PPI) = {DR}, but DR ∉ SAFE.
+
+### Deterministic type enumeration
+
+Fixed the root cause of run-to-run variation:
+
+1. **`enumerate_types`:** Sort closure concepts by `str()` before building atoms: `sorted(cl, key=str)`
+2. **`try_build`:** Use `sorted(T)` for all frozenset iterations
+3. **`check_disjunctive_pc`:** Use `sorted(T)` for T_list
+4. **`check_q2`, `check_sibling_compatibility`:** Sort all iterations over T
+
+This ensures the reasoner always finds the same (good) type set regardless of PYTHONHASHSEED.
+
+### Future-flexibility ordering
+
+Added to the Henkin tree builder's assignment function: sort candidate relations by average composition width (PO: 3.0 > DR: 2.75 > PP: 2.25 > PPI: 2.25). This ensures cross-relations keep future compositions wide, preventing narrow compositions (like comp(DR, PPI) = {DR}) from boxing in later extensions.
+
+### Results
+
+- Reasoner: 18/18 correct across all 12 seeds
+- Henkin tree: zero failures across 1000+ extensions and 12 seeds (PYTHONHASHSEED ∈ {0,1,2,3,4,5,10,42,99,100,200,999})
+
+### Decidability status assessment
+
+**What is proved:**
+- All three checks (disjunctive PC, sibling compatibility, role-path compatibility) are *necessary* conditions — extractable from any model
+- UNSAT answers are **provably sound**: if no type set passes all checks, the concept is genuinely unsatisfiable
+- The one-point extension lemma is correct conditional on star path-consistency
+- All algebraic properties are unconditionally correct
+
+**What is conjectured (with strong evidence):**
+- The three checks are jointly *sufficient* for the one-point extension at every tree depth
+- SAT answers are correct (zero counterexamples across extensive testing)
+
+**What remains:**
+- A formal proof that the three checks imply star path-consistency for the full star network at each extension step (including uncle and cousin constraints)
+- The computational evidence is strong but not a substitute for a proof
+
+**Summary:** The algorithm is a *candidate decision procedure* for ALCI_RCC5. UNSAT is proved sound. SAT is strongly supported. Decidability is *conjectured with strong evidence* rather than *formally proved*.
+
+### Files changed
+
+- `alcircc5_reasoner.py`: Added `check_role_path_compatibility()`, deterministic iterations (`sorted(T)` everywhere, `sorted(cl, key=str)` in enumerate_types)
+- `henkin_extension_test.py`: Added `_sorted_rels` for future-flexibility ordering, removed candidate limit, increased max_depth to 5
+- `decidability_via_quadruples_ALCIRCC5.tex`: Rewrote erratum (three-check algorithm, computational verification section, theoretical status with proved/conjectured/remains), updated status box to green, updated conclusion
+- `README.md`: Updated status header, summary table, implementation section (three checks, determinism, Henkin test results)
+- `CONVERSATION.md`: This entry

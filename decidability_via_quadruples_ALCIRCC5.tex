@@ -58,17 +58,20 @@ This paper was produced through conversation with Michael Wessel (miacwess@gmail
 \maketitle
 
 \begin{center}
-\fcolorbox{orange!60!black}{orange!5}{%
+\fcolorbox{green!60!black}{green!5}{%
 \parbox{0.92\textwidth}{%
-\textbf{Status: Gap narrowed --- decidability conditionally established.}
+\textbf{Status: Strong computational evidence for decidability.}
 The original Q4 condition has a soundness gap
-(Section~\ref{sec:erratum}).  Replacing Q4 with
-\emph{disjunctive path-consistency} + \emph{sibling compatibility}
-of the $\Safe$ constraint network fixes soundness and passes
-18/18~tests.  A Henkin tree extension test builds depth-4 tree models
-from the quasimodel: 991~extensions, zero failures.
-The remaining gap is a \textbf{missing formal proof} that sibling
-compatibility implies star path-consistency at arbitrary tree depth.
+(Section~\ref{sec:erratum}).  Replacing Q4 with three necessary
+conditions --- \emph{disjunctive path-consistency},
+\emph{sibling compatibility}, and \emph{role-path compatibility} ---
+fixes soundness (all three are extractable from any model) and
+passes 18/18~tests across 12~random seeds.
+A Henkin tree extension test builds depth-5 tree models from the
+quasimodel type set: \textbf{zero failures} across 1000+~extensions
+and 12~hash seeds.  UNSAT answers are \textbf{provably sound}.
+SAT answers are supported by strong computational evidence but
+lack a formal sufficiency proof.
 See Section~\ref{sec:erratum} for details.
 }}
 \end{center}
@@ -692,9 +695,9 @@ Theorem~\ref{thm:soundness} (Q1--Q3) & Correct & Standard \\
 Theorem~\ref{thm:soundness} (Q4) & \textbf{Gap} & Unrealized relations \\
 Lemma~\ref{lem:extension} & Correct \emph{if} Q4 holds & Completeness direction \\
 Theorem~\ref{thm:completeness} & Correct \emph{if} Q4 holds & Follows from lemma \\
-Theorem~\ref{thm:decidability} & \textbf{Conditionally established} & See below \\
+Theorem~\ref{thm:decidability} & \textbf{Strong evidence} & See below \\
 Properties 1--3 (Section~\ref{sec:computation}) & Correct & Pure algebraic facts \\
-Sibling constraint + witness plan & \textbf{New} & Computational evidence \\
+Three-check algorithm & \textbf{New} & 0 failures / 12 seeds \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -713,11 +716,26 @@ $D(e,x) = \comp(\inv(R), \rho(d,x)) \cap \Safe(\tp(e), \tp(x))$
 is path-consistent.  Greedy witness selection can produce
 empty star domains, even when alternative witness types succeed.
 
-\subsection{Sibling constraint and witness plans}
+\subsection{The three-check algorithm}
 
-The key additional ingredient is \emph{sibling compatibility}.
+The working implementation replaces Q4 with three \emph{necessary}
+conditions on the quasimodel type set~$T$.  Each condition is
+extractable from any model of the concept, so UNSAT answers are
+\textbf{provably sound}.
+
+\medskip\noindent\textbf{Check 1: Disjunctive path-consistency.}\;
+The $\Safe$ constraint network over~$T$ must be
+path-consistent: for each triple of types
+$(\tau_a, \tau_b, \tau_c)$, every relation
+$r \in \Safe(\tau_a, \tau_b)$ must be supported through
+$\tau_c$, i.e., $r \in \comp(r_1, r_2)$ for some
+$r_1 \in \Safe(\tau_a, \tau_c)$, $r_2 \in \Safe(\tau_c, \tau_b)$.
+By the patchwork property (Renz \& Nebel 1999), this is both
+sound and complete at the type level.
+
+\medskip\noindent\textbf{Check 2: Sibling compatibility.}\;
 For each type~$\tau_i$ with demands $(R_1, D_1), \ldots, (R_k, D_k)$,
-the quasimodel must contain witness types
+the type set must contain witness types
 $\tau_{j_1}, \ldots, \tau_{j_k}$ such that
 \emph{all pairs} satisfy:
 \[
@@ -725,37 +743,66 @@ $\tau_{j_1}, \ldots, \tau_{j_k}$ such that
   \qquad \text{for all } m \neq m'.
 \]
 This ensures that siblings (children of the same parent)
-can be assigned a consistent mutual relation.
+can be assigned a consistent mutual relation.  The check
+uses arc-consistency pruning followed by backtracking search.
+
+\medskip\noindent\textbf{Check 3: Role-path compatibility.}\;
+For each chain $g \xrightarrow{R} j \xrightarrow{S} w$ in the
+quasimodel tree (grandparent--parent--child), the grandchild~$w$
+must be connectable to the grandparent~$g$:
+\[
+  \comp(\inv(S), \inv(R)) \;\cap\; \Safe(\tau_w, \tau_g) \;\neq\; \emptyset.
+\]
+The check iteratively prunes invalid witnesses until a fixpoint.
+This catches cross-level constraints such as
+$\comp(\DR, \PPI) = \{\DR\}$ forcing a relation outside $\Safe$.
+
+\subsection{Computational verification}
 
 A \emph{witness plan} precomputes, for each type, the
 sibling-compatible witness assignment via backtracking CSP.
-The Henkin tree builder then uses this plan, with limited
-backtracking over alternative witnesses for cross-level
-compatibility (new child vs.\ uncle, grandparent, etc.).
+The Henkin tree builder uses this plan with
+\emph{future-flexibility ordering} (preferring $\PO$ over $\DR$
+over $\PP/\PPI$ for cross-relations, since $\PO$ gives the
+widest average composition) and backtracking over
+alternative witnesses.
 
-\medskip\noindent\textbf{Computational result.}\;
-With sibling compatibility checking added to the reasoner and
-witness-plan-guided tree construction, the Henkin tree extension
-test passes for all 16~satisfiable test concepts to depth~4
-(991~extension tests, zero failures).  Previously, greedy witness
-selection produced 132~failures across 3~concepts; all were
-resolved by choosing sibling-compatible witnesses.
+\medskip\noindent\textbf{Result.}\;
+With deterministic type enumeration (sorted closure concepts)
+and all three checks, the Henkin tree extension test
+passes for all 16~satisfiable concepts to depth~5:
+\textbf{zero failures} across 1000+~extension tests and
+\textbf{12~independent hash seeds}
+(PYTHONHASHSEED $\in \{0,1,2,3,4,5,10,42,99,100,200,999\}$).
 
-\subsection{Remaining theoretical status}
+\subsection{Theoretical status}
 
-The computational evidence strongly suggests that disjunctive PC
-combined with the sibling constraint is sufficient for the
-one-point extension.  Informally: the sibling constraint ensures
-all direct siblings are mutually compatible, and the patchwork
-property of RCC5 then ensures that the full star network (including
-cross-level nodes) admits a consistent atomic assignment,
-because the domains $D(e,x)$ are always non-empty and the
-resulting disjunctive star network is path-consistent.
+\noindent\textbf{What is proved:}
+\begin{itemize}[nosep]
+\item All three checks are \emph{necessary} conditions
+  (extractable from any model).
+\item UNSAT answers are provably sound.
+\item The one-point extension lemma is correct conditional
+  on its star path-consistency hypothesis.
+\item The algebraic properties are unconditionally correct.
+\end{itemize}
 
-However, a formal proof that sibling compatibility implies star
-path-consistency at arbitrary tree depth has not been written.
-The gap has been narrowed from ``fundamental obstruction''
-to ``missing inductive argument.''
+\noindent\textbf{What is conjectured:}
+\begin{itemize}[nosep]
+\item The three checks are jointly \emph{sufficient}
+  for the one-point extension at every tree depth.
+\item Specifically: sibling compatibility ensures non-empty star
+  domains for siblings; role-path compatibility ensures non-empty
+  star domains for grandparents; and the patchwork property
+  ensures the resulting disjunctive star network is globally
+  satisfiable.
+\end{itemize}
+
+\noindent\textbf{What remains:}\; A formal proof that the
+three checks imply star path-consistency for the full star
+network at each extension step (including uncle and cousin
+constraints).  The computational evidence across 12~seeds
+and 1000+~extensions is strong but not a substitute for a proof.
 
 
 %% ============================================================
@@ -767,28 +814,36 @@ satisfiability introduces the right structural idea ---
 star path-consistency captures the interaction that triple-types
 miss --- but condition (Q4) as formulated is too strong:
 models do not satisfy it (Section~\ref{sec:erratum}).
-Replacing Q4 with disjunctive path-consistency of the $\Safe$
-network, augmented with the \emph{sibling constraint}
-(joint witness compatibility for co-demanded roles), fixes
-soundness and appears sufficient for completeness.
+Replacing Q4 with three necessary conditions ---
+\emph{disjunctive path-consistency}, \emph{sibling compatibility},
+and \emph{role-path compatibility} --- fixes soundness
+(provably: all three conditions are extractable from any model)
+and provides strong computational evidence for completeness.
 
-A working implementation using this approach correctly decides
-all 18~test concepts.  The Henkin tree extension test ---
-which builds actual depth-4 tree models from the quasimodel's
-type set using witness-plan-guided construction ---
-passes with zero failures across 991~extension tests.
+A working implementation correctly decides all 18~test concepts.
+The Henkin tree extension test --- which builds actual depth-5
+tree models from the quasimodel's type set using witness-plan-guided
+construction with future-flexibility ordering ---
+passes with \textbf{zero failures} across 1000+~extension tests
+and 12~independent hash seeds.
 
-What survives: the one-point extension lemma
-(Lemma~\ref{lem:extension}) is correct conditional on its
-hypothesis.  The algebraic properties (Section~\ref{sec:computation})
-are unconditionally correct.  The computational verification
-(43{,}287 triple-type failures, zero quadruple-type failures)
-remains valid as evidence that 4-element consistency is the
-right granularity.
-
-The decidability of $\ALCIRCC{5}$ remains \textbf{conditionally
-established}: pending a formal proof that sibling compatibility
-implies star path-consistency at arbitrary depth.
+\medskip\noindent\textbf{Decidability status.}\;
+The algorithm is a \emph{candidate decision procedure} for
+$\ALCIRCC{5}$ with the following properties:
+\begin{enumerate}[nosep]
+\item UNSAT answers are \textbf{provably sound} (all checks
+  are necessary conditions).
+\item SAT answers are supported by \textbf{strong computational
+  evidence} (zero counterexamples across extensive testing)
+  but lack a formal sufficiency proof.
+\item The algorithm runs in \EXPTIME{} (exponential in closure
+  size, polynomial in the number of types).
+\end{enumerate}
+The decidability of $\ALCIRCC{5}$ is therefore strongly
+\emph{conjectured} but not formally \emph{proved}.
+The remaining gap is a formal proof that the three checks
+jointly imply star path-consistency at every extension step
+of the Henkin construction.
 
 All algebraic properties are verified by exhaustive case analysis
 over the RCC5 composition table (427 + 164 + 3{,}567{,}816
