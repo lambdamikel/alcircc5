@@ -2750,3 +2750,57 @@ Claude wrote a 9-page LaTeX paper (`cover_tree_tableau_ALCIRCC5.tex`) documentin
 - `cover_tree_tableau_ALCIRCC5.tex`: 9-page LaTeX documentation paper
 - `README.md`: Updated with eleventh approach section and summary table
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session 13: Cover-Tree Decomposition Test and Model Verification (April 2026)
+
+### Context
+
+Following the 902-test cross-validation (logical agreement) and 678-model independent verification (model construction), Michael Wessel asked Claude to implement a third layer of evidence: a **cover-tree decomposition test**. The test checks whether concrete ALCI_RCC5 models have cover-tree structure — i.e., whether the PP relation's Hasse diagram forms a forest (each element has at most one immediate PP-parent).
+
+### Model verifier results
+
+Claude first ran the independent model verifier (`model_verifier.py`) against all 768 SAT concepts from the stress test suite. Results: **678/768** SAT concepts have independently constructed and verified concrete RCC5 models (88.3%), with **zero verification failures**. The 90 build failures are concepts needing larger models than the finite builder's capacity.
+
+### Cover-tree decomposition test
+
+Claude implemented `decomposition_test.py` with two parts:
+
+**Part A**: Check models built by model_verifier for cover-tree structure. These models are built WITHOUT any tree constraint, so finding cover-tree structure is non-trivial evidence. Result: **603/675** built models (89.3%) have cover-tree structure.
+
+**Part B**: Exhaustive enumeration of all valid small models (domain 2–4) using the tableau's type set. For each domain size, iterate over all type assignments and all composition-consistent relation assignments via backtracking. Result: **664/768** SAT concepts (86.5%) have at least one finite cover-tree model. **243,628 total models** enumerated, of which **193,715** (79.5%) have cover-tree structure.
+
+### Key findings
+
+1. **Zero genuine counterexamples** where cover-tree structure is provably impossible
+2. **8 concepts** require infinite cover-tree models (self-referencing PP/PPI demands creating infinite ascending/descending chains) — expected in DL, not counterexamples
+3. **8 concepts** (4 unique patterns) have composition+safe conflicts specific to the tableau's type set:
+   - safe(child_type, cross_witness_type) = {PP, PPI} only (no DR/PO)
+   - Composition forces children to be PP to cross-edge witnesses, creating unavoidable multi-parenting
+   - These may have cover-tree models using alternative type sets not explored by the enumeration
+   - Example: ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A — type set {6,14} where safe(6,14) = {PP,PPI}
+
+### Bug fixes during development
+
+1. **Output buffering**: Python buffered stdout when piped; first run produced 0 bytes of output for 12+ minutes. Fixed with `flush_print()` wrapper and `python3 -u`.
+2. **Wrong cover-tree check (major bug)**: Initial `has_cover_tree()` counted ALL PP-neighbors as parents. In a PP-chain c PP d PP p, element c is PP to both d and p (transitivity), but only d is the immediate parent. First run showed 56.3% CT rate and 64 "counterexamples". Fixed by computing the PP Hasse diagram (immediate parents only). After fix: 79.5% CT rate.
+3. **False counterexamples from infinite-model concepts**: Added `needs_infinite_ct()` using fixed-point computation to detect self-referencing PP/PPI demands.
+
+### Three-layer evidence for decidability
+
+The computational evidence for decidability is now three-layered:
+
+| Layer | Test | Result |
+|---|---|---|
+| Logical agreement | Cover-tree tableau vs quasimodel reasoner | 902 concepts, 0 mismatches |
+| Model construction | Independent model verification | 678/768 SAT concepts verified, 0 failures |
+| Structural decomposition | Cover-tree decomposition test | 89.3% of models have CT structure, 0 genuine counterexamples |
+
+### Files created/changed
+
+- `decomposition_test.py`: Cover-tree decomposition test (~350 lines)
+- `model_verifier.py`: Independent model builder and verifier (~660 lines, created in prior session)
+- `cover_tree_tableau_ALCIRCC5.tex`: Updated with decomposition test results
+- `README.md`: Updated with decomposition test results and new script documentation
+- `CONVERSATION.md`: This entry
