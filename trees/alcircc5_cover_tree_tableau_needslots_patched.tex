@@ -1,0 +1,465 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Proposed cover-tree tableau for $\mathcal{ALCI}_{RCC5}$}
+\fancyhead[R]{April 2026}
+\fancyfoot[C]{\thepage}
+\titleformat{\section}{\large\bfseries\color{MidnightBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{MidnightBlue}}{\thesubsection}{0.5em}{}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.5em}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,leftmargin=1.8em}
+\onehalfspacing
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{claim}[definition]{Claim}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+\newcommand{\RCC}{\mathsf{RCC5}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\Tp}{\operatorname{Tp}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\State}{\operatorname{State}}
+\newcommand{\Par}{\operatorname{Par}}
+\newcommand{\Child}{\operatorname{Child}}
+\newcommand{\Iface}{\operatorname{Iface}}
+\newcommand{\Wit}{\operatorname{Wit}}
+\newcommand{\Loc}{\operatorname{Loc}}
+\newcommand{\Safe}{\operatorname{Safe}}
+\newcommand{\Can}{\operatorname{Can}}
+\newcommand{\ReqUp}{\mathsf{Req}^{\uparrow}}
+\newcommand{\ReqDown}{\mathsf{Req}^{\downarrow}}
+\newcommand{\AllUp}{\mathsf{All}^{\uparrow}}
+\newcommand{\AllDown}{\mathsf{All}^{\downarrow}}
+\newcommand{\CrossDR}{\mathsf{XReq}_{\DR}}
+\newcommand{\CrossPO}{\mathsf{XReq}_{\PO}}
+\newcommand{\NeedDR}{\mathsf{Need}_{\DR}}
+\newcommand{\NeedPO}{\mathsf{Need}_{\PO}}
+\newcommand{\mtopmark}{\mathsf{Top}}
+\newcommand{\evalmark}{\mathsf{Eval}}
+\newcommand{\Core}{\mathsf{Core}}
+\newcommand{\Out}{\mathsf{Out}}
+\newcommand{\Front}{\mathsf{Front}}
+\newcommand{\inv}{\operatorname{inv}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\OpenDom}{\mathbb{D}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries A Proposed Cover-Tree Tableau Calculus for $\mathcal{ALCI}_{RCC5}$\\[0.2em]
+with Eventuality-Aware Signature Blocking\par}
+\vspace{0.75em}
+{\normalsize A proof-style note}\par
+\vspace{0.45em}
+{\small April 2026}
+\end{center}
+
+\begin{abstract}
+This note packages the split-forest / sibling-interface approach into a concrete tableau proposal. The underlying idea is to reason on a \emph{cover tree}: downward edges are immediate $\PPI$-steps, upward edges are immediate $\PP$-steps, while all indirect $\PP/\PPI$ facts are interpreted through the ancestor relation. Because the ambient root of the cover tree need not coincide with the point at which the input concept is evaluated, the calculus works with a distinguished evaluation node and permits \emph{top extension} when upward eventualities demand new ancestors.
+
+The local part of the calculus handles booleans and the transitive modalities $\exists\PP$, $\exists\PPI$, $\forall\PP$, $\forall\PPI$ through ancestor/descendant requests and obligations. The non-tree modalities $\DR$ and $\PO$ are not materialized by local witness creation; instead, they are discharged by a finite global side-checker built from the sibling-interface descriptors of the split-forest certificate. Blocking is equality of finite rank-$d$ signatures, where $d=\md(C_0)$ and the signature records local labels, eventualities, parent summaries, child multiplicities, sibling-interface summaries, and witness menus.
+
+The note states a concrete calculus, an eventuality-aware blocking condition, and proof-style arguments for termination, soundness, and completeness. The arguments are explicit about one condensed point: the extraction of support-closed witness/interface menus from a model is finite but not written out at maximal low-level detail. Relative to the companion split-forest theorem, the present calculus should be read as a proposed operationalization rather than as an independently verified new theorem.
+\end{abstract}
+
+\section{Context and strategy}
+
+Wessel's original report already isolates the source of difficulty in $\mathcal{ALCI}_{RCC5}$: models are complete RCC5-labelled graphs rather than ordinary modal trees, and infinitary behaviour is driven by proper-part chains rather than by plain modal branching \cite{Wessel2003}. The sibling-interface program attacks this by replacing the full complete graph by a weak-$\EQ$ split-forest certificate whose open cross-edges are reduced to finite $\DR/\PO$ choices. The companion note on split-forest certificates proposes a path-consistent disjunctive reconstruction of those open edges by finite-prefix patchwork arguments.
+
+The purpose of the present note is to turn that semantic picture into a tableau-style decision procedure. The guiding principles are the following.
+\begin{itemize}
+    \item The tableau keeps only the \emph{cover tree}. It does not materialize indirect $\PP/\PPI$ edges.
+    \item Formulas $\exists\PPI.C$ and $\exists\PP.C$ are treated as \emph{eventualities} over the descendant / ancestor order of the cover tree, not as immediate child/parent witnesses.
+    \item Formulas $\exists\DR.C$ and $\exists\PO.C$ are discharged globally by a finite sibling-interface solver, not by local child creation.
+    \item Blocking is not plain type equality. It is equality of finite rank-$d$ signatures containing local labels, eventualities, parent summaries, child multiplicities, sibling-interface summaries, and witness menus.
+\end{itemize}
+
+This makes the calculus hybrid: local tableau saturation plus a finite global side-condition. The side-condition is exactly what the split-forest proof needs anyway; the point of the calculus is to expose it operationally.
+
+\section{Preliminaries}
+
+Let $C_0$ be the input concept and let $d:=\md(C_0)$ be its modal depth. Let $\cl(C_0)$ be its Fischer--Ladner closure and $\Tp(C_0)$ its finite set of Hintikka types. We write
+\[
+\RCC:=\{\DR,\PO,\PP,\PPI\}.
+\]
+The nontrivial singleton composition laws used repeatedly are
+\[
+\comp(\PP,\DR)=\{\DR\},\qquad \comp(\DR,\PPI)=\{\DR\}.
+\]
+We also use the full tractability of disjunctive RCC5 networks: every path-consistent finite disjunctive RCC5 network has an atomic refinement \cite{Wessel2003,Sibling2026}.
+
+\begin{remark}
+The cover tree is oriented downward by immediate $\PPI$ steps. Hence semantic $\PPI$ means ``some strict descendant'' and semantic $\PP$ means ``some strict ancestor''. This is why the input concept is evaluated at a distinguished node and not necessarily at the ambient root of the current tree. The formula $\exists\PP.\top$ is perfectly legitimate: it simply means that the evaluation node must have some strict ancestor above it.
+\end{remark}
+
+\section{Tableau objects}
+
+\begin{definition}[Cover-tree tableau]\label{def:tableau-object}
+A \emph{cover-tree tableau} for $C_0$ is a tuple
+\[
+\mathcal T=(V,\preceq,\mathsf{par},\triangleleft, r_\ast, \varrho, L, \AllUp, \AllDown, \ReqUp, \ReqDown, \NeedDR, \NeedPO, \CrossDR, \CrossPO)
+\]
+where:
+\begin{enumerate}[label=(\roman*)]
+    \item $(V,\mathsf{par})$ is a finite rooted tree with ambient root $\varrho$;
+    \item $r_\ast\in V$ is the distinguished \emph{evaluation node};
+    \item $\triangleleft_u$ is an arbitrary but fixed local total order on the children of each node $u$;
+    \item $L(x)\subseteq \cl(C_0)$ is the local label of $x$;
+    \item $\AllUp(x),\AllDown(x),\ReqUp(x),\ReqDown(x),\NeedDR(x),\NeedPO(x),\CrossDR(x),\CrossPO(x)\subseteq \cl(C_0)$ are finite sets of obligations and requests at $x$.
+\end{enumerate}
+The intended meaning is:
+\begin{itemize}
+    \item $C\in \AllUp(x)$: every strict ancestor of $x$ must satisfy $C$;
+    \item $C\in \AllDown(x)$: every strict descendant of $x$ must satisfy $C$;
+    \item $C\in \ReqUp(x)$: some strict ancestor of $x$ must satisfy $C$;
+    \item $C\in \ReqDown(x)$: some strict descendant of $x$ must satisfy $C$;
+    \item $C\in \NeedDR(x)$: every future $\DR$-related witness of $x$ must satisfy $C$;
+    \item $C\in \NeedPO(x)$: every future $\PO$-related witness of $x$ must satisfy $C$;
+    \item $C\in \CrossDR(x)$: $x$ requires some $\DR$-related witness satisfying $C$;
+    \item $C\in \CrossPO(x)$: $x$ requires some $\PO$-related witness satisfying $C$.
+\end{itemize}
+\end{definition}
+
+\begin{remark}
+The local child order has no semantic meaning. It is only used to orient sibling-interface descriptors as ordered left/right pairs, exactly as in the split-forest note. Any other fixed local order yields an isomorphic descriptor calculus.
+\end{remark}
+
+\begin{definition}[Local clashes]\label{def:local-clash}
+A node $x$ has a \emph{local clash} if one of the following holds:
+\begin{enumerate}[label=(\alph*)]
+    \item $A,\neg A\in L(x)$ for some concept name $A$;
+    \item $C\in L(x)\cap \AllUp(x)$ and $\neg C\in L(x)$, or symmetrically with $\AllDown(x)$;
+    \item $\mathsf{par}(x)=y$ and some $C\in \AllUp(x)$ is incompatible with $L(y)$ after boolean saturation;
+    \item some eventuality/request is explicitly contradicted by an already fixed local fact.
+\end{enumerate}
+A tableau branch is \emph{locally clash-free} if no node has a local clash.
+\end{definition}
+
+\section{Operational rules}
+
+The calculus works modulo boolean saturation. Whenever a rule adds a formula to a local label, the standard propositional closure rules are applied immediately.
+
+\subsection{Boolean rules}
+
+\begin{itemize}
+    \item $(\sqcap)$ If $D_1\sqcap D_2\in L(x)$ and one of $D_1,D_2$ is missing, add both to $L(x)$.
+    \item $(\sqcup)$ If $D_1\sqcup D_2\in L(x)$ and neither disjunct is present, branch and add one chosen disjunct.
+\end{itemize}
+
+\subsection{Universal initialization}
+
+\begin{itemize}
+    \item $(\forall\PPI\text{-init})$ If $\forall\PPI.C\in L(x)$ and $C\notin \AllDown(x)$, add $C$ to $\AllDown(x)$.
+    \item $(\forall\PP\text{-init})$ If $\forall\PP.C\in L(x)$ and $C\notin \AllUp(x)$, add $C$ to $\AllUp(x)$.
+    \item $(\forall\DR\text{-init})$ If $\forall\DR.C\in L(x)$ and $C\notin \NeedDR(x)$, add $C$ to $\NeedDR(x)$.
+    \item $(\forall\PO\text{-init})$ If $\forall\PO.C\in L(x)$ and $C\notin \NeedPO(x)$, add $C$ to $\NeedPO(x)$.
+\end{itemize}
+
+\begin{definition}[Local DR/PO type-safety slots]
+For every tableau node $x$, the sets $\NeedDR(x)$ and $\NeedPO(x)$ collect the universal requirements that must be met by future open cross-witnesses of $x$:
+\[
+\NeedDR(x)=\{C\in\cl(C_0): \forall\DR.C\in L(x)\},
+\qquad
+\NeedPO(x)=\{C\in\cl(C_0): \forall\PO.C\in L(x)\}.
+\]
+Because both $\DR$ and $\PO$ are symmetric in RCC5, a candidate $\DR$-witness edge between tableau points $x,y$ is locally type-safe iff
+\[
+\NeedDR(x)\subseteq L(y)
+\qquad\text{and}\qquad
+\NeedDR(y)\subseteq L(x),
+\]
+and a candidate $\PO$-witness edge between $x,y$ is locally type-safe iff
+\[
+\NeedPO(x)\subseteq L(y)
+\qquad\text{and}\qquad
+\NeedPO(y)\subseteq L(x).
+\]
+These constraints are explicit signature components; they are separate from the existential request slots $\CrossDR$ and $\CrossPO$.
+\end{definition}
+
+\subsection{Universal propagation along the cover tree}
+
+\begin{itemize}
+    \item $(\forall\PPI\text{-prop})$ If $C\in \AllDown(x)$ and $y$ is a child of $x$, then add $C$ to $L(y)$ and to $\AllDown(y)$.
+    \item $(\forall\PP\text{-prop})$ If $C\in \AllUp(x)$ and $x$ has parent $p$, then add $C$ to $L(p)$ and to $\AllUp(p)$.
+    \item $(\forall\PP\text{-top})$ If $C\in \AllUp(\varrho)$ and later the ambient root is extended upward by a fresh parent $p$, then $C$ must immediately be inserted into $L(p)$ and into $\AllUp(p)$.
+\end{itemize}
+
+\subsection{Existential initialization}
+
+\begin{itemize}
+    \item $(\exists\PPI\text{-init})$ If $\exists\PPI.C\in L(x)$ and $C\notin \ReqDown(x)$, add $C$ to $\ReqDown(x)$.
+    \item $(\exists\PP\text{-init})$ If $\exists\PP.C\in L(x)$ and $C\notin \ReqUp(x)$, add $C$ to $\ReqUp(x)$.
+    \item $(\exists\DR\text{-init})$ If $\exists\DR.C\in L(x)$ and $C\notin \CrossDR(x)$, add $C$ to $\CrossDR(x)$.
+    \item $(\exists\PO\text{-init})$ If $\exists\PO.C\in L(x)$ and $C\notin \CrossPO(x)$, add $C$ to $\CrossPO(x)$.
+\end{itemize}
+
+\subsection{Downward eventualities}
+
+Let $C\in \ReqDown(x)$. The request is \emph{fulfilled} if some strict descendant of $x$ already has $C$ in its label. If not, one of the following rules may be applied.
+
+\begin{itemize}
+    \item $(\exists\PPI\text{-realize})$ Choose a child $y$ of $x$ (existing or fresh) and add $C$ to $L(y)$.
+    \item $(\exists\PPI\text{-defer})$ Choose a child $y$ of $x$ (existing or fresh) and add $C$ to $\ReqDown(y)$.
+\end{itemize}
+
+A fresh child created by either rule is an immediate $\PPI$-successor of $x$ in the cover tree. All current formulas in $\AllDown(x)$ are copied to its label and to its own $\AllDown$ set.
+
+\subsection{Upward eventualities}
+
+Let $C\in \ReqUp(x)$. The request is \emph{fulfilled} if some strict ancestor of $x$ already has $C$ in its label. If not, one of the following rules may be applied.
+
+\begin{itemize}
+    \item $(\exists\PP\text{-realize})$ If $x$ has parent $p$, add $C$ to $L(p)$.
+    \item $(\exists\PP\text{-defer})$ If $x$ has parent $p$, add $C$ to $\ReqUp(p)$.
+    \item $(\exists\PP\text{-top})$ If $x$ has no parent, create a fresh parent $p$ above the current ambient root and make $p$ the new ambient root; then either realize $C$ at $p$ or defer it upward at $p$.
+\end{itemize}
+
+Whenever a fresh parent is created, all formulas in $\AllUp(x)$ are inserted into $L(p)$ and into $\AllUp(p)$.
+
+\begin{remark}[Why top extension is necessary]
+The formula $\exists\PP.C$ is an \emph{upward eventuality}; it does not say that the immediate parent must satisfy $C$. For example,
+\[
+\exists\PP.C \sqcap \exists\PP.\forall\PPI.\neg C
+\]
+is satisfiable when the distinguished evaluation node lies strictly below an intermediate ancestor satisfying $\forall\PPI.\neg C$ and strictly below a still higher ancestor satisfying $C$. This is why the calculus allows upward deferment and top extension instead of greedily forcing the current parent to realize $C$.
+\end{remark}
+
+\subsection{Cross witness obligations}
+
+No local rule creates a direct $\DR$- or $\PO$-witness as a tree edge. Instead, the sets $\CrossDR(x)$ and $\CrossPO(x)$ are discharged by the finite global side-condition checker of Section~\ref{sec:global-check}. The slots $\NeedDR(x)$ and $\NeedPO(x)$ are the dual universal side: they record what every future $\DR$- respectively $\PO$-witness of $x$ must satisfy. Intuitively, $\CrossDR/\CrossPO$ become existential witness-menu constraints on the finite quotient, while $\NeedDR/\NeedPO$ become the local type-safety side conditions that those menu entries must meet.
+
+\section{Rank-$k$ signatures and blocking}
+
+\subsection{Local packages}
+
+\begin{definition}[Local package]
+For a tableau node $x$, define
+\[
+\Loc(x):=\bigl(L(x),\AllUp(x),\AllDown(x),\ReqUp(x),\ReqDown(x),\NeedDR(x),\NeedPO(x),\CrossDR(x),\CrossPO(x),\mtopmark(x),\evalmark(x)\bigr),
+\]
+where $\mtopmark(x)$ records whether $x$ is the current ambient root and $\evalmark(x)$ records whether $x=r_\ast$.
+\end{definition}
+
+The set of possible local packages is finite because it is built from subsets of the finite closure $\cl(C_0)$ and two booleans.
+
+\begin{remark}[Universal side slots versus existential side slots]
+The components $\NeedDR,\NeedPO$ are universal \emph{expectation} slots: they summarize what every future $\DR$- or $\PO$-related witness must satisfy because of formulas already present in $L(x)$. By contrast, $\CrossDR,\CrossPO$ are existential demand slots: they say that some such witness still has to be found. The calculus keeps both kinds of information explicitly because both become part of the blocking signature.
+\end{remark}
+
+\subsection{Finite signatures}
+
+The signature language is inherited from the split-forest note, but now based on local packages rather than plain local types.
+
+\begin{definition}[Rank-$0$ signatures]
+Set
+\[
+\Sigma_0:=\{\Loc(x): x\text{ may occur in a saturated local package over }C_0\}.
+\]
+Write $\State_0(x):=\Loc(x)$.
+\end{definition}
+
+\begin{definition}[Rank-$(k+1)$ signatures]
+Assume $\Sigma_k$ is defined. Then a rank-$(k+1)$ signature of a node $x$ is
+\[
+\State_{k+1}(x):=\bigl(\Loc(x),\Par_k(x),\Child_k(x),\Iface_k(x),\Wit_k(x)\bigr),
+\]
+where:
+\begin{itemize}
+    \item $\Par_k(x)\in \Sigma_k\cup\{\bot\}$ is the rank-$k$ signature of the parent of $x$, or $\bot$ if $x$ is the ambient root;
+    \item $\Child_k(x):\Sigma_k\to\{0,1,2+\}$ records whether $x$ has no child, exactly one child, or at least two children of each rank-$k$ signature;
+    \item $\Iface_k(x)$ is the finite family of ordered child-pair interface descriptors from the split-forest note, now read over child colors in $\Sigma_k$;
+    \item $\Wit_k(x)$ is a finite support-closed witness menu indicating how the obligations in $\CrossDR(x)$, $\CrossPO(x)$, $\ReqUp(x)$, and $\ReqDown(x)$ are intended to be discharged at signature level, subject to the type-safety side conditions encoded by $\NeedDR(x)$ and $\NeedPO(x)$.
+\end{itemize}
+Let $\Sigma_{k+1}$ be the finite set of such signatures. Finally set $\Sigma_d$ with $d=\md(C_0)$.
+\end{definition}
+
+\begin{remark}
+The value $2+$ means ``at least two''; it does \emph{not} mean infinite branching. The infinite part of the eventual model comes from depth in the unfolding, not from infinite multiplicity at one node.
+\end{remark}
+
+\begin{definition}[Blocking condition]\label{def:blocking}
+Fix any total creation order $\prec$ on tableau nodes. A node $x$ is \emph{blocked} by an earlier node $y\prec x$ if
+\[
+\State_d(x)=\State_d(y)
+\]
+and $y$ is not blocked. A node is \emph{active} if it is not blocked.
+\end{definition}
+
+\begin{remark}
+Because the rank-$d$ signature already contains the parent summary, eventuality sets, interface summaries, and witness menus, this is not mere type blocking. It is an eventuality-aware global caching condition.
+\end{remark}
+
+\section{Global side-checker}\label{sec:global-check}
+
+Given a finite saturated blocked tableau $\mathcal T$, let $Q(\mathcal T)$ be the finite quotient whose nodes are the active rank-$d$ signatures. Each quotient node carries:
+\begin{itemize}
+    \item its local package,
+    \item its child multiplicity map,
+    \item its ordered sibling-interface descriptors,
+    \item its witness menu.
+\end{itemize}
+For local packages $\Loc(x),\Loc(y)$, define the explicit cross-witness type-safety predicates
+\[
+\Safe_{\DR}(x,y)\iff \NeedDR(x)\subseteq L(y)\text{ and }\NeedDR(y)\subseteq L(x),
+\]
+\[
+\Safe_{\PO}(x,y)\iff \NeedPO(x)\subseteq L(y)\text{ and }\NeedPO(y)\subseteq L(x).
+\]
+The conjunctions are symmetric because both $\DR$ and $\PO$ are symmetric RCC5 relations. Thus a menu entry proposing a $\DR$-witness between endpoint colors $p,q$ is accepted only if the represented local packages satisfy $\Safe_{\DR}$; similarly for $\PO$.
+
+The global side-checker $\mathsf{Patch}(\mathcal T)$ accepts if all of the following hold.
+\begin{enumerate}[label=(\roman*)]
+    \item Every $\CrossDR$ and $\CrossPO$ obligation is supported by the quotient node's witness menu.
+    \item Every proposed $\DR$-menu edge between quotient nodes $q,q'$ satisfies
+    \[
+    \NeedDR(q)\subseteq L(q')
+    \qquad\text{and}\qquad
+    \NeedDR(q')\subseteq L(q).
+    \]
+    \item Every proposed $\PO$-menu edge between quotient nodes $q,q'$ satisfies
+    \[
+    \NeedPO(q)\subseteq L(q')
+    \qquad\text{and}\qquad
+    \NeedPO(q')\subseteq L(q).
+    \]
+    \item All ordered child-pair interface descriptors are locally coherent and type-safe.
+    \item The quotient satisfies the extendibility conditions needed by the canonical refinement lemmas of the split-forest note, i.e. every finite prefix network built from the quotient has a canonical extendible $\DR/\PO$ refinement.
+\end{enumerate}
+A saturated blocked tableau is \emph{open} if it is locally clash-free and $\mathsf{Patch}(\mathcal T)$ accepts.
+
+\begin{remark}
+The tableau is therefore hybrid in the same sense that many global-caching calculi are hybrid: local tree expansion plus a finite global consistency check on the quotient. The side-checker is not extra semantic baggage; it is precisely the finite object required by the split-forest soundness proof.
+\end{remark}
+
+\section{Termination}
+
+\begin{proposition}[Finiteness of signatures]\label{prop:finitely-many-signatures}
+For fixed $C_0$, the set $\Sigma_d$ of rank-$d$ signatures is finite.
+\end{proposition}
+
+\begin{proof}
+$\Sigma_0$ is finite because each component of a local package, including the explicit $\NeedDR/\NeedPO$ slots, ranges over subsets of the finite closure $\cl(C_0)$ and two booleans. Inductively, if $\Sigma_k$ is finite, then $\Par_k$ ranges over a finite set, $\Child_k$ is a function into $\{0,1,2+\}$ over a finite domain, $\Iface_k$ ranges over the finite descriptor alphabet from the split-forest note, and $\Wit_k$ ranges over finite support-closed menus over finite alphabets. Hence $\Sigma_{k+1}$ is finite.
+\end{proof}
+
+\begin{theorem}[Termination argument]\label{thm:termination}
+Every fair branch construction for the proposed calculus terminates in a finite saturated blocked tableau.
+\end{theorem}
+
+\begin{proof}[Argument]
+Boolean and initialization rules only add information from the finite closure and therefore can fire only finitely often per node. The propagation rules also add only formulas from $\cl(C_0)$ to finite local package components. Fresh-node creation occurs only through $\exists\PPI$- and $\exists\PP$-eventuality steps. By Definition~\ref{def:blocking}, every newly created active node must realize a new rank-$d$ signature. By Proposition~\ref{prop:finitely-many-signatures}, only finitely many active signatures exist. Once a signature repeats, the new node is blocked and no further subtree below it needs to be expanded. Thus only finitely many active nodes can ever be created.
+
+Because requests and obligations are finite subsets of $\cl(C_0)$ and are recorded in the signature, no eventuality can generate infinitely many unblocked fresh nodes of pairwise distinct request profiles. Therefore the fair branch construction must reach a point where all local rules are exhausted and every further fresh node would be immediately blocked. At that point the tableau is saturated and blocked.
+\end{proof}
+
+\section{Soundness}
+
+\begin{theorem}[Soundness argument]\label{thm:soundness}
+If the proposed calculus has an open saturated blocked tableau for $C_0$, then $C_0$ is satisfiable in a strong-$\EQ$ model of $\mathcal{ALCI}_{RCC5}$.
+\end{theorem}
+
+\begin{proof}[Argument]
+Let $\mathcal T$ be an open saturated blocked tableau. Form the finite quotient $Q(\mathcal T)$ of active rank-$d$ signatures. By openness, the local tableau is clash-free and the side-checker $\mathsf{Patch}(\mathcal T)$ accepts. Thus the quotient carries coherent ordered child-pair descriptors and support-closed witness menus, and every finite prefix network of its split-forest unfolding admits a canonical extendible $\DR/\PO$ refinement.
+
+Now apply the companion split-forest theorem (the completed sibling-interface note): from such a finite quotient one obtains a canonical weak-$\EQ$ split-forest realization, then a strong-$\EQ$ model by quotienting the typed $\EQ$-congruence classes \cite{SiblingCompleted}. The only thing to check is that the tableau obligations are interpreted correctly in that realization.
+\begin{itemize}
+    \item If $C\in \AllDown(x)$, then every strict descendant of the corresponding split-forest node satisfies $C$ because the local propagation rules copied $C$ to every child and recursively to every lower request-state.
+    \item If $C\in \AllUp(x)$, the same holds for strict ancestors by upward propagation and top extension.
+    \item If $C\in \ReqDown(x)$, then either the local tableau already realized $C$ on some chosen child branch, or the witness menu stored in $\Wit_d(x)$ witnesses an infinite descendant branch in the quotient unfolding. Hence some strict descendant satisfies $C$.
+    \item If $C\in \ReqUp(x)$, the symmetric argument uses the ambient-top extension chain above the evaluation node.
+    \item If $C\in \CrossDR(x)$ or $C\in \CrossPO(x)$, acceptance of $\mathsf{Patch}(\mathcal T)$ guarantees a designated witness menu entry compatible both with the sibling-interface descriptors and with the universal side conditions in $\NeedDR(x)$ or $\NeedPO(x)$; the split-forest theorem realizes it by the canonical $\DR/\PO$ refinement.
+\end{itemize}
+Therefore every labelled formula at the evaluation node $r_\ast$ is satisfied in the resulting strong-$\EQ$ model. In particular $C_0\in L(r_\ast)$, so the model satisfies $C_0$.
+\end{proof}
+
+\section{Completeness}
+
+\begin{theorem}[Completeness argument]\label{thm:completeness}
+If $C_0$ is satisfiable in a strong-$\EQ$ model of $\mathcal{ALCI}_{RCC5}$, then the proposed calculus has an open branch for $C_0$.
+\end{theorem}
+
+\begin{proof}[Argument]
+Assume $M,r\models C_0$. By the companion split-forest theorem, choose a weak-$\EQ$ split-tree presentation of $M$ with distinguished evaluation node corresponding to $r$ and with finite rank-$d$ quotient data \cite{SiblingCompleted}. We guide the tableau nondeterministically by that presentation.
+
+Start with one tableau node $r_\ast$ labelled by $C_0$. Whenever a disjunction $D_1\sqcup D_2$ is encountered, choose a disjunct true at the corresponding point of the presentation. Whenever $\exists\PPI.C$ is initialized, follow the chosen descendant witness path from the presentation: either realize $C$ at the next cover child, or defer the request to the child lying on the presentation's witness branch. Similarly, whenever $\exists\PP.C$ is initialized, either realize $C$ at the current parent in the presentation or defer upward; if the present tableau does not yet contain enough ancestors, use top extension to create them. For $\forall\PPI$ and $\forall\PP$, propagation is forced and matches the cover-tree semantics of the presentation.
+
+For $\exists\DR.C$ and $\exists\PO.C$, do not try to materialize a local tree edge. Instead, record the obligation in $\CrossDR$ or $\CrossPO$ and extract the appropriate support-closed witness-menu entry from the finite quotient of the presentation. Because the presentation is a genuine model, every extracted witness endpoint also satisfies the dual universal side conditions encoded by $\NeedDR$ and $\NeedPO$, and because the split-forest theorem provides canonical extendible refinements on all finite prefixes, the global side-checker will succeed on those extracted menus.
+
+Finally, by the finite-index lemma for rank-$d$ signatures, only finitely many active signatures can appear along the guided cover tree. Therefore eventually every newly generated node repeats an earlier rank-$d$ signature and is blocked. The resulting branch is finite, saturated, locally clash-free, and accepted by the side-checker; hence it is open.
+\end{proof}
+
+\section{The resulting decision procedure}
+
+\begin{corollary}[Decision procedure]\label{cor:decision-procedure}
+The proposed calculus yields a finite search procedure for concept satisfiability in $\mathcal{ALCI}_{RCC5}$: explore locally saturated blocked cover-tree tableaux and accept iff some branch is open.
+\end{corollary}
+
+\begin{proof}[Argument]
+Termination is given by Theorem~\ref{thm:termination}; soundness and completeness are given by Theorems~\ref{thm:soundness} and \ref{thm:completeness}. Therefore the calculus decides satisfiability.
+\end{proof}
+
+\section{Discussion}
+
+Two features of the proposal are worth emphasizing.
+
+First, the cover tree is not a semantic tree model. It is an operational abstraction of the proper-part order. The actual model remains a complete RCC5-labelled graph, reconstructed from the finite quotient and its sibling-interface descriptors.
+
+Second, the calculus is intentionally asymmetric with respect to $\PP$ and $\PPI$ because a cover tree chooses one orientation. With downward $\PPI$ cover edges, $\exists\PPI.C$ is a descendant eventuality and $\exists\PP.C$ is an ancestor eventuality. Reversing the orientation would reverse those roles. The use of a distinguished evaluation node and top extension is therefore not optional; it is forced by the semantics of transitive $\PP/\PPI$ over a cover tree.
+
+The chief advantage of the tree abstraction is that it makes the global cross-edge problem finite. After join splitting, $\PP$ is no longer an open sibling-interface value; $\EQ$ is handled by split mates, $\DR$ is rigid on $\Out$ zones, and only $\DR/\PO$ remain open on $\Front$--$\Front$ pairs. That is exactly the configuration captured by the side-checker.
+
+\section{Conclusion}
+
+This note proposes a concrete tableau operationalization of the split-forest proof strategy for $\mathcal{ALCI}_{RCC5}$. The local rules keep only a cover tree and treat $\PP/\PPI$ as ancestor/descendant eventualities. The non-tree modalities $\DR$ and $\PO$ are discharged globally by the finite sibling-interface checker. Blocking is equality of eventuality-aware rank-$d$ signatures.
+
+The resulting calculus is best viewed as a \emph{hybrid tableau with global caching}: its local part is tableau-like, its blocking condition is finite-signature based, and its final acceptance condition is exactly the patchwork side theorem needed by the companion split-forest semantics. In that sense it is a natural candidate operational calculus for the finite-quotient decidability proof.
+
+\begin{thebibliography}{9}
+
+\bibitem{Wessel2003}
+Michael Wessel.
+\newblock \emph{Qualitative Spatial Reasoning with the ALCIRCC Family -- First Results and Unanswered Questions}.
+\newblock University of Hamburg, Memo No. 324/03, 2003.
+
+\bibitem{Sibling2026}
+OpenAI GPT-5.4 Pro, prompted by Michael Wessel.
+\newblock \emph{Finite Sibling-Interface Descriptors and a Proposed Completion for $\mathcal{ALCI}_{RCC5}$}.
+\newblock Manuscript, April 2026.
+
+\bibitem{SiblingCompleted}
+OpenAI GPT-5.4 Pro, prompted by Michael Wessel.
+\newblock \emph{Finite Sibling-Interface Descriptors and a Proposed Completion for $\mathcal{ALCI}_{RCC5}$: completed split-forest version with canonical refinement and typed-$\EQ$ quotienting}.
+\newblock Manuscript, April 2026.
+
+\end{thebibliography}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

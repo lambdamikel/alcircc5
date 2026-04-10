@@ -2654,3 +2654,99 @@ Explicit 3-element cyclic models verified for all 7:
 - `decidability_via_quadruples_ALCIRCC5.tex`: Updated status box (713 concepts), sibling check description, computational verification (stress test results), theoretical status (cyclic model observation), conclusion
 - `README.md`: Updated status header (713 concepts), algorithm description, test results
 - `CONVERSATION.md`: This entry
+
+---
+
+## Part 51: Cover-Tree Tableau — Eleventh Approach (Wessel/GPT-5.4/Claude, April 2026)
+
+### Intellectual origin (Michael Wessel)
+
+Wessel proposed a new line of investigation based on the observation that every ALCI\_RCC5 model admits a PP/PPI-oriented **tree presentation**:
+1. **PPI-tree model property**: Orient PP/PPI as parent/child edges in a tree; DR/PO become cross-edges between sibling subtrees.
+2. **EQ-splitting**: When multiple nodes share the same spatial region (forming a DAG via PP/PPI), duplicate the join-nodes to obtain a tree. This gives a **weak-EQ presentation** where distinct nodes may represent the same region.
+3. **Restoring strong-EQ**: Apply the typed EQ-congruence relation from Wessel's report7.pdf to quotient the weak-EQ model back to a strong-EQ model.
+4. **DR rigidity observation**: comp(PP, DR) = {DR} and comp(DR, PPI) = {DR}, so DR propagates rigidly downward through subtrees. After EQ-splitting, the only "open" (non-forced) cross-edges between sibling subtrees are in {DR, PO}, dramatically reducing the combinatorial complexity.
+5. **Key correction**: Wessel identified that GPT's initial formalization incorrectly treated PP as an open cross-edge between sibling subtrees. After EQ-splitting, PP(x,y) places x in y's Core (below y in the tree), so PP is NOT available as a sibling cross-edge. Only {DR, PO} remain open.
+
+### Formalization (GPT-5.4)
+
+GPT-5.4 formalized Wessel's ideas in two papers:
+
+**Split-forest paper** (`trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_patched.tex`):
+- Defines split-tree presentations (EQ-split models as trees)
+- Proves the corrected status partition: Core (EQ-copies), Out (rigid DR), Front (open DR/PO)
+- Establishes status evolution automaton: Core→{Core}, Out→{Out}, Front→{Out, Front, Core}
+- Proves DR rigidity through subtrees
+- Develops ranked node states and finite quotient construction
+- States the finite-prefix arc-consistency theorem (Theorem 8.1)
+- Sketches the soundness chain: valid quotient → unfolding → disjunctive network → arc-consistency → full tractability → König's lemma → canonical refinements → weak-EQ model → quotient → strong-EQ model
+
+**Cover-tree tableau paper** (`trees/alcircc5_cover_tree_tableau_needslots_patched.tex`):
+- Builds on the split-forest semantics to define a tableau decision procedure
+- Defines tableau objects (cover trees with status-annotated nodes)
+- Specifies operational expansion rules
+- Uses rank-k signatures for blocking
+- Includes a global side-checker for cross-edge consistency
+- Claims termination, soundness, and completeness
+
+### Claude's assessment
+
+Claude read both papers and assessed:
+- **Soundness direction**: Convincing. The chain from open tableau branch to genuine model is well-motivated, leveraging the patchwork property of RCC5 at the key step.
+- **Completeness direction**: Condensed and contains gaps. The finite quotient construction needs more detail, particularly around how the bounded-width claim is established.
+- **Key insight validated**: The restriction to {DR, PO} cross-edges is the crucial simplification. Since comp(R, S) ∩ {DR, PO} ≠ ∅ for all R, S ∈ {DR, PO}, non-empty {DR, PO} networks are trivially arc-consistent. This makes the side-checker tractable.
+
+### Implementation (Claude)
+
+Claude implemented the cover-tree tableau as a type-set decision procedure in `cover_tree_tableau.py` (~350 lines). Rather than building explicit tree structures, the algorithm works at the type level:
+
+**Phase 1**: Compute closure and enumerate Hintikka types (reusing `alcircc5_reasoner.py` infrastructure).
+
+**Phase 2**: Demand closure — iteratively remove types that lack witnesses for existential demands, retaining only types where every ∃R.C demand has a witness type t' with safe(t, t') ∩ {R} ≠ ∅.
+
+**Phase 3**: Cross-edge consistency — verify that the type set supports non-empty {DR, PO} networks between siblings. This is trivially arc-consistent (comp(R, S) ∩ {DR, PO} ≠ ∅ for all R, S ∈ {DR, PO}).
+
+**Phase 4**: Singleton-composition propagation — detect forced relations via singleton compositions: comp(PP, DR) = {DR}, comp(PPI, PPI) = {PPI}, comp(PP, PP) = {PP}. When a type's existential demand forces a witness via role R₁, and another demand forces a witness via R₂, and comp(INV[R₁], R₂) = {S} (singleton), then the universal constraints of the first witness must be satisfied by the second witness under relation S.
+
+The algorithm correctly handles all 7 cyclic-model concepts (returning SAT) by working at the type-set level rather than requiring explicit tree models. This was the key advantage of the cover-tree approach: the type-set feasibility check does not require constructing a model, so concepts that need cyclic models pass as long as their type sets are consistent.
+
+### Cross-validation results
+
+`stress_test_cover_tree.py` tested 902 concepts across 6 categories:
+
+| Category | Tests | Result |
+|---|---|---|
+| Known SAT | 50 | 50/50 correct |
+| Known UNSAT | 13 | 13/13 correct |
+| Adversarial | 27 | 27/27 matching QM |
+| Systematic triples | 512 | 512/512 matching QM |
+| Random depth-2 | 200 | 200/200 matching QM |
+| Random depth-3 | 100 | 100/100 matching QM |
+| **Total** | **902** | **902/902 (0 mismatches, 0 errors)** |
+
+The cover-tree tableau agrees with the quasimodel reasoner on every test case.
+
+### Bugs found and fixed during implementation
+
+1. **Initial architecture timeout**: First implementation built explicit trees with nondeterministic search; timed out on basic tests. Redesigned as type-set approach.
+2. **∃DR.A incorrectly UNSAT**: Side-checker required DR-witnesses as specific tree nodes. Fixed by checking type-level feasibility instead.
+3. **`jmp` undefined**: Two locations in backtracking search referenced undefined variable. Fixed.
+4. **Cross-role UNSAT patterns accepted as SAT**: ∃PPI.(∀DR.A) ⊓ ∃DR.¬A and similar patterns incorrectly returned SAT. Root cause: sibling check only considered DR/PO pairs but these involve tree-cross interaction via singleton compositions. Fixed by adding `check_tree_cross_interaction()`.
+
+### Documentation
+
+Claude wrote a 9-page LaTeX paper (`cover_tree_tableau_ALCIRCC5.tex`) documenting the implementation, the four-phase algorithm, key insights from the split-forest theory, the 7 cyclic-model concepts, and the 902-test computational results.
+
+### Attribution
+
+- **Michael Wessel**: Proposed the PPI-tree model property, EQ-splitting via weak-EQ semantics, strong-EQ restoration via report7.pdf congruence, DR rigidity observation reducing open edges to {DR, PO}. Corrected GPT's inclusion of PP as open cross-edge.
+- **GPT-5.4**: Formalized the split-forest semantics and cover-tree tableau in two papers, proving DR rigidity, status partition, arc-consistency theorem.
+- **Claude (Anthropic)**: Assessed GPT's papers, implemented the decision procedure, ran 902-test cross-validation, wrote the documentation paper, updated README and CONVERSATION log.
+
+### Files created/changed
+
+- `cover_tree_tableau.py`: Cover-tree tableau implementation (~350 lines)
+- `stress_test_cover_tree.py`: 902-test cross-validation suite
+- `cover_tree_tableau_ALCIRCC5.tex`: 9-page LaTeX documentation paper
+- `README.md`: Updated with eleventh approach section and summary table
+- `CONVERSATION.md`: This entry

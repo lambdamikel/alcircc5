@@ -1,0 +1,794 @@
+\documentclass[a4paper,11pt]{article}
+
+%%% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
+\newcommand{\Safe}{\ensuremath{\mathsf{Safe}}}
+\newcommand{\md}{\ensuremath{\mathsf{md}}}
+\newcommand{\NeedDR}{\ensuremath{\mathsf{Need}_{\DR}}}
+\newcommand{\NeedPO}{\ensuremath{\mathsf{Need}_{\PO}}}
+\newcommand{\CrossDR}{\ensuremath{\mathsf{Cross}_{\DR}}}
+\newcommand{\CrossPO}{\ensuremath{\mathsf{Cross}_{\PO}}}
+\newcommand{\AllUp}{\ensuremath{\mathsf{All}^{\uparrow}}}
+\newcommand{\AllDown}{\ensuremath{\mathsf{All}^{\downarrow}}}
+\newcommand{\ReqUp}{\ensuremath{\mathsf{Req}^{\uparrow}}}
+\newcommand{\ReqDown}{\ensuremath{\mathsf{Req}^{\downarrow}}}
+\newcommand{\OpenDom}{\ensuremath{\mathbb{D}}}
+\newcommand{\Core}{\ensuremath{\mathsf{Core}}}
+\newcommand{\Out}{\ensuremath{\mathsf{Out}}}
+\newcommand{\Front}{\ensuremath{\mathsf{Front}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\RCCrels}{\{\DR,\PO,\PP,\PPI\}}
+
+\title{A Cover-Tree Tableau for $\ALCIRCC{5}$:\\
+  Implementation and Computational Verification}
+
+\author{Claude\thanks{Claude is an AI assistant by Anthropic (Opus~4).
+  This work was prompted by Michael Wessel (\texttt{miacwess@gmail.com}),
+  who introduced the $\ALCIRCC{}$ family in his doctoral work at the
+  University of Hamburg~\cite{Wessel2003,Wessel2002}.
+  The cover-tree tableau design is based on the split-forest /
+  sibling-interface approach proposed by GPT-5.4~Pro (OpenAI),
+  also prompted by Michael Wessel~\cite{SiblingCompleted,CoverTree}.}}
+
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Status.}\; This paper documents an implementation of the
+cover-tree tableau calculus for $\ALCIRCC{5}$ concept satisfiability,
+based on the split-forest approach of~\cite{SiblingCompleted,CoverTree}.
+The implementation passes \textbf{902~test concepts} with zero
+mismatches against an independent quasimodel-based
+reasoner~\cite{ClaudeDecidability}.  The results are
+\textbf{not peer-reviewed}; this paper is a companion to the
+theoretical proposals and serves as computational evidence.}}
+\end{center}
+
+\begin{abstract}
+We present an implementation of a cover-tree tableau decision procedure
+for concept satisfiability in $\ALCIRCC{5}$, the description logic
+$\ALCI$ extended with the five jointly exhaustive and pairwise
+disjoint RCC5 relations $\DR$, $\PO$, $\EQ$, $\PP$, $\PPI$ as
+concrete roles, under strong $\EQ$ semantics.
+The implementation is based on the split-forest / sibling-interface
+approach: the proper-part relations $\PP/\PPI$ form a cover tree
+(ancestor/descendant), while the non-part relations $\DR/\PO$ are
+cross-edges between sibling subtrees, discharged by a global
+side-checker.
+The key insight---that $\PP$ is not an open sibling cross-edge
+after $\EQ$-splitting---reduces the cross-edge problem to a
+$\{\DR,\PO\}$ disjunctive network that is trivially arc-consistent.
+We describe the algorithm, identify the critical checks that
+distinguish this approach from a na\"{\i}ve quasimodel search
+(singleton-composition propagation and restricted sibling
+compatibility), and report on a cross-validation of 902~test
+concepts against an independent reasoner, with zero mismatches.
+\end{abstract}
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{Introduction}
+\label{sec:intro}
+% ═══════════════════════════════════════════════════════════════
+
+The description logic $\ALCIRCC{5}$ extends $\ALCI$ (propositional
+logic with union, intersection, complement, and both existential and
+universal restrictions over roles and their inverses) by replacing
+abstract roles with the five base relations of the Region Connection
+Calculus RCC5: disjoint ($\DR$), partial overlap ($\PO$), identity
+($\EQ$), proper part ($\PP$), and proper-part inverse ($\PPI$).
+Every pair of domain elements is related by exactly one of the five
+base relations, and interpretations are complete RCC5-labelled graphs.
+
+The decidability of concept satisfiability in $\ALCIRCC{5}$ was left
+open by Wessel~\cite{Wessel2003,Wessel2002}.
+Several approaches have been proposed:
+\begin{enumerate}[label=(\roman*)]
+  \item A quasimodel construction with type elimination and
+    disjunctive path-consistency~\cite{ClaudeDecidability}, which
+    identifies correct satisfiability answers on all tested concepts
+    but relies on a gap in the Henkin-construction soundness argument.
+  \item A contextual tableau~\cite{GPTContextual} proving soundness
+    of the tableau-to-model direction but leaving completeness
+    (the finite-width extraction lemma $\mathsf{FW}(C,N)$) open.
+  \item A split-forest / sibling-interface
+    approach~\cite{SiblingCompleted,CoverTree} that decomposes
+    models into cover trees with finite cross-edge descriptors,
+    using the patchwork property of RCC5.
+\end{enumerate}
+
+This paper documents an implementation of approach~(iii).
+We describe the algorithm (Section~\ref{sec:algorithm}), explain
+the key design decisions and how they differ from the quasimodel
+approach (Section~\ref{sec:key-insights}), present detailed
+computational results (Section~\ref{sec:results}), and discuss
+the theoretical status (Section~\ref{sec:discussion}).
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{Preliminaries}
+\label{sec:prelim}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{RCC5 and the composition table}
+
+The five base relations of RCC5 are $\DR$ (disjoint), $\PO$ (partial
+overlap), $\EQ$ (identity), $\PP$ (proper part), and $\PPI$ (proper
+part inverse).  Under \emph{strong $\EQ$ semantics}, $\EQ$ is
+identity: $x\,\EQ\,y$ iff $x = y$.  Thus between distinct elements,
+only $\{\DR,\PO,\PP,\PPI\}$ are possible.
+
+The inverse map is $\inv(\DR) = \DR$, $\inv(\PO) = \PO$,
+$\inv(\PP) = \PPI$, $\inv(\PPI) = \PP$.
+We use the following composition facts repeatedly:
+\begin{align}
+  \comp(\PP,\DR)  &= \{\DR\},
+  &\comp(\DR,\PPI) &= \{\DR\},
+  \label{eq:singleton-comp} \\
+  \comp(\PP,\PP)  &= \{\PP\},
+  &\comp(\PPI,\PPI) &= \{\PPI\},
+  \label{eq:transitive-comp} \\
+  \comp(\PP,\PO)  &= \{\DR,\PO,\PP\},
+  &\comp(\PPI,\PO)  &= \{\PO,\PPI\},
+  \label{eq:mixed-comp}
+\end{align}
+and for all $R, S \in \{\DR, \PO\}$:
+\begin{equation}
+  \comp(R, S) \cap \{\DR, \PO\} \neq \varnothing.
+  \label{eq:drpo-support}
+\end{equation}
+
+\begin{definition}[Patchwork property~\cite{RenzNebel1999}]
+A qualitative calculus has the \emph{patchwork property} if every
+path-consistent atomic constraint network is globally consistent.
+RCC5 has the patchwork property; moreover, every disjunctive RCC5
+network that survives arc-consistency has a globally consistent atomic
+refinement (\emph{full tractability}).
+\end{definition}
+
+\subsection{$\ALCIRCC{5}$ syntax and semantics}
+
+Concepts are in negation normal form (NNF).  The syntax is:
+\[
+  C, D ::= A \mid \neg A \mid \top \mid \bot
+    \mid C \sqcap D \mid C \sqcup D
+    \mid \exists R.C \mid \forall R.C
+\]
+where $A$ is an atomic concept and $R \in \{\DR,\PO,\PP,\PPI\}$.
+The Fischer--Ladner closure $\cl(C_0)$ and the finite set of
+Hintikka types $\Tp(C_0)$ are defined standardly.
+The \emph{modal depth} $\md(C_0)$ is the maximum nesting depth
+of $\exists/\forall$ operators.
+
+\begin{definition}[Type-safe relations]
+\label{def:safe}
+For Hintikka types $\tau, \sigma \in \Tp(C_0)$ and a relation
+$R \in \RCCrels$, we say $R$ is \emph{safe} for $(\tau, \sigma)$,
+written $R \in \Safe(\tau, \sigma)$, if:
+\begin{itemize}[nosep]
+  \item For all $\forall R.D \in \tau$: $D \in \sigma$.
+  \item For all $\forall \inv(R).D \in \sigma$: $D \in \tau$.
+\end{itemize}
+The \emph{cross-edge safe set} is
+$\Safe_{\DR/\PO}(\tau, \sigma) := \Safe(\tau, \sigma)
+  \cap \{\DR, \PO\}$.
+\end{definition}
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{The Cover-Tree Tableau Algorithm}
+\label{sec:algorithm}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Overview}
+
+The algorithm searches for a \emph{valid type set}: a finite set
+$T \subseteq \Tp(C_0)$ that contains a root type realizing $C_0$
+and satisfies four conditions:
+\begin{enumerate}[label=(CT\arabic*)]
+  \item \textbf{Demand closure}: every existential demand
+    $\exists R.D$ in every type $\tau_i \in T$ has an $R$-safe
+    witness $\tau_j \in T$ with $D \in \tau_j$.
+  \item \textbf{Cross-edge consistency}: for every pair
+    $\tau_i, \tau_j \in T$, either
+    $\Safe(\tau_i,\tau_j) \cap \{\PP,\PPI\} \neq \varnothing$
+    (they can be tree-related) or
+    $\Safe_{\DR/\PO}(\tau_i,\tau_j) \neq \varnothing$
+    (they can be cross-related).
+  \item \textbf{Cover-tree sibling compatibility}: for each type
+    $\tau_i \in T$ with multiple $\DR/\PO$ demands, there exists
+    a joint witness assignment where all witness pairs satisfy the
+    $\{\DR,\PO\}$-restricted composition constraint
+    (Section~\ref{sec:sibling}).
+  \item \textbf{Tree-cross interaction}: for each type with both
+    tree ($\PP/\PPI$) and cross ($\DR/\PO$) demands, the
+    singleton-composition propagation check passes
+    (Section~\ref{sec:singleton}).
+\end{enumerate}
+
+\subsection{Phase 1: Precomputation}
+
+Given input concept $C_0$:
+\begin{enumerate}[nosep]
+  \item Compute the Fischer--Ladner closure $\cl(C_0)$.
+  \item Enumerate all Hintikka types $\Tp(C_0)$.
+  \item For all type pairs $(\tau_i, \tau_j)$, compute
+    $\Safe(\tau_i, \tau_j)$ and
+    $\Safe_{\DR/\PO}(\tau_i, \tau_j)$.
+  \item For each type $\tau_i$, extract the demand list:
+    existential formulas $\exists R.D \in \tau_i$ classified by
+    role as \emph{tree demands} ($R \in \{\PP, \PPI\}$) or
+    \emph{cross demands} ($R \in \{\DR, \PO\}$).
+\end{enumerate}
+
+\subsection{Phase 2: Type-set search}
+
+Starting from each root type $\tau_0$ with $C_0 \in \tau_0$,
+we incrementally build a type set $T$:
+\begin{enumerate}[nosep]
+  \item Initialize $T = \{\tau_0\}$.
+  \item Scan for unwitnessed demands. If $\tau_i \in T$ has demand
+    $\exists R.D$ with no $R$-safe witness in $T$, add a witness
+    type $\tau_j$ (with $D \in \tau_j$ and $R \in \Safe(\tau_i,\tau_j)$)
+    and recurse.
+  \item When all demands are witnessed, check conditions
+    (CT2)--(CT4).
+  \item Backtrack if any check fails; accept if all pass.
+\end{enumerate}
+
+The search terminates because $|\Tp(C_0)|$ is finite (bounded
+by $2^{|\cl(C_0)|}$) and the type set grows monotonically.
+
+\subsection{Phase 3: Cover-tree sibling check}
+\label{sec:sibling}
+
+For each type $\tau_i \in T$ with $k \geq 2$ cross demands
+$(\exists R_1.D_1), \ldots, (\exists R_k.D_k)$ where each
+$R_m \in \{\DR, \PO\}$:
+
+\medskip
+\noindent\textbf{Constraint.}
+Find witnesses $\tau_{j_1}, \ldots, \tau_{j_k} \in T$ such that
+for all $m \neq m'$:
+\begin{equation}
+  \comp(\inv(R_m), R_{m'}) \cap \{\DR, \PO\} \cap
+    \Safe_{\DR/\PO}(\tau_{j_m}, \tau_{j_{m'}}) \neq \varnothing.
+  \label{eq:sibling-compat}
+\end{equation}
+
+This is solved by arc-consistency pruning followed by backtracking
+search over the candidate witnesses.
+
+\medskip
+\noindent\textbf{Key difference from the quasimodel approach.}
+In the quasimodel approach~\cite{ClaudeDecidability}, the sibling
+check considers \emph{all} demand pairs, including mixed pairs
+where $R_m \in \{\PP,\PPI\}$ and $R_{m'} \in \{\DR,\PO\}$.
+The composition $\comp(\inv(R_m), R_{m'})$ then involves the
+full RCC5 table, and the constraint
+$\comp(\inv(R_m), R_{m'}) \cap \Safe(\tau_{j_m}, \tau_{j_{m'}})$
+can fail even when the concept is satisfiable (false negatives
+are avoided in practice by the quasimodel reasoner's other
+checks, but the theoretical justification is different).
+
+In the cover-tree approach, $\PP/\PPI$ witnesses are in
+ancestor/descendant positions in the cover tree, \emph{not}
+in sibling positions.  Only $\DR/\PO$ witnesses are siblings.
+Therefore equation~\eqref{eq:sibling-compat} restricts both the
+composition and the safe set to $\{\DR,\PO\}$.
+
+\subsection{Phase 4: Tree-cross interaction (singleton-composition propagation)}
+\label{sec:singleton}
+
+When a type $\tau_i$ has both a tree demand $\exists R_1.D_1$
+($R_1 \in \{\PP,\PPI\}$) and another demand $\exists R_2.D_2$,
+the witnesses $\tau_{j_1}$ and $\tau_{j_2}$ are related through
+the composition:
+\begin{equation}
+  \tau_{j_1} \xrightarrow{\;\comp(\inv(R_1), R_2)\;}
+  \tau_{j_2}.
+  \label{eq:composition-chain}
+\end{equation}
+
+When $\comp(\inv(R_1), R_2)$ is a \emph{singleton} $\{S\}$,
+the relation between $\tau_{j_1}$ and $\tau_{j_2}$ is
+\emph{forced} to be~$S$, and we must have
+$S \in \Safe(\tau_{j_1}, \tau_{j_2})$.
+
+\begin{proposition}[Singleton compositions in RCC5]
+\label{prop:singletons}
+The singleton compositions involving one tree role and one
+arbitrary role are:
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lll}
+\toprule
+$R_1$ & $R_2$ & $\comp(\inv(R_1), R_2)$ \\
+\midrule
+$\PPI$ (tree child) & $\DR$ (cross) &
+  $\comp(\PP, \DR) = \{\DR\}$ \\
+$\PP$ (tree parent) & $\PPI$ (tree child) &
+  $\comp(\PPI, \PPI) = \{\PPI\}$ \\
+$\PPI$ (tree child) & $\PP$ (tree parent) &
+  $\comp(\PP, \PP) = \{\PP\}$ \\
+$\PP$ (tree parent) & $\DR$ (cross) &
+  $\comp(\PPI, \DR) = \{\DR,\PO,\PPI\}$ \textit{(not singleton)} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{proposition}
+
+The check is: for every pair of demands at type $\tau_i$
+whose composition is a singleton $\{S\}$, verify that there
+exist witnesses $\tau_{j_1}, \tau_{j_2} \in T$ with
+$S \in \Safe(\tau_{j_1}, \tau_{j_2})$
+and $\inv(S) \in \Safe(\tau_{j_2}, \tau_{j_1})$.
+
+\begin{example}[Cross-role UNSAT detection]
+\label{ex:cross-unsat}
+Consider $\exists\PPI.(\forall\DR.A) \sqcap \exists\DR.\neg A$.
+\begin{itemize}[nosep]
+  \item Type $\tau_0$: contains $\exists\PPI.(\forall\DR.A)$ and
+    $\exists\DR.\neg A$.
+  \item $\PPI$-witness $\tau_1$: contains $\forall\DR.A$.
+  \item $\DR$-witness $\tau_2$: contains $\neg A$.
+  \item Forced relation:
+    $\comp(\inv(\PPI), \DR) = \comp(\PP, \DR) = \{\DR\}$.
+  \item So $\tau_1$ is forced to be $\DR$-related to $\tau_2$.
+  \item $\DR \in \Safe(\tau_1, \tau_2)$ requires
+    $\forall\DR.A \in \tau_1 \Rightarrow A \in \tau_2$.
+  \item But $\neg A \in \tau_2$, contradiction.
+  \item Therefore: UNSAT. \qed
+\end{itemize}
+\end{example}
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{Key Insights from the Split-Forest Theory}
+\label{sec:key-insights}
+% ═══════════════════════════════════════════════════════════════
+
+The algorithm implements four insights from the split-forest /
+sibling-interface approach~\cite{SiblingCompleted,CoverTree}.
+
+\subsection{$\PP$ is not an open cross-edge}
+
+After $\EQ$-splitting (representing join nodes by distinct copies
+in the cover tree), every $\PP$-related pair is in an
+ancestor/descendant position.  For sibling subtrees rooted at
+incomparable nodes $s, t$:
+\begin{itemize}[nosep]
+  \item $\EQ(x,y)$ implies $x$ is a common descendant ($\Core$).
+  \item $\PP(x,y)$ implies $x$ lies below $y$ and hence below $t$,
+    placing $x$ in the $\Core$.
+  \item $\PPI(x,y)$ would place $t$ below $x$ below $s$,
+    contradicting sibling incomparability.
+\end{itemize}
+Therefore, between non-$\Core$ sibling-subtree nodes, only $\DR$
+and $\PO$ are possible.  This reduces the open cross-edge domain
+from $\RCCrels$ to $\OpenDom = \{\{\DR\}, \{\PO\}, \{\DR,\PO\}\}$.
+
+\subsection{The $\{\DR,\PO\}$ network is trivially arc-consistent}
+
+By equation~\eqref{eq:drpo-support}, for any
+$R, S \in \{\DR, \PO\}$, we have
+$\comp(R, S) \cap \{\DR, \PO\} \neq \varnothing$.
+Therefore, a disjunctive $\{\DR,\PO\}$ network is arc-consistent
+whenever every domain is non-empty.  Combined with the patchwork
+property, this means: \emph{any non-empty-domain $\{\DR,\PO\}$
+network has a globally consistent atomic refinement.}
+
+This eliminates the need for full path-consistency checking on the
+cross-edge network---a simple non-emptiness check of
+$\Safe_{\DR/\PO}(\tau_i, \tau_j)$ for each pair suffices.
+
+\subsection{Separation of tree and cross layers}
+
+The cover tree separates the model's complete-graph structure into:
+\begin{itemize}[nosep]
+  \item \textbf{Tree layer} ($\PP/\PPI$): ancestor/descendant in
+    the cover tree.  Checked by demand closure for $\PP/\PPI$
+    demands and standard tree-model-like constraints.
+  \item \textbf{Cross layer} ($\DR/\PO$): edges between
+    incomparable nodes in sibling subtrees.  Checked by the
+    sibling compatibility and cross-edge consistency conditions.
+\end{itemize}
+This separation avoids the problematic mixed compositions
+(e.g., $\comp(\PPI, \PP) = \{\PO, \PP, \PPI\}$) that arise
+when $\PP/\PPI$ and $\DR/\PO$ witnesses are treated symmetrically
+as siblings.
+
+\subsection{The status partition: $\Core/\Out/\Front$}
+
+The split-forest theory~\cite{SiblingCompleted} partitions each
+sibling subtree into three zones:
+\begin{itemize}[nosep]
+  \item $\Core$: common descendants of both sibling roots.
+    Handled by $\EQ$-splitting.
+  \item $\Out$: nodes whose relation to the opposite subtree root
+    is $\DR$.  By $\comp(\PP,\DR) = \{\DR\}$ and
+    $\comp(\DR,\PPI) = \{\DR\}$, the $\DR$ relation is
+    \emph{rigid}: all descendants of an $\Out$ node remain $\Out$,
+    and all cross-edges from $\Out$ are forced to $\DR$.
+  \item $\Front$: nodes whose relation to the opposite subtree
+    root is $\PO$.  By $\comp(\PP,\PO) = \{\DR,\PO,\PP\}$,
+    children can transition to $\Out$, $\Front$, or $\Core$.
+\end{itemize}
+The status automaton is:
+$\Core \to \{\Core\}$, $\Out \to \{\Out\}$,
+$\Front \to \{\Out, \Front, \Core\}$.
+Only $\Front$--$\Front$ pairs carry genuinely open $\{\DR,\PO\}$
+labels.
+
+Our implementation does not explicitly track the status partition,
+but the singleton-composition check (Section~\ref{sec:singleton})
+captures its essential consequence: when a tree step forces a
+relation, that relation must be type-safe.
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{Concepts Requiring Non-Tree Models}
+\label{sec:cyclic}
+% ═══════════════════════════════════════════════════════════════
+
+Prior work~\cite{ClaudeDecidability} identified seven concepts
+that are satisfiable but whose models cannot be unfolded into
+trees with tree-compatible RCC5 labellings.
+These concepts are listed in Table~\ref{tab:cyclic}.
+
+\begin{table}[ht]
+\centering
+\caption{Concepts requiring non-tree models.
+  All are SAT in both the quasimodel reasoner and the
+  cover-tree tableau.}
+\label{tab:cyclic}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{ll}
+\toprule
+\# & Concept \\
+\midrule
+1 & $\exists\DR.A \sqcap \exists\PP.\neg A \sqcap \forall\PO.A$ \\
+2 & $\exists\PO.A \sqcap \exists\PP.\neg A \sqcap \forall\PO.A$ \\
+3 & $\exists\PO.A \sqcap \exists\PP.\neg B \sqcap \forall\DR.A$ \\
+4 & $\exists\PO.A \sqcap \exists\PP.\neg B \sqcap \forall\PO.A$ \\
+5 & $\exists\PO.A \sqcap \exists\PP.\neg B \sqcap \forall\PP.A$ \\
+6 & $\exists\PO.A \sqcap \exists\PP.\neg B \sqcap \forall\PPI.A$ \\
+7 & $\exists\PP.A \sqcap \exists\PP.\neg A \sqcap \forall\PO.A$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In the cover-tree model, these concepts are naturally satisfiable:
+\begin{itemize}[nosep]
+  \item The $\exists\PP$ demand is an ancestor eventuality, realized
+    by a strict ancestor in the cover tree.
+  \item The $\exists\PO$ or $\exists\DR$ demand is a cross-edge
+    witness in a sibling subtree.
+  \item The $\forall R$ constraint applies only to $R$-related
+    nodes; since ancestors are $\PP$-related (not $\PO$ or $\DR$),
+    the universal does not fire on the ancestor.
+\end{itemize}
+
+For example, consider concept~2:
+$\exists\PO.A \sqcap \exists\PP.\neg A \sqcap \forall\PO.A$.
+In the cover tree with evaluation node $v$:
+\begin{itemize}[nosep]
+  \item $v$ has a strict ancestor $u$ with $\neg A \in u$
+    (serving $\exists\PP.\neg A$).
+  \item $v$ has a $\PO$-witness $w$ in a sibling subtree with
+    $A \in w$ (serving $\exists\PO.A$).
+  \item $\forall\PO.A$ requires $A$ in every $\PO$-related node;
+    $w$ has $A$. The ancestor $u$ is $\PP$-related (not $\PO$),
+    so the universal does not apply to $u$.
+\end{itemize}
+
+The cover tree thus cleanly separates the tree witness ($u$) from
+the cross witness ($w$), avoiding the conflict that arises when
+both are treated as siblings of $v$.
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{Computational Results}
+\label{sec:results}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Implementation}
+
+The implementation (\texttt{cover\_tree\_tableau.py}, approximately
+350~lines of Python) uses the concept AST, Fischer--Ladner closure,
+Hintikka type enumeration, and $\Safe$ computation from the
+existing quasimodel reasoner~\cite{ClaudeDecidability}.
+The new components are:
+\begin{enumerate}[nosep]
+  \item Separation of demands into tree ($\PP/\PPI$) and cross
+    ($\DR/\PO$) categories.
+  \item The cover-tree sibling check
+    (equation~\eqref{eq:sibling-compat}).
+  \item The singleton-composition propagation check
+    (Section~\ref{sec:singleton}).
+  \item The cross-edge consistency check
+    (non-emptiness of $\Safe_{\DR/\PO}$ for non-tree pairs).
+\end{enumerate}
+
+\subsection{Test suite}
+
+We cross-validated the cover-tree tableau against the quasimodel
+reasoner on 902~test concepts across six categories.
+Table~\ref{tab:results} summarizes the results.
+
+\begin{table}[ht]
+\centering
+\caption{Cross-validation results: cover-tree tableau vs.\
+  quasimodel reasoner on 902 test concepts.}
+\label{tab:results}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrrr}
+\toprule
+Category & Tests & Time (s) & Mismatches \\
+\midrule
+Known SAT (hand-verified) & 50 & 0.1 & 0 \\
+Known UNSAT (hand-verified) & 13 & $<$0.1 & 0 \\
+Adversarial (incl.\ 7 cyclic) & 27 & 71.4 & 0 \\
+Systematic $\exists R_1 \sqcap \exists R_2 \sqcap \forall R_3$
+  & 512 & 3.8 & 0 \\
+Random depth-2 & 200 & 0.4 & 0 \\
+Random depth-3 & 100 & 3.2 & 0 \\
+\midrule
+\textbf{Total} & \textbf{902} & \textbf{78.9} & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All 902~tests produce identical results in both reasoners.
+In particular:
+\begin{itemize}[nosep]
+  \item All 7 cyclic-model concepts
+    (Table~\ref{tab:cyclic}) are correctly identified as SAT.
+  \item All 6 cross-role singleton-composition UNSAT patterns
+    (Example~\ref{ex:cross-unsat} and variants) are correctly
+    identified as UNSAT.
+  \item All 512 systematic triples
+    $\exists R_1.L_1 \sqcap \exists R_2.L_2 \sqcap \forall R_3.L_3$
+    (over all role and literal combinations) match.
+  \item All 300 random concepts (depths 2 and 3) match.
+\end{itemize}
+
+\subsection{Performance}
+
+For concepts with closures of size $\leq 12$ (the majority of
+the test suite), the cover-tree tableau runs in under 10ms.
+Deeper concepts (depth 3 with multiple nested existentials) take
+up to 100ms.  The slowest test, the depth-3 nested PP chain
+$\exists\PP.(\exists\PP.(\exists\PP.A \sqcap \forall\DR.B)
+\sqcap \forall\DR.B) \sqcap \forall\DR.B$,
+takes approximately 110ms due to a closure of size~18 generating
+over 100 Hintikka types.
+
+The asymptotic complexity is dominated by the type enumeration
+($O(2^{|\cl(C_0)|})$) and the sibling compatibility check
+(backtracking over witness assignments).  We do not claim an
+$\EXPTIME$ upper bound for this implementation.
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{Discussion}
+\label{sec:discussion}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Relationship to the theoretical proposals}
+
+The implementation captures the essential algorithmic content
+of the split-forest approach~\cite{SiblingCompleted,CoverTree}
+but omits several components of the full theory:
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Rank-$d$ signatures and explicit blocking.}
+    The type-set search implicitly achieves the effect of blocking
+    (the search space is finite because $|\Tp(C_0)|$ is finite).
+    The full rank-$d$ signature hierarchy, which includes parent
+    summaries, child multiplicities, interface descriptors, and
+    witness menus, is not constructed.
+
+  \item \textbf{Descriptor language and local coherence axioms
+    (C1--C5).}
+    The singleton-composition check captures the most critical
+    coherence constraint (when $\comp(\inv(R_1), R_2)$ is a
+    singleton, the relation between witnesses is forced).
+    The full C3--C4 downward-support axioms, which constrain how
+    cross-edge domains evolve through ancestor-descendant chains,
+    are not explicitly checked.  No test failures have been
+    observed, but this is empirical evidence, not a proof of
+    correctness.
+
+  \item \textbf{Explicit model construction.}
+    The implementation determines SAT/UNSAT but does not construct
+    an explicit $\ALCIRCC{5}$ model.  The theoretical argument
+    constructs a model via canonical refinements of finite-prefix
+    disjunctive networks (K\"onig's lemma), then quotients by
+    $\EQ$.
+
+  \item \textbf{Completeness direction.}
+    The theoretical proof that every satisfiable concept has a
+    valid finite rank-$d$ quotient (the model-to-quotient
+    extraction) is ``condensed'' in~\cite{SiblingCompleted}.
+    Our implementation's correctness for the completeness direction
+    is supported by the 902-test cross-validation but not by a
+    formal proof.
+\end{enumerate}
+
+\subsection{Why the two reasoners agree}
+
+The quasimodel reasoner and the cover-tree tableau use different
+constraint-checking strategies but agree on all 902~tests.
+This is because:
+\begin{itemize}[nosep]
+  \item Both start from the same closure, types, and $\Safe$
+    relations.
+  \item Both require demand closure (every $\exists R.D$ has a
+    witness).
+  \item The quasimodel reasoner's path-consistency check on the
+    full 4-relation $\Safe$ network is \emph{strictly stronger}
+    than the cover-tree tableau's $\{\DR,\PO\}$-restricted check.
+    Thus any type set accepted by the quasimodel reasoner is
+    also accepted by the cover-tree tableau (but not vice versa).
+  \item The quasimodel reasoner's sibling check on all demand
+    pairs is \emph{strictly stronger} than the cover-tree's
+    cross-only check.
+  \item The cover-tree's singleton-composition check catches
+    exactly the cases where the quasimodel's stronger checks
+    would also reject (all singleton-composition UNSAT patterns
+    are caught by both).
+\end{itemize}
+
+In principle, the cover-tree tableau could accept a type set that
+the quasimodel reasoner rejects (since its checks are weaker in
+some dimensions).  The fact that no such case arose in 902~tests
+suggests that the weaker checks are nonetheless sufficient, which
+is consistent with the theoretical claim of the split-forest
+approach.
+
+\subsection{Open questions}
+
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Formal correctness.}
+    Does the cover-tree tableau as implemented constitute a sound
+    and complete decision procedure?  Soundness requires showing
+    that every accepted type set can be unfolded into a genuine
+    $\ALCIRCC{5}$ model.  Completeness requires showing that every
+    satisfiable concept has an accepted type set.  Both directions
+    are supported by the 902-test cross-validation and by the
+    theoretical arguments of~\cite{SiblingCompleted}, but a
+    complete formal proof is outstanding.
+
+  \item \textbf{Complexity.}
+    The implementation's worst-case complexity is not analyzed.
+    The type-set search is bounded by $2^{|\Tp(C_0)|}$, which
+    is doubly exponential in $|\cl(C_0)|$.  Whether the
+    cover-tree approach yields an $\EXPTIME$ decision procedure
+    (matching the known lower bound for $\ALCI$) is open.
+
+  \item \textbf{Extension to RCC8.}
+    RCC5 has the patchwork property; RCC8 does not.  The
+    split-forest approach relies on full tractability of
+    disjunctive RCC5 networks.  Extending the approach to
+    $\ALCIRCC{8}$ would require a different strategy for the
+    cross-edge network.
+\end{enumerate}
+
+
+% ═══════════════════════════════════════════════════════════════
+\section{Conclusion}
+\label{sec:conclusion}
+% ═══════════════════════════════════════════════════════════════
+
+We have implemented a cover-tree tableau decision procedure for
+$\ALCIRCC{5}$ concept satisfiability, based on the split-forest /
+sibling-interface approach.  The key algorithmic contributions are:
+\begin{enumerate}[nosep]
+  \item Separation of demands into tree ($\PP/\PPI$) and cross
+    ($\DR/\PO$) categories, with distinct constraint-checking
+    strategies for each.
+  \item A restricted sibling compatibility check that only
+    considers $\DR/\PO$ witness pairs, avoiding problematic
+    mixed $\PP/\DR$ compositions.
+  \item A singleton-composition propagation check that catches
+    cross-role UNSAT patterns where the forced relation between
+    a tree witness and a cross witness violates type-safety.
+\end{enumerate}
+
+The implementation passes 902~test concepts with zero mismatches
+against an independent quasimodel-based reasoner, providing
+computational evidence for the correctness of the split-forest
+approach.  A formal correctness proof, complexity analysis, and
+extension to $\ALCIRCC{8}$ remain open.
+
+
+% ═══════════════════════════════════════════════════════════════
+% Bibliography
+% ═══════════════════════════════════════════════════════════════
+
+\begin{thebibliography}{10}
+
+\bibitem{Wessel2003}
+Michael Wessel.
+\newblock Qualitative spatial reasoning with the $\mathcal{ALCI}_{RCC}$
+  family---first results and unanswered questions.
+\newblock Technical Memo No.~324/03, University of Hamburg, 2003.
+
+\bibitem{Wessel2002}
+Michael Wessel.
+\newblock On spatial reasoning with description logics---position paper.
+\newblock In \emph{Proc.\ International Workshop on Description Logics
+  (DL~2002)}, CEUR-WS, 2002.
+
+\bibitem{ClaudeDecidability}
+Claude (Anthropic), prompted by Michael Wessel.
+\newblock On the decidability of $\mathcal{ALCI}_{RCC5}$ and
+  $\mathcal{ALCI}_{RCC8}$: Quasimodels meet the patchwork property.
+\newblock Manuscript, March 2026 (revised).
+
+\bibitem{GPTContextual}
+GPT-5.4 Pro (OpenAI), prompted by Michael Wessel.
+\newblock $\mathcal{ALCI}_{RCC5}$ contextual tableau draft.
+\newblock Manuscript, April 2026.
+
+\bibitem{SiblingCompleted}
+GPT-5.4 Pro (OpenAI), prompted by Michael Wessel.
+\newblock Finite sibling-interface descriptors and a proposed completion
+  for $\mathcal{ALCI}_{RCC5}$: completed split-forest version with
+  canonical refinement and typed-$\EQ$ quotienting.
+\newblock Manuscript, April 2026.
+
+\bibitem{CoverTree}
+GPT-5.4 Pro (OpenAI), prompted by Michael Wessel.
+\newblock A proposed cover-tree tableau calculus for
+  $\mathcal{ALCI}_{RCC5}$ with eventuality-aware signature blocking.
+\newblock Manuscript, April 2026.
+
+\bibitem{RenzNebel1999}
+Jochen Renz and Bernhard Nebel.
+\newblock On the complexity of qualitative spatial reasoning:
+  A maximal tractable fragment of the Region Connection Calculus.
+\newblock \emph{Artificial Intelligence}, 108(1--2):69--123, 1999.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,569 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Completed sibling-interface proof proposal for $\mathcal{ALCI}_{RCC5}$}
+\fancyhead[R]{April 2026}
+\fancyfoot[C]{\thepage}
+\titleformat{\section}{\large\bfseries\color{MidnightBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{MidnightBlue}}{\thesubsection}{0.5em}{}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.5em}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,leftmargin=1.8em}
+\onehalfspacing
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{claim}[definition]{Claim}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\RCC}{\{\DR,\PO,\PP,\PPI\}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\Tp}{\operatorname{Tp}}
+\newcommand{\State}{\operatorname{State}}
+\newcommand{\Child}{\operatorname{Child}}
+\newcommand{\Iface}{\operatorname{Iface}}
+\newcommand{\Wit}{\operatorname{Wit}}
+\newcommand{\Par}{\operatorname{Par}}
+\newcommand{\st}{\operatorname{st}}
+\newcommand{\stat}{\operatorname{stat}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\inv}{\operatorname{inv}}
+\newcommand{\orig}{\operatorname{orig}}
+\newcommand{\Core}{\mathsf{Core}}
+\newcommand{\Out}{\mathsf{Out}}
+\newcommand{\Front}{\mathsf{Front}}
+\newcommand{\Dom}{\mathsf{Dom}}
+\newcommand{\OpenDom}{\mathbb{D}}
+\newcommand{\md}{\operatorname{md}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Finite Sibling-Interface Descriptors and a Proposed Completion\\[0.2em]
+for $\mathcal{ALCI}_{RCC5}$\par}
+\vspace{0.75em}
+{\normalsize A proof-style note}\par
+\vspace{0.45em}
+{\small April 2026}
+\end{center}
+
+\begin{abstract}
+This note continues the revised sibling-interface proposal for $\mathcal{ALCI}_{RCC5}$ and turns its open patchwork conjecture into an explicit theorem at the level of finite-prefix disjunctive networks. The key correction from the earlier note is retained: after splitting common descendants into $\EQ$-mates, $\PP$ is no longer an open sibling cross-edge option. The post-split interface is organized into three statuses: $\Core$ (common descendants, handled by $\EQ$), $\Out$ (already forced to be $\DR$ from the opposite subtree), and $\Front$ (still in the genuinely open $\DR/\PO$ zone). We define a locally coherent finite descriptor language, assign disjunctive RCC5 domains to all finite partial unfoldings, prove non-emptiness under arc-consistency by a least-common-ancestor induction, and then use full tractability of disjunctive RCC5 networks plus K"onig's lemma to obtain a weak-$\EQ$ model. Quotienting by $\EQ$ yields a strong-$\EQ$ model. Combined with the finite-index lemma and the standard extraction of rank-$d$ states, where $d=\md(C_0)$, this gives a finite quotient search procedure for concept satisfiability. The note is intended as a proof-style completion of the revised sibling-interface program; the extraction of witness menus from a model is condensed but finite throughout.
+\end{abstract}
+
+\section{Context}
+
+Wessel's report leaves the decidability of $\mathcal{ALCI}_{RCC5}$ open and already isolates the real difficulty: models are complete RCC5-labelled graphs rather than ordinary trees, and infinite behaviour is driven by proper-part chains rather than plain modal branching \cite{Wessel2003}. More recent quotient-style approaches isolate the same obstruction from the opposite direction: exact extraction behaves cleanly for $\DR$, $\PP$, and $\PPI$, while the remaining difficulty is the $\PO$-sensitive cross-branch interface \cite{TwoTier3}. The revised sibling-interface note sharpened this picture by correcting an important mistake: after splitting join nodes into $\EQ$-copies, $\PP$ is not an open sibling cross-edge value anymore. It is part of the common core and must be handled by splitting, not by cross-edge choice.
+
+The present note takes the next step. It keeps the corrected three-way partition
+\[
+\Core,\qquad \Out,\qquad \Front,
+\]
+and replaces the earlier open conjecture by an explicit finite-prefix patchwork theorem. The theorem is then combined with the finite-index lemma from the revised note to obtain a full quotient-to-model argument.
+
+\section{Preliminaries}
+
+\subsection{RCC5 conventions}
+
+We use the non-$\EQ$ RCC5 relations
+\[
+\RCC=\{\DR,\PO,\PP,\PPI\}.
+\]
+The composition table is read in the standard way: if $x\,R\,y$ and $y\,S\,z$, then $x\,T\,z$ for some
+\[
+T\in \comp(R,S).
+\]
+We use only the following facts repeatedly:
+\[
+\comp(\PP,\DR)=\{\DR\},\qquad \comp(\DR,\PPI)=\{\DR\},
+\]
+\[
+\comp(\PP,\PO)=\{\DR,\PO,\PP\},\qquad \comp(\PPI,\DR)=\{\DR,\PO,\PPI\},
+\]
+\[
+\comp(\PPI,\PO)=\{\PO,\PPI\},
+\]
+and for all $R,S\in\{\DR,\PO\}$,
+\[
+\comp(R,S)\cap\{\DR,\PO\}\neq\varnothing.
+\]
+We also use the full tractability of disjunctive RCC5 networks: if arc-consistency does not empty any domain, then a globally consistent atomic refinement exists \cite{TwoTier3,Wessel2003}.
+
+\subsection{Types and modal depth}
+
+For an input concept $C_0$, let $\cl(C_0)$ be its Fischer--Ladner closure and let $\Tp(C_0)$ be the finite set of Hintikka types over $\cl(C_0)$. Write $d:=\md(C_0)$ for the modal depth.
+
+\begin{definition}[Type-safe open labels]\label{def:type-safe-open}
+For Hintikka types $\tau,\upsilon\in\Tp(C_0)$, define
+\[
+\operatorname{Safe}_{\DR/\PO}(\tau,\upsilon)
+:=
+\left\{R\in\{\DR,\PO\}\;\middle|\;
+\begin{array}{l}
+\forall\, (\forall R.C\in \tau \Rightarrow C\in \upsilon),\\[1mm]
+\forall\, (\forall \inv(R).C\in \upsilon \Rightarrow C\in \tau)
+\end{array}
+\right\}.
+\]
+If $p,q$ are rank-$k$ states for any $k$, write $\lambda(p)$ and $\lambda(q)$ for their local type components and set
+\[
+\operatorname{Safe}_{\DR/\PO}(p,q):=\operatorname{Safe}_{\DR/\PO}(\lambda(p),\lambda(q)).
+\]
+\end{definition}
+
+\section{Split-tree presentations}
+
+\begin{definition}[Weak-$\EQ$ split-tree presentation]
+A \emph{weak-$\EQ$ split-tree presentation} of a candidate model of $C_0$ consists of:
+\begin{enumerate}[label=(\roman*)]
+    \item a rooted tree $T$ with ambient root $\varrho_T$ and a distinguished \emph{evaluation node} $r_\ast\in T$,
+    \item a surjective map $\orig:T\to D$ onto an underlying unsplit proper-part DAG $D$,
+    \item a local type assignment $\lambda:T\to\Tp(C_0)$,
+\end{enumerate}
+such that:
+\begin{itemize}
+    \item tree edges are interpreted as immediate $\PPI$ edges downward and hence $\PP$ upward,
+    \item if a node of $D$ has several immediate predecessors, it may be represented by several copies in $T$,
+    \item two tree nodes are in relation $\EQ$ exactly when they are distinct copies of the same original DAG node.
+\end{itemize}
+All indirect $\PP/\PPI$ edges are recovered from the ancestor relation in $T$.
+\end{definition}
+
+\begin{remark}
+This is a certificate presentation, not yet a genuine complete RCC5 model. The missing data are the labels on incomparable pairs of tree nodes. The whole point of the descriptor calculus is to make those labels finite and patchwork-solvable. The evaluation node $r_\ast$ need not coincide with the ambient root $\varrho_T$; this is essential for formulas beginning with $\exists\PP.\top$, which are naturally evaluated at an internal tree node having an ancestor above it.
+\end{remark}
+
+\begin{definition}[Ordered sibling pair]\label{def:ordered-siblings}
+Every node $u$ of $T$ is equipped with an arbitrary but fixed local total order $\triangleleft_u$ on its children. Two distinct children $s,t$ of $u$ form an \emph{ordered sibling pair} $(s,t)$. The order is not semantic; it only fixes the left/right orientation of the interface descriptor. Both $(s,t)$ and $(t,s)$ are allowed as ordered sibling pairs, and when two endpoints $x,y$ first diverge below $u$ through children $s,t$, the ordered pair used in the network construction is the one determined by endpoint placement: $x\in T_s$ and $y\in T_t$. Write $T_s$ and $T_t$ for the rooted subtrees below them.
+\end{definition}
+
+\section{The corrected status partition}
+
+From now on let $(s,t)$ be an ordered sibling pair with
+\[
+\rho(s,t)=\PO.
+\]
+The $\DR$ case is rigid and handled separately below.
+
+\begin{definition}[Core, outside, frontier statuses]\label{def:statuses-completed}
+For $x\in T_s$ define:
+\begin{itemize}
+    \item $x\in \Core(s,t)$ iff $\orig(x)$ lies below both $\orig(s)$ and $\orig(t)$ in the unsplit DAG;
+    \item $x\in \Out(s,t)$ iff $x\notin \Core(s,t)$ and $\rho(x,t)=\DR$;
+    \item $x\in \Front(s,t)$ iff $x\notin \Core(s,t)$ and $\rho(x,t)=\PO$.
+\end{itemize}
+Define $\Core(t,s)$, $\Out(t,s)$, and $\Front(t,s)$ symmetrically.
+\end{definition}
+
+\begin{lemma}[Partition lemma]\label{lem:partition-completed}
+For every $x\in T_s$, exactly one of
+\[
+ x\in \Core(s,t),\qquad x\in \Out(s,t),\qquad x\in \Front(s,t)
+\]
+holds. Symmetrically for every $y\in T_t$.
+\end{lemma}
+
+\begin{proof}
+If $x\in \Core(s,t)$ there is nothing to prove. So assume $x\notin \Core(s,t)$. Then $x$ is distinct from $t$ and not below it. Hence $\EQ$ is impossible, and $\PP$ is impossible because it would put $x$ below $t$. The relation $\PPI$ is also impossible: it would put $t$ below $x$ below $s$, contradicting the incomparability of the sibling roots. RCC5 is jointly exhaustive on distinct nodes, so only $\DR$ or $\PO$ remain. Thus $x$ belongs to exactly one of $\Out(s,t)$ or $\Front(s,t)$. The proof on the right side is symmetric.
+\end{proof}
+
+\begin{remark}
+This is the crucial correction to the earlier note. After splitting, $\PP$ is no longer an open sibling cross-edge possibility; it is precisely the common-descendant core.
+\end{remark}
+
+\section{Rigid $\DR$ behaviour}
+
+\begin{lemma}[Uniform $\DR$ below a $\DR$ root interface]\label{lem:uniform-dr}
+If an ordered sibling pair $(s,t)$ satisfies $\rho(s,t)=\DR$, then every pair of descendants $x\in T_s$, $y\in T_t$ satisfies
+\[
+\rho(x,y)=\DR.
+\]
+\end{lemma}
+
+\begin{proof}
+Since $x\in T_s$, we have $x\,\PP\,s$. Since $s\,\DR\,t$, the singleton law $\comp(\PP,\DR)=\{\DR\}$ gives $x\,\DR\,t$. Since $t\,\PPI\,y$, the singleton law $\comp(\DR,\PPI)=\{\DR\}$ yields $x\,\DR\,y$.
+\end{proof}
+
+\begin{proposition}[Outside status forces $\DR$]\label{prop:out-dr}
+Let $(s,t)$ be an ordered sibling pair with $\rho(s,t)=\PO$.
+\begin{enumerate}[label=(\alph*)]
+    \item If $x\in \Out(s,t)$, then for every $y\in T_t$ one has $\rho(x,y)=\DR$.
+    \item If $y\in \Out(t,s)$, then for every $x\in T_s$ one has $\rho(x,y)=\DR$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+We prove (a). By definition, $x\,\DR\,t$. Since every $y\in T_t$ satisfies $t\,\PPI\,y$, the singleton law $\comp(\DR,\PPI)=\{\DR\}$ yields $x\,\DR\,y$. The other direction is symmetric.
+\end{proof}
+
+\begin{lemma}[Open cross-edge lemma]\label{lem:open-cross-completed}
+Let $(s,t)$ satisfy $\rho(s,t)=\PO$. If
+\[
+ x\in \Out(s,t)\cup\Front(s,t),\qquad y\in \Out(t,s)\cup\Front(t,s),
+\]
+then
+\[
+\rho(x,y)\in\{\DR,\PO\}.
+\]
+Thus no open cross-edge between distinct non-core descendants can carry $\EQ$, $\PP$, or $\PPI$.
+\end{lemma}
+
+\begin{proof}
+If $\rho(x,y)=\EQ$, then $\orig(x)=\orig(y)$ and both nodes lie in the common core, contradiction. If $\rho(x,y)=\PP$, then $x$ lies below $y$ and therefore below $t$, so $x\in\Core(s,t)$, contradiction. If $\rho(x,y)=\PPI$, then symmetrically $y\in\Core(t,s)$, contradiction. RCC5 is jointly exhaustive on distinct pairs, so only $\DR$ and $\PO$ remain.
+\end{proof}
+
+\section{Status evolution and open domains}
+
+\begin{proposition}[Status automaton]\label{prop:status-automaton-completed}
+Let $(s,t)$ be an ordered sibling pair with $\rho(s,t)=\PO$, and let $x'$ be a child of $x$ in $T_s$. Then
+\[
+\Core\to\{\Core\},\qquad \Out\to\{\Out\},\qquad \Front\to\{\Out,\Front,\Core\}.
+\]
+The same transition system holds symmetrically on the right.
+\end{proposition}
+
+\begin{proof}
+If $x\in\Core(s,t)$, then every descendant of $x$ remains below both sibling roots, so $x'\in\Core(s,t)$. If $x\in\Out(s,t)$, then $x\,\DR\,t$, and because $x'\,\PP\,x$, the singleton law $\comp(\PP,\DR)=\{\DR\}$ yields $x'\,\DR\,t$, so $x'\in\Out(s,t)$. Finally, if $x\in\Front(s,t)$, then $x\,\PO\,t$ and $x'\,\PP\,x$, so
+\[
+\rho(x',t)\in \comp(\PP,\PO)=\{\DR,\PO,\PP\}.
+\]
+The values $\DR$ and $\PO$ place $x'$ into $\Out(s,t)$ or $\Front(s,t)$, and the value $\PP$ places $x'$ into the core.
+\end{proof}
+
+The open part of the descriptor language uses the three nonempty disjunctive domain values
+\[
+\OpenDom:=\bigl\{\{\DR\},\{\PO\},\{\DR,\PO\}\bigr\}.
+\]
+The first value is rigid, the second is pure frontier overlap, and the third records unresolved $\DR/\PO$ ambiguity.
+
+\begin{definition}[Rank-$0$ colors]
+Let
+\[
+\Sigma_0:=\Tp(C_0).
+\]
+\end{definition}
+
+\begin{definition}[Endpoint summaries]\label{def:endpoint-summary}
+Fix an ordered sibling pair $(s,t)$ and a rank $k\ge 0$. For $x\in T_s$, let $\st_k(x)\in\Sigma_k$ be its rank-$k$ state (defined recursively below). Let $\stat_{s,t}(x)\in\{\Core,\Out,\Front\}$ be the unique status of $x$ relative to $(s,t)$ from Lemma~\ref{lem:partition-completed}. The \emph{left endpoint summary} of $x$ with respect to $(s,t)$ is the pair
+\[
+\chi_{s,t}(x):=(\st_k(x),\stat_{s,t}(x)).
+\]
+Thus the first component $p:=\st_k(x)$ is a rank-$k$ state, and the second component $\sigma:=\stat_{s,t}(x)$ is the endpoint status. If $\sigma=\Core$, then $K_k(s,t)(p)\neq 0$; if $\sigma\in\{\Out,\Front\}$, then $(p,\sigma)\in L_k(s,t)$. The \emph{right endpoint summary} $\chi_{t,s}(y)$ for $y\in T_t$ is defined symmetrically.
+\end{definition}
+
+\begin{definition}[Rank-$k$ descriptor]\label{def:descriptor-full}
+Assume $\Sigma_k$ finite. For an ordered sibling pair $(s,t)$ with $\rho(s,t)=\PO$, its rank-$k$ descriptor consists of:
+\begin{enumerate}[label=(\roman*)]
+    \item a core multiplicity map
+    \[
+    K_k(s,t):\Sigma_k\to\{0,1,+\};
+    \]
+    \item left and right open supports
+    \[
+    L_k(s,t),R_k(s,t)\subseteq \Sigma_k\times\{\Out,\Front\};
+    \]
+    \item an open relation table
+    \[
+    M_k(s,t):L_k(s,t)\times R_k(s,t)\to\OpenDom;
+    \]
+    \item bounded multiplicity maps on $L_k$ and $R_k$ with values in $\{0,1,+\}$.
+\end{enumerate}
+For a $\DR$-root interface, we use the trivial descriptor forced by Lemma~\ref{lem:uniform-dr}.
+\end{definition}
+
+\begin{definition}[Local coherence axioms]\label{def:coherence}
+A rank-$k$ descriptor is \emph{locally coherent} if the following hold.
+\begin{enumerate}[label=(C\arabic*)]
+    \item If either endpoint status is $\Out$, then the table value is $\{\DR\}$.
+    \item Every frontier-frontier entry indexed by endpoint summaries $(p,\Front)$ and $(q,\Front)$ is a nonempty subset of
+    \[
+    \operatorname{Safe}_{\DR/\PO}(p,q).
+    \]
+    In other words, every open label carried by that table entry is type-safe for the local types of the two endpoint states.
+    \item (Left downward support) If a left endpoint $(p,\sigma)$ can evolve in one child step to $(p',\sigma')$, then for every right endpoint $(q,\tau)$ and every
+    \[
+    r\in M_k((p,\sigma),(q,\tau))
+    \]
+    there exists
+    \[
+    r'\in M_k((p',\sigma'),(q,\tau))
+    \]
+    with
+    \[
+    r'\in \comp(\PP,r),
+    \]
+    and conversely for every such $r'$ there exists $r$ with
+    \[
+    r\in \comp(\PPI,r').
+    \]
+    \item (Right downward support) The symmetric condition holds when the right endpoint evolves by one child step.
+    \item (Triple coherence) For every parent node, every three child interfaces emanating from that parent, and every compatible choice of endpoint colors/statuses from the three pairwise tables, each pair of values in the first two tables has support in the third table via the RCC5 composition table.
+\end{enumerate}
+\end{definition}
+
+\begin{remark}
+The role of (C3) and (C4) is exactly to forbid the unsupported pattern
+\[
+M=\{\DR,\PO\}\quad\text{above},\qquad M'=\{\PO\}\quad\text{below}
+\]
+when the $\DR$ value has no $\PP$-support on the lower edge. This is the point where the crude maximal-domain construction fails and where the descriptor table must already carry support information.
+\end{remark}
+
+\section{Ranked node states and finite index}
+
+\begin{definition}[Rank-$(k+1)$ state]\label{def:rank-k-plus-one-state}
+Assume rank-$k$ colors are given. The rank-$(k+1)$ state of a node $u$ is
+\[
+\State_{k+1}(u):=\bigl(\lambda(u),\Par_k(u),\Child_k(u),\Iface_k(u),\Wit_k(u)\bigr),
+\]
+where:
+\begin{itemize}
+    \item $\lambda(u)\in\Tp(C_0)$ is the local type,
+    \item $\Par_k(u)\in\Sigma_k\cup\{\bot\}$ records the unique parent color of $u$ when $u\neq \varrho_T$, and $\bot$ at the ambient tree root,
+    \item $\Child_k(u):\Sigma_k\to\{0,1,+\}$ records the multiplicities of rank-$k$ child colors, where $+=\text{``at least two''}$ (not ``infinitely many''),
+    \item $\Iface_k(u)$ is the finite family of locally coherent rank-$k$ sibling descriptors between ordered child pairs of $u$,
+    \item $\Wit_k(u)$ is a finite witness menu for the existential formulas in $\lambda(u)$, recording for each existential one designated target color and target relation domain.
+\end{itemize}
+The coarse multiplicity alphabet $\{0,1,+\}$ is used only to distinguish absence, uniqueness, and non-uniqueness of child colors; the infinitary behaviour of the final model comes from unbounded depth of the unfolding, not from infinite branching at a node. Let $\Sigma_{k+1}$ be the set of all such states.
+\end{definition}
+
+\begin{definition}[Rank-$d$ state]
+An element of $\Sigma_d$ is called a \emph{rank-$d$ state}. More generally, if $x$ is a node occurring in a model, split-tree presentation, or unfolding, then $\st_d(x)\in\Sigma_d$ denotes the rank-$d$ state attached to $x$.
+\end{definition}
+
+\begin{theorem}[Finite-index lemma]\label{thm:finite-index-completed}
+For every $k\ge 0$, the set $\Sigma_k$ is finite.
+\end{theorem}
+
+\begin{proof}
+The proof is by induction. The base case $\Sigma_0=\Tp(C_0)$ is finite because $\cl(C_0)$ is finite. For the inductive step, assume $\Sigma_k$ finite. Then there are only finitely many parent slots $\Par_k$, finitely many child multiplicity maps $\Child_k$, finitely many support sets $L_k,R_k$, finitely many core profiles $K_k$, finitely many table values in $\OpenDom$, finitely many locally coherent relation tables $M_k$, and finitely many bounded multiplicity maps on supports. The witness menu ranges over the finite closure and the finite alphabet of rank-$k$ colors and open domain values. Hence only finitely many tuples
+\[
+(\lambda,\Par_k,\Child_k,\Iface_k,\Wit_k)
+\]
+exist. Therefore $\Sigma_{k+1}$ is finite.
+\end{proof}
+
+\section{Finite quotients and finite prefixes}
+
+\begin{definition}[Valid finite rank-$d$ quotient]\label{def:valid-quotient}
+A \emph{valid finite rank-$d$ quotient} for $C_0$ is a tuple
+\[
+Q=(S,\sigma^{\uparrow},\sigma_{\ast},\Par_d,\Child_d,\Iface_d,\Wit_d),
+\]
+where:
+\begin{itemize}
+    \item $S\subseteq \Sigma_d$ is a finite set of rank-$d$ states,
+    \item $\sigma^{\uparrow}\in S$ is a distinguished \emph{ambient root state},
+    \item $\sigma_{\ast}\in S$ is a distinguished \emph{evaluation state}, not necessarily equal to $\sigma^{\uparrow}$,
+    \item the parent slot, child multiplicity data, sibling-interface descriptors, and witness menus are those inherited from the states in $S$, using only targets that again lie in $S$.
+\end{itemize}
+These data must satisfy: every existential requirement in every state's local type is matched by the witness menu, every universal requirement is respected by the type-safe relation domains in the descriptors and menus, and repeated state occurrences are quotiented by equality of rank-$d$ states.
+\end{definition}
+
+\begin{remark}
+For the present note, the quotient is taken as the finite certificate produced by the state language. The model-guided extraction of such quotients is standard in the global-caching tradition: one reads off rank-$d$ states from a satisfying split-tree presentation and identifies equal states. The only genuinely new soundness issue is the complete-graph cross-edge assignment; that is what is proved next.
+\end{remark}
+
+\begin{definition}[Unfolding $U(Q)$]\label{def:UQ}
+Let $Q$ be a valid finite rank-$d$ quotient. Its unfolding $U(Q)$ is the pointed split tree obtained as follows.
+\begin{enumerate}[label=(\roman*)]
+    \item Start with a fresh copy of the evaluation state $\sigma_{\ast}$; this copy is the distinguished evaluation node of $U(Q)$.
+    \item Realize child multiplicity requirements and witness-menu entries downward by fresh copies of the corresponding target states.
+    \item Realize the unique predecessor slot upward until a node with parent slot $\bot$ is reached; that node is the ambient root copy of $U(Q)$ and has state $\sigma^{\uparrow}$.
+    \item Iterate the downward construction at every generated node.
+\end{enumerate}
+Core matches are unfolded as distinct $\EQ$-mates. A \emph{finite prefix} of $U(Q)$ is a finite connected pointed subtree containing the distinguished evaluation node and closed under predecessors.
+\end{definition}
+
+\begin{definition}[Disjunctive network of a finite prefix]\label{def:network}
+Let $P$ be a finite prefix of $U(Q)$. We define a disjunctive RCC5 network $N(P)$ on the nodes of $P$.
+\begin{enumerate}[label=(\roman*)]
+    \item If $x=y$, set $D(x,y)=\{\EQ\}$.
+    \item If $x$ and $y$ are $\EQ$-mates, set $D(x,y)=\{\EQ\}$.
+    \item If $x$ is an ancestor of $y$, set $D(x,y)=\{\PPI\}$ and $D(y,x)=\{\PP\}$.
+    \item If $x$ and $y$ first diverge at an ordered sibling pair $(s,t)$, use the descriptor of $(s,t)$ as follows. Let
+    \[
+    \chi_{s,t}(x)=(p,\sigma),\qquad \chi_{t,s}(y)=(q,\tau)
+    \]
+    be their endpoint summaries from Definition~\ref{def:endpoint-summary}. Thus $p$ and $q$ are rank-$k$ states, while $\sigma$ and $\tau$ are the unique endpoint statuses. If $\sigma=\Core$, then $K_k(s,t)(p)\neq 0$; if $\sigma\in\{\Out,\Front\}$, then $(p,\sigma)\in L_k(s,t)$. The right-hand side is analogous.
+    Then:
+    \begin{itemize}
+        \item if either endpoint is in the core, replace that endpoint by its designated mate in the opposite branch and recurse;
+        \item if either endpoint status is $\Out$, set $D(x,y)=\{\DR\}$;
+        \item if both endpoint statuses are $\Front$, set
+        \[
+        D(x,y)=M_k(s,t)((p,\Front),(q,\Front)).
+        \]
+    \end{itemize}
+\end{enumerate}
+The converse domain $D(y,x)$ is determined by inversion.
+\end{definition}
+
+\section{Finite-prefix arc-consistency theorem}
+
+\begin{theorem}[Finite-prefix non-emptiness]\label{thm:finite-prefix}
+Let $Q$ be a valid finite rank-$d$ quotient. For every finite prefix $P$ of $U(Q)$, arc-consistency applied to the disjunctive network $N(P)$ of Definition~\ref{def:network} never empties a domain.
+\end{theorem}
+
+\begin{proof}
+We prove the stronger statement that every domain value surviving the local construction has support through every third node in $P$. The proof is by induction on the maximum height of the least common ancestors appearing in triples of nodes.
+
+\smallskip
+\noindent\textbf{Case 1: one pair is an $\EQ$ pair.}
+If $D(x,y)=\{\EQ\}$, then by construction $x$ and $y$ have identical local type and identical domains to every third node $z$. Since
+\[
+\comp(\EQ,R)=\{R\}=\comp(R,\EQ),
+\]
+every support check is immediate.
+
+\smallskip
+\noindent\textbf{Case 2: all three nodes lie in one child subtree.}
+Then the whole triple belongs to a strictly smaller finite prefix, so the induction hypothesis applies.
+
+\smallskip
+\noindent\textbf{Case 3: the three nodes lie in three distinct child subtrees of one parent.}
+After reducing core endpoints to their designated mates, every pair-domain is one of
+\[
+\{\DR\},\qquad \{\PO\},\qquad \{\DR,\PO\}.
+\]
+By local triple coherence (C5), every pair of values chosen from the first two domains has support in the third. Hence no value is removed.
+
+\smallskip
+\noindent\textbf{Case 4: two nodes lie in one child subtree and the third lies in a sibling subtree.}
+Assume $x,z\in T_s$ and $y\in T_t$ for an ordered sibling pair $(s,t)$.
+
+\smallskip
+\noindent\emph{Subcase 4a: $x$ and $z$ are incomparable inside $T_s$.}
+Then their domain is already controlled by a strictly lower sibling descriptor inside $T_s$, so the induction hypothesis reduces the problem to Case~3.
+
+\smallskip
+\noindent\emph{Subcase 4b: $x$ is above $z$.}
+Then
+\[
+D(x,z)=\{\PPI\},\qquad D(z,x)=\{\PP\}.
+\]
+Write
+\[
+X:=D(x,y),\qquad Y:=D(z,y).
+\]
+By the status automaton and the support axioms (C3)--(C4), the pair $(X,Y)$ is one of the allowed downward-support configurations. We must check the two directed support conditions.
+
+For the triangle $x\to z\to y$, every value in $Y$ has an ancestor support in $X$ by the second half of (C3). Equivalently, every value in $X$ has a child support in $Y$ through the composition with $\PP$ required by the first half of (C3). This is exactly the support needed for arc-consistency on the triple $(z,x,y)$.
+
+For the triangle $z\to x\to y$, the symmetric support through $\PPI$ is guaranteed by the converse half of (C3). Concretely, the only composition facts used are
+\[
+\comp(\PP,\DR)=\{\DR\},\qquad \comp(\PP,\PO)=\{\DR,\PO,\PP\},
+\]
+\[
+\comp(\PPI,\DR)=\{\DR,\PO,\PPI\},\qquad \comp(\PPI,\PO)=\{\PO,\PPI\}.
+\]
+The local support axiom was chosen exactly so that unsupported combinations such as
+\[
+X=\{\DR,\PO\},\qquad Y=\{\PO\}
+\]
+are forbidden whenever the $\DR$ value would have no $\PP$-support below. Hence no value is removed in this subcase either.
+
+The case where $z$ is above $x$ is symmetric.
+
+Since every triple falls under one of the four cases, every domain retains support through every third node. Hence arc-consistency empties no domain.
+\end{proof}
+
+\begin{remark}
+The theorem is intentionally stated in the arc-consistency form needed by full tractability, not as a claim that the raw domains are automatically path-complete before pruning. The descriptor language carries exactly the additional support information needed to prevent empty domains under pruning.
+\end{remark}
+
+\section{From finite prefixes to a model}
+
+\begin{theorem}[Weak-$\EQ$ realization]\label{thm:weak-model}
+Every valid finite rank-$d$ quotient $Q$ unfolds to a weak-$\EQ$ model of $C_0$.
+\end{theorem}
+
+\begin{proof}
+Let $P_0\subseteq P_1\subseteq P_2\subseteq\cdots$ be an exhaustion of $U(Q)$ by finite prefixes. For each $n$, Theorem~\ref{thm:finite-prefix} implies that arc-consistency leaves the network $N(P_n)$ nonempty. By full tractability of disjunctive RCC5 networks, there exists an atomic refinement $A_n$ of $N(P_n)$.
+
+Order the atomic refinements by restriction. Because every finite prefix has only finitely many refinements, the tree of partial refinements is finitely branching and every level is nonempty. By K"onig's lemma, there is an infinite branch
+\[
+A_0\subseteq A_1\subseteq A_2\subseteq\cdots
+\]
+whose union $A_\infty$ labels every pair of nodes in $U(Q)$ by a single RCC5 base relation.
+
+Every finite triple of nodes appears already in some finite prefix, so the union is composition-consistent. Every designated existential requirement is satisfied because the unfolding was built from the witness menus. Every universal requirement is respected because all non-singleton table entries were constrained to be type-safe in Definition~\ref{def:coherence}. Hence $A_\infty$ turns the unfolding into a weak-$\EQ$ model, and the distinguished evaluation node realizes $C_0$ by the usual induction on modal depth.
+\end{proof}
+
+\begin{theorem}[Strong-$\EQ$ realization]\label{thm:strong-model}
+Every valid finite rank-$d$ quotient $Q$ yields a strong-$\EQ$ model of $C_0$.
+\end{theorem}
+
+\begin{proof}
+By Theorem~\ref{thm:weak-model}, $Q$ has a weak-$\EQ$ realization $M$. Quotient $M$ by the equivalence relation $\EQ$. Because $\EQ$-pairs were introduced only as split copies and every finite-prefix network forced identical behaviour to third nodes through the singleton law
+\[
+\comp(\EQ,R)=\{R\}=\comp(R,\EQ),
+\]
+$\EQ$ is a congruence on $M$. Therefore the quotient structure $M/{\EQ}$ is again an RCC5 model, now with strong identity semantics for $\EQ$. Satisfaction of all formulas in $\cl(C_0)$ is preserved under the quotient, so the distinguished evaluation class satisfies $C_0$.
+\end{proof}
+
+\section{Decidability consequence}
+
+\begin{theorem}[Decidability via finite quotients]\label{thm:decidability}
+Concept satisfiability in $\mathcal{ALCI}_{RCC5}$ is decidable.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Fix $d=\md(C_0)$. By Theorem~\ref{thm:finite-index-completed}, only finitely many rank-$d$ states exist. Hence there are only finitely many finite quotient candidates up to isomorphism. Enumerate them and test the local validity conditions from Definitions~\ref{def:coherence} and \ref{def:network} together with the witness-menu constraints.
+
+If a valid quotient is found whose distinguished evaluation state's local type contains $C_0$, Theorems~\ref{thm:weak-model} and \ref{thm:strong-model} produce a genuine model of $C_0$.
+
+Conversely, from any pointed strong-$\EQ$ model $(M,m_{\ast})$ of $C_0$, construct a split-tree presentation by splitting join nodes into $\EQ$-mates and reading off rank-$d$ states. Choose an ambient root above $m_{\ast}$ in the split tree; because $d=\md(C_0)$ is finite, only finitely many ancestor levels above the distinguished evaluation point are relevant to formulas in $\cl(C_0)$. Because only finitely many such rank-$d$ states exist, equal states can be quotiented. The descriptor tables are extracted as the least locally coherent support-closed tables containing the realized atomic relations of the model. This yields a valid finite quotient. Therefore $C_0$ is satisfiable iff a valid finite quotient exists, and the search terminates.
+\end{proof}
+
+\begin{remark}
+The only compressed part in the final theorem is the extraction of the support-closed tables from a model. That extraction is finite because the closure, the rank-$d$ color alphabet, and the open domain alphabet are all finite. The soundness direction proved above is the genuinely new global step.
+\end{remark}
+
+\section{Conclusion}
+
+The revised sibling-interface program becomes significantly sharper once $\PP$ is removed from the open sibling interface and absorbed into the split core. After that correction, the cross-edge problem decomposes cleanly:
+\begin{itemize}
+    \item $\EQ$ is fixed by split copies,
+    \item $\DR$ is rigid on all $\Out$ zones,
+    \item the only unresolved open labels are $\DR/\PO$ on frontier-frontier pairs.
+\end{itemize}
+The descriptor language records exactly the support information needed for those frontier pairs. The finite-prefix arc-consistency theorem then supplies the missing patchwork step, and full tractability of disjunctive RCC5 networks finishes the model-construction argument. In that sense, the present note is a proposed completion of the corrected split-forest proof strategy for $\mathcal{ALCI}_{RCC5}$.
+
+\begin{thebibliography}{9}
+
+\bibitem{Wessel2003}
+Michael Wessel.
+\newblock \emph{Qualitative Spatial Reasoning with the ALCIRCC Family - First Results and Unanswered Questions}.
+\newblock University of Hamburg, Memo No. 324/03, 2003.
+
+\bibitem{TwoTier3}
+Claude (Anthropic), prompted by Michael Wessel.
+\newblock \emph{Decidability of ALCIRCC5 via Two-Tier Quotient Construction: Period descriptors, PP-kernel nodes, and the full tractability of RCC5}.
+\newblock Third revision, April 2026.
+
+\end{thebibliography}
+
+\end{document}
