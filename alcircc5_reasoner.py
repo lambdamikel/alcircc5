@@ -433,14 +433,9 @@ def check_satisfiability(C0, verbose=False):
                             comp_set = COMP[(INV[Rm], Rmp)]
                             found = False
                             for jmp in candidates[mp]:
-                                if jm == jmp:
-                                    # Same witness for two demands: sibling
-                                    # relation is EQ, which is always safe
-                                    # (reflexive). But in our model EQ only
-                                    # holds between identical elements; two
-                                    # demands may need distinct witnesses.
-                                    # For now, allow it — the witness can be
-                                    # the same element if types match.
+                                if jm == jmp and Rm == Rmp:
+                                    # Same type AND same role: one element
+                                    # can serve both demands (EQ relation).
                                     found = True
                                     break
                                 if comp_set & safe[(jm, jmp)]:
@@ -466,9 +461,9 @@ def check_satisfiability(C0, verbose=False):
                 for jm in candidates[slot]:
                     ok = True
                     for prev_slot, jmp in enumerate(assignment):
-                        if jm == jmp:
-                            continue  # same witness, compatible
                         Rmp = dems[prev_slot][0]
+                        if jm == jmp and Rm == Rmp:
+                            continue  # same type, same role: one element serves both
                         if not (COMP[(INV[Rm], Rmp)] & safe[(jm, jmp)]):
                             ok = False
                             break

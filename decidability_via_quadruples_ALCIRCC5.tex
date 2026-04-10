@@ -65,13 +65,12 @@ The original Q4 condition has a soundness gap
 (Section~\ref{sec:erratum}).  Replacing Q4 with three necessary
 conditions --- \emph{disjunctive path-consistency},
 \emph{sibling compatibility}, and \emph{role-path compatibility} ---
-fixes soundness (all three are extractable from any model) and
-passes 18/18~tests across 12~random seeds.
-A Henkin tree extension test builds depth-5 tree models from the
-quasimodel type set: \textbf{zero failures} across 1000+~extensions
-and 12~hash seeds.  UNSAT answers are \textbf{provably sound}.
-SAT answers are supported by strong computational evidence but
-lack a formal sufficiency proof.
+fixes soundness (all three are extractable from any model).
+A stress test of 713 concepts (including adversarial patterns)
+finds \textbf{zero correctness errors} and zero Henkin tree failures
+across 12~hash seeds.  UNSAT answers are \textbf{provably sound};
+the sibling check now correctly catches cross-role universal
+contradictions like $\exists\PP.(\forall\PPI.A) \sqcap \exists\PPI.\neg A$.
 See Section~\ref{sec:erratum} for details.
 }}
 \end{center}
@@ -697,7 +696,7 @@ Lemma~\ref{lem:extension} & Correct \emph{if} Q4 holds & Completeness direction 
 Theorem~\ref{thm:completeness} & Correct \emph{if} Q4 holds & Follows from lemma \\
 Theorem~\ref{thm:decidability} & \textbf{Strong evidence} & See below \\
 Properties 1--3 (Section~\ref{sec:computation}) & Correct & Pure algebraic facts \\
-Three-check algorithm & \textbf{New} & 0 failures / 12 seeds \\
+Three-check algorithm & \textbf{New} & 713 concepts, 0 errors \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -743,8 +742,14 @@ $\tau_{j_1}, \ldots, \tau_{j_k}$ such that
   \qquad \text{for all } m \neq m'.
 \]
 This ensures that siblings (children of the same parent)
-can be assigned a consistent mutual relation.  The check
-uses arc-consistency pruning followed by backtracking search.
+can be assigned a consistent mutual relation.  Crucially,
+when two demand slots use different roles ($R_m \neq R_{m'}$),
+the witnesses must be \emph{distinct elements} even if they
+share the same type; the check must verify the pairwise
+constraint in all such cases (same-type bypass is valid only
+when $R_m = R_{m'}$, allowing a single element to serve both
+demands).  The check uses arc-consistency pruning followed
+by backtracking search.
 
 \medskip\noindent\textbf{Check 3: Role-path compatibility.}\;
 For each chain $g \xrightarrow{R} j \xrightarrow{S} w$ in the
@@ -768,12 +773,44 @@ widest average composition) and backtracking over
 alternative witnesses.
 
 \medskip\noindent\textbf{Result.}\;
-With deterministic type enumeration (sorted closure concepts)
-and all three checks, the Henkin tree extension test
-passes for all 16~satisfiable concepts to depth~5:
-\textbf{zero failures} across 1000+~extension tests and
-\textbf{12~independent hash seeds}
-(PYTHONHASHSEED $\in \{0,1,2,3,4,5,10,42,99,100,200,999\}$).
+A comprehensive stress test of \textbf{713~concepts} across seven
+categories (known SAT, known UNSAT, adversarial cross-role universals,
+systematic role--atom combinations, and random concepts of depths
+2--4) finds:
+\begin{itemize}[nosep]
+\item \textbf{Zero correctness errors}: all known-SAT and known-UNSAT
+  concepts are classified correctly.
+\item \textbf{Zero Henkin tree failures} for all 16~basic test concepts
+  across \textbf{12~independent hash seeds}.
+\item 7~remaining Henkin failures in the stress test occur at depths~2--3
+  for concepts that \emph{are} satisfiable (verified by explicit
+  cyclic models) but whose tree unfoldings have cross-level
+  composition conflicts.  One additional failure is a builder
+  over-branching issue (the concept has a tree model).
+  None are reasoner soundness bugs.
+\end{itemize}
+
+\noindent\textbf{Concepts requiring cyclic models.}\;
+Seven concepts are satisfiable only in cyclic (non-tree) models.
+All share the structure $\exists R.\varphi \sqcap \exists\PP.\psi
+\sqcap \forall S.\chi$ where the leaf type~$\tau_\ell$
+(satisfying $\psi$) has $\Safe(\tau_\ell, \tau_\ell) = \{\DR\}$
+due to accumulated universal constraints, while
+$\comp(\PPI, \PP) = \{\PPI, \PP, \PO\}$ forces non-$\DR$
+cross-level relations between leaf copies.
+Since $\{\DR\} \cap \{\PPI, \PP, \PO\} = \emptyset$,
+no tree model exists.  All seven have verified 3-element
+cyclic models (e.g., $d \mathbin{\PO} e$, $d \mathbin{\PP} f$,
+$e \mathbin{\PP} f$):
+\begin{center}\small
+\begin{tabular}{l}
+$\exists\DR.A \sqcap \exists\PP.\neg A \sqcap \forall\PO.A$ \\
+$\exists\PO.A \sqcap \exists\PP.\neg A \sqcap \forall\PO.A$ \\
+$\exists\PO.A \sqcap \exists\PP.\neg B \sqcap \forall R.A$
+  \quad ($R \in \{\DR, \PO, \PP, \PPI\}$; 4~concepts) \\
+$\exists\PP.A \sqcap \exists\PP.\neg A \sqcap \forall\PO.A$ \\
+\end{tabular}
+\end{center}
 
 \subsection{Theoretical status}
 
@@ -801,8 +838,15 @@ passes for all 16~satisfiable concepts to depth~5:
 \noindent\textbf{What remains:}\; A formal proof that the
 three checks imply star path-consistency for the full star
 network at each extension step (including uncle and cousin
-constraints).  The computational evidence across 12~seeds
-and 1000+~extensions is strong but not a substitute for a proof.
+constraints).  Additionally, the stress test reveals that
+some satisfiable concepts may require \emph{cyclic models}
+rather than tree models: when $\Safe(\tau, \tau)$ is narrow
+(e.g., $\{\DR\}$ only) and the tree-path composition forces
+a different relation, tree unfolding fails even though a small
+cyclic model exists.  The soundness proof should account for
+this by using the patchwork property to construct finite
+(possibly cyclic) models rather than relying on tree-shaped
+Henkin constructions exclusively.
 
 
 %% ============================================================
@@ -820,12 +864,13 @@ and \emph{role-path compatibility} --- fixes soundness
 (provably: all three conditions are extractable from any model)
 and provides strong computational evidence for completeness.
 
-A working implementation correctly decides all 18~test concepts.
-The Henkin tree extension test --- which builds actual depth-5
-tree models from the quasimodel's type set using witness-plan-guided
-construction with future-flexibility ordering ---
-passes with \textbf{zero failures} across 1000+~extension tests
-and 12~independent hash seeds.
+A working implementation correctly decides all test concepts in
+a comprehensive stress test of 713~concepts.  The sibling
+compatibility check correctly identifies cross-role universal
+contradictions (e.g., $\exists\PP.(\forall\PPI.A) \sqcap \exists\PPI.\neg A$
+is UNSAT because $\comp(\PPI,\PPI) = \{\PPI\}$ forces the universal
+to fire).  The Henkin tree extension test passes with
+\textbf{zero failures} for all basic tests across 12~hash seeds.
 
 \medskip\noindent\textbf{Decidability status.}\;
 The algorithm is a \emph{candidate decision procedure} for

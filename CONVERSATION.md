@@ -2592,4 +2592,65 @@ Added to the Henkin tree builder's assignment function: sort candidate relations
 - `henkin_extension_test.py`: Added `_sorted_rels` for future-flexibility ordering, removed candidate limit, increased max_depth to 5
 - `decidability_via_quadruples_ALCIRCC5.tex`: Rewrote erratum (three-check algorithm, computational verification section, theoretical status with proved/conjectured/remains), updated status box to green, updated conclusion
 - `README.md`: Updated status header, summary table, implementation section (three checks, determinism, Henkin test results)
+- `CONVERSATION.md`: Parts 48-49
+
+---
+
+## Part 50: Sibling Compatibility Bug Fix and Stress Test
+
+### The sibling same-type bypass bug
+
+**Discovery**: Running a comprehensive stress test of 713 concepts revealed 23 Henkin tree failures. Investigation traced the root cause to a bug in the sibling compatibility check.
+
+**The bug**: When two demand slots had the same witness TYPE (jₘ == jₘ'), the sibling check skipped the pairwise composition constraint — assuming a single element could serve both demands. But when the demands use DIFFERENT ROLES (Rₘ ≠ Rₘ'), two distinct elements are required, and their pairwise relation is constrained by comp(INV[Rₘ], Rₘ') ∩ SAFE(jₘ, jₘ'), which may be empty.
+
+**Example**: ∃PP.(∀PPI.A) ⊓ ∃PPI.¬A
+- Demands: (PP, ∀PPI.A) and (PPI, ¬A)
+- Both can use the same TYPE (with both ∀PPI.A and ¬A)
+- But comp(PPI, PPI) = {PPI}, so the siblings must be PPI-related
+- The witness type has ∀PPI.A, so PPI requires A in the target — but the target has ¬A
+- **Contradiction! The concept is genuinely UNSAT.**
+
+**The fix**: Only bypass the pairwise check when Rₘ == Rₘ' (same role, so one element serves both). Applied in three places: `check_sibling_compatibility()`, `bt_search()`, and `compute_witness_plan()`.
+
+### Impact
+
+- **6 concepts correctly changed from SAT to UNSAT**: all have the pattern ∃R₁.(∀R₂.X) ⊓ ∃R₂.¬X where comp(INV[R₁], R₂) is a singleton {R₂}, forcing the universal to fire on the sibling. The three triggering composition patterns are: comp(PP,DR)={DR}, comp(PPI,PPI)={PPI}, comp(PP,PP)={PP}.
+
+- **Henkin failures dropped from 23 to 8**: the 12 cross-role universal failures are now correctly classified as UNSAT; one deep nesting failure remains; 7 adversarial/systematic failures remain.
+
+### Remaining 8 Henkin failures: two distinct causes
+
+**7 concepts requiring cyclic models**: These are genuinely satisfiable but have NO tree model. All share the pattern ∃R.φ ⊓ ∃PP.ψ ⊓ ∀S.χ where the leaf type τ_ℓ has safe(τ_ℓ, τ_ℓ) = {DR} (narrow due to accumulated universals), while COMP(PPI, PP) = {PPI, PP, PO} forces non-DR cross-level relations between leaf copies at different tree depths. Since {DR} ∩ {PPI, PP, PO} = ∅, no tree model exists.
+
+Explicit 3-element cyclic models verified for all 7:
+
+| Concept | Cyclic model (d=root) | Why tree fails |
+|---|---|---|
+| ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.A | d DR e, d PP f, e DR f | safe(τ₆,τ₆)={DR}, COMP(PPI,PP)={PPI,PP,PO} |
+| ∃PO.A ⊓ ∃PP.¬A ⊓ ∀PO.A | d PO e, d PP f, e PP f | safe(τ₆,τ₆)={DR}, COMP(PPI,PP)={PPI,PP,PO} |
+| ∃PO.A ⊓ ∃PP.¬B ⊓ ∀DR.A | d PO e, d PP f, e PP f | safe(τ₆,τ₆)={DR}, COMP(PPI,PP)={PPI,PP,PO} |
+| ∃PO.A ⊓ ∃PP.¬B ⊓ ∀PO.A | d PO e, d PP f, e PP f | same |
+| ∃PO.A ⊓ ∃PP.¬B ⊓ ∀PP.A | d PO e, d PP f, e PP f | same |
+| ∃PO.A ⊓ ∃PP.¬B ⊓ ∀PPI.A | d PO e, d PP f, e PP f | same |
+| ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PO.A | d PP e, d PP f, e PP f | safe(τ₆,τ₆)={DR}, COMP(PPI,PP)={PPI,PP,PO} |
+
+**1 concept with over-branching**: ∃PP.(∃PP.(∃PP.A ⊓ ∀DR.B) ⊓ ∀DR.B) ⊓ ∀DR.B has only one type (τ₆₀) with safe(τ₆₀,τ₆₀) = {DR,PO,PP,PPI} (all relations safe). This concept HAS a tree model (the 4-element PP-chain d PP e PP f PP g). The Henkin failures occur because the builder creates 3 PP-children per node (one per demand) when a single child serves all three demands simultaneously.
+
+**Implication for decidability**: ALCI_RCC5 does NOT have the tree-model property. The soundness proof must construct finite (possibly cyclic) models via the patchwork property rather than relying on tree-shaped Henkin constructions. The cyclic models are small (3 elements) and the type sets pass all three checks, confirming the reasoner is correct.
+
+### Stress test results
+
+- **713 concepts** across 7 categories: known SAT (92), known UNSAT (21), adversarial (58), systematic pairs (192), random depth-2 (200), random depth-3 (100), random depth-4 (50)
+- **Zero correctness errors** (0/713)
+- **Zero Henkin failures** for basic test suite across 12 hash seeds (0/12)
+- **8 Henkin tree failures** in stress test: 7 cyclic-model-only + 1 builder over-branching
+
+### Files changed
+
+- `alcircc5_reasoner.py`: Fixed sibling same-type bypass (require Rₘ == Rₘ' for skip)
+- `henkin_extension_test.py`: Same fix in `compute_witness_plan()`
+- `stress_test.py`: Added 6 cross-role universal UNSAT patterns to known-UNSAT list
+- `decidability_via_quadruples_ALCIRCC5.tex`: Updated status box (713 concepts), sibling check description, computational verification (stress test results), theoretical status (cyclic model observation), conclusion
+- `README.md`: Updated status header (713 concepts), algorithm description, test results
 - `CONVERSATION.md`: This entry

@@ -198,9 +198,9 @@ def compute_witness_plan(type_list, safe, demands, type_set):
                 ok = True
                 for prev_slot in range(len(assignment)):
                     jmp = assignment[prev_slot]
-                    if jm == jmp:
-                        continue  # same witness, always compatible
                     Rmp = dems[prev_slot][0]
+                    if jm == jmp and Rm == Rmp:
+                        continue  # same type, same role: one element serves both
                     if not (COMP[(INV[Rm], Rmp)] & safe[(jm, jmp)]):
                         ok = False
                         break
