@@ -2904,3 +2904,51 @@ The paper flags four potential subtleties for scrutiny: (1) ambient root type co
 - `papers/completeness_extraction_ALCIRCC5.pdf`: Compiled version
 - `README.md`: Updated complexity table (ALCI_RCC5 now "Decidable"), status block, current assessment, key files list, remaining gap → completeness gap closed
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: GIS taxonomy computation and composition propagation fix (April 11, 2026)
+
+### Composition propagation bug fix (cover_tree_tableau.py)
+
+The `check_tree_cross_interaction` function in the cover-tree tableau had a genuine bug: it only checked composition constraints when `comp(INV[R1], R2)` was a **singleton** (forced relation). The fix generalizes to **all composition sizes** — checking `comp ∩ safe ≠ ∅` for any pair of demands. This catches UNSAT patterns where a non-singleton composition like comp(PO, PP) = {PP, PO} has both relations unsafe between all candidate witness pairs.
+
+All 35 built-in tests and 911 stress tests pass unchanged. The fix is a general correctness strengthening, not specific to the GIS example.
+
+### GIS taxonomy computation (gis_taxonomy.py — new file)
+
+Wessel asked to compute the complete subsumption hierarchy for the GIS example from report7.pdf Section 3, using the cover-tree tableau reasoner with subsumption reduced to unsatisfiability (C ⊑ D iff C ⊓ ¬D is UNSAT).
+
+**TBox**: 18 concepts (area, country, city, river, lake, mountain, germany, czech_republic, local_river, non_local_river, river_flowing_into_a_lake, german_river, german_city, city_at_river, elbe, alster_lake, alster, hamburg) with defined concepts (≡) and primitive inclusions (⊑).
+
+**Two-phase approach**:
+- **Phase 1 (lazy unfolding)**: Expand top-level defined concept names before testing. Handles 17/21 expected subsumptions in ~150s. The 4 missing subsumptions require TBox knowledge *inside modal contexts* — e.g., `∃PO.alster` needs to know alster ⊑ river, but `expand_concept` doesn't recurse into modal operators.
+- **Phase 2 (type constraints)**: For the 4 hard cases, enforce primitive GCIs during Hintikka type enumeration with **zero closure overhead**:
+  - **Cases 1–3** (hamburg ⊑ city_at_river, elbe ⊑ non_local_river, alster ⊑ river_flowing_into_a_lake): Simple atom constraints — if `A('germany')` is in a type then `A('country')` must be too. Implemented via `_ACTIVE_TYPE_CONSTRAINTS` global checked during `enumerate_types_fast`.
+  - **Case 4** (hamburg ⊑ german_city): Requires alster's ∀PO.¬country and ∀PP.(¬country ⊔ germany) constraints in the PO-child's type. Simple atom constraints aren't enough (∀PO.¬country isn't in the closure). Solved by manually expanding alster's definition inside the ∃PO body, keeping closure at 30 items.
+
+**Result**: 21/21 expected subsumptions verified, matching report7 Figure 6 exactly. Total time ~190s.
+
+**Key design decision**: All TBox-specific logic is in `gis_taxonomy.py`, NOT in the prover. The prover (`cover_tree_tableau.py`) remains TBox-agnostic. The type constraint mechanism is a module-level global that the taxonomy script sets before each satisfiability check and clears after.
+
+### Approaches tried and rejected
+
+1. **Deep expansion** (`deep_expand`): Recursively expands all atoms inside modals. Produces closures of 60–70, with 2^18+ type candidates. Impractical (>120s timeout).
+2. **TBox internalization** (adding ∀R.(¬sub ⊔ sup) for all R): Adds 8+ closure items per GCI. Works for 1/4 cases (hamburg ⊑ city_at_river in 49s) but closures of 48–60 for the other 3 cases cause type enumeration to time out.
+3. **Type constraints (adopted)**: Zero closure overhead, filters invalid types during enumeration. Instant for simple atom constraints. Combined with manual modal expansion for the complex case.
+
+### Paper updates
+
+Updated `cover_tree_tableau_ALCIRCC5.tex` throughout: "singleton-composition propagation" renamed to "composition propagation" to reflect the generalized implementation. Proposition 4.1 expanded to include non-singleton cases like comp(PO, PP) = {PP, PO}. Paper recompiles cleanly (10 pages).
+
+Updated `README.md`: fixed composition check description, added "A GIS example" section with Mermaid taxonomy DAG before "Summary: eleven approaches", added `gis_taxonomy.py` to key files.
+
+### Files changed
+
+- `src/cover_tree_tableau.py`: Generalized `check_tree_cross_interaction` from singleton-only to all compositions
+- `src/gis_taxonomy.py`: New file — GIS taxonomy computation (18 concepts, 21/21 subsumptions)
+- `papers/cover_tree_tableau_ALCIRCC5.tex`: "singleton" → "composition propagation" throughout
+- `papers/cover_tree_tableau_ALCIRCC5.pdf`: Recompiled
+- `README.md`: GIS example section with Mermaid DAG, updated composition check description
+- `CLAUDE.md`: Added `gis_taxonomy.py` to key files and build instructions
+- `CONVERSATION.md`: This entry
