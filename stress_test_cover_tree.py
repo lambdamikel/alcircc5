@@ -146,6 +146,34 @@ def gen_adversarial():
             tests.append((f"∃{R1}.(∃{R2}.A ⊓ ∀{R2}.A)",
                           Exists(R1, And(Exists(R2, A), ForAll(R2, A))), None))
 
+    # DR/PO-only concepts (no PP/PPI tree forced) — tests that the
+    # cover-tree tableau handles cross-edge demands without tree expansion
+    tests.append(("∃DR.A", Exists(DR, A), True))
+    tests.append(("∃PO.A", Exists(PO, A), True))
+    tests.append(("∃DR.(∃PO.A)", Exists(DR, Exists(PO, A)), True))
+    tests.append(("∃PO.(∃PO.A)", Exists(PO, Exists(PO, A)), True))
+    tests.append(("∃DR.(∃DR.A)", Exists(DR, Exists(DR, A)), True))
+    tests.append(("∃DR.(∃PO.A ⊓ ∃DR.A)",
+                  Exists(DR, conj(Exists(PO, A), Exists(DR, A))), True))
+
+    # DR/PO demand with universals blocking all relations — UNSAT
+    # The ∃PO.C witness of the DR-witness must relate to root,
+    # but all relations from root force ¬C
+    tests.append(("∃DR.(∃PO.C) ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PPI.¬C ⊓ ∀PP.¬C",
+                  conj(Exists(DR, Exists(PO, C)),
+                       ForAll(PO, nC), ForAll(DR, nC),
+                       ForAll(PPI, nC), ForAll(PP, nC)), False))
+
+    # Same pattern with different filler concept
+    tests.append(("∃PO.(∃DR.A) ⊓ ∀PO.¬A ⊓ ∀DR.¬A ⊓ ∀PPI.¬A ⊓ ∀PP.¬A",
+                  conj(Exists(PO, Exists(DR, A)),
+                       ForAll(PO, nA), ForAll(DR, nA),
+                       ForAll(PPI, nA), ForAll(PP, nA)), False))
+
+    # Deeper: ∃DR.(∃DR.(∃PO.A)) — 3 levels of cross-edge demands
+    tests.append(("∃DR.(∃DR.(∃PO.A))",
+                  Exists(DR, Exists(DR, Exists(PO, A))), True))
+
     return tests
 
 

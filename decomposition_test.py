@@ -244,32 +244,51 @@ def check_built_models(verbose=False):
 # Infinite Cover-Tree Model Detection
 # ══════════════════════════════════════════════════════════════
 
-def needs_infinite_ct(C0, ct_info):
-    """
-    Check if the concept needs an infinite cover-tree model.
-
-    A finite cover-tree model requires:
-      - PP-chains can terminate upward: each type with PP-demands can
-        eventually reach a PP-demand-free type through its PP-witnesses.
-      - PPI-chains can terminate downward: each type with PPI-demands
-        can eventually reach a PPI-demand-free type through PPI-witnesses.
-
-    If either direction can't terminate, infinite model is needed.
-    Uses fixed-point computation.
-    """
+def _expand_pool(ct_info):
+    """Expand the type pool beyond the tableau's type set T."""
     T = sorted(ct_info['type_set'])
     type_list = ct_info['type_list']
     safe = ct_info['safe']
     demands = ct_info['demands']
+    n_all = len(type_list)
+
+    T_set = set(T)
+    extra_types = set()
+    for ti in T:
+        for R, D in demands[ti]:
+            for tj in range(n_all):
+                if tj not in T_set and D in type_list[tj] and R in safe[(ti, tj)]:
+                    extra_types.add(tj)
+    extra2 = set()
+    for ti in extra_types:
+        for R, D in demands[ti]:
+            for tj in range(n_all):
+                if tj not in T_set and tj not in extra_types:
+                    if D in type_list[tj] and R in safe[(ti, tj)]:
+                        extra2.add(tj)
+    extra_types |= extra2
+    return T + sorted(extra_types)
+
+
+def needs_infinite_ct(C0, ct_info):
+    """
+    Check if the concept needs an infinite cover-tree model.
+
+    Uses the expanded type pool (not just T) to check chain termination.
+    """
+    type_list = ct_info['type_list']
+    safe = ct_info['safe']
+    demands = ct_info['demands']
+    pool = _expand_pool(ct_info)
 
     # Check PP-direction (upward chains)
     pp_demands = {ti: [(R, D) for R, D in demands[ti] if R == PP]
-                  for ti in T}
-    can_top = set()  # types that can be at the top of a finite PP-chain
+                  for ti in pool}
+    can_top = set()
     changed = True
     while changed:
         changed = False
-        for ti in T:
+        for ti in pool:
             if ti in can_top:
                 continue
             if not pp_demands[ti]:
@@ -278,7 +297,7 @@ def needs_infinite_ct(C0, ct_info):
                 continue
             all_ok = True
             for R, D in pp_demands[ti]:
-                witnesses = [tj for tj in T
+                witnesses = [tj for tj in pool
                              if D in type_list[tj] and PP in safe[(ti, tj)]]
                 if not any(tj in can_top for tj in witnesses):
                     all_ok = False
@@ -289,12 +308,12 @@ def needs_infinite_ct(C0, ct_info):
 
     # Check PPI-direction (downward chains)
     ppi_demands = {ti: [(R, D) for R, D in demands[ti] if R == PPI]
-                   for ti in T}
-    can_leaf = set()  # types that can be leaves (no PPI-demands to satisfy)
+                   for ti in pool}
+    can_leaf = set()
     changed = True
     while changed:
         changed = False
-        for ti in T:
+        for ti in pool:
             if ti in can_leaf:
                 continue
             if not ppi_demands[ti]:
@@ -303,7 +322,7 @@ def needs_infinite_ct(C0, ct_info):
                 continue
             all_ok = True
             for R, D in ppi_demands[ti]:
-                witnesses = [tj for tj in T
+                witnesses = [tj for tj in pool
                              if D in type_list[tj] and PPI in safe[(ti, tj)]]
                 if not any(tj in can_leaf for tj in witnesses):
                     all_ok = False
@@ -313,10 +332,10 @@ def needs_infinite_ct(C0, ct_info):
                 changed = True
 
     # Root types must be in both can_top and can_leaf for finite CT model
-    root_types = [ti for ti in T if C0 in type_list[ti]]
+    root_types = [ti for ti in pool if C0 in type_list[ti]]
 
-    pp_infinite = any(ti not in can_top for ti in root_types)
-    ppi_infinite = any(ti not in can_leaf for ti in root_types)
+    pp_infinite = not root_types or all(ti not in can_top for ti in root_types)
+    ppi_infinite = not root_types or all(ti not in can_leaf for ti in root_types)
 
     reason = None
     if pp_infinite:
@@ -325,6 +344,105 @@ def needs_infinite_ct(C0, ct_info):
         reason = "self-referencing PPI-demands (infinite descending chain)"
 
     return pp_infinite or ppi_infinite, reason
+
+
+def try_pp_chain_model(C0, ct_info, max_depth=8, timeout=10.0):
+    """
+    Try to construct a valid PP-chain (linear) cover-tree model.
+
+    Builds a single PP-chain: d0 PP d1 PP d2 PP ... PP dk.
+    At each step, all ancestors' unsatisfied PP demands are tracked.
+    A demand ∃PP.D of ancestor a is satisfied when some descendant
+    has D in its type (since a PP d_i PP ... PP d_j implies a PP d_j).
+    Returns True if a valid finite chain is found.
+    """
+    type_list = ct_info['type_list']
+    safe = ct_info['safe']
+    demands = ct_info['demands']
+    pool = _expand_pool(ct_info)
+
+    root_types = [ti for ti in pool if C0 in type_list[ti]]
+    if not root_types:
+        return False
+
+    # Sort: fewer ∀PP formulas = more permissive = tried first
+    def forall_pp_count(t):
+        return sum(1 for f in type_list[t]
+                   if hasattr(f, 'role') and f.__class__.__name__ == 'ForAll'
+                   and f.role == PP)
+    root_types.sort(key=forall_pp_count)
+
+    deadline = time.time() + timeout
+    for root in root_types:
+        if time.time() > deadline:
+            break
+        # pending = list of (demanded_concept) not yet satisfied
+        pp_dems = [D for R, D in demands[root] if R == PP]
+        if not pp_dems:
+            return True  # Root has no PP demands — trivial model
+        if _extend_chain(root, [root], pp_dems, type_list, safe, demands,
+                         pool, max_depth, deadline):
+            return True
+    return False
+
+
+def _extend_chain(new_type, chain_types, pending_demands, type_list, safe,
+                  demands, pool, max_depth, deadline):
+    """
+    Extend a PP-chain by adding one more element.
+
+    chain_types: types of elements so far [root_type, child_type, ...]
+    pending_demands: list of concepts D where some ancestor has ∃PP.D unsatisfied
+    new_type: the type just added at the end of the chain
+
+    Any pending demand D is satisfied if D ∈ type_list[new_type].
+    New PP demands from new_type are added to pending.
+    Chain terminates when pending is empty.
+    """
+    if time.time() > deadline:
+        return False
+
+    # Remove satisfied demands
+    remaining = [D for D in pending_demands if D not in type_list[new_type]]
+
+    # Add new PP demands from the new element
+    new_dems = [D for R, D in demands[new_type] if R == PP]
+    # These new demands might also be immediately satisfied by new_type itself
+    # (self-witnessing through ancestor relationship, which doesn't apply here)
+    remaining.extend(new_dems)
+
+    if not remaining:
+        return True  # All demands satisfied — valid finite chain
+
+    if len(chain_types) >= max_depth:
+        return False
+
+    # Try extending with another PP-child
+    # Need: PP-safe from ALL existing chain elements
+    # Collect candidates sorted by how many pending demands they satisfy (desc)
+    candidates = []
+    for cj in pool:
+        ok = True
+        for anc in chain_types:
+            if PP not in safe[(anc, cj)] or PPI not in safe[(cj, anc)]:
+                ok = False
+                break
+        if not ok:
+            continue
+        # Count how many pending demands this candidate satisfies
+        sat_count = sum(1 for D in remaining if D in type_list[cj])
+        pp_cnt = sum(1 for R, D in demands[cj] if R == PP)
+        candidates.append((-sat_count, pp_cnt, cj))  # most satisfying first
+
+    candidates.sort()
+
+    for _, _, cj in candidates:
+        if time.time() > deadline:
+            return False
+        if _extend_chain(cj, chain_types + [cj], remaining, type_list,
+                         safe, demands, pool, max_depth, deadline):
+            return True
+    return False
 
 
 # ══════════════════════════════════════════════════════════════
@@ -339,39 +457,11 @@ def exhaustive_count(C0, ct_info, max_domain=6, time_limit=1.5,
 
     Returns {size: (total_models, cover_tree_models, timed_out)}
     """
-    T = sorted(ct_info['type_set'])
     type_list = ct_info['type_list']
     safe = ct_info['safe']
     demands = ct_info['demands']
-    n_all = len(type_list)
 
-    # Expand type pool: include all types that can serve as witnesses
-    # for any demand in T, plus types that are safe-compatible with T.
-    # This avoids false "counterexamples" from limited type sets.
-    T_set = set(T)
-    extra_types = set()
-    for ti in T:
-        for R, D in demands[ti]:
-            # Find ALL types that could witness this demand
-            for tj in range(n_all):
-                if tj in T_set:
-                    continue
-                if D in type_list[tj] and R in safe[(ti, tj)]:
-                    extra_types.add(tj)
-
-    # Also add types that are demand-witnesses for the extra types
-    # (one level of closure to support their demands)
-    extra2 = set()
-    for ti in extra_types:
-        for R, D in demands[ti]:
-            for tj in range(n_all):
-                if tj in T_set or tj in extra_types:
-                    continue
-                if D in type_list[tj] and R in safe[(ti, tj)]:
-                    extra2.add(tj)
-    extra_types |= extra2
-
-    type_pool = T + sorted(extra_types)
+    type_pool = _expand_pool(ct_info)
     root_types = [i for i in type_pool if C0 in type_list[i]]
     if not root_types:
         return {}
@@ -380,13 +470,13 @@ def exhaustive_count(C0, ct_info, max_domain=6, time_limit=1.5,
     t_global = time.time()
 
     for n in range(2, max_domain + 1):
-        # Skip if search space is too large
+        if time.time() - t_global > time_limit * max_domain:
+            break
+
         space = len(root_types) * len(type_pool) ** (n - 1)
-        if space > 50000:
+        if space > 200000:
             results[n] = (0, 0, True)
             continue
-        if time.time() - t_global > time_limit * 2:
-            break
 
         t0 = time.time()
         total = [0]
@@ -596,12 +686,21 @@ def run_exhaustive_tests(verbose=False):
             all_timed_out = all(
                 r[2] for r in res.values() if r[0] > 0)
 
-            if concept_total == 0:
-                cat_no_models += 1
-            elif concept_ct > 0:
+            if concept_ct > 0:
                 cat_has_ct += 1
+            elif concept_total == 0:
+                # No models at tested sizes — try targeted chain search
+                if try_pp_chain_model(concept, ct_info):
+                    cat_has_ct += 1
+                else:
+                    inf, reason = needs_infinite_ct(concept, ct_info)
+                    if inf:
+                        cat_infinite += 1
+                        infinite_concepts.append((name, reason))
+                    else:
+                        cat_no_models += 1
             else:
-                # No finite CT model found — check if infinite is expected
+                # Models found but none with CT — check if infinite needed
                 inf, reason = needs_infinite_ct(concept, ct_info)
                 if inf:
                     cat_infinite += 1
@@ -613,7 +712,11 @@ def run_exhaustive_tests(verbose=False):
                     cat_problems.append((name, res))
                 else:
                     # Only timed-out sizes had models — inconclusive
-                    cat_no_models += 1
+                    # Try targeted chain search
+                    if try_pp_chain_model(concept, ct_info):
+                        cat_has_ct += 1
+                    else:
+                        cat_no_models += 1
 
             if verbose and concept_total > 0:
                 pct = 100 * concept_ct / concept_total

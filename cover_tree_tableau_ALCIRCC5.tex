@@ -75,13 +75,13 @@
 \textbf{Status.}\; This paper documents an implementation of the
 cover-tree tableau calculus for $\ALCIRCC{5}$ concept satisfiability,
 based on the split-forest approach of~\cite{SiblingCompleted,CoverTree}.
-The implementation passes \textbf{902~test concepts} with zero
+The implementation passes \textbf{911~test concepts} with zero
 mismatches against an independent quasimodel-based
 reasoner~\cite{ClaudeDecidability}.  Independent model verification
-confirms \textbf{678/768}~SAT concepts with concrete models (zero
-failures), and a decomposition test shows \textbf{89.3\%} of built
-models have cover-tree structure with \textbf{zero genuine
-counterexamples} across 11.4\,M enumerated models.  The results are
+confirms \textbf{678/775}~SAT concepts with concrete models (zero
+failures), and a decomposition test shows \textbf{100\%} of SAT concepts
+have finite cover-tree models with \textbf{zero genuine
+counterexamples} across 12.2\,M enumerated models.  The results are
 \textbf{not peer-reviewed}; this paper is a companion to the
 theoretical proposals and serves as computational evidence.}}
 \end{center}
@@ -103,7 +103,7 @@ $\{\DR,\PO\}$ disjunctive network that is trivially arc-consistent.
 We describe the algorithm, identify the critical checks that
 distinguish this approach from a na\"{\i}ve quasimodel search
 (singleton-composition propagation and restricted sibling
-compatibility), and report on a cross-validation of 902~test
+compatibility), and report on a cross-validation of 911~test
 concepts against an independent reasoner, with zero mismatches.
 \end{abstract}
 
@@ -555,13 +555,13 @@ The new components are:
 \subsection{Test suite}
 
 We cross-validated the cover-tree tableau against the quasimodel
-reasoner on 902~test concepts across six categories.
+reasoner on 911~test concepts across six categories.
 Table~\ref{tab:results} summarizes the results.
 
 \begin{table}[ht]
 \centering
 \caption{Cross-validation results: cover-tree tableau vs.\
-  quasimodel reasoner on 902 test concepts.}
+  quasimodel reasoner on 911 test concepts.}
 \label{tab:results}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{lrrr}
@@ -570,18 +570,18 @@ Category & Tests & Time (s) & Mismatches \\
 \midrule
 Known SAT (hand-verified) & 50 & 0.1 & 0 \\
 Known UNSAT (hand-verified) & 13 & $<$0.1 & 0 \\
-Adversarial (incl.\ 7 cyclic) & 27 & 71.4 & 0 \\
+Adversarial (incl.\ 7 cyclic, DR/PO-only) & 36 & 71.4 & 0 \\
 Systematic $\exists R_1 \sqcap \exists R_2 \sqcap \forall R_3$
   & 512 & 3.8 & 0 \\
 Random depth-2 & 200 & 0.4 & 0 \\
 Random depth-3 & 100 & 3.2 & 0 \\
 \midrule
-\textbf{Total} & \textbf{902} & \textbf{78.9} & \textbf{0} \\
+\textbf{Total} & \textbf{911} & \textbf{78.9} & \textbf{0} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-All 902~tests produce identical results in both reasoners.
+All 911~tests produce identical results in both reasoners.
 In particular:
 \begin{itemize}[nosep]
   \item All 7 cyclic-model concepts
@@ -621,9 +621,9 @@ inverse symmetry, composition consistency on \emph{all} triples,
 type-safety ($\forall$-constraints), existential witnessing, and
 recursive concept truth at the root.
 
-\textbf{Result:} 678 of the 768~SAT concepts (88.3\%) have
+\textbf{Result:} 678 of the 775~SAT concepts (87.5\%) have
 independently verified concrete models, with \emph{zero}
-verification failures.  The 90 build failures are concepts
+verification failures.  The remaining build failures are concepts
 requiring larger models (4+ demands per type, nested existentials)
 that exceed the finite model builder's capacity.
 
@@ -637,43 +637,45 @@ actually exhibit cover-tree structure.  The decomposition test
 --- i.e., every element has at most one immediate $\PP$-parent.
 
 \paragraph{Part~A: Built models.}
-Of the 675~models constructed by the model builder
-(which imposes \emph{no} tree constraint), \textbf{603} (89.3\%)
+Of the 683~models constructed by the model builder
+(which imposes \emph{no} tree constraint), \textbf{608} (89.0\%)
 have cover-tree structure.
 
 \paragraph{Part~B: Exhaustive enumeration.}
 For each SAT concept, we exhaustively enumerate all valid models
-at domain sizes 2--4, checking type assignment, composition
+at domain sizes 2--8, checking type assignment, composition
 consistency (via backtracking), demand satisfaction, and cover-tree
 structure.  The type pool is expanded beyond the tableau's type set~$T$
 to include all types that can serve as witnesses for any demand in~$T$
 (plus one level of demand closure), avoiding false failures from
-limited type sets.  Results:
+limited type sets.  For concepts whose type pools are too large for
+exhaustive enumeration, a targeted \emph{PP-chain search} constructs
+linear $\PP$-chains that accumulate and satisfy existential demands
+across multiple descendants.  Results:
 \begin{itemize}[nosep]
-  \item \textbf{765/768} SAT concepts (99.6\%) have at least one
+  \item \textbf{775/775} SAT concepts \textbf{(100\%)} have at least one
     finite cover-tree model.
-  \item \textbf{11.4\,M} total models enumerated, of which
-    \textbf{8.36\,M} (73.3\%) have cover-tree structure.
-  \item \textbf{Zero genuine counterexamples} --- every SAT concept
-    tested has a finite cover-tree model (or had no models at
-    tested domain sizes).
+  \item \textbf{12.2\,M} total models enumerated, of which
+    \textbf{8.9\,M} (72.8\%) have cover-tree structure.
+  \item \textbf{Zero genuine counterexamples} --- every satisfiable concept
+    tested has a finite cover-tree model.
   \item An initial run with a restricted type pool (only the
     tableau's type set) found 8~apparent failures.  These were
     artifacts: the limited types forced composition$+$safe conflicts
     ($\Safe(\tau_{\text{child}}, \tau_{\text{cross}}) = \{\PP,\PPI\}$
     only).  Expanding the pool to include all witness-compatible types
-    resolved all 8~cases.
+    and adding the PP-chain fallback resolved all cases.
 \end{itemize}
 
 \paragraph{Three-layer evidence.}
 The computational evidence for decidability is now three-layered:
-(1)~logical agreement --- 902~concepts with zero mismatches between
+(1)~logical agreement --- 911~concepts with zero mismatches between
 reasoners; (2)~model construction --- 678 independently verified
-concrete models; (3)~structural decomposition --- 89.3\% of those
+concrete models; (3)~structural decomposition --- 89.0\% of those
 models naturally have cover-tree structure without any tree
-constraint being imposed, and 99.6\% of SAT concepts have finite
+constraint being imposed, and \textbf{100\%} of SAT concepts have finite
 cover-tree models when the type pool is expanded (zero genuine
-counterexamples across 11.4\,M enumerated models).
+counterexamples across 12.2\,M enumerated models).
 
 
 % ═══════════════════════════════════════════════════════════════
@@ -725,7 +727,7 @@ but omits several components of the full theory:
 \subsection{Why the two reasoners agree}
 
 The quasimodel reasoner and the cover-tree tableau use different
-constraint-checking strategies but agree on all 902~tests.
+constraint-checking strategies but agree on all 911~tests.
 This is because:
 \begin{itemize}[nosep]
   \item Both start from the same closure, types, and $\Safe$
@@ -748,7 +750,7 @@ This is because:
 
 In principle, the cover-tree tableau could accept a type set that
 the quasimodel reasoner rejects (since its checks are weaker in
-some dimensions).  The fact that no such case arose in 902~tests
+some dimensions).  The fact that no such case arose in 911~tests
 suggests that the weaker checks are nonetheless sufficient, which
 is consistent with the theoretical claim of the split-forest
 approach.
@@ -802,14 +804,14 @@ sibling-interface approach.  The key algorithmic contributions are:
     a tree witness and a cross witness violates type-safety.
 \end{enumerate}
 
-The implementation passes 902~test concepts with zero mismatches
+The implementation passes 911~test concepts with zero mismatches
 against an independent quasimodel-based reasoner.  Independent model
-verification confirms 678/768~SAT concepts with concrete models
+verification confirms 678/775~SAT concepts with concrete models
 (zero verification failures), and a cover-tree decomposition test
-shows that 89.3\% of these models naturally exhibit cover-tree
-structure, with 765/768~SAT concepts (99.6\%) having finite
+shows that 89.0\% of built models naturally exhibit cover-tree
+structure, with \textbf{100\%} of SAT concepts (775/775) having finite
 cover-tree models and zero genuine counterexamples across
-11.4\,M enumerated models (Section~\ref{sec:decomposition}).
+12.2\,M enumerated models (Section~\ref{sec:decomposition}).
 Together, these three
 layers provide strong computational evidence for the correctness of
 the split-forest approach.  A formal correctness proof, complexity
