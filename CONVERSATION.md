@@ -2854,3 +2854,53 @@ For the UNSAT example: the root type must contain ∃DR.(∃PO.C). The DR-witnes
 - `cover_tree_tableau_ALCIRCC5.tex`: Updated all counts (911 tests, 775/775 100%, 12.2M models)
 - `README.md`: Updated cover-tree decomposition results to 100%
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Completeness extraction paper (April 10, 2026)
+
+### Context
+
+GPT-5.4's split-forest paper proves the **soundness** direction fully (valid finite quotient → unfolding → disjunctive network → arc-consistency → König's lemma → canonical refinements → model). The **completeness** direction (model → valid finite quotient) was stated as a proof sketch with the extraction of support-closed descriptor tables and witness-menu filters left compressed.
+
+Wessel asked Claude to close this gap by writing out the extraction formally.
+
+### The completeness extraction
+
+Claude wrote a full 11-page paper (`papers/completeness_extraction_ALCIRCC5.tex`) giving the model-to-quotient extraction in detail:
+
+1. **Split-tree presentation** — Orient the PP partial order as a DAG, unfold into a rooted tree by splitting join nodes into EQ-copies
+2. **Rank-d state assignment** — Inductive assignment of rank-k states (type, parent state, child multiplicities, sibling descriptors, witness menus)
+3. **Descriptor extraction** — Extract sibling-interface descriptors from the model's realized relations: status partition (Core/Out/Front), core multiplicities, open support sets, relation tables
+4. **Witness-menu extraction** — For each DR/PO existential, record the model witness's rank-d state and relation
+5. **Quotient formation** — Identify tree nodes by rank-d state equality; finite by the finite-index lemma
+
+### The key lemma (Lemma 2.2)
+
+**Model relations are relation-safe.** If ρ(d₁,d₂) = S in a valid model, then Need_S(tp(d₁)) ⊆ tp(d₂) and Need_inv(S)(tp(d₂)) ⊆ tp(d₁). This follows directly from the semantics of universal quantification: ∀S.D ∈ tp(d₁) and ρ(d₁,d₂) = S implies D ∈ tp(d₂).
+
+**Consequence:** In model-extracted quotients, every relation in the disjunctive domain Dom(σ₁,σ₂) is already relation-safe. Therefore Need_R-filtered domains equal unfiltered domains — the filtering step is vacuous.
+
+### Verification of validity conditions
+
+- **(V1) Existential satisfaction:** PP/PPI existentials handled by tree structure; DR/PO existentials recorded in witness menus
+- **(V2) Universal satisfaction:** Follows from model satisfying all universals
+- **(V3) Non-empty filtered domains:** Follows from key lemma (filtered = unfiltered for model-extracted quotients); composition-induced domains also non-empty by model's composition-consistency
+- **(V4) Coherent descriptors:** (C1) Out rigidity from DR propagation; (C2) type-safety from key lemma; (C3)-(C4) downward support from PP-transitivity; (C5) triple coherence from model's atomic RCC5 consistency
+
+### Main result
+
+**Theorem (Completeness Extraction):** If I, d* |= C₀ in ALCI_RCC5 under strong EQ semantics, then there exists a valid finite rank-d quotient Q for C₀ with d = md(C₀).
+
+**Corollary (Decidability):** Combined with GPT's soundness theorems (1.18, 1.19): C₀ is satisfiable ⟺ a valid finite rank-d quotient for C₀ exists. Since the set of candidate quotients is finite and validity is decidable, concept satisfiability in ALCI_RCC5 is decidable.
+
+### Honest assessment
+
+The paper flags four potential subtleties for scrutiny: (1) ambient root type construction, (2) PP/PPI eventualities via parent/child navigation, (3) support closure (witness targets in S), (4) deeper composition chains. None appear to harbor a genuine gap.
+
+### Files changed
+
+- `papers/completeness_extraction_ALCIRCC5.tex`: New paper (11 pages, ~400 lines LaTeX)
+- `papers/completeness_extraction_ALCIRCC5.pdf`: Compiled version
+- `README.md`: Updated complexity table (ALCI_RCC5 now "Decidable"), status block, current assessment, key files list, remaining gap → completeness gap closed
+- `CONVERSATION.md`: This entry
