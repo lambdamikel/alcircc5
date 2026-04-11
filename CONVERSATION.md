@@ -2672,7 +2672,7 @@ Wessel proposed a new line of investigation based on the observation that every 
 
 GPT-5.4 formalized Wessel's ideas in two papers:
 
-**Split-forest paper** (`trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_needpatched.tex`):
+**Split-forest paper** (`papers/trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_needpatched.tex`):
 - Defines split-tree presentations (EQ-split models as trees)
 - Proves the corrected status partition: Core (EQ-copies), Out (rigid DR), Front (open DR/PO)
 - Establishes status evolution automaton: Core→{Core}, Out→{Out}, Front→{Out, Front, Core}
@@ -2682,7 +2682,7 @@ GPT-5.4 formalized Wessel's ideas in two papers:
 - Sketches the soundness chain: valid quotient → unfolding → disjunctive network → arc-consistency → full tractability → König's lemma → canonical refinements → weak-EQ model → quotient → strong-EQ model
 - **Revised (April 2026)**: Added full per-relation need families Need_R for all R ∈ {DR, PO, PP, PPI}, not just DR/PO. This is essential because witness menus can induce PP/PPI domains via composition (e.g., comp(DR,PO) ⊇ {PP}), and the universal constraints for induced relations must be checked.
 
-**Cover-tree tableau paper** (`trees/alcircc5_cover_tree_tableau_needall_patched.tex`):
+**Cover-tree tableau paper** (`papers/trees/alcircc5_cover_tree_tableau_needall_patched.tex`):
 - Builds on the split-forest semantics to define a tableau decision procedure
 - Defines tableau objects (cover trees with status-annotated nodes)
 - Specifies operational expansion rules with full per-relation Need_R slots
@@ -2832,7 +2832,7 @@ For the UNSAT example: the root type must contain ∃DR.(∃PO.C). The DR-witnes
 
 2. **Added 9 DR/PO-only adversarial concepts** to `stress_test_cover_tree.py`: tests that the cover-tree calculus correctly handles concepts with no PP/PPI tree forced (e.g., `∃DR.A`, `∃DR.(∃PO.A)`, `∃DR.(∃DR.(∃PO.A))`), plus two UNSAT cross-edge patterns. All 9 verified against quasimodel reasoner.
 
-3. **GPT revised both tree papers** with full per-relation Need_R families. Old versions moved to `trees/older/`. README URLs updated accordingly.
+3. **GPT revised both tree papers** with full per-relation Need_R families. Old versions moved to `papers/trees/older/`. README URLs updated accordingly.
 
 ### Bug fixes
 

@@ -1,0 +1,558 @@
+Python 3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0] on linux
+Type "help", "copyright", "credits" or "license()" for more information.
+
+=========== RESTART: /home/mike/claude/alcircc5/decomposition_test.py ==========
+======================================================================
+COVER-TREE DECOMPOSITION TEST
+======================================================================
+
+======================================================================
+PART A: COVER-TREE PROPERTY OF BUILT MODELS
+======================================================================
+
+  [Known SAT] 3.1s
+    SAT: 50, Built: 44, Build fail: 6
+    Cover-tree: 42, Non-cover-tree: 2
+      Non-CT: ∃PO.A ⊓ ∃PPI.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+      Non-CT: ∃PPI.A ⊓ ∃PO.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+
+  [Known UNSAT] 0.0s
+    SAT: 0, Built: 0, Build fail: 0
+    Cover-tree: 0, Non-cover-tree: 0
+
+  [Adversarial] 12.6s
+    SAT: 26, Built: 16, Build fail: 10
+    Cover-tree: 14, Non-cover-tree: 2
+      Non-CT: ∃PP.(∃PO.A ⊓ ∀PO.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(0, [2, 3]), (1, [2, 3])]
+      Non-CT: ∃PPI.(∃DR.A ⊓ ∀DR.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Systematic triples] 85.2s
+    SAT: 392, Built: 324, Build fail: 68
+    Cover-tree: 254, Non-cover-tree: 70
+      Non-CT: ∃DR.¬A ⊓ ∃PO.¬A ⊓ ∀PO.¬A — PP:5 hasse:1 DR:7 PO:3 multi-parent:[(1, [2, 3])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Random depth-2] 2.7s
+    SAT: 200, Built: 197, Build fail: 3
+    Cover-tree: 197, Non-cover-tree: 0
+
+  [Random depth-3] 7.1s
+    SAT: 100, Built: 95, Build fail: 5
+    Cover-tree: 95, Non-cover-tree: 0
+
+  PART A SUMMARY
+    Models checked: 676
+    Cover-tree: 602 (89.1%)
+    Non-cover-tree: 74
+    Non-CT examples (74):
+      ∃PO.A ⊓ ∃PPI.B
+      ∃PPI.A ⊓ ∃PO.B
+      ∃PP.(∃PO.A ⊓ ∀PO.A)
+      ∃PPI.(∃DR.A ⊓ ∀DR.A)
+      ∃DR.¬A ⊓ ∃PO.¬A ⊓ ∀PO.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A
+      ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PPI.A
+
+======================================================================
+PART B: EXHAUSTIVE MODEL ENUMERATION
+======================================================================
+
+  [Known SAT] 1.0s
+    SAT concepts: 50
+    Has finite CT model: 46, Needs infinite CT: 0
+    No models at tested sizes: 4
+    Models: 18318 total, 14614 CT (79.8%)
+
+  [Known UNSAT] 0.0s
+    SAT concepts: 0
+    Has finite CT model: 0, Needs infinite CT: 0
+
+  [Adversarial] 1.3s
+    SAT concepts: 26
+    Has finite CT model: 17, Needs infinite CT: 0
+    No models at tested sizes: 9
+    Models: 1206 total, 987 CT (81.8%)
+
+  [Systematic triples] 11.7s
+    SAT concepts: 392
+    Has finite CT model: 310, Needs infinite CT: 8
+    *** GENUINE counterexamples: 8
+    No models at tested sizes: 66
+    Models: 25136 total, 20005 CT (79.6%)
+    *** POTENTIAL COUNTEREXAMPLES:
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+
+  [Random depth-2] 2.1s
+    SAT concepts: 200
+    Has finite CT model: 197, Needs infinite CT: 0
+    No models at tested sizes: 3
+    Models: 145726 total, 115732 CT (79.4%)
+
+  [Random depth-3] 2.8s
+    SAT concepts: 100
+    Has finite CT model: 95, Needs infinite CT: 0
+    No models at tested sizes: 5
+    Models: 53282 total, 42417 CT (79.6%)
+
+  PART B SUMMARY
+    SAT concepts checked: 768
+    Has finite CT model: 665 (86.6%)
+    Needs infinite CT model: 8
+    No models at tested sizes: 87
+    Genuine counterexamples: 8
+    Total models: 243668, Cover-tree: 193755 (79.5%)
+
+    Concepts needing infinite CT model (8):
+      ∃PO.A ⊓ ∃PPI.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PPI.A ⊓ ∃PO.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+
+    *** GENUINE COUNTEREXAMPLES (8): ***
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+      ∃PPI.¬A ⊓ ∃DR.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False)}
+
+======================================================================
+OVERALL RESULTS
+======================================================================
+  Part A: 602/676 built models have CT structure (89.1%)
+  Part B: 8 GENUINE counterexamples found!
+======================================================================
+
+=========================================== RESTART: /home/mike/claude/alcircc5/decomposition_test.py ==========================================
+======================================================================
+COVER-TREE DECOMPOSITION TEST
+======================================================================
+
+======================================================================
+PART A: COVER-TREE PROPERTY OF BUILT MODELS
+======================================================================
+
+  [Known SAT] 3.1s
+    SAT: 50, Built: 44, Build fail: 6
+    Cover-tree: 42, Non-cover-tree: 2
+      Non-CT: ∃PO.A ⊓ ∃PPI.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+      Non-CT: ∃PPI.A ⊓ ∃PO.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+
+  [Known UNSAT] 0.0s
+    SAT: 0, Built: 0, Build fail: 0
+    Cover-tree: 0, Non-cover-tree: 0
+
+  [Adversarial] 11.6s
+    SAT: 26, Built: 16, Build fail: 10
+    Cover-tree: 14, Non-cover-tree: 2
+      Non-CT: ∃PP.(∃PO.A ⊓ ∀PO.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(0, [2, 3]), (1, [2, 3])]
+      Non-CT: ∃PPI.(∃DR.A ⊓ ∀DR.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Systematic triples] 86.9s
+    SAT: 392, Built: 322, Build fail: 70
+    Cover-tree: 252, Non-cover-tree: 70
+      Non-CT: ∃DR.¬A ⊓ ∃PO.¬A ⊓ ∀PO.¬A — PP:5 hasse:1 DR:7 PO:3 multi-parent:[(1, [2, 3])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Random depth-2] 2.7s
+    SAT: 200, Built: 197, Build fail: 3
+    Cover-tree: 197, Non-cover-tree: 0
+
+  [Random depth-3] 7.1s
+    SAT: 100, Built: 95, Build fail: 5
+    Cover-tree: 95, Non-cover-tree: 0
+
+  PART A SUMMARY
+    Models checked: 674
+    Cover-tree: 600 (89.0%)
+    Non-cover-tree: 74
+    Non-CT examples (74):
+      ∃PO.A ⊓ ∃PPI.B
+      ∃PPI.A ⊓ ∃PO.B
+      ∃PP.(∃PO.A ⊓ ∀PO.A)
+      ∃PPI.(∃DR.A ⊓ ∀DR.A)
+      ∃DR.¬A ⊓ ∃PO.¬A ⊓ ∀PO.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A
+      ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PPI.A
+
+======================================================================
+PART B: EXHAUSTIVE MODEL ENUMERATION
+======================================================================
+
+  [Known SAT] 0.9s
+    SAT concepts: 50
+    Has finite CT model: 46, Needs infinite CT: 0
+    No models at tested sizes: 4
+    Models: 18318 total, 14614 CT (79.8%)
+
+  [Known UNSAT] 0.0s
+    SAT concepts: 0
+    Has finite CT model: 0, Needs infinite CT: 0
+
+  [Adversarial] 1.2s
+    SAT concepts: 26
+    Has finite CT model: 17, Needs infinite CT: 0
+    No models at tested sizes: 9
+    Models: 1206 total, 987 CT (81.8%)
+
+  [Systematic triples] 11.5s
+    SAT concepts: 392
+    Has finite CT model: 308, Needs infinite CT: 8
+    *** GENUINE counterexamples: 8
+    No models at tested sizes: 68
+    Models: 25124 total, 19981 CT (79.5%)
+    *** POTENTIAL COUNTEREXAMPLES:
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+
+  [Random depth-2] 2.1s
+    SAT concepts: 200
+    Has finite CT model: 197, Needs infinite CT: 0
+    No models at tested sizes: 3
+    Models: 145726 total, 115732 CT (79.4%)
+
+  [Random depth-3] 2.8s
+    SAT concepts: 100
+    Has finite CT model: 95, Needs infinite CT: 0
+    No models at tested sizes: 5
+    Models: 53282 total, 42417 CT (79.6%)
+
+  PART B SUMMARY
+    SAT concepts checked: 768
+    Has finite CT model: 663 (86.3%)
+    Needs infinite CT model: 8
+    No models at tested sizes: 89
+    Genuine counterexamples: 8
+    Total models: 243656, Cover-tree: 193731 (79.5%)
+
+    Concepts needing infinite CT model (8):
+      ∃PO.A ⊓ ∃PPI.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PPI.A ⊓ ∃PO.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+
+    *** GENUINE COUNTEREXAMPLES (8): ***
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False)}
+      ∃PPI.¬A ⊓ ∃DR.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False)}
+
+======================================================================
+OVERALL RESULTS
+======================================================================
+  Part A: 600/674 built models have CT structure (89.0%)
+  Part B: 8 GENUINE counterexamples found!
+======================================================================
+
+=========================================== RESTART: /home/mike/claude/alcircc5/decomposition_test.py ==========================================
+======================================================================
+COVER-TREE DECOMPOSITION TEST
+======================================================================
+
+======================================================================
+PART A: COVER-TREE PROPERTY OF BUILT MODELS
+======================================================================
+
+  [Known SAT] 3.1s
+    SAT: 50, Built: 44, Build fail: 6
+    Cover-tree: 42, Non-cover-tree: 2
+      Non-CT: ∃PO.A ⊓ ∃PPI.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+      Non-CT: ∃PPI.A ⊓ ∃PO.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+
+  [Known UNSAT] 0.0s
+    SAT: 0, Built: 0, Build fail: 0
+    Cover-tree: 0, Non-cover-tree: 0
+
+  [Adversarial] 11.6s
+    SAT: 26, Built: 16, Build fail: 10
+    Cover-tree: 14, Non-cover-tree: 2
+      Non-CT: ∃PP.(∃PO.A ⊓ ∀PO.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(0, [2, 3]), (1, [2, 3])]
+      Non-CT: ∃PPI.(∃DR.A ⊓ ∀DR.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Systematic triples] 82.9s
+    SAT: 392, Built: 326, Build fail: 66
+    Cover-tree: 258, Non-cover-tree: 68
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PPI.A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Random depth-2] 2.7s
+    SAT: 200, Built: 197, Build fail: 3
+    Cover-tree: 197, Non-cover-tree: 0
+
+  [Random depth-3] 7.1s
+    SAT: 100, Built: 95, Build fail: 5
+    Cover-tree: 95, Non-cover-tree: 0
+
+  PART A SUMMARY
+    Models checked: 678
+    Cover-tree: 606 (89.4%)
+    Non-cover-tree: 72
+    Non-CT examples (72):
+      ∃PO.A ⊓ ∃PPI.B
+      ∃PPI.A ⊓ ∃PO.B
+      ∃PP.(∃PO.A ⊓ ∀PO.A)
+      ∃PPI.(∃DR.A ⊓ ∀DR.A)
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A
+      ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PPI.A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A
+
+======================================================================
+PART B: EXHAUSTIVE MODEL ENUMERATION
+======================================================================
+
+  [Known SAT] 43.0s
+    SAT concepts: 50
+    Has finite CT model: 46, Needs infinite CT: 0
+    No models at tested sizes: 4
+    Models: 452400 total, 319200 CT (70.6%)
+
+  [Known UNSAT] 0.0s
+    SAT concepts: 0
+    Has finite CT model: 0, Needs infinite CT: 0
+
+  [Adversarial] 23.2s
+    SAT concepts: 26
+    Has finite CT model: 17, Needs infinite CT: 0
+    No models at tested sizes: 9
+    Models: 31004 total, 19377 CT (62.5%)
+
+  [Systematic triples] 369.6s
+    SAT concepts: 392
+    Has finite CT model: 312, Needs infinite CT: 8
+    *** GENUINE counterexamples: 10
+    No models at tested sizes: 62
+    Models: 750364 total, 502764 CT (67.0%)
+    *** POTENTIAL COUNTEREXAMPLES:
+      ∃DR.A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (0, 0, False), 5: (12, 0, True)}
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False), 5: (284, 0, True)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False), 5: (458, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False), 5: (528, 0, False)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False), 5: (503, 0, True)}
+
+  [Random depth-2] 81.6s
+    SAT concepts: 200
+    Has finite CT model: 197, Needs infinite CT: 0
+    No models at tested sizes: 3
+    Models: 3236932 total, 2338446 CT (72.2%)
+
+  [Random depth-3] 47.4s
+    SAT concepts: 100
+    Has finite CT model: 95, Needs infinite CT: 0
+    No models at tested sizes: 5
+    Models: 1206596 total, 870662 CT (72.2%)
+
+  PART B SUMMARY
+    SAT concepts checked: 768
+    Has finite CT model: 667 (86.8%)
+    Needs infinite CT model: 8
+    No models at tested sizes: 83
+    Genuine counterexamples: 10
+    Total models: 5677296, Cover-tree: 4050449 (71.3%)
+
+    Concepts needing infinite CT model (8):
+      ∃PO.A ⊓ ∃PPI.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PPI.A ⊓ ∃PO.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+
+    *** GENUINE COUNTEREXAMPLES (10): ***
+      ∃DR.A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (0, 0, False), 5: (12, 0, True)}
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False), 5: (284, 0, True)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False), 5: (458, 0, False)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False), 5: (528, 0, False)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False), 5: (503, 0, True)}
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False), 5: (503, 0, True)}
+      ∃PPI.¬A ⊓ ∃DR.A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (0, 0, False), 5: (11, 0, True)}
+      ∃PPI.¬A ⊓ ∃DR.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False), 5: (284, 0, True)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False), 5: (458, 0, False)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False), 5: (528, 0, False)}
+
+======================================================================
+OVERALL RESULTS
+======================================================================
+  Part A: 606/678 built models have CT structure (89.4%)
+  Part B: 10 GENUINE counterexamples found!
+======================================================================
+
+=========================================== RESTART: /home/mike/claude/alcircc5/decomposition_test.py ==========================================
+======================================================================
+COVER-TREE DECOMPOSITION TEST
+======================================================================
+
+======================================================================
+PART A: COVER-TREE PROPERTY OF BUILT MODELS
+======================================================================
+
+  [Known SAT] 3.1s
+    SAT: 50, Built: 44, Build fail: 6
+    Cover-tree: 42, Non-cover-tree: 2
+      Non-CT: ∃PO.A ⊓ ∃PPI.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+      Non-CT: ∃PPI.A ⊓ ∃PO.B — PP:2 hasse:0 DR:0 PO:1 multi-parent:[(2, [0, 1])]
+
+  [Known UNSAT] 0.0s
+    SAT: 0, Built: 0, Build fail: 0
+    Cover-tree: 0, Non-cover-tree: 0
+
+  [Adversarial] 12.6s
+    SAT: 26, Built: 16, Build fail: 10
+    Cover-tree: 14, Non-cover-tree: 2
+      Non-CT: ∃PP.(∃PO.A ⊓ ∀PO.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(0, [2, 3]), (1, [2, 3])]
+      Non-CT: ∃PPI.(∃DR.A ⊓ ∀DR.A) — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Systematic triples] 84.9s
+    SAT: 392, Built: 324, Build fail: 68
+    Cover-tree: 254, Non-cover-tree: 70
+      Non-CT: ∃DR.¬A ⊓ ∃PO.¬A ⊓ ∀PO.¬A — PP:5 hasse:1 DR:7 PO:3 multi-parent:[(1, [2, 3])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+      Non-CT: ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A — PP:4 hasse:0 DR:1 PO:1 multi-parent:[(2, [0, 1]), (3, [0, 1])]
+
+  [Random depth-2] 2.7s
+    SAT: 200, Built: 197, Build fail: 3
+    Cover-tree: 197, Non-cover-tree: 0
+
+  [Random depth-3] 7.1s
+    SAT: 100, Built: 95, Build fail: 5
+    Cover-tree: 95, Non-cover-tree: 0
+
+  PART A SUMMARY
+    Models checked: 676
+    Cover-tree: 602 (89.1%)
+    Non-cover-tree: 74
+    Non-CT examples (74):
+      ∃PO.A ⊓ ∃PPI.B
+      ∃PPI.A ⊓ ∃PO.B
+      ∃PP.(∃PO.A ⊓ ∀PO.A)
+      ∃PPI.(∃DR.A ⊓ ∀DR.A)
+      ∃DR.¬A ⊓ ∃PO.¬A ⊓ ∀PO.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀DR.A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PO.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PP.¬A
+      ∃DR.A ⊓ ∃PP.A ⊓ ∀PPI.¬A
+      ∃DR.A ⊓ ∃PP.¬A ⊓ ∀PPI.A
+
+======================================================================
+PART B: EXHAUSTIVE MODEL ENUMERATION
+======================================================================
+
+  [Known SAT] 100.4s
+    SAT concepts: 50
+    Has finite CT model: 46, Needs infinite CT: 0
+    No models at tested sizes: 4
+    Models: 865378 total, 625295 CT (72.3%)
+
+  [Known UNSAT] 0.0s
+    SAT concepts: 0
+    Has finite CT model: 0, Needs infinite CT: 0
+
+  [Adversarial] 62.7s
+    SAT concepts: 26
+    Has finite CT model: 17, Needs infinite CT: 0
+    No models at tested sizes: 9
+    Models: 58758 total, 42018 CT (71.5%)
+
+  [Systematic triples] 919.5s
+    SAT concepts: 392
+    Has finite CT model: 310, Needs infinite CT: 8
+    *** GENUINE counterexamples: 10
+    No models at tested sizes: 64
+    Models: 2540692 total, 1584001 CT (62.3%)
+    *** POTENTIAL COUNTEREXAMPLES:
+      ∃DR.A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (0, 0, False), 5: (10, 0, True), 6: (0, 0, True)}
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False), 5: (277, 0, True), 6: (900, 0, True)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False), 5: (458, 0, False), 6: (3180, 0, True)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False), 5: (528, 0, False), 6: (12723, 0, True)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False), 5: (496, 0, True), 6: (0, 0, True)}
+
+  [Random depth-2] 192.5s
+    SAT concepts: 200
+    Has finite CT model: 197, Needs infinite CT: 0
+    No models at tested sizes: 3
+    Models: 6493661 total, 4754154 CT (73.2%)
+
+  [Random depth-3] 112.2s
+    SAT concepts: 100
+    Has finite CT model: 95, Needs infinite CT: 0
+    No models at tested sizes: 5
+    Models: 2524802 total, 1834856 CT (72.7%)
+
+  PART B SUMMARY
+    SAT concepts checked: 768
+    Has finite CT model: 665 (86.6%)
+    Needs infinite CT model: 8
+    No models at tested sizes: 85
+    Genuine counterexamples: 10
+    Total models: 12483291, Cover-tree: 8840324 (70.8%)
+
+    Concepts needing infinite CT model (8):
+      ∃PO.A ⊓ ∃PPI.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀DR.¬A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.A: self-referencing PP-demands (infinite ascending chain)
+      ∃PPI.A ⊓ ∃PO.A ⊓ ∀DR.¬A: self-referencing PPI-demands (infinite descending chain)
+
+    *** GENUINE COUNTEREXAMPLES (10): ***
+      ∃DR.A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (0, 0, False), 5: (10, 0, True), 6: (0, 0, True)}
+      ∃DR.¬A ⊓ ∃PPI.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False), 5: (277, 0, True), 6: (900, 0, True)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False), 5: (458, 0, False), 6: (3180, 0, True)}
+      ∃PO.A ⊓ ∃PPI.¬A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False), 5: (528, 0, False), 6: (12723, 0, True)}
+      ∃PP.A ⊓ ∃PP.¬A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False), 5: (496, 0, True), 6: (0, 0, True)}
+      ∃PP.¬A ⊓ ∃PP.A ⊓ ∀PPI.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (18, 0, False), 5: (500, 0, True), 6: (0, 0, True)}
+      ∃PPI.¬A ⊓ ∃DR.A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (0, 0, False), 5: (10, 0, True), 6: (0, 0, True)}
+      ∃PPI.¬A ⊓ ∃DR.¬A ⊓ ∀PP.A: {2: (0, 0, False), 3: (0, 0, False), 4: (6, 0, False), 5: (275, 0, True), 6: (900, 0, True)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.A: {2: (0, 0, False), 3: (2, 0, False), 4: (24, 0, False), 5: (458, 0, False), 6: (3180, 0, True)}
+      ∃PPI.¬A ⊓ ∃PO.A ⊓ ∀DR.¬A: {2: (0, 0, False), 3: (2, 0, False), 4: (27, 0, False), 5: (528, 0, False), 6: (12623, 0, True)}
+
+======================================================================
+OVERALL RESULTS
+======================================================================
+  Part A: 602/676 built models have CT structure (89.1%)
+  Part B: 10 GENUINE counterexamples found!
+======================================================================

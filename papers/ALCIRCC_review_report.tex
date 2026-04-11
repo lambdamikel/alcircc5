@@ -1,0 +1,325 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{array,booktabs,tabularx,longtable}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{accent}{HTML}{0F4C81}
+\definecolor{soft}{HTML}{F4F7FA}
+\definecolor{border}{HTML}{CBD5E1}
+\definecolor{warn}{HTML}{7A1E1E}
+
+\hypersetup{pdfauthor={OpenAI}, pdftitle={Review of the ALCIRCC5/ALCIRCC8 decidability paper}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Review of the ALCIRCC5/ALCIRCC8 manuscript}
+\rhead{March 30, 2026}
+\cfoot{\thepage}
+\setlength{\headheight}{14pt}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+\setlist[itemize]{leftmargin=1.4em, itemsep=0.3em, topsep=0.3em}
+\setlist[enumerate]{leftmargin=1.6em, itemsep=0.3em, topsep=0.3em}
+
+\newcommand{\Paper}[1]{\textit{[paper, #1]}}
+\newcommand{\role}[1]{\ensuremath{\mathsf{#1}}}
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\PP}{\role{PP}}
+\newcommand{\PPI}{\role{PPI}}
+\newcommand{\DR}{\role{DR}}
+\newcommand{\PO}{\role{PO}}
+\newcommand{\EQ}{\role{EQ}}
+\newcommand{\RCCFive}{\text{RCC5}}
+\newcommand{\Trip}{\operatorname{Trip}}
+\newcommand{\Pair}{\operatorname{Pair}}
+
+\newcommand{\summarybox}[1]{%
+  \noindent\fcolorbox{border}{soft}{%
+    \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{#1}%
+  }%
+}
+
+\begin{document}
+
+{\color{accent}\rule{\linewidth}{1.2pt}}
+
+\begin{center}
+    {\LARGE\bfseries Technical review of \\
+    \vspace{0.3em}
+    \textit{On the Decidability of ALCIRCC5 and ALCIRCC8: Quasimodels Meet the Patchwork Property}}\\[0.7em]
+    {\large Findings on the correctness of the claimed decidability proof}\\[0.5em]
+    {\normalsize Prepared from an internal reading of the uploaded manuscript (March 2026)}
+\end{center}
+
+\summarybox{\textbf{Bottom line.} The paper does \emph{not} establish the claimed decidability result as written. The strongest problem is that Theorem~5.1 is actually false for the language defined in Definition~2.1, because \EQ{} is part of the syntax but is omitted from the pair-type and tableau machinery. Even if one normalizes away \EQ-modalities first, the central soundness arguments still fail: the quasimodel abstraction forgets witness identity, the proof of Claim~5.2 misuses the RCC patchwork property, and several later algorithmic claims therefore do not follow. None of this proves that the target decidability results are false in reality; it shows only that this manuscript does not currently provide a valid proof.}
+
+\section*{1. Overall assessment}
+
+The manuscript proposes two decision procedures for concept satisfiability in $\ALCI\mathrm{RCC5}$ and $\ALCI\mathrm{RCC8}$: a quasimodel construction (Sections~4--6) and a tableau with blocking (Section~7). The intended bridge is Theorem~5.1, which claims that a concept $C_0$ is satisfiable iff a quasimodel exists. The later complexity and tableau sections rely on that bridge.
+
+My assessment is:
+
+\begin{itemize}
+    \item The main theorem is \textbf{false as stated} for the full syntax in Definition~2.1.
+    \item The ``model $\Rightarrow$ quasimodel'' direction is invalid for independent reasons even after ignoring the $\EQ$ bug.
+    \item The ``quasimodel $\Rightarrow$ model'' construction contains a serious gap at Claim~5.2; the invoked patchwork theorem does not justify the needed global choice of edge labels.
+    \item Because these points affect the core correctness argument, the ExpTime upper bound and the RCC8 corollary are not established by the paper.
+\end{itemize}
+
+The table below summarizes the most important defects.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{0.25\linewidth}>{\raggedright\arraybackslash}p{0.24\linewidth}X}
+\toprule
+\textbf{Issue} & \textbf{Where it appears} & \textbf{Why it matters} \\
+\midrule
+$\EQ$ is in the syntax but excluded from pair-types & Definition~2.1, Definition~4.3, Definition~4.6, Section~7 & Theorem~5.1 is false for the language as defined; the tableau is unsound on simple formulas with $\forall \EQ$ \\
+\addlinespace[0.2em]
+Condition (Q2) is too strong & Definition~4.6, Theorem~5.1, Theorem~7.10 & Even a one-element model can fail to yield a quasimodel because self-types need a non-$\EQ$ edge in $P$ \\
+\addlinespace[0.2em]
+Unary types are too coarse & Definition~4.6 (Q1, Q3), Theorem~5.1, Theorem~7.10 & The proofs illegitimately combine role information realized by different representatives of the same type \\
+\addlinespace[0.2em]
+Patchwork property is misapplied & Corollary~2.9, Claim~5.2 & Pairwise extendability does not imply a single global edge assignment; the model construction is unsupported \\
+\addlinespace[0.2em]
+Converse closure of $P$ is assumed but not required & Lemma~5.3 & The induction invariant is not proved as stated \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section*{2. Major defects in the proof}
+
+\subsection*{2.1. The logic includes $\EQ$, but the proof machinery mostly ignores it}
+
+Definition~2.1 explicitly includes $\EQ$ as one of the role symbols. Semantically, Definition~2.2 imposes \emph{strong} equality semantics, so $\EQ^I$ is exactly the identity relation. However:
+
+\begin{itemize}
+    \item pair-types are defined only for roles in $NR \setminus \{\EQ\}$ \Paper{Definition~4.3};
+    \item the quasimodel component $P$ is a subset of those pair-types \Paper{Definition~4.6};
+    \item the tableau completion graph stores only non-$\EQ$ labels on distinct pairs \Paper{Definition~7.1}.
+\end{itemize}
+
+This mismatch is fatal.
+
+\paragraph{Unsatisfiable formula incorrectly admitted by the quasimodel definition.}
+Consider
+\[
+C := \forall \EQ.A \;\sqcap\; \neg A.
+\]
+Under strong equality semantics, $\forall \EQ.A$ is equivalent to $A$, so $C$ is unsatisfiable. But the quasimodel definition can still accept it. Let
+\[
+\tau = \{C,\; \forall \EQ.A,\; \neg A\}, \qquad T = \{\tau\}, \qquad P = \{(\tau,\DR,\tau)\}.
+\]
+Then (Q1) is vacuous, (Q2) holds, and (Q3) is vacuous. Since pair-compatibility never checks $\forall \EQ.A$, nothing forces $A \in \tau$. Hence a quasimodel exists although the concept is unsatisfiable.
+
+So Theorem~5.1 cannot be correct for the language defined in Definition~2.1.
+
+\paragraph{Satisfiable formula incorrectly rejected by the quasimodel definition.}
+Consider instead
+\[
+C := A \;\sqcap\; \exists \EQ.A.
+\]
+Under strong equality semantics this is simply equivalent to $A$, hence satisfiable. But (Q1) demands, for every existential $\exists R.D \in \tau$, a witness type $\tau'$ such that $(\tau,R,\tau') \in P$ \Paper{Definition~4.6}. For $R=\EQ$, this is impossible because $P \subseteq \Pair(C_0)$ and $\Pair(C_0)$ was defined only for non-$\EQ$ roles.
+
+So the theorem fails in both directions as written.
+
+\paragraph{The tableau has the same defect.}
+For $C = \forall \EQ.A \sqcap \neg A$, a tableau branch can contain both conjuncts at one node, yet the $(\forall)$-rule only propagates along stored edges between distinct nodes. There is no rule that says $\forall \EQ.A$ forces $A$ on the same node. The branch can therefore remain clash-free although the formula is unsatisfiable.
+
+A repair is conceivable: prove an explicit preprocessing lemma that eliminates $\EQ$-modalities under strong equality semantics, for example by rewriting $\forall \EQ.D$ and $\exists \EQ.D$ to $D$ before closure, type formation, and tableau expansion. But that lemma is not currently present, and without it the central theorem is false.
+
+\subsection*{2.2. Condition (Q2) is too strong, and the soundness proof for it is wrong}
+
+Condition (Q2) requires:
+\begin{quote}
+for every $\tau_1,\tau_2 \in T$, there exists $R \in NR \setminus \{\EQ\}$ with $(\tau_1,R,\tau_2) \in P$.
+\end{quote}
+This includes the case $\tau_1 = \tau_2$. But the soundness proof of Theorem~5.1 justifies (Q2) by saying that every pair of elements has a role, hence every pair of types has a role in $P$ \Paper{Section~5.1}. That inference is invalid.
+
+A type may be realized by exactly one element. In that case, there is no distinct pair of elements of that type, so there need not be any non-$\EQ$ self-pair in $P$.
+
+\paragraph{Concrete counterexample.}
+Take the one-element interpretation with domain $\{x\}$, $A^I = \{x\}$, and $\EQ^I = \{(x,x)\}$. This is a valid model of $A$. Its extracted type set is $T = \{\tau_A\}$, but the extracted set $P$ is empty because $P$ only records non-$\EQ$ pairs between distinct elements. Therefore (Q2) fails for $(\tau_A,\tau_A)$.
+
+So the claimed proof of ``model $\Rightarrow$ quasimodel'' is false even before one reaches the later construction.
+
+The same issue reappears in the tableau soundness proof. Theorem~7.10, Step~3 tries to verify (Q2) using active witnesses $x_1,x_2$ of the two types. But by Definition~7.3, active nodes have pairwise distinct labels; there is therefore typically only \emph{one} active representative of a given type. The argument gives no non-$\EQ$ self-pair for equal types.
+
+\subsection*{2.3. The abstraction by unary types loses witness identity}
+
+The deepest structural problem is that the quasimodel stores only:
+\[
+(\tau_1,R,\tau_2) \in P \quad \text{meaning: some pair of elements of those types is related by } R.
+\]
+That is an \emph{existential} summary of adjacency information. But conditions (Q1.a), (Q1.b), and (Q3) require one to combine such facts around a \emph{fixed} realization of a type.
+
+This is not legitimate in general, because different realizations of the same unary type can have different neighborhoods.
+
+\paragraph{Representative mismatch in the proof of (Q1.a).}
+In the soundness proof of Theorem~5.1, fix $x$ with type $\tau$ and a witness $y$ for $\exists R.D \in \tau$. To prove (Q1.a), the paper then takes an arbitrary type $\tau''$ with $(\tau,R'',\tau'') \in P$ and says it is witnessed by some $z'$ such that $(x,z') \in (R'')^I$ \Paper{Section~5.1}. But $(\tau,R'',\tau'') \in P$ only says that there exist \emph{some} elements $x',z'$ of types $\tau,\tau''$ with $(x',z') \in (R'')^I$. It does not imply that the particular element $x$ chosen earlier also has an $R''$-neighbor of type $\tau''$.
+
+The same representative-switching problem is visible in Theorem~7.10, Step~2. The proof first uses arbitrary witnesses $x',z'$ for a pair-type and then returns to the original node $x$, effectively assuming that every pair-type outgoing from the type $L(x)$ is realized at that same node. The argument does not justify this.
+
+\paragraph{A direct counterexample to (Q3).}
+Let
+\[
+C_0 := A \;\sqcap\; \exists \PP.B.
+\]
+Consider a path-consistent atomic RCC5 network on four nodes $a,b,c,d$ with:
+\[
+a\PP b, \qquad c\PP d,
+\]
+and every other distinct pair labelled $\DR$ (with converses fixed in the obvious way). Assign concept names by
+\[
+A^I = \{a\}, \qquad B^I = \{b,c\}.
+\]
+One checks directly from the RCC5 composition table that this network is path-consistent; hence, by the paper's own Theorem~2.8, it is realizable.
+
+Now, relative to $\cl(C_0)$:
+\begin{itemize}
+    \item $a$ has a type $\tau_1$ containing $A$ and $\exists \PP.B$;
+    \item $b$ and $c$ have the same type $\tau_2$ (both satisfy $B$ and no other relevant concept distinguishes them);
+    \item $d$ has a type $\tau_3$.
+\end{itemize}
+Then the extracted set $P$ contains $(\tau_1,\PP,\tau_2)$ via the pair $(a,b)$ and $(\tau_2,\PP,\tau_3)$ via the pair $(c,d)$. But it does \emph{not} contain $(\tau_1,\PP,\tau_3)$, because $a\DR d$.
+
+So the natural abstraction of a genuine model need not satisfy (Q3). This refutes the idea that the extracted $(T,P,\tau_0)$ is automatically a quasimodel.
+
+The underlying reason is exactly the one above: the type $\tau_2$ is realized by two different elements, $b$ and $c$, and the proof illegitimately combines adjacency facts witnessed by different realizations.
+
+\subsection*{2.4. Claim~5.2 misuses the RCC patchwork property}
+
+Claim~5.2 is the crucial step in the quasimodel-to-model construction. The paper introduces variables $S_1,\dots,S_m$ for the roles from a new witness node to all old nodes, notes that for each pair $(e_i,e_j)$ there are values making the triple $(e_i,e_j,e_{m+1})$ consistent, and then concludes that a simultaneous assignment exists by the RCC patchwork theorem.
+
+That conclusion does not follow.
+
+\paragraph{First problem: Corollary~2.9 is not proved in a usable form.}
+Definition~2.5 says that an atomic network over $V$ assigns a single base relation to \emph{every} ordered pair of variables in $V$. If $N_1$ and $N_2$ are atomic networks on overlapping variable sets $V_1$ and $V_2$, then the literal set-theoretic union $N_1 \cup N_2$ does \emph{not} define an atomic network on $V_1 \cup V_2$ unless one also chooses the cross-edges between variables in $V_1 \setminus V_2$ and variables in $V_2 \setminus V_1$.
+
+But Corollary~2.9 treats $N_1 \cup N_2$ as if it were already a fully specified atomic network. The proof says that mixed triples are path-consistent ``by agreement on shared variables'', yet those mixed triples precisely require the missing cross-edges. So the corollary is, at minimum, incomplete as stated.
+
+\paragraph{Second problem: Theorem~2.8 applies only to fixed atomic networks, not to edge domains.}
+In Claim~5.2 the symbols $S_i$ are not fixed edge labels; they are variables restricted to domains
+\[
+D_i := \{S \in NR \setminus \{\EQ\} \mid (\tau(e_i),S,\tau') \in P\}.
+\]
+The paper argues that every triple involving the new node can be solved individually, and therefore the whole network is path-consistent and globally consistent. But Theorem~2.8 does not say that a network with \emph{domains of possible labels} has a globally compatible atomic refinement whenever every triple has some local solution.
+
+In other words, the proof jumps from
+\begin{quote}
+for each pair $(i,j)$ there exist values $S_i^{(j)},S_j^{(i)}$ that work for that triple
+\end{quote}
+to
+\begin{quote}
+there exists a single tuple $(S_1,\dots,S_m)$ working for all pairs simultaneously.
+\end{quote}
+That jump is exactly what needs proof.
+
+\paragraph{Explicit RCC5 counterexample to the claimed inference.}
+The failure is not merely philosophical; one can exhibit a small RCC5 constraint pattern where every triple is individually solvable inside the allowed domains, but no global choice exists.
+
+Take three old nodes $e_1,e_2,e_3$ with fixed relations
+\[
+R(e_1,e_2)=\DR, \qquad R(e_1,e_3)=\DR, \qquad R(e_2,e_3)=\PO.
+\]
+This old network is path-consistent. Now suppose the new node $y$ must satisfy the domain restrictions
+\[
+S_1 = \PO, \qquad S_2 = \DR, \qquad S_3 \in \{\PP,\PPI\},
+\]
+where $S_i$ abbreviates $R(e_i,y)$.
+
+Then every \emph{pairwise} requirement can be met:
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lll}
+\toprule
+Triple & Chosen values & Consistent pattern \\
+\midrule
+$(e_1,e_2,y)$ & $(S_1,S_2)=(\PO,\DR)$ & $(\DR,\PO,\DR)$ \\
+$(e_1,e_3,y)$ & $(S_1,S_3)=(\PO,\PP)$ & $(\DR,\PO,\PP)$ \\
+$(e_2,e_3,y)$ & $(S_2,S_3)=(\DR,\PPI)$ & $(\PO,\DR,\PPI)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+But there is no single global value for $S_3$:
+\begin{itemize}
+    \item if $S_3=\PP$, then $(e_2,e_3,y)$ is inconsistent;
+    \item if $S_3=\PPI$, then $(e_1,e_3,y)$ is inconsistent.
+\end{itemize}
+So local triple solvability inside prescribed domains does \emph{not} imply a simultaneous global assignment.
+
+This is exactly the logical gap in Claim~5.2. A genuine amalgamation lemma would be needed here, not just the standard RCC theorem for already-atomic networks.
+
+\subsection*{2.5. Lemma~5.3 assumes converse closure of $P$, but Definition~4.6 does not require it}
+
+In the inductive step of Lemma~5.3, the proof says:
+\begin{quote}
+Claim~5.2(a) gives $(\tau(e_i),S_i,\tau') \in P$ for all $i$. By converse and $P \subseteq \Pair(C_0)$, $(\tau',\operatorname{inv}(S_i),\tau(e_i)) \in P$.
+\end{quote}
+This inference is not valid.
+
+From $(\tau(e_i),S_i,\tau') \in P$ and the fact that $P \subseteq \Pair(C_0)$, one may conclude that the converse triple belongs to $\Pair(C_0)$, because pair-compatibility itself is symmetric under inverses. But Definition~4.6 does not require the chosen subset $P$ to be closed under converse. Therefore the step does \emph{not} establish the stronger claim that the converse pair-type lies in $P$.
+
+This matters because the induction invariant (I2) is stated with membership in $P$, not merely in $\Pair(C_0)$.
+
+\subsection*{2.6. The later algorithmic claims do not follow}
+
+Section~6 derives decidability and an ExpTime upper bound from Theorem~5.1. Section~7 derives tableau soundness by extracting a quasimodel from an open completion graph and again appealing to Theorem~5.1. Section~8 says the RCC8 argument carries over verbatim.
+
+Those consequences are not justified once the issues above are taken seriously.
+
+\begin{itemize}
+    \item Since Theorem~5.1 is false as stated (because of $\EQ$) and unproved even after setting $\EQ$ aside, the type-elimination algorithm in Section~6 is not yet a correctness proof for decidability.
+    \item The tableau soundness theorem inherits the same representative-mismatch problems as the quasimodel proof and is independently unsound on formulas involving $\EQ$.
+    \item The RCC8 section is too terse. Even if the RCC5 proof were correct, one would still need a precise reformulation of the quasimodel conditions and the key construction steps for the RCC8 relation set. ``Carries over verbatim'' is not enough when the RCC5 core argument itself is unresolved.
+\end{itemize}
+
+\section*{3. Possible repair directions}
+
+Some defects look repairable in principle, but not by minor polishing. A serious rewrite of the core proof seems necessary. The following are the most plausible directions.
+
+\begin{enumerate}
+    \item \textbf{Normalize away $\EQ$ at the start.} Under strong equality semantics, one should prove and use an explicit preprocessing lemma replacing $\forall \EQ.D$ and $\exists \EQ.D$ by $D$ before closure, type construction, or tableau expansion.
+
+    \item \textbf{Use a richer abstraction than unary types plus existentially interpreted pair-types.} The current structure forgets which neighborhoods belong to which realization of a type. Any successful replacement must preserve enough two-dimensional information to keep witnesses aligned. Candidates include genuine two-types, mosaics, or local network templates rather than bare unary types.
+
+    \item \textbf{Replace Claim~5.2 with a real global extension lemma.} The construction needs a theorem of the following shape: given a finite already-realized network and a designated witness type, there exists a single compatible role assignment from the new node to all old nodes. The RCC path-consistency theorem for atomic networks is not by itself such a lemma.
+
+    \item \textbf{Strengthen the tableau blocking condition.} Equality of node labels alone is too weak, because two nodes with the same unary type may have incompatible relational contexts. A sound blocking relation would need to preserve enough of the edge-profile information, or the tableau should be replaced by a more global constraint procedure.
+
+    \item \textbf{Revisit (Q2).} As currently formulated, (Q2) asks for non-$\EQ$ self-pairs even when a type has only one realization. Either the definition must be weakened or the extracted structure must carry multiplicity information.
+\end{enumerate}
+
+These are substantial changes. In particular, the current quasimodel seems too coarse to support the existing soundness proof.
+
+\section*{4. Recommendation}
+
+As a discussion piece, the manuscript is useful: it isolates an interesting open problem and suggests proof ingredients that may eventually be relevant. But the present paper should \textbf{not} be treated as having settled the decidability of $\ALCI\mathrm{RCC5}$ or $\ALCI\mathrm{RCC8}$.
+
+My recommendation would be:
+\begin{itemize}
+    \item the main theorem should be regarded as \textbf{unproved};
+    \item the abstract and title claims should be softened unless a new proof is supplied;
+    \item any revision should rebuild the core argument around a stronger abstraction or a different decision method altogether.
+\end{itemize}
+
+\summarybox{\textbf{Final verdict.} The manuscript contains several serious proof errors. The clearest one makes the main theorem false for the language as defined, and the remaining central steps are not validated by the arguments given. I would therefore classify the reported decidability and complexity results as \emph{not established by this paper}.}
+
+\vfill
+
+{\small
+Source under review: \textit{On the Decidability of ALCIRCC5 and ALCIRCC8: Quasimodels Meet the Patchwork Property} (uploaded manuscript, March 2026).
+}
+
+\end{document}
