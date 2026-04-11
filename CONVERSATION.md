@@ -2971,3 +2971,33 @@ The fix generalizes `check_tree_cross_interaction` from singleton-only to all co
 The old code was sound but slightly incomplete in principle (could miss non-singleton UNSAT patterns). The new code closes that gap. No existing claims are weakened.
 
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Extracting Figure 6 from report7.pdf for README comparison (April 11, 2026)
+
+Wessel asked to extract the original taxonomy diagram (Figure 6) from his 2002/2003 report7.pdf, crop it, and add it to the GIS example section in README.md alongside the computed Mermaid DAG — so readers can visually compare the original and the automatically reproduced result.
+
+### What Claude did
+
+1. **Located the figure**: Read report7.pdf page by page (it's a 40+ page document). The GIS example is in Section 3 (page 23), and Figure 6 — the computed taxonomy of the example TBox — is on page 26.
+
+2. **Extracted the page**: Used `pdftoppm` to render page 26 at 300 DPI as a PNG.
+
+3. **Cropped the diagram**: Used ImageMagick `convert` with pixel-level crop coordinates (`-crop 2300x1150+150+60`) to isolate just the taxonomy DAG, then trimmed whitespace and added a clean border. Required two iterations — the first crop cut off LAKE, MOUNTAIN, and RIVER-FLOWING-INTO-A-LAKE at the bottom.
+
+4. **Compressed**: Resized to 800px width and compressed to 159KB (from 466KB).
+
+5. **Integrated into README**: Added the image to the GIS example section with a centered layout, alt text, and caption identifying it as the original Figure 6 from Wessel (2002/2003).
+
+6. **Committed and pushed**: Single commit with the PNG and README update.
+
+### The comparison
+
+The Mermaid DAG (computed by `gis_taxonomy.py` using the cover-tree tableau) and the original Figure 6 (computed by Wessel's prototype system in 2002/2003) show the **identical taxonomy** — 21 subsumption relationships, same DAG structure, same multiple inheritance for Alster (3 parents) and Hamburg (2 parents). This confirms that the cover-tree tableau, 23 years later and implemented by an AI, reproduces the same results as the original human-implemented system.
+
+### Files changed
+
+- `report7_figure6_taxonomy.png`: New file — cropped Figure 6 from report7.pdf
+- `README.md`: Added image to GIS example section
+- `CONVERSATION.md`: This entry
