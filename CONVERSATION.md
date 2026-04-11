@@ -2810,6 +2810,20 @@ The computational evidence for decidability is now three-layered:
 
 ## Session: 100% cover-tree coverage + DR/PO-only tests (2026-04-10)
 
+### Wessel's question: how does the cover-tree tableau handle pure DR/PO demands?
+
+Michael Wessel raised a fundamental concern: the cover-tree tableau has no DR/PO expansion rule — it only creates tree edges (PP/PPI). So how does it prove satisfiability of a concept like `∃DR.A` or `∃PO.B` when no PP/PPI tree is forced? And how does it detect unsatisfiability of `∃DR.(∃PO.C) ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PPI.¬C ⊓ ∀PP.¬C`, where the DR-witness's PO-witness needs to relate back to the root but all relations are blocked?
+
+**Answer (Claude's implementation):** The cover-tree tableau's `check_demand_closure` treats ALL demands identically — for any ∃R.D (including R = DR or PO), it checks that a witness type exists in the type set T such that D is in the witness type and the relation R is safe between the demanding type and the witness type. No tree expansion is needed; in the cover-forest model, DR/PO witnesses are elements in other root trees or distant parts of the same tree. The key check is `safe[(ti, tj)]` — which already considers ALL four relations' universal constraints bidirectionally.
+
+For the UNSAT example: the root type must contain ∃DR.(∃PO.C). The DR-witness type must contain ∃PO.C. The PO-witness of the DR-witness must contain C. But this PO-witness must relate back to the root by some RCC5 relation (every pair of regions has one), and the root has ∀PO.¬C, ∀DR.¬C, ∀PPI.¬C, ∀PP.¬C — blocking C through all four non-EQ relations. Since EQ = identity (strong EQ semantics), the witness can't be EQ to the root. So no safe placement exists, and demand closure fails → UNSAT.
+
+**Wessel also asked GPT the same question.** GPT responded by revising both papers:
+- **Split-forest paper** (`needpatched`): Added full per-relation need families Need_R for all R ∈ {DR, PO, PP, PPI}. The key insight (Remark 4.11): explicit DR/PO witness-menu edges can induce PP/PPI domains via composition (e.g., comp(DR,PO) ⊇ {PP}), so universal constraints for induced relations must also be checked. The old version only tracked Need_DR and Need_PO.
+- **Cover-tree tableau paper** (`needall`): The signature now carries Need_DR, Need_PO, Need_PP, Need_PPI (all four), and the type-safety filter TSafe_S(x,y) requires Need_S(x) ⊆ L(y) and Need_inv(S)(y) ⊆ L(x) for each candidate label S.
+
+**Claude's assessment:** GPT's revisions match the implementation exactly. Claude's `safe[(ti,tj)]` already computes safe relations by checking all four relations' universal constraints bidirectionally — this is precisely the TSafe_S filter that GPT now makes explicit in the papers. The old "needslots" version was incomplete in principle (could miss PP/PPI-induced contradictions), though in practice the implementation was already correct.
+
 ### Changes
 
 1. **Achieved 100% cover-tree coverage (775/775)**: The previous 99.6% (765/768) result had 3 holdout concepts whose type pools were too large (48-120 types) for exhaustive enumeration at feasible domain sizes. Two fixes:
@@ -2818,7 +2832,7 @@ The computational evidence for decidability is now three-layered:
 
 2. **Added 9 DR/PO-only adversarial concepts** to `stress_test_cover_tree.py`: tests that the cover-tree calculus correctly handles concepts with no PP/PPI tree forced (e.g., `∃DR.A`, `∃DR.(∃PO.A)`, `∃DR.(∃DR.(∃PO.A))`), plus two UNSAT cross-edge patterns. All 9 verified against quasimodel reasoner.
 
-3. **Key insight on DR/PO handling**: The cover-tree tableau's `check_demand_closure` treats ALL demands identically (including ∃DR.D, ∃PO.D) — it checks that a witness type exists in the type set with the demanded concept and a safe relation. No tree expansion is needed for DR/PO; witnesses are elements in other root trees or distant parts of the same tree (the cover forest).
+3. **GPT revised both tree papers** with full per-relation Need_R families. Old versions moved to `trees/older/`. README URLs updated accordingly.
 
 ### Bug fixes
 
