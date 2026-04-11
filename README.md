@@ -149,6 +149,14 @@ graph TD
 
 Note that **Alster** has three parents (German River, Local River via German River, and River Flowing Into A Lake) and **Hamburg** has two parents (German City and City At River) — the taxonomy is a DAG, not a tree. The cover-tree tableau handles both the simple structural subsumptions (e.g., Germany ⊑ Country) and the complex spatial-reasoning subsumptions (e.g., Hamburg ⊑ GermanCity) that require RCC5 composition propagation through the model.
 
+For comparison, here is the original taxonomy from Wessel's report7.pdf (2002/2003), Figure 6 — computed by a prototype system at the time:
+
+<p align="center">
+<img src="report7_figure6_taxonomy.png" width="600" alt="Original taxonomy from report7.pdf Figure 6 (Wessel, 2002/2003)"/>
+<br/>
+<em>Original Figure 6 from report7.pdf (Wessel, 2002/2003): computed taxonomy of the GIS example TBox.</em>
+</p>
+
 **Key file:** [`gis_taxonomy.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py) — taxonomy computation (18 concepts, 21 subsumptions, ~190s)
 
 ### Summary: eleven approaches
