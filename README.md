@@ -147,6 +147,8 @@ graph TD
     class TOP top
 ```
 
+*Green nodes are leaf concepts (most specific, no subsumees); white nodes are intermediate concepts with at least one child.*
+
 Note that **Alster** has three parents (German River, Local River via German River, and River Flowing Into A Lake) and **Hamburg** has two parents (German City and City At River) — the taxonomy is a DAG, not a tree. The cover-tree tableau handles both the simple structural subsumptions (e.g., Germany ⊑ Country) and the complex spatial-reasoning subsumptions (e.g., Hamburg ⊑ GermanCity) that require RCC5 composition propagation through the model.
 
 For comparison, here is the original taxonomy from Wessel's report7.pdf (2002/2003), Figure 6 — computed by a prototype system at the time:
