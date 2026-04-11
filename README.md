@@ -53,6 +53,12 @@ The eleventh approach decomposes ALCI\_RCC5 models into **cover trees** (oriente
 3. **Restoring strong EQ via congruence quotient**: Use the typed EQ-congruence relation (from [report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf), Section 4.4.3) to quotient the weak-EQ model back to a strong-EQ model.
 4. **DR propagates rigidly downward**: The critical observation that comp(PP,DR) = {DR} and comp(DR,PPI) = {DR} means DR is **rigid** — once a node is DR to some sibling subtree root, ALL its descendants are also DR. This leaves only {DR,PO} as open choices for sibling cross-edges, dramatically simplifying the constraint problem.
 
+<p align="center">
+<img src="20260407_062616.jpg" width="600" alt="Wessel's whiteboard: split-model intuition for ALCI_RCC5 cover trees"/>
+<br/>
+<em>Wessel's whiteboard sketch of the split-model intuition: PPI chains form trees, DR/PO are sibling cross-edges, and DR propagates rigidly downward.</em>
+</p>
+
 **Formalization by GPT-5.4 Pro.** GPT-5.4, prompted by Wessel, formalized these ideas into two papers:
 - [Split-forest paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_needpatched.pdf): Defines the three-way status partition (Core/Out/Front), rank-k descriptors with local coherence axioms, proves finite-index lemma, finite-prefix arc-consistency theorem, and constructs models via canonical refinements + Konig's lemma.
 - [Cover-tree tableau paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/alcircc5_cover_tree_tableau_needall_patched.pdf): Packages the split-forest approach as a hybrid tableau calculus — local tree expansion for PP/PPI eventualities, global side-checker for DR/PO, blocking via rank-d signatures.
