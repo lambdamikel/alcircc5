@@ -2952,3 +2952,22 @@ Updated `README.md`: fixed composition check description, added "A GIS example" 
 - `README.md`: GIS example section with Mermaid DAG, updated composition check description
 - `CLAUDE.md`: Added `gis_taxonomy.py` to key files and build instructions
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Impact assessment of composition propagation fix (April 11, 2026)
+
+Wessel asked whether the generalized composition check in `cover_tree_tableau.py` affects any of the main status claims (decidability, soundness, completeness) in the README or papers.
+
+### Answer: No — the change is strictly monotone
+
+The fix generalizes `check_tree_cross_interaction` from singleton-only to all composition sizes. This is a **strictly stronger necessary condition**: every type set rejected by the old code is still rejected; the new code can additionally reject type sets the old code missed.
+
+- **Soundness** (SAT answers are correct): Preserved. The composition check is a necessary condition for model existence — if a valid cover-tree model exists, then for every pair of demands from the same type, their witnesses must have `comp(INV[R1], R2) ∩ safe(j1, j2) ≠ ∅`. Strengthening a necessary condition cannot produce false SAT answers.
+- **Completeness** (UNSAT answers are correct): Strictly improved. The new check catches UNSAT patterns previously missed (e.g., when comp(PO, PP) = {PP, PO} and both are unsafe). No false UNSATs were introduced: all 35 built-in tests and 911 stress tests produce identical results.
+- **Empirical agreement**: 911/911 unchanged. Zero mismatches with the quasimodel reasoner before and after the fix.
+- **Papers' theoretical claims**: Unaffected. The split-forest paper, completeness extraction paper, and two-tier quotient paper describe abstract conditions, not the specific singleton-vs-all implementation detail. Only the implementation paper (`cover_tree_tableau_ALCIRCC5.tex`) was updated — because it documents what the code does.
+
+The old code was sound but slightly incomplete in principle (could miss non-singleton UNSAT patterns). The new code closes that gap. No existing claims are weakened.
+
+- `CONVERSATION.md`: This entry
