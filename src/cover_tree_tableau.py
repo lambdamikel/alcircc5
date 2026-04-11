@@ -278,29 +278,17 @@ def check_satisfiability(C0, verbose=False):
     # ── Step 7: Tree-cross interaction check ──────────────────
     def check_tree_cross_interaction(T):
         """
-        Check that tree (PP/PPI) and cross (DR/PO) witnesses are jointly
-        consistent in the cover-tree model.
+        Check that ALL pairs of demands from any type are jointly
+        satisfiable under cover-tree composition constraints.
 
-        Critical constraint: SINGLETON COMPOSITION PROPAGATION.
+        For type i with demands (R1, D1) and (R2, D2), witnesses j1, j2
+        must satisfy:
+          COMP[(INV[R1], R2)] ∩ safe[(j1, j2)] ≠ ∅
+          COMP[(INV[R2], R1)] ∩ safe[(j2, j1)] ≠ ∅
 
-        If type i has a PPI-child j (∃PPI demand) and a DR-witness k
-        (∃DR demand), then in the cover tree j is a child of i and k
-        is in a sibling subtree. The relation between j and k is
-        determined by the sibling interface:
-
-        Since j PP i and i -?-> k where ? ∈ {DR,PO} (cross-edge),
-        j -?'-> k where ?' ∈ comp(PP, ?) (composition through i).
-
-        When comp(PP, R_cross) is a SINGLETON, the relation j-k is
-        FORCED, and j's universals for that forced relation must be
-        satisfied by k (and vice versa).
-
-        Key singleton cases:
-          comp(PP, DR) = {DR}     → PPI-child is DR to parent's DR-witness
-          comp(PPI, PPI) = {PPI}  → PP-parent is PPI to parent's PPI-witness
-          comp(PP, PP) = {PP}     → PPI-child is PP to parent's PP-witness
-
-        For each such forced relation, we check type-safety.
+        This generalizes the previous singleton-only check to handle ALL
+        composition sizes, including non-singleton cases like:
+          COMP[PO, PP] = {PP, PO}  (both may be unsafe → clash)
         """
         T_list = sorted(T)
 
@@ -309,72 +297,34 @@ def check_satisfiability(C0, verbose=False):
             if len(all_dems) <= 1:
                 continue
 
-            # Check all pairs of demands for forced-relation conflicts
             for m1 in range(len(all_dems)):
                 R1, D1 = all_dems[m1]
                 for m2 in range(m1 + 1, len(all_dems)):
                     R2, D2 = all_dems[m2]
 
-                    # Compute the forced relation between witnesses j1 and j2.
-                    # j1 is R1-related to i, j2 is R2-related to i.
-                    # Composition: j1 -[comp(INV[R1], R2)]-> j2
                     comp_12 = COMP[(INV[R1], R2)]
-
-                    # If this is a singleton, the relation is FORCED.
-                    if len(comp_12) == 1:
-                        forced_rel = next(iter(comp_12))
-
-                        # Check: exists j1 witnessing D1 and j2 witnessing D2
-                        # such that forced_rel ∈ safe(j1, j2)
-                        w1 = [j for j in T_list
-                              if D1 in type_list[j] and R1 in safe[(i, j)]]
-                        w2 = [j for j in T_list
-                              if D2 in type_list[j] and R2 in safe[(i, j)]]
-
-                        found = False
-                        for j1 in w1:
-                            for j2 in w2:
-                                if j1 == j2 and R1 == R2:
-                                    found = True
-                                    break
-                                if forced_rel in safe[(j1, j2)]:
-                                    # Also check reverse direction
-                                    forced_rev = INV.get(forced_rel, forced_rel)
-                                    if forced_rev in safe[(j2, j1)]:
-                                        found = True
-                                        break
-                            if found:
-                                break
-
-                        if not found:
-                            return False
-
-                    # Also check reverse composition: j2 -[comp(INV[R2], R1)]-> j1
                     comp_21 = COMP[(INV[R2], R1)]
-                    if len(comp_21) == 1 and comp_12 != comp_21:
-                        forced_rel = next(iter(comp_21))
 
-                        w1 = [j for j in T_list
-                              if D1 in type_list[j] and R1 in safe[(i, j)]]
-                        w2 = [j for j in T_list
-                              if D2 in type_list[j] and R2 in safe[(i, j)]]
+                    w1 = [j for j in T_list
+                          if D1 in type_list[j] and R1 in safe[(i, j)]]
+                    w2 = [j for j in T_list
+                          if D2 in type_list[j] and R2 in safe[(i, j)]]
 
-                        found = False
+                    found = False
+                    for j1 in w1:
                         for j2 in w2:
-                            for j1 in w1:
-                                if j1 == j2 and R1 == R2:
-                                    found = True
-                                    break
-                                if forced_rel in safe[(j2, j1)]:
-                                    forced_rev = INV.get(forced_rel, forced_rel)
-                                    if forced_rev in safe[(j1, j2)]:
-                                        found = True
-                                        break
-                            if found:
+                            if j1 == j2 and R1 == R2:
+                                found = True
                                 break
+                            if (comp_12 & safe[(j1, j2)] and
+                                comp_21 & safe[(j2, j1)]):
+                                found = True
+                                break
+                        if found:
+                            break
 
-                        if not found:
-                            return False
+                    if not found:
+                        return False
 
         return True
 

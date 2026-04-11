@@ -31,6 +31,7 @@ python3 stress_test_cover_tree.py      # cross-validation (911 concepts)
 python3 decomposition_test.py          # cover-tree decomposition test
 python3 model_verifier.py             # independent model verification
 python3 alcircc5_reasoner.py          # quasimodel reasoner (built-in tests)
+python3 gis_taxonomy.py               # GIS taxonomy (18 concepts, ~190s)
 ```
 
 Two LaTeX passes are needed to resolve `\ref` and `\cite` cross-references. The bibliography uses `thebibliography` (inline), not BibTeX.
@@ -45,6 +46,7 @@ Two LaTeX passes are needed to resolve `\ref` and `\cite` cross-references. The 
 - `src/alcircc5_reasoner.py` -- Quasimodel-based reasoner.
 - `src/decomposition_test.py` -- Cover-tree decomposition test (775/775 = 100%).
 - `src/stress_test_cover_tree.py` -- Cross-validation suite (911 concepts, 0 mismatches).
+- `src/gis_taxonomy.py` -- GIS taxonomy computation (18 concepts, 21/21 subsumptions from report7.pdf).
 - `README.md` -- Full project description with complexity landscape and all approach summaries.
 - `CONVERSATION.md` -- Full conversation log between Michael Wessel and the AI assistants.
 

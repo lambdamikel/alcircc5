@@ -69,7 +69,7 @@ The eleventh approach decomposes ALCI\_RCC5 models into **cover trees** (oriente
 1. **Demand closure**: every ∃R.C has an R-safe witness.
 2. **Cross-edge consistency**: all type pairs have non-empty Safe\_{DR/PO} or can be tree-related.
 3. **Cover-tree sibling compatibility**: only DR/PO witness pairs face sibling constraints (not mixed PP/DR).
-4. **Singleton-composition propagation**: when comp(INV[R₁], R₂) is a singleton, the forced relation must be type-safe. Catches cross-role UNSAT patterns (e.g., ∃PPI.(∀DR.A) ⊓ ∃DR.¬A is UNSAT because comp(PP,DR) = {DR} forces the PPI-child's ∀DR.A to fire on the DR-witness).
+4. **Composition propagation**: for any pair of demands (R₁,D₁) and (R₂,D₂) from the same type, witnesses j₁, j₂ must have comp(INV[R₁], R₂) ∩ safe(j₁, j₂) non-empty. Catches cross-role UNSAT patterns (e.g., ∃PPI.(∀DR.A) ⊓ ∃DR.¬A is UNSAT because comp(PP,DR) = {DR} forces the PPI-child's ∀DR.A to fire on the DR-witness). Also catches non-singleton cases like comp(PO,PP) = {PP,PO} where both may be unsafe.
 
 **Results**: Cross-validated on [**911 test concepts**](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py) against the quasimodel reasoner with **zero mismatches**: 50 known SAT, 13 known UNSAT, 36 adversarial (including all 7 cyclic-model concepts plus DR/PO-only and UNSAT cross-edge patterns), 512 systematic triples, 200 random depth-2, 100 random depth-3.
 
@@ -83,6 +83,7 @@ The eleventh approach decomposes ALCI\_RCC5 models into **cover trees** (oriente
 - [`completeness_extraction_ALCIRCC5.tex`](https://github.com/lambdamikel/alcircc5/blob/master/papers/completeness_extraction_ALCIRCC5.tex) — Claude's completeness extraction paper (11 pages, closes the gap)
 - [`cover_tree_tableau.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py) — Claude's implementation (≈350 lines Python)
 - [`stress_test_cover_tree.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py) — Cross-validation script (911 tests)
+- [`gis_taxonomy.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py) — GIS taxonomy computation (18 concepts, 21/21 subsumptions)
 - [`cover_tree_tableau_ALCIRCC5.tex`](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.tex) — Claude's implementation paper (9 pages)
 
 ### Seventh approach: two-tier quotient — PO-COHERENT FRAGMENT DECIDABLE
@@ -100,6 +101,55 @@ See [**Two-Tier Quotient (PDF)**](https://github.com/lambdamikel/alcircc5/blob/m
 Reduces ALCI\_RCC5 satisfiability to the **Borel monadic second-order theory of (R, <)**, which is decidable by Manthe's theorem (2024). RCC5 has a faithful interpretation over open intervals on the real line, making **composition consistency automatic**. The encoding is complete except for one technical gap: MSO-definability of endpoint pairing (Dyck matching) over scattered subsets of R.
 
 See [**MSO Encoding (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/papers/MSO_encoding_ALCIRCC5.pdf) for the full paper (16 pages).
+
+### A GIS example: automated taxonomy computation
+
+To demonstrate the cover-tree tableau on a realistic ALCI\_RCC5 ontology, we compute the **complete subsumption hierarchy** for the GIS (Geographic Information Systems) example from [report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf), Section 3 (Wessel, 2002). The TBox defines 18 concepts — geographic features like countries, cities, rivers, and lakes — connected by RCC5 spatial relations (PP = proper part, PO = partial overlap, DR = discrete).
+
+Example definitions (ALCI\_RCC5 syntax):
+- **Hamburg** ≡ City ⊓ ∃PO.Alster *(a city that partially overlaps the Alster river)*
+- **Alster** ≡ River ⊓ ∃PP.Germany ⊓ ∃PO.AlsterLake ⊓ ∀PO.¬Country ⊓ ∀PP.(¬Country ⊔ Germany) *(a German river overlapping a lake, not overlapping any country, part of only Germany)*
+- **GermanCity** ≡ City ⊓ ∀PP.(¬Country ⊔ Germany) *(a city that is part of only Germany among countries)*
+
+The subsumption **Hamburg ⊑ GermanCity** requires non-trivial spatial reasoning: Hamburg PO Alster, and Alster's ∀PO.¬Country + ∀PP.(¬Country ⊔ Germany) constraints propagate through RCC5 composition (comp(PO,PP) = {PP,PO}) to force every country containing Hamburg to be Germany.
+
+The taxonomy is computed automatically by [`gis_taxonomy.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py) using the cover-tree tableau, reducing each subsumption C ⊑ D to unsatisfiability of C ⊓ ¬D:
+- **Phase 1** (lazy unfolding): Expand defined concepts at the top level. Finds 17/21 subsumptions.
+- **Phase 2** (type constraints): For subsumptions requiring TBox knowledge inside modal contexts (e.g., ∃PO.Alster needs to know Alster ⊑ River), enforce primitive GCIs as **type-level constraints** during Hintikka type enumeration — zero closure overhead. Finds the remaining 4/4.
+
+**Result: 21/21 expected subsumptions verified, matching [report7.pdf Figure 6](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf) exactly.** Total time: ~190s for 306 pairwise tests.
+
+```mermaid
+graph TD
+    TOP(["TOP"]) --> area["Area"]
+    area["Area"] --> city["City"]
+    area["Area"] --> country["Country"]
+    area["Area"] --> lake["Lake"]
+    area["Area"] --> mountain["Mountain"]
+    area["Area"] --> river["River"]
+    country["Country"] --> czech_republic["Czech Republic"]
+    country["Country"] --> germany["Germany"]
+    city["City"] --> city_at_river["City At River"]
+    city["City"] --> german_city["German City"]
+    river["River"] --> local_river["Local River"]
+    river["River"] --> non_local_river["Non Local River"]
+    river["River"] --> river_flowing_into_a_lake["River Flowing Into A Lake"]
+    lake["Lake"] --> alster_lake["Alster Lake"]
+    local_river["Local River"] --> german_river["German River"]
+    non_local_river["Non Local River"] --> elbe["Elbe"]
+    river_flowing_into_a_lake["River Flowing Into A Lake"] --> alster["Alster"]
+    german_river["German River"] --> alster["Alster"]
+    german_city["German City"] --> hamburg["Hamburg"]
+    city_at_river["City At River"] --> hamburg["Hamburg"]
+    classDef leaf fill:#e8f4e8,stroke:#2d7d2d
+    class alster,alster_lake,czech_republic,elbe,germany,hamburg,mountain leaf
+    classDef top fill:#f0f0f0,stroke:#999
+    class TOP top
+```
+
+Note that **Alster** has three parents (German River, Local River via German River, and River Flowing Into A Lake) and **Hamburg** has two parents (German City and City At River) — the taxonomy is a DAG, not a tree. The cover-tree tableau handles both the simple structural subsumptions (e.g., Germany ⊑ Country) and the complex spatial-reasoning subsumptions (e.g., Hamburg ⊑ GermanCity) that require RCC5 composition propagation through the model.
+
+**Key file:** [`gis_taxonomy.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py) — taxonomy computation (18 concepts, 21 subsumptions, ~190s)
 
 ### Summary: eleven approaches
 
@@ -342,7 +392,7 @@ A key insight explored in these papers is the **patchwork property** from qualit
    - **Demand closure**: every ∃R.C in every type has an R-safe witness type in T
    - **Cross-edge compatibility**: every DR/PO demand has a witness type that is DR- or PO-safe
    - **Cover-tree sibling compatibility**: for each type with multiple DR/PO demands, there exist joint witnesses j₁,...,jₖ such that comp(INV[Rₘ], Rₘ') ∩ {DR,PO} ∩ safe\_cross(jₘ, jₘ') ≠ ∅ for all pairs. Uses arc-consistency pruning + backtracking search.
-   - **Singleton-composition propagation**: when comp(INV[R₁], R₂) is a singleton {S}, the forced relation S must be type-safe between the corresponding witness types. Key cases: comp(PP, DR) = {DR} forces PPI-children to be DR to their parent's DR-witnesses; comp(PPI, PPI) = {PPI} forces PP-parents to be PPI to their parent's PPI-witnesses.
+   - **Composition propagation**: for every demand pair (R₁,D₁), (R₂,D₂) from the same type, witnesses j₁, j₂ must satisfy comp(INV[R₁], R₂) ∩ safe(j₁, j₂) ≠ ∅. Key cases: comp(PP, DR) = {DR} forces PPI-children to be DR to their parent's DR-witnesses; comp(PO, PP) = {PP, PO} where both may be unsafe also causes clashes.
 
 ### Key difference from the quasimodel reasoner
 

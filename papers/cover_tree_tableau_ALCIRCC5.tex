@@ -102,7 +102,7 @@ after $\EQ$-splitting---reduces the cross-edge problem to a
 $\{\DR,\PO\}$ disjunctive network that is trivially arc-consistent.
 We describe the algorithm, identify the critical checks that
 distinguish this approach from a na\"{\i}ve quasimodel search
-(singleton-composition propagation and restricted sibling
+(composition propagation and restricted sibling
 compatibility), and report on a cross-validation of 911~test
 concepts against an independent reasoner, with zero mismatches.
 \end{abstract}
@@ -242,9 +242,9 @@ and satisfies four conditions:
     a joint witness assignment where all witness pairs satisfy the
     $\{\DR,\PO\}$-restricted composition constraint
     (Section~\ref{sec:sibling}).
-  \item \textbf{Tree-cross interaction}: for each type with both
-    tree ($\PP/\PPI$) and cross ($\DR/\PO$) demands, the
-    singleton-composition propagation check passes
+  \item \textbf{Tree-cross interaction}: for each type with multiple
+    demands, every pair of witnesses must be jointly satisfiable
+    under composition constraints
     (Section~\ref{sec:singleton}).
 \end{enumerate}
 
@@ -319,11 +319,11 @@ in sibling positions.  Only $\DR/\PO$ witnesses are siblings.
 Therefore equation~\eqref{eq:sibling-compat} restricts both the
 composition and the safe set to $\{\DR,\PO\}$.
 
-\subsection{Phase 4: Tree-cross interaction (singleton-composition propagation)}
+\subsection{Phase 4: Tree-cross interaction (composition propagation)}
 \label{sec:singleton}
 
-When a type $\tau_i$ has both a tree demand $\exists R_1.D_1$
-($R_1 \in \{\PP,\PPI\}$) and another demand $\exists R_2.D_2$,
+When a type $\tau_i$ has two demands $\exists R_1.D_1$
+and $\exists R_2.D_2$,
 the witnesses $\tau_{j_1}$ and $\tau_{j_2}$ are related through
 the composition:
 \begin{equation}
@@ -332,15 +332,30 @@ the composition:
   \label{eq:composition-chain}
 \end{equation}
 
-When $\comp(\inv(R_1), R_2)$ is a \emph{singleton} $\{S\}$,
-the relation between $\tau_{j_1}$ and $\tau_{j_2}$ is
-\emph{forced} to be~$S$, and we must have
-$S \in \Safe(\tau_{j_1}, \tau_{j_2})$.
+For this to be satisfiable, some relation in the composition
+set must be safe between the witnesses.  The check is:
+for every pair of demands at type~$\tau_i$,
+verify that there exist witnesses
+$\tau_{j_1}, \tau_{j_2} \in T$ such that
+\[
+  \comp(\inv(R_1), R_2) \;\cap\; \Safe(\tau_{j_1}, \tau_{j_2})
+  \;\neq\; \emptyset
+\]
+\emph{and} conversely
+$\comp(\inv(R_2), R_1) \cap \Safe(\tau_{j_2}, \tau_{j_1})
+\neq \emptyset$.
 
-\begin{proposition}[Singleton compositions in RCC5]
+When the composition is a \emph{singleton} $\{S\}$,
+this forces $S \in \Safe(\tau_{j_1}, \tau_{j_2})$.
+But the check is equally important for non-singleton
+compositions: if every relation in
+$\comp(\inv(R_1), R_2)$ is unsafe between
+all candidate witness pairs, the type set is still
+inconsistent.
+
+\begin{proposition}[Key compositions in RCC5]
 \label{prop:singletons}
-The singleton compositions involving one tree role and one
-arbitrary role are:
+Some compositions involving tree roles and cross-edge roles:
 \begin{center}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{lll}
@@ -348,23 +363,19 @@ arbitrary role are:
 $R_1$ & $R_2$ & $\comp(\inv(R_1), R_2)$ \\
 \midrule
 $\PPI$ (tree child) & $\DR$ (cross) &
-  $\comp(\PP, \DR) = \{\DR\}$ \\
+  $\comp(\PP, \DR) = \{\DR\}$ \textit{(singleton -- forced)} \\
 $\PP$ (tree parent) & $\PPI$ (tree child) &
-  $\comp(\PPI, \PPI) = \{\PPI\}$ \\
+  $\comp(\PPI, \PPI) = \{\PPI\}$ \textit{(singleton -- forced)} \\
 $\PPI$ (tree child) & $\PP$ (tree parent) &
-  $\comp(\PP, \PP) = \{\PP\}$ \\
+  $\comp(\PP, \PP) = \{\PP\}$ \textit{(singleton -- forced)} \\
+$\PO$ (cross) & $\PP$ (tree parent) &
+  $\comp(\PO, \PP) = \{\PP,\PO\}$ \textit{(both may be unsafe)} \\
 $\PP$ (tree parent) & $\DR$ (cross) &
-  $\comp(\PPI, \DR) = \{\DR,\PO,\PPI\}$ \textit{(not singleton)} \\
+  $\comp(\PPI, \DR) = \{\DR,\PO,\PPI\}$ \textit{(usually satisfiable)} \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{proposition}
-
-The check is: for every pair of demands at type $\tau_i$
-whose composition is a singleton $\{S\}$, verify that there
-exist witnesses $\tau_{j_1}, \tau_{j_2} \in T$ with
-$S \in \Safe(\tau_{j_1}, \tau_{j_2})$
-and $\inv(S) \in \Safe(\tau_{j_2}, \tau_{j_1})$.
 
 \begin{example}[Cross-role UNSAT detection]
 \label{ex:cross-unsat}
@@ -463,9 +474,9 @@ Only $\Front$--$\Front$ pairs carry genuinely open $\{\DR,\PO\}$
 labels.
 
 Our implementation does not explicitly track the status partition,
-but the singleton-composition check (Section~\ref{sec:singleton})
-captures its essential consequence: when a tree step forces a
-relation, that relation must be type-safe.
+but the composition propagation check (Section~\ref{sec:singleton})
+captures its essential consequence: the composition of any two
+demand roles must intersect the safe set of their witnesses.
 
 
 % ═══════════════════════════════════════════════════════════════
@@ -546,7 +557,7 @@ The new components are:
     ($\DR/\PO$) categories.
   \item The cover-tree sibling check
     (equation~\eqref{eq:sibling-compat}).
-  \item The singleton-composition propagation check
+  \item The composition propagation check
     (Section~\ref{sec:singleton}).
   \item The cross-edge consistency check
     (non-emptiness of $\Safe_{\DR/\PO}$ for non-tree pairs).
@@ -586,7 +597,7 @@ In particular:
 \begin{itemize}[nosep]
   \item All 7 cyclic-model concepts
     (Table~\ref{tab:cyclic}) are correctly identified as SAT.
-  \item All 6 cross-role singleton-composition UNSAT patterns
+  \item All 6 cross-role composition-propagation UNSAT patterns
     (Example~\ref{ex:cross-unsat} and variants) are correctly
     identified as UNSAT.
   \item All 512 systematic triples
@@ -699,9 +710,9 @@ but omits several components of the full theory:
 
   \item \textbf{Descriptor language and local coherence axioms
     (C1--C5).}
-    The singleton-composition check captures the most critical
-    coherence constraint (when $\comp(\inv(R_1), R_2)$ is a
-    singleton, the relation between witnesses is forced).
+    The composition propagation check captures the most critical
+    coherence constraint: for every demand pair, the composition
+    set must intersect the safe set of their witnesses.
     The full C3--C4 downward-support axioms, which constrain how
     cross-edge domains evolve through ancestor-descendant chains,
     are not explicitly checked.  No test failures have been
@@ -742,9 +753,9 @@ This is because:
   \item The quasimodel reasoner's sibling check on all demand
     pairs is \emph{strictly stronger} than the cover-tree's
     cross-only check.
-  \item The cover-tree's singleton-composition check catches
+  \item The cover-tree's composition propagation check catches
     exactly the cases where the quasimodel's stronger checks
-    would also reject (all singleton-composition UNSAT patterns
+    would also reject (all composition-propagation UNSAT patterns
     are caught by both).
 \end{itemize}
 
@@ -799,9 +810,9 @@ sibling-interface approach.  The key algorithmic contributions are:
   \item A restricted sibling compatibility check that only
     considers $\DR/\PO$ witness pairs, avoiding problematic
     mixed $\PP/\DR$ compositions.
-  \item A singleton-composition propagation check that catches
-    cross-role UNSAT patterns where the forced relation between
-    a tree witness and a cross witness violates type-safety.
+  \item A composition propagation check that catches
+    cross-role UNSAT patterns where the composition set between
+    any two witnesses has empty intersection with the safe set.
 \end{enumerate}
 
 The implementation passes 911~test concepts with zero mismatches
