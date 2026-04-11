@@ -2672,7 +2672,7 @@ Wessel proposed a new line of investigation based on the observation that every 
 
 GPT-5.4 formalized Wessel's ideas in two papers:
 
-**Split-forest paper** (`trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_patched.tex`):
+**Split-forest paper** (`trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_needpatched.tex`):
 - Defines split-tree presentations (EQ-split models as trees)
 - Proves the corrected status partition: Core (EQ-copies), Out (rigid DR), Front (open DR/PO)
 - Establishes status evolution automaton: Core→{Core}, Out→{Out}, Front→{Out, Front, Core}
@@ -2680,14 +2680,16 @@ GPT-5.4 formalized Wessel's ideas in two papers:
 - Develops ranked node states and finite quotient construction
 - States the finite-prefix arc-consistency theorem (Theorem 8.1)
 - Sketches the soundness chain: valid quotient → unfolding → disjunctive network → arc-consistency → full tractability → König's lemma → canonical refinements → weak-EQ model → quotient → strong-EQ model
+- **Revised (April 2026)**: Added full per-relation need families Need_R for all R ∈ {DR, PO, PP, PPI}, not just DR/PO. This is essential because witness menus can induce PP/PPI domains via composition (e.g., comp(DR,PO) ⊇ {PP}), and the universal constraints for induced relations must be checked.
 
-**Cover-tree tableau paper** (`trees/alcircc5_cover_tree_tableau_needslots_patched.tex`):
+**Cover-tree tableau paper** (`trees/alcircc5_cover_tree_tableau_needall_patched.tex`):
 - Builds on the split-forest semantics to define a tableau decision procedure
 - Defines tableau objects (cover trees with status-annotated nodes)
-- Specifies operational expansion rules
+- Specifies operational expansion rules with full per-relation Need_R slots
 - Uses rank-k signatures for blocking
 - Includes a global side-checker for cross-edge consistency
 - Claims termination, soundness, and completeness
+- **Revised (April 2026)**: Renamed from "needslots" to "needall" — the signature now carries Need_DR, Need_PO, Need_PP, Need_PPI (all four relations), and the type-safety filter TSafe_S uses the full family.
 
 ### Claude's assessment
 
