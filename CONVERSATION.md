@@ -3001,3 +3001,28 @@ The Mermaid DAG (computed by `gis_taxonomy.py` using the cover-tree tableau) and
 - `report7_figure6_taxonomy.png`: New file — cropped Figure 6 from report7.pdf
 - `README.md`: Added image to GIS example section
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Adding Intellectual Roots section to README (April 12, 2026)
+
+Wessel requested an "Intellectual Roots" section at the beginning of README.md, citing Cohn's 1993 IJCAI workshop paper as the origin of the idea of combining modal/description logics with qualitative spatial reasoning via RCC relations as modalities.
+
+### The citation
+
+> A. G. Cohn. *Modal and Non Modal Qualitative Spatial Logics.* In F. D. Anger, H. M. Guesgen, and J. van Benthem (eds.), Proceedings of the Workshop on Spatial and Temporal Reasoning, IJCAI, 1993.
+
+### What Claude added
+
+A new "Intellectual roots" subsection placed immediately after the title and before the complexity landscape table. The section:
+
+1. Credits **Cohn (1993)** for first proposing the idea of treating topological relations (PP, PO, DR, etc.) as modal operators in a spatial logic — but leaving decidability entirely open.
+
+2. Credits **Wessel (2002/2003)** for formally defining the ALCI\_RCC family (ALCI\_RCC5, ALCI\_RCC8) with rigorous composition-table semantics and posing decidability as the central open problem.
+
+3. Notes that the decidability questions remained open for over 20 years — until the work documented in this repository.
+
+### Files changed
+
+- `README.md`: Added "Intellectual roots" section at the top
+- `CONVERSATION.md`: This entry
