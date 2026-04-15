@@ -14,6 +14,8 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
 
 %%% Theorem environments
 \newtheorem{theorem}{Theorem}[section]
@@ -794,6 +796,76 @@ from Wessel's report~\cite{Wessel2003}.
   Hamburg--Alster--AlsterLake).}
 \label{fig:gis-taxonomy}
 \end{figure}
+
+\begin{figure*}[ht]
+\centering
+\begin{tikzpicture}[
+  every node/.style={draw, rounded corners=2pt, font=\scriptsize,
+    minimum height=1.2em, inner sep=2pt},
+  leaf/.style={fill=green!10, draw=green!50!black},
+  arr/.style={->, >=stealth, thin},
+]
+% Row 0: TOP
+\node (top) [fill=gray!15, draw=gray] at (0,0) {$\top$};
+
+% Row 1: Area
+\node (area) at (0,-1) {Area};
+\draw[arr] (top) -- (area);
+
+% Row 2: Area's children (5 nodes, spread across ~12cm)
+\node (city) at (-5,-2.2) {City};
+\node (country) at (-2.5,-2.2) {Country};
+\node (river) at (1,-2.2) {River};
+\node (lake) at (4,-2.2) {Lake};
+\node (mountain) [leaf] at (5.8,-2.2) {Mountain};
+\draw[arr] (area) -- (city);
+\draw[arr] (area) -- (country);
+\draw[arr] (area) -- (river);
+\draw[arr] (area) -- (lake);
+\draw[arr] (area) -- (mountain);
+
+% Row 3: children of City, Country, River, Lake
+\node (germancity) at (-5.8,-3.5) {GermanCity};
+\node (cityatriver) at (-4.0,-3.5) {CityAtRiver};
+\node (germany) [leaf] at (-2.9,-3.5) {Germany};
+\node (czech) [leaf] at (-1.7,-3.5) {Czech Rep.};
+\node (localriver) at (-0.2,-3.5) {LocalRiver};
+\node (nonlocal) at (1.5,-3.5) {NonLocalRiver};
+\node (riverflowing) at (3.2,-3.5) {RiverIntoLake};
+\node (alsterlake) [leaf] at (4.6,-3.5) {AlsterLake};
+\draw[arr] (city) -- (germancity);
+\draw[arr] (city) -- (cityatriver);
+\draw[arr] (country) -- (germany);
+\draw[arr] (country) -- (czech);
+\draw[arr] (river) -- (localriver);
+\draw[arr] (river) -- (nonlocal);
+\draw[arr] (river) -- (riverflowing);
+\draw[arr] (lake) -- (alsterlake);
+
+% Row 4: deeper nodes
+\node (hamburg) [leaf] at (-4.9,-4.8) {Hamburg};
+\node (germanriver) at (-0.2,-4.8) {GermanRiver};
+\node (elbe) [leaf] at (1.5,-4.8) {Elbe};
+\draw[arr] (germancity) -- (hamburg);
+\draw[arr] (cityatriver) -- (hamburg);
+\draw[arr] (localriver) -- (germanriver);
+\draw[arr] (nonlocal) -- (elbe);
+
+% Row 5: Alster (two parents)
+\node (alster) [leaf] at (1.5,-6.1) {Alster};
+\draw[arr] (germanriver) -- (alster);
+\draw[arr] (riverflowing) -- (alster);
+
+\end{tikzpicture}
+\caption{Taxonomy of the GIS example TBox, computed by the
+  cover-tree tableau~\cite{GISTaxonomy}.
+  Green nodes are leaf concepts (most specific).
+  Note the DAG structure: \emph{Alster} has two parents
+  (GermanRiver and RiverIntoLake) and \emph{Hamburg}
+  has two parents (GermanCity and CityAtRiver).
+  All 21~subsumption edges match Figure~\ref{fig:gis-taxonomy}.}
+\label{fig:gis-computed}
+\end{figure*}
 
 %% ====================================================================
 \section{Outlook and Conclusion}
