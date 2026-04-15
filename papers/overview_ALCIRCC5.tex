@@ -13,6 +13,7 @@
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{graphicx}
 
 %%% Theorem environments
 \newtheorem{theorem}{Theorem}[section]
@@ -182,7 +183,7 @@ questions open.
 
 \subsection{Wessel's $\ALCIRCC{}$ family (2002/2003)}
 
-Wessel~\cite{Wessel2003,Wessel2001} gave the first rigorous treatment
+Wessel~\cite{Wessel2002,Wessel2003,Wessel2001} gave the first rigorous treatment
 of the combination, introducing the \emph{$\ALCIRCC{}$ family}:
 description logics $\ALCIRCC{k}$ ($k = 1,2,3,5,8$) extending $\ALCI$
 with role boxes derived from the RCC composition tables.
@@ -778,6 +779,21 @@ connected by RCC5 spatial relations.  The tableau reproduces
 \textbf{all 21/21 expected subsumptions}, including non-trivial
 inferences like Hamburg~$\sqsubseteq$~GermanCity that require
 RCC5 composition reasoning through spatial role chains.
+Figure~\ref{fig:gis-taxonomy} shows the original computed taxonomy
+from Wessel's report~\cite{Wessel2003}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\columnwidth]{report7_figure6_taxonomy.png}
+\caption{Computed taxonomy of the GIS example TBox from
+  Wessel~\cite{Wessel2003}, Figure~6.
+  The cover-tree tableau reproduces all 21 subsumption edges,
+  including non-trivial spatial inferences such as
+  Hamburg~$\sqsubseteq$~GermanCity (requiring RCC5 composition
+  propagation through the PO-chain
+  Hamburg--Alster--AlsterLake).}
+\label{fig:gis-taxonomy}
+\end{figure}
 
 %% ====================================================================
 \section{Outlook and Conclusion}
@@ -895,6 +911,12 @@ M.\ Wessel.
 \newblock Technical Report FBI-HH-M-324/03, Fachbereich Informatik,
   Universit\"at Hamburg, 2002/2003.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf}
+
+\bibitem{Wessel2002}
+M.\ Wessel.
+\newblock On spatial reasoning with description logics --- position paper.
+\newblock In \emph{Proceedings of the 2002 International Workshop on
+  Description Logics (DL~2002)}, CEUR Workshop Proceedings, 2002.
 
 \bibitem{Wessel2000RA}
 M.\ Wessel.
