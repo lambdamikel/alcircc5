@@ -3056,3 +3056,44 @@ Wessel requested a comprehensive LaTeX overview paper (8–10 pages) tying toget
 - `papers/ceurart.cls`, `papers/cc-by.pdf`, `papers/dl-logo.pdf`: Template files copied from `template/`
 - `README.md`: Added overview paper announcement
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: PP-forcing example and composition table (April 14, 2026)
+
+### Context
+
+Michael asked Claude to explain how the cover-tree tableau handles the concept X = ∃DR.∃PO.C ⊓ ∀DR.¬C ⊓ ∀PO.¬C ⊓ ∀PP.X — a concept with no explicit ∃PP demand that nonetheless forces PP edges and requires infinite models. After verifying the concept computationally (SAT at all unfolding depths), Claude explained the mechanism in detail. Michael then asked to add the example to the README, overview paper, and cover-tree tableau paper, along with the full RCC5 composition table in the overview paper.
+
+### Key insight: implicit PP via composition forcing
+
+The concept X = ∃DR.∃PO.C ⊓ ∀DR.¬C ⊓ ∀PO.¬C ⊓ ∀PP.X contains no ∃PP demand, yet PP edges are **forced** by composition and universal filtering:
+
+1. A root r satisfying X has a DR-neighbor a (with ∃PO.C), and a has a PO-neighbor b (with C).
+2. The relation between r and b must lie in comp(DR, PO) = {DR, PO, PP}.
+3. But ∀DR.¬C and ∀PO.¬C at r, combined with C at b, block DR and PO.
+4. **Only PP survives** — the PP edge is forced without any explicit ∃PP.
+
+The recursive ∀PP.X then forces infinite models: since r PP b, node b must satisfy X (by ∀PP.X), creating its own DR→PO chain forcing another PP-ancestor above it. In the cover tree, b is an **ancestor** of r (since r PP b means b contains r), giving an infinite ascending chain: r PP b PP b' PP b'' ...
+
+The cover-tree tableau handles this finitely: the type containing {C, X} serves as its own PP-ancestor (different domain elements, same abstract type). The finite type set {τ₀(C,X), τ₁(¬C, ∃PO.C), τ₂(¬C, root)} represents the infinite model. Verified SAT by both reasoners.
+
+### What was done
+
+1. **README.md**: Added "How PP edges are forced by composition" paragraph in the eleventh approach section, between the cyclic-model explanation and the completeness gap discussion.
+
+2. **Overview paper** (`papers/overview_ALCIRCC5.tex`, now 10 pages):
+   - Added the full **RCC5 composition table** (Table 1) in Section 2.2, after the key-difficulties remark, with highlighted composition facts for DR rigidity, transitivity, and PP forcing.
+   - Added **Example 2.8** (Implicit PP via composition forcing) in Section 6 with the full worked analysis and the infinite ascending chain diagram.
+
+3. **Cover-tree tableau paper** (`papers/cover_tree_tableau_ALCIRCC5.tex`, now 10 pages):
+   - Added new **Section 4.5** "Implicit PP via composition forcing" in the Key Insights section, with Example 4.3 framed in terms of CT1–CT4 checks: CT2 (cross-edge consistency) forces PP as the only safe relation, CT1 (demand closure) propagates X to the ancestor.
+
+### Files changed
+
+- `README.md`: Added PP-forcing example paragraph
+- `papers/overview_ALCIRCC5.tex`: Added RCC5 composition table + PP-forcing example
+- `papers/overview_ALCIRCC5.pdf`: Recompiled (10 pages)
+- `papers/cover_tree_tableau_ALCIRCC5.tex`: Added PP-forcing subsection + example
+- `papers/cover_tree_tableau_ALCIRCC5.pdf`: Recompiled (10 pages)
+- `CONVERSATION.md`: This entry
