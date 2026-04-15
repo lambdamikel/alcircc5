@@ -203,6 +203,24 @@ Wessel established the following:
     $\ALCIRCC{8}$ was left as the central open problem.
 \end{itemize}
 
+In a series of companion reports, Wessel also mapped out the
+decidability landscape for description logics with general
+composition-based role inclusion axioms:
+\begin{itemize}
+  \item $\ALC_{\mathcal{RA}}$ (arbitrary role algebras) is
+    \textbf{undecidable}, via reduction from CFG
+    intersection~\cite{Wessel2001RA}.
+  \item $\ALC_{\mathcal{RA}}^\ominus$ (restricted to admissible
+    role boxes) is also \textbf{undecidable}, via the Post
+    Correspondence Problem~\cite{Wessel2000RA}.
+  \item $\ALC_{\mathcal{RA}_{SG}}$ (subalgebras of groups) is
+    \textbf{decidable}~\cite{Wessel2000SG}.
+\end{itemize}
+$\ALCIRCC{5}$ sits precisely in the gap: its role box is
+non-deterministic (unlike $\ALC_{\mathcal{RA}_{SG}}$) but
+has the patchwork property (unlike
+$\ALC_{\mathcal{RA}}/\ALC_{\mathcal{RA}}^\ominus$).
+
 \begin{remark}[Key difficulties]
 $\ALCIRCC{5}$ has none of the properties that standard DL
 decidability proofs rely on:
@@ -329,7 +347,8 @@ $\ALCIRCC{5}$ has \emph{none} of these.
 \textbf{Source Problem} & \textbf{Technique} & \textbf{Missing in $\ALCIRCC{5}$} \\
 \midrule
 $\naturals \times \naturals$ domino & Graded modalities + transitivity & Number restrictions \\
-$\ALC\_\mathit{RA}^\ominus$ (Wessel) & CFG intersection via PCP & Arbitrary role box \\
+$\ALC_{\mathcal{RA}}$ \cite{Wessel2001RA} & CFG intersection & Arbitrary role box \\
+$\ALC_{\mathcal{RA}}^\ominus$ \cite{Wessel2000RA} & Post Correspondence Problem & Arbitrary role box \\
 $\ALCIRCC{8}$ (Wessel) & Grid via $\TPP/\NTPP$ & $\TPP/\NTPP$ distinction \\
 $\LRCC{8}$ (Lutz--Wolter) & Domino via topological $\TPP$ & Grid coincidence \\
 $\LRCC{5}(\mathit{RS}^\exists)$ & $S5^3$ via supremum regions & Supremum closure \\
@@ -876,6 +895,29 @@ M.\ Wessel.
 \newblock Technical Report FBI-HH-M-324/03, Fachbereich Informatik,
   Universit\"at Hamburg, 2002/2003.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf}
+
+\bibitem{Wessel2000RA}
+M.\ Wessel.
+\newblock Obstacles on the way to spatial reasoning with description
+  logics: Undecidability of $\ALC_{\mathcal{RA}}^\ominus$.
+\newblock Technical Report FBI-HH-M-297/00, Fachbereich Informatik,
+  Universit\"at Hamburg, 2000.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/report4.pdf}
+
+\bibitem{Wessel2000SG}
+M.\ Wessel.
+\newblock Decidable and undecidable extensions of $\ALC$ with
+  composition-based role inclusion axioms.
+\newblock Technical Report FBI-HH-M-301/01, Fachbereich Informatik,
+  Universit\"at Hamburg, 2000.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/report5.pdf}
+
+\bibitem{Wessel2001RA}
+M.\ Wessel.
+\newblock Undecidability of $\ALC_{\mathcal{RA}}$.
+\newblock Technical Report FBI-HH-M-302/01, Fachbereich Informatik,
+  Universit\"at Hamburg, 2001.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/report6.pdf}
 
 \bibitem{LutzWolter2006}
 C.\ Lutz and F.\ Wolter.
