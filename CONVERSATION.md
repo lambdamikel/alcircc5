@@ -3097,3 +3097,42 @@ The cover-tree tableau handles this finitely: the type containing {C, X} serves 
 - `papers/cover_tree_tableau_ALCIRCC5.tex`: Added PP-forcing subsection + example
 - `papers/cover_tree_tableau_ALCIRCC5.pdf`: Recompiled (10 pages)
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Citation fixes, Wessel reports 4/5/6, GIS figures (April 15, 2026)
+
+### Context
+
+Continuation of the overview paper improvements. Michael requested several enhancements: fixing the Wessel2003 citation (wrong title and report number), adding full URLs to all bibliography entries, citing reports 4/5/6 to complete the decidability landscape, adding the DL 2002 position paper citation, and adding both the original and computed GIS taxonomy figures.
+
+### What was done
+
+1. **Fixed Wessel2003 citation** in both papers:
+   - Title: "--- the theory" → "--- first results and unanswered questions"
+   - Report number: FBI-HH-M-323/03 → FBI-HH-M-324/03 (verified against report7.pdf title page)
+   - Added full GitHub URL to report7.pdf
+
+2. **Added full URLs** to all repo-hosted papers in both bibliographies (overview and cover-tree tableau papers): report7.pdf, split-forest paper, cover-tree tableau paper, completeness extraction, implementation paper, contextual tableau, decidability paper.
+
+3. **Added citations for Wessel's reports 4/5/6** to the overview paper:
+   - report4 (FBI-HH-M-297/00): "Undecidability of ALC_RA⊖" — undecidability via Post Correspondence Problem
+   - report5 (FBI-HH-M-301/01): "Decidable and Undecidable Extensions of ALC with Composition-Based Role Inclusion Axioms" — classifies the decidability boundary (ALC_RA_SG decidable)
+   - report6 (FBI-HH-M-302/01): "Undecidability of ALC_RA" — undecidability via CFG intersection
+   - New paragraph in Section 2.2 explaining where ALCI_RCC5 sits in the gap: non-deterministic role box (unlike ALC_RA_SG) but has patchwork (unlike ALC_RA/ALC_RA⊖)
+   - Fixed blocked-routes table: separated ALC_RA and ALC_RA⊖ into distinct rows with correct techniques (the old row conflated "CFG intersection via PCP")
+
+4. **Added DL 2002 citation** (Wessel2002: "On spatial reasoning with description logics — position paper") to bibliography and Section 2.2.
+
+5. **Added GIS taxonomy figures** to the overview paper:
+   - Figure 1: Original screenshot from report7.pdf Figure 6 (Wessel, 2002/2003)
+   - Figure 2: TikZ recreation showing the DAG computed by the cover-tree tableau, with green leaf nodes and multi-parent structure (Alster with 2 parents, Hamburg with 2 parents)
+
+### Files changed
+
+- `papers/overview_ALCIRCC5.tex`: Citation fixes, 3 new bib entries (reports 4/5/6), Wessel2002 bib entry, decidability landscape paragraph, fixed blocked-routes table, GIS taxonomy figures (screenshot + TikZ)
+- `papers/overview_ALCIRCC5.pdf`: Recompiled (11 pages)
+- `papers/cover_tree_tableau_ALCIRCC5.tex`: Citation fix (Wessel2003 title/number), added URLs to bibliography
+- `papers/cover_tree_tableau_ALCIRCC5.pdf`: Recompiled (10 pages)
+- `papers/report7_figure6_taxonomy.png`: Copied to papers/ for LaTeX inclusion
+- `CONVERSATION.md`: This entry
