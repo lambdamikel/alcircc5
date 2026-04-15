@@ -1,0 +1,847 @@
+%% CEUR-WS / DL 2026 format
+\documentclass[
+% twocolumn,
+% hf,
+]{ceurart}
+
+\sloppy
+
+%% (DL logo removed for standalone version)
+
+%%% Additional packages
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+%%% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{examplex}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+%%% Notation macros
+\newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
+\newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
+\newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
+\newcommand{\LRCC}[1]{\ensuremath{L_{\mathit{RCC#1}}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\TPP}{\ensuremath{\mathsf{TPP}}}
+\newcommand{\NTPP}{\ensuremath{\mathsf{NTPP}}}
+\newcommand{\TPPI}{\ensuremath{\mathsf{TPPI}}}
+\newcommand{\NTPPI}{\ensuremath{\mathsf{NTPPI}}}
+\newcommand{\DC}{\ensuremath{\mathsf{DC}}}
+\newcommand{\EC}{\ensuremath{\mathsf{EC}}}
+\newcommand{\inv}{\ensuremath{\mathsf{inv}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\Tp}{\ensuremath{\mathsf{Tp}}}
+\newcommand{\Safe}{\ensuremath{\mathsf{Safe}}}
+\newcommand{\md}{\ensuremath{\mathsf{md}}}
+\newcommand{\Core}{\ensuremath{\mathsf{Core}}}
+\newcommand{\Out}{\ensuremath{\mathsf{Out}}}
+\newcommand{\Front}{\ensuremath{\mathsf{Front}}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+\newcommand{\naturals}{\mathbb{N}}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\RCCfive}{\{\DR,\PO,\PP,\PPI\}}
+
+\begin{document}
+
+%%
+%% Rights management information.
+\copyrightyear{2026}
+\copyrightclause{Copyright for this paper by its authors.
+  Use permitted under Creative Commons License Attribution 4.0
+  International (CC BY 4.0).}
+
+%%
+%% Conference information (removed for standalone version)
+%% \conference{DL 2026: 39th International Workshop on Description
+%%   Logics, July 17--19, 2026, Lisbon, Portugal}
+
+%%
+%% Title
+\title{On the Decidability of $\ALCIRCC{5}$:
+  A Survey of the Problem, Its History, and a Proposed Solution}
+
+%%
+%% Authors
+\author[1]{Michael Wessel}[%
+email=miacwess@gmail.com,
+url=https://github.com/lambdamikel,
+]
+\cormark[1]
+\address[1]{University of Hamburg (doctoral work, 2002/2003)}
+
+\author[2]{Claude (Anthropic)}[%
+url=https://github.com/lambdamikel/alcircc5,
+]
+\address[2]{Anthropic, San Francisco, CA, USA}
+
+\author[3]{GPT-5.4 (OpenAI)}[%
+url=https://github.com/lambdamikel/alcircc5,
+]
+\address[3]{OpenAI, San Francisco, CA, USA}
+
+\cortext[1]{Corresponding author.}
+
+%%
+%% Abstract
+\begin{abstract}
+The description logic $\ALCIRCC{5}$ extends $\ALCI$ with the five
+RCC5 base relations as roles, under composition-table semantics.
+Its decidability has been open since Wessel~(2002/2003).
+We survey the history of the problem---from Cohn's original proposal
+(1993) through Wessel's systematic investigation and Lutz \& Wolter's
+related undecidability results (2006)---and explain why all known
+undecidability reductions fail for $\ALCIRCC{5}$.
+We then present a proposed decision procedure: the \emph{cover-tree
+tableau}, which decomposes models into PPI-oriented cover trees
+where only $\{\DR,\PO\}$ remain as open cross-edges.
+This decomposition, combined with the patchwork property of RCC5,
+yields finite blocking via rank-$d$ signatures.
+The approach is supported by extensive computational evidence
+(911~test concepts, zero mismatches; 775/775~SAT concepts with
+cover-tree models) but has not been formally verified by human experts.
+We discuss why na\"{\i}ve tableau approaches fail for
+$\ALCIRCC{5}$ and how the cover-tree tableau overcomes these obstacles.
+\end{abstract}
+
+\begin{keywords}
+  description logic \sep
+  spatial reasoning \sep
+  RCC5 \sep
+  decidability \sep
+  tableau calculus \sep
+  patchwork property
+\end{keywords}
+
+\maketitle
+
+%% ====================================================================
+\section{Introduction}
+\label{sec:intro}
+%% ====================================================================
+
+The decidability of concept satisfiability in the spatially extended
+description logic $\ALCIRCC{5}$ has been an open problem for over
+twenty years.  This paper provides a self-contained overview of the
+problem, its intellectual history, the obstacles that have resisted
+solution, and a proposed decision procedure that---if correct---would
+settle the question positively.
+
+The paper is organized as follows.
+Section~\ref{sec:history} traces the history of $\ALCIRCC{5}$
+from Cohn's original 1993 proposal through Wessel's systematic
+investigation and Lutz \& Wolter's topological undecidability results.
+Section~\ref{sec:undecidability} explains why standard undecidability
+reductions fail, including a concrete domino-encoding attempt that
+we verify is blocked.
+Section~\ref{sec:naive-blocking} discusses why na\"{\i}ve tableau
+approaches fail for complete-graph logics.
+Section~\ref{sec:split-forest} presents the split-forest model
+decomposition.
+Section~\ref{sec:cover-tree} describes the cover-tree tableau and
+explains how it achieves blocking.
+Section~\ref{sec:outlook} concludes with an assessment of what
+has been achieved and what remains to be done.
+
+\textbf{Disclaimer.}
+This paper was authored by AI assistants
+(Claude/Anthropic and GPT-5.4/OpenAI), prompted by Michael Wessel.
+The results and proofs have \textbf{not been peer-reviewed or verified by
+human domain experts}.  They are published as a discussion piece.
+The claims should not be taken as established results unless independently
+verified.  We invite scrutiny, corrections, and feedback.
+
+%% ====================================================================
+\section{History of $\ALCIRCC{5}$}
+\label{sec:history}
+%% ====================================================================
+
+\subsection{Cohn's 1993 proposal}
+
+The idea of combining description logics with qualitative spatial
+reasoning via modal accessibility relations was first proposed by
+Cohn~\cite{Cohn1993}, who considered treating the RCC8 relations
+(or subsets thereof) as modalities in a multi-modal logic.
+The framework allowed spatial constraints to be expressed as
+modal formulas---e.g., $\langle \PP \rangle C$ for ``some proper
+part satisfies~$C$''---but Cohn left all decidability and complexity
+questions open.
+
+\subsection{Wessel's $\ALCIRCC{}$ family (2002/2003)}
+
+Wessel~\cite{Wessel2003,Wessel2001} gave the first rigorous treatment
+of the combination, introducing the \emph{$\ALCIRCC{}$ family}:
+description logics $\ALCIRCC{k}$ ($k = 1,2,3,5,8$) extending $\ALCI$
+with role boxes derived from the RCC composition tables.
+In an $\ALCIRCC{k}$ interpretation, every pair of domain elements is
+assigned exactly one RCC$k$ base relation, and the composition table
+is enforced globally (\emph{strong $\EQ$ semantics}: $\EQ$ is identity).
+Models are complete graphs with RCC$k$ edge-colorings.
+
+Wessel established the following:
+\begin{itemize}
+  \item \textbf{Decidable cases:} $\ALCIRCC{1}$, $\ALCIRCC{2}$,
+    and $\ALCIRCC{3}$ are decidable, because their composition
+    tables are deterministic or near-deterministic, admitting
+    reduction to standard DL techniques.
+  \item \textbf{Lower bounds:} $\ALCIRCC{5}$ is $\PSPACE$-hard;
+    $\ALCIRCC{8}$ is $\EXPTIME$-hard.
+  \item \textbf{Open:} The decidability of $\ALCIRCC{5}$ and
+    $\ALCIRCC{8}$ was left as the central open problem.
+\end{itemize}
+
+\begin{remark}[Key difficulties]
+$\ALCIRCC{5}$ has none of the properties that standard DL
+decidability proofs rely on:
+(i)~no tree model property (models are complete graphs),
+(ii)~no finite model property (some satisfiable concepts require
+infinite models),
+(iii)~a non-deterministic role box (multi-valued composition entries).
+\end{remark}
+
+\subsection{Wessel's grid constructions and the coincidence obstruction}
+\label{sec:wessel-grid}
+
+In his investigation of $\ALCIRCC{8}$~\cite{Wessel2003}, Wessel
+made two important discoveries:
+
+\medskip\noindent\textbf{1.\ Even-odd chains (Section~4.4.2).}
+The $\TPP/\NTPP$ distinction in RCC8 allows the construction of
+\emph{functional successor chains}: each node alternates between
+$\mathit{even}$ and $\mathit{odd}$, and a node can distinguish its
+direct $\TPPI$-successor from all indirect ones by parity.
+Wessel used this to encode a binary $n$-bit counter, proving
+$\ALCIRCC{8}$ is $\EXPTIME$-hard.
+
+\medskip\noindent\textbf{2.\ The grid coincidence obstruction (Section~4.4.3,
+Figure~11).}
+Wessel constructed explicit RCC8 networks isomorphic to
+$n \times n$ grids, using $\TPP$ for horizontal and vertical
+successors.  However, he identified a fundamental obstacle to
+encoding domino tilings: the \emph{coincidence condition}
+$R_X \circ R_Y = R_Y \circ R_X$ (east-of-north equals
+north-of-east) cannot be enforced by concept terms.
+The composition table allows $\{PO, EQ, TPP, NTPP, TPPI, NTPPI\}$
+at the coincidence point---too many options.  Wessel concluded:
+\begin{quote}
+``Even though these infinite models do exist, we have found no way
+to \emph{enforce} the depicted model(s) by means of a concept term.''
+\end{quote}
+Wessel further observed that adding a hybrid logic binding operator
+$\downarrow$ (nominals) would immediately yield undecidability,
+confirming that the coincidence condition is the \emph{precise
+boundary}.
+
+These constructions---the even-odd chain, the grid encoding via
+$\TPP/\NTPP$, and the identification of the coincidence gap as
+the decisive obstacle---anticipated key technical ingredients of
+the later Lutz--Wolter proof by three to four years.
+
+\subsection{Lutz \& Wolter (2006)}
+
+Lutz and Wolter~\cite{LutzWolter2006} studied \emph{modal logics
+of topological relations}, denoted $\LRCC{8}$, $\LRCC{5}$, etc.
+These have the same \emph{syntax} as $\ALCIRCC{}$ but are
+interpreted over \emph{topological models}: the domain elements
+are regular closed subsets of a topological space (typically~$\reals^n$).
+They proved:
+\begin{itemize}
+  \item $\LRCC{8}$ is \textbf{undecidable} (domino tiling via
+    functional $\TPP$-chains, with the grid coincidence forced
+    by the geometry of $\reals^2$).
+  \item $\LRCC{5}(\mathit{RS}^\exists)$ is \textbf{undecidable}
+    (reduction from $S5^3$ via supremum regions).
+  \item $\LRCC{5}(\mathit{RS})$ is \textbf{open}. Lutz and Wolter
+    explicitly wrote (p.~31): ``Perhaps the most interesting
+    candidate is $L_{RCC5}(RS)$ [\ldots] to which the reduction
+    exhibited in Section~8 does not apply.''
+\end{itemize}
+
+The logic $\ALCIRCC{5}$ is exactly $\LRCC{5}(\mathit{RS})$:
+arbitrary complete-graph models with composition-table semantics.
+The problem has been recognized as open by leading researchers
+since 2006.
+
+%% ====================================================================
+\section{Why Undecidability Reductions Fail}
+\label{sec:undecidability}
+%% ====================================================================
+
+Every known undecidability proof for description logics ultimately
+encodes a two-dimensional grid ($\naturals \times \naturals$ domino
+tiling).  Grid encoding requires either functional roles, number
+restrictions, role intersection, or role value maps.
+$\ALCIRCC{5}$ has \emph{none} of these.
+
+\subsection{Blocked reduction routes}
+
+\begin{table}[t]
+\caption{Why standard undecidability reductions fail for $\ALCIRCC{5}$.}
+\label{tab:blocked}
+\begin{tabular}{p{3.0cm}p{3.8cm}p{3.5cm}}
+\toprule
+\textbf{Source Problem} & \textbf{Technique} & \textbf{Missing in $\ALCIRCC{5}$} \\
+\midrule
+$\naturals \times \naturals$ domino & Graded modalities + transitivity & Number restrictions \\
+$\ALC\_\mathit{RA}^\ominus$ (Wessel) & CFG intersection via PCP & Arbitrary role box \\
+$\ALCIRCC{8}$ (Wessel) & Grid via $\TPP/\NTPP$ & $\TPP/\NTPP$ distinction \\
+$\LRCC{8}$ (Lutz--Wolter) & Domino via topological $\TPP$ & Grid coincidence \\
+$\LRCC{5}(\mathit{RS}^\exists)$ & $S5^3$ via supremum regions & Supremum closure \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:blocked} summarizes the blocked routes.
+The \textbf{patchwork property} of RCC5 (Renz \& Nebel~\cite{RenzNebel1999})---local
+(triple-wise) consistency implies global consistency for atomic
+networks---actively resists grid encoding, since tiling reductions
+require rigid global constraints that go beyond local consistency.
+
+\subsection{A concrete domino attempt in $\ALCIRCC{5}$}
+\label{sec:domino-attempt}
+
+Can we encode a domino-like grid using $\PP/\PPI$ chains in RCC5?
+Consider the concept:
+\begin{align*}
+  X \;=\; &\exists\PPI.\exists\PPI.C \;\sqcap\; \exists\PPI.\exists\PPI.D \\
+  &\sqcap\; \forall\PPI.\forall\PPI.(\forall\PO.(\neg C \sqcap \neg D)
+    \sqcap \forall\DR.(\neg C \sqcap \neg D) \\
+  &\qquad\qquad\qquad\quad\;\;
+    \sqcap\; \forall\PPI.(\neg C \sqcap \neg D)
+    \sqcap \forall\PP.(\neg C \sqcap \neg D)) \\
+  &\sqcap\; \forall\PPI.\exists\PPI.X
+\end{align*}
+The intent: each $X$-node has two $\PPI$-grandchildren colored $C$
+and $D$ (the ``square''), and the universals isolate the colored
+nodes from all non-$\EQ$ neighbors.  The recursive
+$\forall\PPI.\exists\PPI.X$ forces infinite repetition.
+
+\medskip\noindent\textbf{One level is satisfiable.}
+Without the recursive conjunct, $X$ has a 3-element model:
+$z \;\PP\; y \;\PP\; x$, with $z \in C \sqcap D$.
+The two grandchildren are forced to be \emph{the same element}
+($\EQ$ collapse): if $z_1 \neq z_2$, they would be related by
+some $R \in \RCCfive$, and the universals would require $z_2 \notin D$
+(firing $z_1$'s $\forall R.\neg C \sqcap \neg D$).
+So $z_1 = z_2 \in C \sqcap D$, and the universals are vacuously
+satisfied (the only neighbors of~$z$ are PP-predecessors, not
+PO/DR/PPI-neighbors).
+
+\medskip\noindent\textbf{Two levels is unsatisfiable.}
+Adding $\forall\PPI.X$: the $\PPI$-child $y$ must itself satisfy~$X$
+(without recursion), producing a new $C \sqcap D$-labeled element~$w$
+as a $\PPI$-child of~$z$.  But $z$ is a $\PPI$-grandchild of~$x$,
+and $x$'s universals fire: $z$'s $\PPI$-neighbor~$w$ must satisfy
+$\neg C \sqcap \neg D$.  Yet $w \in C \sqcap D$.
+\textbf{Contradiction.}
+
+This was verified computationally: a simplified version
+$X_1 = \exists\PPI.\exists\PPI.C \sqcap \forall\PPI^3.\neg C$
+is SAT; $X_2 = X_1 \sqcap \forall\PPI.X_1$ is UNSAT.
+The domino encoding collapses at depth~2 because the isolation
+constraints from the grandparent level kill the colored elements
+created by the recursive unfolding.
+
+\begin{remark}
+The failure is not accidental.  In $\ALCIRCC{5}$, the only way to
+create ``functional'' successors is via $\PP/\PPI$ chains, but
+$\comp(\PPI,\PPI) = \{\PPI\}$ makes these chains
+\emph{transitive}---grandparent universals automatically propagate
+to grandchildren, preventing the positional diversity needed for
+grid encoding.  In $\ALCIRCC{8}$, the $\TPP/\NTPP$ distinction
+breaks this transitivity (a direct $\TPPI$-child is distinguishable
+from indirect descendants), which is why Wessel's even-odd chain
+works there but has no RCC5 analogue.
+\end{remark}
+
+%% ====================================================================
+\section{Why Na\"{\i}ve Tableau Blocking Fails}
+\label{sec:naive-blocking}
+%% ====================================================================
+
+Standard DL tableau calculi achieve termination through
+\emph{blocking}: if a node~$x$ has the same label as an ancestor~$y$,
+we can reuse $y$'s subtree for~$x$, cutting off infinite
+branches.  The key requirement is that the ``reuse'' preserves
+all constraints---in tree-shaped models, a blocked node's
+interactions are limited to its parent edge, so label equality suffices.
+
+In $\ALCIRCC{5}$, models are \emph{complete graphs}: every pair
+of domain elements is related by an RCC5 base relation.
+A node interacts not just with its parent and children, but with
+\emph{every other node in the model}.
+This creates a fundamental obstacle for blocking.
+
+\begin{examplex}[Blocking breaks with cross-edges]
+\label{ex:blocking-fail}
+Consider $C_0 = \exists\PPI.A \sqcap \exists\DR.\neg A
+\sqcap \exists\PO.\top$.
+A tableau might generate nodes:
+\begin{itemize}[nosep]
+  \item $x_0$: root, satisfies $C_0$
+  \item $x_1$: $\PPI$-child of $x_0$, type contains $A$
+  \item $x_2$: $\DR$-witness for $x_0$, type contains $\neg A$
+\end{itemize}
+Now $x_1$ and $x_2$ must be related by some RCC5 relation~$R$,
+and $R$ must be safe for their types.  If $x_1$ generates a
+descendant $x_3$ with the same label as $x_1$, na\"{\i}ve blocking
+would declare $x_3$ blocked.  But $x_3$'s relation to~$x_2$ may
+differ from $x_1$'s relation to~$x_2$: via composition,
+$\comp(\inv(\PPI), \DR) = \comp(\PP, \DR) = \{\DR\}$ forces
+$x_1$ to be $\DR$-related to~$x_2$, while $x_3$ (deeper in the
+tree) may face a different forced relation.  The blocked node's
+cross-edge commitments differ from the blocking node's.
+\end{examplex}
+
+Multiple sophisticated blocking strategies have been tried and
+failed for $\ALCIRCC{5}$:
+\begin{enumerate}
+  \item \textbf{Profile-cached blocking} (GPT-5.4): Caches
+    ``coherent predecessor blocks'' to compare global neighborhoods.
+    Fails because the \emph{color structure changes during
+    unraveling}---when a blocked subtree is replayed, the
+    edge-coloring to nodes outside the subtree is not preserved.
+  \item \textbf{Meet-semilattice replay} (GPT-5.4): Uses a
+    meet-semilattice structure on labels to ensure robust
+    normalization.  Same unraveling gap.
+  \item \textbf{Tri-neighborhood blocking} (Claude): Matches not
+    just node labels but entire \emph{triangle neighborhoods}
+    (the set of all types of 2-element subsets involving the node).
+    \textbf{Termination disproved}: frontier nodes continuously
+    acquire new triangle types as new neighbors are added, so
+    $\mathrm{Tri}(x) \subsetneq \mathrm{Tri}(y)$ for frontier~$x$
+    and interior~$y$---blocking never triggers.
+\end{enumerate}
+
+The common obstacle is the \textbf{blocking dilemma}: making the
+blocking condition strong enough for soundness (matching all
+cross-edge interactions) prevents termination (the cross-edge
+context keeps growing), and vice versa.
+
+%% ====================================================================
+\section{Split-Forest Model Decomposition}
+\label{sec:split-forest}
+%% ====================================================================
+
+The breakthrough insight, due to Wessel, is to decompose
+$\ALCIRCC{5}$ models into a \emph{tree layer} and a
+\emph{cross-edge layer}, where the cross-edge layer is simple
+enough to handle without full global blocking.
+
+\subsection{Cover trees}
+
+In any $\ALCIRCC{5}$ model, the $\PP/\PPI$ relation is a
+strict partial order (by composition: $\comp(\PP,\PP) = \{\PP\}$).
+Orient this order downward ($\PPI$ = ``has proper part'') to
+obtain a DAG.  If the DAG has join nodes (elements with multiple
+$\PP$-predecessors), split them into $\EQ$-copies, one per parent
+path.  The result is a rooted forest---the \emph{cover tree}.
+
+\begin{definition}[Cover tree]
+A \emph{cover-tree presentation} of an $\ALCIRCC{5}$ model
+$\mathcal{I}$ is a rooted tree $T$ with a surjection
+$\mathrm{orig}: T \to \Delta^{\mathcal{I}}$ such that:
+(i) $u$ is the parent of $v$ in $T$ iff
+$\mathrm{orig}(u) \;\PPI\; \mathrm{orig}(v)$ (immediate containment),
+and (ii) tree nodes mapping to the same element are $\EQ$-mates
+(weak-$\EQ$ semantics, convertible to strong-$\EQ$ by typed
+congruence quotient).
+\end{definition}
+
+\subsection{The key observation: DR rigidity}
+
+In the cover tree, what relations can hold between nodes in
+different sibling subtrees?  Consider sibling roots $s$ and $t$
+(children of the same parent), and elements $x$ below~$s$, $y$
+below~$t$ in the tree.
+
+\begin{proposition}[Wessel]
+\label{prop:dr-rigid}
+After $\EQ$-splitting, only $\DR$ and $\PO$ are possible between
+non-$\Core$ elements of sibling subtrees.
+\end{proposition}
+
+\begin{proof}
+\begin{itemize}[nosep]
+  \item $\EQ(x,y)$: impossible---$x$ and $y$ are distinct tree
+    nodes (after splitting).
+  \item $\PP(x,y)$: would mean $x$ lies below $y$ in the part-of
+    order, hence below~$t$, making $x$ a common descendant
+    ($\Core$).
+  \item $\PPI(x,y)$: would place $y$ below~$x$ below~$s$, meaning
+    $t$ lies below $s$---contradicting sibling incomparability.
+\end{itemize}
+Only $\DR$ and $\PO$ remain.  Furthermore, $\DR$ propagates
+rigidly: $\comp(\PP, \DR) = \{\DR\}$ and $\comp(\DR, \PPI) = \{\DR\}$,
+so if $s \;\DR\; t$, then \emph{every} descendant of~$s$ is $\DR$
+to~$t$ and all its descendants.
+\end{proof}
+
+\subsection{Trivial arc-consistency of $\{\DR,\PO\}$ networks}
+
+The consequence of Proposition~\ref{prop:dr-rigid} is that the
+cross-edge constraint network uses only $\{\DR, \PO\}$ as possible
+relations (plus $\{\DR\}$ for $\DR$-rigid pairs).
+
+\begin{proposition}
+\label{prop:drpo-arc}
+For all $R, S \in \{\DR, \PO\}$:
+$\comp(R, S) \cap \{\DR, \PO\} \neq \varnothing$.
+\end{proposition}
+
+This means a $\{\DR,\PO\}$ disjunctive network is
+\emph{trivially arc-consistent}: every domain is either
+$\{\DR\}$, $\{\PO\}$, or $\{\DR,\PO\}$, and composing any two
+non-empty domains produces a non-empty result.
+By the patchwork property~\cite{RenzNebel1999}, the network
+therefore has a globally consistent atomic refinement whenever
+every domain is non-empty.
+
+This is the central simplification: \emph{checking that each type
+pair has a non-empty $\{\DR,\PO\}$-safe set suffices for
+cross-edge consistency.}  No full path-consistency computation is
+needed.
+
+%% ====================================================================
+\section{The Cover-Tree Tableau}
+\label{sec:cover-tree}
+%% ====================================================================
+
+\subsection{Algorithm overview}
+
+The cover-tree tableau searches for a \emph{valid type set}:
+a finite set $T \subseteq \Tp(C_0)$ of Hintikka types that
+contains a root type realizing~$C_0$ and satisfies four conditions:
+
+\begin{enumerate}[label=(CT\arabic*)]
+  \item \textbf{Demand closure}: every existential demand
+    $\exists R.D$ in every $\tau_i \in T$ has an $R$-safe
+    witness $\tau_j \in T$ with $D \in \tau_j$.
+  \item \textbf{Cross-edge consistency}: every pair
+    $\tau_i, \tau_j \in T$ has either $\Safe(\tau_i,\tau_j)
+    \cap \{\PP,\PPI\} \neq \varnothing$ (tree-relatable) or
+    $\Safe(\tau_i,\tau_j) \cap \{\DR,\PO\} \neq \varnothing$
+    (cross-relatable).
+  \item \textbf{Cover-tree sibling compatibility}: for each
+    type $\tau_i$ with multiple $\DR/\PO$ demands, the witnesses
+    can be jointly assigned such that every witness pair satisfies
+    $\comp(\inv(R_m), R_{m'}) \cap \{\DR,\PO\} \cap
+    \Safe_{\DR/\PO}(\tau_{j_m}, \tau_{j_{m'}}) \neq \varnothing$.
+  \item \textbf{Composition propagation}: for each type with
+    multiple demands of \emph{any} role combination, witnesses
+    $\tau_{j_1}, \tau_{j_2}$ must satisfy
+    $\comp(\inv(R_1), R_2) \cap \Safe(\tau_{j_1}, \tau_{j_2})
+    \neq \varnothing$.
+\end{enumerate}
+
+The algorithm terminates because $|\Tp(C_0)| \leq 2^{|\cl(C_0)|}$
+is finite, and the type set grows monotonically during the search.
+
+\subsection{How blocking works}
+
+The crucial difference from na\"{\i}ve tableau approaches is the
+\emph{separation of layers}:
+
+\begin{itemize}
+  \item The \textbf{tree layer} ($\PP/\PPI$) handles
+    ancestor/descendant demands.  Since $\PP/\PPI$ form a tree,
+    standard tree-model arguments apply: blocking via
+    \emph{rank-$d$ signatures} (the type information visible
+    within modal depth~$d = \md(C_0)$) yields a finite
+    representation.
+
+  \item The \textbf{cross layer} ($\DR/\PO$) handles demands for
+    disconnected or partially overlapping regions.  Because the
+    cross-edge network uses only $\{\DR,\PO\}$---which is
+    trivially arc-consistent---the cross-layer check reduces to a
+    simple pairwise non-emptiness condition (CT2), not a global
+    consistency computation.
+\end{itemize}
+
+Na\"{\i}ve blocking fails because it tries to handle both layers
+simultaneously: the tree structure provides natural blocking, but
+the cross-edges to distant nodes keep changing, preventing a match.
+The cover-tree tableau sidesteps this by \emph{not} blocking on
+cross-edge context---instead, it verifies cross-edge consistency
+as a separate, global check on the finite type set.
+
+\begin{examplex}[A concept that defeats na\"{\i}ve blocking but
+  works with cover trees]
+\label{ex:cover-tree-win}
+Consider $C_0 = \exists\PO.A \sqcap \exists\PP.\neg B \sqcap
+\forall\DR.A$.
+In a na\"{\i}ve tableau, the $\PP$-child needs further expansion;
+blocking requires matching both the label \emph{and} the
+triangle neighborhood (relations to the $\PO$-witness and all
+other nodes).  Since the $\PO$-witness forces $\DR$-relations
+to the $\PP$-child's subtree (via $\comp(\PO, \PP) = \{\DR,\PO,\PP\}$),
+the cross-edge context keeps evolving.
+
+In the cover-tree tableau: the $\PP$-witness is an ancestor in
+the tree, the $\PO$-witness is a cross-edge in a sibling subtree.
+The $\forall\DR.A$ fires only on $\DR$-related nodes---the
+ancestor is $\PP$-related (not $\DR$), so no conflict.
+The type set $T$ needs a type for the root (containing $C_0$),
+one for the $\PO$-witness (containing $A$), and one for the
+$\PP$-witness (containing $\neg B$).  Cross-edge consistency
+(CT2) checks that every pair has a non-empty safe set in
+$\{\DR,\PO\}$---a one-time pairwise check, not an evolving
+context.
+\end{examplex}
+
+\subsection{What makes this ``non-standard''}
+
+The cover-tree tableau differs from a standard DL tableau
+calculus in several fundamental ways:
+
+\begin{enumerate}
+  \item \textbf{No completion graph.}  Standard tableaux build a
+    completion graph node by node, applying expansion rules until
+    saturation or clash.  The cover-tree tableau searches over
+    \emph{sets of types} (abstract states), not concrete graph
+    structures.  It is closer to a type-elimination or
+    automata-theoretic approach.
+
+  \item \textbf{No explicit blocking rule.}  Standard tableaux
+    have an explicit blocking condition that compares nodes during
+    expansion.  The cover-tree tableau achieves finiteness
+    \emph{structurally}: the search space is the powerset of
+    $\Tp(C_0)$, which is already finite.
+
+  \item \textbf{Global side-checker.}  The cross-edge constraints
+    (CT2--CT4) are checked globally over the entire type set,
+    not locally during node expansion.  This is what avoids the
+    blocking dilemma: cross-edge consistency is a property of
+    the type set as a whole, not of individual nodes.
+
+  \item \textbf{Existential demands go to ALL existing types.}
+    In a standard tableau, $\exists R.D$ generates one new
+    $R$-neighbor.  In the cover-tree tableau, the witness can
+    be \emph{any} type already in~$T$---including the root type
+    itself.  This reflects the complete-graph semantics: every
+    domain element is related to every other.
+\end{enumerate}
+
+\subsection{Soundness and completeness}
+
+\textbf{Soundness} (valid type set $\Rightarrow$ satisfiable concept):
+Given a valid type set~$T$, a model is constructed as follows.
+First, build a tree of type instances satisfying all $\PP/\PPI$
+demands (tree layer).
+Then, assign $\DR/\PO$ relations between sibling-subtree nodes
+to satisfy all cross-edge demands.
+The patchwork property of RCC5~\cite{RenzNebel1999} guarantees
+that the resulting disjunctive $\{\DR,\PO\}$ network has a
+globally consistent atomic refinement (since it is trivially
+arc-consistent by Proposition~\ref{prop:drpo-arc}).
+The full construction was formalized by GPT-5.4~\cite{SiblingCompleted}.
+
+\textbf{Completeness} (satisfiable concept $\Rightarrow$
+valid type set):
+Given a model~$\mathcal{I} \models C_0$, construct a cover-tree
+presentation and extract rank-$d$ states.
+The key lemma~\cite{CompletenessExtraction}: every relation
+realized in a valid model is already \emph{relation-safe} for the
+endpoint types (because all universals are satisfied), so the
+Need$_R$-filtered domains in the extracted quotient are non-empty.
+This yields a valid finite quotient, hence a valid type set.
+
+\subsection{Computational evidence}
+
+The algorithm is implemented in approximately 350~lines of
+Python~\cite{CoverTreeImpl}.
+Cross-validation against an independent quasimodel-based
+reasoner on \textbf{911~test concepts} (50~known SAT,
+13~known UNSAT, 36~adversarial, 512~systematic triples,
+200~random depth-2, 100~random depth-3) yields
+\textbf{zero mismatches}.
+A decomposition test confirms that \textbf{775/775 SAT
+concepts (100\%)} have finite cover-tree models, with
+12.2\,M total models enumerated and \textbf{zero genuine
+counterexamples}.
+
+Additionally, a GIS taxonomy computation~\cite{GISTaxonomy}
+applies the cover-tree tableau to a realistic $\ALCIRCC{5}$
+ontology from Wessel's original report~\cite{Wessel2003}:
+18~spatio-thematic concepts (countries, cities, rivers, lakes)
+connected by RCC5 spatial relations.  The tableau reproduces
+\textbf{all 21/21 expected subsumptions}, including non-trivial
+inferences like Hamburg~$\sqsubseteq$~GermanCity that require
+RCC5 composition reasoning through spatial role chains.
+
+%% ====================================================================
+\section{Outlook and Conclusion}
+\label{sec:outlook}
+%% ====================================================================
+
+\subsection{What has been achieved}
+
+If the cover-tree tableau is correct---and the extensive
+computational evidence supports this---then concept satisfiability
+in $\ALCIRCC{5}$ is decidable.  This would settle a problem that
+has been open since Wessel's doctoral work in 2002/2003 and was
+explicitly flagged by Lutz \& Wolter in 2006 as ``perhaps the
+most interesting'' open problem suggested by their work.
+
+The decidability argument rests on four papers:
+\begin{enumerate}
+  \item The \emph{split-forest semantics}~\cite{SiblingCompleted}
+    (GPT-5.4): defines the cover-tree decomposition, proves the
+    finite-index lemma, and constructs models from valid quotients.
+  \item The \emph{cover-tree tableau}~\cite{CoverTree} (GPT-5.4):
+    packages the split-forest approach as an operational calculus
+    with rank-$d$ blocking.
+  \item The \emph{completeness extraction}~\cite{CompletenessExtraction}
+    (Claude): closes the model-to-quotient gap, proving that
+    model-extracted quotients are automatically valid.
+  \item The \emph{implementation paper}~\cite{CoverTreeImpl}
+    (Claude): documents the algorithm and cross-validation results.
+\end{enumerate}
+
+\subsection{What remains open}
+
+\begin{itemize}
+  \item \textbf{Exact complexity.}  The PO-coherent fragment has a
+    doubly exponential quotient bound (2-$\EXPTIME$).  An $\EXPTIME$
+    upper bound matching the lower bound is not established.
+
+  \item \textbf{$\ALCIRCC{8}$.}  RCC8 also has the patchwork
+    property, so the cover-tree approach should extend.  The key
+    difference is the $\TPP/\NTPP$ distinction, which may require
+    a finer status partition.  This has not been worked out.
+
+  \item \textbf{Human verification.}  \emph{None of the proofs in
+    this project have been verified by human domain experts.}  The
+    AI-generated results should be treated as conjectures supported
+    by computational evidence, not as established theorems.
+\end{itemize}
+
+\subsection{A note on the process}
+
+To our knowledge, this is the first time that AI systems have
+produced a complete decidability proof (proposed) for an open
+problem in description logic theory.  The division of labor was:
+\begin{itemize}
+  \item \textbf{Human (Wessel):} Posed the problem in 2002/2003.
+    Provided the key intuitions (PPI-tree orientation, EQ-splitting,
+    DR-rigidity observation).  Guided the AI search process,
+    identified errors, and corrected conceptual mistakes
+    (e.g., that $\PP$ is not an open cross-edge).
+  \item \textbf{AI (GPT-5.4):} Formalized the split-forest semantics
+    and tableau calculus in two papers.
+  \item \textbf{AI (Claude):} Implemented the algorithm, ran
+    extensive cross-validation, closed the completeness gap, and
+    wrote companion papers including this overview.
+\end{itemize}
+
+If the results withstand expert scrutiny, this work demonstrates
+that AI can contribute meaningfully to open problems in
+mathematical logic---not by replacing human insight, but by
+amplifying it with formalization capacity, implementation speed,
+and exhaustive computational testing.  The human provided
+the direction; the machines did the heavy lifting.
+
+We invite the description logic community to review, challenge,
+and---if warranted---confirm or refute these results.
+
+%% ====================================================================
+%% Declaration on Generative AI
+%% ====================================================================
+\section*{Declaration on Generative AI}
+
+During the preparation of this work, the authors used Claude (Anthropic,
+Opus~4) and GPT-5.4~Pro (OpenAI) in order to: formalize mathematical
+proofs, implement decision procedures, generate LaTeX manuscripts,
+and conduct computational experiments.  Michael Wessel reviewed and
+edited the content as needed and takes full responsibility for the
+publication's content.  The entire research project---problem
+formulation, key intuitions, error identification, and direction of
+the investigation---was conducted by Wessel; the AI systems performed
+the detailed formalization, implementation, and writing.
+
+%% ====================================================================
+%% Bibliography
+%% ====================================================================
+\begin{thebibliography}{99}
+
+\bibitem{Cohn1993}
+A.\,G.\ Cohn.
+\newblock Modal and non modal qualitative spatial logics.
+\newblock In F.\,D.\ Anger, H.\,M.\ Guesgen, and J.\ van Benthem, editors,
+  \emph{Proceedings of the Workshop on Spatial and Temporal Reasoning},
+  IJCAI, 1993.
+
+\bibitem{Wessel2001}
+M.\ Wessel.
+\newblock Obstacles on the way to qualitative spatial reasoning with
+  description logics: some undecidability results.
+\newblock In \emph{Proceedings of the 2001 Description Logic Workshop
+  (DL~2001)}, CEUR Workshop Proceedings, vol.~49, 2001.
+
+\bibitem{Wessel2003}
+M.\ Wessel.
+\newblock Qualitative spatial reasoning with the $\ALCIRCC{}$ family ---
+  the theory.
+\newblock Technical Report FBI-HH-M-323/03, Fachbereich Informatik,
+  Universit\"at Hamburg, 2002/2003.
+
+\bibitem{LutzWolter2006}
+C.\ Lutz and F.\ Wolter.
+\newblock Modal logics of topological relations.
+\newblock \emph{Logical Methods in Computer Science}, 2(2):1--41, 2006.
+
+\bibitem{RenzNebel1999}
+J.\ Renz and B.\ Nebel.
+\newblock On the complexity of qualitative spatial reasoning:
+  A maximal tractable fragment of the Region Connection Calculus.
+\newblock \emph{Artificial Intelligence}, 108(1--2):69--123, 1999.
+
+\bibitem{SiblingCompleted}
+GPT-5.4 (OpenAI), prompted by M.\ Wessel.
+\newblock Split-forest models and sibling-interface descriptors for
+  $\ALCIRCC{5}$.
+\newblock Technical report, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5}
+
+\bibitem{CoverTree}
+GPT-5.4 (OpenAI), prompted by M.\ Wessel.
+\newblock A cover-tree tableau calculus for $\ALCIRCC{5}$.
+\newblock Technical report, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5}
+
+\bibitem{CompletenessExtraction}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Completeness extraction for the $\ALCIRCC{5}$ split-forest
+  quotient.
+\newblock Technical report, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5}
+
+\bibitem{CoverTreeImpl}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock A cover-tree tableau for $\ALCIRCC{5}$:
+  Implementation and computational verification.
+\newblock Technical report, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5}
+
+\bibitem{GISTaxonomy}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock GIS taxonomy computation for $\ALCIRCC{5}$.
+\newblock Python implementation, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py}
+
+\end{thebibliography}
+
+\end{document}

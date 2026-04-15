@@ -2,6 +2,10 @@
 
 **Quasimodels Meet the Patchwork Property**
 
+### Overview paper
+
+A self-contained **[overview paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.pdf)** (9 pages) surveys the entire project: the history of ALCI\_RCC5 (Cohn 1993, Wessel 2002/2003, Lutz & Wolter 2006), why all known undecidability reductions fail (including a concrete domino-encoding attempt verified as blocked), why naive tableau blocking fails for complete-graph logics, the split-forest model decomposition and cover-tree tableau, and how the approach achieves decidability. See also the [source (LaTeX)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.tex).
+
 ### Intellectual roots
 
 The idea of combining description logics with qualitative spatial reasoning via modal accessibility relations dates back to **Cohn (1993)**, who proposed a multi-modal spatial logic using RCC8 relations as modalities in his IJCAI workshop paper:

@@ -3026,3 +3026,33 @@ A new "Intellectual roots" subsection placed immediately after the title and bef
 
 - `README.md`: Added "Intellectual roots" section at the top
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Overview paper — survey of the ALCI\_RCC5 problem (April 12, 2026)
+
+Wessel requested a comprehensive LaTeX overview paper (8–10 pages) tying together the entire ALCI\_RCC5 story in one document. The paper was written using the CEUR-WS / ceurart template (DL 2026 style), then adjusted to a standalone version (without DL workshop branding) for the repository.
+
+### What Claude did
+
+1. **Verified the domino encoding claim**: Wessel proposed a concept attempting to encode domino tiling via PPI-chains in RCC5. Claude analyzed it and verified computationally: one square is SAT (the C and D grandchildren collapse to the same element via EQ), but two levels is UNSAT (grandparent universals kill the new colored elements). The key insight: comp(PPI,PPI) = {PPI} makes PP-chains transitive, so grandparent universals propagate to grandchildren, preventing the positional diversity needed for grid encoding.
+
+2. **Wrote the overview paper** (`papers/overview_ALCIRCC5.tex`, 9 pages) covering:
+   - History: Cohn (1993) → Wessel (2002/2003) → Lutz & Wolter (2006), with priority note on Wessel's grid constructions
+   - Why undecidability reductions fail (table of blocked routes + concrete domino attempt)
+   - Why naive tableau blocking fails (blocking dilemma, three failed approaches)
+   - Split-forest model decomposition (cover trees, DR rigidity, trivial arc-consistency)
+   - Cover-tree tableau (CT1–CT4 conditions, how blocking works, what makes it non-standard)
+   - Outlook (what remains open, note on the AI-human collaboration process)
+
+3. **Formatted for CEUR-WS**: Used the ceurart document class with proper author/affiliation structure, keywords, CC-BY license. Then removed DL 2026 branding for the standalone repository version.
+
+4. **Updated README.md**: Added announcement of the overview paper at the top.
+
+### Files changed
+
+- `papers/overview_ALCIRCC5.tex`: New file — the overview paper (LaTeX source)
+- `papers/overview_ALCIRCC5.pdf`: New file — compiled PDF (9 pages)
+- `papers/ceurart.cls`, `papers/cc-by.pdf`, `papers/dl-logo.pdf`: Template files copied from `template/`
+- `README.md`: Added overview paper announcement
+- `CONVERSATION.md`: This entry
