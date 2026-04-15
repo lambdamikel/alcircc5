@@ -478,6 +478,68 @@ but the composition propagation check (Section~\ref{sec:singleton})
 captures its essential consequence: the composition of any two
 demand roles must intersect the safe set of their witnesses.
 
+\subsection{Implicit PP via composition forcing}
+\label{sec:pp-forcing}
+
+The following example shows that $\PP$ edges can be forced
+without any explicit $\exists\PP$ demand, purely through
+composition and universal filtering.
+
+\begin{example}[PP forcing without $\exists\PP$]
+\label{ex:pp-forcing}
+Consider
+\[
+  X \;=\; \exists\DR.\exists\PO.C
+    \;\sqcap\; \forall\DR.\neg C
+    \;\sqcap\; \forall\PO.\neg C
+    \;\sqcap\; \forall\PP.X.
+\]
+The concept has no $\exists\PP$ demand, yet requires an
+infinite model with $\PP$ edges.  Here is how the cover-tree
+tableau handles it.
+
+A root type~$\tau_0$ satisfying~$X$ has the demand
+$\exists\DR.D$ (where $D = \exists\PO.C$), witnessed by
+a type~$\tau_1$ containing $\{D, \neg C\}$.
+Type~$\tau_1$ in turn has the demand $\exists\PO.C$,
+witnessed by a type~$\tau_2$ containing~$C$.
+
+Cross-edge consistency (CT2) requires
+$\Safe(\tau_0, \tau_2) \neq \varnothing$.
+Since $\forall\DR.\neg C \in \tau_0$ and $C \in \tau_2$,
+relation $\DR$ is unsafe.  Similarly, $\forall\PO.\neg C$
+blocks $\PO$.  Of the remaining relations, $\PP$ is safe
+provided $\tau_2$ satisfies $X$ (the only $\forall\PP$
+formula in~$\tau_0$ is $\forall\PP.X$).
+
+In the cover tree, $\tau_0 \;\PP\; \tau_2$ means
+$\tau_2$~is an \emph{ancestor} of~$\tau_0$ (since $\PPI$
+= parent direction).  Since $X \in \tau_2$, the ancestor
+also has the $\exists\DR.D$ demand, regenerating the
+pattern: $\tau_2$ creates its own $\DR \to \PO$ chain
+forcing yet another $\PP$-ancestor above it, giving an
+infinite ascending chain:
+\[
+  \tau_0 \;\PP\; \tau_2 \;\PP\; \tau_2' \;\PP\;
+  \tau_2'' \;\PP\; \cdots
+\]
+The type set is finite: $\tau_2$ is \emph{reused} as its
+own $\PP$-ancestor (different domain elements, same abstract
+type).  The valid type set
+$\{\tau_0, \tau_1, \tau_2\}$ passes all four checks
+(CT1--CT4), and the concept is correctly reported as SAT.
+\qed
+\end{example}
+
+This pattern---$\PP$ edges forced by $\comp(\DR,\PO) =
+\{\DR,\PO,\PP\}$ combined with universals blocking $\DR$
+and~$\PO$---is a distinctive feature of the complete-graph
+semantics.  It demonstrates why the cover-tree tableau's
+separation of tree and cross layers is essential: the forced
+$\PP$ edge places the $C$-element in the \emph{tree layer}
+(as an ancestor), not the cross layer, even though the
+original demands involved only $\DR$ and~$\PO$.
+
 
 % ═══════════════════════════════════════════════════════════════
 \section{Concepts Requiring Non-Tree Models}

@@ -212,6 +212,39 @@ infinite models),
 (iii)~a non-deterministic role box (multi-valued composition entries).
 \end{remark}
 
+For reference, the full RCC5 composition table is given in
+Table~\ref{tab:comp}.  Reading: row = $S(b,c)$, column = $R(a,b)$,
+entry = possible relations for $(a,c)$.
+
+\begin{table}[ht]
+\centering
+\caption{The RCC5 composition table ($*$ = all five relations).}
+\label{tab:comp}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l|ccccc}
+\toprule
+$\comp$ & $\DR(a,b)$ & $\PO(a,b)$ & $\EQ(a,b)$ & $\PPI(a,b)$ & $\PP(a,b)$ \\
+\midrule
+$\DR(b,c)$ & $*$ & $\DR,\PO,\PPI$ & $\DR$ & $\DR,\PO,\PPI$ & $\DR$ \\
+$\PO(b,c)$ & $\DR,\PO,\PP$ & $*$ & $\PO$ & $\PO,\PPI$ & $\DR,\PO,\PP$ \\
+$\EQ(b,c)$ & $\DR$ & $\PO$ & $\EQ$ & $\PPI$ & $\PP$ \\
+$\PP(b,c)$ & $\DR,\PO,\PP$ & $\PO,\PP$ & $\PP$ & $\PO,\EQ,\PP,\PPI$ & $\PP$ \\
+$\PPI(b,c)$ & $\DR$ & $\DR,\PO,\PPI$ & $\PPI$ & $\PPI$ & $*$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Key composition facts exploited in the cover-tree theory
+(Sections~\ref{sec:split-forest}--\ref{sec:cover-tree}):
+$\comp(\PP,\DR) = \{\DR\}$ and $\comp(\DR,\PPI) = \{\DR\}$
+(DR rigidity);
+$\comp(\PP,\PP) = \{\PP\}$ and $\comp(\PPI,\PPI) = \{\PPI\}$
+(transitivity);
+and $\comp(\DR,\PO) = \{\DR,\PO,\PP\}$
+(PP can be \emph{forced} by composition and universal filtering;
+see Example~\ref{ex:pp-forcing}).
+
 \subsection{Wessel's grid constructions and the coincidence obstruction}
 \label{sec:wessel-grid}
 
@@ -600,6 +633,51 @@ $\PP$-witness (containing $\neg B$).  Cross-edge consistency
 (CT2) checks that every pair has a non-empty safe set in
 $\{\DR,\PO\}$---a one-time pairwise check, not an evolving
 context.
+\end{examplex}
+
+\begin{examplex}[Implicit PP via composition forcing]
+\label{ex:pp-forcing}
+The concept
+\[
+  X \;=\; \exists\DR.\exists\PO.C
+    \;\sqcap\; \forall\DR.\neg C
+    \;\sqcap\; \forall\PO.\neg C
+    \;\sqcap\; \forall\PP.X
+\]
+contains no $\exists\PP$ demand, yet it requires an infinite
+model with forced $\PP$ edges.
+
+A node~$r$ satisfying~$X$ has a $\DR$-neighbor~$a$
+(with $\exists\PO.C$) and $a$'s $\PO$-neighbor~$b$
+(with~$C$).  By Table~\ref{tab:comp}, the relation
+between $r$ and $b$ lies in
+$\comp(\DR,\PO) = \{\DR,\PO,\PP\}$.
+But $r$ has $\forall\DR.\neg C$ and $\forall\PO.\neg C$,
+and $b \in C$---so $\DR$ and $\PO$ are blocked, leaving
+\emph{only}~$\PP$.  The $\PP$ edge is \textbf{forced} by
+composition plus universal filtering, with no explicit
+$\exists\PP$ in the concept.
+
+Since $r \;\PP\; b$, node $b$ is an \emph{ancestor} of~$r$
+in the cover tree.  The recursive $\forall\PP.X$ forces $b$
+to also satisfy~$X$, creating its own
+$\DR \to \PO$ chain and forcing yet another $\PP$-ancestor
+above it:
+\[
+  r \;\PP\; b \;\PP\; b' \;\PP\; b'' \;\PP\; \cdots
+\]
+The model is necessarily infinite.  The cover-tree tableau
+handles this finitely: the type for $C$-elements can serve as
+its own $\PP$-ancestor (different domain elements, same
+abstract state), so a three-element type set
+$\{\tau_0(C,X),\; \tau_1(\neg C, \exists\PO.C),\;
+  \tau_2(\neg C, \text{root})\}$
+represents the infinite model.
+
+This pattern---$\PP$ edges arising purely from composition and
+universal filtering---is a distinctive feature of $\ALCIRCC{5}$
+and illustrates why the complete-graph semantics require careful
+handling of implicit spatial constraints.
 \end{examplex}
 
 \subsection{What makes this ``non-standard''}
