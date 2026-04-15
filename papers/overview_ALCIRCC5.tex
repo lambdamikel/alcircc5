@@ -800,8 +800,8 @@ from Wessel's report~\cite{Wessel2003}.
 \begin{figure*}[ht]
 \centering
 \begin{tikzpicture}[
-  every node/.style={draw, rounded corners=2pt, font=\scriptsize,
-    minimum height=1.2em, inner sep=2pt},
+  every node/.style={draw, rounded corners=2pt, font=\tiny,
+    minimum height=1.1em, inner sep=1.5pt},
   leaf/.style={fill=green!10, draw=green!50!black},
   arr/.style={->, >=stealth, thin},
 ]
@@ -809,15 +809,15 @@ from Wessel's report~\cite{Wessel2003}.
 \node (top) [fill=gray!15, draw=gray] at (0,0) {$\top$};
 
 % Row 1: Area
-\node (area) at (0,-1) {Area};
+\node (area) at (0,-0.9) {Area};
 \draw[arr] (top) -- (area);
 
-% Row 2: Area's children (5 nodes, spread across ~12cm)
-\node (city) at (-5,-2.2) {City};
-\node (country) at (-2.5,-2.2) {Country};
-\node (river) at (1,-2.2) {River};
-\node (lake) at (4,-2.2) {Lake};
-\node (mountain) [leaf] at (5.8,-2.2) {Mountain};
+% Row 2: Area's children
+\node (city) at (-5.2,-2) {City};
+\node (country) at (-2.8,-2) {Country};
+\node (river) at (0.8,-2) {River};
+\node (lake) at (4,-2) {Lake};
+\node (mountain) [leaf] at (5.6,-2) {Mountain};
 \draw[arr] (area) -- (city);
 \draw[arr] (area) -- (country);
 \draw[arr] (area) -- (river);
@@ -825,14 +825,14 @@ from Wessel's report~\cite{Wessel2003}.
 \draw[arr] (area) -- (mountain);
 
 % Row 3: children of City, Country, River, Lake
-\node (germancity) at (-5.8,-3.5) {GermanCity};
-\node (cityatriver) at (-4.0,-3.5) {CityAtRiver};
-\node (germany) [leaf] at (-2.9,-3.5) {Germany};
-\node (czech) [leaf] at (-1.7,-3.5) {Czech Rep.};
-\node (localriver) at (-0.2,-3.5) {LocalRiver};
-\node (nonlocal) at (1.5,-3.5) {NonLocalRiver};
-\node (riverflowing) at (3.2,-3.5) {RiverIntoLake};
-\node (alsterlake) [leaf] at (4.6,-3.5) {AlsterLake};
+\node (germancity) at (-6.2,-3.2) {GermanCity};
+\node (cityatriver) at (-4.4,-3.2) {CityAtRiver};
+\node (germany) [leaf] at (-3.1,-3.2) {Germany};
+\node (czech) [leaf] at (-2.0,-3.2) {Czech Rep.};
+\node (localriver) at (-0.5,-3.2) {LocalRiver};
+\node (nonlocal) at (1.2,-3.2) {NonLocalRiver};
+\node (riverflowing) at (3.0,-3.2) {RiverIntoLake};
+\node (alsterlake) [leaf] at (4.6,-3.2) {AlsterLake};
 \draw[arr] (city) -- (germancity);
 \draw[arr] (city) -- (cityatriver);
 \draw[arr] (country) -- (germany);
@@ -843,16 +843,16 @@ from Wessel's report~\cite{Wessel2003}.
 \draw[arr] (lake) -- (alsterlake);
 
 % Row 4: deeper nodes
-\node (hamburg) [leaf] at (-4.9,-4.8) {Hamburg};
-\node (germanriver) at (-0.2,-4.8) {GermanRiver};
-\node (elbe) [leaf] at (1.5,-4.8) {Elbe};
+\node (hamburg) [leaf] at (-5.3,-4.4) {Hamburg};
+\node (germanriver) at (-0.5,-4.4) {GermanRiver};
+\node (elbe) [leaf] at (1.2,-4.4) {Elbe};
 \draw[arr] (germancity) -- (hamburg);
 \draw[arr] (cityatriver) -- (hamburg);
 \draw[arr] (localriver) -- (germanriver);
 \draw[arr] (nonlocal) -- (elbe);
 
 % Row 5: Alster (two parents)
-\node (alster) [leaf] at (1.5,-6.1) {Alster};
+\node (alster) [leaf] at (1.2,-5.6) {Alster};
 \draw[arr] (germanriver) -- (alster);
 \draw[arr] (riverflowing) -- (alster);
 
