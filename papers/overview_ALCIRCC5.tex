@@ -541,8 +541,15 @@ non-$\Core$ elements of sibling subtrees.
 
 \begin{proof}
 \begin{itemize}[nosep]
-  \item $\EQ(x,y)$: impossible---$x$ and $y$ are distinct tree
-    nodes (after splitting).
+  \item $\EQ(x,y)$: In the original DAG (before splitting),
+    $x = y$ would mean a single element is a $\PP$-descendant of
+    both $s$ and $t$---i.e., it is in the $\Core$.
+    After splitting, this element is duplicated into
+    distinct tree nodes $x'$ below~$s$ and $y'$ below~$t$,
+    with $\mathrm{orig}(x') = \mathrm{orig}(y')$
+    ($\EQ$-mates in the weak-$\EQ$ presentation).
+    Since $x' \neq y'$ as tree nodes, $\EQ(x',y')$ is
+    impossible under strong $\EQ$ semantics.
   \item $\PP(x,y)$: would mean $x$ lies below $y$ in the part-of
     order, hence below~$t$, making $x$ a common descendant
     ($\Core$).
