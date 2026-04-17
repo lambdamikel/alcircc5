@@ -334,11 +334,15 @@ since 2006.
 \label{sec:undecidability}
 %% ====================================================================
 
-Every known undecidability proof for description logics ultimately
-encodes a two-dimensional grid ($\naturals \times \naturals$ domino
-tiling).  Grid encoding requires either functional roles, number
-restrictions, role intersection, or role value maps.
-$\ALCIRCC{5}$ has \emph{none} of these.
+Undecidability proofs for description logics use a variety of
+techniques: grid encoding ($\naturals \times \naturals$ domino
+tiling, requiring functional roles or number restrictions),
+reduction from the Post Correspondence Problem (PCP), reduction
+from context-free grammar (CFG) intersection, or simulation of
+$S5^3$ via geometric constructions.
+$\ALCIRCC{5}$ lacks the features that each of these techniques
+exploits: it has no functional roles, no number restrictions,
+no arbitrary role box, and no geometric coincidence conditions.
 
 \subsection{Blocked reduction routes}
 
@@ -522,6 +526,12 @@ In the cover tree, what relations can hold between nodes in
 different sibling subtrees?  Consider sibling roots $s$ and $t$
 (children of the same parent), and elements $x$ below~$s$, $y$
 below~$t$ in the tree.
+An element~$x$ below~$s$ is in the \emph{$\Core$} of the sibling
+pair $(s,t)$ if $\mathrm{orig}(x)$ is a common descendant of both
+$\mathrm{orig}(s)$ and $\mathrm{orig}(t)$ in the original model's
+$\PP$ order---i.e., $\mathrm{orig}(x)$ is a proper part of both.
+Core elements are handled by $\EQ$-splitting; the interesting
+question concerns non-$\Core$ elements.
 
 \begin{proposition}[Wessel]
 \label{prop:dr-rigid}
