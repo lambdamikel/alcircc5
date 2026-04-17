@@ -3208,3 +3208,68 @@ This is a completeness bug in the *implementation*, not the quasimodel *theory* 
 - `papers/overview_ALCIRCC5.tex`: Added two examples and one remark
 - `papers/overview_ALCIRCC5.pdf`: Recompiled (12 pages)
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Quasimodel incompleteness — elevated warning, cycle-aware fix, refreshed 911-test, tool-suite sections (April 17, 2026)
+
+### Context
+
+Continuation of the previous day's PO-loop / clash-to-EQ / quasimodel-bug work. Michael asked two pointed questions that drove the rest of the session:
+
+1. Does the quasimodel-reasoner bug affect the decidability proof, and is it prominently marked?
+2. How difficult is a more complete (slower) quasimodel reasoner, and can we extend the test suite?
+
+### The impact-of-bug question
+
+Answer: **no** — the decidability argument goes through cover-tree tableau + split-forest + completeness-extraction; the quasimodel reasoner is a cross-validation oracle, not a proof step. But the README had terminology drift: the summary table labelled the quasimodel approach "Algorithm unsound / Disproved" (conflating the older type-elimination incompleteness with the new role-path bug), and the "911 zero mismatches" / "713 zero errors" / "UNSAT provably sound" claims were now stale.
+
+### What was done, part 1: documentation
+
+1. **Elevated the warning in README.md** into a visible blockquote box with a dedicated ⚠ heading, placed where the PO-loop/clash-to-EQ examples are already discussed.
+2. **Split the summary table row** (line 202) into two: "Quasimodel theory (type elimination) — Retracted" and "Quasimodel reasoner (constructive) — Known incomplete". Used precise incompleteness/unsoundness terminology.
+3. **Caveated every cross-validation claim** (README lines 86, 302, 306, 439, 479, 492, Limitations) pointing at the new warning box and clarifying that SAT answers remain sound; UNSAT answers are sound only for concepts satisfiable by a tree model.
+4. **Updated the paper's `rem:qm-bug`** to add a Scope note making explicit that the decidability argument does not reference `alcircc5_reasoner.py`.
+
+### What was done, part 2: the fix
+
+Added an opt-in `cycle_close=False` parameter to `check_satisfiability` in `src/alcircc5_reasoner.py` (default preserves the fast baseline exactly). When enabled, the role-path check also admits `w = g` whenever `(inv(S), inv(R)) ∈ {(DR,DR), (PO,PO), (PP,PPI), (PPI,PP)}` — exactly the full-RCC5 composition pairs that admit EQ, equivalently `S = inv(R)`. Algebraic soundness: a cycle `g →R→ j →S→ g` closes iff `EQ ∈ comp(R,S)`. Created:
+
+- `src/alcircc5_reasoner_cyclic.py` — thin wrapper that enables the flag.
+- `src/test_cyclic_reasoner.py` — 7 adversarial cases (PO-loop, DR-loop, PP/PPI cycle, PPI/PP cycle, PP-PP non-cycle, clash-to-EQ, PO-loop with distinguishing universal). All pass: baseline fails exactly the 4 cyclic-SAT cases as predicted; cycle-aware reasoner and cover-tree tableau match expected answers on all 7.
+- Re-ran the 18 built-in baseline tests with `cycle_close=True` — no regressions (only adds witnesses, does not flip UNSAT → SAT spuriously).
+
+### What was done, part 3: refreshed cross-validation
+
+- `src/stress_test_cyclic.py` — mirrors `stress_test_cover_tree.py` but uses the cycle-aware reasoner as the QM oracle. Result: **911/911 matches, 0 mismatches, 0 errors, ~46 seconds**. The earlier "911 zero mismatches" claim is now grounded in a reasoner that is known-complete on the PO-loop / DR-loop / PP-PPI cycle patterns.
+
+- Updated `rem:qm-bug` in the paper to replace the "feasible but not yet implemented" language with the concrete fix, the 7-case adversarial confirmation, and the 911/911 re-validation.
+
+### What was done, part 4: tool-suite orientation sections
+
+Michael noted that the same reasoner is referred to under several names across the README (quasimodel reasoner / quadruple-type reasoner / constructive quasimodel search) and asked for a one-paragraph section fixing terminology.
+
+- **README.md**: Added "Reasoners and tools at a glance" subsection immediately before the Eleventh approach heading. Names the three main tools (cover-tree tableau, quasimodel reasoner with baseline + cyclic variants, independent model verifier), gives intuition, references the papers each is based on, and lists known limitations. Makes explicit that the quasimodel reasoner is a cross-validation oracle only.
+
+- **Overview paper**: Added `rem:tools` "Reasoners and tools: a cross-validation suite" immediately before `rem:qm-bug`. Same content, adapted to paper style. Emphasises that the cover-tree tableau is the only tool whose soundness and completeness are claimed for ALCI_RCC5 satisfiability.
+
+### Commits (in order)
+
+- `570aaf6` — Add PO-loop SAT and clash-to-EQ UNSAT examples; document quasimodel bug (April 16, completed from previous session)
+- `3914c3b` — Elevate quasimodel-reasoner incompleteness warning; correct terminology
+- `c6c3ac5` — Add cycle-aware quasimodel reasoner variant with adversarial tests
+- `97cab7b` — Cross-validate cycle-aware reasoner on full 911-concept suite
+- `5326ff6` — Update Remark 6.5 to reflect implemented fix and refreshed 911-test result
+- `51a8131` — Add "Reasoners and tools at a glance" section before eleventh approach
+- `f13b438` — Add "Reasoners and tools" remark before quasimodel-bug remark
+
+### Files changed
+
+- `README.md`: Warning box, summary-table split, caveated claims throughout, tool-suite orientation section
+- `papers/overview_ALCIRCC5.tex`: Updated `rem:qm-bug`, added `rem:tools`
+- `papers/overview_ALCIRCC5.pdf`: Recompiled (12 pages)
+- `src/alcircc5_reasoner.py`: Added `cycle_close=False` flag and `EQ_ADMITTING_PAIRS` constant
+- `src/alcircc5_reasoner_cyclic.py`: NEW — thin cycle-aware wrapper
+- `src/test_cyclic_reasoner.py`: NEW — 7-case adversarial suite
+- `src/stress_test_cyclic.py`: NEW — 911-concept cross-validation with cycle-aware reasoner
+- `CONVERSATION.md`: This entry
