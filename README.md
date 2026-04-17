@@ -83,7 +83,7 @@ The eleventh approach decomposes ALCI\_RCC5 models into **cover trees** (oriente
 3. **Cover-tree sibling compatibility**: only DR/PO witness pairs face sibling constraints (not mixed PP/DR).
 4. **Composition propagation**: for any pair of demands (R₁,D₁) and (R₂,D₂) from the same type, witnesses j₁, j₂ must have comp(INV[R₁], R₂) ∩ safe(j₁, j₂) non-empty. Catches cross-role UNSAT patterns (e.g., ∃PPI.(∀DR.A) ⊓ ∃DR.¬A is UNSAT because comp(PP,DR) = {DR} forces the PPI-child's ∀DR.A to fire on the DR-witness). Also catches non-singleton cases like comp(PO,PP) = {PP,PO} where both may be unsafe.
 
-**Results**: Cross-validated on [**911 test concepts**](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py) against the quasimodel reasoner with **zero mismatches**: 50 known SAT, 13 known UNSAT, 36 adversarial (including all 7 cyclic-model concepts plus DR/PO-only and UNSAT cross-edge patterns), 512 systematic triples, 200 random depth-2, 100 random depth-3.
+**Results**: Cross-validated on [**911 test concepts**](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py) against the quasimodel reasoner with **zero mismatches**: 50 known SAT, 13 known UNSAT, 36 adversarial (including all 7 cyclic-model concepts plus DR/PO-only and UNSAT cross-edge patterns), 512 systematic triples, 200 random depth-2, 100 random depth-3. *Caveat:* the quasimodel reasoner has a known incompleteness on PO-loop-style SAT concepts (see the warning box below); the test set did not exercise that corner, and an extended adversarial suite targeting cyclic-via-symmetric-role patterns is planned.
 
 **Why this handles the cyclic-model concepts.** The 7 concepts that lack tree models (e.g., ∃PO.A ⊓ ∃PP.¬B ⊓ ∀DR.A) work naturally: the PP-witness is an ancestor in the cover tree, the PO-witness is a cross-edge in a sibling subtree. The ∀DR.A universal fires only on DR-related nodes — the ancestor is PP-related (not DR), so no conflict. The cover tree separates these two witnesses into different mechanisms (tree vs. cross-edge), avoiding the problematic mixed compositions.
 
@@ -95,7 +95,23 @@ The recursive conjunct ∀PP.X then forces infinite models: since r PP b, node b
 
 **The "clash-out to EQ" trick — genuine UNSAT via strong EQ.** The complementary pattern C ⊓ ∃PO.∃PO.¬C ⊓ ∀PO.C ⊓ ∀DR.C ⊓ ∀PP.C ⊓ ∀PPI.C **is** UNSAT. With the chain d→PO→a→PO→c: d's ∀PO.C forces a ∈ C, and a's ∃PO.¬C forces c ∈ ¬C. The relation ρ(d,c) must lie in the full RCC5 composition comp(PO, PO) = {DR, PO, PP, PPI, EQ}. d's four universals ∀R.C (for R ∈ {DR, PO, PP, PPI}) kill all non-EQ options — each forces c ∈ C but c ∈ ¬C ✗. Only EQ remains. Under **strong EQ semantics** (EQ = identity), this forces d = c, giving d ∈ C ∧ d ∈ ¬C → clash. The loop escape of the previous example doesn't work here: the endpoint requires ¬C but d has C, so d ≠ c is forced, and the universals then block every non-EQ relation, while strong EQ delivers the final contradiction. This example illustrates why strong EQ semantics is essential — under weak EQ (equivalence class), collapsing d and c would not immediately clash and extra machinery would be needed to derive UNSAT.
 
-**Completeness bug found in the quasimodel reasoner.** During the discussion above, cross-validation revealed that the quasimodel reasoner (`alcircc5_reasoner.py`) incorrectly reports UNSAT for C ⊓ ∃PO.∃PO.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PP.¬C ⊓ ∀PPI.¬C (the PO-loop example above), while the cover-tree tableau correctly reports SAT. The root cause is in `check_role_path_compatibility`: for a chain g→R→j→S→w, it requires comp(INV[S], INV[R]) ∩ SAFE(w, g) ≠ ∅, which assumes w is a fresh node in a tree unfolding. But when w can equal g itself (via symmetric roles like PO), the check is too strict — the quasimodel implicitly assumes tree models, while ALCI_RCC5 admits cyclic models that trees cannot represent. The cover-tree tableau handles these cyclic cases via back-edges in the cover tree. This is a known incompleteness of the quasimodel implementation; the concepts it wrongly rejects are exactly those requiring cycles via symmetric relations.
+---
+
+> #### ⚠ Known incompleteness of the quasimodel reasoner (`alcircc5_reasoner.py`)
+>
+> The constructive quasimodel reasoner is **incomplete**: it wrongly reports UNSAT for the PO-loop example C ⊓ ∃PO.∃PO.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PP.¬C ⊓ ∀PPI.¬C above, while the cover-tree tableau correctly reports SAT.
+>
+> **Root cause.** In `check_role_path_compatibility`, for every chain g→R→j→S→w, the check requires comp(INV[S], INV[R]) ∩ SAFE(w, g) ≠ ∅. This treats w as a fresh node in a tree unfolding. When w can equal g itself — possible via symmetric roles (PO, DR) under strong-EQ identification — the check is too strict. The reasoner therefore rejects exactly those SAT concepts whose only witnesses are cyclic via a symmetric relation. The cover-tree tableau handles such cycles via back-edges.
+>
+> **What this affects.**
+> - *The decidability claim: **not affected.*** The proof goes through the cover-tree tableau, split-forest semantics, and completeness-extraction paper — none of which use `alcircc5_reasoner.py`.
+> - *Cross-validation claims ("911 concepts, zero mismatches", "713 concepts, zero errors"): **weakened, not invalidated.*** The test set happened to not include PO-loop patterns; both reasoners agreed on all tested concepts. But the quasimodel reasoner is no longer a fully-trusted oracle for cyclic-via-symmetric-role concepts.
+> - *The reasoner's earlier "UNSAT answers are provably sound" claim: **retracted*** for concepts that require cycles through symmetric roles. UNSAT answers on such concepts can be wrong. (For tree-model concepts the claim still holds.)
+>
+> **Fix status.** A surgical fix (allow cycle-close w = g via EQ-admissibility in the composition check) is feasible (~30 lines); not yet implemented. The bug will be kept as-is until a patched version is validated on an extended test suite that includes PO-loop / DR-loop / mixed cyclic-via-symmetric patterns.
+
+---
+
 
 **Completeness gap closed.** The completeness direction (model → quotient extraction) was condensed in GPT's split-forest paper. Claude's [completeness extraction paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/completeness_extraction_ALCIRCC5.pdf) (11 pages) writes out the full extraction: split-tree presentation → rank-d state assignment → descriptor extraction → witness-menu extraction → quotient formation → validity verification. The key lemma: every relation realized in a valid model is already relation-safe for the endpoint types (because universals are satisfied), so Need_R-filtering is vacuous for model-extracted quotients. Combined with GPT's soundness chain, this yields decidability of ALCI_RCC5. No complexity bound (EXPTIME or otherwise) is established. See the [implementation paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.pdf) for cross-validation details.
 
@@ -199,7 +215,8 @@ For comparison, here is the original taxonomy from Wessel's report7.pdf (2002/20
 
 | Approach | Author(s) | Key idea | Gap | Status |
 |---|---|---|---|---|
-| Quasimodel | Claude | Type elimination | **Algorithm unsound**; tableau soundness unproven | **Disproved** |
+| Quasimodel theory (type elimination) | Claude | Greatest-fixpoint type elimination + original tableau | Type elimination rejects satisfiable concepts (Q3 anti-monotonicity); tableau soundness unproven (extension gap, 1,911 counterexamples at m=3) | **Retracted** |
+| Quasimodel reasoner (constructive, `alcircc5_reasoner.py`) | Claude | Bottom-up construction + disjunctive path-consistency + sibling/role-path checks | Role-path check assumes tree unfolding; wrongly rejects SAT concepts whose only witnesses are cycles via symmetric roles (PO/DR) | **Known incomplete** (see warning box above); used as a cross-validation tool only |
 | Direct construction | Claude | Tree unraveling + DN\_safe | Theorem 5.5 false | **Retracted** |
 | Tri-nbr tableau | Claude | Tri-neighborhood blocking + filtered unraveling | Termination false; soundness gap | **Termination disproved** |
 | Contextual tableau | GPT | Local states + recentering | FW(C,N) false | Incomplete |
@@ -236,7 +253,9 @@ The fact that every standard technique is blocked is evidence *for* decidability
 
 The following approaches have been **disproved, retracted, or shown incomplete**. Brief summaries are given here; full details are in [OUTDATED.md](OUTDATED.md).
 
-**1. Original quasimodel paper (Claude): DISPROVED.** Type elimination algorithm rejects satisfiable concepts (Q3 anti-monotonicity causes cascade elimination). Tableau soundness unproven (extension gap: 1,911 counterexamples at m=3). RCC8 results retracted.
+**1. Original quasimodel paper (Claude): RETRACTED.** Type elimination algorithm rejects satisfiable concepts (Q3 anti-monotonicity causes cascade elimination — an **incompleteness**, not unsoundness). The original tableau's soundness is unproven (extension gap: 1,911 counterexamples at m=3). RCC8 results retracted.
+
+**1b. Constructive quasimodel reasoner (`alcircc5_reasoner.py`): KNOWN INCOMPLETE.** A bottom-up replacement that avoided the non-monotonicity of type elimination, and was used extensively as a cross-validation oracle. It has now been found to wrongly reject the PO-loop SAT concept C ⊓ ∃PO.∃PO.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PP.¬C ⊓ ∀PPI.¬C. The role-path compatibility check in `check_role_path_compatibility` implicitly assumes tree unfoldings: it cannot close a chain g→R→j→S→g through a symmetric role. The reasoner's **SAT answers remain sound**, but the claim that UNSAT answers are sound is **withdrawn for concepts requiring cycles via symmetric roles**. The decidability proof is unaffected — it goes through the cover-tree tableau + split-forest + completeness extraction chain.
 
 **2. Contextual tableau (GPT-5.4): INCOMPLETE.** Proves full soundness but reduces completeness to FW(C,N), which is **false** — C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤) is a counterexample. See the [FW counterexample proof (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/FW_proof_ALCIRCC5.pdf).
 
@@ -299,11 +318,11 @@ Reading: row = S(b,c), column = R(a,b), entry = possible relations for (a,c). Th
 
 ### Main Results
 
-**Cover-tree tableau (Wessel/GPT-5.4/Claude) — most promising.** The [cover-tree tableau](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.pdf) decomposes models into PPI-oriented cover trees with {DR,PO}-only cross-edges. A [working implementation](https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py) (Claude) agrees with an independent [quasimodel reasoner](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) on **911 test concepts with zero mismatches**. A [decomposition test](https://github.com/lambdamikel/alcircc5/blob/master/src/decomposition_test.py) confirms that **89.3% of independently built models** have cover-tree structure and **765/768 SAT concepts (99.6%)** have finite cover-tree models (11.4M models enumerated), with **zero genuine counterexamples**. Soundness is convincing (patchwork property); completeness direction has a condensed gap. No complexity bound established.
+**Cover-tree tableau (Wessel/GPT-5.4/Claude) — most promising.** The [cover-tree tableau](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.pdf) decomposes models into PPI-oriented cover trees with {DR,PO}-only cross-edges. A [working implementation](https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py) (Claude) agrees with an independent [quasimodel reasoner](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) on **911 test concepts with zero mismatches** (caveat: the quasimodel reasoner is now known-incomplete on cyclic-via-symmetric-role SAT concepts — a class not present in the current test set). A [decomposition test](https://github.com/lambdamikel/alcircc5/blob/master/src/decomposition_test.py) confirms that **89.3% of independently built models** have cover-tree structure and **765/768 SAT concepts (99.6%)** have finite cover-tree models (11.4M models enumerated), with **zero genuine counterexamples**. Soundness is convincing (patchwork property); completeness direction has a condensed gap. No complexity bound established.
 
 **Two-tier quotient (Claude, reviewed by GPT-5.4) — PO-coherent fragment decidable.** The [two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/two_tier_quotient_ALCIRCC5.pdf) proves **decidability of the PO-coherent fragment** of ALCI\_RCC5 via a finite quotient construction (12 pages, fourth revision after three rounds of GPT-5.4 Pro review). Full decidability remains open due to the PO gap.
 
-**Quadruple-type reasoner (Claude) — strong computational evidence.** The [constructive quasimodel search](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) correctly classifies **713 concepts** with zero errors. UNSAT answers are provably sound; SAT answers lack a formal sufficiency proof. See the [quadruple-type paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/decidability_via_quadruples_ALCIRCC5.pdf).
+**Quadruple-type reasoner (Claude) — computational evidence with one known blind spot.** The [constructive quasimodel search](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) correctly classifies **713 concepts** with zero errors *on the existing test set*. **SAT answers are sound**; the earlier claim that **UNSAT answers are provably sound is withdrawn** — the reasoner wrongly rejects concepts that require cyclic witnesses through symmetric roles (PO-loop pattern; see the warning box earlier in this document). See the [quadruple-type paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/decidability_via_quadruples_ALCIRCC5.pdf).
 
 All results are **unverified** by human experts.
 
@@ -436,7 +455,7 @@ The sibling compatibility check only applies to **DR/PO witness pairs** (not mix
 cd src && python3 cover_tree_tableau.py
 ```
 
-Built-in tests plus cross-validation via [`stress_test_cover_tree.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py): **911 concepts** across six categories (known SAT, known UNSAT, adversarial, systematic triples, random depth-2, random depth-3) with **zero mismatches** against the quasimodel reasoner. Correctly handles all 7 cyclic-model concepts that lack tree models.
+Built-in tests plus cross-validation via [`stress_test_cover_tree.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py): **911 concepts** across six categories (known SAT, known UNSAT, adversarial, systematic triples, random depth-2, random depth-3) with **zero mismatches** against the quasimodel reasoner. Correctly handles all 7 cyclic-model concepts that lack tree models. *Caveat:* the quasimodel reasoner is now known to be incomplete on cyclic-via-symmetric-role SAT concepts (e.g. the PO-loop pattern, see the warning box earlier in this document); the existing stress-test set did not exercise that corner. An extended adversarial batch targeting these patterns is planned.
 
 ### Independent model verification
 
@@ -476,7 +495,7 @@ python3 decomposition_test.py --verbose # detailed output
 
 ### Key design decisions
 
-- **Three necessary conditions replace Q3/Q4.** The original conditions Q3/Q4 universally quantify over all safe relations, which is too strict. The replacement is three necessary conditions: (1) **disjunctive path-consistency** of the SAFE network; (2) **sibling compatibility** — joint witness assignment for co-demanded roles via CSP; (3) **role-path compatibility** — grandchild-grandparent connectivity through composition chains with iterative witness pruning. All three are extractable from any model, making UNSAT provably sound.
+- **Three necessary conditions replace Q3/Q4.** The original conditions Q3/Q4 universally quantify over all safe relations, which is too strict. The replacement is three necessary conditions: (1) **disjunctive path-consistency** of the SAFE network; (2) **sibling compatibility** — joint witness assignment for co-demanded roles via CSP; (3) **role-path compatibility** — grandchild-grandparent connectivity through composition chains with iterative witness pruning. (1) and (2) are extractable from any model. **(3) is extractable only from tree models** — the check wrongly assumes that grandchild w is a fresh node, and fails to close the cycle when w may equal g via strong-EQ identification through a symmetric role. Consequently **UNSAT answers from this reasoner are sound only for concepts whose SAT-status is witnessed by a tree model**; for cyclic-via-symmetric-role SAT concepts the reasoner wrongly reports UNSAT. See the warning box earlier in the README for scope and fix status.
 
 - **Deterministic type enumeration.** Closure concepts are sorted by string representation before building atoms. All frozenset iterations in the search use `sorted()`. This ensures the reasoner always produces the same type set regardless of Python's hash randomization.
 
@@ -489,7 +508,7 @@ cd src
 python3 alcircc5_reasoner.py
 ```
 
-18 basic test cases plus a comprehensive stress test of **713 concepts** across seven categories (known SAT, known UNSAT, adversarial cross-role universals, systematic role-atom combinations, and random concepts of depths 2-4). **Zero correctness errors.** The sibling check correctly catches cross-role universal contradictions like ∃PP.(∀PPI.A) ⊓ ∃PPI.¬A (UNSAT: comp(PPI,PPI) = {PPI} forces the universal to fire on the sibling).
+18 basic test cases plus a comprehensive stress test of **713 concepts** across seven categories (known SAT, known UNSAT, adversarial cross-role universals, systematic role-atom combinations, and random concepts of depths 2-4). **Zero correctness errors on this test set.** The sibling check correctly catches cross-role universal contradictions like ∃PP.(∀PPI.A) ⊓ ∃PPI.¬A (UNSAT: comp(PPI,PPI) = {PPI} forces the universal to fire on the sibling). *Known blind spot:* the test set does not include cyclic-via-symmetric-role SAT concepts such as the PO-loop pattern; on those the reasoner is known to wrongly report UNSAT (see warning earlier in this document).
 
 ### Henkin tree extension test
 
@@ -508,6 +527,7 @@ python3 alcircc5_reasoner.py
 - Exponential in closure size (enumerates all Hintikka types)
 - Not optimized for large concepts; designed as a proof-of-concept
 - The constructive search uses backtracking with depth bound, so may not find all satisfying quasimodels
+- **Known incompleteness** on cyclic-via-symmetric-role SAT concepts (PO-loop pattern): the role-path compatibility check cannot close a chain g→R→j→S→g through a symmetric role, so witnesses that require such cycles are rejected. The decidability proof is unaffected — see the warning box near the top of the README.
 
 ## References
 

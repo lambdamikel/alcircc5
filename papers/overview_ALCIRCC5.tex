@@ -795,25 +795,37 @@ reading is also the one built into the composition tables used
 in Renz \& Nebel's patchwork theorem.
 \end{examplex}
 
-\begin{remark}[Completeness bug in the quasimodel reasoner]
+\begin{remark}[\textbf{Known incompleteness of the quasimodel reasoner} --- does \emph{not} affect the decidability claim]
 \label{rem:qm-bug}
-The two examples above form a useful cross-validation pair.
-During the analysis we observed that the implemented quasimodel
-reasoner (\texttt{alcircc5\_reasoner.py}) \emph{incorrectly}
-reports Example~\ref{ex:po-loop} ($Y$) as UNSAT, while the
-cover-tree tableau correctly reports SAT. The root cause is a
-role-path compatibility check that for every chain
-$g \to_R j \to_S w$ requires
+The two examples above form a useful cross-validation pair, and
+revealed an incompleteness in the constructive quasimodel
+reasoner (\texttt{alcircc5\_reasoner.py}).
+The reasoner \emph{incorrectly} reports Example~\ref{ex:po-loop}
+($Y$) as UNSAT, while the cover-tree tableau correctly reports
+SAT.
+The root cause is the role-path compatibility check: for every
+chain $g \to_R j \to_S w$ it requires
 $\comp(\inv(S), \inv(R)) \cap \Safe(w, g) \ne \emptyset$,
 treating $w$ as a fresh node in a tree unfolding. When $w$ may
-equal $g$ itself (via symmetric roles), this check is too
-strict---the quasimodel implementation implicitly assumes tree
-models, whereas $\ALCIRCC{5}$ admits cyclic models that trees
-cannot represent. The cover-tree tableau handles such cases
-through back-edges in the cover tree. The concepts wrongly
-rejected by the quasimodel implementation are exactly those
-whose satisfiability requires a cycle through a symmetric
-relation.
+equal $g$ itself (via symmetric roles, under strong-$\EQ$
+identification), this check is too strict---the quasimodel
+implementation implicitly assumes tree models, whereas
+$\ALCIRCC{5}$ admits cyclic models that trees cannot represent.
+The cover-tree tableau handles such cases through back-edges.
+The concepts wrongly rejected are exactly those whose
+satisfiability requires a cycle through a symmetric relation.
+
+\emph{Scope.} The reasoner is used as a cross-validation oracle,
+not as a step of the decidability proof. The decidability
+argument goes through the cover-tree tableau together with the
+split-forest semantics and the completeness-extraction paper,
+and does \emph{not} reference \texttt{alcircc5\_reasoner.py}.
+SAT answers from the reasoner remain sound; UNSAT answers are
+sound only for concepts whose satisfiability can be witnessed by
+a tree model. A surgical fix (admitting cycle-close $w = g$ via
+$\EQ$ in the composition check) is feasible but not yet
+implemented; the extended test suite targeting cyclic-via-symmetric
+patterns is future work.
 \end{remark}
 
 \subsection{What makes this ``non-standard''}
