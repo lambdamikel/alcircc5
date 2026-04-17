@@ -3160,3 +3160,51 @@ Michael pointed out two issues in the overview paper:
 - `papers/overview_ALCIRCC5.tex`: Rewrote Section 3 opening, added Core definition
 - `papers/overview_ALCIRCC5.pdf`: Recompiled (11 pages)
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: PO-loop, clash-to-EQ, and a quasimodel completeness bug (April 16, 2026)
+
+### Context
+
+Michael posed a sequence of satisfiability puzzles around nested existentials of the form
+$C \sqcap \exists\PO.\exists\PO.(\pm C) \sqcap \forall R.(\pm C)$
+and asked how the two reasoners (quasimodel vs. cover-tree tableau) answer them. The discussion uncovered two instructive example patterns and a bug in the quasimodel implementation.
+
+### The two tricky examples
+
+**1. The ``$\PO$-loop'': 2-element SAT model.**  The concept
+$$Y \;=\; C \sqcap \exists\PO.\exists\PO.C \sqcap \forall\PO.\neg C \sqcap \forall\DR.\neg C \sqcap \forall\PP.\neg C \sqcap \forall\PPI.\neg C$$
+looks unsatisfiable at first glance — the four universals appear to block every composition entry for $\rho(d, b)$ where $d \;\PO\; a \;\PO\; b$ and $b \in C$, because $\comp(\PO,\PO) = \{\DR,\PO,\PP,\PPI,\EQ\}$ and each of the four non-$\EQ$ options forces $b \in \neg C$.
+
+But $Y$ is **satisfiable** via the 2-element model $\{d, a\}$ with $C^\mathcal{I} = \{d\}$ and $\rho(d,a) = \PO$. Because $\PO$ is symmetric, the chain $d \;\PO\; a \;\PO\; d$ loops back to the root — the ``third node'' of $\exists\PO.\exists\PO.C$ **is** $d$ itself, under strong $\EQ$ identity. Two syntactic positions collapse to one semantic element. The universals $\forall R.\neg C$ constrain $d$'s outgoing neighbours (and $a \in \neg C$ satisfies them), but they do not prevent $d$ from **being** a $\PO$-neighbour of $a$. This asymmetry is peculiar to symmetric roles ($\PO$, $\DR$); $\PP$/$\PPI$ cannot form such cycles because they are asymmetric and irreflexive.
+
+**2. ``Clash-out to $\EQ$'': genuine UNSAT via strong $\EQ$.**  The complementary concept
+$$Z \;=\; C \sqcap \exists\PO.\exists\PO.\neg C \sqcap \forall\PO.C \sqcap \forall\DR.C \sqcap \forall\PP.C \sqcap \forall\PPI.C$$
+is genuinely unsatisfiable. In the chain $d \;\PO\; a \;\PO\; c$, the four universals force $c \in C$ through every non-$\EQ$ composition entry, but $c \in \neg C$ is demanded by $\exists\PO.\neg C$ at $a$. All four non-$\EQ$ options for $\rho(d,c)$ thus clash, leaving only $\EQ$. Under **strong $\EQ$** (= identity), $\rho(d,c) = \EQ$ forces $d = c$, yielding $C(d) \land \neg C(d)$. The $\PO$-loop escape fails because $d \in C$ and $c \in \neg C$ are incompatible, so $d \ne c$ is forced semantically. This example illustrates why strong-$\EQ$ semantics is essential — under weak $\EQ$ the collapse would not be an immediate clash.
+
+### The bug
+
+The cover-tree tableau reports both examples correctly (SAT for $Y$, UNSAT for $Z$). The quasimodel reasoner (`src/alcircc5_reasoner.py`) reports $Y$ **incorrectly as UNSAT**.
+
+Root cause: the role-path compatibility check `check_role_path_compatibility` requires, for every chain $g \to_R j \to_S w$, that $\comp(\inv(S), \inv(R)) \cap \Safe(w, g) \ne \emptyset$. This check implicitly treats $w$ as a fresh node in a tree unfolding. When $w$ may equal $g$ itself (through a symmetric role), the check is too strict — it rejects exactly the cyclic witnesses that symmetric roles need. The quasimodel implementation therefore silently assumes tree models, whereas $\ALCIRCC{5}$ genuinely admits (and sometimes requires) cyclic models. The cover-tree tableau sidesteps this by representing cycles as back-edges.
+
+This is a completeness bug in the *implementation*, not the quasimodel *theory* — the theory's Henkin construction does admit identification of tree nodes. The concepts wrongly rejected are precisely those whose satisfiability requires a cycle through a symmetric relation.
+
+### What was done
+
+1. **`README.md`**: Added three paragraphs after the PP-forcing section documenting (a) the 2-element $\PO$-loop SAT model, (b) the clash-to-$\EQ$ UNSAT pattern, and (c) the quasimodel completeness bug.
+
+2. **`papers/overview_ALCIRCC5.tex`**: Added three new environments after the PP-forcing example:
+   - `examplex{The ``$\PO$-loop'': 2-element SAT via symmetric cycles}` (label `ex:po-loop`)
+   - `examplex{``Clash-out to $\EQ$'': genuine UNSAT via strong $\EQ$}` (label `ex:clash-to-eq`)
+   - `remark{Completeness bug in the quasimodel reasoner}` (label `rem:qm-bug`)
+
+3. Recompiled the overview paper (12 pages).
+
+### Files changed
+
+- `README.md`: Added PO-loop, clash-to-EQ, and quasimodel bug paragraphs
+- `papers/overview_ALCIRCC5.tex`: Added two examples and one remark
+- `papers/overview_ALCIRCC5.pdf`: Recompiled (12 pages)
+- `CONVERSATION.md`: This entry

@@ -719,6 +719,103 @@ and illustrates why the complete-graph semantics require careful
 handling of implicit spatial constraints.
 \end{examplex}
 
+\begin{examplex}[The ``$\PO$-loop'': 2-element SAT via symmetric cycles]
+\label{ex:po-loop}
+Naive reasoning suggests
+\[
+  Y \;=\; C
+    \;\sqcap\; \exists\PO.\exists\PO.C
+    \;\sqcap\; \forall\PO.\neg C
+    \;\sqcap\; \forall\DR.\neg C
+    \;\sqcap\; \forall\PP.\neg C
+    \;\sqcap\; \forall\PPI.\neg C
+\]
+should be unsatisfiable: any witness chain
+$d \;\PO\; a \;\PO\; b$ with $b \in C$ needs
+$\rho(d,b) \in \comp(\PO,\PO) = \{\DR,\PO,\PP,\PPI,\EQ\}$,
+and the four universals $\forall R.\neg C$ seem to block every
+non-$\EQ$ option (each forces $b \in \neg C$, yet $b \in C$).
+
+But $Y$ is in fact \textbf{satisfiable}, via the two-element model
+$\{d,a\}$ with $C^{\mathcal I} = \{d\}$ and $\rho(d,a) = \PO$.
+Because $\PO$ is symmetric
+($\PO(d,a) \Rightarrow \PO(a,d)$), the chain
+$d \;\PO\; a \;\PO\; d$ loops back to the root itself: the
+``third node'' of the $\exists\PO.\exists\PO$ formula \emph{is}
+$d$, under strong $\EQ$ identity. Two syntactic positions in the
+nested existential map to the same semantic element.
+
+The universals $\forall R.\neg C$ constrain $d$'s \emph{outgoing}
+$R$-neighbours (the sole $\PO$-neighbour $a \in \neg C$
+satisfies them), but they do \textbf{not} prevent $d$ from
+\emph{being} a $\PO$-neighbour of $a$: the witness for $a$'s
+$\exists\PO.C$ is $d$ itself, and $a$ has no
+$\forall\PO$-constraint forbidding $C$-neighbours.
+This asymmetry between ``constraints on my neighbours'' and
+``constraints on what I may be a neighbour of'' is peculiar
+to symmetric roles ($\PO,\DR$). The cover-tree tableau correctly
+reports $Y$ as satisfiable.
+\end{examplex}
+
+\begin{examplex}[``Clash-out to $\EQ$'': genuine UNSAT via strong $\EQ$]
+\label{ex:clash-to-eq}
+The complementary pattern
+\[
+  Z \;=\; C
+    \;\sqcap\; \exists\PO.\exists\PO.\neg C
+    \;\sqcap\; \forall\PO.C
+    \;\sqcap\; \forall\DR.C
+    \;\sqcap\; \forall\PP.C
+    \;\sqcap\; \forall\PPI.C
+\]
+\emph{is} unsatisfiable, and the reason is instructive. The chain
+$d \;\PO\; a \;\PO\; c$ forces $a \in C$ (via $\forall\PO.C$ at $d$)
+and $c \in \neg C$ (via $\exists\PO.\neg C$ at $a$). The
+relation $\rho(d,c)$ must lie in
+$\comp(\PO,\PO) = \{\DR,\PO,\PP,\PPI,\EQ\}$. The four universals
+$\forall R.C$ at $d$ (for $R \in \{\DR,\PO,\PP,\PPI\}$) each
+require $c \in C$, contradicting $c \in \neg C$, hence
+\emph{all four non-$\EQ$ options are blocked}. Only $\EQ$ remains.
+
+Under \textbf{strong $\EQ$ semantics} ($\EQ$ = identity),
+$\rho(d,c) = \EQ$ forces $d = c$, yielding $d \in C \land d \in \neg C$
+and a clash. The $\PO$-loop escape of
+Example~\ref{ex:po-loop} does not apply here: the endpoint $c$
+requires $\neg C$ while $d$ has $C$, so $d \ne c$ is forced
+semantically, and the universals then close every non-$\EQ$
+composition entry.
+
+This example illustrates why \emph{strong} $\EQ$ semantics is
+essential for our undecidability- and decidability-proof
+machinery. Under weak $\EQ$ (equivalence-class) semantics,
+collapsing $d$ and $c$ would not immediately clash, and one would
+need additional machinery (equality propagation,
+congruence-closure) to derive the same conclusion. The strong
+reading is also the one built into the composition tables used
+in Renz \& Nebel's patchwork theorem.
+\end{examplex}
+
+\begin{remark}[Completeness bug in the quasimodel reasoner]
+\label{rem:qm-bug}
+The two examples above form a useful cross-validation pair.
+During the analysis we observed that the implemented quasimodel
+reasoner (\texttt{alcircc5\_reasoner.py}) \emph{incorrectly}
+reports Example~\ref{ex:po-loop} ($Y$) as UNSAT, while the
+cover-tree tableau correctly reports SAT. The root cause is a
+role-path compatibility check that for every chain
+$g \to_R j \to_S w$ requires
+$\comp(\inv(S), \inv(R)) \cap \Safe(w, g) \ne \emptyset$,
+treating $w$ as a fresh node in a tree unfolding. When $w$ may
+equal $g$ itself (via symmetric roles), this check is too
+strict---the quasimodel implementation implicitly assumes tree
+models, whereas $\ALCIRCC{5}$ admits cyclic models that trees
+cannot represent. The cover-tree tableau handles such cases
+through back-edges in the cover tree. The concepts wrongly
+rejected by the quasimodel implementation are exactly those
+whose satisfiability requires a cycle through a symmetric
+relation.
+\end{remark}
+
 \subsection{What makes this ``non-standard''}
 
 The cover-tree tableau differs from a standard DL tableau
