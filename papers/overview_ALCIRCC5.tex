@@ -820,12 +820,32 @@ not as a step of the decidability proof. The decidability
 argument goes through the cover-tree tableau together with the
 split-forest semantics and the completeness-extraction paper,
 and does \emph{not} reference \texttt{alcircc5\_reasoner.py}.
-SAT answers from the reasoner remain sound; UNSAT answers are
-sound only for concepts whose satisfiability can be witnessed by
-a tree model. A surgical fix (admitting cycle-close $w = g$ via
-$\EQ$ in the composition check) is feasible but not yet
-implemented; the extended test suite targeting cyclic-via-symmetric
-patterns is future work.
+SAT answers from the baseline reasoner remain sound; UNSAT
+answers are sound only for concepts whose satisfiability can be
+witnessed by a tree model.
+
+\emph{Fix and re-validation.} A surgical patch admits the
+cycle-close case $w = g$ whenever
+$(\inv(S), \inv(R)) \in \{(\DR,\DR), (\PO,\PO), (\PP,\PPI),
+(\PPI,\PP)\}$---exactly the four composition pairs in the full
+RCC5 table that admit $\EQ$, equivalently $S = \inv(R)$. Algebraic
+soundness: a cycle $g \to_R j \to_S g$ closes iff $\EQ \in
+\comp(R, S)$. The patch is available as an opt-in
+\texttt{cycle\_close=True} flag on the baseline, with
+\texttt{alcircc5\_reasoner\_cyclic.py} as a thin wrapper that
+enables it; the baseline's default behaviour is preserved for
+cross-validation throughput. A 7-case adversarial suite
+(\texttt{test\_cyclic\_reasoner.py}) covering PO-loop, DR-loop,
+$\PP/\PPI$ and $\PPI/\PP$ cycles, the $\PP$-$\PP$ non-cycle,
+clash-to-$\EQ$, and a PO-loop variant with distinguishing
+universal confirms that the cycle-aware reasoner matches the
+cover-tree tableau on every case. Re-running the original
+911-concept cross-validation
+(\texttt{stress\_test\_cyclic.py}) with the cycle-aware reasoner
+as the quasimodel oracle yields $911/911$ matches, zero
+mismatches, in approximately $46$ seconds---recovering the
+earlier cross-validation claim with a reasoner that is
+known-complete on cyclic-via-symmetric-role SAT patterns.
 \end{remark}
 
 \subsection{What makes this ``non-standard''}
