@@ -57,6 +57,15 @@ COMP = {
     (PPI, PPI): frozenset({PPI}),
 }
 
+# Pairs (R, S) for which the full RCC5 composition R ∘ S admits EQ.
+# Used by the cycle-close case: a chain g →R→ j →S→ g closes through
+# strong-EQ identification at the endpoint iff EQ ∈ comp_full(R, S),
+# which happens exactly when S = inv(R). See Remark in
+# papers/overview_ALCIRCC5.tex (rem:qm-bug) for context.
+EQ_ADMITTING_PAIRS = frozenset({
+    (DR, DR), (PO, PO), (PP, PPI), (PPI, PP),
+})
+
 
 # ══════════════════════════════════════════════════════════════
 # Concept Language (NNF)
@@ -280,15 +289,24 @@ def compute_safe(tau, sigma):
 # Type Elimination
 # ══════════════════════════════════════════════════════════════
 
-def check_satisfiability(C0, verbose=False):
+def check_satisfiability(C0, verbose=False, cycle_close=False):
     """
     Check satisfiability of concept C0 via constructive quasimodel search.
 
     Builds the quasimodel bottom-up: start with a root type containing C0,
     add witness types for existential demands, and verify that the SAFE
     constraint network is disjunctive-path-consistent. By the RCC5 patchwork
-    property, path-consistent disjunctive networks are satisfiable, making
-    this check both sound and complete.
+    property, path-consistent disjunctive networks are satisfiable.
+
+    Parameters
+    ----------
+    cycle_close : bool, default False
+        When True, the role-path compatibility check also admits the
+        cycle-close case w = g under strong-EQ identification. This fixes
+        a known incompleteness on cyclic-via-symmetric-role SAT concepts
+        (e.g. C ⊓ ∃PO.∃PO.C ⊓ ∀(all).¬C, which is satisfied by the
+        2-element PO-loop model). The default False preserves the original
+        (faster, tree-model-biased) behavior used by the main test harness.
 
     Returns (is_sat, info_dict).
     """
@@ -529,10 +547,18 @@ def check_satisfiability(C0, verbose=False):
                             # j needs an S-child w for demand E
                             # w must satisfy: E ∈ w, S ∈ SAFE(j,w),
                             # AND comp(INV[S], INV[R]) ∩ SAFE(w, g) ≠ ∅
+                            # When cycle_close=True: also admit w == g
+                            # via strong-EQ identification, provided
+                            # (INV[S], INV[R]) ∈ EQ_ADMITTING_PAIRS
+                            # (equivalently S = inv(R)).
                             found_w = False
                             for w in T_list:
                                 if E in type_list[w] and S in safe[(j, w)]:
                                     if COMP[(INV[S], INV[R])] & safe[(w, g)]:
+                                        found_w = True
+                                        break
+                                    if (cycle_close and w == g and
+                                            (INV[S], INV[R]) in EQ_ADMITTING_PAIRS):
                                         found_w = True
                                         break
                             if not found_w:
