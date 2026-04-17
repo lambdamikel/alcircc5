@@ -795,6 +795,36 @@ reading is also the one built into the composition tables used
 in Renz \& Nebel's patchwork theorem.
 \end{examplex}
 
+\begin{remark}[Reasoners and tools: a cross-validation suite]
+\label{rem:tools}
+This paper references three Python tools used in the companion
+implementations; before the incompleteness below we fix their
+roles. The \textbf{cover-tree tableau}
+(\texttt{cover\_tree\_tableau.py}, Section~\ref{sec:cover-tree})
+is the main candidate decision procedure---the only tool whose
+soundness and completeness are claimed for $\ALCIRCC{5}$
+satisfiability, resting on the patchwork property of RCC5 and
+the companion completeness-extraction argument. The
+\textbf{quasimodel reasoner}
+(\texttt{alcircc5\_reasoner.py}, with cycle-aware wrapper
+\texttt{alcircc5\_reasoner\_cyclic.py}) is a constructive
+bottom-up quasimodel search based on disjunctive
+path-consistency; it is used \emph{only} as a cross-validation
+oracle for the cover-tree tableau, not as a step of any
+decidability argument. The \textbf{independent model verifier}
+(\texttt{model\_verifier.py}) grounds SAT answers in concrete
+finite RCC5 models, separately checking inverse symmetry,
+composition consistency on all triples, type-safety,
+existential witnessing, and recursive concept truth. The three
+tools together form a cross-validation suite around the
+cover-tree tableau: cover-tree produces the candidate verdict,
+the quasimodel reasoner offers an independent opinion, and the
+model verifier anchors SAT answers in explicit models. The
+remark below describes a known incompleteness of the
+quasimodel reasoner that does \emph{not} affect the cover-tree
+tableau or the decidability claim.
+\end{remark}
+
 \begin{remark}[\textbf{Known incompleteness of the quasimodel reasoner} --- does \emph{not} affect the decidability claim]
 \label{rem:qm-bug}
 The two examples above form a useful cross-validation pair, and
