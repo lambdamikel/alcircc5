@@ -3136,3 +3136,27 @@ Continuation of the overview paper improvements. Michael requested several enhan
 - `papers/cover_tree_tableau_ALCIRCC5.pdf`: Recompiled (10 pages)
 - `papers/report7_figure6_taxonomy.png`: Copied to papers/ for LaTeX inclusion
 - `CONVERSATION.md`: This entry
+
+---
+
+## Session: Section 3 fix and Core definition (April 16, 2026)
+
+### Context
+
+Michael pointed out two issues in the overview paper:
+
+1. **Section 3 opening was incorrect**: It claimed "Every known undecidability proof for description logics ultimately encodes a two-dimensional grid." This is wrong — Wessel's own undecidability proofs for ALC\_RA (CFG intersection) and ALC\_RA⊖ (PCP) are not grid encodings.
+
+2. **Proposition 5.2 used "non-Core" without definition**: The notion of Core (common descendants in the PP order) was used in Proposition 5.2 but never defined.
+
+### What was done
+
+1. **Rewrote Section 3 opening** to correctly list grid encoding, PCP, CFG intersection, and S5³ simulation as distinct undecidability techniques, each exploiting features that ALCI\_RCC5 lacks.
+
+2. **Added Core definition** before Proposition 5.2: an element x below sibling root s is in the Core of (s,t) if orig(x) is a common descendant of both orig(s) and orig(t) in the original model's PP order.
+
+### Files changed
+
+- `papers/overview_ALCIRCC5.tex`: Rewrote Section 3 opening, added Core definition
+- `papers/overview_ALCIRCC5.pdf`: Recompiled (11 pages)
+- `CONVERSATION.md`: This entry
