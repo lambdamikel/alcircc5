@@ -328,6 +328,69 @@ def check_satisfiability(C0, verbose=False):
 
         return True
 
+    # ── Step 7b: Role-path compatibility (3-type chain check) ──
+    # Ported from the quasimodel reasoner's check_role_path_compatibility.
+    # Catches the 12-cell counterexample family of the form
+    #   ∃R1.∃R2.A ⊓ ⊓_{R ∈ R1∘R2} ∀R.¬A      (R2 ≠ inv(R1))
+    # which check_tree_cross_interaction misses because its early-exit
+    # `if len(all_dems) <= 1: continue` skips cases where each type on the
+    # chain has a single demand. See review_paper/review_cover_tree_tableau.tex.
+    EQ_ADMITTING_PAIRS = frozenset({
+        (DR, DR), (PO, PO), (PP, PPI), (PPI, PP),
+    })
+
+    def check_role_path_compatibility(T):
+        """For every chain g --R--> j --S--> w, verify that w is related
+        back to g by some relation in comp(INV[S], INV[R]) ∩ safe(w, g).
+
+        When (INV[S], INV[R]) admits EQ (iff S = inv(R)), the chain may
+        close via w = g — the strong-EQ / split-forest trick that keeps
+        the cyclic-SAT concepts satisfiable.
+        """
+        T_list = sorted(T)
+
+        valid_witness = {}
+        for g in T_list:
+            for R, D in demands[g]:
+                cands = set()
+                for j in T_list:
+                    if D in type_list[j] and R in safe[(g, j)]:
+                        cands.add(j)
+                if not cands:
+                    return False
+                valid_witness[(g, R, D)] = cands
+
+        changed = True
+        while changed:
+            changed = False
+            for g in T_list:
+                for R, D in demands[g]:
+                    to_remove = set()
+                    for j in valid_witness[(g, R, D)]:
+                        for S, E in demands[j]:
+                            found_w = False
+                            for w in T_list:
+                                if E not in type_list[w]:
+                                    continue
+                                if S not in safe[(j, w)]:
+                                    continue
+                                if COMP[(INV[S], INV[R])] & safe[(w, g)]:
+                                    found_w = True
+                                    break
+                                if (w == g and
+                                        (INV[S], INV[R]) in EQ_ADMITTING_PAIRS):
+                                    found_w = True
+                                    break
+                            if not found_w:
+                                to_remove.add(j)
+                                break
+                    if to_remove:
+                        valid_witness[(g, R, D)] -= to_remove
+                        changed = True
+                        if not valid_witness[(g, R, D)]:
+                            return False
+        return True
+
     # ── Step 8: Disjunctive path-consistency of cross-edge network ──
     def check_cross_pc(T):
         """
@@ -403,6 +466,10 @@ def check_satisfiability(C0, verbose=False):
 
         # Check tree-cross interaction
         if not check_tree_cross_interaction(T):
+            return False
+
+        # Check role-path compatibility (3-type chains)
+        if not check_role_path_compatibility(T):
             return False
 
         found_T[0] = T

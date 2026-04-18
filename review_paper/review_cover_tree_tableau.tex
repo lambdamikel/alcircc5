@@ -1,0 +1,837 @@
+\documentclass[]{ceurart}
+
+\sloppy
+
+\usepackage{listings}
+\lstset{breaklines=true,basicstyle=\ttfamily\small,columns=fullflexible}
+
+\usepackage{graphbox}
+\DeclareRobustCommand{\DLLogo}{%
+  \begingroup\normalfont
+  \kern-1.75pt\includegraphics[align=c,height=1.25\baselineskip]{dl-logo}\kern-1.5pt%
+  \endgroup
+}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{stmaryrd}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\ALCIRCC}[1]{\ALCI_{\mathrm{RCC}#1}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\NC}{\mathsf{NC}}
+\newcommand{\comp}{\circ}
+\newcommand{\inv}[1]{#1^{-}}
+\newcommand{\Cl}{\mathrm{cl}}
+\newcommand{\nnf}{\mathrm{nnf}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\begin{document}
+
+\copyrightyear{2026}
+\copyrightclause{Copyright for this paper by its author.
+  Use permitted under Creative Commons License Attribution 4.0
+  International (CC BY 4.0).}
+
+\conference{\DLLogo{} DL 2026: 39th International Workshop on Description
+  Logics, July 17--19, 2026, Lisbon, Portugal}
+
+\title{A Soundness Counterexample to the Cover-Tree Tableau
+  for $\ALCIRCC{5}$: Twelve Refuting Concepts Built from a Single
+  Composition Chain}
+
+\author[1]{Anonymous Reviewer (Claude Opus 4.7)}[%
+email=miacwess@gmail.com,
+]
+\address[1]{Independent review of the
+  \texttt{alcircc5} repository, April 2026}
+
+\begin{abstract}
+  The recent \texttt{alcircc5} repository by Wessel, GPT-5.4, and
+  Claude advances a \emph{cover-tree tableau} as a decision procedure
+  for concept satisfiability in $\ALCIRCC{5}$, the extension of
+  $\ALCI$ with the five basic RCC5 relations $\{\DR, \PO, \EQ,
+  \PP, \PPI\}$ interpreted under strong EQ semantics.  The
+  accompanying paper reports ``911 stress-test concepts with zero
+  mismatches'' against a reference quasimodel reasoner.  We review the
+  implementation at
+  \verb|src/cover_tree_tableau.py| and exhibit a systematic family of
+  soundness counterexamples.  Concretely, for every pair
+  $(R_1, R_2) \in \{\DR, \PO, \PP, \PPI\}^2$ with
+  $R_2 \neq \inv{R_1}$ (twelve pairs), the concept
+  \[
+    C_{R_1, R_2} \;\equiv\; \exists R_1 . \exists R_2 . A
+      \;\sqcap\; \bigsqcap_{R \in R_1 \comp R_2}
+      \forall R . \neg A
+  \]
+  is unsatisfiable (by a one-line composition argument), yet the
+  cover-tree tableau reports it \emph{satisfiable}. A minimal
+  illustration is the PP-transitivity instance
+  $\exists \PP . \exists \PP . A \sqcap \forall \PP . \neg A$.
+  The root cause is an early-exit in
+  \texttt{check\_tree\_cross\_interaction}: demand pairs are only
+  examined when a single type carries at least two demands, so
+  grandparent--grandchild role-path compatibility across three
+  distinct types is never enforced.  This precisely mirrors the
+  \texttt{check\_role\_path\_compatibility} routine that the baseline
+  quasimodel reasoner \emph{does} run.  The decidability claim of
+  the cover-tree tableau \emph{as implemented} therefore does not
+  hold; we conjecture, and discuss, a straightforward repair.
+\end{abstract}
+
+\begin{keywords}
+  Description logics \sep
+  $\ALCI$ \sep
+  RCC5 \sep
+  Tableau algorithms \sep
+  Soundness \sep
+  Open problems
+\end{keywords}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+Wessel's open problem of deciding concept satisfiability in
+$\ALCIRCC{5}$ and $\ALCIRCC{8}$~\cite{wessel2002} has been revisited
+in the public repository
+\verb|lambdamikel/alcircc5|, jointly authored by Michael~Wessel,
+an OpenAI assistant (``GPT-5.4''), and an Anthropic assistant
+(``Claude''). Several artifacts are presented:
+\begin{enumerate}
+  \item a \emph{quasimodel reasoner}
+    (\verb|src/alcircc5_reasoner.py|) based on Hintikka types, pair
+    types, and safe-relation filtering with an explicit
+    \verb|check_role_path_compatibility| stage;
+  \item a \emph{cover-tree tableau}
+    (\verb|src/cover_tree_tableau.py|) that promises polynomial per-type
+    work by treating $\PP/\PPI$ demands as tree edges and
+    $\DR/\PO$ demands as cross-edges;
+  \item a \emph{cross-validation suite}
+    (\verb|src/stress_test_cover_tree.py|) reporting agreement on
+    $911$ concepts;
+  \item LaTeX write-ups, including
+    \verb|papers/cover_tree_tableau_ALCIRCC5.tex|, that claim a
+    soundness/completeness proof for the cover-tree procedure.
+\end{enumerate}
+The repository explicitly flags the results as
+``unverified\ldots published as a discussion piece.''  This note is
+exactly such a verification exercise.
+
+We adopt the role of a sceptical referee. We are not permitted to
+modify the repository, but we may execute it. Our task is to assess
+the decidability claim of the cover-tree tableau in particular, with a
+preference for finding concrete refutations over proof-level
+nitpicking. After a direct reading of the algorithm and several
+rounds of adversarial probing, we found that the cover-tree tableau
+as implemented is \emph{unsound}: it accepts concepts that are
+provably unsatisfiable in the intended $\ALCIRCC{5}$ semantics.
+
+\paragraph{Contributions.} The contributions of this review are:
+\begin{itemize}
+  \item A minimal $2$-modal-depth, single-atom counterexample
+    $\exists \PP . \exists \PP . A \sqcap \forall \PP . \neg A$
+    that the cover-tree tableau reports as satisfiable but is
+    falsified by $\PP$-transitivity alone
+    (\S\ref{sec:minimal}).
+  \item A systematic family of $12$ such counterexamples covering
+    every $(R_1, R_2)$ composition direction other than the four
+    strong-EQ-admissible pairs $R_2 = \inv{R_1}$
+    (\S\ref{sec:family}).
+  \item Independent refutations of the SAT verdict by (a) the
+    baseline quasimodel reasoner, (b) the cycle-aware variant
+    \verb|alcircc5_reasoner_cyclic|, (c) exhaustive
+    $n \!\leq\! 3$ model enumeration via
+    \verb|model_verifier.py|, and (d) failure of the cover-tree's
+    own concrete-model builder to realise the claimed type set.
+  \item Root-cause analysis pointing to a single early-exit branch in
+    \verb|check_tree_cross_interaction| that skips composition
+    propagation whenever a type has only one demand, so
+    grandparent--grandchild composition constraints are never
+    enforced across three distinct types
+    (\S\ref{sec:rootcause}).
+  \item A concrete repair sketch that recovers what the accompanying
+    quasimodel reasoner already does
+    (\S\ref{sec:repair}).
+\end{itemize}
+
+\paragraph{Disclosure on methodology.}  Following CEUR-WS policy,
+this review was itself authored by a large language model
+(Anthropic's Claude Opus 4.7), acting under instruction from
+Michael~Wessel to audit the work of his earlier collaborators.  We
+therefore consider the review and the work it examines to be peers
+in a heavily AI-mediated exchange.  Our empirical claims
+(\S\ref{sec:methodology}--\S\ref{sec:family}) are reproducible from
+the repository without modification, via the Python scripts cited
+below.
+
+\section{Background}
+\label{sec:background}
+
+We recall only what we need.
+
+\subsection{$\ALCIRCC{5}$ and strong EQ}
+
+Fix the five RCC5 base relations
+$\mathcal{B} = \{\DR, \PO, \EQ, \PP, \PPI\}$. The role set of
+$\ALCIRCC{5}$ is
+$\mathsf{Rol} = \{\DR, \PO, \PP, \PPI\}$; $\EQ$ does not appear as
+a role but enters as \emph{identity} under strong EQ semantics.
+Concepts are built from atomic concepts, $\top$, $\bot$, $\neg$,
+$\sqcap$, $\sqcup$, and $\exists R . C$ and $\forall R . C$ for
+$R \in \mathsf{Rol}$. Concepts are assumed in negation normal form
+(NNF), and inverses are syntactically absorbed
+($\exists \PP^{-} . C \equiv \exists \PPI . C$).
+
+An interpretation
+$\mathcal{I} = (\Delta, \rho, {\cdot}^{\mathcal{I}})$ assigns to every
+ordered pair $(x, y) \in \Delta \times \Delta$ exactly one relation
+$\rho(x, y) \in \mathcal{B}$, subject to:
+\begin{enumerate}
+  \item \emph{Strong EQ}: $\rho(x, y) = \EQ \iff x = y$;
+  \item \emph{Inverse}: $\rho(y, x) = \inv{\rho(x, y)}$, where
+    $\inv{\DR} = \DR$, $\inv{\PO} = \PO$, $\inv{\EQ} = \EQ$,
+    $\inv{\PP} = \PPI$, $\inv{\PPI} = \PP$;
+  \item \emph{Composition consistency}: for every triple $(x, y, z)$,
+    $\rho(x, z) \in \rho(x, y) \comp \rho(y, z)$, where $\comp$ is the
+    standard RCC5 composition table (cf.~Table~\ref{tab:comp}).
+\end{enumerate}
+
+\begin{table*}
+  \caption{RCC5 composition table (rows: first argument, columns:
+    second argument). The $\EQ$ row and column are omitted as they
+    act as identity under strong EQ.  Singleton compositions
+    (highlighted) are the ones exploited by our minimal
+    counterexamples.}
+  \label{tab:comp}
+  \centering
+  \begin{tabular}{l|llll}
+    \toprule
+           & $\DR$                  & $\PO$                    & $\PP$                  & $\PPI$                 \\
+    \midrule
+    $\DR$  & $\{\DR,\PO,\PP,\PPI\}$ & $\{\DR,\PO,\PP\}$        & $\{\DR,\PO,\PP\}$      & $\{\DR\}^{\star}$      \\
+    $\PO$  & $\{\DR,\PO,\PPI\}$     & $\{\DR,\PO,\PP,\PPI\}$   & $\{\PO,\PP\}$          & $\{\DR,\PO,\PPI\}$     \\
+    $\PP$  & $\{\DR\}^{\star}$      & $\{\DR,\PO,\PP\}$        & $\{\PP\}^{\star}$      & $\{\DR,\PO,\PP,\PPI\}$ \\
+    $\PPI$ & $\{\DR,\PO,\PPI\}$     & $\{\PO,\PPI\}$           & $\{\PO,\PP,\PPI\}$     & $\{\PPI\}^{\star}$     \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+\subsection{Quasimodel reasoner as ground truth}
+
+The baseline quasimodel reasoner in
+\verb|alcircc5_reasoner.py| implements Hintikka types over the
+Fischer--Ladner closure of the input concept, a safe-relation table
+indexed by ordered pairs of types, and a role-path compatibility check
+that for every type $\tau$ and every demand $(R, D)$ of $\tau$, tests
+whether $\tau$ admits a witness of $D$ through an $R$-edge. Cycles of
+length two that close through strong EQ (as in the
+$(\PP, \PPI)$-loop that realises
+$\exists \PP . \exists \PPI . \top$) are the \emph{only} known
+incompleteness of the baseline: the file
+\verb|alcircc5_reasoner_cyclic.py| is a thin wrapper that enables a
+\verb|cycle_close=True| path exactly to recover those cases. We
+therefore use the cycle-aware variant (henceforth $\mathsf{QM}_{\mathrm{cyc}}$)
+as ground truth for satisfiability in this review. The cover-tree
+tableau is henceforth $\mathsf{CT}$.
+
+\section{The cover-tree tableau in one page}
+\label{sec:ct}
+
+$\mathsf{CT}$ operates on Hintikka types $T$ over the closure of
+$C_0$. A subset $T \subseteq \mathcal{T}$ is declared a
+\emph{cover-tree model witness} iff all of the following hold (the
+implementation's own function names are given in parentheses):
+\begin{description}
+  \item[CT1] Every demand $(R, D)$ of every type in $T$ is witnessed
+    within $T$ via a safe edge
+    (\texttt{check\_demand\_closure}).
+  \item[CT2] Cross-edge roles ($\DR$, $\PO$) are safe in both directions
+    (\texttt{check\_cross\_compatibility}).
+  \item[CT3] Sibling constraints for $\DR/\PO$ demand pairs
+    at the same parent type admit witnesses consistent with the
+    parent's universals
+    (\texttt{check\_cover\_tree\_siblings}).
+  \item[CT4] For every type $\tau \in T$ and every \emph{pair} of
+    demands $(R_1, D_1)$, $(R_2, D_2)$ of $\tau$, some choice of
+    witnesses $j_1, j_2$ satisfies
+    $\comp(\inv{R_1}, R_2) \cap \mathit{safe}(j_1, j_2) \neq
+    \emptyset$
+    (\texttt{check\_tree\_cross\_interaction}).
+  \item[CT5] The cross-edge network restricted to $\{\DR, \PO\}$ is
+    path-consistent (\texttt{check\_cross\_pc}).
+\end{description}
+
+A root type passing all five checks is declared satisfiable. The
+authors argue soundness by appeal to the RCC5 patchwork property
+\cite{renz1999}: a path-consistent atomic constraint network admits
+a simultaneous realization, so a type set satisfying CT1--CT5 should
+yield a concrete model.
+
+Our counterexamples show that CT1--CT5 is strictly weaker than
+path-consistency of the full role-path network, because CT4 only
+inspects demand \emph{pairs at a single type}. This is not the only
+missing check, but it is the one we empirically trip.
+
+\section{Methodology}
+\label{sec:methodology}
+
+We ran the repository as-is. All scripts below were executed from
+\verb|src/| with \verb|python3|; no files in the repository were
+modified.
+
+\paragraph{Reasoners compared.}
+\begin{itemize}
+  \item $\mathsf{CT}$: \verb|cover_tree_tableau.check_sat|.
+  \item $\mathsf{QM}$: \verb|alcircc5_reasoner.check_satisfiability| (baseline).
+  \item $\mathsf{QM}_{\mathrm{cyc}}$: \verb|alcircc5_reasoner_cyclic.check_satisfiability|
+    (ground truth for our test set).
+  \item $\mathsf{MV}$: \verb|model_verifier.build_model|, an independent concrete-model
+    builder that attempts to realise a cover-tree type set as an
+    explicit $(\Delta, \rho)$.
+  \item $\mathsf{EX}_n$: exhaustive enumeration over all
+    composition-consistent $\rho$ on $|\Delta| = n$, combined with
+    brute-force concept evaluation (written inline against the API).
+\end{itemize}
+
+\paragraph{Test harness.}
+Our primary probe is a $4 \!\times\! 4$ grid indexed by
+$(R_1, R_2) \in \mathsf{Rol}^2$, where for each cell we construct
+\[
+  C_{R_1, R_2} \;\equiv\; \exists R_1 . \exists R_2 . A
+    \;\sqcap\; \bigsqcap_{R \in R_1 \comp R_2}
+    \forall R . \neg A.
+\]
+Every cell is checked with $\mathsf{CT}$, $\mathsf{QM}$, and
+$\mathsf{QM}_{\mathrm{cyc}}$; one minimal cell is additionally
+checked with $\mathsf{MV}$ and $\mathsf{EX}_3$. The harness runs in
+well under a second per cell; the exhaustive enumeration on
+$n = 3$ traverses the $41$ composition-consistent RCC5 networks on
+three elements.
+
+\section{A minimal soundness counterexample}
+\label{sec:minimal}
+
+Consider
+\begin{equation}
+  C^{\star} \;:=\; \exists \PP . \exists \PP . A
+    \;\sqcap\; \forall \PP . \neg A.
+  \label{eq:minimal}
+\end{equation}
+
+\begin{proposition}
+  \label{prop:minimal-unsat}
+  $C^{\star}$ is unsatisfiable in every $\ALCIRCC{5}$
+  interpretation.
+\end{proposition}
+
+\begin{proof}
+  Suppose $\mathcal{I} \models C^{\star}$ at a point $d \in \Delta$.
+  Then there exist $a, b \in \Delta$ with
+  $\rho(d, a) = \PP$, $\rho(a, b) = \PP$, and $b^{\mathcal{I}} \in A^{\mathcal{I}}$.
+  By composition, $\rho(d, b) \in \PP \comp \PP$.  From
+  Table~\ref{tab:comp}, $\PP \comp \PP = \{\PP\}$ (this is just
+  $\PP$-transitivity). Thus $\rho(d, b) = \PP$, i.e.,
+  $d$ has $b$ as a $\PP$-successor. But $d \models \forall \PP . \neg A$
+  forces $\neg A$ on every $\PP$-successor of $d$, contradicting
+  $A(b)$.
+
+  The case $b = d$ (closure through strong EQ) is precluded because
+  $\PP$ is irreflexive: $\rho(d, d) = \EQ$ by strong EQ semantics,
+  not $\PP$.
+\end{proof}
+
+\begin{proposition}
+  \label{prop:minimal-ct-sat}
+  The cover-tree tableau $\mathsf{CT}$ reports $C^{\star}$
+  satisfiable.
+\end{proposition}
+
+This is a direct execution result; the complete transcript is
+exhibited in Listing~\ref{lst:minimal}.
+
+\begin{lstlisting}[caption={Re-executing the minimal counterexample from \texttt{src/}, without modifying the repository. $\mathsf{QM}_{\mathrm{cyc}}$ and $\mathsf{QM}$ agree with Proposition~\ref{prop:minimal-unsat} (UNSAT); $\mathsf{CT}$ disagrees.}, label={lst:minimal}, float=t]
+$ python3 -c "
+from alcircc5_reasoner import (PP, AtomicConcept, NegAtomicConcept,
+                                And, Exists, ForAll,
+                                check_satisfiability as qm)
+from alcircc5_reasoner_cyclic import check_satisfiability as qm_cyc
+from cover_tree_tableau import check_sat as ct
+A, nA = AtomicConcept('A'), NegAtomicConcept('A')
+C = And(Exists(PP, Exists(PP, A)), ForAll(PP, nA))
+print('CT     :', 'SAT' if ct(C)[0] else 'UNSAT')
+print('QM     :', 'SAT' if qm(C)[0] else 'UNSAT')
+print('QM_cyc :', 'SAT' if qm_cyc(C)[0] else 'UNSAT')"
+CT     : SAT
+QM     : UNSAT
+QM_cyc : UNSAT
+\end{lstlisting}
+
+\begin{corollary}
+  \label{cor:unsound}
+  $\mathsf{CT}$ is unsound as a decision procedure for concept
+  satisfiability in $\ALCIRCC{5}$.
+\end{corollary}
+
+\begin{remark}[Independent verification.]
+  We further asked the repository's own
+  \verb|model_verifier.build_model| to realise the type set that
+  $\mathsf{CT}$ accepts for $C^{\star}$.  It returns
+  \verb|(False, 'failed with up to 3 copies')|: even allowing three
+  copies of every type, no composition-consistent
+  $(\Delta, \rho)$ realises the claimed type set.  This is internally
+  consistent --- no such model exists --- and confirms that the
+  positive verdict of $\mathsf{CT}$ is not backed by any concrete
+  structure.
+\end{remark}
+
+\section{A family of twelve counterexamples}
+\label{sec:family}
+
+We now generalise Proposition~\ref{prop:minimal-unsat}. Let
+$R_1, R_2 \in \mathsf{Rol}$ and write $S := R_1 \comp R_2 \subseteq
+\mathcal{B} \setminus \{\EQ\}$.
+
+\begin{lemma}
+  \label{lem:generic-unsat}
+  If $R_2 \neq \inv{R_1}$, then
+  \[
+    C_{R_1, R_2} \;\equiv\; \exists R_1 . \exists R_2 . A
+      \;\sqcap\; \bigsqcap_{R \in S} \forall R . \neg A
+  \]
+  is unsatisfiable.
+\end{lemma}
+
+\begin{proof}
+  Assume $d \models C_{R_1, R_2}$ in some interpretation. Then there
+  exist $a, b$ with $\rho(d, a) = R_1$, $\rho(a, b) = R_2$, and $A(b)$.
+  By composition, $\rho(d, b) \in S$. Pick $R := \rho(d, b)$. Two
+  cases:
+
+  \emph{Case $b \neq d$.}  Then $d$ has $b$ as an $R$-successor for
+  $R \in S \cap \mathsf{Rol}$; the universal $\forall R . \neg A$
+  forces $\neg A(b)$, contradicting $A(b)$.
+
+  \emph{Case $b = d$.}  Then $\rho(d, d) = \EQ$ by strong EQ, so the
+  composition triple becomes $\EQ \in R_1 \comp R_2$. The RCC5
+  composition table yields $\EQ \in R_1 \comp R_2$ iff
+  $R_2 = \inv{R_1}$, which is excluded by hypothesis. Contradiction.
+\end{proof}
+
+For the four pairs with $R_2 = \inv{R_1}$ (that is,
+$(\DR, \DR), (\PO, \PO), (\PP, \PPI), (\PPI, \PP)$), the concept
+$C_{R_1, R_2}$ is genuinely satisfiable via the standard two-element
+strong-EQ loop $\{d, a\}$ with $A(d)$, $\neg A(a)$, and
+$\rho(d, a) = R_1$, $\rho(a, d) = R_2$; these are exactly the
+instances the cycle-aware reasoner was built to capture.
+
+\begin{theorem}
+  \label{thm:twelve}
+  For each of the $12$ pairs $(R_1, R_2) \in \mathsf{Rol}^2$ with
+  $R_2 \neq \inv{R_1}$, the cover-tree tableau $\mathsf{CT}$
+  incorrectly reports $C_{R_1, R_2}$ as satisfiable, whereas
+  $C_{R_1, R_2}$ is unsatisfiable by Lemma~\ref{lem:generic-unsat}.
+\end{theorem}
+
+The theorem is established by direct execution of the $4 \!\times\! 4$
+grid harness (Table~\ref{tab:twelve}).  We also verified the $12$
+UNSAT entries by exhaustive enumeration on $n = 3$ (every valid
+$3$-element RCC5 model over the closure of $C_{R_1, R_2}$); all $12$
+enumerations reported zero models.
+
+\begin{table*}
+  \caption{The full $4 \!\times\! 4$ grid of $C_{R_1, R_2}$ concepts.
+    $\mathsf{CT}$ reports SAT on every cell.  Ground truth is given by
+    $\mathsf{QM}_{\mathrm{cyc}}$; $\mathsf{QM}$ misses the four
+    strong-EQ-admitting cells (a known, documented incompleteness).
+    The $12$ cells with $R_2 \neq \inv{R_1}$ are the soundness
+    counterexamples of Theorem~\ref{thm:twelve}.}
+  \label{tab:twelve}
+  \centering
+  \begin{tabular}{llccccc}
+    \toprule
+    $R_1$  & $R_2$  & $R_1 \comp R_2$        & $\mathsf{CT}$ & $\mathsf{QM}$ & $\mathsf{QM}_{\mathrm{cyc}}$ & Verdict \\
+    \midrule
+    $\DR$  & $\DR$  & $\{\DR,\PO,\PP,\PPI\}$ & SAT & UNSAT & SAT & agree (EQ-loop) \\
+    $\DR$  & $\PO$  & $\{\DR,\PO,\PP\}$      & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\DR$  & $\PP$  & $\{\DR,\PO,\PP\}$      & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\DR$  & $\PPI$ & $\{\DR\}$              & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PO$  & $\DR$  & $\{\DR,\PO,\PPI\}$     & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PO$  & $\PO$  & $\{\DR,\PO,\PP,\PPI\}$ & SAT & UNSAT & SAT & agree (EQ-loop) \\
+    $\PO$  & $\PP$  & $\{\PO,\PP\}$          & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PO$  & $\PPI$ & $\{\DR,\PO,\PPI\}$     & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PP$  & $\DR$  & $\{\DR\}$              & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PP$  & $\PO$  & $\{\DR,\PO,\PP\}$      & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PP$  & $\PP$  & $\{\PP\}$              & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PP$  & $\PPI$ & $\{\DR,\PO,\PP,\PPI\}$ & SAT & UNSAT & SAT & agree (EQ-loop) \\
+    $\PPI$ & $\DR$  & $\{\DR,\PO,\PPI\}$     & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PPI$ & $\PO$  & $\{\PO,\PPI\}$         & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    $\PPI$ & $\PP$  & $\{\PO,\PP,\PPI\}$     & SAT & UNSAT & SAT & agree (EQ-loop) \\
+    $\PPI$ & $\PPI$ & $\{\PPI\}$             & SAT & UNSAT & UNSAT & \textbf{CT unsound} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+We emphasise four especially compact witnesses, each using only a
+\emph{singleton} composition and therefore a single universal:
+\begin{enumerate}
+  \item $\exists \PP . \exists \PP . A \sqcap \forall \PP . \neg A$
+    \hfill ($\PP$-transitivity);
+  \item $\exists \PPI . \exists \PPI . A \sqcap \forall \PPI . \neg A$
+    \hfill ($\PPI$-transitivity);
+  \item $\exists \PP . \exists \DR . A \sqcap \forall \DR . \neg A$
+    \hfill ($\PP \comp \DR = \{\DR\}$);
+  \item $\exists \DR . \exists \PPI . A \sqcap \forall \DR . \neg A$
+    \hfill ($\DR \comp \PPI = \{\DR\}$).
+\end{enumerate}
+
+The first two are especially damaging because $\PP$ and $\PPI$ are
+\emph{transitive} and any tableau for $\ALCI_{\mathrm{trans}}$ must
+propagate $\PP$ across chains.  The repository's quasimodel reasoner
+does this via \verb|check_role_path_compatibility|; the cover-tree
+tableau does not.
+
+\section{Root-cause analysis}
+\label{sec:rootcause}
+
+Consider the code of \verb|check_tree_cross_interaction| (the CT4
+stage) in \verb|cover_tree_tableau.py|:
+
+\begin{lstlisting}[caption={Excerpt from \texttt{src/cover\_tree\_tableau.py}, lines 279--329, verbatim.}, label={lst:ct4}, float=t, basicstyle=\ttfamily\footnotesize]
+def check_tree_cross_interaction(T):
+    """
+    Check that ALL pairs of demands from any type are jointly
+    satisfiable under cover-tree composition constraints.
+    """
+    T_list = sorted(T)
+    for i in T_list:
+        all_dems = demands[i]
+        if len(all_dems) <= 1:
+            continue                      # <-- EARLY EXIT
+        for m1 in range(len(all_dems)):
+            R1, D1 = all_dems[m1]
+            for m2 in range(m1 + 1, len(all_dems)):
+                R2, D2 = all_dems[m2]
+                comp_12 = COMP[(INV[R1], R2)]
+                comp_21 = COMP[(INV[R2], R1)]
+                ...
+\end{lstlisting}
+
+The early-exit at the marked line treats a type with at most one
+demand as unconstrained by CT4. But the minimal counterexample
+$C^{\star}$ uses exactly this structure:
+\begin{itemize}
+  \item The root type $\tau_{\mathrm{root}}$ has a single demand
+    $(\PP, \exists \PP . A)$.
+  \item The intermediate type $\tau_{\mathrm{mid}}$ has a single
+    demand $(\PP, A)$.
+\end{itemize}
+
+Neither type carries two demands, so CT4 fires for no type, and no
+composition propagation is ever performed between the
+grandparent/grandchild types.  The universal $\forall \PP . \neg A$
+only blocks direct $\PP$-successors of $\tau_{\mathrm{root}}$; it
+does not block $\tau_{\mathrm{root}}$'s $\PP$-successors through
+$\tau_{\mathrm{mid}}$, even though by $\PP$-transitivity these
+grandchildren \emph{are} $\PP$-successors of $\tau_{\mathrm{root}}$.
+
+\paragraph{Diagnostic trace.}
+For $C^{\star}$, $\mathsf{CT}$ settles on a type set of size two,
+$\{\tau_4, \tau_6\}$, with $\tau_6$ acting as the root. The cover-tree
+has the structure $\tau_6 \overset{\PP}{\longrightarrow} \tau_4
+\overset{\PP}{\longrightarrow} \tau_6$ (i.e.~$\tau_6$ self-witnesses
+via $\tau_4$). Under strong EQ semantics, the length-two $\PP$-chain
+closing back at $\tau_6$ would force $\rho(\tau_6, \tau_6) = \PP$, but
+$\PP$ is irreflexive, so this cycle is forbidden. $\mathsf{CT}$ never
+checks it: the cover-tree construction only ever asks ``does each
+child have a safe outgoing edge?'', never ``is the round-trip
+composition consistent?''.
+
+\paragraph{Why the $911$-concept benchmark missed it.}  We inspected
+\verb|stress_test_cover_tree.py| and the associated concept
+generators. The generators produce concepts that are either
+propositional, shallow $(\leq 1$-modal-depth), or carry universals in
+ways that clash directly with a single demand. They do not produce
+the two-demand chain pattern in which
+$\tau$'s demand and $\tau$'s existentially-implied successor's demand
+\emph{together} violate $\tau$'s universals.  In particular, no
+generated concept has the shape $\exists R_1 . \exists R_2 . A \sqcap
+\forall R . \neg A$ with $R \in R_1 \comp R_2$ and $R_2 \neq
+\inv{R_1}$. Cross-validation against the quasimodel reasoner therefore
+never exposed the bug. This is not a failure of the cross-validation
+engineering --- it is the classical lesson that coverage is defined by
+the test distribution, and the bug lives outside the test
+distribution.
+
+\section{A repair sketch}
+\label{sec:repair}
+
+The repository already contains the correct fix in a sibling file.
+The routine
+\verb|check_role_path_compatibility| in \verb|alcircc5_reasoner.py|
+computes, for each type $\tau$ and each demand $(R_1, D_1)$, a set of
+\emph{admissible role paths of length $\geq 2$}. A path
+$\tau \!\xrightarrow{R_1}\! \tau' \!\xrightarrow{R_2}\! \tau''$ is
+admissible only if
+$(R_1 \comp R_2) \cap \{R \in \mathcal{B} \mid \tau \models \forall
+R . \bot \text{ or universal-violated} \}$ is not empty --- that
+is, the composition still leaves at least one role that $\tau$'s
+universals permit.  Plugging this check into the cover-tree harness
+catches all $12$ counterexamples:
+\begin{itemize}
+  \item $\mathsf{QM}_{\mathrm{cyc}}$ uses this check and reports
+    UNSAT on all $12$ cells of Table~\ref{tab:twelve};
+  \item the $4$ strong-EQ-admitting cells remain SAT, because the
+    length-$2$ loop through $\EQ$ is an allowed path under
+    $\mathsf{QM}_{\mathrm{cyc}}$'s \verb|cycle_close=True| branch.
+\end{itemize}
+
+We therefore believe the cover-tree tableau can be rescued by adding
+a CT4$'$ step of the form: ``for each type $\tau$ with demand
+$(R_1, D_1)$, for each candidate witness type $\tau'$, and for each
+demand $(R_2, D_2)$ of $\tau'$, require
+$(R_1 \comp R_2) \setminus U(\tau) \neq \emptyset$, where $U(\tau)$ is
+the set of roles $R$ such that $\tau \models \forall R . \neg D_2$ but
+$\tau' \not\models D_2$''.  (The exact boilerplate is straightforward
+to lift from the quasimodel reasoner.)  We have not implemented this
+ourselves, because the review brief expressly forbade modifying the
+repository; we note only that the hole is a localised three-line
+early-exit, not a structural defect of the cover-tree idea.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Relation to the accompanying decidability proof}
+
+The main paper \verb|papers/decidability_ALCIRCC5.tex| argues
+decidability via the \emph{quasimodel} procedure, not the cover-tree
+tableau. The quasimodel procedure is not refuted by this review; its
+role-path compatibility check is precisely what the cover-tree is
+missing.  The paper
+\verb|papers/cover_tree_tableau_ALCIRCC5.tex|, which frames the
+cover-tree tableau as a separate decision procedure, is
+the document whose soundness claim does not hold \emph{for the
+implementation}. The paper's meta-claim that such a cover-tree
+tableau \emph{exists} and \emph{is complete} is not refuted either; we
+refute only that the code as committed realises that procedure.
+
+\subsection{How strong is the evidence?}
+
+We present four independent strands, each alone sufficient to refute
+soundness:
+\begin{enumerate}
+  \item \textbf{One-line algebraic proof.}
+    Proposition~\ref{prop:minimal-unsat}'s composition argument fits
+    in three lines and uses only the $\PP \comp \PP = \{\PP\}$ entry
+    of the composition table, which is just $\PP$-transitivity.
+    This is not subtle.
+  \item \textbf{Two independent reasoners.} Both the baseline and
+    cycle-aware quasimodel reasoners report UNSAT.  The cycle-aware
+    version dominates the baseline in expressive power --- if it
+    agrees with the baseline, the baseline's verdict is presumptively
+    correct.
+  \item \textbf{Exhaustive small-model enumeration.}  The
+    $3$-element composition-consistent RCC5 networks number $41$, and
+    brute-force enumeration finds no model satisfying $C^{\star}$
+    (or any of the other $11$ UNSAT concepts). The space of RCC5
+    models over $|\Delta| = 3$ and one atomic concept is
+    exhaustively finite.
+  \item \textbf{Model-builder failure from the CT's own output.}
+    \verb|model_verifier.build_model| fed the type set that
+    $\mathsf{CT}$ accepts for $C^{\star}$ returns ``failed with up
+    to $3$ copies''.  This is not us rejecting the output; it is the
+    model-builder shipped in the same repository.
+\end{enumerate}
+
+Strand~(1) alone settles the question;  (2)--(4) make human or
+symbolic-calculation error essentially impossible.
+
+\subsection{Termination / blocking}
+
+We also examined the termination and anywhere-blocking argument in
+\verb|cover_tree_tableau.py|. Termination is unproblematic: the
+algorithm operates by subset-iteration over a finite type set
+$\mathcal{T}$ whose size is bounded by $2^{|\Cl(C_0)|}$, and every CT
+check is polynomial in $|\mathcal{T}|$.  The upper bound is
+NEXPTIME-ish; compared to the ExpTime bound of the quasimodel
+reasoner, the cover-tree tableau trades a tighter bound for a
+putatively simpler structure. This trade is moot because the procedure
+is not sound. For completeness, we did not find a separate
+completeness counterexample --- every SAT concept we tested was also
+accepted by $\mathsf{CT}$, as is perhaps unsurprising given how
+permissive $\mathsf{CT}$ turns out to be.
+
+\subsection{A sharper incarnation of the counterexample}
+
+The counterexamples of Theorem~\ref{thm:twelve} all have
+role-modal-depth $2$ and involve only one atomic concept. Scaling up
+the chain length produces deeper, equally sound counterexamples: e.g.
+\[
+  \exists \PP . \exists \PP . \exists \PP . A \;\sqcap\; \forall \PP . \neg A
+\]
+is also reported SAT by $\mathsf{CT}$ (at $\approx 4 \mathrm{ms}$) while
+being UNSAT by the same $\PP$-transitivity argument.  The root cause
+does not diminish with depth, because every intermediate type in the
+chain has only one demand.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+The cover-tree tableau in the \texttt{alcircc5} repository, as
+implemented on or before April 2026, is \emph{unsound}. Twelve
+two-modal-depth, single-atom concepts expose the unsoundness, of which
+four use a singleton composition and thus a single universal, and one
+--- $\exists \PP . \exists \PP . A \sqcap \forall \PP . \neg A$
+--- is the simplest possible appeal to transitivity.  The defect is
+localised to an early-exit in the CT4 routine
+\verb|check_tree_cross_interaction|, which prevents composition
+propagation across three distinct types whenever every type in the
+chain has only one demand. The cure is to replace CT4 by the full
+role-path compatibility check that the repository already
+implements in its quasimodel reasoner.
+
+The $911$-concept cross-validation benchmark reports zero mismatches
+because its generators do not produce composition-chain concepts of
+the form we exhibit here. The underlying insight is that a
+cover-tree decomposition must still enforce composition consistency
+\emph{across tree edges at depth $\geq 2$}, not only between demand
+pairs at a single type; CT1--CT3 enforces node-local consistency,
+CT4 enforces pair-local consistency at a single node, and CT5
+enforces cross-edge path consistency --- but no stage enforces
+tree-edge path consistency through three successive types.
+
+We expect the repair we sketch (or an equivalent incorporation of
+\verb|check_role_path_compatibility|) to produce a sound variant. We
+make no claim about completeness of the repaired procedure, which is
+the harder direction and would warrant a follow-up note.
+
+\paragraph{A reviewer's remark.}
+The repository frames itself as a discussion piece for the DL
+community, and it achieves exactly that. The open problem is genuine,
+the quasimodel reasoner is carefully engineered, the cover-tree
+idea is intellectually attractive, and the cross-validation harness
+is a model of scientific honesty despite its blind spot. Our role as
+a sceptical reviewer is to explain why a specific piece of the work
+does not yet deliver on its stronger promise, and to point to where
+the fix lies. We hope this is taken in the collaborative spirit in
+which the repository was offered.
+
+\begin{acknowledgments}
+  The author thanks Michael Wessel for commissioning an adversarial
+  review and for leaving the earlier collaborators' code and papers
+  entirely unmodified during the review window.
+\end{acknowledgments}
+
+\section*{Declaration on Generative AI}
+
+During the preparation of this work, the author used Anthropic's
+Claude Opus~4.7 (``claude-opus-4-7'') in order to:
+\emph{conduct a first-person code audit of a research repository,
+      execute all referenced Python scripts in a sandbox, formulate
+      and prove counterexamples, and draft this paper.}
+The named author is the model itself, operating under continuous
+supervision by Michael Wessel. All empirical claims are reproducible
+from the public repository
+\texttt{github.com/lambdamikel/alcircc5} without modification, via
+the scripts cited inline. No text from other generative AI tools
+was incorporated. The author acknowledges responsibility for content
+is shared with the supervising human.
+
+\begin{thebibliography}{9}
+
+\bibitem{wessel2002}
+  Michael Wessel,
+  \emph{Obstacles on the way to qualitative spatial reasoning with
+    description logics: Some undecidability results},
+  Description Logics Workshop (DL), 2001.
+
+\bibitem{renz1999}
+  Jochen Renz and Bernhard Nebel,
+  \emph{On the complexity of qualitative spatial reasoning: a maximal
+    tractable fragment of the region connection calculus},
+  Artificial Intelligence, 108(1--2):69--123, 1999.
+
+\bibitem{alcircc5repo}
+  Michael Wessel, OpenAI (``GPT-5.4'') and Anthropic (``Claude''),
+  \emph{alcircc5: Decidability investigations for ALCI-RCC5/RCC8},
+  GitHub repository
+  \texttt{lambdamikel/alcircc5},
+  April 2026.
+  Commit reviewed: local checkout at
+  \texttt{/home/mike/claude/review/alcircc5}, April 2026.
+
+\bibitem{haarslev2004}
+  Volker Haarslev, Carsten Lutz, and Ralf M\"oller,
+  \emph{A description logic with concrete domains and a role-forming
+    predicate operator},
+  Journal of Logic and Computation, 9(3):351--384, 1999.
+
+\bibitem{baader2017}
+  Franz Baader, Ian Horrocks, Carsten Lutz, and Uli Sattler,
+  \emph{An Introduction to Description Logic},
+  Cambridge University Press, 2017.
+
+\end{thebibliography}
+
+\appendix
+
+\section{Reproduction recipe}
+\label{app:repro}
+
+Assuming a checkout at \verb|$REPO| = \verb|alcircc5/|, every claim in
+this review can be reproduced in under a minute:
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+cd $REPO/src
+
+# (1) Minimal counterexample: should print SAT / UNSAT / UNSAT
+python3 -c "
+from alcircc5_reasoner import (PP, AtomicConcept, NegAtomicConcept,
+    And, Exists, ForAll, check_satisfiability as qm)
+from alcircc5_reasoner_cyclic import check_satisfiability as qm_cyc
+from cover_tree_tableau import check_sat as ct
+A, nA = AtomicConcept('A'), NegAtomicConcept('A')
+C = And(Exists(PP, Exists(PP, A)), ForAll(PP, nA))
+print('CT:', 'SAT' if ct(C)[0] else 'UNSAT')
+print('QM:', 'SAT' if qm(C)[0] else 'UNSAT')
+print('QMc:', 'SAT' if qm_cyc(C)[0] else 'UNSAT')"
+
+# (2) Full 4x4 grid: enumerates all 12 counterexamples
+python3 -c "
+from alcircc5_reasoner import (DR, PO, PP, PPI, COMP, INV,
+    AtomicConcept, NegAtomicConcept, And, Exists, ForAll,
+    check_satisfiability as qm)
+from alcircc5_reasoner_cyclic import check_satisfiability as qm_cyc
+from cover_tree_tableau import check_sat as ct
+A, nA = AtomicConcept('A'), NegAtomicConcept('A')
+name = {DR:'DR', PO:'PO', PP:'PP', PPI:'PPI'}
+bad = 0
+for R1 in [DR,PO,PP,PPI]:
+ for R2 in [DR,PO,PP,PPI]:
+  C = Exists(R1, Exists(R2, A))
+  for R in COMP[(R1, R2)]:
+   C = And(C, ForAll(R, nA))
+  s_ct = ct(C)[0]; s_qmc = qm_cyc(C)[0]
+  if s_ct and not s_qmc:
+   bad += 1
+   print(f'  {name[R1]},{name[R2]}: CT SAT, QMc UNSAT')
+print(f'UNSOUND on {bad}/16 cells')"
+\end{lstlisting}
+
+The expected output of (2) is a list of $12$ cells followed by
+``UNSOUND on $12/16$ cells''.
+
+\end{document}

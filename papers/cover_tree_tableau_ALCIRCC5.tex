@@ -273,6 +273,14 @@ and satisfies four conditions:
     demands, every pair of witnesses must be jointly satisfiable
     under composition constraints
     (Section~\ref{sec:singleton}).
+  \item \textbf{Role-path compatibility}: for every three-type chain
+    $\tau_g \xrightarrow{R} \tau_j \xrightarrow{S} \tau_w$ (with
+    $\exists R.D \in \tau_g$ witnessed by $\tau_j$ and
+    $\exists S.E \in \tau_j$ witnessed by $\tau_w$), the grandchild
+    $\tau_w$ must be connectable back to $\tau_g$ by some relation
+    in $\comp(\inv(S), \inv(R)) \cap \Safe(\tau_w, \tau_g)$, with a
+    cycle-close via $\tau_w = \tau_g$ admitted exactly when
+    $(\inv(S), \inv(R))$ admits $\EQ$ (Section~\ref{sec:rolepath}).
 \end{enumerate}
 
 \subsection{Phase 1: Precomputation}
@@ -422,6 +430,63 @@ Consider $\exists\PPI.(\forall\DR.A) \sqcap \exists\DR.\neg A$.
 \end{itemize}
 \end{example}
 
+
+\subsection{Phase 5: Role-path compatibility (three-type chains)}
+\label{sec:rolepath}
+
+The tree-cross check of Section~\ref{sec:singleton} covers chains of
+length~$2$ emanating from a single source type. It misses
+\emph{three-type chains} $\tau_g \to \tau_j \to \tau_w$ in which
+$\tau_g$ and $\tau_j$ each have a single demand, because the early
+exit ``$|\,\text{dems}(\tau_i)\,| \le 1$'' skips them. A
+systematic family of counterexamples of the form
+\[
+  C_{R_1, R_2} \;\equiv\;
+  \exists R_1.\,\exists R_2.\,A
+  \;\sqcap\;
+  \bigwedge_{R \,\in\, \comp(R_1, R_2)} \forall R.\,\neg A
+  \qquad (R_2 \ne \inv(R_1))
+\]
+was identified by Sonnet~4.7 as an adversarial review of an earlier
+draft of this calculus. These concepts are unsatisfiable: the chain
+$g \xrightarrow{R_1} j \xrightarrow{R_2} w$ with $A \in \tau_w$
+forces $g$ to relate to $w$ by some relation in $\comp(R_1, R_2)$, and
+every such relation is barred by a universal in $\tau_g$.
+Twelve of the sixteen $(R_1, R_2)$ cells of the $4 \times 4$ grid
+yield genuinely unsatisfiable concepts --- only the four
+$\EQ$-admitting cells $(\DR,\DR)$, $(\PO,\PO)$, $(\PP,\PPI)$,
+$(\PPI,\PP)$ are satisfiable (via an $\EQ$-identification of $w$ with
+$g$).
+
+Phase~5 enforces the check explicitly. For each demand
+$\exists R.D$ at a type $\tau_g$ and each candidate witness
+$\tau_j$ (with $D \in \tau_j$, $R \in \Safe(\tau_g, \tau_j)$), and
+for each further demand $\exists S.E$ at $\tau_j$, require that
+\emph{some} grandchild $\tau_w$ with $E \in \tau_w$,
+$S \in \Safe(\tau_j, \tau_w)$ satisfies one of:
+\begin{itemize}[nosep]
+  \item $\comp(\inv(S), \inv(R)) \cap \Safe(\tau_w, \tau_g)
+    \neq \varnothing$, or
+  \item $\tau_w = \tau_g$ and
+    $(\inv(S), \inv(R)) \in \{(\DR,\DR), (\PO,\PO),
+    (\PP,\PPI), (\PPI,\PP)\}$ \emph{(strong-$\EQ$ cycle-close)}.
+\end{itemize}
+Witness candidates are pruned iteratively until a fixpoint is
+reached; the type set is rejected if any demand's candidate set
+becomes empty.
+
+\begin{remark}[Why the cycle-close clause is needed]
+\label{rem:cycleclose}
+The split-forest semantics represents $\EQ$-mates by distinct cover-tree
+nodes with the same extracted type. The four $\EQ$-admitting
+composition pairs are exactly those for which the chain
+$g \xrightarrow{R_1} j \xrightarrow{R_2} g$ closes back through
+strong-$\EQ$ identification. Omitting the cycle-close clause
+would wrongly reject the satisfiable cyclic-model concepts
+such as $C \sqcap \exists\PO.\exists\PO.C \sqcap
+\bigwedge_{R \ne \EQ} \forall R.\neg C$, which admits a
+two-element model $\{d, a\}$ with $\PO(d, a)$.
+\end{remark}
 
 % ═══════════════════════════════════════════════════════════════
 \section{Key Insights from the Split-Forest Theory}

@@ -1,0 +1,30 @@
+The recent \texttt{alcircc5} repository by Wessel, GPT-5.4, and
+  Claude advances a \emph{cover-tree tableau} as a decision procedure
+  for concept satisfiability in $\ALCIRCC{5}$, the extension of
+  $\ALCI$ with the five basic RCC5 relations $\{\DR, \PO, \EQ,
+  \PP, \PPI\}$ interpreted under strong EQ semantics.  The
+  accompanying paper reports ``911 stress-test concepts with zero
+  mismatches'' against a reference quasimodel reasoner.  We review the
+  implementation at
+  \verb|src/cover_tree_tableau.py| and exhibit a systematic family of
+  soundness counterexamples.  Concretely, for every pair
+  $(R_1, R_2) \in \{\DR, \PO, \PP, \PPI\}^2$ with
+  $R_2 \neq \inv{R_1}$ (twelve pairs), the concept
+  \[
+    C_{R_1, R_2} \;\equiv\; \exists R_1 . \exists R_2 . A
+      \;\sqcap\; \bigsqcap_{R \in R_1 \comp R_2}
+      \forall R . \neg A
+  \]
+  is unsatisfiable (by a one-line composition argument), yet the
+  cover-tree tableau reports it \emph{satisfiable}. A minimal
+  illustration is the PP-transitivity instance
+  $\exists \PP . \exists \PP . A \sqcap \forall \PP . \neg A$.
+  The root cause is an early-exit in
+  \texttt{check\_tree\_cross\_interaction}: demand pairs are only
+  examined when a single type carries at least two demands, so
+  grandparent--grandchild role-path compatibility across three
+  distinct types is never enforced.  This precisely mirrors the
+  \texttt{check\_role\_path\_compatibility} routine that the baseline
+  quasimodel reasoner \emph{does} run.  The decidability claim of
+  the cover-tree tableau \emph{as implemented} therefore does not
+  hold; we conjecture, and discuss, a straightforward repair.

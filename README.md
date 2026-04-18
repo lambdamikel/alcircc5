@@ -139,6 +139,16 @@ The recursive conjunct ∀PP.X then forces infinite models: since r PP b, node b
 >
 > **Tests.** [`src/test_cyclic_reasoner.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/test_cyclic_reasoner.py) now includes `pp-transitivity-depth-2`, `pp-transitivity-depth-3`, and `ppi-transitivity-depth-2` to lock in regression coverage.
 
+> #### ⚠ Broader cover-tree unsoundness: the 4×4 grid of three-type chains (fixed April 18, 2026)
+>
+> Shortly after the PP/PPI transitivity fix, Sonnet 4.7 produced an adversarial review paper (`review_paper/`) revealing that the narrow `compute_safe` patch handled only 2 of 12 counterexamples. The broader family: for each pair (R₁, R₂) of RCC5 base relations with R₂ ≠ inv(R₁), the concept C_{R₁,R₂} ≡ ∃R₁.∃R₂.A ⊓ ⊓_{R ∈ comp(R₁,R₂)} ∀R.¬A is UNSAT — a three-type chain g →R₁→ j →R₂→ w with A ∈ w forces g to relate to w by some R ∈ comp(R₁, R₂), and every such R is barred at g.
+>
+> **Root cause.** Cover-tree's tree-cross interaction check (Phase 4) performs a pairwise check at a single source type, but short-circuits via `if len(all_dems) <= 1: continue`, skipping three-type chains where every intermediate type has a single demand. The quasimodel reasoner avoids this through its `check_role_path_compatibility` fixpoint, which iterates over all g → j → w chains.
+>
+> **Fix.** Ported `check_role_path_compatibility` into `cover_tree_tableau.py` as a new Phase 5 / condition (CT5), with a strong-EQ cycle-close clause for the four EQ-admitting composition pairs {(DR,DR), (PO,PO), (PP,PPI), (PPI,PP)}. This preserves the three cyclic-SAT concepts (`po-loop-depth-2`, `dr-loop-depth-2`, `pp-ppi-cycle`). The full 4×4 grid now reports UNSAT on exactly the 12 predicted cells and SAT on the 4 EQ-admitting cells, matching the cycle-aware quasimodel reasoner. All 35 built-in tests, 911 stress-test concepts, and 10 adversarial cyclic cases pass unchanged.
+>
+> **What this affects.** Same story as the transitivity fix: the decidability claim as a mathematical statement is unaffected (a valid RCC5 model respects composition by definition, so completeness inherits the check for free); the written calculus and implementation silently relied on stronger consistency than they articulated. The cover-tree tableau paper now documents the check explicitly as Phase 5. The upstream split-forest calculus paper (`papers/trees/`) handles three-type chains via its disjunctive-network path-consistency and needs no change.
+
 ---
 
 

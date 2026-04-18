@@ -3330,3 +3330,56 @@ The 911/911-zero-mismatch claim held before and after the fix. Neither the basel
 - `papers/overview_ALCIRCC5.pdf` — recompiled (13 pages)
 - `CONVERSATION.md` — this entry
 
+
+## April 18, 2026 (afternoon) — Broader cover-tree unsoundness: the 4×4 grid of three-type chains
+
+### Context: Sonnet 4.7's adversarial review paper
+
+After the morning's PP/PPI-transitivity fix, Sonnet 4.7 produced a full adversarial review paper at `review_paper/review_cover_tree_tableau.tex` (837 lines). Michael asked me to read it and report whether more action was required.
+
+The review's verdict: **significantly more action is required.** The transitivity fix patched only 2 of 12 counterexamples. The broader family is:
+\[
+  C_{R_1, R_2} \equiv \exists R_1.\exists R_2.A \sqcap \bigwedge_{R \in \comp(R_1, R_2)} \forall R.\neg A, \qquad R_2 \neq \inv(R_1)
+\]
+which is unsatisfiable for every such (R₁, R₂): the three-type chain `g →R₁→ j →R₂→ w` with `A ∈ w` forces `g` to relate to `w` by some R ∈ comp(R₁, R₂), and every such R is barred at `g`.
+
+Empirical verification with the 4×4 grid probe after the morning's fix: **UNSOUND on 10/16 cells** (the 12 expected minus the 2 transitive cases already patched). Compact singleton-composition witnesses the transitivity fix does NOT handle: `∃PP.∃DR.A ⊓ ∀DR.¬A` (since comp(PP, DR) = {DR}) and `∃DR.∃PPI.A ⊓ ∀DR.¬A` (since comp(DR, PPI) = {DR}) — transitivity plays no role at all.
+
+### Diagnosis
+
+Root cause per the review: the cover-tree's `check_tree_cross_interaction` (Phase 4 of the calculus paper) performs a pairwise demand check at a **single source type** but short-circuits via
+```python
+if len(all_dems) <= 1: continue
+```
+which skips three-type chains whenever every intermediate type has a single demand. The quasimodel reasoner avoids this via its `check_role_path_compatibility` routine, which iterates a fixpoint over all g → j → w chains, pruning witness candidates whose grandchildren have no valid return path.
+
+### Fix
+
+Ported `check_role_path_compatibility` into `src/cover_tree_tableau.py` as a new Phase 5 check / condition (CT5), invoked after the tree-cross interaction check passes. Crucially included the **strong-EQ cycle-close** clause: when `(inv(S), inv(R)) ∈ {(DR,DR), (PO,PO), (PP,PPI), (PPI,PP)}`, the chain may close via `w = g` — the split-forest trick that keeps the cyclic-SAT concepts (`po-loop-depth-2`, `dr-loop-depth-2`, `pp-ppi-cycle`) satisfiable.
+
+### Validation
+
+- 4×4 grid probe: **UNSOUND on 0/16** (previously 10/16 → 12/16 counterexamples now correctly detected)
+- `cover_tree_tableau.py` built-ins: 35/35
+- `test_cyclic_reasoner.py`: 10/10 (including all three cyclic-SAT cases unchanged)
+- `stress_test_cover_tree.py`: 911/911 matches, 0 mismatches
+- Decomposition test (775 concepts): running at time of commit
+
+### Documentation changes
+
+- `src/cover_tree_tableau.py`: added `check_role_path_compatibility` (≈50 LOC); called from `try_build` after `check_tree_cross_interaction`.
+- `papers/cover_tree_tableau_ALCIRCC5.tex`: added condition (CT5) to the overview and a full Phase 5 / Section `sec:rolepath` documenting the 12-cell family, the role-path check, and the cycle-close clause (with `rem:cycleclose`).
+- `papers/overview_ALCIRCC5.tex`: added `rem:ct-rolepath-bug` after `rem:ct-trans-bug` explaining the broader fix (14 pages now).
+- `README.md`: added a third warning box documenting the 4×4 grid family and the Phase 5 fix.
+- `CONVERSATION.md`: this entry.
+
+### Files changed
+
+- `src/cover_tree_tableau.py` — new `check_role_path_compatibility` + call site
+- `papers/cover_tree_tableau_ALCIRCC5.tex` — new Phase 5 subsection, (CT5) condition
+- `papers/cover_tree_tableau_ALCIRCC5.pdf` — recompiled
+- `papers/overview_ALCIRCC5.tex` — new `rem:ct-rolepath-bug`
+- `papers/overview_ALCIRCC5.pdf` — recompiled (14 pages)
+- `README.md` — third warning box
+- `CONVERSATION.md` — this entry
+- `review_paper/` — Sonnet 4.7's review paper (LaTeX source and PDF, checked in as-is)

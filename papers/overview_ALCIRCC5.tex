@@ -947,6 +947,68 @@ Three regression cases (\texttt{pp-transitivity-depth-2},
 every reasoner after the fix.
 \end{remark}
 
+\begin{remark}[\textbf{Broader cover-tree unsoundness: the $4\times 4$ grid of three-type chains} --- fixed April~18, 2026]
+\label{rem:ct-rolepath-bug}
+Shortly after the $\PP/\PPI$ transitivity fix, Sonnet~4.7 produced
+an adversarial review paper (\texttt{review\_paper/}) revealing a
+\emph{systematic family} of twelve counterexamples not addressed by
+the narrow \texttt{compute\_safe} patch alone. For each pair
+$(R_1, R_2)$ of RCC5 base relations with $R_2 \ne \inv(R_1)$, the
+concept
+\[
+  C_{R_1, R_2} \;\equiv\;
+  \exists R_1.\,\exists R_2.\,A \;\sqcap\;
+  \bigwedge_{R \,\in\, \comp(R_1, R_2)} \forall R.\,\neg A
+\]
+is unsatisfiable: a chain $g \xrightarrow{R_1} j \xrightarrow{R_2}
+w$ with $A \in w$ forces $g$ to relate to $w$ by some relation in
+$\comp(R_1, R_2)$, and every such relation is barred at $g$. The
+$\PP/\PPI$ fix handles only the two transitive self-compositions
+$(R_1, R_2) = (\PP, \PP)$ and $(\PPI, \PPI)$; ten other cells
+(e.g.\ $(\PP, \DR)$: $\comp(\PP, \DR) = \{\DR\}$, $(\DR, \PPI)$:
+$\comp(\DR, \PPI) = \{\DR\}$, $(\PO, \PP)$: $\comp(\PO, \PP) =
+\{\PO, \PP\}$, \ldots) remained unsound.
+
+\emph{Root cause.} The cover-tree's tree-cross interaction check
+(Phase~4 of \texttt{cover\_tree\_tableau\_ALCIRCC5.tex}) performs a
+pairwise check at a \emph{single} source type, but does nothing
+for chains that thread through three distinct types where every
+intermediate type carries a single demand. The
+\texttt{check\_tree\_cross\_interaction} routine literally
+short-circuits via
+\texttt{if len(all\_dems) <= 1: continue}, so the grandchild
+constraint is never propagated upward. The baseline quasimodel
+reasoner avoids this because its \texttt{check\_role\_path\_compatibility}
+routine iterates a fixpoint over all three-type chains, pruning
+witness candidates whose grandchildren have no valid return path.
+
+\emph{Fix.} We ported \texttt{check\_role\_path\_compatibility}
+into \texttt{cover\_tree\_tableau.py} (with the strong-$\EQ$
+cycle-close clause for the four $\EQ$-admitting composition pairs,
+which preserves the three cyclic-SAT concepts
+\texttt{po-loop-depth-2}, \texttt{dr-loop-depth-2},
+\texttt{pp-ppi-cycle}). This is documented in the companion paper
+as Phase~5 / condition (CT5). After the fix, the full
+$4\times 4$ grid reports UNSAT on exactly the twelve predicted
+cells and SAT on the four $\EQ$-admitting cells, matching the
+cycle-aware quasimodel reasoner. The $911$-concept
+cross-validation and the $775$-concept decomposition test
+continue to match. The pre-existing $35$ built-in tests and
+$10$-case adversarial cyclic suite all pass unchanged.
+
+\emph{Why the decidability argument is unaffected.} As in the
+transitive-universal fix, the mathematical decidability argument
+(split-forest extraction, König's-lemma unfolding, Henkin model
+construction) is unaffected: a valid RCC5 model respects
+$\comp(R_1, R_2)$ by definition, so the completeness direction
+(model $\Rightarrow$ valid type set) inherits the check for free.
+The soundness direction is where the gap lived; Phase~5 closes
+it explicitly. The upstream split-forest calculus paper
+(\texttt{papers/trees/}) already handles three-type chains via
+its disjunctive-network path-consistency, so no change is needed
+there.
+\end{remark}
+
 \subsection{What makes this ``non-standard''}
 
 The cover-tree tableau differs from a standard DL tableau
