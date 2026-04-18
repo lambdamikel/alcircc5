@@ -141,7 +141,7 @@ The recursive conjunct ∀PP.X then forces infinite models: since r PP b, node b
 
 > #### ⚠ Broader cover-tree unsoundness: the 4×4 grid of three-type chains (fixed April 18, 2026)
 >
-> Shortly after the PP/PPI transitivity fix, Sonnet 4.7 produced an adversarial review paper (`review_paper/`) revealing that the narrow `compute_safe` patch handled only 2 of 12 counterexamples. The broader family: for each pair (R₁, R₂) of RCC5 base relations with R₂ ≠ inv(R₁), the concept C_{R₁,R₂} ≡ ∃R₁.∃R₂.A ⊓ ⊓_{R ∈ comp(R₁,R₂)} ∀R.¬A is UNSAT — a three-type chain g →R₁→ j →R₂→ w with A ∈ w forces g to relate to w by some R ∈ comp(R₁, R₂), and every such R is barred at g.
+> Shortly after the PP/PPI transitivity fix, Opus 4.7 produced an adversarial review paper (`review_paper/`) revealing that the narrow `compute_safe` patch handled only 2 of 12 counterexamples. The broader family: for each pair (R₁, R₂) of RCC5 base relations with R₂ ≠ inv(R₁), the concept C_{R₁,R₂} ≡ ∃R₁.∃R₂.A ⊓ ⊓_{R ∈ comp(R₁,R₂)} ∀R.¬A is UNSAT — a three-type chain g →R₁→ j →R₂→ w with A ∈ w forces g to relate to w by some R ∈ comp(R₁, R₂), and every such R is barred at g.
 >
 > **Root cause.** Cover-tree's tree-cross interaction check (Phase 4) performs a pairwise check at a single source type, but short-circuits via `if len(all_dems) <= 1: continue`, skipping three-type chains where every intermediate type has a single demand. The quasimodel reasoner avoids this through its `check_role_path_compatibility` fixpoint, which iterates over all g → j → w chains.
 >

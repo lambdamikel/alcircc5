@@ -3333,9 +3333,9 @@ The 911/911-zero-mismatch claim held before and after the fix. Neither the basel
 
 ## April 18, 2026 (afternoon) — Broader cover-tree unsoundness: the 4×4 grid of three-type chains
 
-### Context: Sonnet 4.7's adversarial review paper
+### Context: Opus 4.7's adversarial review paper
 
-After the morning's PP/PPI-transitivity fix, Sonnet 4.7 produced a full adversarial review paper at `review_paper/review_cover_tree_tableau.tex` (837 lines). Michael asked me to read it and report whether more action was required.
+After the morning's PP/PPI-transitivity fix, Opus 4.7 produced a full adversarial review paper at `review_paper/review_cover_tree_tableau.tex` (837 lines). (The transitivity bug earlier in the morning was reported by Sonnet 4.7 in a separate conversation; the review paper identifies its author as Claude Opus 4.7.) Michael asked me to read it and report whether more action was required.
 
 The review's verdict: **significantly more action is required.** The transitivity fix patched only 2 of 12 counterexamples. The broader family is:
 \[
@@ -3382,4 +3382,4 @@ Ported `check_role_path_compatibility` into `src/cover_tree_tableau.py` as a new
 - `papers/overview_ALCIRCC5.pdf` — recompiled (14 pages)
 - `README.md` — third warning box
 - `CONVERSATION.md` — this entry
-- `review_paper/` — Sonnet 4.7's review paper (LaTeX source and PDF, checked in as-is)
+- `review_paper/` — Opus 4.7's review paper (LaTeX source and PDF, checked in as-is)
