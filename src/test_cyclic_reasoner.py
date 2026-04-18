@@ -90,6 +90,30 @@ CASES = [
         'C(d) ∧ ¬C(d). Genuine UNSAT.',
     ),
     (
+        'pp-transitivity-depth-2',
+        And(ForAll(PP, nC), Exists(PP, Exists(PP, C))),
+        False, False,
+        'Minimal PP-transitivity UNSAT: d-PP-a-PP-b with comp(PP,PP)={PP} '
+        'forces d-PP-b, so ∀PP.¬C at d forces ¬C(b), clashing with C(b). '
+        'Pre-fix cover-tree tableau wrongly returned SAT because its '
+        'compute_safe did not propagate the universal ∀PP.¬C into '
+        'PP-successor types. Both QM reasoners get this right via '
+        'disjunctive path-consistency.',
+    ),
+    (
+        'pp-transitivity-depth-3',
+        And(ForAll(PP, nC), Exists(PP, Exists(PP, Exists(PP, C)))),
+        False, False,
+        'Depth-3 variant of pp-transitivity-depth-2. Same principle: '
+        'PP is transitive, so d-PP-...-PP-b forces d-PP-b. UNSAT.',
+    ),
+    (
+        'ppi-transitivity-depth-2',
+        And(ForAll(PPI, nC), Exists(PPI, Exists(PPI, C))),
+        False, False,
+        'PPI analogue: comp(PPI,PPI)={PPI}. Same transitivity argument.',
+    ),
+    (
         'po-loop-with-distinguishing-universal',
         # Adds ∀PO.A that is CONSISTENT with the PO-loop: the loop node a
         # must have A, and d must have A (since a-PO-d returns to d).

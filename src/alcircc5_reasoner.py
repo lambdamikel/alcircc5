@@ -261,23 +261,37 @@ def enumerate_types(cl):
 # ══════════════════════════════════════════════════════════════
 
 def compute_safe(tau, sigma):
-    """Compute SAFE(tau, sigma) — set of ∀-safe relations."""
+    """Compute SAFE(tau, sigma) — set of ∀-safe relations.
+
+    For R in {PP, PPI}, the universal itself must propagate (not just its
+    body), because comp(PP,PP)={PP} and comp(PPI,PPI)={PPI} make these
+    roles transitive: any PP-successor of a PP-successor of x is a
+    PP-successor of x. So ∀PP.D at x forces ∀PP.D at every PP-successor.
+    """
     safe = set()
     for R in BASE_RELS:
         ok = True
-        # Check: for all ∀R.C in tau, C in sigma
+        # Check: for all ∀R.C in tau, C in sigma; and for transitive R,
+        # ∀R.C itself must also be in sigma.
         for c in tau:
             if isinstance(c, ForAll) and c.role == R:
                 if c.concept not in sigma:
                     ok = False
                     break
+                if R in (PP, PPI) and c not in sigma:
+                    ok = False
+                    break
         if not ok:
             continue
-        # Check: for all ∀INV(R).C in sigma, C in tau
+        # Check: for all ∀INV(R).C in sigma, C in tau; and for transitive
+        # INV(R), ∀INV(R).C itself must also be in tau.
         R_inv = INV[R]
         for c in sigma:
             if isinstance(c, ForAll) and c.role == R_inv:
                 if c.concept not in tau:
+                    ok = False
+                    break
+                if R_inv in (PP, PPI) and c not in tau:
                     ok = False
                     break
         if ok:

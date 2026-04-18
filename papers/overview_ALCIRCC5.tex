@@ -878,6 +878,62 @@ earlier cross-validation claim with a reasoner that is
 known-complete on cyclic-via-symmetric-role SAT patterns.
 \end{remark}
 
+\begin{remark}[\textbf{Previously-undetected cover-tree unsoundness on $\PP/\PPI$-transitive universals} --- fixed April~18, 2026]
+\label{rem:ct-trans-bug}
+On April~18, 2026, Sonnet~4.7 (Anthropic) pointed out that the
+cover-tree tableau implementation
+(\texttt{cover\_tree\_tableau.py}) wrongly reported SAT for the
+concept $\forall \PP. \neg C \sqcap \exists \PP. \exists \PP. C$,
+which is genuinely UNSAT. The reason is transitivity of $\PP$:
+since $\comp(\PP, \PP) = \{\PP\}$, the chain $d \to_\PP a
+\to_\PP b$ forces $d \to_\PP b$, so $\forall \PP. \neg C$ at $d$
+forces $\neg C(b)$, clashing with $C(b)$ at the end of the
+existential chain. The quasimodel baseline reasoner handled this
+correctly via its disjunctive path-consistency loop; the
+cover-tree tableau did not, because it treats $\PP/\PPI$ as tree
+edges and skips path-consistency for them.
+
+\emph{Root cause.} The shared helper \texttt{compute\_safe}$(\tau,
+\sigma)$ propagated the \emph{body} $D$ of every
+$\forall R.D \in \tau$ into $\sigma$, but did not propagate the
+universal $\forall R.D$ itself. For the two transitive base
+relations ($R \in \{\PP, \PPI\}$, where $\comp(R, R) = \{R\}$),
+failing to propagate the universal means grandchildren escape the
+constraint. This is a calculus-level gap, not a narrow coding
+slip: the tableau statement silently relied on a stronger
+\texttt{safe} relation than the one it articulated.
+
+\emph{Fix.} Standard transitive-role trick (as in
+$\mathcal{ALCH}_{\mathrm{tr}}$): when $R \in \{\PP, \PPI\}$,
+\texttt{safe}$(\tau, \sigma)$ now requires
+$\forall R. D \in \sigma$ (not just $D \in \sigma$) for every
+$\forall R. D \in \tau$. Because \texttt{compute\_safe} is
+shared, both the cover-tree tableau and both quasimodel reasoners
+benefit from the fix; the quasimodel reasoners already produced
+the right answers on these cases (via path-consistency), so the
+tightened \texttt{safe} does not change their observed behaviour,
+only makes the closure of the underlying type relation strictly
+correct. Soundness of the propagation is immediate: if
+$\forall \PP. D$ holds at $x$ and $\PP(x, y)$, then by
+$\PP$-transitivity every $\PP$-successor of $y$ is a
+$\PP$-successor of $x$, hence satisfies $D$; so $\forall \PP. D$
+holds at $y$.
+
+\emph{Scope and tests.} The decidability argument as a
+mathematical statement is unaffected, but the calculus statement
+in the companion cover-tree tableau paper should be amended to
+include the transitive-universal propagation explicitly. The
+911-concept cross-validation continues to match $911/911$ before
+and after the fix---the $\forall R.(\cdots) \sqcap \exists R.
+\exists R.(\mathrm{conflict})$ pattern for $R \in \{\PP, \PPI\}$
+simply was not exercised by the existing generators.
+Three regression cases (\texttt{pp-transitivity-depth-2},
+\texttt{pp-transitivity-depth-3},
+\texttt{ppi-transitivity-depth-2}) have been added to
+\texttt{test\_cyclic\_reasoner.py}; all three resolve UNSAT under
+every reasoner after the fix.
+\end{remark}
+
 \subsection{What makes this ``non-standard''}
 
 The cover-tree tableau differs from a standard DL tableau

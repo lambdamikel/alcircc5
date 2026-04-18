@@ -3273,3 +3273,60 @@ Michael noted that the same reasoner is referred to under several names across t
 - `src/test_cyclic_reasoner.py`: NEW — 7-case adversarial suite
 - `src/stress_test_cyclic.py`: NEW — 911-concept cross-validation with cycle-aware reasoner
 - `CONVERSATION.md`: This entry
+
+## April 18, 2026 — Cover-tree unsoundness on PP/PPI-transitive universals
+
+### Context: Sonnet 4.7 reports a bug
+
+Michael: "I just had a conversation with Sonnet 4.7, and it says that the covertree tableau reasoner doesn't detect unsatisfiability of `(and (all PP (not c)) (some PP (some PP C)))`."
+
+Verified immediately: cover-tree says SAT, both quasimodel reasoners say UNSAT, the concept is genuinely UNSAT. PP is transitive — `comp(PP, PP) = {PP}` — so `d →PP→ a →PP→ b` forces `d →PP→ b`, and `∀PP.¬C` at `d` then forces `¬C(b)`, clashing with the existential chain's `C(b)`.
+
+This was a serious finding: the project had been treating the cover-tree as the sound-and-complete reference reasoner and the quasimodel baseline as "the one with the known incompleteness." Sonnet 4.7's example flipped that picture — the cover-tree was unsound on UNSAT, and the very quasimodel reasoner we had caveated handled the case correctly.
+
+### Diagnosis
+
+Root cause: the shared helper `compute_safe(τ, σ)` in `src/alcircc5_reasoner.py` propagated the *body* D of each `∀R.D ∈ τ` into σ, but never propagated the universal `∀R.D` itself. For the two transitive base relations (R ∈ {PP, PPI}, where `comp(R,R) = {R}`), failing to propagate the universal means grandchildren escape the constraint.
+
+The quasimodel baseline survives because its disjunctive path-consistency loop rediscovers the induced PP-edge via composition and then re-applies the safe check on the (τ₀, τ₂) pair. The cover-tree tableau skips path-consistency for PP/PPI (it treats them as tree edges), so the missing universal-propagation surfaces as unsoundness.
+
+This is a **calculus-level** gap, not a narrow coding slip: the written cover-tree calculus silently relied on a stronger `compute_safe` than it articulated.
+
+### Fix
+
+Standard transitive-role trick (ALCH_tr): when R ∈ {PP, PPI}, require `∀R.D ∈ σ` (not just `D ∈ σ`) for every `∀R.D ∈ τ`. Soundness proof: if `x` satisfies `∀PP.D` and `PP(x, y)`, then by PP-transitivity every PP-successor of `y` is a PP-successor of `x`, so each satisfies D, so `y` satisfies `∀PP.D`.
+
+Because `compute_safe` is shared, both the cover-tree and both quasimodel reasoners benefit from the fix. The quasimodel reasoners already produced the right answers on these cases (via path-consistency), so the tightened safe does not change their observed behaviour — it just makes the closure of the underlying type relation strictly correct.
+
+### Validation
+
+All four test suites pass after the fix:
+
+- `cover_tree_tableau.py` built-ins: 35/35
+- `alcircc5_reasoner.py` built-ins: 18/18
+- `test_cyclic_reasoner.py` adversarial (expanded to 10 cases): 10/10
+- `stress_test_cover_tree.py`: 911/911 matches, 0 mismatches
+- `stress_test_cyclic.py` (cycle-aware QM oracle): 911/911 matches
+
+Added three regression cases to `test_cyclic_reasoner.py`: `pp-transitivity-depth-2` (Sonnet 4.7's original probe), `pp-transitivity-depth-3` (deeper chain), `ppi-transitivity-depth-2` (PPI analogue).
+
+### Blind spot in prior cross-validation
+
+The 911/911-zero-mismatch claim held before and after the fix. Neither the baseline nor the cyclic QM reasoner flagged the PP-transitivity pattern because the stress-test generators don't produce `∀R.(...) ⊓ ∃R.∃R.(conflict)` for R ∈ {PP, PPI}. Both reasoners were silent on the pattern for opposite reasons (QM handled it correctly; cover-tree got it wrong), so no disagreement surfaced. The new adversarial cases close the blind spot going forward.
+
+### Documentation changes
+
+- `src/alcircc5_reasoner.py`: tightened `compute_safe` to propagate `∀R.D` (not just D) into σ when R ∈ {PP, PPI}; analogous change for the inverse-direction check.
+- `src/test_cyclic_reasoner.py`: added three PP/PPI-transitivity UNSAT cases.
+- `README.md`: added a second warning box after the QM bug box, noting the cover-tree unsoundness, the fix, and the test-distribution blind spot; updated caveats on "911 zero mismatches" to mention both bugs.
+- `papers/overview_ALCIRCC5.tex`: added `rem:ct-trans-bug` after `rem:qm-bug` with the same structure. Recompiled (13 pages).
+
+### Files changed
+
+- `src/alcircc5_reasoner.py` — tightened `compute_safe`
+- `src/test_cyclic_reasoner.py` — +3 regression cases
+- `README.md` — second warning box, caveat updates
+- `papers/overview_ALCIRCC5.tex` — new remark `rem:ct-trans-bug`
+- `papers/overview_ALCIRCC5.pdf` — recompiled (13 pages)
+- `CONVERSATION.md` — this entry
+
