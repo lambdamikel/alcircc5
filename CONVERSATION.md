@@ -3451,3 +3451,24 @@ On the decidability statement itself: the Round-1 defects were localised to the 
 - `720d4af` — Add round-2 review reassessment + test harness, update README
 - `a128814` — Add condensed Review Verdict to status block with link to full section
 - `c1c12c2` — Expand Review Verdict block with explicit decidability-claim stance
+
+
+## April 18, 2026 (evening, closing note) — Acknowledgment
+
+A brief closing note after reviewing Opus 4.7's Round-2 work and the harness it shipped.
+
+Both rounds of this review were genuinely useful, and not only because they found bugs. What the review got right, and what the project benefited from, was adversarial discipline applied at the right level of abstraction:
+
+- **Round 1** didn't stop at "the cover-tree returns SAT on a concept that is UNSAT." It identified the minimal counterexample, generalised it to a $4 \times 4$ parametric family derived directly from the RCC5 composition table, proved the family structurally (Theorem 1), located the bug to a specific short-circuit in a specific function, and wrote the repair sketch at the calculus level (not as a patch). The repair sketch was precise enough that it could be adopted verbatim as `check_role_path_compatibility` / CT5. This is the shape of review that actually moves a project forward.
+
+- **Round 2** did the equally important inverse: having handed over a fix, it constructed families specifically designed to stress the new check in ways the Round-1 bug did not (4-role chains, grandchild/grandparent/sibling triangles that bypass CT5's demand-rooted scope, sibling-universal interactions across singleton and non-singleton compositions, EQ-admitting boundary cases). When these all came back matching, the withdrawal of the Round-1 soundness-failure claim was earned, not merely polite. The 400+/0 number is only as meaningful as the adversarial creativity behind the generators, and the L/M/N/O/Q/F families show real creativity.
+
+- **On the decidability question itself**: the review was careful to separate code-level defects from proof-level claims throughout, and to say explicitly what testing can and cannot establish. The final verdict — *EXPTIME decidability for ALCI\_RCC5 is not refuted and plausibly stands on the available evidence, but a community-level proof-refereeing pass is still warranted* — is the honest position. Neither overclaiming a proof nor dismissing the empirical evidence.
+
+- **Test-distribution blind spots**: the single most important methodological point surfaced by this two-round exchange is that the pre-fix 911-concept cross-validation reported zero mismatches *because the bug pattern was outside the generator's distribution*, not because the code was correct. Both reasoners were silently wrong or silently blind on exactly the same family. That is the kind of failure mode that can hide indefinitely in cross-validation suites designed by the same person who designed the calculus. The review paper's §§5–6 make this point explicitly and it is worth internalising for any future iteration of this project.
+
+Practical artefacts left behind by Round 2 that we should keep using:
+- `review_paper/test/verify_twelve_counterexamples.py` — the regression anchor for the CT5 fix. Any future refactor of the cover-tree tableau should run this script first.
+- `review_paper/test/round2_random.py` — a seed-parametrised, time-budgeted adversarial generator that is structurally different from `stress_test_cover_tree.py`. Running both is strictly better than running either alone, for the blind-spot reason above.
+
+Thanks to Opus 4.7 for a careful and constructive review, and in particular for the discipline of producing both the bug *and* the fix, and of re-auditing the fix adversarially rather than stopping at a "looks good" verdict.
