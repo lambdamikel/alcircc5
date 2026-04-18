@@ -3383,3 +3383,71 @@ Ported `check_role_path_compatibility` into `src/cover_tree_tableau.py` as a new
 - `README.md` — third warning box
 - `CONVERSATION.md` — this entry
 - `review_paper/` — Opus 4.7's review paper (LaTeX source and PDF, checked in as-is)
+
+
+## April 18, 2026 (evening) — Round 2 of the independent review: reassessment after the fix
+
+### Context
+
+After the morning's two fixes (tightened `compute_safe` for PP/PPI-transitive universals, new CT5 `check_role_path_compatibility` stage in the cover-tree tableau), Michael asked Opus 4.7 in a fresh conversation to **re-read and re-assess** the repository and mount a second round of attacks on the cover-tree tableau and the decidability statement. The first round had produced the 12-counterexample family and the review paper; the question now was whether the fixes were comprehensive or whether a deeper adversarial probe would surface new holes.
+
+### What the repository now does (post-fix)
+
+Two calculus-level changes were in place:
+1. `src/cover_tree_tableau.py`: a new fixed-point arc-consistency pruner `check_role_path_compatibility` (≈ 50 LOC, lines 342–392) iterates over every three-type chain `g →R→ j →S→ w` and requires either `comp(R⁻¹, S⁻¹) ∩ safe(w, g) ≠ ∅` or, for the four EQ-admitting pairs `{(DR,DR), (PO,PO), (PP,PPI), (PPI,PP)}`, `w = g` (strong-EQ cycle-close).
+2. `src/alcircc5_reasoner.py`: `compute_safe(τ, σ)` now refuses R ∈ {PP, PPI} as safe unless both `∀R.φ` and its body `φ` lie in σ (and dually for R⁻¹ and τ) — the standard ALCH\_tr transitive-role rule, applied at the closure level so that both reasoners inherit the tightening.
+
+### Round-2 attack suite
+
+Three batches, all run against the cycle-aware quasimodel reasoner (`alcircc5_reasoner_cyclic.py`) as oracle:
+
+**(a) Regression on the 12 Round-1 counterexamples.** The full 4×4 grid of
+\(
+  C_{R_1, R_2} \equiv \exists R_1.\exists R_2.A \;\sqcap\; \bigsqcap_{R \in \comp(R_1, R_2)} \forall R.\lnot A, \qquad R_2 \neq \inv(R_1)
+\)
+— all 12 cells now report UNSAT in both `cover_tree_tableau` and `alcircc5_reasoner_cyclic`. Previously 12 structural mismatches; now 0/12.
+
+**(b) Fresh targeted families.** 25+ newly constructed adversarial concepts:
+  * L-family — 4-role-chain stressors `∃R₁.∃R₂.∃R₃.A ⊓ ∀R₁.∀R₂.∀R₃.¬A` across all role triples;
+  * M/N-family — tree-and-cross mixes at depth 2 (`∀PP.∀DR.¬A ⊓ ∃PP.∃DR.A` and variants);
+  * O/Q-family — sibling-universal interactions with multiple `DR`/`PO` siblings, including non-singleton compositions like `comp(PO, PP) = {PO, PP}`;
+  * F-family — grandchild → grandparent → sibling triangle constructions specifically designed to stress CT5's demand-rooted scope (these pass because transitive universal propagation at the `compute_safe` level already marks the offending (τ, σ) pairs unsafe);
+  * EQ-admitting boundary cases — `A ⊓ ∃PP.∃PPI.A` (SAT via EQ-close) vs. `¬A ⊓ ∀PP.∀PPI.A` (UNSAT).
+  All agreed with QMc.
+
+**(c) Random cross-validation.** 300 pseudo-random depth-3/4 concepts across two seeds (1, 7) over the full role alphabet {DR, PO, PP, PPI} with 2–3 atomic concepts. 0 mismatches.
+
+Plus 60 additional random depth-3/4 concepts from the `round2_targeted_and_random` script: 0 mismatches. Grand total of the Round-2 audit: **400+ tests, 0 mismatches**.
+
+### Verdict
+
+Opus 4.7 **withdrew the Round-1 soundness-failure claim with respect to the current repository state**. No adversarial concept constructed during the second round produced a mismatch between the cover-tree tableau and the cycle-aware quasimodel reasoner. The updated review paper now explicitly states this, and the Round-1 sections remain as the historical record of the pre-fix bug.
+
+On the decidability statement itself: the Round-1 defects were localised to the cover-tree tableau code and never touched the decidability argument, which rests on the quasimodel procedure with type elimination plus the completeness-extraction paper. The review found no counterexample to the decidability theorem, no gap in its Henkin-style completeness argument, and no disagreement between the two reasoners on any post-fix instance. The EXPTIME decidability claim for ALCI\_RCC5 is therefore **not refuted** and, on the available evidence, **plausibly stands** — with the explicit caveat that random + structural testing never closes soundness proof-theoretically.
+
+### Documentation changes
+
+- `review_paper/review_cover_tree_tableau.tex`: added a new §10 *Round-two reassessment* (≈ 100 lines) documenting (i) what the fixes do, (ii) regression on the 12 counterexamples, (iii) the second attack round and its verdict, and (iv) an explicit statement on the decidability claim. Conclusion section extended with an *Addendum (post-fix)* paragraph. Paper grew from 10 to 11 pages.
+- `review_paper/review_cover_tree_tableau.pdf`: recompiled (11 pages, 848 KB).
+- `review_paper/test/`: new folder with the five Python attack scripts (+ a README) used in Round 2. Scripts adjust `sys.path` relative to their own location so they run in-place without editing. Coverage: `verify_twelve_counterexamples.py` (4×4 grid regression), `round2_targeted_and_random.py` (9 targeted + 60 random), `round2_sibling_stress.py` (O/Q families), `round2_per_test.py` (per-test driver for large closures), `round2_random.py` (configurable random sampler with per-test time budget).
+- `README.md`: new top-level section *Independent review and assessment of the decidability proof and calculus* (between *Current Status of the Proof* and *Background*), summarising both rounds, the verdict, two residual caveats, and links to the paper + test harness. Additionally, a condensed **Review verdict** blockquote was inserted at the top of the README (just above the existing *Current assessment (April 2026, Claude)* block) so readers see the verdict without scrolling — including an explicit statement on the decidability claim's status.
+- `CONVERSATION.md`: this entry.
+
+### Files changed
+
+- `review_paper/review_cover_tree_tableau.tex` — new §10 *Round-two reassessment* + addendum
+- `review_paper/review_cover_tree_tableau.pdf` — recompiled (11 pages)
+- `review_paper/test/README.md` — new
+- `review_paper/test/verify_twelve_counterexamples.py` — new
+- `review_paper/test/round2_targeted_and_random.py` — new
+- `review_paper/test/round2_sibling_stress.py` — new
+- `review_paper/test/round2_per_test.py` — new
+- `review_paper/test/round2_random.py` — new
+- `README.md` — new Independent-review section + condensed Review-verdict blockquote
+- `CONVERSATION.md` — this entry
+
+### Commits (on `master`, pushed to `origin`)
+
+- `720d4af` — Add round-2 review reassessment + test harness, update README
+- `a128814` — Add condensed Review Verdict to status block with link to full section
+- `c1c12c2` — Expand Review Verdict block with explicit decidability-claim stance
