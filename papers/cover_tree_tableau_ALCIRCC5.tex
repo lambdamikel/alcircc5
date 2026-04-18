@@ -208,13 +208,40 @@ For Hintikka types $\tau, \sigma \in \Tp(C_0)$ and a relation
 $R \in \RCCrels$, we say $R$ is \emph{safe} for $(\tau, \sigma)$,
 written $R \in \Safe(\tau, \sigma)$, if:
 \begin{itemize}[nosep]
-  \item For all $\forall R.D \in \tau$: $D \in \sigma$.
-  \item For all $\forall \inv(R).D \in \sigma$: $D \in \tau$.
+  \item For all $\forall R.D \in \tau$: $D \in \sigma$; and
+    if $R \in \{\PP, \PPI\}$, additionally $\forall R.D \in \sigma$.
+  \item For all $\forall \inv(R).D \in \sigma$: $D \in \tau$; and
+    if $\inv(R) \in \{\PP, \PPI\}$, additionally
+    $\forall \inv(R).D \in \tau$.
 \end{itemize}
 The \emph{cross-edge safe set} is
 $\Safe_{\DR/\PO}(\tau, \sigma) := \Safe(\tau, \sigma)
   \cap \{\DR, \PO\}$.
 \end{definition}
+
+\begin{remark}[Why universals propagate for $\PP$ and $\PPI$]
+\label{rem:trans-propagation}
+The second clause in each bullet is the standard transitive-role
+propagation rule (as in $\mathcal{ALCH}_{\mathrm{tr}}$). Both $\PP$
+and $\PPI$ are transitive in RCC5 ($\comp(\PP, \PP) = \{\PP\}$,
+$\comp(\PPI, \PPI) = \{\PPI\}$), so a $\PP$-successor of a
+$\PP$-successor of $x$ is itself a $\PP$-successor of $x$. If
+$\forall \PP. D$ holds at $x$ and $\PP(x, y)$, then every
+$\PP$-successor of $y$ must satisfy $D$; hence
+$\forall \PP. D$ holds at $y$. Failing to propagate the universal
+itself (and only its body $D$) would admit type pairs
+$(\tau, \sigma)$ with $\forall \PP. D \in \tau$ but
+$\forall \PP. D \notin \sigma$, in which case a $\PP$-grandchild
+could falsify $D$ while each immediate step individually satisfies
+the weak safe condition. This was an implicit assumption in earlier
+formulations of this calculus; making it explicit closes an
+unsoundness reported by Sonnet~4.7 on the concept
+$\forall \PP. \neg C \sqcap \exists \PP. \exists \PP. C$. The
+other three base relations are not transitive
+($\comp(\DR, \DR) = \RCCrels$, $\comp(\PO, \PO)$ is all of
+$\RCCrels$; $\EQ$ is reflexive-identity under strong-$\EQ$
+semantics), so no analogous propagation is needed for them.
+\end{remark}
 
 
 % ═══════════════════════════════════════════════════════════════

@@ -920,9 +920,22 @@ $\PP$-successor of $x$, hence satisfies $D$; so $\forall \PP. D$
 holds at $y$.
 
 \emph{Scope and tests.} The decidability argument as a
-mathematical statement is unaffected, but the calculus statement
-in the companion cover-tree tableau paper should be amended to
-include the transitive-universal propagation explicitly. The
+mathematical statement is unaffected; the completeness direction
+(model $\Rightarrow$ valid quotient) inherits the propagation for
+free from the semantics (a valid RCC5 model respects
+$\PP$-transitivity by definition). The soundness direction
+(valid quotient $\Rightarrow$ model) is where the gap lived, and
+is repaired by the fix. The upstream split-forest calculus paper
+already handles this correctly via its $\mathsf{All}^\uparrow /
+\mathsf{All}^\downarrow$ slots and the rules
+$(\forall\PP\text{-prop}),
+(\forall\PPI\text{-prop})$, which copy the bodies of $\forall\PP$
+and $\forall\PPI$ universals across every tree step and carry the
+obligation to all strict ancestors/descendants. The companion
+implementation paper (\texttt{cover\_tree\_tableau\_ALCIRCC5.tex})
+uses a simpler direct-$\Safe$ formulation and has been amended to
+include the transitive-universal propagation in
+Definition~3.2 explicitly. The
 911-concept cross-validation continues to match $911/911$ before
 and after the fix---the $\forall R.(\cdots) \sqcap \exists R.
 \exists R.(\mathrm{conflict})$ pattern for $R \in \{\PP, \PPI\}$
