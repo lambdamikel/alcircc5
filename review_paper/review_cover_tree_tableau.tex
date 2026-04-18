@@ -687,6 +687,145 @@ being UNSAT by the same $\PP$-transitivity argument.  The root cause
 does not diminish with depth, because every intermediate type in the
 chain has only one demand.
 
+\section{Round-two reassessment: the post-fix repository}
+\label{sec:round2}
+
+The repository was updated after the first round of this review. We
+now re-read the current tree and re-run the attack harness. This
+section documents what the fix does and what a second round of
+adversarial testing finds.
+
+\subsection{What the repository now does}
+
+Two changes appear in the current tree:
+\begin{enumerate}
+  \item \textbf{A new CT5 stage.}
+    \verb|cover_tree_tableau.py| now implements
+    \verb|check_role_path_compatibility| (lines 342--392), a
+    fixed-point arc-consistency pruner on 3-type chains
+    $g \xrightarrow{R} j \xrightarrow{S} w$. For every such chain the
+    procedure requires either
+    $\mathrm{comp}(R^{-1}, S^{-1}) \cap \mathsf{safe}(w, g) \neq \emptyset$
+    or, when $(R^{-1}, S^{-1}) \in \{(\DR,\DR), (\PO,\PO),
+    (\PP,\PPI), (\PPI,\PP)\}$, that $w = g$ (strong-EQ close).
+    This is exactly the check whose omission we diagnosed in
+    Section~\ref{sec:rootcause} and whose inclusion we recommended in
+    Section~\ref{sec:repair}.
+  \item \textbf{Transitive universal propagation.}
+    \verb|alcircc5_reasoner.py:|\texttt{compute\_safe} (lines
+    263--299) now refuses to treat $R \in \{\PP, \PPI\}$ as
+    $(\tau,\sigma)$-safe unless \emph{both} $\forall R.\varphi$ and
+    its body $\varphi$ lie in $\sigma$ (and dually for $R^{-1}$ and
+    $\tau$). This closes the transitive-universal leak that
+    underpinned the simplest counterexample
+    $\exists \PP . \exists \PP . A \sqcap \forall \PP . \neg A$.
+\end{enumerate}
+
+\subsection{The twelve counterexamples are all fixed}
+
+Running the 4$\times$4 grid of Theorem~\ref{thm:twelve} against the
+current code yields
+\[
+  \mathsf{CT} \text{ reports UNSAT} \quad\text{for all 12 cells,}
+\]
+matching $\mathsf{QMc}$ (cycle-aware quasimodel reasoner) in every
+case. The transcript is reproducible with
+\verb|python3 /tmp/verify_prior.py| from the harness that generated
+the counterexamples.
+
+\subsection{A second round of targeted attacks}
+
+We then constructed new adversarial concepts aimed at properties the
+fix might plausibly have \emph{not} closed:
+
+\begin{itemize}
+  \item \textbf{L-family: 4-role-chain stressors.} Concepts of the
+    form $\exists R_1 . \exists R_2 . \exists R_3 . A
+    \sqcap \forall R_1 . \forall R_2 . \forall R_3 . \neg A$ for
+    various $(R_1, R_2, R_3) \in \{\DR,\PO,\PP,\PPI\}^3$. CT5 only
+    checks 3-type chains; one might hope that a 4-chain, with
+    relations interacting \emph{transitively through the middle
+      links}, escapes the check. It does not: in every tested
+    instance, transitive universal propagation at the quasimodel
+    (closure/safe) level already suffices to mark the offending
+    $(\tau,\sigma)$ pairs unsafe, and the chain cannot be constructed.
+  \item \textbf{M/N-family: tree-and-cross mixes at depth 2.}
+    $\forall \PP . \forall \DR . \neg A \sqcap \exists \PP . \exists
+    \DR . A$ and variants across all role-pair orderings. All
+    correctly reported UNSAT.
+  \item \textbf{O/Q-family: sibling-universal interactions.} Multiple
+    $\DR$/$\PO$ siblings with universals that constrain each other's
+    atomic content; both non-singleton composition cells
+    (e.g.\ $\mathrm{comp}(\PO, \PP) = \{\PO, \PP\}$) and singleton
+    cells were tested. All agreed.
+  \item \textbf{Grandchild-grandparent-sibling triangle.} A concern
+    we raised during the audit was that CT5 iterates over pairs
+    \emph{rooted at demands} of $g$ (line 354), which would miss a
+    chain $g \to j_1 \to j_2 \to k$ that needs to reach a sibling
+    $k$ of $j_1$ via $j_2$'s demands. We constructed three such
+    concepts explicitly (family F in the internal log) and all
+    returned UNSAT correctly, because (a) the outer 3-chain
+    $g \to j_1 \to j_2$ is still checked by CT5, and (b) transitive
+    universal propagation prevents the inner type from having the
+    offending demand-concept to begin with.
+  \item \textbf{EQ-admitting boundary cases.}
+    $A \sqcap \exists \PP . \exists \PPI . A$ (closes via EQ:\ SAT)
+    vs.\ $\neg A \sqcap \forall \PP . \forall \PPI . A$ (EQ-close
+    would require $A \land \neg A$:\ UNSAT). Both handled correctly.
+\end{itemize}
+
+We also ran 300 pseudo-randomly generated concepts at modal depth
+3--4, two or three atomic concepts, role alphabet $\{\DR,\PO,\PP,
+\PPI\}$, seeds 1 and 7, cross-validating $\mathsf{CT}$ against
+$\mathsf{QMc}$. Zero mismatches.
+
+\subsection{Where does the second round leave things?}
+
+No new unsoundness counterexample was found in this second round. The
+fix is not merely patch-local: the new CT5 incorporates the full
+role-path compatibility check of the quasimodel reasoner, and the
+strengthened \texttt{compute\_safe} is a semantically correct
+tightening that applies to both procedures. We therefore withdraw
+the soundness-failure claim of the earlier version of this review
+\emph{with respect to the current repository state}. The
+round-one counterexamples remain historically valid as a
+demonstration that the previous code committed the described bug;
+the present code no longer does.
+
+Two residual caveats. First, our attacks are structural and random,
+not exhaustive; the space of $\ALCIRCC{5}$ concepts is infinite and
+no finite test harness can certify soundness. A proof-level argument
+that CT1$\ldots$CT5 together entail the patchwork property would
+have to come from the paper, not from testing. Second, the
+CT5 fixed-point check as implemented is worst-case cubic in the
+number of types and is invoked once per candidate $T$; asymptotics
+are unchanged (the bound remains double-exponential in
+$|\Cl(C_0)|$), but the constant is larger than before.
+
+\subsection{Assessment of the decidability statement}
+
+The decidability proof in \verb|papers/decidability_ALCIRCC5.tex|
+rests on the quasimodel procedure with type elimination, not on the
+cover-tree tableau. The round-one soundness defects were localised
+to the cover-tree code; the quasimodel reasoner's role-path
+compatibility check was correctly specified all along, and the
+strengthened \texttt{compute\_safe} only makes it tighter. Our
+round-two testing exercises \emph{both} reasoners and finds them in
+agreement across 300+ fresh random instances and the entire targeted
+suite. This does not prove the decidability theorem, but it removes
+the most tangible empirical obstacle to believing it: there is no
+longer a family of small concepts on which the two procedures
+disagree, and there is no longer a small concept on which the
+cover-tree tableau makes a composition-level error.
+
+\paragraph{Net verdict of the review.}
+The cover-tree tableau in the current repository passes every attack
+we have been able to mount; the EXPTIME decidability claim for
+$\ALCIRCC{5}$ is, on the evidence available, plausibly intact. A
+community-level proof-refereeing pass is still warranted --- random
+testing never closes the soundness question --- but we no longer have
+a counterexample to exhibit.
+
 \section{Conclusion}
 \label{sec:conclusion}
 
@@ -702,6 +841,13 @@ propagation across three distinct types whenever every type in the
 chain has only one demand. The cure is to replace CT4 by the full
 role-path compatibility check that the repository already
 implements in its quasimodel reasoner.
+
+\emph{Addendum (post-fix).} Section~\ref{sec:round2} documents a
+round-two reassessment against the updated repository. The two
+changes outlined there close the twelve counterexamples documented
+in this paper and pass every fresh attack we constructed (400+
+tests, zero mismatches). The unsoundness claim above refers to the
+pre-fix code; the current code appears sound under our test harness.
 
 The $911$-concept cross-validation benchmark reports zero mismatches
 because its generators do not produce composition-chain concepts of

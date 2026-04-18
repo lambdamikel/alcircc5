@@ -314,6 +314,49 @@ See [OUTDATED.md](OUTDATED.md) for detailed investigation traces: blocking intri
 
 ---
 
+## Independent review and assessment of the decidability proof and calculus
+
+In April 2026, Anthropic's **Claude Opus 4.7** was commissioned by Michael Wessel to perform an adversarial review of the decidability proof for ALCI\_RCC5 and the accompanying cover-tree tableau calculus. The review was run in two rounds, with the repository authors free to apply fixes between rounds.
+
+### Round 1 — twelve structural counterexamples
+
+The reviewer ran an audit of the cover-tree tableau implementation and identified a **soundness failure** affecting the `check_tree_cross_interaction` stage (CT4). The defect was a short-circuit (`if len(all_dems) <= 1: continue`) that skipped composition propagation across three-type chains whose intermediate types each carried only a single demand. A family of **twelve** minimal UNSAT concepts of modal-depth 2 exposed the bug:
+```
+C_{R₁, R₂}  ≡  ∃R₁.∃R₂.A  ⊓  ⨆_{R ∈ comp(R₁, R₂)} ∀R.¬A      (R₂ ≠ inv(R₁))
+```
+for each pair (R₁, R₂) ∈ {DR, PO, PP, PPI}² excluding the four EQ-admitting diagonals, including the simplest transitive-role instance `∃PP.∃PP.A ⊓ ∀PP.¬A`. The cover-tree reported SAT on all twelve; the cycle-aware quasimodel reasoner correctly reported UNSAT on all twelve. The review paper [`review_paper/review_cover_tree_tableau.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.pdf) (11 pages, LaTeX source [here](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.tex)) documents the counterexamples, the root cause, a repair sketch, and four independent verification strands.
+
+The reviewer explicitly *did not* refute the decidability theorem itself — which rests on the quasimodel procedure with type elimination — only the soundness of the committed cover-tree code.
+
+### Round 2 — re-assessment after the fix
+
+The repository authors applied two calculus-level fixes:
+1. A new `check_role_path_compatibility` stage (**CT5**) in [`src/cover_tree_tableau.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py), a fixed-point arc-consistency pruner over all three-type chains g →R→ j →S→ w, with a strong-EQ cycle-close clause for the four EQ-admitting pairs {(DR,DR), (PO,PO), (PP,PPI), (PPI,PP)} — exactly the check recommended by Round 1.
+2. Transitive universal propagation in [`src/alcircc5_reasoner.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) (`compute_safe`): when R ∈ {PP, PPI}, ∀R.D must propagate as a whole (not just its body D) into R-successor types — the standard ALCH\_tr transitive-role rule.
+
+The reviewer re-audited the post-fix repository and ran a second attack round. Results:
+
+- **All 12 Round-1 counterexamples** are now correctly reported UNSAT by the cover-tree tableau (0/12 mismatches with QMc). Reproducible via [`review_paper/test/verify_twelve_counterexamples.py`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/test/verify_twelve_counterexamples.py).
+- **25+ fresh targeted attacks** (4-role-chain stressors, tree/cross mixes at depth 2, EQ-admit boundary cases, sibling-universal interactions with singleton and non-singleton compositions, grandchild–grandparent–sibling triangle constructions) agree with QMc in every case.
+- **300 pseudo-random depth-3/4 concepts** across two seeds (seeds 1 and 7, role alphabet {DR, PO, PP, PPI}, 2–3 atomic concepts) produce 0 mismatches.
+
+The reviewer **withdraws the Round-1 soundness-failure claim with respect to the current repository state**. No adversarial concept constructed during the second round produces a mismatch between the cover-tree tableau and the cycle-aware quasimodel reasoner.
+
+### Verdict
+
+On the available evidence, the EXPTIME decidability claim for ALCI\_RCC5 is **plausibly intact**. The most tangible empirical obstacle — a concrete small concept on which the two procedures disagree — has been removed. Two residual caveats remain, both acknowledged in the review paper:
+
+- Structural and random testing cannot certify soundness; a proof-level argument that **CT1…CT5** jointly entail the patchwork property should come from the companion [cover-tree tableau paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.pdf).
+- The Round-1 counterexamples remain historically valid as a reminder that test-distribution blind spots can mask calculus-level bugs for arbitrarily long. The pre-fix 911-concept cross-validation suite reported zero mismatches for exactly such a blind-spot reason.
+
+### Artefacts
+
+- [`review_paper/review_cover_tree_tableau.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.pdf) — the review paper (11 pages, CEUR-ART template). Sections 5–8 document the Round-1 counterexamples; Section 10 is the Round-2 reassessment.
+- [`review_paper/review_cover_tree_tableau.tex`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.tex) — LaTeX source.
+- [`review_paper/test/`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/test/) — adversarial test harness (5 Python scripts + a README). Complements the repository's own cross-validation in [`src/stress_test_cover_tree.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py) and [`src/test_cyclic_reasoner.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/test_cyclic_reasoner.py).
+
+---
+
 ## Background
 
 The ALCI\_RCC family extends the description logic ALCI (ALC with inverse roles) with **role boxes derived from RCC composition tables**. The base relations of RCC5 ({DR, PO, EQ, PP, PPI}) serve as the role names, and interpretations are constrained to be **complete graphs** where every pair of domain elements is related by exactly one base relation, subject to the RCC5 composition table.
