@@ -3537,3 +3537,50 @@ Added a closing paragraph on "The gap between the two layers" noting that CT5 wa
 The useful distinction that crystallised across Threads 3 and 4 is between *semantic decidability* (which is established by the two theory papers, modulo community-level proof refereeing) and *implementation-level formal correctness* (which is not established — the cover-tree tableau is empirically validated but not derived from the calculus whose semantics it is trying to realize). These are different claims, and the repository is now careful about saying so in all three user-facing surfaces (overview, README, cover-tree paper).
 
 The RCC8 domino attempt is a useful negative result to have written down. It shows concretely that the RCC8 refinement of RCC5 *does* help at level 1 (the TPPI/NTPPI split is not vacuous there), and *does not* help at level 2 (because the obstruction switches from transitive propagation to the coincidence obstruction, which is what Lutz & Wolter resolve topologically and which is unavailable here). This is the kind of thing that makes the "L\_RCC8 undecidability does not mechanically transfer to ALCI\_RCC8" claim more than just a slogan.
+
+
+## April 19, 2026 (evening) — Patchwork-preservation probe for ALCI\_RCC5
+
+A follow-up thread later the same day. After counting approaches (eleven aimed at decidability, zero serious attempts at undecidability, seven blocked reductions analysed), Michael asked what a *serious* undecidability attempt would look like. Three directions suggested:
+
+1. Word problem for finitely presented groups via PP-discreteness + forced coincidence (Novikov-Boone route).
+2. ALCI\_RCC8 first, via synthetic TPP-chain discreteness — closer to Lutz-Wolter's existing proof and strictly easier than ALCI\_RCC5.
+3. **Attack the patchwork property directly**: construct a TBox whose models exhibit a typed RCC5 network that is locally path-consistent but globally inconsistent, OR prove that patchwork survives TBox augmentation.
+
+Michael picked direction 3. This is the sharpest single attack point because patchwork is the load-bearing assumption behind every decidability argument in the repository (quasimodel, cover-tree, split-forest, completeness extraction all depend on Renz-Nebel 1999 patchwork for the atomic RCC5 algebra). Either outcome is informative: a counterexample would invalidate every existing decidability proof and open a route to undecidability; a confirmation would explain *why* the documented reductions all fail, as instances of a single fact rather than a survey of coincidences.
+
+### Paper
+
+Wrote `papers/patchwork_augmentation_ALCIRCC5.tex` / `.pdf` (10 pages). The paper:
+
+- Formalises typed patchwork at three progressively stronger levels: atomic (Renz-Nebel, proven), locally-coherent (typed edges, path-consistent), and arc-consistent with disjunctive domains and Need-filtering. The decidability proof actually needs arc-consistent typed patchwork; Renz-Nebel alone is not enough.
+- Attempts three structurally diverse counterexample probes:
+  - **Probe 1, forced coincidence**: two PP-children of a common parent, typed with concepts B and C that are pairwise incompatible on every non-EQ relation via universals, plus B ⊑ ¬C to block the EQ collapse. Collapses to arc-inconsistency (AC-3 empties the filtered domain between the two children).
+  - **Probe 2, inverse-role cycle**: a four-node cycle with PP, PO, PPI edges and a universal reflecting back from the endpoint. Arc-consistent and realisable; no obstruction.
+  - **Probe 3, yardstick**: iterated existentials with accumulating universals. Collapses to type-level unsatisfiability, caught before any network is constructed.
+- Explains structurally why every probe reduces to either local arc-inconsistency or type-unsatisfiability: **ALCI has no mechanism to express genuinely k-ary constraints for k ≥ 4**. Unary (types), binary (type-safety), and ternary (composition) constraints are all captured by arc-consistency; a failure of typed patchwork would require a k ≥ 4 constraint that arc-consistency misses, and no such construction is visible via inverse-role chaining in the ALCI fragment.
+- Conjectures but does not prove Proposition 7.1: typed patchwork holds for every ALCI\_RCC5 TBox. A full proof would amount to a simpler alternative to the split-forest construction.
+- Sketches the precise shape a genuine failure would need to take (k ≥ 4 nodes, all pairwise filtered domains non-empty, no joint model) and argues this is dual to the completeness-extraction key lemma.
+- Proposes the sharper theorem that would close both questions at once: *every ALCI\_RCC5 constraint on a finite network has arity ≤ 3, and arc-consistency is complete for arity-≤ 3 CSPs over RCC5.* This would be a principled answer to "why all undecidability reductions fail."
+
+### Outcome
+
+Negative in both directions: no counterexample, no full proof. But the probe is more evidence *for* decidability than against, because:
+
+- Three structurally diverse attacks all collapsed to cheap local obstructions (arc-consistency or Hintikka closure).
+- The structural argument (no k-ary synthesis for k ≥ 4 in ALCI) explains why, if correct.
+- Any future undecidability attempt must now either exhibit a k ≥ 4 typed-patchwork failure with a specific combinatorial shape, or bypass patchwork entirely — and ALCI\_RCC5's only semantic content is relational structure, so a patchwork bypass seems unavailable.
+
+### Commits (on `master`, pushed to `origin`)
+
+- `5b8af61` — Add April 19 CONVERSATION entry (attribution fix, RCC8 domino, theory/impl split)
+- `eb10f4b` — Add patchwork-augmentation probe: negative result on undecidability route
+
+### What to try next
+
+Two complementary directions, in priority order:
+
+1. **Prove Proposition 7.1 rigorously.** The conjecture that typed patchwork holds is a real theorem with real technical content. If it goes through, it yields an alternative decidability proof cleaner than the split-forest construction — grounded in constraint satisfaction rather than tree semantics. The hard step is the Henkin-style witness-addition argument maintaining arc-consistency through unbounded extension.
+2. **Push the Bodirsky-Bodor CSP dichotomy angle.** Every first-order expansion of RCC5 has a CSP that is P or NP-complete, never undecidable. If ALCI\_RCC5 satisfiability can be framed as (or reduced to) a CSP of a fixed template over a first-order expansion of RCC5, the dichotomy does the heavy lifting and decidability follows as a corollary. This would be a very short paper if the framing works, and structurally adjacent to the "arity ≤ 3 CSP" theorem sketched in the patchwork paper's closing.
+
+A third, more adversarial direction: write a small combinatorial search that enumerates typed networks on 4–6 nodes with small TBoxes and checks arc-consistency vs. realisability, looking for a counterexample to Proposition 7.1 that pencil-and-paper probes missed. This would be computational evidence rather than a proof, but could either reinforce the conjecture or surface a surprise.
