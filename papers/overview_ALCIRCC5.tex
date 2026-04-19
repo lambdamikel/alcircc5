@@ -1173,6 +1173,21 @@ endpoint types (because all universals are satisfied), so the
 Need$_R$-filtered domains in the extracted quotient are non-empty.
 This yields a valid finite quotient, hence a valid type set.
 
+\medskip\noindent\textbf{A note on scope.}
+The soundness and completeness statements above are theorems
+about the \emph{split-forest semantics}, not about the
+implementation in~\S\ref{sec:cover-tree-tableau}.  The cover-tree
+tableau described in \S\ref{sec:cover-tree} is an algorithmic
+\emph{realization} of this theory---a concrete check set
+(CT1--CT5) arrived at by simplification and, in the case of CT5,
+by empirical counterexample analysis from Opus~4.7's adversarial
+review---not a formal translation of the valid-quotient conditions
+into code.  Formal equivalence between the implementation and the
+split-forest semantics is a separate claim, empirically supported
+but not yet proved.  The companion implementation
+paper~\cite{CoverTreeImpl} discusses this theory-vs-implementation
+split in detail.
+
 \subsection{Computational evidence}
 
 The algorithm is implemented in approximately 350~lines of
@@ -1295,20 +1310,50 @@ has been open since Wessel's doctoral work in 2002/2003 and was
 explicitly flagged by Lutz \& Wolter in 2006 as ``perhaps the
 most interesting'' open problem suggested by their work.
 
-The decidability argument rests on four papers:
+The decidability argument rests on four papers, which fall into
+two distinct layers:
+
+\medskip\noindent\textbf{Theoretical layer (establishes
+decidability).}
 \begin{enumerate}
   \item The \emph{split-forest semantics}~\cite{SiblingCompleted}
     (GPT-5.4): defines the cover-tree decomposition, proves the
-    finite-index lemma, and constructs models from valid quotients.
+    finite-index lemma, and constructs models from valid
+    quotients (soundness direction).
+  \item The \emph{completeness extraction}~\cite{CompletenessExtraction}
+    (Claude): closes the model-to-quotient gap, proving that
+    every satisfiable concept admits a valid finite quotient.
+\end{enumerate}
+Together, (1) and (2) establish: $C_0$ is satisfiable iff it
+admits a valid finite rank-$d$ quotient.  The space of such
+quotients is finite and effectively searchable, so
+$\ALCIRCC{5}$ concept satisfiability is decidable.
+
+\medskip\noindent\textbf{Operational layer (algorithmic
+realization, empirically validated).}
+\begin{enumerate}\setcounter{enumi}{2}
   \item The \emph{cover-tree tableau}~\cite{CoverTree} (GPT-5.4):
     packages the split-forest approach as an operational calculus
     with rank-$d$ blocking.
-  \item The \emph{completeness extraction}~\cite{CompletenessExtraction}
-    (Claude): closes the model-to-quotient gap, proving that
-    model-extracted quotients are automatically valid.
   \item The \emph{implementation paper}~\cite{CoverTreeImpl}
-    (Claude): documents the algorithm and cross-validation results.
+    (Claude): documents a concrete five-check algorithm (CT1--CT5),
+    cross-validated against an independent quasimodel reasoner on
+    911 original tests plus 400+ Round-2 adversarial tests with
+    zero mismatches.
 \end{enumerate}
+
+\medskip\noindent\textbf{The gap between the two layers.}
+The decidability claim for $\ALCIRCC{5}$ rests on (1) and (2)
+alone.  Papers (3) and (4) describe a \emph{plausible and
+empirically validated} algorithmic realization, but a formal
+derivation showing that CT1--CT5 exactly capture the
+valid-quotient conditions has not been written.  CT5 in particular
+was added as a patch after Opus~4.7's adversarial review---not
+derived from the split-forest semantics---and while empirical
+agreement between two independently designed reasoners is strong
+evidence that such a derivation should be possible, it is not
+itself a proof.  See~\cite[\S7]{CoverTreeImpl} for a detailed
+breakdown.
 
 \subsection{What remains open}
 
