@@ -920,6 +920,93 @@ suggests that the weaker checks are nonetheless sufficient, which
 is consistent with the theoretical claim of the split-forest
 approach.
 
+\subsection{Proof status: theory vs.~implementation}
+\label{sec:proof-status}
+
+It is worth being precise about which statements are formally
+proven and which are supported by empirical agreement only, because
+the two are easily conflated in a repository that mixes theory
+papers with an executable reasoner.
+
+\medskip\noindent\textbf{What is formally established (modulo peer
+review).}
+\begin{enumerate}[label=(\alph*)]
+  \item \textbf{Soundness of the split-forest semantics.}
+    Theorems~1.17--1.19 of~\cite{SiblingCompleted} prove by LCA
+    induction that every valid finite rank-$d$ quotient unfolds to
+    an arc-consistent disjunctive network, and that K\"onig's
+    lemma plus canonical refinements yield a strong-$\EQ$ model.
+    This direction is fully written out.
+
+  \item \textbf{Completeness extraction.}
+    The reverse direction---every satisfiable
+    $C_0$ admits a valid finite rank-$d$
+    quotient---was labelled ``condensed'' in~\cite{SiblingCompleted}
+    and is written out in our companion
+    paper~\cite{CompletenessExtraction}: starting from a pointed
+    strong-$\EQ$ model, we split join nodes into $\EQ$-mates, read
+    off rank-$d$ states by induction, extract sibling-interface
+    descriptors from realized atomic relations, and extract
+    relation-safe witness menus.  The key lemma is that in any
+    extracted quotient, Need-filtered pair domains equal unfiltered
+    ones, because the source model satisfies all universals and
+    local types are preserved under the rank-$d$ quotient.
+
+  \item \textbf{Decidability of $\ALCIRCC{5}$ concept satisfiability.}
+    The conjunction of~(a) and~(b) establishes decidability:
+    $C_0$ is satisfiable iff it admits a valid finite rank-$d$
+    quotient, and the space of such quotients is finite and
+    effectively searchable (rank-$d$ states are bounded by a
+    function of $|\mathrm{cl}(C_0)|$).  An explicit elementary
+    complexity bound is not extracted.
+\end{enumerate}
+
+\medskip\noindent\textbf{What the cover-tree tableau is and is
+\emph{not}.}
+The cover-tree tableau (\S\ref{sec:algorithm}) is \emph{inspired
+by}~\cite{SiblingCompleted,CoverTree} but is \emph{not} a formal
+derivation of those semantics.  It is a set of five concrete
+checks (CT1--CT5) over type sets, arrived at by algorithmic
+simplification and---in the case of CT5---by empirical
+counterexample analysis from Opus~4.7's adversarial review
+(\S\ref{sec:rolepath}), rather than by translation from the
+split-forest definition of a valid finite quotient.  Concretely:
+\begin{itemize}[nosep]
+  \item The path-consistency check is restricted to the $\{\DR,\PO\}$
+    sub-network.  The split-forest semantics works with the full
+    4-relation network under disjunctive arc-consistency.
+  \item The sibling-interface descriptor conditions~(C1)--(C5)
+    of~\cite{SiblingCompleted} are not explicitly checked:~(C1)
+    and~(C2) are implicit in the $\{\DR,\PO\}$ sibling check, but
+    the downward-support axioms~(C3)--(C4) that track how
+    cross-edge domains evolve through ancestor-descendant chains
+    are not represented.
+  \item Witness menus, rank-$d$ state identification, and the
+    relation-sensitive filtering of pair domains are not
+    constructed.
+  \item CT5 (role-path compatibility) was ported from the
+    quasimodel reasoner to patch the twelve-counterexample family
+    reported in Opus~4.7's adversarial review
+    (\texttt{review\_paper/review\_cover\_tree\_tableau.tex},
+    Round~1).  The cycle-close clause for $\EQ$-admitting pairs
+    preserves soundness on the three genuine cyclic-$\mathsf{SAT}$
+    concepts.  While CT5 is motivated by the underlying semantics
+    (it prevents compositions that could not arise in a valid
+    quotient), its specific form was not derived from~(C3)--(C4).
+\end{itemize}
+
+\medskip\noindent\textbf{What we claim, in one sentence.}
+$\ALCIRCC{5}$ concept satisfiability is decidable by~(a)--(c) above;
+the cover-tree tableau is a \emph{plausible and empirically
+validated} algorithmic realization (911 original cross-validation
+tests plus 400+ Round-2 adversarial tests, zero mismatches against
+the cycle-aware quasimodel reasoner), but its formal equivalence
+to the split-forest semantics---in particular, that CT1--CT5
+exactly capture the valid-quotient conditions---remains to be
+established.  The empirical agreement between two independently
+designed reasoners is strong evidence that such an equivalence
+should be provable, but evidence is not proof.
+
 \subsection{Open questions}
 
 \begin{enumerate}[label=(\arabic*)]
@@ -932,6 +1019,10 @@ approach.
     are supported by the 902-test cross-validation and by the
     theoretical arguments of~\cite{SiblingCompleted}, but a
     complete formal proof is outstanding.
+    The Round-2 adversarial audit (400+ additional targeted and
+    random tests, zero mismatches against the cycle-aware
+    quasimodel reasoner; see~\S\ref{sec:proof-status}) sharpens the
+    empirical case but does not close the formal gap.
 
   \item \textbf{Complexity.}
     The implementation's worst-case complexity is not analyzed.
@@ -1029,6 +1120,14 @@ GPT-5.4 Pro (OpenAI), prompted by Michael Wessel.
   $\mathcal{ALCI}_{RCC5}$ with eventuality-aware signature blocking.
 \newblock Manuscript, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/alcircc5_cover_tree_tableau_needall_patched.pdf}
+
+\bibitem{CompletenessExtraction}
+Claude Opus (Anthropic), prompted by Michael Wessel.
+\newblock Closing the completeness gap for $\mathcal{ALCI}_{RCC5}$:
+  extraction of valid finite rank-$d$ quotients from strong-$\EQ$
+  models.
+\newblock Manuscript, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/completeness_extraction_ALCIRCC5.pdf}
 
 \bibitem{RenzNebel1999}
 Jochen Renz and Bernhard Nebel.
