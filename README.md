@@ -298,6 +298,28 @@ Every known undecidability proof for description logics ultimately encodes a **t
 
 The fact that every standard technique is blocked is evidence *for* decidability. But ALCI\_RCC5 sits above the known decidable fragments (ALCI\_RCC1/2/3, ALC\_RA\_SG), making the question genuinely open from both directions.
 
+### Direct attacks on the patchwork property (April 2026, Claude)
+
+Beyond the standard reductions, three direct probes were mounted against the **patchwork property** itself — the load-bearing assumption behind every decidability proof in this repository (Renz & Nebel 1999 for atomic RCC5; Renz 1999 for full RCC5 tractability). The idea: if patchwork fails once augmented with an ALCI TBox, that failure could be a seed for undecidability. Three papers form a cascade, each refuting the previous paper's simplified propagation with a strictly smaller counterexample, and converging on split-forest rank-$d$ validity as the minimum viable structure.
+
+| Paper | Propagation attempted | Gap exposed | Counterexample size |
+|---|---|---|---|
+| [`patchwork_augmentation_ALCIRCC5.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/patchwork_augmentation_ALCIRCC5.pdf) | Weak arc-consistency (composition + TypeSafe over existing V) | None found in three probes; conjectured Proposition 7.1 | — |
+| [`typed_patchwork_counterexample_ALCIRCC5.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/typed_patchwork_counterexample_ALCIRCC5.pdf) | Strong arc-consistency (+ existential extensibility against V) | V-to-pending-witness conflicts not caught | **2 nodes, 7 axioms** |
+| [`inter_witness_counterexample_ALCIRCC5.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/inter_witness_counterexample_ALCIRCC5.pdf) | Stronger arc-consistency (+ inter-witness pair-domains) | Pending-witness-to-pending-witness conflicts not caught | **1 node, 7 axioms** |
+
+**Pattern.** Each simplification of split-forest validity has a counterexample. The counterexamples shrink as propagation strengthens, because each layer catches more local failures and leaves only purer versions of the missing gap. The three-paper cascade conjecturally terminates at split-forest rank-$d$ validity: recursing the inter-witness pair-domain check up to modal depth $d$ is equivalent to the split-forest soundness conditions. There is no simpler propagation that works.
+
+**What this says about decidability.** Decidability is unaffected: the split-forest paper already uses the full rank-$d$ machinery, not any of the simplified propagations. The cascade strengthens the decidability case by concretising the "no $k$-ary synthesis" argument from the probe paper — every TBox-expressible constraint decomposes through the witness-extension hierarchy into unary, binary, or pair-local checks. ALCI cannot force genuinely $k$-ary ($k \geq 4$) constraints.
+
+**What this says about undecidability.** The case for decidability keeps strengthening. Every direct attack on patchwork has failed (the cascade), and every standard undecidability reduction is documented as blocked (the table above). The remaining plausible undecidability angles are:
+
+1. **ALCI\_RCC8 with a non-grid reduction shape** — unexplored; Lutz-Wolter's $L_{RCC8}$ undecidability gives a target, and the coincidence obstruction is what blocks naive grid transfer. A non-grid reduction that exploits NTPPI/TPPI transitivity asymmetry differently hasn't been tried.
+2. **Counter-machine simulation via PP-chains** — classical, but ALCI\_RCC5 lacks number restrictions (no zero-test). The cascade's "no $k$-ary synthesis" argument suggests this is exactly what's blocked.
+3. **Encode via infinite structure (ω-automata, infinite PP-chains)** — speculative; ALCI\_RCC5 has infinite models in general, and forcing specific infinite structure without counting looks unavailable.
+
+**Recommendation (April 2026, Claude).** Further probes have low expected yield. The productive remaining direction is to **prove the cascade's termination theorem** (stronger arc-consistency at depth $d$ = split-forest rank-$d$ validity) as a positive result, and to **audit the cover-tree implementation** against split-forest validity to resolve the open theory-vs-implementation gap.
+
 ### Discussion of failed and incomplete approaches
 
 The following approaches have been **disproved, retracted, or shown incomplete**. Brief summaries are given here; full details are in [OUTDATED.md](OUTDATED.md).

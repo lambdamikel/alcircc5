@@ -3584,3 +3584,83 @@ Two complementary directions, in priority order:
 2. **Push the Bodirsky-Bodor CSP dichotomy angle.** Every first-order expansion of RCC5 has a CSP that is P or NP-complete, never undecidable. If ALCI\_RCC5 satisfiability can be framed as (or reduced to) a CSP of a fixed template over a first-order expansion of RCC5, the dichotomy does the heavy lifting and decidability follows as a corollary. This would be a very short paper if the framing works, and structurally adjacent to the "arity ≤ 3 CSP" theorem sketched in the patchwork paper's closing.
 
 A third, more adversarial direction: write a small combinatorial search that enumerates typed networks on 4–6 nodes with small TBoxes and checks arc-consistency vs. realisability, looking for a counterexample to Proposition 7.1 that pencil-and-paper probes missed. This would be computational evidence rather than a proof, but could either reinforce the conjecture or surface a surprise.
+
+
+## April 19, 2026 (late evening) — Cascade: refuting the simplified patchwork propagations
+
+A follow-up thread later the same evening. Michael picked the "prove Proposition 7.1" direction from the previous section. The attempt produced a **counterexample** rather than a proof. After committing that, Michael asked for another undecidability angle; the natural next target was the strengthened propagation introduced by the counterexample paper. That attempt *also* produced a counterexample, one node smaller. The result is a three-paper cascade in which each paper refutes the conjecture of the previous one and proposes a stronger propagation, until the cascade terminates at split-forest rank-$d$ validity.
+
+### Paper 2 — Two-node counterexample to Proposition 7.1
+
+`papers/typed_patchwork_counterexample_ALCIRCC5.tex` / `.pdf` (7 pages).
+
+The two-node TBox:
+
+```
+A ⊑ ∃PP.D
+A ⊑ ¬B
+B ⊑ ∀DR.¬D, ∀PO.¬D, ∀PP.¬D, ∀PPI.¬D
+D ⊑ ¬B
+```
+
+with $V = \{x, z\}$, $x : A$, $z : B$, and the edge $(x,z)$ typed by the full RCC5 disjunction. Arc-consistency over $V$ passes — each pairwise filtered domain is non-empty and composition-closed — but no model exists, because the forced PP-witness $y$ (with type $D$) cannot be related to $z$: every RCC5 relation is ruled out by $B$'s universals. The existential on $x$ fires *outside* the frame $V$, and the atomic patchwork of Renz-Nebel has nothing to say about a pair ($y, z$) that is not in $V$ at all.
+
+The paper defines **strong arc-consistency** (Def 5.1) with an added clause (iii): for every $x \in V$ and every $\exists R.C \in \lambda(x)$, either the existential is already witnessed in $V$, or some $R$-labelled atomic relation is relation-safe against *every* $z \in V \setminus \{x\}$. Under this definition, Probe 1 of the original patchwork paper is also ruled out (so the strengthening is doing real work). The paper conjectures Proposition 5.2: strong arc-consistency is complete for ALCI\_RCC5 satisfiability with domain $V$.
+
+### Paper 3 — One-node counterexample to Proposition 5.2
+
+`papers/inter_witness_counterexample_ALCIRCC5.tex` / `.pdf` (7 pages).
+
+The one-node TBox:
+
+```
+A ⊑ ∃PP.D1
+A ⊑ ∃PP.D2
+D1 ⊑ ∀DR.¬D2, ∀PO.¬D2, ∀PP.¬D2, ∀PPI.¬D2
+D1 ⊑ ¬D2
+```
+
+with $V = \{x\}$, $x : A$. Strong arc-consistency passes vacuously: $V \setminus \{x\}$ is empty, so clause (iii) is satisfied for both existentials. But no model exists: any $y_1 : D_1$ and $y_2 : D_2$ must be related by *some* RCC5 relation, and $D_1$'s universals rule out every one.
+
+The one-node failure is the sharpest form of the gap. It shows that existential propagation that checks each existential *independently* against $V$ cannot catch an obstruction that lives *between two pending witnesses*. The paper defines **stronger arc-consistency** (Def 5.1) with an additional inter-witness clause: for every pair of existentials $(\exists R_1.C_1, \exists R_2.C_2)$ on the same node, there must exist a pair $(R_1', R_2')$ of relations with $R_i' \in \text{atoms}(R_i)$, a third relation $S$, and types realising $C_1, C_2$ such that the triangle $(R_1', R_2', S)$ is composition-consistent and $S$ is relation-safe between the two witness types.
+
+The paper conjectures Proposition 6.1: stronger arc-consistency is equivalent to split-forest rank-$d$ validity. In other words, the cascade terminates here — any further strengthening is just split-forest validity under a different name.
+
+### Pattern
+
+Counterexample size shrinks as propagation strength grows:
+
+- Atomic patchwork (Renz-Nebel 1999) — lives inside one frame, no witness extension.
+- Arc-consistent typed patchwork (Prop 7.1, Paper 1) — refuted by a 2-node example (Paper 2).
+- Strong arc-consistency (Prop 5.2, Paper 2) — refuted by a 1-node example (Paper 3).
+- Stronger arc-consistency (Def 5.1, Paper 3) — conjectured equivalent to rank-$d$ validity.
+
+The fixed point is split-forest semantics itself. There is no simpler propagation that captures ALCI\_RCC5 satisfiability; the witness-menu / inter-witness / composition-triangle structure of rank-$d$ validity is not an accident of the construction but a genuine minimal requirement.
+
+### Outcome
+
+Net effect on the decidability/undecidability balance:
+
+- **Decidability case strengthened.** The cascade concretises the "no $k$-ary synthesis for $k \geq 4$" argument from the patchwork paper: every obstruction sits at arity 2 or 3 (pairwise type-safety, triangle composition, or inter-witness triangles), and the witness-extension hierarchy captures all of them.
+- **Undecidability case weakened.** Each stronger propagation closes off more counterexample space. A genuine undecidability reduction must now exhibit an obstruction that rank-$d$ validity misses — and the cascade suggests that bar is very high.
+
+### Commits (on `master`, pushed to `origin`)
+
+- `c280605` — Add CONVERSATION.md entry for patchwork-probe session
+- `d5d2a92` — Refute Prop 7.1 of the patchwork probe with a two-node counterexample
+- `dcbd44d` — Refute Prop 5.2 with a one-node inter-witness counterexample
+
+### Pivot recommendation
+
+After the cascade, Michael asked what *other* undecidability angle to pursue. Three remain in principle:
+
+1. **ALCI\_RCC8 without grid encoding** — use TPPI/NTPPI refinement non-topologically. But the level-2 domino attempt already showed this hits the coincidence obstruction.
+2. **Counter-machine via PP-chains** — encode a two-counter machine in discrete PP-chains with universal-quantifier bookkeeping. Blocked by the absence of PP-discreteness (unbounded but not unboundedly-indexed).
+3. **Infinite-structure encoding** — encode an undecidable first-order theory into ALCI\_RCC5 TBoxes. Blocked by Bodirsky-Bodor (every FO expansion of RCC5 is CSP-decidable).
+
+None of these look promising. The honest recommendation is to stop attacking undecidability and invest in the decidability side instead:
+
+- **(a)** Prove Proposition 6.1 rigorously — establish that stronger arc-consistency equals rank-$d$ validity. This would give a second, independent decidability argument grounded in constraint propagation rather than tree semantics.
+- **(b)** Audit the cover-tree implementation against split-forest validity. The theory-vs-implementation gap flagged in the previous session is the concrete remaining uncertainty; closing it would turn the 911+400+ empirical result into a derivation from the calculus.
+
+Michael asked for this overall sentiment to be written up in the README under the existing "standard undecidability attempts" section. The README now has a new subsection "Direct attacks on the patchwork property (April 2026, Claude)" with a compact summary of the cascade, its pattern, and the pivot recommendation.
