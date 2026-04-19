@@ -3276,13 +3276,13 @@ Michael noted that the same reasoner is referred to under several names across t
 
 ## April 18, 2026 — Cover-tree unsoundness on PP/PPI-transitive universals
 
-### Context: Sonnet 4.7 reports a bug
+### Context: Opus 4.7 reports a bug
 
-Michael: "I just had a conversation with Sonnet 4.7, and it says that the covertree tableau reasoner doesn't detect unsatisfiability of `(and (all PP (not c)) (some PP (some PP C)))`."
+Michael: "I just had a conversation with Opus 4.7, and it says that the covertree tableau reasoner doesn't detect unsatisfiability of `(and (all PP (not c)) (some PP (some PP C)))`."
 
 Verified immediately: cover-tree says SAT, both quasimodel reasoners say UNSAT, the concept is genuinely UNSAT. PP is transitive — `comp(PP, PP) = {PP}` — so `d →PP→ a →PP→ b` forces `d →PP→ b`, and `∀PP.¬C` at `d` then forces `¬C(b)`, clashing with the existential chain's `C(b)`.
 
-This was a serious finding: the project had been treating the cover-tree as the sound-and-complete reference reasoner and the quasimodel baseline as "the one with the known incompleteness." Sonnet 4.7's example flipped that picture — the cover-tree was unsound on UNSAT, and the very quasimodel reasoner we had caveated handled the case correctly.
+This was a serious finding: the project had been treating the cover-tree as the sound-and-complete reference reasoner and the quasimodel baseline as "the one with the known incompleteness." Opus 4.7's example flipped that picture — the cover-tree was unsound on UNSAT, and the very quasimodel reasoner we had caveated handled the case correctly.
 
 ### Diagnosis
 
@@ -3308,7 +3308,7 @@ All four test suites pass after the fix:
 - `stress_test_cover_tree.py`: 911/911 matches, 0 mismatches
 - `stress_test_cyclic.py` (cycle-aware QM oracle): 911/911 matches
 
-Added three regression cases to `test_cyclic_reasoner.py`: `pp-transitivity-depth-2` (Sonnet 4.7's original probe), `pp-transitivity-depth-3` (deeper chain), `ppi-transitivity-depth-2` (PPI analogue).
+Added three regression cases to `test_cyclic_reasoner.py`: `pp-transitivity-depth-2` (Opus 4.7's original probe), `pp-transitivity-depth-3` (deeper chain), `ppi-transitivity-depth-2` (PPI analogue).
 
 ### Blind spot in prior cross-validation
 
@@ -3335,7 +3335,7 @@ The 911/911-zero-mismatch claim held before and after the fix. Neither the basel
 
 ### Context: Opus 4.7's adversarial review paper
 
-After the morning's PP/PPI-transitivity fix, Opus 4.7 produced a full adversarial review paper at `review_paper/review_cover_tree_tableau.tex` (837 lines). (The transitivity bug earlier in the morning was reported by Sonnet 4.7 in a separate conversation; the review paper identifies its author as Claude Opus 4.7.) Michael asked me to read it and report whether more action was required.
+After the morning's PP/PPI-transitivity fix, Opus 4.7 produced a full adversarial review paper at `review_paper/review_cover_tree_tableau.tex` (837 lines). (The transitivity bug earlier in the morning was reported by Opus 4.7 in a separate conversation; the review paper identifies its author as Claude Opus 4.7.) Michael asked me to read it and report whether more action was required.
 
 The review's verdict: **significantly more action is required.** The transitivity fix patched only 2 of 12 counterexamples. The broader family is:
 \[
