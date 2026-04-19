@@ -3472,3 +3472,68 @@ Practical artefacts left behind by Round 2 that we should keep using:
 - `review_paper/test/round2_random.py` — a seed-parametrised, time-budgeted adversarial generator that is structurally different from `stress_test_cover_tree.py`. Running both is strictly better than running either alone, for the blind-spot reason above.
 
 Thanks to Opus 4.7 for a careful and constructive review, and in particular for the discipline of producing both the bug *and* the fix, and of re-auditing the fix adversarially rather than stopping at a "looks good" verdict.
+
+
+## April 19, 2026 — Attribution fix, RCC8 domino attempt, and theory/implementation distinction
+
+A follow-up session covering four largely independent threads: (1) correcting a model-name attribution error across several files, (2) attempting the coincidence-domino reduction one more time for ALCI\_RCC8 using TPPI/NTPPI to try to separate direct and indirect successors, (3) strengthening the open-question wording in the cover-tree paper and adding an explicit proof-status subsection, and (4) propagating the resulting theory-vs-implementation distinction to the overview paper and the README.
+
+### Context
+
+At this point the repository contains: the split-forest semantics paper (soundness proven), the completeness-extraction paper (completeness proven via the "realized relations are automatically relation-safe" key lemma), the cover-tree tableau implementation paper (empirically validated to 911+400+ concepts with zero mismatches post-CT5), the overview paper tying them together, and the two-tier quotient paper for the PO-coherent fragment. The open decidability question for ALCI\_RCC5 is answered (positively) by the two theory papers taken together; decidability for ALCI\_RCC8 remains open.
+
+### Thread 1 — Sonnet 4.7 → Opus 4.7 rename
+
+Michael pointed out that several files referred to a "Sonnet 4.7" model that does not exist. These references all traced back to the April 18 morning bug-report conversation, which was actually conducted by Opus 4.7 (this assistant) in a separate session, not by a Sonnet model. Renamed all five mentions across `README.md`, `CONVERSATION.md`, and three paper files. Recompiled the affected PDFs. Committed and pushed, explicitly excluding the untracked draft files that were not ready for the repository.
+
+### Thread 2 — Concrete coincidence-domino reduction attempt for ALCI\_RCC8
+
+Michael asked whether the coincidence-domino reduction (the one that fails for ALCI\_RCC5 because PPI is transitive and hence cannot distinguish direct from indirect grid successors) could be rescued in ALCI\_RCC8 by using TPPI for direct grid edges and NTPPI for the indirect (diagonal) edges. The intuition is sound at level 1: comp(TPPI,TPPI) = {TPPI, NTPPI} is genuinely non-transitive, so a single step of two TPPI edges does not force an NTPPI between corners, and the direct-vs-indirect distinction survives where the RCC5 version collapses.
+
+Wrote this up carefully — a schema with a `Corner` local-isolation concept, a level-1 SAT analysis, and a level-2 analysis showing that the grid nevertheless collapses, but via a different mechanism than the RCC5 case. In RCC5 the collapse is transitive-propagation at level 2 (comp(PPI,PPI) = {PPI} forces the corners onto the diagonal); in RCC8 the collapse is the coincidence obstruction from Wessel's Figure 11 — the composition table permits {PO, EQ, TPP, NTPP, TPPI, NTPPI} between the two would-be-distinct corners, and nothing syntactically rules out EQ, so the corners are free to coincide and the attempted domino encoding does not enforce the required halting behaviour.
+
+The punchline is that the two failures are structurally different, and the second (coincidence obstruction) is the one that Lutz & Wolter 2006 resolve topologically for $L_{RCC8}$ via boundary-sensitive semantics, which ALCI\_RCC8 lacks. This also explains why L\_RCC8 undecidability does not transfer to ALCI\_RCC8: the mechanism that makes the undecidability argument go through for L\_RCC8 is not available here.
+
+Added this as §3.4 of the overview paper (`sec:domino-attempt-rcc8`) and as §5.4 of the L\_RCC8 vs ALCI\_RCC8 paper (`sec:concrete-tppi-attempt`). A few macro issues came up during the write-up — `\bigsqcap` was undefined in the overview preamble (replaced with `\bigwedge`), and the L\_RCC8 paper does not define `\TPPI`, `\NTPPI`, `\DC`, `\PPI` etc. macros, so that subsection was rewritten to use plain-text relation names in math mode to match the paper's existing style.
+
+### Thread 3 — Cover-tree paper §7: strengthened Round-2 caveat + new proof-status subsection
+
+Michael asked whether the statement in §7.3 of the cover-tree paper that "a formal proof of decidability is still outstanding" was still appropriate, or whether it was now too strict given that the two theory papers (split-forest soundness, completeness-extraction) together establish decidability.
+
+The right answer is: the statement needs to be relaxed *but also sharpened*, because the decidability claim and the formal-correctness-of-the-cover-tree-implementation claim are two different things that were being conflated.
+
+Added a new §7.3 "Proof status: theory vs. implementation" (`sec:proof-status`) with a three-part breakdown:
+
+- **(a) Soundness of split-forest semantics** — proven in the split-forest paper (Thms 1.17–1.19) by LCA induction + König's lemma + canonical refinements.
+- **(b) Completeness extraction** — proven in the completeness-extraction paper via the key lemma that relations realized in a genuine model are automatically relation-safe, so $\mathsf{Need}_R$-filtered domains are non-empty and the extraction produces a valid finite rank-$d$ quotient.
+- **(c) Decidability of ALCI\_RCC5** — follows from (a) and (b) together.
+
+Then "What the cover-tree tableau is and is not" as a bullet list: the implementation checks a {DR, PO}-restricted path-consistency condition via CT1–CT5; (C3)–(C4) sibling-interface downward-support axioms are not explicitly checked; witness menus, rank-$d$ states, and $\mathsf{Need}_R$ filtering are not constructed; CT5 is a patch derived from adversarial-review counterexamples, not from the split-forest calculus. The subsection concludes with a one-sentence summary: the cover-tree tableau is an *inspired realization* that happens to align with the semantics on the 911+400+ tested concepts, but is not formally derived from it.
+
+Also strengthened §7.3(1) to note that the Round-2 audit (400+ tests, zero mismatches post-CT5) sharpens the empirical case without closing the formal gap, with a cross-reference to the new proof-status subsection. Added a `\bibitem{CompletenessExtraction}` entry. Fixed an undefined `\SAT` → `\mathsf{SAT}`.
+
+### Thread 4 — Theory-vs-implementation distinction propagated to overview and README
+
+Michael asked whether this theory-vs-implementation distinction was already coming across cleanly in the overview paper and the README. It wasn't, so:
+
+**Overview paper §6.3**: appended a "scope" paragraph clarifying that the split-forest soundness and completeness-extraction theorems are about the split-forest semantics, not about the cover-tree implementation; the cover-tree is a realization *arrived at by simplification and, in the case of CT5, by empirical counterexample analysis from Opus 4.7's adversarial review*, not by formal derivation from the split-forest calculus.
+
+**Overview paper §8.1**: restructured "What has been achieved" into two explicit layers:
+- **Theoretical layer (establishes decidability)**: (1) split-forest semantics with soundness, (2) completeness extraction — together imply the decidability of ALCI\_RCC5.
+- **Operational layer (empirically validated but not formally derived)**: (3) cover-tree tableau with CT1–CT5, (4) implementation paper with 911+400+ tests at zero mismatches.
+Added a closing paragraph on "The gap between the two layers" noting that CT5 was a patch in response to an adversarial counterexample, and that an explicit bridge between the two layers remains open work.
+
+**README**: added a new "Theory vs. implementation (April 2026, Claude)" blockquote immediately after the existing "Current assessment" blockquote, with the same two-layer structure, an explicit list of what the cover-tree tableau omits relative to the theory, and pointers to the relevant paper sections for readers who want the detailed version.
+
+### Commits (on `master`, pushed to `origin`)
+
+- `f0413f6` — Rename Sonnet 4.7 → Opus 4.7 across README, CONVERSATION, and three papers
+- `0d695c3` — Add concrete TPPI/NTPPI domino attempt for ALCI\_RCC8 to overview §3.4 and L\_RCC8 paper §5.4
+- `840ac33` — Clarify proof status in cover-tree paper: new §7.3 "Proof status: theory vs. implementation"
+- `98fa54b` — Make theory-vs-implementation distinction explicit in overview §6.3/§8.1 and README
+
+### Reflection
+
+The useful distinction that crystallised across Threads 3 and 4 is between *semantic decidability* (which is established by the two theory papers, modulo community-level proof refereeing) and *implementation-level formal correctness* (which is not established — the cover-tree tableau is empirically validated but not derived from the calculus whose semantics it is trying to realize). These are different claims, and the repository is now careful about saying so in all three user-facing surfaces (overview, README, cover-tree paper).
+
+The RCC8 domino attempt is a useful negative result to have written down. It shows concretely that the RCC8 refinement of RCC5 *does* help at level 1 (the TPPI/NTPPI split is not vacuous there), and *does not* help at level 2 (because the obstruction switches from transitive propagation to the coincidence obstruction, which is what Lutz & Wolter resolve topologically and which is unavailable here). This is the kind of thing that makes the "L\_RCC8 undecidability does not mechanically transfer to ALCI\_RCC8" claim more than just a slogan.
