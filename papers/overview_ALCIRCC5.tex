@@ -426,6 +426,97 @@ from indirect descendants), which is why Wessel's even-odd chain
 works there but has no RCC5 analogue.
 \end{remark}
 
+\subsection{A concrete domino attempt in $\ALCIRCC{8}$}
+\label{sec:domino-attempt-rcc8}
+
+The remark above suggests the $\TPPI/\NTPPI$ distinction in
+$\ALCIRCC{8}$ might rescue the construction: a direct successor
+($\TPPI$) and an indirect one ($\NTPPI$) are genuinely
+distinguishable, so perhaps the level-2 collapse can be avoided.
+We attempt the analogue and show that while it escapes the RCC5
+failure mode, it fails for a different reason---Wessel's
+\emph{coincidence obstruction}~\cite{Wessel2003}.
+
+\medskip\noindent\textbf{The schema.} Let $\textsf{Corner}$ be the
+concept that isolates a node from all non-$\EQ$ neighbors:
+\[
+  \textsf{Corner} \;=\;
+  \bigwedge_{R \,\in\, \{\DC,\EC,\PO,\TPP,\NTPP,\TPPI,\NTPPI\}}
+    \forall R.(\neg C \sqcap \neg D).
+\]
+The isolation is placed \emph{locally on the colored grandchildren}
+rather than as an ancestral $\forall\TPPI.\forall\TPPI$ universal,
+so it cannot propagate transitively through the recursion:
+\begin{align*}
+  X \;=\; &\exists\TPPI.\exists\TPPI.(C \sqcap \textsf{Corner})
+    \;\sqcap\; \exists\TPPI.\exists\TPPI.(D \sqcap \textsf{Corner}) \\
+  &\sqcap\; \forall\TPPI.(\neg C \sqcap \neg D)
+    \;\sqcap\; \forall\TPPI.X.
+\end{align*}
+The third conjunct $\forall\TPPI.(\neg C \sqcap \neg D)$ forces the
+corner relation $x \to z$ to be $\NTPPI$ (not $\TPPI$), using
+$\comp(\TPPI,\TPPI) = \{\TPPI, \NTPPI\}$.
+
+\medskip\noindent\textbf{Level 1 is satisfiable, with a real
+direct/indirect distinction.} Without recursion, $x$ has
+$\TPPI$-children $y_1, y_2$ (the two ``direct'' positions) and a
+single corner $z$ reached by $\TPPI$-$\TPPI$ chains from both
+$y_1$ and $y_2$.  The EQ-collapse at level~2 works exactly as
+in RCC5: $z_1 \in C \sqcap \textsf{Corner}$ and $z_2 \in D \sqcap
+\textsf{Corner}$ are mutual non-$\EQ$ neighbors only if
+$\textsf{Corner}$ is violated, so under strong-$\EQ$ semantics
+$z_1 = z_2 = z$.  Crucially, $z \neq y_1, y_2$ in general: $z$ is
+$\NTPPI$ of $x$ while $y_1, y_2$ are $\TPPI$---the direct/indirect
+distinction survives, which is a genuine RCC8 refinement over the
+RCC5 attempt of~\S\ref{sec:domino-attempt}.
+
+\medskip\noindent\textbf{Level 2 collapses via the coincidence
+obstruction.} Adding $\forall\TPPI.X$: the $\TPPI$-child $y$ of
+$x$ satisfies $X$, producing its own corner $w \in C \sqcap D
+\sqcap \textsf{Corner}$ at $\NTPPI$-distance from $y$, and hence
+at $\NTPPI$-distance from $x$ via
+$\comp(\TPPI, \NTPPI) = \{\NTPPI\}$.  Now $x$'s own corner $z$ and
+$y$'s corner $w$ are distinct grid positions in the intended
+reading---but as elements of the model they are related by some
+RCC8 base relation.  Since $z$ carries $\textsf{Corner}$, every
+non-$\EQ$ neighbor of $z$ lies in $\neg C \sqcap \neg D$.  But
+$w \in C \sqcap D$.  Therefore $z = w$ under strong-$\EQ$.
+\textbf{All corners across the grid coincide at a single point.}
+
+\medskip\noindent\textbf{Why the $\TPPI/\NTPPI$ trick fails.} In
+the RCC5 attempt the collapse is a \emph{transitive-propagation}
+failure: the grandparent universal fires on great-grandchildren
+because $\comp(\PPI,\PPI) = \{\PPI\}$.  Moving the isolation to a
+local $\textsf{Corner}$ marker and using the non-transitive piece
+$\comp(\TPPI,\TPPI) = \{\TPPI, \NTPPI\}$ eliminates that specific
+pathway---the universal at the grandparent no longer reaches
+deeper nodes.  But a \emph{different} obstruction takes over: the
+composition table permits any of
+$\{\PO, \EQ, \TPP, \NTPP, \TPPI, \NTPPI\}$ between two corners at
+different intended grid coordinates, and nothing in the concept
+language rules out $\EQ$.  The $\textsf{Corner}$ markers themselves
+then force the EQ-merge.  This is exactly the obstruction Wessel
+identified in report7.pdf, Figure~11 (cf.~\S\ref{sec:wessel-grid}):
+the composition table does not carry the rigidity needed to keep
+distinct grid cells distinct.
+
+\begin{remark}
+The failure mode is structurally different from the RCC5 one but
+traces back to the same root cause.  Lutz--Wolter's $\LRCC{8}$
+reduction resolves the coincidence obstruction using topological
+geometry of $\reals^2$: east-of-north coincides with north-of-east
+as a geometric fact, and each grid cell is a 2D region whose
+boundary inclusions force distinct corners to be genuinely
+distinct~\cite{LutzWolter2006}.  No such rigidity is available in
+the abstract RCC8 semantics of $\ALCIRCC{8}$: a pure composition
+table allows corner points to merge freely, and the $\TPPI/\NTPPI$
+distinction---while useful locally for a direct/indirect
+separation at level~2---cannot be chained to enforce an unbounded
+$\naturals \times \naturals$ grid.  This matches the open-problem
+status of $\ALCIRCC{8}$ decidability noted in~\cite{LutzWolter2006}
+and further discussed in~\cite{Wessel2003}.
+\end{remark}
+
 %% ====================================================================
 \section{Why Na\"{\i}ve Tableau Blocking Fails}
 \label{sec:naive-blocking}

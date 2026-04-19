@@ -487,6 +487,95 @@ consumed), which is insufficient for the unbounded synchronization required by
 general domino tiling.  The alternating-type trick provides a 1-dimensional
 ladder but not a 2-dimensional grid.
 
+\subsection{A concrete $TPPI/NTPPI$ grid attempt}
+\label{sec:concrete-tppi-attempt}
+
+To make the obstruction completely explicit, we write out a concrete
+$\ALCIRCC{8}$ concept that attempts to encode a 2D grid using the
+$TPPI/NTPPI$ distinction.  The construction is the natural RCC8 lift
+of the failed RCC5 domino attempt in our main paper~\cite{OurMainPaper}:
+there, $\comp(PPI,PPI) = \{PPI\}$ makes $PPI$-chains transitive and
+the ancestral isolation universal propagates to every deeper
+descendant.  The RCC8 refinement $\comp(TPPI,TPPI) = \{TPPI,NTPPI\}$
+is non-transitive, which suggests the collapse can be avoided.  We
+show that while this is locally true, the \emph{coincidence
+obstruction} of~\S\ref{sec:grid} reappears at the grid level.
+
+\medskip\noindent\textbf{Schema.}  Let $\mathsf{Corner}$ be a
+\emph{local} isolation marker placed directly on the colored
+grandchildren (rather than as an ancestral universal, so it cannot
+propagate transitively through recursion):
+\[
+  \mathsf{Corner} \;=\;
+  \bigwedge_{R \,\in\, \{DC,EC,PO,TPP,NTPP,TPPI,NTPPI\}}
+    \forall R.(\neg C \sqcap \neg D).
+\]
+Define
+\begin{align*}
+  X \;=\; &\exists TPPI.\exists TPPI.(C \sqcap \mathsf{Corner})
+    \;\sqcap\; \exists TPPI.\exists TPPI.(D \sqcap \mathsf{Corner}) \\
+  &\sqcap\; \forall TPPI.(\neg C \sqcap \neg D)
+    \;\sqcap\; \forall TPPI.X.
+\end{align*}
+The conjunct $\forall TPPI.(\neg C \sqcap \neg D)$ forces the corner
+relation $x \to z$ to be $NTPPI$ (not $TPPI$), via
+$\comp(TPPI,TPPI) = \{TPPI,NTPPI\}$.
+
+\medskip\noindent\textbf{Level 1 is satisfiable, with direct/indirect
+successors genuinely distinguished.}  Without recursion, $x$ has two
+$TPPI$-children $y_1, y_2$ and a single $NTPPI$-grandchild $z$
+reached along both $TPPI$-$TPPI$ chains.  The RCC5 EQ-collapse
+argument carries over: $z_1 \in C \sqcap \mathsf{Corner}$ and
+$z_2 \in D \sqcap \mathsf{Corner}$ are mutual non-$EQ$ neighbors only
+if $\mathsf{Corner}$ is violated, so under strong-$EQ$ semantics
+$z_1 = z_2 = z$.  Crucially, $z$ is $NTPPI$-related to $x$ while
+$y_1, y_2$ are $TPPI$-related---the direct vs.~indirect distinction
+survives.  This is a genuine refinement over the RCC5 attempt
+in~\cite{OurMainPaper}, where $PP/PPI$-chains cannot express such a
+distinction.
+
+\medskip\noindent\textbf{Level 2 collapses via the coincidence
+obstruction.}  Adding $\forall TPPI.X$: the $TPPI$-child $y$ satisfies
+$X$, producing its own corner $w \in C \sqcap D \sqcap \mathsf{Corner}$
+at $NTPPI$-distance from $y$, and hence at $NTPPI$-distance from $x$
+via $\comp(TPPI,NTPPI) = \{NTPPI\}$.  Now $z$ (the corner of $x$)
+and $w$ (the corner of $y$) are distinct \emph{intended} grid
+positions, but as elements of the model they are related by some RCC8
+base relation.  Since $z$ carries $\mathsf{Corner}$, every non-$EQ$
+neighbor of $z$ lies in $\neg C \sqcap \neg D$.  But $w \in C \sqcap D$.
+Therefore $z = w$ under strong-$EQ$ semantics.  Iterating the
+recursion, \textbf{all corners of the intended grid coincide at a
+single point}---the grid collapses to 1D.
+
+\medskip\noindent\textbf{Diagnosis.}  The RCC5 collapse is a
+\emph{transitive-propagation} failure: the grandparent universal fires
+on great-grandchildren because $\comp(PPI,PPI) = \{PPI\}$.  Moving
+the isolation into a local $\mathsf{Corner}$ marker and using the
+non-transitive composition $\comp(TPPI,TPPI) = \{TPPI,NTPPI\}$
+eliminates that pathway.  But a different obstruction takes over: the
+composition table permits any of
+$\{PO, EQ, TPP, NTPP, TPPI, NTPPI\}$ between two corners at
+distinct intended grid coordinates, and nothing in the concept
+language rules out $EQ$.  The local $\mathsf{Corner}$ marker then
+\emph{forces} the $EQ$-merge.  This is exactly the composition-table
+gap that Wessel's Figure~11 identifies in~\cite{Wessel2003}
+(cf.~\S\ref{sec:grid}): abstract RCC8 does not carry the rigidity
+needed to keep distinct grid cells distinct.
+
+\begin{remark}\label{rem:concrete-attempt-conclusion}
+  This concrete attempt sharpens the non-transfer story.  The
+  $TPPI/NTPPI$ distinction does provide something the RCC5 case
+  lacks---a local direct/indirect separator at level~2---and it does
+  avoid the specific transitive-propagation failure mode of the RCC5
+  attempt.  But it does \emph{not} close the 2D coincidence gap.
+  Lutz--Wolter's $\LRCC{8}$ reduction resolves the gap topologically:
+  geometric boundary inclusions force north-of-east to coincide with
+  east-of-north \emph{without} causing distant corners to merge, because
+  cells are 2D regions with distinct interiors~\cite{LutzWolter2006}.
+  No such rigidity is available in the abstract setting, consistent
+  with $\ALCIRCC{8}$ decidability remaining open.
+\end{remark}
+
 %% ====================================================================
 \section{Technical priority and citation analysis}
 \label{sec:priority}
