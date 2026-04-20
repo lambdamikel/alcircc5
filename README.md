@@ -10,7 +10,7 @@ A self-contained **[overview paper (PDF)](https://github.com/lambdamikel/alcircc
 
 The idea of combining description logics with qualitative spatial reasoning via modal accessibility relations dates back to **Cohn (1993)**, who proposed a multi-modal spatial logic using RCC8 relations as modalities in his IJCAI workshop paper:
 
-> A. G. Cohn. *Modal and Non Modal Qualitative Spatial Logics.* In F. D. Anger, H. M. Guesgen, and J. van Benthem (eds.), Proceedings of the Workshop on Spatial and Temporal Reasoning, IJCAI, 1993.
+> A. G. Cohn. *Modal and Non Modal Qualitative Spatial Logics.* In F. D. Anger, H. W. Guesgen, and J. van Benthem (eds.), Proceedings of the Workshop on Spatial and Temporal Reasoning, IJCAI, 1993.
 
 Cohn's paper introduced the key idea of treating topological relations (PP, PO, DR, etc.) as modal operators, enabling spatial constraints to be expressed within a logical framework — but left decidability questions entirely open. **Wessel (2002/2003)** then formally defined the ALCI\_RCC family (ALCI\_RCC5, ALCI\_RCC8), giving it rigorous semantics based on the RCC composition tables, and investigated decidability as a central open problem (see [report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf)). The decidability questions remained open for over 20 years — until the work documented in this repository.
 
@@ -661,7 +661,7 @@ python3 alcircc5_reasoner.py
 
 8. C. Lutz and M. Milicic. "A Tableau Algorithm for Description Logics with Concrete Domains and General TBoxes." Journal of Automated Reasoning, 38:227-259, 2007.
 
-9. S. Borgwardt, F. De Bortoli, P. Koopmann. "The Precise Complexity of Reasoning in ALC with omega-Admissible Concrete Domains." KR 2024.
+9. S. Borgwardt, F. De Bortoli, P. Koopmann. "The Precise Complexity of Reasoning in ALC with omega-Admissible Concrete Domains." In Proc. 37th International Workshop on Description Logics (DL 2024), CEUR Workshop Proceedings, vol. 3739, 2024. (Extended version: arXiv:2405.19096.)
 
 10. F. Baader and M. Rydval. "Description Logics with Concrete Domains and General Concept Inclusions Revisited." IJCAR 2020, LNCS 12166, pp. 413-431.
 
