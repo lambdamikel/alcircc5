@@ -3664,3 +3664,42 @@ None of these look promising. The honest recommendation is to stop attacking und
 - **(b)** Audit the cover-tree implementation against split-forest validity. The theory-vs-implementation gap flagged in the previous session is the concrete remaining uncertainty; closing it would turn the 911+400+ empirical result into a derivation from the calculus.
 
 Michael asked for this overall sentiment to be written up in the README under the existing "standard undecidability attempts" section. The README now has a new subsection "Direct attacks on the patchwork property (April 2026, Claude)" with a compact summary of the cascade, its pattern, and the pivot recommendation.
+
+## Citation audit (April 2026, Claude)
+
+Michael asked for a web-search verification pass over all external citations across papers, README, and CONVERSATION to flag any hallucinated or incorrect references. Two rounds were run; the second round was a sweep over bibitems and narrative references that had not been checked in round one.
+
+### Errors found and corrected
+
+**Round 1 (commit `6e9bd9b`):**
+
+- **Rybina-Zakharyaschev (2001)** — hallucinated. No such paper exists. Confirmed via the Lutz-Wolter 2006 PDF bibliography (extracted with `pdftotext`): the real citation is **M. Reynolds and M. Zakharyaschev, "On the products of linear modal logics," *Journal of Logic and Computation* 11(6):909-931, 2001**. Fixed in `papers/LRCC8_vs_ALCIRCC8.tex` (bibitem, two narrative mentions, three `\cite` calls) and in this conversation log.
+- **Bresolin et al. (2008/2014)** — fifth author written as "G. Sala" in both papers. Actual author is **G. Sciavicco**. Fixed in `papers/MSO_encoding_ALCIRCC5.tex` (two bibitems) and README entry 15.
+- **Bresolin et al. LPAR version** — year written as 2009. LNCS 5330 is the LPAR 2008 proceedings volume. Fixed.
+- **Renz 1999** — IJCAI page range written as "448--454" across eight papers. Correct range is **448--455**. Fixed in `closing_extension_gap_ALCIRCC5.tex`, `decidability_ALCIRCC5.tex`, `direct_soundness_ALCIRCC5.tex`, `two_tier_quotient_ALCIRCC5.tex`, `FW_proof_ALCIRCC5.tex`, `triangle_blocking_ALCIRCC5.tex`, `response_to_status_note.tex`, `review2/response_to_gpt_review.tex`.
+
+**Round 1 README sweep (commit `f82b10d`):**
+
+- **Bodirsky & Bodor (2024)** — README entry 12 had coauthor "V. Bodor" and journal "ACM Transactions on Computational Logic (TOCL), 25(2)". Actual: **B. Bodor**, **ACM Transactions on Computation Theory (ToCT), 16(2), Article 10**.
+- **Bresolin et al.** — Sala -> Sciavicco in README entry 15 (same error as the papers).
+- **Kontchakov et al. (2010)** — README entry 16 had title "Logic of Metric Spaces and LS-Spaces" with three authors. The actual paper at *Logical Methods in Computer Science* 6(3:7), 2010 is **"Spatial Logics with Connectedness Predicates" by R. Kontchakov, I. Pratt-Hartmann, F. Wolter, M. Zakharyaschev** (four authors, Pratt-Hartmann was missing).
+
+**Round 2 (commit `d078c0e`):**
+
+- **Borgwardt, De Bortoli & Koopmann (2024)** — cited as "Proc. KR, 2024" in `papers/decidability_ALCIRCC5.tex` and README entry 9. Verified against the KR 2024 proceedings index: the paper is **not** in KR 2024. Actual venue is the **37th International Workshop on Description Logics (DL 2024)**, CEUR-WS Vol-3739. Fixed both, with arXiv:2405.19096 noted as the extended version in the README.
+- **Renz 1999 in MSO_encoding_ALCIRCC5.tex** — pages written as "56--61". Correct range is **448--455**, and the full title "A complete analysis" was restored to match the other papers.
+- **Cohn 1993 workshop editor** — the middle-initial "H. M. Guesgen" appeared in `overview_ALCIRCC5.tex`, `dl2026_abstract_ALCIRCC5.tex`, README, and CONVERSATION. The editor is **Hans Werner Guesgen**, i.e. **H. W. Guesgen**. Fixed in all four files.
+
+### Verified correct (no changes needed)
+
+Grädel/Otto TCS 224 (1999), Lutz/Milicic JAR 38 (2007), Baader/Rydval IJCAR 2020 LNCS 12166, Demri/Gu CSL 2026 LIPIcs 363 Art. 42, Marx/Reynolds JLC 9(6) (1999), Reynolds/Zakharyaschev JLC 11(6) (2001), Wolter/Zakharyaschev KR 2000 pp. 3-14, Shelah Ann. Math. 102(3):379-419 (1975), Gurevich/Shelah Ann. Math. Logic 23(2-3):179-198 (1982), Bennett KR 1994 pp. 51-62, Halpern/Shoham JACM 38(4):935-962 (1991), Renz/Nebel AI 108(1-2):69-123 (1999), Lutz/Wolter LMCS 2(2) (2006), Baader et al. DL Handbook (2003), Randell/Cui/Cohn KR 1992 pp. 165-176.
+
+### Commits (on `master`, pushed to `origin`)
+
+- `6e9bd9b` — Fix Reynolds-Zakharyaschev, Bresolin (Sciavicco, LPAR 2008), Renz 448--455 across 10 papers
+- `f82b10d` — Fix three README citation errors (Bodirsky/Bodor journal, Bresolin, Kontchakov title and authors)
+- `d078c0e` — Final pass: Borgwardt venue (DL 2024 workshop, not KR 2024), Renz pages in MSO paper, Guesgen initial
+
+### Method note
+
+Verification was done via WebSearch plus WebFetch on journal landing pages and CEUR-WS/LIPIcs/arXiv PDFs. One Google-induced outage required a re-run pass to compensate for earlier failed fetches; Michael caught that omission and asked for a retry, which uncovered the Reynolds-Zakharyaschev ground truth. A README-only sweep was also performed on explicit follow-up from Michael — the first pass had only covered LaTeX bibitems, and the README carried its own independent reference list with three additional errors.
