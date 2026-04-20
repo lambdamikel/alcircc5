@@ -1912,7 +1912,7 @@ All of these constructions predate Lutz-Wolter (LMCS 2006) by 3-4 years.
 
 ### Citation gap
 
-Lutz-Wolter cite only Wessel's DL2001 paper [Wes01], not the more comprehensive 2002/2003 technical report. They characterize Wessel's work as: "despite several efforts, to the best of our knowledge no results have been obtained so far" — which is factually incorrect (even [Wes01] contains undecidability results for ALC_RA⊖, and the uncited report proves decidability of ALCI_RCC1/2/3 and EXPTIME-hardness of ALCI_RCC8). The even-odd chain technique is credited to Marx-Reynolds and Rybina-Zakharyaschev, not to Wessel. The grid construction and coincidence obstruction are not acknowledged.
+Lutz-Wolter cite only Wessel's DL2001 paper [Wes01], not the more comprehensive 2002/2003 technical report. They characterize Wessel's work as: "despite several efforts, to the best of our knowledge no results have been obtained so far" — which is factually incorrect (even [Wes01] contains undecidability results for ALC_RA⊖, and the uncited report proves decidability of ALCI_RCC1/2/3 and EXPTIME-hardness of ALCI_RCC8). The even-odd chain technique is credited to Marx-Reynolds and Reynolds-Zakharyaschev, not to Wessel. The grid construction and coincidence obstruction are not acknowledged.
 
 ### Parallel to RCC5
 
