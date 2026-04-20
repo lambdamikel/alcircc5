@@ -3703,3 +3703,36 @@ Grädel/Otto TCS 224 (1999), Lutz/Milicic JAR 38 (2007), Baader/Rydval IJCAR 202
 ### Method note
 
 Verification was done via WebSearch plus WebFetch on journal landing pages and CEUR-WS/LIPIcs/arXiv PDFs. One Google-induced outage required a re-run pass to compensate for earlier failed fetches; Michael caught that omission and asked for a retry, which uncovered the Reynolds-Zakharyaschev ground truth. A README-only sweep was also performed on explicit follow-up from Michael — the first pass had only covered LaTeX bibitems, and the README carried its own independent reference list with three additional errors.
+
+## Priority-claim check: first AI-generated decidability proof in DL? (April 2026, Claude)
+
+Michael asked Claude to web-verify the claim that this project constitutes the first AI-generated decidability proof for a non-trivial description logic. Multiple WebSearch queries were run across the 2024-2026 landscape of AI-in-mathematics successes.
+
+### What AI has demonstrably done in math, 2024--2026
+
+- **Knuth / Claude Opus 4.6 (February 2026)** --- *Claude's Cycles*: Hamiltonian decomposition of a Cayley digraph on $m^3$ vertices for all odd $m$. Combinatorics / graph theory, not logic. Guided by Filip Stappers over 31 exploration steps; Knuth wrote the rigorous proof himself.
+- **AlphaProof (DeepMind, July 2024)**: IMO silver-medal-standard problems in Lean. Olympiad-level theorems, not open research problems.
+- **Axiom AI (early 2026)**: Four open problems in algebraic geometry and number theory, including a Chen-Gendron conjecture unsolved since 2021. Human verification underway by Tao et al.
+- **GPT-5.2 + Aristotle**: Erdős problems #397, #728, #729 — additive combinatorics. Since Christmas 2025, 15 problems moved from open to solved on the Erdős website, with 11 crediting AI involvement; Tao has counted eight where AI made meaningful autonomous progress.
+- **Tao's formalization experiments**: Using ChatGPT + Lean to jointly formalize a counterexample proof over ~one week. Translation of existing proofs into Lean, not generation of new open-problem proofs.
+
+### What was not found
+
+No prior AI-generated decidability proof was found for any description logic (ALC family, EL, DL-Lite, ALCI\_RCC family, etc.) or modal logic. Searches included: "AI-generated decidability proof description logic first", "LLM description logic proof open problem", "first AI-generated decidability modal logic", "AI solves open problem description logic decidability 2026", and several variants. No hits.
+
+### Verdict
+
+The claim is defensible *with hedging*. Drop any of the following hedges and it becomes fragile:
+
+1. **"Proposed / unverified."** The results are not peer-reviewed and rely on AI-generated LaTeX and implementations. The README disclaims this; the priority claim must keep it in view.
+2. **"Heavily human-guided."** Wessel posed the problem in 2002/2003 and supplied the key structural intuitions (PPI-tree orientation, EQ-splitting, DR-rigidity). This is not an autonomous AI result in the Erdős-#728 sense. The division of labor is documented in the overview paper's "A note on the process" and should not be softened.
+3. **"Non-trivial."** Should be paired with explicit scope: $\ALCIRCC{5}$ is an ALC extension with JEPD role axioms and RCC5 composition; the decidability of concept satisfiability has been open for ~22 years (Wessel 2002/2003).
+4. **"To our knowledge."** Standard priority-claim hedge. Covers the possibility of a quieter result in a venue web search cannot reach.
+
+### Recommended phrasing
+
+> To our knowledge, this is the first proposed AI-generated decidability proof for a non-trivial open problem in description logic — specifically, concept satisfiability in $\ALCIRCC{5}$, an open question from Wessel (2002/2003). The results are unverified and offered for community scrutiny.
+
+### Search notes
+
+Search was via WebSearch (Google-backed) plus WebFetch on the Knuth PDF, the Tao blog post, the KR 2024 proceedings index, CEUR-WS Vol-3739, and LIPIcs CSL 2026 vol 363. The relevant AI-in-math timeline consistently covers combinatorics, number theory, algebraic geometry, and olympiad-level analysis --- not decidability results in logics with expressive role structure. The `ALCIRCC` family, the patchwork property, and split-forest rank-$d$ semantics have no prior AI-generated treatment according to indexed web content as of April 2026.
