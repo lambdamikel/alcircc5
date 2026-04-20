@@ -58,27 +58,21 @@
 \newcommand{\reals}{\mathbb{R}}
 \newcommand{\RCCfive}{\{\DR,\PO,\PP,\PPI\}}
 
+
 \begin{document}
 
-%%
-%% Rights management information.
 \copyrightyear{2026}
 \copyrightclause{Copyright for this paper by its authors.
   Use permitted under Creative Commons License Attribution 4.0
   International (CC BY 4.0).}
 
-%%
-%% Conference information (removed for standalone version)
-%% \conference{DL 2026: 39th International Workshop on Description
-%%   Logics, July 17--19, 2026, Lisbon, Portugal}
+\conference{DL 2026: 39th International Workshop on Description
+  Logics, July 17--19, 2026, Lisbon, Portugal}
 
-%%
-%% Title
-\title{On the Decidability of $\ALCIRCC{5}$:
-  A Survey of the Problem, Its History, and a Proposed Solution}
+\title{Description Logic Research in the Era of Agentic AI:\\
+  How a Human-and-AI Team Delivered the World's First\\
+  DL Decidability Proof}
 
-%%
-%% Authors
 \author[1]{Michael Wessel}[%
 email=miacwess@gmail.com,
 url=https://github.com/lambdamikel,
@@ -98,40 +92,108 @@ url=https://github.com/lambdamikel/alcircc5,
 
 \cortext[1]{Corresponding author.}
 
-%%
-%% Abstract
 \begin{abstract}
-The description logic $\ALCIRCC{5}$ extends $\ALCI$ with the five
-RCC5 base relations as roles, under composition-table semantics.
-Its decidability has been open since Wessel~(2002/2003).
-We survey the history of the problem---from Cohn's original proposal
-(1993) through Wessel's systematic investigation and Lutz \& Wolter's
-related undecidability results (2006)---and explain why all known
-undecidability reductions fail for $\ALCIRCC{5}$.
-We then present a proposed decision procedure: the \emph{cover-tree
-tableau}, which decomposes models into PPI-oriented cover trees
-where only $\{\DR,\PO\}$ remain as open cross-edges.
-This decomposition, combined with the patchwork property of RCC5,
-yields finite blocking via rank-$d$ signatures.
-The approach is supported by extensive computational evidence
-(911~test concepts, zero mismatches; 775/775~SAT concepts with
-cover-tree models) but has not been formally verified by human experts.
-We discuss why na\"{\i}ve tableau approaches fail for
-$\ALCIRCC{5}$ and how the cover-tree tableau overcomes these obstacles.
+% TODO(Michael): extended-abstract abstract, to be written by hand.
+This extended abstract reports on a human-and-AI collaboration that
+produced a candidate decidability proof for concept satisfiability in
+$\ALCIRCC{5}$---an open problem since Wessel~(2002/2003). The full
+survey, proof sketch, implementation report, and the two-round
+adversarial review log are reproduced verbatim in the appendix. The
+body of this note focuses on the \emph{process}: what the human and
+the AI agents contributed, which strategies worked, which failed, and
+what the episode suggests about the role of agentic AI in description
+logic research.
 \end{abstract}
 
 \begin{keywords}
   description logic \sep
-  spatial reasoning \sep
-  RCC5 \sep
+  ALCI\_RCC5 \sep
   decidability \sep
-  tableau calculus \sep
-  patchwork property
+  agentic AI \sep
+  human--AI collaboration \sep
+  spatial reasoning
 \end{keywords}
 
 \maketitle
 
 %% ====================================================================
+\section{Introduction}
+\label{sec:ea-intro}
+%% ====================================================================
+
+% TODO(Michael): Introduction --- motivation, research question, why
+% DL 2026 should care, one-paragraph teaser of the result and the
+% process.  Paragraphs will be requested from the AI collaborator
+% on demand.
+
+%% ====================================================================
+\section{Background on $\ALCIRCC{}$}
+\label{sec:ea-background}
+%% ====================================================================
+
+% TODO(Michael): Background on the ALCI_RCC family --- minimal
+% recap of the logic, the RCC5/RCC8 composition tables, strong-EQ
+% semantics, and what decidability means here.  See Appendix
+% Sections A.2--A.3 for the full technical treatment.
+
+%% ====================================================================
+\section{Results}
+\label{sec:ea-results}
+%% ====================================================================
+
+% TODO(Michael): Results --- the cover-tree tableau decision
+% procedure for ALCI_RCC5, the empirical validation (911/911,
+% 775/775, the 4x4 grid of counterexamples and its closure), the
+% two-round adversarial review outcome, and the current status of
+% the claim.  See Appendix Sections A.4--A.7 for full details.
+
+%% ====================================================================
+\section{Strategies}
+\label{sec:ea-strategies}
+%% ====================================================================
+
+% TODO(Michael): Strategies --- the methodology of the
+% collaboration: multiple parallel reasoning approaches, iterative
+% formalisation via LaTeX, executable implementations as independent
+% oracles, adversarial review by a second AI agent, the role of
+% cross-validation with deliberate blind-spot awareness, and the
+% discipline of withdrawing claims when counterexamples are found.
+
+%% ====================================================================
+\section{Summary and Implications}
+\label{sec:ea-summary}
+%% ====================================================================
+
+% TODO(Michael): Summary and implications --- what the episode
+% suggests about human-and-AI collaboration in formal-methods
+% research more broadly, residual caveats (testing vs.\ proof,
+% peer review still warranted), and an outlook for the DL
+% community.
+
+\clearpage
+\appendix
+
+%% ====================================================================
+\section*{Appendix: Full Survey Paper\\\normalsize\normalfont
+  ``On the Decidability of $\ALCIRCC{5}$:
+  A Survey of the Problem, Its History, and a Proposed Solution''}
+\label{sec:appendix}
+%% ====================================================================
+
+\noindent\emph{The remainder of this document reproduces the
+self-contained survey paper of the same authors (companion file
+\texttt{overview\_ALCIRCC5.tex}) verbatim, renumbered as an appendix.
+Section numbers within the appendix begin at~A.1.
+Cross-references in the body of the extended abstract
+(Sections~\ref{sec:ea-intro}--\ref{sec:ea-summary}) point into the
+appendix sections below. The appendix is the technical record
+underlying the extended abstract and has been published
+separately in the project repository\footnote{%
+\url{https://github.com/lambdamikel/alcircc5}}.}
+
+\renewcommand{\thesection}{A.\arabic{section}}
+\setcounter{section}{0}
+
 \section{Introduction}
 \label{sec:intro}
 %% ====================================================================
