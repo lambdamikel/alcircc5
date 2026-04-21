@@ -3780,3 +3780,32 @@ The quasimodel reasoner (`src/alcircc5_reasoner.py`) is incomplete on the **PO-l
 The retracted quasimodel **paper** (`decidability_ALCIRCC5.pdf`) was also incomplete, for a different reason: the type-elimination's Q3 condition was anti-monotone, causing cascade elimination of valid types.
 
 In both cases, the failure mode is the same direction: SAT answers are trustworthy; UNSAT answers on certain cyclic-via-symmetric-role patterns are not. That is why the reasoner is still useful as a cross-validation oracle for the cover-tree tableau, and why the 911-concept "zero mismatches" cross-validation held pre-fix (the test set happened not to include the blind-spot pattern).
+
+## Verification of Lutz--Wolter 2006 quote and citation claims (April 2026)
+
+Wessel asked whether the claim in `papers/LRCC8_vs_ALCIRCC8.tex` --- that Lutz and Wolter's 2006 paper *"Modal Logics of Topological Relations"* (Logical Methods in Computer Science 2(2), arXiv:cs/0605064) dismissively characterized his work and did not cite the 2002/2003 technical report `report7.pdf` --- is accurate, and whether the verbatim quote attributed to Lutz & Wolter on lines 589--596 of that paper is actually in their paper.
+
+**Procedure.** Fetched the paper from `https://arxiv.org/pdf/cs/0605064`, extracted text with `pdftotext`, and grep'd for "Wessel", "Egenhofer-Franzosa", "no results", "several efforts", "best of our knowledge". The relevant passage is on page 2 of the paper.
+
+**Quote verification.** The passage in Lutz \& Wolter 2006, page 2 (extracted text lines 86--90), reads:
+
+> *"We should note that modal logics based on the Egenhofer-Franzosa relations have been suggested in an early paper by Cohn [Coh93] and further considered in [Wes01]. However, it proved difficult to analyze the expressive power and computational behavior of such logics: despite several efforts, to the best of our knowledge no results have been obtained so far."*
+
+This is a verbatim match to the block quote on lines 589--596 of `LRCC8_vs_ALCIRCC8.tex`. No paraphrasing, no embellishment, no material added.
+
+**Citation claim verification.** The bibliography of Lutz \& Wolter 2006 (extracted text lines 2423, 2445--2447) contains exactly one Wessel reference:
+
+> `[Wes01]` M. Wessel. *Obstacles on the way to qualitative spatial reasoning with description logics: Some undecidability results.* In C.\ Goble, D.\,L.\ McGuinness, R.\ M\"oller, and P.\,F.\ Patel-Schneider, editors, *Proceedings of the International Workshop in Description Logics 2001 (DL2001)*, number 49 in CEUR-WS, pages 96--105, 2001.
+
+No `[Wes02]`, no `[Wes03]`. The 2002/2003 technical report FBI-HH-M-324/03 (`report7.pdf`) --- which contains the fuller development, including decidability of $\ALCIRCC{1,2,3}$, $\PSPACE$-hardness of $\ALCIRCC{5}$, $\EXPTIME$-hardness of $\ALCIRCC{8}$, the grid construction (Figure~10), the coincidence obstruction (Figure~11), and the hybrid-logic axiomatization --- is not cited.
+
+**Assessment of dismissiveness.** The phrase *"despite several efforts, to the best of our knowledge no results have been obtained so far"* is their exact wording. This characterization is demonstrably inaccurate even with respect to `[Wes01]` (which contains undecidability results for $\ALC_{\mathcal{RA}^\ominus}$ via PCP reduction), and further inaccurate with respect to the uncited `report7.pdf`, which contains the decidability results for $\ALCIRCC{1,2,3}$, complexity lower bounds, the coincidence obstruction analysis, and the hybrid-logic axiomatization.
+
+**Verdict.** The claim in `LRCC8_vs_ALCIRCC8.tex` stands:
+1. The attributed quote is verbatim;
+2. Lutz \& Wolter 2006 cites only `[Wes01]`, not the 2002/2003 technical report;
+3. The "no results have been obtained so far" characterization is their actual wording and is factually incorrect given both the cited and uncited Wessel material.
+
+**Sources.**
+- Lutz \& Wolter, *Modal Logics of Topological Relations*, arXiv:cs/0605064 (<https://arxiv.org/abs/cs/0605064>)
+- LMCS listing: <https://lmcs.episciences.org/2253>
