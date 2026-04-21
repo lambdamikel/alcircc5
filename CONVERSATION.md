@@ -3765,3 +3765,18 @@ A final `EXPTIME|quasimodel|decidability_ALCIRCC5` grep over the README and over
 ### Bibliography check
 
 Confirmed that the overview paper (`papers/overview_ALCIRCC5.tex`) cites all four core papers of the current decidability argument: `SiblingCompleted` (split-forest, bibitem line 1501), `CoverTree` (GPT's cover-tree calculus, line 1508), `CompletenessExtraction` (Claude's, line 1514), `CoverTreeImpl` (Claude's implementation, line 1521), plus `GISTaxonomy` for the practical validation. Exploratory/alternate-approach papers (two-tier quotient, MSO encoding, FW proof, triangle blocking, LRCC8\_vs\_ALCIRCC8, direct soundness) are intentionally not cited — the overview is scoped to the split-forest + cover-tree track; the full catalog lives in the README's "Files" section.
+
+## Clarification: the quasimodel reasoner is incomplete, not unsound (April 2026)
+
+After the scrub, Wessel asked: *"The reasoner was unsound, or incomplete?"*
+
+Answer: **incomplete**, not unsound.
+
+- **Unsound** would mean reporting SAT when the concept is actually UNSAT.
+- **Incomplete** means reporting UNSAT when the concept is actually SAT.
+
+The quasimodel reasoner (`src/alcircc5_reasoner.py`) is incomplete on the **PO-loop pattern** --- e.g., $C \sqcap \exists \PO.\exists \PO. C \sqcap \forall \PO.\neg C \sqcap \forall \DR.\neg C \sqcap \forall \PP.\neg C \sqcap \forall \PPI.\neg C$. This is SAT via a 2-element symmetric loop (strong EQ identifies the two endpoints of the $\exists \PO.\exists \PO$ chain with the root), but the constructive bottom-up search wrongly reports UNSAT.
+
+The retracted quasimodel **paper** (`decidability_ALCIRCC5.pdf`) was also incomplete, for a different reason: the type-elimination's Q3 condition was anti-monotone, causing cascade elimination of valid types.
+
+In both cases, the failure mode is the same direction: SAT answers are trustworthy; UNSAT answers on certain cyclic-via-symmetric-role patterns are not. That is why the reasoner is still useful as a cross-validation oracle for the cover-tree tableau, and why the 911-concept "zero mismatches" cross-validation held pre-fix (the test set happened not to include the blind-spot pattern).
