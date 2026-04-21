@@ -3736,3 +3736,32 @@ The claim is defensible *with hedging*. Drop any of the following hedges and it 
 ### Search notes
 
 Search was via WebSearch (Google-backed) plus WebFetch on the Knuth PDF, the Tao blog post, the KR 2024 proceedings index, CEUR-WS Vol-3739, and LIPIcs CSL 2026 vol 363. The relevant AI-in-math timeline consistently covers combinatorics, number theory, algebraic geometry, and olympiad-level analysis --- not decidability results in logics with expressive role structure. The `ALCIRCC` family, the patchwork property, and split-forest rank-$d$ semantics have no prior AI-generated treatment according to indexed web content as of April 2026.
+
+## Scrub of stale references to the retracted quasimodel paper (April 2026)
+
+After the decidability argument was consolidated onto GPT-5.4's split-forest paper plus Claude's completeness-extraction paper, the README and overview still contained leftover prose from the earlier quasimodel / type-elimination era. Wessel asked for a full scrub; the following commits resolved the inconsistencies:
+
+- **`8cba899` — README: scrub stale references.**
+  - Subtitle (line 3): *"Quasimodels Meet the Patchwork Property"* → *"Split-Forest Models and the Patchwork Property"*.
+  - Review verdict (line 30): *"rests on the quasimodel procedure with type elimination ([decidability_ALCIRCC5.pdf]) plus Claude's completeness extraction"* → *"rests on GPT-5.4's split-forest paper (the quotient-to-model direction, Thms 1.17–1.19) plus Claude's completeness extraction paper (the model-to-quotient direction)"*.
+  - Files listing (line 482): `decidability_ALCIRCC5.pdf` now marked *Retracted/superseded*; noted that its reasoner is retained only as a cross-validation oracle.
+
+- **`4756393` — README: remove leftover EXPTIME decidability claims.** The EXPTIME upper bound was tied to the retracted quasimodel/type-elimination paper. The current argument (split-forest + completeness extraction) asserts **no** complexity bound, and the PO-coherent fragment's quotient is already 2-EXPTIME, so an EXPTIME claim for the full logic was inconsistent with `two_tier_quotient_ALCIRCC5.pdf`. Lines 30 and 379 now say "decidability claim" with a parenthetical noting no complexity bound is asserted. Retained correctly: the complexity-landscape tables (plain ALCI EXPTIME-complete, ALCI\_RCC8 EXPTIME-hard lower bound, PO-coherent 2-EXPTIME), and the Borgwardt/Demri citations describing their own papers.
+
+- **`b39d7f3` — README: last leftover in the Round-1 review paragraph.** Line 361 still attributed the decidability theorem to *"the quasimodel procedure with type elimination"*. Corrected to the current source: split-forest + completeness extraction.
+
+- **`1ae0929` — Overview paper: matching fix.** `papers/overview_ALCIRCC5.tex` line 1115 (and mirrored in the untracked `dl2026_abstract_ALCIRCC5.tex` line 1177) contained the same leftover phrase about *"the quasimodel type-elimination argument that underpins the decidability theorem"*. Replaced with *"the split-forest / completeness-extraction argument that underpins the decidability theorem"*. PDFs regenerated.
+
+- **`cef9c76` — README: add completeness-extraction paper to the intro section.** The intro (lines 96–108), immediately after GPT-5.4's two papers, previously jumped straight to Claude's Python implementation, omitting Claude's completeness-extraction paper. The paper only appeared in the "Key files" block further down. Added a new paragraph ("Closing the completeness gap by Claude (Opus 4.7)") between GPT's formalization and Wessel's PP-cross-edge correction, stating the paper's scope (split-tree presentation → rank-$d$ state assignment → descriptor extraction → witness-menu extraction → quotient formation → validity verification), the key lemma (model-realized relations are already relation-safe for endpoint types, so Need_$R$-filtering is vacuous for model-extracted quotients), and its role in combination with GPT's soundness chain (Thms 1.17–1.19).
+
+### Audit coverage
+
+A final `EXPTIME|quasimodel|decidability_ALCIRCC5` grep over the README and overview confirmed that all remaining mentions fall into one of three legitimate categories:
+
+1. **Complexity-landscape tables** — ALCI EXPTIME-complete (known), ALCI\_RCC8 EXPTIME-hard (Wessel lower bound), PO-coherent fragment 2-EXPTIME (two-tier quotient paper's quotient bound).
+2. **Quasimodel *reasoner*** — the Python tool `alcircc5_reasoner.py` used as a cross-validation oracle for the cover-tree tableau; distinct from the retracted paper.
+3. **Citations of external papers** (Borgwardt/De Bortoli/Koopmann, Demri/Gu) describing *their* EXPTIME results, not ALCI\_RCC5.
+
+### Bibliography check
+
+Confirmed that the overview paper (`papers/overview_ALCIRCC5.tex`) cites all four core papers of the current decidability argument: `SiblingCompleted` (split-forest, bibitem line 1501), `CoverTree` (GPT's cover-tree calculus, line 1508), `CompletenessExtraction` (Claude's, line 1514), `CoverTreeImpl` (Claude's implementation, line 1521), plus `GISTaxonomy` for the practical validation. Exploratory/alternate-approach papers (two-tier quotient, MSO encoding, FW proof, triangle blocking, LRCC8\_vs\_ALCIRCC8, direct soundness) are intentionally not cited — the overview is scoped to the split-forest + cover-tree track; the full catalog lives in the README's "Files" section.
