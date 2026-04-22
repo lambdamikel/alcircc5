@@ -3857,3 +3857,70 @@ Both pushed to `master` on 2026-04-21. The DL 2026 abstract, which remains untra
 ### Lesson
 
 This was the second round of corrections to settled-sounding claims about Wessel's own prior work: the first was the Lutz--Wolter verbatim-quote audit, where Claude had (correctly) attributed the "no results" phrasing but Michael wanted byte-level verification against arXiv:cs/0605064. The recurring pattern: Claude's summaries of Wessel's technical reports can drift from the primary sources even when the bibliography keys are correct. When authorship and attribution details matter, cross-check against the PDFs, not against prior project text.
+
+---
+
+## Bibliography expansion and reorganization (April 2026)
+
+### New bibitems added
+
+Across `papers/overview_ALCIRCC5.tex` and `papers/dl2026_abstract_ALCIRCC5.tex` (the DL 2026 Appendix), the following new bibitem keys were introduced to cover previously uncited project artefacts:
+
+- **`ClaudeOpus47`, `GPT54Pro`** — system-reference bibitems for the two LLMs that produced the proofs and implementations. Used in the disclaimer line.
+- **`ALCIRCC5Repo`** — the GitHub project repository (points at `README.md` for the overall argument and blocked-reduction landscape).
+- **`ALCIRCC5Outdated`** — `OUTDATED.md`, the catalogue of retracted / superseded approaches.
+- **`FWProof`** — `FW_proof_ALCIRCC5.pdf`: negative result on the finite-witness conjecture for the contextual tableau.
+- **`TriangleBlocking`** — `triangle_blocking_ALCIRCC5.pdf`: GPT-5.4's failed triangle-blocking route.
+- **`PatchworkAugmentation`** — `patchwork_augmentation_ALCIRCC5.pdf`: negative result on a patchwork-augmentation probe.
+- **`TypedPatchworkCounterexample`** — `typed_patchwork_counterexample_ALCIRCC5.pdf`: refutation of a proposed typed-patchwork blocking mechanism.
+- **`StatusAfterFW`** — `ALCI_RCC5_status_after_FW.pdf`: status summary after the FW negative result.
+- **`ResponseGPTBlocking`** — `response_to_gpt_blocking.pdf`: Claude's response to GPT-5.4's blocking-based undecidability attempts.
+- **`TwoTierQuotient`** — `two_tier_quotient_ALCIRCC5.pdf`: PO-coherent fragment decidability paper (2-EXPTIME quotient bound).
+- **`QuasimodelReasoner`** — `src/alcircc5_reasoner.py`: the Python quasimodel-based reasoner retained as a cross-validation oracle (bibitem notes the known incompleteness on PO-loop / cyclic-via-symmetric-role concepts — SAT trustworthy, UNSAT not).
+
+### Citations inserted into running text
+
+Every new bibitem is now referenced at least once in the body text of both papers. The main insertion points:
+
+- **Disclaimer** (Section 1 / intro): `\cite{ClaudeOpus47}` and `\cite{GPT54Pro}` next to the AI-authorship note.
+- **Failed-blocking enumeration** (Section "Why Naïve Tableau Blocking Fails"): `\cite{ResponseGPTBlocking}` on profile-cached and meet-semilattice blocking items; `\cite{TriangleBlocking}` on the tri-neighborhood item; new fourth item "Finite-witness / patchwork-augmentation probes" with `\cite{FWProof,PatchworkAugmentation,TypedPatchworkCounterexample}`.
+- **Blocking-dilemma summary**: `\cite{ALCIRCC5Outdated,StatusAfterFW,ResponseGPTBlocking}` as the umbrella catalogue; `\cite{ALCIRCC5Repo}` as repository pointer.
+- **PO-coherent fragment mention** (Section "What remains open"): `\cite{TwoTierQuotient}` at the 2-EXPTIME quotient bound.
+- **Cross-validation-suite remark**: `\cite{QuasimodelReasoner}` at the introduction of `alcircc5_reasoner.py`.
+
+Post-insertion compile showed **zero `LaTeX Warning: Citation` warnings** in both papers.
+
+### Bibliography reorganized into logical groups
+
+Both bibliographies were reordered into six groups with comment dividers:
+
+1. **Classical background** (chronological): Cohn 1993 → Lutz-Wolter 2006 (the DL abstract also contains the additional 1990s primary-literature cites and the 2007/2026 context references).
+2. **Core 2026 decidability pillars**: `SiblingCompleted`, `CoverTree`, `CompletenessExtraction`, `CoverTreeImpl`, `TwoTierQuotient`.
+3. **Failed-attempt investigations** (2026): `FWProof`, `TriangleBlocking`, `PatchworkAugmentation`, `TypedPatchworkCounterexample`, `ResponseGPTBlocking`, `StatusAfterFW`.
+4. **Tools and Python implementations**: `QuasimodelReasoner`, `GISTaxonomy`.
+5. **Project meta-resources**: `ALCIRCC5Repo`, `ALCIRCC5Outdated`.
+6. **Large language models (system references)**: `ClaudeOpus47`, `GPT54Pro`.
+
+The Wessel legacy reports (`Wessel2000RA`, `Wessel2000SG`, `Wessel2001`, `Wessel2001RA`, `Wessel2002`, `Wessel2003`) are now in strict chronological order within Group 1.
+
+### Verification: bibitem content unchanged during reorder
+
+After the reorder commit (`5e39205`), the reorder was verified as **strictly structural**:
+
+- `\bibitem` count unchanged: 26 in the overview, 38 in the DL abstract.
+- All `\bibitem{key}` identifiers match exactly between HEAD and HEAD~1 for the tracked overview paper (`git show HEAD~1:papers/overview_ALCIRCC5.tex | grep -oP '^\\bibitem\{\K[^}]+' | sort` vs. the HEAD version → zero diff).
+- When the bibliography region of HEAD and HEAD~1 is extracted, stripped of empty lines and new comment dividers, and sorted, the two files are byte-identical (157 lines each for the overview).
+
+Only `\bibitem` blocks were moved; no content inside any bibitem was altered.
+
+### Commits
+
+- `d13aaac` — Add ClaudeOpus47 and GPT54Pro.
+- `d90b793` — Add ALCIRCC5Repo, ALCIRCC5Outdated, FWProof, TriangleBlocking, PatchworkAugmentation, TypedPatchworkCounterexample, StatusAfterFW, ResponseGPTBlocking.
+- `6a6c164` — Add TwoTierQuotient.
+- `7d8e462` — Add QuasimodelReasoner.
+- `ca07ea4` — Cite new bibitems in overview body text.
+- `e50aee5` — Cite QuasimodelReasoner in cross-validation-suite remark.
+- `5e39205` — Reorder bibliography into logical groups.
+
+All tracked changes pushed to `origin/master` on 2026-04-22. The DL abstract, which remains untracked per user preference, received the same edits in the working tree and was recompiled locally.
