@@ -1204,16 +1204,18 @@ split in detail.
 \subsection{Computational evidence}
 
 The algorithm is implemented in approximately 350~lines of
-Python~\cite{CoverTreeImpl}.
+Python~\cite{CoverTreeImpl,CoverTreeReasoner}.
 Cross-validation against an independent quasimodel-based
-reasoner on \textbf{911~test concepts} (50~known SAT,
+reasoner~\cite{QuasimodelReasoner,CyclicReasoner} on
+\textbf{911~test concepts} (50~known SAT,
 13~known UNSAT, 36~adversarial, 512~systematic triples,
 200~random depth-2, 100~random depth-3) yields
-\textbf{zero mismatches}.
-A decomposition test confirms that \textbf{775/775 SAT
-concepts (100\%)} have finite cover-tree models, with
-12.2\,M total models enumerated and \textbf{zero genuine
-counterexamples}.
+\textbf{zero mismatches}~\cite{StressTestCoverTree,StressTestCyclic,TestCyclicReasoner}.
+A decomposition test~\cite{DecompositionTest} confirms that
+\textbf{775/775 SAT concepts (100\%)} have finite cover-tree
+models, with 12.2\,M total models enumerated and \textbf{zero
+genuine counterexamples}. Models produced by the tableau are
+independently replayed by a standalone verifier~\cite{ModelVerifier}.
 
 Additionally, a GIS taxonomy computation~\cite{GISTaxonomy}
 applies the cover-tree tableau to a realistic $\ALCIRCC{5}$
@@ -1596,6 +1598,15 @@ Claude (Anthropic), prompted by M.\ Wessel.
 
 %% --- Tools and Python implementations (2026) ------------------------
 
+\bibitem{CoverTreeReasoner}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Cover-tree tableau reasoner for $\ALCIRCC{5}$.
+\newblock Python implementation, April 2026.
+\newblock The main candidate decision procedure; cross-validated
+  against the quasimodel oracle on 911 concepts and on the 775-case
+  decomposition suite.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py}
+
 \bibitem{QuasimodelReasoner}
 Claude (Anthropic), prompted by M.\ Wessel.
 \newblock A quasimodel-based reasoner for $\ALCIRCC{5}$.
@@ -1604,6 +1615,55 @@ Claude (Anthropic), prompted by M.\ Wessel.
   are trustworthy; UNSAT answers are known-incomplete on
   cyclic-via-symmetric-role concepts (e.g.\ the PO-loop pattern).
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py}
+
+\bibitem{CyclicReasoner}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Cycle-aware wrapper for the $\ALCIRCC{5}$ quasimodel
+  reasoner.
+\newblock Python implementation, April 2026.
+\newblock Thin wrapper that detects cyclic-via-symmetric-role
+  patterns and delegates to a direct model search; restores the
+  $911/911$ cross-validation match rate.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner_cyclic.py}
+
+\bibitem{ModelVerifier}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Independent model verifier for $\ALCIRCC{5}$ SAT answers.
+\newblock Python implementation, April 2026.
+\newblock Checks inverse symmetry, composition-consistency on all
+  triples, type-safety, existential witnessing, and recursive
+  concept truth against explicit finite RCC5 models.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/model_verifier.py}
+
+\bibitem{DecompositionTest}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Cover-tree decomposition test for $\ALCIRCC{5}$
+  ($775/775$).
+\newblock Python test suite, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/decomposition_test.py}
+
+\bibitem{StressTestCoverTree}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Cross-validation stress test for the $\ALCIRCC{5}$
+  cover-tree tableau against the baseline quasimodel reasoner
+  (911 concepts).
+\newblock Python test suite, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py}
+
+\bibitem{StressTestCyclic}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Cross-validation stress test against the cycle-aware
+  quasimodel reasoner (911 concepts; zero mismatches).
+\newblock Python test suite, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cyclic.py}
+
+\bibitem{TestCyclicReasoner}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Seven-case adversarial suite for the cycle-aware
+  $\ALCIRCC{5}$ reasoner (PO-loop, DR-loop, mixed-loop,
+  clash-to-$\EQ$, and distinguishing-universal variants).
+\newblock Python test suite, April 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/test_cyclic_reasoner.py}
 
 \bibitem{GISTaxonomy}
 Claude (Anthropic), prompted by M.\ Wessel.
