@@ -283,7 +283,7 @@ Every known undecidability proof for description logics ultimately encodes a **t
 | Candidate Problem | Reduction Technique | Key Feature Missing in ALCI\_RCC5 | Verdict |
 |---|---|---|---|
 | Z×Z Domino Tiling (Berger 1966) | Grid via graded modalities + transitivity + converse | Number restrictions (counting) | Blocked |
-| ALC\_RA⊖ undecidability (Wessel 2000) | CFG intersection via Post Correspondence Problem | Arbitrary role box (fixed in RCC5) | Blocked |
+| ALC\_RA⊖ undecidability (Wessel 2000) | Non-empty CFG intersection | Non-disjoint roles (RCC5 roles are JEPD) | Blocked |
 | ALCN\_RASG undecidability (Wessel 2000) | Grid via domino + number restrictions on admissible role box | Number restrictions (counting) | Blocked |
 | ALCF⁻ (features + inverse) | Grid via functional roles | Functional roles | Blocked |
 | L\_RCC8 undecidability (Lutz-Wolter 2006) | Domino tiling via discrete TPP-chains | TPP/NTPP distinction (RCC5 has only PP) | Blocked |
@@ -398,7 +398,7 @@ The ALCI\_RCC family extends the description logic ALCI (ALC with inverse roles)
 These logics were introduced by Michael Wessel in his doctoral work at the University of Hamburg, under the DFG project "Description Logics and Spatial Reasoning" (grant NE 279/8-1). In a series of technical reports, Wessel:
 
 - **Proved decidability** of ALCI\_RCC1, ALCI\_RCC2, and ALCI\_RCC3 by showing that their composition tables yield deterministic or near-deterministic role boxes amenable to standard DL techniques ([report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf)).
-- **Proved undecidability** of ALC\_RA (ALC with arbitrary role algebras, i.e., unrestricted composition-based role inclusion axioms) via reduction from CFG intersection ([report6.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report6.pdf)), and of ALC\_RA⊖ (the restriction to admissible role boxes) via the Post Correspondence Problem ([report4.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report4.pdf)).
+- **Proved undecidability** of ALC\_RA (ALC with arbitrary role axioms, i.e., unrestricted composition-based role inclusion axioms) via reduction from the Post Correspondence Problem ([report6.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report6.pdf)), and of ALC\_RA⊖ (the non-disjoint-roles variant) via reduction from non-empty CFG intersection ([report4.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report4.pdf)).
 - **Classified the decidability boundary** for ALC with composition-based role inclusion axioms: decidable when the role box is a subalgebra of a group (ALCRA\_SG), undecidable when graded modalities or non-admissible role boxes are added ([report5.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report5.pdf)).
 - **Left open** the decidability of ALCI\_RCC5 and ALCI\_RCC8, noting that their composition tables are non-deterministic but satisfy the patchwork property — placing them between the decidable (ALCRA\_SG) and undecidable (ALC\_RA) cases.
 

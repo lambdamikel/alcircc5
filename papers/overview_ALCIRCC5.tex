@@ -210,12 +210,12 @@ In a series of companion reports, Wessel also mapped out the
 decidability landscape for description logics with general
 composition-based role inclusion axioms:
 \begin{itemize}
-  \item $\ALC_{\mathcal{RA}}$ (arbitrary role algebras) is
-    \textbf{undecidable}, via reduction from CFG
-    intersection~\cite{Wessel2001RA}.
-  \item $\ALC_{\mathcal{RA}}^\ominus$ (restricted to admissible
-    role boxes) is also \textbf{undecidable}, via the Post
-    Correspondence Problem~\cite{Wessel2000RA}.
+  \item $\ALC_{\mathcal{RA}}$ (arbitrary role axioms) is
+    \textbf{undecidable}, via reduction from the Post
+    Correspondence Problem~\cite{Wessel2001RA}.
+  \item $\ALC_{\mathcal{RA}}^\ominus$ (non-disjoint-roles
+    variant) is also \textbf{undecidable}, via reduction from
+    non-empty CFG intersection~\cite{Wessel2000RA}.
   \item $\ALC_{\mathcal{RA}_{SG}}$ (subalgebras of groups) is
     \textbf{decidable}~\cite{Wessel2000SG}.
 \end{itemize}
@@ -354,8 +354,8 @@ no arbitrary role box, and no geometric coincidence conditions.
 \textbf{Source Problem} & \textbf{Technique} & \textbf{Missing in $\ALCIRCC{5}$} \\
 \midrule
 $\naturals \times \naturals$ domino & Graded modalities + transitivity & Number restrictions \\
-$\ALC_{\mathcal{RA}}$ \cite{Wessel2001RA} & CFG intersection & Arbitrary role box \\
-$\ALC_{\mathcal{RA}}^\ominus$ \cite{Wessel2000RA} & Post Correspondence Problem & Arbitrary role box \\
+$\ALC_{\mathcal{RA}}$ \cite{Wessel2001RA} & Post Correspondence Problem & Arbitrary role axioms \\
+$\ALC_{\mathcal{RA}}^\ominus$ \cite{Wessel2000RA} & Non-empty CFG intersection & Non-disjoint roles \\
 $\ALCIRCC{8}$ (Wessel) & Grid via $\TPP/\NTPP$ & $\TPP/\NTPP$ distinction \\
 $\LRCC{8}$ (Lutz--Wolter) & Domino via topological $\TPP$ & Grid coincidence \\
 $\LRCC{5}(\mathit{RS}^\exists)$ & $S5^3$ via supremum regions & Supremum closure \\
