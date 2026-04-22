@@ -3809,3 +3809,51 @@ No `[Wes02]`, no `[Wes03]`. The 2002/2003 technical report FBI-HH-M-324/03 (`rep
 **Sources.**
 - Lutz \& Wolter, *Modal Logics of Topological Relations*, arXiv:cs/0605064 (<https://arxiv.org/abs/cs/0605064>)
 - LMCS listing: <https://lmcs.episciences.org/2253>
+
+---
+
+## Corrections to ALC_RA, ALC_RA⊖, and ALC_RA_SG descriptions (April 2026)
+
+Michael flagged three errors in how the README, overview paper, DL 2026 abstract, and the Lutz--Wolter comparison paper (`LRCC8_vs_ALCIRCC8.tex`) described the Wessel (2000/2001) undecidability/decidability landscape for ALC with composition-based role inclusion axioms. Claude verified the ground truth directly from the technical-report PDFs (`report4.pdf`, `report5.pdf`, `report6.pdf`) via `pdftotext`.
+
+### What was wrong
+
+1. **"RA" was expanded as "Role Algebra".** Michael clarified that RA stands for **Role Axioms** (Role Algebra is acceptable but the original intent is Role Axioms).
+
+2. **The reduction methods for ALC_RA and ALC_RA⊖ were swapped.**
+   - The text claimed ALC_RA used CFG intersection and ALC_RA⊖ used PCP.
+   - Ground truth (from `report4.pdf` and `report6.pdf`, verified by reading the abstracts/bodies):
+     - `report6.pdf` (FBI-HH-M-302/01, Feb 2001) — bibkey `Wessel2001RA` — **ALC_RA** is undecidable via reduction from the **Post Correspondence Problem**. Verbatim from the report: *"we prove its undecidability by giving a reduction from Post's Correspondence Problem (PCP)."*
+     - `report4.pdf` (FBI-HH-M-297/00, Oct 2000) — bibkey `Wessel2000RA` — **ALC_RA⊖** is undecidable via reduction from **non-empty CFG intersection** (concretely, the intersection problem for concatenation grammars, a special CFG class). Verbatim from the report: *"the intersection problem for a special class of context-free grammars -- so called concatenation grammars."*
+
+3. **ALC_RA⊖ was described as "the restriction to admissible role boxes".** This confused two separate variants. The ⊖ variant is the **non-disjoint-roles** variant: unlike ALC_RA, it does *not* require roles to be interpreted as pairwise disjoint. Admissibility is a separate notion that belongs to ALC_RA_SG.
+
+4. **ALC_RA_SG was described as "subalgebras of groups".** Ground truth from `report5.pdf` (FBI-HH-M-301/01, Dec 2000), bibkey `Wessel2000SG`: ALC_RA_SG is ALC with **admissible** role boxes, where admissibility means **deterministic, functional, complete, and associative**. Associativity is the key property exploited for decidability. The logic is **EXPTIME-complete**, proven via reduction to concept satisfiability w.r.t. general TBoxes in ALC. Adding unqualified number restrictions (ALCN_RA_SG) makes it undecidable again.
+
+### Ground-truth quote from report5.pdf (abstract)
+
+> *"It turned out that associativity of role boxes is an important requirement -- exploiting associativity we were able to show the decidability and EXPTIME-completeness of ALC_RASG. Surprisingly, satisfiability of ALC_RASG-concepts w.r.t. admissible role boxes can be reduced to concept satisfiability w.r.t. general TBoxes in ALC. We also show that the further augmentation of ALC_RASG with unqualified number restrictions, yielding the language ALCN_RASG, is again undecidable."*
+
+Definition 4 of `report5.pdf` states: *"The role box is called admissible iff it is deterministic, functional, complete, and associative: ∀R,S,T: con(con(R,S),T) = con(R,con(S,T))."*
+
+### Fixes applied
+
+All across README.md, `papers/overview_ALCIRCC5.tex`, `papers/dl2026_abstract_ALCIRCC5.tex` (untracked), and `papers/LRCC8_vs_ALCIRCC8.tex`:
+
+- "Role Algebra" → "Role Axioms" (where used as the expansion of RA).
+- ALC_RA undecidability: reduction from **Post Correspondence Problem** (cite `Wessel2001RA` / `report6.pdf`).
+- ALC_RA⊖ undecidability: reduction from **non-empty CFG intersection** (cite `Wessel2000RA` / `report4.pdf`); described as the **non-disjoint-roles variant**.
+- ALC_RA_SG decidability: **admissible role boxes** (deterministic, functional, complete, associative); **EXPTIME-complete** via reduction to ALC with general TBoxes; **ALCN_RA_SG undecidable** with unqualified number restrictions.
+
+Bibliography keys (`Wessel2001RA` for `report6.pdf`/ALC_RA, `Wessel2000RA` for `report4.pdf`/ALC_RA⊖) were already correct; only the reduction methods and variant descriptions were swapped or misstated.
+
+### Commits
+
+- `a7f3cb4` — Fix swapped reductions for ALC_RA and ALC_RA⊖.
+- `3ec0f75` — Correct ALC_RA_SG as admissible role boxes (not subalgebras of groups).
+
+Both pushed to `master` on 2026-04-21. The DL 2026 abstract, which remains untracked, was updated in the working tree and recompiled locally.
+
+### Lesson
+
+This was the second round of corrections to settled-sounding claims about Wessel's own prior work: the first was the Lutz--Wolter verbatim-quote audit, where Claude had (correctly) attributed the "no results" phrasing but Michael wanted byte-level verification against arXiv:cs/0605064. The recurring pattern: Claude's summaries of Wessel's technical reports can drift from the primary sources even when the bibliography keys are correct. When authorship and attribution details matter, cross-check against the PDFs, not against prior project text.
