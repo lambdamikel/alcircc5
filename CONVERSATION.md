@@ -3924,3 +3924,49 @@ Only `\bibitem` blocks were moved; no content inside any bibitem was altered.
 - `5e39205` — Reorder bibliography into logical groups.
 
 All tracked changes pushed to `origin/master` on 2026-04-22. The DL abstract, which remains untracked per user preference, received the same edits in the working tree and was recompiled locally.
+
+## 2026-04-22: Implementation-artifact bibitems
+
+### Request
+
+Add bibitems for the main implementation artifacts beyond the
+already-cited `QuasimodelReasoner` and `GISTaxonomy`: the cover-tree
+tableau reasoner itself and the associated test/verification suites.
+
+### Files added as bibitems (both overview and DL abstract)
+
+Inside the "Tools and Python implementations" group:
+
+- `CoverTreeReasoner` — `src/cover_tree_tableau.py` (the main candidate
+  decision procedure, ~350 lines).
+- `CyclicReasoner` — `src/alcircc5_reasoner_cyclic.py` (cycle-aware
+  wrapper around the baseline quasimodel reasoner; restores the
+  $911/911$ cross-validation match).
+- `ModelVerifier` — `src/model_verifier.py` (standalone replayer for
+  models emitted by the tableau).
+- `DecompositionTest` — `src/decomposition_test.py` ($775/775$ SAT
+  concepts decomposed into finite cover-tree models).
+- `StressTestCoverTree` — `src/stress_test_cover_tree.py` (911-concept
+  cross-validation harness on the cover-tree side).
+- `StressTestCyclic` — `src/stress_test_cyclic.py` (same 911-concept
+  harness against the cycle-aware quasimodel oracle; zero mismatches).
+- `TestCyclicReasoner` — `src/test_cyclic_reasoner.py` (adversarial
+  cyclic test suite).
+
+### Body-text citations
+
+The "Computational evidence" paragraph in both papers now carries the
+implementation-artifact citations inline: `CoverTreeReasoner` is added
+alongside `CoverTreeImpl`; `QuasimodelReasoner` and `CyclicReasoner`
+back the "independent quasimodel-based reasoner" phrase; the three
+stress-test bibitems back the $911$-concept zero-mismatches claim;
+`DecompositionTest` backs the $775/775$ claim; and `ModelVerifier` is
+cited in a new trailing sentence noting that tableau-produced models
+are independently replayed by a standalone verifier.
+
+### Verification
+
+- `pdflatex` (two passes) on both papers: no `Citation` warnings.
+- Overview: 17 pages, PDF regenerated; DL abstract: 18 pages.
+- Commit `132c899` (overview `.tex` + `.pdf`) pushed to `origin/master`.
+  The DL abstract remains untracked per user preference.
