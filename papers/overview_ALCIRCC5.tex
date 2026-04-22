@@ -216,8 +216,12 @@ composition-based role inclusion axioms:
   \item $\ALC_{\mathcal{RA}}^\ominus$ (non-disjoint-roles
     variant) is also \textbf{undecidable}, via reduction from
     non-empty CFG intersection~\cite{Wessel2000RA}.
-  \item $\ALC_{\mathcal{RA}_{SG}}$ (subalgebras of groups) is
-    \textbf{decidable}~\cite{Wessel2000SG}.
+  \item $\ALC_{\mathcal{RA}_{SG}}$ (admissible role boxes:
+    deterministic, functional, complete, and associative) is
+    \textbf{decidable} (\EXPTIME-complete, via reduction to
+    $\ALC$ with general TBoxes)~\cite{Wessel2000SG}; adding
+    unqualified number restrictions ($\mathcal{ALCN}_{\mathcal{RA}_{SG}}$)
+    makes it undecidable again.
 \end{itemize}
 $\ALCIRCC{5}$ sits precisely in the gap: its role box is
 non-deterministic (unlike $\ALC_{\mathcal{RA}_{SG}}$) but
