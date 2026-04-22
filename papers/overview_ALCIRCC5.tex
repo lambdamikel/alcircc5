@@ -161,7 +161,8 @@ has been achieved and what remains to be done.
 
 \textbf{Disclaimer.}
 This paper was authored by AI assistants
-(Claude/Anthropic and GPT-5.4/OpenAI), prompted by Michael Wessel.
+(Claude Opus~4.7/Anthropic~\cite{ClaudeOpus47} and
+GPT-5.4~Pro/OpenAI~\cite{GPT54Pro}), prompted by Michael Wessel.
 The results and proofs have \textbf{not been peer-reviewed or verified by
 human domain experts}.  They are published as a discussion piece.
 The claims should not be taken as established results unless independently
@@ -561,29 +562,37 @@ cross-edge commitments differ from the blocking node's.
 \end{examplex}
 
 Multiple sophisticated blocking strategies have been tried and
-failed for $\ALCIRCC{5}$:
+failed for $\ALCIRCC{5}$~\cite{ALCIRCC5Outdated,StatusAfterFW,ResponseGPTBlocking}:
 \begin{enumerate}
-  \item \textbf{Profile-cached blocking} (GPT-5.4): Caches
+  \item \textbf{Profile-cached blocking} (GPT-5.4)~\cite{ResponseGPTBlocking}: Caches
     ``coherent predecessor blocks'' to compare global neighborhoods.
     Fails because the \emph{color structure changes during
     unraveling}---when a blocked subtree is replayed, the
     edge-coloring to nodes outside the subtree is not preserved.
-  \item \textbf{Meet-semilattice replay} (GPT-5.4): Uses a
+  \item \textbf{Meet-semilattice replay} (GPT-5.4)~\cite{ResponseGPTBlocking}: Uses a
     meet-semilattice structure on labels to ensure robust
     normalization.  Same unraveling gap.
-  \item \textbf{Tri-neighborhood blocking} (Claude): Matches not
+  \item \textbf{Tri-neighborhood blocking} (Claude)~\cite{TriangleBlocking}: Matches not
     just node labels but entire \emph{triangle neighborhoods}
     (the set of all types of 2-element subsets involving the node).
     \textbf{Termination disproved}: frontier nodes continuously
     acquire new triangle types as new neighbors are added, so
     $\mathrm{Tri}(x) \subsetneq \mathrm{Tri}(y)$ for frontier~$x$
     and interior~$y$---blocking never triggers.
+  \item \textbf{Finite-witness / patchwork-augmentation probes}
+    (Claude)~\cite{FWProof,PatchworkAugmentation,TypedPatchworkCounterexample}:
+    Probes of a finite-witness conjecture and typed-patchwork
+    augmentations for the contextual tableau, both refuted by
+    explicit counterexamples.
 \end{enumerate}
 
 The common obstacle is the \textbf{blocking dilemma}: making the
 blocking condition strong enough for soundness (matching all
 cross-edge interactions) prevents termination (the cross-edge
-context keeps growing), and vice versa.
+context keeps growing), and vice versa.  A full catalogue of
+retracted approaches is maintained
+in~\cite{ALCIRCC5Outdated}; the overall project is summarised at
+the repository~\cite{ALCIRCC5Repo}.
 
 %% ====================================================================
 \section{Split-Forest Model Decomposition}
@@ -1363,8 +1372,9 @@ breakdown.
 
 \begin{itemize}
   \item \textbf{Exact complexity.}  The PO-coherent fragment has a
-    doubly exponential quotient bound (2-$\EXPTIME$).  An $\EXPTIME$
-    upper bound matching the lower bound is not established.
+    doubly exponential quotient bound
+    (2-$\EXPTIME$)~\cite{TwoTierQuotient}.  An $\EXPTIME$ upper
+    bound matching the lower bound is not established.
 
   \item \textbf{$\ALCIRCC{8}$.}  RCC8 also has the patchwork
     property, so the cover-tree approach should extend.  The key
