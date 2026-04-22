@@ -283,6 +283,7 @@ Every known undecidability proof for description logics ultimately encodes a **t
 | Candidate Problem | Reduction Technique | Key Feature Missing in ALCI\_RCC5 | Verdict |
 |---|---|---|---|
 | Z×Z Domino Tiling (Berger 1966) | Grid via graded modalities + transitivity + converse | Number restrictions (counting) | Blocked |
+| ALC\_RA undecidability (Wessel 2001) | Post Correspondence Problem | Arbitrary role axioms (RCC5 role box is fixed) | Blocked |
 | ALC\_RA⊖ undecidability (Wessel 2000) | Non-empty CFG intersection | Non-disjoint roles (RCC5 roles are JEPD) | Blocked |
 | ALCN\_RASG undecidability (Wessel 2000) | Grid via domino + number restrictions on admissible role box | Number restrictions (counting) | Blocked |
 | ALCF⁻ (features + inverse) | Grid via functional roles | Functional roles | Blocked |
