@@ -2,6 +2,15 @@
 
 **Split-Forest Models and the Patchwork Property**
 
+## Latest News
+
+### 5-5-2026: Copilot created [another decidability
+proof,](papers/copilot.pdf) this time using \emph{a deterministic
+parity ω‑word automaton.}
+
+Also, GPT 5.5 had some complaints about some of the previous work.
+More updates soon. 
+
 ### Overview paper
 
 A self-contained **[overview paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.pdf)** (9 pages) surveys the entire project: the history of ALCI\_RCC5 (Cohn 1993, Wessel 2002/2003, Lutz & Wolter 2006), why all known undecidability reductions fail (including a concrete domino-encoding attempt verified as blocked), why naive tableau blocking fails for complete-graph logics, the split-forest model decomposition and cover-tree tableau, and how the approach achieves decidability. See also the [source (LaTeX)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.tex).
