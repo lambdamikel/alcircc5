@@ -4,7 +4,7 @@
 
 ## Latest News
 
-### 5-5-2026: Copilot created
+- 5-5-2026: Copilot created
 [another decidability proof](papers/copilot.pdf), this time using *a deterministic parity ω‑word automaton.*
 
 Also, GPT 5.5 had some complaints about some of the previous work.
