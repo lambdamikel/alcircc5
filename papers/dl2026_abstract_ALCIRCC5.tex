@@ -1248,9 +1248,20 @@ A first attempt at writing this out as
 contain two structural defects: a Hasse construction that fails on
 infinite $\PP$-chains (e.g.\ $C_\uparrow \equiv \exists\PP.\top
 \sqcap \forall\PP.\exists\PP.\top$), and a witness conflation in
-the $C5$ triple-coherence proof.
-\textit{Completeness extraction~v2}~\cite{CompletenessExtraction}
-(May~2026, 17~pages) repairs both defects via seven concrete
+the $C5$ triple-coherence proof.  The same review found that
+adjacent material in the v1 sibling-interface
+paper~\cite{SiblingCompleted} carries the same defects:
+Def~1.5 (split-tree presentation) requires an ambient root, Def~1.7
+($\mathrm{Wit}_k$) puts $\PP/\PPI$ existentials in the witness menu, and
+the Thm~1.20 proof sketch asserts but does not construct
+support-closed tables.  These adjacent defects are addressed by the
+\textit{sibling-interface paper~v2}~\cite{SiblingInterfaceV2}
+(May~2026, 10~pages), which preserves Thms~1.17--1.19 (soundness)
+verbatim and reinterprets Def~1.5 (parent self-loops, no ambient
+root), Def~1.7 ($\PP/\PPI$ by reachability discharge), and Thm~1.20
+(model-to-quotient delegated to the completeness-extraction~v2 paper
+below).  \textit{Completeness extraction~v2}~\cite{CompletenessExtraction}
+(May~2026, 17~pages) repairs both v1 defects via seven concrete
 fixes: pass to a witness-generated submodel
 (no density / no ambient-root dependence); use generated cover
 edges (selected witness-cover edges) rather than semantic Hasse
@@ -1682,9 +1693,22 @@ C.\ Lutz and F.\ Wolter.
 \bibitem{SiblingCompleted}
 GPT-5.4 (OpenAI), prompted by M.\ Wessel.
 \newblock Split-forest models and sibling-interface descriptors for
-  $\ALCIRCC{5}$.
+  $\ALCIRCC{5}$ (v1; soundness Thms~1.17--1.19 preserved by v2;
+  Def~1.5 / Def~1.7 / Thm~1.20-sketch superseded by v2).
 \newblock Technical report, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_needpatched.pdf}
+
+\bibitem{SiblingInterfaceV2}
+Claude (Anthropic), prompted by M.\ Wessel.
+\newblock Sibling-interface descriptors for $\ALCIRCC{5}$ (v2,
+  repaired): preserves the v1 soundness chain
+  (Thms~1.17--1.19) verbatim and reinterprets v1 Def~1.5
+  (parent self-loops, generated witness-cover edges), v1 Def~1.7
+  ($\PP/\PPI$ existentials by reachability discharge), and v1
+  Thm~1.20-sketch (model-to-quotient delegated to v2 completeness
+  extraction).
+\newblock Technical report, May 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/sibling_interface_descriptors_ALCIRCC5_v2.pdf}
 
 \bibitem{CoverTree}
 GPT-5.4 (OpenAI), prompted by M.\ Wessel.
