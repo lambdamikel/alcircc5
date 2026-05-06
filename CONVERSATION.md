@@ -3970,3 +3970,118 @@ are independently replayed by a standalone verifier.
 - Overview: 17 pages, PDF regenerated; DL abstract: 18 pages.
 - Commit `132c899` (overview `.tex` + `.pdf`) pushed to `origin/master`.
   The DL abstract remains untracked per user preference.
+
+---
+
+## 2026-05-06: GPT-5.5 review and completeness extraction v2
+
+### What happened
+
+Michael obtained an independent GPT-5.5 review of the v1
+completeness-extraction paper
+(`papers/completeness_extraction_ALCIRCC5.tex`, April 2026). The review
+identified **two structural defects**:
+
+1. **Hasse construction breaks on infinite $\PP$-chains.** v1
+   constructed the cover-tree by taking the Hasse diagram of the
+   $\PP$-order in the model. For witnesses of $C_\uparrow \equiv
+   \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$ the
+   $\PP$-order has no immediate predecessor for any element (every
+   element has a strict $\PP$-predecessor), so the Hasse cover relation
+   is empty and the construction yields a tree with no edges --- not a
+   cover-tree at all.
+
+2. **Witness conflation in the $C5$ triple-coherence proof.** The v1
+   argument for the triple-coherence axiom $C5$ assumed that the three
+   witness elements realising the three pair-relations
+   $(p_1{,}p_2),(p_2{,}p_3),(p_1{,}p_3)$ could all be drawn from the
+   same model element. Different state-pairs in general have different
+   witness elements; the proof needs to compose witnesses across pairs,
+   which v1 did not do.
+
+GPT-5.5 also produced its own independent repaired proof using a
+**deterministic parity $\omega$-word automaton** (now in
+`papers/gpt5.5/gpt5-5-refined-proof-latest.{docx,pdf}` and the
+typeset companion
+`papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.{tex,pdf}`).
+Michael's brief was: keep our split-forest framework but repair the two
+defects without introducing automata machinery if possible.
+
+### What v2 does
+
+`papers/completeness_extraction_ALCIRCC5_v2.tex` (17~pages) repairs
+both defects with seven concrete fixes (R1--R7), all kept inside the
+existing split-forest framework:
+
+- **R1: Witness-generated submodel reduction.** Instead of working with
+  the full model, fix a witness assignment for every existential and
+  restrict to the submodel reachable along witness-edges. This bounds
+  the model and gives a definite branching structure to take covers of.
+- **R2: Generated cover edges.** Cover edges are taken **relative to
+  the chosen witness set**, not as Hasse covers of the global
+  $\PP$-order. This sidesteps Defect~1: even on $C_\uparrow$ the
+  witness-generated cover is non-empty by construction.
+- **R3: Containment orientation.** Parent~$\succ$~child means parent is
+  a proper $\PP$-superpart, fixing the orientation that was implicit
+  but unstated in v1.
+- **R4: Self-loops on parent function.** Allow $\mathrm{par}(u)=u$ at
+  the cover-tree root for $C_\uparrow$-style witnesses, absorbing
+  infinite $\PP$-chains into a single fixed-point node.
+- **R5: Support-closed mosaics.** Replace v1's raw pair-tables with
+  **mosaics closed under composition support**, which is what $C5$
+  actually needs. This fixes Defect~2: the mosaic carries enough
+  structure to compose witnesses across the three pairs.
+- **R6: Explicit typed-EQ congruence axiom.** v1 conflated EQ-mate
+  identification with blocking; v2 separates them and adds typed-EQ as
+  its own axiom.
+- **R7: Reachability discharge for $\PP/\PPI$ eventualities.** v1 hand-waved
+  about $\PP$-eventualities being discharged by the cover-tree; v2 makes
+  this a precise reachability condition (no Büchi acceptance needed).
+
+### Documentation updates
+
+Three files now describe the v1$\to$v2 repair:
+
+- **`README.md`** --- New top-level section
+  *"GPT-5.5 review and v2 completeness extraction (May 2026)"* between
+  the Independent Review section and the Background section. The
+  section enumerates the two defects, lists the seven repairs, and
+  points to the v2 paper. Multiple inline references to v1 across the
+  README were updated to v2; status box re-stamped from April~2026 to
+  May~2026; key-files list grew a v2 entry and a `gpt5.5/` entry, with
+  v1 marked "superseded by v2".
+- **`papers/overview_ALCIRCC5.tex`** --- §6.6 *Completeness* rewritten
+  to narrate the v1$\to$v2 repair. New bibliography entries:
+  `CompletenessExtraction` (v2, May~2026), `CompletenessExtractionV1`
+  (v1, superseded), `GPT55Generated` (GPT-5.5's automata-route paper).
+- **`papers/dl2026_abstract_ALCIRCC5.tex`** --- Same edits applied to the
+  appendix (§A.6), which reproduces the overview verbatim.
+
+Both papers compile cleanly: overview 17 pages, DL abstract 19 pages.
+
+### gpt5.5/ folder contents
+
+Tracked under `papers/gpt5.5/` for archival:
+
+- `gpt5.5-original-review.{odt,pdf,rtf}` --- GPT-5.5's original review
+  text identifying the two defects.
+- `gpt5-5-refined-proof-latest.{docx,pdf}` --- GPT-5.5's refined repair
+  using a deterministic parity $\omega$-word automaton.
+- `ALCIRCC5_coherent_generated_split_forest_decidability.{tex,pdf}` ---
+  Typeset version of GPT-5.5's automata-route proof (kept as an
+  independent alternative path).
+- `copilot_repaired.{tex,pdf}` --- A separate Copilot-typeset repair of
+  the same proof.
+- `split_forest_survival_note{,_with_prestep_discussion}.{tex,pdf}` ---
+  Two short notes explaining how much of the original split-forest
+  framework survives each repair route.
+
+### Commit
+
+- `09e30d1` --- *Address GPT-5.5 review with completeness extraction
+  v2.* Pushed to `origin/master` after a rebase over four CoPilot-proof
+  commits (`8f7ad35`, `c60409a`, `1b6c797`, `a0c395f`) that Michael had
+  pushed from another machine in the meantime. No conflicts during the
+  rebase --- our changes touched README and the v2 paper, the CoPilot
+  commits added `papers/copilot/` --- but `papers/copilot/` itself
+  remains untracked from this side per the established preference.
