@@ -1193,12 +1193,20 @@ Def~1.5 (split-tree presentation) requires an ambient root, Def~1.7
 ($\mathrm{Wit}_k$) puts $\PP/\PPI$ existentials in the witness menu, and
 the Thm~1.20 proof sketch asserts but does not construct
 support-closed tables.  These adjacent defects are addressed by the
-\textit{sibling-interface paper~v2}~\cite{SiblingInterfaceV2}
-(May~2026, 10~pages), which preserves Thms~1.17--1.19 (soundness)
-verbatim and reinterprets Def~1.5 (parent self-loops, no ambient
-root), Def~1.7 ($\PP/\PPI$ by reachability discharge), and Thm~1.20
-(model-to-quotient delegated to the completeness-extraction~v2 paper
-below).  \textit{Completeness extraction~v2}~\cite{CompletenessExtraction}
+\textit{sibling-interface delta paper~v2}~\cite{SiblingInterfaceV2}
+(May~2026, 10~pages).  This is explicitly a \emph{delta} paper: it
+does not re-prove Thms~1.17--1.19 (those proofs continue to live
+only in v1~\cite{SiblingCompleted}); it instead replaces v1 Def~1.5
+(parent self-loops, no ambient root, generated witness-cover
+edges), v1 Def~1.7 ($\PP/\PPI$ existentials by reachability
+discharge over the parent graph, not witness-menu slots), drops the
+v1 Thm~1.20 proof sketch (delegating model-to-quotient to the
+completeness-extraction~v2 paper below), and shows by two
+preservation lemmas that v1's proofs of Thms~1.17--1.19 carry over
+verbatim under the new definitions.  Both files are therefore
+active in the chain: v1 supplies the soundness proofs, v2~sibling
+acts as a delta over the surrounding definitions.
+\textit{Completeness extraction~v2}~\cite{CompletenessExtraction}
 (May~2026, 17~pages) repairs both v1 defects via seven concrete
 fixes: pass to a witness-generated submodel
 (no density / no ambient-root dependence); use generated cover
