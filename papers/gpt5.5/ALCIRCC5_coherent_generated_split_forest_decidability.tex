@@ -1,0 +1,437 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,longtable}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Generated split-forest decidability for $\mathcal{ALCI}_{RCC5}$}
+\fancyhead[R]{Proof manuscript}
+\fancyfoot[C]{\thepage}
+\titleformat{\section}{\large\bfseries\color{MidnightBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{MidnightBlue}}{\thesubsection}{0.5em}{}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.5em}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,leftmargin=1.8em}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{corollary}[definition]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+\newcommand{\Logic}{\mathcal{ALCI}_{RCC5}}
+\newcommand{\Base}{\mathsf{B}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Inv}{\operatorname{inv}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\Typ}{\operatorname{Typ}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Need}{\operatorname{Need}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\Prof}{\mathsf{Prof}}
+\newcommand{\Ctx}{\mathsf{Ctx}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\orig}{\operatorname{orig}}
+\newcommand{\parr}{\operatorname{par}}
+\newcommand{\core}{\mathsf{core}}
+\newcommand{\front}{\mathsf{front}}
+\newcommand{\out}{\mathsf{out}}
+\newcommand{\I}{\mathcal{I}}
+\newcommand{\J}{\mathcal{J}}
+\newcommand{\Q}{\mathcal{Q}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\same}{\mathrel{\equiv_s}}
+\newcommand{\strictsub}{\prec}
+\newcommand{\gen}{\mathsf{gen}}
+\newcommand{\Up}{\mathsf{Up}}
+\newcommand{\Down}{\mathsf{Down}}
+
+\begin{document}
+\begin{center}
+{\LARGE\bfseries A Coherent Generated Split-Forest Decidability Proof for $\mathcal{ALCI}_{RCC5}$\par}
+\vspace{0.6em}
+{\large A containment-oriented cover-tree proof over witness-generated abstract RCC5 frames\par}
+\vspace{0.4em}
+{\small May 2026}\par
+\end{center}
+
+\begin{abstract}
+We give a self-contained decidability proof for concept satisfiability in $\mathcal{ALCI}_{RCC5}$ over strong abstract RCC5 frames.  The proof is a split-forest proof: vertical containment branches represent $\PP/\PPI$, weak-$\EQ$ split copies repair non-tree sharing, sibling interfaces record the nonvertical RCC5 interaction, and a finite quotient is checked by local consistency, support closure, and cyclic eventuality conditions.  The cover edges used in the construction are generated witness-cover edges selected from existential requirements in the closure of the input concept.  They are not assumed to be Hasse covers of an arbitrary semantic proper-part order.  A witness-generated submodel lemma justifies this sparse generated reading.  The final theorem states that a concept is satisfiable iff it has a valid finite generated split-forest quotient; hence satisfiability is decidable.
+\end{abstract}
+
+\tableofcontents
+
+\section{Overview}
+Fix an input concept $C_0$ in negation normal form.  The proof proceeds as follows.
+\begin{enumerate}
+\item Replace any satisfying interpretation by the induced subinterpretation generated from the evaluation point by selected witnesses for existential formulas in the closure of $C_0$.
+\item Present that generated model as a containment-oriented split forest.  Downward containment edges are generated $\PPI$ covers; upward containment edges are generated $\PP$ covers.  Multiple selected containment parents are handled by weak-$\EQ$ copies.
+\item Record sibling interaction by finite support-closed mosaics.  Ordinary non-core sibling frontier pairs have only $\DR$ or $\PO$ as open cross-relations; all forced $\PP$, $\PPI$, and $\EQ$ consequences are put into the vertical/core/equality part.
+\item Collapse the infinite presentation to a finite regular quotient.  Cycles in the quotient are blocking cycles and unfold to fresh semantic occurrences.  Transitive $\PP/\PPI$ existential requirements are checked by finite cycle-realization conditions.
+\item From a valid quotient, reconstruct a weak split model by finite-prefix patchwork and then quotient by a typed $\EQ$ congruence to obtain a strong RCC5 model.
+\end{enumerate}
+
+\section{RCC5 and $\mathcal{ALCI}_{RCC5}$ semantics}
+\subsection{Abstract RCC5 frames}
+The five atomic RCC5 base relations are
+\[
+\Base=\{\EQ,\DR,\PO,\PP,\PPI\}.
+\]
+The inverse map fixes $\EQ,\DR,\PO$ and swaps $\PP$ with $\PPI$.
+
+\begin{definition}[Strong abstract RCC5 frame]
+A strong abstract RCC5 frame is a pair $(D,\rho)$ where $D\ne\emptyset$ and $\rho:D\times D\to\Base$ such that, for all $x,y,z\in D$:
+\begin{enumerate}
+\item $\rho(x,x)=\EQ$;
+\item if $x\ne y$, then $\rho(x,y)\ne\EQ$;
+\item $\rho(y,x)=\Inv(\rho(x,y))$;
+\item $\rho(x,z)\in\comp(\rho(x,y),\rho(y,z))$.
+\end{enumerate}
+\end{definition}
+
+We use the standard RCC5 composition table in Table~\ref{tab:comp}.  The entry in row $S$ and column $R$ is $\comp(R,S)$, meaning first $R$, then $S$.
+
+\begin{table}[ht]
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{c|ccccc}
+\toprule
+$\comp(R,S)$ & $R=\DR$ & $R=\PO$ & $R=\EQ$ & $R=\PPI$ & $R=\PP$ \\
+\midrule
+$S=\DR$  & $\Base$ & $\{\DR,\PO,\PPI\}$ & $\{\DR\}$ & $\{\DR,\PO,\PPI\}$ & $\{\DR\}$ \\
+$S=\PO$  & $\{\DR,\PO,\PP\}$ & $\Base$ & $\{\PO\}$ & $\{\PO,\PPI\}$ & $\{\DR,\PO,\PP\}$ \\
+$S=\EQ$  & $\{\DR\}$ & $\{\PO\}$ & $\{\EQ\}$ & $\{\PPI\}$ & $\{\PP\}$ \\
+$S=\PP$  & $\{\DR,\PO,\PP\}$ & $\{\PO,\PP\}$ & $\{\PP\}$ & $\{\PO,\EQ,\PP,\PPI\}$ & $\{\PP\}$ \\
+$S=\PPI$ & $\{\DR\}$ & $\{\DR,\PO,\PPI\}$ & $\{\PPI\}$ & $\{\PPI\}$ & $\Base$ \\
+\bottomrule
+\end{tabular}
+\caption{The RCC5 composition table.}
+\label{tab:comp}
+\end{table}
+
+\begin{definition}[$\Logic$ interpretation]
+An interpretation is a strong abstract RCC5 frame $(D,\rho)$ together with an interpretation $A^\I\subseteq D$ for each concept name $A$.  Boolean constructors are interpreted as usual, and
+\[
+(\exists R.C)^\I=\{x\in D: \exists y\in D\ (\rho(x,y)=R\text{ and }y\in C^\I)\},
+\]
+\[
+(\forall R.C)^\I=\{x\in D: \forall y\in D\ (\rho(x,y)=R\Rightarrow y\in C^\I)\}.
+\]
+A concept $C_0$ is satisfiable if $C_0^\I\ne\emptyset$ in some interpretation.
+\end{definition}
+
+\section{Closure, types, and relation-safe edges}
+Let $\Cl=\Cl(C_0)$ be the Fischer-Ladner closure of $C_0$.  It contains $C_0$, is closed under subformulas, is closed under negation in negation normal form, and contains the body $D$ of every $\exists R.D$ and $\forall R.D$ occurring in it.  Let $d=\md(C_0)$.
+
+\begin{definition}[Closure type]
+A closure type is a set $\tau\subseteq\Cl$ satisfying the usual Boolean Hintikka conditions: exactly one of $D$ and its NNF complement belongs to $\tau$, conjunctions and disjunctions are decomposed correctly, $\top\in\tau$, and $\bot\notin\tau$.  The finite set of closure types is $\Typ(C_0)$.
+\end{definition}
+
+For an interpretation $\I$ and $a\in D$, write
+\[
+\tp_\I(a)=\{E\in\Cl:a\in E^\I\}.
+\]
+
+\begin{definition}[Relation needs]
+For $R\in\Base$ and a type $\tau$, define
+\[
+\Need_R(\tau)=\{D\in\Cl: \forall R.D\in\tau\}.
+\]
+A typed edge $(\tau,R,\sigma)$ is relation-safe if
+\[
+\Need_R(\tau)\subseteq\sigma
+\quad\text{and}\quad
+\Need_{\Inv(R)}(\sigma)\subseteq\tau.
+\]
+\end{definition}
+
+\begin{lemma}[Model edges are relation-safe]\label{lem:model-safe}
+If $\rho(a,b)=R$, $\tp_\I(a)=\tau$, and $\tp_\I(b)=\sigma$, then $(\tau,R,\sigma)$ is relation-safe.
+\end{lemma}
+\begin{proof}
+If $\forall R.D\in\tau$, then $a\in(\forall R.D)^\I$ and $\rho(a,b)=R$, so $b\in D^\I$ and $D\in\sigma$.  The converse inclusion follows by applying the same argument at $b$ with the inverse relation.
+\end{proof}
+
+\section{Witness-generated submodels}
+This section is the key reduction that permits sparse generated cover edges.  It is not necessary to assume that the semantic $\PP/\PPI$ relation has immediate Hasse covers.
+
+\begin{definition}[Selected witness policy]
+Let $\I$ be an interpretation.  A selected witness policy chooses, for every $a\in D$ and every existential formula $\exists R.D_0\in\Cl$ such that $a\in(\exists R.D_0)^\I$, one element
+\[
+w(a,\exists R.D_0)\in D
+\]
+with
+\[
+\rho(a,w(a,\exists R.D_0))=R
+\quad\text{and}\quad
+w(a,\exists R.D_0)\in D_0^\I.
+\]
+We write $a\xrightarrow{R}_{w} b$ when $b$ is selected in this way.
+\end{definition}
+
+The selected edge $a\xrightarrow{R}_{w}b$ is immediate in the generated witness graph.  It is not claimed to be an immediate semantic cover in the whole frame.
+
+\begin{definition}[Witness-generated induced submodel]
+Let $a_0\in D$.  Let $D_w(a_0)$ be the least subset of $D$ containing $a_0$ and closed under all selected witnesses for closure-existentials true at its elements.  Let $\I_w$ be the subinterpretation induced by $D_w(a_0)$.
+\end{definition}
+
+\begin{lemma}[Witness-generated submodel lemma]\label{lem:witness-generated}
+If $a_0\in C_0^\I$, then for every $a\in D_w(a_0)$ and every $E\in\Cl$,
+\[
+a\in E^\I\quad\Longleftrightarrow\quad a\in E^{\I_w}.
+\]
+In particular, $a_0\in C_0^{\I_w}$.
+\end{lemma}
+\begin{proof}
+The induced substructure remains a strong abstract RCC5 frame, since all RCC5 frame requirements are universal over retained pairs and triples.  Atomic concepts are preserved by restriction.  Boolean cases are immediate.
+
+Let $E=\exists R.F$.  If $a\in E^{\I_w}$, then $a\in E^\I$ because $\I_w$ is induced.  Conversely, if $a\in E^\I$, the selected witness $b=w(a,\exists R.F)$ belongs to $D_w(a_0)$ and satisfies $F$ in $\I$; by induction it satisfies $F$ in $\I_w$.
+
+Let $E=\forall R.F$.  If $a\in E^\I$, every retained $R$-neighbour of $a$ in $\I_w$ is also an $R$-neighbour in $\I$, hence satisfies $F$ in $\I$ and therefore in $\I_w$ by induction.  Conversely, suppose $a\notin E^\I$.  Then $a\in(\exists R.\overline F)^\I$, where $\overline F$ is the NNF complement of $F$, and $\exists R.\overline F\in\Cl$ because $\Cl$ is closed under NNF complements.  The selected witness for this existential is retained and satisfies $\overline F$ in $\I_w$ by induction.  Thus $a\notin E^{\I_w}$.
+\end{proof}
+
+\begin{corollary}[Sparse generated models]\label{cor:sparse}
+Every satisfiable concept has a countable witness-generated model.  Hence the cover-tree construction may use selected generated witness-cover edges and need not appeal to semantic Hasse covers of an arbitrary $\PP/\PPI$ order.
+\end{corollary}
+
+\section{Generated split forests}
+The split-forest skeleton is containment-oriented.  Along a branch, upward motion is $\PP$ and downward motion is $\PPI$.
+
+\begin{definition}[Generated cover relation]
+Inside a finite selected witness set $A$, a generated $\PP$-cover edge $x\lessdot_A y$ means $x\PP y$, $x,y\in A$, and no selected element of $A$ lies strictly between $x$ and $y$.  Thus covers are immediate only relative to the finite selected generated set $A$.
+\end{definition}
+
+\begin{definition}[Weak-$\EQ$ generated split forest]\label{def:split-forest}
+A weak-$\EQ$ generated split forest is a tuple
+\[
+\T=(T,\parr,\orig,\same,\tp,\rho_T,t_*),
+\]
+where $T$ is a set of occurrences, $t_*\in T$ is distinguished, $\parr:T\rightharpoonup T$ is a partial parent map, $\orig:T\to D_w(a_0)$ maps occurrences to generated model elements, $\same$ is an equivalence relation of split copies, $\tp(x)=\tp_{\I_w}(\orig(x))$, and $\rho_T:T\times T\to\Base$ is a weak RCC5 labelling.  If $y=\parr^n(x)$ for some $n>0$, then
+\[
+\rho_T(x,y)=\PP
+\quad\text{and}\quad
+\rho_T(y,x)=\PPI.
+\]
+Weak-$\EQ$ means that distinct split copies may be labelled $\EQ$ before the final typed quotient.
+\end{definition}
+
+\begin{lemma}[Generated split extraction]\label{lem:split-extraction}
+Every witness-generated model $\I_w,a_0$ has a weak-$\EQ$ generated split forest whose distinguished occurrence has origin $a_0$.
+\end{lemma}
+\begin{proof}
+Construct occurrences coinductively.  Start with one occurrence of $a_0$.  At an occurrence of origin $a$, collect $a$ together with the selected witnesses for all closure-existentials true at $a$.  Use the finite generated cover relation on this finite set.  Selected $\PPI$ witnesses are placed below the occurrence and selected $\PP$ witnesses above it, according to the containment orientation.
+
+If one origin element must occur under several selected superparts, introduce one weak-$\EQ$ copy for each parent branch.  If the same origin is needed in several sibling interfaces, introduce split copies and record them as $\same$-equivalent.  Pull all types and atomic RCC5 labels back from the generated model through the origin map.  Converse, composition, and relation-safety are therefore inherited.  This gives the required weak split forest.
+\end{proof}
+
+\begin{remark}[Branches need not terminate]
+The partial parent chains of $\T$ may be finite, one-sided infinite, or bi-infinite around the distinguished occurrence.  A finite quotient represents such chains by blocking cycles that unfold to fresh occurrences; a blocking cycle is not semantic $\EQ$.
+\end{remark}
+
+\section{Sibling interfaces and the status partition}
+\begin{definition}[Sibling interface]
+Let $u$ be an occurrence with two distinct generated child subtrees $S_1$ and $S_2$.  The ordered pair $(S_1,S_2)$ is a sibling interface.  It is the local place where RCC5 relations between the two subtrees are recorded.
+\end{definition}
+
+\begin{definition}[Core, outside, frontier]\label{def:status}
+For an occurrence $x$ in one side of a sibling interface:
+\begin{itemize}
+\item $x$ is \emph{core} if it is visible to both sides, such as a split copy, a typed-$\EQ$ mate, or a forced common containment element;
+\item $x$ is \emph{outside} if the descriptor forces it to remain disjoint from the other side;
+\item $x$ is \emph{frontier} if it is an ordinary open endpoint whose cross-relation to the other side is not forced by the vertical/core/equality part.
+\end{itemize}
+\end{definition}
+
+\begin{lemma}[Status partition]\label{lem:status-partition}
+After closure under split-copy equality and generated containment consequences, every endpoint in a sibling interface has exactly one of the statuses $\core$, $\out$, and $\front$.
+\end{lemma}
+\begin{proof}
+Declare core endpoints first and close them under split-copy equality, typed-$\EQ$ mates, and forced common containment.  Declare outside endpoints next when the interface root relation and RCC5 composition force disjointness from the opposite side.  All remaining endpoints are frontier.  The construction is ordered and disjoint, so every endpoint receives exactly one status.
+\end{proof}
+
+\begin{lemma}[Open sibling cross-edge lemma]\label{lem:open-cross}
+Let $x$ and $y$ be non-core endpoints in different sides of the same sibling interface.  Then the open cross-relation between them is in $\{\DR,\PO\}$.
+\end{lemma}
+\begin{proof}
+If $x\EQ y$, then the endpoints are split copies or typed-$\EQ$ mates and hence core.  If $x\PP y$, then $x$ is containment-visible through material on the side of $y$, so the interface closure promotes the relevant occurrence to core.  The case $x\PPI y$ is symmetric.  Thus only $\DR$ and $\PO$ remain for non-core open sibling endpoints.
+\end{proof}
+
+\section{Support-closed mosaics}
+Raw pair tables are not enough: a relation witnessed by one occurrence of a finite type cannot be freely combined with a child evolution witnessed by another occurrence of the same type.  The finite descriptor therefore stores small joint networks.
+
+\begin{definition}[Endpoint summary]
+An endpoint summary consists of a closure type, a status in $\{\core,\out,\front\}$, a typed-$\EQ$ colour, a rank label, and the finite lower/upper summaries needed for transitive $\PP/\PPI$ formulas in $\Cl$.
+\end{definition}
+
+\begin{definition}[Atomic support mosaic]\label{def:mosaic}
+An atomic support mosaic is a finite complete RCC5 network whose vertices are labelled by endpoint summaries and whose edges are labelled by base relations.  It must satisfy converse, the RCC5 composition table, relation-safety, typed-$\EQ$ congruence on $\EQ$ edges, the open sibling cross-edge restriction of Lemma~\ref{lem:open-cross}, and explicit joint support for every advertised witness or triple constraint.
+\end{definition}
+
+\begin{definition}[Support-closed descriptor]\label{def:descriptor}
+A sibling descriptor is a finite set of atomic support mosaics over endpoint summaries.  It is support-closed if it is closed under induced submosaics, typed-$\EQ$ replacement, one-step generated containment extension on either side, witness support, and triple support for any two advertised relations sharing an endpoint.
+\end{definition}
+
+\begin{lemma}[Extracted descriptors are support-closed after finite closure]\label{lem:support-closure}
+For fixed rank alphabet, the support closure of any finite set of realized mosaics is finite and effectively computable.
+\end{lemma}
+\begin{proof}
+The endpoint summary alphabet is finite at fixed rank.  There are only finitely many finite atomic mosaic shapes up to the bounded rank used in the construction.  Each closure operation adds elements from this finite universe.  Iterating to a fixed point terminates.
+\end{proof}
+
+\section{Profiles, vertical summaries, and cyclic realization}
+\begin{definition}[Ranked profile]\label{def:profile}
+A rank-$k$ profile is the isomorphism type of the local package consisting of: the closure type; the typed-$\EQ$ colour; the selected generated cover obligations; the list of incident sibling descriptors; rank-$(k-1)$ profiles of adjacent generated containment neighbours; and finite upper/lower summaries for $\PP/\PPI$ modal requirements.  A rank-$d$ profile is called simply a profile.
+\end{definition}
+
+The upper/lower summaries are finite subsets of $\Cl$.  For example, along an upward $\PP$ branch they record which closure formulas have appeared below, which formulas hold throughout the lower segment, and which $\PP$ eventualities remain to be realized above.  These summaries range over a finite set.
+
+\begin{definition}[Transitive eventuality]
+A formula $\exists\PP.D$ at an occurrence is an upward eventuality: it requires a strict later $\PP$-ancestor satisfying $D$.  A formula $\exists\PPI.D$ is a downward eventuality: it requires a strict later $\PPI$-descendant satisfying $D$.  Universal formulas $\forall\PP.D$ and $\forall\PPI.D$ are safety requirements propagated along the corresponding strict branch direction.
+\end{definition}
+
+\begin{definition}[Cycle-realization condition]\label{def:cycle-realization}
+Let a finite quotient branch be represented by a stem and cycle
+\[
+u_0,\ldots,u_m,(v_0,\ldots,v_{k-1})^\omega.
+\]
+It realizes upward $\PP$ eventualities if every $\exists\PP.D$ occurring at a stem node is met later in the stem or somewhere in the cycle, and every $\exists\PP.D$ occurring at a cycle node is met somewhere in the cycle.  The downward $\PPI$ condition is dual.  A cycle is valid only if all transitive eventualities in its direction are realized in this sense, and all propagated universal safety requirements hold throughout the cycle.
+\end{definition}
+
+\begin{lemma}[Finite-index lemma]\label{lem:finite-index}
+For fixed $C_0$ and $d=\md(C_0)$, there are only finitely many profiles, sibling descriptors, and local generated containment contexts up to isomorphism.
+\end{lemma}
+\begin{proof}
+The closure and type set are finite.  Rank-$0$ labels are finite.  If rank-$k$ profiles are finite, then endpoint summaries, typed equality colours, truncated core multiplicities, finite local contexts, and bounded support mosaics over those labels are finite up to isomorphism.  The support-closure operation terminates by Lemma~\ref{lem:support-closure}.  Induction to rank $d$ gives finiteness.
+\end{proof}
+
+\begin{lemma}[Regular branch lemma]\label{lem:regular-branch}
+If an infinite generated branch over the finite profile alphabet satisfies all vertical safety requirements and realizes all transitive eventualities, then there is an ultimately periodic branch over the same finite profile alphabet satisfying the same local transition requirements and the cycle-realization condition.
+\end{lemma}
+\begin{proof}
+Only finitely many profiles and eventuality-summary states exist.  Along a satisfying branch, choose a position after which the monotone lower/upper summary components have stabilized.  Since every pending eventuality is eventually realized, choose a later segment that realizes all eventualities active at its beginning and returns to the same stabilized profile-summary state.  Repeating this segment preserves local transitions, preserves universal safety, and realizes every eventuality that appears on the cycle.  The finite stem preceding the segment is kept unchanged.
+\end{proof}
+
+\section{Valid finite generated split-forest quotients}
+\begin{definition}[Finite quotient]\label{def:quotient}
+A finite generated split-forest quotient for $C_0$ is a tuple
+\[
+Q=(P,\Ctx,\Mos,p_*,\mathsf{cyc}),
+\]
+where $P$ is a finite set of profiles, $p_*\in P$ with $C_0\in\tp(p_*)$, $\Ctx$ is a finite set of legal generated containment contexts over $P$, $\Mos$ is a finite support-closed set of sibling descriptors over $P$, and $\mathsf{cyc}$ records the finite blocking cycles used for infinite vertical branches.
+\end{definition}
+
+\begin{definition}[Validity]\label{def:validity}
+A finite quotient $Q$ is valid if all of the following finite conditions hold.
+\begin{enumerate}
+\item Every profile carries a Boolean Hintikka type.
+\item Every local context is a complete finite RCC5 network satisfying converse, composition, relation-safety, and typed-$\EQ$ conditions.
+\item Vertical $\PP/\PPI$ safety is propagated along generated cover paths.
+\item Every $\exists\PP.D$ and $\exists\PPI.D$ is witnessed by a strict vertical occurrence or by a valid blocking cycle satisfying Definition~\ref{def:cycle-realization}.
+\item Every $\exists\DR.D$ and $\exists\PO.D$ has an explicit local or sibling-mosaic witness.
+\item Sibling descriptors are support-closed.
+\item Weak-$\EQ$ labels generate a typed congruence: equal endpoints have the same closure type, the same transitive summaries, the same typed-$\EQ$ colour, and the same externally visible relation pattern.
+\item Every finite prefix network generated by contexts and sibling descriptors has a canonical extendible atomic refinement.  Equivalently, the finite support-closure checks for local contexts, sibling mosaics, equality substitution, and triple composition all succeed.
+\end{enumerate}
+\end{definition}
+
+\begin{remark}
+All conditions are finite because $P$, $\Ctx$, $\Mos$, the closure, and the cycle data are finite.  The quotient is not a finite semantic model.  Cycles are blocking devices and unfold to fresh occurrences.
+\end{remark}
+
+\section{Soundness: from a quotient to a model}
+\begin{definition}[Unfolding]
+The unfolding $U(Q)$ starts at $p_*$ and repeatedly expands legal generated containment contexts.  When a blocking cycle is traversed, a fresh occurrence with the repeated profile is created.  Branch-comparable occurrences are labelled $\PP$ upward and $\PPI$ downward.  Incomparable occurrences receive relation domains from the sibling descriptor at their first divergence, with core and typed-$\EQ$ data synchronized.
+\end{definition}
+
+\begin{lemma}[Finite-prefix refinement]\label{lem:prefix-refinement}
+Every finite prefix of $U(Q)$ has an atomic RCC5 refinement satisfying converse, composition, relation-safety, support mosaics, and typed-$\EQ$ synchronization.
+\end{lemma}
+\begin{proof}
+Vertical pairs are refined by the forced $\PP/\PPI$ labels.  Pairs in one local context use the context labels.  Pairs whose first separation is a sibling interface use one of the support mosaics in the relevant descriptor.  Support closure guarantees compatibility under restriction, one-step extension, typed-$\EQ$ replacement, and triple composition.
+\end{proof}
+
+\begin{lemma}[Coherent patchwork]\label{lem:patchwork}
+There is a coherent atomic RCC5 labelling of all pairs of occurrences in $U(Q)$ extending the canonical refinements of all finite prefixes.
+\end{lemma}
+\begin{proof}
+Finite prefix refinements form a finitely branching tree ordered by extension.  Lemma~\ref{lem:prefix-refinement} gives nodes at every finite depth.  By Konig's lemma there is an infinite branch, which is the desired coherent global labelling.  Every RCC5 triangle is contained in some finite prefix, so the global labelling satisfies the RCC5 composition table.
+\end{proof}
+
+\begin{definition}[Typed $\EQ$ congruence]
+An equivalence relation $\equiv$ on occurrences is a typed $\EQ$ congruence if $x\equiv y$ implies that $x$ and $y$ have the same closure type, the same vertical eventuality summaries, the same typed-$\EQ$ colour, and the same relation to every third equivalence class.
+\end{definition}
+
+\begin{lemma}[Strong equality quotient]\label{lem:eq-quotient}
+Let a weak split model carry a typed $\EQ$ congruence generated by weak-$\EQ$ labels.  Quotienting by this congruence yields a strong abstract RCC5 frame.
+\end{lemma}
+\begin{proof}
+Typed congruence makes the edge label between equivalence classes independent of representatives.  Reflexive class labels are $\EQ$ and no two distinct classes are $\EQ$-related.  Converse and RCC5 composition descend from the coherent weak labelling because all representative changes preserve visible labels.
+\end{proof}
+
+\begin{theorem}[Soundness]\label{thm:soundness}
+If $C_0$ has a valid finite generated split-forest quotient, then $C_0$ is satisfiable over a strong abstract RCC5 frame.
+\end{theorem}
+\begin{proof}
+Unfold the quotient and use Lemma~\ref{lem:patchwork} to obtain a coherent weak RCC5 labelling.  Quotient weak-$\EQ$ by Lemma~\ref{lem:eq-quotient}.  Interpret each concept name according to the closure type stored in the representative profile.
+
+We prove by induction on $E\in\Cl$ that if $E\in\tp(x)$, then the equivalence class $[x]$ satisfies $E$.  Boolean cases are standard.  For $\exists R.D$, validity provides either a local/context/mosaic witness or a strict vertical witness realized along the unfolding; cyclic eventualities are realized by Definition~\ref{def:cycle-realization}.  For $\forall R.D$, every $R$-neighbour is accounted for by a local context, a sibling mosaic, or vertical ancestry.  Relation-safety handles contexts and mosaics, while vertical propagation handles ancestry.  Since $C_0\in\tp(p_*)$, the distinguished class satisfies $C_0$.
+\end{proof}
+
+\section{Completeness: extracting a finite quotient}
+\begin{theorem}[Completeness]\label{thm:completeness}
+If $C_0$ is satisfiable over a strong abstract RCC5 frame, then $C_0$ has a valid finite generated split-forest quotient.
+\end{theorem}
+\begin{proof}
+Let $a_0\in C_0^\I$.  By Lemma~\ref{lem:witness-generated}, replace $\I$ by the witness-generated induced submodel $\I_w$ without changing the truth of any closure formula at retained points.  Apply Lemma~\ref{lem:split-extraction} to obtain a weak-$\EQ$ generated split forest.
+
+Assign to every occurrence its rank-$d$ profile: closure type, typed-$\EQ$ colour, vertical summaries, local generated containment context, and incident sibling descriptors.  By Lemma~\ref{lem:finite-index}, only finitely many such profiles and descriptors occur up to isomorphism.  For every sibling interface, collect the realized finite atomic networks of endpoint summaries and close them under the support operations of Definition~\ref{def:descriptor}; this remains finite by Lemma~\ref{lem:support-closure}.  Relation-safety, composition, and typed-$\EQ$ conditions hold because the networks were extracted from a genuine model.
+
+Infinite vertical branches are regularized by Lemma~\ref{lem:regular-branch}.  Replace each branch by an ultimately periodic branch with the same stabilized profile-summary states and with all transitive eventualities realized on the cycle.  Because descriptors are support-closed and depend only on finite profiles, this replacement preserves all local and sibling validity conditions.
+
+Let $P$ be the resulting finite profile set, let $\Ctx$ be the finite set of generated containment contexts, let $\Mos$ be the finite support-closed descriptor set, and let $\mathsf{cyc}$ record the regularized blocking cycles.  The distinguished profile is the profile of the occurrence over $a_0$.  The tuple $Q=(P,\Ctx,\Mos,p_*,\mathsf{cyc})$ satisfies every validity condition in Definition~\ref{def:validity}.
+\end{proof}
+
+\section{Decision procedure}
+\begin{theorem}[Decidability]\label{thm:decidability}
+Concept satisfiability for $\mathcal{ALCI}_{RCC5}$ over strong abstract RCC5 frames is decidable.
+\end{theorem}
+\begin{proof}
+Given $C_0$, compute $\Cl(C_0)$, $d$, and the finite type set.  Enumerate finite profile sets, generated containment contexts, support-closed sibling descriptors, typed-$\EQ$ colourings, and finite blocking-cycle data.  For each candidate, check the finite validity conditions of Definition~\ref{def:validity}.  If a valid quotient is found, soundness gives a model.  If $C_0$ is satisfiable, completeness gives a valid quotient, so enumeration eventually finds one.
+\end{proof}
+
+\section{Tableau reading}
+The proof also yields a direct tableau view.  Boolean rules saturate closure types.  Universal formulas fill per-relation need slots.  Existential formulas select generated witnesses.  In the containment orientation, selected $\PPI$ witnesses are generated below their source and selected $\PP$ witnesses are generated above it.  Sibling interaction is checked by support-closed mosaics.  Blocking is equality of the full profile, including vertical summaries and eventuality data.  A blocked cycle is accepted exactly when the finite cycle-realization condition holds.  The side checker for a closed branch is therefore the finite quotient-validity test.
+
+\section{Examples}
+The concept
+\[
+\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top
+\]
+is represented by a generated witness chain
+\[
+x_0\xrightarrow{\PP}_w x_1\xrightarrow{\PP}_w x_2\xrightarrow{\PP}_w\cdots.
+\]
+In the containment-oriented split forest this appears as an upward $\PP$ branch.  A one-state valid blocking cycle represents it in the finite quotient, and every traversal unfolds to a fresh occurrence.  The dual formula
+\[
+\exists\PPI.\top\sqcap\forall\PPI.\exists\PPI.\top
+\]
+is represented by a downward $\PPI$ branch.  Neither example requires an ambient semantic top, bottom, or Hasse cover.
+
+\section{Conclusion}
+The proof is a generated split-forest proof.  The vertical containment skeleton handles $\PP/\PPI$, split copies handle non-tree sharing, sibling support mosaics handle nonvertical RCC5 interaction, typed-$\EQ$ congruence restores strong equality, and finite regular quotients provide the decision procedure.  The essential semantic reduction is the witness-generated submodel lemma: satisfiability may be tested on sparse abstract models generated by closure-existential witnesses.
+
+\end{document}

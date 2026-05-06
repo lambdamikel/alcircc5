@@ -1,0 +1,380 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\gen}{\mathsf{gen}}
+\newcommand{\blk}{\mathsf{blk}}
+\newcommand{\eqrel}{\equiv_{\EQ}}
+\newcommand{\blkrel}{\equiv_{\blk}}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+
+\title{What Survives of the Split--Forest Idea\\
+\large A Companion Note to the Repaired Decidability Proof for $\ALCI_{\RCC}$}
+\author{}
+\date{May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note explains which parts of the original split--forest proof idea remain intact after the proof is repaired using witness thinning, generated cover presentations, and finite regular certificates.  The main conclusion is that the split--forest idea is not discarded.  It is reinterpreted.  The tree is not the Hasse diagram of an arbitrary semantic $\PP/\PPI$ order, and it is not required to have an ambient semantic root.  Instead, it is a generated witness-cover presentation: selected containment edges form a tree-like skeleton; split copies remove multi-parent obstructions; sibling interactions are stored in support-closed mosaics; typed $\EQ$ is restored by an explicit congruence; and the finite object is a regular certificate whose unfolding may be infinite.
+\end{abstract}
+
+\tableofcontents
+
+\section{Purpose of this note}
+
+The repaired proof changes the formal reading of the original split--forest construction.  This can make it look as if the original idea has been replaced.  That is not the right interpretation.  Most of the original architecture survives, but several phrases must be read in the generated/tableau sense rather than in the semantic Hasse-diagram sense.
+
+The core correction is:
+\[
+\boxed{\text{A cover edge is a generated witness-cover edge, not a semantic Hasse cover.}}
+\]
+
+Once this distinction is made, the original proof strategy remains recognizable.  The repaired proof still uses a containment backbone, split copies, sibling interfaces, $\DR/\PO$ frontier simplification, typed $\EQ$ quotienting, and finite quotient enumeration.  What changes is the status of the finite object: it is a finite regular certificate, not a finite semantic model and not a finite rooted Hasse diagram.
+
+\section{The original intuition}
+
+The original split--forest idea can be summarized as follows.
+
+\begin{enumerate}[leftmargin=2em]
+\item The difficult $\PP/\PPI$ part of $\RCC5$ should be represented vertically, by ancestor and descendant relations in a tree or forest.
+\item If a semantic element appears to need several containment parents, it should be split into several copies so that the presentation remains tree-shaped.
+\item Non-vertical interactions, especially interactions between sibling subtrees, should be recorded by finite interface data.
+\item Equality should first be handled weakly, through synchronized copies, and then restored by a strong typed quotient.
+\item Since only finitely many local closure types and finite interface patterns are relevant, satisfiability should reduce to the existence of a finite quotient or certificate.
+\end{enumerate}
+
+All five ideas still survive.  The repaired proof changes the interpretation of items 1 and 5, and strengthens items 3 and 4.
+
+\section{The key reinterpretation: generated witness covers}
+
+The repaired proof does not begin by taking an arbitrary semantic $\RCC5$ model and forming the Hasse diagram of its $\PP$ order.  That would be the wrong object.  An arbitrary semantic model may contain irrelevant elements between selected witnesses, and those elements need not matter for the satisfaction of the input concept.
+
+Instead, the proof first passes to a witness-generated abstract model.
+
+\begin{definition}[Witness-generated model, informal]
+Let $C_0$ be the input concept and let $\Cl(C_0)$ be its closure under subformulas and negation normal form complement.  A pointed model $(\mathcal I,a_0)$ is witness-generated for $C_0$ if every element of its domain is reachable from $a_0$ by repeatedly choosing witnesses for existential formulas
+\[
+\exists R.D\in\Cl(C_0),
+\qquad R\in\{\PP,\PPI,\PO,\DR,\EQ\}.
+\]
+For each active existential requirement at a generated node, the construction retains a selected witness.
+\end{definition}
+
+The generated edge relation is not the semantic $\PP$ or $\PPI$ relation itself.  It is a selected presentation relation.  For example,
+\[
+x \xrightarrow{\PP}_{\gen} y
+\]
+means that $y$ is a selected generated witness for a $\PP$-existential at $x$.  Semantically this implies $x\PP y$, but it does not assert that $y$ is an immediate semantic Hasse successor of $x$.
+
+This removes the earlier density issue.  Density of an arbitrary ambient semantic order is irrelevant, because the proof works with a sparse generated submodel containing the witnesses needed by the logic.
+
+
+\section{Why the two preliminary steps recover the intended model class}
+
+It is helpful to separate the intended generated-model intuition from the fully general semantic formulation of satisfiability.  The repaired proof starts from the standard statement
+\[
+C_0 \text{ is satisfiable in some abstract } \RCC5 \text{ model,}
+\]
+and then uses two preliminary conservativity steps to reach the sparse model class originally intended by the split--forest construction.
+
+\subsection{First step: witness thinning}
+
+The first step is the witness-generated submodel lemma.  Given any satisfying pointed model $(\mathcal I,a_0)$, the construction retains only the elements that are needed for the closure formulas of $C_0$.  Starting from $a_0$, whenever a generated element $a$ satisfies an existential requirement
+\[
+\exists R.D\in \Cl(C_0),
+\]
+one selected witness $b$ with $aRb$ and $b\models D$ is kept.  Iterating this process gives a generated subdomain.
+
+This step is not primarily a geometric or topological claim.  It is a modal/model-theoretic thinning argument.  Existential formulas remain true because their selected witnesses are retained.  Universal formulas remain true because restricting the domain removes possible successors; it cannot introduce new counterexamples to a universal restriction.  With closure under negation-normal-form complement, truth of all closure formulas is preserved.
+
+Thus, if $C_0$ is satisfiable at all, then it is satisfiable in a model where every element is present for a logical reason: it is either the evaluation point or a selected witness for some existential closure formula.  This is exactly the sparse, generated Kripke-style model class that the original split--forest idea was aiming at.
+
+The earlier discussion of dense or non-Hasse $\PP/\PPI$ orders should be understood only as a warning about arbitrary starting models.  Such models may contain irrelevant intermediate elements.  Witness thinning makes those elements irrelevant.  After thinning, the proof works with selected witnesses, not with every element of the original semantic order.
+
+\subsection{Second step: generated cover presentation}
+
+The second step is to turn the thinned witness-generated model into a containment-oriented generated cover presentation.  The proof introduces an auxiliary edge relation such as
+\[
+x \xrightarrow{\PP}_{\gen} y
+\]
+meaning that $y$ is a selected generated witness for a $\PP$-requirement at $x$, or dually a selected containment witness in the split presentation.  This generated edge is immediate in the presentation.  It is not required to be an immediate cover in the original model before thinning.
+
+The direction of construction is therefore the reverse of a semantic Hasse-diagram construction.  A Hasse diagram starts with a complete transitive order and extracts its immediate-cover relation.  The repaired split--forest proof starts with selected generated cover edges and interprets vertical semantic containment by transitive closure along branches:
+\[
+u\PP v
+\quad\text{when}\quad
+v \text{ is a strict generated superpart ancestor of }u.
+\]
+
+In the final reconstructed split model, the vertical edges are Hasse-like for the generated containment presentation.  But they are not obtained by taking the Hasse diagram of the arbitrary original model.  They are chosen presentation edges produced after witness thinning and splitting.
+
+\subsection{Relation to the original intention}
+
+With these two preliminary steps in place, the repaired proof reaches essentially the model class originally envisioned:
+\[
+\text{sparse abstract Kripke structures generated by logical witness requirements.}
+\]
+The proof only begins from arbitrary abstract models because the usual satisfiability theorem is stated that way.  The thinning lemma and generated-cover presentation show that this broader starting point is conservative: no satisfiable concept is lost by restricting attention to the intended generated structures.
+
+So the corrected reading is not that the original split--forest proof must handle arbitrary dense semantic orders directly.  Rather:
+\[
+\boxed{\text{arbitrary model }\Longrightarrow\text{ witness-generated submodel }\Longrightarrow\text{ generated split--forest presentation}.}
+\]
+Once this reduction is made, more of the original proof idea survives.  The containment backbone can be treated as a generated cover tree; split copies handle multiple generated containment placements; sibling interfaces handle non-vertical $\DR/\PO$ and core interactions; and the finite quotient is a regular certificate for the generated presentation.
+
+If one takes witness-generated abstract Kripke structures as the semantics from the outset, then the first two steps are not additional construction steps.  They become the formal justification that the intended semantics is conservative over the ordinary existential satisfiability statement.  In either presentation, the proof works over the same sparse generated split--forest objects.
+
+\section{The containment-oriented split tree}
+
+The repaired proof keeps the original containment-oriented reading.  There is one vertical containment orientation.  For definiteness:
+\[
+\text{parent} = \text{proper superpart},
+\qquad
+\text{child} = \text{proper part}.
+\]
+Thus, along a vertical branch,
+\[
+\text{child} \;\PP\; \text{parent},
+\qquad
+\text{parent} \;\PPI\; \text{child}.
+\]
+More generally, semantic $\PP/\PPI$ between comparable tree occurrences is obtained by transitive closure along the branch.
+
+This keeps the original separation:
+\[
+\boxed{\text{vertical branch structure handles }\PP/\PPI.}
+\]
+The repaired proof only removes two overly strong readings:
+\[
+\text{tree edge} \ne \text{semantic Hasse cover},
+\]
+and
+\[
+\text{tree root} \ne \text{ambient top element required by the semantics}.
+\]
+
+The split tree is rooted as a generated presentation when possible, but the relevant containment trunk may be infinite upward, infinite downward, or bi-infinite around the evaluation point.  This is why the finite proof object is regular rather than literally finite.
+
+\section{What survived}
+
+\subsection{The tree-shaped containment backbone survives}
+
+The first surviving idea is the most important one.  The repaired proof still represents $\PP$ and $\PPI$ vertically.
+
+In the repaired proof, a vertical branch
+\[
+\cdots \prec u_2 \prec u_1 \prec u_0
+\]
+represents a chain of proper-part/proper-superpart relations.  If $u_{i+1}$ is the parent of $u_i$, then
+\[
+u_i \PP u_{i+1}
+\qquad\text{and}\qquad
+u_{i+1}\PPI u_i.
+\]
+By transitivity, if $i<j$ then
+\[
+u_i\PP u_j.
+\]
+
+What changes is that this branch is a generated presentation.  It need not be the Hasse diagram of a pre-existing semantic partial order.  The branch edges are selected witness-cover links.  They are sparse by construction.
+
+\subsection{Split copies survive}
+
+Split copies also survive essentially unchanged.
+
+The reason is structural.  A tree presentation cannot literally give one node several parents.  But generated containment requirements can point to several selected superparts, and different sibling contexts may require the same semantic element to be seen from different containment positions.  The solution remains the original one: make several copies in the weak split presentation.
+
+These copies are not automatically semantically equal.  They are presentation copies.  If the proof intends them to represent one strong-$\EQ$ element, this must later be justified by the typed $\EQ$ congruence.
+
+Thus the repaired proof keeps the split-copy principle:
+\[
+\boxed{\text{Split first; quotient by typed }\EQ\text{ only when congruence is certified.}}
+\]
+
+\subsection{Sibling interfaces survive, strengthened as mosaics}
+
+The sibling-interface idea survives, but the raw pair-table version is too weak.  The repaired proof uses support-closed mosaics.
+
+The reason is witness coherence.  Suppose a type $p$ can have a child of type $p'$ in one occurrence, and a relation $R$ to a type $q$ in another occurrence.  A raw pair table may record both facts and then incorrectly combine them as if one occurrence witnessed both.  This is the witness-conflation problem.
+
+A support-closed mosaic records a finite joint pattern, not merely independent pair facts.  It stores enough information to certify that the relevant pair and triple labels can occur together.
+
+Thus the original interface idea survives in this stronger form:
+\[
+\boxed{\text{sibling interactions are finite, support-closed joint mosaics.}}
+\]
+
+\subsection{The $\DR/\PO$ sibling simplification survives with qualifications}
+
+The original proof's useful simplification was that ordinary non-core sibling frontier nodes do not need arbitrary $\PP/\PPI/\EQ$ cross-links.  After containment and core/equality interactions have been accounted for, the remaining open sibling relation can be taken from
+\[
+\{\DR,\PO\}.
+\]
+
+This survives, but only in the qualified form:
+\[
+\boxed{\text{non-core sibling frontier edges are }\DR/\PO\text{ after support closure and core handling.}}
+\]
+It should not be stated as ``all sibling interactions are automatically $\DR/\PO$.''  Core nodes, equality mates, and composition-induced containment constraints still need explicit bookkeeping.
+
+\subsection{Typed $\EQ$ quotienting survives}
+
+The repaired proof keeps the weak-to-strong equality strategy.  In the weak split presentation, multiple copies may be linked as intended $\EQ$-mates.  Strong equality is restored only after quotienting by an explicit congruence relation $\eqrel$.
+
+The congruence must guarantee at least the following.
+
+\begin{enumerate}[leftmargin=2em]
+\item If $x\eqrel y$, then $x$ and $y$ have the same closure type.
+\item They have matching witness obligations and universal obligations.
+\item They have the same externally visible $\RCC5$ relations to all other equivalence classes.
+\item The quotient does not identify points related by strict $\PP$ or strict $\PPI$.
+\end{enumerate}
+
+So the original typed-$\EQ$ idea survives, but it must be explicit.  In particular, blocking repetition is not $\EQ$.
+
+\subsection{The finite quotient survives as a regular certificate}
+
+The original finite quotient idea survives, but its interpretation changes.
+
+The finite object is not itself a semantic model.  It is a finite regular certificate whose unfolding may be infinite.  A cyclic edge in the certificate means:
+\[
+\text{repeat this profile with fresh occurrences},
+\]
+not
+\[
+\text{identify the repeated occurrence by }\EQ.
+\]
+
+For example, the satisfiable concept
+\[
+\exists\PP.\top \sqcap \forall\PP.\exists\PP.\top
+\]
+may be represented by a one-profile cycle.  Its unfolding is
+\[
+u_0\PP u_1\PP u_2\PP u_3\PP\cdots,
+\]
+with all $u_i$ distinct.  The cycle is a blocking cycle in the finite certificate, not a semantic $\PP$ cycle.
+
+Thus the correct surviving statement is:
+\[
+\boxed{\text{satisfiability is equivalent to a valid finite regular split--forest certificate.}}
+\]
+
+\section{What was replaced or discarded}
+
+The following original readings should not be used in the repaired proof.
+
+\subsection{No semantic Hasse diagram}
+
+Tree edges should not be defined as immediate covers of the semantic $\PP/\PPI$ order.  The proof constructs selected witness-cover edges.  These edges generate the presentation, and semantic $\PP/\PPI$ is obtained by closure along the branch.
+
+\subsection{No ambient semantic root}
+
+The proof should not require every relevant containment branch to terminate at a semantic top or bottom region.  A concept can force an infinite chain of proper superparts or proper parts.  The repaired proof therefore allows regular trunks and blocking cycles.
+
+\subsection{No well-foundedness assumption}
+
+The repaired proof uses acyclicity and transitivity of strict $\PP/\PPI$, not well-foundedness of either order.  Infinite generated branches are handled by regularity and eventuality checks.
+
+\subsection{No raw pair-table completeness}
+
+Raw pair tables do not preserve joint realizability.  They are replaced by support-closed mosaics with explicit restriction and triple-composition coherence.
+
+\subsection{No blocking-as-equality}
+
+Blocking equivalence and semantic equality must remain separate:
+\[
+\blkrel \ne \eqrel.
+\]
+A blocked cycle unfolds to fresh semantic occurrences.  Only the typed $\EQ$ congruence may be quotiented.
+
+\section{How the repaired proof uses the surviving ideas}
+
+The repaired proof can be read as the following pipeline.
+
+\paragraph{Step 1: Closure and types.}
+Compute the finite closure $\Cl(C_0)$, including NNF complements.  Define Hintikka types over this closure.
+
+\paragraph{Step 2: Witness-generated submodel.}
+Show that if $C_0$ is satisfiable, then it is satisfiable in a witness-generated abstract $\RCC5$ model.  All existential closure formulas have selected witnesses in the generated submodel.  This step removes irrelevant ambient material.
+
+\paragraph{Step 3: Containment split presentation.}
+Present the generated $\PP/\PPI$ witnesses by a containment-oriented split tree.  Parent means proper superpart; child means proper part.  Multiple selected superparts are handled by split copies.
+
+\paragraph{Step 4: Interface mosaics.}
+Represent non-vertical $\DR/\PO$ and equality/core interactions by finite support-closed mosaics.  These mosaics prevent pairwise witness conflation and enforce the $\RCC5$ composition table locally.
+
+\paragraph{Step 5: Regular quotient.}
+Because there are finitely many closure types, finite context descriptors, finite equality colors, and finite mosaic shapes, a valid infinite split presentation has a finite regular certificate.  Cycles in this certificate are blocking cycles.
+
+\paragraph{Step 6: Eventuality checks.}
+Transitive $\PP/\PPI$ existential obligations are checked by reachability in the finite certificate.  A cyclic trunk is valid only if every eventuality occurring on the cycle is realized somewhere later in the same cycle, or along a reachable continuation.
+
+\paragraph{Step 7: Typed $\EQ$ quotient.}
+Unfold the finite certificate into a weak split model.  Then quotient only by the certified typed-$\EQ$ congruence.  The quotient is a strong-$\EQ$ $\RCC5$ model satisfying $C_0$.
+
+\section{Comparison table}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{0.32\linewidth}p{0.58\linewidth}}
+\toprule
+Original component & Repaired status \\
+\midrule
+Tree-shaped containment backbone & Survives as a generated witness-cover tree, not as a semantic Hasse diagram. \\
+Split copies & Survive; they are needed for elements with several selected containment parents or several interface occurrences. \\
+Sibling interfaces & Survive; they must be support-closed mosaics rather than raw pair tables. \\
+$\DR/\PO$ sibling simplification & Survives for non-core sibling frontier nodes after containment, core, equality, and support closure are accounted for. \\
+Typed $\EQ$ quotient & Survives; it must be an explicit congruence, separate from blocking. \\
+Finite quotient & Survives as a finite regular certificate, not as a finite semantic model. \\
+Ambient semantic root & Removed.  Regular trunks replace root termination. \\
+Semantic Hasse covers & Removed.  Generated witness-cover edges replace them. \\
+Well-foundedness & Not assumed.  Infinite branches are handled by regularity and eventuality checks. \\
+Raw pair tables & Replaced by support-closed mosaics. \\
+Blocking as $\EQ$ & Rejected.  Blocking repeats profiles but unfolds to fresh occurrences. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Recommended wording}
+
+A concise way to state the repaired split--forest theorem is:
+
+\begin{quote}
+Every satisfiable $\ALCI_{\RCC}$ concept has a witness-generated containment-oriented regular split--forest presentation.  In this presentation, vertical generated witness-cover edges represent selected $\PP/\PPI$ containment links; semantic $\PP/\PPI$ is obtained by transitive closure along branches; sibling and frontier interactions are recorded by finite support-closed mosaics; weak equality copies are quotiented only by an explicit typed congruence; and cyclic blocking in the finite certificate unfolds to fresh semantic occurrences.
+\end{quote}
+
+This wording keeps the original split--forest idea while avoiding the invalid readings that caused difficulty.
+
+\section{Summary}
+
+With the witness-generated submodel lemma in place, the proof no longer needs to worry about dense ambient $\PP/\PPI$ orders or semantic Hasse diagrams.  This means more of the original split--forest idea survives than might first appear.
+
+The repaired proof is still a split--forest proof.  Its backbone is still containment-oriented.  It still uses splitting, sibling interfaces, $\DR/\PO$ frontier simplification, typed $\EQ$, and finite quotient enumeration.  The essential repair is that the finite object is now understood as a generated regular certificate with support-closed interfaces and explicit equality congruence.
+
+In one sentence:
+\[
+\boxed{\text{The original split--forest idea survives as a generated regular split--forest certificate theorem.}}
+\]
+
+\end{document}
