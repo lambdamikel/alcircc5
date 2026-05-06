@@ -4,6 +4,7 @@
 
 ## Latest News
 
+- 5-6-2026: **Completeness extraction v2** ([PDF](papers/completeness_extraction_ALCIRCC5_v2.pdf), [LaTeX](papers/completeness_extraction_ALCIRCC5_v2.tex)) responds to the GPT-5.5 review. The review found two structural defects in v1: (1) the Hasse construction for the cover-tree breaks on infinite PP-chains (e.g. `C↑ ≡ ∃PP.⊤ ⊓ ∀PP.∃PP.⊤`), and (2) the C5 triple-coherence proof conflates witnesses across the three pairs. v2 repairs both with seven concrete fixes: witness-generated submodel reduction, generated cover edges (relative to the chosen witness set, not Hasse covers), containment orientation, parent self-loops to absorb infinite PP-chains, support-closed mosaics in place of raw pair tables, an explicit typed-EQ congruence axiom, and reachability discharge for PP/PPI eventualities (no Büchi machinery). The README, [overview paper](papers/overview_ALCIRCC5.pdf), and DL 2026 abstract appendix all updated to point at v2 (v1 marked superseded). GPT-5.5's own automata-route repaired proof and review materials are archived under [`papers/gpt5.5/`](papers/gpt5.5/). See the [dedicated section below](#gpt-55-review-and-v2-completeness-extraction-may-2026).
 - 5-5-2026: Copilot created [another decidability
 proof](papers/copilot.pdf), this time using *a deterministic parity
 ω‑word automaton.* Also, GPT 5.5 had some complaints about some of the
