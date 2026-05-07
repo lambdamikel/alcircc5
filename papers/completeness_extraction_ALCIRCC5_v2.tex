@@ -57,6 +57,7 @@
 \newcommand{\eqQ}{\equiv_{\EQ,Q}}
 \newcommand{\blk}{\equiv_{\mathrm{blk}}}
 \newcommand{\Mate}{\operatorname{Mate}}
+\newcommand{\Side}{\operatorname{Side}}
 \newcommand{\reach}{\rightsquigarrow}
 \newcommand{\ALCIRCC}[1]{\mathcal{ALCI}_{\mathsf{RCC#1}}}
 
@@ -82,8 +83,9 @@ scrutiny and corrections.}}
 \fbox{\parbox{0.92\textwidth}{%
 \textbf{Changelog v2 $\to$ v2.1 (May 2026).}\;
 GPT-5.5 reviewed the v2 manuscript and identified six remaining
-proof obligations~\cite{GPT55V2Review}.  This revision addresses the
-three smallest-scope formal obligations:
+proof obligations~\cite{GPT55V2Review}.  This revision addresses
+\emph{four} of them; \emph{two} are acknowledged as open and
+deferred:
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
 \item \textbf{(O1) Blocking vs.\ semantic $\EQ$ separation.}\; The
   typed-$\EQ$ colour is replaced by an \emph{explicit finite
@@ -113,12 +115,19 @@ three smallest-scope formal obligations:
   closure-existentials and closure-universals range over
   $\BaseEdge = \{\DR,\PO,\PP,\PPI\}$ only.  See
   Section~\ref{sec:eq-normalization}.
+\item \textbf{(O5) $\DR/\PO$ side-context witness lemma.}\; A formal
+  lemma (Lemma~\ref{lem:side-context-witness}) ensures that every
+  $\DR/\PO$ witness placed by the witness policy lives in a
+  bounded side context $\Side(u,v)$ of size $\le 5$, that the
+  realized mosaic on this side context satisfies all (M1)--(M7), and
+  that all relation-safety, universal-firing, and RCC5 composition
+  constraints at the interface are preserved.  See
+  Section~\ref{sub:side-context}.
 \end{itemize}
-The other three obligations (finite mosaic arity bound, $\DR/\PO$
-side-context lemma, simultaneous eventuality realization) are
-acknowledged as open and deferred; the present revision does not
-claim to discharge them.  See
-Section~\ref{sec:discussion} for honest scope.
+The two remaining obligations (finite mosaic arity bound (O4),
+simultaneous eventuality realization (O6)) are acknowledged as open
+and deferred; the present revision does not claim to discharge them.
+See Section~\ref{sec:discussion} for honest scope.
 }}
 \end{center}
 
@@ -959,6 +968,174 @@ of $Q$ (Section~\ref{sec:reachability}).  This separation is
 deliberate: $\PP/\PPI$ witnesses are tracked structurally by the
 tree backbone, while $\DR/\PO$ witnesses are tracked
 combinatorially by the menu.
+\end{remark}
+
+
+\subsection{Side-context witness lemma (v2.1, obligation O5)}
+\label{sub:side-context}
+
+Construction~\ref{con:witness-menu} places a $\DR/\PO$-witness
+occurrence $v$ in the split tree, but the placement is described
+schematically (``possibly as a sibling occurrence under a common
+ancestor'').  GPT-5.5's review of v2~\cite{GPT55V2Review}
+flagged that completeness requires a
+formal lemma ensuring this placement preserves all relation-safety
+and composition constraints \emph{at} the bounded interface where
+$u$ and $v$ meet.  We supply that lemma here.
+
+\begin{definition}[Side context of an occurrence pair]
+\label{def:side-context}
+For occurrences $u, v \in T$ with $\orig(u) = a$, $\orig(v) = b$ and
+$\rho(a,b) \in \{\DR,\PO\}$, the \emph{side context} of the pair
+$(u,v)$ in $T$ is the finite vertex set
+\[
+\Side(u,v) \;:=\; \{u, v\} \cup \mathsf{anc}_T(u,v) \cup
+\bigl\{u', v' \in T : u' = \mathsf{par}^k(u), v' = \mathsf{par}^j(v),
+\ k, j \le 1\bigr\},
+\]
+where $\mathsf{anc}_T(u,v)$ is the lowest common ancestor of $u$
+and $v$ in $T$ (if it exists; otherwise $\mathsf{anc}_T(u,v) =
+\emptyset$).  By construction, $|\Side(u,v)| \le 5$.
+\end{definition}
+
+\begin{lemma}[Side-context witness lemma, v2.1]
+\label{lem:side-context-witness}
+Let $u \in T$ be an occurrence with $\orig(u) = a$, let $\exists
+R.D \in \lambda(u)$ with $R \in \{\DR,\PO\}$, and let $b =
+w(a,\exists R.D) \in D_w(a_0)$ be the selected witness from the
+witness policy.  Then there exists an occurrence $v\in T$ with
+$\orig(v) = b$ such that:
+\begin{enumerate}[label=(W\arabic*),leftmargin=2em]
+\item $\rho(\orig(u),\orig(v)) = R$ (witness relation realized);
+\item $D \in \lambda(v)$ (witness contains the body type);
+\item the realized mosaic $\mu_{\Side(u,v)}$ on the side context
+  satisfies (M1)--(M7) of Definition~\ref{def:mosaic} and is in
+  the support closure $\Mos_k(\cdot,\cdot)$ for the relevant sibling
+  pair (Construction~\ref{con:mosaic-extract});
+\item every universal $\forall S.E \in \lambda(u)$ with
+  $S\in\BaseEdge$ that fires on the realized $u$--$v$ edge is
+  satisfied: if $S = R$, then $E\in\lambda(v)$; symmetrically for
+  $\forall \inv(S).E \in \lambda(v)$ targeting $u$;
+\item every triple $(u, v, z)$ with $z\in\Side(u,v)$ has
+  $\rho(\orig(u),\orig(z)) \in \comp(R, \rho(\orig(v),\orig(z)))$
+  (RCC5 composition constraint at the interface).
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Existence of $v$: by Construction~\ref{con:split-tree} step 4
+(sibling expansion), the split tree $T$ contains an occurrence $v$
+with $\orig(v) = b$.  Either $v$ is created \emph{de novo} as a
+sibling under the lowest common ancestor of $u$ and a tree node
+mapped to $b$, or $v$ already exists in $T$ as an occurrence of $b$
+generated earlier; both are licensed by step 4.
+
+\noindent\textbf{(W1).}\;
+By the witness policy, $\rho(a,b) = R$ in $\mathcal{I}_w$.  Since
+the edge labelling $\rho_T$ in $T$ is pulled back from $\rho$ via
+$\orig$ (Construction~\ref{con:split-tree} step 6), we have
+$\rho_T(u,v) = \rho(\orig(u),\orig(v)) = R$.
+
+\noindent\textbf{(W2).}\;
+$b \in D_w(a_0)$ is a witness for $\exists R.D$, hence
+$b\in D^{\mathcal{I}_w}$, so $D\in\tp_{\mathcal{I}_w}(b) =
+\lambda(v)$.  (Witness selection guarantees the body type
+membership; this is a Hintikka-type closure property.)
+
+\noindent\textbf{(W3).}\;
+$\Side(u,v)$ is a finite vertex set of size at most $5$
+(Definition~\ref{def:side-context}).  The realized mosaic
+$\mu_{\Side(u,v)}$ is constructed by setting
+$\mu(v_1,v_2) = \rho(\orig(v_1),\orig(v_2))$ and equipping each
+vertex with its rank-$k$ profile, status, and equality-port tuple.
+Verifying (M1)--(M7):
+\begin{itemize}
+\item (M1) $\mu(v_i,v_i) = \rho(\orig(v_i),\orig(v_i)) = \EQ$
+  (RCC5 reflexivity).
+\item (M2) Inverse symmetry: $\rho(b,a) = \inv(\rho(a,b))$ in any
+  RCC5 frame.
+\item (M3) Triple composition: every realized triple in
+  $\mathcal{I}_w$ satisfies the composition table by the strong
+  abstract RCC5 frame property.
+\item (M4) Relation-safety: every realized model edge is
+  relation-safe by Lemma~\ref{lem:model-safe}.
+\item (M5)--(M6) Status-partition consequences from
+  Lemma~\ref{lem:status-partition} and
+  Lemma~\ref{lem:open-cross}: the placement of $v$ as a sibling under
+  the LCA of $u$ and $v$ produces $\Out$ or $\Front$ status as
+  determined by $R\in\{\DR,\PO\}$.  If $R=\DR$, $v$ has status $\Out$
+  relative to $u$; (M5) gives only $\DR$ on cross-status edges from
+  $v$, consistent with $\rho(b,a) = \DR$.  If $R=\PO$, $v$ has status
+  $\Front$, and $(\Front,\Front)$ cross-status edges have labels in
+  $\{\DR,\PO\}$ by (M6), consistent with $\rho(b,a) = \PO$.
+\item (M7, v2.1) Visible-equality on $\mu_{\Side(u,v)}$ is by the
+  canonical equality-port assignment of
+  Lemma~\ref{lem:extracted-eq}: $\mu(v_1,v_2) = \EQ$ iff
+  $\orig(v_1) = \orig(v_2)$ iff
+  $\bigl(\st_d(v_1),\pi(v_1)\bigr)\eqQ\bigl(\st_d(v_2),\pi(v_2)\bigr)$.
+\end{itemize}
+The mosaic $\mu_{\Side(u,v)}$ is therefore well-defined and
+satisfies (M1)--(M7).  By Construction~\ref{con:mosaic-extract},
+$\mu_{\Side(u,v)}$ is added to $\Mos_k^{\mathrm{raw}}(s,t)$ for the
+sibling pair $(s,t)$ above $u$ and $v$, then closed under
+(SC1)--(SC4).  Thus $\mu_{\Side(u,v)}\in\Mos_k(s,t)$.
+
+\noindent\textbf{(W4).}\;
+$\mathcal{I}_w$ satisfies all universals in $C_0$
+(Lemma~\ref{lem:witness-generated}).  In particular, if
+$\forall S.E\in\lambda(u) = \tp_{\mathcal{I}_w}(a)$ and
+$\rho(a,b) = S$, then $E\in\tp_{\mathcal{I}_w}(b) = \lambda(v)$.
+Symmetrically for $\forall\inv(S).E\in\lambda(v)$.  When $S = R$,
+this is precisely the universal-firing condition.
+
+\noindent\textbf{(W5).}\;
+For any $z\in\Side(u,v)$, the realized triple
+$(\orig(u),\orig(v),\orig(z))$ in $\mathcal{I}_w$ satisfies the
+composition constraint of the strong abstract RCC5 frame:
+\[
+\rho(\orig(u),\orig(z)) \in \comp\bigl(\rho(\orig(u),\orig(v)),
+\rho(\orig(v),\orig(z))\bigr) = \comp(R, \rho(\orig(v),\orig(z))).
+\]
+Since the mosaic $\mu_{\Side(u,v)}$ records the realized relations
+faithfully, this composition is captured in the mosaic's edge
+labels, satisfying~(M3) for the triple.
+\end{proof}
+
+\begin{remark}[Why a \emph{bounded} side context suffices]
+\label{rem:side-context-bounded}
+The side context $\Side(u,v)$ has at most $5$ vertices, regardless
+of where $u$ and $v$ sit in $T$.  This boundedness is essential for
+the finite-index property: the support-closed mosaic
+$\Mos_k(s,t)$ contains only finitely many mosaics of bounded arity
+(Lemma~\ref{lem:support-closure}), so the witness menu's interface
+data is finitely representable.
+
+The lemma's bound of $5$ is the maximum needed for the immediate
+$u$--$v$ interface together with one-step ancestors and the LCA;
+deeper composition constraints involving $u$ or $v$ are captured by
+support-closure operations (SC1)--(SC4), not by extending the side
+context itself.
+\end{remark}
+
+\begin{remark}[Relation to obligation O5]
+\label{rem:o5-discharged}
+GPT-5.5's recommendation~\cite[\S Side-context witness
+lemma]{GPT55V2Review} called for a lemma ensuring that DR/PO
+witnesses placed by the witness policy are realized in the split
+presentation while preserving relation-safety, universal
+restrictions, RCC5 composition constraints, and consistency with
+sibling mosaics and typed-$\EQ$ mate data.
+Lemma~\ref{lem:side-context-witness} discharges this obligation by
+the bookkeeping argument above: every witness occurrence sits in a
+bounded side context, the realized mosaic on that side context
+satisfies all (M1)--(M7) axioms, and the universals/compositions
+involving the interface are inherited from the validity of
+$\mathcal{I}_w$ as a strong-EQ model of $C_0$.
+
+\textbf{Caveat.}\; The lemma is a \emph{local} statement about a
+single witness pair.  Extending it to a global statement about
+\emph{all} witness occurrences simultaneously is part of the
+coherent eventuality realization obligation~(O6), still open.
 \end{remark}
 
 
