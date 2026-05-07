@@ -24,6 +24,7 @@
 \newtheorem{construction}[theorem]{Construction}
 \theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
+\newtheorem{fact}[theorem]{Fact}
 
 \newcommand{\DR}{\mathsf{DR}}
 \newcommand{\PO}{\mathsf{PO}}
@@ -1021,13 +1022,32 @@ For occurrences $u, v \in T$ with $\orig(u) = a$, $\orig(v) = b$ and
 $\rho(a,b) \in \{\DR,\PO\}$, the \emph{side context} of the pair
 $(u,v)$ in $T$ is the finite vertex set
 \[
-\Side(u,v) \;:=\; \{u, v\} \cup \mathsf{anc}_T(u,v) \cup
-\bigl\{u', v' \in T : u' = \mathsf{par}^k(u), v' = \mathsf{par}^j(v),
-\ k, j \le 1\bigr\},
+\Side(u,v) \;:=\; \{u, v,\ \mathsf{par}(u),\ \mathsf{par}(v),\
+\mathrm{lca}_T(u,v)\},
 \]
-where $\mathsf{anc}_T(u,v)$ is the lowest common ancestor of $u$
-and $v$ in $T$ (if it exists; otherwise $\mathsf{anc}_T(u,v) =
-\emptyset$).  By construction, $|\Side(u,v)| \le 5$.
+where $\mathrm{lca}_T(u,v) \in T$ is the (unique) lowest common
+ancestor of $u$ and $v$ in $T$ if it exists, omitted otherwise; and
+where any of $\mathsf{par}(u)$, $\mathsf{par}(v)$ that fail to be
+defined (i.e.\ when $u$ or $v$ is the root of its tree) are also
+omitted.  By construction, $\Side(u,v)$ has at most five elements:
+\begin{enumerate}[label=(\roman*),leftmargin=2em]
+\item the two endpoints $u,v$ themselves (always present);
+\item the parent $\mathsf{par}(u)$ (one element, if $u$ is not a
+  root; otherwise zero);
+\item the parent $\mathsf{par}(v)$ (one element, if $v$ is not a
+  root; otherwise zero);
+\item the lowest common ancestor $\mathrm{lca}_T(u,v)$ (one element,
+  if $u$ and $v$ lie in the same tree of the split forest;
+  otherwise zero).
+\end{enumerate}
+Counting: $2 + 1 + 1 + 1 = 5$, and any of the optional elements may
+also coincide with one of the others (e.g.\ if $u$ and $v$ are
+siblings then $\mathrm{lca}_T(u,v) = \mathsf{par}(u) =
+\mathsf{par}(v)$, collapsing three of the five slots into one),
+which only further decreases $|\Side(u,v)|$.  Hence $|\Side(u,v)|
+\le 5$ in all cases, and the bound is tight (it is attained when
+$u$ and $v$ have distinct, non-root parents and a strict common
+ancestor above both).
 \end{definition}
 
 \begin{lemma}[Side-context witness lemma, v2.1]
@@ -1562,6 +1582,39 @@ not the full mosaic.  Hence the local check is $5$-local.\end{proof}
 
 \subsection{Patchwork-based locality theorem}
 
+For self-containment we restate the path-consistency theorem of
+Renz--Nebel~\cite{RenzNebel} in the precise form we use.
+
+\begin{fact}[Renz--Nebel path-consistency theorem, atomic case]
+\label{fact:renz-nebel}
+Let $\mathcal{N} = (V,\,\rho)$ be a labelled directed graph with
+finite vertex set $V$ and labels $\rho(x,y) \in
+\Base = \{\DR,\PO,\EQ,\PP,\PPI\}$ for every ordered pair $x\ne y$,
+satisfying:
+\begin{enumerate}[label=(\roman*),leftmargin=2em]
+\item (\emph{Reflexivity}) $\rho(x,x) = \EQ$;
+\item (\emph{Converse closure}) $\rho(y,x) = \mathrm{inv}(\rho(x,y))$,
+  where $\mathrm{inv}$ swaps $\PP\leftrightarrow\PPI$ and fixes
+  $\DR,\PO,\EQ$;
+\item (\emph{Triangle composition support}) for every triple of
+  distinct vertices $x,y,z$,
+  \[\rho(x,z) \in \comp(\rho(x,y),\rho(y,z)),\]
+  where $\comp$ is the RCC5 composition table.
+\end{enumerate}
+Then there exists a topological model $(\Delta,\,\mathrm{interp})$
+with concrete RCC5 regions $r_x \subseteq \Delta$ for $x\in V$
+realizing every labelled edge: $\rho(x,y) = R$ implies $r_x$ and
+$r_y$ stand in relation $R$ in $\Delta$.
+\end{fact}
+
+\noindent
+The crucial consequence for us is that \emph{global realizability of
+an atomic RCC5 network reduces to the $3$-local condition (iii)
+above.}  Equivalently: if every triangle of $\mathcal{N}$ is in the
+support of composition, then $\mathcal{N}$ is realizable by a
+concrete frame.  This is the content the patchwork property
+contributes to mosaic locality.
+
 \begin{theorem}[Mosaic locality, v2.1]
 \label{thm:arity-bound}
 There is an effectively computable constant $N(C_0)=5$ such that
@@ -1587,12 +1640,11 @@ size-$\le 5$ clause).
 
 For~(d): a labelled complete graph $\mu$ over a finite vertex set
 $V$ defines a binary RCC5 relation network in the sense of
-Renz--Nebel~\cite{RenzNebel}.  Renz--Nebel's path-consistency
-theorem states that, restricted to base relations
-$\{\DR,\PO,\EQ,\PP,\PPI\}$ and their disjunctions, $\mu$ is
-realizable by a concrete RCC5 frame iff every triangle in $\mu$ is
-in the support of RCC5 composition.  Triangle support is exactly
-$3$-locality of (M3) and (SC2).
+Renz--Nebel~\cite{RenzNebel}.  By
+Fact~\ref{fact:renz-nebel}, $\mu$ (in atomic form) is realizable by
+a concrete RCC5 frame iff every triangle of $\mu$ is in the support
+of RCC5 composition.  Triangle support is exactly $3$-locality of
+(M3) and (SC2).
 
 For atomic mosaics (Definition~\ref{def:mosaic}), every edge is a
 single base relation (not a disjunction), so path-consistency on
@@ -1823,16 +1875,76 @@ $\sigma'$.  Equality-port data of $Q$ ($\Pi_Q,\eqQ$) descends to a
 quotient on $U(Q)$ identifying $\EQ$-mate occurrences.
 \end{definition}
 
-\begin{remark}[$T$ is a concrete canonical unfolding]
+\begin{definition}[Projection $\pi : T \to U(Q)$]
+\label{def:projection}
+For each occurrence $u\in T$, let $\pi(u)\in U(Q)$ be the walk
+\[
+\pi(u) \;:=\; \bigl(\st_d(u_\ast),\ \st_d(\mathsf{par}^{m-1}(u)),\ldots,\
+\st_d(\mathsf{par}(u)),\ \st_d(u)\bigr),
+\]
+where $m$ is the depth of $u$ in $T$ relative to the root $u_\ast$.
+By Definition~\ref{def:quotient}, $\mathsf{par}_Q\circ\st_d =
+\st_d\circ\mathsf{par}$ on $T$, so this is a well-defined walk in
+$(S,\mathsf{par}_Q)$.
+\end{definition}
+
+\begin{lemma}[Projection $\pi$ is a faithful unfolding map]
+\label{lem:pi-faithful}
+The map $\pi : T \to U(Q)$ of
+Definition~\ref{def:projection} satisfies:
+\begin{enumerate}[label=(\roman*),leftmargin=2em]
+\item $\pi$ is parent-respecting:
+  $\pi(\mathsf{par}(u)) = \mathsf{par}_{U(Q)}(\pi(u))$ for every
+  $u\in T$ with a parent (where $\mathsf{par}_{U(Q)}$ is walk
+  truncation on $U(Q)$);
+\item $\pi$ is child-multiplicity-respecting: for each $u\in T$ and
+  each $\sigma'\in S$, the number of children of $u$ in $T$ with
+  $\st_d$-image $\sigma'$ is $\ge \Child_Q(\st_d(u))(\sigma')$
+  (with equality up to the $\{0,1,2{+}\}$ truncation);
+\item $\pi$ is mate-respecting: if $u,u'\in T$ satisfy
+  $u\eqcong u'$, then $\pi(u),\pi(u')\in U(Q)$ are linked by the
+  $\eqQ$-quotient on $U(Q)$;
+\item $\pi$ is surjective on tree-paths: every walk in
+  $(S,\mathsf{par}_Q)$ that is reachable from $\sigma_\ast$ in
+  finitely many steps lies in the image of $\pi$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) By Definition~\ref{def:quotient},
+$\mathsf{par}_Q(\st_d(u))=\st_d(\mathsf{par}(u))$, so
+$\pi(\mathsf{par}(u))$ is the walk $\pi(u)$ truncated by one step.
+
+(ii) The child-multiplicity component of the profile
+(Definition~\ref{def:profile-components}, item~4) is extracted from
+$T$: $\Child_Q(\st_d(u))(\sigma')$ counts the number of children of
+\emph{any} occurrence of profile $\st_d(u)$ in $T$ with $\st_d$-image
+$\sigma'$, truncated to $\{0,1,2{+}\}$.  Because $u$ itself is one
+such occurrence, $u$ has at least $\Child_Q(\st_d(u))(\sigma')$ such
+children.
+
+(iii) If $u\eqcong u'$, then by (EQ2) of
+Definition~\ref{def:typed-eq},
+$(\st_d(u),\pi_T(u))\eqQ(\st_d(u'),\pi_T(u'))$ where $\pi_T(u)$ is
+the equality-port tuple of $u$ (component~2 of the profile).  This
+$\eqQ$-link lifts to a quotient on $U(Q)$ by
+Definition~\ref{def:canonical-unfolding}.
+
+(iv) Every walk $(\sigma_\ast,\sigma_1,\ldots,\sigma_m)$ in
+$(S,\mathsf{par}_Q)$ corresponds to a chain of profiles each obtained
+from the previous via $\mathsf{par}_Q$.  Pick any occurrence $u\in T$
+with $\st_d(u) = \sigma_m$ and traverse $\mathsf{par}^k$ for
+$k=0,\ldots,m$; by (i), $\pi(u)$ is the walk in question.  Such $u$
+exists by definition of $S$.
+\end{proof}
+
+\begin{remark}[$T$ is a concrete unfolding witness]
 \label{rem:T-is-unfolding}
-The split tree $T$ from Construction~\ref{con:split-tree}, with $\st_d
-: T \to S$ projecting to $Q$, is a concrete instance of $U(Q)$ in
-the following sense: for every $u \in T$ the tree path from the
-root $u_\ast$ down to $u$ projects under $\st_d$ to a walk in
-$(S,\mathsf{par}_Q)$ starting at $\sigma_\ast$, and this projection
-is parent-respecting and child-multiplicity-respecting.  We may
-therefore verify simultaneous realization on $T$ rather than on the
-abstract $U(Q)$.
+By Lemma~\ref{lem:pi-faithful}, $T$ is a concrete tree presentation
+that maps onto $U(Q)$ via the parent- and child-respecting
+projection $\pi$.  We use $T$ as a witness for realization
+conditions on $U(Q)$: any condition verified pointwise on $T$
+transfers along $\pi$ to $U(Q)$.
 \end{remark}
 
 \begin{lemma}[$\mathsf{par}_Q$ descends to mate
@@ -1887,54 +1999,90 @@ All three conditions hold for the same $U^\ast(Q)$ at the same time
 \end{lemma}
 
 \begin{proof}
-Take $U^\ast(Q):=T$ from Construction~\ref{con:split-tree}, with the
-projection $\st_d : T \to S$.  We verify the three conditions on
-$T$, then transfer to $U(Q)$ via the projection.
+We take $U^\ast(Q):=T$ and verify (SR1)--(SR3) pointwise on $T$.
+Lemma~\ref{lem:pi-faithful} (the projection $\pi : T \to U(Q)$ is
+faithful) then transfers the realization conditions from $T$ to
+$U(Q)$ along $\pi$.
 
-\smallskip\noindent\textbf{(SR1).}\;
-Let $u\in T$ with $\exists\PP.D\in\lambda(u)$.  By definition of the
-witness-generated submodel $\mathcal{I}_w$
-(Lemma~\ref{lem:witness-generated}), the witness selector $w$ has
-already chosen a model element $b\in\mathcal{I}_w$ with
-$\rho(\orig(u),b)=\PP$ and $D\in\tp_{\mathcal{I}_w}(b)$.  By
-Construction~\ref{con:split-tree} step~2 (upward expansion via
-generated cover edges), the parent chain at $u$ in $T$ continues
-upward and at some finite depth reaches an occurrence $u'$ with
-$\orig(u')$ semantically $\EQ$-equivalent to $b$ (i.e.\ $\orig(u')$ is
-either $b$ itself or an $\EQ$-mate of $b$).  By (EQ1) of the typed-$\EQ$
-congruence, $\lambda(u')=\lambda(b)\ni D$.
+\smallskip\noindent\textbf{(SR1) PP realization.}\;
+Let $u\in T$ with $\exists\PP.D\in\lambda(u)$.  Since $\lambda(u) =
+\tp_{\mathcal{I}_w}(\orig(u))$ and $\mathcal{I}_w\models C_0$ at every
+$\orig(u)$, there exists $b\in\mathcal{I}_w$ with
+$\rho(\orig(u),b)=\PP$ and $D\in\tp_{\mathcal{I}_w}(b)$.  Witness
+generation (Lemma~\ref{lem:witness-generated}) forces $b$ to lie in
+$\mathcal{I}_w$, so $b$ has at least one occurrence $u^{\dagger}\in T$
+with $\orig(u^{\dagger}) = b$
+(Construction~\ref{con:split-tree} step~2).
+Construction~\ref{con:split-tree} also installs the cover edge
+$(u, u^{\dagger})$: there is a finite chain of generated $\PP$-cover
+edges
+\[
+u = u_0 \xrightarrow{\PP} u_1 \xrightarrow{\PP} \cdots \xrightarrow{\PP}
+u_n = u^{\dagger},
+\]
+each step at most one $\PP$-edge in the witness-generated submodel.
+The chain has finite length because the cover graph is generated by
+finitely many witness selections starting at $a_0$
+(Lemma~\ref{lem:witness-generated}).  Thus the parent walk of $u$ in
+$T$ visits $u^{\dagger}$, and $D\in\lambda(u^{\dagger})=\tp_{\mathcal{I}_w}(b)$.
+Projecting along $\pi$ yields the corresponding $\mathsf{par}_Q$-walk
+in $U(Q)$.
 
-\smallskip\noindent\textbf{(SR2).}\;
-Symmetric to (SR1), via the child-multiplicity component
-(Definition~\ref{def:profile-components}, item~4) and the witness
-selector for $\PPI$-existentials.  The selector has chosen a model
-element $b'$ with $\rho(\orig(u),b')=\PPI$ and $D\in\tp_{\mathcal{I}_w}(b')$.
-The split-tree construction places $b'$ as an actual child occurrence
-$u''$ below $u$ (rather than via a parent walk), and the
-multiplicity threshold $\{0,1,2{+}\}$ records its presence in
-$\Child_Q(\st_d(u))$.
+\smallskip\noindent\textbf{(SR2) PPI realization.}\;
+Let $u\in T$ with $\exists\PPI.D\in\lambda(u)$.  By the same
+witness-generation argument, there is $b'\in\mathcal{I}_w$ with
+$\rho(\orig(u),b')=\PPI$ and $D\in\tp_{\mathcal{I}_w}(b')$.
+Construction~\ref{con:split-tree} step~3 places an occurrence
+$u''\in T$ as a child of $u$ with $\orig(u'')=b'$.  The child
+multiplicity component
+$\Child_Q(\st_d(u))(\st_d(u''))$ is therefore at least $1$ (it is
+the truncated count of such children in $T$).  By
+Lemma~\ref{lem:pi-faithful}~(ii), the corresponding child slot in
+$U(Q)$ also has multiplicity $\ge 1$, so the projection
+$\pi(u'')$ is a child of $\pi(u)$ in $U(Q)$ carrying $D$ in its
+profile type.
 
-\smallskip\noindent\textbf{(SR3).}\;
-For $\forall R.D \in \lambda(u)$, Lemma~\ref{lem:safety} gives the
-profile-level statement: along $\reach_R$ from any
-$\widehat\sigma\in\Mate(\st_d(u))$, the target profile carries $D$
-in its type.  Pulling back to $T$: any occurrence $u'$ on the
-parent walk of $u$ (for $R=\PP$) or in the child subtree of $u$
-(for $R=\PPI$) has $\st_d(u')$ in the mate-reachable closure of
-$\st_d(u)$, hence $D\in\lambda_Q(\st_d(u'))=\lambda(u')$.
+\smallskip\noindent\textbf{(SR3) Universal propagation.}\;
+Let $u\in T$ with $\forall R.D \in \lambda(u)$, $R\in\{\PP,\PPI\}$.
+By (EQ1) of Definition~\ref{def:typed-eq}, every occurrence
+$u'\eqcong u$ has $\forall R.D \in \lambda(u')$, so the set of
+profiles in $\Mate(\st_d(u))$ all carry $\forall R.D$.  Along any
+chain of $\PP$- or $\PPI$-cover edges in $T$ starting from $u$ (resp.\
+any descendant occurrence of $u$ via child multiplicity), each
+edge in $\mathcal{I}_w$ is an instance of $R$, and
+Lemma~\ref{lem:model-safe} ensures $D$ is propagated forward.  By
+Lemma~\ref{lem:safety} (the profile-level statement), the target
+profile carries $D$ along the entire $\mathsf{par}_Q$- or
+$\mathsf{par}_Q^{-1}$-reachability closure of $\Mate(\st_d(u))$.
+Pulling back along $\pi$: every $u'\in T$ in the parent walk of $u$
+(or descendant child subtree) has
+$\lambda(u') = \lambda_Q(\st_d(u'))\ni D$.
 
-\smallskip
-The three conditions hold on $T$ \emph{simultaneously} because $T$
-is a single concrete tree built once from $\mathcal{I}_w$, and every
-existential at every $u\in T$ is realized by an actual occurrence
-of $T$ (by witness-generation of $\mathcal{I}_w$ and step~2 of the
-construction).  Projection $T\to U(Q)$ via $\st_d$ transfers the
-realization conditions from $T$ to $U(Q)$ pointwise.  The patchwork
-property of RCC5~\cite{RenzNebel} ensures that the disjunctive
-networks of relations induced on $U(Q)$ from the projected pair
-relations admit a single coherent atomic refinement, so the
-simultaneous realization is also consistent at the level of
-$\rho$-labels in $U(Q)$.
+\smallskip\noindent\textbf{Simultaneity.}\;
+The argument above proceeds occurrence-by-occurrence on a single
+$T$.  $T$ is built once from $\mathcal{I}_w$
+(Construction~\ref{con:split-tree}); the witness selector $w$
+supplies one witness per existential per occurrence (by
+Definition~\ref{def:witness-policy}); $\mathcal{I}_w$ is a single
+strong-$\EQ$ model; hence \emph{all} witnesses coexist in $T$.
+Therefore conditions (SR1)--(SR3) hold for every $u\in T$
+\emph{simultaneously}, witnessed by the same $T$.
+
+\smallskip\noindent\textbf{Coherence of the rho-labelling on $U(Q)$.}\;
+The relation labelling $\rho_T(u,u') = \rho(\orig(u),\orig(u'))$ on
+pairs $u,u'\in T$ inherits all RCC5 frame axioms from $\mathcal{I}_w$
+(Section~\ref{sec:prelim}).  In particular, for any triangle
+$(u_1,u_2,u_3)$ of occurrences in $T$,
+$\rho_T(u_1,u_3)\in\comp(\rho_T(u_1,u_2),\rho_T(u_2,u_3))$.  This is
+$3$-consistency on the realized triangles of $T$.
+By the path-consistency theorem of Renz--Nebel~\cite{RenzNebel},
+$3$-consistency of an atomic RCC5 network is equivalent to global
+consistency.  Projecting $\rho_T$ along $\pi$ to $U(Q)$ preserves
+$3$-consistency (since the projection is parent- and
+child-respecting); hence the relation labelling on $U(Q)$ admits a
+globally consistent atomic RCC5 refinement.  Combined with the
+existential and universal realizations above, this gives a coherent
+simultaneous realization on $U(Q)$.
 \end{proof}
 
 \begin{remark}[O6 discharged]\label{rem:o6-discharged}
