@@ -4085,3 +4085,87 @@ Tracked under `papers/gpt5.5/` for archival:
   rebase --- our changes touched README and the v2 paper, the CoPilot
   commits added `papers/copilot/` --- but `papers/copilot/` itself
   remains untracked from this side per the established preference.
+
+## 2026-05-06: v2.1 -- discharge all six v2-review obligations
+
+### Context
+
+The first v2 commit (`09e30d1`) addressed three of the six obligations
+GPT-5.5's v2 review raised (O1 blocking-vs-EQ, O2 EQ-aware reachability,
+O3 EQ-modality normalization).  Three remained: O4 finite mosaic arity
+bound, O5 DR/PO side-context witness lemma, O6 simultaneous eventuality
+realization.  Michael asked for each in turn ("ok, do O6 now please" /
+"sure" for O4 / "Excellent. So, one missing, right?" for O5).
+
+### Discharges
+
+- **O5** (`bea1ebb`).  Added \S\ref{sub:side-context} with
+  `def:side-context` and `lem:side-context-witness`.  Each DR/PO
+  witness lives in a side context $\Side(u,v) \subseteq T$ of size at
+  most~5 on which the realized mosaic satisfies all (M1)--(M7), all
+  relation-safety, all universal-firing, and all RCC5 composition
+  constraints.
+
+- **O6** (`936d559`).  Added \S~"Simultaneous eventuality realization"
+  with `def:canonical-unfolding`, `lem:par-mate`, and
+  `lem:simul-realization` (SR1 PP via ultimately-periodic parent walk,
+  SR2 PPI via child multiplicity, SR3 universal propagation via
+  mate-aware reachability).  $T$ itself is a concrete realization of
+  $U(Q)$ in which all eventualities fire simultaneously.
+
+- **O4** (`f90f86d`).  Added \S~"Finite mosaic arity bound" with
+  `lem:axiom-arity` ((M1)--(M7) are $\le 3$-local), `lem:closure-arity`
+  ((SC1)--(SC4) are $\le 5$-local), `thm:arity-bound`
+  ($N(C_0) = 5$), and `cor:effective-mosaics`.  Patchwork
+  [Renz--Nebel] reduces global realizability to triangle-support, so
+  the constant is independent of $C_0$.
+
+### Honest assessment and tightening (`e72ccfa`)
+
+After all six discharges Michael asked "So, you are confident you
+addressed everything?".  I gave a confidence ranking
+O3 > O1 > O2 > O4 > O5 > O6 with explicit weak spots in the bottom
+three, and Michael's reply was "Well, try to make them as solid as
+possible."
+
+Tightenings in `e72ccfa`:
+
+- **O6**: replaced informal `rem:T-is-unfolding` with explicit
+  `def:projection` for $\pi : T \to U(Q)$ (walk-truncation) plus
+  `lem:pi-faithful` (parent-/child-multiplicity-/mate-respecting,
+  surjective on tree-paths).  Rewrote the proof of
+  `lem:simul-realization` with sharper (SR1) explicit PP-cover chain
+  $u = u_0 \to_\PP u_1 \to_\PP \cdots \to_\PP u_n = u^\dagger$, (SR2)
+  child multiplicity~$\ge 1$ via `lem:pi-faithful` (ii), (SR3)
+  universal propagation via `lem:safety` + `lem:model-safe` pulled
+  back along $\pi$.  Added explicit "Simultaneity" and "Coherence of
+  the rho-labelling on $U(Q)$" paragraphs that cite Renz--Nebel by
+  name.
+
+- **O5**: made $|\Side(u,v)| \le 5$ enumeration explicit -- the five
+  named elements are $u$, $v$, $\mathsf{par}(u)$, $\mathsf{par}(v)$,
+  $\mathrm{lca}_T(u,v)$, with optional cases (root, separate
+  components) spelled out and the bound shown to be tight.
+
+- **O4**: added `fact:renz-nebel` precisely restating the
+  path-consistency theorem (reflexivity, converse closure, triangle
+  composition support implies realizable by a concrete frame), making
+  `thm:arity-bound`'s appeal to it self-contained.
+
+### Outcome
+
+Page count $25 \to 27 \to 29 \to 31$; clean two-pass compile.  README,
+overview, and DL abstract page-count references updated.  All six
+obligations discharged with no remaining acknowledged gaps.
+
+### Commits
+
+- `bea1ebb` --- *v2.1: also discharge obligation O5 (DR/PO
+  side-context witness lemma).*
+- `936d559` --- *v2.1: discharge obligation O6 (simultaneous
+  eventuality realization).*
+- `f90f86d` --- *v2.1: discharge obligation O4 (finite mosaic arity
+  bound).*
+- `e72ccfa` --- *v2.1: tighten proofs of obligations O4, O5, O6.*
+
+All four pushed to `origin/master`.
