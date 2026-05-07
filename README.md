@@ -138,6 +138,25 @@ Comparing v2.1 of the completeness extraction back to Wessel's original whiteboa
 
 **Net effect.** Wessel's four whiteboard ideas (PPI-tree, EQ-splitting, congruence quotient, DR rigidity) all carry through to v2.1 unchanged in spirit, but the *technical machinery* enacting them was rebuilt around (a) witness-generated submodels in place of full models, (b) support-closed mosaics in place of pair tables, and (c) reachability in place of $\omega$-acceptance. The "DR is rigid → only {DR, PO} between siblings" observation is still the reason the whole approach works — and it is still the reason the closing arc-consistency check is trivial.
 
+#### Two routes to the same conclusion: reachability (Claude) vs. parity automaton (GPT-5.5)
+
+After GPT-5.5's review of v1, two parallel completion paths emerged. Both close the model-to-quotient gap; they differ in how they discharge transitive PP/PPI eventualities (the part that needs a fixpoint argument):
+
+- **Claude's reachability route.** [`completeness_extraction_ALCIRCC5_v2.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/completeness_extraction_ALCIRCC5_v2.pdf) (31 pages, v2.1). Reduces eventuality discharge to *finite-graph reachability* over $\mathsf{Mate}(\sigma)$ classes on the rank-$d$ quotient. No $\omega$-words, no parity automata.
+- **GPT-5.5's parity-automaton route.** [`ALCIRCC5_coherent_generated_split_forest_decidability.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf) (10 pages). Discharges eventualities via a *deterministic parity $\omega$-word automaton* whose emptiness is checked by standard parity-acceptance machinery.
+
+**Tradeoffs.** A 3× page-count gap (10 vs 31) is real and tells most of the story:
+
+| Aspect | Reachability route (Claude) | Parity-automaton route (GPT-5.5) |
+|---|---|---|
+| External prerequisites | Renz–Nebel patchwork only | Renz–Nebel + parity-automaton emptiness, complementation, acceptance |
+| Faithfulness to Wessel's whiteboard | Stays in the geometric "graph world" the sketch lives in | Translates everything into $\omega$-word semantics, one abstraction layer away from the picture |
+| Where the risk lives | Six discrete combinatorial obligations (O1–O6), each independently checkable | Concentrated in the translation to $\omega$-words being faithful — fewer pieces, each more load-bearing |
+| Decidability proof length | 31 pages (self-contained) | 10 pages (modulo automata theory) |
+| Effective complexity bound | Reachability over an exponential-sized graph | Parity-automaton emptiness, comparable order |
+
+**Why both are kept.** GPT-5.5's route is genuinely lighter to *read* if you accept parity automata as standard machinery — it's a textbook completion via well-established results. Claude's route trades that brevity for self-containedness and proximity to the original combinatorial intuition. The two papers are not in competition; they are alternative completions of the same soundness chain (GPT-5.4's Thms 1.17–1.19), and having both in the repo lets a reader pick the route that matches their background. The current overview paper builds on the reachability route for its argument, but the parity-automaton route is preserved under [`papers/gpt5.5/`](https://github.com/lambdamikel/alcircc5/tree/master/papers/gpt5.5) as an independent path to the same decidability conclusion.
+
 **Corrections by Wessel.** GPT's initial formalization incorrectly included PP as an open sibling cross-edge value. Wessel corrected this: after EQ-splitting, if x PP y then x lies below y in the tree, placing x in the Core of the sibling pair — PP is NOT an open cross-edge. This correction is essential; without it, the open domain would be {DR,PO,PP} and the arc-consistency argument breaks down. With it, the open domain is just {DR,PO}, and the {DR,PO} network is trivially arc-consistent (comp(R,S) ∩ {DR,PO} ≠ ∅ for all R,S ∈ {DR,PO}).
 
 **Implementation by Claude (Opus 4).** Claude implemented the algorithm as a type-set search with cover-tree constraint structure ([`cover_tree_tableau.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py)), capturing four key checks:
