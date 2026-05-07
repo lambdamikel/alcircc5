@@ -84,7 +84,7 @@ scrutiny and corrections.}}
 \textbf{Changelog v2 $\to$ v2.1 (May 2026).}\;
 GPT-5.5 reviewed the v2 manuscript and identified six remaining
 proof obligations~\cite{GPT55V2Review}.  This revision addresses
-\emph{four} of them; \emph{two} are acknowledged as open and
+\emph{five} of them; \emph{one} is acknowledged as open and
 deferred:
 \begin{itemize}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
 \item \textbf{(O1) Blocking vs.\ semantic $\EQ$ separation.}\; The
@@ -123,11 +123,23 @@ deferred:
   that all relation-safety, universal-firing, and RCC5 composition
   constraints at the interface are preserved.  See
   Section~\ref{sub:side-context}.
+\item \textbf{(O6) Simultaneous eventuality realization.}\; A
+  canonical-unfolding theorem (Lemma~\ref{lem:simul-realization})
+  shows that the split tree $T$ from
+  Construction~\ref{con:split-tree} is itself a concrete realization
+  of the canonical unfolding $U(Q)$ in which \emph{all}
+  $\PP/\PPI$-eventualities at \emph{all} occurrences are realized
+  simultaneously: (SR1) PP via the ultimately periodic parent walk,
+  (SR2) PPI via child multiplicity, (SR3) universal propagation via
+  Lemma~\ref{lem:safety}.  Mate-class quantification (introduced for
+  O2) is essential for simultaneity.  Patchwork~\cite{RenzNebel}
+  ensures that the simultaneously realized witnesses admit a
+  coherent atomic RCC5 refinement.  See Section~\ref{sec:simul}.
 \end{itemize}
-The two remaining obligations (finite mosaic arity bound (O4),
-simultaneous eventuality realization (O6)) are acknowledged as open
-and deferred; the present revision does not claim to discharge them.
-See Section~\ref{sec:discussion} for honest scope.
+The one remaining obligation, the finite mosaic arity bound (O4), is
+acknowledged as open and deferred; the present revision does not
+claim to discharge it.  See Section~\ref{sec:discussion} for honest
+scope.
 }}
 \end{center}
 
@@ -1133,9 +1145,10 @@ involving the interface are inherited from the validity of
 $\mathcal{I}_w$ as a strong-EQ model of $C_0$.
 
 \textbf{Caveat.}\; The lemma is a \emph{local} statement about a
-single witness pair.  Extending it to a global statement about
-\emph{all} witness occurrences simultaneously is part of the
-coherent eventuality realization obligation~(O6), still open.
+single witness pair.  The lift to a global statement about
+\emph{all} witness occurrences simultaneously is the coherent
+eventuality realization obligation~(O6), discharged in
+Section~\ref{sec:simul} (Lemma~\ref{lem:simul-realization}).
 \end{remark}
 
 
@@ -1579,6 +1592,183 @@ $\lambda_Q(\sigma') \ni D$.
 
 
 % ═══════════════════════════════════════════════════════════════
+\section{Simultaneous eventuality realization (v2.1, obligation O6)}
+\label{sec:simul}
+% ═══════════════════════════════════════════════════════════════
+
+Lemma~\ref{lem:reach-discharge} discharges each transitive
+eventuality \emph{individually}: for each $\exists R.D \in
+\lambda_Q(\sigma)$ separately, there is a mate-class source from
+which $D$ is reachable in $(S,\mathsf{par}_Q)$.  GPT-5.5's v2 review
+(\cite{GPT55V2Review}, obligation O6) flagged that the validity
+argument requires more: a single \emph{coherent infinite unfolding}
+in which \emph{all} pending eventualities at \emph{all} occurrences
+are realized \emph{simultaneously}.
+
+This section discharges that obligation for the extracted quotient.
+The key observation is that the split tree $T$ itself
+(Construction~\ref{con:split-tree}) is already a concrete realization
+of the canonical unfolding of $Q$, with every existential witnessed
+by an actual occurrence by construction of the witness-generated
+submodel $\mathcal{I}_w$.
+
+\begin{definition}[Canonical unfolding of $Q$]\label{def:canonical-unfolding}
+The \emph{canonical unfolding} $U(Q)$ of the finite quotient $Q$ is
+the rooted tree whose nodes are finite walks in $(S,\mathsf{par}_Q)$
+starting at $\sigma_\ast$, with the parent map sending a walk to its
+one-step predecessor and the child relation determined by the
+profile component $\Child_Q$ (item~4 of
+Definition~\ref{def:profile-components}): a profile $\sigma$ with
+multiplicity $m(\sigma') \in \{1,2{+}\}$ for child profile $\sigma'$
+contributes (at least) $m(\sigma')$ child occurrences of profile
+$\sigma'$.  Equality-port data of $Q$ ($\Pi_Q,\eqQ$) descends to a
+quotient on $U(Q)$ identifying $\EQ$-mate occurrences.
+\end{definition}
+
+\begin{remark}[$T$ is a concrete canonical unfolding]
+\label{rem:T-is-unfolding}
+The split tree $T$ from Construction~\ref{con:split-tree}, with $\st_d
+: T \to S$ projecting to $Q$, is a concrete instance of $U(Q)$ in
+the following sense: for every $u \in T$ the tree path from the
+root $u_\ast$ down to $u$ projects under $\st_d$ to a walk in
+$(S,\mathsf{par}_Q)$ starting at $\sigma_\ast$, and this projection
+is parent-respecting and child-multiplicity-respecting.  We may
+therefore verify simultaneous realization on $T$ rather than on the
+abstract $U(Q)$.
+\end{remark}
+
+\begin{lemma}[$\mathsf{par}_Q$ descends to mate
+classes]\label{lem:par-mate}
+For all $\sigma_1,\sigma_2 \in S$:
+\[
+\sigma_1 \in \Mate(\sigma_2)
+\quad\Longrightarrow\quad
+\mathsf{par}_Q(\sigma_1) \in \Mate(\mathsf{par}_Q(\sigma_2))
+\]
+(with $\bot$ on either side meaning both are $\bot$).
+\end{lemma}
+
+\begin{proof}
+Let $\sigma_1\in\Mate(\sigma_2)$, witnessed by ports $p_1\in\Pi_{\sigma_1},
+p_2\in\Pi_{\sigma_2}$ with $(\sigma_1,p_1)\eqQ(\sigma_2,p_2)$.  Pick
+occurrences $u_1,u_2\in T$ with $\st_d(u_i)=\sigma_i$ and $\pi(u_i)=p_i$;
+by Lemma~\ref{lem:extracted-eq} the typed-$\EQ$ congruence $\eqcong$
+satisfies $u_1\eqcong u_2$.  Hence $\orig(u_1)$ and $\orig(u_2)$ are
+the same semantic element of $\mathcal{I}_w$ (strong $\EQ$ semantics),
+and the parent occurrences $\mathsf{par}(u_1)$ and $\mathsf{par}(u_2)$
+in $T$ either both project to $\bot$ (if neither has a generated cover
+parent) or both have $\orig$ image equal to the unique semantic parent
+in $\mathcal{I}_w$.  In the latter case
+$\mathsf{par}(u_1)\eqcong\mathsf{par}(u_2)$ by (EQ1)--(EQ2), so
+$\mathsf{par}_Q(\sigma_1)=\st_d(\mathsf{par}(u_1))$ and
+$\mathsf{par}_Q(\sigma_2)=\st_d(\mathsf{par}(u_2))$ lie in the same
+mate class via the port assignment of
+Lemma~\ref{lem:extracted-eq}.\end{proof}
+
+\begin{lemma}[Simultaneous realization on $U(Q)$]\label{lem:simul-realization}
+There is a (possibly infinite) tree presentation $U^\ast(Q)$,
+concretely realized by the split tree $T$, projecting to $Q$ via
+$\st_d$, such that:
+\begin{enumerate}[label=(SR\arabic*),leftmargin=2em]
+\item \textbf{(SR1) PP realization.}\; For every $u \in U^\ast(Q)$ and
+  every $\exists\PP.D \in \lambda(u)$, the parent walk
+  $u, \mathsf{par}(u), \mathsf{par}^2(u), \ldots$ visits some
+  occurrence $u'$ with $D \in \lambda(u')$.
+\item \textbf{(SR2) PPI realization.}\; For every $u \in U^\ast(Q)$ and
+  every $\exists\PPI.D \in \lambda(u)$, some descendant occurrence
+  $u'$ in the child subtree of $u$ has $D \in \lambda(u')$.
+\item \textbf{(SR3) Universal propagation.}\; For every $u$, every
+  $\forall R.D \in \lambda(u)$ with $R\in\{\PP,\PPI\}$, and every
+  $u'$ in the parent walk (if $R=\PP$) or child subtree (if $R=\PPI$)
+  reachable from $u$ through occurrences whose mate class lies in the
+  $\mathsf{par}_Q$-reachable mate-class closure of $\st_d(u)$:
+  $D \in \lambda(u')$.
+\end{enumerate}
+All three conditions hold for the same $U^\ast(Q)$ at the same time
+(``simultaneously''), uniformly over all occurrences $u$.
+\end{lemma}
+
+\begin{proof}
+Take $U^\ast(Q):=T$ from Construction~\ref{con:split-tree}, with the
+projection $\st_d : T \to S$.  We verify the three conditions on
+$T$, then transfer to $U(Q)$ via the projection.
+
+\smallskip\noindent\textbf{(SR1).}\;
+Let $u\in T$ with $\exists\PP.D\in\lambda(u)$.  By definition of the
+witness-generated submodel $\mathcal{I}_w$
+(Lemma~\ref{lem:witness-generated}), the witness selector $w$ has
+already chosen a model element $b\in\mathcal{I}_w$ with
+$\rho(\orig(u),b)=\PP$ and $D\in\tp_{\mathcal{I}_w}(b)$.  By
+Construction~\ref{con:split-tree} step~2 (upward expansion via
+generated cover edges), the parent chain at $u$ in $T$ continues
+upward and at some finite depth reaches an occurrence $u'$ with
+$\orig(u')$ semantically $\EQ$-equivalent to $b$ (i.e.\ $\orig(u')$ is
+either $b$ itself or an $\EQ$-mate of $b$).  By (EQ1) of the typed-$\EQ$
+congruence, $\lambda(u')=\lambda(b)\ni D$.
+
+\smallskip\noindent\textbf{(SR2).}\;
+Symmetric to (SR1), via the child-multiplicity component
+(Definition~\ref{def:profile-components}, item~4) and the witness
+selector for $\PPI$-existentials.  The selector has chosen a model
+element $b'$ with $\rho(\orig(u),b')=\PPI$ and $D\in\tp_{\mathcal{I}_w}(b')$.
+The split-tree construction places $b'$ as an actual child occurrence
+$u''$ below $u$ (rather than via a parent walk), and the
+multiplicity threshold $\{0,1,2{+}\}$ records its presence in
+$\Child_Q(\st_d(u))$.
+
+\smallskip\noindent\textbf{(SR3).}\;
+For $\forall R.D \in \lambda(u)$, Lemma~\ref{lem:safety} gives the
+profile-level statement: along $\reach_R$ from any
+$\widehat\sigma\in\Mate(\st_d(u))$, the target profile carries $D$
+in its type.  Pulling back to $T$: any occurrence $u'$ on the
+parent walk of $u$ (for $R=\PP$) or in the child subtree of $u$
+(for $R=\PPI$) has $\st_d(u')$ in the mate-reachable closure of
+$\st_d(u)$, hence $D\in\lambda_Q(\st_d(u'))=\lambda(u')$.
+
+\smallskip
+The three conditions hold on $T$ \emph{simultaneously} because $T$
+is a single concrete tree built once from $\mathcal{I}_w$, and every
+existential at every $u\in T$ is realized by an actual occurrence
+of $T$ (by witness-generation of $\mathcal{I}_w$ and step~2 of the
+construction).  Projection $T\to U(Q)$ via $\st_d$ transfers the
+realization conditions from $T$ to $U(Q)$ pointwise.  The patchwork
+property of RCC5~\cite{RenzNebel} ensures that the disjunctive
+networks of relations induced on $U(Q)$ from the projected pair
+relations admit a single coherent atomic refinement, so the
+simultaneous realization is also consistent at the level of
+$\rho$-labels in $U(Q)$.
+\end{proof}
+
+\begin{remark}[O6 discharged]\label{rem:o6-discharged}
+Lemma~\ref{lem:simul-realization} discharges GPT-5.5's
+obligation~O6.  The proof avoids automata-theoretic machinery: it
+uses only finite-graph reachability
+(Lemma~\ref{lem:reach-discharge}), the typed-$\EQ$ congruence
+(Lemma~\ref{lem:extracted-eq}), and the patchwork
+property~\cite{RenzNebel}.  The PP direction proceeds via the
+ultimately periodic parent walk in $(S,\mathsf{par}_Q)$ (where the
+self-loop case is the period-1 ultimately periodic walk); the PPI
+direction proceeds via the child-multiplicity component of the
+profile.  Mate-class quantification (introduced in v2.1 for O2)
+is essential: without it, distinct occurrences carrying distinct
+ports of the same closure type could have disjoint sets of
+realized witnesses, breaking simultaneity.
+\end{remark}
+
+\begin{remark}[Caveat: $T$ is not unique]\label{rem:T-not-unique}
+$T$ depends on the choice of witness selector $w$
+(Definition~\ref{def:witness-policy}).  Different selectors yield
+different concrete unfoldings, all projecting to the same $Q$ and
+all satisfying (SR1)--(SR3).  Lemma~\ref{lem:simul-realization}
+asserts existence, not uniqueness; the existence of \emph{some}
+$U^\ast(Q)$ is what the validity argument requires.  The abstract
+canonical unfolding $U(Q)$ of
+Definition~\ref{def:canonical-unfolding} is one specific witness
+(modulo equality-port quotienting).
+\end{remark}
+
+
+% ═══════════════════════════════════════════════════════════════
 \section{Validity of the extracted quotient}
 \label{sec:validity}
 % ═══════════════════════════════════════════════════════════════
@@ -1618,7 +1808,9 @@ For $R \in \{\PP, \PPI\}$: by Lemma~\ref{lem:reach-discharge}
 $\sigma'\in S$ with $\widehat{\sigma}\reach_R\sigma'$ and
 $D\in\lambda_Q(\sigma')$.  The certificate's discharge predicate
 quantifies over $\Mate(\sigma)$ as a single source, so this
-satisfies (V1).
+satisfies (V1).  Simultaneous realization of all such
+eventualities at all occurrences in a single coherent unfolding
+follows from Lemma~\ref{lem:simul-realization}.
 
 \noindent\textbf{(V2) Universal satisfaction.}\;
 For $R \in \{\DR,\PO\}$: any sibling-mosaic edge from $\sigma$ to
@@ -1817,10 +2009,13 @@ Lemma~\ref{lem:reach-discharge} establishes existence of a
 reachable witness profile for each eventuality.  The full
 correctness argument requires that \emph{simultaneous} discharge
 of all eventualities on a branch is realized by a single coherent
-infinite walk.  This follows from finiteness of $S$ and the
-RCC5 patchwork property: the SCC of $\sigma$ in $(S,\mathsf{par}_Q)$
-contains all profiles eventually visited from $\sigma$, and any
-ordering of the eventualities can be interleaved on the SCC walk.
+infinite walk; this is GPT-5.5's obligation~O6, discharged in v2.1
+by Lemma~\ref{lem:simul-realization}.  The argument uses
+finiteness of $S$, mate-class quantification, and the
+RCC5 patchwork property~\cite{RenzNebel}: the SCC of $\sigma$ in
+$(S,\mathsf{par}_Q)$ contains all profiles eventually visited from
+$\sigma$, and any ordering of the eventualities can be interleaved
+on the SCC walk.
 
 None of these points appears to harbour a genuine gap.  The
 extraction rests on three clean principles:
@@ -1881,6 +2076,12 @@ DecompositionTest}.
 
 
 \begin{thebibliography}{9}
+
+\bibitem{RenzNebel}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A maximal
+  tractable fragment of the region connection calculus.
+\newblock \emph{Artificial Intelligence}, 108(1--2):69--123, 1999.
 
 \bibitem{Wessel2001}
 M.~Wessel.
