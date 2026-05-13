@@ -277,7 +277,48 @@ See [**Two-Tier Quotient (PDF)**](https://github.com/lambdamikel/alcircc5/blob/m
 
 > *Historical:* the **ninth approach (MSO encoding via interval semantics)** — reducing ALCI\_RCC5 to Borel-MSO over (R, <) with one open gap on MSO-definability of Dyck matching — is documented in [OUTDATED.md](OUTDATED.md); the paper itself is [`papers/MSO_encoding_ALCIRCC5.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/MSO_encoding_ALCIRCC5.pdf).
 
-### A GIS example: automated taxonomy computation
+> *Historical:* the **summary table of all twelve approaches** (six "promising and partially successful" including the GPT-5.5 automata-flavored alternative, seven "disproved, retracted, or incomplete") is preserved in [OUTDATED.md](OUTDATED.md). The current pillar is the cover-tree tableau / split-forest route, summarised above; everything else is either subsumed (two-tier quotient for the PO-coherent fragment), retained as an independent alternative (GPT-5.5 automata route), or superseded.
+
+> *Historical:* the **eight discarded approaches** (original quasimodel paper / constructive quasimodel reasoner / contextual tableau / direct model construction / profile-cached blocking / meet-based replay / triangle-type blocking / Tri-neighborhood tableau / MSO encoding) are summarised, with retraction/incompleteness traces, in [OUTDATED.md](OUTDATED.md). All five complete-graph approaches hit the same structural wall (global edge assignment); the cover-tree tableau avoids it by decomposing models into trees with {DR, PO}-only cross-edges.
+
+### Why standard undecidability reductions fail for ALCI\_RCC5
+
+Every known undecidability proof for description logics ultimately encodes a **two-dimensional grid** (the Z×Z domino tiling problem). Grid encoding requires either functional roles, number restrictions, role intersection, or role value maps. ALCI\_RCC5 has **none of these**. Moreover, the patchwork property — local consistency implies global consistency — actively resists grid encoding, since tiling reductions need rigid global constraints that go beyond local consistency.
+
+**Lutz & Wolter (LMCS 2006) explicitly left L\_RCC5(RS) open.** In their comprehensive study of modal logics of topological relations, Lutz and Wolter proved L\_RCC8 undecidable (via domino tiling using the TPP/NTPP distinction) and L\_RCC5 undecidable over RS^∃ (supremum-closed structures, via reduction from S5³). But they explicitly stated (p. 31): "Perhaps the most interesting candidate is L\_RCC5(RS) [...] to which the reduction exhibited in Section 8 does not apply." ALCI\_RCC5 satisfiability is exactly L\_RCC5(RS) — arbitrary complete-graph models. This problem has been recognized as open by leading researchers since 2006.
+
+| Candidate Problem | Reduction Technique | Key Feature Missing in ALCI\_RCC5 | Verdict |
+|---|---|---|---|
+| Z×Z Domino Tiling (Berger 1966) | Grid via graded modalities + transitivity + converse | Number restrictions (counting) | Blocked |
+| ALC\_RA undecidability (Wessel 2001) | Post Correspondence Problem | Arbitrary role axioms (RCC5 role box is fixed) | Blocked |
+| ALC\_RA⊖ undecidability (Wessel 2000) | Non-empty CFG intersection | Non-disjoint roles (RCC5 roles are JEPD) | Blocked |
+| ALCN\_RASG undecidability (Wessel 2000) | Grid via domino + number restrictions on admissible role box | Number restrictions (counting) | Blocked |
+| ALCF⁻ (features + inverse) | Grid via functional roles | Functional roles | Blocked |
+| L\_RCC8 undecidability (Lutz-Wolter 2006) | Domino tiling via discrete TPP-chains | TPP/NTPP distinction (RCC5 has only PP) | Blocked |
+| L\_RCC8 → ALCI\_RCC8 transfer | Same domino reduction over abstract models | Grid coincidence (topological rigidity) | Blocked |
+| L\_RCC5(RS^∃) undecidability (Lutz-Wolter 2006) | S5³ satisfiability via supremum regions | Supremum closure (not guaranteed in RS) | Blocked |
+
+<a id="why-lutz--wolters-rcc5-undecidability-proof-doesnt-transfer"></a>
+**Why Lutz & Wolter's RCC5 undecidability proof doesn't transfer.** The reduction from S5³ requires supremum regions Sup({w₁,w₂,w₃}), which are guaranteed in RS^∃ but not in arbitrary ALCI\_RCC5 models. The reduction therefore does not apply.
+
+<a id="why-lutz--wolters-rcc8-undecidability-proof-doesnt-transfer-to-alci_rcc8-either"></a>
+**Why Lutz & Wolter's RCC8 undecidability proof doesn't transfer to ALCI\_RCC8 either.** L\_RCC8 uses topological models (regular closed sets in R²); ALCI\_RCC8 uses abstract composition-table models. The reduction requires a **grid coincidence condition** (east-of-north = north-of-east) that topological geometry forces but the composition table does not. This **coincidence obstruction** was first identified by Wessel in 2002/2003 ([report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf), Section 4.4.3, Figure 11). See [**L\_RCC8 vs ALCI\_RCC8 (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/papers/LRCC8_vs_ALCIRCC8.pdf) for the full analysis.
+
+**Evidence from Ramsey theory.** The Bodirsky-Bodor dichotomy (2020/2024) proves that every CSP of first-order expansions of RCC5 is either in P or NP-complete — never undecidable. Ramsey uniformity forces large subsets of infinite models to look alike, opposing the positional diversity needed for computation encoding. See [OUTDATED.md](OUTDATED.md) for the full Ramsey-theoretic analysis.
+
+The fact that every standard technique is blocked is evidence *for* decidability. But ALCI\_RCC5 sits above the known decidable fragments (ALCI\_RCC1/2/3, ALC\_RA\_SG), making the question genuinely open from both directions.
+
+### Direct attacks on the patchwork property (April 2026, Claude)
+
+A separate three-paper cascade — `patchwork_augmentation_ALCIRCC5`, `typed_patchwork_counterexample_ALCIRCC5`, `inter_witness_counterexample_ALCIRCC5` — attempted to refute patchwork-based decidability head-on by augmenting the RCC5 composition machinery. Each paper refuted the previous with a strictly smaller ALCI\_RCC5 witness (culminating in a 1-node / 7-axiom inter-witness counterexample), and the cascade converged on **split-forest rank-$d$ validity as the minimum viable propagation** rather than $k$-ary patchwork synthesis. Net effect: decidability is unaffected; the cascade strengthens the "no $k$-ary synthesis" intuition behind the patchwork-based decidability story. Full details, paper titles, and counterexample sizes are in [OUTDATED.md](OUTDATED.md).
+
+---
+
+> *Historical:* the **May 2026 GPT-5.5 v1 review** (two structural defects in v1 — Hasse construction on infinite PP-chains, C5 witness conflation) and the **seven repairs in Claude's v2/v2.1 completeness extraction** (witness-generated submodel, generated cover edges, parent self-loops, containment orientation, support-closed mosaics, typed-EQ congruence axiom, reachability discharge) are documented in [OUTDATED.md](OUTDATED.md). v2.1 was the current pillar in early May 2026 and has since been superseded by the [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) after a Round-2 review (see below).
+
+---
+
+## A GIS example: automated taxonomy computation
 
 To demonstrate the cover-tree tableau on a realistic ALCI\_RCC5 ontology, we compute the **complete subsumption hierarchy** for the GIS (Geographic Information Systems) example from [report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf), Section 3 (Wessel, 2002). The TBox defines 18 concepts — geographic features like countries, cities, rivers, and lakes — connected by RCC5 spatial relations (PP = proper part, PO = partial overlap, DR = discrete).
 
@@ -335,47 +376,6 @@ For comparison, here is the original taxonomy from Wessel's report7.pdf (2002/20
 </p>
 
 **Key file:** [`gis_taxonomy.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py) — taxonomy computation (18 concepts, 21 subsumptions, ~190s)
-
-> *Historical:* the **summary table of all twelve approaches** (six "promising and partially successful" including the GPT-5.5 automata-flavored alternative, seven "disproved, retracted, or incomplete") is preserved in [OUTDATED.md](OUTDATED.md). The current pillar is the cover-tree tableau / split-forest route, summarised above; everything else is either subsumed (two-tier quotient for the PO-coherent fragment), retained as an independent alternative (GPT-5.5 automata route), or superseded.
-
-> *Historical:* the **eight discarded approaches** (original quasimodel paper / constructive quasimodel reasoner / contextual tableau / direct model construction / profile-cached blocking / meet-based replay / triangle-type blocking / Tri-neighborhood tableau / MSO encoding) are summarised, with retraction/incompleteness traces, in [OUTDATED.md](OUTDATED.md). All five complete-graph approaches hit the same structural wall (global edge assignment); the cover-tree tableau avoids it by decomposing models into trees with {DR, PO}-only cross-edges.
-
-### Why standard undecidability reductions fail for ALCI\_RCC5
-
-Every known undecidability proof for description logics ultimately encodes a **two-dimensional grid** (the Z×Z domino tiling problem). Grid encoding requires either functional roles, number restrictions, role intersection, or role value maps. ALCI\_RCC5 has **none of these**. Moreover, the patchwork property — local consistency implies global consistency — actively resists grid encoding, since tiling reductions need rigid global constraints that go beyond local consistency.
-
-**Lutz & Wolter (LMCS 2006) explicitly left L\_RCC5(RS) open.** In their comprehensive study of modal logics of topological relations, Lutz and Wolter proved L\_RCC8 undecidable (via domino tiling using the TPP/NTPP distinction) and L\_RCC5 undecidable over RS^∃ (supremum-closed structures, via reduction from S5³). But they explicitly stated (p. 31): "Perhaps the most interesting candidate is L\_RCC5(RS) [...] to which the reduction exhibited in Section 8 does not apply." ALCI\_RCC5 satisfiability is exactly L\_RCC5(RS) — arbitrary complete-graph models. This problem has been recognized as open by leading researchers since 2006.
-
-| Candidate Problem | Reduction Technique | Key Feature Missing in ALCI\_RCC5 | Verdict |
-|---|---|---|---|
-| Z×Z Domino Tiling (Berger 1966) | Grid via graded modalities + transitivity + converse | Number restrictions (counting) | Blocked |
-| ALC\_RA undecidability (Wessel 2001) | Post Correspondence Problem | Arbitrary role axioms (RCC5 role box is fixed) | Blocked |
-| ALC\_RA⊖ undecidability (Wessel 2000) | Non-empty CFG intersection | Non-disjoint roles (RCC5 roles are JEPD) | Blocked |
-| ALCN\_RASG undecidability (Wessel 2000) | Grid via domino + number restrictions on admissible role box | Number restrictions (counting) | Blocked |
-| ALCF⁻ (features + inverse) | Grid via functional roles | Functional roles | Blocked |
-| L\_RCC8 undecidability (Lutz-Wolter 2006) | Domino tiling via discrete TPP-chains | TPP/NTPP distinction (RCC5 has only PP) | Blocked |
-| L\_RCC8 → ALCI\_RCC8 transfer | Same domino reduction over abstract models | Grid coincidence (topological rigidity) | Blocked |
-| L\_RCC5(RS^∃) undecidability (Lutz-Wolter 2006) | S5³ satisfiability via supremum regions | Supremum closure (not guaranteed in RS) | Blocked |
-
-<a id="why-lutz--wolters-rcc5-undecidability-proof-doesnt-transfer"></a>
-**Why Lutz & Wolter's RCC5 undecidability proof doesn't transfer.** The reduction from S5³ requires supremum regions Sup({w₁,w₂,w₃}), which are guaranteed in RS^∃ but not in arbitrary ALCI\_RCC5 models. The reduction therefore does not apply.
-
-<a id="why-lutz--wolters-rcc8-undecidability-proof-doesnt-transfer-to-alci_rcc8-either"></a>
-**Why Lutz & Wolter's RCC8 undecidability proof doesn't transfer to ALCI\_RCC8 either.** L\_RCC8 uses topological models (regular closed sets in R²); ALCI\_RCC8 uses abstract composition-table models. The reduction requires a **grid coincidence condition** (east-of-north = north-of-east) that topological geometry forces but the composition table does not. This **coincidence obstruction** was first identified by Wessel in 2002/2003 ([report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf), Section 4.4.3, Figure 11). See [**L\_RCC8 vs ALCI\_RCC8 (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/papers/LRCC8_vs_ALCIRCC8.pdf) for the full analysis.
-
-**Evidence from Ramsey theory.** The Bodirsky-Bodor dichotomy (2020/2024) proves that every CSP of first-order expansions of RCC5 is either in P or NP-complete — never undecidable. Ramsey uniformity forces large subsets of infinite models to look alike, opposing the positional diversity needed for computation encoding. See [OUTDATED.md](OUTDATED.md) for the full Ramsey-theoretic analysis.
-
-The fact that every standard technique is blocked is evidence *for* decidability. But ALCI\_RCC5 sits above the known decidable fragments (ALCI\_RCC1/2/3, ALC\_RA\_SG), making the question genuinely open from both directions.
-
-### Direct attacks on the patchwork property (April 2026, Claude)
-
-A separate three-paper cascade — `patchwork_augmentation_ALCIRCC5`, `typed_patchwork_counterexample_ALCIRCC5`, `inter_witness_counterexample_ALCIRCC5` — attempted to refute patchwork-based decidability head-on by augmenting the RCC5 composition machinery. Each paper refuted the previous with a strictly smaller ALCI\_RCC5 witness (culminating in a 1-node / 7-axiom inter-witness counterexample), and the cascade converged on **split-forest rank-$d$ validity as the minimum viable propagation** rather than $k$-ary patchwork synthesis. Net effect: decidability is unaffected; the cascade strengthens the "no $k$-ary synthesis" intuition behind the patchwork-based decidability story. Full details, paper titles, and counterexample sizes are in [OUTDATED.md](OUTDATED.md).
-
----
-
-> *Historical:* the **May 2026 GPT-5.5 v1 review** (two structural defects in v1 — Hasse construction on infinite PP-chains, C5 witness conflation) and the **seven repairs in Claude's v2/v2.1 completeness extraction** (witness-generated submodel, generated cover edges, parent self-loops, containment orientation, support-closed mosaics, typed-EQ congruence axiom, reachability discharge) are documented in [OUTDATED.md](OUTDATED.md). v2.1 was the current pillar in early May 2026 and has since been superseded by the [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) after a Round-2 review (see below).
-
----
 
 ## Round-2 review and repaired-proof adoption (May 2026)
 
