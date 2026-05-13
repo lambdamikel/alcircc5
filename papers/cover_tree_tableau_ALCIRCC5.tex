@@ -941,16 +941,20 @@ review).}
   \item \textbf{Completeness extraction.}
     The reverse direction---every satisfiable
     $C_0$ admits a valid finite rank-$d$
-    quotient---was labelled ``condensed'' in~\cite{SiblingCompleted}
-    and is written out in our companion
-    paper~\cite{CompletenessExtraction}: starting from a pointed
-    strong-$\EQ$ model, we split join nodes into $\EQ$-mates, read
-    off rank-$d$ states by induction, extract sibling-interface
-    descriptors from realized atomic relations, and extract
-    relation-safe witness menus.  The key lemma is that in any
-    extracted quotient, Need-filtered pair domains equal unfiltered
-    ones, because the source model satisfies all universals and
-    local types are preserved under the rank-$d$ quotient.
+    quotient---was labelled ``condensed'' in~\cite{SiblingCompleted}.
+    Claude's earlier completeness-extraction
+    attempts (\cite{CompletenessExtractionV1}, v1; v2.1, May~2026) are
+    \emph{superseded} after a GPT-5.5 round-2 review found
+    two structural defects in v1 and a residual
+    $\omega$-acceptance dependency in v2.1.  The current best
+    statement is GPT-5.5's repaired
+    proof~\cite{GPT55Repaired} (May~2026, 16~pages, no-automata
+    route), which formulates rank-$d$ split-forest certificates
+    and ten finite-checkable validity conditions (V1)--(V10), and
+    proves both directions in their entirety.  The three structural
+    ingredients that make the proof go through are (i)~occurrence-level
+    equality, (ii)~mates with different parents, and
+    (iii)~request-closed cycles in place of $\omega$-acceptance.
 
   \item \textbf{Decidability of $\ALCIRCC{5}$ concept satisfiability.}
     The conjunction of~(a) and~(b) establishes decidability:
@@ -1121,13 +1125,20 @@ GPT-5.4 Pro (OpenAI), prompted by Michael Wessel.
 \newblock Manuscript, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/alcircc5_cover_tree_tableau_needall_patched.pdf}
 
-\bibitem{CompletenessExtraction}
+\bibitem{CompletenessExtractionV1}
 Claude Opus (Anthropic), prompted by Michael Wessel.
 \newblock Closing the completeness gap for $\mathcal{ALCI}_{RCC5}$:
   extraction of valid finite rank-$d$ quotients from strong-$\EQ$
-  models.
+  models (v1; \emph{superseded}).
 \newblock Manuscript, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/completeness_extraction_ALCIRCC5.pdf}
+
+\bibitem{GPT55Repaired}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\newblock A repaired split-forest decidability proof for
+  $\mathcal{ALCI}_{RCC5}$ (no-automata route).
+\newblock Manuscript, May 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf}
 
 \bibitem{RenzNebel1999}
 Jochen Renz and Bernhard Nebel.
