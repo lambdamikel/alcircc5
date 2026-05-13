@@ -13,11 +13,11 @@ proof](papers/copilot.pdf), this time using *a deterministic parity
 ω‑word automaton.* Also, GPT 5.5 had some complaints about some of the
 previous work.  More updates soon.
 
-### Overview paper
+## Overview paper
 
 A self-contained **[overview paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.pdf)** (9 pages) surveys the entire project: the history of ALCI\_RCC5 (Cohn 1993, Wessel 2002/2003, Lutz & Wolter 2006), why all known undecidability reductions fail (including a concrete domino-encoding attempt verified as blocked), why naive tableau blocking fails for complete-graph logics, the split-forest model decomposition and cover-tree tableau, and how the approach achieves decidability. See also the [source (LaTeX)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.tex).
 
-### Intellectual roots
+## Intellectual roots
 
 The idea of combining description logics with qualitative spatial reasoning via modal accessibility relations dates back to **Cohn (1993)**, who proposed a multi-modal spatial logic using RCC8 relations as modalities in his IJCAI workshop paper:
 
@@ -25,7 +25,34 @@ The idea of combining description logics with qualitative spatial reasoning via 
 
 Cohn's paper introduced the key idea of treating topological relations (PP, PO, DR, etc.) as modal operators, enabling spatial constraints to be expressed within a logical framework — but left decidability questions entirely open. **Wessel (2002/2003)** then formally defined the ALCI\_RCC family (ALCI\_RCC5, ALCI\_RCC8), giving it rigorous semantics based on the RCC composition tables, and investigated decidability as a central open problem (see [report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf)). The decidability questions remained open for over 20 years — until the work documented in this repository.
 
-### Complexity landscape
+## Background
+
+The ALCI\_RCC family extends the description logic ALCI (ALC with inverse roles) with **role boxes derived from RCC composition tables**. The base relations of RCC5 ({DR, PO, EQ, PP, PPI}) serve as the role names, and interpretations are constrained to be **complete graphs** where every pair of domain elements is related by exactly one base relation, subject to the RCC5 composition table.
+
+These logics were introduced by Michael Wessel in his doctoral work at the University of Hamburg, under the DFG project "Description Logics and Spatial Reasoning" (grant NE 279/8-1). In a series of technical reports, Wessel:
+
+- **Proved decidability** of ALCI\_RCC1, ALCI\_RCC2, and ALCI\_RCC3 by showing that their composition tables yield deterministic or near-deterministic role boxes amenable to standard DL techniques ([report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf)).
+- **Proved undecidability** of ALC\_RA (ALC with arbitrary role axioms, i.e., unrestricted composition-based role inclusion axioms) via reduction from the Post Correspondence Problem ([report6.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report6.pdf)), and of ALC\_RA⊖ (the non-disjoint-roles variant) via reduction from non-empty CFG intersection ([report4.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report4.pdf)).
+- **Classified the decidability boundary** for ALC with composition-based role inclusion axioms: decidable (EXPTIME-complete, via reduction to ALC with general TBoxes) when the role box is **admissible** — deterministic, functional, complete, and associative (ALCRA\_SG); undecidable again once unqualified number restrictions are added (ALCN\_RASG) ([report5.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report5.pdf)).
+- **Left open** the decidability of ALCI\_RCC5 and ALCI\_RCC8, noting that their composition tables are non-deterministic but satisfy the patchwork property — placing them between the decidable (ALCRA\_SG) and undecidable (ALC\_RA) cases.
+
+### Key Difficulties
+
+- **No tree model property**: models are complete graphs (K\_n or K\_omega)
+- **No finite model property**: some satisfiable concepts require infinite models
+- **Non-deterministic role box**: the RCC5 composition table has multi-valued entries, ruling out reduction to ALCRA\_SG
+
+### Key Enablers: Patchwork Property and Full RCC5 Tractability
+
+The proof exploits two results from qualitative constraint reasoning (Renz & Nebel, 1999; Renz, 1999):
+
+> **Patchwork property.** For RCC5 (and RCC8), an atomic constraint network is consistent if and only if it is path-consistent.
+
+> **Full RCC5 tractability.** The entire RCC5 algebra is tractable: a *disjunctive* RCC5 constraint network is consistent if and only if it is path-consistent.
+
+The patchwork property means **local (triple-wise) consistency implies global consistency** for atomic networks. Full RCC5 tractability is strictly stronger: it extends this to disjunctive networks (where each edge has a *set* of possible relations). The Henkin model construction relies on the stronger result to solve disjunctive constraint networks arising at each extension step.
+
+## Complexity landscape
 
 | Logic | Lower bound | Upper bound | Status |
 |---|---|---|---|
@@ -333,33 +360,6 @@ GPT-5.5's [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automat
 **Verification status.** All six Python work packages WP1–WP6 under [`verification/`](verification/) **PASS** (WP4 and WP5 folded into WP2/WP3): WP1 (RCC5 composition table — exhaustive subset enumeration matches GPT-5.5's table exactly, 25/25 cells); WP2 ((V1)/(V3)/(V4)/(V5)/(V9)/(V10) certificate fuzzer — $C_{AB}$ accepted with two different parents, rejected when forced into a single parent); WP3 (small-model SAT/UNSAT oracle — $C_{AB}$ realised at $n=3$); WP6 ((M1)–(M5) + (SC1)–(SC4) mosaic closure search — Renz–Nebel patchwork holds on triangles, no counterexample to the patchwork lemma). The full prose of the Round-2 review and verification work is preserved in [OUTDATED.md](OUTDATED.md); the Lean targets L1–L7 are not yet attempted.
 
 ---
-
-## Background
-
-The ALCI\_RCC family extends the description logic ALCI (ALC with inverse roles) with **role boxes derived from RCC composition tables**. The base relations of RCC5 ({DR, PO, EQ, PP, PPI}) serve as the role names, and interpretations are constrained to be **complete graphs** where every pair of domain elements is related by exactly one base relation, subject to the RCC5 composition table.
-
-These logics were introduced by Michael Wessel in his doctoral work at the University of Hamburg, under the DFG project "Description Logics and Spatial Reasoning" (grant NE 279/8-1). In a series of technical reports, Wessel:
-
-- **Proved decidability** of ALCI\_RCC1, ALCI\_RCC2, and ALCI\_RCC3 by showing that their composition tables yield deterministic or near-deterministic role boxes amenable to standard DL techniques ([report7.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf)).
-- **Proved undecidability** of ALC\_RA (ALC with arbitrary role axioms, i.e., unrestricted composition-based role inclusion axioms) via reduction from the Post Correspondence Problem ([report6.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report6.pdf)), and of ALC\_RA⊖ (the non-disjoint-roles variant) via reduction from non-empty CFG intersection ([report4.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report4.pdf)).
-- **Classified the decidability boundary** for ALC with composition-based role inclusion axioms: decidable (EXPTIME-complete, via reduction to ALC with general TBoxes) when the role box is **admissible** — deterministic, functional, complete, and associative (ALCRA\_SG); undecidable again once unqualified number restrictions are added (ALCN\_RASG) ([report5.pdf](https://github.com/lambdamikel/alcircc5/blob/master/papers/report5.pdf)).
-- **Left open** the decidability of ALCI\_RCC5 and ALCI\_RCC8, noting that their composition tables are non-deterministic but satisfy the patchwork property — placing them between the decidable (ALCRA\_SG) and undecidable (ALC\_RA) cases.
-
-### Key Difficulties
-
-- **No tree model property**: models are complete graphs (K\_n or K\_omega)
-- **No finite model property**: some satisfiable concepts require infinite models
-- **Non-deterministic role box**: the RCC5 composition table has multi-valued entries, ruling out reduction to ALCRA\_SG
-
-### Key Enablers: Patchwork Property and Full RCC5 Tractability
-
-The proof exploits two results from qualitative constraint reasoning (Renz & Nebel, 1999; Renz, 1999):
-
-> **Patchwork property.** For RCC5 (and RCC8), an atomic constraint network is consistent if and only if it is path-consistent.
-
-> **Full RCC5 tractability.** The entire RCC5 algebra is tractable: a *disjunctive* RCC5 constraint network is consistent if and only if it is path-consistent.
-
-The patchwork property means **local (triple-wise) consistency implies global consistency** for atomic networks. Full RCC5 tractability is strictly stronger: it extends this to disjunctive networks (where each edge has a *set* of possible relations). The Henkin model construction relies on the stronger result to solve disjunctive constraint networks arising at each extension step.
 
 ## The RCC5 Composition Table
 
