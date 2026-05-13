@@ -1228,6 +1228,33 @@ along parent edges (including self-loops). Combined with the
 soundness chain above, this yields a valid finite quotient, hence
 a valid type set.
 
+\medskip\noindent\textbf{Round-2 update (May~12,~2026).}
+A week after v2.1, GPT-5.5 produced a \emph{second formal review}
+of v2.1 itself and identified \textbf{eight structural gaps
+(G1)--(G8)}, of which three are load-bearing: (G1)~profile-level
+equality ports contradict vertical separation on self-loops via
+the M1$+$M7 reflexivity chain; (G3)~the mate construction forces
+all mates to share a single semantic parent, refuted by a
+two-mate stress formula $C_{AB}$; (G4)~the rootless orientation
+is incompatible with the depth-from-$u_*$ projection.  Alongside
+the review, GPT-5.5 supplied a \emph{repaired
+proof}~\cite{GPT55Repaired} that addresses all three via
+(i)~\textbf{occurrence-level equality}
+$u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$
+(not profile-port equality), (ii)~\textbf{mates with different
+parents} via port-equivalence,
+and (iii)~\textbf{request-closed cycles} in place of
+$\omega$-acceptance.  The repaired proof formulates ten
+finite-checkable validity conditions~(V1)--(V10) on rank-$d$
+quotients and a coarse bound $B(C_0) = 2^{2^{p(n)}}$ on
+certificate size.  v2.1 is therefore \textbf{marked superseded};
+the GPT-5.5 repaired proof is the \textbf{current best
+statement} of the decidability argument; Claude's contribution
+shifts to verification of its combinatorial claims (WP1--WP6,
+L1--L7).  WP1 (RCC5 composition table by exhaustive subset
+enumeration) confirms the repaired proof's table matches
+brute-force computation in all 25 cells.
+
 \medskip\noindent\textbf{A note on scope.}
 The soundness and completeness statements above are theorems
 about the \emph{split-forest semantics}, not about the
@@ -1614,6 +1641,14 @@ GPT-5.5 (OpenAI), prompted by M.\ Wessel.
   for $\ALCIRCC{5}$ (B\"uchi-automaton route).
 \newblock Technical report, May 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf}
+
+\bibitem{GPT55Repaired}
+GPT-5.5 (OpenAI), prompted by M.\ Wessel.
+\newblock A repaired split-forest decidability proof for
+  $\ALCIRCC{5}$ (no-automata route): occurrence-level equality,
+  mates with different parents, request-closed cycles.
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf}
 
 \bibitem{CoverTreeImpl}
 Claude (Anthropic), prompted by M.\ Wessel.

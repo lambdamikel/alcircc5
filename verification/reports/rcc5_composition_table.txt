@@ -1,0 +1,48 @@
+===============================================================================
+WP1: RCC5 composition-table verification by exhaustive subset enumeration
+===============================================================================
+
+Stability check across |U| = 2, 3, 4, 5:
+
+  |U| = 2: signature 04510108  
+  |U| = 3: signature 68941931  DIFFERENT
+  |U| = 4: signature 30249552  DIFFERENT
+  |U| = 5: signature 30249552  SAME
+
+Per-cell comparison at |U| = 5:
+
+  (R, S)         computed                     GPT-5.5                      reasoner                 status
+  --------------------------------------------------------------------------------------------------------
+  (EQ, EQ)      {EQ}                         {EQ}                        n/a (EQ)               n/a
+  (EQ, DR)      {DR}                         {DR}                        n/a (EQ)               n/a
+  (EQ, PO)      {PO}                         {PO}                        n/a (EQ)               n/a
+  (EQ, PP)      {PP}                         {PP}                        n/a (EQ)               n/a
+  (EQ, PPI)     {PPI}                        {PPI}                       n/a (EQ)               n/a
+  (DR, EQ)      {DR}                         {DR}                        n/a (EQ)               n/a
+  (DR, DR)      {EQ,DR,PO,PP,PPI}            {EQ,DR,PO,PP,PPI}           {DR,PO,PP,PPI}         conv.
+  (DR, PO)      {DR,PO,PP}                   {DR,PO,PP}                  {DR,PO,PP}             PASS
+  (DR, PP)      {DR,PO,PP}                   {DR,PO,PP}                  {DR,PO,PP}             PASS
+  (DR, PPI)     {DR}                         {DR}                        {DR}                   PASS
+  (PO, EQ)      {PO}                         {PO}                        n/a (EQ)               n/a
+  (PO, DR)      {DR,PO,PPI}                  {DR,PO,PPI}                 {DR,PO,PPI}            PASS
+  (PO, PO)      {EQ,DR,PO,PP,PPI}            {EQ,DR,PO,PP,PPI}           {DR,PO,PP,PPI}         conv.
+  (PO, PP)      {PO,PP}                      {PO,PP}                     {PO,PP}                PASS
+  (PO, PPI)     {DR,PO,PPI}                  {DR,PO,PPI}                 {DR,PO,PPI}            PASS
+  (PP, EQ)      {PP}                         {PP}                        n/a (EQ)               n/a
+  (PP, DR)      {DR}                         {DR}                        {DR}                   PASS
+  (PP, PO)      {DR,PO,PP}                   {DR,PO,PP}                  {DR,PO,PP}             PASS
+  (PP, PP)      {PP}                         {PP}                        {PP}                   PASS
+  (PP, PPI)     {EQ,DR,PO,PP,PPI}            {EQ,DR,PO,PP,PPI}           {DR,PO,PP,PPI}         conv.
+  (PPI, EQ)     {PPI}                        {PPI}                       n/a (EQ)               n/a
+  (PPI, DR)     {DR,PO,PPI}                  {DR,PO,PPI}                 {DR,PO,PPI}            PASS
+  (PPI, PO)     {PO,PPI}                     {PO,PPI}                    {PO,PPI}               PASS
+  (PPI, PP)     {EQ,PO,PP,PPI}               {EQ,PO,PP,PPI}              {PO,PP,PPI}            conv.
+  (PPI, PPI)    {PPI}                        {PPI}                       {PPI}                  PASS
+
+Summary: 0 GPT-5.5 mismatches, 0 reasoner mismatches
+         (convention-only EQ omissions in 4 reasoner cells do not count).
+
+VERDICT: PASS. GPT-5.5 table matches brute-force enumeration exactly.
+         Reasoner table differs only by the conventional EQ omission
+         in 4 cells (DR/DR, PO/PO, PP/PPI, PPI/PP), as documented in
+         the reasoner source by EQ_ADMITTING_PAIRS.

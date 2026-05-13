@@ -4169,3 +4169,104 @@ obligations discharged with no remaining acknowledged gaps.
 - `e72ccfa` --- *v2.1: tighten proofs of obligations O4, O5, O6.*
 
 All four pushed to `origin/master`.
+
+---
+
+## 2026-05-12: round-2 review of v2.1 — adopt GPT-5.5's repaired proof, start verification work
+
+GPT-5.5 returned with a **second formal review**, this time of v2.1
+itself: [`papers/gpt5.5_round2/formal_review_latest_v21.pdf`](papers/gpt5.5_round2/formal_review_latest_v21.pdf).
+The review identifies **eight critical structural gaps (G1)–(G8)** in
+v2.1.  After reading line-by-line against the v2.1 text, three are
+genuinely load-bearing:
+
+- **G1 — profile-port equality contradicts vertical separation on
+  self-loops.**  v2.1 defines $\equiv_{\EQ,Q}$ at the *equality-port*
+  level on profiles.  Axiom M1 (reflexivity) plus M7 (typed-EQ
+  congruence) imply $\sigma \equiv_{\EQ,Q} \sigma$ via the identity
+  port-map.  The vertical-separation axiom forbids $\equiv_{\EQ,Q}$
+  along strict PP/PPI paths.  On a state $\sigma$ with a PP self-edge
+  (v2.1 explicitly allows these to absorb infinite PP-chains), this is
+  a contradiction.  v2.1 has no consistent reading on self-loops.
+
+- **G3 — single-parent mate construction refuted by $C_{AB}$.** v2.1
+  forces every mate of $\sigma$ to share a single semantic parent.
+  The stress formula
+  $$C_{AB} \;\equiv\; A \sqcap B \sqcap \exists\PP.A \sqcap \exists\PP.B \sqcap \forall\PP.(A \to \lnot B) \sqcap \forall\PP.(B \to \lnot A)$$
+  admits a model with two distinct upward PP witnesses with different
+  type profiles, forcing two mate occurrences with different parents.
+
+- **G4 — rootless orientation incompatible with depth-from-$u_*$.**
+  v2.1 retains a projection $\pi: T \to U(Q)$ defined by depth from
+  $u_*$, but the rootless orientation allows occurrences that are
+  proper-superparts of $u_*$ (depth undefined).
+  `lem:simul-realization` silently assumes $u_*$ is a root.
+
+### GPT-5.5's repaired proof
+
+Alongside the review, GPT-5.5 supplied a self-contained repaired
+proof:
+[`papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf`](papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf)
+(16 pages).  Three structural fixes:
+
+1. **Occurrence-level equality.**  Def. 4.1 (S5):
+   $u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$
+   — a concrete identification on occurrences, not a port-bijection on
+   profiles.  Self-loops become trivially reflexive and
+   vertical-separation contradictions vanish.
+2. **Mates with different parents** via port-equivalence on `Mate_Q`,
+   so the $C_{AB}$ two-mate scenario is fully accommodated.
+3. **Request-closed cycles replace $\omega$-acceptance.**  Transitive
+   PP/PPI eventualities are discharged by request-closed cycles in the
+   rank-$d$ quotient graph — pure finite-graph reachability + cycle
+   closure, no parity/Büchi.
+
+The repaired proof formulates ten finite-checkable validity conditions
+(V1)–(V10) on rank-$d$ quotients and a coarse upper bound
+$B(C_0) = 2^{2^{p(n)}}$ on certificate size for a polynomial $p$.
+
+### Decision: Option 4 — adopt the repaired proof, do verification work
+
+After I laid out four options
+(1: rewrite my own proof to fix only the three load-bearing gaps;
+ 2: write a v2.2 patch paper;
+ 3: drop the proof entirely and rely on the parity-automaton route;
+ 4: adopt GPT-5.5's repaired proof as current best statement and shift
+ my contribution to verification),
+Michael chose **Option 4**.  Rationale: the repaired proof is
+self-contained, addresses all three load-bearing gaps, and the
+verification work is concrete original Claude-side contribution that
+doesn't duplicate either GPT-5.5's prose or the existing soundness
+chain.
+
+### Verification work
+
+GPT-5.5 also supplied
+[`papers/gpt5.5_round2/verification_recommendations_for_claude.pdf`](papers/gpt5.5_round2/verification_recommendations_for_claude.pdf)
+— six Python work packages (WP1–WP6) and seven Lean targets (L1–L7)
+with pass/fail criteria C1–C8.  The Python work lives under
+[`verification/`](verification/):
+
+- **WP1 (done):** RCC5 composition table verification by exhaustive
+  subset enumeration.  Brute-force computation over non-empty subsets
+  of $|U| = 5$ matches GPT-5.5's stated table in all 25 cells.  The
+  signature stabilises at $|U| = 4$.  The in-repo quasimodel reasoner's
+  COMP table differs only in the four documented EQ-omission cells
+  (DR,DR), (PO,PO), (PP,PPI), (PPI,PP) — convention, not bug.  See
+  [`verification/python/rcc5_composition_check.py`](verification/python/rcc5_composition_check.py)
+  and [`verification/reports/rcc5_composition_table.txt`](verification/reports/rcc5_composition_table.txt).
+- **WP2 (planned):** bounded certificate soundness fuzzer for the
+  (V1)–(V10) conditions.
+- **WP3 (planned):** small-model SAT/UNSAT oracle cross-check.
+- **WP4 (planned):** $C_{AB}$ stress formula (the G3 witness).
+- **WP5 (planned):** request-closed blocking cycles.
+- **WP6 (planned):** mosaic closure search.
+
+### Status updates
+
+- v2.1 marked **superseded** by the round-2 review.
+- GPT-5.5's repaired proof adopted as the **current best statement**.
+- README, overview paper, DL 2026 abstract all updated with a Round-2
+  note pointing at the repaired proof and recording WP1's result.
+- v1 + v2.1 + repaired proof all retained in the repo for the audit
+  trail.
