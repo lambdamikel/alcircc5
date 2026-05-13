@@ -2,6 +2,22 @@
 
 **Split-Forest Models and the Patchwork Property**
 
+**Contents**
+
+- [Latest News](#latest-news)
+- [Overview paper](#overview-paper)
+- [Intellectual roots](#intellectual-roots)
+- [Background](#background)
+- [Complexity landscape](#complexity-landscape)
+- [Why this problem is still open](#why-this-problem-is-still-open)
+- [Current Status of the Proof](#current-status-of-the-proof)
+- [A GIS example: automated taxonomy computation](#a-gis-example-automated-taxonomy-computation)
+- [Files](#files)
+- [Implementation: Cover-Tree Tableau Reasoner](#implementation-cover-tree-tableau-reasoner)
+- [Implementation: ALCI\_RCC5 Concept Satisfiability Reasoner (quasimodel oracle)](#implementation-alci_rcc5-concept-satisfiability-reasoner-quasimodel-oracle)
+- [References](#references)
+- [Acknowledgments](#acknowledgments)
+
 ## Latest News
 
 - 5-12-2026 (latest): **GPT-5.5 round-2 review supersedes v2.1; repaired proof adopted as current best statement; Claude-side verification begins.** GPT-5.5 published a second formal review ([PDF](papers/gpt5.5_round2/formal_review_latest_v21.pdf), [LaTeX](papers/gpt5.5_round2/formal_review_latest_v21.tex)) of [completeness extraction v2.1](papers/completeness_extraction_ALCIRCC5_v2.pdf) that identifies **eight critical structural gaps (G1–G8)**, of which three are genuinely load-bearing: (G1) profile-level equality ports contradict vertical separation on self-loops via the M1+M7 reflexivity chain; (G3) the mate construction forces all mates to share a single semantic parent, refuted by a two-mate stress formula $C_{AB}$ requiring different parents; (G4) the rootless orientation is incompatible with the depth-from-$u_*$ projection used in the proof. Alongside the review, GPT-5.5 produced a [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (16 pages, [LaTeX](papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.tex)) that fixes all three load-bearing gaps via **occurrence-level equality** ($u \equiv_{EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$, not port-equality on profiles), **mates with different parents**, and **request-closed cycles** in place of $\omega$-acceptance; the result is a self-contained no-automata decidability proof with 10 finite-checkable validity conditions (V1)–(V10) and a coarse bound $B(C_0) = 2^{2^{p(n)}}$. **Decision (Wessel + Claude):** v2.1 is **marked superseded**; the GPT-5.5 repaired proof is adopted as the **current best statement** of the decidability argument. Claude's contribution shifts to **verification**, per GPT-5.5's [verification-recommendations document](papers/gpt5.5_round2/verification_recommendations_for_claude.pdf): six Python work packages (WP1–WP6) and seven Lean targets (L1–L7) cross-checking the repaired proof's combinatorial claims. **WP1 complete** — [`verification/python/rcc5_composition_check.py`](verification/python/rcc5_composition_check.py) exhaustively enumerates triples of non-empty subsets of $|U|=5$ and confirms GPT-5.5's RCC5 composition table (repaired proof, lines 99–114) matches brute-force computation **exactly**, all 25 cells; the in-repo reasoner's COMP table differs only by the four documented EQ-omission cells (DR,DR), (PO,PO), (PP,PPI), (PPI,PP). Output saved to [`verification/reports/rcc5_composition_table.txt`](verification/reports/rcc5_composition_table.txt). WP2–WP6 and L1–L7 in progress. See [Round-2 review and repaired-proof adoption section](#round-2-review-and-repaired-proof-adoption-may-2026) below.
