@@ -1240,74 +1240,96 @@ The full construction was formalized by GPT-5.4~\cite{SiblingCompleted}.
 
 \textbf{Completeness} (satisfiable concept $\Rightarrow$
 valid type set):
-Given a model~$\mathcal{I} \models C_0$, construct a cover-tree
-presentation and extract rank-$d$ states.
-A first attempt at writing this out as
-\textit{completeness extraction~v1}~\cite{CompletenessExtractionV1}
-(April~2026) was reviewed in May~2026 by GPT-5.5 and found to
-contain two structural defects: a Hasse construction that fails on
-infinite $\PP$-chains (e.g.\ $C_\uparrow \equiv \exists\PP.\top
-\sqcap \forall\PP.\exists\PP.\top$), and a witness conflation in
-the $C5$ triple-coherence proof.  The same review found that
-adjacent material in the v1 sibling-interface
-paper~\cite{SiblingCompleted} carries the same defects:
-Def~1.5 (split-tree presentation) requires an ambient root, Def~1.7
-($\mathrm{Wit}_k$) puts $\PP/\PPI$ existentials in the witness menu, and
-the Thm~1.20 proof sketch asserts but does not construct
-support-closed tables.  These adjacent defects are addressed by the
-\textit{sibling-interface delta paper~v2}~\cite{SiblingInterfaceV2}
-(May~2026, 10~pages).  This is explicitly a \emph{delta} paper: it
-does not re-prove Thms~1.17--1.19 (those proofs continue to live
-only in v1~\cite{SiblingCompleted}); it instead replaces v1 Def~1.5
-(parent self-loops, no ambient root, generated witness-cover
-edges), v1 Def~1.7 ($\PP/\PPI$ existentials by reachability
-discharge over the parent graph, not witness-menu slots), drops the
-v1 Thm~1.20 proof sketch (delegating model-to-quotient to the
-completeness-extraction~v2 paper below), and shows by two
-preservation lemmas that v1's proofs of Thms~1.17--1.19 carry over
-verbatim under the new definitions.  Both files are therefore
-active in the chain: v1 supplies the soundness proofs, v2~sibling
-acts as a delta over the surrounding definitions.
-\textit{Completeness extraction~v2}~\cite{CompletenessExtraction}
-(May~2026, 31~pages, v2.1) repairs both v1 defects via seven concrete
-fixes: pass to a witness-generated submodel
-(no density / no ambient-root dependence); use generated cover
-edges (selected witness-cover edges) rather than semantic Hasse
-covers; permit self-loops on the parent function of the finite
-quotient (so ultimately periodic ancestor trunks are first-class);
-make containment orientation explicit (parent~$=$~proper superpart);
-replace raw pair-tables by support-closed mosaics (joint atomic
-networks over triples, fixing the $C5$ conflation); add an
-explicit typed-$\EQ$ congruence axiom; and discharge transitive
-$\PP/\PPI$ eventualities by \emph{finite-graph reachability} on
-the finite quotient---no B\"uchi acceptance and no
-$\omega$-language machinery.
-The crucial observation behind~(R7) is that GPT-5.5's
-cycle-realization condition reduces to ordinary reachability over
-the finite quotient: $\exists\PP.D \in \lambda(\sigma)$ requires
-$D \in \lambda(\sigma')$ for some $\sigma'$ reachable from $\sigma$
-along parent edges (including self-loops). Combined with the
-soundness chain above, this yields a valid finite quotient, hence
-a valid type set.
+Given a model~$\mathcal{I} \models C_0$, construct a
+\emph{generated split-forest certificate} for it.  This direction
+was treated through three successive attempts.
+\textit{Completeness extraction~v1}~\cite{CompletenessExtractionV1}
+(April~2026) and \textit{v2.1}~\cite{CompletenessExtraction}
+(May~2026) by Claude each closed obstacles that the prior version
+had failed to handle, but each in turn was found defective under
+adversarial review by GPT-5.5: v1 used a Hasse construction that
+failed on infinite $\PP$-chains (e.g.\ $C_\uparrow \equiv
+\exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$) and contained a
+witness conflation in the $C5$ triple-coherence proof; v2.1 fixed
+both of those but then a second-round review identified \textbf{eight
+structural gaps (G1)--(G8)} of which three were load-bearing:
+(G1)~profile-port equality contradicted vertical separation on
+self-loops via the $M1{+}M7$ reflexivity chain; (G3)~the mate
+construction forced all mates to share a single semantic parent,
+refuted by a two-mate stress formula
+$C_{AB} \equiv A \sqcap B \sqcap \exists\PP.A \sqcap \exists\PP.B
+\sqcap \forall\PP.(A\to\lnot B) \sqcap \forall\PP.(B\to\lnot A)$;
+(G4)~the rootless orientation was incompatible with the
+depth-from-$u_*$ projection used in the proof.
 
-\medskip\noindent\textbf{Round-2 update (May~12,~2026).}
-GPT-5.5 produced a second formal review of v2.1 and identified
-eight structural gaps, three of which are load-bearing
-(profile-port equality contradicts vertical separation on
-self-loops; the mate construction forces all mates to share a
-parent; the rootless orientation is incompatible with the
-depth-from-$u_*$ projection).  GPT-5.5's repaired
-proof~\cite{GPT55Repaired} fixes all three via occurrence-level
-equality ($u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) =
-\mathrm{orig}(v)$), mates with different parents, and
-request-closed cycles in place of $\omega$-acceptance.  It states
-ten finite-checkable validity conditions (V1)--(V10) on rank-$d$
-quotients with coarse bound $B(C_0) = 2^{2^{p(n)}}$.  v2.1 is
-\emph{marked superseded}; the GPT-5.5 repaired proof is the
-\emph{current best statement}; Claude's contribution shifts to
-computational verification (WP1--WP6, L1--L7).  WP1 (RCC5
-composition table by exhaustive subset enumeration) confirms the
-repaired proof's table in all 25 cells.
+The \textbf{current best statement} of the
+model-to-quotient direction is GPT-5.5's
+\textit{repaired split-forest decidability
+proof}~\cite{GPT55Repaired} (May~2026, 16~pages, no-automata
+route), which removes all three load-bearing defects.  The three
+structural fixes are:
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Occurrence-level equality:}
+    $u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) =
+    \mathrm{orig}(v)$ on the split presentation, not a
+    profile-port equivalence on the rank-$d$ quotient.  Self-loops
+    on the parent map become trivially reflexive and the
+    vertical-separation chain that defeats~(G1) vanishes.
+  \item \textbf{Mates with different parents} via
+    explicit port-equivalence on $\mathrm{Mate}_Q$, so a single
+    rank-$d$ state can carry incomparable upward $\PP$
+    witnesses---the $C_{AB}$ stress pattern is accommodated rather
+    than ruled out.
+  \item \textbf{Request-closed cycles} in place of
+    $\omega$-acceptance.  Transitive $\PP/\PPI$ eventualities are
+    discharged by finite-graph reachability plus a request-closure
+    condition on the rank-$d$ quotient: no parity or B\"uchi
+    automaton, no $\omega$-language machinery.  Equality of
+    profile names along a blocking cycle never generates
+    $\equiv_{\EQ}$; each lap of the cycle unfolds to fresh
+    occurrences.
+\end{enumerate}
+The repaired proof formulates the model-to-quotient direction as
+\textbf{ten finite-checkable validity conditions
+(V1)--(V10)} on rank-$d$ quotient certificates and proves both
+directions: every valid certificate unfolds to a strong abstract
+RCC5 frame satisfying $C_0$ (soundness), and every satisfiable
+$C_0$ admits a finite valid certificate (completeness).  The
+certificate space is bounded by a coarse
+$B(C_0) = 2^{2^{p(n)}}$ for a polynomial $p$, and validity is
+finite-graph checkable, so $\ALCIRCC{5}$ concept satisfiability
+reduces to a finite enumeration.
+
+\medskip\noindent\textbf{Status of v1, v2.1, and the repaired
+proof.}  v1 and v2.1 are retained in the repository for the audit
+trail but are explicitly \emph{marked superseded}: v1 by the
+sibling-interface v2 delta~\cite{SiblingInterfaceV2} that already
+fixed the Def~1.5 / Def~1.7 / Thm~1.20-sketch defects, and v2.1 by
+the GPT-5.5 round-2 review.  The repaired proof~\cite{GPT55Repaired}
+is the single document that now carries the decidability claim on
+the model-to-quotient side; its V1--V10 validity conditions are
+designed to be sufficient inputs for the soundness chain in the v1
+sibling-interface paper~\cite{SiblingCompleted}.
+
+\medskip\noindent\textbf{Computational verification of the
+combinatorial claims.}
+With the proof side stable, Claude's contribution shifted to
+\emph{cross-checking the repaired proof's finite-combinatorial
+claims} per GPT-5.5's verification-recommendations document.  Six
+Python work packages (WP1--WP6) are all \textbf{PASS}: brute-force
+enumeration confirms GPT-5.5's RCC5 composition table in all 25
+cells (WP1); a vertical-fragment validity-condition checker accepts
+$C_\uparrow$ via parent self-loops, accepts $C_{AB}$ via two mates
+with different parents, rejects the v2.1-style single-parent
+$C_{AB}$ attempt, and rejects two genuine UNSAT concepts on the
+soundness side (WP2, covering V1/V3/V4/V5/V9/V10); a small-model
+SAT/UNSAT oracle exhibits a concrete 3-element model for $C_{AB}$
+with two incomparable $\PP$-superparts (WP3); $C_{AB}$ and
+request-closed cycle tests fold into WP2/WP3 (WP4, WP5); and a
+mosaic enumeration confirms (M1)--(M5) and the support-closure
+axioms on small mosaics, including the patchwork-on-triangles
+property for RCC5 (WP6).  No counterexample to any combinatorial
+claim of the repaired proof was found.
 
 \medskip\noindent\textbf{A note on scope.}
 The soundness and completeness statements above are theorems
@@ -1448,30 +1470,46 @@ has been open since Wessel's doctoral work in 2002/2003 and was
 explicitly flagged by Lutz \& Wolter in 2006 as ``perhaps the
 most interesting'' open problem suggested by their work.
 
-The decidability argument rests on four papers, which fall into
-two distinct layers:
+The decidability argument as of May~2026 rests on \emph{two}
+core papers, which together establish:
+\[
+  \text{$C_0$ satisfiable}
+  \;\;\Longleftrightarrow\;\;
+  \text{$C_0$ admits a valid finite split-forest certificate.}
+\]
+A separate operational layer realizes the check algorithmically and
+is empirically validated.
 
 \medskip\noindent\textbf{Theoretical layer (establishes
 decidability).}
 \begin{enumerate}
-  \item The \emph{split-forest semantics}~\cite{SiblingCompleted}
-    (GPT-5.4): defines the cover-tree decomposition, proves the
-    finite-index lemma, and constructs models from valid
-    quotients (soundness direction).
-  \item The \emph{completeness extraction~v2}~\cite{CompletenessExtraction}
-    (Claude, May~2026; supersedes
-    v1~\cite{CompletenessExtractionV1} after a GPT-5.5 review
-    found two structural defects): closes the model-to-quotient
-    gap, proving that every satisfiable concept admits a valid
-    finite quotient. The repair uses witness-generated submodels,
-    generated cover edges, support-closed mosaics, and
-    finite-graph reachability discharge---no B\"uchi acceptance is
-    needed.
+  \item The \emph{v1 split-forest paper}~\cite{SiblingCompleted}
+    (GPT-5.4): defines the cover-tree decomposition, the
+    sibling-interface descriptors, and the patchwork-lemma route,
+    and proves Thms~1.17--1.19 (\textbf{soundness}: a valid
+    finite quotient unfolds to a strong abstract RCC5 model
+    satisfying $C_0$).  The v2 sibling-interface
+    delta~\cite{SiblingInterfaceV2} replaces the surrounding
+    Def~1.5 / Def~1.7 / Thm~1.20-sketch with the corrected
+    generated-cover statements; the proofs of Thms~1.17--1.19
+    carry over verbatim.
+  \item The \emph{GPT-5.5 repaired
+    proof}~\cite{GPT55Repaired} (May~2026, 16~pages, no-automata
+    route): formulates rank-$d$ split-forest certificates and ten
+    finite-checkable validity conditions (V1)--(V10), and proves
+    both directions in their entirety, including
+    \textbf{completeness} (every satisfiable $C_0$ admits a
+    valid finite certificate).  The three structural ingredients
+    that make the proof go through---occurrence-level equality,
+    mates with different parents, and request-closed
+    cycles---resolve the gaps that defeated Claude's earlier
+    completeness-extraction attempts (v1, v2.1; both now marked
+    superseded).
 \end{enumerate}
-Together, (1) and (2) establish: $C_0$ is satisfiable iff it
-admits a valid finite rank-$d$ quotient.  The space of such
-quotients is finite and effectively searchable, so
-$\ALCIRCC{5}$ concept satisfiability is decidable.
+Together, (1) and (2) establish the biconditional displayed
+above.  The certificate space is bounded by
+$B(C_0) = 2^{2^{p(n)}}$, validity is finite-graph checkable, and
+the enumeration terminates.
 
 \medskip\noindent\textbf{Operational layer (algorithmic
 realization, empirically validated).}
@@ -1486,18 +1524,30 @@ realization, empirically validated).}
     zero mismatches.
 \end{enumerate}
 
+\medskip\noindent\textbf{Computational verification of the
+combinatorial claims.}  In parallel with the proof work, six
+Python work packages (WP1--WP6) cross-check the finite
+combinatorial content of the repaired proof:  RCC5 composition
+table by exhaustive subset enumeration (WP1), bounded
+certificate-soundness fuzzing for (V1)/(V3)/(V4)/(V5)/(V9)/(V10)
+(WP2), small-model SAT/UNSAT oracle (WP3), multiple-superpart
+$C_{AB}$ stress (WP4, folded into WP2/WP3), request-closed
+blocking-cycle tests (WP5, folded into WP2), and mosaic closure
+search (WP6).  All six \textbf{PASS}; no counterexample to a
+combinatorial claim of the repaired proof was found.
+
 \medskip\noindent\textbf{The gap between the two layers.}
 The decidability claim for $\ALCIRCC{5}$ rests on (1) and (2)
 alone.  Papers (3) and (4) describe a \emph{plausible and
 empirically validated} algorithmic realization, but a formal
 derivation showing that CT1--CT5 exactly capture the
-valid-quotient conditions has not been written.  CT5 in particular
-was added as a patch after Opus~4.7's adversarial review---not
-derived from the split-forest semantics---and while empirical
-agreement between two independently designed reasoners is strong
-evidence that such a derivation should be possible, it is not
-itself a proof.  See~\cite[\S7]{CoverTreeImpl} for a detailed
-breakdown.
+valid-certificate conditions (V1)--(V10) has not been written.
+CT5 in particular was added as a patch after Opus~4.7's
+adversarial review---not derived from the split-forest
+semantics---and while empirical agreement between two
+independently designed reasoners is strong evidence that such a
+derivation should be possible, it is not itself a proof.
+See~\cite[\S7]{CoverTreeImpl} for a detailed breakdown.
 
 \subsection{What remains open}
 
