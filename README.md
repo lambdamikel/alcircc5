@@ -295,7 +295,7 @@ GPT-5.5's [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automat
 
 ### Twelfth approach: GPT-5.5 automata-flavored split-forest proof — ALTERNATIVE ROUTE (GPT-5.5)
 
-A second, self-contained decidability proof for ALCI\_RCC5 produced by GPT-5.5 about a week before the no-automata round-2 proof. Same target theorem, same overall split-forest architecture, but a different discipline for vertical PP/PPI eventualities.
+**This proof independently establishes the decidability of ALCI\_RCC5** — a second, self-contained proof produced by GPT-5.5 about a week before the no-automata round-2 proof. Same target theorem as the eleventh approach, same overall split-forest architecture, but a different discipline for vertical PP/PPI eventualities.
 
 **Paper.** [`papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf) (May 2026, [LaTeX](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.tex)) — *A Coherent Generated Split-Forest Decidability Proof for ALCI\_RCC5*. Proves Soundness (Thm 7.x), Completeness (Thm 8.x), and Decidability (Thm 9.x) in their entirety over strong abstract RCC5 frames.
 
