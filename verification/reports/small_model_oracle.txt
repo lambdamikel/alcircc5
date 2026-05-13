@@ -1,0 +1,49 @@
+===============================================================================
+WP3: small-model oracle
+===============================================================================
+
+Domains searched: n = 1, 2, 3, 4.  For each concept C0 we either:
+  - find a model and report SAT, or
+  - exhaust the search and report "no finite model up to size 4".
+
+Cross-check with WP2 certificate checker:
+  - WP2 VALID + WP3 SAT             -> consistent (finite model)
+  - WP2 VALID + WP3 no model        -> consistent IF C0 needs infinite
+  - WP2 INVALID + WP3 no model      -> consistent (UNSAT)
+  - WP2 INVALID + WP3 SAT           -> oracle conflict (BUG)
+
+>>> forall PP.A & exists PP.A
+    C0 = (APP.A & EPP.A)
+    SAT at n=2 root=0
+    valuation: A=[1]
+    rho =
+   EQ  PP
+  PPI  EQ
+    expected=True    PASS (SAT)
+
+>>> A & B & exists PP.A & exists PP.B & forall PP.(~A | ~B) & forall PP.(~B | ~A)  [C_AB]
+    C0 = (A & B & EPP.A & EPP.B & APP.(~A | ~B) & APP.(~B | ~A))
+    SAT at n=3 root=2
+    valuation: A=[0, 2] B=[1, 2]
+    rho =
+   EQ  PO PPI
+   PO  EQ PPI
+   PP  PP  EQ
+    expected=True    PASS (SAT)
+
+>>> exists PP.A & forall PP.~A
+    C0 = (EPP.A & APP.~A)
+    no finite model up to n=4
+    expected=False    PASS (UNSAT)
+
+>>> forall PP.~C & exists PP.exists PP.C  [PP-transitive UNSAT]
+    C0 = (APP.~C & EPP.EPP.C)
+    no finite model up to n=4
+    expected=False    PASS (UNSAT)
+
+>>> exists PP.top & forall PP.exists PP.top  [C_up, infinite SAT]
+    C0 = (EPP.T & APP.EPP.T)
+    no finite model up to n=4
+    expected=None    PASS (expected infinite-model-only SAT)
+
+VERDICT: PASS.  WP3 oracle agrees with WP2 on all corpus entries.
