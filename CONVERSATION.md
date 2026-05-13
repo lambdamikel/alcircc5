@@ -4255,12 +4255,37 @@ with pass/fail criteria C1–C8.  The Python work lives under
   (DR,DR), (PO,PO), (PP,PPI), (PPI,PP) — convention, not bug.  See
   [`verification/python/rcc5_composition_check.py`](verification/python/rcc5_composition_check.py)
   and [`verification/reports/rcc5_composition_table.txt`](verification/reports/rcc5_composition_table.txt).
-- **WP2 (planned):** bounded certificate soundness fuzzer for the
-  (V1)–(V10) conditions.
-- **WP3 (planned):** small-model SAT/UNSAT oracle cross-check.
-- **WP4 (planned):** $C_{AB}$ stress formula (the G3 witness).
-- **WP5 (planned):** request-closed blocking cycles.
-- **WP6 (planned):** mosaic closure search.
+- **WP2 (done):** bounded certificate soundness fuzzer for the
+  vertical fragment of (V1)–(V10).  10-test corpus exercises G1
+  (profile-port equality on PP self-loop), G3 (C_AB with multi-parent
+  mates), and the soundness side (UNSAT concepts rejected).  All 10
+  verdicts match expected.  See
+  [`verification/python/certificate_checker.py`](verification/python/certificate_checker.py).
+- **WP3 (done):** small-model SAT/UNSAT oracle cross-check.  Brute-force
+  enumeration of complete RCC5 labelings on $n \le 4$ confirms WP2 on
+  the 5-test corpus; C_AB realized at $n=3$ with two incomparable
+  PP-superparts (the G3 witness in concrete form); $C_{up}$ correctly
+  shows "no finite model up to $n=4$", consistent with WP2 accepting
+  it via parent self-loop unfolding to an infinite chain.  See
+  [`verification/python/small_model_oracle.py`](verification/python/small_model_oracle.py).
+- **WP4 (folded into WP2/WP3):** the $C_{AB}$ stress formula is exercised
+  by both the certificate fuzzer (cert_C_AB and cert_C_AB_wrong_singleparent)
+  and the small-model oracle (concrete two-mate model found).
+- **WP5 (folded into WP2):** request-closed blocking cycles tested by
+  cert_WP5_cycle_carries_existential_sat (accepted: cycle carries a
+  satisfiable PP-request that unfolds to fresh occurrences) and
+  cert_WP5_cycle_unfulfilled_request_unsat (rejected: cycle with no
+  later occurrence satisfying the request).
+- **WP6 (done):** mosaic closure search.  Tests (M1)–(M5) and (SC1)–(SC4)
+  on small mosaics.  (A) 41/64 triangle labelings are (M3)-consistent;
+  the 23 rejected are also unrealizable by finite subsets, confirming
+  (M3) is exact.  (B) every (M3)-consistent triangle is realizable for
+  $n \le 5$ (Renz–Nebel patchwork on triangles).  (C) DR/PO side
+  witnesses insertable without breaking (M4).  (D) universal
+  propagation through PP-chain caught by (M4).  (E) sibling-branching
+  legal $L(c, s_2)$ candidates exactly match $\mathrm{comp}(\PP, \PO) =
+  \{\DR, \PO, \PP\}$.  No counterexample to the patchwork lemma.  See
+  [`verification/python/mosaic_closure_search.py`](verification/python/mosaic_closure_search.py).
 
 ### Status updates
 

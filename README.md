@@ -534,13 +534,19 @@ GPT-5.5's [`verification_recommendations_for_claude.pdf`](https://github.com/lam
 | WP | Title | Status | Output |
 |---|---|---|---|
 | WP1 | RCC5 composition table | **PASS** | [`rcc5_composition_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/rcc5_composition_check.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/rcc5_composition_table.txt) |
-| WP2 | Bounded certificate soundness fuzzer | planned | — |
-| WP3 | Small-model SAT/UNSAT oracle | planned | — |
-| WP4 | Multiple-superpart $C_{AB}$ stress | planned | — |
-| WP5 | Request-closed blocking cycles | planned | — |
-| WP6 | Mosaic closure search | planned | — |
+| WP2 | Bounded certificate soundness fuzzer | **PASS** | [`certificate_checker.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/certificate_checker.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/certificate_checker.txt) |
+| WP3 | Small-model SAT/UNSAT oracle | **PASS** | [`small_model_oracle.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/small_model_oracle.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/small_model_oracle.txt) |
+| WP4 | Multiple-superpart $C_{AB}$ stress | **PASS** (folded into WP2/WP3) | see `cert_C_AB` in WP2, two-mate model in WP3 |
+| WP5 | Request-closed blocking cycles | **PASS** (folded into WP2) | see `cert_WP5_cycle_*` in WP2 |
+| WP6 | Mosaic closure search | **PASS** | [`mosaic_closure_search.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/mosaic_closure_search.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/mosaic_closure_search.txt) |
 
 **WP1 result.** Exhaustive enumeration over non-empty subsets of $|U|=5$ derives the 5-relation RCC5 base by set-theoretic comparison, then composes via triples to compute $\mathsf{comp}(R, S)$ for all 25 cells. The computed table matches GPT-5.5's stated table (repaired proof, lines 99–114) **exactly**. The signature stabilises at $|U| = 4$ (no new compositions at $|U| = 5$), confirming the table is universe-size-independent for $|U| \ge 4$. The in-repo quasimodel reasoner's `COMP` table ([`src/alcircc5_reasoner.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py)) differs only in four cells — (DR,DR), (PO,PO), (PP,PPI), (PPI,PP) — by exactly EQ, which the reasoner intentionally omits because it models edges between distinct nodes only (the `EQ_ADMITTING_PAIRS` convention). No genuine mismatches.
+
+**WP2 result.** Implements (V1) type legality, (V3) vertical safety, (V4)/(V5) equality-aware vertical existential/universal discharge, (V9) typed-equality congruence on ports, and (V10) exact summaries — the vertical fragment of the validity-condition checker. 10-test corpus: $C_{up}$ accepted with parent self-loop (G1 test under occurrence-level equality), $C_{AB}$ accepted with two mate occurrences carrying different selected parents (G3 witness), $C_{AB}$ rejected when forced into a single-parent mate (v2.1-style failure mode), UNSAT concepts rejected on the soundness side, and request-closed cycles accepted/rejected correctly (WP5 folded in). All 10 verdicts match expected.
+
+**WP3 result.** Brute-force enumeration of complete RCC5 labelings on $n \le 4$ confirms WP2 on a 5-test corpus. $C_{AB}$ realised at $n = 3$ with model $A = \{0, 2\}$, $B = \{1, 2\}$, $\rho(2, 0) = \PP$, $\rho(2, 1) = \PP$, $\rho(0, 1) = \PO$ — exactly the two-incomparable-PP-superparts pattern G3 was about. $C_{up}$ returns "no finite model up to $n = 4$", consistent with WP2 accepting it via parent self-loop unfolding to an infinite chain (semantics: infinite-model-only SAT). The two genuine UNSAT entries return "no finite model" matching WP2's rejection.
+
+**WP6 result.** Tests (M1)–(M5) and the support-closure axioms (SC1)–(SC4) on small mosaics. (A) Of all $4^3 = 64$ triangle labelings, 41 satisfy (M3) and 23 are rejected; every rejected triangle is also unrealizable by finite subsets of $|U| \le 5$, confirming (M3) is exact. (B) Every (M3)-consistent triangle is realizable for $n \le 5$ — Renz–Nebel patchwork property on triangles. (C) DR/PO side-witness insertion succeeds without breaking (M4) in both directions. (D) Universal propagation through a PP-chain forces $A$ at the deep position via (M3)+(M4) jointly; the legal chain is accepted and a broken chain is caught. (E) Sibling-branching: with $p$ PPI $s_1$, $p$ PPI $s_2$, $s_1$ PO $s_2$, $s_1$ PPI $c$, the legal $L(c, s_2)$ candidates are exactly $\{\DR, \PO, \PP\} = \mathsf{comp}(\PP, \PO)$. No counterexample to the patchwork lemma was found.
 
 ### Status of the argument
 
@@ -548,7 +554,7 @@ GPT-5.5's [`verification_recommendations_for_claude.pdf`](https://github.com/lam
 
 **Soundness chain unchanged:** GPT-5.4's v1 sibling-interface paper still supplies Thms 1.17–1.19 (the quotient-to-model direction). The repaired proof's validity conditions (V1)–(V10) are designed to be sufficient inputs for this chain, and GPT-5.5 argues this in the repaired proof Section 6.
 
-**What remains to verify (Claude side):** WP2 (certificate fuzzer), WP3 (small-model oracle), WP4 ($C_{AB}$ stress), WP5 (cycle closure), WP6 (mosaic enumeration), and optionally L1–L7 Lean formalisations. Verification does not constitute peer review by humans; it is a check that the combinatorial claims survive computational scrutiny on bounded examples.
+**What remains to verify (Claude side):** all six Python work packages WP1–WP6 are now **PASS** (WP4 and WP5 folded into WP2/WP3). The optional Lean targets L1–L7 are not yet attempted. Verification does not constitute peer review by humans; it is a check that the combinatorial claims survive computational scrutiny on bounded examples.
 
 ---
 

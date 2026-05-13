@@ -1,0 +1,42 @@
+===============================================================================
+WP6: mosaic closure counterexample search
+===============================================================================
+
+>>> Test A: partition 3-position networks by (M3) consistency
+    Enumerating 4^3 = 64 ordered (L(0,1), L(0,2), L(1,2)) triples
+    over off-diagonal RCC5 base relations.
+
+    41/64 triangles are (M3)-consistent.
+    23/64 triangles violate (M3) (correctly rejected by check_M3).
+    PASS: every (M3)-rejected triangle is also unrealizable by finite sets.
+          (M3) is exact, not over-approximating.
+
+>>> Test B: locally consistent triangles are RCC5-realizable
+    For every (M3)-consistent triangle, find finite subsets of {0..n-1}
+    realizing the labels (Renz-Nebel patchwork property base case).
+
+    PASS: every locally-consistent triangle is realizable for n<=5.
+    (Confirms patchwork property on triangles for RCC5.)
+
+>>> Test C: DR/PO side-witness insertion
+    For exists R.B with R in {DR, PO} and consistent universals at p,
+    confirm we can choose tau(q) satisfying (M4) at both ends.
+
+    PASS: DR/PO witnesses inserted without (M4) violation in both directions.
+
+>>> Test D: universal propagation through PP-chain
+    forall PP.A at p, L(p,q)=PP, L(q,r)=PP forces L(p,r)=PP, so A in tau(r).
+
+    PASS: legal PP-chain accepted; broken PP-chain caught by (M4).
+
+>>> Test E: sibling branching (PP-child of PO-related sibling)
+    p PPI s1, p PPI s2, s1 PO s2, s1 PPI c.  Which L(c, s2) are legal?
+    Composition: comp(PP, PO) = {DR, PO, PP}.
+
+    PASS: legal L(c, s2) candidates = ['DR', 'PO', 'PP']
+    Matches comp(PP, PO) = ['DR', 'PO', 'PP'] exactly.
+
+===============================================================================
+VERDICT: PASS.  Support-closed mosaics give global triple composition
+         on every test we ran; DR/PO side witnesses are insertable.
+         No counterexample to the patchwork lemma was found.
