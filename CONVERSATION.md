@@ -4295,3 +4295,72 @@ with pass/fail criteria C1–C8.  The Python work lives under
   note pointing at the repaired proof and recording WP1's result.
 - v1 + v2.1 + repaired proof all retained in the repo for the audit
   trail.
+
+---
+
+## 2026-05-12 (continuation): downstream artefacts realigned to repaired proof
+
+A follow-up pass through the repository to bring all status-bearing
+files in line with the post-Option-4 reality.  The earlier 2026-05-12
+entry had already inserted Round-2 notes at the top of the major
+documents, but several inline status claims throughout the prose still
+treated Claude's v2.1 completeness extraction as the current pillar.
+This pass replaced those inline claims wholesale rather than layering
+more notes on top.
+
+### Files realigned
+
+- **`papers/overview_ALCIRCC5.tex`** and
+  **`papers/dl2026_abstract_ALCIRCC5.tex`** — "What has been achieved"
+  section restructured into a *two-paper theoretical core* (v1
+  split-forest soundness + GPT-5.5 repaired proof for both directions)
+  plus an *operational layer* (cover-tree theory paper + Claude's
+  implementation paper).  WP1–WP6 verification paragraph added.
+  v1 + v2.1 completeness-extraction papers explicitly marked
+  superseded.  Commit `2f132a0`.
+- **`papers/cover_tree_tableau_ALCIRCC5.tex`** — proof-status item (b)
+  *Completeness extraction* (§7.3) rewritten: Claude's v1 extraction
+  argument (Need-filtered pair domains, etc.) replaced with a
+  description of GPT-5.5's repaired proof and its three structural
+  ingredients (occurrence-level equality, multi-parent mates,
+  request-closed cycles).  Bibliography entry
+  `\bibitem{CompletenessExtraction}` renamed to
+  `CompletenessExtractionV1` and marked superseded; new
+  `\bibitem{GPT55Repaired}` added pointing at
+  `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf`.
+  Commit `ce509ce`.
+- **`CLAUDE.md`** — "Current Decidability Argument" section now lists
+  the v1 split-forest paper and the repaired proof as the two-paper
+  core; v1 + v2.1 completeness extraction marked superseded; new
+  "Computational Verification (WP1–WP6)" section added; Key Files list
+  updated with the repaired-proof path.
+- **`README.md`** — sixteen-odd inline status claims updated across
+  the complexity-landscape table (row for ALCI\_RCC5 (full) now cites
+  the repaired proof with $B(C_0) = 2^{2^{p(n)}}$ bound), the Status
+  box, the Review verdict box, the Current assessment box, the
+  Theory-vs-implementation box, the Eleventh Approach section
+  ("Closing the completeness gap"), the Reasoners-and-tools section
+  (tool 1 description), the retraction notes, the Main Results table,
+  and the file-list at the bottom.  Historical subsections
+  (*Evolution of the split-tree forest model*, *Two routes to the
+  same conclusion*, *GPT-5.5 review and v2 completeness extraction*)
+  preserved verbatim with explicit "Note (post Option 4)" /
+  "Status note (post Option 4)" callouts indicating supersession,
+  rather than rewritten.  Commit `0f789ec`.
+
+### Verification
+
+PDFs recompiled cleanly (overview 9 pages, DL abstract 20 pages,
+cover-tree impl paper 13 pages) with zero undefined references and
+zero undefined citations after two-pass `pdflatex`.
+
+### Commits
+
+- `2f132a0` --- *Update overview and DL2026 abstract to GPT-5.5
+  repaired proof.*
+- `ce509ce` --- *Cover-tree impl paper: cite repaired proof as
+  completeness pillar.*
+- `0f789ec` --- *README: realign status text with GPT-5.5 repaired
+  proof as completeness pillar.*
+
+All three pushed to `origin/master` (`9d1cd20..0f789ec`).
