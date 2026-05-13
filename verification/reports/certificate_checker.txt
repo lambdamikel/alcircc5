@@ -1,0 +1,90 @@
+===============================================================================
+WP2 (vertical fragment): bounded certificate validity checker
+per repaired_split_forest_no_automata_proof.tex Def 4.1/4.5
+===============================================================================
+
+Conditions checked: V1, V3, V4, V5, V9 (Ea, Eb), V10.
+Out of scope (this version): V2, V6, V7, V8 (DR/PO mosaics).
+
+[1] C_up (PP self-loop, no eq ports)
+    C0 = (EPP.T & APP.EPP.T)
+    states = ['s0']
+    verdict: VALID
+    expected: VALID     outcome: PASS
+
+[2] C_up with ports, no eq edges
+    C0 = (EPP.T & APP.EPP.T)
+    states = ['s0']
+    verdict: VALID
+    expected: VALID     outcome: PASS
+
+[3] G1 reproducer: PP plus eq across vertical (should fail V9.Eb)
+    C0 = (EPP.T & APP.EPP.T)
+    states = ['s0', 's1']
+    verdict: INVALID
+      - V9.Eb: s0 reach_PP s1 but they share eq-ports
+    expected: INVALID     outcome: PASS
+
+[4] C_AB (G3): two mates with different selected parents
+    C0 = (A & B & EPP.A & EPP.B & APP.(~A | ~B) & APP.(~B | ~A))
+    states = ['s_A', 's_B', 's_root', 's_root_prime']
+    verdict: VALID
+    expected: VALID     outcome: PASS
+
+[5] C_AB v2.1-style single-parent (should fail V4)
+    C0 = (A & B & EPP.A & EPP.B & APP.(~A | ~B) & APP.(~B | ~A))
+    states = ['s_A', 's_root']
+    verdict: INVALID
+      - V4: s_root: exists PP.B not discharged (Reach_PP=['s_A'], no t carries B)
+    expected: INVALID     outcome: PASS
+
+[6] UNSAT: exists PP.A & forall PP.~A (broken type should fail V1)
+    C0 = (EPP.A & APP.~A)
+    states = ['s0']
+    verdict: INVALID
+      - V1: C0 not in lambda(s_0=s0)
+      - V1: lambda(s0) is not a Hintikka type
+    expected: INVALID     outcome: PASS
+
+[7] UNSAT: PP-transitive (should fail V3)
+    C0 = (APP.~C & EPP.EPP.C)
+    states = ['s0', 's1', 's2']
+    verdict: INVALID
+      - V3: s0: forall PP.~C but ~C not in lambda(s2)
+      - V5: s0: forall PP.~C but mate-path reach s2 lacks ~C
+    expected: INVALID     outcome: PASS
+
+[8] WP5 SAT: cycle with exists PP.A discharged by self-loop
+    C0 = (A & EPP.A & APP.EPP.A)
+    states = ['s0']
+    verdict: VALID
+    expected: VALID     outcome: PASS
+
+[9] WP5 UNSAT: cycle carries exists PP.A but no state has A
+    C0 = (~A & EPP.A & APP.~A)
+    states = ['s0']
+    verdict: INVALID
+      - V1: lambda(s0) is not a Hintikka type
+    expected: INVALID     outcome: PASS
+
+[10] SAT: forall PP.A & exists PP.A
+    C0 = (APP.A & EPP.A)
+    states = ['s0', 's1']
+    verdict: VALID
+    expected: VALID     outcome: PASS
+
+-------------------------------------------------------------------------------
+Summary
+-------------------------------------------------------------------------------
+   expected=V  got=V  C_up (PP self-loop, no eq ports)
+   expected=V  got=V  C_up with ports, no eq edges
+   expected=I  got=I  G1 reproducer: PP plus eq across vertical (should fail V9.Eb)
+   expected=V  got=V  C_AB (G3): two mates with different selected parents
+   expected=I  got=I  C_AB v2.1-style single-parent (should fail V4)
+   expected=I  got=I  UNSAT: exists PP.A & forall PP.~A (broken type should fail V1)
+   expected=I  got=I  UNSAT: PP-transitive (should fail V3)
+   expected=V  got=V  WP5 SAT: cycle with exists PP.A discharged by self-loop
+   expected=I  got=I  WP5 UNSAT: cycle carries exists PP.A but no state has A
+   expected=V  got=V  SAT: forall PP.A & exists PP.A
+
+VERDICT: PASS.  All certificates match expected validity.
