@@ -4364,3 +4364,95 @@ zero undefined citations after two-pass `pdflatex`.
   proof as completeness pillar.*
 
 All three pushed to `origin/master` (`9d1cd20..0f789ec`).
+
+---
+
+## 2026-05-13: README slimmed, date heading fixed, twelfth approach documented
+
+Three small follow-up passes over the README + OUTDATED.md after the
+post-Option-4 realignment.
+
+### 1. Historical material migrated to OUTDATED.md
+
+The README had grown to ~868 lines because every adversarial-review
+round, every superseded completeness-extraction attempt, and every
+disproved direct attack on patchwork had been appended in place.
+Migrated the older material to OUTDATED.md and left one-line
+breadcrumb pointers behind:
+
+- Evolution of the split-tree forest model + "two routes to the same
+  conclusion" subsection → one breadcrumb.
+- Ninth approach (MSO encoding) section → breadcrumb to OUTDATED.md.
+- Summary table of eleven approaches → breadcrumb.
+- Direct attacks on patchwork (three-paper cascade) → breadcrumb.
+- Discussion of failed and incomplete approaches → breadcrumb.
+- Independent review and assessment (Opus 4.7 Round 1 + Round 2 +
+  verdict + artefacts) → breadcrumb.
+- GPT-5.5 v2 completeness extraction (review history, seven repairs)
+  → breadcrumb.
+- Round-2 review and repaired-proof adoption — compressed from ~55
+  lines to ~17 lines (three load-bearing gaps + three fixes + V1–V10
+  + B(C_0) + WP1–WP6 summary; full prose preserved in OUTDATED.md).
+- File-list subsections (GPT-5.4 Pro papers, GPT-5.4 Pro reviews,
+  computational verification scripts, decomposition test, PP-kernel
+  quotient investigation, extension-gap root-cause scripts,
+  triangle-type blocking investigation) → single breadcrumb.
+- Implementation: ALCI_RCC5 Concept Satisfiability Reasoner section
+  compressed from ~55 lines to ~7 lines (renamed to
+  "quasimodel oracle").
+
+README dropped from ~868 lines to ~527 lines (~40% reduction);
+OUTDATED.md grew by 376 lines.  Commit `39e3e04`.
+
+### 2. April → May date jump in Status heading
+
+The "Current Status of the Proof" subsection header read
+`### Status (April 2026): Strong computational evidence for
+decidability`, but the very next paragraph was prefixed
+`**UPDATE (May 2026, post Option 4): ...**`, which made the section
+look retrofitted in place rather than rewritten.  Rebased the heading
+to May 2026 and dropped the UPDATE prefix so the section reads as a
+single coherent status snapshot.  Commit `befd4e4`.
+
+### 3. Twelfth approach: GPT-5.5 automata-flavored split-forest proof
+
+The README listed eleven approaches but only briefly mentioned the
+GPT-5.5 *coherent generated split-forest decidability proof*
+([`papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf`](papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf))
+in the file list, with the parenthetical "earlier automata-flavored
+repaired proof (alternative route, archived)".  Wessel pointed out
+that this is itself a self-contained working decidability proof,
+not merely an archived earlier draft — same target theorem as the
+round-2 no-automata proof, different vertical-eventuality discipline.
+Added a new `### Twelfth approach: GPT-5.5 automata-flavored
+split-forest proof — ALTERNATIVE ROUTE (GPT-5.5)` section between
+the eleventh and seventh approach blocks, explaining:
+
+- The paper proves Soundness, Completeness, and Decidability in
+  their entirety over strong abstract RCC5 frames.
+- It shares the witness-generated split-forest skeleton with the
+  eleventh approach (split copies, generated PP/PPI cover edges,
+  sibling interfaces with support-closed mosaics, finite-prefix
+  patchwork via König, typed-EQ congruence quotient).
+- It differs only on vertical eventuality discipline: ultimately
+  periodic branches `u_0,…,u_m,(v_0,…,v_{k-1})^ω` with an explicit
+  cycle-realization condition (Defn 6.x) and a regular-branch lemma
+  (Lem 6.x), versus the round-2 paper's request-closed cycles.
+- The no-automata formulation was preferred for the current pillar
+  because it removes the residual ω-word notation; the
+  automata-flavored proof is retained as an independent witness.
+
+Bumped "Eleven approaches" → "Twelve approaches" in the README's
+Status blockquote (with anchor to the new section) and in OUTDATED.md's
+"Summary: eleven approaches" → "Summary: twelve approaches" heading.
+Added a new row for the twelfth approach in OUTDATED.md's
+*Promising and partially successful* table.  Commit `633d914`.
+
+### Commits
+
+- `39e3e04` --- *Migrate historical material from README to OUTDATED.*
+- `befd4e4` --- *Fix April/May date jump in Status section heading.*
+- `633d914` --- *Document GPT-5.5 automata-flavored proof as twelfth
+  approach.*
+
+All three pushed to `origin/master` (`0206ad7..633d914`).
