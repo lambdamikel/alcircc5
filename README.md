@@ -18,6 +18,7 @@
 - [Files](#files)
 - [References](#references)
 - [Acknowledgments](#acknowledgments)
+- [Outdated and Superseded Material](OUTDATED.md) — detailed write-ups of disproved, retracted, or superseded approaches, preserved for reference and transparency
 
 ## Latest News
 
