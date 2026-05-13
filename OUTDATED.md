@@ -628,13 +628,14 @@ Reduces ALCI\_RCC5 satisfiability to the **Borel monadic second-order theory of 
 
 See [**MSO Encoding (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/papers/MSO_encoding_ALCIRCC5.pdf) for the full paper (16 pages).
 
-### Summary: eleven approaches
+### Summary: twelve approaches
 
 **Promising and partially successful:**
 
 | Approach | Author(s) | Key idea | Gap | Status |
 |---|---|---|---|---|
-| Cover-tree tableau | Wessel/GPT/Claude | PPI-tree + EQ-splitting + {DR,PO}-only cross-edges + patchwork | Completeness direction condensed | **Most promising: 911 concepts, 0 errors; 100% CT models** |
+| Cover-tree tableau (eleventh) | Wessel/GPT/Claude | PPI-tree + EQ-splitting + {DR,PO}-only cross-edges + patchwork; GPT-5.5 round-2 no-automata proof closes completeness | None (current pillar) | **Current best statement of decidability**; 911 concepts, 0 errors; 100% CT models |
+| GPT-5.5 automata-flavored split-forest (twelfth) | GPT-5.5 | Same split-forest skeleton + ultimately periodic branches `u_0…u_m(v_0…v_{k-1})^ω` + cycle-realization condition; both directions proved | None | **Alternative route**: independent self-contained decidability proof, retained as a second witness |
 | Quadruple-type | Claude | 4-element star path-consistency for cross-branch edges | Formal sufficiency proof pending | **713 concepts, 0 errors** |
 | Two-tier quotient | Claude | Period descriptors + PP-kernels + full RCC5 tractability | **PO gap** | **PO-coherent fragment decidable** |
 | MSO encoding | Claude | Reduce to Borel-MSO(R,<) via interval semantics | MSO-definability of Dyck matching | One technical gap |
