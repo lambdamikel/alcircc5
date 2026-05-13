@@ -551,3 +551,379 @@ Despite the gaps, the papers introduce proof machinery that narrows the open pro
 - **Computational verification** pinpoints the gap precisely: condition Q3s (arc-consistency) would suffice but is not extractable from models — a **structural impossibility** (11.1% of concrete models produce DN networks violating Q3s).
 
 **Why the two proven results don't compose.** The chain satisfiable → quasimodel exists (Claude) and open contextual tableau → model exists (GPT-5.4) cannot be composed because they operate on different intermediate representations with gaps on opposite sides.
+
+---
+
+## Historical material moved from README (May 2026)
+
+The following subsections were originally in README.md but were moved here as part of a May 2026 cleanup to keep the README focused on the current proof machinery. They document superseded approaches, comparison narratives between completion attempts, adversarial review history, and pointers to older verification scripts. References back to the README (e.g., `[Round-2 review section](#round-2-review-and-repaired-proof-adoption-may-2026)`) refer to anchors that still exist in `README.md`.
+
+### Evolution of the split-tree forest model: what survived and what had to change
+
+> **Note (May 2026, post Option 4).** This subsection compares Claude's v2.1 completeness extraction against Wessel's whiteboard. v2.1 has since been **superseded** by GPT-5.5's repaired proof (see the Round-2 review section in README). The "v2.1 (current)" column below reflects the v2.1 era; the actual current pillar is GPT-5.5's repaired proof, which is structurally close to v2.1 but uses **occurrence-level equality** (not port-equality), **multi-parent mate classes** (not single-parent), and **request-closed cycles** (not Mate-class reachability) — fixing v2.1's gaps G1, G3, G4. The four whiteboard ideas (PPI-tree, EQ-splitting, congruence quotient, DR rigidity) survive unchanged in the repaired proof.
+
+Comparing v2.1 of the completeness extraction back to Wessel's original whiteboard sketch, four passes of formalization (Wessel → GPT-5.4 → Claude v1 → GPT-5.5 review → Claude v2 → v2.1 obligation discharges) preserved the *core ideas* but rebuilt almost every *technical instantiation* of them.
+
+**What survived from Wessel's whiteboard, unchanged in spirit:**
+
+1. **PPI-as-tree orientation.** Every revision keeps Wessel's central move: orient the proper-part order so PPI is "immediate child" and the cover tree carries the PP/PPI hierarchy. The split tree $T$ in v2.1 (Construction 1.x) is still a PPI-rooted oriented tree.
+2. **Splitting joins into EQ-mates.** Wessel's "DAG-node splitting via weak EQ" survived as the construction of $T$: occurrences with the same `orig` image are EQ-mates, and the `Mate(σ)` class is the formal carrier for that intuition.
+3. **Congruence quotient back to strong EQ.** Restoring strong EQ via a typed congruence is still the route, but it is now anchored by the explicit equality relation $\equiv_{\EQ,Q}$ on declared *equality ports* $\Pi_\sigma$ (introduced to fix obligation O1 — the v1 collision between blocking equivalence and semantic EQ).
+4. **DR rigidity → {DR, PO} cross-edges only.** Wessel's observation that comp(PP, DR) = {DR} forces DR to propagate rigidly downward, leaving only {DR, PO} open between sibling subtrees, is *exactly* the three-way status partition (Core / Out / Front) that GPT-5.4 formalized and that v2.1 inherits verbatim. The {DR, PO} arc-consistency triviality (every triangle composes) is still the engine.
+5. **Patchwork as glue.** Renz–Nebel's path-consistency theorem for atomic RCC5 networks is the same theorem in every revision — v2.1 just states it explicitly as `fact:renz-nebel`.
+
+**What had to change between revisions:**
+
+| Aspect | Original / GPT-5.4 / v1 | v2.1 (current) | Why it changed |
+|---|---|---|---|
+| Cover-edge orientation | **Hasse covers** of the PP-order | **Generated cover edges** (relative to the chosen witness set) | v1 Hasse construction breaks on infinite PP-chains (e.g.\ $\exists \PP.\top \sqcap \forall \PP.\exists \PP.\top$); GPT-5.5 review |
+| Domain | Full model $I$ | **Witness-generated submodel** $I_w \subseteq I$ | v1 needed density and an ambient root to stitch witnesses globally; $I_w$ removes both |
+| Ambient root | Required for the global side-check | Replaced by **self-loops on the parent function** | $I_w$ may have multiple roots; self-loops absorb degenerate PP-fixed-points |
+| Pair tables | Raw $M_k(s, t)$ pair tables | **Support-closed mosaics** $\Mos_k(s, t)$ (descriptors) | v1 C5 triple-coherence proof conflated witnesses across the three pairs; mosaics are bounded-arity labelled graphs that handle this correctly |
+| Local coherence axioms | (C1)–(C5) on pair tables | **(M1)–(M7) on mosaics + (SC1)–(SC4) closure** | The mosaic shift; (M7) explicitly axiomatizes the typed-EQ congruence |
+| Arity bound | Implicit | **Explicit constant $N(C_0) = 5$** (independent of $C_0$) | v2-review obligation O4: 3-locality of (M1)–(M7) + 5-locality of (SC1)–(SC4) + Renz–Nebel patchwork |
+| DR/PO witness placement | Stated globally | **Bounded side context** $\Side(u, v)$ of size $\le 5$ | v2-review obligation O5: every DR/PO witness is realized inside $\{u, v, \mathsf{par}(u), \mathsf{par}(v), \mathrm{lca}_T(u,v)\}$ |
+| Eventuality discharge | Sketched via König or implicitly via Büchi-automaton machinery in GPT-5.5's parallel route | **Finite-graph reachability** over `Mate(σ)`, no $\omega$-words | Reachability is decidable on the finite quotient; v2-review obligation O2 forced this to be EQ-aware (multiple-incomparable-upward-witness pattern $C_{AB}$) |
+| EQ modalities | Treated as part of the descriptor | **Eliminated by preprocessing** ($\exists \EQ.D$, $\forall \EQ.D$ are normalized away under strong EQ semantics) | v2-review obligation O3: simpler than handling them as a separate edge type |
+| Simultaneous realization | Implicit in v1 Thm 1.20 sketch | **Explicit projection** $\pi : T \to U(Q)$ + `lem:simul-realization` (SR1/SR2/SR3) | v2-review obligation O6: $T$ itself is a concrete realization of the canonical unfolding $U(Q)$ in which all PP/PPI eventualities at all occurrences fire simultaneously |
+
+**Net effect.** Wessel's four whiteboard ideas (PPI-tree, EQ-splitting, congruence quotient, DR rigidity) all carry through to v2.1 unchanged in spirit, but the *technical machinery* enacting them was rebuilt around (a) witness-generated submodels in place of full models, (b) support-closed mosaics in place of pair tables, and (c) reachability in place of $\omega$-acceptance. The "DR is rigid → only {DR, PO} between siblings" observation is still the reason the whole approach works — and it is still the reason the closing arc-consistency check is trivial.
+
+### Two routes to the same conclusion: reachability (Claude) vs. parity automaton (GPT-5.5)
+
+> **Note (May 2026, post Option 4).** This subsection compares two May-2026 completion attempts against v1. Both have since been **superseded**: Claude's reachability route (v2.1) was found to have three load-bearing gaps in the GPT-5.5 round-2 review; the current pillar is GPT-5.5's no-automata [repaired proof](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (May 2026), which is closer in spirit to Claude's reachability route but with cleaner foundations (occurrence-level equality, multi-parent mates, request-closed cycles). The comparison below is kept for historical perspective.
+
+After GPT-5.5's review of v1, two parallel completion paths emerged. Both close the model-to-quotient gap; they differ in how they discharge transitive PP/PPI eventualities (the part that needs a fixpoint argument):
+
+- **Claude's reachability route.** [`completeness_extraction_ALCIRCC5_v2.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/completeness_extraction_ALCIRCC5_v2.pdf) (31 pages, v2.1). Reduces eventuality discharge to *finite-graph reachability* over $\mathsf{Mate}(\sigma)$ classes on the rank-$d$ quotient. No $\omega$-words, no parity automata.
+- **GPT-5.5's parity-automaton route.** [`ALCIRCC5_coherent_generated_split_forest_decidability.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf) (10 pages). Discharges eventualities via a *deterministic parity $\omega$-word automaton* whose emptiness is checked by standard parity-acceptance machinery.
+
+**Tradeoffs.** A 3× page-count gap (10 vs 31) is real and tells most of the story:
+
+| Aspect | Reachability route (Claude) | Parity-automaton route (GPT-5.5) |
+|---|---|---|
+| External prerequisites | Renz–Nebel patchwork only | Renz–Nebel + parity-automaton emptiness, complementation, acceptance |
+| Faithfulness to Wessel's whiteboard | Stays in the geometric "graph world" the sketch lives in | Translates everything into $\omega$-word semantics, one abstraction layer away from the picture |
+| Where the risk lives | Six discrete combinatorial obligations (O1–O6), each independently checkable | Concentrated in the translation to $\omega$-words being faithful — fewer pieces, each more load-bearing |
+| Decidability proof length | 31 pages (self-contained) | 10 pages (modulo automata theory) |
+| Effective complexity bound | Reachability over an exponential-sized graph | Parity-automaton emptiness, comparable order |
+
+**Why both are kept.** GPT-5.5's route is genuinely lighter to *read* if you accept parity automata as standard machinery — it's a textbook completion via well-established results. Claude's route trades that brevity for self-containedness and proximity to the original combinatorial intuition. The two papers are not in competition; they are alternative completions of the same soundness chain (GPT-5.4's Thms 1.17–1.19), and having both in the repo lets a reader pick the route that matches their background.
+
+**Corrections by Wessel.** GPT's initial formalization incorrectly included PP as an open sibling cross-edge value. Wessel corrected this: after EQ-splitting, if x PP y then x lies below y in the tree, placing x in the Core of the sibling pair — PP is NOT an open cross-edge. This correction is essential; without it, the open domain would be {DR,PO,PP} and the arc-consistency argument breaks down. With it, the open domain is just {DR,PO}, and the {DR,PO} network is trivially arc-consistent (comp(R,S) ∩ {DR,PO} ≠ ∅ for all R,S ∈ {DR,PO}).
+
+**Why this handles the cyclic-model concepts.** The 7 concepts that lack tree models (e.g., ∃PO.A ⊓ ∃PP.¬B ⊓ ∀DR.A) work naturally: the PP-witness is an ancestor in the cover tree, the PO-witness is a cross-edge in a sibling subtree. The ∀DR.A universal fires only on DR-related nodes — the ancestor is PP-related (not DR), so no conflict. The cover tree separates these two witnesses into different mechanisms (tree vs. cross-edge), avoiding the problematic mixed compositions.
+
+**How PP edges are forced by composition (no explicit ∃PP needed).** The concept X = ∃DR.∃PO.C ⊓ ∀DR.¬C ⊓ ∀PO.¬C ⊓ ∀PP.X illustrates a remarkable feature of ALCI\_RCC5: PP edges can be forced without any explicit ∃PP demand, purely through composition propagation. A root node r satisfying X has a DR-neighbor a (satisfying ∃PO.C) and a's PO-neighbor b (satisfying C): r --DR→ a --PO→ b(C). The relation between r and b must lie in comp(DR, PO) = {DR, PO, PP}. But r has ∀DR.¬C and ∀PO.¬C, and b satisfies C — so DR and PO are blocked, leaving **only PP**. The PP edge is forced entirely by composition + universal filtering.
+
+The recursive conjunct ∀PP.X then forces infinite models: since r PP b, node b must also satisfy X (by ∀PP.X), creating its own DR→PO chain and forcing another PP-ancestor above it, ad infinitum. In the cover tree, b sits ABOVE r (since r PP b means b is an ancestor of r), creating an infinite ascending PP-chain: r PP b PP b' PP b'' ... The cover-tree tableau handles this finitely: the type for C-elements can serve as its own PP-ancestor type (different domain elements, same abstract type), so the finite type set {τ₀(C, X), τ₁(¬C, ∃PO.C), τ₂(¬C, root)} represents an infinite model. Verified SAT by both reasoners.
+
+**The "PO-loop" trick — 2-element SAT model via symmetric cycles.** Consider C ⊓ ∃PO.∃PO.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PP.¬C ⊓ ∀PPI.¬C. Naive reasoning suggests this should be UNSAT: d has C, the existential chain d→PO→a→PO→b demands b ∈ C, but d's universals seemingly require b ∈ ¬C for every possible d-b relation in comp(PO, PO) = {DR, PO, PP, PPI}. However, the concept is **SAT** via a 2-element loop: {d, a} with C = {d} and ρ(d,a) = PO. Because PO is symmetric (PO(d,a) ⟹ PO(a,d)), the chain d→PO→a→PO→d loops back to the root itself — the "third node" in the ∃PO.∃PO formula is **d** under strong EQ identity. The universals ∀R.¬C constrain d's *outgoing* R-neighbors (a has ¬C ✓), but don't prevent d from *being* a C-neighbor of a (a doesn't have ∀PO.¬C — it has ∃PO.C instead, satisfied by d). Two syntactic positions in ∃PO.∃PO can thus map to the same semantic element. The cover-tree tableau correctly reports SAT for this concept.
+
+**The "clash-out to EQ" trick — genuine UNSAT via strong EQ.** The complementary pattern C ⊓ ∃PO.∃PO.¬C ⊓ ∀PO.C ⊓ ∀DR.C ⊓ ∀PP.C ⊓ ∀PPI.C **is** UNSAT. With the chain d→PO→a→PO→c: d's ∀PO.C forces a ∈ C, and a's ∃PO.¬C forces c ∈ ¬C. The relation ρ(d,c) must lie in the full RCC5 composition comp(PO, PO) = {DR, PO, PP, PPI, EQ}. d's four universals ∀R.C (for R ∈ {DR, PO, PP, PPI}) kill all non-EQ options — each forces c ∈ C but c ∈ ¬C ✗. Only EQ remains. Under **strong EQ semantics** (EQ = identity), this forces d = c, giving d ∈ C ∧ d ∈ ¬C → clash. The loop escape of the previous example doesn't work here: the endpoint requires ¬C but d has C, so d ≠ c is forced, and the universals then block every non-EQ relation, while strong EQ delivers the final contradiction. This example illustrates why strong EQ semantics is essential — under weak EQ (equivalence class), collapsing d and c would not immediately clash and extra machinery would be needed to derive UNSAT.
+
+### Ninth approach: MSO encoding via interval semantics
+
+Reduces ALCI\_RCC5 satisfiability to the **Borel monadic second-order theory of (R, <)**, which is decidable by Manthe's theorem (2024). RCC5 has a faithful interpretation over open intervals on the real line, making **composition consistency automatic**. The encoding is complete except for one technical gap: MSO-definability of endpoint pairing (Dyck matching) over scattered subsets of R.
+
+See [**MSO Encoding (PDF)**](https://github.com/lambdamikel/alcircc5/blob/master/papers/MSO_encoding_ALCIRCC5.pdf) for the full paper (16 pages).
+
+### Summary: eleven approaches
+
+**Promising and partially successful:**
+
+| Approach | Author(s) | Key idea | Gap | Status |
+|---|---|---|---|---|
+| Cover-tree tableau | Wessel/GPT/Claude | PPI-tree + EQ-splitting + {DR,PO}-only cross-edges + patchwork | Completeness direction condensed | **Most promising: 911 concepts, 0 errors; 100% CT models** |
+| Quadruple-type | Claude | 4-element star path-consistency for cross-branch edges | Formal sufficiency proof pending | **713 concepts, 0 errors** |
+| Two-tier quotient | Claude | Period descriptors + PP-kernels + full RCC5 tractability | **PO gap** | **PO-coherent fragment decidable** |
+| MSO encoding | Claude | Reduce to Borel-MSO(R,<) via interval semantics | MSO-definability of Dyck matching | One technical gap |
+| Triangle-type | Claude | Triangle-filtered arc-consistency | Extension Solvability Conjecture | Conditional |
+
+**Disproved, retracted, or incomplete:**
+
+| Approach | Author(s) | Key idea | Gap | Status |
+|---|---|---|---|---|
+| Quasimodel theory (type elimination) | Claude | Greatest-fixpoint type elimination + original tableau | Type elimination rejects satisfiable concepts (Q3 anti-monotonicity); tableau soundness unproven (extension gap, 1,911 counterexamples at m=3) | **Retracted** |
+| Quasimodel reasoner (constructive, `alcircc5_reasoner.py`) | Claude | Bottom-up construction + disjunctive path-consistency + sibling/role-path checks | Role-path check assumes tree unfolding; wrongly rejects SAT concepts whose only witnesses are cycles via symmetric roles (PO/DR) | **Known incomplete** (used as a cross-validation tool only) |
+| Direct construction | Claude | Tree unraveling + DN\_safe | Theorem 5.5 false | **Retracted** |
+| Tri-nbr tableau | Claude | Tri-neighborhood blocking + filtered unraveling | Termination false; soundness gap | **Termination disproved** |
+| Contextual tableau | GPT | Local states + recentering | FW(C,N) false | Incomplete |
+| Profile-cached blocking | GPT | Coherent predecessor blocks | Color structure changes in unraveling | Incomplete |
+| Meet-based replay | GPT | Meet-semilattice on labels | Same unraveling gap | Incomplete |
+
+### Direct attacks on the patchwork property (April 2026, Claude)
+
+Beyond the standard reductions, three direct probes were mounted against the **patchwork property** itself — the load-bearing assumption behind every decidability proof in this repository (Renz & Nebel 1999 for atomic RCC5; Renz 1999 for full RCC5 tractability). The idea: if patchwork fails once augmented with an ALCI TBox, that failure could be a seed for undecidability. Three papers form a cascade, each refuting the previous paper's simplified propagation with a strictly smaller counterexample, and converging on split-forest rank-$d$ validity as the minimum viable structure.
+
+| Paper | Propagation attempted | Gap exposed | Counterexample size |
+|---|---|---|---|
+| [`patchwork_augmentation_ALCIRCC5.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/patchwork_augmentation_ALCIRCC5.pdf) | Weak arc-consistency (composition + TypeSafe over existing V) | None found in three probes; conjectured Proposition 7.1 | — |
+| [`typed_patchwork_counterexample_ALCIRCC5.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/typed_patchwork_counterexample_ALCIRCC5.pdf) | Strong arc-consistency (+ existential extensibility against V) | V-to-pending-witness conflicts not caught | **2 nodes, 7 axioms** |
+| [`inter_witness_counterexample_ALCIRCC5.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/inter_witness_counterexample_ALCIRCC5.pdf) | Stronger arc-consistency (+ inter-witness pair-domains) | Pending-witness-to-pending-witness conflicts not caught | **1 node, 7 axioms** |
+
+**Pattern.** Each simplification of split-forest validity has a counterexample. The counterexamples shrink as propagation strengthens, because each layer catches more local failures and leaves only purer versions of the missing gap. The three-paper cascade conjecturally terminates at split-forest rank-$d$ validity: recursing the inter-witness pair-domain check up to modal depth $d$ is equivalent to the split-forest soundness conditions. There is no simpler propagation that works.
+
+**What this says about decidability.** Decidability is unaffected: the split-forest paper already uses the full rank-$d$ machinery, not any of the simplified propagations. The cascade strengthens the decidability case by concretising the "no $k$-ary synthesis" argument from the probe paper — every TBox-expressible constraint decomposes through the witness-extension hierarchy into unary, binary, or pair-local checks. ALCI cannot force genuinely $k$-ary ($k \geq 4$) constraints.
+
+**What this says about undecidability.** The case for decidability keeps strengthening. Every direct attack on patchwork has failed (the cascade), and every standard undecidability reduction is documented as blocked. The remaining plausible undecidability angles are:
+
+1. **ALCI\_RCC8 with a non-grid reduction shape** — unexplored; Lutz-Wolter's $L_{RCC8}$ undecidability gives a target, and the coincidence obstruction is what blocks naive grid transfer. A non-grid reduction that exploits NTPPI/TPPI transitivity asymmetry differently hasn't been tried.
+2. **Counter-machine simulation via PP-chains** — classical, but ALCI\_RCC5 lacks number restrictions (no zero-test). The cascade's "no $k$-ary synthesis" argument suggests this is exactly what's blocked.
+3. **Encode via infinite structure (ω-automata, infinite PP-chains)** — speculative; ALCI\_RCC5 has infinite models in general, and forcing specific infinite structure without counting looks unavailable.
+
+**Recommendation (April 2026, Claude).** Further probes have low expected yield. The productive remaining direction is to **prove the cascade's termination theorem** (stronger arc-consistency at depth $d$ = split-forest rank-$d$ validity) as a positive result, and to **audit the cover-tree implementation** against split-forest validity to resolve the open theory-vs-implementation gap.
+
+### Discussion of failed and incomplete approaches
+
+The following approaches have been **disproved, retracted, or shown incomplete**.
+
+**1. Original quasimodel paper (Claude): RETRACTED.** Type elimination algorithm rejects satisfiable concepts (Q3 anti-monotonicity causes cascade elimination — an **incompleteness**, not unsoundness). The original tableau's soundness is unproven (extension gap: 1,911 counterexamples at m=3). RCC8 results retracted.
+
+**1b. Constructive quasimodel reasoner (`alcircc5_reasoner.py`): KNOWN INCOMPLETE.** A bottom-up replacement that avoided the non-monotonicity of type elimination, and was used extensively as a cross-validation oracle. It has now been found to wrongly reject the PO-loop SAT concept C ⊓ ∃PO.∃PO.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PP.¬C ⊓ ∀PPI.¬C. The role-path compatibility check in `check_role_path_compatibility` implicitly assumes tree unfoldings: it cannot close a chain g→R→j→S→g through a symmetric role. The reasoner's **SAT answers remain sound**, but the claim that UNSAT answers are sound is **withdrawn for concepts requiring cycles via symmetric roles**. The decidability proof is unaffected — it now goes through GPT-5.4's v1 split-forest paper (soundness, Thms 1.17–1.19) plus GPT-5.5's [repaired split-forest decidability proof](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (both directions, no automata).
+
+**2. Contextual tableau (GPT-5.4): INCOMPLETE.** Proves full soundness but reduces completeness to FW(C,N), which is **false** — C∞ = (∃PP.⊤) ⊓ (∀PP.∃PP.⊤) is a counterexample. See the [FW counterexample proof (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/FW_proof_ALCIRCC5.pdf).
+
+**3. Direct model construction (Claude): RETRACTED.** Two errors found by GPT-5.4: algebraic error in Lemma 3.2 and Theorem 5.5 is false.
+
+**4–5. Profile-cached blocking and meet-based replay (GPT-5.4): INCOMPLETE.** Both fail at the unraveling step where the color structure changes.
+
+**6. Triangle-type blocking (Claude): CONDITIONAL.** Decidability conditional on the Extension Solvability Conjecture (unproven). See [triangle-type paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/triangle_blocking_ALCIRCC5.pdf).
+
+**7. Tri-neighborhood tableau (Claude): TERMINATION DISPROVED.** Non-termination via frontier advancement: frontier nodes have Tri ⊂ interior Tri and are never blocked. The blocking dilemma (soundness requires Tri-matching; termination requires ignoring Tri) remains open. See [tableau paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/tableau_ALCIRCC5.pdf).
+
+**8. MSO encoding (Claude): ONE GAP.** Reduces to decidable Borel-MSO(R,<) but MSO-definability of Dyck matching is unresolved.
+
+**The structural wall (approaches 1–5).** All five fail at global edge assignment in complete-graph models. The cover-tree tableau avoids this wall by decomposing models into trees with {DR,PO}-only cross-edges.
+
+### Independent review and assessment of the decidability proof and calculus (April 2026, Opus 4.7)
+
+In April 2026, Anthropic's **Claude Opus 4.7** was commissioned by Michael Wessel to perform an adversarial review of the decidability proof for ALCI\_RCC5 and the accompanying cover-tree tableau calculus. The review was run in two rounds, with the repository authors free to apply fixes between rounds.
+
+#### Round 1 — twelve structural counterexamples
+
+The reviewer ran an audit of the cover-tree tableau implementation and identified a **soundness failure** affecting the `check_tree_cross_interaction` stage (CT4). The defect was a short-circuit (`if len(all_dems) <= 1: continue`) that skipped composition propagation across three-type chains whose intermediate types each carried only a single demand. A family of **twelve** minimal UNSAT concepts of modal-depth 2 exposed the bug:
+```
+C_{R₁, R₂}  ≡  ∃R₁.∃R₂.A  ⊓  ⨆_{R ∈ comp(R₁, R₂)} ∀R.¬A      (R₂ ≠ inv(R₁))
+```
+for each pair (R₁, R₂) ∈ {DR, PO, PP, PPI}² excluding the four EQ-admitting diagonals, including the simplest transitive-role instance `∃PP.∃PP.A ⊓ ∀PP.¬A`. The cover-tree reported SAT on all twelve; the cycle-aware quasimodel reasoner correctly reported UNSAT on all twelve. The review paper [`review_paper/review_cover_tree_tableau.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.pdf) (11 pages, LaTeX source [here](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.tex)) documents the counterexamples, the root cause, a repair sketch, and four independent verification strands.
+
+The reviewer explicitly *did not* refute the decidability theorem itself — which now rests on GPT-5.4's v1 split-forest paper (soundness) plus GPT-5.5's [repaired split-forest decidability proof](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (both directions, May 2026) — only the soundness of the committed cover-tree code.
+
+#### Round 2 — re-assessment after the fix
+
+The repository authors applied two calculus-level fixes:
+1. A new `check_role_path_compatibility` stage (**CT5**) in [`src/cover_tree_tableau.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py), a fixed-point arc-consistency pruner over all three-type chains g →R→ j →S→ w, with a strong-EQ cycle-close clause for the four EQ-admitting pairs {(DR,DR), (PO,PO), (PP,PPI), (PPI,PP)} — exactly the check recommended by Round 1.
+2. Transitive universal propagation in [`src/alcircc5_reasoner.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) (`compute_safe`): when R ∈ {PP, PPI}, ∀R.D must propagate as a whole (not just its body D) into R-successor types — the standard ALCH\_tr transitive-role rule.
+
+The reviewer re-audited the post-fix repository and ran a second attack round. Results:
+
+- **All 12 Round-1 counterexamples** are now correctly reported UNSAT by the cover-tree tableau (0/12 mismatches with QMc). Reproducible via [`review_paper/test/verify_twelve_counterexamples.py`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/test/verify_twelve_counterexamples.py).
+- **25+ fresh targeted attacks** (4-role-chain stressors, tree/cross mixes at depth 2, EQ-admit boundary cases, sibling-universal interactions with singleton and non-singleton compositions, grandchild–grandparent–sibling triangle constructions) agree with QMc in every case.
+- **300 pseudo-random depth-3/4 concepts** across two seeds (seeds 1 and 7, role alphabet {DR, PO, PP, PPI}, 2–3 atomic concepts) produce 0 mismatches.
+
+The reviewer **withdraws the Round-1 soundness-failure claim with respect to the current repository state**. No adversarial concept constructed during the second round produces a mismatch between the cover-tree tableau and the cycle-aware quasimodel reasoner.
+
+#### Verdict (Opus 4.7 review)
+
+On the available evidence, the decidability claim for ALCI\_RCC5 is **plausibly intact** (no complexity bound is asserted; the PO-coherent fragment's quotient is already 2-EXPTIME). The most tangible empirical obstacle — a concrete small concept on which the two procedures disagree — has been removed. Two residual caveats remain, both acknowledged in the review paper:
+
+- Structural and random testing cannot certify soundness; a proof-level argument that **CT1…CT5** jointly entail the patchwork property should come from the companion [cover-tree tableau paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.pdf).
+- The Round-1 counterexamples remain historically valid as a reminder that test-distribution blind spots can mask calculus-level bugs for arbitrarily long. The pre-fix 911-concept cross-validation suite reported zero mismatches for exactly such a blind-spot reason.
+
+#### Artefacts (Opus 4.7 review)
+
+- [`review_paper/review_cover_tree_tableau.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.pdf) — the review paper (11 pages, CEUR-ART template). Sections 5–8 document the Round-1 counterexamples; Section 10 is the Round-2 reassessment.
+- [`review_paper/review_cover_tree_tableau.tex`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/review_cover_tree_tableau.tex) — LaTeX source.
+- [`review_paper/test/`](https://github.com/lambdamikel/alcircc5/blob/master/review_paper/test/) — adversarial test harness (5 Python scripts + a README). Complements the repository's own cross-validation in [`src/stress_test_cover_tree.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/stress_test_cover_tree.py) and [`src/test_cyclic_reasoner.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/test_cyclic_reasoner.py).
+
+### GPT-5.5 review and v2 completeness extraction (May 2026)
+
+> **Status note (post Option 4).** This subsection describes Claude's v2.1 completeness extraction, which was the current pillar in early May 2026 but has since been **superseded** by GPT-5.5's no-automata [repaired proof](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) after a Round-2 review found three load-bearing gaps in v2.1 (G1, G3, G4 — see the Round-2 section in README). Preserved for historical record.
+
+In May 2026, **GPT-5.5** (a reasoning-engine variant of GPT) reviewed all four argument-bearing files (the v1 sibling-interface paper, the patched cover-tree tableau note, Claude's v1 completeness extraction, and Claude's implementation paper). The review identified **two structural defects**: one in the v1 completeness extraction directly, and the same two defects in adjacent material in the v1 sibling-interface paper itself (Def 1.5's ambient-root requirement, Def 1.7's witness-menu treatment of PP/PPI, and the Thm 1.20 proof sketch). GPT-5.5 then produced its own repaired proof using Büchi automata over a cycle-realization condition (`papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.pdf`). Claude subsequently produced two v2 papers:
+
+- [`papers/completeness_extraction_ALCIRCC5_v2.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/completeness_extraction_ALCIRCC5_v2.pdf) (31 pages, v2.1) — closes the model-to-quotient gap **without** ω-acceptance machinery, by reducing GPT-5.5's cycle-realization condition to finite-graph reachability.
+- [`papers/trees/sibling_interface_descriptors_ALCIRCC5_v2.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/sibling_interface_descriptors_ALCIRCC5_v2.pdf) (10 pages) — preserves GPT-5.4's Thms 1.17–1.19 (soundness) verbatim and reinterprets v1 Def 1.5 (parent self-loops, generated witness-cover edges), v1 Def 1.7 (PP/PPI eventualities by reachability discharge, not witness-menu slots), and v1 Thm 1.20 (proof sketch dropped, model-to-quotient delegated to the v2 completeness extraction paper).
+
+#### Two defects in v1
+
+**Defect 1 — Hasse construction breaks on infinite PP-chains.** The v1 split-tree construction assumed the model's PP/PPI partial order had a well-founded ambient root, then built a Hasse-like tree by walking up immediate PP-predecessors from a designated root element. This works for tree-shaped models but breaks for concepts that force infinite ascending PP-chains. The standard witness is
+
+> *C↑* ≡ ∃PP.⊤ ⊓ ∀PP.∃PP.⊤
+
+every model of *C↑* has an infinite PP-chain *x*₀ PP *x*₁ PP *x*₂ PP …, with no PP-maximal element. The v1 construction has nowhere to root the tree.
+
+**Defect 2 — Witness conflation in C5 (triple coherence).** The v1 proof of the C5 triple-coherence axiom for extracted descriptors implicitly identified the *role-witness* of an existential at one rank with the *concrete element* witnessing the same demand at a different rank along the same trunk. When witness sets at different ranks differ (which is generic), this conflation invalidates the C5 verification step.
+
+#### Seven repairs in v2 (without automata)
+
+The v2 paper applies GPT-5.5's structural ideas but **without** any Büchi or ω-language machinery. Seven concrete repairs:
+
+1. **(R1) Witness-generated submodel.** Restrict to the submodel generated by selected existential witnesses from the root — logic-generated, sparse, no density issue, no ambient-root dependence.
+2. **(R2) Generated cover edges.** Cover edges are *selected witness-cover* edges in the generated submodel — not semantic Hasse covers.
+3. **(R3) Self-loops on the parent function.** The finite quotient's parent map permits self-loops, so ultimately periodic ancestor trunks (such as those forced by *C↑*) are first-class. No ambient root is required.
+4. **(R4) Containment orientation made explicit.** Parent = proper superpart, child = proper part — fixes the orientation ambiguity in v1.
+5. **(R5) Support-closed mosaics replace raw pair tables.** The C5 fix: store joint atomic networks (triples), not pairs, so witness identities are preserved across rank steps.
+6. **(R6) Typed-EQ congruence as an explicit axiom.** Separated from blocking equivalence; corrects a v1 conflation between the two.
+7. **(R7) Reachability discharge for PP/PPI eventualities.** Transitive ∃PP.*D* / ∃PPI.*D* existentials are discharged by *finite-graph reachability* on the finite quotient — not Büchi acceptance. For each eventuality at state *σ*, check whether some *σ′* reachable from *σ* along parent edges (including self-loops) satisfies the witness condition. Decidable in *O*(|*S*|²) per eventuality.
+
+The crucial observation: GPT-5.5's cycle-realization condition reduces to ordinary reachability over the finite quotient, because the parent function is total and may self-loop, so eventualities discharged on a self-loop are automatically witnessed.
+
+#### Net effect on the decidability argument (v2.1 era)
+
+Combined with the v1 soundness chain (split-forest → unfolding → König → canonical refinements → strong-EQ model), the two v2 papers were claimed to yield decidability of concept satisfiability in ALCI\_RCC5. The argument stood at v2.1 on three files (v1 sibling, v2 sibling delta, v2 completeness extraction); v2 sibling is explicitly a delta paper and does *not* restate the v1 soundness proofs. v2.1 has since been superseded (see the Round-2 section in README).
+
+### Round-2 review and repaired-proof adoption — full prose (May 2026)
+
+This is the verbose version of the README's compressed Round-2 section, preserved here for the full audit trail.
+
+A week after v2.1, GPT-5.5 produced a **second formal review** of v2.1 itself, archived under [`papers/gpt5.5_round2/`](https://github.com/lambdamikel/alcircc5/tree/master/papers/gpt5.5_round2). The review identified **eight critical structural gaps (G1)–(G8)** in v2.1, of which three are genuinely load-bearing for the decidability argument. GPT-5.5 also produced a self-contained **repaired proof** that fixes all three load-bearing gaps without recourse to $\omega$-acceptance machinery.
+
+The decision (Wessel + Claude): **v2.1 is marked superseded**; GPT-5.5's repaired proof is adopted as the current best statement of the decidability argument; Claude's contribution shifts to **verification** of the repaired proof's combinatorial claims.
+
+#### Three load-bearing gaps in v2.1
+
+**Gap G1 — profile-level equality ports contradict vertical separation.** v2.1 defines the equality relation $\equiv_{\EQ,Q}$ at the *profile* (equality-port) level: two states $\sigma, \tau$ are EQ-equivalent iff a port-bijection matches their declared equality ports. Axiom M1 (reflexivity of equality) and Axiom M7 (typed-EQ congruence) together imply $\sigma \equiv_{\EQ,Q} \sigma$ via the identity port-map. Combined with the vertical-separation axiom (which forbids $\equiv_{\EQ,Q}$ along any strict PP/PPI path), this yields a contradiction on **self-loops**: a state $\sigma$ with a PP self-edge (which v2.1 allows, to absorb infinite PP-chains) is simultaneously reflexively EQ-related to itself (by M1+M7) and forbidden from being EQ-related along a strict PP path (by vertical separation). v2.1 has no consistent reading.
+
+**Gap G3 — multiple upward PP witnesses with different parents.** v2.1 builds the mate construction (the EQ-equivalence class $\mathrm{Mate}_Q(\sigma)$) such that every mate of $\sigma$ shares a single semantic parent state. The stress formula
+$$C_{AB} \;\equiv\; A \sqcap B \sqcap \exists \PP. A \sqcap \exists \PP. B \sqcap \forall \PP. (A \to \lnot B) \sqcap \forall \PP. (B \to \lnot A)$$
+admits a model with two distinct upward PP witnesses for the root (an $A$-only superpart and a $B$-only superpart), which by Wessel's containment orientation forces two mate occurrences with **different parents**. v2.1's single-parent mate construction cannot accommodate this.
+
+**Gap G4 — rootless orientation incompatible with the depth-from-$u_*$ projection.** v2.1 retains a projection $\pi: T \to U(Q)$ that depends on depth from a distinguished occurrence $u_*$, but the rootless orientation (Section "Self-loops on the parent function") allows occurrences that are *proper-superparts* of $u_*$, for which depth-from-$u_*$ is undefined. The simultaneous-realization lemma (`lem:simul-realization`) silently assumes $u_*$ is a root.
+
+#### GPT-5.5's repaired proof — three structural fixes
+
+GPT-5.5's [`repaired_split_forest_no_automata_proof.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (16 pages) addresses all three:
+
+1. **Occurrence-level equality.** Definition 4.1 (S5) sets $u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$, i.e., two occurrences are EQ-mates iff they project to the same semantic element. This is *not* a port-bijection condition on profiles; it is a concrete identification on occurrences. M1 reflexivity then trivially holds and vertical-separation contradictions vanish — a self-loop occurrence is its own (and only) mate, and there is no need for a strict PP path.
+2. **Mates with different parents.** $\mathrm{Mate}_Q(\sigma)$ is redefined via the port-equivalence relation, not via a single semantic-parent witness. The two mate occurrences for $C_{AB}$ live in different mate classes with different parents — fully accommodated.
+3. **Request-closed cycles replace $\omega$-acceptance.** Transitive PP/PPI eventualities are discharged by **request-closed cycles** in the rank-$d$ quotient graph: a state $\sigma$ with a deferred PP-request is realized iff the request is closed by a finite cycle of $\sigma$-reachable states. No parity, no Büchi. The decidability check is reachability + cycle-closure, both standard finite-graph operations.
+
+The repaired proof formulates **ten finite-checkable validity conditions (V1)–(V10)** on rank-$d$ quotients, gives a coarse upper bound $B(C_0) = 2^{2^{p(n)}}$ on certificate size for a polynomial $p$, and establishes decidability via guess-and-check.
+
+#### Verification work (Claude's contribution) — full table
+
+GPT-5.5's [`verification_recommendations_for_claude.pdf`](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/verification_recommendations_for_claude.pdf) lists six Python work packages and seven Lean targets. The Python work lives under [`verification/`](https://github.com/lambdamikel/alcircc5/tree/master/verification):
+
+| WP | Title | Status | Output |
+|---|---|---|---|
+| WP1 | RCC5 composition table | **PASS** | [`rcc5_composition_check.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/rcc5_composition_check.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/rcc5_composition_table.txt) |
+| WP2 | Bounded certificate soundness fuzzer | **PASS** | [`certificate_checker.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/certificate_checker.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/certificate_checker.txt) |
+| WP3 | Small-model SAT/UNSAT oracle | **PASS** | [`small_model_oracle.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/small_model_oracle.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/small_model_oracle.txt) |
+| WP4 | Multiple-superpart $C_{AB}$ stress | **PASS** (folded into WP2/WP3) | see `cert_C_AB` in WP2, two-mate model in WP3 |
+| WP5 | Request-closed blocking cycles | **PASS** (folded into WP2) | see `cert_WP5_cycle_*` in WP2 |
+| WP6 | Mosaic closure search | **PASS** | [`mosaic_closure_search.py`](https://github.com/lambdamikel/alcircc5/blob/master/verification/python/mosaic_closure_search.py), [report](https://github.com/lambdamikel/alcircc5/blob/master/verification/reports/mosaic_closure_search.txt) |
+
+**WP1 result.** Exhaustive enumeration over non-empty subsets of $|U|=5$ derives the 5-relation RCC5 base by set-theoretic comparison, then composes via triples to compute $\mathsf{comp}(R, S)$ for all 25 cells. The computed table matches GPT-5.5's stated table (repaired proof, lines 99–114) **exactly**. The signature stabilises at $|U| = 4$ (no new compositions at $|U| = 5$), confirming the table is universe-size-independent for $|U| \ge 4$. The in-repo quasimodel reasoner's `COMP` table ([`src/alcircc5_reasoner.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py)) differs only in four cells — (DR,DR), (PO,PO), (PP,PPI), (PPI,PP) — by exactly EQ, which the reasoner intentionally omits because it models edges between distinct nodes only (the `EQ_ADMITTING_PAIRS` convention). No genuine mismatches.
+
+**WP2 result.** Implements (V1) type legality, (V3) vertical safety, (V4)/(V5) equality-aware vertical existential/universal discharge, (V9) typed-equality congruence on ports, and (V10) exact summaries — the vertical fragment of the validity-condition checker. 10-test corpus: $C_{up}$ accepted with parent self-loop (G1 test under occurrence-level equality), $C_{AB}$ accepted with two mate occurrences carrying different selected parents (G3 witness), $C_{AB}$ rejected when forced into a single-parent mate (v2.1-style failure mode), UNSAT concepts rejected on the soundness side, and request-closed cycles accepted/rejected correctly (WP5 folded in). All 10 verdicts match expected.
+
+**WP3 result.** Brute-force enumeration of complete RCC5 labelings on $n \le 4$ confirms WP2 on a 5-test corpus. $C_{AB}$ realised at $n = 3$ with model $A = \{0, 2\}$, $B = \{1, 2\}$, $\rho(2, 0) = \PP$, $\rho(2, 1) = \PP$, $\rho(0, 1) = \PO$ — exactly the two-incomparable-PP-superparts pattern G3 was about. $C_{up}$ returns "no finite model up to $n = 4$", consistent with WP2 accepting it via parent self-loop unfolding to an infinite chain (semantics: infinite-model-only SAT). The two genuine UNSAT entries return "no finite model" matching WP2's rejection.
+
+**WP6 result.** Tests (M1)–(M5) and the support-closure axioms (SC1)–(SC4) on small mosaics. (A) Of all $4^3 = 64$ triangle labelings, 41 satisfy (M3) and 23 are rejected; every rejected triangle is also unrealizable by finite subsets of $|U| \le 5$, confirming (M3) is exact. (B) Every (M3)-consistent triangle is realizable for $n \le 5$ — Renz–Nebel patchwork property on triangles. (C) DR/PO side-witness insertion succeeds without breaking (M4) in both directions. (D) Universal propagation through a PP-chain forces $A$ at the deep position via (M3)+(M4) jointly; the legal chain is accepted and a broken chain is caught. (E) Sibling-branching: with $p$ PPI $s_1$, $p$ PPI $s_2$, $s_1$ PO $s_2$, $s_1$ PPI $c$, the legal $L(c, s_2)$ candidates are exactly $\{\DR, \PO, \PP\} = \mathsf{comp}(\PP, \PO)$. No counterexample to the patchwork lemma was found.
+
+### Implementation: ALCI\_RCC5 Concept Satisfiability Reasoner (quasimodel reasoner, full description)
+
+[**`alcircc5_reasoner.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) is a working implementation of a concept satisfiability checker for ALCI\_RCC5. It implements a **constructive quasimodel search** that builds candidate quasimodels bottom-up and verifies them using disjunctive path-consistency of RCC5 constraint networks. It is retained as a cross-validation oracle for the cover-tree tableau, **not** as a step of any decidability proof.
+
+#### Algorithm
+
+1. Parse input concept in negation normal form (NNF)
+2. Compute Fischer-Ladner closure
+3. Enumerate all Hintikka types over the closure
+4. Compute SAFE relations between all type pairs (relations R such that all ∀R.C constraints in both types are satisfied)
+5. **Bottom-up quasimodel construction:**
+   - Start from each root type (containing the input concept)
+   - Add witness types for unsatisfied existential demands (∃R.C)
+   - After each addition, verify that the SAFE constraint network over the current type set is **disjunctive path-consistent**: for each pair of types, the domain is the SAFE set; arc-consistency propagation removes relations that have no support through intermediate types
+   - By the **RCC5 patchwork property** (Renz & Nebel 1999), path-consistent disjunctive networks are globally satisfiable, making this check both **sound** (rejects only genuinely unsatisfiable configurations) and **complete** (accepts all satisfiable ones)
+   - Backtrack if path-consistency fails; try alternative witness types
+   - **Sibling compatibility check**: for each type with multiple demands (R₁,D₁),...,(Rₖ,Dₖ), verify that witnesses j₁,...,jₖ can be chosen jointly such that comp(INV[Rₘ], Rₘ') ∩ SAFE(jₘ, jₘ') ≠ ∅ for all pairs. When Rₘ ≠ Rₘ', the witnesses must be distinct elements even if they share the same type — the pairwise check is required. Same-type bypass is valid only when Rₘ = Rₘ' (one element serves both demands). Uses CSP with arc-consistency + backtracking.
+6. Accept iff some root type leads to a valid quasimodel
+
+#### Key design decisions
+
+- **Three necessary conditions replace Q3/Q4.** The original conditions Q3/Q4 universally quantify over all safe relations, which is too strict. The replacement is three necessary conditions: (1) **disjunctive path-consistency** of the SAFE network; (2) **sibling compatibility** — joint witness assignment for co-demanded roles via CSP; (3) **role-path compatibility** — grandchild-grandparent connectivity through composition chains with iterative witness pruning. (1) and (2) are extractable from any model. **(3) is extractable only from tree models** — the check wrongly assumes that grandchild w is a fresh node, and fails to close the cycle when w may equal g via strong-EQ identification through a symmetric role. Consequently **UNSAT answers from this reasoner are sound only for concepts whose SAT-status is witnessed by a tree model**; for cyclic-via-symmetric-role SAT concepts the reasoner wrongly reports UNSAT. See the warning box in README for scope and fix status.
+
+- **Deterministic type enumeration.** Closure concepts are sorted by string representation before building atoms. All frozenset iterations in the search use `sorted()`. This ensures the reasoner always produces the same type set regardless of Python's hash randomization.
+
+- **Bottom-up construction avoids GFP non-monotonicity.** The original greatest-fixpoint type elimination is non-monotone: removing one type can make another supportable. This caused the algorithm to reject satisfiable concepts (e.g., C₁ from the paper). The constructive approach only checks consistency of types actually in the candidate quasimodel.
+
+#### Test results
+
+```
+cd src
+python3 alcircc5_reasoner.py
+```
+
+18 basic test cases plus a comprehensive stress test of **713 concepts** across seven categories (known SAT, known UNSAT, adversarial cross-role universals, systematic role-atom combinations, and random concepts of depths 2-4). **Zero correctness errors on this test set.** The sibling check correctly catches cross-role universal contradictions like ∃PP.(∀PPI.A) ⊓ ∃PPI.¬A (UNSAT: comp(PPI,PPI) = {PPI} forces the universal to fire on the sibling). *Known blind spot:* the test set does not include cyclic-via-symmetric-role SAT concepts such as the PO-loop pattern; on those the reasoner is known to wrongly report UNSAT.
+
+#### Henkin tree extension test
+
+[**`henkin_extension_test.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/henkin_extension_test.py) validates the Henkin construction by building actual tree models from quasimodel type sets. For each SAT concept, it:
+
+1. Gets the quasimodel type set T from the reasoner
+2. Builds a depth-4 Henkin tree, adding witnesses level by level
+3. At each extension, computes the star network D(new, x) = comp(INV[R], ρ(parent, x)) ∩ SAFE(new_type, x_type) for all existing nodes x
+4. Runs star arc-consistency and finds a consistent atomic assignment
+5. Uses a **precomputed witness plan** (sibling-compatible assignment per type) with limited backtracking over alternative witnesses
+
+**Result: zero failures for all basic tests across 12 hash seeds.** The future-flexibility ordering (PO > DR > PP > PPI) ensures cross-relations keep compositions wide at deeper tree levels. In the stress test, 8 Henkin failures occur at depths 2-3 for concepts that are satisfiable in cyclic models but whose tree unfoldings have cross-level composition conflicts — these are tree-model limitations, not reasoner bugs.
+
+#### Limitations
+
+- Exponential in closure size (enumerates all Hintikka types)
+- Not optimized for large concepts; designed as a proof-of-concept
+- The constructive search uses backtracking with depth bound, so may not find all satisfying quasimodels
+- **Known incompleteness** on cyclic-via-symmetric-role SAT concepts (PO-loop pattern): the role-path compatibility check cannot close a chain g→R→j→S→g through a symmetric role, so witnesses that require such cycles are rejected. The decidability proof is unaffected.
+
+### Pointers to other superseded papers and verification scripts
+
+These pointers were in the README's file lists; the underlying papers/scripts remain in the repo but are not part of the current proof machinery.
+
+#### GPT-5.4 Pro papers (profile-cached blocking series, superseded)
+
+- [**`gpt/alcircc5_blocking_draft.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt/alcircc5_blocking_draft.pdf) -- Paper 1: Profile-cached global blocking, conditional on classwise normalization lemma ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt/alcircc5_blocking_draft.tex))
+- [**`gpt/alcircc5_blocking_revised.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt/alcircc5_blocking_revised.pdf) -- Paper 2: Self-correction — flat normalization false, introduces coherent predecessor blocks ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt/alcircc5_blocking_revised.tex))
+- [**`gpt/alcircc5_blocking_explicit_signatures.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt/alcircc5_blocking_explicit_signatures.pdf) -- Paper 3: Explicit depth-indexed signature construction, proves finite-index lemma (PDF only)
+- [**`gpt/alcircc5_blocking_replay_final.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt/alcircc5_blocking_replay_final.pdf) -- Paper 4: Meet-semilattice approach, robust colorwise normalization — gap in blocked unraveling theorem ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt/alcircc5_blocking_replay_final.tex))
+
+#### GPT-5.4 Pro review correspondence (two-tier quotient)
+
+- [**`review/review_closing_extension_gap_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/review/review_closing_extension_gap_ALCIRCC5.pdf) -- GPT's review of Claude's companion paper: identifies algebraic error in Lemma 3.2 and counterexample to Theorem 5.5 ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/review/review_closing_extension_gap_ALCIRCC5.tex))
+- [**`review2/response_to_two_tier_quotient_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/review2/response_to_two_tier_quotient_ALCIRCC5.pdf) -- GPT's review of Claude's two-tier quotient paper: five objections against the decidability claim ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/review2/response_to_two_tier_quotient_ALCIRCC5.tex))
+- [**`review2/response_to_gpt_review.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/review2/response_to_gpt_review.pdf) -- Claude's response to GPT's first review (8 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/review2/response_to_gpt_review.tex))
+- [**`review3/response_to_revised_two_tier_quotient_ALCIRCC5.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/review3/response_to_revised_two_tier_quotient_ALCIRCC5.pdf) -- GPT's second review of two-tier quotient ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/review3/response_to_revised_two_tier_quotient_ALCIRCC5.tex))
+- [**`review3/response_to_gpt_second_review.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/review3/response_to_gpt_second_review.pdf) -- Claude's response to GPT's second review ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/review3/response_to_gpt_second_review.tex))
+- [**`review4/response_to_latest_two_tier_revision.tex`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/review4/response_to_latest_two_tier_revision.tex) -- GPT's third review of two-tier quotient
+- [**`review4/response_to_gpt_third_review.pdf`**](https://github.com/lambdamikel/alcircc5/blob/master/papers/review4/response_to_gpt_third_review.pdf) -- Claude's response to GPT's third review (7 pages) ([source](https://github.com/lambdamikel/alcircc5/blob/master/papers/review4/response_to_gpt_third_review.tex))
+
+#### Older computational verification scripts (quasimodel-era)
+
+- [**`extension_gap_checker.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/extension_gap_checker.py) -- Exhaustive extension gap checker. Confirmed Q3-compatible configurations can fail (1,575 at m=3, 806,094 at m=4).
+- [**`extension_gap_checker_v2.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/extension_gap_checker_v2.py) -- Tests existential Q3 vs universal Q3. Universal Q3 eliminates all failures through m=4.
+- [**`q3_implies_q3s_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/q3_implies_q3s_check.py) -- Does Q3 imply Q3s? No (1,803 counterexamples at 3 types).
+- [**`model_derived_q3s_fast.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/model_derived_q3s_fast.py) -- Result: 7,560/68,276 models produce DN networks violating Q3s. Confirms Q3s not extractable from models.
+
+#### PP-kernel quotient investigation
+
+- [**`pp_kernel_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/pp_kernel_analysis.py) -- Reflexive PP composition-consistency, PP-chain monotonicity and stabilization.
+- [**`pp_kernel_quotient.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/pp_kernel_quotient.py) -- Tests disjunctive {PP,PPI} quotient: 6/15 two-type demand patterns are satisfiable; bidirectional demands fail.
+- [**`pp_kernel_cycle_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/pp_kernel_cycle_analysis.py) -- Generates and validates 56 toy 2-type period descriptors.
+- [**`gap_closing_verification.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/gap_closing_verification.py) -- Verifies algebraic facts: 0 failures across 164 two-element and 128 three-element configurations.
+
+#### Extension gap root cause investigation scripts
+
+- [**`self_absorption_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/self_absorption_analysis.py) -- Identifies comp(DR,PPI)={DR} as the unique asymmetric failure.
+- [**`cross_subtree_investigation.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/cross_subtree_investigation.py) -- Ancestor projection strategy, self-safety theorem (S ∈ comp(S,S) for all S).
+- [**`drpp_deep_analysis.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/drpp_deep_analysis.py) -- Modified profile-copy approach for DR+PP problematic case.
+- [**`drpp_extension_investigation.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/drpp_extension_investigation.py) -- One-step extension solvability (45,528/45,528 pass).
+- [**`profile_blocking_drpp.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/profile_blocking_drpp.py) -- Initial DR+PP profile-blocking investigation.
+
+#### Triangle-type blocking investigation
+
+- [**`triangle_closure_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/triangle_closure_check.py) -- Tests triangle-type blocking on 68,276 models. Zero genuine failures.
+- [**`triangle_type_saturation_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/triangle_type_saturation_check.py) -- All three node types stabilize at k=2 (τ_A: 68 types, τ_B: 56 types, σ: 57 types).
+- [**`profile_blocking_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/profile_blocking_check.py) -- Confirms node-identity-based profile blocking does NOT terminate.
+- [**`tri_neighborhood_check.py`**](https://github.com/lambdamikel/alcircc5/blob/master/src/tri_neighborhood_check.py) -- Strengthened blocking condition also stabilizes, at k=3.
