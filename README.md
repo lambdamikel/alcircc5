@@ -279,6 +279,8 @@ For comparison, here is the original taxonomy from Wessel's report7.pdf (2002/20
 
 > *Historical:* the **summary table of all twelve approaches** (six "promising and partially successful" including the GPT-5.5 automata-flavored alternative, seven "disproved, retracted, or incomplete") is preserved in [OUTDATED.md](OUTDATED.md). The current pillar is the cover-tree tableau / split-forest route, summarised above; everything else is either subsumed (two-tier quotient for the PO-coherent fragment), retained as an independent alternative (GPT-5.5 automata route), or superseded.
 
+> *Historical:* the **eight discarded approaches** (original quasimodel paper / constructive quasimodel reasoner / contextual tableau / direct model construction / profile-cached blocking / meet-based replay / triangle-type blocking / Tri-neighborhood tableau / MSO encoding) are summarised, with retraction/incompleteness traces, in [OUTDATED.md](OUTDATED.md). All five complete-graph approaches hit the same structural wall (global edge assignment); the cover-tree tableau avoids it by decomposing models into trees with {DR, PO}-only cross-edges.
+
 ### Why standard undecidability reductions fail for ALCI\_RCC5
 
 Every known undecidability proof for description logics ultimately encodes a **two-dimensional grid** (the Z×Z domino tiling problem). Grid encoding requires either functional roles, number restrictions, role intersection, or role value maps. ALCI\_RCC5 has **none of these**. Moreover, the patchwork property — local consistency implies global consistency — actively resists grid encoding, since tiling reductions need rigid global constraints that go beyond local consistency.
@@ -306,13 +308,9 @@ Every known undecidability proof for description logics ultimately encodes a **t
 
 The fact that every standard technique is blocked is evidence *for* decidability. But ALCI\_RCC5 sits above the known decidable fragments (ALCI\_RCC1/2/3, ALC\_RA\_SG), making the question genuinely open from both directions.
 
-> *Historical:* the **three-paper direct-attack cascade on the patchwork property** (April 2026, Claude) — `patchwork_augmentation_ALCIRCC5`, `typed_patchwork_counterexample_ALCIRCC5`, `inter_witness_counterexample_ALCIRCC5` — and its convergence on split-forest rank-$d$ validity as the minimum viable propagation are documented in [OUTDATED.md](OUTDATED.md). Net effect on the current argument: decidability is unaffected; the cascade strengthens the "no $k$-ary synthesis" intuition behind the patchwork-based decidability story.
+### Direct attacks on the patchwork property (April 2026, Claude)
 
-> *Historical:* the **eight discarded approaches** (original quasimodel paper / constructive quasimodel reasoner / contextual tableau / direct model construction / profile-cached blocking / meet-based replay / triangle-type blocking / Tri-neighborhood tableau / MSO encoding) are summarised, with retraction/incompleteness traces, in [OUTDATED.md](OUTDATED.md). All five complete-graph approaches hit the same structural wall (global edge assignment); the cover-tree tableau avoids it by decomposing models into trees with {DR, PO}-only cross-edges.
-
----
-
-> *Historical:* the **April 2026 Opus 4.7 adversarial review** (Round 1: twelve `∃R₁.∃R₂.A ⊓ ⨆∀R.¬A` counterexamples on the pre-fix cover-tree; Round 2: re-verification after CT5 + transitive-universal-propagation fixes — Round-1 soundness-failure claim withdrawn) is documented in [OUTDATED.md](OUTDATED.md). Artefacts: [`review_paper/review_cover_tree_tableau.pdf`](review_paper/review_cover_tree_tableau.pdf) (11 pages) and [`review_paper/test/`](review_paper/test/). Verdict on the decidability claim itself: **plausibly intact** — the review localised the defects to the implementation, never the theoretical argument; that argument has since shifted to GPT-5.5's repaired proof anyway.
+A separate three-paper cascade — `patchwork_augmentation_ALCIRCC5`, `typed_patchwork_counterexample_ALCIRCC5`, `inter_witness_counterexample_ALCIRCC5` — attempted to refute patchwork-based decidability head-on by augmenting the RCC5 composition machinery. Each paper refuted the previous with a strictly smaller ALCI\_RCC5 witness (culminating in a 1-node / 7-axiom inter-witness counterexample), and the cascade converged on **split-forest rank-$d$ validity as the minimum viable propagation** rather than $k$-ary patchwork synthesis. Net effect: decidability is unaffected; the cascade strengthens the "no $k$-ary synthesis" intuition behind the patchwork-based decidability story. Full details, paper titles, and counterexample sizes are in [OUTDATED.md](OUTDATED.md).
 
 ---
 
