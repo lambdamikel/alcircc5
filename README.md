@@ -279,6 +279,20 @@ The recursive conjunct ∀PP.X then forces infinite models: since r PP b, node b
 - [`cover_tree_tableau_ALCIRCC5.tex`](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.tex) — Claude's implementation paper (9 pages)
 - [`verification/`](https://github.com/lambdamikel/alcircc5/tree/master/verification) — Python work packages WP1–WP6 cross-checking the repaired proof's combinatorial claims (all PASS)
 
+### Round-2 review and repaired-proof adoption (May 2026)
+
+A week after v2.1, GPT-5.5 produced a [second formal review](papers/gpt5.5_round2/formal_review_latest_v21.pdf) identifying **eight structural gaps (G1)–(G8)** in v2.1; three are load-bearing:
+
+- **G1 — profile-level equality ports vs. vertical separation.** v2.1 defines $\equiv_{\EQ,Q}$ at the profile level; M1 + M7 force reflexivity, vertical separation forbids $\equiv_{\EQ,Q}$ along strict PP/PPI paths, and the two clash on PP self-loops (which v2.1 allows to absorb infinite PP-chains). No consistent reading.
+- **G3 — multiple upward PP witnesses with different parents.** v2.1's mate class $\mathrm{Mate}_Q(\sigma)$ forces a single semantic parent; the stress formula $C_{AB} \equiv A \sqcap B \sqcap \exists \PP.A \sqcap \exists \PP.B \sqcap \forall \PP.(A \to \lnot B) \sqcap \forall \PP.(B \to \lnot A)$ requires two mate occurrences with different parents.
+- **G4 — rootless orientation vs. depth-from-$u_*$ projection.** The simultaneous-realization lemma silently assumes $u_*$ is a root, but the rootless orientation allows proper-superpart occurrences for which depth is undefined.
+
+GPT-5.5's [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (16 pages) fixes all three: (i) **occurrence-level equality** ($u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$, killing the M1/vertical-separation clash); (ii) **mates with different parents** via a port-equivalence redefinition of $\mathrm{Mate}_Q(\sigma)$; (iii) **request-closed cycles** in the rank-$d$ quotient in place of $\omega$-acceptance. The proof formulates **ten finite-checkable validity conditions (V1)–(V10)** on rank-$d$ split-forest certificates and gives the coarse bound $B(C_0) = 2^{2^{p(n)}}$.
+
+**Decision (Wessel + Claude):** v2.1 is marked superseded; the repaired proof is adopted as the current best statement; Claude's contribution shifts to **verification**.
+
+**Verification status.** All six Python work packages WP1–WP6 under [`verification/`](verification/) **PASS** (WP4 and WP5 folded into WP2/WP3): WP1 (RCC5 composition table — exhaustive subset enumeration matches GPT-5.5's table exactly, 25/25 cells); WP2 ((V1)/(V3)/(V4)/(V5)/(V9)/(V10) certificate fuzzer — $C_{AB}$ accepted with two different parents, rejected when forced into a single parent); WP3 (small-model SAT/UNSAT oracle — $C_{AB}$ realised at $n=3$); WP6 ((M1)–(M5) + (SC1)–(SC4) mosaic closure search — Renz–Nebel patchwork holds on triangles, no counterexample to the patchwork lemma). The full prose of the Round-2 review and verification work is preserved in [OUTDATED.md](OUTDATED.md); the Lean targets L1–L7 are not yet attempted.
+
 ### Twelfth approach: GPT-5.5 automata-flavored split-forest proof — ALTERNATIVE ROUTE (GPT-5.5)
 
 A second, self-contained decidability proof for ALCI\_RCC5 produced by GPT-5.5 about a week before the no-automata round-2 proof. Same target theorem, same overall split-forest architecture, but a different discipline for vertical PP/PPI eventualities.
@@ -376,22 +390,6 @@ For comparison, here is the original taxonomy from Wessel's report7.pdf (2002/20
 </p>
 
 **Key file:** [`gis_taxonomy.py`](https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py) — taxonomy computation (18 concepts, 21 subsumptions, ~190s)
-
-## Round-2 review and repaired-proof adoption (May 2026)
-
-A week after v2.1, GPT-5.5 produced a [second formal review](papers/gpt5.5_round2/formal_review_latest_v21.pdf) identifying **eight structural gaps (G1)–(G8)** in v2.1; three are load-bearing:
-
-- **G1 — profile-level equality ports vs. vertical separation.** v2.1 defines $\equiv_{\EQ,Q}$ at the profile level; M1 + M7 force reflexivity, vertical separation forbids $\equiv_{\EQ,Q}$ along strict PP/PPI paths, and the two clash on PP self-loops (which v2.1 allows to absorb infinite PP-chains). No consistent reading.
-- **G3 — multiple upward PP witnesses with different parents.** v2.1's mate class $\mathrm{Mate}_Q(\sigma)$ forces a single semantic parent; the stress formula $C_{AB} \equiv A \sqcap B \sqcap \exists \PP.A \sqcap \exists \PP.B \sqcap \forall \PP.(A \to \lnot B) \sqcap \forall \PP.(B \to \lnot A)$ requires two mate occurrences with different parents.
-- **G4 — rootless orientation vs. depth-from-$u_*$ projection.** The simultaneous-realization lemma silently assumes $u_*$ is a root, but the rootless orientation allows proper-superpart occurrences for which depth is undefined.
-
-GPT-5.5's [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (16 pages) fixes all three: (i) **occurrence-level equality** ($u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$, killing the M1/vertical-separation clash); (ii) **mates with different parents** via a port-equivalence redefinition of $\mathrm{Mate}_Q(\sigma)$; (iii) **request-closed cycles** in the rank-$d$ quotient in place of $\omega$-acceptance. The proof formulates **ten finite-checkable validity conditions (V1)–(V10)** on rank-$d$ split-forest certificates and gives the coarse bound $B(C_0) = 2^{2^{p(n)}}$.
-
-**Decision (Wessel + Claude):** v2.1 is marked superseded; the repaired proof is adopted as the current best statement; Claude's contribution shifts to **verification**.
-
-**Verification status.** All six Python work packages WP1–WP6 under [`verification/`](verification/) **PASS** (WP4 and WP5 folded into WP2/WP3): WP1 (RCC5 composition table — exhaustive subset enumeration matches GPT-5.5's table exactly, 25/25 cells); WP2 ((V1)/(V3)/(V4)/(V5)/(V9)/(V10) certificate fuzzer — $C_{AB}$ accepted with two different parents, rejected when forced into a single parent); WP3 (small-model SAT/UNSAT oracle — $C_{AB}$ realised at $n=3$); WP6 ((M1)–(M5) + (SC1)–(SC4) mosaic closure search — Renz–Nebel patchwork holds on triangles, no counterexample to the patchwork lemma). The full prose of the Round-2 review and verification work is preserved in [OUTDATED.md](OUTDATED.md); the Lean targets L1–L7 are not yet attempted.
-
----
 
 ## Files
 
