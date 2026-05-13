@@ -50,6 +50,40 @@ The proof exploits one core result from qualitative constraint reasoning (Renz &
 
 The patchwork property means **local (triple-wise) consistency implies global consistency** for atomic networks. Split-forest soundness (Thms 1.17–1.19 of the v1 split-forest paper) uses it via König's lemma + canonical refinements: the disjunctive sibling-interface descriptors are refined to an atomic RCC5 network on every finite subgraph, and patchwork lifts the local atomic refinements to a globally consistent atomic assignment on the full complete-graph model. Renz's stronger "full RCC5 tractability" result (disjunctive networks: consistency $\Leftrightarrow$ path-consistency) was load-bearing for the earlier (retracted) Henkin/quasimodel construction but is **not** used by the current split-forest argument.
 
+### The RCC5 Composition Table
+
+Reading: row = $S(b,c)$, column = $R(a,b)$, entry = possible relations for $(a,c)$. The symbol \* means all five relations are possible.
+
+|  comp   | DR(a,b) | PO(a,b)     | EQ(a,b) | PPI(a,b)       | PP(a,b)     |
+|---------|---------|-------------|---------|----------------|-------------|
+| DR(b,c) | \*      | DR,PO,PPI   | DR      | DR,PO,PPI      | DR          |
+| PO(b,c) | DR,PO,PP| \*          | PO      | PO,PPI         | DR,PO,PP    |
+| EQ(b,c) | DR      | PO          | EQ      | PPI            | PP          |
+| PP(b,c) | DR,PO,PP| PO,PP       | PP      | PO,EQ,PP,PPI   | PP          |
+| PPI(b,c)| DR      | DR,PO,PPI   | PPI     | PPI            | \*          |
+
+### Concrete Domains vs. Composition-Based Role Boxes
+
+An important distinction must be drawn between two fundamentally different approaches to combining description logics with spatial reasoning. Several decidability results exist for DLs with RCC constraints, but they all use the **concrete domain** formalism, which is expressively incomparable with the composition-based role box approach of ALCI\_RCC.
+
+| Approach | Spatial constraints via | Can express ∀PP.C ? | Can express ∃DR.D ? | Quantify over spatial relations? |
+|---|---|---|---|---|
+| **Concrete domains** (ALC(RCC8)) | Functional roles to concrete values | No | No | No |
+| **Composition-based role boxes** (ALCI\_RCC5) | Spatial relations serve as roles directly | **Yes** | **Yes** | **Yes** |
+
+#### Prior decidability results (concrete domain approach)
+
+- **Lutz & Milicic (2007)**: ALC with omega-admissible concrete domains (including RCC5, RCC8) is decidable. No inverse roles.
+- **Borgwardt, De Bortoli & Koopmann (2024)**: ALC(D) ontology consistency is EXPTIME-complete for omega-admissible D. ALC only, no inverse roles.
+- **Baader & Rydval (2020)**: Strengthened undecidability results and generalized omega-admissibility conditions for DLs with concrete domains and GCIs. Refines the decidability boundary within the concrete domain paradigm.
+- **Demri & Gu (CSL 2026)**: Extended the automata-based approach to handle **inverse roles**, functional role names, and constraint assertions, establishing EXPTIME membership. This is the closest published result to ALCI\_RCC, as it combines inverse roles with RCC-like spatial constraints. However, it still operates within the concrete domain formalism.
+
+#### Why the gap remained open
+
+None of these results settle the decidability of ALCI\_RCC5 or ALCI\_RCC8, because the composition-based role box approach allows **quantification over spatial relations** — concepts like ∀PP.C ("all proper parts satisfy C") and ∃DR.D ("some disconnected region satisfies D") — which are inexpressible in the concrete domain setting. The two formalisms are complementary: concrete domains reason about spatial *attributes* of elements; ALCI\_RCC captures direct spatial *relationships* between elements.
+
+The **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), known contemporaneously with Wessel's original work but not initially connected to the description logic decidability question, is the load-bearing combinatorial tool for the current split-forest argument (see the Key Enabler subsection above). The unsolved step in earlier approaches was applying it at the global level — assigning consistent atomic edges across the entire complete-graph model. The split-forest construction (GPT-5.4 Thms 1.17–1.19 + GPT-5.5's repaired proof) closes this step via König's lemma plus canonical refinements of disjunctive descriptors to a globally consistent atomic assignment.
+
 ## Complexity landscape
 
 | Logic | Lower bound | Upper bound | Status |
@@ -356,63 +390,6 @@ GPT-5.5's [repaired proof](papers/gpt5.5_round2/repaired_split_forest_no_automat
 **Decision (Wessel + Claude):** v2.1 is marked superseded; the repaired proof is adopted as the current best statement; Claude's contribution shifts to **verification**.
 
 **Verification status.** All six Python work packages WP1–WP6 under [`verification/`](verification/) **PASS** (WP4 and WP5 folded into WP2/WP3): WP1 (RCC5 composition table — exhaustive subset enumeration matches GPT-5.5's table exactly, 25/25 cells); WP2 ((V1)/(V3)/(V4)/(V5)/(V9)/(V10) certificate fuzzer — $C_{AB}$ accepted with two different parents, rejected when forced into a single parent); WP3 (small-model SAT/UNSAT oracle — $C_{AB}$ realised at $n=3$); WP6 ((M1)–(M5) + (SC1)–(SC4) mosaic closure search — Renz–Nebel patchwork holds on triangles, no counterexample to the patchwork lemma). The full prose of the Round-2 review and verification work is preserved in [OUTDATED.md](OUTDATED.md); the Lean targets L1–L7 are not yet attempted.
-
----
-
-## The RCC5 Composition Table
-
-Reading: row = S(b,c), column = R(a,b), entry = possible relations for (a,c). The symbol \* means all five relations are possible.
-
-|  comp   | DR(a,b) | PO(a,b)     | EQ(a,b) | PPI(a,b)       | PP(a,b)     |
-|---------|---------|-------------|---------|----------------|-------------|
-| DR(b,c) | \*      | DR,PO,PPI   | DR      | DR,PO,PPI      | DR          |
-| PO(b,c) | DR,PO,PP| \*          | PO      | PO,PPI         | DR,PO,PP    |
-| EQ(b,c) | DR      | PO          | EQ      | PPI            | PP          |
-| PP(b,c) | DR,PO,PP| PO,PP       | PP      | PO,EQ,PP,PPI   | PP          |
-| PPI(b,c)| DR      | DR,PO,PPI   | PPI     | PPI            | \*          |
-
-## Results
-
-### Main Results
-
-**Cover-tree tableau (Wessel/GPT-5.4/Claude) — most promising.** The [cover-tree tableau](https://github.com/lambdamikel/alcircc5/blob/master/papers/cover_tree_tableau_ALCIRCC5.pdf) decomposes models into PPI-oriented cover trees with {DR,PO}-only cross-edges. A [working implementation](https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py) (Claude) agrees with an independent [quasimodel reasoner](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) on **911 test concepts with zero mismatches** (caveat: the quasimodel reasoner is now known-incomplete on cyclic-via-symmetric-role SAT concepts — a class not present in the current test set). A [decomposition test](https://github.com/lambdamikel/alcircc5/blob/master/src/decomposition_test.py) confirms that **89.3% of independently built models** have cover-tree structure and **765/768 SAT concepts (99.6%)** have finite cover-tree models (11.4M models enumerated), with **zero genuine counterexamples**. Both directions are proven: soundness by GPT-5.4's v1 split-forest paper (Thms 1.17–1.19); completeness by GPT-5.5's [repaired split-forest decidability proof](https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (May 2026, no automata, V1–V10 validity conditions, coarse bound $B(C_0) = 2^{2^{p(n)}}$). No singly-exponential complexity bound established.
-
-**Two-tier quotient (Claude, reviewed by GPT-5.4) — PO-coherent fragment decidable.** The [two-tier quotient paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/two_tier_quotient_ALCIRCC5.pdf) proves **decidability of the PO-coherent fragment** of ALCI\_RCC5 via a finite quotient construction (12 pages, fourth revision after three rounds of GPT-5.4 Pro review). Full decidability remains open due to the PO gap.
-
-**Quadruple-type reasoner (Claude) — computational evidence with one known blind spot.** The [constructive quasimodel search](https://github.com/lambdamikel/alcircc5/blob/master/src/alcircc5_reasoner.py) correctly classifies **713 concepts** with zero errors *on the existing test set*. **SAT answers are sound**; the earlier claim that **UNSAT answers are provably sound is withdrawn** — the reasoner wrongly rejects concepts that require cyclic witnesses through symmetric roles (PO-loop pattern; see the warning box earlier in this document). See the [quadruple-type paper](https://github.com/lambdamikel/alcircc5/blob/master/papers/decidability_via_quadruples_ALCIRCC5.pdf).
-
-All results are **unverified** by human experts.
-
-### Known complexity bounds
-
-| Logic      | Lower Bound          | Upper Bound | Status       |
-|------------|----------------------|-------------|--------------|
-| ALCI\_RCC5 | PSPACE-hard (Wessel) | PO-coherent fragment decidable (computable, non-elementary) | **PO-coherent fragment decidable** (unverified); full decidability **open** |
-| ALCI\_RCC8 | EXPTIME-hard (Wessel)| EXPTIME (if decidable) | **Open** |
-
----
-
-## Concrete Domains vs. Composition-Based Role Boxes
-
-An important distinction must be drawn between two fundamentally different approaches to combining description logics with spatial reasoning. Several decidability results exist for DLs with RCC constraints, but they all use the **concrete domain** formalism, which is expressively incomparable with the composition-based role box approach of ALCI\_RCC.
-
-| Approach | Spatial constraints via | Can express ∀PP.C ? | Can express ∃DR.D ? | Quantify over spatial relations? |
-|---|---|---|---|---|
-| **Concrete domains** (ALC(RCC8)) | Functional roles to concrete values | No | No | No |
-| **Composition-based role boxes** (ALCI\_RCC5) | Spatial relations serve as roles directly | **Yes** | **Yes** | **Yes** |
-
-### Prior decidability results (concrete domain approach)
-
-- **Lutz & Milicic (2007)**: ALC with omega-admissible concrete domains (including RCC5, RCC8) is decidable. No inverse roles.
-- **Borgwardt, De Bortoli & Koopmann (2024)**: ALC(D) ontology consistency is EXPTIME-complete for omega-admissible D. ALC only, no inverse roles.
-- **Baader & Rydval (2020)**: Strengthened undecidability results and generalized omega-admissibility conditions for DLs with concrete domains and GCIs. Refines the decidability boundary within the concrete domain paradigm.
-- **Demri & Gu (CSL 2026)**: Extended the automata-based approach to handle **inverse roles**, functional role names, and constraint assertions, establishing EXPTIME membership. This is the closest published result to ALCI\_RCC, as it combines inverse roles with RCC-like spatial constraints. However, it still operates within the concrete domain formalism.
-
-### Why the gap remained open
-
-None of these results settle the decidability of ALCI\_RCC5 or ALCI\_RCC8, because the composition-based role box approach allows **quantification over spatial relations** --- concepts like ∀PP.C ("all proper parts satisfy C") and ∃DR.D ("some disconnected region satisfies D") --- which are inexpressible in the concrete domain setting. The two formalisms are complementary: concrete domains reason about spatial *attributes* of elements; ALCI\_RCC captures direct spatial *relationships* between elements.
-
-A key insight explored in these papers is the **patchwork property** from qualitative constraint reasoning (Renz & Nebel 1999), which was known contemporaneously with Wessel's original work but had not been connected to the description logic decidability question. The patchwork property (local consistency implies global consistency for atomic RCC5 networks) and full RCC5 tractability (extending this to disjunctive networks) are central tools in all proof attempts. However, applying them at the global level — assigning consistent edges across the entire unraveled complete-graph model — remains the unsolved step.
 
 ---
 
