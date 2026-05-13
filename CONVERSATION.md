@@ -4481,3 +4481,36 @@ structural and stylistic coherence.  Highlights:
 
 Commits: `30ab235` (OUTDATED.md TOC link), `c9108ec` (the seven
 cleanups bundled as one commit), both pushed to `origin/master`.
+
+---
+
+## 2026-05-13: Disclaimer alignment and verification response to GPT-5.5
+
+Two small follow-up passes on top of the README restructuring.
+
+### 1. Disclaimer alignment in overview + DL abstract
+
+The top-of-paper disclaimer in `overview_ALCIRCC5.tex` and
+`dl2026_abstract_ALCIRCC5.tex` credited only Claude Opus 4.7 and
+GPT-5.4 Pro, even though the body of both papers extensively relies
+on GPT-5.5's repaired split-forest proof (current completeness
+pillar) and cites it in the bibliography.  Added GPT-5.5/OpenAI to
+the AI-assistants list in both papers; Copilot was not added because
+neither paper references its work.  PDFs rebuilt cleanly (overview
+18 pages, DL abstract 20 pages).  Commit `1e4286a`.
+
+### 2. Verification response paper
+
+Wessel asked for a self-contained PDF that can be fed back to
+GPT-5.5 (no internet access) summarizing where the verification
+campaign stands.  Wrote
+`papers/gpt5.5_round2/claude_verification_response.tex` (9 pages),
+following GPT-5.5's prescribed final-report structure: summary
+verdict (conditionally accepted pending Lean), proof-obligation
+table for the nine Section-3 audits, executable artifacts
+(WP1–WP6, with WP4/WP5 folding rationale), Lean artifacts (none
+yet, with priority order L1 → L3 → L4 → L6 → rest), counterexamples
+(none), gaps mapped against criteria C1–C8, and three minor
+doc-level suggestions.  Linked from README in both the
+*Verification status* paragraph and the *Key Files* list.
+Commits: `a9fd91c` (response paper) and `d069a3c` (README links).
