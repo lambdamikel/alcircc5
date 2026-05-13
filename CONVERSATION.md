@@ -4514,3 +4514,15 @@ yet, with priority order L1 → L3 → L4 → L6 → rest), counterexamples
 doc-level suggestions.  Linked from README in both the
 *Verification status* paragraph and the *Key Files* list.
 Commits: `a9fd91c` (response paper) and `d069a3c` (README links).
+
+### 3. GPT-5.5 added as co-author of overview and DL abstract
+
+The author lines on `overview_ALCIRCC5.tex` and
+`dl2026_abstract_ALCIRCC5.tex` previously listed Wessel, Claude,
+and GPT-5.4.  Since the overview's headline decidability claim
+now rests on GPT-5.5's repaired split-forest proof (current
+completeness pillar), the same standard already applied to
+GPT-5.4 (split-forest semantics and cover-tree tableau
+formalization) calls for adding GPT-5.5 as a fourth co-author.
+Did so in both papers; PDFs rebuilt cleanly (overview 19 pages,
+DL abstract 20 pages).  Commit `4cb8acd`.
