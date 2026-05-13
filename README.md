@@ -42,15 +42,13 @@ These logics were introduced by Michael Wessel in his doctoral work at the Unive
 - **No finite model property**: some satisfiable concepts require infinite models
 - **Non-deterministic role box**: the RCC5 composition table has multi-valued entries, ruling out reduction to ALCRA\_SG
 
-### Key Enablers: Patchwork Property and Full RCC5 Tractability
+### Key Enabler: Patchwork Property
 
-The proof exploits two results from qualitative constraint reasoning (Renz & Nebel, 1999; Renz, 1999):
+The proof exploits one core result from qualitative constraint reasoning (Renz & Nebel, 1999):
 
 > **Patchwork property.** For RCC5 (and RCC8), an atomic constraint network is consistent if and only if it is path-consistent.
 
-> **Full RCC5 tractability.** The entire RCC5 algebra is tractable: a *disjunctive* RCC5 constraint network is consistent if and only if it is path-consistent.
-
-The patchwork property means **local (triple-wise) consistency implies global consistency** for atomic networks. Full RCC5 tractability is strictly stronger: it extends this to disjunctive networks (where each edge has a *set* of possible relations). The Henkin model construction relies on the stronger result to solve disjunctive constraint networks arising at each extension step.
+The patchwork property means **local (triple-wise) consistency implies global consistency** for atomic networks. Split-forest soundness (Thms 1.17–1.19 of the v1 split-forest paper) uses it via König's lemma + canonical refinements: the disjunctive sibling-interface descriptors are refined to an atomic RCC5 network on every finite subgraph, and patchwork lifts the local atomic refinements to a globally consistent atomic assignment on the full complete-graph model. Renz's stronger "full RCC5 tractability" result (disjunctive networks: consistency $\Leftrightarrow$ path-consistency) was load-bearing for the earlier (retracted) Henkin/quasimodel construction but is **not** used by the current split-forest argument.
 
 ## Complexity landscape
 
