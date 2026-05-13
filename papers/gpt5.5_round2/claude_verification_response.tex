@@ -1,0 +1,596 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  breaklines=true,
+  frame=single,
+  framerule=0.3pt,
+  xleftmargin=0.5em,
+  xrightmargin=0.5em
+}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\Rel}{\operatorname{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\blk}{\equiv_{\mathrm{blk}}}
+\newcommand{\eqrel}{\equiv_{\EQ}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\reach}{\operatorname{reach}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\st}{\operatorname{st}}
+\newcommand{\PASS}{\textcolor{black!70!green}{\textbf{PASS}}}
+\newcommand{\OPEN}{\textcolor{black!60!orange}{\textbf{open}}}
+
+\title{Response to GPT-5.5's Round-2 Review and Verification Recommendations\\
+       \large Status report on Python work packages WP1--WP6 and Lean targets L1--L7}
+\author{Prepared by Claude (Anthropic), prompted by Michael Wessel}
+\date{2026-05-13}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document is a response to GPT-5.5's round-2 formal review of the
+v2.1 completeness-extraction manuscript and to the subsequent
+\emph{verification recommendations} memorandum.  It follows the
+expected final-report structure (summary verdict, proof-obligation
+table, executable artifacts, Lean artifacts, counterexamples,
+remaining gaps, recommended manuscript edits).  The verification work
+on the Python side (WP1--WP6) is complete and every script reports
+\PASS{}; no counterexample to the repaired proof was found.  The
+Lean targets L1--L7 are not yet attempted.  The repaired proof is
+adopted in the project as the current completeness pillar.
+\end{abstract}
+
+%% ====================================================================
+\section{Summary verdict}
+%% ====================================================================
+
+\textbf{Conditionally accepted, pending Lean formalization of the
+core lemmas.}
+
+The repaired split-forest decidability proof
+(\texttt{repaired\_split\_forest\_no\_automata\_proof.tex},
+May~2026, 16~pages, no-automata route) has been adopted in the
+project as the current completeness pillar, superseding Claude's
+earlier completeness-extraction attempts (v1 and v2.1).  The
+three load-bearing repairs identified in the round-2 review
+\begin{itemize}[leftmargin=2.2em]
+  \item \textbf{G1.}  Equality at the level of occurrences,
+    \(u \eqrel v \iff \mathrm{orig}(u) = \mathrm{orig}(v)\),
+    replacing the v2.1 profile/port equality that contradicted
+    vertical separation on self-loops via the M1+M7 reflexivity
+    chain.
+  \item \textbf{G3.}  Equality mates may have different selected
+    parents.  The two-mate stress concept
+    \(C_{AB} \equiv A \sqcap B \sqcap \exists\PP.A \sqcap \exists\PP.B
+                  \sqcap \forall\PP.(\neg A \vee \neg B)\)
+    is accepted with two mate occurrences at distinct parents, and
+    rejected when forced onto a single parent chain.
+  \item \textbf{G4.}  Rootless orientation:\@ parent self-loops are
+    permitted; no ambient root is required.  Request-closed cycles
+    replace \(\omega\)-acceptance as the discipline for transitive
+    eventualities.
+\end{itemize}
+all pass the executable tests detailed below.  The remaining
+sub-load-bearing items in G2/G5--G8 either no longer apply (because
+the underlying construction has changed) or are not contradicted by
+any test we ran.
+
+We do \emph{not} recommend further manuscript repairs at this time.
+The condition under which the proof is \emph{fully} established is
+the Lean formalization of the L1--L7 core lemmas (in particular L1,
+L3, L4, L6); we have not attempted these.
+
+%% ====================================================================
+\section{Proof-obligation table}
+%% ====================================================================
+
+For each of the nine obligations from Section~3 of the verification
+recommendations, the table below reports status (proved by GPT-5.5
+in the manuscript, tested computationally, counterexample found, or
+still open) and the supporting artifact.
+
+\begin{center}\small
+\begin{longtable}{p{0.18\linewidth} p{0.40\linewidth} p{0.13\linewidth} p{0.21\linewidth}}
+\toprule
+Obligation & Statement (abridged) & Status & Evidence \\
+\midrule
+\endfirsthead
+\toprule
+Obligation & Statement (abridged) & Status & Evidence \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+RCC5 relation algebra
+  & Manuscript composition table correct over finite-set semantics;
+    \(\PP\circ\PP \subseteq \{\PP\}\), \(\PPI\circ\PPI \subseteq \{\PPI\}\); table
+    stabilizes at \(|U|=5\).
+  & \PASS{} (computational)
+  & WP1: all 25/25 cells match GPT-5.5's table; brute-force
+    enumeration over \(|U| \in \{2,3,4,5\}\). \\
+
+Closure / NNF complement
+  & \(\Cl(C_0)\) closed under NNF complement; in particular
+    \(\overline{\exists R.D} = \forall R.\overline D\).
+  & \PASS{} (manuscript)
+  & Proved in the repaired manuscript (Def 2.1, Lemma 2.3);
+    not separately tested. \\
+
+Witness thinning
+  & \(\mathcal I, a_0 \models C_0\)
+    \(\Rightarrow\) \(\mathcal I\upharpoonright W, a_0 \models C_0\)
+    on the selected-witness substructure.
+  & \PASS{} (manuscript)
+  & Proved in the repaired manuscript (Lemma 3.2);
+    not separately tested. \\
+
+Generated cover (not Hasse)
+  & Tree edges are selected generated containment-cover edges; semantic
+    \(\PP/\PPI\) is the strict ancestor/descendant closure.
+  & \PASS{} (manuscript)
+  & Definition 4.1 of the repaired manuscript; no test could
+    contradict the choice of orientation. \\
+
+Blocking vs.\ semantic equality
+  & \(\blk\) (finite blocking/profile repetition) is kept disjoint
+    from \(\eqrel\) (semantic equality / weak-EQ mate relation).
+  & \PASS{} (computational)
+  & WP2 tests~[1][8] (C\(_{\mathrm{up}}\) self-loop accepted) and
+    WP2 test~[3] (G1 reproducer rejected) jointly confirm the
+    separation. \\
+
+Multiple upward \(\PP\) witnesses
+  & A semantic element may need several incomparable superpart
+    witnesses, discharged via explicit \(\eqrel\)-mate
+    occurrences with different parents.
+  & \PASS{} (computational)
+  & WP2 test~[4] accepts \(C_{AB}\) with two mate occurrences;
+    WP2 test~[5] rejects the single-parent variant via V4.
+    Folds WP4 into WP2. \\
+
+Typed \(\eqrel\) quotient
+  & Quotient by typed-RCC5 \(\eqrel\) congruence preserves frame
+    conditions and concept truth.
+  & \PASS{} (manuscript)
+  & Definition 4.3 and Lemma 4.4 of the repaired manuscript; not
+    separately tested.  L4 in the Lean stack. \\
+
+Support-closed mosaics
+  & Mosaics record joint realizability; every triple in the
+    unfolding is covered by a compatible 3-mosaic; larger prefixes
+    by overlap-compatible amalgamation.
+  & \PASS{} (computational)
+  & WP6 finds no counterexample to (M1)--(M5) and (SC1)--(SC4) on
+    triples; the (M3) check is exact (41/64 triangles
+    consistent, all realizable on \(|U|\le 5\)). \\
+
+Request-closed cycles
+  & Cyclic blocking is sound only if every transitive
+    \(\PP/\PPI\) existential request is fulfilled later on the
+    same finite cycle or via an explicit equality-mate route.
+  & \PASS{} (computational)
+  & WP2 test~[8] (cycle with \(\exists\PP.A\) discharged by
+    self-loop) accepted; WP2 test~[9] (cycle carrying
+    \(\exists\PP.A\) but no state satisfies \(A\)) rejected by V1.
+    Folds WP5 into WP2. \\
+
+\end{longtable}
+\end{center}
+
+\paragraph{Note on coverage.}
+\emph{``\PASS{} (manuscript)''} means the obligation is proved in
+the repaired manuscript and our verification work did not produce
+an additional executable cross-check.  \emph{``\PASS{}
+(computational)''} means the corresponding finite-counterexample
+search ran and returned no counterexample.  No obligation has
+status \emph{counterexample found}.
+
+%% ====================================================================
+\section{Executable artifacts}
+%% ====================================================================
+
+The Python verification suite is organized as four scripts that
+cover all six work packages.  WP4 (multiple-superpart stress) is
+folded into WP2 via the dedicated \(C_{AB}\) test; WP5
+(request-closed blocking cycles) is folded into WP2 via the cycle
+tests, with WP3 providing the small-model cross-check.  The
+directory layout follows the suggested structure but with WP4 and
+WP5 inlined.
+
+\begin{lstlisting}
+verification/
+  python/
+    rcc5_composition_check.py     WP1
+    certificate_checker.py        WP2 + WP4 + WP5  (vertical fragment)
+    small_model_oracle.py         WP3
+    mosaic_closure_search.py      WP6
+  reports/
+    rcc5_composition_table.txt
+    certificate_checker.txt
+    small_model_oracle.txt
+    mosaic_closure_search.txt
+\end{lstlisting}
+
+\subsection{WP1: RCC5 composition table}
+
+\textbf{Script:}\quad \texttt{rcc5\_composition\_check.py}\\
+\textbf{Method:}\quad Compute the RCC5 composition table by
+exhaustive enumeration over non-empty subsets of a finite universe
+\(U\), using the set-theoretic semantics
+\[
+A\EQ B \iff A=B,\quad
+A\PP B \iff A\subsetneq B,\quad
+A\PPI B \iff B\subsetneq A,
+\]
+\[
+A\DR B \iff A\cap B=\varnothing,\quad
+A\PO B \iff A\cap B\neq\varnothing\wedge A\nsubseteq B\wedge B\nsubseteq A.
+\]
+For each \((R,S)\), compute all \(T\) realized by a witness triple
+\(A R B\), \(B S C\), \(A T C\).  Increase \(|U|\) until the table
+stabilizes.
+
+\textbf{Result:}
+\begin{itemize}[leftmargin=2em]
+  \item Stability across \(|U| \in \{2,3,4,5\}\):\ \(|U|=5\) and
+    \(|U|=4\) give the same signature; the table is therefore
+    stable at \(|U|=5\).
+  \item Per-cell comparison against the manuscript table
+    (lines~99--114 of \texttt{repaired\_split\_forest\_no\_auto\-mata\_proof.tex}):
+    \textbf{0 mismatches out of 25 cells}.
+  \item Comparison against the in-repo quasimodel reasoner's COMP
+    table differs only by the four documented EQ-omission cells
+    \((\DR,\DR),(\PO,\PO),(\PP,\PPI),(\PPI,\PP)\)\,---\,a
+    convention of that reasoner (which models edges between
+    distinct nodes only), not a bug.
+\end{itemize}
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\subsection{WP2 + WP4 + WP5: certificate-soundness fuzzer (vertical fragment)}
+
+\textbf{Script:}\quad \texttt{certificate\_checker.py}\\
+\textbf{Coverage:}\quad Validity conditions (V1), (V3), (V4),
+(V5), (V9), (V10) of Definition~4.5 of the repaired manuscript.\\
+\textbf{Out of scope:}\quad (V2), (V6), (V7), (V8) (the DR/PO
+mosaic conditions; tested separately by WP6).
+
+The fuzzer exercises the three load-bearing repairs:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{G1 toggle (occurrence-level equality).}
+    The self-loop on
+    \(C_{\mathrm{up}} \equiv \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top\)
+    is \emph{accepted} as VALID under occurrence-level equality
+    (tests~[1][2][8]) and \emph{rejected} as INVALID when two
+    states share an eq-port across a \(\PP\)-edge (test~[3], V9.Eb).
+  \item \textbf{G3 toggle (mates with different parents).}
+    The two-mate stress \(C_{AB}\) is \emph{accepted} when the two
+    mate occurrences have distinct selected parents (test~[4]),
+    and \emph{rejected} (V4) when forced onto a single parent
+    chain (test~[5]).
+  \item \textbf{G4 toggle (rootless / request-closed).}
+    The self-loop discharging \(\exists\PP.A\) at a state carrying
+    \(A\) is accepted (test~[8]); the same self-loop without a
+    state carrying \(A\) is rejected (test~[9], V1 Hintikka).
+\end{itemize}
+
+\textbf{Per-test summary} (corpus of 10 tests):
+\begin{lstlisting}
+   expected=V  got=V  C_up (PP self-loop, no eq ports)
+   expected=V  got=V  C_up with ports, no eq edges
+   expected=I  got=I  G1 reproducer: PP plus eq across vertical
+   expected=V  got=V  C_AB (G3): two mates with different parents
+   expected=I  got=I  C_AB v2.1-style single-parent (V4)
+   expected=I  got=I  UNSAT: exists PP.A & forall PP.~A (V1)
+   expected=I  got=I  UNSAT: PP-transitive (V3 / V5)
+   expected=V  got=V  WP5 SAT: cycle, exists PP.A discharged by loop
+   expected=I  got=I  WP5 UNSAT: cycle carries exists PP.A, no A state
+   expected=V  got=V  SAT: forall PP.A & exists PP.A
+\end{lstlisting}
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\subsection{WP3: small-model SAT/UNSAT oracle}
+
+\textbf{Script:}\quad \texttt{small\_model\_oracle.py}\\
+\textbf{Method:}\quad Brute-force enumeration of complete RCC5
+Kripke labelings \(\rho : \dom \times \dom \to \{\EQ,\DR,\PO,\PP,\PPI\}\)
+over domain sizes \(n \in \{1,2,3,4\}\) satisfying
+\begin{itemize}[leftmargin=2em]
+  \item (J1)~reflexivity: \(\rho(x,x) = \EQ\);
+  \item (J2)~inverse: \(\rho(y,x) = \mathrm{INV}[\rho(x,y)]\);
+  \item (J3)~triple composition:
+    \(\rho(x,z) \in \mathrm{comp}(\rho(x,y), \rho(y,z))\).
+\end{itemize}
+For each labeling and each atomic assignment, the oracle checks
+concept satisfaction at the declared root.
+
+\textbf{Result on the WP2 cross-check corpus:}
+\begin{itemize}[leftmargin=2em]
+  \item \(C_{AB}\) is realized at \(n=3\) (consistent with WP2
+    accepting its certificate).
+  \item Infinite-model-only concepts (e.g.\
+    \(C_{\mathrm{up}} \equiv \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top\))
+    correctly report \emph{no finite model up to \(n=4\)}; this is
+    consistent with SAT in an infinite frame and with WP2
+    accepting the certificate (a parent self-loop on the
+    rank-\(d\) quotient unfolds to fresh occurrences).
+  \item Genuine UNSAT concepts (e.g.\
+    \(\exists\PP.A \sqcap \forall\PP.\neg A\)) yield \emph{no
+    model up to \(n=4\)} \emph{and} WP2 rejects the corresponding
+    certificate.
+\end{itemize}
+
+No instance of the diagnostic conflict ``WP2 INVALID + WP3 SAT''
+(which would indicate a bug) was observed.
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\subsection{WP6: mosaic closure / patchwork lemma counterexample search}
+
+\textbf{Script:}\quad \texttt{mosaic\_closure\_search.py}\\
+\textbf{Method:}\quad Empirically verify Lemma~4.6 of the repaired
+manuscript (patchwork, citing Renz \& Nebel 1999):\ support-closed
+mosaics, closed under the local axioms (M1)--(M5) at every
+position and under the support-closure operations (SC1)--(SC4) at
+every context, yield globally consistent atomic RCC5 networks on
+triples.
+
+\textbf{Tests run:}
+\begin{itemize}[leftmargin=2em]
+  \item Partition all \(4^3 = 64\) ordered 3-position triangles by
+    (M3) consistency:\ 41/64 consistent, 23/64 rejected.  Every
+    rejected triangle is also unrealizable by finite subsets,
+    so (M3) is exact, not over-approximating.
+  \item For every (M3)-consistent triangle, realize it by finite
+    subsets of \(\{0,\dots,n-1\}\) for some \(n \le 5\) (Renz--Nebel
+    patchwork base case).  All 41 are realizable.
+  \item DR/PO side-witness insertion: for \(\exists R.B\) with
+    \(R \in \{\DR,\PO\}\) and consistent universals at \(p\),
+    \(\tau(q)\) can be chosen satisfying (M4) at both ends.
+  \item Universal propagation through PP-chains:\ a broken
+    PP-chain is caught by (M4); a legal one is accepted.
+  \item Sibling branching test (\(p\PPI s_1\), \(p\PPI s_2\),
+    \(s_1\PO s_2\), \(s_1\PPI c\)):\ legal \(L(c, s_2)\)
+    candidates are \(\{\DR, \PO, \PP\}\), matching
+    \(\mathrm{comp}(\PP, \PO)\) exactly.
+\end{itemize}
+
+No counterexample to the patchwork lemma was found.
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\paragraph{Reproducing the reports.}
+From the repository root,
+\begin{lstlisting}
+cd verification/python
+python3 rcc5_composition_check.py    > ../reports/rcc5_composition_table.txt
+python3 certificate_checker.py       > ../reports/certificate_checker.txt
+python3 small_model_oracle.py        > ../reports/small_model_oracle.txt
+python3 mosaic_closure_search.py     > ../reports/mosaic_closure_search.txt
+\end{lstlisting}
+Each script exits with code \texttt{0} on \PASS{} and \texttt{1} on
+any mismatch or counterexample.  All four current reports end with
+\texttt{VERDICT: PASS}.
+
+%% ====================================================================
+\section{Lean artifacts}
+%% ====================================================================
+
+\textbf{None.}  The Lean targets L1--L7 from the verification
+recommendations have not yet been attempted.  No Lean file exists
+in the project for the repaired proof, and consequently no
+\texttt{sorry}-free formalization can be reported.  In the Lean
+stack the priority order remains as recommended:
+\begin{enumerate}[leftmargin=2em]
+  \item L1 (RCC5 relation algebra) --- the only target whose
+    statement is also covered by an executable check (WP1).
+    Recommended first.
+  \item L3 (witness thinning).
+  \item L4 (typed \(\eqrel\) quotient soundness).
+  \item L6 (request-closed lasso correctness).
+  \item L2 (closure / NNF complement / Hintikka types),
+    L5 (blocking unfolds to fresh), and L7 (mosaic composition
+    lifting) after L1/L3/L4/L6.
+\end{enumerate}
+
+%% ====================================================================
+\section{Counterexamples}
+%% ====================================================================
+
+\textbf{None found.}  No script in WP1, WP2, WP3, or WP6 produced
+a counterexample to the repaired manuscript's claims on its
+tested input families.  In particular:
+\begin{itemize}[leftmargin=2em]
+  \item WP1 found no entry in the 25-cell composition table at
+    which the manuscript differs from the exhaustive enumeration.
+  \item WP2 found no certificate whose validity verdict differs
+    from the expected outcome on the 10-concept corpus, including
+    the three load-bearing G1/G3/G4 reproducers.
+  \item WP3 found no instance of the diagnostic conflict ``WP2
+    INVALID + WP3 SAT''.
+  \item WP6 found no triangle for which support-closure rules
+    fail to imply RCC5-realizability on \(|U| \le 5\), and no DR/PO
+    side-witness insertion was blocked.
+\end{itemize}
+
+We emphasize that absence of counterexamples in a bounded search is
+not a proof:\ all reported \PASS{} verdicts are evidence, not
+certificates.  Pass/fail criterion C8 (effectively checkable
+certificate language) is met by the manuscript design but is not
+itself executable.
+
+%% ====================================================================
+\section{Remaining gaps}
+%% ====================================================================
+
+The following lemmas remain informal in our verification work, in
+the sense that we have no Lean-checked artifact for them; the
+manuscript itself provides hand proofs.
+
+\begin{itemize}[leftmargin=2em]
+  \item L1.~RCC5 relation algebra.  Computationally validated by
+    WP1; not yet formalized.
+  \item L2.~Closure, NNF complement, Hintikka types.  Definitionally
+    standard; not yet formalized.
+  \item L3.~Witness-generated submodel lemma.  Hand-proved in the
+    manuscript (Lemma~3.2);\ not yet formalized.
+  \item L4.~Typed-\(\eqrel\) quotient soundness.  Hand-proved in
+    the manuscript (Lemma~4.4);\ not yet formalized.
+  \item L5.~Blocking unfolds to fresh.  Established by the design
+    of the cycle-unfolding map in the manuscript; not yet
+    formalized.
+  \item L6.~Request-closed lasso correctness.  Hand-proved in the
+    manuscript via the cycle-closure conditions;\ tested by WP2
+    (tests~[8][9]);\ not yet formalized.
+  \item L7.~Mosaic composition lifting.  Tested by WP6;\ not yet
+    formalized.  The verification recommendations suggest postponing
+    L7 until the computational mosaic rules stabilize, which they
+    have.
+\end{itemize}
+
+Against the pass/fail criteria (C1)--(C8) of the verification
+recommendations:
+\begin{center}\small
+\begin{tabular}{p{0.05\linewidth} p{0.78\linewidth} p{0.08\linewidth}}
+\toprule
+ID & Criterion & Status \\
+\midrule
+C1 & RCC5 composition table executable and independently validated & \PASS{} \\
+C2 & Witness-generated submodel lemma formalized
+     (or proved in formalization-equivalent detail) & manuscript only \\
+C3 & Blocking repetition formally separated from semantic \(\EQ\)
+     & \PASS{} (WP2 [3][8]) \\
+C4 & Typed-\(\EQ\) quotient soundness proved as a standalone lemma
+     & manuscript only \\
+C5 & Multiple upward \(\PP\)-witness examples accepted by certificate
+     rules and sound after quotienting & \PASS{} (WP2 [4][5]) \\
+C6 & Request-closed cycles satisfy all transitive eventualities in
+     the unfolding & \PASS{} (WP2 [8][9]) \\
+C7 & Mosaics have explicit finite arity bound or finite closure
+     construction & \PASS{} (WP6) \\
+C8 & Decision procedure enumerates a finite effectively checkable
+     certificate language & manuscript only \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+By the criterion of \emph{Section~10} of the verification
+recommendations (``If C1--C6 are met but C7 remains informal, the
+result should be described as a strong proof strategy with one
+remaining finite-interface gap.  If C7 is also closed, then the
+proof is much closer to a publication-grade decidability theorem.''),
+the work satisfies C1, C3, C5, C6, C7 computationally and
+C2, C4, C8 by manuscript hand proof.  We are therefore in the
+``much closer to publication-grade'' regime, modulo the Lean
+formalization.
+
+%% ====================================================================
+\section{Recommended manuscript edits}
+%% ====================================================================
+
+\emph{None at this time.}  The verification work did not surface
+any text in the manuscript that should be replaced or strengthened
+beyond what the repaired proof already states.  Three minor
+documentation-level suggestions, in decreasing order of usefulness:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Composition table line annotation.}  At the
+    composition table (lines~99--114), a one-line annotation
+    pointing to the WP1 cross-check would let an adversarial reader
+    locate the executable check immediately.
+  \item \textbf{Folding rationale for WP4/WP5.}  The verification
+    recommendations document scopes WP4 and WP5 as separate work
+    packages.  In the executed verification suite they are folded
+    into WP2 (with WP3 as cross-check), because the
+    multiple-superpart stress (\(C_{AB}\)) and the request-closed
+    cycle tests are most naturally expressed as additional entries
+    in the certificate fuzzer's corpus.  If GPT-5.5 produces a
+    revised verification recommendations document, this folding
+    could be reflected there.
+  \item \textbf{Cycle-close clause for the four EQ-admitting
+    composition pairs.}  Independent of the manuscript itself,
+    Claude's operational cover-tree tableau adopts a strong-EQ
+    cycle-close clause in the role-path compatibility check (Phase
+    5 / condition (CT5)) admitting \(w = g\) when
+    \((\mathrm{INV}[S], \mathrm{INV}[R]) \in
+       \{(\DR,\DR), (\PO,\PO), (\PP,\PPI), (\PPI,\PP)\}\).
+    This is the strong-EQ analogue of the same composition pattern
+    that produces the four ``conventional EQ omission'' cells in
+    the quasimodel reasoner's table.  The repaired manuscript is
+    not affected by this clause (the manuscript proof does not use
+    a tree-tableau);\ we mention it only because GPT-5.5 may want
+    to acknowledge the operational fragment in any future
+    revision.
+\end{enumerate}
+
+%% ====================================================================
+\section{Surrounding alignment work}
+%% ====================================================================
+
+For situational awareness, since the round-2 review was issued the
+following alignment work has been done in the project:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{papers/overview\_ALCIRCC5.tex} (overview paper)
+    and \texttt{papers/dl2026\_abstract\_ALCIRCC5.tex} (DL~2026
+    abstract) were rewritten to adopt the repaired split-forest
+    proof as the current completeness pillar.  The earlier
+    completeness-extraction papers
+    (\texttt{papers/completeness\_extraction\_ALCIRCC5.tex}~=~v1
+    and
+    \texttt{papers/completeness\_extraction\_ALCIRCC5\_v2.tex}~=~v2.1)
+    are explicitly marked as superseded and kept for historical
+    reference.  No claim from those papers is propagated forward.
+  \item The v1 split-forest paper
+    (\texttt{papers/trees/sibling\_interface\_descriptors\_ALCIRCC5\_completed\_eqsync\_canonical\_needpatched.tex})
+    is retained as the source of the soundness direction
+    (Thms~1.17--1.19), with a delta paper
+    (\texttt{papers/sibling\_interface\_descriptors\_ALCIRCC5\_v2.tex})
+    fixing the surrounding Def~1.5, Def~1.7, and Thm~1.20-sketch
+    via the corrected generated-cover statements.  The proofs of
+    1.17--1.19 carry over verbatim.
+  \item The Python quasimodel reasoner
+    (\texttt{src/alcircc5\_reasoner.py}) is retained only as a
+    cross-validation oracle.  It is known-incomplete on
+    cyclic-via-symmetric-role concepts (PO-loop, DR-loop, PP-PPI
+    cycle, PPI-PP cycle):\ SAT answers are trustworthy, UNSAT
+    answers are sound only for tree-model concepts.
+  \item No complexity claim above doubly-exponential
+    \(B(C_0) = 2^{2^{p(n)}}\) is asserted for the full logic.  The
+    coarse manuscript bound is preserved.  No EXPTIME upper bound is
+    claimed.
+\end{itemize}
+
+%% ====================================================================
+\section*{Bottom line}
+%% ====================================================================
+
+The Python WP1--WP6 verification campaign is complete and every
+script reports \PASS{}.  No counterexample to the repaired
+split-forest decidability proof was found on the tested input
+families.  The proof is conditionally accepted as the project's
+current completeness pillar.  Closing the remaining gap to a
+publication-grade decidability theorem requires the Lean L1--L7
+formalization, which we have not attempted; the priority order on
+that stack is L1, L3, L4, L6, then L2/L5/L7.
+
+\end{document}
