@@ -4456,3 +4456,28 @@ Added a new row for the twelfth approach in OUTDATED.md's
   approach.*
 
 All three pushed to `origin/master` (`0206ad7..633d914`).
+
+---
+
+## 2026-05-13: README restructured
+
+Several follow-up cleanup passes over the README after the
+historical-migration work.  No content claims changed; the goal was
+structural and stylistic coherence.  Highlights:
+
+- TOC reworked, including a top-level link to OUTDATED.md.
+- Latest News entries cleaned up; the 5-12-2026 entry rewritten to
+  reflect WP1–WP6 all-complete status (was WP1-only).
+- Cover-tree algorithm section now lists CT1–CT5 (CT5 = role-path
+  compatibility, with the strong-EQ cycle-close clause for the four
+  EQ-admitting composition pairs).
+- Soundness wording for the quadruple-type reasoner qualified to
+  tree-model concepts only, with a forward reference to the existing
+  warning box.
+- Acknowledgments now names Claude, GPT-5.4, GPT-5.5, and Copilot.
+- The single *Files* section was split into *Key Files* (current
+  pillars) and *Outdated Files* (superseded/retracted), grouped by
+  role; em-dash separators normalized.
+
+Commits: `30ab235` (OUTDATED.md TOC link), `c9108ec` (the seven
+cleanups bundled as one commit), both pushed to `origin/master`.
