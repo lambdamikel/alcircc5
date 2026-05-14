@@ -266,13 +266,14 @@ stabilizes.
 
 \textbf{Verdict:}\quad \PASS{}.
 
-\subsection{WP2 + WP4 + WP5: certificate-soundness fuzzer (vertical fragment)}
+\subsection{WP2 + WP4 + WP5: certificate-soundness fuzzer}
 
 \textbf{Script:}\quad \texttt{certificate\_checker.py}\\
-\textbf{Coverage:}\quad Validity conditions (V1), (V3), (V4),
-(V5), (V9), (V10) of Definition~4.5 of the repaired manuscript.\\
-\textbf{Out of scope:}\quad (V2), (V6), (V7), (V8) (the DR/PO
-mosaic conditions; tested separately by WP6).
+\textbf{Coverage:}\quad Validity conditions (V1), (V2), (V3),
+(V4), (V5), (V6), (V7), (V8) basic, (V9) Ea/Eb, (V10) of
+Definition~4.5 of the repaired manuscript.  The full (V8)
+triple-support search and the patchwork closure of (V2)/(V6)/(V7)
+are stress-tested separately by WP6.
 
 The fuzzer exercises the three load-bearing repairs:
 \begin{itemize}[leftmargin=2em]
@@ -280,31 +281,56 @@ The fuzzer exercises the three load-bearing repairs:
     The self-loop on
     \(C_{\mathrm{up}} \equiv \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top\)
     is \emph{accepted} as VALID under occurrence-level equality
-    (tests~[1][2][8]) and \emph{rejected} as INVALID when two
-    states share an eq-port across a \(\PP\)-edge (test~[3], V9.Eb).
+    (tests~[1][2][8][21][23]) and \emph{rejected} as INVALID when
+    two states share an eq-port across a \(\PP\)-edge or across a
+    cycle (test~[3], test~[22] V9.Eb).
   \item \textbf{G3 toggle (mates with different parents).}
     The two-mate stress \(C_{AB}\) is \emph{accepted} when the two
     mate occurrences have distinct selected parents (test~[4]),
     and \emph{rejected} (V4) when forced onto a single parent
-    chain (test~[5]).
+    chain (test~[5]).  The strengthened variant \(C_{AB}^{\mathrm{inc}}\)
+    (cheap-win~1 from the round-2 review) confirms both verdicts
+    on a concept with no DAG model (tests~[6][7][8]).
   \item \textbf{G4 toggle (rootless / request-closed).}
     The self-loop discharging \(\exists\PP.A\) at a state carrying
-    \(A\) is accepted (test~[8]); the same self-loop without a
-    state carrying \(A\) is rejected (test~[9], V1 Hintikka).
+    \(A\) is accepted (test~[11]); the same self-loop without a
+    state carrying \(A\) is rejected (test~[12], V1 Hintikka);
+    and the pure request-closure variant (cheap-win~2) where
+    the self-loop carries \(\neg A \sqcap \exists\PP.A\) and lacks
+    an explicit mate is rejected by V4 (test~[13]).
 \end{itemize}
 
-\textbf{Per-test summary} (corpus of 10 tests):
+The corpus also contains four \emph{occurrence-level distinction}
+certs (tests~[21]--[24]) and four \emph{DR/PO mosaic} certs
+(tests~[15]--[20]) that exercise V2, V6, V7, V9.Ea, and V9.Eb on
+positive and negative inputs.
+
+\textbf{Per-test summary} (corpus of 24 tests):
 \begin{lstlisting}
    expected=V  got=V  C_up (PP self-loop, no eq ports)
    expected=V  got=V  C_up with ports, no eq edges
-   expected=I  got=I  G1 reproducer: PP plus eq across vertical
+   expected=I  got=I  G1 reproducer: PP plus eq across vertical (V9.Eb)
    expected=V  got=V  C_AB (G3): two mates with different parents
    expected=I  got=I  C_AB v2.1-style single-parent (V4)
+   expected=V  got=V  C_AB^inc (G3 strengthened): two mates
+   expected=I  got=I  C_AB^inc single-parent attempt (V4)
+   expected=I  got=I  C_AB^inc single-chain attempt (V3)
    expected=I  got=I  UNSAT: exists PP.A & forall PP.~A (V1)
-   expected=I  got=I  UNSAT: PP-transitive (V3 / V5)
+   expected=I  got=I  UNSAT: PP-transitive (V3)
    expected=V  got=V  WP5 SAT: cycle, exists PP.A discharged by loop
-   expected=I  got=I  WP5 UNSAT: cycle carries exists PP.A, no A state
+   expected=I  got=I  WP5 UNSAT: cycle carries exists PP.A, no A
+   expected=I  got=I  WP5 pure request-closure: V4 fails, V1 clean
    expected=V  got=V  SAT: forall PP.A & exists PP.A
+   expected=V  got=V  DR witness: exists DR.A discharged (V6 SAT)
+   expected=V  got=V  PO witness: exists PO.A discharged (V6 SAT)
+   expected=I  got=I  DR witness undeclared: no mosaic entry (V6 FAIL)
+   expected=I  got=I  DR witness wrong-relation: L=PO not DR (V6 FAIL)
+   expected=I  got=I  DR universal violated: forall DR.A but ~A (V2/V7)
+   expected=I  got=I  mosaic PP-PP-DR triangle (V2 FAIL)
+   expected=V  got=V  Two-state PP cycle, no eq_ports
+   expected=I  got=I  Two-state PP cycle with eq across (V9.Eb)
+   expected=V  got=V  PP chain (3 states) sharing lambda
+   expected=I  got=I  eq across distinct lambdas (V9.Ea)
 \end{lstlisting}
 
 \textbf{Verdict:}\quad \PASS{}.
@@ -324,6 +350,25 @@ over domain sizes \(n \in \{1,2,3,4\}\) satisfying
 For each labeling and each atomic assignment, the oracle checks
 concept satisfaction at the declared root.
 
+\paragraph{Scope and intended role.}  The oracle's domain is
+bounded at \(n=4\), so its role in this verification is
+\emph{bounded counterexample search}, not evidence for the
+infinite-unfolding theorem of Section~5 of the repaired
+manuscript.  Concepts such as
+\(\exists\PP.\top \sqcap \forall\PP.\exists\PP.\top\) are
+\emph{intentionally outside} the oracle's reach:\ they admit only
+infinite regular models on the strong-EQ semantics, and asking for
+a finite witness at \(n\le 4\) is a category error.  The oracle
+contributes to the campaign in two ways only:\ (a) it independently
+falsifies any \emph{finite-witnessed} sat claim by exhibiting a
+labeling, and (b) it provides a non-trivial cross-check
+``WP2~\textsc{Invalid} \(+\) WP3~\textsc{Sat}'' diagnostic conflict
+that would flag a bug in the certificate checker.  No instance of
+that conflict has been observed.  Evidence for the unfolding
+theorem itself is delivered \emph{indirectly} via the certificate
+checker (WP2) and the patchwork search (WP6); the oracle does not,
+and cannot, certify regular-tree satisfiability on its own.
+
 \textbf{Result on the WP2 cross-check corpus:}
 \begin{itemize}[leftmargin=2em]
   \item \(C_{AB}\) is realized at \(n=3\) (consistent with WP2
@@ -333,15 +378,16 @@ concept satisfaction at the declared root.
     correctly report \emph{no finite model up to \(n=4\)}; this is
     consistent with SAT in an infinite frame and with WP2
     accepting the certificate (a parent self-loop on the
-    rank-\(d\) quotient unfolds to fresh occurrences).
+    rank-\(d\) quotient unfolds to fresh occurrences).  Per the
+    scope above, this is the expected outcome, not a failure mode.
   \item Genuine UNSAT concepts (e.g.\
     \(\exists\PP.A \sqcap \forall\PP.\neg A\)) yield \emph{no
     model up to \(n=4\)} \emph{and} WP2 rejects the corresponding
     certificate.
 \end{itemize}
 
-No instance of the diagnostic conflict ``WP2 INVALID + WP3 SAT''
-(which would indicate a bug) was observed.
+No instance of the diagnostic conflict ``WP2~\textsc{Invalid} \(+\)
+WP3~\textsc{Sat}'' (which would indicate a bug) was observed.
 
 \textbf{Verdict:}\quad \PASS{}.
 
@@ -357,25 +403,46 @@ triples.
 
 \textbf{Tests run:}
 \begin{itemize}[leftmargin=2em]
-  \item Partition all \(4^3 = 64\) ordered 3-position triangles by
-    (M3) consistency:\ 41/64 consistent, 23/64 rejected.  Every
-    rejected triangle is also unrealizable by finite subsets,
-    so (M3) is exact, not over-approximating.
-  \item For every (M3)-consistent triangle, realize it by finite
-    subsets of \(\{0,\dots,n-1\}\) for some \(n \le 5\) (Renz--Nebel
-    patchwork base case).  All 41 are realizable.
-  \item DR/PO side-witness insertion: for \(\exists R.B\) with
-    \(R \in \{\DR,\PO\}\) and consistent universals at \(p\),
-    \(\tau(q)\) can be chosen satisfying (M4) at both ends.
-  \item Universal propagation through PP-chains:\ a broken
-    PP-chain is caught by (M4); a legal one is accepted.
-  \item Sibling branching test (\(p\PPI s_1\), \(p\PPI s_2\),
-    \(s_1\PO s_2\), \(s_1\PPI c\)):\ legal \(L(c, s_2)\)
-    candidates are \(\{\DR, \PO, \PP\}\), matching
+  \item \textbf{Test A.}  Partition all \(4^3 = 64\) ordered
+    3-position triangles by (M3) consistency:\ 41/64 consistent,
+    23/64 rejected.  Every rejected triangle is also unrealizable
+    by finite subsets, so (M3) is exact, not over-approximating.
+  \item \textbf{Test B.}  For every (M3)-consistent triangle,
+    realize it by finite subsets of \(\{0,\dots,n-1\}\) for some
+    \(n \le 5\) (Renz--Nebel patchwork base case).  All 41 are
+    realizable.
+  \item \textbf{Test C.}  DR/PO side-witness insertion: for
+    \(\exists R.B\) with \(R \in \{\DR,\PO\}\) and consistent
+    universals at \(p\), \(\tau(q)\) can be chosen satisfying
+    (M4) at both ends.
+  \item \textbf{Test D.}  Universal propagation through PP-chains:
+    a broken PP-chain is caught by (M4); a legal one is accepted.
+  \item \textbf{Test E.}  Sibling branching (\(p\PPI s_1\),
+    \(p\PPI s_2\), \(s_1\PO s_2\), \(s_1\PPI c\)):\ legal
+    \(L(c, s_2)\) candidates are \(\{\DR, \PO, \PP\}\), matching
     \(\mathrm{comp}(\PP, \PO)\) exactly.
+  \item \textbf{Test F (arity 4, atomic).}  Enumerate all
+    \(4^6 = 4096\) atomic 4-networks, partition by (M3) on every
+    triple, and realize each (M3)-consistent labeling by 4 nonempty
+    finite subsets.  Of the 4096, 916 are (M3)-consistent.  Of these,
+    seven require \(n \ge 6\) (the pattern is three pairwise-\(\DR\)
+    positions each \(\PO\) a fourth: three external loners plus
+    three shared elements in the fourth position, six atoms total).
+    Every (M3)-consistent 4-network is realizable for \(n \le 6\).
+  \item \textbf{Test G (overlap amalgamation, arity~3 + arity~3).}
+    Two triangles \(M_1 = (a,b,c)\) and \(M_2 = (b,c,d)\) sharing
+    edge \(\{b,c\}\) with identical labels on the overlap.  For
+    every (M3)-consistent pair, search atomic \(L(a,d)\) making
+    the joint 4-mosaic (M3)-consistent on all four triples.  All
+    427/427 overlap-compatible triangle pairs amalgamate.  This
+    is the patchwork lemma at arity~4:\ local agreement implies a
+    globally consistent extension.
 \end{itemize}
 
-No counterexample to the patchwork lemma was found.
+No counterexample to the patchwork lemma was found.  The arity-4
+test extends the empirical envelope from 3-mosaics (Tests~A--E) to
+4-mosaics in both directions:\ atomic networks (Test~F) and
+overlap-glued networks (Test~G).
 
 \textbf{Verdict:}\quad \PASS{}.
 
@@ -424,13 +491,18 @@ tested input families.  In particular:
   \item WP1 found no entry in the 25-cell composition table at
     which the manuscript differs from the exhaustive enumeration.
   \item WP2 found no certificate whose validity verdict differs
-    from the expected outcome on the 10-concept corpus, including
-    the three load-bearing G1/G3/G4 reproducers.
+    from the expected outcome on the 24-concept corpus, including
+    the three load-bearing G1/G3/G4 reproducers, the two cheap-win
+    cases (strengthened \(C_{AB}^{\mathrm{inc}}\) and pure
+    request-closure), and the four occurrence-level distinction
+    certs.
   \item WP3 found no instance of the diagnostic conflict ``WP2
     INVALID + WP3 SAT''.
   \item WP6 found no triangle for which support-closure rules
-    fail to imply RCC5-realizability on \(|U| \le 5\), and no DR/PO
-    side-witness insertion was blocked.
+    fail to imply RCC5-realizability on \(|U| \le 5\), no DR/PO
+    side-witness insertion was blocked, no (M3)-consistent
+    4-network was unrealizable for \(n \le 6\), and no
+    overlap-compatible triangle pair failed to amalgamate.
 \end{itemize}
 
 We emphasize that absence of counterexamples in a bounded search is

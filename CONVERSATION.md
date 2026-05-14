@@ -4573,3 +4573,91 @@ oracle: 6/6 PASS (was 5/5).  WP1 composition table and WP6 mosaic
 closure unchanged.  The remaining three GPT-5.5 gaps (vertical-only
 checker, support-closed patchwork theorem, Lean formalization) are
 larger commitments and not in scope for this pass.
+
+---
+
+## 2026-05-13: GPT-5.5 round-2 review — non-LEAN gaps (§3.2, §3.5, §3.6, §3.7)
+
+Follow-up pass closing the four non-LEAN items of the review.
+The Lean targets L1--L7 (§3.1, §3.3, §3.4) remain out of scope.
+
+**§3.2 — DR/PO mosaic checker (V2/V6/V7/V8 basic).**  Extended
+`verification/python/certificate_checker.py` from the vertical
+fragment to the DR/PO mosaic fragment.  Added a `mosaics` field
+to certificates carrying `(positions, tau, L)` typed RCC5
+networks, plus checks for V2 (typed relation-safety inside the
+mosaic), V6 (DR/PO existential discharge by a designated mosaic
+position), V7 (universal propagation through DR/PO edges), and
+V8 basic (M3 triple consistency on every triple in the mosaic).
+Six new certs:
+- `cert_dr_witness_sat` (VALID, ∃DR.A discharged by a 2-position mosaic);
+- `cert_po_witness_sat` (VALID, ∃PO.A);
+- `cert_dr_witness_undeclared` (INVALID, ∃DR.A but no mosaic carries it);
+- `cert_dr_witness_wrong_relation` (INVALID, mosaic edge labelled PO not DR);
+- `cert_dr_universal_violated` (INVALID, ∀DR.A but neighbor has ¬A);
+- `cert_mosaic_illegal_composition` (INVALID, PP-PP-DR triangle violates M3).
+
+V2 positive tests initially failed because the default Hintikka
+saturation of the witness position picked `∀DR.¬A` (the NNF
+complement of `∃DR.A`), and V2's typed-relation-safety then
+propagated `¬A` back to the witnessing position via the inverse
+DR edge, clashing with the local A.  Fix: force the existential
+into the witness position's must list (`saturate_for(cl, [a, e_dr_a])`),
+which is semantically valid because the witnessing position is
+DR-related back to a position carrying A, so it does satisfy
+`∃DR.A` via that inverse edge.
+
+**§3.5 — Occurrence-level distinction certs.**  Added four certs
+exercising the occurrence-level definition of `≡_EQ`:
+- `cert_two_state_pp_cycle_no_eq` (VALID, two states in a PP cycle
+  with the same λ but no shared eq-ports — occurrence freshness);
+- `cert_two_state_pp_cycle_with_cross_eq` (INVALID, same cycle with
+  cross-cycle eq-ports — V9.Eb);
+- `cert_pp_chain_same_lambda_no_eq` (VALID, three-state PP chain
+  with self-loop terminus, same λ at all three);
+- `cert_eq_across_distinct_lambdas` (INVALID, two states share an
+  eq-port but disagree on A — V9.Ea).
+
+Together these confirm that two states can share the same Hintikka
+type without being EQ-mates (the v2.1 mismatch with G1), and that
+eq-ports propagate both type equality and PP/PPI separation
+correctly.
+
+**§3.6 — Mosaic patchwork fuzzer (arity 4).**  Extended
+`verification/python/mosaic_closure_search.py` with two new tests:
+- **Test F** — enumerate all 4^6 = 4096 atomic 4-networks,
+  partition by (M3) on every triple, and realize each
+  (M3)-consistent labelling by 4 nonempty finite subsets.
+  916/4096 are (M3)-consistent.  Seven of those need n≥6 to
+  realize (the pattern is three pairwise-DR positions each PO a
+  fourth: three external loners plus three shared atoms in the
+  fourth position).  All 916 realize at n≤6.
+- **Test G** — overlap amalgamation: two arity-3 mosaics
+  M1=(a,b,c), M2=(b,c,d) sharing edge {b,c} with identical
+  labels on the overlap.  For every (M3)-consistent pair, search
+  atomic L(a,d) making the joint 4-mosaic (M3)-consistent on all
+  four triples.  All 427/427 overlap-compatible triangle pairs
+  amalgamate.
+
+Together: empirical evidence for the patchwork lemma at arity 4
+in both directions (atomic enumeration and overlap glueing).
+
+**§3.7 — Oracle scope framing.**  Reframed the WP3 section of
+`papers/gpt5.5_round2/claude_verification_response.tex` to
+describe the small-model oracle as *bounded counterexample search*,
+not as evidence for the infinite-unfolding theorem of Section 5
+of the repaired manuscript.  Concepts such as `∃PP.⊤ ⊓ ∀PP.∃PP.⊤`
+are intentionally outside the oracle's reach (no finite model on
+strong-EQ); the oracle's role is (a) falsifying any
+finite-witnessed sat claim and (b) catching the diagnostic
+conflict "WP2 INVALID + WP3 SAT".  Evidence for the unfolding
+theorem itself is delivered *indirectly* via the certificate
+checker (WP2) and the patchwork search (WP6).  Also updated the
+WP2 and WP6 subsections to reflect the expanded test corpora
+(24 certs in WP2, Tests F and G in WP6) and updated the
+Counterexamples section accordingly.
+
+Final status: cert checker 24/24 PASS, mosaic search PASS in 0.7s,
+response PDF rebuilds cleanly (9 pages).  All four non-LEAN gaps
+from the GPT-5.5 verification.zip review are now closed.  The Lean
+stack (L1--L7) remains the only open verification work.

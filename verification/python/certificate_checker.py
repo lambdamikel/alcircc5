@@ -1,21 +1,33 @@
 """
-WP2 (initial vertical-fragment version) from
-gpt5.5_round2/verification_recommendations_for_claude.tex.
+WP2 certificate validity checker, extended to DR/PO mosaics (per GPT-5.5
+round-2 verification.zip review section 3.2).
 
 Implements the validity-condition checker for finite generated split-forest
 certificates per Definition 4.1 (def:certificate) and Definition 4.5 (def:valid)
 of papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.tex.
 
-Scope of this initial version
------------------------------
-This script covers the *vertical fragment*: certificates whose witness
-mechanisms use only PP/PPI vertical reachability (no DR/PO mosaic positions).
-That means we check (V1) type legality, (V3) vertical safety, (V4)/(V5)
-equality-aware vertical existential/universal discharge, (V9) typed-equality
-congruence on ports, and (V10) exact summaries.  (V2), (V6), (V7), (V8) involve
-DR/PO mosaics and are deferred to WP6/full version.
+Scope
+-----
+This version covers both the vertical fragment AND the DR/PO mosaic
+fragment.  Conditions checked:
 
-This subset is sufficient to exercise the three load-bearing fixes from the
+  - V1  type legality (Hintikka types over the closure of C_0)
+  - V2  context legality (mosaic Hintikka types, RCC5 composition on
+        triples, EQ-reflexivity, INV-converse, typed relation-safety)
+  - V3  vertical safety (forall PP/PPI propagation on the strict graph)
+  - V4  equality-aware vertical existential discharge
+  - V5  equality-aware vertical universal discharge
+  - V6  DR/PO existential support (each state-level exists R.D for R in
+        {DR,PO} has a declared mosaic witness)
+  - V7  DR/PO universal safety (state-level forall R.D propagates to
+        every mosaic neighbor at relation R from any source position)
+  - V8  support closure (basic: every source position is in a declared
+        mosaic with matching tau).  Full triple-support is exercised by
+        the patchwork fuzzer (mosaic_closure_search.py).
+  - V9  typed equality congruence on ports (Ea, Eb)
+  - V10 exact summaries (vacuous in this representation)
+
+The hand-crafted corpus exercises the three load-bearing fixes from the
 GPT-5.5 round-2 review:
 
   G1 (profile-port equality contradicts vertical separation on self-loops)
@@ -48,8 +60,39 @@ from typing import Optional
 
 BASE_RELS = ('EQ', 'DR', 'PO', 'PP', 'PPI')
 VERTICAL = ('PP', 'PPI')
+MOSAIC = ('DR', 'PO')
 
 INV = {'EQ': 'EQ', 'DR': 'DR', 'PO': 'PO', 'PP': 'PPI', 'PPI': 'PP'}
+
+# RCC5 composition table (brute-force verified in WP1).
+# Used by V2 (mosaic legality) and V8 (support closure on triples).
+COMP = {
+    ('EQ', 'EQ'): frozenset({'EQ'}),
+    ('EQ', 'DR'): frozenset({'DR'}),
+    ('EQ', 'PO'): frozenset({'PO'}),
+    ('EQ', 'PP'): frozenset({'PP'}),
+    ('EQ', 'PPI'): frozenset({'PPI'}),
+    ('DR', 'EQ'): frozenset({'DR'}),
+    ('DR', 'DR'): frozenset({'EQ', 'DR', 'PO', 'PP', 'PPI'}),
+    ('DR', 'PO'): frozenset({'DR', 'PO', 'PP'}),
+    ('DR', 'PP'): frozenset({'DR', 'PO', 'PP'}),
+    ('DR', 'PPI'): frozenset({'DR'}),
+    ('PO', 'EQ'): frozenset({'PO'}),
+    ('PO', 'DR'): frozenset({'DR', 'PO', 'PPI'}),
+    ('PO', 'PO'): frozenset({'EQ', 'DR', 'PO', 'PP', 'PPI'}),
+    ('PO', 'PP'): frozenset({'PO', 'PP'}),
+    ('PO', 'PPI'): frozenset({'DR', 'PO', 'PPI'}),
+    ('PP', 'EQ'): frozenset({'PP'}),
+    ('PP', 'DR'): frozenset({'DR'}),
+    ('PP', 'PO'): frozenset({'DR', 'PO', 'PP'}),
+    ('PP', 'PP'): frozenset({'PP'}),
+    ('PP', 'PPI'): frozenset({'EQ', 'DR', 'PO', 'PP', 'PPI'}),
+    ('PPI', 'EQ'): frozenset({'PPI'}),
+    ('PPI', 'DR'): frozenset({'DR', 'PO', 'PPI'}),
+    ('PPI', 'PO'): frozenset({'PO', 'PPI'}),
+    ('PPI', 'PP'): frozenset({'EQ', 'PO', 'PP', 'PPI'}),
+    ('PPI', 'PPI'): frozenset({'PPI'}),
+}
 
 
 @dataclass(frozen=True)
@@ -220,6 +263,28 @@ def is_hintikka_type(tau: frozenset, cl: frozenset) -> bool:
 # -----------------------------------------------------------------------------
 
 @dataclass
+class Mosaic:
+    """Finite RCC5 network used to back DR/PO existentials and contain
+    typed witnesses for them.
+
+    Per Def 1.2 of repaired_split_forest_no_automata_proof.tex: a mosaic
+    over a finite position set P is a triple (P, tau, L) with
+      - tau : P -> closure type
+      - L   : P x P -> base relation (with L(p,p) = EQ and L(p,q) = INV(L(q,p)))
+      - L respects the RCC5 composition table on triples
+      - any existential declared to be witnessed inside the mosaic has a
+        position q with L(p,q) = R and D in tau(q).
+
+    Type completeness (each tau(p) being a Hintikka type over cl(C_0)) is
+    enforced by V2 in conjunction with the Hintikka check.
+    """
+    name: str
+    positions: tuple
+    tau: dict   # {position: frozenset of concepts}
+    L: dict     # {(p, q): relation}, must include all ordered pairs
+
+
+@dataclass
 class Certificate:
     S: tuple
     s0: str
@@ -227,6 +292,10 @@ class Certificate:
     par: dict = field(default_factory=dict)
     ports: dict = field(default_factory=dict)
     eq_ports: set = field(default_factory=set)
+    # DR/PO mosaic infrastructure (optional; empty means vertical-only cert).
+    mosaics: list = field(default_factory=list)               # list[Mosaic]
+    source_pos: dict = field(default_factory=dict)            # {state: list[(mosaic_name, pos)]}
+    dr_po_wit: dict = field(default_factory=dict)             # {(state, concept): (mosaic_name, pos)}
     name: str = '?'
 
     def parents_of(self, s: str):
@@ -234,6 +303,12 @@ class Certificate:
         if s in self.par:
             out.append(self.par[s])
         return out
+
+    def mosaic_by_name(self, mname: str):
+        for m in self.mosaics:
+            if m.name == mname:
+                return m
+        return None
 
 
 # -----------------------------------------------------------------------------
@@ -461,6 +536,184 @@ def check_V9_typed_equality_congruence(cert: Certificate, rep: ValidityReport) -
     rep.ok('V9', 'typed-EQ congruence consistent (Ea, Eb)')
 
 
+def _typed_relation_safety_ok(L: dict, tau: dict, positions: tuple) -> Optional[str]:
+    """For every pair (p, q) with L(p,q) = R, every forall R.D in tau(p)
+    must put D in tau(q).  Returns an error message or None if clean.
+    """
+    for p in positions:
+        for c in tau[p]:
+            if c.kind == 'forall':
+                R = c.role
+                for q in positions:
+                    if L[(p, q)] == R and c.sub not in tau[q]:
+                        return (f'pos {p}: forall {R}.{c.sub} but {c.sub} '
+                                f'not in tau({q}) [L({p},{q})={R}]')
+    return None
+
+
+def check_V2_context_legality(cert: Certificate, cl: frozenset,
+                              rep: ValidityReport) -> None:
+    """V2: every mosaic is a legal RCC5 network with typed relation-safety.
+
+    Checks:
+      - tau(p) is a Hintikka type over cl for every position p,
+      - L(p,p) = EQ,
+      - L(p,q) = INV(L(q,p)),
+      - L respects RCC5 composition on every triple,
+      - typed relation-safety: forall R.D in tau(p) and L(p,q) = R implies D in tau(q).
+    """
+    if not cert.mosaics:
+        rep.ok('V2', 'no mosaics declared; vacuously legal')
+        return
+    for m in cert.mosaics:
+        # Hintikka types
+        for p in m.positions:
+            if p not in m.tau:
+                rep.fail('V2', f'mosaic {m.name}: no tau for position {p}')
+                return
+            if not is_hintikka_type(m.tau[p], cl):
+                rep.fail('V2', f'mosaic {m.name}: tau({p}) is not a Hintikka type')
+                return
+        # Reflexivity and converse
+        for p in m.positions:
+            if m.L.get((p, p)) != 'EQ':
+                rep.fail('V2', f'mosaic {m.name}: L({p},{p}) = {m.L.get((p,p))} != EQ')
+                return
+        for p in m.positions:
+            for q in m.positions:
+                if (p, q) not in m.L:
+                    rep.fail('V2', f'mosaic {m.name}: L({p},{q}) missing')
+                    return
+                if m.L[(p, q)] != INV[m.L[(q, p)]]:
+                    rep.fail('V2',
+                             f'mosaic {m.name}: L({p},{q})={m.L[(p,q)]} but '
+                             f'INV(L({q},{p}))=INV({m.L[(q,p)]})={INV[m.L[(q,p)]]}')
+                    return
+        # Composition on triples
+        for p in m.positions:
+            for q in m.positions:
+                for r in m.positions:
+                    rpr = m.L[(p, r)]
+                    rpq = m.L[(p, q)]
+                    rqr = m.L[(q, r)]
+                    if rpr not in COMP[(rpq, rqr)]:
+                        rep.fail('V2',
+                                 f'mosaic {m.name}: L({p},{r})={rpr} not in '
+                                 f'comp(L({p},{q}),L({q},{r}))=comp({rpq},{rqr})'
+                                 f'={sorted(COMP[(rpq, rqr)])}')
+                        return
+        # Typed relation-safety
+        err = _typed_relation_safety_ok(m.L, m.tau, m.positions)
+        if err is not None:
+            rep.fail('V2', f'mosaic {m.name}: {err}')
+            return
+    rep.ok('V2', f'{len(cert.mosaics)} mosaics are legal RCC5 networks with typed safety')
+
+
+def check_V6_dr_po_existential_support(cert: Certificate,
+                                       rep: ValidityReport) -> None:
+    """V6: every exists R.D in lam(s) with R in {DR, PO} has a declared
+    witness (mosaic, q) where the source position p of s in that mosaic
+    satisfies L(p, q) = R and D in tau(q).
+    """
+    if not cert.mosaics:
+        rep.ok('V6', 'no mosaics declared; no DR/PO existentials checked here')
+        return
+    for s in cert.S:
+        for c in cert.lam[s]:
+            if c.kind != 'exists' or c.role not in MOSAIC:
+                continue
+            key = (s, c)
+            if key not in cert.dr_po_wit:
+                rep.fail('V6',
+                         f'{s}: exists {c.role}.{c.sub} has no declared '
+                         f'mosaic witness')
+                return
+            mname, q = cert.dr_po_wit[key]
+            m = cert.mosaic_by_name(mname)
+            if m is None:
+                rep.fail('V6',
+                         f'{s}: witness mosaic {mname!r} for {c} not in cert.mosaics')
+                return
+            sources = [pos for (mn, pos) in cert.source_pos.get(s, [])
+                       if mn == mname]
+            if not sources:
+                rep.fail('V6',
+                         f'{s}: witness claims mosaic {mname} but s has no '
+                         f'source position there')
+                return
+            ok = False
+            for p in sources:
+                if m.L.get((p, q)) == c.role and c.sub in m.tau.get(q, frozenset()):
+                    ok = True
+                    break
+            if not ok:
+                rep.fail('V6',
+                         f'{s}: witness ({mname},{q}) for exists {c.role}.{c.sub} '
+                         f'fails: no source p with L(p,{q})={c.role} and '
+                         f'{c.sub} in tau({q})')
+                return
+    rep.ok('V6', 'all DR/PO existentials are mosaic-witnessed')
+
+
+def check_V7_dr_po_universal_safety(cert: Certificate,
+                                    rep: ValidityReport) -> None:
+    """V7: every forall R.D in lam(s) with R in {DR, PO} must propagate
+    D to every q at relation R from any source position of s in any mosaic.
+    """
+    if not cert.mosaics:
+        rep.ok('V7', 'no mosaics declared; no DR/PO universals checked here')
+        return
+    for s in cert.S:
+        for c in cert.lam[s]:
+            if c.kind != 'forall' or c.role not in MOSAIC:
+                continue
+            for (mname, p) in cert.source_pos.get(s, []):
+                m = cert.mosaic_by_name(mname)
+                if m is None:
+                    continue
+                for q in m.positions:
+                    if m.L[(p, q)] == c.role and c.sub not in m.tau[q]:
+                        rep.fail('V7',
+                                 f'{s}: forall {c.role}.{c.sub} but {c.sub} '
+                                 f'not in tau({q}) of mosaic {mname} '
+                                 f'(source {p}, L({p},{q})={c.role})')
+                        return
+    rep.ok('V7', 'all DR/PO universals propagate to mosaic neighbors')
+
+
+def check_V8_support_closure(cert: Certificate, rep: ValidityReport) -> None:
+    """V8 (basic): support closure on the declared mosaic family.
+
+    Minimum check: every state-existential pair backed by V6 names a
+    mosaic that is in the family, and every source position of every
+    state lies in a declared mosaic.  Full triple-support closure (every
+    abstract triple shape generated by the certificate appears in some
+    mosaic) is handled by the patchwork fuzzer (mosaic_closure_search.py)
+    and is not implemented here.
+    """
+    if not cert.mosaics:
+        rep.ok('V8', 'no mosaics declared; vacuously support-closed')
+        return
+    mnames = {m.name for m in cert.mosaics}
+    for s in cert.S:
+        for (mname, p) in cert.source_pos.get(s, []):
+            if mname not in mnames:
+                rep.fail('V8', f'{s}: source mosaic {mname!r} not in cert.mosaics')
+                return
+            m = cert.mosaic_by_name(mname)
+            if p not in m.positions:
+                rep.fail('V8',
+                         f'{s}: source position {p} not in mosaic {mname}.positions')
+                return
+            if cert.lam[s] != m.tau[p]:
+                rep.fail('V8',
+                         f'{s}: lambda({s}) != mosaic {mname}.tau({p}); '
+                         f'source-position typing must agree with state label')
+                return
+    rep.ok('V8', f'{len(cert.mosaics)} mosaics: basic support closure holds')
+
+
 def check_V10_exact_summaries(cert: Certificate, rep: ValidityReport) -> None:
     """V10: reachability summaries stored in profiles match the finite graph.
 
@@ -480,9 +733,15 @@ def check_certificate(cert: Certificate, c0: Concept,
     check_V1_type_legality(cert, c0, cl, rep)
     if not rep.is_valid():
         return rep
+    check_V2_context_legality(cert, cl, rep)
+    if not rep.is_valid():
+        return rep
     check_V3_vertical_safety(cert, rep)
     check_V4_existential_discharge(cert, rep)
     check_V5_universal_via_mate(cert, rep)
+    check_V6_dr_po_existential_support(cert, rep)
+    check_V7_dr_po_universal_safety(cert, rep)
+    check_V8_support_closure(cert, rep)
     check_V9_typed_equality_congruence(cert, rep)
     check_V10_exact_summaries(cert, rep)
     return rep
@@ -962,6 +1221,217 @@ def cert_WP5_cycle_unfulfilled_request_unsat() -> tuple:
     return cert, C
 
 
+def cert_dr_witness_sat() -> tuple:
+    """exists DR.A backed by a 2-position mosaic with L(p1,p2)=DR.
+
+    Single state s0, source position p1; mosaic m0 has positions {p1,p2}
+    with L(p1,p2)=DR, tau(p2) contains A.  V6 must accept the named witness.
+
+    Note: tau_a is forced to contain `exists DR.A` (not `forall DR.~A`) so
+    the witness position carries an existential, not a universal complement.
+    This matches the model semantics: p2 is DR from p1 which has A, so p2
+    itself satisfies `exists DR.A` (via the inverse edge back to p1).
+    """
+    a = Atom('A')
+    e_dr_a = E('DR', a)
+    C = e_dr_a
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    tau_a = saturate_for(cl, [a, e_dr_a])
+    L = {
+        ('p1', 'p1'): 'EQ', ('p2', 'p2'): 'EQ',
+        ('p1', 'p2'): 'DR', ('p2', 'p1'): 'DR',
+    }
+    m = Mosaic(name='m0', positions=('p1', 'p2'),
+               tau={'p1': tau_root, 'p2': tau_a}, L=L)
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau_root},
+        par={},
+        ports={},
+        eq_ports=set(),
+        mosaics=[m],
+        source_pos={'s0': [('m0', 'p1')]},
+        dr_po_wit={('s0', e_dr_a): ('m0', 'p2')},
+        name='DR witness: exists DR.A discharged by 2-position mosaic (V6 SAT)',
+    )
+    return cert, C
+
+
+def cert_po_witness_sat() -> tuple:
+    """exists PO.A backed by a 2-position mosaic with L(p1,p2)=PO.
+
+    Same construction as the DR variant: tau_a contains `exists PO.A` so
+    the typed relation-safety check sees no `forall PO.~A` at p2.
+    """
+    a = Atom('A')
+    e_po_a = E('PO', a)
+    C = e_po_a
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    tau_a = saturate_for(cl, [a, e_po_a])
+    L = {
+        ('p1', 'p1'): 'EQ', ('p2', 'p2'): 'EQ',
+        ('p1', 'p2'): 'PO', ('p2', 'p1'): 'PO',
+    }
+    m = Mosaic(name='m0', positions=('p1', 'p2'),
+               tau={'p1': tau_root, 'p2': tau_a}, L=L)
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau_root},
+        par={},
+        ports={},
+        eq_ports=set(),
+        mosaics=[m],
+        source_pos={'s0': [('m0', 'p1')]},
+        dr_po_wit={('s0', e_po_a): ('m0', 'p2')},
+        name='PO witness: exists PO.A discharged by 2-position mosaic (V6 SAT)',
+    )
+    return cert, C
+
+
+def cert_dr_witness_undeclared() -> tuple:
+    """exists DR.A with mosaics present but no witness entry.  Should FAIL V6.
+
+    Mosaic itself is V2-clean (same construction as cert_dr_witness_sat);
+    the failure mode we exercise here is purely the missing dr_po_wit entry.
+    """
+    a = Atom('A')
+    e_dr_a = E('DR', a)
+    C = e_dr_a
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    tau_a = saturate_for(cl, [a, e_dr_a])
+    L = {
+        ('p1', 'p1'): 'EQ', ('p2', 'p2'): 'EQ',
+        ('p1', 'p2'): 'DR', ('p2', 'p1'): 'DR',
+    }
+    m = Mosaic(name='m0', positions=('p1', 'p2'),
+               tau={'p1': tau_root, 'p2': tau_a}, L=L)
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau_root},
+        par={},
+        ports={},
+        eq_ports=set(),
+        mosaics=[m],
+        source_pos={'s0': [('m0', 'p1')]},
+        dr_po_wit={},  # no witness declared
+        name='DR witness undeclared: exists DR.A has no mosaic entry (V6 FAIL)',
+    )
+    return cert, C
+
+
+def cert_dr_witness_wrong_relation() -> tuple:
+    """exists DR.A witnessed by a PO-labeled mosaic edge.  Should FAIL V6.
+
+    Mosaic is V2-clean (PO edges are RCC5-legal); V6 catches the relation
+    mismatch between the requested role (DR) and the actual L(p1,p2)=PO.
+    """
+    a = Atom('A')
+    e_dr_a = E('DR', a)
+    C = e_dr_a
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    tau_a = saturate_for(cl, [a, e_dr_a])
+    L = {
+        ('p1', 'p1'): 'EQ', ('p2', 'p2'): 'EQ',
+        ('p1', 'p2'): 'PO', ('p2', 'p1'): 'PO',
+    }
+    m = Mosaic(name='m0', positions=('p1', 'p2'),
+               tau={'p1': tau_root, 'p2': tau_a}, L=L)
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau_root},
+        par={},
+        ports={},
+        eq_ports=set(),
+        mosaics=[m],
+        source_pos={'s0': [('m0', 'p1')]},
+        dr_po_wit={('s0', e_dr_a): ('m0', 'p2')},
+        name='DR witness wrong-relation: L(p1,p2)=PO not DR (V6 FAIL)',
+    )
+    return cert, C
+
+
+def cert_dr_universal_violated() -> tuple:
+    """forall DR.A in lam(s), but a DR-neighbor in the mosaic lacks A.
+
+    Should FAIL V7.  The state's source has a mosaic neighbor at DR
+    whose type does not contain A.
+    """
+    a = Atom('A')
+    not_a = Neg(a)
+    a_dr_a = A('DR', a)
+    e_dr_top = E('DR', TOP())
+    # forall DR.A & exists DR.top -- but the mosaic witness places a
+    # DR-neighbor with ~A, violating V7.
+    C = And(a_dr_a, e_dr_top)
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    tau_bad = saturate_for(cl, [not_a, a_dr_a])  # ~A neighbor, still carries the universal
+    L = {
+        ('p1', 'p1'): 'EQ', ('p2', 'p2'): 'EQ',
+        ('p1', 'p2'): 'DR', ('p2', 'p1'): 'DR',
+    }
+    m = Mosaic(name='m0', positions=('p1', 'p2'),
+               tau={'p1': tau_root, 'p2': tau_bad}, L=L)
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau_root},
+        par={},
+        ports={},
+        eq_ports=set(),
+        mosaics=[m],
+        source_pos={'s0': [('m0', 'p1')]},
+        dr_po_wit={('s0', e_dr_top): ('m0', 'p2')},
+        name='DR universal violated: forall DR.A but neighbor has ~A (V2/V7 FAIL)',
+    )
+    return cert, C
+
+
+def cert_mosaic_illegal_composition() -> tuple:
+    """Mosaic with PP-PP-DR triangle.  Should FAIL V2 (composition).
+
+    PP o PP = {PP}, so L(p1,p3)=DR is not allowed.  The cert otherwise
+    discharges exists PP.A vertically (via par) but the mosaic is intrinsically
+    illegal.
+    """
+    a = Atom('A')
+    e_pp_a = E('PP', a)
+    C = e_pp_a
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    tau_a = saturate_for(cl, [a])
+    L = {
+        ('p1', 'p1'): 'EQ', ('p2', 'p2'): 'EQ', ('p3', 'p3'): 'EQ',
+        ('p1', 'p2'): 'PP', ('p2', 'p1'): 'PPI',
+        ('p2', 'p3'): 'PP', ('p3', 'p2'): 'PPI',
+        ('p1', 'p3'): 'DR', ('p3', 'p1'): 'DR',  # illegal: PP o PP = {PP}
+    }
+    m = Mosaic(name='m_bad', positions=('p1', 'p2', 'p3'),
+               tau={'p1': tau_root, 'p2': tau_a, 'p3': tau_a}, L=L)
+    # Vertical par discharges exists PP.A via s1.
+    cert = Certificate(
+        S=('s0', 's1'),
+        s0='s0',
+        lam={'s0': tau_root, 's1': tau_a},
+        par={'s0': 's1'},
+        ports={},
+        eq_ports=set(),
+        mosaics=[m],
+        source_pos={'s0': [('m_bad', 'p1')]},
+        dr_po_wit={},
+        name='mosaic illegal composition: PP-PP-DR triangle (V2 FAIL)',
+    )
+    return cert, C
+
+
 def cert_WP5_pure_request_unfulfilled() -> tuple:
     """Pure request-closure negative test (GPT-5.5 verification.zip review section 3.5).
 
@@ -1021,6 +1491,135 @@ def cert_C_pp_simple_sat() -> tuple:
 
 
 # -----------------------------------------------------------------------------
+# Occurrence-level vs profile-name distinction tests.
+#
+# Per GPT-5.5 verification.zip review section 4.5: the script's encoding
+# uses *profiles* (string names) as certificate states.  Different profile
+# names always represent distinct semantic occurrences; identical profile
+# names across cycle laps represent FRESH occurrences (the t == s skip in
+# V9.Eb encodes this).  The only way to declare two occurrences as eq^Q-
+# equal is via explicit eq_ports edges.
+#
+# The certs below pin down four boundary behaviors of this convention:
+#   - multi-state cycles with profile reuse but no eq_ports stay SAT
+#     (each lap is fresh; transitive PP-reachability does not generate eq)
+#   - cycles where eq_ports explicitly identify reach_PP-related states
+#     are rejected by V9.Eb
+#   - PP chains with identical Hintikka types across distinct profiles
+#     are SAT (profile equality does not imply semantic EQ)
+#   - eq_ports across states with distinct lambdas are rejected by V9.Ea
+# -----------------------------------------------------------------------------
+
+def cert_two_state_pp_cycle_no_eq() -> tuple:
+    """Multi-state PP cycle: par[s0]=s1, par[s1]=s0.  Both states share
+    the same Hintikka type.  No eq_ports declared.
+
+    Semantically the cycle unfolds to s0_1 PP s1_1 PP s0_2 PP s1_2 PP ...
+    where every lap produces fresh occurrences.  Profile reuse alone must
+    NOT generate semantic eq^Q -- this is the multi-state analogue of
+    cert_C_up's one-state self-loop.  Should be VALID.
+    """
+    e_pp_top = E('PP', TOP())
+    a_pp_e_pp_top = A('PP', e_pp_top)
+    C_up = And(e_pp_top, a_pp_e_pp_top)
+    cl = closure(C_up)
+    tau = saturate_for(cl, [C_up])
+    cert = Certificate(
+        S=('s0', 's1'),
+        s0='s0',
+        lam={'s0': tau, 's1': tau},
+        par={'s0': 's1', 's1': 's0'},
+        ports={},
+        eq_ports=set(),
+        name='Two-state PP cycle, no eq_ports (occurrence freshness)',
+    )
+    return cert, C_up
+
+
+def cert_two_state_pp_cycle_with_cross_eq() -> tuple:
+    """Same two-state PP cycle, but eq_ports declares (s0,p) eq^Q (s1,p).
+
+    s0 reach_PP s1 (one cycle step) and s1 reach_PP s0 (another step).
+    V9.Eb forbids declaring eq^Q across reach_PP-related occurrences:
+    distinct laps cannot be semantic mates.  Should FAIL V9.Eb.
+    """
+    e_pp_top = E('PP', TOP())
+    a_pp_e_pp_top = A('PP', e_pp_top)
+    C_up = And(e_pp_top, a_pp_e_pp_top)
+    cl = closure(C_up)
+    tau = saturate_for(cl, [C_up])
+    cert = Certificate(
+        S=('s0', 's1'),
+        s0='s0',
+        lam={'s0': tau, 's1': tau},
+        par={'s0': 's1', 's1': 's0'},
+        ports={
+            's0': frozenset({('p0', 'g')}),
+            's1': frozenset({('p1', 'g')}),
+        },
+        eq_ports={(('s0', 'p0'), ('s1', 'p1'))},
+        name='Two-state PP cycle with eq across cycle (should fail V9.Eb)',
+    )
+    return cert, C_up
+
+
+def cert_pp_chain_same_lambda_no_eq() -> tuple:
+    """PP chain s0 -> s1 -> s2 (s2 self-loop) with identical lambdas
+    across all three states; no eq_ports.
+
+    Three distinct profile names carrying the SAME Hintikka type must
+    stay SAT under the occurrence-level convention: profile equality
+    (same string content of lambda) never implies semantic eq^Q.
+    """
+    e_pp_top = E('PP', TOP())
+    a_pp_e_pp_top = A('PP', e_pp_top)
+    C_up = And(e_pp_top, a_pp_e_pp_top)
+    cl = closure(C_up)
+    tau = saturate_for(cl, [C_up])
+    cert = Certificate(
+        S=('s0', 's1', 's2'),
+        s0='s0',
+        lam={'s0': tau, 's1': tau, 's2': tau},
+        par={'s0': 's1', 's1': 's2', 's2': 's2'},
+        ports={},
+        eq_ports=set(),
+        name='PP chain (3 states) sharing lambda, no eq_ports (SAT)',
+    )
+    return cert, C_up
+
+
+def cert_eq_across_distinct_lambdas() -> tuple:
+    """eq_ports declares s0 eq^Q s1 but lambda(s0) != lambda(s1).
+
+    C_0 = A.  s0 carries A; s1 carries ~A.  Both Hintikka types are
+    individually legal, but V9.Ea (typed-EQ congruence) forbids declaring
+    eq across distinct lambdas: an eq^Q-class must share Hintikka type.
+
+    Should FAIL V9.Ea before any vertical-fragment condition fires
+    (there are no PP/PPI roles in C_0).
+    """
+    a = Atom('A')
+    not_a = Neg(a)
+    C = a
+    cl = closure(C)
+    tau_a = saturate_for(cl, [a])
+    tau_not_a = saturate_for(cl, [not_a])
+    cert = Certificate(
+        S=('s0', 's1'),
+        s0='s0',
+        lam={'s0': tau_a, 's1': tau_not_a},
+        par={},
+        ports={
+            's0': frozenset({('p0', 'g')}),
+            's1': frozenset({('p1', 'g')}),
+        },
+        eq_ports={(('s0', 'p0'), ('s1', 'p1'))},
+        name='eq across distinct lambdas (should fail V9.Ea)',
+    )
+    return cert, C
+
+
+# -----------------------------------------------------------------------------
 # Driver.
 # -----------------------------------------------------------------------------
 
@@ -1040,6 +1639,18 @@ CORPUS = [
     (cert_WP5_cycle_unfulfilled_request_unsat, False),
     (cert_WP5_pure_request_unfulfilled, False),
     (cert_C_pp_simple_sat, True),
+    # DR/PO mosaic tests (V2/V6/V7/V8).
+    (cert_dr_witness_sat, True),
+    (cert_po_witness_sat, True),
+    (cert_dr_witness_undeclared, False),
+    (cert_dr_witness_wrong_relation, False),
+    (cert_dr_universal_violated, False),
+    (cert_mosaic_illegal_composition, False),
+    # Occurrence-level distinction (V9.Ea/Eb, per review section 4.5).
+    (cert_two_state_pp_cycle_no_eq, True),
+    (cert_two_state_pp_cycle_with_cross_eq, False),
+    (cert_pp_chain_same_lambda_no_eq, True),
+    (cert_eq_across_distinct_lambdas, False),
 ]
 
 
@@ -1049,8 +1660,9 @@ def main() -> int:
     print('per repaired_split_forest_no_automata_proof.tex Def 4.1/4.5')
     print('=' * 79)
     print()
-    print('Conditions checked: V1, V3, V4, V5, V9 (Ea, Eb), V10.')
-    print('Out of scope (this version): V2, V6, V7, V8 (DR/PO mosaics).')
+    print('Conditions checked: V1, V2, V3, V4, V5, V6, V7, V8 (basic),')
+    print('                    V9 (Ea, Eb), V10.')
+    print('Full V8 triple-support closure: see mosaic_closure_search.py.')
     print()
     overall_ok = True
     summaries = []

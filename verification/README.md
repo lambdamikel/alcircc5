@@ -29,13 +29,14 @@ Stability of the enumeration across $|U| \in \{2, 3, 4, 5\}$ is also reported.
 Run: `python3 python/rcc5_composition_check.py`
 Report: [`reports/rcc5_composition_table.txt`](reports/rcc5_composition_table.txt)
 
-### `python/certificate_checker.py` — WP2 + WP4 + WP5: certificate-soundness fuzzer (vertical fragment)
+### `python/certificate_checker.py` — WP2 + WP4 + WP5: certificate-soundness fuzzer
 
-Checks validity conditions (V1), (V3), (V4), (V5), (V9), (V10) of Definition 4.5 of the repaired proof on a corpus of generated split-forest certificates. The fuzzer exercises the three load-bearing round-2 fixes:
+Checks validity conditions (V1), (V2), (V3), (V4), (V5), (V6), (V7), (V8) basic, (V9) Ea/Eb, (V10) of Definition 4.5 of the repaired proof on a corpus of 24 generated split-forest certificates (the full (V8) triple-support search and the patchwork closure of (V2)/(V6)/(V7) are stress-tested separately by WP6). The fuzzer exercises the three load-bearing round-2 fixes plus the two cheap-win cases and four occurrence-level distinction certs added after the GPT-5.5 verification.zip review (May 2026):
 
-- **G1 (occurrence-level equality).** Self-loop on $C_{\mathrm{up}} \equiv \exists \mathrm{PP}.\top \sqcap \forall \mathrm{PP}.\exists \mathrm{PP}.\top$ is **consistent under occurrence-level equality** $u \equiv_{EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$, but contradictory under the old profile-port equality that the round-2 review refuted.
-- **G3 (mates with different parents).** $C_{AB}$ (two equality-mates at the same rank-$d$ profile, with two distinct upward witnesses) is **accepted** when the two mate occurrences are allowed to have different parents, and rejected when forced into a single parent.
-- **G4 (rootless orientation).** Parent self-loops are permitted; no ambient root is required.
+- **G1 (occurrence-level equality).** Self-loop on $C_{\mathrm{up}} \equiv \exists \mathrm{PP}.\top \sqcap \forall \mathrm{PP}.\exists \mathrm{PP}.\top$ is **consistent under occurrence-level equality** $u \equiv_{EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$, but contradictory under the old profile-port equality that the round-2 review refuted. Occurrence-level distinction is exercised by four additional certs (two-state PP cycle with/without cross-cycle eq-ports; PP-chain sharing $\lambda$; eq across distinct $\lambda$).
+- **G3 (mates with different parents).** $C_{AB}$ (two equality-mates at the same rank-$d$ profile, with two distinct upward witnesses) is **accepted** when the two mate occurrences are allowed to have different parents, and rejected when forced into a single parent. The strengthened variant $C_{AB}^{\mathrm{inc}}$ (cheap-win #1) confirms both verdicts on a concept with no DAG model.
+- **G4 (rootless orientation).** Parent self-loops are permitted; no ambient root is required. The pure request-closure cheap-win #2 (self-loop carrying $\neg A \sqcap \exists \mathrm{PP}.A$, no $\forall \mathrm{PP}.\neg A$) is rejected by V4 alone (V1 stays clean).
+- **DR/PO mosaic fragment (V2/V6/V7/V8 basic).** Six certs exercising DR/PO existential discharge by typed RCC5 networks, universal propagation through DR/PO edges, and M3 triple consistency.
 
 Run: `python3 python/certificate_checker.py`
 Report: [`reports/certificate_checker.txt`](reports/certificate_checker.txt)
@@ -59,7 +60,7 @@ Report: [`reports/small_model_oracle.txt`](reports/small_model_oracle.txt)
 
 ### `python/mosaic_closure_search.py` — WP6: mosaic closure / patchwork lemma counterexample search
 
-Empirically verifies Lemma 4.6 of the repaired proof (patchwork, citing Renz & Nebel 1999): support-closed mosaics — closed under the local axioms (M1)–(M5) at every position and under the support-closure operations (SC1)–(SC4) at every context — yield globally consistent atomic RCC5 networks on triples.
+Empirically verifies Lemma 4.6 of the repaired proof (patchwork, citing Renz & Nebel 1999): support-closed mosaics — closed under the local axioms (M1)–(M5) at every position and under the support-closure operations (SC1)–(SC4) at every context — yield globally consistent atomic RCC5 networks. Seven tests: (A) triangle (M3)-partition (41/64 consistent, 23/64 rejected, all 41 realizable for $n \le 5$); (B) Renz–Nebel realizability of every (M3)-consistent triangle; (C) DR/PO side-witness insertion respecting (M4); (D) universal propagation through PP-chains; (E) sibling branching $L(c, s_2)$ matching $\mathrm{comp}(\mathrm{PP}, \mathrm{PO})$ exactly; (F) atomic arity-4 enumeration — 916/4096 (M3)-consistent 4-networks, of which 7 require $n \ge 6$ (pattern: three pairwise-DR positions all PO a fourth), all 916 realize at $n \le 6$; (G) overlap amalgamation of two arity-3 mosaics sharing an edge — 427/427 overlap-compatible pairs amalgamate.
 
 No counterexample to the patchwork lemma was found on the tested mosaic families.
 

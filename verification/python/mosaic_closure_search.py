@@ -472,6 +472,191 @@ def test_sibling_branching() -> list:
 
 
 # -----------------------------------------------------------------------------
+# Test F: arity-4 path-consistency / global-consistency.
+#
+# Per GPT-5.5 verification.zip review section 4.6, the patchwork tests must
+# extend beyond triangles to arity > 3.  Test F enumerates all 4^6 = 4096
+# atomic labelings of a 4-position network (six ordered off-diagonal edges
+# (0,1),(0,2),(0,3),(1,2),(1,3),(2,3) over the four off-diagonal RCC5
+# relations DR, PO, PP, PPI), partitions them by (M3) on every ordered
+# triple, and attempts to realize each (M3)-consistent labeling by four
+# nonempty finite subsets of {0..n-1} for n <= 4.
+#
+# The Renz-Nebel patchwork theorem predicts that every (M3)-consistent
+# atomic 4-network is realizable.  Any (M3)-consistent network that fails
+# realization at n = 4 is escalated to n = 5; a residual failure would
+# falsify patchwork for atomic RCC5 at arity 4.
+# -----------------------------------------------------------------------------
+
+def test_quadruple_composition() -> dict:
+    """Partition all 4^6 = 4096 4-position networks by (M3) consistency."""
+    consistent = []
+    inconsistent = []
+    OFF = ('DR', 'PO', 'PP', 'PPI')
+    for labels in product(OFF, repeat=6):
+        L = {(i, i): 'EQ' for i in range(4)}
+        L[(0, 1)] = labels[0]; L[(1, 0)] = INV[labels[0]]
+        L[(0, 2)] = labels[1]; L[(2, 0)] = INV[labels[1]]
+        L[(0, 3)] = labels[2]; L[(3, 0)] = INV[labels[2]]
+        L[(1, 2)] = labels[3]; L[(2, 1)] = INV[labels[3]]
+        L[(1, 3)] = labels[4]; L[(3, 1)] = INV[labels[4]]
+        L[(2, 3)] = labels[5]; L[(3, 2)] = INV[labels[5]]
+        ok = True
+        for p in range(4):
+            for q in range(4):
+                for r in range(4):
+                    if L[(p, r)] not in COMP[(L[(p, q)], L[(q, r)])]:
+                        ok = False
+                        break
+                if not ok:
+                    break
+            if not ok:
+                break
+        (consistent if ok else inconsistent).append(labels)
+    return {'consistent': consistent, 'inconsistent': inconsistent}
+
+
+def _rel_fn(A: frozenset, B: frozenset) -> str:
+    if A == B:
+        return 'EQ'
+    if A.issubset(B):
+        return 'PP'
+    if B.issubset(A):
+        return 'PPI'
+    if not (A & B):
+        return 'DR'
+    return 'PO'
+
+
+def realize_quadruple(labels, max_n: int = 4):
+    """Try to realize a 4-position network with four nonempty finite subsets."""
+    for n in range(2, max_n + 1):
+        univ = range(n)
+        masks = []
+        for m in range(1, 1 << n):
+            masks.append(frozenset(i for i in univ if (m >> i) & 1))
+        for A in masks:
+            for B in masks:
+                if _rel_fn(A, B) != labels[0]:
+                    continue
+                for C in masks:
+                    if _rel_fn(A, C) != labels[1]:
+                        continue
+                    if _rel_fn(B, C) != labels[3]:
+                        continue
+                    for D in masks:
+                        if (_rel_fn(A, D) == labels[2]
+                                and _rel_fn(B, D) == labels[4]
+                                and _rel_fn(C, D) == labels[5]):
+                            return (n, A, B, C, D)
+    return None
+
+
+def test_quadruple_realizability(consistent_list: list) -> tuple:
+    """Attempt to realize every (M3)-consistent 4-network with finite subsets.
+
+    Escalates n from 4 to 6.  At arity 4, certain RCC5 networks
+    (three pairwise-DR positions each PO a fourth position) require six
+    atoms: three external "loners" for the DR positions plus three shared
+    atoms in the PO position.  These are realizable but not below n=6.
+
+    Returns (fails_at_n5, fails_at_n6).  fails_at_n6 is the unrealized
+    residual; any non-empty residual would falsify atomic-RCC5 patchwork.
+    """
+    fails_at_n5 = []
+    fails_at_n6 = []
+    for labels in consistent_list:
+        rz = realize_quadruple(labels, max_n=5)
+        if rz is None:
+            fails_at_n5.append(labels)
+            rz = realize_quadruple(labels, max_n=6)
+            if rz is None:
+                fails_at_n6.append(labels)
+    return fails_at_n5, fails_at_n6
+
+
+# -----------------------------------------------------------------------------
+# Test G: overlap amalgamation of two arity-3 mosaics sharing an edge.
+#
+# Two triangles M1 = ({a,b,c}, L1) and M2 = ({b,c,d}, L2) with overlap edge
+# {b, c} (forced agreement on L(b,c)).  Each (M3)-consistent individually.
+# The patchwork theorem predicts that for every such overlap-compatible
+# pair, there exists at least one atomic L(a, d) extending the two triangles
+# to an (M3)-consistent 4-mosaic over {a, b, c, d}.
+#
+# Iterates 4^5 = 1024 candidate (l_ab, l_ac, l_bc, l_bd, l_cd) tuples; skips
+# pairs where either triangle violates (M3); reports any consistent pair
+# that admits no atomic extension L(a, d) in {EQ, DR, PO, PP, PPI}.
+# -----------------------------------------------------------------------------
+
+def _triangle_consistent(l_pq, l_pr, l_qr) -> bool:
+    """Check (M3) on a 3-position network with the three given pair labels."""
+    L = {
+        (0, 0): 'EQ', (1, 1): 'EQ', (2, 2): 'EQ',
+        (0, 1): l_pq, (1, 0): INV[l_pq],
+        (0, 2): l_pr, (2, 0): INV[l_pr],
+        (1, 2): l_qr, (2, 1): INV[l_qr],
+    }
+    for p in range(3):
+        for q in range(3):
+            for r in range(3):
+                if L[(p, r)] not in COMP[(L[(p, q)], L[(q, r)])]:
+                    return False
+    return True
+
+
+def _quadruple_consistent(l_ab, l_ac, l_ad, l_bc, l_bd, l_cd) -> bool:
+    """Check (M3) on a 4-position network with the six given pair labels."""
+    L = {(i, i): 'EQ' for i in range(4)}
+    L[(0, 1)] = l_ab; L[(1, 0)] = INV[l_ab]
+    L[(0, 2)] = l_ac; L[(2, 0)] = INV[l_ac]
+    L[(0, 3)] = l_ad; L[(3, 0)] = INV[l_ad]
+    L[(1, 2)] = l_bc; L[(2, 1)] = INV[l_bc]
+    L[(1, 3)] = l_bd; L[(3, 1)] = INV[l_bd]
+    L[(2, 3)] = l_cd; L[(3, 2)] = INV[l_cd]
+    for p in range(4):
+        for q in range(4):
+            for r in range(4):
+                if L[(p, r)] not in COMP[(L[(p, q)], L[(q, r)])]:
+                    return False
+    return True
+
+
+def test_overlap_amalgamation() -> dict:
+    """For every overlap-compatible pair of (M3)-consistent triangles, find
+    at least one atomic L(a, d) making the joint 4-mosaic (M3)-consistent.
+    """
+    OFF = ('DR', 'PO', 'PP', 'PPI')
+    EXTEND_CANDS = ('EQ', 'DR', 'PO', 'PP', 'PPI')
+    pairs_tested = 0
+    pairs_amalgamated = 0
+    failures = []
+    for l_ab, l_ac, l_bc, l_bd, l_cd in product(OFF, repeat=5):
+        if not _triangle_consistent(l_ab, l_ac, l_bc):
+            continue
+        if not _triangle_consistent(l_bc, l_bd, l_cd):
+            continue
+        pairs_tested += 1
+        accepted = []
+        for l_ad in EXTEND_CANDS:
+            if _quadruple_consistent(l_ab, l_ac, l_ad, l_bc, l_bd, l_cd):
+                accepted.append(l_ad)
+        if accepted:
+            pairs_amalgamated += 1
+        else:
+            failures.append({
+                'M1': (l_ab, l_ac, l_bc),
+                'M2': (l_bc, l_bd, l_cd),
+                'note': 'no atomic L(a,d) extends both triangles',
+            })
+    return {
+        'pairs_tested': pairs_tested,
+        'pairs_amalgamated': pairs_amalgamated,
+        'failures': failures,
+    }
+
+
+# -----------------------------------------------------------------------------
 # Main: run all tests and emit a report.
 # -----------------------------------------------------------------------------
 
@@ -574,10 +759,57 @@ def main() -> int:
         print(f'    FAIL: {fails_E}')
     print()
 
+    # --- Test F: arity-4 path-consistency / global-consistency ----
+    print('>>> Test F: arity-4 atomic 4-networks (path-consistency vs realizability)')
+    print('    Enumerate all 4^6 = 4096 atomic labelings of 4 positions, partition')
+    print('    by (M3) on every triple, then realize each (M3)-consistent labeling')
+    print('    by 4 nonempty finite subsets (Renz-Nebel patchwork at arity 4).')
+    print()
+    part_F = test_quadruple_composition()
+    n_ok = len(part_F['consistent'])
+    n_bad = len(part_F['inconsistent'])
+    print(f'    {n_ok}/4096 4-networks are (M3)-consistent.')
+    print(f'    {n_bad}/4096 violate (M3) on some triple.')
+    fails_n5, fails_n6 = test_quadruple_realizability(part_F['consistent'])
+    if fails_n5:
+        print(f'    NOTE: {len(fails_n5)} (M3)-consistent 4-networks need n>5 to realize.')
+        print(f'          (Pattern: 3 pairwise-DR positions all PO a fourth.)')
+    if not fails_n6:
+        print('    PASS: every (M3)-consistent 4-network is realizable for n<=6.')
+        print('    (Confirms patchwork property at arity 4 for atomic RCC5.)')
+    else:
+        all_ok = False
+        print(f'    FAIL: {len(fails_n6)} (M3)-consistent 4-networks are unrealizable.')
+        for f in fails_n6[:5]:
+            print(f'      {f}')
+    print()
+
+    # --- Test G: overlap amalgamation of two arity-3 mosaics ----
+    print('>>> Test G: overlap amalgamation of two arity-3 mosaics')
+    print('    Two triangles M1=(a,b,c) and M2=(b,c,d) sharing edge {b,c}.')
+    print('    For every (M3)-consistent pair, find atomic L(a,d) making the')
+    print('    joint 4-mosaic (M3)-consistent (the patchwork lemma at arity 4).')
+    print()
+    part_G = test_overlap_amalgamation()
+    p_t = part_G['pairs_tested']
+    p_a = part_G['pairs_amalgamated']
+    print(f'    {p_a}/{p_t} overlap-compatible triangle pairs amalgamate.')
+    fails_G = part_G['failures']
+    if not fails_G:
+        print('    PASS: every overlap-compatible consistent pair admits an extension.')
+        print('    (Confirms patchwork: local agreement -> global synchronization.)')
+    else:
+        all_ok = False
+        print(f'    FAIL: {len(fails_G)} overlap-compatible pairs do not amalgamate.')
+        for f in fails_G[:5]:
+            print(f'      {f}')
+    print()
+
     print('=' * 79)
     if all_ok:
         print('VERDICT: PASS.  Support-closed mosaics give global triple composition')
-        print('         on every test we ran; DR/PO side witnesses are insertable.')
+        print('         on every test we ran; DR/PO side witnesses are insertable;')
+        print('         arity-4 patchwork holds (Tests F and G).')
         print('         No counterexample to the patchwork lemma was found.')
         return 0
     print('VERDICT: FAIL.  See * above.')

@@ -36,7 +36,29 @@ WP6: mosaic closure counterexample search
     PASS: legal L(c, s2) candidates = ['DR', 'PO', 'PP']
     Matches comp(PP, PO) = ['DR', 'PO', 'PP'] exactly.
 
+>>> Test F: arity-4 atomic 4-networks (path-consistency vs realizability)
+    Enumerate all 4^6 = 4096 atomic labelings of 4 positions, partition
+    by (M3) on every triple, then realize each (M3)-consistent labeling
+    by 4 nonempty finite subsets (Renz-Nebel patchwork at arity 4).
+
+    916/4096 4-networks are (M3)-consistent.
+    3180/4096 violate (M3) on some triple.
+    NOTE: 7 (M3)-consistent 4-networks need n>5 to realize.
+          (Pattern: 3 pairwise-DR positions all PO a fourth.)
+    PASS: every (M3)-consistent 4-network is realizable for n<=6.
+    (Confirms patchwork property at arity 4 for atomic RCC5.)
+
+>>> Test G: overlap amalgamation of two arity-3 mosaics
+    Two triangles M1=(a,b,c) and M2=(b,c,d) sharing edge {b,c}.
+    For every (M3)-consistent pair, find atomic L(a,d) making the
+    joint 4-mosaic (M3)-consistent (the patchwork lemma at arity 4).
+
+    427/427 overlap-compatible triangle pairs amalgamate.
+    PASS: every overlap-compatible consistent pair admits an extension.
+    (Confirms patchwork: local agreement -> global synchronization.)
+
 ===============================================================================
 VERDICT: PASS.  Support-closed mosaics give global triple composition
-         on every test we ran; DR/PO side witnesses are insertable.
+         on every test we ran; DR/PO side witnesses are insertable;
+         arity-4 patchwork holds (Tests F and G).
          No counterexample to the patchwork lemma was found.
