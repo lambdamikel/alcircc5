@@ -211,6 +211,22 @@ def get_corpus():
                       A('PP', Or(Neg(b), Neg(a)))),
                   True))
 
+    # C_AB^inc: strengthened incomparability-forcing concept
+    # (GPT-5.5 verification.zip review section 3.3).  Forces any A-superpart
+    # and any B-superpart to be PP/PPI-incomparable, so single chains are
+    # ruled out.  Expected SAT in a 3-element model where the root has two
+    # PP-successors related by PO (or DR), one carrying A and one B.
+    cases.append((
+        'exists PP.A & exists PP.B & forall PP.('
+        '(~A | (~B & forall PP.~B & forall PPI.~B)) & '
+        '(~B | (~A & forall PP.~A & forall PPI.~A)))  [C_AB^inc]',
+        And(E('PP', a), E('PP', b),
+            A('PP', And(
+                Or(Neg(a), And(Neg(b), A('PP', Neg(b)), A('PPI', Neg(b)))),
+                Or(Neg(b), And(Neg(a), A('PP', Neg(a)), A('PPI', Neg(a)))),
+            ))),
+        True))
+
     # UNSAT cases.
     cases.append(('exists PP.A & forall PP.~A',
                   And(E('PP', a), A('PP', Neg(a))),

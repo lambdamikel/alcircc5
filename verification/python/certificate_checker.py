@@ -710,6 +710,117 @@ def cert_C_AB_wrong_singleparent() -> tuple:
     return cert, C_AB
 
 
+def _build_C_AB_inc():
+    """Build the strengthened C_AB^inc formula and its key subterms.
+
+    C_AB^inc = exists PP.A
+             & exists PP.B
+             & forall PP. ( (~A | (~B & forall PP.~B & forall PPI.~B))
+                          & (~B | (~A & forall PP.~A & forall PPI.~A)) )
+
+    Unlike C_AB, this formula forbids the A-superpart and B-superpart from
+    being PP-comparable, since any A-witness must have no B in its PP/PPI
+    cone (and symmetrically).  This forces two PP-incomparable mate
+    occurrences with different selected parents.
+    """
+    a = Atom('A')
+    b = Atom('B')
+    not_a = Neg(a)
+    not_b = Neg(b)
+    no_b_cone = And(not_b, A('PP', not_b), A('PPI', not_b))
+    no_a_cone = And(not_a, A('PP', not_a), A('PPI', not_a))
+    or1 = Or(not_a, no_b_cone)
+    or2 = Or(not_b, no_a_cone)
+    body = And(or1, or2)
+    fa_pp_body = A('PP', body)
+    e_pp_a = E('PP', a)
+    e_pp_b = E('PP', b)
+    C = And(e_pp_a, e_pp_b, fa_pp_body)
+    return C, a, b, not_a, not_b, no_a_cone, no_b_cone, body, fa_pp_body
+
+
+def cert_C_AB_inc() -> tuple:
+    """C_AB^inc (strengthened G3 stress, per GPT-5.5 verification.zip review).
+
+    Valid certificate: two equality-mate occurrences of the root with
+    different selected parents, one carrying A (with the full no-B-cone)
+    and one carrying B (with the full no-A-cone).  This is the canonical
+    incomparability-forcing positive test.
+    """
+    C, a, b, not_a, not_b, no_a_cone, no_b_cone, body, fa_pp_body = _build_C_AB_inc()
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C, not_a, not_b])
+    tau_A = saturate_for(cl, [a, no_b_cone, body, fa_pp_body])
+    tau_B = saturate_for(cl, [b, no_a_cone, body, fa_pp_body])
+    cert = Certificate(
+        S=('s_root', 's_root_prime', 's_A', 's_B'),
+        s0='s_root',
+        lam={
+            's_root': tau_root,
+            's_root_prime': tau_root,
+            's_A': tau_A,
+            's_B': tau_B,
+        },
+        par={
+            's_root': 's_A',
+            's_root_prime': 's_B',
+        },
+        ports={
+            's_root': frozenset({('p_root', 'g')}),
+            's_root_prime': frozenset({('p_root_prime', 'g')}),
+        },
+        eq_ports={(('s_root', 'p_root'), ('s_root_prime', 'p_root_prime'))},
+        name='C_AB^inc (G3 strengthened): two mates with different parents',
+    )
+    return cert, C
+
+
+def cert_C_AB_inc_singleparent() -> tuple:
+    """C_AB^inc single-parent attempt.  Should FAIL V4.
+
+    Only one mate, parented in an A-superpart, so exists PP.B never finds
+    a witness in Reach_PP.
+    """
+    C, a, b, not_a, not_b, no_a_cone, no_b_cone, body, fa_pp_body = _build_C_AB_inc()
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C, not_a, not_b])
+    tau_A = saturate_for(cl, [a, no_b_cone, body, fa_pp_body])
+    cert = Certificate(
+        S=('s_root', 's_A'),
+        s0='s_root',
+        lam={'s_root': tau_root, 's_A': tau_A},
+        par={'s_root': 's_A'},
+        ports={},
+        eq_ports=set(),
+        name='C_AB^inc single-parent attempt (should fail V4)',
+    )
+    return cert, C
+
+
+def cert_C_AB_inc_singlechain() -> tuple:
+    """C_AB^inc single-PP-chain attempt.  Should FAIL V3.
+
+    Both A-witness and B-witness placed on one comparable chain
+    s_root -> s_A -> s_B.  The inner forall PP.~B at s_A then forces ~B
+    at s_B, contradicting B in tau_B.
+    """
+    C, a, b, not_a, not_b, no_a_cone, no_b_cone, body, fa_pp_body = _build_C_AB_inc()
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C, not_a, not_b])
+    tau_A = saturate_for(cl, [a, no_b_cone, body, fa_pp_body])
+    tau_B = saturate_for(cl, [b, no_a_cone, body, fa_pp_body])
+    cert = Certificate(
+        S=('s_root', 's_A', 's_B'),
+        s0='s_root',
+        lam={'s_root': tau_root, 's_A': tau_A, 's_B': tau_B},
+        par={'s_root': 's_A', 's_A': 's_B'},
+        ports={},
+        eq_ports=set(),
+        name='C_AB^inc single-chain attempt (should fail V3)',
+    )
+    return cert, C
+
+
 def cert_C_clash_pp_universal() -> tuple:
     """A bogus certificate for exists PP.A & forall PP.~A (UNSAT).
 
@@ -851,6 +962,37 @@ def cert_WP5_cycle_unfulfilled_request_unsat() -> tuple:
     return cert, C
 
 
+def cert_WP5_pure_request_unfulfilled() -> tuple:
+    """Pure request-closure negative test (GPT-5.5 verification.zip review section 3.5).
+
+    One-state self-loop carrying ~A & exists PP.A, with no forall PP.~A
+    (so V1 is locally satisfied -- no NNF-complement clash inside the
+    Hintikka type).  Should FAIL V4: reach_PP(s0) = {s0} (self-loop),
+    but lam(s0) carries ~A, so the existential is never discharged.
+
+    Distinct from cert_WP5_cycle_unfulfilled_request_unsat which combines
+    ~A & exists PP.A & forall PP.~A and is rejected at V1 (Hintikka clash
+    between exists PP.A and forall PP.~A as NNF complements), short-
+    circuiting before V4 is genuinely exercised.
+    """
+    a = Atom('A')
+    not_a = Neg(a)
+    e_pp_a = E('PP', a)
+    C = And(not_a, e_pp_a)
+    cl = closure(C)
+    tau = saturate_for(cl, [C])
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau},
+        par={'s0': 's0'},
+        ports={},
+        eq_ports=set(),
+        name='WP5 pure request-closure: self-loop carries ~A & exists PP.A (V4 fails, V1 clean)',
+    )
+    return cert, C
+
+
 def cert_C_pp_simple_sat() -> tuple:
     """forall PP.A & exists PP.A.  SAT via one parent state with A and forall PP.A.
 
@@ -889,10 +1031,14 @@ CORPUS = [
     (cert_C_up_with_bad_eq, False),
     (cert_C_AB, True),
     (cert_C_AB_wrong_singleparent, False),
+    (cert_C_AB_inc, True),
+    (cert_C_AB_inc_singleparent, False),
+    (cert_C_AB_inc_singlechain, False),
     (cert_C_clash_pp_universal, False),
     (cert_C_pp_transitive_unsat, False),
     (cert_WP5_cycle_carries_existential_sat, True),
     (cert_WP5_cycle_unfulfilled_request_unsat, False),
+    (cert_WP5_pure_request_unfulfilled, False),
     (cert_C_pp_simple_sat, True),
 ]
 

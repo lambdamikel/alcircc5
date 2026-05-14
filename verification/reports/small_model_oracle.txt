@@ -31,6 +31,16 @@ Cross-check with WP2 certificate checker:
    PP  PP  EQ
     expected=True    PASS (SAT)
 
+>>> exists PP.A & exists PP.B & forall PP.((~A | (~B & forall PP.~B & forall PPI.~B)) & (~B | (~A & forall PP.~A & forall PPI.~A)))  [C_AB^inc]
+    C0 = (EPP.A & EPP.B & APP.((~A | (~B & APP.~B & APPI.~B)) & (~B | (~A & APP.~A & APPI.~A))))
+    SAT at n=3 root=2
+    valuation: A=[0] B=[1]
+    rho =
+   EQ  PO PPI
+   PO  EQ PPI
+   PP  PP  EQ
+    expected=True    PASS (SAT)
+
 >>> exists PP.A & forall PP.~A
     C0 = (EPP.A & APP.~A)
     no finite model up to n=4

@@ -38,15 +38,35 @@ Out of scope (this version): V2, V6, V7, V8 (DR/PO mosaics).
       - V4: s_root: exists PP.B not discharged (Reach_PP=['s_A'], no t carries B)
     expected: INVALID     outcome: PASS
 
-[6] UNSAT: exists PP.A & forall PP.~A (broken type should fail V1)
+[6] C_AB^inc (G3 strengthened): two mates with different parents
+    C0 = (EPP.A & EPP.B & APP.((~A | (~B & APP.~B & APPI.~B)) & (~B | (~A & APP.~A & APPI.~A))))
+    states = ['s_A', 's_B', 's_root', 's_root_prime']
+    verdict: VALID
+    expected: VALID     outcome: PASS
+
+[7] C_AB^inc single-parent attempt (should fail V4)
+    C0 = (EPP.A & EPP.B & APP.((~A | (~B & APP.~B & APPI.~B)) & (~B | (~A & APP.~A & APPI.~A))))
+    states = ['s_A', 's_root']
+    verdict: INVALID
+      - V4: s_root: exists PP.B not discharged (Reach_PP=['s_A'], no t carries B)
+    expected: INVALID     outcome: PASS
+
+[8] C_AB^inc single-chain attempt (should fail V3)
+    C0 = (EPP.A & EPP.B & APP.((~A | (~B & APP.~B & APPI.~B)) & (~B | (~A & APP.~A & APPI.~A))))
+    states = ['s_A', 's_B', 's_root']
+    verdict: INVALID
+      - V3: s_A: forall PP.~B but ~B not in lambda(s_B)
+      - V5: s_A: forall PP.~B but mate-path reach s_B lacks ~B
+    expected: INVALID     outcome: PASS
+
+[9] UNSAT: exists PP.A & forall PP.~A (broken type should fail V1)
     C0 = (EPP.A & APP.~A)
     states = ['s0']
     verdict: INVALID
-      - V1: C0 not in lambda(s_0=s0)
       - V1: lambda(s0) is not a Hintikka type
     expected: INVALID     outcome: PASS
 
-[7] UNSAT: PP-transitive (should fail V3)
+[10] UNSAT: PP-transitive (should fail V3)
     C0 = (APP.~C & EPP.EPP.C)
     states = ['s0', 's1', 's2']
     verdict: INVALID
@@ -54,20 +74,27 @@ Out of scope (this version): V2, V6, V7, V8 (DR/PO mosaics).
       - V5: s0: forall PP.~C but mate-path reach s2 lacks ~C
     expected: INVALID     outcome: PASS
 
-[8] WP5 SAT: cycle with exists PP.A discharged by self-loop
+[11] WP5 SAT: cycle with exists PP.A discharged by self-loop
     C0 = (A & EPP.A & APP.EPP.A)
     states = ['s0']
     verdict: VALID
     expected: VALID     outcome: PASS
 
-[9] WP5 UNSAT: cycle carries exists PP.A but no state has A
+[12] WP5 UNSAT: cycle carries exists PP.A but no state has A
     C0 = (~A & EPP.A & APP.~A)
     states = ['s0']
     verdict: INVALID
       - V1: lambda(s0) is not a Hintikka type
     expected: INVALID     outcome: PASS
 
-[10] SAT: forall PP.A & exists PP.A
+[13] WP5 pure request-closure: self-loop carries ~A & exists PP.A (V4 fails, V1 clean)
+    C0 = (~A & EPP.A)
+    states = ['s0']
+    verdict: INVALID
+      - V4: s0: exists PP.A not discharged (Reach_PP=['s0'], no t carries A)
+    expected: INVALID     outcome: PASS
+
+[14] SAT: forall PP.A & exists PP.A
     C0 = (APP.A & EPP.A)
     states = ['s0', 's1']
     verdict: VALID
@@ -81,10 +108,14 @@ Summary
    expected=I  got=I  G1 reproducer: PP plus eq across vertical (should fail V9.Eb)
    expected=V  got=V  C_AB (G3): two mates with different selected parents
    expected=I  got=I  C_AB v2.1-style single-parent (should fail V4)
+   expected=V  got=V  C_AB^inc (G3 strengthened): two mates with different parents
+   expected=I  got=I  C_AB^inc single-parent attempt (should fail V4)
+   expected=I  got=I  C_AB^inc single-chain attempt (should fail V3)
    expected=I  got=I  UNSAT: exists PP.A & forall PP.~A (broken type should fail V1)
    expected=I  got=I  UNSAT: PP-transitive (should fail V3)
    expected=V  got=V  WP5 SAT: cycle with exists PP.A discharged by self-loop
    expected=I  got=I  WP5 UNSAT: cycle carries exists PP.A but no state has A
+   expected=I  got=I  WP5 pure request-closure: self-loop carries ~A & exists PP.A (V4 fails, V1 clean)
    expected=V  got=V  SAT: forall PP.A & exists PP.A
 
 VERDICT: PASS.  All certificates match expected validity.

@@ -4,10 +4,10 @@ WP1: RCC5 composition-table verification by exhaustive subset enumeration
 
 Stability check across |U| = 2, 3, 4, 5:
 
-  |U| = 2: signature 04510108  
-  |U| = 3: signature 68941931  DIFFERENT
-  |U| = 4: signature 30249552  DIFFERENT
-  |U| = 5: signature 30249552  SAME
+  |U| = 2: signature 56089069  
+  |U| = 3: signature 02704758  DIFFERENT
+  |U| = 4: signature 18566165  DIFFERENT
+  |U| = 5: signature 18566165  SAME
 
 Per-cell comparison at |U| = 5:
 

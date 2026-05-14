@@ -4526,3 +4526,50 @@ GPT-5.4 (split-forest semantics and cover-tree tableau
 formalization) calls for adding GPT-5.5 as a fourth co-author.
 Did so in both papers; PDFs rebuilt cleanly (overview 19 pages,
 DL abstract 20 pages).  Commit `4cb8acd`.
+
+---
+
+## 2026-05-13: GPT-5.5 round-2 review of verification.zip — two cheap wins
+
+GPT-5.5 sent a follow-up review
+(`papers/gpt5.5_round2/formal_response_verification_zip_review.tex`,
+"Reproducible computational evidence: yes. Publication-grade proof:
+not yet.") identifying five substantive gaps in the verification
+campaign.  Three require substantial work (vertical-only checker
+extended with DR/PO mosaic, support-closed patchwork theorem, Lean).
+Two are quick fixes implemented in this pass:
+
+**Cheap win #1 — strengthened `C_AB^inc`.**  The original `C_AB`
+formula `A & B & ∃PP.A & ∃PP.B & ∀PP.(¬A | ¬B) & ∀PP.(¬B | ¬A)`
+does not force the A-superpart and B-superpart to be incomparable
+— a single PP-chain (s_root → s_A → s_B with s_A carrying A∧¬B
+and s_B carrying B∧¬A) still satisfies it.  GPT-5.5's strengthened
+formula adds, inside the universal, `∀PP.¬B ∧ ∀PPI.¬B` whenever A
+holds (and symmetric for B), which forbids any B in the A-witness's
+PP/PPI cone.  Added three new certs to
+`verification/python/certificate_checker.py`: `cert_C_AB_inc`
+(VALID, two mates with different parents),
+`cert_C_AB_inc_singleparent` (INVALID via V4 — one parent only,
+∃PP.B undischarged), and `cert_C_AB_inc_singlechain` (INVALID via
+V3 — the inner ∀PP.¬B at s_A clashes with B at s_B).  Added the
+matching SAT case to `verification/python/small_model_oracle.py`;
+oracle confirms SAT at n=3 with the predicted witness (root has
+two PP-successors related by PO, one carrying A and one B).
+
+**Cheap win #2 — pure request-closure negative test.**  The
+existing `cert_WP5_cycle_unfulfilled_request_unsat` carries
+`¬A ∧ ∃PP.A ∧ ∀PP.¬A`, which is rejected at V1 (Hintikka clash —
+∃PP.A and ∀PP.¬A are NNF complements) before V4 is genuinely
+exercised.  GPT-5.5 asked for a test that locally type-checks but
+fails the request-discharge condition.  Added
+`cert_WP5_pure_request_unfulfilled` (one-state self-loop carrying
+`¬A ∧ ∃PP.A`, no ∀PP.¬A); this passes V1 cleanly and is rejected
+at V4 because reach_PP(s0) = {s0} but lam(s0) has ¬A, so the
+existential is never discharged.
+
+All four scripts re-run; reports in `verification/reports/`
+regenerated.  Cert checker: 14/14 PASS (was 10/10).  Small-model
+oracle: 6/6 PASS (was 5/5).  WP1 composition table and WP6 mosaic
+closure unchanged.  The remaining three GPT-5.5 gaps (vertical-only
+checker, support-closed patchwork theorem, Lean formalization) are
+larger commitments and not in scope for this pass.
