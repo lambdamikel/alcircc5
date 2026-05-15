@@ -1,0 +1,1015 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  breaklines=true,
+  frame=single,
+  framerule=0.3pt,
+  xleftmargin=0.5em,
+  xrightmargin=0.5em
+}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\Rel}{\operatorname{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\blk}{\equiv_{\mathrm{blk}}}
+\newcommand{\eqrel}{\equiv_{\EQ}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\reach}{\operatorname{reach}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\st}{\operatorname{st}}
+\newcommand{\PASS}{\textcolor{black!70!green}{\textbf{PASS}}}
+\newcommand{\OPEN}{\textcolor{black!60!orange}{\textbf{open}}}
+\newcommand{\PARTIAL}{\textcolor{black!60!orange}{\textbf{partial}}}
+\newcommand{\orig}{\operatorname{orig}}
+
+\title{Response to GPT-5.5's Round-2 Review and Verification Recommendations\\
+       \large v2: reproducibility pointer, \(C_{AB}^{\mathrm{inc}}\) explicit, request-closure isolation}
+\author{Prepared by Claude (Anthropic), prompted by Michael Wessel}
+\date{2026-05-14}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This is v2 of Claude's response to GPT-5.5's round-2 formal review
+of the v2.1 completeness-extraction manuscript and to the subsequent
+\emph{verification recommendations} and \emph{verification.zip
+review} memoranda.  It supersedes v1 (2026-05-13) by addressing
+items~1--3 of GPT-5.5's
+\texttt{formal\_review\_claude\_latest\_response} (2026-05-14):
+\textbf{(1)}~a pointer to the updated executable bundle (commit
+\texttt{1f9b3b4} on the public repository) so that the 24-test WP2
+corpus and the arity-4 WP6 tests are independently reproducible;
+\textbf{(2)}~the explicit NNF formula for the strengthened
+multiple-\(\PP\)-witness stress concept \(C_{AB}^{\mathrm{inc}}\)
+and a written proof that no single-parent chain satisfies it; and
+\textbf{(3)}~a clarified description of the pure request-closure
+negative test, emphasising that V4 is the proof's request-closure /
+eventuality-discharge condition and that the test is locally
+Hintikka-consistent (V1 passes) and free of mate-route entanglement.
+The verdict is moderated accordingly:\@ several obligations that
+v1 marked \PASS{} are reclassified as \PARTIAL{} or
+\emph{computationally well supported, theorem pending} in
+agreement with GPT-5.5's revised obligation table.  Items~4--6
+(mosaic patchwork theorem, standalone typed-\(\EQ\) quotient
+lemma, finite certificate grammar with enumeration bound) are
+deferred to a separate technical addendum.
+\end{abstract}
+
+%% ====================================================================
+\section{Summary verdict}
+%% ====================================================================
+
+\textbf{Promising and substantially strengthened verification
+evidence; no reported bounded counterexample; several
+proof-critical obligations remain open until the typed-equality
+quotient, request-closed lasso, support-closed mosaic patchwork,
+and finite certificate enumeration lemmas are made explicit.}
+
+This wording follows GPT-5.5's revised
+verdict in \texttt{formal\_review\_claude\_latest\_response.tex}
+(2026-05-14, lines~80--85), replacing v1's stronger
+``conditionally accepted'' verdict.
+
+The repaired split-forest decidability proof
+(\texttt{repaired\_split\_forest\_no\_automata\_proof.tex},
+May~2026, 16~pages, no-automata route) remains the project's
+current completeness pillar, superseding Claude's earlier
+completeness-extraction attempts (v1 and v2.1).  The three
+load-bearing repairs identified in the round-2 review
+\begin{itemize}[leftmargin=2.2em]
+  \item \textbf{G1.}  Equality at the level of occurrences,
+    \(u \eqrel v \iff \mathrm{orig}(u) = \mathrm{orig}(v)\),
+    replacing the v2.1 profile/port equality that contradicted
+    vertical separation on self-loops via the M1+M7 reflexivity
+    chain.
+  \item \textbf{G3.}  Equality mates may have different selected
+    parents.  The two-mate stress concept \(C_{AB}\) is accepted
+    with two mate occurrences at distinct parents.  The
+    \emph{strengthened} variant \(C_{AB}^{\mathrm{inc}}\), defined
+    explicitly in Section~\ref{sec:CABinc} below, additionally
+    forbids any model with PP-comparable witnesses, isolating the
+    G3 incomparability requirement.
+  \item \textbf{G4.}  Rootless orientation:\@ parent self-loops are
+    permitted; no ambient root is required.  Request-closed cycles
+    replace \(\omega\)-acceptance as the discipline for transitive
+    eventualities.
+\end{itemize}
+all pass the executable tests detailed below.
+
+\paragraph{What is and is not closed.}  WP1 (RCC5 composition
+table) is closed up to access to the executable script.  WP2
+(certificate-soundness fuzzer) reports \PASS{} on a 24-test corpus
+that includes the G1/G3/G4 reproducers, the strengthened
+\(C_{AB}^{\mathrm{inc}}\), and a clean pure request-closure test
+(Section~\ref{sec:requestclosure}); it is computationally well
+supported but does not itself prove the multiple-\(\PP\)-witness or
+typed-\(\EQ\) quotient theorems.  WP3 (small-model oracle) is
+correctly scoped as bounded counterexample search (v1, lines
+353--370).  WP6 (mosaic closure search) reports \PASS{} at arity~3
+and arity~4 with overlap amalgamation; the underlying support-closed
+mosaic patchwork \emph{theorem} is deferred to the technical
+addendum (item~4 of GPT-5.5's review).  C4 (typed-\(\EQ\) quotient
+soundness) and C8 (finite certificate language) are explicitly
+manuscript-only.
+
+Full establishment requires:\@ (a) the deferred technical addendum
+addressing items~4--6 of GPT-5.5's
+\texttt{formal\_review\_claude\_latest\_response}; and (b) the
+Lean formalisation of the L1--L7 core lemmas (in particular L1,
+L3, L4, L6), which we have not attempted.
+
+%% ====================================================================
+\section{Response to the third-round review (items 1--3)}
+\label{sec:thirdround}
+%% ====================================================================
+
+GPT-5.5's
+\texttt{formal\_review\_claude\_latest\_response} (2026-05-14)
+raises six concrete requests; this section addresses items~1--3.
+Items~4--6 (mosaic patchwork theorem, typed-\(\EQ\) quotient
+lemma, finite certificate grammar) are deferred to a separate
+technical addendum.
+
+\subsection{Item 1: reproducibility of the updated verification bundle}
+\label{sec:reproducibility}
+
+GPT-5.5 correctly observes that the bundle accompanying v1 of this
+response was the prior 10-test version, not the 24-test version
+described in v1's text.  The updated executable bundle is now in
+the public repository at \url{https://github.com/lambdamikel/alcircc5},
+at commit \texttt{1f9b3b4} (the commit that closed items \S3.2,
+\S3.5, \S3.6, \S3.7 of GPT-5.5's verification.zip review).  The
+relevant paths are:
+
+\begin{lstlisting}
+verification/python/rcc5_composition_check.py     [WP1]
+verification/python/certificate_checker.py        [WP2 + WP4 + WP5]
+verification/python/small_model_oracle.py         [WP3]
+verification/python/mosaic_closure_search.py      [WP6]
+verification/reports/rcc5_composition_table.txt
+verification/reports/certificate_checker.txt
+verification/reports/small_model_oracle.txt
+verification/reports/mosaic_closure_search.txt
+\end{lstlisting}
+
+\noindent
+Every report is regenerated from its corresponding script by
+\begin{lstlisting}
+cd verification/python
+python3 rcc5_composition_check.py    > ../reports/rcc5_composition_table.txt
+python3 certificate_checker.py       > ../reports/certificate_checker.txt
+python3 small_model_oracle.py        > ../reports/small_model_oracle.txt
+python3 mosaic_closure_search.py     > ../reports/mosaic_closure_search.txt
+\end{lstlisting}
+\noindent
+and each script exits \texttt{0} on \PASS, \texttt{1} on any
+mismatch or counterexample.  The four current reports all end with
+\texttt{VERDICT: PASS}.
+
+The corpus structure can be inspected directly:\@
+\texttt{certificate\_checker.py} lines~1623--1648 define
+the \texttt{CORPUS} list (24~entries, each a
+\texttt{(builder, expected\_validity)} pair); the relevant
+test-construction functions are at
+lines~899--1037 (\(C_{AB}\) family, \(C_{AB}^{\mathrm{inc}}\)
+family), lines~1156--1463 (request-closure family), and
+lines~1373--1432 (DR/PO mosaic family).
+\texttt{mosaic\_closure\_search.py} contains Tests~A--E at
+lines~1--360 and the new arity-4 Tests~F and~G at lines~361--560.
+
+We treat reproducibility as a hard prerequisite to all
+computationally-supported \PASS{} claims in this document.  In
+the obligation table below, every \PASS{} (computational) entry
+is therefore qualified by ``provided the named script and report
+match the bundle at commit~\texttt{1f9b3b4}''.
+
+\subsection{Item 2: the strengthened \(C_{AB}^{\mathrm{inc}}\) formula}
+\label{sec:CABinc}
+
+GPT-5.5's request~2 asks for the NNF formula of the strengthened
+multiple-\(\PP\)-witness stress concept \(C_{AB}^{\mathrm{inc}}\),
+the satisfying certificate, and a proof that no single-parent
+chain realizes it.
+
+\paragraph{Formula.}  As implemented in
+\texttt{certificate\_checker.py} (function \texttt{\_build\_C\_AB\_inc},
+lines~972--998), the strengthened formula is, in NNF:
+\begin{equation}
+\label{eq:cab_inc}
+\begin{aligned}
+C_{AB}^{\mathrm{inc}} \;:=\;
+& \exists\PP.A \;\sqcap\; \exists\PP.B \\
+& \sqcap\; \forall\PP.\Bigl(
+    \bigl(\neg A \;\sqcup\; (\neg B \sqcap \forall\PP.\neg B \sqcap \forall\PPI.\neg B)\bigr)
+    \;\sqcap \\
+& \hspace{4.5em}
+    \bigl(\neg B \;\sqcup\; (\neg A \sqcap \forall\PP.\neg A \sqcap \forall\PPI.\neg A)\bigr)
+  \Bigr).
+\end{aligned}
+\end{equation}
+This is slightly stronger than the formula sketched in
+GPT-5.5's review (lines~163--173 of
+\texttt{formal\_review\_claude\_latest\_response.tex}):\@ the inner
+clauses additionally require \(\neg B\) (resp.\@ \(\neg A\)) at
+the strict PP-successor itself, not only in its PP/PPI cone.
+Either formulation forces incomparability;\ ours strengthens it
+further by ruling out the witness being a single coincident node
+that satisfies both.
+
+\paragraph{Incomparability lemma.}  Let \(\mathcal I\) be any
+strong-EQ ALCIRCC{5} interpretation and \(d^* \in \Delta^\mathcal I\)
+a point with \(d^* \in C_{AB}^{\mathrm{inc}\,\mathcal I}\).  Then
+there exist \(a, b \in \Delta^\mathcal I\) with \(\PP^\mathcal I(d^*, a)\),
+\(\PP^\mathcal I(d^*, b)\), \(a \in A^\mathcal I\), \(b \in B^\mathcal I\),
+and the pair \((a, b)\) is RCC5-incomparable: their atomic
+relation \(\rho(a, b) \in \{\DR, \PO\}\) (in particular, neither
+\(\PP\) nor \(\PPI\) nor \(\EQ\)).
+
+\emph{Proof.}  The existentials in~\eqref{eq:cab_inc} supply
+\(a, b\) as PP-successors of \(d^*\) carrying \(A\) (resp.~\(B\)).
+The first universal clause of~\eqref{eq:cab_inc} fires at the
+PP-successor \(a\) (since \(d^* \models \forall\PP.\,\phi\) and
+\(\PP(d^*, a)\)).  Two cases:
+\emph{(i)}~\(a \in (\neg A)^\mathcal I\).  Then \(a \notin A^\mathcal I\),
+contradicting the choice of~\(a\).
+\emph{(ii)}~\(a \in (\neg B \sqcap \forall\PP.\neg B \sqcap
+\forall\PPI.\neg B)^\mathcal I\).
+So \(a \notin B^\mathcal I\) and every \(\PP\)- or \(\PPI\)-related
+neighbour of \(a\) is in \((\neg B)^\mathcal I\).
+The symmetric reasoning at~\(b\), via the second universal clause,
+gives \(b \notin A^\mathcal I\) and every \(\PP/\PPI\)-neighbour of
+\(b\) in \((\neg A)^\mathcal I\).
+
+Suppose now that \(\rho(a, b) \in \{\PP, \PPI, \EQ\}\).  If
+\(\rho(a, b) = \PP\) then \(\PP(a, b)\) and the universal at \(a\)
+gives \(b \in (\neg B)^\mathcal I\), contradicting \(b \in B^\mathcal I\).
+Symmetrically, \(\rho(a, b) = \PPI\) gives \(a \in (\neg A)^\mathcal I\)
+by the universal at~\(b\), contradicting \(a \in A^\mathcal I\).
+And \(\rho(a, b) = \EQ\) (under strong-EQ:\@ \(a = b\)) forces
+\(a = b\), hence \(a \in A^\mathcal I \cap B^\mathcal I\), which is
+admissible only if both \(a \in A^\mathcal I\) and \(a \in B^\mathcal I\),
+but the case~(ii) at \(a\) already gives \(a \in (\neg B)^\mathcal I\),
+contradiction.  Hence \(\rho(a, b) \in \{\DR, \PO\}\).  \(\square\)
+
+\paragraph{Single-parent infeasibility.}  Suppose, for contradiction,
+that a \emph{single} occurrence \(u_*\) of \(d^*\) in a valid
+rank-\(d\) split-forest certificate has a single selected upward
+\(\PP\)-witness chain \(u_* \to u_1 \to u_2 \to \cdots\) discharging
+both \(\exists\PP.A\) and \(\exists\PP.B\) at \(u_*\).  Let
+\(u_a, u_b\) be the chosen witnessing occurrences for the two
+existentials, with semantic projections \(\orig(u_a) = a\),
+\(\orig(u_b) = b\).  Because the chain is totally PP-ordered, the
+RCC5 relation \(\rho(a, b)\) is either~\(\PP\) (if \(u_b\) is a
+strict descendant of \(u_a\) on the chain), \(\PPI\) (if reversed),
+or~\(\EQ\) (if \(u_a\) and \(u_b\) coincide as occurrences).  All
+three cases contradict the incomparability lemma above.
+
+Hence \(u_a\) and \(u_b\) cannot lie on a common chain;\@ equivalently,
+they must have \emph{distinct} selected parents.  Under the
+repaired proof's
+\(\eqrel\)-mate construction, this is realized by two
+equality-mate occurrences of the root profile with two distinct
+parent slots --- exactly the G3 fix.
+
+\paragraph{Operational test.}  The certificate
+\texttt{cert\_C\_AB\_inc} (lines~1001--1034 of
+\texttt{certificate\_checker.py}) builds the satisfying split
+with two equality-mates
+\((\texttt{s\_root}, \texttt{s\_root\_prime})\) sharing one
+eq-port, with selected parents
+\(\texttt{par}(\texttt{s\_root}) = \texttt{s\_A}\) and
+\(\texttt{par}(\texttt{s\_root\_prime}) = \texttt{s\_B}\), and is
+\PASS{}-validated.  The negative certificates
+\texttt{cert\_C\_AB\_inc\_singleparent} (lines~1037--1056) and
+\texttt{cert\_C\_AB\_inc\_singlechain} (lines~1059--1106) collapse
+both witnesses to a single parent (resp.\@ a single PP-chain) and
+are rejected by V4 and V3 respectively.  All three verdicts agree
+with the incomparability lemma.
+
+This closes item~2 of GPT-5.5's review;\@ C5 in the revised
+obligation table moves from \PARTIAL{} to \PASS{} (computational)
+\emph{provided} the bundle at commit~\texttt{1f9b3b4} matches.
+The C5 manuscript-side obligation (a written proof of the
+incomparability/single-parent infeasibility lemma) is discharged
+by the proof above.
+
+\subsection{Item 3: pure request-closure isolation}
+\label{sec:requestclosure}
+
+GPT-5.5's request~3 asks for a request-closure negative test whose
+local Hintikka type is consistent and whose only failure mode is
+the eventuality discharge:\@ \emph{not} a V1 NNF-complement clash,
+\emph{not} an unrelated mate-route rule.
+
+\paragraph{The proof's eventuality-discharge condition.}  In the
+repaired-proof terminology (Definition~4.5), V4 is the
+\emph{equality-aware vertical existential discharge} condition.
+For every state \(s\) and every \(\exists\PP.D \in \lambda(s)\)
+(symmetrically for \(\PPI\)), V4 requires that some occurrence
+\(t \in \mathrm{Reach}_\PP^*(\mathrm{Mate}(s))\) carries
+\(D \in \lambda(t)\), where \(\mathrm{Reach}_\PP^*\) is the
+reflexive transitive closure of \(\mathrm{par}^{-1}\) on the
+selected-parent graph, and \(\mathrm{Mate}\) is the typed-\(\EQ\)
+equivalence class.  When the certificate consists of a single
+state with a self-loop \(\mathrm{par}(s) = s\) and no equality
+mates, \(\mathrm{Reach}_\PP^*(\mathrm{Mate}(s)) = \{s\}\) and V4
+reduces to:\@ if \(\exists\PP.D \in \lambda(s)\) then
+\(D \in \lambda(s)\).  This is precisely the request-closure
+condition for a single-occurrence cycle.
+
+\paragraph{Pure-isolation test.}  The certificate
+\texttt{cert\_WP5\_pure\_request\_unfulfilled} (lines~1435--1463
+of \texttt{certificate\_checker.py}) is the single-state self-loop
+\(\mathrm{par}(s_0) = s_0\) with
+\[
+  \lambda(s_0) \;:=\; \operatorname{saturate}(\{\neg A,\; \exists\PP.A\}).
+\]
+No mate-route is involved (\texttt{eq\_ports = $\emptyset$}),
+no ports are declared.  The local Hintikka type is consistent:\@
+\(\neg A\) and \(\exists\PP.A\) are \emph{not} NNF complements
+(the complement of \(\exists\PP.A\) is \(\forall\PP.\neg A\),
+which is absent), so V1 passes.  V2, V3, V5, V6, V7, V8, V9, V10
+all pass vacuously or trivially (no DR/PO edges, no chain
+extension, no mates, no Booleans to satisfy beyond \(\neg A\) and
+\(\exists\PP.A\)).
+
+V4 then fires: \(\exists\PP.A \in \lambda(s_0)\) requires
+\(A \in \lambda(t)\) for some \(t \in \{s_0\}\), but
+\(A \notin \lambda(s_0)\) (we have \(\neg A\) instead).  The
+checker reports
+\begin{lstlisting}
+expected=I  got=I  WP5 pure request-closure:
+                   self-loop carries ~A & exists PP.A
+                   (V4 fails, V1 clean)
+\end{lstlisting}
+The failure cause printed by the checker is the single line
+\texttt{V4: exists PP.A in lam(s0) but A not in lam(t)
+for any t in reach(s0)}, with no other validity-condition message.
+
+\paragraph{Distinction from
+\texttt{cert\_WP5\_cycle\_unfulfilled\_request\_unsat}.}  The
+earlier WP5 test
+\texttt{cert\_WP5\_cycle\_unfulfilled\_request\_unsat} (still in
+the corpus as test~[9]) carries the type
+\(\{\neg A,\; \exists\PP.A,\; \forall\PP.\neg A\}\).  Because
+\(\exists\PP.A\) and \(\forall\PP.\neg A\) are NNF complements,
+V1 rejects this type at the Hintikka stage --- the cycle never
+gets a chance to fail V4.  The pure-isolation test removes
+\(\forall\PP.\neg A\), making V1 clean and exposing V4 as the
+sole rejection point.  This matches GPT-5.5's request exactly
+(\texttt{formal\_review\_claude\_latest\_response.tex},
+lines~182--202).
+
+This closes item~3;\@ C6 in the revised obligation table moves
+from \PARTIAL{} to \PASS{} (computational), again qualified by
+bundle reproducibility from commit~\texttt{1f9b3b4}.
+
+%% ====================================================================
+\section{Proof-obligation table}
+%% ====================================================================
+
+For each of the nine obligations from Section~3 of the verification
+recommendations, the table below reports status (proved by GPT-5.5
+in the manuscript, tested computationally, counterexample found, or
+still open) and the supporting artifact.
+
+\begin{center}\small
+\begin{longtable}{p{0.18\linewidth} p{0.40\linewidth} p{0.13\linewidth} p{0.21\linewidth}}
+\toprule
+Obligation & Statement (abridged) & Status & Evidence \\
+\midrule
+\endfirsthead
+\toprule
+Obligation & Statement (abridged) & Status & Evidence \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+RCC5 relation algebra
+  & Manuscript composition table correct over finite-set semantics;
+    \(\PP\circ\PP \subseteq \{\PP\}\), \(\PPI\circ\PPI \subseteq \{\PPI\}\); table
+    stabilizes at \(|U|=5\).
+  & \PASS{} (computational)
+  & WP1: all 25/25 cells match GPT-5.5's table; brute-force
+    enumeration over \(|U| \in \{2,3,4,5\}\). \\
+
+Closure / NNF complement
+  & \(\Cl(C_0)\) closed under NNF complement; in particular
+    \(\overline{\exists R.D} = \forall R.\overline D\).
+  & \PASS{} (manuscript)
+  & Proved in the repaired manuscript (Def 2.1, Lemma 2.3);
+    not separately tested. \\
+
+Witness thinning
+  & \(\mathcal I, a_0 \models C_0\)
+    \(\Rightarrow\) \(\mathcal I\upharpoonright W, a_0 \models C_0\)
+    on the selected-witness substructure.
+  & \PASS{} (manuscript)
+  & Proved in the repaired manuscript (Lemma 3.2);
+    not separately tested. \\
+
+Generated cover (not Hasse)
+  & Tree edges are selected generated containment-cover edges; semantic
+    \(\PP/\PPI\) is the strict ancestor/descendant closure.
+  & \PASS{} (manuscript)
+  & Definition 4.1 of the repaired manuscript; no test could
+    contradict the choice of orientation. \\
+
+Blocking vs.\ semantic equality
+  & \(\blk\) (finite blocking/profile repetition) is kept disjoint
+    from \(\eqrel\) (semantic equality / weak-EQ mate relation).
+  & \PASS{} (computational)
+  & WP2 tests~[1][8] (C\(_{\mathrm{up}}\) self-loop accepted) and
+    WP2 test~[3] (G1 reproducer rejected) jointly confirm the
+    separation. \\
+
+Multiple upward \(\PP\) witnesses
+  & A semantic element may need several incomparable superpart
+    witnesses, discharged via explicit \(\eqrel\)-mate
+    occurrences with different parents.
+  & \PASS{} (computational) + lemma
+  & WP2 tests~[4]--[8] accept \(C_{AB}\) and \(C_{AB}^{\mathrm{inc}}\)
+    with two mate occurrences;\@ test~[5]/[7] rejects the
+    single-parent variants;\@ test~[8] rejects the single-PP-chain
+    variant.  Incomparability proof in
+    \S\ref{sec:CABinc}.  Folds WP4 into WP2. \\
+
+Typed \(\eqrel\) quotient
+  & Quotient by typed-RCC5 \(\eqrel\) congruence preserves frame
+    conditions and concept truth.
+  & \PARTIAL{} (manuscript-only)
+  & Definition 4.3 and Lemma 4.4 of the repaired manuscript; not
+    separately tested.  Standalone lemma deferred to addendum
+    item~5.  L4 in the Lean stack. \\
+
+Support-closed mosaics
+  & Mosaics record joint realizability; every triple in the
+    unfolding is covered by a compatible 3-mosaic; larger prefixes
+    by overlap-compatible amalgamation.
+  & \PARTIAL{} (WP6) + theorem pending
+  & WP6 Tests~A--G:\@ 41/64 triangles consistent and realizable on
+    \(|U|\le 5\);\@ 916/4096 atomic 4-networks consistent and
+    realizable on \(|U|\le 6\);\@ 427/427 overlap-compatible
+    triangle pairs amalgamate.  General patchwork theorem
+    deferred to addendum item~4. \\
+
+Request-closed cycles
+  & Cyclic blocking is sound only if every transitive
+    \(\PP/\PPI\) existential request is fulfilled later on the
+    same finite cycle or via an explicit equality-mate route.
+  & \PASS{} (computational) + isolation
+  & WP2 test~[11] accepts the cycle discharged by self-loop;\@
+    test~[12] rejects the variant with \(\forall\PP.\neg A\)
+    (V1 Hintikka clash);\@ test~[13] rejects the
+    \emph{pure}-request variant (V1 clean, V4 sole rejection)
+    --- see~\S\ref{sec:requestclosure}.  Folds WP5 into WP2. \\
+
+\end{longtable}
+\end{center}
+
+\paragraph{Note on coverage.}
+\emph{``\PASS{} (manuscript)''} means the obligation is proved in
+the repaired manuscript and our verification work did not produce
+an additional executable cross-check.  \emph{``\PASS{}
+(computational)''} means the corresponding finite-counterexample
+search ran and returned no counterexample.  No obligation has
+status \emph{counterexample found}.
+
+%% ====================================================================
+\section{Executable artifacts}
+%% ====================================================================
+
+The Python verification suite is organized as four scripts that
+cover all six work packages.  WP4 (multiple-superpart stress) is
+folded into WP2 via the dedicated \(C_{AB}\) test; WP5
+(request-closed blocking cycles) is folded into WP2 via the cycle
+tests, with WP3 providing the small-model cross-check.  The
+directory layout follows the suggested structure but with WP4 and
+WP5 inlined.
+
+\begin{lstlisting}
+verification/
+  python/
+    rcc5_composition_check.py     WP1
+    certificate_checker.py        WP2 + WP4 + WP5  (vertical fragment)
+    small_model_oracle.py         WP3
+    mosaic_closure_search.py      WP6
+  reports/
+    rcc5_composition_table.txt
+    certificate_checker.txt
+    small_model_oracle.txt
+    mosaic_closure_search.txt
+\end{lstlisting}
+
+\subsection{WP1: RCC5 composition table}
+
+\textbf{Script:}\quad \texttt{rcc5\_composition\_check.py}\\
+\textbf{Method:}\quad Compute the RCC5 composition table by
+exhaustive enumeration over non-empty subsets of a finite universe
+\(U\), using the set-theoretic semantics
+\[
+A\EQ B \iff A=B,\quad
+A\PP B \iff A\subsetneq B,\quad
+A\PPI B \iff B\subsetneq A,
+\]
+\[
+A\DR B \iff A\cap B=\varnothing,\quad
+A\PO B \iff A\cap B\neq\varnothing\wedge A\nsubseteq B\wedge B\nsubseteq A.
+\]
+For each \((R,S)\), compute all \(T\) realized by a witness triple
+\(A R B\), \(B S C\), \(A T C\).  Increase \(|U|\) until the table
+stabilizes.
+
+\textbf{Result:}
+\begin{itemize}[leftmargin=2em]
+  \item Stability across \(|U| \in \{2,3,4,5\}\):\ \(|U|=5\) and
+    \(|U|=4\) give the same signature; the table is therefore
+    stable at \(|U|=5\).
+  \item Per-cell comparison against the manuscript table
+    (lines~99--114 of \texttt{repaired\_split\_forest\_no\_auto\-mata\_proof.tex}):
+    \textbf{0 mismatches out of 25 cells}.
+  \item Comparison against the in-repo quasimodel reasoner's COMP
+    table differs only by the four documented EQ-omission cells
+    \((\DR,\DR),(\PO,\PO),(\PP,\PPI),(\PPI,\PP)\)\,---\,a
+    convention of that reasoner (which models edges between
+    distinct nodes only), not a bug.
+\end{itemize}
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\subsection{WP2 + WP4 + WP5: certificate-soundness fuzzer}
+
+\textbf{Script:}\quad \texttt{certificate\_checker.py}\\
+\textbf{Coverage:}\quad Validity conditions (V1), (V2), (V3),
+(V4), (V5), (V6), (V7), (V8) basic, (V9) Ea/Eb, (V10) of
+Definition~4.5 of the repaired manuscript.  The full (V8)
+triple-support search and the patchwork closure of (V2)/(V6)/(V7)
+are stress-tested separately by WP6.
+
+The fuzzer exercises the three load-bearing repairs:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{G1 toggle (occurrence-level equality).}
+    The self-loop on
+    \(C_{\mathrm{up}} \equiv \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top\)
+    is \emph{accepted} as VALID under occurrence-level equality
+    (tests~[1][2][8][21][23]) and \emph{rejected} as INVALID when
+    two states share an eq-port across a \(\PP\)-edge or across a
+    cycle (test~[3], test~[22] V9.Eb).
+  \item \textbf{G3 toggle (mates with different parents).}
+    The two-mate stress \(C_{AB}\) is \emph{accepted} when the two
+    mate occurrences have distinct selected parents (test~[4]),
+    and \emph{rejected} (V4) when forced onto a single parent
+    chain (test~[5]).  The strengthened variant \(C_{AB}^{\mathrm{inc}}\)
+    (cheap-win~1 from the round-2 review) confirms both verdicts
+    on a concept with no DAG model (tests~[6][7][8]).
+  \item \textbf{G4 toggle (rootless / request-closed).}
+    The self-loop discharging \(\exists\PP.A\) at a state carrying
+    \(A\) is accepted (test~[11]); the same self-loop without a
+    state carrying \(A\) is rejected (test~[12], V1 Hintikka);
+    and the pure request-closure variant (cheap-win~2) where
+    the self-loop carries \(\neg A \sqcap \exists\PP.A\) and lacks
+    an explicit mate is rejected by V4 (test~[13]).
+\end{itemize}
+
+The corpus also contains four \emph{occurrence-level distinction}
+certs (tests~[21]--[24]) and four \emph{DR/PO mosaic} certs
+(tests~[15]--[20]) that exercise V2, V6, V7, V9.Ea, and V9.Eb on
+positive and negative inputs.
+
+\textbf{Per-test summary} (corpus of 24 tests):
+\begin{lstlisting}
+   expected=V  got=V  C_up (PP self-loop, no eq ports)
+   expected=V  got=V  C_up with ports, no eq edges
+   expected=I  got=I  G1 reproducer: PP plus eq across vertical (V9.Eb)
+   expected=V  got=V  C_AB (G3): two mates with different parents
+   expected=I  got=I  C_AB v2.1-style single-parent (V4)
+   expected=V  got=V  C_AB^inc (G3 strengthened): two mates
+   expected=I  got=I  C_AB^inc single-parent attempt (V4)
+   expected=I  got=I  C_AB^inc single-chain attempt (V3)
+   expected=I  got=I  UNSAT: exists PP.A & forall PP.~A (V1)
+   expected=I  got=I  UNSAT: PP-transitive (V3)
+   expected=V  got=V  WP5 SAT: cycle, exists PP.A discharged by loop
+   expected=I  got=I  WP5 UNSAT: cycle carries exists PP.A, no A
+   expected=I  got=I  WP5 pure request-closure: V4 fails, V1 clean
+   expected=V  got=V  SAT: forall PP.A & exists PP.A
+   expected=V  got=V  DR witness: exists DR.A discharged (V6 SAT)
+   expected=V  got=V  PO witness: exists PO.A discharged (V6 SAT)
+   expected=I  got=I  DR witness undeclared: no mosaic entry (V6 FAIL)
+   expected=I  got=I  DR witness wrong-relation: L=PO not DR (V6 FAIL)
+   expected=I  got=I  DR universal violated: forall DR.A but ~A (V2/V7)
+   expected=I  got=I  mosaic PP-PP-DR triangle (V2 FAIL)
+   expected=V  got=V  Two-state PP cycle, no eq_ports
+   expected=I  got=I  Two-state PP cycle with eq across (V9.Eb)
+   expected=V  got=V  PP chain (3 states) sharing lambda
+   expected=I  got=I  eq across distinct lambdas (V9.Ea)
+\end{lstlisting}
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\subsection{WP3: small-model SAT/UNSAT oracle}
+
+\textbf{Script:}\quad \texttt{small\_model\_oracle.py}\\
+\textbf{Method:}\quad Brute-force enumeration of complete RCC5
+Kripke labelings \(\rho : \dom \times \dom \to \{\EQ,\DR,\PO,\PP,\PPI\}\)
+over domain sizes \(n \in \{1,2,3,4\}\) satisfying
+\begin{itemize}[leftmargin=2em]
+  \item (J1)~reflexivity: \(\rho(x,x) = \EQ\);
+  \item (J2)~inverse: \(\rho(y,x) = \mathrm{INV}[\rho(x,y)]\);
+  \item (J3)~triple composition:
+    \(\rho(x,z) \in \mathrm{comp}(\rho(x,y), \rho(y,z))\).
+\end{itemize}
+For each labeling and each atomic assignment, the oracle checks
+concept satisfaction at the declared root.
+
+\paragraph{Scope and intended role.}  The oracle's domain is
+bounded at \(n=4\), so its role in this verification is
+\emph{bounded counterexample search}, not evidence for the
+infinite-unfolding theorem of Section~5 of the repaired
+manuscript.  Concepts such as
+\(\exists\PP.\top \sqcap \forall\PP.\exists\PP.\top\) are
+\emph{intentionally outside} the oracle's reach:\ they admit only
+infinite regular models on the strong-EQ semantics, and asking for
+a finite witness at \(n\le 4\) is a category error.  The oracle
+contributes to the campaign in two ways only:\ (a) it independently
+falsifies any \emph{finite-witnessed} sat claim by exhibiting a
+labeling, and (b) it provides a non-trivial cross-check
+``WP2~\textsc{Invalid} \(+\) WP3~\textsc{Sat}'' diagnostic conflict
+that would flag a bug in the certificate checker.  No instance of
+that conflict has been observed.  Evidence for the unfolding
+theorem itself is delivered \emph{indirectly} via the certificate
+checker (WP2) and the patchwork search (WP6); the oracle does not,
+and cannot, certify regular-tree satisfiability on its own.
+
+\textbf{Result on the WP2 cross-check corpus:}
+\begin{itemize}[leftmargin=2em]
+  \item \(C_{AB}\) is realized at \(n=3\) (consistent with WP2
+    accepting its certificate).
+  \item Infinite-model-only concepts (e.g.\
+    \(C_{\mathrm{up}} \equiv \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top\))
+    correctly report \emph{no finite model up to \(n=4\)}; this is
+    consistent with SAT in an infinite frame and with WP2
+    accepting the certificate (a parent self-loop on the
+    rank-\(d\) quotient unfolds to fresh occurrences).  Per the
+    scope above, this is the expected outcome, not a failure mode.
+  \item Genuine UNSAT concepts (e.g.\
+    \(\exists\PP.A \sqcap \forall\PP.\neg A\)) yield \emph{no
+    model up to \(n=4\)} \emph{and} WP2 rejects the corresponding
+    certificate.
+\end{itemize}
+
+No instance of the diagnostic conflict ``WP2~\textsc{Invalid} \(+\)
+WP3~\textsc{Sat}'' (which would indicate a bug) was observed.
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\subsection{WP6: mosaic closure / patchwork lemma counterexample search}
+
+\textbf{Script:}\quad \texttt{mosaic\_closure\_search.py}\\
+\textbf{Method:}\quad Empirically verify Lemma~4.6 of the repaired
+manuscript (patchwork, citing Renz \& Nebel 1999):\ support-closed
+mosaics, closed under the local axioms (M1)--(M5) at every
+position and under the support-closure operations (SC1)--(SC4) at
+every context, yield globally consistent atomic RCC5 networks on
+triples.
+
+\textbf{Tests run:}
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Test A.}  Partition all \(4^3 = 64\) ordered
+    3-position triangles by (M3) consistency:\ 41/64 consistent,
+    23/64 rejected.  Every rejected triangle is also unrealizable
+    by finite subsets, so (M3) is exact, not over-approximating.
+  \item \textbf{Test B.}  For every (M3)-consistent triangle,
+    realize it by finite subsets of \(\{0,\dots,n-1\}\) for some
+    \(n \le 5\) (Renz--Nebel patchwork base case).  All 41 are
+    realizable.
+  \item \textbf{Test C.}  DR/PO side-witness insertion: for
+    \(\exists R.B\) with \(R \in \{\DR,\PO\}\) and consistent
+    universals at \(p\), \(\tau(q)\) can be chosen satisfying
+    (M4) at both ends.
+  \item \textbf{Test D.}  Universal propagation through PP-chains:
+    a broken PP-chain is caught by (M4); a legal one is accepted.
+  \item \textbf{Test E.}  Sibling branching (\(p\PPI s_1\),
+    \(p\PPI s_2\), \(s_1\PO s_2\), \(s_1\PPI c\)):\ legal
+    \(L(c, s_2)\) candidates are \(\{\DR, \PO, \PP\}\), matching
+    \(\mathrm{comp}(\PP, \PO)\) exactly.
+  \item \textbf{Test F (arity 4, atomic).}  Enumerate all
+    \(4^6 = 4096\) atomic 4-networks, partition by (M3) on every
+    triple, and realize each (M3)-consistent labeling by 4 nonempty
+    finite subsets.  Of the 4096, 916 are (M3)-consistent.  Of these,
+    seven require \(n \ge 6\) (the pattern is three pairwise-\(\DR\)
+    positions each \(\PO\) a fourth: three external loners plus
+    three shared elements in the fourth position, six atoms total).
+    Every (M3)-consistent 4-network is realizable for \(n \le 6\).
+  \item \textbf{Test G (overlap amalgamation, arity~3 + arity~3).}
+    Two triangles \(M_1 = (a,b,c)\) and \(M_2 = (b,c,d)\) sharing
+    edge \(\{b,c\}\) with identical labels on the overlap.  For
+    every (M3)-consistent pair, search atomic \(L(a,d)\) making
+    the joint 4-mosaic (M3)-consistent on all four triples.  All
+    427/427 overlap-compatible triangle pairs amalgamate.  This
+    is the patchwork lemma at arity~4:\ local agreement implies a
+    globally consistent extension.
+\end{itemize}
+
+No counterexample to the patchwork lemma was found.  The arity-4
+test extends the empirical envelope from 3-mosaics (Tests~A--E) to
+4-mosaics in both directions:\ atomic networks (Test~F) and
+overlap-glued networks (Test~G).
+
+\textbf{Verdict:}\quad \PASS{}.
+
+\paragraph{Reproducing the reports.}
+From the repository root,
+\begin{lstlisting}
+cd verification/python
+python3 rcc5_composition_check.py    > ../reports/rcc5_composition_table.txt
+python3 certificate_checker.py       > ../reports/certificate_checker.txt
+python3 small_model_oracle.py        > ../reports/small_model_oracle.txt
+python3 mosaic_closure_search.py     > ../reports/mosaic_closure_search.txt
+\end{lstlisting}
+Each script exits with code \texttt{0} on \PASS{} and \texttt{1} on
+any mismatch or counterexample.  All four current reports end with
+\texttt{VERDICT: PASS}.
+
+%% ====================================================================
+\section{Lean artifacts}
+%% ====================================================================
+
+\textbf{None.}  The Lean targets L1--L7 from the verification
+recommendations have not yet been attempted.  No Lean file exists
+in the project for the repaired proof, and consequently no
+\texttt{sorry}-free formalization can be reported.  In the Lean
+stack the priority order remains as recommended:
+\begin{enumerate}[leftmargin=2em]
+  \item L1 (RCC5 relation algebra) --- the only target whose
+    statement is also covered by an executable check (WP1).
+    Recommended first.
+  \item L3 (witness thinning).
+  \item L4 (typed \(\eqrel\) quotient soundness).
+  \item L6 (request-closed lasso correctness).
+  \item L2 (closure / NNF complement / Hintikka types),
+    L5 (blocking unfolds to fresh), and L7 (mosaic composition
+    lifting) after L1/L3/L4/L6.
+\end{enumerate}
+
+%% ====================================================================
+\section{Counterexamples}
+%% ====================================================================
+
+\textbf{None found.}  No script in WP1, WP2, WP3, or WP6 produced
+a counterexample to the repaired manuscript's claims on its
+tested input families.  In particular:
+\begin{itemize}[leftmargin=2em]
+  \item WP1 found no entry in the 25-cell composition table at
+    which the manuscript differs from the exhaustive enumeration.
+  \item WP2 found no certificate whose validity verdict differs
+    from the expected outcome on the 24-concept corpus, including
+    the three load-bearing G1/G3/G4 reproducers, the two cheap-win
+    cases (strengthened \(C_{AB}^{\mathrm{inc}}\) and pure
+    request-closure), and the four occurrence-level distinction
+    certs.
+  \item WP3 found no instance of the diagnostic conflict ``WP2
+    INVALID + WP3 SAT''.
+  \item WP6 found no triangle for which support-closure rules
+    fail to imply RCC5-realizability on \(|U| \le 5\), no DR/PO
+    side-witness insertion was blocked, no (M3)-consistent
+    4-network was unrealizable for \(n \le 6\), and no
+    overlap-compatible triangle pair failed to amalgamate.
+\end{itemize}
+
+We emphasize that absence of counterexamples in a bounded search is
+not a proof:\ all reported \PASS{} verdicts are evidence, not
+certificates.  Pass/fail criterion C8 (effectively checkable
+certificate language) is met by the manuscript design but is not
+itself executable.
+
+%% ====================================================================
+\section{Remaining gaps}
+%% ====================================================================
+
+The following lemmas remain informal in our verification work, in
+the sense that we have no Lean-checked artifact for them; the
+manuscript itself provides hand proofs.
+
+\begin{itemize}[leftmargin=2em]
+  \item L1.~RCC5 relation algebra.  Computationally validated by
+    WP1; not yet formalized.
+  \item L2.~Closure, NNF complement, Hintikka types.  Definitionally
+    standard; not yet formalized.
+  \item L3.~Witness-generated submodel lemma.  Hand-proved in the
+    manuscript (Lemma~3.2);\ not yet formalized.
+  \item L4.~Typed-\(\eqrel\) quotient soundness.  Hand-proved in
+    the manuscript (Lemma~4.4);\ not yet formalized.
+  \item L5.~Blocking unfolds to fresh.  Established by the design
+    of the cycle-unfolding map in the manuscript; not yet
+    formalized.
+  \item L6.~Request-closed lasso correctness.  Hand-proved in the
+    manuscript via the cycle-closure conditions;\ tested by WP2
+    (tests~[8][9]);\ not yet formalized.
+  \item L7.~Mosaic composition lifting.  Tested by WP6;\ not yet
+    formalized.  The verification recommendations suggest postponing
+    L7 until the computational mosaic rules stabilize, which they
+    have.
+\end{itemize}
+
+Against the pass/fail criteria (C1)--(C8) of the verification
+recommendations, with statuses revised per GPT-5.5's
+\texttt{formal\_review\_claude\_latest\_response.tex}
+(lines~286--294):
+\begin{center}\small
+\begin{tabular}{p{0.05\linewidth} p{0.62\linewidth} p{0.26\linewidth}}
+\toprule
+ID & Criterion & Status \\
+\midrule
+C1 & RCC5 composition table executable and independently validated & \PASS{} (computational, WP1) \\
+C2 & Witness-generated submodel lemma formalized
+     (or proved in formalization-equivalent detail) & \PARTIAL{} (manuscript hand proof) \\
+C3 & Blocking repetition formally separated from semantic \(\EQ\)
+     & \PASS{} (computational, WP2 [3][22]) \\
+C4 & Typed-\(\EQ\) quotient soundness proved as a standalone lemma
+     & \OPEN{} (manuscript only;\@ addendum item~5) \\
+C5 & Multiple upward \(\PP\)-witness examples accepted by certificate
+     rules and sound after quotienting
+     & \PASS{} (computational, WP2 [4]--[8]) +
+       lemma in \S\ref{sec:CABinc} \\
+C6 & Request-closed cycles satisfy all transitive eventualities in
+     the unfolding
+     & \PASS{} (computational, WP2 [11]--[13]) +
+       isolation in \S\ref{sec:requestclosure} \\
+C7 & Mosaics have explicit finite arity bound or finite closure
+     construction
+     & \PARTIAL{} (WP6 arity~3 and~4 with overlap;
+       theorem deferred to addendum item~4) \\
+C8 & Decision procedure enumerates a finite effectively checkable
+     certificate language
+     & \OPEN{} (manuscript only;\@ addendum item~6) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The revised status follows GPT-5.5's third-round verdict that the
+verification campaign is ``promising and substantially strengthened
+verification evidence; no reported bounded counterexample;
+several proof-critical obligations remain open'' (lines~80--85 of
+the third-round review).  C5 and C6 move from v1's bare \PASS{}
+to \PASS{}~+~lemma after the explicit construction
+in~\S\S\ref{sec:CABinc}--\ref{sec:requestclosure}.  C2, C4, C7,
+and C8 are downgraded to \PARTIAL{} or \OPEN{} pending the
+deferred technical addendum (items~4--6 of GPT-5.5's review) and
+the Lean stack (L1--L7).
+
+%% ====================================================================
+\section{Recommended manuscript edits}
+%% ====================================================================
+
+v1 of this response said ``none at this time.''  GPT-5.5's
+third-round review pushes back on that:\@ four manuscript-level
+items remain open, beyond the documentation suggestions retained
+from v1.
+
+\paragraph{Open manuscript items, deferred to the technical addendum.}
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Support-closed mosaic patchwork theorem
+    (addendum item~4).}  Either cite the precise Renz--Nebel
+    (1999) patchwork theorem and verify its hypotheses for atomic
+    RCC5 networks restricted to the certificate-system labelling
+    (typed equality compatibility, vertical \(\PP/\PPI\)
+    preservation, agreement on overlaps), or prove a custom
+    support-closed amalgamation lemma directly.  WP6's arity-3
+    and arity-4 + overlap checks (Tests~A--G) are evidence, not a
+    theorem.
+  \item \textbf{Standalone typed-\(\EQ\) quotient lemma
+    (addendum item~5).}  List all assumptions
+    (\(\eqrel\) is an equivalence;\@ no strict
+    vertical \(\PP/\PPI\) relates \(\eqrel\)-mates;\@ mates have
+    identical types;\@ mate-aware witness obligations are jointly
+    discharged;\@ pair labels to third occurrences are
+    quotient-compatible;\@ sibling mosaics agree on
+    \(\eqrel\)-related endpoints) in one place, and prove that
+    quotienting preserves JEPD, strong-EQ, RCC5 composition, and
+    truth of all closure formulas.
+  \item \textbf{Finite certificate grammar and enumeration bound
+    (addendum item~6).}  Give a compact formal grammar for
+    rank-\(d\) split-forest certificates and a computable bound
+    on:\@ local closure types;\@ equality-mate interface ports;\@
+    selected-parent/-child context slots;\@ request summaries;\@
+    sibling/support mosaics and maximum arity;\@ finite-graph
+    size after blocking.  The coarse bound
+    \(B(C_0) = 2^{2^{p(n)}}\) is stated in the repaired manuscript
+    but not derived; the addendum will derive it.
+  \item \textbf{Composition table line annotation
+    (retained from v1).}  A one-line annotation at the composition
+    table (lines~99--114 of the repaired proof) pointing to the
+    WP1 cross-check.
+\end{enumerate}
+
+\paragraph{Documentation suggestions, retained from v1.}
+\begin{enumerate}[leftmargin=2em, resume]
+  \item \textbf{Folding rationale for WP4/WP5.}  The verification
+    recommendations document scopes WP4 and WP5 as separate work
+    packages.  In the executed verification suite they are folded
+    into WP2 (with WP3 as cross-check), because the
+    multiple-superpart stress (\(C_{AB}\), \(C_{AB}^{\mathrm{inc}}\))
+    and the request-closed cycle tests are most naturally expressed
+    as additional entries in the certificate fuzzer's corpus.
+  \item \textbf{Cycle-close clause for the four EQ-admitting
+    composition pairs.}  Independent of the manuscript itself,
+    Claude's operational cover-tree tableau adopts a strong-EQ
+    cycle-close clause in the role-path compatibility check (Phase
+    5 / condition (CT5)) admitting \(w = g\) when
+    \((\mathrm{INV}[S], \mathrm{INV}[R]) \in
+       \{(\DR,\DR), (\PO,\PO), (\PP,\PPI), (\PPI,\PP)\}\).
+    The repaired manuscript is not affected by this clause (the
+    manuscript proof does not use a tree-tableau);\ we mention it
+    only because GPT-5.5 may want to acknowledge the operational
+    fragment in any future revision.
+\end{enumerate}
+
+%% ====================================================================
+\section{Surrounding alignment work}
+%% ====================================================================
+
+For situational awareness, since the round-2 review was issued the
+following alignment work has been done in the project:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{papers/overview\_ALCIRCC5.tex} (overview paper)
+    and \texttt{papers/dl2026\_abstract\_ALCIRCC5.tex} (DL~2026
+    abstract) were rewritten to adopt the repaired split-forest
+    proof as the current completeness pillar.  The earlier
+    completeness-extraction papers
+    (\texttt{papers/completeness\_extraction\_ALCIRCC5.tex}~=~v1
+    and
+    \texttt{papers/completeness\_extraction\_ALCIRCC5\_v2.tex}~=~v2.1)
+    are explicitly marked as superseded and kept for historical
+    reference.  No claim from those papers is propagated forward.
+  \item The v1 split-forest paper
+    (\texttt{papers/trees/sibling\_interface\_descriptors\_ALCIRCC5\_completed\_eqsync\_canonical\_needpatched.tex})
+    is retained as the source of the soundness direction
+    (Thms~1.17--1.19), with a delta paper
+    (\texttt{papers/sibling\_interface\_descriptors\_ALCIRCC5\_v2.tex})
+    fixing the surrounding Def~1.5, Def~1.7, and Thm~1.20-sketch
+    via the corrected generated-cover statements.  The proofs of
+    1.17--1.19 carry over verbatim.
+  \item The Python quasimodel reasoner
+    (\texttt{src/alcircc5\_reasoner.py}) is retained only as a
+    cross-validation oracle.  It is known-incomplete on
+    cyclic-via-symmetric-role concepts (PO-loop, DR-loop, PP-PPI
+    cycle, PPI-PP cycle):\ SAT answers are trustworthy, UNSAT
+    answers are sound only for tree-model concepts.
+  \item No complexity claim above doubly-exponential
+    \(B(C_0) = 2^{2^{p(n)}}\) is asserted for the full logic.  The
+    coarse manuscript bound is preserved.  No EXPTIME upper bound is
+    claimed.
+\end{itemize}
+
+%% ====================================================================
+\section*{Bottom line}
+%% ====================================================================
+
+The Python WP1--WP6 verification campaign reports \PASS{} on
+every script;\@ no counterexample to the repaired split-forest
+decidability proof was found.  The 24-test WP2 corpus and the
+arity-4 WP6 tests are reproducible from commit~\texttt{1f9b3b4}
+at \url{https://github.com/lambdamikel/alcircc5}.  The
+multiple-\(\PP\)-witness obligation (C5) is closed by the
+explicit \(C_{AB}^{\mathrm{inc}}\) formula and the incomparability
+lemma in~\S\ref{sec:CABinc};\@ the request-closure obligation
+(C6) is closed by the pure-isolation test in~\S\ref{sec:requestclosure}.
+
+Three obligations remain open and are deferred to the technical
+addendum:\@ the support-closed mosaic patchwork theorem
+(C7;\@ addendum item~4), the standalone typed-\(\EQ\) quotient
+lemma (C4;\@ addendum item~5), and the finite certificate grammar
+with derived enumeration bound (C8;\@ addendum item~6).  Beyond
+the addendum, full publication-grade closure requires the Lean
+L1--L7 formalisation;\@ the priority order on that stack remains
+L1, L3, L4, L6, then L2/L5/L7.
+
+The revised verdict, following GPT-5.5's third-round review
+(lines~80--85), is:\@ \emph{promising and substantially
+strengthened verification evidence; no reported bounded
+counterexample; several proof-critical obligations remain open
+until the typed-equality quotient, request-closed lasso,
+support-closed mosaic patchwork, and finite certificate
+enumeration lemmas are made explicit.}
+
+\end{document}

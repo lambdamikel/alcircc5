@@ -4661,3 +4661,60 @@ Final status: cert checker 24/24 PASS, mosaic search PASS in 0.7s,
 response PDF rebuilds cleanly (9 pages).  All four non-LEAN gaps
 from the GPT-5.5 verification.zip review are now closed.  The Lean
 stack (L1--L7) remains the only open verification work.
+
+---
+
+## 2026-05-14: GPT-5.5 third review — verdict moderated; v2 response
+
+GPT-5.5 reviewed the v1 verification response and replied with
+`formal_review_claude_latest_response` (May 14, 2026), revising
+the verdict from "conditionally accepted, pending Lean
+formalization" to "promising and substantially strengthened
+verification evidence; ... several proof-critical obligations
+remain open."  Six concrete requests:
+
+1. **Reproducibility.**  The verification.zip accompanying v1
+   was still the 10-test version, not the 24-test version
+   v1 described.  GPT-5.5 cannot validate any of the new claims
+   without the matching code.
+2. **C_AB^inc formula not specified.**  v1 mentioned the
+   strengthened formula but did not state it in NNF and did not
+   prove single-parent infeasibility.
+3. **Pure request-closure not isolated.**  v1's request-cycle
+   test description did not make clear that V1 is locally clean
+   and V4 is the sole rejection point.
+4. **Mosaic patchwork theorem.**  WP6 Tests A--G are evidence,
+   not a theorem.
+5. **Standalone typed-EQ quotient lemma.**  Lemma 4.4 of the
+   repaired proof should be restated with all assumptions
+   listed in one place.
+6. **Finite certificate grammar + B(C_0) bound derivation.**
+
+Wrote `claude_verification_response_v2.tex` (14 pages) closing
+items 1--3:
+
+- **§3.1 Reproducibility** points to commit `1f9b3b4` with
+  explicit file paths to all four scripts and their reports.
+- **§3.2 C_AB^inc** states the NNF formula explicitly:
+  `∃PP.A ⊓ ∃PP.B ⊓ ∀PP((¬A ⊔ (¬B ⊓ ∀PP.¬B ⊓ ∀PPI.¬B)) ⊓
+                       (¬B ⊔ (¬A ⊓ ∀PP.¬A ⊓ ∀PPI.¬A)))`,
+  proves the incomparability lemma (any A/B-superpart witnesses
+  must be RCC5-incomparable, i.e., {DR, PO}) by case analysis on
+  the inner universal, and derives single-parent infeasibility
+  (any total PP-order forces {PP, PPI, EQ}, contradicting
+  incomparability).
+- **§3.3 Request-closure isolation** explains that V4 is the
+  proof's eventuality-discharge condition (Def 4.5), and the
+  pure test `cert_WP5_pure_request_unfulfilled` carries
+  `¬A ⊓ ∃PP.A` only (no ∀PP.¬A, so V1 stays clean), with
+  reach_PP(s0)={s0} and λ(s0)={¬A, ∃PP.A} so V4 rejects with
+  no mate-route entanglement.
+
+Obligation table downgraded: C5 and C6 keep PASS but now cite
+the explicit lemmas; C2 and C4 reclassified as PARTIAL /
+manuscript-only; C7 reclassified as PARTIAL (WP6 evidence +
+theorem pending); C8 reclassified as OPEN.
+
+Items 4--6 deferred to a technical addendum (mosaic patchwork
+theorem, standalone typed-EQ quotient lemma, finite certificate
+grammar + B(C_0) bound derivation).
