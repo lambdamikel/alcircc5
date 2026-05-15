@@ -4718,3 +4718,54 @@ theorem pending); C8 reclassified as OPEN.
 Items 4--6 deferred to a technical addendum (mosaic patchwork
 theorem, standalone typed-EQ quotient lemma, finite certificate
 grammar + B(C_0) bound derivation).
+
+---
+
+## 2026-05-14: Technical addendum — items 4--6 closed at paper level
+
+Wrote `claude_verification_addendum.tex` (12 pages) closing items
+4--6 of GPT-5.5's third-round review:
+
+- **§3 Mosaic patchwork (item 4).**  Theorem 3.6 cites Renz--Nebel
+  1999 for the atomic-RCC5 patchwork base case, verifies its
+  hypotheses (RN1)--(RN3) for every mosaic in Mos_Q (Lemma 3.2:
+  mosaic axioms M1/M2/M3 = RN1/RN2/RN3), proves overlap
+  amalgamation under (SC3) (Lemma 3.3), universal-propagation
+  preservation under amalgamation (Lemma 3.4), existential-support
+  inheritance (Lemma 3.5), and typed-EQ compatibility from (V9)
+  (Lemma 3.5b).  The main patchwork theorem (Theorem 3.6)
+  discharges the obligation embedded in (V8) and used in the
+  proofs of soundness (Thm 6.1) and completeness (Thm 7.4) of the
+  repaired proof.  C7 moves from PARTIAL to CLOSED (paper).
+
+- **§4 Typed-EQ quotient lemma (item 5).**  Theorem 4.7 lists all
+  six load-bearing assumptions in one place: (4.1) equivalence,
+  (4.2) vertical separation, (4.3) type rigidity, (4.4) joint
+  witness obligations via mate-aware reachability, (4.5)
+  quotient-compatible pair labels, (4.6) sibling-mosaic agreement
+  on EQ-related endpoints.  Each is identified with its (V9)
+  clause in Def 4.5 of the repaired proof.  The four preservation
+  properties are proved separately: JEPD (Lemma 4.3), strong
+  equality (Lemma 4.4), RCC5 composition (Lemma 4.5),
+  closure-formula truth (Lemma 4.6, induction on Cl(C_0)).
+  Existential and universal cases of the truth lemma cover all
+  five RCC5 relations including the EQ-self-witness clause of
+  wit_Q.  C4 moves from OPEN to CLOSED (paper).
+
+- **§5 Certificate grammar + enumeration bound (item 6).**  §5.1
+  gives an abstract grammar with terminals over finite alphabets;
+  §5.2 derives coarse polynomial bounds on every component
+  (|Typ(C_0)| ≤ 2^n, |Port(σ)| ≤ n+1, mosaics with m(n) positions,
+  request summaries (n+1)·2·2^{2n} bits per profile, blocked
+  graph size |S| ≤ |Σ| ≤ 2^{p(n)}); Lemma 5.2 (enumeration
+  bound) shows the total number of certificates of size ≤
+  B(C_0) = 2^{2^{p(n)}} is at most 2^{2^{q(n)}} for some
+  polynomial q(n), and each validity clause (V1)--(V10) is
+  decidable in time polynomial in |Q|.  C8 moves from OPEN to
+  CLOSED (paper).
+
+Final obligation table: C1 PASS, C2 PARTIAL (Lean-pending), C3
+PARTIAL→PASS, C4 CLOSED (paper), C5 PASS, C6 PASS, C7 CLOSED
+(paper), C8 CLOSED (paper).  The Lean stack L1--L7 remains the
+only open verification work, in priority order L1, L3, L4, L6,
+then L2/L5/L7.

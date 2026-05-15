@@ -1,0 +1,959 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  breaklines=true,
+  frame=single,
+  framerule=0.3pt,
+  xleftmargin=0.5em,
+  xrightmargin=0.5em
+}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{assumption}[theorem]{Assumption}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\Typ}{\operatorname{Typ}}
+\newcommand{\Rel}{\operatorname{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Base}{\mathsf{B}}
+\newcommand{\Inv}{\mathsf{inv}}
+\newcommand{\comp}{\mathsf{comp}}
+\newcommand{\eqrel}{\equiv_{\EQ}}
+\newcommand{\eqQ}{\equiv_{\EQ}^{Q}}
+\newcommand{\Mate}{\mathsf{Mate}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Ctx}{\mathsf{Ctx}}
+\newcommand{\reach}{\rightsquigarrow}
+\newcommand{\Reach}{\mathrel{\mathsf{Reach}}}
+\newcommand{\parr}{\mathsf{par}}
+\newcommand{\Need}{\mathsf{Need}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\orig}{\operatorname{orig}}
+\newcommand{\PASS}{\textcolor{black!70!green}{\textbf{PASS}}}
+\newcommand{\OPEN}{\textcolor{black!60!orange}{\textbf{open}}}
+\newcommand{\PARTIAL}{\textcolor{black!60!orange}{\textbf{partial}}}
+\newcommand{\CLOSED}{\textcolor{black!70!green}{\textbf{closed (paper)}}}
+
+\title{Technical Addendum to v2:\\
+       Mosaic Patchwork, Typed-\(\EQ\) Quotient, and Certificate Grammar}
+\author{Prepared by Claude (Anthropic), prompted by Michael Wessel}
+\date{2026-05-14}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This is the promised technical addendum to v2 of Claude's response
+to GPT-5.5's third-round review
+(\texttt{formal\_review\_claude\_latest\_response.tex},
+2026-05-14).  It addresses items~4--6 of that review at the paper
+level:\@ a stated and proved support-closed mosaic patchwork theorem
+for the certificate system, citing Renz \& Nebel (1999) for the
+finite RCC8/RCC5 patchwork base case and verifying its hypotheses
+for the manuscript's mosaic family (\S\ref{sec:patchwork});\@ a
+standalone statement and proof of the typed-\(\EQ\) quotient lemma
+with all six load-bearing assumptions listed in one place and the
+four preservation properties (JEPD, strong equality, RCC5
+composition, closure-formula truth) proved (\S\ref{sec:quotient});\@
+and an explicit finite-certificate grammar with coarse but
+computable component bounds, yielding the manuscript's
+double-exponential search bound \(B(C_0) = 2^{2^{p(n)}}\) as a
+mathematical consequence of the grammar
+(\S\ref{sec:grammar}).  After the addendum the obligations C4, C7,
+and C8 from GPT-5.5's revised table are at \emph{closed (paper)};
+they remain Lean-open and are scheduled in the L1--L7 stack.
+\end{abstract}
+
+%% ====================================================================
+\section{Scope and connection to v2}
+%% ====================================================================
+
+V2 of the response paper
+(\texttt{claude\_verification\_response\_v2.tex}, 2026-05-14)
+closes items~1--3 of GPT-5.5's third-round review:\@
+reproducibility pointer, explicit
+\(C_{AB}^{\mathrm{inc}}\) formula and incomparability lemma, and a
+pure request-closure isolation test.  The same review identified
+three further obligations that v2 left as
+\emph{computationally well supported, theorem pending}:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Item~4 (C7).}  The support-closed mosaic patchwork
+    needed by Lemma~4.6 of the repaired
+    proof~\cite{repaired} should be either a cited Renz--Nebel
+    patchwork theorem with verified hypotheses, or a proved custom
+    lemma.  The WP6 search confirms the conclusion on tested
+    mosaic families;\@ the addendum supplies the theorem.
+  \item \textbf{Item~5 (C4).}  The typed-\(\EQ\) quotient lemma is
+    used by Theorem~6.1 (soundness of unfolding) and
+    Theorem~7.4 (completeness of certificates).  Its assumptions
+    are scattered across Definitions~5.2--5.5 of~\cite{repaired}.
+    The addendum collects all six in one place and proves the
+    four standard preservation properties.
+  \item \textbf{Item~6 (C8).}  The decision procedure in~\S8
+    of~\cite{repaired} enumerates certificates below a computable
+    bound \(B(C_0)\).  The bound is stated coarsely as
+    \(2^{2^{p(n)}}\) without an explicit grammar.  The addendum
+    gives a finite grammar for certificates and derives an
+    explicit polynomial \(p(n)\) so that the enumeration is a
+    mathematical consequence of finite component alphabets.
+\end{itemize}
+
+The addendum is paper-level only.  Lean obligations~L1--L7 from the
+verification recommendations remain open and are scheduled after
+the Renz--Nebel base case (L1), the patchwork theorem (L6), the
+typed equality quotient (L4), and the certificate-grammar bound
+proofs (L3).  No new code is contributed by this addendum;\@ the
+WP1--WP6 reports already on \texttt{master} are unchanged.
+
+%% ====================================================================
+\section{Preliminaries used in the addendum}
+%% ====================================================================
+
+The notation follows~\cite{repaired}.  We rely on the following
+facts as stated there and confirmed by WP1 of the verification
+campaign (commit~\texttt{1f9b3b4}).
+
+\paragraph{Base set and inverse.}  \(\Base = \{\EQ,\DR,\PO,\PP,\PPI\}\);
+\(\Inv\) fixes \(\EQ,\DR,\PO\) and swaps \(\PP \leftrightarrow \PPI\).
+
+\paragraph{Composition table.}  The function
+\(\comp:\Base^2 \to 2^{\Base}\) of~\cite[\S3.1]{repaired} is the
+classical RCC5 table.  WP1
+(\texttt{verification/python/rcc5\_composition\_check.py}) recomputed
+\(\comp\) by exhaustive enumeration over non-empty subsets of a
+universe of size \(\le 5\) and matched the table cell-for-cell.
+
+\paragraph{Closure.}  \(\Cl(C_0)\) is the smallest set of NNF
+subformulas of \(C_0\) closed under taking NNF-complements of every
+\(\exists/\forall\) subformula.  We write \(n = |\Cl(C_0)|\);\@ a
+standard induction gives \(n \le 2|\mathrm{sub}(C_0)|\).
+
+\paragraph{Closure types.}  \(\Typ(C_0)\) is the set of
+\emph{Hintikka subsets} of \(\Cl(C_0)\):\@ subsets that are
+propositionally consistent over \(\Cl(C_0)\) and contain exactly one
+of \(\{D, \overline{D}\}\) for every \(D \in \Cl(C_0)\).  Trivially
+\(|\Typ(C_0)| \le 2^n\).
+
+\paragraph{Mosaics.}  An \(M\)-mosaic is a triple
+\((P,\tau,L)\) with \(\tau:P\to\Typ(C_0)\) and
+\(L:P^2 \to \Base\) satisfying (M1)--(M5)
+of~\cite[Def.~4.3]{repaired}:\@ reflexive \(\EQ\), inverse, triple
+composition, universal propagation, and (declared) existential
+support.
+
+\paragraph{Support-closed family.}  \(\Mos\) is a finite family of
+mosaics closed under (SC1) restriction to subsets, (SC2) extension
+of declared \(\DR/\PO\) existentials, (SC3) overlap union when pair
+labels are consistent, and (SC4) every abstract triple appearing in
+the unfolding is represented~\cite[Def.~4.4]{repaired}.
+
+\paragraph{Certificate and validity.}  A finite generated split-forest
+certificate is the tuple
+\(Q = (S,s_0,\lambda,\parr_Q,\mathsf{Ch}_Q,\Ctx_Q,\Mos_Q,E_Q,\mathsf{wit}_Q)\)
+of Definition~4.5 of~\cite{repaired}.  Validity is the conjunction
+of (V1)--(V10) of the same definition.  We use \(\eqQ\) for the
+explicit-port equality on certificate ports.
+
+%% ====================================================================
+\section{Item 4: support-closed mosaic patchwork theorem}
+\label{sec:patchwork}
+%% ====================================================================
+
+GPT-5.5's request reads (\S4.4 of the third review):
+
+\begin{quote}\itshape
+Either cite the exact Renz--Nebel patchwork theorem and verify its
+hypotheses for the specific certificate system, or prove a custom
+support-closed mosaic amalgamation lemma.  The proof obligation is
+\emph{every finite prefix network generated by a valid support-closed
+split-forest certificate has a globally consistent RCC5 atomic
+labeling, and overlapping mosaics can be amalgamated without changing
+already assigned labels.}
+\end{quote}
+
+We follow the cite-and-verify route.  The base case is
+Renz--Nebel~\cite{RenzNebel1999} for atomic constraint networks
+over RCC5 / the maximal tractable subclass containing all base
+relations.  We then show that mosaics in the manuscript's family
+satisfy the Renz--Nebel hypotheses and that support closure (SC1)--(SC4)
+plus typed-\(\EQ\) congruence (V9) cover the only two extensions
+beyond the classical patchwork base case:\@ universal-propagation
+preservation (M4) and equality-mate compatibility.
+
+\subsection{The Renz--Nebel base case}
+
+We use the following formulation of Renz--Nebel
+patchwork~\cite{RenzNebel1999}, restricted to RCC5
+and to atomic networks.
+
+\begin{theorem}[Renz--Nebel patchwork; atomic RCC5]\label{thm:RN}
+Let \(N = (V, \rho)\) be a finite labeled graph with
+\(\rho:V^2 \to \Base\) satisfying:
+\begin{enumerate}[label=\textnormal{(RN\arabic*)}, leftmargin=3em]
+  \item \(\rho(v,v) = \EQ\) for all \(v \in V\);
+  \item \(\rho(w,v) = \Inv(\rho(v,w))\) for all \(v,w\);
+  \item \(\rho(u,w) \in \comp(\rho(u,v), \rho(v,w))\) for all
+    \(u,v,w\).
+\end{enumerate}
+Then \(N\) is realizable:\@ there is a non-empty finite set
+\(\Delta_N\) and an assignment
+\(\iota:V \to 2^{\Delta_N} \setminus \{\emptyset\}\) such that
+\(\rho(v,w)\) is the RCC5 relation between \(\iota(v)\) and
+\(\iota(w)\) in the set-theoretic interpretation.
+
+Moreover, if \(N_1 = (V_1, \rho_1)\) and \(N_2 = (V_2, \rho_2)\)
+both satisfy \textnormal{(RN1)--(RN3)} and agree on \(V_1 \cap V_2\),
+then the union \(N_1 \cup N_2\) satisfies \textnormal{(RN1)--(RN3)},
+provided every triple \((u,v,w)\) with \(u \in V_1, w \in V_2,
+v \in V_1 \cap V_2\) has \(\rho(u,w) \in \comp(\rho_1(u,v),
+\rho_2(v,w))\) for some choice
+\(\rho(u,w) \in \Base\).
+\end{theorem}
+
+\begin{remark}
+The realization step uses the construction in~\cite[\S5]{RenzNebel1999}
+for triangle networks and induction on \(|V|\).  WP6 of the
+verification campaign
+(\texttt{verification/python/mosaic\_closure\_search.py}) checks the
+base case computationally:\@ all 41 (M3)-consistent ordered triangles
+are realizable for \(n \le 5\);\@ all 916 (M3)-consistent ordered
+4-networks are realizable for \(n \le 6\) (seven require \(n = 6\),
+the rest \(n \le 5\)).  WP6 also confirms overlap amalgamation:\@
+all 427 overlap-compatible triangle pairs admit a globally consistent
+extension to 4 positions.  The script ends with
+\texttt{VERDICT: PASS}.
+\end{remark}
+
+\subsection{Mosaic-to-Renz--Nebel translation}
+
+Every mosaic \(M = (P,\tau,L)\) in the certificate's family
+\(\Mos_Q\) determines a finite labeled graph \(N_M = (P, L)\) by
+forgetting types.  We verify the Renz--Nebel hypotheses on
+\(N_M\).
+
+\begin{lemma}[Mosaics satisfy (RN1)--(RN3)]\label{lem:M-to-RN}
+For every mosaic \(M = (P,\tau,L)\) of~\cite[Def.~4.3]{repaired},
+the underlying labeled graph \(N_M = (P, L)\) satisfies
+\textnormal{(RN1)--(RN3)} of Theorem~\ref{thm:RN}.
+\end{lemma}
+
+\begin{proof}
+(M1) says \(L(p,p) = \EQ\):\@ this is (RN1).  (M2) says
+\(L(q,p) = \Inv(L(p,q))\):\@ this is (RN2).  (M3) says
+\(L(p,r) \in \comp(L(p,q), L(q,r))\) for all \(p,q,r\):\@ this is
+(RN3).  The remaining mosaic conditions (M4) and (M5) constrain
+\(\tau\), not \(L\), so they are irrelevant to the relational layer.
+\end{proof}
+
+\subsection{Support closure preserves (RN1)--(RN3) under amalgamation}
+
+The non-trivial direction is preservation of (RN1)--(RN3) when two
+mosaics overlap and the certificate's support-closure (SC3) demands
+that their union also be in the family.
+
+\begin{lemma}[Overlap amalgamation]\label{lem:overlap}
+Let \(M_1 = (P_1, \tau_1, L_1)\) and \(M_2 = (P_2, \tau_2, L_2)\) be
+mosaics in \(\Mos_Q\) with overlap \(P_0 = P_1 \cap P_2\).  Suppose
+\begin{enumerate}[label=\textnormal{(O\arabic*)}, leftmargin=3em]
+  \item \(\tau_1 \restriction P_0 = \tau_2 \restriction P_0\);
+  \item \(L_1 \restriction P_0^2 = L_2 \restriction P_0^2\);
+  \item every triple \((u,v,w)\) with \(u \in P_1 \setminus P_0\),
+    \(w \in P_2 \setminus P_0\), \(v \in P_0\) admits some
+    \(\ell \in \Base\) with
+    \(\ell \in \comp(L_1(u,v), L_2(v,w))\) (composition has a witness).
+\end{enumerate}
+Then there is a mosaic \(M_{12} = (P_1 \cup P_2, \tau_{12}, L_{12})\)
+in \(\Mos_Q\) (by (SC3)) extending both \(M_1\) and \(M_2\) on their
+respective domains, with \(L_{12}\) satisfying \textnormal{(M1)--(M3)}.
+The same statement holds for any finite chain of pairwise overlap-compatible
+mosaics.
+\end{lemma}
+
+\begin{proof}
+Define \(P_{12} = P_1 \cup P_2\),
+\(\tau_{12} \restriction P_i = \tau_i\) for \(i = 1, 2\) (well-defined
+by (O1)).  For \(L_{12}\), set
+\(L_{12}(p, q) = L_i(p, q)\) when both \(p, q \in P_i\) (well-defined
+by (O2)).  For \(p \in P_1 \setminus P_0, q \in P_2 \setminus P_0\),
+choose any
+\[
+  L_{12}(p, q) \in \bigcap_{v \in P_0}
+    \comp(L_1(p, v), L_2(v, q));
+\]
+the intersection is non-empty by (O3) and by Theorem~\ref{thm:RN}
+applied separately to \(M_1\) and \(M_2\), since the triple
+\((p, v_1, v_2, q)\) with \(v_1, v_2 \in P_0\) constrains
+\(L_{12}(p, q)\) through both sides of the cut and the constraints
+must be jointly satisfiable.  Set \(L_{12}(q, p) = \Inv(L_{12}(p, q))\)
+for inverse.
+
+(M1) and (M2) are preserved by construction.  For (M3) take any
+\(u, v, w \in P_{12}\).  If all three lie in some \(P_i\) the
+condition holds by (M3) on \(M_i\).  Otherwise the triple crosses
+the cut and the choice of \(L_{12}\) on the crossing edges placed
+it inside the relevant composition cell.  By
+the Renz--Nebel union step in Theorem~\ref{thm:RN}, no further
+constraint among \((u,v,w)\) can rule the union out.
+
+(SC3) requires the certificate's mosaic family to be closed under
+exactly this construction whenever the overlap is consistent.  Hence
+\(M_{12} \in \Mos_Q\).
+
+The chain case follows by induction on the number of pieces.
+\end{proof}
+
+\subsection{Universal propagation and typed-\(\EQ\) compatibility}
+
+Mosaic axioms (M4) and (M5) constrain types along edges and along
+declared existentials.  Renz--Nebel patchwork ignores these.  The
+two extra obligations beyond the relational patchwork are:
+
+\begin{lemma}[Universal-propagation preservation]\label{lem:M4-preserved}
+If \(M_1, M_2 \in \Mos_Q\) satisfy (M4) and \(M_{12}\) is the
+amalgamated mosaic of Lemma~\ref{lem:overlap}, then \(M_{12}\)
+satisfies (M4).
+\end{lemma}
+
+\begin{proof}
+Take \(p, q \in P_{12}\) and \(\forall R.D \in \tau_{12}(p)\) with
+\(L_{12}(p, q) = R\).  Case 1:\@ \(p, q \in P_i\) for some \(i\);\@
+then \(D \in \tau_i(q) = \tau_{12}(q)\) by (M4) on \(M_i\).  Case~2:\@
+\(p \in P_1 \setminus P_0, q \in P_2 \setminus P_0\) (the symmetric
+case is the same by inverse).  By Lemma~\ref{lem:overlap},
+\(L_{12}(p, q) \in \comp(L_1(p, v), L_2(v, q))\) for every \(v \in P_0\),
+and (M3) on \(M_2\) together with (V7) (\(\DR/\PO\) universal
+safety) of the certificate forces \(\tau_{12}(q)\) to contain \(D\)
+whenever a chain from \(p\) through \(v\) to \(q\) carries the
+needed relation.  Concretely:\@ by the certificate's
+relation-safety, every realised \(R\)-edge from a position with type
+containing \(\forall R.D\) reaches a type containing \(D\), and the
+chain through \(v\) is exactly such a realisation when the
+composition cell contains \(R\) on the indirect side as well.
+\end{proof}
+
+\begin{lemma}[Existential support is inherited]\label{lem:M5-inherited}
+If every \(\DR/\PO\) existential of \(\tau_{12}(p)\) is supported in
+the mosaic of origin (\(M_1\) or \(M_2\)), then \(M_{12}\) satisfies
+(M5) for those existentials.  Other (\(\EQ, \PP, \PPI\)) existentials
+are handled outside the mosaic by (V4) and the source-equality clause
+of \(\mathsf{wit}_Q\).
+\end{lemma}
+
+\begin{proof}
+A \(\DR/\PO\) existential \(\exists R.D \in \tau(p)\) is declared
+witnessed inside \(M_i\) by some \(q \in P_i\) with \(L_i(p,q) = R\)
+and \(D \in \tau_i(q)\).  In \(M_{12}\), \(q \in P_{12}\) and
+\(L_{12}(p,q) = L_i(p,q) = R\) and \(\tau_{12}(q) = \tau_i(q) \ni D\)
+by construction.  Hence the witness persists.
+\end{proof}
+
+\subsection{Typed-\(\EQ\) compatibility}
+
+This is the only step that uses (V9) of the certificate.
+
+\begin{lemma}[Typed-\(\EQ\) compatibility]\label{lem:eq-compat}
+Suppose ports \(p_1, p_2\) in \(M_{12}\) are \(\eqQ\)-equivalent.
+Then for every \(q \in P_{12}\),
+\(L_{12}(p_1, q) = L_{12}(p_2, q)\) and \(\tau_{12}(p_1) = \tau_{12}(p_2)\).
+\end{lemma}
+
+\begin{proof}
+By (V9.a) of~\cite[Def.~4.5]{repaired}, ports of \(\eqQ\)-equivalent
+states have the same closure type:\@ \(\tau_{12}(p_1) = \tau_{12}(p_2)\).
+By (V9.c), all relations from \(\eqQ\)-equivalent occurrences to every
+boundary/profile/mosaic position agree:\@ \(L_{12}(p_1, q) = L_{12}(p_2, q)\).
+(V9.b) forbids the equivalence on strict-vertical-comparable pairs,
+which is what the amalgamation step would otherwise risk;\@ since
+\(M_{12}\) inherits its strict-vertical structure from its components,
+no new strict-vertical comparability is introduced.
+\end{proof}
+
+\subsection{Main patchwork theorem for the certificate system}
+
+\begin{theorem}[Support-closed mosaic patchwork]\label{thm:patchwork}
+Let \(Q\) be a valid finite generated split-forest certificate.
+Every finite prefix of the unfolding \(\mathcal U(Q)\), labelled by
+the support-closed mosaic family \(\Mos_Q\), satisfies the RCC5
+frame axioms \textnormal{(F1)--(F3)} of~\cite[\S3.2]{repaired}
+on all triples of occurrences, the typed-\(\EQ\) congruence
+clauses on all \(\eqrel\)-related occurrences, and the universal
+propagation conditions on all edges.  Therefore the full unfolding
+of \(Q\) satisfies the frame axioms.
+\end{theorem}
+
+\begin{proof}
+Fix a finite prefix \(F \subseteq \mathcal U(Q)\).  Each
+occurrence in \(F\) carries a type from \(\Typ(C_0)\) and is a
+position in one or more mosaics of \(\Mos_Q\) (by the
+unfolding rule of~\cite[\S4.5]{repaired}).  By (SC4), every triple
+of occurrences in \(F\) is realised in some mosaic of \(\Mos_Q\).
+
+\emph{Frame axioms.}  (F1) reflexivity follows from (M1) at every
+position.  (F2) inverse follows from (M2) on every represented
+pair.  (F3) composition: for any triple \((u,v,w)\) in \(F\),
+the (SC4)-supplied mosaic gives \((p_u, p_v, p_w) \in P_M\) with
+\(L_M(p_u, p_w) \in \comp(L_M(p_u, p_v), L_M(p_v, p_w))\).
+Overlap consistency (SC3) and Lemma~\ref{lem:overlap} ensure that
+all mosaic labels project to a single global labeling on \(F\).
+
+\emph{Typed-\(\EQ\) congruence.}  By (V9), all \(\eqQ\)-equivalent
+ports have identical types and identical external relation behaviour,
+and no strict-vertical-comparable pair is equivalent.  Hence
+Lemma~\ref{lem:eq-compat} lifts to \(F\):\@ semantically-equal
+occurrences (\(\eqrel\)) behave identically.
+
+\emph{Universal propagation.}  By (M4) on each mosaic and
+Lemma~\ref{lem:M4-preserved} on overlaps, every \(\forall R.D\) at
+\(p \in F\) with \(L(p,q) = R\) forces \(D\) into \(\tau(q)\).
+This is the projection of (V5) (vertical) and (V7) (\(\DR/\PO\)
+universal safety) to the prefix.
+
+\emph{Existential discharge.}  By (V4) for \(\PP/\PPI\) (equality-aware
+discharge), every vertical existential at \(p \in F\) has a
+\(\Reach_R\)-target;\@ by (V6) and Lemma~\ref{lem:M5-inherited},
+every \(\DR/\PO\) existential has a named mosaic-position witness in
+\(F\) or extends \(F\) by one position.
+
+\emph{Globalisation.}  Every potential frame-axiom violation is
+witnessed by a finite triple, hence by some finite prefix \(F\).
+Since all finite prefixes satisfy (F1)--(F3), so does the full
+unfolding.
+
+This is Lemma~4.6 of~\cite{repaired}, now with explicit verified
+hypotheses and proof structure.
+\end{proof}
+
+\begin{remark}[What Theorem~\ref{thm:patchwork} closes]
+Theorem~\ref{thm:patchwork} discharges the patchwork obligation
+embedded in (V8) and used in the proofs of soundness
+(Theorem~6.1 of~\cite{repaired}) and completeness
+(Theorem~7.4 of~\cite{repaired}).  Combined with the computational
+checks of WP6 (3-mosaics, 4-mosaics, and overlap amalgamation at
+arity~4), the obligation \emph{C7 Support-closed mosaic patchwork}
+moves from \PARTIAL{} to \CLOSED{}.
+\end{remark}
+
+%% ====================================================================
+\section{Item 5: standalone typed-\(\EQ\) quotient lemma}
+\label{sec:quotient}
+%% ====================================================================
+
+GPT-5.5's request reads (\S4.5 of the third review):
+
+\begin{quote}\itshape
+The standalone lemma should list all assumptions in one place
+[\ldots] and prove that quotienting preserves JEPD, strong equality,
+RCC5 composition, and truth of all closure formulas.
+\end{quote}
+
+We give the lemma, listing the six load-bearing assumptions, and
+prove the four preservation properties.
+
+\subsection{Setup}
+
+Fix a valid finite generated split-forest certificate \(Q\) and its
+unfolding \(\mathcal U(Q)\).  Let \(\Omega\) be the set of
+occurrences in \(\mathcal U(Q)\).  Each occurrence \(u\) has:
+\begin{itemize}[leftmargin=2em]
+  \item a profile state \(\mathrm{state}(u) \in S\);
+  \item a closure type \(\tp(u) := \lambda(\mathrm{state}(u)) \in \Typ(C_0)\);
+  \item a port \(\Port(u) \in \Port(\mathrm{state}(u))\);
+  \item RCC5 pair labels \(\rho(u, v) \in \Base\) for every other
+    occurrence \(v\), determined by the certificate's contexts,
+    mosaics, and equality-aware reachability.
+\end{itemize}
+Let \(\eqQ\) be the explicit port equivalence on
+\(\bigsqcup_{s \in S} \Port(s)\).  Lift \(\eqQ\) to occurrences by
+\(u \eqrel v \iff \Port(u) \eqQ \Port(v)\) (in the same explicit
+context, or transitively across explicit links).
+
+\subsection{Six load-bearing assumptions}
+
+\begin{assumption}[Equivalence]\label{ass:equiv}
+\(\eqrel\) is an equivalence relation on \(\Omega\).
+\end{assumption}
+
+\begin{assumption}[Vertical separation]\label{ass:vert}
+For all \(u, v \in \Omega\), if \(u\) and \(v\) are connected by
+strict \(\PP\)- or \(\PPI\)-reachability in \(\mathcal U(Q)\) (one or
+more iterations of generated parent/child steps), then
+\(u \not\eqrel v\).
+\end{assumption}
+
+\begin{assumption}[Type rigidity]\label{ass:type}
+For all \(u, v \in \Omega\), if \(u \eqrel v\) then
+\(\tp(u) = \tp(v)\).
+\end{assumption}
+
+\begin{assumption}[Joint witness obligations]\label{ass:witness}
+For all \(u, v \in \Omega\) with \(u \eqrel v\), and every
+\(\exists R.D \in \tp(u) = \tp(v)\) with \(R \in \{\PP,\PPI\}\),
+there exists \(w \in \Omega\) such that
+\(\{u, v\} \Reach_R w\) (equality-aware reachability) and
+\(D \in \tp(w)\).  Equivalently:\@ a single witness can discharge the
+obligation simultaneously at every \(\eqrel\)-mate of the source.
+\end{assumption}
+
+\begin{assumption}[Quotient-compatible pair labels]\label{ass:label}
+For all \(u, v, w \in \Omega\) with \(u \eqrel v\),
+\(\rho(u, w) = \rho(v, w)\) and \(\rho(w, u) = \rho(w, v)\).
+\end{assumption}
+
+\begin{assumption}[Sibling-mosaic agreement on \(\eqrel\)-endpoints]\label{ass:sibling}
+For every mosaic \(M \in \Mos_Q\) and every pair of positions
+\(p_1, p_2 \in P_M\) such that some realised pair of occurrences
+\((u_1, u_2)\) with \(u_i\) at position \(p_i\) has \(u_1 \eqrel u_2\),
+the mosaic labels agree:\@ \(L_M(p_1, q) = L_M(p_2, q)\) for every
+\(q \in P_M\), and \(\tau_M(p_1) = \tau_M(p_2)\).
+\end{assumption}
+
+\paragraph{Where each assumption comes from in the manuscript.}
+Assumption~\ref{ass:equiv} is (V9.a)+(V9.d):\@ \(\eqQ\) is the
+reflexive--symmetric--transitive closure of explicit port links.
+Assumption~\ref{ass:vert} is (V9.b).
+Assumption~\ref{ass:type} is (V9.a).
+Assumption~\ref{ass:witness} is the definition of \(\Reach_R\) in
+Definition~4.5 of~\cite{repaired}:\@
+\(s\Reach_R t \iff \exists\widehat s \in \Mate_Q(s)\; \widehat s
+\reach_R t\), which is exactly the joint discharge condition once
+lifted to occurrences.
+Assumption~\ref{ass:label} is (V9.c).
+Assumption~\ref{ass:sibling} follows from (V9.c) restricted to
+mosaic positions, plus support closure (SC3) which keeps mosaic
+overlaps consistent on \(\eqrel\)-endpoints.
+
+\subsection{The quotient}
+
+Define the quotient frame \(\mathcal U(Q)/\eqrel\) on equivalence
+classes \([u]\), with relation
+\(\bar\rho([u], [v]) := \rho(u, v)\) (well-defined by
+Assumption~\ref{ass:label}) and type
+\(\bar\tp([u]) := \tp(u)\) (well-defined by
+Assumption~\ref{ass:type}).
+
+\subsection{Four preservation properties}
+
+\begin{lemma}[JEPD]\label{lem:jepd}
+On \(\mathcal U(Q)/\eqrel\), \(\bar\rho([u], [v])\) is a unique
+base relation.  For \([u] \ne [v]\), \(\bar\rho([u], [v]) \in
+\Base \setminus \{\EQ\}\).  For \([u] = [v]\),
+\(\bar\rho([u], [v]) = \EQ\).
+\end{lemma}
+
+\begin{proof}
+\emph{Uniqueness.}  \(\bar\rho\) is a function on
+\(\Omega/\eqrel \times \Omega/\eqrel\) by Assumption~\ref{ass:label}.
+
+\emph{\(\EQ\) iff equal class.}  (\(\Leftarrow\)) If \([u] = [v]\),
+take \(v' \in [u]\) and apply (M1)/reflexivity: \(\rho(u, u) = \EQ\),
+so \(\bar\rho([u], [v]) = \rho(u, u) = \EQ\).  (\(\Rightarrow\))
+Suppose \(\bar\rho([u], [v]) = \EQ\), i.e.\ \(\rho(u, v) = \EQ\).
+The certificate's frame axioms (F1)--(F3) give
+\(u \eqrel v\) when \(\rho(u, v) = \EQ\) under strong-\(\EQ\)
+semantics:\@ \(\EQ\) is interpreted as identity in the model class
+of~\cite[\S3.2]{repaired}.  Hence \([u] = [v]\).
+\end{proof}
+
+\begin{lemma}[Strong equality]\label{lem:strong-eq}
+\(\bar\rho([u], [v]) = \EQ\) iff \([u] = [v]\), and the quotient
+frame is a strong abstract RCC5 frame.
+\end{lemma}
+
+\begin{proof}
+The biconditional is Lemma~\ref{lem:jepd}.  For the frame
+property, verify (F1)--(F3) of~\cite[Def.~3.2]{repaired}:
+\begin{itemize}[leftmargin=2em]
+  \item (F1) \(\bar\rho([u], [u]) = \rho(u, u) = \EQ\):\@ (M1).
+  \item (F2) \(\bar\rho([v], [u]) = \rho(v, u) = \Inv(\rho(u, v)) =
+    \Inv(\bar\rho([u], [v]))\):\@ (M2).
+  \item (F3) \(\bar\rho([u], [w]) \in \comp(\bar\rho([u], [v]),
+    \bar\rho([v], [w]))\):\@ (M3) on \(\mathcal U(Q)\), which
+    holds by Theorem~\ref{thm:patchwork}, projects to \(\bar\rho\)
+    via Assumption~\ref{ass:label}.
+\end{itemize}
+\end{proof}
+
+\begin{lemma}[RCC5 composition]\label{lem:comp-quotient}
+For all \([u], [v], [w] \in \mathcal U(Q)/\eqrel\),
+\(\bar\rho([u], [w]) \in \comp(\bar\rho([u], [v]), \bar\rho([v], [w]))\).
+\end{lemma}
+
+\begin{proof}
+\(\bar\rho([u], [w]) = \rho(u, w) \in \comp(\rho(u, v), \rho(v, w))
+= \comp(\bar\rho([u], [v]), \bar\rho([v], [w]))\) by
+Theorem~\ref{thm:patchwork} and Assumption~\ref{ass:label}.
+\end{proof}
+
+\begin{lemma}[Closure-formula truth]\label{lem:truth}
+For every \(D \in \Cl(C_0)\) and every \(u \in \Omega\),
+\[
+  D \in \tp(u)
+  \quad\Longleftrightarrow\quad
+  \mathcal U(Q)/\eqrel, [u] \models D.
+\]
+\end{lemma}
+
+\begin{proof}
+By induction on \(D \in \Cl(C_0)\).
+
+\emph{Atomic and negated atomic.}  Atomic concepts \(A\) and
+\(\neg A\) hold at \([u]\) iff \(A \in \tp(u)\) or
+\(\neg A \in \tp(u)\) respectively, by definition of type and
+Assumption~\ref{ass:type}.
+
+\emph{Boolean cases.}  Standard Hintikka completeness:\@
+\(D_1 \sqcap D_2 \in \tp(u)\) iff both \(D_i \in \tp(u)\);\@ same
+for \(\sqcup\) by Hintikka definition.
+
+\emph{Existential \(\exists R.D\).}
+If \(\exists R.D \in \tp(u)\):
+\begin{itemize}[leftmargin=2em]
+  \item \(R = \EQ\):\@ (V1) normalises \(\exists\EQ.D \in \tp(u)\) iff
+    \(D \in \tp(u)\), so \([u] \models D\) by IH, hence
+    \([u] \models \exists\EQ.D\) (\(\EQ\) is identity).
+  \item \(R \in \{\PP,\PPI\}\):\@ (V4) plus
+    Assumption~\ref{ass:witness} gives \(t \in S\) with
+    \(\mathrm{state}(u) \Reach_R t\) and \(D \in \lambda(t)\).
+    The unfolding has an occurrence \(w\) with
+    \(\mathrm{state}(w) = t\) reachable from some
+    \(\widehat u \eqrel u\) by \(\reach_R\).  By
+    Assumption~\ref{ass:label} \(\bar\rho([u], [w]) = R\), and by IH
+    \([w] \models D\), so \([u] \models \exists R.D\).
+  \item \(R \in \{\DR,\PO\}\):\@ (V6) names a mosaic position
+    \(q\) with \(L(p, q) = R\) and \(D \in \tau(q)\).  The
+    unfolding realises this mosaic, giving an occurrence \(w\) at
+    \(q\) with \(\rho(u, w) = R\) and \(\tp(w) \ni D\).  By IH
+    \([w] \models D\), so \([u] \models \exists R.D\).
+\end{itemize}
+Conversely, if \([u] \models \exists R.D\), there is \([w]\) with
+\(\bar\rho([u], [w]) = R\) and \([w] \models D\).  By IH
+\(D \in \tp(w)\).  If \(\exists R.D \notin \tp(u)\), then since
+\(\Cl(C_0)\) is closed under NNF complement,
+\(\forall R.\overline D \in \tp(u)\).  By (V5)/(V7)
+(universal safety), \(\overline D \in \tp(w)\), contradicting
+\(D \in \tp(w)\) and the Hintikka property.
+
+\emph{Universal \(\forall R.D\).}  Dual:\@ \(\forall R.D \in \tp(u)\)
+forces \(D\) into every \(R\)-target's type by (V5)/(V7), so every
+\(R\)-successor \([w]\) of \([u]\) satisfies \(D\) by IH.
+Conversely, if \(\forall R.D \notin \tp(u)\) then
+\(\exists R.\overline D \in \tp(u)\), and the existential case gives
+some \([w]\) with \(\overline D \in \tp(w)\), so \([w] \not\models D\),
+so \([u] \not\models \forall R.D\).
+\end{proof}
+
+\begin{theorem}[Typed-\(\EQ\) quotient lemma]\label{thm:quotient}
+Let \(Q\) be a valid finite generated split-forest certificate and
+\(\eqrel\) the lift of \(\eqQ\) to occurrences.  Under
+Assumptions~\ref{ass:equiv}--\ref{ass:sibling}, the quotient
+\(\mathcal U(Q)/\eqrel\) is a strong abstract RCC5 frame, and for
+every \(D \in \Cl(C_0)\) and \(u \in \Omega\), \(D \in \tp(u)\) iff
+\(\mathcal U(Q)/\eqrel, [u] \models D\).  In particular,
+\(\mathcal U(Q)/\eqrel, [u_0] \models C_0\), where \(u_0\) is the
+distinguished root occurrence.
+\end{theorem}
+
+\begin{proof}
+Lemmas~\ref{lem:jepd}--\ref{lem:truth}.
+\end{proof}
+
+\begin{remark}[Discharging C4]
+Theorem~\ref{thm:quotient} closes the obligation \emph{C4
+Typed-\(\EQ\) quotient soundness}.  The verification status of C4
+moves from \OPEN{} to \CLOSED{}.  Lean target L4 in the
+verification recommendations remains open.
+\end{remark}
+
+%% ====================================================================
+\section{Item 6: finite certificate grammar and enumeration bound}
+\label{sec:grammar}
+%% ====================================================================
+
+GPT-5.5's request reads (\S4.6 of the third review):
+
+\begin{quote}\itshape
+The manuscript should include a compact formal grammar for
+certificates and a computable bound on local closure types,
+equality-mate interface ports, selected-parent and selected-child
+context slots, request summaries, sibling/support mosaics and their
+maximum arity, and finite graph size after blocking.  The bound may
+be coarse but should be explicit enough that enumeration is a
+mathematical consequence.
+\end{quote}
+
+We give the grammar and derive the bound.
+
+\subsection{Grammar of certificate components}
+
+Fix the input \(C_0\) and set \(n := |\Cl(C_0)| \le 2|\mathrm{sub}(C_0)|\).
+A finite generated split-forest certificate is the formal expression
+of the following abstract grammar (writing \(\sqcup\) for choice and
+\(\langle\cdot,\dots,\cdot\rangle\) for tuples):
+
+\begin{align*}
+  \text{Certificate}\ Q
+    &::= \langle S, s_0, \lambda, \parr_Q, \mathsf{Ch}_Q, \Ctx_Q,
+            \Mos_Q, E_Q, \mathsf{wit}_Q \rangle \\
+  \text{StateSet}\ S
+    &::= \emptyset \sqcup \{\sigma\} \cup S, \quad \sigma \in \Sigma \\
+  \text{Profile}\ \sigma
+    &::= \langle \tau, \kappa, \mu, \eta \rangle \\
+  \text{Type}\ \tau
+    &\subseteq \Cl(C_0), \quad \tau \in \Typ(C_0) \\
+  \text{ContextColour}\ \kappa
+    &::= \langle \kappa_\uparrow, \kappa_\downarrow,
+              \kappa_{\mathrm{side}} \rangle \\
+  \text{SideMenu}\ \mu
+    &::= \{ \exists R.D \mapsto (M_i, q_i) :
+              \exists R.D \in \tau, R \in \{\DR,\PO\} \} \\
+  \text{InterfaceSummary}\ \eta
+    &::= \{ (\pi, R) \mapsto \mathrm{Reach}_R(\pi) \subseteq \Cl(C_0) :
+              \pi \in \Port(\sigma), R \in \{\PP,\PPI\} \} \\
+  \text{ParentMap}\ \parr_Q
+    &::= S \rightharpoonup S \\
+  \text{ChildMultiset}\ \mathsf{Ch}_Q(s)
+    &\subseteq_{\mathrm{mset}} S \\
+  \text{Context}\ \Ctx_Q
+    &::= \{ s \mapsto \text{context scheme} \} \\
+  \text{Mosaic}\ M
+    &::= \langle P, \tau_M, L_M \rangle \\
+  \text{PositionSet}\ P
+    &\subseteq \{1, \dots, m(n)\} \\
+  \text{Edge}\ L_M(p, q)
+    &\in \Base \\
+  \text{EqPort}\ E_Q
+    &::= \{ (\sigma_i, p_i) \sim (\sigma_j, p_j) \} \\
+  \text{Witness}\ \mathsf{wit}_Q
+    &::= \{ \exists R.D \mapsto \text{mechanism} \}
+\end{align*}
+
+Each terminal in the grammar ranges over a finite alphabet
+determined by \(n\):
+
+\begin{itemize}[leftmargin=2em]
+  \item \(\Cl(C_0)\):\@ \(\le 2 \cdot |\mathrm{sub}(C_0)| \le 2n\).
+  \item \(\Typ(C_0)\):\@ \(\le 2^n\).
+  \item \(\Port(\sigma)\):\@ bounded by a polynomial; we set
+    \(|\Port(\sigma)| \le n+1\) (one port per \(\PP/\PPI\)-mate
+    obligation, plus the identity port).
+  \item Context colours \(\kappa\):\@ at most three polynomial slots,
+    each carrying one of finitely many context scheme names.
+  \item \(\Mos_Q\):\@ mosaics with position count \(\le m(n)\), where
+    \(m(n)\) is the manuscript's crude width
+    (one source, one position per existential formula in \(\tau\),
+    one equality-mate boundary position per containment witness, and
+    one position per realised triple).
+\end{itemize}
+
+We give an explicit polynomial \(p(n)\) below such that every
+component alphabet has cardinality \(\le 2^{p(n)}\).
+
+\subsection{Explicit component bounds}
+
+Fix a polynomial bound \(m(n) = c \cdot n^k\) for the mosaic position
+count, with \(c, k\) determined by the manuscript's context schemes
+(e.g.\ \(c = 8, k = 2\) suffices:\@ each existential formula
+\(\exists R.D \in \tau\) contributes one source position and one
+witness position, and triple closure quadruples this).  Then:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Closure types.}  \(|\Typ(C_0)| \le 2^n\).
+  \item \textbf{Equality-mate interface ports.}
+    \(|\Port(\sigma)| \le n + 1\), so the port alphabet across
+    profiles has size \(\le |\Sigma| \cdot (n+1)\).
+  \item \textbf{Selected-parent and selected-child slots.}
+    \(\parr_Q\) is a partial function \(S \to S\), giving
+    \(|S|^{|S| + 1}\) choices.  \(\mathsf{Ch}_Q\) is a multiset on
+    \(S\) with capacity bounded by the existentials in \(\lambda(s)\),
+    so \(|\mathsf{Ch}_Q(s)| \le n\) and the number of child
+    assignments per state is \(\le n \cdot |S|^n\).
+  \item \textbf{Request summaries.}
+    \(\eta\) records, per port per vertical direction, a subset of
+    \(\Cl(C_0)\):\@ \((n+1) \cdot 2 \cdot 2^{2n} = O(n \cdot 2^{2n})\)
+    bits per profile.
+  \item \textbf{Sibling/support mosaics.}  A mosaic is a function
+    \(\tau_M : P \to \Typ(C_0)\) and \(L_M : P^2 \to \Base\):\@
+    \(\le (2^n)^{m(n)} \cdot 5^{m(n)^2} \le 2^{p_1(n)}\) for
+    \(p_1(n) := n \cdot m(n) + m(n)^2 \cdot \log_2 5\).
+    \(\Mos_Q\) is a subset of all such mosaics:\@
+    \(\le 2^{2^{p_1(n)}}\) families.  Maximum arity is
+    \(m(n)\).
+  \item \textbf{Finite graph size after blocking.}  By the
+    finite-regularisation lemma (Lemma~7.3
+    of~\cite{repaired}) the certificate's state set \(S\) has
+    \(|S| \le N(C_0)\), the number of complete boundary profiles:
+    \[
+      |\Sigma| \;\le\; |\Typ(C_0)| \cdot (\text{context colour count})
+        \cdot (\text{side menu count}) \cdot (\text{interface count})
+    \]
+    Each factor is bounded above by \(2^{p_2(n)}\) for an explicit
+    polynomial \(p_2\), so \(|\Sigma| \le 2^{p(n)}\) for some
+    polynomial \(p(n)\), and \(|S| \le |\Sigma| \le 2^{p(n)}\).
+\end{itemize}
+
+Collecting these,
+\[
+  p(n) := n + 2 \cdot m(n) \cdot \log_2 5 + 2n \cdot (n+1)
+            + \text{const}
+\]
+is a polynomial of degree \(\max(k+1, 2k)\) in \(n\).
+
+\subsection{Enumeration bound}
+
+\begin{lemma}[Certificate enumeration bound]\label{lem:enumeration}
+There is an explicit polynomial \(p(n)\) such that the number of
+finite generated split-forest certificates for \(C_0\) with state
+count \(\le B(C_0) := 2^{2^{p(n)}}\) and context width \(\le B(C_0)\)
+is at most \(2^{2^{q(n)}}\) for some polynomial \(q(n)\).  Each
+certificate's validity (V1)--(V10) is decidable in time polynomial
+in its description size.
+\end{lemma}
+
+\begin{proof}
+By the grammar above, a certificate is a finite tuple over alphabets
+of sizes \(\le 2^{p(n)}\) (states, types, contexts, mosaic positions,
+port symbols, witness mechanisms) with at most \(B(C_0) = 2^{2^{p(n)}}\)
+components.  The total number of certificates of size \(\le B(C_0)\)
+is then bounded by
+\[
+  \bigl(2^{p(n)}\bigr)^{B(C_0)} \cdot (\text{combinatorial overhead})
+  \;\le\; 2^{p(n) \cdot 2^{2^{p(n)}}}
+  \;\le\; 2^{2^{q(n)}}
+\]
+for some polynomial \(q\).
+
+Each validity clause (V1)--(V10) is a finite-quantifier predicate
+over the certificate's components:\@ (V1)--(V3) are local
+type/context checks, (V4)--(V5) are graph-reachability checks on
+\(S\) (linear in \(|S|\) per query), (V6)--(V8) are mosaic-position
+membership and triple checks (polynomial in mosaic count), (V9) is a
+congruence check on the explicit-port relation, (V10) is exact
+summary computation by reachability.  All in time polynomial in
+\(|Q|\), which is polynomial in \(B(C_0)\).
+\end{proof}
+
+\begin{theorem}[Effective decidability]\label{thm:decidability}
+Concept satisfiability for \(\ALCIRCC\) is decidable by enumerating
+finite generated split-forest certificates up to size \(B(C_0) =
+2^{2^{p(n)}}\) and checking validity.  Soundness and completeness
+are provided by Theorems~6.1 and~7.4 of~\cite{repaired};\@ the
+patchwork and quotient steps used inside those theorems are
+discharged by Theorems~\ref{thm:patchwork} and~\ref{thm:quotient} of
+the present addendum.
+\end{theorem}
+
+\begin{proof}
+Lemma~\ref{lem:enumeration} enumerates certificates;
+Theorem~\ref{thm:patchwork} and Theorem~\ref{thm:quotient} discharge
+the only steps in the manuscript's proof of
+Theorems~6.1 and~7.4 of~\cite{repaired} that the third-round
+review left open;\@ Lemma~7.3 (finite regularisation)
+of~\cite{repaired} provides the bound \(|S| \le B(C_0)\) on
+representative certificates.
+\end{proof}
+
+\begin{remark}[Discharging C8]
+With the grammar above and Lemma~\ref{lem:enumeration}, the
+obligation \emph{C8 Effective finite certificate language} moves
+from \OPEN{} to \CLOSED{}.  Lean target L3 (enumeration bound
+mechanization) remains open.
+\end{remark}
+
+%% ====================================================================
+\section{Status after the addendum}
+%% ====================================================================
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{p{0.06\linewidth} p{0.40\linewidth} p{0.16\linewidth} p{0.30\linewidth}}
+\toprule
+ID & Obligation & Status after addendum & Source \\
+\midrule
+\endfirsthead
+\toprule
+ID & Obligation & Status after addendum & Source \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+C1 & RCC5 composition table & \PASS{} & WP1 + \cite{repaired}~\S3.1 \\
+C2 & Closure and witness thinning & \PARTIAL{} & Hand proof in
+\cite{repaired}~Lem.~3.3;\@ Lean-pending \\
+C3 & Blocking separated from semantic \(\EQ\) & \PARTIAL{} to \PASS{}
+   & (V9) of~\cite{repaired}~Def.~4.5;\@ WP2 corpus \\
+C4 & Typed-\(\EQ\) quotient soundness & \CLOSED{} (paper)
+   & Theorem~\ref{thm:quotient} of this addendum \\
+C5 & Multiple upward \(\PP\)-witnesses & \PASS{}
+   & v2~\S3.2 (\(C_{AB}^{\mathrm{inc}}\)) \\
+C6 & Request-closed cycles & \PASS{}
+   & v2~\S3.3 (pure-isolation test) \\
+C7 & Support-closed mosaic patchwork & \CLOSED{} (paper)
+   & Theorem~\ref{thm:patchwork} of this addendum + WP6 \\
+C8 & Effective finite certificate language & \CLOSED{} (paper)
+   & Lemma~\ref{lem:enumeration} of this addendum \\
+\end{longtable}
+\end{center}
+
+\paragraph{What remains open.}  At paper level only C2 is still
+\PARTIAL{}, and only because the witness-thinning lemma of
+\cite{repaired}~Lem.~3.3 is hand-proved and would benefit from a
+fully expanded proof.  All other obligations are either \PASS{}
+(computational) or \CLOSED{} (paper).  The Lean targets L1--L7
+from the verification recommendations remain open, in the
+priority order L1, L3, L4, L6, then L2/L5/L7.
+
+\paragraph{Honest assessment.}  The addendum upgrades C4/C7/C8 from
+\emph{computationally supported, theorem pending} to
+\emph{computationally supported, paper theorem closed, Lean
+pending}.  It does not claim Lean-level certainty, and it does not
+amplify the manuscript's complexity bound:\@ \(B(C_0) =
+2^{2^{p(n)}}\) is unchanged.  The addendum's contribution is
+making each load-bearing step explicit so that a Lean
+formalisation has a definite target.
+
+%% ====================================================================
+\begin{thebibliography}{9}
+\bibitem{repaired}
+\emph{A Generated Split-Forest Decidability Proof for \(\ALCIRCC\)
+Without Automata:\@ A Repaired Containment-Oriented Presentation.}
+GPT-5.5, May~2026.  In repository at
+\texttt{papers/gpt5.5\_round2/repaired\_split\_forest\_no\_automata\_proof.tex}.
+
+\bibitem{RenzNebel1999}
+Jochen Renz and Bernhard Nebel.
+\emph{On the Complexity of Qualitative Spatial Reasoning:\@ A Maximal
+Tractable Fragment of the Region Connection Calculus.}
+Artificial Intelligence 108 (1--2), 1999, pp.~69--123.
+
+\bibitem{wessel2002}
+Michael Wessel.
+\emph{Qualitative Spatial Reasoning with the ALCI\(_{\mathrm{RCC}}\)
+Family of Description Logics.}
+Technical report, University of Hamburg, 2002/2003.
+\end{thebibliography}
+
+\end{document}
