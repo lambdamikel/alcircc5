@@ -4769,3 +4769,44 @@ PARTIAL→PASS, C4 CLOSED (paper), C5 PASS, C6 PASS, C7 CLOSED
 (paper), C8 CLOSED (paper).  The Lean stack L1--L7 remains the
 only open verification work, in priority order L1, L3, L4, L6,
 then L2/L5/L7.
+
+---
+
+## 2026-05-14: Expanded witness-thinning proof closes C2 at paper level
+
+Added §6 to `claude_verification_addendum.tex` (now 14 pages)
+giving the expanded proof of the witness-thinning lemma
+(Lem. 3.3 of the repaired proof), which the third-review table
+left as PARTIAL.  The compressed proof in `repaired_split_forest_no_automata_proof.tex`
+elides two checks:
+
+- **Frame inheritance.**  The induced restriction `I↾W` is itself
+  a strong abstract RCC5 frame, not merely a labelled subgraph.
+  Lemma 6.1 verifies (F1) reflexivity, (F2) inverse, (F3)
+  composition, and strong-EQ (ρ(x,y)=EQ ⇔ x=y) on the restricted
+  frame.  Each frame condition is universal over triples of Δ^I
+  and therefore carries over to W ⊆ Δ^I without further
+  obligation.
+
+- **NNF-complement-closure step in the universal case.**
+  Theorem 6.2 covers all four cases of the structural induction
+  over Cl(C_0):  atomic and negated-atomic (intersection with W),
+  Boolean (∩/∪ membership decomposition), existential (selected
+  witness w(a, ∃R.D) is in W by construction of W_{i+1}), and
+  universal — the only non-trivial case.  The universal converse
+  uses the contrapositive: if a ∉ (∀R.D)^I, then a ∈ (∃R.¬D)^I,
+  and by complement closure of Cl(C_0), ∃R.D̄ ∈ Cl(C_0), so the
+  selected witness w(a, ∃R.D̄) is in W with ρ(a, w) = R and
+  w ∈ D̄^I, by IH w ∉ D^{I↾W}.
+
+Strong-EQ is load-bearing: a remark explains that without it the
+existential case for R = EQ would not reduce to IH (a witness
+with ρ(a,b)=EQ and b ≠ a could satisfy D while a does not).
+
+Corollary: C2 moves from PARTIAL to CLOSED (paper).  Lean
+target L2 (mechanisation of the thinning lemma) remains open.
+
+Final paper-level obligation table is now uniform: C1/C3/C5/C6
+PASS, C2/C4/C7/C8 CLOSED (paper).  Every obligation is at PASS or
+CLOSED at paper level.  The Lean stack L1--L7 is the only open
+verification work.

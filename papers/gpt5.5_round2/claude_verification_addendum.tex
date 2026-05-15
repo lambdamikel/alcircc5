@@ -52,6 +52,8 @@
 \newcommand{\Need}{\mathsf{Need}}
 \newcommand{\tp}{\operatorname{tp}}
 \newcommand{\orig}{\operatorname{orig}}
+\newcommand{\I}{\mathcal{I}}
+\newcommand{\J}{\mathcal{J}}
 \newcommand{\PASS}{\textcolor{black!70!green}{\textbf{PASS}}}
 \newcommand{\OPEN}{\textcolor{black!60!orange}{\textbf{open}}}
 \newcommand{\PARTIAL}{\textcolor{black!60!orange}{\textbf{partial}}}
@@ -82,9 +84,14 @@ and an explicit finite-certificate grammar with coarse but
 computable component bounds, yielding the manuscript's
 double-exponential search bound \(B(C_0) = 2^{2^{p(n)}}\) as a
 mathematical consequence of the grammar
-(\S\ref{sec:grammar}).  After the addendum the obligations C4, C7,
-and C8 from GPT-5.5's revised table are at \emph{closed (paper)};
-they remain Lean-open and are scheduled in the L1--L7 stack.
+(\S\ref{sec:grammar}).  An additional supplementary section
+(\S\ref{sec:thinning}) gives an expanded proof of the
+witness-generated submodel lemma, closing the only obligation that
+the items~1--6 closures left as \PARTIAL{} at paper level
+(C2 \emph{Closure and witness thinning}).  After the addendum the
+obligations C2, C4, C7, and C8 from GPT-5.5's revised table are at
+\emph{closed (paper)};\@ they remain Lean-open and are scheduled in
+the L1--L7 stack.
 \end{abstract}
 
 %% ====================================================================
@@ -120,6 +127,12 @@ three further obligations that v2 left as
     gives a finite grammar for certificates and derives an
     explicit polynomial \(p(n)\) so that the enumeration is a
     mathematical consequence of finite component alphabets.
+  \item \textbf{Supplementary (C2).}  GPT-5.5's third-review table
+    listed C2 as \PARTIAL{}, citing the compressed proof of
+    Lemma~3.3 of~\cite{repaired}.  \S\ref{sec:thinning} of this
+    addendum gives the expanded proof with an explicit
+    frame-inheritance lemma and the NNF-complement-closure step
+    made explicit in the universal case, closing C2 at paper level.
 \end{itemize}
 
 The addendum is paper-level only.  Lean obligations~L1--L7 from the
@@ -884,6 +897,193 @@ mechanization) remains open.
 \end{remark}
 
 %% ====================================================================
+\section{Supplementary: expanded witness-thinning proof (closing C2)}
+\label{sec:thinning}
+%% ====================================================================
+
+GPT-5.5's third-review obligation table marked C2 (\emph{closure and
+witness thinning}) as \PARTIAL{}, citing the hand-proved
+Lemma~3.3 of~\cite{repaired} (witness-generated submodel preserves
+truth of all closure formulas) and noting that a fully expanded
+proof would be valuable.  The compressed proof
+in~\cite[\S3.3]{repaired} is correct but elides two checks:\@
+\emph{(i)} the induced restriction \(\I \restriction W\) is a strong
+abstract RCC5 frame in its own right, not merely a labelled
+subgraph;\@ and \emph{(ii)} the universal case relies on
+NNF-complement closure of \(\Cl(C_0)\), which deserves the same
+explicit treatment as the existential case.  We restate the lemma
+and give the expanded proof.
+
+\subsection{Setup}
+
+The notation follows~\cite[\S3.3]{repaired}.  Fix an interpretation
+\(\I = (\Delta^\I, \rho^\I, \cdot^\I)\) and an element
+\(a_0 \in \Delta^\I\) with \(\I, a_0 \models C_0\).  A selected
+witness function \(w(a, \exists R.D)\) is defined exactly when
+\(a \in (\exists R.D)^\I\), with \(\rho^\I(a, w(a,\exists R.D)) = R\)
+and \(w(a, \exists R.D) \in D^\I\).  The generated domain is
+\(W = \bigcup_i W_i\) with \(W_0 = \{a_0\}\) and \(W_{i+1}\) the
+closure of \(W_i\) under selected witnesses for all
+\(\exists R.D \in \Cl(C_0)\).  The induced subinterpretation
+\(\I \restriction W = (W, \rho^\I \restriction W^2, \cdot^\I \cap W)\)
+keeps only elements in \(W\) and restricts both the relation and
+atomic interpretations.
+
+\subsection{The frame is inherited}
+
+\begin{lemma}[Frame inheritance]\label{lem:frame-inherited}
+If \((\Delta^\I, \rho^\I)\) is a strong abstract RCC5 frame
+(satisfying \textnormal{(F1)--(F3)} of~\cite[Def.~3.2]{repaired}
+plus the strong-\(\EQ\) condition \(\rho^\I(x, y) = \EQ \iff x = y\)),
+then so is \((W, \rho^\I \restriction W^2)\) for every non-empty
+\(W \subseteq \Delta^\I\).
+\end{lemma}
+
+\begin{proof}
+Let \(\rho := \rho^\I \restriction W^2\).
+\begin{itemize}[leftmargin=2em]
+  \item \emph{(F1) Reflexivity.}  For \(x \in W\),
+    \(\rho(x, x) = \rho^\I(x, x) = \EQ\) by (F1) on \(\I\).
+  \item \emph{(F2) Inverse.}  For \(x, y \in W\),
+    \(\rho(y, x) = \rho^\I(y, x) = \Inv(\rho^\I(x, y)) =
+    \Inv(\rho(x, y))\) by (F2) on \(\I\).
+  \item \emph{(F3) Composition.}  For \(x, y, z \in W \subseteq \Delta^\I\),
+    \(\rho(x, z) = \rho^\I(x, z) \in \comp(\rho^\I(x, y), \rho^\I(y, z))
+    = \comp(\rho(x, y), \rho(y, z))\) by (F3) on \(\I\).
+  \item \emph{Strong \(\EQ\).}  For \(x, y \in W\),
+    \(\rho(x, y) = \EQ \iff \rho^\I(x, y) = \EQ \iff x = y\) by the
+    strong-\(\EQ\) condition on \(\I\), where the second
+    biconditional is identity \emph{in \(\Delta^\I\)} but coincides
+    with identity in \(W\) for \(x, y \in W\).
+\end{itemize}
+The frame conditions are universal over triples of \(\Delta^\I\)
+and therefore over any subset \(W\) with no further obligation.
+\end{proof}
+
+\begin{remark}
+Lemma~\ref{lem:frame-inherited} is the missing first sentence of the
+compressed proof.  Without it, \(\I \restriction W\) is only a
+labelled subgraph;\@ the truth-preservation induction below uses the
+fact that \(\I \restriction W\) is itself a frame in the manuscript's
+model class so that every concept evaluates in it.
+\end{remark}
+
+\subsection{Truth preservation}
+
+\begin{theorem}[Witness-generated submodel lemma, expanded]\label{thm:thinning}
+For every \(a \in W\) and every \(C \in \Cl(C_0)\),
+\[
+  a \in C^\I \quad\Longleftrightarrow\quad a \in C^{\I \restriction W}.
+\]
+In particular, if \(\I, a_0 \models C_0\) then
+\(\I \restriction W, a_0 \models C_0\).
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:frame-inherited}, \(\I \restriction W\) is a
+strong abstract RCC5 frame, so concept evaluation is well-defined.
+We proceed by structural induction on \(C \in \Cl(C_0)\) in NNF.
+
+\paragraph{Case 1:\@ atomic and negated-atomic concepts.}
+For a concept name \(A\), \(A^{\I \restriction W} = A^\I \cap W\)
+by definition of the restricted interpretation.  Hence for
+\(a \in W\), \(a \in A^\I\) iff \(a \in A^{\I \restriction W}\).
+For negated atomic \(\neg A\) in NNF,
+\((\neg A)^{\I \restriction W} = W \setminus A^{\I \restriction W} =
+W \setminus (A^\I \cap W) = W \setminus A^\I\) (intersecting with
+\(W\)), and for \(a \in W\), \(a \in (\neg A)^\I\) iff \(a \notin A^\I\)
+iff \(a \in W \setminus A^\I\) iff \(a \in (\neg A)^{\I \restriction W}\).
+
+\paragraph{Case 2:\@ Boolean connectives.}
+For \(C = C_1 \sqcap C_2\) with \(C_i \in \Cl(C_0)\) (closure under
+subformulas), \(a \in C^\I\) iff \(a \in C_1^\I \cap C_2^\I\) iff
+(by IH for each \(C_i\)) \(a \in C_1^{\I \restriction W} \cap
+C_2^{\I \restriction W}\) iff \(a \in C^{\I \restriction W}\).
+Same for \(\sqcup\).
+
+\paragraph{Case 3:\@ existentials \(\exists R.D\) for \(R \in \Base\).}
+\emph{(\(\Rightarrow\))} Suppose \(a \in (\exists R.D)^\I\).  Then
+the selected witness \(b := w(a, \exists R.D)\) is defined.  By
+construction \(b \in W_{i+1}\) for the index \(i\) with \(a \in W_i\),
+hence \(b \in W\).  Also \(\rho^\I(a, b) = R\) and \(b \in D^\I\).
+By Lemma~\ref{lem:frame-inherited},
+\(\rho^{\I \restriction W}(a, b) = R\).  By IH \(b \in D^\I\) implies
+\(b \in D^{\I \restriction W}\).  Hence
+\(a \in (\exists R.D)^{\I \restriction W}\).
+
+\emph{(\(\Leftarrow\))} Suppose \(a \in (\exists R.D)^{\I \restriction W}\).
+Then there is \(b \in W\) with
+\(\rho^{\I \restriction W}(a, b) = R\) and \(b \in D^{\I \restriction W}\).
+Since \(W \subseteq \Delta^\I\) and \(\rho^\I\) restricts to
+\(\rho^{\I \restriction W}\), the same \(b\) satisfies
+\(\rho^\I(a, b) = R\).  By IH \(b \in D^\I\).  Hence
+\(a \in (\exists R.D)^\I\).
+
+\emph{Subcase \(R = \EQ\).}  Strong-\(\EQ\) gives \(\rho^\I(a, b) = \EQ\)
+iff \(a = b\), so \((\exists \EQ.D)^\I = D^\I\) and likewise for the
+restriction.  The equivalence reduces to IH for \(D\).
+
+\paragraph{Case 4:\@ universals \(\forall R.D\) for \(R \in \Base\).}
+\emph{(\(\Rightarrow\))} Suppose \(a \in (\forall R.D)^\I\) and let
+\(b \in W\) be any element with
+\(\rho^{\I \restriction W}(a, b) = R\).  Then \(\rho^\I(a, b) = R\),
+so \(b \in D^\I\).  By IH \(b \in D^{\I \restriction W}\).  Hence
+\(a \in (\forall R.D)^{\I \restriction W}\).
+
+\emph{(\(\Leftarrow\)) — uses NNF complement closure.}  We argue by
+contrapositive.  Suppose \(a \notin (\forall R.D)^\I\).  Then there is
+\(b' \in \Delta^\I\) (not necessarily in \(W\)!) with \(\rho^\I(a, b') = R\)
+and \(b' \notin D^\I\), so \(b' \in \overline{D}^\I\) where
+\(\overline{D}\) is the NNF complement of \(D\).  Equivalently
+\(a \in (\exists R.\overline{D})^\I\).  By complement closure of
+\(\Cl(C_0)\),
+\(\exists R.\overline{D} \in \Cl(C_0)\) whenever
+\(\forall R.D \in \Cl(C_0)\).  The selected witness
+\(b := w(a, \exists R.\overline{D})\) is therefore defined and lies in
+\(W\), with \(\rho^\I(a, b) = R\) and \(b \in \overline{D}^\I\).
+By IH applied to \(\overline{D} \in \Cl(C_0)\),
+\(b \in \overline{D}^{\I \restriction W}\), i.e.\
+\(b \notin D^{\I \restriction W}\).  Since \(b \in W\) and
+\(\rho^{\I \restriction W}(a, b) = R\), this shows
+\(a \notin (\forall R.D)^{\I \restriction W}\).
+
+\emph{Subcase \(R = \EQ\).}  As in Case~3, \((\forall \EQ.D)^\I = D^\I\)
+and the equivalence reduces to IH for \(D\).
+
+\paragraph{Conclusion.}  The induction covers every \(C \in \Cl(C_0)\).
+Setting \(C = C_0\) and \(a = a_0\) gives the corollary
+\(\I, a_0 \models C_0 \Longleftrightarrow
+\I \restriction W, a_0 \models C_0\).
+\end{proof}
+
+\begin{remark}[What this proof uses about \(\Cl(C_0)\)]
+The induction uses two closure properties of \(\Cl(C_0)\):\@
+closure under subformulas of \(\sqcap, \sqcup, \exists, \forall\)
+(Cases~2--4 forward and backward) and \emph{NNF complement closure}
+on \(\exists/\forall\) subformulas (Case~4 backward).  Both are
+explicit in \cite[Def.~3.4]{repaired}.
+\end{remark}
+
+\begin{remark}[Strong-\(\EQ\) is necessary]
+If the frame were not strong-\(\EQ\) (i.e.\ if \(\rho^\I(x, y) = \EQ\)
+were allowed for some \(x \ne y\)), then the existential case
+\(R = \EQ\) would not reduce to IH for \(D\):\@ a witness with
+\(\rho^\I(a, b) = \EQ\) and \(b \ne a\) might satisfy \(D\) while \(a\)
+does not, and the selected-witness construction would not preserve
+truth.  The manuscript's strong-\(\EQ\) hypothesis is therefore
+load-bearing in Theorem~\ref{thm:thinning}, exactly as
+in~\cite[\S3.2]{repaired}.
+\end{remark}
+
+\begin{corollary}[C2 closes at paper level]
+Combining Lemma~\ref{lem:frame-inherited} and
+Theorem~\ref{thm:thinning} discharges the obligation \emph{C2
+Closure and witness thinning}.  The status of C2 moves from
+\PARTIAL{} to \CLOSED{}.  Lean target L2 (mechanisation of the
+thinning lemma) remains open.
+\end{corollary}
+
+%% ====================================================================
 \section{Status after the addendum}
 %% ====================================================================
 
@@ -901,8 +1101,8 @@ ID & Obligation & Status after addendum & Source \\
 \bottomrule
 \endfoot
 C1 & RCC5 composition table & \PASS{} & WP1 + \cite{repaired}~\S3.1 \\
-C2 & Closure and witness thinning & \PARTIAL{} & Hand proof in
-\cite{repaired}~Lem.~3.3;\@ Lean-pending \\
+C2 & Closure and witness thinning & \CLOSED{} (paper)
+   & Lemma~\ref{lem:frame-inherited} + Theorem~\ref{thm:thinning} of this addendum \\
 C3 & Blocking separated from semantic \(\EQ\) & \PARTIAL{} to \PASS{}
    & (V9) of~\cite{repaired}~Def.~4.5;\@ WP2 corpus \\
 C4 & Typed-\(\EQ\) quotient soundness & \CLOSED{} (paper)
@@ -918,16 +1118,15 @@ C8 & Effective finite certificate language & \CLOSED{} (paper)
 \end{longtable}
 \end{center}
 
-\paragraph{What remains open.}  At paper level only C2 is still
-\PARTIAL{}, and only because the witness-thinning lemma of
-\cite{repaired}~Lem.~3.3 is hand-proved and would benefit from a
-fully expanded proof.  All other obligations are either \PASS{}
-(computational) or \CLOSED{} (paper).  The Lean targets L1--L7
-from the verification recommendations remain open, in the
-priority order L1, L3, L4, L6, then L2/L5/L7.
+\paragraph{What remains open.}  At paper level every obligation is
+now either \PASS{} (computational, with explicit lemmas in the v2
+response) or \CLOSED{} (paper, by the present addendum).  The Lean
+targets L1--L7 from the verification recommendations remain open,
+in the priority order L1, L3, L4, L6, then L2/L5/L7.
 
-\paragraph{Honest assessment.}  The addendum upgrades C4/C7/C8 from
-\emph{computationally supported, theorem pending} to
+\paragraph{Honest assessment.}  The addendum upgrades C2/C4/C7/C8
+from \emph{computationally supported, theorem pending} (or
+\emph{hand proof only}, in the case of C2) to
 \emph{computationally supported, paper theorem closed, Lean
 pending}.  It does not claim Lean-level certainty, and it does not
 amplify the manuscript's complexity bound:\@ \(B(C_0) =
