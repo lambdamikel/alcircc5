@@ -239,9 +239,14 @@ strong-EQ ALCIRCC{5} interpretation and \(d^* \in \Delta^\mathcal I\)
 a point with \(d^* \in C_{AB}^{\mathrm{inc}\,\mathcal I}\).  Then
 there exist \(a, b \in \Delta^\mathcal I\) with \(\PP^\mathcal I(d^*, a)\),
 \(\PP^\mathcal I(d^*, b)\), \(a \in A^\mathcal I\), \(b \in B^\mathcal I\),
-and the pair \((a, b)\) is RCC5-incomparable: their atomic
-relation \(\rho(a, b) \in \{\DR, \PO\}\) (in particular, neither
-\(\PP\) nor \(\PPI\) nor \(\EQ\)).
+and the pair \((a, b)\) satisfies \(\rho(a, b) = \PO\).  In particular,
+the pair is neither \(\PP\)-, \(\PPI\)-, \(\EQ\)-, nor \(\DR\)-related.
+The exclusion of \(\DR\) is by common-root composition: since
+\(d^* \PP a\) gives \(\PPI(a, d^*)\), the chain
+\(a \to d^* \to b\) yields
+\(\rho(a, b) \in \mathsf{comp}(\PPI, \PP) = \{\EQ, \PO, \PP, \PPI\}\),
+so \(\DR\) is unavailable a priori;\@ the formula then rules out
+\(\EQ\), \(\PP\), \(\PPI\), leaving \(\PO\) as the unique possibility.
 
 \emph{Proof.}  The existentials in~\eqref{eq:cab_inc} supply
 \(a, b\) as PP-successors of \(d^*\) carrying \(A\) (resp.~\(B\)).
@@ -267,7 +272,11 @@ And \(\rho(a, b) = \EQ\) (under strong-EQ:\@ \(a = b\)) forces
 \(a = b\), hence \(a \in A^\mathcal I \cap B^\mathcal I\), which is
 admissible only if both \(a \in A^\mathcal I\) and \(a \in B^\mathcal I\),
 but the case~(ii) at \(a\) already gives \(a \in (\neg B)^\mathcal I\),
-contradiction.  Hence \(\rho(a, b) \in \{\DR, \PO\}\).  \(\square\)
+contradiction.  Hence \(\rho(a, b) \in \{\DR, \PO\}\).  Moreover, by
+the composition argument in the lemma statement,
+\(\rho(a, b) \in \mathsf{comp}(\PPI, \PP) = \{\EQ, \PO, \PP, \PPI\}\),
+which excludes \(\DR\).  Combining the two,
+\(\rho(a, b) = \PO\).  \(\square\)
 
 \paragraph{Single-parent infeasibility.}  Suppose, for contradiction,
 that a \emph{single} occurrence \(u_*\) of \(d^*\) in a valid
