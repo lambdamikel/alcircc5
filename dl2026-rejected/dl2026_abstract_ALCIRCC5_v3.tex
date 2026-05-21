@@ -1,15 +1,10 @@
-%% CEUR-WS / DL 2026 format
 \documentclass[
-% twocolumn,
-% hf,
 ]{ceurart}
 
 \pdfoutput=1                                                                                                                                                             
 \sloppy
 
-% DL workshop logo macro removed: manuscript was not published at DL 2026.
       
-%%% Additional packages
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs}
 \usepackage{enumitem}
@@ -18,7 +13,6 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 
-%%% Theorem environments
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -29,9 +23,7 @@
 \newtheorem{remark}[theorem]{Remark}
 
 \newcommand{\Lean}{\textsf{Lean}}
-%\newcommand{\Lean}{\ensuremath{\mathsf{L\exists\forall N}}}
 
-%%% Notation macros
 \newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
 \newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
 \newcommand{\ALCIRCC}[1]{\ensuremath{\mathcal{ALCI}_{\mathit{RCC#1}}}}
@@ -61,7 +53,6 @@
 \newcommand{\naturals}{\mathbb{N}}
 \newcommand{\reals}{\mathbb{R}}
 \newcommand{\RCCfive}{\{\DR,\PO,\PP,\PPI\}}
-
 
 \begin{document}
 
@@ -104,27 +95,6 @@ proof would count as the world's first AI-generated decidability proof
 to a long-standing open, non-trivial problem in Description Logics
 (DL) theory.
 
-%% The motivation for presenting this work is three-fold. \emph{First,}
-%% we want to make the DL community aware of the result. Although we have
-%% strong evidence for the correctness of the proof, it has not been
-%% extensively verified by human experts yet. Our evidence includes
-%% AI-generated novel forms of $\ALCIRCC{5}$ provers accompanied by
-%% extensive test-suites as well as a practical example. The work has now
-%% survived multiple rounds of \emph{adversarial but constructive
-%% opreview-and-refine cycles} by LLM frontier models (Claude Opus
-%% 4.7). \emph{Second,} even if the proof should not withstand human
-%% expert scrutiny, we argue that the techniques and processes that led
-%% to this body of work are potentially transformative to DL research and
-%% are hence worthwhile documenting here. We hope to raise awareness for
-%% and a better understanding of these emerging transformative capabities
-%% in the field of mathematics and logic so that the DL community can
-%% maximize their utility for the sake of scientific progress and
-%% discovery. \emph{Third,} we reflect on the opportunities and promises
-%% that it holds for the field. Thus, this paper focuses on \emph{the
-%% process}: what the human and the AI agents contributed, which
-%% strategies worked, which failed, and what it suggests about the future
-%% role of agentic AI in DL research.
-
 The main motivation for this extended abstract is to raise awareness
 in the DL community of the emerging impressive capabilities of
 agentic AI frontier models (OpenAI's GPT 5.4 Pro, Anthropic's Claude Opus
@@ -139,44 +109,6 @@ Opus 4.7, prompted and guided by Michael Wessel. The main
 (by hand).}
 \end{abstract}
 
-%% \begin{abstract}
-
-%% We report on a human-and-AI collaboration that produced what we
-%% believe to be the first decidability proof for concept satisfiability
-%% in ALCIRCC5 — an open problem since Wessel (2002/2003). The proof,
-%% the accompanying complexity analysis, and two independently-designed
-%% reasoners (a quasimodel-based type-elimination procedure and a
-%% cover-tree tableau) were developed over three weeks of dialogue
-%% between the author and the AI assistants Claude Opus 4.6, Claude Opus
-%% 4.7, and GPT-5.4, with the author acting as research director,
-%% prompter, and final arbiter.
-
-%% Our motivation for this extended-abstract submission is
-%% three-fold. First, we want to make the DL community aware of the
-%% result itself, and invite scrutiny of the proof, the reductions, and
-%% the two reasoner implementations — all of which cross-validate each
-%% other on 911 concepts with zero mismatches, plus 775/775 agreement on
-%% a decomposition benchmark and 21/21 on a GIS taxonomy reconstruction
-%% from prior published work. Second, we want to share what we learned
-%% about doing mathematical research with current frontier models: what
-%% worked, what did not, which failure modes are characteristic of
-%% AI-generated proofs, and how a disciplined review protocol can catch
-%% them. Third, we would like to reflect on what this collaboration
-%% suggests about the near-term future of formal research in description
-%% logic and related fields.
-
-%% We take the correctness question seriously. The repository has been
-%% subjected to an independent adversarial review by Claude Opus 4.7,
-%% which in Round 1 identified a twelve-concept family on which the
-%% cover-tree tableau was unsound; a repair was designed, implemented,
-%% and verified, after which Round 2 ran 400+ additional adversarial
-%% instances and found zero mismatches between the two reasoners. We do
-%% not claim the proof is machine-checked, and the appendix contains the
-%% full technical development precisely so that interested readers can
-%% examine — and, we hope, challenge — every step.
-%% \end{abstract} 
-
-
 \begin{keywords}
   description logic \sep
   ALCI\_RCC5 \sep
@@ -188,15 +120,8 @@ Opus 4.7, prompted and guided by Michael Wessel. The main
 
 \maketitle
 
-%% ====================================================================
 \section{Introduction}
 \label{sec:ea-intro}
-%% ====================================================================
-
-% TODO(Michael): Introduction --- motivation, research question, why
-% DL 2026 should care, one-paragraph teaser of the result and the
-% process.  Paragraphs will be requested from the AI collaborator
-% on demand.
 
 In 1993, Cohn~\cite{Cohn1993} proposed a qualitative
 spatioterminological multi-modal logic syntactically equivalent to
@@ -271,26 +196,9 @@ We like to stress that the main motivation for this extended abstract
 is to raise \emph{awareness of the emerging capabilities of agentic AI
 frontier models in the field of mathematics and logic (especially DL).}
 
-%% We feel obligated to
-%% share our observations, for the sake of scientic progress, and the
-%% future of research.
-
-%% The reminder of this extended abstract is structured as follows:
-%% first, we re-introduce the $\ALCIRCC{}$ family and summarize what was
-%% known. We then present a high-level overview of the new results. Next,
-%% we comment on the process, which collaboration strategies worked, and
-%% what the roles of human and AI agents were, and what this could imply
-%% for future of DL research in the agentic era. 
-
-%% ====================================================================
 \section{Background on $\ALCIRCC{}$}
 \label{sec:ea-background}
-%% ====================================================================
 
-% TODO(Michael): Background on the ALCI_RCC family --- minimal
-% recap of the logic, the RCC5/RCC8 composition tables, strong-EQ
-% semantics, and what decidability means here.  See Appendix
-% Sections A.2--A.3 for the full technical treatment.
                              
 The \ALCIRCC{n} DL family \cite{Wessel2002, Wessel2003} (for $n \in
 \{5,8\}$) extends \ALCI\ \cite{DLHandbook2007} by fixing the role
@@ -350,10 +258,8 @@ adding a hybrid modal logic binding operator (``$\downarrow$'') to
 $\ALCIRCC{8}$ would make the logic immediately undecidable
 \cite{Wessel2003}.
 
-%% ====================================================================
 \section{Attempts \& Results}
 \label{sec:ea-results}
-%% ====================================================================
 
 Lutz and Wolter's grid reduction in their $\LRCC{8}$ Domino
 undecidability proof uses the same TBox construction as in
@@ -384,29 +290,6 @@ tableau blocking (e.g., ``RCC triangle type'' blocking) ideas.  Of the
 \cite{TwoTierQuotient}, and 6 (or 7) approaches failed (depending on
 what counts as partial success) \cite{ALCIRCC5Outdated}, whereas the
 standard undecidability approaches all failed \cite{ALCIRCC5Repo}. 
-
-%% The investigated tableau blocking ideas all failed due to a
-%% fundamental tension between \emph{soundness and termination in tableau
-%% calculi.} Standard double (pair) blocking, as used for \ALCI
-%% \cite{DLHandbook2007}, terminates on any bounded type-space but is
-%% unsound for \ALCIRCC{5}: the usual unravelling copies a blocked node's
-%% subtree under its blocker, and composition of the copied RCC5 edges
-%% with the ambient network frequently produces atomic relations that
-%% violate the composition table or contradict the universals that were
-%% satisfied locally.
-
-%% Richer blocking conditions (triangle blocking, sibling-interface
-%% blocking, rank-$d$ blocking) achieve soundness by forcing the blocker
-%% and blockee to agree on enough surrounding context, for example,
-%% \emph{triples of RCC relations,} sibling descriptors, or full rank-$d$
-%% states, enabling consistent composition-consistent
-%% unravelling. Unfortunately, each strengthening shrinks the equivalence
-%% classes, and strong enough variants then either fail to terminate or
-%% require an a priori bound on the context depth (the rank $d$), and
-%% this is in itself what the decidability proof is trying to
-%% establish. We were not able to overcome this tension, no matter how
-%% ``sophisticated'' the blocking condition.
-
 
 The investigated tableau blocking ideas all failed due to a
 fundamental tension between \emph{soundness and termination in tableau
@@ -460,22 +343,6 @@ later restored by collapsing them — Theorem~1.19 of the soundness
 proof in the split-forest paper \cite{SiblingCompleted,
   CompletenessExtraction}.
 
-%% For the decidability argument, a key ingredient is the rank-$d$ 
-%% quotient with sibling-interface descriptors: instead of blocking on
-%% local type equality, the split-forest records, at each node, a
-%% bounded-depth summary of how its subtree interacts with each sibling —
-%% a three-way partition into $\Core/\Out/\Front$, multiplicities of
-%% common-core descendants by rank-$k$ state, open support sets on each
-%% side, and a locally coherent relation table satisfying axioms
-%% (C1)–(C5). This is the so-called "sibling interface".
-
-%% Because these descriptors live in a finite space (bounded by the
-%% closure of $C_0$ at depth $d$), König's lemma applied to canonical
-%% refinements forces any satisfiable concept to admit a finite quotient
-%% whose witness menus and $\mathsf{Need}_R$-filtered pair-domains stay
-%% non-empty under composition — and that finite object is exactly what a
-%% decision procedure can enumerate.
-
 A crucial structural fact is that $\mathit{PPI}/\mathit{PP}$ is a DAG rather than a tree
 (joins are allowed, cycles are not), so the split-tree presentation is
 always well-defined and finite-quotientable, while still recording
@@ -498,31 +365,9 @@ taxonomy from \cite{Wessel2003}, Fig.~6 (and Appendix
 Fig.\ref{fig:gis-taxonomy}).
  
 
-%% , providing a
-%% realistic-workload check on top of the randomised ones; while
-%% empirical agreement is not a proof of formal correctness, the combined
-%% 1300+ tested concepts without a single mismatch is strong evidence
-%% that the cover-tree implementation realises the split-forest semantics
-%% in practice.
-
-% TODO(Michael): Results --- the cover-tree tableau decision
-% procedure for ALCI_RCC5, the empirical validation (911/911,
-% 775/775, the 4x4 grid of counterexamples and its closure), the
-% two-round adversarial review outcome, and the current status of
-% the claim.  See Appendix Sections A.4--A.7 for full details.
-
 \section{On Agentic AI for Description Logic Research}
 \label{sec:agentic-ai}
                                                                     
-%% The reported work was carried out with Claude Code running Opus~4.7
-%% at maximum reasoning effort and full tool access.  Opus handled
-%% \LaTeX\ compilation, GitHub operations, and Python execution in the
-%% loop. The agents are highly technical capable by now: every technical
-%% artifact and aspect of this project was created and managed by them,
-%% including the proofs and their typesetting, the Python reasoners and
-%% test suites, the cross-validation scripts, and repository maintenance
-%% including the main {\tt README.md} and {\tt CONVERSATION.md} files on
-%% \cite{ALCIRCC5Repo}. 
 
 The reported work was carried out with Claude Code running Opus~4.7 at
 maximum reasoning effort and full tool access.  Opus handled
@@ -542,7 +387,6 @@ and the repo itself, see {\tt README.md} and {\tt
   CONVERSATION.md} files on~\cite{ALCIRCC5Repo,ALCIRCC5Outdated}.
                                                                        
 
-
 I (the human) contributed the research questions, the starting
 material \cite{Wessel2002, Wessel2003, LutzWolter2006}, and, most
 importantly, high-level questions, scrutiny and intuition that would
@@ -557,14 +401,6 @@ $\mathit{PPI}/\mathit{PP}$ cross-edges are possible, defeating the
 purpose of the construction. A follow-up question fixed this 
 misconception.
   
-%% A highly productive technique is \emph{formal, constructive agent
-%% peer-review:} in the early stages of this project, a GPT-5.4~Pro and an
-%% Opus~4.7 session critiqued each other's blocking conditions and
-%% tableau calculi by exchanging \LaTeX\ papers with formal counter
-%% examples and constructive recommendations. Later, a fresh Opus~4.7
-%% session was spawned specifically to adversarially review the entire
-%% team's output with no prior conversation context to provide ``an
-%% independent pair of eyes'' on the work.
 
 A highly productive technique is \emph{formal, constructive agent
 peer-review:} in the early stages of this project, a GPT-5.4~Pro and
@@ -583,11 +419,7 @@ Eleven distinct approaches to decidability and seven blocked
 undecidability reductions were explored in three weeks. This would
 have been impossible without agents: they \emph{traverse a large
 search space far faster than a human can,} descend more deeply into
-rabbit holes, and reorient quickly if required. %% The importance
-  %% of these capabilities is even higher when the landscape map is
-  %% largely unexplored, and both undecidability and decidability routes
-  %% seem equally likely. They are also superior at understanding and
-  %% assessing the consequences of results.
+rabbit holes, and reorient quickly if required.
 
 Hallucination is no longer the dominant failure mode. The \emph{models
 kept themselves honest} by cross-validating claims, writing test
@@ -601,12 +433,6 @@ be small enough for the models to bridge.
 The models are a \emph{treasure trove of deep knowledge} in math and
 logic -- they explored a broader range of techniques and approaches
 than I could have familiarized myself with in many weeks of study.
-%% : one
-%% attempt proved $\ALCIRCC{5}$ decidability via Borel-MSO over the real
-%% line, using an interval-endpoint encoding that reduces to Rabin/Manthe
-%% once the MSO-definability of the Dyck matching within the ambient
-%% $(\reals,<)$ structure is established, which is an open question in
-%% its own right.
 
 I was not able to keep up with every detail of and in the agents'
 work. Instead, I frequently asked them to explain their findings at a
@@ -652,32 +478,13 @@ step. \emph{Transparency is non-negotiable.}
 are real, and hope that the DL community will decide to benefit from
 these impressive emerging capabilities -- for the sake of science.}
 
-%% science and discovery via agentic AI, or if it will close the door to
-%% these capabilities. These are difficult decisions with impactful
-%% consequences, but I believe that the wins will outweight the risks for
-%% DL research.
-
-%% AI-produced proofs can and should no longer be outrights dismissed as
-%% ``AI slop''; the landscape has shifted, and progress in mathematics
-%% and logic is likely to accelerate sharply in the immediate future. For
-%% the sake of scientific progress it would be unwise to dismiss these
-%% capabilities. The potential is tremdous. Is the DL community ready
-%% for that, or should we ban all AI-generated proofs and hence potential
-%% break-through results? If you are still hyper-fixating on hallucinated
-%% citations, then you are likely missing the bigger developing picture
-%% by now, and might miss the opportunities for research and discovery
-%% that are beginning to emerge.  Clearly, these are difficult questions
-%% in exciting times that the community needs to answer.
-
 \clearpage
 \appendix
 
-%% ====================================================================
 \section*{Appendix: Full Survey Paper\\\normalsize\normalfont
   ``On the Decidability of $\ALCIRCC{5}$:
   A Survey of the Problem, Its History, and a Proposed Solution''}
 \label{sec:appendix}
-%% ====================================================================
 
 \noindent\emph{The remainder of this document reproduces the
 self-contained survey paper of the same authors (companion file
@@ -695,7 +502,6 @@ separately in the project repository\footnote{%
 
 \section{Introduction}
 \label{sec:intro}
-%% ====================================================================
 
 The decidability of concept satisfiability in the spatially extended
 description logic $\ALCIRCC{5}$ has been an open problem for over
@@ -729,10 +535,8 @@ human domain experts}.  They are published as a discussion piece.
 The claims should not be taken as established results unless independently
 verified.  We invite scrutiny, corrections, and feedback.
 
-%% ====================================================================
 \section{History of $\ALCIRCC{5}$}
 \label{sec:history}
-%% ====================================================================
 
 \subsection{Cohn's 1993 proposal}
 
@@ -895,10 +699,8 @@ arbitrary complete-graph models with composition-table semantics.
 The problem has been recognized as open by leading researchers
 since 2006.
 
-%% ====================================================================
 \section{Why Undecidability Reductions Fail}
 \label{sec:undecidability}
-%% ====================================================================
 
 Undecidability proofs for description logics use a variety of
 techniques: grid encoding ($\naturals \times \naturals$ domino
@@ -1083,10 +885,8 @@ status of $\ALCIRCC{8}$ decidability noted in~\cite{LutzWolter2006}
 and further discussed in~\cite{Wessel2003}.
 \end{remark}
 
-%% ====================================================================
 \section{Why Na\"{\i}ve Tableau Blocking Fails}
 \label{sec:naive-blocking}
-%% ====================================================================
 
 Standard DL tableau calculi achieve termination through
 \emph{blocking}: if a node~$x$ has the same label as an ancestor~$y$,
@@ -1155,10 +955,8 @@ retracted approaches is maintained
 in~\cite{ALCIRCC5Outdated}; the overall project is summarised at
 the repository~\cite{ALCIRCC5Repo}.
 
-%% ====================================================================
 \section{Split-Forest Model Decomposition}
 \label{sec:split-forest}
-%% ====================================================================
 
 The breakthrough insight, due to Wessel, is to decompose
 $\ALCIRCC{5}$ models into a \emph{tree layer} and a
@@ -1252,10 +1050,8 @@ pair has a non-empty $\{\DR,\PO\}$-safe set suffices for
 cross-edge consistency.}  No full path-consistency computation is
 needed.
 
-%% ====================================================================
 \section{The Cover-Tree Tableau}
 \label{sec:cover-tree}
-%% ====================================================================
 
 \subsection{Algorithm overview}
 
@@ -1852,14 +1648,11 @@ from Wessel's report~\cite{Wessel2003}.
   leaf/.style={fill=green!10, draw=green!50!black},
   arr/.style={->, >=stealth, thin},
 ]
-% Row 0: TOP
 \node (top) [fill=gray!15, draw=gray] at (0,0) {$\top$};
 
-% Row 1: Area
 \node (area) at (0,-0.9) {Area};
 \draw[arr] (top) -- (area);
 
-% Row 2: Area's children
 \node (city) at (-5.2,-2) {City};
 \node (country) at (-2.8,-2) {Country};
 \node (river) at (0.8,-2) {River};
@@ -1871,7 +1664,6 @@ from Wessel's report~\cite{Wessel2003}.
 \draw[arr] (area) -- (lake);
 \draw[arr] (area) -- (mountain);
 
-% Row 3: children of City, Country, River, Lake
 \node (germancity) at (-6.2,-3.2) {GermanCity};
 \node (cityatriver) at (-4.4,-3.2) {CityAtRiver};
 \node (germany) [leaf] at (-3.1,-3.2) {Germany};
@@ -1889,7 +1681,6 @@ from Wessel's report~\cite{Wessel2003}.
 \draw[arr] (river) -- (riverflowing);
 \draw[arr] (lake) -- (alsterlake);
 
-% Row 4: deeper nodes
 \node (hamburg) [leaf] at (-5.3,-4.4) {Hamburg};
 \node (germanriver) at (-0.5,-4.4) {GermanRiver};
 \node (elbe) [leaf] at (1.2,-4.4) {Elbe};
@@ -1898,7 +1689,6 @@ from Wessel's report~\cite{Wessel2003}.
 \draw[arr] (localriver) -- (germanriver);
 \draw[arr] (nonlocal) -- (elbe);
 
-% Row 5: Alster (two parents)
 \node (alster) [leaf] at (1.2,-5.6) {Alster};
 \draw[arr] (germanriver) -- (alster);
 \draw[arr] (riverflowing) -- (alster);
@@ -1914,10 +1704,8 @@ from Wessel's report~\cite{Wessel2003}.
 \label{fig:gis-computed}
 \end{figure*}
 
-%% ====================================================================
 \section{Outlook and Conclusion}
 \label{sec:outlook}
-%% ====================================================================
 
 \subsection{What has been achieved}
 
@@ -2041,9 +1829,6 @@ fixes are documented in the project's \texttt{CONVERSATION.md} log
 with commit hashes.  Citations in this paper have been checked, but
 readers should still verify any reference before citing it.
 
-%% ====================================================================
-%% Declaration on Generative AI
-%% ====================================================================
 \section*{Declaration on Generative AI}
 
 During the preparation of this work, the authors used Claude (Anthropic,
@@ -2056,12 +1841,7 @@ formulation, key intuitions, error identification, and direction of
 the investigation---was conducted by Wessel; the AI systems performed
 the detailed formalization, implementation, and writing.
 
-%% ====================================================================
-%% Bibliography
-%% ====================================================================
 \begin{thebibliography}{99}
-
-%% --- Classical background (chronological) ---------------------------
 
 \bibitem{Cohn1993}
 A.\,G.\ Cohn.
@@ -2195,8 +1975,6 @@ C.\ Lutz and F.\ Wolter.
   2026.  \newblock
   \url{https://github.com/lambdamikel/alcircc5/blob/master/20260407_062616.jpg}
 
-%% --- Core 2026 decidability pillars ---------------------------------
-
 \bibitem{SiblingCompleted}
 GPT-5.4 (OpenAI), prompted by M.\ Wessel.
 \newblock Split-forest models and sibling-interface descriptors for
@@ -2259,8 +2037,6 @@ Claude (Anthropic), prompted by M.\ Wessel.
 \newblock Technical report, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/two_tier_quotient_ALCIRCC5.pdf}
 
-%% --- Failed-attempt investigations (2026) ---------------------------
-
 \bibitem{FWProof}
 Claude (Anthropic), prompted by M.\ Wessel.
 \newblock A negative result on the finite-witness conjecture for
@@ -2302,8 +2078,6 @@ Claude (Anthropic), prompted by M.\ Wessel.
   the FW negative result.
 \newblock Technical report, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/ALCI_RCC5_status_after_FW.pdf}
-
-%% --- Tools and Python implementations (2026) ------------------------
 
 \bibitem{CoverTreeReasoner}
 Claude (Anthropic), prompted by M.\ Wessel.
@@ -2378,8 +2152,6 @@ Claude (Anthropic), prompted by M.\ Wessel.
 \newblock Python implementation, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/gis_taxonomy.py}
 
-%% --- Project meta-resources -----------------------------------------
-
 \bibitem{ALCIRCC5Repo}
 M.\ Wessel (with Claude Opus 4.7 and GPT-5.4 Pro).
 \newblock $\ALCIRCC{5}$ decidability project repository.
@@ -2395,8 +2167,6 @@ M.\ Wessel (with Claude Opus 4.7 and GPT-5.4 Pro).
   attempts and retracted approaches for $\ALCIRCC{5}$.
 \newblock GitHub, 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/OUTDATED.md}
-
-%% --- Large language models (system references) ----------------------
 
 \bibitem{ClaudeOpus47}
 Anthropic.
