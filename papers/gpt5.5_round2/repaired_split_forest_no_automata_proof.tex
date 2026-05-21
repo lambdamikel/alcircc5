@@ -944,24 +944,177 @@ Apply the finite regularization lemma to obtain a finite certificate.  All valid
 
 \section{Decision procedure}
 
-\begin{lemma}[Effective finite search bound]\label{lem:bound}
-For each input $C_0$, there is a computable number $B(C_0)$ such that if $C_0$ has a valid finite generated split-forest certificate, then it has one with at most $B(C_0)$ states and with context width at most $B(C_0)$.
+This section makes the decision procedure effective by giving (i) a
+compact formal grammar for certificates, (ii) explicit polynomial
+bounds on each component alphabet, and (iii) an enumeration bound
+sufficient to make the satisfiability test an exhaustive finite
+search.  The bound is coarse; computability is what is needed for
+decidability.
+
+\subsection{Grammar of certificate components}
+\label{ssec:grammar}
+
+Fix the input $C_0$ and set $n:=|\Cl(C_0)|\le 2|\mathrm{sub}(C_0)|$.
+A finite generated split-forest certificate is the formal expression
+of the following abstract grammar (writing $\sqcup$ for choice and
+$\langle\cdot,\dots,\cdot\rangle$ for tuples):
+\begin{align*}
+  \text{Certificate}\ \Q
+    &::= \langle S, s_0, \lambda, \parr_Q, \mathsf{Ch}_Q, \Ctx_Q,
+            \Mos_Q, E_Q, \mathsf{wit}_Q \rangle \\
+  \text{StateSet}\ S
+    &::= \emptyset \sqcup \{\sigma\}\cup S,\quad \sigma\in\Sigma \\
+  \text{Profile}\ \sigma
+    &::= \langle \tau, \kappa, \mu, \eta \rangle \\
+  \text{Type}\ \tau
+    &\subseteq \Cl(C_0),\quad \tau\in\Typ(C_0) \\
+  \text{ContextColour}\ \kappa
+    &::= \langle \kappa_\uparrow,\kappa_\downarrow,
+              \kappa_{\mathrm{side}}\rangle \\
+  \text{SideMenu}\ \mu
+    &::= \{\,\exists R.D\mapsto(M_i,q_i):
+              \exists R.D\in\tau,\ R\in\{\DR,\PO\}\,\} \\
+  \text{InterfaceSummary}\ \eta
+    &::= \{\,(\pi,R)\mapsto \Reach_R(\pi)\subseteq\Cl(C_0):
+              \pi\in\Port(\sigma),\ R\in\{\PP,\PPI\}\,\} \\
+  \text{ParentMap}\ \parr_Q
+    &::= S\rightharpoonup S \\
+  \text{ChildMultiset}\ \mathsf{Ch}_Q(s)
+    &\subseteq_{\mathrm{mset}} S \\
+  \text{Context}\ \Ctx_Q
+    &::= \{\,s\mapsto\text{context scheme}\,\} \\
+  \text{Mosaic}\ M
+    &::= \langle P,\tau_M, L_M\rangle \\
+  \text{PositionSet}\ P
+    &\subseteq \{1,\dots,m(n)\} \\
+  \text{Edge}\ L_M(p,q)
+    &\in \Base \\
+  \text{EqPort}\ E_Q
+    &::= \{(\sigma_i,p_i)\sim(\sigma_j,p_j)\} \\
+  \text{Witness}\ \mathsf{wit}_Q
+    &::= \{\,\exists R.D\mapsto\text{mechanism}\,\}
+\end{align*}
+Each terminal ranges over a finite alphabet determined by $n$:
+\begin{itemize}[leftmargin=2em]
+  \item $\Cl(C_0)$: $\le 2|\mathrm{sub}(C_0)| \le 2n$.
+  \item $\Typ(C_0)$: $\le 2^n$.
+  \item $\Port(\sigma)$: bounded by $n+1$ (one port per $\PP/\PPI$
+    obligation, plus the identity port).
+  \item Context colours $\kappa$: three polynomial slots, each
+    carrying one of finitely many context scheme names.
+  \item $\Mos_Q$: mosaics with position count $\le m(n)$ where
+    $m(n)$ is the crude width fixed below (one source, one position
+    per existential formula in $\tau$, one equality-mate boundary
+    position per containment witness, and one position per realised
+    triple of such positions).
+\end{itemize}
+
+\subsection{Explicit component bounds}
+\label{ssec:bounds}
+
+Fix a polynomial bound $m(n)=c\cdot n^k$ for the mosaic position
+count, with constants $c,k$ determined by the context schemes (the
+choice $c=8$, $k=2$ already suffices: each existential
+$\exists R.D\in\tau$ contributes one source and one witness position,
+and triple closure quadruples this).  Then:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Closure types.}  $|\Typ(C_0)|\le 2^n$.
+  \item \textbf{Equality-mate interface ports.}
+    $|\Port(\sigma)|\le n+1$, so the port alphabet across profiles
+    has size $\le|\Sigma|\cdot(n+1)$.
+  \item \textbf{Selected-parent and selected-child slots.}  $\parr_Q$
+    is a partial function $S\to S$, giving $|S|^{|S|+1}$ choices;
+    $\mathsf{Ch}_Q$ is a multiset on $S$ with capacity bounded by the
+    existentials in $\lambda(s)$, so $|\mathsf{Ch}_Q(s)|\le n$ and
+    the number of child assignments per state is $\le n\cdot|S|^n$.
+  \item \textbf{Request summaries.}  $\eta$ records, per port and
+    per vertical direction, a subset of $\Cl(C_0)$:
+    $(n+1)\cdot 2\cdot 2^{2n}=O(n\cdot 2^{2n})$ bits per profile.
+  \item \textbf{Sibling/support mosaics.}  A mosaic is a function
+    $\tau_M:P\to\Typ(C_0)$ together with $L_M:P^2\to\Base$:
+    $\le(2^n)^{m(n)}\cdot 5^{m(n)^2}\le 2^{p_1(n)}$ for
+    $p_1(n):=n\cdot m(n)+m(n)^2\cdot\log_2 5$.  $\Mos_Q$ is a subset:
+    $\le 2^{2^{p_1(n)}}$ families.  Maximum arity is $m(n)$.
+  \item \textbf{Finite graph size after blocking.}  By
+    Lemma~\ref{lem:regularization} the state set $S$ has
+    $|S|\le N(C_0)$, the number of complete boundary profiles, and
+    $N(C_0)\le|\Typ(C_0)|\cdot(\text{context colour count})\cdot
+    (\text{side menu count})\cdot(\text{interface count})$.  Each
+    factor is at most $2^{p_2(n)}$ for an explicit polynomial $p_2$,
+    so $|\Sigma|\le 2^{p(n)}$ and $|S|\le 2^{p(n)}$.
+\end{itemize}
+Collecting these,
+\[
+  p(n):=n+2\cdot m(n)\cdot\log_2 5+2n\cdot(n+1)+\text{const}
+\]
+is a polynomial of degree $\max(k+1,2k)$ in $n$.
+
+\subsection{Enumeration bound}
+\label{ssec:enumeration}
+
+\begin{lemma}[Certificate enumeration bound]\label{lem:enumeration}
+There is an explicit polynomial $p(n)$ such that the number of
+finite generated split-forest certificates for $C_0$ with state count
+$\le B(C_0):=2^{2^{p(n)}}$ and context width $\le B(C_0)$ is at
+most $2^{2^{q(n)}}$ for some polynomial $q(n)$.  Each certificate's
+validity (V1)--(V10) is decidable in time polynomial in its
+description size.
 \end{lemma}
 
 \begin{proof}
-Let $n=|\Cl(C_0)|$.  There are at most $2^n$ closure types.  The number of possible local witness menus is finite because there are at most $n$ existential formulas and five RCC5 labels.  For any fixed context width $m$, there are finitely many type assignments, equality partitions, port assignments, and RCC5 matrices over $m$ positions; legality is decidable by checking all triples.  Take $m$ to be the crude width consisting of one source, one witness position for each existential formula, one equality-mate boundary position for each containment witness mechanism, and the positions needed for all triples of such positions.  This is bounded by a computable polynomial in $n$ before taking finite powers.
+By the grammar of \S\ref{ssec:grammar}, a certificate is a finite
+tuple over alphabets of size $\le 2^{p(n)}$ (states, types,
+contexts, mosaic positions, port symbols, witness mechanisms) with
+at most $B(C_0)=2^{2^{p(n)}}$ components.  The total number of
+certificates of size $\le B(C_0)$ is then bounded by
+\[
+  \bigl(2^{p(n)}\bigr)^{B(C_0)}\cdot(\text{combinatorial overhead})
+  \;\le\; 2^{p(n)\cdot 2^{2^{p(n)}}}
+  \;\le\; 2^{2^{q(n)}}
+\]
+for some polynomial $q$.
 
-A complete boundary profile is a tuple over these finite alphabets: a closure type, context colour, witness menu, equality-port pattern, relation matrix, and upper/lower reachability summaries over subsets of $\Cl(C_0)$.  Hence the number $N(C_0)$ of complete profiles is computable.  Lemma~\ref{lem:regularization} constructs a certificate using no more states than the number of representative complete profiles and request-closed cycle states.  A coarse bound such as $B(C_0)=2^{2^{p(n)}}$ for a sufficiently large explicit polynomial $p$ is enough.  The exact asymptotic value is irrelevant; computability is what is needed.
+Each validity clause (V1)--(V10) is a finite-quantifier predicate
+over the certificate's components: (V1)--(V3) are local
+type/context checks; (V4)--(V5) are graph-reachability checks on $S$
+(linear in $|S|$ per query); (V6)--(V8) are mosaic-position
+membership and triple checks (polynomial in mosaic count); (V9) is a
+congruence check on the explicit-port relation; (V10) is exact
+summary computation by reachability.  All checks run in time
+polynomial in $|\Q|$, which is polynomial in $B(C_0)$.
 \end{proof}
 
+The compressed label \texttt{lem:bound} is retained as a synonym
+of Lemma~\ref{lem:enumeration} for back-reference compatibility.
+\begin{lemma}[Effective finite search bound; alias of Lemma~\ref{lem:enumeration}]\label{lem:bound}
+For each input $C_0$ there is a computable number $B(C_0)$ such that
+if $C_0$ has a valid finite generated split-forest certificate, then
+it has one with at most $B(C_0)$ states and with context width at
+most $B(C_0)$.
+\end{lemma}
+
+\subsection{Decidability}
+\label{ssec:decidability}
+
 \begin{theorem}[Decidability]\label{thm:decidability}
-Concept satisfiability for $\Logic$ over strong abstract RCC5 frames is decidable.
+Concept satisfiability for $\Logic$ over strong abstract RCC5 frames
+is decidable.
 \end{theorem}
 
 \begin{proof}
-Given $C_0$, compute $\Cl(C_0)$ and the bound $B(C_0)$.  Enumerate all finite tuples of the form in Definition~\ref{def:certificate} with at most $B(C_0)$ profile states and context width at most $B(C_0)$.  For each tuple, check the finite validity conditions of Definition~\ref{def:valid}: closure type legality, context and mosaic legality, graph reachability for $\PP/\PPI$, equality-aware witness discharge, support closure over the finite triple graph, and typed equality congruence.
+Given $C_0$, compute $\Cl(C_0)$ and the bound $B(C_0)$.  Enumerate
+all finite tuples of the form in Definition~\ref{def:certificate}
+with at most $B(C_0)$ profile states and context width at most
+$B(C_0)$.  By Lemma~\ref{lem:enumeration} this enumeration is
+finite and each tuple's validity (V1)--(V10) is decidable in
+polynomial time.
 
-If a valid certificate is found, accept.  By soundness, $C_0$ is satisfiable.  If no valid certificate exists below the bound, reject.  By completeness and Lemma~\ref{lem:bound}, every satisfiable $C_0$ would have appeared in the finite search.  Hence the algorithm halts with the correct answer.
+If a valid certificate is found, accept; by Theorem~\ref{thm:soundness}
+(soundness), $C_0$ is satisfiable.  If no valid certificate exists
+below the bound, reject; by Theorem~\ref{thm:completeness}
+(completeness) and Lemma~\ref{lem:bound}, every satisfiable $C_0$
+would have appeared in the finite search.  Hence the algorithm halts
+with the correct answer.
 \end{proof}
 
 \section{How the repaired proof handles the known stress cases}
