@@ -141,26 +141,40 @@ Full V8 triple-support closure: see mosaic_closure_search.py.
       - V2: mosaic m_bad: L(p1,p3)=DR not in comp(L(p1,p2),L(p2,p3))=comp(PP,PP)=['PP']
     expected: INVALID     outcome: PASS
 
-[21] Two-state PP cycle, no eq_ports (occurrence freshness)
+[21] exists DR.A with no mosaics: V6 must reject (regression)
+    C0 = EDR.A
+    states = ['s0']
+    verdict: INVALID
+      - V6: s0: exists DR.A has no declared mosaic witness
+    expected: INVALID     outcome: PASS
+
+[22] exists PO.A with no mosaics: V6 must reject (regression)
+    C0 = EPO.A
+    states = ['s0']
+    verdict: INVALID
+      - V6: s0: exists PO.A has no declared mosaic witness
+    expected: INVALID     outcome: PASS
+
+[23] Two-state PP cycle, no eq_ports (occurrence freshness)
     C0 = (EPP.T & APP.EPP.T)
     states = ['s0', 's1']
     verdict: VALID
     expected: VALID     outcome: PASS
 
-[22] Two-state PP cycle with eq across cycle (should fail V9.Eb)
+[24] Two-state PP cycle with eq across cycle (should fail V9.Eb)
     C0 = (EPP.T & APP.EPP.T)
     states = ['s0', 's1']
     verdict: INVALID
       - V9.Eb: s0 reach_PP s1 but they share eq-ports
     expected: INVALID     outcome: PASS
 
-[23] PP chain (3 states) sharing lambda, no eq_ports (SAT)
+[25] PP chain (3 states) sharing lambda, no eq_ports (SAT)
     C0 = (EPP.T & APP.EPP.T)
     states = ['s0', 's1', 's2']
     verdict: VALID
     expected: VALID     outcome: PASS
 
-[24] eq across distinct lambdas (should fail V9.Ea)
+[26] eq across distinct lambdas (should fail V9.Ea)
     C0 = A
     states = ['s0', 's1']
     verdict: INVALID
@@ -190,6 +204,8 @@ Summary
    expected=I  got=I  DR witness wrong-relation: L(p1,p2)=PO not DR (V6 FAIL)
    expected=I  got=I  DR universal violated: forall DR.A but neighbor has ~A (V2/V7 FAIL)
    expected=I  got=I  mosaic illegal composition: PP-PP-DR triangle (V2 FAIL)
+   expected=I  got=I  exists DR.A with no mosaics: V6 must reject (regression)
+   expected=I  got=I  exists PO.A with no mosaics: V6 must reject (regression)
    expected=V  got=V  Two-state PP cycle, no eq_ports (occurrence freshness)
    expected=I  got=I  Two-state PP cycle with eq across cycle (should fail V9.Eb)
    expected=V  got=V  PP chain (3 states) sharing lambda, no eq_ports (SAT)

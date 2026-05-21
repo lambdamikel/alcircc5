@@ -615,10 +615,11 @@ def check_V6_dr_po_existential_support(cert: Certificate,
     """V6: every exists R.D in lam(s) with R in {DR, PO} has a declared
     witness (mosaic, q) where the source position p of s in that mosaic
     satisfies L(p, q) = R and D in tau(q).
+
+    Note: a certificate with no mosaics is NOT vacuously V6-legal -- if
+    any state carries a DR/PO existential, the absence of a witness must
+    cause rejection. (Fix per GPT-5.5 May 2026 review.)
     """
-    if not cert.mosaics:
-        rep.ok('V6', 'no mosaics declared; no DR/PO existentials checked here')
-        return
     for s in cert.S:
         for c in cert.lam[s]:
             if c.kind != 'exists' or c.role not in MOSAIC:
@@ -1432,6 +1433,60 @@ def cert_mosaic_illegal_composition() -> tuple:
     return cert, C
 
 
+def cert_dr_existential_no_mosaics() -> tuple:
+    """exists DR.A with no mosaics declared at all.  Should FAIL V6.
+
+    GPT-5.5 May-2026 regression test: prior to the fix, V6 returned
+    vacuously on cert.mosaics==[], so this cert was incorrectly accepted.
+    With the fix, V6 scans all states/existentials unconditionally and
+    rejects the missing witness.
+    """
+    a = Atom('A')
+    e_dr_a = E('DR', a)
+    C = e_dr_a
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau_root},
+        par={},
+        ports={},
+        eq_ports=set(),
+        mosaics=[],
+        source_pos={},
+        dr_po_wit={},
+        name='exists DR.A with no mosaics: V6 must reject (regression)',
+    )
+    return cert, C
+
+
+def cert_po_existential_no_mosaics() -> tuple:
+    """exists PO.A with no mosaics declared at all.  Should FAIL V6.
+
+    Symmetric to cert_dr_existential_no_mosaics; covers the PO leg of the
+    V6 no-mosaics loophole flagged by GPT-5.5.
+    """
+    a = Atom('A')
+    e_po_a = E('PO', a)
+    C = e_po_a
+    cl = closure(C)
+    tau_root = saturate_for(cl, [C])
+    cert = Certificate(
+        S=('s0',),
+        s0='s0',
+        lam={'s0': tau_root},
+        par={},
+        ports={},
+        eq_ports=set(),
+        mosaics=[],
+        source_pos={},
+        dr_po_wit={},
+        name='exists PO.A with no mosaics: V6 must reject (regression)',
+    )
+    return cert, C
+
+
 def cert_WP5_pure_request_unfulfilled() -> tuple:
     """Pure request-closure negative test (GPT-5.5 verification.zip review section 3.5).
 
@@ -1646,6 +1701,8 @@ CORPUS = [
     (cert_dr_witness_wrong_relation, False),
     (cert_dr_universal_violated, False),
     (cert_mosaic_illegal_composition, False),
+    (cert_dr_existential_no_mosaics, False),
+    (cert_po_existential_no_mosaics, False),
     # Occurrence-level distinction (V9.Ea/Eb, per review section 4.5).
     (cert_two_state_pp_cycle_no_eq, True),
     (cert_two_state_pp_cycle_with_cross_eq, False),
