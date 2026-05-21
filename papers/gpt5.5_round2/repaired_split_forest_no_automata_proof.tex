@@ -1017,22 +1017,136 @@ Every possible interaction between the replaced component and the outside occurs
 
 \subsection{Finite-index blocking without automata}
 
-We now prove regularity directly, using request-closed cycles rather than automata.
+We now prove regularity directly, using request-closed cycles
+rather than automata.  The argument has three ingredients: (i) a
+finite alphabet of \emph{extended profiles} that records both the
+complete boundary profile and the set of still-pending vertical
+existentials, (ii) a checkpoint construction that produces
+infinitely many positions where every request pending at the
+preceding checkpoint has already been fulfilled, and (iii) a
+pigeonhole that selects two equi-profile checkpoints whose
+intervening segment can be pumped without losing existential or
+universal truth.
 
-For a vertical direction $R\in\{\PP,\PPI\}$, an $R$-request at an occurrence $u$ is an existential formula $\exists R.D\in\lambda(u)$ not already witnessed inside the current finite context.  A segment of a vertical path from $u_i$ to $u_j$ is request-closed if every $R$-request generated at or after $u_i$ and passed into the segment is fulfilled before or at $u_j$, or is passed out at $u_j$ with exactly the same complete boundary profile as at $u_i$.  In the latter case repetition of the segment again gives a fresh opportunity to fulfill the request; if the request is fulfilled somewhere inside the segment, every later lap also contains the same fulfilling position.
+For a vertical direction $R\in\{\PP,\PPI\}$, an $R$-request at an
+occurrence $u$ is an existential formula $\exists R.D\in\lambda(u)$
+not already witnessed inside the current finite context.  A segment
+of a vertical path from $u_i$ to $u_j$ is request-closed if every
+$R$-request generated at or after $u_i$ and passed into the segment
+is fulfilled before or at $u_j$, or is passed out at $u_j$ with
+exactly the same complete boundary profile as at $u_i$.  In the
+latter case repetition of the segment again gives a fresh
+opportunity to fulfill the request;\@ if the request is fulfilled
+somewhere inside the segment, every later lap also contains the
+same fulfilling position.
+
+\begin{definition}[Request status and extended profile]\label{def:request-status}
+For an occurrence $u_k$ on an infinite vertical path
+$u_0,u_1,\ldots$, the \emph{pending set}
+\(
+  \mathsf{Pend}(u_k)\subseteq
+  \{\exists R.D\in\Cl(C_0):R\in\{\PP,\PPI\}\}
+\)
+is the set of vertical existentials generated at some occurrence
+$u_{k'}$ with $k'\le k$ and not yet witnessed by any
+$u_{k''}$ with $k'\le k''\le k$.  The \emph{extended profile} of
+$u_k$ is
+\[
+  \widehat\Pi(u_k):=\bigl(\Pi(u_k),\,\mathsf{Pend}(u_k)\bigr).
+\]
+\end{definition}
+
+The pending set ranges over a finite alphabet: it is a subset of the
+at-most-$n$ vertical existentials in $\Cl(C_0)$, so
+$|\mathsf{Pend}|\le 2^{n}$.  Combined with the finitely many complete
+boundary profiles, the extended-profile alphabet $\widehat\Sigma$ is
+finite of size $\le |\Sigma|\cdot 2^n$.
+
+\begin{lemma}[Checkpoint structure]\label{lem:checkpoints}
+Suppose every transitive existential request on
+$u_0,u_1,\ldots$ is eventually fulfilled.  For each $k\ge 0$ there is
+a least position
+\[
+  \mathsf{chk}(k):=\min\{m>k:\text{every }\exists R.D\in\mathsf{Pend}(u_k)
+                          \text{ is fulfilled at some }u_{k'},\ k\le k'\le m\}.
+\]
+Iterating $k_0:=0$, $k_{n+1}:=\mathsf{chk}(k_n)+1$ produces an
+infinite increasing sequence of checkpoint positions.
+\end{lemma}
+
+\begin{proof}
+For each $\exists R.D\in\mathsf{Pend}(u_k)$, by hypothesis there is
+some $m_{\exists R.D}>k$ at which it is fulfilled.  Take
+$\mathsf{chk}(k)$ to be the maximum of these (at most $n$) values:
+it exists since $\mathsf{Pend}(u_k)$ is finite.  Iteration is
+well-defined because $k_{n+1}>k_n$ for every $n$.
+\end{proof}
 
 \begin{lemma}[Request-closed repetition lemma]\label{lem:request-cycle}
 Let
 \[
   u_0,u_1,u_2,\ldots
 \]
-be an infinite generated vertical path in a split presentation, and suppose every transitive existential request on the path is eventually fulfilled in the presentation.  Then there are $i<j$ such that $\Pi(u_i)=\Pi(u_j)$ and the segment $u_i,\ldots,u_j$ is request-closed.  Repeating this segment with fresh occurrences preserves all $\PP/\PPI$ existential and universal closure formulas on the resulting path.
+be an infinite generated vertical path in a split presentation, and
+suppose every transitive existential request on the path is
+eventually fulfilled in the presentation.  Then there are $i<j$
+such that $\Pi(u_i)=\Pi(u_j)$ and the segment $u_i,\ldots,u_j$ is
+request-closed.  Repeating this segment with fresh occurrences
+preserves all $\PP/\PPI$ existential and universal closure formulas
+on the resulting path.
 \end{lemma}
 
 \begin{proof}
-There are finitely many complete boundary profiles and finitely many request sets over $\Cl(C_0)$.  Starting at a position $k$, wait until all requests generated at $u_k$ and passed forward have either been fulfilled or reappear at a boundary with the same profile and same request status.  Such a later position exists because the original path satisfies every request and because only finitely many request statuses can occur.  This defines infinitely many checkpoints.  Among them, two checkpoints $i<j$ have the same complete profile and the same request status.  The intervening segment is request-closed by construction.
+\emph{Pigeonhole.}  By Lemma~\ref{lem:checkpoints} the sequence of
+checkpoints $u_{k_0},u_{k_1},\ldots$ is infinite.  Each $u_{k_n}$
+has an extended profile $\widehat\Pi(u_{k_n})\in\widehat\Sigma$.
+Since $\widehat\Sigma$ is finite, the infinite sequence
+$\widehat\Pi(u_{k_n})$ takes some value at least twice: there are
+$n_1<n_2$ with $\widehat\Pi(u_{k_{n_1}})=\widehat\Pi(u_{k_{n_2}})$.
+Set $i:=k_{n_1}$, $j:=k_{n_2}$.  In particular
+$\Pi(u_i)=\Pi(u_j)$ and $\mathsf{Pend}(u_i)=\mathsf{Pend}(u_j)$.
 
-When the segment is repeated, every universal formula is safe because the repeated targets have the same profiles as before.  Every existential request generated in a lap is fulfilled within the same lap if it was fulfilled in the segment, or is carried to the next boundary with identical status; in the latter case the next fresh lap is a strict later $R$-successor and repeats the same finite pattern.  Thus every occurrence has an appropriate strict reachable witness in the infinite repeated path.
+\emph{Request-closure.}  Every $\exists R.D\in\mathsf{Pend}(u_i)$ is
+fulfilled at some $u_m$ with $i<m\le\mathsf{chk}(i)\le j$, by
+definition of the checkpoint $\mathsf{chk}(i)$.  Every
+$\exists R.D$ generated at some $u_k$ with $i<k\le j$ is either
+fulfilled at some $u_{k'}$ with $k\le k'\le j$, or remains pending
+at $u_j$ --- in which case it lies in
+$\mathsf{Pend}(u_j)=\mathsf{Pend}(u_i)$ and is therefore carried out
+through the boundary $u_j$ with the same status as at $u_i$.
+
+\emph{Pumping.}  Replace the tail $u_j,u_{j+1},\ldots$ by infinitely
+many fresh copies $u_i^{(1)},\ldots,u_j^{(1)},u_i^{(2)},\ldots,u_j^{(2)},\ldots$
+of the segment $[u_i,u_j]$, where each $u_k^{(\ell)}$ is a fresh
+occurrence of the same profile as $u_k$.  By
+$\Pi(u_i)=\Pi(u_j)$, the splice is profile-consistent; by the
+substitution lemma (Lemma~\ref{lem:substitution}), local closure
+formulas and mosaic compatibility at the splice point are
+preserved.
+
+\emph{Preservation of universals.}  Every $\forall R.D$ formula at
+$u_k^{(\ell)}$ depends only on the relations and target types
+visible from $u_k^{(\ell)}$.  By substitution the visible
+neighbourhood of $u_k^{(\ell)}$ is the same as the visible
+neighbourhood of $u_k$, so $\forall R.D$ truth is inherited from the
+original path.
+
+\emph{Preservation of existentials.}  Let $\exists R.D$ be a
+vertical existential generated at $u_k^{(\ell)}$.
+\begin{itemize}[leftmargin=2em]
+  \item If $\exists R.D$ was fulfilled within $[u_k,u_j]$ in the
+    original path, the same fulfilling position appears within the
+    same lap as $u_{k'}^{(\ell)}$, $k\le k'\le j$.
+  \item Otherwise $\exists R.D\in\mathsf{Pend}(u_j)=\mathsf{Pend}(u_i)$,
+    so the next lap $\ell+1$ begins with $\exists R.D$ in its pending
+    set, and by request-closure of the segment it is fulfilled inside
+    $[u_i^{(\ell+1)},u_j^{(\ell+1)}]$.
+\end{itemize}
+In both subcases the existential at $u_k^{(\ell)}$ has a strict
+later $R$-successor along the pumped path.
+
+Thus every closure formula at every fresh occurrence of the pumped
+path holds, completing the proof.
 \end{proof}
 
 \begin{lemma}[Finite regularization lemma]\label{lem:regularization}
