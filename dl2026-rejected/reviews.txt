@@ -1,0 +1,169 @@
+
+
+Skip to content
+Using Gmail with screen readers
+28 of 3,970
+[DL'26] Paper Notification #33 "Description Logic Research in the Era of..."
+Inbox
+DL'26 <noreply@mail.submissions.floc26.org>
+	
+8:27 AM (9 hours ago)
+	
+	
+to me
+Dear Michael Wessel,
+
+Thank you for submitting your work to the 39th International Workshop on
+Description Logics (DL 2026). After careful review, we regret to say
+that your paper titled
+
+"Description Logic Research in the Era of Agentic AI: The World's First
+AI-Generated Description Logic Decidability Proof?"
+
+cannot be accepted for presentation at the workshop. Please find the
+reviewers' comments attached. We hope these remarks are helpful as you
+continue your work.
+
+While this paper sparked intense discussion and led to a request for
+additional guidance from the DL Steering Committee, the majority of
+answers supported the negative decision. That said, many added that the
+paper could be a good scientific contribution if it adopted a
+higher-level perspective—focusing on the advantages and disadvantages of
+the using LLMs for formal proofs rather than claiming decidability
+results.
+
+Thank you for considering DL 2026, and we hope to receive your
+submissions at future editions.
+
+Kindest regards,
+Alisa Kovtunova and Barış Sertkaya
+DL 2026 Program Committee Chairs
+
+Review #33A
+===========================================================================
+
+Overall merit
+-------------
+1. Reject
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Paper summary
+-------------
+The submission addresses an open problem in description logic: the decidability of concept satisfiability for ALCI_RCC5, where the roles are interpreted as RCC5 spatial relations. A resolution of this problem would be interesting for the workshop. The submission is unusual because the proposed proof was developed in collaboration with large language models, and because these systems are explicitly presented as co-authors and contributors to the paper. The paper states that the main extended abstract was written by the human author, whereas the appendix, which contains the technical material, was written by LLMs under the human author’s direction.
+
+My recommendation is to reject the paper in its current form.
+
+My first concern is responsibility for the claimed result. The paper repeatedly presents the proof in tentative or conditional terms. For example, it says that the proof would count as an AI-generated decidability proof “if found correct by human experts,” and that the attempted proof “seems to have succeeded.” The appendix also contains disclaimers indicating that the results and proofs have not been verified by human domain experts and should not be taken as established unless independently checked. This is problematic for a submission that claims to settle an open decidability problem. If a theorem is submitted as a scientific result, then the human author must take full responsibility for its correctness. The use of LLMs in discovering, developing, writing, or testing the proof does not change this. In particular, making an LLM a co-author, or emphasizing that the technical appendix was written by LLMs, cannot serve to shift responsibility away from the human author.
+
+My second concern is that the paper mixes two quite different issues in an unfortunate way. One issue is the technical question whether ALCI-RCC5 is decidable. This is a legitimate research question for the workshop. The other issue is whether the community should examine and validate a proof generated largely by LLMs. The paper seems to present the submission partly as a call for such validation. This is not the same as submitting a proof that the author has checked and stands behind. It risks shifting the burden of verification from the author to the reviewers and the community. For a workshop with relatively light reviewing, this is especially problematic: checking a difficult decidability proof requires substantial expert time, and reviewers should not be asked to serve as the first human validators of an LLM-generated proof. Moreover, the biggest expert for the problem under consideration is the author himself.
+
+A related concern is the role played by tests, implementations, cross-validation suites, and adversarial audits. The paper reports substantial computational evidence in support of the claim. However, for a decidability theorem, such evidence is not the main issue. A decidability result is established by a formal proof, including precise definitions and rigorous arguments for soundness, completeness, and termination of the proposed procedure. Tests and cross-validations may detect bugs during proof development, but they do not validate a theorem in the way a proof does. The emphasis on these artifacts is therefore unusual and contributes to the impression that the correctness of the result has not yet been established in the standard mathematical sense.
+
+I have only skimmed the appendix and have not attempted to verify the proof in detail. From that reading, the appendix appears to be written more like a survey, research log, or AI-generated technical narrative than like a polished mathematical proof. I do not claim, on the basis of this reading, that the proof is wrong. Rather, my concern is that the paper itself does not present the proof as something the human author has fully checked and for which he takes full responsibility. Given the tentative framing of the result, I do not think it is reasonable to expect workshop reviewers to perform a detailed verification of the LLM-generated appendix.
+
+Overall, I do not think the submission is suitable in its current form as a technical contribution establishing the decidability of ALCI_RCC5. The topic of LLM-assisted theorem proving is timely, and the case study may be interesting as a discussion piece about the role of AI systems in theoretical research. But that is a different kind of contribution from a paper that proves a decidability theorem. If the paper is to be considered as a technical contribution, the proof should be rewritten in a conventional mathematical style, and the human author should clearly state that he has checked the proof and takes responsibility for its correctness. If the paper is instead intended as a call for the community to examine a candidate AI-generated proof, then it should be framed as such, rather than as a submission establishing the theorem.
+
+To make things even more interesting, I have written this review in collaboration with ChatGPT. I take full responsibility for the review content.
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Review #33B
+===========================================================================
+
+Overall merit
+-------------
+4. Accept
+
+Reviewer expertise
+------------------
+2. Some familiarity
+
+Paper summary
+-------------
+In this article, the authors present a “candidate decidability proof for concept satisfiability in $\mathcal{ALCI}_{RCC5}$.” A distinctive feature of the submission is that the proof was produced through what the authors describe as a “human-and-AI collaboration.”
+
+Comments for authors
+--------------------
+Let me first start with the positive aspects of the submission.
+
+1. The use of AI to assist with mathematical proofs is both timely and relevant. It is interesting to see researchers testing the limits of current AI systems and exploring whether they can contribute to solving open problems in Description Logics.
+
+2. The choice of problem seems well suited for testing current AI systems. On the one hand, this is an open problem, which makes the exercise genuinely meaningful. On the other hand, it seems somewhat related to existing problems and techniques, so it is not entirely outside the scope of what LLMs such as Claude or ChatGPT might plausibly handle.
+
+For the above reasons, and given that this is a submission to a workshop whose main goal is dissemination, I am happy to recommend acceptance and look forward to its presentation in Lisbon. Nevertheless, if this were a conference submission, my recommendation would be to reject. In short, I find the idea of using AI to assist with proofs both interesting and promising, but the presentation of this submission needs substantial improvement before it can be published. In the following paragraphs, I discuss these concerns about the write-up in more detail.
+
+3. There are some issues concerning the clarity and meaning of several claims throughout the submission. To begin with, after reading the extended abstract, I am not sure whether the human author of the submission believes that the presented proofs are correct. For instance, the following sentence raises this concern: “We hereby claim: $\mathcal{ALCI}_{RCC5}$ is decidable. We invite scrutiny and constructive feedback from the DL community to challenge this claim.” I am fine with authors publishing proofs obtained with the assistance of LLMs, but the burden of establishing correctness first lies with the authors, not with the reviewers. After reading the extended abstract, I am left with the impression that the author has obtained a candidate proof from some LLMs and expects the reviewers to do the work of verifying it.
+
+There are other sentences in the extended abstract that I find unclear and puzzling. For instance, at one point the authors write: “The human-and-AI team started by assessing the technical correctness of my original contributions. No major technical errors were found; the established results still stand unrefuted in April 2026.” What exactly does this mean? Did the AI produce some form of Lean code, or another machine-checkable proof, that can be verified by an automated theorem prover? Or is this simply the human author reasserting the correctness of their own results after having a conversation with an LLM?
+
+4. The write-up of the extended abstract could be significantly improved. To begin with, the semantics of $\mathcal{ALCI}_{RCC5}$ are not explained clearly enough. For a reader unfamiliar with this formalism, such as myself, the presentation is difficult to follow. At a minimum, the author should spell out what the RCC5 relations DR, PO, EQ, PP, and PPi stand for, and then explain the intended semantics of each relation. For instance, I would expect PP, standing for “proper part,” to be interpreted as a transitive relation, but this is not made explicit in the current version. There are also sentences whose meaning is ambiguous. For example, the paper states: “Under strong-EQ semantics [15], $EQ^\mathcal{I}$ is the identity on $\Delta^\mathcal{I}$.” It is not clear from this sentence whether strong-EQ semantics is actually being assumed in the paper, or merely mentioned as an alternative semantics.
+
+If the author plans to submit this work to a conference, I would suggest simplifying the presentation and making the technical content clearer. For instance, I do not understand why $\mathcal{ALCI}{RCC8}$ is introduced, since the new decidability result concerns $\mathcal{ALCI}{RCC5}$. I would therefore recommend removing the discussion of $\mathcal{ALCI}_{RCC8}$ from the final version, unless it is directly needed for the main result. Moreover, it would be better to present the decidability result first, and only then discuss “attempts and results” and related work in separate subsequent sections.
+
+5. The formal proof of the decidability result given in Section~A.5 of the appendix is not written clearly enough, nor in a sufficiently formal manner, to be properly verified. I list below several issues, among the many others I found.
+ - I don't understand the notion of a cover tree. What does it mean to "split them (i.e., the join nodes) into EQ-copies, one per parent path"? This notion requires a more formal definition.
+ - What does this comment mean "(weak-EQ semantics, convertible to strong-EQ by typed congruence quotient)"?
+ - You write $orig : T \to \Delta^\mathcal{I}$ but $T$ is a tree. What is the domain of orig? The nodes in the tree?
+ - I am confused by the notion "sibling roots s and t". If these nodes are siblings, then they must be the children of some node. Then, how can they be possible be roots?
+ - What is EQ-splitting?
+ - I reckon that there is something wrong in the statement of Proposition A.5.3. Namely, shouldn't you mention an interpretation somewhere? The composition of two binary predicates is not defined; the composition of the interpretation of two such predicates is.
+
+Just to reiterate my main concern: my problem is not that this submission was written with the help of AI, but rather that the write-up is not yet up to the expected standard. My recommendation to the human author is to study the solution proposed by the LLM, understand it thoroughly, and then write the paper as they would write a regular "human-authored" paper. A disclaimer can then be added at the end explaining the respective contributions of the human author and the AI tools used in preparing the submission.
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Review #33C
+===========================================================================
+
+Overall merit
+-------------
+1. Reject
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Paper summary
+-------------
+This extended abstract reports on the author's experience in teaming up with LLMs to investigate the decidability of reasoning in a variant of ALCI, called ALCI(RCC5), where the only available role names correspond to RCC5 relations, which are interpreted according to the semantics of RCC5 constraints. This problem has been open since the author first considered it during his doctoral studies. The abstract explains what steps have been taken to produce attempts at showing undecidability or decidability of this satisfiability problem, and invites the community to reflect on the possibility of adopting agentic AI to foster research in the area of Description Logics. Finally, the team claims that reasoning in ALCI(RCC5) is decidable.
+
+Comments for authors
+--------------------
+There are two aspects of this contribution that I find positive. First, the research problem at the core of this paper is an interesting one, and I do see the importance of resolving it, since this particular DL offers an example of a very selective usage of reflexive, symmetric and transitive roles with a non-trivial composition, which (to the best of my knowledge) is not captured by existing decidable DLs. Second, I reckon that it is important to discuss the role of AI agents as research companions moving forward: for example, one benefit, based on the anecdotal evidence of mathematicians of the caliber of Terence Tao and Don Knuth, would be the ability to map out the space of existing techniques to select the right tool to achieve a clearly stated goal, and extensively trying out these techniques to narrow down the solution space.
+
+Before going further, I would like to address the claim posed by the paper. I believe that reasoning in ALCI(RCC5) is decidable. This belief is not corroborated by the content of the survey paper, rather by my experience with problems in similar settings. On an intuitive level, I think that the split-tree forest and cover-tree tableau approach suggested by the author, which is quite similar to type-elimination, could be used to show decidability.
+
+Unfortunately, there are several aspects of this submission that I find problematic.
+
+The extended abstract is describing the process followed by the author and the LLMs to find a solution to the research problem, but is not really describing the solution itself. While telling about this process to the DL community would have its merits, I personally believe that an extended abstract to be included in the DL proceedings is not the right choice, here. Alternatives that would still reach the community and potentially have an impact include the DL mailing list and the DL Discord channel, among other media.
+
+The technical content of the abstract cannot be fully understood without reading the appendix. For instance, the definition of ALCI(RCC5) given in the abstract relies on a composition table that only appears in the appendix (Table 1).
+
+Notation is not used consistently across the paper, neither in the appendix nor in the abstract. Changes in notation include using different capitalization and fonts.
+
+Both the abstract and the appendix contain extensive references to work hosted on GitHub.
+The way these references are provided here is faulty: to what commit are they referring? I can already see that the content of the repository changed after submission. How am I expected to review an ever-changing submission? I would have wished references to a stable version of the submission hosted e.g. on Zenodo, with an immutable DOI. At the very least, I would have expected a clearer reference to a specific commit for each linked paper or program.
+
+The abstract and the provided appendix fail to mention some existing integrations of RCC8 or RCC5 in DLs, which have for instance been successfully studied in the context of concrete domains. I would have expected at least a mention as related work, in spite of the integration being different. As a reader, this gives me the false feeling that concrete domains were not at all considered by the LLMs during their research. However, a cursory look at one of the READMEs in the companion repository shows that indeed the LLMs did consider concrete domains as a candidate for showing decidability. Then, why are the appendix paper and the repository so different in their recollection of the research process?
+
+The appendix paper is not suitable for peer review. The content of the appendix heavily relies on the content of several other papers generated during the research conducted by the LLMs, which are also not independently peer-reviewed, and cannot be read and understood without reading these auxiliary papers. One example (among several) is the notion of safety for a pair of types. Where is it defined? I could not find a matching definition. Without this definition, I cannot understand the rest of the paper and judge its claims. Another important missing piece are the correctness proofs for the cover-tree tableau: there are two quite incomplete proof sketches in Section A.6.4, which again rely on two additional papers written by the LLMs and without which I cannot judge the correctness of the claims (although I can form an opinion on whether the approach makes sense).
+
+The appendix contains a broken reference in Section A.6.4.
+
+The extended abstract contains some mistakes that, ironically, would have probably been caught by using an LLM to perform a spell check on the TeX sources. Two examples are listed here, with their corrections: "attemps" -> "attempts"; "the agent’s work" -> "the agents' work".
+
+I support the idea of tackling a research problem in innovative ways, and I think that it is important to share this type of experience with the research community, especially as a former member that can also bring some domain-specific insights to the process.
+I am not very supportive of work that fails to follow basic good scientific practices and most importantly (for this particular context) that is not written to be readable, informative and accurate for human DL researchers.
+
+This paper, in my opinion, unfortunately does not meet the standards for acceptance at this workshop, and recommend for its rejection. Still, I would encourage the author to take part in the DL workshop to discuss both the research problem concerning ALCI(RCC5) and the LLM-aided research process, and would be curious to see a carefully presented poster or talk on the subject.
+
+P.s.: generative AI was not used to write this review, and I apologize for any potential mistake or inaccuracy.
+
+

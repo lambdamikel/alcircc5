@@ -18,6 +18,7 @@
 - [Key Files](#key-files)
 - [Outdated Files](#outdated-files)
 - [References](#references)
+- [DL 2026 submission and rejection](#dl-2026-submission-and-rejection)
 - [Acknowledgments](#acknowledgments)
 - [Outdated and Superseded Material](OUTDATED.md) — detailed write-ups of disproved, retracted, or superseded approaches, preserved for reference and transparency
 
@@ -575,6 +576,45 @@ Earlier approaches, drafts, and retracted papers, preserved for traceability. Se
 16. R. Kontchakov, I. Pratt-Hartmann, F. Wolter, M. Zakharyaschev. "Spatial Logics with Connectedness Predicates." Logical Methods in Computer Science, 6(3:7), 2010.
 
 17. J. Halpern and Y. Shoham. "A Propositional Modal Logic of Time Intervals." J. ACM, 38(4):935-962, 1991.
+
+## DL 2026 submission and rejection
+
+In May 2026, an extended-abstract version of this work was submitted to the 39th International Workshop on Description Logics (DL 2026). The submission was titled *"Description Logic Research in the Era of Agentic AI: The World's First AI-Generated Description Logic Decidability Proof?"*, authored by Michael Wessel with Claude (Anthropic) and GPT-5.4 (OpenAI) listed as co-authors. The paper was **rejected** after three reviews. The full submission (with post-submission typographical corrections, substantive content unchanged) and the three reviews are archived under [`dl2026-rejected/`](dl2026-rejected/):
+
+- [Rejected submission (PDF)](dl2026-rejected/dl2026_abstract_ALCIRCC5_v3.pdf) — [LaTeX source](dl2026-rejected/dl2026_abstract_ALCIRCC5_v3.tex)
+- [Three reviews and rejection letter](dl2026-rejected/reviews.txt)
+
+As stated in the abstract and again in §3 of the submission, **the main motivation of the paper was to raise awareness of the emerging capabilities of agentic AI frontier models for Description Logic research** — not to demand peer-review-grade certification of the underlying decidability proof. The proof, with its caveats and "candidate" framing, was offered as an exhibit illustrating what the agentic process produced. The companion overview paper, the GPT-5.5 repaired proof, the technical addendum, the WP1–WP6 computational verification, and the full conversation log are available elsewhere in this repository for anyone who wishes to engage with the technical content on its own terms.
+
+### Why I (Wessel) believe the paper was rejected on the wrong basis
+
+The reviews themselves carry the evidence:
+
+- **Reviewer C explicitly believes the result.** Quoted verbatim: *"I believe that reasoning in ALCI(RCC5) is decidable… I think that the split-tree forest and cover-tree tableau approach suggested by the author, which is quite similar to type-elimination, could be used to show decidability."* A reviewer who agrees with the thesis and names the right techniques, but recommends Reject on presentational grounds (GitHub commit pinning, missing definitions, typos, broken refs) is not rejecting on technical merit.
+- **Reviewer A explicitly did not engage with the technical content.** Quoted verbatim: *"I have only skimmed the appendix and have not attempted to verify the proof in detail."* The Reject vote was framed around LLM co-authorship and the locus of responsibility — a *normative* objection about who may publish what, not a *technical* objection to the work.
+- **Reviewer B saw essentially the same surface defects and recommended Accept.** Same complaints about RCC5-semantics presentation, the *"We hereby claim"* framing, and the cover-tree formality issues; opposite verdict. The defect inventory is roughly constant across the three reviews — the verdict is not. That delta is a value judgment about LLM-assisted work, not a technical assessment.
+- **The Program Committee escalated to the DL Steering Committee.** From the rejection letter: *"this paper sparked intense discussion and led to a request for additional guidance from the DL Steering Committee."* Steering Committees are not normally asked to adjudicate typos or missing related work — they are called when a submission raises a *policy* question. Here, the question was whether DL is willing to platform an openly AI-generated decidability claim.
+- **The PC's covering letter confirms what was actually being decided.** Quoted verbatim: *"the paper could be a good scientific contribution if it adopted a higher-level perspective — focusing on the advantages and disadvantages of using LLMs for formal proofs rather than claiming decidability results."* Translated: same content minus the decidability claim would be considered. The objection was to the framing and the precedent, not the substance.
+
+My reading is that the rejection was driven by community-level discomfort with admitting AI tools as co-authors and with certifying an AI-generated theorem, **not** by the technical defects nominally cited. Those defects were available and were used to support a decision that had already been reached on other grounds. **This is gatekeeping** — defensible from the perspective of the gatekeepers, perhaps necessary in some form, but distinct from peer review on technical merit.
+
+### The recursive irony
+
+Section 4 of the rejected paper warned in advance about exactly these failure modes: *"network effects, not-invented-here bias, and dismissive reviewing."* The three returned reviews instantiate all three:
+
+- **Network effects** — Steering Committee escalation indicates that community-policy considerations governed the outcome.
+- **Not-invented-here bias** — a submission from a new participant class (work openly co-authored with AI agents) was rejected on the framing of that participation rather than on substance.
+- **Dismissive reviewing** — one reviewer skimmed only; one rejected a thesis they hold to be correct; the cited defects would normally be revise-and-resubmit material, not rejection grounds.
+
+Agentic AI will not by itself eliminate bias in peer review — AI systems carry their own training-data and RLHF-induced biases — but it can provide a second, orthogonal lens that exposes asymmetries in how submissions are evaluated. **The rejection itself, in my reading, is a data point in favour of the §4 thesis the paper was trying to advance:** the technical content was not what the community responded to.
+
+### What this section is, and is not
+
+This is **not** a claim that the ALCI\_RCC5 decidability proof is verified or that the result is established. The Lean L1–L7 verification stack remains open, and a serious certification of the claim still depends on it. The repaired proof and the technical addendum close all paper-level obligations, but paper-level closure is not machine-checkable closure, and the candidate framing of the extended abstract reflected that honestly.
+
+This is also **not** a claim that the reviewers acted in bad faith. Two of three were applying what they considered the appropriate community standard to a novel form of submission; the third recommended Accept on essentially the same evidence. The disagreement among them is itself informative about where the DL community currently stands on this question.
+
+What this section *is*: a record that an open-problem paper on a topic explicitly within the workshop's stated scope (decidability of a spatial DL), with an explicit motivation of *raising awareness* of agentic AI capabilities rather than demanding validation, accompanied by extensive computational artifacts and a full conversation log, was rejected by a workshop whose covering letter offered to entertain the same content under a different frame. The reviews and the rejected paper are published here so that readers can form their own view.
 
 ## Acknowledgments
 
