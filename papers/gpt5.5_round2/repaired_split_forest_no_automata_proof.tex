@@ -213,21 +213,138 @@ Given $a_0\in\Delta^\I$, let $W_0=\{a_0\}$ and
 Let $W=\bigcup_i W_i$ and let $\I\upharpoonright W$ be the induced subinterpretation on $W$.
 \end{definition}
 
+The thinning argument has two parts: (i) the induced restriction is
+again a strong RCC5 frame, not merely a labelled subgraph, and (ii)
+truth of every closure formula is preserved.  Both parts use only
+that $\Cl(C_0)$ is closed under subformulas and under NNF complement
+of universal/existential restrictions.
+
+\begin{lemma}[Frame inheritance]\label{lem:frame-inherited}
+If $(\Delta^\I,\rho^\I)$ is a strong abstract RCC5 frame (satisfying
+(F1)--(F3) plus the strong-$\EQ$ condition
+$\rho^\I(x,y)=\EQ\iff x=y$), then so is
+$(W,\rho^\I\!\upharpoonright\!W^2)$ for every non-empty
+$W\subseteq\Delta^\I$.
+\end{lemma}
+
+\begin{proof}
+Let $\rho:=\rho^\I\!\upharpoonright\!W^2$.
+\begin{itemize}[leftmargin=2em]
+  \item \emph{(F1) Reflexivity.}  For $x\in W$,
+    $\rho(x,x)=\rho^\I(x,x)=\EQ$ by (F1) on $\I$.
+  \item \emph{(F2) Inverse.}  For $x,y\in W$,
+    $\rho(y,x)=\rho^\I(y,x)=\mathsf{Inv}(\rho^\I(x,y))=\mathsf{Inv}(\rho(x,y))$
+    by (F2) on $\I$.
+  \item \emph{(F3) Composition.}  For $x,y,z\in W\subseteq\Delta^\I$,
+    $\rho(x,z)=\rho^\I(x,z)\in\comp(\rho^\I(x,y),\rho^\I(y,z))=\comp(\rho(x,y),\rho(y,z))$
+    by (F3) on $\I$.
+  \item \emph{Strong $\EQ$.}  For $x,y\in W$,
+    $\rho(x,y)=\EQ\iff\rho^\I(x,y)=\EQ\iff x=y$, where the second
+    biconditional is identity in $\Delta^\I$ but coincides with
+    identity in $W$ for $x,y\in W$.
+\end{itemize}
+The frame conditions are universal over triples of $\Delta^\I$ and
+therefore hold over any subset $W$ with no further obligation.
+\end{proof}
+
+\begin{remark}
+Lemma~\ref{lem:frame-inherited} is the missing first sentence of the
+compressed thinning proof.  Without it, $\I\!\upharpoonright\!W$
+would be only a labelled subgraph, and the truth-preservation
+induction could not invoke ``concept evaluation in the manuscript's
+model class''.
+\end{remark}
+
 \begin{lemma}[Witness-generated submodel lemma]\label{lem:thinning}
 For every $a\in W$ and every $C\in\Cl(C_0)$,
 \[
   a\in C^\I \quad\Longleftrightarrow\quad a\in C^{\I\upharpoonright W}.
 \]
-Consequently, if $\I,a_0\models C_0$, then $\I\upharpoonright W,a_0\models C_0$.
+Consequently, if $\I,a_0\models C_0$, then $\I\!\upharpoonright\!W,a_0\models C_0$.
 \end{lemma}
 
 \begin{proof}
-The induced restriction of a strong RCC5 frame is again a strong RCC5 frame because the frame conditions are universal over triples and equality remains identity.
+By Lemma~\ref{lem:frame-inherited}, $\I\!\upharpoonright\!W$ is a
+strong abstract RCC5 frame, so concept evaluation is well-defined.
+We proceed by structural induction on $C\in\Cl(C_0)$ in NNF.
 
-The truth equivalence is proved by structural induction over $\Cl(C_0)$.  Atomic and Boolean cases are immediate.  For $C=\exists R.D$, if $a\in C^\I$, then the selected witness $b=w(a,\exists R.D)$ belongs to $W$, satisfies $\rho(a,b)=R$, and belongs to $D^\I$.  By induction $b\in D^{\I\upharpoonright W}$, so $a\in C^{\I\upharpoonright W}$.  The converse is immediate because witnesses in the restricted model are also witnesses in the original model.
+\emph{Case 1: atomic and negated-atomic concepts.}  For a concept
+name $A$, $A^{\I\upharpoonright W}=A^\I\cap W$ by definition of the
+restricted interpretation.  Hence for $a\in W$, $a\in A^\I$ iff
+$a\in A^{\I\upharpoonright W}$.  For NNF-negated $\neg A$,
+$(\neg A)^{\I\upharpoonright W}=W\setminus A^\I$, which agrees with
+$(\neg A)^\I$ on $W$.
 
-For $C=\forall R.D$, the direction from $\I$ to $\I\upharpoonright W$ is immediate, since fewer $R$-neighbours are present.  Conversely suppose $a\notin C^\I$.  Then $a\in(\exists R.\overline D)^\I$, and $\exists R.\overline D\in\Cl(C_0)$ by complement closure.  The selected witness $b=w(a,\exists R.\overline D)$ lies in $W$, has relation $R$ from $a$, and satisfies $\overline D$ in $\I$.  By induction $b\notin D^{\I\upharpoonright W}$, hence $a\notin(\forall R.D)^{\I\upharpoonright W}$.
+\emph{Case 2: Boolean connectives.}  For $C=C_1\sqcap C_2$ with
+$C_i\in\Cl(C_0)$ (closure under subformulas), $a\in C^\I$ iff
+$a\in C_1^\I\cap C_2^\I$ iff (by IH for each $C_i$)
+$a\in C_1^{\I\upharpoonright W}\cap C_2^{\I\upharpoonright W}$ iff
+$a\in C^{\I\upharpoonright W}$.  The same argument handles
+$\sqcup$.
+
+\emph{Case 3: existentials $\exists R.D$ for $R\in\Base$.}
+\emph{($\Rightarrow$)} If $a\in(\exists R.D)^\I$, the selected
+witness $b:=w(a,\exists R.D)$ is defined.  By construction
+$b\in W_{i+1}$ for the index $i$ with $a\in W_i$, hence $b\in W$.
+Also $\rho^\I(a,b)=R$ and $b\in D^\I$.  By
+Lemma~\ref{lem:frame-inherited},
+$\rho^{\I\upharpoonright W}(a,b)=R$.  By IH $b\in D^\I$ implies
+$b\in D^{\I\upharpoonright W}$.  Hence
+$a\in(\exists R.D)^{\I\upharpoonright W}$.
+
+\emph{($\Leftarrow$)} If $a\in(\exists R.D)^{\I\upharpoonright W}$,
+some $b\in W$ has $\rho^{\I\upharpoonright W}(a,b)=R$ and
+$b\in D^{\I\upharpoonright W}$.  Since $W\subseteq\Delta^\I$ and the
+relation restricts, $\rho^\I(a,b)=R$.  By IH $b\in D^\I$.  Hence
+$a\in(\exists R.D)^\I$.
+
+\emph{Subcase $R=\EQ$.}  Strong-$\EQ$ gives
+$\rho^\I(a,b)=\EQ\iff a=b$, so $(\exists \EQ.D)^\I=D^\I$ and likewise
+for the restriction.  The equivalence reduces to IH for $D$.
+
+\emph{Case 4: universals $\forall R.D$ for $R\in\Base$.}
+\emph{($\Rightarrow$)} Suppose $a\in(\forall R.D)^\I$ and let
+$b\in W$ be any element with
+$\rho^{\I\upharpoonright W}(a,b)=R$.  Then $\rho^\I(a,b)=R$, so
+$b\in D^\I$.  By IH $b\in D^{\I\upharpoonright W}$.  Hence
+$a\in(\forall R.D)^{\I\upharpoonright W}$.
+
+\emph{($\Leftarrow$) --- uses NNF complement closure.}  We argue by
+contrapositive.  Suppose $a\notin(\forall R.D)^\I$.  Then there is
+$b'\in\Delta^\I$ (not necessarily in $W$) with $\rho^\I(a,b')=R$ and
+$b'\notin D^\I$, so $b'\in\overline D^\I$ where $\overline D$ is the
+NNF complement of $D$.  Equivalently $a\in(\exists R.\overline D)^\I$.
+By complement closure of $\Cl(C_0)$, $\exists R.\overline D\in\Cl(C_0)$
+whenever $\forall R.D\in\Cl(C_0)$.  The selected witness
+$b:=w(a,\exists R.\overline D)$ is therefore defined and lies in $W$,
+with $\rho^\I(a,b)=R$ and $b\in\overline D^\I$.  By IH applied to
+$\overline D\in\Cl(C_0)$, $b\in\overline D^{\I\upharpoonright W}$,
+i.e.\ $b\notin D^{\I\upharpoonright W}$.  Since $b\in W$ and
+$\rho^{\I\upharpoonright W}(a,b)=R$, this shows
+$a\notin(\forall R.D)^{\I\upharpoonright W}$.
+
+\emph{Subcase $R=\EQ$.}  As in Case~3,
+$(\forall \EQ.D)^\I=D^\I$ and the equivalence reduces to IH for $D$.
+
+The induction covers every $C\in\Cl(C_0)$.  Setting $C=C_0$ and
+$a=a_0$ gives the corollary
+$\I,a_0\models C_0\iff\I\!\upharpoonright\!W,a_0\models C_0$.
 \end{proof}
+
+\begin{remark}[What this proof uses about $\Cl(C_0)$]
+The induction uses two closure properties of $\Cl(C_0)$: closure
+under subformulas of $\sqcap,\sqcup,\exists,\forall$ (Cases~2--4
+forward and backward) and \emph{NNF complement closure} on
+$\exists/\forall$ subformulas (Case~4 backward).
+\end{remark}
+
+\begin{remark}[Strong-$\EQ$ is necessary]
+If the frame were not strong-$\EQ$, the existential case $R=\EQ$
+would not reduce to IH for $D$: a witness with $\rho^\I(a,b)=\EQ$ and
+$b\ne a$ might satisfy $D$ while $a$ does not, and the selected-witness
+construction would not preserve truth.  The strong-$\EQ$ hypothesis
+is therefore load-bearing in Lemma~\ref{lem:thinning}.
+\end{remark}
 
 \begin{remark}[Why no semantic Hasse assumption is used]
 The witness edge $a\to w(a,\exists R.D)$ is immediate only in the generated witness graph.  It need not be an immediate cover in the original semantic $\PP/\PPI$ order.  Thus any dense or otherwise non-Hasse behaviour of an arbitrary starting model is removed from the proof by the thinning lemma.  The later cover tree is a generated presentation, not the transitive reduction of the original model.
