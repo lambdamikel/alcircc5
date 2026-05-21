@@ -467,46 +467,193 @@ All clauses are finite.  Reachability is graph reachability in $S$; mosaic suppo
 
 \section{Soundness}
 
-\begin{lemma}[Strong equality quotient]\label{lem:eq-quotient}
-Let a weak split occurrence structure satisfy the RCC5 composition table, converse, and typed relation-safety, and let $\eqc$ be an explicit typed equality congruence satisfying the analogues of (Ea)--(Ec) and containing no strict vertical comparable pair.  Then quotienting occurrences by $\eqc$ yields a strong abstract RCC5 frame.
+\subsection{Six assumptions on \texorpdfstring{$\eqc^Q$}{the equality congruence}}
+\label{ssec:six-assumptions}
+
+The validity conditions (V1)--(V10) of Definition~\ref{def:valid}
+plus the structural setup (generated cover, support-closed mosaic
+family) give six load-bearing assumptions on the lift of $\eqc^Q$ to
+occurrences of $\U(\Q)$.  We collect them here in one place so that
+the quotient lemma below can be applied to \emph{any} occurrence
+structure satisfying them, independently of how the certificate was
+obtained.
+
+Let $\Omega$ denote the set of occurrences of $\U(\Q)$, and let
+$\eqc$ be the lift of $\eqc^Q$ to $\Omega$ defined by:
+$u\eqc v$ iff $\Port(u)\eqc^Q\Port(v)$ in $\Q$ (within the same
+generated context or transitively across explicit equality-port
+links).  Let $\lab(u,v)\in\Base$ be the pair label on $\U(\Q)$
+assigned by the certificate's vertical and mosaic data, as in the
+proof of Lemma~\ref{lem:patchwork}.
+
+\begin{enumerate}[label=(A\arabic*),leftmargin=2em]
+\item \textbf{(Equivalence)} $\eqc$ is an equivalence relation on $\Omega$.
+\hfill [(V9.a)+(V9.d)]
+
+\item \textbf{(Vertical separation)} If $u,v\in\Omega$ are connected by strict $\PP$- or $\PPI$-reachability in $\U(\Q)$ (one or more iterations of generated parent/child steps), then $u\not\eqc v$.
+\hfill [(V9.b)]
+
+\item \textbf{(Type rigidity)} If $u\eqc v$, then $\lambda(u)=\lambda(v)$.
+\hfill [(V9.a)]
+
+\item \textbf{(Joint witness obligations)} For all $u\eqc v$ and every $\exists R.D\in\lambda(u)=\lambda(v)$ with $R\in\{\PP,\PPI\}$, there exists $w\in\Omega$ with $\{u,v\}\Reach_R w$ (equality-aware reachability) and $D\in\lambda(w)$.  Equivalently, a single witness discharges the obligation simultaneously at every $\eqc$-mate of the source.
+\hfill [(V4) + Def.~of $\Reach$]
+
+\item \textbf{(Quotient-compatible pair labels)} For all $u,v,w\in\Omega$ with $u\eqc v$, $\lab(u,w)=\lab(v,w)$ and $\lab(w,u)=\lab(w,v)$.
+\hfill [(V9.c)]
+
+\item \textbf{(Sibling-mosaic agreement on $\eqc$-endpoints)} For every mosaic $M\in\Mos_Q$ and every pair of positions $p_1,p_2$ in $M$ such that some realised pair of occurrences $(u_1,u_2)$ with $u_i$ at $p_i$ has $u_1\eqc u_2$, the mosaic labels and types agree: $L_M(p_1,q)=L_M(p_2,q)$ for every $q$ in $M$, and $\tau_M(p_1)=\tau_M(p_2)$.
+\hfill [(V9.c) on mosaic positions + (SC3)]
+\end{enumerate}
+
+Assumptions (A1)--(A6) are syntactic properties of $\Q$ and depend
+only on the certificate, not on any external model.  No assumption
+is made that $\eqc^Q$ arises from occurrence-coincidence in an
+intended interpretation; the quotient is constructed purely from
+$\Q$.
+
+\subsection{The standalone typed-\texorpdfstring{$\EQ$}{EQ} quotient theorem}
+\label{ssec:standalone-quotient}
+
+\begin{theorem}[Typed-$\EQ$ quotient]\label{thm:quotient}
+Let $\Q$ be a valid finite generated split-forest certificate and
+$\eqc$ the lift of $\eqc^Q$ to $\Omega=\Omega(\U(\Q))$, satisfying
+(A1)--(A6).  The quotient $\U(\Q)/\eqc$ is a strong abstract RCC5
+frame, and for every $D\in\Cl(C_0)$ and $u\in\Omega$,
+\[
+  D\in\lambda(u)
+  \quad\Longleftrightarrow\quad
+  \U(\Q)/\eqc,\ [u]\models D.
+\]
+\end{theorem}
+
+The theorem follows from four preservation lemmas, one per property
+listed in GPT-5.5's standalone-quotient request.  Throughout, write
+$\bar\lab([u],[v]):=\lab(u,v)$, which is well-defined by (A5).
+
+\begin{lemma}[JEPD]\label{lem:quotient-jepd}
+On $\U(\Q)/\eqc$, $\bar\lab([u],[v])$ is a unique base relation, with
+$\bar\lab([u],[v])=\EQ$ iff $[u]=[v]$.
 \end{lemma}
 
 \begin{proof}
-Let $[u]$ be the $\eqc$-class of $u$.  Define
-\[
-  \rho([u],[v])=\lab(u,v).
-\]
-This is well-defined by equality congruence: replacing $u$ or $v$ by an equality mate preserves all external labels.  The quotient has $\rho([u],[v])=\EQ$ iff $[u]=[v]$, because explicit equality is exactly the relation being quotiented and no strict vertical comparable pair is equated.  Converse and the RCC5 composition table descend from the weak occurrence structure because they hold for representatives and the definition is representative-independent.
+Uniqueness is well-definedness of $\bar\lab$, which is (A5).  If
+$[u]=[v]$, then any representative pair $(u,v')$ with $v'\eqc v$
+gives $\lab(u,v')$; in particular, the reflexive choice $v'=u$ gives
+$\lab(u,u)=\EQ$ by (M1).  Conversely, suppose $\bar\lab([u],[v])=\EQ$
+for some representatives.  Vertical comparability would forbid
+$\lab=\EQ$ (the vertical labelling reserves $\EQ$ for identical
+occurrences and explicit equality-port targets), so the pair is
+related either by occurrence identity or by an explicit equality
+chain in $\eqc^Q$.  Either case forces $u\eqc v$, hence $[u]=[v]$.
 \end{proof}
 
+\begin{lemma}[Strong-$\EQ$ frame]\label{lem:quotient-frame}
+$\U(\Q)/\eqc$ satisfies the abstract RCC5 frame axioms (F1)--(F3).
+\end{lemma}
+
+\begin{proof}
+(F1) is Lemma~\ref{lem:quotient-jepd}.  (F2) follows from (M2) on
+representatives and (A5).  For (F3), take any triple of classes
+$([u],[v],[w])$.  Lemma~\ref{lem:patchwork} (patchwork) gives
+$\lab(u,w)\in\comp(\lab(u,v),\lab(v,w))$ on $\U(\Q)$ for
+representatives, and (A5) lets the entries descend to $\bar\lab$.
+\end{proof}
+
+\begin{lemma}[RCC5 composition]\label{lem:quotient-comp}
+For all $[u],[v],[w]\in\U(\Q)/\eqc$,
+$\bar\lab([u],[w])\in\comp(\bar\lab([u],[v]),\bar\lab([v],[w]))$.
+\end{lemma}
+
+\begin{proof}
+$\bar\lab([u],[w])=\lab(u,w)\in\comp(\lab(u,v),\lab(v,w))
+=\comp(\bar\lab([u],[v]),\bar\lab([v],[w]))$ by
+Lemma~\ref{lem:patchwork} and (A5).
+\end{proof}
+
+\begin{lemma}[Closure-formula truth]\label{lem:quotient-truth}
+For every $D\in\Cl(C_0)$ and every $u\in\Omega$,
+\[
+  D\in\lambda(u)
+  \quad\Longleftrightarrow\quad
+  \U(\Q)/\eqc,\ [u]\models D.
+\]
+\end{lemma}
+
+\begin{proof}
+By induction on $D\in\Cl(C_0)$.  Interpret concept names by
+$A^\I=\{[u]:A\in\lambda(u)\}$;\@ this is well-defined by (A3).
+
+\emph{Atomic and Boolean cases.}  Direct from the definition of
+$A^\I$ and Hintikka completeness on closure types.
+
+\emph{Existential $\exists R.D\in\lambda(u)$.}
+For $R=\EQ$: (V1) normalises $\exists\EQ.D\in\lambda(u)$ iff
+$D\in\lambda(u)$, and strong-$\EQ$ semantics makes $[u]\models\exists\EQ.D$
+iff $[u]\models D$, so the IH closes the case.
+For $R\in\{\PP,\PPI\}$: (V4) supplies a state $t$ and an equality-mate
+state $\widehat s\in\Mate_Q(\mathrm{state}(u))$ with
+$\widehat s\reach_R t$ and $D\in\lambda(t)$.  By (A4), the
+equality-aware reachability lifts to occurrences:\@ there is an
+occurrence $\widehat u\eqc u$ in the unfolding with a strict
+vertical $R$-path to some occurrence $w$ of state $t$.  By (A5),
+$\bar\lab([u],[w])=\lab(\widehat u,w)=R$; by IH, $[w]\models D$;
+so $[u]\models\exists R.D$.  Note (A2) ensures $[u]\ne[w]$.
+For $R\in\{\DR,\PO\}$: (V6) names a mosaic position $q$ with
+$L(p,q)=R$ and $D\in\tau(q)$ in some mosaic $M$ realised in the
+unfolding.  The unfolding contains an occurrence $w$ at $q$ with
+$\lab(u,w)=R$ and $D\in\lambda(w)$; (A5) descends to
+$\bar\lab([u],[w])=R$, and IH gives $[w]\models D$.
+
+Conversely, suppose $[u]\models\exists R.D$ but
+$\exists R.D\notin\lambda(u)$.  Closure under NNF complement gives
+$\forall R.\bar D\in\lambda(u)$, where $\bar D$ is the NNF complement
+of $D$.  By (V5)/(V7), every $R$-target of $u$ in $\U(\Q)$ has
+$\bar D\in\lambda(\cdot)$, contradicting $D\in\lambda(w)$ at the
+witness obtained from $[u]\models\exists R.D$.
+
+\emph{Universal $\forall R.D\in\lambda(u)$.}  Dual to the
+existential case: (V3)/(V5)/(V7) force $D$ into every $R$-target's
+type, so every $R$-successor $[w]$ of $[u]$ satisfies $D$ by IH.
+The converse uses NNF complement as above.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:quotient}]
+Lemmas~\ref{lem:quotient-jepd} and~\ref{lem:quotient-frame} give the
+strong abstract RCC5 frame.  Lemma~\ref{lem:quotient-comp} states
+the composition closure explicitly (already used inside
+Lemma~\ref{lem:quotient-frame}, but isolated here per GPT-5.5's
+request for an enumerated preservation property).
+Lemma~\ref{lem:quotient-truth} gives the closure-formula truth
+biconditional.
+\end{proof}
+
+\subsection{Soundness of valid certificates}
+\label{ssec:soundness-corollary}
+
+The compressed lemma label \texttt{lem:eq-quotient} is retained as a
+synonym for the strong-$\EQ$ frame lemma so that earlier
+back-references remain valid.
+
+\begin{lemma}[Strong equality quotient; alias of Lemma~\ref{lem:quotient-frame}]\label{lem:eq-quotient}
+Under (A1)--(A6), $\U(\Q)/\eqc$ is a strong abstract RCC5 frame.
+\end{lemma}
+
 \begin{theorem}[Soundness of valid certificates]\label{thm:soundness}
-If $C_0$ has a valid finite generated split-forest certificate, then $C_0$ is satisfiable in a strong abstract RCC5 frame.
+If $C_0$ has a valid finite generated split-forest certificate, then
+$C_0$ is satisfiable in a strong abstract RCC5 frame.
 \end{theorem}
 
 \begin{proof}
-Let $\Q$ be valid and unfold it to the occurrence forest $\U(\Q)$.  Each traversal of a blocking cycle yields fresh occurrences.  Assign to each occurrence the type of its state.
-
-Define a weak pair labelling on occurrences.  Identical occurrences have label $\EQ$.  If two occurrences lie on one vertical branch, the lower-to-higher label is $\PP$ and the higher-to-lower label is $\PPI$.  If two occurrences are explicitly connected by equality ports, label them $\EQ$.  All other pair labels are supplied by the support-closed mosaic associated with their least generated interface.  Support closure and overlap agreement make this label independent of the chosen interface.  By Lemma~\ref{lem:patchwork}, every finite prefix satisfies converse and RCC5 composition.
-
-Quotient by the explicit equality congruence.  Lemma~\ref{lem:eq-quotient} gives a strong abstract RCC5 frame.  Interpret every concept name $A$ by
-\[
-  A^\I=\{[u]:A\in\lambda(u)\}.
-\]
-This is well-defined because equality mates have identical types.
-
-We prove by induction on $C\in\Cl(C_0)$ that
-\[
-  [u]\in C^\I \quad\Longleftrightarrow\quad C\in\lambda(u).
-\]
-Atomic and Boolean cases follow from the definition of $A^\I$ and closure type consistency.
-
-For $R=\EQ$, the claim follows from strong equality and validity clause (V1).  For $R\in\{\DR,\PO\}$, existential formulas are witnessed by the concrete mosaic positions named in (V6), and universal formulas are enforced by (V7).  The induction hypothesis applies at the witness positions.
-
-For $R\in\{\PP,\PPI\}$, suppose $\exists R.D\in\lambda(u)$.  Clause (V4) gives an equality mate state $\widehat s$ of the state of $u$ and a state $t$ reachable by a strict vertical $R$-path from $\widehat s$, with $D\in\lambda(t)$.  In the unfolding, the corresponding equality mate occurrence $\widehat u$ is in the same quotient class as $u$, and there is a strict vertical occurrence $v$ of state $t$ with relation $R$ from $\widehat u$ to $v$.  Hence $[u]=[\widehat u]$ has an $R$-successor $[v]$ satisfying $D$ by induction.
-
-Conversely, if $[u]$ has an $R$-successor $[v]$ for $R\in\{\PP,\PPI\}$, then some equality mate of an occurrence representing $[u]$ is vertically $R$-related to an occurrence representing $[v]$.  Clause (V5) ensures that every such reachable target satisfies every required universal $D$; hence $\forall R.D$ is interpreted correctly.  If an existential is not in the type, its complement universal is in the type, so the closure-complement argument gives the reverse direction as usual.
-
-Since $C_0\in\lambda(s_0)$, the class of the distinguished initial occurrence satisfies $C_0$.
+Let $\Q$ be valid.  The validity clauses (V1)--(V10) instantiate
+Assumptions~(A1)--(A6) on $\Omega(\U(\Q))$:\@ (V9.a)+(V9.d) give
+(A1)+(A3);\@ (V9.b) gives (A2);\@ (V4) together with the definition
+of $\Reach$ gives (A4);\@ (V9.c) gives (A5);\@ (V9.c) on mosaic
+positions plus (SC3) gives (A6).
+By Theorem~\ref{thm:quotient}, $\U(\Q)/\eqc$ is a strong abstract
+RCC5 frame and the closure-formula truth biconditional holds at every
+occurrence.  Since $C_0\in\lambda(s_0)$ and $u_0$ is the distinguished
+initial occurrence of $s_0$, the class $[u_0]$ satisfies $C_0$.
 \end{proof}
 
 \section{Completeness}
