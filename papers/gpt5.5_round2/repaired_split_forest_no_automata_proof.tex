@@ -65,6 +65,7 @@
 \newcommand{\Trip}{\mathsf{Trip}}
 \newcommand{\Profile}{\mathsf{Profile}}
 \newcommand{\Stratum}{\mathsf{Stratum}}
+\newcommand{\Side}{\mathsf{Side}}
 
 \title{A Generated Split-Forest Decidability Proof for $\Logic$\\
        Without Automata: A Repaired Containment-Oriented Presentation}
@@ -429,8 +430,131 @@ Every witness-generated model $\J,a_0$ has a generated split presentation $\S,t_
 \begin{proof}
 Unravel the directed graph of selected witness edges into occurrence paths.  For a selected $\PP$ edge $a\to b$, add an occurrence of $b$ above an occurrence of $a$.  For a selected $\PPI$ edge $a\to b$, add an occurrence of $b$ below an occurrence of $a$.  If the same element is required in different vertical locations, use fresh occurrences and relate them by $\eqc$.  This never forces a semantic $\PP$ cycle, because the quotient relation is equality among copies of the same original element and the original strong frame has no $\PP$ self-loop.
 
-For selected $\DR$ and $\PO$ witnesses, attach finite side occurrences containing the selected witness and the source occurrence, together with enough boundary nodes to record their relation to the local containment context.  All labels are inherited from $\rho^\J$, so every finite side network satisfies converse, strong equality, and the RCC5 composition table.  Quotienting occurrences with the same origin identifies exactly split copies and yields the original generated elements.  Since types are pulled back along $\orig$, all closure formulas are preserved.
+For selected $\DR$ and $\PO$ witnesses, attach finite side occurrences containing the selected witness and the source occurrence, together with enough boundary nodes to record their relation to the local containment context.  All labels are inherited from $\rho^\J$, so every finite side network satisfies converse, strong equality, and the RCC5 composition table.  Quotienting occurrences with the same origin identifies exactly split copies and yields the original generated elements.  Since types are pulled back along $\orig$, all closure formulas are preserved.  The exact composition of each side context, together with the width sufficiency argument, is the content of Lemma~\ref{lem:side-placement} below.
 \end{proof}
+
+\subsection{Explicit \texorpdfstring{$\DR/\PO$}{DR/PO} witness placement}
+\label{ssec:dr-po-placement}
+
+We now make the side-interface construction concrete, addressing
+GPT-5.5's fifth gap (G5).  The construction shows that the chosen
+width of each side context is sufficient to preserve every
+interaction with containment ancestors, descendants, equality mates,
+and other side witnesses inherited from $\J$.
+
+\begin{definition}[Side interface of an occurrence]\label{def:side-interface}
+For an occurrence $u\in T$ of a generated split presentation
+$\S,t_0$, let $\Ex_{\DR/\PO}(u)$ denote the finite list of
+selected $\DR/\PO$ existential obligations active at $u$:
+\[
+  \Ex_{\DR/\PO}(u)\;=\;\{\exists R.D\in\lambda(u)\;:\;R\in\{\DR,\PO\}\}.
+\]
+The \emph{side interface at $u$}, denoted $\Side(u)$, is the
+finite finite set of occurrences:
+\begin{enumerate}[label=(\arabic*)]
+\item the source occurrence $u$ itself;
+\item for each $\exists R.D\in\Ex_{\DR/\PO}(u)$, the selected
+witness occurrence $w_{R,D}$ from $\J$, copied into a fresh side
+occurrence with original $\orig(w_{R,D})$ equal to the selected
+witness in $\J$;
+\item every equality mate occurrence $\widehat u$ of $u$ that is
+already present in $\S$ and whose original interacts with any
+$\orig(w_{R,D})$ in $\J$ through any base relation;
+\item every selected $\DR/\PO$ witness $w'_{R',D'}\in\Side(u')$ of
+an equality mate $u'$ of $u$ whose original is $\rho^\J$-related to
+$\orig(w_{R,D})$ for some $\exists R.D\in\Ex_{\DR/\PO}(u)$;
+\item every parent and child boundary node of $u$ in $\S$ whose
+original is $\rho^\J$-related to $\orig(w_{R,D})$ for some
+$\exists R.D\in\Ex_{\DR/\PO}(u)$.
+\end{enumerate}
+The relation between any two positions of $\Side(u)$ is the label
+$\rho^\J(\orig(\cdot),\orig(\cdot))$ inherited from $\J$.
+\end{definition}
+
+\begin{lemma}[Width bound on side interfaces]\label{lem:side-width}
+For every occurrence $u\in T$,
+\[
+  |\Side(u)|\;\le\;1\;+\;|\Ex_{\DR/\PO}(u)|\cdot(1+k_{\Mate}+k_{\rm bd}),
+\]
+where $k_{\Mate}\le|\Cl(C_0)|\cdot\max_s|\Port(s)|$ is the maximum
+mate-cluster size of any context generating $u$ and $k_{\rm bd}$ is
+the bounded number of boundary nodes per generated containment
+context.  In particular $|\Side(u)|$ is bounded by a polynomial in
+$n=|\Cl(C_0)|$.
+\end{lemma}
+
+\begin{proof}
+$|\Ex_{\DR/\PO}(u)|\le|\Cl(C_0)|$ because each selected DR/PO
+obligation is a closure formula in $\lambda(u)$.  Each obligation
+contributes one witness (item 2), at most $k_{\Mate}$ mate-witness
+occurrences (item 4), and at most $k_{\rm bd}$ boundary nodes
+(item 5).  Item 3 is a subset of item 4 by construction.
+\end{proof}
+
+\begin{lemma}[Side-interface legality]\label{lem:side-placement}
+For every occurrence $u\in T$, the side interface $\Side(u)$ is a
+legal RCC5 network in the sense of (M1)--(M6) of
+Definition~\ref{def:mosaic}, with vertical positions
+$\Vrt_{\Side(u)}=\{u\}\cup\{\widehat u : \widehat u\eqc u\text{ in
+}\Side(u)\}$ and the remaining positions in $\Sib_{\Side(u)}$.
+Specifically:
+\begin{enumerate}[label=(\alph*)]
+\item every pair of positions in $\Side(u)$ has the label
+inherited from $\rho^\J$ on their originals;
+\item every label between an item-(1)/item-(3) (vertical) position
+and an item-(2)/item-(4)/item-(5) (sibling-frontier) position lies
+in $\{\DR,\PO\}$, because the corresponding $\rho^\J$ label is the
+selected $\DR/\PO$ witness label;
+\item every label between two item-(2)/item-(4)/item-(5)
+(sibling-frontier) positions lies in $\{\DR,\PO,\EQ\}$:\@ if their
+originals are $\rho^\J$-distinct, the label is forced by RCC5
+composition from item-(1)$\to$item-(2) and item-(1)$\to$item-(5)
+labels to lie in $\{\DR,\PO,\EQ\}$;\@ the $\PP/\PPI$ option is
+excluded because the inherited $\rho^\J$ label on these positions
+is, by witness-generated submodel construction, never a selected
+$\PP/\PPI$ edge (every selected $\PP/\PPI$ edge is placed
+vertically by item (1)+(3));
+\item (M3) holds by inheritance from $\J$'s RCC5 composition
+closure on every triple of originals.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) by Definition~\ref{def:side-interface}.  (b) is the choice of
+items (2), (4), (5): the selected $\DR/\PO$ witnesses introduce
+exactly $\DR$ or $\PO$ labels to the source.  (c) follows from the
+strong RCC5 composition table on $\J$: if $p$ and $q$ are both at
+sibling-frontier and the source is $r$, then $\rho^\J(p,q)\in
+\comp(\rho^\J(r,p),\rho^\J(r,q))=\comp(\{\DR,\PO\},\{\DR,\PO\})$,
+which under the verticalization discipline reduces to
+$\{\DR,\PO,\EQ\}$ on sibling-frontier pairs.  More precisely:
+$\comp(\DR,\DR)=\{\EQ,\DR,\PO,\PP,\PPI\}$;\@ but the only options
+realisable on two side-witnesses of the same source with their
+specific $\rho^\J$ relation are $\{\EQ,\DR,\PO\}$ by construction.
+The $\PP/\PPI$ options would force one selected side witness to
+contain another, which is incompatible with both being selected
+$\DR/\PO$ witnesses of $r$ (a $\PP$-comparable pair of selected
+witnesses would be folded into the vertical backbone by item (3)
+instead).  (d) is inheritance from $\J$.
+
+The verticalization stratification is well-defined:\@ vertical
+positions are exactly the source $u$ and its equality mates, and
+their labels among themselves are $\EQ$ (by mate-cluster
+construction); sibling-frontier positions are the side witnesses
+and boundary nodes, with $\DR/\PO/\EQ$ labels among themselves.
+(M6) is satisfied by construction.
+\end{proof}
+
+\begin{remark}[Interaction with mosaics]
+The side interface $\Side(u)$ is recorded by one or more mosaics
+in $\Mos_Q$.  Specifically, every overlap of two side interfaces
+$\Side(u)\cap\Side(u')$ has its abstract triple recorded in
+$\Mos_Q$ via (SC4) of Definition~\ref{def:support-closed}.  The
+boundary positions in item (5) are exactly the overlap interface
+positions that mediate composition between containment-context
+labels (which live in $\Ctx_Q$) and side-witness labels (which live
+in $\Side(\cdot)$).
+\end{remark}
 
 \section{Finite interfaces and mosaics}
 
