@@ -4968,3 +4968,68 @@ Every gap from the fourth review is closed by explicit
 construction and verifiable lemma in the main proof.  The Lean
 formalisation stack L1--L7 remains the only open verification
 work.
+
+---
+
+## 2026-05-21: Overview paper and DL 2026 abstract refreshed; body squeezed to 4 pages
+
+After the fourth-review gap closures, the customer-facing papers
+were brought into line with the current state of the proof.
+
+- **`papers/overview_ALCIRCC5.tex`** (commit `b65478e`).  Updated
+  to reflect the 31-page repaired proof (was 16 pages).  Mentions
+  the fourth-review structural additions in the body text and the
+  outlook section: verticalization discipline (M6), port-indexed
+  mate clusters $\mathrm{Mate}_Q(C, s, p)$ replacing state-level
+  $\mathrm{Mate}_Q(s)$ in (V3)/(V4)/(V5)/(V9.Eb), the abstract
+  triple graph $T_Q$ with explicit cardinality bounds, the
+  side-interface $\mathrm{Side}(u)$ of polynomial width $O(n^3)$,
+  and the grammar-first derivation of $B(C_0) = 2^{2^{p(n)}}$.
+  The legacy "(G1)--(G8)" reference (v2.1 round-2 gaps) was
+  reworded to avoid name collision with the fourth-review
+  "(G1)--(G6)".  Compiles cleanly to 19 pages.
+
+- **`papers/dl2026_abstract_ALCIRCC5.tex`** (commit `bca6c73`).
+  The five TODO-stub body sections (Introduction, Background on
+  $\ALCIRCC{}$, Results, Strategies, Summary and Implications)
+  were replaced with hand-written content of about 250 lines.
+  The body fits exactly in 4 pages (verified by pdftotext: page
+  4 ends with "engage with the artefacts and the process on
+  their technical merits"; page 5 starts with the appendix
+  title page).  The appendix (which mirrors the overview paper
+  verbatim) inherits the same updates.
+
+  Rhetorical choices in the body, informed by the 5-20 open
+  letter's two concessions:
+  - The bold "We hereby claim: $\ALCIRCC{5}$ is decidable" of
+    rejected v3 is replaced with the softer "We propose for the
+    community's consideration that $\ALCIRCC{5}$ is decidable."
+  - The abstract carries an explicit transparency block naming
+    AI authorship of the mathematical content and the
+    not-yet-peer-reviewed status of the candidate proof.
+
+  Total PDF: 23 pages (4 body + 19 appendix).  Compiles cleanly
+  with no undefined references or citations.
+
+- **`README.md`** (commit `f6578b9`).  The 5-21-2026 Latest
+  News entry on the fourth-review gap closures linked the
+  GPT-5.5 review file but not the 31-page proof the review
+  applies to.  PDF and LaTeX links to
+  `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.{pdf,tex}`
+  added.
+
+- **`dl2026-rejected/README.md`** (commit `b1f9741`).  New
+  one-line pointer naming the preserved rejected submission,
+  reviews, and open letter, and pointing to
+  `papers/dl2026_abstract_ALCIRCC5.tex` as the post-rejection
+  successor with softened claim, updated proof status, and
+  GPT-5.5 as fourth author.  The rejected submission file
+  (`dl2026-rejected/dl2026_abstract_ALCIRCC5_v3.tex`) was not
+  modified.
+
+After this refresh, the public-facing description of the work
+(README plus the two papers and their appendix) matches the
+31-page proof's current structural commitments.  The audit trail
+in `dl2026-rejected/` remains an immutable record of the
+submission that DL 2026 reviewed, separate from the working
+papers.
