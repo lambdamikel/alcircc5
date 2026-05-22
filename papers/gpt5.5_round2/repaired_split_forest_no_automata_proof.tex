@@ -66,7 +66,7 @@
 \maketitle
 
 \begin{abstract}
-We give a self-contained repaired proof of decidability for concept satisfiability in $\Logic$ over strong abstract atomic RCC5 frames.  The proof keeps the original split-forest architecture: a containment-oriented generated backbone for $\PP/\PPI$, split copies for multiple containment parents, finite sibling interfaces, and a typed equality quotient.  The proof removes three sources of unsoundness.  First, the vertical cover relation is a generated witness-cover relation, not the Hasse diagram of an arbitrary semantic $\PP$-order.  Second, blocking repetition is separated from semantic equality.  Third, upward $\PP$ eventualities are discharged through equality-mate occurrences, so an element may have several incomparable selected superpart witnesses.  No Buchi or parity automata are used.  Regularity is obtained by a finite-index blocking lemma with explicit request-closed cycles, and the final decision procedure enumerates finite split-forest certificates and checks only finite local, reachability, equality-congruence, and mosaic conditions.
+We give a self-contained repaired proof of decidability for concept satisfiability in $\Logic$ over strong abstract atomic RCC5 frames.  The proof keeps the original split-forest architecture: a containment-oriented generated backbone for $\PP/\PPI$, split copies for multiple containment parents, finite sibling interfaces, and a typed equality quotient.  The proof removes three sources of unsoundness.  First, the vertical cover relation is a generated witness-cover relation, not the Hasse diagram of an arbitrary semantic $\PP$-order.  Second, blocking repetition is separated from semantic equality.  Third, upward $\PP$ eventualities are discharged through equality-mate occurrences, so an element may have several incomparable selected superpart witnesses.  No Buchi or parity automata are used.  Regularity is obtained by a finite-index blocking lemma with explicit request-fulfilled cycles, and the final decision procedure enumerates finite split-forest certificates and checks only finite local, reachability, equality-congruence, and mosaic conditions.
 \end{abstract}
 
 \tableofcontents
@@ -1017,7 +1017,7 @@ Every possible interaction between the replaced component and the outside occurs
 
 \subsection{Finite-index blocking without automata}
 
-We now prove regularity directly, using request-closed cycles
+We now prove regularity directly, using request-fulfilled cycles
 rather than automata.  The argument has three ingredients: (i) a
 finite alphabet of \emph{extended profiles} that records both the
 complete boundary profile and the set of still-pending vertical
@@ -1025,20 +1025,25 @@ existentials, (ii) a checkpoint construction that produces
 infinitely many positions where every request pending at the
 preceding checkpoint has already been fulfilled, and (iii) a
 pigeonhole that selects two equi-profile checkpoints whose
-intervening segment can be pumped without losing existential or
-universal truth.
+intervening segment is guaranteed to contain a strict later
+fulfilling position for every $R$-request inside it.
 
 For a vertical direction $R\in\{\PP,\PPI\}$, an $R$-request at an
 occurrence $u$ is an existential formula $\exists R.D\in\lambda(u)$
 not already witnessed inside the current finite context.  A segment
-of a vertical path from $u_i$ to $u_j$ is request-closed if every
-$R$-request generated at or after $u_i$ and passed into the segment
-is fulfilled before or at $u_j$, or is passed out at $u_j$ with
-exactly the same complete boundary profile as at $u_i$.  In the
-latter case repetition of the segment again gives a fresh
-opportunity to fulfill the request;\@ if the request is fulfilled
-somewhere inside the segment, every later lap also contains the
-same fulfilling position.
+of a vertical path from $u_i$ to $u_j$ is \emph{request-fulfilled}
+if every $R$-request that is pending at some position $u_k$ in the
+segment ($i\le k\le j$) is discharged by a strict later position
+$u_{k'}$ in the \emph{same} segment, $k<k'\le j$, whose type
+contains the witness formula.  This is strictly stronger than the
+deferral reading: a request is never merely passed out at $u_j$ and
+left to be re-tried in some future lap; the segment itself supplies
+a strict witness, and pumping the segment forever turns a
+request-fulfilled cycle into actual fulfillment of every
+existential along the resulting path.  In particular, a cycle that
+carries a request $\exists R.D$ but does not contain a strict later
+position with $D\in\lambda$ is \emph{not} request-fulfilled and is
+rejected by the validity check.
 
 \begin{definition}[Request status and extended profile]\label{def:request-status}
 For an occurrence $u_k$ on an infinite vertical path
@@ -1082,7 +1087,7 @@ it exists since $\mathsf{Pend}(u_k)$ is finite.  Iteration is
 well-defined because $k_{n+1}>k_n$ for every $n$.
 \end{proof}
 
-\begin{lemma}[Request-closed repetition lemma]\label{lem:request-cycle}
+\begin{lemma}[Request-fulfilled repetition lemma]\label{lem:request-cycle}
 Let
 \[
   u_0,u_1,u_2,\ldots
@@ -1091,9 +1096,23 @@ be an infinite generated vertical path in a split presentation, and
 suppose every transitive existential request on the path is
 eventually fulfilled in the presentation.  Then there are $i<j$
 such that $\Pi(u_i)=\Pi(u_j)$ and the segment $u_i,\ldots,u_j$ is
-request-closed.  Repeating this segment with fresh occurrences
-preserves all $\PP/\PPI$ existential and universal closure formulas
-on the resulting path.
+\emph{request-fulfilled}: for every transitive existential request
+$\exists R.D$ that is pending at some position $u_k$ with
+$i\le k\le j$, there is a strict later position $u_{k'}$ within
+the same segment, $k<k'\le j$, with $D\in\lambda(u_{k'})$.
+Consequently the pumped path
+\[
+  u_0,\ldots,u_{i-1},(u_i,\ldots,u_{j-1})^\omega
+\]
+built from fresh occurrences of the segment satisfies the strong
+fulfillment property:
+\begin{quote}
+every $\PP/\PPI$ existential request generated at any occurrence
+of the pumped path is fulfilled at a strict later occurrence on
+the same path, within bounded lookahead $\le j-i$.
+\end{quote}
+All $\PP/\PPI$ universal closure formulas are preserved at every
+occurrence of the pumped path.
 \end{lemma}
 
 \begin{proof}
@@ -1106,14 +1125,46 @@ $n_1<n_2$ with $\widehat\Pi(u_{k_{n_1}})=\widehat\Pi(u_{k_{n_2}})$.
 Set $i:=k_{n_1}$, $j:=k_{n_2}$.  In particular
 $\Pi(u_i)=\Pi(u_j)$ and $\mathsf{Pend}(u_i)=\mathsf{Pend}(u_j)$.
 
-\emph{Request-closure.}  Every $\exists R.D\in\mathsf{Pend}(u_i)$ is
-fulfilled at some $u_m$ with $i<m\le\mathsf{chk}(i)\le j$, by
-definition of the checkpoint $\mathsf{chk}(i)$.  Every
-$\exists R.D$ generated at some $u_k$ with $i<k\le j$ is either
-fulfilled at some $u_{k'}$ with $k\le k'\le j$, or remains pending
-at $u_j$ --- in which case it lies in
-$\mathsf{Pend}(u_j)=\mathsf{Pend}(u_i)$ and is therefore carried out
-through the boundary $u_j$ with the same status as at $u_i$.
+\emph{Strict cyclic fulfillment.}  We show two facts.
+
+\smallskip\noindent\emph{(F1) The segment supplies a witness label
+for every pending formula.}  Let $\exists R.D\in\mathsf{Pend}(u_j)$.
+By the pigeonhole choice of $i,j$, $\mathsf{Pend}(u_j)=
+\mathsf{Pend}(u_i)$, so $\exists R.D\in\mathsf{Pend}(u_i)$.  By the
+checkpoint definition, $\exists R.D$ is fulfilled in the original
+path at some $u_m$ with $i\le m\le\mathsf{chk}(i)\le j-1<j$, so
+$D\in\lambda(u_m)$ with $i\le m<j$.  Hence every formula in
+$\mathsf{Pend}(u_j)=\mathsf{Pend}(u_i)$ has a witness label
+occurring somewhere in the finite segment $[u_i,u_{j-1}]$.
+
+\smallskip\noindent\emph{(F2) The pumped path realizes a strict
+later witness for every existential, within bounded lookahead.}
+Consider any occurrence $u_k^{(\ell)}$ of the pumped path
+($i\le k<j$, $\ell\ge 0$) and any $\exists R.D\in\lambda(u_k)$ that
+is generated at $u_k^{(\ell)}$.  Two cases.
+
+\textbf{(F2a)} If $\exists R.D$ is fulfilled in the original path at
+some $u_{k'}$ with $k<k'\le j-1$, the pumped path contains the
+fresh occurrence $u_{k'}^{(\ell)}$ with $D\in\lambda(u_{k'}^{(\ell)})=
+\lambda(u_{k'})$, strictly later than $u_k^{(\ell)}$ in the same lap.
+Lookahead: $k'-k\le j-1-k< j-i$.
+
+\textbf{(F2b)} Otherwise $\exists R.D$ remains in
+$\mathsf{Pend}(u_j)=\mathsf{Pend}(u_i)$.  By (F1), $D\in\lambda(u_m)$
+for some $i\le m\le\mathsf{chk}(i)\le j-1$.  In the pumped path, the
+occurrence $u_m^{(\ell+1)}$ in the next lap satisfies
+$D\in\lambda(u_m^{(\ell+1)})$ and lies strictly later than
+$u_k^{(\ell)}$.  Lookahead: $(j-k)+(m-i)+1\le 2(j-i)$.
+
+\smallskip\noindent
+Together (F1) and (F2) establish that the segment
+$u_i,\ldots,u_{j-1}$ is \emph{request-fulfilled}: every transitive
+existential generated at any occurrence of the pumped path has a
+strict later witness in the pumped path, within bounded lookahead
+$\le 2(j-i)$.  No request is merely deferred to a future lap; the
+finite segment itself supplies the witness label, and pumping
+guarantees that the witness label is encountered as a strict later
+occurrence.
 
 \emph{Pumping.}  Replace the tail $u_j,u_{j+1},\ldots$ by infinitely
 many fresh copies $u_i^{(1)},\ldots,u_j^{(1)},u_i^{(2)},\ldots,u_j^{(2)},\ldots$
@@ -1131,19 +1182,11 @@ neighbourhood of $u_k^{(\ell)}$ is the same as the visible
 neighbourhood of $u_k$, so $\forall R.D$ truth is inherited from the
 original path.
 
-\emph{Preservation of existentials.}  Let $\exists R.D$ be a
-vertical existential generated at $u_k^{(\ell)}$.
-\begin{itemize}[leftmargin=2em]
-  \item If $\exists R.D$ was fulfilled within $[u_k,u_j]$ in the
-    original path, the same fulfilling position appears within the
-    same lap as $u_{k'}^{(\ell)}$, $k\le k'\le j$.
-  \item Otherwise $\exists R.D\in\mathsf{Pend}(u_j)=\mathsf{Pend}(u_i)$,
-    so the next lap $\ell+1$ begins with $\exists R.D$ in its pending
-    set, and by request-closure of the segment it is fulfilled inside
-    $[u_i^{(\ell+1)},u_j^{(\ell+1)}]$.
-\end{itemize}
-In both subcases the existential at $u_k^{(\ell)}$ has a strict
-later $R$-successor along the pumped path.
+\emph{Preservation of existentials.}  This is exactly (F2) above:
+every $\PP/\PPI$ existential generated at any pumped-path occurrence
+has a strict later witness within bounded lookahead $\le 2(j-i)$.
+No indefinite deferral is admitted, and pumping a request-fulfilled
+segment yields an infinite path satisfying every existential.
 
 Thus every closure formula at every fresh occurrence of the pumped
 path holds, completing the proof.
@@ -1154,7 +1197,7 @@ Every generated split presentation satisfying all closure formulas and support-c
 \end{lemma}
 
 \begin{proof}
-Label every boundary occurrence by its complete profile.  There are finitely many labels.  For finite branches, keep one representative context for each complete profile encountered before termination.  For an infinite vertical ray, apply Lemma~\ref{lem:request-cycle} and replace the tail by the request-closed repeated segment.  This produces a finite stem and a finite blocking cycle.  Because repeated laps are fresh, no semantic equality is introduced by this operation.
+Label every boundary occurrence by its complete profile.  There are finitely many labels.  For finite branches, keep one representative context for each complete profile encountered before termination.  For an infinite vertical ray, apply Lemma~\ref{lem:request-cycle} and replace the tail by the request-fulfilled repeated segment.  This produces a finite stem and a finite blocking cycle.  Because repeated laps are fresh, no semantic equality is introduced by this operation.
 
 For branching, perform the same replacement independently at each boundary profile.  The substitution lemma guarantees that replacing a component by another component with the same complete profile preserves all interactions through the boundary.  Since each profile has only finitely many selected existential obligations and side contexts, only finitely many representative outgoing contexts are needed.  Collect these representatives into the finite state set $S$, record the parent map and child multisets, and record the exact context and mosaic schemes witnessed by the representatives.
 
@@ -1388,7 +1431,7 @@ Sibling interfaces & Survive as support-closed mosaics rather than raw pair tabl
 $\DR/\PO$ sibling simplification & Survives for ordinary non-core sibling frontier pairs after containment, core copies, and equality interfaces are accounted for. \\
 Typed $\EQ$ quotient & Survives as an explicit congruence; it is never inferred from profile equality or blocking. \\
 Finite quotient & Survives as a finite regular certificate whose unfolding may be infinite. \\
-Blocking & Survives as finite-index repetition with fresh laps and request-closed cycles. \\
+Blocking & Survives as finite-index repetition with fresh laps and request-fulfilled cycles. \\
 \bottomrule
 \end{tabular}
 \end{center}
