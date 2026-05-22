@@ -4810,3 +4810,161 @@ Final paper-level obligation table is now uniform: C1/C3/C5/C6
 PASS, C2/C4/C7/C8 CLOSED (paper).  Every obligation is at PASS or
 CLOSED at paper level.  The Lean stack L1--L7 is the only open
 verification work.
+
+---
+
+## 2026-05-20: DL 2026 rejection — submission, reviews, and open letter
+
+The DL 2026 Extended Abstract on this work was rejected (verdicts
+33A Reject, 33B Accept, 33C Reject), with the decision escalated
+to the DL Steering Committee.  The full rejected submission (with
+post-submission typo corrections only, substantive content
+unchanged), the three reviews, and a detailed point-by-point
+response were placed in `dl2026-rejected/`.
+
+An open letter to the DL 2026 Committee
+(`dl2026-rejected/open_letter.md`) lays out nine concrete
+objections to the rejection rationale:
+
+1. Reviewers' "technical" objections concern the Appendix, which
+   DL 2026's own guidelines explicitly exclude from mandatory review.
+2. The reviewers attacked positions the paper did not take
+   (treating a "candidate" claim with epistemic hedges as a settled
+   theorem submission).
+3. The reviewers quoted the author's own epistemic disclaimers
+   back as evidence of irresponsibility.
+4. No reviewer engaged with the actual thesis (raising awareness of
+   agentic AI's emerging capabilities for DL research).
+5. The three reviews disagree on the verdict but not on the
+   defects — the defect inventory is roughly constant across
+   reviewers; the verdict difference is a value judgment about
+   AI-assisted work.
+6. The decision was escalated to the DL Steering Committee, which
+   adjudicates policy questions, not typos.
+7. §4 of the rejected paper warned, in advance and by name, about
+   the three failure modes the rejection now exhibits — network
+   effects, not-invented-here bias, and dismissive reviewing.
+8. Reviewer B's recommended remedy puts honest disclosure and
+   acceptance in direct conflict (front-loaded AI co-authorship
+   was the cost of admission; partial concealment was offered as
+   the path to acceptance).
+9. One concession: the "we hereby claim" sentence in the
+   introduction was probably too strong, and the bold framing
+   strategy behind it may have been the wrong rhetorical call.
+
+The README's Latest News entry and a new "DL 2026 submission and
+rejection" section in the README mirror the open letter's
+content.  The rejection is treated as an instance of the
+sociology-of-mathematics phenomenon §4 of the rejected paper
+identified as a barrier to AI-assisted formal results entering
+the research mainstream.
+
+---
+
+## 2026-05-21: Addendum content inlined into main proof
+
+The four obligations closed in the 5-14-2026 addendum (closure
+and witness thinning, support-closed mosaic patchwork, standalone
+typed-EQ quotient theorem, finite certificate grammar +
+enumeration bound) were lifted directly into the main repaired
+proof `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.tex`,
+which grew from 16 to 23 pages and became fully self-contained:
+
+- **§3.2** carries an explicit frame-inheritance lemma and a full
+  structural induction over Cl(C_0) in NNF (atomic, Boolean,
+  existential, universal-via-NNF-complement cases), closing the
+  (C2) closure / witness-thinning obligation in the main text.
+- **§4.4--§4.6** carry the Renz--Nebel base case, overlap
+  amalgamation, universal-propagation and typed-EQ compatibility
+  (Lemmas 4.3--4.5), and the support-closed mosaic patchwork
+  theorem (Thm 4.6).
+- **§6.2** carries the standalone typed-EQ quotient theorem with
+  its six assumptions (A1)--(A6) and four preservation properties
+  (JEPD, strong equality, RCC5 composition, closure-formula truth).
+- **§8.1--§8.3** carry the explicit grammar of certificate
+  components, component-wise polynomial bounds, and derivation of
+  B(C_0) = 2^{2^{p(n)}}.
+- **§7.2** expands the request-closed lasso lemma with an explicit
+  checkpoint structure — pending set, extended profile, infinite
+  checkpoint sequence by pigeonhole, and a 5-step structured proof
+  of the request-cycle pumping lemma.
+
+The separate technical addendum (`claude_verification_addendum.tex`)
+is retained for historical reference but is no longer required for
+the main proof to be self-contained.
+
+---
+
+## 2026-05-21: GPT-5.5 fourth review — six gaps + five smaller issues addressed
+
+GPT-5.5 reviewed the now-inlined 23-page proof
+(`papers/gpt5.5_round2/formal_review_latest_paper.tex`, May 21,
+2026).  Verdict: *"promising repaired architecture, but not yet a
+complete formal decidability proof"* — six load-bearing gaps in
+the certificate semantics, the occurrence-level equality-port
+construction, the request-closed blocking lemma, and the
+support-closed mosaic / patchwork argument, plus five smaller
+issues.
+
+Each gap was addressed in a dedicated commit; main proof grew
+from 23 to 31 pages.
+
+- **G1 (commit `a5857a3`) Verticalization discipline.**
+  Definition 5.1 (mosaic) extended from a 3-tuple to a 4-tuple
+  M = (P, τ, L, Vrt) with a new clause (M6) containing four
+  sub-clauses: (a) EQ-closure of strata, (b) PP/PPI containment
+  labels both vertical, (c) cross-stratum labels in {DR, PO},
+  (d) sibling-frontier labels in {DR, PO, EQ}.  A new Lemma 7.1
+  (*Vertical realisation of PP/PPI pairs*) lifts (M6) from
+  mosaics to U(Q), with case analysis covering subcases ii.a--ii.e.
+- **G2 (commit `f171456`) Port-level equality clusters.**
+  State-level Mate_Q(s) was replaced by context- and port-indexed
+  mate clusters Mate_Q(C, s, p) ⊆ S × Port(s'), attached to
+  context schemes so every occurrence comes with its synchronised
+  companion occurrences by construction.  The identity cluster
+  (s,p) ∈ Mate_Q(C,s,p) is included by definition.  Port-level
+  reachability Reach_R replaces state-level reachability; V3,
+  V4, V5, and V9.Eb were restated in port-indexed form.
+- **G3 (commit `bd3c2e4`, earlier in the day) Request-fulfilled
+  cycles.**  Lemma 7.2 was renamed to *Request-fulfilled
+  repetition lemma* with explicit (F1) + (F2a/F2b) structure
+  proving strict cyclic fulfillment with lookahead ≤ 2(j-i).
+- **G4 (commit `e8f046d`) Abstract triple graph T_Q.**
+  New §5.2 formally constructs T_Q with vertices
+  Pos_Q = {⟨s, p, C, ζ⟩} and explicit cardinality bounds
+  |Pos_Q| ≤ 2|S|·(n+1)·|Ctx_Q| and |Trip_Q| ≤ |Pos_Q|^3 · 125,
+  a quotient-map definition, and a "Finite support-closure check"
+  and "Quotient lifting" lemma — making T_Q syntactic, depending
+  only on the certificate's finite alphabets.
+- **G5 (commit `4800385`) DR/PO witness placement.**
+  New §4.4 defines the side interface Side(u) with a five-item
+  composition (source, EQ mates, selected PP/PPI witnesses,
+  selected DR/PO witnesses, boundary nodes), a width bound
+  m(n) = 1 + n·(1 + k_Mate + k_bd) (Lemma 4.5), and (M1)--(M6)
+  legality (Lemma 4.6) proving PP/PPI exclusion from the
+  sibling-frontier via a witness-generated submodel construction.
+- **G6 (commit `0e8ba02`) Grammar-first finite bound.**
+  §9 was rewritten so B(C_0) = 2^{2^{p(n)}} is derived
+  grammar-first: the informal context-width prose was replaced
+  with the explicit cubic m(n) = O(n³) from Lemma 4.4, and the
+  grammar productions Mosaic ::= ⟨P, τ_M, L_M, Vrt_M⟩ and
+  MateCluster were made explicit.
+- **S1--S5 (commit `411fbe0`) Smaller issues.**
+  S1: identity included in mate reachability; S2: port-level
+  strict-reachability exclusion in V9.Eb; S3: stratification
+  reflection in support closure; S4: PP/PPI semantic-successor
+  coverage in soundness; S5: the regularization lemma split into
+  four independent lemmas (8.5 profile extraction, 8.6 lasso,
+  8.7 eq-port preservation, 8.8 mosaic collection, 8.9 combined).
+
+After the four LaTeX label/macro fix-ups required for compilation
+(adding `\Vrt`, `\Sib`, `\Pos`, `\Pair`, `\Trip`, `\Profile`,
+`\Stratum`, `\Side` macros to the preamble; creating the
+`sec:certificates` and `def:complete-profile` labels), the main
+proof compiles cleanly to 31 pages with no undefined references
+across two pdflatex passes.
+
+Every gap from the fourth review is closed by explicit
+construction and verifiable lemma in the main proof.  The Lean
+formalisation stack L1--L7 remains the only open verification
+work.
