@@ -98,16 +98,27 @@ url=https://github.com/lambdamikel/alcircc5,
 \cortext[1]{Corresponding author.}
 
 \begin{abstract}
-% TODO(Michael): extended-abstract abstract, to be written by hand.
 This extended abstract reports on a human-and-AI collaboration that
 produced a candidate decidability proof for concept satisfiability in
-$\ALCIRCC{5}$---an open problem since Wessel~(2002/2003). The full
-survey, proof sketch, implementation report, and the two-round
-adversarial review log are reproduced verbatim in the appendix. The
-body of this note focuses on the \emph{process}: what the human and
-the AI agents contributed, which strategies worked, which failed, and
-what the episode suggests about the role of agentic AI in description
-logic research.
+$\ALCIRCC{5}$---an open problem since Wessel~(2002/2003).  The
+mathematical content was developed and revised across four rounds of
+adversarial review between OpenAI's GPT-5.4~Pro / GPT-5.5 and
+Anthropic's Claude Opus~4.7, with Wessel guiding the search and
+correcting high-level errors.  The proof rests on a novel split-tree
+forest decomposition of $\ALCIRCC{5}$ models and reduces concept
+satisfiability to a finite enumeration of rank-$d$ certificates.  The
+self-contained survey, proof sketch, implementation report, and
+adversarial review log are reproduced verbatim in the appendix.  This
+note focuses on the \emph{process}: who contributed what, which
+strategies worked, and what the episode suggests about agentic AI in
+description logic research.
+
+\textbf{Transparency.}  The mathematical content was produced by the
+AI agents; this extended abstract was written by Michael Wessel,
+drawing on the agents' material; the appendix is the survey paper
+authored by the AI agents.  The results have not been peer-reviewed
+by human experts and should be treated as a \emph{candidate}, not an
+established theorem.
 \end{abstract}
 
 \begin{keywords}
@@ -121,59 +132,236 @@ logic research.
 
 \maketitle
 
-%% ====================================================================
 \section{Introduction}
 \label{sec:ea-intro}
-%% ====================================================================
 
-% TODO(Michael): Introduction --- motivation, research question, why
-% DL 2026 should care, one-paragraph teaser of the result and the
-% process.  Paragraphs will be requested from the AI collaborator
-% on demand.
+In 1993, Cohn~\cite{Cohn1993} proposed a qualitative
+spatioterminological multi-modal logic, syntactically equivalent to
+multi-modal $K_n$, with a pair of $\Box_R / \Diamond_R$ operators for
+each qualitative spatial RCC8 relation~$R$: a formula such as
+$Forest \sqcap \exists\NTPP.Lake$ denotes ``a forest non-tangentially
+containing a lake.''  Cohn's paper did not address decidability or
+complexity.  In 2000, I (Wessel) started a systematic investigation
+of the description-logic equivalent of Cohn's logics and called it the
+$\ALCIRCC{}$ DL family~\cite{Wessel2002, Wessel2003, Wessel2003KRDB},
+aiming for decidability results and prover implementations for
+geo-spatial applications such as ontology-based GIS.  I obtained
+decidability for the small-table members
+($\ALCIRCC{1}, \ALCIRCC{2}, \ALCIRCC{3}$)~\cite{Wessel2002, Wessel2003},
+and decidability / undecidability results for general DLs with
+role-box axioms~\cite{Wessel2000RA, Wessel2000SG, Wessel2001, Wessel2001RA},
+but I was unable to settle the decidability of $\ALCIRCC{5}$ or
+$\ALCIRCC{8}$.
 
-%% ====================================================================
+Twenty-five years on, the rapid advance of agentic LLM systems in
+mathematics and proof assistance~\cite{TaoKlowden2026,
+  Knuth2026ClaudesCycles} prompted me to revisit these gaps.  In
+April~2026, I assembled a small virtual research team: myself,
+OpenAI's GPT-5.4~Pro and GPT-5.5~\cite{GPT54Pro, GPT55Repaired}, and
+Anthropic's Claude Opus~4.7~\cite{ClaudeOpus47} running in agentic
+mode (Claude Code with full Python, \LaTeX, and GitHub tool access).
+Over three weeks we explored eleven decidability approaches and seven
+undecidability reductions; the project log is in the repository's
+\texttt{CONVERSATION.md} and \texttt{README.md}~\cite{ALCIRCC5Repo}.
+
+One of the eleven approaches appears to have succeeded.  Its central
+idea --- a novel \emph{split-tree forest} decomposition of
+$\ALCIRCC{5}$ models~\cite{SiblingCompleted, GPT55Repaired} --- has
+survived four rounds of adversarial review between the agents.  We
+\emph{propose for the community's consideration} that
+$\ALCIRCC{5}$ concept satisfiability is decidable, and invite scrutiny
+and constructive feedback through our public
+repository~\cite{ALCIRCC5Repo}.  The primary motivation for this
+extended abstract, however, is not the claim itself: it is to
+\emph{raise awareness of the emerging capabilities of agentic AI for
+description-logic research}, in a setting where the outputs are
+artefacts the community can verify, refute, or improve.
+
 \section{Background on $\ALCIRCC{}$}
 \label{sec:ea-background}
-%% ====================================================================
 
-% TODO(Michael): Background on the ALCI_RCC family --- minimal
-% recap of the logic, the RCC5/RCC8 composition tables, strong-EQ
-% semantics, and what decidability means here.  See Appendix
-% Sections A.2--A.3 for the full technical treatment.
+The $\ALCIRCC{n}$ family ($n \in \{5,8\}$)~\cite{Wessel2002, Wessel2003}
+extends $\ALCI$~\cite{DLHandbook2007} by fixing the role names to the
+jointly-exhaustive-pairwise-disjoint (JEPD) base relations of RCC$n$:
+$\{\DR,\PO,\EQ,\PP,\PPI\}$ for $n=5$, and the eight RCC8 relations for
+$n=8$.  An interpretation labels every pair $(x,y) \in
+\Delta^{\mathcal{I}} \times \Delta^{\mathcal{I}}$ with exactly one
+base relation, so models are \emph{complete directed graphs}
+colour-coded by RCC$n$.  Under \emph{strong-EQ semantics}
+\cite{Wessel2003}, $\EQ^{\mathcal{I}}$ is identity.  Role composition
+is constrained by the RCC$n$ composition table $\comp$: for $(x,y) \in
+R_1^{\mathcal{I}}$ and $(y,z) \in R_2^{\mathcal{I}}$, the label of
+$(x,z)$ must lie in $\comp(R_1, R_2)$.  The fundamental structural
+fact used throughout is the \emph{patchwork property} of Renz and
+Nebel: any path-consistent atomic RCC$n$ network is globally
+realisable~\cite{RenzNebel1999}.  $\ALCIRCC{5}$ and $\ALCIRCC{8}$ have
+\emph{neither the tree- nor the finite-model property,} and the role
+box is non-deterministic, so the standard DL toolkit does not apply
+directly.  Lower bounds: $\ALCIRCC{5}$ is $\PSPACE$-hard, $\ALCIRCC{8}$
+is $\EXPTIME$-hard~\cite{Wessel2003}.
 
-%% ====================================================================
 \section{Results}
 \label{sec:ea-results}
-%% ====================================================================
 
-% TODO(Michael): Results --- the cover-tree tableau decision
-% procedure for ALCI_RCC5, the empirical validation (911/911,
-% 775/775, the 4x4 grid of counterexamples and its closure), the
-% two-round adversarial review outcome, and the current status of
-% the claim.  See Appendix Sections A.4--A.7 for full details.
+\textbf{Why undecidability reductions stall.}  Lutz and
+Wolter~\cite{LutzWolter2006} proved $\LRCC{8}$ undecidable via a
+topological grid-encoding that uses the \emph{co-incidence
+  construction} I had identified in~\cite{Wessel2003} (Def.~6,
+Figs.~10--11).  Their reduction relies on two features unavailable in
+$\ALCIRCC{n}$: (i)~the $\TPP/\NTPP$ refinement, collapsed in
+$\ALCIRCC{5}$, and (ii)~the topological interpretation in
+$\mathbb{R}^n$; the additional structure in topological models forces
+co-incidence, not the TBox axioms, and this is not available in the
+abstract DL models of the $\ALCIRCC{}$ family.  Seven undecidability
+attempts, including direct domino encodings, were all blocked in this
+way~\cite{ALCIRCC5Outdated}.
 
-%% ====================================================================
+\textbf{Why standard tableau blocking stalls.}  Of the eleven
+decidability attempts, three were partially successful, two suggested
+novel reductions and decidable fragments~\cite{TwoTierQuotient}, and
+six failed~\cite{ALCIRCC5Outdated}.  The tension is between
+\emph{soundness and termination}: standard pair blocking terminates
+but is unsound for $\ALCIRCC{5}$ (composition of copied RCC5 edges
+with the ambient network violates the composition table); richer
+blocking conditions --- triangle blocking, sibling-interface blocking,
+rank-$d$ blocking --- recover soundness but require an a priori bound
+on the context depth, which is exactly what the proof should
+establish.
+
+\textbf{Split-tree forest models.}  The breakthrough was the idea of a
+class of possibly-infinite $\PPI/\PP$-skeleton models, formalised by
+GPT-5.4~Pro and Claude into the \emph{split-tree forest} (or
+\emph{split-forest}) model class~\cite{SiblingCompleted,
+  GPT55Repaired}.  A split-tree is a rooted tree $T$ with a map
+$\mathit{orig}: T \to \Delta^{\mathcal{I}}$ into a DAG of
+$\PPI/\PP$-edges: each tree node carries a Hintikka type, and whenever
+an element has several $\PP$-predecessors in the DAG it is split into
+one tree copy per incoming path.  $\PPI/\PP$ is a DAG (joins allowed,
+cycles forbidden), so the split-tree presentation is well-defined and
+finite-quotientable; cross-tree edges are restricted to $\{\DR, \PO\}$,
+which are arc-consistent under the RCC5 composition table.  Strong-EQ
+is restored from weak-EQ split-copies by collapse
+(Thm.~1.19~\cite{SiblingCompleted}).
+
+\textbf{The current decidability argument.}  The argument rests on two
+core papers.  (1)~The v1 \emph{split-forest paper}
+(GPT-5.4)~\cite{SiblingCompleted} establishes the
+quotient-to-model direction (Thms.~1.17--1.19): every valid rank-$d$
+quotient unfolds to a strong abstract RCC5 model satisfying $C_0$.
+(2)~The GPT-5.5 \emph{repaired split-forest decidability
+  proof}~\cite{GPT55Repaired} (May~2026, \textbf{31~pages after four
+  rounds of adversarial review}, no-automata route) establishes the
+model-to-quotient direction in full and proves both directions on
+rank-$d$ split-forest certificates against ten finite-checkable
+validity conditions (V1)--(V10).  The fourth review added a
+verticalization discipline (mosaic axiom~(M6)) stratifying positions
+into vertical (source $+$ EQ mates $+$ selected $\PP/\PPI$ witnesses)
+and sibling-frontier ($\DR/\PO$ witnesses $+$ boundary), port-indexed
+mate clusters $\mathrm{Mate}_Q(C,s,p)$, an explicit abstract triple
+graph $T_Q$ with cardinality bounds, and an explicit side interface
+$\mathrm{Side}(u)$ of polynomial width $O(n^3)$.  All six load-bearing
+gaps (G1)--(G6) and five smaller issues from the fourth review are
+closed; the certificate space is bounded by $B(C_0) = 2^{2^{p(n)}}$
+for a polynomial $p$, derived grammar-first, and validity is
+finite-graph checkable.  Together, (1) and (2) reduce $\ALCIRCC{5}$
+concept satisfiability to a finite enumeration.
+
+\textbf{Operational layer and empirical evidence.}  A cover-tree
+tableau~\cite{CoverTree, CoverTreeImpl} packages the split-forest
+approach as an operational calculus with rank-$d$ blocking and a
+five-check algorithm CT1--CT5 (Python, $\approx$350 lines).  Three
+independent computational artefacts agree at zero mismatches: (i)~the
+cover-tree tableau cross-validated against an
+incomplete-but-trustworthy-on-SAT quasimodel reasoner on
+\textbf{911~test concepts}~\cite{StressTestCoverTree,
+  StressTestCyclic, TestCyclicReasoner}; (ii)~a decomposition test on
+\textbf{775~SAT concepts (100\%)} confirming finite cover-tree models,
+12.2M total models enumerated, zero genuine
+counterexamples~\cite{DecompositionTest}; (iii)~a Round-2 adversarial
+audit of 400+ additional concepts~\cite{StatusAfterFW}.  The
+cover-tree tableau additionally reproduces \textbf{all 21/21
+  subsumptions} of the 18-concept GIS taxonomy from~\cite{Wessel2003},
+Fig.~6 (Appendix Fig.~A.1)~\cite{GISTaxonomy}.  Six Python work
+packages (WP1--WP6) cross-check the finite combinatorial content of
+the repaired proof; all PASS, no counterexample found.
+
 \section{Strategies}
 \label{sec:ea-strategies}
-%% ====================================================================
 
-% TODO(Michael): Strategies --- the methodology of the
-% collaboration: multiple parallel reasoning approaches, iterative
-% formalisation via LaTeX, executable implementations as independent
-% oracles, adversarial review by a second AI agent, the role of
-% cross-validation with deliberate blind-spot awareness, and the
-% discipline of withdrawing claims when counterexamples are found.
+The reported work was carried out with Claude Code running Opus~4.7 at
+maximum reasoning effort and full tool access, alongside GPT-5.4~Pro
+and GPT-5.5 sessions.  The agents handled \LaTeX\ compilation, GitHub
+operations, and Python execution in the loop, including \emph{every
+  technical artefact} of the
+project~\cite{SiblingCompleted, CoverTree, CompletenessExtraction,
+  CoverTreeImpl, TwoTierQuotient, FWProof, TriangleBlocking,
+  PatchworkAugmentation, TypedPatchworkCounterexample,
+  ResponseGPTBlocking, StatusAfterFW, GPT55Repaired}.  Human
+contributions: research questions, the original
+material~\cite{Wessel2002, Wessel2003, LutzWolter2006}, intuition that
+steered the search toward fertile ground (in particular, the
+split-tree forest class), and correction of high-level conceptual
+errors when they arose (the most consequential being GPT-5.4's initial
+assumption that cross-tree edges could still be $\PPI/\PP$, which
+defeated the purpose of the construction).  \emph{One good idea was
+  enough for the agents to eventually carry the formalisation
+  through.}
 
-%% ====================================================================
+Four techniques mattered.  First, \emph{constructive agent
+  peer-review:} GPT-5.4 and Claude sessions critiqued each other's
+blocking conditions by exchanging \LaTeX\ notes with concrete
+counterexamples~\cite{FWProof, TriangleBlocking, PatchworkAugmentation,
+  TypedPatchworkCounterexample, ResponseGPTBlocking, StatusAfterFW};
+later, a fresh Claude session was spawned with no prior context to
+adversarially audit the team's output, and GPT-5.5 reviewed the
+resulting proof four times (rounds~1--3 produced the v2/v2.1
+extractions and the round-2 repair; round~4 identified six structural
+gaps (G1)--(G6) and five smaller issues, all closed in the current
+proof~\cite{GPT55Repaired}).  Second, \emph{executable implementations
+  as independent oracles:} every theoretical claim with a finite
+combinatorial witness was implemented and run; six work packages
+cross-check the repaired proof's combinatorial content.  Third,
+\emph{cross-validation with deliberate blind-spot awareness:} the
+911-concept zero-mismatch result holds against an
+oracle (the quasimodel reasoner) that is itself
+\emph{known-incomplete} on cyclic-via-symmetric-role concepts, so
+SAT~answers are trustworthy and UNSAT~answers are not; this is
+documented in \texttt{CLAUDE.md} and informed test-set design.
+Fourth, \emph{discipline of retraction:} v1 and v2.1 of the
+completeness-extraction paper were both withdrawn after defects were
+found, with the audit trail preserved in the repository rather than
+overwritten.  Hallucination was not the dominant failure mode; the
+models kept themselves honest by cross-validating claims, writing
+tests, and running computational probes against their own proofs.
+
 \section{Summary and Implications}
 \label{sec:ea-summary}
-%% ====================================================================
 
-% TODO(Michael): Summary and implications --- what the episode
-% suggests about human-and-AI collaboration in formal-methods
-% research more broadly, residual caveats (testing vs.\ proof,
-% peer review still warranted), and an outlook for the DL
-% community.
+To the best of our knowledge, this would be the first time AI systems
+have produced a complete decidability proof for an open problem in
+description logic theory, on top of an artefact set that the community
+can independently verify or refute.  Three caveats stand: (i)~no human
+domain expert has yet verified the proof; (ii)~the gap between the
+formal theory layer (the v1 paper plus the repaired proof) and the
+operational layer (the cover-tree tableau) is bridged empirically,
+not formally; (iii)~Lean formalisation (priority L1, L3, L4, L6) is
+the only open verification work but has not been started.  The
+empirical evidence is strong but not a substitute for human peer
+review.
+
+The broader observation is that \emph{agentic AI can now contribute
+  meaningfully to open problems in mathematical logic by amplifying
+  human direction with formalisation capacity, implementation speed,
+  and exhaustive computational testing.}  Standards for scientific
+integrity in the era of agentic research will need attention --- in
+particular, mandatory and authentic \texttt{CONVERSATION.md} logs
+documenting who, human or agent, contributed what.  Agentic AI can
+also \emph{level access:} a researcher outside the core DL network can
+now benefit from tutor-quality mentorship, proof-formalisation
+support, and an always-on collaborator --- the kind of access that
+previously required being the student of a particular advisor.  We
+hope the DL community will engage with the artefacts and the process
+on their technical merits.
 
 \clearpage
 \appendix
@@ -1257,23 +1445,23 @@ adversarial review by GPT-5.5: v1 used a Hasse construction that
 failed on infinite $\PP$-chains (e.g.\ $C_\uparrow \equiv
 \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$) and contained a
 witness conflation in the $C5$ triple-coherence proof; v2.1 fixed
-both of those but then a second-round review identified \textbf{eight
-structural gaps (G1)--(G8)} of which three were load-bearing:
-(G1)~profile-port equality contradicted vertical separation on
-self-loops via the $M1{+}M7$ reflexivity chain; (G3)~the mate
-construction forced all mates to share a single semantic parent,
-refuted by a two-mate stress formula
+both of those but then a second-round review identified
+\textbf{eight structural gaps in v2.1} of which three were
+load-bearing: profile-port equality contradicted vertical
+separation on self-loops via the $M1{+}M7$ reflexivity chain; the
+mate construction forced all mates to share a single semantic
+parent, refuted by a two-mate stress formula
 $C_{AB} \equiv A \sqcap B \sqcap \exists\PP.A \sqcap \exists\PP.B
 \sqcap \forall\PP.(A\to\lnot B) \sqcap \forall\PP.(B\to\lnot A)$;
-(G4)~the rootless orientation was incompatible with the
+and the rootless orientation was incompatible with the
 depth-from-$u_*$ projection used in the proof.
 
 The \textbf{current best statement} of the
 model-to-quotient direction is GPT-5.5's
 \textit{repaired split-forest decidability
-proof}~\cite{GPT55Repaired} (May~2026, 16~pages, no-automata
-route), which removes all three load-bearing defects.  The three
-structural fixes are:
+proof}~\cite{GPT55Repaired} (May~2026, 31~pages after a fourth
+round of review, no-automata route), which removes all three
+load-bearing defects.  The three structural fixes are:
 \begin{enumerate}[label=(\arabic*)]
   \item \textbf{Occurrence-level equality:}
     $u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) =
@@ -1300,9 +1488,23 @@ The repaired proof formulates the model-to-quotient direction as
 (V1)--(V10)} on rank-$d$ quotient certificates and proves both
 directions: every valid certificate unfolds to a strong abstract
 RCC5 frame satisfying $C_0$ (soundness), and every satisfiable
-$C_0$ admits a finite valid certificate (completeness).  The
+$C_0$ admits a finite valid certificate (completeness).  After
+four rounds of adversarial review by GPT-5.5, validity conditions
+(V3), (V4), (V5), and (V9.Eb) are restated in port-indexed form
+using context- and port-attached mate clusters $\mathrm{Mate}_Q(C,
+s, p) \subseteq S \times \mathrm{Port}(s')$; mosaics carry a
+verticalization stratum $\mathrm{Vrt}(M)$ (axiom (M6)) that
+separates vertical positions (source $+$ EQ mates $+$ selected
+$\PP/\PPI$ witnesses) from the sibling frontier (DR/PO witnesses
+$+$ boundary nodes); finite support closure is checked on an
+explicit abstract triple graph $T_Q$ with cardinality bounds
+$|\mathrm{Pos}_Q| \leq 2|S|\cdot(n{+}1)\cdot|\mathrm{Ctx}_Q|$ and
+$|\mathrm{Trip}_Q| \leq |\mathrm{Pos}_Q|^3 \cdot 125$; and the
+side interface $\mathrm{Side}(u)$ has an explicit five-item
+composition with polynomial width bound $m(n) = O(n^3)$.  The
 certificate space is bounded by a coarse
-$B(C_0) = 2^{2^{p(n)}}$ for a polynomial $p$, and validity is
+$B(C_0) = 2^{2^{p(n)}}$ for a polynomial $p$, derived
+\emph{grammar-first} from these component bounds, and validity is
 finite-graph checkable, so $\ALCIRCC{5}$ concept satisfiability
 reduces to a finite enumeration.
 
@@ -1500,17 +1702,22 @@ decidability).}
     generated-cover statements; the proofs of Thms~1.17--1.19
     carry over verbatim.
   \item The \emph{GPT-5.5 repaired
-    proof}~\cite{GPT55Repaired} (May~2026, 16~pages, no-automata
-    route): formulates rank-$d$ split-forest certificates and ten
-    finite-checkable validity conditions (V1)--(V10), and proves
-    both directions in their entirety, including
-    \textbf{completeness} (every satisfiable $C_0$ admits a
-    valid finite certificate).  The three structural ingredients
-    that make the proof go through---occurrence-level equality,
-    mates with different parents, and request-closed
-    cycles---resolve the gaps that defeated Claude's earlier
-    completeness-extraction attempts (v1, v2.1; both now marked
-    superseded).
+    proof}~\cite{GPT55Repaired} (May~2026, 31~pages after four
+    rounds of review, no-automata route): formulates rank-$d$
+    split-forest certificates and ten finite-checkable validity
+    conditions (V1)--(V10), and proves both directions in their
+    entirety, including \textbf{completeness} (every satisfiable
+    $C_0$ admits a valid finite certificate).  The three
+    structural ingredients that make the proof go
+    through---occurrence-level equality, mates with different
+    parents, and request-closed cycles---resolve the gaps that
+    defeated Claude's earlier completeness-extraction attempts
+    (v1, v2.1; both now marked superseded).  The fourth-review
+    pass added the verticalization discipline (M6), port-indexed
+    mate clusters, the abstract triple graph $T_Q$, and the
+    explicit side-interface construction; all six load-bearing
+    gaps (G1)--(G6) and five smaller issues from the fourth
+    review are closed in the main proof.
 \end{enumerate}
 Together, (1) and (2) establish the biconditional displayed
 above.  The certificate space is bounded by
