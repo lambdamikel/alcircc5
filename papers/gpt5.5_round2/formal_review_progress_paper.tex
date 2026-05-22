@@ -1,0 +1,236 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\Base}{\mathsf B}
+\newcommand{\comp}{\mathsf{comp}}
+\newcommand{\Cl}{\mathsf{cl}}
+\newcommand{\Reach}{\mathsf{Reach}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Ctx}{\mathsf{Ctx}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\Mate}{\mathsf{Mate}}
+\newcommand{\U}{\mathcal U}
+\newcommand{\Q}{\mathcal Q}
+\newcommand{\J}{\mathcal J}
+\newcommand{\eqEQ}{\equiv_{\EQ}}
+\newcommand{\eqQEQ}{\equiv^{\Q}_{\EQ}}
+
+\title{Formal Review of the Latest Repaired Split-Forest Proof Manuscript}
+\author{Prepared for Michael Wessel}
+\date{May 22, 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Scope of this review}
+
+I reviewed the uploaded manuscript titled
+\emph{A Generated Split-Forest Decidability Proof for $\ALCIRCC$ Without Automata: A Repaired Containment-Oriented Presentation}.
+The substantive comments below refer to the 31-page PDF uploaded as
+\texttt{repaired\_split\_forest\_no\_automata\_proof-1.pdf}.
+I also checked the accompanying source file
+\texttt{repaired\_split\_forest\_no\_automata\_proof.tex}.  That source does not appear to reproduce the uploaded PDF: compiling it locally produced a 15-page document, whereas the uploaded PDF has 31 pages and contains substantially more detailed material.  This source/PDF mismatch should be fixed before further circulation.
+
+\section*{Executive verdict}
+
+The latest manuscript is a significant improvement over the preceding version.  In particular, the paper now gives a much clearer account of witness thinning, generated containment covers, strong equality, explicit equality ports, DR/PO side witnesses, finite abstract triple shapes, and request-fulfilled blocking cycles.  These are all moves in the right direction.
+
+However, I would still not regard the decidability proof as fully closed.  The largest remaining concern is that the new verticalization discipline appears too strong: it forbids or tries to eliminate nonvertical $\PP/\PPI$ relations among side-witness positions, but such relations can occur in satisfiable witness-generated models.  This threatens completeness unless the side-interface construction is generalized to include local vertical mini-contexts for comparable side witnesses.  In addition, the support-closed mosaic/patchwork theorem is still not fully non-circular, and the typed-equality and request-cycle arguments need a few more exact finite conditions.
+
+A concise verdict is:
+\[
+\boxed{\text{Major progress, but not yet a watertight decidability proof.}}
+\]
+
+\section{Main improvements}
+
+\subsection{Witness thinning and generated covers are now correctly central}
+
+The witness-generated submodel lemma in Section 3 is now substantially stronger than in earlier drafts.  It explicitly proves frame inheritance for induced submodels, uses NNF-complement closure in the backward universal case, and treats $\EQ$-modalities using strong equality.  This removes the earlier density/Hasse concern in the right way: the proof does not need to read a Hasse diagram off an arbitrary semantic $\PP$-order.  It may thin to a witness-generated model and then build its own sparse generated cover presentation.
+
+\subsection{Blocking and semantic equality are cleanly separated}
+
+The distinction between blocking repetition and semantic equality is stated explicitly.  Repeated finite profiles in a cycle unfold to fresh occurrences, whereas $\EQ$ is generated only by explicit equality-port data.  This is a crucial repair and should remain a central invariant throughout the proof.
+
+\subsection{Multiple upward witnesses are addressed by port-indexed equality mates}
+
+The introduction of context-indexed mate clusters and port-level reachability is the right architectural repair for the multiple-upward-$\PP$ problem.  The proof now attempts to discharge a $\PP/\PPI$ existential from an equality mate of the source occurrence, rather than requiring all upward witnesses to lie on one parent chain of one occurrence.
+
+\subsection{The request-cycle condition is stronger than before}
+
+The manuscript no longer merely says that a pending request may be deferred forever around a blocking loop.  It tries to require request-fulfilled segments and strict later witnesses in the unfolded path.  This is the right non-automata analogue of a Buchi/fairness condition.
+
+\section{Major remaining issue: side witnesses may be comparable}
+
+The most serious mathematical concern is the treatment of side interfaces, especially Lemma 4.6 and the verticalization discipline (M6).  The manuscript claims, in effect, that after placing selected $\PP/\PPI$ witnesses vertically, sibling-frontier side-witness pairs may be restricted to $\DR$, $\PO$, or $\EQ$.  A representative passage is the argument that two side witnesses of the same source cannot have a $\PP/\PPI$ label, because such a label would be incompatible with both being selected $\DR/\PO$ witnesses of the source.
+
+That claim is false in abstract RCC5.  Two elements can both be disjoint from a source and still stand in a proper-part relation to one another.  For example, let
+\[
+    x \DR z, \qquad y \PP z.
+\]
+Then $x \DR y$ also holds, by monotonicity/composition, so both $y$ and $z$ are $\DR$-related to $x$, while $y \PP z$.
+
+This produces a very small stress concept:
+\[
+ C_{\mathrm{side}} :=
+ \exists\DR.(A \sqcap \exists\PP.B)
+ \;\sqcap\;
+ \exists\DR.B.
+\]
+It is satisfiable in an abstract RCC5 frame.  Take a source $x$, a region/element $z$ disjoint from $x$ with $B(z)$, and a proper part $y \PP z$ disjoint from $x$ with $A(y)$.  Then $y$ witnesses the first $\DR$ existential and $z$ witnesses the second; moreover $y$'s $\exists\PP.B$ is witnessed by $z$.
+
+In the side interface of the source $x$, the two selected $\DR$ witnesses $y$ and $z$ are not merely $\DR/\PO$ siblings: they satisfy $y\PP z$.  Therefore a rule saying that all non-equality side-frontier pairs are only $\DR/\PO$ is not complete.
+
+This does not refute the split-forest architecture.  It indicates that the definition of ``side frontier'' must be saturated more carefully.  A likely repair is:
+\begin{quote}
+Side interfaces must include local vertical mini-contexts for selected side witnesses and their selected containment witnesses.  Only the residual open frontier, after this local containment saturation, may be restricted to $\DR/\PO$.
+\end{quote}
+Equivalently, (M6) should not state that every $\PP/\PPI$ label in a mosaic is between positions that are vertical relative to the source's main containment context.  It should state that every $\PP/\PPI$ label is represented in some explicit vertical subcontext, possibly rooted at a side witness.  The finite certificate then needs to record those nested local vertical subcontexts and include them in the reachability and universal-safety checks.
+
+Until this is repaired, the completeness direction is not established: the proof may reject satisfiable witness-generated models whose DR/PO witnesses are themselves containment-comparable.
+
+\section{Support-closed mosaic patchwork is still under-specified}
+
+The manuscript makes real progress by defining an abstract triple graph $T_{\Q}$ and a support-closed family $\Mos_{\Q}$.  Nevertheless, the patchwork proof still needs tightening.
+
+\subsection{Potential circularity}
+
+Several statements say that a concrete triple in the unfolding maps to an abstract triple in $T_{\Q}$ by the patchwork lemma, while the patchwork lemma itself uses support closure over $T_{\Q}$ to prove that concrete triples are composition-consistent.  This risks circularity.
+
+A cleaner proof order would be:
+\begin{enumerate}[leftmargin=2em]
+  \item Define the finite set of abstract positions and a global abstract pair-label function independently of the patchwork theorem.
+  \item Define $T_{\Q}$ as all ordered triples of abstract positions with the already-declared pair labels.
+  \item Require as a finite validity condition that every such triple satisfies the RCC5 composition table.
+  \item Then prove that every concrete unfolding triple is an instance of one of these prechecked abstract triples.
+\end{enumerate}
+In that order, the global composition proof does not need to assume the result it is proving.
+
+\subsection{Overlap amalgamation condition is too weak as stated}
+
+The overlap-amalgamation lemma chooses cross labels using an intersection of composition cells over overlap nodes.  However, the stated hypothesis that each triple admits some label does not by itself imply that the intersection over all overlap nodes is non-empty, nor that the chosen cross labels satisfy all mixed triples simultaneously.  The hypothesis should be strengthened to require a single label choice for each cross pair that is compatible with all overlap witnesses and all mixed triples.
+
+A suitable finite condition would be:
+\[
+\forall p\in P_1\setminus P_0,\; q\in P_2\setminus P_0,
+\quad
+\bigcap_{v\in P_0}\comp(L_1(p,v),L_2(v,q)) \neq \emptyset,
+\]
+and then an additional finite check that the selected cross-label function makes every triple in $P_1\cup P_2$ composition-consistent.  The current prose gestures at this but does not make it a precise certificate condition.
+
+\subsection{Renz--Nebel theorem should be quoted exactly}
+
+The manuscript restates a Renz--Nebel patchwork theorem.  This may be the right external theorem, but the exact hypotheses and conclusion should be quoted with care.  In particular, the proof uses both:
+\begin{itemize}[leftmargin=2em]
+  \item global realizability of atomic RCC5 networks satisfying the composition table; and
+  \item an amalgamation/patchwork property for overlapping networks.
+\end{itemize}
+If both are intended to be external results, the exact theorem numbers or precise statements should be cited.  If the paper is intended to be self-contained, then the patchwork step needs a complete proof, not only the computational triangle/4-network sanity checks.
+
+\section{Typed equality quotient: assumptions versus validity clauses}
+
+The typed-$\EQ$ quotient section is much improved, especially the separation of $\eqEQ$ from blocking.  However, Theorem 7.3 is stated under assumptions (A1)--(A6), and it is not yet completely transparent that validity clauses (V1)--(V10) imply all six assumptions.
+
+The most delicate one is (A4), the joint witness obligation.  It requires that if $u\eqEQ v$, then vertical existential obligations are discharged in a way that is simultaneous for all equality mates.  Clause (V4) is context- and port-indexed, but the proof should explicitly show that the transitive closure of equality-port links cannot create an equality class whose members have incompatible mate clusters or incompatible selected witnesses.
+
+A robust repair would be to promote (A4) to an explicit finite validity clause:
+\[
+\text{for every explicit equality class }E\text{ of ports and every }\exists R.D\text{ in its common type,}
+\]
+\[
+\text{there is a declared mate/target pair that works uniformly for all ports in }E.
+\]
+Then Theorem 7.3 would depend directly on a finite checked condition rather than on a proof sketch from (V4) and mate-cluster construction.
+
+\section{Request-fulfilled cycles: improved, but endpoint conventions need repair}
+
+The request-cycle argument is much closer to the needed non-automata fairness proof.  Still, the current statement mixes a closed segment $u_i,\ldots,u_j$ with a lasso that appears to repeat $u_i,\ldots,u_{j-1}$.  This is a standard source of off-by-one errors.
+
+The proof should adopt one convention and use it everywhere.  For example:
+\begin{quote}
+Choose $i<j$ with the same extended boundary profile.  The cycle word is the half-open segment $[i,j)$, and $u_j$ is identified with the next lap's copy of $u_i$ at the level of profiles only, not at the level of semantic occurrences.
+\end{quote}
+Then explicitly prove the endpoint case: if a request generated at $u_k$ is first witnessed at $u_j$, the pumped path witnesses it at the first occurrence of the next lap, which has the same type as $u_j$ because $\Pi(u_i)=\Pi(u_j)$.
+
+This is likely fixable, but it should be stated precisely because the whole no-automata regularization rests on this lemma.
+
+\section{Global regularization of trees remains compressed}
+
+The finite-index blocking lemma is stated primarily for a single infinite vertical path.  The completeness theorem then applies it to every infinite vertical ray of a split presentation.  The missing step is a global finite regularization argument for the whole branching split forest.
+
+The proof should explain why regularizing rays one by one yields a single finite certificate rather than infinitely many distinct lasso choices.  A possible direct non-automata argument is:
+\begin{enumerate}[leftmargin=2em]
+  \item There are finitely many complete boundary profiles and finitely many request statuses.
+  \item For each profile/request status, choose one representative finite context and one representative request-fulfilled cycle, if one exists.
+  \item Use the substitution lemma to replace every occurrence of the same profile/request status by the chosen representative.
+  \item Prove by induction on generated contexts that all closure formulas, equality ports, side mosaics, and triple support are preserved.
+\end{enumerate}
+This would give the desired global finite quotient without invoking automata.  The current manuscript contains the ingredients, but the global selection argument is still too terse.
+
+\section{Decision bounds depend on unresolved width assumptions}
+
+The explicit grammar and bound section is useful.  But the numerical width bound for side interfaces depends on the current side-interface discipline.  If, as argued above, side witnesses may need their own local vertical subcontexts, then the bound $m(n)=O(n^3)$ may have to be revised.  This is not necessarily a problem for decidability--any computable bound is enough--but the proof should not rely on a polynomial bound until the saturated side-interface construction is fully specified.
+
+The safe statement is:
+\[
+\text{there is an effectively computable bound }m(C_0)\text{ derived from the finite closure and context grammar.}
+\]
+A polynomial bound can be retained only after proving that the saturated local side-context construction does not require more than polynomially many positions.
+
+\section{Source/PDF reproducibility issue}
+
+As noted at the start, the uploaded TeX source does not seem to reproduce the uploaded PDF.  Compiling the source produced a different 15-page document, whereas the uploaded PDF has 31 pages and includes more detailed sections on side interfaces, the abstract triple graph, Renz--Nebel patchwork, port-level reachability, and explicit bounds.
+
+For review and verification, this should be treated as a blocking editorial issue.  Future versions should include a source bundle that compiles to the exact PDF under review, including any bibliography or generated files.
+
+\section{Recommended repairs}
+
+I recommend the following concrete repairs before treating the proof as complete.
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Fix the TeX/PDF mismatch.}  Provide the exact source that compiles to the 31-page manuscript.
+
+  \item \textbf{Repair the side-interface verticalization discipline.}  Replace the claim that all side-frontier pairs are $\DR/\PO/\EQ$ by a saturation rule: comparable side witnesses must be represented in explicit local vertical subcontexts.  Only residual open sibling-frontier pairs should be restricted to $\DR/\PO$.
+
+  \item \textbf{Add the stress test}
+  \[
+  \exists\DR.(A\sqcap\exists\PP.B)\sqcap\exists\DR.B
+  \]
+  and verify that the repaired certificate construction accepts it.
+
+  \item \textbf{Make the mosaic patchwork proof non-circular.}  Define the abstract pair-label function and triple set before invoking patchwork, and require every abstract triple to satisfy the RCC5 composition table as a finite validity check.
+
+  \item \textbf{Strengthen overlap amalgamation.}  Require a single cross-label assignment compatible with all overlap nodes and all mixed triples, not merely per-triple existence of some possible label.
+
+  \item \textbf{Promote joint equality-witness compatibility to an explicit validity clause.}  The typed-$\EQ$ quotient theorem should not rely on an implicit inference from context-local mate clusters.
+
+  \item \textbf{Rewrite the request-cycle lemma with a half-open cycle convention.}  Explicitly handle endpoint witnesses by mapping $u_j$ to the next fresh copy of $u_i$.
+
+  \item \textbf{Add a global finite regularization lemma.}  Show that representative contexts/cycles can be chosen uniformly for all profile/request-status classes, yielding one finite certificate for the entire split forest.
+
+  \item \textbf{Revise the finite bound after side-context saturation.}  It is enough to give a computable bound; do not claim a cubic or polynomial bound unless the saturated construction proves it.
+\end{enumerate}
+
+\section*{Final assessment}
+
+The manuscript has made real progress.  The density/Hasse issue is resolved, the strong-$\EQ$ treatment is much cleaner, and the proof now has a coherent generated split-forest architecture.  I would describe the current status as:
+\[
+\boxed{\text{credible architecture with several remaining formal proof obligations.}}
+\]
+The most urgent mathematical repair is the side-witness comparability issue.  Once that is fixed, the remaining work is mainly to make the mosaic patchwork and no-automata regularization arguments precise and reproducible.
+
+\end{document}
