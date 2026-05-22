@@ -1728,13 +1728,17 @@ $\langle\cdot,\dots,\cdot\rangle$ for tuples):
   \text{Context}\ \Ctx_Q
     &::= \{\,s\mapsto\text{context scheme}\,\} \\
   \text{Mosaic}\ M
-    &::= \langle P,\tau_M, L_M\rangle \\
+    &::= \langle P,\tau_M, L_M, \Vrt_M\rangle \\
   \text{PositionSet}\ P
     &\subseteq \{1,\dots,m(n)\} \\
+  \text{Stratum}\ \Vrt_M
+    &\subseteq P \\
   \text{Edge}\ L_M(p,q)
     &\in \Base \\
   \text{EqPort}\ E_Q
     &::= \{(\sigma_i,p_i)\sim(\sigma_j,p_j)\} \\
+  \text{MateCluster}\ \Mate_Q(C,s,p)
+    &\subseteq S\times\bigcup_{s'\in S}\Port(s') \\
   \text{Witness}\ \mathsf{wit}_Q
     &::= \{\,\exists R.D\mapsto\text{mechanism}\,\}
 \end{align*}
@@ -1747,20 +1751,41 @@ Each terminal ranges over a finite alphabet determined by $n$:
   \item Context colours $\kappa$: three polynomial slots, each
     carrying one of finitely many context scheme names.
   \item $\Mos_Q$: mosaics with position count $\le m(n)$ where
-    $m(n)$ is the crude width fixed below (one source, one position
-    per existential formula in $\tau$, one equality-mate boundary
-    position per containment witness, and one position per realised
-    triple of such positions).
+    $m(n)$ is the explicit polynomial width fixed below
+    (Lemma~\ref{lem:side-width}).
 \end{itemize}
 
 \subsection{Explicit component bounds}
 \label{ssec:bounds}
 
-Fix a polynomial bound $m(n)=c\cdot n^k$ for the mosaic position
-count, with constants $c,k$ determined by the context schemes (the
-choice $c=8$, $k=2$ already suffices: each existential
-$\exists R.D\in\tau$ contributes one source and one witness position,
-and triple closure quadruples this).  Then:
+The mosaic position count $m(n)$ is now the explicit
+side-interface bound from Lemma~\ref{lem:side-width}.  Concretely:
+\begin{itemize}[leftmargin=2em]
+\item Per source state $s$, $|\Ex_{\DR/\PO}(s)|\le n$.
+\item Per source state $s$, mate-cluster size
+$k_{\Mate}\le n(n+1)$ (one mate port per equality interface times
+the port alphabet).
+\item Per generated context, the number of boundary nodes
+$k_{\rm bd}\le 2$ (one parent, one child boundary).
+\item Hence $m(n):=1+n\cdot(1+n(n+1)+2)=1+n^3+3n^2+3n=O(n^3)$ is
+an explicit cubic polynomial bound on $|\Side(u)|$ for every
+generated occurrence $u$, and consequently on the position count
+of every mosaic representing a side interface or its support
+closure.  The mosaic count is then $|\Mos_Q|\le 2^{p_1(n)}$ with
+$p_1(n)=n\cdot m(n)+m(n)^2\cdot\log_2 5$.
+\end{itemize}
+The abstract triple graph of \S\ref{ssec:abstract-triples} has
+\[
+  |\Pos_Q|\le 2|S|\cdot(n+1)\cdot|\Ctx_Q|,
+  \qquad
+  |\Pair_Q|\le|\Pos_Q|^2\cdot 5,
+  \qquad
+  |\Trip_Q|\le|\Pos_Q|^3\cdot 125,
+\]
+so the support-closure check (SC4) is a finite quantifier of size
+$O(|\Pos_Q|^3)$, polynomial in $|\Q|$.
+
+We collect the remaining grammar object counts:
 \begin{itemize}[leftmargin=2em]
   \item \textbf{Closure types.}  $|\Typ(C_0)|\le 2^n$.
   \item \textbf{Equality-mate interface ports.}
@@ -1803,13 +1828,22 @@ $\le B(C_0):=2^{2^{p(n)}}$ and context width $\le B(C_0)$ is at
 most $2^{2^{q(n)}}$ for some polynomial $q(n)$.  Each certificate's
 validity (V1)--(V10) is decidable in time polynomial in its
 description size.
+
+Moreover, every component of the bound is determined explicitly by
+the grammar object counts of \S\ref{ssec:grammar} and the explicit
+cubic mosaic width $m(n)=1+n^3+3n^2+3n$ derived from
+Lemma~\ref{lem:side-width}.  Thus $B(C_0)$ depends on no
+unspecified ingredient; the bound is grammar-first.
 \end{lemma}
 
 \begin{proof}
 By the grammar of \S\ref{ssec:grammar}, a certificate is a finite
 tuple over alphabets of size $\le 2^{p(n)}$ (states, types,
-contexts, mosaic positions, port symbols, witness mechanisms) with
-at most $B(C_0)=2^{2^{p(n)}}$ components.  The total number of
+contexts, mosaic positions of width $m(n)=O(n^3)$, port symbols,
+mate-cluster entries, witness mechanisms) with at most
+$B(C_0)=2^{2^{p(n)}}$ components.  Each grammar object's count is
+the explicit polynomial of \S\ref{ssec:bounds}, derived without
+appeal to informal context-width prose.  The total number of
 certificates of size $\le B(C_0)$ is then bounded by
 \[
   \bigl(2^{p(n)}\bigr)^{B(C_0)}\cdot(\text{combinatorial overhead})
