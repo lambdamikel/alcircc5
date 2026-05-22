@@ -1,0 +1,1 @@
+This directory preserves the rejected DL 2026 submission (`dl2026_abstract_ALCIRCC5_v3.tex`), the three reviews (`reviews.txt`), and the [open letter](open_letter.md). The post-rejection successor — with a softened claim, updated proof status, and GPT-5.5 as fourth author — lives at [`../papers/dl2026_abstract_ALCIRCC5.tex`](../papers/dl2026_abstract_ALCIRCC5.tex).
