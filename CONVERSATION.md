@@ -5118,3 +5118,58 @@ remains untouched; the post-rejection working copy at
 `papers/dl2026_abstract_ALCIRCC5.tex` is now effectively
 "v3 prose, squeezed to 4 pages, with the round-4 proof status
 and the post-rejection softened claim folded in."
+
+### Rejected v3: footnote removed, conference line restored (commit `2ee5294`)
+
+Wessel noticed that the `dl2026-rejected/dl2026_abstract_ALCIRCC5_v3.pdf`
+linked in the repo was 5 pages and still contained the cost footnote
+("Costs: 200,- USD for an annual Claude Code Pro subscription, plus
+$\approx$ 300,- USD for ``extra token usage''"), and asked for the
+footnote to be removed under the expectation that a recompile would
+automatically bring it down to 4 pages — pointing to
+`dl2026-rejected/dl2026_abstract_ALCIRCC5_original.tex` as the
+4-page reference.
+
+Investigation: `_original.tex` (the as-submitted snapshot with
+typos and SRI affiliation) compiles to 22 total pages with the body
+at exactly 4 pages.  v3 (same body content as `_original.tex` but
+with typo corrections and post-submission cleanup) had grown to
+23 pages with body at 5 pages.  Diffing the two showed the
+divergence was NOT in the body but in the front matter:
+v3's `\conference{...}` line had been replaced with the longer
+"Unpublished manuscript. Typographical corrections applied
+post-submission by Claude Opus 4.7 (May 2026); substantive content
+unchanged." string, which wrapped to three rendered lines in the
+page-1 footer instead of two, pushing roughly six lines of body
+content onto a fifth page.
+
+Fix: the `\conference{}` line was restored to the standard "DL
+2026: 39th International Workshop on Description Logics, July
+17--19, 2026, Lisbon, Portugal" string (matching `_original.tex`
+minus the `\DLLogo{}` macro, which `_original.tex` defines via
+`\usepackage{graphbox}` and which v3 omits).  The cost footnote
+was removed.  Body now fits in 4 pages with page 4 ending at
+"for the sake of science."  The rejected-submission status of
+this file is conveyed by the `dl2026-rejected/` directory and
+its `README.md`.
+
+The earlier typographical corrections in v3 are preserved:
+`attemps -> attempts`, `advantages -> advances`,
+`to to -> to`, `technical -> technically`,
+`Occassionally -> Occasionally`,
+`programming at which ... excel at -> programming, at which ... excel`,
+`agent's -> agents'`,
+`groups overarching -> group's overarching`.
+
+### Why the earlier "trim v3 body" detour didn't work
+
+Before the conference-line cause was identified, the
+footnote-removal-only approach left page 5 with ~6 lines of meta
+content ("Standards will be required ... for the sake of science."),
+which prompted me to start applying body-tightening edits (Hamburg
+paragraph compression, project-paragraph rewrite).  Wessel
+correctly intercepted: "Sorry, don't apply the same edits...
+use the original paper, but only remove the footnote.  If you
+recompile, it should automatically be at 4 pages."  Reverting
+those body edits and digging into the diff against `_original.tex`
+revealed the front-matter cause.
