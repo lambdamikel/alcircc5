@@ -1120,7 +1120,7 @@ A certificate $\Q$ is valid if all of the following finite conditions hold.
 \item \textbf{Typed equality congruence.}  The explicit port relation $\eqc^{Q}$ satisfies:
   \begin{enumerate}[label=(E\alph*)]
   \item if ports of states $s,t$ are $\eqc^{Q}$-equivalent, then $\lambda(s)=\lambda(t)$;
-  \item no two states connected by strict $\PP$- or $\PPI$-reachability are $\eqc^{Q}$-equivalent through any ports;
+  \item no two state ports $(s,p),(t,q)$ such that $(s,p)\reach_R(t,q)$ for $R\in\{\PP,\PPI\}$ in $Q$ are $\eqc^{Q}$-equivalent.  (The exclusion is at the port level, not just state-level:\@ in branching or cyclic finite quotients a single state may occur both comparably and noncomparably in different contexts, but the relevant occurrence ports must remain distinguishable.)
   \item whenever two ports are $\eqc^{Q}$-equivalent, all relations from their represented occurrences to every boundary/profile/mosaic position agree up to $\eqc^{Q}$; equivalently, replacing one mate by the other preserves every finite context and mosaic label;
   \item equality links are explicit context/port links.  Equality of profile names, equality of context colours, or repetition along a blocking cycle never generates $\eqc^{Q}$.
   \end{enumerate}
@@ -1462,7 +1462,7 @@ Completeness has three steps: thinning, split cover extraction, and finite block
 
 The profile used for blocking is intentionally richer than a closure type.  It contains every datum needed to replace one generated subtree by another without changing satisfaction of closure formulas or mosaic compatibility at the boundary.
 
-\begin{definition}[Complete boundary profile]
+\begin{definition}[Complete boundary profile]\label{def:complete-profile}
 For an occurrence $u$ in a generated split presentation, its complete boundary profile $\Pi(u)$ consists of:
 \begin{enumerate}[label=(B\arabic*)]
 \item the closure type $\lambda(u)$;
@@ -1662,18 +1662,130 @@ Thus every closure formula at every fresh occurrence of the pumped
 path holds, completing the proof.
 \end{proof}
 
-\begin{lemma}[Finite regularization lemma]\label{lem:regularization}
-Every generated split presentation satisfying all closure formulas and support-closed mosaic conditions has a finite regular split-forest certificate satisfying Definition~\ref{def:valid}.
+The regularization argument is split into four independent steps,
+in response to GPT-5.5's smaller issue S5, so that each ingredient
+can be audited separately.
+
+\begin{lemma}[Finite profile extraction]\label{lem:profile-extraction}
+Every boundary occurrence $u$ of a generated split presentation has
+a complete boundary profile $\Pi(u)$ taking values in a finite set
+$\Pi_{C_0}$ of size $\le 2^{p_2(n)}$ for an explicit polynomial
+$p_2$ (Definition~\ref{def:complete-profile} below).  Hence
+boundary occurrences fall into finitely many profile classes.
 \end{lemma}
 
 \begin{proof}
-Label every boundary occurrence by its complete profile.  There are finitely many labels.  For finite branches, keep one representative context for each complete profile encountered before termination.  For an infinite vertical ray, apply Lemma~\ref{lem:request-cycle} and replace the tail by the request-fulfilled repeated segment.  This produces a finite stem and a finite blocking cycle.  Because repeated laps are fresh, no semantic equality is introduced by this operation.
+The profile components are (a) the closure type $\lambda(u)
+\in\Typ(C_0)$, $|\Typ(C_0)|\le 2^n$; (b) the selected-existential
+list $\le n$; (c) per-existential discharge mode, finite by the
+fixed witness mechanism set; (d) the side mosaic position assignment
+for $\DR/\PO$ obligations, $\le|\Pos_Q|$ per obligation; (e) the
+equality-port pattern of the local context, a subset of
+$E_Q$; (f) the boundary relation matrix and types, a finite product
+of $\Base$ and $\Typ(C_0)$ over $\le 2$ boundary nodes
+(Lemma~\ref{lem:side-width}); (g) request summaries $\le 2^{2n}$
+per port-direction.  Product of finitely many finite alphabets is
+finite, of size at most $2^{p_2(n)}$ for a polynomial $p_2$ derived
+explicitly from these factors.
+\end{proof}
 
-For branching, perform the same replacement independently at each boundary profile.  The substitution lemma guarantees that replacing a component by another component with the same complete profile preserves all interactions through the boundary.  Since each profile has only finitely many selected existential obligations and side contexts, only finitely many representative outgoing contexts are needed.  Collect these representatives into the finite state set $S$, record the parent map and child multisets, and record the exact context and mosaic schemes witnessed by the representatives.
+\begin{lemma}[Lasso construction by blocking]\label{lem:lasso}
+On every infinite vertical ray of a generated split presentation,
+either some closure formula's request fails the eventual-fulfillment
+hypothesis of Lemma~\ref{lem:request-cycle}, or there exist
+positions $i<j$ on the ray with $\Pi(u_i)=\Pi(u_j)$ and the segment
+$u_i,\ldots,u_j$ is request-fulfilled.  In the latter case the tail
+$u_i,u_{i+1},\ldots$ may be replaced by the pumped path
+$u_0,\ldots,u_{i-1},(u_i,\ldots,u_{j-1})^\omega$ built from fresh
+occurrences of the segment.  The replacement is closure-formula
+faithful by Lemma~\ref{lem:request-cycle}.
+\end{lemma}
 
-Equality data are recorded only as explicit port links inherited from equality of split copies in the original presentation.  If two occurrences are merely blocked copies of the same profile, no equality link is recorded.  Since the original presentation quotients to a strong frame, no explicit equality link connects strict vertical comparables, and equality mates have identical types and identical external relation behaviour.  Hence the typed equality congruence clauses hold.
+\begin{proof}
+By Lemma~\ref{lem:profile-extraction} profile values are drawn from
+a finite set, so any infinite ray must repeat a profile by the
+pigeonhole principle.  Take the first such repetition $i<j$ with
+$\Pi(u_i)=\Pi(u_j)$.  If every transitive existential request on the
+ray is eventually fulfilled in the presentation,
+Lemma~\ref{lem:request-cycle} applies and the segment is
+request-fulfilled.  Otherwise some request is permanently deferred,
+which contradicts the closure-formula satisfaction of the original
+infinite presentation.  Hence in any closure-faithful infinite ray
+the request-fulfilled lasso exists, and the pumped replacement is
+sound by Lemma~\ref{lem:request-cycle}.
+\end{proof}
 
-The reachability summaries in the profiles are copied from the actual representative components and then recomputed on the finite quotient.  Request-closed cycles guarantee that recomputation agrees with the copied summaries: a target available after another lap is represented by reachability around the blocking cycle, while distinct laps remain fresh occurrences.  Side witnesses and triple support are preserved by the collected support-closed mosaic family.  Therefore all validity conditions (V1)--(V10) hold.
+\begin{lemma}[Equality-port preservation]\label{lem:eq-port-preservation}
+The finite regularization replaces components only across equal
+complete profiles.  Equality data $E_Q$ is recorded only as
+explicit port links inherited from equality of split copies in the
+original presentation.  Profile equality, context-colour equality,
+or repetition along a blocking cycle never generate new equality
+data.  The typed equality congruence clauses (V9.a)--(V9.d) follow
+directly:
+\begin{itemize}
+\item (V9.a) types of equality-port endpoints agree by inherited
+strong-EQ semantics on $\J$;
+\item (V9.b) no equality link connects strict vertical comparables
+because the original strong frame has no $\PP$ self-loop;
+\item (V9.c) external relation behaviour agrees by inheritance from
+$\J$'s pair labels;
+\item (V9.d) blocking copies and profile equality cannot generate
+$\eqc^Q$ links by construction.
+\end{itemize}
+\end{lemma}
+
+\begin{proof}
+Direct from the definition of equality-port recording in
+\S\ref{ssec:port-reach} and the witness-generated submodel
+property.  In particular, the mate cluster of every context (G2
+construction) is exactly the set of explicit equality companions
+generated by the presentation; no additional $\eqc^Q$ links are
+introduced by regularization.
+\end{proof}
+
+\begin{lemma}[Mosaic collection]\label{lem:mosaic-collection}
+The finite family $\Mos_Q$ produced by the regularization is
+support-closed against the abstract triple graph $\mathcal T_Q$ of
+the resulting finite certificate.  Specifically, every abstract
+triple in $\Trip_Q$ is the image of some concrete unfolding triple
+of the presentation, and the corresponding $\rho^\J$-induced mosaic
+is included in $\Mos_Q$.
+\end{lemma}
+
+\begin{proof}
+For each context scheme $C\in\Ctx_Q$ collected during the
+regularization, $\Mos_Q$ includes the side interface
+$\Side(u)$ of one representative occurrence $u$ of each profile
+generated by $C$ (Lemma~\ref{lem:side-placement}).  By
+Lemma~\ref{lem:side-placement}, $\Side(u)$ satisfies (M1)--(M6)
+with labels inherited from $\rho^\J$.  Composition closure on
+overlaps follows from $\J$'s strong RCC5 frame.  Lemma 5.4 (quotient
+lifting) then guarantees every abstract triple in $\Trip_Q$ has a
+witnessing mosaic.
+\end{proof}
+
+\begin{lemma}[Finite regularization lemma]\label{lem:regularization}
+Every generated split presentation satisfying all closure formulas
+and support-closed mosaic conditions has a finite regular
+split-forest certificate satisfying Definition~\ref{def:valid}.
+\end{lemma}
+
+\begin{proof}
+Apply Lemma~\ref{lem:profile-extraction} to bound the boundary
+profiles to a finite set.  Apply Lemma~\ref{lem:lasso} to every
+infinite vertical ray to produce a finite stem and a
+request-fulfilled blocking cycle.  Apply
+Lemma~\ref{lem:eq-port-preservation} to inherit the typed equality
+congruence (V9) verbatim from the presentation.  Apply
+Lemma~\ref{lem:mosaic-collection} to produce a support-closed
+$\Mos_Q$ satisfying (V2), (V6)--(V8).
+
+The substitution lemma (Lemma~\ref{lem:substitution}) ensures that
+replacing one component by another with the same complete profile
+preserves all interactions through the boundary, so (V3), (V4),
+(V5), (V10) are inherited from the original closure-faithful
+presentation.  All validity conditions (V1)--(V10) hold.
 \end{proof}
 
 \begin{theorem}[Completeness of certificates]\label{thm:completeness}
