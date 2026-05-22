@@ -5033,3 +5033,88 @@ After this refresh, the public-facing description of the work
 in `dl2026-rejected/` remains an immutable record of the
 submission that DL 2026 reviewed, separate from the working
 papers.
+
+---
+
+## 2026-05-22: README all-in-one paragraph; DL 2026 body restored to v3 prose
+
+Two follow-ups to the 5-21 refresh.
+
+- **README "Current Status of the Proof" section** (commits
+  `f785f1a`, `ae5123e`).  The 5-21 pass had updated section
+  headers but the prose still described the 16-page round-2
+  state and listed only the three round-2 structural fixes (i)
+  occurrence-level equality, (ii) mates with different parents,
+  (iii) request-closed cycles.  Two changes:
+  - A dedicated *"All-in-one fourth-review proof (31 pages,
+    May 2026)"* paragraph was added to the Round-2 review
+    subsection, describing the four round-3/4 layers: (iv) the
+    verticalization discipline (mosaic axiom (M6)) stratifying
+    each context into a vertical stratum (source + EQ mates +
+    selected PP/PPI witnesses) and a sibling frontier (DR/PO
+    witnesses + boundary nodes); (v) port-indexed mate clusters
+    $\mathrm{Mate}_Q(C, s, p) \subseteq S \times \mathrm{Port}(s')$
+    with (V3)/(V4)/(V5)/(V9.Eb) restated in port-indexed form;
+    (vi) the explicit abstract triple graph $T_Q$ with cardinality
+    bounds on $\mathrm{Pos}_Q$ and $\mathrm{Trip}_Q$; (vii) the
+    side interface $\mathrm{Side}(u)$ with polynomial width
+    $m(n) = O(n^3)$.  The certificate-space bound $B(C_0) =
+    2^{2^{p(n)}}$ is now derived *grammar-first* from these
+    component bounds.
+  - The "Theory vs. implementation" disclaimer block listed only
+    the three round-2 fixes for completeness; it was extended to
+    name the four round-3/4 layers as (iv)–(vii), so the bullet
+    is internally consistent with the new Round-2 paragraph.
+  - Five stale "16 pages, May 2026" mentions on current-state
+    claims were updated to "31 pages after four rounds of GPT-5.5
+    review".  The 5-12-2026 Latest News entry was deliberately
+    left at "16 pages" as a historically accurate snapshot of
+    the round-2 state.
+
+- **DL 2026 abstract body** (commit `40b01c2`).  The 5-21 pass had
+  rewritten the body more aggressively than intended — the
+  "On Agentic AI for Description Logic Research" meta section
+  was compressed to four short technique bullets, losing the
+  rejected-v3 narrative on agentic peer-review, broader search
+  coverage, hallucination-as-no-longer-dominant, the README
+  discipline, the Ramanujan/Hardy analogy, the reviewing-hierarchy
+  proposal, and the closing transparency call.  Per Wessel's
+  feedback, the meta-level is the primary focus of the abstract
+  and was cut too short.
+
+  The body was restored close to the rejected v3 prose
+  verbatim, with these updates folded in:
+  - Softened claim retained ("We propose for the community's
+    consideration that $\ALCIRCC{5}$ is decidable").
+  - One short paragraph describes the current decidability
+    argument with the 31-page repaired proof and brief mentions
+    of (M6), port-indexed mate clusters, $T_Q$, $\mathrm{Side}(u)$.
+  - The concrete computational evidence (911 cross-validated
+    concepts, 775 SAT with 100% finite cover-tree models, 12.2M
+    models enumerated, GIS taxonomy 21/21, WP1–WP6 all PASS) is
+    retained — Wessel explicitly said the more concrete
+    explanation of the results should stay.
+  - GPT-5.5 added as the fourth listed author throughout.
+
+  To fit 4 pages instead of v3's 5, targeted trims were made in
+  parts of the body that have full coverage in the appendix:
+  the Background section's formal restatements (JEPD axioms,
+  inverse axiom, separate complete-graph paragraph) collapsed
+  into one denser paragraph; the tableau-blocking discussion
+  consolidated from two paragraphs into one; the
+  split-forest-mechanism paragraphs merged with light wording
+  cuts; the current-decidability-argument paragraph reduced from
+  ~15 lines of M6/$T_Q$/$\mathrm{Side}(u)$ detail to ~10 lines
+  (full detail lives in the appendix and the README).  The
+  Agentic-AI meta section was only minimally touched (one
+  "treasure trove" single-sentence paragraph merged with its
+  neighbour; one redundant probe-count sentence cut; one
+  intro footnote consolidated).  Verified by pdftotext that
+  page 4 ends with "for the sake of science" and page 5
+  starts with the Appendix title.
+
+The audit trail in `dl2026-rejected/dl2026_abstract_ALCIRCC5_v3.tex`
+remains untouched; the post-rejection working copy at
+`papers/dl2026_abstract_ALCIRCC5.tex` is now effectively
+"v3 prose, squeezed to 4 pages, with the round-4 proof status
+and the post-rejection softened claim folded in."
