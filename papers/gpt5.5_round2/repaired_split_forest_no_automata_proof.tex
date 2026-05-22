@@ -60,6 +60,11 @@
 \newcommand{\Sib}{\mathsf{Sib}}
 \newcommand{\vertical}{\mathrm{vert}}
 \newcommand{\sibling}{\mathrm{sib}}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Profile}{\mathsf{Profile}}
+\newcommand{\Stratum}{\mathsf{Stratum}}
 
 \title{A Generated Split-Forest Decidability Proof for $\Logic$\\
        Without Automata: A Repaired Containment-Oriented Presentation}
@@ -466,17 +471,132 @@ The mosaic definition is deliberately joint.  A witness and the relations needed
 
 The verticalization discipline (M6) is the formal counterpart of GPT-5.5's first major gap (Repair R1).  Its effect is that every $\PP/\PPI$ relation produced by a mosaic is between vertical positions, and is therefore witnessed by the vertical containment backbone of the unfolding, possibly modulo explicit $\EQ$-mate substitution.  In particular, no sibling-frontier position can supply an additional $\PP/\PPI$ target that is invisible to the equality-aware vertical reachability $\Reach_R$ of \S\ref{sec:certificates} below.  The discipline does not affect composition consistency: for every cross-stratum or within-sibling triple, the RCC5 composition table always offers at least one option in $\{\DR,\PO,\EQ\}$ that respects (M6)(a)--(d), and in fact one in $\{\DR,\PO\}$ when both required endpoints are non-equal.
 
-\begin{definition}[Support-closed mosaic family]
-A finite family $\Mos$ of mosaics is support-closed for a certificate if:
+\subsection{The finite abstract triple graph $\mathcal T_Q$}
+\label{ssec:abstract-triples}
+
+Support closure is checked on a finite combinatorial structure
+$\mathcal T_Q$ generated purely from the certificate's finite
+alphabets, prior to any unfolding.  We construct it explicitly so
+that the support-closure clauses below are finite tests rather than
+appeals to an unspecified universe.  This is the formal counterpart
+of GPT-5.5's fourth gap (Repair R4).
+
+The certificate carries:
+\begin{itemize}
+\item the finite profile alphabet $S\subseteq\Sigma$;
+\item per profile $s\in S$, the finite port alphabet $\Port(s)$;
+\item the finite set of context schemes $\Ctx_Q$, each generating a
+finite set of source/witness/equality-mate positions of declared
+profiles and ports;
+\item the finite explicit equality-port relation $E_Q$;
+\item the stratum alphabet $\{\vertical,\sibling\}$ inherited from
+the verticalization discipline (M6).
+\end{itemize}
+
+\begin{definition}[Abstract position symbol]\label{def:abs-pos}
+An abstract position symbol is a quadruple
+$\pi=\langle s,p,C,\zeta\rangle$ with $s\in S$, $p\in\Port(s)$,
+$C\in\Ctx_Q$ a context scheme that declares a position of profile
+$s$ at port $p$, and $\zeta\in\{\vertical,\sibling\}$ the stratum
+that $C$ assigns to that position.  Let $\Pos_Q$ denote the finite
+set of abstract position symbols.  $|\Pos_Q|\le|S|\cdot
+\max_s|\Port(s)|\cdot|\Ctx_Q|\cdot 2$.
+\end{definition}
+
+\begin{definition}[Permitted abstract pair shape]\label{def:abs-pair}
+A permitted abstract pair shape is a triple
+$(\pi_1,\pi_2,r)\in\Pos_Q^2\times\Base$ such that:
+\begin{enumerate}[label=(P\arabic*)]
+\item $r$ respects (M6): if $r\in\{\PP,\PPI\}$ then
+$\zeta_1=\zeta_2=\vertical$;\@ if exactly one of $\zeta_1,\zeta_2$
+is $\vertical$ then $r\in\{\DR,\PO\}$;\@ if $\zeta_1=\zeta_2=
+\sibling$ and $\pi_1\neq\pi_2$ then $r\in\{\DR,\PO,\EQ\}$;
+\item if $\pi_1$ and $\pi_2$ lie in the same context ($C_1=C_2$),
+$r$ matches the relation that $C_1$'s mosaic data assigns to that
+pair of positions;
+\item if $\pi_1$ and $\pi_2$ lie in distinct contexts
+$C_1\neq C_2$, then either $\pi_1$ and $\pi_2$ are linked through
+an explicit equality-port chain in $E_Q$ (in which case $r=\EQ$ and
+$\zeta_1=\zeta_2$), or some mosaic in $\Mos$ records both positions
+with label $r$ on a boundary overlap.
+\end{enumerate}
+Let $\Pair_Q\subseteq\Pos_Q^2\times\Base$ be the finite set of
+permitted abstract pair shapes.  $|\Pair_Q|\le|\Pos_Q|^2\cdot 5$.
+\end{definition}
+
+\begin{definition}[Abstract triple graph]\label{def:T-Q}
+The abstract triple graph $\mathcal T_Q$ has:
+\begin{itemize}
+\item vertices: the finite set $\Pos_Q$;
+\item edges: the finite set $\Pair_Q$;
+\item triples $\Trip_Q$: the ordered triples
+$(\pi_1,\pi_2,\pi_3)\in\Pos_Q^3$ together with relation values
+$(r_{12},r_{13},r_{23})\in\Base^3$ such that every two-element
+projection is in $\Pair_Q$ and the values satisfy the RCC5
+composition closure $r_{13}\in\comp(r_{12},r_{23})$.
+\end{itemize}
+$\mathcal T_Q$ is finite: $|\Pos_Q|\le 2|S|\cdot
+\max_s|\Port(s)|\cdot|\Ctx_Q|$, $|\Trip_Q|\le|\Pos_Q|^3\cdot 5^3$.
+The graph $\mathcal T_Q$ depends only on the syntactic data of
+$\Q$ and can be built before any unfolding.
+\end{definition}
+
+\begin{definition}[Quotient map from concrete to abstract]\label{def:quotient-map}
+The unfolding $\U(\Q)$ sends each occurrence $u\in\Omega$ to a
+unique abstract position symbol
+\[
+  q(u)\;:=\;\langle\Profile(u),\Port(u),\Ctx(u),\Stratum(u)\rangle\;\in\;\Pos_Q,
+\]
+where $\Profile,\Port,\Ctx,\Stratum$ are the certificate's
+inherited bookkeeping fields on every occurrence.  Componentwise,
+ordered concrete triples $(u,v,w)\in\Omega^3$ are sent to
+$(q(u),q(v),q(w),\lab(u,v),\lab(u,w),\lab(v,w))$, which lies in
+$\Trip_Q$ by (M1)--(M6), (P1)--(P3), and the patchwork lemma.
+\end{definition}
+
+\begin{definition}[Support-closed mosaic family]\label{def:support-closed}
+A finite family $\Mos$ of mosaics is \emph{support-closed} relative
+to $\mathcal T_Q$ if:
 \begin{enumerate}[label=(SC\arabic*)]
-\item it is closed under restrictions to subsets of positions;
-\item every $\DR$ or $\PO$ existential side obligation occurring in a certificate context has a mosaic extension that contains a typed witness for that obligation;
-\item whenever two contexts overlap on boundary positions with the same types, labels, and explicit equality classes, their union is represented by a legal refinement mosaic whenever the pair labels are permitted by the RCC5 table;
-\item every abstract triple of occurrence positions that can be produced by the finite unfolding scheme is represented by some mosaic in the family with the same pair labels on the triple.
+\item $\Mos$ is closed under restrictions to subsets of positions;
+\item every $\DR$ or $\PO$ existential side obligation occurring in
+a certificate context has a mosaic in $\Mos$ that contains a typed
+witness for the obligation;
+\item whenever two context boundary regions overlap on positions
+with the same abstract position symbols and the overlap pair labels
+are RCC5-permitted, their union is represented by a refinement
+mosaic in $\Mos$;
+\item \textbf{Support against $\mathcal T_Q$:} for every abstract
+triple $T=(\pi_1,\pi_2,\pi_3,r_{12},r_{13},r_{23})\in\Trip_Q$, the
+family $\Mos$ contains a mosaic $M_T$ with three positions
+$p_1,p_2,p_3$ such that $\tau_{M_T}(p_i)=\lambda(s_i)$,
+$p_i\in\Vrt_{M_T}$ iff $\zeta_i=\vertical$, and the mosaic pair
+labels match the triple's relation values.
 \end{enumerate}
 \end{definition}
 
-The last clause is finite because the certificate has finitely many profile symbols, equality-port symbols, boundary statuses, and context names.  The abstract triple graph generated by those symbols is finite and can be computed before unfolding.
+\begin{lemma}[Finite support-closure check]\label{lem:sc-finite}
+(SC1)--(SC4) are finite tests on the certificate.  Specifically,
+(SC4) is a finite quantifier over $|\Trip_Q|\le|\Pos_Q|^3\cdot125$
+abstract triples, each requiring constant-time mosaic lookup.
+\end{lemma}
+
+\begin{lemma}[Quotient lifting]\label{lem:quotient-lift}
+Suppose $\Mos$ is support-closed.  Then every concrete triple
+$(u,v,w)\in\Omega^3$ in $\U(\Q)$ is covered by a mosaic $M\in\Mos$:
+namely $M_{q(u,v,w)}$ from (SC4), which contains positions of
+types and strata matching $(u,v,w)$ with the same pair labels.
+\end{lemma}
+
+\begin{proof}
+By Definition~\ref{def:quotient-map}, the concrete triple $(u,v,w)$
+maps to $q(u,v,w)\in\Trip_Q$.  By (SC4), $\Mos$ contains a mosaic
+$M_{q(u,v,w)}$ realising this abstract triple.  The realisation
+includes matching types (from $\tau_{M_{q(u,v,w)}}=\lambda$ at each
+profile), matching strata (from $\Vrt$-membership reflecting
+$\zeta$), and matching pair labels (from (M3) closure agreeing with
+$r_{12},r_{13},r_{23}$).
+\end{proof}
 
 \subsection{The Renz--Nebel base case}
 \label{ssec:renz-nebel}
@@ -871,7 +991,7 @@ A certificate $\Q$ is valid if all of the following finite conditions hold.
 
 \item \textbf{$\DR/\PO$ universal safety.}  If $\forall R.D\in\lambda(s)$ with $R\in\{\DR,\PO\}$, then every mosaic position that can be related by $R$ to a source occurrence of state $s$ has type containing $D$.
 
-\item \textbf{Support closure.}  $\Mos_Q$ is support-closed for all abstract pair and triple shapes generated by $\Q$.
+\item \textbf{Support closure.}  $\Mos_Q$ is support-closed (Definition~\ref{def:support-closed}) against the finite abstract triple graph $\mathcal T_Q$ (Definition~\ref{def:T-Q}).  By Lemma~\ref{lem:sc-finite}, this is a finite check over at most $|\Pos_Q|^3\cdot 125$ abstract triples.
 
 \item \textbf{Typed equality congruence.}  The explicit port relation $\eqc^{Q}$ satisfies:
   \begin{enumerate}[label=(E\alph*)]
