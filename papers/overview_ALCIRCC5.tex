@@ -1195,23 +1195,23 @@ adversarial review by GPT-5.5: v1 used a Hasse construction that
 failed on infinite $\PP$-chains (e.g.\ $C_\uparrow \equiv
 \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$) and contained a
 witness conflation in the $C5$ triple-coherence proof; v2.1 fixed
-both of those but then a second-round review identified \textbf{eight
-structural gaps (G1)--(G8)} of which three were load-bearing:
-(G1)~profile-port equality contradicted vertical separation on
-self-loops via the $M1{+}M7$ reflexivity chain; (G3)~the mate
-construction forced all mates to share a single semantic parent,
-refuted by a two-mate stress formula
+both of those but then a second-round review identified
+\textbf{eight structural gaps in v2.1} of which three were
+load-bearing: profile-port equality contradicted vertical
+separation on self-loops via the $M1{+}M7$ reflexivity chain; the
+mate construction forced all mates to share a single semantic
+parent, refuted by a two-mate stress formula
 $C_{AB} \equiv A \sqcap B \sqcap \exists\PP.A \sqcap \exists\PP.B
 \sqcap \forall\PP.(A\to\lnot B) \sqcap \forall\PP.(B\to\lnot A)$;
-(G4)~the rootless orientation was incompatible with the
+and the rootless orientation was incompatible with the
 depth-from-$u_*$ projection used in the proof.
 
 The \textbf{current best statement} of the
 model-to-quotient direction is GPT-5.5's
 \textit{repaired split-forest decidability
-proof}~\cite{GPT55Repaired} (May~2026, 16~pages, no-automata
-route), which removes all three load-bearing defects.  The three
-structural fixes are:
+proof}~\cite{GPT55Repaired} (May~2026, 31~pages after a fourth
+round of review, no-automata route), which removes all three
+load-bearing defects.  The three structural fixes are:
 \begin{enumerate}[label=(\arabic*)]
   \item \textbf{Occurrence-level equality:}
     $u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) =
@@ -1238,9 +1238,23 @@ The repaired proof formulates the model-to-quotient direction as
 (V1)--(V10)} on rank-$d$ quotient certificates and proves both
 directions: every valid certificate unfolds to a strong abstract
 RCC5 frame satisfying $C_0$ (soundness), and every satisfiable
-$C_0$ admits a finite valid certificate (completeness).  The
+$C_0$ admits a finite valid certificate (completeness).  After
+four rounds of adversarial review by GPT-5.5, validity conditions
+(V3), (V4), (V5), and (V9.Eb) are restated in port-indexed form
+using context- and port-attached mate clusters $\mathrm{Mate}_Q(C,
+s, p) \subseteq S \times \mathrm{Port}(s')$; mosaics carry a
+verticalization stratum $\mathrm{Vrt}(M)$ (axiom (M6)) that
+separates vertical positions (source $+$ EQ mates $+$ selected
+$\PP/\PPI$ witnesses) from the sibling frontier (DR/PO witnesses
+$+$ boundary nodes); finite support closure is checked on an
+explicit abstract triple graph $T_Q$ with cardinality bounds
+$|\mathrm{Pos}_Q| \leq 2|S|\cdot(n{+}1)\cdot|\mathrm{Ctx}_Q|$ and
+$|\mathrm{Trip}_Q| \leq |\mathrm{Pos}_Q|^3 \cdot 125$; and the
+side interface $\mathrm{Side}(u)$ has an explicit five-item
+composition with polynomial width bound $m(n) = O(n^3)$.  The
 certificate space is bounded by a coarse
-$B(C_0) = 2^{2^{p(n)}}$ for a polynomial $p$, and validity is
+$B(C_0) = 2^{2^{p(n)}}$ for a polynomial $p$, derived
+\emph{grammar-first} from these component bounds, and validity is
 finite-graph checkable, so $\ALCIRCC{5}$ concept satisfiability
 reduces to a finite enumeration.
 
@@ -1438,17 +1452,22 @@ decidability).}
     generated-cover statements; the proofs of Thms~1.17--1.19
     carry over verbatim.
   \item The \emph{GPT-5.5 repaired
-    proof}~\cite{GPT55Repaired} (May~2026, 16~pages, no-automata
-    route): formulates rank-$d$ split-forest certificates and ten
-    finite-checkable validity conditions (V1)--(V10), and proves
-    both directions in their entirety, including
-    \textbf{completeness} (every satisfiable $C_0$ admits a
-    valid finite certificate).  The three structural ingredients
-    that make the proof go through---occurrence-level equality,
-    mates with different parents, and request-closed
-    cycles---resolve the gaps that defeated Claude's earlier
-    completeness-extraction attempts (v1, v2.1; both now marked
-    superseded).
+    proof}~\cite{GPT55Repaired} (May~2026, 31~pages after four
+    rounds of review, no-automata route): formulates rank-$d$
+    split-forest certificates and ten finite-checkable validity
+    conditions (V1)--(V10), and proves both directions in their
+    entirety, including \textbf{completeness} (every satisfiable
+    $C_0$ admits a valid finite certificate).  The three
+    structural ingredients that make the proof go
+    through---occurrence-level equality, mates with different
+    parents, and request-closed cycles---resolve the gaps that
+    defeated Claude's earlier completeness-extraction attempts
+    (v1, v2.1; both now marked superseded).  The fourth-review
+    pass added the verticalization discipline (M6), port-indexed
+    mate clusters, the abstract triple graph $T_Q$, and the
+    explicit side-interface construction; all six load-bearing
+    gaps (G1)--(G6) and five smaller issues from the fourth
+    review are closed in the main proof.
 \end{enumerate}
 Together, (1) and (2) establish the biconditional displayed
 above.  The certificate space is bounded by
