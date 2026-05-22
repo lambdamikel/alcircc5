@@ -56,6 +56,10 @@
 \newcommand{\type}{\mathsf{type}}
 \newcommand{\arity}{\mathsf{ar}}
 \newcommand{\NNF}{\mathsf{nnf}}
+\newcommand{\Vrt}{\mathsf{Vert}}
+\newcommand{\Sib}{\mathsf{Sib}}
+\newcommand{\vertical}{\mathrm{vert}}
+\newcommand{\sibling}{\mathrm{sib}}
 
 \title{A Generated Split-Forest Decidability Proof for $\Logic$\\
        Without Automata: A Repaired Containment-Oriented Presentation}
@@ -429,22 +433,38 @@ For selected $\DR$ and $\PO$ witnesses, attach finite side occurrences containin
 
 A local interface records a finite set of occurrences near one generated containment context: a source, its selected witnesses, its equality mates needed to discharge upward requests, and the relevant sibling frontier nodes.
 
-\begin{definition}[Mosaic]
-A mosaic over a finite position set $P$ is a triple
+\begin{definition}[Mosaic]\label{def:mosaic}
+A mosaic over a finite position set $P$ is a tuple
 \[
-  M=(P,\tau,L)
+  M=(P,\tau,L,\Vrt)
 \]
-where $\tau:P\to\Typ(C_0)$ and $L:P^2\to\Base$ satisfy:
+where $\tau:P\to\Typ(C_0)$ and $L:P^2\to\Base$ as before, and
+$\Vrt\subseteq P$ is the set of \emph{vertical} positions.  The
+intended reading of $\Vrt$ is: the source occurrence of the mosaic,
+its explicit equality mates, and any selected $\PP/\PPI$ containment
+witnesses recorded in the mosaic.  Positions in
+$\Sib:=P\setminus\Vrt$ are \emph{sibling-frontier} positions; they
+represent selected $\DR/\PO$ witnesses and ordinary
+sibling/boundary nodes.  The tuple satisfies:
 \begin{enumerate}[label=(M\arabic*)]
 \item $L(p,p)=\EQ$ and $L(p,q)=\EQ$ iff $p$ and $q$ are in the same explicit equality class of the mosaic;
 \item $L(q,p)=\Inv(L(p,q))$;
 \item $L(p,r)\in\comp(L(p,q),L(q,r))$ for all $p,q,r\in P$;
 \item if $\forall R.D\in\tau(p)$ and $L(p,q)=R$, then $D\in\tau(q)$;
-\item if $\exists R.D\in\tau(p)$ is declared to be witnessed inside the mosaic, then some $q\in P$ has $L(p,q)=R$ and $D\in\tau(q)$.
+\item if $\exists R.D\in\tau(p)$ is declared to be witnessed inside the mosaic, then some $q\in P$ has $L(p,q)=R$ and $D\in\tau(q)$;
+\item \textbf{Verticalization discipline.}
+  \begin{enumerate}[label=(\alph*)]
+  \item \textbf{$\EQ$-closure of strata:} $L(p,q)=\EQ$ implies $p\in\Vrt$ iff $q\in\Vrt$, so equality classes are either entirely vertical or entirely sibling-frontier;
+  \item \textbf{Containment labels are vertical:} $L(p,q)\in\{\PP,\PPI\}$ implies $p,q\in\Vrt$;
+  \item \textbf{Cross-stratum labels are $\DR/\PO$:} if exactly one of $p,q$ lies in $\Vrt$, then $L(p,q)\in\{\DR,\PO\}$;
+  \item \textbf{Within sibling-frontier:} if $p,q\in\Sib$ and $p\neq q$ are in different equality classes, then $L(p,q)\in\{\DR,\PO\}$.
+  \end{enumerate}
 \end{enumerate}
 \end{definition}
 
 The mosaic definition is deliberately joint.  A witness and the relations needed to support it occur in one finite network.  This avoids the unsound aggregation step where a relation from one occurrence and a witness from another occurrence with the same type are combined even though they never occur together.
+
+The verticalization discipline (M6) is the formal counterpart of GPT-5.5's first major gap (Repair R1).  Its effect is that every $\PP/\PPI$ relation produced by a mosaic is between vertical positions, and is therefore witnessed by the vertical containment backbone of the unfolding, possibly modulo explicit $\EQ$-mate substitution.  In particular, no sibling-frontier position can supply an additional $\PP/\PPI$ target that is invisible to the equality-aware vertical reachability $\Reach_R$ of \S\ref{sec:certificates} below.  The discipline does not affect composition consistency: for every cross-stratum or within-sibling triple, the RCC5 composition table always offers at least one option in $\{\DR,\PO,\EQ\}$ that respects (M6)(a)--(d), and in fact one in $\{\DR,\PO\}$ when both required endpoints are non-equal.
 
 \begin{definition}[Support-closed mosaic family]
 A finite family $\Mos$ of mosaics is support-closed for a certificate if:
@@ -498,7 +518,7 @@ globally consistent extension to $4$ positions.
 \label{ssec:mosaic-to-rn}
 
 \begin{lemma}[Mosaic relational layer]\label{lem:M-to-RN}
-For every mosaic $M=(P,\tau,L)\in\Mos$, the underlying labelled
+For every mosaic $M=(P,\tau,L,\Vrt)\in\Mos$, the underlying labelled
 graph $N_M=(P,L)$ satisfies (RN1)--(RN3) of
 Theorem~\ref{thm:RN}.
 \end{lemma}
@@ -678,6 +698,7 @@ composition;\@ therefore so does the full unfolding.
 \end{lemma}
 
 \section{Finite generated split-forest certificates}
+\label{sec:certificates}
 
 \subsection{Profiles and ports}
 
@@ -765,7 +786,7 @@ A certificate $\Q$ is valid if all of the following finite conditions hold.
 \begin{enumerate}[label=(V\arabic*)]
 \item \textbf{Type legality.}  Every $\lambda(s)$ is a closure type.  $C_0\in\lambda(s_0)$.  $\EQ$-modalities are locally normalized: $\exists\EQ.D\in\lambda(s)$ iff $D\in\lambda(s)$, and $\forall\EQ.D\in\lambda(s)$ iff $D\in\lambda(s)$.
 
-\item \textbf{Context legality.}  Every context in $\Ctx_Q$ and every mosaic in $\Mos_Q$ is a legal finite RCC5 network with typed relation-safety.
+\item \textbf{Context legality.}  Every context in $\Ctx_Q$ and every mosaic $M=(P,\tau,L,\Vrt)$ in $\Mos_Q$ satisfies (M1)--(M6) of Definition~\ref{def:mosaic}, including the verticalization discipline.  In particular, every mosaic carries an explicit stratification of its positions into vertical and sibling-frontier, and the source positions of the certificate's generated contexts are vertical.
 
 \item \textbf{Vertical safety.}  If $s\reach_{\PP}t$ and $\forall\PP.D\in\lambda(s)$, then $D\in\lambda(t)$.  If $s\reach_{\PPI}t$ and $\forall\PPI.D\in\lambda(s)$, then $D\in\lambda(t)$.
 
@@ -839,6 +860,121 @@ only on the certificate, not on any external model.  No assumption
 is made that $\eqc^Q$ arises from occurrence-coincidence in an
 intended interpretation; the quotient is constructed purely from
 $\Q$.
+
+\subsection{Verticalization soundness}
+\label{ssec:verticalization-soundness}
+
+The verticalization discipline (M6) of
+Definition~\ref{def:mosaic} restricts every $\PP/\PPI$ label inside
+a mosaic to vertical mosaic positions.  We lift this from mosaics to
+the entire unfolding $\U(\Q)$ as a separate lemma, because the
+truth biconditional in the quotient (Lemma~\ref{lem:quotient-truth}
+below) needs to know that mosaics introduce no extra $\PP/\PPI$
+successors invisible to vertical reachability.
+
+A mosaic position $p\in P$ of $M\in\Mos_Q$ is called \emph{vertical}
+when $p\in\Vrt_M$ and \emph{sibling-frontier} otherwise.  When an
+occurrence $u\in\Omega$ realises position $p$ of $M$, we say $u$ is
+a \emph{vertical occurrence at $M$} (resp.~\emph{sibling-frontier
+occurrence at $M$}).  A single occurrence may be vertical at one
+mosaic and sibling-frontier at another;\@ the stratification is per
+mosaic.  An occurrence $u$ is \emph{on the vertical backbone}
+relative to a generated context $C$ if $u$ is the source of $C$, an
+explicit equality mate of the source, or lies on the strict
+generated parent/child chain through $C$.
+
+\begin{lemma}[Vertical realisation of $\PP/\PPI$ pairs]\label{lem:vertical-realisation}
+Let $\Q$ be a valid certificate satisfying (V1)--(V10) and (M6) on
+every mosaic in $\Mos_Q$.  Let $u,v\in\Omega(\U(\Q))$ and
+$R\in\{\PP,\PPI\}$.  Suppose $\lab(u,v)=R$ in the unfolding.  Then
+either
+\begin{enumerate}[label=(\alph*)]
+\item there is a strict vertical $\Reach_R$-chain from $u$ to $v$ in
+the generated backbone of $\U(\Q)$, or
+\item there exist $u',v'\in\Omega$ with $u\eqc u'$ and $v\eqc v'$
+such that $(u',v')$ falls under case (a).
+\end{enumerate}
+In particular, every $\PP/\PPI$ class-pair in the quotient
+$\U(\Q)/\eqc$ is realised by an explicit vertical $\Reach_R$-chain in
+$\U(\Q)$ after $\eqc$-mate substitution.
+\end{lemma}
+
+\begin{proof}
+The label $\lab(u,v)\in\Base$ of an unfolding pair $(u,v)$ is
+assigned by either (i) a vertical generated cover edge between $u$
+and $v$ recorded in the certificate's containment data, or (ii) a
+mosaic label $L_M(p,q)$ where $u$ realises position $p$ and $v$
+realises position $q$ of some $M\in\Mos_Q$ realised at the local
+context of $u$ and $v$.  These are the only two sources of pair
+labels, by the construction of $\U(\Q)$ from $\Q$'s vertical
+backbone and the support-closed mosaic family.
+
+\emph{Case (i): vertical generated cover.}  By the definition of the
+generated cover and (V4)/(V5), $u$ and $v$ lie on the same vertical
+backbone, with $u\Reach_R v$ (one or several generated parent/child
+steps).  This is case (a).
+
+\emph{Case (ii): mosaic label.}  By assumption $L_M(p,q)=R\in
+\{\PP,\PPI\}$.  By (M6)(b), $p,q\in\Vrt_M$.  Vertical mosaic
+positions are, by the certificate's verticalization construction,
+either the source of the mosaic, an explicit equality mate of the
+source, or a selected $\PP/\PPI$ containment witness of the
+source/mate.
+
+If $p$ is the source and $q$ is the source itself or an
+equality mate, then $L_M(p,q)\in\{\EQ\}$ by (M1), contradicting
+$L_M(p,q)\in\{\PP,\PPI\}$.  So at least one of $p,q$ is a selected
+containment witness.
+
+Subcase (ii.a): $p$ is the source and $q$ is a selected
+containment witness with $L_M(p,q)=R$.  Then the realising
+occurrence pair $(u,v)$ is the source occurrence and its
+selected $R$-witness on the vertical backbone, hence $u\Reach_R v$.
+This is case (a).
+
+Subcase (ii.b): $p$ is an equality mate of the source and $q$ is a
+selected containment witness with $L_M(p,q)=R$.  Then by (V9.c) and
+(M6)(a), the source of the mosaic is a vertical occurrence $u'$
+with $u\eqc u'$, and $u'\Reach_R v$.  This is case (b) with
+$v'=v$.
+
+Subcase (ii.c): $p$ is the source and $q$ is an equality mate of a
+selected containment witness.  By (M6)(a), $q\in\Vrt_M$ since its
+equality class is entirely vertical, and the selected containment
+witness $v'$ satisfies $v\eqc v'$ and $u\Reach_R v'$.  This is case
+(b) with $u'=u$.
+
+Subcase (ii.d): both $p$ and $q$ are equality mates of, respectively,
+the source and a selected witness.  Both substitutions apply
+simultaneously and the pair $(u',v')$ falls under (a) by
+construction.  This is case (b) in its full form.
+
+Subcase (ii.e): $p$ and $q$ are both selected containment witnesses
+of the source (i.e., neither is the source itself).  Then by
+(M6)(b) and (M1)--(M3), the source is a third vertical position $s$
+with $L_M(s,p),L_M(s,q)\in\{\PP,\PPI\}$, and $L_M(p,q)=R$ is forced
+by composition through $s$:  if $L_M(s,p)=\PP$ and $L_M(s,q)=\PP$
+then $L_M(p,q)\in\comp(\PPI,\PP)\cap\{\PP,\PPI\}$, etc.  Each option
+puts the realising occurrence pair $(u,v)$ on the same vertical
+backbone through the source occurrence, giving case (a).  The
+equality-mate variants of $p$ or $q$ are handled by case (b).
+
+In every subcase, $(u,v)$ satisfies (a) directly or admits
+$\eqc$-mate substitutes that do, which is (b).  By (A5)
+(Quotient-compatible pair labels), the substitution preserves
+$\lab$, so the resulting $\Reach_R$-chain witnesses $\bar\lab([u],
+[v])=R$ in the quotient.
+\end{proof}
+
+\begin{remark}
+Lemma~\ref{lem:vertical-realisation} is the formal counterpart of
+Repair R1 of GPT-5.5's fourth review.  It plugs the gap (G1):
+sibling-frontier mosaic positions cannot, by (M6), produce
+$\PP/\PPI$ labels invisible to vertical reachability, so the
+$\PP/\PPI$ universal discharge clauses (V3) and (V5) apply uniformly
+to every quotient $R$-successor.  No additional non-vertical
+$\PP/\PPI$ targets need to be considered in the truth proof.
+\end{remark}
 
 \subsection{The standalone typed-\texorpdfstring{$\EQ$}{EQ} quotient theorem}
 \label{ssec:standalone-quotient}
@@ -936,14 +1072,23 @@ $\bar\lab([u],[w])=R$, and IH gives $[w]\models D$.
 Conversely, suppose $[u]\models\exists R.D$ but
 $\exists R.D\notin\lambda(u)$.  Closure under NNF complement gives
 $\forall R.\bar D\in\lambda(u)$, where $\bar D$ is the NNF complement
-of $D$.  By (V5)/(V7), every $R$-target of $u$ in $\U(\Q)$ has
-$\bar D\in\lambda(\cdot)$, contradicting $D\in\lambda(w)$ at the
-witness obtained from $[u]\models\exists R.D$.
+of $D$.  For $R\in\{\PP,\PPI\}$,
+Lemma~\ref{lem:vertical-realisation} expresses the witness pair as
+either a vertical $\Reach_R$-chain from $u$ or such a chain from an
+$\eqc$-mate of $u$; in either case (V5) applied via (A4) gives $\bar
+D\in\lambda(w)$, contradicting $D\in\lambda(w)$.  For
+$R\in\{\DR,\PO\}$, (V7) directly gives $\bar D\in\lambda(\cdot)$ at
+every mosaic-supplied $R$-target.  In all cases the contradiction
+forces $\exists R.D\in\lambda(u)$.
 
 \emph{Universal $\forall R.D\in\lambda(u)$.}  Dual to the
-existential case: (V3)/(V5)/(V7) force $D$ into every $R$-target's
-type, so every $R$-successor $[w]$ of $[u]$ satisfies $D$ by IH.
-The converse uses NNF complement as above.
+existential case.  For $R\in\{\PP,\PPI\}$,
+Lemma~\ref{lem:vertical-realisation} ensures that every quotient
+$R$-successor $[w]$ of $[u]$ is realised by an explicit vertical
+$\Reach_R$-chain in $\U(\Q)$ after $\eqc$-mate substitution; (V3)
+and (V5) then force $D\in\lambda(w)$.  For $R\in\{\DR,\PO\}$, (V7)
+covers every mosaic-supplied $R$-target.  In every case
+$[w]\models D$ by IH.  The converse uses NNF complement as above.
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:quotient}]
