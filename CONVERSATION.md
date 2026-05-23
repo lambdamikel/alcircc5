@@ -5173,3 +5173,147 @@ use the original paper, but only remove the footnote.  If you
 recompile, it should automatically be at 4 pages."  Reverting
 those body edits and digging into the diff against `_original.tex`
 revealed the front-matter cause.
+
+---
+
+## 2026-05-22 / 2026-05-23: Round-5 review filed, all eight items closed at paper level
+
+### Round-5 review filed (2026-05-22, commits `f8f247f`, `4b4f1a5`)
+
+GPT-5.5 published a fifth formal review of the 31-page repaired
+proof.  Verdict: "credible architecture with several remaining
+formal proof obligations."  Eight repairs recommended; the most
+urgent is mathematical:
+
+- **(M6) verticalization is too strong.** It forbids non-vertical
+  PP/PPI relations among side-witness positions, but such relations
+  occur in satisfiable witness-generated models.  Concrete stress
+  concept: `∃DR.(A ⊓ ∃PP.B) ⊓ ∃DR.B`.
+
+Filed actions:
+- `papers/gpt5.5_round2/formal_review_progress_paper.{tex,pdf}` --
+  the review itself.
+- `verification/python/wp7_side_witness_stress.py` -- stress concept
+  run through cover-tree tableau, baseline QM, cycle-aware QM.  All
+  three report **SAT**, corroborating the review's claim that the
+  concept is satisfiable in abstract RCC5 and the current (M6)
+  rejects it.
+- README "Latest News" entry summarising the 8 items.
+- CLAUDE.md updated to flag the open obligations.
+- TeX/PDF mismatch the reviewer flagged is not present in our repo
+  (our source compiles cleanly to the 31-page PDF; the reviewer's
+  bundle had stale source).
+
+### Claude-drafted v2 (M6$'$) delta paper (2026-05-23, commit `e276eb7`)
+
+Closes round-5 items 2, 3, 9.  Wessel asked "Do you have an idea
+how to fix it?" and after the conceptual sketch ("recursive
+verticalization: each side-witness can itself open a local cover
+tree of its own selected PP/PPI ancestors"), gave the green light
+to start drafting.
+
+`papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2.tex`
+(14 pages) replaces the flat $\Vrt \subseteq P$ of a mosaic with a
+finite stratum forest in which:
+- Root stratum $V_0$ has the mosaic source as its source.
+- Each selected DR/PO side-witness may open a nested local stratum
+  with its own source, equality mates, and selected PP/PPI
+  ancestors.
+- Strata may share exactly the parent position; otherwise
+  supports are disjoint.
+
+Recursive (M6$'$.a--d):
+- (M6$'$.a) EQ-closure within strata: every EQ-class lies inside a
+  single stratum.
+- (M6$'$.b) Containment labels are co-vertical: PP/PPI pairs are
+  justified by *some* stratum in the forest, not necessarily the
+  root.
+- (M6$'$.c) Cross-stratum labels are DR/PO/EQ.
+- (M6$'$.d) Residual sibling frontier restricted to DR/PO.
+
+Round-4 (M6) is the depth-1 case.  Lemma 7.1 of the round-4 paper
+(Vertical realisation of PP/PPI pairs) carries over with the case
+analysis restricted to one stratum at a time; Subcase (ii.e) of the
+round-4 proof goes through verbatim inside each stratum.
+
+Validity clauses (V3), (V4), (V5), (V9.Eb) are universally
+quantified over strata in the v2 forms (V3$'$, V4$'$, V5$'$,
+V9.Eb$'$).
+
+Polynomial side-width $m(n) = O(n^3)$ replaced by a recurrence
+$m(d{+}1) = 1 + n^3(1+k_\Mate+k_\mathrm{bd}) + n^3 m(d)$ over modal
+depth.  Effectively computable, no longer polynomial; matches
+round-5 item 9.  $B(C_0) \leq 2^{2^{p(n)}}$ preserved.
+
+Worked v2 certificate for $C_\mathrm{side}$ in §6 of the paper,
+explicitly verifying all four (M6$'$) sub-clauses on a 3-position
+mosaic with stratum forest $V_0 = \{x\}$, $V_1 = \{y, z\}$ rooted
+at $z$.
+
+### Items 4--8 delta paper (2026-05-23, commit `4c07bf0`)
+
+`papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_items4to8.tex`
+(12 pages) closes the remaining five mathematical items:
+
+- **Item 4 (non-circular patchwork).**  Explicit abstract pair-label
+  function $L_\Q : \Pos_\Q^2 \to \Base$ declared as certificate
+  data.  New validity clause (V11) requires the RCC5 composition
+  table on every triple in $\T_\Q$.  Support-closure (SC4) is
+  replaced by per-position (SC4$'$) -- no longer requires per-triple
+  mosaic coverage.  The patchwork theorem becomes a direct
+  consequence of (V11) and is non-circular.
+
+- **Item 5 (strengthened overlap amalgamation).**  Strong overlap
+  compatibility (O3$'$) requires a single declared cross-label
+  function $L_{12}^\mathrm{cross} : (P_1 \setminus P_0) \times (P_2
+  \setminus P_0) \to \Base$ compatible with all overlap nodes and
+  all mixed triples simultaneously, not just per-triple
+  existence.  New validity clause (V12) declares this function.
+
+- **Item 6 (joint equality validity clause).**  Assumption (A4) of
+  the round-4 typed-EQ quotient theorem promoted to explicit
+  validity clause (V13): the certificate declares a joint witness
+  $w_E^{R,D}$ per equality class $E$ per existential, working
+  uniformly for all ports in $E$.  Lemma proves (V13) implies (A4).
+
+- **Item 7 (half-open cycle convention).**  Request-fulfilled
+  repetition lemma restated with the half-open $[i, j)$ cycle
+  convention.  $u_j$ identified with the next lap's
+  $u_i^{(\ell+1)}$ at the profile level only.  Endpoint case
+  (witness at $u_j$ in the original path) handled by the next-lap
+  occurrence, since profiles include closure types.
+
+- **Item 8 (global finite regularization).**  Uniform representative
+  selection lemma (V14) declares one $(C_\sigma, \mathsf{cyc}_\sigma)$
+  per extended profile $\sigma \in \widehat\Sigma$ once, then
+  uniformly substitutes across every infinite vertical ray.
+  Substitution data bounded by $|\widehat\Sigma| \leq |\Sigma| \cdot
+  2^n$.  No automaton, no parity acceptance, no $\omega$-language
+  theoretic machinery; pure pigeonhole over the finite set
+  $\widehat\Sigma$.
+
+Combined certificate validity check now has 14 clauses (V1)--(V14)
+plus (M6$'$).  $B(C_0) \leq 2^{2^{p(n)}}$ preserved.
+
+### Status caveat
+
+All eight round-5 items are addressed at the paper level by
+Claude-drafted v2 and items-4-to-8 deltas.  GPT-5.5 has not yet
+ratified these repairs.  The 31-page round-4 paper remains the only
+document GPT-5.5 has reviewed; the v2 and items-4-to-8 papers are
+Claude-authored proposals that need an independent round-6 review
+before the decidability claim can be considered closed.  Until
+ratification, the status should be described as "round-5 items
+closed at the paper level pending GPT-5.5 round-6 review of the
+Claude-drafted deltas."
+
+The papers/gpt5.5_round2/ directory now contains the full round-5
+exchange:
+- `formal_review_progress_paper.{tex,pdf}` -- GPT-5.5's round-5
+  review.
+- `repaired_split_forest_no_automata_proof_v2.{tex,pdf}` --
+  Claude's v2 (M6$'$) delta closing items 2, 3, 9.
+- `repaired_split_forest_no_automata_proof_items4to8.{tex,pdf}` --
+  Claude's delta closing items 4--8.
+- `repaired_split_forest_no_automata_proof.{tex,pdf}` -- the
+  31-page round-4 paper (unchanged).
