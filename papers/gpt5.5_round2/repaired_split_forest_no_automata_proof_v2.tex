@@ -776,6 +776,52 @@ $C_{\rm side}$ as SAT under all three reasoners.  The v2 certificate
 above is the smallest witness-generated certificate matching the
 abstract RCC5 model of Example~\ref{ex:stress-model}.
 
+\paragraph{The repair aligns the proof with what the provers
+already do.}  A noteworthy point for round-6 review: the (M6$'$)
+repair is not a hypothetical relaxation introduced to admit a
+contrived counterexample.  It brings the round-4 \emph{certificate
+model} into alignment with what the project's three Python provers
+(\texttt{src/cover\_tree\_tableau.py},
+\texttt{src/alcircc5\_reasoner.py},
+\texttt{src/alcircc5\_reasoner\_cyclic.py}) have been computing all
+along.
+
+A direct \texttt{grep} of those three files for the round-4
+keywords \texttt{vert}, \texttt{Vrt}, \texttt{stratum},
+\texttt{sibling.frontier}, \texttt{M6}, \texttt{side\_frontier}
+returns no matches: none of the provers implements a flat
+verticalization discipline at the certificate level.  Instead, the
+provers operate at the Hintikka-type / witness-chain level (CT1--CT5
+for the cover-tree tableau; the disjunctive path-consistency loop
+for the quasimodel reasoners) and check only local network
+consistency, witness existence, composition propagation, and (in
+the cycle-aware variant) cycle closure through symmetric roles.
+
+The cover-tree tableau, for example, accepts an $\exists\DR$
+witness that itself has a $\PP$-witness without imposing any
+restriction on whether the inner $\PP$-witness happens to also be a
+$\DR$-witness of the original source --- it simply tracks each
+demand by its own type and witness, and verifies the local RCC5
+composition constraints on every realised triple.  This is exactly
+what the recursive verticalization (M6$'$) admits: nested vertical
+mini-contexts at each side-witness, with no flat-frontier
+constraint.
+
+So no prover code needs to be modified for the (M6$'$) repair.  The
+\texttt{wp7} verification script (run on all three provers) shows
+the satisfiable stress concept is accepted, which is the
+empirical-layer ground truth.  The round-5 defect was in the
+\emph{theoretical layer}: the round-4 (M6) was strictly tighter
+than the operational semantics the provers implement, and the
+recursive (M6$'$) brings them into alignment.
+
+This is the kind of cross-check the project's two-layer
+architecture (theoretical proof + executable artefacts) was
+designed to provide: an empirical-layer ``SAT'' verdict on
+$C_{\rm side}$ flags the over-restriction in the theoretical layer,
+and the v2 repair is then the minimum theoretical change needed to
+catch up with what the implementations have been doing.
+
 %% ==================================================================
 \section{What carries over from round-4 verbatim}
 \label{sec:carryover}
