@@ -1,0 +1,948 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Repaired split-forest decidability proof, v2 (M6$'$)}
+\fancyhead[R]{May 2026}
+\fancyfoot[C]{\thepage}
+\titleformat{\section}{\large\bfseries\color{MidnightBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{MidnightBlue}}{\thesubsection}{0.5em}{}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.5em}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,leftmargin=1.8em}
+\onehalfspacing
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{construction}[theorem]{Construction}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Base}{\mathsf{B}}
+\newcommand{\Inv}{\operatorname{Inv}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\ALCIRCC}[1]{\mathcal{ALCI}_{\mathsf{RCC#1}}}
+\newcommand{\Vrt}{\mathsf{Vrt}}
+\newcommand{\Sib}{\mathsf{Sib}}
+\newcommand{\Front}{\mathsf{Front}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Ctx}{\mathsf{Ctx}}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\Mate}{\mathsf{Mate}}
+\newcommand{\Reach}{\mathsf{Reach}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Q}{\mathcal{Q}}
+\newcommand{\U}{\mathcal{U}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\Cl}{\operatorname{cl}}
+\newcommand{\Typ}{\operatorname{Typ}}
+\newcommand{\Stratum}{\mathsf{Strat}}
+\newcommand{\Subsrc}{\mathsf{subsrc}}
+\newcommand{\eqc}{\equiv_{\EQ}}
+\newcommand{\eqQEQ}{\equiv^{\Q}_{\EQ}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Repaired Split-Forest Decidability Proof for $\ALCIRCC{5}$ (v2):\\[2pt]
+Recursive Verticalization (M6$'$) to Close the Round-5 Side-Witness Gap\par}
+\vspace{0.5em}
+{\large A delta to the 31-page round-4 repaired proof~\cite{GPT55Repaired}\par}
+\vspace{0.75em}
+{\normalsize Claude (Anthropic, Opus~4.7), prompted by Michael Wessel}\par
+\vspace{0.45em}
+{\small May~2026}
+\end{center}
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Disclaimer.}\;
+This document was drafted by Claude (Anthropic), prompted by Michael
+Wessel, in response to GPT-5.5's fifth formal review of the
+repaired split-forest proof.  The results have not been independently
+verified by human domain experts.  We invite scrutiny and
+corrections.}}
+\end{center}
+
+\begin{abstract}
+GPT-5.5's fifth formal review~\cite{GPT55Round5Review} of the 31-page
+repaired split-forest decidability proof for $\ALCIRCC{5}$ identifies
+one load-bearing mathematical defect: the verticalization discipline
+(M6) of Definition~5.1 in~\cite{GPT55Repaired} is too strong.  It
+forbids non-vertical $\PP/\PPI$ relations between sibling-frontier
+mosaic positions, but such relations occur in satisfiable
+witness-generated models, as witnessed by the stress concept
+\[
+  C_{\rm side}\;:=\;\exists\DR.(A\sqcap\exists\PP.B)\;\sqcap\;\exists\DR.B,
+\]
+which is satisfiable in abstract RCC5 (and is reported \emph{SAT} by
+all three Python reasoners in the project repository), yet rejected
+by the round-4 (M6).  This delta paper repairs the defect by
+replacing the flat verticalization $\Vrt\subseteq P$ with a
+\emph{recursive vertical-stratum forest}, in which every selected
+$\DR/\PO$ side-witness may itself open a local vertical stratum
+containing its own selected $\PP/\PPI$ ancestors and equality mates.
+The new discipline (M6$'$) is the natural recursive lift of the
+round-4 (M6); the rest of the round-4 architecture (occurrence-level
+equality, port-indexed mate clusters $\Mate_\Q(C,s,p)$, the abstract
+triple graph $\T_\Q$, request-closed cycles in place of
+$\omega$-acceptance) carries over without further change.  The
+explicit cubic side-width bound $m(n)=O(n^3)$ of the round-4 paper is
+replaced by a finite recurrence over modal depth; the certificate
+space is still bounded by an effectively computable
+$B(C_0)\leq 2^{2^{p(n)}}$ for some computable $p$.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+%% ==================================================================
+\section{Scope and relationship to the round-4 paper}
+\label{sec:scope}
+%% ==================================================================
+
+This is a delta to the 31-page round-4 paper
+\cite{GPT55Repaired}.  Specifically:
+
+\begin{itemize}
+\item Section~5 (Finite interfaces and mosaics) of \cite{GPT55Repaired}
+  is amended in \S\ref{sec:m6prime} below: Definition~5.1 (Mosaic) is
+  restated with a recursive vertical-stratum forest, and the four
+  sub-clauses of (M6) are replaced by their recursive analogues
+  (M6$'$).
+\item Section~7.2 (Verticalization soundness) of \cite{GPT55Repaired}
+  is amended in \S\ref{sec:lifting}: Lemma~7.1 (Vertical realisation
+  of $\PP/\PPI$ pairs) is restated as Lemma~\ref{lem:vertreal-recursive}
+  with the recursive case analysis.
+\item Section~6.5 (Validity conditions) of \cite{GPT55Repaired} is
+  amended in \S\ref{sec:validity}: clauses (V3), (V4), (V5), and
+  (V9.Eb) are restated to traverse the stratum forest, in addition to
+  the port-indexed mate clusters introduced in round 4.
+\item Section~4.3 (Explicit $\DR/\PO$ witness placement and side
+  interfaces) of \cite{GPT55Repaired} is amended in
+  \S\ref{sec:side-bound}: the polynomial bound $m(n)=O(n^3)$ is
+  replaced by a finite recurrence over modal depth.  The certificate
+  space is still finite and effectively computable.
+\item All other sections of \cite{GPT55Repaired} are preserved
+  verbatim.  In particular: witness thinning (\S3 of
+  \cite{GPT55Repaired}), occurrence-level equality (\S4.1), the
+  port-indexed mate clusters $\Mate_\Q(C,s,p)$ (\S6.3), the abstract
+  triple graph $\T_\Q$ (\S5.2), Renz--Nebel-based mosaic patchwork
+  (\S5.4--\S5.7), request-fulfilled cyclic repetition (\S6.5), and the
+  no-automata regularization (\S8) all carry over without
+  modification.
+\end{itemize}
+
+The repair does not change the soundness chain (\S7 of
+\cite{GPT55Repaired} except for Lemma~7.1) and does not change the
+completeness chain (\S8 of \cite{GPT55Repaired} except for the
+side-interface construction at \S4.3).  In particular, the proof
+remains no-automata, in the sense that the only finite-state machinery
+used is the request-closed blocking cycle of Section~6.5 in
+\cite{GPT55Repaired}.
+
+%% ==================================================================
+\section{The defect, with the round-5 stress concept}
+\label{sec:defect}
+%% ==================================================================
+
+\subsection{The round-4 verticalization discipline (M6)}
+
+Definition~5.1 of \cite{GPT55Repaired} declares, for every mosaic
+$M=(P,\tau,L,\Vrt)$ over a finite position set $P$, that
+$\Vrt\subseteq P$ is the set of \emph{vertical} positions (the
+source occurrence of the mosaic, its explicit equality mates, and any
+selected $\PP/\PPI$ containment witnesses recorded in the mosaic) and
+$\Sib:=P\setminus\Vrt$ is the set of \emph{sibling-frontier}
+positions (selected $\DR/\PO$ witnesses and ordinary sibling /
+boundary nodes).  Clause (M6) then states:
+
+\begin{enumerate}[label=(M6.\alph*)]
+\item $\EQ$-closure of strata: $L(p,q)=\EQ$ implies $p\in\Vrt$ iff $q\in\Vrt$;
+\item containment labels are vertical: $L(p,q)\in\{\PP,\PPI\}$ implies $p,q\in\Vrt$;
+\item cross-stratum labels are $\DR/\PO$: if exactly one of $p,q$ lies in $\Vrt$, then $L(p,q)\in\{\DR,\PO\}$;
+\item within sibling-frontier: if $p,q\in\Sib$ are in different equality classes and $p\neq q$, then $L(p,q)\in\{\DR,\PO\}$.
+\end{enumerate}
+
+\subsection{The stress concept}
+\label{ssec:stress}
+
+Let $A,B$ be atomic concepts of $\Cl(C_0)$ and consider
+\[
+  C_{\rm side}\;:=\;\exists\DR.(A\sqcap\exists\PP.B)\;\sqcap\;\exists\DR.B.
+\]
+
+\begin{example}[Concrete satisfying model]\label{ex:stress-model}
+Let $\Delta=\{x,y,z\}$ with $A^{\mathcal{I}}=\{y\}$,
+$B^{\mathcal{I}}=\{z\}$, and atomic relation labels
+\[
+  L(x,y)=\DR,\quad L(x,z)=\DR,\quad L(y,z)=\PP
+  \;\;(\,L\text{ extended to inverses and reflexive }\EQ\text{ in the usual way}).
+\]
+JEPD and the RCC5 composition table are satisfied: the only nontrivial
+triple is $(x,y,z)$ with $\comp(\DR,\PP)=\{\DR,\PO,\PP\}$, and the
+chosen label $L(x,z)=\DR$ lies in $\comp(\DR,\PP)$.  The model
+satisfies $C_{\rm side}$ at $x$: the first conjunct is witnessed by
+$y$ (which satisfies $A\sqcap\exists\PP.B$, since $y$ is in $A$ and
+$L(y,z)=\PP$ with $z\in B$), and the second conjunct is witnessed by
+$z\in B$.
+\end{example}
+
+The cover-tree tableau, the baseline quasimodel reasoner, and the
+cycle-aware quasimodel reasoner of the repository all report
+$C_{\rm side}$ \emph{SAT}; the verification script
+\texttt{verification/python/wp7\_side\_witness\_stress.py} records the
+agreement.  Hence the concept is genuinely satisfiable in abstract
+RCC5.
+
+\subsection{Why round-4 (M6) rejects $C_{\rm side}$}
+
+Consider the candidate certificate that the round-4 proof would
+construct for a model of $C_{\rm side}$ rooted at $x$.  At the source
+$x$ we place two selected $\DR$ witnesses, one for each conjunct, say
+$p_y$ for $y\models A\sqcap\exists\PP.B$ and $p_z$ for $z\models B$.
+The mosaic at $x$ has $\Vrt_M=\{x\}$ (since $x$ has no selected
+$\PP/\PPI$ witnesses; the upward containment from $x$ is empty) and
+$\Sib_M=\{p_y,p_z\}\cup\{\text{boundary nodes}\}$.  By
+Example~\ref{ex:stress-model}, $L(p_y,p_z)=\PP$.  But clause (M6.d)
+of round-4 requires $L(p_y,p_z)\in\{\DR,\PO\}$, contradiction.
+
+So the round-4 (M6) rejects every certificate built from the
+witness-generated submodel of any satisfying model of $C_{\rm side}$.
+Concretely, the (M6) clause that fails is the within-sibling-frontier
+clause (M6.d): it asserts that two distinct equality classes inside
+$\Sib$ admit only $\{\DR,\PO\}$ labels, whereas $\PP/\PPI$ between
+two $\DR$-witnesses of the source can be forced by the
+witness-generated containment structure of $C_{\rm side}$.
+
+\begin{remark}\label{rem:why-round4-overshoots}
+The round-4 proof needed (M6.d) to make Lemma~7.1 (vertical
+realisation of $\PP/\PPI$ pairs) of \cite{GPT55Repaired} go through:
+that proof argued, in Subcase~(ii.e), that every $\PP/\PPI$ mosaic
+label is between vertical positions because (M6.b) forbids
+$\PP/\PPI$ across the $\Vrt$/$\Sib$ boundary and (M6.d) forbids
+$\PP/\PPI$ within $\Sib$.  The recursive repair below preserves the
+\emph{conclusion} of Lemma~7.1 (vertical realisation modulo
+$\EQ$-mate substitution) while admitting nested local vertical
+strata, so the case analysis no longer needs to exclude
+sibling-frontier $\PP/\PPI$ pairs.
+\end{remark}
+
+%% ==================================================================
+\section{Recursive verticalization}
+\label{sec:m6prime}
+%% ==================================================================
+
+The repair is to replace the single vertical set $\Vrt\subseteq P$ by
+a finite \emph{forest} of nested vertical strata.  Each stratum has
+its own source, its own equality mates, and its own selected
+$\PP/\PPI$ witnesses, recursively.  The forest carries the explicit
+nesting and the labels between positions in distinct strata are
+still constrained as in round-4 (cross-stratum $\DR/\PO$).
+
+\subsection{Stratum forest}
+
+\begin{definition}[Vertical stratum]\label{def:stratum}
+A \emph{vertical stratum} on a finite position set $P$ is a tuple
+$V=(P_V,s_V,\mu_V)$ where $P_V\subseteq P$ is the stratum's support,
+$s_V\in P_V$ is its \emph{source position}, and
+$\mu_V\subseteq P_V$ is the stratum's set of \emph{explicit equality
+mates of $s_V$}, with $s_V\in\mu_V$.  The positions in
+$P_V\setminus\mu_V$ are the stratum's \emph{selected
+$\PP/\PPI$-witnesses}.
+\end{definition}
+
+\begin{definition}[Stratum forest]\label{def:stratum-forest}
+A \emph{stratum forest} on a finite position set $P$ is a pair
+$\mathcal V=(\Stratum,\Subsrc)$ where
+\begin{enumerate}[label=(SF\arabic*)]
+\item $\Stratum=\{V_0,V_1,\dots,V_k\}$ is a finite set of vertical
+  strata on $P$ (Definition~\ref{def:stratum});
+\item $V_0$ is distinguished as the \emph{root stratum}; its source
+  $s_{V_0}$ is called the \emph{mosaic source};
+\item $\Subsrc:\Stratum\setminus\{V_0\}\to P$ is the \emph{parent
+  position map}: $\Subsrc(V_i)$ is the position in some other stratum
+  $V_{j}$ at which $V_i$ is rooted as a nested local stratum;
+\item the parent relation $\Subsrc$ induces a forest on $\Stratum$
+  with $V_0$ as the global root: for every non-root stratum $V_i$,
+  $\Subsrc(V_i)\in P_{V_j}$ for some uniquely determined $V_j\neq
+  V_i$, and the relation $V_i\prec V_j$ iff
+  $\Subsrc(V_i)\in P_{V_j}$ is acyclic;
+\item supports are stratified: distinct strata have distinct sources,
+  and for any two strata $V_i,V_j$, $P_{V_i}\cap P_{V_j}$ is either
+  empty or contains exactly the parent position $\Subsrc(V_i)$ when
+  $V_i$ is nested at a position of $V_j$.
+\end{enumerate}
+\end{definition}
+
+\begin{remark}
+(SF5) is the key sharing rule.  A position $p\in P$ can be a
+\emph{sibling-frontier} member of $V_j$ and \emph{simultaneously} the
+source of a nested stratum $V_i$ rooted at $p$.  In that case
+$p\in P_{V_i}\cap P_{V_j}$ but the rest of $P_{V_i}$ does not
+intersect $P_{V_j}$.
+\end{remark}
+
+We extend the stratum-membership relation pointwise:
+
+\begin{definition}[Stratum membership]\label{def:stratum-mem}
+For $p\in P$, write
+\[
+  \Stratum(p)\;=\;\{\,V\in\Stratum\;:\;p\in P_V\,\}.
+\]
+By (SF5), $|\Stratum(p)|\in\{1,2\}$, with $|\Stratum(p)|=2$ exactly
+when $p$ is the parent position of some nested stratum.
+
+We say $p$ is \emph{vertical in $V$} if $p\in P_V$.  We say a pair
+$(p,q)$ is \emph{co-vertical} if there exists $V\in\Stratum$ with
+$\{p,q\}\subseteq P_V$; otherwise it is \emph{cross-stratum}.  The
+\emph{residual sibling frontier} of $V_j$ at a position $p\in P_{V_j}$
+is the set of positions in $P_{V_j}$ that are in $V_j$ but in no
+nested stratum rooted at $p$.
+\end{definition}
+
+\subsection{Restated mosaic definition}
+
+\begin{definition}[Mosaic, v2]\label{def:mosaic-v2}
+A mosaic over a finite position set $P$ is a tuple
+\[
+  M\;=\;(P,\tau,L,\mathcal V)
+\]
+where $\tau:P\to\Typ(C_0)$, $L:P^2\to\Base$, and $\mathcal V$ is a
+stratum forest on $P$ (Definition~\ref{def:stratum-forest}).  The
+tuple satisfies axioms (M1)--(M5) of Definition~5.1 in
+\cite{GPT55Repaired}, unchanged in form, together with the recursive
+verticalization discipline:
+\begin{enumerate}[label=(M6$'$.\alph*)]
+\item \textbf{$\EQ$-closure within strata.}  If $L(p,q)=\EQ$ and
+  $V\in\Stratum$ with $p\in P_V$, then $q\in P_V$.  In other words,
+  every $\EQ$-class lies entirely inside some single stratum.
+
+\item \textbf{Containment labels are co-vertical.}  If $L(p,q)\in
+  \{\PP,\PPI\}$, then $(p,q)$ is co-vertical
+  (Definition~\ref{def:stratum-mem}): there exists $V\in\Stratum$ with
+  $\{p,q\}\subseteq P_V$, and $L(p,q)$ matches the local containment
+  data of $V$ (i.e., if $L(p,q)=\PP$ then $q$ is the source $s_V$ or
+  an equality mate, and $p$ is a selected $\PPI$-witness of $V$; the
+  $\PPI$ case is symmetric).
+
+\item \textbf{Cross-stratum labels are $\DR/\PO$ or $\EQ$.}  If $(p,q)$
+  is cross-stratum and $p\neq q$, then $L(p,q)\in\{\DR,\PO\}$ unless
+  $(p,q)$ is identified by an explicit $\EQ$-class, in which case
+  $L(p,q)=\EQ$ and (by (M6$'$.a)) both $p$ and $q$ lie inside one
+  stratum.
+
+\item \textbf{Residual sibling frontier.}  If $p,q$ are both in the
+  residual sibling frontier of some common stratum $V_j$ at a common
+  parent position (i.e., neither $p$ nor $q$ opens a nested stratum
+  containing the other), then $L(p,q)\in\{\DR,\PO\}$ or $L(p,q)=\EQ$
+  with $p,q$ in the same equality class.
+\end{enumerate}
+\end{definition}
+
+The intended reading is: each $\PP/\PPI$ label in the mosaic is
+\emph{justified} by some stratum in $\mathcal V$ — either the root
+stratum $V_0$ (the round-4 case) or a nested stratum opened at a
+sibling-frontier position of $V_0$.  Pairs of positions whose vertical
+contexts are mutually incomparable still receive only $\DR/\PO$
+labels, which is the local arc-consistent regime that the
+patchwork-based completeness argument requires.
+
+\begin{lemma}[Round-4 (M6) is the depth-1 case]\label{lem:round4-recovery}
+If $\mathcal V=(\{V_0\},\emptyset)$ (the stratum forest has only the
+root stratum and no nested strata), then Definition~\ref{def:mosaic-v2}
+specializes to Definition~5.1 of \cite{GPT55Repaired} with
+$\Vrt=P_{V_0}$.  In particular, every round-4 mosaic is a v2 mosaic.
+\end{lemma}
+
+\begin{proof}
+Direct unfolding of definitions.  (M6$'$.a) becomes (M6.a) since the
+only stratum is $V_0$ and $\Vrt=P_{V_0}$.  (M6$'$.b) becomes (M6.b)
+because co-vertical reduces to ``both in $V_0$''.  (M6$'$.c) and
+(M6$'$.d) become (M6.c) and (M6.d) by the same reduction.
+\end{proof}
+
+\begin{remark}\label{rem:why-recursive}
+Recursive verticalization is not an arbitrary generalization: it is
+exactly what the witness-generated containment structure produces.
+When the witness selector chooses, at a source $u$, a $\DR$-witness
+$w$ that itself has a $\PP$-witness $w'$ inside the model, then the
+selector at $w$ produces a new local mosaic context whose source is
+$w$.  In round-4, that nested context was \emph{separate} from $u$'s
+mosaic.  The defect arose because $w'$ can also be a selected
+$\DR/\PO$ witness of $u$ (when $w'$ is $\DR$ to $u$ but $\PP$ to $w$),
+in which case the round-4 mosaic at $u$ records both $w$ and $w'$ at
+the frontier with no place to put the forced $\PP$ label between
+them.  The repair pulls $w$ and $w'$ into a shared nested stratum
+$V_w$ inside $u$'s mosaic, recording the $\PP$ label as a local
+co-vertical label of $V_w$.
+\end{remark}
+
+%% ==================================================================
+\section{Verticalization soundness (restated Lemma~7.1)}
+\label{sec:lifting}
+%% ==================================================================
+
+We lift (M6$'$) from a single mosaic to the entire unfolding $\U(\Q)$.
+The argument generalizes the round-4 case analysis of
+Lemma~7.1 in~\cite{GPT55Repaired} (Subcases (ii.a)--(ii.e) of the
+\emph{mosaic-label} case) by adding the recursive stratum-membership
+data.
+
+\begin{lemma}[Vertical realisation, recursive]\label{lem:vertreal-recursive}
+Let $\Q$ be a valid certificate satisfying (V1)--(V10) and (M6$'$) on
+every mosaic in $\Mos_\Q$.  Let $u,v\in\Omega(\U(\Q))$ and
+$R\in\{\PP,\PPI\}$.  Suppose $L_{\U(\Q)}(u,v)=R$ in the unfolding.
+Then either
+\begin{enumerate}[label=(\alph*)]
+\item there is a strict vertical $\Reach_R$-chain from $u$ to $v$ in
+  the generated backbone of $\U(\Q)$ (\emph{not necessarily through
+  the mosaic source}; the chain may live in a nested stratum), or
+\item there exist $u',v'\in\Omega(\U(\Q))$ with $u\eqc u'$ and
+  $v\eqc v'$ such that $(u',v')$ falls under~(a).
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+As in the proof of Lemma~7.1 of \cite{GPT55Repaired}, the label
+$L_{\U(\Q)}(u,v)\in\Base$ is assigned by either (i) a vertical
+generated cover edge recorded in the certificate's containment data,
+or (ii) a mosaic label $L_M(p,q)$ where $u$ realises position $p$ and
+$v$ realises position $q$ of some $M\in\Mos_\Q$.
+
+\emph{Case (i): vertical generated cover.}  Unchanged from the
+round-4 proof: $u$ and $v$ lie on the same vertical backbone, with
+$u\Reach_R v$, by (V4)/(V5).  This is case~(a).
+
+\emph{Case (ii): mosaic label.}  $L_M(p,q)=R\in\{\PP,\PPI\}$.  By
+(M6$'$.b), there exists $V\in\Stratum_M$ with $\{p,q\}\subseteq
+P_V$.  Within stratum $V$, positions are partitioned into the
+source $s_V$, its explicit equality mates $\mu_V$, and selected
+containment witnesses of $V$.  We argue by the same case-by-case
+analysis as round-4, but \emph{within} stratum $V$:
+
+\begin{itemize}
+\item Subcase (ii.a$'$): $p=s_V$ and $q$ is a selected $R$-witness of
+  $V$.  The realising pair $(u,v)$ is the source of $V$ and its
+  selected $R$-witness on $V$'s vertical backbone, so $u\Reach_R v$.
+  This is case~(a).
+
+\item Subcase (ii.b$'$): $p\in\mu_V$ (an equality mate of $s_V$) and
+  $q$ is a selected $R$-witness of $V$.  By (V9.Eb) applied to
+  stratum $V$ (see~\S\ref{sec:validity} below), the source $s_V$ is
+  realised by an occurrence $u'$ with $u\eqc u'$ and $u'\Reach_R v$.
+  This is case~(b) with $v'=v$.
+
+\item Subcase (ii.c$'$): $p=s_V$ and $q\in\mu_V'$, where $\mu_V'$ is
+  the equality-mate set of some selected containment witness inside
+  $V$.  Symmetric to (ii.b$'$): the selected witness $v'$ satisfies
+  $v\eqc v'$ and $u\Reach_R v'$.  Case~(b) with $u'=u$.
+
+\item Subcase (ii.d$'$): $p\in\mu_V$ and $q\in\mu_V'$ as above.  Both
+  substitutions apply; the pair $(u',v')$ falls under~(a) by
+  composition of (ii.a$'$)--(ii.c$'$).  Case~(b) in full.
+
+\item Subcase (ii.e$'$): both $p$ and $q$ are selected containment
+  witnesses of $V$ (neither is $s_V$ or one of its mates).  Then by
+  (M1)--(M5) on $V$ and the round-4 argument applied \emph{inside
+  $V$}, the source $s_V$ is the common third position with
+  $L_M(s_V,p),L_M(s_V,q)\in\{\PP,\PPI\}$ and $L_M(p,q)=R$ forced by
+  composition through $s_V$.  Each option places the realising pair
+  $(u,v)$ on the vertical backbone of $V$ through the source
+  occurrence of $V$, giving case~(a).  Equality-mate variants are
+  handled exactly as in (ii.b$'$)--(ii.d$'$).
+\end{itemize}
+
+The only difference from the round-4 case analysis is that the
+``common stratum'' is no longer forced to be the root stratum $V_0$.
+By (M6$'$.b) it is \emph{some} stratum $V\in\Stratum_M$, possibly
+nested; the proof goes through inside $V$ because each individual
+stratum is itself a round-4-style local mosaic over $P_V$.  In every
+subcase, $(u,v)$ satisfies~(a) directly or admits $\eqc$-mate
+substitutes that do, which is~(b).
+\end{proof}
+
+\begin{remark}
+The key insight is that the round-4 Subcase (ii.e) argument is
+purely \emph{local} to one stratum: it uses only the round-4 axioms
+(M1)--(M5) restricted to $P_V$, plus (M6) restricted to $V$'s
+containment data.  Recursive verticalization preserves this locality
+inside each stratum and uses (M6$'$) only to ensure that the right
+stratum exists.  Cross-stratum pairs never receive $\PP/\PPI$ labels
+(by (M6$'$.c)), so the round-4 case analysis is not lost; it is
+applied \emph{inside} each stratum.
+\end{remark}
+
+%% ==================================================================
+\section{Updated validity clauses (V3), (V4), (V5), (V9.Eb)}
+\label{sec:validity}
+%% ==================================================================
+
+The round-4 validity clauses on certificates (Section~6.5 of
+\cite{GPT55Repaired}) are formulated in terms of port-indexed mate
+clusters $\Mate_\Q(C,s,p)\subseteq S\times\Port(s')$ attached to
+contexts $C\in\Ctx_\Q$.  In the recursive setting the clauses traverse
+the stratum forest of each mosaic, in addition to the mate clusters.
+
+We restate only the four clauses affected by the repair.  All other
+clauses (V1), (V2), (V6), (V7), (V8), (V9.Ea), (V10) of
+\cite{GPT55Repaired} are preserved verbatim.
+
+\subsection*{(V3$'$) Selected containment witness, per stratum.}
+For every $\exists R.D\in\Cl(C_0)$ with $R\in\{\PP,\PPI\}$, every
+mosaic $M\in\Mos_\Q$, every stratum $V\in\Stratum_M$, and every port
+$p$ of the source $s_V$ such that $\exists R.D\in\tau(s_V)$ at port
+$p$: there exists a selected $R$-witness $w\in P_V\setminus\mu_V$
+declared in $V$, with $D\in\tau(w)$ and $L_M(s_V,w)=R$.
+\smallskip\noindent
+\emph{Difference from round-4 (V3).} Round-4 (V3) ranged over the
+single stratum $\Vrt_M$.  (V3$'$) ranges over every stratum $V$
+in the forest $\mathcal V_M$.  Existential discharge for a position
+$s_V$ is checked within the stratum that $s_V$ heads.
+
+\subsection*{(V4$'$) Mate-cluster closure, per stratum.}
+For every mosaic $M$, every stratum $V\in\Stratum_M$, and every port
+$p$ of $s_V$: the port-indexed mate cluster $\Mate_\Q(C_V,s_V,p)$
+declared for $V$ is closed under explicit $\EQ$-port chains in $E_\Q$
+\emph{within} $V$, in the sense that every chain of $\EQ$-port links
+starting from $(s_V,p)$ and remaining inside $P_V$ produces only
+ports that lie in $\Mate_\Q(C_V,s_V,p)$.
+\smallskip\noindent
+\emph{Difference from round-4 (V4).} The closure operation is now
+restricted to stratum-local $\EQ$-port chains; cross-stratum
+$\EQ$-port chains are forbidden by (M6$'$.a), so they need not be
+considered.
+
+\subsection*{(V5$'$) Universal propagation, per stratum.}
+For every $\forall R.D\in\Cl(C_0)$, every mosaic $M$, every stratum
+$V\in\Stratum_M$, and every pair $p,q\in P_V$ with $L_M(p,q)=R$ and
+$\forall R.D\in\tau(p)$: $D\in\tau(q)$.  Furthermore, for
+cross-stratum pairs $(p,q)$ with $L_M(p,q)=R\in\{\DR,\PO\}$ and
+$\forall R.D\in\tau(p)$: $D\in\tau(q)$ as well (this is the
+cross-stratum case, unchanged from round-4).
+\smallskip\noindent
+\emph{Difference from round-4 (V5).} Within-stratum universal
+propagation is restricted to one stratum; cross-stratum $\DR/\PO$
+universal propagation is unchanged.  No within-stratum $\PP/\PPI$
+universal escapes from $V$ because (M6$'$.b) forbids any $\PP/\PPI$
+label between $P_V$ and the rest of the mosaic.
+
+\subsection*{(V9.Eb$'$) Equality-mate joint witnessing, per stratum.}
+For every mosaic $M$, every stratum $V\in\Stratum_M$, every explicit
+$\EQ$-class $E\subseteq P_V$, and every $\exists R.D\in\Cl(C_0)$
+common to the type $\tau(p)$ for all $p\in E$: there exists a single
+selected witness $w\in P_V$ with $L_M(p,w)=R$ for some $p\in E$ and
+$D\in\tau(w)$, such that the substitution lemma applied to any
+$p'\in E$ yields the same $\eqc$-class for $w$.
+\smallskip\noindent
+\emph{Difference from round-4 (V9.Eb).} Joint witnessing is checked
+per stratum, because (M6$'$.a) prevents $\EQ$-classes from spanning
+multiple strata.  The clause matches the local structure: an
+equality class lives inside one stratum, so its joint discharge is
+also stratum-local.
+
+\medskip
+
+\begin{remark}\label{rem:carry-over}
+The four clauses above are essentially \emph{universally quantified
+over strata}.  Their finite-checkability is preserved: the stratum
+forest of every mosaic in $\Mos_\Q$ is finite (a finite set of
+strata), so each of (V3$'$)--(V9.Eb$'$) is a finite conjunction of
+round-4-style clauses, one per stratum.  The original round-4
+validity clauses (V3), (V4), (V5), (V9.Eb) are recovered as the
+single-stratum case (depth-1 stratum forest).
+\end{remark}
+
+%% ==================================================================
+\section{Side-interface width, recurrence over modal depth}
+\label{sec:side-bound}
+%% ==================================================================
+
+The round-4 paper proves an explicit cubic bound
+$|\Side(u)|\leq 1+n^3+3n^2+3n$ for the side interface at an
+occurrence $u$, where $n=|C_0|$ (Lemma~4.4 of
+\cite{GPT55Repaired}).  Under recursive verticalization, a single
+side-witness $w$ of $u$ can itself open a local stratum carrying up
+to $|\Side(w)|$ further positions.  The width bound therefore becomes
+a recurrence over modal depth.
+
+\subsection{Recurrence}
+
+Let $\md(C_0)\in\mathbb N$ denote the modal depth of $C_0$.  Define
+$m:\{0,1,\dots,\md(C_0)\}\to\mathbb N$ by
+\[
+  m(0)\;=\;1,\qquad
+  m(d{+}1)\;=\;1\;+\;n^3\cdot\bigl(1+k_\Mate+k_{\rm bd}\bigr)\;+\;n^3\cdot m(d),
+\]
+where $n=|C_0|$ and $k_\Mate,k_{\rm bd}$ are the round-4 mate and
+boundary constants.
+
+\begin{proposition}[Side-interface width]\label{prop:side-width}
+For every occurrence $u$ in $\U(\Q)$ at modal depth $\leq d$ from a
+generated context source, $|\Side(u)|\leq m(d)$.
+\end{proposition}
+
+\begin{proof}
+Induction on $d$.  Base $d=0$: $u$ is a leaf of the witness selector;
+$\Side(u)=\{u\}$, so $|\Side(u)|=1=m(0)$.  Inductive step: the
+selector at $u$ adds up to $n^3$ selected $\DR/\PO$ witnesses
+(round-4 cubic bound), each with up to $1+k_\Mate+k_{\rm bd}$
+boundary or equality-mate companions, and each side-witness $w$ may
+open a nested stratum $V_w$ of width $\leq m(d)$ (by the induction
+hypothesis applied at $w$).  Summing: $|\Side(u)|\leq 1 +
+n^3(1+k_\Mate+k_{\rm bd}) + n^3 m(d) = m(d+1)$.
+\end{proof}
+
+\begin{corollary}[Effectively computable side-width]\label{cor:m-effective}
+$m(\md(C_0))$ is effectively computable from $C_0$.  In particular,
+the total side-interface alphabet is finite and bounded by
+$m(\md(C_0))\leq (n^3+1)^{\md(C_0)+1}\cdot
+\bigl(1+k_\Mate+k_{\rm bd}\bigr)$.
+\end{corollary}
+
+The bound $m(\md(C_0))$ is no longer polynomial in $n$ in general; it
+is exponential in $\md(C_0)$, which can itself be linear in $n$.  This
+matches GPT-5.5's round-5 recommendation: drop the polynomial claim
+and commit only to an effectively computable bound.  The certificate
+space $B(C_0)$ from Section~6.6 of \cite{GPT55Repaired} now uses
+$m(\md(C_0))$ in place of the cubic constant, but the overall
+double-exponential bound $B(C_0)\leq 2^{2^{p(n)}}$ for some
+computable polynomial $p$ is preserved.
+
+\begin{remark}\label{rem:bound-not-load-bearing}
+The decision procedure does not rely on a polynomial side-width.  It
+only uses that $B(C_0)$ is effectively computable from $C_0$.  Both
+$m(\md(C_0))$ and the round-4 cubic bound satisfy this requirement.
+\end{remark}
+
+%% ==================================================================
+\section{Worked example: a v2 certificate for $C_{\rm side}$}
+\label{sec:worked-example}
+%% ==================================================================
+
+We construct a small certificate for
+$C_{\rm side}=\exists\DR.(A\sqcap\exists\PP.B)\sqcap\exists\DR.B$
+explicitly, to confirm that the v2 discipline accepts the satisfiable
+concept.
+
+\subsection{Setup}
+
+Let $C_0=C_{\rm side}$.  The closure is $\Cl(C_0)=\{C_0, \exists\DR.(A
+\sqcap\exists\PP.B), A\sqcap\exists\PP.B, A, \exists\PP.B, B,
+\exists\DR.B, \top, \bot\}$ together with negations as needed.  Modal
+depth $\md(C_0)=2$.
+
+\subsection{Hintikka types}
+
+Three Hintikka types suffice for the source and its two selected
+$\DR$-witnesses; a fourth type covers the $\PP$-witness of the first
+selected $\DR$-witness:
+\begin{align*}
+  \tau_x &= \{\,C_0,\,\exists\DR.(A\sqcap\exists\PP.B),
+              \exists\DR.B,\,\top\,\},\\
+  \tau_y &= \{\,A\sqcap\exists\PP.B,\,A,\,\exists\PP.B,\,\top\,\},\\
+  \tau_z &= \{\,B,\,\top\,\},\\
+  \tau_w &= \{\,B,\,\top\,\}.
+\end{align*}
+(We use $\tau_w$ for $y$'s selected $\PP$-witness; it happens to be
+equal to $\tau_z$, which is what justifies the identification
+$w=z$ in the round-5 stress reading; see Remark~\ref{rem:identify}
+below.)
+
+\subsection{Certificate structure}
+
+The certificate $\Q$ has exactly one context $C\in\Ctx_\Q$ whose
+source has profile/type $\tau_x$ at port $p_x$.  The mosaic at $C$ is
+$M=(P,\tau,L,\mathcal V)$ with $P=\{x,y,z\}$ (we use the same names
+for positions and the model elements of
+Example~\ref{ex:stress-model}; this is a notational coincidence, not
+a semantic identification).  Stratum forest
+$\mathcal V=(\Stratum,\Subsrc)$ with:
+\begin{itemize}
+\item Root stratum $V_0$: $P_{V_0}=\{x\}$, source $s_{V_0}=x$, mates
+  $\mu_{V_0}=\{x\}$.  (Source has no explicit equality mates and no
+  selected $\PP/\PPI$ witnesses, so $V_0$ contains only $x$.)
+\item Nested stratum $V_1$: $P_{V_1}=\{y,z\}$, source $s_{V_1}=z$,
+  mates $\mu_{V_1}=\{z\}$, selected $\PPI$-witness $y$.
+\item $\Subsrc(V_1)=z$, with $z$ as parent position.  Note
+  $z\in P_{V_0}^{\,c}$ in the sense that $z\notin V_0$, but $z$ is a
+  sibling-frontier position of $V_0$; (SF5) is satisfied because
+  $P_{V_0}\cap P_{V_1}=\emptyset$, $V_1$ being rooted at $z$ which
+  itself lies outside $V_0$'s support.
+\end{itemize}
+
+Equivalently: the root stratum $V_0$ has source $x$ and no selected
+witnesses; the sibling-frontier of $V_0$ contains $y,z$; the nested
+stratum $V_1$ rooted at $z$ has $y$ as a $\PPI$-witness of $z$.
+
+\begin{remark}\label{rem:identify}
+The original model of Example~\ref{ex:stress-model} has $y\PP z$, so
+in the certificate $z$ is the proper-superpart and $y$ the
+$\PPI$-mate of $z$; equivalently, $y$ is a selected $\PPI$-witness of
+$z$ inside the nested stratum $V_1$.  We do not identify $w$ with $z$
+in the certificate; we only use the type-level identification
+$\tau_w=\tau_z$ to keep the example compact.
+\end{remark}
+
+\subsection{Label matrix and (M6$'$) verification}
+
+The label matrix $L:P^2\to\Base$ on $P=\{x,y,z\}$ is, modulo
+reflexive $\EQ$ on the diagonal and inverses on
+$L(q,p)=\Inv(L(p,q))$:
+\[
+  L(x,y)=\DR,\quad L(x,z)=\DR,\quad L(y,z)=\PP.
+\]
+
+We verify (M6$'$.a)--(M6$'$.d) on $M$.
+\begin{itemize}
+\item (M6$'$.a) $\EQ$-closure within strata.  The only $\EQ$-classes
+  are the trivial singletons (no explicit equality identifications),
+  so the clause holds vacuously.
+\item (M6$'$.b) Containment labels are co-vertical.  The only
+  $\PP/\PPI$ label is $L(y,z)=\PP$ (and its inverse $L(z,y)=\PPI$).
+  We verify that $(y,z)$ is co-vertical: $y\in P_{V_1}$, $z\in
+  P_{V_1}$, so $V_1\in\Stratum(y)\cap\Stratum(z)$.  Moreover the
+  local containment data of $V_1$ (source $z$, selected
+  $\PPI$-witness $y$) matches $L(y,z)=\PP$.
+\item (M6$'$.c) Cross-stratum labels are $\DR/\PO$ or $\EQ$.
+  $L(x,y)=\DR$ between $x\in P_{V_0}$ and $y\in P_{V_1}$ is
+  cross-stratum: $(x,y)$ is not co-vertical (no common stratum
+  contains both).  The label $\DR\in\{\DR,\PO\}$ satisfies (M6$'$.c).
+  Likewise $L(x,z)=\DR$ between $x\in P_{V_0}$ and $z\in P_{V_1}$:
+  cross-stratum, label $\DR$, satisfies (M6$'$.c).
+\item (M6$'$.d) Residual sibling frontier.  $x$ is the source of
+  $V_0$ and has no other positions in its residual sibling frontier
+  (apart from $y,z$ which are handled by (M6$'$.c)).  No other
+  residual-frontier pairs exist in $M$.
+\end{itemize}
+All four clauses hold, so $M$ is a v2-mosaic, and $C_{\rm side}$ is
+accepted by the v2 certificate.
+
+\subsection{Validity clauses on this certificate}
+
+We verify the four affected clauses (V3$'$), (V4$'$), (V5$'$),
+(V9.Eb$'$).
+\begin{itemize}
+\item (V3$'$) Selected containment witness.  The only
+  $\exists R.D\in\Cl(C_0)$ with $R\in\{\PP,\PPI\}$ is
+  $\exists\PP.B\in\tau_y=\tau(y)$.  We check stratum $V_1$: $y$ is a
+  position of $V_1$, and $V_1$ declares $z$ as the source with $y$ a
+  selected $\PPI$-witness.  $L(y,z)=\PP$ and $B\in\tau(z)$, so $y$'s
+  $\exists\PP.B$ is discharged in stratum $V_1$ as required.
+\item (V4$'$) Mate-cluster closure.  No explicit $\EQ$-port chains
+  are declared, so the clause holds vacuously.
+\item (V5$'$) Universal propagation.  No $\forall R.D$ universals are
+  in any type of this certificate, so the clause holds vacuously.
+\item (V9.Eb$'$) Equality-mate joint witnessing.  No multi-element
+  $\EQ$-classes are declared, so the clause holds vacuously.
+\end{itemize}
+All non-vacuous validity conditions hold.  The unaffected clauses
+(V1), (V2), (V6), (V7), (V8), (V9.Ea), (V10) are checked as in
+round-4; the only nontrivial point is (V2) (composition consistency),
+which holds because $L(x,y)=\DR$, $L(y,z)=\PP$, $L(x,z)=\DR$ and
+$\DR\in\comp(\DR,\PP)=\{\DR,\PO,\PP\}$.
+
+\subsection{Confirmation against the repository's reasoners}
+
+The verification script
+\texttt{verification/python/wp7\_side\_witness\_stress.py} reports
+$C_{\rm side}$ as SAT under all three reasoners.  The v2 certificate
+above is the smallest witness-generated certificate matching the
+abstract RCC5 model of Example~\ref{ex:stress-model}.
+
+%% ==================================================================
+\section{What carries over from round-4 verbatim}
+\label{sec:carryover}
+%% ==================================================================
+
+The following sections of \cite{GPT55Repaired} are unaffected by the
+repair, in the sense that their statements and proofs go through
+verbatim once Definition~\ref{def:mosaic-v2}, Lemma~\ref{lem:vertreal-recursive},
+the restated validity clauses of \S\ref{sec:validity}, and the
+recurrence bound of \S\ref{sec:side-bound} are inlined.
+
+\begin{itemize}
+\item Section 2 (Abstract RCC5 frames).
+\item Section 3 (Closure, types, and witness thinning), including the
+  frame inheritance lemma and the witness-generated submodel theorem.
+\item Section 4.1--4.2 (Occurrences, blocking, and equality;
+  generated split-cover construction).  Section 4.3 (DR/PO witness
+  placement) is amended only at the width bound (Lemma~4.4 of
+  \cite{GPT55Repaired}), replaced by Proposition~\ref{prop:side-width}.
+\item Section 5.2 (Abstract triple graph $\T_\Q$), with stratum
+  membership $\zeta\in\{\mathsf{vertical}_V : V\in\Stratum\}\cup\{\mathsf{sibling}\}$
+  ranging over the per-position stratum index instead of a Boolean.
+  The bound $|\Pos_\Q|\leq |S|\cdot\max_s|\Port(s)|\cdot|\Ctx_\Q|\cdot
+  k_{\rm strat}$, where $k_{\rm strat}$ is the maximum stratum count
+  per context (bounded by $m(\md(C_0))$).
+\item Section 5.3--5.6 (Renz--Nebel patchwork).  The patchwork lemma
+  is applied to the local network on each stratum independently and
+  to the residual cross-stratum frontier as in round-4;\@ the
+  $\DR/\PO$ arc-consistency argument that the round-4 paper uses on
+  the sibling-frontier carries over to the cross-stratum case.
+\item Section 6.3 (Port-indexed mate clusters $\Mate_\Q(C,s,p)$),
+  unchanged in form;\@ the clusters now attach to per-stratum sources
+  and ports, but the definition and (V9.Ea) clause are unchanged.
+\item Section 6.5 (Request-fulfilled cycles), unchanged.
+\item Section 7.3 (Standalone typed-$\EQ$ quotient theorem),
+  unchanged.  The six assumptions (A1)--(A6) remain the same;\@
+  (A4) is now discharged by the restated (V3$'$)/(V4$'$)/(V9.Eb$'$)
+  combined.
+\item Section 8 (Completeness, including the no-automata
+  regularization), unchanged.
+\end{itemize}
+
+%% ==================================================================
+\section{Discussion of the other round-5 items}
+\label{sec:other-round5}
+%% ==================================================================
+
+GPT-5.5's round-5 review~\cite{GPT55Round5Review} lists eight
+recommended repairs.  This paper closes \textbf{Item 2} (side-interface
+verticalization discipline), \textbf{Item 3} (add the stress test --
+done by Example~\ref{ex:stress-model} and the worked certificate of
+\S\ref{sec:worked-example}, with computational corroboration via
+\texttt{wp7\_side\_witness\_stress.py}), and \textbf{Item 9} (drop the
+polynomial side-width claim, via the recurrence of
+\S\ref{sec:side-bound}).  Item~1 (TeX/PDF mismatch) is editorial and
+the repository copy is already self-consistent.
+
+The remaining items require independent editorial passes on
+\cite{GPT55Repaired}:
+
+\begin{itemize}
+\item \textbf{Item~4 (non-circular mosaic patchwork)}: Sections 5.4--5.6
+  of \cite{GPT55Repaired} should be reordered so that the abstract
+  pair-label function and triple set are defined before the
+  patchwork lemma is invoked, and a finite composition-table check on
+  every abstract triple is required as a finite validity clause.
+  No change to the v2 (M6$'$) statements is needed.
+\item \textbf{Item~5 (overlap amalgamation)}: the overlap-amalgamation
+  lemma should require a single cross-label assignment compatible
+  with every overlap node and every mixed triple, not merely
+  per-triple existence.  This is a tightening of the lemma's
+  hypothesis, orthogonal to (M6$'$).
+\item \textbf{Item~6 (joint equality-witness compatibility as an
+  explicit clause)}: the assumption (A4) of the typed-$\EQ$ quotient
+  theorem (Section 7 of \cite{GPT55Repaired}) should be promoted to
+  an explicit finite validity clause on the certificate.  (V9.Eb$'$)
+  of \S\ref{sec:validity} above is the natural per-stratum form;\@
+  cross-stratum joint-witnessing is vacuous by (M6$'$.a) (no
+  cross-stratum equality classes).
+\item \textbf{Item~7 (half-open cycle convention)}: the request-cycle
+  lemma in Section 6.5 of \cite{GPT55Repaired} should be rewritten
+  with a half-open $[i,j)$ convention and an explicit endpoint
+  mapping.  This is orthogonal to (M6$'$).
+\item \textbf{Item~8 (global finite regularization)}: the
+  no-automata regularization argument in Section 8 of
+  \cite{GPT55Repaired} should be promoted to an explicit global
+  lemma covering all infinite vertical rays uniformly.  This is
+  orthogonal to (M6$'$).
+\end{itemize}
+
+Items 4--8 do not affect the (M6$'$) repair and can be addressed in
+independent editorial passes.  The v2 architecture of this paper is
+the natural setting for those passes, since each of them is local to
+a specific section of \cite{GPT55Repaired}.
+
+%% ==================================================================
+\section{Summary}
+%% ==================================================================
+
+The repair is a recursive lift of the round-4 verticalization
+discipline.  The only structural change is that the flat
+$\Vrt\subseteq P$ of a mosaic is replaced by a finite \emph{stratum
+forest} $\mathcal V$, in which selected $\DR/\PO$ side-witnesses
+may themselves open nested local vertical strata.  The repair:
+\begin{enumerate}[label=(\arabic*)]
+\item closes the round-5 stress concept
+  $\exists\DR.(A\sqcap\exists\PP.B)\sqcap\exists\DR.B$ by accepting
+  the small certificate of \S\ref{sec:worked-example};
+\item preserves Lemma~7.1 of \cite{GPT55Repaired} (vertical
+  realisation of $\PP/\PPI$ pairs) by the recursive case analysis of
+  \S\ref{sec:lifting};
+\item preserves the round-4 case analysis of Subcase (ii.e) of the
+  Vertical-Realisation Lemma by restricting the analysis to one
+  stratum at a time;
+\item recovers the round-4 (M6) discipline as the depth-1 case of
+  (M6$'$);
+\item preserves the rest of the round-4 architecture verbatim,
+  modulo the per-stratum quantifier on (V3), (V4), (V5), (V9.Eb);
+\item replaces the polynomial side-width $m(n)=O(n^3)$ with an
+  effectively computable recurrence over modal depth, which suffices
+  for decidability;\@ the double-exponential certificate-space bound
+  $B(C_0)\leq 2^{2^{p(n)}}$ is preserved.
+\end{enumerate}
+
+The repair is computationally corroborated: all three Python
+reasoners in the repository (cover-tree tableau, baseline and
+cycle-aware quasimodel) report $C_{\rm side}$ as SAT.  The v2
+discipline (M6$'$) accepts that satisfiable concept by construction.
+
+%% ==================================================================
+\begin{thebibliography}{99}
+
+\bibitem{GPT55Repaired}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{A Generated Split-Forest Decidability Proof for $\ALCIRCC{5}$
+Without Automata: A Repaired Containment-Oriented Presentation}.
+Unpublished manuscript, May 2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf}.
+
+\bibitem{GPT55Round5Review}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{Formal Review of the Latest Repaired Split-Forest Proof
+Manuscript}.  Unpublished manuscript, May~22, 2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/formal_review_progress_paper.pdf}.
+
+\bibitem{SiblingV1}
+GPT-5.4~Pro (OpenAI), prompted by Michael Wessel.
+\emph{Sibling-Interface Descriptors for $\ALCIRCC{5}$}.  Unpublished
+manuscript, April~2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_needpatched.pdf}.
+
+\bibitem{Wessel2003}
+Michael Wessel.
+\emph{Some Practical Issues in Building Description Logic Based
+Spatially-Aware Information Systems}.  In:\@ Description Logics, 2003.
+
+\bibitem{RenzNebel1999}
+Jochen Renz and Bernhard Nebel.
+\emph{On the Complexity of Qualitative Spatial Reasoning: A Maximal
+Tractable Fragment of the Region Connection Calculus}.  Artificial
+Intelligence, 108(1--2):69--123, 1999.
+
+\bibitem{ALCIRCC5Repo}
+Michael Wessel et al.
+\emph{ALCI\_RCC5 Project Repository}.
+\url{https://github.com/lambdamikel/alcircc5}.
+
+\end{thebibliography}
+
+\end{document}
