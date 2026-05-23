@@ -1,0 +1,863 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Repaired split-forest proof: items 4--8 of round 5}
+\fancyhead[R]{May 2026}
+\fancyfoot[C]{\thepage}
+\titleformat{\section}{\large\bfseries\color{MidnightBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{MidnightBlue}}{\thesubsection}{0.5em}{}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.5em}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,leftmargin=1.8em}
+\onehalfspacing
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{construction}[theorem]{Construction}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Base}{\mathsf{B}}
+\newcommand{\Inv}{\operatorname{Inv}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\ALCIRCC}[1]{\mathcal{ALCI}_{\mathsf{RCC#1}}}
+\newcommand{\Vrt}{\mathsf{Vrt}}
+\newcommand{\Sib}{\mathsf{Sib}}
+\newcommand{\Front}{\mathsf{Front}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Ctx}{\mathsf{Ctx}}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\Mate}{\mathsf{Mate}}
+\newcommand{\Reach}{\mathsf{Reach}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Q}{\mathcal{Q}}
+\newcommand{\U}{\mathcal{U}}
+\newcommand{\T}{\mathcal{T}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\Cl}{\operatorname{cl}}
+\newcommand{\Typ}{\operatorname{Typ}}
+\newcommand{\Pend}{\mathsf{Pend}}
+\newcommand{\chk}{\mathsf{chk}}
+\newcommand{\eqc}{\equiv_{\EQ}}
+\newcommand{\eqQEQ}{\equiv^{\Q}_{\EQ}}
+\newcommand{\extProf}{\widehat\Pi}
+\newcommand{\extSigma}{\widehat\Sigma}
+\newcommand{\lab}{\operatorname{lab}}
+\newcommand{\Stratum}{\mathsf{Strat}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Repaired Split-Forest Decidability Proof for $\ALCIRCC{5}$:\\[2pt]
+Items 4--8 of the Round-5 Review\par}
+\vspace{0.5em}
+{\large A delta to the 31-page round-4 proof~\cite{GPT55Repaired},\\
+companion to the (M6$'$) v2 delta~\cite{V2Delta}\par}
+\vspace{0.75em}
+{\normalsize Claude (Anthropic, Opus~4.7), prompted by Michael Wessel}\par
+\vspace{0.45em}
+{\small May~2026}
+\end{center}
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Disclaimer.}\;
+This document was drafted by Claude (Anthropic), prompted by Michael
+Wessel.  The results have not been independently verified by human
+domain experts.  We invite scrutiny and corrections.}}
+\end{center}
+
+\begin{abstract}
+The round-5 review of the 31-page repaired split-forest decidability
+proof~\cite{GPT55Repaired} for $\ALCIRCC{5}$~\cite{GPT55Round5Review}
+lists eight recommended repairs.  Item~1 (TeX/PDF mismatch) is
+editorial and already self-consistent in the repository; items~2, 3
+and~9 are addressed by the (M6$'$) recursive-verticalization v2
+delta~\cite{V2Delta}.  This delta paper closes the remaining
+mathematical items 4--8:
+\begin{enumerate}[label=(\arabic*),leftmargin=2em]
+\item[\textbf{4.}] \emph{Non-circular mosaic patchwork.}  We replace
+the implicit ``support against $\T_\Q$'' clause~(SC4) of round 4 by
+an explicit two-step construction: first, a finite abstract
+pair-label function $L_\Q:\Pos_\Q^2\to\Base$ is declared as
+certificate data; second, an explicit finite validity clause~(V11)
+requires every abstract triple in $\Trip_\Q$ to satisfy the RCC5
+composition table.  The mosaic patchwork theorem is then a
+non-circular consequence.
+\item[\textbf{5.}] \emph{Strengthened overlap amalgamation.}  We
+strengthen hypothesis~(O3) of round 4 to require a single
+cross-label assignment $L_{12}:(P_1\setminus P_0)\times(P_2\setminus
+P_0)\to\Base$ compatible with all overlap nodes and all mixed
+triples simultaneously.  This becomes an additional explicit
+validity clause~(V12) on certificates.
+\item[\textbf{6.}] \emph{Joint equality validity clause.}  We
+promote round-4 assumption~(A4) of the typed-$\EQ$ quotient theorem
+to an explicit finite validity clause~(V13): for every equality
+class $E$ of ports and every $\exists R.D$ common to the type of
+$E$'s members, there is a declared mate/target pair that works
+uniformly for all ports in $E$.
+\item[\textbf{7.}] \emph{Half-open cycle convention.}  We rewrite
+the request-fulfilled repetition lemma with the half-open
+$[i,j)$ convention.  The pumped path is $u_0,\ldots,u_{i-1},
+(u_i,\ldots,u_{j-1})^\omega$, and $u_j$ is identified with the next
+lap's copy of $u_i$ at the profile level only.  The endpoint case
+is handled explicitly.
+\item[\textbf{8.}] \emph{Global finite regularization.}  We add a
+global representative-selection lemma: for the finitely many
+$(\text{profile},\text{request-status})$ classes
+$\extProf\in\extSigma$, one representative finite context and one
+representative request-fulfilled cycle suffices, simultaneously,
+for every infinite vertical ray of the split forest.  The proof is
+a direct pigeonhole over $\extSigma$, not via $\omega$-automata.
+\end{enumerate}
+None of items 4--8 affects~(M6$'$); the architecture of the v2
+delta paper carries over, and the validity-clause numbering is
+extended from (V1)--(V10) to (V1)--(V13).  The decision procedure
+remains a finite enumeration of finite-graph-checkable certificates;
+$B(C_0)\leq 2^{2^{p(n)}}$ for a computable polynomial~$p$ is
+preserved.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+%% ==================================================================
+\section{Scope and notation}
+\label{sec:scope}
+%% ==================================================================
+
+This document is a delta to the 31-page round-4 paper
+\cite{GPT55Repaired} and the (M6$'$) v2 delta paper \cite{V2Delta}.
+We use the round-4 notation throughout: $\Q$ is a finite generated
+split-forest certificate; $\Mos_\Q$ is its support-closed mosaic
+family; $\T_\Q=(\Pos_\Q,\Pair_\Q,\Trip_\Q)$ is the abstract triple
+graph; $\U(\Q)$ is the unfolding; $\eqc^\Q$ is the explicit equality
+congruence on ports of $\Q$.  All other notation is as in
+\cite{GPT55Repaired}.
+
+Where the v2 delta paper restated a definition or a clause of
+\cite{GPT55Repaired}, we work with the v2 restated form
+(e.g., recursive verticalization (M6$'$) replaces (M6); validity
+clauses (V3$'$), (V4$'$), (V5$'$), (V9.Eb$'$) replace (V3), (V4),
+(V5), (V9.Eb)).
+
+%% ==================================================================
+\section{Item 4: non-circular mosaic patchwork}
+\label{sec:item4}
+%% ==================================================================
+
+\subsection{The circularity diagnosed by round 5}
+
+Round-4 \cite{GPT55Repaired} proves the support-closed mosaic
+patchwork theorem (Theorem~5.8) in two steps:
+\begin{enumerate}
+\item the mosaic relational layer satisfies the Renz--Nebel
+hypotheses (RN1)--(RN3) on every mosaic (Lemma~5.5);
+\item the overlap-amalgamation lemma (Lemma~5.6) combines two
+mosaics over a shared boundary;
+\item the support-closure clause (SC4) requires that every abstract
+triple in $\Trip_\Q$ is represented by some mosaic $M_T\in\Mos$ with
+matching pair labels (Definition~5.4).
+\end{enumerate}
+
+The round-5 review~\cite{GPT55Round5Review} objects that the
+patchwork theorem uses (SC4) to argue that concrete unfolding
+triples are RCC5-composition-consistent, while (SC4) itself
+\emph{presupposes} that the mosaic $M_T$ assigning labels to an
+abstract triple realises composition-consistent labels.  The
+labelling on $\T_\Q$ is implicit, contained in the mosaic data
+itself rather than declared as an independent function.  The risk
+is that the patchwork claim is established by appeal to mosaic
+composition consistency, which is in turn what the patchwork claim
+asserts at the abstract level.
+
+\subsection{The repair: explicit $L_\Q$ and a composition-table validity clause}
+
+We declare an explicit \emph{abstract pair-label function} on the
+abstract triple graph, separately from any mosaic, and require it
+to satisfy the composition table.  The certificate's pair labels
+become primary data; mosaics become local realisations of those
+labels.
+
+\begin{definition}[Abstract pair-label function]\label{def:Lq}
+The certificate $\Q$ declares an explicit function
+\[
+  L_\Q:\Pos_\Q^2\;\longrightarrow\;\Base
+\]
+on pairs of abstract position symbols, satisfying:
+\begin{enumerate}[label=(L\arabic*)]
+\item $L_\Q(\pi,\pi)=\EQ$;
+\item $L_\Q(\pi',\pi)=\Inv(L_\Q(\pi,\pi'))$;
+\item if $\pi,\pi'$ are linked by an explicit equality-port chain in
+$E_\Q$, then $L_\Q(\pi,\pi')=\EQ$.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Compatibility with mosaics]\label{def:LM-Lq}
+For every mosaic $M=(P,\tau,L,\mathcal V)\in\Mos_\Q$ and every pair
+$p,q\in P$ realising abstract position symbols
+$\pi_p,\pi_q\in\Pos_\Q$:
+\[
+  L_M(p,q)\;=\;L_\Q(\pi_p,\pi_q).
+\]
+That is, mosaic labels are restrictions of the global $L_\Q$ to the
+mosaic's position set.
+\end{definition}
+
+The labels in $L_\Q$ are part of the certificate $\Q$ and are part
+of the finite data the validity check enumerates.  We now require
+explicit composition-table checking on $\T_\Q$ as a finite
+validity clause:
+
+\paragraph{(V11) Composition table on $\T_\Q$.}
+For every ordered triple $(\pi_1,\pi_2,\pi_3)\in\Pos_\Q^3$,
+\[
+  L_\Q(\pi_1,\pi_3)\;\in\;\comp\bigl(L_\Q(\pi_1,\pi_2),
+                                       L_\Q(\pi_2,\pi_3)\bigr).
+\]
+This is a finite quantifier over $|\Pos_\Q|^3\leq 2|S|\cdot(n+1)
+\cdot|\Ctx_\Q|\cdot k_{\rm strat}\cdot |\Pos_\Q|^2$
+abstract triples, each requiring a constant-time table lookup.
+
+\begin{lemma}[(V11) implies (M3) on every mosaic]\label{lem:V11-implies-M3}
+If $\Q$ satisfies (V11) and every mosaic $M\in\Mos_\Q$ is
+$L_\Q$-compatible in the sense of Definition~\ref{def:LM-Lq}, then
+$M$ satisfies the round-4 mosaic axiom (M3).
+\end{lemma}
+
+\begin{proof}
+For $p,q,r\in P$ at positions $\pi_p,\pi_q,\pi_r\in\Pos_\Q$, the
+mosaic labels are $L_M(p,q)=L_\Q(\pi_p,\pi_q)$ (and similarly for
+the other two pairs).  By (V11), $L_\Q(\pi_p,\pi_r)\in\comp(L_\Q(\pi_p,\pi_q),
+L_\Q(\pi_q,\pi_r))$, so $L_M(p,r)\in\comp(L_M(p,q),L_M(q,r))$,
+which is (M3).
+\end{proof}
+
+\subsection{Restated support-closure}
+
+The round-4 support-closure clauses (SC1)--(SC4) are restated with
+explicit reference to $L_\Q$ and (V11) replacing the implicit
+composition-on-$\T_\Q$.
+
+\begin{definition}[Support-closed mosaic family, non-circular]\label{def:support-closed-v3}
+A finite family $\Mos$ of mosaics is support-closed relative to
+$(\T_\Q,L_\Q)$ if it satisfies (SC1)--(SC3) of \cite{GPT55Repaired}
+unchanged, together with:
+\begin{enumerate}[label=(SC4$'$)]
+\item For every abstract position symbol $\pi\in\Pos_\Q$ on the
+generated context of some source in $\Ctx_\Q$, $\Mos$ contains a
+mosaic $M_\pi$ that includes $\pi$ as one of its positions, with
+$\tau_{M_\pi}(\pi)=\lambda(\pi)$ (the type declared by the certificate)
+and the stratum of $\pi$ in $M_\pi$ matching its declared stratum.
+\end{enumerate}
+\end{definition}
+
+The change is that (SC4$'$) no longer requires per-triple coverage
+of $\Trip_\Q$.  Instead, the composition table on $\T_\Q$ is
+enforced \emph{globally} by (V11), and (SC4$'$) requires only that
+each position has \emph{some} mosaic realising its type and
+stratum.  Triple consistency is then a consequence of (V11) and
+(SC1)--(SC3), without circular appeal to per-triple mosaic
+coverage.
+
+\subsection{Restated patchwork theorem}
+
+\begin{theorem}[Support-closed mosaic patchwork, non-circular]\label{thm:patchwork-v3}
+Let $\Q$ be a valid certificate satisfying (V1)--(V13), (M6$'$) on
+every mosaic in $\Mos_\Q$, (V11) on the abstract pair-label function
+$L_\Q$, and (SC1)--(SC3), (SC4$'$).  Then every finite prefix
+$F\subseteq\U(\Q)$ satisfies the abstract RCC5 frame axioms
+(F1)--(F3) on all triples of occurrences.
+\end{theorem}
+
+\begin{proof}
+We argue independently of the mosaic family on the global
+relation:
+
+\emph{Step 1.}  Define the unfolding label $\lab(u,v)\in\Base$ as
+$L_\Q(\pi_u,\pi_v)$, where $\pi_u,\pi_v$ are the abstract position
+symbols of the unfolding occurrences $u,v$ in $\U(\Q)$ (each
+occurrence carries a unique abstract position symbol by the
+unfolding rule of \S4 of \cite{GPT55Repaired}, possibly via an
+equality-port chain).
+
+\emph{Step 2.}  (F1) and (F2) follow from (L1) and (L2) of
+Definition~\ref{def:Lq}.  For (F3):  given any triple $(u,v,w)$ in
+$F$, with abstract position symbols
+$(\pi_u,\pi_v,\pi_w)$, apply (V11) directly:
+$\lab(u,w)=L_\Q(\pi_u,\pi_w)\in\comp(L_\Q(\pi_u,\pi_v),L_\Q(\pi_v,\pi_w))
+=\comp(\lab(u,v),\lab(v,w))$.  No mosaic is consulted; the
+composition check is a finite global validity check on $L_\Q$.
+
+\emph{Step 3.}  The mosaic family $\Mos_\Q$ is used only to discharge
+existential support obligations (M4)--(M5) and the
+$\EQ$-congruence/universal-propagation conditions, which the
+round-4 lemmas establish on the mosaic side (Lemmas~5.7, 5.8, 5.9 of
+\cite{GPT55Repaired}).  These do not rely on (SC4) per-triple
+coverage; they are local to a single mosaic.  Mosaic
+type-consistency at each abstract position is supplied by (SC4$'$).
+\end{proof}
+
+\begin{remark}
+The repair shifts the burden of composition consistency from
+mosaic-mediated (SC4) coverage to a global validity clause on the
+finite $L_\Q$.  The proof of (F3) no longer requires the existence
+of a mosaic per triple, and no statement of the patchwork theorem
+assumes its own conclusion.
+\end{remark}
+
+%% ==================================================================
+\section{Item 5: strengthened overlap amalgamation}
+\label{sec:item5}
+%% ==================================================================
+
+\subsection{The weakness diagnosed by round 5}
+
+Round-4's overlap-amalgamation lemma (Lemma~5.6 of
+\cite{GPT55Repaired}) takes hypothesis~(O3):
+\begin{quote}
+every triple $(u,v,w)$ with $u\in P_1\setminus P_0$,
+$w\in P_2\setminus P_0$, $v\in P_0$ admits some
+$\ell\in\Base$ with $\ell\in\comp(L_1(u,v),L_2(v,w))$.
+\end{quote}
+The construction then takes $L_{12}(u,w)\in\bigcap_{v\in P_0}
+\comp(L_1(u,v),L_2(v,w))$.  Round 5~\cite{GPT55Round5Review} notes
+that per-triple existence of some $\ell$ does not imply that the
+intersection is non-empty, nor that one consistent assignment
+exists across all cross-pairs simultaneously.
+
+\subsection{Strengthened hypothesis (O3$'$) and validity clause (V12)}
+
+\begin{definition}[Strong overlap compatibility]\label{def:strong-overlap}
+Two mosaics $M_1,M_2\in\Mos_\Q$ are \emph{strongly
+overlap-compatible} over $P_0=P_1\cap P_2$ if there exists a
+declared cross-label function
+\[
+  L_{12}^{\rm cross}:(P_1\setminus P_0)\times(P_2\setminus P_0)
+                     \;\longrightarrow\;\Base
+\]
+satisfying:
+\begin{enumerate}[label=(O3$'$.\alph*)]
+\item \textbf{Triangle compatibility through every overlap node.}
+For every $u\in P_1\setminus P_0$, $w\in P_2\setminus P_0$, and
+every $v\in P_0$,
+\[
+  L_{12}^{\rm cross}(u,w)\;\in\;\comp\bigl(L_1(u,v),L_2(v,w)\bigr).
+\]
+\item \textbf{Composition consistency on mixed triples.}  For every
+$u,u'\in P_1\setminus P_0$, $w\in P_2\setminus P_0$,
+\[
+  L_{12}^{\rm cross}(u',w)\;\in\;
+    \comp\bigl(L_1(u',u),L_{12}^{\rm cross}(u,w)\bigr),
+\]
+and symmetrically for $u\in P_1\setminus P_0$,
+$w,w'\in P_2\setminus P_0$.
+\item \textbf{Inverse symmetry.}  $L_{12}^{\rm cross}(w,u)=
+\Inv\bigl(L_{12}^{\rm cross}(u,w)\bigr)$.
+\end{enumerate}
+\end{definition}
+
+\paragraph{(V12) Declared overlap labels.}
+For every pair of mosaics $M_1,M_2\in\Mos_\Q$ that share a non-empty
+boundary $P_0=P_1\cap P_2$ and whose amalgamation is required by
+(SC3), the certificate declares a cross-label function
+$L_{12}^{\rm cross}$ satisfying (O3$'$.a)--(O3$'$.c) of
+Definition~\ref{def:strong-overlap}.  In particular, the declared
+$L_{12}^{\rm cross}$ extends consistently to a global mosaic
+$M_{12}=(P_1\cup P_2,\tau_{12},L_{12})$ with $L_{12}\subseteq L_\Q$
+(consistent with Definition~\ref{def:LM-Lq}).
+
+The clause (V12) is finite-checkable: the certificate enumerates
+the pairs of mosaics requiring amalgamation (finite, since
+$\Mos_\Q$ is finite), and the cross-label function for each pair is
+a finite map.  The composition-table checks of (O3$'$.a)--(O3$'$.c)
+are finite quantifiers over $|P_1\setminus P_0|\cdot|P_0|\cdot
+|P_2\setminus P_0|$ triples, each a constant-time lookup.
+
+\subsection{Restated overlap amalgamation lemma}
+
+\begin{lemma}[Overlap amalgamation, strong]\label{lem:overlap-v3}
+Let $M_1,M_2\in\Mos_\Q$ be strongly overlap-compatible
+(Definition~\ref{def:strong-overlap}), and let $L_{12}^{\rm cross}$
+be the declared cross-label function from (V12).  Then the
+amalgamated mosaic
+$M_{12}=(P_1\cup P_2,\tau_{12},L_{12},\mathcal V_{12})$ with
+\[
+  L_{12}(p,q):=\begin{cases}
+    L_i(p,q) & \text{if }p,q\in P_i,\\
+    L_{12}^{\rm cross}(p,q) & \text{if }p\in P_1\setminus P_0,\;q\in P_2\setminus P_0,\\
+    \Inv L_{12}^{\rm cross}(q,p) & \text{if }p\in P_2\setminus P_0,\;q\in P_1\setminus P_0,
+  \end{cases}
+\]
+satisfies (M1)--(M5) and (M6$'$) of v2~\cite{V2Delta} on all
+positions of $P_1\cup P_2$.
+\end{lemma}
+
+\begin{proof}
+(M1) and (M2) follow from (O3$'$.c) and the unchanged structure on
+$P_1, P_2$.  (M3) on a triple $(u,v,w)$ in $P_{12}$:\@
+\begin{itemize}
+\item If $u,v,w$ all lie in $P_i$ for some $i$, (M3) on $M_i$
+suffices.
+\item If two of $u,v,w$ lie in $P_i$ and the third in
+$P_j\setminus P_0$ ($i\neq j$), apply (O3$'$.b) to the cross pair
+through the third overlap vertex (or one of the within-$P_i$
+vertices), which is a triangle of the form covered by (O3$'$.a)
+or (O3$'$.b).
+\item If $u\in P_1\setminus P_0$, $v\in P_0$, $w\in P_2\setminus
+P_0$, (O3$'$.a) directly gives
+$L_{12}^{\rm cross}(u,w)\in\comp(L_1(u,v),L_2(v,w))$.
+\item All other cases reduce to (O3$'$.b) by symmetry.
+\end{itemize}
+(M4) and (M5) are inherited from $M_1, M_2$ as in round-4
+Lemmas~5.7 and 5.8.  (M6$'$) is preserved: (M6$'$.b) requires
+co-vertical $\PP/\PPI$ labels;\@ cross-pair labels chosen by
+$L_{12}^{\rm cross}$ are in $\{\DR,\PO\}$ on cross-stratum pairs
+because (O3$'$) does not produce $\PP/\PPI$ across distinct strata.
+(M6$'$.c)--(M6$'$.d) are similarly preserved.
+\end{proof}
+
+\begin{remark}
+Round-4's existential ``some $\ell\in\Base$'' in (O3) is replaced
+by an explicit declared function $L_{12}^{\rm cross}$.  The
+ambiguity ``does the intersection over $v\in P_0$ have a common
+witness?'' is moved to the certificate-writing time:\@ the writer
+must produce a witness function and (V12) checks it.
+\end{remark}
+
+%% ==================================================================
+\section{Item 6: joint equality validity clause}
+\label{sec:item6}
+%% ==================================================================
+
+\subsection{The diagnosis}
+
+Round-4 \cite{GPT55Repaired} proves the standalone typed-$\EQ$
+quotient theorem~7.3 under six assumptions (A1)--(A6).  The
+delicate one is (A4):
+\begin{quote}
+For all $u\eqc v$ and every $\exists R.D\in\lambda(u)=\lambda(v)$
+with $R\in\{\PP,\PPI\}$, there exists $w\in\Omega$ with
+$\{u,v\}\Reach_R w$ (equality-aware reachability) and
+$D\in\lambda(w)$.  Equivalently, a single witness discharges the
+obligation simultaneously at every $\eqc$-mate of the source.
+\end{quote}
+Round-4 derives (A4) from (V4) + the definition of $\Reach$.
+Round-5 \cite{GPT55Round5Review} suggests promoting (A4) to an
+explicit finite validity clause.
+
+\subsection{The repair: clause (V13)}
+
+\paragraph{(V13) Joint equality discharge.}
+For every mosaic $M\in\Mos_\Q$, every stratum $V\in\Stratum_M$,
+every explicit equality class $E\subseteq P_V$ (entirely within $V$
+by (M6$'$.a)), and every $\exists R.D\in\Cl(C_0)$ such that
+$\exists R.D\in\tau(p)$ for all $p\in E$, the certificate declares a
+joint witness $w_E^{R,D}\in P_V$ with $L_M(p,w_E^{R,D})=R$ and
+$D\in\tau(w_E^{R,D})$ for some (equivalently, every) $p\in E$.
+
+In addition, for cross-class joint witnesses, when an equality
+class $E\subseteq P_V$ has $\exists R.D$ in the common type and
+the existing port-indexed mate cluster $\Mate_\Q(C_V,s_V,p)$ for
+$p\in E$ contains a port $(s',p')$ targeting a witness in
+another generated context, the certificate declares that
+$\Mate_\Q(C_V,s_V,p)$ is identical for every $p\in E$ (the cluster
+is class-wide, not per-port-of-the-class).
+
+\subsection{(V13) implies (A4)}
+
+\begin{lemma}[(V13) discharges (A4)]\label{lem:V13-implies-A4}
+Suppose $\Q$ satisfies (V1)--(V13).  Then the lift of $\eqc^Q$ to
+$\U(\Q)$ satisfies assumption~(A4) of the round-4 typed-$\EQ$
+quotient theorem.
+\end{lemma}
+
+\begin{proof}
+Take $u,v\in\Omega(\U(\Q))$ with $u\eqc v$ and
+$\exists R.D\in\lambda(u)=\lambda(v)$ with $R\in\{\PP,\PPI\}$.  By
+the unfolding rule, $u$ and $v$ realise positions $p_u,p_v$ of some
+mosaic $M\in\Mos_\Q$ with $p_u,p_v$ in the same explicit equality
+class $E$ of $M$.  By (M6$'$.a), $E\subseteq P_V$ for some
+stratum $V$.  Since $u\eqc v$ at the certificate level, both
+$p_u$ and $p_v$ belong to the same class $E$.
+
+By (V13), $\Q$ declares a joint witness $w_E^{R,D}\in P_V$ with
+$L_M(p,w_E^{R,D})=R$ and $D\in\tau(w_E^{R,D})$ for every $p\in E$.
+Take $w$ to be the occurrence in $\U(\Q)$ realising
+$w_E^{R,D}$.  Then $L_M(p_u,w_E^{R,D})=R$ and
+$L_M(p_v,w_E^{R,D})=R$ both hold, so $u\Reach_R w$ and
+$v\Reach_R w$ via the same witness occurrence.  This is exactly
+(A4).
+\end{proof}
+
+\begin{remark}
+The strengthening eliminates the round-4 inference chain through
+the equality-aware reachability $\Reach$.  Where round 4 used the
+\emph{existence} of a witness for each individual $\eqc$-mate, (V13)
+declares the witness once for the entire class.  This is the
+formal counterpart of the round-5 review's recommended repair:
+``promote (A4) to an explicit finite validity clause''.
+\end{remark}
+
+%% ==================================================================
+\section{Item 7: half-open cycle convention}
+\label{sec:item7}
+%% ==================================================================
+
+\subsection{The off-by-one risk in the round-4 convention}
+
+Round-4 \cite{GPT55Repaired} states the request-fulfilled
+repetition lemma (Lemma~6.12) with the pumped path
+\[
+  u_0,u_1,\ldots,u_{i-1},(u_i,\ldots,u_{j-1})^\omega.
+\]
+The cycle word is $u_i,u_{i+1},\ldots,u_{j-1}$; position $u_j$ is
+not part of the cycle word, but acts as the ``return-to-$u_i$'' on
+the next lap.  Round-5 \cite{GPT55Round5Review} notes that
+round-4 alternates between a closed segment $u_i,\ldots,u_j$ and a
+lasso that repeats $u_i,\ldots,u_{j-1}$, which is the standard
+off-by-one source of confusion.  The lemma is correct;\@ the
+convention should be made explicit.
+
+\subsection{The repair: half-open $[i,j)$ convention with explicit endpoint mapping}
+
+\begin{definition}[Half-open cycle convention]\label{def:half-open}
+The cycle word of a request-fulfilled repetition lemma is the
+\emph{half-open segment} $u_i,u_{i+1},\ldots,u_{j-1}$ of length
+$j-i$.  The pumped path is the concatenation of $u_0,\ldots,u_{i-1}$
+with infinitely many fresh copies of the cycle word:
+\[
+  u_0,u_1,\ldots,u_{i-1},
+  \underbrace{u_i^{(1)},\ldots,u_{j-1}^{(1)}}_{\text{lap }1},
+  \underbrace{u_i^{(2)},\ldots,u_{j-1}^{(2)}}_{\text{lap }2},
+  \ldots
+\]
+For every $\ell\geq 1$, the occurrence $u_j^{(\ell)}$ \emph{does
+not appear} in the pumped path; the next position after
+$u_{j-1}^{(\ell)}$ is $u_i^{(\ell+1)}$.  At the profile level,
+$u_j^{(\ell)}$ is identified with $u_i^{(\ell+1)}$ because
+$\Pi(u_j)=\Pi(u_i)$ by the pigeonhole choice of $i<j$.
+\end{definition}
+
+\begin{lemma}[Request-fulfilled repetition lemma, half-open]\label{lem:request-cycle-v3}
+Let $u_0,u_1,u_2,\ldots$ be an infinite generated vertical path in
+a split presentation, and suppose every transitive existential
+request on the path is eventually fulfilled.  Then there are
+indices $i<j$ with $\Pi(u_i)=\Pi(u_j)$ and the half-open segment
+$[u_i,u_j)$ is \emph{request-fulfilled}: for every transitive
+existential request $\exists R.D$ pending at some position $u_k$
+with $i\leq k<j$, there is a strict later position $u_{k'}$ within
+$[u_i,u_j)$ (i.e., $k<k'<j$) or in the segment endpoint $u_j$
+(handled below) with $D\in\lambda(u_{k'})$.
+
+The pumped path
+$u_0,\ldots,u_{i-1},u_i^{(1)},\ldots,u_{j-1}^{(1)},
+u_i^{(2)},\ldots,u_{j-1}^{(2)},\ldots$ built from fresh
+occurrences of the half-open segment satisfies the strong
+fulfillment property:
+\begin{quote}
+every $\PP/\PPI$ existential request generated at any occurrence
+of the pumped path is fulfilled at a strict later occurrence on
+the same path, within bounded lookahead $\leq j-i$.
+\end{quote}
+\end{lemma}
+
+\begin{proof}
+The pigeonhole and checkpoint arguments are unchanged from
+round-4 (Lemma~6.10 of \cite{GPT55Repaired}).  We make the endpoint
+case explicit.
+
+\emph{Endpoint case.}  Let $\exists R.D$ be a request pending at
+$u_k$ for some $i\leq k<j$.  By round-4's analysis~(F1) and
+(F2a)/(F2b):
+\begin{enumerate}[label=(\alph*)]
+\item if $\exists R.D$ is fulfilled at some $u_{k'}$ with
+$k<k'<j$, the pumped path contains $u_{k'}^{(\ell)}$ strictly
+later than $u_k^{(\ell)}$ in the same lap.  Lookahead:
+$k'-k<j-i$.
+
+\item if $\exists R.D$ is fulfilled at $u_j$ in the original path,
+the pumped path's next-lap position $u_i^{(\ell+1)}$ has
+$\Pi(u_i^{(\ell+1)})=\Pi(u_j)$ at the profile level, but at the
+\emph{semantic} level $u_i^{(\ell+1)}$ is a fresh occurrence with
+$\lambda(u_i^{(\ell+1)})=\lambda(u_i)$, not $\lambda(u_j)$.  In
+general $\lambda(u_i)$ and $\lambda(u_j)$ are equal as types
+(since profiles include closure types in round-4 Definition~6.6 of
+\cite{GPT55Repaired}), so $D\in\lambda(u_i^{(\ell+1)})$ iff
+$D\in\lambda(u_j)$.  Therefore the pumped path's $u_i^{(\ell+1)}$
+acts as the strict later fulfilling position for $\exists R.D$
+generated at $u_k^{(\ell)}$.  Lookahead: $(j-k)+0=j-k\leq j-i$.
+
+\item if $\exists R.D$ persists into $\Pend(u_j)=\Pend(u_i)$,
+case~(F2b) of round-4 applies: there is $m$ with $i\leq m<j$ and
+$D\in\lambda(u_m)$;\@ the pumped path's $u_m^{(\ell+1)}$ in the
+next lap satisfies $D\in\lambda(u_m^{(\ell+1)})$, strictly later
+than $u_k^{(\ell)}$.  Lookahead: $(j-k)+(m-i)+1\leq 2(j-i)$.
+\end{enumerate}
+The half-open convention makes case~(b) explicit: $u_j$ never
+appears in the pumped path, but its \emph{profile} is realised by
+the next lap's $u_i^{(\ell+1)}$, and (since profiles include
+closure types) the witness label transfers to the next lap.
+\end{proof}
+
+\begin{remark}
+The change is purely notational: round-4's lemma is correct, but
+the closed-vs-half-open ambiguity is removed by always using
+$[i,j)$ and stating the endpoint behaviour explicitly.  The
+boundary $u_j$ is never an occurrence of the pumped path; the
+position right after the last cycle-word occurrence of a lap is
+the first cycle-word occurrence of the next lap.
+\end{remark}
+
+%% ==================================================================
+\section{Item 8: global finite regularization}
+\label{sec:item8}
+%% ==================================================================
+
+\subsection{The diagnosis}
+
+Round-4 \cite{GPT55Repaired} proves the request-fulfilled
+repetition lemma per-ray (Lemma~6.12 and Lemma~6.13 of
+\cite{GPT55Repaired}): each infinite vertical ray of a split
+presentation independently lassos to a finite cycle.  Round-5
+\cite{GPT55Round5Review} requests a global lemma showing that a
+single finite certificate covers \emph{all} infinite vertical rays
+of the branching split forest uniformly, not infinitely many
+independent lasso choices.
+
+\subsection{The repair: a global representative-selection lemma}
+
+The key observation is that the finite extended-profile alphabet
+$\extSigma$ is finite of size at most $|\Sigma|\cdot 2^n$, and a
+lasso choice depends only on the extended profile $\extProf$ at the
+two pigeonhole positions, not on the specific ray.
+
+\begin{lemma}[Uniform representative selection]\label{lem:global-rep}
+Let $\extSigma$ be the finite extended-profile alphabet (round-4
+Definition~6.7).  For every $\sigma\in\extSigma$, choose:
+\begin{enumerate}[label=(\arabic*)]
+\item a representative finite generated context
+$C_\sigma\in\Ctx_\Q$ whose source has extended profile $\sigma$;
+\item a representative cycle word
+$\mathsf{cyc}_\sigma=(u_0^\sigma,u_1^\sigma,\ldots,u_{L_\sigma-1}^\sigma)$
+of length $L_\sigma$, built from $C_\sigma$ using the construction
+of Lemma~\ref{lem:request-cycle-v3}, such that the half-open
+segment $\mathsf{cyc}_\sigma$ is request-fulfilled.
+\end{enumerate}
+If, for every $\sigma\in\extSigma$, such a representative
+$(C_\sigma,\mathsf{cyc}_\sigma)$ exists, then a single finite
+certificate $\Q$ covers every infinite vertical ray of the split
+forest, by uniformly substituting at every ray the canonical
+$\mathsf{cyc}_{\sigma(r)}$ for the extended profile $\sigma(r)$
+that the ray hits twice.
+\end{lemma}
+
+\begin{proof}
+We argue in two parts.
+
+\emph{Part 1 (Existence of representatives).}  By the round-4
+hypothesis that every transitive existential request is eventually
+fulfilled in the witness-generated submodel, every infinite
+vertical ray $r$ satisfies the hypothesis of Lemma~6.10 (checkpoint
+structure) of \cite{GPT55Repaired}.  Hence for every $r$ the
+pigeonhole gives indices $i_r<j_r$ with
+$\extProf(u_{i_r}^r)=\extProf(u_{j_r}^r)=\sigma(r)$.
+
+For each $\sigma\in\extSigma$ realised on some ray, fix one such
+ray $r_\sigma$ and set $C_\sigma$ to be the generated context of
+$u_{i_{r_\sigma}}^{r_\sigma}$ and
+$\mathsf{cyc}_\sigma=[u_{i_{r_\sigma}}^{r_\sigma},\ldots,
+u_{j_{r_\sigma}-1}^{r_\sigma})$.  This is the
+\emph{Axiom-of-Choice-free} representative selection:\@ for each of
+the finitely many extended profiles in $\extSigma$, choose any
+one ray realising it.  Since $\extSigma$ is finite, the selection
+is finite and effective.
+
+\emph{Part 2 (Uniform substitution).}  Consider any infinite
+vertical ray $r$ of the split forest.  By Part~1, $r$ hits some
+extended profile $\sigma(r)\in\extSigma$ at two positions $i_r<j_r$
+with $\extProf(u_{i_r}^r)=\extProf(u_{j_r}^r)$.  By the
+substitution lemma of \cite{GPT55Repaired} (Lemma~6.9),
+substituting the representative cycle $\mathsf{cyc}_{\sigma(r)}$
+for the tail $[u_{i_r}^r,\ldots]$ of $r$ preserves all closure
+formulas at every position of $r$, because both
+$(u_{i_r}^r,\ldots)$ and $\mathsf{cyc}_{\sigma(r)}$ realise the
+same extended profile at their starting positions and are
+request-fulfilled.
+
+The substitution is the \emph{same} cycle word for every ray that
+hits $\sigma(r)$;\@ rays that hit different extended profiles
+substitute different (but pre-declared) cycle words.  The total
+substitution data is a finite map
+$\extSigma\to\{(C_\sigma,\mathsf{cyc}_\sigma):\sigma\in\extSigma\}$,
+finite of size $\leq |\extSigma|$.
+
+After substitution, every infinite vertical ray of the (modified)
+split forest is the original prefix
+$u_0^r,\ldots,u_{i_r-1}^r$ concatenated with
+$\mathsf{cyc}_{\sigma(r)}^\omega$.  The finitely many cycle words
+$\{\mathsf{cyc}_\sigma\}_{\sigma\in\extSigma}$ together with the
+finite prefix data of the unmodified portion form a finite
+certificate.
+\end{proof}
+
+\paragraph{(V14) Uniform cycle representatives.}
+For each $\sigma\in\extSigma$ that is realised on some infinite
+vertical ray of the witness-generated submodel, the certificate
+$\Q$ declares one representative finite generated context $C_\sigma$
+and one representative half-open cycle word $\mathsf{cyc}_\sigma$
+satisfying the request-fulfilled property of
+Lemma~\ref{lem:request-cycle-v3}.  Uniformity:\@ no two distinct
+extended profiles use the same cycle word, and the substitution
+function is the identity on the finite prefix
+$u_0,\ldots,u_{i-1}$ before the first pigeonhole hit.
+
+(V14) is a finite quantifier over $|\extSigma|\leq|\Sigma|\cdot
+2^n$ extended profiles;\@ for each, the certificate declares a
+context (one of $|\Ctx_\Q|$ many) and a cycle word (a path in
+$\U(\Q)$ of length at most $|\Ctx_\Q|\cdot|S|$).
+
+\begin{corollary}[Global finite regularization]\label{cor:global-reg}
+A valid certificate $\Q$ satisfying (V1)--(V14) yields, by the
+uniform substitution of Lemma~\ref{lem:global-rep}, a single finite
+representation of every infinite vertical ray of the original
+witness-generated submodel.  No automaton, parity acceptance, or
+$\omega$-language theoretic machinery is required;\@ the
+pigeonhole is over the finite set $\extSigma$.
+\end{corollary}
+
+%% ==================================================================
+\section{Summary and combined statement of the proof}
+\label{sec:summary}
+%% ==================================================================
+
+The round-5 review~\cite{GPT55Round5Review} lists eight
+recommended repairs.  Combining this paper with the v2 (M6$'$)
+delta~\cite{V2Delta} closes all eight:
+
+\begin{itemize}
+\item \textbf{Item~1 (TeX/PDF mismatch).}  Self-consistent in the
+repository (the source compiles to the 31-page PDF; the reviewer's
+bundle had stale source).  Editorial; no mathematical change.
+\item \textbf{Items~2, 3, 9.}  Closed by~\cite{V2Delta}: recursive
+verticalization (M6$'$), the stress concept
+$\exists\DR.(A\sqcap\exists\PP.B)\sqcap\exists\DR.B$ accepted by
+the worked example, polynomial side-width $m(n)=O(n^3)$ replaced
+by an effectively computable recurrence over modal depth.
+\item \textbf{Item~4.}  Closed by \S\ref{sec:item4}: explicit
+abstract pair-label function $L_\Q$ and validity clause (V11) for
+the composition table on $\T_\Q$.  The patchwork theorem is
+non-circular.
+\item \textbf{Item~5.}  Closed by \S\ref{sec:item5}: strong overlap
+compatibility (O3$'$) and validity clause (V12) requiring a
+declared global cross-label assignment.
+\item \textbf{Item~6.}  Closed by \S\ref{sec:item6}: (V13) promotes
+the joint equality discharge from assumption (A4) to an explicit
+finite validity clause.
+\item \textbf{Item~7.}  Closed by \S\ref{sec:item7}: half-open
+$[i,j)$ convention with explicit endpoint mapping
+$u_j\mapsto u_i^{(\ell+1)}$ at the profile level.
+\item \textbf{Item~8.}  Closed by \S\ref{sec:item8}: uniform
+representative selection (V14) gives a single finite certificate
+covering all infinite vertical rays.
+\end{itemize}
+
+\subsection{Combined validity-clause numbering}
+
+The combined certificate validity check has fourteen clauses:
+(V1)--(V10) of round-4~\cite{GPT55Repaired}, modified in v2 to
+(V3$'$), (V4$'$), (V5$'$), (V9.Eb$'$)~\cite{V2Delta}, together with
+(V11)--(V14) of this paper.  Each clause is a finite quantifier
+over the certificate's finite alphabets and contexts;\@ no clause
+requires a quantifier over models or unfoldings.
+
+\subsection{Combined decision procedure}
+
+The decision procedure for $\ALCIRCC{5}$ concept satisfiability is:
+\begin{enumerate}[label=(\arabic*)]
+\item enumerate finite generated split-forest certificates $\Q$ of
+size $\leq B(C_0)\leq 2^{2^{p(n)}}$ for an explicit computable
+polynomial $p$, where the components of $\Q$ are:
+$S$ (profiles), $E_\Q$ (equality ports), $\Ctx_\Q$ (context
+schemes), $\Mos_\Q$ (mosaics with stratum forests $\mathcal V$),
+$L_\Q$ (abstract pair-label function),
+$\{L_{12}^{\rm cross}\}$ (declared overlap labels),
+$\{w_E^{R,D}\}$ (joint equality witnesses),
+$\{(C_\sigma,\mathsf{cyc}_\sigma)\}_{\sigma\in\extSigma}$ (uniform
+cycle representatives);
+\item for each $\Q$, check (V1)--(V14) and (M6$'$.a)--(M6$'$.d), all
+finite-graph computations on $\Q$'s alphabets;\@
+\item if any $\Q$ passes, output ``$C_0$ is satisfiable'';
+otherwise output ``$C_0$ is unsatisfiable''.
+\end{enumerate}
+Soundness is the v2 vertical-realisation
+lemma~\cite{V2Delta} combined with Theorem~\ref{thm:patchwork-v3}
+and the typed-$\EQ$ quotient theorem of round 4 with (A4) replaced
+by (V13).  Completeness is the uniform regularization
+Corollary~\ref{cor:global-reg} combined with the existence of
+representatives from witness-generated submodels of any
+satisfying abstract RCC5 frame, as in round 4.
+
+%% ==================================================================
+\begin{thebibliography}{99}
+
+\bibitem{GPT55Repaired}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{A Generated Split-Forest Decidability Proof for $\ALCIRCC{5}$
+Without Automata: A Repaired Containment-Oriented Presentation}.
+Unpublished manuscript, May 2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf}.
+
+\bibitem{GPT55Round5Review}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{Formal Review of the Latest Repaired Split-Forest Proof
+Manuscript}.  Unpublished manuscript, May~22, 2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/formal_review_progress_paper.pdf}.
+
+\bibitem{V2Delta}
+Claude (Anthropic, Opus~4.7), prompted by Michael Wessel.
+\emph{Repaired Split-Forest Decidability Proof for $\ALCIRCC{5}$ (v2):
+Recursive Verticalization (M6$'$) to Close the Round-5
+Side-Witness Gap}.  Unpublished manuscript, May~2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2.pdf}.
+
+\bibitem{RenzNebel1999}
+Jochen Renz and Bernhard Nebel.
+\emph{On the Complexity of Qualitative Spatial Reasoning: A
+Maximal Tractable Fragment of the Region Connection Calculus}.
+Artificial Intelligence, 108(1--2):69--123, 1999.
+
+\bibitem{ALCIRCC5Repo}
+Michael Wessel et al.
+\emph{ALCI\_RCC5 Project Repository}.
+\url{https://github.com/lambdamikel/alcircc5}.
+
+\end{thebibliography}
+
+\end{document}
