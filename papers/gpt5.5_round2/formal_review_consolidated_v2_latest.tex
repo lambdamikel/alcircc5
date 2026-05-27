@@ -1,0 +1,486 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\Logic}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\Base}{\mathsf{B}}
+\newcommand{\comp}{\mathsf{comp}}
+\newcommand{\Cl}{\mathsf{cl}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Q}{\mathcal Q}
+\newcommand{\T}{\mathcal T}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Reach}{\mathrel{\mathsf{Reach}}}
+\newcommand{\eqc}{\equiv_{\EQ}}
+\newcommand{\blkeq}{\equiv_{\mathrm{blk}}}
+\newcommand{\Ex}{\mathsf{Ex}}
+\newcommand{\Mate}{\mathsf{Mate}}
+\newcommand{\Stratum}{\mathsf{Stratum}}
+\newcommand{\Subsrc}{\mathsf{Subsrc}}
+\newcommand{\Vrt}{\mathsf{Vert}}
+
+\title{Formal Review of the Consolidated v2 Generated Split-Forest Proof\
+       and the 2026-05-26 Verification Bundle}
+\author{Review prepared by GPT-5.5 Pro}
+\date{May 26, 2026}
+
+\begin{document}
+\sloppy
+\maketitle
+
+\begin{abstract}
+This memorandum reviews the latest consolidated manuscript
+\texttt{repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated}
+and the verification archive \texttt{verification-05-26-2026-latest.zip}.
+The new version is a genuine improvement: the verification bundle is now
+substantially aligned with the stronger claims, the previous V6 no-mosaic
+loophole has been closed in the executable checker, strengthened multiple
+upward-$\PP$ tests are present, request-cycle tests are present, and arity-4
+mosaic tests are included.  The proof architecture is still credible.
+However, the mathematical proof is not yet closed.  The remaining issues are
+not merely stylistic; several internal inconsistencies remain between the new
+recursive verticalization discipline, the old side-interface lemma, the
+support-closure definition, the patchwork proof, and the final enumeration
+bound.  I therefore recommend treating the current manuscript as strong
+progress, not yet as a finished decidability proof.
+\end{abstract}
+
+\tableofcontents
+
+\section{Materials reviewed and reproduction checks}
+
+I reviewed the following uploaded materials:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated.pdf};
+  \item \texttt{repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated.tex};
+  \item \texttt{verification-05-26-2026-latest.zip}.
+\end{itemize}
+The TeX source compiles locally with \texttt{pdflatex} and produces a
+36-page PDF.  The only compilation warnings I observed after repeated runs
+were harmless hyperref PDF-string warnings.
+
+I also unpacked and reran the verification scripts in
+\texttt{verification/python}.  The four main scripts named in the README all
+exit with code 0:
+\begin{center}
+\begin{tabular}{p{0.55\linewidth}cc}
+\toprule
+Script & Exit code & Result \\
+\midrule
+\texttt{rcc5\_composition\_check.py} & 0 & PASS \\
+\texttt{certificate\_checker.py} & 0 & PASS \\
+\texttt{small\_model\_oracle.py} & 0 & PASS \\
+\texttt{mosaic\_closure\_search.py} & 0 & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+The additional script \texttt{wp7\_side\_witness\_stress.py} is present in the
+archive, but it does not run from the archive alone: it imports project modules
+from \texttt{src/} that are not included in the zip, yielding
+\texttt{ModuleNotFoundError: No module named 'alcircc5\_reasoner'}.  This is not
+a mathematical refutation, but it means that the manuscript's claim that this
+script gives empirical ground truth is not reproducible from the supplied
+verification package as distributed.
+
+\section{Executive verdict}
+
+The latest version is a significant improvement over the previous manuscript.
+In particular:
+\begin{itemize}[leftmargin=2em]
+  \item the RCC5 composition table is computationally checked;
+  \item the V6 no-mosaic loophole is fixed in the checker;
+  \item strengthened two-superpart tests, including an incomparability-forcing
+        variant, are present;
+  \item request-closure regressions are present;
+  \item the proof now explicitly attempts recursive verticalization (M6$'$),
+        abstract pair labels $L_{\Q}$, overlap cross-labels, joint equality
+        discharge, and uniform cycle representatives.
+\end{itemize}
+These are the right repairs.  Nevertheless, I would not yet state that the
+paper establishes decidability.  Several proof-critical components are still
+internally inconsistent or under-proved.  The most important remaining defects
+are:
+\begin{enumerate}[leftmargin=2em,label=(G\arabic*)]
+  \item the old side-interface legality lemma still excludes exactly the
+        $\PP/\PPI$-comparable side witnesses that M6$'$ was introduced to admit;
+  \item the support-closure definition was weakened to per-position coverage
+        (SC4$'$), but the quotient-lifting and patchwork proofs still invoke
+        per-triple mosaic coverage from the old SC4;
+  \item the overlap/universal-propagation argument does not yet prove that
+        cross-mosaic universal restrictions are preserved;
+  \item the no-automata regularization section still mixes complete-profile
+        repetition and extended-profile repetition, and the uniform-cycle
+        substitution lemma needs a stronger compatibility proof;
+  \item the final enumeration bound contradicts the earlier side-width
+        recurrence and checks only V1--V10, although the certificate validity
+        definition now has V1--V14;
+  \item the verification package is useful evidence but does not prove the
+        support-closed patchwork theorem, and one cited script is not
+        self-contained.
+\end{enumerate}
+
+\section{Positive progress since the previous round}
+
+\subsection{The verification bundle is now materially stronger}
+
+The earlier mismatch between Claude's memo and the uploaded verification folder
+has mostly been corrected.  The latest certificate checker contains 26 test
+cases, including:
+\begin{itemize}[leftmargin=2em]
+  \item the strengthened $C_{AB}^{\mathrm{inc}}$ test;
+  \item the single-parent and single-chain negative controls;
+  \item pure request-cycle positive and negative controls;
+  \item explicit no-mosaic regressions for $\exists\DR.A$ and $\exists\PO.A$;
+  \item occurrence-freshness tests separating blocking from semantic equality.
+\end{itemize}
+All of these pass locally.  This is valuable counterexample-search evidence.
+
+\subsection{Recursive verticalization is the right conceptual repair}
+
+The manuscript correctly identifies the round-4 side-witness problem: two
+$\DR/\PO$ side witnesses of the same source can themselves be $\PP/\PPI$-
+comparable.  The stress concept
+\[
+  \exists\DR.(A\sqcap\exists\PP.B)\sqcap\exists\DR.B
+\]
+can be satisfied with two $\DR$-witnesses $y,z$ of the source and with
+$y\PP z$.  A flat sibling-frontier restriction to $\{\DR,\PO\}$ is therefore
+too strong.  The proposed recursive verticalization discipline (M6$'$), where
+a side witness can open a nested local vertical stratum, is the right direction.
+
+\subsection{The executable V6 defect appears fixed}
+
+In the previous verification review I found that a certificate for
+$\exists\DR.A$ with no mosaics was accepted vacuously.  The new checker now
+contains explicit negative tests for \texttt{exists DR.A with no mosaics} and
+\texttt{exists PO.A with no mosaics}, both rejected.  This is a real improvement.
+
+\section{Remaining proof-critical gaps}
+
+\subsection{The old side-interface lemma contradicts the new M6$'$ discipline}
+\label{ssec:side-contradiction}
+
+The most immediate mathematical problem is that the consolidated manuscript
+contains both of the following claims.
+
+First, the new M6$'$ discussion says that two side witnesses $y,z$ of the same
+source may be $\PP/\PPI$-comparable, and that this is handled by opening a
+nested local vertical stratum.  This is the intended round-5 repair.
+
+Second, Lemma \texttt{Side-interface legality} still states that the side
+interface $\Side(u)$ is legal with vertical positions only
+\[
+  \{u\}\cup\{\widehat u:\widehat u\eqc u\},
+\]
+and all remaining positions are sibling-frontier positions.  It then asserts
+that labels between sibling-frontier positions lie in
+\[
+  \{\DR,\PO,\EQ\},
+\]
+and explicitly excludes the $\PP/\PPI$ options.
+
+These two statements are incompatible.  The stress concept above is exactly a
+case where two side witnesses of the same source may have $y\PP z$.  Under
+M6$'$ that pair should be co-vertical inside a nested stratum; under the old
+side-interface lemma it is forbidden.  The proof of the lemma even says that a
+$\PP$-comparable pair of selected witnesses would be ``folded into the vertical
+backbone'', but the definition of $\Side(u)$ does not actually construct the
+nested stratum that performs this folding.
+
+This is not only a wording problem.  Later completeness steps still invoke
+Lemma \texttt{side-placement} to claim that collected side interfaces satisfy
+(M1)--(M6).  If that lemma is the old flat-frontier lemma, it loses satisfiable
+models.  If it is meant to be the new recursive lemma, then its definition and
+proof must be rewritten.
+
+\paragraph{Required repair.}
+Delete or replace the current Lemma \texttt{Side-interface legality}.  The
+replacement should define $\Side(u)$ as a finite \emph{stratified} side network,
+not as one source/equality cluster plus a flat sibling frontier.  It should prove:
+\begin{enumerate}[leftmargin=2em,label=(S\arabic*)]
+  \item every $\PP/\PPI$ label among side positions is co-vertical in some
+        explicitly named nested stratum;
+  \item cross-stratum labels are $\DR/\PO$;
+  \item the construction has the stated effective width bound;
+  \item the collected stratified side interfaces satisfy the same M6$'$ used
+        later in the mosaic definition.
+\end{enumerate}
+
+\subsection{SC4$'$ is per-position, but the patchwork proof still uses per-triple coverage}
+\label{ssec:sc4}
+
+The manuscript changes support closure to a per-position condition (SC4$'$):
+for each abstract position symbol $\pi\in\Pos_Q$, there is a mosaic containing
+that position with the right type and stratum.  It then says that per-triple
+coverage is not required because V11 enforces the RCC5 composition table on the
+abstract triple graph.
+
+However, the next lemmas still rely on the old per-triple version of SC4.  In
+particular, Lemma \texttt{Quotient lifting} says that every concrete triple
+$(u,v,w)$ is covered by a mosaic $M_{q(u,v,w)}$ ``from (SC4)'', and the proof of
+Theorem \texttt{Support-closed mosaic patchwork} likewise says that every triple
+of occurrences in a finite prefix is realised in some mosaic by (SC4).
+
+This is an internal contradiction:
+\[
+  \text{SC4$'$ gives mosaics for individual positions,}
+\]
+whereas
+\[
+  \text{the proof uses mosaics for triples.}
+\]
+V11 may be enough to check RCC5 composition on abstract labels, but then the
+patchwork proof must be rewritten to use $L_Q$ directly, not a triple mosaic
+that SC4$'$ no longer guarantees.
+
+\paragraph{Required repair.}
+Choose one of two routes and make the whole proof consistent.
+
+\begin{description}[leftmargin=2em]
+  \item[Route A: restore triple coverage.]  Define support closure so that for
+  every abstract triple in $\Trip_Q$ there is a mosaic realising that triple.
+  Then Lemma \texttt{Quotient lifting} and Theorem \texttt{patchwork} can keep
+  their current form, modulo updated M6$'$ stratification.
+
+  \item[Route B: remove triple-mosaic dependence.]  Keep SC4$'$ per-position
+  coverage, but prove a new global-label theorem: every concrete pair label in
+  the unfolding is exactly $L_Q(q(u),q(v))$; every concrete triple therefore
+  satisfies RCC5 composition by V11; and type propagation/existential support
+  are handled by separate V6/V7/V13 clauses.  Under this route, Lemma
+  \texttt{Quotient lifting} as currently stated must be deleted.
+\end{description}
+The current manuscript mixes the two routes.
+
+\subsection{The abstract triple map is still circular}
+
+Definition \texttt{Quotient map from concrete to abstract} says that ordered
+concrete triples are sent to elements of $\Trip_Q$ ``by (M1)--(M6), (P1)--(P3),
+and the patchwork lemma.''  But the patchwork lemma is later proved using this
+same quotient-lifting step.  This makes the argument circular.
+
+A non-circular proof should first define, independently of patchwork, how every
+concrete occurrence receives an abstract position symbol and how every concrete
+pair label is computed from $L_Q$.  Then V11 can be applied directly to concrete
+triples.  Alternatively, if triple mosaics are restored, then $q(u,v,w)$ should
+be defined from the concrete unfolding and SC4 should provide a mosaic for it,
+without appealing to the theorem being proved.
+
+\subsection{Universal propagation across overlap amalgams is under-proved}
+
+Lemma \texttt{Universal-propagation preservation} is still too compressed.  The
+hard case is a cross pair $p\in P_1\setminus P_0$, $q\in P_2\setminus P_0$ with
+$L_{12}(p,q)=R$ and $\forall R.D\in\tau(p)$.  The proof says that V7 and a
+composition chain through an overlap point force $D\in\tau(q)$.  This is not an
+immediate consequence of RCC5 composition.  Composition determines possible
+relation labels; it does not by itself propagate type information along a newly
+declared cross-pair label.
+
+\paragraph{Required repair.}
+The certificate needs an explicit type-safety condition for declared cross-labels:
+for every declared overlap cross-pair $(p,q)$ with label $R$, if
+$\forall R.D\in\tau(p)$, then $D\in\tau(q)$, and symmetrically using inverse
+labels.  Then Lemma \texttt{M4-preserved} becomes immediate.  Without such a
+clause, overlap amalgamation can introduce a new $R$-edge that violates a
+universal restriction.
+
+\subsection{The request-cycle proof still has profile/extended-profile slippage}
+
+The request-cycle lemma itself is close to the desired no-automata replacement:
+it uses half-open cycles and fresh occurrences, and it rejects cycles that carry
+unfulfilled vertical existential requests.  This is the right idea.
+
+There is still a mismatch between the lemmas using it.  Lemma
+\texttt{Request-fulfilled repetition} uses repeated \emph{extended} profiles
+$\widehat\Pi$, including pending-set information.  But Lemma \texttt{Lasso
+construction by blocking} says to take the first repetition of the ordinary
+complete profile $\Pi(u_i)=\Pi(u_j)$ and then invokes the request-cycle lemma.
+That is not sufficient: two occurrences can have the same complete boundary
+profile but different pending request sets.  The lasso lemma should repeat
+$\widehat\Pi$, not just $\Pi$.
+
+There is also a smaller half-open notation issue.  The proof later says to
+replace the tail by fresh copies of $[u_i,u_j]$, while the convention defines
+the cycle word as $[u_i,u_j)$.  This should be made consistent throughout.
+
+\paragraph{Required repair.}
+State the lasso lemma only for repeated extended profiles:
+\[
+  \widehat\Pi(u_i)=\widehat\Pi(u_j),
+\]
+and use the half-open segment $[u_i,u_j)$ everywhere.  Then define the finite
+cycle validity check to verify request fulfillment on that half-open word.
+
+\subsection{Uniform global regularization needs a stronger compatibility lemma}
+
+Lemma \texttt{Uniform global regularization} says that all rays hitting the same
+extended profile can use one representative cycle word.  This is plausible only
+if the extended profile records every boundary component needed for
+substitution: context scheme, port pattern, side mosaic interfaces, M6$'$ stratum
+forest, equality cluster, request status, and every outward relation summary.
+The manuscript asserts this through the substitution lemma, but the proof does
+not show that the representative cycle is compatible with every occurrence of
+that extended profile in every ray.
+
+This is another place where the proof should be made more mechanical.  The
+complete profile should be defined as a finite boundary isomorphism type, and
+the substitution lemma should explicitly say that equal complete profiles induce
+an isomorphism of all boundary data, including the stratum forest and all named
+mosaic positions.  Then the uniform-cycle lemma can rely on that isomorphism.
+
+\subsection{The side-width and enumeration bounds are inconsistent}
+
+The manuscript first says that recursive verticalization requires a side-width
+recurrence over modal depth:
+\[
+  m(0)=1,\qquad
+  m(d+1)=1+|\Ex_{\DR/\PO}(u)|(1+k_{\Mate}+k_{\rm bd})
+         +|\Ex_{\DR/\PO}(u)|m(d),
+\]
+and explicitly states that this is not polynomial in general.
+
+Later, in the decision-procedure section, the manuscript reverts to a cubic
+bound
+\[
+  m(n)=1+n^3+3n^2+3n=O(n^3)
+\]
+for every generated occurrence.  This contradicts the earlier recurrence.  The
+abstract and the enumeration bound also speak of a computable double-exponential
+bound, while the final proof of Lemma \texttt{enumeration} says that the
+certificate validity clauses V1--V10 are checked, omitting the newly added
+V11--V14.
+
+\paragraph{Required repair.}
+Use one bound consistently.  The safer bound is the recurrence-derived
+computable bound, for example
+\[
+  m_*(C_0)=m(\mathrm{md}(C_0)).
+\]
+Then define the certificate grammar and enumeration bound using $m_*(C_0)$, not
+an unrelated cubic $m(n)$.  Also update every decision-procedure statement from
+V1--V10 to V1--V14.
+
+\subsection{The certificate grammar has not caught up with M6$'$}
+
+The mosaic definition now uses a stratum forest
+\[
+  \mathcal V=(\Stratum,\Subsrc),
+\]
+but several later pieces still treat the vertical component as a simple subset
+$\Vrt\subseteq P$.  Examples include the grammar entry
+\[
+  \text{Stratum }\Vrt_M \subseteq P
+\]
+and lemmas that write mosaics as $(P,\tau,L,\Vrt)$ rather than
+$(P,\tau,L,\mathcal V)$.  This is not merely notation: a subset $\Vrt$ cannot
+encode nested strata, parent-position maps, or the co-vertical relation required
+by M6$'$.
+
+\paragraph{Required repair.}
+Update the grammar, the finite alphabet count, and every mosaic lemma to use the
+full finite stratum-forest object.  The enumeration bound must count finite
+stratum forests of size at most the side-width bound.
+
+\section{Assessment of the verification bundle}
+
+The verification evidence is useful and has improved.  It now supports several
+finite aspects of the proof architecture:
+\begin{itemize}[leftmargin=2em]
+  \item the RCC5 composition table is correctly implemented;
+  \item the strengthened multiple-superpart examples are included;
+  \item occurrence-level equality is distinguished from blocking cycles;
+  \item no-mosaic DR/PO witnesses are rejected;
+  \item arity-4 atomic mosaic networks and overlap amalgamations are tested.
+\end{itemize}
+However, the verification bundle remains counterexample-search evidence, not a
+formal proof.  In particular:
+\begin{enumerate}[leftmargin=2em]
+  \item The arity-4 mosaic search does not prove the full support-closed
+        patchwork theorem for arbitrary finite prefixes.
+  \item The checker does not appear to test the new SC4$'$ versus
+        triple-coverage inconsistency identified in Section~\ref{ssec:sc4}.
+  \item The side-witness stress script is not self-contained in the supplied
+        archive, because it depends on missing \texttt{src/} modules.
+  \item The small-model oracle is useful for finite sanity checks, but it cannot
+        validate infinite regular witnesses such as
+        $\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$ beyond confirming
+        that no small finite model exists.
+\end{enumerate}
+
+I recommend including either the full project source needed by
+\texttt{wp7\_side\_witness\_stress.py}, or replacing that script with a
+self-contained finite model construction for the stress concept.  The latter
+would be easy: take three regions/elements $x,y,z$ with $x\DR y$, $x\DR z$, and
+$y\PP z$, put $A$ on $y$ and $B$ on $z$, then verify the concept directly.
+
+\section{Recommended next revision}
+
+The next revision should prioritize coherence over adding new machinery.  I
+recommend the following concrete edit plan.
+
+\begin{enumerate}[leftmargin=2em,label=(R\arabic*)]
+  \item Replace the old \texttt{Side-interface legality} lemma with a genuinely
+        recursive M6$'$ side-interface construction.  Do not use the old flat
+        sibling-frontier lemma anywhere in completeness.
+  \item Decide whether support closure is per-triple or per-position.  If
+        per-position, rewrite the patchwork proof to use $L_Q$ directly and
+        remove Lemma \texttt{Quotient lifting}.  If per-triple, restore SC4 as
+        triple coverage.
+  \item Add an explicit cross-pair universal-safety clause for overlap
+        cross-labels, and use it to prove Lemma \texttt{M4-preserved}.
+  \item Change the lasso construction to repeat extended profiles
+        $\widehat\Pi$, and standardize all cycle words as half-open
+        $[i,j)$ segments.
+  \item Define the complete profile as a finite boundary isomorphism type that
+        includes the full stratum forest, all ports, all side mosaic positions,
+        and all request statuses.  Then restate the substitution lemma in terms
+        of that boundary isomorphism.
+  \item Replace the cubic side-width bound by the recurrence-derived computable
+        bound $m(\mathrm{md}(C_0))$, or prove that recursive verticalization can
+        actually be compressed to the cubic bound.  At present the two claims
+        conflict.
+  \item Update the certificate grammar and enumeration proof to cover V1--V14
+        and to count full stratum forests, not only subsets $\Vrt\subseteq P$.
+  \item Make \texttt{wp7\_side\_witness\_stress.py} reproducible from the
+        supplied zip, or remove manuscript claims that rely on it.
+\end{enumerate}
+
+\section{Final assessment}
+
+The proof has moved in the right direction.  I am more confident now than in the
+previous round that the intended split-forest architecture can be made to work:
+witness thinning, generated containment covers, occurrence-level equality ports,
+recursive side verticalization, support-closed mosaics, and request-fulfilled
+blocking cycles are the right ingredients.
+
+But the current consolidated manuscript still does not, as written, establish
+decidability.  The largest remaining issue is no longer the original density or
+Hasse-diagram concern.  It is the mismatch among three layers that now have to
+be aligned precisely:
+\[
+  \text{recursive side strata (M6$'$)},
+  \qquad
+  \text{abstract pair/triple support},
+  \qquad
+  \text{finite regular certificate enumeration}.
+\]
+Once those layers are made internally consistent, the proof will be much closer
+to publication-grade.  Until then, the appropriate verdict is:
+\[
+  \boxed{\text{Substantial progress, but the decidability proof remains open as a formal manuscript.}}
+\]
+
+\end{document}
