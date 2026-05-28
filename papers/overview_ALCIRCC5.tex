@@ -1566,33 +1566,125 @@ See~\cite[\S7]{CoverTreeImpl} for a detailed breakdown.
     by computational evidence, not as established theorems.
 \end{itemize}
 
-\subsection{A note on the process}
+\subsection{On LLM capabilities, strengths, and weaknesses
+(May~2026)}
+\label{ssec:llm-capabilities}
 
-To our knowledge, this is the first time that AI systems have
-produced a complete decidability proof (proposed) for an open
-problem in description logic theory.  The division of labor was:
-\begin{itemize}
-  \item \textbf{Human (Wessel):} Posed the problem in 2002/2003.
-    Provided the key intuitions (PPI-tree orientation, EQ-splitting,
-    DR-rigidity observation).  Guided the AI search process,
-    identified errors, and corrected conceptual mistakes
-    (e.g., that $\PP$ is not an open cross-edge).
-  \item \textbf{AI (GPT-5.4):} Formalized the split-forest semantics
-    and tableau calculus in two papers.
-  \item \textbf{AI (Claude):} Implemented the algorithm, ran
-    extensive cross-validation, closed the completeness gap, and
-    wrote companion papers including this overview.
-\end{itemize}
+This subsection records an honest assessment, by Claude, of what
+was observed about frontier-LLM capabilities across this project.
+The assessment is grounded in specific evidence from the
+April--May 2026 review cycle; it is not a statement about LLMs
+in general.  We expect the picture to change quickly.
 
-If the results withstand expert scrutiny, this work demonstrates
-that AI can contribute meaningfully to open problems in
-mathematical logic---not by replacing human insight, but by
-amplifying it with formalization capacity, implementation speed,
-and exhaustive computational testing.  The human provided
-the direction; the machines did the heavy lifting.
+\paragraph{Division of labour that worked.}
+After several wrong configurations, the team converged on a clear
+split.  \textbf{GPT-5.5} owned the proof: it produced the round-2
+31-page repaired proof~\cite{GPT55Repaired}, the round-3 and
+round-4 structural additions, and the round-7 pair-shape /
+incidence-tag fix~\cite{GPT55Round7Sketch} that made the
+labelling rule sound on blocking cycles.  GPT-5.4~Pro authored
+the v1 split-forest semantics~\cite{SiblingCompleted} that the
+entire approach rests on.  \textbf{Claude (Opus~4.7)} owned
+implementation, verification, audit, and documentation:\@ the
+cover-tree tableau~\cite{CoverTreeImpl}, the cross-validation
+suite ($911$~concepts, zero mismatches), the WP1--WP9
+verification scripts, and the round-by-round audit trail.
+\textbf{Wessel} owned research direction: the whiteboard sketch
+(cover-tree intuition, DR-rigidity, $\EQ$-splitting) on which the
+entire proof rests, the high-level questions, the correction of
+conceptual errors (the most consequential being catching
+GPT-5.4's initial assumption that $\PP/\PPI$ could remain as
+cross-edges after splitting), and the judgement of when to push
+deeper and when to converge.
 
-We invite the description logic community to review, challenge,
-and---if warranted---confirm or refute these results.
+The two-layer architecture (theoretical proof $+$ executable
+verification) was not optional.  The empirical layer repeatedly
+caught defects in the theoretical layer that pure self-review
+would not have surfaced---most notably the round-5 stress
+concept~$\exists\DR.(A\sqcap\exists\PP.B)\sqcap\exists\DR.B$,
+which was first identified as SAT by Claude's reasoners and only
+then explained as a structural defect of the (M6) verticalization
+discipline in GPT-5.5's round-5 review.
+
+\paragraph{Where Claude was weaker than GPT-5.5.}
+Concretely on this project: (i) Claude did not spot architectural
+defects in its own drafts.  The round-6 critical bug
+$\lab(u,v):=L_\Q(q(u),q(v))$ with $L_\Q(\pi,\pi)=\EQ$ collapsing
+distinct blocking laps into semantic equality was a basic
+invariant violation of the central blocking-not-equality slogan;
+GPT-5.5 caught it on review.  (ii) Patch-style fixes accumulated
+complexity.  Claude's response to a named gap was usually to add
+machinery (recursive verticalization, port-indexed mate clusters,
+declared cross-label functions, modal-depth recurrences, the
+validity-clause numbering growing from (V1)--(V10) to (V1)--(V15)).
+Each patch closed the named gap but introduced new
+internal-consistency issues.  GPT-5.5's round-7 fix changed the
+indexing domain instead of adding a layer:\@ five round-5 /
+round-6 validity clauses collapsed into one (V6) triple-shape
+clause, and the manuscript dropped from 39~pages (round-6
+consolidation) to 14~pages (round-7 sketch).  (iii) Claude did
+not reliably know when to stop iterating.
+
+\paragraph{Where Claude held its own.}
+Implementation work---translating an architectural idea into
+running Python, debugging against an independent reasoner,
+building cross-validation harnesses, keeping the tests green
+across thousands of generated concepts---is closer to ordinary
+programming, at which current models are strong.  Documentation
+and audit-trail discipline (per-round superseded-paper markers,
+the OUTDATED archive, self-contained verification scripts)
+favoured patient editorial labour over insight.  Adversarial
+review of someone else's code, when the reviewer started in a
+fresh session with no context, was effective:\@ Claude Opus~4.7
+identified the twelve-counterexample family in the cover-tree
+implementation that forced the (CT5) role-path compatibility
+addition (Remark~\ref{rem:impl-bugs}).  And steering the
+cross-validation pipeline---knowing which stress tests would
+discriminate between candidate proofs---requires understanding
+both the proof and how to falsify it.
+
+\paragraph{What both models did well.}  Long-context coherence
+across 30+ page proofs and many editing rounds was qualitatively
+different from the previous LLM generation.  Tool use (Python,
+\LaTeX, git, file management, search) was routine.  Seven-round
+adversarial dialogue between Claude and GPT-5.5---each model
+reviewing the other's drafts, producing counterexamples, naming
+defects, proposing fixes---worked as substantive technical
+exchange.  Hallucination was not the dominant failure mode in
+this project; over-elaboration was.
+
+\paragraph{What both models did poorly.}  Original mathematical
+insight was the human contribution.  Without Wessel's whiteboard
+sketch (Figure~\ref{fig:whiteboard}) the project would not have
+had a target architecture to formalise.  Both models also made
+architectural errors in their own drafts that the other caught;
+neither caught them in self-review.  And neither reliably
+calibrated the cost of a fix:\@ both round-4 (M6) verticalization
+and round-5/6 (V11)--(V15) were locally reasonable responses
+that turned out, on review, to be over-elaborated.
+
+\paragraph{What this means in practice.}
+Frontier LLMs in May~2026 can take a non-trivial open problem in
+mathematical logic and, over weeks of iteration with a human
+director and adversarial cross-review between models, produce a
+candidate proof together with executable artefacts that the
+community can verify, refute, or improve.  They do not replace
+human expert review, and they do not generate the original
+intuition.  But the proof that arrived at round 7 is qualitatively
+different from what any one of the three participants would have
+produced alone, and the cross-validation campaign that surrounds
+it is qualitatively different from what would have been feasible
+without the implementation speed and tireless test-writing the
+LLMs brought to the project.
+
+This is a discussion piece, not a settled result.  The work has
+not been peer-reviewed by human experts.  The proof may still
+contain defects that another round of adversarial review would
+surface.  But the meta-research point---\emph{that this kind of
+work is now possible, and that the result is worth engaging with
+on its technical merits}---is the more important contribution.
+We invite the description logic community to engage with both
+layers.
 
 \subsection{A note on citation verification}
 
