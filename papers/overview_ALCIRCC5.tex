@@ -622,6 +622,27 @@ The breakthrough insight, due to Wessel, is to decompose
 $\ALCIRCC{5}$ models into a \emph{tree layer} and a
 \emph{cross-edge layer}, where the cross-edge layer is simple
 enough to handle without full global blocking.
+Figure~\ref{fig:whiteboard} reproduces the original whiteboard
+sketch from April~7, 2026:\@ $\PPI$ chains form trees, $\DR/\PO$
+are sibling cross-edges, and $\DR$ propagates rigidly downward
+along $\PP$-chains.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\columnwidth]{20260407_062616.jpg}
+\caption{Wessel's whiteboard sketch (April~7, 2026) of the
+  split-forest decomposition for $\ALCIRCC{5}$.  Vertical
+  $\PPI$-chains form the cover-tree backbone (with join nodes
+  split into $\EQ$-mates); $\DR/\PO$ become sibling cross-edges
+  between non-comparable subtrees; and $\DR$ propagates rigidly
+  downward because $\comp(\PP,\DR)=\comp(\DR,\PPI)=\{\DR\}$, so
+  the residual cross-edge alphabet is just $\{\DR,\PO\}$, which
+  is trivially arc-consistent.  Every subsequent formalisation
+  in this paper---GPT-5.4's split-forest semantics, Claude's
+  cover-tree tableau, and GPT-5.5's round-7 sketch---rests on
+  this two-layer decomposition.}
+\label{fig:whiteboard}
+\end{figure}
 
 \subsection{Cover trees}
 
