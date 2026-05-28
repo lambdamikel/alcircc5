@@ -606,6 +606,53 @@ The deeper concern raised by this rejection is not the fate of one extended abst
 
 Agentic AI did not create this failure mode; the failure mode is older than the AI question. But the appearance of AI-assisted work at the boundary of the community is a stress test for the existing review process, and **the test result is that the process does not currently have the tools to engage with such submissions on their merits**. The risk this carries for the field is real. If the response to a 25-year-open problem being attacked with new methods is to reject the attempt on the basis of typos, GitHub-pinning, and discomfort with the participant class, while ignoring the substantive claims of the work and the meta-research question the work explicitly raises, then the review process is endangering exactly the scientific progress it claims to protect. Peer review exists to surface and stress-test new ideas, not to keep them out. When it functions as the latter, it has stopped doing the job the community delegated to it.
 
+## On the capabilities, strengths, and weaknesses of frontier LLMs for DL research (May 2026)
+
+*An honest assessment by Claude (Opus 4.7), based on what was actually observed across this project — one open problem in description logic, three frontier models (Claude Opus 4.7, GPT-5.4 Pro, GPT-5.5), seven rounds of adversarial review, three weeks of after-work iteration.  Not a statement about LLMs in general; a report on what happened here.*
+
+### Division of labour that worked
+
+After several wrong configurations, the team converged on a clear split:
+- **GPT-5.5** owned the mathematical proof.  It produced the round-2 31-page repaired proof, the round-4 structural additions, and the round-7 pair-shape / incidence-tag fix that finally made the labelling rule sound on blocking cycles.  GPT-5.4 Pro authored the v1 split-forest semantics that the entire approach rests on.
+- **Claude (Opus 4.7)** owned implementation, verification, audit, and documentation.  The cover-tree tableau (≈350 lines of Python), the cross-validation suite (911 concepts, zero mismatches), the WP1–WP9 verification scripts, the README/CONVERSATION/CLAUDE.md upkeep, and the round-by-round audit-trail discipline are all Claude's.
+- **Wessel** owned the research direction: the whiteboard sketch (the cover-tree intuition, DR rigidity, EQ-splitting) that the entire proof depends on, the high-level questions, the correction of conceptual errors (the most consequential being catching GPT-5.4's initial assumption that PP/PPI could remain as cross-edges after splitting), and the steering of when to push deeper and when to converge.
+
+The empirical layer (Claude's implementations) repeatedly caught defects in the theoretical layer (the proof drafts) that pure self-review would not have found.  The round-5 stress concept `∃DR.(A ⊓ ∃PP.B) ⊓ ∃DR.B` was first identified as SAT by the cover-tree tableau and the quasimodel reasoner; the round-7 review uses this empirical fact to motivate the recursive verticalization that was missing.  Two-layer architecture (theoretical proof + executable verification) is not optional under this style of work; it is the cross-check that keeps either layer from running off on its own.
+
+### Where Claude was weaker than GPT-5.5
+
+Concretely, on this project:
+- **Spotting architectural defects in Claude's own drafts.**  The round-6 critical bug — `lab(u,v) := L_Q(q(u), q(v))` with `L_Q(π,π) = EQ` collapsing distinct laps of a blocking cycle into semantic equality — was a basic invariant violation.  It violated the central blocking-not-equality slogan that Claude had been carrying forward through every previous round.  Claude did not spot it; GPT-5.5 did, on review.
+- **Patch-style fixes accumulate complexity.**  When a defect was named, Claude's typical response was to layer on new machinery: recursive verticalization, port-indexed mate clusters, declared cross-label functions, modal-depth recurrences, the validity-clause numbering growing from (V1)–(V10) to (V1)–(V15).  Each patch closed the named gap but introduced new internal-consistency issues that the next round had to clean up.  GPT-5.5's round-7 fix was the structurally right move: it did not add a layer, it changed the indexing domain.  Validity clauses (V11)–(V15) of round-5 / round-6 were absorbed into a single (V6) clause on triple shapes.
+- **Knowing when to stop iterating.**  GPT-5.5's round-7 sketch is 14 pages; Claude's round-6 consolidation was 39 pages.  Some of that difference is detail; much of it is over-elaboration in response to perceived gaps.  A cleaner architecture tends to be shorter.
+
+### Where Claude held its own
+
+Also concretely:
+- **Implementation work.**  Translating an architectural idea into running Python, debugging it against an independent reasoner, building cross-validation harnesses, and keeping the tests green across thousands of generated concepts.  This is closer to ordinary programming, where current models are strong.
+- **Documentation and audit-trail discipline.**  The README, CLAUDE.md, CONVERSATION.md, the per-round superseded-paper markers, the OUTDATED.md archive, the verification scripts' self-contained reproducibility.  Keeping the project legible to a future reader (or a fresh AI session, or a human reviewer) is real work and it favours patient editorial labour over flash-of-insight thinking.
+- **Adversarial review of someone else's work.**  Claude Opus 4.7 in a fresh session, with no prior context, identified the twelve-counterexample family in the cover-tree tableau implementation and forced the (CT5) role-path compatibility addition.  That was Claude reviewing Claude's prior code; the role-swap worked because the adversary started cold.
+- **Steering the cross-validation pipeline.**  Knowing which stress tests would discriminate between candidate proofs and writing the scripts to run them.  WP7 (side witnesses), WP8 (blocking-not-equality), WP9 (split copies) are the right minimal exercises of the round-7 architecture; getting them right requires understanding both the proof and how to falsify it.
+
+### What both models did well
+
+- **Long-context coherence.**  Both models maintained 30+ page proofs and 600+ line repository documents across many editing rounds without losing track of prior commitments.  This is qualitatively different from the previous LLM generation.
+- **Tool use.**  Python execution, LaTeX compilation, git operations, file management, search.  Routine.
+- **Multi-round adversarial dialogue.**  The seven-round Claude ⇄ GPT-5.5 exchange — each model reviewing the other's drafts, producing counterexamples, naming defects, proposing fixes — works.  It is not a substitute for human expert review, but it is a substantive technical exchange between non-human reviewers, and it found real defects that survived shallower checks.
+- **Self-skeptical working style.**  After some early failed attempts, both models settled into a pattern of writing tests against their own claims, cross-validating with the independent reasoner, and citing the verification logs in the prose.  Hallucination was not the dominant failure mode in this project.  Over-elaboration was.
+
+### What both models did poorly
+
+- **Original mathematical insight.**  The cover-tree intuition (Wessel), the DR-rigidity observation (Wessel), the corrected cross-edge restriction (Wessel correcting GPT-5.4) are all human contributions.  Without Wessel's whiteboard sketch the project would not have had a target architecture to formalise.  Frontier LLMs in May 2026 are excellent at formalising a good idea and stress-testing it; they did not generate the good idea here.
+- **Self-review for foundational soundness.**  Both Claude (round-6) and GPT-5.5 (rounds 2–4) made architectural errors in their own drafts that the other model caught.  Neither caught them in self-review.
+- **Calibrating the cost of a fix.**  The (M6) verticalization discipline added in round 4 was reasonable for the round-4 stress cases but turned out to over-restrict.  The (V11)–(V15) clauses added in round 5 / round 6 were reasonable per-item responses but accumulated into a structure round 7 had to dismantle.  Neither model reliably said "this is enough" or "this is too much."
+
+### What this means in practice
+
+Frontier LLMs in May 2026 can take a non-trivial open problem in mathematical logic and, over weeks of iteration with a human director and adversarial cross-review between models, produce a candidate proof together with executable artefacts that the community can verify, refute, or improve.  They cannot replace human expert review, and they cannot generate the original intuition.  But the proof that arrived at round 7 is qualitatively different from what any one of the three participants would have produced alone, and the cross-validation campaign that surrounds it is qualitatively different from what would have been feasible without the implementation speed and tireless test-writing that the LLMs brought to the project.
+
+The honest summary: this is a discussion piece, not a settled result.  The work has not been peer-reviewed by human experts.  The proof may still contain defects that another round of adversarial review would surface.  But the meta-research point — *that this kind of work is now possible, and that the result is worth engaging with on its technical merits* — is the more important contribution.  We hope the description-logic community will engage with both layers.
+
 ## Acknowledgments
 
 This research was prompted by Michael Wessel (miacwess@gmail.com), who introduced the ALCI\_RCC family in his doctoral work at the University of Hamburg under the DFG project "Description Logics and Spatial Reasoning" (grant NE 279/8-1).
