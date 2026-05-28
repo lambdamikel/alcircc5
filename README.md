@@ -19,6 +19,7 @@
 - [Outdated Files](#outdated-files)
 - [References](#references)
 - [DL 2026 submission and rejection](#dl-2026-submission-and-rejection)
+- [On the capabilities, strengths, and weaknesses of frontier LLMs for DL research (May 2026)](#on-the-capabilities-strengths-and-weaknesses-of-frontier-llms-for-dl-research-may-2026)
 - [Acknowledgments](#acknowledgments)
 - [Outdated and Superseded Material](OUTDATED.md) — detailed write-ups of disproved, retracted, or superseded approaches, preserved for reference and transparency
 
