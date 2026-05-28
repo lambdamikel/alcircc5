@@ -5447,3 +5447,117 @@ The conceptual contributions that survive into round-7 are:
 GPT-5.5's round-7 sketch is the new canonical pillar.  Claude's role
 going forward is verification, audit, and documentation, not
 authorship of the proof manuscript.
+
+---
+
+## 2026-05-28 (afternoon/evening): README cleanup, OVERVIEW paper rewrite
+
+### README compression (commit `7cb54d5`)
+
+After round-7 adoption the README was carrying substantial
+historical debt.  Wessel asked to "shorten this significantly by now,
+and maybe move some stuff to OUTDATED."  Three structural changes:
+
+- **Latest News compressed 17 -> 5 entries.**  The 12 superseded
+  round-2 through round-6 entries (5-6, 5-12, 5-13, 5-14 x2, 5-21
+  x2, 5-22, 5-23 x3, 5-26) were collapsed into one "2026-05-22 to
+  2026-05-26 -- round-5 / round-6 review cycle (Claude as proof
+  author)" marker pointing at OUTDATED.md, plus a similar
+  marker for 5-6 to 5-14.
+- **"Round-2 review and repaired-proof adoption (May 2026)"
+  section** removed from README, full prose archived in OUTDATED.md.
+- **"Twelfth approach: GPT-5.5 automata-flavored split-forest
+  proof"** removed from README -- the early-May automata proof is
+  superseded by round-7's parity-tree-automata route paper -- and
+  archived in OUTDATED.md.
+
+Net: README went from 654 to 611 lines.  OUTDATED.md grew from 930
+to 997 lines, capturing the full historical prose.
+
+### "Eleventh approach: cover-tree tableau — MOST PROMISING" stays
+
+Wessel asked whether the "Eleventh approach" should be renamed to
+twelfth now that round-7 is the canonical statement.  No:\@
+round-7 is the current canonical statement of the eleventh
+approach, not a new approach.  GPT-5.5's round-7 sketch uses every
+ingredient of the eleventh approach (witness thinning, generated
+containment covers, split copies, sibling interfaces, typed-EQ
+quotient, DR-rigidity-based residual frontier, finite-index
+blocking with request-closed cycles); the round-7 fix
+(occurrence-sensitive pair shapes + incidence tags) is a labelling
+repair on the same architecture, not a new architecture.  The
+"Closing the completeness gap" history paragraph inside the
+section was already updated to point at round-7.
+
+### Overview paper: first-pass update (commit `bd537c4`)
+
+The overview paper was updated to reflect round-7 as the canonical
+statement:
+
+- **§6.4 (Soundness and completeness):** the "current best
+  statement" paragraph was rewritten to describe the round-7
+  pair-shape architecture, explicitly describe the round-6 collapse
+  defect (lab(u,v) = L_Q(q(u),q(v)) with L_Q(pi,pi) = EQ), and
+  state why round-7's structural move resolves it.
+- Three structural ingredients restated (occurrence-sensitive
+  equality, split copies, request-closed cycles).
+- "Status of v1, v2.1, ..." paragraph extended to list all
+  superseded round-5 / round-6 manuscripts.
+- WP1-WP6 verification paragraph qualified as for the round-2
+  31-page proof; WP7/WP8/WP9 added for the round-7 stress
+  concepts.
+- Theoretical-layer summary (§7) and bibliography updated.
+- New macros for round-7 pair-shape notation
+  (\self, \eqtag, \up, \down, \side, \front, \Pos, \Pair, \Tri,
+  \lab, \Base).
+
+### Overview paper: second-pass restructure (commit `7dcf9a2`)
+
+Wessel observed the overview still had "a lot of historic revision
+discussion, fixed, defects & repairs, etc." and asked for a second
+pass to either omit most of the historic developments or move them
+to a dedicated "History of Attempts" section in abstracted form.
+
+Three structural changes:
+
+1. **§6.2 (How blocking works):** three large historical
+   implementation-bug remarks (~200 lines covering the QM-reasoner
+   incompleteness on cyclic-via-symmetric-role concepts, the
+   PP/PPI-transitivity unsoundness, and the 4x4 grid of three-type
+   chains) were compressed into one short remark
+   "Implementation-level bugs found and fixed in April 2026" that
+   names the three categories in one paragraph and refers to the
+   cover-tree implementation paper for technical detail.
+
+2. **§6.4 (Soundness and completeness):** rewritten as a clean
+   current-state statement of what the round-7 proof shows. The
+   historical narrative of v1/v2.1/round-2/round-6 with all the
+   eight-structural-gaps and load-bearing-defects discussion was
+   removed from this subsection; only the current round-7
+   architecture, the three structural ingredients, the WP7-WP9
+   verification, and the theory-vs-implementation scope note
+   remain.
+
+3. **New §7 (History of Attempts, April--May 2026):** abstracted
+   narrative of the seven-round evolution, in eight subsections:
+   starting point + v1; v1 -> v2.1 -> round-2 31-page; rounds 3-4
+   structural layers; round 5 (M6') recursive verticalization;
+   round 6 internal-coherence pass; round 7 abstract-position-symbol
+   collapse and pair-shape fix; what survives and why;
+   computational verification across rounds.  The Outlook and
+   Conclusion section auto-renumbered §7 -> §8 via cross-refs.
+
+Net effect: the up-front overview reads as a clean current-state
+survey; readers who want the review-cycle history have one
+dedicated section for it in abstracted form.  The companion
+implementation paper carries the deep implementation-level bug
+detail.  Page count unchanged at 20 pages (deletions in §6
+balanced by the new §7).
+
+### DL 2026 abstract paper: left as-is
+
+Wessel:\@ "We can leave the DL Abstract paper the way it is; it's
+historical by now."  The DL 2026 abstract (rejected, in
+dl2026-rejected/, plus the post-rejection working copy in papers/)
+was not updated for round-7.  It remains as the snapshot of the
+work as of the DL 2026 submission with post-submission softening.
