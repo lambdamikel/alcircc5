@@ -1,0 +1,486 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\Logic}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\Base}{\mathsf{B}}
+\newcommand{\comp}{\mathsf{comp}}
+\newcommand{\Cl}{\mathsf{cl}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Q}{\mathcal Q}
+\newcommand{\TQ}{\mathcal T_{\Q}}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Reach}{\mathrel{\mathsf{Reach}}}
+\newcommand{\reach}{\mathrel{\mathsf{reach}}}
+\newcommand{\eqc}{\equiv_{\EQ}}
+\newcommand{\blkeq}{\equiv_{\mathrm{blk}}}
+\newcommand{\Stratum}{\mathsf{Stratum}}
+\newcommand{\Subsrc}{\mathsf{Subsrc}}
+\newcommand{\Vrt}{\mathsf{Vert}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\lab}{\mathsf{lab}}
+\newcommand{\vertical}{\mathsf{vert}}
+\newcommand{\sibling}{\mathsf{sib}}
+\newcommand{\Inv}{\mathsf{Inv}}
+\newcommand{\U}{\mathcal U}
+\newcommand{\md}{\mathsf{md}}
+
+\title{Formal Review of the Round-6 Consolidated Generated Split-Forest Proof}
+\author{Review prepared by GPT-5.5 Pro}
+\date{May 27, 2026}
+
+\begin{document}
+\sloppy
+\maketitle
+
+\begin{abstract}
+This memorandum reviews the attached manuscript
+\texttt{repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated\_round6}
+and its TeX source.  The round-6 document is a clear improvement over the
+previous consolidated version.  It compiles cleanly, it directly addresses the
+flat side-frontier problem by introducing recursive verticalization, it replaces
+per-triple mosaic coverage by an explicit abstract label function $L_{\Q}$, it
+adds cross-pair universal safety, and it strengthens the request-cycle argument
+with half-open cycles and extended profiles.  Nevertheless, I would not yet
+regard the decidability proof as closed.  The most serious remaining issue is
+that the new abstract-position labelling mechanism appears to reintroduce the
+blocking/equality conflation it was designed to avoid: if all occurrences with
+the same abstract position symbol are labelled by $L_{\Q}(\pi,\pi)=\EQ$, then
+distinct laps of a blocking cycle become semantically equal.  This affects the
+basic one-state upward-chain certificate.  Additional remaining issues concern
+the occurrence-local interpretation of equality ports, the precise stratum
+identity stored in the finite certificate, the recursive side-interface
+construction, universal safety across pumped cycles, and inconsistent side-width
+bounds.  My verdict is therefore: substantial progress, but not yet a fully
+watertight decidability proof.
+\end{abstract}
+
+\tableofcontents
+
+\section{Materials reviewed}
+
+I reviewed the following uploaded files:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated\_round6.pdf};
+  \item \texttt{repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated\_round6.tex}.
+\end{itemize}
+The TeX source compiles locally without fatal errors and produces a 39-page PDF.
+I did not receive a new verification archive with this round, so this review is
+a manuscript review rather than a rerun of an updated executable verification
+suite.
+
+\section{Executive verdict}
+
+The round-6 manuscript makes real progress.  In particular, it no longer tries
+to defend the old flat side-frontier discipline.  The new stratified side
+interface and recursive verticalization discipline (M6$'$) are the right kind
+of repair for side witnesses that are themselves $\PP/\PPI$-comparable.  The
+manuscript also correctly identifies the previous inconsistency between
+per-position support closure and per-triple mosaic coverage, and it attempts to
+move the composition proof to the explicit global label function $L_{\Q}$.  The
+request-cycle section is also more coherent than in the previous round.
+
+However, several of the new repairs are not yet internally consistent.  The
+most serious defect is independent of the support-mosaic details.  The current
+combination of
+\[
+   q(u)\in\Pos_{\Q},\qquad
+   \lab(u,v):=L_{\Q}(q(u),q(v)),\qquad
+   L_{\Q}(\pi,\pi)=\EQ
+\]
+seems to force every two occurrences with the same finite abstract position
+symbol to be $\EQ$-related.  Since blocking cycles necessarily reuse finite
+abstract position symbols on fresh semantic occurrences, this collapses cyclic
+blocking into semantic equality.  This directly conflicts with the manuscript's
+central slogan that blocking is not equality.
+
+Thus my revised verdict is:
+\[
+\boxed{\text{Round 6 is an important improvement, but the proof still does not stand as written.}}
+\]
+The proof architecture remains credible, but the formal certificate semantics
+needs another occurrence-level repair.
+
+\section{Positive changes in round 6}
+
+\subsection{Stratified side interfaces address the old flat-frontier problem}
+
+The earlier manuscript treated side/frontier positions too flatly.  That lost
+satisfiable configurations in which two $\DR/\PO$ side witnesses of the same
+source are themselves $\PP/\PPI$-comparable.  The round-6 text now explicitly
+recognizes this and introduces a stratum forest inside a mosaic.  This is the
+right conceptual repair: a pair of comparable side witnesses should be
+co-vertical inside a nested local stratum rather than rejected as an illegal
+sibling-frontier pair.
+
+\subsection{The proof no longer depends on per-triple mosaic coverage}
+
+The previous version weakened support closure to per-position support but later
+continued to appeal to per-triple mosaic coverage.  The round-6 manuscript
+tries to repair this by using the declared global pair-label function
+\[
+  L_{\Q}:\Pos_{\Q}^{2}\to\Base
+\]
+and enforcing the RCC5 composition table directly by validity clause (V11).
+This is a promising direction.  If the abstract pair labels are defined over
+the correct kind of occurrence-pair shapes, then composition can indeed be
+checked finitely without requiring every triple to appear inside one mosaic.
+
+\subsection{Cross-pair universal safety is now explicit}
+
+The new validity clause (V15) is also the right sort of fix.  RCC5 composition
+alone does not propagate DL types; if an overlap cross-label is declared to be
+$R$, then universal restrictions $\forall R.D$ at the source must be checked
+against the target type.  Making this a finite validity condition is an
+improvement.
+
+\subsection{The request-cycle section is more precise}
+
+The switch to half-open cycle words $[i,j)$ and the use of extended profiles
+including pending requests are both improvements.  This avoids one of the
+previous defects, where a repeated ordinary profile might not carry the same
+unfulfilled eventualities.
+
+\section{Main remaining blocker: abstract positions collapse blocking into equality}
+\label{sec:diagonal}
+
+The central formal problem is the new definition of concrete labels through the
+finite abstract position map.  The manuscript defines an abstract position
+symbol $q(u)\in\Pos_{\Q}$ for each concrete occurrence $u$ and then defines
+\[
+  \lab(u,v):=L_{\Q}(q(u),q(v)).
+\]
+It also requires
+\[
+  L_{\Q}(\pi,\pi)=\EQ.
+\]
+This is harmless only if $q(u)=q(v)$ implies $u=v$.  But in a finite regular
+certificate, this implication is false.  Blocking deliberately creates
+infinitely many fresh semantic occurrences with the same finite profile, port,
+context, and stratum data.
+
+\subsection{Concrete failure on the upward-chain stress case}
+
+Consider again
+\[
+  C_{\uparrow}=\exists\PP.\top\ \sqcap\ \forall\PP.\exists\PP.\top.
+\]
+The intended regular certificate is the one-state upward loop whose unfolding is
+\[
+  u_0\PP u_1\PP u_2\PP\cdots,
+\]
+with all $u_i$ fresh occurrences of the same finite state/profile.  In such a
+certificate, the occurrences $u_i$ and $u_j$ for $i\ne j$ will have the same
+abstract position symbol:
+\[
+  q(u_i)=q(u_j)=\pi.
+\]
+The round-6 labelling rule then gives
+\[
+  \lab(u_i,u_j)=L_{\Q}(\pi,
+  \pi)=\EQ.
+\]
+This is impossible.  The intended relation for $i<j$ is $\PP$, and strong
+$\EQ$ semantics forbids two distinct occurrences from being $\EQ$-related.
+If the quotient identifies them, the strict $\PP$ chain collapses into a
+$\PP$-cycle.  If the quotient does not identify them, the pre-quotient or
+quotient frame has $\EQ$ between distinct elements.  Either way the current
+formal definitions do not represent the very blocking cycle they are meant to
+represent.
+
+\subsection{Why this is not just notation}
+
+This defect affects several later arguments:
+\begin{itemize}[leftmargin=2em]
+  \item the proof of the support-closed patchwork theorem uses
+        $\lab(u,v)=L_{\Q}(q(u),q(v))$ for arbitrary concrete pairs;
+  \item Lemma 7.4/JEPD relies on $\EQ$ iff same quotient class;
+  \item the typed-$\EQ$ quotient proof assumes blocking repetition is not
+        semantic equality;
+  \item V9 forbids equality between strict vertical comparables.
+\end{itemize}
+These cannot all be true if $L_{\Q}(\pi,\pi)=\EQ$ is applied to two distinct
+fresh occurrences with the same abstract symbol.
+
+\subsection{Required repair}
+
+The label function cannot be a plain function
+\[
+  L_{\Q}:\Pos_{\Q}^{2}\to\Base
+\]
+with diagonal $\EQ$ unless abstract positions are occurrence-unique, which would
+make the certificate infinite.  A finite certificate needs a label function over
+\emph{abstract occurrence-pair shapes}, not just over pairs of position symbols.
+At minimum the pair shape must distinguish:
+\begin{enumerate}[leftmargin=2em,label=(D\arabic*)]
+  \item the literal identity pair $(u,u)$, where the label is $\EQ$;
+  \item two distinct occurrences with the same abstract position symbol but in
+        different laps or different context instances;
+  \item vertical successor/predecessor copies across a blocking cycle;
+  \item side/mosaic-visible pairs;
+  \item explicit equality-port pairs.
+\end{enumerate}
+One possible replacement is a finite function
+\[
+  L_{\Q}^{\mathrm{pair}}:\mathsf{PairShape}_{\Q}\to\Base
+\]
+where $\mathsf{PairShape}_{\Q}$ contains an explicit identity flag and enough
+relative-copy information to distinguish same-symbol identity from same-symbol
+fresh copies.  The validity clause (V11) would then quantify over compatible
+\emph{triple shapes}, not over $\Pos_{\Q}^{3}$ alone.
+
+\section{Equality-port lifting remains ambiguous}
+\label{sec:eqports}
+
+A related issue occurs in the definition of the occurrence lift of
+$\eqc^{Q}$.  The manuscript says that $\eqc^{Q}$ is the reflexive, symmetric,
+transitive closure of explicit port links, and then writes informally that
+\[
+  u\eqc v \quad\text{iff}\quad \Port(u)\eqc^{Q}\Port(v)
+\]
+within the same generated context or transitively across explicit links.
+If this is read literally at the state-port level, then every occurrence with
+port $(s,p)$ is equivalent to every other occurrence with port $(s,p)$, because
+$\eqc^{Q}$ is reflexive.  Again, distinct laps of a blocking cycle collapse.
+
+There is also tension with V9.b.  The manuscript says that a finite cycle counts
+as strict reachability because each lap unfolds to a fresh occurrence.  Thus a
+self-loop can make
+\[
+  (s,p)\reach_{\PP}(s,p).
+\]
+But $\eqc^{Q}$ is reflexive on $(s,p)$, so V9.b, read literally at the finite
+state-port level, would reject the very self-loop needed for
+$C_{\uparrow}$.  If V9.b is not meant to reject the reflexive port occurrence,
+then the text must say so and must define the occurrence-level lift explicitly.
+
+\paragraph{Required repair.}
+The finite port relation should be treated as a \emph{template} for explicit
+local equality edges generated inside a context instance.  Its lift should be:
+\[
+  u\eqc v
+  \quad\Longleftrightarrow\quad
+  u=v\ \text{or there is a path of instantiated explicit equality edges between }u\text{ and }v.
+\]
+It should not identify all occurrences with the same finite port.  V9.b should
+then be stated over instantiated occurrence-level equality edges, or over pair
+shapes that can actually occur in one context instance, not over reflexive
+state-port equality in the finite quotient.
+
+\section{Stratum identity is still not fully present in the finite abstraction}
+
+The abstract position definition still uses a stratum field
+\[
+  \zeta\in\{\vertical,\sibling\}.
+\]
+But M6$'$ is no longer a binary vertical/sibling distinction.  It uses a full
+stratum forest
+\[
+  \mathcal V=(\Stratum,\Subsrc)
+\]
+with nested strata.  Whether two positions are co-vertical depends on the
+identity of the stratum containing them, not merely on whether each is marked
+``vertical''.  Two positions can both be vertical but in different strata; they
+are then cross-stratum and should not receive $\PP/\PPI$ labels.
+
+The introduction says the round-6 certificate grammar tracks the full stratum
+forest object $\mathcal V$, but the formal abstract-position definition still
+looks round-4-like.  The permitted-pair condition says that co-verticality is
+``lifted via the certificate's stratum-membership data'', but that data is not
+part of the abstract position symbol as written.
+
+\paragraph{Required repair.}
+Replace the binary field $\zeta\in\{\vertical,\sibling\}$ by a stratum identity
+or stratum-path field, for example
+\[
+  \zeta \in \mathsf{StratumId}(C),
+\]
+where $C$ is the context scheme.  Then define co-verticality in
+$\Pos_{\Q}$ by equality of an actual stratum identifier.  Validity clauses
+(V2), (V11), (V12), and the enumeration grammar should all use the same
+stratum-forest object, not the old $\Vrt$ notation or a binary vertical/sibling
+flag.
+
+\section{The recursive side-interface construction is improved but still underspecified}
+
+The new side-interface legality lemma is much closer to the needed statement.
+However, the construction of nested strata is still ambiguous for configurations
+with more than two comparable side positions.
+
+The lemma says that for every side witness $w$ whose original is $\PP/\PPI$-
+related to another side position $w'$, a nested stratum $V_w$ is introduced.
+But if one side position is comparable to several others, or if the side
+positions form a chain
+\[
+  w_0\PP w_1\PP w_2,
+\]
+it is not clear whether there is one stratum per comparable pair, one stratum
+per source $w$, or a recursively nested chain of strata.  The stratum forest
+axioms allow overlaps only at parent-source positions, so the construction must
+specify exactly how such chains are represented without creating illegal
+stratum intersections.
+
+There is also a tension inside M6$'$.  Clause (M6$'$.b) says that a containment
+label in a stratum must match the source/mate versus selected-witness structure.
+That appears to allow $\PP/\PPI$ labels only between the stratum source (or its
+mates) and selected witnesses.  But the vertical-realisation proof later has a
+subcase where both endpoints are selected containment witnesses of the same
+stratum and $L(p,q)\in\{\PP,\PPI\}$.  As written, that subcase seems forbidden
+by M6$'$.b rather than explained by it.
+
+\paragraph{Required repair.}
+Each stratum should carry an explicit local containment order or local parent
+map, not merely a source and a set of selected witnesses.  Then M6$'$.b can say:
+$L(p,q)\in\{\PP,\PPI\}$ iff $p,q$ are comparable in the local stratum order,
+possibly modulo equality mates.  The recursive side-interface lemma should
+construct this local order for arbitrary finite comparable side-witness
+networks and prove the stated modal-depth width recurrence.
+
+\section{Request cycles handle existentials better, but universal wrap-around still needs proof}
+
+The request-cycle lemma now handles transitive existential requests more
+carefully.  However, pumping a half-open segment can create new future
+successors for a universal formula.  If a node $u_k$ in the cycle has
+$\forall R.D$, then in the pumped path it sees not only later nodes
+$u_{k+1},\ldots,u_{j-1}$ from the same lap, but also the next lap
+$u_i,u_{i+1},\ldots$.  The original infinite path did not require $u_i,
+\ldots,u_{k-1}$ to satisfy $D$, because they were earlier than $u_k$.
+
+The proof currently says that universal truth is preserved because the visible
+neighbourhood is the same as in the original path.  That is not literally true
+under cyclic pumping: the wrap-around part of the next lap is newly visible as
+a strict future successor.
+
+This may be repairable.  The profile already gestures toward storing formulas
+true at all/some strict ancestors and descendants.  But the request-cycle lemma
+must use that information explicitly.  A valid cycle should satisfy a finite
+universal-cycle safety condition:
+\[
+  \forall R.D\in\lambda(u_k)
+  \quad\Longrightarrow\quad
+  D\in\lambda(u_m)
+  \quad\text{for every later position }m\text{ in the cyclic order.}
+\]
+For a half-open cycle $[i,j)$ this includes the wrap-around positions
+$i\le m<k$ in the next lap.  The completeness proof then needs to show that a
+cycle satisfying this stronger condition can always be selected from a
+satisfying ray, perhaps by choosing the lasso after all universal-suffix
+summaries have stabilized.
+
+\section{The side-width and enumeration bounds are internally inconsistent}
+
+The round-6 introduction and Lemma 4.5 say that the old cubic side-width bound
+has been replaced by a modal-depth recurrence
+\[
+  m_*(C_0)=m(\md(C_0)).
+\]
+The enumeration lemma also says ``No cubic side-width is used.''  But the later
+``Explicit component bounds'' section still defines
+\[
+  m(n)=1+n^3+3n^2+3n=O(n^3)
+\]
+as a cubic polynomial bound on $|\Side(u)|$ and on mosaic arity.  The same
+section then defines polynomial bounds using this cubic $m(n)$.
+
+This is not merely a cosmetic mismatch.  The finite search bound is the final
+step of the decidability proof.  The proof needs one consistent bound, with the
+same symbol used throughout.  If the correct bound is the modal-depth recurrence,
+then the grammar and enumeration estimates should use $m_*(C_0)$ everywhere.
+If a cubic bound is actually sufficient, then Lemma 4.5 and the surrounding
+round-6 explanation should be changed accordingly.
+
+\section{The Renz--Nebel / patchwork layer should be simplified or restated}
+
+The manuscript defines semantics as strong abstract atomic RCC5 frames, not as
+topological or set-theoretic region models.  For this abstract semantics,
+soundness only needs JEPD, inverse symmetry, and RCC5 composition closure.  The
+new $L_{\Q}$-direct proof already aims to establish exactly these abstract frame
+conditions.
+
+The Renz--Nebel realisability theorem is therefore not obviously needed for the
+main decidability theorem as stated.  Worse, the ``Moreover'' clause in the
+current restatement is too weak as written: saying there exists some
+$\ell\in\comp(\rho_1(u,v),\rho_2(v,w))$ does not itself define a globally
+consistent cross-label for all mixed triples.  The later strong-overlap
+condition supplies actual cross-labels, so the theorem statement should not
+suggest that mere non-emptiness of a composition entry is enough.
+
+\paragraph{Recommendation.}
+Either remove the set-theoretic Renz--Nebel realisation layer from the main
+proof, or clearly mark it as optional background.  For the abstract-frame
+result, the patchwork theorem can be replaced by the direct statement:
+if the certificate supplies a well-defined pair-shape labelling satisfying JEPD,
+inverse symmetry, and V11 on all compatible triple shapes, then the unfolded
+structure is an abstract RCC5 frame.
+
+\section{Recommended repairs before claiming decidability}
+
+I recommend the following concrete repair sequence.
+
+\begin{enumerate}[leftmargin=2em,label=(R\arabic*)]
+  \item Replace $L_{\Q}:\Pos_{\Q}^{2}\to\Base$ by a label function on
+        finite abstract occurrence-pair shapes.  Include an explicit identity
+        flag so that $\EQ$ on the diagonal applies only to literal identity,
+        not to two fresh blocked copies with the same finite position symbol.
+  \item Redefine the occurrence lift of equality ports.  Equality links should
+        be instantiated local edges inside generated context occurrences;
+        reflexivity of a finite port should not identify all occurrences using
+        that port.
+  \item Rewrite V9.b at the occurrence-template level.  It should forbid
+        explicit equality between two positions that can be strict-vertical
+        comparable in the same unfolding instance, without rejecting self-loop
+        blocking profiles by reflexivity.
+  \item Make stratum identity part of abstract positions or pair shapes.  A
+        binary vertical/sibling flag is not enough for recursive M6$'$.
+  \item Strengthen M6$'$ so each stratum has an explicit local containment
+        order, and rewrite the side-interface construction for arbitrary finite
+        comparable side-witness networks.
+  \item Add a universal-cycle safety lemma for pumped half-open cycles, or
+        strengthen the extended profile so that request-fulfilled cycles are
+        also universal-safe across wrap-around.
+  \item Normalize the side-width bound: use either the modal-depth recurrence
+        $m_*(C_0)$ everywhere or prove the cubic bound everywhere.
+  \item Simplify the patchwork layer to the abstract-frame needs of the theorem,
+        or restate the Renz--Nebel component precisely and mark which parts are
+        optional.
+\end{enumerate}
+
+\section{Conclusion}
+
+Round 6 is genuine progress.  The manuscript has moved from the old flat
+side-interface picture toward the right recursive, occurrence-based split-forest
+architecture.  The major conceptual repairs are in place: witness-generated
+covers, split copies, typed equality, recursive verticalization, cross-pair
+universal safety, and request-fulfilled cycles.
+
+But the proof still contains a serious formal defect: the finite abstract
+position labelling currently equates distinct blocked copies by assigning
+$L_{\Q}(\pi,\pi)=\EQ$ whenever their abstract position symbols coincide.  This
+undermines the central blocking-not-equality principle and breaks the canonical
+one-state certificate for
+\[
+  \exists\PP.\top\sqcap\forall\PP.\exists\PP.\top.
+\]
+Until the label function and equality-port lift are repaired at the
+occurrence-pair-shape level, I would not regard the decidability theorem as
+established.
+
+The architecture is still promising, but the next manuscript should focus on
+this single foundational correction before further polishing the mosaic and
+verification layers.
+
+\end{document}

@@ -1,0 +1,840 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{fact}[theorem]{Fact}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{claim}[theorem]{Claim}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Inv}{\operatorname{inv}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\arity}{\operatorname{arity}}
+\newcommand{\Ports}{\mathsf{Ports}}
+\newcommand{\Prof}{\mathsf{Prof}}
+\newcommand{\Bag}{\mathsf{Bag}}
+\newcommand{\Req}{\mathsf{Req}}
+\newcommand{\true}{\top}
+\newcommand{\false}{\bot}
+\newcommand{\NNF}{\operatorname{NNF}}
+\newcommand{\Aut}{\mathcal A}
+\newcommand{\sem}[1]{\llbracket #1\rrbracket}
+
+\title{Decidability of $\ALCI_{\RCC}$ by Split-Forest Normal Forms and Parity Tree Automata}
+\author{Proof manuscript / consolidated strategy}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note gives a self-contained proof architecture for decidability of concept satisfiability for $\ALCI$ with the five atomic RCC5 roles $\EQ,\PP,\PPI,\PO,\DR$, under abstract complete atomic RCC5 frame semantics.  The proof deliberately separates two tasks.  First, it proves a split-forest normal form: arbitrary satisfying abstract models may be thinned to witness-generated models and then represented by generated containment covers with split copies, side interfaces, and typed equality ports.  Second, instead of encoding regularity and eventuality fulfillment by an ad hoc finite certificate, it builds a finite parity tree automaton over the finite alphabet of split-forest profiles.  The split forest remains the semantic normal form; the automaton is used only as the clean technical device for regularity, simultaneous eventuality discharge, and decidability of the finite search problem.
+\end{abstract}
+
+\tableofcontents
+
+\section{Motivation and proof design}
+
+The central difficulty in $\ALCI_{\RCC}$ is not the Boolean part of the concept language.  It is the interaction of four phenomena:
+\begin{enumerate}[label=(\roman*)]
+\item $\PP$ and $\PPI$ are transitive converse relations;
+\item a point may need several incompatible proper superparts;
+\item $\PO$ and $\DR$ witnesses need not lie on the vertical containment chain; and
+\item split copies must later be synchronized with strong equality without confusing blocking repetition with semantic $\EQ$.
+\end{enumerate}
+
+The split-forest idea addresses the first three phenomena model-theoretically.  It says that, after choosing witnesses, the important $\PP/\PPI$ structure can be represented by generated containment-cover edges, while nonvertical interactions are stored in finite side interfaces.  Several rounds of hand proof show, however, that a purely manual finite-certificate proof tends to reimplement automata theory in disguise: request-closed cycles are Büchi/parity conditions, equality-port synchronization is a finite-state invariant, and mosaic patching is a local consistency condition over a finite interface alphabet.
+
+The proof below therefore uses the following division of labor.
+\begin{center}
+\fbox{\parbox{0.88\linewidth}{
+\textbf{Split forest:} semantic normal form.  It reduces arbitrary models to witness-generated, tree-like presentations with bounded local interfaces.\\[2mm]
+\textbf{Parity tree automaton:} finite decision engine.  It checks local RCC5 consistency, typed equality, side interfaces, and transitive eventualities over the finite split-forest alphabet.
+}}
+\end{center}
+
+Thus the split-forest model class is not discarded.  It is the key normal form that makes a tree automaton applicable.  The automaton layer replaces the fragile hand-coded regularity proof.
+
+\paragraph{Scope.}
+We work with abstract complete atomic RCC5 frames.  That is, the five RCC5 atoms form a joint exhaustive pairwise-disjoint labeling of ordered pairs, $\EQ$ is identity, converse is respected, and all triples satisfy the RCC5 composition table.  This is the standard abstract relational semantics used by relation-algebraic RCC5 reasoners.  The proof is not a proof for arbitrary topological region models unless a representation theorem from those models to the abstract frames is added.
+
+\section{Syntax, closure, and abstract RCC5 frames}
+
+\subsection{Roles and concepts}
+
+Let
+\[
+  \Rel=\{\EQ,\PP,\PPI,\PO,\DR\}.
+\]
+The inverse operation is
+\[
+\Inv(\EQ)=\EQ,
+\qquad
+\Inv(\PP)=\PPI,
+\qquad
+\Inv(\PPI)=\PP,
+\qquad
+\Inv(\PO)=\PO,
+\qquad
+\Inv(\DR)=\DR.
+\]
+Concepts are built from concept names $A$, Boolean connectives, and modal restrictions
+\[
+  \exists R.C,\\qquad \forall R.C,
+  \qquad R\in\Rel.
+\]
+All concepts are put into negation normal form.  We write $\overline C$ for the NNF complement of $C$:
+\begin{align*}
+\overline{A}&=\neg A,& \overline{\neg A}&=A,\\
+\overline{C\sqcap D}&=\overline C\sqcup\overline D,&
+\overline{C\sqcup D}&=\overline C\sqcap\overline D,\\
+\overline{\exists R.C}&=\forall R.\overline C,&
+\overline{\forall R.C}&=\exists R.\overline C.
+\end{align*}
+
+\begin{definition}[Closure]
+For an input concept $C_0$, $\Cl(C_0)$ is the least finite set containing $C_0$ and closed under subformulas and NNF complement.  We additionally normalize $\EQ$-modalities by adding the equivalences
+\[
+  \exists\EQ.C \equiv C,
+  \qquad
+  \forall\EQ.C \equiv C.
+\]
+Equivalently, $\EQ$ may remain as a role, but every local type is required to satisfy
+\[
+  \exists\EQ.C\in t \Leftrightarrow C\in t,
+  \qquad
+  \forall\EQ.C\in t \Leftrightarrow C\in t.
+\]
+\end{definition}
+
+\begin{definition}[Hintikka type]
+A type over $\Cl(C_0)$ is a subset $t\subseteq\Cl(C_0)$ such that:
+\begin{enumerate}[label=(T\arabic*)]
+\item for every $D\in\Cl(C_0)$, exactly one of $D,\overline D$ lies in $t$;
+\item $D\sqcap E\in t$ iff $D\in t$ and $E\in t$;
+\item $D\sqcup E\in t$ iff $D\in t$ or $E\in t$;
+\item the $\EQ$-modal conditions above hold.
+\end{enumerate}
+Let $\mathsf{Type}(C_0)$ be the finite set of all such types.
+\end{definition}
+
+\subsection{Abstract RCC5 frames}
+
+\begin{definition}[RCC5 composition table]
+The composition operation $\Comp(R,S)\subseteq\Rel$ is the standard atomic RCC5 composition table.  Rows are $R$, columns are $S$.
+\[
+\begin{array}{c|ccccc}
+\Comp & \EQ & \PP & \PPI & \PO & \DR\\
+\hline
+\EQ  & \{\EQ\} & \{\PP\} & \{\PPI\} & \{\PO\} & \{\DR\}\\
+\PP  & \{\PP\} & \{\PP\} & \Rel & \{\PP,\PO,\DR\} & \{\DR\}\\
+\PPI & \{\PPI\} & \{\EQ,\PP,\PPI,\PO\} & \{\PPI\} & \{\PPI,\PO\} & \{\PPI,\PO,\DR\}\\
+\PO  & \{\PO\} & \{\PP,\PO\} & \{\PPI,\PO,\DR\} & \Rel & \{\PPI,\PO,\DR\}\\
+\DR  & \{\DR\} & \{\PP,\PO,\DR\} & \{\DR\} & \{\PP,\PO,\DR\} & \Rel
+\end{array}
+\]
+\end{definition}
+
+\begin{definition}[Abstract complete atomic RCC5 frame]
+An abstract RCC5 frame is a pair $(\Delta,\rho)$ where $\Delta\ne\varnothing$ and $\rho:\Delta^2\to\Rel$ satisfies:
+\begin{enumerate}[label=(R\arabic*)]
+\item $\rho(x,y)=\EQ$ iff $x=y$;
+\item $\rho(y,x)=\Inv(\rho(x,y))$;
+\item for all $x,y,z\in\Delta$,
+\[
+  \rho(x,z)\in\Comp(\rho(x,y),\rho(y,z)).
+\]
+\end{enumerate}
+A model $\mathcal I$ additionally assigns each concept name $A$ a set $A^{\mathcal I}\subseteq\Delta$.
+\end{definition}
+
+Satisfaction is standard:
+\begin{align*}
+\mathcal I,x\models \exists R.C &\iff
+  \text{there is }y\in\Delta\text{ with }\rho(x,y)=R\text{ and }\mathcal I,y\models C,\\
+\mathcal I,x\models \forall R.C &\iff
+  \text{for all }y\in\Delta,\rho(x,y)=R\Rightarrow \mathcal I,y\models C.
+\end{align*}
+
+\section{Witness thinning}
+
+The first step removes irrelevant elements from arbitrary abstract models.  This is the formal version of the intended generated-model viewpoint.
+
+\begin{definition}[Witness selector]
+Let $\mathcal I$ be a model and $a\in\Delta^{\mathcal I}$.  A witness selector for $\mathcal I$ and $\Cl(C_0)$ chooses, whenever possible, one element
+\[
+  w(x,\exists R.D)
+\]
+for every $x\in\Delta$ and every $\exists R.D\in\Cl(C_0)$ such that $\mathcal I,x\models\exists R.D$, with
+\[
+  \rho(x,w(x,\exists R.D))=R,
+  \qquad
+  \mathcal I,w(x,\exists R.D)\models D.
+\]
+\end{definition}
+
+\begin{definition}[Witness-generated submodel]
+Given $\mathcal I,a$ and a witness selector $w$, define $W_0=\{a\}$ and
+\[
+  W_{n+1}=W_n\cup
+  \{w(x,\exists R.D):x\in W_n,\;\exists R.D\in\Cl(C_0),\;\mathcal I,x\models\exists R.D\}.
+\]
+Let $W=\bigcup_n W_n$.  The restricted model $\mathcal I\upharpoonright W$ uses the same atomic valuations restricted to $W$ and the same RCC5 labeling restricted to $W^2$.
+\end{definition}
+
+\begin{lemma}[Witness thinning]
+If $\mathcal I,a\models C_0$, then there is a witness-generated submodel $\mathcal J=\mathcal I\upharpoonright W$ such that $\mathcal J,a\models C_0$.  More strongly, for every $x\in W$ and every $D\in\Cl(C_0)$,
+\[
+  \mathcal I,x\models D \quad\Longleftrightarrow\quad \mathcal J,x\models D.
+\]
+\end{lemma}
+
+\begin{proof}
+The proof is by structural induction on $D\in\Cl(C_0)$.  Concept names and Boolean connectives are immediate because valuations are restricted and the induction hypothesis applies to subformulas.
+
+For $D=\exists R.E$, suppose first $\mathcal J,x\models\exists R.E$.  Then a witness exists in $W\subseteq\Delta^{\mathcal I}$, so $\mathcal I,x\models\exists R.E$ by the induction hypothesis.  Conversely, if $\mathcal I,x\models\exists R.E$ and $x\in W$, then the construction of $W$ adds $w(x,\exists R.E)$ at the next stage after $x$ first appears.  This selected witness lies in $W$, is $R$-related to $x$, and satisfies $E$ in $\mathcal I$; by the induction hypothesis it satisfies $E$ in $\mathcal J$.
+
+For $D=\forall R.E$, use the NNF complement.  Since $\overline{\forall R.E}=\exists R.\overline E$ lies in $\Cl(C_0)$, failure of $\forall R.E$ is equivalent to truth of $\exists R.\overline E$.  The existential case just proved preserves this failure in both directions.  Hence the universal formula is preserved.
+\end{proof}
+
+\begin{remark}
+The thinning lemma is why no assumption about semantic Hasse diagrams or density is needed.  We do not take cover edges from the original model.  We keep only selected witnesses relevant to $\Cl(C_0)$ and later build generated cover presentations for them.
+\end{remark}
+
+\section{Generated split-forest presentations}
+
+This section defines the model normal form.  The automaton of Section~\ref{sec:automaton} will operate on finite encodings of these presentations.
+
+\subsection{Occurrences, blocking, and equality}
+
+The split forest uses \emph{occurrences}.  Several occurrences may represent copies of the same semantic element before quotienting.  There are two distinct equivalence notions:
+\[
+  \equiv_{\mathrm{blk}} \quad\text{profile repetition used by regularity/blocking,}
+\]
+\[
+  \equiv_{\EQ} \quad\text{semantic equality to be quotiented.}
+\]
+Only $\equiv_{\EQ}$ is used to form the final strong-$\EQ$ model.  Equality of profiles or equality of port names is never by itself semantic equality.
+
+\begin{definition}[Generated split forest]
+A generated split forest presentation consists of:
+\begin{enumerate}[label=(S\arabic*)]
+\item a countable rooted tree $T$ of occurrences, of bounded finite arity;
+\item for each occurrence $u$, a type $\tp(u)\in\mathsf{Type}(C_0)$;
+\item a finite set of explicit equality-port edges $u\equiv_{\EQ}v$ between occurrences, generating an equivalence relation;
+\item a partial generated containment-cover relation $E_\uparrow$ and $E_\downarrow$ represented by child slots of $T$:
+      $uE_\uparrow v$ means that $v$ is a selected proper superpart witness of $u$, while $uE_\downarrow v$ means that $v$ is a selected proper part witness of $u$;
+\item finite side-interface bags containing nonvertical $\PO/\DR$ witnesses and all relation labels needed to make local triples composition-consistent.
+\end{enumerate}
+The tree $T$ is an encoding tree.  It need not be the Hasse diagram of the original model.  In the unfolded presentation, vertical semantic $\PP$ and $\PPI$ are the strict transitive closures of generated containment-cover paths, modulo explicit equality copies.
+\end{definition}
+
+The root of $T$ is the evaluation occurrence.  A proper superpart chain may be encoded by repeated $E_\uparrow$ child slots, so no ambient semantic top is required.  A proper part chain is encoded by $E_\downarrow$ child slots.
+
+\begin{definition}[Occurrence-sensitive pair shape]
+A pair shape is a finite record describing two occurrences relative to their least common interface bag: their local positions in that bag, their child-slot directions from the bag, whether one is reached after a positive cover length, and whether an explicit equality-port edge is being used.  Pair shapes are occurrence-sensitive: two copies in different laps of a blocking cycle have the same profile but different occurrence addresses, so the diagonal rule $L(p,p)=\EQ$ is applied only to the same occurrence, not to repeated copies of the same abstract profile.
+\end{definition}
+
+This definition is deliberately stronger than an abstract-position label.  It prevents the error in which a one-state loop for
+\[
+  \exists\PP.\top\sqcap\forall\PP.\exists\PP.\top
+\]
+would be collapsed into $u\EQ u'$ for successive laps.  Successive laps share a profile but are distinct occurrences; their vertical relation is $\PP$ or $\PPI$, not $\EQ$.
+
+\subsection{Local bags and side interfaces}
+
+A bag is a bounded finite local subnetwork.  It contains a main occurrence, its named interface ports, and a bounded number of witness positions.
+
+\begin{definition}[Bag]
+Fix a bound $B$ depending only on $C_0$.  A bag over $C_0$ consists of:
+\begin{enumerate}[label=(B\arabic*)]
+\item a finite set $P$ of positions, $|P|\le B$, with one distinguished main position $m$;
+\item a type assignment $\tau:P\to\mathsf{Type}(C_0)$;
+\item a symmetric/converse-respecting relation table $L:P^2\to\Rel$ such that $L(p,p)=\EQ$ and $L(q,p)=\Inv(L(p,q))$;
+\item a partition of some positions into equality-port classes, with the condition that $p$ and $q$ in the same equality class have $L(p,q)=\EQ$ and equal types;
+\item child-slot declarations saying which child bag continues which generated cover, side witness, or equality synchronization obligation.
+\end{enumerate}
+The bag is RCC5-local if every triple $p,q,r\in P$ satisfies
+\[
+  L(p,r)\in\Comp(L(p,q),L(q,r)).
+\]
+\end{definition}
+
+\begin{definition}[Support-closed side interface]
+A side interface for a source occurrence $u$ is a finite tree of bags rooted at the bag containing $u$.  It realizes the selected nonvertical witnesses of $u$ and closes them under the following operations:
+\begin{enumerate}[label=(M\arabic*)]
+\item if a side witness itself has selected vertical witnesses, those are inserted as recursive side subcontexts;
+\item if two positions appear together in a bag, their relation is recorded in the bag table;
+\item if three positions can occur together in one finite prefix of the unfolding, some bag or overlap chain records a triple shape whose labels satisfy the RCC5 composition table;
+\item if a universal formula at one position applies to another by the recorded relation, the target type contains the required subconcept.
+\end{enumerate}
+The boundedness of interfaces follows from witness thinning: for each occurrence, only one witness per existential closure formula is selected, and $\Cl(C_0)$ is finite.  Recursive side contexts reuse the same finite alphabet of bag profiles.
+\end{definition}
+
+\subsection{Truth in split presentations}
+
+Given a split presentation, form a weak occurrence model first.  Its domain is the set of occurrences.  Relation labels are defined as follows.
+
+\begin{enumerate}[label=(L\arabic*)]
+\item If $u=v$, then $\rho(u,v)=\EQ$.
+\item If $u$ and $v$ are connected by a positive generated superpart path from $u$ to $v$, then $\rho(u,v)=\PP$.
+\item If $u$ and $v$ are connected by a positive generated proper-part path from $u$ to $v$, then $\rho(u,v)=\PPI$.
+\item If neither vertical case applies, the relation is read from the unique occurrence-sensitive pair shape supplied by the side-interface mosaic at their nearest common bag.
+\item Explicit equality-port edges generate $\equiv_{\EQ}$; after the weak model is checked, the strong model is the quotient by $\equiv_{\EQ}$.
+\end{enumerate}
+
+\begin{definition}[Typed equality congruence]
+The equivalence relation $\equiv_{\EQ}$ is a typed RCC5 congruence if:
+\begin{enumerate}[label=(E\arabic*)]
+\item $u\equiv_{\EQ}v$ implies $\tp(u)=\tp(v)$;
+\item no two distinct occurrences related by a strict positive generated $\PP/\PPI$ path are $\equiv_{\EQ}$;
+\item for all $u\equiv_{\EQ}v$ and all $z$, the labels $\rho(u,z)$ and $\rho(v,z)$ agree after replacing $z$ by its $\equiv_{\EQ}$-class;
+\item selected witnesses and universal obligations are invariant under replacing a source occurrence by an $\equiv_{\EQ}$-mate.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Quotient soundness]
+If the weak occurrence model satisfies the RCC5 composition table and $\equiv_{\EQ}$ is a typed RCC5 congruence, then the quotient by $\equiv_{\EQ}$ is a strong abstract RCC5 model.  Moreover, every closure formula has the same truth value at equality-related occurrences.
+\end{lemma}
+
+\begin{proof}
+Define $[u]$ to be the $\equiv_{\EQ}$-class of $u$ and set
+\[
+  \rho_Q([u],[v])=\rho(u,v).
+\]
+This is well-defined by congruence clause (E3).  The diagonal is exactly $\EQ$: if $[u]=[v]$, then $u\equiv_{\EQ}v$, so the quotient identifies them; if $[u]\ne[v]$, clause (E3) and the explicit equality construction prohibit label $\EQ$ between the two classes.  Converse and composition descend because they hold before quotienting and $\rho_Q$ is well-defined.  Atomic concept membership descends by equality of types, and the Boolean and modal cases follow by induction on closure formulas using (E4) for selected witnesses and the relation congruence for universals.
+\end{proof}
+
+\section{The split-forest normal-form theorem}
+
+\begin{theorem}[Split-forest normal form]\label{thm:normalform}
+If $C_0$ is satisfiable in an abstract RCC5 model, then $C_0$ is satisfiable in the strong quotient of a generated split-forest presentation whose local bags are drawn from a finite set depending only on $C_0$.
+\end{theorem}
+
+\begin{proof}
+Let $\mathcal I,a\models C_0$.  By the witness-thinning lemma, replace $\mathcal I$ by a witness-generated submodel $\mathcal J$ preserving all closure formulas at all generated points.
+
+For each generated element $x$ and each selected witness $w(x,\exists R.D)$, proceed by cases.
+
+\smallskip
+\noindent\textbf{Vertical witnesses.}  If $R=\PP$, the witness is a proper superpart of $x$.  Insert a generated superpart cover edge from an occurrence of $x$ to an occurrence of the witness.  If $x$ already has an incompatible selected superpart branch, create another occurrence $x'$ of $x$ and connect $x'$ to the new superpart.  Add an explicit equality port $x\equiv_{\EQ}x'$.  Thus one semantic element may appear in several tree places, but each occurrence has at most the bounded number of selected cover links required by closure formulas.  The $R=\PPI$ case is dual, using proper-part cover edges.
+
+\smallskip
+\noindent\textbf{Nonvertical witnesses.}  If $R=\DR$ or $R=\PO$, place the selected witness in a side-interface bag of the source occurrence.  If that witness has its own selected vertical or nonvertical witnesses, recursively attach bounded subcontexts.  Since only one witness per existential closure formula is selected at each occurrence, the branching needed at each step is bounded by $|\Cl(C_0)|$.
+
+\smallskip
+\noindent\textbf{Local relation tables.}  For each finite bag, copy the relation labels from $\mathcal J$ among the origins of its positions.  These labels satisfy converse and the RCC5 composition table because $\mathcal J$ is an abstract RCC5 frame.  Types are copied from truth in $\mathcal J$.
+
+\smallskip
+\noindent\textbf{Equality.}  Occurrences created as copies of the same origin are joined by explicit equality ports.  Because they have the same origin in $\mathcal J$, they have the same closure type and the same relations to all other origins after quotienting.  Hence the induced equality is a typed congruence.
+
+\smallskip
+\noindent\textbf{Regular alphabet.}  The construction may be infinite, but the set of possible local bags is finite up to isomorphism over $\Cl(C_0)$: there are finitely many types, finitely many relation tables on at most $B$ positions, finitely many port patterns, and finitely many child-slot declarations.  Thus the presentation is a tree over a finite split-forest alphabet.
+
+Finally, quotienting by the typed equality congruence gives a strong abstract RCC5 model.  Closure truth is preserved by construction and by quotient soundness, so the root class satisfies $C_0$.
+\end{proof}
+
+\section{Finite split-forest alphabet}\label{sec:alphabet}
+
+The automaton does not see arbitrary models.  It sees trees labeled by finite bag profiles.
+
+\begin{definition}[Profile alphabet]
+For $C_0$, let $\Sigma(C_0)$ be the finite set of all records
+\[
+  \sigma=(P,m,\tau,L,E_{\EQ},\mathsf{slots},\mathsf{src})
+\]
+where:
+\begin{enumerate}[label=(A\arabic*)]
+\item $(P,m,\tau,L,E_{\EQ})$ is a bag as above with $|P|\le B(C_0)$;
+\item $L$ is RCC5-local on all triples of $P$;
+\item $E_{\EQ}$ is an explicit equality-port relation on $P$ satisfying type equality and not identifying strict vertical positions;
+\item $\mathsf{slots}$ is a finite list of child slots, each with a kind in
+\[
+  \{\mathsf{up},\mathsf{down},\mathsf{side},\mathsf{eqsync},\mathsf{idle}\};
+\]
+\item $\mathsf{src}$ records, for every existential formula in the type of each source position, which local position or child slot is intended to provide a witness.
+\end{enumerate}
+Only records satisfying the local consistency clauses are included.  Since all components are finite and bounded by $C_0$, $\Sigma(C_0)$ is finite and effectively enumerable.
+\end{definition}
+
+\begin{remark}
+The alphabet deliberately contains no global semantic equality color.  Equality ports are local obligations and overlap data.  Repeating the same profile in two different laps of an accepting tree never implies $\EQ$ between those laps.
+\end{remark}
+
+\begin{definition}[Encoded split-forest tree]
+A $\Sigma(C_0)$-tree is a full $d$-ary tree, where $d$ is the maximum number of child slots in the alphabet.  Missing children are filled by an idle profile.  The $i$th child of a node must correspond to the $i$th slot declared by that node's profile.
+\end{definition}
+
+\section{Parity tree automata}\label{sec:automaton}
+
+We use a standard alternating parity tree automaton.  The definition is included to make clear where eventualities are checked.
+
+\begin{definition}[Alternating parity tree automaton]
+An alternating parity tree automaton over $d$-ary $\Sigma$-trees is a tuple
+\[
+  \mathcal A=(Q,q_0,\delta,\Omega)
+\]
+where $Q$ is finite, $q_0\in Q$, $\Omega:Q\to\{0,\ldots,k\}$ is a priority map, and $\delta(q,\sigma)$ is a positive Boolean formula over moves
+\[
+  \mathsf{stay}(q'),\quad \mathsf{child}_i(q')\quad(1\le i\le d),\quad \mathsf{parent}(q')
+\]
+with the parent move disabled at the root.  A run is the usual tree of obligations.  Universal conjunctions spawn all listed obligations; disjunctions choose one.  An infinite branch of a run is accepting iff the least priority seen infinitely often is even.  A tree is accepted if there is an accepting run from $q_0$ at the root.
+\end{definition}
+
+\begin{fact}[Decidability of emptiness]
+For every finite alternating parity tree automaton, emptiness is decidable.
+\end{fact}
+
+\begin{proof}[Proof sketch]
+The emptiness problem is converted to a finite parity game.  A game position records an automaton state and a possible input symbol.  Eloise chooses disjunctive transitions and candidate child symbols; Abelard chooses conjunctive obligations and successor directions.  Because $Q$, $\Sigma$, and the arity are finite, the game graph is finite.  The priority of a game position is the priority of the automaton state.  The automaton has a nonempty language iff Eloise has a winning strategy in this parity game.  Finite parity games are decidable by standard attractor/strategy-improvement algorithms.
+\end{proof}
+
+\subsection{Automaton states}
+
+The automaton $\Aut_{C_0}$ has the following classes of states.
+\begin{enumerate}[label=(Q\arabic*)]
+\item $\mathsf{Root}$: checks that the root main type contains $C_0$.
+\item $\mathsf{Local}$: checks local bag consistency, overlap consistency with children, and typed equality-port consistency.
+\item $\mathsf{Check}(p,D)$: at the current bag, checks that position $p$ has $D$ in its type.
+\item $\mathsf{Univ}(p,R,D)$: checks all represented $R$-targets of position $p$ for $D$.
+\item $\mathsf{Ex}(p,R,D)$: searches for a strict $R$-target satisfying $D$.
+\item $\mathsf{EqSync}(p,q)$: checks that positions declared equality mates have equal types and congruent outward obligations.
+\item $\mathsf{Patch}$: checks side-interface/mosaic overlap conditions.
+\end{enumerate}
+The set is finite because $p$ ranges over bounded bag positions and $D$ over $\Cl(C_0)$.
+
+\subsection{Local checks}
+
+At a node labeled $\sigma$, $\mathsf{Local}$ verifies:
+\begin{enumerate}[label=(L\arabic*)]
+\item all types in the bag are Hintikka types;
+\item the bag relation table is converse-respecting and locally composition-closed;
+\item every equality-port pair has equal type and label $\EQ$;
+\item no equality-port pair is also marked as a strict positive vertical pair;
+\item for each child slot, the child's overlap positions agree in type, relation labels, and equality-port declarations;
+\item every nonidle child slot is justified by some existential witness, side-interface closure, or equality synchronization obligation declared in the parent profile.
+\end{enumerate}
+All these are finite table checks.
+
+\subsection{Boolean and local modal checks}
+
+For $\mathsf{Check}(p,D)$, the automaton simply inspects the type $\tau(p)$.  For Boolean formulas this is redundant because Hintikka types were checked locally, but including these states makes the induction proof transparent.
+
+For $\exists\EQ.D$ and $\forall\EQ.D$, the automaton checks $D$ at the same position.  For $\exists\DR.D$ or $\exists\PO.D$, it uses the witness declaration in $\mathsf{src}$: the witness must be a local position or a side child whose overlap target has relation $\DR$ or $\PO$ to $p$ and type containing $D$.  For $\forall\DR.D$ and $\forall\PO.D$, $\mathsf{Univ}$ is sent to every local or side-interface target that the profile represents as a $\DR$ or $\PO$ target of $p$.
+
+\subsection{Transitive $\PP/\PPI$ eventualities}
+
+The transitive roles require parity.  The state $\mathsf{Ex}(p,R,D)$ is a pending request for a strict $R$-target satisfying $D$.
+
+For $R=\PP$, the automaton may choose one of the following moves:
+\begin{enumerate}[label=(P\arabic*)]
+\item move to a local equality mate of $p$ and continue the same request;
+\item move along a generated superpart child slot and check whether the target has $D$;
+\item continue along the superpart chain if $D$ is not yet found.
+\end{enumerate}
+For $R=\PPI$, the same definition uses generated proper-part child slots.  The request is strict: the automaton must traverse at least one positive cover edge before accepting the target as a witness.
+
+The pending request states have odd priority $1$.  The success states $\mathsf{Check}(q,D)$ have even priority $0$.  Therefore an infinite run branch that postpones a request forever sees priority $1$ infinitely often and is rejecting.  A request that reaches a target satisfying $D$ exits the pending state and is accepting with respect to that obligation.
+
+Universals are safety conditions.  $\mathsf{Univ}(p,\PP,D)$ checks every represented strict superpart target for $D$ and recursively sends $\mathsf{Univ}$ along superpart cover slots.  Similarly for $\PPI$ along proper-part cover slots.  Since universal propagation is conjunctive, all reachable strict targets are checked.
+
+\subsection{Side-interface patching}
+
+The state $\mathsf{Patch}$ checks that side interfaces form a tree decomposition of the nonvertical relation network:
+\begin{enumerate}[label=(S\arabic*)]
+\item every explicit side witness appears in some bag;
+\item every pair of positions appearing in adjacent bags has the same relation label in the overlap;
+\item every triple whose pairwise relations are introduced by the interface is represented in some bag or by an occurrence-sensitive triple shape declared in the nearest common bag;
+\item each declared triple satisfies the RCC5 composition table;
+\item recursive side subcontexts satisfy the same conditions.
+\end{enumerate}
+Because bags have bounded size and the child-slot arity is bounded, this is a finite local tree-automaton condition.
+
+\section{Soundness of the automaton}
+
+\begin{theorem}[Automaton soundness]\label{thm:sound}
+If $\Aut_{C_0}$ accepts a $\Sigma(C_0)$-tree, then $C_0$ is satisfiable in a strong abstract RCC5 model.
+\end{theorem}
+
+\begin{proof}
+Let $T$ be an accepted labeled tree.  Build a weak occurrence model as follows.  The domain consists of all occurrence positions of all bags, modulo overlap identifications between parent and child bags.  Do not identify repeated profile occurrences from different parts of $T$.  Identify only explicit equality-port pairs later, via $\equiv_{\EQ}$.
+
+The type of an occurrence is the type assigned in any bag containing it; overlap checks make this well-defined.  The relation label between two occurrences is obtained from the bag or occurrence-sensitive pair shape guaranteed by $\mathsf{Patch}$.  If two occurrences lie on a generated vertical path, the label is $\PP$ or $\PPI$ according to positive superpart/proper-part reachability.  Otherwise it is the nonvertical label supplied by the side-interface mosaic.
+
+\smallskip
+\noindent\textbf{RCC5 frame conditions.}  Diagonal labels are $\EQ$ by local checks.  Distinct occurrences are not $\EQ$ unless an explicit equality port says so; blocking repetition alone creates no equality.  Converse is checked in each bag and preserved by overlap.  For any triple of occurrences, the patch condition supplies a bag or triple shape containing the three pair labels.  That local triple was checked against the composition table.  Hence the weak occurrence labeling is an abstract RCC5 network.
+
+\smallskip
+\noindent\textbf{Typed equality quotient.}  The $\mathsf{EqSync}$ and local equality checks ensure that explicit equality ports generate a typed RCC5 congruence.  By quotient soundness, the quotient is a strong abstract RCC5 model.
+
+\smallskip
+\noindent\textbf{Truth lemma.}  We prove by induction on $D\in\Cl(C_0)$ that if $D$ lies in the type of an occurrence, then the quotient model satisfies $D$ at its class, and if $\overline D$ lies in the type then it does not satisfy $D$.
+
+Boolean cases follow from Hintikka types.  For $\exists R.E$, the automaton's existential check guarantees a witness.  If $R=\EQ$, the witness is the same quotient class.  If $R\in\{\DR,\PO\}$, the witness is a local or side-interface occurrence with the correct relation and type containing $E$.  If $R\in\{\PP,\PPI\}$, the pending request state must be discharged after a positive cover path, possibly through an equality mate first; the resulting occurrence has type containing $E$ and the corresponding semantic relation holds by transitive vertical closure.  The induction hypothesis gives satisfaction of $E$ at the witness.
+
+For $\forall R.E$, the $\mathsf{Univ}$ state checks all represented $R$-targets.  The split-forest patch condition guarantees that every semantic target in the quotient is represented either vertically, locally, or by a side-interface shape.  Thus every $R$-target has type containing $E$, and the induction hypothesis applies.
+
+The root check ensures $C_0$ lies in the root main type, so the quotient model satisfies $C_0$.
+\end{proof}
+
+\section{Completeness of the automaton}
+
+\begin{theorem}[Automaton completeness]\label{thm:complete}
+If $C_0$ is satisfiable in a strong abstract RCC5 model, then $\Aut_{C_0}$ accepts some $\Sigma(C_0)$-tree.
+\end{theorem}
+
+\begin{proof}
+Assume $\mathcal I,a\models C_0$.  By Theorem~\ref{thm:normalform}, obtain a generated split-forest presentation over a finite set of bag profiles.  Label each node of its encoding tree by the corresponding profile in $\Sigma(C_0)$.
+
+We define an accepting run of $\Aut_{C_0}$ by following the actual witnesses in the presentation.
+
+Local states accept because all local profiles were extracted from an actual abstract RCC5 model; hence types are Hintikka, labels satisfy converse and composition, equality ports connect copies of the same origin, and overlaps agree.
+
+For existential formulas, the witness selector used in the thinning step provides one actual witness.  If the witness is vertical, the split presentation contains a generated cover path, possibly through an equality copy; the run of $\mathsf{Ex}$ follows that path and stops when it reaches the witness.  If the witness is nonvertical, it was inserted into a side interface; the run chooses that side witness.  If the role is $\EQ$, the witness is the same element.
+
+For universal formulas, the run branches to every represented target.  Since types were copied from $\mathcal I$ and $\mathcal I$ satisfies the universal formula, each target type contains the required subconcept.  The universal branch therefore continues successfully.
+
+No pending request is postponed forever: each existential branch follows the finite selected witness path from the normal-form construction.  Thus every infinite branch of the run either eventually leaves pending states or satisfies the even parity condition.  Therefore the run is accepting.
+\end{proof}
+
+\section{Decidability}
+
+\begin{theorem}[Decidability]
+Concept satisfiability for $\ALCI_{\RCC}$ over abstract complete atomic RCC5 frames is decidable.
+\end{theorem}
+
+\begin{proof}
+Given $C_0$, compute $\Cl(C_0)$, the finite type set, the finite bag bound $B(C_0)$, and enumerate $\Sigma(C_0)$.  Construct the finite alternating parity tree automaton $\Aut_{C_0}$ as described above.  By Theorems~\ref{thm:sound} and~\ref{thm:complete}, $C_0$ is satisfiable iff $L(\Aut_{C_0})\ne\varnothing$.  Emptiness of finite alternating parity tree automata is decidable.  Hence satisfiability is decidable.
+\end{proof}
+
+\section{Why this proof keeps the split-forest idea}
+
+The automaton does not replace the split forest.  It consumes it.  The semantic work is still done by:
+\begin{enumerate}[label=(\alph*)]
+\item witness thinning from arbitrary abstract models to generated models;
+\item generated containment-cover presentations for $\PP/\PPI$;
+\item split copies for multiple incompatible superparts;
+\item side-interface mosaics for nonvertical $\DR/\PO$ witnesses;
+\item typed equality quotienting to restore strong $\EQ$.
+\end{enumerate}
+The automaton merely gives a standard finite-state account of the parts that were most brittle in a hand certificate: regular infinite branches, simultaneous eventuality fulfillment, recursive side contexts, and profile repetition without semantic equality.
+
+Thus the split-forest model class is the key enabler; the automaton is the clean decision procedure on top of that normal form.
+
+\appendix
+
+\section{Finite bounds}
+
+Let $n=|\Cl(C_0)|$ and $t=|\mathsf{Type}(C_0)|\le 2^n$.  Let $e$ be the number of existential subformulas in $\Cl(C_0)$.  A conservative bag bound is
+\[
+  B(C_0)=1+2e+e^2.
+\]
+The summands account for the main position, direct selected witnesses/equality copies, and pairwise side-interface witnesses needed to close local triple shapes.  This bound is intentionally crude.  Any computable bound sufficient for the normal-form construction yields decidability.
+
+For fixed $B$, the number of possible bag profiles is bounded by
+\[
+  \sum_{k\le B}
+  t^k\cdot 5^{k^2}\cdot 2^{k^2}\cdot (d_0+1)^k\cdot M(k,n),
+\]
+where $5^{k^2}$ counts relation tables, $2^{k^2}$ counts equality-port graphs, $(d_0+1)^k$ counts child-slot declarations for a finite slot set $d_0=d_0(n)$, and $M(k,n)$ counts witness-source maps from existential formulas at bag positions to local positions or child slots.  All factors are finite and computable from $C_0$.
+
+\section{Patchwork lemma for bag trees}
+
+\begin{lemma}[Bag-tree patchwork]
+Let $\mathcal T$ be a tree of finite bags satisfying:
+\begin{enumerate}[label=(P\arabic*)]
+\item each bag relation table is converse-respecting and composition-closed on triples;
+\item adjacent bags agree on their overlap;
+\item for every three global occurrences, the construction assigns an occurrence-sensitive triple shape in some bag or nearest-common interface, and that shape's pair labels agree with the labels assigned to the three pairs.
+\end{enumerate}
+Then the global relation labeling induced by the bags is an abstract RCC5 network.
+\end{lemma}
+
+\begin{proof}
+Well-definedness of pair labels follows from overlap agreement along the unique path between any two bags containing the same occurrence.  Converse holds because every local table is converse-respecting.  For any triple of global occurrences $x,y,z$, condition (P3) supplies a local triple shape whose labels are exactly the global labels $\rho(x,y)$, $\rho(y,z)$, and $\rho(x,z)$.  Since the local shape is composition-closed, the global triple satisfies
+\[
+  \rho(x,z)\in\Comp(\rho(x,y),\rho(y,z)).
+\]
+Thus all abstract RCC5 frame conditions except strong $\EQ$ hold in the weak occurrence network.  Strong $\EQ$ is obtained after quotienting by the typed equality congruence.
+\end{proof}
+
+\section{Request parity in detail}
+
+The only accepting condition needed for concepts is reachability of transitive existential witnesses.  For each $R\in\{\PP,\PPI\}$ and $D\in\Cl(C_0)$, define a pending state $\mathsf{Ex}(p,R,D)$ with priority $1$ and a success continuation with priority $0$.  The transition is:
+\[
+\delta(\mathsf{Ex}(p,R,D),\sigma)
+=
+\bigvee_{q\in \mathsf{Step}_R(p,\sigma)}
+\begin{cases}
+\mathsf{Check}(q,D),& D\in\tau(q),\\
+\mathsf{move}(q,\mathsf{Ex}(q,R,D)),& D\notin\tau(q),
+\end{cases}
+\]
+where $\mathsf{Step}_R$ lists one-step strict generated $R$-cover successors and equality-mate transfers followed by such successors.  The strictness flag is stored in the automaton state so that the source itself cannot witness its own $\exists\PP$ or $\exists\PPI$ request.
+
+If a run branch follows pending states forever without reaching $D$, priority $1$ is the least priority seen infinitely often, so the branch rejects.  If it reaches $D$, it leaves the pending state.  Multiple requests are handled by alternation: the local type check spawns a separate request obligation for every existential in the type.  Acceptance requires all spawned obligations to be accepted, so simultaneous fulfillment is not reduced to separate noncoherent reachability claims; it is witnessed by one accepting run over one labeled split forest.
+
+\section{Typed equality quotient details}
+
+Let $M$ be the weak occurrence network extracted from an accepted tree, and let $\equiv_{\EQ}$ be the equivalence relation generated by explicit equality-port edges.  The automaton checks the following finite conditions at every port occurrence:
+\begin{enumerate}[label=(Q\arabic*)]
+\item equal ports have identical closure types;
+\item if two equal ports have outgoing child slots of the same declared obligation, the child overlaps are also equality-synchronized or relation-congruent;
+\item for every third local position $z$ in the interface, equal ports have the same relation to $z$ after quotienting;
+\item no equal ports are separated by a strict positive vertical path.
+\end{enumerate}
+These local checks are propagated through overlap slots.  By induction on the bag tree path from an equality port to any third occurrence, (Q3) extends to all third occurrences.  Hence $\equiv_{\EQ}$ is a congruence on the whole weak occurrence network.  Clause (Q4) prevents equality from collapsing a strict $\PP/\PPI$ chain.  Therefore quotienting yields a strong RCC5 frame and preserves closure truth, as used in the soundness theorem.
+
+
+
+\section{Expanded construction of the normal form}
+
+This appendix expands the proof of Theorem~\ref{thm:normalform}.  Its purpose is to make explicit which information is placed in the split forest and which information is delegated to the automaton.
+
+\subsection{From selected witnesses to generated covers}
+
+Let $\mathcal J$ be the witness-generated submodel obtained from $\mathcal I,a$.  Write $\mathrm{orig}(u)$ for the element of $\mathcal J$ represented by an occurrence $u$.
+
+For each generated element $x$ and each existential formula $\exists R.D\in\Cl(C_0)$ true at $x$, the witness selector has chosen an element $y=w(x,\exists R.D)$.  The construction creates an occurrence-level obligation
+\[
+  (u,R,D,y)
+\]
+for every occurrence $u$ with origin $x$.  The obligation says that, in the eventual quotient, the class of $u$ must have an $R$-successor satisfying $D$ and represented by an occurrence whose origin is $y$.
+
+If $R=\PP$, the witness $y$ is a proper superpart of $x$.  A single tree occurrence has only one immediate generated superpart slot for each active upward branch.  When two selected superparts of the same origin are incomparable, one occurrence cannot lie below both in one containment tree.  The split step is therefore:
+\begin{enumerate}[label=(U\arabic*)]
+\item create one copy $u_i$ of $x$ for each selected upward branch that cannot be merged with another branch;
+\item attach $u_i$ by a generated superpart slot to an occurrence $v_i$ of its selected superpart $y_i$;
+\item declare all $u_i$ to be equality mates by explicit equality ports;
+\item copy the full type of $x$ to every $u_i$.
+\end{enumerate}
+The equality port is not a blocking edge.  It asserts that after quotienting, the classes of the $u_i$ coincide.  The automaton checks the congruence conditions needed for this quotient.
+
+If $R=\PPI$, the witness is a proper part of $x$.  Proper-part witnesses can be placed in downward generated child slots below an occurrence of $x$.  If several such witnesses have incompatible side requirements, they are placed in distinct child slots.  The number of slots needed at one occurrence is bounded by the number of existential formulas in $\Cl(C_0)$.
+
+\subsection{When two upward witnesses can be merged}
+
+Two upward $\PP$-witness obligations at $x$ can share one occurrence chain only when their chosen witnesses are comparable in $\mathcal J$ in the correct order and the higher witness does not violate any universal formula inherited from the lower witness.  The construction does not need to decide maximal merging.  It may always split.  Splitting is sound because equality ports later identify the source copies, not the witness superparts.
+
+This conservative policy is useful in the proof: it avoids a global search for an optimal containment tree.  Every upward existential may receive its own copy of the source.  The finite alphabet remains finite because at each type there are only finitely many existential formulas, hence finitely many upward witness obligations.
+
+\subsection{Side witnesses and recursive side contexts}
+
+For $R\in\{\DR,\PO\}$, the selected witness is not naturally placed on the vertical containment branch.  It is inserted into a side-interface bag.  Suppose $u$ has origin $x$ and $y=w(x,\exists R.D)$.  Create a bag containing positions $p_u,p_y$ with
+\[
+  L(p_u,p_y)=R,
+  \qquad
+  \tau(p_y)=\tp_{\mathcal J}(y).
+\]
+If $y$ itself has selected witnesses, recursively attach child bags for those witnesses.  Thus side witnesses are not inert leaves; they are roots of local split subpresentations.
+
+The important invariant is:
+\begin{quote}
+Every occurrence introduced as a witness carries the full set of closure obligations of its origin.
+\end{quote}
+Therefore universal formulas at side witnesses and existential formulas from side witnesses are handled by exactly the same automaton states as those at vertical nodes.
+
+\subsection{Cross-relations among side witnesses}
+
+If a source occurrence $u$ has side witnesses $v_1,\ldots,v_k$, the construction records not only $\rho(u,v_i)$ but also $\rho(v_i,v_j)$ for pairs of side witnesses that can occur together in a finite prefix.  These labels are copied from $\mathcal J$.  If $v_i$ and $v_j$ are themselves $\PP/\PPI$-comparable, the side context is recursively verticalized: one side witness is placed in the local vertical subcontext of the other, or an occurrence-sensitive pair shape records the positive containment relation.
+
+This is the point that replaces the older overly strong rule that all residual sibling frontiers are only $\DR/\PO$.  The repaired rule is:
+\begin{quote}
+Only residual frontier pairs after recursive verticalization are required to be $\DR/\PO$; comparable side witnesses are represented by local vertical mini-contexts before residualization.
+\end{quote}
+The automaton checks this using the $\mathsf{Patch}$ state and the finite bag table.
+
+\subsection{Why the construction is bounded}
+
+The construction may repeat profiles infinitely often along generated chains, but every local expansion is bounded.  At one occurrence, possible obligations are indexed by subformulas of the form $\exists R.D$ in $\Cl(C_0)$.  Hence there are at most $e\le n$ direct selected witness obligations.  For local triple closure, it is enough to keep, in a bag, the source, its direct local witnesses, and the pairwise comparison witnesses introduced by recursive verticalization.  The crude bound $1+2e+e^2$ is sufficient for decidability.  The exact optimal bound is irrelevant; only computable finiteness matters.
+
+\section{Expanded automaton construction}
+
+We now spell out the transition conditions more explicitly.  A profile $\sigma$ contains a finite bag $P_\sigma$, type map $\tau_\sigma$, relation table $L_\sigma$, equality-port relation $E^\sigma_{\EQ}$, and child slots.  A child slot $i$ has a kind and an overlap map
+\[
+  \mu_i:P_\sigma\rightharpoonup P_{\sigma_i}
+\]
+from parent positions to child positions.
+
+\subsection{The root transition}
+
+At the root, $\mathsf{Root}$ checks that the main position $m$ satisfies $C_0$:
+\[
+  C_0\in\tau_\sigma(m).
+\]
+It then spawns $\mathsf{Local}$ and $\mathsf{CheckAll}(p)$ for every bag position $p$, where $\mathsf{CheckAll}(p)$ checks all modal formulas in the type of $p$.
+
+\subsection{Checking all formulas in a type}
+
+For a position $p$, define
+\[
+  \mathsf{Mod}(p)=\{\exists R.D\in\tau(p)\}\cup\{\forall R.D\in\tau(p)\}.
+\]
+The transition for $\mathsf{CheckAll}(p)$ is the conjunction of the obligations corresponding to every formula in $\mathsf{Mod}(p)$.  This is where simultaneous fulfillment is enforced: all existential requests spawned from the same type must be satisfied in one accepted tree.
+
+\subsection{Existential transitions}
+
+For $\exists R.D\in\tau(p)$:
+\begin{itemize}
+\item If $R=\EQ$, require $D\in\tau(p)$.
+\item If $R\in\{\DR,\PO\}$, require a declared witness target $q$ either in the same bag or in a side child overlap, with $L(p,q)=R$ and $D\in\tau(q)$.  If the target lies in a child bag, move to that child and check the overlap position.
+\item If $R\in\{\PP,\PPI\}$, enter the pending state $\mathsf{Ex}^{+}(p,R,D)$, where the superscript $+$ records that at least one strict cover step must be taken before success.
+\end{itemize}
+
+For the transitive state $\mathsf{Ex}^{+}(p,R,D)$, the transition is a finite disjunction over permitted next moves.  Permitted moves are:
+\begin{enumerate}[label=(X\arabic*)]
+\item a strict generated cover slot of direction $R$;
+\item an equality-port transfer to a mate $p'$ followed by a strict generated cover slot of direction $R$;
+\item continuation through a child overlap that preserves the same pending request.
+\end{enumerate}
+After one strict cover step, the automaton may accept any current position whose type contains $D$.  If not, it may continue along further $R$-cover steps.  Infinite nonfulfillment is rejected by the odd priority of the pending state.
+
+\subsection{Universal transitions}
+
+For $\forall R.D\in\tau(p)$:
+\begin{itemize}
+\item If $R=\EQ$, require $D\in\tau(p)$.
+\item If $R\in\{\DR,\PO\}$, spawn $\mathsf{Check}(q,D)$ for every local or side-interface position $q$ represented as an $R$-target of $p$.
+\item If $R\in\{\PP,\PPI\}$, spawn a propagation state $\mathsf{All}^{+}(p,R,D)$.
+\end{itemize}
+The propagation state universally follows every strict generated $R$-cover successor and every equality-mate transfer that can expose additional $R$-successors.  At each strict target $q$, it checks $D\in\tau(q)$ and continues propagation from $q$.
+
+\subsection{Equality synchronization transitions}
+
+For every equality-port pair $pE_{\EQ}q$ in a bag, the automaton checks:
+\begin{enumerate}[label=(Y\arabic*)]
+\item $\tau(p)=\tau(q)$;
+\item $L(p,q)=\EQ$;
+\item for every local third position $r$, $L(p,r)=L(q,r)$ after quotienting equality ports;
+\item each existential witness declaration of $p$ has a matching declaration for $q$ either locally or through a synchronized child slot;
+\item no strict positive vertical path from $p$ to $q$ is declared in the same bag or through an overlap.
+\end{enumerate}
+The fourth item is the finite local version of typed congruence.  It is propagated through the tree by overlap maps.
+
+\subsection{Patch transitions}
+
+The patch state is a conjunction of finite checks:
+\begin{enumerate}[label=(Z\arabic*)]
+\item all bag triples satisfy the RCC5 composition table;
+\item every side child has an overlap with its parent identifying the source or boundary position that justifies it;
+\item if two child interfaces share a boundary position, their labels to that boundary agree;
+\item if two side witnesses can be compared by $\PP/\PPI$, the profile contains a recursive verticalization slot witnessing that comparison;
+\item remaining residual side-frontier pairs are labelled $\DR$ or $\PO$ and included in a triple shape with every relevant boundary position.
+\end{enumerate}
+These are all checks against finite relation tables in $\sigma$ and its finitely many children.
+
+\section{Detailed soundness proof}
+
+The proof of Theorem~\ref{thm:sound} rests on three lemmas, each made explicit here.
+
+\begin{lemma}[Well-defined global labels]
+In an accepted profile tree, every pair of global occurrences receives exactly one RCC5 label, and this label is independent of the bag in which the pair is read.
+\end{lemma}
+
+\begin{proof}
+If the two occurrences are identical, the label is $\EQ$.  If they are related by a positive generated vertical path, the label is determined by the path direction and transitive closure.  The automaton forbids a conflicting side label for such a vertical pair unless the side label is the same vertical relation.  If the pair is nonvertical, the patch condition assigns an occurrence-sensitive pair shape at the nearest common interface.  Any other bag containing the same pair is connected to this interface by a path of overlaps.  Overlap consistency requires the same label at each step.  Hence the label is unique.
+\end{proof}
+
+\begin{lemma}[Global RCC5 composition]
+The global weak occurrence labeling obtained from an accepted tree satisfies the RCC5 composition table on every triple.
+\end{lemma}
+
+\begin{proof}
+Let $x,y,z$ be global occurrences.  If all three occur in one bag, the local triple check applies.  Otherwise take the least interface in the bag tree connecting the bags containing $x,y,z$.  The occurrence-sensitive triple-shape requirement in the patch state declares the three pair labels at that interface.  The declared labels agree with the global pair labels by the previous lemma.  The automaton checked this triple against the composition table.  Therefore
+\[
+  \rho(x,z)\in\Comp(\rho(x,y),\rho(y,z)).
+\]
+\end{proof}
+
+\begin{lemma}[Truth lemma]
+For every closure formula $D$ and every global occurrence $u$ of an accepted tree,
+\[
+  D\in\tp(u) \Rightarrow M/[\equiv_{\EQ}], [u]\models D,
+\]
+and
+\[
+  \overline D\in\tp(u) \Rightarrow M/[\equiv_{\EQ}], [u]\not\models D.
+\]
+\end{lemma}
+
+\begin{proof}
+The proof is by induction on $D$.  Boolean cases are exactly the Hintikka conditions.  For $\exists R.E$, the automaton has spawned the corresponding existential transition from the type of $u$.  The transition supplies a witness occurrence $v$ with semantic relation $R$ from $u$ after quotienting and with $E\in\tp(v)$.  The induction hypothesis gives $E$ at $[v]$.
+
+For $\forall R.E$, let $[v]$ be any $R$-target of $[u]$ in the quotient.  Choose occurrence representatives $u',v'$ with $u'\equiv_{\EQ}u$ and $v'\equiv_{\EQ}v$.  By typed congruence, $\forall R.E\in\tp(u')$.  The automaton's universal propagation checks every represented target of $u'$, including $v'$.  Hence $E\in\tp(v')$, and the induction hypothesis gives $E$ at $[v]$.
+
+The negative clause follows because types contain exactly one of $D$ and $\overline D$ and the positive clause applies to $\overline D$.
+\end{proof}
+
+\section{Detailed completeness proof}
+
+Starting from a satisfying model, the accepting tree is obtained by extraction.  We describe the extraction as a deterministic recipe once a witness selector is fixed.
+
+\begin{enumerate}[label=(C\arabic*)]
+\item Thin the model to the witness-generated submodel $\mathcal J$.
+\item For the root element $a$, create a root occurrence with type $\{D\in\Cl(C_0):\mathcal J,a\models D\}$.
+\item For each occurrence and each selected existential witness, attach a vertical child, side child, or equality-copy branch according to the role.
+\item Fill each local relation table by copying $\rho^{\mathcal J}$ on the origins of bag positions.
+\item Whenever an occurrence is copied to satisfy incompatible upward witnesses, add equality ports between the copies.
+\item Whenever a finite triple of occurrences first becomes jointly visible at an interface, add its occurrence-sensitive triple shape with labels copied from $\mathcal J$.
+\end{enumerate}
+
+Every local automaton check is satisfied because the data were copied from an actual abstract RCC5 model.  The accepting run chooses precisely the witness branches chosen by the selector.  Pending parity requests are fulfilled after finitely many moves because each selected witness is placed at a finite generated path from its source occurrence.  If the same profile repeats infinitely often, the run still treats successive laps as different occurrences; no equality obligation is generated merely by repetition.
+
+\section{Example: the upward infinite chain}
+
+Consider
+\[
+  C_{\uparrow}=\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top.
+\]
+A generated split-forest presentation has a root occurrence $u_0$ and a superpart-cover child $u_1$, then $u_2$, and so on:
+\[
+  u_0 E_\uparrow u_1 E_\uparrow u_2 E_\uparrow\cdots .
+\]
+A regular profile tree may use one repeating profile.  This is not semantic equality.  The occurrence-sensitive address distinguishes $u_i$ from $u_j$ for $i\ne j$, and the vertical relation is $u_i\PP u_j$ when $i<j$.  The automaton's pending state for $\exists\PP.\top$ at $u_i$ moves once to $u_{i+1}$ and succeeds.  The universal state for $\forall\PP.\exists\PP.\top$ propagates to every later $u_j$ and spawns the same successful existential request there.  Thus the one-profile regular presentation is accepted without collapsing the chain into an $\EQ$-cycle.
+
+\section{Checklist of proof obligations}
+
+\begin{longtable}{p{0.33\linewidth}p{0.57\linewidth}}
+\toprule
+Obligation & Where it is discharged \\
+\midrule
+Arbitrary models may be assumed generated & Witness thinning lemma, Section 3 \\
+No semantic Hasse assumption & Generated cover construction, Sections 4 and 5 \\
+Multiple upward superparts & Splitting construction, Appendix E.1--E.2 \\
+Blocking is not equality & Occurrence-sensitive pair shapes and equality-port discipline, Sections 4.1 and Appendix D \\
+Side witnesses with comparable witnesses & Recursive side-context construction, Appendix E.3--E.4 \\
+RCC5 composition globally & Patchwork lemma and detailed soundness, Appendix B and Appendix G \\
+Transitive eventualities & Parity pending states, Sections 7.4 and Appendix C \\
+Simultaneous request fulfillment & Alternation spawns all type obligations in one run, Appendix F.2 \\
+Strong $\EQ$ quotient & Typed equality congruence and quotient soundness, Sections 4.3 and Appendix D \\
+Decidable finite search & Finite alphabet plus alternating parity tree automata emptiness, Sections 6--9 \\
+\bottomrule
+\end{longtable}
+
+\end{document}
