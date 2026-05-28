@@ -57,6 +57,19 @@
 \newcommand{\naturals}{\mathbb{N}}
 \newcommand{\reals}{\mathbb{R}}
 \newcommand{\RCCfive}{\{\DR,\PO,\PP,\PPI\}}
+%% Round-7 pair-shape / incidence-tag notation
+\newcommand{\Q}{\ensuremath{\mathcal Q}}
+\newcommand{\Pos}{\ensuremath{\mathsf{Pos}}}
+\newcommand{\Pair}{\ensuremath{\mathsf{Pair}}}
+\newcommand{\Tri}{\ensuremath{\mathsf{Tri}}}
+\newcommand{\Base}{\ensuremath{\mathsf{B}}}
+\newcommand{\lab}{\operatorname{lab}}
+\newcommand{\self}{\ensuremath{\mathsf{self}}}
+\newcommand{\eqtag}{\ensuremath{\mathsf{eq}}}
+\newcommand{\up}{\ensuremath{\mathsf{up}}}
+\newcommand{\down}{\ensuremath{\mathsf{down}}}
+\newcommand{\side}{\ensuremath{\mathsf{side}}}
+\newcommand{\front}{\ensuremath{\mathsf{front}}}
 
 \begin{document}
 
@@ -1208,86 +1221,125 @@ depth-from-$u_*$ projection used in the proof.
 
 The \textbf{current best statement} of the
 model-to-quotient direction is GPT-5.5's
-\textit{repaired split-forest decidability
-proof}~\cite{GPT55Repaired} (May~2026, 31~pages after a fourth
-round of review, no-automata route), which removes all three
-load-bearing defects.  The three structural fixes are:
+\textit{round-7 split-forest decidability
+proof}~\cite{GPT55Round7Sketch} (May~2026, 14~pages,
+no-automata route), with detailed companion
+\cite{GPT55Round7Expanded} (28~pages) and an independent
+parity-tree-automata witness~\cite{GPT55AutomataRoute} (21~pages).
+The round-7 architectural move addresses a defect identified in
+the round-6 review~\cite{GPT55Round7Review}: indexing labels by
+abstract position-symbol pairs $L_\Q:\Pos_\Q^2\to\Base$ with
+diagonal $L_\Q(\pi,\pi)=\EQ$ collapses distinct laps of a blocking
+cycle into semantic equality (the canonical one-state certificate
+for $\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$ breaks
+because $q(u_i)=q(u_j)=\pi$ for every $i,j$, forcing $\lab(u_i,
+u_j)=\EQ$).  The defect is intrinsic to indexing by
+position-symbol pairs and cannot be locally patched.
+
+Round-7 replaces the position-symbol pair labelling by labels on
+\emph{occurrence-sensitive pair shapes}
+\[
+  \alpha(u,v)\;=\;\bigl(s_u,p_u,s_v,p_v,\iota(u,v)\bigr),
+\]
+where $\iota(u,v)\in\{\self,\eqtag,\up,\down,\side_R,\front_R\}$
+is an \emph{incidence tag} that distinguishes literal occurrence
+identity ($u=v$, tag $\self$) from explicit equality-port pairs
+(tag $\eqtag$), vertical successor / predecessor pairs (tags $\up,
+\down$), side-mosaic pairs, and residual sibling-frontier pairs.
+The label function is
+\[
+  \ell_\Q:\Pair_\Q\to\Base,\qquad
+  \ell_\Q(\self)=\ell_\Q(\eqtag)=\EQ,\;\;
+  \ell_\Q(\up)=\PP,\;\;
+  \ell_\Q(\down)=\PPI,\;\;
+  \ell_\Q(\side_R)=\ell_\Q(\front_R)=R.
+\]
+Distinct laps of a blocking cycle satisfy $\iota\ne\self$ and
+(absent an explicit equality-port link) $\iota\ne\eqtag$, so
+$\ell_\Q(\alpha(u_i,u_j))\ne\EQ$ for any distinct laps; for the
+one-state upward cycle the label is $\PP$, as intended.  Triple
+composition is verified on a finite triple-shape set $\Tri_\Q$ via
+\[
+  \ell_\Q(\alpha_{13})\in\comp\bigl(\ell_\Q(\alpha_{12}),\ell_\Q(\alpha_{23})\bigr)
+  \qquad\text{for all }(\alpha_{12},\alpha_{23},\alpha_{13})\in\Tri_\Q,
+\]
+the round-7 (V6) clause.  All of round 7 is twelve
+finite-checkable validity conditions (V1)--(V12) on a finite
+occurrence-sensitive certificate; both directions are proved
+(soundness: a valid certificate unfolds to a strong abstract RCC5
+model; completeness: every satisfiable $C_0$ admits a valid finite
+certificate).  The certificate space is bounded by a coarse
+$B(C_0)\le 2^{2^{p(n)}}$ for a polynomial $p$, sufficient for
+decidability.
+
+Three structural ingredients survive from earlier rounds and
+remain load-bearing in round 7:
 \begin{enumerate}[label=(\arabic*)]
-  \item \textbf{Occurrence-level equality:}
-    $u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) =
-    \mathrm{orig}(v)$ on the split presentation, not a
-    profile-port equivalence on the rank-$d$ quotient.  Self-loops
-    on the parent map become trivially reflexive and the
-    vertical-separation chain that defeats~(G1) vanishes.
-  \item \textbf{Mates with different parents} via
-    explicit port-equivalence on $\mathrm{Mate}_Q$, so a single
-    rank-$d$ state can carry incomparable upward $\PP$
-    witnesses---the $C_{AB}$ stress pattern is accommodated rather
-    than ruled out.
+  \item \textbf{Occurrence-sensitive equality} (round-7
+    refinement of round-2's occurrence-level equality).
+    Equality is generated only by explicit equality-port chains
+    instantiated inside a context, never by reuse of an abstract
+    position symbol in a blocking cycle.
+  \item \textbf{Split copies for multiple selected proper
+    superparts}.  Where an element has incomparable selected
+    $\PP$-superparts (the $C_{AB}$ stress concept), the
+    presentation carries one equality-mate occurrence per
+    selected superpart, linked by explicit equality-port chains.
   \item \textbf{Request-closed cycles} in place of
     $\omega$-acceptance.  Transitive $\PP/\PPI$ eventualities are
-    discharged by finite-graph reachability plus a request-closure
-    condition on the rank-$d$ quotient: no parity or B\"uchi
-    automaton, no $\omega$-language machinery.  Equality of
-    profile names along a blocking cycle never generates
-    $\equiv_{\EQ}$; each lap of the cycle unfolds to fresh
-    occurrences.
+    discharged by finite-graph reachability plus a
+    request-closure condition: no parity or B\"uchi automaton.
 \end{enumerate}
-The repaired proof formulates the model-to-quotient direction as
-\textbf{ten finite-checkable validity conditions
-(V1)--(V10)} on rank-$d$ quotient certificates and proves both
-directions: every valid certificate unfolds to a strong abstract
-RCC5 frame satisfying $C_0$ (soundness), and every satisfiable
-$C_0$ admits a finite valid certificate (completeness).  After
-four rounds of adversarial review by GPT-5.5, validity conditions
-(V3), (V4), (V5), and (V9.Eb) are restated in port-indexed form
-using context- and port-attached mate clusters $\mathrm{Mate}_Q(C,
-s, p) \subseteq S \times \mathrm{Port}(s')$; mosaics carry a
-verticalization stratum $\mathrm{Vrt}(M)$ (axiom (M6)) that
-separates vertical positions (source $+$ EQ mates $+$ selected
-$\PP/\PPI$ witnesses) from the sibling frontier (DR/PO witnesses
-$+$ boundary nodes); finite support closure is checked on an
-explicit abstract triple graph $T_Q$ with cardinality bounds
-$|\mathrm{Pos}_Q| \leq 2|S|\cdot(n{+}1)\cdot|\mathrm{Ctx}_Q|$ and
-$|\mathrm{Trip}_Q| \leq |\mathrm{Pos}_Q|^3 \cdot 125$; and the
-side interface $\mathrm{Side}(u)$ has an explicit five-item
-composition with polynomial width bound $m(n) = O(n^3)$.  The
-certificate space is bounded by a coarse
-$B(C_0) = 2^{2^{p(n)}}$ for a polynomial $p$, derived
-\emph{grammar-first} from these component bounds, and validity is
-finite-graph checkable, so $\ALCIRCC{5}$ concept satisfiability
-reduces to a finite enumeration.
 
-\medskip\noindent\textbf{Status of v1, v2.1, and the repaired
-proof.}  v1 and v2.1 are retained in the repository for the audit
-trail but are explicitly \emph{marked superseded}: v1 by the
-sibling-interface v2 delta~\cite{SiblingInterfaceV2} that already
-fixed the Def~1.5 / Def~1.7 / Thm~1.20-sketch defects, and v2.1 by
-the GPT-5.5 round-2 review.  The repaired proof~\cite{GPT55Repaired}
+\medskip\noindent\textbf{Status of v1, v2.1, the round-2 31-page
+proof, and the round-5 / round-6 deltas.}
+Claude's v1 and v2.1 completeness-extraction papers, GPT-5.5's
+round-2 31-page repaired proof~\cite{GPT55Repaired}, Claude's
+round-5 (M6$'$) delta, items-4-to-8 delta, round-5 consolidation,
+and round-6 internal-coherence pass are all retained in the
+repository as the historical audit trail but are explicitly
+\emph{marked superseded} by GPT-5.5's round-7
+sketch~\cite{GPT55Round7Sketch}.  The round-2 through round-6
+material is documented in
+\texttt{OUTDATED.md}~\cite{ALCIRCC5Outdated}.  The round-7 sketch
 is the single document that now carries the decidability claim on
-the model-to-quotient side; its V1--V10 validity conditions are
-designed to be sufficient inputs for the soundness chain in the v1
-sibling-interface paper~\cite{SiblingCompleted}.
+the model-to-quotient side; its (V1)--(V12) validity conditions on
+occurrence-sensitive pair shapes replace the
+position-symbol-indexed (V1)--(V15) of the round-5 / round-6
+consolidations.  The v1 sibling-interface
+paper~\cite{SiblingCompleted} and its v2
+delta~\cite{SiblingInterfaceV2} still supply the soundness chain
+(Thms~1.17--1.19) and the cover-tree decomposition that the
+round-7 sketch builds on.
 
 \medskip\noindent\textbf{Computational verification of the
 combinatorial claims.}
 With the proof side stable, Claude's contribution shifted to
-\emph{cross-checking the repaired proof's finite-combinatorial
-claims} per GPT-5.5's verification-recommendations document.  Six
-Python work packages (WP1--WP6) are all \textbf{PASS}: brute-force
-enumeration confirms GPT-5.5's RCC5 composition table in all 25
-cells (WP1); a vertical-fragment validity-condition checker accepts
-$C_\uparrow$ via parent self-loops, accepts $C_{AB}$ via two mates
-with different parents, rejects the v2.1-style single-parent
-$C_{AB}$ attempt, and rejects two genuine UNSAT concepts on the
-soundness side (WP2, covering V1/V3/V4/V5/V9/V10); a small-model
-SAT/UNSAT oracle exhibits a concrete 3-element model for $C_{AB}$
-with two incomparable $\PP$-superparts (WP3); $C_{AB}$ and
-request-closed cycle tests fold into WP2/WP3 (WP4, WP5); and a
-mosaic enumeration confirms (M1)--(M5) and the support-closure
-axioms on small mosaics, including the patchwork-on-triangles
-property for RCC5 (WP6).  No counterexample to any combinatorial
-claim of the repaired proof was found.
+\emph{cross-checking finite-combinatorial claims}.  Six Python work
+packages (WP1--WP6) verify the round-2 31-page repaired
+proof~\cite{GPT55Repaired} (now historical) and all
+\textbf{PASS}: brute-force enumeration confirms GPT-5.5's RCC5
+composition table in all 25 cells (WP1); a vertical-fragment
+validity-condition checker accepts $C_\uparrow$ via parent
+self-loops, accepts $C_{AB}$ via two mates with different parents,
+rejects the v2.1-style single-parent $C_{AB}$ attempt, and rejects
+two genuine UNSAT concepts (WP2); a small-model SAT/UNSAT oracle
+exhibits a concrete 3-element model for $C_{AB}$ (WP3); $C_{AB}$
+and request-closed cycle tests fold into WP2/WP3 (WP4, WP5); and a
+mosaic enumeration confirms support-closure axioms on small
+mosaics (WP6).
+
+Three further self-contained pure-stdlib verification scripts
+exercise the central round-7 stress concepts: WP7
+(comparable side witnesses, $\exists\DR.(A\sqcap\exists\PP.B)\sqcap
+\exists\DR.B$), WP8 (blocking-not-equality: builds a finite
+truncation of the canonical $C_\uparrow$ chain and verifies that
+the round-7 incidence-tagged label rule keeps distinct laps at
+$\PP/\PPI$ rather than collapsing them to $\EQ$, while explicitly
+demonstrating the round-6 collapsed rule), and WP9 (split copies
+for $\exists\PP.A\sqcap\exists\PP.B$ with incomparable proper
+superparts).  All three pass; no counterexample to a
+combinatorial claim of the round-7 sketch was found.
 
 \medskip\noindent\textbf{A note on scope.}
 The soundness and completeness statements above are theorems
@@ -1451,28 +1503,34 @@ decidability).}
     Def~1.5 / Def~1.7 / Thm~1.20-sketch with the corrected
     generated-cover statements; the proofs of Thms~1.17--1.19
     carry over verbatim.
-  \item The \emph{GPT-5.5 repaired
-    proof}~\cite{GPT55Repaired} (May~2026, 31~pages after four
-    rounds of review, no-automata route): formulates rank-$d$
-    split-forest certificates and ten finite-checkable validity
-    conditions (V1)--(V10), and proves both directions in their
-    entirety, including \textbf{completeness} (every satisfiable
-    $C_0$ admits a valid finite certificate).  The three
-    structural ingredients that make the proof go
-    through---occurrence-level equality, mates with different
-    parents, and request-closed cycles---resolve the gaps that
-    defeated Claude's earlier completeness-extraction attempts
-    (v1, v2.1; both now marked superseded).  The fourth-review
-    pass added the verticalization discipline (M6), port-indexed
-    mate clusters, the abstract triple graph $T_Q$, and the
-    explicit side-interface construction; all six load-bearing
-    gaps (G1)--(G6) and five smaller issues from the fourth
-    review are closed in the main proof.
+  \item The \emph{GPT-5.5 round-7 split-forest
+    proof}~\cite{GPT55Round7Sketch} (May~2026, 14~pages,
+    no-automata route) with detailed
+    companion~\cite{GPT55Round7Expanded} (28~pages) and
+    parity-tree-automata witness~\cite{GPT55AutomataRoute}
+    (21~pages): formulates finite occurrence-sensitive
+    split-forest certificates with twelve finite-checkable
+    validity conditions (V1)--(V12), and proves both directions
+    in their entirety, including \textbf{completeness} (every
+    satisfiable $C_0$ admits a valid finite certificate).  The
+    central round-7 architectural move is that finite labels live
+    on occurrence-sensitive \emph{pair shapes}
+    $\alpha(u,v)=(s_u,p_u,s_v,p_v,\iota(u,v))$ with incidence
+    tags $\iota\in\{\self,\eqtag,\up,\down,\side_R,\front_R\}$.
+    Distinct laps of a blocking cycle satisfy $\iota\ne\self$ and
+    $\iota\ne\eqtag$, so the round-7 labelling preserves
+    blocking-not-equality while still discharging
+    $\PP/\PPI$ eventualities by request-closed cycles.  Round-7
+    supersedes Claude's earlier round-5 (M6$'$) delta, items-4-to-8
+    delta, round-5 consolidation, and round-6 internal-coherence
+    pass; those manuscripts and the round-2 31-page repaired
+    proof~\cite{GPT55Repaired} are retained as the historical
+    audit trail (see~\texttt{OUTDATED.md}~\cite{ALCIRCC5Outdated}).
 \end{enumerate}
 Together, (1) and (2) establish the biconditional displayed
 above.  The certificate space is bounded by
-$B(C_0) = 2^{2^{p(n)}}$, validity is finite-graph checkable, and
-the enumeration terminates.
+$B(C_0) = 2^{2^{p(n)}}$ as an effectively computable bound,
+validity is finite-graph checkable, and the enumeration terminates.
 
 \medskip\noindent\textbf{Operational layer (algorithmic
 realization, empirically validated).}
@@ -1490,21 +1548,24 @@ realization, empirically validated).}
 \medskip\noindent\textbf{Computational verification of the
 combinatorial claims.}  In parallel with the proof work, six
 Python work packages (WP1--WP6) cross-check the finite
-combinatorial content of the repaired proof:  RCC5 composition
+combinatorial content of the round-2 31-page repaired
+proof~\cite{GPT55Repaired} (now historical):  RCC5 composition
 table by exhaustive subset enumeration (WP1), bounded
 certificate-soundness fuzzing for (V1)/(V3)/(V4)/(V5)/(V9)/(V10)
 (WP2), small-model SAT/UNSAT oracle (WP3), multiple-superpart
 $C_{AB}$ stress (WP4, folded into WP2/WP3), request-closed
 blocking-cycle tests (WP5, folded into WP2), and mosaic closure
-search (WP6).  All six \textbf{PASS}; no counterexample to a
-combinatorial claim of the repaired proof was found.
+search (WP6).  Three further self-contained pure-stdlib scripts
+(WP7--WP9) exercise the round-7 stress concepts: comparable side
+witnesses, blocking-not-equality, and split copies.  All nine
+\textbf{PASS}; no counterexample was found.
 
 \medskip\noindent\textbf{The gap between the two layers.}
 The decidability claim for $\ALCIRCC{5}$ rests on (1) and (2)
 alone.  Papers (3) and (4) describe a \emph{plausible and
 empirically validated} algorithmic realization, but a formal
-derivation showing that CT1--CT5 exactly capture the
-valid-certificate conditions (V1)--(V10) has not been written.
+derivation showing that CT1--CT5 exactly capture the round-7
+valid-certificate conditions (V1)--(V12) has not been written.
 CT5 in particular was added as a patch after Opus~4.7's
 adversarial review---not derived from the split-forest
 semantics---and while empirical agreement between two
@@ -1712,10 +1773,54 @@ GPT-5.5 (OpenAI), prompted by M.\ Wessel.
 \bibitem{GPT55Repaired}
 GPT-5.5 (OpenAI), prompted by M.\ Wessel.
 \newblock A repaired split-forest decidability proof for
-  $\ALCIRCC{5}$ (no-automata route): occurrence-level equality,
-  mates with different parents, request-closed cycles.
+  $\ALCIRCC{5}$ (no-automata route, round-2 31-page version;
+  superseded by~\cite{GPT55Round7Sketch}).
 \newblock Technical report, May~2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf}
+
+\bibitem{GPT55Round7Review}
+GPT-5.5 (OpenAI), prompted by M.\ Wessel.
+\newblock Formal review of the round-6 consolidated generated
+  split-forest proof (May~27, 2026): identifies the central
+  abstract-position-symbol labelling defect that motivates the
+  round-7 pair-shape architecture.
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/formal_response_round6_review.pdf}
+
+\bibitem{GPT55Round7Sketch}
+GPT-5.5 (OpenAI), prompted by M.\ Wessel.
+\newblock A repaired split-forest decidability proof for
+  $\ALCIRCC{5}$ without automata (round-7 consolidated sketch,
+  14~pages): occurrence-sensitive pair shapes with incidence
+  tags; twelve validity clauses (V1)--(V12).  Current canonical
+  statement of the decidability theorem.
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/repaired_split_forest_all_in_one_round7.pdf}
+
+\bibitem{GPT55Round7Expanded}
+GPT-5.5 (OpenAI), prompted by M.\ Wessel.
+\newblock Expanded generated split-forest decidability proof for
+  $\ALCIRCC{5}$: detailed companion to the round-7 sketch
+  (28~pages).  Detailed local constructions, worked stress cases,
+  audit-of-main-proof-obligations section.
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/expanded_split_forest_full_details_proof.pdf}
+
+\bibitem{GPT55AutomataRoute}
+GPT-5.5 (OpenAI), prompted by M.\ Wessel.
+\newblock A split-forest decidability proof for $\ALCIRCC{5}$ via
+  parity tree automata: detailed version (21~pages).  Independent
+  witness to the same decidability theorem.
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/split_forest_automata_decidability_proof_detailed.pdf}
+
+\bibitem{ClaudeRound7Audit}
+Claude (Anthropic, Opus~4.7), prompted by M.\ Wessel.
+\newblock Round-7 audit and response: adopting GPT-5.5's
+  pair-shape / incidence-tag repair as the canonical statement
+  (9~pages).
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/claude_round7_audit_response.pdf}
 
 \bibitem{CoverTreeImpl}
 Claude (Anthropic), prompted by M.\ Wessel.
