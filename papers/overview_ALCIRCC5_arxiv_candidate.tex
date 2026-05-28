@@ -92,28 +92,15 @@
   A Survey of the Problem, Its History, and a Proposed Solution}
 
 %%
-%% Authors
+%% Authors (arXiv candidate: sole human author per arXiv policy;
+%% AI-tool contributions are disclosed in the body and in the
+%% Declaration on Generative AI below.)
 \author[1]{Michael Wessel}[%
-email=miacwess@gmail.com,
+email=lambdamikel@gmail.com,
 url=https://github.com/lambdamikel,
 ]
 \cormark[1]
-\address[1]{University of Hamburg (doctoral work, 2002/2003)}
-
-\author[2]{Claude (Anthropic)}[%
-url=https://github.com/lambdamikel/alcircc5,
-]
-\address[2]{Anthropic, San Francisco, CA, USA}
-
-\author[3]{GPT-5.4 (OpenAI)}[%
-url=https://github.com/lambdamikel/alcircc5,
-]
-\address[3]{OpenAI, San Francisco, CA, USA}
-
-\author[4]{GPT-5.5 (OpenAI)}[%
-url=https://github.com/lambdamikel/alcircc5,
-]
-\address[4]{OpenAI, San Francisco, CA, USA}
+\address[1]{LambdaMikel@Home}
 
 \cortext[1]{Corresponding author.}
 
@@ -178,15 +165,25 @@ explains how it achieves blocking.
 Section~\ref{sec:outlook} concludes with an assessment of what
 has been achieved and what remains to be done.
 
-\textbf{Disclaimer.}
-This paper was authored by AI assistants
-(Claude Opus~4.7/Anthropic~\cite{ClaudeOpus47},
-GPT-5.4~Pro/OpenAI~\cite{GPT54Pro}, and
-GPT-5.5/OpenAI~\cite{GPT55Repaired}), prompted by Michael Wessel.
-The results and proofs have \textbf{not been peer-reviewed or verified by
-human domain experts}.  They are published as a discussion piece.
-The claims should not be taken as established results unless independently
-verified.  We invite scrutiny, corrections, and feedback.
+\textbf{Disclaimer and AI-tool disclosure.}
+This paper was prepared by Michael Wessel with significant
+assistance from generative-AI language tools:\@ Claude
+(Anthropic, Opus~4.7)~\cite{ClaudeOpus47}, GPT-5.4~Pro
+(OpenAI)~\cite{GPT54Pro}, and GPT-5.5~(OpenAI)~\cite{GPT55Repaired}.
+The AI tools were used to formalise the mathematical proofs,
+implement the cover-tree tableau decision procedure, conduct the
+computational verification campaigns, and draft the manuscript
+text including this overview.  Wessel reviewed and edited the
+content as needed, directed the research, identified and
+corrected errors, and takes full responsibility for the
+publication's content---including any errors, mistakes, or
+misleading statements the AI tools may have introduced.  See the
+Declaration on Generative AI at the end of the paper for
+further details.  The results and proofs have \textbf{not been
+peer-reviewed or verified by human domain experts}; they are
+published as a discussion piece.  The claims should not be taken
+as established results unless independently verified.  Scrutiny,
+corrections, and feedback are invited.
 
 %% ====================================================================
 \section{History of $\ALCIRCC{5}$}
@@ -1707,15 +1704,49 @@ readers should still verify any reference before citing it.
 %% ====================================================================
 \section*{Declaration on Generative AI}
 
-During the preparation of this work, the authors used Claude (Anthropic,
-Opus~4) and GPT-5.4~Pro (OpenAI) in order to: formalize mathematical
-proofs, implement decision procedures, generate LaTeX manuscripts,
-and conduct computational experiments.  Michael Wessel reviewed and
-edited the content as needed and takes full responsibility for the
-publication's content.  The entire research project---problem
-formulation, key intuitions, error identification, and direction of
-the investigation---was conducted by Wessel; the AI systems performed
-the detailed formalization, implementation, and writing.
+In preparing this work, the author (Wessel) made significant use of
+generative-AI language tools:\@ \textbf{Claude} (Anthropic,
+Opus~4.7), \textbf{GPT-5.4~Pro} (OpenAI), and \textbf{GPT-5.5}
+(OpenAI).  Specifically, the AI tools were used to:
+\begin{itemize}
+\item formalise the mathematical proofs (split-forest semantics,
+  completeness extraction across seven review rounds, the round-7
+  pair-shape / incidence-tag architecture);
+\item implement the cover-tree tableau decision procedure
+  ($\approx$350~lines of Python), the quasimodel reasoners, and
+  the WP1--WP9 verification scripts;
+\item conduct computational verification campaigns (911-concept
+  cross-validation, 775-concept decomposition test, the round-7
+  stress-concept verifications);
+\item draft the \LaTeX\ manuscript text, including this overview
+  and all companion papers in the repository.
+\end{itemize}
+The division of labour between the human author and the AI tools
+is documented in detail in \S\ref{ssec:llm-capabilities} of this
+paper.
+
+\paragraph{Responsibility.}  By signing this work as its author,
+Wessel takes full responsibility for all of its contents,
+irrespective of how the contents were generated.  Where the
+generative-AI tools produced inappropriate language, plagiarised
+content, biased content, errors, mistakes, incorrect references,
+or misleading content that was included in the work, that
+responsibility rests with the author, not with the tools.
+
+\paragraph{Authorship.}  Per arXiv's content moderation policy,
+generative-AI tools are not listed as authors of this paper.
+The AI tools are disclosed here as the substantial methodological
+instruments they were.
+
+\paragraph{Direction.}  The research direction---problem
+formulation, the key conceptual insights (cover-tree intuition,
+$\PPI$-tree orientation, $\EQ$-splitting, $\DR$-rigidity), the
+correction of architectural errors (notably GPT-5.4's initial
+inclusion of $\PP/\PPI$ as cross-edges, which would have defeated
+the construction), and the high-level judgement calls about when
+to converge---was provided by Wessel; the AI tools performed the
+detailed formalisation, implementation, verification, and
+manuscript drafting under that direction.
 
 %% ====================================================================
 %% Bibliography
