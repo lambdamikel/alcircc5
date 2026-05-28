@@ -5317,3 +5317,133 @@ exchange:
   Claude's delta closing items 4--8.
 - `repaired_split_forest_no_automata_proof.{tex,pdf}` -- the
   31-page round-4 paper (unchanged).
+
+---
+
+## 2026-05-27 to 2026-05-28: Round-7 — pair-shape architecture adopted as canonical
+
+### Round-7 review of Claude's round-6 paper (2026-05-27)
+
+GPT-5.5 published a seventh formal review of Claude's round-6
+internal-coherence pass on the consolidated v2.  Verdict: *"Round 6
+is an important improvement, but the proof still does not stand as
+written."*  The review identifies one central architectural defect
+and five additional issues.
+
+**Central defect.**  Round-6 defines concrete labels by
+`lab(u,v) := L_Q(q(u), q(v))` where `q : Omega(U(Q)) -> Pos_Q` sends
+each occurrence to an abstract position symbol, and the standard
+reflexivity clause `L_Q(pi, pi) = EQ` holds.  In a finite regular
+certificate, blocking deliberately reuses the same abstract position
+symbol on infinitely many fresh semantic occurrences.  For the
+canonical one-state upward cycle of
+`C_up := exists PP.top and forall PP.exists PP.top`, distinct laps
+`u_i, u_j` (i != j) have `q(u_i) = q(u_j) = pi`, so
+`lab(u_i, u_j) = L_Q(pi, pi) = EQ`.  This collapses the strict PP
+chain into semantic equality, contradicting the central
+blocking-not-equality slogan and breaking the canonical certificate.
+
+The defect is intrinsic to indexing labels by position-symbol pairs:
+no local patch suffices because, to give the diagonal correctly, the
+label function would need to know whether `q(u) = q(v)` came from
+`u = v` or from same-symbol fresh copies, and that information is
+precisely what `Pos_Q^2` cannot carry.
+
+**Five additional defects (D1)-(D5).**  Equality-port lift ambiguous;
+V9.b at finite state-port level rejects self-loop profiles by
+reflexivity; stratum identity not in abstract positions; recursive
+side-interface underspecified for chains w_0 PP w_1 PP w_2; universal
+wrap-around in pumped cycles under-proved.
+
+### GPT-5.5's three round-7 proof drafts
+
+GPT-5.5 supplied three round-7 documents:
+
+1. `repaired_split_forest_all_in_one_round7.{tex,pdf}` (14 pages,
+   no-automata).  The canonical round-7 statement.  Central repair:
+   labels live on **occurrence-sensitive pair shapes** `alpha(u,v) =
+   (s_u, p_u, s_v, p_v, iota(u,v))` with **incidence tags** `iota in
+   {self, eq, up, down, side_R, front_R}`.  The label function
+   `ell_Q : Pair_Q -> Base` sends `self/eq -> EQ`, `up -> PP`,
+   `down -> PPI`, `side_R/front_R -> R`.  Distinct blocked laps
+   satisfy `iota != self` and `iota != eq`, so they never collapse
+   into EQ.  Triple composition is verified on a finite triple-shape
+   set Tri_Q via (V6).  Twelve validity clauses (V1)-(V12) replace
+   round-5/round-6's fifteen.
+
+2. `expanded_split_forest_full_details_proof.{tex,pdf}` (28 pages,
+   no-automata).  Detailed companion to the round-7 sketch with
+   detailed local constructions, worked stress cases, and an
+   audit-of-main-proof-obligations section.
+
+3. `split_forest_automata_decidability_proof_detailed.{tex,pdf}`
+   (21 pages, parity-tree automata).  An alternative route to the
+   same decidability theorem.  Retained as an independent witness,
+   not as the canonical statement.
+
+### Decision: adopt GPT-5.5's round-7 as canonical (2026-05-28)
+
+Wessel asked: attempt my own repair based on the round-7 review, or
+adopt GPT-5.5's proof?  After reading all three round-7 documents,
+Claude recommended adoption with a Claude-authored audit/response
+layer.  Reasons: (i) the round-6 defect is architectural, not local;
+(ii) GPT-5.5's pair-shape / incidence-tag fix is structurally clean
+and matches the two-layer division of labour
+(GPT-5.5 = proof author, Claude = verification + audit) that worked
+in rounds 4-5; (iii) three GPT-5.5 documents need coordinating along
+with substantial documentation updates.  Wessel agreed.
+
+### Claude's round-7 audit + response (2026-05-28)
+
+Three pure-stdlib verification scripts, replacing
+project-imports-dependent originals (round-6 (G6) repair):
+
+- `verification/python/wp7_selfcontained_side_witness.py` (already in
+  place from round-6 G6) -- comparable side witnesses stress
+  `exists DR.(A and exists PP.B) and exists DR.B`.
+
+- `verification/python/wp8_round7_blocking_chain.py` -- the round-7
+  central repair: builds a five-element truncation of the upward
+  PP-chain, verifies (a) JEPD / inverse / strong-EQ / RCC5
+  composition; (b) the round-7 incidence-tag rule keeps every
+  distinct lap pair at label PP or PPI, never EQ; (c) the round-6
+  collapsed rule does mis-equate distinct laps (explicit
+  demonstration of the defect).
+
+- `verification/python/wp9_round7_split_copies.py` -- split copies
+  for `C_split := exists PP.A and exists PP.B` with incomparable
+  proper superparts.  Pre-quotient occurrence structure with
+  equality-port chain `x ~ x_a ~ x_b`; verifies typed-EQ congruence
+  and no-self-collapse.
+
+All three pass.
+
+Claude's `papers/gpt5.5_final/claude_round7_audit_response.tex`
+(9 pages) maps round-6 (G1)-(G6) and round-7 (D1)-(D5) to their
+resolutions in GPT-5.5's round-7 architecture, summarizes the three
+verification scripts, and discusses the no-automata vs automata-route
+choice.
+
+### Status of Claude-authored manuscripts
+
+Superseded but retained as historical audit trail:
+- `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2.tex`
+  (round-5 (M6$'$) delta, 15 pages)
+- `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_items4to8.tex`
+  (round-5 items 4-8 delta, 12 pages)
+- `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2_consolidated.tex`
+  (round-5 consolidation, 36 pages)
+- `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2_consolidated_round6.tex`
+  (round-6 internal-coherence pass, 39 pages)
+
+The conceptual contributions that survive into round-7 are:
+- recognition that two DR/PO side witnesses can be PP/PPI-comparable
+  (round-5 stress concept, now worked in round-7 sketch \S6 and
+  verified in wp7);
+- the broader two-layer architecture (theoretical proof +
+  self-contained executable verification artefacts), which is
+  exactly what surfaced the round-6 defect.
+
+GPT-5.5's round-7 sketch is the new canonical pillar.  Claude's role
+going forward is verification, audit, and documentation, not
+authorship of the proof manuscript.

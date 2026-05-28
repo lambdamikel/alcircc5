@@ -38,28 +38,35 @@ Two LaTeX passes are needed to resolve `\ref` and `\cite` cross-references. The 
 
 ## Current Decidability Argument
 
-The current decidability argument for ALCI_RCC5 rests on **two papers** (as of May 2026, post Option 4):
+The current canonical statement is **GPT-5.5's round-7 split-forest proof** (May 28, 2026). Two documents form the no-automata canonical pillar, plus one independent witness via parity-tree automata:
 
-1. `papers/trees/sibling_interface_descriptors_ALCIRCC5_completed_eqsync_canonical_needpatched.tex` -- GPT-5.4's v1 split-forest paper. Proves the quotient-to-model (soundness) direction in full detail (Thms 1.17-1.19). A delta paper `papers/sibling_interface_descriptors_ALCIRCC5_v2.tex` replaces the surrounding Def 1.5 / Def 1.7 / Thm 1.20-sketch with the corrected generated-cover statements; the proofs of 1.17-1.19 carry over verbatim.
-2. `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.tex` -- GPT-5.5's repaired split-forest decidability proof (May 2026, 31 pages after four rounds of GPT-5.5 review). Formulates rank-d split-forest certificates with ten finite-checkable validity conditions (V1)-(V10), a verticalization discipline (mosaic axiom (M6)), port-indexed mate clusters Mate_Q(C, s, p), an abstract triple graph T_Q, and a side interface Side(u); the certificate-space bound B(C_0) = 2^(2^p(n)) is derived grammar-first. Three structural ingredients: (i) occurrence-level equality, (ii) mates with different parents, (iii) request-closed cycles in place of omega-acceptance.
+1. `papers/gpt5.5_final/repaired_split_forest_all_in_one_round7.tex` -- GPT-5.5's round-7 no-automata proof (14 pages, May 2026). The central architectural move: finite labels are no longer indexed by abstract position-symbol pairs `L_Q : Pos_Q^2 → Base` (which collapsed blocking cycles into semantic equality via the diagonal `L_Q(π,π) = EQ`). Instead, labels live on occurrence-sensitive **pair shapes** `α(u,v) = (s_u, p_u, s_v, p_v, ι(u,v))` with **incidence tags** `ι ∈ {self, eq, up, down, side_R, front_R}`. The label function `ℓ_Q : Pair_Q → Base` sends `self/eq → EQ`, `up → PP`, `down → PPI`, `side_R/front_R → R`. Repeated blocked laps satisfy `ι ≠ self`, so they never collapse into EQ. Twelve finite-checkable validity conditions (V1)-(V12), including (V6) triple composition over a finite triple-shape set Tri_Q.
 
-**Round-5 review status (2026-05-22) and Claude-side repair drafts (2026-05-23).** GPT-5.5 published a fifth formal review `papers/gpt5.5_round2/formal_review_progress_paper.{tex,pdf}` of the 31-page proof. Verdict: "credible architecture with several remaining formal proof obligations." Eight repairs recommended.
+2. `papers/gpt5.5_final/expanded_split_forest_full_details_proof.tex` -- detailed companion to the round-7 sketch (28 pages). Detailed local constructions for DR/PO witness placement, split copies, comparable side witnesses, universal propagation, finite patching. Includes worked stress cases and an audit-of-main-proof-obligations section.
 
-Claude has drafted two follow-up papers that close all eight items at the paper level:
+3. `papers/gpt5.5_final/split_forest_automata_decidability_proof_detailed.tex` -- alternative parity-tree-automata route (21 pages). Same decidability theorem via reduction to non-emptiness of a parity tree automaton. Retained as an independent witness, not as the canonical statement.
 
-- `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2.tex` (14 pages) -- closes items 2, 3, 9 (side-interface verticalization, stress test added, polynomial side-width dropped). Core change: flat `Vrt ⊆ P` replaced by a finite stratum forest with recursive (M6'.a–d); each selected DR/PO side-witness may itself open a local vertical stratum carrying its own selected PP/PPI ancestors and equality mates. Round-4 (M6) recovered as the depth-1 case. Worked v2 certificate for the stress concept `∃DR.(A ⊓ ∃PP.B) ⊓ ∃DR.B` constructed and verified against all four (M6') sub-clauses. Polynomial m(n) = O(n^3) replaced by recurrence over modal depth.
+Claude's [round-7 audit/response](papers/gpt5.5_final/claude_round7_audit_response.tex) (9 pages) maps round-6 (G1)–(G6) and round-7 (D1)–(D5) to their resolutions in GPT-5.5's round-7 architecture, and documents the three self-contained Python verifications.
 
-- `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_items4to8.tex` (12 pages) -- closes items 4, 5, 6, 7, 8. Item 4: explicit `L_Q : Pos_Q² → Base` and validity clause (V11) for the composition table on T_Q; (SC4) replaced by per-position (SC4'); patchwork is non-circular. Item 5: strong overlap compatibility (O3') and validity clause (V12) requiring a declared cross-label function `L_12^cross`. Item 6: assumption (A4) of the typed-EQ quotient theorem promoted to explicit validity clause (V13). Item 7: half-open [i,j) cycle convention with explicit endpoint mapping u_j ↦ u_i^{(ℓ+1)} at the profile level. Item 8: uniform representative selection lemma (V14) with one (C_σ, cyc_σ) per extended profile σ ∈ \widehat\Sigma applied uniformly across all infinite vertical rays.
+**Superseded** (retained as historical audit trail in `papers/gpt5.5_round2/`):
+- `repaired_split_forest_no_automata_proof.tex` (round-4, 31 pages)
+- `repaired_split_forest_no_automata_proof_v2.tex` (Claude's round-5 (M6') delta, 15 pages)
+- `repaired_split_forest_no_automata_proof_items4to8.tex` (Claude's round-5 items 4-8 delta, 12 pages)
+- `repaired_split_forest_no_automata_proof_v2_consolidated.tex` (Claude's round-5 consolidation, 36 pages)
+- `repaired_split_forest_no_automata_proof_v2_consolidated_round6.tex` (Claude's round-6 internal-coherence pass, 39 pages)
 
-Combined certificate validity check has 14 clauses (V1)–(V14) plus (M6'). B(C_0) ≤ 2^(2^p(n)) preserved.
+The round-6 critical defect found in GPT-5.5's round-7 review: in round-6, `lab(u,v) := L_Q(q(u), q(v))` with `L_Q(π, π) = EQ` collapses distinct laps of a blocking cycle into semantic equality, because two fresh occurrences in a one-state upward cycle have the same abstract position symbol π and would be assigned EQ. This breaks the canonical certificate for `∃PP.⊤ ⊓ ∀PP.∃PP.⊤`. The defect is intrinsic to indexing labels by position-symbol pairs and cannot be locally patched. GPT-5.5's round-7 fix (incidence tags on pair shapes) is structural.
 
-Item 1 (TeX/PDF mismatch) was editorial -- the repository source compiles to the 31-page PDF; the reviewer's bundle had stale source. No mathematical change needed.
+**Status (2026-05-28).** GPT-5.5's round-7 sketch is the canonical statement of the decidability theorem. Claude's role is verification + audit + documentation. Three self-contained Python verification scripts under `verification/python/`:
+- `wp7_selfcontained_side_witness.py` -- comparable side witnesses stress
+- `wp8_round7_blocking_chain.py` -- blocking-not-equality stress (round-7 central repair)
+- `wp9_round7_split_copies.py` -- split copies for incomparable proper superparts
 
-**Status caveat (2026-05-23).** All round-5 items are addressed *at the paper level* by Claude-drafted v2 and items-4-to-8 deltas. GPT-5.5 has not yet ratified these repairs. The 31-page round-4 paper remains the only document GPT-5.5 has reviewed; the v2 and items-4-to-8 papers are Claude-authored proposals that need an independent round-6 review before the decidability claim can be considered closed. Until that ratification, do not assert the proof is closed; describe the current status as "round-5 items closed at the paper level pending GPT-5.5 round-6 review of the Claude-drafted deltas."
+All three pass. They corroborate the three central round-7 stress concepts.
 
-Claude's earlier completeness-extraction papers (`papers/completeness_extraction_ALCIRCC5.tex` = v1, and `papers/completeness_extraction_ALCIRCC5_v2.tex` = v2.1) are **superseded** by GPT-5.5's repaired proof and kept for historical reference. Do not cite them as the current completeness pillar.
+Claude's earlier completeness-extraction papers (`papers/completeness_extraction_ALCIRCC5.tex` = v1, and `papers/completeness_extraction_ALCIRCC5_v2.tex` = v2.1) are **superseded** by GPT-5.5's round-7 proof and kept for historical reference. Do not cite them as the current completeness pillar.
 
-**No complexity bound is asserted for the full logic.** Plain ALCI is EXPTIME-complete (known). ALCI_RCC8 is EXPTIME-hard (Wessel lower bound). The PO-coherent fragment's quotient bound is 2-EXPTIME (`papers/two_tier_quotient_ALCIRCC5.tex`). The repaired proof's coarse bound is B(C_0) = 2^(2^p(n)) (doubly exponential). Do not reintroduce an EXPTIME upper-bound claim for the full logic -- that was tied to the retracted quasimodel paper.
+**No complexity bound is asserted for the full logic.** Plain ALCI is EXPTIME-complete (known). ALCI_RCC8 is EXPTIME-hard (Wessel lower bound). The PO-coherent fragment's quotient bound is 2-EXPTIME (`papers/two_tier_quotient_ALCIRCC5.tex`). The round-7 proof commits only to an effectively computable bound on the certificate space (the round-5/round-6 cubic vs. recurrence dispute is moot under round-7's pair-shape grammar). Do not reintroduce an EXPTIME upper-bound claim for the full logic -- that was tied to the retracted quasimodel paper.
 
 Both directions rely on the **patchwork property** of RCC5/RCC8 (Renz & Nebel 1999): path-consistent atomic constraint networks are globally consistent.
 

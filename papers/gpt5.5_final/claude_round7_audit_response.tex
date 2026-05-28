@@ -1,0 +1,636 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Round-7 audit / response (Claude)}
+\fancyhead[R]{May 2026}
+\fancyfoot[C]{\thepage}
+\titleformat{\section}{\large\bfseries\color{MidnightBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{MidnightBlue}}{\thesubsection}{0.5em}{}
+\setlist[itemize]{topsep=4pt,itemsep=2pt,leftmargin=1.5em}
+\setlist[enumerate]{topsep=4pt,itemsep=2pt,leftmargin=1.8em}
+\onehalfspacing
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Base}{\mathsf{B}}
+\newcommand{\Inv}{\operatorname{Inv}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\ALCIRCC}[1]{\mathcal{ALCI}_{\mathsf{RCC#1}}}
+\newcommand{\Q}{\mathcal Q}
+\newcommand{\U}{\mathcal U}
+\newcommand{\T}{\mathcal T}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Tri}{\mathsf{Tri}}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Inc}{\mathsf{Inc}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\Ctx}{\mathsf{Ctx}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Vrt}{\mathsf{Vert}}
+\newcommand{\lab}{\operatorname{lab}}
+\newcommand{\Stratum}{\mathsf{Stratum}}
+\newcommand{\Subsrc}{\mathsf{Subsrc}}
+\newcommand{\eqc}{\equiv_{\EQ}}
+\newcommand{\Cl}{\operatorname{cl}}
+\newcommand{\self}{\mathsf{self}}
+\newcommand{\eqtag}{\mathsf{eq}}
+\newcommand{\up}{\mathsf{up}}
+\newcommand{\down}{\mathsf{down}}
+\newcommand{\side}{\mathsf{side}}
+\newcommand{\front}{\mathsf{front}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Round-7 Audit and Response (Claude)\par}
+\vspace{0.5em}
+{\large Adopting GPT-5.5's pair-shape / incidence-tag repair as the
+canonical statement\par}
+\vspace{0.75em}
+{\normalsize Claude (Anthropic, Opus~4.7), prompted by Michael Wessel}\par
+\vspace{0.45em}
+{\small May~2026}
+\end{center}
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Disclaimer.}\;
+This document was drafted by Claude (Anthropic), prompted by Michael
+Wessel.  The results have not been independently verified by human
+domain experts.  We invite scrutiny and corrections.}}
+\end{center}
+
+\begin{abstract}
+GPT-5.5's round-7 review of Claude's round-6 internal-coherence pass
+of the consolidated v2 proof identifies one central architectural
+defect in Claude's manuscript: the abstract pair-label function
+$L_\Q:\Pos_\Q^2\to\Base$ with diagonal $L_\Q(\pi,\pi)=\EQ$ collapses
+distinct laps of a blocking cycle into semantic equality, because in
+a finite regular certificate two fresh occurrences $u_i,u_j$ of a
+one-state upward cycle share the same abstract position symbol $\pi$
+and would be assigned $\lab(u_i,u_j)=L_\Q(\pi,\pi)=\EQ$.  This breaks
+the canonical certificate for $\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$
+and undermines the central blocking-not-equality slogan.  We accept
+that the round-6 architecture cannot be locally patched: the
+diagonal-$\EQ$ collapse is intrinsic to indexing labels by abstract
+position symbol pairs.  We therefore adopt GPT-5.5's round-7 proof
+sketch~\cite{GPT55Round7Sketch} as the new canonical statement; the
+expanded full-details version~\cite{GPT55Round7Expanded} is its
+detailed companion; the alternative parity-tree-automata
+proof~\cite{GPT55AutomataRoute} is retained as an independent
+witness.  Claude's role shifts back to verification and audit.
+
+This response paper (i) summarizes the round-7 architectural move
+(incidence tags and pair shapes), (ii) maps the six gaps (G1)--(G6)
+of Claude's round-6 paper and the five gaps (D1)--(D5) of GPT-5.5's
+round-7 review to their resolution in the round-7 sketch, (iii)
+reports three self-contained Python verifications
+(\texttt{wp7\_selfcontained\_side\_witness.py},
+\texttt{wp8\_round7\_blocking\_chain.py},
+\texttt{wp9\_round7\_split\_copies.py}) corroborating the three
+central stress concepts of the round-7 architecture, and (iv)
+discusses the no-automata route as the canonical path with the
+automata route as the independent witness.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+%% ==================================================================
+\section{Why round-6 cannot be locally patched}
+\label{sec:round6-cannot-be-patched}
+%% ==================================================================
+
+GPT-5.5's round-7 review~\cite{GPT55Round7Review} identifies a single
+critical defect in Claude's round-6 manuscript that is independent of
+the various surface inconsistencies.  Round-6 defined the concrete
+label on every unfolding pair by
+\[
+  \lab(u,v)\;:=\;L_\Q(q(u),q(v)),
+\]
+where $q:\Omega(\U(\Q))\to\Pos_\Q$ sends each concrete occurrence to
+an abstract position symbol and $L_\Q:\Pos_\Q^2\to\Base$ is the
+declared abstract pair-label function with the standard reflexivity
+clause $L_\Q(\pi,\pi)=\EQ$.
+
+\paragraph{The collapse.}
+In a finite regular certificate, the abstract position alphabet is
+finite while the unfolding is infinite.  Blocking deliberately reuses
+the same abstract position symbol on infinitely many fresh semantic
+occurrences.  Take the canonical one-state upward cycle for
+$C_\uparrow:=\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$, whose
+unfolding is
+\[
+  u_0\PP u_1\PP u_2\PP\cdots
+\]
+with all $u_i$ at the same finite profile, port, context, and stratum.
+Then $q(u_i)=q(u_j)=\pi$ for every $i,j$, and the round-6 rule gives
+\[
+  \lab(u_i,u_j)\;=\;L_\Q(\pi,\pi)\;=\;\EQ,
+\]
+\emph{even for $i\ne j$}.  Two contradictory conclusions follow.
+Either the quotient identifies $u_i$ and $u_j$, collapsing the strict
+$\PP$ chain into a $\PP$-self-loop (which violates strong-$\EQ$
+semantics on $\PP$); or the quotient does not identify them, in which
+case two distinct elements of the quotient frame are $\EQ$-related
+(which also violates strong-$\EQ$ semantics).  Either way the round-6
+labelling does not represent the regular certificate it was designed
+to represent.
+
+\paragraph{Why no local patch suffices.}
+A weaker version of the diagonal clause does not work.  Without
+$L_\Q(\pi,\pi)=\EQ$, the reflexive case $u=v$ has no defined label.
+With a side clause ``$L_\Q(\pi,\pi)=\EQ$ \emph{except when the two
+occurrences are different}'', the function is no longer a function of
+$\Pos_\Q^2$ alone:\@ to evaluate at $(q(u),q(v))=(\pi,\pi)$ one must
+also know whether $u=v$, which is exactly the information $L_\Q$ over
+position-symbol pairs cannot carry.  The defect is intrinsic to the
+indexing.
+
+\paragraph{The structural move.}
+GPT-5.5's round-7 fix is to redefine the label function on a different
+finite domain: \emph{occurrence-sensitive pair shapes}.  A pair shape
+$\alpha(u,v)$ carries an explicit incidence tag $\iota(u,v)$ that
+distinguishes literal identity ($u=v$, tag $\self$) from same-symbol
+fresh copies (tag $\up$, $\down$, $\side_R$, or $\front_R$).  The
+label function is
+\[
+  \ell_\Q:\Pair_\Q\to\Base,\qquad
+  \ell_\Q(\self)=\EQ,\quad \ell_\Q(\eqtag)=\EQ,\quad
+  \ell_\Q(\up)=\PP,\quad \ell_\Q(\down)=\PPI,\quad
+  \ell_\Q(\side_R)=\ell_\Q(\front_R)=R.
+\]
+Reflexivity gives $\EQ$ only when the incidence tag is $\self$; two
+fresh laps with $\iota(u_i,u_j)=\up$ get label $\PP$, never $\EQ$.
+
+We accept this fix.  It is not a small revision of the round-6
+formulation, because the entire round-6 architecture (the abstract
+position symbol $\Pos_\Q$, the (V11) composition table on $\T_\Q$, the
+(SC4$'$) per-position support closure, the round-5 (M6$'$) stratum
+forest, and the round-6 (V15) cross-pair universal safety) is built
+around the per-position labelling.  Replacing it requires reworking
+the validity-clause numbering, the patchwork proof, the soundness
+chain, and the verification artefacts.  We adopt the round-7 sketch
+as the canonical proof manuscript and rebuild the verification layer
+around the new architecture.
+
+%% ==================================================================
+\section{The round-7 architecture: incidence tags and pair shapes}
+\label{sec:round7-architecture}
+%% ==================================================================
+
+We summarize the round-7 architecture from~\cite{GPT55Round7Sketch}
+for self-containment.
+
+\subsection{Incidence tags}
+
+\begin{definition}[Incidence tags, after \cite{GPT55Round7Sketch} Def.~5.3]
+\label{def:incidence}
+For two concrete occurrences $u,v$ in the unfolding $\U(\Q)$, the
+\emph{incidence tag} $\iota(u,v)\in\Inc$ takes one of the following
+finite values:
+\[
+\begin{array}{ll}
+\self  & u=v \text{ as concrete occurrences}\\
+\eqtag & u\ne v \text{ and } u\eqc v \text{ by explicit equality ports}\\
+\up    & v \text{ is a strict equality-aware proper superpart of } u\\
+\down  & v \text{ is a strict equality-aware proper part of } u\\
+\side_R & \text{the pair is named in a side mosaic with label }R\in\Base\\
+\front_R & \text{the pair is residual sibling-frontier with }R\in\{\DR,\PO\}.
+\end{array}
+\]
+The tags $\self$ and $\eqtag$ are \emph{occurrence-sensitive}: repeated
+laps of a blocking cycle never receive $\self$ merely because their
+finite profiles agree, and never receive $\eqtag$ unless explicitly
+linked by the equality-port relation.
+\end{definition}
+
+\subsection{Pair shapes and the label function}
+
+\begin{definition}[Pair shape and label, after \cite{GPT55Round7Sketch} Def.~5.4--5.5]
+A \emph{pair shape} is a tuple
+\[
+  \alpha(u,v)\;=\;\bigl(s_u,p_u,s_v,p_v,\iota(u,v)\bigr),
+\]
+with $s_u,s_v$ profiles, $p_u\in\Port(s_u)$, $p_v\in\Port(s_v)$, and
+$\iota(u,v)\in\Inc$.  The finite set of permitted pair shapes is
+$\Pair_\Q$.  The label function is
+\[
+  \ell_\Q:\Pair_\Q\to\Base,
+\]
+with mandatory values
+\[
+  \ell_\Q(\self)=\EQ,\quad
+  \ell_\Q(\eqtag)=\EQ,\quad
+  \ell_\Q(\up)=\PP,\quad
+  \ell_\Q(\down)=\PPI,\quad
+  \ell_\Q(\side_R)=\ell_\Q(\front_R)=R.
+\]
+(For the $\self$/$\eqtag$ clauses, the profile/port fields are
+determined by $u$ and $v$; for the others, the tag determines the
+relation directly.)
+\end{definition}
+
+\begin{remark}\label{rem:no-collapse}
+The diagonal collapse of round-6 is averted by Definition~\ref{def:incidence}.
+Two distinct laps $u_i,u_j$ ($i\ne j$) of a blocking cycle satisfy
+$u_i\ne u_j$ and (typically) $u_i\not\eqc u_j$.  Therefore
+$\iota(u_i,u_j)\in\{\up,\down,\side_R,\front_R\}$, never $\self$ or
+$\eqtag$.  In particular, $\ell_\Q(\alpha(u_i,u_j))\ne\EQ$ for any
+distinct laps; for the one-state upward cycle, the label is $\PP$.
+\end{remark}
+
+\subsection{Triple shapes and composition (V6)}
+
+\begin{definition}[Triple shape, after \cite{GPT55Round7Sketch} Def.~5.6]
+A \emph{triple shape} is a tuple $\Theta=(\alpha_{12},\alpha_{23},\alpha_{13})$
+of pair shapes satisfying coherence constraints: equality endpoints
+must collapse the third pair label across $\eqc$; vertical chains must
+project to vertical labels at the third edge; etc.  The finite set of
+coherent triple shapes is $\Tri_\Q$.
+\end{definition}
+
+\paragraph{(V6) Triple composition.}
+For every $\Theta=(\alpha_{12},\alpha_{23},\alpha_{13})\in\Tri_\Q$,
+\[
+  \ell_\Q(\alpha_{13})\;\in\;\comp\bigl(\ell_\Q(\alpha_{12}),\ell_\Q(\alpha_{23})\bigr).
+\]
+This is the round-7 successor of Claude's round-6 (V11).  The
+difference is that triples are over \emph{pair shapes}, not over
+position-symbol pairs, so the diagonal-$\EQ$ collapse cannot occur in
+the composition check.
+
+\subsection{Validity clauses (V1)--(V12)}
+
+The round-7 validity clauses, summarized:
+
+\begin{enumerate}[label=(V\arabic*)]
+\item Type legality (Hintikka types).
+\item Context legality (mosaics satisfy local axioms; local
+$\PP/\PPI$ side labels are verticalized).
+\item Pair-shape totality (every pair has exactly one shape).
+\item Occurrence-sensitive equality ($\self$ only for $u=v$;
+$\eqtag$ only for explicit equality-port pairs; no strict vertical
+pair is $\eqtag$).
+\item Typed equality congruence ($\eqtag$-mates have identical types
+and identical $\ell_\Q$-labels to every shape).
+\item Triple composition over $\Tri_\Q$ (above).
+\item Vertical existential support ($\PP/\PPI$): equality-aware
+strict reachability to a witness profile, with strict-later occurrences
+on cyclic witnesses.
+\item Vertical universal safety ($\PP/\PPI$): every strictly
+reachable target has the witnessed type.
+\item Side existential support ($\DR/\PO$): named mosaic position.
+\item Side universal safety ($\DR/\PO$): every named side/frontier
+target carries the type.
+\item Request-closed cycles: every cycle is half-open
+request-closed; cyclic witnesses are strict later occurrences in the
+same or next lap.
+\item Cycle universal safety: universal safety holds across the
+entire cyclic order including wrap-around.
+\end{enumerate}
+
+Twelve clauses versus Claude's round-5/round-6 fifteen.  The
+reduction is real: round-5 (V11) and round-6 (V15) are absorbed by
+the round-7 (V6); round-5 (V12)/(V13)/(V14) are absorbed by the new
+(V9)/(V5)/(V11) respectively (joint equality is folded into typed
+congruence, declared overlap labels into mosaic legality, uniform
+cycle representatives into the request-closed-cycle clause directly).
+
+%% ==================================================================
+\section{Mapping round-6 (G1)--(G6) gaps to round-7 resolutions}
+\label{sec:round6-gaps}
+%% ==================================================================
+
+GPT-5.5's round-6 review listed six internal-coherence gaps in
+Claude's round-6 consolidated paper.  All six are resolved by the
+round-7 architectural move.
+
+\begin{description}[leftmargin=2em]
+\item[\textbf{G1 (flat side frontier).}]  Round-6 inlined (M6$'$) into
+the Mosaic definition but left the round-4 ``Side-interface legality''
+lemma asserting flat-frontier $\{\DR,\PO,\EQ\}$ on sibling positions.
+Round-7 ((V2), Mosaic axiom (M6)) requires that any $\PP/\PPI$ side
+label live inside a declared local vertical stratum; residual frontier
+pairs are then restricted to $\{\DR,\PO\}$.  The flat-frontier lemma
+is dropped.
+
+\item[\textbf{G2 (SC4$'$ per-position vs.\ per-triple).}]  Round-6
+weakened (SC4) to per-position but kept Quotient lifting and
+Patchwork invoking per-triple mosaic coverage.  Round-7's
+per-position support closure is consistent because composition is
+checked globally on the triple-shape set $\Tri_\Q$ via (V6), and
+patching is by the occurrence-sensitive triple-shape table
+(\cite{GPT55Round7Sketch} Lemma 4.3), not by a per-triple mosaic.
+
+\item[\textbf{G3 (cross-pair universal safety).}]  Round-6 added (V15)
+to fix the under-proved universal-propagation lemma.  Round-7 folds
+this into (V5) (typed equality congruence on mosaic positions) and
+(V8)/(V10) (universal safety on vertical and side targets).  Cross-pair
+universal safety is now a corollary of the universal-safety clauses on
+the cycle and on the support mosaics.
+
+\item[\textbf{G4 (extended-profile lasso, half-open cycle).}]  Round-7
+adopts the half-open $[i,j)$ convention throughout and uses the
+extended profile (including pending requests) for the request-closed
+cycle lemma.  No tension between $\Pi$ and $\widehat\Pi$ remains.
+
+\item[\textbf{G5 (bound consistency, V1--V15, stratum-forest grammar).}]
+Round-7 has only 12 validity clauses and does not assert a polynomial
+side-width.  The grammar enumerates over occurrence-sensitive pair
+shapes and triple shapes; the bound on mosaic size is a crude
+polynomial in $|\Cl(C_0)|$ ($p(n)=1+4n+3(4n+1)^3$ in
+\cite{GPT55Round7Sketch}), sufficient for decidability.  Inconsistency
+between cubic and recurrence bounds is moot.
+
+\item[\textbf{G6 (self-contained verification script).}]  Round-7
+verification: see \S\ref{sec:verification} below.  Three pure-stdlib
+scripts (\texttt{wp7\_selfcontained\_side\_witness.py},
+\texttt{wp8\_round7\_blocking\_chain.py},
+\texttt{wp9\_round7\_split\_copies.py}) replace the
+project-imports-dependent original.
+\end{description}
+
+%% ==================================================================
+\section{Mapping round-7 (D1)--(D5) defects to their resolutions}
+\label{sec:round7-defects}
+%% ==================================================================
+
+GPT-5.5's round-7 review of Claude's round-6 paper lists, in addition
+to the central defect (\S\ref{sec:round6-cannot-be-patched}), five
+further issues.  All are addressed by the round-7 architectural move.
+
+\begin{description}[leftmargin=2em]
+\item[\textbf{D1 (equality-port lift ambiguous).}]  Round-6 wrote
+$u\eqc v$ iff $\Port(u)\eqc^\Q\Port(v)$ in the same generated
+context or transitively across explicit links.  Read literally, this
+identifies every occurrence using the same finite port.  Round-7
+treats explicit equality-port links as \emph{occurrence-template} data
+generating instantiated equality edges inside context instances; the
+lift is $u\eqc v$ iff $u=v$ or there is a path of instantiated
+explicit equality edges between $u$ and $v$.  Reflexivity at the
+finite port does not collapse fresh blocked copies.
+
+\item[\textbf{D2 (V9.b at the finite state-port level).}]  Round-7
+restates V9.b at the occurrence-template level: it forbids explicit
+equality between two positions that can be strict-vertical comparable
+\emph{in the same unfolding instance}, without rejecting self-loop
+blocking profiles by reflexivity.
+
+\item[\textbf{D3 (stratum identity in abstract positions).}]  Round-6
+kept a binary $\zeta\in\{\mathrm{vert},\mathrm{sib}\}$ field on
+abstract positions, insufficient for nested strata.  Round-7's mosaic
+declares vertical strata as a finite family $\mathcal V$, and the
+co-vertical pair shape carries the stratum identity directly; the
+binary flag is dropped.
+
+\item[\textbf{D4 (recursive side-interface underspecified for chains).}]
+Round-6's recursive side-interface construction was ambiguous for
+side-witness chains $w_0\PP w_1\PP w_2$.  Round-7 (M6) is the simpler
+condition: every $\PP/\PPI$ side label in a mosaic lies in a declared
+vertical stratum; the stratum carries an explicit local containment
+order, so chains are represented as ordered sequences inside a single
+declared stratum.
+
+\item[\textbf{D5 (universal wrap-around in pumped cycles).}]  Round-6's
+request-cycle proof preserved existentials but the wrap-around case
+of universals was under-proved.  Round-7 adds (V12) Cycle universal
+safety: every $\forall R.D$ at any cycle position holds at every later
+cycle position including wrap-around.  This is a finite cycle-word
+check.
+\end{description}
+
+%% ==================================================================
+\section{Verification corroboration}
+\label{sec:verification}
+%% ==================================================================
+
+We supply three self-contained Python verifications, each in
+\texttt{verification/python/}, that exercise the three central stress
+concepts of the round-7 architecture.  Each script uses only the
+Python standard library and runs from the verification archive alone.
+
+\subsection{WP7: side-witness comparability}
+\label{ssec:wp7}
+
+\texttt{wp7\_selfcontained\_side\_witness.py} (round-6 (G6) repair)
+builds the three-element abstract RCC5 frame $\Delta=\{x,y,z\}$ with
+$\rho(x,y)=\DR$, $\rho(x,z)=\DR$, $\rho(y,z)=\PP$, $A=\{y\}$, $B=\{z\}$,
+and verifies:
+\begin{itemize}
+\item JEPD, inverse, strong-$\EQ$, and the full RCC5 composition table
+on every pair and triple;
+\item $C_{\rm side}:=\exists\DR.(A\sqcap\exists\PP.B)\sqcap\exists\DR.B$
+is SAT at $x$.
+\end{itemize}
+The script confirms the round-5/round-7 claim that two $\DR$-witnesses
+of a source can themselves be $\PP/\PPI$-comparable.  The round-7
+architecture handles this via local vertical stratification inside a
+side mosaic.
+
+\subsection{WP8: blocking is not equality}
+\label{ssec:wp8}
+
+\texttt{wp8\_round7\_blocking\_chain.py} (round-7 central repair)
+truncates the canonical one-state upward cycle of
+$C_\uparrow:=\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$ to a
+five-element frame $\{u_0,\ldots,u_4\}$ with
+$\rho(u_i,u_j)=\PP$ for $i<j$, $\PPI$ for $i>j$, $\EQ$ for $i=j$.
+The script verifies:
+\begin{itemize}
+\item JEPD, inverse, strong-$\EQ$, RCC5 composition (frame
+conditions);
+\item the round-7 incidence-tagged label rule keeps every distinct
+lap pair $(u_i,u_j)$ at label $\PP$ or $\PPI$, \emph{never} $\EQ$;
+\item the round-6 collapsed rule
+$\lab(u,v)=L_\Q(q(u),q(v))=L_\Q(\pi,\pi)=\EQ$ does mis-equate
+distinct laps (explicit demonstration of the defect).
+\end{itemize}
+$C_\uparrow$ has no finite model, so SAT is not asserted at the truncation;
+the script exercises the architectural claim about the regular
+certificate.
+
+\subsection{WP9: split copies for incomparable proper superparts}
+\label{ssec:wp9}
+
+\texttt{wp9\_round7\_split\_copies.py} builds the three-element
+abstract RCC5 frame $\Delta=\{x,a_\text{sup},b_\text{sup}\}$ with
+$\rho(x,a_\text{sup})=\PP$, $\rho(x,b_\text{sup})=\PP$,
+$\rho(a_\text{sup},b_\text{sup})=\PO$ (forced by strong-$\EQ$
+semantics: $a_\text{sup}$ and $b_\text{sup}$ both contain $x$, hence
+share a point, hence $\PO$), $A=\{a_\text{sup}\}$, $B=\{b_\text{sup}\}$,
+and verifies:
+\begin{itemize}
+\item the quotient frame respects JEPD, inverse, strong-$\EQ$, and
+RCC5 composition;
+\item the pre-quotient occurrence structure
+$(x,x_a,x_b,a_\text{sup},b_\text{sup})$ with explicit equality-port
+chain $x\eqtag x_a\eqtag x_b$ satisfies the round-7 typed equality
+congruence (the three mates have identical $\ell_\Q$-labels to every
+outside position);
+\item no distinct pair receives the $\self$ tag (round-7
+no-self-collapse);
+\item $C_{\rm split}:=\exists\PP.A\sqcap\exists\PP.B$ is SAT at $x$.
+\end{itemize}
+This exercises the round-7 split-copy architecture for multiple
+selected proper superparts.
+
+\subsection{Summary}
+
+All three scripts pass.  The empirical layer corroborates the
+round-7 architectural claims for the three canonical stress concepts
+without relying on any project-internal Python module.
+
+%% ==================================================================
+\section{No-automata route vs.\ automata route}
+\label{sec:two-routes}
+%% ==================================================================
+
+GPT-5.5 has supplied two round-7 proofs of the same decidability
+theorem.
+
+\paragraph{No-automata route (canonical).}
+\cite{GPT55Round7Sketch} (14 pages) and the expanded companion
+\cite{GPT55Round7Expanded} (28 pages) use direct finite-index blocking
+with explicit request-closed cycles.  No B\"uchi or parity automata
+appear.  This route is the canonical statement because it stays inside
+the same conceptual layer as the certificate validity check:
+everything is a finite syntactic test on finite alphabets.
+
+\paragraph{Automata route (independent witness).}
+\cite{GPT55AutomataRoute} (21 pages) reduces satisfiability to
+non-emptiness of a parity tree automaton over the split-forest
+alphabet.  This route is an independent reproof of the decidability
+theorem using a different finite-state machinery.  It is kept in the
+repository as a corroboration of the no-automata route, not as the
+canonical statement.
+
+\paragraph{Why this matters.}
+The two routes converge on the same theorem (concept satisfiability
+of $\ALCIRCC{5}$ over strong abstract atomic RCC5 frames is
+decidable).  The no-automata route is a more direct argument
+($\omega$-regularity is replaced by a finite combinatorial
+cycle-closure condition) and aligns with the verification layer's
+preference for finite enumeration.  The automata route is a
+classically-styled witness:\@ if a reviewer wants to translate the
+proof to a familiar automata-theoretic setting, the parity-automaton
+construction is already available.
+
+%% ==================================================================
+\section{Status of Claude-authored manuscripts}
+\label{sec:status}
+%% ==================================================================
+
+The following Claude-authored manuscripts are now superseded by
+GPT-5.5's round-7 sketch and expanded companion:
+
+\begin{itemize}
+\item \texttt{papers/gpt5.5\_round2/repaired\_split\_forest\_no\_automata\_proof\_v2.tex}
+(May 2026, 15 pages, the round-5 (M6$'$) delta);
+\item \texttt{papers/gpt5.5\_round2/repaired\_split\_forest\_no\_automata\_proof\_items4to8.tex}
+(May 2026, 12 pages, the round-5 items 4--8 delta);
+\item \texttt{papers/gpt5.5\_round2/repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated.tex}
+(May 2026, 36 pages, the round-5 consolidation);
+\item \texttt{papers/gpt5.5\_round2/repaired\_split\_forest\_no\_automata\_proof\_v2\_consolidated\_round6.tex}
+(May 2026, 39 pages, the round-6 internal-coherence pass).
+\end{itemize}
+
+All four are retained in the repository as the historical audit
+trail.  The conceptual contributions that survive into round-7 are:
+\begin{enumerate}
+\item the recognition that two $\DR/\PO$ side witnesses of the same
+source can be $\PP/\PPI$-comparable (round-5 stress concept, now
+worked example in \cite{GPT55Round7Sketch} \S6 and verified in
+\S\ref{ssec:wp7}); and
+\item the broader two-layer architecture (theoretical proof +
+self-contained executable verification artefacts) that surfaced the
+round-6 defect.
+\end{enumerate}
+
+The round-7 sketch is the new canonical pillar of the decidability
+argument.  Claude's role going forward is verification, audit, and
+documentation, not authorship of the proof manuscript.
+
+%% ==================================================================
+\section{Conclusion}
+%% ==================================================================
+
+GPT-5.5's round-7 architectural move (occurrence-sensitive pair
+shapes with incidence tags) resolves the central defect of Claude's
+round-6 manuscript and absorbs the smaller round-6 (G1)--(G6) and
+round-7 (D1)--(D5) issues.  The three self-contained verification
+scripts (WP7, WP8, WP9) corroborate the three central stress concepts
+of the round-7 architecture.  We adopt GPT-5.5's round-7 sketch as
+the new canonical statement; the expanded full-details version is
+its detailed companion; the alternative automata-route proof is
+retained as an independent witness.  Claude's previous round-5 and
+round-6 manuscripts are marked superseded and preserved as the
+audit trail.
+
+%% ==================================================================
+\begin{thebibliography}{9}
+
+\bibitem{GPT55Round7Review}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{Formal Review of the Round-6 Consolidated Generated
+Split-Forest Proof}.  Unpublished manuscript, May~27, 2026.
+Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/formal_response_round6_review.pdf}.
+
+\bibitem{GPT55Round7Sketch}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{A Repaired Split-Forest Decidability Proof for $\ALCIRCC{5}$
+Without Automata}.  Unpublished manuscript (consolidated round-7,
+14~pages), May~2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/repaired_split_forest_all_in_one_round7.pdf}.
+
+\bibitem{GPT55Round7Expanded}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{Expanded Generated Split-Forest Decidability Proof for
+$\ALCIRCC{5}$: Detailed Companion}.  Unpublished manuscript
+(round-7, 28~pages), May~2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/expanded_split_forest_full_details_proof.pdf}.
+
+\bibitem{GPT55AutomataRoute}
+GPT-5.5 (OpenAI), prompted by Michael Wessel.
+\emph{A Split-Forest Decidability Proof for $\ALCIRCC{5}$ via Parity
+Tree Automata: Detailed Version}.  Unpublished manuscript (round-7,
+21~pages), May~2026.  Repository:
+\url{https://github.com/lambdamikel/alcircc5/blob/master/papers/gpt5.5_final/split_forest_automata_decidability_proof_detailed.pdf}.
+
+\bibitem{ALCIRCC5Repo}
+Michael Wessel et al.
+\emph{ALCI\_RCC5 Project Repository}.
+\url{https://github.com/lambdamikel/alcircc5}.
+
+\end{thebibliography}
+
+\end{document}
