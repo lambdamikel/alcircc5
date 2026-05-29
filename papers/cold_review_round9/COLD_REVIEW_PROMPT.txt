@@ -1,0 +1,93 @@
+COLD REVIEW PROMPT  --  ALCI_RCC5 split-forest decidability proof
+================================================================
+
+Paste the PRIMARY PROMPT below into a FRESH session of a frontier model (one
+with no prior involvement in this project), and attach the two PDFs in this
+folder:
+
+    split_forest_decidability_proof_sketch.pdf     (16-page sketch)
+    split_forest_decidability_proof_expanded.pdf   (32-page companion)
+
+Do NOT attach anything else (see WHAT TO WITHHOLD in README_FOR_HUMAN.txt).
+Run the PRIMARY PROMPT first, unguided. Only run the OPTIONAL FOCUSED PASS if
+the primary pass comes back clean.
+
+
+================================================================
+PRIMARY PROMPT  (paste verbatim)
+================================================================
+
+You are an expert referee in description logics, modal/temporal logic, and
+qualitative spatial reasoning (RCC5/RCC8), asked to adversarially review a proof
+manuscript for correctness. You have no prior involvement with this work.
+
+THE MANUSCRIPT. Attached is a proof that concept satisfiability in the
+description logic ALCI_RCC5 (ALCI extended with the five RCC5 base relations
+DR, PO, EQ, PP, PPI as roles, under composition-table semantics, strong-EQ) is
+decidable. It proceeds by a "split-forest" certificate construction: a finite
+combinatorial certificate whose validity is finitely checkable, with a soundness
+direction (valid certificate => model) and a completeness direction (satisfiable
+concept => a valid finite certificate exists). The manuscript is intended to be
+self-contained.
+
+YOUR TASK. Determine whether the proof is correct. Specifically:
+  1. Is the decidability THEOREM true? (Is the construction sound and complete?)
+  2. Does the manuscript actually PROVE it, or are there gaps, unjustified
+     steps, or hand-waved claims that do not in fact follow?
+These are different questions -- a theorem can be true while its proof is broken.
+Address both.
+
+HOW TO WORK -- be concrete and adversarial:
+  - Check every load-bearing lemma. For each, ask: is it actually proved, or
+    merely asserted/sketched? Does the proof of the main theorem use it in a way
+    the lemma actually supports?
+  - Scrutinise BOTH directions. Completeness (satisfiable => certificate)
+    constructions are where these arguments usually break: check that the
+    construction handles EVERY satisfiable concept, not just the easy cases.
+  - Test every finiteness, boundedness, and termination claim. If a quantity is
+    claimed bounded, verify the bound argument; look for a way to make it
+    unbounded.
+  - First verify the RCC5 composition table the manuscript uses is correct
+    (compute it yourself by subset enumeration -- write a few lines of code if
+    helpful). Composition is load-bearing; a single wrong cell can sink the
+    argument or hide a gap.
+  - Try to BREAK it with concrete witnesses. Construct specific ALCI_RCC5
+    concepts and ask whether the construction gives the right answer on them.
+    The most convincing defect is a concrete satisfiable concept for which the
+    construction fails to produce (or validates an invalid) certificate, or a
+    concrete unsatisfiable concept it wrongly accepts. Push on concepts that
+    force infinite models, deeply nested role interactions, multiple interacting
+    universals, and witnesses whose required relationships are FORCED (not
+    freely chosen) by composition with other parts of the model.
+  - Do not manufacture defects. Confirming that a step is sound is as valuable
+    as finding it unsound. A clean bill of health -- "I tried hard to break this
+    and could not, here is what I checked" -- is a fully acceptable and valuable
+    outcome. Only report a defect if you can say precisely why the step fails,
+    ideally with a witness.
+
+DELIVERABLE -- a referee report:
+  (a) One-paragraph verdict: correct / correct-modulo-fixable-gaps / has a
+      genuine gap / unsound, with your confidence.
+  (b) A severity-graded list of findings (critical / major / minor). For each:
+      the precise location in the manuscript, a self-contained statement of what
+      is claimed there, why it does not follow (or a counterexample concept with
+      the composition calculation that exhibits the failure), and -- if you see
+      one -- a candidate repair.
+  (c) A short list of the steps you checked and found sound, so the authors know
+      what the report does and does not cover.
+
+Work it through carefully; show your composition calculations and witness
+constructions explicitly.
+
+
+================================================================
+OPTIONAL FOCUSED PASS  (run ONLY if the primary pass came back clean)
+================================================================
+
+Follow-up, same manuscript: focus specifically on the construction's handling of
+MULTIPLE side witnesses that must be re-routed/spliced simultaneously, and on
+witnesses that are proper parts of one another or that share a common superpart
+(overlapping witnesses). Does the bookkeeping remain consistent when several
+such re-routings happen at once -- no double-counting, no order-dependence, no
+pair left without a consistent label, finiteness preserved? Try to construct a
+concept that forces several interacting simultaneous re-routings.
