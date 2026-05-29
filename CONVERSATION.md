@@ -5894,3 +5894,44 @@ defect, by the proof's author. It is NOT a mechanically certified theorem,
 and it has not been cold-reviewed in turn. The decidability theorem is
 strongly supported, not proven. We continue to present this as a discussion
 piece and to invite scrutiny.
+
+## 2026-05-29 (later): re-ran the verification suite + added WP10 emission test
+
+Two verification follow-ups after the round-9 doc sync:
+
+(a) **Re-ran the whole suite against the round-9 framing -- all pass (exit 0):**
+WP1 `rcc5_composition_check.py` (composition table matches brute force;
+confirms the three entries that drive the round-9 monotone-trace lemma:
+comp(PPI,PO)={PO,PPI}, comp(PPI,PPI)={PPI}, comp(PPI,DR)={DR,PO,PPI}),
+WP2 `certificate_checker.py`, WP3 `small_model_oracle.py`,
+WP6 `mosaic_closure_search.py` (427/427 amalgamate), WP7
+`wp7_selfcontained_side_witness.py` + `wp7_side_witness_stress.py`,
+WP8 `wp8_round7_blocking_chain.py`, WP9 `wp9_round7_split_copies.py`, and the
+opus4.8_review trio `rcc5_compose.py` / `fix_feasibility.py` /
+`repaired_certificate.py`.  Nothing in round-9 invalidated any earlier
+artifact: round-9 is additive over round-7/8 (preserves pair shapes, V1-V12,
+the composition table, blocking-not-equality, split copies, mosaic closure),
+so every WP still tests a structure round-9 contains.  WP1 and the opus4.8
+arithmetic scripts are in fact MORE load-bearing now (they sit on the D-1
+critical path).
+
+(b) **Wrote the missing piece: `verification/python/wp10_round9_forced_verticalization.py`.**
+The existing scripts checked the D-1 *arithmetic* (fix_feasibility) and a
+*hand-placed* repaired certificate on a depth prefix (repaired_certificate),
+but nothing drove the round-9 construction end-to-end.  WP10 does:
+DETECT (compute the forced ancestor trace L(a_m,w) by composition+universal
+pruning; confirm DR*PO*PPI*; find threshold k_0) -> SPLICE (DERIVE the E_up
+edge w->a_{k_0}, not hand-place it; splice-faithfulness guard) -> BUILD
+(occurrence-sensitive pair shapes with incidence tags + l_Q; tower regularized
+to a request-closed cycle; Reach_PP carries the splice up the tail so every
+(a_m,w) becomes a 'down'/PPI pair) -> VALIDATE (converse, V6 composition,
+universal safety, V9 equality, request discharge, residual-frontier ⊆ {DR,PO}).
+Result: C0' emits a VALID certificate; the UNSAT sibling
+(G also carries forall PPI.Y, witness in ~X and ~Y) is REJECTED at DETECT
+because every routing fails (splice -> forall PPI.Y clash; no-splice -> forced
+PPI cannot be a DR/PO residual; DR composition-illegal).  Negative-controlled:
+withholding the splice for C0' makes the validator flag the D-1
+residual-frontier violation (24 errors), and a corrupted (u,w) label trips the
+converse check -- so the validator has teeth.  This fulfils the round-8
+review's recommendation to add C0' (+ UNSAT sibling) as a constructive
+emission test.  CLAUDE.md verification section updated to list WP10.
