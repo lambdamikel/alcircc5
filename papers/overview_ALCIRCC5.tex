@@ -1684,12 +1684,20 @@ across thousands of generated concepts---is closer to ordinary
 programming, at which current models are strong.  Documentation
 and audit-trail discipline (per-round superseded-paper markers,
 the OUTDATED archive, self-contained verification scripts)
-favoured patient editorial labour over insight.  Adversarial
-review of someone else's code, when the reviewer started in a
-fresh session with no context, was effective:\@ Claude Opus~4.7
-identified the twelve-counterexample family in the cover-tree
-implementation that forced the (CT5) role-path compatibility
-addition (Remark~\ref{rem:impl-bugs}).  And steering the
+favoured patient editorial labour over insight.  \emph{Cold
+review across context, and across model}, was effective:\@ a
+fresh Claude Opus~4.7 session, given a finished manuscript with
+no prior project context, finds defects that no session holding
+the long context can find.  This was confirmed twice on this
+project---first in April~2026 when Claude reviewed Claude's own
+cover-tree implementation and identified the twelve-counterexample
+family that forced the (CT5) role-path compatibility addition
+(Remark~\ref{rem:impl-bugs}), then again on May~28 (evening) when
+Claude reviewed GPT-5.5's round-7 sketch and identified the
+three architectural defects that motivated GPT-5.5's
+round-8 saturated-side-context repair (\S\ref{sec:history-of-attempts}).
+The reviewer-was-cold property is the load-bearing one, not the
+reviewer-was-different-model property.  And steering the
 cross-validation pipeline---knowing which stress tests would
 discriminate between candidate proofs---requires understanding
 both the proof and how to falsify it.
@@ -1721,12 +1729,31 @@ director and adversarial cross-review between models, produce a
 candidate proof together with executable artefacts that the
 community can verify, refute, or improve.  They do not replace
 human expert review, and they do not generate the original
-intuition.  But the proof that arrived at round 7 is qualitatively
+intuition.  But the proof that arrived at round 8 is qualitatively
 different from what any one of the three participants would have
 produced alone, and the cross-validation campaign that surrounds
 it is qualitatively different from what would have been feasible
 without the implementation speed and tireless test-writing the
 LLMs brought to the project.
+
+\paragraph{A methodology that worked: cold review as a standard
+intermediate step.}  The cycle that drove this project forward
+was repeatable.  A fresh session of a frontier model, given the
+latest manuscript with no prior project context, finds defects
+that no session holding the long context can find.  The pattern
+was confirmed twice on this project (April~2026, the cover-tree
+implementation review that produced the (CT5) addition; May~28
+evening, the round-7 review that produced round 8), and in both
+cases the cold reviewer was Claude Opus~4.7.  The cost is one
+session.  The pay-off is a list of concrete defects that the
+long-context model can then respond to with a structural repair.
+We recommend cold review as a standard intermediate step between
+\emph{``this manuscript looks finished''} and \emph{``submit for
+human review''}---not as a substitute for human peer review, but
+as a check that finds real defects when there are real defects to
+find.  The pattern is operationalisable for any project of this
+scale; it is not specific to description logic or to these
+particular models.
 
 This is a discussion piece, not a settled result.  The work has
 not been peer-reviewed by human experts.  The proof may still
