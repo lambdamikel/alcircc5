@@ -5788,3 +5788,109 @@ unverified structural lemmas and open obligations O1-O4. We do NOT
 present "round-8 + repair" as a settled new canonical proof. Natural
 next step: send the review + repair to GPT-5.5 for a round-9
 ratification (or replacement).
+
+## 2026-05-29: GPT-5.5 round-9 ratifies D-1 and integrates the repair (composition-forced verticalization)
+
+### What GPT-5.5 did
+
+The round-8 cold review (Opus 4.8) + proposed repair were sent to GPT-5.5.
+GPT-5.5 produced a round-9 repair package, filed under
+`papers/gpt5.5_round3/` (folder is "round3" = GPT-5.5's third
+post-rejection round; the files are labelled "round9" = round-9 overall):
+
+- `formal_response_opus48_round9_repair.{tex,pdf}` (5 pp) -- a response memo.
+  GPT-5.5 ran the three Opus 4.8 scripts (`rcc5_compose.py`,
+  `fix_feasibility.py`, `repaired_certificate.py`), all pass; confirmed
+  `comp(PPI,PO)={PO,PPI}` and `comp(PPI,PPI)={PPI}`; and stated plainly:
+  "I agree with the review that this is a genuine completeness defect.
+  It is not merely a presentational ambiguity."
+- `repaired_split_forest_abstract_round9_forced_verticalization.{tex,pdf}`
+  (16-page sketch) -- the round-9 canonical statement.
+- `expanded_split_forest_full_details_round9_forced_verticalization.{tex,pdf}`
+  (33-page companion) -- full construction + lemmas.
+- `round9_repair_README.txt` -- package note.
+
+### The repair (composition-forced verticalization)
+
+Round-9 preserves the round-7 pair-shape/incidence-tag architecture and
+the round-8 saturated side context, and adds a two-case treatment of a
+selected DR/PO side witness `w` of a source `u`:
+
+- **Case 1 (no eventual containment tail):** `w` stays an ordinary side
+  witness; deep ancestor-witness pairs are residual DR/PO pairs.
+- **Case 2 (eventual containment tail):** when RCC5 composition forces
+  `w` to be a proper part of all sufficiently high tower nodes, a generated
+  cover edge `w' E_up a*` is inserted at the first retained PPI-point `a*`
+  (`w'` is `w` or a split equality mate). Every later pair `(a_m, w')` is
+  then presented by equality-aware vertical reachability, not by a bounded
+  side context. The `u`-`w` relation stays the inherited DR/PO residual pair.
+
+Three lemmas carry it: (i) **monotone ancestor traces** -- the trace
+`r_m = L(a_m,w)` has shape `DR* PO* PPI*`, PPI absorbing, because
+`comp(PPI,·)` never increases rank; (ii) **bounded threshold after regular
+replacement** -- augmenting the tower descriptor with the 3-valued trace
+status keeps finitely many descriptors, so the first retained PPI-point is
+at a computable height `N_thr(C0)`; (iii) **global residual frontier** --
+after equality ports, finite containment saturation, and forced
+verticalization, every remaining residual-frontier pair is DR or PO. The
+split-cover and extraction proofs now apply the forced-verticalization test
+before ordinary side-context attachment. No automata introduced; the only
+extra finite information is the 3-valued trace status.
+
+### Status after round-9
+
+D-1 is closed **at the manuscript level**: cold reviewer (Opus 4.8) found
++ proposed; proof author (GPT-5.5) ratified + integrated with the threshold
+lemmas. Honest status is now **"strongly supported, not mechanically
+certified"** (was "strongly supported, NOT proven" at round-8). GPT-5.5's
+own caveat stands: round-9 is "a serious proof manuscript rather than a
+mechanically certified theorem," with the bounded-threshold replacement
+lemma, the typed-equality quotient lemma, and the support-closed mosaic
+patchwork theorem named as the parts most worth future formalization.
+Round-9 has **not itself been cold-reviewed in turn** -- and the sobering
+corollary from the round-8 entry still applies: every cold review so far
+has found a real defect, so the moment to trust the "finished" claim is
+after a cold review of round-9 finds nothing, which has not yet happened.
+
+### Updates made this session
+
+- **README.md:** new 2026-05-29 Latest News entry (round-9 ratifies D-1);
+  complexity cell -> "Strongly supported, not mechanically certified"
+  pointing at round-9; Current Status, Theoretical-layer, and Key Files
+  blocks moved to round-9 as the pillar (round-8 demoted to predecessor);
+  cold-review bullet's third instance now "ratified and integrated by
+  GPT-5.5 in round-9". The "on par?" calibrated-read additions from the
+  prior turn were preserved (round-9 reinforces them: construction work on
+  both sides of the author/reviewer line).
+- **CLAUDE.md:** Current Decidability Argument now leads with the round-9
+  status and lists the round-9 files as the pillar; round-8 moved to the
+  predecessor list.
+- **Overview paper (main + arXiv candidate):** §6.4 now says round-9 closes
+  D-1 (status "strongly supported, not mechanically certified"); new History
+  subsection `\ref{ssec:round9}` "Round 9: composition-forced verticalization
+  closes D-1"; round-9 bibliography entries (sketch, expanded, response);
+  round-8 bibitem demoted from "canonical" to predecessor; Opus48Round8Repair
+  note now "ratified and integrated by GPT-5.5 in round-9". The calibrated-read
+  paragraph was synced into the arXiv candidate (it was previously main-only);
+  arXiv adjustments reapplied (sole author, AI-tool disclosure, expanded
+  Declaration -- all updated to round-9). Both compile to 26 pages.
+- **Build robustness (both standalone overviews):** with the bundled
+  `ceurart.cls` + a current TeX Live (pdfx present), the standalone papers
+  did not build, for two reasons unrelated to content: (a) `\maketitle`
+  references `\ceurConference@name`, which only `\conference{}` defines, and
+  `\conference` is commented out for the standalone version; (b) ceurart
+  writes the XMP `\Title` as the detokenized `\title`, so `$\ALCIRCC{5}$`
+  landed literally in the `.xmpdata` and made pdfx fail on re-read. Added two
+  small, well-commented preamble guards: `\providecommand\ceurConference@name{}`
+  and a `\csgdef{casprelimstitle}{...plain-text title...}` override (metadata
+  only; verified by a sentinel test that the visible title is untouched and
+  comes from `\@title`). Both papers now build reproducibly (3 consecutive
+  runs succeed; clean PDF /Title; sole-author /Author on the arXiv candidate).
+
+### The honest line held across all files
+
+Round-9 is a real ratification + integration of a real repair to a real
+defect, by the proof's author. It is NOT a mechanically certified theorem,
+and it has not been cold-reviewed in turn. The decidability theorem is
+strongly supported, not proven. We continue to present this as a discussion
+piece and to invite scrutiny.
