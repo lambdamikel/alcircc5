@@ -1623,7 +1623,13 @@ side-context attachment.
 The repair preserves the no-automata split-forest architecture (no
 B\"uchi/parity automata); the only extra finite information is the
 three-valued ancestor-trace status, absorbed into the existing
-finite-index replacement argument.  GPT-5.5 explicitly characterises
+finite-index replacement argument.  On the computational side, the
+round-9 construction is exercised end-to-end by a certificate-emission
+test on $C_0'$ and its UNSAT sibling, generalised to a parameterised
+forced-tower family and cross-checked against a by-construction oracle
+and the cover-tree tableau (\S\ref{ssec:compverif}); this closes the
+round-8 review's recommendation to add $C_0'$ as a constructive
+emission test.  GPT-5.5 explicitly characterises
 round-9 as ``a serious proof manuscript rather than a mechanically
 certified theorem,'' naming the bounded-threshold replacement lemma,
 the typed-equality quotient lemma, and the support-closed mosaic
@@ -1652,6 +1658,7 @@ v1 formalisation, and Claude's cover-tree tableau implementation
 all remain load-bearing in round~7.
 
 \subsection{Computational verification across rounds}
+\label{ssec:compverif}
 
 In parallel with the proof work, nine Python work packages
 verify the finite combinatorial content of the proof family.
@@ -1667,9 +1674,21 @@ request-closed cycle tests fold into WP2/WP3 (WP4, WP5); a
 mosaic enumeration confirms support-closure axioms on small
 mosaics (WP6).  WP7--WP9 verify the round-7 central stress
 concepts (comparable side witnesses, blocking-not-equality, and
-split copies for incomparable proper superparts), and all
-PASS.  No counterexample to any combinatorial claim of any
-round was found.
+split copies for incomparable proper superparts).  WP10 drives the
+D-1 witness $C_0'$ end-to-end through the round-9 forced-verticalization
+construction---detect the forced ancestor trace, splice at the bounded
+threshold, build the incidence-tagged certificate, validate the round-9
+clauses---emitting a valid certificate for $C_0'$ and rejecting its
+UNSAT sibling; WP11 generalises this to a parameterised forced-tower
+family (period-$p$ profiles, many side witnesses, universals over
+$\{\PO,\PPI,\DR,\PP\}$) and cross-checks the round-9 emit/reject verdict
+against a by-construction oracle, an independent certificate validator,
+and the cover-tree tableau ($216/216$ agreement on the current sweep,
+no completeness or soundness gap found on that family; the
+overlap-amalgam case remains future work).  WP10/WP11 close the
+round-8 review's recommendation to add $C_0'$ as a constructive
+certificate-emission test.  All PASS.  No counterexample to any
+combinatorial claim of any round was found.
 
 %% ====================================================================
 \section{Outlook and Conclusion}
