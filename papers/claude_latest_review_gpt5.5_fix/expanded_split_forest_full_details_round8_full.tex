@@ -71,6 +71,31 @@
 \begin{document}
 \maketitle
 
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{\small
+\textbf{Editorial status note (added 2026-05-28, after drafting; not by
+the manuscript's author).}  A subsequent cold review by Claude
+Opus~4.8 (\texttt{papers/opus4.8\_review/review\_round8\_split\_forest.pdf})
+identified a genuine \emph{completeness}-construction gap in this
+manuscript (defect ``D-1'', medium--high severity):\@ the cross
+side/tree exhaustion lemma verticalizes side/tree pairs only on the
+\emph{finite, depth-bounded} boundary $B_k(u)$, but a $\DR/\PO$ side
+witness can be RCC5-composition forced to be a proper part of an
+\emph{infinite} pumped containment tower, and the bounded saturated
+side context cannot carry the forced $\PP/\PPI$ labels on the tower's
+tail.  The concrete satisfiable witness is
+$C_0' = (\exists\PP.G)\sqcap(\exists\PO.\neg X)$ with
+$G=(\forall\PO.X)\sqcap(\exists\PP.G)$.  The soundness direction and
+the round-7 blocking/equality machinery are unaffected.  A proposed
+repair (composition-forced verticalization) is given in
+\texttt{papers/opus4.8\_review/repair\_completeness\_round8.pdf}; it
+has machine-checked linchpins but open bookkeeping obligations
+(O1--O4) and has \emph{not} been ratified.  Read this manuscript as
+the most developed statement of the architecture, whose completeness
+construction has a known open gap.  The text below is unchanged from
+its 2026-05-28 drafting.}}
+\end{center}
+
 \begin{abstract}
 This manuscript gives an expanded, self-contained version of the generated split-forest proof of decidability for satisfiability of $\Logic$ concepts over strong abstract complete atomic RCC5 frames.  It preserves the original proof architecture: witness thinning, generated containment covers, split copies for multiple selected containment parents, saturated finite side interfaces, constructed support-closed pair/triple catalogues, explicit typed equality quotienting, and finite regular certificates.  It avoids Buchi and parity automata.  Infinite branches are handled by a direct finite-index, request-closed cycle argument.  The key technical point is that finite blocking is not semantic equality: repeated profiles in different laps of a cycle unfold to fresh occurrences.  Pair labels in the finite certificate are therefore occurrence-sensitive rather than merely abstract-position-sensitive.
 \end{abstract}

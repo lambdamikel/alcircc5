@@ -71,6 +71,7 @@
 \newcommand{\down}{\ensuremath{\mathsf{down}}}
 \newcommand{\side}{\ensuremath{\mathsf{side}}}
 \newcommand{\front}{\ensuremath{\mathsf{front}}}
+\newcommand{\Eup}{\ensuremath{E_{\uparrow}}}
 
 \begin{document}
 
@@ -1029,8 +1030,8 @@ calculus in several fundamental ways:
 \subsection{Soundness and completeness}
 \label{ssec:soundness-completeness}
 
-The decidability theorem is established by the GPT-5.5 \emph{round-8
-saturated-side-context split-forest
+The decidability argument is most developed in the GPT-5.5
+\emph{round-8 saturated-side-context split-forest
 proof}~\cite{GPT55Round8Sketch} (May~2026, 15-page sketch,
 no-automata route), with detailed
 companion~\cite{GPT55Round8Expanded} (30~pages) and an independent
@@ -1044,9 +1045,41 @@ before the residual $\DR/\PO$ restriction, a
 $\PP/\PPI$ pairs between vertical-boundary positions and side
 positions, and \emph{constructed pair and triple catalogues}
 $\Pair_\Q,\Tri_\Q$ replacing the round-7 finiteness-only
-assertions.  The history of how the proof reached its current
-form is collected in~\S\ref{sec:history-of-attempts} below; this
-subsection states the current result.
+assertions.  The history of how the argument reached its current
+form is collected in~\S\ref{sec:history-of-attempts} below.
+
+\paragraph{Status: an open completeness gap.}
+A subsequent cold review of round-8 (Claude Opus~4.8,
+\S\ref{sec:history-of-attempts}) found that the cross side/tree
+exhaustion lemma closes the side/tree gap only on the
+\emph{finite, depth-bounded} boundary $B_k(u)$, whereas a
+$\DR/\PO$ side witness can be RCC5-composition forced to be a
+proper part of an \emph{infinite} pumped containment tower.  The
+concrete satisfiable witness is
+$C_0'=(\exists\PP.G)\sqcap(\exists\PO.\neg X)$ with
+$G=(\forall\PO.X)\sqcap(\exists\PP.G)$:\@ the tower
+$a_1\PP a_2\PP\cdots$ each carries $\forall\PO.X$, and the root's
+$\PO$-witness $w\in\neg X$ is forced ($\comp(\PPI,\PO)=\{\PO,\PPI\}$
+with $\PO$ killed by $\forall\PO.X$, then $\comp(\PPI,\PPI)=\{\PPI\}$)
+to be a proper part of \emph{every} tower node.  The bounded
+saturated side context cannot carry the forced $\PP/\PPI$ labels on
+the tail, so the round-8 completeness construction produces an
+invalid certificate for a satisfiable concept (machine-checked).
+This is a genuine gap in the completeness proof of medium--high
+severity.  The decidability \emph{theorem} is most likely still
+true --- an alternative presentation, placing $w$ as a true
+vertical descendant of the tower, appears to certify $C_0'$ --- and
+a proposed repair (\emph{composition-forced verticalization}:\@
+splice the forced witness into the cover relation $\Eup$ at a
+bounded threshold height so equality-aware reachability carries the
+label up the tail) is recorded in~\S\ref{sec:history-of-attempts},
+with machine-checked linchpins but open bookkeeping obligations and
+no external ratification.  We therefore state the result honestly as
+\textbf{strongly supported but not, as written, proven}:\@ the
+soundness direction is sound, the architecture is sound, but the
+completeness construction has a known open gap.  The remainder of
+this subsection states the construction at the level the manuscript
+develops it.
 
 \paragraph{Soundness} (valid certificate $\Rightarrow$ strong
 abstract RCC5 model satisfying $C_0$).  A finite split-forest
@@ -1065,7 +1098,8 @@ sibling-interface paper~\cite{SiblingCompleted}
 plus the round-7 architectural specifics.
 
 \paragraph{Completeness} (satisfiable $C_0\Rightarrow$ valid
-finite certificate).  A satisfying interpretation is thinned to a
+finite certificate) --- \emph{this is the direction with the open
+gap above}.  A satisfying interpretation is thinned to a
 witness-generated model via the witness-thinning lemma; the
 generated containment split-cover construction supplies a weak
 split presentation with explicit equality mates and side mosaics.
@@ -1074,7 +1108,12 @@ infinite vertical ray to a finite prefix plus a request-closed
 cycle word.  The certificate profiles are the resulting complete
 boundary profiles; pair shapes and triple shapes are extracted
 from the occurrence-sensitive incidences of the regular
-presentation, not merely from abstract position symbols.
+presentation, not merely from abstract position symbols.  The
+known gap (D-1) is that the split-cover construction files every
+$\DR/\PO$ witness in a bounded side context, which cannot record
+the labels forced by composition with an unbounded ancestor tower;
+the proposed repair re-routes such a witness into the vertical
+backbone (\S\ref{sec:history-of-attempts}).
 
 \paragraph{The round-7 architectural move.}  The central
 ingredient of round 7 is that finite labels live on
@@ -1450,8 +1489,75 @@ required to satisfy the RCC5 composition table.  The 15-page
 round-8 sketch and the 30-page detailed
 companion~\cite{GPT55Round8Expanded} are filed under
 \texttt{papers/claude\_latest\_review\_gpt5.5\_fix/}.  Round-8 is
-the current canonical statement; round 7 is its immediate
-predecessor.
+the most developed statement of the architecture; round 7 is its
+immediate predecessor.
+
+\subsection{Round 8 cold review: an open completeness gap (D-1) and
+a proposed repair}
+\label{ssec:round8-review}
+
+A further cold review --- this time by Claude~Opus~4.8, again with
+no prior project context --- examined whether the saturated-side-context
+repair actually closes the side/tree gap, and found that it does
+not:\@ it relocates the gap rather than closing it
+\cite{Opus48Round8Review}.
+
+The cross side/tree exhaustion lemma quantifies only over the
+\emph{finite, depth-bounded} boundary $B_k(u)$ and the finite
+saturated side context $S_k(u)$; both are bounded by the
+side-width $m_\ast(C_0)$.  The lemma is true as stated, but the
+advertised global conclusion --- ``no $\PP/\PPI$ side/tree pair is
+hidden'' --- is a statement about the whole unfolded model, in
+which the vertical ancestor chain is infinite.  The genuinely hard
+case is a $\DR/\PO$ side witness that RCC5 composition forces to be
+a proper part of an \emph{infinite} pumped tower.  The concrete
+satisfiable witness is
+\[
+  G := (\forall\PO.X)\sqcap(\exists\PP.G),\qquad
+  C_0' := (\exists\PP.G)\sqcap(\exists\PO.\neg X).
+\]
+$G$ generates an infinite ascending tower $a_1\PP a_2\PP\cdots$,
+each $a_m\in\forall\PO.X$; the root's $\PO$-witness $w\in\neg X$ is
+forced to satisfy $\rho(a_m,w)=\PPI$ for \emph{all} $m$ (base case:
+$\rho(a_1,w)\in\comp(\PPI,\PO)=\{\PO,\PPI\}$, and $\forall\PO.X$ at
+$a_1$ with $w\in\neg X$ kills the $\PO$ option; induction:
+$\comp(\PPI,\PPI)=\{\PPI\}$).  Only finitely many tower nodes fit
+in $S_k(u)$; for the unbounded tail the constructed pair-shape
+catalogue offers no admissible shape ($\side_{\PPI}$ needs
+co-residence in one bounded context; $\down$ needs a cover-edge
+path the construction never creates for a side witness;
+$\front_{\DR}$ is composition-illegal; $\front_{\PO}$ violates the
+$\forall\PO.X$ universal-safety check).  So the round-8 completeness
+construction produces an invalid certificate for the satisfiable
+$C_0'$ --- a genuine gap (``D-1''), of medium--high severity.  The
+composition arithmetic is machine-checked.
+
+The decidability \emph{theorem} most likely survives:\@ placing
+$w$ as a true vertical descendant of the tower (a selected
+$\Eup$-child of $a_1$, with the $u$--$w$ edge demoted to a residual
+$\PO$ frontier) appears to yield a valid certificate, and the
+decision procedure accepts whenever \emph{some} valid certificate
+exists.  The accompanying repair note~\cite{Opus48Round8Repair}
+turns this observation into a construction --- \emph{composition-forced
+verticalization}: detect when composition forces a $\DR/\PO$
+witness to be a proper part of an ancestor, and splice an $\Eup$
+cover edge at the (provably bounded) threshold height where it
+first becomes a proper part, so equality-aware reachability carries
+the correct $\PP/\PPI$ label up the entire tail.  Three facts make
+the repair clean, the first machine-checked:\@ (i) the forced label
+up an ascending chain is monotone in $\DR\succ\PO\succ\PPI$ and
+$\PPI$-absorbing, hence eventually constant at a threshold; (ii)
+the threshold is bounded by the number of boundary descriptors, so
+finiteness is preserved; (iii) the construction \emph{presents a
+fixed consistent model}, so RCC5 composition and universal safety
+are inherited rather than re-derived.  The repair has open
+bookkeeping obligations (excision coherence under replacement,
+simultaneous splices, overlap-amalgam closure, finiteness
+constants) and has not been ratified by GPT-5.5 or by human
+experts; we record it as a candidate, not a settled fix.  Until it
+(or a GPT-5.5 round-9 fix) is ratified, the completeness direction
+has a known open gap and the theorem's status is
+\emph{strongly supported, not proven}.
 
 \subsection{What survives, and why}
 
@@ -1498,22 +1604,29 @@ round was found.
 
 \subsection{What has been achieved}
 
-If the cover-tree tableau is correct---and the extensive
-computational evidence supports this---then concept satisfiability
-in $\ALCIRCC{5}$ is decidable.  This would settle a problem that
+If the split-forest decidability argument is correct---and the
+soundness direction together with the extensive computational
+evidence support this---then concept satisfiability in
+$\ALCIRCC{5}$ is decidable.  This would settle a problem that
 has been open since Wessel's doctoral work in 2002/2003 and was
 explicitly flagged by Lutz \& Wolter in 2006 as ``perhaps the
-most interesting'' open problem suggested by their work.
+most interesting'' open problem suggested by their work.  As of
+this writing the argument is \emph{strongly supported but not, as
+written, proven}:\@ the completeness direction has a known open
+gap (D-1, \S\ref{ssec:round8-review}) with a proposed-but-unratified
+repair.
 
 The decidability argument as of May~2026 rests on \emph{two}
-core papers, which together establish:
+core papers, which together aim to establish:
 \[
   \text{$C_0$ satisfiable}
   \;\;\Longleftrightarrow\;\;
   \text{$C_0$ admits a valid finite split-forest certificate.}
 \]
-A separate operational layer realizes the check algorithmically and
-is empirically validated.
+The ($\Leftarrow$) (soundness) direction is established; the
+($\Rightarrow$) (completeness) direction is the one with the open
+gap.  A separate operational layer realizes the check
+algorithmically and is empirically validated.
 
 \medskip\noindent\textbf{Theoretical layer (establishes
 decidability).}
@@ -1528,34 +1641,42 @@ decidability).}
     Def~1.5 / Def~1.7 / Thm~1.20-sketch with the corrected
     generated-cover statements; the proofs of Thms~1.17--1.19
     carry over verbatim.
-  \item The \emph{GPT-5.5 round-7 split-forest
-    proof}~\cite{GPT55Round7Sketch} (May~2026, 14~pages,
-    no-automata route) with detailed
-    companion~\cite{GPT55Round7Expanded} (28~pages) and
-    parity-tree-automata witness~\cite{GPT55AutomataRoute}
+  \item The \emph{GPT-5.5 round-8 split-forest
+    proof}~\cite{GPT55Round8Sketch} (May~2026, 15-page sketch)
+    with detailed companion~\cite{GPT55Round8Expanded} (30~pages)
+    and parity-tree-automata witness~\cite{GPT55AutomataRoute}
     (21~pages): formulates finite occurrence-sensitive
     split-forest certificates with twelve finite-checkable
-    validity conditions (V1)--(V12), and proves both directions
-    in their entirety, including \textbf{completeness} (every
+    validity conditions (V1)--(V12), establishes \textbf{soundness}
+    in full, and \emph{aims} at \textbf{completeness} (every
     satisfiable $C_0$ admits a valid finite certificate).  The
-    central round-7 architectural move is that finite labels live
-    on occurrence-sensitive \emph{pair shapes}
+    central architectural move (introduced in round 7, preserved
+    in round 8) is that finite labels live on occurrence-sensitive
+    \emph{pair shapes}
     $\alpha(u,v)=(s_u,p_u,s_v,p_v,\iota(u,v))$ with incidence
-    tags $\iota\in\{\self,\eqtag,\up,\down,\side_R,\front_R\}$.
-    Distinct laps of a blocking cycle satisfy $\iota\ne\self$ and
-    $\iota\ne\eqtag$, so the round-7 labelling preserves
+    tags $\iota\in\{\self,\eqtag,\up,\down,\side_R,\front_R\}$;
+    distinct laps of a blocking cycle satisfy $\iota\ne\self$ and
+    $\iota\ne\eqtag$, so the labelling preserves
     blocking-not-equality while still discharging
-    $\PP/\PPI$ eventualities by request-closed cycles.  Round-7
-    supersedes Claude's earlier round-5 (M6$'$) delta, items-4-to-8
-    delta, round-5 consolidation, and round-6 internal-coherence
-    pass; those manuscripts and the round-2 31-page repaired
-    proof~\cite{GPT55Repaired} are retained as the historical
-    audit trail (see~\texttt{OUTDATED.md}~\cite{ALCIRCC5Outdated}).
+    $\PP/\PPI$ eventualities by request-closed cycles.
+    \emph{However}, the completeness construction has a known open
+    gap (D-1, \S\ref{ssec:round8-review}):\@ a $\DR/\PO$ witness
+    composition-forced into an infinite pumped tower is not
+    correctly routed, so the construction as written can emit an
+    invalid certificate for a satisfiable concept; a proposed
+    repair (composition-forced verticalization,
+    \cite{Opus48Round8Repair}) is unratified.  Round-8 supersedes
+    Claude's earlier round-5/round-6 manuscripts and the round-2
+    31-page repaired proof~\cite{GPT55Repaired}, all retained as
+    the historical audit trail
+    (see~\texttt{OUTDATED.md}~\cite{ALCIRCC5Outdated}).
 \end{enumerate}
-Together, (1) and (2) establish the biconditional displayed
-above.  The certificate space is bounded by
-$B(C_0) = 2^{2^{p(n)}}$ as an effectively computable bound,
-validity is finite-graph checkable, and the enumeration terminates.
+Subject to the open D-1 gap, (1) and (2) aim to establish the
+biconditional displayed above; the soundness direction
+($\Leftarrow$) is established unconditionally.  The certificate
+space is bounded by $B(C_0) = 2^{2^{p(n)}}$ as an effectively
+computable bound, validity is finite-graph checkable, and the
+enumeration terminates.
 
 \medskip\noindent\textbf{Operational layer (algorithmic
 realization, empirically validated).}
@@ -1686,21 +1807,23 @@ and audit-trail discipline (per-round superseded-paper markers,
 the OUTDATED archive, self-contained verification scripts)
 favoured patient editorial labour over insight.  \emph{Cold
 review across context, and across model}, was effective:\@ a
-fresh Claude Opus~4.7 session, given a finished manuscript with
+fresh frontier-model session, given a finished manuscript with
 no prior project context, finds defects that no session holding
-the long context can find.  This was confirmed twice on this
-project---first in April~2026 when Claude reviewed Claude's own
+the long context can find.  This was confirmed three times on this
+project---in April~2026 (Claude Opus~4.7 reviewed Claude's own
 cover-tree implementation and identified the twelve-counterexample
-family that forced the (CT5) role-path compatibility addition
-(Remark~\ref{rem:impl-bugs}), then again on May~28 (evening) when
-Claude reviewed GPT-5.5's round-7 sketch and identified the
-three architectural defects that motivated GPT-5.5's
-round-8 saturated-side-context repair (\S\ref{sec:history-of-attempts}).
-The reviewer-was-cold property is the load-bearing one, not the
-reviewer-was-different-model property.  And steering the
-cross-validation pipeline---knowing which stress tests would
-discriminate between candidate proofs---requires understanding
-both the proof and how to falsify it.
+family that forced the (CT5) role-path compatibility addition,
+Remark~\ref{rem:impl-bugs}); on May~28 evening (Claude Opus~4.7
+reviewed GPT-5.5's round-7 sketch and identified the three
+architectural defects that motivated round-8,
+\S\ref{sec:history-of-attempts}); and on May~28 late evening
+(Claude Opus~4.8 reviewed GPT-5.5's round-8 proof and found the
+D-1 completeness gap, \S\ref{ssec:round8-review} --- and in this
+instance also supplied a candidate repair).  The reviewer-was-cold
+property is the load-bearing one, not the reviewer-was-different-model
+property.  And steering the cross-validation pipeline---knowing
+which stress tests would discriminate between candidate proofs---requires
+understanding both the proof and how to falsify it.
 
 \paragraph{What both models did well.}  Long-context coherence
 across 30+ page proofs and many editing rounds was qualitatively
@@ -1729,40 +1852,49 @@ director and adversarial cross-review between models, produce a
 candidate proof together with executable artefacts that the
 community can verify, refute, or improve.  They do not replace
 human expert review, and they do not generate the original
-intuition.  But the proof that arrived at round 8 is qualitatively
-different from what any one of the three participants would have
-produced alone, and the cross-validation campaign that surrounds
-it is qualitatively different from what would have been feasible
-without the implementation speed and tireless test-writing the
-LLMs brought to the project.
+intuition.  But the round-8 proof is qualitatively different from
+what any one of the three participants would have produced alone,
+and the cross-validation campaign that surrounds it is
+qualitatively different from what would have been feasible without
+the implementation speed and tireless test-writing the LLMs
+brought to the project.
 
 \paragraph{A methodology that worked: cold review as a standard
 intermediate step.}  The cycle that drove this project forward
 was repeatable.  A fresh session of a frontier model, given the
 latest manuscript with no prior project context, finds defects
 that no session holding the long context can find.  The pattern
-was confirmed twice on this project (April~2026, the cover-tree
+was confirmed three times (April~2026, the cover-tree
 implementation review that produced the (CT5) addition; May~28
-evening, the round-7 review that produced round 8), and in both
-cases the cold reviewer was Claude Opus~4.7.  The cost is one
-session.  The pay-off is a list of concrete defects that the
-long-context model can then respond to with a structural repair.
-We recommend cold review as a standard intermediate step between
-\emph{``this manuscript looks finished''} and \emph{``submit for
-human review''}---not as a substitute for human peer review, but
-as a check that finds real defects when there are real defects to
-find.  The pattern is operationalisable for any project of this
-scale; it is not specific to description logic or to these
-particular models.
+evening, the round-7 review that produced round 8; May~28 late
+evening, the Opus~4.8 review that found the round-8 D-1
+completeness gap and proposed a repair).  The cost is one
+session; the pay-off is a list of concrete defects --- and, in
+the third instance, a candidate repair --- that the long-context
+author can then ratify or replace.  We recommend cold review as a
+standard intermediate step between \emph{``this manuscript looks
+finished''} and \emph{``submit for human review''}---not as a
+substitute for human peer review, but as a check that reliably
+finds real defects when there are real defects to find.  The
+sobering corollary, visible across all three instances, is that
+\emph{each} cold review found a genuine defect in a manuscript its
+authors believed was finished, including two successive rounds
+each advertised as ``canonical'':\@ the moment to trust a
+``finished'' claim is after a cold review finds \emph{nothing},
+which has not yet happened here.  The pattern is operationalisable
+for any project of this scale; it is not specific to description
+logic or to these particular models.
 
 This is a discussion piece, not a settled result.  The work has
-not been peer-reviewed by human experts.  The proof may still
-contain defects that another round of adversarial review would
-surface.  But the meta-research point---\emph{that this kind of
-work is now possible, and that the result is worth engaging with
-on its technical merits}---is the more important contribution.
-We invite the description logic community to engage with both
-layers.
+not been peer-reviewed by human experts, and as of this writing
+the round-8 completeness construction has a known open gap (D-1,
+\S\ref{ssec:round8-review}) with a proposed-but-unratified repair.
+The decidability theorem is strongly supported but not, as
+written, proven.  The meta-research point---\emph{that this kind
+of work is now possible, and that the result is worth engaging
+with on its technical merits}---is the more important
+contribution.  We invite the description logic community to engage
+with both layers.
 
 \subsection{A note on citation verification}
 
@@ -1962,6 +2094,26 @@ GPT-5.5 (OpenAI), prompted by M.\ Wessel.
   pair/triple catalogues, explicit completeness extraction.
 \newblock Technical report, May~2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/claude_latest_review_gpt5.5_fix/expanded_split_forest_full_details_round8_full.pdf}
+
+\bibitem{Opus48Round8Review}
+Claude (Anthropic, Opus~4.8), prompted by M.\ Wessel.
+\newblock Review of the round-8 saturated-side-context split-forest
+  decidability proof for $\ALCIRCC{5}$ (9~pages): identifies the
+  completeness gap D-1 (a $\DR/\PO$ witness composition-forced into
+  an infinite pumped tower has no admissible pair shape on the
+  tail); composition arithmetic machine-checked.
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/opus4.8_review/review_round8_split_forest.pdf}
+
+\bibitem{Opus48Round8Repair}
+Claude (Anthropic, Opus~4.8), prompted by M.\ Wessel.
+\newblock Repairing the round-8 completeness construction for
+  $\ALCIRCC{5}$:\@ composition-forced verticalization (8~pages).
+  Splices a forced witness into the cover relation at a bounded
+  threshold height; machine-checked threshold lemmas; open
+  bookkeeping obligations O1--O4; unratified.
+\newblock Technical report, May~2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/opus4.8_review/repair_completeness_round8.pdf}
 
 \bibitem{GPT55Round7Expanded}
 GPT-5.5 (OpenAI), prompted by M.\ Wessel.

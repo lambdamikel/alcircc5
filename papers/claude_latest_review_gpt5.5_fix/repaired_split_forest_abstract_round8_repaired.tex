@@ -66,6 +66,31 @@
 \begin{document}
 \maketitle
 
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{\small
+\textbf{Editorial status note (added 2026-05-28, after drafting; not by
+the manuscript's author).}  A subsequent cold review by Claude
+Opus~4.8 (\texttt{papers/opus4.8\_review/review\_round8\_split\_forest.pdf})
+identified a genuine \emph{completeness}-construction gap in this
+manuscript (defect ``D-1'', medium--high severity):\@ the cross
+side/tree exhaustion lemma below verticalizes side/tree pairs only on
+the \emph{finite, depth-bounded} boundary $B_k(u)$, but a $\DR/\PO$
+side witness can be RCC5-composition forced to be a proper part of an
+\emph{infinite} pumped containment tower, and the bounded saturated
+side context cannot carry the forced $\PP/\PPI$ labels on the tower's
+tail.  The concrete satisfiable witness is
+$C_0' = (\exists\PP.G)\sqcap(\exists\PO.\neg X)$ with
+$G=(\forall\PO.X)\sqcap(\exists\PP.G)$.  The soundness direction and
+the round-7 blocking/equality machinery are unaffected.  A proposed
+repair (composition-forced verticalization) is given in
+\texttt{papers/opus4.8\_review/repair\_completeness\_round8.pdf}; it
+has machine-checked linchpins but open bookkeeping obligations
+(O1--O4) and has \emph{not} been ratified.  Read this manuscript as
+the most developed statement of the architecture, whose completeness
+construction has a known open gap.  The text below is unchanged from
+its 2026-05-28 drafting.}}
+\end{center}
+
 \begin{abstract}
 This note gives a single coherent version of the repaired split-forest proof for decidability of satisfiability of \(\ALCIRCC\) concepts over abstract complete atomic RCC5 frames.  The proof keeps the original architecture: witness thinning, generated containment covers, split copies for several selected containment parents, finite side interfaces, support-closed mosaics, typed equality quotienting, and finite regular certificates.  It does not use Büchi or parity automata.  Instead it uses direct finite-index blocking with explicit request-closed cycles.  The main repair relative to the preceding consolidated draft is that finite abstract labels are no longer indexed only by abstract position symbols.  Labels are indexed by occurrence-sensitive pair shapes.  Thus two occurrences in different laps of a blocking cycle may have the same profile and the same local position symbol without being \(\EQ\)-identified.  Semantic equality is generated only by explicit equality ports and never by blocking repetition.
 \end{abstract}

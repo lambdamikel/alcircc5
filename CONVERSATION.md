@@ -5666,3 +5666,125 @@ suggested as the highest-leverage internal "next step" in the
 previous session, and it worked exactly as predicted:\@ a fresh
 context found defects, GPT-5.5 produced a clean repair, and the
 proof advanced.
+
+---
+
+## 2026-05-28 (late evening): Cold Opus 4.8 review of round-8 finds a completeness gap (D-1); proposes a repair
+
+### The cold review (third instance of the pattern)
+
+A fresh Claude Opus 4.8 session, with no prior project context, reviewed
+GPT-5.5's round-8 saturated-side-context proof (the manuscripts in
+`papers/claude_latest_review_gpt5.5_fix/`). It ran in a separate clone
+(`review/`) and produced `papers/opus4.8_review/`, filed via
+`git fetch`/`pull` (commit `39e52a3`).
+
+This is the cold-review pattern's THIRD confirmed instance, and the
+first where the cold reviewer supplied both the defect AND a candidate
+repair.
+
+### The defect (D-1, medium-high severity)
+
+Round-8's headline repair was the "cross side/tree exhaustion" lemma,
+which verticalizes side/tree pairs. The review found it closes the gap
+only on the FINITE, depth-bounded boundary B_k(u). The genuinely hard
+case is a DR/PO side witness that RCC5 composition forces to be a
+proper part of an INFINITE pumped tower.
+
+Concrete satisfiable witness:
+- `G   := (∀PO.X) ⊓ (∃PP.G)`
+- `C0' := (∃PP.G) ⊓ (∃PO.¬X)`
+
+`G` generates an infinite ascending PP-tower `a_1 PP a_2 PP …`, each
+`a_m ∈ ∀PO.X`. The root `u` has a PO-witness `w ∈ ¬X`. Because
+`comp(PPI,PO) = {PO,PPI}` and `∀PO.X` at `a_1` kills the PO option,
+`w PP a_1` is forced; then `comp(PPI,PPI) = {PPI}` forces `w PP a_m`
+for ALL m. So `w` is a proper part of every tower node.
+
+Only finitely many tower nodes fit in the bounded side context
+`S_k(u)`. For the tail (`m > K`), the pair `(a_m, w)` must carry the
+forced PPI label, but the constructed pair-shape catalogue offers no
+admissible shape (`side_PPI` needs co-residence in one bounded context;
+`down` needs an `E_up` cover path the construction never creates for a
+side witness; `front_DR` is composition-illegal; `front_PO` violates
+the `∀PO.X` universal-safety check). So the round-8 completeness
+construction emits an INVALID certificate for a SATISFIABLE concept.
+The composition arithmetic is machine-checked (`rcc5_compose.py`).
+
+The decidability THEOREM is most likely still true: an alternative
+presentation (place `w` as a true vertical descendant of the tower,
+demote `u`–`w` to a residual PO frontier) appears to certify C0'. But
+the round-8 PROOF as written does not establish completeness, so the
+theorem reverts to "strongly supported, not proven."
+
+### The proposed repair (composition-forced verticalization)
+
+Opus 4.8 also shipped `repair_completeness_round8.tex`. Principle: the
+vertical backbone must present the FULL generated containment order,
+not just selected-witness edges. Mechanism: when composition forces a
+DR/PO witness `w` to be a proper part of an ancestor, splice an `E_up`
+cover edge at the bounded threshold height where `w` first becomes a
+proper part, so `Reach_PP` carries the correct PP/PPI label up the
+entire (infinite) tail.
+
+Three facts make the repair clean (first machine-checked):
+- **Monotone threshold (Lemma 4.1):** climbing the tower, the forced
+  label `ρ(a_m,w)` is non-increasing in `DR ≻ PO ≻ PPI` and PPI is
+  absorbing, so it is `DR* PO* PPI*`, eventually constant.
+- **Bounded threshold (Lemma 4.3):** each constant-label stretch is
+  shortened to ≤ N checkpoints by the existing replacement/blocking
+  lemma, so splice height ≤ 3N — finiteness preserved.
+- **Consistency inherited (Lemma 5.2):** the construction presents a
+  FIXED consistent model J; the splice changes which device carries a
+  pair's label, never the label. So RCC5 composition and universal
+  safety are inherited from J, not re-derived. Acyclicity is free
+  (`Reach_PP ⊆ <`).
+
+`repaired_certificate.py` builds the valid repaired certificate for C0'
+and confirms the UNSAT sibling (`G` with an extra `∀PPI.Y`,
+`w ∈ ¬X ∩ ¬Y`) is still correctly rejected (the splice makes `w` a
+PPI-successor, firing `∀PPI.Y`).
+
+**Status of the repair:** machine-checked linchpins, but the structural
+lemmas are not formally verified, four bookkeeping obligations (O1-O4)
+remain open (chief among them: excision coherence under replacement in
+the presence of splices), and it has NOT been ratified by GPT-5.5 or
+human experts. Recorded as a candidate, not a settled fix.
+
+### Updates made this session
+
+- **README.md:** new 2026-05-28 (late evening) Latest News entry;
+  complexity table cell softened to "strongly supported, not proven";
+  Current Status disclaimer block and the "Theoretical layer" block
+  rewritten to flag D-1 + repair; canonical-statement §6 reframed as
+  "most developed statement, with a known open completeness gap"; Key
+  Files adds the review + repair notes; the cold-review LLM paragraph
+  extended to three instances with the sobering corollary that every
+  cold review so far has found a real defect.
+- **GPT-5.5 round-8 manuscripts:** a boxed editorial status note added
+  near the top of both (sketch + expanded companion) flagging D-1 and
+  pointing at the review/repair. No math changed. Recompiled (15 and
+  31 pages).
+- **Overview paper (main + arXiv candidate):** §6.4 reflects the D-1
+  gap and the proposed repair, with a "Status: an open completeness
+  gap" paragraph; the completeness sub-paragraph flags the gap; §8.1
+  "What has been achieved" softened (soundness established,
+  completeness has the open gap); new History subsection
+  "Round 8 cold review: an open completeness gap (D-1) and a proposed
+  repair"; bibliography entries for the review + repair notes; the
+  cold-review discussion extended to three instances. arXiv candidate
+  re-synced with the three arXiv adjustments (sole author, expanded
+  disclaimer, expanded Declaration). Both compile (24 pages).
+- **CLAUDE.md:** Current Decidability Argument now leads with the
+  "strongly supported, NOT proven" status and the D-1 description.
+
+### The honest line held across all files
+
+This review found a GENUINE medium-high completeness gap, not polish.
+The decidability theorem's status is "strongly supported; proof has a
+known gap with a proposed-but-unratified repair." The repair is
+Claude-authored (Opus 4.8), machine-checked on the arithmetic but with
+unverified structural lemmas and open obligations O1-O4. We do NOT
+present "round-8 + repair" as a settled new canonical proof. Natural
+next step: send the review + repair to GPT-5.5 for a round-9
+ratification (or replacement).
