@@ -5477,7 +5477,7 @@ to 997 lines, capturing the full historical prose.
 ### "Eleventh approach: cover-tree tableau — MOST PROMISING" stays
 
 Wessel asked whether the "Eleventh approach" should be renamed to
-twelfth now that round-7 is the canonical statement.  No:\@
+twelfth now that round-7 is the canonical statement.  No:
 round-7 is the current canonical statement of the eleventh
 approach, not a new approach.  GPT-5.5's round-7 sketch uses every
 ingredient of the eleventh approach (witness thinning, generated
@@ -5556,7 +5556,7 @@ balanced by the new §7).
 
 ### DL 2026 abstract paper: left as-is
 
-Wessel:\@ "We can leave the DL Abstract paper the way it is; it's
+Wessel: "We can leave the DL Abstract paper the way it is; it's
 historical by now."  The DL 2026 abstract (rejected, in
 dl2026-rejected/, plus the post-rejection working copy in papers/)
 was not updated for round-7.  It remains as the snapshot of the
@@ -5641,16 +5641,16 @@ makes the previously-asserted catalogues explicit.
 
 ### Updates
 
-- README Latest News:\@ new 2026-05-28 (evening) entry at the top.
+- README Latest News: new 2026-05-28 (evening) entry at the top.
   Complexity-landscape table updated.  "Current canonical
-  statement" updated.  Key Files block updated:\@ round-8 papers
+  statement" updated.  Key Files block updated: round-8 papers
   in bold as new canonical, round-7 retained as audit trail.
-- CLAUDE.md:\@ "Current Decidability Argument" rewritten to
+- CLAUDE.md: "Current Decidability Argument" rewritten to
   describe round-8 as canonical, with round-7 listed alongside
   round-2 through round-6 as superseded.  Round-7 stress-test
   scripts (WP7--WP9) remain load-bearing in round-8 because the
   pair-shape architecture is preserved.
-- Overview paper:\@ §6.4 (Soundness and completeness) updated to
+- Overview paper: §6.4 (Soundness and completeness) updated to
   describe round-8 as canonical.  New §7.8 "Round 8: saturated
   side contexts and constructed catalogues" added between Round 7
   and "What survives, and why".  Bibliography updated with
@@ -5663,7 +5663,7 @@ makes the previously-asserted catalogues explicit.
 Round-8 is the current canonical statement of the decidability
 theorem.  The cold-review-and-fix cycle was the procedure
 suggested as the highest-leverage internal "next step" in the
-previous session, and it worked exactly as predicted:\@ a fresh
+previous session, and it worked exactly as predicted: a fresh
 context found defects, GPT-5.5 produced a clean repair, and the
 proof advanced.
 
