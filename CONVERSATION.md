@@ -5935,3 +5935,50 @@ residual-frontier violation (24 errors), and a corrupted (u,w) label trips the
 converse check -- so the validator has teeth.  This fulfils the round-8
 review's recommendation to add C0' (+ UNSAT sibling) as a constructive
 emission test.  CLAUDE.md verification section updated to list WP10.
+
+## 2026-05-29 (later still): WP11 -- generalised the forced-verticalization engine + oracle cross-check
+
+Took the highest-leverage step from the "what would it take to make WP10 more
+general" discussion: grafted a GENERAL forced-verticalization emission engine
+and wired it to independent oracles.  New file
+`verification/python/wp11_general_forced_verticalization.py` (self-contained
+apart from reusing the repo's AST/tables/oracles).
+
+**What it generalises (beyond WP10's single C0').** A parameterised forced-tower
+family: period-p tower profiles (so the bounded-threshold lemma is exercised
+with *varying* ancestor profiles, not one recurring profile), arbitrarily many
+side witnesses of the root each with its own source relation (PO/DR) and its own
+negative-literal payload, and universals over any of {PO,PPI,DR,PP} with any
+payload.  The engine runs the round-9 pipeline end-to-end per spec:
+DETECT (forced ancestor trace by composition+universal pruning; monotone
+DR>PO>PPI; threshold) -> ROUTE (side witness if a DR/PO tail survives; splice at
+the bounded threshold if a PPI-tail is forced; UNPLACEABLE -> REJECT) ->
+BUILD (incidence-tagged certificate; tower regularised to a request-closed
+cycle; Reach_PP carries each splice up its tail) -> VALIDATE (round-9 clauses).
+
+**Three-way cross-check (the value).** For each spec the engine's emit/REJECT
+verdict is checked against: (i) a by-construction oracle `family_status` (reasons
+about which witness routings survive the ancestor universals); (ii) the
+independent VALIDATOR on the concrete emitted certificate (composition over all
+triples + universal safety + residual-frontier); and (iii) for period-1,
+finitely encodable specs with closure <= 20, the cover-tree tableau decision
+procedure.  Sweep result (216 specs): **216/216** engine-vs-by-construction,
+**0** invalid certificates, **32/32** tableau confirmations.  Canonical C0' ->
+EMIT_VALID/SAT and the UNSAT sibling -> REJECT/UNSAT are checked explicitly;
+a negative control (withhold the splice for C0') trips the residual-frontier
+clause (32 errors).
+
+**Outcome, honestly.** No round-9 completeness or soundness gap was found on
+this family -- a POSITIVE result that hardens round-9 across the tested axes,
+not a proof.  The harness demonstrably has teeth: during development the
+validator caught a real composition bug in the engine's own inter-witness
+labeling (a spliced witness w0 PP a0 and a DR-side witness w1 force
+L(w0,w1) in comp(PP,DR)={DR}, not the PO I had naively picked); fixing it to
+compute inter-witness labels by composition-through-anchors closed the 4
+mismatches.  Scope caveat stated in the file and docs: it does NOT yet stress
+the hardest part of obligation D -- witnesses that are proper parts of each
+other or share superparts (overlap amalgams), where simultaneous splices could
+genuinely interact.  The splice pass is a fixpoint so that extension is
+structural; that overlap/mutual-part generator is the natural next increment
+(and the place a D-2, if any, would most likely surface).  README + CLAUDE.md
+updated to list WP11.
