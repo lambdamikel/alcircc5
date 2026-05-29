@@ -1,0 +1,571 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,enumitem,longtable}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{observation}[theorem]{Observation}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\Base}{\mathsf B}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\reach}{\operatorname{Reach}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Q}{\mathcal Q}
+\newcommand{\Eup}{E_{\uparrow}}
+\newcommand{\self}{\mathsf{self}}
+\newcommand{\eqtag}{\mathsf{eq}}
+\newcommand{\up}{\mathsf{up}}
+\newcommand{\down}{\mathsf{down}}
+\newcommand{\sidetag}{\mathsf{side}}
+\newcommand{\fronttag}{\mathsf{front}}
+
+\title{Review of the Round-8 Saturated-Side-Context\\
+Split-Forest Decidability Proof for \texorpdfstring{\ALCIRCC}{ALCI-RCC5}}
+\author{Independent review (Claude, Anthropic), prompted by Michael Wessel}
+\date{28 May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note reviews the round-8 ``saturated side context'' repair of GPT-5.5's
+split-forest decidability proof for \ALCIRCC, as recorded in
+\texttt{repaired\_split\_forest\_abstract\_round8\_repaired.tex} (15-page sketch)
+and \texttt{expanded\_split\_forest\_full\_details\_round8\_full.tex} (30-page
+companion) in \texttt{papers/claude\_latest\_review\_gpt5.5\_fix/}.  Round-8 was
+written to close three defects of round-7 identified in a previous cold review
+(folder \texttt{review2/}): missing side/tree pair exhaustion, the residual
+$\DR/\PO$ frontier imposed before saturation, and pair/triple catalogues that
+were bounded but not constructed.  We confirm that the round-7
+blocking/equality repair (occurrence-sensitive incidence tags) is preserved and
+correct, and that the soundness direction is essentially sound.  We then show
+that the headline round-8 repair does \emph{not} close the side/tree gap: it
+fixes the gap only on the \emph{finite, depth-bounded} vertical boundary
+$B_k(u)$, whereas the genuinely hard case is an \emph{infinite} vertical tower
+whose pumped tail the bounded saturated side context provably cannot reach.  We
+exhibit a concrete satisfiable concept $C_0'$ for which RCC5 composition forces
+a $\DR/\PO$ side witness to be a proper part of every node of an infinite
+$\PP$-tower, and we verify (with a transcribed copy of the round-8 composition
+table) that the constructed pair-shape catalogue contains \emph{no} shape that
+can carry the forced label on the unbounded tail. The completeness construction
+(Lemma~``split-cover'' and the extraction procedure) therefore produces an
+\emph{invalid} certificate for $C_0'$, so completeness is not established as
+written.  We argue the decidability \emph{theorem} probably survives via a
+different presentation (placing the witness as a true vertical descendant of the
+tower), but that presentation is neither constructed nor justified in the
+manuscript.  We classify the defect as a real hole in the completeness proof of
+medium--high severity, and give targeted repair suggestions.
+\end{abstract}
+
+\tableofcontents
+
+\section{Scope, method, and verdict}
+
+\subsection{What was reviewed}
+
+This review concerns the two round-8 manuscripts that the project
+\texttt{README.md} and \texttt{CLAUDE.md} designate as the current canonical
+no-automata statement of decidability (entry dated 2026-05-28, evening):
+\begin{itemize}
+\item \texttt{papers/claude\_latest\_review\_gpt5.5\_fix/}\\
+      \texttt{repaired\_split\_forest\_abstract\_round8\_repaired.tex} --- the
+      15-page sketch;
+\item \texttt{papers/claude\_latest\_review\_gpt5.5\_fix/}\\
+      \texttt{expanded\_split\_forest\_full\_details\_round8\_full.tex} --- the
+      30-page detailed companion.
+\end{itemize}
+Both were read in full.  We also consulted the round-7 companion
+(\texttt{expanded\_split\_forest\_full\_details\_proof.tex}, the subject of the
+earlier \texttt{review2/}) for the round-7$\to$round-8 delta, and the project
+\texttt{README.md} for the advertised status of the repair.  The round-8 README
+news entry states that round-8 ``closes three defects identified by a cold
+Claude review of round-7''; those three defects are precisely the major and
+minor concerns of \texttt{review2/}.  The natural question for this review is
+therefore: \emph{does the saturated-side-context construction actually close the
+side/tree gap, or does it relocate it?}
+
+As an explicit constraint from the prompt, nothing in
+\texttt{alcircc5/} was modified.  All artifacts of this review live in
+\texttt{review3/}: this document, a composition-checking script
+\texttt{rcc5\_compose.py}, and its captured output \texttt{compose\_output.txt}.
+
+\subsection{Method}
+
+The composition arithmetic that underpins the central concern was transcribed
+verbatim from the round-8 companion (its Section~2.1 table) into
+\texttt{rcc5\_compose.py} and checked for inverse symmetry (zero violations) and
+for the specific entries used below.  Every label propagation asserted in
+Section~\ref{sec:central} of this review is reproduced and machine-checked by
+that script.
+
+\subsection{Verdict}
+
+\begin{itemize}
+\item \textbf{Soundness} (valid certificate $\Rightarrow$ model) is essentially
+correct.  The occurrence-sensitive pair-shape machinery, the typed-equality
+quotient, and the request-closed cycle argument correctly avoid the round-6
+diagonal-$\EQ$ collapse.  We found no soundness counterexample.
+\item \textbf{Completeness} (model $\Rightarrow$ valid certificate) is
+\emph{not} established by the manuscript's construction.  The round-8 repair
+saturates a \emph{finite, depth-bounded} side context and verticalizes only the
+pairs that fall inside it.  We give a concrete satisfiable concept whose
+honest model forces a $\DR/\PO$ side witness to be $\PP$-below an \emph{infinite}
+pumped tower; the bounded side context cannot record the forced $\PP/\PPI$
+labels on the tower's tail, and the constructed catalogue contains no admissible
+pair shape for those pairs.  This is a genuine gap in the completeness proof
+(Concern~D-1), not a cosmetic one.
+\item \textbf{Theorem.}  We believe the decidability theorem is most likely
+still \emph{true}: a different split presentation (witness as a true vertical
+descendant of the tower, source--witness edge demoted to the residual $\PO$
+frontier) appears to yield a valid certificate, and the decision procedure
+accepts whenever \emph{any} valid certificate exists.  But the manuscript
+neither constructs nor analyses that presentation; its stated construction is
+the one that fails.  So the gap is in the \emph{proof}, with the theorem's
+status reverting to ``strongly supported, not proven.''
+\end{itemize}
+We classify Concern~D-1 as \textbf{medium--high severity}: it directly breaks the
+central completeness argument for an identifiable and natural class of concepts,
+and it is exactly the obligation round-8 advertised as repaired.
+
+\section{What round-8 gets right}
+
+For balance, we first record the parts of the argument that we believe are
+correct, several of them genuine improvements over round-7.
+
+\paragraph{The blocking/equality repair is preserved and correct.}
+The core round-7 move---labelling pairs by occurrence-sensitive shapes
+$\alpha(u,v)=(s_u,p_u,s_v,p_v,\iota(u,v))$ with an incidence tag $\iota$ that
+separates literal occurrence identity ($\self$) from same-profile repetition
+across laps---is carried over intact (Def.~``incidence-tags'',
+Lemma~``no-collapse-laps'', Lemma~``no accidental cycle equality'').  This
+correctly prevents the round-6 collapse $L(\pi,\pi)=\EQ$ that conflated distinct
+laps of a blocking cycle.  The worked stress case
+$\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$ is handled correctly: laps
+$u_i,u_j$ get tag $\up$ (label $\PP$), never $\self$.
+
+\paragraph{Soundness is sound.}
+Given a valid certificate, the unfolding/quotient construction
+(Def.~``model-from-cert'', Lemmas ``well-defined-labels'',
+``strong-eq-sound'', ``frame-sound'', ``truth'') builds a strong abstract RCC5
+frame and proves a truth lemma.  Strong equality in the quotient is enforced
+correctly because $\EQ$ arises only from $\self/\eqtag$ tags.  Composition in the
+quotient is delegated to the triple-shape check (V8); since validity is checked
+on the supplied finite catalogues, the soundness direction is internally
+consistent.
+
+\paragraph{The composition table is correct.}
+We transcribed the round-8 table (companion Section~2.1) and verified it is
+closed under the converse law $\comp(R,S)^{-1}=\comp(S^{-1},R^{-1})$ with zero
+violations.  In particular the entries load-bearing below are confirmed:
+\[
+  \comp(\PPI,\PO)=\{\PO,\PPI\},\quad
+  \comp(\PPI,\PPI)=\{\PPI\},\quad
+  \comp(\PP,\PP)=\{\PP\}.
+\]
+
+\paragraph{Two of the three advertised round-7 repairs are real.}
+The pair and triple catalogues are now \emph{constructed} as least sets under
+explicit generation clauses (Defs.~``pair-shape'', ``triple-shape''), rather
+than merely asserted finite; this genuinely addresses the round-7
+``catalogues bounded but not constructed'' complaint (review2 MC-1/MC-4).  And
+the residual $\DR/\PO$ restriction is now textually placed \emph{after} the
+equality/containment closure step (Sat5)--(Sat6), addressing the
+``restriction-before-saturation'' complaint (review2 MC-2(b)) at the level of
+the local boundary.  The problem, developed next, is that these repairs operate
+on a finite object that is too small to witness the obligation.
+
+\section{Central concern (D-1): saturation is bounded; the obstruction is not}
+\label{sec:central}
+
+\subsection{The claim that is over-stated}
+
+The round-8 abstract states (sketch, Lemma ``cross-side-tree-compact''; companion
+Lemma~``cross-side-tree''):
+\begin{quote}
+``If $b$ is an exposed vertical boundary position of a source $u$ and $w$ is a
+side position in $S_k(u)$, then the pair $(b,w)$ is either equality-linked,
+placed in a local vertical stratum, or labelled $\DR$ or $\PO$\ldots In
+particular, no $\PP/\PPI$ side/tree pair is hidden in the residual frontier.''
+\end{quote}
+Read literally, this lemma quantifies only over $b\in B_k(u)$, the
+\emph{finite} vertical boundary of depth budget $k$, and over $w\in S_k(u)$, the
+\emph{finite} saturated side context.  Both sets are bounded by
+$m_*(C_0)$ (Lemma~``side-width'').  The lemma is true as stated.  The difficulty
+is that the conclusion advertised in the README and the abstract --- ``no
+$\PP/\PPI$ side/tree pair is hidden'' --- is a statement about the \emph{whole
+unfolded model}, in which the vertical ancestor chain of $u$ is \emph{infinite}.
+The lemma does not entail the advertised global statement, because the forced
+$\PP/\PPI$ relationships extend up the infinite tower beyond $B_k(u)$.
+
+\subsection{A concept that forces the unbounded case}
+
+\begin{definition}[The stress concept]
+Let $X$ and $Y$ be concept names.  Put
+\[
+  G \;:=\; (\forall\PO.X)\;\sqcap\;(\exists\PP.G),
+\]
+\[
+  C_0' \;:=\; (\exists\PP.G)\;\sqcap\;(\exists\PO.\neg X).
+\]
+\end{definition}
+The conjunct $\exists\PP.G$ inside $G$ makes $G$ generate an infinite ascending
+chain of proper superparts $a_1\PP a_2\PP a_3\PP\cdots$, each $a_m\in G$, hence
+each $a_m\in\forall\PO.X$.  The root $u$ (where $C_0'$ is evaluated) has a proper
+superpart $a_1\in G$ and a $\PO$-witness $w\in\neg X$.  Note $u$ itself is
+\emph{not} required to satisfy $\forall\PO.X$, so $u$ having a $\PO$-witness in
+$\neg X$ is consistent.
+
+\begin{observation}[$C_0'$ is satisfiable]
+A concrete model: regions nested $a_1\subset a_2\subset a_3\subset\cdots$
+(proper part $=$ subset), with $u\subset a_1$ and $w\subset a_1$ two
+\emph{overlapping} subregions of $a_1$ (so $u\,\PO\,w$).  Then $u\PP a_m$ and
+$w\PP a_m$ for all $m$.  Each $a_m$ has no $\PO$-neighbour among $\{u,w\}$ (both
+are proper parts of $a_m$, not partial overlaps), so $\forall\PO.X$ at $a_m$ is
+vacuously satisfied on these elements.  Hence $C_0'$ is satisfiable; in fact it
+has no finite model (the ascending tower cannot terminate), which is exactly the
+regime the split-forest blocking machinery exists to handle.
+\end{observation}
+
+\begin{lemma}[Composition forces $w$ to be a part of the entire tower]
+\label{lem:forced}
+In any model of $C_0'$ realising the generated witnesses, for every $m\ge1$ the
+label $\rho(a_m,w)=\PPI$, i.e.\ $w$ is a proper part of every tower node $a_m$.
+\end{lemma}
+
+\begin{proof}
+Because $u\PP a_1$ we have $\rho(a_1,u)=\PPI$, and $\rho(u,w)=\PO$ by choice of
+the $\PO$-witness.  Hence
+\[
+  \rho(a_1,w)\in\comp(\rho(a_1,u),\rho(u,w))=\comp(\PPI,\PO)=\{\PO,\PPI\}.
+\]
+Now $a_1\in\forall\PO.X$ while $w\in\neg X$; if $\rho(a_1,w)=\PO$ then $w\in X$,
+a contradiction.  Therefore $\rho(a_1,w)=\PPI$.  For the inductive step,
+$\rho(a_{m},a_{m-1})=\PPI$ (since $a_{m-1}\PP a_m$), so
+\[
+  \rho(a_m,w)\in\comp(\rho(a_m,a_{m-1}),\rho(a_{m-1},w))
+            =\comp(\PPI,\PPI)=\{\PPI\}.
+\]
+Thus $\rho(a_m,w)=\PPI$ for all $m\ge1$.  The arithmetic
+($\comp(\PPI,\PO)=\{\PO,\PPI\}$, $\comp(\PPI,\PPI)=\{\PPI\}$) is machine-checked
+in \texttt{rcc5\_compose.py}.
+\end{proof}
+
+The essential point: the exclusion of $\PO$ in the base case uses a
+\emph{universal} ($\forall\PO.X$) sitting on the tower, and the propagation up
+the tower is \emph{forced} and \emph{unbounded}.  Crucially, $\DR$ is never
+available: $\DR\notin\comp(\PPI,\PO)$ and $\DR\notin\comp(\PPI,\PPI)$.
+
+\subsection{The constructed catalogue has no shape for the tail}
+
+The completeness construction (companion Lemma~``split-cover'') attaches a
+$\DR/\PO$ witness to its source as a \emph{saturated side context}: ``For a
+selected $\DR$ or $\PO$ witness of a currently exposed occurrence, attach the
+saturated context $S_k(u)$\ldots''  So $w$ is placed in $S_k(u)$, which by
+Lemma~``side-width'' has at most $m_*(C_0')$ positions and reaches only finitely
+far up the tower, say through $a_1,\dots,a_K$.  For $m>K$ the pair $(a_m,w)$ must
+nevertheless carry the forced label $\PPI$ (Lemma~\ref{lem:forced}).  We check
+every incidence tag the constructed pair catalogue (Def.~``pair-shape'') can
+offer:
+
+\begin{enumerate}[label=(\arabic*)]
+\item \textbf{$\sidetag_{\PPI}$} (Def.~``incidence-tags'': ``$u,v$ occur in one
+saturated side context or local stratum''). Unavailable: $a_m\notin S_k(u)$ for
+$m>K$, and $w$ lies in $S_k(u)$, attached low; the two never co-occur in one
+bounded side context.
+
+\item \textbf{$\down$} ($a_m$ is a strict equality-aware proper part \dots\ no:
+$\down$ at $(a_m,w)$ means $w$ is a strict equality-aware proper part of $a_m$,
+i.e.\ $a_m\reach_{\PPI}w$, i.e.\ $w\reach_{\PP}a_m$).  By
+Def.~``eq-aware-vertical'' this requires an $\Eup$-path
+$w\rightsquigarrow a_m$ in the \emph{selected cover relation}.  But $w$ was
+selected as a $\PO$-witness of $u$; the split-cover construction adds no $\Eup$
+cover edge out of $w$ into the tree.  Hence $w\reach_{\PP}a_m$ fails and the
+$\down$ tag is unavailable.
+
+\item \textbf{$\fronttag_{R}$} (residual frontier).  Restricted by construction
+to $R\in\{\DR,\PO\}$ (mosaic axiom (M7), validity clause (V13),
+Lemma~``residual-frontier'').  So a $\fronttag_{\PPI}$ shape does not exist.
+\end{enumerate}
+
+Thus the only catalogue shapes admissible for $(a_m,w)$, $m>K$, are
+$\fronttag_{\DR}$ and $\fronttag_{\PO}$.  Both are impossible:
+\begin{itemize}
+\item $\fronttag_{\DR}$: the triple shape $(a_m,a_{m-1},w)$ (or
+$(a_m,u,w)$ in the base case) must satisfy (V8); but
+$\DR\notin\comp(\PPI,\PPI)$ (resp.\ $\DR\notin\comp(\PPI,\PO)$), so the triple is
+RCC5-illegal and (V8) rejects it.
+\item $\fronttag_{\PO}$: composition-legal in the base case
+($\PO\in\comp(\PPI,\PO)$), but then $a_1$ sees $w$ as a $\PO$-successor, and
+validity clause (V12) (``$\DR/\PO$ universal safety'') together with
+$\forall\PO.X\in\tp(a_1)$ forces $X\in\tp(w)$.  Since $w\in\neg X$, (V12) fails.
+For $m\ge2$ even composition-legality fails since $\PO\notin\comp(\PPI,\PPI)$.
+\end{itemize}
+
+\begin{proposition}[Completeness construction fails on $C_0'$]
+\label{prop:fail}
+For the satisfiable concept $C_0'$, the finite certificate produced by the
+manuscript's stated completeness construction (Lemma~``split-cover'' followed by
+the extraction procedure of Lemma~``extraction'') is invalid: at least one
+ordered pair $(a_m,w)$ with $m$ larger than the side-width bound admits no
+permitted pair shape with a label that simultaneously satisfies (V8) triple
+composition and (V12) $\DR/\PO$ universal safety.
+\end{proposition}
+
+\begin{proof}
+By Lemma~\ref{lem:forced} the forced label is $\PPI$.  By the case analysis
+above, the constructed catalogue offers for $(a_m,w)$ only $\sidetag_{\PPI}$
+(unavailable), $\down$ (unavailable), $\fronttag_{\DR}$ ((V8)-illegal), or
+$\fronttag_{\PO}$ ((V12)-illegal, and for $m\ge2$ also (V8)-illegal).  Hence no
+admissible shape carries the forced label, so the pair-shape-totality clause
+(V6) cannot be met by the extracted object.  All shape verdicts are reproduced
+in \texttt{rcc5\_compose.py}.
+\end{proof}
+
+\subsection{Why this is not closed by the round-8 repair}
+
+The round-8 repair is precisely the saturation of $S_k(u)$ and the
+verticalization of side/tree pairs \emph{inside} it.  Proposition~\ref{prop:fail}
+shows the obstruction lives \emph{outside} any bounded $S_k(u)$: it is the
+interaction between a fixed side witness and the \emph{infinite pumped tail} of a
+blocking tower.  Two structural facts make this unavoidable for the stated
+construction:
+\begin{enumerate}[label=(\roman*)]
+\item the side-width bound (Lemma~``side-width'') makes $S_k(u)$ finite, so it
+contains only finitely many tower nodes;
+\item the forced $\PP/\PPI$ relationship to the tower is \emph{unbounded}
+(Lemma~\ref{lem:forced}), and the only catalogue device that scales to an
+unbounded vertical relation --- the $\up/\down$ tag via $\reach_{\PP}$ on $\Eup$
+--- is not made available to a $\DR/\PO$ side witness, because the construction
+attaches $w$ to $u$'s side context rather than splicing an $\Eup$ cover edge from
+$w$ into the tree.
+\end{enumerate}
+So the gap is not ``a finite case we forgot to enumerate'' (the round-7
+complaint, now genuinely fixed for finite boundaries); it is ``the finite
+saturated object provably cannot witness an inherently infinite obligation.''
+
+\section{The hidden ambiguity: do local strata join \texorpdfstring{$\Eup$}{E-up}?}
+\label{sec:ambiguity}
+
+The manuscript's escape route, if any, is the phrase ``add a local vertical
+stratum containing the two endpoints'' in (Sat6).  Everything turns on whether a
+local stratum edge is (a) a bounded mosaic-internal annotation tagged
+$\sidetag_{\PP}$, or (b) a genuine addition to the global cover relation $\Eup$
+that participates in $\reach_{\PP}$.
+
+The textual evidence points to (a):
+\begin{itemize}
+\item $\reach_{\PP}$ is defined purely via $\Eup$, the ``selected upward
+containment-cover relation'' (Def.~``weak-presentation'',
+Def.~``eq-aware-vertical''); local strata are a separate component $\mathcal V$
+of a mosaic (Def.~``mosaic'').
+\item The incidence-tag table assigns pairs in a ``local stratum'' the tag
+$\sidetag_R$, \emph{not} $\up/\down$ (Def.~``incidence-tags'').
+\item Local strata are bounded objects inside the finite mosaic and are counted
+by the side-width recurrence (Lemma~``side-width'').
+\end{itemize}
+Under reading (a), the verticalization stops at the mosaic boundary and
+Proposition~\ref{prop:fail} stands.
+
+If instead the intended meaning is (b) --- that verticalizing $(a_1,w)$ splices
+an $\Eup$ edge $w\to a_1$ so that $\reach_{\PP}$ then carries $w$ up the entire
+pumped tower, giving every $(a_m,w)$ the $\down$ tag --- then
+Proposition~\ref{prop:fail} is avoided, but a different obligation appears and
+is not discharged:
+\begin{itemize}
+\item Splicing $w$ below $a_1$ makes $w$ a true vertical descendant of the
+tower, i.e.\ a node of the containment backbone, \emph{not} a side-mosaic
+witness.  The construction would then have to demote the $u$--$w$ relation to a
+\emph{residual $\PO$ frontier} between two proper parts of $a_1$, and re-derive
+all of $w$'s own witnesses in the tree rather than in $u$'s side context.  The
+manuscript does neither; its construction explicitly files $w$ under $u$'s side
+context.
+\item Under reading (b) the side-width bound argument is unsound as written,
+because a single splice changes $w$'s vertical reach across an unbounded number
+of laps, and the ``finite saturated neighbourhood'' framing no longer bounds the
+relevant pairs (they are now handled by $\reach_{\PP}$, not by the mosaic).
+\end{itemize}
+Either way, the manuscript is \emph{underspecified at the load-bearing point}.
+The single most useful clarification the authors could make is to state, with a
+proof, exactly which relation receives the verticalizing edge and how
+$\reach_{\PP}$ interacts with side-mosaic strata across blocking laps.
+
+\section{Does the theorem survive? A plausible repair}
+\label{sec:survive}
+
+We believe $C_0'$ \emph{does} have a valid certificate, just not the one the
+construction builds.  Place $w$ as a genuine vertical child of the tower node
+$a_1$ (so $w\PP a_1$ via a selected $\Eup$ edge), make $u$ and $w$ two proper
+parts of $a_1$ related by a \emph{residual $\PO$ frontier} edge, and let
+$\reach_{\PP}$ carry $w$ up the pumped tower exactly as it carries $u$.  Then:
+\begin{itemize}
+\item every $(a_m,w)$ is a $\down$ pair with label $\PPI$ --- correct and
+composition-legal;
+\item the $u$--$w$ pair is $\fronttag_{\PO}$ --- legal, and (V12) for $u$ is
+satisfied because $u$ carries no $\forall\PO$ obligation conflicting with $w$;
+\item $a_m$'s $\forall\PO.X$ has no $\PO$-successor among $\{u,w\}$ (both are
+$\PPI$ to $a_m$), so (V12) for the tower is vacuous on these positions.
+\end{itemize}
+Because the decision procedure accepts iff \emph{some} enumerated certificate is
+valid, the existence of this presentation means the procedure most likely still
+returns the correct verdict on $C_0'$.  Hence we expect Theorem~``main'' to be
+\emph{true}.  But this argument is ours, not the manuscript's: the completeness
+proof must \emph{construct} a valid certificate from a model, and the construction
+it gives (saturated side context for every $\DR/\PO$ witness) is the one that
+fails.  A correct completeness proof must replace ``attach every $\DR/\PO$
+witness as a bounded side context'' by a rule that recognises when a $\DR/\PO$
+witness is composition-forced into the vertical containment order of an ancestor
+and routes it into the backbone instead.  This is a non-trivial change because
+the decision of where to route $w$ depends on \emph{universals on unboundedly
+many ancestors}, which is global information not visible in the local side
+context.
+
+\section{Secondary observations}
+
+\paragraph{(S-1) The cross side/tree exhaustion lemma is correct but mis-scoped.}
+As noted, Lemma~``cross-side-tree'' is true for $b\in B_k(u)$ but is used (in the
+README and abstract) to justify a global ``no hidden $\PP/\PPI$'' claim it does
+not support.  The remedy is to state the lemma's quantifier honestly and add the
+separate, harder argument for the infinite tail (Section~\ref{sec:survive}).
+
+\paragraph{(S-2) The ``constructed catalogue'' repair is orthogonal to the real
+gap.}
+Round-8 correctly upgrades $\Pair_\Q$ and $\Trip_\Q$ from ``finite'' to
+``constructed least sets.''  But Proposition~\ref{prop:fail} shows the
+constructed set is constructed to be \emph{incomplete}: it has no shape for the
+forced deep pairs.  Making a catalogue explicit does not make it exhaustive over
+the unfolded model; the exhaustion claim (Lemma~``pair-triple-exhaustion'') silently
+assumes every $\PP/\PPI$ pair is either $\reach_{\PP}$-related or co-resident in a
+bounded side context, which is exactly what fails here.
+
+\paragraph{(S-3) The replacement lemma needs an identity-preservation clause.}
+Lemma~``replacement'' records, for a component $K$, ``the set of strict $\PP$ and
+$\PPI$ target \emph{types} reachable inside $K$.''  A fixed side witness that is a
+common proper part of an unbounded pumped chain is an interaction in which the
+\emph{identity} of the shared part (one $w$ for all laps), not merely the
+existence of a part of that type, is constrained by tower universals
+($\forall\PPI.\,\cdot$ in a variant of $C_0'$).  Pumping with ``fresh copies''
+preserves type-reachability but can silently replace ``one shared $w$'' by ``one
+$w$ per lap.''  For $C_0'$ this happens to be harmless, but the lemma is stated
+in full generality and the identity constraint is not addressed.
+
+\paragraph{(S-4) Truth-lemma converse for $\exists\PP$ is phrased loosely.}
+In Lemma~``truth'', the converse direction for $\exists\PP.E$ concludes
+$\exists\PP.E\in\tp(u)$ from the existence of a $\PP$-successor satisfying $E$ via
+``type legality plus witness support.''  The honest justification is the
+contrapositive of vertical universal safety (V10): if $\exists\PP.E\notin\tp(u)$
+then $\forall\PP.\overline E\in\tp(u)$, and (V10) forbids a $\PP$-successor
+satisfying $E$.  The conclusion is recoverable but the stated reasoning is
+circular as written.  Cosmetic.
+
+\paragraph{(S-5) No complexity claim --- appropriate.}
+Consistent with \texttt{CLAUDE.md}, the manuscript commits only to an effectively
+computable certificate bound and asserts no elementary upper bound for the full
+logic.  We agree this is the right posture and flag no over-claim here.
+
+\section{Summary table}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{0.05\linewidth}p{0.55\linewidth}p{0.13\linewidth}p{0.13\linewidth}}
+\toprule
+ID & Concern & Direction & Severity \\
+\midrule
+D-1 & Saturated side context is depth-bounded; a $\DR/\PO$ witness forced
+$\PP/\PPI$-below an infinite pumped tower has no admissible pair shape for the
+tail. Completeness construction produces an invalid certificate for $C_0'$.
+& Completeness & Medium--high \\
+S-1 & Cross side/tree exhaustion lemma true only for $B_k(u)$; global claim not
+entailed. & Completeness & Medium \\
+S-2 & Constructed catalogue is explicit but not exhaustive over the unfolded
+model. & Completeness & Medium \\
+S-3 & Replacement lemma preserves reachable \emph{types}, not the \emph{identity}
+of a shared part bound by tower universals. & Completeness & Low--medium \\
+S-4 & $\exists\PP$ truth-lemma converse phrased circularly; recoverable via
+(V10). & Soundness & Low \\
+S-5 & No complexity over-claim. & --- & None \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Recommendations}
+
+\begin{enumerate}[label=R\arabic*.]
+\item \textbf{Re-route composition-forced witnesses into the backbone.}  Replace
+the rule ``attach every $\DR/\PO$ witness as a bounded saturated side context''
+by a rule that first tests whether RCC5 composition with the source's ancestor
+universals forces the witness to be $\PP/\PPI$-comparable with some ancestor; if
+so, place the witness as a vertical relative (with a selected $\Eup$ edge) and
+demote the source--witness edge to a residual $\DR/\PO$ frontier.  This is the
+presentation of Section~\ref{sec:survive}.
+
+\item \textbf{State the verticalization/$\Eup$ interaction precisely.}  Resolve
+the ambiguity of Section~\ref{sec:ambiguity}: declare whether local strata
+contribute to $\reach_{\PP}$, and if so re-do the side-width bound accordingly
+(it must now bound \emph{cover edges added}, not \emph{pairs co-resident in a
+mosaic}).
+
+\item \textbf{Prove a global ``forced verticalization'' lemma.}  Show: for every
+$\DR/\PO$ witness $w$ of $u$ and every ancestor $a$ of $u$, the label
+$\rho(a,w)$ is determined by $\rho(a,u)$, $\rho(u,w)$, and the $\forall\PO/\forall\DR$
+content of $\tp(a)$; tabulate the finitely many outcomes; and route $w$ into the
+backbone in exactly the $\PP/\PPI$ outcomes.  This converts the unbounded
+obstruction into a finite case analysis on \emph{one} ancestor relation, after
+which $\reach_{\PP}$ handles the tail.
+
+\item \textbf{Add $C_0'$ (and its UNSAT sibling
+$G:=\forall\PO.X\sqcap\forall\PPI.Y\sqcap\exists\PP.G$,
+$C_0:=\exists\PP.G\sqcap\exists\PO.(\neg X\sqcap\neg Y)$) to the verification
+suite}, as constructive certificate-emission tests analogous to the existing
+\texttt{wp7/wp8/wp9} scripts, so that the regression is caught mechanically.
+\end{enumerate}
+
+\section{Conclusion}
+
+Round-8 correctly preserves the round-7 blocking/equality repair, has a sound
+soundness direction, and genuinely upgrades two of the three round-7
+deficiencies (constructed catalogues; residual restriction textually after
+saturation).  However, the headline repair --- saturated side contexts with
+cross side/tree verticalization --- closes the side/tree gap only on the finite
+vertical boundary.  The mathematically essential case is a $\DR/\PO$ witness that
+RCC5 composition forces to be a proper part of an \emph{infinite} pumped tower
+(Lemma~\ref{lem:forced}), and the bounded saturated side context provably cannot
+record the forced $\PP/\PPI$ labels on the tower's tail
+(Proposition~\ref{prop:fail}).  The completeness construction as written
+therefore does not produce a valid certificate for the satisfiable concept
+$C_0'$.  We expect the decidability \emph{theorem} to survive via the alternative
+presentation of Section~\ref{sec:survive}, but that presentation is not the one
+the manuscript constructs, so the completeness \emph{proof} has a genuine hole of
+medium--high severity.  The recommendations above indicate a concrete path to a
+repair that we believe would close it.
+
+\section*{Disclaimer}
+
+This review was produced by Claude (Anthropic, Opus~4.8), prompted by Michael
+Wessel.  Its findings have not been independently verified by human domain
+experts.  The reviewed manuscripts are themselves AI-drafted (GPT-5.5).  The
+composition arithmetic in Lemma~\ref{lem:forced} and Proposition~\ref{prop:fail}
+is machine-checked by \texttt{review3/rcc5\_compose.py}; the structural
+arguments are not formally verified and should be checked by hand.
+
+\end{document}

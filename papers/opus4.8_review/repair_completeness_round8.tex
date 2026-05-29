@@ -1,0 +1,554 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,enumitem,longtable}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{principle}[theorem]{Principle}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\Base}{\mathsf B}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\reach}{\operatorname{Reach}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Eup}{E_{\uparrow}}
+\newcommand{\eqc}{\equiv_{\EQ}}
+\newcommand{\self}{\mathsf{self}}
+\newcommand{\eqtag}{\mathsf{eq}}
+\newcommand{\up}{\mathsf{up}}
+\newcommand{\down}{\mathsf{down}}
+\newcommand{\sidetag}{\mathsf{side}}
+\newcommand{\fronttag}{\mathsf{front}}
+\newcommand{\W}{\mathsf W}
+\newcommand{\Inv}{\operatorname{inv}}
+\newcommand{\J}{\mathcal J}
+\newcommand{\Q}{\mathcal Q}
+
+\title{Repairing the Round-8 Completeness Construction for \texorpdfstring{\ALCIRCC}{ALCI-RCC5}:\\
+Composition-Forced Verticalization}
+\author{Independent repair note (Claude, Anthropic), prompted by Michael Wessel}
+\date{28 May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The companion review (\texttt{review3/review\_round8\_split\_forest.pdf})
+identified a gap (D-1) in the completeness direction of GPT-5.5's round-8
+saturated-side-context proof: a $\DR/\PO$ side witness can be RCC5-composition
+forced to be a proper part of an \emph{infinite} pumped containment tower, and
+the bounded saturated side context cannot record the forced $\PP/\PPI$ labels on
+the tower's tail, so the certificate produced by the stated construction is
+invalid.  This note supplies a repair.  The repair rests on one principle ---
+the vertical backbone must present the \emph{full} generated containment order,
+not merely the selected-witness edges --- realised by a single new operation
+(splicing a composition-forced witness into the cover relation $\Eup$ at a
+bounded height).  We prove the three facts the repair needs: (A) the forced
+label up an ascending chain is monotone and eventually constant
+(\emph{threshold} lemma, machine-checked); (B) the threshold is bounded by the
+number of boundary descriptors, so finiteness of the certificate universe is
+preserved; and (C/D) the repaired presentation embeds label-preservingly into
+the fixed satisfying model, so RCC5 composition and universal safety are
+inherited rather than re-derived, and the descriptor space stays finite.  We
+restate the patched split-cover lemma and the restored completeness theorem,
+re-derive the stress concept $C_0'$ (now certifiable) and its UNSAT sibling
+(still correctly rejected), and close with an honest list of the obligations a
+referee should still check.  All composition arithmetic and the two worked
+certificates are machine-checked by the accompanying scripts.
+\end{abstract}
+
+\tableofcontents
+
+\section{Purpose and summary}
+
+We work entirely inside the framework of the round-8 expanded companion
+\texttt{expanded\_split\_forest\_full\_details\_round8\_full.tex}; definitions and
+validity clauses are cited by their names there
+(``thinning'', ``split-cover'', ``eq-aware-vertical'', ``incidence-tags'',
+``pair-shape'', ``side-width'', ``replacement'', ``blocking'', and the validity
+conditions (V1)--(V15)).  Nothing in \texttt{alcircc5/} is modified; this is a
+standalone replacement for the witness-placement step of the completeness proof.
+
+The gap, in one sentence: the round-8 construction places every $\DR/\PO$ witness
+$w$ of a source $u$ inside a \emph{bounded} saturated side context $S_k(u)$, but
+RCC5 composition can force $w$ to be $\PP/\PPI$-comparable with \emph{unboundedly
+many} vertical ancestors of $u$, and a bounded side context cannot carry those
+forced labels (companion review, Proposition~``fail'').
+
+The repair, in one sentence: do not file such a $w$ under $u$'s side context;
+instead detect the composition-forced comparability and \emph{splice} $w$ into the
+vertical cover relation $\Eup$ at the (provably bounded) height where it first
+becomes a proper part, so that the equality-aware reachability $\reach_\PP$ ---
+which already scales to infinite towers --- carries the correct $\PP/\PPI$ label
+to the entire tail.
+
+The conceptual reason the repair is clean: the completeness construction is
+\emph{presenting a fixed, already-consistent model} $\J$, not synthesising a new
+one.  The bug was presentational (the forest had no slot for a
+composition-forced vertical pair), not a failure of consistency.  A presentation
+that routes the pair correctly inherits RCC5 composition and universal safety
+\emph{from $\J$} for free.
+
+\section{The generated order and the presentation principle}
+
+Fix a witness-generated model $\J=(\W,\rho)$ obtained from the thinning lemma,
+with $\W$ countable and every closure existential witnessed inside $\W$.  Write
+$x<y$ for $\rho(x,y)=\PP$ (``$x$ is a proper part of $y$'').
+
+\begin{proposition}[The generated containment order]\label{prop:order}
+$(\W,<)$ is a strict partial order: irreflexive, transitive, and antisymmetric.
+\end{proposition}
+
+\begin{proof}
+Irreflexivity: $\rho(x,x)=\EQ\ne\PP$ by strong equality.  Transitivity: if
+$x<y<z$ then $\rho(x,z)\in\comp(\PP,\PP)=\{\PP\}$, so $x<z$.  Antisymmetry: if
+$x<y$ and $y<x$ then $\rho(x,y)=\PP$ and $\rho(y,x)=\PP$; but
+$\rho(y,x)=\Inv(\rho(x,y))=\PPI\ne\PP$, a contradiction.  (All three use only
+the frame axioms and $\comp(\PP,\PP)=\{\PP\}$.)
+\end{proof}
+
+\begin{principle}[Faithful backbone]\label{prin:backbone}
+The vertical backbone of the split presentation must generate, under
+equality-aware transitive closure, \emph{the entire restriction of $<$ to the
+generated occurrences}, not merely the sub-relation given by selected
+$\PP/\PPI$ witness edges.
+\end{principle}
+
+The round-8 construction violates Principle~\ref{prin:backbone}: it builds
+$\Eup$ only from selected $\PP/\PPI$ witnesses, so a generated element $w$ that
+happens (by composition) to satisfy $w<a$ for some ancestor $a$ --- without $a$
+having been \emph{selected} as a $\PP$-witness of $w$ --- has no $\Eup$-path to
+$a$, and the pair $(a,w)$ is left to the residual frontier, where the label
+$\PP/\PPI$ is illegal.  The repair restores Principle~\ref{prin:backbone} by
+adding exactly the missing cover edges, at bounded height.
+
+\section{Corrected witness placement}
+
+\subsection{Where composition forces verticality}
+
+\begin{definition}[Ancestor profile of a side pair]\label{def:anc-profile}
+Let $u\in\W$ have a selected $\DR/\PO$ witness $w$ (so $\rho(u,w)\in\{\DR,\PO\}$),
+and let $a$ be a $<$-ancestor of $u$ (so $u<a$, i.e.\ $\rho(a,u)=\PPI$).  The
+\emph{ancestor relation} of the pair at $a$ is $r_a:=\rho(a,w)$.
+\end{definition}
+
+\begin{lemma}[Forced range]\label{lem:forced-range}
+In the situation of Definition~\ref{def:anc-profile}, $r_a\in\{\DR,\PO,\PPI\}$;
+in particular $r_a\notin\{\EQ,\PP\}$.
+\end{lemma}
+
+\begin{proof}
+$r_a\ne\EQ$: else $a=w$, but $\rho(a,u)=\PPI$ while $\rho(w,u)=\Inv(\rho(u,w))\in
+\{\DR,\PO\}$.  $r_a\ne\PP$: $\rho(a,w)=\PP$ means $a<w$; with $u<a$ this gives
+$u<w$ by Proposition~\ref{prop:order}, so $\rho(u,w)=\PP$, contradicting
+$\rho(u,w)\in\{\DR,\PO\}$.  The remaining base labels are $\DR,\PO,\PPI$.
+\end{proof}
+
+Thus a side pair is comparable with an ancestor exactly when $r_a=\PPI$ (then
+$w<a$, $w$ a proper part of $a$).  We must route $w$ into the backbone precisely
+on the set $\{a: r_a=\PPI\}$.
+
+\subsection{The splice}
+
+\begin{definition}[Corrected split-cover with splicing]\label{def:corrected}
+Construct the weak split presentation as in companion Lemma~``split-cover'',
+with one change.  When a selected $\DR/\PO$ witness $w$ of $u$ is generated, also
+inspect the ancestor relations $r_a$ for the $<$-ancestors $a$ of $u$.  Let
+\[
+   A_\PPI(w)=\{a : u<a \text{ and } r_a=\PPI\}=\{a: w<a\}.
+\]
+If $A_\PPI(w)\ne\varnothing$, let $a^\ast$ be a $<$-minimal element of
+$A_\PPI(w)$ (it exists and is unique on the ancestor chain of $u$, by
+Lemma~\ref{lem:threshold} below).  Add the cover edge $w\,\Eup\,a^\ast$ (the
+\emph{splice}), so that $w$ becomes a vertical proper part of $a^\ast$ and, by
+transitivity of $\Eup$, of every $a\in A_\PPI(w)$.  Demote the pair $(u,w)$ and
+every pair $(a,w)$ with $a\notin A_\PPI(w)$ to its inherited $\{\DR,\PO\}$
+residual/side label.  If $A_\PPI(w)=\varnothing$, leave $w$ as a pure side
+witness exactly as in round-8.
+\end{definition}
+
+The splice edge $w\,\Eup\,a^\ast$ asserts the genuine fact $w<a^\ast$ of $\J$, so
+it is sound by construction; the next sections show it is well-defined,
+bounded, and globally consistent.
+
+\section{The threshold lemmas}
+
+\subsection{Monotonicity}
+
+\begin{lemma}[Monotone threshold]\label{lem:threshold}
+Let $w$ be a $\DR/\PO$ witness of $u$, and let $a_1<a_2<a_3<\cdots$ be the
+$<$-ancestor chain of $u$ (so $u<a_1$ and $a_m<a_{m+1}$).  Put $r_m=\rho(a_m,w)$.
+Then, with respect to the linear order $\DR\succ\PO\succ\PPI$, the sequence
+$(r_m)$ is non-increasing:
+\[
+   r_{m+1}\in\comp(\PPI,r_m)\quad\text{and}\quad r_{m+1}\preceq r_m .
+\]
+Consequently $(r_m)$ is eventually constant; there are thresholds
+$1\le k_1\le k_2\le\infty$ with $r_m=\DR$ for $m<k_1$, $r_m=\PO$ for
+$k_1\le m<k_2$, and $r_m=\PPI$ for $m\ge k_2$.  In particular $\{a:w<a\}$ is an
+upward-closed final segment of the chain with $<$-minimum $a_{k_2}$ (when
+$k_2<\infty$).
+\end{lemma}
+
+\begin{proof}
+$\rho(a_{m+1},a_m)=\PPI$ since $a_m<a_{m+1}$, so
+$r_{m+1}\in\comp(\rho(a_{m+1},a_m),\rho(a_m,w))=\comp(\PPI,r_m)$.  By
+Lemma~\ref{lem:forced-range} each $r_m\in\{\DR,\PO,\PPI\}$, and the relevant
+transitions are
+\[
+  \comp(\PPI,\DR)=\{\DR,\PO,\PPI\},\quad
+  \comp(\PPI,\PO)=\{\PO,\PPI\},\quad
+  \comp(\PPI,\PPI)=\{\PPI\}.
+\]
+Inspection shows no transition increases the rank in $\DR\succ\PO\succ\PPI$:
+from $\DR$ one stays $\preceq\DR$; from $\PO$ the options $\{\PO,\PPI\}$ are
+$\preceq\PO$ (note $\DR\notin\comp(\PPI,\PO)$, so no return to $\DR$); from
+$\PPI$ the only option is $\PPI$.  A non-increasing sequence in a three-element
+order is eventually constant, giving the thresholds.  Upward-closure of
+$\{a:w<a\}$ is $\PPI$-absorption ($\comp(\PPI,\PPI)=\{\PPI\}$).
+\end{proof}
+
+All three transition entries, the non-increase, and the $\PPI$-absorption are
+machine-checked in \texttt{fix\_feasibility.py}.
+
+\begin{remark}[The benign regimes]
+If $k_2=\infty$ the witness is never a proper part of an ancestor; then every
+$(a_m,w)$ carries an inherited $\DR$ or $\PO$ label, which is a legal
+residual/side shape, and (V12) holds because the labels are inherited from the
+model $\J$.  There is \emph{no gap} in these regimes; the round-8 construction
+already handles them.  The repair is needed only when $k_2<\infty$.
+\end{remark}
+
+\subsection{Boundedness}
+
+For finiteness we must bound $k_2$.  Recall the boundary descriptor of companion
+Definition~``boundary-descriptor'' and the replacement/blocking lemmas
+(``replacement'', ``blocking''); a checkpoint of the chain is a generated
+component, and there are at most $N$ distinct boundary descriptors for fixed
+$C_0$, where $N\le 2^{\mathrm{poly}(n)}$ is the round-8 descriptor bound.
+
+\begin{lemma}[Bounded threshold]\label{lem:bounded}
+The chain may be re-presented, preserving all closure formulas and finite-prefix
+RCC5 composition, so that the splice height satisfies $k_2\le 3N$.
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:threshold} the chain splits into three consecutive
+constant-$r$ stretches: a $\DR$-stretch $[1,k_1)$, a $\PO$-stretch $[k_1,k_2)$,
+and the $\PPI$-tail $[k_2,\infty)$.  Consider any one stretch.  Along it the
+relation $r_m$ to the fixed occurrence $w$ is constant, so the value of $r_m$ is
+not part of what distinguishes checkpoints within the stretch; the only
+distinguishing data is the boundary descriptor, of which there are at most $N$.
+If a stretch has more than $N$ checkpoints, two of them, say at heights $i<j$,
+have equal boundary descriptors.  By the replacement lemma the segment
+$[i,j)$ may be excised and $a_{i-1}$ glued directly to $a_j$, preserving all
+closure formulas and finite-prefix composition.  Because $r$ is constant on the
+stretch, $r_{i-1}=r_j$, so the glue is coherent with the relation to $w$ as
+well: the inherited label between $w$ and the glued checkpoint is unchanged.
+Iterating, each stretch is shortened to at most $N$ checkpoints, so
+$k_1\le N$ and $k_2\le 2N<3N$.  (The bound $3N$ leaves room for the single
+glued boundary checkpoints between stretches.)  The $\PPI$-tail is then a
+standard blocking region: $r=\PPI$ is constant, and ordinary blocking applies.
+\end{proof}
+
+\begin{remark}[Periodic witness families]\label{rem:periodic}
+Lemma~\ref{lem:bounded} bounds the splice height for a \emph{single} fixed
+witness $w$.  When a whole \emph{periodic family} of witnesses occurs --- e.g.\
+every tower node carries its own $\DR/\PO$ witness that becomes its proper part
+--- the splice is not placed in the prefix but is incorporated into the
+recurrent cyclic profile itself (``this profile splices a proper-part side child
+here''), and pumping reproduces one fresh spliced witness per lap.  Cross-lap
+pairs between these fresh witnesses are ordinary occurrence-sensitive pairs.
+Either way the certificate stays finite.
+\end{remark}
+
+\section{Consistency and finiteness are inherited from \texorpdfstring{$\J$}{J}}
+
+\begin{lemma}[Acyclicity of the spliced backbone]\label{lem:acyclic}
+The equality-aware transitive closure $\reach_\PP$ of the spliced cover relation
+$\Eup$ is a strict partial order; in particular the splice introduces no
+containment cycle.
+\end{lemma}
+
+\begin{proof}
+Every $\Eup$ edge --- selected or spliced --- asserts a genuine relation $x<y$
+of $\J$ (the splice edge $w\,\Eup\,a^\ast$ asserts $w<a^\ast$, which holds
+because $a^\ast\in A_\PPI(w)$).  Equality mates have, by construction, identical
+$<$-relations to all occurrences (typed congruence).  Hence
+$\reach_\PP\subseteq{<}$ on origins, and ${<}$ is a strict partial order by
+Proposition~\ref{prop:order}.  A sub-relation of a strict partial order is
+acyclic.
+\end{proof}
+
+\begin{lemma}[Label-preserving embedding]\label{lem:embed}
+The quotient of the corrected presentation by explicit equality maps
+label-preservingly onto the generated submodel of $\J$.  Consequently every
+RCC5-composition obligation and every universal-safety obligation of the
+certificate holds, because it holds in $\J$.
+\end{lemma}
+
+\begin{proof}
+Each occurrence has an origin in $\W$; equality mates share an origin; the
+splice changes only \emph{which presentation device} carries a pair's label
+(a vertical $\up/\down$ shape instead of an impossible residual shape), never
+the label itself, which is inherited from $\rho$.  After the splice, every pair
+$(a,w)$ with $w<a$ has $\reach_\PP(w,a)$ (Definition~\ref{def:corrected}), hence
+the $\down$ shape with label $\PPI=\rho(a,w)$; every pair with $r_a\in\{\DR,\PO\}$
+keeps its inherited residual/side label.  Thus the map origin$:\;$occurrence
+$\mapsto\W$ is a label isomorphism onto the generated submodel.  Composition
+(V8) for any triple of occurrences is the composition of their origins in $\J$;
+universal safety (V10)/(V12) for any pair is the universal it satisfies in $\J$.
+Both transfer.
+\end{proof}
+
+\begin{lemma}[Descriptor space stays finite]\label{lem:desc-finite}
+The repair does not enlarge the descriptor universe beyond a finite bound.
+\end{lemma}
+
+\begin{proof}
+A boundary descriptor records reachable \emph{types} (subsets of $\Cl(C_0)$,
+$\le 2^n$ of them) and side-mosaic \emph{isomorphism types} (finitely many by
+the side-width bound), not individual occurrences.  Splicing adds, to a
+checkpoint's data, at most the finite list of incident splice-cover edges; each
+such edge is described by the (bounded) profile/port of its endpoints and one of
+five labels.  In the recurrent tail the relation to spliced witnesses is the
+constant $\PPI$ and contributes only the presence of the witness type in the
+downward type-set --- already a bounded datum.  Hence the descriptor space is
+multiplied by a bounded factor and remains finite; the round-8 finiteness
+counts (Lemmas ``side-width'', ``finite-universe'') are preserved up to that
+factor.
+\end{proof}
+
+\section{Compatibility with split copies (overlap)}
+
+A side witness $w$ may be forced to share a proper part with its source.
+
+\begin{lemma}[Overlap reduces to split copies]\label{lem:overlap}
+Let $w$ be a $\DR/\PO$ witness of $u$ and $d<u$ a generated descendant.  Then
+$\rho(w,d)\in\comp(\rho(w,u),\rho(u,d))=\comp(\{\DR,\PO\},\PPI)$; in the $\PO$
+case $\rho(w,d)\in\{\DR,\PO,\PPI\}$.  If $\rho(w,d)=\PPI$ (so $d<w$ as well as
+$d<u$), then $d$ is a common proper part of the $\PO$-incomparable elements $u$
+and $w$, and is represented by the existing split-copy discipline: occurrences
+$d^{(1)}\,\Eup$-below $u$ and $d^{(2)}\,\Eup$-below $w$ with $d^{(1)}\eqc
+d^{(2)}$.
+\end{lemma}
+
+\begin{proof}
+The composition values are read off the round-8 table ($\comp(\PO,\PPI)=
+\{\DR,\PO,\PPI\}$, $\comp(\DR,\PPI)=\{\DR\}$; machine-checked).  When
+$\rho(w,d)=\PPI$, $d<u$ and $d<w$ hold simultaneously while $\rho(u,w)\in\{\DR,
+\PO\}$, which is exactly the configuration the round-8 split-copy discipline
+(companion Lemma ``multiple-superpart-split'') was designed for: a single origin
+$d$ placed under two $<$-incomparable parents via equality-mate occurrences.
+Typed congruence makes the two copies carry identical labels to all third
+occurrences, and quotienting recovers the single origin $d$.  The set of such
+common parts is a subset of the generated descendants of $u$, finite per
+generated component, so no new infinity is introduced.
+\end{proof}
+
+\section{Patched statements}
+
+\begin{definition}[Patched incidence of spliced pairs]\label{def:patched-tags}
+In companion Definition ``incidence-tags'', a pair $(u,v)$ that is
+$\reach_\PP$-related \emph{through a splice edge} receives the vertical tag
+$\up$ (resp.\ $\down$) and hence the mandatory label $\PP$ (resp.\ $\PPI$),
+exactly as for selected vertical pairs.  The tag $\sidetag_R$ is reserved for
+pairs inside one bounded saturated context; it is \emph{not} used for a
+$\PP/\PPI$ pair that the splice has placed in $\reach_\PP$.  This removes the
+round-8 ambiguity (review3 \S4) by declaring that verticalizing a forced pair
+contributes to the global $\reach_\PP$, not merely to a local mosaic.
+\end{definition}
+
+\begin{lemma}[Patched split-cover]\label{lem:patched-splitcover}
+Definition~\ref{def:corrected} produces a weak split presentation whose strong
+quotient is label-isomorphic to the generated submodel of $\J$, in which
+\emph{every} pair with origin label $\PP/\PPI$ is realised by equality-aware
+vertical reachability (selected or spliced), every $\EQ$ pair by explicit
+equality, and every residual/side pair by an inherited $\DR/\PO$ label.
+\end{lemma}
+
+\begin{proof}
+Round-8 Lemma ``split-cover'' already realises selected $\PP/\PPI$ witnesses,
+$\EQ$ mates, and $\DR/\PO$ side witnesses.  The only pairs it failed to realise
+were $(a,w)$ with $w<a$ for a $\DR/\PO$ witness $w$ and a non-selected ancestor
+$a$ (the D-1 pairs).  By Definition~\ref{def:corrected} the splice makes
+$\reach_\PP(w,a)$ hold for every such $a$ (Lemma~\ref{lem:threshold}:
+$\{a:w<a\}$ is the final segment above $a^\ast$, and $a^\ast\,\Eup$-reaches all
+of it), so these pairs now carry the $\down$ shape with the correct label
+$\PPI$.  Acyclicity is Lemma~\ref{lem:acyclic}; label-preservation is
+Lemma~\ref{lem:embed}; overlap is Lemma~\ref{lem:overlap}.  Hence every origin
+$\PP/\PPI$ pair is vertical, as claimed.
+\end{proof}
+
+\begin{remark}[Validity clauses]
+No validity clause is weakened.  The only structural change visible to the
+checker is that some pairs previously destined for the residual frontier are now
+$\up/\down$ pairs; (V6) pair-shape determinacy, (V8) composition, and (V10)
+vertical universal safety apply to them unchanged.  Lemma~\ref{lem:bounded}
+keeps every bound in (V15) finite.  Optionally one adds a single bookkeeping
+clause:
+
+\smallskip
+\noindent(V16) \emph{Forced verticalization.}  For every $\DR/\PO$ witness $w$
+of a source $u$ and every ancestor $a$ of $u$ with $\rho(a,w)=\PPI$ in the
+recorded labels, $w\,\reach_\PP\,a$ holds.
+
+\smallskip
+\noindent This clause is decidable (a finite reachability test) and is exactly
+what the splice guarantees.  It turns the D-1 obstruction into a checkable
+condition.
+\end{remark}
+
+\section{Completeness restored}
+
+\begin{theorem}[Completeness, repaired]\label{thm:complete}
+If $C_0$ is satisfiable, then $C_0$ has a valid finite generated split-forest
+certificate (in the sense of the round-8 companion, augmented by
+Definition~\ref{def:patched-tags} and optionally (V16)).
+\end{theorem}
+
+\begin{proof}
+Let $\J,a_0\models C_0$ be witness-generated (thinning lemma).  Build the
+corrected split presentation (Definition~\ref{def:corrected}); it is a faithful
+label-preserving presentation of the generated submodel
+(Lemma~\ref{lem:patched-splitcover}).  Extract a finite certificate by the
+round-8 extraction procedure (companion Lemma ``extraction''), with two changes:
+(i) splice edges are recorded as cover edges of $\Eup$, contributing to the
+$\up/\down$ pair shapes; (ii) per-witness splice heights are normalised to
+$\le 3N$ by Lemma~\ref{lem:bounded}, or absorbed into recurrent profiles by
+Remark~\ref{rem:periodic}.  All validity clauses hold: type legality and witness
+support from satisfaction in $\J$; equality congruence from equality of origins;
+RCC5 composition and universal safety by Lemma~\ref{lem:embed}; request-closure
+and universal safety on cycles from the blocking lemma applied to the $\PPI$-tail
+and the bounded prefix; finiteness from Lemmas~\ref{lem:bounded} and
+\ref{lem:desc-finite}.  The extracted object is therefore a valid certificate.
+\end{proof}
+
+Together with round-8 soundness (untouched by this note) and the finite,
+effective enumeration (preserved by Lemma~\ref{lem:desc-finite}), this restores
+the decision procedure and hence Theorem~``main'' of the round-8 companion.
+
+\section{Worked cases}
+
+\subsection{\texorpdfstring{$C_0'$}{C0'}: a valid certificate now exists}
+
+Recall $G=(\forall\PO.X)\sqcap(\exists\PP.G)$ and
+$C_0'=(\exists\PP.G)\sqcap(\exists\PO.\neg X)$ from review3.  The honest model
+has $u$ with a $\PO$-witness $w\in\neg X$ and an ascending tower
+$a_1<a_2<\cdots$, each $a_m\in\forall\PO.X$, with $\rho(a_m,w)=\PPI$ for all $m$
+(machine-checked: $\comp(\PPI,\PO)=\{\PO,\PPI\}$, $\forall\PO.X$ kills $\PO$,
+$\comp(\PPI,\PPI)=\{\PPI\}$ propagates).  Here $k_2=1$, so the splice is
+$w\,\Eup\,a_1$.  The accompanying \texttt{repaired\_certificate.py} builds this
+presentation explicitly on a depth-$8$ prefix and verifies:
+\begin{itemize}
+\item zero RCC5 frame-axiom violations on every triple;
+\item $\reach_\PP(w,a_m)$ holds for every tower node, so the $\down$ shape with
+label $\PPI$ is available for every $(a_m,w)$;
+\item $(u,w)$ is residual with the inherited label $\PO$;
+\item every demand of $C_0'$ is met, the single top existential being discharged
+by the blocking cycle.
+\end{itemize}
+Thus the repaired construction yields a valid certificate, exactly the object the
+round-8 construction failed to produce.
+
+\subsection{The UNSAT sibling: still correctly rejected}
+
+Let $G=(\forall\PO.X)\sqcap(\forall\PPI.Y)\sqcap(\exists\PP.G)$ and
+$C_0=(\exists\PP.G)\sqcap(\exists\PO.(\neg X\sqcap\neg Y))$.  Now $w\in\neg X\cap
+\neg Y$.  The splice makes $w$ a $\PPI$-successor (proper part) of $a_1$, so
+(V10) fires $a_1$'s $\forall\PPI.Y$ on $w$, requiring $Y\in\tp(w)$ ---
+contradicting $w\in\neg Y$.  The alternative residual label $\PO$ fires
+$\forall\PO.X$ via (V12), requiring $X\in\tp(w)$, contradicting $w\in\neg X$;
+and $\DR$ is composition-illegal ($\DR\notin\comp(\PPI,\PO)$).
+\texttt{repaired\_certificate.py} enumerates the two composition-legal labels for
+$(a_1,w)$ and confirms both clash, so no valid certificate exists and the
+procedure correctly returns UNSAT.  The repair therefore does not over-accept:
+it adds the missing $\PP/\PPI$ pair shapes \emph{and} the universal-safety
+obligations that come with them.
+
+\section{Scope and remaining verification obligations}
+
+The repair is local to the witness-placement step; soundness, the
+occurrence-sensitive blocking machinery, the typed-equality quotient, and the
+request-closed cycle argument are untouched.  We have proved monotonicity
+(Lemma~\ref{lem:threshold}), boundedness (Lemma~\ref{lem:bounded}), acyclicity
+(Lemma~\ref{lem:acyclic}), inherited consistency (Lemma~\ref{lem:embed}), and
+finiteness (Lemma~\ref{lem:desc-finite}); the algebra and two worked
+certificates are machine-checked.  A careful referee should still verify:
+
+\begin{enumerate}[label=O\arabic*.]
+\item \textbf{Excision coherence under replacement.}  Lemma~\ref{lem:bounded}
+excises a same-descriptor segment of the chain while a fixed off-chain witness
+$w$ hangs below it.  We argued the inherited label $r$ to $w$ is constant on the
+stretch, hence preserved; one should confirm the replacement lemma's
+preconditions (boundary descriptor identity) genuinely subsume the labels to
+spliced-in witnesses crossing the boundary, i.e.\ that the descriptor as defined
+records enough to license the excision in the presence of splices.  This is the
+single most load-bearing point.
+
+\item \textbf{Simultaneous splices.}  Lemmas~\ref{lem:embed} and
+\ref{lem:desc-finite} treat the splices collectively via the embedding into
+$\J$, but the interaction of many splices with the blocking decomposition (which
+splice lands in the prefix vs.\ in a recurrent profile, per
+Remark~\ref{rem:periodic}) deserves a fully spelled-out normal form.
+
+\item \textbf{Overlap amalgam closure.}  Lemma~\ref{lem:overlap} reduces the
+shared-part case to existing split copies; one should check that the
+support-closed mosaic family (companion Definition ``support-closed'') remains
+closed when a side witness is simultaneously a backbone node and a $\PO$-relative
+of its former source.
+
+\item \textbf{No interaction with the round-8 finiteness constants.}  The
+descriptor blow-up factor in Lemma~\ref{lem:desc-finite} should be carried
+through the explicit bounds of the round-8 enumeration appendix to confirm the
+universe is still effectively enumerable (it is elementary, but the constant
+changes).
+\end{enumerate}
+
+None of these is an obstruction in the sense of D-1: they are bookkeeping
+obligations on a construction that, by Lemma~\ref{lem:embed}, presents a fixed
+consistent model and therefore cannot violate composition or universal safety.
+We accordingly assess the decidability theorem as \emph{true and provable along
+this route}, with the present note supplying the missing completeness argument
+modulo the bookkeeping items O1--O4.
+
+\section*{Reproducibility}
+
+\begin{itemize}
+\item \texttt{rcc5\_compose.py} --- round-8 composition table; D-1 forcing.
+\item \texttt{fix\_feasibility.py} --- Lemma~\ref{lem:threshold}
+(monotone/absorbing transitions) and the bounded-threshold rationale.
+\item \texttt{repaired\_certificate.py} --- explicit valid repaired certificate
+for $C_0'$ (frame axioms, $\reach_\PP$ tags, concept truth) and the
+correct rejection of the UNSAT sibling.
+\end{itemize}
+
+\section*{Disclaimer}
+
+Produced by Claude (Anthropic, Opus~4.8), prompted by Michael Wessel.  Not
+independently verified by human experts.  The composition arithmetic and the two
+worked certificates are machine-checked; the structural lemmas
+(\ref{lem:threshold}--\ref{lem:overlap}) are proved here but not formally
+verified, and obligations O1--O4 are stated as open bookkeeping.
+
+\end{document}

@@ -1,0 +1,73 @@
+========================================================================
+review3: composition checks for the round-8 saturated-side-context proof
+========================================================================
+Inverse-symmetry violations in transcribed round-8 table: 0
+RCC5-legal ordered triples: 54
+
+------------------------------------------------------------------------
+Core fact 1: comp(PPI, PO) = {PO, PPI}  (note: DR is NOT in it)
+------------------------------------------------------------------------
+  comp(PPI, PO) = ['PO', 'PPI']
+  Read: if  a PPI u  (i.e. u PP a, u a proper part of a) and  u PO w,
+  then rho(a,w) in {PO, PPI}.  A universal forall PO.X at a, with w in ~X,
+  EXCLUDES PO, FORCING rho(a,w) = PPI, i.e. w PP a.  DR is impossible.
+
+------------------------------------------------------------------------
+Core fact 2: comp(PPI, PPI) = {PPI}  (PP/PPI transitivity up the tower)
+------------------------------------------------------------------------
+  comp(PPI, PPI) = ['PPI']
+  Read: once w PP a_1 and a_1 PP a_2, then rho(a_2,w) in comp(PPI,PPI)={PPI}.
+  So w PP a_m is FORCED for EVERY tower node a_m, m >= 1.
+
+------------------------------------------------------------------------
+Core fact 3: comp(PP, PP) = {PP}  (the side witness is a part of the whole tower)
+------------------------------------------------------------------------
+  comp(PP, PP) = ['PP']
+
+------------------------------------------------------------------------
+Forced-label propagation in the witness configuration C0'
+------------------------------------------------------------------------
+Configuration (all relations FORCED, none chosen):
+   u            : source, has  exists PO.(~X)  ->  side witness w
+   w            : the PO-witness of u,  w in ~X
+   a_1,a_2,...  : infinite ascending PP-tower, each a_m in (forall PO.X)
+   u PP a_1 PP a_2 PP ...   (u is a proper part of every tower node)
+
+  Step m=1: rho(a_1,w) in comp(PPI,PO) = ['PO', 'PPI']
+            forall PO.X at a_1 + w in ~X  removes PO  ->  rho(a_1,w) = ['PPI']
+  Step m=2: rho(a_2,w) in comp(PPI, PPI) = {PPI}  ->  w PP a_2
+  Step m=3: rho(a_3,w) in comp(PPI, PPI) = {PPI}  ->  w PP a_3
+  Step m=4: rho(a_4,w) in comp(PPI, PPI) = {PPI}  ->  w PP a_4
+  Step m=5: rho(a_5,w) in comp(PPI, PPI) = {PPI}  ->  w PP a_5
+  Step m=6: rho(a_6,w) in comp(PPI, PPI) = {PPI}  ->  w PP a_6
+
+  CONCLUSION: w PP a_m is forced for ALL m >= 1.  The side witness w is a
+  proper part of every node of the infinite tower.
+
+------------------------------------------------------------------------
+Why the round-8 pair-shape catalogue cannot label the deep pairs
+------------------------------------------------------------------------
+A saturated side context S_k(u) has <= m_*(C0) positions (Lemma 'side-width'),
+so it contains only FINITELY many tower nodes a_1..a_K.  For m > K the pair
+(a_m, w) must still carry the FORCED label PPI, yet:
+
+  * tag 'side_PPI' (Def. incidence-tags) needs a_m and w in ONE finite side
+    context  -> unavailable for m > K (a_m not in S_k(u)).
+  * tag 'down'    needs a_m Reach_PPI w, i.e. an E_up path w -> ... -> a_m
+    (Def. eq-aware-vertical).  The DR/PO side-witness w is attached to u's
+    side context; the construction adds NO E_up edge from w into the tree,
+    so Reach_PP(w, a_m) fails.
+  * tag 'front_R' (residual frontier) is restricted to R in {DR,PO}
+    (mosaic axiom M7 / clause V13 / Lemma residual-frontier).
+
+So the only catalogue shapes that COULD apply to (a_m, w), m>K, are DR/PO
+residual-frontier shapes.  Check those against the constraints:
+  - DR : excluded by composition, since comp(PPI,PO) = ['PO', 'PPI'] has no DR.
+  - PO : composition-legal, BUT then a_m sees w as a PO-successor, and
+         clause V12 (DR/PO universal safety) + forall PO.X at a_m force
+         X in tp(w).  Since w in ~X, V12 FAILS.
+
+  => No catalogue pair shape can carry the forced PPI label for m>K.
+     The certificate produced by the stated construction (Lemma split-cover,
+     which attaches w as a saturated side context of u) is INVALID.
+     Hence the completeness construction does not go through for C0'.

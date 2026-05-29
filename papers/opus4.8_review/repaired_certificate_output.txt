@@ -1,0 +1,26 @@
+========================================================================
+(A) Repaired presentation of the SAT concept C0'
+========================================================================
+RCC5 frame-axiom violations on the depth-8 prefix: 0
+tower nodes a_m WITHOUT an available 'down' shape for (a_m,w): 0
+every (a_m,w) vertical tag reproduces label PPI: True
+(u,w) is residual (front_PO), label = PO: True
+All demands of C0' met (top existential a_M->a_{M+1} discharged by the cycle).
+>>> A VALID repaired certificate for C0' EXISTS.
+
+========================================================================
+(B) The repair does NOT over-accept the UNSAT sibling C0
+========================================================================
+Tower node a_1: forall PO.X and forall PPI.Y.  Witness w in ~X and ~Y.
+u PP a_1 (rho(a_1,u)=PPI),  u PO w (rho(u,w)=PO).
+rho(a_1,w) must lie in comp(PPI,PO) = ['PO', 'PPI'].
+  rho(a_1,w)=PO  : legal ; a_1 sees w as PO-successor -> forall PO.X forces X(w); but w in ~X. CLASH
+  rho(a_1,w)=PPI : legal ; a_1 sees w as PPI-successor (w PP a_1) -> forall PPI.Y forces Y(w); but w in ~Y. CLASH
+
+Every composition-legal label for (a_1,w) clashes: True
+>>> The repaired construction correctly finds NO valid certificate => UNSAT.
+
+========================================================================
+Repair verified on the witness pair: SAT C0' now certifiable, UNSAT C0
+still correctly rejected.
+========================================================================
