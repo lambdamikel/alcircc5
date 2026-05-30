@@ -68,7 +68,7 @@ The new Section 7 ("A Tableau Decision Procedure") adds 5 pages covering:
 - **7.2 Expansion Rules** --- (⊓), (⊔), (∀), (∃) with full connectivity for new nodes
 - **7.3 Constraint Filtering** --- composition consistency via patchwork property
 - **7.4 Rule Application Strategy** --- saturate propositional/∀ first, then generate, re-evaluate blocking
-- **7.5 Termination** --- at most 2^{O(|C₀|)} nodes; labels grow monotonically, active nodes bounded by number of distinct types
+- **7.5 Termination** --- at most 2^O(|C₀|) nodes; labels grow monotonically, active nodes bounded by number of distinct types
 - **7.6 Soundness** --- open completion graph → extract quasimodel → invoke Henkin construction (Thm 5.1)
 - **7.7 Completeness** --- model guides nondeterministic choices (disjunctions + role assignments); blocked nodes' demands satisfied via quasimodel extraction, not directly in the graph
 - **Remark 7.13** --- comparison with tree-based ALCI tableaux (simpler blocking thanks to patchwork property)
@@ -224,7 +224,7 @@ What if comp(U, T) = {S} (a forced single value), and ∀S.D ∈ τ(eₐ), and D
 
 To be fully explicit: the constraint on Sₐ is:
 
-    Sₐ ∈ comp(U, T) ∩ {S ∈ NR\{EQ} | (τ(eₐ), S, τ') ∈ P}
+    Sₐ ∈ comp(U, T) ∩ {S ∈ NR{EQ} | (τ(eₐ), S, τ') ∈ P}
 
 The first set comes from composition. The second ensures pair-compatibility. The patchwork property guarantees that the intersection is non-empty for some globally consistent choice of all the S-values.
 
@@ -436,7 +436,7 @@ Michael asked Claude to evaluate a companion paper by GPT-5.4 Pro: *"A Contextua
 
 Key features of GPT's framework:
 - **Local states**: tuples (I_M, 0_M, tp_M, ρ_M, w_M) with bounded width N, saturation conditions (L1)–(L3)
-- **Recentering maps**: total maps u: I_{Succ(M,i)} → I_M satisfying axioms (R1)–(R4) — center preservation, type preservation, RCC5 relation preservation, successor preservation
+- **Recentering maps**: total maps u: I_Succ(M,i) → I_M satisfying axioms (R1)–(R4) — center preservation, type preservation, RCC5 relation preservation, successor preservation
 - **Unfolding**: occurrences form an infinite tree of witness-choices; quotient by EQ-congruence yields the model domain
 - **Soundness**: fully proven — every open N-tableau graph unfolds into a genuine strong-EQ model (Theorems 6.3, 6.5, Corollary 6.6)
 - **Completeness**: reduced to the conjecture **FW(C,N)** — every satisfiable concept admits a finite closed family of local states of bounded width
@@ -540,7 +540,7 @@ The architecture is plausible but none of the four tasks are addressed:
 
 **A concrete sub-question posed to both sides:**
 
-> Is the sequence of Hintikka types along an infinite PP-chain eventually periodic? That is, do there exist computable n₀ and p (depending only on |C|) such that tp(e_{n+p}) = tp(e_n) for all n ≥ n₀?
+> Is the sequence of Hintikka types along an infinite PP-chain eventually periodic? That is, do there exist computable n₀ and p (depending only on |C|) such that tp(e_n+p) = tp(e_n) for all n ≥ n₀?
 
 If **yes**: the omega-model route is viable (PP-chains are ultimately periodic).
 If **no**: even the type sequence along a PP-chain can be irregular, pointing toward undecidability.
@@ -723,9 +723,9 @@ Confirmed — each chain independently supports a binary counter using concept m
 - String equality: PO-enforced symbol matching gives character-by-character equality ✓
 
 **What fails — pair-index synchronization:**
-PCP requires both chains to use the SAME sequence of pair indices i₁, i₂, .... But |u_i| ≠ |v_i| in general, so the chains consume pairs at different rates. After pair i₁, chain A has consumed |u_{i₁}| cells, chain B has consumed |v_{i₁}| cells. The pair boundaries are misaligned.
+PCP requires both chains to use the SAME sequence of pair indices i₁, i₂, .... But |u_i| ≠ |v_i| in general, so the chains consume pairs at different rates. After pair i₁, chain A has consumed |u_i₁| cells, chain B has consumed |v_i₁| cells. The pair boundaries are misaligned.
 
-Synchronizing indices requires tracking the **lag** Σ(|u_{iₖ}| - |v_{iₖ}|), which can grow unboundedly. Proposed a "handshake protocol" where chain A announces pair indices via ∀PO and chain B propagates them via ∀TPP until consumed at pair boundaries, but multiple announcements can overlap, creating an unbounded queue.
+Synchronizing indices requires tracking the **lag** Σ(|u_iₖ| - |v_iₖ|), which can grow unboundedly. Proposed a "handshake protocol" where chain A announces pair indices via ∀PO and chain B propagates them via ∀TPP until consumed at pair boundaries, but multiple announcements can overlap, creating an unbounded queue.
 
 ### Michael Wessel
 
@@ -745,7 +745,7 @@ The visible announcement set grows **monotonically** with depth. Elements can de
 
 **Key negative result: broadcast ≠ queue.** The ∀NTPP mechanism is fundamentally monotonic — announcements accumulate but are NEVER consumed. This is a broadcast log, not a FIFO queue. For chain B to track "which announcement I'm currently processing," it would need to encode queue position in its Hintikka type. But:
 
-1. Hintikka types come from a finite set (bounded by 2^{|cl(C)|})
+1. Hintikka types come from a finite set (bounded by 2^|cl(C)|)
 2. By pigeonhole, if outstanding announcements exceed the number of types, two elements at different queue positions must have the same type
 3. Same type → same reaction to all constraints → cannot distinguish queue positions
 4. The number of outstanding announcements is unbounded for general PCP
@@ -1079,7 +1079,7 @@ The triangle-type approach is the first mechanism that:
 
 ### What remains to prove
 
-1. **Termination**: the set of triangle types T stabilizes (bounded by ~2^{3|cl(C)|} × 64)
+1. **Termination**: the set of triangle types T stabilizes (bounded by ~2³|cl(C)| × 64)
 2. **Completeness**: when T stabilizes, all demands are either globally satisfied or T-closed-extendable
 3. **Model transfer**: the T-filtered CSP is solvable throughout the infinite Henkin construction
 4. **Formal correctness**: the T-filtered arc-consistency result (zero genuine failures) holds for ALL model sizes, not just n ≤ 4
@@ -1233,7 +1233,7 @@ The proof relies on **full RCC5 tractability**, which is specific to RCC5 — th
 
 GPT-5.4 Pro reviewed the two-tier quotient paper (`review2/response_to_two_tier_quotient_ALCIRCC5.tex`) and raised five technical objections:
 
-1. **Core loses phase-specific obligations.** Core(Desc) = ∩τ_j forgets demands like ∃DR.D ∈ τ_A \ τ_B. Designated witnesses only for Core means chain elements of type τ_A lack witnesses for phase-specific non-PP demands.
+1. **Core loses phase-specific obligations.** Core(Desc) = ∩τ_j forgets demands like ∃DR.D ∈ τ_A  τ_B. Designated witnesses only for Core means chain elements of type τ_A lack witnesses for phase-specific non-PP demands.
 
 2. **V6 not DL-safe.** The domain initialization D(w,e) = comp(demanded, ρ(parent,e)) filters by RCC5 composition but not by type-safety. Example: ∀PO.¬A ∈ tp(e) and A ∈ tp(w) should exclude PO(w,e), but composition alone doesn't catch this.
 
@@ -1312,7 +1312,7 @@ GPT-5.4 Pro reviewed the third revision (`review4/response_to_latest_two_tier_re
 
 1. **Phasewise safety of arbitrary kernel interfaces**: V_safe conditions appear only in T4 and V6 (designated/off-chain witnesses), but Step 2 copies every kernel interface to every chain element. A regular node m with P ∈ tp(m) and ρ(k_α, m) = DR violates ∀DR.¬P ∈ τ_B if τ_B is a phase on that tail.
 2. **Exact-relation witness extraction (Step 4 of Theorem 7.1)**: T4 requires ρ(k_α, w) = R, but the proof only shows all-phase safety of the stabilized relation S. S = R is not established.
-3. **Circular size bound**: K ≤ D · 4^{K+L} gives K in terms of K+L, not a bound from |C₀| alone.
+3. **Circular size bound**: K ≤ D · 4^K+L gives K in terms of K+L, not a bound from |C₀| alone.
 4. **Regular-node blocking lacks replacement theorem**: The blocking key doesn't track regular-to-regular relations.
 
 ### Claude's response to third review — discovery of the PO gap
@@ -1321,8 +1321,8 @@ Claude's response (`review4/response_to_gpt_third_review.tex`, 7 pages) resolved
 
 **Resolved:**
 
-- **(i) Phasewise safety → V\_safe**: New validity condition requiring ρ(k_α, e) ∈ ∩_{τ ∈ Desc_α} Safe(τ, tp(e)) for every kernel k_α and external node e. For kernel-kernel edges, both sides checked. Model-extracted quotients satisfy this by Lemma 4.7/4.8.
-- **(iii) Size bound → constructive quotient**: One kernel per descriptor (K ≤ D, where D is the number of PO-coherent descriptors), one witness per demand (L ≤ D · |cl(C₀)|). Total size D(1 + |cl(C₀)|) with D ≤ 2^{2^{|cl(C₀)|}}. Breaks the circularity completely.
+- **(i) Phasewise safety → V\_safe**: New validity condition requiring ρ(k_α, e) ∈ ∩_τ ∈ Desc_α Safe(τ, tp(e)) for every kernel k_α and external node e. For kernel-kernel edges, both sides checked. Model-extracted quotients satisfy this by Lemma 4.7/4.8.
+- **(iii) Size bound → constructive quotient**: One kernel per descriptor (K ≤ D, where D is the number of PO-coherent descriptors), one witness per demand (L ≤ D · |cl(C₀)|). Total size D(1 + |cl(C₀)|) with D ≤ 2^(2^|cl(C₀)|). Breaks the circularity completely.
 - **(iv) Blocking → eliminated**: The constructive approach (one witness per demand) makes the blocking argument entirely unnecessary. No subtree redirection, no blocking key, no replacement theorem.
 
 **Genuine gap discovered — PO exact-relation extraction:**
@@ -1336,7 +1336,7 @@ Analysis of exact-relation extraction by relation type using the RCC5 compositio
 | PPI | — | comp(PPI, PPI) = {PPI} — absorbed forward | Works: once PPI, always PPI; stabilized = demanded |
 | **PO** | comp(PP, PO) = {DR, PO, PP} — **NOT forced** | comp(PPI, PO) = {PO, PPI} — **NOT absorbed** | **FAILS** |
 
-**The forward transition table** (Lemma 3.7 in fourth revision): Using both forward (comp(PPI, ·)) and backward (comp(PP, ·)) constraints, the valid transitions ρ(d_i, w) → ρ(d_{i+1}, w) are:
+**The forward transition table** (Lemma 3.7 in fourth revision): Using both forward (comp(PPI, ·)) and backward (comp(PP, ·)) constraints, the valid transitions ρ(d_i, w) → ρ(d_i+1, w) are:
 - DR → {DR, PO, PPI} (can escape DR)
 - PO → {PO, PPI} (no return to DR)
 - PP → {PO, PP, PPI} (can escape PP)
@@ -1344,7 +1344,7 @@ Analysis of exact-relation extraction by relation type using the RCC5 compositio
 
 Key no-return properties: once PO, never DR; once PPI, stays PPI. But PO → PPI is possible without ever stabilizing at PO.
 
-**Concrete PO-incoherent counterexample (Proposition 9.1):** A descriptor Desc = (τ_A, τ_B) with ∃PO.A ∈ τ_A and ∀PO.¬A ∈ τ_B is **realizable**: chain d_0(τ_A) PP d_1(τ_B) PP d_2(τ_A) PP ... with witnesses w_k where ρ(d_i, w_k) = DR for i ≤ 2k−1, PO at i = 2k, PPI for i ≥ 2k+1. Each witness is PO to exactly one τ_A-position and DR at all τ_B-positions (so ∀PO.¬A is vacuously satisfied at τ_B). But no single element has a stabilized PO relation to the chain — every witness eventually becomes PPI. So the constant-interface quotient cannot capture this scenario.
+**Concrete PO-incoherent counterexample (Proposition 9.1):** A descriptor Desc = (τ_A, τ_B) with ∃PO.A ∈ τ_A and ∀PO.¬A ∈ τ_B is **realizable**: chain d₀(τ_A) PP d₁(τ_B) PP d₂(τ_A) PP ... with witnesses w_k where ρ(d_i, w_k) = DR for i ≤ 2k−1, PO at i = 2k, PPI for i ≥ 2k+1. Each witness is PO to exactly one τ_A-position and DR at all τ_B-positions (so ∀PO.¬A is vacuously satisfied at τ_B). But no single element has a stabilized PO relation to the chain — every witness eventually becomes PPI. So the constant-interface quotient cannot capture this scenario.
 
 **Why the DR analogue is impossible**: ∃DR.A ∈ τ_A and ∀DR.¬A ∈ τ_B cannot coexist in T∞ because backward forcing (comp(PP,DR)={DR}) makes any DR-witness at a τ_A-position also DR at all earlier τ_B-positions, violating ∀DR.¬A.
 
@@ -1401,7 +1401,7 @@ First, `profile_blocking_check.py` confirmed the node-identity non-termination c
 
 - Built RCC5 constraint networks for chain lengths 4, 6, 8
 - Used arc-consistency propagation and enumerated all valid assignments
-- Confirmed the sliding PO diagonal pattern: each w_k is PO to exactly d_{2k}, DR to earlier elements, PPI to later ones
+- Confirmed the sliding PO diagonal pattern: each w_k is PO to exactly d₂k, DR to earlier elements, PPI to later ones
 - Node-identity profiles: **no two τ_A nodes ever match** (2/4/8 valid solutions for chains 4/6/8, zero profile matches)
 
 ### Computational verification: triangle_type_saturation_check.py
@@ -1619,7 +1619,7 @@ Wrote `intra_subtree_tclosure_check.py` — a comprehensive investigation of the
 When the tree unraveling creates two copies of the same node (a "same-map pair"), the map-based assignment ρ(a,b) = E(map(a), map(b)) forces both copies to have the same relation to every third element. This creates "mirror triangles" — triangle types of the form (τ, R, τ, S, τ', S) where two elements of the same type both have relation S to a third element.
 
 **19 mirror triangle types are impossible** in T(G) for the PO-incoherent example. The critical ones:
-- (τ\_A, R, τ\_A, PO, σ, PO) — requires two distinct τ\_A nodes both PO to the same σ witness. Impossible because each w\_k is PO to exactly d\_{2k}.
+- (τ\_A, R, τ\_A, PO, σ, PO) — requires two distinct τ\_A nodes both PO to the same σ witness. Impossible because each w\_k is PO to exactly d\₂k.
 - (σ, R, σ, PO, τ\_A, PO) — the dual: two σ nodes both PO to the same τ\_A. Also impossible.
 
 For the same-map pair (d6, d6\_c1), the ONLY composition-consistent relation is PPI, but PPI creates (τ\_A, PPI, τ\_A, PO, σ, PO) which is not in T(G). So NO relation is both composition-consistent and T-consistent for this pair. The gap is confirmed for 6 out of 9 same-map pairs (all d6-copies and w3-copies).
@@ -1646,7 +1646,7 @@ Revised `tableau_ALCIRCC5.tex` to fix the soundness proof:
 4. Notes type-safety of the relaxation: all D₀ values are from saturated P(G)
 5. References computational verification
 
-**New Remark 5.5b (mirror triangle obstruction):** Explains the structural cause — PO is a "unique-witness" relation where each σ node w\_k is PO to exactly one τ\_A node d\_{2k}.
+**New Remark 5.5b (mirror triangle obstruction):** Explains the structural cause — PO is a "unique-witness" relation where each σ node w\_k is PO to exactly one τ\_A node d\₂k.
 
 **Lemma 5.7 (simplified):** Now just derives path-consistency from non-empty AC-stable domains, without referencing T-closed solutions.
 
@@ -1699,9 +1699,9 @@ Rewrote the termination proof (Theorem 4.1) with a corrected argument:
 
 **Subtlety paragraph.** Explicitly acknowledges that the pre-stable phase involves replacement (not just growth) of triangle types, making the precise bound more complex. Notes that a clean closed-form bound has not been extracted.
 
-**Honest assessment point 2.** Replaced the old "monotonicity of triangle-type sets" point with a new point about the total node creation bound. Credits GPT-5.4 Pro's review (new bibliography entry \cite{GPTReview}) for identifying the gap.
+**Honest assessment point 2.** Replaced the old "monotonicity of triangle-type sets" point with a new point about the total node creation bound. Credits GPT-5.4 Pro's review (new bibliography entry `\cite{GPTReview}`) for identifying the gap.
 
-**Bibliography.** Added GPT-5.4 Pro's review as \cite{GPTReview}.
+**Bibliography.** Added GPT-5.4 Pro's review as `\cite{GPTReview}`.
 
 **Compilation.** 15 pages, no errors.
 
@@ -1766,7 +1766,7 @@ GPT-5.4 Pro's [second review](review6/response_to_tableau_ALCIRCC5_second_revisi
 
 **Conclusion rewritten.** Paper presented as "substantial partial progress" rather than a finished proof. Principal open obligations: global termination argument + general non-emptiness proof.
 
-**Bibliography.** Added GPT's second review as \cite{GPTReview2}.
+**Bibliography.** Added GPT's second review as `\cite{GPTReview2}`.
 
 **Compilation.** 15 pages, no errors.
 
@@ -1824,7 +1824,7 @@ This leads to the idea of reducing ALCI_RCC5 satisfiability to a known decidable
 - Composition consistency is FREE (the main advantage)
 - All five RCC5 relations are MSO-definable between interval set variables
 - Existential and universal concept constructors translate to MSO quantification
-- The formula Φ_{C₀} is exponential in |C₀| (from the type count)
+- The formula Φ_C₀ is exponential in |C₀| (from the type count)
 
 **The remaining gap: endpoint pairing.** Computing the RCC5 relation between two intervals requires knowing both their left and right endpoints. Pairing lefts with rights requires a Dyck (balanced parenthesization) matching over the endpoint set. Over discrete orders like (N, <), this is standard (Büchi automata). Over the dense order (R, <), the formal MSO-definability of Dyck matching requires that the endpoint set is scattered (no dense sub-order). This is achievable for countable models but the details over dense orders need verification.
 
@@ -1848,7 +1848,7 @@ Parallel literature research (via web search) yielded several important results:
 
 4. **ALC(RCC8) is different.** Lutz and Miličić (2007) showed ALC with RCC8 as a concrete domain is decidable, but that framework treats spatial relations as constraints between features, not as roles. The complete-graph semantics of ALCI_RCC5 is not enforced. These are structurally different problems.
 
-5. **Key insight: MSO encoding avoids these barriers.** The BD undecidability and Kontchakov et al. results concern satisfiability problems for modal logics (infinite families of sentences). Our MSO encoding produces a single, fixed sentence Φ_{C₀} for each concept C₀ and asks whether (R, <) ⊨ Φ_{C₀}. This is a question about the theory of (R, <), which IS decidable. What modal logics cannot decide efficiently, MSO decides with Shelah's brute-force model theory.
+5. **Key insight: MSO encoding avoids these barriers.** The BD undecidability and Kontchakov et al. results concern satisfiability problems for modal logics (infinite families of sentences). Our MSO encoding produces a single, fixed sentence Φ_C₀ for each concept C₀ and asks whether (R, <) ⊨ Φ_C₀. This is a question about the theory of (R, <), which IS decidable. What modal logics cannot decide efficiently, MSO decides with Shelah's brute-force model theory.
 
 ### Critical correction: full MSO over (R, <) is undecidable
 
@@ -1868,7 +1868,7 @@ A deep dive into the Lutz & Wolter paper "Modal Logics of Topological Relations"
 
 1. **L_RCC8 is undecidable** — via domino tiling. The proof uses the TPP/NTPP distinction to create discrete chains (the alternating-type trick). This CANNOT transfer to RCC5 because PP = TPP ∪ NTPP is undifferentiated.
 
-2. **L_RCC5(RS^∃) is undecidable** — via reduction from S5³ (undecidable by Maddux 1980). The reduction constructs "diagonal" regions d = Sup({w₁,w₂,w₃}) and "pair" regions d_{ij} = Sup({w_i,w_j}). The S5³ modalities are simulated by navigating through PP/PPI between these regions. **This requires RS^∃** — the model class must contain supremum regions for every 2- or 3-element set.
+2. **L_RCC5(RS^∃) is undecidable** — via reduction from S5³ (undecidable by Maddux 1980). The reduction constructs "diagonal" regions d = Sup({w₁,w₂,w₃}) and "pair" regions d_ij = Sup({w_i,w_j}). The S5³ modalities are simulated by navigating through PP/PPI between these regions. **This requires RS^∃** — the model class must contain supremum regions for every 2- or 3-element set.
 
 3. **L_RCC5(RS) is explicitly left open.** Lutz & Wolter state (p. 31): "Perhaps the most interesting candidate is L_RCC5(RS) [...] to which the reduction exhibited in Section 8 does not apply."
 
@@ -1903,7 +1903,7 @@ Every topological model is an abstract model, but not vice versa. The Lutz-Wolte
 
 Wessel identified exactly this obstruction in report7.pdf (FBI-HH-M-324/03):
 1. **Even-odd chain** (Section 4.4.2): alternating even/odd markers along TPPI chain, exploiting (TPPI)⁺ - TPPI ⊆ NTPPI to create functional successors
-2. **Binary counter** (Section 4.4.2): n-bit counter encoding forcing paths of length ≥ 2^n → EXPTIME-hardness
+2. **Binary counter** (Section 4.4.2): n-bit counter encoding forcing paths of length ≥ 2ⁿ → EXPTIME-hardness
 3. **Grid construction** (Figure 10): explicit n×n RCC8 network using TPP for H/V successors, PO within rows, NTPP for indirect containment — composition-consistent
 4. **Coincidence obstruction** (Figure 11): composition table allows {PO, EQ, TPP, NTPP, TPPI, NTPPI} at the diagonal point → no concept term can force z = z'
 5. **Undecidability boundary** (p. 43-44): adding hybrid logic binding operator ↓ would immediately yield undecidability, confirming coincidence is the precise boundary
@@ -2216,7 +2216,7 @@ The valid quasimodel **exists as a subset** of Tp(C₀), but the greatest-fixpoi
 
 #### Additional Bug: Q3 Soundness Proof
 
-The soundness proof for Q3 (Section 5) handles the case τ₂ = τ₃ by setting R₂₃ = EQ. But DN is defined over NR \ {EQ}, so EQ ∉ DN(τ₂, τ₂). The proof silently uses EQ in a domain that excludes it.
+The soundness proof for Q3 (Section 5) handles the case τ₂ = τ₃ by setting R₂₃ = EQ. But DN is defined over NR  {EQ}, so EQ ∉ DN(τ₂, τ₂). The proof silently uses EQ in a domain that excludes it.
 
 #### Implications
 
@@ -2261,7 +2261,7 @@ Updated `README.md` with full counterexample analysis and cascade mechanism.
 
 The paper (`decidability_ALCIRCC5.tex`) Section 7 presents a tableau calculus with **equality-anywhere blocking** (just label equality: L(x)=L(y)). This is different from the Tri-neighborhood tableau (`tableau_ALCIRCC5.tex`) whose termination was disproved in Parts 39-40. The Section 7 tableau:
 
-- **Terminates**: Yes — label-equality blocking bounds active nodes to 2^n (experimentally confirmed: 14/14 concepts terminate with label-only blocking)
+- **Terminates**: Yes — label-equality blocking bounds active nodes to 2ⁿ (experimentally confirmed: 14/14 concepts terminate with label-only blocking)
 - **Completeness**: Yes — model-guided open branch exists
 - **Soundness**: **NOT ESTABLISHED** — the proof extracts a quasimodel from the open completion graph and invokes the Henkin construction (Theorem 5.1), which has the **extension gap** (Remark 5.4)
 
@@ -2933,7 +2933,7 @@ Wessel asked to compute the complete subsumption hierarchy for the GIS example f
 
 ### Approaches tried and rejected
 
-1. **Deep expansion** (`deep_expand`): Recursively expands all atoms inside modals. Produces closures of 60–70, with 2^18+ type candidates. Impractical (>120s timeout).
+1. **Deep expansion** (`deep_expand`): Recursively expands all atoms inside modals. Produces closures of 60–70, with 2¹8+ type candidates. Impractical (>120s timeout).
 2. **TBox internalization** (adding ∀R.(¬sub ⊔ sup) for all R): Adds 8+ closure items per GCI. Works for 1/4 cases (hamburg ⊑ city_at_river in 49s) but closures of 48–60 for the other 3 cases cause type enumeration to time out.
 3. **Type constraints (adopted)**: Zero closure overhead, filters invalid types during enumeration. Instant for simple atom constraints. Combined with manual modal expansion for the complex case.
 
@@ -3168,32 +3168,32 @@ Michael pointed out two issues in the overview paper:
 ### Context
 
 Michael posed a sequence of satisfiability puzzles around nested existentials of the form
-$C \sqcap \exists\PO.\exists\PO.(\pm C) \sqcap \forall R.(\pm C)$
+C ⊓ ∃PO.∃PO.(± C) ⊓ ∀R.(± C)
 and asked how the two reasoners (quasimodel vs. cover-tree tableau) answer them. The discussion uncovered two instructive example patterns and a bug in the quasimodel implementation.
 
 ### The two tricky examples
 
-**1. The ``$\PO$-loop'': 2-element SAT model.**  The concept
-$$Y \;=\; C \sqcap \exists\PO.\exists\PO.C \sqcap \forall\PO.\neg C \sqcap \forall\DR.\neg C \sqcap \forall\PP.\neg C \sqcap \forall\PPI.\neg C$$
-looks unsatisfiable at first glance — the four universals appear to block every composition entry for $\rho(d, b)$ where $d \;\PO\; a \;\PO\; b$ and $b \in C$, because $\comp(\PO,\PO) = \{\DR,\PO,\PP,\PPI,\EQ\}$ and each of the four non-$\EQ$ options forces $b \in \neg C$.
+**1. The ``PO-loop'': 2-element SAT model.**  The concept
+Y = C ⊓ ∃PO.∃PO.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PP.¬C ⊓ ∀PPI.¬C
+looks unsatisfiable at first glance — the four universals appear to block every composition entry for ρ(d, b) where d PO a PO b and b ∈ C, because comp(PO,PO) = {DR,PO,PP,PPI,EQ} and each of the four non-EQ options forces b ∈ ¬C.
 
-But $Y$ is **satisfiable** via the 2-element model $\{d, a\}$ with $C^\mathcal{I} = \{d\}$ and $\rho(d,a) = \PO$. Because $\PO$ is symmetric, the chain $d \;\PO\; a \;\PO\; d$ loops back to the root — the ``third node'' of $\exists\PO.\exists\PO.C$ **is** $d$ itself, under strong $\EQ$ identity. Two syntactic positions collapse to one semantic element. The universals $\forall R.\neg C$ constrain $d$'s outgoing neighbours (and $a \in \neg C$ satisfies them), but they do not prevent $d$ from **being** a $\PO$-neighbour of $a$. This asymmetry is peculiar to symmetric roles ($\PO$, $\DR$); $\PP$/$\PPI$ cannot form such cycles because they are asymmetric and irreflexive.
+But Y is **satisfiable** via the 2-element model {d, a} with C^I = {d} and ρ(d,a) = PO. Because PO is symmetric, the chain d PO a PO d loops back to the root — the ``third node'' of ∃PO.∃PO.C **is** d itself, under strong EQ identity. Two syntactic positions collapse to one semantic element. The universals ∀R.¬C constrain d's outgoing neighbours (and a ∈ ¬C satisfies them), but they do not prevent d from **being** a PO-neighbour of a. This asymmetry is peculiar to symmetric roles (PO, DR); PP/PPI cannot form such cycles because they are asymmetric and irreflexive.
 
-**2. ``Clash-out to $\EQ$'': genuine UNSAT via strong $\EQ$.**  The complementary concept
-$$Z \;=\; C \sqcap \exists\PO.\exists\PO.\neg C \sqcap \forall\PO.C \sqcap \forall\DR.C \sqcap \forall\PP.C \sqcap \forall\PPI.C$$
-is genuinely unsatisfiable. In the chain $d \;\PO\; a \;\PO\; c$, the four universals force $c \in C$ through every non-$\EQ$ composition entry, but $c \in \neg C$ is demanded by $\exists\PO.\neg C$ at $a$. All four non-$\EQ$ options for $\rho(d,c)$ thus clash, leaving only $\EQ$. Under **strong $\EQ$** (= identity), $\rho(d,c) = \EQ$ forces $d = c$, yielding $C(d) \land \neg C(d)$. The $\PO$-loop escape fails because $d \in C$ and $c \in \neg C$ are incompatible, so $d \ne c$ is forced semantically. This example illustrates why strong-$\EQ$ semantics is essential — under weak $\EQ$ the collapse would not be an immediate clash.
+**2. ``Clash-out to EQ'': genuine UNSAT via strong EQ.**  The complementary concept
+Z = C ⊓ ∃PO.∃PO.¬C ⊓ ∀PO.C ⊓ ∀DR.C ⊓ ∀PP.C ⊓ ∀PPI.C
+is genuinely unsatisfiable. In the chain d PO a PO c, the four universals force c ∈ C through every non-EQ composition entry, but c ∈ ¬C is demanded by ∃PO.¬C at a. All four non-EQ options for ρ(d,c) thus clash, leaving only EQ. Under **strong EQ** (= identity), ρ(d,c) = EQ forces d = c, yielding C(d) ∧ ¬C(d). The PO-loop escape fails because d ∈ C and c ∈ ¬C are incompatible, so d ≠ c is forced semantically. This example illustrates why strong-EQ semantics is essential — under weak EQ the collapse would not be an immediate clash.
 
 ### The bug
 
-The cover-tree tableau reports both examples correctly (SAT for $Y$, UNSAT for $Z$). The quasimodel reasoner (`src/alcircc5_reasoner.py`) reports $Y$ **incorrectly as UNSAT**.
+The cover-tree tableau reports both examples correctly (SAT for Y, UNSAT for Z). The quasimodel reasoner (`src/alcircc5_reasoner.py`) reports Y **incorrectly as UNSAT**.
 
-Root cause: the role-path compatibility check `check_role_path_compatibility` requires, for every chain $g \to_R j \to_S w$, that $\comp(\inv(S), \inv(R)) \cap \Safe(w, g) \ne \emptyset$. This check implicitly treats $w$ as a fresh node in a tree unfolding. When $w$ may equal $g$ itself (through a symmetric role), the check is too strict — it rejects exactly the cyclic witnesses that symmetric roles need. The quasimodel implementation therefore silently assumes tree models, whereas $\ALCIRCC{5}$ genuinely admits (and sometimes requires) cyclic models. The cover-tree tableau sidesteps this by representing cycles as back-edges.
+Root cause: the role-path compatibility check `check_role_path_compatibility` requires, for every chain g →_R j →_S w, that comp(inv(S), inv(R)) ∩ §afe(w, g) ≠ ∅. This check implicitly treats w as a fresh node in a tree unfolding. When w may equal g itself (through a symmetric role), the check is too strict — it rejects exactly the cyclic witnesses that symmetric roles need. The quasimodel implementation therefore silently assumes tree models, whereas ALCI_RCC5 genuinely admits (and sometimes requires) cyclic models. The cover-tree tableau sidesteps this by representing cycles as back-edges.
 
 This is a completeness bug in the *implementation*, not the quasimodel *theory* — the theory's Henkin construction does admit identification of tree nodes. The concepts wrongly rejected are precisely those whose satisfiability requires a cycle through a symmetric relation.
 
 ### What was done
 
-1. **`README.md`**: Added three paragraphs after the PP-forcing section documenting (a) the 2-element $\PO$-loop SAT model, (b) the clash-to-$\EQ$ UNSAT pattern, and (c) the quasimodel completeness bug.
+1. **`README.md`**: Added three paragraphs after the PP-forcing section documenting (a) the 2-element PO-loop SAT model, (b) the clash-to-EQ UNSAT pattern, and (c) the quasimodel completeness bug.
 
 2. **`papers/overview_ALCIRCC5.tex`**: Added three new environments after the PP-forcing example:
    - `examplex{The ``$\PO$-loop'': 2-element SAT via symmetric cycles}` (label `ex:po-loop`)
@@ -3339,7 +3339,7 @@ After the morning's PP/PPI-transitivity fix, Opus 4.7 produced a full adversaria
 
 The review's verdict: **significantly more action is required.** The transitivity fix patched only 2 of 12 counterexamples. The broader family is:
 \[
-  C_{R_1, R_2} \equiv \exists R_1.\exists R_2.A \sqcap \bigwedge_{R \in \comp(R_1, R_2)} \forall R.\neg A, \qquad R_2 \neq \inv(R_1)
+  C_R₁, R₂ ≡ ∃R₁.∃R₂.A ⊓ ⋀_R ∈ comp(R₁, R₂) ∀R.¬A,    R₂ ≠ inv(R₁)
 \]
 which is unsatisfiable for every such (R₁, R₂): the three-type chain `g →R₁→ j →R₂→ w` with `A ∈ w` forces `g` to relate to `w` by some R ∈ comp(R₁, R₂), and every such R is barred at `g`.
 
@@ -3403,7 +3403,7 @@ Three batches, all run against the cycle-aware quasimodel reasoner (`alcircc5_re
 
 **(a) Regression on the 12 Round-1 counterexamples.** The full 4×4 grid of
 \(
-  C_{R_1, R_2} \equiv \exists R_1.\exists R_2.A \;\sqcap\; \bigsqcap_{R \in \comp(R_1, R_2)} \forall R.\lnot A, \qquad R_2 \neq \inv(R_1)
+  C_R₁, R₂ ≡ ∃R₁.∃R₂.A ⊓ ⊓_R ∈ comp(R₁, R₂) ∀R.¬A,    R₂ ≠ inv(R₁)
 \)
 — all 12 cells now report UNSAT in both `cover_tree_tableau` and `alcircc5_reasoner_cyclic`. Previously 12 structural mismatches; now 0/12.
 
@@ -3459,7 +3459,7 @@ A brief closing note after reviewing Opus 4.7's Round-2 work and the harness it 
 
 Both rounds of this review were genuinely useful, and not only because they found bugs. What the review got right, and what the project benefited from, was adversarial discipline applied at the right level of abstraction:
 
-- **Round 1** didn't stop at "the cover-tree returns SAT on a concept that is UNSAT." It identified the minimal counterexample, generalised it to a $4 \times 4$ parametric family derived directly from the RCC5 composition table, proved the family structurally (Theorem 1), located the bug to a specific short-circuit in a specific function, and wrote the repair sketch at the calculus level (not as a patch). The repair sketch was precise enough that it could be adopted verbatim as `check_role_path_compatibility` / CT5. This is the shape of review that actually moves a project forward.
+- **Round 1** didn't stop at "the cover-tree returns SAT on a concept that is UNSAT." It identified the minimal counterexample, generalised it to a 4 × 4 parametric family derived directly from the RCC5 composition table, proved the family structurally (Theorem 1), located the bug to a specific short-circuit in a specific function, and wrote the repair sketch at the calculus level (not as a patch). The repair sketch was precise enough that it could be adopted verbatim as `check_role_path_compatibility` / CT5. This is the shape of review that actually moves a project forward.
 
 - **Round 2** did the equally important inverse: having handed over a fix, it constructed families specifically designed to stress the new check in ways the Round-1 bug did not (4-role chains, grandchild/grandparent/sibling triangles that bypass CT5's demand-rooted scope, sibling-universal interactions across singleton and non-singleton compositions, EQ-admitting boundary cases). When these all came back matching, the withdrawal of the Round-1 soundness-failure claim was earned, not merely polite. The 400+/0 number is only as meaningful as the adversarial creativity behind the generators, and the L/M/N/O/Q/F families show real creativity.
 
@@ -3492,7 +3492,7 @@ Michael asked whether the coincidence-domino reduction (the one that fails for A
 
 Wrote this up carefully — a schema with a `Corner` local-isolation concept, a level-1 SAT analysis, and a level-2 analysis showing that the grid nevertheless collapses, but via a different mechanism than the RCC5 case. In RCC5 the collapse is transitive-propagation at level 2 (comp(PPI,PPI) = {PPI} forces the corners onto the diagonal); in RCC8 the collapse is the coincidence obstruction from Wessel's Figure 11 — the composition table permits {PO, EQ, TPP, NTPP, TPPI, NTPPI} between the two would-be-distinct corners, and nothing syntactically rules out EQ, so the corners are free to coincide and the attempted domino encoding does not enforce the required halting behaviour.
 
-The punchline is that the two failures are structurally different, and the second (coincidence obstruction) is the one that Lutz & Wolter 2006 resolve topologically for $L_{RCC8}$ via boundary-sensitive semantics, which ALCI\_RCC8 lacks. This also explains why L\_RCC8 undecidability does not transfer to ALCI\_RCC8: the mechanism that makes the undecidability argument go through for L\_RCC8 is not available here.
+The punchline is that the two failures are structurally different, and the second (coincidence obstruction) is the one that Lutz & Wolter 2006 resolve topologically for L_RCC8 via boundary-sensitive semantics, which ALCI\_RCC8 lacks. This also explains why L\_RCC8 undecidability does not transfer to ALCI\_RCC8: the mechanism that makes the undecidability argument go through for L\_RCC8 is not available here.
 
 Added this as §3.4 of the overview paper (`sec:domino-attempt-rcc8`) and as §5.4 of the L\_RCC8 vs ALCI\_RCC8 paper (`sec:concrete-tppi-attempt`). A few macro issues came up during the write-up — `\bigsqcap` was undefined in the overview preamble (replaced with `\bigwedge`), and the L\_RCC8 paper does not define `\TPPI`, `\NTPPI`, `\DC`, `\PPI` etc. macros, so that subsection was rewritten to use plain-text relation names in math mode to match the paper's existing style.
 
@@ -3505,10 +3505,10 @@ The right answer is: the statement needs to be relaxed *but also sharpened*, bec
 Added a new §7.3 "Proof status: theory vs. implementation" (`sec:proof-status`) with a three-part breakdown:
 
 - **(a) Soundness of split-forest semantics** — proven in the split-forest paper (Thms 1.17–1.19) by LCA induction + König's lemma + canonical refinements.
-- **(b) Completeness extraction** — proven in the completeness-extraction paper via the key lemma that relations realized in a genuine model are automatically relation-safe, so $\mathsf{Need}_R$-filtered domains are non-empty and the extraction produces a valid finite rank-$d$ quotient.
+- **(b) Completeness extraction** — proven in the completeness-extraction paper via the key lemma that relations realized in a genuine model are automatically relation-safe, so Need_R-filtered domains are non-empty and the extraction produces a valid finite rank-d quotient.
 - **(c) Decidability of ALCI\_RCC5** — follows from (a) and (b) together.
 
-Then "What the cover-tree tableau is and is not" as a bullet list: the implementation checks a {DR, PO}-restricted path-consistency condition via CT1–CT5; (C3)–(C4) sibling-interface downward-support axioms are not explicitly checked; witness menus, rank-$d$ states, and $\mathsf{Need}_R$ filtering are not constructed; CT5 is a patch derived from adversarial-review counterexamples, not from the split-forest calculus. The subsection concludes with a one-sentence summary: the cover-tree tableau is an *inspired realization* that happens to align with the semantics on the 911+400+ tested concepts, but is not formally derived from it.
+Then "What the cover-tree tableau is and is not" as a bullet list: the implementation checks a {DR, PO}-restricted path-consistency condition via CT1–CT5; (C3)–(C4) sibling-interface downward-support axioms are not explicitly checked; witness menus, rank-d states, and Need_R filtering are not constructed; CT5 is a patch derived from adversarial-review counterexamples, not from the split-forest calculus. The subsection concludes with a one-sentence summary: the cover-tree tableau is an *inspired realization* that happens to align with the semantics on the 911+400+ tested concepts, but is not formally derived from it.
 
 Also strengthened §7.3(1) to note that the Round-2 audit (400+ tests, zero mismatches post-CT5) sharpens the empirical case without closing the formal gap, with a cross-reference to the new proof-status subsection. Added a `\bibitem{CompletenessExtraction}` entry. Fixed an undefined `\SAT` → `\mathsf{SAT}`.
 
@@ -3588,7 +3588,7 @@ A third, more adversarial direction: write a small combinatorial search that enu
 
 ## April 19, 2026 (late evening) — Cascade: refuting the simplified patchwork propagations
 
-A follow-up thread later the same evening. Michael picked the "prove Proposition 7.1" direction from the previous section. The attempt produced a **counterexample** rather than a proof. After committing that, Michael asked for another undecidability angle; the natural next target was the strengthened propagation introduced by the counterexample paper. That attempt *also* produced a counterexample, one node smaller. The result is a three-paper cascade in which each paper refutes the conjecture of the previous one and proposes a stronger propagation, until the cascade terminates at split-forest rank-$d$ validity.
+A follow-up thread later the same evening. Michael picked the "prove Proposition 7.1" direction from the previous section. The attempt produced a **counterexample** rather than a proof. After committing that, Michael asked for another undecidability angle; the natural next target was the strengthened propagation introduced by the counterexample paper. That attempt *also* produced a counterexample, one node smaller. The result is a three-paper cascade in which each paper refutes the conjecture of the previous one and proposes a stronger propagation, until the cascade terminates at split-forest rank-d validity.
 
 ### Paper 2 — Two-node counterexample to Proposition 7.1
 
@@ -3603,9 +3603,9 @@ B ⊑ ∀DR.¬D, ∀PO.¬D, ∀PP.¬D, ∀PPI.¬D
 D ⊑ ¬B
 ```
 
-with $V = \{x, z\}$, $x : A$, $z : B$, and the edge $(x,z)$ typed by the full RCC5 disjunction. Arc-consistency over $V$ passes — each pairwise filtered domain is non-empty and composition-closed — but no model exists, because the forced PP-witness $y$ (with type $D$) cannot be related to $z$: every RCC5 relation is ruled out by $B$'s universals. The existential on $x$ fires *outside* the frame $V$, and the atomic patchwork of Renz-Nebel has nothing to say about a pair ($y, z$) that is not in $V$ at all.
+with V = {x, z}, x : A, z : B, and the edge (x,z) typed by the full RCC5 disjunction. Arc-consistency over V passes — each pairwise filtered domain is non-empty and composition-closed — but no model exists, because the forced PP-witness y (with type D) cannot be related to z: every RCC5 relation is ruled out by B's universals. The existential on x fires *outside* the frame V, and the atomic patchwork of Renz-Nebel has nothing to say about a pair (y, z) that is not in V at all.
 
-The paper defines **strong arc-consistency** (Def 5.1) with an added clause (iii): for every $x \in V$ and every $\exists R.C \in \lambda(x)$, either the existential is already witnessed in $V$, or some $R$-labelled atomic relation is relation-safe against *every* $z \in V \setminus \{x\}$. Under this definition, Probe 1 of the original patchwork paper is also ruled out (so the strengthening is doing real work). The paper conjectures Proposition 5.2: strong arc-consistency is complete for ALCI\_RCC5 satisfiability with domain $V$.
+The paper defines **strong arc-consistency** (Def 5.1) with an added clause (iii): for every x ∈ V and every ∃R.C ∈ λ(x), either the existential is already witnessed in V, or some R-labelled atomic relation is relation-safe against *every* z ∈ V {x}. Under this definition, Probe 1 of the original patchwork paper is also ruled out (so the strengthening is doing real work). The paper conjectures Proposition 5.2: strong arc-consistency is complete for ALCI\_RCC5 satisfiability with domain V.
 
 ### Paper 3 — One-node counterexample to Proposition 5.2
 
@@ -3620,11 +3620,11 @@ D1 ⊑ ∀DR.¬D2, ∀PO.¬D2, ∀PP.¬D2, ∀PPI.¬D2
 D1 ⊑ ¬D2
 ```
 
-with $V = \{x\}$, $x : A$. Strong arc-consistency passes vacuously: $V \setminus \{x\}$ is empty, so clause (iii) is satisfied for both existentials. But no model exists: any $y_1 : D_1$ and $y_2 : D_2$ must be related by *some* RCC5 relation, and $D_1$'s universals rule out every one.
+with V = {x}, x : A. Strong arc-consistency passes vacuously: V {x} is empty, so clause (iii) is satisfied for both existentials. But no model exists: any y₁ : D₁ and y₂ : D₂ must be related by *some* RCC5 relation, and D₁'s universals rule out every one.
 
-The one-node failure is the sharpest form of the gap. It shows that existential propagation that checks each existential *independently* against $V$ cannot catch an obstruction that lives *between two pending witnesses*. The paper defines **stronger arc-consistency** (Def 5.1) with an additional inter-witness clause: for every pair of existentials $(\exists R_1.C_1, \exists R_2.C_2)$ on the same node, there must exist a pair $(R_1', R_2')$ of relations with $R_i' \in \text{atoms}(R_i)$, a third relation $S$, and types realising $C_1, C_2$ such that the triangle $(R_1', R_2', S)$ is composition-consistent and $S$ is relation-safe between the two witness types.
+The one-node failure is the sharpest form of the gap. It shows that existential propagation that checks each existential *independently* against V cannot catch an obstruction that lives *between two pending witnesses*. The paper defines **stronger arc-consistency** (Def 5.1) with an additional inter-witness clause: for every pair of existentials (∃R₁.C₁, ∃R₂.C₂) on the same node, there must exist a pair (R₁', R₂') of relations with R_i' ∈ atoms(R_i), a third relation S, and types realising C₁, C₂ such that the triangle (R₁', R₂', S) is composition-consistent and S is relation-safe between the two witness types.
 
-The paper conjectures Proposition 6.1: stronger arc-consistency is equivalent to split-forest rank-$d$ validity. In other words, the cascade terminates here — any further strengthening is just split-forest validity under a different name.
+The paper conjectures Proposition 6.1: stronger arc-consistency is equivalent to split-forest rank-d validity. In other words, the cascade terminates here — any further strengthening is just split-forest validity under a different name.
 
 ### Pattern
 
@@ -3633,16 +3633,16 @@ Counterexample size shrinks as propagation strength grows:
 - Atomic patchwork (Renz-Nebel 1999) — lives inside one frame, no witness extension.
 - Arc-consistent typed patchwork (Prop 7.1, Paper 1) — refuted by a 2-node example (Paper 2).
 - Strong arc-consistency (Prop 5.2, Paper 2) — refuted by a 1-node example (Paper 3).
-- Stronger arc-consistency (Def 5.1, Paper 3) — conjectured equivalent to rank-$d$ validity.
+- Stronger arc-consistency (Def 5.1, Paper 3) — conjectured equivalent to rank-d validity.
 
-The fixed point is split-forest semantics itself. There is no simpler propagation that captures ALCI\_RCC5 satisfiability; the witness-menu / inter-witness / composition-triangle structure of rank-$d$ validity is not an accident of the construction but a genuine minimal requirement.
+The fixed point is split-forest semantics itself. There is no simpler propagation that captures ALCI\_RCC5 satisfiability; the witness-menu / inter-witness / composition-triangle structure of rank-d validity is not an accident of the construction but a genuine minimal requirement.
 
 ### Outcome
 
 Net effect on the decidability/undecidability balance:
 
-- **Decidability case strengthened.** The cascade concretises the "no $k$-ary synthesis for $k \geq 4$" argument from the patchwork paper: every obstruction sits at arity 2 or 3 (pairwise type-safety, triangle composition, or inter-witness triangles), and the witness-extension hierarchy captures all of them.
-- **Undecidability case weakened.** Each stronger propagation closes off more counterexample space. A genuine undecidability reduction must now exhibit an obstruction that rank-$d$ validity misses — and the cascade suggests that bar is very high.
+- **Decidability case strengthened.** The cascade concretises the "no k-ary synthesis for k ≥ 4" argument from the patchwork paper: every obstruction sits at arity 2 or 3 (pairwise type-safety, triangle composition, or inter-witness triangles), and the witness-extension hierarchy captures all of them.
+- **Undecidability case weakened.** Each stronger propagation closes off more counterexample space. A genuine undecidability reduction must now exhibit an obstruction that rank-d validity misses — and the cascade suggests that bar is very high.
 
 ### Commits (on `master`, pushed to `origin`)
 
@@ -3660,7 +3660,7 @@ After the cascade, Michael asked what *other* undecidability angle to pursue. Th
 
 None of these look promising. The honest recommendation is to stop attacking undecidability and invest in the decidability side instead:
 
-- **(a)** Prove Proposition 6.1 rigorously — establish that stronger arc-consistency equals rank-$d$ validity. This would give a second, independent decidability argument grounded in constraint propagation rather than tree semantics.
+- **(a)** Prove Proposition 6.1 rigorously — establish that stronger arc-consistency equals rank-d validity. This would give a second, independent decidability argument grounded in constraint propagation rather than tree semantics.
 - **(b)** Audit the cover-tree implementation against split-forest validity. The theory-vs-implementation gap flagged in the previous session is the concrete remaining uncertainty; closing it would turn the 911+400+ empirical result into a derivation from the calculus.
 
 Michael asked for this overall sentiment to be written up in the README under the existing "standard undecidability attempts" section. The README now has a new subsection "Direct attacks on the patchwork property (April 2026, Claude)" with a compact summary of the cascade, its pattern, and the pivot recommendation.
@@ -3710,7 +3710,7 @@ Michael asked Claude to web-verify the claim that this project constitutes the f
 
 ### What AI has demonstrably done in math, 2024--2026
 
-- **Knuth / Claude Opus 4.6 (February 2026)** --- *Claude's Cycles*: Hamiltonian decomposition of a Cayley digraph on $m^3$ vertices for all odd $m$. Combinatorics / graph theory, not logic. Guided by Filip Stappers over 31 exploration steps; Knuth wrote the rigorous proof himself.
+- **Knuth / Claude Opus 4.6 (February 2026)** --- *Claude's Cycles*: Hamiltonian decomposition of a Cayley digraph on m³ vertices for all odd m. Combinatorics / graph theory, not logic. Guided by Filip Stappers over 31 exploration steps; Knuth wrote the rigorous proof himself.
 - **AlphaProof (DeepMind, July 2024)**: IMO silver-medal-standard problems in Lean. Olympiad-level theorems, not open research problems.
 - **Axiom AI (early 2026)**: Four open problems in algebraic geometry and number theory, including a Chen-Gendron conjecture unsolved since 2021. Human verification underway by Tao et al.
 - **GPT-5.2 + Aristotle**: Erdős problems #397, #728, #729 — additive combinatorics. Since Christmas 2025, 15 problems moved from open to solved on the Erdős website, with 11 crediting AI involvement; Tao has counted eight where AI made meaningful autonomous progress.
@@ -3726,16 +3726,16 @@ The claim is defensible *with hedging*. Drop any of the following hedges and it 
 
 1. **"Proposed / unverified."** The results are not peer-reviewed and rely on AI-generated LaTeX and implementations. The README disclaims this; the priority claim must keep it in view.
 2. **"Heavily human-guided."** Wessel posed the problem in 2002/2003 and supplied the key structural intuitions (PPI-tree orientation, EQ-splitting, DR-rigidity). This is not an autonomous AI result in the Erdős-#728 sense. The division of labor is documented in the overview paper's "A note on the process" and should not be softened.
-3. **"Non-trivial."** Should be paired with explicit scope: $\ALCIRCC{5}$ is an ALC extension with JEPD role axioms and RCC5 composition; the decidability of concept satisfiability has been open for ~22 years (Wessel 2002/2003).
+3. **"Non-trivial."** Should be paired with explicit scope: ALCI_RCC5 is an ALC extension with JEPD role axioms and RCC5 composition; the decidability of concept satisfiability has been open for ~22 years (Wessel 2002/2003).
 4. **"To our knowledge."** Standard priority-claim hedge. Covers the possibility of a quieter result in a venue web search cannot reach.
 
 ### Recommended phrasing
 
-> To our knowledge, this is the first proposed AI-generated decidability proof for a non-trivial open problem in description logic — specifically, concept satisfiability in $\ALCIRCC{5}$, an open question from Wessel (2002/2003). The results are unverified and offered for community scrutiny.
+> To our knowledge, this is the first proposed AI-generated decidability proof for a non-trivial open problem in description logic — specifically, concept satisfiability in ALCI_RCC5, an open question from Wessel (2002/2003). The results are unverified and offered for community scrutiny.
 
 ### Search notes
 
-Search was via WebSearch (Google-backed) plus WebFetch on the Knuth PDF, the Tao blog post, the KR 2024 proceedings index, CEUR-WS Vol-3739, and LIPIcs CSL 2026 vol 363. The relevant AI-in-math timeline consistently covers combinatorics, number theory, algebraic geometry, and olympiad-level analysis --- not decidability results in logics with expressive role structure. The `ALCIRCC` family, the patchwork property, and split-forest rank-$d$ semantics have no prior AI-generated treatment according to indexed web content as of April 2026.
+Search was via WebSearch (Google-backed) plus WebFetch on the Knuth PDF, the Tao blog post, the KR 2024 proceedings index, CEUR-WS Vol-3739, and LIPIcs CSL 2026 vol 363. The relevant AI-in-math timeline consistently covers combinatorics, number theory, algebraic geometry, and olympiad-level analysis --- not decidability results in logics with expressive role structure. The `ALCIRCC` family, the patchwork property, and split-forest rank-d semantics have no prior AI-generated treatment according to indexed web content as of April 2026.
 
 ## Scrub of stale references to the retracted quasimodel paper (April 2026)
 
@@ -3752,7 +3752,7 @@ After the decidability argument was consolidated onto GPT-5.4's split-forest pap
 
 - **`1ae0929` — Overview paper: matching fix.** `papers/overview_ALCIRCC5.tex` line 1115 (and mirrored in the untracked `dl2026_abstract_ALCIRCC5.tex` line 1177) contained the same leftover phrase about *"the quasimodel type-elimination argument that underpins the decidability theorem"*. Replaced with *"the split-forest / completeness-extraction argument that underpins the decidability theorem"*. PDFs regenerated.
 
-- **`cef9c76` — README: add completeness-extraction paper to the intro section.** The intro (lines 96–108), immediately after GPT-5.4's two papers, previously jumped straight to Claude's Python implementation, omitting Claude's completeness-extraction paper. The paper only appeared in the "Key files" block further down. Added a new paragraph ("Closing the completeness gap by Claude (Opus 4.7)") between GPT's formalization and Wessel's PP-cross-edge correction, stating the paper's scope (split-tree presentation → rank-$d$ state assignment → descriptor extraction → witness-menu extraction → quotient formation → validity verification), the key lemma (model-realized relations are already relation-safe for endpoint types, so Need_$R$-filtering is vacuous for model-extracted quotients), and its role in combination with GPT's soundness chain (Thms 1.17–1.19).
+- **`cef9c76` — README: add completeness-extraction paper to the intro section.** The intro (lines 96–108), immediately after GPT-5.4's two papers, previously jumped straight to Claude's Python implementation, omitting Claude's completeness-extraction paper. The paper only appeared in the "Key files" block further down. Added a new paragraph ("Closing the completeness gap by Claude (Opus 4.7)") between GPT's formalization and Wessel's PP-cross-edge correction, stating the paper's scope (split-tree presentation → rank-d state assignment → descriptor extraction → witness-menu extraction → quotient formation → validity verification), the key lemma (model-realized relations are already relation-safe for endpoint types, so Need_R-filtering is vacuous for model-extracted quotients), and its role in combination with GPT's soundness chain (Thms 1.17–1.19).
 
 ### Audit coverage
 
@@ -3775,7 +3775,7 @@ Answer: **incomplete**, not unsound.
 - **Unsound** would mean reporting SAT when the concept is actually UNSAT.
 - **Incomplete** means reporting UNSAT when the concept is actually SAT.
 
-The quasimodel reasoner (`src/alcircc5_reasoner.py`) is incomplete on the **PO-loop pattern** --- e.g., $C \sqcap \exists \PO.\exists \PO. C \sqcap \forall \PO.\neg C \sqcap \forall \DR.\neg C \sqcap \forall \PP.\neg C \sqcap \forall \PPI.\neg C$. This is SAT via a 2-element symmetric loop (strong EQ identifies the two endpoints of the $\exists \PO.\exists \PO$ chain with the root), but the constructive bottom-up search wrongly reports UNSAT.
+The quasimodel reasoner (`src/alcircc5_reasoner.py`) is incomplete on the **PO-loop pattern** --- e.g., C ⊓ ∃PO.∃PO. C ⊓ ∀PO.¬C ⊓ ∀DR.¬C ⊓ ∀PP.¬C ⊓ ∀PPI.¬C. This is SAT via a 2-element symmetric loop (strong EQ identifies the two endpoints of the ∃PO.∃PO chain with the root), but the constructive bottom-up search wrongly reports UNSAT.
 
 The retracted quasimodel **paper** (`decidability_ALCIRCC5.pdf`) was also incomplete, for a different reason: the type-elimination's Q3 condition was anti-monotone, causing cascade elimination of valid types.
 
@@ -3787,27 +3787,27 @@ Wessel asked whether the claim in `papers/LRCC8_vs_ALCIRCC8.tex` --- that Lutz a
 
 **Procedure.** Fetched the paper from `https://arxiv.org/pdf/cs/0605064`, extracted text with `pdftotext`, and grep'd for "Wessel", "Egenhofer-Franzosa", "no results", "several efforts", "best of our knowledge". The relevant passage is on page 2 of the paper.
 
-**Quote verification.** The passage in Lutz \& Wolter 2006, page 2 (extracted text lines 86--90), reads:
+**Quote verification.** The passage in Lutz & Wolter 2006, page 2 (extracted text lines 86--90), reads:
 
 > *"We should note that modal logics based on the Egenhofer-Franzosa relations have been suggested in an early paper by Cohn [Coh93] and further considered in [Wes01]. However, it proved difficult to analyze the expressive power and computational behavior of such logics: despite several efforts, to the best of our knowledge no results have been obtained so far."*
 
 This is a verbatim match to the block quote on lines 589--596 of `LRCC8_vs_ALCIRCC8.tex`. No paraphrasing, no embellishment, no material added.
 
-**Citation claim verification.** The bibliography of Lutz \& Wolter 2006 (extracted text lines 2423, 2445--2447) contains exactly one Wessel reference:
+**Citation claim verification.** The bibliography of Lutz & Wolter 2006 (extracted text lines 2423, 2445--2447) contains exactly one Wessel reference:
 
-> `[Wes01]` M. Wessel. *Obstacles on the way to qualitative spatial reasoning with description logics: Some undecidability results.* In C.\ Goble, D.\,L.\ McGuinness, R.\ M\"oller, and P.\,F.\ Patel-Schneider, editors, *Proceedings of the International Workshop in Description Logics 2001 (DL2001)*, number 49 in CEUR-WS, pages 96--105, 2001.
+> `[Wes01]` M. Wessel. *Obstacles on the way to qualitative spatial reasoning with description logics: Some undecidability results.* In C. Goble, D.L. McGuinness, R. M\"oller, and P.F. Patel-Schneider, editors, *Proceedings of the International Workshop in Description Logics 2001 (DL2001)*, number 49 in CEUR-WS, pages 96--105, 2001.
 
-No `[Wes02]`, no `[Wes03]`. The 2002/2003 technical report FBI-HH-M-324/03 (`report7.pdf`) --- which contains the fuller development, including decidability of $\ALCIRCC{1,2,3}$, $\PSPACE$-hardness of $\ALCIRCC{5}$, $\EXPTIME$-hardness of $\ALCIRCC{8}$, the grid construction (Figure~10), the coincidence obstruction (Figure~11), and the hybrid-logic axiomatization --- is not cited.
+No `[Wes02]`, no `[Wes03]`. The 2002/2003 technical report FBI-HH-M-324/03 (`report7.pdf`) --- which contains the fuller development, including decidability of ALCI_RCC1,2,3}, PSPACE-hardness of ALCI_RCC5, EXPTIME-hardness of ALCI_RCC8, the grid construction (Figure~10), the coincidence obstruction (Figure~11), and the hybrid-logic axiomatization --- is not cited.
 
-**Assessment of dismissiveness.** The phrase *"despite several efforts, to the best of our knowledge no results have been obtained so far"* is their exact wording. This characterization is demonstrably inaccurate even with respect to `[Wes01]` (which contains undecidability results for $\ALC_{\mathcal{RA}^\ominus}$ via PCP reduction), and further inaccurate with respect to the uncited `report7.pdf`, which contains the decidability results for $\ALCIRCC{1,2,3}$, complexity lower bounds, the coincidence obstruction analysis, and the hybrid-logic axiomatization.
+**Assessment of dismissiveness.** The phrase *"despite several efforts, to the best of our knowledge no results have been obtained so far"* is their exact wording. This characterization is demonstrably inaccurate even with respect to `[Wes01]` (which contains undecidability results for ALC_RA^⊖ via PCP reduction), and further inaccurate with respect to the uncited `report7.pdf`, which contains the decidability results for ALCI_RCC1,2,3}, complexity lower bounds, the coincidence obstruction analysis, and the hybrid-logic axiomatization.
 
 **Verdict.** The claim in `LRCC8_vs_ALCIRCC8.tex` stands:
 1. The attributed quote is verbatim;
-2. Lutz \& Wolter 2006 cites only `[Wes01]`, not the 2002/2003 technical report;
+2. Lutz & Wolter 2006 cites only `[Wes01]`, not the 2002/2003 technical report;
 3. The "no results have been obtained so far" characterization is their actual wording and is factually incorrect given both the cited and uncited Wessel material.
 
 **Sources.**
-- Lutz \& Wolter, *Modal Logics of Topological Relations*, arXiv:cs/0605064 (<https://arxiv.org/abs/cs/0605064>)
+- Lutz & Wolter, *Modal Logics of Topological Relations*, arXiv:cs/0605064 (<https://arxiv.org/abs/cs/0605064>)
 - LMCS listing: <https://lmcs.episciences.org/2253>
 
 ---
@@ -3941,10 +3941,10 @@ Inside the "Tools and Python implementations" group:
   decision procedure, ~350 lines).
 - `CyclicReasoner` — `src/alcircc5_reasoner_cyclic.py` (cycle-aware
   wrapper around the baseline quasimodel reasoner; restores the
-  $911/911$ cross-validation match).
+  911/911 cross-validation match).
 - `ModelVerifier` — `src/model_verifier.py` (standalone replayer for
   models emitted by the tableau).
-- `DecompositionTest` — `src/decomposition_test.py` ($775/775$ SAT
+- `DecompositionTest` — `src/decomposition_test.py` (775/775 SAT
   concepts decomposed into finite cover-tree models).
 - `StressTestCoverTree` — `src/stress_test_cover_tree.py` (911-concept
   cross-validation harness on the cover-tree side).
@@ -3959,8 +3959,8 @@ The "Computational evidence" paragraph in both papers now carries the
 implementation-artifact citations inline: `CoverTreeReasoner` is added
 alongside `CoverTreeImpl`; `QuasimodelReasoner` and `CyclicReasoner`
 back the "independent quasimodel-based reasoner" phrase; the three
-stress-test bibitems back the $911$-concept zero-mismatches claim;
-`DecompositionTest` backs the $775/775$ claim; and `ModelVerifier` is
+stress-test bibitems back the 911-concept zero-mismatches claim;
+`DecompositionTest` backs the 775/775 claim; and `ModelVerifier` is
 cited in a new trailing sentence noting that tableau-produced models
 are independently replayed by a standalone verifier.
 
@@ -3982,25 +3982,25 @@ completeness-extraction paper
 (`papers/completeness_extraction_ALCIRCC5.tex`, April 2026). The review
 identified **two structural defects**:
 
-1. **Hasse construction breaks on infinite $\PP$-chains.** v1
+1. **Hasse construction breaks on infinite PP-chains.** v1
    constructed the cover-tree by taking the Hasse diagram of the
-   $\PP$-order in the model. For witnesses of $C_\uparrow \equiv
-   \exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$ the
-   $\PP$-order has no immediate predecessor for any element (every
-   element has a strict $\PP$-predecessor), so the Hasse cover relation
+   PP-order in the model. For witnesses of C_↑ ≡
+   ∃PP.⊤ ⊓ ∀PP.∃PP.⊤ the
+   PP-order has no immediate predecessor for any element (every
+   element has a strict PP-predecessor), so the Hasse cover relation
    is empty and the construction yields a tree with no edges --- not a
    cover-tree at all.
 
-2. **Witness conflation in the $C5$ triple-coherence proof.** The v1
-   argument for the triple-coherence axiom $C5$ assumed that the three
+2. **Witness conflation in the C5 triple-coherence proof.** The v1
+   argument for the triple-coherence axiom C5 assumed that the three
    witness elements realising the three pair-relations
-   $(p_1{,}p_2),(p_2{,}p_3),(p_1{,}p_3)$ could all be drawn from the
+   (p₁{,}p₂),(p₂{,}p₃),(p₁{,}p₃) could all be drawn from the
    same model element. Different state-pairs in general have different
    witness elements; the proof needs to compose witnesses across pairs,
    which v1 did not do.
 
 GPT-5.5 also produced its own independent repaired proof using a
-**deterministic parity $\omega$-word automaton** (now in
+**deterministic parity ω-word automaton** (now in
 `papers/gpt5.5/gpt5-5-refined-proof-latest.{docx,pdf}` and the
 typeset companion
 `papers/gpt5.5/ALCIRCC5_coherent_generated_split_forest_decidability.{tex,pdf}`).
@@ -4019,28 +4019,28 @@ existing split-forest framework:
   the model and gives a definite branching structure to take covers of.
 - **R2: Generated cover edges.** Cover edges are taken **relative to
   the chosen witness set**, not as Hasse covers of the global
-  $\PP$-order. This sidesteps Defect~1: even on $C_\uparrow$ the
+  PP-order. This sidesteps Defect~1: even on C_↑ the
   witness-generated cover is non-empty by construction.
-- **R3: Containment orientation.** Parent~$\succ$~child means parent is
-  a proper $\PP$-superpart, fixing the orientation that was implicit
+- **R3: Containment orientation.** Parent~≻~child means parent is
+  a proper PP-superpart, fixing the orientation that was implicit
   but unstated in v1.
-- **R4: Self-loops on parent function.** Allow $\mathrm{par}(u)=u$ at
-  the cover-tree root for $C_\uparrow$-style witnesses, absorbing
-  infinite $\PP$-chains into a single fixed-point node.
+- **R4: Self-loops on parent function.** Allow par(u)=u at
+  the cover-tree root for C_↑-style witnesses, absorbing
+  infinite PP-chains into a single fixed-point node.
 - **R5: Support-closed mosaics.** Replace v1's raw pair-tables with
-  **mosaics closed under composition support**, which is what $C5$
+  **mosaics closed under composition support**, which is what C5
   actually needs. This fixes Defect~2: the mosaic carries enough
   structure to compose witnesses across the three pairs.
 - **R6: Explicit typed-EQ congruence axiom.** v1 conflated EQ-mate
   identification with blocking; v2 separates them and adds typed-EQ as
   its own axiom.
-- **R7: Reachability discharge for $\PP/\PPI$ eventualities.** v1 hand-waved
-  about $\PP$-eventualities being discharged by the cover-tree; v2 makes
+- **R7: Reachability discharge for PP/PPI eventualities.** v1 hand-waved
+  about PP-eventualities being discharged by the cover-tree; v2 makes
   this a precise reachability condition (no Büchi acceptance needed).
 
 ### Documentation updates
 
-Three files now describe the v1$\to$v2 repair:
+Three files now describe the v1→v2 repair:
 
 - **`README.md`** --- New top-level section
   *"GPT-5.5 review and v2 completeness extraction (May 2026)"* between
@@ -4051,7 +4051,7 @@ Three files now describe the v1$\to$v2 repair:
   May~2026; key-files list grew a v2 entry and a `gpt5.5/` entry, with
   v1 marked "superseded by v2".
 - **`papers/overview_ALCIRCC5.tex`** --- §6.6 *Completeness* rewritten
-  to narrate the v1$\to$v2 repair. New bibliography entries:
+  to narrate the v1→v2 repair. New bibliography entries:
   `CompletenessExtraction` (v2, May~2026), `CompletenessExtractionV1`
   (v1, superseded), `GPT55Generated` (GPT-5.5's automata-route paper).
 - **`papers/dl2026_abstract_ALCIRCC5.tex`** --- Same edits applied to the
@@ -4066,7 +4066,7 @@ Tracked under `papers/gpt5.5/` for archival:
 - `gpt5.5-original-review.{odt,pdf,rtf}` --- GPT-5.5's original review
   text identifying the two defects.
 - `gpt5-5-refined-proof-latest.{docx,pdf}` --- GPT-5.5's refined repair
-  using a deterministic parity $\omega$-word automaton.
+  using a deterministic parity ω-word automaton.
 - `ALCIRCC5_coherent_generated_split_forest_decidability.{tex,pdf}` ---
   Typeset version of GPT-5.5's automata-route proof (kept as an
   independent alternative path).
@@ -4099,26 +4099,26 @@ realization.  Michael asked for each in turn ("ok, do O6 now please" /
 
 ### Discharges
 
-- **O5** (`bea1ebb`).  Added \S\ref{sub:side-context} with
+- **O5** (`bea1ebb`).  Added §`\ref{sub:side-context}` with
   `def:side-context` and `lem:side-context-witness`.  Each DR/PO
-  witness lives in a side context $\Side(u,v) \subseteq T$ of size at
+  witness lives in a side context Side(u,v) ⊆ T of size at
   most~5 on which the realized mosaic satisfies all (M1)--(M7), all
   relation-safety, all universal-firing, and all RCC5 composition
   constraints.
 
-- **O6** (`936d559`).  Added \S~"Simultaneous eventuality realization"
+- **O6** (`936d559`).  Added §~"Simultaneous eventuality realization"
   with `def:canonical-unfolding`, `lem:par-mate`, and
   `lem:simul-realization` (SR1 PP via ultimately-periodic parent walk,
   SR2 PPI via child multiplicity, SR3 universal propagation via
-  mate-aware reachability).  $T$ itself is a concrete realization of
-  $U(Q)$ in which all eventualities fire simultaneously.
+  mate-aware reachability).  T itself is a concrete realization of
+  U(Q) in which all eventualities fire simultaneously.
 
-- **O4** (`f90f86d`).  Added \S~"Finite mosaic arity bound" with
-  `lem:axiom-arity` ((M1)--(M7) are $\le 3$-local), `lem:closure-arity`
-  ((SC1)--(SC4) are $\le 5$-local), `thm:arity-bound`
-  ($N(C_0) = 5$), and `cor:effective-mosaics`.  Patchwork
+- **O4** (`f90f86d`).  Added §~"Finite mosaic arity bound" with
+  `lem:axiom-arity` ((M1)--(M7) are ≤ 3-local), `lem:closure-arity`
+  ((SC1)--(SC4) are ≤ 5-local), `thm:arity-bound`
+  (N(C₀) = 5), and `cor:effective-mosaics`.  Patchwork
   [Renz--Nebel] reduces global realizability to triangle-support, so
-  the constant is independent of $C_0$.
+  the constant is independent of C₀.
 
 ### Honest assessment and tightening (`e72ccfa`)
 
@@ -4131,20 +4131,20 @@ possible."
 Tightenings in `e72ccfa`:
 
 - **O6**: replaced informal `rem:T-is-unfolding` with explicit
-  `def:projection` for $\pi : T \to U(Q)$ (walk-truncation) plus
+  `def:projection` for π : T → U(Q) (walk-truncation) plus
   `lem:pi-faithful` (parent-/child-multiplicity-/mate-respecting,
   surjective on tree-paths).  Rewrote the proof of
   `lem:simul-realization` with sharper (SR1) explicit PP-cover chain
-  $u = u_0 \to_\PP u_1 \to_\PP \cdots \to_\PP u_n = u^\dagger$, (SR2)
-  child multiplicity~$\ge 1$ via `lem:pi-faithful` (ii), (SR3)
+  u = u₀ →_PP u₁ →_PP ·s →_PP u_n = u^†, (SR2)
+  child multiplicity~≥ 1 via `lem:pi-faithful` (ii), (SR3)
   universal propagation via `lem:safety` + `lem:model-safe` pulled
-  back along $\pi$.  Added explicit "Simultaneity" and "Coherence of
-  the rho-labelling on $U(Q)$" paragraphs that cite Renz--Nebel by
+  back along π.  Added explicit "Simultaneity" and "Coherence of
+  the rho-labelling on U(Q)" paragraphs that cite Renz--Nebel by
   name.
 
-- **O5**: made $|\Side(u,v)| \le 5$ enumeration explicit -- the five
-  named elements are $u$, $v$, $\mathsf{par}(u)$, $\mathsf{par}(v)$,
-  $\mathrm{lca}_T(u,v)$, with optional cases (root, separate
+- **O5**: made |Side(u,v)| ≤ 5 enumeration explicit -- the five
+  named elements are u, v, par(u), par(v),
+  lca_T(u,v), with optional cases (root, separate
   components) spelled out and the bound shown to be tight.
 
 - **O4**: added `fact:renz-nebel` precisely restating the
@@ -4154,7 +4154,7 @@ Tightenings in `e72ccfa`:
 
 ### Outcome
 
-Page count $25 \to 27 \to 29 \to 31$; clean two-pass compile.  README,
+Page count 25 → 27 → 29 → 31; clean two-pass compile.  README,
 overview, and DL abstract page-count references updated.  All six
 obligations discharged with no remaining acknowledged gaps.
 
@@ -4181,26 +4181,26 @@ v2.1.  After reading line-by-line against the v2.1 text, three are
 genuinely load-bearing:
 
 - **G1 — profile-port equality contradicts vertical separation on
-  self-loops.**  v2.1 defines $\equiv_{\EQ,Q}$ at the *equality-port*
+  self-loops.**  v2.1 defines ≡_EQ,Q at the *equality-port*
   level on profiles.  Axiom M1 (reflexivity) plus M7 (typed-EQ
-  congruence) imply $\sigma \equiv_{\EQ,Q} \sigma$ via the identity
-  port-map.  The vertical-separation axiom forbids $\equiv_{\EQ,Q}$
-  along strict PP/PPI paths.  On a state $\sigma$ with a PP self-edge
+  congruence) imply σ ≡_EQ,Q σ via the identity
+  port-map.  The vertical-separation axiom forbids ≡_EQ,Q
+  along strict PP/PPI paths.  On a state σ with a PP self-edge
   (v2.1 explicitly allows these to absorb infinite PP-chains), this is
   a contradiction.  v2.1 has no consistent reading on self-loops.
 
-- **G3 — single-parent mate construction refuted by $C_{AB}$.** v2.1
-  forces every mate of $\sigma$ to share a single semantic parent.
+- **G3 — single-parent mate construction refuted by C_AB.** v2.1
+  forces every mate of σ to share a single semantic parent.
   The stress formula
-  $$C_{AB} \;\equiv\; A \sqcap B \sqcap \exists\PP.A \sqcap \exists\PP.B \sqcap \forall\PP.(A \to \lnot B) \sqcap \forall\PP.(B \to \lnot A)$$
+  C_AB ≡ A ⊓ B ⊓ ∃PP.A ⊓ ∃PP.B ⊓ ∀PP.(A → ¬B) ⊓ ∀PP.(B → ¬A)
   admits a model with two distinct upward PP witnesses with different
   type profiles, forcing two mate occurrences with different parents.
 
-- **G4 — rootless orientation incompatible with depth-from-$u_*$.**
-  v2.1 retains a projection $\pi: T \to U(Q)$ defined by depth from
-  $u_*$, but the rootless orientation allows occurrences that are
-  proper-superparts of $u_*$ (depth undefined).
-  `lem:simul-realization` silently assumes $u_*$ is a root.
+- **G4 — rootless orientation incompatible with depth-from-u_*.**
+  v2.1 retains a projection π: T → U(Q) defined by depth from
+  u_*, but the rootless orientation allows occurrences that are
+  proper-superparts of u_* (depth undefined).
+  `lem:simul-realization` silently assumes u_* is a root.
 
 ### GPT-5.5's repaired proof
 
@@ -4210,20 +4210,20 @@ proof:
 (16 pages).  Three structural fixes:
 
 1. **Occurrence-level equality.**  Def. 4.1 (S5):
-   $u \equiv_{\EQ} v \Leftrightarrow \mathrm{orig}(u) = \mathrm{orig}(v)$
+   u ≡_EQ v ⇔ orig(u) = orig(v)
    — a concrete identification on occurrences, not a port-bijection on
    profiles.  Self-loops become trivially reflexive and
    vertical-separation contradictions vanish.
 2. **Mates with different parents** via port-equivalence on `Mate_Q`,
-   so the $C_{AB}$ two-mate scenario is fully accommodated.
-3. **Request-closed cycles replace $\omega$-acceptance.**  Transitive
+   so the C_AB two-mate scenario is fully accommodated.
+3. **Request-closed cycles replace ω-acceptance.**  Transitive
    PP/PPI eventualities are discharged by request-closed cycles in the
-   rank-$d$ quotient graph — pure finite-graph reachability + cycle
+   rank-d quotient graph — pure finite-graph reachability + cycle
    closure, no parity/Büchi.
 
 The repaired proof formulates ten finite-checkable validity conditions
-(V1)–(V10) on rank-$d$ quotients and a coarse upper bound
-$B(C_0) = 2^{2^{p(n)}}$ on certificate size for a polynomial $p$.
+(V1)–(V10) on rank-d quotients and a coarse upper bound
+B(C₀) = 2^(2^p(n)) on certificate size for a polynomial p.
 
 ### Decision: Option 4 — adopt the repaired proof, do verification work
 
@@ -4249,8 +4249,8 @@ with pass/fail criteria C1–C8.  The Python work lives under
 
 - **WP1 (done):** RCC5 composition table verification by exhaustive
   subset enumeration.  Brute-force computation over non-empty subsets
-  of $|U| = 5$ matches GPT-5.5's stated table in all 25 cells.  The
-  signature stabilises at $|U| = 4$.  The in-repo quasimodel reasoner's
+  of |U| = 5 matches GPT-5.5's stated table in all 25 cells.  The
+  signature stabilises at |U| = 4.  The in-repo quasimodel reasoner's
   COMP table differs only in the four documented EQ-omission cells
   (DR,DR), (PO,PO), (PP,PPI), (PPI,PP) — convention, not bug.  See
   [`verification/python/rcc5_composition_check.py`](verification/python/rcc5_composition_check.py)
@@ -4262,13 +4262,13 @@ with pass/fail criteria C1–C8.  The Python work lives under
   verdicts match expected.  See
   [`verification/python/certificate_checker.py`](verification/python/certificate_checker.py).
 - **WP3 (done):** small-model SAT/UNSAT oracle cross-check.  Brute-force
-  enumeration of complete RCC5 labelings on $n \le 4$ confirms WP2 on
-  the 5-test corpus; C_AB realized at $n=3$ with two incomparable
-  PP-superparts (the G3 witness in concrete form); $C_{up}$ correctly
-  shows "no finite model up to $n=4$", consistent with WP2 accepting
+  enumeration of complete RCC5 labelings on n ≤ 4 confirms WP2 on
+  the 5-test corpus; C_AB realized at n=3 with two incomparable
+  PP-superparts (the G3 witness in concrete form); C_up correctly
+  shows "no finite model up to n=4", consistent with WP2 accepting
   it via parent self-loop unfolding to an infinite chain.  See
   [`verification/python/small_model_oracle.py`](verification/python/small_model_oracle.py).
-- **WP4 (folded into WP2/WP3):** the $C_{AB}$ stress formula is exercised
+- **WP4 (folded into WP2/WP3):** the C_AB stress formula is exercised
   by both the certificate fuzzer (cert_C_AB and cert_C_AB_wrong_singleparent)
   and the small-model oracle (concrete two-mate model found).
 - **WP5 (folded into WP2):** request-closed blocking cycles tested by
@@ -4280,11 +4280,11 @@ with pass/fail criteria C1–C8.  The Python work lives under
   on small mosaics.  (A) 41/64 triangle labelings are (M3)-consistent;
   the 23 rejected are also unrealizable by finite subsets, confirming
   (M3) is exact.  (B) every (M3)-consistent triangle is realizable for
-  $n \le 5$ (Renz–Nebel patchwork on triangles).  (C) DR/PO side
+  n ≤ 5 (Renz–Nebel patchwork on triangles).  (C) DR/PO side
   witnesses insertable without breaking (M4).  (D) universal
   propagation through PP-chain caught by (M4).  (E) sibling-branching
-  legal $L(c, s_2)$ candidates exactly match $\mathrm{comp}(\PP, \PO) =
-  \{\DR, \PO, \PP\}$.  No counterexample to the patchwork lemma.  See
+  legal L(c, s₂) candidates exactly match comp(PP, PO) =
+  {DR, PO, PP}.  No counterexample to the patchwork lemma.  See
   [`verification/python/mosaic_closure_search.py`](verification/python/mosaic_closure_search.py).
 
 ### Status updates
@@ -4336,7 +4336,7 @@ more notes on top.
   updated with the repaired-proof path.
 - **`README.md`** — sixteen-odd inline status claims updated across
   the complexity-landscape table (row for ALCI\_RCC5 (full) now cites
-  the repaired proof with $B(C_0) = 2^{2^{p(n)}}$ bound), the Status
+  the repaired proof with B(C₀) = 2^(2^p(n)) bound), the Status
   box, the Review verdict box, the Current assessment box, the
   Theory-vs-implementation box, the Eleventh Approach section
   ("Closing the completeness gap"), the Reasoners-and-tools section
@@ -4392,7 +4392,7 @@ breadcrumb pointers behind:
   → breadcrumb.
 - Round-2 review and repaired-proof adoption — compressed from ~55
   lines to ~17 lines (three load-bearing gaps + three fixes + V1–V10
-  + B(C_0) + WP1–WP6 summary; full prose preserved in OUTDATED.md).
+  + B(C₀) + WP1–WP6 summary; full prose preserved in OUTDATED.md).
 - File-list subsections (GPT-5.4 Pro papers, GPT-5.4 Pro reviews,
   computational verification scripts, decomposition test, PP-kernel
   quotient investigation, extension-gap root-cause scripts,
@@ -4625,7 +4625,7 @@ correctly.
 
 **§3.6 — Mosaic patchwork fuzzer (arity 4).**  Extended
 `verification/python/mosaic_closure_search.py` with two new tests:
-- **Test F** — enumerate all 4^6 = 4096 atomic 4-networks,
+- **Test F** — enumerate all 4⁶ = 4096 atomic 4-networks,
   partition by (M3) on every triple, and realize each
   (M3)-consistent labelling by 4 nonempty finite subsets.
   916/4096 are (M3)-consistent.  Seven of those need n≥6 to
@@ -4688,7 +4688,7 @@ remain open."  Six concrete requests:
 5. **Standalone typed-EQ quotient lemma.**  Lemma 4.4 of the
    repaired proof should be restated with all assumptions
    listed in one place.
-6. **Finite certificate grammar + B(C_0) bound derivation.**
+6. **Finite certificate grammar + B(C₀) bound derivation.**
 
 Wrote `claude_verification_response_v2.tex` (14 pages) closing
 items 1--3:
@@ -4717,7 +4717,7 @@ theorem pending); C8 reclassified as OPEN.
 
 Items 4--6 deferred to a technical addendum (mosaic patchwork
 theorem, standalone typed-EQ quotient lemma, finite certificate
-grammar + B(C_0) bound derivation).
+grammar + B(C₀) bound derivation).
 
 ---
 
@@ -4747,7 +4747,7 @@ Wrote `claude_verification_addendum.tex` (12 pages) closing items
   clause in Def 4.5 of the repaired proof.  The four preservation
   properties are proved separately: JEPD (Lemma 4.3), strong
   equality (Lemma 4.4), RCC5 composition (Lemma 4.5),
-  closure-formula truth (Lemma 4.6, induction on Cl(C_0)).
+  closure-formula truth (Lemma 4.6, induction on Cl(C₀)).
   Existential and universal cases of the truth lemma cover all
   five RCC5 relations including the EQ-self-witness clause of
   wit_Q.  C4 moves from OPEN to CLOSED (paper).
@@ -4755,11 +4755,11 @@ Wrote `claude_verification_addendum.tex` (12 pages) closing items
 - **§5 Certificate grammar + enumeration bound (item 6).**  §5.1
   gives an abstract grammar with terminals over finite alphabets;
   §5.2 derives coarse polynomial bounds on every component
-  (|Typ(C_0)| ≤ 2^n, |Port(σ)| ≤ n+1, mosaics with m(n) positions,
-  request summaries (n+1)·2·2^{2n} bits per profile, blocked
-  graph size |S| ≤ |Σ| ≤ 2^{p(n)}); Lemma 5.2 (enumeration
+  (|Typ(C₀)| ≤ 2ⁿ, |Port(σ)| ≤ n+1, mosaics with m(n) positions,
+  request summaries (n+1)·2·2²ⁿ bits per profile, blocked
+  graph size |S| ≤ |Σ| ≤ 2^p(n)); Lemma 5.2 (enumeration
   bound) shows the total number of certificates of size ≤
-  B(C_0) = 2^{2^{p(n)}} is at most 2^{2^{q(n)}} for some
+  B(C₀) = 2^(2^p(n)) is at most 2^(2^q(n)) for some
   polynomial q(n), and each validity clause (V1)--(V10) is
   decidable in time polynomial in |Q|.  C8 moves from OPEN to
   CLOSED (paper).
@@ -4790,14 +4790,14 @@ elides two checks:
 
 - **NNF-complement-closure step in the universal case.**
   Theorem 6.2 covers all four cases of the structural induction
-  over Cl(C_0):  atomic and negated-atomic (intersection with W),
+  over Cl(C₀):  atomic and negated-atomic (intersection with W),
   Boolean (∩/∪ membership decomposition), existential (selected
-  witness w(a, ∃R.D) is in W by construction of W_{i+1}), and
+  witness w(a, ∃R.D) is in W by construction of W_i+1), and
   universal — the only non-trivial case.  The universal converse
   uses the contrapositive: if a ∉ (∀R.D)^I, then a ∈ (∃R.¬D)^I,
-  and by complement closure of Cl(C_0), ∃R.D̄ ∈ Cl(C_0), so the
+  and by complement closure of Cl(C₀), ∃R.D̄ ∈ Cl(C₀), so the
   selected witness w(a, ∃R.D̄) is in W with ρ(a, w) = R and
-  w ∈ D̄^I, by IH w ∉ D^{I↾W}.
+  w ∈ D̄^I, by IH w ∉ D^I↾W.
 
 Strong-EQ is load-bearing: a remark explains that without it the
 existential case for R = EQ would not reduce to IH (a witness
@@ -4871,7 +4871,7 @@ proof `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.tex`,
 which grew from 16 to 23 pages and became fully self-contained:
 
 - **§3.2** carries an explicit frame-inheritance lemma and a full
-  structural induction over Cl(C_0) in NNF (atomic, Boolean,
+  structural induction over Cl(C₀) in NNF (atomic, Boolean,
   existential, universal-via-NNF-complement cases), closing the
   (C2) closure / witness-thinning obligation in the main text.
 - **§4.4--§4.6** carry the Renz--Nebel base case, overlap
@@ -4883,7 +4883,7 @@ which grew from 16 to 23 pages and became fully self-contained:
   (JEPD, strong equality, RCC5 composition, closure-formula truth).
 - **§8.1--§8.3** carry the explicit grammar of certificate
   components, component-wise polynomial bounds, and derivation of
-  B(C_0) = 2^{2^{p(n)}}.
+  B(C₀) = 2^(2^p(n)).
 - **§7.2** expands the request-closed lasso lemma with an explicit
   checkpoint structure — pending set, extended profile, infinite
   checkpoint sequence by pigeonhole, and a 5-step structured proof
@@ -4932,7 +4932,7 @@ from 23 to 31 pages.
 - **G4 (commit `e8f046d`) Abstract triple graph T_Q.**
   New §5.2 formally constructs T_Q with vertices
   Pos_Q = {⟨s, p, C, ζ⟩} and explicit cardinality bounds
-  |Pos_Q| ≤ 2|S|·(n+1)·|Ctx_Q| and |Trip_Q| ≤ |Pos_Q|^3 · 125,
+  |Pos_Q| ≤ 2|S|·(n+1)·|Ctx_Q| and |Trip_Q| ≤ |Pos_Q|³ · 125,
   a quotient-map definition, and a "Finite support-closure check"
   and "Quotient lifting" lemma — making T_Q syntactic, depending
   only on the certificate's finite alphabets.
@@ -4944,7 +4944,7 @@ from 23 to 31 pages.
   legality (Lemma 4.6) proving PP/PPI exclusion from the
   sibling-frontier via a witness-generated submodel construction.
 - **G6 (commit `0e8ba02`) Grammar-first finite bound.**
-  §9 was rewritten so B(C_0) = 2^{2^{p(n)}} is derived
+  §9 was rewritten so B(C₀) = 2^(2^p(n)) is derived
   grammar-first: the informal context-width prose was replaced
   with the explicit cubic m(n) = O(n³) from Lemma 4.4, and the
   grammar productions Mosaic ::= ⟨P, τ_M, L_M, Vrt_M⟩ and
@@ -4980,18 +4980,18 @@ were brought into line with the current state of the proof.
   to reflect the 31-page repaired proof (was 16 pages).  Mentions
   the fourth-review structural additions in the body text and the
   outlook section: verticalization discipline (M6), port-indexed
-  mate clusters $\mathrm{Mate}_Q(C, s, p)$ replacing state-level
-  $\mathrm{Mate}_Q(s)$ in (V3)/(V4)/(V5)/(V9.Eb), the abstract
-  triple graph $T_Q$ with explicit cardinality bounds, the
-  side-interface $\mathrm{Side}(u)$ of polynomial width $O(n^3)$,
-  and the grammar-first derivation of $B(C_0) = 2^{2^{p(n)}}$.
+  mate clusters Mate_Q(C, s, p) replacing state-level
+  Mate_Q(s) in (V3)/(V4)/(V5)/(V9.Eb), the abstract
+  triple graph T_Q with explicit cardinality bounds, the
+  side-interface Side(u) of polynomial width O(n³),
+  and the grammar-first derivation of B(C₀) = 2^(2^p(n)).
   The legacy "(G1)--(G8)" reference (v2.1 round-2 gaps) was
   reworded to avoid name collision with the fourth-review
   "(G1)--(G6)".  Compiles cleanly to 19 pages.
 
 - **`papers/dl2026_abstract_ALCIRCC5.tex`** (commit `bca6c73`).
   The five TODO-stub body sections (Introduction, Background on
-  $\ALCIRCC{}$, Results, Strategies, Summary and Implications)
+  ALCIRCC{}, Results, Strategies, Summary and Implications)
   were replaced with hand-written content of about 250 lines.
   The body fits exactly in 4 pages (verified by pdftotext: page
   4 ends with "engage with the artefacts and the process on
@@ -5001,9 +5001,9 @@ were brought into line with the current state of the proof.
 
   Rhetorical choices in the body, informed by the 5-20 open
   letter's two concessions:
-  - The bold "We hereby claim: $\ALCIRCC{5}$ is decidable" of
+  - The bold "We hereby claim: ALCI_RCC5 is decidable" of
     rejected v3 is replaced with the softer "We propose for the
-    community's consideration that $\ALCIRCC{5}$ is decidable."
+    community's consideration that ALCI_RCC5 is decidable."
   - The abstract carries an explicit transparency block naming
     AI authorship of the mathematical content and the
     not-yet-peer-reviewed status of the candidate proof.
@@ -5053,13 +5053,13 @@ Two follow-ups to the 5-21 refresh.
     each context into a vertical stratum (source + EQ mates +
     selected PP/PPI witnesses) and a sibling frontier (DR/PO
     witnesses + boundary nodes); (v) port-indexed mate clusters
-    $\mathrm{Mate}_Q(C, s, p) \subseteq S \times \mathrm{Port}(s')$
+    Mate_Q(C, s, p) ⊆ S × Port(s')
     with (V3)/(V4)/(V5)/(V9.Eb) restated in port-indexed form;
-    (vi) the explicit abstract triple graph $T_Q$ with cardinality
-    bounds on $\mathrm{Pos}_Q$ and $\mathrm{Trip}_Q$; (vii) the
-    side interface $\mathrm{Side}(u)$ with polynomial width
-    $m(n) = O(n^3)$.  The certificate-space bound $B(C_0) =
-    2^{2^{p(n)}}$ is now derived *grammar-first* from these
+    (vi) the explicit abstract triple graph T_Q with cardinality
+    bounds on Pos_Q and Trip_Q; (vii) the
+    side interface Side(u) with polynomial width
+    m(n) = O(n³).  The certificate-space bound B(C₀) =
+    2^(2^p(n)) is now derived *grammar-first* from these
     component bounds.
   - The "Theory vs. implementation" disclaimer block listed only
     the three round-2 fixes for completeness; it was extended to
@@ -5085,10 +5085,10 @@ Two follow-ups to the 5-21 refresh.
   The body was restored close to the rejected v3 prose
   verbatim, with these updates folded in:
   - Softened claim retained ("We propose for the community's
-    consideration that $\ALCIRCC{5}$ is decidable").
+    consideration that ALCI_RCC5 is decidable").
   - One short paragraph describes the current decidability
     argument with the 31-page repaired proof and brief mentions
-    of (M6), port-indexed mate clusters, $T_Q$, $\mathrm{Side}(u)$.
+    of (M6), port-indexed mate clusters, T_Q, Side(u).
   - The concrete computational evidence (911 cross-validated
     concepts, 775 SAT with 100% finite cover-tree models, 12.2M
     models enumerated, GIS taxonomy 21/21, WP1–WP6 all PASS) is
@@ -5104,7 +5104,7 @@ Two follow-ups to the 5-21 refresh.
   consolidated from two paragraphs into one; the
   split-forest-mechanism paragraphs merged with light wording
   cuts; the current-decidability-argument paragraph reduced from
-  ~15 lines of M6/$T_Q$/$\mathrm{Side}(u)$ detail to ~10 lines
+  ~15 lines of M6/T_Q/Side(u) detail to ~10 lines
   (full detail lives in the appendix and the README).  The
   Agentic-AI meta section was only minimally touched (one
   "treasure trove" single-sentence paragraph merged with its
@@ -5124,7 +5124,7 @@ and the post-rejection softened claim folded in."
 Wessel noticed that the `dl2026-rejected/dl2026_abstract_ALCIRCC5_v3.pdf`
 linked in the repo was 5 pages and still contained the cost footnote
 ("Costs: 200,- USD for an annual Claude Code Pro subscription, plus
-$\approx$ 300,- USD for ``extra token usage''"), and asked for the
+≈ 300,- USD for ``extra token usage''"), and asked for the
 footnote to be removed under the expectation that a recompile would
 automatically bring it down to 4 pages — pointing to
 `dl2026-rejected/dl2026_abstract_ALCIRCC5_original.tex` as the
@@ -5204,7 +5204,7 @@ Filed actions:
   (our source compiles cleanly to the 31-page PDF; the reviewer's
   bundle had stale source).
 
-### Claude-drafted v2 (M6$'$) delta paper (2026-05-23, commit `e276eb7`)
+### Claude-drafted v2 (M6') delta paper (2026-05-23, commit `e276eb7`)
 
 Closes round-5 items 2, 3, 9.  Wessel asked "Do you have an idea
 how to fix it?" and after the conceptual sketch ("recursive
@@ -5213,23 +5213,23 @@ tree of its own selected PP/PPI ancestors"), gave the green light
 to start drafting.
 
 `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2.tex`
-(14 pages) replaces the flat $\Vrt \subseteq P$ of a mosaic with a
+(14 pages) replaces the flat Vrt ⊆ P of a mosaic with a
 finite stratum forest in which:
-- Root stratum $V_0$ has the mosaic source as its source.
+- Root stratum V₀ has the mosaic source as its source.
 - Each selected DR/PO side-witness may open a nested local stratum
   with its own source, equality mates, and selected PP/PPI
   ancestors.
 - Strata may share exactly the parent position; otherwise
   supports are disjoint.
 
-Recursive (M6$'$.a--d):
-- (M6$'$.a) EQ-closure within strata: every EQ-class lies inside a
+Recursive (M6'.a--d):
+- (M6'.a) EQ-closure within strata: every EQ-class lies inside a
   single stratum.
-- (M6$'$.b) Containment labels are co-vertical: PP/PPI pairs are
+- (M6'.b) Containment labels are co-vertical: PP/PPI pairs are
   justified by *some* stratum in the forest, not necessarily the
   root.
-- (M6$'$.c) Cross-stratum labels are DR/PO/EQ.
-- (M6$'$.d) Residual sibling frontier restricted to DR/PO.
+- (M6'.c) Cross-stratum labels are DR/PO/EQ.
+- (M6'.d) Residual sibling frontier restricted to DR/PO.
 
 Round-4 (M6) is the depth-1 case.  Lemma 7.1 of the round-4 paper
 (Vertical realisation of PP/PPI pairs) carries over with the case
@@ -5237,18 +5237,18 @@ analysis restricted to one stratum at a time; Subcase (ii.e) of the
 round-4 proof goes through verbatim inside each stratum.
 
 Validity clauses (V3), (V4), (V5), (V9.Eb) are universally
-quantified over strata in the v2 forms (V3$'$, V4$'$, V5$'$,
-V9.Eb$'$).
+quantified over strata in the v2 forms (V3', V4', V5',
+V9.Eb').
 
-Polynomial side-width $m(n) = O(n^3)$ replaced by a recurrence
-$m(d{+}1) = 1 + n^3(1+k_\Mate+k_\mathrm{bd}) + n^3 m(d)$ over modal
+Polynomial side-width m(n) = O(n³) replaced by a recurrence
+m(d{+}1) = 1 + n³(1+k_Mate+k_bd) + n³ m(d) over modal
 depth.  Effectively computable, no longer polynomial; matches
-round-5 item 9.  $B(C_0) \leq 2^{2^{p(n)}}$ preserved.
+round-5 item 9.  B(C₀) ≤ 2^(2^p(n)) preserved.
 
-Worked v2 certificate for $C_\mathrm{side}$ in §6 of the paper,
-explicitly verifying all four (M6$'$) sub-clauses on a 3-position
-mosaic with stratum forest $V_0 = \{x\}$, $V_1 = \{y, z\}$ rooted
-at $z$.
+Worked v2 certificate for C_side in §6 of the paper,
+explicitly verifying all four (M6') sub-clauses on a 3-position
+mosaic with stratum forest V₀ = {x}, V₁ = {y, z} rooted
+at z.
 
 ### Items 4--8 delta paper (2026-05-23, commit `4c07bf0`)
 
@@ -5256,44 +5256,44 @@ at $z$.
 (12 pages) closes the remaining five mathematical items:
 
 - **Item 4 (non-circular patchwork).**  Explicit abstract pair-label
-  function $L_\Q : \Pos_\Q^2 \to \Base$ declared as certificate
+  function L_Q : Pos_Q² → Base declared as certificate
   data.  New validity clause (V11) requires the RCC5 composition
-  table on every triple in $\T_\Q$.  Support-closure (SC4) is
-  replaced by per-position (SC4$'$) -- no longer requires per-triple
+  table on every triple in T_Q.  Support-closure (SC4) is
+  replaced by per-position (SC4') -- no longer requires per-triple
   mosaic coverage.  The patchwork theorem becomes a direct
   consequence of (V11) and is non-circular.
 
 - **Item 5 (strengthened overlap amalgamation).**  Strong overlap
-  compatibility (O3$'$) requires a single declared cross-label
-  function $L_{12}^\mathrm{cross} : (P_1 \setminus P_0) \times (P_2
-  \setminus P_0) \to \Base$ compatible with all overlap nodes and
+  compatibility (O3') requires a single declared cross-label
+  function L₁₂^cross : (P₁  P₀) × (P₂
+   P₀) → Base compatible with all overlap nodes and
   all mixed triples simultaneously, not just per-triple
   existence.  New validity clause (V12) declares this function.
 
 - **Item 6 (joint equality validity clause).**  Assumption (A4) of
   the round-4 typed-EQ quotient theorem promoted to explicit
   validity clause (V13): the certificate declares a joint witness
-  $w_E^{R,D}$ per equality class $E$ per existential, working
-  uniformly for all ports in $E$.  Lemma proves (V13) implies (A4).
+  w_E^R,D per equality class E per existential, working
+  uniformly for all ports in E.  Lemma proves (V13) implies (A4).
 
 - **Item 7 (half-open cycle convention).**  Request-fulfilled
-  repetition lemma restated with the half-open $[i, j)$ cycle
-  convention.  $u_j$ identified with the next lap's
-  $u_i^{(\ell+1)}$ at the profile level only.  Endpoint case
-  (witness at $u_j$ in the original path) handled by the next-lap
+  repetition lemma restated with the half-open [i, j) cycle
+  convention.  u_j identified with the next lap's
+  u_i^(ℓ+1) at the profile level only.  Endpoint case
+  (witness at u_j in the original path) handled by the next-lap
   occurrence, since profiles include closure types.
 
 - **Item 8 (global finite regularization).**  Uniform representative
-  selection lemma (V14) declares one $(C_\sigma, \mathsf{cyc}_\sigma)$
-  per extended profile $\sigma \in \widehat\Sigma$ once, then
+  selection lemma (V14) declares one (C_σ, cyc_σ)
+  per extended profile σ ∈ Σ once, then
   uniformly substitutes across every infinite vertical ray.
-  Substitution data bounded by $|\widehat\Sigma| \leq |\Sigma| \cdot
-  2^n$.  No automaton, no parity acceptance, no $\omega$-language
+  Substitution data bounded by |Σ| ≤ |Σ| ·
+  2ⁿ. No automaton, no parity acceptance, noω-language
   theoretic machinery; pure pigeonhole over the finite set
-  $\widehat\Sigma$.
+  Σ.
 
 Combined certificate validity check now has 14 clauses (V1)--(V14)
-plus (M6$'$).  $B(C_0) \leq 2^{2^{p(n)}}$ preserved.
+plus (M6').  B(C₀) ≤ 2^(2^p(n)) preserved.
 
 ### Status caveat
 
@@ -5312,7 +5312,7 @@ exchange:
 - `formal_review_progress_paper.{tex,pdf}` -- GPT-5.5's round-5
   review.
 - `repaired_split_forest_no_automata_proof_v2.{tex,pdf}` --
-  Claude's v2 (M6$'$) delta closing items 2, 3, 9.
+  Claude's v2 (M6') delta closing items 2, 3, 9.
 - `repaired_split_forest_no_automata_proof_items4to8.{tex,pdf}` --
   Claude's delta closing items 4--8.
 - `repaired_split_forest_no_automata_proof.{tex,pdf}` -- the
@@ -5352,7 +5352,7 @@ precisely what `Pos_Q^2` cannot carry.
 **Five additional defects (D1)-(D5).**  Equality-port lift ambiguous;
 V9.b at finite state-port level rejects self-loop profiles by
 reflexivity; stratum identity not in abstract positions; recursive
-side-interface underspecified for chains w_0 PP w_1 PP w_2; universal
+side-interface underspecified for chains w₀ PP w₁ PP w₂; universal
 wrap-around in pumped cycles under-proved.
 
 ### GPT-5.5's three round-7 proof drafts
@@ -5428,7 +5428,7 @@ choice.
 
 Superseded but retained as historical audit trail:
 - `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2.tex`
-  (round-5 (M6$'$) delta, 15 pages)
+  (round-5 (M6') delta, 15 pages)
 - `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_items4to8.tex`
   (round-5 items 4-8 delta, 12 pages)
 - `papers/gpt5.5_round2/repaired_split_forest_no_automata_proof_v2_consolidated.tex`
@@ -5438,7 +5438,7 @@ Superseded but retained as historical audit trail:
 
 The conceptual contributions that survive into round-7 are:
 - recognition that two DR/PO side witnesses can be PP/PPI-comparable
-  (round-5 stress concept, now worked in round-7 sketch \S6 and
+  (round-5 stress concept, now worked in round-7 sketch §6 and
   verified in wp7);
 - the broader two-layer architecture (theoretical proof +
   self-contained executable verification artefacts), which is
@@ -5508,8 +5508,8 @@ statement:
   concepts.
 - Theoretical-layer summary (§7) and bibliography updated.
 - New macros for round-7 pair-shape notation
-  (\self, \eqtag, \up, \down, \side, \front, \Pos, \Pair, \Tri,
-  \lab, \Base).
+  (self, eq, up, down, side, front, Pos, Pair, Tri,
+  lab, Base).
 
 ### Overview paper: second-pass restructure (commit `7dcf9a2`)
 
@@ -5578,19 +5578,19 @@ round-7:
    enumeration covered same-occurrence, equality-port, vertical
    up/down, side, and residual-frontier pairs, but did not
    exhaustively handle the case of an exposed vertical-boundary
-   position $b$ paired with a side position $w$.  A $\PP$ or $\PPI$
-   label between $b$ and $w$ could be hidden in the residual
-   $\DR/\PO$ frontier closure.
+   position b paired with a side position w.  A PP or PPI
+   label between b and w could be hidden in the residual
+   DR/PO frontier closure.
 
-2. **Residual $\DR/\PO$ frontier imposed before saturation.**
+2. **Residual DR/PO frontier imposed before saturation.**
    Round-7 restricted residual sibling-frontier pairs to
-   $\{\DR, \PO\}$ but applied that restriction \emph{before} the
-   side context was saturated.  If a $\PP/\PPI$ pair was still
+   {DR, PO} but applied that restriction *before* the
+   side context was saturated.  If a PP/PPI pair was still
    pending in the side context (defect 1), the restriction was
    unsound.
 
 3. **Pair and triple catalogues bounded but not constructed.**
-   Round-7 asserted $\Pair_\Q$ and $\Tri_\Q$ were finite but did
+   Round-7 asserted Pair_Q and Tri_Q were finite but did
    not give an explicit construction.
 
 ### GPT-5.5 round-8 repair
@@ -5608,28 +5608,28 @@ zip from GPT-5.5.
 
 The round-8 architectural moves:
 
-1. **Saturated side context $S_k(u)$**: defined as the least
+1. **Saturated side context S_k(u)**: defined as the least
    finite labelled network generated by five (Sat1)--(Sat5)
    operations: start with the exposed vertical boundary; add one
-   selected witness for each local $\exists R.D$ with
-   $R \in \{\DR, \PO\}$ and modal depth strictly less than $k$;
+   selected witness for each local ∃R.D with
+   R ∈ {DR, PO} and modal depth strictly less than k;
    recursively add smaller-depth witnesses; assign a complete RCC5
    label to every ordered pair (including side/tree pairs); close
-   under equality ($\EQ \to$ equality-port declaration) and
-   containment ($\PP/\PPI \to$ local vertical stratum) BEFORE
-   applying the residual $\DR/\PO$ restriction.
+   under equality (EQ → equality-port declaration) and
+   containment (PP/PPI → local vertical stratum) BEFORE
+   applying the residual DR/PO restriction.
 
-2. **Cross side/tree exhaustion lemma**: every pair $(b, w)$ of an
+2. **Cross side/tree exhaustion lemma**: every pair (b, w) of an
    exposed vertical-boundary position with a side position in
-   $S_k(u)$ is either equality-linked, placed in a local vertical
-   stratum, or genuinely $\DR/\PO$.  No $\PP/\PPI$ side/tree pair
+   S_k(u) is either equality-linked, placed in a local vertical
+   stratum, or genuinely DR/PO.  No PP/PPI side/tree pair
    survives in the residual frontier.
 
 3. **Constructed pair and triple catalogues**:
-   $\Pair_\Q$ is the least finite set containing same-occurrence
+   Pair_Q is the least finite set containing same-occurrence
    pairs, explicit equality-port pairs, strict vertical pairs, all
    pairs inside saturated side contexts and overlap amalgams, and
-   residual $\DR/\PO$ frontier pairs.  $\Tri_\Q$ is the least set
+   residual DR/PO frontier pairs.  Tri_Q is the least set
    of ordered pair-shape triples whose endpoints occur in
    saturated side contexts, overlap amalgams, or pure vertical
    configurations, with every triple required to satisfy the RCC5
@@ -5920,8 +5920,8 @@ The existing scripts checked the D-1 *arithmetic* (fix_feasibility) and a
 *hand-placed* repaired certificate on a depth prefix (repaired_certificate),
 but nothing drove the round-9 construction end-to-end.  WP10 does:
 DETECT (compute the forced ancestor trace L(a_m,w) by composition+universal
-pruning; confirm DR*PO*PPI*; find threshold k_0) -> SPLICE (DERIVE the E_up
-edge w->a_{k_0}, not hand-place it; splice-faithfulness guard) -> BUILD
+pruning; confirm DR*PO*PPI*; find threshold k₀) -> SPLICE (DERIVE the E_up
+edge w->a_k₀, not hand-place it; splice-faithfulness guard) -> BUILD
 (occurrence-sensitive pair shapes with incidence tags + l_Q; tower regularized
 to a request-closed cycle; Reach_PP carries the splice up the tail so every
 (a_m,w) becomes a 'down'/PPI pair) -> VALIDATE (converse, V6 composition,
