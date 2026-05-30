@@ -1,0 +1,864 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,booktabs,longtable}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{mathpartir}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{fact}[theorem]{Fact}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Inv}{\operatorname{inv}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Typ}{\mathsf{Type}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\NNF}{\operatorname{NNF}}
+\newcommand{\Aut}{\mathcal A}
+\newcommand{\Prof}{\mathsf{Prof}}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Live}{\mathsf{Live}}
+\newcommand{\Sh}{\mathsf{Sh}}
+\newcommand{\Front}{\mathsf{Front}}
+\newcommand{\Req}{\mathsf{Req}}
+\newcommand{\Obl}{\mathsf{Obl}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Child}{\mathsf{Child}}
+\newcommand{\rank}{\operatorname{rk}}
+\newcommand{\lca}{\operatorname{lca}}
+\newcommand{\lab}{\operatorname{lab}}
+\newcommand{\occ}{\operatorname{occ}}
+\newcommand{\true}{\top}
+\newcommand{\false}{\bot}
+\newcommand{\sem}[1]{\llbracket #1\rrbracket}
+\newcommand{\eqE}{\equiv_{\EQ}}
+\newcommand{\blkE}{\equiv_{\mathrm{blk}}}
+\newcommand{\restrict}{\upharpoonright}
+
+\title{A Repaired Split-Forest Automata Proof of Decidability for $\ALCI_{\RCC}$}
+\author{Consolidated proof manuscript}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We give a repaired, self-contained proof architecture for decidability of concept satisfiability for $\ALCI$ with the five RCC5 atomic roles $\EQ,\PP,\PPI,\PO,\DR$, over abstract complete atomic RCC5 frames with strong equality.  The proof keeps the split-forest idea as the model-theoretic normal form, but uses a finite alternating parity tree automaton as the decision engine.  The repair addresses the main defects identified in referee feedback: the old patch condition quantified over global triples without a finite representation theorem; universal restrictions were checked only on selected or vaguely ``represented'' targets; exact strong-$\EQ$ was not enforced at the occurrence level; and the automaton was not given as a genuinely finite object.  The repaired proof introduces bounded frontier profiles, finite pair and triple product-state representatives, compositional propagation of universal obligations, exact equality ports, and an explicit finite automaton whose emptiness is decidable.
+\end{abstract}
+
+\tableofcontents
+
+\section{Motivation and repair summary}
+
+The split-forest idea remains the central model-theoretic normal form.  Its purpose is to replace arbitrary abstract RCC5 models by witness-generated presentations in which vertical containment is tree-like and nonvertical interactions are recorded in finite side interfaces.  That normal form is the reason a tree automaton can be used at all.
+
+The earlier automata proof, however, had a gap at precisely the point where the split-forest presentation is turned into a finite alphabet.  It used terms such as ``represented target'' and ``represented triple'' without proving that every semantic target or triple in the unfolded infinite structure has a finite representative checked by the automaton.  This matters because RCC5 composition creates targets that are not selected witnesses.  For example,
+\[
+  x\PP y,\qquad y\DR z
+\]
+forces
+\[
+  x\DR z
+\]
+because $\Comp(\PP,\DR)=\{\DR\}$.  Thus a universal restriction $\forall\DR.\neg A$ at $x$ must be checked at $z$, even if $z$ was selected only as a $\DR$-witness of $y$.
+
+The repaired proof below makes the finite representation layer explicit.  Each automaton symbol is a \emph{frontier profile}.  A frontier profile contains a finite live interface, exact equality ports, relation matrices, side-context records, inherited universal obligations, and finite pair/triple product-state transformers.  The product-state transformers define, by induction on nearest common interfaces, a finite representative for every pair and triple of occurrences in the unfolded tree.  Universal obligations are propagated through those same pair representatives.  Global RCC5 composition follows from local checks on finite triple representatives.
+
+The resulting proof has the following division of labor.
+\begin{center}
+\fbox{\parbox{0.88\linewidth}{
+\textbf{Split forest:} semantic normal form obtained by witness thinning, generated containment edges, split copies, side-context saturation, and exact equality ports.\\[1mm]
+\textbf{Frontier profiles:} finite abstraction of live boundary data, forgotten-source summaries, side-contexts, and pair/triple representatives.\\[1mm]
+\textbf{Parity tree automaton:} finite decision engine checking local consistency, global pair/triple representation by product states, universal propagation, equality congruence, and transitive eventualities.
+}}
+\end{center}
+
+\paragraph{Scope.}
+The theorem is for abstract complete atomic RCC5 frames.  It does not assert that every such abstract frame is representable as regular closed regions in a particular topological space.  A geometric representation result, if desired, is a separate theorem.
+
+\section{Syntax, closure, and abstract RCC5 semantics}
+
+\subsection{Roles and concepts}
+
+Let
+\[
+  \Rel=\{\EQ,\PP,\PPI,\PO,\DR\}.
+\]
+The converse operation is
+\[
+\Inv(\EQ)=\EQ,
+\quad
+\Inv(\PP)=\PPI,
+\quad
+\Inv(\PPI)=\PP,
+\quad
+\Inv(\PO)=\PO,
+\quad
+\Inv(\DR)=\DR.
+\]
+Concepts are generated from concept names by Boolean connectives and restrictions
+\[
+  \exists R.C,
+  \qquad
+  \forall R.C,
+  \qquad R\in\Rel.
+\]
+All concepts are written in negation normal form.  For every NNF concept $C$, its NNF complement $\overline C$ is defined by the usual De Morgan dualities:
+\begin{align*}
+\overline A&=\neg A,&
+\overline{\neg A}&=A,\\
+\overline{C\sqcap D}&=\overline C\sqcup\overline D,&
+\overline{C\sqcup D}&=\overline C\sqcap\overline D,\\
+\overline{\exists R.C}&=\forall R.\overline C,&
+\overline{\forall R.C}&=\exists R.\overline C.
+\end{align*}
+
+\begin{definition}[Closure]
+For an input concept $C_0$, $\Cl(C_0)$ is the least finite set containing $C_0$ and closed under subformulas and NNF complement.  We normalize equality restrictions by the strong-equality equivalences
+\[
+  \exists\EQ.C\equiv C,
+  \qquad
+  \forall\EQ.C\equiv C.
+\]
+Equivalently, equality restrictions may remain in $\Cl(C_0)$, but every type must satisfy those equivalences.
+\end{definition}
+
+\begin{definition}[Types]
+A type over $\Cl(C_0)$ is a set $t\subseteq\Cl(C_0)$ such that:
+\begin{enumerate}[label=(T\arabic*)]
+\item for every $D\in\Cl(C_0)$ exactly one of $D,\overline D$ belongs to $t$;
+\item $D\sqcap E\in t$ iff $D\in t$ and $E\in t$;
+\item $D\sqcup E\in t$ iff $D\in t$ or $E\in t$;
+\item $\exists\EQ.D\in t$ iff $D\in t$;
+\item $\forall\EQ.D\in t$ iff $D\in t$.
+\end{enumerate}
+Let $\Typ(C_0)$ be the finite set of all such types.
+\end{definition}
+
+\subsection{Abstract RCC5 frames}
+
+\begin{definition}[RCC5 composition table]
+The atomic composition table is the following relation-valued operation $\Comp(R,S)\subseteq\Rel$:
+\[
+\begin{array}{c|ccccc}
+\Comp & \EQ & \PP & \PPI & \PO & \DR\\
+\hline
+\EQ  & \{\EQ\} & \{\PP\} & \{\PPI\} & \{\PO\} & \{\DR\}\\
+\PP  & \{\PP\} & \{\PP\} & \Rel & \{\PP,\PO,\DR\} & \{\DR\}\\
+\PPI & \{\PPI\} & \{\EQ,\PP,\PPI,\PO\} & \{\PPI\} & \{\PPI,\PO\} & \{\PPI,\PO,\DR\}\\
+\PO  & \{\PO\} & \{\PP,\PO\} & \{\PPI,\PO,\DR\} & \Rel & \{\PPI,\PO,\DR\}\\
+\DR  & \{\DR\} & \{\PP,\PO,\DR\} & \{\DR\} & \{\PP,\PO,\DR\} & \Rel
+\end{array}
+\]
+\end{definition}
+
+\begin{definition}[Abstract strong RCC5 frame]
+An abstract strong RCC5 frame is a nonempty set $\Delta$ together with a function
+\[
+  \rho:\Delta^2\to\Rel
+\]
+such that for all $a,b,c\in\Delta$:
+\begin{enumerate}[label=(R\arabic*)]
+\item $\rho(a,b)=\EQ$ iff $a=b$;
+\item $\rho(b,a)=\Inv(\rho(a,b))$;
+\item $\rho(a,c)\in\Comp(\rho(a,b),\rho(b,c))$.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Interpretations and satisfaction]
+An interpretation $\mathcal I$ consists of a strong RCC5 frame $(\Delta^\mathcal I,\rho^\mathcal I)$ and an interpretation of concept names as subsets of $\Delta^\mathcal I$.  Boolean clauses are standard, and
+\[
+ a\models_{\mathcal I}\exists R.C
+ \quad\Longleftrightarrow\quad
+ \exists b\in\Delta^\mathcal I\;[\rho^\mathcal I(a,b)=R\text{ and }b\models_{\mathcal I} C],
+\]
+\[
+ a\models_{\mathcal I}\forall R.C
+ \quad\Longleftrightarrow\quad
+ \forall b\in\Delta^\mathcal I\;[\rho^\mathcal I(a,b)=R\Rightarrow b\models_{\mathcal I} C].
+\]
+A concept $C_0$ is satisfiable if $a\models_{\mathcal I}C_0$ for some $\mathcal I,a$.
+\end{definition}
+
+\section{Witness thinning}
+
+The first normalization removes irrelevant ambient elements.  It is the formal reason why density or non-Hasse behavior of an arbitrary starting model does not matter.
+
+\begin{definition}[Witness function]
+Let $\mathcal I,a_0\models C_0$.  For every element $a\in\Delta^\mathcal I$ and every existential formula $\exists R.D\in\Cl(C_0)$ with $a\models\exists R.D$, choose one witness
+\[
+  w(a,\exists R.D)
+\]
+such that
+\[
+  \rho^\mathcal I(a,w(a,\exists R.D))=R,
+  \qquad
+  w(a,\exists R.D)\models D.
+\]
+\end{definition}
+
+\begin{definition}[Witness-generated subdomain]
+Let $W_0=\{a_0\}$ and
+\[
+  W_{n+1}=W_n\cup\{w(a,\exists R.D):a\in W_n,
+  \exists R.D\in\Cl(C_0),
+  a\models\exists R.D\}.
+\]
+Let $W=\bigcup_n W_n$.  The restriction $\mathcal I\restrict W$ has domain $W$, concept-name interpretations restricted to $W$, and relation map $\rho^\mathcal I\restrict W^2$.
+\end{definition}
+
+\begin{lemma}[Witness thinning]
+For every $D\in\Cl(C_0)$ and every $a\in W$,
+\[
+  a\models_{\mathcal I}D
+  \quad\Longleftrightarrow\quad
+  a\models_{\mathcal I\restrict W}D.
+\]
+In particular, $\mathcal I\restrict W,a_0\models C_0$.
+\end{lemma}
+
+\begin{proof}
+By induction on $D$.  Boolean cases use the induction hypothesis.  For $D=\exists R.E$, if $a\models_{\mathcal I\restrict W}\exists R.E$, then the same witness works in $\mathcal I$.  Conversely, if $a\models_{\mathcal I}\exists R.E$, then the selected witness $w(a,\exists R.E)$ belongs to $W$ and satisfies $E$ in $\mathcal I$; by induction it satisfies $E$ in $\mathcal I\restrict W$.
+
+For $D=\forall R.E$, the forward direction is immediate because $W$ is a subdomain.  Conversely, suppose $a\models_{\mathcal I\restrict W}\forall R.E$ but not $a\models_{\mathcal I}\forall R.E$.  Then some $b\in\Delta^\mathcal I$ has $\rho(a,b)=R$ and $b\models_{\mathcal I}\overline E$.  Hence $a\models_{\mathcal I}\exists R.\overline E$.  Since $\exists R.\overline E\in\Cl(C_0)$, the selected witness $w(a,\exists R.\overline E)$ lies in $W$, has relation $R$ from $a$, and satisfies $\overline E$ in $\mathcal I$.  By induction it satisfies $\overline E$ in $\mathcal I\restrict W$, contradicting $a\models_{\mathcal I\restrict W}\forall R.E$.
+\end{proof}
+
+\section{Generated containment split forests}
+
+We next pass from the witness-generated model to a tree-like presentation.  The vertical edges below are selected generated containment edges, not Hasse covers of the original semantic order.
+
+\begin{definition}[Occurrence]
+An occurrence is a pair $(x,i)$, where $x$ is an element of the witness-generated model and $i$ is a copy index.  The origin of $(x,i)$ is $x$.  Different occurrences may have the same origin.  Such occurrences are initially weak copies; strong equality is restored later by an explicit equivalence relation $\eqE$.
+\end{definition}
+
+\begin{definition}[Generated containment edge]
+A generated containment edge is an edge between occurrences labelled by either $\PP$ or $\PPI$.  We use the convention that a parent is a selected proper superpart and a child is a selected proper part.  Thus if $v$ is the parent of $u$, the semantic vertical relation is
+\[
+  u\PP v,
+  \qquad
+  v\PPI u.
+\]
+The edge is generated by a selected witness requirement.  It need not be an immediate cover in the original semantic relation.
+\end{definition}
+
+\begin{remark}[Why splitting is needed]
+A single occurrence in a tree has one parent, but one semantic element may require several incompatible selected proper superparts.  The presentation therefore creates equality-mate copies of the element, one under each selected superpart context.  The copies are not identified by blocking; they are identified only by the explicit semantic equality relation $\eqE$.
+\end{remark}
+
+\begin{definition}[Weak split presentation]
+A weak split presentation consists of:
+\begin{enumerate}[label=(S\arabic*)]
+\item a countable, finitely branching tree of occurrence bags;
+\item a finite set of positions in each bag;
+\item an origin map from occurrences to the witness-generated model;
+\item selected vertical containment edges between occurrence positions in adjacent bags;
+\item finite side contexts for selected $\DR$ and $\PO$ witnesses;
+\item equality ports indicating which occurrences have the same origin and must be quotiented;
+\item the actual RCC5 label, inherited from the original model, for every pair of occurrences that is explicitly placed in a common bag or side context.
+\end{enumerate}
+The presentation is \emph{faithful} if every selected witness from the thinned model has at least one occurrence in the presentation and every occurrence has the same closure type as its origin.
+\end{definition}
+
+The difficult part is not the existence of such a presentation.  The difficult part is bounding its local information and proving that all nonlocal pair/triple labels are finitely represented.  This is what the next sections formalize.
+
+\section{Saturated side contexts and bounded frontiers}
+
+This section defines the finite interface alphabet.  The definition is deliberately stronger than the older ``bag'' definition: it stores enough information to represent all composition-forced targets and all equality-congruence checks.
+
+\subsection{Ranks and a computable width bound}
+
+Let
+\[
+  m=|\Cl(C_0)|,
+  \qquad
+  e=|\{\exists R.D\in\Cl(C_0):R\in\Rel\}|.
+\]
+We define a crude computable bound recursively.  Let $B_0=1$.  Given $B_r$, let
+\[
+  B_{r+1}=1+4e+4eB_r+4B_r^2+4B_r^3.
+\]
+Finally set
+\[
+  B(C_0)=B_m.
+\]
+The concrete polynomial/exponential shape is unimportant.  What matters is that it is computable from $C_0$ and large enough for the saturation operations below: direct selected witnesses, equality copies, local verticalization thresholds, pair witnesses, and triple witnesses at the next lower rank.
+
+\begin{definition}[Side-context rank]
+A side context has rank $r\le m$.  Introducing a side witness for a formula $\exists R.D$ opens a subcontext of rank at most the modal depth of $D$, hence strictly below the rank of the formula that created it.  Vertical $\PP/\PPI$ eventualities are not expanded by side-context recursion; they are handled by parity states.
+\end{definition}
+
+\begin{definition}[Saturated side context]
+A rank-$r$ saturated side context around a source position $p$ is the least finite set $K$ of local positions, of size at most $B_r$, closed under the following operations:
+\begin{enumerate}[label=(SC\arabic*)]
+\item $p\in K$.
+\item If $q\in K$ and $\exists R.D\in\tp(q)$ with $R\in\{\DR,\PO\}$, then one selected $R$-witness position for $D$ is placed in $K$, unless an existing position of $K$ already realizes it.
+\item If a newly placed side position $w$ has, by the inherited or chosen relation table, relation $\EQ$, $\PP$, or $\PPI$ to a vertical boundary position or to another side position, then $w$ is not left as residual frontier.  Instead an equality port or a local vertical stratum connecting the relevant positions is added to $K$.
+\item For every pair $q,w\in K$, the inherited or chosen RCC5 label $L(q,w)$ is stored.  For every triple $q,w,z\in K$, the composition condition $L(q,z)\in\Comp(L(q,w),L(w,z))$ is checked.
+\item If a side witness has its own $\DR/\PO$ existential requirement of lower modal rank, a saturated lower-rank side subcontext is inserted.
+\item After these closure steps, a pair is classified as residual frontier only if it is not equality-linked and not vertically related inside $K$.  Every residual frontier pair must have label $\DR$ or $\PO$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Termination and finite bound for saturation]
+Every rank-$r$ side context has a saturated representative of size at most $B_r$.  Moreover the set of isomorphism types of saturated side contexts of rank $r$ over $\Cl(C_0)$ is finite.
+\end{lemma}
+
+\begin{proof}
+The proof is by induction on $r$.  For $r=0$, no lower-rank existential subcontext can be opened, and only the source, finitely many direct selected witnesses, equality copies, and finite pair/triple verticalization witnesses can be introduced.  The bound $B_0=1$ is harmlessly enlarged by the recurrence at rank $1$; alternatively one may take $B_0$ to be the finite number of rank-zero records.  For the induction step, each of the finitely many closure formulas contributes at most a fixed finite number of direct representatives, equality/verticalization adds at most a finite number per pair or triple of existing positions, and every recursive side subcontext has rank $<r$ and therefore size at most $B_{r-1}$.  The displayed recurrence deliberately overestimates these contributions.  Since labels range over finite sets $\Typ(C_0)$ and $\Rel$, there are only finitely many labelled structures of size at most $B_r$.
+\end{proof}
+
+\subsection{Frontier profiles}
+
+The profile of a tree node stores both live positions and summaries of forgotten sources.  Forgotten sources are not ignored: they survive as finite shadows carrying relation vectors and universal obligations.
+
+\begin{definition}[Obligation atom]
+An obligation atom is a triple
+\[
+  (R,D,\sigma)
+\]
+where $R\in\Rel$, $D\in\Cl(C_0)$, and $\sigma$ is a source identifier, either a live position or a shadow class.  It means: every future occurrence whose relation from the source $\sigma$ is $R$ must satisfy $D$.
+\end{definition}
+
+\begin{definition}[Frontier profile]
+A frontier profile over $C_0$ is a finite object
+\[
+  \Phi=(P,H,\tau,L,E,\Omega,\mathcal C,\Pi_2,\Pi_3)
+\]
+with the following components.
+\begin{enumerate}[label=(P\arabic*)]
+\item $P$ is a finite set of live positions, $|P|\le B(C_0)$.
+\item $H$ is a finite set of shadow classes, $|H|\le B(C_0)$.  A shadow class represents a forgotten occurrence or a finite set of forgotten occurrences that impose the same future obligations.
+\item $\tau:P\cup H\to\Typ(C_0)$ assigns closure types to live and shadow sources.
+\item $L:(P\cup H)^2\to\Rel$ is a relation matrix on all live/shadow representatives.
+\item $E$ is an equivalence relation on $P\cup H$ satisfying the exact equality condition
+\[
+  L(a,b)=\EQ \quad\Longleftrightarrow\quad aEb.
+\]
+\item $\Omega$ is a finite set of obligation atoms.  It contains, for every $a\in P\cup H$ and every $\forall R.D\in\tau(a)$, the atom $(R,D,a)$.
+\item $\mathcal C$ is a finite list of child-interface descriptors.  Each descriptor specifies a child slot, the positions of $P$ shared with or summarized into that child, the relation vector from every live/shadow source to every child boundary position, and the obligations inherited by the child.
+\item $\Pi_2$ is a finite catalogue of pair product states for pairs whose nearest common interface is this profile.
+\item $\Pi_3$ is a finite catalogue of triple product states for triples whose nearest common interface is this profile.
+\end{enumerate}
+The profile is locally legal if the local relation matrix satisfies converse, exact equality, and RCC5 composition on all triples in $P\cup H$, and if all side contexts appearing in child descriptors are saturated.
+\end{definition}
+
+\begin{remark}
+The shadow classes are not semantic equality classes.  They are finite representatives of forgotten sources for the purpose of future relation vectors and universal obligations.  Exact equality is governed only by $E$, and $E$ is required to coincide with the label $\EQ$.
+\end{remark}
+
+\begin{lemma}[Finiteness of the profile alphabet]
+For fixed $C_0$, there are only finitely many frontier profiles up to isomorphism.
+\end{lemma}
+
+\begin{proof}
+The sets $P$ and $H$ have cardinality bounded by the computable number $B(C_0)$.  Types range over the finite set $\Typ(C_0)$.  Relation matrices range over $\Rel^{(P\cup H)^2}$.  Equality relations are finite equivalence relations and must agree with the $\EQ$ entries of $L$.  Obligation atoms range over the finite set
+\[
+  \Rel\times\Cl(C_0)\times(P\cup H).
+\]
+There are finitely many saturated side-context isomorphism types by the previous lemma.  Finally, $\Pi_2$ and $\Pi_3$ are subsets of finite sets of pair/triple records over the finite local position universe and finite relation/type labels.  Therefore the number of profiles is finite and effectively enumerable.
+\end{proof}
+
+\section{Finite pair and triple product-state representation}
+
+This section is the main repair.  It replaces the informal phrase ``represented pair/triple'' by an explicit finite product-state construction.
+
+
+\subsection{Pair and triple states}
+
+The finite representatives are coded relative to an indexed frontier.  This removes any appeal to an informal notion of a ``represented'' pair.
+
+\begin{definition}[Frontier scheme]
+A frontier scheme is a tuple
+\[
+  F=(n,\tau_F,L_F,E_F)
+\]
+where $0\le n\le B(C_0)$, $\tau_F:\{1,\ldots,n\}\to\Typ(C_0)$, $L_F:\{1,\ldots,n\}^2\to\Rel$, and $E_F$ is an equivalence relation satisfying
+\[
+  L_F(i,j)=\EQ\quad\Longleftrightarrow\quad iE_Fj.
+\]
+The matrix $L_F$ must satisfy converse and RCC5 composition on all triples of frontier indices.  The set of frontier schemes is finite.
+\end{definition}
+
+\begin{definition}[Endpoint summary]
+Let $F=(n,\tau_F,L_F,E_F)$ be a frontier scheme.  An endpoint summary over $F$ is a pair
+\[
+  s=(t,r)
+\]
+where $t\in\Typ(C_0)$ and $r:\{1,\ldots,n\}\to\Rel$ is a relation vector from the endpoint to the frontier.  It is legal if for all $i,j\le n$,
+\[
+  r(j)\in\Comp(r(i),L_F(i,j)),
+  \qquad
+  L_F(i,j)\in\Comp(\Inv(r(i)),r(j)),
+\]
+and if $r(i)=\EQ$ occurs exactly when the endpoint is declared by an equality port to be the frontier position $i$.  This last equality-port declaration is part of the finite code.
+\end{definition}
+
+\begin{definition}[Pair state]
+A pair state over $C_0$ is a tuple
+\[
+  \pi=(F,s_1,s_2,R)
+\]
+where $F$ is a frontier scheme, $s_k=(t_k,r_k)$ are legal endpoint summaries over $F$, and $R\in\Rel$ is the relation from endpoint $1$ to endpoint $2$.  The state is legal if:
+\begin{enumerate}[label=(PS\arabic*)]
+\item $R=\EQ$ iff the two endpoints are in the same declared equality-port class;
+\item $\Inv(R)$ is the converse relation from endpoint $2$ to endpoint $1$;
+\item for every frontier index $i$,
+\[
+  r_2(i)\in\Comp(\Inv(R),r_1(i)),
+  \qquad
+  r_1(i)\in\Comp(R,r_2(i));
+\]
+\item all universal obligations generated by $t_1$ and $t_2$ toward the other endpoint and toward frontier indices are respected.
+\end{enumerate}
+Let $\mathsf{PState}(C_0)$ be the finite set of all legal pair states.
+\end{definition}
+
+\begin{definition}[Triple state]
+A triple state over $C_0$ is a tuple
+\[
+  \theta=(F,s_1,s_2,s_3,R_{12},R_{23},R_{13})
+\]
+where $F$ is a frontier scheme, $s_i=(t_i,r_i)$ are endpoint summaries over $F$, and $R_{ij}\in\Rel$ are pair labels.  It is legal if each projected pair is a legal pair state and, in addition,
+\[
+  R_{13}\in\Comp(R_{12},R_{23})
+\]
+together with the two converse permutations.  It is also required that, for each frontier index $k$, every triple involving two endpoints and the frontier position $k$ satisfies the RCC5 composition table.  Let $\mathsf{TState}(C_0)$ be the finite set of all legal triple states.
+\end{definition}
+
+All components of a pair or triple state range over finite sets bounded by $B(C_0)$, $\Typ(C_0)$, and $\Rel$.  Hence $\mathsf{PState}(C_0)$ and $\mathsf{TState}(C_0)$ are finite and effectively enumerable.
+
+\subsection{Interface transformers}
+
+\begin{definition}[Pair transformer]
+For a child interface descriptor $c$ of a profile $\Phi$, a pair transformer is a partial function
+\[
+  T^2_c:\mathsf{PState}(C_0)\to\mathsf{PState}(C_0)
+\]
+which updates the pair state when one or both endpoints are moved from the parent interface into the child interface.  The transformer is legal if every updated relation is one of the relations allowed by the RCC5 composition table from the parent relation and the child boundary relation vectors.
+\end{definition}
+
+\begin{definition}[Triple transformer]
+For a child interface descriptor $c$, a triple transformer is a partial function
+\[
+  T^3_c:\mathsf{TState}(C_0)\to\mathsf{TState}(C_0)
+\]
+which updates triple states under movement into the child interface.  It is legal if all three pair components are updated by the corresponding pair transformers and the resulting triple is composition-legal.
+\end{definition}
+
+Each frontier profile explicitly stores the finitely many pair and triple transformers attached to its child interfaces.  Local legality requires compatibility of the pair and triple transformers with the local relation matrix $L$ and the saturated side contexts.
+
+\subsection{Global representatives}
+
+Let $\mathcal T$ be a tree labelled by legal frontier profiles.  An occurrence of the unfolded split forest is represented by an address
+\[
+  \xi=(v,p)
+\]
+where $v$ is a node of $\mathcal T$ and $p$ is a live position of the profile at $v$, modulo equality ports as described later.
+
+\begin{definition}[Pair representative]
+For two occurrences $\xi=(v,p)$ and $\eta=(w,q)$, let $u=\lca(v,w)$.  Starting at the nearest common interface $u$, initialize a pair state from the local catalogue of the profile at $u$.  Then apply the stored pair transformers along the path from $u$ to $v$ for the first endpoint and along the path from $u$ to $w$ for the second endpoint.  If the transformations are defined and lead to a unique final pair state, call it
+\[
+  \operatorname{rep}_2(\xi,\eta).
+\]
+The global relation label is the relation component of this final pair state and is denoted
+\[
+  \rho_\mathcal T(\xi,\eta).
+\]
+\end{definition}
+
+\begin{definition}[Triple representative]
+For three occurrences $\xi,\eta,\zeta$, let $u$ be the least node containing the branch point for the three addresses.  Initialize a triple state from the profile at $u$, and apply the stored triple transformers down the three paths to the endpoint profiles.  The resulting state is
+\[
+  \operatorname{rep}_3(\xi,\eta,\zeta).
+\]
+Its three pair components must agree with
+\[
+  \operatorname{rep}_2(\xi,\eta),\qquad
+  \operatorname{rep}_2(\eta,\zeta),\qquad
+  \operatorname{rep}_2(\xi,\zeta).
+\]
+\end{definition}
+
+\begin{lemma}[Finite pair/triple representation]
+If every node of $\mathcal T$ has a legal frontier profile and every child interface transformer is legal and overlap-compatible, then:
+\begin{enumerate}[label=(F\arabic*)]
+\item every pair of occurrences has a unique finite pair representative;
+\item every triple of occurrences has a unique finite triple representative;
+\item the triple representative contains exactly the three pair labels obtained from the pair representatives; and
+\item for every triple $\xi,\eta,\zeta$,
+\[
+  \rho_\mathcal T(\xi,\zeta)
+  \in
+  \Comp(\rho_\mathcal T(\xi,\eta),\rho_\mathcal T(\eta,\zeta)).
+\]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+For pairs, uniqueness follows by induction on the length of the two paths from the nearest common interface to the endpoints.  The initial pair state is unique because the local catalogue is functional on local endpoint positions and equality-port classes.  At each child edge the stored pair transformer is a partial function; legality of the profile requires that it be defined on every pair state that can enter that child.  Hence the final state is unique.
+
+For triples, the same induction uses the triple transformers.  Overlap compatibility says that applying a triple transformer and then projecting to any of the three pair components gives the same pair state as applying the corresponding pair transformer directly.  Therefore the triple representative agrees with the three pair representatives.  Finally, every triple state stored in $\mathsf{TState}(C_0)$ is composition-legal, and the triple transformers are required to preserve composition-legality.  The final relation components therefore satisfy the RCC5 composition condition.
+\end{proof}
+
+\section{Compositional universal propagation}
+
+A universal restriction must be checked at every semantic target, not only at selected witnesses.  The repaired profile alphabet carries this by inherited obligation atoms.
+
+\begin{definition}[Generated universal obligation]
+Let $a$ be a live or shadow source in a profile.  If $\forall R.D\in\tau(a)$, then the profile contains the source obligation $(R,D,a)$.  A child interface receives from $a$ all obligations whose target relation can occur for positions inside that child, as computed by the pair transformers.
+\end{definition}
+
+\begin{definition}[Universal propagation check]
+A profile is universal-safe if for every source $a\in P\cup H$, every local or side-context position $b$, and every pair state assigning relation $R=L(a,b)$, the following holds:
+\[
+  \forall R.D\in\tau(a)\quad\Longrightarrow\quad D\in\tau(b).
+\]
+Moreover, for every child interface $c$, if a pair transformer can map the source $a$ to a future child occurrence with relation $R$, then the child descriptor contains the inherited obligation $(R,D,a_c)$, where $a_c$ is the corresponding live or shadow representative of $a$ in the child profile.
+\end{definition}
+
+\begin{lemma}[Universal coverage]
+In any accepted profile tree, if $\forall R.D\in\tp(\xi)$ and $\rho_\mathcal T(\xi,\eta)=R$, then $D\in\tp(\eta)$.
+\end{lemma}
+
+\begin{proof}
+Let $u$ be the nearest common interface for $\xi$ and $\eta$.  The pair representative $\operatorname{rep}_2(\xi,\eta)$ is obtained by composing finitely many pair transformers along the paths from $u$ to the endpoints.  At the point where the source occurrence $\xi$ is live, the local profile contains the obligation $(R,D,\xi)$ for every $\forall R.D\in\tp(\xi)$.  Whenever the target endpoint moves through a child interface, the universal propagation check sends the obligation through the corresponding pair transformer to the child summary if relation $R$ remains possible.  Since the final pair representative has relation $R$, the obligation survives along the unique product-state path to the final endpoint.  At the endpoint profile, universal-safety requires $D\in\tp(\eta)$.  This proves coverage for all targets, selected or composition-forced.
+\end{proof}
+
+\begin{corollary}[The composition-forced target test is rejected]
+The concept
+\[
+  \exists\PP.(\exists\DR.A)\sqcap\forall\DR.\neg A
+\]
+is rejected by the automaton.
+\end{corollary}
+
+\begin{proof}
+If $x\PP y$ and $y\DR z$ with $z:A$, the pair/triple representation check forces $x\DR z$, because $\Comp(\PP,\DR)=\{\DR\}$.  Universal coverage for $\forall\DR.\neg A$ at $x$ then requires $\neg A\in\tp(z)$, contradicting $A\in\tp(z)$.
+\end{proof}
+
+\section{Exact equality and quotient soundness}
+
+Equality ports are semantic equality; profile repetition or blocking is not.
+
+\begin{definition}[Exact equality invariant]
+An occurrence-labelled profile tree satisfies exact equality if the equivalence relation generated by equality ports, written $\eqE$, satisfies for all occurrences $\xi,\eta$:
+\[
+  \rho_\mathcal T(\xi,\eta)=\EQ
+  \quad\Longleftrightarrow\quad
+  \xi\eqE\eta.
+\]
+Furthermore, if $\xi\eqE\eta$, then:
+\begin{enumerate}[label=(E\arabic*)]
+\item $\tp(\xi)=\tp(\eta)$;
+\item for every occurrence $\zeta$, the quotient relations from $\xi$ and $\eta$ to $\zeta$ agree;
+\item selected existential witnesses and inherited universal obligations are synchronized across the equality class; and
+\item no strict positive vertical $\PP/\PPI$ path identifies its endpoints by $\eqE$.
+\end{enumerate}
+\end{definition}
+
+The second item is enforced finitely by pair representatives: equality-port pairs have identical relation vectors to every live/shadow boundary position and the equality synchronization transition requires the pair transformers to preserve equality of those vectors in every child.
+
+\begin{lemma}[Global equality congruence]
+If the finite equality synchronization checks hold in every profile, then $\eqE$ is a typed RCC5 congruence on the unfolded occurrence structure: whenever $\xi\eqE\eta$ and $\zeta$ is any occurrence,
+\[
+  \rho_\mathcal T(\xi,\zeta)=\rho_\mathcal T(\eta,\zeta)
+\]
+after replacing $\zeta$ by its equality class, and $\tp(\xi)=\tp(\eta)$.
+\end{lemma}
+
+\begin{proof}
+By the finite pair representation lemma, the two pair relations are computed from finite pair states.  The equality synchronization check says that at the nearest common interface of an equality-port pair, the two endpoints have identical pair-state vectors to every local, side, shadow, and child-boundary representative.  Pair transformers preserve this equality of vectors when moving into a child.  Induction on the path from the nearest common interface to $\zeta$ therefore gives identical final pair states.  Type equality is checked at the equality port and propagated by the same overlap compatibility.  Transitive closure of equality ports is handled by composing these equalities along the equivalence chain.
+\end{proof}
+
+\begin{lemma}[Strong quotient soundness]
+Let $\mathcal W$ be a weak occurrence structure obtained from an accepted profile tree.  Suppose pair/triple representation, exact equality, and equality congruence hold.  Then the quotient $\mathcal W/{\eqE}$ is a strong abstract RCC5 frame.
+\end{lemma}
+
+\begin{proof}
+Define
+\[
+  \rho_Q([\xi],[\eta])=\rho_\mathcal T(\xi,\eta).
+\]
+This is well-defined by global equality congruence.  Exact equality gives
+\[
+  \rho_Q([\xi],[\eta])=\EQ
+  \quad\Longleftrightarrow\quad
+  \xi\eqE\eta
+  \quad\Longleftrightarrow\quad
+  [\xi]=[\eta],
+\]
+so $\EQ$ is identity in the quotient.  Converse follows from the pair-state converse checks.  Composition follows from the finite triple representation lemma.  Thus the quotient is a strong RCC5 frame.
+\end{proof}
+
+\section{Transitive existential requests and parity acceptance}
+
+The roles $\PP$ and $\PPI$ are transitive in the semantic relation.  Vertical containment edges generate strict ancestor/descendant chains, and parity acceptance is used to ensure that existential requests along such chains are eventually fulfilled.
+
+\begin{definition}[Vertical request]
+A vertical request is a pair $(R,D)$ with $R\in\{\PP,\PPI\}$ and $D\in\Cl(C_0)$.  An occurrence $\xi$ creates request $(R,D)$ when $\exists R.D\in\tp(\xi)$ and the witness is not already realized in the finite local side/vertical context of the current profile.
+\end{definition}
+
+\begin{definition}[Request transition]
+A request $(\PP,D)$ is sent upward along generated superpart links; a request $(\PPI,D)$ is sent downward along generated proper-part links.  If a strict target occurrence with $D$ in its type is encountered, the request is fulfilled.  If the request passes through an equality mate, it remains occurrence-local: equality synchronization may offer additional support occurrences, but the automaton tracks the request along the support branch chosen by the witness declaration.
+\end{definition}
+
+\begin{definition}[Parity condition]
+For every vertical request type $(R,D)$, the automaton has a request-tracking state.  A run path that carries an unfulfilled request of the highest active index infinitely often receives odd priority; a path that fulfills or drops the request receives the corresponding even priority.  The finitely many request types are ordered arbitrarily and the standard generalized Buchi-to-parity encoding is used.
+\end{definition}
+
+\begin{lemma}[Vertical eventuality soundness]
+If the parity condition is satisfied, then every existential formula $\exists R.D$ with $R\in\{\PP,\PPI\}$ has a strict semantic witness in the unfolded occurrence structure.
+\end{lemma}
+
+\begin{proof}
+If the witness is local, there is nothing to prove.  Otherwise the automaton launches the request state along the appropriate generated containment direction.  The request state can terminate successfully only when it reaches a strict occurrence whose type contains $D$.  If no such occurrence is ever reached, the request remains pending on an infinite run path and the parity condition rejects.  Hence every accepted run supplies a strict target satisfying $D$.
+\end{proof}
+
+\begin{remark}
+The profile self-loop accepting
+\[
+  \exists\PP.\top\sqcap\forall\PP.\exists\PP.\top
+\]
+represents infinitely many fresh occurrences with the same profile.  It is not an $\EQ$-cycle.  Exact equality prevents any strict vertical successor from being identified with the source.
+\end{remark}
+
+\section{The finite alternating parity tree automaton}
+
+We now define the decision object.  Parent moves are not needed: all parent and ancestor information required by a child is included in the child-interface descriptor and the inherited obligation set.  Thus a standard one-way alternating parity tree automaton suffices.  A two-way version would also be decidable, but the one-way formulation is cleaner.
+
+\begin{definition}[Alphabet]
+The alphabet $\Sigma_{C_0}$ is the finite set of all frontier profiles over $C_0$ satisfying the static syntactic conditions: bounded live/shadow sets, exact local equality, finite child-interface descriptors, finite pair/triple transformer tables, and saturated side contexts.
+\end{definition}
+
+\begin{definition}[Automaton states]
+The automaton $\Aut_{C_0}$ has the following finite families of states:
+\begin{enumerate}[label=(A\arabic*)]
+\item $q_{\mathrm{init}}$ and $q_{\mathrm{wf}}$ for initialization and recursive well-formedness;
+\item $q_{\mathrm{loc}}$ for Boolean type and local RCC5 checks;
+\item $q_{\mathrm{pair}}(\pi)$ for pair product-state checks, $\pi\in\mathsf{PState}(C_0)$;
+\item $q_{\mathrm{triple}}(\theta)$ for triple product-state checks, $\theta\in\mathsf{TState}(C_0)$;
+\item $q_{\mathrm{univ}}(a,R,D)$ for inherited universal obligations;
+\item $q_{\mathrm{eq}}(a,b)$ for equality synchronization of an equality-port pair;
+\item $q_{\mathrm{req}}(R,D)$ for vertical existential requests with $R\in\{\PP,\PPI\}$.
+\end{enumerate}
+All parameters range over finite sets determined by $C_0$ and the bounded profile universe.
+\end{definition}
+
+\begin{definition}[Transition relation]
+At a node labelled by a profile $\Phi$, the transition from $q_{\mathrm{wf}}$ is the conjunction of the following finite requirements.
+\begin{enumerate}[label=(Q\arabic*)]
+\item $q_{\mathrm{loc}}$ checks that every live/shadow type is a Hintikka type, that the local relation matrix has exact equality, converse, and local RCC5 composition, and that every saturated side context is locally legal.
+\item For every listed pair transformer and every relevant input pair state, spawn the finite check $q_{\mathrm{pair}}(\pi)$ verifying that the transformer is defined, respects converse, and produces one of the pair states listed in the child profile.
+\item For every listed triple transformer and every relevant input triple state, spawn $q_{\mathrm{triple}}(\theta)$ verifying that its three projections agree with the pair transformers and that the output triple is composition-legal.
+\item For every source $a$ and every $\forall R.D\in\tau(a)$, check all local targets with relation $R$ and spawn $q_{\mathrm{univ}}(a,R,D)$ into every child interface whose pair transformer admits future $R$-targets from $a$.
+\item For every equality-port pair $aEb$, spawn $q_{\mathrm{eq}}(a,b)$.  This checks type equality, identical relation vectors to live/shadow/frontier positions, identical outgoing witness declarations, and identical transformer behavior into children.
+\item For every existential $\exists R.D\in\tau(a)$:
+\begin{enumerate}[label=(Q6.\alph*)]
+\item if $R\in\{\DR,\PO\}$, require a local or side-context witness represented by the saturated side context and checked by the pair representative;
+\item if $R\in\{\PP,\PPI\}$, either require a local strict vertical witness or spawn the request state $q_{\mathrm{req}}(R,D)$ into the selected support direction;
+\item if $R=\EQ$, use the normalized equivalence $\exists\EQ.D\equiv D$.
+\end{enumerate}
+\item For every non-idle child slot declared by $\Phi$, spawn $q_{\mathrm{wf}}$ to that child.  Thus all local, patch, equality, universal, and request checks are recursively applied at every generated node.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Priorities]
+All states except request states have even priority $0$.  Request states are assigned the standard parity priorities for finitely many eventualities: a run path is accepting iff every request that is generated infinitely often without fulfillment is rejected.  Equivalently, one may use a generalized Buchi condition for the finite set of request types and then convert it effectively to parity.
+\end{definition}
+
+\begin{lemma}[Effectivity]
+For every input $C_0$, $\Aut_{C_0}$ is an effectively constructible finite alternating parity tree automaton.
+\end{lemma}
+
+\begin{proof}
+The profile alphabet is finite and enumerable.  The state families range over finite sets: profile positions are bounded by $B(C_0)$, types are in $\Typ(C_0)$, relations are in $\Rel$, and pair/triple states are finite records over bounded frontiers.  Every transition clause is a finite Boolean combination of child moves and local checks over those finite records.  The priority map is finite.  Hence $\Aut_{C_0}$ is effectively constructible.
+\end{proof}
+
+\section{Soundness of the automaton}
+
+\begin{lemma}[Accepted tree yields weak occurrence model]
+If $\Aut_{C_0}$ accepts a $\Sigma_{C_0}$-labelled tree $\mathcal T$ whose root has a live position $p_0$ with $C_0\in\tau(p_0)$, then the occurrences of $\mathcal T$ form a weak occurrence structure with a total RCC5 labelling $\rho_\mathcal T$ defined by finite pair representatives.
+\end{lemma}
+
+\begin{proof}
+The occurrence set consists of all live positions at all nodes, with side-context positions treated as local occurrences and child positions connected by the declared interfaces.  For any two occurrences, define $\rho_\mathcal T$ as the relation component of $\operatorname{rep}_2$.  The finite pair representation lemma gives existence and uniqueness.  Local exact equality and pair-state converse checks give JEPD and converse.
+\end{proof}
+
+\begin{lemma}[RCC5 frame soundness]
+The weak occurrence labelling from an accepted tree satisfies RCC5 composition on all triples.
+\end{lemma}
+
+\begin{proof}
+For arbitrary occurrences $\xi,\eta,\zeta$, use the finite triple representation lemma.  The triple representative contains the three pair labels and is composition-legal by the local $q_{\mathrm{triple}}$ checks and transformer compatibility.  Therefore
+\[
+  \rho_\mathcal T(\xi,\zeta)
+  \in
+  \Comp(\rho_\mathcal T(\xi,\eta),\rho_\mathcal T(\eta,\zeta)).
+\]
+\end{proof}
+
+\begin{lemma}[Concept soundness in the weak occurrence structure]
+For every occurrence $\xi$ and every $D\in\Cl(C_0)$,
+\[
+  D\in\tp(\xi)
+  \quad\Longrightarrow\quad
+  \xi\models D
+\]
+where satisfaction is evaluated in the weak occurrence structure before quotienting, except that $\EQ$ is interpreted by exact equality ports.
+\end{lemma}
+
+\begin{proof}
+By induction on $D$.  Boolean cases follow from local Hintikka conditions.  Equality modalities are normalized.
+
+For $D=\exists R.E$, if $R\in\{\DR,\PO\}$, transition clause Q6.a supplies a local or saturated side-context occurrence $\eta$ with $\rho_\mathcal T(\xi,\eta)=R$ and $E\in\tp(\eta)$; induction gives $\eta\models E$.  If $R\in\{\PP,\PPI\}$, either a local strict vertical witness is supplied or the parity request lemma supplies a strict occurrence $\eta$ with relation $R$ and $E\in\tp(\eta)$.  Induction applies.
+
+For $D=\forall R.E$, let $\eta$ be any occurrence with $\rho_\mathcal T(\xi,\eta)=R$.  Universal coverage gives $E\in\tp(\eta)$.  By induction, $\eta\models E$.
+\end{proof}
+
+\begin{theorem}[Automaton soundness]
+If $\Aut_{C_0}$ accepts a tree with a root position containing $C_0$, then $C_0$ is satisfiable in a strong abstract RCC5 frame.
+\end{theorem}
+
+\begin{proof}
+By the previous lemmas the accepted tree gives a weak occurrence structure satisfying all closure formulas at their typed occurrences and satisfying RCC5 composition.  The equality checks ensure exact equality and global equality congruence.  Quotienting by $\eqE$ therefore yields a strong abstract RCC5 frame.  Types and satisfaction are preserved under the quotient because equality mates have identical types and identical witness/universal behavior.  The root quotient class satisfies $C_0$.
+\end{proof}
+
+\section{Completeness}
+
+\begin{lemma}[Generated split-forest normal form]
+If $\mathcal I,a_0\models C_0$, then there is a faithful generated split-forest presentation whose local contexts are saturated and whose frontier profiles are drawn from $\Sigma_{C_0}$.
+\end{lemma}
+
+\begin{proof}
+First apply witness thinning, obtaining a countable witness-generated model $\mathcal I_w$.  For every selected $\PPI$ witness, place a generated proper-part child.  For every selected $\PP$ witness, place the source occurrence under a generated proper-superpart parent.  If several incompatible selected $\PP$ witnesses are needed for the same origin, create distinct occurrences of that origin, each under one selected superpart, and connect them by equality ports.
+
+For selected $\DR$ and $\PO$ witnesses, insert them into saturated side contexts.  Saturation inspects their relation to the source's vertical boundary positions, equality mates, and already inserted side positions.  If a side occurrence is $\EQ$, $\PP$, or $\PPI$ related to such a boundary, it is verticalized or equality-linked rather than left as residual frontier.  Only after this closure is complete are residual pairs permitted, and then only with labels $\DR$ or $\PO$.  The ranked saturation lemma gives a bounded finite context at every profile.
+
+Every profile is filled with the actual types and RCC5 labels inherited from $\mathcal I_w$.  Equality ports connect exactly occurrences with the same origin.  Since $\mathcal I_w$ is a strong RCC5 model, the inherited labels satisfy exact equality, converse, and composition on all concrete local triples.
+
+Finally, define the pair and triple product-state catalogues by actual finite relation summaries at nearest common interfaces.  Because the frontier width, type set, relation set, obligation set, and saturated side-context types are all finite, only finitely many such summaries exist up to isomorphism.  The child transformers are the actual update maps induced by moving from a parent frontier to a child frontier.  They are legal because all labels come from the RCC5 model $\mathcal I_w$.
+\end{proof}
+
+\begin{lemma}[Accepted extraction]
+The profile tree extracted in the previous lemma is accepted by $\Aut_{C_0}$.
+\end{lemma}
+
+\begin{proof}
+Every local Boolean/type check holds because types are defined by truth in $\mathcal I_w$.  Every local RCC5 and triple check holds because $\mathcal I_w$ satisfies the RCC5 composition table.  Universal propagation checks hold because if $\forall R.D$ is true at a source in $\mathcal I_w$, every target with relation $R$ satisfies $D$; the product-state representative records exactly that relation.  Equality synchronization holds because equality ports connect occurrences with the same origin, hence with identical type and identical relations to every third origin.
+
+Existential checks hold by construction: every selected witness chosen during thinning is placed either vertically or in a saturated side context.  For vertical transitive requests that require an infinite chain, the extracted profile tree follows the actual selected witnesses in $\mathcal I_w$; any pending request therefore eventually reaches its selected witness.  Hence the parity condition is satisfied.  Recursive well-formedness is spawned at every child, and every child profile is built by the same extraction.  Thus the automaton has an accepting run.
+\end{proof}
+
+\begin{theorem}[Automaton completeness]
+If $C_0$ is satisfiable, then $\Aut_{C_0}$ accepts some $\Sigma_{C_0}$-labelled tree with a root position containing $C_0$.
+\end{theorem}
+
+\begin{proof}
+Immediate from the generated split-forest normal form and accepted extraction lemmas.
+\end{proof}
+
+\section{Decidability}
+
+\begin{theorem}[Decidability]
+Concept satisfiability for $\ALCI$ with atomic RCC5 roles $\EQ,\PP,\PPI,\PO,\DR$ over abstract complete atomic strong-$\EQ$ RCC5 frames is decidable.
+\end{theorem}
+
+\begin{proof}
+Given $C_0$, construct the finite alternating parity tree automaton $\Aut_{C_0}$.  By soundness and completeness,
+\[
+  C_0\text{ is satisfiable}
+  \quad\Longleftrightarrow\quad
+  L(\Aut_{C_0})\ne\emptyset.
+\]
+Emptiness of finite alternating parity tree automata over a finite ranked alphabet is decidable by reduction to a finite parity game.  Hence satisfiability is decidable.
+\end{proof}
+
+\section{Diagnostic examples}
+
+\subsection{Composition-forced universal target}
+
+For
+\[
+  C_{\mathrm{force}}
+  =
+  \exists\PP.(\exists\DR.A)\sqcap\forall\DR.\neg A,
+\]
+the automaton rejects.  Any attempted profile tree must create $x\PP y$ and $y\DR z$ with $A\in\tp(z)$.  Pair/triple product states force $x\DR z$.  Universal propagation then forces $\neg A\in\tp(z)$, contradicting $A\in\tp(z)$.
+
+\subsection{Incompatible split superparts}
+
+Let
+\[
+C_{\mathrm{split}}
+=
+\exists\PP.(A\sqcap\neg B\sqcap\forall\PP.\neg B\sqcap\forall\PPI.\neg B\sqcap\forall\PO.\neg B)
+\sqcap
+\exists\PP.B.
+\]
+The automaton rejects.  If $x\PP y$ witnesses the first conjunct and $x\PP z$ witnesses the second, then $y\PPI x$ and $x\PP z$, so
+\[
+  \rho(y,z)\in\Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}.
+\]
+Each option contradicts $y$'s universal restrictions and $z:B$.  If the construction splits $x$ into equality copies, equality synchronization still requires the two copies to have identical relation summaries to $y$ and $z$, so the same triple representative is checked.
+
+\subsection{Recursive child obligations}
+
+For
+\[
+  \exists\DR.(A\sqcap\exists\DR.B),
+\]
+the automaton accepts only if the $A$-witness profile recursively satisfies its own $\exists\DR.B$ obligation.  This follows from transition clause Q7, which sends $q_{\mathrm{wf}}$ to every non-idle child and side subcontext.
+
+\subsection{Infinite upward chain without equality collapse}
+
+For
+\[
+  \exists\PP.\top\sqcap\forall\PP.\exists\PP.\top,
+\]
+the automaton may accept a tree with a repeated profile along an upward support direction.  The repeated profiles are blocking/profile repetitions.  They are not equality ports.  Exact equality forbids $\EQ$ between distinct strict vertical laps.
+
+\section{How the repaired proof addresses the referee findings}
+
+\begin{longtable}{p{0.28\linewidth}p{0.62\linewidth}}
+\toprule
+Referee issue & Repair in this manuscript\\
+\midrule
+Global patch condition was not finite & Sections 5--6 define finite pair/triple product states and representatives.  Lemma 6.5 proves every global pair/triple has a finite representative.\\
+Universal restrictions checked only on selected targets & Section 7 defines inherited universal obligations and proves universal coverage for all pair-represented semantic targets.\\
+Split-forest normal form asserted rather than proved & Sections 4--5 and 12 give witness thinning, generated containment splitting, saturated side contexts, and bounded frontier extraction.\\
+Exact strong equality missing & Section 8 imposes $\rho=\EQ$ iff equality-port equivalence and proves strong quotient soundness.\\
+Equality synchronization only local & Lemma 8.2 uses pair representatives and transformer induction to obtain global congruence.\\
+Automaton not fully finite & Section 10 gives finite alphabet, finite state families, finite transitions, and parity priorities.\\
+Unsupported bag bound & Section 5 uses a computable recursive bound $B(C_0)$ derived from ranked saturation, not the earlier heuristic bound.\\
+Completeness used missing normal form & Section 12 constructs the profile tree from the thinned model and fills pair/triple catalogues from actual relation summaries.\\
+\bottomrule
+\end{longtable}
+
+\section{Conclusion}
+
+The repaired proof keeps the original split-forest insight but moves the fragile global consistency obligations into a finite frontier automaton.  The key addition is the finite pair/triple product-state representation theorem: every semantic pair and triple in the infinite unfolded presentation has a finite representative, and the automaton checks those representatives locally.  This closes the gap between local side-interface checks and global RCC5 composition, and it ensures that universal restrictions are propagated to composition-forced targets.  Together with exact equality ports and parity handling of vertical eventualities, this yields a decidability procedure for the stated abstract semantics.
+
+\end{document}

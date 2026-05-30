@@ -1,0 +1,107 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem,booktabs,longtable}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+
+\title{Formal Response to the Referee Report on the Split-Forest Automata Proof}
+\author{Repair memorandum}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{Verdict}
+
+The referee report is substantive and the main criticism is accepted.  The previous automata manuscript did not prove a finite representation invariant strong enough to justify its patch condition.  In particular, it used phrases such as ``represented target'' and ``represented triple'' without proving that every semantic target and every RCC5-relevant triple in the infinite unfolded split forest has a finite representative checked by the automaton.
+
+I have repaired the proof by replacing the informal patchwork condition with an explicit finite frontier/profile construction and finite pair/triple product-state representatives.  The repaired proof is contained in
+\[
+\texttt{split\_forest\_automata\_repaired\_full\_proof.tex/pdf}.
+\]
+
+\section*{Main accepted defects and repairs}
+
+\begin{longtable}{p{0.30\linewidth}p{0.60\linewidth}}
+\toprule
+Referee finding & Repair in the new proof \\
+\midrule
+Global patch condition was not finite. & Sections 5--6 define bounded frontier profiles, frontier schemes, endpoint summaries, pair states, triple states, and child-interface transformers.  Lemma 6.7 proves finite pair/triple representation for all global occurrences. \\
+Universal restrictions were checked only on selected targets. & Section 7 defines inherited universal obligations and proves a universal coverage lemma: if $\forall R.D$ is in the source type and the finite pair representative assigns relation $R$ to a target, then the target type contains $D$. \\
+The split-forest normal form was asserted too quickly. & Sections 3--5 and Section 12 now separate witness thinning, generated containment edges, split copies for multiple superparts, saturated side contexts, and bounded frontiers. \\
+Exact strong equality was not enforced. & Section 8 imposes the exact equality invariant $\rho(u,v)=\EQ$ iff $u\equiv_{\EQ}v$, and proves quotient soundness under global equality congruence. \\
+Equality synchronization was only local. & Section 8 proves a global equality-congruence lemma by induction over pair representatives and child-interface transformers. \\
+The automaton was not fully finite. & Section 10 gives a finite alphabet, finite state families, finite transition clauses, and a standard parity condition for vertical eventualities. \\
+The old bag bound was unsupported. & Section 5 replaces the heuristic bound with a computable ranked saturation bound $B(C_0)$.  The exact magnitude is not important; finiteness and effective computability are. \\
+Completeness extraction depended on the missing normal form. & Section 12 fills frontier profiles, pair catalogues, triple catalogues, equality ports, and child transformers from the actual thinned model. \\
+\bottomrule
+\end{longtable}
+
+\section*{Key correction: product-state representatives}
+
+The central change is the following.  The automaton no longer merely checks local bags and hopes that global triples are covered.  Each profile carries finite pair and triple product states.  For any two occurrences in the unfolded split tree, the pair representative is computed from their nearest common interface and the finite pair transformers along the two paths to the endpoints.  For any three occurrences, the triple representative is computed analogously.  The triple representative contains the three pair labels and is checked against the RCC5 composition table.
+
+Therefore the proof now has an explicit finite route from local checks to global composition:
+\[
+\text{local transformer checks}
+\quad\Longrightarrow\quad
+\text{finite representative for every global triple}
+\quad\Longrightarrow\quad
+\text{global RCC5 composition}.
+\]
+
+\section*{Diagnostic examples addressed}
+
+The repaired proof explicitly discusses the referee's diagnostic tests.
+
+For
+\[
+  \exists\PP.(\exists\DR.A)\sqcap\forall\DR.\neg A,
+\]
+the product-state triple check forces
+\[
+  x\PP y,\quad y\DR z
+  \quad\Longrightarrow\quad
+  x\DR z
+\]
+because $\Comp(\PP,\DR)=\{\DR\}$.  Universal propagation then forces $z:\neg A$, contradicting $z:A$.
+
+For the incompatible split-superpart test, if
+\[
+  x\PP y,
+  \qquad
+  x\PP z,
+\]
+then
+\[
+  y\PPI x,
+  \qquad
+  x\PP z,
+\]
+and the product-state triple check enforces
+\[
+  \rho(y,z)\in\Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}.
+\]
+The universal restrictions on the first witness reject all four cases.  Equality splitting does not hide the conflict, because equality-port synchronization requires identical pair summaries to all third occurrences.
+
+\section*{Remaining status}
+
+The repaired manuscript is substantially stronger than the earlier automata proof.  It gives an explicit finite interface invariant rather than relying on an informal patch condition.  As usual for a complex decidability proof, the product-state frontier construction and equality-congruence proof remain the sections most deserving of independent review or mechanization.  I no longer see the specific defects identified in the referee report in the repaired version.
+
+\end{document}

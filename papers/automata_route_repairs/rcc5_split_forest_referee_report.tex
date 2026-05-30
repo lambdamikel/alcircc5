@@ -1,0 +1,666 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array,booktabs,longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{listings}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Aut}{\mathcal A}
+\newcommand{\NNF}{\operatorname{NNF}}
+\newcommand{\inv}{\operatorname{inv}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{claim}{Claim}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\definecolor{crit}{RGB}{145,0,0}
+\definecolor{maj}{RGB}{160,90,0}
+\definecolor{minr}{RGB}{60,60,60}
+\newcommand{\Critical}{\textbf{\textcolor{crit}{Critical}}}
+\newcommand{\Major}{\textbf{\textcolor{maj}{Major}}}
+\newcommand{\Minor}{\textbf{\textcolor{minr}{Minor}}}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false
+}
+
+\title{Referee Report and Repair Roadmap\\
+for the Split-Forest Decidability Proof for $\ALCI_{\RCC}$}
+\author{Adversarial technical review}
+\date{May 30, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report reviews the proof manuscript claiming decidability of concept satisfiability for $\ALCI$ extended with the five RCC5 atomic roles $\EQ,\PP,\PPI,\PO,\DR$, under abstract complete atomic RCC5 composition-table semantics and strong-$\EQ$ semantics.  My conclusion is that the theorem is very plausibly true over the stated abstract semantics, but the manuscript does not currently prove it.  The proof leaves as assumptions exactly the hard finite-interface facts needed for soundness and completeness: global RCC5 composition, universal propagation to all composition-forced targets, and equality congruence after splitting.  This document gives line-specific findings, concrete counterexample tests that any corrected construction must reject, and an implementation-oriented list of replacement lemmas and local checks.
+\end{abstract}
+
+\tableofcontents
+
+\section{One-paragraph verdict}
+
+I would not accept the manuscript as a proof in its present form.  My verdict is: \emph{the decidability theorem is very plausibly true for the stated abstract complete atomic RCC5 semantics, but the presented split-forest certificate/automaton proof has genuine load-bearing gaps}.  The RCC5 composition table used in the manuscript is correct, and the witness-thinning idea is sound.  The serious problem is the split-forest patchwork layer: the manuscript repeatedly assumes that a finite, locally checkable side-interface condition guarantees global RCC5 composition and guarantees that all universal restrictions see all targets forced by composition.  That finite condition is not actually constructed or proved.  If \textsf{Patch} literally quantifies over every global triple, then it is not the finite tree-automaton check claimed in the proof.  If it is read as only the finite local checks explicitly listed, soundness fails on small unsatisfiable concepts such as
+\[
+  \exists\PP.(\exists\DR.A) \sqcap \forall\DR.\neg A .
+\]
+Confidence in this diagnosis is high.  Confidence that the theorem itself is repairable over abstract RCC5 frames is moderate to high.
+
+\section{Scope and line references}
+
+Line references below are to the supplied TeX file
+\[
+\texttt{split\_forest\_automata\_decidability\_proof\_detailed.tex}.
+\]
+The most load-bearing line ranges are:
+\begin{center}
+\begin{tabular}{p{0.25\linewidth}p{0.62\linewidth}}
+\toprule
+Lines & Relevant claim \\
+\midrule
+245--298 & Generated split forest, pair shapes, bags, side interfaces. \\
+312--331 & Typed equality congruence and quotient soundness. \\
+336--360 & Split-forest normal-form theorem and proof. \\
+434--477 & Local, universal, transitive, and patch automaton checks. \\
+481--504 & Automaton soundness. \\
+508--524 & Automaton completeness. \\
+552--565 & Claimed finite bag bound $B(C_0)=1+2e+e^2$. \\
+567--585 & Patchwork lemma. \\
+603--612 & Equality quotient details. \\
+685--750 & Expanded automaton transitions, especially universal and patch transitions. \\
+756--790 & Detailed soundness lemmas. \\
+794--807 & Detailed completeness extraction. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Independent RCC5 composition-table check}
+
+The composition table in the manuscript is correct.  I recomputed it by enumerating all nonempty subsets of a four-element set and classifying every ordered pair by RCC5 relation.  Four points suffice to realize all entries of the table.
+
+\begin{lstlisting}[language=Python,caption={Subset-enumeration check of RCC5 composition}]
+from itertools import combinations, product
+
+REL = ['EQ', 'PP', 'PPI', 'PO', 'DR']
+
+def nonempty_subsets(n):
+    U = range(n)
+    for k in range(1, n + 1):
+        for c in combinations(U, k):
+            yield frozenset(c)
+
+def rcc5(a, b):
+    if a == b:
+        return 'EQ'
+    if a < b:
+        return 'PP'
+    if b < a:
+        return 'PPI'
+    if a & b:
+        return 'PO'
+    return 'DR'
+
+U = list(nonempty_subsets(4))
+comp = {(r, s): set() for r in REL for s in REL}
+
+for a, b, c in product(U, repeat=3):
+    comp[(rcc5(a, b), rcc5(b, c))].add(rcc5(a, c))
+
+for r in REL:
+    print(r, [sorted(comp[(r, s)]) for s in REL])
+\end{lstlisting}
+
+The resulting table is:
+\[
+\begin{array}{c|ccccc}
+\Comp & \EQ & \PP & \PPI & \PO & \DR\\
+\hline
+\EQ  & \{\EQ\} & \{\PP\} & \{\PPI\} & \{\PO\} & \{\DR\}\\
+\PP  & \{\PP\} & \{\PP\} & \Rel & \{\PP,\PO,\DR\} & \{\DR\}\\
+\PPI & \{\PPI\} & \{\EQ,\PP,\PPI,\PO\} & \{\PPI\} & \{\PPI,\PO\} & \{\PPI,\PO,\DR\}\\
+\PO  & \{\PO\} & \{\PP,\PO\} & \{\PPI,\PO,\DR\} & \Rel & \{\PPI,\PO,\DR\}\\
+\DR  & \{\DR\} & \{\PP,\PO,\DR\} & \{\DR\} & \{\PP,\PO,\DR\} & \Rel
+\end{array}
+\]
+Two cells used in the counterexamples below are
+\[
+  \Comp(\PP,\DR)=\{\DR\}
+\]
+and
+\[
+  \Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}.
+\]
+The composition table is therefore not the source of the problem.
+
+\section{Severity-graded findings}
+
+\subsection{Finding 1: The patch condition is global, but no finite representation lemma is proved}
+
+\noindent\Critical.  Location: lines 289--298, 467--477, 567--585, 740--750, and 756--773.
+
+\paragraph{What is claimed.}
+The manuscript claims that bounded side-interface bags and the \textsf{Patch} state ensure that every relevant pair/triple relation is represented and that global RCC5 composition follows from finite local checks.  The key soundness sentence is at lines 490--491:
+\begin{quote}
+``For any triple of occurrences, the patch condition supplies a bag or triple shape containing the three pair labels.  That local triple was checked against the composition table.''
+\end{quote}
+The patchwork lemma repeats this at lines 569--576 by assuming that for every three global occurrences there is an occurrence-sensitive triple shape in a bag or nearest-common interface.
+
+\paragraph{Why this does not follow.}
+The phrase ``for every triple of occurrences'' is global.  It ranges over triples arbitrarily far apart in the unfolded infinite split tree.  The manuscript never defines a finite abstraction that represents every such triple, nor does it prove that the announced finite bag bound suffices to do so.
+
+There is a hidden dilemma.
+\begin{enumerate}[label=(\alph*)]
+\item If \textsf{Patch} literally checks every global triple, then the automaton is not finite and lines 477 and 533 do not follow.
+\item If \textsf{Patch} checks only the finite local conditions explicitly listed in lines 742--750, then it does not imply the global composition claim at lines 490--491 and 764--773.
+\end{enumerate}
+
+\paragraph{Concrete stress test.}
+The concept
+\[
+C_{\mathrm{force}} = \exists\PP.(\exists\DR.A) \sqcap \forall\DR.\neg A
+\]
+is unsatisfiable.  Suppose $x\models C_{\mathrm{force}}$.  Then there is a $y$ with
+\[
+  \rho(x,y)=\PP
+\]
+and $y\models\exists\DR.A$.  Hence there is a $z$ with
+\[
+  \rho(y,z)=\DR, \qquad z\models A.
+\]
+By the RCC5 table,
+\[
+  \rho(x,z)\in\Comp(\PP,\DR)=\{\DR\}.
+\]
+Thus $x\DR z$.  Since $x\models\forall\DR.\neg A$, we get $z\models\neg A$, contradicting $z\models A$.
+
+A split-forest checker that only records the selected $\PP$-witness $y$ of $x$ and then the selected $\DR$-witness $z$ of $y$ can miss that $z$ is also a $\DR$-target of $x$.  The manuscript says \textsf{Patch} prevents this, but no finite local mechanism is defined that forces the relation $x\DR z$ to be represented and then checks $x$'s universal restriction at $z$.
+
+\paragraph{Candidate repair.}
+Add a formal finite representation lemma.  A possible statement is:
+
+\begin{lemma}[Required finite pair/triple representation lemma]
+For the fixed input $C_0$, there is a computable finite set $\Gamma(C_0)$ of profile symbols and finite representation maps
+\[
+  \operatorname{rep}_2(u,v),\qquad \operatorname{rep}_3(u,v,w)
+\]
+such that, in every accepted profile tree:
+\begin{enumerate}[label=(R\arabic*)]
+\item every pair of global occurrences $u,v$ has exactly one representative finite pair shape $\operatorname{rep}_2(u,v)\in\Gamma(C_0)$;
+\item every triple $u,v,w$ has a representative finite triple shape $\operatorname{rep}_3(u,v,w)\in\Gamma(C_0)$;
+\item the triple shape contains the three pair labels read by the pair representatives;
+\item every transition of the automaton checks all triple shapes in $\Gamma(C_0)$ locally; and
+\item the representation maps are defined inductively from nearest-common-interface data, not by quantifying over the infinite unfolded tree.
+\end{enumerate}
+\end{lemma}
+
+This lemma must be proved before the soundness theorem.  The current patchwork lemma assumes essentially the same statement as condition (P3), so it does not discharge the obligation.
+
+\subsection{Finding 2: Universal restrictions are checked only on ``represented'' targets, but representation is the hard part}
+
+\noindent\Critical.  Location: lines 449, 465, 499--501, 720--727, and 786--790.
+
+\paragraph{What is claimed.}
+The automaton checks universal restrictions by sending \textsf{Univ} to every represented target.  The soundness proof then says that the split-forest patch condition guarantees that every semantic target is represented.
+
+\paragraph{Why this does not follow.}
+In the weak occurrence model, every pair of occurrences has an RCC5 relation.  Therefore, if $\forall R.D\in\tp(u)$, every global occurrence $v$ with $\rho(u,v)=R$ must have $D\in\tp(v)$.  Many such $v$ are not selected witnesses of $u$; they arise indirectly by composition through witnesses of witnesses, side subcontexts, or equality-split branches.
+
+The concept $C_{\mathrm{force}}$ above is the minimal example.  The $A$-element $z$ is selected only as a $\DR$-witness of $y$, not as a witness of $x$.  Nevertheless, $x\PP y$ and $y\DR z$ force $x\DR z$, so the universal $\forall\DR.\neg A$ at $x$ applies to $z$.
+
+\paragraph{Candidate repair.}
+Universal obligations must be propagated compositionally.  One implementable local rule is the following.  Suppose a bag or child-interface contains/declares
+\[
+  L(p,q)=S, \qquad L(q,r)=T,
+\]
+and the profile chooses or implies
+\[
+  L(p,r)=U.
+\]
+Then the transition must check
+\[
+  U\in\Comp(S,T).
+\]
+Moreover, for every universal $\forall U.D\in\tau(p)$, it must require
+\[
+  D\in\tau(r).
+\]
+For the test concept $C_{\mathrm{force}}$, the local data
+\[
+  L(x,y)=\PP, \qquad L(y,z)=\DR
+\]
+forces $L(x,z)=\DR$, because $\Comp(\PP,\DR)=\{\DR\}$, and hence forces $\neg A\in\tp(z)$, contradicting $A\in\tp(z)$.
+
+For arbitrary depths this cannot remain an informal local check.  The child profile must carry inherited obligations from active boundary/source occurrences, or else the proof must show that all such obligations are represented by a finite frontier signature.
+
+A useful target statement is:
+
+\begin{lemma}[Universal coverage lemma]
+In every accepted profile tree, if $\forall R.D\in\tp(u)$ and the global label between $u$ and $v$ is $R$, then the automaton has generated a finite obligation forcing $D\in\tp(v)$.
+\end{lemma}
+
+This lemma is currently asserted at lines 501 and 789, but not proved.
+
+\subsection{Finding 3: The split-forest normal-form theorem is asserted, not proved}
+
+\noindent\Critical.  Location: lines 336--360 and Appendix E, especially lines 647--675 and 794--807.
+
+\paragraph{What is claimed.}
+Theorem 5.1 says every satisfiable concept has a generated split-forest presentation whose local bags come from a finite alphabet depending only on $C_0$.  The proof argues that witness thinning bounds branching and therefore bounds side interfaces and relation tables.
+
+\paragraph{Why this does not follow.}
+Witness thinning gives at most one selected witness per existential closure formula per generated element.  This bounds immediate existential branching.  It does not by itself bound the amount of relation information needed to:
+\begin{enumerate}[label=(\alph*)]
+\item compare witnesses introduced in different recursive subcontexts;
+\item propagate universal restrictions from ancestors or equality mates to descendants;
+\item synchronize equality copies against all third occurrences;
+\item represent all composition-critical triples; or
+\item decide when a finite frontier can be forgotten without losing future universal/composition obligations.
+\end{enumerate}
+
+Lines 554--558 propose
+\[
+  B(C_0)=1+2e+e^2,
+\]
+where $e$ is the number of existential closure formulas.  The summands are explained as main position, direct selected witnesses/equality copies, and pairwise side-interface witnesses.  This is not a proof that all relevant triple shapes, equality congruence obligations, and universal obligations fit in bags of that size.  It is a counting heuristic.
+
+\paragraph{Concrete stress test.}
+The concept
+\[
+C_{\mathrm{split}}
+=
+\exists\PP.\bigl(A\sqcap\neg B
+      \sqcap \forall\PP.\neg B
+      \sqcap \forall\PPI.\neg B
+      \sqcap \forall\PO.\neg B\bigr)
+\sqcap
+\exists\PP.B
+\]
+is unsatisfiable.  Let $x$ be the root, $y$ the first $\PP$-witness, and $z$ the $B$-labelled $\PP$-witness.  Then
+\[
+  x\PP y, \qquad x\PP z.
+\]
+Therefore
+\[
+  y\PPI x, \qquad x\PP z,
+\]
+and by composition
+\[
+  \rho(y,z)\in\Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}.
+\]
+Each case contradicts $y$'s type:
+\begin{itemize}[leftmargin=2em]
+\item $\EQ$: $y:\neg B$, but $z:B$;
+\item $\PP$: $y:\forall\PP.\neg B$, but $z:B$;
+\item $\PPI$: $y:\forall\PPI.\neg B$, but $z:B$;
+\item $\PO$: $y:\forall\PO.\neg B$, but $z:B$.
+\end{itemize}
+A correct split/equality construction must compare the two upward witnesses even when the source is split into equality copies.  The manuscript says \textsf{EqSync} and \textsf{Patch} handle this, but does not prove the finite mechanism.
+
+\paragraph{Candidate repair.}
+Replace Theorem 5.1 by a theorem with an explicit invariant.  A workable form would be:
+
+\begin{theorem}[Normal form with bounded frontier invariant]
+For every satisfiable $C_0$, there is a generated split-forest presentation such that every node carries a finite frontier $F$ of size at most $B'(C_0)$ and:
+\begin{enumerate}[label=(F\arabic*)]
+\item every open universal obligation from an ancestor or equality mate that can still apply below the node is represented by a record in $F$;
+\item every occurrence outside $F$ has been safely forgotten, meaning all future elements have a relation to it determined by a finite summary already stored in the profile;
+\item every equality copy has identical relation summaries to all frontier records;
+\item every future child extension declares its relation vector to $F$ and is checked against RCC5 composition; and
+\item every represented universal is checked when a new target relation is chosen.
+\end{enumerate}
+\end{theorem}
+
+The proof must show why $B'(C_0)$ is finite and computable.  It may be much larger than $1+2e+e^2$; an explicit elegant bound is less important than a correct finite bound.
+
+\subsection{Finding 4: Quotient soundness misses exact strong-$\EQ$}
+
+\noindent\Major.  Location: lines 312--331, 434--441, and 730--738.
+
+\paragraph{What is claimed.}
+The quotient soundness lemma says that if the weak occurrence model satisfies RCC5 composition and $\equiv_{\EQ}$ is a typed RCC5 congruence, then quotienting by $\equiv_{\EQ}$ yields a strong abstract RCC5 model.
+
+\paragraph{Why the stated hypotheses are insufficient.}
+The hypotheses do not require
+\[
+  \rho(u,v)=\EQ \quad\Longleftrightarrow\quad u\equiv_{\EQ}v.
+\]
+They require equality-port pairs to have label $\EQ$, but they do not require every off-diagonal $\EQ$ label to generate an equality-port edge.
+
+Here is a counterexample to the lemma as stated.  Take two distinct occurrences $u\ne v$, no equality port, and label every pair by $\EQ$:
+\[
+  \rho(u,u)=\EQ,
+  \quad \rho(v,v)=\EQ,
+  \quad \rho(u,v)=\EQ,
+  \quad \rho(v,u)=\EQ.
+\]
+This satisfies converse and RCC5 composition, because $\Comp(\EQ,\EQ)=\{\EQ\}$.  Let $\equiv_{\EQ}$ be identity.  It is trivially type-respecting and congruent in the stated sense.  But the quotient still has two distinct classes $[u]\ne[v]$ with
+\[
+  \rho_Q([u],[v])=\EQ.
+\]
+Thus $\EQ$ is not identity in the quotient.
+
+Line 331 says that the explicit equality construction prohibits label $\EQ$ between distinct quotient classes.  That prohibition must be added as a hypothesis and enforced in the automaton.
+
+\paragraph{Candidate repair.}
+Strengthen the local and global equality invariant to:
+\[
+  \rho(u,v)=\EQ \text{ if and only if } u\equiv_{\EQ}v.
+\]
+Concretely:
+\begin{enumerate}[label=(E\arabic*)]
+\item every off-diagonal $\EQ$ label in a bag or pair shape must introduce an equality-port edge;
+\item the transitive closure of equality ports must be saturated before quotienting;
+\item no profile may contain $L(p,q)=\EQ$ unless $p,q$ are in the same equality class;
+\item equality classes must have identical closure types; and
+\item equality classes must have identical relation summaries to every active frontier position and recursively synchronized child obligation.
+\end{enumerate}
+Then quotient soundness is correct.
+
+\subsection{Finding 5: Equality synchronization is global but only locally asserted}
+
+\noindent\Major.  Location: lines 603--612 and 728--738.
+
+\paragraph{What is claimed.}
+Local \textsf{EqSync} checks ensure that explicit equality ports generate a typed RCC5 congruence.  Lines 611--612 say that local checks propagate through overlaps and, by induction on the bag-tree path, extend to all third occurrences.
+
+\paragraph{Why this is not yet a proof.}
+Congruence requires that for every global occurrence $z$,
+\[
+  u\equiv_{\EQ}v \quad\Longrightarrow\quad
+  \rho(u,z)=\rho(v,z)
+\]
+after replacing $z$ by its equality class.  If $u$ is split into equality copies $u_1,u_2$ so that $u_1\PP y$ and $u_2\PP z$, then after quotienting both copies must have the same relation to $y$, the same relation to $z$, and the same relations to all descendants and side witnesses of $y,z$.  This is not guaranteed by comparing only local third positions unless the frontier representation theorem tells us that all global third positions are represented by finite local profiles.
+
+\paragraph{Candidate repair.}
+Make equality synchronization part of the same finite representation invariant as \textsf{Patch}.  A useful formal target is:
+
+\begin{lemma}[Global equality-congruence lemma]
+Assume the profile tree satisfies the finite pair/triple representation lemma and the strengthened exact-$\EQ$ invariant.  If $u\equiv_{\EQ}v$, then for every global occurrence $z$, the pair representatives for $(u,z)$ and $(v,z)$ carry the same quotient relation.  Moreover, for every existential or universal closure formula, obligations generated from $u$ and $v$ are matched by the equality-synchronization transitions.
+\end{lemma}
+
+The proof should be by induction on the representation of $z$ from the nearest common interface, not by a one-line appeal to overlap propagation.
+
+\subsection{Finding 6: The automaton is not fully defined as a finite automaton}
+
+\noindent\Major.  Location: lines 398--416 and Appendix F, especially lines 685--750.
+
+\paragraph{What is claimed.}
+The manuscript claims to construct a finite alternating parity tree automaton $\Aut_{C_0}$ and reduces satisfiability to emptiness.
+
+\paragraph{Problems.}
+First, the automaton is described by prose states rather than a total finite transition function.  It is not explicit that every non-idle child recursively receives all global well-formedness obligations: \textsf{Local}, \textsf{Patch}, \textsf{EqSync}, and \textsf{CheckAll} for all child positions.  If this recursion is omitted, formulas such as
+\[
+  \exists\DR.(A\sqcap\exists\DR.B)
+\]
+can be accepted by creating an $A$-witness whose own $\exists\DR.B$ obligation is never checked.
+
+Second, the described automaton appears to allow parent moves.  A device with parent moves is a two-way alternating parity tree automaton.  Emptiness remains decidable, but the simple state/symbol parity-game sketch at lines 398--416 is not the standard one-way construction.  Either cite/use the two-way alternating parity tree automaton emptiness theorem, or eliminate parent moves by storing all parent-overlap information in child profiles.
+
+\paragraph{Candidate repair.}
+Define a total transition function $\delta$ explicitly.  At every non-idle node, $\delta$ should spawn:
+\[
+  \mathsf{Local},\quad
+  \mathsf{Patch},\quad
+  \mathsf{EqSync}(p,q) \text{ for all equality-port pairs},
+\]
+and
+\[
+  \mathsf{CheckAll}(p) \text{ for every live position }p.
+\]
+Every non-idle child must receive the same well-formedness package.  Then either:
+\begin{enumerate}[label=(\alph*)]
+\item state that the automaton is two-way and invoke decidability of finite two-way alternating parity tree automata; or
+\item transform it into a one-way automaton by including all needed parent/boundary information in the child symbol and state.
+\end{enumerate}
+
+\subsection{Finding 7: The finite bag bound is unsupported}
+
+\noindent\Major.  Location: lines 552--565.
+
+\paragraph{What is claimed.}
+The manuscript proposes
+\[
+  B(C_0)=1+2e+e^2,
+\]
+where $e$ is the number of existential formulas in $\Cl(C_0)$.
+
+\paragraph{Why this is not established.}
+This count covers immediate witnesses and some pairwise side-interface witnesses.  It does not cover global triple representatives, equality synchronization frontiers, ancestor universal obligations, or relation summaries for future descendants.  The proof may not need this particular bound, but it does need some computable finite bound derived from a precise invariant.
+
+\paragraph{Candidate repair.}
+Delete the explicit bound unless it can be proved.  Replace it by:
+\begin{quote}
+``Let $B(C_0)$ be the maximum size of a frontier profile in the finite representation construction of Lemma X.''
+\end{quote}
+Then prove Lemma X and derive computability of $B(C_0)$ from the finite closure/type/profile construction.  It is acceptable if $B(C_0)$ is enormous.
+
+\subsection{Finding 8: Completeness extraction uses the missing normal form}
+
+\noindent\Major.  Location: lines 508--524 and 794--807.
+
+\paragraph{What is claimed.}
+Given a satisfying model, the proof extracts a profile tree accepted by the automaton, by copying actual model relations into local profiles and adding triple shapes whenever a finite triple first becomes jointly visible.
+
+\paragraph{Why this does not follow.}
+The phrase ``whenever a finite triple first becomes jointly visible'' at lines 804--805 presupposes that there are only finitely many relevant visible triple shapes per profile, and that all remaining global triples can be represented by those shapes.  This is exactly the missing finite representation theorem.  Copying labels from an actual model proves local consistency of whatever finite shapes have been selected; it does not prove that the selected shapes cover every future global triple or every future universal target.
+
+\paragraph{Candidate repair.}
+Completeness must be proved simultaneously with the finite representation invariant.  In particular, from a concrete model $\mathcal I$ the extraction must specify:
+\begin{enumerate}[label=(C\arabic*)]
+\item which occurrences remain in the frontier of each profile;
+\item what finite relation summary is retained for forgotten occurrences;
+\item how equality copies inherit summaries;
+\item how all universal obligations from forgotten ancestors are either discharged or summarized; and
+\item why the same finite set of summaries suffices along infinite branches.
+\end{enumerate}
+
+\subsection{Finding 9: ``Cover edge'' terminology is misleading}
+
+\noindent\Minor.  Location: Sections 4--5 and Appendix E.
+
+Generated vertical edges are called ``cover'' edges.  They are not covers in the original RCC5 order.  They are selected/generated containment edges whose strict transitive closure is intended to represent $\PP/\PPI$.  This is not a fatal issue, but renaming them ``generated containment edges'' would prevent confusion with semantic Hasse covers.
+
+\section{Concrete acceptance tests for the revised proof}
+
+A repaired proof/construction should explicitly handle the following tests.  They are small enough that the authors should be able to trace the automaton/certificate by hand.
+
+\subsection{Test 1: composition-forced universal target}
+
+\[
+C_{\mathrm{force}} = \exists\PP.(\exists\DR.A) \sqcap \forall\DR.\neg A .
+\]
+Expected result: reject as unsatisfiable.
+
+The repaired construction must force the following inference:
+\[
+  x\PP y,\quad y\DR z
+  \quad\Longrightarrow\quad
+  x\DR z,
+\]
+because $\Comp(\PP,\DR)=\{\DR\}$.  Then $x:\forall\DR.\neg A$ forces $z:\neg A$, contradicting the existential witness requirement $z:A$.
+
+\subsection{Test 2: incompatible split superparts}
+
+\[
+C_{\mathrm{split}}
+=
+\exists\PP.\bigl(A\sqcap\neg B
+      \sqcap \forall\PP.\neg B
+      \sqcap \forall\PPI.\neg B
+      \sqcap \forall\PO.\neg B\bigr)
+\sqcap
+\exists\PP.B .
+\]
+Expected result: reject as unsatisfiable.
+
+The repaired construction must compare the two $\PP$-witnesses $y,z$ of the root $x$.  Since
+\[
+  y\PPI x,\qquad x\PP z,
+\]
+composition yields
+\[
+  \rho(y,z)\in\Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}.
+\]
+Every relation in this set contradicts $y$'s type and $z:B$.
+
+\subsection{Test 3: recursive child obligations}
+
+\[
+C_{\mathrm{recursive}}=\exists\DR.(A\sqcap\exists\DR.B).
+\]
+Expected result: accept only if the $A$-witness also has a represented $\DR$-witness satisfying $B$.  This test checks that \textsf{CheckAll} and local well-formedness obligations are recursively spawned at every non-idle child, not only at the root.
+
+\subsection{Test 4: infinite upward chain without equality collapse}
+
+\[
+C_{\uparrow}=\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top.
+\]
+Expected result: accept via an infinite strict upward $\PP$-chain, possibly represented by a repeated profile, but without identifying repeated laps by semantic $\EQ$.  This checks that blocking/profile repetition is not equality.
+
+\section{Repair roadmap: replacement lemmas the manuscript should add}
+
+This section gives an implementation-oriented proof skeleton.  The exact formalism may vary, but a corrected proof needs lemmas with this strength.
+
+\subsection{Lemma A: finite frontier profiles}
+
+Define a profile symbol not merely as a bounded bag, but as a bounded \emph{frontier summary}.  It should include at least:
+\begin{enumerate}[label=(A\arabic*)]
+\item a finite set of live positions;
+\item their closure types;
+\item an exact relation matrix on live positions;
+\item an equality equivalence on live positions, with $L(p,q)=\EQ$ iff $p,q$ are in the same equality class;
+\item for each child slot, a relation vector from every live boundary position to the child's overlap/main positions;
+\item for each child slot, the inherited universal obligations that live boundary positions impose on descendants in that child subtree;
+\item for each equality class, synchronized witness declarations and synchronized relation summaries; and
+\item finite pair/triple shape declarations sufficient to compute the relation of every future forgotten occurrence to every live boundary position.
+\end{enumerate}
+Then prove there are finitely many such symbols depending only on $C_0$.
+
+\subsection{Lemma B: finite pair/triple representation}
+
+For every accepted profile tree, define pair and triple representatives by induction on the nearest common interface of the involved occurrences.  Prove:
+\begin{enumerate}[label=(B\arabic*)]
+\item pair labels are unique and independent of the bag from which they are read;
+\item every triple of global occurrences is represented by a finite triple shape;
+\item the represented triple contains exactly the three global pair labels; and
+\item local checks of these finite triple shapes imply global RCC5 composition.
+\end{enumerate}
+This is the missing heart of \textsf{Patch}.
+
+\subsection{Lemma C: compositional universal propagation}
+
+Add transition rules that propagate universal restrictions through relation composition.  A local rule should have the following form.  Whenever a profile contains/declares
+\[
+  L(p,q)=S,
+  \qquad
+  L(q,r)=T,
+  \qquad
+  L(p,r)=U,
+\]
+then check $U\in\Comp(S,T)$.  If $\forall U.D\in\tau(p)$, require $D\in\tau(r)$.  If $r$ is a child-root whose subtree may introduce further targets of $p$, propagate the obligation into the child state.
+
+The global lemma should state:
+\[
+  \forall R.D\in\tp(u) \text{ and } \rho(u,v)=R
+  \quad\Longrightarrow\quad
+  D\in\tp(v).
+\]
+Its proof must use the pair/triple representation lemma, not an undefined notion of ``represented target.''
+
+\subsection{Lemma D: exact equality and quotient soundness}
+
+Strengthen the weak occurrence invariant to:
+\[
+  \rho(u,v)=\EQ \iff u\equiv_{\EQ} v.
+\]
+Then prove:
+\begin{enumerate}[label=(D\arabic*)]
+\item equality classes have identical types;
+\item equality classes have identical pair-representation labels to all global third occurrences;
+\item existential witness declarations are matched across equality mates;
+\item universal obligations are matched across equality mates; and
+\item no strict positive generated $\PP/\PPI$ path is collapsed by equality.
+\end{enumerate}
+Under these hypotheses, quotient soundness is straightforward.
+
+\subsection{Lemma E: bounded normal-form extraction}
+
+From a satisfying abstract model, construct an accepted profile tree while maintaining the frontier invariant.  The extraction proof must say exactly when an occurrence is kept live, when it is forgotten, and what finite summary remains after forgetting.  The proof must also show that all child profiles are drawn from the finite set of symbols defined in Lemma A.
+
+\subsection{Lemma F: formal automaton definition and emptiness}
+
+Define the finite state set, alphabet, priorities, and transition function $\delta$ completely.  If parent moves are used, state explicitly that the device is a finite two-way alternating parity tree automaton and invoke the corresponding decidable emptiness theorem.  Otherwise, remove parent moves and encode parent-overlap information into child profiles and downward states.
+
+\section{A minimal local rule that would catch the first counterexample}
+
+The smallest visible bug is that the construction must not allow the following local pattern without deriving the third relation:
+\[
+  x\PP y, \qquad y\DR z.
+\]
+A revised \textsf{Patch}/\textsf{Univ} combination should force:
+\[
+  x\DR z.
+\]
+Then, if $\forall\DR.\neg A\in\tp(x)$ and $A\in\tp(z)$, the profile is rejected.
+
+More generally, for any boundary/source position $p$, intermediate position $q$, and newly introduced position $r$, the profile must either contain or compute a relation $U=L(p,r)$ satisfying
+\[
+  U\in\Comp(L(p,q),L(q,r)).
+\]
+If $\Comp(L(p,q),L(q,r))$ is a singleton, $U$ is forced.  If it is not a singleton, the profile may choose one allowed relation, but that choice must then be used consistently in all universal and triple checks.
+
+This single rule is not a complete proof, but it is a good diagnostic.  If the revised construction cannot explain exactly where this rule is applied to $C_{\mathrm{force}}$, the repair is still incomplete.
+
+\section{Steps checked and found sound or plausibly sound}
+
+\begin{enumerate}[label=(S\arabic*)]
+\item \textbf{RCC5 composition table.}  Verified independently by subset enumeration.  The manuscript's table is correct.
+\item \textbf{Witness thinning.}  The thinning lemma is sound: selected existential witnesses preserve existential formulas, and universal formulas are preserved using closure under NNF complement.  The argument does not require finite models or semantic Hasse covers.
+\item \textbf{$\EQ$-modalities.}  Normalizing $\exists\EQ.C\equiv C$ and $\forall\EQ.C\equiv C$ is correct under strong-$\EQ$ semantics.
+\item \textbf{Infinite upward-chain example.}  The concept $\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$ really requires an infinite ascending $\PP$-chain in the intended strong finite-free semantics, and the manuscript correctly distinguishes repeated profile occurrence from semantic equality in this example.
+\item \textbf{Parity for pending transitive existentials.}  The odd pending priority idea is conceptually sound, assuming the transition relation and vertical successor relation are fully formalized.
+\item \textbf{Quotient soundness under stronger hypotheses.}  If one assumes exact equality, $\rho(u,v)=\EQ$ iff $u\equiv_{\EQ}v$, plus a genuine global relation congruence, then quotienting preserves RCC5 frame conditions and closure truth.
+\end{enumerate}
+
+\section{Recommended revision strategy}
+
+The authors have two viable paths.
+
+\paragraph{Path 1: keep the split-forest automaton, but prove the missing frontier invariant.}
+This is closest to the current manuscript.  The revised proof should make the finite profile alphabet richer and then prove Lemmas A--F above.  In this path, the central new material is a genuine finite representation theorem for pair/triple shapes and universal propagation.
+
+\paragraph{Path 2: replace the ad hoc patchwork with a known finite mosaic/automata construction.}
+The authors could recast split-forest profiles as mosaics carrying all boundary relation vectors and obligation summaries, then use standard alternating parity tree automata emptiness.  The split forest would remain the semantic normal form, but the patchwork lemma would be replaced by a formal mosaic invariant.
+
+In either path, the revised manuscript should not rely on phrases such as ``every represented target'' or ``every global triple is supplied by Patch'' unless those terms have been defined by a finite inductive construction and proved to cover all occurrences in the unfolded tree.
+
+\section{Bottom line}
+
+The proof has the right high-level architecture: thin witnesses, unfold a generated split structure, use parity for infinite transitive requests, and quotient explicit equality copies.  The current manuscript, however, leaves the hardest part as an assumption: a finite, local, occurrence-sensitive patchwork invariant that simultaneously guarantees global RCC5 composition, universal propagation to all composition-forced targets, and equality congruence.  Until that invariant is defined and proved, the manuscript does not establish decidability, even though the theorem itself is likely true over the stated abstract RCC5 semantics.
+
+\end{document}

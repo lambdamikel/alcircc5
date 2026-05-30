@@ -1,0 +1,767 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{booktabs,longtable,array}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{mathpartir}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{fact}[theorem]{Fact}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Inv}{\operatorname{inv}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Typ}{\mathsf{Type}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\Aut}{\mathcal A}
+\newcommand{\Prof}{\mathsf{Prof}}
+\newcommand{\Front}{\mathsf{Front}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\Pos}{\mathsf{Pos}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Req}{\mathsf{Req}}
+\newcommand{\Obl}{\mathsf{Obl}}
+\newcommand{\lab}{\operatorname{lab}}
+\newcommand{\rank}{\operatorname{rk}}
+\newcommand{\lca}{\operatorname{lca}}
+\newcommand{\eqE}{\equiv_{\EQ}}
+\newcommand{\blkE}{\equiv_{\mathrm{blk}}}
+\newcommand{\restrict}{\upharpoonright}
+\newcommand{\sem}[1]{\llbracket #1\rrbracket}
+
+\title{Split-Forest Normal Forms and Finite Abstractions for $\ALCI_{\RCC}$\\
+\large A Companion Paper Organized Around the Three Core Theorems}
+\author{Consolidated proof companion}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This companion paper isolates the three load-bearing parts of the split-forest decidability argument for $\ALCI$ with the five RCC5 atomic roles $\EQ,\PP,\PPI,\PO,\DR$, over abstract complete atomic RCC5 frames with strong equality.  The point is to separate the model-theoretic normal form from the finite representation theorem and from the automata decision layer.  The three central results are: (A) every satisfiable concept has a witness-generated saturated split-forest presentation; (B) saturated split forests are exactly captured, up to satisfiability of all closure formulas, by finite frontier/pair/triple/equality-port abstractions; and (C) a finite alternating parity tree automaton accepts exactly the valid finite abstractions.  The paper also explains what remains of the original split-forest idea: the split forest is retained as the semantic normal form, while the automaton is used only as the regularity and eventuality engine.
+\end{abstract}
+
+\tableofcontents
+
+\section{Purpose and relation to the original split-forest idea}
+
+The original split-forest proposal was not merely a notational device.  It contained the main semantic insight: arbitrary RCC5/Kripke models should first be replaced by sparse witness-generated presentations in which containment is represented vertically and non-containment interaction is represented by finite side interfaces.  Once this normal form is available, decidability becomes a finite search problem over regular labelled trees.
+
+Several rounds of repair showed that the split-forest idea and the decision method should not be forced to do the same job.  The split forest should answer the model-theoretic question
+\[
+  \text{what kind of models suffice?}
+\]
+whereas the automaton should answer the algorithmic question
+\[
+  \text{is there a regular object of that kind?}
+\]
+This paper therefore organizes the argument around the following three theorems.
+
+\begin{description}[leftmargin=2.8cm,style=nextline]
+\item[Theorem A.] Every satisfiable concept has a witness-generated saturated split-forest presentation.
+\item[Theorem B.] The finite frontier/pair/triple/equality-port alphabet is sound and complete for saturated split forests.
+\item[Theorem C.] The parity tree automaton accepts exactly the finite abstractions of satisfying saturated split forests.
+\end{description}
+
+The table summarizes the final status of the original proof components.
+
+\begin{center}
+\begin{tabular}{p{0.32\linewidth}p{0.56\linewidth}}
+\toprule
+Original component & Final role \\
+\midrule
+Witness thinning & Retained.  It reduces arbitrary abstract models to sparse witness-generated models.\\
+Generated containment cover & Retained.  It is a generated cover presentation, not the semantic Hasse diagram of an arbitrary starting model.\\
+Split copies & Retained.  They handle elements with several selected incomparable superparts.\\
+Sibling/side interfaces & Retained but strengthened to saturated frontier profiles with forced verticalization.\\
+Residual $\DR/\PO$ frontier & Retained only after saturation has removed all forced $\PP,\PPI,\EQ$ cross-pairs.\\
+Typed equality & Retained as exact equality ports and a typed congruence.\\
+Manual blocking/request cycles & Replaced by parity acceptance over finite request states.\\
+Manual certificate enumeration & Replaced by emptiness of a finite alternating parity tree automaton.\\
+Patchwork intuition & Formalized by finite pair and triple product-state representatives.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Thus the split-forest model class is not technical debt.  It is the normal form that makes a tree automaton applicable.  What changed is that the finite abstraction and eventuality parts are no longer hand-managed by ad hoc cyclic certificate clauses; they are represented as a finite alphabet and checked by the automaton.
+
+\section{Syntax and abstract RCC5 semantics}
+
+\subsection{Concept language}
+
+Let
+\[
+  \Rel=\{\EQ,\PP,\PPI,\PO,\DR\}.
+\]
+The converse operation is
+\[
+\Inv(\EQ)=\EQ,
+\quad
+\Inv(\PP)=\PPI,
+\quad
+\Inv(\PPI)=\PP,
+\quad
+\Inv(\PO)=\PO,
+\quad
+\Inv(\DR)=\DR.
+\]
+Concepts are built from concept names, Boolean connectives, and restrictions
+\[
+  \exists R.C,
+  \qquad
+  \forall R.C,
+  \qquad R\in\Rel.
+\]
+All concepts are assumed to be in negation normal form.  The NNF complement of $C$ is denoted $\overline C$ and satisfies the usual identities
+\begin{align*}
+\overline A&=\neg A,
+&\overline{\neg A}&=A,\\
+\overline{C\sqcap D}&=\overline C\sqcup\overline D,
+&\overline{C\sqcup D}&=\overline C\sqcap\overline D,\\
+\overline{\exists R.C}&=\forall R.\overline C,
+&\overline{\forall R.C}&=\exists R.\overline C.
+\end{align*}
+
+\begin{definition}[Closure]
+For an input concept $C_0$, $\Cl(C_0)$ is the least finite set containing $C_0$ and closed under subformulas and NNF complement.  Equality restrictions may either be eliminated by the strong-equality identities
+\[
+  \exists\EQ.C\equiv C,
+  \qquad
+  \forall\EQ.C\equiv C,
+\]
+or retained with these equivalences imposed on types.
+\end{definition}
+
+\begin{definition}[Types]
+A type over $\Cl(C_0)$ is a subset $t\subseteq\Cl(C_0)$ satisfying:
+\begin{enumerate}[label=(T\arabic*)]
+\item for every $D\in\Cl(C_0)$, exactly one of $D,\overline D$ belongs to $t$;
+\item $D\sqcap E\in t$ iff $D\in t$ and $E\in t$;
+\item $D\sqcup E\in t$ iff $D\in t$ or $E\in t$;
+\item $\exists\EQ.D\in t$ iff $D\in t$;
+\item $\forall\EQ.D\in t$ iff $D\in t$.
+\end{enumerate}
+Let $\Typ(C_0)$ be the finite set of such types.
+\end{definition}
+
+\subsection{RCC5 relation algebra}
+
+The RCC5 atomic composition table used throughout is the following relation-valued operation $\Comp(R,S)\subseteq\Rel$:
+\[
+\begin{array}{c|ccccc}
+\Comp & \EQ & \PP & \PPI & \PO & \DR\\
+\hline
+\EQ  & \{\EQ\} & \{\PP\} & \{\PPI\} & \{\PO\} & \{\DR\}\\
+\PP  & \{\PP\} & \{\PP\} & \Rel & \{\PP,\PO,\DR\} & \{\DR\}\\
+\PPI & \{\PPI\} & \{\EQ,\PP,\PPI,\PO\} & \{\PPI\} & \{\PPI,\PO\} & \{\PPI,\PO,\DR\}\\
+\PO  & \{\PO\} & \{\PP,\PO\} & \{\PPI,\PO,\DR\} & \Rel & \{\PPI,\PO,\DR\}\\
+\DR  & \{\DR\} & \{\PP,\PO,\DR\} & \{\DR\} & \{\PP,\PO,\DR\} & \Rel
+\end{array}
+\]
+
+\begin{definition}[Abstract strong RCC5 frame]
+An abstract strong RCC5 frame is a nonempty set $\Delta$ together with a map
+\[
+  \rho:\Delta^2\to\Rel
+\]
+such that for all $a,b,c\in\Delta$:
+\begin{enumerate}[label=(R\arabic*)]
+\item $\rho(a,b)=\EQ$ iff $a=b$;
+\item $\rho(b,a)=\Inv(\rho(a,b))$;
+\item $\rho(a,c)\in\Comp(\rho(a,b),\rho(b,c))$.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Interpretations]
+An interpretation $\mathcal I$ consists of a strong RCC5 frame $(\Delta^\mathcal I,\rho^\mathcal I)$ and an interpretation of each concept name as a subset of $\Delta^\mathcal I$.  Boolean clauses are standard, and
+\[
+ a\models_\mathcal I \exists R.C
+ \quad\Longleftrightarrow\quad
+ \exists b\in\Delta^\mathcal I\,[\rho^\mathcal I(a,b)=R\text{ and }b\models_\mathcal I C],
+\]
+\[
+ a\models_\mathcal I \forall R.C
+ \quad\Longleftrightarrow\quad
+ \forall b\in\Delta^\mathcal I\,[\rho^\mathcal I(a,b)=R\Rightarrow b\models_\mathcal I C].
+\]
+A concept $C_0$ is satisfiable if $a\models_\mathcal I C_0$ for some interpretation $\mathcal I$ and $a\in\Delta^\mathcal I$.
+\end{definition}
+
+\section{Theorem A: split-forest normal form}
+
+Theorem A is the semantic normalization theorem.  It has three stages: witness thinning, generated containment covers, and saturation of side interfaces.
+
+\subsection{Witness thinning}
+
+\begin{definition}[Chosen witnesses]
+Let $\mathcal I,a_0\models C_0$.  For every $a\in\Delta^\mathcal I$ and every existential $\exists R.D\in\Cl(C_0)$ with $a\models_\mathcal I\exists R.D$, choose one witness
+\[
+  w(a,\exists R.D)
+\]
+such that
+\[
+  \rho^\mathcal I(a,w(a,\exists R.D))=R,
+  \qquad
+  w(a,\exists R.D)\models_\mathcal I D.
+\]
+\end{definition}
+
+\begin{definition}[Witness-generated subdomain]
+Let $W_0=\{a_0\}$.  Having defined $W_n$, let $W_{n+1}$ contain $W_n$ and, for every $a\in W_n$ and every $\exists R.D\in\Cl(C_0)$ true at $a$, the chosen witness $w(a,\exists R.D)$.  Put
+\[
+  W=\bigcup_{n<\omega} W_n.
+\]
+Let $\mathcal I\restrict W$ be the induced subinterpretation on $W$.
+\end{definition}
+
+\begin{lemma}[Witness thinning]
+For every $D\in\Cl(C_0)$ and every $a\in W$,
+\[
+  a\models_\mathcal I D
+  \quad\Longleftrightarrow\quad
+  a\models_{\mathcal I\restrict W} D.
+\]
+In particular, $a_0\models_{\mathcal I\restrict W}C_0$.
+\end{lemma}
+
+\begin{proof}
+The proof is by structural induction on $D$ and uses closure under NNF complement.  Atomic and Boolean cases are immediate because concept-name interpretations are restricted to $W$.  For $D=\exists R.E$, if $a\models_\mathcal I\exists R.E$, the selected witness belongs to $W$ by construction and satisfies $E$ by the induction hypothesis.  The reverse direction is immediate because $\mathcal I\restrict W$ is an induced subinterpretation.  For $D=\forall R.E$, the forward direction holds because every $R$-successor in $W$ is also an $R$-successor in $\mathcal I$.  For the reverse direction, suppose $a\not\models_\mathcal I\forall R.E$.  Then $a\models_\mathcal I\exists R.\overline E$, and since $\exists R.\overline E\in\Cl(C_0)$, its selected witness is in $W$ and satisfies $\overline E$ by the induction hypothesis.  Hence $a\not\models_{\mathcal I\restrict W}\forall R.E$.
+\end{proof}
+
+The thinning lemma is the formal replacement for any assumption about semantic Hasse diagrams of arbitrary starting models.  The resulting model contains only the root and selected witnesses.  Generated cover edges are chosen witness links, not necessarily immediate covers in the original semantic order.
+
+\subsection{Generated containment covers and split copies}
+
+In the containment-oriented presentation, a vertical parent is a selected proper superpart.  Thus along one branch,
+\[
+  x\PP y
+  \quad\text{iff}\quad
+  y\text{ is a strict generated ancestor of }x,
+\]
+and conversely
+\[
+  x\PPI y
+  \quad\text{iff}\quad
+  y\text{ is a strict generated descendant of }x.
+\]
+The generated edge relation is auxiliary.  Semantic $\PP/\PPI$ is its strict vertical transitive closure plus the explicitly recorded nonvertical labels in side interfaces.
+
+A single occurrence cannot always carry all selected superparts of a semantic element.  If $x$ has two selected $\PP$-witnesses $y$ and $z$ that must be incomparable, then one tree occurrence of $x$ cannot lie below both $y$ and $z$ in a tree.  The split-forest presentation therefore permits multiple occurrences of the same semantic element, connected by equality ports and later quotiented by a typed equality congruence.
+
+\begin{definition}[Weak split occurrence]
+A weak split occurrence is a node $u$ equipped with:
+\begin{itemize}
+\item an origin element $\operatorname{orig}(u)\in W$;
+\item a type $\tp(u)=\{D\in\Cl(C_0):\operatorname{orig}(u)\models D\}$;
+\item a finite list of equality ports naming other occurrences with the same origin, subject to exact equality congruence conditions below.
+\end{itemize}
+Two occurrences may have the same origin without being identified by blocking.  Blocking/profile repetition and semantic equality are separate relations:
+\[
+  \blkE\ne\eqE.
+\]
+\end{definition}
+
+\subsection{Side contexts and forced verticalization}
+
+Side contexts represent selected $\DR/\PO$ witnesses and nonvertical interactions.  The important repair is that side contexts are not mere bags of side witnesses.  They are saturated finite local diagrams.
+
+\begin{definition}[Ranked side context]
+Fix a computable rank bound $h=h(C_0)$, for instance the number of modal subformulas in $\Cl(C_0)$ plus the number of types.  A ranked side context for a source occurrence $u$ is a finite labelled diagram $S(u)$ of rank at most $h$ containing:
+\begin{enumerate}[label=(S\arabic*)]
+\item every selected $\DR/\PO$ witness of $u$ required by an existential in $\Cl(C_0)$;
+\item the relevant vertical boundary of $u$: its selected parent, selected children, equality mates, and bounded-depth vertical threshold nodes needed for forced verticalization;
+\item all inherited labels among context positions and between context positions and the boundary;
+\item equality-port declarations for every inherited $\EQ$ label;
+\item local vertical strata for every inherited $\PP$ or $\PPI$ side/tree or side/side pair;
+\item recursively, lower-rank side contexts required by selected existential formulas at newly introduced context positions.
+\end{enumerate}
+The recursion is well founded because the rank strictly decreases when a side context calls a subordinate side context.
+\end{definition}
+
+\begin{definition}[Forced verticalization]
+Let $w$ be introduced as a $\DR$ or $\PO$ side witness for a source $u$.  Before $w$ may be placed into the residual frontier, the construction checks the inherited relation between $w$ and every relevant vertical boundary occurrence $b$ of $u$.
+\begin{itemize}
+\item If $\rho(b,w)=\EQ$, then $w$ is represented by an equality port.
+\item If $\rho(b,w)=\PP$ or $\rho(b,w)=\PPI$, then an occurrence or equality mate of $w$ is spliced into a local vertical stratum at the appropriate bounded threshold.
+\item Only if no such $\EQ,\PP,\PPI$ interaction remains is the pair classified as residual, and then its label is $\DR$ or $\PO$.
+\end{itemize}
+The same check is applied to side/side pairs and to both ancestor and descendant tails.  Thus an infinite ancestor $\PPI$ tail and an infinite descendant $\PP$ tail are handled symmetrically by vertical reachability, not by an impossible bounded side context.
+\end{definition}
+
+\begin{lemma}[Residual-frontier lemma]
+After ranked side-context saturation and forced verticalization, every residual pair whose endpoints are not equality-linked, not vertically comparable, and not inside an explicit side-interface stratum has label in $\{\DR,\PO\}$.
+\end{lemma}
+
+\begin{proof}
+Let $(p,q)$ be such a residual pair.  During saturation, every pair involving a newly introduced side position and every relevant vertical or side position is inspected.  If its inherited label is $\EQ$, the pair is removed from the residual frontier and represented by an equality port.  If its inherited label is $\PP$ or $\PPI$, the pair is removed from the residual frontier and represented by a local vertical stratum.  The only RCC5 base labels left after these three cases are $\DR$ and $\PO$.  Hence every residual pair has one of those two labels.
+\end{proof}
+
+\subsection{Saturated split forests}
+
+\begin{definition}[Saturated split-forest presentation]
+A saturated split-forest presentation for $C_0$ consists of:
+\begin{enumerate}[label=(F\arabic*)]
+\item a possibly infinite generated forest of occurrences, with vertical parent/child links interpreted as generated containment covers;
+\item a type $\tp(u)\in\Typ(C_0)$ at every occurrence;
+\item exact equality ports $\eqE$ between weak split occurrences, disjoint from blocking/profile repetition;
+\item ranked saturated side contexts at occurrences;
+\item a total RCC5 label for every pair of occurrences, obtained from vertical closure, equality ports, side contexts, and residual $\DR/\PO$ labels;
+\item for every existential $\exists R.D\in\tp(u)$, an explicit support: a vertical reachable occurrence, an equality-port mate's vertical reachable occurrence, or a side-context occurrence labelled by $R$ and carrying $D$;
+\item for every universal $\forall R.D\in\tp(u)$, propagation of $D$ to every represented $R$-target, including targets generated by RCC5 composition through side contexts and vertical paths.
+\end{enumerate}
+It is strong if quotienting by $\eqE$ yields a strong RCC5 interpretation with $\EQ$ iff identity.
+\end{definition}
+
+\begin{theorem}[Theorem A: split-forest normal form]
+If $C_0$ is satisfiable over abstract strong RCC5 frames, then $C_0$ has a witness-generated saturated split-forest presentation.
+\end{theorem}
+
+\begin{proof}
+Start with a model $\mathcal I,a_0\models C_0$ and apply witness thinning.  The thinned model is generated from $a_0$ by selected witnesses for existential formulas in $\Cl(C_0)$, and truth of all closure formulas is preserved.
+
+For selected $\PPI$ witnesses, create generated child occurrences.  For selected $\PP$ witnesses, create generated parent occurrences.  If one semantic element requires several incomparable selected superparts, create several weak split occurrences of that element, one under each selected superpart, and connect them by equality ports.  These ports are semantic equality data; they are not blocking identifications.
+
+For selected $\DR/\PO$ witnesses, place the witness into the ranked side context of the source.  Saturate the context by repeatedly adding inherited labels to the vertical boundary and to other side positions.  Whenever the inherited label is $\EQ,\PP$, or $\PPI$, remove the pair from the residual frontier and represent it by an equality port or local vertical stratum.  Because subordinate side contexts have strictly smaller rank, the saturation terminates within the computable bound $h(C_0)$.  The residual-frontier lemma then ensures that residual frontier labels are only $\DR$ or $\PO$.
+
+Define the RCC5 label between any two occurrences by case distinction on their nearest common represented interface: vertical ancestor/descendant relation, equality port, side-context matrix, or residual frontier.  The label agrees with the inherited label from the thinned model for all selected supports and all saturated boundary positions.  RCC5 converse and composition are inherited locally from the original model and enforced at context overlaps; the finite abstraction theorem below makes this overlap enforcement explicit.  Existential supports are present by construction, and universal restrictions are preserved because every generated or composition-forced target appears in a represented vertical, equality, or side-interface class.  Quotienting exact equality ports gives strong equality.
+\end{proof}
+
+\section{Theorem B: finite abstraction adequacy}
+
+Theorem B is the most delicate part.  It states that saturated split forests can be represented by a finite alphabet of frontier profiles, pair states, triple states, and equality ports; conversely, every valid finite abstraction unfolds to a genuine saturated split forest.
+
+\subsection{Frontier profiles}
+
+\begin{definition}[Local positions]
+For fixed $C_0$, let $K=K(C_0)$ be a computable bound on the number of live positions needed at one interface.  A live position is one of:
+\begin{itemize}
+\item the current occurrence;
+\item one of finitely many equality-port mates;
+\item a selected parent or child slot;
+\item a side-context position of bounded rank;
+\item a boundary threshold position used for forced verticalization.
+\end{itemize}
+Let $\Pos(C_0)$ be a finite set of abstract names for these possible live positions.
+\end{definition}
+
+\begin{definition}[Frontier profile]
+A frontier profile over $C_0$ is a finite object
+\[
+  P=(L,\tau,E,M,U,X,Y)
+\]
+where:
+\begin{enumerate}[label=(P\arabic*)]
+\item $L\subseteq\Pos(C_0)$ is the live position set;
+\item $\tau:L\to\Typ(C_0)$ assigns types;
+\item $E$ is an exact equality-port equivalence relation on $L$;
+\item $M:L^2\to\Rel$ is a relation matrix satisfying $M(p,q)=\EQ$ iff $p\,E\,q$, $M(q,p)=\Inv(M(p,q))$, and the RCC5 composition table on all triples in $L$;
+\item $U$ is a set of universal obligations of the form $(p,R,D)$ meaning that every represented $R$-target of $p$ must carry $D$;
+\item $X$ is a set of existential support declarations of the form $(p,\exists R.D,s)$, where $s$ is a local support position, an equality-port transfer, a vertical reachability request, or a side-context occurrence;
+\item $Y$ is a finite side-context descriptor, including recursive lower-rank side descriptors, forced verticalization records, and residual $\DR/\PO$ frontier labels.
+\end{enumerate}
+The profile is legal if these components satisfy the local type, equality, relation, side-context, existential, and universal consistency clauses listed below.
+\end{definition}
+
+\begin{definition}[Local legality clauses]
+A frontier profile $P=(L,\tau,E,M,U,X,Y)$ is locally legal if:
+\begin{enumerate}[label=(L\arabic*)]
+\item type clauses (T1)--(T5) hold at each $p\in L$;
+\item $E$ is an equivalence relation and $M(p,q)=\EQ$ iff $p\,E\,q$;
+\item if $p\,E\,q$, then $\tau(p)=\tau(q)$ and $p,q$ have the same externally visible equality ports, universal obligations, and side-interface behaviour;
+\item for all $p,q,r\in L$, $M(p,r)\in\Comp(M(p,q),M(q,r))$;
+\item if $\exists R.D\in\tau(p)$, then $X$ contains a support declaration whose represented target has relation $R$ from $p$ and carries $D$;
+\item if $\forall R.D\in\tau(p)$, then $(p,R,D)\in U$ and $D$ is propagated to every locally represented $R$-target of $p$;
+\item side-context descriptor $Y$ is ranked, saturated, and obeys forced verticalization: every side/tree and side/side pair labelled $\EQ,\PP$, or $\PPI$ is represented by an equality port or local vertical stratum before residual classification;
+\item every residual side-frontier pair in $Y$ is labelled $\DR$ or $\PO$.
+\end{enumerate}
+\end{definition}
+
+\subsection{Pair and triple product states}
+
+A finite frontier profile describes only one interface.  The unfolded split forest contains pairs and triples whose endpoints may lie in different subtrees.  The repaired abstraction therefore records finite product-state representatives for such pairs and triples.
+
+\begin{definition}[Pair state]
+A pair state is a finite record
+\[
+  \pi=(P,Q,i,j,R,\eta)
+\]
+where $P,Q$ are frontier profiles, $i\in P$, $j\in Q$ are endpoint positions, $R\in\Rel$ is the represented RCC5 label, and $\eta$ is a finite interface trace describing how the pair crosses the least common represented interface: same local profile, ancestor/descendant path, equality-port transfer, side-context transfer, or residual frontier transfer.  The set of pair states is denoted $\Pair(C_0)$.
+\end{definition}
+
+\begin{definition}[Triple state]
+A triple state is a compatible ordered triple of pair states
+\[
+  \theta=(\pi_{12},\pi_{23},\pi_{13})
+\]
+with endpoint profiles and positions matching on overlaps and with
+\[
+  R_{13}\in\Comp(R_{12},R_{23}),
+\]
+where $R_{ab}$ is the RCC5 label recorded by $\pi_{ab}$.  The set of triple states is denoted $\Trip(C_0)$.
+\end{definition}
+
+\begin{remark}[Why pair/triple states are needed]
+It is not enough to say that every global triple is covered by some unspecified patch.  Universal restrictions and RCC5 composition can create targets that are not selected witnesses.  Pair states give a finite representative for every pair of occurrences, and triple states certify that the three pair representatives chosen for any triple compose correctly.
+\end{remark}
+
+\begin{definition}[Product-state transition]
+Given a parent profile and the profiles of its finitely many children, a product-state transition specifies:
+\begin{enumerate}[label=(PS\arabic*)]
+\item how every local pair inside one profile maps to a pair state;
+\item how every cross-child pair is mapped through the parent frontier or a saturated side-context descriptor;
+\item how ancestor/descendant pairs compose through the vertical containment relation;
+\item how equality-port transfers are resolved without identifying blocking copies;
+\item how every compatible ordered triple of generated pair states maps to a triple state in $\Trip(C_0)$.
+\end{enumerate}
+The transition is legal only if all generated pair and triple states are in $\Pair(C_0)$ and $\Trip(C_0)$ and all universal obligations are propagated along pair states with the required relation label.
+\end{definition}
+
+\subsection{Finite abstraction objects}
+
+\begin{definition}[Finite split-forest abstraction]
+A finite abstraction for $C_0$ is a finite ranked tree alphabet $\Sigma(C_0)$ whose letters are locally legal frontier profiles, together with finite pair and triple transition tables
+\[
+  \delta_{\Pair},\delta_{\Trip}
+\]
+assigning product-state representatives to every parent/child interface combination.  It is valid if:
+\begin{enumerate}[label=(A\arabic*)]
+\item the root profile contains a distinguished position $r$ with $C_0\in\tau(r)$;
+\item every local profile is legal;
+\item every parent/child tuple respects the generated containment orientation;
+\item every selected $\PP$ or $\PPI$ support is represented by vertical reachability, possibly after equality-port transfer to a split mate;
+\item every selected $\DR$ or $\PO$ support is represented inside a saturated side context;
+\item every equality port is exact: equality-port equivalent positions have identical type and external interface data, and no strict vertical path connects equality-port mates;
+\item every pair in every finite prefix of the unfolding has a pair-state representative generated by $\delta_{\Pair}$;
+\item every ordered triple in every finite prefix has a triple-state representative generated by $\delta_{\Trip}$;
+\item universal obligations are propagated to all pair-state represented $R$-targets;
+\item transitive existential requests for $\PP$ and $\PPI$ are recorded as finite eventuality obligations for the automaton.
+\end{enumerate}
+\end{definition}
+
+The clauses are finite because $\Typ(C_0)$, $\Pos(C_0)$, side-context rank, equality-port names, pair states, and triple states are all bounded by computable functions of $|\Cl(C_0)|$.
+
+\subsection{Extraction and realization}
+
+\begin{lemma}[Extraction of a finite abstraction]
+Every saturated split-forest presentation of $C_0$ induces a valid finite abstraction.
+\end{lemma}
+
+\begin{proof}
+Take the type of each occurrence from the presentation.  At each occurrence, collect its bounded live interface: equality mates, selected vertical boundary positions, saturated side-context positions, and threshold positions.  Since the interface size and side-context rank are bounded by functions of $C_0$, there are only finitely many isomorphism types.  These are the frontier profiles.
+
+For every pair of occurrences in a finite prefix, compute its nearest represented interface: the same local profile, an ancestor/descendant vertical segment, an equality-port transfer, a saturated side context, or a residual frontier.  Record the corresponding pair state.  Because all ingredients are chosen from finite profile and context alphabets, only finitely many pair states occur.  For every triple, record the three induced pair states and the inherited RCC5 composition witness.  This produces a triple state, and compatibility follows from the original RCC5 frame.
+
+Existential support declarations are extracted from the selected witness supports of the saturated presentation.  Universal obligations are extracted from the truth of universal formulas and from the complete pair-state coverage of represented targets.  Equality-port exactness is inherited from origin equality in the presentation.  Thus all validity clauses hold.
+\end{proof}
+
+\begin{lemma}[Realization from a valid finite abstraction]
+Every valid finite abstraction unfolds to a saturated split-forest presentation satisfying all closure formulas recorded in its types.
+\end{lemma}
+
+\begin{proof}
+Unfold the finite tree alphabet into a possibly infinite labelled tree.  Each node occurrence receives the type, side-context positions, equality ports, and relation matrix specified by its frontier profile.  Vertical parent/child links supply generated containment covers.  Equality-port declarations induce an equivalence relation $\eqE$ on occurrences.  Blocking/profile repetition is not part of $\eqE$.
+
+Define the RCC5 label between any two occurrences by the pair state generated by repeated use of $\delta_{\Pair}$ from the least common represented interface.  This is well defined by the overlap compatibility component of pair states.  Define labels for triples through $\delta_{\Trip}$.  Since every triple state satisfies the RCC5 composition table, the global labelling satisfies composition for all triples of occurrences.  Converse and strong equality are enforced by the pair-state and equality-port clauses.
+
+The interpretation of concept names is given by types.  The truth lemma for all $D\in\Cl(C_0)$ is proved by induction on $D$.  Boolean cases follow from type legality.  For $\exists R.D$, the abstraction contains a support declaration.  If the support is local or side-contextual, the required target exists in the unfolding by construction.  If it is vertical, the automaton/eventuality layer guarantees a strict reachable target carrying $D$.  If it is equality-transfer vertical, first move to the equality-port mate and then follow the vertical support; after quotienting exact equality ports, this is a valid support for the original occurrence.  For $\forall R.D$, pair-state exhaustion says every $R$-target has a pair representative, and universal propagation requires $D$ in the target type.  The induction hypothesis finishes the proof.
+
+Finally quotient by $\eqE$.  Exact equality ports guarantee that relation labels, types, supports, and universal obligations are congruent across representatives.  Therefore the quotient is a strong RCC5 interpretation.
+\end{proof}
+
+\begin{theorem}[Theorem B: finite abstraction adequacy]
+For an input concept $C_0$, saturated split-forest presentations satisfying $C_0$ exist iff valid finite abstractions for $C_0$ exist.
+\end{theorem}
+
+\begin{proof}
+The forward direction is the extraction lemma.  The reverse direction is the realization lemma.  Both constructions preserve the root type and hence preserve satisfaction of $C_0$.
+\end{proof}
+
+\section{Theorem C: automaton correctness}
+
+Theorem C says that valid finite abstractions are precisely the objects recognized by an effectively constructible parity tree automaton.
+
+\subsection{Automaton model}
+
+We use finite alternating parity tree automata over ranked trees.  The branching rank is bounded by a computable number $B(C_0)$ sufficient for all selected vertical children, equality-port copies, side-context roots, and dummy padding children.  Alternation is convenient for universal propagation and for spawning request monitors.  Nothing in the construction requires an infinite-state device.
+
+\begin{definition}[Automaton alphabet]
+The input alphabet $\Sigma(C_0)$ consists of all locally legal frontier profiles over $C_0$, including side-context descriptors, equality ports, pair-state interface tables, and triple-state transition summaries.  Since all components are finite and effectively enumerable, $\Sigma(C_0)$ is finite and computable.
+\end{definition}
+
+\begin{definition}[States]
+The automaton $\Aut_{C_0}$ has the following finite classes of states:
+\begin{enumerate}[label=(Q\arabic*)]
+\item a main state $q_{\mathrm{main}}$ checking local profile legality and child-transition compatibility;
+\item pair-checking states $q_{\Pair}(\pi)$ for $\pi\in\Pair(C_0)$;
+\item triple-checking states $q_{\Trip}(\theta)$ for $\theta\in\Trip(C_0)$;
+\item equality-port congruence states $q_{\EQ}(e)$ for equality-port data $e$;
+\item universal-propagation states $q_{\forall}(R,D)$;
+\item eventuality states $q_{\exists}^{\PP,D}$ and $q_{\exists}^{\PPI,D}$ for transitive vertical existential requests.
+\end{enumerate}
+\end{definition}
+
+\subsection{Transition conditions}
+
+At a node labelled by profile $P$, the automaton checks the following finite conditions.
+
+\begin{enumerate}[label=(C\arabic*)]
+\item $P$ is locally legal.
+\item The child profile tuple is compatible with the generated containment orientation and with the declared side-context ranks.
+\item Every local pair and cross-child pair has the declared pair-state representative.
+\item Every local triple and every triple formed across child interfaces has the declared triple-state representative.
+\item Equality ports are exact and congruent: equal ports have identical types and identical external pair/triple behaviour.
+\item Every existential formula has a declared support.  Nonvertical $\DR/\PO$ supports must appear in saturated side contexts.  Vertical $\PP/\PPI$ supports either appear immediately in the live boundary or create an eventuality state.
+\item Every universal formula $\forall R.D$ is propagated to all represented $R$-targets using pair states, including composition-generated targets and side-context targets.
+\item Every side-context residual frontier label is $\DR$ or $\PO$ after saturation and forced verticalization.
+\end{enumerate}
+
+All checks are finite table lookups in $\Sigma(C_0)$, $\Pair(C_0)$, and $\Trip(C_0)$.
+
+\subsection{Parity condition}
+
+The only genuinely infinite obligations are transitive $\PP/\PPI$ existential requests along vertical branches.  The automaton handles them by parity acceptance.
+
+For a request $\exists\PP.D$ at an occurrence, the monitor follows the ancestor direction, allowing equality-port transfer to an exact split mate when declared.  The request is discharged when a strict represented $\PP$-target with $D$ in its type is encountered.  Dually, $\exists\PPI.D$ follows the descendant direction.  Pending request states receive odd priorities; discharged or inactive states receive smaller even priorities.  The standard parity condition therefore enforces that no request remains pending forever.
+
+\begin{lemma}[Eventuality correctness]
+Along every branch of an accepting run, every transitive $\PP$ or $\PPI$ existential request opened by a type is eventually discharged at a strict target of the required relation and type.  Conversely, if all such requests are discharged in the represented split forest, the parity condition can be satisfied.
+\end{lemma}
+
+\begin{proof}
+The automaton has finitely many request kinds $(R,D)$ with $R\in\{\PP,\PPI\}$ and $D\in\Cl(C_0)$.  While a request is pending, the run visits a state with the corresponding odd priority.  When a strict target with $D$ is found, the request monitor exits to an even-priority discharged state.  Parity acceptance excludes runs in which some odd pending priority is seen infinitely often without a smaller even discharge priority recurring.  Conversely, if every request has a strict target, choose the transition that follows the support path to the target and then discharges.  Finiteness of the request set gives a uniform parity index.
+\end{proof}
+
+\subsection{Correctness of the automaton}
+
+\begin{theorem}[Theorem C: automaton correctness]
+For every concept $C_0$,
+\[
+  L(\Aut_{C_0})\ne\varnothing
+  \quad\Longleftrightarrow\quad
+  C_0\text{ has a valid finite split-forest abstraction.}
+\]
+\end{theorem}
+
+\begin{proof}
+If $\Aut_{C_0}$ accepts a labelled tree, read off from every node its frontier profile, side-context descriptor, equality ports, pair table, and triple table.  Conditions (C1)--(C8) are exactly the validity clauses of a finite abstraction, and the parity condition supplies the required transitive vertical existential supports.  Hence the accepted tree determines a valid finite abstraction.
+
+Conversely, given a valid finite abstraction, label the regular unfolding by its frontier profiles.  At each node choose the automaton transitions corresponding to the abstraction's declared child tuple, pair states, triple states, equality ports, and supports.  Local validity makes every finite transition legal.  Eventuality validity supplies accepting parity choices for all transitive requests.  Thus the automaton has an accepting run.
+\end{proof}
+
+\begin{corollary}[Decidability]
+Concept satisfiability for $\ALCI_{\RCC}$ over abstract strong RCC5 frames is decidable.
+\end{corollary}
+
+\begin{proof}
+Given $C_0$, construct the finite automaton $\Aut_{C_0}$.  Emptiness of finite alternating parity tree automata is decidable.  By Theorem C, nonemptiness is equivalent to existence of a valid finite abstraction.  By Theorem B, this is equivalent to existence of a saturated split-forest presentation satisfying $C_0$.  By Theorem A and the realization direction of Theorem B, this is equivalent to satisfiability of $C_0$ over abstract strong RCC5 frames.
+\end{proof}
+
+\section{Where the proof obligations live}
+
+The A/B/C separation makes the remaining proof obligations explicit.
+
+\begin{longtable}{p{0.28\linewidth}p{0.62\linewidth}}
+\toprule
+Obligation & Discharged by \\
+\midrule
+Witness-generated reduction & Witness thinning lemma in Section 3.1.\\
+No semantic Hasse assumption & Generated cover presentation in Section 3.2.\\
+Multiple selected superparts & Weak split occurrences and equality ports in Section 3.2.\\
+Side/tree and side/side comparable witnesses & Ranked side contexts and forced verticalization in Section 3.3.\\
+Residual $\DR/\PO$ frontier & Residual-frontier lemma after saturation.\\
+Blocking not equality & Explicit separation of $\blkE$ from $\eqE$ and exact equality-port clauses.\\
+Global RCC5 composition & Pair/triple product-state representatives and triple-state legality.\\
+Universal propagation to nonselected targets & Pair-state exhaustion plus universal propagation clauses.\\
+Transitive $\PP/\PPI$ eventualities & Parity request monitors in Theorem C.\\
+Effectivity & Finite closure, finite type set, bounded side rank, finite frontier positions, finite pair/triple states, finite automaton.\\
+\bottomrule
+\end{longtable}
+
+\section{Finite bounds and effectivity}
+
+Let $n=|\Cl(C_0)|$ and $t=|\Typ(C_0)|\le 2^n$.  Let $h(C_0)$ be the side-context rank bound.  The number of abstract live positions is bounded by a computable expression of the form
+\[
+  K(C_0)\le c\cdot n\cdot t\cdot h(C_0)
+\]
+for a fixed construction-dependent constant $c$, after padding all missing children by dummy positions.  A frontier profile is determined by:
+\begin{itemize}
+\item a subset of $K(C_0)$ positions;
+\item a type assignment to live positions;
+\item an equality-port equivalence relation;
+\item a relation matrix over live positions;
+\item finite side-context descriptors of rank at most $h(C_0)$;
+\item finite existential and universal support/obligation declarations.
+\end{itemize}
+Therefore the set of profiles is finite and effectively enumerable.  Pair states are finite records over pairs of profiles, endpoint positions, relation labels, and finitely many interface-trace tags.  Triple states are finite triples of pair states with overlap checks.  Consequently $\Sigma(C_0)$, $\Pair(C_0)$, $\Trip(C_0)$, and $\Aut_{C_0}$ are all computable.
+
+No useful elementary complexity bound is claimed here.  The construction is intended as a decidability proof.  Sharper complexity analysis would require a more economical normal form and is left separate.
+
+\section{Concluding formulation}
+
+The final decidability proof should be read as the composition of three independent modules:
+\[
+\boxed{\text{Theorem A: split-forest normal form}}
+\]
+\[
+\boxed{\text{Theorem B: finite abstraction adequacy}}
+\]
+\[
+\boxed{\text{Theorem C: automaton correctness}.}
+\]
+The split-forest abstraction survives as the key semantic enabler.  What changes is the burden placed on it: it no longer has to implement cyclic blocking and simultaneous eventuality satisfaction by hand.  Instead, it supplies a saturated, finite-interface tree-like normal form, and the parity automaton handles the regular infinite behaviour.
+
+
+\appendix
+
+\section{Detailed side-context saturation argument}
+
+This appendix spells out the saturation process used in Theorem A.  It is included because most defects in earlier split-forest drafts arose from unsaturated side interfaces.
+
+\begin{definition}[Context closure operator]
+For a source occurrence $u$, let $B(u)$ be the current bounded vertical boundary consisting of the current occurrence, declared equality mates, selected parent and child slots, and threshold positions for ancestor and descendant tails.  Given a finite side diagram $S$, define $\Gamma_u(S)$ to be the least extension obtained by the following one-step operations:
+\begin{enumerate}[label=(G\arabic*)]
+\item add each selected $\DR/\PO$ witness of every occurrence already in $S$ whose remaining side rank is positive;
+\item add the inherited label between every $s\in S$ and every $b\in B(u)$;
+\item add the inherited label between every pair $s,t\in S$;
+\item if any such label is $\EQ$, add an equality-port declaration and require equality congruence of types and external interfaces;
+\item if any such label is $\PP$ or $\PPI$, add the corresponding local vertical stratum or threshold splice;
+\item if a new side witness is introduced, give it a subordinate side context of strictly smaller rank.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Termination of saturation]
+For fixed $C_0$, iterating $\Gamma_u$ terminates up to isomorphism within a computable bound.
+\end{lemma}
+
+\begin{proof}
+The rank of subordinate side calls strictly decreases.  At any fixed rank, the construction uses only finitely many types, finitely many RCC5 labels, finitely many equality-port names, and a bounded number of selected existential requirements from $\Cl(C_0)$.  If two newly generated context positions have the same type, same relation vector to the boundary, same equality-port data, and same lower-rank context type, they are merged at the descriptor level.  Hence at rank $k$ only finitely many descriptor isomorphism classes can appear once all rank $<k$ descriptors are known.  Induction on $k\le h(C_0)$ gives a computable bound and termination up to descriptor isomorphism.
+\end{proof}
+
+\begin{lemma}[Two-sided verticalization]
+Let $w$ be a side witness introduced for a source $u$, and let $b$ be any represented vertical boundary occurrence of $u$, either on an ancestor trace or on a descendant trace.  If the inherited label between $b$ and $w$ is $\PP$ or $\PPI$, then the saturated context represents this interaction by a vertical stratum rather than by a residual side-frontier pair.
+\end{lemma}
+
+\begin{proof}
+The context closure operator inspects all side/tree pairs in both directions.  If $b\PP w$, then $w$ is a proper superpart of $b$ and an occurrence or equality mate of $w$ is inserted into the ancestor-side threshold for $b$.  If $b\PPI w$, then $w$ is a proper part of $b$ and an occurrence or equality mate of $w$ is inserted into the descendant-side threshold.  These are the only two strict containment cases.  The closure operator performs the insertion before residual-frontier classification, so the pair cannot remain residual.  Infinite tails are represented by the vertical reachability/eventuality mechanism; the side context stores only the bounded threshold at which the tail enters the vertical backbone.
+\end{proof}
+
+\section{Exact equality-port quotient}
+
+\begin{definition}[Typed equality congruence]
+An equality-port relation $\eqE$ on a split presentation is a typed RCC5 congruence if, whenever $x\eqE y$:
+\begin{enumerate}[label=(E\arabic*)]
+\item $\tp(x)=\tp(y)$;
+\item for every occurrence $z$, the labels $\rho(x,z)$ and $\rho(y,z)$ agree after replacing $z$ by its $\eqE$-class;
+\item existential supports and universal obligations of $x$ and $y$ correspond under the same replacement;
+\item no strict vertical path connects $x$ and $y$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Quotient soundness]
+Let $\Phi$ be a weak split-forest presentation whose equality ports form a typed RCC5 congruence.  The quotient $\Phi/{\eqE}$ is a strong RCC5 interpretation.  Moreover, every closure formula has the same truth value at an occurrence and at its quotient class.
+\end{lemma}
+
+\begin{proof}
+Define the quotient domain as the set of $\eqE$-classes.  Put
+\[
+  \rho([x],[y])=\rho(x,y).
+\]
+This is well defined by the congruence condition.  If $[x]=[y]$, exact equality ports give $\rho(x,y)=\EQ$.  If $[x]\ne[y]$, exactness forbids an $\EQ$ label between representatives, hence strong equality holds.  Converse is inherited from the weak presentation.  For composition, choose representatives $x,y,z$.  Since $\Phi$ satisfies RCC5 composition,
+\[
+  \rho(x,z)\in\Comp(\rho(x,y),\rho(y,z)).
+\]
+Well-definedness transfers this statement to quotient classes.
+
+Truth preservation is by induction on closure formulas.  Atomic concepts and Boolean formulas follow from type equality on equality ports.  Existentials are preserved because supports correspond under congruence.  Universals are preserved because every quotient successor is represented by some occurrence successor, and universal obligations agree across equality classes.
+\end{proof}
+
+\section{Pair and triple exhaustion}
+
+\begin{definition}[Interface distance]
+For two occurrences $x,y$ in an unfolded abstraction, the interface distance is the number of profile boundaries crossed by the unique path from $x$ to $y$ through their least common represented interface, counting equality-port and side-context transfers as one boundary step.  Triples use the maximum of the three pair distances.
+\end{definition}
+
+\begin{lemma}[Pair-state exhaustion]
+Every ordered pair of occurrences in an unfolding of a valid finite abstraction has a unique compatible pair-state representative.
+\end{lemma}
+
+\begin{proof}
+Induct on interface distance.  Distance zero means both endpoints lie in the same live profile or saturated side context, so the local relation matrix supplies the pair state.  For positive distance, move one endpoint one boundary step toward the least common represented interface.  The induction hypothesis gives a pair state for the shortened pair.  The product-state transition table composes that state with the crossed boundary label and returns the declared pair state for the original pair.  Compatibility clauses ensure independence of equivalent choices through equality ports and side-context overlaps.
+\end{proof}
+
+\begin{lemma}[Triple-state exhaustion]
+Every ordered triple of occurrences in an unfolding of a valid finite abstraction has a compatible triple-state representative, and its three pair labels satisfy the RCC5 composition table.
+\end{lemma}
+
+\begin{proof}
+Apply pair-state exhaustion to the three ordered pairs.  The product-state transition table is closed under every local triple and every cross-interface triple generated from child profiles, side contexts, equality-port transfers, and vertical paths.  Therefore the three pair states determine a triple state in $\Trip(C_0)$.  Triple-state legality includes the condition
+\[
+  R_{13}\in\Comp(R_{12},R_{23}),
+\]
+so the represented labels compose correctly.  Since every concrete triple maps to such a representative, global RCC5 composition follows.
+\end{proof}
+
+\begin{lemma}[Universal target exhaustion]
+Let $x$ be an occurrence carrying $\forall R.D$.  If $y$ is any occurrence with represented label $\rho(x,y)=R$, then the abstraction propagates $D$ to the type of $y$.
+\end{lemma}
+
+\begin{proof}
+By pair-state exhaustion, $(x,y)$ has a pair-state representative labelled $R$.  The validity clauses require every universal obligation $(x,R,D)$ to be propagated to every pair-state represented $R$-target, including selected witnesses, side-context witnesses, and targets arising only by composition through intermediate occurrences.  Hence $D\in\tp(y)$.
+\end{proof}
+
+\section{Automaton finiteness and emptiness}
+
+The automaton used in Theorem C is finite for a simple reason: every object it stores is drawn from the finite closure and the finite abstraction alphabet.
+
+\begin{lemma}[Effective construction]
+From $C_0$ one can effectively enumerate the alphabet $\Sigma(C_0)$, the state set of $\Aut_{C_0}$, the transition relation, and the parity priority map.
+\end{lemma}
+
+\begin{proof}
+Compute $\Cl(C_0)$ and the finite type set.  Enumerate all bounded live position sets, all type assignments, all equivalence relations, all RCC5 relation matrices, all ranked side-context descriptors, all support declarations, and all universal obligation sets; discard those failing local legality.  Enumerate pair states and triple states from the surviving profiles.  Transitions are finite tables over parent profiles and bounded child-profile tuples.  Priorities are assigned to the finitely many request-monitor states.  Each step is a finite search.
+\end{proof}
+
+\begin{lemma}[Emptiness is decidable]
+It is decidable whether $L(\Aut_{C_0})$ is empty.
+\end{lemma}
+
+\begin{proof}
+Finite alternating parity tree automata have decidable emptiness, for example by the standard reduction to finite parity games.  The game positions are pairs of automaton states and alphabet symbols, together with direction choices for the ranked input tree.  The parity condition is inherited from the automaton.  Since both the state set and alphabet are finite, the game graph is finite, and finite parity games are decidable.
+\end{proof}
+
+\section{Suggested division between main paper and companion}
+
+A concise main decidability paper can now cite this companion as follows.
+\begin{enumerate}[label=(M\arabic*)]
+\item State the abstract RCC5 semantics and closure definitions.
+\item State Theorem A and cite the normal-form proof in this companion.
+\item State Theorem B and cite the finite-abstraction adequacy proof in this companion.
+\item Give the automaton construction at a high level and cite Theorem C.
+\item Conclude decidability by automaton emptiness.
+\end{enumerate}
+This keeps the main paper readable while leaving the fragile interface and equality-port details in a dedicated technical source.
+
+\end{document}
