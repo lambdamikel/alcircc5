@@ -5982,3 +5982,38 @@ genuinely interact.  The splice pass is a fixpoint so that extension is
 structural; that overlap/mutual-part generator is the natural next increment
 (and the place a D-2, if any, would most likely surface).  README + CLAUDE.md
 updated to list WP11.
+
+## 2026-05-29/30: promoted the automata route to primary; doc-hygiene pass (meta notes)
+
+A few meta-observations from this stretch, not a changelog (git has the details).
+
+**The pivot.** A fresh-GPT-5.5 cold review of round-9 (the 4th cold review on the
+project) found a clean dual of D-1 plus two foundational gaps -- finite
+checkability of validity, and cross-label determinacy -- that round-9 had only
+asserted.  Round-10 repaired them, but the repairs (finite product-state
+exhaustion, complete interface descriptors) are an automaton in all but name.
+The honest read is that the no-automata route spent rounds 2--10 repeatedly
+rediscovering automaton-shaped obligations it could not discharge, so the
+convergent move was to make GPT-5.5's split-forest + parity-tree-automata proof
+the primary statement.  It keeps the whole split-forest normal form ("the
+automaton does not replace the split forest, it consumes it") and lets parity
+non-emptiness handle the brittle half by construction.  Crucially this is a
+*strategic clarity move, not a proof upgrade*: the automata proof itself has not
+been cold-reviewed, so the status stays "strongly supported, not certified," and
+the next step is to cold-review it (the cold_review_round9 packet repurposes).
+
+**Recurring pattern worth flagging for future sessions.** Every round was
+declared "canonical/closed" and a cold review punctured it; the only trustworthy
+signal is a cold review that finds *nothing*, which still hasn't happened.  Each
+such pivot leaves stale "current/canonical" framing scattered across README,
+CLAUDE.md, OUTDATED.md and the overview papers -- including self-contradictory
+blocks (a lead saying "automata primary, round-9 reviewed" followed later by
+"round-9 not yet reviewed").  Scrub for it explicitly after every pivot.
+
+**Doc-hygiene lesson.** LaTeX had leaked into the Markdown docs (custom macros
+like \PP, \cite{}, $...$ that don't render in Markdown).  Converting it was
+mostly mechanical, but the brace-stripping silently *changed formula readings*:
+2^{2^{p(n)}} became 2^(2^p(n)), whose inner 2^p(n) reads as (2^p)(n).  Multi-char
+exponents/subscripts need explicit parens; the fix was 2^(2^(p(n))) etc.  Lesson:
+keep Markdown LaTeX-free, and never trust a mechanical math conversion without
+re-checking grouping.
