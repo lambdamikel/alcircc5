@@ -1046,27 +1046,45 @@ calculus in several fundamental ways:
 \subsection{Soundness and completeness}
 \label{ssec:soundness-completeness}
 
-The decidability argument is most developed in the GPT-5.5
-\emph{round-9 forced-verticalization split-forest
-proof}~\cite{GPT55Round9Sketch} (May~2026, 16-page sketch,
-no-automata route), with detailed
-companion~\cite{GPT55Round9Expanded} (33~pages) and an independent
-parity-tree-automata witness~\cite{GPT55AutomataRoute} (21~pages).
-Round-9 preserves the round-7 architectural move (incidence-tagged
-pair shapes) and the round-8 saturated side context $S_k(u)$, and
-adds \emph{composition-forced verticalization} to close the one
-completeness gap (D-1) found by a cold Claude Opus~4.8 review of
-round-8:\@ a $\DR/\PO$ side witness whose ancestor trace has a
-$\PPI$-tail is spliced into the generated cover relation $\Eup$ at a
-bounded threshold, so equality-aware vertical reachability --- not a
-bounded side context --- carries the forced containment label up the
-infinite tail.  The history of how the argument reached its current
-form is collected in~\S\ref{sec:history-of-attempts} below.
+The \textbf{primary decidability statement} (as of 29~May~2026) is
+the GPT-5.5 \emph{split-forest $+$ parity-tree-automata
+proof}~\cite{GPT55AutomataRoute} (21~pages): the split-forest
+\emph{semantic normal form}---witness thinning, generated
+containment covers, split copies for incomparable superparts,
+side-interface mosaics, and typed-$\EQ$ quotient---together with a
+reduction of the finite search problem to \emph{non-emptiness of a
+parity tree automaton} over the finite alphabet of split-forest
+profiles.  The automaton keeps the split-forest model idea (in the
+proof's own words, ``the automaton does not replace the split
+forest; it consumes it'') and is used only for the parts most
+brittle in a hand certificate: regular infinite branches,
+simultaneous eventuality fulfilment, recursive side contexts, and
+profile repetition without semantic equality.  Parity-tree-automaton
+non-emptiness is decidable by construction, so the finite-checkability
+and eventuality obligations come for free.  This proof has \emph{not}
+itself been cold-reviewed; promoting it is a strategic clarity move,
+not a proof upgrade, and the overall status remains \emph{strongly
+supported, not certified}.
 
-\paragraph{Status: a repaired gap, strongly supported, not
-mechanically certified.}
+The \emph{no-automata} route---which encoded those same brittle
+parts by a finite certificate with request-closed blocking
+cycles---was the project's primary statement through round~10 and is
+now its historical predecessor (\S\ref{sec:history-of-attempts}).
+Its most developed manuscript is the round-9 forced-verticalization
+proof~\cite{GPT55Round9Sketch} with companion~\cite{GPT55Round9Expanded};
+a cold review of round-9 then found a dual descendant-tower defect
+and two foundational gaps (finite checkability; cross-label
+determinacy), and round-10's repair reduced them to
+\emph{automaton-shaped} lemmas---which is exactly why the automaton
+was promoted.  The remainder of this subsection develops the shared
+split-forest normal form and the (now-historical) no-automata
+certificate machinery, since the automata proof consumes the former
+and the latter records what the automaton replaces.
+
+\paragraph{The no-automata thread's final state (D-1 and the round-9
+repair, historical).}
 The completeness gap (D-1) that a cold Claude Opus~4.8 review found
-in round-8 is closed at the manuscript level in round-9.  The gap
+in round-8 was closed at the manuscript level in round-9.  The gap
 was this:\@ round-8's cross side/tree exhaustion lemma closes the
 side/tree gap only on the \emph{finite, depth-bounded} boundary
 $B_k(u)$, whereas a $\DR/\PO$ side witness can be RCC5-composition
@@ -1636,8 +1654,67 @@ the typed-equality quotient lemma, and the support-closed mosaic
 patchwork theorem as the parts most worth future formalization.
 Round-9 has not itself been independently cold-reviewed in turn; we
 therefore state the result as \emph{strongly supported, not
-mechanically certified}.  Round-9 is the most developed statement of
-the architecture; round-8 is its immediate predecessor.
+mechanically certified}.  Round-9 was the most developed statement of
+the no-automata thread when written; it was superseded within the
+day, as the next subsection records.
+
+\subsection{Round 9 cold review, round 10, and the switch to the
+automata route (May 29, 2026)}
+\label{ssec:round10-automata}
+
+A fresh GPT-5.5 session, given the round-9 manuscripts with no project
+context, reviewed round-9 and found it was not yet a proof.  The
+composition table was independently re-verified correct.  Three
+\emph{critical} defects:
+\begin{itemize}
+  \item \textbf{One-sided verticalization.}  Round-9 handled a
+    $\DR/\PO$ witness forced into an infinite \emph{ancestor}
+    $\PPI$-tower but missed the dual case --- a $\PO$ witness forced
+    to be a proper \emph{superpart} of an infinite \emph{descendant}
+    $\PP$-tower.  Concrete witness
+    $C=(\exists\PO.A)\sqcap(\exists\PPI.\top)\sqcap
+    \forall\PPI.(\exists\PPI.\top\sqcap\forall\DR.\neg A\sqcap\forall\PO.\neg A)$:
+    each descendant $d_i$ is forced
+    ($\comp(\PP,\PO)=\{\DR,\PO,\PP\}$, $\DR/\PO$ killed by the
+    universals, $\comp(\PP,\PP)=\{\PP\}$ absorbing) to satisfy
+    $d_i\PP w$ (machine-checked).
+  \item \textbf{Finite checkability never proved.}  The validity
+    clauses (V6)/(V7) were \emph{asserted} to be finite syntactic
+    checks but quantify over the infinite unfolding; the finite
+    pair/triple catalogues were never shown to exhaust it.
+  \item \textbf{Boundary non-determinacy.}  A boundary descriptor
+    does not determine the mixed outside/internal labels:\@
+    $i\PP b,\ o\PO b\Rightarrow L(o,i)\in\{\DR,\PO,\PPI\}$.
+\end{itemize}
+plus four majors, including a \emph{false} simple-cycle bound (a
+request-closed cycle may need a closed walk that revisits
+descriptors).
+
+Round~10 accepts all findings and repairs them:\@ a dual descendant
+splice (symmetric to round~9), occurrence-local requests, ranked
+side-width, global-quotient-before-cycle-selection, a corrected
+$(M{+}1)N$ closed-walk bound, and --- for the two foundational
+criticals --- a \emph{finite product-state exhaustion} construction
+and \emph{complete interface descriptors}.  A close reading finds
+that the entire decidability burden then funnels into two named
+lemmas, Finite Product Exhaustion and Complete-Interface Replacement,
+both established by case analysis plus finiteness of a descriptor
+alphabet, and both \emph{automaton-shaped}: product-state exhaustion
+is product-automaton reachability, and the complete interface
+descriptor is a finite interface abstraction.
+
+This is the convergence point.  Over rounds 2--10 the no-automata
+route repeatedly rediscovered automaton-shaped obligations
+(request-closed cycles for $\omega$-acceptance; product-state
+exhaustion for finite checking) that it could not discharge.  The
+decision (29~May~2026) is therefore to promote the split-forest
+$+$ parity-tree-automata proof~\cite{GPT55AutomataRoute}
+(\S\ref{ssec:soundness-completeness}) to the primary statement: it
+keeps the entire split-forest normal form and lets a parity tree
+automaton --- whose non-emptiness is decidable by construction ---
+handle the brittle half directly.  The promotion is strategic, not a
+proof upgrade; the automata proof has not itself been cold-reviewed,
+so the natural next step is to cold-review it.
 
 \subsection{What survives, and why}
 
@@ -1705,11 +1782,13 @@ has been open since Wessel's doctoral work in 2002/2003 and was
 explicitly flagged by Lutz \& Wolter in 2006 as ``perhaps the
 most interesting'' open problem suggested by their work.  As of
 this writing the argument is \emph{strongly supported but not
-mechanically certified}:\@ the one known completeness gap (D-1,
-\S\ref{ssec:round8-review}) is repaired at the manuscript level in
-round-9 (\S\ref{ssec:round9}), but neither that repair nor the
-surrounding manuscript has been independently cold-reviewed in turn
-or machine-certified.
+certified}.  The primary statement is the split-forest $+$
+parity-tree-automata proof (\S\ref{ssec:soundness-completeness}); the
+no-automata thread that preceded it reached round~10 after a cold
+review of round-9 found a dual descendant-tower defect and two
+foundational gaps (\S\ref{ssec:round10-automata}), and its repairs
+reduced to automaton-shaped lemmas.  The automata proof has not
+itself been cold-reviewed or machine-certified.
 
 The decidability argument as of May~2026 rests on \emph{two}
 core papers, which together aim to establish:
@@ -1736,15 +1815,20 @@ decidability).}
     Def~1.5 / Def~1.7 / Thm~1.20-sketch with the corrected
     generated-cover statements; the proofs of Thms~1.17--1.19
     carry over verbatim.
-  \item The \emph{GPT-5.5 round-9 split-forest
-    proof}~\cite{GPT55Round9Sketch} (May~2026, 16-page sketch)
-    with detailed companion~\cite{GPT55Round9Expanded} (33~pages)
-    and parity-tree-automata witness~\cite{GPT55AutomataRoute}
-    (21~pages): formulates finite occurrence-sensitive
-    split-forest certificates with twelve finite-checkable
-    validity conditions (V1)--(V12), establishes \textbf{soundness}
-    in full, and \emph{aims} at \textbf{completeness} (every
-    satisfiable $C_0$ admits a valid finite certificate).  The
+  \item The \emph{GPT-5.5 split-forest $+$ parity-tree-automata
+    proof}~\cite{GPT55AutomataRoute} (21~pages, \textbf{the primary
+    statement since 29~May~2026}): the split-forest normal form
+    (shared with the v1 paper) plus a reduction of the finite search
+    problem to non-emptiness of a parity tree automaton, which is
+    decidable by construction.  The no-automata route that preceded
+    it --- most developed in the round-9 forced-verticalization
+    proof~\cite{GPT55Round9Sketch} with
+    companion~\cite{GPT55Round9Expanded}, reaching round~10 after the
+    round-9 cold review (\S\ref{ssec:round10-automata}) ---
+    formulates finite occurrence-sensitive split-forest certificates
+    with twelve validity conditions (V1)--(V12), establishes
+    \textbf{soundness} in full, and \emph{aimed} at
+    \textbf{completeness} via a finite certificate.  The
     central architectural move (introduced in round 7, preserved
     through rounds 8--9) is that finite labels live on
     occurrence-sensitive \emph{pair shapes}
