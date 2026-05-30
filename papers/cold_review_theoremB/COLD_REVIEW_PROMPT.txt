@@ -1,0 +1,113 @@
+COLD REVIEW PROMPT  --  ALCI_RCC5 split-forest automata decidability proof
+=========================================================================
+
+Paste the PRIMARY PROMPT into a FRESH session of a frontier model (no prior
+involvement with this work), and attach the two PDFs in this folder:
+
+    split_forest_automata_proof.pdf                    (the proof, ~18 pp)
+    split_forest_normal_forms_and_abstractions.pdf     (companion: Theorems A/B/C)
+
+Attach NOTHING else (see WHAT TO WITHHOLD in README_FOR_HUMAN.txt).  Run the
+PRIMARY PROMPT first, unguided.  Run the OPTIONAL FOCUSED PASS only if the
+primary pass comes back clean.
+
+
+================================================================
+PRIMARY PROMPT  (paste verbatim)
+================================================================
+
+You are an expert referee in description logics, qualitative spatial reasoning
+(RCC5/RCC8), and automata on infinite trees, asked to adversarially review a
+proof for correctness.  You have no prior involvement with this work.
+
+THE MANUSCRIPT.  Attached is a proof (with a companion paper organising it into
+three theorems A/B/C) that concept satisfiability in the description logic
+ALCI_RCC5 -- ALCI extended with the five RCC5 base relations DR, PO, EQ, PP, PPI
+as roles, under abstract complete atomic RCC5 composition-table semantics with
+strong equality -- is decidable.  The strategy: thin any satisfying model to a
+witness-generated split forest (Theorem A); abstract that split forest by a
+finite system of frontier profiles, pair/triple product-state representatives,
+and equality ports (Theorem B); and decide satisfiability as non-emptiness of a
+finite alternating parity tree automaton that accepts exactly the valid finite
+abstractions (Theorem C).
+
+YOUR TASK.  Determine whether the proof is correct.  Distinguish two questions:
+  1. Is the decidability THEOREM true over this abstract RCC5 semantics?
+  2. Does the manuscript actually PROVE it -- or are there load-bearing claims
+     that are asserted, sketched, or do not in fact follow?
+
+HOW TO WORK -- be concrete and adversarial:
+  - First recompute the RCC5 composition table yourself by subset enumeration
+    (a few lines of code) and check the manuscript's table; composition is
+    load-bearing.
+  - The heart of any such proof is the FINITE ABSTRACTION step (Theorem B
+    here).  Interrogate it hard.  In the weak occurrence model EVERY pair of
+    occurrences has an RCC5 relation, and many forced relations are *indirect*
+    -- a witness of a witness, or an equality-split mate, can be a
+    composition-forced target of a far-away ancestor.  Check precisely:
+      * Is there a finite, inductively-defined representative for EVERY pair and
+        EVERY triple of occurrences in the (generally infinite) unfolded tree --
+        not just for selected witnesses or "nearby" occurrences?  Or does a key
+        claim quietly quantify over all global triples while calling itself a
+        finite check?
+      * Universal restrictions: if forall R.D is in the type of u and the global
+        relation between u and some v is R, is D *forced* into the type of v --
+        for EVERY such v, including ones reached only by composition through
+        intermediate witnesses?  Is that proved, or only checked on selected
+        targets?
+      * Equality: is rho(u,v) = EQ enforced if and only if u and v are in the
+        same equality class, with the congruence proved against ALL third
+        occurrences (not only local ones)?
+      * Is the automaton a genuinely finite object -- a total transition
+        function over a finite alphabet/state set with a stated parity/priority
+        condition -- and does every non-idle child recursively inherit all
+        well-formedness obligations?  (If it makes parent moves, is the
+        two-way alternating tree-automaton emptiness theorem invoked?)
+      * Is the claimed finite bound on profile/frontier size actually proved, or
+        is it a counting heuristic?
+  - Try to BREAK it with concrete witnesses.  Construct small ALCI_RCC5 concepts
+    and trace whether the abstraction/automaton gives the right answer.  The
+    most convincing defect is a small UNSATISFIABLE concept that the
+    construction would ACCEPT because a composition-forced relation or universal
+    target is not represented.  Worth trying, among others:
+        exists PP.(exists DR.A) and forall DR.not A          (unsat?)
+        exists PP.(A and not B and forall PP.not B and forall PPI.not B
+                   and forall PO.not B) and exists PP.B        (unsat?)
+        exists DR.(A and exists DR.B)                         (recursive child obligations)
+        exists PP.top and forall PP.exists PP.top             (infinite PP-chain; no EQ collapse)
+    For each, show the composition arithmetic and say exactly where in the
+    construction the forced relation / universal / recursive obligation is (or
+    is not) represented and checked.
+  - Do not manufacture defects.  Confirming a step is sound is as valuable as
+    finding it unsound.  A clean bill of health -- "I tried hard to break the
+    finite-abstraction theorem and could not, here is what I checked" -- is a
+    fully acceptable and valuable outcome.
+
+DELIVERABLE -- a referee report:
+  (a) one-paragraph verdict (correct / correct-modulo-fixable-gaps / genuine gap
+      / unsound) with your confidence;
+  (b) a severity-graded findings list (critical / major / minor); for each: the
+      precise location, a self-contained statement of what is claimed, why it
+      does not follow (or a counterexample concept with the composition
+      calculation), and a candidate repair if you see one;
+  (c) a short list of the steps you checked and found sound.
+
+Show your composition calculations and witness constructions explicitly.
+
+
+================================================================
+OPTIONAL FOCUSED PASS  (run ONLY if the primary pass came back clean)
+================================================================
+
+Follow-up, same manuscript: focus exclusively on the finite-abstraction theorem
+(Theorem B / the pair-and-triple product-state representation).  State precisely
+the inductive definition of the pair representative rep2(u,v) and the triple
+representative rep3(u,v,w) from the nearest common interface, and check: (i)
+every pair and every triple of occurrences in the infinite unfolded split tree
+has a representative; (ii) the representative's labels equal the actual global
+RCC5 labels; (iii) finiteness of the representative alphabet is proved from a
+precise invariant, not assumed; and (iv) local checks of these finite
+representatives genuinely imply global RCC5 composition AND universal coverage
+to all composition-forced targets.  Try to construct a concept whose unfolding
+forces a triple whose three endpoints share no bounded common interface, and
+see whether it still has a finite representative.
