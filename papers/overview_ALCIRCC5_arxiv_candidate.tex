@@ -1061,10 +1061,14 @@ brittle in a hand certificate: regular infinite branches,
 simultaneous eventuality fulfilment, recursive side contexts, and
 profile repetition without semantic equality.  Parity-tree-automaton
 non-emptiness is decidable by construction, so the finite-checkability
-and eventuality obligations come for free.  This proof has \emph{not}
-itself been cold-reviewed; promoting it is a strategic clarity move,
-not a proof upgrade, and the overall status remains \emph{strongly
-supported, not certified}.
+and eventuality obligations come for free.  This proof was promoted as a strategic
+move, not a proof upgrade, and was \emph{then cold-reviewed} in turn
+(the 5th cold review):\@ it was found to share the no-automata route's
+finite-representation keystone gap and was repaired (the repaired proof
+$+$ A/B/C companion; Theorem~B, finite abstraction adequacy, is the
+load-bearing keystone), and that repair has not been cold-reviewed in
+turn.  The overall status remains \emph{strongly supported, not
+certified}.
 
 The \emph{no-automata} route---which encoded those same brittle
 parts by a finite certificate with request-closed blocking
@@ -1713,9 +1717,11 @@ $+$ parity-tree-automata proof~\cite{GPT55AutomataRoute}
 (\S\ref{ssec:soundness-completeness}) to the primary statement: it
 keeps the entire split-forest normal form and lets a parity tree
 automaton --- whose non-emptiness is decidable by construction ---
-handle the brittle half directly.  The promotion is strategic, not a
-proof upgrade; the automata proof has not itself been cold-reviewed,
-so the natural next step is to cold-review it.
+handle the brittle half directly.  The promotion was strategic, not a
+proof upgrade; the automata proof was then cold-reviewed in turn (the
+5th cold review), found to share the finite-representation keystone gap,
+and repaired---the repaired proof and its Theorem~B (finite abstraction
+adequacy) are now the next target for cold review.
 
 \subsection{What survives, and why}
 
@@ -2027,7 +2033,7 @@ favoured patient editorial labour over insight.  \emph{Cold
 review across context, and across model}, was effective:\@ a
 fresh frontier-model session, given a finished manuscript with
 no prior project context, finds defects that no session holding
-the long context can find.  This was confirmed four times on this
+the long context can find.  This was confirmed five times on this
 project---in April~2026 (Claude Opus~4.7 reviewed Claude's own
 cover-tree implementation and identified the twelve-counterexample
 family that forced the (CT5) role-path compatibility addition,
@@ -2041,7 +2047,10 @@ instance also supplied a candidate repair); and on May~29 (a fresh
 GPT-5.5 session reviewed GPT-5.5's own round-9 proof and found a dual
 descendant-tower defect plus two foundational gaps,
 \S\ref{ssec:round10-automata}, which led to round-10 and the switch to
-the automata route).  The reviewer-was-cold
+the automata route); and on May~30 (a fresh GPT-5.5 session reviewed the
+automata proof itself and found it had the same finite-representation
+keystone gap, which GPT-5.5 then repaired with product-state
+representatives and an A/B/C companion).  The reviewer-was-cold
 property is the load-bearing one, not the reviewer-was-different-model
 property.  And steering the cross-validation pipeline---knowing
 which stress tests would discriminate between candidate proofs---requires
@@ -2086,28 +2095,30 @@ intermediate step.}  The cycle that drove this project forward
 was repeatable.  A fresh session of a frontier model, given the
 latest manuscript with no prior project context, finds defects
 that no session holding the long context can find.  The pattern
-was confirmed four times (April~2026, the cover-tree
+was confirmed five times (April~2026, the cover-tree
 implementation review that produced the (CT5) addition; May~28
 evening, the round-7 review that produced round 8; May~28 late
 evening, the Opus~4.8 review that found the round-8 D-1
 completeness gap and proposed a repair, which GPT-5.5 then ratified
 and integrated as round-9; and May~29, a fresh GPT-5.5 review of
 round-9 itself, which found a dual defect and two foundational gaps and
-produced round-10 and the switch to the automata route).  The cost is
-one session; the pay-off is a list of concrete defects --- and, in the
+produced round-10 and the switch to the automata route; and May~30, a
+fresh GPT-5.5 review of the automata proof itself, which found the same
+finite-representation keystone gap and was repaired with product-state
+representatives and an A/B/C companion).  The cost is one session; the pay-off is a list of concrete defects --- and, in the
 third instance, a candidate repair --- that the long-context author can
 then ratify or replace.  We recommend cold review as a
 standard intermediate step between \emph{``this manuscript looks
 finished''} and \emph{``submit for human review''}---not as a
 substitute for human peer review, but as a check that reliably
 finds real defects when there are real defects to find.  The
-sobering corollary, visible across all four instances, is that
+sobering corollary, visible across all five instances, is that
 \emph{each} cold review found a genuine defect in a manuscript its
 authors believed was finished, including successive rounds each
 advertised as ``canonical'':\@ the moment to trust a
 ``finished'' claim is after a cold review finds \emph{nothing},
-which has not yet happened---the parity-tree-automata proof now the
-primary statement has not itself been cold-reviewed.  The pattern is operationalisable
+which has not yet happened---the repaired automata proof and its
+Theorem~B have not themselves been cold-reviewed.  The pattern is operationalisable
 for any project of this scale; it is not specific to description
 logic or to these particular models.
 
@@ -2116,7 +2127,10 @@ not been peer-reviewed by human experts; the primary statement (since 29~May~202
 parity-tree-automata proof (\S\ref{ssec:soundness-completeness}),
 reached after the no-automata thread's round-9 was cold-reviewed and
 its round-10 repairs reduced to automaton-shaped lemmas; that automata
-proof has not itself been cold-reviewed or machine-certified.  The
+proof was itself then cold-reviewed (the 5th cold review), found to
+share the keystone gap, and repaired (the repaired proof $+$ A/B/C
+companion), and that repair and its Theorem~B have not been
+cold-reviewed or machine-certified.  The
 decidability theorem is strongly supported but not certified.  The meta-research point---\emph{that this kind
 of work is now possible, and that the result is worth engaging
 with on its technical merits}---is the more important
