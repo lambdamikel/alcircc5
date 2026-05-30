@@ -1,0 +1,1162 @@
+
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Expanded split-forest proof, merged round 10}
+\rhead{\thepage\ of \pageref{LastPage}}
+\setlist[itemize]{leftmargin=2em,itemsep=.25em,topsep=.25em}
+\setlist[enumerate]{leftmargin=2em,itemsep=.25em,topsep=.25em}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{claim}[theorem]{Claim}
+
+\newcommand{\Logic}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\Base}{\mathsf B}
+\newcommand{\B}{\Base}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\Inv}{\operatorname{inv}}
+\newcommand{\comp}{\operatorname{Comp}}
+\newcommand{\Rel}{\operatorname{Rel}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\md}{\operatorname{md}}
+\newcommand{\I}{\mathcal I}
+\newcommand{\J}{\mathcal J}
+\newcommand{\Q}{\mathcal Q}
+\newcommand{\U}{\mathcal U}
+\newcommand{\M}{\mathcal M}
+\newcommand{\Splt}{\mathcal S}
+\newcommand{\Dom}{\Delta}
+\newcommand{\NN}{\mathbb N}
+\newcommand{\Occ}{\mathsf{Occ}}
+\newcommand{\Prof}{\mathsf{Prof}}
+\newcommand{\Port}{\mathsf{Port}}
+\newcommand{\Ctx}{\mathsf{Ctx}}
+\newcommand{\Mos}{\mathsf{Mos}}
+\newcommand{\Side}{\mathsf{Side}}
+\newcommand{\Str}{\mathsf{Str}}
+\newcommand{\Pair}{\mathsf{Pair}}
+\newcommand{\Trip}{\mathsf{Trip}}
+\newcommand{\Req}{\mathsf{Req}}
+\newcommand{\Typ}{\mathsf{Typ}}
+\newcommand{\typ}{\operatorname{typ}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\orig}{\operatorname{orig}}
+\newcommand{\lab}{\operatorname{lab}}
+\newcommand{\parr}{\operatorname{par}}
+\newcommand{\rank}{\operatorname{rk}}
+\newcommand{\depth}{\operatorname{depth}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\eqc}{\equiv_{\EQ}}
+\newcommand{\Eq}{\equiv_{\!E}}
+\newcommand{\Blk}{\equiv_{\!B}}
+\newcommand{\blkeq}{\equiv_{\mathrm{blk}}}
+\newcommand{\reach}{\operatorname{Reach}}
+\newcommand{\up}{\mathsf{up}}
+\newcommand{\down}{\mathsf{down}}
+\newcommand{\self}{\mathsf{self}}
+\newcommand{\eqtag}{\mathsf{eq}}
+\newcommand{\side}{\mathsf{side}}
+\newcommand{\fin}{\mathsf{fin}}
+\newcommand{\ray}{\mathsf{ray}}
+\newcommand{\eport}{\mathsf{eqport}}
+\newcommand{\front}{\mathsf{front}}
+\newcommand{\NNF}{\operatorname{nnf}}
+\newcommand{\powerset}{\mathcal P}
+\newcommand{\Pairs}{\mathsf P_2}
+\newcommand{\Triples}{\mathsf P_3}
+\newcommand{\overlineC}[1]{\overline{#1}}
+
+\title{A Fully Expanded Merged Round-10 Generated Split-Forest Proof of Decidability for $\Logic$}
+\author{Self-contained proof manuscript with two-sided verticalization and finite product exhaustion}
+\date{29 May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This manuscript is the fully expanded merged version of the repaired generated split-forest proof of decidability for concept satisfiability in $\Logic$ over strong abstract complete atomic RCC5 frames.  It integrates the earlier long round-8/round-9 exposition with the round-10 referee repairs.  The proof keeps the original split-forest architecture: witness thinning, generated containment covers, split copies for multiple selected containment parents, ranked saturated side interfaces, constructed support-closed pair/triple catalogues, explicit typed-equality quotienting, and finite regular certificates.  It avoids Buchi/parity automata by using direct closed-walk request conditions.  The round-10 repairs incorporated here are: dual ancestor/descendant side-witness verticalization; complete interface descriptors rather than boundary-only replacement; finite pair/triple product-state exhaustion rather than quantification over an infinite unfolding; occurrence-local support mechanisms; global closed-walk blocking in a single quotient; and an explicit finite bound for closed walks.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction and proof architecture}
+
+The split-forest idea is used here as a normal-form theorem.  It is not a claim that every arbitrary RCC5 model is already a rooted tree, nor that tree edges are Hasse edges of a pre-existing semantic order.  The proof first thins arbitrary satisfying models to witness-generated submodels, then presents the relevant generated containment behaviour by split occurrences.  Vertical generated cover edges represent selected proper-part witnesses; nonvertical $\DR/\PO$ witnesses and sibling interactions are represented by finite saturated side interfaces; and semantic equality introduced by splitting is restored only by an explicit typed congruence.
+
+The reason for preserving the split-forest model class is that it separates three phenomena that are otherwise entangled in arbitrary RCC5 frames:
+\[
+  \PP/\PPI\hbox{ containment},\qquad
+  \DR/\PO\hbox{ side interaction},\qquad
+  \EQ\hbox{ synchronization of split copies}.
+\]
+The reason for expanding the proof beyond the compact correction layer is that all three phenomena interact at interfaces.  A nominal $\DR/\PO$ side witness of a source may be forced by RCC5 composition to become comparable with vertical ancestors or descendants.  Therefore side contexts are first saturated under equality and containment closure, and then an explicit two-sided forced-verticalization test is applied before any pair may be declared residual frontier.  Only after these steps is the residual frontier restricted to $\DR/\PO$.
+
+The proof proceeds as follows.  Sections~2--3 define the abstract semantics, closure, types, and the witness-generated submodel lemma.  Sections~4--8 define generated split presentations, ranked side contexts, two-sided forced verticalization, complete interface descriptors, and finite product-state certificates.  Sections~9--11 prove soundness, completeness, and decidability.  The remaining sections and appendices expand the local constructions, patchwork argument, typed-equality quotient, request-cycle argument, and enumeration bounds.
+
+\begin{theorem}[Main theorem]\label{thm:main}
+Concept satisfiability for $\Logic$ over strong abstract complete atomic RCC5 frames is decidable.
+\end{theorem}
+\section{Abstract RCC5 semantics}
+
+\subsection{The RCC5 composition table}
+
+The inverse operation fixes $\EQ,\DR,\PO$ and swaps $\PP$ with $\PPI$.  The composition table below is used throughout.  The entry in row $R$ and column $S$ is the set $\comp(R,S)$ such that, whenever $xRy$ and $ySz$, the label of $(x,z)$ must belong to $\comp(R,S)$.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabular}{c|ccccc}
+\toprule
+$\comp(R,S)$ & $S=\EQ$ & $S=\DR$ & $S=\PO$ & $S=\PP$ & $S=\PPI$ \\
+\midrule
+$R=\EQ$  & $\{\EQ\}$ & $\{\DR\}$ & $\{\PO\}$ & $\{\PP\}$ & $\{\PPI\}$ \\
+$R=\DR$  & $\{\DR\}$ & $\Base$ & $\{\DR,\PO,\PP\}$ & $\{\DR,\PO,\PP\}$ & $\{\DR\}$ \\
+$R=\PO$  & $\{\PO\}$ & $\{\DR,\PO,\PPI\}$ & $\Base$ & $\{\PO,\PP\}$ & $\{\DR,\PO,\PPI\}$ \\
+$R=\PP$  & $\{\PP\}$ & $\{\DR\}$ & $\{\DR,\PO,\PP\}$ & $\{\PP\}$ & $\Base$ \\
+$R=\PPI$ & $\{\PPI\}$ & $\{\DR,\PO,\PPI\}$ & $\{\PO,\PPI\}$ & $\{\EQ,\PO,\PP,\PPI\}$ & $\{\PPI\}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Thus, in particular,
+\[
+  \comp(\PP,\PP)=\{\PP\},\qquad
+  \comp(\PPI,\PPI)=\{\PPI\},\qquad
+  \comp(\DR,\DR)=\Base.
+\]
+The first two equations express transitivity of proper part and its converse.  The last equation records the fact that two elements both disjoint from a third element may be related in any RCC5 way to each other.
+
+\begin{definition}[Strong abstract complete atomic RCC5 frame]\label{def:frame}
+A strong abstract RCC5 frame is a pair $(\Delta,\rho)$ where $\Delta$ is nonempty and $\rho:\Delta^2\to\Base$ satisfies, for all $x,y,z\in\Delta$:
+\begin{enumerate}[label=(F\arabic*)]
+\item $\rho(x,y)=\EQ$ if and only if $x=y$;
+\item $\rho(y,x)=\Inv(\rho(x,y))$;
+\item $\rho(x,z)\in\comp(\rho(x,y),\rho(y,z))$.
+\end{enumerate}
+The word ``complete'' means that every ordered pair receives exactly one base label.  The word ``atomic'' means that labels are the five base RCC5 atoms, not arbitrary unions of atoms.
+\end{definition}
+
+\begin{remark}
+This is an abstract relation-algebraic semantics.  No representation by regular closed subsets of a topological space is assumed.  In particular, the proof below does not try to read a Hasse diagram from an arbitrary geometric or order-theoretic model.  It constructs a sparse witness-cover presentation.
+\end{remark}
+
+\begin{definition}[Interpretation and satisfaction]\label{def:satisfaction}
+An interpretation $\I$ consists of a strong abstract RCC5 frame $(\Delta^\I,\rho^\I)$ and a set $A^\I\subseteq\Delta^\I$ for each concept name $A$.  Boolean clauses are standard.  Modal clauses are
+\[
+ x\in(\exists R.C)^\I
+ \quad\Longleftrightarrow\quad
+ \exists y\in\Delta^\I\,[\rho^\I(x,y)=R\hbox{ and }y\in C^\I],
+\]
+\[
+ x\in(\forall R.C)^\I
+ \quad\Longleftrightarrow\quad
+ \forall y\in\Delta^\I\,[\rho^\I(x,y)=R\Rightarrow y\in C^\I].
+\]
+A concept $C_0$ is satisfiable if $x\in C_0^\I$ for some interpretation $\I$ and some $x\in\Delta^\I$.
+\end{definition}
+
+Strong equality makes $\EQ$-modalities local:
+\[
+  \exists\EQ.C\equiv C,
+  \qquad
+  \forall\EQ.C\equiv C.
+\]
+The certificate either assumes these formulas have been simplified away or checks the equivalent local type condition.
+
+\section{Closure, types, and the witness-generated submodel lemma}
+
+\subsection{Closure under NNF complement}
+
+\begin{definition}[NNF complement]\label{def:nnfcomp}
+For every concept $C$, define its negation-normal-form complement $\overline C$ recursively by
+\[
+\overline A=\neg A,
+\quad
+\overline{\neg A}=A,
+\]
+\[
+\overline{C\sqcap D}=\overline C\sqcup\overline D,
+\quad
+\overline{C\sqcup D}=\overline C\sqcap\overline D,
+\]
+\[
+\overline{\exists R.C}=\forall R.\overline C,
+\qquad
+\overline{\forall R.C}=\exists R.\overline C.
+\]
+Then $\overline{\overline C}$ is syntactically equivalent to $C$.
+\end{definition}
+
+\begin{definition}[Closure]\label{def:closure}
+The closure $\Cl(C_0)$ is the least finite set containing $C_0$ such that:
+\begin{enumerate}[label=(C\arabic*)]
+\item if $D\in\Cl(C_0)$, then every subformula of $D$ is in $\Cl(C_0)$;
+\item if $D\in\Cl(C_0)$, then $\overline D\in\Cl(C_0)$;
+\item if $\exists R.D\in\Cl(C_0)$ or $\forall R.D\in\Cl(C_0)$, then $D\in\Cl(C_0)$.
+\end{enumerate}
+Let $n=|\Cl(C_0)|$.
+\end{definition}
+
+\begin{definition}[Types]\label{def:types}
+A $C_0$-type is a set $t\subseteq\Cl(C_0)$ satisfying:
+\begin{enumerate}[label=(T\arabic*)]
+\item for every $D\in\Cl(C_0)$, exactly one of $D,\overline D$ belongs to $t$;
+\item $D\sqcap E\in t$ iff $D\in t$ and $E\in t$;
+\item $D\sqcup E\in t$ iff $D\in t$ or $E\in t$;
+\item $\exists\EQ.D\in t$ iff $D\in t$, and $\forall\EQ.D\in t$ iff $D\in t$.
+\end{enumerate}
+If $x$ is a point of an interpretation $\I$, its realized type is
+\[
+   \typ_\I(x)=\{D\in\Cl(C_0):x\in D^\I\}.
+\]
+\end{definition}
+
+\begin{lemma}[Realized types are types]\label{lem:realized-type}
+For every interpretation $\I$ and every $x\in\Delta^\I$, $\typ_\I(x)$ is a $C_0$-type.
+\end{lemma}
+
+\begin{proof}
+The Boolean clauses follow from the semantics of Boolean connectives.  For exactly-one of $D,\overline D$, use induction on $D$ and the fact that $\overline D$ is the semantic complement of $D$ in negation normal form.  The $\EQ$ clauses follow from strong equality: the only $\EQ$-successor of $x$ is $x$ itself.
+\end{proof}
+
+\subsection{Thinning arbitrary models to generated models}
+
+\begin{definition}[Selected witness map]\label{def:witness-map}
+Let $\I$ be an interpretation and $X\subseteq\Delta^\I$.  A selected witness map on $X$ chooses, for every $x\in X$ and every existential formula $\exists R.D\in\Cl(C_0)$ with $x\in(\exists R.D)^\I$, one point
+\[
+   w(x,\exists R.D)\in\Delta^\I
+\]
+such that
+\[
+   \rho^\I(x,w(x,\exists R.D))=R,
+   \qquad
+   w(x,\exists R.D)\in D^\I.
+\]
+\end{definition}
+
+\begin{definition}[Witness-generated set]\label{def:witness-generated}
+Starting from $a_0\in\Delta^\I$, define
+\[
+  W_0=\{a_0\},
+\]
+and, inductively,
+\[
+  W_{i+1}=W_i\cup\{w(x,\exists R.D):x\in W_i,
+         \exists R.D\in\Cl(C_0),
+         x\in(\exists R.D)^\I\}.
+\]
+Let
+\[
+  W=\bigcup_{i<\omega}W_i.
+\]
+The induced restriction of $\I$ to $W$ is denoted $\I\upharpoonright W$.
+\end{definition}
+
+\begin{lemma}[Frame inheritance under restriction]\label{lem:restriction-frame}
+If $(\Delta^\I,\rho^\I)$ is a strong abstract RCC5 frame and $W\subseteq\Delta^\I$ is nonempty, then the restriction $(W,\rho^\I\upharpoonright W^2)$ is again a strong abstract RCC5 frame.
+\end{lemma}
+
+\begin{proof}
+Strong equality is inherited because $\rho^\I(x,y)=\EQ$ iff $x=y$ in the larger domain.  Converse is inherited by restricting the same equality $\rho^\I(y,x)=\Inv(\rho^\I(x,y))$ to $W$.  Composition is inherited because every triple $x,y,z\in W$ is also a triple in $\Delta^\I$.
+\end{proof}
+
+\begin{lemma}[Witness-generated submodel lemma]\label{lem:thinning}
+If $\I,a_0\models C_0$, then there is a countable witness-generated induced subinterpretation $\J=\I\upharpoonright W$ such that $a_0\in W$, $\J,a_0\models C_0$, and for every $x\in W$ and every $D\in\Cl(C_0)$,
+\[
+   x\in D^\J \quad\Longleftrightarrow\quad x\in D^\I.
+\]
+Moreover, every existential formula in $\Cl(C_0)$ true at a point of $W$ has its selected witness in $W$.
+\end{lemma}
+
+\begin{proof}
+Construct $W$ as in Definition~\ref{def:witness-generated}.  Since each stage adds at most finitely many witnesses for each element and $\Cl(C_0)$ is finite, $W$ is countable.  By Lemma~\ref{lem:restriction-frame}, $\J=\I\upharpoonright W$ is a strong abstract RCC5 interpretation.
+
+We prove the displayed equivalence by induction on the structure of $D\in\Cl(C_0)$.  Atomic and Boolean cases are immediate because concept-name extensions are restricted to $W$ and Boolean operations commute with restriction.
+
+Let $D=\exists R.E$.  If $x\in(\exists R.E)^\I$, the construction put the selected witness $w(x,\exists R.E)$ into $W$, and that witness satisfies $E$ in $\I$.  By the induction hypothesis it satisfies $E$ in $\J$, so $x\in(\exists R.E)^\J$.  Conversely, if $x\in(\exists R.E)^\J$, the same witness is a point of $\Delta^\I$ with the same $R$-label, so $x\in(\exists R.E)^\I$.
+
+Let $D=\forall R.E$.  If $x\in(\forall R.E)^\I$, then every $R$-successor in the smaller domain $W$ satisfies $E$ in $\I$, hence by induction satisfies $E$ in $\J$.  Thus $x\in(\forall R.E)^\J$.  Conversely suppose $x\notin(\forall R.E)^\I$.  Then some $y\in\Delta^\I$ has $\rho^\I(x,y)=R$ and $y\notin E^\I$.  Since $\overline E\in\Cl(C_0)$ and is the complement of $E$, $x\in(\exists R.\overline E)^\I$.  The selected witness for this existential is in $W$ and satisfies $\overline E$ in $\I$, hence by induction satisfies $\overline E$ in $\J$.  Therefore $x\notin(\forall R.E)^\J$.
+
+Taking $D=C_0$ gives $\J,a_0\models C_0$.
+\end{proof}
+
+\begin{remark}[What thinning accomplishes]
+The proof of decidability never needs all elements of an arbitrary starting model.  It only needs elements that witness existential requirements in the closure.  Thinning is the formal bridge from arbitrary abstract models to the sparse generated structures used below.  Any dense or non-Hasse behavior in the original model is irrelevant after this step.
+\end{remark}
+
+\section{Generated split presentations}
+
+\subsection{Generated cover edges versus semantic Hasse edges}
+
+The vertical edge relation used below is an auxiliary generated relation.  If an occurrence $u$ has a selected proper superpart witness $v$, we draw a generated cover edge from $u$ to $v$.  This edge means that $v$ was selected for the presentation.  It does not mean that $v$ was an immediate cover of $u$ in some pre-existing semantic order.  In the final constructed model, however, semantic $\PP$ along a vertical branch is the strict transitive closure of these generated cover edges, transported through explicit equality mates.
+
+\begin{definition}[Weak split occurrence presentation]\label{def:weak-presentation}
+A weak split occurrence presentation is a tuple
+\[
+  \mathcal S=(\Occ,E_\uparrow,\eqc,\typ,\chi)
+\]
+where:
+\begin{enumerate}[label=(S\arabic*)]
+\item $\Occ$ is a set of occurrences;
+\item $E_\uparrow\subseteq\Occ^2$ is the selected upward containment-cover relation; $E_\uparrow(u,v)$ is read as ``$u\PP v$ by one generated cover step'';
+\item $\eqc$ is an explicit equivalence relation on occurrences, called equality-mate equivalence;
+\item $\typ(u)$ is a $C_0$-type and is constant on $\eqc$-classes;
+\item $\chi$ supplies labels for nonvertical, nonequality pairs through finite side interfaces.
+\end{enumerate}
+The relation $E_\uparrow$ may be infinite and may contain ultimately periodic branches in the finite certificate representation.  The equivalence $\eqc$ is semantic equality in the weak presentation.  Blocking repetition is not $\eqc$.
+\end{definition}
+
+\begin{definition}[Equality-aware vertical reachability]\label{def:eq-aware-vertical}
+For occurrences $u,v\in\Occ$, write $u\reach_\PP v$ if there are $u',v'$ with $u\eqc u'$ and $v'\eqc v$ such that $v'$ is a strict $E_\uparrow$-ancestor of $u'$.  Strict means that the path contains at least one $E_\uparrow$ edge.  Define $u\reach_\PPI v$ iff $v\reach_\PP u$.
+\end{definition}
+
+\begin{definition}[Occurrence-level label priority]\label{def:priority-label}
+The occurrence-level label $\rho_\mathcal S(u,v)$ is defined by the following priority order:
+\begin{enumerate}[label=(L\arabic*)]
+\item if $u\eqc v$, then $\rho_\mathcal S(u,v)=\EQ$;
+\item else if $u\reach_\PP v$, then $\rho_\mathcal S(u,v)=\PP$;
+\item else if $u\reach_\PPI v$, then $\rho_\mathcal S(u,v)=\PPI$;
+\item otherwise $\rho_\mathcal S(u,v)=\chi(u,v)$, where $\chi(u,v)\in\{\DR,\PO\}$ for residual sibling-frontier pairs and may be any RCC5 base label inside a named side interface with local vertical strata.
+\end{enumerate}
+A presentation is typed-congruent if $u\eqc u'$ and $v\eqc v'$ imply $\typ(u)=\typ(u')$ and $\rho_\mathcal S(u,v)=\rho_\mathcal S(u',v')$.
+\end{definition}
+
+\subsection{Why split copies are needed}
+
+A single containment tree gives each occurrence one upward parent chain.  But a semantic element may need several incomparable proper superpart witnesses.  For example, a concept may require both $\exists\PP.A$ and $\exists\PP.B$, while additional universal restrictions force every $A$-superpart and every $B$-superpart to be incomparable.  A single occurrence cannot lie on two incomparable parent chains.  The split presentation therefore creates several occurrences of the same semantic element and declares them equality mates.
+
+\begin{definition}[Split copy discipline]\label{def:split-copy}
+If a semantic element $a$ has selected proper superpart witnesses $b_1,\ldots,b_k$ that cannot be placed on a single vertical chain, the split presentation uses occurrences
+\[
+  a^{(1)},\ldots,a^{(k)}
+\]
+with $a^{(i)}\eqc a^{(j)}$ for all $i,j$, and places $a^{(i)}$ below a selected occurrence of $b_i$.  The equality congruence requires all $a^{(i)}$ to have the same type and the same labels to every outside occurrence after quotienting.
+\end{definition}
+
+\begin{lemma}[Quotient intuition]\label{lem:split-copy-intuition}
+After quotienting by $\eqc$, the equality mates $a^{(i)}$ become one semantic element.  If $a^{(i)}\reach_\PP b_i$ before quotienting, then the quotient element has all $b_i$ as proper superparts.
+\end{lemma}
+
+\begin{proof}
+The quotient maps all $a^{(i)}$ to a single class $[a]$.  The label from $[a]$ to $[b_i]$ is defined from the occurrence label $\rho_\mathcal S(a^{(i)},b_i)$.  Typed congruence guarantees that the choice of representative of $[a]$ does not change any quotient label.  Since $a^{(i)}\reach_\PP b_i$ is strict, $\rho_\mathcal S(a^{(i)},b_i)=\PP$, and hence $\rho_{/\eqc}([a],[b_i])=\PP$.
+\end{proof}
+
+
+
+\subsection{Occurrence-local support mechanisms}
+\begin{definition}[Support mechanism]
+For each occurrence $u$ and existential $\exists R.D\in\Cl(C_0)$ true at $u$, the presentation records a support mechanism
+\[
+  \mu(u,\exists R.D)\in
+  \{\ray,\eport,\side,\fin\}.
+\]
+Here $\ray$ means that the witness is reached along the current strict vertical ray; $\eport$ means that an explicit equality mate of $u$ has the vertical witness; $\side$ means the witness is in a named side context; and $\fin$ means the witness lies in a bounded local vertical stratum.
+\end{definition}
+
+\begin{remark}
+The mechanism annotation is essential.  A semantic element split into several equality-mate occurrences may satisfy two incomparable $\exists\PP$ requirements using two different vertical branches.  Only the request assigned to a particular ray is checked on that ray.
+\end{remark}
+
+
+\section{Ranked saturated side contexts}
+
+\begin{definition}[Modal depth and rank]
+The modal depth $\md(C)$ is defined in the usual way, with $\md(\exists R.C)=\md(\forall R.C)=1+\md(C)$.  A side-context position carries a rank $r\leq \md(C_0)$.  If a position is introduced as a witness for $\exists R.D$, its recursive side-rank is at most $\md(D)$.  Recursive side expansion is permitted only at strictly smaller rank.  Equality and containment closure at a fixed rank is a bounded local closure over the positions already present and does not create new same-rank modal expansions.
+\end{definition}
+
+\begin{definition}[Vertical boundary]
+For an occurrence $u$ and rank $r$, the vertical boundary $B_r(u)$ contains $u$, its exposed equality ports, its exposed immediate vertical parent/children, and their boundary ports down to rank $r-1$.  It is finite.  Infinite vertical behaviour is represented separately by profiles and request cycles.
+\end{definition}
+
+\begin{definition}[Ranked saturated side context]
+\label{def:ranked-side}
+The ranked saturated side context $S_r(u)$ is the least finite labelled network obtained as follows.
+\begin{enumerate}[label=(S\arabic*)]
+\item Seed the context with $B_r(u)$.
+\item For every position $p$ in the context and every selected existential $\exists R.D\in\typ(p)$ with $R\in\{\DR,\PO\}$ and $\md(D)<r$, add one selected side witness $q$ of rank $\md(D)$.
+\item For every newly added side position, recursively add side witnesses only at strictly smaller rank.
+\item Inspect every pair $p,q$ currently present.  The label is inherited in completeness extraction and supplied by the candidate certificate in soundness.
+\item If $L(p,q)=\EQ$, add an equality-port declaration and require type and third-label agreement.
+\item If $L(p,q)\in\{\PP,\PPI\}$, add a local vertical stratum containing $p$ and $q$ in the indicated orientation.  The stratum exposes only lower-rank boundary ports for further side expansion.
+\item Only after equality and containment closure are saturated may a pair be declared residual.  Residual finite side pairs must have label $\DR$ or $\PO$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Side-width bound]
+\label{lem:side-width}
+For fixed $C_0$ there is a computable bound $m_*(C_0)$ on the number of positions in every ranked saturated side context.
+\end{lemma}
+
+\begin{proof}
+Let $e$ be the number of existential formulas in $\Cl(C_0)$.  Define $m(0)=1+e$.  Given $m(r)$, let
+\[
+ m(r+1)=1+e(1+m(r))+5(1+e(1+m(r)))^2(1+m(r)).
+\]
+This crude recurrence bounds the seed, the selected side witnesses at rank at most $r$, and the bounded equality/containment closure over all pairs already present, each of which may expose lower-rank boundary data.  Because every recursive modal expansion strictly lowers rank, no branch of recursive expansion has length exceeding $\md(C_0)$.  Thus $m_*(C_0)=m(\md(C_0))$ is computable.  The precise constants are irrelevant; only effective finiteness is used.
+\end{proof}
+
+\section{Two-sided forced verticalization}
+
+Finite side contexts cannot store an unbounded comparability tail.  This section isolates the only two possible tails and splices them into the vertical backbone.
+
+\begin{definition}[Ancestor trace]
+Let $w$ be a $\DR/\PO$ side witness of $u$, and let
+\[
+   u\PP a_1\PP a_2\PP\cdots
+\]
+be a generated proper-superpart tower above $u$.  The ancestor trace is $r_i=L(a_i,w)$.
+\end{definition}
+
+\begin{lemma}[Ancestor trace monotonicity]
+\label{lem:ancestor-trace}
+Every ancestor trace is contained in $\{\DR,\PO,\PPI\}$ and has form
+\[
+  \DR^*\PO^*\PPI^*.
+\]
+If a $\PPI$ value occurs, it is final.
+\end{lemma}
+
+\begin{proof}
+Neither $\EQ$ nor $\PP$ is possible: either would imply, using $u\PP a_i$, that $u$ is $\PP$-related to $w$, contradicting that $w$ is a $\DR/\PO$ witness of $u$.  Since $a_i\PP a_{i+1}$, we have $L(a_{i+1},a_i)=\PPI$, and hence
+\[
+ r_{i+1}\in\comp(\PPI,r_i).
+\]
+The table gives
+\[
+ \comp(\PPI,\DR)=\{\DR,\PO,\PPI\},\quad
+ \comp(\PPI,\PO)=\{\PO,\PPI\},\quad
+ \comp(\PPI,\PPI)=\{\PPI\}.
+\]
+Thus the sequence can only move from $\DR$ to $\PO$ to $\PPI$, never back.
+\end{proof}
+
+\begin{definition}[Descendant trace]
+Let $w$ be a $\DR/\PO$ side witness of $u$, and let
+\[
+   \cdots\PP d_2\PP d_1\PP d_0\PP u
+\]
+be a generated proper-part tower below $u$.  The descendant trace is $s_i=L(d_i,w)$.
+\end{definition}
+
+\begin{lemma}[Descendant trace monotonicity]
+\label{lem:descendant-trace}
+Every descendant trace is contained in $\{\DR,\PO,\PP\}$.  It has one of the forms
+\[
+   \PO^*\DR^*,\qquad \PO^*\PP^*,\qquad \DR^*,\qquad \PP^*,
+\]
+with $\DR$ and $\PP$ absorbing.
+\end{lemma}
+
+\begin{proof}
+The labels $\EQ$ and $\PPI$ are impossible.  If $d_i=w$, or if $w\PP d_i$, then since $d_i\PP u$ we get $w\PP u$, contradicting $L(u,w)\in\{\DR,\PO\}$.  Hence only $\DR,\PO,\PP$ can occur.
+
+Since $d_{i+1}\PP d_i$, the recurrence is
+\[
+  s_{i+1}\in\comp(\PP,s_i).
+\]
+The table gives
+\[
+ \comp(\PP,\DR)=\{\DR\},\quad
+ \comp(\PP,\PO)=\{\DR,\PO,\PP\},\quad
+ \comp(\PP,\PP)=\{\PP\}.
+\]
+Thus once the trace reaches $\DR$ or $\PP$, it remains there; from $\PO$ it may stay $\PO$ or jump once to one of the absorbing values.
+\end{proof}
+
+\begin{lemma}[Bounded thresholds for forced tails]
+\label{lem:thresholds}
+There is a computable bound $N_{\mathrm{tail}}(C_0)$ such that, after finite-index replacement using complete interface descriptors, every final $\PPI$ ancestor tail and every final $\PP$ descendant tail can be made to start within $N_{\mathrm{tail}}(C_0)$ steps of its source.
+\end{lemma}
+
+\begin{proof}
+Augment each tower checkpoint by its closure type, equality-port interface, support mechanisms, complete interface descriptor, active vertical requests, universal safety summary, and the current trace value.  There are finitely many augmented descriptors.  Within a constant trace regime, two equal augmented descriptors delimit a replaceable segment: the endpoints expose the same complete interface to all outside pair-shape classes, and the same requests and universal targets.  Deleting or pumping the segment preserves all closure formulas and all mixed pair/triple states.  By Lemmas~\ref{lem:ancestor-trace} and~\ref{lem:descendant-trace}, each trace has at most three regimes.  Keeping one representative segment between repeated augmented descriptors in each regime gives a computable bound.
+\end{proof}
+
+\begin{definition}[Two-sided forced verticalization]
+\label{def:two-sided-verticalization}
+Let $w$ be a selected $\DR/\PO$ side witness of $u$.
+\begin{enumerate}[label=(V\arabic*)]
+\item If an ancestor trace above $u$ has a final $\PPI$ tail, choose its bounded threshold $a^*$ and insert a split occurrence $w'\Eq w$ with cover edge $w' E_\uparrow a^*$.  All later ancestor/witness pairs are represented by equality-aware vertical reachability.
+\item If a descendant trace below $u$ has a final $\PP$ tail, choose its bounded threshold $d^*$.  Introduce a split occurrence $d^{*'}\Eq d^*$ and an equality mate $w'\Eq w$, and add $d^{*'}E_\uparrow w'$.  The deeper descendant tail is copied below $d^{*'}$ by equality-mate occurrences.  Thus every later pair $d_i\PP w$ is represented by equality-aware vertical reachability through the copied tail.
+\item If neither final containment tail appears, the witness remains in its ranked saturated side context.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Faithfulness of two-sided splicing]
+\label{lem:splice-faithful}
+Two-sided forced verticalization preserves acyclicity of the generated containment backbone and preserves all inherited RCC5 labels after quotienting by equality ports.
+\end{lemma}
+
+\begin{proof}
+Every added cover edge is oriented along an inherited strict $\PP$ relation: in case (V1), $w'\PP a^*$; in case (V2), $d^{*'}\PP w'$.  A directed cycle would therefore yield a strict $\PP$-cycle in the original strong frame, impossible by irreflexivity and transitivity.  The construction does not change any atom.  It changes only the presentation device for atoms already present in the witness-generated model.  When a threshold node or witness must keep its old parent as well as the new forced parent, the construction uses split occurrences linked by $\Eq$ rather than multiple parents for one occurrence.  Quotienting by $\Eq$ restores the original element and all inherited labels.
+\end{proof}
+
+\begin{lemma}[Residual frontier after saturation and splicing]
+\label{lem:residual-frontier}
+After ranked side saturation and two-sided forced verticalization, every residual frontier pair has label $\DR$ or $\PO$.
+\end{lemma}
+
+\begin{proof}
+Let $(p,q)$ be residual.  If $L(p,q)=\EQ$, equality closure would have created an equality port.  If $L(p,q)\in\{\PP,\PPI\}$ and the pair is within the finite exposed side boundary, containment closure would have inserted a local vertical stratum.  If the containment relation persists along an unbounded ancestor tower, Definition~\ref{def:two-sided-verticalization}(V1) makes it an equality-aware vertical pair.  If it persists along an unbounded descendant tower, Definition~\ref{def:two-sided-verticalization}(V2) does the same.  Thus no residual pair can carry $\EQ,\PP$, or $\PPI$.  Atomicity leaves only $\DR$ and $\PO$.
+\end{proof}
+
+\section{Complete interface descriptors}
+
+\begin{definition}[Outside pair-shape class]
+A pair-shape class is one of the finite syntactic ways in which an outside occurrence can be related to a component boundary: same occurrence, explicit equality port, strict vertical-up reachability, strict vertical-down reachability, finite side-context membership, overlap-mosaic membership, or residual frontier.  The class also records the local profiles, relative blocking-lap order when applicable, and the relevant equality-port names.  For fixed $C_0$ and certificate alphabets there are finitely many such classes.
+\end{definition}
+
+\begin{definition}[Complete interface descriptor]
+\label{def:complete-interface}
+For a finite component $K$ with boundary $\partial K$, its complete interface descriptor contains:
+\begin{enumerate}[label=(I\arabic*)]
+\item the type, equality-port, support-mechanism, and request summaries of every boundary position;
+\item for every internal port $i$ of $K$ and every outside pair-shape class $\theta$, the allowed mixed label(s) $L(o,i)$ for an outside occurrence $o$ of class $\theta$ relative to $\partial K$;
+\item for every such mixed pair, the target types relevant to universal formulas at $o$ and at $i$;
+\item for every pair of internal ports and every outside pair-shape class, the compatible triple shapes and RCC5 composition checks;
+\item all selected witnesses entering or leaving the component and their support mechanisms.
+\end{enumerate}
+Because the sets of types, ports, ranks, pair-shape classes, and triple-shape classes are finite, there are finitely many complete interface descriptors.
+\end{definition}
+
+\begin{lemma}[Complete-interface replacement]
+\label{lem:replacement}
+If two finite components have the same complete interface descriptor, either may be replaced by a fresh copy of the other inside any finite prefix without changing truth of closure formulas at outside occurrences and without violating RCC5 composition.
+\end{lemma}
+
+\begin{proof}
+The earlier boundary-only argument is insufficient because boundary labels need not determine all mixed outside/internal labels.  The complete descriptor records precisely those mixed labels by outside pair-shape class.  Thus, for every outside occurrence $o$ and internal occurrence $i$, the replacement assigns the same label $L(o,i)$ as the descriptor prescribes for the pair-shape class of $o$.  Universal formulas at outside positions are preserved because the descriptor records, for each relation $R$, all target types reachable inside the component by an $R$-labelled mixed pair.  Existential formulas are preserved because selected witnesses entering the component are named in the descriptor.
+
+For RCC5 composition, consider a triple.  Triples entirely inside or outside are unchanged.  A mixed triple with one outside point and two internal points is governed by item (I4).  A triple with two outside points and one internal point is governed by the two outside pair-shape classes together with the triple-shape entry in (I4).  Since the replacement is fresh, it creates no accidental equality to outside occurrences.  Hence every mixed triple has the same permitted composition status after replacement.
+\end{proof}
+
+
+\section{Finite certificates and finite product-state exhaustion}
+
+\subsection{Profiles, contexts, mosaics, and support mechanisms}
+
+\begin{definition}[Profile]
+A profile is a finite record consisting of a $C_0$-type, a finite set of local ports, equality-port declarations among those ports, exposed vertical parent/child boundary ports, side-boundary ports, support mechanisms for existential formulas, vertical request summaries, and universal-safety summaries.  Profiles are finite objects over the finite closure $\Cl(C_0)$.
+\end{definition}
+
+\begin{definition}[One-step context]
+A one-step context is a finite generator step connecting one profile to finitely many successor profiles and finite side mosaics.  It records generated vertical cover edges, equality-port identifications, support-mechanism assignments, and the boundary maps by which adjacent contexts are glued.  Blocking cycles are cycles in the finite context graph; traversing a blocking cycle in the unfolding creates fresh occurrences in a new lap.
+\end{definition}
+
+\begin{definition}[Ranked side mosaic]\label{def:ranked-mosaic}
+A ranked side mosaic is a finite labelled network
+\[
+   M=(P,\tau,L,\mathcal V,\mathcal E,\mathcal W,r)
+\]
+where $P$ is the finite set of positions, $\tau$ assigns $C_0$-types, $L:P^2\to\Base$ is a complete RCC5 label matrix, $\mathcal V$ is a family of local vertical strata, $\mathcal E$ is an equality-port relation, $\mathcal W$ names local witnesses, and $r\leq\md(C_0)$ is the remaining side rank.  It is legal if:
+\begin{enumerate}[label=(M\arabic*)]
+\item $L(p,p)=\EQ$, and $L(p,q)=\EQ$ only for identical or explicitly equality-ported positions;
+\item $L(q,p)=\Inv(L(p,q))$;
+\item $L(p,r)\in\comp(L(p,q),L(q,r))$ for all $p,q,r\in P$;
+\item every existential obligation supported in $M$ has its named witness in $P$;
+\item every universal obligation is respected by all positions of $P$ carrying the relevant label;
+\item if $L(p,q)\in\{\PP,\PPI\}$, then $p,q$ are in a declared local vertical stratum or in the surrounding vertical boundary;
+\item residual frontier pairs inside $M$ are labelled only $\DR$ or $\PO$.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Support-closed mosaic family]\label{def:support-closed}
+A finite family $\Mos_\Q$ of ranked side mosaics is support-closed if it is closed under restriction to named boundaries, every selected $\DR/\PO$ existential names an actual witness in a mosaic, side/tree and side/side $\EQ/\PP/\PPI$ pairs are represented by equality ports or local vertical strata, and every permitted overlap of two mosaics is represented by either a mosaic or an explicit complete-interface descriptor with RCC5-legal triple states.
+\end{definition}
+
+\subsection{Finite pair and triple product states}
+
+\begin{definition}[Pair product states]\label{def:pair-product}
+From a finite certificate $\Q$, construct $\Pairs(\Q)$ as the least finite set of pair states closed under the following rules.
+\begin{enumerate}[label=(P\arabic*)]
+\item Add same-occurrence and explicit equality-port pair states.
+\item Add strict vertical-up and vertical-down reachability pair states induced by one-step contexts, two-sided forced splices, and blocking-cycle lap order.  The state records whether the second endpoint is in the same lap, a strict later lap, or a strict earlier lap; different laps are never equality merely because their profiles coincide.
+\item Add all pairs inside ranked side mosaics and their support-closed overlap amalgams.
+\item Add all mixed side/tree and side/side pairs created by local vertical strata and by two-sided forced splices.
+\item Add residual frontier pair states only after Lemma~\ref{lem:residual-frontier} applies.
+\item Close under one-step generator transitions: if a pair state can move one endpoint through a context edge or cycle edge, add the resulting pair state with the updated relative status and interface descriptor.
+\end{enumerate}
+Each pair state carries exactly one RCC5 atom.
+\end{definition}
+
+\begin{definition}[Triple product states]\label{def:triple-product}
+Construct $\Triples(\Q)$ as the least finite set of compatible triples of pair states whose endpoints can occur together in one finite support component: a vertical context, ranked side mosaic, overlap amalgam, complete interface descriptor, two-sided forced-splice component, or blocking-cycle product cell.  A triple state is legal if its labels $R_{12},R_{23},R_{13}$ satisfy
+\[
+   R_{13}\in\comp(R_{12},R_{23}).
+\]
+For notational compatibility with the expanded appendices, we also write $\Pair_\Q$ for $\Pairs(\Q)$ and $\Trip_\Q$ for $\Triples(\Q)$.
+\end{definition}
+
+\begin{lemma}[Finite product exhaustion]\label{lem:product-exhaustion}
+Every concrete pair in the infinite unfolding of a candidate certificate maps to a state in $\Pairs(\Q)$, and every concrete ordered triple maps to a state in $\Triples(\Q)$.
+\end{lemma}
+
+\begin{proof}
+For pairs, classify the least finite support of the two occurrences.  If they are identical or equality-linked, rule (P1) applies.  If one is strictly vertically reachable from the other, including through a copied tail produced by two-sided forced verticalization, rule (P2) or (P4) applies.  If their least support lies in a side mosaic or an overlap, rule (P3) applies.  Otherwise equality and containment support have been saturated or spliced, so Lemma~\ref{lem:residual-frontier} makes the pair residual, and rule (P5) applies.  When the pair crosses blocking laps, the relative-lap component records strictness without identifying the laps.
+
+For triples, first classify all three pairs.  The three endpoints have a least common finite support: a generated vertical context, equality-port component, ranked side mosaic, overlap amalgam, complete interface descriptor, forced-splice component, or cycle product cell.  The closure rule for $\Triples(\Q)$ adds the corresponding compatible triple state.  Since the alphabets of profiles, ports, ranks, descriptors, and cycle indices are finite, the saturation process defining $\Pairs(\Q)$ and $\Triples(\Q)$ terminates.
+\end{proof}
+
+\subsection{Expanded validity conditions}
+
+\begin{definition}[Valid finite generated split-forest certificate]\label{def:valid-certificate}
+A finite certificate $\Q$ is valid if the following finite conditions hold.
+\begin{enumerate}[label=(V\arabic*)]
+\item \emph{Initial type.}  The initial profile contains $C_0$.
+\item \emph{Type legality.}  Every profile and every mosaic position carries a $C_0$-type.
+\item \emph{Context legality.}  One-step contexts respect port kinds, generated-cover orientations, side ranks, and boundary maps.
+\item \emph{Support mechanisms.}  Every existential formula in every generated occurrence has exactly one declared support mechanism: current ray, equality port, finite local vertical stratum, or side mosaic.
+\item \emph{Equality congruence.}  Equality-port declarations generate an equivalence relation; equality mates have the same type and the same labels to all named boundary, side, vertical, and product-state classes.
+\item \emph{No strict containment collapse.}  No pair that is strict $\PP$- or $\PPI$-reachable is identified by equality ports.
+\item \emph{Pair product totality.}  $\Pairs(\Q)$ is the least set generated by Definition~\ref{def:pair-product}; every generated concrete pair has exactly one pair state, and inverse pair states carry inverse labels.
+\item \emph{Triple product coverage.}  $\Triples(\Q)$ is the least set generated by Definition~\ref{def:triple-product}; every generated concrete triple has a triple state, and every triple state is RCC5-composition legal.
+\item \emph{Ranked side saturation.}  Every side mosaic is a legal ranked saturated side context in the sense of Definitions~\ref{def:ranked-side} and~\ref{def:ranked-mosaic}, and the mosaic family is support-closed.
+\item \emph{Two-sided forced verticalization.}  Ancestor $\PPI$ tails and descendant $\PP$ tails of selected $\DR/\PO$ side witnesses are spliced into equality-aware vertical reachability by Definition~\ref{def:two-sided-verticalization}; only after this step may residual frontier labels be used.
+\item \emph{Vertical existential support.}  Every $\exists\PP.D$ or $\exists\PPI.D$ assigned to a ray or equality port has a strict equality-aware vertical witness whose type contains $D$.
+\item \emph{$\DR/\PO$ existential support.}  Every $\exists R.D$ with $R\in\{\DR,\PO\}$ names a side mosaic or residual pair state containing an actual $R$-labelled witness of type containing $D$.
+\item \emph{Universal safety.}  For every pair state labelled $R$, if $\forall R.D$ is in the source type, then $D$ is in the target type.  This includes vertical, equality-port, side, overlap, forced-splice, and residual-frontier pair states.
+\item \emph{Complete-interface replacement.}  Every bounded replacement or pumping step uses complete interface descriptors in the sense of Definition~\ref{def:complete-interface}; mixed outside/internal labels and triple shapes are preserved.
+\item \emph{Request-closed closed walks.}  Each blocking closed walk is request-closed and universal-safe for the active ray-local requests assigned to it.  Same descriptor in the next lap counts as a strict future occurrence; the same concrete occurrence does not.
+\item \emph{Finite bounds.}  Profiles, contexts, side mosaics, complete interface descriptors, pair states, triple states, forced-tail thresholds, and closed walks lie within the computable bounds determined by $C_0$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Validity is decidable]\label{lem:validity-decidable}
+For a fixed finite candidate certificate $\Q$, whether $\Q$ is valid is decidable.
+\end{lemma}
+
+\begin{proof}
+All objects in the candidate are finite.  Compute equality-port closure and test type/label invariance.  Compute $\Pairs(\Q)$ and $\Triples(\Q)$ by finite saturation.  Check side mosaics by inspecting their finite label matrices and all triples of positions.  Check complete interface descriptors by finite table comparison over outside pair-shape classes and internal ports.  Check support mechanisms and universal safety over the finite pair-state table.  Check request closure over the finite closed walks.  Each clause (V1)--(V16) is a finite computation.
+\end{proof}
+
+\section{Occurrence-local request cycles}
+
+\begin{definition}[Active vertical requests]
+For an occurrence $o$ on a vertical ray, define $\Req_{\ray}(o)$ to be the set of target formulas $D$ such that $\exists\PP.D$ or $\exists\PPI.D$ is in $\typ(o)$ and the support mechanism $\mu(o,\exists R.D)$ is $\ray$ on this particular ray.  Existentials supported through an equality port, a finite vertical stratum, or a side context are not requests of this ray.
+\end{definition}
+
+\begin{lemma}[Closed-walk request lemma]
+\label{lem:closed-walk}
+Let $G$ be a finite directed graph whose vertices carry active request sets and fulfilment labels.  Suppose there is an infinite path such that every active request is fulfilled later on that same path.  Then there is an ultimately periodic path whose cycle is a closed walk satisfying every active request.  If the recurrent strongly connected component has $N$ vertices and $M$ distinct active request targets, a closed walk of length at most $(M+1)N$ suffices.
+\end{lemma}
+
+\begin{proof}
+Take a recurrent strongly connected component $C$ visited infinitely often after some prefix.  Every request issued by a vertex in $C$ is fulfilled by some vertex in $C$, because the issuing vertex recurs infinitely often and all its issued requests are eventually fulfilled.  Choose one fulfilment vertex for each of the at most $M$ target requirements.  Starting at any chosen vertex, concatenate simple paths in $C$ visiting these fulfilment vertices and returning to the start.  Each simple path has length at most $N$.  The resulting closed walk has length at most $(M+1)N$ and is request-closed.  Repeating the half-open closed walk gives strict future witnesses; if the fulfiller is the same descriptor, the next lap is a fresh occurrence.
+\end{proof}
+
+\begin{lemma}[Global blocking]
+\label{lem:global-blocking}
+In completeness extraction, cycles are selected inside a single global quotient whose states are complete interface descriptors.  The selected closed walks preserve all cross-branch pair/triple obligations and fulfil exactly the active ray-local requests assigned to them.
+\end{lemma}
+
+\begin{proof}
+First quotient the witness-generated split presentation by equality of complete interface descriptors, not by local profile alone.  This quotient already includes cross-mosaic data, external pair-shape classes, triple-shape data, equality ports, and support mechanisms.  Therefore taking a closed walk inside a strongly connected component of this quotient preserves the cross labels recorded in the descriptor.  Apply Lemma~\ref{lem:closed-walk} only to the active requests of that component and mechanism.  Requests assigned to equality ports or side contexts are checked by their own finite support clauses.  Thus all obligations are fulfilled in one coherent global regular unfolding, not by independently lassoing unrelated rays.
+\end{proof}
+
+\section{Soundness}
+
+\begin{lemma}[Unfolding model]
+\label{lem:unfolding}
+Every valid finite certificate $\Q$ unfolds to a weak split presentation whose quotient by explicit equality ports is a strong abstract RCC5 interpretation.
+\end{lemma}
+
+\begin{proof}
+Unfold the finite generator into a possibly infinite occurrence structure.  Blocking cycles create fresh occurrences in each lap.  Define labels of concrete pairs by their image in $\Pairs(\Q)$.  Product exhaustion gives every pair exactly one state, and validity gives that state exactly one RCC5 atom.  Equality-port congruence identifies only explicitly linked occurrences, never mere blocking repeats.  Quotient by this congruence.
+
+Strong equality holds because the quotient identifies exactly the equality-port classes and validity forbids strict $\PP/\PPI$ inside an equality class.  Converse is checked on pair states.  For composition, take any quotient triple and representatives in the weak unfolding.  By Lemma~\ref{lem:product-exhaustion}, the concrete triple maps to a state in $\Triples(\Q)$, and validity requires its labels to satisfy the RCC5 table.  Hence the quotient is a strong RCC5 frame.
+\end{proof}
+
+\begin{lemma}[Truth lemma]
+\label{lem:truth}
+For every occurrence $u$ in the unfolding and every $D\in\Cl(C_0)$,
+\[
+   [u]\in D^{\I_\Q}
+   \quad\Longleftrightarrow\quad
+   D\in\typ(u).
+\]
+\end{lemma}
+
+\begin{proof}
+Induct on $D$.  Boolean cases are Hintikka conditions.  For $D=\exists R.E$, if $\exists R.E\in\typ(u)$, validity supplies the witness according to $\mu$: on the current ray, via equality-mate reachability, in a finite side mosaic, or in a bounded vertical stratum.  Pair-state validity gives label $R$, and the induction hypothesis gives $E$ at the witness.
+
+Conversely, suppose $[u]\models\exists R.E$.  Choose a concrete representative $v$ with label $R$ and $[v]\models E$.  By product exhaustion the pair $(u,v)$ has a pair state.  If $\exists R.E\notin\typ(u)$, type completeness gives $\forall R.\overline E\in\typ(u)$.  Universal safety is checked for every $R$-labelled pair state, hence $\overline E\in\typ(v)$, contradicting the induction hypothesis for $E$.  Thus $\exists R.E\in\typ(u)$.  The universal case follows by the same NNF complement argument.
+\end{proof}
+
+\begin{theorem}[Soundness]
+If $C_0$ has a valid finite certificate, then $C_0$ is satisfiable.
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:unfolding}, the certificate unfolds and quotients to a strong abstract RCC5 interpretation.  The initial profile contains $C_0$, so Lemma~\ref{lem:truth} gives satisfaction at the initial occurrence.
+\end{proof}
+
+\section{Completeness}
+
+\begin{lemma}[Generated split-cover presentation]
+\label{lem:split-cover}
+Every witness-generated model preserving $\Cl(C_0)$ has a weak split occurrence presentation in which every selected witness is represented by a support mechanism and every residual frontier pair is $\DR$ or $\PO$ after ranked saturation and two-sided forced verticalization.
+\end{lemma}
+
+\begin{proof}
+Create occurrences for generated elements.  Selected $\PPI$ witnesses become proper-part children; selected $\PP$ witnesses become proper-superpart parents.  If one semantic element needs several incomparable selected parents, create equality-mate split occurrences, one under each selected parent.  Selected $\DR/\PO$ witnesses are first placed in ranked saturated side contexts.  Every side/tree and side/side pair is inspected.  Equality pairs create equality ports; finite containment pairs create local vertical strata.
+
+For unbounded side/tree containment tails, apply Definition~\ref{def:two-sided-verticalization}.  Ancestor $\PPI$ tails splice an equality mate of the side witness below the ancestor threshold.  Descendant $\PP$ tails splice an equality mate of the descendant threshold below an equality mate of the side witness and copy the tail below it.  Lemma~\ref{lem:splice-faithful} preserves acyclicity and labels.  Lemma~\ref{lem:residual-frontier} then gives the residual $\DR/\PO$ property.
+\end{proof}
+
+\begin{lemma}[Certificate extraction]
+\label{lem:extraction}
+If $C_0$ is satisfiable, then it has a valid finite certificate.
+\end{lemma}
+
+\begin{proof}
+Start with $\I,a_0\models C_0$.  By Lemma~\ref{lem:thinning}, pass to a witness-generated model $\J$.  By Lemma~\ref{lem:split-cover}, build a weak split presentation.
+
+Extract a single global quotient as follows.  A checkpoint descriptor is the complete interface descriptor of Definition~\ref{def:complete-interface}, together with the local type, equality ports, support mechanisms, active request assignment, side-context ranks, and current forced-trace states.  There are finitely many descriptors.  Quotient checkpoints by equality of this complete data.  Record all realized one-step contexts, ranked side mosaics, forced splices, overlap amalgams, pair states, and triple states inherited from $\J$.
+
+For infinite vertical behaviour, choose request-closed closed walks in strongly connected components of the global quotient using Lemma~\ref{lem:closed-walk}; by Lemma~\ref{lem:global-blocking}, these choices preserve cross-branch obligations.  The extracted pair and triple tables are precisely the finite product states $\Pairs(\Q)$ and $\Triples(\Q)$ induced by the quotient generator.  Since all labels are inherited from the strong RCC5 model $\J$, all triple states satisfy the composition table.  Type legality, witness support, universal safety, equality congruence, side saturation, forced verticalization, and request closure hold by construction.  Thus the finite object is a valid certificate.
+\end{proof}
+
+\begin{theorem}[Completeness]
+If $C_0$ is satisfiable, then $C_0$ has a valid finite certificate.
+\end{theorem}
+
+\begin{proof}
+This is Lemma~\ref{lem:extraction}.
+\end{proof}
+
+
+\section{Decidability}
+
+\begin{lemma}[Finite search space]\label{lem:finite-universe}
+For fixed $C_0$, there are only finitely many candidate certificates up to isomorphism, and they are effectively enumerable.
+\end{lemma}
+
+\begin{proof}
+The closure $\Cl(C_0)$ is finite, hence the type set is finite.  Lemma~\ref{lem:side-width} gives a computable bound on ranked side-context size.  Lemma~\ref{lem:thresholds} gives a computable bound on forced-tail thresholds.  Complete interface descriptors are finite tables over finite sets of types, ports, ranks, pair-shape classes, triple-shape classes, support mechanisms, and request summaries.  Lemma~\ref{lem:closed-walk} bounds request-closed walks by $(M+1)N$ once the finite descriptor graph is fixed.  Therefore the profile alphabet, context alphabet, side-mosaic alphabet, equality-port alphabet, pair-state alphabet, triple-state alphabet, and cycle alphabet are all finite and computable.  Enumerate all finite combinations within these bounds and apply Lemma~\ref{lem:validity-decidable}.
+\end{proof}
+
+\begin{theorem}[Decidability of $\Logic$ satisfiability]\label{thm:decidability}
+Concept satisfiability for $\Logic$ over strong abstract complete atomic RCC5 frames is decidable.
+\end{theorem}
+
+\begin{proof}
+Given $C_0$, enumerate the finite candidate certificates from Lemma~\ref{lem:finite-universe} and run the validity test of Lemma~\ref{lem:validity-decidable}.  If a valid certificate is found, soundness gives a model.  If $C_0$ is satisfiable, completeness gives a valid finite certificate in the enumeration.  Since the candidate universe is finite for fixed $C_0$, the exhaustive search terminates and decides satisfiability.
+\end{proof}
+
+\section{Worked stress cases}
+
+\subsection{An infinite upward chain}
+
+The concept
+\[
+  C_\uparrow=\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top
+\]
+requires an infinite chain of strict proper superparts.  The certificate has one profile $s$ with a self-loop as a blocking cycle.  The unfolding is
+\[
+  u_0\PP u_1\PP u_2\PP\cdots.
+\]
+The occurrences $u_i$ and $u_j$ have the same profile when $i\ne j$, but they are different concrete occurrences and are not equality mates.  For $i<j$, the pair shape has incidence tag $\up$, hence label $\PP$.  It does not have tag $\self$, hence it is not labelled $\EQ$.  The request $\exists\PP.\top$ at $u_i$ is fulfilled by $u_{i+1}$; in the one-state cycle, this is represented by the same profile in the next lap, which is strict because the next lap is a fresh occurrence.
+
+\subsection{Two incomparable proper superparts}
+
+A stress formula may require an element to have an $A$-superpart and a $B$-superpart while forcing every $A$-superpart and every $B$-superpart to be incomparable:
+\[
+\exists\PP.A\sqcap\exists\PP.B\sqcap
+\forall\PP\Bigl((\neg A\sqcup(\forall\PP.\neg B\sqcap\forall\PPI.\neg B))
+\sqcap
+(\neg B\sqcup(\forall\PP.\neg A\sqcap\forall\PPI.\neg A))\Bigr).
+\]
+The certificate uses two equality-mate occurrences of the source.  One mate is placed below the selected $A$-superpart; the other is placed below the selected $B$-superpart.  After quotienting, the two source occurrences are one semantic element with both superparts.  The two superparts are related by a side mosaic, typically by $\PO$, because they share the source as a common proper part but are forced not to be comparable or equal.
+
+\subsection{Comparable side witnesses}
+
+Suppose two side witnesses of the same source are themselves $\PP/\PPI$-comparable.  They are not treated as residual sibling-frontier positions.  The side interface is refined by adding a local vertical stratum containing those witnesses.  Only after all such containment and equality interactions are accounted for are remaining residual sibling-frontier pairs restricted to $\DR$ or $\PO$.
+
+
+
+\section{Detailed local constructions}
+
+This section spells out the construction that addresses the side/tree defect.  A side witness is never placed in isolation.  It is placed together with the relevant vertical boundary of its source and then saturated under equality and containment closure.  Therefore a pair consisting of a side witness and a vertical ancestor, descendant, or equality mate of the source is explicitly classified before the residual frontier rule is applied.
+
+\label{sec:detailed-local}
+
+This section expands several constructions that are often compressed in the phrase ``close the side interface'' or ``split the node''.  These details are not additional proof techniques; they are the concrete implementation of the same generated split-forest architecture.
+
+\subsection{Placing a \texorpdfstring{$\DR/\PO$}{DR/PO} witness}
+
+\begin{lemma}[Side-witness insertion]\label{lem:side-witness-insertion}
+Let $u$ be an occurrence whose profile contains $\exists R.D$, where $R\in\{\DR,\PO\}$.  Suppose the witness-generated model supplies a selected witness $v$ with label $R$ from $u$ and $D\in\typ(v)$.  Then $u$ and $v$ can be represented in a finite side interface satisfying the mosaic axioms and all universal-safety checks involving the displayed boundary.
+\end{lemma}
+
+\begin{proof}
+Create a finite position set containing a source position $p_u$, a witness position $p_v$, and the boundary positions through which the source interacts with the surrounding context.  The necessary boundary positions are finite: they consist of the source port, any explicit equality mate ports of the source, the immediate vertical parent/child ports exposed by the local context, and the side-boundary ports named by the certificate.  Assign the realized types inherited from the witness-generated model.  Put
+\[
+   L(p_u,p_v)=R,
+   \qquad
+   L(p_v,p_u)=\Inv(R)=R,
+\]
+since both $\DR$ and $\PO$ are self-converse.
+
+For every pair among the displayed positions, copy the RCC5 label from the witness-generated model.  If such a copied label is $\PP$ or $\PPI$, add a local vertical stratum containing the pair.  This means the pair is not classified as residual frontier.  If the copied label is $\DR$ or $\PO$, it may remain a residual side pair.  Because all labels are copied from an actual abstract RCC5 frame, equality, converse, and triple composition hold inside the finite side network.
+
+Universal safety is checked as follows.  For every displayed pair $(p,q)$ with label $S$, if $\forall S.E\in\tau(p)$, then $E\in\tau(q)$ because the corresponding elements in the original model satisfy the universal formula.  The selected existential $\exists R.D$ is witnessed by $p_v$.  Therefore the finite network is a legal mosaic witnessing the original $\DR/\PO$ request.  Additional existential requirements of $p_v$ need not be expanded inside this same mosaic; they are handled by their own named witness mechanisms when $p_v$ is generated as an occurrence.
+\end{proof}
+
+\begin{remark}
+The residual frontier restriction is imposed only after this local analysis.  Thus the proof does not assume that all side witnesses are pairwise $\DR/\PO$.  Comparable side witnesses are verticalized locally.
+\end{remark}
+
+\subsection{Splitting for several selected proper superparts}
+
+\begin{lemma}[Multiple-superpart split]\label{lem:multiple-superpart-split}
+Let a generated semantic element $x$ have selected $\PP$-witnesses $y_1,\ldots,y_k$.  Even if the $y_i$ are pairwise incomparable, they can be represented in a containment-oriented split presentation using explicit equality mates of $x$.
+\end{lemma}
+
+\begin{proof}
+For each selected superpart $y_i$, create a fresh occurrence $x_i$ with origin $x$ and a fresh occurrence $y_i'$ with origin $y_i$.  Add the selected vertical edge
+\[
+   x_i E_\uparrow y_i'.
+\]
+Declare all $x_i$ to be explicit equality mates: $x_i\eqc x_j$ for all $i,j$.  If the same semantic superpart $y_i$ is represented elsewhere, declare $y_i'$ equivalent to the corresponding occurrence of $y_i$ as well.
+
+The labels from $x_i$ to every boundary occurrence are copied from the original semantic element $x$.  Hence all $x_i$ have the same type and the same external labels.  This proves typed equality congruence for the split copies.  After quotienting by $\eqc$, all $x_i$ become one semantic element $[x]$, and the quotient element has all superparts $[y_i']$.  The $y_i'$ themselves need not lie on one parent chain.  If two of them are incomparable, their relation is recorded in a side mosaic; if they are comparable, the local side interface includes a vertical stratum for that containment.
+
+No semantic cycle is introduced.  The equality relation identifies the copies of the source element, not the source with any strict superpart.  Validity explicitly forbids a strict vertical pair from being tagged as an equality pair.
+\end{proof}
+
+\subsection{Why occurrence-sensitive pair shapes are necessary}
+
+\begin{lemma}[No collapse of blocking laps]\label{lem:no-collapse-laps}
+Let a finite cycle contain a profile $s$ and port $p$.  In the unfolding, let $u_m=(m,s,p)$ and $u_{m+1}=(m+1,s,p)$ be two successive lap occurrences of the same profile and port.  Then $u_m$ and $u_{m+1}$ may be related by $\PP$ or $\PPI$ according to the vertical direction of the cycle, but they are not $\EQ$ unless an explicit equality-port edge relates them.
+\end{lemma}
+
+\begin{proof}
+The concrete occurrence includes the lap index.  Hence $u_m\ne u_{m+1}$ as concrete occurrences, so their incidence tag is not $\self$.  The incidence tag $\eqtag$ is generated only by explicit equality-port links and their transitive closure.  A blocking cycle edge is not an equality-port link.  Therefore, absent an explicit equality link, the pair is not labelled $\EQ$.  If the cycle is an upward containment cycle, the pair receives the strict vertical tag $\up$ and hence label $\PP$; in the downward direction it receives $\down$ and hence $\PPI$.
+\end{proof}
+
+\begin{remark}
+This is the place where an abstract-position labelling $L(\pi,\pi)=\EQ$ would fail.  A repeated abstract position symbol $\pi$ can occur in different laps.  Equality must be determined by concrete occurrence identity or explicit equality ports, not by equality of finite symbols.
+\end{remark}
+
+\subsection{Universal propagation across all target classes}
+
+\begin{lemma}[Exhaustion of target cases]\label{lem:target-exhaustion}
+In the unfolding of a valid certificate, if an occurrence $v$ is an $R$-successor of an occurrence $u$, then exactly one of the following explanations accounts for the pair label:
+\begin{enumerate}[label=(\roman*)]
+\item $u=v$ or $u\eqc v$, in which case $R=\EQ$;
+\item $v$ is a strict equality-aware vertical superpart or proper part of $u$, in which case $R\in\{\PP,\PPI\}$;
+\item the pair is contained in a named side mosaic or in a local vertical stratum inside a side mosaic;
+\item the pair is a residual sibling-frontier pair, in which case $R\in\{\DR,\PO\}$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Pair totality assigns every pair of co-occurring positions exactly one permitted pair shape.  The incidence tags are disjoint by construction: same occurrence, explicit equality, strict vertical comparability, named side membership, and residual frontier are mutually exclusive cases.  If a side pair has label $\PP$ or $\PPI$, side-interface verticalization requires it to be placed in a local vertical stratum, so it is covered by case (iii), not by the residual frontier.  Thus the list is exhaustive and disjoint.
+\end{proof}
+
+\begin{corollary}[Universal safety is complete]\label{cor:universal-complete}
+Validity clause (V10)/(V12) for all permitted pair shapes is sufficient to prove every semantic universal formula in the canonical model.
+\end{corollary}
+
+\begin{proof}
+Let $\forall R.D$ be in the type of $u$, and let $v$ be any semantic $R$-successor.  By Lemma~\ref{lem:target-exhaustion}, the pair $(u,v)$ has one of the permitted pair shapes.  The universal-safety validity condition for that shape gives $D$ in the target type.  The Truth Lemma then yields semantic satisfaction of $D$ at $v$.
+\end{proof}
+
+\subsection{Finite patching from occurrence-sensitive triples}
+
+\begin{lemma}[Finite-prefix patching]\label{lem:finite-prefix-patching}
+Every finite prefix of the certificate unfolding is an abstract RCC5 network before quotienting by explicit equality, and its quotient by the typed equality relation is a strong abstract RCC5 network.
+\end{lemma}
+
+\begin{proof}
+Consider any finite prefix $F$ of occurrences.  Pair totality gives exactly one base label to every ordered pair.  Converse coherence gives inverse labels.  Now take any triple $u,v,w\in F$.  Their three pair shapes form a coherent triple shape because the incidence tags are computed from concrete occurrence identity, explicit equality, vertical reachability, and side membership.  Triple composition validity gives
+\[
+  \ell(\alpha(u,w))\in\comp(\ell(\alpha(u,v)),\ell(\alpha(v,w))).
+\]
+Hence composition holds for every triple in $F$.
+
+If $u\eqc v$, typed equality congruence gives the same type and the same labels from $u$ and $v$ to every third occurrence.  Therefore quotienting by $\eqc$ is well-defined.  Strong equality in the quotient follows from the no-collapse rule: a quotient pair is labelled $\EQ$ exactly when the two classes are equal.
+\end{proof}
+
+\section{Audit of the main proof obligations}
+\label{sec:audit}
+
+For clarity, we isolate the proof obligations that the preceding sections discharge.
+
+\begin{center}
+\begin{tabular}{p{0.34\linewidth}p{0.56\linewidth}}
+\toprule
+Obligation & Where it is handled \\
+\midrule
+Arbitrary abstract models may be replaced by sparse generated models & Witness thinning, Lemma~\ref{lem:thinning}. \\
+Generated cover edges need not be original Hasse covers & Split-cover construction, Lemma~\ref{lem:split-cover}. \\
+Several incomparable superparts of one element are representable & Multiple-superpart split, Lemma~\ref{lem:multiple-superpart-split}. \\
+$\DR/\PO$ witnesses are not lost & Side-witness insertion, Lemma~\ref{lem:side-witness-insertion}. \\
+Comparable side witnesses do not violate residual $\DR/\PO$ simplification & Local vertical strata in mosaics, Definitions~\ref{def:ranked-mosaic} and~\ref{def:support-closed}. \\
+Blocking does not imply semantic equality & Occurrence-sensitive pair shapes and Lemma~\ref{lem:no-collapse-laps}. \\
+Quotienting explicit equality is sound & Typed equality quotient, Lemma~\ref{lem:unfolding} and the appendix on typed equality. \\
+RCC5 composition holds globally & Triple shapes, mosaic patching, and Lemma~\ref{lem:finite-prefix-patching}. \\
+Vertical eventualities on infinite branches are fulfilled & Request-closed cycles, Lemmas~\ref{lem:closed-walk} and~\ref{lem:global-blocking}. \\
+The search space is finite & Finite-index descriptors and Lemma~\ref{lem:finite-universe}. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The table is not an additional argument.  It is an index showing where each previously problematic step is made explicit in the proof.
+
+
+\section{What remains of the original split-forest idea}
+
+The repaired proof keeps the original split-forest idea, but with precise generated semantics.
+
+\begin{center}
+\begin{tabular}{p{0.38\linewidth}p{0.52\linewidth}}
+\toprule
+Original idea & Repaired status \\
+\midrule
+Tree-shaped containment backbone & Survives as a generated witness-cover backbone, not as the Hasse diagram of an arbitrary starting model. \\
+Split copies & Survive; they are essential for multiple selected containment parents. \\
+Sibling interfaces & Survive as support-closed mosaics with local vertical strata. \\
+Residual $\DR/\PO$ simplification & Survives only for non-core residual sibling-frontier pairs after equality and vertical containment have been accounted for. \\
+Typed $\EQ$ quotient & Survives as an explicit occurrence-level congruence. \\
+Finite quotient & Survives as a finite regular certificate, not as a finite semantic model. \\
+Blocking & Survives as finite-index repetition, but never as semantic equality. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Conclusion}
+
+The proof is a generated, regular, support-closed split-forest proof.  The semantic model may be infinite.  The finite object is a certificate whose unfolding supplies fresh occurrences for repeated cycles and whose equality quotient is controlled only by explicit equality ports.  The two preliminary steps, witness thinning and generated cover presentation, justify working with the sparse model class originally intended by the split-forest construction.  The occurrence-sensitive pair-shape repair prevents the previous collapse of blocking repetition into semantic equality.
+
+\appendix
+
+\section{Round-10 referee repairs in expanded form}
+
+\subsection{Why both forced tails are needed}
+The round-9 proof handled the case in which a selected $\DR/\PO$ side witness $w$ of $u$ becomes a proper part of an unbounded ancestor tower above $u$.  The referee correctly observed the dual case: $w$ can also become a proper superpart of an unbounded descendant tower below $u$.  The two trace lemmas in Lemma~\ref{lem:ancestor-trace} and Lemma~\ref{lem:descendant-trace} are the exact algebraic reason only these two tails need special treatment.  Ancestor traces can have a final $\PPI$ regime; descendant traces can have a final $\PP$ regime.  Both regimes are unbounded containment information, so both must be spliced into the vertical backbone rather than stored in a bounded side mosaic.
+
+\subsection{Why product states replace semantic quantification over the unfolding}
+A validity condition that says ``every pair/triple in the infinite unfolding is legal'' is not itself a finite decision procedure.  The product-state construction in Definitions~\ref{def:pair-product} and~\ref{def:triple-product} is the finite replacement.  It computes a finite automaton-like closure of pair and triple situations, but no external automata theorem is used: the closure is a direct finite saturation over the certificate alphabets.  Lemma~\ref{lem:product-exhaustion} then proves that all concrete infinite-unfolding pairs and triples are represented in those finite tables.
+
+\subsection{Why complete descriptors are stronger than boundary descriptors}
+A boundary descriptor that records only the labels on the boundary of a component is insufficient for replacement.  A replacement component must also know how outside occurrences of each pair-shape class relate to internal ports, and which mixed triples are legal.  Definition~\ref{def:complete-interface} records precisely these mixed pair and triple data.  Lemma~\ref{lem:replacement} is then a genuine replacement lemma: replacing a component by another with the same complete descriptor preserves closure truth and RCC5 composition for mixed triples.
+
+\subsection{Why requests are occurrence-local}
+A profile may occur on several equality-mate branches.  It would be too strong to require every vertical request in the profile to be discharged on every branch.  The support mechanism $\mu$ assigns each existential to the mechanism that actually supports it: current ray, equality port, side context, or finite stratum.  Closed-walk request closure is imposed only on the active ray-local requests of that branch.  This is exactly what allows split copies to handle multiple incomparable proper-superpart witnesses without forcing all witnesses onto one parent chain.
+
+
+
+\section{Expanded proof details for side interfaces}
+
+This appendix expands the side-interface and verticalization part of Lemma~\ref{lem:split-cover}.  The purpose is to justify the slogan that residual sibling-frontier pairs are only $\DR$ or $\PO$ after containment and equality interactions have been accounted for.
+
+\begin{definition}[Local side closure]
+Fix a source occurrence $u$ of type $t$ and an integer $k\le d_0$.  The local side closure of depth $k$ around $u$ is constructed as follows.
+\begin{enumerate}[label=(LC\arabic*)]
+\item Start with the full exposed vertical boundary $B_k(u)$: the source, equality-mate ports, selected parent/child boundary ports, and their smaller-depth boundary ports.
+\item For each formula $\exists R.D\in t$ with $R\in\{\DR,\PO\}$ and $\md(D)<k$, add one selected witness occurrence $v_{R,D}$.
+\item For every newly added side occurrence $v$, inspect the selected existential formulas in its type whose target depth is strictly below the remaining depth.  Add their selected witnesses recursively.
+\item For every pair of positions already added, including pairs with one side position and one vertical boundary position, copy the RCC5 label from the witness-generated model in the completeness construction.  In a soundness certificate, require this label to be supplied explicitly by the mosaic.
+\item If a copied label between any two positions is $\PP$ or $\PPI$, insert those positions into a local vertical stratum.  The upper/lower orientation in the stratum is the copied label.  If more intermediate selected witnesses are needed by formulas at either endpoint, add them recursively at smaller modal depth.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Termination of local side closure]
+The local side closure construction terminates after finitely many steps bounded by the recurrence of Lemma~\ref{lem:side-width}.
+\end{lemma}
+
+\begin{proof}
+Every recursive expansion is triggered by an existential formula $\exists R.D$ occurring in the current type.  The target concept $D$ has modal depth one less than the triggering formula.  Therefore along every recursive branch of side expansion the remaining modal-depth budget strictly decreases.  Since the initial budget is at most $d_0=\md(C_0)$, no branch has length greater than $d_0$.  At each node there are at most $e\le n$ existential closure formulas, so the number of immediate selected witnesses is bounded by $e$.  Pairwise verticalization may add strata for at most $e^2$ pairs at the current level, and each such stratum carries only subcontexts of smaller depth.  This is exactly the recurrence used in Lemma~\ref{lem:side-width}.  Thus the construction terminates and is effectively bounded.
+\end{proof}
+
+\begin{lemma}[Residual frontier reduction]
+After local side closure, every residual sibling-frontier pair has label $\DR$ or $\PO$.
+\end{lemma}
+
+\begin{proof}
+Let $p,q$ be two side positions after closure, and suppose they are residual frontier positions: they are not equality ports of the same semantic element, and they do not lie in a common local vertical stratum.  The RCC5 label between their origins in the witness-generated model is one of the five atoms.
+
+It cannot be $\EQ$, because equality-related side positions are made equality ports and are not residual.  It cannot be $\PP$ or $\PPI$, because whenever such a label is copied, the construction inserts the two positions into a local vertical stratum.  Therefore the only remaining possible labels are $\DR$ and $\PO$.  This proves the reduction.
+\end{proof}
+
+\begin{remark}
+The preceding lemma is deliberately local.  It does not claim that every pair of nodes in an arbitrary RCC5 model outside a vertical relation is $\DR/\PO$.  It says only that, after the proof has selected the finitely relevant side witnesses and verticalized the finitely relevant containment relations among them, the residual frontier of that finite interface is $\DR/\PO$.
+\end{remark}
+
+\section{Expanded patchwork argument for mosaics and triple shapes}
+
+This appendix expands the composition part of Lemma~\ref{lem:unfolding}.  The key point is that the certificate does not try to infer arbitrary global labels from pair tables alone.  It records occurrence-sensitive triple shapes.
+
+\begin{definition}[Finite prefix network]
+A finite prefix network of an unfolding $\U(\Q)$ is a finite set $F\subseteq\Occ_\Q$ with the pair labels induced by the certificate.  It is composition-correct if for all $u,v,w\in F$,
+\[
+  \rho(u,w)\in\comp(\rho(u,v),\rho(v,w)).
+\]
+\end{definition}
+
+\begin{lemma}[Triple-shape patchwork]
+If every concrete triple in an unfolding has an allowed RCC5-legal occurrence-sensitive triple shape, then every finite prefix network is composition-correct.
+\end{lemma}
+
+\begin{proof}
+Let $F$ be a finite prefix network and let $u,v,w\in F$.  By validity clauses (V7)--(V8), the ordered triple $(u,v,w)$ has an allowed triple shape $\theta\in\Trip_\Q$.  This triple shape records the three pair shapes $\alpha(u,v)$, $\alpha(v,w)$, and $\alpha(u,w)$, and therefore records the three labels
+\[
+ R_{uv}=\ell_\Q(\alpha(u,v)),\quad
+ R_{vw}=\ell_\Q(\alpha(v,w)),\quad
+ R_{uw}=\ell_\Q(\alpha(u,w)).
+\]
+By validity clause (V8), the triple shape is RCC5-legal, so
+\[
+ R_{uw}\in\comp(R_{uv},R_{vw}).
+\]
+This is exactly the composition requirement for the triple $u,v,w$.  Since the triple was arbitrary, every finite prefix network is composition-correct.
+\end{proof}
+
+\begin{lemma}[Why occurrence-sensitive shapes avoid witness conflation]
+Suppose two pairs $(u,v)$ and $(u,w)$ have the same endpoint profiles as two other pairs $(u',v')$ and $(u'',w'')$.  The certificate cannot combine them into a fake triple unless their occurrence-sensitive incidence data are compatible in one triple shape.
+\end{lemma}
+
+\begin{proof}
+A pair shape contains more than endpoint profiles.  It includes concrete incidence: whether the endpoints are the same occurrence, equality mates, strict vertical relatives, in a named common side mosaic, in overlapping side mosaics, or residual frontier positions.  A triple shape contains all three pair shapes simultaneously.  Thus, to form a triple, the certificate must exhibit one coherent incidence pattern for all three pairs.  Pair labels realized in unrelated contexts do not automatically form a triple shape.  Therefore the old error of aggregating pairwise relations by endpoint type alone is avoided.
+\end{proof}
+
+\begin{lemma}[Overlap compatibility]
+Let two side mosaics $M_1$ and $M_2$ overlap on a boundary $B$.  If the support-closure conditions hold, then any mixed triple with positions in $M_1\cup M_2$ satisfies RCC5 composition.
+\end{lemma}
+
+\begin{proof}
+If all three positions lie in one mosaic, composition is the mosaic axiom (M3).  Otherwise the triple is mixed.  Support closure requires that the two mosaics agree on all boundary labels and types, and that every mixed triple is covered by an amalgamating mosaic or by an explicit triple shape in the certificate.  In the amalgamating-mosaic case, composition is again the mosaic axiom.  In the explicit-triple-shape case, composition is validity clause (V8).  Hence all mixed triples are composition-correct.
+\end{proof}
+
+\section{Expanded typed-equality quotient proof}
+
+This appendix isolates the typed-equality quotient argument.  It is important because equality is used for split copies, while blocking repetition is not equality.
+
+\begin{definition}[Equality congruence data]
+In an unfolding, the relation $\eqc$ is the smallest equivalence relation generated by explicit equality-port declarations.  It is not generated by equal profiles, equal types, equal local port names, or repeated cycle laps.
+\end{definition}
+
+\begin{lemma}[No accidental cycle equality]
+Let $u_0,u_1,u_2,\ldots$ be the occurrences obtained by unfolding a one-state vertical blocking cycle.  Then $u_i\not\eqc u_j$ for $i\ne j$, unless the certificate contains an explicit equality-port path relating those concrete laps.  In a valid certificate no such equality-port path may identify a strict vertical pair.
+\end{lemma}
+
+\begin{proof}
+The first sentence follows from the definition of $\eqc$: the generator of equality is explicit equality-port declaration, not profile repetition.  For the second sentence, validity clause (V5) forbids identifying strict containment-related occurrences.  Distinct laps on a one-state vertical cycle are strict vertical relatives, because moving to a later lap traverses at least one vertical edge.  Hence they cannot be equality mates in a valid certificate.
+\end{proof}
+
+\begin{lemma}[Quotient composition from occurrence composition]
+Assume occurrence labels are invariant under $\eqc$ and every occurrence triple satisfies RCC5 composition.  Then the quotient by $\eqc$ satisfies RCC5 composition.
+\end{lemma}
+
+\begin{proof}
+Take quotient classes $[u],[v],[w]$.  Choose representatives $u,v,w$.  Occurrence-level composition gives
+\[
+  \rho(u,w)\in\comp(\rho(u,v),\rho(v,w)).
+\]
+By equality-label invariance, replacing representatives does not change any of these three labels.  Therefore the quotient labels satisfy the same inclusion:
+\[
+  \rho_{/\eqc}([u],[w])\in
+  \comp(\rho_{/\eqc}([u],[v]),\rho_{/\eqc}([v],[w])).
+\]
+\end{proof}
+
+\begin{lemma}[Truth preservation under typed equality quotient]
+Suppose $u\eqc v$ implies $\typ(u)=\typ(v)$ and label invariance to every other occurrence.  Then for every closure formula $D$, the truth value of $D$ is constant on $\eqc$-classes in the quotient model.
+\end{lemma}
+
+\begin{proof}
+Induct on $D$.  Atomic and Boolean cases follow from equality of types.  For $D=\exists R.E$, if $[u]$ has an $R$-successor $[w]$ satisfying $E$, then by label invariance $[v]$ has the same $R$-successor label to $[w]$.  By induction $E$ is a property of the class $[w]$.  Thus $[v]$ satisfies the same existential.  Universal formulas are similar: the set of $R$-successor classes of $[u]$ equals the set of $R$-successor classes of $[v]$ because all labels to all classes are invariant.
+\end{proof}
+
+\section{Expanded request-cycle and lasso details}
+
+The request-cycle lemma is the direct no-automata replacement for a Buchi acceptance argument.  This section spells out how strictness is handled.
+
+\begin{definition}[Strict later occurrence in a cycle]
+In a half-open cycle word $c_0,\ldots,c_{k-1}$, a position $c_j$ is strictly later than $c_i$ if either $i<j$ in the same lap, or $j\le i$ and $c_j$ is taken in the next lap.  Thus a request at $c_i$ may be fulfilled by the same profile $c_i$ only in the next lap, not by the same concrete occurrence.
+\end{definition}
+
+\begin{lemma}[Cycle request truth]
+Let $c_0,\ldots,c_{k-1}$ be request-closed in the $\PP$ direction.  In the infinite unfolding of the cycle, every occurrence whose profile is $c_i$ satisfies all existential formulas $\exists\PP.D$ listed in $\Req_\PP(c_i)$.
+\end{lemma}
+
+\begin{proof}
+Fix an occurrence $u$ in lap $m$ at position $i$, and let $D\in\Req_\PP(c_i)$.  Request closure gives a strictly later cyclic position $j$.  If $j>i$, take the occurrence in the same lap $m$ at position $j$.  If $j\le i$, take the occurrence in lap $m+1$ at position $j$.  In both cases the target is a fresh occurrence strictly above $u$ in the equality-aware vertical order, and its profile type contains $D$.  Hence it is a valid $\PP$ witness.
+\end{proof}
+
+\begin{lemma}[Cycle universal truth]
+Let $c_0,\ldots,c_{k-1}$ be universal-safe in the $\PP$ direction.  In the infinite unfolding of the cycle, every occurrence whose profile is $c_i$ satisfies all universal formulas $\forall\PP.D$ listed in its type.
+\end{lemma}
+
+\begin{proof}
+Fix an occurrence $u$ at cycle position $i$ and suppose $\forall\PP.D\in\lambda(c_i)$.  Any strict $\PP$-successor of $u$ on the vertical cycle is represented by a strict later cyclic position, possibly in a later lap.  Universal safety says that every such position has $D$ in its type.  By the truth induction for subformulas, every such successor satisfies $D$.
+\end{proof}
+
+\begin{remark}
+The downward $\PPI$ versions are obtained by reversing the vertical direction.  If the certificate contains a downward cycle, the same half-open convention is used with strict later replaced by strict lower occurrence in the unfolded descendant direction.
+\end{remark}
+
+\section{Expanded enumeration details}
+
+For completeness, this appendix spells out one explicit finite enumeration strategy.  It is intentionally crude.
+
+\begin{definition}[Crude bounds]
+Let $n=|\Cl(C_0)|$, let $e\le n$ be the number of existential formulas in the closure, and let $m_*=m_*(C_0)$ be the side-width bound.  Define
+\[
+  p_*=1+2e+2m_*+4e m_*+10.
+\]
+This bounds the number of ports needed for a profile: one source port, equality-mate ports, vertical parent/child boundary ports, side boundary ports, and bookkeeping ports for overlap and triple-shape checks.
+\end{definition}
+
+\begin{lemma}[Finiteness of profile candidates]
+The number of profile candidates is bounded by
+\[
+  2^n\cdot 2^{p_*^2}\cdot 5^{p_*^2}\cdot 2^{4np_*}.
+\]
+\end{lemma}
+
+\begin{proof}
+There are at most $2^n$ type candidates.  An equivalence relation on at most $p_*$ ports is bounded by a subset of $p_*^2$ pairs, hence by $2^{p_*^2}$.  A pair-label summary on ports is bounded by $5^{p_*^2}$.  Reachability and universal-safety summaries choose subsets of the closure for each direction and port; the crude bound $2^{4np_*}$ covers upward/downward existential and universal summaries.  Multiplying gives the stated finite bound.
+\end{proof}
+
+\begin{lemma}[Finiteness of mosaic candidates]
+There are finitely many mosaic candidates of size at most $m_*$, effectively enumerable from $C_0$.
+\end{lemma}
+
+\begin{proof}
+For each $r\le m_*$ choose an $r$-element position set.  Assign to each position one of at most $2^n$ types.  Assign to each ordered pair one of five base labels.  Assign a finite forest of local strata, bounded by a subset of $r^2$ possible parent relations.  This gives a finite search space.  Legal mosaics are selected by finite checks (M1)--(M7).
+\end{proof}
+
+\begin{lemma}[Finiteness of triple-shape candidates]
+There are finitely many occurrence-sensitive triple-shape candidates.
+\end{lemma}
+
+\begin{proof}
+A triple shape consists of three pair shapes plus consistency data saying which endpoint occurrences are equal, equality mates, vertical relatives, side-mosaic positions, or residual frontier positions.  Each component ranges over a finite set: profiles, ports, incidence tags, context descriptors, and relation labels.  Therefore the product space is finite.  The validity check discards inconsistent or RCC5-illegal candidates.
+\end{proof}
+
+These lemmas justify the finite-universe claim in Lemma~\ref{lem:finite-universe} without relying on any hidden infinitary search.
+
+\end{document}

@@ -1,0 +1,413 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array,longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\setlength{\headheight}{14pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Referee report: ALCI\_RCC5 split-forest proof}
+\rhead{\thepage\ of \pageref{LastPage}}
+
+\setlist[itemize]{leftmargin=2em,itemsep=0.25em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=2em,itemsep=0.25em,topsep=0.25em}
+\renewcommand{\arraystretch}{1.15}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Rel}{\operatorname{Rel}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Req}{\operatorname{Req}}
+\newcommand{\I}{\mathcal I}
+\newcommand{\B}{\mathcal B}
+\newcommand{\NN}{\mathbb N}
+\newcommand{\Top}{\top}
+\newcommand{\Bot}{\bot}
+\newcommand{\notA}{\neg A}
+
+\newtheorem*{claim}{Claim}
+\newtheorem*{observation}{Observation}
+
+\title{Formal Referee Report on the Split-Forest Decidability Proof for $\ALCI_{\RCC}$}
+\author{Anonymous referee response prepared for adversarial proof review}
+\date{29 May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report reviews the manuscript's proof that concept satisfiability in $\ALCI_{\RCC}$, with the five RCC5 base relations $DR,PO,EQ,PP,PPI$ used as roles, composition-table semantics, and strong equality, is decidable. I distinguish the truth of the theorem from the adequacy of the proof. My conclusion is that the decidability result is plausible, and several local technical ideas are sound, but the present manuscript does not prove the theorem. The most serious defects are a missing dual case in the side-witness verticalization argument, an unproved reduction of infinite unfolding validity to finite checking, and an under-specified replacement lemma for complete RCC5 networks.
+\end{abstract}
+
+\section{Verdict}
+
+\textbf{Verdict: correct theorem plausible; proof presently has genuine gaps.} My confidence is high that the manuscript as written is not a complete proof. I did not find an error in the RCC5 composition table. I also found several local arguments to be sound in isolation, notably the witness-generated submodel lemma, the need for occurrence-sensitive blocking, and the typed equality quotient argument, conditional on the promised global pair/triple invariance. However, the completeness direction and finite validity/enumeration argument are not established at the level required for a decidability proof. In particular, the construction misses a concrete satisfiable pattern in which a $PO$ side witness becomes a forced proper superpart of an infinite proper-part tower below the root occurrence.
+
+Throughout this report, locations refer to the section and lemma numbering in the expanded manuscript.
+
+\section{Independent RCC5 composition calculation}
+
+I first recomputed the RCC5 composition table independently by subset enumeration. Let $U=\{0,1,2,3\}$ and let $X,Y,Z$ range over the nonempty subsets of $U$. Define
+\[
+\Rel(X,Y)=
+\begin{cases}
+EQ, & X=Y,\\
+DR, & X\cap Y=\varnothing,\\
+PP, & X\subsetneq Y,\\
+PPI, & X\supsetneq Y,\\
+PO, & \text{otherwise.}
+\end{cases}
+\]
+For base relations $R,S\in \{EQ,DR,PO,PP,PPI\}$, compute
+\[
+\begin{aligned}
+\Comp(R,S)=\{\Rel(X,Z):{}& \Rel(X,Y)=R \text{ and } \Rel(Y,Z)=S,\\
+& X,Y,Z\subseteq U,\; X,Y,Z\ne\varnothing\}.
+\end{aligned}
+\]
+The resulting table is:
+\begin{center}
+\small
+$\begin{array}{c|ccccc}
+\Comp(R,S) & EQ & DR & PO & PP & PPI\\
+\hline
+EQ  & \{EQ\} & \{DR\} & \{PO\} & \{PP\} & \{PPI\}\\
+DR  & \{DR\} & \B & \{DR,PO,PP\} & \{DR,PO,PP\} & \{DR\}\\
+PO  & \{PO\} & \{DR,PO,PPI\} & \B & \{PO,PP\} & \{DR,PO,PPI\}\\
+PP  & \{PP\} & \{DR\} & \{DR,PO,PP\} & \{PP\} & \B\\
+PPI & \{PPI\} & \{DR,PO,PPI\} & \{PO,PPI\} & \{EQ,PO,PP,PPI\} & \{PPI\}.
+\end{array}$
+\end{center}
+Here $\B=\{EQ,DR,PO,PP,PPI\}$. This matches the table in the manuscript. Thus the algebraic table itself is not the source of the proof failure.
+
+\section{Critical findings}
+
+\subsection*{Critical 1. The side-witness verticalization repair is one-sided}
+
+\paragraph{Location.} Section 4.4, especially Definition 4.12, Lemma 4.13, Definition 4.14, Lemma 4.17, and their use in Lemma 4.18 and Lemma 7.5.
+
+\paragraph{Claim in the manuscript.} After saturated side closure and the ``composition-forced verticalization'' of Definition 4.14, every residual frontier pair has label only $DR$ or $PO$. The only unbounded exceptional case explicitly handled is this: a $DR/PO$ side witness $w$ of $u$ becomes a proper part of an infinite ancestor tower above $u$,
+\[
+  uPPa_1PPa_2PP\cdots,
+\]
+so that eventually $L(a_m,w)=PPI$, equivalently $wPPa_m$.
+
+\paragraph{Defect.} There is a dual unbounded case in which a $PO$ side witness of $u$ becomes a proper superpart of an infinite descendant tower below $u$. This produces an eventual $PP$ tail, not an eventual $PPI$ tail. It is not covered by Definition 4.14.
+
+\paragraph{Concrete satisfiable witness concept.} Consider the concept
+\[
+C :=
+\exists PO.A
+\ \sqcap\
+\exists PPI.\Top
+\ \sqcap\
+\forall PPI.\bigl(
+      \exists PPI.\Top
+      \sqcap
+      \forall DR.\neg A
+      \sqcap
+      \forall PO.\neg A
+\bigr).
+\]
+Here $xPPIy$ means that $y$ is a proper part of $x$.
+
+\begin{claim}
+The concept $C$ is satisfiable.
+\end{claim}
+
+\begin{proof}
+Let the underlying set universe be $\NN\cup\{c,e\}$ and define regions
+\[
+  u=\NN\cup\{c\},\qquad
+  w=\NN\cup\{e\},\qquad
+  d_i=\{n\in\NN:n\ge i\}\quad (i\in\NN).
+\]
+Let
+\[
+  \Delta^{\I}=\{u,w,d_0,d_1,d_2,\ldots\}
+\]
+with RCC5 labels induced by the subset relation, and interpret $A^{\I}=\{w\}$. Then $uPOw$, so $w$ witnesses $\exists PO.A$ at $u$. Also $d_iPPu$ for every $i$, so $uPPI d_i$. For every $i$, $d_{i+1}PPd_i$, so each $d_i$ satisfies $\exists PPI.\Top$. Finally, $d_iPPw$ for every $i$, hence the only $A$-point $w$ is neither $DR$- nor $PO$-related to $d_i$. Therefore each $d_i$ satisfies $\forall DR.\neg A\sqcap \forall PO.\neg A$. Thus $u\in C^{\I}$.
+\end{proof}
+
+\begin{claim}
+In every model of $C$, the $PO$ side witness is forced to be a proper superpart of every point in the infinite proper-part tower below $u$.
+\end{claim}
+
+\begin{proof}
+Let $u\models C$ and choose $w$ with $uPOw$ and $w\models A$. Let $d$ be any proper part of $u$, so $uPPI d$, equivalently $dPPu$. Since $u\models \forall PPI.(\forall DR.\neg A\sqcap\forall PO.\neg A)$, the point $d$ satisfies $\forall DR.\neg A\sqcap\forall PO.\neg A$. By composition,
+\[
+  dPPu \quad\text{and}\quad uPOw
+  \quad\Longrightarrow\quad
+  L(d,w)\in \Comp(PP,PO)=\{DR,PO,PP\}.
+\]
+Because $w\models A$, the alternatives $DR$ and $PO$ are forbidden by the universal restrictions at $d$. Therefore $L(d,w)=PP$, i.e. $dPPw$.
+
+The formula also says that every such $d$ has a further proper part $d'$, since $d\models\exists PPI.\Top$. By $d'PPd$ and $dPPu$, composition gives $d'PPu$, so the same reasoning applies again. Irreflexivity of $PP$ under strong equality prevents a finite cycle. Hence every model contains an infinite chain
+\[
+  \cdots PP d_2PPd_1PPd_0PPu
+\]
+with
+\[
+  d_iPPw\quad\text{for all }i.
+\]
+\end{proof}
+
+The missing descendant trace is therefore
+\[
+  L(d_i,w)=PP\quad\text{for all }i.
+\]
+The transition calculation is
+\[
+  d_{i+1}PPd_i,\\ L(d_i,w)=PP
+  \quad\Longrightarrow\quad
+  L(d_{i+1},w)\in \Comp(PP,PP)=\{PP\}.
+\]
+More generally, starting from $uPOw$, a descendant trace obeys
+\[
+\Comp(PP,DR)=\{DR\},\qquad
+\Comp(PP,PO)=\{DR,PO,PP\},\qquad
+\Comp(PP,PP)=\{PP\}.
+\]
+Thus a $PP$ tail is possible and then absorbing. This is the dual of Lemma 4.13, but it is not handled by Definition 4.14.
+
+\paragraph{Why this breaks the construction.} The side mosaic around $u$ is bounded by modal depth, so it can include only a finite initial part of the descendant boundary. For all deeper $d_i$, the pair $(d_i,w)$ has forced label $PP$. It is neither an ordinary vertical pair in the generated backbone, unless the proof explicitly splices an equality-copy of $w$ into the vertical structure above the descendant tail, nor a permitted residual $DR/PO$ frontier pair. Consequently Lemma 4.17 fails as stated.
+
+\paragraph{Candidate repair.} Add a dual forced-verticalization rule. For a $DR/PO$ side witness $w$ of $u$, inspect not only ancestor towers above $u$, but also descendant towers below $u$. If the descendant trace has a $PP$ tail, then after a bounded threshold introduce an explicit generated cover edge
+\[
+  d^{\ast}E_{\uparrow}w'
+\]
+where $w'$ is an equality mate of $w$. Then equality-aware vertical reachability can classify all later descendant-tail pairs $d_iPPw'$. This requires a separate monotone-threshold lemma for the descendant trace and changes to Lemmas 4.17, 4.18, and 7.5.
+
+\subsection*{Critical 2. Lemma 5.16 does not prove finite decidability of validity}
+
+\paragraph{Location.} Definition 5.15, especially clauses V6 and V7; Lemma 5.16; also Lemma 5.10 and the soundness proof in Lemmas 6.4--6.7.
+
+\paragraph{Claim in the manuscript.} Validity of a finite candidate certificate is decidable because all objects in the candidate are finite. In particular, pair and triple coverage are said to be checked over finite pair-shape and triple-shape tables.
+
+\paragraph{Defect.} Clauses V6 and V7 are not finite syntactic checks as written. They quantify over the infinite unfolding generated by blocking cycles:
+\begin{itemize}
+  \item V6 says that every concrete pair in the unfolding has exactly one allowed pair shape.
+  \item V7 says that every concrete ordered triple in the unfolding has an allowed occurrence-sensitive triple shape satisfying the RCC5 composition table.
+\end{itemize}
+The unfolding is generally infinite. Lemma 5.16 does not give an algorithm reducing these universal semantic claims to a finite computation over the candidate. It says that the candidate supplies finite tables, but it does not prove that those tables exhaust all concrete pairs and triples produced after arbitrarily many laps or across independently pumped branches.
+
+This is load-bearing. Lemma 6.6 proves composition by taking arbitrary quotient classes $[u],[v],[w]$ and invoking V7 for the concrete triple $(u,v,w)$. If V7 is interpreted semantically, validity is not shown decidable. If V7 is intended as a finite syntactic table condition, the proof has not shown that the finite table condition implies the semantic V7 property.
+
+\paragraph{Candidate repair.} Define a finite-state abstraction of unfoldings. A pair/triple state should include, at minimum, context node, lap-order information, equality-port reachability, vertical-reachability status, side-mosaic membership, and frontier status. Then prove a product-graph theorem: every concrete pair/triple in the infinite unfolding maps to one of finitely many computed abstract states, and every computed abstract state is represented by a supplied pair/triple shape. Without such an automaton/product construction, Lemma 5.16 is only an assertion.
+
+\subsection*{Critical 3. The replacement lemma assumes an unproved tree-decomposition property}
+
+\paragraph{Location.} Lemma 7.2 and its use in Lemmas 7.4 and 7.5.
+
+\paragraph{Claim in the manuscript.} If two finite generated components have the same boundary descriptor, one can replace either by a fresh copy of the other without changing truth of closure formulas at outside occurrences or violating RCC5 composition on finite prefixes. The proof says all interaction with the rest of the presentation passes through boundary occurrences, equality ports, vertical reachability summaries, and named side mosaics.
+
+\paragraph{Defect.} In a complete RCC5 frame, every outside point has a direct RCC5 label to every inside point. These labels are not generally determined by the boundary labels. Composition often yields several possible labels, not a unique label.
+
+For example, let $b$ be a boundary point, $i$ an internal point below $b$, and $o$ an outside point with
+\[
+  iPPb,
+  \qquad oPOb.
+\]
+Then $bPPIi$, and the table gives
+\[
+  L(o,i)\in \Comp(PO,PPI)=\{DR,PO,PPI\}.
+\]
+All three alternatives can occur in concrete set models while preserving the same boundary relations $iPPb$ and $oPOb$:
+\[
+\begin{array}{c|c|c|c}
+\text{case} & b & i & o \\
+\hline
+DR  & \{1,2,3,4\} & \{1,2\} & \{3,5\} \\
+PO  & \{1,2,3,4\} & \{1,2\} & \{2,3,5\} \\
+PPI & \{1,2,3,4\} & \{1,2\} & \{1,2,5\}.
+\end{array}
+\]
+In each row, $iPPb$ and $oPOb$ hold. But respectively $oDRi$, $oPOi$, and $oPPIi$ hold.
+
+Therefore a boundary descriptor that records only boundary labels, vertical target summaries, selected witnesses, universal safety requirements from boundary occurrences, side mosaics touching the boundary, and pair/triple shapes involving boundary positions does not by itself determine all mixed outside/internal labels. Such labels can affect truth of formulas at $o$, for example formulas involving $\forall DR.E$, $\forall PO.E$, or $\forall PPI.E$.
+
+\paragraph{Candidate repair.} Strengthen descriptors so that they include a complete finite interface type relative to all possible outside pair-shapes and triple-shapes, and prove that this interface is finite and compositional. Alternatively, replace the component-by-component replacement lemma by a global regular-model construction in which cross-component labels are generated by finite states and checked simultaneously.
+
+\section{Major findings}
+
+\subsection*{Major 1. The request-cycle lemma uses the wrong notion of request for split presentations}
+
+\paragraph{Location.} Definitions 5.11--5.14; Lemma 7.4; Lemma 7.5, step E7.
+
+\paragraph{Claim in the manuscript.} For a profile $s$,
+\[
+  \Req_{PP}(s)=\{D: \exists PP.D\in\lambda(s)\},
+\]
+and every infinite generated vertical ray can be replaced by a finite prefix followed by a request-closed cycle satisfying all these requests.
+
+\paragraph{Defect.} In a split presentation, one semantic element may have several equality-mate occurrences, with different $PP$-witnesses placed on different vertical branches. The manuscript introduces split copies precisely because a single tree occurrence cannot lie below several incomparable selected superparts. But Definition 5.11 assigns all $\exists PP$-requirements of the type to every profile occurrence on every vertical ray.
+
+A schematic forced-splitting pattern is
+\[
+  \exists PP.(A\sqcap\neg B\sqcap\forall PP.\neg B\sqcap\forall PPI.\neg B)
+  \ \sqcap\
+  \exists PP.B.
+\]
+The two $PP$-witnesses cannot lie above one another: if the $B$-witness were above or below the first witness, it would violate one of the displayed universal restrictions; equality is excluded by $A\sqcap\neg B$ versus $B$. Thus a tree-like generated presentation may need equality-mate copies of the lower point, one under each incomparable superpart. On a particular vertical ray, only the request assigned to that ray need be fulfilled vertically; the other request may be fulfilled through an equality mate on a different branch.
+
+Lemma 7.4 assumes that the actual ray satisfies all requests in $\Req_{PP}(s)$. In a split presentation this assumption is not justified. Clause V9 partly acknowledges the issue by allowing vertical existential support ``possibly through an explicit equality-mate source port,'' but the request-cycle definition does not record which existential obligations are branch-local and which are discharged through equality ports.
+
+\paragraph{Candidate repair.} Requests must be occurrence-local obligations, not merely all $\exists PP$ formulas in the type. Each profile should record, for every existential, whether it is discharged along the current vertical ray, inside a finite side/local stratum, or through a named equality-mate port. Cycle closure should be required only for obligations assigned to that cycle.
+
+\subsection*{Major 2. Lemma 4.9's side-width bound is asserted, not proved for the saturation operation}
+
+\paragraph{Location.} Definition 4.8, Lemma 4.9, and Appendix A, especially Lemma A.2.
+
+\paragraph{Claim in the manuscript.} Saturated side contexts have a computable size bound $m^{\ast}(C_0)$ because every recursive expansion is triggered by a subformula of smaller modal depth.
+
+\paragraph{Defect.} The saturation operation is not formal enough to support the claimed recurrence. Step Sat6 says that if a pair has label $PP$ or $PPI$, a local vertical stratum is added, and the endpoints' exposed boundary ports and smaller-depth side contexts are added recursively. But comparability between already-added positions is not itself a modal subformula occurrence. The proof does not define precisely which new boundary ports are added, why they are only smaller-depth ports, or why repeated containment/equality closure cannot generate same-depth obligations.
+
+The finite certificate construction depends on a uniform side-width bound. The sentence that pair inspection creates at most quadratically many containment/equality obligations is not enough; one must prove that those obligations cannot recursively create further same-rank obligations.
+
+\paragraph{Candidate repair.} Give every side-context position an explicit rank or remaining-depth annotation. Prove that every recursive rule strictly decreases this rank, except for a bounded local closure phase. Then prove the side-width bound by induction on rank.
+
+\subsection*{Major 3. Lemma 7.5 compresses infinite global extraction into independent local blockings}
+
+\paragraph{Location.} Lemma 7.5, especially steps E4--E7.
+
+\paragraph{Claim in the manuscript.} From a witness-generated split presentation one extracts a finite certificate by recording profiles, contexts, side mosaics, overlaps, pair catalogues, triple catalogues, and by applying Lemma 7.4 to every infinite vertical ray.
+
+\paragraph{Defect.} The construction treats infinite rays independently. RCC5 side mosaics and composition constraints relate different branches and different rays. Blocking or replacing one ray can change the labels/triples involving nodes on another ray. The manuscript says overlap amalgams and triple catalogues are closed under support, but it does not prove that independently chosen lassos for all rays admit a single globally coherent finite regular unfolding.
+
+This is not a cosmetic issue. Local lasso existence along each path does not imply a global regular structure satisfying all cross-path RCC5 constraints. A global finite-state quotient, or an equivalent compactness/regularization argument preserving all cross labels simultaneously, is needed.
+
+\paragraph{Candidate repair.} Extract a single finite quotient of the whole generated presentation by an equivalence that already includes all cross-mosaic and cross-branch interface obligations. Then choose cycles inside that finite quotient. Do not first lasso rays independently and only afterwards attempt to reconcile their cross labels.
+
+\subsection*{Major 4. The cycle-length bound in Lemma 8.1 is false as stated}
+
+\paragraph{Location.} Lemma 8.1.
+
+\paragraph{Claim in the manuscript.} Request-cycle words need length no greater than the number of complete boundary descriptors: if a longer simple cycle were needed, some descriptor would repeat and the shorter request-closed subcycle could be used instead.
+
+\paragraph{Defect.} A request-closed cycle may need to be a closed walk with repeated descriptors. A simple cycle need not visit all required fulfilment vertices.
+
+Consider the finite directed graph
+\[
+  a\to b\to a,
+  \qquad
+  a\to c\to a.
+\]
+Suppose a request issued at $a$ requires visiting both a $b$-type and a $c$-type later on the cycle. The closed walk
+\[
+  a,b,a,c
+\]
+with the final edge $c\to a$ closes the walk and satisfies the request, but it repeats $a$. There are only three descriptors $a,b,c$, and no simple cycle contains both $b$ and $c$. Hence the claimed ``number of descriptors'' bound is false.
+
+\paragraph{Candidate repair.} Use a larger computable bound on closed walks, for example one obtained by selecting fulfilment vertices for each request type inside a strongly connected component and concatenating simple paths between them. The resulting bound may be quadratic or worse in the number of descriptors and request types, but it remains finite.
+
+\section{Minor findings}
+
+\subsection*{Minor 1. The converse direction in the truth lemma is misstated}
+
+\paragraph{Location.} Lemma 6.7.
+
+\paragraph{Issue.} The manuscript says that if $[u]\models \exists R.E$, then type legality plus witness support imply $\exists R.E\in\tp(u)$. Type legality alone does not imply this. The correct argument is by NNF complement and universal safety: if $\exists R.E\notin\tp(u)$, then by type completeness $\forall R.\overline E\in\tp(u)$; universal safety for all $R$-successors forces $\overline E\in\tp(v)$, contradicting $E\in\tp(v)$.
+
+This is fixable, assuming the global universal-safety and pair-exhaustiveness clauses are themselves made sound.
+
+\subsection*{Minor 2. Some definitions mix occurrence-level and quotient-level equality}
+
+\paragraph{Location.} Definition 5.8, clause M1.
+
+\paragraph{Issue.} The notation
+\[
+  L(p,p)=EQ,
+  \qquad
+  L(p,q)=EQ \text{ iff } p=q \text{ or } pEq
+\]
+appears malformed; presumably it means that $p$ and $q$ are connected by the equality-port relation. Since strong equality is enforced only after quotienting by explicit equality ports, the definition should distinguish concrete position equality from equality-port equivalence.
+
+\subsection*{Minor 3. The grammar should say whether $\Top$ and $\Bot$ are primitives or abbreviations}
+
+The formal closure/type definitions should either include $\Top,\Bot$ in the concept grammar or define them as abbreviations. This is harmless but should be made explicit.
+
+\section{Steps checked and found sound}
+
+The following parts appear sound, subject to the dependencies identified above.
+
+\begin{enumerate}
+  \item The RCC5 composition table used in the manuscript is correct under finite subset enumeration.
+
+  \item Lemma 3.8, the witness-generated submodel lemma, is essentially sound. The universal case correctly uses NNF complements: if $\forall R.E$ fails in the original model, the closure contains $\exists R.\overline E$, and the selected witness is retained.
+
+  \item The distinction between blocking repetition and semantic equality is necessary and correctly identified. Lemma 6.2 and Lemma 10.4 are sound in spirit: repeated laps must denote fresh occurrences unless explicitly equality-linked.
+
+  \item The typed equality quotient argument is locally sound, provided the promised label invariance really holds for all occurrence pairs. Lemmas 6.4, 6.5, and Appendix C are acceptable quotient arguments, but they depend on the unproved global pair-exhaustiveness and congruence machinery.
+
+  \item Lemma 4.13's ancestor-trace monotonicity is correct. If
+  \[
+    uPPa_1PPa_2PP\cdots
+  \]
+  and $w$ is $DR/PO$-related to $u$, then $L(a_m,w)\notin\{EQ,PP\}$, and the recurrence
+  \[
+    L(a_{m+1},w)\in \Comp(PPI,L(a_m,w))
+  \]
+  yields a trace of the form
+  \[
+    DR^{\ast}PO^{\ast}PPI^{\ast}.
+  \]
+  The problem is not this lemma; the problem is that the proof also needs the dual descendant trace with possible eventual $PP$.
+\end{enumerate}
+
+\section{Conclusion}
+
+I would not accept the manuscript as a proof of decidability in its present form. The theorem may be true, and the proposed split-forest strategy may be repairable, but the current proof does not establish completeness or finite checkability. The minimum repairs are: (i) add and prove the dual descendant-side verticalization case; (ii) replace the informal finite-validity claim by a precise finite-state exhaustion theorem for all pairs and triples in the infinite unfolding; and (iii) strengthen or replace the boundary replacement lemma so that all mixed outside/internal RCC5 labels are controlled.
+
+\appendix
+\section{Subset-enumeration script used for the composition table}
+
+The following script is the calculation described in Section 2.
+
+\begingroup\footnotesize
+\begin{verbatim}
+from itertools import combinations
+
+rels = ['EQ','DR','PO','PP','PPI']
+U = range(4)
+subs = []
+for r in range(1, len(U)+1):
+    for c in combinations(U, r):
+        subs.append(frozenset(c))
+
+def rel(a,b):
+    if a == b:
+        return 'EQ'
+    if a.isdisjoint(b):
+        return 'DR'
+    if a < b:
+        return 'PP'
+    if a > b:
+        return 'PPI'
+    return 'PO'
+
+comp = {(r,s): set() for r in rels for s in rels}
+for x in subs:
+    for y in subs:
+        r = rel(x,y)
+        for z in subs:
+            s = rel(y,z)
+            comp[(r,s)].add(rel(x,z))
+
+for r in rels:
+    print(r, [','.join(t for t in rels if t in comp[(r,s)])
+              for s in rels])
+\end{verbatim}
+\endgroup
+
+\end{document}

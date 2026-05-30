@@ -1,0 +1,179 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Response to referee report}
+\rhead{\thepage\ of \pageref{LastPage}}
+\setlist[itemize]{leftmargin=2em,itemsep=.25em,topsep=.25em}
+\setlist[enumerate]{leftmargin=2em,itemsep=.25em,topsep=.25em}
+\newcommand{\Logic}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\typ}{\operatorname{typ}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\PP}{\mathrm{PP}}
+\newcommand{\PPI}{\mathrm{PPI}}
+\newcommand{\DR}{\mathrm{DR}}
+\newcommand{\PO}{\mathrm{PO}}
+\newcommand{\EQ}{\mathrm{EQ}}
+\newcommand{\Req}{\operatorname{Req}}
+\newcommand{\Eq}{\equiv_{\!E}}
+\newcommand{\Blk}{\equiv_{\!B}}
+\newcommand{\Q}{\mathcal Q}
+\newcommand{\I}{\mathcal I}
+\newcommand{\J}{\mathcal J}
+\title{Formal Response to the Referee Report on the Split-Forest Decidability Proof}
+\author{Prepared as a round-10 repair memorandum}
+\date{29 May 2026}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The referee report identifies genuine defects in the round-9 split-forest proof.  I accept the main criticisms.  The most serious missing case is the dual side-witness verticalization pattern: a nominal $\DR/\PO$ side witness may become a forced proper superpart of an infinite descendant tower, producing a $\PP$-tail rather than the $\PPI$-tail handled in round 9.  I have repaired both the expanded proof and the compact proof sketch by adding dual trace verticalization, ranked side-context saturation, occurrence-local request mechanisms, finite pair/triple product exhaustion, complete-interface descriptors, and a corrected closed-walk bound for request cycles.  This memorandum records which objections are accepted and how the revised proof addresses them.
+\end{abstract}
+
+\section{Overall assessment}
+
+The report is substantive.  It does not refute the decidability theorem, but it shows that the round-9 manuscript did not yet prove the theorem.  In particular, the proof still contained three hidden assumptions:
+\begin{enumerate}
+\item that the only unbounded side/tree comparability case is an ancestor $\PPI$-tail;
+\item that finite pair and triple catalogues automatically exhaust an infinite unfolding;
+\item that a boundary descriptor determines all mixed outside/internal RCC5 labels.
+\end{enumerate}
+All three assumptions are too strong as stated.  The repaired manuscripts remove them.
+
+The revised proof remains within the same proof architecture: witness thinning, generated containment split forests, split copies for multiple containment parents, finite side interfaces, typed equality quotienting, and finite regular certificates.  It still does not invoke Buchi or parity automata.  However, the finite certificate is now made more explicit: pair and triple validity is checked by finite product-state exploration of the certificate generator, and vertical liveness is checked by occurrence-local request assignments and closed walks in finite strongly connected components.
+
+\section{Accepted critical defects and repairs}
+
+\subsection{Critical 1: missing descendant-side verticalization}
+
+I accept the criticism.  Round 9 handled the following case: if $u\PP a_1\PP a_2\PP\cdots$ is an ancestor tower above $u$ and $w$ is a $\DR/\PO$ side witness of $u$, then the trace
+\[
+   L(a_i,w)
+\]
+can have a final $\PPI$ tail.  Round 9 spliced an equality mate of $w$ into the vertical backbone below the tail.
+
+The referee correctly observes the dual case.  If
+\[
+   \cdots\PP d_2\PP d_1\PP d_0\PP u
+\]
+is a descendant tower below $u$ and $u\PO w$, then $L(d_i,w)$ can have a final $\PP$ tail.  The concept
+\[
+C :=
+\exists \PO.A
+\sqcap
+\exists \PPI.\top
+\sqcap
+\forall \PPI.
+  \bigl(\exists \PPI.\top
+    \sqcap \forall \DR.\neg A
+    \sqcap \forall \PO.\neg A\bigr)
+\]
+is a concrete witness.  Any proper-part descendant $d$ of the root must avoid being $\DR$- or $\PO$-related to the $A$-side witness $w$; composition leaves $\PP$ as the only possible label.  Hence every point in the infinite descendant tower satisfies $d\PP w$.
+
+The repair is a dual threshold-and-splice rule.  For a descendant trace
+\[
+   s_i := L(d_i,w),
+\]
+one has
+\[
+   s_i\in\{\DR,\PO,\PP\}
+\]
+and the sequence is eventually constant in either $\DR$ or $\PP$, with a possible finite $\PO$ prefix.  If a final $\PP$ tail appears, the proof introduces a split occurrence $d_i'$ of the threshold tail node and an equality mate $w'$ of $w$, with a generated cover edge
+\[
+   d_i' E_{\uparrow} w'.
+\]
+All deeper tail nodes are represented by equality-mate copies below $d_i'$.  Thus pairs $d_j\PP w$ are no longer classified through a bounded side context; they are equality-aware vertical pairs.  This is symmetric to the ancestor $\PPI$-tail repair.
+
+The repaired proof also updates the residual-frontier lemma: a pair is residual only after finite side saturation and both ancestor- and descendant-forced verticalization have been applied.
+
+\subsection{Critical 2: V6/V7 were not finite syntactic checks}
+
+I accept the criticism.  Saying that every concrete pair or triple in the infinite unfolding has an allowed shape is not itself a finite decidable test.
+
+The round-10 repair replaces semantic quantification over the infinite unfolding by a finite product-state exhaustion theorem.  From a finite certificate $\Q$ one constructs finite sets
+\[
+   P_2(\Q),\qquad P_3(\Q)
+\]
+of reachable abstract pair and triple states.  A pair state records the two local profiles, equality-port status, blocking-lap order, vertical-reachability status, side-mosaic membership, overlap membership, and residual-frontier status.  A triple state is a compatible triple of such pair states together with the least common finite support context.  These sets are computed by finite saturation from the finite generator graph of $\Q$.
+
+The new finite validity clauses are:
+\begin{itemize}
+\item every state in $P_2(\Q)$ is assigned exactly one RCC5 atom and belongs to one of the allowed pair-shape classes;
+\item every state in $P_3(\Q)$ has its three pair labels satisfying the RCC5 composition table;
+\item every one-step generator transition preserves the pair/triple state maps.
+\end{itemize}
+A product-exhaustion lemma proves that every concrete pair/triple in the infinite unfolding maps to some state in $P_2(\Q)$ or $P_3(\Q)$.  Therefore validity is a finite syntactic check.
+
+\subsection{Critical 3: replacement required a complete interface descriptor}
+
+I accept the criticism.  Boundary labels alone do not determine all mixed outside/internal RCC5 labels.  The report's example with $i\PP b$ and $o\PO b$ is decisive: $o$ can be $\DR$, $\PO$, or $\PPI$ relative to $i$ while preserving the same boundary labels.
+
+The repaired proof strengthens the descriptor.  A component descriptor is now a complete interface descriptor.  For each internal port and each possible outside pair-shape class, it records the possible or realized mixed label, the relevant universal-safety target types, and the compatible triple shapes with boundary positions.  Two components may be replaced only if these complete interface descriptors agree.  Equivalently, the repaired extraction may be viewed as a global quotient of the entire generated presentation rather than independent local replacement of components.
+
+This eliminates the unsupported assertion that all interaction passes through boundary labels alone.
+
+\section{Accepted major defects and repairs}
+
+\subsection{Requests are occurrence-local, not profile-global}
+
+I accept the criticism.  In split presentations, one semantic element may be represented by several equality-mate occurrences, with different $\PP$ witnesses placed on different branches.  Therefore one must not assign every $\exists\PP.D$ request in the type to every vertical ray containing that profile.
+
+The repaired proof introduces a support mechanism function
+\[
+   \mu(o,\exists R.D)
+   \in
+   \{\text{this vertical ray},\; \text{equality-mate port},\; \text{finite side context}\}.
+\]
+Only requests whose mechanism is ``this vertical ray'' are placed into the request set of the cycle containing $o$.  The other requests are checked by equality-aware reachability or by finite side-mosaic support.  This fixes the mismatch between split copies and branch-local cycles.
+
+\subsection{Side-width bound now uses ranks}
+
+I accept that the previous side-width proof was too informal.  The repaired side-context construction assigns every side position a rank, bounded by the modal depth of the subformula whose witness created it.  Local equality/containment closure at a fixed rank is finite and does not create new same-rank modal obligations.  Recursive side-context expansion is allowed only for formulas of strictly smaller rank.  This gives a genuine induction and an explicit computable recurrence for the side-width bound.
+
+\subsection{Global extraction precedes cycle selection}
+
+I accept that round 9 lassoed rays too independently.  The repaired proof first extracts a single global finite quotient whose descriptors already include cross-branch mosaics, complete interface information, pair states, triple states, and equality ports.  Request cycles are then chosen inside strongly connected components of this global quotient.  The cycles are not selected independently of cross labels.
+
+\subsection{Corrected closed-walk bound}
+
+I accept the counterexample to the simple-cycle bound.  Request-closed cycles may need to be closed walks that revisit descriptors.  The repaired bound is obtained by choosing, inside a finite strongly connected component, one fulfilment vertex for each active request type and concatenating simple paths between successive fulfilment vertices.  If the component has $N$ vertices and there are $M$ active request targets, a closed walk of length at most $(M+1)N$ suffices.  This is finite and computable, though not necessarily simple.
+
+\section{Minor repairs}
+
+The repaired proofs also make the following small corrections.
+\begin{itemize}
+\item The converse direction of the truth lemma now uses NNF complement and universal safety, not type legality alone.
+\item Equality notation distinguishes concrete occurrence identity, explicit equality-port equivalence $\Eq$, and blocking repetition $\Blk$.
+\item $\top$ and $\bot$ are declared as grammar primitives, equivalently definable abbreviations.
+\end{itemize}
+
+\section{Files produced}
+
+The accompanying round-10 package contains:
+\begin{itemize}
+\item a revised expanded proof, \texttt{expanded\_split\_forest\_full\_details\_round10\_corrected.tex/pdf};
+\item a revised compact proof sketch, \texttt{repaired\_split\_forest\_abstract\_round10\_corrected.tex/pdf};
+\item this formal response.
+\end{itemize}
+The expanded proof contains the full versions of the dual trace lemma, ranked side-context bound, finite pair/triple product exhaustion, complete-interface replacement lemma, occurrence-local request-cycle lemma, and corrected decidability argument.
+
+\section{Current confidence}
+
+The referee report revealed real issues, but they are repairable within the same split-forest architecture.  The most important conceptual change is that the finite certificate is no longer merely a finite list of intended pair and triple shapes.  It is now a finite generator together with a finite product-state exhaustion of all pair and triple configurations that can occur in its infinite unfolding.  This is the missing bridge between the regular split-forest presentation and decidable validity checking.
+
+I would still recommend independent review of the product-exhaustion and complete-interface descriptor lemmas, since they now carry the largest formal burden.  However, the specific defects raised in the report are addressed by the round-10 repair.
+
+\end{document}
