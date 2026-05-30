@@ -436,7 +436,7 @@ Michael asked Claude to evaluate a companion paper by GPT-5.4 Pro: *"A Contextua
 
 Key features of GPT's framework:
 - **Local states**: tuples (I_M, 0_M, tp_M, ρ_M, w_M) with bounded width N, saturation conditions (L1)–(L3)
-- **Recentering maps**: total maps u: I_Succ(M,i) → I_M satisfying axioms (R1)–(R4) — center preservation, type preservation, RCC5 relation preservation, successor preservation
+- **Recentering maps**: total maps u: I_(Succ(M,i)) → I_M satisfying axioms (R1)–(R4) — center preservation, type preservation, RCC5 relation preservation, successor preservation
 - **Unfolding**: occurrences form an infinite tree of witness-choices; quotient by EQ-congruence yields the model domain
 - **Soundness**: fully proven — every open N-tableau graph unfolds into a genuine strong-EQ model (Theorems 6.3, 6.5, Corollary 6.6)
 - **Completeness**: reduced to the conjecture **FW(C,N)** — every satisfiable concept admits a finite closed family of local states of bounded width
@@ -540,7 +540,7 @@ The architecture is plausible but none of the four tasks are addressed:
 
 **A concrete sub-question posed to both sides:**
 
-> Is the sequence of Hintikka types along an infinite PP-chain eventually periodic? That is, do there exist computable n₀ and p (depending only on |C|) such that tp(e_n+p) = tp(e_n) for all n ≥ n₀?
+> Is the sequence of Hintikka types along an infinite PP-chain eventually periodic? That is, do there exist computable n₀ and p (depending only on |C|) such that tp(e_(n+p)) = tp(e_n) for all n ≥ n₀?
 
 If **yes**: the omega-model route is viable (PP-chains are ultimately periodic).
 If **no**: even the type sequence along a PP-chain can be irregular, pointing toward undecidability.
@@ -1312,7 +1312,7 @@ GPT-5.4 Pro reviewed the third revision (`review4/response_to_latest_two_tier_re
 
 1. **Phasewise safety of arbitrary kernel interfaces**: V_safe conditions appear only in T4 and V6 (designated/off-chain witnesses), but Step 2 copies every kernel interface to every chain element. A regular node m with P ∈ tp(m) and ρ(k_α, m) = DR violates ∀DR.¬P ∈ τ_B if τ_B is a phase on that tail.
 2. **Exact-relation witness extraction (Step 4 of Theorem 7.1)**: T4 requires ρ(k_α, w) = R, but the proof only shows all-phase safety of the stabilized relation S. S = R is not established.
-3. **Circular size bound**: K ≤ D · 4^K+L gives K in terms of K+L, not a bound from |C₀| alone.
+3. **Circular size bound**: K ≤ D · 4^(K+L) gives K in terms of K+L, not a bound from |C₀| alone.
 4. **Regular-node blocking lacks replacement theorem**: The blocking key doesn't track regular-to-regular relations.
 
 ### Claude's response to third review — discovery of the PO gap
@@ -1336,7 +1336,7 @@ Analysis of exact-relation extraction by relation type using the RCC5 compositio
 | PPI | — | comp(PPI, PPI) = {PPI} — absorbed forward | Works: once PPI, always PPI; stabilized = demanded |
 | **PO** | comp(PP, PO) = {DR, PO, PP} — **NOT forced** | comp(PPI, PO) = {PO, PPI} — **NOT absorbed** | **FAILS** |
 
-**The forward transition table** (Lemma 3.7 in fourth revision): Using both forward (comp(PPI, ·)) and backward (comp(PP, ·)) constraints, the valid transitions ρ(d_i, w) → ρ(d_i+1, w) are:
+**The forward transition table** (Lemma 3.7 in fourth revision): Using both forward (comp(PPI, ·)) and backward (comp(PP, ·)) constraints, the valid transitions ρ(d_i, w) → ρ(d_(i+1), w) are:
 - DR → {DR, PO, PPI} (can escape DR)
 - PO → {PO, PPI} (no return to DR)
 - PP → {PO, PP, PPI} (can escape PP)
@@ -3339,7 +3339,7 @@ After the morning's PP/PPI-transitivity fix, Opus 4.7 produced a full adversaria
 
 The review's verdict: **significantly more action is required.** The transitivity fix patched only 2 of 12 counterexamples. The broader family is:
 \[
-  C_R₁, R₂ ≡ ∃R₁.∃R₂.A ⊓ ⋀_R ∈ comp(R₁, R₂) ∀R.¬A,    R₂ ≠ inv(R₁)
+  C_(R₁,R₂) ≡ ∃R₁.∃R₂.A ⊓ ⋀_R ∈ comp(R₁, R₂) ∀R.¬A,    R₂ ≠ inv(R₁)
 \]
 which is unsatisfiable for every such (R₁, R₂): the three-type chain `g →R₁→ j →R₂→ w` with `A ∈ w` forces `g` to relate to `w` by some R ∈ comp(R₁, R₂), and every such R is barred at `g`.
 
@@ -3403,7 +3403,7 @@ Three batches, all run against the cycle-aware quasimodel reasoner (`alcircc5_re
 
 **(a) Regression on the 12 Round-1 counterexamples.** The full 4×4 grid of
 \(
-  C_R₁, R₂ ≡ ∃R₁.∃R₂.A ⊓ ⊓_R ∈ comp(R₁, R₂) ∀R.¬A,    R₂ ≠ inv(R₁)
+  C_(R₁,R₂) ≡ ∃R₁.∃R₂.A ⊓ ⊓_R ∈ comp(R₁, R₂) ∀R.¬A,    R₂ ≠ inv(R₁)
 \)
 — all 12 cells now report UNSAT in both `cover_tree_tableau` and `alcircc5_reasoner_cyclic`. Previously 12 structural mismatches; now 0/12.
 
@@ -3797,9 +3797,9 @@ This is a verbatim match to the block quote on lines 589--596 of `LRCC8_vs_ALCIR
 
 > `[Wes01]` M. Wessel. *Obstacles on the way to qualitative spatial reasoning with description logics: Some undecidability results.* In C. Goble, D.L. McGuinness, R. M\"oller, and P.F. Patel-Schneider, editors, *Proceedings of the International Workshop in Description Logics 2001 (DL2001)*, number 49 in CEUR-WS, pages 96--105, 2001.
 
-No `[Wes02]`, no `[Wes03]`. The 2002/2003 technical report FBI-HH-M-324/03 (`report7.pdf`) --- which contains the fuller development, including decidability of ALCI_RCC1,2,3}, PSPACE-hardness of ALCI_RCC5, EXPTIME-hardness of ALCI_RCC8, the grid construction (Figure~10), the coincidence obstruction (Figure~11), and the hybrid-logic axiomatization --- is not cited.
+No `[Wes02]`, no `[Wes03]`. The 2002/2003 technical report FBI-HH-M-324/03 (`report7.pdf`) --- which contains the fuller development, including decidability of ALCI_RCC{1,2,3}, PSPACE-hardness of ALCI_RCC5, EXPTIME-hardness of ALCI_RCC8, the grid construction (Figure~10), the coincidence obstruction (Figure~11), and the hybrid-logic axiomatization --- is not cited.
 
-**Assessment of dismissiveness.** The phrase *"despite several efforts, to the best of our knowledge no results have been obtained so far"* is their exact wording. This characterization is demonstrably inaccurate even with respect to `[Wes01]` (which contains undecidability results for ALC_RA^⊖ via PCP reduction), and further inaccurate with respect to the uncited `report7.pdf`, which contains the decidability results for ALCI_RCC1,2,3}, complexity lower bounds, the coincidence obstruction analysis, and the hybrid-logic axiomatization.
+**Assessment of dismissiveness.** The phrase *"despite several efforts, to the best of our knowledge no results have been obtained so far"* is their exact wording. This characterization is demonstrably inaccurate even with respect to `[Wes01]` (which contains undecidability results for ALC_RA^⊖ via PCP reduction), and further inaccurate with respect to the uncited `report7.pdf`, which contains the decidability results for ALCI_RCC{1,2,3}, complexity lower bounds, the coincidence obstruction analysis, and the hybrid-logic axiomatization.
 
 **Verdict.** The claim in `LRCC8_vs_ALCIRCC8.tex` stands:
 1. The attributed quote is verbatim;
@@ -4223,7 +4223,7 @@ proof:
 
 The repaired proof formulates ten finite-checkable validity conditions
 (V1)–(V10) on rank-d quotients and a coarse upper bound
-B(C₀) = 2^(2^p(n)) on certificate size for a polynomial p.
+B(C₀) = 2^(2^(p(n))) on certificate size for a polynomial p.
 
 ### Decision: Option 4 — adopt the repaired proof, do verification work
 
@@ -4336,7 +4336,7 @@ more notes on top.
   updated with the repaired-proof path.
 - **`README.md`** — sixteen-odd inline status claims updated across
   the complexity-landscape table (row for ALCI\_RCC5 (full) now cites
-  the repaired proof with B(C₀) = 2^(2^p(n)) bound), the Status
+  the repaired proof with B(C₀) = 2^(2^(p(n))) bound), the Status
   box, the Review verdict box, the Current assessment box, the
   Theory-vs-implementation box, the Eleventh Approach section
   ("Closing the completeness gap"), the Reasoners-and-tools section
@@ -4757,9 +4757,9 @@ Wrote `claude_verification_addendum.tex` (12 pages) closing items
   §5.2 derives coarse polynomial bounds on every component
   (|Typ(C₀)| ≤ 2ⁿ, |Port(σ)| ≤ n+1, mosaics with m(n) positions,
   request summaries (n+1)·2·2²ⁿ bits per profile, blocked
-  graph size |S| ≤ |Σ| ≤ 2^p(n)); Lemma 5.2 (enumeration
+  graph size |S| ≤ |Σ| ≤ 2^(p(n))); Lemma 5.2 (enumeration
   bound) shows the total number of certificates of size ≤
-  B(C₀) = 2^(2^p(n)) is at most 2^(2^q(n)) for some
+  B(C₀) = 2^(2^(p(n))) is at most 2^(2^(q(n))) for some
   polynomial q(n), and each validity clause (V1)--(V10) is
   decidable in time polynomial in |Q|.  C8 moves from OPEN to
   CLOSED (paper).
@@ -4792,12 +4792,12 @@ elides two checks:
   Theorem 6.2 covers all four cases of the structural induction
   over Cl(C₀):  atomic and negated-atomic (intersection with W),
   Boolean (∩/∪ membership decomposition), existential (selected
-  witness w(a, ∃R.D) is in W by construction of W_i+1), and
+  witness w(a, ∃R.D) is in W by construction of W_(i+1)), and
   universal — the only non-trivial case.  The universal converse
   uses the contrapositive: if a ∉ (∀R.D)^I, then a ∈ (∃R.¬D)^I,
   and by complement closure of Cl(C₀), ∃R.D̄ ∈ Cl(C₀), so the
   selected witness w(a, ∃R.D̄) is in W with ρ(a, w) = R and
-  w ∈ D̄^I, by IH w ∉ D^I↾W.
+  w ∈ D̄^I, by IH w ∉ D^(I↾W).
 
 Strong-EQ is load-bearing: a remark explains that without it the
 existential case for R = EQ would not reduce to IH (a witness
@@ -4883,7 +4883,7 @@ which grew from 16 to 23 pages and became fully self-contained:
   (JEPD, strong equality, RCC5 composition, closure-formula truth).
 - **§8.1--§8.3** carry the explicit grammar of certificate
   components, component-wise polynomial bounds, and derivation of
-  B(C₀) = 2^(2^p(n)).
+  B(C₀) = 2^(2^(p(n))).
 - **§7.2** expands the request-closed lasso lemma with an explicit
   checkpoint structure — pending set, extended profile, infinite
   checkpoint sequence by pigeonhole, and a 5-step structured proof
@@ -4944,7 +4944,7 @@ from 23 to 31 pages.
   legality (Lemma 4.6) proving PP/PPI exclusion from the
   sibling-frontier via a witness-generated submodel construction.
 - **G6 (commit `0e8ba02`) Grammar-first finite bound.**
-  §9 was rewritten so B(C₀) = 2^(2^p(n)) is derived
+  §9 was rewritten so B(C₀) = 2^(2^(p(n))) is derived
   grammar-first: the informal context-width prose was replaced
   with the explicit cubic m(n) = O(n³) from Lemma 4.4, and the
   grammar productions Mosaic ::= ⟨P, τ_M, L_M, Vrt_M⟩ and
@@ -4984,7 +4984,7 @@ were brought into line with the current state of the proof.
   Mate_Q(s) in (V3)/(V4)/(V5)/(V9.Eb), the abstract
   triple graph T_Q with explicit cardinality bounds, the
   side-interface Side(u) of polynomial width O(n³),
-  and the grammar-first derivation of B(C₀) = 2^(2^p(n)).
+  and the grammar-first derivation of B(C₀) = 2^(2^(p(n))).
   The legacy "(G1)--(G8)" reference (v2.1 round-2 gaps) was
   reworded to avoid name collision with the fourth-review
   "(G1)--(G6)".  Compiles cleanly to 19 pages.
@@ -5059,7 +5059,7 @@ Two follow-ups to the 5-21 refresh.
     bounds on Pos_Q and Trip_Q; (vii) the
     side interface Side(u) with polynomial width
     m(n) = O(n³).  The certificate-space bound B(C₀) =
-    2^(2^p(n)) is now derived *grammar-first* from these
+    2^(2^(p(n))) is now derived *grammar-first* from these
     component bounds.
   - The "Theory vs. implementation" disclaimer block listed only
     the three round-2 fixes for completeness; it was extended to
@@ -5243,7 +5243,7 @@ V9.Eb').
 Polynomial side-width m(n) = O(n³) replaced by a recurrence
 m(d{+}1) = 1 + n³(1+k_Mate+k_bd) + n³ m(d) over modal
 depth.  Effectively computable, no longer polynomial; matches
-round-5 item 9.  B(C₀) ≤ 2^(2^p(n)) preserved.
+round-5 item 9.  B(C₀) ≤ 2^(2^(p(n))) preserved.
 
 Worked v2 certificate for C_side in §6 of the paper,
 explicitly verifying all four (M6') sub-clauses on a 3-position
@@ -5273,7 +5273,7 @@ at z.
 - **Item 6 (joint equality validity clause).**  Assumption (A4) of
   the round-4 typed-EQ quotient theorem promoted to explicit
   validity clause (V13): the certificate declares a joint witness
-  w_E^R,D per equality class E per existential, working
+  w_E^(R,D) per equality class E per existential, working
   uniformly for all ports in E.  Lemma proves (V13) implies (A4).
 
 - **Item 7 (half-open cycle convention).**  Request-fulfilled
@@ -5293,7 +5293,7 @@ at z.
   Σ.
 
 Combined certificate validity check now has 14 clauses (V1)--(V14)
-plus (M6').  B(C₀) ≤ 2^(2^p(n)) preserved.
+plus (M6').  B(C₀) ≤ 2^(2^(p(n))) preserved.
 
 ### Status caveat
 
