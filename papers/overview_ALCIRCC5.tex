@@ -342,10 +342,16 @@ $\downarrow$ (nominals) would immediately yield undecidability,
 confirming that the coincidence condition is the \emph{precise
 boundary}.
 
-These constructions---the even-odd chain, the grid encoding via
-$\TPP/\NTPP$, and the identification of the coincidence gap as
-the decisive obstacle---anticipated key technical ingredients of
-the later Lutz--Wolter proof by three to four years.
+Wessel thus independently developed, three to four years before
+Lutz--Wolter, the RCC8 description-logic analogues of these
+ingredients---the even-odd chain, an explicit two-dimensional
+$\TPP/\NTPP$ grid, and the first identification of the coincidence
+gap as the decisive obstacle.  Lutz--Wolter later obtained
+undecidability by a \emph{different} route---a linearized tiling
+enumeration (their~\S5, following Marx--Reynolds) that sidesteps the
+two-dimensional coincidence rather than enforcing it---so this is
+shared lineage and prior identification, not a dependence of their
+proof on Wessel's constructions.
 
 \subsection{Lutz \& Wolter (2006)}
 
@@ -356,9 +362,10 @@ interpreted over \emph{topological models}: the domain elements
 are regular closed subsets of a topological space (typically~$\reals^n$).
 They proved:
 \begin{itemize}
-  \item $\LRCC{8}$ is \textbf{undecidable} (domino tiling via
-    functional $\TPP$-chains, with the grid coincidence forced
-    by the geometry of $\reals^2$).
+  \item $\LRCC{8}$ is \textbf{undecidable} (their~\S5: a linearized
+    $\NTPP$-chain enumeration of tile positions, following
+    Marx--Reynolds, whose faithfulness relies on the geometry of
+    $\reals^n$; no two-dimensional grid coincidence is enforced).
   \item $\LRCC{5}(\mathit{RS}^\exists)$ is \textbf{undecidable}
     (reduction from $S5^3$ via supremum regions).
   \item $\LRCC{5}(\mathit{RS})$ is \textbf{open}. Lutz and Wolter
@@ -400,7 +407,7 @@ $\naturals \times \naturals$ domino & Graded modalities + transitivity & Number 
 $\ALC_{\mathcal{RA}}$ \cite{Wessel2001RA} & Post Correspondence Problem & Arbitrary role axioms \\
 $\ALC_{\mathcal{RA}}^\ominus$ \cite{Wessel2000RA} & Non-empty CFG intersection & Non-disjoint roles \\
 $\ALCIRCC{8}$ (Wessel) & Grid via $\TPP/\NTPP$ & $\TPP/\NTPP$ distinction \\
-$\LRCC{8}$ (Lutz--Wolter) & Domino via topological $\TPP$ & Grid coincidence \\
+$\LRCC{8}$ (Lutz--Wolter) & Linearized topological enumeration & Topological rigidity \\
 $\LRCC{5}(\mathit{RS}^\exists)$ & $S5^3$ via supremum regions & Supremum closure \\
 \bottomrule
 \end{tabular}
@@ -546,11 +553,12 @@ distinct grid cells distinct.
 \begin{remark}
 The failure mode is structurally different from the RCC5 one but
 traces back to the same root cause.  Lutz--Wolter's $\LRCC{8}$
-reduction resolves the coincidence obstruction using topological
-geometry of $\reals^2$: east-of-north coincides with north-of-east
-as a geometric fact, and each grid cell is a 2D region whose
-boundary inclusions force distinct corners to be genuinely
-distinct~\cite{LutzWolter2006}.  No such rigidity is available in
+reduction \emph{circumvents} the coincidence obstruction rather than
+enforcing it: they linearize the plane into a single $\NTPP$-chain
+(the Marx--Reynolds enumeration) and recover the vertical direction
+from the enumeration, so no ``north-of-east $=$ east-of-north''
+coincidence has to be forced; the geometry of $\reals^n$ only has to
+keep that linear encoding faithful~\cite{LutzWolter2006}.  No such rigidity is available in
 the abstract RCC8 semantics of $\ALCIRCC{8}$: a pure composition
 table allows corner points to merge freely, and the $\TPPI/\NTPPI$
 distinction---while useful locally for a direct/indirect
