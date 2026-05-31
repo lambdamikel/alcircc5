@@ -37,6 +37,41 @@
 
 - **2026-05-05 — Copilot's parity-ω-word automaton decidability proof** ([PDF](papers/copilot.pdf)).  Independent attempt using a deterministic parity ω-word automaton, archived alongside the rest of the historical material.
 
+## Status Report — End of May 2026
+
+*After two months of intensive AI-assisted work (April–May 2026), we have concluded that:* the decidability of ALCI\_RCC5 and ALCI\_RCC8 **remains open**; our decidability argument is **strongly supported but not certified**; and the project has reached a natural **consolidation point**. We are deliberately stopping the cold-review / repair cycle rather than continuing it. This section records where things actually stand and why.
+
+### What is settled (and worth keeping)
+
+- **The Lutz–Wolter non-transfer result and the priority record.** Verified against the primary sources (Lutz & Wolter, *Modal Logics of Topological Relations*, LMCS 2(2:5) 2006; Wessel's 2002/2003 [report7.pdf](papers/report7.pdf)): the topological undecidability of L\_RCC8 and L\_RCC5(RS^∃) does **not** transfer to the abstract composition-table semantics of ALCI\_RCC8 / ALCI\_RCC5. Wessel's 2002/2003 report independently developed the RCC8 description-logic analogues of the relevant constructions and was first to identify the *coincidence obstruction*, predating Lutz & Wolter (who cite only the shorter [Wes01]); they later obtained undecidability by a *different*, separately-attributed route (a linearized tiling enumeration in the Marx–Reynolds lineage). This note is finished, primary-source-verified, and diplomatic — see [LRCC8\_vs\_ALCIRCC8.pdf](papers/LRCC8_vs_ALCIRCC8.pdf).
+- **The cover-tree tableau implementation.** Reproduces the GIS taxonomy of report7 Figure 6 (21/21 subsumptions), 23 years later, implemented by an AI; cross-validated on 911 concepts ([`src/cover_tree_tableau.py`](src/cover_tree_tableau.py), [`src/gis_taxonomy.py`](src/gis_taxonomy.py)).
+- **The computational verification harnesses** (WP1–WP13 under [`verification/python/`](verification/python/)): finite-combinatorial cross-checks of the proof's content — all pass, no counterexample found.
+- **The methodology and the honest capability assessment.** "Cold review as a standard intermediate step" worked repeatably; the documented, calibrated account of what two frontier models (Claude, GPT-5.5) could and could not do across this project is itself a contribution.
+
+### What remains open (the decidability proof)
+
+The canonical statement is the **round-12 patchwork-bag + two-way alternating parity tree automaton** proof ([`split_forest_patchwork_automata_repaired.pdf`](papers/automata_route_repairs/split_forest_patchwork_automata_repaired.pdf)). Its honest status is **strongly supported, not certified**:
+
+- **Six cold reviews, six defects, no clean pass.** Every manuscript ever declared "canonical" was punctured by a fresh-session review. The only fully trustworthy signal — a cold review that finds *nothing* — has never occurred.
+- **But the trajectory is convergent.** The repairs moved from bespoke, hand-built machinery (which the next review kept breaking) toward **standard, citable theorems**: round-12 rests global consistency on the RCC5 *patchwork property* (Renz–Nebel 1999) and decides via two-way parity-automaton emptiness (Vardi 1998). The single remaining home-grown keystone is **patchwork-bag adequacy** — that the saturated split-forest is faithfully captured by finite patchwork bags. The 6th reviewer judged the theorem *most likely true and reachable by standard techniques*, and could not construct an accepted-but-unsatisfiable witness.
+
+### Why we are stopping the round treadmill
+
+More prose rounds have **diminishing returns and cannot certify the result.** A cold review that finds nothing is only "no defect *found*" — not a proof. The two paths that can actually *settle* the question are:
+
+1. **Mechanization (Lean / Coq).** Difficulty is very uneven across the proof's layers:
+   - *Finite / algebraic core* (composition table, JEPD, finite network checks) — **easy**, days to weeks; essentially `decide`-able.
+   - *Theorem A* (the split-forest normal form) — **heavy but standard**, months of infinite-model bookkeeping, no conceptual novelty for a proof assistant.
+   - *The two external pillars* — **expensive**: the RCC5 patchwork property is provable but, to our knowledge, unmechanized; and **two-way alternating parity *tree* automaton emptiness (Vardi) is, to our knowledge, not mechanized in any proof assistant** and is near the frontier of what has been formalized.
+   - *Patchwork-bag adequacy* (the keystone) — **the wildcard**: the one step never cold-reviewed, where a formalization is genuine research, not transcription (Lean will either close it or pinpoint the gap — strictly more informative than another prose round).
+
+   The tractable strategy is to **axiomatize the two citable external theorems and mechanize only the novel glue** (Theorem A + patchwork-bag adequacy) — a focused 6–12 month effort that is *time*-expensive, not *dollar*-expensive. A cheap first half-step: machine-check just the finite combinatorial core (WP1 / WP6 + the patchwork property as used), upgrading "Python-stress-tested" to "machine-checked" without committing to the keystone.
+2. **Human peer review.** The cold-review loop was a *substitute* for expert human review; the honest endgame is to hand the round-12 proof — labeled exactly as it is — to the description-logic community.
+
+### Disposition
+
+We **freeze the decidability proof at round-12**, honestly labeled, with the complete audit trail preserved in [OUTDATED.md](OUTDATED.md) and [CONVERSATION.md](CONVERSATION.md). We **ship the finished side-contributions** (the non-transfer note, the overview discussion piece, the implementation). Mechanization and human peer review are reserved as deliberate future moves — not the next reflexive round. Reporting a problem that has been open for 20+ years as *strongly supported but not certified*, with the standard undecidability routes shown blocked and a convergent-but-unclosed decidability argument, is an accurate and respectable terminal state for a discussion piece. The more important contribution may be the demonstration that this kind of work — sustained, adversarial, self-correcting formal mathematics with AI in the loop and a human steering — is now possible at all.
+
 ## Overview paper
 
 A self-contained **[overview paper (PDF)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.pdf)** (27 pages) surveys the entire project: the history of ALCI\_RCC5 (Cohn 1993, Wessel 2002/2003, Lutz & Wolter 2006), why all known undecidability reductions fail (including a concrete domino-encoding attempt verified as blocked), why naive tableau blocking fails for complete-graph logics, the split-forest model decomposition and cover-tree tableau, and how the approach achieves decidability. See also the [source (LaTeX)](https://github.com/lambdamikel/alcircc5/blob/master/papers/overview_ALCIRCC5.tex).
