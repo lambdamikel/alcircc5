@@ -6017,3 +6017,67 @@ mostly mechanical, but the brace-stripping silently *changed formula readings*:
 exponents/subscripts need explicit parens; the fix was 2^(2^(p(n))) etc.  Lesson:
 keep Markdown LaTeX-free, and never trust a mechanical math conversion without
 re-checking grouping.
+
+
+## 2026-05-30/31: the automata route was cold-reviewed twice (5th and 6th); round-11, then round-12 (patchwork)
+
+Continuing the pattern -- two more cold reviews, two more defects -- but the
+trajectory turned: the repairs are now *standard citable theorems* rather than
+fresh bespoke machinery.
+
+**5th cold review (2026-05-30, automata route).** A fresh GPT-5.5 session reviewed
+the 21-page automata proof just promoted to primary and found its `Patch`
+invariant -- that a finite *local* check forces *global* RCC5 composition +
+universal propagation + equality congruence -- assumed, not constructed; the
+"automaton" was prose, not a total transition function.  UNSAT witnesses it would
+wrongly accept: C_force = (exists PP.(exists DR.A)) and (forall DR.not A), via
+comp(PP,DR)={DR}; C_split; C_recursive.  So the automata route had carried the
+no-automata route's keystone gap all along -- "decided by non-emptiness" was
+illusory until the automaton was shown genuinely finite.  GPT-5.5 repaired it
+(round-11) with finite pair/triple product-state representatives -- the *same*
+convergent idea as round-10 -- plus an A/B/C companion isolating Theorem A
+(normal form; shared, sound), Theorem B (finite abstraction adequacy = the
+keystone), Theorem C (automaton).  Both routes had now provably converged on
+Theorem B.
+
+**6th cold review (2026-05-31, Theorem B).** Theorem B was the obvious next
+target, so we built a neutralised cold-review packet (`papers/cold_review_theoremB/`)
+and ran it on a fresh, genuinely cold Opus 4.8 -- a *different model lineage* from
+GPT-5.5, who authored the proof.  Verdict: genuine gap, theorem most likely true,
+repairable.  The keystone (Lemma 6.9 finite pair/triple representation) reads a
+globally consistent RCC5 labelling of an *infinite* tree off purely *local*
+interface-transformer checks, and the required confluence law
+(initialise-at-ancestor-then-push-down = initialise-at-LCA) is asserted, never
+checked (C1).  Same gap in the multi-parent split (C2) and equality-port
+congruence (C3); plus M1-M4.  The reviewer could *not* build an accepted-unsat
+witness, re-verified the composition table + witness thinning + every diagnostic
+verdict, and recommended the *principled* fix: stop hand-deriving global coherence
+-- cite the RCC5 *patchwork property* -- and use a *two-way* automaton (Vardi).
+
+**Round-12 (2026-05-31, patchwork).** GPT-5.5 took exactly that route:
+`split_forest_patchwork_automata_repaired.tex` (14pp) deletes the transformer
+layer and rebuilds on a patchwork-bag abstraction (finite bags = complete RCC5
+networks, glued by the patchwork property), a two-way alternating parity
+automaton, exact tree-decomposition identity for EQ, and exact relation-vector
+shadows for universals.  The significance: for the first time the fix is "cite a
+standard theorem the project has already stress-tested (WP6 = the patchwork
+property)" rather than "add a bespoke lemma."  Remaining mathematical dependence
+localises to two standard external results (RCC5 patchwork property; two-way
+parity-automaton emptiness, Vardi 1998); the new (smaller) keystone is
+patchwork-bag adequacy.  Round-12 is not cold-reviewed in turn, so status stays
+"strongly supported, not certified" -- now 6 reviews, 6 defects -- but on
+conventional footing.
+
+**Verification note.** WP6 (patchwork-property stress) is now the most relevant
+computational backing, since it exercises round-12's central external dependency.
+`wp13_referee_acceptance_tests.py`'s product-state *mechanism* is superseded by
+patchwork bags, but its acceptance-test *verdicts* (C_force/C_split UNSAT,
+C_recursive/C_up SAT) remain the correct spec, re-verified by the 6th review and
+still decided correctly by the cover-tree tableau.
+
+**Doc note.** Recompiling the overview papers for round-12 surfaced two
+pre-existing latent LaTeX bugs introduced back in commit 7dcf9a2: line 1141 used
+\Cl, \I, and \eqc, none of which were ever defined (the committed PDF had been
+built from a transient state where they were).  Fixed by defining \eqc (= approx)
+and using the paper's existing \cl / \mathcal{I} notation; both overviews now
+build clean (27 / 28 pp, 0 undefined control sequences, 0 undefined refs).
