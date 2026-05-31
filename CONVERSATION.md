@@ -6081,3 +6081,57 @@ pre-existing latent LaTeX bugs introduced back in commit 7dcf9a2: line 1141 used
 built from a transient state where they were).  Fixed by defining \eqc (= approx)
 and using the paper's existing \cl / \mathcal{I} notation; both overviews now
 build clean (27 / 28 pp, 0 undefined control sequences, 0 undefined refs).
+
+
+## 2026-05-31 (later): downloaded Lutz--Wolter, verified the priority claim against the primary source, corrected the LRCC8-vs-ALCIRCC8 paper
+
+A previous session had claimed (in conversation) that Lutz--Wolter "very
+literally use the same coincidence formula" from Wessel's report7.  A fresh
+Opus 4.8 review of the `LRCC8_vs_ALCIRCC8` paper flagged its priority section as
+overreaching: the abstract, Table 1, and \S7.4 framed Wessel as having
+"anticipated the key technical ingredients of the Lutz--Wolter proof" (implying
+their proof depends on his constructions).  To settle it we downloaded the
+actual paper (Lutz & Wolter, *Modal Logics of Topological Relations*, LMCS
+2(2:5) 2006; arXiv cs/0605064) and checked it against report7.
+
+**Primary-source finding.**  L--W's RCC8 undecidability is their **\S5**
+(Theorem 5 / Corollary 6, Figure 4 "Enumerating tile positions"), and it is
+**not** Wessel's grid.  They *linearize* the plane into a single ntpp-chain
+r_1, r_2, ... enumerating positions via an enumeration lambda, add "go right"
+regions, and recover "up" as "go right then advance one in the enumeration" ---
+explicitly "following the lines of Marx and Reynolds."  Wessel's construction
+(report7 Fig 10) is a *native 2-D grid* with two TPP-successors and the
+coincidence R_X o R_Y = R_Y o R_X stated as the hardest condition, shown
+unenforceable abstractly.  So the two took **different routes at the same
+obstacle**; the only shared ingredient is the functional-successor parity
+trick (Marx--Reynolds / PDL lineage, which Wessel also cites).  The "same
+formula" claim was false.
+
+**Citation error, also found.**  The paper attributed the L--W grid to "\S8 /
+Theorem 8.2," but \S8 is L--W's *RCC5* section; the RCC8 result is \S5 / Thm 5
+/ Cor 6.  (The README's separate "Section 8" reference for L_RCC5(RS) is
+correct --- that IS their RCC5 section, the one they say "does not apply" to
+RS.)
+
+**Corrections (this session).**  Realigned the paper's abstract, \S7.4, and
+Table 1 from the strong "anticipated the ingredients of their proof" to the
+defensible "independently developed the RCC8-DL analogues and was first to
+identify the obstruction; L--W close it by a different, topologically grounded
+linearized construction."  Rewrote \S4.2 to describe the actual linearization;
+fixed \S8 -> \S5 and Thm 8.2 -> Thm 5 / Cor 6; reconciled \S5 Prop 5 (which had
+framed non-transfer around a literal 2-D z/z' coincidence in L--W's formula) to
+rest on "the abstract semantics lacks the topological rigidity the linear
+encoding needs," with Wessel's coincidence obstruction kept as the *structural*
+reason grid encodings are blocked in abstract RCC8.  Fixed 5 pre-existing
+\NR_8 double-subscript LaTeX errors; the paper now compiles to 12 pp with 0
+errors.  README L--W sections rewritten to match.  The non-transfer conclusion
+(the paper's actual contribution) and the defensible priority kernel are
+unchanged; Claude stays in the byline per the author's instruction.  The L--W
+PDF was downloaded for verification but left **uncommitted** (third-party,
+though CC-BY).
+
+**Lesson.**  A prior session's confident factual claim ("they literally reuse
+the formula") was an overstatement that had drifted into the paper's framing;
+the fix was to read the actual source.  Cross-checking priority/credit claims
+about named researchers against the primary text --- not against a confident
+prior summary --- is the discipline.
