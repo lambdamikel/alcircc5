@@ -1,0 +1,772 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,longtable,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\Bag}{\operatorname{Bag}}
+\newcommand{\Front}{\operatorname{Front}}
+\newcommand{\Sh}{\operatorname{Sh}}
+\newcommand{\Obl}{\operatorname{Obl}}
+\newcommand{\APTA}{\mathcal A}
+\newcommand{\Nat}{\mathbb N}
+\newcommand{\calI}{\mathcal I}
+\newcommand{\calN}{\mathcal N}
+\newcommand{\calT}{\mathcal T}
+\newcommand{\calB}{\mathcal B}
+\newcommand{\calP}{\mathcal P}
+\newcommand{\calQ}{\mathcal Q}
+\newcommand{\calS}{\mathcal S}
+\newcommand{\ul}[1]{\underline{#1}}
+
+\title{A Repaired Split-Forest Automata Proof of Decidability for $\mathcal{ALCI}_{\RCC}$\\
+\large Patchwork Bags, Exact Occurrence Identity, and Two-Way Parity Checking}
+\author{Prepared as a consolidated proof manuscript}
+\date{May 31, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note gives a repaired proof scheme for decidability of concept satisfiability for
+$\mathcal{ALCI}$ whose roles are the five atomic RCC5 relations
+$\EQ,\PP,\PPI,\PO,\DR$, interpreted over abstract complete atomic RCC5 frames with
+strong equality.  The proof keeps the split-forest idea as the semantic normal form, but
+it replaces the earlier transformer-based finite abstraction by a patchwork-bag
+abstraction.  The key change is that global RCC5 coherence is no longer derived from
+route-dependent pair and triple transformers.  Instead, each bag carries a finite complete
+RCC5 network, adjacent bags agree on overlaps, and global consistency follows from the
+patchwork property of RCC5.  Equality is treated as exact occurrence identity in the tree
+decomposition, not as a quotient of repeated blocking profiles.  Universal restrictions
+are checked by relation-set shadows, and infinite vertical eventualities are handled by a
+two-way alternating parity tree automaton.  This is a proof for abstract composition-table
+RCC5 frames, not for topological RCC5 semantics.
+\end{abstract}
+
+\tableofcontents
+
+\section{Motivation and relation to the original split-forest idea}
+
+The original split-forest idea remains the essential model-theoretic normal form.  Its
+purpose is not to compute the Hasse diagram of an arbitrary semantic RCC5 model.  Rather,
+it says that after witness thinning one may work with a generated containment
+presentation: selected $\PP/\PPI$ witnesses are represented vertically, selected
+$\DR/\PO$ witnesses are represented in finite side contexts, and multiple incomparable
+proper-superpart witnesses are handled by split occurrences connected through explicit
+identity ports.
+
+The part that has changed is the finite abstraction layer.  Earlier drafts attempted to
+recover the global relation $\rho(x,y)$ by pushing pair and triple states through
+interface transformers.  That creates a coherence problem: computing a pair from its
+least common interface and computing the same pair as a projection of a higher triple
+need not agree unless a nontrivial confluence theorem is proved.  The present proof avoids
+that issue.  The finite object is a tree decomposition by \emph{patchwork bags}.  Each bag
+is a finite complete RCC5 network.  The only required compatibility between bags is
+agreement on shared occurrences.  Global RCC5 consistency then follows from the RCC5
+patchwork theorem.  Thus the split forest supplies the normal form, while the automaton
+checks existence of a regular labelled tree of finite patchwork bags.
+
+This gives the following theorem spine.
+\begin{description}[leftmargin=2.7cm,style=nextline]
+\item[Theorem A.] Every satisfiable concept has a witness-generated saturated
+split-forest presentation.
+\item[Theorem B.] Saturated split forests are exactly represented, up to the closure of the
+input concept, by finite patchwork-bag abstractions.
+\item[Theorem C.] A finite two-way alternating parity tree automaton accepts exactly the
+patchwork-bag abstractions satisfying the input concept.
+\end{description}
+The decidability theorem follows from the decidability of emptiness for finite two-way
+alternating parity tree automata.
+
+\section{RCC5 frames and the two external finite-model facts}
+
+\subsection{The abstract frame semantics}
+
+Let
+\[
+\Rel=\{\EQ,\PP,\PPI,\PO,\DR\}.
+\]
+An \emph{abstract complete atomic RCC5 frame} is a nonempty set $\Delta$ together with a
+map
+\[
+\rho:\Delta^2\to \Rel
+\]
+such that for all $x,y,z\in\Delta$:
+\begin{enumerate}[label=(R\arabic*)]
+\item $\rho(x,y)=\EQ$ iff $x=y$;
+\item $\rho(y,x)=\rho(x,y)^{-1}$, where $\PP^{-1}=\PPI$, $\PPI^{-1}=\PP$, and
+$\EQ,\PO,\DR$ are self-converse;
+\item $\rho(x,z)\in\Comp(\rho(x,y),\rho(y,z))$, where $\Comp$ is the RCC5 composition
+operation.
+\end{enumerate}
+We use the standard RCC5 composition table:
+\[
+\begin{array}{c|ccccc}
+\Comp & \EQ & \PP & \PPI & \PO & \DR\\\hline
+\EQ & \{\EQ\} & \{\PP\} & \{\PPI\} & \{\PO\} & \{\DR\}\\
+\PP & \{\PP\} & \{\PP\} & \Rel & \{\PP,\PO,\DR\} & \{\DR\}\\
+\PPI & \{\PPI\} & \{\EQ,\PP,\PPI,\PO\} & \{\PPI\} & \{\PPI,\PO\} & \{\PPI,\PO,\DR\}\\
+\PO & \{\PO\} & \{\PP,\PO\} & \{\PPI,\PO,\DR\} & \Rel & \{\PPI,\PO,\DR\}\\
+\DR & \{\DR\} & \{\PP,\PO,\DR\} & \{\DR\} & \{\PP,\PO,\DR\} & \Rel
+\end{array}
+\]
+An interpretation of $\mathcal{ALCI}_{\RCC}$ consists of such a frame and an assignment of
+concept names to subsets of $\Delta$.  The five RCC5 relations are ordinary roles:
+\[
+\calI,x\models \exists R.C\quad\text{iff}\quad
+\text{there is }y\in\Delta\text{ with }\rho(x,y)=R\text{ and }\calI,y\models C,
+\]
+and similarly for universal restrictions.  Since $\EQ$ is identity, $\exists\EQ.C$ and
+$\forall\EQ.C$ are equivalent to $C$; below we normalize them away.
+
+\subsection{Patchwork for complete RCC5 networks}
+
+The proof uses one algebraic fact about RCC5.
+
+\begin{theorem}[RCC5 patchwork property]\label{thm:patchwork}
+Let $N_1,N_2$ be finite complete atomic RCC5 networks over variable sets $V_1,V_2$.
+Assume that each $N_i$ is satisfiable as an abstract RCC5 network and that $N_1$ and
+$N_2$ agree on the common variables $V_1\cap V_2$.  Then the union network on
+$V_1\cup V_2$ is satisfiable.  The same holds for any finite tree-shaped family of
+finite complete RCC5 networks agreeing on pairwise overlaps.  Moreover, any countable
+tree-shaped family has a countable abstract completion all of whose finite restrictions
+are patchwork unions of finitely many bags.
+\end{theorem}
+
+\begin{proof}[Proof indication]
+The two-network statement is the usual patchwork property of atomic RCC5.  The finite
+family statement follows by induction over the tree of bags, repeatedly amalgamating one
+leaf bag with the already amalgamated remainder.  For a countable tree of bags, every
+finite set of variables is contained in the union of finitely many bags after adding the
+finite connecting subtree.  That finite restriction is satisfiable by the finite
+patchwork property.  Since the relation alphabet is finite, a standard compactness/Konig
+argument yields a labelling of all pairs in the countable union whose every finite
+restriction is one of these satisfiable finite patchworks.  This is an abstract
+composition-table argument; it does not claim topological representability.
+\end{proof}
+
+Theorem~\ref{thm:patchwork} is precisely what replaces the earlier transformer-coherence
+lemma.  No relation in the global model is computed by following an interface route.  It
+is supplied by a patchwork completion of locally consistent complete bag networks.
+
+\subsection{Two-way alternating parity tree automata}
+
+We also use the standard fact that emptiness for finite two-way alternating parity tree
+automata over finite ranked alphabets is decidable.  Two-way motion is convenient because
+it allows the automaton to revisit ancestor and sibling interfaces instead of relying on
+lossless one-way shadows.  The use of two-way motion is only in the decision layer; the
+semantic normal form remains a split-forest presentation.
+
+\section{Syntax, closure, types, and witness thinning}
+
+Put all concepts in negation normal form.  For each NNF concept $D$, write $\overline D$
+for its NNF complement.  Let $\Cl(C_0)$ be the least finite set containing $C_0$, closed
+under subformulas, under $D\mapsto\overline D$, and with $\exists\EQ.D,\forall\EQ.D$
+replaced by $D$.
+
+\begin{definition}[Hintikka type]
+A type over $\Cl(C_0)$ is a set $t\subseteq\Cl(C_0)$ such that:
+\begin{enumerate}[label=(T\arabic*)]
+\item exactly one of $D,\overline D$ is in $t$ for each $D\in\Cl(C_0)$;
+\item $D\sqcap E\in t$ iff $D,E\in t$, and $D\sqcup E\in t$ iff $D\in t$ or $E\in t$;
+\item the EQ-normalized clauses $\exists\EQ.D\leftrightarrow D$ and
+$\forall\EQ.D\leftrightarrow D$ are respected when such formulas occur before
+normalization.
+\end{enumerate}
+Let $\mathsf{Typ}$ be the finite set of all such types.
+\end{definition}
+
+\begin{lemma}[Witness-generated submodel]\label{lem:thin}
+If $\calI,a_0\models C_0$, then there is a subinterpretation $\calI\upharpoonright W$ with
+$a_0\in W$ such that:
+\begin{enumerate}[label=(\roman*)]
+\item $W$ is generated from $a_0$ by choosing, for every $a\in W$ and every
+$\exists R.D\in\Cl(C_0)$ true at $a$, one witness $b$ with $\rho(a,b)=R$ and
+$\calI,b\models D$;
+\item for every $a\in W$ and every $D\in\Cl(C_0)$,
+\[
+\calI,a\models D\quad\Longleftrightarrow\quad \calI\upharpoonright W,a\models D .
+\]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Let $W$ be the least subset containing $a_0$ and all selected witnesses for existential
+closure formulas at already generated elements.  The proof is by induction on $D\in
+\Cl(C_0)$.  Atomic and Boolean cases are immediate.  For $D=\exists R.E$, a witness in
+$\calI$ is retained by construction.  Conversely, any witness in the restricted model is
+also a witness in $\calI$.  For $D=\forall R.E$, the forward direction is inherited by
+restriction.  For the reverse direction, suppose $a\not\models_\calI\forall R.E$.
+Then $a\models_\calI\exists R.\overline E$.  Since $\Cl(C_0)$ is closed under NNF
+complement, the selected witness for $\exists R.\overline E$ lies in $W$, and by the
+induction hypothesis it still satisfies $\overline E$ in the restricted model.  Hence the
+universal fails there as well.
+\end{proof}
+
+\section{Saturated split-forest presentations}
+
+The split-forest presentation is a normal form for witness-generated models.  It is not a
+Hasse diagram of an arbitrary original model.  It is a generated containment presentation.
+
+\begin{definition}[Generated containment skeleton]
+A generated containment skeleton is a forest-like directed structure whose vertical edges
+are selected $\PPI$-cover edges downward, equivalently selected $\PP$-cover edges upward.
+The semantic $\PP$ and $\PPI$ relations along a branch are the strict ancestor and strict
+descendant closures of these selected cover edges.  The skeleton may have infinite rays.
+Blocking repetitions are presentation repetitions, not semantic equality.
+\end{definition}
+
+A node may need several incomparable selected $\PP$-superpart witnesses.  Rather than
+assigning several parents to one tree node, the presentation uses a tree decomposition of
+finite bags.  The same semantic occurrence may be present in several bags through shared
+ports; the occurrence is one vertex of the decomposition, not two vertices related by a
+nontrivial $\EQ$ edge.
+
+\begin{definition}[Patchwork bag]
+A patchwork bag is a finite object
+\[
+B=(P_B,N_B,\tau_B,\iota_B,W_B,U_B,E_B)
+\]
+where:
+\begin{enumerate}[label=(B\arabic*)]
+\item $P_B$ is a finite set of local port positions, drawn from a fixed finite set
+$\{1,\ldots,K\}$;
+\item $N_B:P_B^2\to\Rel$ is a complete atomic RCC5 network satisfying the composition
+table on all triples in $P_B$ and with $N_B(p,q)=\EQ$ iff $p=q$;
+\item $\tau_B(p)\in\mathsf{Typ}$ is the concept type of $p$;
+\item $\iota_B$ records overlap maps to the parent and children of the bag; overlap maps
+are partial injections preserving $N_B$ and $\tau_B$;
+\item $W_B$ records local witnesses for existential restrictions, either as a port in the
+same bag or as a declared vertical request to be fulfilled by parity;
+\item $U_B$ records relation-set universal obligations carried by live occurrences and
+shadows;
+\item $E_B$ records exact occurrence identity through overlaps.  There is no nontrivial
+semantic $\EQ$ between distinct ports; identity means that two port occurrences are the
+same vertex of the tree decomposition by the equivalence relation generated by overlap
+maps.
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Saturated side context]
+A side context for a source occurrence $u$ is saturated if it is the least finite context
+closed under the following operations, up to the rank bound described below.
+\begin{enumerate}[label=(S\arabic*)]
+\item Insert every selected $\DR$ or $\PO$ witness of $u$.
+\item Insert the vertical boundary of $u$ needed to evaluate relations to its parent,
+children, selected superparts, selected subparts, and shared identity ports.
+\item For every side/tree or side/side pair whose inherited relation is $\PP$, $\PPI$, or
+$\EQ$, replace the pair by an explicit local vertical stratum or shared identity port.
+Thus such a pair is never left as an unstructured residual frontier pair.
+\item Apply the same operation recursively to side witnesses, with strictly smaller rank
+measured by the remaining modal depth below the triggering existential formula.
+\item Only after this saturation may a residual frontier pair be classified as $\DR$ or
+$\PO$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Finite saturation bound]\label{lem:finite-saturation}
+For fixed $C_0$ there is a computable number $K(C_0)$ such that every rank-$r$ saturated
+side context needed for $C_0$ has a representative using at most $K(C_0)$ local ports,
+up to equality of types, overlap pattern, finite RCC5 bag network, witness declarations,
+and universal-obligation summaries.
+\end{lemma}
+
+\begin{proof}
+Let $n=|\Cl(C_0)|$ and let $T=|\mathsf{Typ}|\le 2^n$.  For a local context of width at
+most $k$, the number of complete atomic RCC5 networks on its ports is at most
+$5^{k^2}$, the number of type assignments is at most $T^k$, and the number of witness
+and obligation summaries is bounded by a power set of a set of size polynomial in
+$k,n,5$.  Hence, for every fixed $k$, there are finitely many context shapes.
+
+Define $K_r$ inductively as the number of equivalence classes of rank-$r$ context shapes,
+where rank $0$ contains only the source, its finite vertical boundary, and direct
+witnesses whose targets have no further modal obligations.  For rank $r+1$, a context
+shape is determined by: the source type; a finite bag network on a live frontier; one
+direct witness declaration for each existential formula in $\Cl(C_0)$; one threshold
+verticalization position for each pair of live or side ports whose composition forces
+$\PP,\PPI$, or $\EQ$; and one recursive rank-$r$ subcontext class for each recursive
+trigger.  Since each of these choices ranges over a finite set determined by $K_r$ and
+$n$, there are finitely many classes.  Let $K(C_0)$ be the maximum size of a chosen
+representative for all ranks $r\le n$.  This is an effective bound because all classes are
+enumerable: enumerate all finite labelled bags up to size $m$, check local RCC5
+consistency, saturation closure, overlap compatibility, and increase $m$ until every
+newly generated rank-$r$ class has a representative.  The induction guarantees
+termination at each rank.  No numerical recurrence is used; only effective finiteness of
+the quotient is needed.
+\end{proof}
+
+\begin{theorem}[A: split-forest normal form]\label{thm:A}
+If $C_0$ is satisfiable over abstract complete atomic RCC5 frames, then $C_0$ is
+satisfiable in a witness-generated saturated split-forest patchwork presentation of width
+at most $K(C_0)$.
+\end{theorem}
+
+\begin{proof}
+Start with a satisfying model and apply Lemma~\ref{lem:thin}.  Use the selected
+$\PP/\PPI$ witnesses to form generated vertical cover links.  When one semantic element
+requires several incomparable selected superparts, introduce several bags sharing the
+same occurrence through overlap ports rather than identifying distinct copies by a
+semantic $\EQ$ edge.  Insert all selected $\DR/\PO$ witnesses into side contexts and
+saturate them by (S1)--(S5).  The construction is rank-decreasing on recursive side
+contexts, hence terminates in one of the finitely many context shapes of
+Lemma~\ref{lem:finite-saturation}.  Each finite bag is labelled by the restriction of the
+original complete RCC5 network, so every bag is locally satisfiable and adjacent bags
+agree on their shared occurrences.  The resulting presentation is a tree decomposition by
+finite complete networks, with exact occurrence identity represented by connected overlap
+classes.
+\end{proof}
+
+\section{Finite patchwork abstraction}
+
+The finite abstraction deliberately avoids pair and triple transformers.  Its alphabet
+contains finite complete bag networks and overlap maps.  Global consistency is a patchwork
+consequence.
+
+\subsection{Shadows and universal obligations}
+
+A universal restriction at a source occurrence must apply to every target occurrence in
+the final global network.  The automaton can check this with two-way motion, but the bag
+labels still record finite summaries called shadows.
+
+\begin{definition}[Shadow profile]
+For a bag $B$, a shadow profile is a tuple
+\[
+\sigma=(t,\vec r,\Omega)
+\]
+where $t\in\mathsf{Typ}$ is the type of the source represented by the shadow, $\vec r$ is
+the vector of RCC5 relations from that source to the live ports of $B$, and
+\[\Omega\subseteq \Rel\times\Cl(C_0)\]
+is the set of universal obligations carried by the source: $(R,D)\in\Omega$ means that
+any target currently known to be in relation $R$ to the source must have $D$ in its type.
+Two shadows with the same triple impose exactly the same constraints on every extension
+of the current bag.  The finite set of shadow profiles over width $K$ has cardinality at
+most
+\[
+|\mathsf{Typ}|\cdot 5^K\cdot 2^{5|\Cl(C_0)|}.
+\]
+\end{definition}
+
+\begin{definition}[Relation-set update]
+When moving from a bag $B$ to an adjacent bag $B'$ across overlap $O$, a shadow
+$(t,\vec r,\Omega)$ may be updated to $(t,\vec r',\Omega)$ if the combined finite network
+on $O\cup P_{B'}$ assigns $\vec r'$ to the new live ports and agrees with $\vec r$ on
+$O$.  For every new live port $p$ of $B'$ and every $(R,D)\in\Omega$, if $\vec r'(p)=R$
+then $D\in\tau_{B'}(p)$ is required.  If the source type $t$ contains $\forall R.D$, then
+$(R,D)$ is included in $\Omega$.  No obligation is discarded because an intermediate
+relation temporarily leaves $R$; the exact relation vector at every visited bag is
+carried explicitly.
+\end{definition}
+
+This repairs the earlier may-analysis.  An obligation is never pruned merely because some
+composition entry is multivalued; it is evaluated against the relation actually recorded
+in the current bag network or shadow vector.
+
+\subsection{Patchwork abstraction}
+
+\begin{definition}[Valid patchwork abstraction]\label{def:valid-abstraction}
+A valid patchwork abstraction for $C_0$ is a finitely branching tree whose nodes are
+labelled by patchwork bags of width at most $K(C_0)$ and satisfying:
+\begin{enumerate}[label=(A\arabic*)]
+\item each bag network is a finite complete atomic RCC5 network with strong equality;
+\item adjacent bags agree exactly on their overlap positions, including types,
+relations, witness declarations that mention overlap positions, and shadow vectors;
+\item the equivalence classes generated by overlap maps are connected subtrees; these
+classes are the semantic occurrences of the final model;
+\item all existential restrictions in a port type have either a local witness in the same
+bag or a declared vertical parity request;
+\item all universal obligations are present as shadows and are checked against every live
+port introduced in every adjacent bag reached by shadow propagation;
+\item saturated side-context closure holds: any side/tree or side/side pair whose local
+network label is $\PP$, $\PPI$, or $\EQ$ is represented by a vertical stratum or shared
+identity port before the pair may be forgotten as residual frontier;
+\item residual frontier pairs are labelled only by $\DR$ or $\PO$;
+\item vertical eventuality requests are attached to a concrete support branch and, if the
+source occurrence is carried through an overlap, to the same overlap equivalence class.
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[B: finite abstraction adequacy]\label{thm:B}
+For every $C_0$, saturated split-forest presentations of $C_0$ of width $K(C_0)$ are sound
+and complete for valid patchwork abstractions in the following sense.
+\begin{enumerate}[label=(\alph*)]
+\item Every saturated split-forest presentation induces a valid patchwork abstraction.
+\item Every valid patchwork abstraction has a global abstract complete RCC5 interpretation
+that realizes all bag types, witnesses, universal restrictions, and vertical requests.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+For (a), label each decomposition bag by the restriction of the presentation's global RCC5
+network, by the type of each occurrence, and by the selected witness/support declarations.
+Since the presentation is saturated, side/tree and side/side containment or identity
+pairs have already been verticalized or shared; residual frontier pairs are therefore
+$\DR$ or $\PO$.  Universal shadows are obtained by taking, for every source occurrence
+whose universal restrictions remain relevant outside the current bag, its type, its
+relation vector to the live ports, and the set of obligations induced by its universal
+formulas.  Since these objects range over the finite set specified above, equal shadows
+can be merged.  The merge is a congruence: the update into an adjacent bag depends only on
+$(t,\vec r,\Omega)$ and the finite adjacent bag network, not on the identity of the
+forgotten source.
+
+For (b), form the set $V$ of semantic occurrences as equivalence classes of local port
+occurrences under the overlap maps.  For each bag $B$, the labelled network $N_B$ is a
+finite complete satisfiable RCC5 network on the occurrences represented in that bag.
+Adjacent bags agree on overlaps by (A2), and the overlap classes are connected by (A3).
+By Theorem~\ref{thm:patchwork}, the tree of bag networks has a countable abstract RCC5
+completion $\rho$ on $V$ whose restriction to every bag is exactly $N_B$.
+
+Concept names are interpreted according to the bag types; this is well-defined because
+bag types agree on overlaps.  Boolean clauses follow from Hintikka consistency.
+Existential clauses are satisfied either by a same-bag witness, whose relation is read in
+$N_B$, or by a vertical parity witness whose support branch is realized in the tree and
+whose endpoint type contains the required concept.  Universal clauses hold by the shadow
+condition: for a source occurrence $x$ with $\forall R.D$, the obligation $(R,D)$ is
+carried in every shadow/profile representing $x$ outside its home bag.  Whenever a target
+occurrence is introduced, the exact recorded relation from the source shadow to that
+target is checked; if it is $R$, then $D$ is forced into the target type.  Since every
+occurrence of $V$ is introduced in some bag and every source's shadow is propagated along
+the unique connecting path in the decomposition tree, all targets are checked.  Finally,
+strong equality is automatic: $\EQ$ occurs in a bag only on identical ports, and global
+identity is generated by overlaps, not by quotienting distinct vertices.  Hence the
+interpretation realizes the abstraction.
+\end{proof}
+
+\begin{remark}[Why this repairs transformer coherence]
+The proof of Theorem~\ref{thm:B} never defines $\rho(x,y)$ by an interface route.  It
+therefore has no least-common-ancestor versus higher-triple coherence problem.  Pair and
+triple consistency is supplied by the finite bag networks and the RCC5 patchwork theorem.
+The diagnostic concept
+\[
+\exists\PP.(A\sqcap\neg B\sqcap\forall\PP.\neg B\sqcap\forall\PPI.\neg B\sqcap
+\forall\PO.\neg B)\sqcap\exists\PP.B
+\]
+is rejected because any patchwork bag or amalgam containing the shared split child and
+the two superpart witnesses must satisfy
+$\Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}$, so $\DR$ is not available, and the remaining four
+relations are exactly those forbidden by the first witness type.
+\end{remark}
+
+\section{The automaton}
+
+Let $\Sigma_{C_0}$ be the finite set of all patchwork bags of width at most $K(C_0)$:
+finite port sets, finite complete RCC5 networks, type assignments, overlap maps, witness
+declarations, shadows, and request declarations.  Finiteness follows from finiteness of
+$\Rel$, $\mathsf{Typ}$, $\Cl(C_0)$, and the bound $K(C_0)$.
+
+\begin{definition}[Two-way alternating parity automaton $\APTA_{C_0}$]
+The automaton $\APTA_{C_0}$ runs on ranked trees over $\Sigma_{C_0}$.  Its states are of
+six kinds.
+\begin{enumerate}[label=(Q\arabic*)]
+\item local-bag states checking finite RCC5 consistency, type consistency, overlap
+agreement, and saturation closure;
+\item existential-witness states checking local witnesses and spawning vertical request
+states for nonlocal $\PP/\PPI$ requests;
+\item universal-shadow states carrying a shadow profile and moving two-way through the
+decomposition tree to check every introduced target;
+\item equality/identity states checking that overlap maps generate connected occurrence
+classes and that no distinct local ports are labelled $\EQ$;
+\item patchwork states checking that adjacent bag networks agree on their overlaps;
+\item parity-request states for vertical eventualities.
+\end{enumerate}
+The transition relation is finite because every state mentions only a bounded port number,
+a type in $\mathsf{Typ}$, a relation in $\Rel$, a formula in $\Cl(C_0)$, or a shadow
+profile from the finite shadow set.
+\end{definition}
+
+The parity condition is a standard generalized Buchi condition converted to parity.  For
+each vertical eventuality kind $e=(R,D)$ with $R\in\{\PP,\PPI\}$, the automaton creates a
+request state when it sees $\exists R.D$ without a same-bag witness.  The request follows
+the declared support branch.  It is fulfilled at the first occurrence whose recorded
+relation to the source is $R$ and whose type contains $D$.  If the request crosses an
+overlap, the source occurrence is the same overlap-equivalence class; there is no
+possibility of deferring forever by bouncing between semantic equality mates, because
+there are no nontrivial equality mates.  Generalized Buchi acceptance requires every
+request generated infinitely often to be fulfilled infinitely often along the support
+run; a standard indexing of the finitely many request kinds gives a finite parity index.
+
+\begin{lemma}[Automaton soundness]\label{lem:auto-sound}
+If $\APTA_{C_0}$ accepts an input tree, then the input tree is a valid patchwork
+abstraction for $C_0$ with some root occurrence whose type contains $C_0$.
+\end{lemma}
+
+\begin{proof}
+The local-bag, overlap, identity, and patchwork states enforce (A1)--(A3).  Existential
+states enforce (A4).  Universal-shadow states enforce (A5): the automaton carries the
+full relation vector of the source shadow and checks the target type whenever the recorded
+relation is one of the source's universal guards.  Saturation states enforce (A6)--(A7).
+Parity-request states enforce (A8).  The initial condition requires a root port with
+$C_0$ in its type.  Hence all clauses of Definition~\ref{def:valid-abstraction} hold.
+\end{proof}
+
+\begin{lemma}[Automaton completeness]\label{lem:auto-complete}
+Every valid patchwork abstraction for $C_0$ is accepted by $\APTA_{C_0}$.
+\end{lemma}
+
+\begin{proof}
+Choose the accepting run that follows the witnesses, shadows, overlaps, and support
+branches recorded in the abstraction.  All local checks succeed by validity.  Universal
+shadow runs succeed because the abstraction's shadow updates carry the exact relation
+vector into every adjacent bag.  Every vertical eventuality request has a declared support
+branch reaching a witness of the required type, so the generalized Buchi condition is
+satisfied.  Thus the parity run is accepting.
+\end{proof}
+
+\begin{theorem}[C: automaton correctness]\label{thm:C}
+For every concept $C_0$,
+\[
+L(\APTA_{C_0})\neq\varnothing
+\quad\Longleftrightarrow\quad
+C_0\text{ has a valid patchwork abstraction.}
+\]
+\end{theorem}
+
+\begin{proof}
+Immediate from Lemmas~\ref{lem:auto-sound} and~\ref{lem:auto-complete}.
+\end{proof}
+
+\section{Decidability}
+
+\begin{theorem}[Decidability over abstract RCC5 frames]\label{thm:dec}
+Concept satisfiability for $\mathcal{ALCI}_{\RCC}$ over abstract complete atomic RCC5
+frames with strong equality is decidable.
+\end{theorem}
+
+\begin{proof}
+Given $C_0$, compute $\Cl(C_0)$, the finite type set $\mathsf{Typ}$, the finite width
+bound $K(C_0)$, and hence the finite alphabet $\Sigma_{C_0}$ of patchwork bags.  Construct
+$\APTA_{C_0}$.  By Theorems~\ref{thm:A},~\ref{thm:B}, and~\ref{thm:C}, $C_0$ is
+satisfiable iff $L(\APTA_{C_0})$ is nonempty.  Emptiness for finite two-way alternating
+parity tree automata is decidable.  Therefore satisfiability is decidable.
+\end{proof}
+
+
+\section{Expanded construction details}
+
+This section spells out the finite objects used above.  The point is to make explicit
+where the previous route-dependent transformer machinery has been removed.
+
+\subsection{From a generated model to bags}
+
+Given a witness-generated model $\calI\upharpoonright W$, choose for each generated
+occurrence $x$ a home bag $B_x$.  The home bag contains $x$, all selected same-step
+witnesses for existential formulas in $\tp(x)$ that are not handled by a vertical
+request, and the bounded vertical boundary needed by the saturated side-context
+construction.  If a selected witness $y$ lies in a side context of $x$ and some boundary
+point $b$ has $\rho(y,b)\in\{\PP,\PPI,\EQ\}$, then the bag is enlarged by the threshold
+position that witnesses that containment or identity interaction.  If the threshold
+itself creates new side obligations, the rank decreases because it belongs to a proper
+subformula of the formula that generated $y$.  Hence this recursive enlargement stops.
+
+For multiple selected superparts, the same semantic occurrence is not duplicated as two
+RCC5-distinct points.  Instead, it is represented by local ports in several bags joined
+by overlap maps.  The equivalence class of those ports is one occurrence in the final
+tree decomposition.  The connectedness condition on overlaps is the replacement for the
+old typed-EQ quotient.  Thus the statement
+\[
+  p\text{ in }B \text{ and }q\text{ in }B'\text{ represent the same element}
+\]
+means that $p$ and $q$ are in the same overlap-connected component; it does not mean that
+there are two distinct elements with an $\EQ$ edge between them.
+
+\subsection{The finite alphabet}
+
+Fix $K=K(C_0)$.  The alphabet $\Sigma_{C_0}$ is obtained by enumerating all tuples
+\[
+  (P,N,\tau,\mu,W,U,\Gamma)
+\]
+with $P\subseteq\{1,\ldots,K\}$, $N:P^2\to\Rel$, $\tau:P\to\mathsf{Typ}$, $\mu$ a finite
+family of partial injective overlap maps to the parent and to the $K$ possible child
+slots, $W$ a set of witness declarations, $U$ a set of shadow profiles, and $\Gamma$ a
+set of vertical request declarations.  A tuple is retained in the alphabet only if the
+following finite tests pass.
+\begin{enumerate}[label=(L\arabic*)]
+\item $N(p,p)=\EQ$ and $N(p,q)\ne\EQ$ for $p\ne q$.
+\item $N(q,p)=N(p,q)^{-1}$.
+\item For all $p,q,r\in P$, $N(p,r)\in\Comp(N(p,q),N(q,r))$.
+\item The type assignment $\tau$ is Hintikka-consistent.
+\item Every local existential witness declaration for $\exists R.D\in\tau(p)$ names a
+port $q\in P$ with $N(p,q)=R$ and $D\in\tau(q)$.
+\item Every nonlocal vertical request for $\exists R.D$ has $R\in\{\PP,\PPI\}$ and records
+which support branch it follows.
+\item For every universal formula $\forall R.D\in\tau(p)$, the shadow set contains the
+source obligation $(R,D)$ for the occurrence represented by $p$ whenever $p$ is not kept
+live in the adjacent bag being checked.
+\item Saturation holds: if a side-context pair has label $\PP,\PPI$, or $\EQ$, the tuple
+also contains the corresponding vertical stratum or overlap identification; otherwise it
+is not admitted as a residual frontier tuple.
+\end{enumerate}
+The alphabet is finite because all components range over finite sets.  Importantly, the
+alphabet does not contain a function that attempts to compute a far-away pair relation by
+iteration.  It contains only finite complete networks on finite bags and finite summaries
+of obligations.
+
+\subsection{Overlap and running-intersection checks}
+
+For an edge between a parent bag $B$ and a child bag $C$, the input label supplies a
+partial injection
+\[
+  \mu_{B,C}:P_B\rightharpoonup P_C.
+\]
+The local transition checks:
+\begin{align*}
+  \tau_C(\mu(p)) &= \tau_B(p),\\
+  N_C(\mu(p),\mu(q)) &= N_B(p,q)
+\end{align*}
+for all $p,q$ in the domain of $\mu$.  The automaton also checks that each local port is
+introduced once and forgotten along a connected subtree.  This can be expressed by three
+finite status bits for every port: introduced here, continued to a child, or forgotten
+here.  Since the underlying input is a tree, these local bits enforce the
+running-intersection property for each overlap-equivalence class.
+
+This is the exact point at which equality-port congruence is repaired.  The old proof
+needed to show that two distinct copies had the same relation to every third occurrence.
+Here there are no two distinct copies.  There is one global occurrence whose local
+manifestations form a connected subtree.  All bag networks containing that occurrence
+agree on its relations to all other ports in the same bag by the overlap checks and
+patchwork agreement.
+
+\subsection{The patchwork construction in detail}
+
+Let $T$ be an accepted labelled input tree.  Let $V_T$ be the quotient of all local port
+occurrences $(t,p)$ by the equivalence relation generated by the overlap maps.  For every
+node $t$, the bag label gives a finite complete network $N_t$ on the finite set
+$P_t/{\sim}$ of global occurrences represented in that bag.  If two bags share an
+occurrence, their networks agree on all relations inside the overlap.
+
+For a finite set $F\subseteq V_T$, choose finitely many bags whose union contains $F$ and
+close this set of bags under paths in the input tree.  The result is a finite subtree of
+bags.  Repeatedly apply the two-bag patchwork theorem from the leaves inward.  This gives
+a satisfiable complete RCC5 network on the union of all occurrences in those bags, hence
+on $F$.  Therefore every finite subset of $V_T$ has at least one complete RCC5 labelling
+extending all bag networks.  Since $\Rel$ is finite, the product space
+$\Rel^{V_T\times V_T}$ is compact in the product topology.  The closed set of labellings
+satisfying each finite bag constraint and each finite composition constraint has the
+finite intersection property, hence is nonempty.  Any element of this intersection is the
+global relation $\rho_T$.
+
+This construction proves three facts that were previously only asserted:
+\begin{enumerate}[label=(P\arabic*)]
+\item $\rho_T$ is well-defined globally, because it is chosen as one complete labelling of
+all pairs, not computed by a path.
+\item Every global triple satisfies the RCC5 composition table, because each finite
+triple is contained in some finite patchwork union and the compactness construction
+preserves all finite composition constraints.
+\item If a diagnostic composition is forced, such as $\PP;\DR=\DR$ or $\PPI;\PP\subseteq
+\{\EQ,\PP,\PPI,\PO\}$, then every global completion respects that forced value or forced
+exclusion.
+\end{enumerate}
+
+\subsection{Universal propagation by exact relation vectors}
+
+A universal source $x$ may be forgotten from a bag before a later target $y$ is
+introduced.  To ensure that $\forall R.D$ at $x$ is not lost, the input carries a shadow
+profile for $x$.  At a bag $B$, the shadow records the exact vector
+\[
+  (\rho_T(x,p))_{p\in P_B}
+\]
+whenever $x$ is not live.  In an accepted input this vector is not inferred from a single
+composition step.  It is part of the finite label and is checked for consistency with the
+parent and child bag networks.  When a child bag introduces a new port $q$, the child
+label records $\rho_T(x,q)$ in the updated vector.  If this relation is $R$ and
+$\forall R.D\in\tp(x)$, then $D$ is required in the type of $q$.
+
+This is stronger than may-analysis.  A may-analysis would carry a set of possible
+relations and might drop an obligation if an intermediate step leaves $R$.  Here the
+actual recorded relation at the target is checked.  In an existential branch of the
+automaton the run guesses the vectors; soundness follows because the guessed vectors are
+part of the patchwork network and must be globally extendible.  Completeness follows by
+choosing the vectors from an actual satisfying presentation.
+
+\subsection{Vertical eventualities and equality transfer}
+
+For $R\in\{\PP,\PPI\}$, a witness for $\exists R.D$ may lie arbitrarily far along a
+vertical branch.  The automaton handles this by a parity request.  A request state
+contains:
+\[
+  (R,D,p,\ell),
+\]
+where $p$ is the current manifestation of the source occurrence and $\ell$ is the support
+branch declaration.  If the source occurrence passes through an overlap, the state updates
+$p$ to the corresponding port under the overlap injection.  If the source is forgotten,
+its shadow is used to keep the relation vector.  A request is fulfilled only when the run
+visits a port $q$ with recorded relation $R$ from the source and $D\in\tau(q)$.
+
+Because occurrence identity is overlap identity, a request cannot be deferred by jumping
+between different equality mates.  There are no equality mates outside the connected
+manifestations of the same global occurrence.  The parity condition is therefore the
+standard one: for the finite set of request kinds $(R,D)$, require that each request kind
+that is pending infinitely often is fulfilled infinitely often.  Converting the resulting
+generalized Buchi condition to a parity condition gives index at most
+$2\cdot |\{(R,D):R\in\{\PP,\PPI\},D\in\Cl(C_0)\}|+1$.
+
+
+\section{Audit against the referee concerns}
+
+\begin{longtable}{p{0.18\linewidth}p{0.76\linewidth}}
+\toprule
+Concern & Repair in this manuscript\\
+\midrule
+C1 transformer coherence & Pair/triple transformers are removed.  Global coherence is
+obtained from the RCC5 patchwork property applied to complete bag networks agreeing on
+overlaps.\\
+C2 multivalued composition freedom & Multivalued choices are made inside finite complete
+bag networks and globally amalgamated by patchwork; diagnostic triples such as
+$\PPI;\PP$ are checked in bags or finite patchwork unions, not inferred by route-dependent
+summaries.\\
+C3 equality-port congruence & Nontrivial EQ quotienting is removed.  Strong equality is
+identity of overlap-equivalence classes in a tree decomposition.  Distinct local ports
+may never be labelled EQ.\\
+M1 finite width & Numerical ad hoc recurrences are replaced by an effective type/mosaic
+bound: enumerate finite saturated context shapes up to the finite rank $|\Cl(C_0)|$.\\
+M2 shadows & Shadows are explicit finite profiles
+$(t,\vec r,\Omega)\in\mathsf{Typ}\times\Rel^K\times2^{\Rel\times\Cl(C_0)}$; updates factor
+through this profile.\\
+M3 one-way sufficiency & The decision layer is stated as a two-way alternating parity
+tree automaton.  No lossless one-way ancestor summary is assumed.\\
+M4 universal propagation & Universal obligations carry exact relation vectors and are
+checked against the recorded relation at every introduced target.  Obligations are not
+dropped by may-analysis.\\
+m3 equality-eventualities & Requests are tied to overlap-equivalence classes, so they
+cannot be postponed by moving between distinct equality mates.\\
+\bottomrule
+\end{longtable}
+
+\section{Limitations and scope}
+
+The theorem is for abstract complete atomic RCC5 frames satisfying the composition table.
+It does not assert decidability for topological RCC5 role semantics.  The external
+algebraic input is the RCC5 patchwork property.  If one wants a fully self-contained
+paper, Theorem~\ref{thm:patchwork} should either be proved in an appendix from a standard
+homogeneous representation of RCC5 or cited with a precise reference.
+
+\begin{thebibliography}{9}
+\bibitem{RN-patchwork} J. Renz and B. Nebel. Qualitative spatial reasoning using
+constraint calculi. Standard sources for RCC5/RCC8 composition and patchwork properties.
+\bibitem{BW-homogeneous} M. Bodirsky and S. Wolfl. Homogeneous representations and
+patchwork properties for region connection calculi.
+\bibitem{Vardi} M. Y. Vardi. Reasoning about the past with two-way automata, and standard
+emptiness results for two-way alternating parity tree automata.
+\end{thebibliography}
+
+\end{document}

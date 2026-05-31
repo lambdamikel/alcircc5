@@ -1,0 +1,131 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,longtable,array}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\ALCI}{\mathcal{ALCI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\title{Formal Response to the Referee Report on the Split-Forest Automata Proof}
+\author{Prepared review and repair memorandum}
+\date{May 31, 2026}
+\begin{document}
+\maketitle
+
+\section*{Overall assessment}
+
+I agree with the referee's central criticism.  The previous automata proof had the right
+high-level architecture, but the finite abstraction layer was not adequately justified.
+In particular, the proof attempted to recover a global RCC5 labelling from local
+pair/triple transformer states.  The missing step was a confluence theorem saying that
+initialising at an ancestor and pushing endpoints down gives the same pair relation as
+initialising at the least common interface.  That theorem had not been proved, and the
+local transition checks did not enforce it.
+
+The corrected proof therefore removes the transformer construction.  The replacement is
+a patchwork-bag abstraction: each finite bag carries a complete atomic RCC5 network,
+adjacent bags agree on overlaps, and global RCC5 consistency follows from the patchwork
+property of RCC5.  Equality is no longer handled by quotienting repeated blocking copies;
+it is handled as exact occurrence identity in a tree decomposition.  The automaton is
+also made explicitly two-way, and universal propagation is checked with exact
+relation-vector shadows rather than a may-analysis.
+
+The repaired proof is supplied separately as
+\texttt{split\_forest\_patchwork\_automata\_repaired.tex/pdf}.
+
+\section*{Response by issue}
+
+\begin{longtable}{p{0.16\linewidth}p{0.38\linewidth}p{0.38\linewidth}}
+\toprule
+Issue & Referee concern & Repair\\
+\midrule
+C1 & The relation $\rho_T(\xi,\eta)$ was computed by route-dependent pair transformers,
+and triple projections need not agree with independently computed pair representatives. &
+The transformer layer is deleted.  The new proof uses finite complete RCC5 bag networks
+and the RCC5 patchwork property.  Global relations are supplied by an amalgamated
+complete network, not by an interface route.\\
+\addlinespace
+C2 & Multivalued composition allows local declarations that are legal in isolation but
+not globally coherent; diagnostic examples such as $C_{\mathrm{split}}$ are not forced to
+be checked in a common interface. &
+All finite bags are complete networks, and all finite tree-shaped unions of bags are
+amalgamated by patchwork.  Thus forced exclusions such as
+$\Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}$ are enforced in every global completion.\\
+\addlinespace
+C3 & Equality-port congruence was a global for-all-$\zeta$ condition reduced to finite
+frontier agreement; split copies in different trees might never be checked together. &
+The revised proof removes nontrivial semantic EQ quotienting.  Multiple manifestations of
+one semantic occurrence are connected by overlap maps in a tree decomposition.  Strong
+EQ is identity of overlap-equivalence classes; distinct local ports are never labelled
+EQ.\\
+\addlinespace
+M1 & The side-context width bound was a counting heuristic. &
+The proof now uses an effective type/mosaic enumeration bound.  Saturated context shapes
+are classified up to finite RCC5 bag network, type assignment, overlap pattern, witness
+declarations, and shadow summaries.  A numerical recurrence is not claimed.\\
+\addlinespace
+M2 & Shadow-class finiteness was asserted. &
+A shadow is explicitly defined as a finite profile
+$(t,\vec r,\Omega)\in\mathsf{Typ}\times\mathrm{Rel}^K\times
+2^{\mathrm{Rel}\times\Cl(C_0)}$.  The update into adjacent bags depends only on this
+profile and the adjacent finite bag network, so equal shadows are a congruence.\\
+\addlinespace
+M3 & One-way sufficiency depended on unproved lossless summaries. &
+The decision layer is now a two-way alternating parity tree automaton.  The proof no
+longer requires a one-way lossless ancestor summary.\\
+\addlinespace
+M4 & Universal propagation used a may-analysis that might drop obligations when an
+intermediate relation leaves and later re-enters the guarded relation. &
+The automaton carries exact relation-vector shadows.  If the recorded relation from the
+source shadow to a newly introduced target is $R$, then every obligation
+$\forall R.D$ forces $D$ at that target.  Obligations are not pruned by intermediate
+may-steps.\\
+\addlinespace
+m3 & Equality-mediated eventualities were informal. &
+Requests are attached to concrete overlap-equivalence classes.  Since equality is
+identity, a request cannot be deferred forever by bouncing between distinct equality
+mates.  The generalized Buchi request condition is converted to a finite parity index.\\
+\bottomrule
+\end{longtable}
+
+\section*{What remains from the original split-forest abstraction}
+
+The repaired proof does not abandon the split-forest idea.  It keeps the split forest as
+the semantic normal form:
+\[
+\text{witness thinning}\quad\to\quad\text{generated containment covers}\quad\to\quad
+\text{saturated side contexts}.
+\]
+What changes is the adequacy proof for the finite abstraction.  The old proof tried to
+hand-build a global relation by local transformers.  The repaired proof represents the
+normal form by finite patchwork bags and lets the RCC5 patchwork theorem provide global
+amalgamation.  The automaton is used only to decide the existence of such a regular
+patchwork-bag presentation and to manage infinite eventualities.
+
+\section*{Remaining external input}
+
+The repaired proof is self-contained except for two standard background results:
+\begin{enumerate}
+\item the patchwork property for complete atomic RCC5 networks;
+\item decidability of emptiness for finite two-way alternating parity tree automata.
+\end{enumerate}
+If a completely self-contained manuscript is desired, the RCC5 patchwork theorem should
+be proved in an appendix or cited precisely.  The referee explicitly recommended this
+patchwork route, and it is now the central replacement for the former unproved
+transformer-coherence lemma.
+
+\section*{Bottom line}
+
+The referee's report identified a genuine defect in the abstraction-adequacy layer.  The
+repaired proof addresses it by replacing route-dependent transformer coherence with
+patchwork amalgamation, exact tree-decomposition identity, finite shadow profiles, and a
+two-way parity automaton.  This materially strengthens the proof and localizes the
+remaining mathematical dependence to the standard RCC5 patchwork theorem and the standard
+two-way parity-automaton emptiness theorem.
+
+\end{document}
