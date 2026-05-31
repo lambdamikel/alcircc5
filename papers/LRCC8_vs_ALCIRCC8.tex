@@ -32,6 +32,7 @@
 \newcommand{\ALC}{\ensuremath{\mathcal{ALC}}}
 \newcommand{\ALCI}{\ensuremath{\mathcal{ALCI}}}
 \newcommand{\NR}{\ensuremath{\mathcal{N}_\mathcal{R}}}
+\newcommand{\NRe}{\ensuremath{\mathcal{N}_{\mathcal{R}_8}}}% the 8 RCC8 base relations
 \newcommand{\NC}{\ensuremath{\mathcal{N}_\mathcal{C}}}
 \newcommand{\reals}{\mathbb{R}}
 \newcommand{\naturals}{\mathbb{N}}
@@ -71,11 +72,16 @@ identified by Wessel in~2002, who constructed explicit RCC8 grid models but
 showed that no concept term can force the coincidence at the level of abstract
 models.
 
-The analysis reveals that Wessel's 2002/2003 technical report anticipated the
-key technical ingredients of the Lutz--Wolter proof---the even-odd chain
-construction, the grid encoding via TPP/NTPP, and the identification of the
-coincidence gap as the decisive obstacle---three to four years before their
-LMCS publication.  The decidability of $\ALCIRCC{8}$ remains open.
+The analysis reveals that Wessel's 2002/2003 technical report independently
+developed the RCC8 description-logic analogues of these ingredients---the
+even-odd chain for functional successors, an explicit two-dimensional
+TPP/NTPP grid, and the identification of the coincidence gap as the decisive
+obstacle---three to four years before the Lutz--Wolter LMCS publication, and
+was the first to identify that obstruction in this setting.  Lutz and Wolter
+close the gap by a \emph{different}, topologically grounded construction---a
+linearized enumeration of tile positions in the Marx--Reynolds lineage they
+cite (their~\S5)---rather than by the two-dimensional grid Wessel analyzed.
+The decidability of $\ALCIRCC{8}$ remains open.
 \end{abstract}
 
 %% ====================================================================
@@ -137,12 +143,12 @@ The purpose of this note is threefold:
 
 RCC8 distinguishes eight base relations between regions:
 \[
-\NR_8 = \{DC,\, EC,\, PO,\, EQ,\, TPP,\, NTPP,\, TPPI,\, NTPPI\}.
+\NRe = \{DC,\, EC,\, PO,\, EQ,\, TPP,\, NTPP,\, TPPI,\, NTPPI\}.
 \]
 $DC$ (disconnected) and $EC$ (externally connected) refine $DR$; $TPP$
 (tangential proper part) and $NTPP$ (non-tangential proper part) refine $PP$.
-The composition table $\comp(R,S) \subseteq \NR_8$ is defined for all pairs
-$R,S \in \NR_8$ and captures which base relations are possible for a pair
+The composition table $\comp(R,S) \subseteq \NRe$ is defined for all pairs
+$R,S \in \NRe$ and captures which base relations are possible for a pair
 $(a,c)$ given that $R(a,b)$ and $S(b,c)$ hold.
 
 A key property of the composition table is:
@@ -166,11 +172,11 @@ An $\ALCIRCC{8}$ interpretation is a pair $\mathcal{I} = (\Delta^{\mathcal{I}},
 \begin{itemize}
   \item $\Delta^{\mathcal{I}}$ is a non-empty set (the domain);
   \item every pair $(d,e)$ with $d \neq e$ is assigned exactly one base
-    relation $R \in \NR_8 \setminus \{EQ\}$, and $EQ^{\mathcal{I}} =
+    relation $R \in \NRe \setminus \{EQ\}$, and $EQ^{\mathcal{I}} =
     \mathrm{Id}(\Delta^{\mathcal{I}})$
     (strong EQ semantics);
   \item the role box (composition-table constraints) is satisfied:
-    for all $R,S \in \NR_8$, $R^{\mathcal{I}} \circ S^{\mathcal{I}} \subseteq
+    for all $R,S \in \NRe$, $R^{\mathcal{I}} \circ S^{\mathcal{I}} \subseteq
     \bigcup_{T \in \comp(R,S)} T^{\mathcal{I}}$;
   \item concepts are interpreted as in $\ALCI$: $(\exists R.C)^{\mathcal{I}} =
     \{d \mid \exists e.\; \langle d,e\rangle \in R^{\mathcal{I}} \wedge e \in
@@ -247,7 +253,8 @@ $\geq 2^n$, thereby proving:
 
 \subsection{Lutz--Wolter's construction (2006)}
 
-In~\cite{LutzWolter2006}, the same idea appears as follows.  An infinite
+In~\cite{LutzWolter2006}, the same idea appears within their Section~5
+undecidability reduction, as follows.  An infinite
 sequence of regions $r_1, r_2, r_3, \ldots$ is ordered by $\mathit{ntpp}$.
 Regions are marked alternately with $a \wedge b$ and $a \wedge \neg b$,
 connected via $\mathit{tpp}$.  The \emph{next} operator is defined as:
@@ -328,19 +335,30 @@ In~\cite{Wessel2003}, Section~4.4.3, Wessel:
     condition is the \emph{precise boundary}.
 \end{enumerate}
 
-\subsection{Lutz--Wolter's grid construction (2006)}
+\subsection{Lutz--Wolter's construction: linearizing the plane (2006)}
 
-In~\cite{LutzWolter2006}, Section~8, Lutz and Wolter solve the coincidence
-problem---but only in the \emph{topological} setting.  They introduce
-additional ``$c$-regions'' connected via $tpp$ to implement a ``go right''
-function in the grid.  The grid coincidence~\ref{g:coinc} is enforced
-because:
+In~\cite{LutzWolter2006}, Section~5 (Theorem~5, Corollary~6), Lutz and Wolter
+\emph{sidestep} the coincidence problem rather than enforcing it on a
+two-dimensional grid.  Following Marx and Reynolds~\cite{MarxReynolds1999},
+they fix a \emph{linear enumeration} $\lambda$ of the plane positions
+($\lambda(1)=(0,0)$, $\lambda(2)=(1,0)$, $\lambda(3)=(1,1)$, \ldots; their
+Figure~4) and enforce a single $ntpp$-ordered chain $r_1, r_2, \ldots$ with
+$r_i$ representing position $\lambda(i)$.  Additional ``go right'' regions
+connect each $r_i$ to the region representing the position to its right,
+and---crucially---``reaching the position above the current one is simply a
+matter of going to the right and then advancing by one in the
+enumeration''~\cite{LutzWolter2006}.  There is thus no two-path coincidence
+$R_X \circ R_Y = R_Y \circ R_X$ to force on a $2$-D grid: the linearization
+dissolves it.  What still requires the \emph{topological} setting is the
+rigidity that keeps this linear encoding faithful:
 \begin{itemize}
   \item In a topological space, $TPP(a,b)$ means $a \subsetneq b$ with
     $a \cap \partial b \neq \emptyset$.  The containment structure of regions
-    in~$\reals^2$ (or~$\reals^n$ for $n \geq 1$) is rigid enough that the
-    ``go right then go up'' and ``go up then go right'' paths are forced
-    to reach the same region.
+    in~$\reals^n$ ($n \geq 1$) is rigid enough to realize the $ntpp$-chain and
+    the ``go right'' regions as genuinely nested regions, pinning the
+    enumeration down consistently; the second dimension is then recovered
+    \emph{from} the enumeration, never as an independent vertical successor
+    that would have to coincide with a horizontal one.
   \item This rigidity is a consequence of the topological structure, not of the
     composition table.  The composition table is a \emph{necessary} condition
     for topological realizability but not a \emph{sufficient} one: there exist
@@ -350,7 +368,7 @@ because:
 
 The result is:
 
-\begin{theorem}[Lutz--Wolter~\cite{LutzWolter2006}, Theorem~8.2]
+\begin{theorem}[Lutz--Wolter~\cite{LutzWolter2006}, Theorem~5 and Corollary~6]
   Satisfiability of $\LRCC{8}$ formulas (over topological models in~$\reals^n$
   for any $n \geq 1$) is undecidable.
 \end{theorem}
@@ -389,18 +407,22 @@ We now make the non-transfer argument precise.
   \textbf{Completeness ($\Leftarrow$):}
   If $\mathcal{D}$ does \emph{not} tile, we need $C_\mathcal{D}$ to be
   unsatisfiable in the relevant model class.  For $\LRCC{8}$, every model is
-  topological, and the topological rigidity forces the grid coincidence
-  condition~\ref{g:coinc}.  Therefore every $\LRCC{8}$-model of
-  $C_\mathcal{D}$ is (isomorphic to) a valid tiling, so
+  topological, and topological rigidity makes Lutz and Wolter's linearized
+  enumeration \emph{faithful}: the $ntpp$-chain genuinely enumerates the plane
+  positions and the ``go right''\,/\,``advance one'' regions land coherently,
+  so every $\LRCC{8}$-model of $C_\mathcal{D}$ encodes a valid tiling and
   $\LRCC{8}$-unsatisfiability follows.
 
-  For $\ALCIRCC{8}$, the situation is different.  An abstract model of
-  $C_\mathcal{D}$ need not satisfy~\ref{g:coinc}: the ``east-of-north''
-  and ``north-of-east'' elements $z$ and $z'$ may be distinct, with
-  $R(z,z') \in \{PO, TPP, NTPP, TPPI, NTPPI\}$ (any relation permitted
-  by the composition table).  Such a model satisfies the concept term
-  $C_\mathcal{D}$ without encoding a valid tiling---it is a ``spurious''
-  model where the two-dimensional grid structure unravels.
+  For $\ALCIRCC{8}$, that rigidity is gone.  The composition-table semantics
+  does not pin the enumeration down to a genuine grid: nothing forces the
+  ``go right then advance one'' regions to realize the intended
+  two-dimensional adjacency, so an abstract model can satisfy $C_\mathcal{D}$
+  while the encoded positions do \emph{not} form a tiling---a ``spurious''
+  model.  The underlying obstruction is the one Wessel identified: any faithful
+  grid encoding ultimately needs the coincidence
+  $R_X \circ R_Y = R_Y \circ R_X$ (condition~\ref{g:coinc}), and abstract RCC8
+  cannot force it---the composition table allows too many relations
+  $\{PO, EQ, TPP, NTPP, TPPI, NTPPI\}$ at the coincidence point (Figure~11).
 
   Therefore, $C_\mathcal{D}$ being $\ALCIRCC{8}$-satisfiable does not
   imply that $\mathcal{D}$ tiles, and the completeness direction fails.
@@ -568,10 +590,12 @@ needed to keep distinct grid cells distinct.
   lacks---a local direct/indirect separator at level~2---and it does
   avoid the specific transitive-propagation failure mode of the RCC5
   attempt.  But it does \emph{not} close the 2D coincidence gap.
-  Lutz--Wolter's $\LRCC{8}$ reduction resolves the gap topologically:
-  geometric boundary inclusions force north-of-east to coincide with
-  east-of-north \emph{without} causing distant corners to merge, because
-  cells are 2D regions with distinct interiors~\cite{LutzWolter2006}.
+  Lutz--Wolter's $\LRCC{8}$ reduction \emph{avoids} the gap rather than
+  closing it on a 2-D grid: they linearize the plane into a single
+  $ntpp$-chain (the Marx--Reynolds enumeration) and recover the vertical
+  direction from the enumeration, so no ``north-of-east $=$ east-of-north''
+  coincidence has to be enforced at all; topological rigidity is what keeps
+  that linear encoding faithful~\cite{LutzWolter2006}.
   No such rigidity is available in the abstract setting, consistent
   with $\ALCIRCC{8}$ decidability remaining open.
 \end{remark}
@@ -631,11 +655,13 @@ This characterization is incomplete in several respects:
   \item \textbf{The undecidability boundary:}
     Wessel explicitly characterizes $\ALCIRCC{8}$ as ``close to
     undecidability''~\cite{Wessel2003} and identifies the hybrid logic
-    binding operator as the precise extension that crosses the boundary.
-    This analysis directly anticipates the structure of the Lutz--Wolter
-    proof: they succeed precisely where Wessel showed the abstract semantics
-    fails, by exploiting topological rigidity in place of hybrid logic
-    binding.
+    binding operator $\downarrow$ as the precise extension that crosses the
+    boundary.  This is the same boundary the Lutz--Wolter result sits astride
+    from the other side: they obtain undecidability precisely where Wessel
+    showed the \emph{abstract} semantics cannot, by drawing on the
+    \emph{concrete} topological rigidity Wessel's setting lacks---a different
+    route to the boundary (a linearized tiling enumeration, \S5), not a
+    development of Wessel's grid.
 \end{enumerate}
 
 \begin{table}[t]
@@ -645,17 +671,23 @@ This characterization is incomplete in several respects:
   \smallskip
   \begin{tabular}{@{}lcc@{}}
     \toprule
-    \textbf{Construction} & \textbf{Wessel (2002/2003)} & \textbf{Lutz--Wolter (2006)} \\
+    \textbf{Ingredient} & \textbf{Wessel (2002/2003)} & \textbf{Lutz--Wolter (2006)} \\
     \midrule
-    Even-odd chain via TPP/NTPP & \cite{Wessel2003}, \S4.4.2 & \cite{LutzWolter2006}, \S8 \\
+    Functional successor via TPP/NTPP$^\dagger$ & \cite{Wessel2003}, \S4.4.2 & \cite{LutzWolter2006}, \S5 \\
     Binary counter ($2^n$ path) & \cite{Wessel2003}, \S4.4.2 & --- \\
-    $\EXPTIME$-hardness of RCC8 logic & \cite{Wessel2003}, Thm.\ implicit & --- \\
-    Grid model construction & \cite{Wessel2003}, Fig.~10 & \cite{LutzWolter2006}, \S8 \\
+    $\EXPTIME$-hardness of an RCC8 logic & \cite{Wessel2003}, \S4.4.2 & --- \\
+    Native 2-D $TPP$ grid (two successors) & \cite{Wessel2003}, Fig.~10 & --- \\
     Coincidence obstruction identified & \cite{Wessel2003}, Fig.~11 & --- \\
-    Coincidence resolved (topologically) & --- & \cite{LutzWolter2006}, Thm.~8.2 \\
-    Domino reduction completed & --- & \cite{LutzWolter2006}, Thm.~8.2 \\
+    Linearized plane enumeration$^\dagger$ & --- & \cite{LutzWolter2006}, \S5, Fig.~4 \\
+    Coincidence avoided via topology & --- & \cite{LutzWolter2006}, Thm.~5 \\
+    Domino reduction completed & --- & \cite{LutzWolter2006}, Thm.~5, Cor.~6 \\
     \bottomrule
   \end{tabular}
+
+  \smallskip
+  {\footnotesize $^\dagger$~Shared technique; both trace it to
+  Marx--Reynolds~\cite{MarxReynolds1999} (compass/temporal logics) and to PDL
+  counter encodings, not to each other.}
 \end{table}
 
 We emphasize that the Lutz--Wolter contribution is genuine: showing that
@@ -761,10 +793,10 @@ This obstruction was first identified by Wessel in~\cite{Wessel2003}, who:
     (p.~43--44).
 \end{itemize}
 These contributions predate Lutz--Wolter~\cite{LutzWolter2006} by three to
-four years.  While the Lutz--Wolter result is genuinely new (resolving the
-coincidence in the topological setting is non-trivial), the prior analysis that
-\emph{identified} the obstruction and \emph{demonstrated} that it blocks the
-reduction in the abstract setting deserved more explicit
+four years.  While the Lutz--Wolter result is genuinely new (circumventing the
+coincidence via a linearized topological encoding is non-trivial), the prior
+analysis that \emph{identified} the obstruction and \emph{demonstrated} that it
+blocks the reduction in the abstract setting deserved more explicit
 acknowledgment.
 
 The decidability of $\ALCIRCC{8}$ remains open.  The coincidence obstruction
