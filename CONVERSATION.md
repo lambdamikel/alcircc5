@@ -6207,3 +6207,44 @@ note, the overview discussion piece, the cover-tree tableau implementation) are
 ready to ship.
 
 **Final addition (overview papers).** Both overview papers now carry a "Preliminary conclusion (end of May 2026)" subsection at the top of the Outlook/Conclusion section, stating the honest current status in paper register: the *settled foundation* is the split-forest model class (Theorem A, sound by every cold review), the *open layer* is only the finite abstraction (round-12, proved on paper but not independently certified), strongly supported not certified, with the consolidation stance (mechanization or human review as the off-ramps). A stale "the automata proof has not itself been cold-reviewed" sentence in the conclusion was corrected to reflect the 5th/6th cold reviews and round-12. Both recompile clean (28 / 29 pp, 0 errors).
+
+---
+
+## Round-12 expanded into a self-contained 29-page edition (2026-05-31, later)
+
+After the consolidation above, the project asked GPT-5.5 (the proof author) to extend
+the 14-page round-12 manuscript with appendices to make it more self-contained. The
+result is `papers/automata_route_repairs/split_forest_automata_with_appendices.tex`
+(29pp; compiles clean here, two passes, 0 undefined references).
+
+**What it is.** The *same* round-12 theorem spine — Theorem A (split-forest normal
+form) → Theorem B (patchwork-bag adequacy) → Theorem C (two-way alternating parity
+automaton correctness) → Decidability — now followed by **21 appendices (A–U)** that
+discharge every load-bearing step in full. The mathematically important one is the
+pair App A + App E: App A proves the finite→countable patchwork passage (finite
+tree-patching by induction on the number of bags, then a **compactness argument over
+the finite relation alphabet** — finite-intersection-property over `Rel^{V²}` — for
+the countable completion), and App E reads the global RCC5 labelling `ρ_T` off that
+compactness + finite patchwork, **with no route-dependent transformer**. That is
+exactly the global-coherence step the 6th cold review faulted as "asserted, not
+proved" in the round-11 transformer layer: round-12 had already replaced the layer;
+the expanded edition now writes the replacement out in full. Other appendices cover
+the effective `K(C₀)` width bound (C/L), extraction (D), relation-vector shadows (F),
+exact occurrence identity / running-intersection replacing the EQ quotient (G/R),
+automaton states + parity (H/N), effective bounds (I), an implementation-ready
+decision procedure + local legality tests (K/Q), diagnostic examples incl. the
+`PPI;PP` DR-exclusion (O), the two-wayness rationale (S), a dependency graph (T), and
+a "what would invalidate the proof" failure-mode list (U).
+
+**What it is not.** It is **not a new repair round** — no new defect prompted it; the
+goal was self-containedness, not correction — and it is **not itself cold-reviewed**.
+It still rests on the same two standard external theorems (RCC5 patchwork property;
+two-way parity-automaton emptiness, Vardi 1998). The keystone is still patchwork-bag
+adequacy (Theorem B).
+
+**Status: unchanged.** Strongly supported, not certified. This is the now-canonical
+manuscript (the 14-page theorem-spine version is retained as its compact form); the
+consolidation stance from the previous entry stands — mechanization or human peer
+review remain the real off-ramps, not another prose round. Docs updated: README
+(Latest News + Status Report pointer), CLAUDE.md (Key Files + status paragraph),
+OUTDATED.md.
