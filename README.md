@@ -5,6 +5,7 @@
 **Contents**
 
 - [Latest News](#latest-news)
+- [Status Report: End of May 2026](#status-report-end-of-may-2026)
 - [Overview paper](#overview-paper)
 - [Intellectual roots](#intellectual-roots)
 - [Background](#background)
@@ -37,7 +38,7 @@
 
 - **2026-05-05 — Copilot's parity-ω-word automaton decidability proof** ([PDF](papers/copilot.pdf)).  Independent attempt using a deterministic parity ω-word automaton, archived alongside the rest of the historical material.
 
-## Status Report — End of May 2026
+## Status Report: End of May 2026
 
 *After two months of intensive AI-assisted work (April–May 2026), we have concluded that:* the decidability of ALCI\_RCC5 and ALCI\_RCC8 **remains open**; our decidability argument is **strongly supported but not certified**; and the project has reached a natural **consolidation point**. We are deliberately stopping the cold-review / repair cycle rather than continuing it. This section records where things actually stand and why.
 
