@@ -6135,3 +6135,75 @@ the formula") was an overstatement that had drifted into the paper's framing;
 the fix was to read the actual source.  Cross-checking priority/credit claims
 about named researchers against the primary text --- not against a confident
 prior summary --- is the discipline.
+
+
+## 2026-05-31 (consolidation): finished the Lutz--Wolter cleanup, decided to freeze at round-12, wrote the Status Report capstone
+
+This stretch closed out the Lutz--Wolter accuracy work and then stepped back to a
+strategic decision: stop the cold-review treadmill and consolidate.
+
+**Finished the L--W corpus cleanup.** Beyond the LRCC8_vs paper and README (prior
+entry), the same overclaim ("Wessel anticipated the key technical ingredients of
+the L--W proof") and the same inaccurate "L--W force a grid coincidence" framing
+were also in BOTH overview papers --- four spots each --- and were corrected to
+match the primary source (commit ba50697). Also tightened Remark 3's "Wessel's
+contribution" claim: report7 itself attributes the binary-counter and
+ExpTime-hardness constructions to a PDL encoding ("works basically like for PDL
+[7]"), so the credit is the *application to ALCI_RCC8* (the TPP/NTPP
+role-vs-orbit separation), not the technique --- consistent with how the paper
+already credits Marx--Reynolds for the successor trick (commit 922e838). The
+whole L--W / Wessel-priority story across the corpus (LRCC8_vs paper, README,
+both overviews) is now uniformly primary-source-verified and diplomatic.
+
+**The strategic turn.** Michael asked where the project stands; he is weary of
+the cold-review/round cycle and it is getting pricey. Honest read, recorded:
+ALCI_RCC5/RCC8 decidability remains open; round-12 is "strongly supported, not
+certified" (6 reviews, 6 defects, no clean pass), but the trajectory is
+convergent (bespoke -> standard citable theorems). More prose rounds have
+diminishing returns and *cannot certify* --- a clean cold review is only "no
+defect found," not a proof. The two real off-ramps are mechanization (Lean/Coq)
+and human peer review.
+
+**Mechanization assessment (recorded in the Status Report).** Layer by layer:
+finite/algebraic core easy (days-weeks); Theorem A heavy-but-standard (months);
+the two external pillars expensive (RCC5 patchwork property unmechanized;
+two-way alternating parity *tree* automaton emptiness near the frontier, likely
+unmechanized anywhere); patchwork-bag adequacy the wildcard. Tractable strategy:
+axiomatize the two citable externals, mechanize only Theorem A + the keystone.
+Cheap half-step: machine-check the finite core (WP1/WP6 + patchwork-as-used).
+
+**The decision + the capstone.** Freeze the decidability proof at round-12,
+honestly labeled, full audit trail preserved; ship the finished side-
+contributions; reserve mechanization / human review as deliberate future moves,
+not the next reflexive round. Wrote a "Status Report: End of May 2026" capstone
+section in the README (commit d0fbd7d; TOC entry + clean anchor 276356e). A
+project memory was saved so a future session does not reflexively start "round
+13."
+
+**Round-12 self-containedness (a correctness check Michael prompted).** Verified
+that round-12 (14pp) is a *complete, self-contained manuscript*: it states and
+proves INLINE its lemmas (thinning, finite saturation) and Theorems A (normal
+form), B (finite patchwork-bag abstraction adequacy), C (automaton), and
+Decidability --- depending only on the two cited externals. It does NOT depend on
+the round-11 companion (the 19pp full_proof + 18pp A/B/C are the superseded
+predecessor whose transformer abstraction the 6th review broke). Added a
+"Provenance" note to the round-12 .tex and a README clarifier: "strongly
+supported, not certified" means *proved on paper, not independently
+cold-reviewed/mechanized* --- NOT that any step is unproved. Audited the docs:
+"unproved" is attached only to the round-11 transformer, never to round-12's
+keystone (commit e75e3ca). Finally, at Michael's request, made the **split-forest
+model class (Theorem A) the first "settled" item** --- it is the foundation
+everything consumes (the automaton "consumes the split forest, it does not
+replace it"), the one component every cold review found sound; the report's spine
+is now: *settled foundation = the tree-like model class; open layer = only the
+finite abstraction on top* (commit cd60cf4).
+
+**Where we left off (longer break).** The project is on solid, honest ground.
+Decidability is open and accurately represented; the Lutz--Wolter / priority
+story is primary-source-verified across the whole corpus; nothing is mid-edit.
+If/when work resumes, the cheap next step toward *settling* decidability is the
+finite-core Lean/Coq check; otherwise the finished pieces (the L--W non-transfer
+note, the overview discussion piece, the cover-tree tableau implementation) are
+ready to ship.
+
+**Final addition (overview papers).** Both overview papers now carry a "Preliminary conclusion (end of May 2026)" subsection at the top of the Outlook/Conclusion section, stating the honest current status in paper register: the *settled foundation* is the split-forest model class (Theorem A, sound by every cold review), the *open layer* is only the finite abstraction (round-12, proved on paper but not independently certified), strongly supported not certified, with the consolidation stance (mechanization or human review as the off-ramps). A stale "the automata proof has not itself been cold-reviewed" sentence in the conclusion was corrected to reflect the 5th/6th cold reviews and round-12. Both recompile clean (28 / 29 pp, 0 errors).

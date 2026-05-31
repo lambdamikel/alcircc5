@@ -1797,6 +1797,48 @@ combinatorial claim of any round was found.
 \label{sec:outlook}
 %% ====================================================================
 
+\subsection{Preliminary conclusion (end of May~2026)}
+\label{ssec:prelim-conclusion}
+
+We state the status plainly, as it is provisional.  The decidability of
+$\ALCIRCC{5}$ \emph{remains open} (and $\ALCIRCC{8}$ likewise); as of the end of
+May~2026 the decidability argument is \emph{strongly supported but not
+certified}.  Two layers should be kept apart.
+
+\emph{The settled foundation} is the split-forest model class---the semantic
+normal form of Theorem~A (witness thinning, generated containment covers, split
+copies for incomparable superparts, side-interface mosaics, typed-$\EQ$
+quotient).  Every satisfiable concept admits a witness-generated, tree-like
+split-forest model, and this normal form has been found sound by \emph{every one
+of the six cold reviews} conducted on the project---it is the one component that
+has never broken.  Everything downstream is built \emph{on top of} it: the finite
+patchwork-bag abstraction and the two-way alternating parity tree automaton
+\emph{consume} the split forest rather than replace it.
+
+\emph{The open layer} is exactly that finite abstraction.  The current canonical
+manuscript (round~12) replaces the earlier transformer-based abstraction---which
+a cold review found unproved---by a patchwork-bag abstraction whose global RCC5
+coherence follows from the patchwork property of RCC5, with infinite
+eventualities decided by two-way parity-automaton emptiness.  It is a complete,
+self-contained manuscript that \emph{proves} its finite-abstraction adequacy on
+paper, modulo two standard external theorems (the RCC5 patchwork property;
+emptiness of two-way alternating parity tree automata); what it has \emph{not}
+yet received is an independent cold review or a machine-checked certification.
+``Strongly supported, not certified'' should be read in precisely this
+sense---proved on paper, not independently verified---and not as a claim that any
+step is known to be missing.
+
+The trajectory across the rounds is convergent: the repairs have moved from
+bespoke, hand-built machinery towards standard, citable theorems, so we regard
+the present state as a natural consolidation point.  Settling the question
+definitively will require either mechanization (Lean/Coq) of the
+finite-abstraction keystone---axiomatizing the two external theorems and
+formalizing the normal form and the adequacy argument---or human expert peer
+review.  Until then we offer the work as a discussion piece: a problem open for
+over twenty years, with the standard undecidability routes shown blocked and a
+convergent-but-uncertified decidability argument resting on the sound
+split-forest model class.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the
@@ -1812,8 +1854,10 @@ parity-tree-automata proof (\S\ref{ssec:soundness-completeness}); the
 no-automata thread that preceded it reached round~10 after a cold
 review of round-9 found a dual descendant-tower defect and two
 foundational gaps (\S\ref{ssec:round10-automata}), and its repairs
-reduced to automaton-shaped lemmas.  The automata proof has not
-itself been cold-reviewed or machine-certified.
+reduced to automaton-shaped lemmas.  That automata proof was itself then
+cold-reviewed twice (the 5th and 6th cold reviews) and repaired; the current
+round-12 patchwork-bag manuscript (see the preliminary conclusion above) has
+not been cold-reviewed or machine-certified.
 
 The decidability argument as of May~2026 rests on \emph{two}
 core papers, which together aim to establish:
