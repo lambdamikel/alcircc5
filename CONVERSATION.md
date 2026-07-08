@@ -6248,3 +6248,81 @@ consolidation stance from the previous entry stands — mechanization or human p
 review remain the real off-ramps, not another prose round. Docs updated: README
 (Latest News + Status Report pointer), CLAUDE.md (Key Files + status paragraph),
 OUTDATED.md.
+
+## 2026-07-08: the seventh review — Fable 5 hot audit of round-12; the Shadow Amalgamation gap; WP14–WP16
+
+The May freeze held for five weeks, until a genuinely stronger reviewer became
+available: **Claude Fable 5** (Anthropic's first Mythos-class model, a capability tier
+above Opus, and a different model lineage from the proof's author GPT-5.5). A
+materially stronger reviewer is itself new information, so the freeze was broken once
+to run a **seventh review** — a context-loaded (*hot*) adversarial audit of the
+canonical 29-page round-12 manuscript, explicitly *not* a cold review (the reviewer
+had the full repository, including all six prior reports). Deliverables:
+`papers/fable5_review/referee_report_round12_fable5.tex/.pdf` (9pp), three new
+verification harnesses (WP14–WP16 under `verification/python/`, output logs under
+`verification/reports/`), and a self-contained response bundle for GPT-5.5
+(`papers/fable5_review/fable5_review_round12_bundle.zip`).
+
+**The critical finding (F1, "Shadow Amalgamation").** Round-12's Theorem B(b) builds
+the global relation `ρ_T` by patchwork + compactness over the **bag networks only**
+(App E "Global realization"), but its Truth Lemma then asserts that the declared
+relation-vector **shadow** entries agree with `ρ_T` ("the exact relation vector from
+x to the live ports includes ρ_T(x,y) = R"). No listed legality test constrains two
+*shadows* against each other, and a vector entry is dropped when its port is
+forgotten, so the implicit lemma — *bags + all declared shadow rows are jointly
+realizable in one frame* — is unproved, and in fact **false for the tests as
+written**: WP15 exhibits a minimal 3-bag configuration (declared entries
+`x₁–x₂: DR`, `x₁–p: PP`, `x₂–p: PPI`; `comp(PP,PP) = {PP}` forces `x₁ PP x₂`)
+that passes every listed test and admits no realizing frame; exhaustively, 23 of 64
+row assignments on the pattern fail. This is the 6th review's transformer-coherence
+gap C1 recurring **one layer up** (shadow tier instead of transformer tier) — but
+strictly smaller: with a single shadow the needed lemma is provable (the bag+row
+family is itself an agreeing tree family, so round-12's own Theorem 2.5 applies;
+250/250 in WP15), and no counterexample exists under the **vertical-liveness repair
+discipline** (PP/PPI/EQ pairs always co-bagged, shadow entries DR/PO-only — which is
+just saturation rule (S3)/(V7) extended to the shadow layer; 358/358 clean) or under
+the extended-bag discipline (shadow-shadow entries checked per bag; 200/200 clean).
+The report's §6 turns this into the repair program for a prospective round 13.
+
+**The spec loopholes (F2/F3).** Two independently soundness-fatal-as-written
+specification gaps, each with a one-line fix: Def 3.3 permits **EQ-valued shadow
+entries** (obligations `(R,D)` with `R ≠ EQ` then never fire on that target), and the
+**shadow's propagation scope is never pinned down** (App H's "all adjacent bags in
+which the shadow must continue" leaves "must" undefined; completeness never forces
+propagation, so a run may simply drop the shadow). WP16 machine-checks that either
+loophole flips the UNSAT concepts `C_force`, `C_split`, `C_2hop`, `C_3hop` to
+ACCEPT, while the repaired discipline (obligations on actual completed relations,
+non-EQ entries, mandatory propagation) matches the cover-tree tableau on all ten
+diagnostics — including **SAT for the strong-EQ PO-loop concept** (the retired
+quasimodel oracle's blind spot; round-12's exact occurrence identity + same-bag
+witness reuse handles it by design, an architectural strength) — plus a 148-concept
+random sweep with zero disagreements. Also **F4**: the `K(C₀)` finiteness proof
+still asserts "This is finite" for an enumeration that is a priori infinite without
+a witness-generatedness constraint (the 6th review's M1, softened).
+
+**What held up under attack.** The RCC5 patchwork theorem *in exactly the round-12
+form* — WP14 verifies it exhaustively at small widths (T1: 21,538 two-bag
+amalgamations, exhaustive at 1+1 fresh variables; T2: 41,681 at 2+2; T3: 300 random
+tree-of-bags families amalgamated leaf-by-leaf literally per App A's induction; T4:
+no composition cell can force EQ — zero failures anywhere; a failure would have
+invalidated the proof per its own App U/F1). Also sound: the finite→countable
+compactness passage (modulo one wording fix — "extending *the* patchwork completion"
+must read "*some* completion"), strong equality / App G, the running-intersection /
+exact-occurrence-identity layer (App R), the forest→tree packaging (the 6th review's
+C3.3 dissolved), and the two-way/Vardi choice (M3 resolved in principle). An
+incidental replication: WP16's first naive same-type blocking implementation
+produced a false SAT on `C_3hop` by deferring the eventuality forever down the
+regular tail — the round-6/7 lap-collapse family — confirming that Theorem C's
+request-closed-lap content is load-bearing; the fix (a lap may block only if the
+blocking occurrence fulfilled the same request concretely) restored agreement.
+
+**No accepted-but-unsatisfiable concept was found** (consistent with the 6th
+review): ALCI's lack of nominals appears to block concept-level exploitation of the
+configuration-level defect. Net status: **unchanged — strongly supported, NOT
+certified** (now 7 reviews, 7 defects: six cold, the seventh hot); the keystone is
+sharpened from "patchwork-bag adequacy" generically to the **Shadow Amalgamation
+Lemma + K(C₀) accounting** specifically. Docs updated: README (Latest News, Status
+Report annotations + July update subsection, treadmill-section annotation, WP14–WP16,
+Key Files), CLAUDE.md (status paragraph, 7th-review paragraph, WP list, Key Files),
+verification/README.md, this file. The round treadmill remains stopped as a default;
+frontier-model audits are the sanctioned exception.

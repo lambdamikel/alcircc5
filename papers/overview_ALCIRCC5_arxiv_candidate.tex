@@ -1833,7 +1833,9 @@ faulted in the earlier transformer-based abstraction.  What the manuscript has
 certification.
 ``Strongly supported, not certified'' should be read in precisely this
 sense---proved on paper, not independently verified---and not as a claim that any
-step is known to be missing.
+step is known to be missing.  \emph{(Update, July~2026: that last clause has
+since been overtaken---the seventh review identified one concretely unproved
+step; see \S\ref{ssec:july2026-update}.)}
 
 The trajectory across the rounds is convergent: the repairs have moved from
 bespoke, hand-built machinery towards standard, citable theorems, so we regard
@@ -1845,6 +1847,63 @@ review.  Until then we offer the work as a discussion piece: a problem open for
 over twenty years, with the standard undecidability routes shown blocked and a
 convergent-but-uncertified decidability argument resting on the sound
 split-forest model class.
+
+
+\subsection{Update (July 2026): the seventh review}
+\label{ssec:july2026-update}
+
+The consolidation stance above held for five weeks, until a genuinely stronger
+reviewer became available: Claude Fable~5 (Anthropic's first Mythos-class
+model, a capability tier above Opus, and a different model lineage from the
+round-12 author, GPT-5.5).  A materially stronger reviewer is itself new
+information, so the freeze was broken once for a \emph{seventh review}---a
+context-loaded (``hot'') adversarial audit of the canonical round-12
+manuscript, explicitly \emph{not} a cold review, accompanied by three new
+computational work packages (WP14--WP16); see
+\texttt{papers/fable5\_review/} in the repository for the full report and
+probes.  It continued the series' pattern: every review so far has found a
+defect, and this one did too (seven reviews, seven defects).
+
+The critical finding is that the round-12 truth lemma rests on an unproved
+\emph{shadow-amalgamation} step: the global RCC5 relation $\rho_T$ is
+amalgamated by patchwork from the \emph{bag networks only}, yet the lemma
+assumes the declared relation-vector shadow entries agree with $\rho_T$.  No
+legality test constrains two shadows against each other, and the implicit
+lemma---bags plus all declared shadow rows are jointly realizable in one
+frame---is in fact false for the tests as written: WP15 exhibits a three-bag
+configuration (declared entries $x_1\,\DR\,x_2$, $x_1\,\PP\,p$,
+$x_2\,\PPI\,p$; $\comp(\PP,\PP)=\{\PP\}$ forces $x_1\,\PP\,x_2$) that passes
+every listed test and admits no realizing frame; 23 of 64 assignments on the
+minimal pattern fail.  This is the sixth review's transformer-coherence gap
+recurring one layer up, but strictly smaller: the single-shadow case is
+provable from the patchwork theorem itself, and no counterexample exists
+under a \emph{vertical-liveness} repair discipline ($\PP/\PPI/\EQ$ pairs
+always co-bagged, shadow entries restricted to $\{\DR,\PO\}$---the
+saturation rules extended to the shadow layer; 358/358 random and exhaustive
+configurations clean) or under an extended-bag discipline (200/200).  Two
+specification loopholes were also found ($\EQ$-valued shadow entries;
+undefined shadow propagation scope), each independently soundness-fatal as
+literally written and each a one-line fix: WP16 machine-checks that either
+loophole makes the mechanism wrongly accept four unsatisfiable
+forced-composition concepts, while under the repaired discipline it agrees
+with the cover-tree tableau on all ten referee diagnostics---including,
+notably, the strong-$\EQ$ PO-loop concept that the retired quasimodel
+reasoner decided wrongly---and on a 148-concept random sweep without
+disagreement.  The $K(C_0)$ finiteness argument also remains an assertion.
+
+What held up under attack is equally important: the RCC5 patchwork theorem
+\emph{in exactly the round-12 form} was verified exhaustively at small
+widths (WP14: 63{,}219 two-bag amalgamations and 300 tree-of-bags patchings
+executed literally along the manuscript's own induction, zero failures), as
+did the finite-to-countable compactness passage, strong equality, the
+running-intersection layer, and Theorem~A's normal form.  No
+accepted-but-unsatisfiable \emph{concept} was found.  The status label is
+therefore unchanged---\emph{strongly supported, not certified}---with the
+keystone sharpened from ``patchwork-bag adequacy'' generically to a
+\emph{shadow-amalgamation lemma} (plus the $K(C_0)$ accounting)
+specifically.  The consolidation stance otherwise stands: mechanization or
+human peer review remain the decisive next steps, with frontier-model audits
+as the sanctioned exception whenever a genuinely stronger reviewer appears.
 
 \subsection{What has been achieved}
 
@@ -1864,7 +1923,8 @@ foundational gaps (\S\ref{ssec:round10-automata}), and its repairs
 reduced to automaton-shaped lemmas.  That automata proof was itself then
 cold-reviewed twice (the 5th and 6th cold reviews) and repaired; the current
 round-12 patchwork-bag manuscript (see the preliminary conclusion above) has
-not been cold-reviewed or machine-certified.
+not been cold-reviewed or machine-certified; a seventh (hot) review in
+July~2026 found its truth lemma incomplete (\S\ref{ssec:july2026-update}).
 
 The decidability argument as of May~2026 rests on \emph{two}
 core papers, which together aim to establish:

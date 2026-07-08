@@ -4,7 +4,7 @@ This directory contains computational cross-checks of the finite combinatorial c
 
 The work-package mapping follows GPT-5.5's [verification recommendations document](../papers/gpt5.5_round2/verification_recommendations_for_claude.pdf). Six work packages WP1–WP6 are scoped; WP4 (multiple-superpart $C_{AB}$ stress) and WP5 (request-closed blocking-cycle tests) are folded into WP2 and WP3 respectively, so four Python scripts cover all six work packages.
 
-**Status: All four scripts PASS. No counterexample found.**
+**Status: All four scripts PASS. No counterexample found.** *(July 2026: three further scripts WP14–WP16 target the round-12 patchwork-bag proof — see below; all PASS, where WP15's PASS deliberately confirms a defect in round-12's Truth Lemma as written, plus its repair map.)*
 
 The Lean targets L1–L7 from GPT-5.5's verification recommendations are not yet attempted.
 
@@ -67,6 +67,28 @@ No counterexample to the patchwork lemma was found on the tested mosaic families
 Run: `python3 python/mosaic_closure_search.py`
 Report: [`reports/mosaic_closure_search.txt`](reports/mosaic_closure_search.txt)
 
+### `python/wp14_patchwork_property_check.py` — WP14: the round-12 patchwork theorem (Thm 2.5 / App A), direct verification
+
+Added by the **seventh review** (July 2026, Claude Fable 5), targeting the **round-12 patchwork-bag proof** (`papers/automata_route_repairs/split_forest_automata_with_appendices.tex`). For the abstract composition-table semantics, a finite complete atomic network is satisfiable iff it is composition-closed — the network *is* a frame — so round-12's central external dependency (its Theorem 2.5) is a purely combinatorial statement, verified here directly: T0 composition table re-derived from set semantics; T1 two-bag patchwork **exhaustive** at 1+1 fresh variables, shared parts of size 0–3 (21,538 agreeing pairs); T2 two-bag at 2+2 fresh variables (41,681 pairs); T3 **300 random tree-shaped bag families amalgamated leaf-by-leaf, literally executing App A's induction**; T4 EQ-forcing impossibility (every nontrivial composition cell containing EQ also contains PP, PPI, PO — backing App G's strong-equality claim). **All PASS, zero failures.** A failure here would have invalidated the proof (its own App U, failure point F1).
+
+Run: `python3 python/wp14_patchwork_property_check.py`
+Report: [`reports/wp14_patchwork_property_check.txt`](reports/wp14_patchwork_property_check.txt)
+
+### `python/wp15_shadow_row_realizability.py` — WP15: the Shadow Amalgamation gap (7th review, finding F1), machine-checked
+
+An **attack harness, not a proof check**: a passing run *confirms a defect* in round-12's Truth Lemma as written, together with its repair map. Models the shadow legality tests literally (per-bag one-point closure, boundary rigidity on continued ports, non-EQ entries) and shows the Truth Lemma's implicit assumption — *bag networks + all declared shadow rows are jointly realizable in one frame* — is **false**: P1, a minimal 3-bag configuration (declared entries `x1–x2: DR`, `x1–p: PP`, `x2–p: PPI`; `comp(PP,PP) = {PP}` forces `x1 PP x2`) passes every listed test with no realizing frame; P2, exhaustively 23/64 row assignments on the pattern fail. Repair map corroborated: P3 single-shadow always realizable (250/250 — provable: the bag+row family is an agreeing tree family, so Theorem 2.5 applies to it); P4 multi-shadow with DR/PO-only entries (the *vertical-liveness* discipline) 358/358 clean; P5 extended-bag discipline (shadow-shadow entries checked per bag) 200/200 clean.
+
+Run: `python3 python/wp15_shadow_row_realizability.py`
+Report: [`reports/wp15_shadow_row_realizability.txt`](reports/wp15_shadow_row_realizability.txt)
+
+### `python/wp16_round12_bag_acceptance.py` — WP16: acceptance-level patchwork-bag mechanism check vs the cover-tree tableau
+
+A finite-occurrence rendering of round-12's acceptance semantics (Hintikka types; declared witness edges with exact-occurrence-identity reuse; request-closed regularity for vertical eventualities; patchwork completion of undeclared pairs), run in two modes and cross-checked against `src/cover_tree_tableau.py`. **Repaired mode** (obligations enforced on actual completed relations; no EQ shadow entries; mandatory propagation): agrees with the tableau on all ten referee diagnostics — `C_force`, `C_split`, `C_2hop`, `C_3hop` UNSAT; `C_recursive`, `C_↑`, the round-10 dual-descendant tower, and the strong-EQ **PO-loop** SAT (the quasimodel oracle's blind spot, decided correctly here by design) — plus a 148-concept random sweep with **zero disagreements**. **Literal mode** (either of the 7th review's spec loopholes active: EQ-valued shadow entries, or droppable shadow scope): **wrongly accepts all four forced-composition UNSAT concepts**, machine-proving both loopholes are load-bearing. Bounded probe (occurrence budget; blocking requires request-closed laps — naive same-type blocking was observed to reproduce the round-6/7 lap-collapse false-SAT on `C_3hop`).
+
+Run: `python3 python/wp16_round12_bag_acceptance.py`
+Report: [`reports/wp16_round12_bag_acceptance.txt`](reports/wp16_round12_bag_acceptance.txt)
+
+
 ## Reproducing the reports
 
 ```
@@ -75,6 +97,9 @@ python3 rcc5_composition_check.py    > ../reports/rcc5_composition_table.txt
 python3 certificate_checker.py       > ../reports/certificate_checker.txt
 python3 small_model_oracle.py        > ../reports/small_model_oracle.txt
 python3 mosaic_closure_search.py     > ../reports/mosaic_closure_search.txt
+python3 wp14_patchwork_property_check.py > ../reports/wp14_patchwork_property_check.txt
+python3 wp15_shadow_row_realizability.py > ../reports/wp15_shadow_row_realizability.txt
+python3 -u wp16_round12_bag_acceptance.py > ../reports/wp16_round12_bag_acceptance.txt
 ```
 
-Each script exits with code `0` on PASS and `1` on any mismatch / counterexample. The four current reports all end with `VERDICT: PASS`.
+Each script exits with code `0` on PASS and `1` on any mismatch / counterexample. The four round-2-era reports all end with `VERDICT: PASS`; the three round-12-era reports (WP14–WP16, July 2026) all end with their `OVERALL: PASS` lines (for WP15, PASS means *the defect and its repair map are confirmed* — it is an attack harness).

@@ -1,0 +1,605 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,longtable,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newtheorem{lemma}{Lemma}[section]
+\theoremstyle{definition}
+\newtheorem{finding}{Finding}
+\newtheorem{soundstep}{S}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Referee Report and Computational Stress Test:\\
+the Round-12 Patchwork-Bag Automata Proof of Decidability for $\ALCIRCC$}
+\author{Claude (Fable~5, Anthropic)\thanks{Seventh review in the series.
+Prompted by Michael Wessel.  This is a \emph{context-loaded} (``hot'')
+adversarial audit, \emph{not} a cold review in the sense of the project's
+cold-review protocol: the reviewer had full access to the repository,
+including all prior referee reports.  It is, however, by a different model
+lineage than the author of the manuscript under review (GPT-5.5, OpenAI).}}
+\date{July 8, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This report reviews the canonical round-12 decidability manuscript
+\code{papers/automata\_route\_repairs/split\_forest\_automata\_with\_appendices.tex}
+(29\,pp, May 31, 2026) and attacks it with three new computational probes
+(WP14--WP16, under \code{verification/python/}).  Summary verdict:
+\textbf{genuine gap; the theorem remains most likely true; the repair is
+localized and computationally corroborated.}  The round-12 architecture is a
+real improvement --- the route-dependent transformer layer is gone, and
+global RCC5 coherence of the \emph{bag networks} genuinely follows from the
+RCC5 patchwork property plus a correct compactness argument (WP14 verifies
+the patchwork statement exhaustively at small widths: $63{,}219$
+amalgamation instances, zero failures).  But the Truth Lemma of Theorem~B(b)
+contains one unproved load-bearing step: it assumes the declared
+relation-vector \emph{shadows} agree with the patchwork completion
+$\rho_T$, although $\rho_T$ is amalgamated from bag networks \emph{only} and
+no listed legality test constrains two shadows against each other.  WP15
+exhibits a three-bag configuration that passes every listed test yet admits
+\emph{no} frame realizing all declared vectors (23 of 64 assignments on the
+minimal pattern fail); the missing statement is a \emph{Shadow Amalgamation
+Lemma}, the round-12 successor of the sixth review's transformer-coherence
+gap C1 --- same genus, one layer up, but now much smaller.  Two independent
+specification loopholes (EQ-valued shadow entries; undefined shadow scope)
+are each shown by WP16 to flip the referee concept $C_{\mathrm{split}}$ and
+three other unsatisfiable forced-composition concepts to ACCEPT; both have
+one-line fixes.  Under the repaired discipline, WP16's mechanism agrees
+with the cover-tree tableau on all ten diagnostics --- including the
+strong-EQ PO-loop concept that the retired quasimodel reasoner decided
+wrongly --- and on a 148-concept random sweep with zero disagreements.  No
+accepted-but-unsatisfiable \emph{concept} was found.  Status
+recommendation: keep ``strongly supported, \emph{not} certified''; the
+keystone is now the Shadow Amalgamation Lemma plus the $K(C_0)$
+finiteness accounting.
+\end{abstract}
+
+\tableofcontents
+
+\section{Scope, materials, and disclosure}
+
+\textbf{Manuscript under review.}
+\code{split\_forest\_automata\_with\_appendices.tex} (``the manuscript''),
+the round-12 \emph{expanded self-contained edition}: Theorem~A (split-forest
+normal form) $\to$ Theorem~B (finite patchwork-bag abstraction adequacy)
+$\to$ Theorem~C (two-way alternating parity tree automaton correctness)
+$\to$ decidability, with appendices A--U.  The 14-page theorem-spine
+edition \code{split\_forest\_patchwork\_automata\_repaired.tex} was read for
+cross-checking; the sixth cold review
+(\code{referee\_report\_ALCI\_RCC5.md}) and the author's response
+(\code{formal\_response\_referee\_round12.tex}) were used to fix the review
+targets.
+
+\textbf{Review goal.}  Attack the proof; search for counterexamples; where
+no defect is found, strengthen the verification record.  Accordingly this
+report contains both findings (Section~\ref{sec:findings}) and a list of
+steps checked and found sound (Section~\ref{sec:sound}), plus three new
+verification work packages (Section~\ref{sec:probes}).
+
+\textbf{Disclosure.}  This is a \emph{hot} review: the reviewer had the full
+repository in context, including all six prior reviews.  It therefore does
+not discharge the project's requirement that round-12 be cold-reviewed; it
+is best read as an internal audit.  The reviewer is a different model
+lineage (Anthropic) from the manuscript's author (GPT-5.5, OpenAI).
+
+\section{Summary verdict}\label{sec:verdict}
+
+\begin{enumerate}[leftmargin=2em]
+\item \textbf{The architectural move of round-12 is correct and real
+progress.}  Deleting the pair/triple transformer layer and resting global
+RCC5 coherence on complete atomic bag networks + the patchwork property
+removes the sixth review's C1 \emph{for the bag layer}: Appendix~A's finite
+tree-patching induction is sound (its use of running intersection is
+exactly right), the compactness passage to countable trees is correct
+(modulo a wording slip, Finding~\ref{f:appA}), and the two-bag patchwork
+property itself --- the one algebraic input --- holds in exactly the stated
+form for the abstract semantics, now machine-verified exhaustively at small
+widths (WP14, $63{,}219$ instances, zero failures).
+
+\item \textbf{The Truth Lemma of Theorem B(b) has one unproved load-bearing
+step (Finding~\ref{f:shadow}, critical).}  $\rho_T$ is amalgamated from
+\emph{bag networks only} (App.~E, ``Global realization''), yet the universal
+case asserts ``the exact relation vector from $x$ to the live ports includes
+$\rho_T(x,y)=R$''.  Nothing forces the declared shadow vectors to agree with
+$\rho_T$: no listed test relates two shadows to each other, and a vector
+entry to a port is dropped when the port is forgotten.  WP15 gives a
+three-bag configuration passing \emph{every} listed test whose declared
+vectors are \emph{jointly unrealizable} --- the quoted sentence is false for
+every choice of $\rho_T$ on that input.  The missing statement is a
+\emph{Shadow Amalgamation Lemma}.  This is the same \emph{genus} of defect
+as the sixth review's C1 (local checks that do not compose globally), one
+layer up (shadow tier instead of transformer tier) --- but the layer is far
+thinner, the failure is now precisely isolated, and two repair disciplines
+are computationally corroborated (Section~\ref{sec:repair}).
+
+\item \textbf{Two specification loopholes are independently
+soundness-fatal as literally written} (Findings~\ref{f:eq}
+and~\ref{f:scope}); each admits a one-line fix, and WP16 machine-checks
+that with the fixes in place the mechanism decides all referee diagnostics
+correctly, while either loophole alone flips $C_{\mathrm{split}}$,
+$C_{\mathrm{force}}$ and two deeper forced-composition concepts to ACCEPT.
+
+\item \textbf{The $K(C_0)$ finiteness argument is still an assertion}
+(Finding~\ref{f:kbound}) --- the sixth review's M1 in softened form.
+
+\item \textbf{No accepted-but-unsatisfiable concept was found.}  Like the
+sixth reviewer, I could not exploit the gaps at \emph{concept} level:
+$\mathcal{ALCI}$ lacks nominals, so the witness-identification needed to
+force two distinct occurrences into my WP15 configuration appears
+inexpressible.  The configuration-level defect stands regardless: the Truth
+Lemma, as proved, is false.
+
+\item \textbf{Status recommendation.}  Keep ``strongly supported,
+\emph{not} certified.''  Do not describe round-12 as cold-reviewed.  The
+keystone has narrowed again: from ``patchwork-bag adequacy'' generically to
+\emph{Shadow Amalgamation} + \emph{$K(C_0)$ accounting} specifically.
+\end{enumerate}
+
+\section{Findings}\label{sec:findings}
+
+Throughout, $\Comp$ is the RCC5 composition table (re-verified, S1), and
+``the listed tests'' means the union of Definition~3.4 (V1)--(V8), the
+Appendix~H shadow-movement conditions (boundary agreement on shared ports;
+compatibility with the current bag network), and the Appendix~Q tests
+(N1)--(N6), (T1)--(T4), (W1)--(W3), (O1)--(O5), (C1)--(C3), (S1)--(S4).
+
+\begin{finding}[\textbf{CRITICAL --- the Truth Lemma assumes an unproved
+Shadow Amalgamation Lemma}]\label{f:shadow}
+\emph{Location:} Theorem~3.6(b) proof; Appendix~E (``Global realization'',
+``Truth lemma''); Appendix~M (``Truth lemma: universal cases'',
+``Truth lemma: existential cases'').
+
+\emph{The step.}  The realization builds $\rho_T$ by ``the countable
+patching lemma \ldots{} applied to the tree-shaped family of finite
+\emph{bag networks}'' --- shadow vectors are not part of the amalgamated
+family.  The universal case then argues: when target $y$ is introduced,
+``the exact relation vector from $x$ to the live ports includes
+$\rho_T(x,y)=R$; validity therefore forces $D$ into the type of $y$.''
+The existential case for vertical requests likewise fulfills
+$\exists R.D$ at ``a port $q$ whose exact recorded relation to the source
+is $R$'' --- where, if the source is no longer live, ``recorded'' can only
+mean the shadow entry.
+
+\emph{Why it does not follow.}  For a pair $(x,y)$ that is never co-bagged,
+$\rho_T(x,y)$ is whatever the bag-only amalgam happens to choose among the
+(generally several) patchwork-feasible values, while the declared vector
+entry is a separate guess constrained only \emph{per bag} (one-point
+compatibility) and \emph{per boundary} (rigidity on continued ports).
+Two gaps result:
+\begin{enumerate}[label=(\alph*),leftmargin=2em]
+\item nothing makes $\rho_T$ agree with the declared entries; and
+\item one cannot repair this by amalgamating the entries too, because the
+listed tests never constrain two \emph{shadows} against each other, nor a
+vector entry declared while a port was live against entries declared after
+that port is forgotten.  The implicit lemma ---
+\emph{bags $+$ all declared shadow rows are jointly realizable in one
+frame} --- is false for the tests as written.
+\end{enumerate}
+
+\emph{Machine-checked counterexample} (WP15, part P1; three bags on a
+decomposition path, one port each, separators empty --- a variant with a
+continued all-$\DR$ separator port behaves identically):
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+bag & live port & declared shadow entries at this bag\\
+\midrule
+$t_0$ & $x_1$ & --- ($x_1$ introduced, then forgotten)\\
+$t_1$ & $x_2$ & $x_1$: $(x_2\mapsto\DR)$\\
+$t_2$ & $p$   & $x_1$: $(p\mapsto\PP)$;\quad $x_2$: $(p\mapsto\PPI)$\\
+\bottomrule
+\end{tabular}
+\end{center}
+Every bag is (trivially) a complete atomic closed network; every row is
+one-point composition-closed with its bag; rigidity is vacuous
+(no continued ports); all entries are non-$\EQ$; the $(x_1,x_2)$ entry even
+respects the residual-frontier discipline ($\DR$).  Yet jointly the three
+declarations say $x_1\,\PP\,p$, $p\,\PP\,x_2$ (converse of the declared
+$\PPI$), hence $\rho(x_1,x_2)\in\Comp(\PP,\PP)=\{\PP\}$, contradicting the
+declared $\DR$.  \textbf{No abstract RCC5 frame realizes bags $+$ rows;}
+consequently, for every choice of $\rho_T$, at least one declared vector
+entry is wrong, and the Truth Lemma's quoted sentence fails: an obligation
+$(\rho_T(x_1,x_2),D)\in\Omega_{x_1}$ can fire in the realized frame on a
+target whose type was never checked for $D$ (the automaton checked the
+$\DR$ entry instead).  WP15's exhaustive sweep of the pattern shows the
+defect is generic: \textbf{23 of the 64} legal row assignments are jointly
+unrealizable.
+
+\emph{What survives.}  With a \emph{single} shadow the implicit lemma is
+provable and empirically clean (WP15 P3: 250/250 realizable): the extended
+family $\{N_t\cup\text{row}_t\}$ is itself a tree-shaped agreeing family of
+complete atomic networks (the source becomes a member of every bag in its
+connected scope; rigidity is exactly overlap agreement), so
+Theorem~2.5 applies to it verbatim.  The defect is strictly about
+\emph{multiple} shadows and \emph{dropped} entries.  This localizes the
+missing lemma sharply; see Section~\ref{sec:repair}.
+
+\emph{Relation to prior reviews.}  This is the successor of the sixth
+review's C1: round-12 removed the route-dependent transformer layer, but
+the shadow layer still carries cross-bag relational commitments whose
+global coherence is asserted rather than derived from patchwork.  The
+manuscript's own Appendix~U names the failure mode (F3: ``if relation-vector
+shadows failed to preserve universal obligations across bag boundaries, the
+automaton could accept false abstractions'').
+\end{finding}
+
+\begin{finding}[\textbf{MAJOR (spec, soundness-fatal as written, one-line
+fix) --- $\EQ$-valued shadow entries are not excluded}]\label{f:eq}
+\emph{Location:} Definition~3.3 ($\vec r\in\Rel^P$ with
+$\Rel=\{\EQ,\PP,\PPI,\PO,\DR\}$); Appendix~Q (no test excludes $\EQ$
+entries; the no-$\EQ$ tests (N3)/(N4) apply to bag networks only).
+
+A shadow whose entry to a target port is declared $\EQ$ triggers \emph{no}
+obligation $(R,D)$ with $R\neq\EQ$, while under strong equality the realized
+relation between the two distinct occurrences is necessarily non-$\EQ$.  On
+the referee concept
+$C_{\mathrm{split}}=\exists\PP.(A\sqcap\lnot B\sqcap\forall\PP.\lnot
+B\sqcap\forall\PPI.\lnot B\sqcap\forall\PO.\lnot B)\sqcap\exists\PP.B$
+the $y$-shadow may declare its entry to $z$ as $\EQ$; all three universal
+obligations then stay silent, and the abstraction is accepted although
+$\Comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}$ minus $\EQ$ leaves only
+obligation-violating options.  WP16 (literal mode) machine-checks the
+acceptance.  \emph{Fix:} require shadow entries to range over
+$\Rel\setminus\{\EQ\}$ (an entry $\EQ$ is legal only as the statement that
+the source \emph{is} that port's occurrence, i.e.\ never for a genuine
+shadow).
+\end{finding}
+
+\begin{finding}[\textbf{MAJOR (spec, soundness-fatal as written) --- the
+shadow's scope is never pinned down}]\label{f:scope}
+\emph{Location:} Appendix~H (``universally branches to all adjacent bags in
+which the shadow \emph{must} continue'' --- ``must'' is not defined);
+Definition~3.4 (V5) (``every introduced target is checked'' --- by which
+shadow, where?); Appendix~S.
+
+If a run may simply not carry the shadow of $x$ into the subtree where $y$
+lives, the pair $(x,y)$ escapes all checks; the completeness direction never
+objects (a real model needs no check), so the choice is unconstrained.
+WP16 (literal mode) shows the consequence: the unsatisfiable
+$C_{\mathrm{force}}$, $C_{\mathrm{split}}$,
+$C_{\mathrm{2hop}}=\exists\DR.(\exists\PPI.A)\sqcap\forall\DR.\lnot A$ and
+$C_{\mathrm{3hop}}=\exists\DR.(\exists\PPI.\exists\PPI.A)\sqcap
+\forall\DR.\lnot A$ are all ACCEPTED when distant pairs escape obligations.
+Note that mandatory propagation cannot be depth-bounded:
+$\Comp(\DR,\PPI)=\{\DR\}$ forces a $\DR$-obligation into \emph{every}
+proper part of a $\DR$-witness, arbitrarily deep, so obligation-carrying
+shadows must be propagated into entire subtrees.  That is unproblematic for
+an alternating automaton (spawn a copy per direction forever; the state
+space is the finite set of profiles) --- but it must be \emph{required} by
+the transition function, not left to the run.  \emph{Fix:} make shadow
+propagation mandatory: for every source with a nonempty obligation set, a
+shadow copy is spawned into every child direction and to the parent, at
+every bag of the run.
+\end{finding}
+
+\begin{finding}[\textbf{MAJOR --- $K(C_0)$ finiteness is still asserted
+(sixth review M1, softened)}]\label{f:kbound}
+\emph{Location:} Lemma~3.5 (\code{lem:K-bound}) and Appendix~K (K1)--(K4).
+
+The rank-0 step says: ``one enumerates finite labelled contexts, keeps
+those satisfying local RCC5 consistency and saturation, and quotients by
+isomorphism\ldots{}  This is finite.''  As written it is not: the
+saturation rules (S1)--(S6) are conditional-insert closure rules, so a
+context with arbitrarily many mutually-$\DR$ ports (all conditions
+vacuously satisfied) passes them at every size, and isomorphism classes
+grow without bound.  The enumeration in Appendix~K terminates only if
+saturated contexts \emph{needed for $C_0$} have bounded minimal
+representatives --- which is precisely the claim to be proved.  The round-11
+recurrence was faulted for over-claiming a specific bound (M1); round-12
+responds by claiming no bound at all, which under-delivers: \emph{some}
+explicit accounting is needed.  \emph{Fix:} define side contexts as
+\emph{witness-generated} (every port carries a generation reason: a
+selected witness of a closure formula at a specific source, a boundary
+insertion under (S2), a stratum/threshold node under (S3)/(S4), or a
+recursive-context port under (S5)); then bound reasons per source by
+$|\Cl(C_0)|$ plus the boundary size and prove the closure operator stays
+within a computable per-rank recurrence --- or sidestep entirely with the
+$2^{\mathrm{poly}(|\Cl(C_0)|)}$ type/mosaic bound the sixth review
+recommended.
+\end{finding}
+
+\begin{finding}[\textbf{MINOR --- Appendix A countable-patching wording}]
+\label{f:appA}
+The closed sets are defined as labellings ``extending \emph{the} patchwork
+completion on the occurrences occurring in $S$'' --- there is no canonical
+completion, and with the definite article the finite-intersection argument
+breaks (different subtrees would pin incompatible completions).  Replace by
+``whose restriction to the occurrences of $S$ is \emph{some} complete
+atomic composition-closed extension of all bags in $S$''.  With that
+reading the argument is correct (checked in detail): the sets are clopen
+cylinders, a common finite super-subtree witnesses the finite intersection
+property (restriction of a completion of the larger subtree to a smaller
+one remains a completion because (R1)--(R3) are universal conditions),
+and every pair/triple of occurrences lies in some finite connected subtree
+by trace-connectedness, so the limit labelling satisfies all constraints.
+\end{finding}
+
+\begin{finding}[\textbf{MINOR --- parity narrative and input-tree
+formalities}]\label{f:parity}
+(i) The ``generalized B\"uchi via round-robin counter'' construction is the
+single-thread device; in an \emph{alternating} automaton each spawned
+request copy can simply carry a rejecting (odd) priority until it enters
+its fulfilled state, which is simpler and avoids any inter-request
+bookkeeping.  Either is fine; the text should commit to one and state the
+priority assignment.  (ii) ``Runs on ranked trees over $\Sigma_{C_0}$'':
+bag labels do not determine an arity; say explicitly that trees are padded
+to a fixed maximal branching degree (computable from $K$ and $|\Cl(C_0)|$)
+with a dummy label.  (iii) Definition~3.4 (V8) ties a vertical request to
+``the same overlap-equivalence class of the source occurrence''; if this is
+meant to keep the source \emph{live} (co-bagged) along its support branch
+--- which makes request fulfillment a bag-network fact and immunizes it
+against Finding~\ref{f:shadow} --- say so explicitly; it is the right
+choice.
+\end{finding}
+
+\begin{finding}[\textbf{OBSERVATION --- the parity/request-closure content
+is load-bearing (incidental replication of the round-6/7 defect)}]
+\label{f:blocking}
+While building WP16's reference machine, a first implementation used naive
+same-type blocking for vertical eventualities.  It promptly produced a
+false SAT on $C_{\mathrm{3hop}}$ by deferring the eventuality
+$\exists\PPI.A$ forever down the regular tail --- precisely the lap-collapse
+family of defects from the no-automata thread (rounds 6/7), and precisely
+what a parity condition must reject.  The fix (a lap may block only if the
+blocking occurrence fulfilled the \emph{same} request concretely) restored
+agreement with the tableau.  This is independent corroboration that
+Theorem~C's request states must enforce fulfillment \emph{on every lap},
+and that any implementation gets this wrong by default.
+\end{finding}
+
+\section{Steps attacked and found sound}\label{sec:sound}
+
+\begin{soundstep}[Composition table]
+Re-derived independently from set semantics over a 5-element universe
+(WP14 T0); matches the manuscript's table in all 25 cells.
+\end{soundstep}
+
+\begin{soundstep}[The patchwork theorem as stated (Theorem 2.5)]
+For the abstract composition-table semantics, ``satisfiable finite complete
+atomic network'' $=$ ``composition-closed network'', so the two-bag
+patchwork property is a purely combinatorial statement.  WP14 verifies it
+\textbf{exhaustively} for one fresh variable per side with shared parts of
+size $0..3$ ($21{,}538$ agreeing pairs) and for two fresh variables per side
+with shared parts of size $1..2$ ($41{,}681$ pairs, sampled at the largest
+class), and verifies the finite tree-patching lemma on 300 random
+tree-shaped bag families (3--6 bags, width $\le 7$) by literally executing
+Appendix~A's leaf-by-leaf induction.  \textbf{Zero failures.}  This turns
+the proof's central external dependency into a machine-checked fact at
+small width (complementing WP6), in \emph{exactly} the form the manuscript
+uses it.
+\end{soundstep}
+
+\begin{soundstep}[Finite tree patching's use of running intersection]
+The induction step needs the leaf to agree with the \emph{remainder} on
+their full shared variable set; connected traces give
+$V_L\cap V_{\mathrm{rest}} = V_L\cap V_M$ for the unique neighbor $M$,
+which is exactly what the proof uses.  Correct.
+\end{soundstep}
+
+\begin{soundstep}[Strong equality / Appendix G]
+Correct given atomic completions: every completion in the amalgam is atomic
+with $\EQ$ only on the diagonal, and no cell of the composition table can
+force a cross pair to be exactly $\EQ$ --- WP14 T4 verifies that every
+nontrivial cell containing $\EQ$ also contains $\PP,\PPI,\PO$.  Together
+with exact occurrence identity this cleanly eliminates the historical
+blocking-vs-equality confusion (Appendix~R's trace-connectedness argument
+is also correct).
+\end{soundstep}
+
+\begin{soundstep}[The strong-EQ loop concepts]
+The mechanism (exact occurrence identity + same-bag witness reuse) decides
+the PO-loop concept
+$C\sqcap\exists\PO.\exists\PO.C\sqcap\forall\{\PO,\DR,\PP,\PPI\}.\lnot C$
+correctly as SAT (WP16), the known blind spot of the retired quasimodel
+reasoner.  The universal constraints force the second-hop witness to be the
+root occurrence itself, and reuse expresses exactly that.  This is an
+architectural strength of round-12.
+\end{soundstep}
+
+\begin{soundstep}[$C_{\mathrm{split}}$ under the repaired discipline]
+With Findings \ref{f:eq}/\ref{f:scope} fixed, the rejection mechanism works
+as Appendix~O claims: the shared source $x$ keeps $y,z$ connected through
+its overlap class; the $y$-shadow's entry to $z$ is triangle-constrained
+through $x$ to $\Comp(\PPI,\PP)\setminus\{\EQ\}=\{\PP,\PPI,\PO\}$, and each
+option violates one of $y$'s universals against $z{:}B$.  WP16 confirms
+REJECT in repaired mode, ACCEPT under either loophole.  The sixth review's
+C2 is thus \emph{addressed conditional on} Findings
+\ref{f:shadow}--\ref{f:scope}.
+\end{soundstep}
+
+\begin{soundstep}[Forest-to-tree packaging (sixth review C3.3)]
+Dissolved by design: the decomposition tree is a data structure, not the
+containment order; vertical direction is a per-edge annotation, upward
+growth is a child bag, and the cross-tree links of the semantic forest are
+side-context bags.  No residual objection.
+\end{soundstep}
+
+\begin{soundstep}[Two-wayness and emptiness]
+Choosing a two-way alternating parity tree automaton and citing emptiness
+(Vardi) is the right resolution of the sixth review's M3; the lossless
+one-way summary burden is genuinely gone.  The state families are finite
+given the profile alphabet.  (Presentational points in
+Finding~\ref{f:parity}.)
+\end{soundstep}
+
+\begin{soundstep}[Witness thinning; types; normalization]
+Lemma 3.1's complement-closure argument is correct and standard (as in
+prior reviews); the $\EQ$-normalization and Hintikka machinery are correct.
+\end{soundstep}
+
+\begin{soundstep}[Random cross-validation of the repaired mechanism]
+WP16's repaired-discipline machine agrees with the cover-tree tableau on
+148/148 decided random concepts (2 skipped at budget), in addition to all
+ten diagnostics.  No adequacy anomaly surfaced.
+\end{soundstep}
+
+\section{Computational probes (new work packages)}\label{sec:probes}
+
+All three scripts are self-contained except WP16's use of the repo's
+concept classes and tableau oracle; all pass; total runtime a few minutes.
+
+\subsection*{WP14 --- \code{wp14\_patchwork\_property\_check.py}}
+Direct verification of Theorem~2.5 for the abstract semantics.
+T0: composition table re-derivation (PASS).
+T1: two-bag patchwork, exhaustive, $1{+}1$ fresh, $|S|\le 3$:
+$21{,}538$ agreeing pairs, all amalgamable (PASS).
+T2: $2{+}2$ fresh, $|S|\in\{1,2\}$: $41{,}681$ pairs, zero failures (PASS).
+T3: 300 random tree-shaped families amalgamated leaf-by-leaf per
+Appendix~A (PASS).
+T4: $\EQ$-forcing impossibility (PASS).
+\emph{A failure here would have invalidated the proof (Appendix U, F1);
+none was found.}
+
+\subsection*{WP15 --- \code{wp15\_shadow\_row\_realizability.py}}
+The Finding~\ref{f:shadow} attack and its repair map.
+P1: the minimal counterexample above passes all listed tests and is
+jointly unrealizable (also with a continued separator).
+P2: exhaustive mini-search over the pattern: \textbf{23/64} legal
+assignments unrealizable --- the defect is generic, not a knife-edge.
+P3: \textbf{single-shadow} configurations: 250/250 realizable (the
+extended family $\{$bag $\cup$ row$\}$ is an agreeing tree family, so
+Theorem~2.5 applies --- the provable core of the repair).
+P4: multi-shadow with entries restricted to $\{\DR,\PO\}$ (the
+saturation/residual-frontier discipline applied to the shadow layer):
+\textbf{0} unrealizable in 350 random + 8 exhaustive configurations.
+P5: the extended-bag discipline (shadows as virtual ports with
+per-bag-checked shadow-shadow entries): \textbf{0} failures in 200
+accepted configurations.
+
+\subsection*{WP16 --- \code{wp16\_round12\_bag\_acceptance.py}}
+Acceptance-level mechanism check against the cover-tree tableau.
+Repaired mode (obligations enforced on actual completed relations; no
+$\EQ$ entries; mandatory propagation): all ten diagnostics correct ---
+$C_{\mathrm{force}}$, $C_{\mathrm{split}}$, $C_{\mathrm{2hop}}$,
+$C_{\mathrm{3hop}}$, $\exists\DR.A\sqcap\forall\DR.\lnot A$ UNSAT;
+$C_{\mathrm{recursive}}$, $C_\uparrow$, PO-loop, the round-10
+dual-descendant tower concept, and a sanity SAT concept SAT.
+Literal mode (either loophole active): \textbf{ACCEPTs the four
+unsatisfiable forced-composition concepts}.  Random sweep: 148 concepts,
+zero disagreements.  Caveats: bounded occurrence budget; regularity via
+request-closed blocking (Finding~\ref{f:blocking}).
+
+\section{The repair program}\label{sec:repair}
+
+The missing keystone is now one lemma.  Two routes, both compatible with
+the manuscript's architecture; route (a) is recommended.
+
+\subsection*{(a) The discipline route (recommended)}
+\begin{enumerate}[label=(R\arabic*),leftmargin=2.6em]
+\item \textbf{Vertical liveness.}  Extend saturation/(V7) to the shadow
+layer: a pair whose relation is (or becomes, by forced composition)
+$\PP$, $\PPI$ or $\EQ$ must be \emph{co-bagged} (live-live), never
+shadow-carried.  Since the only compositions forcing a vertical atom are
+$\PP;\PP=\{\PP\}$, $\PPI;\PPI=\{\PPI\}$ (and $\EQ$-trivial ones), forced
+verticals arise only along containment chains, which the presentation
+already keeps live; the WP15 counterexample (which needs $\PP$/$\PPI$
+shadow entries) becomes ill-formed.  Shadow entries then range over
+$\{\DR,\PO\}$.
+\item \textbf{Horizontal Shadow Amalgamation Lemma} (to be proved): bag
+networks + $\DR/\PO$-only shadow rows satisfying one-point closure and
+rigidity are jointly realizable.  Proof strategy: fix each shadow's
+extended family (sound alone, by the single-shadow argument / WP15 P3);
+complete shadow-shadow pairs by $\DR$ --- every cell
+$\Comp(r,s^{-1})$ with $r,s\in\{\DR,\PO\}$ contains $\DR$ --- and derive
+triangle-closure through ports from the per-bag one-point closure plus
+directional propagation along separators.  WP15 P4 found no counterexample
+(358 configurations).
+\item \textbf{Bookkeeping fixes.}  Findings \ref{f:eq}, \ref{f:scope},
+\ref{f:parity}(iii): non-$\EQ$ entries; mandatory propagation; requests
+keep their source live along the support branch.
+\end{enumerate}
+
+\subsection*{(b) The extended-bag route}
+Promote in-scope shadows to \emph{virtual ports}: each bag carries a
+complete atomic closed network on $P\cup\mathrm{Sh}$ \emph{including
+shadow-shadow entries}, with boundary agreement on continued shadows.  The
+family is then literally a tree-shaped agreeing family and Theorem~2.5
+applies verbatim (WP15 P5: no failures).  The cost is real: along an
+infinite branch the number of simultaneously in-scope shadows is unbounded,
+so the \emph{alphabet} must quotient shadow instances by profile, and the
+quotient needs its own lemma --- same-profile instances must be pairwise
+realizable ($\PP$ and $\PO$ are always available in
+$\Comp(r,r^{-1})$, but a profile whose own obligations forbid all four
+non-$\EQ$ relations to its own type --- e.g.\ the PO-loop type --- is
+\emph{solitary} and must not be duplicated).  This route is doable but
+heavier than (a).
+
+\subsection*{Also required}
+Finding~\ref{f:kbound}: witness-generated context accounting (or the
+$2^{\mathrm{poly}}$ mosaic bound); Finding~\ref{f:appA} wording;
+Finding~\ref{f:parity} formalities.
+
+\section{Status recommendation}
+
+The trajectory is genuinely convergent: each round has replaced a bespoke
+global-coherence mechanism by a smaller, more standard one, and the
+residual gap has shrunk correspondingly --- from transformer coherence over
+routes (round 11) to amalgamation of $\DR/\PO$ shadow rows over a tree
+decomposition (round 12).  The patchwork half of the sixth review's
+recommendation is now genuinely implemented and machine-corroborated; what
+remains unproved is the interaction of the \emph{obligation} layer with the
+amalgam.  Accordingly:
+
+\begin{itemize}[leftmargin=2em]
+\item Keep the project status: \textbf{strongly supported, NOT certified};
+seven reviews, seven defects (this report's Finding~\ref{f:shadow}
+continuing the series).
+\item Name the keystone precisely: the \textbf{Shadow Amalgamation Lemma}
+(with the vertical-liveness discipline), plus the $K(C_0)$ accounting.
+\item Round-12 remains \emph{not cold-reviewed}; this hot audit does not
+change that.
+\item The new probes WP14--WP16 should be listed alongside WP1--WP13; WP14
+directly backs the proof's central external dependency, WP15 delimits the
+open lemma, WP16 is the first acceptance-level cross-validation of the
+patchwork-bag mechanism against the cover-tree tableau.
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{round12} Consolidated proof manuscript.
+\emph{Decidability of $\mathcal{ALCI}_{\mathrm{RCC5}}$ via Saturated Split
+Forests, Patchwork Bags, and Two-Way Parity Automata} (round-12 expanded
+self-contained edition), May 31, 2026.
+\code{papers/automata\_route\_repairs/split\_forest\_automata\_with\_appendices.tex}.
+
+\bibitem{review6} Opus 4.8 (Anthropic).  \emph{Referee Report} (sixth cold
+review: Theorem B / interface transformers), May 2026.
+\code{papers/automata\_route\_repairs/referee\_report\_ALCI\_RCC5.md}.
+
+\bibitem{resp12} GPT-5.5 (OpenAI).  \emph{Formal Response to the Referee
+Report on the Split-Forest Automata Proof}, May 31, 2026.
+\code{papers/automata\_route\_repairs/formal\_response\_referee\_round12.tex}.
+
+\bibitem{renznebel} J.~Renz and B.~Nebel.  On the complexity of qualitative
+spatial reasoning.  \emph{Artificial Intelligence} 108 (1999).  (Source of
+the RCC composition tables and the path-consistency/global-consistency
+results behind the patchwork property.)
+
+\bibitem{lutzmilicic} C.~Lutz and M.~Mili\v{c}i\'c.  A tableau algorithm for
+DLs with concrete domains and GCIs.  \emph{J.~Automated Reasoning} 38
+(2007).  (Patchwork and compactness properties for $\omega$-admissible
+constraint systems; the citable genre for Theorem 2.5.)
+
+\bibitem{vardi} M.~Y.~Vardi.  Reasoning about the past with two-way
+automata.  \emph{ICALP} 1998.  (Emptiness for two-way alternating parity
+tree automata.)
+\end{thebibliography}
+
+\end{document}
