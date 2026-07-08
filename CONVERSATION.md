@@ -6397,3 +6397,26 @@ mechanization of the finite core + the Shadow Amalgamation Lemma, or human peer
 review. Docs updated: README (Latest News, July-update subsection, Key Files),
 CLAUDE.md (status, round-13 paragraph, WP17, Key Files), verification/README.md,
 this file.
+
+## 2026-07-08 (later still): overviews updated for round-13; the G2/G3 task packet for GPT-5.5
+
+Two follow-ups to round-13. (1) Both overview papers (`overview_ALCIRCC5.tex` and
+the arXiv candidate) now carry a "Round 13 (July 2026, unreviewed)" paragraph at the
+end of their July-2026 update subsection — the D-discipline, the Shadow Amalgamation
+Lemma, the explicit move of the residual burden to the completeness side, WP17, and
+the unchanged status label — recompiled clean (29pp / 30pp). (2) A drag-and-drop
+**task packet for GPT-5.5** targeting round-13's designated weak points was built in
+the `cold_review_*` style: `papers/fable5_round13/gpt_task_g2_g3_round13.zip`
+(unpacked copy alongside). Contents: `TASK_PROMPT.txt` (targeted attack-and-discharge
+assignment: G2a verticalization-vs-width, G2b horizontality of extracted rows incl.
+the wp11-flagged overlap-amalgam families, G2c no-third-category; G3a mixed-walk
+exhaustiveness, G3b chain-orientation bookkeeping, G3c amalgam-vs-coverage
+interaction; deliverables = referee report, witness or round-14 proofs, machine
+checks), `OPTIONAL_COLD_PASS.txt` (an unguided first-pass prompt with only the two
+manuscripts attached, to preserve an unbiased signal before targeting),
+`README_FOR_HUMAN.txt` (protocol; explicit that this targeted task does NOT
+discharge the outstanding cold-review obligation), both manuscripts (round-13 delta
++ round-12 base, tex+pdf), the 7th-review report, WP14–WP17 with logs, and the
+cover-tree tableau oracle. Reviewer/author hygiene note: round-13 was authored by
+Claude (the 7th reviewer), so GPT-5.5 — the round-12 author, a different lineage —
+is the natural adversary, restoring the cross-model review pattern.

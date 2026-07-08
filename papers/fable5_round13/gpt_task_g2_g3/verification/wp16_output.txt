@@ -1,0 +1,23 @@
+WP16 -- Acceptance-level mechanism check of the round-12 patchwork-bag
+========================================================================================
+concept                                                    tableau  repaired  literal 
+----------------------------------------------------------------------------------------
+C_force  = ExPP.(ExDR.A) n AllDR.~A                        UNSAT    UNSAT     SAT     
+C_split  = ExPP.(A n ~B n AllPP~B n AllPPI~B n AllPO~B) n ExPP.B UNSAT    UNSAT     SAT     
+C_recur  = ExDR.(A n ExDR.B)                               SAT      SAT       SAT     
+C_up     = ExPP.T n AllPP.ExPP.T                           SAT      SAT       SAT     
+C_2hop   = ExDR.(ExPPI.A) n AllDR.~A                       UNSAT    UNSAT     SAT     
+C_3hop   = ExDR.(ExPPI.ExPPI.A) n AllDR.~A                 UNSAT    UNSAT     SAT     
+PO-loop  = C n ExPO.ExPO.C n All{PO,DR,PP,PPI}.~C          SAT      SAT       SAT     
+C_dual   = ExPO.A n ExPPI.T n AllPPI.(ExPPI.T n AllDR~A n AllPO~A) SAT      SAT       SAT     
+sanity   = ExDR.A n AllDR.~A                               UNSAT    UNSAT     UNSAT   
+sanity   = ExPP.A n AllPP.(A u B)                          SAT      SAT       SAT     
+----------------------------------------------------------------------------------------
+repaired mode: all verdicts agree with the tableau oracle
+literal mode:  wrong (SAT) verdicts on: C_force, C_split, C_2hop, C_3hop
+    (each wrong literal verdict is an UNSAT concept ACCEPTED when distant pairs
+     escape obligations -- the EQ-entry / shadow-scope loopholes are load-bearing)
+
+random sweep: 149 concepts decided (of 150; 1 budget timeouts skipped), 0 disagreements with the cover-tree tableau
+========================================================================================
+WP16 OVERALL: PASS (repaired discipline correct on all probes; literal spec loopholes demonstrated)

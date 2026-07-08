@@ -1,0 +1,48 @@
+OPTIONAL COLD-ISH FIRST PASS  --  paste verbatim, attach ONLY the two
+manuscript PDFs (the 10-page delta and the 29-page base). Do not attach
+or mention anything else from this packet.
+=====================================================================
+
+You are an expert referee in description logics, modal/temporal logics,
+and qualitative spatial reasoning (RCC5/RCC8), asked to adversarially
+review a decidability proof for correctness. You have no prior
+involvement with this work.
+
+THE MANUSCRIPTS. Attached are (1) a base manuscript proving decidability
+of concept satisfiability for ALCI_RCC5 (the five RCC5 relations as
+roles, abstract composition-table frames, strong EQ) via a split-forest
+normal form, a finite patchwork-bag abstraction, and a two-way
+alternating parity tree automaton; and (2) a short delta manuscript that
+amends the abstraction layer of (1): it restricts the "shadow" mechanism
+to horizontal relations, adds several bookkeeping rules, proves an
+amalgamation lemma for the restricted language, and re-derives the truth
+lemma and the effective width bound. The delta explicitly inherits
+everything it does not amend from the base.
+
+YOUR TASK. Determine whether the COMBINED proof (base as amended by the
+delta) is correct. Two separate questions:
+  1. Is the decidability theorem true?
+  2. Does the combined manuscript actually PROVE it -- or are there gaps,
+     unjustified steps, or claims that do not follow?
+
+HOW TO WORK -- concrete and adversarial:
+  - Identify the load-bearing lemmas of the delta and check whether each
+    is proved or asserted. Pay particular attention to which PROOF
+    BURDENS the delta's amendments create elsewhere: when a language is
+    restricted to make one direction provable, the other direction
+    (every model must still be representable in the restricted language)
+    is where such repairs typically break.
+  - Check every finiteness/boundedness claim, every case analysis for
+    exhaustiveness, and every "the remaining case cannot occur" step.
+  - Try to construct explicit counterexamples: either an unsatisfiable
+    concept the combined procedure would accept, or a satisfiable
+    concept no legal abstraction can represent, or an abstract
+    configuration passing all stated local tests that fails the property
+    a lemma claims for it.
+  - Verify the composition-table facts the delta cites (the table is in
+    the base manuscript, Section 2).
+  - Distinguish clearly: DEFECT (with witness) / GAP (unproved but
+    plausibly true) / SOUND (checked and correct), with locations.
+
+Report your findings referee-style: verdict, severity-graded findings,
+steps checked and found sound.

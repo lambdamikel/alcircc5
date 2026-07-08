@@ -1,0 +1,23 @@
+WP15 -- Shadow-row joint realizability: a machine check of the round-12
+==========================================================================
+P1a minimal counterexample (empty separators):
+    passes all V0 legality tests: True (ok)
+    jointly realizable:           False
+P1b same defect with a continued all-DR separator port s:
+    passes all V0 legality tests: True (ok)
+    jointly realizable:           False
+P1 PASS (defect demonstrated)
+P2 exhaustive 3-bag pattern: 64 V0-legal row assignments, 23 jointly UNREALIZABLE
+    e.g. x1-x2:PP  x1-p:PP  x2-p:DR
+    e.g. x1-x2:PP  x1-p:PPI  x2-p:PP
+    e.g. x1-x2:PP  x1-p:PPI  x2-p:PO
+    e.g. x1-x2:PP  x1-p:PPI  x2-p:DR
+    e.g. x1-x2:PP  x1-p:PO  x2-p:PP
+    e.g. x1-x2:PP  x1-p:PO  x2-p:DR
+    ... and 17 more
+P2 PASS (defect is generic, not a knife-edge)
+P3 single shadow, unrestricted entries, 250 random V0-legal configs: 0 unrealizable (PASS -- single-shadow extended family always patches)
+P4 multi-shadow, entries restricted to DR/PO: 350 random configs + 8 exhaustive mini-patterns: 0 unrealizable (PASS -- no counterexample under the repair discipline)
+P5 extended-bag discipline (shadow-shadow entries checked per-bag): 200 accepted configs, 0 unrealizable (PASS -- discipline restores patchwork)
+==========================================================================
+WP15 OVERALL: PASS (defect demonstrated; repair disciplines corroborated)

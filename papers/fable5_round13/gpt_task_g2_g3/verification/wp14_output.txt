@@ -1,0 +1,16 @@
+WP14 -- Direct verification of the RCC5 patchwork theorem as stated in
+==========================================================================
+T0 composition table vs set semantics (5-cell universe): PASS
+    |S|=0: 1 x matching nets, 1 agreeing pairs checked
+    |S|=1: 4 x matching nets, 16 agreeing pairs checked
+    |S|=2: 41 x matching nets, 427 agreeing pairs checked
+    |S|=3: 916 x matching nets, 21094 agreeing pairs checked
+T1 two-bag patchwork, 1+1 fresh, exhaustive (21538 pairs): PASS
+    |S|=1: 1681 agreeing pairs checked, 0 failures
+    |S|=2: 40000 agreeing pairs checked, 0 failures
+T2 two-bag patchwork, 2+2 fresh: PASS
+T3 tree patching, 300 random trees (3-6 bags, width<=7): PASS
+T4 every non-trivial comp cell containing EQ also contains PP,PPI,PO: PASS
+    (hence a cross-pair is never composition-forced to be exactly EQ; with T1-T3 searching non-EQ values only, strong equality is preservable, as Appendix G claims)
+==========================================================================
+WP14 OVERALL: PASS

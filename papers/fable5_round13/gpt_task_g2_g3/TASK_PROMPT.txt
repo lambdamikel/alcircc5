@@ -1,0 +1,143 @@
+TASK PROMPT -- G2/G3: attack and discharge the round-13 completeness side
+==========================================================================
+(Paste this into a fresh GPT-5.5 session and attach the files listed under
+MATERIALS. This is a TARGETED task, not a cold review; you are told exactly
+where the designated weak points are and are asked to break them or prove
+them.)
+
+ROLE. You are an expert in description logics, modal/temporal logics, and
+qualitative spatial reasoning (RCC5/RCC8), acting as (i) an adversarial
+referee and (ii) if and only if your attack fails, the author of the next
+repair round. You authored the round-12 manuscript in this project; the
+round-13 delta attached here was authored by a different model (Claude
+Fable 5, Anthropic), which was also the seventh reviewer. You are the
+natural adversary for it: attack it as hard as you attacked nothing of
+your own.
+
+CONTEXT IN ONE PARAGRAPH. The project proves decidability of concept
+satisfiability for ALCI_RCC5 (RCC5 base relations DR, PO, EQ, PP, PPI as
+roles; abstract composition-table frames; strong EQ = identity) via:
+Theorem A (saturated split-forest normal form) -> Theorem B (finite
+patchwork-bag abstraction adequacy) -> Theorem C (two-way alternating
+parity tree automaton) -> emptiness. The seventh review found round-12's
+Theorem B(b) truth lemma assumed an unproved Shadow Amalgamation property
+(machine-checked counterexample: WP15). Round-13 repairs the REALIZATION
+direction by tightening the abstraction language (the D-discipline: D1
+horizontal-only shadow entries with vertical/EQ pairs co-bagged; D2
+mandatory omni-directional shadow propagation with verticalization
+fallback; D3 type-propagation of transitive vertical universals; D4
+request-source liveness; D5 pair coherence) and proving the Shadow
+Amalgamation Lemma under it (four exhaustively machine-checked finite
+composition facts + patchwork/compactness on the shadow-extended family;
+WP17: 400/400 random tree configurations). The COST is explicit: the
+residual proof burden moved to the COMPLETENESS side. Round-13's own
+"what would invalidate" section designates two targets, G2 and G3. Your
+task is those two targets.
+
+MATERIALS (attached)
+  manuscripts/split_forest_shadow_amalgamation_round13.pdf   the round-13 delta (10pp)
+  manuscripts/split_forest_automata_with_appendices.pdf      the round-12 base (29pp)
+  manuscripts/referee_report_round12_fable5.pdf              the 7th review (9pp; F1-F7)
+  verification/wp14..wp17 *.py + *_output.txt                the machine evidence
+  support/alcircc5_reasoner.py, support/cover_tree_tableau.py
+      ground-truth oracle: cover_tree_tableau.check_sat(C) decides the
+      diagnostics correctly (911-concept cross-validated; handles the
+      strong-EQ loop concepts). Run WP16-style cross-checks with
+      PYTHONPATH=support.
+
+--------------------------------------------------------------------------
+TARGET G2 -- EXTRACTION WITHIN THE DISCIPLINE (round-13 Sec. 7-8, item G2)
+--------------------------------------------------------------------------
+Claim to attack/prove: every satisfiable C0 has a saturated split-forest
+presentation (Theorem A) that admits a VALID D-ABSTRACTION of width at
+most K(C0). Sub-obligations, in decreasing order of suspected fragility:
+
+  G2a (verticalization vs width). D2's fallback and D4's liveness insert
+      port manifestations on demand. Show this stays within the
+      witness-generated accounting of round-13 Sec. 8 (reasons g1-g5,
+      recurrence B_{r+1} <= c(n)(1+B_r)^2) -- or construct a concept
+      forcing unboundedly many simultaneous co-bagged manifestations
+      (e.g. many distinct obligation-sources crossing the same region;
+      towers whose every level carries a side obligation; interleaved
+      ancestor AND descendant towers, cf. the round-9/10 dual
+      verticalization history).
+  G2b (horizontality of extracted rows). After saturation (S1)-(S6) and
+      threshold verticalization, every shadowed pair has a horizontal
+      true relation. Attack with: obligation sources deep inside a
+      subpart cone vs side witnesses of remote ancestors; overlap
+      amalgams (side witnesses that are proper parts of each other or
+      share superparts) -- flagged as UNSTRESSED by wp11's honest-scope
+      note; infinite tails on BOTH sides simultaneously.
+  G2c (no third category). D3 type-propagation + horizontal rows +
+      in-bag checks jointly cover every obligation the extraction leaves
+      undeclared. Try to build a concept whose model forces an
+      obligation-relevant pair that is neither co-bagged, nor
+      row-coverable (a legal horizontal entry exists), nor a pure
+      vertical chain.
+
+  Suggested attack concepts to start from (all decidable by the attached
+  tableau oracle for cross-checking):
+      C0'  = (ExPP.G) n (ExPO.~X),  G = (AllPO.X) n (ExPP.G)
+      C_dd = (ExPO.A) n (ExPPI.T) n AllPPI.(ExPPI.T n AllDR.~A n AllPO.~A)
+      C_split, C_force, C_2hop, C_3hop (7th review Sec. 3)
+      plus overlap-amalgam and multi-source-crossing families of your design.
+
+--------------------------------------------------------------------------
+TARGET G3 -- THE COVERAGE WALK (round-13 Lemma 6.1, item G3)
+--------------------------------------------------------------------------
+Claim to attack/prove: in a valid D-abstraction, for every occurrence x
+with nonempty obligation set and every occurrence y, the pair (x,y) is
+(a) co-bagged, (b) row-covered, or (c) rho_T(x,y) in {PP,PPI} realized
+along a co-bagged uniformly-oriented vertical chain (through which D3
+propagates). Scrutinize specifically:
+
+  G3a The walk induction: crossings either keep horizontal entries or
+      verticalize; is the case split exhaustive? What exactly happens on
+      MIXED walks (horizontal crossings interleaved with
+      verticalizations)? The manuscript dismisses them in one sentence
+      ("end in cases (a)/(b) at the last horizontal manifestation's bag
+      family") -- verify or refute with a concrete tree-of-bags
+      configuration.
+  G3b Orientation bookkeeping in case (c): the chain composes to exactly
+      R by Comp(PP,PP)={PP} -- but must the chain be uniformly oriented?
+      Can rho_T(x,y) be vertical while every connecting chain mixes PP
+      and PPI edges (Comp(PP,PPI) = all five)? If yes, D3 does not reach
+      y and the truth lemma's case (iii) has a hole.
+  G3c The interaction with Theorem 4.3: for obligation-carrying x, can
+      the amalgam assign a vertical value to a pair that is neither
+      co-bagged nor chain-connected? (The intended argument: D2 makes x
+      row-cover every port, and row values are horizontal and realized
+      verbatim -- so vertical rho_T values can only occur where rows are
+      absent, i.e. co-bagged or chain cases. Check this reasoning against
+      the definition of "row-covered" and the verticalization fallback:
+      after a fallback, is the NEW manifestation's row coverage complete
+      in all directions, including backwards?)
+
+--------------------------------------------------------------------------
+DELIVERABLES
+--------------------------------------------------------------------------
+ 1. A referee-style report (LaTeX): verdict per target (G2a-c, G3a-c),
+    severity-graded findings with concrete witnesses (a concept, or an
+    explicit tree-of-bags configuration passing round-13's listed tests),
+    and a section "steps checked and found sound".
+ 2. If you find a defect: the smallest witness you can construct, plus --
+    if you see one -- the repair, as a round-14 delta.
+ 3. If your attack fails: full proofs of the Coverage Lemma and the
+    Extraction Theorem ("Theorem B(a), D-form") at the rigor of
+    round-12's appendices, as a round-14 delta manuscript; optionally a
+    consolidated round-14 edition integrating round-12 + round-13 + your
+    proofs into one self-contained manuscript.
+ 4. Machine checks for any finite claim you rely on (extend wp17's
+    harness style; the support/ oracle gives ground truth on concepts).
+
+CONVENTIONS (project house rules)
+  - Never describe the theorem as proven or certified. The status label
+    is "strongly supported, not certified" until a cold review finds
+    nothing and/or the argument is mechanized.
+  - The project's track record is 7 reviews, 7 defects. Round-13 is
+    unreviewed and reviewer-authored; presume it contains a defect.
+  - Composition table, witness thinning, Theorem A saturation, the RCC5
+    patchwork property (in round-12's Theorem 2.5 form), and strong-EQ
+    handling have been repeatedly re-verified; do not spend your budget
+    there unless a finding forces you to.
+  - Machine-checkable claims should come with a script.
