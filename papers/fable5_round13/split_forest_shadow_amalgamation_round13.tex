@@ -1,0 +1,634 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,longtable,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{fact}[theorem]{Fact}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Hor}{\mathsf{Hor}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\Typ}{\operatorname{Typ}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Shadow Amalgamation for the Patchwork-Bag Abstraction:\\
+a Round-13 Repair of Theorem B for $\ALCIRCC$}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-13 repair manuscript,
+authored by the \emph{seventh reviewer} of this project (the hot audit of
+2026-07-08, \code{papers/fable5\_review/}); it repairs the defects that
+review found in GPT-5.5's round-12 manuscript.  It is a \emph{delta} on
+round-12: everything not amended here is inherited from
+\code{split\_forest\_automata\_with\_appendices.tex} (May 31, 2026).
+This manuscript has \emph{not} been reviewed, cold or otherwise; the usual
+project convention applies (seven reviews so far, seven defects; do not
+describe the theorem as proven or certified).}}
+\date{July 8, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The seventh review of the $\ALCIRCC$ decidability project found that the
+round-12 Truth Lemma rests on an unproved \emph{Shadow Amalgamation}
+assumption: the global relation $\rho_T$ is amalgamated by patchwork from
+the bag networks only, while the lemma silently assumes the declared
+relation-vector shadow entries agree with $\rho_T$; for the legality tests
+as written this is false (a machine-checked three-bag configuration passes
+every test yet admits no realizing frame).  This manuscript repairs
+Theorem~B by \emph{tightening the abstraction language}: the
+\textbf{D-discipline} restricts shadow entries to the horizontal relations
+$\{\DR,\PO\}$ (vertical and equality relationships must be co-bagged,
+which is the existing saturation and residual-frontier regime extended to
+the shadow layer), makes obligation shadows propagate mandatorily with a
+verticalization fallback, propagates transitive vertical universals
+through types, keeps request sources live, and adds a pair-coherence rule.
+Under this discipline the \textbf{Shadow Amalgamation Lemma} is proved:
+bag networks, all declared rows, and a canonical completion of the
+remaining shadow pairs are jointly realizable in one abstract RCC5 frame.
+The proof is a short case analysis over four finite composition-table
+facts, followed by the round-12 patchwork-plus-compactness argument
+applied to the shadow-extended family; every finite ingredient is
+machine-checked (WP17), and the repaired truth lemma then goes through
+with the declared entries literally equal to $\rho_T$.  The cost of the
+repair is made explicit: the residual proof burden moves to the
+\emph{completeness} side (every saturated split-forest presentation must
+be abstractable within the discipline), which is discharged by a Coverage
+Lemma leaning on the round-12 saturation rules, and flagged as the
+remaining keystone together with the (repaired) effective width bound.
+Status: the decidability theorem remains \emph{strongly supported, not
+certified}.
+\end{abstract}
+
+\tableofcontents
+
+\section{What this manuscript is, and its honest standing}\label{sec:scope}
+
+This is a \emph{repair delta} on the round-12 manuscript
+\cite{round12}: it amends the abstraction language of Theorem~B, proves
+the lemma whose absence the seventh review \cite{fable5review} identified
+as the critical gap (finding F1), and fixes the review's other findings
+(F2--F6).  Everything not explicitly amended --- the semantics, Theorem~A
+(split-forest normal form), the patchwork theorem and its
+finite-to-countable passage (round-12 Theorem~2.5 and Appendix~A), the
+two-way alternating parity automaton frame and its emptiness reference ---
+is inherited unchanged.
+
+Two disclosures.  First, the author of this repair is the seventh
+reviewer; the manuscript is therefore \emph{not} an independent check of
+its own claims, and by the project's own standard it must be cold-reviewed
+before its status can improve.  Second, the repair deliberately
+\emph{trades directions}: round-12's broken step was in the
+\emph{realization} direction (a valid abstraction must unfold to a model);
+this manuscript proves that direction fully, \emph{given} the tightened
+discipline, and in exchange the \emph{extraction} direction (every
+saturated presentation must be expressible within the tightened
+discipline) carries a larger burden than before.  Section~\ref{sec:cover}
+discharges it by a Coverage Lemma whose load-bearing inputs are exactly the
+round-12 saturation rules (S1)--(S6); the residual risk of this manuscript
+is concentrated there and in the width interaction of
+Section~\ref{sec:width}, and we say so plainly in
+Section~\ref{sec:invalidate}.
+
+Machine support: the finite composition facts, the constructive
+assignment, and the joint-realizability claim of the central lemma are
+verified by \code{verification/python/wp17\_round13\_discipline\_check.py}
+(400/400 random tree-shaped configurations under the discipline; negative
+control 151/300 failures when the discipline is violated); the
+configuration-level defect being repaired, and the survival of the
+discipline against it, were established by WP15; the acceptance-level
+behaviour of exactly this discipline is the ``repaired mode'' of WP16
+(all ten referee diagnostics agree with the cover-tree tableau; a
+148-concept random sweep with zero disagreements).
+
+\section{Inherited setting and notation}\label{sec:prelim}
+
+We use round-12's setting verbatim: abstract complete atomic RCC5 frames
+$(\Delta,\rho)$ with $\rho:\Delta^2\to\Rel$,
+$\Rel=\{\EQ,\PP,\PPI,\PO,\DR\}$, satisfying identity (R1), converse (R2),
+and composition (R3) for the standard RCC5 table; concepts in NNF over
+$\Cl(C_0)$; Hintikka types $\Typ(C_0)$; patchwork bags
+$B=(P,N,\tau,\mu,W,U,\Gamma)$ over width $K(C_0)$; trees of bags with
+overlap maps, connected occurrence traces (running intersection), and the
+validity clauses (V1)--(V8); the RCC5 patchwork theorem (round-12
+Theorem~2.5) with its finite tree-patching and countable compactness
+lemmas (round-12 Appendix~A); and the two-way alternating parity tree
+automaton.  Write $\Hor=\{\DR,\PO\}$ (\emph{horizontal} relations) and
+call $\PP,\PPI,\EQ$ \emph{vertical}.
+
+An \emph{occurrence} is an overlap-equivalence class of ports.  An
+occurrence is \emph{live} at bag $t$ if it has a port manifestation in
+$P_t$.  A \emph{shadow} of an occurrence $x$ at bag $t$ (where $x$ is not
+live) is the round-12 relation-vector record
+$(t_x,\vec r,\Omega)$; we call $\vec r$ the \emph{row} of $x$ at $t$ and
+$\Omega\subseteq\Rel\times\Cl(C_0)$ its obligation set, induced by the
+universal formulas of $\tp(x)$.
+
+\subsection{The four finite facts}
+
+The repair rests on four properties of the composition table, each a
+finite check (machine-verified exhaustively, WP17 part A, against a table
+independently re-derived from set semantics).
+
+\begin{fact}[Horizontal absorption]\label{fact:hor}
+For all $a,b\in\Hor$: $\Hor\subseteq\Comp(a,b)$.
+\end{fact}
+
+\begin{fact}[Vertical transitivity]\label{fact:vert}
+$\Comp(\PP,\PP)=\{\PP\}$ and $\Comp(\PPI,\PPI)=\{\PPI\}$.
+\end{fact}
+
+\begin{fact}[No horizontal dead ends]\label{fact:nodead}
+For all $h\in\Hor$ and $r\in\{\PP,\PPI\}$:
+$\Comp(h,r)\cap\Hor\neq\varnothing$.
+\end{fact}
+
+\begin{fact}[$\EQ$ is never forced]\label{fact:eq}
+Every cell of the table containing $\EQ$, other than
+$\Comp(\EQ,\EQ)$, also contains $\PP$, $\PPI$ and $\PO$.
+\end{fact}
+
+Fact~\ref{fact:hor} is the engine of the whole repair: \emph{a triangle
+two of whose sides are horizontal admits every horizontal third side}.
+Horizontal values never constrain one another through the composition
+table; all genuine constraint flows through vertical structure, and the
+discipline confines vertical structure to co-bagged ports, where the
+complete bag networks and the patchwork theorem already govern it.
+
+\section{The D-discipline}\label{sec:discipline}
+
+The following amendments to round-12's Definitions 3.3/3.4 and Appendix~Q
+define the round-13 abstraction language.  Each clause is a finite local
+test (or, for D2, a transition-function obligation), so the alphabet
+remains effectively enumerable and the automaton finite.
+
+\begin{definition}[D-discipline]\label{def:D}
+A valid patchwork abstraction additionally satisfies:
+\begin{enumerate}[label=(D\arabic*),leftmargin=2.6em]
+\item \textbf{Horizontal rows.}  Every shadow row entry lies in $\Hor$.
+In particular no entry is $\EQ$ (this subsumes the seventh review's F2
+fix), and no entry is $\PP$ or $\PPI$: a pair whose relation is vertical
+must be \emph{co-bagged} --- represented by port manifestations in a
+common bag --- exactly as the saturation rules (S2)/(S3)/(S4) and the
+residual-frontier clause (V7) already require for side contexts.  A row
+must be \emph{one-point closed} with its bag: the network on
+$P_t\cup\{x\}$ obtained by adjoining the row to $N_t$ satisfies the
+composition table on every triple.
+\item \textbf{Mandatory propagation with verticalization fallback.}  If
+$\Omega_x\neq\varnothing$, then a shadow of $x$ is present in
+\emph{every} direction out of every bag where $x$ is live or shadowed:
+crossing a boundary, the row entries on continued ports are inherited
+(rigidity) and entries for new ports are declared, subject to one-point
+closure.  If closure would force an entry outside $\Hor$ (the true
+relation is vertical), the crossing is replaced by
+\emph{verticalization}: a manifestation of $x$ is inserted into the
+target bag as a port (this is rule (S3)/(S4) applied to the shadow
+layer), after which propagation resumes from the new manifestation.  A
+shadow is never silently dropped (the seventh review's F3 fix).
+\item \textbf{Type propagation of transitive vertical universals.}  If
+$\forall\PP.D\in\tau(p)$ and $N_t(p,q)=\PP$ then
+$\{D,\ \forall\PP.D\}\subseteq\tau(q)$; dually for $\PPI$.  (Sound by
+Fact~\ref{fact:vert}; this is the \code{compute\_safe} rule of the
+project's implementations, now a bag-level legality test.)  Consequently
+vertical universal obligations never need long-range shadows: they ride
+the types along the co-bagged vertical skeleton.
+\item \textbf{Request-source liveness.}  A vertical request
+$(\PP,D)$ or $(\PPI,D)$ keeps a manifestation of its source occurrence
+live (co-bagged) along the declared support branch until fulfillment, so
+fulfillment (``the recorded relation to the source is $R$ and
+$D\in\tau(q)$'') is a bag-network fact, never a shadow fact.  (This
+pins down round-12's (V8), the seventh review's F6(iii).)
+\item \textbf{Pair coherence.}  The declared relation between two given
+occurrences is unique: if $x$'s row at bag $t$ has an entry for a
+manifestation of $y$, and $y$'s row at bag $t'$ has an entry for a
+manifestation of $x$, the two entries are converse to each other.  (A
+two-way automaton checks this by carrying the value along the tree path
+between the two declaration sites.)
+\end{enumerate}
+\end{definition}
+
+\begin{remark}
+D5 is not cosmetic.  The WP17 harness, before modelling it, produced
+exactly the round-12 failure pattern from two shadows co-located near
+each other's live manifestations with an undeclared mutual value; with D5
+the pattern is excluded and the sweep is clean.  D5 is the shadow-layer
+analogue of overlap agreement (O1)--(O5).
+\end{remark}
+
+\begin{remark}[Local checkability]
+(D1) and (D3) are per-bag table checks; (D5) is a per-pair regular check;
+(D2) and (D4) are conditions on the transition function (the automaton
+\emph{must} spawn the copies; it may not choose scopes).  All state
+components range over the finite sets of round-12 Appendix~I, so
+finiteness of the automaton is unaffected.  Alternation absorbs the
+unbounded \emph{instance} counts (one run copy per shadow instance,
+finite state space of profiles), exactly as in round-12.
+\end{remark}
+
+\section{The Shadow Amalgamation Lemma}\label{sec:sal}
+
+Fix a valid D-abstraction $T$.  Let $V_T$ be its occurrences.  Define the
+\emph{declared data} $\Lambda$ as the partial $\Rel$-labelling of
+$V_T^2$ consisting of:
+(i) all bag network values (on co-bagged pairs);
+(ii) all shadow row entries (on shadow--port pairs), which by D5 assign a
+unique value per pair;
+(iii) for every remaining pair of occurrences (never co-bagged, neither
+covering the other by a row --- necessarily both obligation-free by D2):
+the value $\DR$.
+
+\begin{lemma}[Extended-bag closure]\label{lem:ext-closed}
+For every bag $t$, the network on $P_t\cup S_t$ (where $S_t$ is the set of
+occurrences shadowed at $t$) induced by $\Lambda$ is a complete atomic
+composition-closed RCC5 network.
+\end{lemma}
+
+\begin{proof}
+Completeness: bag values cover $P_t^2$; rows cover $S_t\times P_t$
+(D1/D2); clauses (ii)/(iii) of $\Lambda$ cover $S_t^2$.  Atomicity: bag
+networks are atomic with $\EQ$ only on the diagonal; row entries and
+default values lie in $\Hor$, and distinct occurrences never receive
+$\EQ$ (D1).  Composition closure, by the number of shadow members in a
+triple:
+\begin{itemize}[leftmargin=2em]
+\item \emph{No shadow}: the triple lies in $N_t$, closed by (N6).
+\item \emph{One shadow} $(x,p,q)$: this is precisely the one-point
+closure test of D1.
+\item \emph{Two or three shadows}: every side incident to a shadow lies
+in $\Hor$ (D1 for shadow--port sides; (ii)/(iii) for shadow--shadow
+sides).  In each of the three cyclic constraint positions the composed
+pair of sides is horizontal--horizontal, so by Fact~\ref{fact:hor} the
+third side --- itself horizontal --- is admitted.\qedhere
+\end{itemize}
+\end{proof}
+
+\begin{lemma}[Agreeing tree family]\label{lem:ext-family}
+The family $\{P_t\cup S_t\}_{t\in T}$ with the $\Lambda$-induced networks
+is tree-shaped (every occurrence appears in a connected set of extended
+bags) and adjacent extended bags agree on their common occurrences.
+\end{lemma}
+
+\begin{proof}
+Traces of ports are connected by (C1)--(C3); scopes of shadows are
+connected by construction of D2 (propagation crosses adjacent boundaries;
+verticalization inserts a manifestation in the adjacent bag, preserving
+connectedness of the combined trace-plus-scope).  Agreement: bag values
+agree by (O3); row entries agree on continued ports by rigidity;
+shadow--shadow values are single global values per pair by D5 and
+clause~(iii).
+\end{proof}
+
+\begin{theorem}[Shadow Amalgamation]\label{thm:sal}
+There is an abstract complete atomic RCC5 frame $\rho_T$ on $V_T$
+extending $\Lambda$: every bag value, every declared row entry, and every
+default value of clause (iii) is realized verbatim.
+\end{theorem}
+
+\begin{proof}
+Every finite subfamily of extended bags, restricted to finitely many
+occurrences, is a finite tree-shaped family of finite complete atomic
+composition-closed networks agreeing on overlaps
+(Lemmas~\ref{lem:ext-closed} and~\ref{lem:ext-family}; restriction
+preserves closure because (R1)--(R3) are universal conditions).  By
+round-12's finite tree-patching lemma (from the two-bag patchwork
+property, Theorem~2.5) each such subfamily has a satisfiable completion.
+The countable passage is round-12 Appendix~A verbatim, applied to the
+extended family: the closed cylinder sets
+$C_S=\{\lambda\in\Rel^{V_T^2}:\lambda\restriction S \text{ is \emph{some}
+complete atomic closed extension of the extended bags of }S\}$ have the
+finite intersection property (a common finite super-subtree witnesses
+it), and any point of the intersection is a total labelling satisfying
+(R1)--(R3) on every triple, since every triple of occurrences lies in
+some finite connected subtree of extended bags.  Atomicity and (R1) hold
+because every finite completion is atomic with $\EQ$ only on identical
+occurrences (Fact~\ref{fact:eq} guarantees non-$\EQ$ choices are never
+excluded, as in round-12 Appendix~G).\footnote{The wording fix to
+round-12's Appendix~A demanded by the seventh review's F5 (``\emph{the}
+patchwork completion'' $\to$ ``\emph{some} completion'') is incorporated
+in the definition of $C_S$ above.}
+\end{proof}
+
+\begin{remark}[Why the round-12 gap cannot recur]
+The seventh review's counterexample declares $x_1\,\PP\,p$ and
+$x_2\,\PPI\,p$ as \emph{shadow entries}; both are illegal under D1.  Its
+exhaustive variant needs at least one vertical entry in every failing
+assignment (all 23 unrealizable assignments of the minimal pattern
+contain one).  WP17's part C reproduces this: re-admitting vertical
+entries makes 151 of 300 sampled configurations unrealizable, while under
+the discipline 400 of 400 tree-shaped configurations both pass
+Lemma~\ref{lem:ext-closed} and are globally realizable.
+\end{remark}
+
+\section{The repaired Truth Lemma}\label{sec:truth}
+
+Let $T$ be a valid D-abstraction with a root port containing $C_0$, and
+let $\rho_T$ be the frame of Theorem~\ref{thm:sal}.  Interpret concept
+names by the types, as in round-12.
+
+\begin{lemma}[Truth lemma, round-13 form]\label{lem:truth}
+For every occurrence $x$ and $C\in\Cl(C_0)$:
+$C\in\tp(x)\iff \mathcal I_T,x\models C$.
+\end{lemma}
+
+\begin{proof}
+Induction on $C$; atomic and Boolean cases as in round-12.
+
+\emph{Existentials.}  If $\exists R.D\in\tp(x)$ with a local (or
+saturated-side-context) witness, the witness edge is a bag value, so
+$\rho_T$ realizes it verbatim (Theorem~\ref{thm:sal}) and induction
+applies.  If it is a vertical request, D4 keeps a manifestation of $x$
+co-bagged along the support branch; parity acceptance yields a bag in
+which the fulfilling port $q$ satisfies $N(x,q)=R$, $D\in\tau(q)$ ---
+again a bag value.  Conversely if $\exists R.D\notin\tp(x)$, then
+$\forall R.\overline D\in\tp(x)$ and the universal case applies.
+
+\emph{Universals.}  Let $\forall R.D\in\tp(x)$ (so
+$\Omega_x\neq\varnothing$) and let $y$ be any occurrence with
+$\rho_T(x,y)=R$.  We claim $D\in\tp(y)$, whence induction finishes.
+Distinguish how the pair $(x,y)$ is represented:
+\begin{enumerate}[label=(\roman*),leftmargin=2.2em]
+\item \emph{Co-bagged}: $\rho_T(x,y)=N_t(x,y)$ for a common bag $t$
+(Theorem~\ref{thm:sal} extends bag values), and the in-bag universal test
+(round-12 (T4), retained) forces $D\in\tau(y)$.
+\item \emph{Row-covered}: some row of $x$ (or of $y$, via D5 the value is
+the same) declares the pair's value $e\in\Hor$.  By
+Theorem~\ref{thm:sal}, $\rho_T(x,y)=e$; the shadow obligation check
+fires on the entry $e=R$ and forces $D\in\tau(y)$.  \emph{This is the
+step that was unproved in round-12; it is now literal, because $\rho_T$
+extends the rows by construction.}
+\item \emph{Neither}: by the Coverage Lemma below
+(Lemma~\ref{lem:coverage}), for an obligation-carrying $x$ this happens
+only when $R\in\{\PP,\PPI\}$ and $y$ lies on the co-bagged vertical
+skeleton reachable from $x$ by a chain of $R$-labelled bag edges; then D3
+has propagated $\{D,\forall R.D\}$ along the chain into $\tp(y)$'s
+predecessors and $D$ into $\tp(y)$ (soundness of the propagation is
+Fact~\ref{fact:vert}: the composed relation along the chain is exactly
+$R$).  For the default pairs of clause (iii), $\rho_T(x,y)=\DR$ with both
+sides obligation-free, so no universal at $x$ exists to check ---
+excluded here since $\Omega_x\neq\varnothing$ means $x$ is not
+default-paired (D2).
+\end{enumerate}
+The converse direction ($\forall R.D\notin\tp(x)$ gives a counter-witness)
+is by closure under NNF complement and the existential case, as in
+round-12.
+\end{proof}
+
+\section{The Coverage Lemma (the completeness side)}\label{sec:cover}
+
+The truth lemma used:
+
+\begin{lemma}[Coverage]\label{lem:coverage}
+In a valid D-abstraction, for every occurrence $x$ with
+$\Omega_x\neq\varnothing$ and every occurrence $y$, at least one of:
+(a) $x,y$ are co-bagged;
+(b) the pair's value is declared by a row (of $x$ or of $y$);
+(c) $\rho_T(x,y)\in\{\PP,\PPI\}$ is realized along a co-bagged chain of
+vertical bag edges from $x$ to $y$ (through which D3 propagates).
+\end{lemma}
+
+\begin{proof}
+Let $d$ be the tree distance between the sets of bags carrying $x$
+(live or shadow) and those carrying $y$.  If $d=0$ they share a bag: if
+both live, (a); if one is shadowed there, its row covers the other's
+manifestation (rows cover all ports, D2), giving (b).  For $d>0$, D2
+propagates $x$'s shadow along the connecting path.  At each boundary the
+crossing either succeeds with horizontal entries --- decreasing $d$ ---
+or triggers verticalization, which inserts a manifestation of $x$ into
+the next bag as a \emph{port}, also decreasing $d$; by
+Fact~\ref{fact:nodead} these are the only cases (a horizontal anchor is
+never composition-forced into ``no horizontal and no verticalization''
+--- if every closure-consistent entry is vertical, verticalization
+applies; if none exists at all, the abstraction is illegal and rejected).
+By induction on $d$, either $x$'s manifestations reach a bag of $y$
+(cases (a)/(b)), or the walk consists entirely of verticalization steps
+whose inserted manifestations are related to their predecessors by bag
+edges labelled $\PP$ (resp.\ $\PPI$) throughout; in that case the
+composed relation is exactly $\PP$ (resp.\ $\PPI$) by
+Fact~\ref{fact:vert}, giving (c).  Mixed walks (some horizontal
+crossings, then verticalizations) end in cases (a)/(b) at the last
+horizontal manifestation's bag family.
+\end{proof}
+
+\begin{remark}[Where the burden sits]
+Lemma~\ref{lem:coverage} is a statement about \emph{valid
+D-abstractions}.  The companion obligation --- that every satisfiable
+concept \emph{has} a valid D-abstraction --- is the extraction direction,
+Section~\ref{sec:extract}: there, the model supplies the true relations,
+and the discipline's demands (horizontal rows, verticalization,
+liveness) are met exactly by the saturation apparatus (S1)--(S6) of
+Theorem~A.  This inheritance is deliberate and is flagged in
+Section~\ref{sec:invalidate}: Theorem~A's saturation has been found sound
+by every review, but the \emph{interaction} of on-demand verticalization
+with the width bound is the part of this repair most deserving of the
+next adversarial review.
+\end{remark}
+
+\section{Extraction under the discipline (Theorem B(a) delta)}
+\label{sec:extract}
+
+Let $\Phi$ be a saturated split-forest presentation of width $K(C_0)$
+(Theorem~A).  Round-12's extraction (its Appendix~D/M) is amended:
+
+\begin{enumerate}[label=(E\arabic*'),leftmargin=2.6em]
+\item Rows are the \emph{true} model relations from forgotten sources to
+current ports.  Whenever the true relation is vertical or $\EQ$, the
+presentation does not shadow it: saturation (S3) verticalizes the pair
+(inserting the stratum or overlap identity), (S4) splices infinite
+tails at bounded thresholds, and (S2) keeps the relevant vertical
+boundary co-bagged.  Hence all row entries are horizontal: D1 holds.
+\item Obligation sources' shadows are recorded in every direction; where
+the true relation to a boundary turns vertical, the (S3)/(S4) step of
+(E1') has already co-bagged the pair, so the fallback of D2 is exactly
+the saturation step: D2 holds.
+\item Types are read off the model; since the model satisfies
+$\forall\PP.D$ at $p$ and $\rho(p,q)=\PP$ implies both $D$ and (by
+Fact~\ref{fact:vert}) $\forall\PP.D$ hold at $q$, the D3 clauses are
+true type memberships: D3 holds.
+\item Vertical requests name their true witnesses; the source is kept
+live along the finite support prefix (its trace is extended --- a
+presentation choice, not a semantic change): D4 holds.
+\item Entries are true relations, so the value of a pair is unique: D5
+holds.
+\end{enumerate}
+
+Since all declared data are restrictions of one real model, all local
+tests pass, and the extraction lands in the (still finite) alphabet.
+
+\section{The effective width bound, repaired (F4)}\label{sec:width}
+
+Round-12's Lemma~3.5 asserted finiteness of the saturated-context
+classes by an enumeration that is a priori infinite (the seventh review's
+F4; the sixth review's M1).  We replace it.
+
+\begin{definition}[Witness-generated context]
+A saturated side context is \emph{witness-generated} if every port
+carries a \emph{generation reason}: (g1) the source $u$ itself; (g2) a
+selected witness of an existential formula of $\Cl(C_0)$ at a port
+already generated; (g3) a boundary insertion under (S2) (live parent,
+live children, support endpoints, overlap manifestations of an already
+generated port); (g4) a vertical stratum or threshold node inserted by
+(S3)/(S4) for a pair of already generated ports; (g5) a port of a
+recursive side subcontext (rank strictly smaller).
+\end{definition}
+
+\begin{lemma}[Effective bound]\label{lem:kbound}
+Let $n=|\Cl(C_0)|$.  There are computable numbers $c(n)$ and $B_r$
+such that every rank-$r$ witness-generated saturated context has at most
+$B_r$ ports, where $B_0\le c(n)$ and
+$B_{r+1}\le c(n)\,(1+B_r)^2$.  Hence
+$K(C_0)\le B_n$ is computable.
+\end{lemma}
+
+\begin{proof}
+Reasons (g2) contribute at most $n$ ports per generated port (one per
+existential formula of the closure); (g3) at most $2+n+2$ per generated
+port (parent, children bounded by the number of existentials, at most two
+support endpoints, plus overlap manifestations bounded by the number of
+incomparable superpart witnesses $\le n$) --- absorb all these constants
+into $c(n)$.  (g4) inserts at most one port per \emph{pair} of generated
+ports, contributing quadratically; (g5) attaches, for each of the at most
+$n$ recursive triggers per generated port, a context of rank $<r$, of
+size $\le B_{r-1}$ by induction.  Every port has a finite generation
+chain terminating in (g1), so the whole context is contained in the union
+counted by the recurrence; ranks are bounded by $n$ because recursive
+triggers descend to proper subformulas.  All quantities are computable.
+\end{proof}
+
+Only witness-generated contexts are enumerated (extraction produces no
+others: every inserted port in Section~\ref{sec:extract} has one of the
+reasons (g1)--(g5)); the enumeration of round-12's Appendix~K is run with
+the size cap $B_r$ per rank, and its termination is now a theorem, not an
+observation.  No optimality is claimed.
+
+\section{Automaton delta and remaining formalities (F5, F6)}
+\label{sec:automaton}
+
+\begin{enumerate}[label=(\alph*),leftmargin=2em]
+\item \emph{Transitions.}  Shadow states additionally reject $\EQ$
+entries and non-horizontal entries (D1); obligation shadows are spawned
+universally into all directions (D2) --- alternation makes this a
+conjunction in the transition formula, not a choice; verticalization is
+a labelled alternative checked against the bag (D2); the D3 clauses join
+the local type tests; request states carry the source port through
+overlaps (D4); D5 is checked by a two-way excursion between the two
+declaration sites of a pair, carrying one $\Rel$ value.
+\item \emph{Parity.}  Each request copy carries an odd priority until it
+enters its fulfilled state (even); infinite deferral of any single
+request is thus rejecting.  No inter-request round-robin is needed under
+alternation.  (This replaces round-12's generalized-B\"uchi narrative;
+the seventh review's F6(i), and its incidental finding that naive
+same-profile blocking without request-closed laps immediately accepts a
+false SAT, WP16.)
+\item \emph{Input trees.}  Trees are padded to a fixed maximal branching
+degree computable from $K(C_0)$ and $n$, with a dummy label (F6(ii)).
+\item \emph{Appendix A wording.}  Incorporated in
+Theorem~\ref{thm:sal}'s proof (F5).
+\end{enumerate}
+
+The state components remain within round-12's Appendix~I bounds
+(profiles, request kinds, pair-check values), so the automaton is finite
+and emptiness is decidable (Vardi).
+
+\section{Diagnostics and machine checks}\label{sec:diag}
+
+The acceptance behaviour of exactly this discipline is WP16's repaired
+mode: agreement with the cover-tree tableau on all ten referee
+diagnostics --- $C_{\mathrm{force}}$, $C_{\mathrm{split}}$,
+$C_{\mathrm{2hop}}$, $C_{\mathrm{3hop}}$,
+$\exists\DR.A\sqcap\forall\DR.\lnot A$ unsatisfiable;
+$C_{\mathrm{recursive}}$, $C_\uparrow$, the dual-descendant tower, the
+strong-$\EQ$ PO-loop, and a sanity concept satisfiable --- plus a
+148-concept random sweep with zero disagreements.  The PO-loop case is
+worth singling out: exact occurrence identity with same-bag witness
+reuse decides it correctly by design, where the project's retired
+quasimodel oracle failed.  WP17 verifies Facts~\ref{fact:hor}--%
+\ref{fact:eq} exhaustively and the constructive content of
+Lemmas~\ref{lem:ext-closed}--\ref{thm:sal} on 400 random tree-shaped
+configurations (all pass), with a functioning negative control (151/300
+failures when D1 is dropped).  WP14 backs Theorem~2.5 itself; WP15
+delimits the defect this manuscript repairs.
+
+\section{What would invalidate this repair}\label{sec:invalidate}
+
+\begin{enumerate}[label=(G\arabic*),leftmargin=2.6em]
+\item A valid D-abstraction whose declared data $\Lambda$ is not jointly
+realizable would refute Theorem~\ref{thm:sal}; by
+Lemma~\ref{lem:ext-closed} it would have to violate one of the four
+finite facts or the family structure (WP17 searched; none found).
+\item A satisfiable concept none of whose saturated presentations can be
+expressed within the D-discipline would break extraction
+(Section~\ref{sec:extract}).  The pressure point is on-demand
+verticalization versus the width bound: if keeping obligation sources
+co-bagged through vertical regions (D2 fallback, D4 liveness) could force
+unboundedly many simultaneous manifestations \emph{not} absorbed by the
+witness-generated accounting of Lemma~\ref{lem:kbound}, the alphabet
+would no longer cover all models.  This is the direct descendant of the
+round-9/10 forced-verticalization problems (machine-checked at the
+certificate level by WP10--WP12) and is the \textbf{designated next
+review target}.
+\item An error in the Coverage Lemma's walk argument
+(Lemma~\ref{lem:coverage}), e.g.\ a pair reachable only by a walk that
+alternates horizontal and vertical crossings in a way that terminates in
+neither (a)/(b) nor a pure vertical chain (c).
+\item Failure of either inherited external theorem (RCC5 patchwork;
+two-way alternating parity emptiness).
+\end{enumerate}
+
+\section{Status}
+
+With this repair: the \emph{realization} direction of Theorem~B ---
+where rounds 11 and 12 broke --- is proved from four machine-checked
+finite facts plus the patchwork/compactness apparatus that WP14 verifies
+in exactly the form used.  The \emph{extraction} direction and the width
+accounting now carry the residual risk, localized in
+Section~\ref{sec:invalidate}(G2)--(G3).  The decidability theorem for
+$\ALCIRCC$ over abstract complete atomic RCC5 frames therefore remains,
+in the project's calibrated language, \textbf{strongly supported, not
+certified}: this manuscript is unreviewed, was written by the seventh
+reviewer, and by the project's own track record (seven reviews, seven
+defects) should be presumed to contain a defect until a genuinely cold
+review fails to find one.
+
+\begin{thebibliography}{9}
+\bibitem{round12} Consolidated proof manuscript (GPT-5.5, OpenAI).
+\emph{Decidability of $\mathcal{ALCI}_{\mathrm{RCC5}}$ via Saturated
+Split Forests, Patchwork Bags, and Two-Way Parity Automata}, round-12
+expanded self-contained edition, May 31, 2026.
+\code{papers/automata\_route\_repairs/split\_forest\_automata\_with\_appendices.tex}.
+
+\bibitem{fable5review} Claude (Fable~5, Anthropic).  \emph{Referee Report
+and Computational Stress Test: the Round-12 Patchwork-Bag Automata Proof
+of Decidability for $\mathcal{ALCI}_{\mathrm{RCC5}}$}, July 8, 2026.
+\code{papers/fable5\_review/referee\_report\_round12\_fable5.pdf}.
+
+\bibitem{renznebel} J.~Renz and B.~Nebel.  On the complexity of
+qualitative spatial reasoning.  \emph{Artificial Intelligence} 108
+(1999).
+
+\bibitem{lutzmilicic} C.~Lutz and M.~Mili\v{c}i\'c.  A tableau algorithm
+for description logics with concrete domains and GCIs.
+\emph{J.~Automated Reasoning} 38 (2007).
+
+\bibitem{vardi} M.~Y.~Vardi.  Reasoning about the past with two-way
+automata.  \emph{ICALP} 1998.
+\end{thebibliography}
+
+\end{document}

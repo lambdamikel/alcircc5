@@ -6326,3 +6326,74 @@ Report annotations + July update subsection, treadmill-section annotation, WP14�
 Key Files), CLAUDE.md (status paragraph, 7th-review paragraph, WP list, Key Files),
 verification/README.md, this file. The round treadmill remains stopped as a default;
 frontier-model audits are the sanctioned exception.
+
+## 2026-07-08 (later): round-13 — the Shadow Amalgamation repair, authored by the seventh reviewer
+
+Asked whether the proof could be fixed, the seventh reviewer (Claude Fable 5)
+executed its own repair program the same day:
+`papers/fable5_round13/split_forest_shadow_amalgamation_round13.tex/.pdf` (10pp,
+compiles clean, 0 undefined refs) — a **delta on round-12** (everything not amended
+is inherited), plus a new harness `verification/python/wp17_round13_discipline_check.py`.
+
+**The repair.** Instead of proving joint realizability for the unrestricted round-12
+shadow language (which WP15 showed is false as written), round-13 **tightens the
+abstraction language** — the *D-discipline*: (D1) shadow entries range over {DR, PO}
+only; vertical/EQ pairs must be co-bagged (saturation (S3)/(S4)/(V7) extended to the
+shadow layer); (D2) obligation shadows propagate omni-directionally with a
+verticalization fallback (never silently dropped — the F3 fix); (D3) transitive
+vertical universals propagate through *types* along vertical bag edges (`∀PP.D` at p
+with N(p,q)=PP pushes {D, ∀PP.D} into τ(q) — the `compute_safe` rule as a bag-level
+legality test, sound by `comp(PP,PP)={PP}`), so vertical obligations never need
+long-range shadows; (D4) vertical-request sources stay live along their support
+branch (pins down (V8)); (D5) **pair coherence** — one declared value per occurrence
+pair across all rows. Under this discipline the **Shadow Amalgamation Lemma** is
+proved: bag networks + all declared rows + a canonical completion (fixed values on
+previously co-located pairs, DR elsewhere) are jointly realizable in one frame. The
+proof: (i) every shadow-extended bag is a closed complete atomic network, by a
+triangle case analysis over **four finite composition facts** — horizontal absorption
+({DR,PO} ⊆ comp(a,b) for horizontal a,b — the engine: horizontal values never
+constrain each other; vertical transitivity; no horizontal dead ends; EQ never
+forced — all verified exhaustively against an independently re-derived table (WP17
+part A); (ii) the extended family is an agreeing tree family (rigidity + D5 +
+connected scopes); (iii) finite tree patchwork + the App-A compactness argument
+(WP14-verified apparatus) applied to the shadow-extended family, with the F5 wording
+fix incorporated. The repaired Truth Lemma then holds with declared entries
+*literally equal* to ρ_T — the round-11/12 failure mode (local checks that do not
+compose globally) is closed by construction, because everything the automaton checks
+is realized verbatim in the amalgam.
+
+**The explicit trade.** Rounds 11/12 broke in the *realization* direction; round-13
+proves that direction fully and moves the residual burden to the *extraction /
+completeness* side: a **Coverage Lemma** (every obligation pair is co-bagged,
+row-covered, or vertical-chain-mediated — proved by a walk argument using the
+no-dead-ends fact, leaning on saturation) and the **verticalization-vs-width
+interaction** (the round-9/10 forced-verticalization territory), plus the repaired
+`K(C₀)` bound: **witness-generated contexts** with explicit generation reasons
+(g1)–(g5) and a computable per-rank recurrence B_{r+1} ≤ c(n)(1+B_r)², replacing
+round-12's "this is finite" assertion (the F4/M1 fix). Round-13's own
+"what-would-invalidate" list designates the extraction (G2) and Coverage-walk (G3)
+steps as the next review targets. Automaton delta: mandatory propagation as
+transition-function conjunctions, no-EQ entry tests, D5 checked by two-way
+excursions, per-request odd parity priorities (no round-robin needed under
+alternation), arity padding.
+
+**WP17.** Part A: the four finite facts, exhaustive — PASS. Part B: the lemma's
+constructive assignment on 400 random **tree-shaped** configurations under the
+discipline: extended-bag closure 400/400, global joint realizability 400/400. Part C
+negative control: with vertical entries re-admitted, 151/300 configurations fail
+(the WP15 defect the discipline excludes). Instructive development note: the first
+Part B draft failed closure in 143/400 cases because the generator let two shadows
+co-locate near each other's live manifestations without declaring their mutual
+value — exactly the omission that forced rule **D5** into the manuscript; the
+harness caught a real gap in the repair-in-progress before it was written up.
+
+**Honesty.** Round-13 is authored by the seventh reviewer — it is not an independent
+check of itself; it is **unreviewed** (neither cold nor hot); and by the project's
+track record (**seven reviews, seven defects**) it should be presumed to contain a
+defect until a genuinely cold review fails to find one. Status stays **strongly
+supported, NOT certified**. The freeze resumes; sanctioned next steps: a cold review
+of round-13 (a fresh packet in the `cold_review_*` style would be the natural move),
+mechanization of the finite core + the Shadow Amalgamation Lemma, or human peer
+review. Docs updated: README (Latest News, July-update subsection, Key Files),
+CLAUDE.md (status, round-13 paragraph, WP17, Key Files), verification/README.md,
+this file.

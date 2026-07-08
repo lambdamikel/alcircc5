@@ -88,6 +88,14 @@ A finite-occurrence rendering of round-12's acceptance semantics (Hintikka types
 Run: `python3 python/wp16_round12_bag_acceptance.py`
 Report: [`reports/wp16_round12_bag_acceptance.txt`](reports/wp16_round12_bag_acceptance.txt)
 
+### `python/wp17_round13_discipline_check.py` — WP17: the round-13 Shadow Amalgamation repair, machine-checked
+
+Companion to the **round-13 repair manuscript** ([`papers/fable5_round13/`](../papers/fable5_round13/)), which repairs the seventh review's critical finding F1 by the *D-discipline* (shadow entries restricted to {DR, PO}; vertical/EQ pairs co-bagged; mandatory propagation with verticalization fallback; type-propagation of transitive vertical universals; request-source liveness; pair coherence D5). Part A verifies the four finite composition facts the Shadow Amalgamation Lemma cites, exhaustively against an independently re-derived table (A1 horizontal absorption `{DR,PO} ⊆ Comp(a,b)`; A2 vertical transitivity; A3 no horizontal dead ends; A4 EQ never forced). Part B builds the lemma's constructive assignment (bag values + live rows + shadow rows + unique pair values + DR-default) on 400 random **tree-shaped** configurations under the discipline and asserts both B1 (every shadow-extended bag is a closed complete atomic network — the finite-facts step of the proof) and B2 (global joint realizability — what patchwork + compactness guarantee): **400/400 both**. Part C is the negative control: re-admitting vertical entries (violating D1) makes 151/300 configurations fail — the WP15 defect the discipline excludes. Historical note: an earlier draft of Part B failed B1 in 143/400 cases because the generator let two shadows co-locate without declaring their mutual value — exactly the omission that motivated the manuscript's pair-coherence rule (D5).
+
+Run: `python3 python/wp17_round13_discipline_check.py`
+Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
+
+
 
 ## Reproducing the reports
 
@@ -100,6 +108,7 @@ python3 mosaic_closure_search.py     > ../reports/mosaic_closure_search.txt
 python3 wp14_patchwork_property_check.py > ../reports/wp14_patchwork_property_check.txt
 python3 wp15_shadow_row_realizability.py > ../reports/wp15_shadow_row_realizability.txt
 python3 -u wp16_round12_bag_acceptance.py > ../reports/wp16_round12_bag_acceptance.txt
+python3 wp17_round13_discipline_check.py > ../reports/wp17_round13_discipline_check.txt
 ```
 
-Each script exits with code `0` on PASS and `1` on any mismatch / counterexample. The four round-2-era reports all end with `VERDICT: PASS`; the three round-12-era reports (WP14–WP16, July 2026) all end with their `OVERALL: PASS` lines (for WP15, PASS means *the defect and its repair map are confirmed* — it is an attack harness).
+Each script exits with code `0` on PASS and `1` on any mismatch / counterexample. The four round-2-era reports all end with `VERDICT: PASS`; the four July-2026 reports (WP14–WP17) all end with their `OVERALL: PASS` lines (for WP15, PASS means *the defect and its repair map are confirmed* — it is an attack harness).
