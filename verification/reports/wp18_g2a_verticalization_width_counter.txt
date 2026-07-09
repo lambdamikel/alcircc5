@@ -1,0 +1,19 @@
+C_min_literal = (∃PP.⊤ ⊓ ∀PP.(∃PP.⊤ ⊓ ∀PP.∃PP.⊤))
+oracle_sat_min = True closure_size = 12
+C_G2a_robust = (∃PP.⊤ ⊓ ∀PP.(∃PP.⊤ ⊓ (∀PP.∃PP.⊤ ⊓ ∀DR.A)))
+oracle_sat_robust = True closure_size = 18
+
+finite prefix check under literal D2:
+m  chain_closed  root_bag_size  expected  fallbacks
+ 1         True              2         2          0
+ 2         True              3         3          1
+ 3         True              4         4          3
+ 4         True              5         5          6
+ 5         True              6         6         10
+ 6         True              7         7         15
+ 7         True              8         8         21
+ 8         True              9         9         28
+ 9         True             10        10         36
+10         True             11        11         45
+
+conclusion = PASS: root width grows unboundedly with the prefix

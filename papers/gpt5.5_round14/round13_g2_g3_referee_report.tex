@@ -1,0 +1,334 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,longtable,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{xcolor}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Hor}{\mathsf{Hor}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\severity}[1]{\textbf{#1}}
+
+\title{Referee Report on Round 13: Targets G2 and G3}
+\author{Adversarial review of the D-discipline extraction and coverage walk}
+\date{July 8, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\begin{minipage}{0.92\linewidth}
+\textbf{Overall verdict.}  Round 13 does not currently prove Theorem B(a) in
+D-form.  The literal D2 propagation/verticalization clause is too strong for
+finite-width extraction: a fixed satisfiable concept forces infinitely many
+obligation-carrying vertical sources to be inserted into the same lower bag.
+The Shadow Amalgamation Lemma itself remains strongly supported under the
+horizontal-row discipline; the defect is on the completeness/extraction side
+that round 13 explicitly designated as G2.  Status remains: strongly
+supported, not certified.
+\end{minipage}}
+\end{center}
+
+\section{Executive verdict table}
+
+\begin{longtable}{p{0.11\linewidth}p{0.16\linewidth}p{0.63\linewidth}}
+\toprule
+Target & Verdict & Finding \\
+\midrule
+G2a & \severity{Fatal} & Literal D2 fallback plus D4-style liveness is incompatible with any finite
+width bound.  The witness concept $C_{\mathrm{G2a}}$ below is satisfiable, but
+for every prefix length $m$ the D2 extraction of the standard vertical support
+chain forces the root edge bag to contain $m+1$ distinct manifestations. \\
+G2b & \severity{Fatal, derivative} & The rows can be kept horizontal only by applying D2 fallback at every downward
+crossing of every remote source in the tower.  Without fallback, D1 fails; with
+fallback, width fails. \\
+G2c & \severity{Major} & The ``no third category'' assertion is true only under the same globally
+omnidirectional D2 that causes G2a.  Any width-preserving repair must replace
+Coverage by a relation-indexed lemma; the present proof cannot simply be
+reused. \\
+G3a & \severity{Major} & Under literal D2 the coverage walk is essentially trivial but
+unextractable.  Under the needed weakening, the one-sentence dismissal of
+mixed walks is not a proof and lacks the invariant saying where propagation is
+allowed to stop and later restart. \\
+G3b & \severity{Major, conditional} & A closed three-point RCC5 network has $x\PP z$, $z\PPI y$, and $x\PP y$.
+Thus a vertical endpoint relation can be supported by a mixed $\PP/\PPI$ path,
+and D3 does not propagate an $\forall\PP.D$ obligation to $y$.  Literal D2
+avoids this only by co-bagging $x$ with $y$, which is exactly the source of
+G2a. \\
+G3c & \severity{Sound under literal D2, unusable for extraction} & I did not find an independent defect in Theorem 4.3's row-realization
+argument under D1--D5.  The problem is that the D2 hypothesis needed to exclude
+default pairs involving obligation sources is too expensive to extract at
+bounded width. \\
+\bottomrule
+\end{longtable}
+
+\section{G2a counterexample: verticalization versus width}
+
+The smallest literal-wording witness I found is
+\[
+C_{\min}=\exists\PP.\top\ \sqcap\
+        \forall\PP.(\exists\PP.\top\ \sqcap\ \forall\PP.\exists\PP.\top).
+\]
+It already breaks round 13 if D2 is applied to every nonempty universal
+obligation set, including purely vertical universal obligations.
+
+To remove the likely defense ``vertical universals are meant to ride D3 and
+not cast shadows'', I used the following robust version in the machine check:
+\[
+C_{\mathrm{G2a}}=\exists\PP.\top\ \sqcap\
+\forall\PP.\bigl(\exists\PP.\top\ \sqcap\
+        (\forall\PP.\exists\PP.\top\ \sqcap\ \forall\DR.A)\bigr).
+\]
+The added $\forall\DR.A$ makes every strict $\PP$-successor of the root carry
+a genuinely horizontal universal obligation.
+
+\subsection{Semantic forcing}
+
+Let $a_0\models C_{\mathrm{G2a}}$.  Choose $a_1$ with $a_0\PP a_1$.  Since
+$a_0$ satisfies the outer $\forall\PP$, the element $a_1$ satisfies
+$\exists\PP.\top$, $\forall\PP.\exists\PP.\top$, and $\forall\DR.A$.  Choose
+$a_2$ with $a_1\PP a_2$.  By $\Comp(\PP,\PP)=\{\PP\}$, $a_0\PP a_2$, so the
+outer universal at $a_0$ applies to $a_2$ as well.  Inductively every finite
+prefix
+\[
+  a_0\PP a_1\PP a_2\PP\cdots\PP a_m
+\]
+is forced, and every $a_i$ with $i\ge 1$ has a nonempty horizontal obligation
+set because $\forall\DR.A\in\tp(a_i)$.
+
+This is not an artefact of a chosen model.  A finite cycle cannot close the
+chain: repeated $\PP$ composition would imply a nontrivial $\PP$ self-edge,
+contradicting strong equality/identity.
+
+\subsection{Why literal D2 forces unbounded bags}
+
+Use the standard edge-bag presentation of the selected $\PP$ support chain:
+$B_i$ initially contains $a_i$ and $a_{i+1}$, with adjacent bags sharing
+$a_i$ or $a_{i+1}$ as usual.  Consider a remote source $a_k$ with
+$k\ge 2$ and propagate its obligation shadow downward toward the root bag
+$B_0$.
+
+At the crossing from $B_i$ to $B_{i-1}$, for $1\le i<k$, the continued
+separator occurrence is $a_i$.  The true relation from source $a_k$ to this
+separator is
+\[
+  a_k\ \PPI\ a_i,
+\]
+because $a_i\PP a_k$.  A row entry $a_k\PPI a_i$ is illegal by D1
+(horizontal rows).  Therefore literal D2 says that the crossing is replaced by
+verticalization: $a_k$ is inserted into the target bag as a live port.  Repeating
+this over $i=k-1,k-2,\ldots,1$ inserts $a_k$ into $B_0$.  Since this holds for
+every $k$, the root edge bag must contain
+\[
+  \{a_0,a_1,\ldots,a_m\}
+\]
+for the length-$m$ prefix.  The width requirement is therefore at least $m+1$,
+for arbitrary $m$, for the fixed concept $C_{\mathrm{G2a}}$.
+
+The round-13 accounting by generation reasons (g1)--(g5), including
+$B_{r+1}\le c(n)(1+B_r)^2$, counts ports generated inside a bounded side
+context.  It does not count the same lower bag receiving manifestations of
+unboundedly many independently generated remote obligation sources.  These are
+manifestation copies, not new semantic elements, but width counts
+manifestations.
+
+\subsection{Machine check}
+
+I added \code{verification/wp18\_g2a\_verticalization\_width\_counter.py}.
+It checks three finite claims:
+\begin{enumerate}[leftmargin=2em]
+\item $C_{\min}$ and $C_{\mathrm{G2a}}$ are satisfiable according to the
+project oracle \code{cover\_tree\_tableau.check\_sat};
+\item the complete $\PP$-chain prefix network on $a_0,\ldots,a_m$ is closed
+under the RCC5 composition table;
+\item literal D2 fallback inserts all sources $a_1,\ldots,a_m$ into the root
+edge bag.
+\end{enumerate}
+The relevant output was:
+\begin{verbatim}
+C_min_literal = (ExPP.Top n AllPP.(ExPP.Top n AllPP.ExPP.Top))
+oracle_sat_min = True closure_size = 12
+C_G2a_robust = (ExPP.Top n AllPP.(ExPP.Top n (AllPP.ExPP.Top n AllDR.A)))
+oracle_sat_robust = True closure_size = 18
+
+finite prefix check under literal D2:
+m  chain_closed  root_bag_size  expected  fallbacks
+ 1         True              2         2          0
+ 2         True              3         3          1
+ 3         True              4         4          3
+ 4         True              5         5          6
+ 5         True              6         6         10
+ 6         True              7         7         15
+ 7         True              8         8         21
+ 8         True              9         9         28
+ 9         True             10        10         36
+10         True             11        11         45
+
+conclusion = PASS: root width grows unboundedly with the prefix
+\end{verbatim}
+
+\section{G2b: extracted horizontal rows}
+
+The tower above also diagnoses G2b.  At each downward boundary, the extracted
+true row entry from source $a_k$ to the continued separator $a_i$ is $\PPI$.
+Thus there are only two options:
+\begin{enumerate}[leftmargin=2em]
+\item keep the true row entry, violating D1; or
+\item apply D2 fallback, inserting $a_k$ as a live port in the target bag.
+\end{enumerate}
+Round 13 chooses the second option, but G2a shows that the second option has
+unbounded simultaneous cost.  Therefore the manuscript has not shown that
+``after saturation and threshold verticalization every shadowed pair has a
+horizontal true relation'' within the claimed width bound.
+
+This is stronger than the old overlap-amalgam stress case: no exotic side
+amalgam is needed.  A single forced vertical tower with a harmless horizontal
+universal at each level is enough.
+
+\section{G2c: no third category}
+
+The current Coverage Lemma is stated for every occurrence $y$ whenever
+$\Omega_x\ne\varnothing$.  Under literal D2 this is almost tautological:
+$x$ is live or shadowed in every bag reachable from its starting point, so a
+manifestation of $y$ is either co-bagged with $x$ or row-covered by $x$.
+However, that literal reading is precisely what fails G2a.
+
+A width-preserving repair must allow propagation to stop at some vertical
+barriers.  Once this is done, the trichotomy cannot remain occurrence-wide.  It
+must become relation-indexed: for a fixed formula $\forall R.D\in\tp(x)$ and a
+target $y$ with $\rho_T(x,y)=R$, either the pair is co-bagged, or it is covered
+by a horizontal row if $R\in\{\DR,\PO\}$, or it is covered by a uniformly
+oriented vertical support chain if $R\in\{\PP,\PPI\}$.  Pairs in a vertical
+barrier that are not in relation $R$ should be allowed to remain undeclared for
+that particular obligation.  The round-13 text does not state this weaker,
+relation-indexed lemma, and its existing proof does not establish it.
+
+\section{G3: the coverage walk}
+
+\subsection{G3a: mixed walks}
+
+The proof of Lemma 6.1 says that mixed walks ``end in cases (a)/(b) at the last
+horizontal manifestation's bag family.''  I could not make this sentence into a
+valid induction invariant.  A mixed walk can switch from horizontal movement to
+vertical fallback, and after the fallback the source is live again; literal D2
+then sends it in all directions, causing the G2a blow-up.  If this propagation
+is weakened to preserve width, the proof needs an explicit rule saying which
+components are still covered and which are certified irrelevant for the current
+relation $R$.
+
+Thus G3a is not an independent counterexample under literal D2, but it is not a
+repairable proof as written once G2a is fixed.
+
+\subsection{G3b: orientation bookkeeping}
+
+I added \code{verification/wp19\_g3\_mixed\_orientation\_probe.py}.  It checks
+the closed three-point network
+\[
+  x\PP z,
+  \qquad z\PPI y,
+  \qquad x\PP y.
+\]
+The network is composition-closed because $\PP\in\Comp(\PP,\PPI)$.
+For a source type containing $\forall\PP.D$, D3 propagates $D$ and
+$\forall\PP.D$ from $x$ to $z$ along $x\PP z$, but it does not propagate from
+$z$ to $y$ along $z\PPI y$.  The output was:
+\begin{verbatim}
+B0={x,z}, B1={z,y}, overlap={z}
+relations: x PP z, z PPI y, completion x PP y
+composition_closed = True
+D3_from_AllPP_D_at_x gives D flags: {'x': False, 'z': True, 'y': False}
+D3_from_AllPP_D_at_x gives AllPP.D flags: {'x': True, 'z': True, 'y': False}
+endpoint_relation_x_y = PP
+conclusion = PASS: mixed PP/PPI path can have vertical endpoint; uniformity needs an extra invariant
+\end{verbatim}
+
+This is not a valid D-abstraction under literal D2, because D2 would
+verticalize $x$ across the first boundary and make $x,y$ co-bagged in the
+second bag.  But that observation is exactly the problem: the orientation claim
+in case (c) is safe only because D2 is doing expensive global co-bagging.  It
+is not a consequence of the composition table or patchwork alone.
+
+\subsection{G3c: interaction with Theorem 4.3}
+
+I found no direct defect in the row-realization part of Theorem 4.3 under the
+literal D-discipline.  D1, D5, and the extended-family patchwork proof do make
+declared horizontal row values literal values of $\rho_T$.  Also, if D2 is read
+literally, default $\DR$ pairs cannot involve obligation-carrying sources,
+because those sources have been propagated everywhere.
+
+The caveat is again extraction: the literal D2 hypothesis needed for this
+argument is not finite-width extractable.  After a width-preserving repair, the
+``default pairs involve only obligation-free sources'' statement will need to
+be replaced by a relation-indexed irrelevance statement.
+
+\section{Steps checked and found sound}
+
+The following pieces survived this targeted review.
+\begin{enumerate}[leftmargin=2em]
+\item I reran WP17.  The four finite RCC5 facts used by the Shadow
+Amalgamation Lemma passed; 400/400 random D-discipline tree configurations
+were extended-bag closed and globally realizable; the negative control still
+triggered.
+\item I reran WP16 in repaired mode.  The listed referee diagnostics and the
+random sweep agreed with the cover-tree tableau oracle.  This supports the
+acceptance-level intuition but does not test the finite-width extraction
+failure above.
+\item I reran WP14.  The two-bag patchwork checks, finite tree-patching
+stress test, and strong-EQ non-forcing check passed.
+\item I did not find a new defect in the horizontal Shadow Amalgamation Lemma
+itself.  The D1 horizontal-row restriction plus D5 pair coherence are exactly
+what make the extended-bag closure proof work.
+\item The D3 propagation rule is sound for uniformly oriented vertical chains:
+$\Comp(\PP,\PP)=\{\PP\}$ and $\Comp(\PPI,\PPI)=\{\PPI\}$.
+\end{enumerate}
+
+\section{Recommended round-14 repair direction}
+
+Round 14 should not try to save literal D2.  The repair should split obligation
+coverage by relation and replace omni-directional port verticalization with a
+bounded horizontal-frontier mechanism.
+
+Concretely, define horizontal obligations
+\[
+  \Omega_x^H=\{(R,D)\in\Omega_x:R\in\{\DR,\PO\}\}
+\]
+and vertical obligations $\Omega_x^V$ analogously.  Vertical obligations should
+be handled by D3 along certified uniformly oriented support chains, not by
+long-range shadows.  Horizontal shadows should propagate only across open
+horizontal frontiers.  When a crossing is known to enter a vertical cone of the
+source, the automaton should record a finite vertical-barrier certificate rather
+than inserting the source as a port.  If a later side context exits the cone and
+creates a possible $\DR/\PO$ target for the source, the certificate must reopen
+a horizontal row there.
+
+The corresponding Coverage Lemma should be restated as:
+\begin{quote}
+For every $\forall R.D\in\tp(x)$ and every $y$ with $\rho_T(x,y)=R$, the pair
+$(x,y)$ is either co-bagged, row-covered by a horizontal row when
+$R\in\{\DR,\PO\}$, or connected by a co-bagged uniformly oriented vertical chain
+when $R\in\{\PP,\PPI\}$.
+\end{quote}
+This is a proposed repair path, not a completed proof.  The new proof
+obligation is to show that vertical-barrier certificates are locally checkable,
+width-bounded, and sufficient to reopen horizontal rows exactly when a
+horizontal target can occur.
+
+\section{Final recommendation}
+
+Reject round 13 as a complete repair of Theorem B.  Keep the Shadow
+Amalgamation Lemma as a strongly supported component, but withdraw the claimed
+D-form extraction theorem and Coverage Lemma until D2 is replaced and the
+relation-indexed coverage proof is supplied.
+
+\end{document}

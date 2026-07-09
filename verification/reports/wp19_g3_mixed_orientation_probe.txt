@@ -1,0 +1,7 @@
+B0={x,z}, B1={z,y}, overlap={z}
+relations: x PP z, z PPI y, completion x PP y
+composition_closed = True
+D3_from_AllPP_D_at_x gives D flags: {'x': False, 'z': True, 'y': False}
+D3_from_AllPP_D_at_x gives AllPP.D flags: {'x': True, 'z': True, 'y': False}
+endpoint_relation_x_y = PP
+conclusion = PASS: mixed PP/PPI path can have vertical endpoint; uniformity needs an extra invariant

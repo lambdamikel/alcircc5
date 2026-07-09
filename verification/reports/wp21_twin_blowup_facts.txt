@@ -1,0 +1,8 @@
+WP21 -- profile-copy expansion facts
+========================================================================
+A1 each atom is internally copy-closed: PASS
+A2 CopyOK blow-up stress cases: 54192
+A2 result: PASS
+A3 PP-chain works for every outside atom: PASS
+========================================================================
+WP21 OVERALL: PASS

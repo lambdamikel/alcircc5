@@ -1,0 +1,97 @@
+COLD REVIEW PROMPT  --  ALCI_RCC5 decidability, round-14 candidate stack
+========================================================================
+
+Paste the PRIMARY PROMPT below into a FRESH Fable 5 session (no prior
+context on this project), attaching exactly the three PDFs in this folder:
+
+    split_forest_automata_with_appendices.pdf      (base, 29pp)
+    split_forest_shadow_amalgamation_round13.pdf   (delta 1, 10pp)
+    split_forest_round14_repaired_proof.pdf        (delta 2, 12pp)
+
+Do NOT attach anything else (see WHAT TO WITHHOLD in README_FOR_HUMAN.txt).
+
+
+================================================================
+PRIMARY PROMPT  (paste verbatim)
+================================================================
+
+You are an expert referee in description logics, modal and temporal
+logics, and qualitative spatial reasoning (RCC5/RCC8), asked to
+adversarially review a decidability proof for correctness. You have no
+prior involvement with this work.
+
+THE MANUSCRIPTS. Attached is a revision stack of three documents proving
+that concept satisfiability for ALCI_RCC5 -- the description logic ALCI
+whose five roles are the RCC5 base relations DR, PO, EQ, PP, PPI,
+interpreted over abstract complete atomic RCC5 frames (every pair of
+domain elements carries exactly one base relation, closed under the RCC5
+composition table), with strong equality (EQ = identity) -- is decidable.
+
+  (1) The BASE manuscript: split-forest normal form (Theorem A), a finite
+      patchwork-bag abstraction (Theorem B), and a two-way alternating
+      parity tree automaton (Theorem C), deciding via emptiness.
+  (2) A first DELTA that amends the abstraction layer of (1): it
+      restricts the "shadow" mechanism to horizontal relations and proves
+      an amalgamation lemma for that restricted language.
+  (3) A second DELTA that replaces most of (2): it withdraws the
+      horizontal restriction and instead treats every universal source as
+      a virtual active occurrence at every bag ("active virtual bags",
+      AV1-AV6), with finite-restriction closure conditions, and
+      re-proves amalgamation, coverage, truth, and extraction in that
+      form.
+
+The EFFECTIVE candidate proof is: (1), as amended by the surviving parts
+of (2) (in particular its width-accounting section), as amended by (3).
+Where (2) and (3) conflict, (3) governs; (3) states explicitly which
+clauses of (2) it withdraws.
+
+YOUR TASK. Determine whether the effective candidate proof is correct.
+Two separate questions:
+  1. Is the decidability THEOREM true?
+  2. Does the effective stack actually PROVE it -- or are there gaps,
+     unjustified steps, or claims that do not follow?
+A theorem can be true while its proof is broken; address both.
+
+HOW TO WORK -- concrete and adversarial:
+  - First verify the RCC5 composition table (base manuscript, Section 2)
+    independently, then take it as ground truth.
+  - Identify the load-bearing lemmas of (3) and check each: proved, or
+    asserted? Pay particular attention to:
+      * every place where an infinite object (an infinite active set, an
+        infinite tree, an infinite family of constraints) is handled by
+        finite conditions -- check the finite conditions actually entail
+        the infinite property used later;
+      * the interaction of the three layers: does (3) really discharge
+        everything it withdraws from (2), and does anything in (1) or (2)
+        silently depend on a withdrawn clause?
+      * the automaton layer: the abstraction of (3) carries data that is
+        not part of any finite bag label; check that the described
+        finite-state machinery (alternating run copies / monitors) can
+        actually enforce all validity conditions, including for objects
+        first introduced far apart in the input tree, and that the
+        alphabet and state space are genuinely finite;
+      * all width/finiteness accounting: if a quantity is claimed
+        bounded, verify the bound argument; try to make it unbounded
+        with a fixed satisfiable concept;
+      * the eventuality/parity layer: can an accepted run defer a
+        required witness forever?
+  - Scrutinise BOTH directions of the finite-abstraction theorem:
+    realization (valid abstraction => model) AND extraction (satisfiable
+    concept => valid abstraction of bounded width). Historically,
+    repairs that strengthen one direction shift the failure to the other.
+  - Try to construct explicit counterexamples: an unsatisfiable concept
+    the procedure would accept; a satisfiable concept no valid
+    abstraction of the claimed width can represent; or an abstract
+    configuration meeting all stated validity clauses that falsifies a
+    lemma's conclusion. Small, fixed concepts are best.
+  - Check strong equality end-to-end: nothing may force EQ between
+    distinct occurrences, and blocking/repetition must not be conflated
+    with identity.
+
+REPORT FORMAT: referee-style. (a) Verdict (defect found / gap / could not
+break it), with confidence. (b) Severity-graded findings, each with exact
+location, why it does not follow, and -- wherever possible -- a concrete
+witness (concept or configuration). (c) Steps checked and found sound.
+Be explicit about what you verified by computation-in-principle versus
+read-through. Do not defer to the authors' assertions: if a step is
+"clear" or "immediate" in the text but not to you, that is a finding.

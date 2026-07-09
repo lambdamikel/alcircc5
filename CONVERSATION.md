@@ -6420,3 +6420,69 @@ discharge the outstanding cold-review obligation), both manuscripts (round-13 de
 cover-tree tableau oracle. Reviewer/author hygiene note: round-13 was authored by
 Claude (the 7th reviewer), so GPT-5.5 — the round-12 author, a different lineage —
 is the natural adversary, restoring the cross-model review pattern.
+
+## 2026-07-09: the eighth review (GPT-5.5 breaks round-13 at G2a) and round-14 (active virtual bags)
+
+The G2/G2 task packet came back. Two packages: `papers/round13_g2_g3_review_package.zip`
+(the eighth review + an emergency delta + wp18/wp19) and
+`papers/round14_repaired_proof_package.zip` (the round-14 repaired proof + wp21–wp25),
+now unpacked under `papers/gpt5.5_round14/`.
+
+**The eighth review** (`round13_g2_g3_referee_report.*`): round-13's Theorem B(a),
+D-form, is withdrawn. G2a (Fatal): for the satisfiable tower
+`C_G2a = ∃PP.⊤ ⊓ ∀PP.(∃PP.⊤ ⊓ (∀PP.∃PP.⊤ ⊓ ∀DR.A))` — every level carries the
+horizontal obligation ∀DR.A — literal D2 (omni-directional propagation +
+verticalization fallback) forces every remote level into every lower edge bag (the
+rigid entry to the separator is the vertical PPI, so the fallback cascades to the
+root): width m+1 for every prefix m (machine-checked, wp18; reproduced locally).
+G2b fatal-derivative (horizontal rows only via the fallback that kills width);
+G2c/G3a major (occurrence-wide Coverage must become relation-indexed; the mixed-walk
+sentence is not an invariant); G3b (wp19): the closed network `x PP z, z PPI y,
+x PP y` shows vertical endpoint relations need no uniformly oriented chain, so D3
+misses them. G3c: no independent defect in the row-realization core. Found sound:
+the Shadow Amalgamation Lemma (WP14/16/17 re-run clean by the reviewer). Score:
+**8 reviews, 8 defects** — and for the second consecutive round, the defect sits
+exactly where the previous round's "what would invalidate" list pointed. Claude's
+assessment: the review is correct; the D2 clause as written was an over-broad
+rendering of a confinement idea the round-13 design notes had gotten right, and the
+reviewer's tower makes the width consequence unarguable.
+
+**Round-14** (`split_forest_round14_repaired_proof.*`, 12pp, GPT-5.5): withdraws
+D1's horizontal-only restriction, D2's fallback, and the DR-default, and adopts the
+**extended-bag route** — the 7th review's repair option (b), which WP15-P5 had
+corroborated — in "active-virtual-bag" (AV) form: every universal source is a
+virtual active occurrence at every bag (`A_t = P_t ∪ Univ_T`); validity (AV1–AV6)
+requires a coherent complete atomic relation per active set whose **every finite
+restriction** is composition-closed, adjacency agreement (AV3), obligation checks
+against declared entries (AV4), and no default for inactive pairs (AV6).
+Amalgamation = finite tree patchwork + compactness over the active family, so
+declared = realized verbatim; **coverage trivializes** (the source is active
+wherever the target is live — no walks, no orientation cases; the G3 issues
+evaporate); **extraction is width-free** (virtual entries are not ports; wp25 shows
+the G2a tower absorbed with 2 live ports + m−1 virtual shadows, and the old
+WP15/WP20 shadow-shadow counterexamples rejected by active closure). Claude
+reproduced all seven new harnesses (wp18–wp25 → `verification/reports/`) and
+hot-audited the manuscript. Semantic core: sound as far as hand-checking reaches.
+**Designated cold-review targets:** (i) the automaton bookkeeping — AV1 is enforced
+by single/pair/triple alternating monitors, and the spawning discipline (especially
+for two sources first introduced in disjoint subtrees) is prose, self-flagged by
+the author as "the review target"; (ii) the single-shadow transition is written to
+check AV4 but must also check composition closure of the vector with the bag
+network (implied by AV1, not spelled out); (iii) `K_A(C₀)` still rests on
+round-13 §8's witness-generated accounting, which survives as a component (as do
+the Shadow Amalgamation Lemma and the F2/F3/F5/F6 fixes). Packaging notes: the
+repair package contains a stray earlier variant of wp25 (named wp21) and
+docstrings referencing an intermediate profile-compression design the final
+manuscript replaced with per-instance monitors; the shipped facts remain true and
+are kept as regressions. A "WP20" is referenced in outputs but was not shipped.
+
+**Meta-observation worth recording:** the two lineages have now each broken and
+each repaired the other's round (Claude broke GPT's round-12 and wrote round-13;
+GPT broke Claude's round-13 and wrote round-14), with both breaks landing on the
+previous author's own designated targets. Docs updated (README Latest News +
+Status-update section + Key Files; CLAUDE.md status/rounds/WP list; overview
+papers × 2 with a "Round 14" paragraph, recompiled 30pp each). **Next: a genuinely
+cold review of round-14 by a fresh Fable 5 session** — packet at
+`papers/cold_review_round14/` (round-12 base + round-13 delta + round-14 repair +
+prompt + withhold list; the answer key — the referee reports and attack scripts —
+is withheld per the cold-review protocol).

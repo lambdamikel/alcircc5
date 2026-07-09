@@ -95,6 +95,11 @@ Companion to the **round-13 repair manuscript** ([`papers/fable5_round13/`](../p
 Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
+### `python/wp18…wp25` — the eighth review and the round-14 active-virtual-bag repair (GPT-5.5, July 2026; reproduced locally)
+
+`wp18_g2a_verticalization_width_counter.py` and `wp19_g3_mixed_orientation_probe.py` are the **eighth review's** counterexample checks against round-13 (the `C_G2a` tower's unbounded root-bag width under literal D2; the mixed `PP/PPI` closed path whose vertical endpoint D3 never reaches). `wp21_twin_blowup_facts.py`, `wp22_g2a_profile_bound.py`, `wp23_active_closure_regressions.py`, `wp24_vertical_walk_facts.py`, and `wp25_active_virtual_bag_repair.py` check the **round-14** repair: same-profile copy chain/clique facts, G2a profile boundedness, no-DR-default and shadow-shadow-triangle regressions, uniform-vs-mixed vertical walk facts, and the main AV check (G2a absorbed at 2 live ports + virtual shadows; WP15/WP20-style triangles rejected by active closure; random active restrictions closed). All PASS; reports under [`reports/`](reports/).
+
+
 
 
 ## Reproducing the reports

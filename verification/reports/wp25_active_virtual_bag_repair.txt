@@ -1,0 +1,20 @@
+WP25 -- active-virtual-bag repair checks
+========================================================================
+A. robust G2a witness SAT by cover-tree oracle: PASS closure=18
+B. G2a prefix width: old fallback unbounded, new live ports bounded: PASS
+   m  chain_closed  old_root_ports  new_root_ports  virtual_shadows
+   1          True               2               2                0
+   2          True               3               2                1
+   3          True               4               2                2
+   4          True               5               2                3
+   5          True               6               2                4
+   6          True               7               2                5
+   7          True               8               2                6
+   8          True               9               2                7
+   9          True              10               2                8
+  10          True              11               2                9
+C. WP20 bad shadow-shadow triangle rejected by active closure: PASS
+   closure conflict: ('composition', 'x', 'y', 'p', 'PO', 'PP', 'DR', ['DR'])
+D. random concrete active restrictions closed: PASS
+========================================================================
+WP25 OVERALL: PASS

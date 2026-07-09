@@ -1,0 +1,176 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Hor}{\mathsf{Hor}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Round-14 Delta after the G2a Failure:\
+Withdrawing Literal D2 and Restating Coverage by Relation}
+\author{Repair note following targeted G2/G3 review}
+\date{July 8, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\begin{minipage}{0.91\linewidth}
+This is an emergency delta, not a completed round-14 proof.  It records the
+counterexample to round 13's extraction theorem and the smallest repair shape I
+currently see.  The status of the decidability argument remains strongly
+supported, not certified.
+\end{minipage}}
+\end{center}
+
+\section{Retraction of the round-13 D2 extraction claim}
+
+Round 13's D2 clause said that whenever an occurrence $x$ has nonempty
+obligation set, a shadow of $x$ is propagated in every direction out of every
+bag where $x$ is live or shadowed; if a crossing would require a non-horizontal
+row entry, the crossing is replaced by verticalization, inserting $x$ as a
+port in the target bag.
+
+This literal clause is not compatible with finite-width extraction.  The fixed
+satisfiable concept
+\[
+C_{\mathrm{G2a}}=\exists\PP.\top\ \sqcap\
+\forall\PP.\bigl(\exists\PP.\top\ \sqcap\
+        (\forall\PP.\exists\PP.\top\ \sqcap\ \forall\DR.A)\bigr)
+\]
+forces an infinite chain $a_0\PP a_1\PP a_2\PP\cdots$, and every $a_i$ for
+$i\ge 1$ carries the horizontal universal $\forall\DR.A$.  In the edge-bag
+presentation of the length-$m$ prefix, source $a_k$ crossing downward over
+separator $a_i$ has relation $a_k\PPI a_i$, hence a D1-forbidden vertical row
+entry.  Literal D2 therefore inserts $a_k$ into every lower edge bag, including
+the root edge bag.  The root edge bag has size $m+1$ for arbitrary $m$.
+
+The script \code{verification/wp18\_g2a\_verticalization\_width\_counter.py}
+checks the oracle satisfiability and the finite-prefix width growth.  Therefore
+round 13's Theorem B(a), D-form, and Lemma 6.1 are withdrawn as stated.
+
+\section{Principle of the repair}
+
+The mistake was to make coverage occurrence-wide.  The truth lemma needs
+coverage only for a particular universal formula $\forall R.D$ and a target
+$y$ satisfying $\rho_T(x,y)=R$.  Pairs whose relation is not $R$ do not need to
+be represented for that obligation.
+
+Round 14 should split obligations by relation:
+\[
+\Omega_x^H=\{(R,D)\in\Omega_x:R\in\{\DR,\PO\}\},
+\qquad
+\Omega_x^V=\{(R,D)\in\Omega_x:R\in\{\PP,\PPI\}\}.
+\]
+Vertical obligations are handled by type propagation along uniformly oriented
+vertical support chains.  Horizontal obligations are handled by horizontal rows
+only at open horizontal frontiers.  A vertical region that is certified to be
+entirely below or above the source is a barrier for the horizontal obligation,
+not a reason to insert the remote source as a live port.
+
+\section{Replacement for D2: draft D2H}
+
+The following clause is the proposed replacement.  It is deliberately stated as
+a proof obligation, not as a proved theorem.
+
+\begin{description}[leftmargin=2em]
+\item[(D2H) Horizontal-frontier propagation with vertical barriers.]
+For every source occurrence $x$ and every horizontal obligation
+$(R,D)\in\Omega_x^H$, the abstraction carries a shadow state for $x$ across
+all adjacent components that are not certified vertical barriers for $x$.
+At a crossed bag, the declared row entries are exactly the horizontal true
+relations from $x$ to the current ports relevant to that frontier, and D1/D5
+apply to these entries.
+
+If a boundary crossing would require a vertical entry from $x$ to every
+continued separator port, the transition may take a vertical-barrier outcome
+instead of inserting $x$ as a port.  The barrier record stores only a finite
+certificate: orientation ($x\PP$-above or $x\PPI$-above the separator), the
+separator profile, and the obligation kind being protected.  It is not part of
+$\Lambda$ and is not a shadow row.  If a later side context can contain a
+$\DR$ or $\PO$ target for $x$, the saturation certificate must reopen a
+horizontal frontier and resume row propagation there.
+\end{description}
+
+This clause is meant to avoid the G2a tower: each ancestor $a_k$ sees the lower
+chain as a vertical barrier, so it does not get inserted into the root bag
+merely because it carries $\forall\DR.A$.
+
+\section{Replacement for D3: explicit vertical coverage}
+
+Round 13's D3 was sound but underspecified as a coverage device.  The amended
+version should be:
+\begin{description}[leftmargin=2em]
+\item[(D3V) Uniform vertical propagation.]
+If $\forall\PP.D\in\tp(p)$ and a co-bagged vertical support edge has
+$N(p,q)=\PP$, then $D,\forall\PP.D\in\tp(q)$; dually for $\PPI$.  The valid
+abstraction must certify that every target relevant to a vertical universal is
+co-bagged with the source or lies on a uniformly oriented chain of such support
+edges.  Mixed $\PP/\PPI$ paths do not count as vertical coverage.
+\end{description}
+
+The last sentence is necessary.  The probe
+\code{verification/wp19\_g3\_mixed\_orientation\_probe.py} checks a closed
+network with $x\PP z$, $z\PPI y$, and $x\PP y$; D3 propagates
+$\forall\PP.D$ from $x$ to $z$ but not to $y$.
+
+\section{Replacement Coverage Lemma}
+
+The old occurrence-wide lemma should be replaced by the following
+relation-indexed statement.
+
+\begin{quote}
+For every occurrence $x$, every formula $\forall R.D\in\tp(x)$, and every
+occurrence $y$ with $\rho_T(x,y)=R$, at least one of the following holds:
+\begin{enumerate}[label=(\alph*),leftmargin=2em]
+\item $x$ and $y$ are co-bagged, and the in-bag universal test forces
+$D\in\tp(y)$;
+\item $R\in\{\DR,\PO\}$ and the pair is covered by a declared horizontal row
+whose value is realized by Shadow Amalgamation;
+\item $R\in\{\PP,\PPI\}$ and $y$ lies on a certified co-bagged uniformly
+oriented vertical support chain from $x$, so D3V forces $D\in\tp(y)$.
+\end{enumerate}
+\end{quote}
+
+Pairs outside the queried relation $R$ need not be co-bagged or row-covered.
+This is the essential change that prevents the G2a tower from being forced into
+one bag.
+
+\section{New proof obligations}
+
+The repair is viable only if the following obligations are discharged.
+\begin{enumerate}[leftmargin=2em]
+\item \textbf{Barrier soundness.}  A vertical-barrier certificate must imply
+that no target in the skipped component can be in the queried horizontal
+relation to $x$, unless a later certified side exit reopens a horizontal
+frontier.
+\item \textbf{Barrier completeness.}  In every saturated split-forest
+presentation extracted from a model, every horizontal target of every
+horizontal universal is either co-bagged or reached by D2H row propagation.
+\item \textbf{Width.}  Barrier records consume finite state but no port
+manifestations.  Port insertions must again be chargeable to the
+witness-generated reasons (g1)--(g5); remote sources crossing a vertical tower
+must not be charged to the receiving bag.
+\item \textbf{Automaton locality.}  D2H barriers and side exits must be
+checkable by finite two-way states over bounded bag labels.
+\item \textbf{Truth lemma.}  The universal case must use the relation-indexed
+Coverage Lemma above, not the old occurrence-wide lemma.
+\end{enumerate}
+
+\section{Status}
+
+This delta identifies the failed round-13 clause and a plausible direction for
+round 14.  It does not certify that the barrier mechanism is complete.  The
+Shadow Amalgamation Lemma for horizontal rows remains available as a component;
+the remaining load is the new extraction and relation-indexed coverage proof.
+
+\end{document}

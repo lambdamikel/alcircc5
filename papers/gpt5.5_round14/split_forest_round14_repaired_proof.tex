@@ -1,0 +1,520 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{booktabs,longtable,array}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Hor}{\mathsf{Hor}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\dom}{\operatorname{dom}}
+\newcommand{\Bag}{\mathsf{Bag}}
+\newcommand{\Act}{\mathsf{Act}}
+\newcommand{\Univ}{\mathsf{Univ}}
+\newcommand{\Typ}{\mathsf{Typ}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Round-14 Repaired Proof: Active Virtual Bags for the Patchwork-Bag Abstraction}
+\author{GPT-5.5 Pro (OpenAI), repair after the G2/G3 round-13 failure}
+\date{July 8, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Round 13 repaired the round-12 shadow-amalgamation gap by forbidding vertical
+shadow entries and replacing them by co-bagged verticalization.  The targeted
+G2 review found that this is not extractable at bounded width: the fixed
+satisfiable tower concept
+\[
+  \exists\PP.\top\ \sqcap\
+  \forall\PP\bigl(\exists\PP.\top\ \sqcap\
+        (\forall\PP.\exists\PP.\top\ \sqcap\ \forall\DR.A)\bigr)
+\]
+forces unboundedly many remote obligation sources to be inserted into the same
+lower bag under literal D2.  This document gives the repaired Theorem B proof.
+The repair abandons horizontal-only shadows.  Universal sources are propagated
+as \emph{virtual active ports}: their relation vectors may contain vertical
+atoms, but every finite active bag, including simultaneous shadows, must be a
+complete composition-closed RCC5 network and adjacent active bags must agree.
+Thus no remote source is inserted as a live port merely because its relation to
+a separator is vertical, while the old shadow-amalgamation counterexamples are
+excluded by finite active-network closure.  The status remains the project
+status: strongly supported, not certified.
+\end{abstract}
+
+\tableofcontents
+
+\section{Patch statement}
+
+This is a replacement for round-13 Sections 3--8.  The following clauses are
+withdrawn as proof devices:
+\begin{enumerate}[label=(\roman*),leftmargin=2em]
+\item D1's horizontal-only restriction on shadow rows;
+\item D2's verticalization fallback for universal shadows;
+\item the global default value \(\DR\) for nonlocal undeclared pairs.
+\end{enumerate}
+The retained ingredients are the round-12 bag/overlap infrastructure, strong
+\(\EQ\) as identity, witness/request handling for existentials, the RCC5
+patchwork theorem, and the normal-form Theorem A.  Vertical propagation D3 is
+still a useful local saturation rule, but it is no longer the only way a
+vertical universal is protected in the truth lemma; exact active-shadow entries
+protect all universal roles uniformly.
+
+\paragraph{Design principle.}
+A universal source should not be converted into a port just because its current
+relation to a separator is \(\PP\) or \(\PPI\).  It should instead be kept as a
+virtual occurrence whose exact relation to each current port is declared.  What
+made this unsafe in round 12 was not the presence of vertical entries by
+itself, but the absence of closure conditions between two simultaneously active
+shadows.  The new discipline treats active shadows as virtual ports for the
+sole purpose of finite RCC5 closure and patchwork.
+
+\section{The active-virtual-bag discipline}
+
+Let \(T\) be a tree of finite bags.  Each bag \(t\) has a finite port set
+\(P_t\), a complete atomic RCC5 network \(N_t\) on \(P_t\), and a type map
+\(\tau_t:P_t\to\Typ(C_0)\).  Overlap maps identify manifestations of one global
+occurrence exactly as in round 12.  Let \(V_T\) be the set of global
+occurrences.  For an occurrence \(x\), write \(\tp(x)\) for the common type of
+its manifestations, and put
+\[
+  \Omega_x=\{(R,D):\forall R.D\in\tp(x)\}.
+\]
+Let
+\[
+  \Univ_T=\{x\in V_T: \Omega_x\ne\varnothing\}
+\]
+be the set of universal sources.  These are the only occurrences that need
+long-range protection for the truth lemma.
+
+\begin{definition}[Active occurrence set]
+For every bag \(t\), define
+\[
+  A_t=P_t\cup \Univ_T.
+\]
+If a universal source \(x\) is also represented by a live port in \(P_t\), the
+live port and the virtual copy are the same occurrence.  Thus \(A_t\) is a set
+of global occurrences, not a disjoint union of ports and shadows.
+\end{definition}
+
+The set \(A_t\) may be infinite.  Validity is therefore stated by finite-subset
+conditions.  This is exactly the form needed by patchwork and compactness.
+
+\begin{definition}[AV-discipline]\label{def:AV}
+An active-virtual-bag abstraction satisfies the inherited round-12 port,
+overlap, type, witness, request, and parity clauses, and additionally satisfies
+AV1--AV6 below.
+
+\begin{enumerate}[label=(AV\arabic*),leftmargin=3.1em]
+\item \textbf{Finite active networks.}  For each bag \(t\) and every finite
+set \(F\subseteq A_t\), the abstraction supplies a complete atomic network
+\(N^t_F\) on \(F\) such that:
+\begin{enumerate}[label=(\alph*),leftmargin=2em]
+\item \(N^t_F\) restricts to the live bag network \(N_t\) on
+      \(F\cap P_t\);
+\item if \(F\subseteq F'\subseteq A_t\) are finite, then
+      \(N^t_{F'}\restriction F=N^t_F\);
+\item \(N^t_F\) satisfies the RCC5 composition table on every triple;
+\item \(\EQ\) occurs only on the diagonal, i.e. distinct occurrences are never
+      related by \(\EQ\).
+\end{enumerate}
+Equivalently, one may view AV1 as a coherent complete atomic relation
+\(N^*_t\) on the active set \(A_t\), with every finite restriction closed.
+
+\item \textbf{Exact active rows.}  If \(x\in\Univ_T\) and \(p\in P_t\), then
+\(N^*_t(x,p)\) is the declared relation from the universal source \(x\) to the
+current port \(p\).  The value may be \(\DR,\PO,\PP\), or \(\PPI\); it is
+\(\EQ\) only when \(p\) is a manifestation of \(x\) itself.  There is no
+horizontal-only restriction and no verticalization fallback.
+
+\item \textbf{Active pair coherence.}  If \(s,t\) are adjacent bags, then
+\(N^*_s\) and \(N^*_t\) agree on every finite subset of
+\(A_s\cap A_t\).  In particular, a pair of universal sources has one relation
+wherever they are simultaneously active, and a universal-source/continued-port
+row value is rigid across the overlap.
+
+\item \textbf{Universal type check.}  For every bag \(t\), every universal
+source \(x\in\Univ_T\), every live port \(p\in P_t\), and every
+\(\forall R.D\in\tp(x)\),
+\[
+  N^*_t(x,p)=R \quad\Longrightarrow\quad D\in\tp(p).
+\]
+The same-bag check is the special case \(x\in P_t\).  Strong-\(\EQ\) formulas,
+if not normalized away, are checked only on the identical occurrence.
+
+\item \textbf{Existential witnesses and vertical requests.}  The round-12 and
+round-13 witness clauses are retained: every \(\exists R.D\in\tp(p)\) has a
+local, saturated side-context, or parity-fulfilled vertical request witness
+with exact bag relation \(R\) and target type containing \(D\).  Request-source
+liveness is used for existential fulfillment, not for universal-shadow
+verticalization.
+
+\item \textbf{No default for inactive pairs.}  If a pair of occurrences is not
+co-bagged and neither occurrence is in \(\Univ_T\), no relation is preassigned
+to that pair.  It is completed only by the patchwork/compactness construction.
+There is therefore no global \(\DR\) default.
+\end{enumerate}
+\end{definition}
+
+\begin{remark}[How this differs from round 13]
+Round 13 forced vertical source--port entries to become live co-baggings.  AV2
+keeps them virtual.  Round 13 tried to recover patchwork by making every
+shadow-incident side horizontal.  AV1 instead demands the actual missing
+condition: every finite set of live ports and active shadows already forms a
+closed RCC5 network.  This is the extended-bag repair route identified by WP15,
+now used in place of the horizontal-row route.
+\end{remark}
+
+\section{Active shadow amalgamation}
+
+\begin{lemma}[Active family is tree-shaped]\label{lem:active-tree}
+For each occurrence \(u\), the set of bags whose active set contains \(u\) is
+connected.  Adjacent active networks agree on their common occurrences.
+\end{lemma}
+
+\begin{proof}
+If \(u\in\Univ_T\), then \(u\in A_t\) for every bag \(t\), so its active trace
+is the whole tree.  If \(u\notin\Univ_T\), then \(u\) appears only as a live
+port, and its live trace is connected by the inherited overlap/running-
+intersection condition.  Agreement of adjacent active networks is AV3; on live
+ports this is the ordinary overlap agreement, and on pairs involving universal
+sources it is active pair coherence.
+\end{proof}
+
+\begin{lemma}[Finite active patchwork]\label{lem:finite-active-patch}
+Let \(Q\) be a finite connected subtree of bags and let \(F\subseteq V_T\) be
+finite.  There is a complete atomic RCC5 network on
+\[
+  F_Q=F\cup\bigcup_{t\in Q}P_t
+\]
+that extends every live bag value in \(Q\) and every active value
+\(N^*_t(x,p)\) or \(N^*_t(x,y)\) with \(t\in Q\) and
+\(x,y\in F_Q\cap A_t\).
+\end{lemma}
+
+\begin{proof}
+For each \(t\in Q\), let
+\[
+  B_t=F_Q\cap A_t.
+\]
+The set \(B_t\) is finite because \(Q\) and all live bags are finite and
+\(F\) is finite.  By AV1, \(N^*_t\restriction B_t\) is a complete atomic
+composition-closed RCC5 network.  By Lemma~\ref{lem:active-tree}, adjacent
+bags agree on the overlap \(B_s\cap B_t\).  The family
+\((B_t,N^*_t\restriction B_t)_{t\in Q}\) is therefore a finite tree-shaped
+family of complete atomic closed networks agreeing on overlaps.  The round-12
+finite tree-patching lemma gives a complete atomic RCC5 network on the union
+\(F_Q\) extending all these values.
+\end{proof}
+
+\begin{theorem}[Active shadow amalgamation]\label{thm:active-amalgamation}
+Every valid active-virtual-bag abstraction has a total abstract complete atomic
+RCC5 frame \(\rho_T\) on \(V_T\) extending all live bag values and all active
+virtual-bag values.
+\end{theorem}
+
+\begin{proof}
+For every finite \(F\subseteq V_T\), choose a finite connected subtree \(Q_F\)
+containing at least one live manifestation of each occurrence of
+\(F\setminus\Univ_T\).  Occurrences in \(F\cap\Univ_T\) are active in every bag,
+so no special bag is needed for them.  By Lemma~\ref{lem:finite-active-patch},
+there is a complete atomic RCC5 network on a finite superset of \(F\) extending
+all active and live constraints encountered in \(Q_F\); restrict it to \(F\).
+Thus every finite set of occurrences has a closed atomic labelling compatible
+with the declared data.
+
+Now use the same compactness argument as round 12, with the F5 wording repair
+``some completion'' rather than ``the completion''.  The product space
+\(\Rel^{V_T^2}\) is compact.  For a finite set \(F\), let \(C_F\) be the closed
+set of total labellings whose restriction to \(F\) is extendable to one of the
+finite completions above and which respect converse symmetry and strong
+identity on \(F\).  The preceding paragraph gives the finite intersection
+property: a larger finite subtree and a larger finite occurrence set witness
+any finite family of requirements.  A point in the intersection of all
+\(C_F\)'s is a total labelling \(\rho_T\).  Every RCC5 composition axiom is a
+condition on a finite triple, hence holds in \(\rho_T\).  Since all finite
+completions are atomic and use \(\EQ\) only for identical occurrences, the same
+is true of \(\rho_T\).
+\end{proof}
+
+\begin{remark}[Why WP15/WP20 cannot recur]
+The old counterexamples put two shadows in a bag with independently legal
+one-point rows but no declared relation between the shadows.  AV1 has no such
+case: the two shadows and any live port form a finite active network, and every
+triangle among them must satisfy the RCC5 table.  For example,
+\(x\PP y\), \(y\DR p\), and \(x\PO p\) is rejected because
+\(\Comp(\PP,\DR)=\{\DR\}\).  This is exactly the WP20 finite check.
+\end{remark}
+
+\section{Coverage and truth}
+
+The old round-13 Coverage Lemma had a difficult walk induction with three
+cases: co-bagged, row-covered, or uniformly vertical.  Under active virtual
+bags, coverage is simpler and relation-exact.
+
+\begin{lemma}[Active coverage]\label{lem:active-coverage}
+Let \(T\) be a valid active-virtual-bag abstraction and let
+\(\rho_T\) be supplied by Theorem~\ref{thm:active-amalgamation}.  If
+\(x\in\Univ_T\) and \(y\in V_T\), then for every bag \(t\) containing a live
+manifestation of \(y\), the active value \(N^*_t(x,y)\) is defined and
+\[
+  \rho_T(x,y)=N^*_t(x,y).
+\]
+Consequently, if \(\forall R.D\in\tp(x)\) and \(\rho_T(x,y)=R\), then
+\(D\in\tp(y)\).
+\end{lemma}
+
+\begin{proof}
+Since \(x\in\Univ_T\), we have \(x\in A_t\) for every bag \(t\).  If \(t\)
+contains a live manifestation of \(y\), then \(y\in P_t\subseteq A_t\), so
+\(N^*_t(x,y)\) is one of the active values.  Theorem~\ref{thm:active-amalgamation}
+extends all active values, hence \(\rho_T(x,y)=N^*_t(x,y)\).  If this value is
+\(R\) and \(\forall R.D\in\tp(x)\), AV4 gives \(D\in\tp(y)\).
+\end{proof}
+
+\begin{remark}[Mixed walks]
+There is no residual mixed-walk case.  A path from a source manifestation to a
+target bag may pass through any mixture of horizontal and vertical separators,
+but the source remains a virtual active occurrence at the target bag.  The
+truth proof uses the endpoint active value, not a composition of the walk.  D3
+may still propagate vertical universal formulas along selected uniform support
+chains, but the truth lemma no longer depends on every vertical endpoint being
+reached by such a chain.
+\end{remark}
+
+\begin{theorem}[Truth lemma, AV form]\label{thm:truth}
+Let \(T\) be a valid active-virtual-bag abstraction with a root port whose type
+contains \(C_0\), and let \(\rho_T\) be the frame of
+Theorem~\ref{thm:active-amalgamation}.  Interpret concept names by types:
+\(x\in A^{\mathcal I_T}\) iff \(A\in\tp(x)\).  Then for every occurrence \(x\)
+and every \(C\in\Cl(C_0)\),
+\[
+  C\in\tp(x)\quad\Longleftrightarrow\quad \mathcal I_T,x\models C.
+\]
+\end{theorem}
+
+\begin{proof}
+By induction on \(C\).  Atomic and Boolean cases are immediate from the type
+conditions.
+
+For \(C=\exists R.D\), if \(\exists R.D\in\tp(x)\), AV5 supplies a witness:
+either a local or saturated side-context port, or a parity-fulfilled vertical
+request target.  In all cases the relevant relation is a live bag value, hence
+is extended by \(\rho_T\), and the target type contains \(D\).  The induction
+hypothesis gives a semantic witness.  Conversely, if
+\(\exists R.D\notin\tp(x)\), type completeness gives
+\(\forall R.\overline D\in\tp(x)\).  The universal case below implies that no
+\(R\)-successor satisfies \(D\).
+
+For \(C=\forall R.D\), assume \(\forall R.D\in\tp(x)\) and let
+\(y\) be any occurrence with \(\rho_T(x,y)=R\).  Then \(x\in\Univ_T\), so by
+Lemma~\ref{lem:active-coverage}, \(D\in\tp(y)\).  The induction hypothesis gives
+\(\mathcal I_T,y\models D\).  Since \(y\) was arbitrary, the universal holds.
+Conversely, if \(\forall R.D\notin\tp(x)\), then
+\(\exists R.\overline D\in\tp(x)\), and the existential case supplies a
+counter-witness to the universal.
+\end{proof}
+
+\begin{corollary}[Realization direction of Theorem B, AV form]
+Every valid active-virtual-bag abstraction with a root port containing \(C_0\)
+unfolds to a model of \(C_0\) over an abstract complete atomic RCC5 frame with
+strong equality.
+\end{corollary}
+
+\section{Extraction and width}
+
+\begin{theorem}[Extraction direction of Theorem B, AV form]\label{thm:extract}
+If \(C_0\) is satisfiable, then some saturated split-forest presentation of
+\(C_0\) of width at most the Theorem A bound \(K_A(C_0)\) admits a valid
+active-virtual-bag abstraction.  No extra port manifestations are introduced
+for universal-shadow propagation.
+\end{theorem}
+
+\begin{proof}
+Let \(\mathcal M\) be a satisfying abstract complete atomic RCC5 model, and let
+\(\Phi\) be the witness-generated saturated split-forest presentation obtained
+from Theorem A after thinning.  Its live bags have width at most \(K_A(C_0)\).
+Use exactly these live bags, overlap maps, bag networks, type labels, local
+witnesses, side contexts, and vertical existential requests.
+
+For every occurrence \(x\), set \(\tp(x)=\{C\in\Cl(C_0):\mathcal M,x\models C\}\).
+For every bag \(t\), put \(A_t=P_t\cup\Univ_T\).  For each finite
+\(F\subseteq A_t\), define \(N^t_F\) to be the restriction of the true relation
+of \(\mathcal M\) to \(F\).  Because \(\mathcal M\) is a complete atomic RCC5
+frame with strong equality, every such finite active network is complete,
+atomic, composition-closed, and has \(\EQ\) only on identical occurrences.
+The restriction to live ports is exactly the bag network of \(\Phi\).  If two
+finite active sets are nested, their true-relation restrictions are compatible.
+Adjacent active networks agree because they are restrictions of the same global
+relation.  Thus AV1--AV3 hold.
+
+AV4 holds because the types are read from \(\mathcal M\): if
+\(\forall R.D\in\tp(x)\) and the true relation from \(x\) to a live port
+\(p\) is \(R\), then \(\mathcal M,p\models D\), hence \(D\in\tp(p)\).
+AV5 is inherited from the selected witnesses and parity request paths in the
+saturated presentation.  AV6 is a convention on what is not declared.
+Therefore the extracted object is a valid AV-abstraction.
+
+The live port sets are unchanged from \(\Phi\).  Active shadows are virtual
+relations used by the verifier and patchwork proof; they are not manifestations
+and do not increase bag width.  Hence the width remains at most \(K_A(C_0)\).
+\end{proof}
+
+\begin{corollary}[The G2a tower is absorbed]
+For the fixed G2a witness concept, a finite prefix
+\(a_0\PP a_1\PP\cdots\PP a_m\) may have all remote ancestors
+\(a_k\) active at the root edge bag.  The relation from \(a_k\) to a lower
+separator is \(\PPI\), but this is an AV2 virtual entry, not a reason to insert
+\(a_k\) as a live port.  The root edge bag keeps its two live ports while the
+active network records arbitrarily many virtual vertical entries.  Thus the
+round-13 unbounded manifestation count disappears.
+\end{corollary}
+
+\section{Automaton delta}
+
+This section records the finite-state implementation obligation for Theorem C.
+It is included so that the proof document is internally consistent, but it
+should be treated as a review target rather than a mechanized certification.
+
+The live input alphabet is no larger than in round 12, apart from replacing the
+old horizontal-row/verticalization annotations by active-shadow monitor
+annotations.  Shadows are not listed as an unbounded part of a bag label; as in
+round 12, they are generated by alternating run copies.
+
+\begin{description}[leftmargin=3.2cm,style=nextline]
+\item[Single-shadow states.]
+A state \(q_{\rm sh}(\sigma)\) carries a finite shadow profile
+\(\sigma=(\tau,\Omega,\vec r)\), where \(\tau\in\Typ(C_0)\),
+\(\Omega\subseteq\Rel\times\Cl(C_0)\), and \(\vec r\in\Rel^{P_t}\) is the
+relation vector to the current finite port list.  Unlike round 13,
+\(\vec r\) may contain \(\PP\) and \(\PPI\).  The transition checks AV4 for all
+entries of \(\vec r\) and propagates the profile to adjacent bags with overlap
+rigidity.
+
+\item[Pair states.]
+A state \(q_{\rm pair}(\sigma_1,e,\sigma_2)\), with \(e\in\Rel\), carries the
+mutual relation between two active shadows.  At a bag it checks every triangle
+formed by the two shadows and one live port.  Along an overlap it keeps \(e\)
+rigid.  If one shadow later becomes live, the state checks that \(e\) agrees
+with the live bag value.
+
+\item[Triple states.]
+A state \(q_{\rm tri}(\sigma_1,e_{12},\sigma_2,e_{23},\sigma_3,e_{13})\) checks
+\(e_{13}\in\Comp(e_{12},e_{23})\) and the two cyclic companion constraints.
+Together with the pair states, this is the finite-control form of AV1 for
+active-shadow triples.
+
+\item[No default state.]
+There is no state assigning \(\DR\) to untracked nonlocal pairs.  Nonactive
+pairs are left for patchwork completion.
+\end{description}
+
+The number of possible profiles is finite because \(|P_t|\le K_A(C_0)\),
+\(\Typ(C_0)\) is finite, and \(\Rel\) is finite.  The tuple monitors therefore
+add finitely many states.  The parity condition for vertical existential
+requests is unchanged.  The usual two-way alternating parity emptiness theorem
+then applies to the repaired language.
+
+\begin{remark}[Cold-review target]
+The semantic proof above does not depend on a particular encoding of the tuple
+monitors.  A mechanized round should still spell out the spawning discipline for
+pair and triple states, especially for two sources first introduced in disjoint
+subtrees.  The finite data carried by such states are clear; the review target
+is the bookkeeping, not an additional RCC5 fact.
+\end{remark}
+
+\section{Machine checks}
+
+The new script
+\[
+\code{verification/wp25\_active\_virtual\_bag\_repair.py}
+\]
+checks the semantic finite claims introduced by this repair.  The accompanying WP21--WP24 scripts check profile-copy expansion, the G2a profile-count regression, active-closure regressions, and vertical-walk facts retained from the G3 review.  Its output is:
+\begin{verbatim}
+WP25 -- active-virtual-bag repair checks
+========================================================================
+A. robust G2a witness SAT by cover-tree oracle: PASS closure=18
+B. G2a prefix width: old fallback unbounded, new live ports bounded: PASS
+   m  chain_closed  old_root_ports  new_root_ports  virtual_shadows
+   1          True               2               2                0
+   2          True               3               2                1
+   3          True               4               2                2
+   4          True               5               2                3
+   5          True               6               2                4
+   6          True               7               2                5
+   7          True               8               2                6
+   8          True               9               2                7
+   9          True              10               2                8
+  10          True              11               2                9
+C. WP20 bad shadow-shadow triangle rejected by active closure: PASS
+   closure conflict: ('composition', 'x', 'y', 'p', 'PO', 'PP', 'DR', ['DR'])
+D. random concrete active restrictions closed: PASS
+========================================================================
+WP25 OVERALL: PASS
+\end{verbatim}
+WP14 remains the check for the finite RCC5 patchwork theorem, WP15 identifies
+the original shadow-amalgamation failure and its extended-bag repair route,
+WP17 remains useful for the horizontal-row facts but is no longer load-bearing
+for D1, and WP18--WP20 are regression checks for the G2/G3 failures that this
+round removes.
+
+\section{Replacement theorem statement}
+
+Combining Theorem A, Theorem~\ref{thm:extract},
+Theorem~\ref{thm:active-amalgamation}, Theorem~\ref{thm:truth}, and the
+automaton delta yields the repaired finite-abstraction theorem:
+
+\begin{theorem}[Theorem B, round-14 AV form]
+For every input concept \(C_0\), saturated split-forest presentations of width
+at most \(K_A(C_0)\) are soundly and completely represented, up to
+\(\Cl(C_0)\)-types, by active-virtual-bag abstractions.  A valid abstraction
+with a root port containing \(C_0\) realizes to a model of \(C_0\); every
+satisfying model has such an abstraction extracted from a Theorem A
+presentation without increasing live bag width.
+\end{theorem}
+
+\begin{corollary}[Decidability status]
+Together with the finite two-way alternating parity automaton for the repaired
+language and the standard emptiness decision, concept satisfiability for
+\(\ALCIRCC\) over abstract complete atomic RCC5 frames with strong equality is
+decidable.  In project terminology, this is strongly supported, not certified,
+until a cold review or mechanization finds no defect.
+\end{corollary}
+
+\begin{thebibliography}{9}
+\bibitem{round12} Round-12 base manuscript.  \emph{Decidability of
+\(\mathcal{ALCI}_{\mathrm{RCC5}}\) via Saturated Split Forests, Patchwork Bags,
+and Two-Way Parity Automata}.
+
+\bibitem{round13} Round-13 delta.  \emph{A Shadow-Amalgamation Repair of
+Theorem B for \(\mathcal{ALCI}_{\mathrm{RCC5}}\)}.
+
+\bibitem{fable5} Claude Fable 5.  \emph{Referee Report and Computational Stress
+Test: the Round-12 Patchwork-Bag Automata Proof}.
+
+\bibitem{vardi} M. Y. Vardi.  Reasoning about the past with two-way automata.
+\emph{ICALP}, 1998.
+\end{thebibliography}
+
+\end{document}

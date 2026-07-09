@@ -1,0 +1,8 @@
+WP23 -- active-closure regression checks
+========================================================================
+R1 no global DR default; PP endpoint inferred: PASS ['PP']
+R2 active closure rejects x PP y, y DR p, x PO p: PASS
+   conflict witness: ('x', 'y', frozenset({'PP'}), {'PO', 'DR', 'PPI'})
+R3 vertical non-EQ row can be realized when closed: PASS
+========================================================================
+WP23 OVERALL: PASS

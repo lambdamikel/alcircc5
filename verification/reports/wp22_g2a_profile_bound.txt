@@ -1,0 +1,11 @@
+WP22 -- G2a tower profile-count regression
+========================================================================
+depth  1: oracle=SAT, literal_live_ports= 2, repaired_profiles=1, closure=14
+depth  2: oracle=SAT, literal_live_ports= 3, repaired_profiles=1, closure=18
+depth  3: oracle=SAT, literal_live_ports= 4, repaired_profiles=1, closure=22
+depth  4: oracle=SAT, literal_live_ports= 5, repaired_profiles=1, closure=26
+========================================================================
+finite approximants SAT: PASS
+literal D2 live-port count grows: PASS
+round-14 profile count bounded on the prefix: PASS
+WP22 OVERALL: PASS

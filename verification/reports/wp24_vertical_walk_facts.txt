@@ -1,0 +1,13 @@
+WP24 -- vertical walk facts retained by round-14
+========================================================================
+W1 mixed vertical walks have a horizontal composition option: PASS
+   sample mixed words: PPPPI -> ['DR', 'EQ', 'PO', 'PP', 'PPI']; PPIPP -> ['EQ', 'PO', 'PP', 'PPI']; PPPPPPI -> ['DR', 'EQ', 'PO', 'PP', 'PPI']
+W2 horizontal prefix/suffix survives vertical segments: PASS
+W3 singleton vertical transitivity cells: PASS
+W4 finite C0-prime approximants SAT by cover-tree oracle: PASS
+   depth 1: SAT, closure=14, time=0.0063s
+   depth 2: SAT, closure=18, time=0.0754s
+   depth 3: SAT, closure=22, time=4.1937s
+   depth 4: SAT, closure=26, time=1.2569s
+========================================================================
+WP24 OVERALL: PASS
