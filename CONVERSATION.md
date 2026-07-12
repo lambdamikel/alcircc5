@@ -6486,3 +6486,95 @@ cold review of round-14 by a fresh Fable 5 session** — packet at
 `papers/cold_review_round14/` (round-12 base + round-13 delta + round-14 repair +
 prompt + withhold list; the answer key — the referee reports and attack scripts —
 is withheld per the cold-review protocol).
+
+## 2026-07-12: the ninth review — the cold review of round-14 lands; verdict GAP; the decision layer is the open front
+
+The `cold_review_round14` packet was run in a fresh Fable 5 session per protocol
+(three PDFs only, answer key withheld). It returned three report packets and an
+independent verification script (`papers/cold_review_round14/
+referee_report_packet{1,2,3}*.pdf`, `verify_rcc5.py` + output — Claude reproduced
+the script locally, byte-identical). The report self-titles "eighth review" (it
+counted from packet-visible history); the project ledger counts it as the **ninth
+review** (seventh cold). **Verdict: GAP — 9 reviews, 9 defects.**
+
+**F1 (critical, confidence ~0.9).** The review's central insight sharpens what both
+hot audits had only flagged as "bookkeeping": a valid AV abstraction is a *pair*
+(tree T, enrichment N*), and the enrichment — relations from every universal source
+to every port and between universal sources — is not carried by the input tape. So
+Theorem C must decide the projection language {T : ∃N* (T,N*) valid}, a statement
+the stack never formulates, let alone proves; round-12's Theorem-C lemmas are void
+(their validity clauses were rewritten twice). Worse, the §6 monitor sketch is
+**unsound as described**: in an alternating automaton, distinct run copies resolve
+nondeterminism independently — there is no channel forcing two copies carrying
+guessed values for the same pair to agree. Machine-checked witness: rows
+`x–p: PP, y–p: PPI, x–q: PP, y–q: DR` pin e = ρ(x,y) to Comp(PP,PP) ∩ Comp(PP,DR)
+= {PP} ∩ {DR} = ∅ — no coherent N* exists — yet the single monitors pass AV4 with
+the true rows and the pair monitor passes all its triangles with private all-DR row
+copies. Acceptance without validity. The three natural repairs are each blocked by
+facts the stack itself establishes: tape annotation (per-node row data unbounded —
+round-14's own G2a table), profile quotient (lossy: ρ(a₁,a₃)=PP vs ρ(a₅,a₃)=PPI at
+identical profiles, machine-checked), canonical guessing (an unproved
+uniformization). The structural summary is the review's sharpest line: across
+rounds 12→13→14 "**the gap has migrated; it has not closed**" — bounded labels with
+an unproved existence claim, then restricted rows that broke width, then total data
+with no automaton.
+
+**F2 (major).** D4 request-source liveness is load-bearing for the truth lemma
+(non-universal sources have no active rows; deferred existentials discharge only as
+live bag facts) but absent from the width accounting. The probe p4 is elegant: a
+strong-EQ-guarded globally unique A-element must witness ∃PPI.A for every level of
+an infinite tower — bounded width requires extending the *witness's* trace rather
+than dragging every source down, and no lemma legislates that presentation choice.
+
+**F3 (major).** Two-part: (a) scope contradiction — round-14 §1 declares itself "a
+replacement for round-13 Sections 3–8" yet Theorem 5.1 quotes §8's K_A(C₀), defined
+nowhere else; (b) round-13 Lemma 8.2's recurrence does not close: (g2)-generated
+ports are themselves "already generated" and spawn same-rank cascades; the
+one-sentence finite-chain argument bounds finiteness, not same-rank length. The
+identified fix — a single decreasing measure, rank := remaining modal depth, making
+(g2) rank-decreasing — is exactly what the round-13 author (Claude) intended but
+failed to define. The width layer has now been unsound or under-proved in three
+consecutive rounds; the review recommends a clean re-proof, not another patch.
+
+**Minors F4–F7**, two with verified repairs (Lemma 3.2's inactive-occurrence case
+via DR-isolation, machine-checked; Thm 3.3's C_F under-specification with exact
+rewording — the same compactness-wording genus as the 7th review's F5 against
+round-12). F6: a dangling citation into round-12 App H.2 (whose label-declared
+rows no longer exist — the silent dependency break of the delta stack). F7:
+reproducibility (WP scripts should ship with the manuscript).
+
+**Found sound (S1–S10), and this matters:** the AV semantic layer was
+*reconstructed*, not just read — amalgamation (Thm 3.3), coverage, truth (Thm 4.3),
+with two glossed holes identified and repaired en route (inactive occurrences;
+bidirectional AV4 coverage); strong equality end-to-end including the sharpest
+uniqueness probes in both directions; extraction at set level; the per-copy parity
+design; the withdrawal audit (complete except automaton + §8); the composition
+table and patchwork re-derived from scratch (6-element universe; 21,521
+amalgamation instances, 0 failures). The review calls Thms 3.3/4.3 "the strongest
+versions of these results in the stack's history." No counterexample to the
+theorem itself was found; the reviewer regards the theorem as open.
+
+**Meta-observations.** (1) The cold review found what both hot audits missed: the
+unsoundness proof behind the "bookkeeping" flag, the scope contradiction, and the
+Lemma 8.2 regress — the third consecutive demonstration on this project that cold
+reviews outperform context-loaded ones. (2) The reviewer faulted its own lineage's
+round-13 width section without hesitation (its independence note addresses this
+directly). (3) The probes p5/p7 record genuine adversarial effort on the
+soundness side (EQ-forcing, accept-an-unsatisfiable-concept) with the honest
+observation that §6 "pins down no procedure to run" — the F1.3 configuration is
+the closest constructible object.
+
+**Round-15 task (the review's R1–R6):** state Theorem C as an
+existential-enrichment projection and prove a coherence-forcing design against the
+F1.3 test (R1); either a bounded-relevance/bounded-annotation lemma with a proven
+congruence, or **replace the tree-automaton layer with a mosaic/type-elimination
+decision procedure on the infinitary AV abstraction** — the review notes Thms
+3.3/4.3 already supply the model-construction half (R2); the bounded-delay/width
+lemma with a K_A term for live request sources (R3); the §8 erratum and re-proof
+under a single decreasing measure (R4); one consolidated manuscript replacing the
+three-layer delta stack, which has already produced one silent dependency break
+and one scope contradiction (R5); ship the WP scripts in-stack (R6). Docs updated
+(README Latest News + Status section + Key Files; CLAUDE.md status + 9th-review
+paragraph; overview papers ×2). Status: **strongly supported, NOT certified** —
+now with the honest gloss that the semantic theory is in the best shape it has
+ever been and the decision layer is unwritten.

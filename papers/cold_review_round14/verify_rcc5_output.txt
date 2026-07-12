@@ -1,0 +1,18 @@
+1. Composition table derived from set semantics (|U|=6, 63 regions, 63^3 triples):
+   match with manuscript Section 2 table: EXACT
+2. Fact 2.1 (horizontal absorption): True
+   Fact 2.2 (vertical transitivity): True
+   Fact 2.3 (no horizontal dead ends): True
+   Fact 2.4 (EQ never forced) on cells [('PP', 'PPI'), ('PPI', 'PP'), ('PO', 'PO'), ('DR', 'DR')] : True
+3. WP20 triangle x PP y, y DR p, x PO p:  Comp(PP,DR) = ['DR'] -> PO admitted: False
+4. Closed complete atomic RCC5 networks: n=3: 41  n=4: 916
+5a. Patchwork 3+3 over 2-overlap: 427 agreeing pairs, 0 amalgamation failures
+5b. Patchwork 4+4 over 3-overlap: 21094 agreeing pairs, 0 amalgamation failures
+6. DR-isolation (fresh point DR to all) preserves closure: n=3 failures: 0  n=4 failures: 0
+7. F1 witness: rows row(x,p)=PP, row(y,p)=PPI, row(x,q)=PP, row(y,q)=DR
+   e forced via p: Comp(PP,PP) = ['PP']
+   e forced via q: Comp(PP,DR) = ['DR']
+   intersection: [] (empty => no coherent N* exists)
+   source-triangle (PP,PP,DR): DR in Comp(PP,PP)? False
+8. G2a tower: rho(a1,a3) = PP by Comp(PP,PP)={PP}; rho(a5,a3) = PPI by Comp(PPI,PPI)={PPI};  identical (type,Omega) profiles, distinct rows ->  profile-quotient loses necessary information
+9. G2a model sanity: pairwise relations on nested chain: ['PP', 'PPI'] (no DR pairs; forall DR.A vacuous; concept satisfiable)
