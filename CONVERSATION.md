@@ -7239,3 +7239,43 @@ inclusion theorem); F6, W2′; the RCC5 patchwork property as sole
 external input.  Ledger unchanged: 13 reviews — 12 defects, 1
 no-counterexample; rounds 19–20 unreviewed.  Status: **strongly
 supported, NOT certified**.
+
+## 2026-07-13 — Round-21: "Continue with the Lean work first" — the S-layer soundness kernel
+
+Directed with "Continue with the Lean work first."  Same-day delivery,
+same file, still zero sorries (now 2,392 lines): the S4-soundness
+statement that WP30 Part C and WP32 Part C only ever checked
+empirically is now a kernel-checked theorem.
+
+Layer contents: `uSource_conv` (R2 for the update — definitional
+except two fuel-boundary crossings, bridged by round-20's fuel
+irrelevance; the co-birth case is exactly where the round-20-forced
+`net_conv` clause earns its keep); `pairVal` (the realized network);
+`SCond` (the manuscripts' S4 as certificate-computable conditions);
+`pairVal_closed` by a **max-birth rotation argument** — every distinct
+triple contains a maximal-birth occurrence, the S-condition covers the
+triangle with that occurrence in the middle position, and two finite
+kernel facts (`comp_rot1`/`comp_rot2`) plus converse coherence rotate
+everything else; then transport to the operational frame
+(`frame_closed`, `frame_conv`, `frame_proper`) via `uSource_eq_frame`
+and a new core-row lemma.  A wellformed, S-conditioned certificate
+provably unfolds to a proper atomic RCC5 network presentation.
+
+Both poles are witnessed in the kernel: `certC` satisfies `SCond` and
+its frame closes end to end; `certD` — WP32's adversarial Part-C
+control as a theorem — steers PPI against a comp(DR,PO)-pinned
+geometry, provably violates the triangle clause, and provably breaks
+frame closure at exactly the predicted triple.
+
+One toolchain discovery: core Lean has no `Decidable (p → q)`
+instance, which silently blocks `decide` on bounded S-condition
+quantifiers; a local `decImp` instance restores it (found by
+bisecting a `native_decide` synthesis failure to a standalone
+reproduction).
+
+Not closed: the catalogue level — the manuscripts check S4 on finitely
+many interface states and conclude closure for ALL unfoldings, while
+`Cert` encodes one canonical unfolding.  Round-22 = lift `SCond` to a
+finite catalogue with a reachability fixed point.  F6, W2′ unchanged.
+Ledger: 13 reviews — 12 defects, 1 no-counterexample; rounds 19–21
+unreviewed.  Status: **strongly supported, NOT certified**.

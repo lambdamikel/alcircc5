@@ -2326,6 +2326,35 @@ external input (the RCC5 patchwork property).  Rounds 19--20 are
 unreviewed; the natural review is to attack the Lean statements.
 Status unchanged: \emph{strongly supported, not certified}.
 
+\paragraph{Round 21 (July 2026): the S-layer soundness kernel, in the
+kernel.}
+The same Lean artifact (still zero \texttt{sorry}) now proves the
+statement the transition-system harnesses only ever checked
+empirically: a wellformed certificate whose steering satisfies the
+S-condition --- the manuscripts' composition check S4, stated on
+certificate-computable values --- unfolds operationally to a frame
+that is composition-closed on every distinct triangle,
+converse-coherent, and EQ-free on distinct pairs; that is, to a proper
+atomic RCC5 network presentation.  The proof is a max-birth rotation
+argument: every triple contains an occurrence of maximal birth step,
+the S-condition covers the triangle with that occurrence in the middle
+position, and two finite kernel-checked rotation facts together with
+converse coherence of the update rotate everything else into place ---
+the birth structure of the canonical fold does all the work, with no
+induction beyond a trichotomy.  Both poles are witnessed concretely in
+the kernel: a certificate satisfying the S-condition whose frame
+closes end to end, and an adversarial certificate --- the harness-era
+negative control, now a theorem --- that steers against a
+$\comp(\DR,\PO)$-pinned geometry, provably violates the triangle
+clause, and provably breaks closure at exactly the predicted triple.
+What remains above this layer is the catalogue level: the manuscripts
+check the S-condition on finitely many interface states and conclude
+closure for \emph{all} unfoldings, while the formalized certificate
+encodes one canonical unfolding; lifting the condition to a finite
+catalogue with a reachability fixed point is the natural next round.
+Rounds 19--21 are unreviewed.  Status unchanged: \emph{strongly
+supported, not certified}.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the

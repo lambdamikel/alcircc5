@@ -48,6 +48,19 @@ Content:
   7. Non-vacuity: `certC_wellformed` exhibits a certificate with an
      inherited slot satisfying the full `Wellformed`, and an `example`
      applies `uSource_eq_frame` to it end to end.
+  8. Round-21 (2026-07-13): the S-layer soundness kernel.  `SCond`
+     (the manuscripts' S4, stated on certificate-computable values via
+     `pairVal`) implies the unfolded frame is composition-closed
+     (`frame_closed`), converse-coherent (`frame_conv`) and EQ-free
+     (`frame_proper`); `uSource_conv` is R2 for the update, and the
+     closure proof is a max-birth rotation argument over the
+     kernel-checked triangle-rotation facts (`comp_rot1`/`comp_rot2`).
+     This is the statement WP30 Part C and WP32 Part C checked
+     empirically.  Kernel-checked both ways: `certC_scond` + a closed
+     end-to-end example, and `certD` (adversarial steering, the WP32
+     Part-C control as a theorem) whose S-condition provably fails at
+     the comp(DR,PO)-pinned triangle and whose frame provably breaks
+     closure exactly there.
 
   Round-20 provenance note: `doStep` was refactored (let-extraction
   into `memberPortsList`/`patternVals`/`steeringVals`, propositional
@@ -1660,5 +1673,720 @@ example : Frame.get? (unfoldAll certC) (.born 0 1) (.born 1 0)
   uSource_eq_frame certC certC_wellformed _ _
     (by decide) (by decide) (by decide)
     (fun c c' h => Occ.noConfusion h.1)
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ## 8. Round-21: the S-layer — converse coherence, S-conditions,
+    and the closure theorem
+
+The soundness kernel of rounds 15-18, in the kernel: a certificate
+whose steering satisfies the S-condition (`SCond`, the manuscripts'
+S4 on certificate-computable values) unfolds to a composition-closed,
+converse-coherent, EQ-free frame.  WP30 Part C and WP32 Part C checked
+this empirically (S4-valid steering ⟹ closed unfoldings, 100/100 and
+150/150); here it is a theorem.  The negative direction is also
+kernel-checked: `certD` below violates the S-condition and its frame
+provably breaks closure — WP32's adversarial control as a theorem. -/
+
+/-- Rotation of closed triangles, first form: if `u` labels `x→y`,
+    `v` labels `x→z`, `w` labels `z→y` consistently, the same three
+    points witness `v ∈ comp u (conv w)`. -/
+theorem comp_rot1 : ∀ u v w : Atom, u ∈ comp v w → v ∈ comp u (conv w) := by
+  intro u v w
+  cases u <;> cases v <;> cases w <;> decide
+
+/-- Rotation of closed triangles, second form. -/
+theorem comp_rot2 : ∀ u v w : Atom, u ∈ comp v w → w ∈ comp (conv v) u := by
+  intro u v w
+  cases u <;> cases v <;> cases w <;> decide
+
+/-- Converse coherence of the source-oriented update (R2 for
+    `uSource`): definitional in every clause except the two that cross
+    a fuel boundary, which `uSourceFuel_irrel` bridges. -/
+theorem uSource_conv (C : Cert) (hwf : Wellformed C) :
+    ∀ x y : Occ, x ≠ y →
+      (∀ s j, x = .born s j → s < C.steps.length) →
+      (∀ s j, y = .born s j → s < C.steps.length) →
+      (∀ c c', ¬(x = .core c ∧ y = .core c')) →
+      uSource C y x = conv (uSource C x y) := by
+  intro x y hxy hxs hys hcc
+  cases x with
+  | core c =>
+    cases y with
+    | core c' => exact absurd ⟨rfl, rfl⟩ (hcc c c')
+    | born s j =>
+      show (C.template (C.step s).tmpl).net (.inr (.inr j)) (.inr (.inl c))
+        = conv (conv ((C.template (C.step s).tmpl).net
+            (.inr (.inr j)) (.inr (.inl c))))
+      exact (conv_involution _).symm
+  | born sx jx =>
+    cases y with
+    | core c => rfl
+    | born ss js =>
+      obtain hlt | heq | hgt := Nat.lt_trichotomy sx ss
+      · -- x older: (y,x) is the flip of (x,y)
+        have hsl : ss < C.steps.length := hys ss js rfl
+        have hb : fuelNeed (.born sx jx) (.born ss js)
+            ≤ 2 * C.steps.length + 3 := by
+          simp only [fuelNeed]
+          rw [Nat.max_eq_right (Nat.le_of_lt hlt),
+              if_neg (by omega : ¬ss < sx)]
+          omega
+        rw [show uSource C (.born ss js) (.born sx jx)
+            = uSourceFuel C ((2*C.steps.length+3)+1)
+                (.born ss js) (.born sx jx) from rfl,
+          uSourceFuel_born_born, if_neg (by omega : ¬ss = sx),
+          if_neg (by omega : ¬ss < sx)]
+        show conv (uSourceFuel C (2*C.steps.length+3)
+            (.born sx jx) (.born ss js)) = _
+        congr 1
+        exact uSourceFuel_irrel C hwf (2*C.steps.length+4)
+          (.born sx jx) (.born ss js) (by omega) hxs hys
+          _ _ (by omega) (by omega)
+      · -- co-birth: both directions are pattern values; net_conv
+        subst heq
+        have hsl : sx < C.steps.length := hxs sx jx rfl
+        rw [show uSource C (.born sx js) (.born sx jx)
+            = uSourceFuel C ((2*C.steps.length+3)+1)
+                (.born sx js) (.born sx jx) from rfl,
+          uSourceFuel_born_born, if_pos rfl,
+          show uSource C (.born sx jx) (.born sx js)
+            = uSourceFuel C ((2*C.steps.length+3)+1)
+                (.born sx jx) (.born sx js) from rfl,
+          uSourceFuel_born_born, if_pos rfl]
+        exact hwf.net_conv sx hsl _ _
+      · -- y older: (x,y) is the flip of (y,x)
+        have hsl : sx < C.steps.length := hxs sx jx rfl
+        have hb : fuelNeed (.born ss js) (.born sx jx)
+            ≤ 2 * C.steps.length + 3 := by
+          simp only [fuelNeed]
+          rw [Nat.max_eq_right (Nat.le_of_lt hgt),
+              if_neg (by omega : ¬sx < ss)]
+          omega
+        rw [show uSource C (.born sx jx) (.born ss js)
+            = uSourceFuel C ((2*C.steps.length+3)+1)
+                (.born sx jx) (.born ss js) from rfl,
+          uSourceFuel_born_born, if_neg (by omega : ¬sx = ss),
+          if_neg (by omega : ¬sx < ss), conv_involution]
+        exact uSourceFuel_irrel C hwf (2*C.steps.length+4)
+          (.born ss js) (.born sx jx) (by omega) hys hxs
+          _ _ (by omega) (by omega)
+
+/-- The realized pair value of a certificate: core-core pairs read the
+    core net, all others the source-oriented update.  This is the
+    total network the S-condition constrains. -/
+def pairVal (C : Cert) : Occ → Occ → Atom
+  | .core c, .core c' => C.coreNet c c'
+  | .core c, .born s j => uSource C (.core c) (.born s j)
+  | .born s j, y => uSource C (.born s j) y
+
+/-- The S-condition (the manuscripts' S4, on certificate-computable
+    values): the core net is converse-coherent, proper and closed;
+    template core rows agree with it (N3); and at every step, every
+    triangle through a fresh occurrence is composition-closed and
+    every fresh pair is EQ-free.  All fields are finitely checkable on
+    a concrete certificate (the two unbounded core fields become
+    range-bounded or vacuous once `nCore` is fixed). -/
+structure SCond (C : Cert) : Prop where
+  core_conv : ∀ c c', C.coreNet c' c = conv (C.coreNet c c')
+  core_proper : ∀ c c', c < C.nCore → c' < C.nCore → c ≠ c' →
+    C.coreNet c c' ≠ Atom.eq
+  core_closed : ∀ c1 c2 c3, c1 < C.nCore → c2 < C.nCore → c3 < C.nCore →
+    c1 ≠ c2 → c1 ≠ c3 → c3 ≠ c2 →
+    C.coreNet c1 c2 ∈ comp (C.coreNet c1 c3) (C.coreNet c3 c2)
+  core_rows : ∀ i, i < C.steps.length → ∀ c c', c < C.nCore → c' < C.nCore →
+    c ≠ c' →
+    (C.template (C.step i).tmpl).net (.inr (.inl c)) (.inr (.inl c'))
+      = C.coreNet c c'
+  tri : ∀ i, i < C.steps.length →
+    ∀ x ∈ existingBefore C (i+1), ∀ y ∈ existingBefore C (i+1),
+    ∀ jz, jz < (C.template (C.step i).tmpl).nFresh →
+    x ≠ y → x ≠ .born i jz → y ≠ .born i jz →
+    pairVal C x y ∈ comp (pairVal C x (.born i jz))
+                         (pairVal C (.born i jz) y)
+  pair_proper : ∀ i, i < C.steps.length →
+    ∀ x ∈ existingBefore C (i+1),
+    ∀ jz, jz < (C.template (C.step i).tmpl).nFresh →
+    x ≠ .born i jz → pairVal C x (.born i jz) ≠ Atom.eq
+
+/-- Birth bounds from membership in the full unfolding. -/
+theorem birthBound {C : Cert} {x : Occ}
+    (hx : x ∈ existingBefore C C.steps.length) :
+    ∀ s j, x = .born s j → s < C.steps.length := by
+  intro s j h
+  subst h
+  exact (mem_existingBefore_born.mp hx).1
+
+/-- Membership transfers down to any stage past the birth. -/
+theorem mem_downgrade {C : Cert} {x : Occ}
+    (hx : x ∈ existingBefore C C.steps.length) (i : Nat)
+    (hb : ∀ s j, x = .born s j → s ≤ i) :
+    x ∈ existingBefore C (i+1) := by
+  cases x with
+  | core c => exact mem_existingBefore_core.mpr (mem_existingBefore_core.mp hx)
+  | born s j =>
+    have h2 := mem_existingBefore_born.mp hx
+    exact mem_existingBefore_born.mpr ⟨Nat.lt_succ_of_le (hb s j rfl), h2.2⟩
+
+/-- Converse coherence of the realized network. -/
+theorem pairVal_conv (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    {x y : Occ} (hxy : x ≠ y)
+    (hxs : ∀ s j, x = .born s j → s < C.steps.length)
+    (hys : ∀ s j, y = .born s j → s < C.steps.length) :
+    pairVal C y x = conv (pairVal C x y) := by
+  cases x with
+  | core c =>
+    cases y with
+    | core c' => exact hs.core_conv c c'
+    | born s j =>
+      show uSource C (.born s j) (.core c)
+        = conv (uSource C (.core c) (.born s j))
+      exact uSource_conv C hwf _ _ hxy hxs hys
+        (fun c1 c2 h => Occ.noConfusion h.2)
+  | born s j =>
+    cases y with
+    | core c =>
+      show uSource C (.core c) (.born s j)
+        = conv (uSource C (.born s j) (.core c))
+      exact uSource_conv C hwf _ _ hxy hxs hys
+        (fun c1 c2 h => Occ.noConfusion h.1)
+    | born s' j' =>
+      show uSource C (.born s' j') (.born s j)
+        = conv (uSource C (.born s j) (.born s' j'))
+      exact uSource_conv C hwf _ _ hxy hxs hys
+        (fun c1 c2 h => Occ.noConfusion h.1)
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### The closure theorem on the realized network -/
+
+/-- Route 1: the fresh occurrence is the middle element. -/
+theorem route_direct {C : Cert} (hs : SCond C) {i jc : Nat}
+    (hi : i < C.steps.length)
+    (hjc : jc < (C.template (C.step i).tmpl).nFresh)
+    {a b : Occ} (ha : a ∈ existingBefore C (i+1))
+    (hb : b ∈ existingBefore C (i+1))
+    (hab : a ≠ b) (hac : a ≠ .born i jc) (hbc : b ≠ .born i jc) :
+    pairVal C a b ∈ comp (pairVal C a (.born i jc))
+                         (pairVal C (.born i jc) b) :=
+  hs.tri i hi a ha b hb jc hjc hab hac hbc
+
+/-- Route 2: the fresh occurrence sits in the third position; rotate
+    with `comp_rot1` and converse coherence. -/
+theorem route_rotb {C : Cert} (hwf : Wellformed C) (hs : SCond C)
+    {i jb : Nat} (hi : i < C.steps.length)
+    (hjb : jb < (C.template (C.step i).tmpl).nFresh)
+    {a c : Occ} (ha : a ∈ existingBefore C (i+1))
+    (hc : c ∈ existingBefore C (i+1))
+    (hac : a ≠ c) (hab : a ≠ .born i jb) (hcb : c ≠ .born i jb)
+    (hcs : ∀ s j, c = .born s j → s < C.steps.length) :
+    pairVal C a (.born i jb) ∈ comp (pairVal C a c)
+                                    (pairVal C c (.born i jb)) := by
+  have h := hs.tri i hi a ha c hc jb hjb hac hab hcb
+  have h2 := comp_rot1 _ _ _ h
+  rwa [show conv (pairVal C (.born i jb) c) = pairVal C c (.born i jb) from
+    (pairVal_conv C hwf hs (fun h3 => hcb h3.symm)
+      (fun s j h3 => by injection h3 with h4 _; omega) hcs).symm] at h2
+
+/-- Route 3: the fresh occurrence sits in the first position; rotate
+    with `comp_rot2` and converse coherence. -/
+theorem route_rota {C : Cert} (hwf : Wellformed C) (hs : SCond C)
+    {i ja : Nat} (hi : i < C.steps.length)
+    (hja : ja < (C.template (C.step i).tmpl).nFresh)
+    {b c : Occ} (hb : b ∈ existingBefore C (i+1))
+    (hc : c ∈ existingBefore C (i+1))
+    (hcb : c ≠ b) (hca : c ≠ .born i ja) (hba : b ≠ .born i ja)
+    (hcs : ∀ s j, c = .born s j → s < C.steps.length) :
+    pairVal C (.born i ja) b ∈ comp (pairVal C (.born i ja) c)
+                                    (pairVal C c b) := by
+  have h := hs.tri i hi c hc b hb ja hja hcb hca hba
+  have h2 := comp_rot2 _ _ _ h
+  rwa [show conv (pairVal C c (.born i ja)) = pairVal C (.born i ja) c from
+    (pairVal_conv C hwf hs hca hcs
+      (fun s j h3 => by injection h3 with h4 _; omega)).symm] at h2
+
+/-- The realized network of an S-conditioned certificate is
+    composition-closed on all distinct existing triples. -/
+theorem pairVal_closed (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
+    ∀ a b c : Occ,
+      a ∈ existingBefore C C.steps.length →
+      b ∈ existingBefore C C.steps.length →
+      c ∈ existingBefore C C.steps.length →
+      a ≠ b → a ≠ c → c ≠ b →
+      pairVal C a b ∈ comp (pairVal C a c) (pairVal C c b) := by
+  intro a b c ha hb hc hab hac hcb
+  cases c with
+  | born sc jc =>
+    have hcd := mem_existingBefore_born.mp hc
+    cases a with
+    | core ca =>
+      cases b with
+      | core cb =>
+        exact route_direct hs hcd.1 hcd.2
+          (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
+          (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
+          hab hac hcb.symm
+      | born sb jb =>
+        have hbd := mem_existingBefore_born.mp hb
+        by_cases hbs : sb ≤ sc
+        · exact route_direct hs hcd.1 hcd.2
+            (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
+            (mem_downgrade hb sc (fun s j h => by injection h with h1 _; omega))
+            hab hac hcb.symm
+        · exact route_rotb hwf hs hbd.1 hbd.2
+            (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
+            (mem_downgrade hc sb (fun s j h => by injection h with h1 _; omega))
+            hac hab hcb (birthBound hc)
+    | born sa ja =>
+      have had := mem_existingBefore_born.mp ha
+      cases b with
+      | core cb =>
+        by_cases has : sa ≤ sc
+        · exact route_direct hs hcd.1 hcd.2
+            (mem_downgrade ha sc (fun s j h => by injection h with h1 _; omega))
+            (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
+            hab hac hcb.symm
+        · exact route_rota hwf hs had.1 had.2
+            (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
+            (mem_downgrade hc sa (fun s j h => by injection h with h1 _; omega))
+            hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
+      | born sb jb =>
+        have hbd := mem_existingBefore_born.mp hb
+        by_cases hasc : sa ≤ sc
+        · by_cases hbsc : sb ≤ sc
+          · exact route_direct hs hcd.1 hcd.2
+              (mem_downgrade ha sc (fun s j h => by injection h with h1 _; omega))
+              (mem_downgrade hb sc (fun s j h => by injection h with h1 _; omega))
+              hab hac hcb.symm
+          · exact route_rotb hwf hs hbd.1 hbd.2
+              (mem_downgrade ha sb (fun s j h => by injection h with h1 _; omega))
+              (mem_downgrade hc sb (fun s j h => by injection h with h1 _; omega))
+              hac hab hcb (birthBound hc)
+        · by_cases habs : sa ≤ sb
+          · exact route_rotb hwf hs hbd.1 hbd.2
+              (mem_downgrade ha sb (fun s j h => by injection h with h1 _; omega))
+              (mem_downgrade hc sb (fun s j h => by injection h with h1 _; omega))
+              hac hab hcb (birthBound hc)
+          · exact route_rota hwf hs had.1 had.2
+              (mem_downgrade hb sa (fun s j h => by injection h with h1 _; omega))
+              (mem_downgrade hc sa (fun s j h => by injection h with h1 _; omega))
+              hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
+  | core cc =>
+    cases a with
+    | core ca =>
+      cases b with
+      | core cb =>
+        have h1 := mem_existingBefore_core.mp ha
+        have h2 := mem_existingBefore_core.mp hb
+        have h3 := mem_existingBefore_core.mp hc
+        exact hs.core_closed ca cb cc h1 h2 h3
+          (fun h => hab (congrArg Occ.core h))
+          (fun h => hac (congrArg Occ.core h))
+          (fun h => hcb (congrArg Occ.core h))
+      | born sb jb =>
+        have hbd := mem_existingBefore_born.mp hb
+        exact route_rotb hwf hs hbd.1 hbd.2
+          (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
+          (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
+          hac hab hcb (birthBound hc)
+    | born sa ja =>
+      have had := mem_existingBefore_born.mp ha
+      cases b with
+      | core cb =>
+        exact route_rota hwf hs had.1 had.2
+          (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
+          (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
+          hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
+      | born sb jb =>
+        have hbd := mem_existingBefore_born.mp hb
+        by_cases habs : sa ≤ sb
+        · exact route_rotb hwf hs hbd.1 hbd.2
+            (mem_downgrade ha sb (fun s j h => by injection h with h1 _; omega))
+            (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
+            hac hab hcb (birthBound hc)
+        · exact route_rota hwf hs had.1 had.2
+            (mem_downgrade hb sa (fun s j h => by injection h with h1 _; omega))
+            (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
+            hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
+
+/-- The realized network is EQ-free on distinct pairs (strong-EQ
+    discipline: EQ is identity, so distinct occurrences never carry
+    it). -/
+theorem pairVal_proper (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
+    ∀ x y : Occ,
+      x ∈ existingBefore C C.steps.length →
+      y ∈ existingBefore C C.steps.length →
+      x ≠ y → pairVal C x y ≠ Atom.eq := by
+  intro x y hx hy hxy
+  have hconvroute :
+      ∀ {a b : Occ}, a ∈ existingBefore C C.steps.length →
+        b ∈ existingBefore C C.steps.length → a ≠ b →
+        pairVal C b a ≠ Atom.eq → pairVal C a b ≠ Atom.eq := by
+    intro a b ha hb hab hba h
+    apply hba
+    rw [pairVal_conv C hwf hs hab (birthBound ha) (birthBound hb), h]
+    rfl
+  cases x with
+  | core cx =>
+    cases y with
+    | core cy =>
+      exact hs.core_proper cx cy (mem_existingBefore_core.mp hx)
+        (mem_existingBefore_core.mp hy)
+        (fun h => hxy (congrArg Occ.core h))
+    | born sy jy =>
+      have hyd := mem_existingBefore_born.mp hy
+      exact hs.pair_proper sy hyd.1 (.core cx)
+        (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hx))
+        jy hyd.2 hxy
+  | born sx jx =>
+    have hxd := mem_existingBefore_born.mp hx
+    cases y with
+    | core cy =>
+      exact hconvroute hx hy hxy
+        (hs.pair_proper sx hxd.1 (.core cy)
+          (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hy))
+          jx hxd.2 (fun h => hxy h.symm))
+    | born sy jy =>
+      have hyd := mem_existingBefore_born.mp hy
+      by_cases hxs : sx ≤ sy
+      · exact hs.pair_proper sy hyd.1 (.born sx jx)
+          (mem_downgrade hx sy (fun s j h => by injection h with h1 _; omega))
+          jy hyd.2 hxy
+      · exact hconvroute hx hy hxy
+          (hs.pair_proper sx hxd.1 (.born sy jy)
+            (mem_downgrade hy sx (fun s j h => by injection h with h1 _; omega))
+            jx hxd.2 (fun h => hxy h.symm))
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### Transport to the operational frame -/
+
+theorem get?_some_mem {F : Frame} {x y : Occ} {v : Atom}
+    (h : Frame.get? F x y = some v) : ((x, y), v) ∈ F := by
+  unfold Frame.get? at h
+  cases hf : F.find? (fun e => e.1.1 == x && e.1.2 == y) with
+  | none => rw [hf] at h; cases h
+  | some e =>
+    rw [hf] at h
+    have hmem := List.mem_of_find?_eq_some hf
+    have hp := List.find?_some hf
+    simp only [Bool.and_eq_true, beq_iff_eq] at hp
+    injection h with h
+    obtain ⟨⟨a, b⟩, w⟩ := e
+    simp only at hp h
+    rw [← hp.1, ← hp.2, ← h]
+    exact hmem
+
+theorem get?_append_cases {F G : Frame} {x y : Occ} {v : Atom}
+    (h : Frame.get? (F ++ G) x y = some v) :
+    Frame.get? F x y = some v ∨
+      (Frame.get? F x y = none ∧ Frame.get? G x y = some v) := by
+  cases hF : Frame.get? F x y with
+  | none =>
+    right
+    exact ⟨rfl, by rwa [get?_append_none hF] at h⟩
+  | some w =>
+    left
+    rw [get?_append_some hF] at h
+    injection h with h
+    subst h
+    rfl
+
+/-- Core-core frame entries carry the core net (under `core_rows`):
+    the first write is a pattern write with core ports, whose value
+    the N3 condition pins to `coreNet`; steering never touches
+    core-core pairs. -/
+theorem get?_corecore {C : Cert} (hwf : Wellformed C) (hs : SCond C) :
+    ∀ n, n ≤ C.steps.length → ∀ c c', c ≠ c' → ∀ v,
+      Frame.get? (unfoldPrefix C n) (.core c) (.core c') = some v →
+      v = C.coreNet c c' := by
+  intro n
+  induction n with
+  | zero =>
+    intro _ c c' _ v h
+    cases h
+  | succ n ih =>
+    intro hn c c' hne v h
+    have hn' : n < C.steps.length := Nat.lt_of_succ_le hn
+    rw [unfoldPrefix_succ] at h
+    unfold doStep at h
+    cases get?_append_cases h with
+    | inl hFP =>
+      cases get?_append_cases hFP with
+      | inl hF => exact ih (Nat.le_of_lt hn') c c' hne v hF
+      | inr hP =>
+        have hmem := get?_some_mem hP.2
+        rw [mem_patternVals] at hmem
+        obtain ⟨p', hp', q', hq', _, _, heq⟩ := hmem
+        simp only [Prod.mk.injEq] at heq
+        obtain ⟨⟨h1, h2⟩, h3⟩ := heq
+        -- ports mapping to cores are core ports with in-range indices
+        have hpcore : p' = (.inr (.inl c) : TPort) ∧ c < C.nCore := by
+          cases mem_memberPortsList_elim hp' with
+          | inl hk =>
+            obtain ⟨k, hk, rfl⟩ := hk
+            have hk' : k < (C.step n).slotTargets.length := by
+              rw [hwf.targets_length n hn']; exact hk
+            obtain ⟨s, j, htk, _⟩ :=
+              target_shape hwf hn' (List.getElem_mem hk')
+            rw [portOcc_slot_eq hk', htk] at h1
+            exact absurd h1 (fun h4 => Occ.noConfusion h4)
+          | inr hcf =>
+            cases hcf with
+            | inl hcp =>
+              obtain ⟨c1, hc1, rfl⟩ := hcp
+              have h1' : Occ.core c = Occ.core c1 := h1
+              injection h1' with h1'
+              subst h1'
+              exact ⟨rfl, hc1⟩
+            | inr hfp =>
+              obtain ⟨j, _, rfl⟩ := hfp
+              exact absurd (h1 : Occ.core c = Occ.born n j)
+                (fun h4 => Occ.noConfusion h4)
+        have hqcore : q' = (.inr (.inl c') : TPort) ∧ c' < C.nCore := by
+          cases mem_memberPortsList_elim hq' with
+          | inl hk =>
+            obtain ⟨k, hk, rfl⟩ := hk
+            have hk' : k < (C.step n).slotTargets.length := by
+              rw [hwf.targets_length n hn']; exact hk
+            obtain ⟨s, j, htk, _⟩ :=
+              target_shape hwf hn' (List.getElem_mem hk')
+            rw [portOcc_slot_eq hk', htk] at h2
+            exact absurd h2 (fun h4 => Occ.noConfusion h4)
+          | inr hcf =>
+            cases hcf with
+            | inl hcp =>
+              obtain ⟨c1, hc1, rfl⟩ := hcp
+              have h2' : Occ.core c' = Occ.core c1 := h2
+              injection h2' with h2'
+              subst h2'
+              exact ⟨rfl, hc1⟩
+            | inr hfp =>
+              obtain ⟨j, _, rfl⟩ := hfp
+              exact absurd (h2 : Occ.core c' = Occ.born n j)
+                (fun h4 => Occ.noConfusion h4)
+        rw [h3, hpcore.1, hqcore.1]
+        exact hs.core_rows n hn' c c' hpcore.2 hqcore.2 hne
+    | inr hS =>
+      have hmem := get?_some_mem hS.2
+      rw [mem_steeringVals] at hmem
+      obtain ⟨x', _, _, j', _, hor⟩ := hmem
+      cases hor with
+      | inl h1 =>
+        simp only [Prod.mk.injEq] at h1
+        exact absurd h1.1.2 (fun h => Occ.noConfusion h)
+      | inr h1 =>
+        simp only [Prod.mk.injEq] at h1
+        exact absurd h1.1.1 (fun h => Occ.noConfusion h)
+
+/-- Every frame entry between distinct existing occurrences carries
+    the realized `pairVal` (round-20's theorem for non-core-core
+    pairs; the core-row lemma for core-core pairs). -/
+theorem get?_eq_pairVal (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    {x y : Occ} {v : Atom}
+    (hx : x ∈ existingBefore C C.steps.length)
+    (hy : y ∈ existingBefore C C.steps.length)
+    (hxy : x ≠ y)
+    (h : Frame.get? (unfoldAll C) x y = some v) :
+    v = pairVal C x y := by
+  cases x with
+  | core c =>
+    cases y with
+    | core c' =>
+      exact get?_corecore hwf hs C.steps.length (Nat.le_refl _) c c'
+        (fun h2 => hxy (congrArg Occ.core h2)) v h
+    | born s j =>
+      have h2 := uSource_eq_frame C hwf _ _ hxy hx hy
+        (fun c1 c2 h3 => Occ.noConfusion h3.2)
+      rw [h] at h2
+      injection h2 with h2
+  | born s j =>
+    have h2 := uSource_eq_frame C hwf _ _ hxy hx hy
+      (fun c1 c2 h3 => Occ.noConfusion h3.1)
+    rw [h] at h2
+    injection h2 with h2
+
+/-- ROUND-21 MAIN THEOREM (the S4 soundness kernel, operational form):
+    the unfolded frame of a wellformed, S-conditioned certificate is
+    composition-closed on every distinct existing triangle.  This is
+    the statement WP30 Part C and WP32 Part C checked empirically. -/
+theorem frame_closed (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    {x y z : Occ} {v1 v2 v3 : Atom}
+    (hx : x ∈ existingBefore C C.steps.length)
+    (hy : y ∈ existingBefore C C.steps.length)
+    (hz : z ∈ existingBefore C C.steps.length)
+    (hxy : x ≠ y) (hxz : x ≠ z) (hzy : z ≠ y)
+    (h1 : Frame.get? (unfoldAll C) x y = some v1)
+    (h2 : Frame.get? (unfoldAll C) x z = some v2)
+    (h3 : Frame.get? (unfoldAll C) z y = some v3) :
+    v1 ∈ comp v2 v3 := by
+  rw [get?_eq_pairVal C hwf hs hx hy hxy h1,
+      get?_eq_pairVal C hwf hs hx hz hxz h2,
+      get?_eq_pairVal C hwf hs hz hy hzy h3]
+  exact pairVal_closed C hwf hs x y z hx hy hz hxy hxz hzy
+
+/-- The unfolded frame is converse-coherent (R2). -/
+theorem frame_conv (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    {x y : Occ} {v1 v2 : Atom}
+    (hx : x ∈ existingBefore C C.steps.length)
+    (hy : y ∈ existingBefore C C.steps.length)
+    (hxy : x ≠ y)
+    (h1 : Frame.get? (unfoldAll C) x y = some v1)
+    (h2 : Frame.get? (unfoldAll C) y x = some v2) :
+    v2 = conv v1 := by
+  rw [get?_eq_pairVal C hwf hs hx hy hxy h1,
+      get?_eq_pairVal C hwf hs hy hx (fun h => hxy h.symm) h2]
+  exact pairVal_conv C hwf hs hxy (birthBound hx) (birthBound hy)
+
+/-- The unfolded frame is EQ-free on distinct pairs (strong EQ). -/
+theorem frame_proper (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    {x y : Occ} {v : Atom}
+    (hx : x ∈ existingBefore C C.steps.length)
+    (hy : y ∈ existingBefore C C.steps.length)
+    (hxy : x ≠ y)
+    (h : Frame.get? (unfoldAll C) x y = some v) :
+    v ≠ Atom.eq := by
+  rw [get?_eq_pairVal C hwf hs hx hy hxy h]
+  exact pairVal_proper C hwf hs x y hx hy hxy
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### Kernel-checked witnesses for the S-layer -/
+
+/-- Core Lean has no general `Decidable (p → q)` instance; the bounded
+    S-condition quantifiers need one to be `decide`-checkable on
+    concrete certificates. -/
+instance decImp {p q : Prop} [dp : Decidable p] [dq : Decidable q] :
+    Decidable (p → q) :=
+  match dp with
+  | isTrue hp =>
+    match dq with
+    | isTrue hq => isTrue fun _ => hq
+    | isFalse hq => isFalse fun h => hq (h hp)
+  | isFalse hp => isTrue fun h => absurd h hp
+
+/-- `certC` satisfies the S-condition: all pattern, core and steering
+    values are `DR`, and `comp dr dr` is the full atom set. -/
+theorem certC_scond : SCond certC := by
+  refine ⟨fun _ _ => rfl, ?_, ?_, ?_, ?_, ?_⟩
+  · intro c c' hc hc' hne
+    have h0 : certC.nCore = 0 := rfl
+    omega
+  · intro c1 c2 c3 h1 h2 h3 h4 h5 h6
+    have h0 : certC.nCore = 0 := rfl
+    omega
+  · intro i hi c c' hc hc' hne
+    have h0 : certC.nCore = 0 := rfl
+    omega
+  · native_decide
+  · native_decide
+
+/-- End to end: the operational frame of the S-conditioned `certC` is
+    closed on its inherited-slot triangle -- the round-21 theorem
+    applied to a concrete certificate. -/
+example {v1 v2 v3 : Atom}
+    (h1 : Frame.get? (unfoldAll certC) (.born 0 0) (.born 0 1) = some v1)
+    (h2 : Frame.get? (unfoldAll certC) (.born 0 0) (.born 1 0) = some v2)
+    (h3 : Frame.get? (unfoldAll certC) (.born 1 0) (.born 0 1) = some v3) :
+    v1 ∈ comp v2 v3 :=
+  frame_closed certC certC_wellformed certC_scond
+    (by decide) (by decide) (by decide)
+    (by decide) (by decide) (by decide) h1 h2 h3
+
+/-- The adversarial control (WP32 Part C in the kernel): pattern
+    geometry `x DR z` (step 0), `z PO b` (step 1, `z` inherited), but
+    the steering function insists on `PPI` for the steered `x` toward
+    the fresh `b` -- against `comp DR PO = {PP, PO, DR}`. -/
+def certD : Cert where
+  nCore := 0
+  coreNet := fun _ _ => Atom.dr
+  templates :=
+    [ ⟨0, 2, fun _ _ => Atom.dr⟩,
+      ⟨1, 1, fun _ _ => Atom.po⟩ ]
+  steps := [⟨0, []⟩, ⟨1, [.born 0 1]⟩]
+  f := fun _ _ _ _ => Atom.ppi
+
+theorem certD_wellformed : Wellformed certD := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro i hi t ht
+    match i with
+    | 0 => cases ht
+    | 1 =>
+      cases ht with
+      | head => exact Nat.zero_lt_one
+      | tail _ h => cases h
+    | n+2 =>
+      have h2 : certD.steps.length = 2 := rfl
+      omega
+  · intro i hi t ht
+    match i with
+    | 0 => cases ht
+    | 1 =>
+      cases ht with
+      | head => decide
+      | tail _ h => cases h
+    | n+2 =>
+      have h2 : certD.steps.length = 2 := rfl
+      omega
+  · intro i hi
+    match i with
+    | 0 => rfl
+    | 1 => rfl
+    | n+2 =>
+      have h2 : certD.steps.length = 2 := rfl
+      omega
+  · intro i hi
+    match i with
+    | 0 => exact List.Pairwise.nil
+    | 1 => decide
+    | n+2 =>
+      have h2 : certD.steps.length = 2 := rfl
+      omega
+  · intro i hi
+    match i with
+    | 0 => decide
+    | 1 => decide
+    | n+2 =>
+      have h2 : certD.steps.length = 2 := rfl
+      omega
+  · intro i hi p q
+    match i with
+    | 0 => rfl
+    | 1 => rfl
+    | n+2 =>
+      have h2 : certD.steps.length = 2 := rfl
+      omega
+  · intro i hi r1 r1' r2 r2' j h1 h2
+    rfl
+
+/-- The S-condition fails on `certD` at the predicted triangle: the
+    old pair is pinned to `comp PPI PO = {PPI, PO}`, but the recorded
+    value is `DR`.  (This is the instance of `SCond.tri` at step 1,
+    `x = born 0 0`, `y = born 0 1`, `jz = 0`.) -/
+theorem certD_scond_violated :
+    pairVal certD (.born 0 0) (.born 0 1) ∉
+      comp (pairVal certD (.born 0 0) (.born 1 0))
+           (pairVal certD (.born 1 0) (.born 0 1)) := by native_decide
+
+/-- ... and the operational frame indeed breaks closure exactly
+    there -- `certD` is wellformed, so by `frame_closed`
+    (contrapositive) no `SCond` can exist for it. -/
+theorem certD_frame_not_closed :
+    Frame.get? (unfoldAll certD) (.born 0 0) (.born 0 1) = some Atom.dr ∧
+    Frame.get? (unfoldAll certD) (.born 0 0) (.born 1 0) = some Atom.ppi ∧
+    Frame.get? (unfoldAll certD) (.born 1 0) (.born 0 1) = some Atom.po ∧
+    Atom.dr ∉ comp Atom.ppi Atom.po := by native_decide
 
 end Round19

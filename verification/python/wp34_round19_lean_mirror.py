@@ -16,6 +16,12 @@ induction on the canonical step list; fuel adequacy via
 generator had silently honored (targets_exist, targets_length,
 net_conv, f_reads_rows); the Part-B steering function now reads ONLY
 in-range row entries, the literal form of f_reads_rows.
+ROUND 21 (2026-07-13): the S-layer soundness kernel is in the same
+file -- SCond (the manuscripts' S4 on certificate-computable values)
+implies the unfolded frame is composition-closed, converse-coherent
+and EQ-free (frame_closed / frame_conv / frame_proper); the WP32
+Part-C adversarial control is now the kernel-checked certD pair.
+Part A below re-verifies all of it on every run.
 This harness:
 
   A  builds the Lean file if a Lean toolchain is available (the build
@@ -65,8 +71,9 @@ def part_a():
     sorries = r.stdout.count('declaration uses `sorry`') + \
         r.stderr.count('declaration uses `sorry`')
     ok = r.returncode == 0 and sorries == 0
-    verdict = ('PASS -- zero sorries: uSource_eq_frame and fuel '
-               'adequacy are kernel-checked theorems (round-20)') \
+    verdict = ('PASS -- zero sorries: uSource_eq_frame + fuel adequacy '
+               '(round-20) and the S-layer closure theorems (round-21) '
+               'are kernel-checked') \
         if ok else 'FAIL'
     print(f"A. Lean build of formal/Round19Transport.lean: "
           f"returncode={r.returncode}, sorries={sorries} "

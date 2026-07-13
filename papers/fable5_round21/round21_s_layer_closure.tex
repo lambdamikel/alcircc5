@@ -1,0 +1,105 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\comp}{\mathrm{comp}}
+
+\title{Round-21: the S-Layer Soundness Kernel in Lean\\
+\large S4 implies closed frames --- the statement WP30/WP32 checked
+empirically is now a kernel-checked theorem}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-21 of the
+$\ALCIRCC$ decidability project.  Substrate: the round-19/20 Lean
+artifact \code{formal/Round19Transport.lean} (transport layer defined;
+characterization and fuel adequacy proved).  Ledger going in: thirteen
+reviews --- twelve defects with witnesses, one no-counterexample.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The S-layer's soundness kernel is now in the kernel.
+\code{formal/Round19Transport.lean} (2{,}392 lines, still \textbf{zero}
+\code{sorry}) defines the certificate-level S-condition \code{SCond}
+--- the manuscripts' S4, stated on the certificate-computable realized
+network \code{pairVal} (core net on core pairs, the proved
+source-oriented update everywhere else) --- and proves: a wellformed,
+S-conditioned certificate unfolds operationally to a frame that is
+\emph{composition-closed} on every distinct existing triangle
+(\code{frame\_closed}), \emph{converse-coherent}
+(\code{frame\_conv}), and \emph{EQ-free} on distinct pairs
+(\code{frame\_proper}) --- i.e.\ to a proper atomic RCC5 network
+presentation.  This is precisely the claim WP30 Part~C and WP32
+Part~C supported empirically (S4-valid steering $\Rightarrow$ closed
+unfoldings, 100/100 and 150/150 runs); it is now a theorem, and both
+poles are witnessed concretely: \code{certC} satisfies \code{SCond}
+and its frame closes end to end, while \code{certD} --- adversarial
+steering against a $\comp(\mathrm{DR},\mathrm{PO})$-pinned geometry,
+the WP32 Part-C control --- provably violates the triangle clause and
+its frame provably breaks closure at exactly the predicted triple.
+Status: \emph{strongly supported, not certified}.
+\end{abstract}
+
+\section{What was proved}
+
+\begin{itemize}[leftmargin=2em]
+\item \code{uSource\_conv}: converse coherence of the source-oriented
+update (R2).  Definitional in every clause except the two crossing a
+fuel boundary, which the round-20 fuel-irrelevance lemma bridges; the
+co-birth case is exactly the \code{net\_conv} wellformedness clause
+round-20 forced.
+\item \code{pairVal} and \code{SCond}: the realized network of a
+certificate, and the S-condition on it --- core net converse-coherent,
+proper, closed, and agreeing with template core rows (N3); at every
+step, every triangle through a fresh occurrence composition-closed,
+and every fresh pair EQ-free.  All fields are checkable on a concrete
+certificate; a \code{Decidable (p \(\to\) q)} instance (absent from
+core Lean) makes the bounded quantifier chains \code{decide}-friendly.
+\item \code{pairVal\_closed}: the abstract closure theorem.  The proof
+is a \emph{max-birth rotation argument}: every distinct triple contains
+an occurrence of maximal birth step; the S-condition covers the
+triangle with that occurrence in the middle position, and the two
+kernel-checked rotation facts \code{comp\_rot1}/\code{comp\_rot2}
+(finite, by \code{decide}) together with converse coherence rotate it
+into the goal orientation.  No induction beyond the trichotomy is
+needed --- the birth structure of the fold does all the work.
+\item \code{frame\_closed}, \code{frame\_conv}, \code{frame\_proper}:
+the operational forms, by transport along round-20's
+\code{uSource\_eq\_frame} plus a new core-row lemma
+(\code{get?\_corecore}: core-core frame entries carry the core net,
+because the first write is a pattern write whose core ports the N3
+condition pins).
+\item Witnesses: \code{certC\_scond} with an end-to-end closed-frame
+\code{example}; \code{certD\_wellformed},
+\code{certD\_scond\_violated} and \code{certD\_frame\_not\_closed}
+(values $\mathrm{DR}/\mathrm{PPI}/\mathrm{PO}$ with
+$\mathrm{DR} \notin \comp(\mathrm{PPI},\mathrm{PO})$) --- the
+adversarial control of WP32 Part~C as kernel-checked theorems.
+\end{itemize}
+
+\section{What this closes, and what it does not}
+
+Closed: the seam that produced defects \#10--\#12 (steering conditions
+versus realized frames) is now theorem-bounded end to end ---
+certificate syntax (\code{Wellformed}), realized values
+(\code{uSource} = frame, round-20), and soundness of the S-condition
+(closed proper atomic presentations, this round).  Not closed: the
+catalogue level --- the manuscripts check S4 on finitely many
+interface states and conclude closure for \emph{all} unfoldings of the
+catalogue, while \code{Cert} encodes one canonical unfolding; lifting
+\code{SCond} to a finite catalogue with a reachability fixed point is
+the natural round-22.  Below everything, the standing completeness
+mathematics (F6 width budgets, W2$'$ uniformization) and the single
+external input (the RCC5 patchwork property) are untouched.  Ledger:
+thirteen reviews --- twelve defects, one no-counterexample; rounds
+19--21 unreviewed.  The decidability theorem for $\ALCIRCC$ remains
+\textbf{strongly supported, not certified}.
+
+\end{document}
