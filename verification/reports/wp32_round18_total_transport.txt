@@ -1,0 +1,10 @@
+WP32 -- Executable check of the round-18 total-transport repair (M1-M6
+======================================================================
+Part A (M1/M5 rule-vs-frame agreement): 150 branching unfoldings; U-clause divergences: 0 (PASS)
+Part B (mixed coverage): mixed ambient/resident + flip pairs encountered: 2820; birth-flip entries exercised: 140 (PASS -- the 17.1/17.2 seam is exercised)
+        (canonical steering kept 150/150 frames closed; closure is certified by S-conditions, not assumed)
+Part D (determinism): result digest 52b4bafdcf46eae0 -- rerun under any PYTHONHASHSEED must reproduce it
+Part B2 (WP31 regression): with the mixed pair transported, S4 requires rho(y,b) in ['DR'] -- the bad PO is rejected: PASS
+Part C (negative S4 control): 22/41 adversarial-steering unfoldings show closure failures (PASS -- the control fires)
+======================================================================
+WP32 OVERALL: PASS

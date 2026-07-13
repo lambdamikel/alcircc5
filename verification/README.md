@@ -96,6 +96,13 @@ Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
 
+### `python/wp32_round18_total_transport.py` — WP32: the round-18 total-transport harness
+
+Companion to [`papers/fable5_round18/`](../papers/fable5_round18/) (the twelfth review's M1–M6, plus the birth-flip clause). The architecture makes Finding 17.3's lesson structural: **rule-computed states — derived from the catalogue and steering records only, never by reading the realized frame — are cross-checked against frame truth on genuinely branching attachment trees**, so any divergence between the written U-clauses and the actual construction is caught automatically. Results: **150 branching unfoldings, 0 divergences**; **2,820** mixed ambient/resident + flip pairs and **140** birth-flip entries exercised (the 17.1/17.2 seam covered); the WP31 geometry regression (mixed pair transported ⟹ S4 rejects the bad row); a **constructed** negative S4 control firing in 17/41 runs; deterministic output (result digest verified identical across `PYTHONHASHSEED` values). Development note: initial divergences (6/150) were traced to non-injective slot maps — the twelfth review's 17.4 discipline, re-derived empirically by the harness before being enforced.
+
+Run: `python3 python/wp32_round18_total_transport.py`
+Report: [`reports/wp32_round18_total_transport.txt`](reports/wp32_round18_total_transport.txt)
+
 ### `python/wp31_round17_mixed_transport_attack.py` — WP31: the twelfth review's mixed-transport witness
 
 Shipped by the **twelfth review** (GPT-5.5) and reproduced byte-identical. Isolates the seam WP30 never exercised: at a child gluing, one old endpoint is ambient (T-updated) while the other is a **parent-copy member outside the child separator** (birth-adjacent state, outside the written T's domain) — round-17's (P3) fails to transport the mixed pair, S4 never sees it, and the W1a triangle recurs. Adding the evident mixed-transport rule restores the pair and S4 rejects. **Caveat recorded on WP30:** it is `PYTHONHASHSEED`-nondeterministic (Part B counts 69/77/80/81/83 across runs; conclusions stable), and its executable semantics implicitly implement the correct *total* transport — it validates the intended construction, not the round-17 text as written.

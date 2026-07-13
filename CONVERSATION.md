@@ -7011,3 +7011,57 @@ LCA path semantics for "later gluings elsewhere," a proof that U is finite and
 catalogue-computable, and WP32 with genuinely branching unfoldings, explicit
 mixed-transport coverage, a negative S4 control, and deterministic runs. Docs
 updated; pushed. Status: **strongly supported, NOT certified**.
+
+## 2026-07-13 (round-18): total transport — M1–M6 implemented, and the work order needed a third clause
+
+Round-18 (`papers/fable5_round18/cluster_quasimodels_round18_total_transport.tex/
+.pdf`, 6pp, compiles clean) implements the twelfth review's repair package. The
+mathematically interesting part: **the reviewer's two-case U is not total.**
+Working out M5 (path semantics) exposes the cross-branch case — an occurrence y
+born (in copy A) *after* some copy k elsewhere in the tree has its entries to
+V_k-members assigned neither at k's attachment (y did not exist) nor by y's own
+later steering: they were assigned **at y's birth**, when the k-members were
+steered at A and received f-values *toward the fresh y*. The entry y→s is the
+converse of the older side's steering value at the younger's birth — the
+**birth flip**, now clause (U-flip) alongside (U-core)/(U-res)/(U-down). The
+**birth-dichotomy lemma** (at every attachment, every pre-existing occurrence is
+a member of the new copy or steered there — definitionally no third case) makes
+U total and every pair value single-assignment, so (U-down)/(U-flip) always find
+their recorded value. Pairs transport in lockstep under U (with two-sided
+creation); the **inclusion theorem is re-proved by a five-way endpoint-class
+analysis** — the twelfth review's mixed steered/resident seam (Finding 17.1) is
+now an ordinary transport step; an **order-invariance lemma** (values fixed at
+the later birth by step-local data; interleavings of incomparable branches
+irrelevant) yields the LCA path characterization and eliminates round-17's
+undefined "T composed along the corresponding path." Also implemented: 17.4
+(injective slot maps as certificate syntax), 17.5 (continued/core overlap
+invariant), R6 (sibling ordering; with the witness map the unfolding, including
+its tree, is a function of the certificate).
+
+**WP32 — the 17.3 lesson made structural.** The harness maintains two independent
+computations: frame truth (full realized unfolding over genuinely branching
+attachment trees) and a rule engine that computes every steered occurrence's
+separator row from the catalogue + steering records ONLY — never reading the
+frame — following the written U-clauses literally. Any spec-vs-text divergence
+is now caught automatically. Results: 150 branching unfoldings, **0
+divergences**; 2,820 mixed pairs and 140 birth-flip entries exercised (the
+17.1/17.2 seam demonstrably covered); the WP31 geometry rejected via the
+transported mixed pair; a **constructed** negative S4 control (adversarial
+steering) fires in 17/41 runs — round-17's control never sampled one; no
+set-iteration choice points and a result digest verified identical under
+different PYTHONHASHSEED values. Development note worth recording: the first
+WP32 run showed 6/150 divergences — traced to **non-injective slot maps**
+(one occurrence occupying two pattern ports ⟹ conflicting pattern writes), i.e.
+the harness independently re-derived the twelfth review's 17.4 injectivity
+discipline before it was enforced; with injectivity, agreement is exact. Two
+harness-found necessities (D5 in round-13's WP17, injectivity here) have now
+been promoted into certificate syntax by their own tests.
+
+**Ledger: 12 reviews — 11 defects-with-witness, 1 no-counterexample. Round-18 is
+unreviewed; presume the next finding** (designated: Z1 the birth
+dichotomy/flip-clause coverage — definitional here, but extraction-side
+presentations might demand a step that neither co-patterns nor steers; Z2 order
+invariance under exotic-but-legal declarations; Z3 the standing F6/W2′). Next:
+the thirteenth review, and/or the Lean transcription — the U-clauses are now
+literally the function definitions a mechanization needs. Docs updated; pushed.
+Status: **strongly supported, NOT certified**.
