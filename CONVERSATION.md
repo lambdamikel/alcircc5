@@ -6822,3 +6822,59 @@ a clean verdict on the soundness claim would be the first clean verdict on any
 load-bearing half in ten reviews — next steps would be mechanization of the
 deterministic soundness half plus the uniformization lemma; a defect means #11
 and round 17. Status: strongly supported, NOT certified.
+
+## 2026-07-13 (latest): the eleventh review — cold, and for the first time, no counterexample
+
+The round-16 cold packet returned `formal_referee_report_alci_rcc5_bundle.zip`
+(report tex/pdf + an independent finite-algebra script; Claude reproduced the
+script byte-identical; it re-derives the 10-set fold lattice independently and
+the list matches WP26 exactly). **Verdict: gap — not certified as written — but,
+for the first time in eleven reviews, no counterexample and no false lemma:**
+"I did not find an algebraic counterexample to the intended theorem... With these
+changes I would regard the intended soundness argument as very likely correct.
+Without them, the text is a strong proof sketch rather than a fully certified
+proof."
+
+**Findings (F1–F8).** F1/F3 (high gaps): Definition 2.3's reachability fixed
+point is under-specified — it needs an explicit **ordered-pair transport rule**
+(reachable pairs must be carried with their *current* states through later
+gluings, not merely their birth states; otherwise S4 can be silently unchecked on
+updated states — the reviewer reuses the W1a triangle as a witness *template* for
+any implementation that omits transport, and supplies the exact transition rule
+in their Appendix B). F2/F7 (high/medium gaps): the core mechanism needs the
+explicit invariant `V_k ∩ U_m = σ` (every pre-existing member of a new pattern,
+including all core references, lies in the separator — S1 with row entry EQ then
+forces pattern values to be preserved, a check the reviewer did themselves); the
+*semantic* core-uniqueness derivation was verified sound. F4 (medium defect,
+presentation): the advertised "no free choices" is overstated while Q2 witness
+selection is unstored — fix: a finite witness map w(k, a, ∃R.D). F5: pair states
+must be explicitly ordered. F6 (medium gap): the width recurrence's non-iteration
+budgets remain assertions (inherited W3, sharpened: a stratum can create pairs
+with boundary nodes inserted for other reasons). F8: the uniformization
+delimitation is **certified sound** — no hidden use in soundness; failure means
+over-rejection only.
+
+**Found sound:** the four-class triangle taxonomy ("algebraically adequate" under
+the strengthened invariants — with the audit spelling out why old–old–old and
+separator-fresh cases close); one-step existential fulfilment after the Q2 repair
+("no parity/liveness issue for soundness"); the truth lemma given completion;
+strong equality conditional on exact occurrence identity; the steering toolkit;
+converse closure and one-orientation triangle equivalence (new checks, integrated
+as wp29).
+
+**Ledger update — phrased carefully.** 11 reviews: ten defects-with-witness, and
+one no-counterexample verdict with six required repairs. The failure mode has
+moved, for the first time, from "false step found" to "unwritten formalization
+demanded": every demand (R1–R6) is a request to state and prove an invariant the
+construction visibly relies on — an explicit finite transition system for
+Definition 2.3; ordered-pair transport; the operational-inclusion invariant
+(actual unfolding states ⊆ computed reachable states, including the core case —
+the one item needing real proof work); `V_k ∩ U_m = σ`; orientation explicitness;
+the stored witness map. This is exactly the outcome the round-16 design was built
+to force: with no free choices left in the construction, a reviewer can no longer
+exhibit a bad choice — only demand the bookkeeping be written. Status label
+unchanged: **strongly supported, NOT certified**. Standing deeper items: F6
+(width budgets) and W2′ (uniformization). Next: round-17 (implement R1–R6), then
+either a third-lineage cold pass or mechanization — the reviewer's own R1
+("replace the prose fixed point by an explicit finite transition system") is
+simultaneously the first step of a Lean formalization.

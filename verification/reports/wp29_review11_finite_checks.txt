@@ -1,0 +1,12 @@
+fold count: 10
+{DR}
+{PO}
+{PP}
+{PPI}
+{PO,PP}
+{PO,PPI}
+{DR,PO,PP}
+{DR,PO,PPI}
+{EQ,PO,PP,PPI}
+{DR,EQ,PO,PP,PPI}
+PASS

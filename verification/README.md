@@ -96,6 +96,13 @@ Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
 
+### `python/wp29_review11_finite_checks.py` — WP29: the eleventh review's independent finite-algebra checks
+
+Shipped by the **eleventh review** (cold, fresh GPT-5.5; the first of eleven reviews to find no counterexample) and reproduced byte-identical. Checks, independently of all prior WP scripts: converse closure of the RCC5 composition table; the equivalence of the three cyclic/converse triangle orientations (licensing one-orientation closure checking); an independent re-derivation of the **10-set fold lattice** (matches WP26 exactly); and the steering toolkit facts. All PASS.
+
+Run: `python3 python/wp29_review11_finite_checks.py`
+Report: [`reports/wp29_review11_finite_checks.txt`](reports/wp29_review11_finite_checks.txt)
+
 ### `python/wp28_round16_joint_steering.py` — WP28: round-16 certified joint steering
 
 Companion to [`papers/fable5_round16/`](../papers/fable5_round16/), the repair of defect #10. A1: the tenth review's W1a witness admits **no** steering function under (Q4′) — rejected, and rejection is semantically correct (the configuration is unrealizable: `y ⊂ z`, `z∩b=∅` force `y DR b`, forbidden by `Safe(Y,B)`); A2: the repaired sibling admits `f` with a closed induced completion. Part B (300 random glue steps, selector-free random domains): **B1 soundness 208/208** ((Q4′)-accepted ⟹ f-induced completion closed); **B3 zero false accepts**; **B2 uniformization 208/211 = 98.6%** — the measured size of the round-16 keystone W2′ (3 instances jointly realizable but not state-uniform).
