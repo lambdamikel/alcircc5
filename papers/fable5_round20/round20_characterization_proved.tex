@@ -1,0 +1,139 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Round-20: the Characterization Theorem, Proved\\
+\large \code{uSource\_eq\_frame} is now a kernel-checked theorem;
+\code{formal/Round19Transport.lean} builds with zero \code{sorry}}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-20 of the
+$\ALCIRCC$ decidability project.  Ledger going in: thirteen reviews ---
+twelve defects with witnesses, one no-counterexample verdict.
+Round-19 (the transport layer authored in Lean) is round-20's
+substrate; this round discharges its single stated \code{sorry}.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Round-19 left exactly one \code{sorry}: the characterization
+obligation \code{uSource\_eq\_frame} --- on wellformed certificates,
+the source-oriented update U1--U5 agrees with the operationally
+unfolded frame on every distinct existing non-core-core pair.  That
+statement, whose prose renditions produced defects \#11 and \#12, is
+now a kernel-checked theorem: \code{formal/Round19Transport.lean}
+builds with \textbf{zero} \code{sorry}, no axioms beyond Lean's
+kernel, and no \code{native\_decide} anywhere in the main proof chain
+(it remains only in the standalone witness examples).  The companion
+fuel-adequacy obligation is discharged in the same file
+(\code{uSourceFuel\_irrel}: the update is constant in the fuel above
+the explicit threshold $2\cdot\mathrm{maxBirth}+1$, plus one on
+flipped orientation), and non-vacuity is witnessed
+(\code{certC\_wellformed} plus an end-to-end \code{example}).  The
+mathematically substantive outcome is that the proof \emph{forced
+four additional wellformedness clauses}, each semantically intended
+since round 15 and each silently honored by the WP34 generator, none
+previously stated.  Status: \emph{strongly supported, not certified}.
+\end{abstract}
+
+\section{What was proved}
+
+\begin{itemize}[leftmargin=2em]
+\item \code{frame\_char}: for every wellformed certificate and every
+$n \le$ the number of steps, after $n$ canonical steps the frame value
+of every distinct existing non-core-core pair equals \code{uSource}.
+Plain induction on the canonical step list --- the induction the
+thirteenth review's canonical-order determinism made available.  Four
+cases per step: both endpoints old (first-match monotonicity), old
+member/fresh (pattern value; the birth flip is
+\code{net\_conv}), old steered/fresh (steering value; the recursive
+row reconstruction matches the recorded rows by the induction
+hypothesis plus fuel irrelevance), co-birth (pattern value --- defect
+\#12's geometry, now one induction case).
+\item \code{uSourceFuel\_irrel}: round-19's stated fuel-adequacy
+obligation.  The recursion measure is made exact:
+$\mathrm{fuelNeed} = 2\cdot\mathrm{maxBirth}+1$, plus one on the
+younger-first orientation; above it the fuel is irrelevant.
+\item \code{certC\_wellformed} and an \code{example} applying the
+main theorem to a concrete certificate with an inherited slot:
+\code{Wellformed} is not vacuous, and the theorem fires end to end.
+\item Supporting layer: a first-match calculus for frame lookup
+(membership plus value-uniqueness replaces all ordering reasoning), a
+domain invariant (frame keys mention only existing occurrences), and
+injectivity of the port map on member ports --- the usable form of the
+twelfth review's 17.4 discipline.
+\end{itemize}
+
+\section{The four forced wellformedness clauses}
+
+The proof would not close without four clauses round-19's ``minimal''
+\code{Wellformed} lacked.  Each is a statement the manuscripts always
+intended and the WP34 generator always satisfied; the medium made
+their absence a type error rather than a review finding:
+
+\begin{center}
+\begin{tabular}{p{0.2\linewidth}p{0.72\linewidth}}
+\toprule
+\code{targets\_exist} & Slot targets are \emph{real} occurrences
+(in-range fresh indices).  Without it, ghost occurrences enter
+patterns and pollute recorded rows.\\
+\code{targets\_length} & Exactly one target per template slot.
+Without it, out-of-range slot ports alias core~0 under the port map's
+default and injectivity fails.\\
+\code{net\_conv} & Pattern nets are converse-coherent --- the R2 half
+of ``patterns are closed atomic networks''.  Without it the two
+orientations of one pattern pair may disagree, and the birth flip
+(round-18's vindicated clause) is unsound.\\
+\code{f\_reads\_rows} & The steering function is a function \emph{of
+the rows}: it reads only in-range core and slot columns.  Without it,
+steering could distinguish the frame's padding from template junk
+outside the interface, and the recursive row reconstruction of U3
+would not determine the recorded value.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is the round-19 thesis operating at the next level: in prose,
+each of these would have been a referee's defect \#13; in Lean, they
+were unprovable-goal errors during round-20's development, fixed
+before any reviewer saw them.
+
+\section{Provenance and hygiene}
+
+\code{doStep} was refactored for provability: the \code{let}-bound
+pattern and steering blocks became named definitions
+(\code{memberPortsList}, \code{patternVals}, \code{steeringVals}) and
+the Boolean pattern guard became propositional.  The fold is
+extensionally the round-19 fold: the kernel-checked witness theorems
+(\code{defect12\_written\_gap}, the repair coverage and
+frame-agreement lemmas) re-verify unchanged, and WP34 Part~B
+re-checks the Python transcription against it on 14{,}338 pairs with
+zero mismatches --- now a \emph{regression against a proved theorem}
+guarding the Lean/Python seam, no longer the only evidence.  WP34's
+Part-A expectation changed from ``exactly one \code{sorry}'' to
+``zero''; its Part-B steering function now reads only in-range row
+entries, the literal form of \code{f\_reads\_rows}.
+
+\section{What remains}
+
+The transport layer is now closed: definitions and their
+characterization are both in the kernel.  Above it, the round-16
+S-conditions, the canonical completion, and the inclusion theorem
+remain prose-plus-harness (their Lean port is the natural round-21);
+below it, the standing completeness mathematics (F6 width budgets,
+W2$'$ uniformization) and the single external input (the RCC5
+patchwork property) are untouched.  Ledger: thirteen reviews ---
+twelve defects with witnesses, one no-counterexample; rounds 19--20
+are unreviewed, and their natural review remains: attack the Lean
+statements.  The decidability theorem for $\ALCIRCC$ remains
+\textbf{strongly supported, not certified}.
+
+\end{document}

@@ -1,30 +1,36 @@
 #!/usr/bin/env python3
 """
-WP34 -- Round-19 harness: the Lean-mirrored source-oriented update
-(papers/fable5_round19/, formal/Round19Transport.lean).
+WP34 -- Round-19/20 harness: the Lean-mirrored source-oriented update
+(papers/fable5_round19/, papers/fable5_round20/,
+formal/Round19Transport.lean).
 
-Round 19 changes the medium: the NORMATIVE definitions (the operational
+Round 19 changed the medium: the NORMATIVE definitions (the operational
 fold `unfoldAll` and the source-oriented update `uSource`, U1-U5 of the
 thirteenth review) live in Lean, where totality is compiler-checked and
-the thirteenth review's witnesses are kernel-checked theorems
-(defect12_written_gap, repair_covers_cobirth,
-repair_matches_frame_on_witnessA, witnessB_source_is_birth_step).
+the thirteenth review's witnesses are kernel-checked theorems.
+ROUND 20 (2026-07-13): the round-19 `sorry` is DISCHARGED --
+`uSource_eq_frame` is now a kernel-checked theorem (`frame_char`,
+induction on the canonical step list; fuel adequacy via
+`uSourceFuel_irrel`), and the file also proves non-vacuity
+(`certC_wellformed`).  The proof forced four Wellformed clauses this
+generator had silently honored (targets_exist, targets_length,
+net_conv, f_reads_rows); the Part-B steering function now reads ONLY
+in-range row entries, the literal form of f_reads_rows.
 This harness:
 
   A  builds the Lean file if a Lean toolchain is available (the build
-     IS the totality check and re-verifies the witness theorems), else
-     reports SKIPPED with instructions;
+     is the totality check and re-verifies every theorem incl. the
+     round-20 characterization; EXPECTED SORRIES: ZERO), else reports
+     SKIPPED with instructions;
   B  cross-checks a Python TRANSCRIPTION of uSource against a Python
      transcription of the operational fold on random certificates
      whose slot targets range over ARBITRARY pre-existing occurrences
      (core or born, injective) -- the inherited-member geometry class
-     where defects #11-#12 lived, which earlier generators
-     under-covered; expected: exact agreement on every existing
-     non-core-core pair (the empirical form of the sorry'd
-     uSource_eq_frame obligation);
+     where defects #11-#12 lived; expected: exact agreement on every
+     existing non-core-core pair (now a REGRESSION against the proved
+     theorem, guarding the Lean/Python transcription seam);
   C  the thirteenth review's WP-literalization items: the negative
-     steering control is DETERMINISTIC (no salted hash -- the
-     adversarial pick keys on a sorted-row fingerprint), and it fires;
+     steering control is DETERMINISTIC (no salted hash), and it fires;
   D  a result digest stable across PYTHONHASHSEED.
 
 Run:  python3 verification/python/wp34_round19_lean_mirror.py
@@ -58,12 +64,13 @@ def part_a():
                        cwd=os.path.dirname(os.path.abspath(src)))
     sorries = r.stdout.count('declaration uses `sorry`') + \
         r.stderr.count('declaration uses `sorry`')
-    ok = r.returncode == 0 and sorries == 1
-    verdict = ('PASS -- definitions total by construction; witness '
-               'theorems kernel-checked') if ok else 'FAIL'
+    ok = r.returncode == 0 and sorries == 0
+    verdict = ('PASS -- zero sorries: uSource_eq_frame and fuel '
+               'adequacy are kernel-checked theorems (round-20)') \
+        if ok else 'FAIL'
     print(f"A. Lean build of formal/Round19Transport.lean: "
-          f"returncode={r.returncode}, intentional sorries={sorries} "
-          f"(expected exactly 1: uSource_eq_frame) ({verdict})")
+          f"returncode={r.returncode}, sorries={sorries} "
+          f"(expected 0 since round-20) ({verdict})")
     if not ok:
         print((r.stdout + r.stderr)[:800])
     return ok
@@ -223,9 +230,13 @@ def rand_cert(rng, n_templates=3, n_steps=5, n_core=1):
                                        and k and k[0] == 'v')})})
 
     def f(i, crow, srow, j):
-        # deterministic steering keyed on the rows (no salted hash):
+        # deterministic steering keyed on the rows (no salted hash),
+        # reading ONLY in-range row entries -- the literal form of the
+        # round-20 Wellformed clause f_reads_rows (C is resolved at
+        # call time, after construction)
+        nS = cert_template(C, cert_step(C, i)['tmpl'])['nSlots']
         key = sum(AIDX[crow(c)] for c in range(n_core)) + \
-            sum(AIDX[srow(k)] for k in range(3)) + i + j
+            sum(AIDX[srow(k)] for k in range(nS)) + i + j
         return ('DR', 'PO', 'PP', 'PPI')[key % 4]
 
     C = {'nCore': n_core,
@@ -276,7 +287,7 @@ def part_b(trials=200, seed=511):
           f"occurrences; {inherited_targets} born-occurrence targets "
           f"sampled), {pairs_checked} pairs checked, "
           f"{mismatches} mismatches "
-          f"({('PASS -- the sorry-d obligation holds empirically' if mismatches == 0 else 'FAIL')})")
+          f"({('PASS -- transcription regression against the proved theorem' if mismatches == 0 else 'FAIL')})")
     print(f"D. determinism digest: {digest.hexdigest()[:16]} (stable "
           f"across PYTHONHASHSEED)")
     return mismatches == 0

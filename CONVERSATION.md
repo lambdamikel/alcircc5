@@ -7199,3 +7199,43 @@ remains is one named proof obligation plus the standing mathematics (F6, W2′).
 Ledger unchanged: 13 reviews — 12 defects-with-witness, 1 no-counterexample;
 round-19 unreviewed (its natural review: attack the Lean statements, or prove
 the sorry). Status: **strongly supported, NOT certified**.
+
+## 2026-07-13 — Round-20: "Try the sorry first" — the sorry is proved
+
+Directed with "Try the sorry first."  Same-day discharge:
+`uSource_eq_frame` is now a kernel-checked theorem and
+`formal/Round19Transport.lean` builds with **zero** sorries.
+
+Architecture: `frame_char`, a plain induction on the canonical step
+list (available exactly because the 13th review's canonical-order
+determinism is definitional in the Lean encoding), with a first-match
+lookup calculus (membership + value-uniqueness replaces all ordering
+reasoning), a frame-domain invariant, port-map injectivity (the usable
+17.4), and `uSourceFuel_irrel` — round-19's stated fuel-adequacy
+obligation, proved with the exact threshold `2·maxBirth+1` (+1 on
+flipped orientation).  Non-vacuity: `certC_wellformed` + an
+end-to-end `example` on an inherited-slot certificate.
+
+**The substantive outcome: the proof forced four `Wellformed` clauses**
+that round-19's "minimal" predicate lacked — `targets_exist`,
+`targets_length`, `net_conv` (patterns converse-coherent; without it
+the birth flip is unsound), `f_reads_rows` (steering is a function of
+the actual rows).  Each was intended since round 15 and silently
+honored by WP34's generator; none was stated.  In the prose era each
+would have been defect #13 material; here they surfaced as
+unprovable-goal errors during the proof and were fixed the same
+session — the round-19 thesis operating one level up.
+
+Hygiene: `doStep` refactored for provability (named
+`memberPortsList`/`patternVals`/`steeringVals`, propositional guard) —
+extensionally the round-19 fold, re-pinned by the unchanged witness
+theorems and WP34 Part B (14,338 pairs, 0 mismatches, digest unchanged
+66fd4a6bd2099e73, hash-seed stable).  WP34 now expects zero sorries and
+its Part-B steering function reads only in-range rows (the literal
+`f_reads_rows`).  Companion: `papers/fable5_round20/` (2pp).
+
+Remaining: round-21 = the S-layer port (S1–S4, canonical completion,
+inclusion theorem); F6, W2′; the RCC5 patchwork property as sole
+external input.  Ledger unchanged: 13 reviews — 12 defects, 1
+no-counterexample; rounds 19–20 unreviewed.  Status: **strongly
+supported, NOT certified**.
