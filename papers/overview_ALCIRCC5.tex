@@ -2181,6 +2181,32 @@ unreviewed; the completeness side retains its two named open lemmas
 (the width budgets and uniformization).  Status unchanged:
 \emph{strongly supported, not certified}.
 
+
+\paragraph{The twelfth review (July 2026): the transport rule has a seam.}
+Framed as an acceptance test against the eleventh review's own work
+order, the twelfth review rejected round 17 on a precise, finite
+finding: the written ordered-pair transport rule fires only when both
+endpoints are updated by the ambient transition, while a pre-existing
+member of the parent copy outside the child separator receives a
+birth-adjacent catalogue state instead --- so mixed ambient/parent-copy
+pairs silently escape the fixed point, the pair condition never
+inspects them, and the round-16 counterexample triangle recurs at
+exactly that seam (machine-checked, reproduced).  Two instructive
+meta-findings accompany it: the executable harness had implicitly
+implemented the correct \emph{total} transport, which is why twelve
+hundred simulations showed nothing --- the defect lives in the written
+rule, not the intended construction --- and the harness itself was
+caught being hash-seed-nondeterministic.  The stack also grew stronger
+where it held: the reviewer failed to break the parent-plus-core normal
+form and volunteered the running-intersection argument for its
+extractability, found no overwrite witness, and discharged the
+ordered-pair item cleanly.  The ledger stands at twelve reviews: eleven
+defects with witnesses, one no-counterexample verdict.  The round-18
+repair is fully specified by the reviewer (a total endpoint-update
+operation, transport under it, the re-proved inclusion case analysis,
+defined path semantics, and a deterministic branching harness).
+Status unchanged: \emph{strongly supported, not certified}.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the

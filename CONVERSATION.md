@@ -6962,3 +6962,52 @@ uniformization as round-18 material. Packet includes the 11th review under
 `workorder/` (it IS the acceptance criterion), all four manuscripts, wp26/28/29/30
 with outputs, the tableau oracle, and an optional cold first pass. Docs updated;
 pushed.
+
+## 2026-07-13 (12th review): round-17 rejected — the mixed-transport seam; the acceptance-test framing pays off
+
+GPT-5.5 returned `round17_formal_response_package.zip` (report + wp31), now under
+`papers/gpt5.5_round17_review/`. **Verdict: round-17 not accepted as discharging
+R1–R6 — Finding 17.1 (High): the mixed-transport omission.** The defect is
+precise: round-17 defines the singleton transition T only for occurrences
+*ambient at g* (y ∉ V_k), handles parent-copy members by a separate
+birth-adjacent read-off clause, and states (P3) transport only "when both
+singleton transitions are defined." Consequence: an old–old pair with one ambient
+endpoint and one parent-copy endpoint outside the child separator is neither
+co-patterned (P1), nor created (P2), nor transported (P3) — it escapes the fixed
+point, S4 never inspects it, and the W1a triangle (y PP z PP s, s PPI b,
+ρ(y,b)=PO, ρ(z,b)=DR, comp(PP,DR)={DR}) slips through at exactly that seam.
+Theorem 3.1(c)'s sentence "both endpoint states update by T" is false for
+parent-copy endpoints; the "T composed along the corresponding path" sentence
+(17.2) is undefined under endpoint-role changes. Claude reproduced wp31
+byte-identical and confirms the reading of the round-17 text.
+
+**The instructive twist (17.3).** WP30 showed 1,200 clean simulations because the
+*executable* system implicitly implemented the correct **total** transport — its
+unfold() assigns f-values to every occurrence ambient *at the current step*
+(including old-copy members) and logs pairs from the current frame — i.e., the
+harness validated the intended construction while the manuscript's written rule
+had the gap: a spec-vs-text mismatch in the opposite direction from WP26's
+(there the harness was stronger than the spec; here the spec was weaker than the
+harness). Additionally the reviewer caught a real discrepancy (manuscript 83/83
+vs their run 69/69): Claude confirmed wp30 is PYTHONHASHSEED-nondeterministic
+(77/81/80 across seeds — frozenset iteration order inside pc_complete changes
+which completions are found; qualitative conclusions stable, counts not).
+Reproducibility lesson logged for WP32: fix the hash seed and sort iteration.
+
+**Where the stack got stronger.** The reviewer attacked Y1 (the parent ∪ core
+normal form) and failed to break it — and volunteered the extraction argument:
+running intersection implies an occurrence shared between a new bag and an older
+non-parent bag must appear along the path, hence in the parent once the tree is
+rooted. Y2: no overwrite witness under strict N1–N3. Y3: the safety signature is
+certificate-determined. R5 (ordered pairs): discharged clean. R1/R4/R6:
+nominally discharged with named tightenings (certificate-syntax port partition
+for N1; sibling-ordering convention for w; the continued/core overlap invariant).
+
+**Ledger: 12 reviews — 11 defects-with-witness, 1 no-counterexample.** Round-18
+is fully specified by the reviewer's M1–M6: a total endpoint-update U (ambient ↦
+T-image; parent-copy ↦ birth-adjacent state), pair transport under U with
+simultaneous converses, Theorem 3.1(c) re-proved as a U-case analysis, defined
+LCA path semantics for "later gluings elsewhere," a proof that U is finite and
+catalogue-computable, and WP32 with genuinely branching unfoldings, explicit
+mixed-transport coverage, a negative S4 control, and deterministic runs. Docs
+updated; pushed. Status: **strongly supported, NOT certified**.

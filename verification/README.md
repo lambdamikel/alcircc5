@@ -96,6 +96,13 @@ Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
 
+### `python/wp31_round17_mixed_transport_attack.py` — WP31: the twelfth review's mixed-transport witness
+
+Shipped by the **twelfth review** (GPT-5.5) and reproduced byte-identical. Isolates the seam WP30 never exercised: at a child gluing, one old endpoint is ambient (T-updated) while the other is a **parent-copy member outside the child separator** (birth-adjacent state, outside the written T's domain) — round-17's (P3) fails to transport the mixed pair, S4 never sees it, and the W1a triangle recurs. Adding the evident mixed-transport rule restores the pair and S4 rejects. **Caveat recorded on WP30:** it is `PYTHONHASHSEED`-nondeterministic (Part B counts 69/77/80/81/83 across runs; conclusions stable), and its executable semantics implicitly implement the correct *total* transport — it validates the intended construction, not the round-17 text as written.
+
+Run: `python3 python/wp31_round17_mixed_transport_attack.py`
+Report: [`reports/wp31_round17_mixed_transport_attack.txt`](reports/wp31_round17_mixed_transport_attack.txt)
+
 ### `python/wp30_round17_transition_system.py` — WP30: the round-17 explicit transition system, executed
 
 Companion to [`papers/fable5_round17/`](../papers/fable5_round17/) (the eleventh review's R1–R6 implemented). Implements the singleton/ordered-pair transition system executably — persistent core rows, the total three-case row decomposition (continued / parent-fresh / core), pair creation, and the reviewer's **transport rule** — and machine-checks the **operational-inclusion invariant (R3)**: on 120 random catalogues with shared cores, 10 random unfoldings each (**1,200 simulations**), every actual singleton state and every actual ordered pair with its realized mutual value lies in the computed reachable sets — **zero containment failures**. Negative control (R2 is load-bearing): a birth-only fixed point (no transport) misses actual transported pairs in **83/83** catalogues that have them — the eleventh review's F1 confirmed at scale. Part C: S4-valid canonical steering ⟹ all simulated unfoldings are closed atomic frames (100/100).

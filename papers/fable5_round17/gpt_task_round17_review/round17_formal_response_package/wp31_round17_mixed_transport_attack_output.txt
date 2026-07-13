@@ -1,0 +1,3 @@
+PASS: S1/S2/S3 can accept the bad y-z-b triangle when the mixed pair is omitted.
+PASS: The manuscript P3 text omits (state_y_at_child_h, birth_adjacent_state_z_at_h, PP).
+PASS: Adding a mixed ambient/parent transport rule restores the pair, so S4 rejects the bad row.
