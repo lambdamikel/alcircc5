@@ -1,0 +1,13 @@
+WP28 -- Machine checks for the round-16 repair: JOINT steering via
+======================================================================
+A1 tenth-review W1a witness under (Q4'):
+    steering function exists: False; joint assignment exists: False; comp(PP,DR)=['DR']
+    (Q4') REJECTS the witness -- and rejection is semantically correct: PASS
+A2 repaired sibling (Safe(Y,B)={DR}): steering function found and induced completion closed: PASS
+Part B: 300 random glue steps with selector-free random safe domains
+    B1 soundness: (Q4')-accepted steps whose f-induced completion is closed: 219/219 (PASS)
+    B3 no false accepts ((Q4') accepts but no joint assignment exists): 0 (PASS)
+    B2 uniformization rate (the W2' keystone, measured): 219/220 jointly-realizable steps admit a UNIFORM steering function (99.5%)
+    NOTE: 1 instances are joint-realizable but not state-uniform -- the honest measure of the round-16 extraction obligation (W2').
+======================================================================
+WP28 OVERALL: PASS

@@ -6749,3 +6749,51 @@ Docs updated (README Latest News + Status section + Key Files; CLAUDE.md status 
 round-15 outcome + wp26-B2/wp27; verification/README; overview papers ×2). Status:
 **strongly supported, NOT certified**. Round-16 direction fixed: the joint
 per-gluing-profile steering-amalgamation condition (Q4′).
+
+## 2026-07-13 (later): round-16 — certified joint steering; the W1a genus closed by construction
+
+Round-16 (`papers/fable5_round16/cluster_quasimodels_round16_joint_steering.tex/.pdf`,
+6pp delta on round-15) implements the tenth review's closing recommendation
+literally: the certificate now **stores the joint selection**. Per gluing edge, a
+**steering function** f from interface *states* — (type, row over the separator,
+safety signature toward the fresh members) — to fresh rows, under four finite
+conditions: (S1) through-separator, (S2) safety (never EQ), (S3) fresh-edge
+closure, and (S4) the pair condition over **reachable pair states** with their
+realized mutual values. The key structural point: because every cross value in the
+unfolding is f-generated, the reachable states and pairs are computable from the
+certificate itself by a finite least fixed point (rows evolve by
+restriction-plus-f; mutual values are in-pattern or f-generated) — so (Q4′) is
+checked exactly on what can occur, with no over-approximation. The canonical
+completion becomes **deterministic**: the soundness proof contains no free choices
+anywhere; each of the four triangle classes is discharged by a certified condition
+((S1)/(S4)/(S3)/in-pattern), and ambient-ambient-ambient triples were checked at
+the step where the youngest was fresh — exactly how the pair fixed point extends.
+The pointwise-vs-joint genus cannot recur in this proof because there is nothing
+pointwise left: values are functions of certified data, interactions are
+quantified certificate conditions over finite reachable sets.
+
+**WP28** (all PASS): A1 — the tenth review's witness admits *no* steering function
+(the pair condition with W=PP demands f(Y-state)(b) ∈ comp(PP,DR)={DR}, excluded
+by Safe(Y,B)={PO}) and no joint assignment either: (Q4′) rejects it, and rejection
+is semantically correct. A2 — the repaired sibling admits f with a closed induced
+completion. B — 300 random glue steps with selector-free random domains (the WP26
+Part-B mistake is structurally avoided): B1 soundness 208/208; B3 zero false
+accepts; B2 the honest new number — **uniformization 208/211 = 98.6%**: three
+instances are jointly realizable but admit no state-uniform steering function.
+
+**The new keystone, named and measured: W2′ (Uniformization).** Extraction from a
+model yields per-instance values; (Q4′) needs them factored through states. At the
+coarsest state granularity this fails in ~1.4% of random jointly-realizable steps
+(two same-state occurrences forced apart by different mutual values to third
+parties). Two finite repair routes are sketched in §5: bounded state refinement
+(absorb a summary of realized partner values into the state; the fixed point
+absorbs it) or re-presentation (Theorem A's witness-selection freedom separates
+the colliding instances). Crucially, **soundness does not depend on W2′** — the
+risk direction is completeness/over-rejection only. Also fixed: the (Q2) wording
+instability (10th review W2c). Inherited open: W1c (core-sharing fixed point),
+W2b, W3 width details. Docs updated (README, CLAUDE.md, verification/README,
+overviews ×2). **Ledger: 10 reviews, 10 defects; round-16 is reviewer-authored and
+unreviewed — presume #11.** Natural next step: hand it back to GPT-5.5 (targets:
+X1 uniformization, X2 reachability-under-core-sharing, X3 the triangle taxonomy),
+or go straight to mechanization — (Q4′) checking and Theorem 4.2's induction are
+now fully finite-state and unusually Lean-amenable.

@@ -96,6 +96,13 @@ Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
 
+### `python/wp28_round16_joint_steering.py` — WP28: round-16 certified joint steering
+
+Companion to [`papers/fable5_round16/`](../papers/fable5_round16/), the repair of defect #10. A1: the tenth review's W1a witness admits **no** steering function under (Q4′) — rejected, and rejection is semantically correct (the configuration is unrealizable: `y ⊂ z`, `z∩b=∅` force `y DR b`, forbidden by `Safe(Y,B)`); A2: the repaired sibling admits `f` with a closed induced completion. Part B (300 random glue steps, selector-free random domains): **B1 soundness 208/208** ((Q4′)-accepted ⟹ f-induced completion closed); **B3 zero false accepts**; **B2 uniformization 208/211 = 98.6%** — the measured size of the round-16 keystone W2′ (3 instances jointly realizable but not state-uniform).
+
+Run: `python3 python/wp28_round16_joint_steering.py`
+Report: [`reports/wp28_round16_joint_steering.txt`](reports/wp28_round16_joint_steering.txt)
+
 ### `python/wp26_round15_cluster_quasimodels.py` — WP26: the round-15 cluster-quasimodel decision layer (no automaton)
 
 Companion to [`papers/fable5_round15/`](../papers/fable5_round15/), the round-15 replacement for Theorem C after the ninth review (taking its R2 alternative: mosaic-style decision layer instead of a tree automaton). Part A establishes the **fold lattice** (new load-bearing finite fact): exactly **10** sets arise as compositions of atomic RCC5 words; every non-singleton fold contains a horizontal atom; the three DR-free folds all contain PO, so the canonical selector (forced value / DR / PO) is total — plus the steering toolkit (DR-column absorption, horizontal absorption, vertical transitivity, EQ-never-forced), all exhaustive against a set-semantics-derived table. Part B probes the **steering keystone (W1)**: 250 random realized cluster-tree frames, each glued with a fresh pattern, cross-pair domains = true separator-mediated feasible sets ∩ safety-like restrictions containing the canonical selector — **250/250 jointly realizable**; negative control (horizontals stripped): 245/249 fail (the F1.3/WP15 genus the certificate conditions exclude). Part C cross-validates the acceptance semantics (witness graphs with reuse, obligations on actual completed relations, request-closed repetition) against the cover-tree tableau on **all eleven diagnostics** — including the eighth review's `C_G2a` tower and the ninth review's p4 shared-unique-witness tower — **plus a 200-concept random sweep: zero disagreements, zero timeouts**.
