@@ -6797,3 +6797,28 @@ unreviewed — presume #11.** Natural next step: hand it back to GPT-5.5 (target
 X1 uniformization, X2 reachability-under-core-sharing, X3 the triangle taxonomy),
 or go straight to mechanization — (Q4′) checking and Theorem 4.2's induction are
 now fully finite-state and unusually Lean-amenable.
+
+## 2026-07-13 (later still): the round-16 cold-review packet for GPT-5.5
+
+Built per the cold_review_* protocol: `papers/cold_review_round16/` (+ zip). The
+packet contains only the three-PDF effective stack (round-12 base for model
+theory/patchwork — its own superseded decision layers explicitly declared not
+part of the candidate; round-15 decision layer; round-16 delta, which governs on
+conflict) plus the primary prompt and human notes. The prompt is calibrated to
+what the stack itself claims — soundness fully proved and choice-free;
+completeness modulo the explicitly-open uniformization lemma — and asks for three
+ordered verdicts: (1) attack the soundness claim (triangle-taxonomy
+exhaustiveness, especially "checked when the youngest was fresh" across branches
+and through the shared core; reachability fixed-point under-approximation; state
+sufficiency; hidden dependence on open items), (2) audit the delimitation of the
+open parts (is completeness really the only casualty of uniformization failing?),
+(3) the standing general attack. Honesty caveats recorded in README_FOR_HUMAN:
+the manuscripts self-describe their revision history and designated weak points
+(by design; the analysis depth stays withheld); the prompt must disclose the
+stack's claim structure for the review to be well-posed; lineage note (base is
+GPT-authored; the new mathematics is Claude-authored, so cross-model holds where
+it matters; a third lineage would maximize independence). Interpretation guidance:
+a clean verdict on the soundness claim would be the first clean verdict on any
+load-bearing half in ten reviews — next steps would be mechanization of the
+deterministic soundness half plus the uniformization lemma; a defect means #11
+and round 17. Status: strongly supported, NOT certified.

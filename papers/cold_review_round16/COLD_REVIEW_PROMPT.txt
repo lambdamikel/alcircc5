@@ -1,0 +1,120 @@
+COLD REVIEW PROMPT -- ALCI_RCC5 decidability, round-16 candidate stack
+=======================================================================
+
+Paste the PRIMARY PROMPT below into a FRESH GPT-5.5 session (no prior
+context on this project), attaching exactly the three PDFs in this
+folder:
+
+    split_forest_automata_with_appendices.pdf          (base, 29pp)
+    cluster_quasimodels_round15.pdf                    (decision layer, 10pp)
+    cluster_quasimodels_round16_joint_steering.pdf     (delta, 6pp)
+
+Do NOT attach anything else (see WHAT TO WITHHOLD in
+README_FOR_HUMAN.txt).
+
+
+================================================================
+PRIMARY PROMPT  (paste verbatim)
+================================================================
+
+You are an expert referee in description logics, modal and temporal
+logics, and qualitative spatial reasoning (RCC5/RCC8), asked to
+adversarially review a decidability argument for correctness. You have
+no prior involvement with this work.
+
+THE MANUSCRIPTS. Attached is a revision stack of three documents
+concerning concept satisfiability for ALCI_RCC5 -- the description
+logic ALCI whose five roles are the RCC5 base relations DR, PO, EQ, PP,
+PPI, interpreted over abstract complete atomic RCC5 frames (every pair
+of domain elements carries exactly one base relation, closed under the
+RCC5 composition table), with strong equality (EQ = identity).
+
+  (1) The BASE manuscript: model theory -- a split-forest normal form
+      (Theorem A), the RCC5 patchwork property (an explicitly external
+      input), and supporting machinery. Its own decision layers
+      (Theorems B/C, the automaton) are NOT part of the candidate: they
+      were superseded; only the parts that (2) explicitly inherits are
+      live (semantics, closure/types, Theorem A, the patchwork theorem
+      with its finite tree-patching and compactness lemmas).
+  (2) The DECISION LAYER: a finite "cluster quasimodel" certificate --
+      types, safe links, a catalogue of small closed patterns with
+      one-step demand fulfilment, fold-lattice conditions, a core for
+      uniquely realizable types, a width bound -- with soundness
+      (certificate => model), extraction (model => certificate), and
+      decidability by finite enumeration.
+  (3) The DELTA: replaces (2)'s long-range steering condition (Q4) and
+      its completion lemma (Lemma 4.3), which were defective, by
+      certificate-stored "steering functions" on interface states with
+      a reachability fixed point ((Q4')), making the model construction
+      deterministic. Where (2) and (3) conflict, (3) governs.
+
+WHAT THE STACK ITSELF CLAIMS -- calibrate your review to this. The
+stack does NOT claim a finished proof. Its own account is:
+  - SOUNDNESS (valid certificate => satisfiable) is claimed FULLY
+    PROVED, with the specific structural feature that the construction
+    is deterministic: no free choices, every step discharged by a
+    certificate condition checked on a finite "reachable" set.
+  - COMPLETENESS (satisfiable => valid certificate) is claimed proved
+    MODULO one explicitly open lemma ("uniformization", delta
+    Section 4), stated with an empirically measured failure rate for
+    its naive form and two sketched repair routes.
+  - Several further items are explicitly designated open in the two
+    manuscripts' "what would invalidate" sections.
+
+YOUR TASK, in order of value to the project:
+  1. ATTACK THE SOUNDNESS CLAIM. It is the load-bearing novelty: a
+     deterministic canonical completion (delta, Theorem 3.2) whose
+     closure argument is a four-class triangle taxonomy over
+     certificate-certified data, plus a reachability fixed point
+     computed from the certificate. Specifically scrutinise:
+       * the triangle taxonomy for exhaustiveness -- especially triples
+         of three ambient occurrences, claimed to have been checked "at
+         the step where the youngest was fresh": verify the pair fixed
+         point really carries every such pair with its realized mutual
+         value into the relevant step, including pairs whose members
+         were created in different branches of the unfolding, and
+         including every interaction with the shared CORE occurrences
+         (the core makes the occurrence graph non-tree-like; the fixed
+         point's treatment of it is a designated but unresolved
+         concern);
+       * the reachability fixed point for UNDER-approximation: an
+         unfolding reaching a state or pair outside the computed sets
+         would make (Q4') certify too little -- try to construct one;
+       * the state definition itself: is (type, separator row, safety
+         signature) actually enough for the invariant, or can two
+         same-state occurrences be distinguished by something the
+         induction later needs (this is the dual of the stack's own
+         open uniformization question, on the soundness side);
+       * whether any step of the claimed-proved soundness half secretly
+         depends on the openly-open completeness lemma or on any other
+         designated-open item.
+  2. AUDIT THE DELIMITATION OF THE OPEN PARTS. Is the uniformization
+     lemma correctly scoped -- i.e., is completeness really the only
+     casualty if it fails, and is the claimed independence of soundness
+     from it real? Are the "what would invalidate" lists complete, or
+     do you see an undesignated failure mode?
+  3. ATTACK EVERYTHING ELSE AS USUAL: the width bound and its single
+     decreasing measure (decision layer, Section 6); the core mechanism
+     for uniquely realizable types; one-step demand fulfilment (no
+     promissory witnesses -- can an eventuality still be deferred?);
+     strong equality end-to-end; the fold-lattice facts (re-derive the
+     composition table first and take it as ground truth); and explicit
+     counterexamples -- an unsatisfiable concept with a valid
+     certificate, a satisfiable concept provably without one (beyond
+     the open lemma's scope), or a certificate meeting all stated
+     conditions whose canonical completion violates closure or a
+     universal constraint. Small fixed witnesses are best.
+
+HOW TO WORK: expand every compressed case analysis yourself; check
+every fixed point for under-approximation and every "charged to X"
+accounting for hidden iteration; treat "immediate" or "exactly how the
+fixed point extends" as claims to verify, not facts. Distinguish
+DEFECT (with witness) / GAP (unproved but plausibly true) / SOUND
+(checked), with exact locations. Declare computation-in-principle vs
+read-through.
+
+REPORT FORMAT: referee-style. (a) Verdict per claim -- the soundness
+claim, the open-part delimitation, the rest -- each with confidence.
+(b) Severity-graded findings with concrete witnesses wherever possible.
+(c) Steps checked and found sound. If you rely on a finite fact, ship
+the check (pseudocode or a runnable script).
