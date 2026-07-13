@@ -1,0 +1,149 @@
+TASK PROMPT -- Twelfth review: acceptance test of round-17 against the
+eleventh review's work order, plus the new attack surface
+========================================================================
+(Paste into a fresh GPT-5.5 session; attach the files listed under
+MATERIALS. Targeted task, full context supplied.)
+
+ROLE. You are an expert in description logics, modal/temporal logics,
+and qualitative spatial reasoning (RCC5/RCC8). A cold reviewer of your
+lineage issued, in the attached eleventh-review report, a six-item work
+order (R1-R6) as the condition for accepting the soundness theorem of a
+decidability argument for ALCI_RCC5: "With these changes, I would
+regard the intended soundness argument as very likely correct." The
+attached round-17 delta claims to implement all six items. Your task
+has three parts, in order of value:
+
+  PART I  -- ACCEPTANCE TEST: verify, item by item, that round-17
+             actually discharges R1-R6 in the sense the work order
+             intended -- not merely nominally.
+  PART II -- ATTACK THE NEW CONTENT: round-17 introduces new
+             definitions and one new theorem; new text means new
+             attack surface (this project's ledger: 11 reviews, 10
+             defects-with-witness, 1 no-counterexample-with-repairs).
+  PART III-- OPTIONALLY ADVANCE THE OPEN ITEMS (F6, W2') as round-18
+             material if Parts I-II find nothing fatal.
+
+CONTEXT IN ONE PARAGRAPH. Candidate proof: satisfiability for
+ALCI_RCC5 over abstract complete atomic RCC5 frames with strong
+equality, via a finite cluster-quasimodel certificate (round 15:
+types, safe links, one-step cluster patterns, fold-lattice bounds,
+core for uniquely realizable types, width bound) with certified joint
+steering (round 16: per-gluing steering functions on interface states;
+deterministic canonical completion) and now an explicit transition
+system (round 17). The base manuscript supplies Theorem A (split-forest
+normal form) and the RCC5 patchwork theorem (sole external input); its
+own automaton layers are dead. Soundness (certificate => model) is
+claimed FULLY WRITTEN after round 17; completeness retains two named
+open lemmas (F6 width budgets, W2' uniformization) -- the eleventh
+review certified that soundness does not depend on W2'.
+
+MATERIALS (attached)
+  workorder/formal_referee_report_alci_rcc5.pdf/.tex   the 11th review
+      (R1-R6 in its Section "Required repairs"; the transport rule in
+      its Appendix B; findings F1-F8)
+  manuscripts/cluster_quasimodels_round17_transition_system.pdf/.tex
+      THE TARGET (6pp): gluing normal form (Q3'), explicit transition
+      system, inclusion invariant (Thm 3.1), witness map (Q2')
+  manuscripts/cluster_quasimodels_round16_joint_steering.pdf/.tex
+      round 16 (S1-S4, canonical completion Thm 3.2)
+  manuscripts/cluster_quasimodels_round15.pdf/.tex
+      round 15 (certificate, fold lattice, extraction, width)
+  manuscripts/split_forest_automata_with_appendices.pdf
+      base (Theorem A; patchwork Thm 2.5 + App A; only these are live)
+  verification/wp26/28/29/30 *.py + *_output.txt
+      the machine checks (wp30 = the executable transition system:
+      1,200 unfoldings, 0 inclusion failures; birth-only fixed points
+      miss transported pairs in 83/83 catalogues)
+  support/alcircc5_reasoner.py, cover_tree_tableau.py
+      concept-level ground-truth oracle (PYTHONPATH=support)
+
+--------------------------------------------------------------------------
+PART I -- ACCEPTANCE TEST (R1-R6, per the work order's intent)
+--------------------------------------------------------------------------
+  R1  Is Definition 3.2/3.3 a genuine explicit finite transition
+      system -- alphabets, seeds, transitions all effectively given --
+      or does prose remain where the work order demanded structure?
+      In particular: are birth(-adjacent) states really "computable
+      from the catalogue" for ALL members of a copy, including
+      inherited separator members whose rows mix pattern values and
+      pre-existing values?
+  R2  Does (P3) match Appendix B of the work order? Check the edge
+      cases the rule must cover: pairs whose two members were born in
+      DIFFERENT branches of the unfolding tree; pairs transported
+      through a gluing where one member is in the separator (hence
+      co-patterned, not ambient) while the other is ambient -- is that
+      a transport step, a re-seed, or unhandled?
+  R3  Audit the proof of Theorem 3.1 line by line. The compressed step
+      to attack: "or a later gluing elsewhere in the tree order; the
+      argument is the same with T composed along the corresponding
+      path." For a pair born at the meeting of two branches, what
+      exactly is "the corresponding path," and is the composed-T claim
+      proved or asserted? Also: the proof's case (a) uses N1 to know
+      parent-fresh separator values were steering values -- verify
+      this excludes ALL other value sources.
+  R4  Are (N1)-(N3) actually USED where claimed (totality of the
+      three-case decomposition; the F2 exclusion), and are they
+      CHECKABLE certificate conditions rather than unfolding
+      properties? (N1 quantifies over "occurrences existing before the
+      step" -- is that certificate-level or run-level?)
+  R5  Ordered pairs and converses: any place where an unordered
+      reading could still be smuggled in (e.g., the S4 check itself)?
+  R6  Does the witness map (Q2') make the unfolding a function of the
+      certificate, including the TREE structure (which copies are
+      attached where and in what order), or only the values?
+
+--------------------------------------------------------------------------
+PART II -- NEW ATTACK SURFACE
+--------------------------------------------------------------------------
+  Y1 (the manuscript's own designated risk; really an extraction
+      question): the normal form demands sigma_g ⊆ parent-copy ∪ core.
+      Construct a satisfiable concept whose Theorem-A presentations
+      NEED a separator member from a non-parent, non-core copy --
+      e.g., overlap amalgams (side witnesses that are proper parts of
+      each other or share superparts across branches), or a
+      configuration where two side contexts of DIFFERENT parents must
+      share a non-unique occurrence. If such sharing is unavoidable,
+      the three-case decomposition is incomplete and round 17's
+      transition system cannot represent the presentation: an
+      over-rejection (completeness) or, worse, a hole in the inclusion
+      proof if the unfolding definition silently permits it.
+  Y2  The no-overwrite lemma (3.5): attack with declaration patterns
+      the lemma's proof does not visibly cover -- two gluings
+      attaching copies that share more than the declared separator via
+      the core; a pattern whose network disagrees with a previously
+      f-generated value on a separator-adjacent pair (does gluing
+      coherence (Q3) actually compare against f-generated values, or
+      only against pattern values?).
+  Y3  The state definition: the safety signature is "certificate-
+      determined" -- verify it is a function of the state's other
+      components plus the catalogue, or else it must be tracked as an
+      independent component with its own transition rule.
+  Y4  Anything else: strong equality through the persistent core rows;
+      the fold-lattice bounds now that folds are no longer
+      load-bearing; the interaction of the witness map with the width
+      bound (does storing w change the alphabet/width accounting?).
+
+--------------------------------------------------------------------------
+PART III -- OPTIONAL ROUND-18 MATERIAL (only if I-II find nothing fatal)
+--------------------------------------------------------------------------
+  F6  Derive, rather than assert, the width recurrence's non-iteration
+      budgets (round-15 Section 6): an invariant showing boundary and
+      stratum insertions terminate within the stated budgets, or a
+      corrected recurrence.
+  W2' Uniformization (round-16 Section 4): prove one of the two
+      sketched routes (bounded state refinement absorbing partner
+      history; or presentation re-choice via Theorem A's freedom), or
+      construct a satisfiable concept where BOTH fail -- which would
+      make W2' a genuine completeness barrier rather than an
+      engineering margin.
+
+DELIVERABLES
+  1. Referee-style report: Part I as an itemized acceptance table
+     (discharged / nominally-discharged-but / not discharged, per R);
+     Part II as severity-graded findings with witnesses; Part III if
+     reached.
+  2. Machine checks for any finite claim (extend wp30's harness; the
+     support/ oracle gives concept-level ground truth).
+  3. House rules: never "proven/certified"; the label is "strongly
+     supported, not certified"; presume this delta contains the next
+     finding until you fail to find it.

@@ -1,0 +1,447 @@
+\documentclass[11pt]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+
+\definecolor{reviewgray}{gray}{0.35}
+\definecolor{lightgray}{gray}{0.95}
+
+\lstdefinestyle{reviewpython}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{reviewgray},
+  stringstyle=\ttfamily,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  frame=single,
+  backgroundcolor=\color{lightgray},
+  rulecolor=\color{reviewgray}
+}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\Rel}{\ensuremath{\mathrm{Rel}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\Comp}{\ensuremath{\mathrm{Comp}}}
+\newcommand{\Safe}{\ensuremath{\mathrm{Safe}}}
+\newcommand{\St}{\ensuremath{\mathrm{St}}}
+\newcommand{\tp}{\ensuremath{\mathrm{tp}}}
+\newcommand{\rhoM}{\ensuremath{\rho_M}}
+\newcommand{\cert}[1]{\textsc{#1}}
+
+\newenvironment{finding}[2]{%
+  \subsection*{#1 --- #2}
+  \addcontentsline{toc}{subsection}{#1 --- #2}
+}{\par\medskip}
+
+\title{Adversarial Referee Report on the Cluster-Quasimodel Decision Layer for \ALCIRCC}
+\author{External referee report prepared for the revision stack}
+\date{13 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report reviews a three-document revision stack for concept satisfiability in \ALCIRCC{} over abstract complete atomic RCC5 frames with strong equality.  The live decision layer is the round-15 cluster-quasimodel certificate as amended by the round-16 joint-steering delta; the earlier automaton decision layer of the base manuscript is not treated as live.  The review focuses adversarially on the claimed certificate-to-model direction, especially the deterministic canonical completion in the delta.  The verdict is that the intended soundness theorem is plausible but not yet certified as written: the four-class triangle taxonomy is algebraically adequate under strengthened invariants, but the reachability fixed point and the treatment of ordered pair states and shared core occurrences are under-specified.  Completeness remains explicitly open through uniformization, and further inherited width/core obligations are not discharged by the delta.
+\end{abstract}
+
+\tableofcontents
+
+\section{Scope and sources under review}
+
+The reviewed stack consists of the following manuscripts.
+\begin{enumerate}[label=(\arabic*)]
+  \item \textbf{Base manuscript:} \emph{Decidability of \ALCIRCC{} via Saturated Split Forests, Patchwork Bags, and Two-Way Parity Automata}.  Only the semantics, closure/type machinery, Theorem A, and the RCC5 patchwork material are treated as inherited live material.  Theorems B/C and the automaton decision layer are not part of the candidate proof under review.
+  \item \textbf{Round-15 decision layer:} \emph{Cluster Quasimodels for \ALCIRCC{}: a Round-15 Decision Layer without Automata}.  This supplies the finite cluster-quasimodel certificate, fold lattice, safe links, small cluster patterns, one-step demand fulfilment, core treatment for unique types, width bound, soundness/extraction/decidability claims, and open invalidation list.
+  \item \textbf{Round-16 delta:} \emph{Certified Joint Steering for Cluster Quasimodels: the Round-16 Repair of the Round-15 Decision Layer}.  This withdraws round-15 condition Q4 and Lemma 4.3, replacing them by certificate-stored steering functions on interface states and a reachability fixed point.  Where round 15 and the delta conflict, the delta is treated as governing.
+\end{enumerate}
+
+The classification terms used below are as follows.  \cert{Defect} means a claim is false or materially misleading under a natural reading, preferably with a witness.  \cert{Gap} means an essential lemma or invariant is not proved, although it may well be true after strengthening the definitions.  \cert{Sound} means I checked the step under the assumptions stated in the report.
+
+\section{Executive verdicts}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.26\linewidth} >{\raggedright\arraybackslash}p{0.52\linewidth} >{\raggedright\arraybackslash}p{0.13\linewidth}}
+\toprule
+\textbf{Claim area} & \textbf{Verdict} & \textbf{Confidence} \\
+\midrule
+Soundness: valid certificate implies satisfiable & \cert{Gap}, not certified as written.  I did not find an algebraic counterexample to the intended theorem.  Under the strengthened reading that the reachability fixed point exactly contains all operational singleton and ordered pair states, and that every pre-existing occurrence in a new pattern, including core references, is in the separator, the theorem looks likely.  The manuscripts do not yet supply these strengthened fixed-point and core-interface invariants. & Medium-high \\
+\addlinespace
+Open-part delimitation & Mostly correct for uniformization, incomplete for soundness.  The open uniformization lemma is genuinely a completeness/extraction issue.  However, pair-state reachability, state transport, and core handling are not merely possible invalidators; they are proof obligations needed for the claimed soundness theorem. & High \\
+\addlinespace
+Rest of decision layer & Mixed.  The RCC5 finite algebra and one-orientation triangle checks are sound.  One-step demand fulfilment is sound after the delta's Q2 wording repair.  Strong equality is sound conditional on exact occurrence identity and no off-pattern \EQ.  The width bound and syntactic core mechanism remain under-proved. & Medium \\
+\bottomrule
+\end{longtable}
+
+\section{Load-bearing soundness issue}
+
+The delta's central claim is that the canonical completion is deterministic: at a gluing edge
+\[
+  g=(k' \to k,\sigma),
+\]
+every old/fresh value is assigned by a stored function
+\[
+  \rho(y,b) := f_g(\St_g(y))(b),
+\]
+where the state records the type of \(y\), its separator row, and its safety signature toward the fresh members.  Closure is then checked by four triangle classes:
+\begin{enumerate}[label=\roman*.]
+  \item old--separator--fresh, by S1;
+  \item old--old--fresh, by S4;
+  \item old--fresh--fresh, by S3;
+  \item fresh--fresh--fresh, by the pattern network.
+\end{enumerate}
+This taxonomy is algebraically adequate if the S4 pair data is present at the moment it is needed.  The unresolved question is exactly whether Definition 2.3's finite reachability fixed point is strong enough to guarantee this for all operational pairs, including pairs born in different branches and pairs involving globally shared core occurrences.
+
+\section{Severity-graded findings}
+
+\begin{finding}{F1}{High gap: Q4' reachability is under-specified and may under-approximate pair states}
+\textbf{Location.}  Round-16 delta, Definition 2.3 and Theorem 3.1.
+
+\textbf{Problem.}  The proof of the old--old--fresh triangle class says that for ambient occurrences \(y,y'\) and fresh \(b\), the triple is covered by S4 because
+\[
+  (\St_g(y),\St_g(y'),\rho(y,y'))
+\]
+is a reachable pair state.  The text justifies this by saying that \(\rho(y,y')\) was either in-pattern or generated when the younger of \(y,y'\) was fresh.  That is not enough.  S4 requires the pair to be reachable with its \emph{current} states at the current gluing \(g\), not merely with its birth states at an earlier gluing.
+
+The missing operational rule is a pair-transport rule of the following form:
+\begin{quote}
+If \((\varsigma,\varsigma',W)\) is a reachable ordered pair state before crossing a gluing and the singleton transition sends \(\varsigma\mapsto\eta\), \(\varsigma'\mapsto\eta'\), then add \((\eta,\eta',W)\) to the pair fixed point for the next gluing.
+\end{quote}
+Without such a rule, two old elements whose mutual value was generated earlier can arrive at a later gluing with updated separator rows, while S4 is not checked for their current states.
+
+\textbf{Witness template if the pair is omitted.}  Reuse the minimal round-16 bad triangle, but make the bad pair a transported old--old pair that the fixed point fails to carry.  Let the old ambient structure contain
+\[
+  y \;\PP\; z \;\PP\; s.
+\]
+Glue a fresh pattern over separator \(s\) with
+\[
+  s \;\PPI\; b.
+\]
+Let the relevant safety domains be
+\[
+  \Safe(Y,B)=\{\PO\},\qquad \Safe(Z,B)=\{\DR\}.
+\]
+S1 permits both choices, because \(y\PP s\), \(z\PP s\), and \(s\PPI b\) give \(\Comp(\PP,\PPI)=\Rel\).  S2 permits \(y\PO b\) and \(z\DR b\).  S3 is vacuous if \(b\) is the only fresh member.  If the current pair state \((\St_g(y),\St_g(z),\PP)\) is not included in the reachable pair set, S4 is not checked.  The certificate could assign
+\[
+  f_g(\St_g(y))(b)=\PO,\qquad f_g(\St_g(z))(b)=\DR.
+\]
+But closure of the triangle \((y,z,b)\) requires
+\[
+  \rho(y,b)\in \Comp(\PP,\DR)=\{\DR\},
+\]
+contradicting \(\rho(y,b)=\PO\).
+
+\textbf{Classification.}  This is a \cert{gap} against the intended theorem and a \cert{defect} against any implementation or formalization of Definition 2.3 that does not transport ordered old--old pair states through later gluings.
+\end{finding}
+
+\begin{finding}{F2}{High gap: core occurrences are not formally integrated into Q4'}
+\textbf{Location.}  Round-15 Q5 and unfolding definition; round-16 Theorem 3.1.
+
+\textbf{Problem.}  The core mechanism says that unique-type members are globally shared and referenced as permanent interface members.  The delta then processes one pattern copy at a time and assigns
+\[
+  f_g(\St_g(y))(b)
+\]
+for every ambient occurrence \(y\) and fresh member \(b\).  The construction is sound only if every already-existing member of the new pattern is contained in the separator \(\sigma\).  This must include all core occurrences referenced by the pattern.
+
+If an old core occurrence \(c\) is co-patterned with fresh \(b\) but \(c\notin\sigma\), there are two possible sources for \(\rho(c,b)\): the pattern value \(N_k(c,b)\), and the steering value \(f_g(\St_g(c))(b)\).  When \(c\in\sigma\), S1 with row entry \(r(c)=\EQ\) forces
+\[
+  f_g(\St_g(c))(b) \in \Comp(\EQ,N_k(c,b))=\{N_k(c,b)\},
+\]
+so the pattern value is preserved.  When \(c\notin\sigma\), this forcing condition is absent.
+
+\textbf{Concrete failure mode.}  Let a new pattern contain an old core occurrence \(c\) and a fresh member \(b\) with \(N_k(c,b)=\PP\).  If \(c\notin\sigma\), S1 does not force \(f_g(\St_g(c))(b)=\PP\).  A steering function could assign \(\DR\), if \(\DR\) is safe.  Then the canonical completion does not extend the pattern network.
+
+\textbf{Needed invariant.}  The proof needs an explicit statement that at every gluing step
+\[
+  V_k \cap U_m = \sigma,
+\]
+including all core references, and that all such old references are seeded in the singleton and pair fixed points.
+
+\textbf{Classification.}  \cert{Gap}.  The prose suggests this is intended by ``permanent interface'', but the theorem should state and use it explicitly.
+\end{finding}
+
+\begin{finding}{F3}{High gap: ``checked when the youngest was fresh'' needs a transport lemma}
+\textbf{Location.}  Round-16 Theorem 3.1.
+
+\textbf{Problem.}  The proof says that triples among three ambient occurrences remain closed because they were checked at the step where the youngest member was fresh.  This is true only if the following two facts have been proved:
+\begin{enumerate}[label=(\alph*)]
+  \item the relation assigned at the birth step is never overwritten; and
+  \item at the birth step, the ordered pair state for the two older members is present with the then-current states and realized mutual value.
+\end{enumerate}
+For a pure tree unfolding, this is a routine induction.  With shared core occurrences and multiple interface traces, it is no longer automatic.  An old pair may be created in one branch, updated through later gluings, and then interact with a fresh member introduced elsewhere.
+
+\textbf{Classification.}  \cert{Gap}.  I expect it to be repairable by an explicit operational invariant proving that actual unfolding singleton and ordered pair states are always included in the finite fixed point.
+\end{finding}
+
+\begin{finding}{F4}{Medium defect: the advertised determinism still hides Q2 witness choices}
+\textbf{Location.}  Round-15 Q2 as repaired by round-16 Section 5.
+
+\textbf{Problem.}  The delta repairs the literal contradiction in round-15 Q2 by saying that every existential demand is fulfilled in the current pattern or in an adjacent pattern in which the source is identified.  However, the certificate does not appear to store, for each pair \((a,\exists R.D)\), which adjacent pattern or gluing witnesses the demand.  If several adjacent patterns can serve, the unfolding still makes a choice.
+
+This is not a soundness hole: any certified adjacent witness should yield a model.  It is, however, a defect in the advertised ``no free choices'' formulation.  To make the deterministic claim exact, add a finite witness map
+\[
+  w(k,a,\exists R.D)
+\]
+selecting either an in-pattern witness or a specified adjacent gluing witness.
+
+\textbf{Classification.}  \cert{Defect} in the deterministic presentation; low risk for certificate-to-model soundness.
+\end{finding}
+
+\begin{finding}{F5}{Medium gap: pair states must be ordered, not unordered mutual states}
+\textbf{Location.}  Round-16 Definition 2.2, especially S4.
+
+\textbf{Problem.}  S4 is oriented:
+\[
+  f_g(\varsigma)(b) \in \Comp\bigl(W,f_g(\varsigma')(b)\bigr).
+\]
+Therefore the finite data must contain ordered triples \((\varsigma,\varsigma',W)\), with the converse triple \((\varsigma',\varsigma,W^{-1})\) either explicitly included or generated automatically.  If the fixed point stores an unordered pair with a ``mutual value'', the orientation can be misread in implementation or in a mechanized proof.
+
+The RCC5 table itself supports one-orientation checking once the orientation is fixed; see Appendix~\ref{app:finite-check}.  The data structure nevertheless needs to be explicit.
+
+\textbf{Classification.}  \cert{Gap} in formalization, not an algebraic counterexample.
+\end{finding}
+
+\begin{finding}{F6}{Medium gap: the width bound still assumes non-iteration of boundary and stratum insertions}
+\textbf{Location.}  Round-15 Lemma 6.2.
+
+\textbf{Problem.}  The recurrence asserts that boundary insertions and stratum insertions do not iterate: boundary insertions for insertions are charged to the original member, and strata involving strata are charged to the original pair.  This is a budget assertion rather than a derivation from the saturation rules.
+
+The dangerous case is not only fixed-rank existential generation.  A stratum inserted for a pair \((a,b)\) can create new pairs with boundary/support nodes introduced for other reasons.  The proof needs an invariant saying these secondary interactions either were already included in the original pair budget or collapse to finitely many context classes supplied by Theorem A.
+
+\textbf{Classification.}  \cert{Gap} affecting completeness and decidability, not the round-16 soundness theorem directly.
+\end{finding}
+
+\begin{finding}{F7}{Medium gap: the core mechanism is semantically plausible but syntactically incomplete}
+\textbf{Location.}  Round-15 Q5.
+
+\textbf{Checked semantic part.}  The semantic uniqueness argument is sound.  If two distinct realizations of a type \(t\) existed, their atomic relation would be some \(R\neq\EQ\).  Since the model satisfies the universal formulas in \(t\), this would put \(R\) in \(\Safe(t,t)\).  Thus
+\[
+  \Safe(t,t)\cap(\Rel\setminus\{\EQ\})=\varnothing
+\]
+implies at most one realization of \(t\).
+
+\textbf{Missing syntactic part.}  The certificate must define core identities, not merely core types.  Every reference to a unique type must point to the same core occurrence, and every pattern network involving that occurrence must agree.  The prose says this, but Q4' reachability does not explicitly say how core rows and core pair states are seeded and transported.
+
+\textbf{Classification.}  \cert{Gap}, mostly subsumed by F2 but important enough to state separately.
+\end{finding}
+
+\begin{finding}{F8}{Low/sound: uniformization is not used by soundness}
+\textbf{Location.}  Round-16 Section 4.
+
+\textbf{Assessment.}  The uniformization lemma is needed for extraction from a true model: the model supplies relations per instance, while Q4' needs a value per finite state.  I see no hidden use of this lemma in certificate-to-model soundness.  Soundness only requires that a certificate already provides steering functions satisfying S1--S4 on the reachable states.
+
+The risk of failed uniformization is therefore over-rejection: satisfiable concepts might lack a valid finite certificate of this form.  It is not a false-acceptance mechanism unless the reachability set itself is under-approximated.
+
+\textbf{Classification.}  \cert{Sound} delimitation for uniformization, with the caveat that F1--F3 are separate soundness obligations.
+\end{finding}
+
+\section{Triangle taxonomy audit}
+
+Assume the strengthened invariant that the fixed point contains every operational singleton state and every operational ordered pair state with the correct realized mutual value at each gluing.  Also assume that every old member of a new pattern, including core references, lies in the separator.  Under these assumptions, the delta's four triangle classes are exhaustive.
+
+At a gluing step, every element in a new triangle is old/ambient or fresh.  If at least one member is fresh, there are exactly four cases:
+\begin{enumerate}[label=(\arabic*)]
+  \item old--separator--fresh: S1 applies;
+  \item old--old--fresh: S4 applies;
+  \item old--fresh--fresh: S3 applies;
+  \item fresh--fresh--fresh: the pattern network is already closed.
+\end{enumerate}
+Old--old--old triangles are inherited from the induction invariant.  Co-patterned separator--fresh values are preserved because if the separator member is \(s\), then the row component for \(s\) against itself is \(\EQ\), and S1 forces the pattern value through \(\Comp(\EQ,N_k(s,b))=\{N_k(s,b)\}\).
+
+The RCC5 table also supports checking a single oriented composition condition per unordered triangle, provided the orientation is fixed.  The script in Appendix~\ref{app:finite-check} exhaustively verifies the converse closure of the composition table and the equivalence of the three cyclic/converse triangle orientations.
+
+Thus I do not see a missing triangle class.  The vulnerability is whether S4 is being checked on every pair state that can actually occur.
+
+\section{Open-part delimitation}
+
+The manuscripts correctly identify uniformization as an open completeness obligation.  State-uniform steering asks that two ambient occurrences with the same finite state at a gluing can be assigned the same row to fresh members without loss of satisfiability.  The delta reports that the naive state granularity fails on a small percentage of random jointly realizable instances; this is precisely a certificate-extraction problem.
+
+However, the soundness delimitations should be tightened.  The delta's invalidation list includes the possibility that the reachability fixed point is wrong and that core sharing is the suspect mechanism.  In this review, that item is promoted from ``possible invalidator'' to ``unproved lemma required by the theorem.''  The soundness theorem should not be called fully proved until the operational fixed-point invariant, ordered-pair transport, and core-interface equality are stated and proved.
+
+\section{Other checks found sound}
+
+\subsection{RCC5 fold lattice and finite algebra}
+I re-derived the fold lattice from the base RCC5 composition table.  The reachable nonempty folds over non-\EQ{} atoms are exactly the following ten sets:
+\[
+\begin{gathered}
+\{\DR\},\{\PO\},\{\PP\},\{\PPI\},\{\PO,\PP\},\{\PO,\PPI\},\\
+\{\DR,\PO,\PP\},\{\DR,\PO,\PPI\},\{\EQ,\PO,\PP,\PPI\},\{\DR,\EQ,\PO,\PP,\PPI\}.
+\end{gathered}
+\]
+This matches the round-15 ten-set claim.  The steering toolkit facts also check out:
+\[
+\DR\in\Comp(W,\DR)\quad\text{for every } W\in\Rel,
+\]
+\[
+\{\DR,\PO\}\subseteq\Comp(a,b)\quad\text{for }a,b\in\{\DR,\PO\},
+\]
+\[
+\Comp(\PP,\PP)=\{\PP\},\qquad \Comp(\PPI,\PPI)=\{\PPI\},
+\]
+and every composition cell containing \EQ{}, other than \(\Comp(\EQ,\EQ)\), also contains \(\PP,\PPI,\PO\).
+
+\subsection{One-step existential fulfilment}
+After the delta's Q2 wording repair, there is no parity/liveness issue for soundness.  Every existential demand is fulfilled by an actual pattern edge in the same pattern or in one adjacent pattern.  The remaining issue is only whether the certificate stores the choice if determinism is advertised.
+
+\subsection{Truth lemma once completion exists}
+The universal case is sound once Theorem 3.1 has produced a total closed relation.  Every pair is either co-patterned, in which case the pattern edge is a safe link, or f-generated, in which case S2 gives safety.  Thus if \(\forall R.D\in\tp(x)\) and \(\rho(x,y)=R\), the definition of safe link forces \(D\in\tp(y)\).
+
+\subsection{Strong equality}
+Strong equality is sound conditional on exact occurrence identity and on f-generated off-pattern values never being \EQ{}.  S2 excludes \EQ{} for f-generated values, and pattern networks require \EQ{} only on the diagonal.  The remaining obligation is to ensure that core sharing and overlap identity are exact occurrence identity, not typed equality quotienting.
+
+\section{Required repairs before acceptance of the soundness theorem}
+
+I would require the following changes before accepting the soundness theorem as fully proved.
+\begin{enumerate}[label=R\arabic*.]
+  \item Replace the prose fixed point in Definition 2.3 by an explicit finite transition system.  It should separately define singleton states and ordered pair states.
+  \item Add an ordered-pair transport rule through each gluing: if singleton states update by restriction plus f-values, then pair states update in lockstep while preserving their realized mutual value.
+  \item Prove the operational inclusion invariant:
+  \[
+    \text{actual singleton and ordered pair states in every partial unfolding}
+    \subseteq
+    \text{computed reachable states}.
+  \]
+  \item State that every old occurrence appearing in the new pattern is exactly in the separator, including all core references:
+  \[
+    V_k\cap U_m=\sigma.
+  \]
+  \item Make pair-state orientation explicit.  The certificate should store \((\varsigma,\varsigma',W)\), not an unordered pair with an informal mutual value.
+  \item Either store Q2 witness choices or weaken the statement that the whole construction is deterministic.
+\end{enumerate}
+
+With these changes, I would regard the intended soundness argument as very likely correct.  Without them, the text is a strong proof sketch rather than a fully certified proof.
+
+\appendix
+
+\section{Finite RCC5 algebra check}\label{app:finite-check}
+
+The following script is a runnable check for every finite fact used in this report: converse closure of the RCC5 composition table, one-orientation triangle equivalence, the ten reachable folds, and the steering toolkit facts.  It is independent of the manuscripts' machine checks, except that it uses the same standard RCC5 composition table.
+
+\begin{lstlisting}[style=reviewpython]
+REL = ("EQ", "PP", "PPI", "PO", "DR")
+conv = {"EQ": "EQ", "PP": "PPI", "PPI": "PP", "PO": "PO", "DR": "DR"}
+
+Comp = {
+    "EQ":  {"EQ": {"EQ"}, "PP": {"PP"}, "PPI": {"PPI"},
+             "PO": {"PO"}, "DR": {"DR"}},
+    "PP":  {"EQ": {"PP"}, "PP": {"PP"}, "PPI": set(REL),
+             "PO": {"PP", "PO", "DR"}, "DR": {"DR"}},
+    "PPI": {"EQ": {"PPI"}, "PP": {"EQ", "PP", "PPI", "PO"},
+             "PPI": {"PPI"}, "PO": {"PPI", "PO"},
+             "DR": {"PPI", "PO", "DR"}},
+    "PO":  {"EQ": {"PO"}, "PP": {"PP", "PO"},
+             "PPI": {"PPI", "PO", "DR"}, "PO": set(REL),
+             "DR": {"PPI", "PO", "DR"}},
+    "DR":  {"EQ": {"DR"}, "PP": {"PP", "PO", "DR"},
+             "PPI": {"DR"}, "PO": {"PP", "PO", "DR"},
+             "DR": set(REL)},
+}
+Comp = {a: {b: frozenset(v) for b, v in row.items()} for a, row in Comp.items()}
+
+
+def comp_set(A, B):
+    out = set()
+    for a in A:
+        for b in B:
+            out |= set(Comp[a][b])
+    return frozenset(out)
+
+
+# Converse closure of the composition table.
+for a in REL:
+    for b in REL:
+        lhs = {conv[c] for c in Comp[a][b]}
+        rhs = set(Comp[conv[b]][conv[a]])
+        assert lhs == rhs, (a, b, lhs, rhs)
+
+# One oriented triangle check implies the cyclic/converse orientations.
+for a in REL:
+    for b in REL:
+        for c in REL:
+            ok = c in Comp[a][b]
+            assert ok == (a in Comp[c][conv[b]])
+            assert ok == (b in Comp[conv[a]][c])
+
+# Fold lattice over nonempty words on non-EQ atoms.
+atoms = ("PP", "PPI", "PO", "DR")
+folds = {frozenset([a]) for a in atoms}
+changed = True
+while changed:
+    changed = False
+    for F in list(folds):
+        for a in atoms:
+            G = comp_set(F, frozenset([a]))
+            if G not in folds:
+                folds.add(G)
+                changed = True
+
+print("fold count:", len(folds))
+for F in sorted(folds, key=lambda x: (len(x), sorted(x))):
+    print("{" + ",".join(sorted(F)) + "}")
+
+assert len(folds) == 10
+assert all(len(F) == 1 or ("DR" in F or "PO" in F) for F in folds)
+assert {frozenset(["PO", "PP"]),
+        frozenset(["PO", "PPI"]),
+        frozenset(["EQ", "PO", "PP", "PPI"])} == {
+            F for F in folds if len(F) > 1 and "DR" not in F
+        }
+
+# Steering toolkit.
+assert all("DR" in Comp[w]["DR"] for w in REL)
+assert all({"DR", "PO"} <= set(Comp[a][b])
+           for a in ("DR", "PO") for b in ("DR", "PO"))
+assert Comp["PP"]["PP"] == frozenset(["PP"])
+assert Comp["PPI"]["PPI"] == frozenset(["PPI"])
+
+for a in REL:
+    for b in REL:
+        if (a, b) != ("EQ", "EQ") and "EQ" in Comp[a][b]:
+            assert {"PP", "PPI", "PO"} <= set(Comp[a][b])
+
+print("PASS")
+\end{lstlisting}
+
+\section{Minimal formal pair-transport rule}
+
+For clarity, here is the transition rule I would add to Definition 2.3.  For each gluing edge \(g\), let \(T_g\) be the singleton-state transition induced by restriction to the continued separator and extension by the certified row \(f_g\).  If \((\varsigma,\varsigma',W)\) is a reachable ordered pair state before crossing \(g\), and both singleton transitions are defined, then add
+\[
+  (T_g(\varsigma),T_g(\varsigma'),W)
+\]
+to the reachable ordered pair states after crossing \(g\).  If a new fresh member \(b\) is created and \(f_g(\varsigma)(b)=V\), add the ordered old--fresh pair state with mutual value \(V\) and its converse with mutual value \(V^{-1}\).  Seed all co-patterned ordered pairs from the pattern network.  Iterate these clauses to a least fixed point over the finite state alphabet.
+
+This rule is not intended as the only possible formalization, but some equivalent transport principle is necessary for the S4 check used in the old--old--fresh triangle class.
+
+\section{Report status}
+
+This report is a read-through adversarial review plus a finite computation-in-principle check of the RCC5 algebra.  It does not mechanize the full fixed point, the core sharing invariant, or the width recurrence.  Those are precisely the proof obligations identified above.
+
+\begin{thebibliography}{9}
+\bibitem{round15}
+Claude (Fable 5, Anthropic).  \emph{Cluster Quasimodels for \ALCIRCC{}: a Round-15 Decision Layer without Automata}.  12 July 2026.
+
+\bibitem{round16}
+Claude (Fable 5, Anthropic).  \emph{Certified Joint Steering for Cluster Quasimodels: the Round-16 Repair of the Round-15 Decision Layer}.  13 July 2026.
+
+\bibitem{base}
+Consolidated proof manuscript.  \emph{Decidability of \ALCIRCC{} via Saturated Split Forests, Patchwork Bags, and Two-Way Parity Automata}.  31 May 2026.
+
+\bibitem{renznebel}
+J. Renz and B. Nebel.  On the complexity of qualitative spatial reasoning.  \emph{Artificial Intelligence} 108, 1999.
+\end{thebibliography}
+
+\end{document}

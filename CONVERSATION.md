@@ -6940,3 +6940,25 @@ milestone worth recording: Definitions 3.2–3.4 are literally in transition-sys
 form — the Lean mechanization of Theorem 3.1 and the canonical completion is now
 transcription rather than research, which was the point of the last three rounds.
 Docs updated; pushed. Status: **strongly supported, NOT certified**.
+
+## 2026-07-13 (after round-17): the twelfth-review packet for GPT-5.5
+
+Built `papers/fable5_round17/gpt_task_round17_review.zip` (27 files). Framing: an
+**acceptance test against the eleventh review's own work order** — the 11th
+reviewer conditioned acceptance of the soundness argument on R1–R6; round-17
+claims to implement them; the highest-value question is whether each item is
+discharged *as intended, not nominally* (Part I: itemized acceptance table, with
+specific traps flagged per item — e.g., R2: pairs born in different branches, and
+transport when one member re-enters a separator; R3: the compressed
+"T composed along the corresponding path" step; R4: whether N1 is
+certificate-level or run-level). Part II: the new attack surface — Y1 (the
+manuscript's own designated risk: can Theorem-A presentations always be arranged
+with σ ⊆ parent ∪ core, or do overlap amalgams force cross-branch sharing of
+non-core occurrences?), Y2 (no-overwrite under exotic declarations — incl.
+whether gluing coherence compares against f-generated values), Y3 (is the safety
+signature a function of the other state components?), Y4 (general). Part III
+(optional, if I–II find nothing fatal): F6 width derivation and W2′
+uniformization as round-18 material. Packet includes the 11th review under
+`workorder/` (it IS the acceptance criterion), all four manuscripts, wp26/28/29/30
+with outputs, the tableau oracle, and an optional cold first pass. Docs updated;
+pushed.

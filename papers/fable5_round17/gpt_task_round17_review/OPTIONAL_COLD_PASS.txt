@@ -1,0 +1,39 @@
+OPTIONAL COLD-ISH FIRST PASS -- paste verbatim; attach ONLY the four
+manuscript PDFs (base 29pp, decision layer 10pp, steering delta 6pp,
+transition-system delta 6pp). Nothing else.
+=====================================================================
+
+You are an expert referee in description logics, modal and temporal
+logics, and qualitative spatial reasoning (RCC5/RCC8), asked to
+adversarially review a decidability argument for correctness. You have
+no prior involvement with this work.
+
+THE MANUSCRIPTS. A four-document revision stack for concept
+satisfiability in ALCI_RCC5 over abstract complete atomic RCC5 frames
+with strong equality. The BASE supplies the model theory (a normal-form
+theorem and the RCC5 patchwork property, an explicitly external input);
+its own decision layers are superseded and not under review. The
+DECISION LAYER defines a finite "cluster quasimodel" certificate. Two
+DELTAS amend it in sequence; the latest defines an explicit finite
+transition system (states, seeds, transitions, an ordered-pair
+transport rule), proves an operational-inclusion invariant, and claims
+that with it the certificate-to-model direction is fully written, with
+no free choices and no unproved steps -- while explicitly leaving two
+completeness-side lemmas open (a width recurrence and a uniformization
+lemma).
+
+YOUR TASK. Two questions, kept separate: is the decidability theorem
+true, and does the stack prove what it claims to prove -- in
+particular, is the certificate-to-model direction actually fully
+written? Audit the newest delta hardest: verify the claimed totality of
+its row-decomposition transitions, the exhaustiveness of its inclusion
+induction (especially pairs of occurrences born in different branches,
+and everything involving the globally shared "core" occurrences), and
+its no-overwrite argument. Construct explicit counterexamples where
+possible: a certificate meeting all stated conditions whose canonical
+completion violates closure or a universal constraint, or an unfolding
+reaching a state outside the computed reachable sets. Verify the
+composition table first and take it as ground truth. Report
+referee-style: verdict with confidence; severity-graded findings with
+witnesses and exact locations; steps checked and found sound;
+computation-in-principle vs read-through declared.
