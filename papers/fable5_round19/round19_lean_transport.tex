@@ -1,0 +1,159 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Round-19: the Transport Layer in Lean\\
+\large The normative artifact is \code{formal/Round19Transport.lean};
+this document is commentary}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-19 of the
+$\ALCIRCC$ decidability project.  Ledger going in: thirteen reviews ---
+twelve defects with witnesses, one no-counterexample verdict.  Defects
+\#10--\#12 were all divergences between prose renditions of total
+recursive definitions and their intended executable semantics; this
+round eliminates the medium in which that defect class lives.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Round 19 changes the medium.  The certificate transport layer --- the
+operational unfolding and the thirteenth review's source-oriented
+update U1--U5 --- is now \emph{defined} in Lean~4 (core, no
+dependencies): \code{formal/Round19Transport.lean}, 390 lines, one
+intentional \code{sorry}.  Totality of the update is
+compiler-checked; the canonical order is definitional (a certificate's
+attachments are a list); and the thirteenth review's witnesses are
+kernel-checked theorems --- including \code{defect12\_written\_gap},
+which renders defect \#12 itself as a theorem: round-18's written
+case split provably fires no clause on the co-birth pair.  The single
+\code{sorry} is the characterization obligation
+\code{uSource\_eq\_frame} --- the exact statement that prose failed to
+render correctly in rounds 17 and 18, now fixed and unambiguous.  A
+mirror harness (WP34) cross-checks a Python transcription of the Lean
+definitions against the operational fold on random certificates whose
+slot targets range over arbitrary born occurrences (the geometry class
+of defects \#11--\#12): 14{,}338 pairs, zero mismatches, deterministic
+by construction.  The round's thesis was demonstrated during its own
+development: the mirror caught three definitional defects in the Lean
+artifact (a padding inconsistency between the update and the row
+reader; core-targeting slots duplicating an occurrence inside one
+pattern --- now a wellformedness clause; an insufficient fuel bound)
+before any reviewer saw them.  Status: \emph{strongly supported, not
+certified}.
+\end{abstract}
+
+\section{What is kernel-checked today}
+
+From \code{Round19Transport.lean}, checked by the Lean kernel on every
+build:
+\begin{itemize}[leftmargin=2em]
+\item all finite composition-table facts the rounds have leaned on:
+converse involution and closure, one-orientation triangle equivalence,
+horizontal absorption, vertical transitivity, DR-column absorption,
+EQ-never-forced, and the S4 pin $\mathrm{comp}(PP,DR)=\{DR\}$;
+\item \code{defect12\_written\_gap}: round-18's written four-case
+split, encoded as the Option-valued \code{writtenU18}, returns
+\code{none} on the thirteenth review's co-birth witness --- the defect
+as a theorem;
+\item \code{repair\_covers\_cobirth} and
+\code{repair\_matches\_frame\_on\_witnessA}: the source-oriented
+\code{uSource} returns the birth-pattern value on that witness and
+agrees with the operational frame;
+\item \code{witnessB\_source\_is\_birth\_step}: the mis-source witness
+--- the value is sourced at the separator occurrence's \emph{birth}
+step, and that occurrence provably enters the later copy through a
+slot, not as fresh;
+\item totality of \code{uSource} --- not a theorem but a property of
+the artifact: the compiler accepts the definition only if every case
+is covered;
+\item canonical-order determinism --- definitional: a certificate's
+attachments are a \code{List Step}, and the operational frame is a
+fold over it.  The thirteenth review's cure for the false
+order-invariance lemma is thereby built into the type.
+\end{itemize}
+
+\section{The single \code{sorry}, and the obligation stack}
+
+\code{uSource\_eq\_frame}: on wellformed certificates, for all distinct
+existing occurrences (excluding core--core pairs, which live in the
+core net), the operational frame value equals \code{uSource}.  This is
+the statement whose prose renditions produced defects \#11 and \#12;
+it can no longer drift, because both sides of the equation are the
+definitions above.  The adjacent stated obligations: fuel adequacy
+(the recursion depth bound $2\cdot\mathrm{steps}+2$, argued in a
+comment, to be proved); completeness of the \code{Wellformed}
+predicate against Theorem-A extraction; and above this layer, the
+round-16 S-conditions, canonical completion, and inclusion theorem ---
+the round-20 Lean work.  Below it, the standing completeness
+mathematics (F6 width budgets, W2$'$ uniformization) is untouched.
+
+\section{The development log as evidence}
+
+The mirror harness (WP34) computes every pair value twice --- a Python
+transcription of \code{uSource} against a Python transcription of the
+operational fold --- on random certificates with slot targets ranging
+over arbitrary born occurrences, including inherited members of
+non-parent copies: exactly where defects \#11 and \#12 lived.  During
+development it caught, in order: (i) \code{uSourceFuel} padded
+out-of-range slot indices with the value-to-core while the row reader
+padded with $DR$ --- a genuine definitional inconsistency, fixed by
+aligning the paddings; (ii) slots targeting core occurrences give one
+occurrence two ports in one pattern with potentially disagreeing net
+columns --- now excluded by the \code{Wellformed} clause (core is
+threaded through its dedicated ports, per N3); (iii) the initial fuel
+bound $\mathrm{steps}+1$ was insufficient for deep steering chains ---
+corrected to $2\cdot\mathrm{steps}+4$ with the depth argument.  In the
+prose era each of these would have been a referee finding; in this
+round they were caught by the toolchain before review.  Final state:
+200 certificates, 663 inherited-member slot targets, 14{,}338 pairs,
+zero mismatches; the negative steering control is deterministic (no
+salted hash) and fires; the result digest is hash-seed stable.
+
+\section{Response map to the thirteenth review}
+
+\begin{center}
+\begin{tabular}{p{0.22\linewidth}p{0.70\linewidth}}
+\toprule
+U1--U5 (source-oriented) & The clauses of \code{uSourceFuel}: core
+row; birth-pattern of the separator occurrence's copy (covering
+co-birth); steering recorded at the separator occurrence's birth; the
+birth flip, with the in-copy/steered split.  Total by construction.\\
+Order invariance $\to$ canonical order & Definitional: certificates
+are step lists; the false lemma is not restated.\\
+WP literalization & WP34: the Python rule engine is a transcription of
+the Lean definitions; slot targets arbitrary born occurrences;
+deterministic negative control; digest stable across hash seeds.\\
+17.4 syntax & \code{Wellformed}: targets pre-exist, are born (not
+core), pairwise distinct; template indices valid.\\
+Core overlap (17.5-adjacent) & \code{uSource} gives core columns a
+single source (the birth pattern's core ports), removing the
+overlap ambiguity noted in review.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{What would invalidate this round, and status}
+
+(V1) A wellformed certificate on which \code{uSource\_eq\_frame} fails
+--- WP34 searched the inherited-member class without finding one, and
+any such example would now be a concrete Lean disproof target rather
+than a prose dispute.  (V2) An extraction-side need for certificate
+shapes outside \code{Wellformed} (core-targeting slots, non-injective
+maps) --- each exclusion is documented with its failure mode.  (V3)
+The standing completeness items F6 and W2$'$, and the single external
+input (the RCC5 patchwork property).  Ledger: thirteen reviews ---
+twelve defects with witnesses, one no-counterexample.  This round is
+unreviewed; its natural review is different in kind: attack the Lean
+statements, or prove the \code{sorry}.  The decidability theorem for
+$\ALCIRCC$ remains \textbf{strongly supported, not certified}.
+
+\end{document}

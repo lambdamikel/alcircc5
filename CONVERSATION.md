@@ -7157,3 +7157,45 @@ attack, while prose renditions of total recursive definitions keep failing. The
 strongest conclusion of thirteen reviews: **round-19 should be authored as the
 Lean definitions**, where the definition IS the artifact and no text/code gap
 can exist. Docs updated; pushed. Status: **strongly supported, NOT certified**.
+
+## 2026-07-13 — Round-19: the transport layer moves to Lean (the medium change)
+
+Approved with "go ahead. I hope we are converging to something...". Round-19
+executes the thirteen-review meta-lesson literally: since defects #10–#12 were
+all prose-vs-code divergences, the normative definitions now live where that
+gap cannot exist. **`formal/Round19Transport.lean`** (Lean 4 core, no mathlib,
+~390 lines) is the artifact; the 3pp companion
+(`papers/fable5_round19/round19_lean_transport.tex`) is commentary.
+
+What the kernel checks on every build: the finite composition facts (converse
+involution/closure, triangle-orientation equivalence, horizontal absorption,
+vertical transitivity, DR-column absorption, EQ-never-forced, the S4 pin);
+**`defect12_written_gap` — defect #12 as a theorem** (`writtenU18` fires no
+clause on the co-birth pair); the source-oriented repair's coverage and
+frame-agreement on both thirteenth-review witnesses; totality of `uSource`
+(compiler-enforced); canonical-order determinism (definitional — certificates
+are step lists, so the false order-invariance lemma is replaced by
+construction). The **single intentional `sorry`** is `uSource_eq_frame`: the
+characterization statement prose botched in rounds 17 and 18, now pinned as a
+Lean proposition. Round-20 = prove it (plus fuel adequacy), then port the
+S-layer.
+
+WP34 mirrors the Lean definitions in Python and cross-checks `uSource` against
+the operational fold on 200 random certificates whose slot targets range over
+arbitrary born occurrences — the defect-#11/#12 geometry: **14,338 pairs, 0
+mismatches**, deterministic negative control (115/120), hash-stable digest.
+
+**The round's thesis was demonstrated during its own development.** The mirror
+caught three definitional defects in the Lean artifact before any reviewer saw
+them: (i) a padding inconsistency between `uSourceFuel` and the row reader;
+(ii) core-targeting slots duplicating an occurrence inside one pattern — now a
+`Wellformed` clause (slot targets must be *born*; core threads through its
+dedicated ports); (iii) an insufficient fuel bound (steps+1 → 2·steps+4, with
+the depth argument). In the prose era each would have been a referee finding.
+That is the honest, measurable form of "converging": the dominant defect class
+of the last three reviews is now caught by the toolchain pre-review, and what
+remains is one named proof obligation plus the standing mathematics (F6, W2′).
+
+Ledger unchanged: 13 reviews — 12 defects-with-witness, 1 no-counterexample;
+round-19 unreviewed (its natural review: attack the Lean statements, or prove
+the sorry). Status: **strongly supported, NOT certified**.

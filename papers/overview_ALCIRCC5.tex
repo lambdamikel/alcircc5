@@ -2263,6 +2263,40 @@ zero mathematical ones, is that the next round should be written in a
 proof assistant, where the definition and the artifact cannot diverge.
 Status unchanged: \emph{strongly supported, not certified}.
 
+\paragraph{Round 19 (July 2026): the transport layer moves to Lean.}
+Round 19 executes that meta-lesson literally.  The certificate transport
+layer --- the operational unfolding and the thirteenth review's
+source-oriented update --- is now \emph{defined} in Lean~4 (core
+language, no libraries): the file \texttt{formal/Round19Transport.lean}
+is the normative artifact, and the accompanying paper is commentary on
+it.  Totality of the update, the exact property whose prose renditions
+failed in rounds 17 and 18, is enforced by the compiler: the definition
+is accepted only if every case is covered.  Canonical-order determinism
+is definitional --- a certificate's attachments are a list, so the
+refuted invariance lemma is not restated but replaced by construction.
+The kernel checks, on every build, the finite composition facts the
+argument leans on (among them
+$\comp(\PP,\DR)=\{\DR\}$ and horizontal absorption), and --- notably ---
+the thirteenth review's own findings as theorems: the round-18 case
+split provably fires no clause on the co-birth witness, and the repaired
+update provably agrees with the operationally unfolded frame on both
+witnesses.  A mirror harness cross-checks a Python transcription of the
+Lean definitions against the operational fold on random certificates
+whose attachment targets range over arbitrary inherited members ---
+precisely the geometry of the last two defects --- with fourteen
+thousand pairs and no disagreement.  One proof obligation is stated and
+deliberately left open (the single \texttt{sorry}): that the update
+characterizes the unfolded frame on all wellformed certificates ---
+the statement itself can no longer drift, and proving it is round 20.
+During development the mirror caught three definitional defects in the
+Lean file before any reviewer saw them (a padding inconsistency, a
+duplicated-occurrence configuration now excluded by a wellformedness
+clause, an insufficient recursion bound) --- the dominant defect class
+of the last three reviews, now caught by the toolchain instead of the
+referee.  Round 19 is unreviewed; its natural review is different in
+kind: attack the Lean statements, or prove the \texttt{sorry}.  Status
+unchanged: \emph{strongly supported, not certified}.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the

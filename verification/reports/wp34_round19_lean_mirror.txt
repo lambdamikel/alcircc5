@@ -1,0 +1,8 @@
+WP34 -- Round-19 harness: the Lean-mirrored source-oriented update
+======================================================================
+A. Lean build of formal/Round19Transport.lean: returncode=0, intentional sorries=1 (expected exactly 1: uSource_eq_frame) (PASS -- definitions total by construction; witness theorems kernel-checked)
+B. Lean-mirror uSource vs operational fold: 200 random certificates (slot targets over ARBITRARY pre-existing occurrences; 663 born-occurrence targets sampled), 14338 pairs checked, 0 mismatches (PASS -- the sorry-d obligation holds empirically)
+D. determinism digest: 66fd4a6bd2099e73 (stable across PYTHONHASHSEED)
+C. deterministic adversarial control: 115/120 frames non-closed (PASS -- control fires, no salted hash)
+======================================================================
+WP34 OVERALL: PASS
