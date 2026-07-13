@@ -6878,3 +6878,65 @@ unchanged: **strongly supported, NOT certified**. Standing deeper items: F6
 either a third-lineage cold pass or mechanization — the reviewer's own R1
 ("replace the prose fixed point by an explicit finite transition system") is
 simultaneously the first step of a Lean formalization.
+
+## 2026-07-13 (round-17): the explicit transition system — the eleventh review's work order implemented
+
+Round-17 (`papers/fable5_round17/cluster_quasimodels_round17_transition_system.tex/
+.pdf`, 6pp, compiles clean) implements R1–R6. The load-bearing pieces:
+
+**(Q3′) The gluing normal form (R4).** Three conditions, stated as certificate
+requirements and *used* in the proofs: N1 `V_k ∩ U = σ_g` (every pre-existing
+member of a new copy is in the separator — the F2 double-source failure mode is
+excluded by definition, with the reviewer's own S1-forces-pattern-value check
+retained as a remark); N2 `σ_g ⊆ parent-copy ∪ core`; N3 `core ⊆ σ_g` at every
+gluing (core references are permanent interface members).
+
+**(R1/R5) The explicit system.** Singleton states = (type, persistent core row,
+separator row, safety signature) — the core row is set at birth (N3 puts the core
+in every birth pattern) and never changes (no-overwrite + continued core).
+Transitions are a **total three-case row decomposition**: a child separator member
+is continued (keep the entry), parent-fresh (take the f-value), or core (take the
+persistent entry) — exhaustive precisely because of N2+N3. Ordered pair states
+(ς, ς′, W) with simultaneous converses; seeds = co-patterned pairs; creation =
+(ambient state, birth state, f-value); **(R2) transport** = the reviewer's
+Appendix-B rule verbatim in substance: (ς,ς′,W) ↦ (T(ς),T(ς′),W), justified by a
+**no-overwrite lemma** (every pair's value is assigned exactly once — N1 plus
+gluing coherence).
+
+**(R3) The operational-inclusion invariant, proved** (Thm 3.1): by induction on
+the unfolding — ambient singleton states update exactly by T (the three-case
+argument, using N1 to know the parent-fresh values were steering values), fresh
+states are seeds, pre-existing pairs transport with W unchanged, ambient-fresh
+pairs are creations, in-copy pairs are co-patterned seeds; the core cases are
+instances, not exceptions (core-core and core-fresh co-patterned at every step by
+N3; core-ambient born co-patterned at the ambient's birth, transported
+thereafter). Corollary: round-16's (S4) is checked on every operational pair with
+its *current* states and realized mutual value — the canonical-completion theorem
+stands on the explicit system.
+
+**(R6/Q2′)** the stored witness map w(k, a, ∃R.D): the canonical unfolding is now
+a *function of the certificate* — the determinism claim is exact (F4 resolved).
+
+**WP30** (all PASS): the transition system implemented executably (synthetic
+level: rows/cores/transport/orientation; types and safety ride along
+identically). A: 120 random catalogues with shared cores × 10 random unfoldings =
+1,200 simulations — zero containment failures for singleton states and ordered
+pairs. B: recomputing the fixed point *without* transport leaves actual
+transported pairs uncovered in **83/83** catalogues that have them — F1 confirmed
+at scale; the transport rule is not optional bookkeeping. C: when the canonical
+steering satisfies S4 on the computed pairs, all simulated unfoldings are closed
+atomic frames (100/100).
+
+**Where this leaves the project.** By the eleventh reviewer's stated criterion
+("with these changes I would regard the intended soundness argument as very
+likely correct"), the soundness half of the decision layer is now fully written:
+explicit finite system, proved inclusion invariant, no free choices, machine
+checks at every finite joint. Round-17 is UNREVIEWED (presume the next finding —
+the designated risks are Y1: a satisfiable concept whose presentations cannot be
+arranged in the gluing normal form, i.e. N2's parent-plus-core separator shape;
+Y2: no-overwrite under exotic declarations). Open on the completeness side,
+unchanged: F6 (width budgets) and W2′ (uniformization). And a structural
+milestone worth recording: Definitions 3.2–3.4 are literally in transition-system
+form — the Lean mechanization of Theorem 3.1 and the canonical completion is now
+transcription rather than research, which was the point of the last three rounds.
+Docs updated; pushed. Status: **strongly supported, NOT certified**.

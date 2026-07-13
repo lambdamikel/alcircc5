@@ -1,0 +1,8 @@
+WP30 -- Executable transition system for the round-17 repairs R1-R6
+======================================================================
+Part A (R3 inclusion): 120 random catalogues x 10 simulations each; containment failures: 0 (PASS)
+Part B (R2 load-bearing): 69/69 catalogues with transported pairs NOT covered by a birth-only fixed point (PASS -- transport is necessary, confirming F1)
+Part C (S4 => closure): 100 catalogues with S4-valid canonical steering; closure failures in simulation: 0 (PASS)
+        control (S4-violating steering): 0/0 show closure failures (n/a -- none sampled)
+======================================================================
+WP30 OVERALL: PASS

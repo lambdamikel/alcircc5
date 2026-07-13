@@ -96,6 +96,13 @@ Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
 
+### `python/wp30_round17_transition_system.py` — WP30: the round-17 explicit transition system, executed
+
+Companion to [`papers/fable5_round17/`](../papers/fable5_round17/) (the eleventh review's R1–R6 implemented). Implements the singleton/ordered-pair transition system executably — persistent core rows, the total three-case row decomposition (continued / parent-fresh / core), pair creation, and the reviewer's **transport rule** — and machine-checks the **operational-inclusion invariant (R3)**: on 120 random catalogues with shared cores, 10 random unfoldings each (**1,200 simulations**), every actual singleton state and every actual ordered pair with its realized mutual value lies in the computed reachable sets — **zero containment failures**. Negative control (R2 is load-bearing): a birth-only fixed point (no transport) misses actual transported pairs in **83/83** catalogues that have them — the eleventh review's F1 confirmed at scale. Part C: S4-valid canonical steering ⟹ all simulated unfoldings are closed atomic frames (100/100).
+
+Run: `python3 python/wp30_round17_transition_system.py`
+Report: [`reports/wp30_round17_transition_system.txt`](reports/wp30_round17_transition_system.txt)
+
 ### `python/wp29_review11_finite_checks.py` — WP29: the eleventh review's independent finite-algebra checks
 
 Shipped by the **eleventh review** (cold, fresh GPT-5.5; the first of eleven reviews to find no counterexample) and reproduced byte-identical. Checks, independently of all prior WP scripts: converse closure of the RCC5 composition table; the equivalence of the three cyclic/converse triangle orientations (licensing one-orientation closure checking); an independent re-derivation of the **10-set fold lattice** (matches WP26 exactly); and the steering toolkit facts. All PASS.
