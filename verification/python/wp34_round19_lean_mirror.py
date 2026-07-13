@@ -21,6 +21,11 @@ file -- SCond (the manuscripts' S4 on certificate-computable values)
 implies the unfolded frame is composition-closed, converse-coherent
 and EQ-free (frame_closed / frame_conv / frame_proper); the WP32
 Part-C adversarial control is now the kernel-checked certD pair.
+ROUND 22 (2026-07-13): the catalogue level -- SCat states the
+S-condition on (coreNet, templates, f) alone over enumerated abstract
+rows; scat_scond proves SCat + pattern faithfulness imply SCond for
+every faithful unfolding (one finite check, unboundedly many step
+lists); certD's catalogue check provably fails at the reachable row.
 Part A below re-verifies all of it on every run.
 This harness:
 
@@ -72,8 +77,9 @@ def part_a():
         r.stderr.count('declaration uses `sorry`')
     ok = r.returncode == 0 and sorries == 0
     verdict = ('PASS -- zero sorries: uSource_eq_frame + fuel adequacy '
-               '(round-20) and the S-layer closure theorems (round-21) '
-               'are kernel-checked') \
+               '(round-20), the S-layer closure theorems (round-21) and '
+               'the catalogue-level scat_scond (round-22) are '
+               'kernel-checked') \
         if ok else 'FAIL'
     print(f"A. Lean build of formal/Round19Transport.lean: "
           f"returncode={r.returncode}, sorries={sorries} "

@@ -61,6 +61,21 @@ Content:
      Part-C control as a theorem) whose S-condition provably fails at
      the comp(DR,PO)-pinned triangle and whose frame provably breaks
      closure exactly there.
+  9. Round-22 (2026-07-13): the catalogue level.  `SCat` states the
+     S-condition on `(coreNet, templates, f)` ALONE — abstract
+     enumerated rows replace occurrences, so the check is independent
+     of the step count — and `scat_scond` proves that `SCat` plus
+     pattern faithfulness (`Faithful`, the thirteenth review's
+     parent-pattern agreement as a per-certificate condition) yield
+     the full `SCond` for EVERY faithful unfolding: one finite check
+     certifies unboundedly many step lists.  The steered-steered case
+     is the manuscripts' joint steering (round-16 Q4′) made exact: the
+     old pair's value enters constrained through every separator
+     member by closure below the step (`fresh_tri` + the
+     `closedBelow_all` induction).  Witnesses: `certC_scat` +
+     `certC_faithful` reproduce `SCond certC` through the catalogue
+     route; `certD_scat_violated` pins the catalogue check's failure
+     to exactly the reachable row `DR` against `comp(PPI,PO)`.
 
   Round-20 provenance note: `doStep` was refactored (let-extraction
   into `memberPortsList`/`patternVals`/`steeringVals`, propositional
@@ -1832,7 +1847,8 @@ theorem mem_downgrade {C : Cert} {x : Occ}
     exact mem_existingBefore_born.mpr ⟨Nat.lt_succ_of_le (hb s j rfl), h2.2⟩
 
 /-- Converse coherence of the realized network. -/
-theorem pairVal_conv (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+theorem pairVal_conv (C : Cert) (hwf : Wellformed C)
+    (hcc : ∀ c c', C.coreNet c' c = conv (C.coreNet c c'))
     {x y : Occ} (hxy : x ≠ y)
     (hxs : ∀ s j, x = .born s j → s < C.steps.length)
     (hys : ∀ s j, y = .born s j → s < C.steps.length) :
@@ -1840,7 +1856,7 @@ theorem pairVal_conv (C : Cert) (hwf : Wellformed C) (hs : SCond C)
   cases x with
   | core c =>
     cases y with
-    | core c' => exact hs.core_conv c c'
+    | core c' => exact hcc c c'
     | born s j =>
       show uSource C (.born s j) (.core c)
         = conv (uSource C (.core c) (.born s j))
@@ -1866,21 +1882,30 @@ open Atom
 
 /-! ### The closure theorem on the realized network -/
 
+/-- The per-step triangle condition (the body of `SCond.tri` at one
+    step); round-22 derives it from the catalogue-level check. -/
+def TriAt (C : Cert) (i : Nat) : Prop :=
+  ∀ x ∈ existingBefore C (i+1), ∀ y ∈ existingBefore C (i+1),
+  ∀ jz, jz < (C.template (C.step i).tmpl).nFresh →
+  x ≠ y → x ≠ .born i jz → y ≠ .born i jz →
+  pairVal C x y ∈ comp (pairVal C x (.born i jz))
+                       (pairVal C (.born i jz) y)
+
 /-- Route 1: the fresh occurrence is the middle element. -/
-theorem route_direct {C : Cert} (hs : SCond C) {i jc : Nat}
-    (hi : i < C.steps.length)
+theorem route_direct {C : Cert} {i jc : Nat} (htri : TriAt C i)
     (hjc : jc < (C.template (C.step i).tmpl).nFresh)
     {a b : Occ} (ha : a ∈ existingBefore C (i+1))
     (hb : b ∈ existingBefore C (i+1))
     (hab : a ≠ b) (hac : a ≠ .born i jc) (hbc : b ≠ .born i jc) :
     pairVal C a b ∈ comp (pairVal C a (.born i jc))
                          (pairVal C (.born i jc) b) :=
-  hs.tri i hi a ha b hb jc hjc hab hac hbc
+  htri a ha b hb jc hjc hab hac hbc
 
 /-- Route 2: the fresh occurrence sits in the third position; rotate
     with `comp_rot1` and converse coherence. -/
-theorem route_rotb {C : Cert} (hwf : Wellformed C) (hs : SCond C)
-    {i jb : Nat} (hi : i < C.steps.length)
+theorem route_rotb {C : Cert} (hwf : Wellformed C)
+    (hcc : ∀ c c', C.coreNet c' c = conv (C.coreNet c c'))
+    {i jb : Nat} (hi : i < C.steps.length) (htri : TriAt C i)
     (hjb : jb < (C.template (C.step i).tmpl).nFresh)
     {a c : Occ} (ha : a ∈ existingBefore C (i+1))
     (hc : c ∈ existingBefore C (i+1))
@@ -1888,16 +1913,17 @@ theorem route_rotb {C : Cert} (hwf : Wellformed C) (hs : SCond C)
     (hcs : ∀ s j, c = .born s j → s < C.steps.length) :
     pairVal C a (.born i jb) ∈ comp (pairVal C a c)
                                     (pairVal C c (.born i jb)) := by
-  have h := hs.tri i hi a ha c hc jb hjb hac hab hcb
+  have h := htri a ha c hc jb hjb hac hab hcb
   have h2 := comp_rot1 _ _ _ h
   rwa [show conv (pairVal C (.born i jb) c) = pairVal C c (.born i jb) from
-    (pairVal_conv C hwf hs (fun h3 => hcb h3.symm)
+    (pairVal_conv C hwf hcc (fun h3 => hcb h3.symm)
       (fun s j h3 => by injection h3 with h4 _; omega) hcs).symm] at h2
 
 /-- Route 3: the fresh occurrence sits in the first position; rotate
     with `comp_rot2` and converse coherence. -/
-theorem route_rota {C : Cert} (hwf : Wellformed C) (hs : SCond C)
-    {i ja : Nat} (hi : i < C.steps.length)
+theorem route_rota {C : Cert} (hwf : Wellformed C)
+    (hcc : ∀ c c', C.coreNet c' c = conv (C.coreNet c c'))
+    {i ja : Nat} (hi : i < C.steps.length) (htri : TriAt C i)
     (hja : ja < (C.template (C.step i).tmpl).nFresh)
     {b c : Occ} (hb : b ∈ existingBefore C (i+1))
     (hc : c ∈ existingBefore C (i+1))
@@ -1905,10 +1931,10 @@ theorem route_rota {C : Cert} (hwf : Wellformed C) (hs : SCond C)
     (hcs : ∀ s j, c = .born s j → s < C.steps.length) :
     pairVal C (.born i ja) b ∈ comp (pairVal C (.born i ja) c)
                                     (pairVal C c b) := by
-  have h := hs.tri i hi c hc b hb ja hja hcb hca hba
+  have h := htri c hc b hb ja hja hcb hca hba
   have h2 := comp_rot2 _ _ _ h
   rwa [show conv (pairVal C c (.born i ja)) = pairVal C (.born i ja) c from
-    (pairVal_conv C hwf hs hca hcs
+    (pairVal_conv C hwf hcc hca hcs
       (fun s j h3 => by injection h3 with h4 _; omega)).symm] at h2
 
 /-- The realized network of an S-conditioned certificate is
@@ -1928,18 +1954,18 @@ theorem pairVal_closed (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
     | core ca =>
       cases b with
       | core cb =>
-        exact route_direct hs hcd.1 hcd.2
+        exact route_direct (hs.tri sc hcd.1) hcd.2
           (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
           (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
           hab hac hcb.symm
       | born sb jb =>
         have hbd := mem_existingBefore_born.mp hb
         by_cases hbs : sb ≤ sc
-        · exact route_direct hs hcd.1 hcd.2
+        · exact route_direct (hs.tri sc hcd.1) hcd.2
             (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
             (mem_downgrade hb sc (fun s j h => by injection h with h1 _; omega))
             hab hac hcb.symm
-        · exact route_rotb hwf hs hbd.1 hbd.2
+        · exact route_rotb hwf hs.core_conv hbd.1 (hs.tri sb hbd.1) hbd.2
             (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
             (mem_downgrade hc sb (fun s j h => by injection h with h1 _; omega))
             hac hab hcb (birthBound hc)
@@ -1948,11 +1974,11 @@ theorem pairVal_closed (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
       cases b with
       | core cb =>
         by_cases has : sa ≤ sc
-        · exact route_direct hs hcd.1 hcd.2
+        · exact route_direct (hs.tri sc hcd.1) hcd.2
             (mem_downgrade ha sc (fun s j h => by injection h with h1 _; omega))
             (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
             hab hac hcb.symm
-        · exact route_rota hwf hs had.1 had.2
+        · exact route_rota hwf hs.core_conv had.1 (hs.tri sa had.1) had.2
             (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
             (mem_downgrade hc sa (fun s j h => by injection h with h1 _; omega))
             hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
@@ -1960,20 +1986,20 @@ theorem pairVal_closed (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
         have hbd := mem_existingBefore_born.mp hb
         by_cases hasc : sa ≤ sc
         · by_cases hbsc : sb ≤ sc
-          · exact route_direct hs hcd.1 hcd.2
+          · exact route_direct (hs.tri sc hcd.1) hcd.2
               (mem_downgrade ha sc (fun s j h => by injection h with h1 _; omega))
               (mem_downgrade hb sc (fun s j h => by injection h with h1 _; omega))
               hab hac hcb.symm
-          · exact route_rotb hwf hs hbd.1 hbd.2
+          · exact route_rotb hwf hs.core_conv hbd.1 (hs.tri sb hbd.1) hbd.2
               (mem_downgrade ha sb (fun s j h => by injection h with h1 _; omega))
               (mem_downgrade hc sb (fun s j h => by injection h with h1 _; omega))
               hac hab hcb (birthBound hc)
         · by_cases habs : sa ≤ sb
-          · exact route_rotb hwf hs hbd.1 hbd.2
+          · exact route_rotb hwf hs.core_conv hbd.1 (hs.tri sb hbd.1) hbd.2
               (mem_downgrade ha sb (fun s j h => by injection h with h1 _; omega))
               (mem_downgrade hc sb (fun s j h => by injection h with h1 _; omega))
               hac hab hcb (birthBound hc)
-          · exact route_rota hwf hs had.1 had.2
+          · exact route_rota hwf hs.core_conv had.1 (hs.tri sa had.1) had.2
               (mem_downgrade hb sa (fun s j h => by injection h with h1 _; omega))
               (mem_downgrade hc sa (fun s j h => by injection h with h1 _; omega))
               hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
@@ -1991,7 +2017,7 @@ theorem pairVal_closed (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
           (fun h => hcb (congrArg Occ.core h))
       | born sb jb =>
         have hbd := mem_existingBefore_born.mp hb
-        exact route_rotb hwf hs hbd.1 hbd.2
+        exact route_rotb hwf hs.core_conv hbd.1 (hs.tri sb hbd.1) hbd.2
           (mem_existingBefore_core.mpr (mem_existingBefore_core.mp ha))
           (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
           hac hab hcb (birthBound hc)
@@ -1999,18 +2025,18 @@ theorem pairVal_closed (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
       have had := mem_existingBefore_born.mp ha
       cases b with
       | core cb =>
-        exact route_rota hwf hs had.1 had.2
+        exact route_rota hwf hs.core_conv had.1 (hs.tri sa had.1) had.2
           (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hb))
           (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
           hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
       | born sb jb =>
         have hbd := mem_existingBefore_born.mp hb
         by_cases habs : sa ≤ sb
-        · exact route_rotb hwf hs hbd.1 hbd.2
+        · exact route_rotb hwf hs.core_conv hbd.1 (hs.tri sb hbd.1) hbd.2
             (mem_downgrade ha sb (fun s j h => by injection h with h1 _; omega))
             (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
             hac hab hcb (birthBound hc)
-        · exact route_rota hwf hs had.1 had.2
+        · exact route_rota hwf hs.core_conv had.1 (hs.tri sa had.1) had.2
             (mem_downgrade hb sa (fun s j h => by injection h with h1 _; omega))
             (mem_existingBefore_core.mpr (mem_existingBefore_core.mp hc))
             hcb (fun h => hac h.symm) (fun h => hab h.symm) (birthBound hc)
@@ -2030,7 +2056,8 @@ theorem pairVal_proper (C : Cert) (hwf : Wellformed C) (hs : SCond C) :
         pairVal C b a ≠ Atom.eq → pairVal C a b ≠ Atom.eq := by
     intro a b ha hb hab hba h
     apply hba
-    rw [pairVal_conv C hwf hs hab (birthBound ha) (birthBound hb), h]
+    rw [pairVal_conv C hwf hs.core_conv hab (birthBound ha)
+          (birthBound hb), h]
     rfl
   cases x with
   | core cx =>
@@ -2245,7 +2272,7 @@ theorem frame_conv (C : Cert) (hwf : Wellformed C) (hs : SCond C)
     v2 = conv v1 := by
   rw [get?_eq_pairVal C hwf hs hx hy hxy h1,
       get?_eq_pairVal C hwf hs hy hx (fun h => hxy h.symm) h2]
-  exact pairVal_conv C hwf hs hxy (birthBound hx) (birthBound hy)
+  exact pairVal_conv C hwf hs.core_conv hxy (birthBound hx) (birthBound hy)
 
 /-- The unfolded frame is EQ-free on distinct pairs (strong EQ). -/
 theorem frame_proper (C : Cert) (hwf : Wellformed C) (hs : SCond C)
@@ -2388,5 +2415,826 @@ theorem certD_frame_not_closed :
     Frame.get? (unfoldAll certD) (.born 0 0) (.born 1 0) = some Atom.ppi ∧
     Frame.get? (unfoldAll certD) (.born 1 0) (.born 0 1) = some Atom.po ∧
     Atom.dr ∉ comp Atom.ppi Atom.po := by native_decide
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ## 9. Round-22: the catalogue level — interface-state S-conditions
+
+`SCond` (round-21) quantifies over the occurrences of one unfolding.
+This section lifts the check to the CATALOGUE: `SCat` below is a
+condition on `(coreNet, templates, f)` only — it never mentions the
+step list — so one finite check covers every certificate sharing that
+data.  Together with per-certificate pattern faithfulness (a
+structural condition the round-23 generator will guarantee by
+construction), `SCat` implies `SCond`, hence closed frames, for every
+unfolding.  The steered-steered case is the manuscripts' joint
+steering (round-16 Q4′): the old pair's value is constrained through
+every separator member by closure below the current step — a
+strengthened induction, not a per-triple check. -/
+
+/-- All atom lists of a given length (the abstract-row enumeration). -/
+def atomLists : Nat → List (List Atom)
+  | 0 => [[]]
+  | n+1 => (atomLists n).flatMap (fun l => atoms.map (fun a => a :: l))
+
+theorem mem_atomLists : ∀ l : List Atom, l ∈ atomLists l.length := by
+  intro l
+  induction l with
+  | nil => exact List.mem_cons_self ..
+  | cons a l ih =>
+    show a :: l ∈ (atomLists l.length).flatMap
+      (fun l' => atoms.map (fun x => x :: l'))
+    exact List.mem_flatMap.mpr
+      ⟨l, ih, List.mem_map.mpr ⟨a, by cases a <;> decide, rfl⟩⟩
+
+/-- The old-member addresses of a template: inherited slots and core
+    ports (fresh ports are never "old"). -/
+def oldPorts (T : Template) (nCore : Nat) : List TPort :=
+  (List.range T.nSlots).map .inl ++
+  (List.range nCore).map (fun c => .inr (.inl c))
+
+/-- Reading an abstract row pair at an old address (padding `DR`,
+    matching `coreRowOf`/`slotRowOf`). -/
+def rowval (r1 r2 : List Atom) : TPort → Atom
+  | .inl k => r2.getD k Atom.dr
+  | .inr (.inl c) => r1.getD c Atom.dr
+  | .inr (.inr _) => Atom.dr
+
+/-- A member's value toward a fresh port is the current template's
+    net entry at its port (uSource's member clause, with `net_conv`
+    absorbing the core orientation). -/
+theorem member_val {C : Cert} (hwf : Wellformed C) {i : Nat}
+    (hi : i < C.steps.length) {x : Occ} {p : TPort}
+    (hx : x ∈ existingBefore C (i+1)) (hmp : memberPort C i x = some p)
+    (jz : Nat) :
+    pairVal C x (.born i jz)
+      = (C.template (C.step i).tmpl).net p (.inr (.inr jz)) := by
+  cases x with
+  | core c =>
+    have hp : p = (.inr (.inl c) : TPort) := by
+      have h2 := (memberPort_core C i c).symm.trans hmp
+      injection h2 with h2
+      exact h2.symm
+    subst hp
+    show conv ((C.template (C.step i).tmpl).net
+        (.inr (.inr jz)) (.inr (.inl c))) = _
+    exact (hwf.net_conv i hi _ _).symm
+  | born sx jx =>
+    have hsx : sx < i + 1 := (mem_existingBefore_born.mp hx).1
+    by_cases hei : sx = i
+    · subst hei
+      have hp : p = (.inr (.inr jx) : TPort) := by
+        have h2 := (memberPort_fresh C sx jx).symm.trans hmp
+        injection h2 with h2
+        exact h2.symm
+      subst hp
+      show uSourceFuel C ((2*C.steps.length+3)+1)
+          (.born sx jx) (.born sx jz) = _
+      rw [uSourceFuel_born_born, if_pos rfl]
+    · have hlt : sx < i := by omega
+      show uSourceFuel C ((2*C.steps.length+3)+1)
+          (.born sx jx) (.born i jz) = _
+      rw [uSourceFuel_born_born, if_neg (by omega : ¬sx = i),
+          if_pos hlt, hmp]
+
+/-- A steered occurrence's value toward a fresh port is the steering
+    function applied to its `pairVal` rows (uSource's U3 clause with
+    the recursive rows collapsed by fuel irrelevance). -/
+theorem steered_val {C : Cert} (hwf : Wellformed C) {i : Nat}
+    (hi : i < C.steps.length) {x : Occ}
+    (hxo : x ∈ existingBefore C i) (hmp : memberPort C i x = none)
+    (jz : Nat) :
+    pairVal C x (.born i jz)
+      = C.f i (fun c => pairVal C x (.core c))
+              (fun k => match (C.step i).slotTargets[k]? with
+                        | some t => pairVal C x t
+                        | none => Atom.dr) jz := by
+  cases x with
+  | core c => rw [memberPort_core] at hmp; simp at hmp
+  | born sx jx =>
+    have hsx : sx < i := (mem_existingBefore_born.mp hxo).1
+    show uSourceFuel C ((2*C.steps.length+3)+1)
+        (.born sx jx) (.born i jz) = _
+    rw [uSourceFuel_born_born, if_neg (by omega : ¬sx = i),
+        if_pos hsx, hmp]
+    have hcrow : (fun c => uSourceFuel C (2*C.steps.length+3)
+          (.born sx jx) (.core c))
+        = fun c => pairVal C (.born sx jx) (.core c) := rfl
+    have hsrow : (fun k : Nat => match (C.step i).slotTargets[k]? with
+          | some t => uSourceFuel C (2*C.steps.length+3) (.born sx jx) t
+          | none => Atom.dr)
+        = fun k : Nat => match (C.step i).slotTargets[k]? with
+          | some t => pairVal C (.born sx jx) t
+          | none => Atom.dr := by
+      funext k
+      cases htk : (C.step i).slotTargets[k]? with
+      | none => rfl
+      | some t =>
+        obtain ⟨hklen, hgk⟩ := List.getElem?_eq_some_iff.mp htk
+        have htmem : t ∈ (C.step i).slotTargets :=
+          hgk ▸ List.getElem_mem hklen
+        obtain ⟨st, jt, hteq, hst⟩ := target_shape hwf hi htmem
+        subst hteq
+        show uSourceFuel C (2*C.steps.length+3) _ _
+          = uSourceFuel C (2*C.steps.length+4) _ _
+        have hfn : fuelNeed (.born sx jx) (.born st jt)
+            ≤ 2 * C.steps.length + 3 := by
+          simp only [fuelNeed]
+          have hmx : max sx st ≤ C.steps.length :=
+            Nat.max_le.mpr ⟨by omega, by omega⟩
+          split <;> omega
+        exact uSourceFuel_irrel C hwf (2*C.steps.length+4)
+          (.born sx jx) (.born st jt) (by omega)
+          (fun s j h => by injection h with hh _; omega)
+          (fun s j h => by injection h with hh _; omega)
+          _ _ (by omega) (by omega)
+    rw [hcrow, hsrow]
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### The catalogue-level S-condition -/
+
+/-- Steering applied to abstract list-rows (padding `DR`). -/
+def fOn (C : Cert) (i : Nat) (r1 r2 : List Atom) (j : Nat) : Atom :=
+  C.f i (fun c => r1.getD c Atom.dr) (fun k => r2.getD k Atom.dr) j
+
+/-- The `pairVal` rows of an occurrence, as lists. -/
+def rowsCore (C : Cert) (x : Occ) : List Atom :=
+  (List.range C.nCore).map (fun c => pairVal C x (.core c))
+
+def rowsSlot (C : Cert) (i : Nat) (x : Occ) : List Atom :=
+  (List.range (C.template (C.step i).tmpl).nSlots).map
+    (fun k => match (C.step i).slotTargets[k]? with
+              | some t => pairVal C x t
+              | none => Atom.dr)
+
+theorem getD_map_range {α : Type} (f : Nat → α) {n c : Nat} (d : α)
+    (hc : c < n) : ((List.range n).map f).getD c d = f c := by
+  rw [List.getD_eq_getElem?_getD, List.getElem?_map,
+      List.getElem?_range hc]
+  rfl
+
+theorem rowsCore_mem (C : Cert) (x : Occ) :
+    rowsCore C x ∈ atomLists C.nCore := by
+  have h := mem_atomLists (rowsCore C x)
+  rwa [show (rowsCore C x).length = C.nCore by
+    simp [rowsCore]] at h
+
+theorem rowsSlot_mem (C : Cert) (i : Nat) (x : Occ) :
+    rowsSlot C i x ∈ atomLists (C.template (C.step i).tmpl).nSlots := by
+  have h := mem_atomLists (rowsSlot C i x)
+  rwa [show (rowsSlot C i x).length
+      = (C.template (C.step i).tmpl).nSlots by simp [rowsSlot]] at h
+
+/-- Steered value in list-row form (`f_reads_rows` bridges the frame
+    rows and their list restrictions). -/
+theorem steered_val_list {C : Cert} (hwf : Wellformed C) {i : Nat}
+    (hi : i < C.steps.length) {x : Occ}
+    (hxo : x ∈ existingBefore C i) (hmp : memberPort C i x = none)
+    (jz : Nat) :
+    pairVal C x (.born i jz) = fOn C i (rowsCore C x) (rowsSlot C i x) jz := by
+  rw [steered_val hwf hi hxo hmp jz]
+  exact hwf.f_reads_rows i hi _ _ _ _ jz
+    (fun c hc => by
+      unfold rowsCore
+      exact (getD_map_range (fun c => pairVal C x (.core c))
+        Atom.dr hc).symm)
+    (fun k hk => by
+      unfold rowsSlot
+      exact (getD_map_range
+        (fun k => match (C.step i).slotTargets[k]? with
+                  | some t => pairVal C x t
+                  | none => Atom.dr) Atom.dr hk).symm)
+
+theorem mem_oldPorts_elim {T : Template} {nc : Nat} {p : TPort}
+    (h : p ∈ oldPorts T nc) :
+    (∃ k, k < T.nSlots ∧ p = .inl k) ∨
+    (∃ c, c < nc ∧ p = .inr (.inl c)) := by
+  unfold oldPorts at h
+  cases List.mem_append.mp h with
+  | inl hs =>
+    obtain ⟨k, hk, rfl⟩ := List.mem_map.mp hs
+    exact Or.inl ⟨k, List.mem_range.mp hk, rfl⟩
+  | inr hc =>
+    obtain ⟨c, hcr, rfl⟩ := List.mem_map.mp hc
+    exact Or.inr ⟨c, List.mem_range.mp hcr, rfl⟩
+
+theorem slot_mem_oldPorts {T : Template} {nc k : Nat} (hk : k < T.nSlots) :
+    (.inl k : TPort) ∈ oldPorts T nc :=
+  List.mem_append.mpr (Or.inl
+    (List.mem_map.mpr ⟨k, List.mem_range.mpr hk, rfl⟩))
+
+theorem core_mem_oldPorts {T : Template} {nc c : Nat} (hc : c < nc) :
+    (.inr (.inl c) : TPort) ∈ oldPorts T nc :=
+  List.mem_append.mpr (Or.inr
+    (List.mem_map.mpr ⟨c, List.mem_range.mpr hc, rfl⟩))
+
+theorem mem_atoms : ∀ a : Atom, a ∈ atoms := by
+  intro a
+  cases a <;> decide
+
+/-- Membership at stage `i+1` decomposed: old or fresh. -/
+theorem member_old_or_fresh {C : Cert} {i : Nat} {x : Occ}
+    (hx : x ∈ existingBefore C (i+1)) :
+    x ∈ existingBefore C i ∨
+    ∃ j, j < (C.template (C.step i).tmpl).nFresh ∧ x = .born i j := by
+  rw [existingBefore_succ] at hx
+  cases List.mem_append.mp hx with
+  | inl h => exact Or.inl h
+  | inr h =>
+    obtain ⟨j, hj, heq⟩ := List.mem_map.mp h
+    exact Or.inr ⟨j, List.mem_range.mp hj, heq.symm⟩
+
+theorem old_of_not_member {C : Cert} {i : Nat} {x : Occ}
+    (hx : x ∈ existingBefore C (i+1)) (hmp : memberPort C i x = none) :
+    x ∈ existingBefore C i := by
+  cases member_old_or_fresh hx with
+  | inl h => exact h
+  | inr h =>
+    obtain ⟨j, _, rfl⟩ := h
+    rw [memberPort_fresh] at hmp
+    simp at hmp
+
+/-- `memberPort_spec` extended to stage `i+1` (covers fresh members). -/
+theorem memberPort_spec' {C : Cert} (hwf : Wellformed C) {i : Nat}
+    (hi : i < C.steps.length) {x : Occ} {p : TPort}
+    (hx : x ∈ existingBefore C (i+1)) (h : memberPort C i x = some p) :
+    p ∈ memberPortsList C i ∧ portOcc C i p = x := by
+  cases member_old_or_fresh hx with
+  | inl hxo => exact memberPort_spec hwf hi hxo h
+  | inr hf =>
+    obtain ⟨j, hj, rfl⟩ := hf
+    have h2 := (memberPort_fresh C i j).symm.trans h
+    injection h2 with h2
+    subst h2
+    exact ⟨freshPort_mem_memberPortsList hj, rfl⟩
+
+/-- Pattern faithfulness: co-members that both pre-exist a step carry
+    the step template's net entry as their recorded value.  (The
+    thirteenth review's parent-pattern agreement, as a per-certificate
+    condition; the round-23 catalogue generator discharges it by
+    construction.) -/
+def Faithful (C : Cert) : Prop :=
+  ∀ i, i < C.steps.length →
+    ∀ p ∈ memberPortsList C i, ∀ q ∈ memberPortsList C i,
+    portOcc C i p ∈ existingBefore C i →
+    portOcc C i q ∈ existingBefore C i →
+    portOcc C i p ≠ portOcc C i q →
+    pairVal C (portOcc C i p) (portOcc C i q)
+      = (C.template (C.step i).tmpl).net p q
+
+/-- Two members' mutual value is the current template's net entry. -/
+theorem member_pair_val {C : Cert} (hwf : Wellformed C)
+    (hcc : ∀ c c', C.coreNet c' c = conv (C.coreNet c c'))
+    (hfaith : Faithful C) {i : Nat} (hi : i < C.steps.length)
+    {x y : Occ} {px py : TPort}
+    (hx : x ∈ existingBefore C (i+1)) (hy : y ∈ existingBefore C (i+1))
+    (hmpx : memberPort C i x = some px)
+    (hmpy : memberPort C i y = some py) (hxy : x ≠ y) :
+    pairVal C x y = (C.template (C.step i).tmpl).net px py := by
+  obtain ⟨hpxm, hpxo⟩ := memberPort_spec' hwf hi hx hmpx
+  obtain ⟨hpym, hpyo⟩ := memberPort_spec' hwf hi hy hmpy
+  cases member_old_or_fresh hy with
+  | inr hyf =>
+    obtain ⟨jy, hjy, rfl⟩ := hyf
+    have hpy_eq : py = (.inr (.inr jy) : TPort) := by
+      have h2 := (memberPort_fresh C i jy).symm.trans hmpy
+      injection h2 with h2
+      exact h2.symm
+    subst hpy_eq
+    exact member_val hwf hi hx hmpx jy
+  | inl hyo =>
+    cases member_old_or_fresh hx with
+    | inl hxo =>
+      have h := hfaith i hi px hpxm py hpym (hpxo ▸ hxo) (hpyo ▸ hyo)
+        (by rw [hpxo, hpyo]; exact hxy)
+      rwa [hpxo, hpyo] at h
+    | inr hxf =>
+      obtain ⟨jx, hjx, rfl⟩ := hxf
+      have hpx_eq : px = (.inr (.inr jx) : TPort) := by
+        have h2 := (memberPort_fresh C i jx).symm.trans hmpx
+        injection h2 with h2
+        exact h2.symm
+      subst hpx_eq
+      have hyx : y ≠ Occ.born i jx := fun h => hxy h.symm
+      rw [show pairVal C (.born i jx) y = conv (pairVal C y (.born i jx))
+            from pairVal_conv C hwf hcc hyx
+              (fun s j h => by
+                subst h
+                have := (mem_existingBefore_born.mp hyo).1
+                omega)
+              (fun s j h => by injection h with h4 _; omega),
+          member_val hwf hi hy hmpy jx]
+      exact (hwf.net_conv i hi _ _).symm
+
+/-- The catalogue-level S-condition: no occurrences, no step targets —
+    only `(coreNet, templates, f)` data quantified over abstract rows
+    and ports.  (The step index `i` appears only to select which
+    template/steering pair is in force; for template-determined
+    steering — the round-23 generator's discipline — the conditions
+    collapse to one check per template.) -/
+structure SCat (C : Cert) : Prop where
+  core_conv : ∀ c c', C.coreNet c' c = conv (C.coreNet c c')
+  core_proper : ∀ c c', c < C.nCore → c' < C.nCore → c ≠ c' →
+    C.coreNet c c' ≠ Atom.eq
+  core_closed : ∀ c1 c2 c3, c1 < C.nCore → c2 < C.nCore → c3 < C.nCore →
+    c1 ≠ c2 → c1 ≠ c3 → c3 ≠ c2 →
+    C.coreNet c1 c2 ∈ comp (C.coreNet c1 c3) (C.coreNet c3 c2)
+  core_rows : ∀ i, i < C.steps.length → ∀ c c', c < C.nCore → c' < C.nCore →
+    c ≠ c' →
+    (C.template (C.step i).tmpl).net (.inr (.inl c)) (.inr (.inl c'))
+      = C.coreNet c c'
+  net_r3 : ∀ i, i < C.steps.length →
+    ∀ p ∈ memberPortsList C i, ∀ q ∈ memberPortsList C i,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh → p ≠ q →
+    (C.template (C.step i).tmpl).net p q ∈
+      comp ((C.template (C.step i).tmpl).net p (.inr (.inr j)))
+           (conv ((C.template (C.step i).tmpl).net q (.inr (.inr j))))
+  net_proper : ∀ i, i < C.steps.length →
+    ∀ p ∈ memberPortsList C i,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh → p ≠ .inr (.inr j) →
+    (C.template (C.step i).tmpl).net p (.inr (.inr j)) ≠ Atom.eq
+  steer_member : ∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ p ∈ oldPorts (C.template (C.step i).tmpl) C.nCore,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    conv (rowval r1 r2 p) ∈
+      comp ((C.template (C.step i).tmpl).net p (.inr (.inr j)))
+           (conv (fOn C i r1 r2 j))
+  steer_member2 : ∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ q ∈ oldPorts (C.template (C.step i).tmpl) C.nCore,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    rowval r1 r2 q ∈
+      comp (fOn C i r1 r2 j)
+           (conv ((C.template (C.step i).tmpl).net q (.inr (.inr j))))
+  steer_two_fresh : ∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ jx, jx < (C.template (C.step i).tmpl).nFresh →
+    ∀ jz, jz < (C.template (C.step i).tmpl).nFresh → jx ≠ jz →
+    conv (fOn C i r1 r2 jx) ∈
+      comp ((C.template (C.step i).tmpl).net (.inr (.inr jx)) (.inr (.inr jz)))
+           (conv (fOn C i r1 r2 jz))
+  steer_two_fresh2 : ∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ jy, jy < (C.template (C.step i).tmpl).nFresh →
+    ∀ jz, jz < (C.template (C.step i).tmpl).nFresh → jy ≠ jz →
+    fOn C i r1 r2 jy ∈
+      comp (fOn C i r1 r2 jz)
+           ((C.template (C.step i).tmpl).net (.inr (.inr jz)) (.inr (.inr jy)))
+  steer_steer : ∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ r1' ∈ atomLists C.nCore,
+    ∀ r2' ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ v ∈ atoms,
+    (∀ a ∈ oldPorts (C.template (C.step i).tmpl) C.nCore,
+      v ∈ comp (rowval r1 r2 a) (conv (rowval r1' r2' a))) →
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    v ∈ comp (fOn C i r1 r2 j) (conv (fOn C i r1' r2' j))
+  f_proper : ∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    fOn C i r1 r2 j ≠ Atom.eq
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### The catalogue check certifies every step -/
+
+/-- The heart of round-22: the catalogue-level check plus pattern
+    faithfulness plus closure below the step yield the per-step
+    triangle condition.  The steered-steered case is the joint
+    steering of round 16: the old pair's value enters constrained
+    through every separator member by `hclosed`. -/
+theorem fresh_tri (C : Cert) (hwf : Wellformed C) (hcat : SCat C)
+    (hfaith : Faithful C) {i : Nat} (hi : i < C.steps.length)
+    (hclosed : ∀ a b c : Occ, a ∈ existingBefore C i →
+      b ∈ existingBefore C i → c ∈ existingBefore C i →
+      a ≠ b → a ≠ c → c ≠ b →
+      pairVal C a b ∈ comp (pairVal C a c) (pairVal C c b)) :
+    TriAt C i := by
+  intro x hx y hy jz hjz hxy hxz hyz
+  have hxb : ∀ s j, x = .born s j → s < C.steps.length := fun s j h => by
+    subst h
+    have := (mem_existingBefore_born.mp hx).1
+    omega
+  have hyb : ∀ s j, y = .born s j → s < C.steps.length := fun s j h => by
+    subst h
+    have := (mem_existingBefore_born.mp hy).1
+    omega
+  have hzb : ∀ s j, (Occ.born i jz) = .born s j → s < C.steps.length :=
+    fun s j h => by injection h with h1 _; omega
+  cases hmpx : memberPort C i x with
+  | some px =>
+    cases hmpy : memberPort C i y with
+    | some py =>
+      -- both members: pattern triangle
+      obtain ⟨hpxm, hpxo⟩ := memberPort_spec' hwf hi hx hmpx
+      obtain ⟨hpym, hpyo⟩ := memberPort_spec' hwf hi hy hmpy
+      rw [member_pair_val hwf hcat.core_conv hfaith hi hx hy hmpx hmpy hxy,
+          member_val hwf hi hx hmpx jz,
+          show pairVal C (.born i jz) y = conv (pairVal C y (.born i jz))
+            from pairVal_conv C hwf hcat.core_conv hyz hyb hzb,
+          member_val hwf hi hy hmpy jz]
+      exact hcat.net_r3 i hi px hpxm py hpym jz hjz
+        (fun h => hxy (by rw [← hpxo, h, hpyo]))
+    | none =>
+      -- x member, y steered
+      have hyo : y ∈ existingBefore C i := old_of_not_member hy hmpy
+      cases member_old_or_fresh hx with
+      | inr hxf =>
+        -- x fresh: same-source two-fresh check
+        obtain ⟨jx, hjx, rfl⟩ := hxf
+        have hpx_eq : px = (.inr (.inr jx) : TPort) := by
+          have h2 := (memberPort_fresh C i jx).symm.trans hmpx
+          injection h2 with h2
+          exact h2.symm
+        subst hpx_eq
+        have hjxz : jx ≠ jz := fun h => hxz (by rw [h])
+        rw [show pairVal C (.born i jx) y = conv (pairVal C y (.born i jx))
+              from pairVal_conv C hwf hcat.core_conv
+                (fun h => hxy h.symm) hyb hxb,
+            steered_val_list hwf hi hyo hmpy jx,
+            member_val hwf hi hx hmpx jz,
+            show pairVal C (.born i jz) y = conv (pairVal C y (.born i jz))
+              from pairVal_conv C hwf hcat.core_conv hyz hyb hzb,
+            steered_val_list hwf hi hyo hmpy jz]
+        exact hcat.steer_two_fresh i hi (rowsCore C y) (rowsCore_mem C y)
+          (rowsSlot C i y) (rowsSlot_mem C i y) jx hjx jz hjz hjxz
+      | inl hxo =>
+        -- x old member
+        obtain ⟨hpxm, hpxo⟩ := memberPort_spec' hwf hi hx hmpx
+        have hpxold : px ∈ oldPorts (C.template (C.step i).tmpl) C.nCore := by
+          cases mem_memberPortsList_elim hpxm with
+          | inl h =>
+            obtain ⟨k, hk, rfl⟩ := h
+            exact slot_mem_oldPorts hk
+          | inr h =>
+            cases h with
+            | inl hc =>
+              obtain ⟨c, hc2, rfl⟩ := hc
+              exact core_mem_oldPorts hc2
+            | inr hf =>
+              obtain ⟨j, hj, rfl⟩ := hf
+              exfalso
+              have h4 : Occ.born i j = x := hpxo
+              have h3 : Occ.born i j ∈ existingBefore C i := by
+                rw [h4]; exact hxo
+              exact absurd (mem_existingBefore_born.mp h3).1
+                (Nat.lt_irrefl i)
+        have hxyval : pairVal C x y
+            = conv (rowval (rowsCore C y) (rowsSlot C i y) px) := by
+          rw [show pairVal C x y = conv (pairVal C y x) from
+                pairVal_conv C hwf hcat.core_conv
+                  (fun h => hxy h.symm) hyb hxb]
+          congr 1
+          cases mem_oldPorts_elim hpxold with
+          | inl h =>
+            obtain ⟨k, hk, rfl⟩ := h
+            have hk' : k < (C.step i).slotTargets.length := by
+              rw [hwf.targets_length i hi]; exact hk
+            have hxt : (C.step i).slotTargets[k] = x := by
+              rw [portOcc_slot_eq hk'] at hpxo
+              exact hpxo
+            show pairVal C y x = (rowsSlot C i y).getD k Atom.dr
+            unfold rowsSlot
+            rw [getD_map_range
+                  (fun k => match (C.step i).slotTargets[k]? with
+                    | some t => pairVal C y t
+                    | none => Atom.dr) Atom.dr hk,
+                List.getElem?_eq_getElem hk', hxt]
+          | inr h =>
+            obtain ⟨c, hc, rfl⟩ := h
+            have hxc : Occ.core c = x := hpxo
+            show pairVal C y x = (rowsCore C y).getD c Atom.dr
+            unfold rowsCore
+            rw [getD_map_range (fun c => pairVal C y (.core c))
+                  Atom.dr hc, hxc]
+        rw [hxyval, member_val hwf hi hx hmpx jz,
+            show pairVal C (.born i jz) y = conv (pairVal C y (.born i jz))
+              from pairVal_conv C hwf hcat.core_conv hyz hyb hzb,
+            steered_val_list hwf hi hyo hmpy jz]
+        exact hcat.steer_member i hi (rowsCore C y) (rowsCore_mem C y)
+          (rowsSlot C i y) (rowsSlot_mem C i y) px hpxold jz hjz
+  | none =>
+    have hxo : x ∈ existingBefore C i := old_of_not_member hx hmpx
+    cases hmpy : memberPort C i y with
+    | some py =>
+      -- x steered, y member
+      cases member_old_or_fresh hy with
+      | inr hyf =>
+        -- y fresh: same-source two-fresh check, second orientation
+        obtain ⟨jy, hjy, rfl⟩ := hyf
+        have hjyz : jy ≠ jz := fun h => hyz (by rw [h])
+        rw [steered_val_list hwf hi hxo hmpx jy,
+            steered_val_list hwf hi hxo hmpx jz,
+            show pairVal C (.born i jz) (.born i jy)
+                = (C.template (C.step i).tmpl).net
+                    (.inr (.inr jz)) (.inr (.inr jy)) from by
+              show uSourceFuel C ((2*C.steps.length+3)+1) _ _ = _
+              rw [uSourceFuel_born_born, if_pos rfl]]
+        exact hcat.steer_two_fresh2 i hi (rowsCore C x) (rowsCore_mem C x)
+          (rowsSlot C i x) (rowsSlot_mem C i x) jy hjy jz hjz hjyz
+      | inl hyo =>
+        obtain ⟨hpym, hpyo⟩ := memberPort_spec' hwf hi hy hmpy
+        have hpyold : py ∈ oldPorts (C.template (C.step i).tmpl) C.nCore := by
+          cases mem_memberPortsList_elim hpym with
+          | inl h =>
+            obtain ⟨k, hk, rfl⟩ := h
+            exact slot_mem_oldPorts hk
+          | inr h =>
+            cases h with
+            | inl hc =>
+              obtain ⟨c, hc2, rfl⟩ := hc
+              exact core_mem_oldPorts hc2
+            | inr hf =>
+              obtain ⟨j, hj, rfl⟩ := hf
+              exfalso
+              have h4 : Occ.born i j = y := hpyo
+              have h3 : Occ.born i j ∈ existingBefore C i := by
+                rw [h4]; exact hyo
+              exact absurd (mem_existingBefore_born.mp h3).1
+                (Nat.lt_irrefl i)
+        have hxyval : pairVal C x y
+            = rowval (rowsCore C x) (rowsSlot C i x) py := by
+          cases mem_oldPorts_elim hpyold with
+          | inl h =>
+            obtain ⟨k, hk, rfl⟩ := h
+            have hk' : k < (C.step i).slotTargets.length := by
+              rw [hwf.targets_length i hi]; exact hk
+            have hyt : (C.step i).slotTargets[k] = y := by
+              rw [portOcc_slot_eq hk'] at hpyo
+              exact hpyo
+            show pairVal C x y = (rowsSlot C i x).getD k Atom.dr
+            unfold rowsSlot
+            rw [getD_map_range
+                  (fun k => match (C.step i).slotTargets[k]? with
+                    | some t => pairVal C x t
+                    | none => Atom.dr) Atom.dr hk,
+                List.getElem?_eq_getElem hk', hyt]
+          | inr h =>
+            obtain ⟨c, hc, rfl⟩ := h
+            have hyc : Occ.core c = y := hpyo
+            show pairVal C x y = (rowsCore C x).getD c Atom.dr
+            unfold rowsCore
+            rw [getD_map_range (fun c => pairVal C x (.core c))
+                  Atom.dr hc, hyc]
+        rw [hxyval, steered_val_list hwf hi hxo hmpx jz,
+            show pairVal C (.born i jz) y = conv (pairVal C y (.born i jz))
+              from pairVal_conv C hwf hcat.core_conv hyz hyb hzb,
+            member_val hwf hi hy hmpy jz]
+        exact hcat.steer_member2 i hi (rowsCore C x) (rowsCore_mem C x)
+          (rowsSlot C i x) (rowsSlot_mem C i x) py hpyold jz hjz
+    | none =>
+      -- both steered: joint steering through the separator
+      have hyo : y ∈ existingBefore C i := old_of_not_member hy hmpy
+      rw [steered_val_list hwf hi hxo hmpx jz,
+          show pairVal C (.born i jz) y = conv (pairVal C y (.born i jz))
+            from pairVal_conv C hwf hcat.core_conv hyz hyb hzb,
+          steered_val_list hwf hi hyo hmpy jz]
+      refine hcat.steer_steer i hi (rowsCore C x) (rowsCore_mem C x)
+        (rowsSlot C i x) (rowsSlot_mem C i x) (rowsCore C y)
+        (rowsCore_mem C y) (rowsSlot C i y) (rowsSlot_mem C i y)
+        (pairVal C x y) (mem_atoms _) ?_ jz hjz
+      intro a ha
+      cases mem_oldPorts_elim ha with
+      | inl h =>
+        obtain ⟨k, hk, rfl⟩ := h
+        have hk' : k < (C.step i).slotTargets.length := by
+          rw [hwf.targets_length i hi]; exact hk
+        have htmem : (C.step i).slotTargets[k] ∈ (C.step i).slotTargets :=
+          List.getElem_mem hk'
+        obtain ⟨st, jt, hteq, hst⟩ := target_shape hwf hi htmem
+        have hmex : (C.step i).slotTargets[k] ∈ existingBefore C i :=
+          hwf.targets_exist i hi _ htmem
+        have hxm : x ≠ (C.step i).slotTargets[k] := by
+          intro h2
+          have hs2 := memberPort_isSome_of_target hwf hi htmem
+          rw [← h2, hmpx] at hs2
+          simp at hs2
+        have hym : y ≠ (C.step i).slotTargets[k] := by
+          intro h2
+          have hs2 := memberPort_isSome_of_target hwf hi htmem
+          rw [← h2, hmpy] at hs2
+          simp at hs2
+        have hrx : rowval (rowsCore C x) (rowsSlot C i x) (.inl k)
+            = pairVal C x ((C.step i).slotTargets[k]) := by
+          show (rowsSlot C i x).getD k Atom.dr = _
+          unfold rowsSlot
+          rw [getD_map_range
+                (fun k => match (C.step i).slotTargets[k]? with
+                  | some t => pairVal C x t
+                  | none => Atom.dr) Atom.dr hk,
+              List.getElem?_eq_getElem hk']
+        have hry : rowval (rowsCore C y) (rowsSlot C i y) (.inl k)
+            = pairVal C y ((C.step i).slotTargets[k]) := by
+          show (rowsSlot C i y).getD k Atom.dr = _
+          unfold rowsSlot
+          rw [getD_map_range
+                (fun k => match (C.step i).slotTargets[k]? with
+                  | some t => pairVal C y t
+                  | none => Atom.dr) Atom.dr hk,
+              List.getElem?_eq_getElem hk']
+        rw [hrx, hry,
+            show conv (pairVal C y ((C.step i).slotTargets[k]))
+                = pairVal C ((C.step i).slotTargets[k]) y from
+              (pairVal_conv C hwf hcat.core_conv hym hyb
+                (fun s j h2 => by
+                  rw [hteq] at h2
+                  injection h2 with h3 _
+                  omega)).symm]
+        exact hclosed x y _ hxo hyo hmex hxy hxm (fun h2 => hym h2.symm)
+      | inr h =>
+        obtain ⟨c, hc, rfl⟩ := h
+        have hxm : x ≠ Occ.core c := by
+          cases x with
+          | core c2 => rw [memberPort_core] at hmpx; simp at hmpx
+          | born s j => exact fun h2 => Occ.noConfusion h2
+        have hym : y ≠ Occ.core c := by
+          cases y with
+          | core c2 => rw [memberPort_core] at hmpy; simp at hmpy
+          | born s j => exact fun h2 => Occ.noConfusion h2
+        have hrx : rowval (rowsCore C x) (rowsSlot C i x) (.inr (.inl c))
+            = pairVal C x (.core c) := by
+          show (rowsCore C x).getD c Atom.dr = _
+          unfold rowsCore
+          rw [getD_map_range (fun c => pairVal C x (.core c)) Atom.dr hc]
+        have hry : rowval (rowsCore C y) (rowsSlot C i y) (.inr (.inl c))
+            = pairVal C y (.core c) := by
+          show (rowsCore C y).getD c Atom.dr = _
+          unfold rowsCore
+          rw [getD_map_range (fun c => pairVal C y (.core c)) Atom.dr hc]
+        rw [hrx, hry,
+            show conv (pairVal C y (.core c)) = pairVal C (.core c) y from
+              (pairVal_conv C hwf hcat.core_conv hym hyb
+                (fun s j h2 => Occ.noConfusion h2)).symm]
+        exact hclosed x y (.core c) hxo hyo
+          (mem_existingBefore_core.mpr hc) hxy hxm (fun h2 => hym h2.symm)
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### Catalogue soundness assembled -/
+
+/-- Closure below every stage, by induction: new triples contain a
+    fresh occurrence, which the routes rotate into the middle where
+    `fresh_tri` certifies it. -/
+theorem closedBelow_all (C : Cert) (hwf : Wellformed C) (hcat : SCat C)
+    (hfaith : Faithful C) :
+    ∀ n, n ≤ C.steps.length →
+      ∀ a b c : Occ, a ∈ existingBefore C n → b ∈ existingBefore C n →
+      c ∈ existingBefore C n → a ≠ b → a ≠ c → c ≠ b →
+      pairVal C a b ∈ comp (pairVal C a c) (pairVal C c b) := by
+  intro n
+  induction n with
+  | zero =>
+    intro _ a b c ha hb hc hab hac hcb
+    cases a with
+    | born s j =>
+      exact absurd (mem_existingBefore_born.mp ha).1 (Nat.not_lt_zero s)
+    | core ca =>
+      cases b with
+      | born s j =>
+        exact absurd (mem_existingBefore_born.mp hb).1 (Nat.not_lt_zero s)
+      | core cb =>
+        cases c with
+        | born s j =>
+          exact absurd (mem_existingBefore_born.mp hc).1 (Nat.not_lt_zero s)
+        | core cc =>
+          exact hcat.core_closed ca cb cc (mem_existingBefore_core.mp ha)
+            (mem_existingBefore_core.mp hb) (mem_existingBefore_core.mp hc)
+            (fun h => hab (congrArg Occ.core h))
+            (fun h => hac (congrArg Occ.core h))
+            (fun h => hcb (congrArg Occ.core h))
+  | succ n ih =>
+    intro hn a b c ha hb hc hab hac hcb
+    have hn' : n < C.steps.length := Nat.lt_of_succ_le hn
+    have htri : TriAt C n :=
+      fresh_tri C hwf hcat hfaith hn' (ih (Nat.le_of_lt hn'))
+    cases member_old_or_fresh hc with
+    | inr hcf =>
+      obtain ⟨jc, hjc, rfl⟩ := hcf
+      exact route_direct htri hjc ha hb hab hac (fun h => hcb h.symm)
+    | inl hco =>
+      cases member_old_or_fresh hb with
+      | inr hbf =>
+        obtain ⟨jb, hjb, rfl⟩ := hbf
+        exact route_rotb hwf hcat.core_conv hn' htri hjb ha hc hac hab hcb
+          (fun s j h => by
+            subst h
+            have := (mem_existingBefore_born.mp hco).1
+            omega)
+      | inl hbo =>
+        cases member_old_or_fresh ha with
+        | inr haf =>
+          obtain ⟨ja, hja, rfl⟩ := haf
+          exact route_rota hwf hcat.core_conv hn' htri hja hb hc hcb
+            (fun h => hac h.symm) (fun h => hab h.symm)
+            (fun s j h => by
+              subst h
+              have := (mem_existingBefore_born.mp hco).1
+              omega)
+        | inl hao =>
+          exact ih (Nat.le_of_lt hn') a b c hao hbo hco hab hac hcb
+
+/-- ROUND-22 MAIN THEOREM: the catalogue-level check plus pattern
+    faithfulness yield the full per-unfolding S-condition — one
+    step-count-independent check certifies every faithful unfolding,
+    and all round-21 frame theorems apply downstream. -/
+theorem scat_scond (C : Cert) (hwf : Wellformed C) (hcat : SCat C)
+    (hfaith : Faithful C) : SCond C := by
+  refine ⟨hcat.core_conv, hcat.core_proper, hcat.core_closed,
+          hcat.core_rows, ?_, ?_⟩
+  · intro i hi x hx y hy jz hjz hxy hxz hyz
+    exact fresh_tri C hwf hcat hfaith hi
+      (closedBelow_all C hwf hcat hfaith i (Nat.le_of_lt hi))
+      x hx y hy jz hjz hxy hxz hyz
+  · intro i hi x hx jz hjz hxz
+    cases hmpx : memberPort C i x with
+    | some px =>
+      obtain ⟨hpxm, hpxo⟩ := memberPort_spec' hwf hi hx hmpx
+      rw [member_val hwf hi hx hmpx jz]
+      exact hcat.net_proper i hi px hpxm jz hjz
+        (fun h => hxz (by rw [← hpxo, h]; rfl))
+    | none =>
+      have hxo := old_of_not_member hx hmpx
+      rw [steered_val_list hwf hi hxo hmpx jz]
+      exact hcat.f_proper i hi (rowsCore C x) (rowsCore_mem C x)
+        (rowsSlot C i x) (rowsSlot_mem C i x) jz hjz
+
+/-- Catalogue soundness, operational form: every frame entry triangle
+    of a wellformed, catalogue-checked, faithful certificate is
+    composition-closed. -/
+theorem scat_frame_closed (C : Cert) (hwf : Wellformed C) (hcat : SCat C)
+    (hfaith : Faithful C) {x y z : Occ} {v1 v2 v3 : Atom}
+    (hx : x ∈ existingBefore C C.steps.length)
+    (hy : y ∈ existingBefore C C.steps.length)
+    (hz : z ∈ existingBefore C C.steps.length)
+    (hxy : x ≠ y) (hxz : x ≠ z) (hzy : z ≠ y)
+    (h1 : Frame.get? (unfoldAll C) x y = some v1)
+    (h2 : Frame.get? (unfoldAll C) x z = some v2)
+    (h3 : Frame.get? (unfoldAll C) z y = some v3) :
+    v1 ∈ comp v2 v3 :=
+  frame_closed C hwf (scat_scond C hwf hcat hfaith)
+    hx hy hz hxy hxz hzy h1 h2 h3
+
+/-! ### Kernel-checked catalogue witnesses -/
+
+/-- `certC` passes the catalogue-level check (all values `DR`;
+    `comp dr dr` is the full atom set). -/
+theorem certC_scat : SCat certC := by
+  refine ⟨fun _ _ => rfl, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro c c' hc hc' hne
+    have h0 : certC.nCore = 0 := rfl
+    omega
+  · intro c1 c2 c3 h1 h2 h3 h4 h5 h6
+    have h0 : certC.nCore = 0 := rfl
+    omega
+  · intro i hi c c' hc hc' hne
+    have h0 : certC.nCore = 0 := rfl
+    omega
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+
+theorem certC_faithful : Faithful certC := by
+  unfold Faithful
+  native_decide
+
+/-- The catalogue route reproduces round-21's `SCond certC` — the
+    finite abstract check certifies the unfolding. -/
+example : SCond certC :=
+  scat_scond certC certC_wellformed certC_scat certC_faithful
+
+/-- `certD` FAILS the catalogue check at exactly the reachable row:
+    `steer_member2` with the inherited slot's recorded value `DR`
+    demands the steered value compose with the child pattern's `PO`
+    through `comp(PPI, PO) = {PPI, PO}` — and `DR` is not in it. -/
+theorem certD_scat_violated :
+    ¬(rowval [] [Atom.dr] (.inl 0) ∈
+      comp (fOn certD 1 [] [Atom.dr] 0)
+           (conv ((certD.template (certD.step 1).tmpl).net
+             (.inl 0) (.inr (.inr 0))))) := by native_decide
 
 end Round19

@@ -7279,3 +7279,40 @@ many interface states and conclude closure for ALL unfoldings, while
 finite catalogue with a reachability fixed point.  F6, W2′ unchanged.
 Ledger: 13 reviews — 12 defects, 1 no-counterexample; rounds 19–21
 unreviewed.  Status: **strongly supported, NOT certified**.
+
+## 2026-07-13 — Round-22: the catalogue level — one finite check, unboundedly many unfoldings
+
+Asked first: how many rounds to full certification?  Honest answer
+recorded: the soundness half is ~4 foreseeable rounds (22 catalogue
+conditions, 23 generator, 24 logic layer, 25 limit passage); the
+completeness half is bounded below by F6 and W2′ — open mathematics,
+not schedulable; optimistic total ~8–10 rounds, with the 13-review
+base rate saying presume surprises; plus one statement-adequacy cold
+review at the end (the surface Lean cannot check).
+
+Round-22 delivered same-day, same artifact, still zero sorries (now
+3,225 lines): **`SCat`** states the S-condition on `(coreNet,
+templates, f)` alone — enumerated abstract rows replace occurrences,
+making the check step-count-independent — and **`scat_scond`** proves
+`SCat` + `Faithful` (parent-pattern agreement, per certificate) imply
+the full `SCond` for every faithful unfolding.  One finite check
+certifies unboundedly many step lists; round-21's frame theorems
+apply downstream (`scat_frame_closed`).
+
+The heart is `fresh_tri`: the steered-steered case is the round-16
+joint steering made exact — the old pair's value enters the abstract
+check constrained through every separator member, the constraint
+being supplied by closure below the current step
+(`closedBelow_all`).  This is the pointwise-vs-joint failure genus
+(defects #4-of-its-kind) now theorem-bounded.
+
+Witnesses both ways: `certC_scat`/`certC_faithful` recover `SCond
+certC` through the abstract route; `certD_scat_violated` pins the
+catalogue check's failure to exactly the reachable row (DR against
+comp(PPI,PO)) — the same triple where certD's frame provably breaks.
+
+Round-23 = the catalogue generator: N2 attachment rules, plan-indexed
+`buildCert`, wellformedness + faithfulness by construction.  F6, W2′
+unchanged.  Ledger: 13 reviews — 12 defects, 1 no-counterexample;
+rounds 19–22 unreviewed.  Status: **strongly supported, NOT
+certified**.

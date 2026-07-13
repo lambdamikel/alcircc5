@@ -1,0 +1,100 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\comp}{\mathrm{comp}}
+
+\title{Round-22: the Catalogue Level in Lean\\
+\large One finite interface-state check certifies every faithful
+unfolding}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-22 of the
+$\ALCIRCC$ decidability project.  Substrate: the rounds 19--21 Lean
+artifact (transport layer, characterization, S-layer closure).
+Ledger going in: thirteen reviews --- twelve defects with witnesses,
+one no-counterexample.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Round-21's \code{SCond} quantifies over the occurrences of one
+unfolding.  Round-22 lifts the check to the catalogue:
+\code{formal/Round19Transport.lean} (3{,}225 lines, still
+\textbf{zero} \code{sorry}) now defines \code{SCat} --- the
+S-condition stated on \code{(coreNet, templates, f)} \emph{alone},
+with enumerated abstract rows in place of occurrences, so the check
+is independent of the step count --- and proves \code{scat\_scond}:
+\code{SCat} plus pattern faithfulness (\code{Faithful}, the
+thirteenth review's parent-pattern agreement as a per-certificate
+condition) imply the full per-unfolding \code{SCond}.  One finite
+check thus certifies unboundedly many step lists, and all round-21
+frame theorems apply downstream (\code{scat\_frame\_closed}).  The
+mathematical heart is the steered-steered case: the manuscripts'
+joint steering (round-16 Q4$'$) made exact --- the old pair's value
+enters the abstract check \emph{constrained through every separator
+member} by closure below the current step, discharged by a
+strengthened induction (\code{fresh\_tri} +
+\code{closedBelow\_all}).  Both poles are kernel-checked:
+\code{certC} passes the catalogue check and recovers its
+\code{SCond} through the abstract route, while \code{certD}'s
+catalogue check provably fails at exactly the reachable row
+($\mathrm{DR}$ against $\comp(\mathrm{PPI},\mathrm{PO})$).  Status:
+\emph{strongly supported, not certified}.
+\end{abstract}
+
+\section{What was proved}
+
+\begin{itemize}[leftmargin=2em]
+\item \code{SCat}: twelve fields on catalogue data only --- core net
+conditions (converse coherence, properness, closure, N3 row
+agreement), per-template composition closure and properness, and six
+steering conditions quantified over \emph{enumerated} abstract rows
+(\code{atomLists}): member/steered in both orientations, same-source
+two-fresh in both orientations, the joint steered-steered condition,
+and steering properness.  The step index appears only to select which
+template/steering pair is in force; for template-determined steering
+--- the round-23 generator's discipline --- the conditions collapse
+to one check per template.
+\item \code{Faithful}: co-members that both pre-exist a step carry
+the step template's net entry as their recorded value.  This is the
+parent-pattern agreement the thirteenth review demanded; the round-23
+catalogue generator will discharge it by construction.
+\item \code{fresh\_tri}: \code{SCat} + \code{Faithful} + closure
+below step $i$ yield the per-step triangle condition.  Four-way case
+analysis on membership; the values are pinned by \code{member\_val}
+and \code{steered\_val\_list} (uSource's clauses in list-row form,
+bridged by \code{f\_reads\_rows}); the steered-steered case
+instantiates the joint condition with the old pair's value
+constrained through every separator member.
+\item \code{closedBelow\_all} and \code{scat\_scond}: the induction
+and the assembly --- the ROUND-22 MAIN THEOREM.  Corollary
+\code{scat\_frame\_closed}: every frame triangle of a wellformed,
+catalogue-checked, faithful certificate is composition-closed.
+\item Witnesses: \code{certC\_scat}, \code{certC\_faithful}, an
+\code{example} deriving \code{SCond certC} through the catalogue
+route; \code{certD\_scat\_violated} --- the check fails at the
+reachable row, matching \code{certD}'s actual frame violation.
+\end{itemize}
+
+\section{What remains}
+
+Round-23: the catalogue \emph{generator} --- attachment rules with
+parent-port slot maps (the N2 gluing normal form), a plan-indexed
+\code{buildCert}, and proofs that generated certificates are
+wellformed and faithful by construction, making ``every unfolding of
+the catalogue'' a theorem about a syntactic object rather than a
+hypothesis pair.  Then the logic layer (types, truth lemma) and the
+limit passage.  Below everything, F6 and W2$'$ (open mathematics) and
+the RCC5 patchwork property (single external input).  Ledger:
+thirteen reviews --- twelve defects, one no-counterexample; rounds
+19--22 unreviewed.  The decidability theorem for $\ALCIRCC$ remains
+\textbf{strongly supported, not certified}.
+
+\end{document}
