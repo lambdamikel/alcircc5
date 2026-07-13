@@ -6671,3 +6671,81 @@ proofs (full triangle case table over the 10-set fold lattice for Lemma 4.3;
 expanded Lemma 5.2; width extraction); machine checks. The packet includes the
 optional cold-ish first pass (three manuscripts only) to get an unbiased signal
 before targeting. Docs updated with pointers; pushed.
+
+## 2026-07-13: the tenth review — round-15 falls at W1a; defect #10; the pointwise-vs-joint genus, fourth incarnation
+
+GPT-5.5 ran the W1–W3 packet and delivered `papers/fable5_round15/
+round15_referee_deliverables.zip` (report + machine check), now unpacked under
+`papers/gpt5.5_round15_review/`. **Verdict: reject / fatal defect — at W1a, the
+designated keystone.** The witness is minimal and elegant: old pattern
+`y PP z PP s` (closed), fresh pattern `s PPI b` glued on `s`; both folds are Rel;
+safe sets `Safe(Y,B) = {PO}`, `Safe(Z,B) = {DR}` realized by explicit universal
+formulas per Definition 3.1. The manuscript's (Q4)(b) passes **pairwise** — for
+(y,b) the selector DR is unsafe but the *other* horizontal PO is safe, exactly the
+disjunction branch the text allows — yet Lemma 4.3's pointwise assignment gives
+`ρ(y,b)=PO`, `ρ(z,b)=DR`, and the old triangle demands
+`ρ(y,b) ∈ comp(PP,DR) = {DR}`. No safe completion of the gluing step exists at
+all: the defect is in the certificate condition, not the prose. Claude reproduced
+the shipped script byte-identically (`wp27_round15_w1a_counterexample.py`).
+
+**Claude's post-mortem, confirming and sharpening.** (1) The witness configuration
+is *semantically unrealizable*: `y ⊂ z` and `z ∩ b = ∅` force `y DR b`, which
+`Safe(Y,B) = {PO}` forbids — so a correct certificate system must REJECT it, i.e.
+(Q4) as written **accepts garbage**. This settles the repair's completeness
+question in advance: making the steering condition **joint** (per gluing profile,
+the finite domain CSP — forced singletons plus fold∩Hor∩Safe domains, together
+with the declared old and fresh networks — must admit a closed atomic completion)
+cannot over-reject, because extraction from a real model always supplies the joint
+solution. That is the round-16 direction, and it is finite and checkable at the
+catalogue level. (2) The review's critique of WP26 is exactly right and is the
+methodological lesson of the round: Part B hard-wired the canonical selector into
+every positive test domain (`dom = {sel}`), thereby testing the *stronger*
+condition "sel(F) ∈ Safe" rather than the manuscript's (Q4)(b) disjunction — a
+**spec-vs-test mismatch**: the harness validated a discipline the manuscript did
+not actually require. WP26 now carries **Part B2**, which tests (Q4)(b) as
+written: the minimal witness is confirmed and a randomized disjunction-branch
+sweep finds **95/250** glue steps jointly unrealizable — the pairwise condition is
+not marginally weak, it is badly weak. (3) The failure genus is the project's
+single recurring shape — **pointwise/local checks that do not compose jointly** —
+in its fourth incarnation (transformer coherence, shadow amalgamation, monitor
+copy-consistency, and now the steering disjunction), this time inside Claude's own
+assignment argument: the proof conflated pre-assignment feasibility (the fold)
+with the post-assignment constraint (the composition cell fixed by the neighbour's
+chosen value). W1b is the same mechanism in the two-fresh case; W1c/W2/W3 were not
+reached (not exonerated); W2c also noted a syntactic instability in (Q2)'s
+interior/interface quantification. **Ledger: 10 reviews, 10 defects.** The
+author/adversary alternation has now had each lineage break the other twice.
+
+**The deferred reflection (recorded now, as agreed).** After the ninth review,
+Wessel asked whether the persistence of his original split-forest intuition across
+the rounds is an illusion. The assessment given then — recorded here with the
+tenth round's data point added — was: not an illusion, for three reasons, with
+three caveats. Reasons: (i) the failure pattern is asymmetric — every one of the
+now **ten** defects sits in decision machinery, and none in the model class, which
+every review that examined it (including genuinely cold ones) found sound; the
+tenth round extends this streak — the fold-lattice/one-step/core architecture and
+the underlying split-forest semantics were not what broke, the steering
+*condition* was; (ii) the intuition reduces to two tiny machine-checked facts that
+are continuous with Wessel's own 2002/2003 observations — comp(PP,PP)={PP}
+(containment is the only rigid structure) and the patchwork property (the floppy
+remainder glues) — now sharpened quantitatively by the 10-set fold lattice; (iii)
+independent searchers (three model lineages, opposite starting biases) keep
+re-arriving at the same normal form after every demolition, and the round-15
+certificate is literally the model class folded by pattern isomorphism. Caveats:
+(a) load-bearing in all attempts ≠ sufficient for the theorem — ten dead decision
+layers are also consistent with something genuinely non-finitary living in the
+decision problem, though the coincidence obstruction (Wessel's own negative
+observation) still blocks every known route to encoding computation in the floppy
+part; (b) what survived is the *repaired* intuition (split copies, saturation,
+thresholds, exact identity), not the 2002 mental object verbatim; (c) the
+anchoring control has never been run — no one has attempted this theorem from
+scratch without split forests. Meta-note on the division of labour: the two
+Wessel-era observations — patchwork positive, coincidence obstruction negative —
+are at this point the two boundary walls of the entire investigation; the fifteen
+rounds have been attempts to build a finite bridge between them, and the ten
+failures have all been bridge failures, never wall failures.
+
+Docs updated (README Latest News + Status section + Key Files; CLAUDE.md status +
+round-15 outcome + wp26-B2/wp27; verification/README; overview papers ×2). Status:
+**strongly supported, NOT certified**. Round-16 direction fixed: the joint
+per-gluing-profile steering-amalgamation condition (Q4′).

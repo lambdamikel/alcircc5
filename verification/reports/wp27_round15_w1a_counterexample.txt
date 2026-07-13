@@ -1,0 +1,25 @@
+RCC5 cells used:
+  PP o PPI = ['DR', 'EQ', 'PO', 'PP', 'PPI']
+  PP o DR  = ['DR']
+
+old pattern O(y,z,s): closed
+fresh pattern K(s,b): closed
+pattern-edge safety:
+  Safe(Y,Z) contains PP: True ['DR', 'PO', 'PP', 'PPI']
+  Safe(Z,S) contains PP: True ['PP']
+  Safe(Y,S) contains PP: True ['PP']
+  Safe(S,B) contains PPI: True ['DR', 'PO', 'PPI']
+
+cross folds through separator s:
+  F(y,b)=PP o PPI = ['DR', 'EQ', 'PO', 'PP', 'PPI'] selector DR Safe(Y,B)= ['PO']
+  F(z,b)=PP o PPI = ['DR', 'EQ', 'PO', 'PP', 'PPI'] selector DR Safe(Z,B)= ['DR']
+
+round-15 pointwise choices:
+  rho(y,b) = PO
+  rho(z,b) = DR
+
+old-detour triangle y --PP--> z --DR--> b requires rho(y,b) in ['DR']
+  actual chosen rho(y,b) = PO
+  CLOSED? False
+
+RESULT: PASS - this is a W1a counterexample to Lemma 4.3's pointwise canonical completion.

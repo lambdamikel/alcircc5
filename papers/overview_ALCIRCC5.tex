@@ -2073,6 +2073,35 @@ split-forest model class the project has produced: it \emph{is} the
 split forest, folded by pattern isomorphism, with the fold lattice
 bounding what the folding forgets.
 
+
+\paragraph{The tenth review (July 2026): round 15 falls at its designated
+keystone.}
+GPT-5.5's targeted pass broke round 15 exactly where the manuscript
+pointed: the steering condition of the canonical completion is stated
+pairwise (each unrepresented pair must admit a safe horizontal value in
+its fold), and a minimal machine-checked witness --- two safe sets
+$\{\PO\}$ and $\{\DR\}$ over an already-realized $\PP$ edge, with
+$\comp(\PP,\DR)=\{\DR\}$ pinning the pair the first set cannot reach ---
+shows the pairwise condition passes while no joint completion exists.
+The post-mortem sharpened the finding: the witness configuration is
+semantically unrealizable, so the condition accepts what it should
+reject, and the repair --- making the condition \emph{joint}, requiring
+a closed completion of the finite domain problem per gluing profile ---
+provably cannot hurt completeness, since extraction from a real model
+always supplies the joint solution.  The review also exposed a
+spec-versus-test mismatch in the accompanying harness, which had
+validated a stronger discipline than the manuscript stated; the harness
+now tests the condition as written and confirms the defect at scale.
+The ledger stands at ten reviews, ten defects, and the failure genus is
+the project's single recurring shape --- pointwise checks that do not
+compose jointly --- in its fourth incarnation.  Two things did not
+break, again: the split-forest model class, and the round-15
+architecture around the failed condition (the fold lattice, one-step
+clusters, and the core were not reached).  The round-16 direction is
+fixed and small: replace the pairwise steering condition by the joint
+per-profile amalgamation check.  Status unchanged: \emph{strongly
+supported, not certified}.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the

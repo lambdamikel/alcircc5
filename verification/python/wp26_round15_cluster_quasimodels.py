@@ -34,7 +34,11 @@ Parts:
      EQ never forced) -- the steering toolkit.
 
   B  SAFE-PATCHWORK STEERING PROBE (the designated keystone W1,
-     empirically).  Random realized "old" frames built as trees of
+     empirically).  POST-10TH-REVIEW NOTE: Part B tests the STRONGER
+     condition "the canonical selector is safe" (every positive domain
+     contains sel(F)) -- the 10th review showed the manuscript's actual
+     (Q4)(b) disjunction is weaker and NOT jointly realizable; Part B2
+     below tests the condition as written and CONFIRMS the defect.  Random realized "old" frames built as trees of
      closed atomic clusters glued by iterated patchwork; then a fresh
      cluster is glued on a separator, and every cross pair (old element,
      fresh element) receives a DOMAIN = (its true separator-mediated
@@ -354,7 +358,98 @@ def part_b(trials=250, seed=71):
     print(f"        negative control (horizontals stripped): "
           f"{neg_fail}/{neg_total} become unrealizable "
           f"({'PASS -- harness sees the F1.3/WP15 genus' if neg_fail > 0 else 'FAIL'})")
+    print("        NOTE (post-10th-review): Part B tests the STRONGER "
+          "condition sel(F) in Safe\n        (every positive domain "
+          "contains the selector), not the manuscript's (Q4)(b)\n"
+          "        disjunction. The 10th review's W1a witness exploits "
+          "exactly that gap; see B2.")
     return ok_pos == n and neg_fail > 0
+
+
+def part_b2(trials=250, seed=97):
+    """Part B2 (added after the 10th review): test the (Q4)(b) condition
+    AS WRITTEN in the round-15 manuscript -- 'sel(F) is safe OR the other
+    horizontal member of F is safe' -- i.e. positive domains need NOT
+    contain the canonical selector.  Expected result: joint realizability
+    FAILS on some configurations (this is the 10th defect, W1a).  A
+    passing run of B2 CONFIRMS the defect; it is a regression harness,
+    not a proof check."""
+    # (i) the 10th review's minimal witness, hardcoded:
+    #     old pattern y PP z PP s (y PP s); fresh pattern s PPI b;
+    #     Safe(Y,B) = {PO}, Safe(Z,B) = {DR}; both folds = Rel.
+    known = {}
+    for (i, j, r) in [('y', 'z', 'PP'), ('z', 's', 'PP'), ('y', 's', 'PP'),
+                      ('s', 'b', 'PPI')]:
+        net_set(known, i, j, r)
+    doms = {('y', 'b'): frozenset({'PO'}), ('b', 'y'): frozenset({'PO'}),
+            ('z', 'b'): frozenset({'DR'}), ('b', 'z'): frozenset({'DR'})}
+    # pairwise (Q4)(b) check: each domain is a horizontal member of the
+    # fold Rel = comp(PP,PPI); the selector DR is unsafe for (y,b) but PO
+    # (the other horizontal) is safe -- the disjunction branch.
+    fold_yb = COMP[('PP', 'PPI')]
+    q4b_ok = ('PO' in fold_yb) and ('DR' in fold_yb)
+    sol = pc_complete(['y', 'z', 's', 'b'], known, domains=doms)
+    w1a_confirmed = q4b_ok and (sol is None)
+    print(f"Part B2 (the manuscript's actual (Q4)(b), post-10th-review):")
+    print(f"        minimal W1a witness: pairwise (Q4)(b) passes = "
+          f"{q4b_ok}; joint completion exists = {sol is not None} "
+          f"({'PASS -- defect #10 confirmed' if w1a_confirmed else 'FAIL'})")
+
+    # (ii) randomized disjunction-branch sweep: like Part B, but domains
+    # may DROP the selector whenever another horizontal is feasible.
+    rng = random.Random(seed)
+    n = fails = 0
+    attempts = 0
+    while n < trials and attempts < trials * 40:
+        attempts += 1
+        made = rand_cluster_tree_frame(rng, rng.randint(3, 5))
+        if made is None:
+            continue
+        elems, frame = made
+        sep = rng.sample(elems, min(len(elems), rng.randint(1, 2)))
+        fresh = [f'b{i}' for i in range(rng.randint(1, 2))]
+        sepn = {(i, j): frame[(i, j)] for i in sep for j in sep if i != j}
+        patt = pc_complete(sep + fresh, dict(sepn), rng=rng)
+        if patt is None:
+            continue
+        known2 = dict(frame)
+        known2.update(patt)
+        allv = elems + fresh
+        cross = [(y, b) for y in elems if y not in sep for b in fresh]
+        doms2 = {}
+        ok = True
+        for (y, b) in cross:
+            feas = set()
+            for v in NONEQ:
+                k2 = dict(known2)
+                net_set(k2, y, b, v)
+                if pc_complete(allv, k2) is not None:
+                    feas.add(v)
+            if not feas:
+                ok = False
+                break
+            hor = [v for v in feas if v in HOR]
+            if len(feas) == 1:
+                dom = set(feas)                      # forced
+            elif len(hor) >= 2 and rng.random() < 0.6:
+                dom = {rng.choice(hor)}              # disjunction branch:
+                                                     # maybe NOT the selector
+            elif hor:
+                dom = {rng.choice(hor)}
+            else:
+                dom = set(feas)
+            doms2[(y, b)] = frozenset(dom)
+            doms2[(b, y)] = frozenset(CONV[v] for v in dom)
+        if not ok:
+            continue
+        n += 1
+        if pc_complete(allv, known2, domains=doms2) is None:
+            fails += 1
+    print(f"        randomized (Q4)(b)-branch sweep: {fails}/{n} glue "
+          f"steps jointly unrealizable "
+          f"({'PASS -- the pairwise condition is too weak, as the 10th '
+              'review proved' if fails > 0 else 'FAIL -- expected failures'})")
+    return w1a_confirmed and fails > 0
 
 
 # ---------------------------------------------------------------- Part C --
@@ -650,7 +745,7 @@ def part_c():
 if __name__ == '__main__':
     print(__doc__.split('\n')[1])
     print('=' * 70)
-    r = [part_a(), part_b(), part_c()]
+    r = [part_a(), part_b(), part_b2(), part_c()]
     print('=' * 70)
     print("WP26 OVERALL:", "PASS" if all(r) else "ATTENTION: see above")
     sys.exit(0 if all(r) else 1)
