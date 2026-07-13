@@ -1,0 +1,29 @@
+WP33 -- adversarial extensions for the round-18 total-transport review.
+========================================================================
+A. co-birth inherited-slot U totality witness
+   births: b(x)=0, b(a)=0; parent members V_B={a,b}; separator s=a
+   manuscript U clauses for entry rho(x,a): NONE
+   expected value exists from birth pattern A: N_A(x,a)
+   RESULT: FAIL for manuscript totality (gap exposed)
+B. inherited older-separator U-down source witness
+   births: b(x)=0 < b(a)=1; parent B at step 2 inherited a and freshened b
+   manuscript U clauses for entry rho(x,a): ['U-down']
+   text lookup f_at_parent_B(...)(a) exists: False
+   correct birth-step lookup f_at_step_1(...)(a) exists: True
+   RESULT: FAIL for written U-down lookup (wrong source step)
+C. order-invariance counterexample
+   template A: N(c,a)=DR; template B: N(c,b)=DR; Safe permits all non-EQ
+   A then B chooses f_B(St(a))(b)=PP, yielding rho(a,b)=PP
+   B then A chooses f_A(St(b))(a)=DR, yielding rho(a,b)=DR
+   S1 checks: True True S2 checks: True True S3/S4: vacuous
+   closed networks: True True
+   RESULT: FAIL for order-invariance lemma (same unordered tree, different values)
+D. co-birth gap can hide an S4-critical old pair
+   old: x PP a, z PP a, x PP z; old network closed: True
+   child: a PPI d; steering x PP d and z DR d
+   S1 through a: True True S2/S3: ok/vacuous
+   S4 on old pair x PP z would require x-d in ['DR']
+   S4 rejects chosen x-d: True new network closed: False
+   RESULT: FAIL for omission-prone fixed point (bad triangle accepted without the missing pair)
+========================================================================
+WP33 OVERALL: COUNTEREXAMPLES FOUND

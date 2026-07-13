@@ -7088,3 +7088,72 @@ sibling-convention uniqueness across different sources; general). Part III:
 F6/W2′ as optional round-19 material. Contents: the 12th review under workorder/,
 all five manuscripts, wp28/30/31/32 + outputs, oracle, optional cold pass. Docs
 updated; pushed.
+
+## 2026-07-13 (13th review): round-18 rejected — the flip vindicated, totality still short, order invariance false
+
+GPT-5.5's response (`papers/gpt5.5_round18_review/round18_formal_response.*`) is a
+split verdict of unusual precision. **Vindicated:** round-18's departure from the
+work order was right — the birth-flip clause is *necessary* (the 12th review's own
+two-case M1 was incomplete) and *essentially correct* for the strict case, and the
+Birth Dichotomy Lemma survived an extraction-side attack ("lazy steering would
+simply not instantiate the certificate normal form"). **Rejected (defect #12),
+three High findings plus the toolchain finding, all verified locally and
+reconstructed as wp33:**
+
+1. **Co-birth inherited-slot totality gap.** The written case split (s∈core /
+x∈V_k / b(x)<b(s) / b(x)>b(s)) is not total: if s and x were born in the *same*
+copy A and only s was inherited into the current parent B, then s∉core, x∉V_B,
+b(x)=b(s) — no clause fires, though the value exists as N_A(x,s). My totality
+proof's step "distinct copies ⟹ different births" is simply false: same copy,
+different carry-forward.
+2. **U-down mis-sourced for inherited separators.** The written clause reads the
+*current parent attachment's* steering row — which has no component for a member
+that was inherited (not fresh) there. The correct source is s's *birth* step.
+3. **S4-criticality:** with the co-birth pair absent from the fixed point, a
+steering choice passing S1/S2/S3 produces a non-closed frame
+(comp(PP,DR)={DR} pins the escaped triangle).
+4. **Order invariance is false.** Two incomparable siblings with independent
+steering functions: expanding A-then-B vs B-then-A legally yields ρ(a,b)=PP vs
+DR — same unordered attachment tree, both results closed and locally legal. My
+Lemma's "value fixed at the later birth by step-local data" hid the fact that
+*which* birth is later is an artifact of the interleaving, and the two candidate
+assigning-steps consult *different* steering functions. Only **canonical-order
+determinism** survives — which is all the construction needs, since the witness
+map + sibling convention already fix a canonical order; the lemma and the LCA
+corollary must be weakened accordingly.
+5. **WP32 does not test the text — the sharpest instance yet of the recurring
+finding.** My code contained BOTH correct rules (the co-birth branch at line 233;
+the birth-step U-down source at 237–246) that my manuscript text lacks: the code
+knew, the text didn't (the exact inverse of rounds 15/17 was supposed to be
+prevented by the two-computation design — but the rule engine was written from my
+*intent*, not transcribed from my *text*). Plus: the generator maps slots to
+parent-fresh members only (disclosed in the packet prompt, and precisely where
+the witnesses live), and Part C's adversarial policy used Python's salted
+`hash()` — the negative-control count is seed-dependent (21/17/20 across
+PYTHONHASHSEED 0/1/2, confirmed) despite the manuscript's determinism claim (the
+digest was computed before Part C and so stayed stable — a determinism claim
+scoped narrower than it read).
+
+**Also from the review:** the core-overlap mutual-exclusivity nit (declare U-core
+a priority clause); the flip's slot-name resolution to make explicit
+(conv(N_A(q, p_x))); no new strong-equality or core-provenance defect; the
+sibling convention's same-edge-different-sources case flagged as
+presentation-level. **Ledger: 13 reviews — 12 defects-with-witness, 1
+no-counterexample.**
+
+**Round-19 is fully specified** (the reviewer's U1–U5): source-oriented U —
+look each value up *where it was recorded* (core row; birth pattern of s,
+covering co-birth; steering recorded at s's birth; converse recorded at x's
+birth) with an agreement lemma for when the current parent also contains both
+endpoints; canonical-order determinism replacing the false invariance lemma;
+and WP literalization (text = code, arbitrary parent non-core slot targets,
+deterministic control). wp33-E verifies the repair direction covers all four
+witnesses.
+
+**The meta-lesson, now unavoidable:** defects #10, #11(-adjacent findings), and
+#12 are ALL text/code alignment failures — the mathematics (fold lattice, birth
+flip, dichotomy, core handling, no-overwrite) keeps surviving adversarial
+attack, while prose renditions of total recursive definitions keep failing. The
+strongest conclusion of thirteen reviews: **round-19 should be authored as the
+Lean definitions**, where the definition IS the artifact and no text/code gap
+can exist. Docs updated; pushed. Status: **strongly supported, NOT certified**.

@@ -1,0 +1,20 @@
+WP33 (reconstruction) -- the thirteenth review's four witnesses against
+======================================================================
+A. co-birth inherited-slot totality gap:
+   b(x)=b(s)=0, s not core, x not in V_B: written clauses fired = NONE
+   value exists as birth-pattern entry N_A(x,s): True
+   PASS -- the gap is real (defect #12 confirmed)
+B. inherited U-down mis-source:
+   clauses fired = ['U-down']; text lookup at parent step has s-component: False; birth-step lookup has it: True
+   PASS -- wrong source step in the written clause
+C. order-invariance counterexample:
+   A-then-B gives rho(a,b)=PP; B-then-A gives rho(a,b)=DR; both S1-legal through c (comp(DR,DR)=Rel) and both closed: True/True
+   PASS -- same unordered tree, different values; only canonical-order determinism survives
+D. the co-birth gap is S4-critical:
+   S1 admits x PP d and z DR d through a: True/True; S4 on the old pair x PP z pins x-d to ['DR']
+   PASS -- omitting the pair accepts a non-closed frame
+E. the source-oriented repair (13th review U1-U5):
+   co-birth case -> birth-pattern of s (covers co-birth); inherited older case -> steering recorded at s's birth
+   PASS -- both witnesses covered; S4 sees the pair again
+======================================================================
+WP33 (reconstruction) OVERALL: PASS -- all four witnesses confirmed; repair direction verified

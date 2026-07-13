@@ -96,6 +96,13 @@ Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
 
+### `python/wp33_round18_audit_reconstruction.py` — WP33: the thirteenth review's witnesses, reconstructed
+
+The thirteenth review quoted a WP33 script without shipping it; this reconstruction keeps the WP series executable. A: the **co-birth inherited-slot** totality gap (no written U-clause fires; the value exists as the birth-pattern entry); B: the **U-down mis-source** (the current parent's steering row lacks the component; the birth-step row has it); C: the **order-invariance counterexample** (sibling interleavings yield PP vs DR from the same unordered tree, both closed — only canonical-order determinism survives); D: **S4-criticality** (`comp(PP,DR)={DR}` pins the escaped triangle); E: the reviewer's **source-oriented repair** (U1–U5) covers A/B and restores the S4 rejection. All PASS (= all findings confirmed). Caveats recorded on WP32: its rule engine contains two correct rules absent from the round-18 text (the inverse spec-vs-text failure), its generator covers parent-fresh slot targets only, and its Part C negative control was `hash()`-salted (seed-dependent counts 21/17/20, confirmed).
+
+Run: `python3 python/wp33_round18_audit_reconstruction.py`
+Report: [`reports/wp33_round18_audit_reconstruction.txt`](reports/wp33_round18_audit_reconstruction.txt)
+
 ### `python/wp32_round18_total_transport.py` — WP32: the round-18 total-transport harness
 
 Companion to [`papers/fable5_round18/`](../papers/fable5_round18/) (the twelfth review's M1–M6, plus the birth-flip clause). The architecture makes Finding 17.3's lesson structural: **rule-computed states — derived from the catalogue and steering records only, never by reading the realized frame — are cross-checked against frame truth on genuinely branching attachment trees**, so any divergence between the written U-clauses and the actual construction is caught automatically. Results: **150 branching unfoldings, 0 divergences**; **2,820** mixed ambient/resident + flip pairs and **140** birth-flip entries exercised (the 17.1/17.2 seam covered); the WP31 geometry regression (mixed pair transported ⟹ S4 rejects the bad row); a **constructed** negative S4 control firing in 17/41 runs; deterministic output (result digest verified identical across `PYTHONHASHSEED` values). Development note: initial divergences (6/150) were traced to non-injective slot maps — the twelfth review's 17.4 discipline, re-derived empirically by the harness before being enforced.

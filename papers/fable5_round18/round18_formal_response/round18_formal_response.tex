@@ -1,0 +1,483 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{amsthm}
+\usepackage{array,booktabs,longtable,tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\St}{\operatorname{St}}
+\newcommand{\Safe}{\operatorname{Safe}}
+\newcommand{\core}{\operatorname{core}}
+\newcommand{\Uop}{\operatorname{U}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\status}[1]{\textsc{#1}}
+\newcommand{\sev}[1]{\textsc{#1}}
+\newcommand{\rhoR}{\rho}
+
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+\renewcommand{\arraystretch}{1.18}
+\setlength{\LTpre}{0.5em}
+\setlength{\LTpost}{0.5em}
+\emergencystretch=2em
+
+\lstdefinestyle{reviewpython}{
+  basicstyle=\ttfamily\scriptsize,
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  frame=single,
+  showstringspaces=false,
+  tabsize=2,
+  language=Python
+}
+\lstdefinestyle{reviewtext}{
+  basicstyle=\ttfamily\scriptsize,
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  frame=single,
+  showstringspaces=false,
+  tabsize=2
+}
+
+\newtheorem{finding}{Finding}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{remark}
+\newtheorem*{remark*}{Remark}
+
+\title{Formal Response on the Round-18 Total-Transport Delta for\\
+\texorpdfstring{$\ALCIRCC$}{ALCI RCC5}}
+\author{GPT-5.5 Pro}
+\date{13 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This response tests whether the round-18 total-transport delta discharges the twelfth review's repair package M1--M6.  The answer is negative.  The delta is right that the two-case total update requested in M1 was incomplete: cross-branch occurrences require a birth-flip clause.  The strict birth-flip clause is essentially correct and well-founded.  However, the published case split for $\Uop$ is still not total on legal operational endpoint/separator pairs.  Round 18 allows child slots to map to arbitrary parent non-core ports, but both the totality proof and WP32 behave as if they map only to parent-fresh ports.  Inherited separator members create two missing/mis-sourced cases: a same-birth inherited separator pair covered by no written clause, and an older-endpoint U-down case whose lookup is taken from the current parent attachment although the separator occurrence was not fresh there.  These gaps can again hide an S4-critical old pair.  In addition, the order-invariance lemma is false for legal sibling interleavings, and WP32 does not literally test the manuscript text.  Status remains \emph{strongly supported, not certified}; round 18 is rejected as written.
+\end{abstract}
+
+\tableofcontents
+
+\section{Scope, sources, and notation}
+
+This report reviews the attached round-18 target
+\[
+\code{manuscripts/cluster\_quasimodels\_round18\_total\_transport.tex}
+\]
+against the M1--M6 work order in the twelfth review
+\[
+\code{workorder/round17\_formal\_response.tex}.
+\]
+It also audits the executable evidence
+\[
+\code{verification/wp32\_round18\_total\_transport.py}
+\]
+and the adversarial extension produced for this review,
+\[
+\code{round18\_wp33\_audit\_extensions.py}.
+\]
+Line numbers below refer to \code{nl -ba} renderings of these files.  The target clauses for $\Uop$ are round-18 lines 103--124; the totality proof is lines 143--160; the order-invariance lemma is lines 175--191; the port discipline is lines 253--260; the WP32 rule engine is lines 228--257 and the WP32 generator's slot map is lines 262--275.
+
+The RCC5 atoms are written
+\[
+\EQ,\PP,\PPI,\PO,\DR,
+\]
+with $\Comp$ denoting the standard atomic RCC5 composition table.  The birth step of an occurrence $x$ is written $b(x)$, and $V_k$ denotes the member set of the current parent copy $k$ of a gluing $h$.  A separator member at $h$ is written $s\in\sigma_h$.
+
+\section{Executive verdict}
+
+I do not accept round 18 as discharging M1--M6.  The main issue is not the birth-flip idea; that idea is necessary.  The issue is that the manuscript proves totality using the false implication
+\[
+  s\notin\core,\quad x\notin V_k
+  \quad\Longrightarrow\quad
+  b(x)\neq b(s).
+\]
+This implication fails whenever $s$ is an inherited parent port whose birth copy also contained $x$, but only $s$ was carried forward into the current parent.  Such a configuration is legal under the stated port discipline, because a child slot may map injectively into the parent's non-core ports plus core, not merely into the parent's fresh ports.
+
+There is also a second inherited-port problem: if $b(x)<b(s)$ and the current separator member $s$ was inherited into the current parent rather than born fresh there, the written U-down clause reads the wrong steering row.  It says to read the row recorded at the current parent copy's attachment, but the value $\rhoR(x,s)$ was fixed at $s$'s own birth.
+
+These are fatal to the round-18 acceptance claim because the fixed point may omit a real old--old pair needed by S4.  WP32 does not catch this because its generator maps inherited child slots only to parent-fresh members, and its rule engine already contains two repairs not present in the text.
+
+\section{Part I: acceptance table for M1--M6}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.19\linewidth} >{\raggedright\arraybackslash}p{0.18\linewidth} >{\raggedright\arraybackslash}p{0.55\linewidth}}
+\toprule
+\textbf{Item} & \textbf{Result} & \textbf{Assessment} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Item} & \textbf{Result} & \textbf{Assessment} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Birth-flip necessity & \status{Discharged} & The two-case M1 update is not total for cross-branch pairs.  If $s$ is older and $x$ is born in an incomparable or descendant branch later, then $\rhoR(x,s)$ is the converse of the value assigned from $s$ to $x$ at $x$'s birth.  It is neither an ambient $T$-image nor a parent-copy catalogue read-off at a later gluing. \\
+\addlinespace
+Birth-flip correctness & \status{Nominally discharged} & For the strict case $b(x)>b(s)$, the clause is correct: if $s$ is in $x$'s birth copy, use the converse of the in-copy value; otherwise use the converse of the recorded steering value at $x$'s birth.  The manuscript should state the member-name lookup explicitly: if $s$ entered the birth copy through slot $q$ and $x$ was born at fresh port $p_x$, the value is $\operatorname{conv}(N_A(q,p_x))$.  Core overlap is harmless only under a priority or consistency convention. \\
+\addlinespace
+M1: totality of $\Uop$ & \status{Not discharged} & The claimed split $s\in\core$; $x\in V_k$; $b(x)<b(s)$; $b(x)>b(s)$ misses legal inherited same-birth cases.  If $s$ and $x$ were born in the same copy, $s$ alone is inherited into the current parent, and a child uses $s$ as separator, then $s\notin\core$, $x\notin V_k$, and $b(x)=b(s)$.  No clause applies, although $\rhoR(x,s)$ exists as the old birth-pattern value.  U-down is also mis-sourced for inherited separators. \\
+\addlinespace
+M2: lockstep transport and two-sided creation & \status{Nominally, conditional on M1} & Definition P3 at round-18 lines 162--170 now states two-sided creation and pair transport under $\Uop$.  Resident/resident reseeding is consistent in the intended fresh-parent case by P1, gluing coherence, and no-overwrite.  But because $\Uop$ is partial or mis-sourced on inherited separator members, lockstep transport still omits legal operational pairs. \\
+\addlinespace
+M3: well-founded and catalogue-computable lookups & \status{Not discharged} & The birth-flip lookup itself is well-founded: it reads the older endpoint's state at the younger endpoint's birth, already computed before steering to the fresh members.  There is no circular flip-at-mutual-birth case.  The written U-down lookup, however, is not computable for inherited separators: it asks for a component of the current parent attachment's steering row to a member that was not fresh in that parent. \\
+\addlinespace
+M4: five-way pair analysis & \status{Not discharged} & The resident/steered analysis at round-18 lines 214--237 would be adequate after a genuinely total $\Uop$.  As written, it has no case for same-birth nonresident inherited separators, and it uniformly treats down-history and flip-history as ``steered'' without a valid lookup for the inherited down-history cases. \\
+\addlinespace
+M5: order invariance & \status{Not discharged} & The order-invariance lemma at round-18 lines 175--191 is false for legal sibling interleavings.  The older endpoint's state at the younger's birth can depend on which incomparable sibling is expanded second, because the relevant steering function is different in the two interleavings.  A fixed canonical sibling order may still give determinism, but unordered-tree order invariance does not hold. \\
+\addlinespace
+M6: WP32 tests the text & \status{Not discharged} & WP32 is useful but not literal.  Its \code{rule\_entry} has a same-birth branch absent from Definition U, uses the separator occurrence's birth step for U-down rather than the current parent step written in the manuscript, and generates slot maps only to parent-fresh members.  It therefore misses exactly the inherited-port cases above.  Its negative-control count is also Python-hash-seed dependent. \\
+\end{longtable}
+
+\section{Birth-flip audit}
+
+\subsection{The birth flip is necessary}
+
+The twelfth review's two-case M1 update was: ambient endpoints take their transported $T$-images, and parent-copy endpoints take the relevant birth-adjacent catalogue state.  This is not enough for cross-branch endpoints.
+
+Consider two sibling copies below a common ancestor.  A fresh occurrence $a$ is born in the first sibling, and a fresh occurrence $b$ is born in the second sibling.  If the second sibling is expanded after the first, then $a$ is pre-existing but not a member of the second copy, so the value from $a$ to $b$ is recorded by steering at $b$'s birth.  Later, at a gluing whose separator contains $a$, the needed entry in $b$'s separator row is
+\[
+  \rhoR(b,a)=\operatorname{conv}\bigl(\rhoR(a,b)\bigr),
+\]
+where $\rhoR(a,b)$ was fixed at $b$'s birth.  This value is not obtained from a later parent-copy read-off, and it was not present when $a$ was born.  A third birth-flip clause is therefore genuinely required.
+
+\subsection{The strict birth-flip clause is essentially correct}
+
+For $b(x)>b(s)$, the round-18 flip clause has the right shape.  Let $A$ be the birth copy of $x$ and $p_x$ its fresh port in $A$.  Since $s$ pre-exists the birth of $x$, there are two possibilities in the round-18 normal form:
+\begin{enumerate}[label=(\roman*)]
+  \item $s$ is a member of $A$, either through core or through an inherited slot $q$; then $\rhoR(s,x)=N_A(q,p_x)$ and $\rhoR(x,s)=\operatorname{conv}(N_A(q,p_x))$.
+  \item $s$ is not a member of $A$; then it was steered at $A$'s attachment, giving $\rhoR(s,x)=f_{g_A}(\St_{g_A}(s))(p_x)$ and hence $\rhoR(x,s)=\operatorname{conv}(f_{g_A}(\St_{g_A}(s))(p_x))$.
+\end{enumerate}
+The state $\St_{g_A}(s)$ is computed before the fresh occurrence $x$ is created, so this lookup is well-founded.  There is no circular pair of flip lookups at mutual births, since equal birth step is not a strict flip case.
+
+The manuscript should, however, replace the notation $N_A(\,\cdot\,,x)$ in lines 117--119 by an explicit inverse slot-map lookup.  If $s$ is core, the U-core and U-flip sources also overlap; the values agree by N3, but mutual exclusivity is false unless U-core is declared a priority case.
+
+\subsection{The birth dichotomy is not the failing step}
+
+I do not find an extraction-side counterexample to the birth dichotomy itself.  In the round-18 normal form, every pre-existing occurrence outside the new copy is supposed to be steered at the step; an attachment that leaves such an occurrence neither co-patterned nor steered would simply not instantiate the claimed certificate normal form.  Lazy or declaration-free unrelatedness would leave values to fresh members unavailable for S1--S4 and would require a different presentation.
+
+The failure below is sharper: even accepting the birth dichotomy, the totality proof misclassifies separator members that are inherited through the current parent.
+
+\section{Part II: findings}
+
+\begin{finding}[Inherited-slot separator makes $\Uop$ partial]
+\label{find:inherited-cobirth}
+\textbf{Severity:} \sev{High}.  Round 18's $\Uop$ is not total on legal operational endpoint/separator pairs.
+\end{finding}
+
+\paragraph{Location.}
+Definition U is round-18 lines 103--124.  The totality proof is lines 143--160.  The port discipline allowing the witness is lines 253--260.
+
+\paragraph{Witness.}
+Take no core, for simplicity.  Let copy $A$ be attached at step $0$ with two fresh non-core members $a$ and $x$.  Thus
+\[
+  b(a)=b(x)=0,
+\]
+and $N_A(x,a)$ fixes the value $\rhoR(x,a)$.
+
+Later attach copy $B$ so that it inherits $a$ through a slot and creates a fresh member $b$.  Thus
+\[
+  V_B=\{a,b\},
+\]
+but $x\notin V_B$.  Now attach a child of $B$ whose separator contains the inherited parent member $s=a$.
+
+At this child gluing, the entry $\rhoR(x,s)=\rhoR(x,a)$ is needed in the separator row of the steered occurrence $x$.  But the four written clauses give:
+\[
+\begin{array}{rcll}
+  s\in\core      &:& \text{false}, & \text{no U-core;}\\
+  x\in V_B       &:& \text{false}, & \text{no U-res;}\\
+  b(x)<b(s)      &:& \text{false}, & \text{no U-down;}\\
+  b(x)>b(s)      &:& \text{false}, & \text{no U-flip.}
+\end{array}
+\]
+No clause applies.  Nevertheless the value exists and is the old in-pattern value $N_A(x,a)$.
+
+The totality proof's line 154 says that, when $s\notin\core$ and $x\notin V_k$, one has $b(x)\ne b(s)$ because the endpoints are in distinct copies.  The witness shows this inference is false: $x$ and $s$ were born in the same copy $A$, but only $s$ was inherited into the current parent copy $B$.
+
+\paragraph{Machine check.}
+WP33 prints the following targeted check.
+\begin{lstlisting}[style=reviewtext]
+A. co-birth inherited-slot U totality witness
+   births: b(x)=0, b(a)=0; parent members V_B={a,b}; separator s=a
+   manuscript U clauses for entry rho(x,a): NONE
+   expected value exists from birth pattern A: N_A(x,a)
+   RESULT: FAIL for manuscript totality (gap exposed)
+\end{lstlisting}
+
+\begin{finding}[Inherited U-down reads the wrong source step]
+\label{find:inherited-down}
+\textbf{Severity:} \sev{High}.  Even when a written U clause fires, it can point to a non-existent steering component.
+\end{finding}
+
+\paragraph{Location.}
+U-down is round-18 lines 111--113.  It reads
+\[
+  f_{g_k}(\St_{g_k}(x))(s),
+\]
+where $g_k$ is the attachment of the current parent copy $k$.
+
+\paragraph{Witness.}
+Let $x$ be older than $a$.  Let $a$ be born fresh in copy $A$ at step $1$, so the value $\rhoR(x,a)$ is recorded at $a$'s birth.  Later copy $B$ inherits $a$ and creates a fresh member $b$.  At a child of $B$ with separator $s=a$, assume $x\notin V_B$.  Then
+\[
+  b(x)<b(a)=b(s), \qquad x\notin V_B,
+\]
+so the manuscript chooses U-down.  But $a$ was not fresh when $B$ was attached; it was an inherited member of $B$.  Hence the current parent attachment $g_B$ has no steering-row component to $a$.  The correct source is the steering value recorded at $a$'s birth, step $1$, not at the current parent step.
+
+\paragraph{Machine check.}
+WP33 records exactly this distinction.
+\begin{lstlisting}[style=reviewtext]
+B. inherited older-separator U-down source witness
+   births: b(x)=0 < b(a)=1; parent B at step 2 inherited a and freshened b
+   manuscript U clauses for entry rho(x,a): ['U-down']
+   text lookup f_at_parent_B(...)(a) exists: False
+   correct birth-step lookup f_at_step_1(...)(a) exists: True
+   RESULT: FAIL for written U-down lookup (wrong source step)
+\end{lstlisting}
+
+\begin{finding}[The inherited-slot gap can hide an S4-critical old pair]
+\label{find:s4-critical}
+\textbf{Severity:} \sev{High}.  The totality gap is load-bearing, not cosmetic.
+\end{finding}
+
+\paragraph{Witness.}
+Use the same inherited-separator geometry as Finding~\ref{find:inherited-cobirth}.  Before the child step, let the old occurrences be $a,x,z$, with $a$ the inherited separator member and
+\[
+  x\;\PP\;a,\qquad z\;\PP\;a,\qquad x\;\PP\;z.
+\]
+This old network is RCC5 composition-closed.  Let the child copy introduce a fresh member $d$ with
+\[
+  a\;\PPI\;d,
+\]
+so $d\PP a$.  Choose steering values
+\[
+  x\;\PP\;d,
+  \qquad
+  z\;\DR\;d.
+\]
+Each individual separator check through $a$ can pass, since both choices lie in $\Comp(\PP,\PPI)$.  S2 can be made harmless by using unrestricted types, and S3 is vacuous with one fresh member.
+
+However, S4 must also inspect the old pair $x\PP z$.  Since
+\[
+  \Comp(\PP,\DR)=\{\DR\},
+\]
+S4 would require $x\DR d$, rejecting the chosen value $x\PP d$.  The resulting four-point network is not composition-closed.  The bad row can escape exactly when the state/pair involving $x$ at the child gluing is absent because $\Uop(x,a)$ is undefined.
+
+\paragraph{Machine check.}
+WP33 prints:
+\begin{lstlisting}[style=reviewtext]
+D. co-birth gap can hide an S4-critical old pair
+   old: x PP a, z PP a, x PP z; old network closed: True
+   child: a PPI d; steering x PP d and z DR d
+   S1 through a: True True S2/S3: ok/vacuous
+   S4 on old pair x PP z would require x-d in ['DR']
+   S4 rejects chosen x-d: True new network closed: False
+   RESULT: FAIL for omission-prone fixed point (bad triangle accepted without the missing pair)
+\end{lstlisting}
+
+\begin{finding}[Order invariance is false]
+\label{find:order}
+\textbf{Severity:} \sev{High/medium}.  The canonical completion may be deterministic under a chosen order, but round 18's stronger interleaving-invariance claim fails.
+\end{finding}
+
+\paragraph{Location.}
+Round-18 Lemma 2.1 is lines 175--191, with the LCA corollary at lines 193--202.
+
+\paragraph{Witness.}
+Let $c$ be a core occurrence.  Let two incomparable sibling copies $A$ and $B$ both attach below the same parent.  Copy $A$ contains $c$ and fresh $a$ with
+\[
+  N_A(c,a)=\DR,
+\]
+and copy $B$ contains $c$ and fresh $b$ with
+\[
+  N_B(c,b)=\DR.
+\]
+Use types with no restrictive universals, so all non-EQ RCC5 atoms are safe.
+
+The same certificate can contain both local steering choices
+\[
+  f_B(\St_B(a))(b)=\PP,
+  \qquad
+  f_A(\St_A(b))(a)=\DR.
+\]
+If $A$ is expanded first and $B$ second, then $a$ is steered at $B$'s birth and
+\[
+  \rhoR(a,b)=\PP.
+\]
+If $B$ is expanded first and $A$ second, then $b$ is steered at $A$'s birth and
+\[
+  \rhoR(a,b)=\DR.
+\]
+Both choices satisfy the local S1 check through $c$ because $\Comp(\DR,\DR)$ permits all non-EQ atoms in this setting; S2 is harmless; S3 and S4 are vacuous at the second sibling step because only one nonseparator old non-core endpoint is steered.  Both resulting three-point networks are composition-closed.  The unordered attachment tree is the same, but the cross-value differs.
+
+\paragraph{Machine check.}
+WP33 prints:
+\begin{lstlisting}[style=reviewtext]
+C. order-invariance counterexample
+   template A: N(c,a)=DR; template B: N(c,b)=DR; Safe permits all non-EQ
+   A then B chooses f_B(St(a))(b)=PP, yielding rho(a,b)=PP
+   B then A chooses f_A(St(b))(a)=DR, yielding rho(a,b)=DR
+   S1 checks: True True S2 checks: True True S3/S4: vacuous
+   closed networks: True True
+   RESULT: FAIL for order-invariance lemma (same unordered tree, different values)
+\end{lstlisting}
+
+The cure is to weaken Lemma 2.1 to canonical-order determinism, or to add cross-branch coherence constraints on steering functions strong enough to force the two interleavings to agree.
+
+\begin{finding}[WP32 does not test the manuscript text]
+\label{find:wp32}
+\textbf{Severity:} \sev{Medium/high}.  WP32 is supportive but not a literal acceptance test for M6.
+\end{finding}
+
+\paragraph{Divergence 1: WP32 has a same-birth branch absent from Definition U.}
+Round-18 Definition U has no explicit $b(x)=b(s)$ case when $s\notin\core$ and $x\notin V_k$.  WP32's rule engine does:
+\begin{lstlisting}[style=reviewpython]
+if xb_step == sb_step:
+    # co-born: in-pattern value (resident clause, same copy)
+    T = self.cat['templates'][sb_ti]
+    return T['net'][(self.birth[x][2], sb_name)]
+\end{lstlisting}
+This is WP32 lines 233--236.  It is exactly the repair needed for Finding~\ref{find:inherited-cobirth}, but it is not in the manuscript rule.
+
+\paragraph{Divergence 2: WP32 uses the separator's birth step for U-down.}
+The manuscript's U-down at lines 111--113 reads from the current parent attachment $g_k$.  WP32 instead uses $s$'s birth step:
+\begin{lstlisting}[style=reviewpython]
+if xb_step < sb_step:
+    # x existed when s was born
+    ti, pstep, m2o = self.copies[sb_step]
+    ...
+    return self.frow[(sb_step, x)][fresh.index(sb_name)]
+\end{lstlisting}
+This is WP32 lines 237--246.  Again, this is closer to the repair the text needs than to the text actually written.
+
+\paragraph{Coverage gap: WP32 maps child slots only to parent-fresh members.}
+Round 18's port discipline allows inherited slots to map injectively into the parent's non-core ports plus core.  WP32 narrows this to the parent's fresh ports:
+\begin{lstlisting}[style=reviewpython]
+# separator: map inherited slots INJECTIVELY to parent's fresh
+# members ...
+pfresh = cat['templates'][pti]['fresh']
+mapping = {T['slots'][k]: pm2o[pfresh[k]]
+           for k in range(T['inh'])}
+\end{lstlisting}
+This is WP32 lines 262--275.  Therefore WP32 cannot generate the inherited-port witnesses in Findings~\ref{find:inherited-cobirth} and~\ref{find:inherited-down}.
+
+\paragraph{Hash-seed dependence in the negative control.}
+WP32's Part C uses Python's salted \code{hash(srow)} at lines 475--476.  The attached manuscript text claims hash-seed-deterministic output at round-18 lines 304--305, but the Part C count varies.  A fresh hash-seed audit produced:
+\begin{lstlisting}[style=reviewtext]
+PYTHONHASHSEED=0   -> 21/41
+PYTHONHASHSEED=1   -> 17/41
+PYTHONHASHSEED=2   -> 20/41
+PYTHONHASHSEED=123 -> 17/41
+\end{lstlisting}
+The digest printed in Part D remains stable because it is computed before Part C and does not cover the varying negative-control count.
+
+\section{Additional Part II observations}
+
+\paragraph{Core overlap and mutual exclusivity.}
+The target says the U clauses are exhaustive and mutually exclusive, but U-core overlaps U-res, U-down, or U-flip whenever the separator column is a core member.  The later overlap remark at lines 273--280 says the values agree, so this is repairable by declaring U-core a priority clause or by replacing mutual exclusivity with coherent overlap.
+
+\paragraph{Birth-flip slot resolution.}
+Z1 is not a fatal finding, but the notation needs tightening.  If the older endpoint $s$ enters the younger birth copy $A$ through an inherited slot $q$, then the in-copy flip value is $\operatorname{conv}(N_A(q,p_x))$, where $p_x$ is $x$'s fresh port.  If $s$ is core, the same value agrees with the persistent core row by N3.
+
+\paragraph{Core sharing and path ambiguity.}
+The core is present in every copy, so there are apparent multiple value-provenance paths through core sharing.  I do not find a new strong counterexample there: persistent core rows and no-overwrite make these values agree.  The real order issue is the sibling steering witness in Finding~\ref{find:order}, not a conflicting core value.
+
+\paragraph{Sibling convention and witness map.}
+The sibling convention at round-18 lines 282--288 says demands designating the same gluing edge at the same source share one copy.  It still does not fully specify sharing of the same edge from different sources.  This appears to be a determinism-presentation issue rather than an immediate soundness hole, provided the proof is reformulated for a fixed canonical order.
+
+\paragraph{Strong equality, closure, and finiteness.}
+I found no new strong-equality defect.  Injective slot maps are the right guard against accidental non-core identity collapse.  The alphabets remain finite after adding the corrected birth-source cases to $\Uop$, because the lookup depends on finitely many birth-copy ports, catalogue states, and steering rows.  However, the text must state those finite source cases rather than relying on occurrence-run metadata as WP32 does.
+
+\section{Machine-check artifacts}
+
+The following finite checks were added for this review.
+\begin{itemize}
+  \item \code{round18\_wp33\_audit\_extensions.py}: adversarial extension checking inherited-slot totality, inherited U-down source, order invariance, and the S4-critical bad triangle.
+  \item \code{round18\_wp33\_audit\_output.txt}: output from WP33.
+  \item \code{round18\_wp32\_hashseed\_audit.txt}: hash-seed audit for WP32 Part C.
+\end{itemize}
+
+The complete WP33 output is:
+\begin{lstlisting}[style=reviewtext]
+WP33 -- adversarial extensions for the round-18 total-transport review.
+========================================================================
+A. co-birth inherited-slot U totality witness
+   births: b(x)=0, b(a)=0; parent members V_B={a,b}; separator s=a
+   manuscript U clauses for entry rho(x,a): NONE
+   expected value exists from birth pattern A: N_A(x,a)
+   RESULT: FAIL for manuscript totality (gap exposed)
+B. inherited older-separator U-down source witness
+   births: b(x)=0 < b(a)=1; parent B at step 2 inherited a and freshened b
+   manuscript U clauses for entry rho(x,a): ['U-down']
+   text lookup f_at_parent_B(...)(a) exists: False
+   correct birth-step lookup f_at_step_1(...)(a) exists: True
+   RESULT: FAIL for written U-down lookup (wrong source step)
+C. order-invariance counterexample
+   template A: N(c,a)=DR; template B: N(c,b)=DR; Safe permits all non-EQ
+   A then B chooses f_B(St(a))(b)=PP, yielding rho(a,b)=PP
+   B then A chooses f_A(St(b))(a)=DR, yielding rho(a,b)=DR
+   S1 checks: True True S2 checks: True True S3/S4: vacuous
+   closed networks: True True
+   RESULT: FAIL for order-invariance lemma (same unordered tree, different values)
+D. co-birth gap can hide an S4-critical old pair
+   old: x PP a, z PP a, x PP z; old network closed: True
+   child: a PPI d; steering x PP d and z DR d
+   S1 through a: True True S2/S3: ok/vacuous
+   S4 on old pair x PP z would require x-d in ['DR']
+   S4 rejects chosen x-d: True new network closed: False
+   RESULT: FAIL for omission-prone fixed point (bad triangle accepted without the missing pair)
+========================================================================
+WP33 OVERALL: COUNTEREXAMPLES FOUND
+\end{lstlisting}
+
+\section{Required repair package for round 19}
+
+The repair should define $\Uop$ by the source at which the separator occurrence obtained its value, not by the current parent copy alone.  For a non-core separator occurrence $s$, let $A_s$ be the birth copy of $s$ and let $p_s$ be its birth port.  A total rule should have the following shape.
+\begin{enumerate}[label=\textbf{U\arabic*.}]
+  \item If $s\in\core$, use the persistent core-row value.
+  \item Else, if $x$ is a member of $A_s$, including a co-born member, use the birth-pattern value $N_{A_s}(p_x,p_s)$.
+  \item Else, if $b(x)<b(s)$, use the steering value recorded at $s$'s birth step.
+  \item Else, if $b(x)>b(s)$, use the converse of the value recorded at $x$'s birth step, with the in-copy/steered split for the older endpoint.
+  \item Prove that if the current parent copy also contains both endpoints, this source-oriented value agrees with the current parent pattern by gluing coherence and no-overwrite.
+\end{enumerate}
+
+Then replace the order-invariance claim by one of two alternatives.  Either fix a canonical sibling order and prove canonical-order determinism only, or add explicit cross-branch coherence constraints on steering functions ensuring that sibling interleavings produce converse-compatible values.
+
+Finally, WP32 should be brought back into literal correspondence with the manuscript: remove hidden repairs or move them into the text, generate slot maps into arbitrary parent non-core ports as allowed by the syntax, and replace the salted \code{hash()} negative-control choice by a deterministic hash or exclude that count from any determinism claim.
+
+\section{Part III}
+
+Part III is not reached.  The optional F6 width-budget recurrence and W2$'$ uniformization work should wait until the round-18 transport layer is repaired.  The appropriate ledger entry for this round is a defect with finite witnesses, and the global label remains \emph{strongly supported, not certified}.
+
+\begin{thebibliography}{9}
+\bibitem{round18}
+Claude (Fable 5).  \emph{Total Transport for the Cluster-Quasimodel Transition System: Round-18, Implementing M1--M6 -- with the Birth Flip}.  Attached manuscript, 13 July 2026.
+
+\bibitem{review12}
+GPT-5.5 Pro.  \emph{Formal Response on the Round-17 Transition-System Delta for $\ALCIRCC$}.  Attached workorder, 13 July 2026.
+
+\bibitem{wp32}
+Claude (Fable 5).  \code{verification/wp32\_round18\_total\_transport.py} and attached output, 13 July 2026.
+
+\bibitem{wp33}
+GPT-5.5 Pro.  \code{round18\_wp33\_audit\_extensions.py} and output, 13 July 2026.
+\end{thebibliography}
+
+\end{document}
