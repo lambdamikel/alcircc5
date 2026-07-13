@@ -1,0 +1,145 @@
+TASK PROMPT -- Thirteenth review: acceptance test of round-18 against
+your lineage's M1-M6, with special scrutiny on the birth-flip clause
+========================================================================
+(Paste into a fresh GPT-5.5 session; attach the files under MATERIALS.)
+
+ROLE. You are an expert in description logics, modal/temporal logics,
+and qualitative spatial reasoning (RCC5/RCC8). The twelfth review (your
+lineage; attached under workorder/) rejected the round-17 transition
+system at Finding 17.1 (mixed ambient/parent-copy pairs escaping
+transport) and issued repair package M1-M6. The attached round-18 delta
+claims to implement all of it -- and claims your M1 was itself
+INCOMPLETE: the proposed two-case total update (ambient -> T-image;
+parent-copy -> birth-adjacent state) allegedly cannot cover cross-branch
+occurrences, which need a third "birth-flip" clause. Your task:
+
+  PART I  -- ACCEPTANCE TEST of M1-M6, per intent. Includes auditing the
+             departure: is the birth-flip clause (a) necessary, as
+             claimed -- i.e., is the two-case U really not total on
+             operational endpoint/separator pairs? -- and (b) CORRECT
+             and complete as stated?
+  PART II -- NEW ATTACK SURFACE (round-18's own designated risks plus
+             anything the new text opens).
+  PART III-- OPTIONAL round-19 material (F6, W2') if I-II find nothing
+             fatal.
+
+LEDGER. 12 reviews: 11 defects-with-witness, 1 no-counterexample.
+Presume round-18 contains the next finding until you fail to find it.
+
+MATERIALS (attached)
+  workorder/round17_formal_response.pdf/.tex   the 12th review: Finding
+      17.1/17.2/17.3/17.4/17.5, repair package M1-M6
+  manuscripts/cluster_quasimodels_round18_total_transport.pdf/.tex
+      THE TARGET (6pp): U in three clauses (U-core/U-res/U-down/U-flip),
+      birth-dichotomy lemma, lockstep pair transport with two-sided
+      creation, five-way inclusion proof, order-invariance lemma + LCA
+      corollary, injective-slot-map syntax (17.4), overlap invariant
+      (17.5), sibling convention (R6)
+  manuscripts/round17, round16, round15 (tex+pdf); round-12 base (pdf;
+      only Theorem A + patchwork are live)
+  verification/wp28/30/31/32 *.py + outputs
+      wp32 = the two-computation harness: rule-engine states (computed
+      from the written U-clauses, never reading the frame) vs frame
+      truth on branching unfoldings -- 150 runs / 0 divergences; 2,820
+      mixed + 140 flip pairs; constructed negative S4 control (17/41);
+      hash-seed-stable digest
+  support/alcircc5_reasoner.py, cover_tree_tableau.py (oracle;
+      PYTHONPATH=support)
+
+--------------------------------------------------------------------------
+PART I -- ACCEPTANCE TEST (M1-M6)
+--------------------------------------------------------------------------
+  M1  Totality of U. The round-18 claim: at any gluing h with separator
+      member s (a member of h's parent copy k, or core), the entry
+      rho(x,s) falls under exactly one of U-core / U-res / U-down /
+      U-flip. Verify the case split (s in core; x in V_k; b(x)<b(s);
+      b(x)>b(s)) is exhaustive AND that each clause's recorded value
+      exists -- the load-bearing step is the Birth Dichotomy Lemma
+      ("every pre-existing occurrence is co-patterned or steered at
+      every step"). Attack it from the EXTRACTION side: could a
+      Theorem-A presentation require an attachment step that neither
+      co-patterns nor steers some pre-existing occurrence (e.g., an
+      occurrence that should remain wholly unrelated-by-declaration at
+      that step, or lazy/deferred steering for width reasons)? If yes,
+      U-flip's lookup fails and U is not total on real certificates.
+  M2  Lockstep transport + two-sided creation: check the creation rule
+      now covers both orientations at birth (the 12th review noted
+      one-sided creation); check transported pairs where BOTH endpoints
+      are residents of the same parent copy (resident/resident) are
+      really re-seeded consistently ((P1) + gluing coherence + no
+      overwrite) rather than double-sourced.
+  M3  Is each U-clause's lookup well-founded and catalogue-computable?
+      Specifically U-flip reads f at the OLDER endpoint's state at the
+      younger's birth -- confirm that state is itself in the fixed
+      point's alphabet and computed at a strictly earlier step
+      (no circularity between flip lookups at mutual births).
+  M4  The five-way pair analysis in the inclusion proof: enumerate the
+      endpoint-class combinations yourself and check none is missing
+      (in particular: steered-with-down-history vs steered-with-flip-
+      history -- treated uniformly as "steered"; is uniformity actually
+      proved, or do the two histories need distinct transport
+      bookkeeping?).
+  M5  Order invariance: audit the lemma's proof ("values fixed at the
+      later birth by step-local data; expanding incomparable branches
+      changes nothing"). Try interleavings where a branch expansion
+      changes WHICH occurrences are pre-existing at a later birth --
+      the set of steered occurrences at a step depends on the
+      interleaving; the lemma claims pair VALUES do not. Verify the
+      claim survives: the pair (x,y) value depends only on data along
+      the tree path -- is the older endpoint's state at the younger's
+      birth really interleaving-independent (it is a row over the birth
+      copy's separator -- check its entries' provenance recursively)?
+  M6  Does wp32 test the TEXT? Read the rule engine (Run.rule_entry)
+      against Definition U clause by clause; any divergence between
+      code and manuscript is itself a finding (this killed rounds 15
+      and 17). Also assess coverage: are there operational shapes the
+      generator cannot produce (e.g., separators mixing parent-fresh
+      and parent-inherited members -- the generator maps child slots to
+      parent FRESH members only; the manuscript's (N2) allows parent
+      non-core ports generally)?
+
+--------------------------------------------------------------------------
+PART II -- NEW ATTACK SURFACE
+--------------------------------------------------------------------------
+  Z1  The birth-flip's two subcases (older side co-patterned at the
+      younger's birth vs steered there): construct a configuration
+      where the older side is a CORE member or a separator member of
+      the younger's birth copy and check the flip lookup returns the
+      value the frame actually has (the in-copy subcase reads
+      CONV[N_A(., x)] -- verify the member-name resolution when the
+      older side entered A through a slot).
+  Z2  Order invariance under exotic-but-legal certificates: within the
+      injective-slot-map discipline, look for declaration patterns
+      where two different tree paths between the same occurrences exist
+      via core sharing (the core is in EVERY copy -- does core
+      membership create value-provenance ambiguity that the
+      no-overwrite argument only apparently resolves?).
+  Z3  The sibling convention + witness map: is the canonical unfolding
+      really unique (sharing "demands designating the same gluing edge
+      at the same source" -- what about the same edge from DIFFERENT
+      sources)? Does uniqueness matter for soundness, or only for the
+      determinism presentation?
+  Z4  General, as always: strong equality end-to-end; an unsatisfiable
+      concept with a certificate; a certificate whose canonical
+      completion violates closure (now via flip-clause geometries);
+      finiteness of all alphabets after the round-18 additions.
+
+--------------------------------------------------------------------------
+PART III -- OPTIONAL ROUND-19 MATERIAL (only if I-II find nothing fatal)
+--------------------------------------------------------------------------
+  F6  Derive the width recurrence's non-iteration budgets (round-15
+      Section 6) or give a corrected recurrence.
+  W2' Uniformization (round-16 Section 4): prove one of the two routes
+      (bounded state refinement / presentation re-choice), or defeat
+      both with a satisfiable concept -- settling whether W2' is a
+      completeness barrier or an engineering margin.
+
+DELIVERABLES
+  1. Referee-style report: Part I acceptance table (discharged /
+     nominally / not, per M-item, with the birth-flip audit called out
+     separately); Part II severity-graded findings with witnesses;
+     Part III if reached.
+  2. Machine checks for finite claims (extend wp32; the support/ oracle
+     gives concept-level ground truth).
+  3. House rules: the label is "strongly supported, not certified";
+     never "proven/certified".

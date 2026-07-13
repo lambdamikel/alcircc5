@@ -1,0 +1,401 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,longtable,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\Typ}{\operatorname{Typ}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Safe}{\operatorname{Safe}}
+\newcommand{\St}{\operatorname{St}}
+\newcommand{\core}{\operatorname{core}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{The Explicit Transition System for Certified Joint Steering:\\
+Round-17, Implementing the Eleventh Review's Work Order}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-17 delta on rounds 15/16
+(\code{papers/fable5\_round15/}, \code{papers/fable5\_round16/}),
+implementing repairs R1--R6 of the eleventh review
+(\code{papers/cold\_review\_round16/formal\_referee\_report\_alci\_rcc5.pdf}),
+whose ordered-pair transport rule (its Appendix~B) is adopted here in
+substance.  Everything not amended is inherited.  Project conventions:
+eleven reviews --- ten defects with witnesses, one no-counterexample
+verdict with required repairs; this delta is unreviewed and should be
+presumed to contain the next finding.  Designated weak points:
+Section~\ref{sec:invalidate}.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The eleventh review --- the first in this project to find no
+counterexample --- withheld certification of the round-16 soundness
+theorem pending six repairs: an explicit finite transition system for
+the reachability fixed point (R1), an ordered-pair transport rule (R2),
+a proof that actual unfolding states are contained in the computed
+reachable sets (R3), the separator-covers-core invariant stated and
+used (R4), explicit pair orientation (R5), and stored witness choices
+(R6).  This delta supplies all six.  The transition system is defined
+by a three-case row decomposition (continued / parent-fresh / core)
+made total by the now-explicit normal form of gluings; singleton states
+carry a persistent core row; ordered pairs are seeded co-patterned,
+created at fresh birth, and transported with the singleton transitions
+while preserving their realized mutual value.  The operational-inclusion
+invariant (R3) is proved by induction on the unfolding, with the
+shared-core cases discharged by core-row persistence and birth-pattern
+membership; a no-overwrite lemma underpins the transport step.  The
+witness map makes the canonical unfolding a function of the certificate
+alone, so the determinism claim is now exact.  An executable rendering
+of the transition system (WP30) machine-checks the inclusion invariant
+on 1{,}200 random unfoldings (no violations), shows transport is
+load-bearing (83/83 catalogues have transported pairs a birth-only
+fixed point misses), and confirms S4-validated steering yields closed
+unfoldings.  Unchanged and open: the width budgets (F6) and
+uniformization (W2$'$).  Status: \emph{strongly supported, not
+certified}.
+\end{abstract}
+
+\tableofcontents
+
+\section{Scope}\label{sec:scope}
+
+This delta amends round 16's Definition 2.3 (the prose fixed point),
+strengthens round 15's (Q3)/(Q5) into the explicit normal form the
+eleventh review demanded, and adds the witness map.  The findings map:
+F1/F3 $\to$ Sections~\ref{sec:ts}--\ref{sec:incl}; F2/F7 $\to$
+Section~\ref{sec:normal}; F4 $\to$ Section~\ref{sec:witness}; F5 $\to$
+ordered pairs throughout; F6 and W2$'$ remain open and are not touched
+(Section~\ref{sec:open}).
+
+\section{The normal form of gluings (R4; repairs F2/F7)}\label{sec:normal}
+
+\begin{definition}[Gluing normal form; condition (Q3$'$)]\label{def:nf}
+An unfolding attaches each new pattern copy $k$ at a gluing $g$ to a
+unique \emph{parent} copy $k'$ (the root copy attaches to the core
+pattern).  The certificate's gluing declaration for $g$ lists the
+separator $\sigma_g$ exhaustively, and validity requires:
+\begin{enumerate}[label=(N\arabic*),leftmargin=2.6em]
+\item $V_k\cap U \;=\; \sigma_g$, where $U$ is the set of occurrences
+existing before the step: every pre-existing member of the new copy is
+in the separator --- there is no second channel by which an old
+occurrence can be co-patterned with fresh members;
+\item $\sigma_g\subseteq V_{k'}\cup\core$: separator members are
+members of the parent copy or core occurrences;
+\item $\core\subseteq\sigma_g$ for every gluing $g$: core references
+are permanent interface members, so every pattern copy contains the
+core and core members are continued at every step.
+\end{enumerate}
+\end{definition}
+
+\begin{remark}[The ambient dichotomy]
+By (N1), at every step each existing occurrence is either in
+$\sigma_g$ --- co-patterned with the fresh members, receiving
+\emph{pattern} values --- or outside $V_k$ entirely, receiving
+\emph{steering} values.  The eleventh review's F2 failure mode (an old
+core occurrence co-patterned with fresh members yet outside the
+separator, creating two competing value sources) is excluded by
+definition, not by argument.  The review's own observation is retained
+as a check: for $s\in\sigma_g$, the row entry of $s$ at itself is
+$\EQ$, and $\Comp(\EQ,N_k(s,b))=\{N_k(s,b)\}$, so even a redundant
+steering application to separator members would be forced to the
+pattern value.
+\end{remark}
+
+\section{The explicit transition system (R1, R2, R5; repairs F1/F3/F5)}
+\label{sec:ts}
+
+Fix a certificate with catalogue, gluing declarations in normal form,
+and steering functions $f_g$.
+
+\begin{definition}[Singleton states]\label{def:single}
+The state of an existing occurrence $y$ at a gluing $g$ is
+\[
+\St_g(y)=\bigl(\tp(y),\ \rho\restriction(\{y\}\times\core),\
+\rho\restriction(\{y\}\times\sigma_g),\
+(\Safe(\tp y,\tau_k b))_{b\in B_g}\bigr),
+\]
+its type, \emph{persistent core row}, separator row, and safety
+signature.  The core row is set at birth --- by (N3) the core is
+contained in $y$'s birth pattern, so $\rho(y,c)$ is an in-pattern value
+for every core member $c$ --- and never changes thereafter (core
+members are continued at every step, and values are never overwritten:
+Lemma~\ref{lem:noover}).
+\end{definition}
+
+\begin{definition}[Singleton transitions]\label{def:trans}
+Let $g'$ be a child gluing of the copy $k$ attached at $g$ (so
+$\sigma_{g'}\subseteq V_k\cup\core$ by (N2)).  For an occurrence $y$
+ambient at $g$ (i.e.\ $y\notin V_k$), the transition
+$T_{g\to g'}$ sends $\St_g(y)$ to the state whose separator row is
+given by the \emph{three-case decomposition}: for $s\in\sigma_{g'}$,
+\[
+\rho(y,s)=
+\begin{cases}
+\text{(continued)} & s\in\sigma_g:\ \text{the } \sigma_g\text{-row
+entry of } y;\\
+\text{(parent-fresh)} & s\in B_g:\ f_g(\St_g(y))(s);\\
+\text{(core)} & s\in\core:\ \text{the core-row entry of } y.
+\end{cases}
+\]
+By (N2)+(N3) these cases are exhaustive, so $T_{g\to g'}$ is a total
+function on states; the type, core row, and (certificate-determined)
+safety signature components update trivially.  For $y\in V_k$ (a
+member of the parent copy, including its fresh members), the state at
+$g'$ is read off the pattern network and, for $y$'s relations to
+$\sigma_{g'}$-members, consists of in-pattern values only --- these are
+the \emph{birth-adjacent} states, computable from the catalogue.
+\end{definition}
+
+\begin{definition}[Ordered pair states; the transport rule]\label{def:pairs}
+Pair states are \emph{ordered} triples $(\varsigma,\varsigma',W)$ with
+$W\in\Rel\setminus\{\EQ\}$; the converse triple
+$(\varsigma',\varsigma,W^{-1})$ is always added simultaneously.  The
+reachable pair set is the least set closed under:
+\begin{enumerate}[label=(P\arabic*),leftmargin=2.6em]
+\item \textbf{Co-patterned seeds:} for any two members $a,b$ of one
+pattern copy at its birth gluing, $(\St(a),\St(b),N_k(a,b))$.
+\item \textbf{Creation:} when a fresh $b$ is created at $g$ and $y$ is
+ambient, $\bigl(\St_g(y),\St_g(b),f_g(\St_g(y))(b)\bigr)$, where
+$\St_g(b)$ is $b$'s birth state.
+\item \textbf{Transport} (the eleventh review's Appendix-B rule): if
+$(\varsigma,\varsigma',W)$ is reachable before crossing a child gluing
+$g'$ and both singleton transitions are defined, then
+$(T_{g\to g'}(\varsigma),\,T_{g\to g'}(\varsigma'),\,W)$ is reachable
+after it.  The mutual value $W$ is preserved --- justified by
+Lemma~\ref{lem:noover}.
+\end{enumerate}
+All components range over finite alphabets (types; rows over
+$\core$ and over separators of bounded size; signatures), so the least
+fixed point is finite and effectively computable.  Condition (Q4$'$) of
+round 16 --- in particular (S4) --- is checked on exactly these sets.
+\end{definition}
+
+\begin{lemma}[No overwrite]\label{lem:noover}
+In an unfolding satisfying (Q3$'$), every pair of occurrences receives
+its value exactly once: in-pattern at the first gluing where the two
+are co-patterned, or by steering at the birth step of the younger.
+Later steps never reassign it.
+\end{lemma}
+
+\begin{proof}
+At a step attaching copy $k$: values assigned are $\sigma_g\times B_g$
+and $B_g\times B_g$ (pattern values on fresh pairs) and
+$(\,U\setminus\sigma_g)\times B_g$ (steering).  By (N1), no pair of
+pre-existing occurrences is touched: pattern values on
+$\sigma_g\times\sigma_g$ pre-exist, and gluing coherence (round-15
+(Q3)) requires the declared pattern network to agree with them, so no
+reassignment occurs there either.  Every touched pair involves a fresh
+member, hence had no prior value.
+\end{proof}
+
+\section{The operational-inclusion invariant (R3; repairs F1/F3)}
+\label{sec:incl}
+
+\begin{theorem}[Inclusion]\label{thm:incl}
+In every (finite prefix of an) unfolding of a certificate in normal
+form: at every gluing $g$, the state $\St_g(y)$ of every existing
+occurrence lies in the computed reachable singleton set, and for every
+ordered pair $(y,z)$ of existing occurrences,
+$(\St_g(y),\St_g(z),\rho(y,z))$ lies in the computed reachable pair
+set.
+\end{theorem}
+
+\begin{proof}
+Induction on the number of steps.  \emph{Base:} the root copy attached
+to the core pattern.  Every occurrence is a member of one of the two
+patterns; all states are birth(-adjacent) states, seeded; all pairs are
+co-patterned, seeded by (P1) --- including core--core pairs (co-patterned
+in the core pattern) and core--root pairs (co-patterned in the root
+copy by (N3)).
+
+\emph{Step:} suppose the invariant holds before attaching copy $k$ at
+$g$, and consider the next gluing $g'$ (a child of $k$, or a later
+gluing elsewhere in the tree order; the argument is the same with
+$T$ composed along the corresponding path).  Three obligations:
+
+(a) \emph{Ambient singleton states update by $T_{g\to g'}$.}  For $y$
+ambient at $g$, its $\sigma_{g'}$-row is given pointwise by exactly the
+three cases of Definition~\ref{def:trans}: $s\in\sigma_g$ gives a
+continued value (unchanged by Lemma~\ref{lem:noover}); $s\in B_g$ gives
+the value assigned at step $g$, which was $f_g(\St_g(y))(s)$ by the
+construction --- here (N1) is used: $y\notin V_k$, so the value was a
+steering value, not a pattern value; $s\in\core$ gives the persistent
+core-row entry.  By (N2)+(N3) there is no fourth kind of separator
+member.  Hence $\St_{g'}(y)=T_{g\to g'}(\St_g(y))$, which is in the
+computed set by induction and closure under transitions.
+
+(b) \emph{Fresh states are seeds.}  Members of $k$ have
+birth(-adjacent) states computable from the catalogue
+(Definition~\ref{def:trans}), seeded.
+
+(c) \emph{Pairs.}  Pairs among pre-existing occurrences: their mutual
+value is unchanged (Lemma~\ref{lem:noover}) and both endpoint states
+update by $T$, so the pair is covered by transport (P3) applied to the
+inductively-reachable pair.  Pairs of one ambient and one fresh
+occurrence: covered by creation (P2) with the assigned steering value.
+Pairs among members of $k$ (fresh--fresh, fresh--separator,
+separator--separator): co-patterned seeds (P1), with the
+separator--separator case agreeing with pre-existing values by gluing
+coherence.  Core cases are instances of the above, not exceptions:
+core--core and core--fresh pairs are co-patterned at every step by
+(N3); core--ambient pairs were born co-patterned at the ambient
+occurrence's birth (again (N3)) and are transported thereafter, their
+$W$ persistent by Lemma~\ref{lem:noover} and the core row persistent by
+Definition~\ref{def:single}.
+\end{proof}
+
+\begin{corollary}\label{cor:sound}
+Round-16 Theorem 3.2 (deterministic canonical completion) holds with
+its Definition 2.3 replaced by
+Definitions~\ref{def:single}--\ref{def:pairs}: at every step, the
+old--old--fresh triangle class is discharged by (S4) checked on a pair
+that Theorem~\ref{thm:incl} guarantees is in the certified set with its
+\emph{current} states and realized mutual value; the other three
+classes are unchanged.  Consequently the certificate-to-model soundness
+theorem (round-16 Corollary 3.3) stands on the explicit system.
+\end{corollary}
+
+\section{The witness map (R6; repairs F4)}\label{sec:witness}
+
+\begin{definition}[Condition (Q2$'$)]
+The certificate carries a total map $w$ assigning to every pattern $k$,
+member $a\in V_k$, and demand $\exists R.D\in\tau_k(a)$ either an
+in-pattern witness $b\in V_k$ with $N_k(a,b)=R$, $D\in\tau_k(b)$, or a
+designated gluing edge of $\mathcal G$ at which $a$ is a separator
+member of an adjacent pattern fulfilling the demand in-pattern.
+\end{definition}
+
+With $w$ stored, the canonical unfolding is generated deterministically
+from the root: each step's attached copies are those designated by $w$
+for the unfulfilled demands of the frontier.  The round-16 claim is
+restated exactly: \emph{the unfolding and its completion are functions
+of the certificate}; no choice is made outside the certificate.  (The
+eleventh review classified the previous formulation as a
+presentation-level defect; nothing in the soundness argument changes.)
+
+\section{What remains open}\label{sec:open}
+
+Unchanged by this delta, and explicitly still open: \textbf{F6} --- the
+width recurrence's non-iteration budgets for boundary and stratum
+insertions (round-15 Section 6) remain assertions awaiting a derivation
+from the saturation rules; \textbf{W2$'$} --- uniformization (round-16
+Section 4), with its measured $98.6\%$ coarse-granularity rate and two
+sketched refinement routes.  Both sit on the completeness side; the
+eleventh review certified (F8) that soundness does not depend on
+W2$'$, and this delta introduces no new dependence.
+
+\section{Machine checks (WP30)}\label{sec:wp}
+
+\code{verification/python/wp30\_round17\_transition\_system.py}
+implements the transition system executably (synthetic level: rows,
+cores, transport, orientation; type and safety components ride along
+identically) and checks, all PASS:
+\textbf{A} (R3): on 120 random catalogues with shared cores, 10 random
+unfoldings each (1{,}200 simulations): every actual singleton state and
+every actual ordered pair, with its realized mutual value, lies in the
+computed reachable sets --- zero containment failures.
+\textbf{B} (R2 is load-bearing): recomputing the fixed point
+\emph{without} transport leaves actual transported pairs uncovered in
+$83/83$ catalogues that have them --- the eleventh review's F1, confirmed
+at scale.
+\textbf{C}: when the canonical steering satisfies (S4) on the computed
+pairs, all simulated unfoldings are closed atomic frames (100
+catalogues, zero failures).
+
+\section{Response map}\label{sec:resp}
+
+\begin{center}
+\begin{tabular}{p{0.10\linewidth}p{0.82\linewidth}}
+\toprule
+R1 & Definitions~\ref{def:single}--\ref{def:pairs}: explicit finite
+transition system, singleton and ordered pair states separated.\\
+R2 & (P3), adopted from the review's Appendix B; justified by
+Lemma~\ref{lem:noover}.\\
+R3 & Theorem~\ref{thm:incl}, with the core cases discharged by (N3),
+core-row persistence, and no-overwrite; machine-checked (WP30 A/B).\\
+R4 & (Q3$'$) = (N1)--(N3), Section~\ref{sec:normal}; used, not just
+stated, in Definition~\ref{def:trans} (exhaustiveness of the three-case
+decomposition) and Theorem~\ref{thm:incl}(a).\\
+R5 & Ordered triples with simultaneous converses,
+Definition~\ref{def:pairs}.\\
+R6 & (Q2$'$), Section~\ref{sec:witness}; determinism restated
+exactly.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{What would invalidate this delta}\label{sec:invalidate}
+
+\begin{enumerate}[label=(Y\arabic*),leftmargin=2.6em]
+\item An unfolding shape violating the gluing normal form that the
+extraction direction genuinely needs --- i.e.\ a satisfiable concept
+whose Theorem-A presentations cannot be arranged with
+$V_k\cap U=\sigma_g$, $\sigma_g\subseteq V_{k'}\cup\core$,
+$\core\subseteq\sigma_g$.  (N2) in particular constrains separators to
+parent-plus-core; if saturation ever requires sharing with a
+non-parent, non-core copy, the transition system's three-case
+decomposition is incomplete.
+\item A failure of Lemma~\ref{lem:noover} under some declaration
+pattern (e.g.\ overlapping gluings touching the same pair twice with
+different values) --- excluded by (N1)+(Q3) as argued, but the arguing
+is new.
+\item The standing open items: F6 (width budgets), W2$'$
+(uniformization), and the single external input (RCC5 patchwork).
+\end{enumerate}
+
+\section{Status}
+
+Eleven reviews: ten defects with witnesses, one no-counterexample
+verdict with required repairs --- now implemented.  By the reviewer's
+own criterion (``with these changes, I would regard the intended
+soundness argument as very likely correct''), the soundness half is,
+for the first time, fully written: explicit system, proved inclusion,
+no free choices, machine-checked at every finite joint.  It remains
+\emph{unreviewed in this form}, and the completeness side retains its
+two named open lemmas.  The decidability theorem for $\ALCIRCC$
+remains \textbf{strongly supported, not certified}.  The natural next
+steps: a verification pass on this delta (twelfth review), and --- since
+Definitions~\ref{def:single}--\ref{def:pairs} are already in
+transition-system form --- the start of the Lean mechanization of
+Theorem~\ref{thm:incl} and round-16 Theorem 3.2, which are now
+transcription rather than research.
+
+\begin{thebibliography}{9}
+\bibitem{review11} Fresh GPT-5.5 session.  \emph{Adversarial Referee
+Report on the Cluster-Quasimodel Decision Layer for
+$\mathcal{ALCI}_{\mathrm{RCC5}}$}, July 13, 2026.
+\code{papers/cold\_review\_round16/}.
+
+\bibitem{round16} Claude (Fable 5).  \emph{Certified Joint Steering for
+Cluster Quasimodels}, July 13, 2026.  \code{papers/fable5\_round16/}.
+
+\bibitem{round15} Claude (Fable 5).  \emph{Cluster Quasimodels for
+$\mathcal{ALCI}_{\mathrm{RCC5}}$}, July 12, 2026.
+\code{papers/fable5\_round15/}.
+
+\bibitem{renznebel} J.~Renz and B.~Nebel.  On the complexity of
+qualitative spatial reasoning.  \emph{Artificial Intelligence} 108
+(1999).
+\end{thebibliography}
+
+\end{document}

@@ -7065,3 +7065,26 @@ invariance under exotic-but-legal declarations; Z3 the standing F6/W2′). Next:
 the thirteenth review, and/or the Lean transcription — the U-clauses are now
 literally the function definitions a mechanization needs. Docs updated; pushed.
 Status: **strongly supported, NOT certified**.
+
+## 2026-07-13 (after round-18): the thirteenth-review packet
+
+Built `papers/fable5_round18/gpt_task_round18_review.zip` (29 files). Framing: the
+author-swap acceptance test continues — GPT's lineage issued M1–M6; round-18
+implements them but *departs* from the work order in one place (the two-case U
+was found incomplete; the birth-flip clause added), and the packet makes auditing
+that departure a first-class task: is the flip necessary (was two-case U really
+not total on operational pairs?) and is it correct (both subcases, member-name
+resolution through slots)? Other targeted traps: M1 — attack the Birth Dichotomy
+Lemma from the extraction side (could a Theorem-A presentation need a step that
+neither co-patterns nor steers, e.g. lazy steering for width?); M3 — no
+circularity between flip lookups at mutual births; M4 — is "steered" uniformity
+across down/flip histories proved?; M5 — interrogate order invariance where
+interleaving changes which occurrences pre-exist at a later birth; M6 — wp32
+code-vs-text fidelity clause by clause, plus generator coverage (slots map to
+parent-fresh members only, while (N2) permits parent non-core ports generally —
+an under-coverage the reviewer should weigh); Z1–Z4 (flip subcases with
+core/slot-entered members; core-induced provenance ambiguity vs no-overwrite;
+sibling-convention uniqueness across different sources; general). Part III:
+F6/W2′ as optional round-19 material. Contents: the 12th review under workorder/,
+all five manuscripts, wp28/30/31/32 + outputs, oracle, optional cold pass. Docs
+updated; pushed.

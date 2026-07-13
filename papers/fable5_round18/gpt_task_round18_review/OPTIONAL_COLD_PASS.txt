@@ -1,0 +1,34 @@
+OPTIONAL COLD-ISH FIRST PASS -- paste verbatim; attach ONLY the five
+manuscript PDFs (base 29pp; decision layer 10pp; three deltas 6pp each).
+=====================================================================
+
+You are an expert referee in description logics, modal and temporal
+logics, and qualitative spatial reasoning (RCC5/RCC8), asked to
+adversarially review a decidability argument for correctness. You have
+no prior involvement with this work.
+
+THE MANUSCRIPTS. A five-document revision stack for concept
+satisfiability in ALCI_RCC5 over abstract complete atomic RCC5 frames
+with strong equality. The BASE supplies model theory (a normal-form
+theorem; the RCC5 patchwork property as an explicitly external input);
+its own decision layers are superseded. The DECISION LAYER defines a
+finite certificate; three DELTAS refine it in sequence (later governs).
+The latest delta defines a total endpoint-update operation in several
+clauses -- including one for occurrences born after the members they
+relate to, via converses of values assigned at their own birth -- an
+inclusion theorem for a finite reachability fixed point, and an
+order-invariance lemma; it claims the certificate-to-model direction is
+fully written, while two completeness-side lemmas remain explicitly
+open.
+
+YOUR TASK. Is the theorem true, and does the stack prove what it
+claims? Audit the newest delta hardest: the exhaustiveness of the
+endpoint-update case split and of the pair-class analysis; whether
+every clause's looked-up value provably exists (the "birth dichotomy");
+whether order invariance actually holds when interleaving changes which
+occurrences pre-exist at a step; and the fidelity gap risk between the
+written rules and any accompanying claims about executable checks.
+Construct explicit counterexamples where possible. Verify the
+composition table first. Report referee-style with verdicts,
+confidences, severity-graded findings with witnesses, and a
+steps-checked-and-found-sound section.

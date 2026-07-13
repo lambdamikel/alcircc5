@@ -1,0 +1,380 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,longtable,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\St}{\operatorname{St}}
+\newcommand{\core}{\operatorname{core}}
+\newcommand{\U}{\operatorname{U}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Total Transport for the Cluster-Quasimodel Transition System:\\
+Round-18, Implementing M1--M6 --- with the Birth Flip}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-18 delta on rounds
+15--17, implementing the twelfth review's repair package M1--M6
+(\code{papers/gpt5.5\_round17\_review/}).  Everything not amended is
+inherited.  Ledger going in: twelve reviews --- eleven defects with
+witnesses, one no-counterexample verdict.  This delta is unreviewed;
+presume it contains the next finding.  Designated weak points:
+Section~\ref{sec:invalidate}.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The twelfth review rejected round 17 at a precise seam: the ordered-pair
+transport rule covered only pairs whose endpoints are both updated by
+the ambient transition, omitting mixed pairs with a parent-copy
+endpoint, so the pair condition could miss operational pairs.  This
+delta implements the review's repair package with one sharpening that
+working out the path semantics makes unavoidable: the total endpoint
+update $\U$ has \emph{three} clauses, not two.  Besides the review's
+ambient clause (recorded steering rows carried forward) and resident
+clause (catalogue read-off), cross-branch occurrences require a
+\emph{birth-flip} clause: a younger occurrence's entry to an older
+separator member is the converse of the steering value that the
+\emph{older} side received at the younger's birth.  With $\U$ total,
+pairs are transported in lockstep, the inclusion theorem is re-proved by
+a five-way endpoint-class analysis, and an order-invariance lemma gives
+the least-common-ancestor path semantics the review asked for.  The
+review's syntactic demands are also implemented: injective slot maps
+(whose necessity the new harness independently re-derived when
+non-injective maps produced conflicting pattern writes), the
+continued/core consistency invariant, and a sibling-ordering convention
+completing the witness map.  The harness architecture answers Finding
+17.3 structurally: rule-computed states, derived without ever reading
+the realized frame, are cross-checked against frame truth on genuinely
+branching unfoldings --- 150 runs, zero divergences, 2{,}820 mixed pairs
+and 140 birth-flip entries exercised, a constructed negative control,
+and hash-seed-deterministic output.  Open and unchanged: the width
+budgets (F6) and uniformization (W2$'$).  Status: \emph{strongly
+supported, not certified}.
+\end{abstract}
+
+\tableofcontents
+
+\section{Scope, and one sharpening of the work order}\label{sec:scope}
+
+The twelfth review's M1 proposed a total endpoint update with two
+clauses: ambient endpoints keep their $T$-images; parent-copy endpoints
+take birth-adjacent catalogue states.  Implementing M5 (the path
+semantics for ``later gluings elsewhere'') shows a third case is
+forced.  Consider an occurrence $y$ born in a copy $A$ attached
+\emph{after} some copy $k$ elsewhere in the tree, and a later gluing
+$h$ whose separator contains a member $s\in V_k$.  The value
+$\rho(y,s)$ was not assigned when $k$ was attached ($y$ did not exist)
+nor by $y$'s own steering at any later step: it was assigned \emph{at
+$y$'s birth}, when $s$ was a pre-existing occurrence steered at $A$ and
+received the value $f_A(\St_A(s))(y)$ toward the fresh $y$.  The entry
+$y\to s$ is therefore the \emph{converse of the older side's steering
+value at the younger's birth}.  We call this the \emph{birth flip}.  It
+is the least-common-ancestor role change that the twelfth review's
+Finding 17.2 said was undefined; making it a named clause of $\U$ is
+the content of this delta beyond the literal work order.
+
+\section{The total endpoint update}\label{sec:U}
+
+Fix a certificate in the normal form of round 17 (Q3$'$), tightened by
+Section~\ref{sec:syntax} below.  For occurrences $x,s$ with $s$ a
+member of the separator $\sigma_h$ of a gluing $h$ (so $s$ is a member
+of $h$'s parent copy $k$, or a core reference), the entry
+$\rho(x,s)$ is given by exactly one of:
+
+\begin{definition}[$\U$: three clauses]\label{def:U}
+Let $b(x)$ denote the attachment step of $x$'s birth copy, with core
+occurrences born at the base.
+\begin{description}[leftmargin=2.2em,style=nextline]
+\item[(U-core)] $s\in\core$: the persistent core-row entry of $x$
+(in-pattern at $x$'s birth, by (N3)).
+\item[(U-res)] $x\in V_k$ (a co-member of $s$'s copy): the pattern
+value $N_k(x,s)$, a catalogue value.
+\item[(U-down)] $b(x)<b(s)$ and $x\notin V_k$: $x$ was steered when $k$
+was attached; the entry is the recorded steering value
+$f_{g_k}(\St_{g_k}(x))(s)$.
+\item[(U-flip)] $b(x)>b(s)$: at $x$'s birth step, every pre-existing
+occurrence is either a member of $x$'s birth copy or steered there
+(there is no third possibility --- Lemma~\ref{lem:dichotomy}); the
+entry is, respectively, the converse of the in-pattern value
+$N_{A}(\,\cdot\,,x)$, or the converse of the recorded steering value
+$f_{g_A}(\St_{g_A}(s))(x)$.
+\end{description}
+$\U_{\!*\to h}(x)$ is the state of $x$ at $h$: its type, persistent core
+row, the $\sigma_h$-row assembled from the clauses above, and its
+certificate-determined safety signature.
+\end{definition}
+
+\begin{lemma}[Birth dichotomy]\label{lem:dichotomy}
+At every attachment step, every pre-existing occurrence is a member of
+the new copy (equivalently, of its separator, by (N1)) or is steered at
+that step.  Hence every pair of occurrences receives its value exactly
+once --- in-pattern if ever co-patterned, else by steering at the
+younger's birth --- and (U-down)/(U-flip) always find a recorded value.
+\end{lemma}
+
+\begin{proof}
+The construction steers precisely the pre-existing occurrences outside
+the new copy; (N1) says the pre-existing members of the new copy are
+exactly the separator.  Single assignment is round-17's no-overwrite
+lemma, unchanged.  The recorded value exists because the younger's
+birth step steered (or co-patterned) the older endpoint, by the first
+sentence.
+\end{proof}
+
+\begin{lemma}[$\U$ is total, finite, and catalogue-computable
+(M1/M3)]\label{lem:total}
+The four clauses are exhaustive and mutually exclusive on the pairs
+$(x,s)$ with $s\in\sigma_h$, and each reads finitely many values from
+the catalogue, the certificate's steering functions, and states already
+computed at earlier steps.  The state alphabet is unchanged from round
+17.
+\end{lemma}
+
+\begin{proof}
+Exhaustiveness: $s\in\core$ or $s\in V_k\setminus\core$; in the latter
+case $x\in V_k$ or not, and if not, $b(x)\neq b(s)$ (distinct copies)
+splits into (U-down)/(U-flip); Lemma~\ref{lem:dichotomy} supplies the
+recorded value in both.  Computability: (U-core), (U-res) are catalogue
+lookups; (U-down), (U-flip) are lookups into steering values
+$f(\varsigma)(\cdot)$ at states $\varsigma$ computed at strictly
+earlier steps --- well-founded in the attachment order.
+\end{proof}
+
+\begin{definition}[Pair transport under $\U$ (M2)]\label{def:P3}
+Replace round-17's (P3) by: if $(\varsigma,\varsigma',W)$ is reachable
+before a step and both endpoints persist, then
+$\bigl(\U(\varsigma),\U(\varsigma'),W\bigr)$ is reachable after it,
+together with its converse.  Creation (P2) is retained \emph{in both
+orientations}: at a birth step, for every steered or co-patterned
+pre-existing $x$ and fresh $y$, both $(\St(x),\St(y),V)$ and
+$(\St(y),\St(x),V^{-1})$ enter the pair set, where $V$ is the assigned
+or in-pattern value.  Co-patterned seeds (P1) are unchanged.
+\end{definition}
+
+\section{Order invariance and the path semantics (M5)}\label{sec:order}
+
+\begin{lemma}[Order invariance]\label{lem:order}
+The value of every pair, and hence every state $\U_{\!*\to h}(x)$,
+depends only on the attachment \emph{tree} (which copies attach where,
+with which slot maps) and not on the interleaving order in which
+incomparable branches are expanded.
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:dichotomy}, the value of a pair $(x,y)$ is fixed at
+the later of the two birth steps, by data local to that step: the
+younger's birth copy, slot map, and the older's state there.  The
+older's state at that step is, inductively, a function of pair values
+fixed at even earlier birth steps along the relevant path.  No step
+touches a pair whose endpoints both pre-exist (no overwrite), so
+expanding an incomparable branch neither changes existing values nor
+the states read at later births.  Induction on the tree.
+\end{proof}
+
+\begin{corollary}[LCA path semantics]\label{cor:lca}
+For occurrences $y,z$ and a gluing $h$, the pair state
+$(\St_h(y),\St_h(z),\rho(y,z))$ is determined by the attachment-tree
+paths from the birth copies of $y$ and $z$ through their least common
+ancestors to $h$'s parent, with (U-down) applying along descents on the
+elder side and (U-flip) applying at and above the younger's birth.
+``Later gluing elsewhere in the tree order'' (round-17's undefined
+phrase) is thereby replaced: the fixed point closes under one-step
+attachment, and Lemma~\ref{lem:order} makes the result path-functional.
+\end{corollary}
+
+\section{The inclusion theorem, re-proved (M4)}\label{sec:incl}
+
+\begin{theorem}[Inclusion, total-transport form]\label{thm:incl}
+In every finite unfolding prefix of a certificate in normal form: at
+every gluing, every existing occurrence's state and every ordered pair
+$(\St(y),\St(z),\rho(y,z))$ lie in the fixed point computed with seeds
+(P1), two-sided creation (P2), and $\U$-transport
+(Definition~\ref{def:P3}).
+\end{theorem}
+
+\begin{proof}
+Induction over attachment steps, as in round 17, with case (c) replaced
+by a five-way endpoint-class analysis.  At a step, classify each
+pre-existing endpoint as \emph{resident} (member of the new copy, i.e.\
+separator or core) or \emph{steered}; steered endpoints subdivide by
+Definition~\ref{def:U} into down and flip histories, but their state
+update is uniformly $\U$.  For a pair of pre-existing occurrences, the
+five combinations are:
+\emph{steered/steered} --- transported by Definition~\ref{def:P3},
+both endpoints $\U$-updated, $W$ unchanged;
+\emph{steered/resident} and \emph{resident/steered} --- transported
+likewise: $\U$ is total, so the resident endpoint's update (U-res) is a
+legitimate transport step (this is exactly the mixed case round 17
+omitted and Finding 17.1 witnessed);
+\emph{resident/resident} --- co-patterned at this step, hence a (P1)
+seed, whose value agrees with any pre-existing value by gluing
+coherence and no-overwrite.
+Pairs with a fresh endpoint are (P2) creations, in both orientations.
+Fresh/fresh pairs are (P1) seeds.  States: residents take
+catalogue-computable states; steered occurrences take
+$\U$-images of inductively-reachable states.  Order invariance
+(Lemma~\ref{lem:order}) licenses treating ``the next gluing'' in tree
+order without loss of generality.
+\end{proof}
+
+\begin{corollary}
+Round-16's Theorem 3.2 (deterministic canonical completion) holds with
+(S4) checked on the fixed point of Definition~\ref{def:P3}: every
+operational ordered pair --- including the mixed ambient/resident and
+cross-branch flip pairs --- is present with its current states and
+realized mutual value.  The twelfth review's witness geometry is
+rejected: the pair $(\St_h(y),\St_h(z),\PP)$ is transported, S4 demands
+$f(\St_h(y))(b)\in\Comp(\PP,f(\St_h(z))(b))$, and the bad $(\PO,\DR)$
+choice violates $\Comp(\PP,\DR)=\{\DR\}$ (WP32 part B2).
+\end{corollary}
+
+\section{Certificate syntax (17.4), the overlap invariant (17.5), and
+the sibling convention (R6)}\label{sec:syntax}
+
+\begin{definition}[Port discipline]\label{def:ports}
+Every template's ports are partitioned into core ports, inherited
+slots, and fresh ports.  Every gluing declaration maps the child's
+inherited slots \emph{injectively} into the parent's non-core ports
+plus core; fresh occurrence identities are allocated per copy; non-core
+identity reuse occurs only through slot maps (connected traces).  (N1)
+of round 17 is thereby a syntactic consequence of the declarations, not
+a run property.
+\end{definition}
+
+\begin{remark}[Injectivity is not decorative]
+WP32's own development re-derived its necessity: with a non-injective
+slot map, one occurrence occupies two pattern ports, the instantiation
+performs conflicting writes, and the rule-computed states diverge from
+frame truth --- the harness caught exactly this before injectivity was
+enforced, after which agreement is exact ($150$ runs, $0$
+divergences).  This is the twelfth review's 17.4, confirmed
+empirically.
+\end{remark}
+
+\begin{remark}[Continued/core overlap (17.5)]
+Core members are both persistent core-row indices and separator
+members at every step.  The two sources agree by construction:
+(U-core) and (U-res)/(U-down)/(U-flip) coincide on core columns because
+core values are in-pattern at every copy (N3) and never overwritten.
+We state this as an explicit invariant so a mechanization can discharge
+it once.
+\end{remark}
+
+\begin{remark}[Sibling ordering (R6 completion)]
+Children of a copy are ordered lexicographically by (source member
+index, demand index in closure order); demands designating the same
+gluing edge at the same source share one copy.  With this convention
+and the witness map of round 17, the unfolding is a function of the
+certificate, including its tree structure.
+\end{remark}
+
+\section{Machine checks (WP32)}\label{sec:wp}
+
+\code{verification/python/wp32\_round18\_total\_transport.py}, all
+PASS, with the harness architecture the twelfth review's Finding 17.3
+demanded: rule-computed states (never reading the frame) cross-checked
+against frame truth on genuinely \emph{branching} unfoldings.
+\textbf{A} (M1/M5): 150 random branching unfoldings, \emph{zero}
+$\U$-clause divergences between rule and frame.
+\textbf{B} (M2/17.1 regression): 2{,}820 mixed ambient/resident and
+flip pairs exercised, 140 birth-flip entries; the WP31 geometry's mixed
+pair is transported and S4 rejects the bad row.
+\textbf{C} (M6): a constructed adversarial steering violating S4
+produces closure failures in $17/41$ runs --- the negative control
+fires (round-17's harness never sampled one).
+\textbf{D} (17.3): no set-iteration choice points; a result digest is
+printed and is stable across \code{PYTHONHASHSEED} values.
+
+\section{Response map}\label{sec:resp}
+
+\begin{center}
+\begin{tabular}{p{0.12\linewidth}p{0.80\linewidth}}
+\toprule
+M1 & $\U$ total on all pre-existing endpoints
+(Definition~\ref{def:U}), with the birth-flip clause added beyond the
+work order's two cases (Section~\ref{sec:scope}).\\
+M2 & Pair transport under $\U$ with converses; two-sided creation
+(Definition~\ref{def:P3}).\\
+M3 & Lemma~\ref{lem:total}.\\
+M4 & Theorem~\ref{thm:incl}: five-way endpoint-class analysis replacing
+``both endpoints update by $T$''.\\
+M5 & Lemma~\ref{lem:order} and Corollary~\ref{cor:lca}: one-step
+closure plus order invariance; the LCA characterization derived, the
+undefined phrase eliminated.\\
+M6 & WP32: branching trees, mixed transport exercised and counted,
+constructed negative S4 control, deterministic output.\\
+17.4 & Definition~\ref{def:ports} (with empirical confirmation).\\
+17.5 & The overlap invariant remark.\\
+R6 & The sibling convention remark.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{What would invalidate this delta}\label{sec:invalidate}
+
+\begin{enumerate}[label=(Z\arabic*),leftmargin=2.6em]
+\item \textbf{A gap in the birth dichotomy or the flip clause}: a
+relative position of $(x,s)$ not covered by
+Definition~\ref{def:U} --- e.g.\ if some construction step neither
+co-patterns nor steers a pre-existing occurrence (this would contradict
+Lemma~\ref{lem:dichotomy}'s first sentence, which is definitional here,
+but an extraction-side presentation might demand such a step).
+\item \textbf{Order invariance under declarations richer than the
+normal form}: Lemma~\ref{lem:order} leans on no-overwrite and
+injective slot maps; exotic-but-legal certificates are the place to
+look.
+\item \textbf{The standing open items}: F6 (width budgets), W2$'$
+(uniformization), and the single external input (RCC5 patchwork).
+\end{enumerate}
+
+\section{Status}
+
+Twelve reviews: eleven defects with witnesses, one no-counterexample
+verdict.  This delta implements the twelfth review's full repair
+package, sharpened by the birth-flip clause that the path semantics
+forces, and its harness now checks the \emph{text} against frame truth
+by construction --- the mismatch class that produced Findings 17.1 and
+17.3 is structurally excluded from the toolchain, not just from this
+round.  The delta is unreviewed; presume the next finding.  The
+soundness half remains, as of this writing, fully written and
+machine-cross-checked; the completeness half retains its two named open
+lemmas.  The decidability theorem for $\ALCIRCC$ remains
+\textbf{strongly supported, not certified}.
+
+\begin{thebibliography}{9}
+\bibitem{review12} GPT-5.5 (OpenAI).  \emph{Formal Response on the
+Round-17 Transition-System Delta}, July 13, 2026.
+\code{papers/gpt5.5\_round17\_review/}.
+
+\bibitem{round17} Claude (Fable 5).  \emph{The Explicit Transition
+System for Certified Joint Steering}, July 13, 2026.
+\code{papers/fable5\_round17/}.
+
+\bibitem{round16} Claude (Fable 5).  \emph{Certified Joint Steering for
+Cluster Quasimodels}, July 13, 2026.  \code{papers/fable5\_round16/}.
+
+\bibitem{renznebel} J.~Renz and B.~Nebel.  On the complexity of
+qualitative spatial reasoning.  \emph{Artificial Intelligence} 108
+(1999).
+\end{thebibliography}
+
+\end{document}
