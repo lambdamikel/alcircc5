@@ -6578,3 +6578,72 @@ and one scope contradiction (R5); ship the WP scripts in-stack (R6). Docs update
 paragraph; overview papers ×2). Status: **strongly supported, NOT certified** —
 now with the honest gloss that the semantic theory is in the best shape it has
 ever been and the decision layer is unwritten.
+
+## 2026-07-12 (later): round-15 — cluster quasimodels; the decision layer without automata
+
+Asked whether the automaton should be saved or dropped, the assessment (recorded in
+the session) was: the automaton solved the eventuality problem and is structurally
+wrong for the coherence problem — F1.3 is an impossibility insight, not a bug; and
+route 1 (save it) contains route 2's mathematics as a sub-problem plus an unproved
+uniformization on top. Round-15 therefore executes the ninth review's R2
+alternative: `papers/fable5_round15/cluster_quasimodels_round15.tex/.pdf` (10pp,
+compiles clean) + `verification/python/wp26_round15_cluster_quasimodels.py`.
+
+**The design.** Certificate = **cluster quasimodel**: Hintikka types + safe links
+(with transitive vertical propagation) + a finite catalogue of cluster patterns
+(≤ K(C₀) members, closed atomic, safe-decorated) + gluing graph + core. Conditions
+Q1–Q6: root; **one-step demands** (every existential fulfilled in-pattern or in the
+adjacent pattern — no promissory witnesses, hence *no parity condition at all*: the
+lap-collapse trap of rounds 6/7 and WP16 is structurally excluded); gluing
+coherence (unfoldings are tree-shaped agreeing families — patchwork-ready); **fold
+conditions** over the new **fold lattice** — the big new finite fact: the closure
+of the four non-EQ atoms under set-composition contains **exactly 10 sets**, every
+one a vertical singleton or containing a horizontal atom, and the three DR-free
+folds all contain PO, so the canonical selector (forced / DR / PO) is total (WP26
+A, exhaustive; this makes the entire unbounded-distance analysis a fixed point on
+a 10-element lattice, finitely checkable on the gluing graph); **core clusters**
+for uniquely realizable types (empty self-safe-set ⟹ one global realization
+threaded as a permanent interface — the ninth review's p4 tower is absorbed
+structurally, and F2's per-source liveness pressure never arises); width re-proved
+under a **single strictly decreasing measure** (remaining modal depth at (g2);
+fixed budgets for (g3)/(g4); closed recurrence — resolves F3 and re-houses the
+width proof in the document that uses it).
+
+**Soundness** (Thm 4.5-style): unfold; patchwork the skeleton; then the **canonical
+completion lemma** assigns every non-co-patterned pair a value *in the proof*:
+chain-forced singletons (safe by Q4a + transitive safety) or a horizontal member of
+the pair's fold ∩ Safe (nonempty by the FOLD fact + Q4b). Coherence thus lives in
+the soundness proof — built from patchwork, compactness, and the fold algebra —
+not in any run-time device: the ninth review's F1 is structurally moot (there are
+no run copies to disagree). Truth lemma: every pair is co-patterned or
+canonically assigned within Safe; no third case. **Completeness**: extraction from
+Theorem A presentations (bags are the patterns; types/edges read off the model;
+unique types provably unique in the model, placed in the core); the dichotomy
+"horizontally presentable or chain-confined" is the Horizontal Normal Form lemma.
+**Decidability**: finite certificate space, finitely checkable conditions,
+enumerate. **No automaton, no Vardi** — the sole external input is now the RCC5
+patchwork property, which also shortens the eventual mechanization path (the 9th
+review had flagged two-way parity emptiness as unmechanized anywhere).
+
+**WP26** (all PASS): A fold lattice + steering toolkit, exhaustive; B the steering
+keystone probed on 250 random realized cluster-tree frames with a fresh glued
+pattern — 250/250 jointly realizable with canonical-selector domains, negative
+control 245/249 fail when horizontals are stripped (the F1.3/WP15 genus that Q4
+excludes); C acceptance semantics vs the cover-tree tableau: **all 11 diagnostics**
+— C_force, C_split, C_2hop, C_3hop, sanity UNSAT; C_recursive, C_up, PO-loop,
+dual-descendant, **C_G2a (8th review)**, **p4 tower (9th review)** SAT — plus a
+**200-concept random sweep with zero disagreements and zero timeouts**.
+
+**Honesty.** Round-15 designates its own weak points (§10): **W1** the steering
+induction's compressed fold-algebra cases (two-fresh-member and old-detour
+triangles) — the keystone; **W2** the Horizontal Normal Form (multiple interacting
+forcing paths); **W3** one-step saturation at width K(C₀) (Theorem A inheritance +
+core threading). It is authored by the same lineage that wrote round-13 (broken by
+review 8) and is **unreviewed**: 9 reviews, 9 defects; presume #10 until an
+adversarial review fails to find it. Next steps: a GPT-5.5 review targeting W1–W3
+(the author/adversary swap continues), then a cold pass from a third lineage if it
+survives; W1 is also the most Lean-amenable keystone the project has had (finite
+fold-lattice case analysis + patchwork). Docs updated (README Latest News + Status
+section + Key Files; CLAUDE.md status + round-15 paragraph + WP26;
+verification/README; overview papers ×2). Status: **strongly supported, NOT
+certified**.

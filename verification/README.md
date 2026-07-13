@@ -95,6 +95,14 @@ Companion to the **round-13 repair manuscript** ([`papers/fable5_round13/`](../p
 Run: `python3 python/wp17_round13_discipline_check.py`
 Report: [`reports/wp17_round13_discipline_check.txt`](reports/wp17_round13_discipline_check.txt)
 
+
+### `python/wp26_round15_cluster_quasimodels.py` — WP26: the round-15 cluster-quasimodel decision layer (no automaton)
+
+Companion to [`papers/fable5_round15/`](../papers/fable5_round15/), the round-15 replacement for Theorem C after the ninth review (taking its R2 alternative: mosaic-style decision layer instead of a tree automaton). Part A establishes the **fold lattice** (new load-bearing finite fact): exactly **10** sets arise as compositions of atomic RCC5 words; every non-singleton fold contains a horizontal atom; the three DR-free folds all contain PO, so the canonical selector (forced value / DR / PO) is total — plus the steering toolkit (DR-column absorption, horizontal absorption, vertical transitivity, EQ-never-forced), all exhaustive against a set-semantics-derived table. Part B probes the **steering keystone (W1)**: 250 random realized cluster-tree frames, each glued with a fresh pattern, cross-pair domains = true separator-mediated feasible sets ∩ safety-like restrictions containing the canonical selector — **250/250 jointly realizable**; negative control (horizontals stripped): 245/249 fail (the F1.3/WP15 genus the certificate conditions exclude). Part C cross-validates the acceptance semantics (witness graphs with reuse, obligations on actual completed relations, request-closed repetition) against the cover-tree tableau on **all eleven diagnostics** — including the eighth review's `C_G2a` tower and the ninth review's p4 shared-unique-witness tower — **plus a 200-concept random sweep: zero disagreements, zero timeouts**.
+
+Run: `python3 python/wp26_round15_cluster_quasimodels.py`
+Report: [`reports/wp26_round15_cluster_quasimodels.txt`](reports/wp26_round15_cluster_quasimodels.txt)
+
 ### `python/wp18…wp25` — the eighth review and the round-14 active-virtual-bag repair (GPT-5.5, July 2026; reproduced locally)
 
 `wp18_g2a_verticalization_width_counter.py` and `wp19_g3_mixed_orientation_probe.py` are the **eighth review's** counterexample checks against round-13 (the `C_G2a` tower's unbounded root-bag width under literal D2; the mixed `PP/PPI` closed path whose vertical endpoint D3 never reaches). `wp21_twin_blowup_facts.py`, `wp22_g2a_profile_bound.py`, `wp23_active_closure_regressions.py`, `wp24_vertical_walk_facts.py`, and `wp25_active_virtual_bag_repair.py` check the **round-14** repair: same-profile copy chain/clique facts, G2a profile boundedness, no-DR-default and shadow-shadow-triangle regressions, uniform-vs-mixed vertical walk facts, and the main AV check (G2a absorbed at 2 live ports + virtual shadows; WP15/WP20-style triangles rejected by active closure; random active restrictions closed). All PASS; reports under [`reports/`](reports/).
