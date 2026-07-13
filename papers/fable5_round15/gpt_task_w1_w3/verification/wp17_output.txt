@@ -1,0 +1,13 @@
+WP17 -- Machine checks for the round-13 repair ("Shadow Amalgamation via
+==========================================================================
+A1 {DR,PO} subseteq Comp(a,b) for all a,b in {DR,PO}: PASS
+A2 Comp(PP,PP)={PP}, Comp(PPI,PPI)={PPI}: PASS
+A3 Comp(h,r) cap {DR,PO} nonempty for h in {DR,PO}, r in {PP,PPI}: PASS
+A4 every nontrivial cell containing EQ contains PP,PPI,PO: PASS
+Part A (finite facts): PASS
+Part B: 400 random tree configurations under the D-discipline
+   B1 extended bags closed under the lemma assignment: 400/400 (PASS)
+   B2 jointly realizable (global CSP): 400/400 (PASS)
+Part C (negative control, vertical entries admitted): 140/300 configurations fail the lemma assignment (PASS -- the harness sees the WP15 defect the discipline excludes)
+==========================================================================
+WP17 OVERALL: PASS

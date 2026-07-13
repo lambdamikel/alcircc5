@@ -1,0 +1,188 @@
+TASK PROMPT -- W1/W2/W3: attack and discharge the round-15 decision layer
+==========================================================================
+(Paste into a fresh GPT-5.5 session; attach the files listed under
+MATERIALS. This is a TARGETED task: you are told exactly where the
+designated weak points are, and asked to break them with concrete
+witnesses or discharge them with round-16-grade proofs.)
+
+ROLE. You are an expert in description logics, modal/temporal logics,
+and qualitative spatial reasoning (RCC5/RCC8), acting as (i) an
+adversarial referee and (ii) only if your attack fails, the author of
+the next repair round. Context: you authored rounds 12 and 14 of this
+project; the round-15 manuscript attached here was authored by the other
+lineage (Claude Fable 5), which also broke your round 12 (7th review)
+and whose round 13 you broke (8th review). A cold review by a fresh
+session of that lineage (9th review, included) then broke your round 14
+at Theorem C. Round 15 executes that review's R2 alternative: it deletes
+the automaton layer entirely. You are the natural adversary. The ledger
+is 9 reviews, 9 defects; your job is to find #10 or prove it absent.
+
+THE OBJECT UNDER REVIEW. "Cluster Quasimodels for ALCI_RCC5: a Round-15
+Decision Layer without Automata" (10pp). One-paragraph summary: the
+certificate is a finite CLUSTER QUASIMODEL -- Hintikka types, safe links
+(with transitive vertical propagation), a finite catalogue of closed
+atomic cluster patterns of width <= K(C0) in which every existential
+demand is fulfilled within ONE gluing step (no promissory witnesses, no
+parity condition), long-range conditions (Q4) over the FOLD LATTICE (the
+10-element closure of the RCC5 atoms under set-composition; every
+non-singleton fold contains a horizontal atom -- machine-checked), and a
+CORE cluster holding uniquely realizable types. Soundness constructs the
+global relation in the proof (iterated patchwork over the unfolding +
+canonical fold selection); completeness extracts from Theorem A
+presentations; width is re-proved under a single strictly decreasing
+measure; decidability = finite certificate space + finitely checkable
+conditions. Sole external input: the RCC5 patchwork property.
+
+MATERIALS (attached)
+  manuscripts/cluster_quasimodels_round15.pdf/.tex        the target (10pp)
+  manuscripts/split_forest_automata_with_appendices.*     round-12 base
+      (Theorem A, patchwork Thm 2.5 + App A -- inherited by round 15)
+  manuscripts/split_forest_round14_repaired_proof.*       round-14
+      (the certified AV semantic pattern round 15 cites)
+  context/referee_report_packet{1,2,3}*.pdf               the 9th review
+      (R1-R6, F1-F7 -- what round 15 responds to)
+  verification/wp26_round15_cluster_quasimodels.py + wp26_output.txt
+      (fold lattice; steering probe; 11-diagnostic + 200-concept
+       cross-validation), wp14/wp17 + outputs (inherited facts)
+  support/alcircc5_reasoner.py, cover_tree_tableau.py
+      ground truth: cover_tree_tableau.check_sat(C) (911-concept
+      cross-validated; correct on all nine reviews' diagnostics).
+      Run wp26 with the support/ directory on PYTHONPATH.
+
+--------------------------------------------------------------------------
+TARGET W1 -- THE STEERING INDUCTION (Lemma 4.3, "Canonical completion")
+--------------------------------------------------------------------------
+The keystone. Lemma 4.3 extends the patchworked skeleton to a total
+frame by assigning every non-co-patterned pair either its chain-forced
+value or a horizontal member of its fold intersected with Safe. The
+proof compresses two triangle cases whose full expansion is admitted to
+be missing (Remark 4.4; Section 10, W1):
+
+  W1a (old-detour case). The assigned value for (y, b) is claimed to lie
+      in "every composition through old occurrences, because F(y,b) is
+      computed along the tree path and A is globally consistent: any old
+      detour composes to a superset of the tree-path fold." Attack this:
+      construct a realized old structure A (a closed atomic network,
+      buildable as a tree of clusters), a glued fresh pattern, and a
+      configuration where a realized old edge rho(y,z) (e.g. vertical)
+      together with z's already-assigned value pins v_y to a value
+      OUTSIDE {canonical selector} -- or worse, outside F(y,b) cap Safe.
+      The suspect claim is the superset relation between detour
+      compositions and the tree-path fold; check whether it actually
+      holds when the detour leaves and re-enters the separator's
+      component, and whether the ASSIGNMENT ORDER (all fresh members of
+      one pattern at once, then the next pattern) matters.
+  W1b (two-fresh-member case). For fresh b, b' with pattern value
+      N_k(b',b), the proof claims the horizontal choices for (y,b) and
+      (y,b') compose because "the fold F(y,b) was computed through the
+      same separator and the horizontal choice was taken inside F(y,b)."
+      Verify or refute: the horizontal member of F(y,b) chosen need not
+      be compatible with the horizontal member of F(y,b') chosen when
+      Comp(chosen', N_k(b',b)) is a proper subset -- e.g. chosen' = DR,
+      N_k(b',b) = PPI gives Comp(DR,PPI) = {DR}: is DR then guaranteed
+      to be in F(y,b) cap Safe? (The manuscript's selector prefers DR
+      when available -- find a configuration where it is NOT available
+      for one pair but forced by the other pair's choice.)
+  W1c (fixed-point definition of R(k,k') in (Q4)). The fold sets are
+      computed "over separator-mediated paths in unfoldings" by a fixed
+      point on the gluing graph. Check well-definedness: does the fixed
+      point over-approximate (harmless) or can it UNDER-approximate the
+      folds realizable in unfoldings (fatal for (Q4)'s coverage --
+      e.g. paths through the CORE, which is shared by all patterns and
+      creates shortcuts the gluing graph may not represent)? The core
+      threading (Q5) makes every unfolding non-tree-like as a graph of
+      shared occurrences; verify the fold analysis and the running-
+      intersection claim survive core sharing.
+
+  A concrete W1 witness = a certificate passing (Q1)-(Q6) whose
+  canonical completion violates closure or safety, or a proof that the
+  canonical completion is not well-defined under core sharing. WP26
+  part B searched randomly (250/250 clean); construct deliberately.
+
+--------------------------------------------------------------------------
+TARGET W2 -- HORIZONTAL NORMAL FORM (Lemma 5.2) AND EXTRACTION (Thm 5.1)
+--------------------------------------------------------------------------
+Extraction needs: every non-chain-forced coexistence of two types is
+presentable with a horizontal relation, or the fixed point classifies
+the placement as chain-confined ((Q4)(a) applies). The manuscript proves
+this only in outline and names the interaction of MULTIPLE forcing paths
+as the suspect step.
+
+  W2a Construct a satisfiable concept with two types t, s that co-occur
+      in every model, always in a vertical relation, at a placement
+      whose fold the (Q4) fixed point computes as non-singleton -- then
+      (Q4)(b) demands a horizontal safe link that extraction cannot
+      supply: an over-rejection (completeness failure). Candidate
+      shapes: nested-only pairs (s-elements existing only inside
+      t-elements, enforced by universals killing DR/PO/PPI coexistence),
+      combined with side contexts that make the connecting fold wide.
+  W2b Check the extraction of (Q4) itself (Theorem 5.1's last
+      paragraph): the argued dichotomy quietly swaps quantifiers
+      ("either some placement realizes a horizontal relation ... or
+      every model realizes a vertical one"). Exhibit a concept where
+      SOME placements are horizontal and OTHERS are forced vertical at
+      the SAME pattern pair and fold -- then neither branch of the
+      dichotomy discharges (Q4)(b) for the vertical placements.
+  W2c The one-step demand condition (Q2) under extraction (= W3
+      overlap): does Theorem A saturation really fulfil every demand
+      within one gluing step at width K(C0)? Attack with the overlap-
+      amalgam family (witnesses that are proper parts of each other or
+      share superparts) and with demands whose witnesses must sit far
+      from the source's cluster.
+
+--------------------------------------------------------------------------
+TARGET W3 -- WIDTH (Section 6) AND THE CORE (Q5)
+--------------------------------------------------------------------------
+  W3a The re-proved recurrence: verify the fixed budgets c3 (boundary/
+      support insertions "per member, no iteration") and c4 (strata "per
+      pair, charged to the original pair") are actually non-iterating
+      under saturation -- the 9th review broke the previous version on
+      exactly this genre. Try to make (g3) or (g4) cascade.
+  W3b The core: |core| <= |Typ(C0)| members threaded as PERMANENT
+      interface members of every pattern referencing them. Check the
+      width accounting includes the core correctly, and attack the
+      claim that unique types have at most one realization (the
+      manuscript derives it from empty self-safe-sets; verify the
+      derivation handles types whose self-links are excluded only by
+      TRANSITIVE propagation (L2), not by (L1) directly).
+  W3c Pattern-copy identity: (Q5) shares core members globally but all
+      other interface members are shared only along gluing edges. Can
+      two copies of the same pattern be forced (by universals) to share
+      a NON-core member -- a uniqueness phenomenon below the type level
+      -- breaking the tree-shape of the unfolding?
+
+--------------------------------------------------------------------------
+GENERAL ATTACK (always in scope)
+--------------------------------------------------------------------------
+  - An unsatisfiable concept whose cluster quasimodel exists (soundness
+    failure) -- cross-check candidates against the attached tableau
+    oracle first.
+  - A satisfiable concept with no certificate (completeness failure).
+  - Any finiteness claim: try to make the certificate space or a
+    condition check infinite.
+  - Strong equality end-to-end, as always.
+
+DELIVERABLES
+  1. Referee-style report (LaTeX): verdict per target (W1a-c, W2a-c,
+     W3a-c), severity-graded findings with concrete witnesses (a
+     concept, or an explicit certificate/configuration), and a
+     steps-checked-and-found-sound section.
+  2. If a defect is found: the smallest witness you can construct,
+     plus -- if visible -- the round-16 repair.
+  3. If your attack fails: full expanded proofs of Lemma 4.3 (complete
+     triangle case table over the 10-set fold lattice), Lemma 5.2, and
+     the (Q2)/width extraction, at the rigor of the round-12
+     appendices; these would constitute round 16.
+  4. Machine checks for any finite claim (extend wp26; the support/
+     oracle gives concept-level ground truth).
+
+CONVENTIONS (house rules)
+  - Never describe the theorem as proven or certified; the label is
+    "strongly supported, not certified".
+  - 9 reviews, 9 defects; round-15 is unreviewed and reviewer-authored;
+    presume it contains #10.
+  - The composition table, Theorem A, the patchwork property (round-12
+    Thm 2.5 form), strong-EQ handling, and the round-14 semantic layer
+    are repeatedly re-verified; spend your budget on W1-W3 and the
+    general attack, not there.
+  - Machine-checkable claims should ship with a script.

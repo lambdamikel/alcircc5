@@ -6647,3 +6647,27 @@ fold-lattice case analysis + patchwork). Docs updated (README Latest News + Stat
 section + Key Files; CLAUDE.md status + round-15 paragraph + WP26;
 verification/README; overview papers ×2). Status: **strongly supported, NOT
 certified**.
+
+## 2026-07-12 (later still): the W1–W3 task packet for GPT-5.5
+
+The round-15 adversary packet was built in the established style:
+`papers/fable5_round15/gpt_task_w1_w3_round15.zip` (25 files; unpacked copy
+alongside). The targeted prompt decomposes the manuscript's self-designated weak
+points into nine sub-targets — W1a (the old-detour case of the canonical
+completion: does a realized detour really compose to a superset of the tree-path
+fold, and does assignment order matter?), W1b (the two-fresh-member case: a DR
+choice at one pair can pin the other pair via comp(DR,PPI)={DR} — is the pinned
+value always available and safe?), W1c (well-definedness of the (Q4) fold fixed
+point under core sharing, which makes unfoldings non-tree-like as occurrence
+graphs); W2a (vertical-only coexistence at a wide fold — over-rejection), W2b (the
+extraction dichotomy's quantifier slip: some placements horizontal, others forced
+vertical at the same pattern pair), W2c (one-step saturation vs the
+overlap-amalgam family); W3a ((g3)/(g4) budget cascades — the genre that broke two
+prior width proofs), W3b (uniqueness derived only through transitive propagation),
+W3c (sub-type-level forced sharing breaking tree shape) — plus the standing
+general attack lane (accepted-unsat / rejected-sat / infinite-space /
+strong-EQ). Deliverables requested: referee report; smallest witness or round-16
+proofs (full triangle case table over the 10-set fold lattice for Lemma 4.3;
+expanded Lemma 5.2; width extraction); machine checks. The packet includes the
+optional cold-ish first pass (three manuscripts only) to get an unbiased signal
+before targeting. Docs updated with pointers; pushed.

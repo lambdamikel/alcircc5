@@ -1,0 +1,52 @@
+OPTIONAL COLD-ISH FIRST PASS -- paste verbatim; attach ONLY the three
+manuscript PDFs (the 10-page decision-layer manuscript, the 29-page
+base, the 12-page semantic-layer manuscript). Nothing else.
+=====================================================================
+
+You are an expert referee in description logics, modal and temporal
+logics, and qualitative spatial reasoning (RCC5/RCC8), asked to
+adversarially review a decidability proof for correctness. You have no
+prior involvement with this work.
+
+THE MANUSCRIPTS. Attached are three documents jointly proving that
+concept satisfiability for ALCI_RCC5 -- ALCI whose five roles are the
+RCC5 relations DR, PO, EQ, PP, PPI over abstract complete atomic RCC5
+frames (every pair related by exactly one base relation, closed under
+the composition table), strong equality -- is decidable. The BASE
+manuscript supplies a model normal form (Theorem A) and the RCC5
+patchwork theorem; the 12-page manuscript supplies a semantic
+amalgamation-and-truth layer; the 10-page manuscript is the DECISION
+layer under review: it defines a finite "cluster quasimodel"
+certificate, proves satisfiability equivalent to certificate existence
+(soundness by a canonical model construction, completeness by
+extraction from the normal form), and concludes decidability by finite
+enumeration. There is deliberately no automaton anywhere.
+
+YOUR TASK. Is the decidability theorem true, and does this stack prove
+it? These are different questions; address both.
+
+HOW TO WORK -- concrete and adversarial:
+  - Verify the composition table first; take it as ground truth.
+  - The decision manuscript's load-bearing steps are a canonical model
+    construction (a completion lemma assigning relations to all
+    non-local pairs) and an extraction argument. For each: proved, or
+    asserted? Expand every compressed case analysis yourself; if a case
+    table is claimed to follow from a finite lattice analysis, redo the
+    lattice analysis.
+  - Check every claimed dichotomy for quantifier slips, every fixed
+    point for under-approximation, every "charged to the original
+    member/pair" accounting for hidden iteration, and every sharing
+    mechanism (interfaces, cores) for breaking the tree-shape that the
+    amalgamation steps require.
+  - Try explicit counterexamples: an unsatisfiable concept with a
+    certificate; a satisfiable concept without one; a certificate whose
+    canonical completion violates closure or a universal constraint.
+    Small fixed concepts are best.
+  - Check strong equality end-to-end, including uniquely realizable
+    types and shared-witness configurations.
+
+REPORT: referee-style -- verdict with confidence; severity-graded
+findings with exact locations and concrete witnesses where possible;
+steps checked and found sound; computation-in-principle vs read-through
+declared. If a step is "immediate" in the text but not to you, that is
+a finding.

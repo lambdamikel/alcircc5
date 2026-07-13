@@ -1,0 +1,26 @@
+WP26 -- Machine checks for the round-15 decision layer:
+======================================================================
+A1 reachable fold-sets: 10 (expected 10): PASS
+A2 FOLD fact (non-singleton folds contain a horizontal; every fold has DR, PO, or is a vertical singleton): PASS
+A3 no-DR non-singleton folds [('EQ', 'PO', 'PP', 'PPI'), ('PO', 'PP'), ('PO', 'PPI')] all contain PO; canonical selector total on the lattice: PASS
+A4 steering toolkit (DR-column absorption; horizontal absorption; vertical transitivity; EQ never forced): PASS
+Part A: PASS
+Part B: 250 glue steps; canonical-selector domains jointly realizable: 250/250 (PASS)
+        negative control (horizontals stripped): 245/248 become unrealizable (PASS -- harness sees the F1.3/WP15 genus)
+concept                tableau  CTQ     
+--------------------------------------------
+C_force                UNSAT    UNSAT   
+C_split                UNSAT    UNSAT   
+C_recursive            SAT      SAT     
+C_up                   SAT      SAT     
+C_2hop                 UNSAT    UNSAT   
+C_3hop                 UNSAT    UNSAT   
+PO-loop                SAT      SAT     
+C_dualdesc             SAT      SAT     
+C_G2a (8th rev.)       SAT      SAT     
+p4 tower (9th rev.)    SAT      SAT     
+sanity UNSAT           UNSAT    UNSAT   
+--------------------------------------------
+random sweep: 199 decided (1 timeouts skipped), 0 disagreements with the tableau
+======================================================================
+WP26 OVERALL: PASS

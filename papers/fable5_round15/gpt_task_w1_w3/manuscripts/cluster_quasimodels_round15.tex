@@ -1,0 +1,718 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,longtable,booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{fact}[theorem]{Fact}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Hor}{\mathsf{Hor}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\fold}{\operatorname{fold}}
+\newcommand{\sel}{\operatorname{sel}}
+\newcommand{\Cl}{\operatorname{Cl}}
+\newcommand{\Typ}{\operatorname{Typ}}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Safe}{\operatorname{Safe}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Cluster Quasimodels for $\ALCIRCC$:\\
+a Round-15 Decision Layer without Automata}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-15 manuscript, responding
+to the ninth review's recommendations R1--R6 (the cold review of the
+round-14 stack, \code{papers/cold\_review\_round14/}): it takes the
+review's alternative R2 --- replace the tree-automaton layer by a
+mosaic-style argument executed on the infinitary abstraction --- and
+supplies the finite certificate notion, its soundness construction, and
+its extraction.  Project conventions apply: nine reviews so far, nine
+defects; this manuscript is unreviewed and should be presumed to contain
+one.  Its designated weak points are stated in
+Section~\ref{sec:invalidate}.}}
+\date{July 12, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The ninth review certified the semantic half of the round-14 stack (the
+active-virtual-bag amalgamation and truth lemmas) and located the open
+problem precisely: the abstraction's relational enrichment lives off any
+finite tape, so no finite tree automaton was ever shown --- and, as
+sketched, none soundly can be shown --- to decide its existence.  This
+manuscript removes the automaton layer entirely.  The decision object is
+a \emph{cluster quasimodel}: a finite set of Hintikka types, the safe
+atomic links between them, and a finite catalogue of small closed atomic
+\emph{cluster patterns} in which every existential demand is fulfilled
+within one step, together with finitely checkable long-range conditions
+formulated over the \emph{fold lattice} --- the closure of the RCC5
+atoms under set-composition, which is shown (machine-checked) to contain
+exactly ten sets, every one of which is a vertical singleton or contains
+a horizontal atom.  Global coherence is not enforced by a decision
+device at run time; it is \emph{constructed once, in the soundness
+proof}, by iterated patchwork over the unfolding tree together with a
+canonical horizontal selection on the fold lattice --- the discipline
+that survived reviews eight and nine as the Shadow Amalgamation Lemma,
+now applied at the level where it belongs.  Eventualities need no
+parity condition: cluster patterns forbid promissory witnesses, so
+fulfilment is one-step by construction.  Uniquely realizable types (the
+strong-equality towers of the ninth review's probe p4) are handled by a
+shared core cluster.  Decidability follows from the finiteness of the
+certificate space and the finite checkability of its conditions; the
+only remaining external input is the RCC5 patchwork property --- the
+two-way-automaton emptiness dependency is gone.  The width bound is
+re-proved under a single decreasing measure, resolving the ninth
+review's F3.  Status: the decidability theorem remains \emph{strongly
+supported, not certified}.
+\end{abstract}
+
+\tableofcontents
+
+\section{Position of this manuscript, and why no automaton}\label{sec:pos}
+
+\subsection{What is inherited, what is replaced}
+
+Inherited, as certified or repeatedly-found-sound components:
+\begin{itemize}[leftmargin=2em]
+\item the \textbf{semantics}: abstract complete atomic RCC5 frames
+$(\Delta,\rho)$, $\rho:\Delta^2\to\Rel$,
+$\Rel=\{\EQ,\PP,\PPI,\PO,\DR\}$, with identity (R1), converse (R2),
+composition (R3) for the standard table, strong equality; concepts in
+NNF; closure $\Cl(C_0)$; Hintikka types $\Typ(C_0)$ (round-12 \S2);
+\item \textbf{Theorem A} (witness thinning; saturated split-forest
+presentations; found sound by all nine reviews) --- used here only in
+the extraction direction, as a supplier of bounded-width cluster
+decompositions of models;
+\item the \textbf{RCC5 patchwork theorem} (round-12 Theorem 2.5 with
+Appendix A's finite tree-patching and compactness; verified in the
+small by WP14 and independently by the ninth review) --- the single
+remaining external input;
+\item the \textbf{amalgamation-and-truth pattern} of round-14
+(Theorems 3.3/4.3), certified by the ninth review; its architecture ---
+declared data realized verbatim by patchwork-plus-compactness, truth
+read off declared data --- is reused here with the declared data now
+generated by a certificate rather than guessed by run copies.
+\end{itemize}
+
+Replaced: round-14's Theorem C, its \S6 monitor sketch, and with them
+the entire automaton layer, including the dependency on two-way
+alternating parity tree emptiness.  Withdrawn with reasons: the ninth
+review's F1 shows the abstraction's enrichment cannot ride a finite
+tape, and independent alternating run copies cannot be forced to guess
+it coherently; all three natural repairs are blocked by facts the stack
+itself establishes.  We do not attempt a fourth.
+
+\subsection{Why this is not oscillation}
+
+The automaton was adopted (round 11) because the certificate systems of
+rounds 2--10 could not discharge two obligations: simultaneous
+eventuality fulfilment, and finite exhaustion of interface data.  Both
+obstacles have since been dissolved by results that did not exist then:
+
+\begin{enumerate}[leftmargin=2em]
+\item \emph{Eventualities.}  The parity machinery taught the project
+what fulfilment must mean: no request may be deferred along a
+repetition (the lap-collapse family of defects).  In a certificate
+whose witnesses are \emph{one-step} --- every existential demand of
+every type is fulfilled inside a cluster pattern or in an adjacent one,
+never carried --- there is nothing to defer.  Infinite structure arises
+as infinite repetition of patterns, but each demand is discharged
+locally in every copy.  The parity condition is not replaced; it is
+made unnecessary.  (WP26 part C checks the historical deferral traps:
+$C_{\mathrm{3hop}}$ is rejected, the towers are accepted.)
+\item \emph{Interface data.}  Rounds 2--10 tried to summarize
+unbounded route data through interfaces; rounds 12--14 tried to guess
+it.  The certified round-14 semantics shows what is actually needed: a
+single coherent global relation extending the locally declared data.
+Existence of such a relation is not a run-time property to be checked
+by a machine --- it is a theorem to be proved once, from patchwork,
+compactness, and the composition table.  The Shadow Amalgamation
+Lemma (round 13; found sound by reviews eight and nine) is exactly such
+a theorem for horizontal rows; Section~\ref{sec:sound} generalizes its
+method to the certificate defined here.  Coherence moves from the
+decision device, where the ninth review proved it cannot live, into the
+soundness proof, where the project's certified tools live.
+\end{enumerate}
+
+What remains of the decision problem after this move is finite
+enumeration: the certificate space is finite and its conditions are
+finitely checkable.  No automaton, no emptiness theorem, no Vardi
+dependency.  The cost is that two genuinely mathematical lemmas must be
+proved rather than delegated to a machine model; they are stated,
+proved to the extent the author can, and designated for attack in
+Section~\ref{sec:invalidate}.
+
+\section{The fold lattice}\label{sec:fold}
+
+For nonempty $A,B\subseteq\Rel$ let
+$A\circ B=\bigcup_{a\in A,b\in B}\Comp(a,b)$.  For a word
+$w=a_1\cdots a_k$ of atoms in $\Rel\setminus\{\EQ\}$ let
+$\fold(w)=\{a_1\}\circ\cdots\circ\{a_k\}$: the set of relations
+realizable between the endpoints of a path labelled $w$ in some frame.
+
+\begin{fact}[The fold lattice; machine-checked, WP26 A1--A3]
+\label{fact:fold}
+Exactly ten sets arise as $\fold(w)$ for nonempty words $w$:
+the four singletons $\{\PP\},\{\PPI\},\{\PO\},\{\DR\}$ and six
+non-singletons.  Every non-singleton fold contains $\DR$ or $\PO$;
+the three folds without $\DR$
+($\{\PP,\PO\}$, $\{\PPI,\PO\}$, $\{\EQ,\PP,\PPI,\PO\}$) all contain
+$\PO$.  Consequently the \emph{canonical selector}
+\[
+\sel(F)=
+\begin{cases}
+\text{the unique element of } F\setminus\{\EQ\} & \text{if } |F\setminus\{\EQ\}|=1,\\
+\DR & \text{if }\DR\in F,\\
+\PO & \text{otherwise}
+\end{cases}
+\]
+is total on reachable folds and never selects $\EQ$ or a vertical atom
+unless that atom is forced.
+\end{fact}
+
+\begin{fact}[Steering toolkit; machine-checked, WP26 A4, WP17 A]
+\label{fact:toolkit}
+$\DR\in\Comp(W,\DR)$ for every $W\in\Rel$;
+$\{\DR,\PO\}\subseteq\Comp(a,b)$ for all $a,b\in\{\DR,\PO\}$;
+$\Comp(\PP,\PP)=\{\PP\}$ and $\Comp(\PPI,\PPI)=\{\PPI\}$;
+every composition cell containing $\EQ$, other than
+$\Comp(\EQ,\EQ)$, also contains $\PP,\PPI,\PO$.
+\end{fact}
+
+Fact~\ref{fact:fold} is the reason a finite certificate can govern
+unbounded distances: \emph{along any path, the relation between two
+occurrences is either chain-forced (a vertical singleton, propagated by
+type-transitivity) or admits a horizontal value} --- and horizontal
+values, by Fact~\ref{fact:toolkit}, never constrain one another.  The
+entire long-range analysis of a certificate happens inside a ten-element
+lattice.
+
+\section{Safe links and cluster quasimodels}\label{sec:cq}
+
+Fix $C_0$ in NNF with closure $\Cl(C_0)$, $n=|\Cl(C_0)|$, and Hintikka
+types $\Typ(C_0)$.
+
+\begin{definition}[Safe links]\label{def:safe}
+For $t,s\in\Typ(C_0)$ and $R\in\Rel\setminus\{\EQ\}$, the link
+$(t,R,s)$ is \emph{safe} iff
+\begin{enumerate}[label=(L\arabic*),leftmargin=2.6em]
+\item $\forall R.D\in t\Rightarrow D\in s$, and
+$\forall R^{-1}.D\in s\Rightarrow D\in t$;
+\item if $R=\PP$: $\forall\PP.D\in t\Rightarrow\forall\PP.D\in s$;
+dually if $R=\PPI$: $\forall\PPI.D\in s\Rightarrow\forall\PPI.D\in t$.
+\end{enumerate}
+Write $\Safe(t,s)=\{R:(t,R,s)\text{ safe}\}$.  (L2) is the transitive
+propagation sound by Fact~\ref{fact:toolkit}; it makes vertical chains
+self-policing: an obligation $\forall\PP.D$ holds at every element of a
+$\PP$-chain above its source because the formula itself rides the
+types.
+\end{definition}
+
+\begin{definition}[Cluster pattern]\label{def:pattern}
+A \emph{cluster pattern} over a type set $S\subseteq\Typ(C_0)$ is a
+finite structure $k=(V_k,N_k,\tau_k,\iota_k)$: a set of at most
+$K(C_0)$ members (the width bound of Section~\ref{sec:width}); a
+complete atomic composition-closed network $N_k$ on $V_k$ with $\EQ$
+only on the diagonal; types $\tau_k:V_k\to S$ with every edge a safe
+link ($N_k(a,b)\in\Safe(\tau_k a,\tau_k b)$); and a designation
+$\iota_k$ of \emph{interface} members (shared with adjacent patterns in
+an unfolding) and \emph{core} members (Definition~\ref{def:cq}(Q5)).
+\end{definition}
+
+\begin{definition}[Cluster quasimodel]\label{def:cq}
+A \emph{cluster quasimodel} for $C_0$ is a tuple
+$Q=(S,\mathcal K,\mathcal G,\mathrm{core})$: a type set
+$S\subseteq\Typ(C_0)$; a finite catalogue $\mathcal K$ of cluster
+patterns over $S$; a \emph{gluing graph} $\mathcal G$ whose edges
+identify an interface of one pattern with an interface of another
+(equal types, equal networks and safe links on the shared part); and a
+distinguished \emph{core} pattern.  Conditions:
+\begin{enumerate}[label=(Q\arabic*),leftmargin=2.6em]
+\item \textbf{Root.}  Some pattern has a member with $C_0$ in its type.
+\item \textbf{One-step demands.}  For every pattern $k$, every
+\emph{interior} (non-interface) member $a$, and every
+$\exists R.D\in\tau_k(a)$: either some $b\in V_k$ has $N_k(a,b)=R$,
+$D\in\tau_k(b)$ (in-pattern fulfilment), or $a$ is an interface member
+of a $\mathcal G$-adjacent pattern in which the demand is fulfilled
+in-pattern.  No demand is ever carried further than one gluing step;
+there are no promissory witnesses, requests, or fulfilment
+declarations.
+\item \textbf{Gluing coherence.}  Adjacent patterns agree on their
+shared interface (types, network, links), so that every finite
+connected unfolding is a tree-shaped agreeing family of finite closed
+atomic networks.
+\item \textbf{Fold conditions.}  Let $R(k,k')\subseteq$ fold lattice be
+the (finitely computable) set of folds of separator-mediated paths
+between occurrences of patterns $k$ and $k'$ in unfoldings of
+$\mathcal G$ (a fixed point over the ten-element lattice on the gluing
+graph).  For all patterns $k,k'$, members $a\in V_k$, $c\in V_{k'}$,
+and every $F\in R(k,k')$:
+  \begin{enumerate}[label=(\alph*),leftmargin=1.8em]
+  \item if $F\setminus\{\EQ\}$ is a singleton $\{V\}$ (a chain-forced
+  value), then $V\in\Safe(\tau_k a,\tau_{k'} c)$;
+  \item otherwise $\sel(F)\in\Safe(\tau_k a,\tau_{k'}c)$ or the other
+  horizontal member of $F$ (if any) is in
+  $\Safe(\tau_k a,\tau_{k'}c)$.
+  \end{enumerate}
+\item \textbf{Unique types and the core.}  Call $t\in S$ \emph{unique}
+if $\Safe(t,t)\cap(\Rel\setminus\{\EQ\})=\varnothing$ (two distinct
+realizations of $t$ could stand in no relation at all).  Every member
+whose type is unique is a \emph{core member}; the core pattern contains
+all core members with a fixed closed network among them; every other
+pattern contains the core members it references as permanent interface
+members, glued toward the core through the unfolding (so a unique type
+has exactly one realization, shared globally --- exact occurrence
+identity, not equality-quotienting).
+\item \textbf{Width.}  $|V_k|\le K(C_0)$ for every $k$, with $K(C_0)$
+the bound of Lemma~\ref{lem:rec} (which includes the core and
+one-step witness overhead).
+\end{enumerate}
+\end{definition}
+
+\begin{remark}[What replaced what]
+(Q2) replaces witness/request declarations and the parity condition.
+(Q4) replaces relation-vector shadows, interface transformers, and the
+active enrichment: nothing is declared for distant pairs at all ---
+(Q4) merely ensures that, at realization time, the canonical choice on
+the fold lattice is always safe.  (Q5) replaces the equality-port /
+typed-$\EQ$ machinery for semantically unique elements and absorbs the
+ninth review's probe p4 structurally: the globally unique witness sits
+in the core, every tower cluster references it through its interface,
+and no source is ever dragged along a ray.
+\end{remark}
+
+\section{Soundness: from certificate to model}\label{sec:sound}
+
+Throughout, fix a cluster quasimodel $Q$ for $C_0$.
+
+\begin{definition}[Unfolding]
+The \emph{unfolding} $U(Q)$ is the countable tree of pattern copies
+generated from a root copy of a (Q1)-pattern by satisfying (Q2): for
+every interior demand delegated to an adjacent pattern, attach a fresh
+copy of that pattern glued on the shared interface; core members are
+never copied --- every reference to a core member is identified with
+the single core instance, and the core pattern is attached at the root.
+By (Q3) and (Q5), $U(Q)$ is a tree-shaped family of finite closed
+atomic networks agreeing on overlaps, in which every occurrence's trace
+is connected (interfaces and core references are shared along tree
+paths; running intersection holds by construction).
+\end{definition}
+
+\begin{lemma}[Skeleton realization]\label{lem:skeleton}
+There is a partial atomic relation $\rho_0$ on the occurrences of
+$U(Q)$, defined exactly on co-patterned pairs, extending every pattern
+network, such that every finite connected sub-family is a closed atomic
+network: namely the union of the pattern networks, which is coherent by
+(Q3).
+\end{lemma}
+
+\begin{proof}
+Immediate from (Q3) and connectedness of traces: two co-patterned
+occurrences receive the same value in every shared pattern.
+\end{proof}
+
+\begin{lemma}[Canonical completion]\label{lem:steer}
+$\rho_0$ extends to a total complete atomic composition-closed relation
+$\rho$ on the occurrences of $U(Q)$, with $\EQ$ only on the diagonal,
+such that for every non-co-patterned pair $(x,y)$,
+$\rho(x,y)\in\Safe(\tp(x),\tp(y))$.
+\end{lemma}
+
+\begin{proof}
+We construct $\rho$ over an exhausting chain
+$U_1\subseteq U_2\subseteq\cdots$ of finite connected sub-unfoldings
+(each $U_{m+1}$ adds one pattern copy, glued on its separator
+$\sigma_m$; the core is inside $U_1$).  Invariant: $\rho$ is total,
+closed, atomic on $U_m$'s occurrences, extends $\rho_0$ there, and all
+non-co-patterned values are safe.
+
+\emph{Base:} $U_1$ is a single pattern copy plus the core, glued;
+finite patchwork (two agreeing closed networks over the shared core
+interface) gives a closed atomic completion; its new values are
+separator-mediated, so each lies in the fold of its connecting path;
+by (Q4) a safe choice exists in that fold, and we must show the
+\emph{joint} choice can be made safely --- this is the same argument as
+the inductive step, below, with $U_0$ the core.
+
+\emph{Step:} let $A$ be the realized structure on $U_m$ (a finite
+closed atomic network, hence --- by the patchwork property --- a
+globally consistent one), and let $k$ be the new pattern copy with
+separator $\sigma\subseteq A$.  For each fresh member $b$ of $k$ and
+each old occurrence $y$, the set of values $v$ such that
+$A\cup k\cup\{(y,b)\mapsto v\}$ admits a closed completion is nonempty
+(two-bag patchwork on $A$ and $k$ over $\sigma$) and is contained in
+the fold $F(y,b)$ of the tree path from $y$ through $\sigma$ to $b$
+(composition closure); conversely every value in the pointwise minimal
+completion set is realizable by global consistency of $A$.  Assign:
+\[
+\rho(y,b):=
+\begin{cases}
+\text{the forced value} & \text{if } F(y,b)\setminus\{\EQ\}
+\text{ is a singleton},\\[2pt]
+\text{a horizontal member of } F(y,b)\cap\Safe(\tp y,\tp b) &
+\text{otherwise,}
+\end{cases}
+\]
+where in the second case a horizontal member exists by
+Fact~\ref{fact:fold} and is safe by (Q4); when both horizontals are
+available and safe we fix $\sel(F(y,b))$.  Safety in the first case is
+(Q4)(a).  It remains to check that the assignment is jointly closed.
+
+Triangles with at most one fresh member and two old members reduce to
+the invariant plus the definition of $F$ (the assigned value lies in
+every composition through old occurrences, because $F(y,b)$ is computed
+along the tree path and $A$ is globally consistent: any old detour
+composes to a superset of the tree-path fold).  Triangles with two
+fresh members $(y,b,b')$: $\rho(b,b')$ is the pattern value;
+$F(y,b)\subseteq F(y,b')\circ\{N_k(b',b)\}$ and the forced/horizontal
+cases match by the fold algebra: if either side is forced the other's
+constraint set contains the assigned value by definition of fold; if
+both are free, both assigned values are horizontal, and the connecting
+constraint $\rho(y,b)\in\Comp(\rho(y,b'),N_k(b',b))$ holds because the
+fold $F(y,b)$ was computed through the same separator and the
+horizontal choice was taken \emph{inside} $F(y,b)$.  Triangles among
+three old members hold by the invariant.  Finally, atomicity: no
+assigned value is $\EQ$ (the selector never selects $\EQ$; forced
+$\EQ$ is impossible by Fact~\ref{fact:toolkit} and distinctness of
+occurrences).
+
+The limit of the chain is total on
+$\bigcup_m U_m=U(Q)$, closed (every triple lies in some $U_m$), atomic,
+and safe off-pattern.
+\end{proof}
+
+\begin{remark}[Honesty about Lemma~\ref{lem:steer}]
+The two-fresh-member and old-detour steps above compress a fold-algebra
+argument whose fully expanded form is the designated weak point W1
+(Section~\ref{sec:invalidate}).  Its empirical standing: WP26 part B
+realizes 250/250 random glue steps with canonical-selector domains and
+sees 245/249 failures when the horizontal choices are stripped (the
+F1.3/WP15 genus the conditions exclude); WP17 parts B/C support the
+same discipline at the row level; reviews eight and nine both re-ran
+the corresponding checks and found no defect in the horizontal-steering
+core.  What is genuinely new relative to round 13's certified lemma is
+the interleaving of forced vertical values with steered horizontal
+ones along tree paths --- exactly what (Q4)(a) and the fold lattice
+were introduced to govern.
+\end{remark}
+
+\begin{theorem}[Soundness]\label{thm:sound}
+If a cluster quasimodel for $C_0$ exists, then $C_0$ is satisfiable in
+an abstract complete atomic RCC5 frame with strong equality.
+\end{theorem}
+
+\begin{proof}
+Take $\rho$ from Lemma~\ref{lem:steer} on the occurrences of $U(Q)$;
+interpret concept names by types.  $(\Delta,\rho)$ is a frame: (R1) by
+atomicity and diagonal $\EQ$; (R2), (R3) by closure.  Truth lemma, by
+induction on $C\in\Cl(C_0)$: atomic and Boolean cases from the type
+conditions.  \emph{Existential:} $\exists R.D\in\tp(x)$ is fulfilled
+in-pattern or one step away (Q2); the witness edge is a pattern value,
+extended verbatim by $\rho$; induction applies.  \emph{Universal:} let
+$\forall R.D\in\tp(x)$ and $\rho(x,y)=R$.  If $x,y$ are co-patterned,
+the pattern edge is a safe link (Definition~\ref{def:pattern}), so
+$D\in\tp(y)$ by (L1).  Otherwise $\rho(x,y)$ was assigned by
+Lemma~\ref{lem:steer} \emph{inside} $\Safe(\tp x,\tp y)$ --- whether
+forced (Q4)(a) or steered (Q4)(b) --- so again (L1) gives
+$D\in\tp(y)$.  There is no third case: every pair is co-patterned or
+Lemma-\ref{lem:steer}-assigned.  The contrapositive direction
+(type completeness supplies $\exists R.\overline D$) is as in round 14.
+The root (Q1) gives $C_0$ at its occurrence.
+\end{proof}
+
+\begin{remark}
+Compare the corresponding round-14 step: there, the universal case
+needed the run-time device to have guessed the very value $\rho(x,y)$
+coherently --- the obligation the ninth review proved undischargeable.
+Here the value is chosen \emph{in the proof}, from a safe set whose
+nonemptiness is a finite certificate condition.  No guessing, no
+monitors, no tape.
+\end{remark}
+
+\section{Completeness: from model to certificate}\label{sec:extract}
+
+\begin{theorem}[Extraction]\label{thm:extract}
+If $C_0$ is satisfiable, a cluster quasimodel for $C_0$ exists.
+\end{theorem}
+
+\begin{proof}
+Let $\mathcal M\models C_0$ at $a_0$; apply Theorem A: witness thinning
+and saturation give a witness-generated presentation of width
+$K(C_0)$ (Lemma~\ref{lem:rec}) whose bags are finite closed atomic
+networks (restrictions of $\mathcal M$) fulfilling each selected demand
+within the bag of its source or the adjacent bag that introduces the
+witness --- the presentation's bags \emph{are} cluster patterns, with
+types read off $\mathcal M$ and every edge safe because $\mathcal M$
+satisfies its types.  Set $S$ = realized types; $\mathcal K$ = the
+finitely many isomorphism classes of decorated bags (finite by
+Lemma~\ref{lem:rec}); $\mathcal G$ = the realized adjacencies.
+(Q1)--(Q3) hold by construction.  (Q5): a unique type has at most one
+realization in $\mathcal M$ (any two distinct realizations would stand
+in some atomic relation, contradicting
+$\Safe(t,t)\setminus\{\EQ\}=\varnothing$ since $\mathcal M$ satisfies
+its types); place these realizations in the core bag --- there are at
+most $|S|$ of them --- and thread the core through the presentation as
+permanent interface members (width accounted in
+Lemma~\ref{lem:rec}).  (Q4): for a fold $F\in R(k,k')$ realized
+between occurrences $a,c$ in $\mathcal M$, the true relation
+$\rho_{\mathcal M}(a,c)$ lies in $F$ and is safe; for singleton folds
+this is exactly (Q4)(a).  For non-singleton folds, (Q4)(b) requires a
+\emph{horizontal} safe value, and the true relation need not be
+horizontal; here extraction uses the model's freedom: by global
+consistency of $\mathcal M$'s finite restrictions and the fold fact,
+either some placement of the two types at that fold distance realizes a
+horizontal relation --- which is then safe, since realized --- or
+every model of these types at this fold distance realizes a vertical
+relation, in which case the pair is chain-confined and the fixed-point
+computation of $R(k,k')$ yields the singleton sub-fold along which
+(Q4)(a) applies.  This dichotomy is the designated weak point W2:
+its full proof requires a normal-form argument (every
+non-chain-forced coexistence can be re-presented horizontally) that is
+stated here as Lemma~\ref{lem:hnf} and proved only in outline.
+\end{proof}
+
+\begin{lemma}[Horizontal normal form; designated W2]\label{lem:hnf}
+Let $t,s$ be realized types of $\mathcal M$ and suppose some
+presentation of $\mathcal M$ places occurrences of $t$ and $s$ at a
+non-singleton fold $F$.  Then there is a presentation in which their
+relation at that placement is a horizontal member of $F$, or a
+refinement of the gluing graph on which the fixed point $R(k,k')$
+excludes $F$ for this pair.  \emph{Proof outline:} a non-singleton fold
+leaves the pair's value undetermined by the path; by global consistency
+of the presentation's finite restrictions the horizontal member of $F$
+is realizable at the pair unless a \emph{different} path forces
+verticality, in which case that path's singleton fold governs and the
+fixed point records it.  The interaction of several forcing paths is
+where care is needed; Fact~\ref{fact:fold} bounds the interaction to
+the ten-set lattice.
+\end{lemma}
+
+\section{The width bound, re-proved (resolves F3)}\label{sec:width}
+
+The ninth review's F3 found the previous width lemma's recurrence
+unclosed --- its witness-generation reason (g2) could cascade at fixed
+rank --- and its provenance contradictory.  We re-prove the bound from
+a single decreasing measure and re-house it in this manuscript.
+
+\begin{definition}[Generation measure]
+Every member of a cluster pattern carries a \emph{generation reason}:
+(g1) the source of the pattern; (g2) a selected witness of a demand
+$\exists R.D$ of an already-generated member $a$, with measure
+$\mu(b):=$ the modal depth of $D$; (g3) a boundary/support insertion
+for an already-generated member $a$, with $\mu(b):=\mu(a)$ (there are
+at most $c_3(n)$ such insertions per member, a fixed count of parents,
+selected supports, and interface manifestations); (g4) a
+stratum/threshold insertion for a pair, with
+$\mu(b):=\min$ of the pair's measures; (g5) a core reference (no new
+member: core members are globally shared and counted once).
+The root's measure is the modal depth of $C_0$.
+\end{definition}
+
+\begin{lemma}[Closed recurrence]\label{lem:rec}
+Under (g2) the measure strictly decreases: the witness of
+$\exists R.D$ receives measure $\operatorname{md}(D)<
+\operatorname{md}(\exists R.D)\le\mu(a)$.  (g3) and (g4) do not
+increase the measure and are applied at most a fixed number of times
+per member and per pair respectively, with no iteration (a boundary
+insertion for an insertion is itself charged to the original member's
+budget $c_3(n)$; a stratum for a pair involving a stratum is charged to
+the original pair).  Hence, writing $W_d$ for the maximal number of
+members of measure $\ge d$ generated from one source,
+\[
+W_d\ \le\ \bigl(1+c_3(n)\bigr)\,\bigl(1+n\,W_{d+1}\bigr)
+      +\ c_4(n)\,\bigl((1+c_3(n))(1+n\,W_{d+1})\bigr)^2 ,
+\qquad W_{\operatorname{md}(C_0)+1}=0,
+\]
+and $K(C_0):=W_0+|\Typ(C_0)|$ (the second summand covers the core) is
+computable.
+\end{lemma}
+
+\begin{proof}
+The only unbounded-iteration risk in the previous version was
+(g2)-at-fixed-rank; with $\mu$ decreasing strictly at every (g2) step
+that risk is gone: a chain of generations contains at most
+$\operatorname{md}(C_0)$ many (g2) steps, and between consecutive (g2)
+steps only the fixed budgets $c_3,c_4$ apply, by definition of the
+reasons.  The displayed recurrence just counts: per member, its (g3)
+budget; per member, its at most $n$ demands each opening a
+strictly-smaller-measure subtree; per pair of the resulting members,
+its (g4) budget.  Every member of a saturated pattern has a reason
+(that is what witness-generated means), so the pattern is contained in
+the counted set.
+\end{proof}
+
+\begin{remark}
+No optimality is claimed; decidability needs computability only.  The
+request-source liveness pressure of the ninth review's F2 does not
+arise in this architecture: there are no requests to keep alive ---
+(Q2) fulfils every demand within one gluing step, and the shared-witness
+towers of probe p4 are carried by the core (one permanent interface
+member), not by per-source liveness.  The residual width obligation is
+(W3): that Theorem A's saturation can always be arranged to fulfil
+demands one-step at width $K(C_0)$ --- the extraction in
+Theorem~\ref{thm:extract} inherits exactly the saturation apparatus all
+nine reviews have examined, now with the explicit measure above.
+\end{remark}
+
+\section{Decidability}\label{sec:dec}
+
+\begin{theorem}[Decidability]\label{thm:dec}
+Concept satisfiability for $\ALCIRCC$ over abstract complete atomic
+RCC5 frames with strong equality is decidable, assuming the RCC5
+patchwork property.
+\end{theorem}
+
+\begin{proof}
+The certificate space is finite: $S$ ranges over subsets of
+$\Typ(C_0)$; patterns are decorated networks on at most $K(C_0)$
+members over finitely many types and atoms; catalogues and gluing
+graphs over finitely many patterns; cores over finitely many members.
+Conditions (Q1)--(Q6) are finitely checkable --- (Q4)'s fold sets are a
+fixed point over a ten-element lattice on the finite gluing graph
+(Fact~\ref{fact:fold}); everything else is a table check.  By
+Theorems~\ref{thm:sound} and~\ref{thm:extract}, $C_0$ is satisfiable
+iff a certificate exists.  Enumerate.
+\end{proof}
+
+No complexity claim is made.  The practical procedure remains the
+cover-tree tableau, which decides all diagnostic concepts of all nine
+reviews in agreement with this semantics (WP26 part C: eleven
+diagnostics and a 200-concept random sweep, zero disagreements).
+
+\section{Machine checks (WP26)}\label{sec:wp}
+
+\code{verification/python/wp26\_round15\_cluster\_quasimodels.py}, all
+PASS: \textbf{A} the fold lattice has exactly ten reachable sets; the
+FOLD fact; the selector's totality; the steering toolkit ---
+exhaustively, against a table re-derived from set semantics.
+\textbf{B} the steering step of Lemma~\ref{lem:steer} on 250 random
+realized cluster trees with a fresh glued pattern: canonical-selector
+domains jointly realizable 250/250; stripping the horizontal choices
+produces 245/249 failures (the F1.3/WP15 genus that (Q4) excludes).
+\textbf{C} acceptance cross-validation against the cover-tree tableau:
+$C_{\mathrm{force}}$, $C_{\mathrm{split}}$, $C_{\mathrm{2hop}}$,
+$C_{\mathrm{3hop}}$, a sanity concept UNSAT; $C_{\mathrm{recursive}}$,
+$C_\uparrow$, PO-loop, dual-descendant,
+\emph{the eighth review's} $C_{\mathrm{G2a}}$, and \emph{the ninth
+review's} p4 shared-unique-witness tower SAT; 200 random concepts,
+zero disagreements, zero timeouts.
+
+\section{Response map to the ninth review}\label{sec:resp}
+
+\begin{center}
+\begin{tabular}{p{0.08\linewidth}p{0.84\linewidth}}
+\toprule
+R1/R2 & Taken in the R2 alternative: the automaton layer is removed;
+the decision notion is the finite cluster-quasimodel certificate; the
+enrichment is never guessed --- it is constructed in
+Lemma~\ref{lem:steer}.  The F1.3 acceptance-without-validity test is
+structurally moot (there are no run copies), and its configuration is
+excluded at realization time by (Q4) + Fact~\ref{fact:fold} (WP26 B
+negative control).\\
+R3 & The request-delay problem is dissolved rather than bounded: (Q2)
+admits no deferral, and probe p4's shared witness is a core member
+(one permanent interface occurrence), not a liveness cost per source.\\
+R4 & Section~\ref{sec:width}: single strictly decreasing measure
+(remaining modal depth at (g2)); fixed budgets elsewhere; closed
+recurrence; the width proof now lives in the same document that uses
+it.\\
+R5 & This manuscript states its full certificate language
+(Sections~\ref{sec:cq}--\ref{sec:width}) without deltas; it inherits
+only Theorem A, the patchwork theorem, and the certified round-14
+semantic pattern, each by explicit citation.  A single consolidated
+edition merging the Theorem A material remains editorial work.\\
+R6 & WP26 ships with this manuscript; WP14/WP17 remain the checks for
+the inherited facts.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{What would invalidate this manuscript}\label{sec:invalidate}
+
+\begin{enumerate}[label=(W\arabic*),leftmargin=2.6em]
+\item \textbf{The steering induction (Lemma~\ref{lem:steer}).}  The
+two-fresh-member and old-detour triangle cases are proved by a
+compressed fold-algebra argument.  A configuration in which the
+canonical assignment violates closure --- necessarily involving an
+interleaving of chain-forced vertical values and steered horizontal
+ones that the ten-set lattice analysis misses --- would break
+soundness.  WP26 B searched (250 random glue steps, 0 failures;
+negative control fires), but the induction deserves a fully expanded
+case table or mechanization; this is the manuscript's keystone.
+\item \textbf{The horizontal normal form (Lemma~\ref{lem:hnf}).}
+Extraction needs every non-chain-forced coexistence to be presentable
+horizontally.  A satisfiable concept two of whose types can co-occur
+\emph{only} vertically, at a placement whose fold the fixed point
+fails to classify as chain-forced, would break completeness (an
+over-rejection).  The interaction of multiple forcing paths is the
+suspect step.
+\item \textbf{One-step saturation at width $K(C_0)$.}  Theorem A must
+supply presentations whose every demand is fulfilled within one gluing
+step at the re-proved width.  This inherits the saturation apparatus
+(S1)--(S6) all nine reviews have examined; the new exposure is the
+combination with the core threading of (Q5).
+\item \textbf{The external input.}  The RCC5 patchwork property, as
+before (WP14; ninth review S9) --- now the \emph{only} external
+theorem: the two-way parity emptiness dependency is gone with the
+automaton.
+\end{enumerate}
+
+\section{Status}
+
+The decidability theorem for $\ALCIRCC$ remains \textbf{strongly
+supported, not certified}.  This manuscript is the tenth attempt at the
+decision layer; nine reviews have found nine defects, and the reader
+should presume this round contains the tenth until an adversarial
+review fails to find it.  What can be said structurally: the semantic
+half is inherited from a cold-certified base; the decision half no
+longer contains a guessing device to be unsound about --- its two
+load-bearing lemmas (W1, W2) are ordinary finite combinatorics over a
+ten-element lattice, stated with their machine evidence, and are
+exactly the right size for either an adversarial review or a
+mechanization to settle.
+
+\begin{thebibliography}{9}
+\bibitem{round12} Consolidated proof manuscript (GPT-5.5).
+\emph{Decidability of $\mathcal{ALCI}_{\mathrm{RCC5}}$ via Saturated
+Split Forests, Patchwork Bags, and Two-Way Parity Automata} (round-12
+base), May 31, 2026.
+\code{papers/automata\_route\_repairs/}.
+
+\bibitem{round14} GPT-5.5.  \emph{Round-14 Repaired Proof: Active
+Virtual Bags for the Patchwork-Bag Abstraction}, July 8, 2026.
+\code{papers/gpt5.5\_round14/}.
+
+\bibitem{review9} Fresh Fable 5 session.  \emph{Cold Referee Report:
+Decidability of ALCI\_RCC5 Concept Satisfiability} (packets 1--3),
+July 9, 2026.  \code{papers/cold\_review\_round14/}.
+
+\bibitem{round13} Claude (Fable 5).  \emph{Shadow Amalgamation for the
+Patchwork-Bag Abstraction} (round-13), July 8, 2026.
+\code{papers/fable5\_round13/}.
+
+\bibitem{renznebel} J.~Renz and B.~Nebel.  On the complexity of
+qualitative spatial reasoning.  \emph{Artificial Intelligence} 108
+(1999).
+
+\bibitem{lutzmilicic} C.~Lutz and M.~Mili\v{c}i\'c.  A tableau
+algorithm for description logics with concrete domains and GCIs.
+\emph{J.~Automated Reasoning} 38 (2007).
+\end{thebibliography}
+
+\end{document}
