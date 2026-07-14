@@ -7422,3 +7422,41 @@ residue is two named open problems.
 
 Ledger: 13 reviews — 12 defects, 1 no-counterexample; rounds 19–25
 unreviewed. Status: **strongly supported, NOT certified**.
+
+## 2026-07-14 — F6 attack: the alternating-colour gap tower (WP35)
+
+At the user's request, spent real effort trying to CONSTRUCT a concept that
+breaks F6 (bounded width) — actively refuting rather than re-proving a
+measure, which is the graveyard. Built `verification/python/wp35_f6_width_attack.py`.
+
+The construction (the "alternating-colour gap tower"): a spy region a_0 with a
+forced PP-tower above it, each level carrying an existential PO-witness, with
+two alternating colours B/C so each level's rejection universals force the next
+witness DR from the level below WITHOUT colliding with the level's own witness.
+
+Machine-checked outcome:
+ (1) SATISFIABLE for every depth D (explicit interval model, 0 RCC5 violations;
+     tableau SAT).
+ (2) FORCED unbounded spy-degree: every model has >= D distinct DR-neighbours of
+     a_0. Proven two ways — a composition-fact forcing certificate
+     (comp(PP,PO)\{PP,PO}={DR}; comp(DR,PPI)={DR}; PO!=DR; comp(PP,PP)={PP}),
+     and a path-consistency model search FREE to share/merge witnesses that
+     COLLAPSES for every witness-count < D (a sound impossibility proof).
+ (3) BUT THE ATTACK FAILS: the unbounded degree is entirely SHADOW width — 7 of
+     8 spy edges (D=8) are composition-forced (singleton comp via a_1); the LIVE
+     (non-shadow) cross-degree is BOUNDED at 4, constant in D. So the concept HAS
+     a bounded-live-width model — exactly the case the shadow / virtual-bag
+     argument absorbs.
+
+CONCLUSION (honest): this does NOT refute F6. It is a concrete, machine-checked
+instance of "unbounded forced GLOBAL degree, bounded LIVE width" — the exact
+phenomenon F6's shadow argument hinges on — so it is mild evidence FOR F6: the
+RCC5 composition table RESISTED the natural "spy sees unboundedly many
+neighbours" attack by funnelling all the unbounded degree into shadows. It also
+sharpens the target: a real F6 counterexample cannot come from global node
+degree (always shadows); it needs unbounded LIVE width — unboundedly many
+occurrences in ONE cluster with NON-composition-determined mutual relations —
+and every attempt runs into the tension that forced edges are shadows while
+free edges can be re-oriented (model surgery) to collapse the width. F6 remains
+open; this raised its plausibility and localized the real difficulty. Status
+unchanged: strongly supported, NOT certified.

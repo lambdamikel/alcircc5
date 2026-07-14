@@ -1,0 +1,35 @@
+WP35: adversarial attack on F6 (bounded width)
+======================================================================
+
+(1) SATISFIABILITY -- explicit interval model per depth:
+    D=1: model|=C0=True  RCC5-viol=0  spy-DR-degree=1
+    D=2: model|=C0=True  RCC5-viol=0  spy-DR-degree=2
+    D=3: model|=C0=True  RCC5-viol=0  spy-DR-degree=3
+    D=4: model|=C0=True  RCC5-viol=0  spy-DR-degree=4
+    D=5: model|=C0=True  RCC5-viol=0  spy-DR-degree=5
+    D=6: model|=C0=True  RCC5-viol=0  spy-DR-degree=6
+    D=7: model|=C0=True  RCC5-viol=0  spy-DR-degree=7
+    D=8: model|=C0=True  RCC5-viol=0  spy-DR-degree=8
+    D=9: model|=C0=True  RCC5-viol=0  spy-DR-degree=9
+    D=10: model|=C0=True  RCC5-viol=0  spy-DR-degree=10
+
+(2A) forcing certificate (composition facts):
+    F1 comp(PP,PO)\{PP,PO}={DR}: True
+    F2 comp(DR,PPI)={DR}: True
+    F3 PO!=DR: True
+    F4 comp(PP,PP)={PP}: True
+
+(2B) PC search -- min feasible witness count (free to share/merge):
+    D=2: feasible W=[2]; min=2; forced (min==D)? True
+    D=3: feasible W=[3]; min=3; forced (min==D)? True
+    D=4: feasible W=[4]; min=4; forced (min==D)? True
+    D=5: feasible W=[5]; min=5; forced (min==D)? True
+
+(3) shadow vs LIVE width (the attack's undoing):
+    D=4: spy global DR-degree=4 (grows);  max LIVE cross-degree=4 (bounded)
+    D=6: spy global DR-degree=6 (grows);  max LIVE cross-degree=4 (bounded)
+    D=8: spy global DR-degree=8 (grows);  max LIVE cross-degree=4 (bounded)
+    D=10: spy global DR-degree=10 (grows);  max LIVE cross-degree=4 (bounded)
+
+======================================================================
+WP35 OVERALL: PASS -- SAT + forced-unbounded-global-degree + bounded-live-width: the attack FAILS, F6 survives (all width is shadow); the composition table resists forcing live width.
