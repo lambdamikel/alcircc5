@@ -7316,3 +7316,38 @@ Round-23 = the catalogue generator: N2 attachment rules, plan-indexed
 unchanged.  Ledger: 13 reviews — 12 defects, 1 no-counterexample;
 rounds 19–22 unreviewed.  Status: **strongly supported, NOT
 certified**.
+
+## 2026-07-13 — Round-23: the catalogue generator
+
+Round-23 delivered same-day, same artifact, still zero sorries (now
+4,056 lines).  Round-22's `SCat` certified a given certificate but
+still needed, per certificate, that it be wellformed and faithful.
+Round-23 discharges both BY CONSTRUCTION.
+
+A `Catalog` carries templates, N2 attachment rules (each child slot
+maps to a parent member port — never core, which threads through its
+own ports), a root, and template-indexed steering; `buildCert` folds a
+plan (rule/parent choices) into a certificate.  `build_wellformed` and
+`build_faithful` prove every planned certificate is Wellformed and
+Faithful for any sound catalogue (`CatOk`) and valid plan (`PlanOk`).
+
+The load-bearing new proof is `build_faithful` — the 13th review's
+parent-pattern agreement, which round-22 had isolated as the last
+per-certificate hypothesis, is now discharged by a parent-chain
+induction: each old child port maps to a parent member port
+(`built_port_parent`), the parent pair value is the parent template's
+entry by IH, and the rule's `agree` condition transports it to the
+child template.  So `catalogue_soundness` gives the full per-unfolding
+`SCond` for EVERY valid plan from the single catalogue check `SCat`.
+
+Witness `certK` (root + one inherited-slot rule) drives the whole
+rounds-19..23 pipeline to `certK_scond` plus a closed frame, with no
+per-certificate wellformedness or faithfulness proof.
+
+**The relational soundness pipeline is now complete end-to-end**:
+catalogue syntax → closed atomic frames, every step kernel-checked.
+Remaining soundness = round-24 (the logic layer: ALCI_RCC5 syntax,
+types, truth lemma) + round-25 (the limit passage, absorbing the RCC5
+patchwork property).  Open completeness: F6, W2′.  Ledger: 13 reviews
+— 12 defects, 1 no-counterexample; rounds 19–23 unreviewed.  Status:
+**strongly supported, NOT certified**.

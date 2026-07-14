@@ -1,0 +1,103 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Round-23: the Catalogue Generator in Lean\\
+\large ``Every unfolding of the catalogue'' becomes a theorem about a
+syntactic object}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-23 of the
+$\ALCIRCC$ decidability project.  Substrate: the rounds 19--22 Lean
+artifact (transport, characterization, S-layer closure, catalogue
+conditions).  Ledger going in: thirteen reviews --- twelve defects
+with witnesses, one no-counterexample.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Round-22 lifted the S-condition to catalogue data
+(\code{SCat}) but still required, per certificate, that it be
+\emph{wellformed} and \emph{faithful}.  Round-23 discharges both by
+construction.  \code{formal/Round19Transport.lean} (4{,}056 lines,
+still \textbf{zero} \code{sorry}) now defines a \code{Catalog} ---
+templates, N2 attachment rules (each child slot maps to a parent
+member port, never core), a root, and template-indexed steering ---
+and a builder \code{buildCert} that turns a \emph{plan} (a list of
+rule/parent choices) into a certificate.  The round-23 theorems prove
+that for any structurally sound catalogue (\code{CatOk}) and any valid
+plan (\code{PlanOk}), the built certificate is \code{Wellformed}
+(\code{build\_wellformed}) and \code{Faithful} (\code{build\_faithful})
+--- so \code{catalogue\_soundness} derives the full per-unfolding
+\code{SCond} for \emph{every} plan from the single catalogue check
+\code{SCat}.  Faithfulness --- the thirteenth review's parent-pattern
+agreement, the last per-certificate hypothesis --- is proved by a
+parent-chain induction from each rule's port-agreement condition.
+``Every unfolding of the catalogue'' is thereby a theorem about a
+syntactic object rather than a hypothesis pair.  A concrete catalogue
+witness (\code{certK}) drives the entire rounds 19--23 pipeline to a
+closed frame with no per-certificate proof.  Status: \emph{strongly
+supported, not certified}.
+\end{abstract}
+
+\section{What was proved}
+
+\begin{itemize}[leftmargin=2em]
+\item \code{Catalog}, \code{Attach} (child template, expected parent
+template, N2 slot map), and \code{buildCert}: a plan folds attachment
+rules onto the root, each child inheriting its parent's member
+occurrences through the slot map.  Indexing lemmas
+(\code{buildSteps\_length}, \code{buildCert\_step\_zero},
+\code{buildCert\_step\_succ}) pin what each built step is.
+\item \code{CatOk} / \code{AttachOk} / \code{PlanOk}: structural
+soundness of the catalogue, of each rule (valid templates, injective
+slot map into parent member ports, and \emph{port agreement} --- old
+child ports and their parent images carry equal net values), and of a
+plan (real rules, earlier parents, matching parent templates).
+\item \code{build\_wellformed}: every planned certificate satisfies
+all seven \code{Wellformed} clauses --- targets pre-exist, are born
+and in range, one per slot, injective; templates valid; nets
+converse-coherent; steering reads only rows.  Proved by induction over
+the step prefix; slot injectivity descends from the rule's
+\code{map\_nodup} through the port map.
+\item \code{build\_faithful}: co-members of a built step carry the
+step template's net entry.  Proved by a \emph{parent-chain
+induction}: each old child port maps to a parent member port
+(\code{built\_port\_parent}), the parent pair value is the parent
+template's entry by the inductive hypothesis, and the rule's
+\code{agree} condition transports it to the child template --- exactly
+the thirteenth review's parent-pattern agreement, now structural.
+\item \code{catalogue\_soundness} (ROUND-23 MAIN THEOREM) and
+\code{catalogue\_frame\_closed}: \code{CatOk} + \code{PlanOk} +
+\code{SCat} give \code{SCond}, hence closed frames, for every plan.
+\item Witness \code{certK}: a root template (two fresh ports) and one
+rule whose slot inherits a root fresh port.
+\code{certK\_catok} / \code{certK\_planok} / \code{certK\_scat} drive
+\code{certK\_scond} and a closed-frame \code{example} through
+\code{buildCert}, with no per-certificate wellformedness or
+faithfulness proof written.
+\end{itemize}
+
+\section{What remains}
+
+With round-23 the soundness pipeline is complete at the relational
+level: from catalogue syntax to closed atomic frames, every step
+kernel-checked.  The remaining soundness work is the logic layer
+(round-24: $\ALCIRCC$ syntax and semantics over frames, Hintikka
+types, one-step demand fulfilment, the truth lemma) and the limit
+passage (round-25: finite prefixes to the full presentation, absorbing
+the RCC5 patchwork property).  The completeness direction (extraction
+from Theorem-A presentations) still contains the open mathematics F6
+(width budgets) and W2$'$ (uniformization).  Ledger: thirteen reviews
+--- twelve defects, one no-counterexample; rounds 19--23 unreviewed.
+The decidability theorem for $\ALCIRCC$ remains \textbf{strongly
+supported, not certified}.
+
+\end{document}

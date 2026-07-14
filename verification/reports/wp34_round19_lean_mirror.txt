@@ -1,6 +1,6 @@
 WP34 -- Round-19/20 harness: the Lean-mirrored source-oriented update
 ======================================================================
-A. Lean build of formal/Round19Transport.lean: returncode=0, sorries=0 (expected 0 since round-20) (PASS -- zero sorries: uSource_eq_frame + fuel adequacy (round-20), the S-layer closure theorems (round-21) and the catalogue-level scat_scond (round-22) are kernel-checked)
+A. Lean build of formal/Round19Transport.lean: returncode=0, sorries=0 (expected 0 since round-20) (PASS -- zero sorries: uSource_eq_frame + fuel adequacy (round-20), the S-layer closure theorems (round-21), the catalogue-level scat_scond (round-22) and the catalogue generator build_wellformed/build_faithful/catalogue_soundness (round-23) are kernel-checked)
 B. Lean-mirror uSource vs operational fold: 200 random certificates (slot targets over ARBITRARY pre-existing occurrences; 663 born-occurrence targets sampled), 14338 pairs checked, 0 mismatches (PASS -- transcription regression against the proved theorem)
 D. determinism digest: 66fd4a6bd2099e73 (stable across PYTHONHASHSEED)
 C. deterministic adversarial control: 115/120 frames non-closed (PASS -- control fires, no salted hash)

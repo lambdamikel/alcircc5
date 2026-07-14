@@ -26,6 +26,11 @@ S-condition on (coreNet, templates, f) alone over enumerated abstract
 rows; scat_scond proves SCat + pattern faithfulness imply SCond for
 every faithful unfolding (one finite check, unboundedly many step
 lists); certD's catalogue check provably fails at the reachable row.
+ROUND 23 (2026-07-13): the catalogue GENERATOR -- a Catalog + N2
+attachment rules + buildCert produce certificates that are Wellformed
+and Faithful BY CONSTRUCTION (build_wellformed, build_faithful), so
+catalogue_soundness gives SCond for EVERY valid plan; the certK
+witness drives the whole round-19..23 pipeline.
 Part A below re-verifies all of it on every run.
 This harness:
 
@@ -77,9 +82,10 @@ def part_a():
         r.stderr.count('declaration uses `sorry`')
     ok = r.returncode == 0 and sorries == 0
     verdict = ('PASS -- zero sorries: uSource_eq_frame + fuel adequacy '
-               '(round-20), the S-layer closure theorems (round-21) and '
-               'the catalogue-level scat_scond (round-22) are '
-               'kernel-checked') \
+               '(round-20), the S-layer closure theorems (round-21), '
+               'the catalogue-level scat_scond (round-22) and the '
+               'catalogue generator build_wellformed/build_faithful/'
+               'catalogue_soundness (round-23) are kernel-checked') \
         if ok else 'FAIL'
     print(f"A. Lean build of formal/Round19Transport.lean: "
           f"returncode={r.returncode}, sorries={sorries} "

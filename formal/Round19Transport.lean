@@ -76,6 +76,21 @@ Content:
      `certC_faithful` reproduce `SCond certC` through the catalogue
      route; `certD_scat_violated` pins the catalogue check's failure
      to exactly the reachable row `DR` against `comp(PPI,PO)`.
+ 10. Round-23 (2026-07-13): the catalogue GENERATOR.  A `Catalog`
+     carries templates, N2 attachment rules (child slots map to
+     parent member ports, never core), and template-indexed steering;
+     `buildCert` turns a plan (rule/parent choices) into a
+     certificate.  `build_wellformed` and `build_faithful` prove every
+     planned certificate is `Wellformed` and `Faithful` BY
+     CONSTRUCTION (faithfulness by a parent-chain induction using each
+     rule's port-agreement condition — the thirteenth review's
+     parent-pattern lemma discharged structurally), so
+     `catalogue_soundness` yields the full `SCond` for EVERY valid
+     plan from `CatOk` + `PlanOk` + the catalogue check `SCat`.
+     "Every unfolding of the catalogue" is now a theorem about a
+     syntactic object.  Witness: `certK` (a root + one inherited-slot
+     rule) drives the whole round-19..23 pipeline to `certK_scond`
+     plus a closed frame, with no per-certificate proof.
 
   Round-20 provenance note: `doStep` was refactored (let-extraction
   into `memberPortsList`/`patternVals`/`steeringVals`, propositional
@@ -2680,19 +2695,21 @@ theorem memberPort_spec' {C : Cert} (hwf : Wellformed C) {i : Nat}
     thirteenth review's parent-pattern agreement, as a per-certificate
     condition; the round-23 catalogue generator discharges it by
     construction.) -/
-def Faithful (C : Cert) : Prop :=
-  ∀ i, i < C.steps.length →
-    ∀ p ∈ memberPortsList C i, ∀ q ∈ memberPortsList C i,
+def FaithfulAt (C : Cert) (i : Nat) : Prop :=
+  ∀ p ∈ memberPortsList C i, ∀ q ∈ memberPortsList C i,
     portOcc C i p ∈ existingBefore C i →
     portOcc C i q ∈ existingBefore C i →
     portOcc C i p ≠ portOcc C i q →
     pairVal C (portOcc C i p) (portOcc C i q)
       = (C.template (C.step i).tmpl).net p q
 
+def Faithful (C : Cert) : Prop :=
+  ∀ i, i < C.steps.length → FaithfulAt C i
+
 /-- Two members' mutual value is the current template's net entry. -/
 theorem member_pair_val {C : Cert} (hwf : Wellformed C)
     (hcc : ∀ c c', C.coreNet c' c = conv (C.coreNet c c'))
-    (hfaith : Faithful C) {i : Nat} (hi : i < C.steps.length)
+    {i : Nat} (hi : i < C.steps.length) (hfa : FaithfulAt C i)
     {x y : Occ} {px py : TPort}
     (hx : x ∈ existingBefore C (i+1)) (hy : y ∈ existingBefore C (i+1))
     (hmpx : memberPort C i x = some px)
@@ -2712,7 +2729,7 @@ theorem member_pair_val {C : Cert} (hwf : Wellformed C)
   | inl hyo =>
     cases member_old_or_fresh hx with
     | inl hxo =>
-      have h := hfaith i hi px hpxm py hpym (hpxo ▸ hxo) (hpyo ▸ hyo)
+      have h := hfa px hpxm py hpym (hpxo ▸ hxo) (hpyo ▸ hyo)
         (by rw [hpxo, hpyo]; exact hxy)
       rwa [hpxo, hpyo] at h
     | inr hxf =>
@@ -2845,7 +2862,8 @@ theorem fresh_tri (C : Cert) (hwf : Wellformed C) (hcat : SCat C)
       -- both members: pattern triangle
       obtain ⟨hpxm, hpxo⟩ := memberPort_spec' hwf hi hx hmpx
       obtain ⟨hpym, hpyo⟩ := memberPort_spec' hwf hi hy hmpy
-      rw [member_pair_val hwf hcat.core_conv hfaith hi hx hy hmpx hmpy hxy,
+      rw [member_pair_val hwf hcat.core_conv hi (hfaith i hi) hx hy hmpx hmpy
+            hxy,
           member_val hwf hi hx hmpx jz,
           show pairVal C (.born i jz) y = conv (pairVal C y (.born i jz))
             from pairVal_conv C hwf hcat.core_conv hyz hyb hzb,
@@ -3219,7 +3237,7 @@ theorem certC_scat : SCat certC := by
   · native_decide
 
 theorem certC_faithful : Faithful certC := by
-  unfold Faithful
+  unfold Faithful FaithfulAt
   native_decide
 
 /-- The catalogue route reproduces round-21's `SCond certC` — the
@@ -3236,5 +3254,818 @@ theorem certD_scat_violated :
       comp (fOn certD 1 [] [Atom.dr] 0)
            (conv ((certD.template (certD.step 1).tmpl).net
              (.inl 0) (.inr (.inr 0))))) := by native_decide
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ## 10. Round-23: the catalogue generator
+
+`SCat`/`Faithful` (round-22) certify a given certificate.  This
+section makes "every unfolding of the catalogue" a theorem about a
+syntactic object: a `Catalog` carries templates, N2 attachment rules
+(child slots map to parent member ports — never core, which threads
+through its own ports), and template-indexed steering; `buildCert`
+turns a plan (a list of rule/parent choices) into a certificate; and
+the round-23 theorems show every planned certificate is `Wellformed`
+and `Faithful` BY CONSTRUCTION.  With `kscat_scat` transporting the
+catalogue-level check, `catalogue_soundness` certifies every plan
+from one finite check. -/
+
+/-- An attachment rule: child template, expected parent template, and
+    the N2 slot map (child slot `k` inherits the parent member at port
+    `slotMap[k]` — a parent slot or a parent fresh port). -/
+structure Attach where
+  tmpl : Nat
+  parentTmpl : Nat
+  slotMap : List TPort
+
+structure Catalog where
+  nCore : Nat
+  coreNet : Nat → Nat → Atom
+  templates : List Template
+  root : Nat
+  attaches : List Attach
+  F : Nat → (Nat → Atom) → (Nat → Atom) → Nat → Atom
+
+def Catalog.tmpl (K : Catalog) (t : Nat) : Template :=
+  K.templates.getD t ⟨0, 0, fun _ _ => Atom.dr⟩
+
+def Catalog.rule (K : Catalog) (r : Nat) : Attach :=
+  K.attaches.getD r ⟨0, 0, []⟩
+
+/-- Step-local port reading (agrees with `portOcc` definitionally). -/
+def portOccOf (st : Step) (i : Nat) : TPort → Occ
+  | .inl k => st.slotTargets.getD k (.core 0)
+  | .inr (.inl c) => .core c
+  | .inr (.inr j) => .born i j
+
+theorem portOcc_eq_portOccOf (C : Cert) (i : Nat) (p : TPort) :
+    portOcc C i p = portOccOf (C.step i) i p := by
+  cases p with
+  | inl k => rfl
+  | inr q => cases q with
+    | inl c => rfl
+    | inr j => rfl
+
+/-- The child step created by a plan entry `(r, p)` on top of the
+    accumulated steps. -/
+def childStepOf (K : Catalog) (steps : List Step) (rp : Nat × Nat) : Step :=
+  ⟨(K.rule rp.1).tmpl,
+   (K.rule rp.1).slotMap.map
+     (portOccOf (steps.getD rp.2 ⟨0, []⟩) rp.2)⟩
+
+def extendSteps (K : Catalog) (steps : List Step) (rp : Nat × Nat) :
+    List Step :=
+  steps ++ [childStepOf K steps rp]
+
+/-- The canonical step list of a plan: root first, then one child per
+    plan entry. -/
+def buildSteps (K : Catalog) (plan : List (Nat × Nat)) : List Step :=
+  plan.foldl (extendSteps K) [⟨K.root, []⟩]
+
+def buildCert (K : Catalog) (plan : List (Nat × Nat)) : Cert where
+  nCore := K.nCore
+  coreNet := K.coreNet
+  templates := K.templates
+  steps := buildSteps K plan
+  f := fun i r1 r2 j =>
+    K.F ((buildSteps K plan).getD i ⟨0, []⟩).tmpl r1 r2 j
+
+theorem foldl_extend_length (K : Catalog) :
+    ∀ (l : List (Nat × Nat)) (acc : List Step),
+      (l.foldl (extendSteps K) acc).length = acc.length + l.length := by
+  intro l
+  induction l with
+  | nil => intro acc; rfl
+  | cons e l ih =>
+    intro acc
+    show (l.foldl (extendSteps K) (extendSteps K acc e)).length = _
+    rw [ih]
+    show (acc ++ [childStepOf K acc e]).length + l.length = _
+    rw [List.length_append]
+    simp +arith
+
+theorem buildSteps_length (K : Catalog) (plan : List (Nat × Nat)) :
+    (buildSteps K plan).length = plan.length + 1 := by
+  unfold buildSteps
+  rw [foldl_extend_length]
+  simp +arith
+
+theorem foldl_extend_getD_stable (K : Catalog) :
+    ∀ (l : List (Nat × Nat)) (acc : List Step) (i : Nat),
+      i < acc.length →
+      (l.foldl (extendSteps K) acc).getD i ⟨0, []⟩ = acc.getD i ⟨0, []⟩ := by
+  intro l
+  induction l with
+  | nil => intro acc i _; rfl
+  | cons e l ih =>
+    intro acc i hi
+    show (l.foldl (extendSteps K) (extendSteps K acc e)).getD i _ = _
+    rw [ih (extendSteps K acc e) i
+        (by show i < (acc ++ _).length
+            rw [List.length_append]; omega)]
+    show (acc ++ [childStepOf K acc e]).getD i _ = _
+    rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+        List.getElem?_append_left hi]
+
+theorem foldl_extend_getD_new (K : Catalog) :
+    ∀ (l : List (Nat × Nat)) (acc : List Step) (m : Nat),
+      m < l.length →
+      (l.foldl (extendSteps K) acc).getD (acc.length + m) ⟨0, []⟩
+        = childStepOf K ((l.take m).foldl (extendSteps K) acc)
+            (l.getD m (0, 0)) := by
+  intro l
+  induction l with
+  | nil => intro acc m hm; cases hm
+  | cons e l ih =>
+    intro acc m hm
+    cases m with
+    | zero =>
+      show (l.foldl (extendSteps K) (extendSteps K acc e)).getD
+        (acc.length + 0) _ = _
+      rw [foldl_extend_getD_stable K l (extendSteps K acc e)
+          (acc.length + 0)
+          (by show acc.length + 0 < (acc ++ _).length
+              rw [List.length_append]; simp)]
+      show (acc ++ [childStepOf K acc e]).getD (acc.length + 0) _ = _
+      rw [List.getD_eq_getElem?_getD]
+      rw [show acc.length + 0 = acc.length from rfl]
+      rw [List.getElem?_append_right (Nat.le_refl _)]
+      simp
+    | succ m' =>
+      show (l.foldl (extendSteps K) (extendSteps K acc e)).getD
+        (acc.length + (m' + 1)) _ = _
+      have harith : acc.length + (m' + 1)
+          = (extendSteps K acc e).length + m' := by
+        show _ = (acc ++ _).length + m'
+        rw [List.length_append]
+        simp +arith
+      rw [harith, ih (extendSteps K acc e) m' (by simp at hm; omega)]
+      rfl
+
+/-- Step 0 of every planned certificate is the root step. -/
+theorem buildCert_step_zero (K : Catalog) (plan : List (Nat × Nat)) :
+    (buildCert K plan).step 0 = ⟨K.root, []⟩ := by
+  show (buildSteps K plan).getD 0 _ = _
+  unfold buildSteps
+  rw [foldl_extend_getD_stable K plan [⟨K.root, []⟩] 0 (by simp)]
+  rfl
+
+/-- Step `m+1` of a planned certificate: the child built by plan entry
+    `m` on the step prefix — and by stability, its parent reference
+    reads the FINAL step list. -/
+theorem buildCert_step_succ (K : Catalog) (plan : List (Nat × Nat))
+    {m : Nat} (hm : m < plan.length)
+    (hp : (plan.getD m (0, 0)).2 < m + 1) :
+    (buildCert K plan).step (m + 1)
+      = ⟨(K.rule (plan.getD m (0, 0)).1).tmpl,
+         (K.rule (plan.getD m (0, 0)).1).slotMap.map
+           (portOccOf ((buildCert K plan).step (plan.getD m (0, 0)).2)
+             (plan.getD m (0, 0)).2)⟩ := by
+  show (buildSteps K plan).getD (m + 1) _ = _
+  unfold buildSteps
+  rw [show m + 1 = ([⟨K.root, []⟩] : List Step).length + m from by
+        simp +arith,
+      foldl_extend_getD_new K plan _ m hm]
+  unfold childStepOf
+  have hstable : ((plan.take m).foldl (extendSteps K)
+        [⟨K.root, []⟩]).getD (plan.getD m (0, 0)).2 ⟨0, []⟩
+      = (buildCert K plan).step (plan.getD m (0, 0)).2 := by
+    show _ = (buildSteps K plan).getD _ _
+    unfold buildSteps
+    rw [show plan = plan.take m ++ plan.drop m from
+          (List.take_append_drop m plan).symm]
+    rw [List.foldl_append]
+    rw [List.take_append_drop]
+    rw [foldl_extend_getD_stable K (plan.drop m) _ _
+        (by rw [foldl_extend_length]
+            have h5 : (plan.take m).length = m := by
+              rw [List.length_take]; omega
+            simp only [h5, List.length_cons, List.length_nil]
+            omega)]
+  rw [hstable]
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### Catalogue wellformedness conditions -/
+
+/-- Port translation along a rule: child slots to parent ports, core
+    and fresh ports unchanged. -/
+def mapPort (r : Attach) : TPort → TPort
+  | .inl k => r.slotMap.getD k (.inr (.inl 0))
+  | p => p
+
+/-- Structural conditions on one attachment rule (all finite). -/
+structure AttachOk (K : Catalog) (r : Attach) : Prop where
+  tmpl_lt : r.tmpl < K.templates.length
+  parent_lt : r.parentTmpl < K.templates.length
+  map_len : r.slotMap.length = (K.tmpl r.tmpl).nSlots
+  map_nodup : r.slotMap.Nodup
+  map_member : ∀ p ∈ r.slotMap,
+    (∃ k, k < (K.tmpl r.parentTmpl).nSlots ∧ p = .inl k) ∨
+    (∃ j, j < (K.tmpl r.parentTmpl).nFresh ∧ p = .inr (.inr j))
+  agree : ∀ p ∈ oldPorts (K.tmpl r.tmpl) K.nCore,
+          ∀ q ∈ oldPorts (K.tmpl r.tmpl) K.nCore,
+    (K.tmpl r.tmpl).net p q
+      = (K.tmpl r.parentTmpl).net (mapPort r p) (mapPort r q)
+
+/-- Structural conditions on the catalogue. -/
+structure CatOk (K : Catalog) : Prop where
+  root_valid : K.root < K.templates.length
+  root_slots : (K.tmpl K.root).nSlots = 0
+  net_conv : ∀ t, t < K.templates.length → ∀ p q,
+    (K.tmpl t).net q p = conv ((K.tmpl t).net p q)
+  F_reads : ∀ t r1 r1' r2 r2' j,
+    (∀ c, c < K.nCore → r1 c = r1' c) →
+    (∀ k, k < (K.tmpl t).nSlots → r2 k = r2' k) →
+    K.F t r1 r2 j = K.F t r1' r2' j
+  rules_ok : ∀ r ∈ K.attaches, AttachOk K r
+
+/-- Plan validity: each entry names a real rule, an earlier parent,
+    and the parent step's template matches the rule's expectation. -/
+def PlanOk (K : Catalog) (plan : List (Nat × Nat)) : Prop :=
+  ∀ m, m < plan.length →
+    (plan.getD m (0, 0)).1 < K.attaches.length ∧
+    (plan.getD m (0, 0)).2 < m + 1 ∧
+    ((buildCert K plan).step (plan.getD m (0, 0)).2).tmpl
+      = (K.rule (plan.getD m (0, 0)).1).parentTmpl
+
+theorem mem_existingBefore_le {C : Cert} {m n : Nat} {x : Occ}
+    (h : m ≤ n) (hx : x ∈ existingBefore C m) :
+    x ∈ existingBefore C n := by
+  cases x with
+  | core c => exact mem_existingBefore_core.mpr (mem_existingBefore_core.mp hx)
+  | born s j =>
+    have h2 := mem_existingBefore_born.mp hx
+    exact mem_existingBefore_born.mpr ⟨by omega, h2.2⟩
+
+theorem pairwise_ne_map {α β : Type} {f : α → β} {l : List α}
+    (hnd : l.Nodup)
+    (hinj : ∀ a ∈ l, ∀ b ∈ l, a ≠ b → f a ≠ f b) :
+    (l.map f).Nodup := by
+  induction l with
+  | nil => exact List.Pairwise.nil
+  | cons a l ih =>
+    rw [List.map_cons]
+    cases hnd with
+    | cons hne hnd' =>
+      exact List.Pairwise.cons
+        (fun b hb => by
+          obtain ⟨a', ha', rfl⟩ := List.mem_map.mp hb
+          exact hinj a (List.mem_cons_self ..) a'
+            (List.mem_cons_of_mem _ ha') (hne a' ha'))
+        (ih hnd' (fun a' ha' b' hb' =>
+          hinj a' (List.mem_cons_of_mem _ ha')
+            b' (List.mem_cons_of_mem _ hb')))
+
+/-- Rules named by valid plans satisfy `AttachOk`. -/
+theorem rule_ok_of_plan {K : Catalog} (hok : CatOk K)
+    {r : Nat} (hr : r < K.attaches.length) : AttachOk K (K.rule r) := by
+  apply hok.rules_ok
+  show K.attaches.getD r _ ∈ K.attaches
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hr]
+  exact List.getElem_mem hr
+
+/-- Reading a slot port of a step (getElem form). -/
+theorem portOccOf_slot {st : Step} {i k : Nat}
+    (hk : k < st.slotTargets.length) :
+    portOccOf st i (.inl k) = st.slotTargets[k] := by
+  show st.slotTargets.getD k (.core 0) = _
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hk]
+  rfl
+
+theorem portOccOf_fresh (st : Step) (i j : Nat) :
+    portOccOf st i (.inr (.inr j)) = .born i j := rfl
+
+/-- The per-step wellformedness bundle of built certificates. -/
+def WfStep (C : Cert) (K : Catalog) (m : Nat) : Prop :=
+  (C.step m).tmpl < K.templates.length ∧
+  (C.step m).slotTargets.length = (K.tmpl (C.step m).tmpl).nSlots ∧
+  (∀ t ∈ (C.step m).slotTargets,
+    (∃ s j, t = Occ.born s j ∧ s < m) ∧ t ∈ existingBefore C m) ∧
+  (C.step m).slotTargets.Nodup
+
+theorem build_wfstep (K : Catalog) (hok : CatOk K)
+    (plan : List (Nat × Nat)) (hplan : PlanOk K plan) :
+    ∀ n m, m ≤ n → m ≤ plan.length → WfStep (buildCert K plan) K m := by
+  intro n
+  induction n with
+  | zero =>
+    intro m hmn _
+    have hm0 : m = 0 := by omega
+    subst hm0
+    refine ⟨?_, ?_, ?_, ?_⟩ <;> rw [buildCert_step_zero]
+    · exact hok.root_valid
+    · exact hok.root_slots.symm
+    · intro t ht; cases ht
+    · exact List.Pairwise.nil
+  | succ n ih =>
+    intro m hmn hmp
+    by_cases hmn' : m ≤ n
+    · exact ih m hmn' hmp
+    · have hm : m = n + 1 := by omega
+      subst hm
+      have hnp : n < plan.length := by omega
+      obtain ⟨hr, hp, hptmpl⟩ := hplan n hnp
+      have hrok := rule_ok_of_plan hok hr
+      have hpar : WfStep (buildCert K plan) K (plan.getD n (0, 0)).2 :=
+        ih _ (by omega) (by omega)
+      obtain ⟨hpt, hplen, hpborn, hpnd⟩ := hpar
+      rw [hptmpl] at hplen
+      have hstep := buildCert_step_succ K plan hnp hp
+      -- abbreviations
+      have hlen' : ((buildCert K plan).step
+          (plan.getD n (0, 0)).2).slotTargets.length
+          = (K.tmpl (K.rule (plan.getD n (0, 0)).1).parentTmpl).nSlots :=
+        hplen
+      have hinj : ∀ a ∈ (K.rule (plan.getD n (0, 0)).1).slotMap,
+          ∀ b ∈ (K.rule (plan.getD n (0, 0)).1).slotMap, a ≠ b →
+          portOccOf ((buildCert K plan).step (plan.getD n (0, 0)).2)
+              (plan.getD n (0, 0)).2 a
+            ≠ portOccOf ((buildCert K plan).step (plan.getD n (0, 0)).2)
+              (plan.getD n (0, 0)).2 b := by
+        intro a ha b hb hab
+        cases hrok.map_member a ha with
+        | inl h1 =>
+          obtain ⟨k1, hk1, rfl⟩ := h1
+          have hk1' : k1 < ((buildCert K plan).step
+              (plan.getD n (0, 0)).2).slotTargets.length := by omega
+          rw [portOccOf_slot hk1']
+          cases hrok.map_member b hb with
+          | inl h2 =>
+            obtain ⟨k2, hk2, rfl⟩ := h2
+            have hk2' : k2 < ((buildCert K plan).step
+                (plan.getD n (0, 0)).2).slotTargets.length := by omega
+            rw [portOccOf_slot hk2']
+            have hkk : k1 ≠ k2 := fun h => hab (by rw [h])
+            intro heq
+            cases Nat.lt_or_ge k1 k2 with
+            | inl hlt =>
+              exact (List.pairwise_iff_getElem.mp hpnd k1 k2 hk1' hk2'
+                hlt) heq
+            | inr hge =>
+              have hlt : k2 < k1 := by omega
+              exact (List.pairwise_iff_getElem.mp hpnd k2 k1 hk2' hk1'
+                hlt) heq.symm
+          | inr h2 =>
+            obtain ⟨j2, hj2, rfl⟩ := h2
+            rw [portOccOf_fresh]
+            obtain ⟨⟨s, j, hteq, hs⟩, _⟩ := hpborn _ (List.getElem_mem hk1')
+            rw [hteq]
+            intro heq
+            injection heq with h3 _
+            omega
+        | inr h1 =>
+          obtain ⟨j1, hj1, rfl⟩ := h1
+          rw [portOccOf_fresh]
+          cases hrok.map_member b hb with
+          | inl h2 =>
+            obtain ⟨k2, hk2, rfl⟩ := h2
+            have hk2' : k2 < ((buildCert K plan).step
+                (plan.getD n (0, 0)).2).slotTargets.length := by omega
+            rw [portOccOf_slot hk2']
+            obtain ⟨⟨s, j, hteq, hs⟩, _⟩ := hpborn _ (List.getElem_mem hk2')
+            rw [hteq]
+            intro heq
+            injection heq with h3 _
+            omega
+          | inr h2 =>
+            obtain ⟨j2, hj2, rfl⟩ := h2
+            rw [portOccOf_fresh]
+            have hjj : j1 ≠ j2 := fun h => hab (by rw [h])
+            intro heq
+            injection heq with _ h4
+            exact hjj h4
+      refine ⟨?_, ?_, ?_, ?_⟩ <;> rw [hstep]
+      · exact hrok.tmpl_lt
+      · show ((K.rule _).slotMap.map _).length = _
+        rw [List.length_map]
+        exact hrok.map_len
+      · intro t ht
+        obtain ⟨q, hq, rfl⟩ := List.mem_map.mp ht
+        cases hrok.map_member q hq with
+        | inl h1 =>
+          obtain ⟨k1, hk1, rfl⟩ := h1
+          have hk1' : k1 < ((buildCert K plan).step
+              (plan.getD n (0, 0)).2).slotTargets.length := by omega
+          rw [portOccOf_slot hk1']
+          obtain ⟨⟨s, j, hteq, hs⟩, hex⟩ := hpborn _ (List.getElem_mem hk1')
+          constructor
+          · exact ⟨s, j, hteq, by omega⟩
+          · exact mem_existingBefore_le (by omega) hex
+        | inr h1 =>
+          obtain ⟨j1, hj1, rfl⟩ := h1
+          rw [portOccOf_fresh]
+          constructor
+          · exact ⟨_, j1, rfl, by omega⟩
+          · apply mem_existingBefore_born.mpr
+            refine ⟨by omega, ?_⟩
+            show j1 < (Cert.template _ ((buildCert K plan).step
+              (plan.getD n (0, 0)).2).tmpl).nFresh
+            rw [hptmpl]
+            exact hj1
+      · exact pairwise_ne_map hrok.map_nodup hinj
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### Wellformedness and faithfulness by construction -/
+
+theorem build_wellformed (K : Catalog) (hok : CatOk K)
+    (plan : List (Nat × Nat)) (hplan : PlanOk K plan) :
+    Wellformed (buildCert K plan) := by
+  have hwfs := build_wfstep K hok plan hplan plan.length
+  have hlen : (buildCert K plan).steps.length = plan.length + 1 :=
+    buildSteps_length K plan
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro i hi t ht
+    obtain ⟨_, _, hborn, _⟩ := hwfs i (by omega) (by omega)
+    obtain ⟨⟨s, j, rfl, hs⟩, _⟩ := hborn t ht
+    exact hs
+  · intro i hi t ht
+    obtain ⟨_, _, hborn, _⟩ := hwfs i (by omega) (by omega)
+    exact (hborn t ht).2
+  · intro i hi
+    obtain ⟨_, hlen2, _, _⟩ := hwfs i (by omega) (by omega)
+    exact hlen2
+  · intro i hi
+    obtain ⟨_, _, _, hnd⟩ := hwfs i (by omega) (by omega)
+    exact hnd
+  · intro i hi
+    obtain ⟨ht, _, _, _⟩ := hwfs i (by omega) (by omega)
+    exact ht
+  · intro i hi p q
+    obtain ⟨ht, _, _, _⟩ := hwfs i (by omega) (by omega)
+    exact hok.net_conv _ ht p q
+  · intro i hi r1 r1' r2 r2' j h1 h2
+    exact hok.F_reads ((buildCert K plan).step i).tmpl r1 r1' r2 r2' j h1 h2
+
+/-- `memberPort` inverts `portOcc` on member ports. -/
+theorem memberPort_of_portOcc {C : Cert} (hwf : Wellformed C) {i : Nat}
+    (hi : i < C.steps.length) {p : TPort}
+    (hp : p ∈ memberPortsList C i) :
+    memberPort C i (portOcc C i p) = some p := by
+  have hs := memberPort_portOcc_isSome hwf hi hp
+  cases hmp : memberPort C i (portOcc C i p) with
+  | none => rw [hmp] at hs; simp at hs
+  | some p2 =>
+    obtain ⟨hp2m, hp2o⟩ := memberPort_spec' hwf hi
+      (portOcc_mem_existing hwf hi hp) hmp
+    rw [portOcc_inj hwf hi hp2m hp hp2o]
+
+/-- Port transport into the parent: at a built step, every old child
+    port reads the parent occurrence at its mapped port, which is a
+    parent member port. -/
+theorem built_port_parent (K : Catalog) (hok : CatOk K)
+    (plan : List (Nat × Nat)) (hplan : PlanOk K plan)
+    {n : Nat} (hnp : n < plan.length) {p : TPort}
+    (hmem : p ∈ oldPorts (K.tmpl (K.rule (plan.getD n (0, 0)).1).tmpl)
+      K.nCore) :
+    portOcc (buildCert K plan) (n+1) p
+      = portOcc (buildCert K plan) (plan.getD n (0, 0)).2
+          (mapPort (K.rule (plan.getD n (0, 0)).1) p)
+    ∧ mapPort (K.rule (plan.getD n (0, 0)).1) p
+        ∈ memberPortsList (buildCert K plan) (plan.getD n (0, 0)).2 := by
+  obtain ⟨hr, hp, hptmpl⟩ := hplan n hnp
+  have hrok := rule_ok_of_plan hok hr
+  have hstep := buildCert_step_succ K plan hnp hp
+  cases mem_oldPorts_elim hmem with
+  | inl h1 =>
+    obtain ⟨k, hk, rfl⟩ := h1
+    have hk_len : k < (K.rule (plan.getD n (0, 0)).1).slotMap.length := by
+      rw [hrok.map_len]; exact hk
+    have hmapk : mapPort (K.rule (plan.getD n (0, 0)).1) (.inl k)
+        = (K.rule (plan.getD n (0, 0)).1).slotMap[k] := by
+      show (K.rule (plan.getD n (0, 0)).1).slotMap.getD k _ = _
+      rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hk_len]
+      rfl
+    constructor
+    · rw [portOcc_eq_portOccOf, hstep]
+      show ((K.rule (plan.getD n (0, 0)).1).slotMap.map
+        (portOccOf ((buildCert K plan).step (plan.getD n (0, 0)).2)
+          (plan.getD n (0, 0)).2)).getD k (.core 0) = _
+      rw [List.getD_eq_getElem?_getD, List.getElem?_map,
+          List.getElem?_eq_getElem hk_len, hmapk]
+      exact (portOcc_eq_portOccOf _ _ _).symm
+    · rw [hmapk]
+      cases hrok.map_member _ (List.getElem_mem hk_len) with
+      | inl h2 =>
+        obtain ⟨k', hk', heq⟩ := h2
+        rw [heq]
+        apply slotPort_mem_memberPortsList
+        show k' < (Cert.template _ ((buildCert K plan).step
+          (plan.getD n (0, 0)).2).tmpl).nSlots
+        rw [hptmpl]
+        exact hk'
+      | inr h2 =>
+        obtain ⟨j, hj, heq⟩ := h2
+        rw [heq]
+        apply freshPort_mem_memberPortsList
+        show j < (Cert.template _ ((buildCert K plan).step
+          (plan.getD n (0, 0)).2).tmpl).nFresh
+        rw [hptmpl]
+        exact hj
+  | inr h1 =>
+    obtain ⟨c, hc, rfl⟩ := h1
+    exact ⟨rfl, corePort_mem_memberPortsList hc⟩
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-- Faithfulness by construction: co-members of a built step carry the
+    step template's net entry, by induction along parent chains using
+    the rule agreement condition (the thirteenth review's
+    parent-pattern agreement, discharged structurally). -/
+theorem build_faithful (K : Catalog) (hok : CatOk K)
+    (plan : List (Nat × Nat)) (hplan : PlanOk K plan)
+    (hcc : ∀ c c', K.coreNet c' c = conv (K.coreNet c c'))
+    (hcr : ∀ t, t < K.templates.length → ∀ c c', c < K.nCore →
+      c' < K.nCore → c ≠ c' →
+      (K.tmpl t).net (.inr (.inl c)) (.inr (.inl c')) = K.coreNet c c') :
+    Faithful (buildCert K plan) := by
+  have hwf := build_wellformed K hok plan hplan
+  have hlen : (buildCert K plan).steps.length = plan.length + 1 :=
+    buildSteps_length K plan
+  have htmplEq : ∀ t, (buildCert K plan).template t = K.tmpl t :=
+    fun _ => rfl
+  suffices h : ∀ n i, i ≤ n → i < (buildCert K plan).steps.length →
+      FaithfulAt (buildCert K plan) i by
+    intro i hi
+    exact h i i (Nat.le_refl i) hi
+  intro n
+  induction n with
+  | zero =>
+    intro i hin hi
+    have hi0 : i = 0 := by omega
+    subst hi0
+    intro p hp q hq hpex hqex hne
+    have htmpl0 : ((buildCert K plan).step 0).tmpl = K.root := by
+      rw [buildCert_step_zero]
+    cases mem_memberPortsList_elim hp with
+    | inl h1 =>
+      obtain ⟨k, hk, rfl⟩ := h1
+      rw [htmpl0, htmplEq] at hk
+      exfalso
+      have := hok.root_slots
+      omega
+    | inr h1 =>
+      cases h1 with
+      | inr h2 =>
+        obtain ⟨j, hj, rfl⟩ := h2
+        exfalso
+        exact absurd (mem_existingBefore_born.mp hpex).1 (Nat.lt_irrefl 0)
+      | inl h2 =>
+        obtain ⟨c, hc, rfl⟩ := h2
+        cases mem_memberPortsList_elim hq with
+        | inl h3 =>
+          obtain ⟨k, hk, rfl⟩ := h3
+          rw [htmpl0, htmplEq] at hk
+          exfalso
+          have := hok.root_slots
+          omega
+        | inr h3 =>
+          cases h3 with
+          | inr h4 =>
+            obtain ⟨j, hj, rfl⟩ := h4
+            exfalso
+            exact absurd (mem_existingBefore_born.mp hqex).1
+              (Nat.lt_irrefl 0)
+          | inl h4 =>
+            obtain ⟨c', hc', rfl⟩ := h4
+            show K.coreNet c c' = (Cert.template _ ((buildCert K plan).step
+              0).tmpl).net (.inr (.inl c)) (.inr (.inl c'))
+            rw [htmpl0]
+            exact (hcr K.root hok.root_valid c c' hc hc'
+              (fun h => hne (congrArg Occ.core h))).symm
+  | succ n ih =>
+    intro i hin hi
+    by_cases hin' : i ≤ n
+    · exact ih i hin' hi
+    · have hieq : i = n + 1 := by omega
+      subst hieq
+      have hnp : n < plan.length := by omega
+      obtain ⟨hr, hp, hptmpl⟩ := hplan n hnp
+      have hrok := rule_ok_of_plan hok hr
+      have htmplS : ((buildCert K plan).step (n+1)).tmpl
+          = (K.rule (plan.getD n (0, 0)).1).tmpl := by
+        rw [buildCert_step_succ K plan hnp hp]
+      have hpidx : (plan.getD n (0, 0)).2
+          < (buildCert K plan).steps.length := by
+        omega
+      intro p hp' q hq' hpex hqex hne
+      have holdport : ∀ p' ∈ memberPortsList (buildCert K plan) (n+1),
+          portOcc (buildCert K plan) (n+1) p' ∈
+            existingBefore (buildCert K plan) (n+1) →
+          p' ∈ oldPorts (K.tmpl (K.rule (plan.getD n (0, 0)).1).tmpl)
+            K.nCore := by
+        intro p' hp'' hex
+        cases mem_memberPortsList_elim hp'' with
+        | inl h1 =>
+          obtain ⟨k, hk, rfl⟩ := h1
+          rw [htmplS, htmplEq] at hk
+          exact slot_mem_oldPorts hk
+        | inr h1 =>
+          cases h1 with
+          | inl h2 =>
+            obtain ⟨c, hc, rfl⟩ := h2
+            exact core_mem_oldPorts hc
+          | inr h2 =>
+            obtain ⟨j, hj, rfl⟩ := h2
+            exfalso
+            exact absurd (mem_existingBefore_born.mp hex).1
+              (Nat.lt_irrefl (n+1))
+      have hpold := holdport p hp' hpex
+      have hqold := holdport q hq' hqex
+      obtain ⟨hxp, hpmem⟩ := built_port_parent K hok plan hplan hnp hpold
+      obtain ⟨hyq, hqmem⟩ := built_port_parent K hok plan hplan hnp hqold
+      have hxE := portOcc_mem_existing hwf hpidx hpmem
+      have hyE := portOcc_mem_existing hwf hpidx hqmem
+      have hmpx := memberPort_of_portOcc hwf hpidx hpmem
+      have hmpy := memberPort_of_portOcc hwf hpidx hqmem
+      have hne' : portOcc (buildCert K plan) (plan.getD n (0, 0)).2
+            (mapPort (K.rule (plan.getD n (0, 0)).1) p)
+          ≠ portOcc (buildCert K plan) (plan.getD n (0, 0)).2
+            (mapPort (K.rule (plan.getD n (0, 0)).1) q) := by
+        rw [← hxp, ← hyq]
+        exact hne
+      have hval := member_pair_val hwf hcc hpidx
+        (ih (plan.getD n (0, 0)).2 (by omega) hpidx)
+        hxE hyE hmpx hmpy hne'
+      rw [hxp, hyq, hval, htmplS, hptmpl]
+      exact (hrok.agree p hpold q hqold).symm
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### Round-23 capstone: soundness from the catalogue -/
+
+/-- ROUND-23 MAIN THEOREM: for a structurally sound catalogue, EVERY
+    valid plan's certificate is wellformed and faithful BY
+    CONSTRUCTION, so the catalogue-level check `SCat` alone yields the
+    full per-unfolding `SCond`.  "Every unfolding of the catalogue" is
+    now a theorem about a syntactic object (`buildCert`), not a
+    hypothesis pair. -/
+theorem catalogue_soundness (K : Catalog) (hok : CatOk K)
+    (hcc : ∀ c c', K.coreNet c' c = conv (K.coreNet c c'))
+    (hcr : ∀ t, t < K.templates.length → ∀ c c', c < K.nCore →
+      c' < K.nCore → c ≠ c' →
+      (K.tmpl t).net (.inr (.inl c)) (.inr (.inl c')) = K.coreNet c c')
+    (plan : List (Nat × Nat)) (hplan : PlanOk K plan)
+    (hscat : SCat (buildCert K plan)) :
+    SCond (buildCert K plan) :=
+  scat_scond _ (build_wellformed K hok plan hplan) hscat
+    (build_faithful K hok plan hplan hcc hcr)
+
+/-- Operational form: every planned certificate's frame is
+    composition-closed on every distinct existing triangle. -/
+theorem catalogue_frame_closed (K : Catalog) (hok : CatOk K)
+    (hcc : ∀ c c', K.coreNet c' c = conv (K.coreNet c c'))
+    (hcr : ∀ t, t < K.templates.length → ∀ c c', c < K.nCore →
+      c' < K.nCore → c ≠ c' →
+      (K.tmpl t).net (.inr (.inl c)) (.inr (.inl c')) = K.coreNet c c')
+    (plan : List (Nat × Nat)) (hplan : PlanOk K plan)
+    (hscat : SCat (buildCert K plan))
+    {x y z : Occ} {v1 v2 v3 : Atom}
+    (hx : x ∈ existingBefore (buildCert K plan) (buildCert K plan).steps.length)
+    (hy : y ∈ existingBefore (buildCert K plan) (buildCert K plan).steps.length)
+    (hz : z ∈ existingBefore (buildCert K plan) (buildCert K plan).steps.length)
+    (hxy : x ≠ y) (hxz : x ≠ z) (hzy : z ≠ y)
+    (h1 : Frame.get? (unfoldAll (buildCert K plan)) x y = some v1)
+    (h2 : Frame.get? (unfoldAll (buildCert K plan)) x z = some v2)
+    (h3 : Frame.get? (unfoldAll (buildCert K plan)) z y = some v3) :
+    v1 ∈ comp v2 v3 :=
+  frame_closed (buildCert K plan)
+    (build_wellformed K hok plan hplan)
+    (catalogue_soundness K hok hcc hcr plan hplan hscat)
+    hx hy hz hxy hxz hzy h1 h2 h3
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### A kernel-checked catalogue witness (round-23)
+
+`certK` mirrors `certC`'s geometry as a CATALOGUE: a root template
+(2 fresh ports) and a child rule whose single slot inherits the root's
+fresh port 1.  It is structurally sound (`certK_catok`); every plan is
+wellformed and faithful by construction; and for a concrete plan the
+catalogue check `SCat` holds, so the built certificate satisfies the
+full `SCond` — obtained without any per-certificate wellformedness or
+faithfulness proof. -/
+
+def certK : Catalog where
+  nCore := 0
+  coreNet := fun _ _ => Atom.dr
+  templates :=
+    [ ⟨0, 2, fun _ _ => Atom.dr⟩,
+      ⟨1, 1, fun _ _ => Atom.dr⟩ ]
+  root := 0
+  attaches := [⟨1, 0, [.inr (.inr 1)]⟩]
+  F := fun _ _ _ _ => Atom.dr
+
+theorem certK_attachok : AttachOk certK (certK.rule 0) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · decide
+  · decide
+  · decide
+  · decide
+  · decide
+  · decide
+
+theorem certK_catok : CatOk certK := by
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  · decide
+  · decide
+  · intro t ht p q
+    match t with
+    | 0 => rfl
+    | 1 => rfl
+    | n+2 =>
+      have h2 : certK.templates.length = 2 := rfl
+      omega
+  · intro t r1 r1' r2 r2' j h1 h2
+    rfl
+  · intro r hr
+    have hr' : r = ⟨1, 0, [.inr (.inr 1)]⟩ := by
+      rw [show certK.attaches = [⟨1, 0, [.inr (.inr 1)]⟩] from rfl] at hr
+      cases hr with
+      | head => rfl
+      | tail _ h => cases h
+    subst hr'
+    exact certK_attachok
+
+/-- The one-child plan: rule 0 attached to the root (step 0). -/
+def planK : List (Nat × Nat) := [(0, 0)]
+
+theorem certK_planok : PlanOk certK planK := by
+  intro m hm
+  have hm0 : m = 0 := by
+    have : planK.length = 1 := rfl
+    omega
+  subst hm0
+  refine ⟨?_, ?_, ?_⟩
+  · decide
+  · decide
+  · native_decide
+
+theorem certK_scat : SCat (buildCert certK planK) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro c c'; rfl
+  · intro c c' hc hc' hne
+    have : (buildCert certK planK).nCore = 0 := rfl
+    omega
+  · intro c1 c2 c3 h1 h2 h3 h4 h5 h6
+    have : (buildCert certK planK).nCore = 0 := rfl
+    omega
+  · intro i hi c c' hc hc' hne
+    have : (buildCert certK planK).nCore = 0 := rfl
+    omega
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+
+/-- The whole round-19..23 pipeline on one object: a planned
+    certificate whose wellformedness and faithfulness are free from
+    the catalogue, whose catalogue check passes, and which therefore
+    satisfies the per-unfolding S-condition. -/
+theorem certK_scond : SCond (buildCert certK planK) :=
+  catalogue_soundness certK certK_catok (fun _ _ => rfl)
+    (fun t ht c c' hc _ _ => by
+      have : certK.nCore = 0 := rfl
+      omega)
+    planK certK_planok certK_scat
+
+/-- ... and every frame triangle of the built certificate is closed. -/
+example {x y z : Occ} {v1 v2 v3 : Atom}
+    (hx : x ∈ existingBefore (buildCert certK planK)
+      (buildCert certK planK).steps.length)
+    (hy : y ∈ existingBefore (buildCert certK planK)
+      (buildCert certK planK).steps.length)
+    (hz : z ∈ existingBefore (buildCert certK planK)
+      (buildCert certK planK).steps.length)
+    (hxy : x ≠ y) (hxz : x ≠ z) (hzy : z ≠ y)
+    (h1 : Frame.get? (unfoldAll (buildCert certK planK)) x y = some v1)
+    (h2 : Frame.get? (unfoldAll (buildCert certK planK)) x z = some v2)
+    (h3 : Frame.get? (unfoldAll (buildCert certK planK)) z y = some v3) :
+    v1 ∈ comp v2 v3 :=
+  frame_closed _ (build_wellformed certK certK_catok planK certK_planok)
+    certK_scond hx hy hz hxy hxz hzy h1 h2 h3
 
 end Round19

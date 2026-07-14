@@ -2382,6 +2382,34 @@ form, with wellformedness and faithfulness by construction), then the
 logic layer and the limit passage.  Rounds 19--22 are unreviewed.
 Status unchanged: \emph{strongly supported, not certified}.
 
+\paragraph{Round 23 (July 2026): the catalogue generator.}
+Round 22 certified a given certificate but still required, per
+certificate, that it be wellformed and faithful; round 23 discharges
+both by construction.  The same Lean artifact (still zero
+\texttt{sorry}) now defines a catalogue --- templates, attachment
+rules in the gluing normal form (each child slot inherits a parent
+member occurrence, never core), a root, and template-indexed steering
+--- and a builder that turns a plan into a certificate.  For any
+structurally sound catalogue and any valid plan, the built
+certificate is provably wellformed and faithful; faithfulness ---
+the thirteenth review's parent-pattern agreement, which the previous
+round had isolated as the last per-certificate hypothesis --- is
+obtained by a parent-chain induction from each rule's local
+port-agreement condition.  Consequently the catalogue-level check
+alone yields the full per-unfolding soundness condition, and hence
+closed atomic frames, for \emph{every} plan: ``every unfolding of the
+catalogue'' is now a theorem about a syntactic object rather than a
+hypothesis pair.  A concrete catalogue witness drives the entire
+transport-to-closure pipeline to a closed frame with no
+per-certificate proof.  With this the relational soundness pipeline is
+complete end to end, from catalogue syntax to closed atomic frames;
+what remains on the soundness side is the logic layer (the description
+logic's syntax, types and truth lemma) and the limit passage
+(absorbing the patchwork property), and on the completeness side the
+open width and uniformization questions.  Rounds 19--23 are
+unreviewed.  Status unchanged: \emph{strongly supported, not
+certified}.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the
