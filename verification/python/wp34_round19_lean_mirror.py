@@ -31,6 +31,11 @@ attachment rules + buildCert produce certificates that are Wellformed
 and Faithful BY CONSTRUCTION (build_wellformed, build_faithful), so
 catalogue_soundness gives SCond for EVERY valid plan; the certK
 witness drives the whole round-19..23 pipeline.
+ROUND 24 (2026-07-13): the LOGIC LAYER -- Concept (ALCI_RCC5 NNF),
+sat semantics, Hintikka type labellings, and the truth_lemma; the
+bridge certInterp_rcc5 proves the pipeline frame is an RCC5
+interpretation frame, and sat_from_hintikka turns a certificate +
+Hintikka labelling into an RCC5 model of the target concept.
 Part A below re-verifies all of it on every run.
 This harness:
 
@@ -84,8 +89,9 @@ def part_a():
     verdict = ('PASS -- zero sorries: uSource_eq_frame + fuel adequacy '
                '(round-20), the S-layer closure theorems (round-21), '
                'the catalogue-level scat_scond (round-22) and the '
-               'catalogue generator build_wellformed/build_faithful/'
-               'catalogue_soundness (round-23) are kernel-checked') \
+               'catalogue generator (round-23) and the logic-layer '
+               'truth_lemma + certInterp_rcc5 (round-24) are '
+               'kernel-checked') \
         if ok else 'FAIL'
     print(f"A. Lean build of formal/Round19Transport.lean: "
           f"returncode={r.returncode}, sorries={sorries} "

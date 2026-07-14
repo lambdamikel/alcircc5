@@ -91,6 +91,19 @@ Content:
      syntactic object.  Witness: `certK` (a root + one inherited-slot
      rule) drives the whole round-19..23 pipeline to `certK_scond`
      plus a closed frame, with no per-certificate proof.
+ 11. Round-24 (2026-07-13): the LOGIC LAYER.  `Concept` (ALCI_RCC5 in
+     NNF), `sat` (semantics over an atomic frame), `Hintikka` (locally
+     coherent type labellings with one-step ∃-fulfilment), and the
+     `truth_lemma` (every concept in an occurrence's type is satisfied
+     there).  `RCC5Interp` states the frame conditions R1/R2/R3;
+     `certInterp_rcc5` proves the pipeline frame is a legitimate RCC5
+     interpretation frame (from `pairVal_conv`/`pairVal_closed`/
+     `pairVal_proper`).  Capstone `sat_from_hintikka`: a wellformed,
+     S-conditioned certificate carrying a root-anchored Hintikka
+     labelling yields an RCC5 MODEL of the target concept.
+     `sample_satisfiable` is a concrete non-vacuity witness.  (Round-25
+     obligation: the catalogue generator PRODUCES such a labelling for
+     a satisfiable input — the construction/completeness direction.)
 
   Round-20 provenance note: `doStep` was refactored (let-extraction
   into `memberPortsList`/`patternVals`/`steeringVals`, propositional
@@ -4067,5 +4080,229 @@ example {x y z : Occ} {v1 v2 v3 : Atom}
     v1 ∈ comp v2 v3 :=
   frame_closed _ (build_wellformed certK certK_catok planK certK_planok)
     certK_scond hx hy hz hxy hxz hzy h1 h2 h3
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ## 11. Round-24: the logic layer (syntax, semantics, truth lemma)
+
+Rounds 19-23 build a composition-closed, converse-coherent, EQ-free
+atomic frame from a catalogue.  This section adds the DESCRIPTION LOGIC
+on top: ALCI_RCC5 concepts in negation normal form, their semantics
+over such a frame, Hintikka systems (locally coherent type
+labellings), and the TRUTH LEMMA — every concept in an occurrence's
+type is satisfied there.  The capstone `sat_from_hintikka` turns any
+certificate carrying a root-anchored Hintikka labelling into an RCC5
+MODEL of the target concept; `certInterp_rcc5` proves the pipeline
+frame is a legitimate RCC5 interpretation frame.  (What round-25+ must
+add: the catalogue generator PRODUCES such a Hintikka labelling for a
+satisfiable input — the completeness/construction direction.) -/
+
+/-- ALCI_RCC5 concepts in NNF.  Roles are the RCC5 atoms; inverse
+    roles are absorbed (∃PP⁻.C = ∃PPI.C), per the project convention. -/
+inductive Concept
+  | top | bot
+  | atom (a : Nat)
+  | natom (a : Nat)
+  | and (c d : Concept)
+  | or (c d : Concept)
+  | ex (r : Atom) (c : Concept)
+  | all (r : Atom) (c : Concept)
+deriving DecidableEq, Repr
+
+/-- An interpretation: a domain predicate, the atomic RCC5 relation
+    (a total single-valued function — a proper atomic network), and an
+    atomic-concept extension. -/
+structure Interp where
+  dom : Occ → Prop
+  rho : Occ → Occ → Atom
+  val : Nat → Occ → Prop
+
+/-- Satisfaction, structural on the concept. -/
+def sat (I : Interp) : Occ → Concept → Prop
+  | _, .top => True
+  | _, .bot => False
+  | x, .atom a => I.val a x
+  | x, .natom a => ¬ I.val a x
+  | x, .and c d => sat I x c ∧ sat I x d
+  | x, .or c d => sat I x c ∨ sat I x d
+  | x, .ex r c => ∃ y, I.dom y ∧ I.rho x y = r ∧ sat I y c
+  | x, .all r c => ∀ y, I.dom y → I.rho x y = r → sat I y c
+
+/-- The canonical interpretation induced by a type labelling: an atom
+    holds exactly where its concept is in the type. -/
+def typeInterp (dom : Occ → Prop) (rho : Occ → Occ → Atom)
+    (τ : Occ → List Concept) : Interp :=
+  ⟨dom, rho, fun a x => Concept.atom a ∈ τ x⟩
+
+/-- A Hintikka system: a locally coherent type labelling.  Clash-free
+    and bot-free literals; ∧/∨ decomposed; ∀ propagated to
+    r-neighbours; ∃ fulfilled by an r-neighbour (one-step fulfilment
+    — no promissory witnesses, so no eventuality/parity condition). -/
+structure Hintikka (dom : Occ → Prop) (rho : Occ → Occ → Atom)
+    (τ : Occ → List Concept) : Prop where
+  clashfree : ∀ x a, dom x → Concept.atom a ∈ τ x → Concept.natom a ∉ τ x
+  nobot : ∀ x, dom x → Concept.bot ∉ τ x
+  and_c : ∀ x c d, dom x → Concept.and c d ∈ τ x → c ∈ τ x ∧ d ∈ τ x
+  or_c : ∀ x c d, dom x → Concept.or c d ∈ τ x → c ∈ τ x ∨ d ∈ τ x
+  all_c : ∀ x r c, dom x → Concept.all r c ∈ τ x →
+    ∀ y, dom y → rho x y = r → c ∈ τ y
+  ex_f : ∀ x r c, dom x → Concept.ex r c ∈ τ x →
+    ∃ y, dom y ∧ rho x y = r ∧ c ∈ τ y
+
+/-- THE TRUTH LEMMA: every concept in an occurrence's type is
+    satisfied at that occurrence, under the canonical interpretation.
+    Structural induction on the concept; each case is exactly one
+    Hintikka clause plus the induction hypotheses. -/
+theorem truth_lemma (dom : Occ → Prop) (rho : Occ → Occ → Atom)
+    (τ : Occ → List Concept) (H : Hintikka dom rho τ) :
+    ∀ C x, dom x → C ∈ τ x → sat (typeInterp dom rho τ) x C := by
+  intro C
+  induction C with
+  | top => intro x _ _; exact True.intro
+  | bot => intro x hx hmem; exact absurd hmem (H.nobot x hx)
+  | atom a => intro x _ hmem; exact hmem
+  | natom a => intro x hx hmem hval; exact H.clashfree x a hx hval hmem
+  | and c d ihc ihd =>
+    intro x hx hmem
+    obtain ⟨hc, hd⟩ := H.and_c x c d hx hmem
+    exact ⟨ihc x hx hc, ihd x hx hd⟩
+  | or c d ihc ihd =>
+    intro x hx hmem
+    cases H.or_c x c d hx hmem with
+    | inl h => exact Or.inl (ihc x hx h)
+    | inr h => exact Or.inr (ihd x hx h)
+  | ex r c ihc =>
+    intro x hx hmem
+    obtain ⟨y, hy, hr, hcy⟩ := H.ex_f x r c hx hmem
+    exact ⟨y, hy, hr, ihc y hy hcy⟩
+  | all r c ihc =>
+    intro x hx hmem y hy hr
+    exact ihc y hy (H.all_c x r c hx hmem y hy hr)
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ### The pipeline frame is an RCC5 interpretation frame -/
+
+/-- What makes an interpretation a legitimate ALCI_RCC5 model: the
+    relation is reflexively EQ, strong-EQ is identity, converse-coherent
+    (R2), and composition-closed (R3). -/
+structure RCC5Interp (I : Interp) : Prop where
+  refl_eq : ∀ x, I.dom x → I.rho x x = Atom.eq
+  eq_id : ∀ x y, I.dom x → I.dom y → I.rho x y = Atom.eq → x = y
+  conv_ : ∀ x y, I.dom x → I.dom y → I.rho y x = conv (I.rho x y)
+  comp_ : ∀ x y z, I.dom x → I.dom y → I.dom z →
+    I.rho x z ∈ comp (I.rho x y) (I.rho y z)
+
+theorem comp_eq_left (b : Atom) : comp Atom.eq b = [b] := rfl
+theorem comp_eq_right : ∀ a, comp a Atom.eq = [a] := by intro a; cases a <;> rfl
+theorem eq_mem_comp_conv : ∀ a, Atom.eq ∈ comp a (conv a) := by
+  intro a; cases a <;> decide
+
+/-- The interpretation induced by a certificate: domain = existing
+    occurrences, relation = `pairVal` off the diagonal and EQ on it,
+    atoms from a type labelling. -/
+def certInterp (C : Cert) (τ : Occ → List Concept) : Interp :=
+  typeInterp (fun x => x ∈ existingBefore C C.steps.length)
+    (fun x y => if x = y then Atom.eq else pairVal C x y) τ
+
+/-- ROUND-24 BRIDGE: a wellformed, S-conditioned certificate's frame
+    is a legitimate RCC5 interpretation frame — reflexive EQ, strong
+    EQ = identity (`pairVal_proper`), R2 (`pairVal_conv`) and R3
+    (`pairVal_closed`). -/
+theorem certInterp_rcc5 (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    (τ : Occ → List Concept) : RCC5Interp (certInterp C τ) := by
+  constructor
+  · intro x _
+    show (if x = x then Atom.eq else pairVal C x x) = Atom.eq
+    rw [if_pos rfl]
+  · intro x y hx hy h
+    by_cases hxy : x = y
+    · exact hxy
+    · exfalso
+      have h2 : pairVal C x y = Atom.eq := by
+        have hr : (certInterp C τ).rho x y = pairVal C x y := by
+          show (if x = y then Atom.eq else pairVal C x y) = _
+          rw [if_neg hxy]
+        rw [hr] at h; exact h
+      exact pairVal_proper C hwf hs x y hx hy hxy h2
+  · intro x y hx hy
+    by_cases hxy : x = y
+    · subst hxy
+      show (if x = x then Atom.eq else pairVal C x x)
+        = conv (if x = x then Atom.eq else pairVal C x x)
+      rw [if_pos rfl]
+      rfl
+    · show (if y = x then Atom.eq else pairVal C y x)
+        = conv (if x = y then Atom.eq else pairVal C x y)
+      rw [if_neg (fun h => hxy h.symm), if_neg hxy]
+      exact pairVal_conv C hwf hs.core_conv hxy (birthBound hx) (birthBound hy)
+  · intro x y z hx hy hz
+    show (if x = z then Atom.eq else pairVal C x z)
+      ∈ comp (if x = y then Atom.eq else pairVal C x y)
+             (if y = z then Atom.eq else pairVal C y z)
+    by_cases hxy : x = y
+    · subst hxy
+      rw [if_pos rfl, comp_eq_left]
+      exact List.mem_cons_self ..
+    · by_cases hyz : y = z
+      · subst hyz
+        rw [if_pos rfl, comp_eq_right]
+        exact List.mem_cons_self ..
+      · by_cases hxz : x = z
+        · rw [if_pos hxz, if_neg hxy, if_neg hyz,
+              ← congrArg (pairVal C y) hxz,
+              pairVal_conv C hwf hs.core_conv hxy (birthBound hx)
+                (birthBound hy)]
+          exact eq_mem_comp_conv _
+        · rw [if_neg hxz, if_neg hxy, if_neg hyz]
+          exact pairVal_closed C hwf hs x z y hx hz hy hxz hxy hyz
+
+/-- Concept satisfiability over an RCC5 frame. -/
+def Satisfiable (C0 : Concept) : Prop :=
+  ∃ I : Interp, RCC5Interp I ∧ ∃ x, I.dom x ∧ sat I x C0
+
+/-! ### Capstone: a certificate + a Hintikka labelling = a model -/
+
+/-- ROUND-24 MAIN THEOREM: a wellformed, S-conditioned certificate
+    whose frame carries a Hintikka labelling putting `C0` at an
+    existing root yields an RCC5 model of `C0`.  Combined with
+    `catalogue_soundness`, `SCat`/`Faithful` supply the S-condition; the
+    remaining obligation — that the catalogue GENERATOR produces such a
+    labelling for a satisfiable `C0` — is the round-25 construction. -/
+theorem sat_from_hintikka (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    (τ : Occ → List Concept)
+    (H : Hintikka (fun x => x ∈ existingBefore C C.steps.length)
+      (fun x y => if x = y then Atom.eq else pairVal C x y) τ)
+    (root : Occ) (hroot : root ∈ existingBefore C C.steps.length)
+    (C0 : Concept) (hC0 : C0 ∈ τ root) :
+    Satisfiable C0 :=
+  ⟨certInterp C τ, certInterp_rcc5 C hwf hs τ, root, hroot,
+    truth_lemma _ _ τ H C0 root hroot hC0⟩
+
+/-! ### Non-vacuity: a concrete satisfiable concept and model -/
+
+/-- `A₀ ⊓ ∀DR.⊥` is satisfiable in a one-point RCC5 model (the point
+    has no DR-neighbour, so the ∀DR is vacuous). -/
+theorem sample_satisfiable :
+    Satisfiable (Concept.and (.atom 0) (.all Atom.dr .bot)) := by
+  refine ⟨⟨fun x => x = Occ.core 0, fun _ _ => Atom.eq,
+           fun a x => a = 0 ∧ x = Occ.core 0⟩, ?_, Occ.core 0, rfl, ?_⟩
+  · constructor
+    · intro x _; rfl
+    · intro x y hx hy _; rw [hx, hy]
+    · intro x y _ _; rfl
+    · intro x y z _ _ _
+      show Atom.eq ∈ comp Atom.eq Atom.eq
+      decide
+  · refine ⟨?_, ?_⟩
+    · exact ⟨rfl, rfl⟩
+    · intro y _ hr
+      exact Atom.noConfusion hr
 
 end Round19

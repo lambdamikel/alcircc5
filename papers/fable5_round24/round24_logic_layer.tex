@@ -1,0 +1,102 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Round-24: the Logic Layer in Lean\\
+\large Syntax, semantics, Hintikka systems, and the truth lemma over
+the pipeline frame}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-24 of the
+$\ALCIRCC$ decidability project.  Substrate: the rounds 19--23 Lean
+artifact (the complete relational soundness pipeline).  Ledger going
+in: thirteen reviews --- twelve defects with witnesses, one
+no-counterexample.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Rounds 19--23 build a composition-closed, converse-coherent, EQ-free
+atomic RCC5 frame from a catalogue, entirely in the kernel.  Round-24
+puts the \emph{description logic} on top.
+\code{formal/Round19Transport.lean} (4{,}295 lines, still
+\textbf{zero} \code{sorry}) now defines $\ALCIRCC$ concepts in negation
+normal form (\code{Concept}), their semantics over a frame
+(\code{sat}), Hintikka systems (\code{Hintikka} --- locally coherent
+type labellings with one-step $\exists$-fulfilment), and proves the
+\textbf{truth lemma}: every concept in an occurrence's type is
+satisfied there, under the canonical interpretation.  Two results tie
+this to the pipeline: \code{certInterp\_rcc5} proves the frame built by
+rounds 19--23 is a legitimate RCC5 interpretation frame (reflexive EQ,
+strong-EQ = identity, R2, R3 --- read directly off
+\code{pairVal\_conv}/\code{pairVal\_closed}/\code{pairVal\_proper}); and
+the capstone \code{sat\_from\_hintikka} turns any wellformed,
+S-conditioned certificate carrying a root-anchored Hintikka labelling
+into an RCC5 \emph{model} of the target concept.  A concrete witness
+(\code{sample\_satisfiable}) exhibits a satisfiable concept with its
+model.  What round-25 must add is the other direction: that the
+catalogue generator \emph{produces} such a labelling for a satisfiable
+input.  Status: \emph{strongly supported, not certified}.
+\end{abstract}
+
+\section{What was proved}
+
+\begin{itemize}[leftmargin=2em]
+\item \code{Concept}: $\top$, $\bot$, atoms and negated atoms (NNF
+literals), $\sqcap$, $\sqcup$, and $\exists r.C$ / $\forall r.C$ with
+$r$ an RCC5 atom (inverse roles absorbed per the project convention).
+\item \code{sat}: satisfaction over an interpretation (domain
+predicate, the total single-valued relation \code{rho}, atomic
+extension), structural on the concept.  Roles read the relation
+directly ($\code{rho}\,x\,y = r$), which is why a proper atomic RCC5
+network --- exactly what the pipeline delivers --- is the right frame.
+\item \code{Hintikka}: clash-freeness and $\bot$-freeness of literals,
+$\sqcap$/$\sqcup$ decomposition, $\forall$-propagation to
+$r$-neighbours, and $\exists$-fulfilment by an actual $r$-neighbour.
+One-step fulfilment means no promissory witnesses, hence no
+eventuality/parity condition --- the structural payoff of the
+split-forest normal form.
+\item \code{truth\_lemma}: by structural induction on the concept,
+$C \in \tau(x) \Rightarrow x \models C$.  Each case is one Hintikka
+clause plus the induction hypotheses; the literal cases use
+clash-freeness.
+\item \code{RCC5Interp} and \code{certInterp\_rcc5}: the frame
+conditions R1 (reflexive EQ, strong-EQ = identity), R2 (converse), R3
+(composition), and the theorem that the pipeline's induced
+interpretation satisfies them --- a direct reading of the round-21/22
+closure theorems, with the diagonal handled by the EQ convention.
+\item \code{sat\_from\_hintikka} (ROUND-24 MAIN THEOREM): wellformed +
+S-conditioned + a root-anchored Hintikka labelling $\Rightarrow$ the
+target concept is RCC5-satisfiable.  With \code{catalogue\_soundness},
+\code{SCat} + \code{Faithful} supply the S-condition.
+\item \code{sample\_satisfiable}: $A_0 \sqcap \forall\mathrm{DR}.\bot$
+is satisfiable in a one-point model --- non-vacuity of every
+definition above.
+\end{itemize}
+
+\section{What remains}
+
+The soundness pipeline is now complete from catalogue syntax to a
+\emph{model of the logic}: a certificate that is wellformed,
+faithful, S-conditioned, and Hintikka-labelled is an RCC5 model of its
+root concept, every step kernel-checked.  The one hypothesis not yet
+produced by construction is the Hintikka labelling itself --- this is
+the round-25 CONSTRUCTION: the catalogue generator, driven by the
+input concept's $\exists$-requirements, must emit a plan whose built
+certificate carries a fulfilling Hintikka labelling (with the
+$K(C_0)$ width accounting and the limit passage absorbing the RCC5
+patchwork property).  That is the completeness/construction direction,
+where the standing open items F6 (width budgets) and W2$'$
+(uniformization) live.  Ledger: thirteen reviews --- twelve defects,
+one no-counterexample; rounds 19--24 unreviewed.  The decidability
+theorem for $\ALCIRCC$ remains \textbf{strongly supported, not
+certified}.
+
+\end{document}

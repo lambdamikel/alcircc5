@@ -2410,6 +2410,32 @@ open width and uniformization questions.  Rounds 19--23 are
 unreviewed.  Status unchanged: \emph{strongly supported, not
 certified}.
 
+\paragraph{Round 24 (July 2026): the logic layer.}
+Rounds 19--23 build the atomic RCC5 frame; round 24 puts the
+description logic itself on top --- the first time $\ALCIRCC$, and not
+merely the relational geometry, enters the kernel.  The same Lean
+artifact (still zero \texttt{sorry}) now defines the concept syntax in
+negation normal form, its semantics over a frame, Hintikka systems
+(locally coherent type labellings with one-step existential
+fulfilment), and proves the truth lemma: every concept in an
+occurrence's type is satisfied there.  Notably, one-step fulfilment ---
+no promissory witnesses, hence no parity or eventuality condition --- is
+the structural payoff of the split-forest normal form, and is exactly
+the obligation the earlier no-automata thread repeatedly failed to
+discharge; here it is a non-issue by construction.  Two bridges connect
+the layer to the pipeline: the induced interpretation of a wellformed,
+S-conditioned certificate is proved to be a legitimate RCC5
+interpretation frame (the frame conditions read straight off the
+closure and converse theorems), and the capstone turns any such
+certificate carrying a root-anchored Hintikka labelling into an RCC5
+model of the target concept.  A concrete witness exhibits a
+satisfiable concept together with its model.  The soundness pipeline
+now runs end to end, from catalogue syntax to a model of the logic;
+the one hypothesis not yet produced by construction is the Hintikka
+labelling itself, which the next round's generator must emit for a
+satisfiable input.  Rounds 19--24 are unreviewed.  Status unchanged:
+\emph{strongly supported, not certified}.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the

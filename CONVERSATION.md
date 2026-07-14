@@ -7351,3 +7351,38 @@ types, truth lemma) + round-25 (the limit passage, absorbing the RCC5
 patchwork property).  Open completeness: F6, W2′.  Ledger: 13 reviews
 — 12 defects, 1 no-counterexample; rounds 19–23 unreviewed.  Status:
 **strongly supported, NOT certified**.
+
+## 2026-07-13 — Round-24: the logic layer
+
+Round-24, same-day continuation, same artifact, still zero sorries
+(now 4,295 lines).  Rounds 19-23 delivered the atomic RCC5 frame;
+round-24 puts ALCI_RCC5 itself on top — the first time the DESCRIPTION
+LOGIC (not just the relational geometry) is in the kernel.
+
+New: `Concept` (NNF syntax), `sat` (semantics over a frame), `Hintikka`
+(locally coherent type labellings — clash/bot-free literals, and/or
+decomposition, ∀-propagation, one-step ∃-fulfilment), and the
+`truth_lemma` (C ∈ τ(x) ⟹ x ⊨ C, structural induction, each case one
+Hintikka clause + IH).  The one-step fulfilment is the structural
+payoff of the split-forest normal form: no promissory witnesses, so no
+parity/eventuality machinery — the exact thing the no-automata thread
+kept failing to discharge (rounds 2-10) is here a non-issue by
+construction.
+
+Two bridges connect it to the pipeline: `certInterp_rcc5` proves the
+rounds-19..23 frame is a legitimate RCC5 interpretation frame (R1/R2/R3
+read straight off pairVal_conv/closed/proper, diagonal by the EQ
+convention), and the capstone `sat_from_hintikka` turns any wellformed,
+S-conditioned certificate carrying a root-anchored Hintikka labelling
+into an RCC5 MODEL of the target concept.  `sample_satisfiable`
+witnesses non-vacuity.
+
+The soundness pipeline now runs end-to-end from catalogue syntax to a
+model of the logic.  The one hypothesis not yet produced by
+construction is the Hintikka labelling itself — round-25 is the
+generator that emits it for a satisfiable input (the input concept's
+∃-requirements drive plan generation; K(C₀) width; the limit passage
+absorbing the RCC5 patchwork property).  That is the
+construction/completeness direction, where F6 and W2′ live.  Ledger:
+13 reviews — 12 defects, 1 no-counterexample; rounds 19–24 unreviewed.
+Status: **strongly supported, NOT certified**.
