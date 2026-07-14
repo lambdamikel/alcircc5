@@ -1,0 +1,20 @@
+WP36: determination vs distinctness in RCC5
+======================================================================
+
+(1) singleton (fully-determining) compositions:
+    comp(DR,PPI) = {DR}   vertical-leg? True
+    comp(PP,DR) = {DR}   vertical-leg? True
+    comp(PP,PP) = {PP}   vertical-leg? True
+    comp(PPI,PPI) = {PPI}   vertical-leg? True
+    exactly 4 singletons; ALL have a vertical leg: True
+    no horizontal-only singleton: True
+    PO is ever a forced value: False  (=> PO never determined)
+
+(2) horizontal distinctness via a shared DR-anchor (u DR w, w R v):
+    comp(DR,DR) = ['DR', 'EQ', 'PO', 'PP', 'PPI']   forces!=EQ? False   live(non-singleton)? True
+    comp(DR,PO) = ['DR', 'PO', 'PP']   forces!=EQ? True   live(non-singleton)? True  <= forces u!=v AND stays LIVE (undetermined)
+    comp(DR,PP) = ['DR', 'PO', 'PP']   forces!=EQ? True   live(non-singleton)? True  <= forces u!=v AND stays LIVE (undetermined)
+    comp(DR,PPI) = ['DR']   forces!=EQ? True   live(non-singleton)? False
+
+======================================================================
+WP36 OVERALL: PASS -- determination is vertical-only (4 singletons, all vertical; PO never forced) => explains WP35's shadows; BUT distinctness is achievable horizontally and stays live => the 4-singleton fact does NOT close F6.  Frontier pinpointed: a live horizontally-distinct crowd.
