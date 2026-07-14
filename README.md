@@ -232,6 +232,8 @@ Readers familiar with Lutz and Wolter's "Modal Logics of Topological Relations" 
 
 Both problems — ALCI\_RCC5 and ALCI\_RCC8 satisfiability — have been **open for over 20 years** (Wessel 2002/2003, Lutz-Wolter 2006). No known undecidability reduction applies to the abstract composition-table semantics. This repository documents multiple approaches toward settling them.
 
+> **New to this problem? Read [`WHY_ITS_HARD.md`](WHY_ITS_HARD.md) first.** It is a plain-language, no-symbols guide to *why* the question is hard — the two axes (nesting vs. side-by-side), the "loop trick," shadows, live width, and the single open lemma (F6) that everything now reduces to. Written for non-specialists; it is the gentlest entry point to the whole project.
+
 ### Why standard undecidability reductions fail for ALCI\_RCC5
 
 Every known undecidability proof for description logics ultimately encodes a **two-dimensional grid** (the Z×Z domino tiling problem). Grid encoding requires either functional roles, number restrictions, role intersection, or role value maps. ALCI\_RCC5 has **none of these**. Moreover, the patchwork property — local consistency implies global consistency — actively resists grid encoding, since tiling reductions need rigid global constraints that go beyond local consistency.
