@@ -7460,3 +7460,41 @@ and every attempt runs into the tension that forced edges are shadows while
 free edges can be re-oriented (model surgery) to collapse the width. F6 remains
 open; this raised its plausibility and localized the real difficulty. Status
 unchanged: strongly supported, NOT certified.
+
+## 2026-07-14 — F6, third pass (WP36/WP37): the construction reduces to the forcing question
+
+Pushed (rightly) to actually try building the "unbounded live crowd"
+counterexample rather than defer to the GPT review. Did so; it bottomed out at
+a genuine reduction, recorded as WP36 + WP37.
+
+WP36 (structural anatomy): RCC5 has EXACTLY four singleton (fully-determining)
+compositions — comp(DR,PPI)={DR}, comp(PP,DR)={DR}, comp(PP,PP)={PP},
+comp(PPI,PPI)={PPI} — and every one uses a vertical PP/PPI leg; no
+horizontal-only determination exists and PO is never a forced value. So
+DETERMINATION (shadows) is vertical-only (explains WP35). BUT distinctness
+(EQ-exclusion) IS achievable horizontally and stays live (comp(DR,PO)={DR,PO,PP}
+excludes EQ, non-singleton). So the four-singleton fact does NOT close F6.
+
+WP37 (the redirected swing, followed to the floor): (1) the SUBSTRATE is free —
+any {DR,PO} graph is a valid, realizable, irreducible RCC5 network of any size,
+so unbounded live horizontal crowds ARE realizable; F6 does not fail at the
+network level. (2) But horizontal PO-chains BLOCK (loop) exactly like vertical
+PP-ladders: comp(PO,PO) is the whole algebra incl. the loop-closing merge, so a
+forced PO-chain is SAT via a finite looping model; finite colours ⟹ repetition
+⟹ loop. (3) So forcing an unbounded live crowd = forcing NON-repetition =
+forcing rigid horizontal COORDINATES — which the table cannot pin. Hence:
+F6-counterexample ⟺ a concept forcing an unbounded rigid {DR,PO} graph; F6-proof
+⟺ no concept can. SAME horizontal-forcing question — and it is the MIRROR of the
+undecidability obstruction (the Lutz-Wolter grid does not transfer because the
+composition table cannot force the coincidence condition, Wessel 2002/2003).
+
+OUTCOME. The construction attempt does not yield a counterexample, but for a
+principled reason: it provably reduces to the horizontal-rigidity forcing
+question — the deep open problem itself, and the common root of why NEITHER
+decidability nor undecidability has been settled in 20 years. The substrate is
+free; only the forcing is hard; the forcing IS the problem. This unifies the
+decidability keystone (F6, bounded width) and the undecidability obstruction (no
+forcible grid) as two faces of one fact: the abstract composition table is too
+loose to pin rigid horizontal structure. Status unchanged: strongly supported,
+NOT certified — but the frontier is now a single, well-posed, two-sided
+question.

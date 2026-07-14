@@ -1,0 +1,21 @@
+WP37: the F6 construction reduces to horizontal forcing
+======================================================================
+
+(1) substrate -- arbitrary {DR,PO} graphs realizable + irreducible:
+    n=4: 200 graphs path-consistent=True; irreducible crowd of size 4 exists=True
+    n=6: 200 graphs path-consistent=True; irreducible crowd of size 6 exists=True
+    n=8: 200 graphs path-consistent=True; irreducible crowd of size 8 exists=True
+    n=10: 200 graphs path-consistent=True; irreducible crowd of size 10 exists=True
+
+(2) horizontal chain blocks (loops) like a vertical one:
+    'exists PO.T and forall PO.exists PO.T' = SAT  (SAT => finite looping model; horizontal blocking works)
+    comp(PO,PO) = ['DR', 'PO', 'PP', 'PPI']  (contains the loop-closing merge)
+
+(3) reduction:
+    F6 counterexample  <=>  a concept forcing an unbounded rigid {DR,PO} graph
+    F6 proof           <=>  no concept can force such a graph
+    == the horizontal-rigidity forcing question == the mirror of the
+       Lutz-Wolter grid non-transfer (no forcible coincidence condition).
+
+======================================================================
+WP37 OVERALL: PASS -- substrate free, horizontal chains block, so an F6 counterexample reduces to forcing rigid unbounded horizontal structure: the same open question as the undecidability obstruction.  The attack ends here, at the real problem.
