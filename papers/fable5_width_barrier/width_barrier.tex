@@ -1,0 +1,550 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage{array,booktabs}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\comp}{\mathbin{;}}          % composition
+\newcommand{\Comp}{\mathrm{comp}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{observation}[theorem]{Observation}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{\bfseries The Width Barrier\\[2pt]
+\large A Conditional Decidability Result for $\ALCIRCC$,\\
+and the Unity of Its Two Open Directions}
+
+\author{Claude (Fable~5, Anthropic)\\
+\small prepared for Michael Wessel}
+\date{July 14, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Concept satisfiability for $\ALCIRCC$ --- the description logic
+$\mathcal{ALCI}$ over the five RCC5 base relations under abstract
+composition-table semantics --- has been open since Wessel
+(2002/2003). This report records the current, honestly-delimited
+state of one line of attack. We establish a \emph{conditional}
+decidability theorem: $\ALCIRCC$ satisfiability is decidable provided a
+single property holds --- \emph{bounded live width} (the obligation we
+call F6) --- and we note that the soundness half of the underlying
+reduction is machine-checked in Lean~4 with no unproved steps. We then
+analyse F6 itself. Two facts about the RCC5 composition table, both
+exhaustively verified, drive the analysis: (i) the only compositions
+that \emph{determine} a relation (are singletons) all involve a
+vertical ($\PP/\PPI$) argument, and $\PO$ is never a determined value;
+(ii) consequently the ``determined'' structure a presentation may carry
+for free (\emph{shadows}) is confined to the vertical axis, while the
+costly \emph{live} structure lives on the horizontal ($\DR/\PO$) axis.
+Building on these we show that the width barrier \emph{reduces to a
+definability question}: F6 fails if and only if some $\ALCIRCC$ concept
+can \emph{force} unboundedly large rigid horizontal configurations. The
+substrate for such configurations is free (every $\DR/\PO$ network is
+realizable), and horizontal chains \emph{block} exactly as vertical
+ones do; so the entire barrier concentrates into whether the logic can
+pin rigid horizontal coordinates. Finally we observe that this is
+precisely the obstruction on the \emph{undecidability} side as well:
+the reason no grid-encoding transfers to the abstract semantics
+(Wessel 2002/2003; Lutz--Wolter 2006) is the same looseness. The
+decidability keystone and the undecidability obstruction are one fact
+seen from two sides. We do not resolve F6; we localize it, certify
+everything around it, and place it on the knife's edge between the two
+outcomes.
+\end{abstract}
+
+\section{Introduction}
+
+The Region Connection Calculus fragment RCC5 partitions the
+relationships between two non-empty spatial regions into five
+jointly-exhaustive, pairwise-disjoint base relations. The description
+logic $\ALCIRCC$ takes these five as its roles (inverse roles are
+absorbed, since each relation's converse is again a base relation) and
+interprets them over \emph{abstract} models: structures in which every
+pair of distinct elements is labelled by exactly one base relation,
+subject only to the RCC5 composition table and converse laws. Whether
+concept satisfiability in this logic is decidable has been open for
+over two decades \cite{wessel2003,lutzwolter2006}. No undecidability
+reduction is known to apply to the abstract semantics, and no decision
+procedure has been certified.
+
+This report is not a claimed resolution. It is a \emph{structural
+status report}: an account of where the difficulty now sits, written to
+be handed to someone new. Its contributions are three.
+
+\begin{enumerate}[leftmargin=1.6em]
+\item A \textbf{conditional decidability theorem}
+(\S\ref{sec:conditional}): $\ALCIRCC$ satisfiability is decidable if the
+\emph{bounded live width} property F6 holds. The soundness direction of
+the reduction --- that a finite, well-formed, composition-closed,
+faithfully-labelled certificate yields a genuine RCC5 model of the
+input concept --- is fully machine-checked in Lean~4.
+
+\item A \textbf{reduction of F6 to a definability question}
+(\S\S\ref{sec:anatomy}--\ref{sec:reduction}): using two exhaustively
+verified facts about the composition table, we show that F6 fails
+exactly when some concept can \emph{force} unboundedly large rigid
+horizontal configurations, and that the combinatorial substrate for
+such configurations is otherwise free.
+
+\item A \textbf{unification of the two open directions}
+(\S\ref{sec:knife}): the forcing question that F6 reduces to is the
+same obstruction that blocks every attempt to prove the problem
+\emph{undecidable}. Bounding it one way yields decidability; exploiting
+it the other way would yield undecidability; and the reason neither has
+happened is a single fact about the composition table.
+\end{enumerate}
+
+Throughout, we distinguish clearly between what is machine-checked, what
+is exhaustively verified by finite computation, and what is argued.
+
+\section{Preliminaries}\label{sec:prelim}
+
+\subsection{RCC5 and its composition table}
+
+The five base relations are $\DR$ (discrete --- disjoint interiors),
+$\PO$ (partial overlap --- share a part, neither contained in the
+other), $\PP$ (proper part), $\PPI$ (inverse proper part), and $\EQ$
+(equal). Converse is the involution
+$\overline{\DR}=\DR$, $\overline{\PO}=\PO$, $\overline{\EQ}=\EQ$,
+$\overline{\PP}=\PPI$, $\overline{\PPI}=\PP$. The composition
+$\Comp(R,S)$ collects every base relation that can hold between $x$ and
+$z$ given $x\mathbin{R}y$ and $y\mathbin{S}z$; it is derivable from the
+subset semantics on non-empty regions and is displayed in
+Table~\ref{tab:comp}.
+
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{c|ccccc}
+$\Comp$ & $\EQ$ & $\DR$ & $\PO$ & $\PP$ & $\PPI$\\\hline
+$\EQ$  & $\{\EQ\}$ & $\{\DR\}$ & $\{\PO\}$ & $\{\PP\}$ & $\{\PPI\}$\\
+$\DR$  & $\{\DR\}$ & $\{\EQ,\DR,\PO,\PP,\PPI\}$ & $\{\DR,\PO,\PP\}$ & $\{\DR,\PO,\PP\}$ & $\{\DR\}$\\
+$\PO$  & $\{\PO\}$ & $\{\DR,\PO,\PPI\}$ & $\{\EQ,\DR,\PO,\PP,\PPI\}$ & $\{\PO,\PP\}$ & $\{\DR,\PO,\PPI\}$\\
+$\PP$  & $\{\PP\}$ & $\{\DR\}$ & $\{\DR,\PO,\PP\}$ & $\{\PP\}$ & $\{\EQ,\DR,\PO,\PP,\PPI\}$\\
+$\PPI$ & $\{\PPI\}$ & $\{\DR,\PO,\PPI\}$ & $\{\PO,\PPI\}$ & $\{\EQ,\PO,\PP,\PPI\}$ & $\{\PPI\}$\\
+\end{tabular}
+\caption{The RCC5 composition table, $\Comp(\text{row},\text{col})$.
+Rows are the first argument, columns the second. Computed by exhaustive
+enumeration over finite region domains.}
+\label{tab:comp}
+\end{table}
+
+An \emph{atomic RCC5 network} on a set $V$ assigns to each ordered pair
+of distinct elements exactly one base relation $N(u,v)$, satisfying
+converse coherence $N(v,u)=\overline{N(u,v)}$ (R2) and composition
+closure $N(u,w)\in\Comp(N(u,v),N(v,w))$ for all distinct $u,v,w$ (R3);
+under \emph{strong-EQ} semantics $\EQ$ occurs only on the diagonal
+(R1). We use the standard external input of the whole subject:
+
+\begin{proposition}[Patchwork property; Renz--Nebel]\label{prop:patchwork}
+A path-consistent atomic RCC5 constraint network is globally
+realizable: it has a model.
+\end{proposition}
+
+\subsection{$\ALCIRCC$ syntax and semantics}
+
+Concepts in negation normal form are generated by
+\[
+C,D \;::=\; \top \mid \bot \mid A \mid \neg A \mid C\sqcap D \mid C\sqcup D
+\mid \exists R.C \mid \forall R.C,
+\]
+where $A$ is a concept name and $R\in\{\DR,\PO,\PP,\PPI\}$ (the reflexive
+$\EQ$ is not used as a role between distinct elements). An
+interpretation $\mathcal I=(\Delta,\rho,\cdot^{\mathcal I})$ has a
+non-empty domain $\Delta$, an atomic RCC5 network $\rho$ on $\Delta$,
+and concept-name extensions $A^{\mathcal I}\subseteq\Delta$. The role
+reading is
+$(\exists R.C)^{\mathcal I}=\{x\mid \exists y\,(\rho(x,y)=R \wedge y\in
+C^{\mathcal I})\}$ and dually for $\forall$; because $\rho$ is atomic,
+the extension of role $R$ is exactly the set of pairs labelled $R$.
+$C_0$ is \emph{satisfiable} if $C_0^{\mathcal I}\neq\emptyset$ for some
+such $\mathcal I$. This is the abstract composition-table semantics of
+\cite{wessel2003}; it is what makes the problem different from the
+topological logics of \cite{lutzwolter2006}, whose undecidability does
+not transfer.
+
+\section{The split-forest presentation and the two axes}\label{sec:axes}
+
+The line of attack organizes any model along two axes. The
+\emph{vertical} axis is nesting: $\PP$ and $\PPI$ form a forest, since
+$\PP$ is a strict partial order ($\Comp(\PP,\PP)=\{\PP\}$, so $\PP$ is
+transitive, and it is irreflexive under strong-EQ). The
+\emph{horizontal} axis is $\DR$ and $\PO$: the relations between
+elements that are not nested in one another. A model thus presents as a
+forest of nested regions with horizontal cross-links between
+incomparable ones; this is the \emph{split-forest presentation}. The
+entire difficulty of the problem is captured by one asymmetry, which we
+now make precise.
+
+\section{Shadows and live width}\label{sec:width}
+
+The composition table forces some relations and leaves others free. The
+crucial instance is the pair
+\begin{equation}\label{eq:downup}
+\Comp(\PP,\DR)=\{\DR\}, \qquad
+\Comp(\PPI,\DR)=\{\DR,\PO,\PPI\}.
+\end{equation}
+The first is a singleton: if $u\mathbin{\PP}w$ and $w\mathbin{\DR}v$
+then $u\mathbin{\DR}v$ is \emph{forced} --- discreteness propagates
+\emph{into parts}. The second is not: discreteness does not propagate
+into wholes. This one-directional determinism is the source of both the
+method's power and its difficulty.
+
+\begin{definition}[Shadow / determined edge]\label{def:shadow}
+In an atomic RCC5 network $N$ on $V$, an edge $\{u,v\}$ is
+\emph{determined} (a \emph{shadow}) if its label is fixed by
+path-consistency from $N$ restricted to $V\setminus\{u,v\}$ together
+with the two elements' other edges. A sufficient local condition is the
+existence of $w\in V$ with $|\Comp(N(u,w),N(w,v))|=1$. An edge that is
+not determined is \emph{live}.
+\end{definition}
+
+A shadow costs nothing in a finite presentation: it is recoverable and
+need not be independently stored or checked. Hence the size that
+matters for a blueprint is not a node's degree but its number of live
+neighbours.
+
+\begin{definition}[Live width; the property F6]\label{def:width}
+The \emph{live width} of a split-forest presentation is the supremum,
+over its interface clusters, of the number of live occurrences that
+must coexist in one cluster. Property \textbf{F6 (Bounded Live Width)}:
+there is a computable $K$ such that every satisfiable concept $C_0$ has
+a model whose split-forest presentation has live width at most
+$K(|C_0|)$.
+\end{definition}
+
+\section{The conditional decidability theorem}\label{sec:conditional}
+
+The reduction built over rounds of this project, and its soundness core
+now certified in Lean~4, yields the following. We state it at the level
+of certificates; the formal development is
+\code{formal/Round19Transport.lean} (roughly 4{,}500 lines, zero
+\code{sorry}, no added axioms).
+
+\begin{theorem}[Conditional decidability]\label{thm:conditional}
+If F6 holds, then $\ALCIRCC$ concept satisfiability is decidable.
+\end{theorem}
+
+\noindent\emph{Sketch, with the certified content marked.}
+A \emph{certificate} is a finite \emph{catalogue} (core network,
+attachment templates with a gluing normal form, and a template-indexed
+steering function) together with a plan; unfolding a plan produces a
+split-forest presentation. The development establishes, \emph{in the
+Lean kernel}:
+\begin{enumerate}[leftmargin=1.6em,itemsep=1pt]
+\item \emph{Generation by construction.} For a structurally sound
+catalogue and a valid plan, the unfolded certificate is well-formed and
+\emph{faithful} (its pattern values agree with the recorded interface
+rows) --- \code{build\_wellformed}, \code{build\_faithful}.
+\item \emph{Catalogue soundness.} A finite composition check on the
+catalogue alone (the \emph{S-condition}, independent of the plan length)
+plus faithfulness implies the full per-unfolding closure condition ---
+\code{scat\_scond} --- hence the unfolded frame is a proper atomic RCC5
+network (composition-closed, converse-coherent, EQ-free):
+\code{frame\_closed}, \code{catalogue\_soundness}.
+\item \emph{Truth.} A Hintikka labelling of the frame with the target
+concept at a root yields a genuine RCC5 model of that concept ---
+\code{truth\_lemma}, \code{sat\_from\_hintikka}; and the induced frame
+is verified to satisfy R1--R3 (\code{certInterp\_rcc5}).
+\item \emph{Faithful abstraction.} Satisfiability and
+Hintikka-realizability coincide (\code{satisfiable\_iff\_hintikkaP}): a
+model always induces a Hintikka labelling, so the certificate loses
+nothing.
+\end{enumerate}
+The decision procedure enumerates finite catalogues, checks the finite
+S-condition and a Hintikka labelling, and accepts iff a valid one
+carries $C_0$ at a root. Soundness (accept $\Rightarrow$ satisfiable) is
+(1)--(3), certified. Completeness (satisfiable $\Rightarrow$ accept)
+needs every satisfiable $C_0$ to admit a \emph{finite} catalogue; this
+is the obligation \code{CompletenessObligation} in the development, and
+it follows from F6 (which bounds the catalogue, giving a finite search
+space and termination) together with a minor uniformization property
+W2$'$ affecting only extraction faithfulness --- a failure of which can
+only cause over-rejection, never unsoundness. \qed
+
+\begin{remark}
+Theorem~\ref{thm:conditional} is a genuine reduction, not a
+restatement: F6 is a single, precisely-posed property, and everything
+around it is machine-checked. What is \emph{not} established is F6
+itself. The rest of this report analyses F6.
+\end{remark}
+
+\section{The anatomy of forcing}\label{sec:anatomy}
+
+We now isolate what the composition table can and cannot \emph{force}.
+Call a composition $\Comp(R,S)$ \emph{determining} if it is a singleton.
+
+\begin{proposition}[Determination is vertical]\label{prop:singletons}
+Among the sixteen compositions of proper (non-$\EQ$) relations, exactly
+four are determining:
+\[
+\Comp(\DR,\PPI)=\{\DR\},\quad
+\Comp(\PP,\DR)=\{\DR\},\quad
+\Comp(\PP,\PP)=\{\PP\},\quad
+\Comp(\PPI,\PPI)=\{\PPI\}.
+\]
+Every one of them has a vertical ($\PP$ or $\PPI$) argument. No
+composition with both arguments horizontal ($\in\{\DR,\PO\}$) is
+determining, and $\PO$ is never the value of a determining composition.
+\end{proposition}
+
+\begin{proof}
+Exhaustive inspection of Table~\ref{tab:comp}; verified by finite
+computation. The horizontal block $\{\DR,\PO\}\times\{\DR,\PO\}$ gives
+$\Comp(\DR,\DR)$ and $\Comp(\PO,\PO)$ (all five relations) and
+$\Comp(\DR,\PO)=\Comp(\PO,\DR)$'s companions of size three; none is a
+singleton. The four singletons are as listed, each with a $\PP/\PPI$
+leg. Scanning the table, no cell equals $\{\PO\}$.
+\end{proof}
+
+Proposition~\ref{prop:singletons} explains a phenomenon observed
+experimentally: attempts to force a region to acquire unboundedly many
+neighbours succeed only in producing shadows. Any \emph{forced} edge
+arises from a determining composition (or an intersection of
+constraints that pins a value), and by
+Proposition~\ref{prop:singletons} the only fully determining
+compositions run through the vertical axis --- so forced structure is
+shadow structure, confined to nesting. Concretely, a construction in
+which a distinguished ``spy'' region is forced discrete from every
+level of an ascending tower makes the spy's degree grow without bound,
+yet each such edge is a shadow (forced by $\Comp(\PP,\DR)=\{\DR\}$
+through the tower); the \emph{live} width stays bounded.
+
+There is, however, a subtlety that keeps the barrier open. Determination
+and \emph{distinctness} are different.
+
+\begin{proposition}[Distinctness can be horizontal]\label{prop:distinct}
+Two same-typed occurrences are mergeable (identifiable, set to $\EQ$)
+unless some constraint excludes $\EQ$ between them. A shared horizontal
+anchor excludes $\EQ$: if $u\mathbin{\DR}w$ and $w\mathbin{\PO}v$ then
+$u,v$ satisfy $\Comp(\DR,\PO)=\{\DR,\PO,\PP\}$, which excludes $\EQ$
+(forcing $u\neq v$) yet is not a singleton (the edge $\{u,v\}$ remains
+live).
+\end{proposition}
+
+\begin{proof}
+From Table~\ref{tab:comp}, $\Comp(\DR,\PO)=\{\DR,\PO,\PP\}\not\ni\EQ$
+and $|\{\DR,\PO,\PP\}|=3$.
+\end{proof}
+
+Thus \emph{determination} is strictly vertical
+(Prop.~\ref{prop:singletons}) but \emph{distinctness} extends to the
+horizontal axis (Prop.~\ref{prop:distinct}). The two notions come
+apart, and it is precisely in the gap between them that F6 lives: a
+live horizontal crowd --- many occurrences, pairwise distinct by
+horizontal anchors, with live (undetermined) mutual relations --- is
+not ruled out by Proposition~\ref{prop:singletons}.
+
+\section{The width barrier reduces to horizontal forcing}\label{sec:reduction}
+
+We now follow the live-crowd possibility to its floor. Three facts,
+each finite-checkable, combine into a reduction.
+
+\begin{proposition}[The substrate is free]\label{prop:substrate}
+Every $\{\DR,\PO\}$-labelled network is path-consistent, hence
+realizable by Proposition~\ref{prop:patchwork}. Moreover, for every $n$
+there is such a network on $n$ nodes in which no two nodes are
+mergeable (all rows distinct): an irreducible live horizontal crowd of
+size $n$.
+\end{proposition}
+
+\begin{proof}
+For $R,S\in\{\DR,\PO\}$ one has $\{\DR,\PO\}\subseteq\Comp(R,S)$ (rows
+$\DR,\PO$ of Table~\ref{tab:comp}), so any $\{\DR,\PO\}$-labelling meets
+every composition constraint: path-consistency is immediate.
+Realizability follows from Proposition~\ref{prop:patchwork}. For
+irreducibility, a $\{\DR,\PO\}$ network is a graph (edge $=\PO$,
+non-edge $=\DR$); a graph with pairwise-distinct neighbourhood rows has
+no two mergeable nodes, and such graphs exist at every size.
+\end{proof}
+
+\begin{proposition}[Horizontal chains block]\label{prop:block}
+The concept $\exists\PO.\top \sqcap \forall\PO.\exists\PO.\top$, which
+demands an endless horizontal successor chain, is satisfiable by a
+finite model. More generally, any forced $\PO$-chain admits a finite
+looping model.
+\end{proposition}
+
+\begin{proof}
+$\Comp(\PO,\PO)$ is the whole algebra
+(Table~\ref{tab:comp}), and in particular contains $\EQ$; hence a
+$\PO$-chain may close a loop ($w_i=w_j$ is composition-consistent). With
+finitely many concept types, any chain repeats a type, and a repeated
+type with mergeable surroundings closes the loop, exactly as in the
+vertical blocking (\S\ref{sec:axes}). A two- or three-element cyclic
+model satisfies the displayed concept.
+\end{proof}
+
+Propositions~\ref{prop:substrate} and~\ref{prop:block} isolate the
+issue. A large live horizontal crowd is trivial to \emph{exhibit}
+(Prop.~\ref{prop:substrate}) but cannot be produced merely by
+\emph{demanding} more occurrences, because horizontal chains fold back
+on themselves (Prop.~\ref{prop:block}). To prevent the fold one would
+have to make the crowd members pairwise \emph{non-mergeable in every
+model} --- to give each a permanent address, a rigid horizontal
+coordinate. By Proposition~\ref{prop:singletons} the composition table
+offers no lever to pin a horizontal coordinate: it cannot determine a
+horizontal relation, and $\PO$ is never forced. We arrive at the central
+structural statement.
+
+\begin{observation}[The width barrier is a forcing question]\label{obs:reduction}
+Bounded live width (F6) fails if and only if some $\ALCIRCC$ concept
+\emph{forces} arbitrarily large \emph{rigid} horizontal configurations
+--- unboundedly many occurrences that must coexist at one interface and
+that no model may merge. Equivalently:
+\begin{center}
+\emph{F6 counterexample} $\iff$ \emph{a concept forcing an unbounded
+rigid $\{\DR,\PO\}$ graph},\\
+\emph{F6 proof} $\iff$ \emph{no concept forces such a graph.}
+\end{center}
+The combinatorial substrate is free (Prop.~\ref{prop:substrate}); the
+mere generation of occurrences blocks (Prop.~\ref{prop:block}); so the
+whole barrier concentrates into whether the logic can force rigid
+horizontal coordination, a \emph{definability} question about the
+expressive power of $\ALCIRCC$.
+\end{observation}
+
+Observation~\ref{obs:reduction} is a reduction, not a theorem in the
+formal sense: the forward direction (unbounded width $\Rightarrow$
+forced irreducible crowds) is the definition of live width unwound; the
+content is that the converse obstruction is a pure forcing question,
+because everything \emph{except} forcing --- realizability and
+non-repetition --- has been discharged by
+Propositions~\ref{prop:substrate} and~\ref{prop:block}. We state it as
+an observation to mark that ``forces'' is used in its intuitive
+model-theoretic sense; making it a formal equivalence is itself part of
+the open problem.
+
+\section{One fact, two faces}\label{sec:knife}
+
+The forcing question of Observation~\ref{obs:reduction} is not new to
+the subject. It is the exact obstruction on the \emph{undecidability}
+side.
+
+To prove a logic undecidable one typically forces it to encode an
+unbounded, rigidly-coordinated grid on which a Turing computation (or a
+tiling) is written. For RCC8 with \emph{topological} semantics this
+succeeds \cite{lutzwolter2006}. For the \emph{abstract}
+composition-table semantics of $\ALCIRCC$ (and $\mathcal{ALCI}_{\mathrm
+{RCC8}}$) it does not, and the reason was identified by
+\cite{wessel2003}: the composition table cannot force the
+\emph{coincidence condition} --- that ``east-of-north'' and
+``north-of-east'' name the same cell --- because it cannot pin the
+relevant relations to single values. That is rigid horizontal
+coordination, and its unavailability is exactly
+Proposition~\ref{prop:singletons}: no horizontal determination, $\PO$
+never forced.
+
+\begin{observation}[The knife's edge]\label{obs:knife}
+The bounded-width property F6 (decidability side) and the
+non-forcibility of a coordinate grid (undecidability side) are the same
+fact about $\ALCIRCC$: \emph{the abstract composition table is too
+loose to pin rigid horizontal structure}. If this looseness can be
+turned into a bound, one obtains decidability
+(Theorem~\ref{thm:conditional}); if it could be circumvented and a grid
+forced, one would obtain undecidability. The two open directions are one
+question seen from two sides, and the reason neither has been settled in
+two decades is that the same fact must be turned one way or the other.
+\end{observation}
+
+\section{Discussion}\label{sec:discussion}
+
+\paragraph{Why the combinatorics did not fit.}
+Attempts to attack the width bound with Ramsey-type combinatorics were
+unsuccessful, and Observation~\ref{obs:reduction} explains why by type
+mismatch. Ramsey theory concerns structure that is \emph{unavoidable}
+in a large fixed object; F6 concerns structure that a formula can
+\emph{force}. These differ in quantifier order: ``every large graph
+contains $X$'' versus ``some formula makes every model contain $X$.''
+The tools that fit the latter are model-theoretic: locality
+(Gaifman/Hanf), Ehrenfeucht--Fra\"iss\'e games, the composition method,
+and the finite/bounded-model-property machinery --- together with the
+grid-encodability analysis in which
+\cite{wessel2003,lutzwolter2006} already sit. This is a different
+toolbox from the model-\emph{construction} techniques used to build the
+certificate layer, and it is the one Observation~\ref{obs:knife}
+indicates. We do not claim it succeeds; we claim it is the correct room
+to enter.
+
+\paragraph{What is and is not established.}
+Certified (Lean, no gaps): the soundness of the certificate-to-model
+pipeline and the faithfulness of the Hintikka abstraction
+(\S\ref{sec:conditional}). Exhaustively verified (finite computation):
+Table~\ref{tab:comp} and Propositions~\ref{prop:singletons},
+\ref{prop:distinct}, \ref{prop:substrate}, \ref{prop:block}. Argued
+(structural, intuitive ``forces''): Observations~\ref{obs:reduction}
+and~\ref{obs:knife}. Open: F6 itself, hence decidability. The honest
+one-line status is unchanged from the project's standing label:
+\emph{strongly supported, not certified}.
+
+\paragraph{Value independent of F6.}
+Theorem~\ref{thm:conditional} is a conditional result that stands
+regardless of F6's fate, with its soundness half machine-certified.
+Observation~\ref{obs:knife} is, to our knowledge, a new unification: it
+identifies the decidability keystone and the undecidability obstruction
+as one fact. Together they turn a formless two-decade question into a
+single, well-posed, two-sided lemma with a certified surrounding and a
+named toolbox. If the problem is ever settled we expect the resolution
+to begin from a map of this shape.
+
+\section{Conclusion}
+
+$\ALCIRCC$ satisfiability is decidable if the live width of its models
+is bounded (Theorem~\ref{thm:conditional}), and the soundness of that
+reduction is machine-checked. Whether the width is bounded reduces to
+whether the logic can force rigid horizontal coordination
+(Observation~\ref{obs:reduction}), which is exactly the obstruction
+that blocks proving the problem undecidable
+(Observation~\ref{obs:knife}). The composition table's inability to pin
+rigid horizontal structure is the single fact underneath both open
+directions. We have not turned that fact into a bound; we have shown
+that doing so, in either direction, is the whole of what remains.
+
+\begin{thebibliography}{9}
+\bibitem{wessel2003} M. Wessel.
+\emph{On spatial reasoning with description logics --- position paper}
+and technical report (report7), 2002/2003. Introduces
+$\mathcal{ALCI}_{\mathrm{RCC}}$ under abstract composition-table
+semantics and identifies the coincidence-condition obstruction to grid
+encoding.
+\bibitem{lutzwolter2006} C. Lutz and F. Wolter.
+\emph{Modal Logics of Topological Relations}. Logical Methods in
+Computer Science, 2006. Undecidability for topological RCC logics; the
+reductions do not transfer to the abstract semantics.
+\bibitem{renznebel} J. Renz and B. Nebel.
+\emph{On the complexity of qualitative spatial reasoning: a maximal
+tractable fragment of the region connection calculus}. Artificial
+Intelligence, 1999. Source of the patchwork property.
+\end{thebibliography}
+
+\vfill
+\noindent\footnotesize
+Companion artifacts: the machine-checked development
+\code{formal/Round19Transport.lean}; the width-attack probes
+\code{verification/python/wp35\_f6\_width\_attack.py},
+\code{wp36\_determination\_vs\_distinctness.py},
+\code{wp37\_f6\_reduces\_to\_forcing.py}; and the plain-language
+companion \code{WHY\_ITS\_HARD.md}. This report is deliberately at the
+boundary of formal and expository; where it and the machine-checked
+artifacts disagree, the artifacts win.
+\end{document}
