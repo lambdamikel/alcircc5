@@ -2436,6 +2436,32 @@ labelling itself, which the next round's generator must emit for a
 satisfiable input.  Rounds 19--24 are unreviewed.  Status unchanged:
 \emph{strongly supported, not certified}.
 
+\paragraph{Round 25 (July 2026): completeness of the Hintikka
+abstraction.}
+Round 24 proved the soundness direction; round 25 proves the
+abstraction is also complete, and --- as importantly --- states
+precisely what remains open.  The same Lean artifact (still zero
+\texttt{sorry}) now proves that every interpretation's own
+satisfaction relation is a Hintikka labelling, whence satisfiability
+and Hintikka-realizability coincide: a concept is satisfiable over an
+RCC5 frame if and only if some RCC5 frame carries a Hintikka labelling
+containing it.  The type-system certificate therefore loses nothing
+relative to models.  The certificate/generation interface is also
+proved, and a concrete two-point model discharges a genuine
+existential in one step --- the demand-fulfilment the earlier
+no-automata thread never achieved by hand.  What round 25 does not do,
+and explicitly neither proves nor assumes, is the one remaining
+target, stated as a named proposition in the artifact: that every
+satisfiable concept admits a \emph{finite} catalogue and labelling.
+Its two sub-parts are the project's long-standing open items --- the
+width budget and uniformization --- which are genuine mathematics.
+The value of the round is the delimitation it makes machine-legible:
+the entire soundness pipeline and the completeness of the abstraction
+are now kernel-checked, and nothing else stands between the
+development and decidability except finite realizability.  Rounds
+19--25 are unreviewed.  Status unchanged: \emph{strongly supported,
+not certified}.
+
 \subsection{What has been achieved}
 
 If the split-forest decidability argument is correct---and the

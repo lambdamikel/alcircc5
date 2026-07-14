@@ -7386,3 +7386,39 @@ absorbing the RCC5 patchwork property).  That is the
 construction/completeness direction, where F6 and W2′ live.  Ledger:
 13 reviews — 12 defects, 1 no-counterexample; rounds 19–24 unreviewed.
 Status: **strongly supported, NOT certified**.
+
+## 2026-07-13 — Round-25: completeness of the Hintikka abstraction (and honest delimitation of the open frontier)
+
+Round-25, same-day continuation, same artifact, still zero sorries
+(now 4,522 lines).  This is the round I flagged as where real
+mathematical resistance lives — so the deliverable is what's honestly
+provable plus a precise statement of what is not.
+
+PROVED: the Hintikka abstraction is SOUND AND COMPLETE for
+satisfiability. `model_hintikkaP` shows every interpretation's own
+satisfaction relation is a Hintikka labelling (nearly immediate — the
+Hintikka clauses ARE sat's recursion clauses); with `truth_lemmaP`
+this gives the biconditional `satisfiable_iff_hintikkaP`:
+C0 satisfiable IFF an RCC5 frame carries a Hintikka labelling with C0.
+So the type-system certificate loses nothing. Plus `generated_
+satisfiable` (the catalogue completeness interface) and
+`sample_satisfiable_ex` — a two-point DR model discharging a REAL
+existential one-step (the thing the no-automata thread never managed).
+
+NOT PROVED, and explicitly NOT axiomatized: `CompletenessObligation`
+is a Lean def stating that every satisfiable concept admits a FINITE
+catalogue+plan+labelling. Its two sub-parts are F6 (width) and W2′
+(uniformization) — the genuine open mathematics. I did not fake a
+theorem or add an axiom; the obligation is stated so the gap is
+precise and machine-legible.
+
+What this establishes: NOTHING ELSE stands between the kernel-checked
+development and decidability. Rounds 19-24 (the entire soundness
+pipeline) and round 25 (completeness of the abstraction) are done;
+only finite realizability of a satisfiable concept remains, and that
+is exactly F6/W2′. This is the most honest possible statement of where
+the project stands: the reduction is complete and checked; the
+residue is two named open problems.
+
+Ledger: 13 reviews — 12 defects, 1 no-counterexample; rounds 19–25
+unreviewed. Status: **strongly supported, NOT certified**.

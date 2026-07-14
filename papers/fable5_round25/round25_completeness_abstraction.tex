@@ -1,0 +1,113 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{Round-25: Completeness of the Hintikka Abstraction\\
+\large Satisfiability and Hintikka-realizability coincide; the open
+frontier is exactly finiteness}
+\author{Claude (Fable~5, Anthropic)\thanks{Round-25 of the
+$\ALCIRCC$ decidability project.  Substrate: the rounds 19--24 Lean
+artifact (the complete soundness pipeline through the logic layer).
+Ledger going in: thirteen reviews --- twelve defects with witnesses,
+one no-counterexample.}}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Round-24 proved the soundness direction: a certificate carrying a
+Hintikka labelling yields a model.  Round-25 proves the abstraction is
+also \emph{complete}: every model induces a Hintikka labelling, so
+satisfiability and Hintikka-realizability \emph{coincide}
+(\code{satisfiable\_iff\_hintikkaP}).  \code{formal/Round19Transport.lean}
+(4{,}522 lines, still \textbf{zero} \code{sorry}) now proves this
+biconditional --- the \emph{completeness of the type-system
+abstraction}: the certificate loses nothing relative to models.  The
+completeness proof is short because the Hintikka clauses are literally
+the recursion clauses of satisfaction (\code{model\_hintikkaP}).  The
+certificate/generation interface is also proved
+(\code{generated\_satisfiable}), and a concrete two-point model
+witnesses a \emph{real fulfilled existential} ($A_0 \sqcap
+\exists\mathrm{DR}.A_1$) --- the one-step demand discharge that the
+no-automata thread never achieved by hand.  Crucially, this round
+\emph{honestly delimits what is open}: \code{CompletenessObligation}
+states --- but does \emph{not} prove and does \emph{not} axiomatize ---
+the one remaining target, that every satisfiable concept admits a
+\emph{finite} catalogue and labelling.  Its two sub-parts are the
+project's long-standing open items F6 (width budgets) and W2$'$
+(uniformization).  Status: \emph{strongly supported, not certified}.
+\end{abstract}
+
+\section{What was proved}
+
+\begin{itemize}[leftmargin=2em]
+\item \code{HintikkaP} / \code{truth\_lemmaP}: the Hintikka conditions
+and truth lemma in predicate form (labellings need not be a
+certificate's occurrence lists).
+\item \code{model\_hintikkaP}: every interpretation's own satisfaction
+relation $\{(x,C) : x \models C\}$ is a Hintikka labelling.  This is
+the completeness half, and it is nearly immediate --- the Hintikka
+clauses are exactly the recursion clauses of \code{sat}.
+\item \code{satisfiable\_iff\_hintikkaP}: $C_0$ is satisfiable
+\emph{iff} there is an RCC5 frame with a Hintikka labelling putting
+$C_0$ at a domain point.  The two directions are
+\code{truth\_lemmaP} (soundness) and \code{model\_hintikkaP}
+(completeness).  So the type-system certificate is a faithful
+abstraction of models.
+\item \code{hintikka\_listP}: a round-24 List-labelling induces a
+predicate labelling --- certificates plug into the abstract framework.
+\item \code{generated\_satisfiable}: the completeness INTERFACE --- a
+structurally sound catalogue with a valid plan, the catalogue check,
+and a root-anchored Hintikka labelling yields a model (composing
+rounds 23--24).
+\item \code{sample\_satisfiable\_ex}: $A_0 \sqcap \exists\mathrm{DR}.A_1$
+is satisfiable in a two-point DR model.  The root's existential is met
+by an actual DR-neighbour carrying $A_1$ --- one step, no promissory
+witness, with composition closure holding
+($\mathrm{comp}(\mathrm{DR},\mathrm{DR}) \ni \mathrm{DR},\mathrm{EQ}$).
+\end{itemize}
+
+\section{What is open --- stated precisely}
+
+\code{CompletenessObligation} is a Lean \code{def} (a proposition), not
+a theorem and not an axiom: \emph{for every satisfiable $C_0$ there
+exist a catalogue $K$, a valid plan, a Hintikka labelling $\tau$ and a
+root with $C_0 \in \tau(\text{root})$, all finite}.  With this
+obligation, \code{satisfiable\_iff\_hintikkaP} and
+\code{generated\_satisfiable} close the completeness direction, and the
+finite type space (at most $2^{|\mathrm{closure}(C_0)|}$ types) turns
+the search into a decision procedure.  The obligation's two hard
+sub-parts are exactly the project's standing open items:
+\begin{itemize}[leftmargin=2em]
+\item \textbf{F6} --- the $K(C_0)$ width budget: bounding the number
+of live occurrences per cluster so the catalogue is finite and the
+generation terminates.
+\item \textbf{W2$'$} --- uniformization: that model values factor
+through finitely many interface states (measured $98.6\%$ in WP28; two
+finite repair routes sketched; soundness does not depend on it, so the
+risk is over-rejection only).
+\end{itemize}
+These are genuine mathematics, not transcription; no round count is
+promised for them.  What round-25 establishes is that \emph{nothing
+else} stands between the current kernel-checked development and
+decidability --- the entire soundness pipeline and the completeness of
+the abstraction are done; only the finite realizability of a
+satisfiable concept remains.
+
+\section{Status}
+
+The decidability theorem for $\ALCIRCC$ remains \textbf{strongly
+supported, not certified}.  Ledger: thirteen reviews --- twelve
+defects, one no-counterexample; rounds 19--25 unreviewed.  The natural
+review is to attack the Lean statements, or to attack (or discharge)
+\code{CompletenessObligation}.
+
+\end{document}

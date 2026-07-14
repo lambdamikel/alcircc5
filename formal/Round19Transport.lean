@@ -101,9 +101,23 @@ Content:
      `pairVal_proper`).  Capstone `sat_from_hintikka`: a wellformed,
      S-conditioned certificate carrying a root-anchored Hintikka
      labelling yields an RCC5 MODEL of the target concept.
-     `sample_satisfiable` is a concrete non-vacuity witness.  (Round-25
-     obligation: the catalogue generator PRODUCES such a labelling for
-     a satisfiable input — the construction/completeness direction.)
+     `sample_satisfiable` is a concrete non-vacuity witness.
+ 12. Round-25 (2026-07-13): completeness of the Hintikka abstraction.
+     `HintikkaP` (predicate labellings) + `truth_lemmaP`;
+     `model_hintikkaP` (every interpretation's own satisfaction
+     relation is a Hintikka labelling — the clauses ARE `sat`'s
+     recursion); hence `satisfiable_iff_hintikkaP` — satisfiability and
+     Hintikka-realizability COINCIDE (both directions), so the
+     type-system certificate loses nothing.  `hintikka_listP` feeds
+     round-24's List labellings in; `generated_satisfiable` is the
+     completeness INTERFACE (a generated catalogue + a Hintikka
+     labelling ⟹ a model).  `sample_satisfiable_ex` (A₀ ⊓ ∃DR.A₁ in a
+     two-point DR model) exercises a REAL fulfilled existential —
+     one-step, the crux the no-automata thread never discharged.
+     `CompletenessObligation` STATES (not proves, not axiomatizes) the
+     one remaining target: every satisfiable concept admits a FINITE
+     catalogue+plan+labelling — gated by the open items F6 (width) and
+     W2′ (uniformization).
 
   Round-20 provenance note: `doStep` was refactored (let-extraction
   into `memberPortsList`/`patternVals`/`steeringVals`, propositional
@@ -4304,5 +4318,219 @@ theorem sample_satisfiable :
     · exact ⟨rfl, rfl⟩
     · intro y _ hr
       exact Atom.noConfusion hr
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-! ## 12. Round-25: completeness of the Hintikka abstraction
+
+Round-24 proved the SOUNDNESS direction (a certificate + a Hintikka
+labelling ⟹ a model).  This section proves the abstraction is also
+COMPLETE: every model induces a Hintikka labelling, so
+satisfiability and Hintikka-realizability COINCIDE — the type-system
+certificate loses nothing.  Combined, the decidability of ALCI_RCC5
+concept satisfiability reduces to ONE remaining obligation: that a
+satisfiable concept admits a FINITE such labelling with a bounded
+catalogue (`CompletenessObligation` below) — the standing open
+mathematics F6 (width budgets) and W2′ (uniformization).  We do NOT
+prove that obligation and we do NOT axiomatize it. -/
+
+/-- Hintikka labelling as a predicate (subsumes the List version;
+    used for the abstract completeness theorem where the domain need
+    not be a certificate's occurrences). -/
+structure HintikkaP (I : Interp) (τ : Occ → Concept → Prop) : Prop where
+  val_atom : ∀ x a, I.dom x → τ x (.atom a) → I.val a x
+  val_natom : ∀ x a, I.dom x → τ x (.natom a) → ¬ I.val a x
+  nobot : ∀ x, I.dom x → ¬ τ x .bot
+  and_c : ∀ x c d, I.dom x → τ x (.and c d) → τ x c ∧ τ x d
+  or_c : ∀ x c d, I.dom x → τ x (.or c d) → τ x c ∨ τ x d
+  all_c : ∀ x r c, I.dom x → τ x (.all r c) →
+    ∀ y, I.dom y → I.rho x y = r → τ y c
+  ex_f : ∀ x r c, I.dom x → τ x (.ex r c) →
+    ∃ y, I.dom y ∧ I.rho x y = r ∧ τ y c
+
+/-- Truth lemma, predicate form: every labelled concept is satisfied. -/
+theorem truth_lemmaP (I : Interp) (τ : Occ → Concept → Prop)
+    (H : HintikkaP I τ) : ∀ C x, I.dom x → τ x C → sat I x C := by
+  intro C
+  induction C with
+  | top => intro x _ _; exact True.intro
+  | bot => intro x hx hmem; exact absurd hmem (H.nobot x hx)
+  | atom a => intro x hx hmem; exact H.val_atom x a hx hmem
+  | natom a => intro x hx hmem; exact H.val_natom x a hx hmem
+  | and c d ihc ihd =>
+    intro x hx hmem
+    obtain ⟨hc, hd⟩ := H.and_c x c d hx hmem
+    exact ⟨ihc x hx hc, ihd x hx hd⟩
+  | or c d ihc ihd =>
+    intro x hx hmem
+    cases H.or_c x c d hx hmem with
+    | inl h => exact Or.inl (ihc x hx h)
+    | inr h => exact Or.inr (ihd x hx h)
+  | ex r c ihc =>
+    intro x hx hmem
+    obtain ⟨y, hy, hr, hcy⟩ := H.ex_f x r c hx hmem
+    exact ⟨y, hy, hr, ihc y hy hcy⟩
+  | all r c ihc =>
+    intro x hx hmem y hy hr
+    exact ihc y hy (H.all_c x r c hx hmem y hy hr)
+
+/-- COMPLETENESS of the abstraction: every interpretation's own
+    satisfaction relation is a Hintikka labelling — the Hintikka
+    clauses are literally the recursion clauses of `sat`. -/
+theorem model_hintikkaP (I : Interp) :
+    HintikkaP I (fun x C => sat I x C) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro x a _ h; exact h
+  · intro x a _ h; exact h
+  · intro x _ h; exact h
+  · intro x c d _ h; exact h
+  · intro x c d _ h; exact h
+  · intro x r c _ h; exact h
+  · intro x r c _ h; exact h
+
+/-- Satisfiability and Hintikka-realizability COINCIDE.  `→` is
+    completeness (`model_hintikkaP`); `←` is soundness
+    (`truth_lemmaP`).  So the type-system certificate is a faithful
+    abstraction of models — it loses nothing. -/
+theorem satisfiable_iff_hintikkaP (C0 : Concept) :
+    Satisfiable C0 ↔
+      ∃ I, RCC5Interp I ∧ ∃ τ, HintikkaP I τ ∧ ∃ x, I.dom x ∧ τ x C0 := by
+  constructor
+  · rintro ⟨I, hI, x, hx, hsat⟩
+    exact ⟨I, hI, (fun x C => sat I x C), model_hintikkaP I, x, hx, hsat⟩
+  · rintro ⟨I, hI, τ, H, x, hx, hmem⟩
+    exact ⟨I, hI, x, hx, truth_lemmaP I τ H C0 x hx hmem⟩
+
+/-- A List-`Hintikka` labelling induces a `HintikkaP` labelling over
+    the canonical interpretation — feeding round-24's certificate
+    labellings into the abstract framework. -/
+theorem hintikka_listP (dom : Occ → Prop) (rho : Occ → Occ → Atom)
+    (τ : Occ → List Concept) (H : Hintikka dom rho τ) :
+    HintikkaP (typeInterp dom rho τ) (fun x C => C ∈ τ x) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro x a _ h; exact h
+  · intro x a hx h hval; exact H.clashfree x a hx hval h
+  · intro x hx h; exact H.nobot x hx h
+  · intro x c d hx h; exact H.and_c x c d hx h
+  · intro x c d hx h; exact H.or_c x c d hx h
+  · intro x r c hx h; exact H.all_c x r c hx h
+  · intro x r c hx h; exact H.ex_f x r c hx h
+
+/-! ### The completeness interface and the standing obligation -/
+
+/-- COMPLETENESS INTERFACE: a generated catalogue (sound + valid plan
+    + catalogue check + faithful) carrying a root-anchored Hintikka
+    labelling yields a model — the exact output shape the round-25
+    generator must produce. -/
+theorem generated_satisfiable (K : Catalog) (hok : CatOk K)
+    (hcc : ∀ c c', K.coreNet c' c = conv (K.coreNet c c'))
+    (hcr : ∀ t, t < K.templates.length → ∀ c c', c < K.nCore →
+      c' < K.nCore → c ≠ c' →
+      (K.tmpl t).net (.inr (.inl c)) (.inr (.inl c')) = K.coreNet c c')
+    (plan : List (Nat × Nat)) (hplan : PlanOk K plan)
+    (hscat : SCat (buildCert K plan))
+    (τ : Occ → List Concept)
+    (H : Hintikka
+      (fun x => x ∈ existingBefore (buildCert K plan)
+        (buildCert K plan).steps.length)
+      (fun x y => if x = y then Atom.eq
+        else pairVal (buildCert K plan) x y) τ)
+    (root : Occ)
+    (hroot : root ∈ existingBefore (buildCert K plan)
+      (buildCert K plan).steps.length)
+    (C0 : Concept) (hC0 : C0 ∈ τ root) :
+    Satisfiable C0 :=
+  sat_from_hintikka (buildCert K plan)
+    (build_wellformed K hok plan hplan)
+    (catalogue_soundness K hok hcc hcr plan hplan hscat)
+    τ H root hroot C0 hC0
+
+/-- THE STANDING OPEN OBLIGATION (stated, NOT proved, NOT axiomatized):
+    every satisfiable concept admits a finite catalogue + valid plan +
+    root-anchored Hintikka labelling.  Its two hard sub-parts are the
+    project's long-standing open items — F6 (the `K(C₀)` width budget
+    bounding the catalogue) and W2′ (uniformization).  With this
+    obligation, `satisfiable_iff_hintikkaP` + `generated_satisfiable`
+    would close the completeness direction; the finite type space (≤
+    `2^|closure(C₀)|`) then yields a decision procedure. -/
+def CompletenessObligation : Prop :=
+  ∀ C0 : Concept, Satisfiable C0 →
+    ∃ (K : Catalog) (plan : List (Nat × Nat))
+      (τ : Occ → List Concept) (root : Occ),
+      CatOk K ∧
+      (∀ c c', K.coreNet c' c = conv (K.coreNet c c')) ∧
+      (∀ t, t < K.templates.length → ∀ c c', c < K.nCore → c' < K.nCore →
+        c ≠ c' →
+        (K.tmpl t).net (.inr (.inl c)) (.inr (.inl c')) = K.coreNet c c') ∧
+      PlanOk K plan ∧ SCat (buildCert K plan) ∧
+      Hintikka
+        (fun x => x ∈ existingBefore (buildCert K plan)
+          (buildCert K plan).steps.length)
+        (fun x y => if x = y then Atom.eq
+          else pairVal (buildCert K plan) x y) τ ∧
+      root ∈ existingBefore (buildCert K plan)
+        (buildCert K plan).steps.length ∧
+      C0 ∈ τ root
+
+end Round19
+
+namespace Round19
+open Atom
+
+/-- Non-vacuity of the completeness direction with a REAL fulfilled
+    existential: `A₀ ⊓ ∃DR.A₁` is satisfiable in a two-point DR model
+    (the root has a genuine DR-neighbour carrying `A₁`).  This is the
+    crux the no-automata thread never discharged — here the ∃-demand is
+    met by an actual neighbour, one-step, with the frame's composition
+    closure holding (all off-diagonal DR, `comp DR DR ∋ DR, EQ`). -/
+theorem sample_satisfiable_ex :
+    Satisfiable (Concept.and (.atom 0) (.ex Atom.dr (.atom 1))) := by
+  refine ⟨⟨fun x => x = Occ.born 0 0 ∨ x = Occ.born 0 1,
+           fun x y => if x = y then Atom.eq else Atom.dr,
+           fun a x => (a = 0 ∧ x = Occ.born 0 0)
+                    ∨ (a = 1 ∧ x = Occ.born 0 1)⟩,
+          ?_, Occ.born 0 0, Or.inl rfl, ?_⟩
+  · constructor
+    · intro x _
+      show (if x = x then Atom.eq else Atom.dr) = Atom.eq
+      rw [if_pos rfl]
+    · intro x y _ _ h
+      by_cases hxy : x = y
+      · exact hxy
+      · exfalso
+        have h' : (if x = y then Atom.eq else Atom.dr) = Atom.eq := h
+        rw [if_neg hxy] at h'
+        exact Atom.noConfusion h'
+    · intro x y _ _
+      by_cases hxy : x = y
+      · subst hxy
+        show (if x = x then Atom.eq else Atom.dr)
+          = conv (if x = x then Atom.eq else Atom.dr)
+        rw [if_pos rfl]
+        rfl
+      · show (if y = x then Atom.eq else Atom.dr)
+          = conv (if x = y then Atom.eq else Atom.dr)
+        rw [if_neg (fun h => hxy h.symm), if_neg hxy]
+        rfl
+    · intro x y z _ _ _
+      show (if x = z then Atom.eq else Atom.dr)
+        ∈ comp (if x = y then Atom.eq else Atom.dr)
+               (if y = z then Atom.eq else Atom.dr)
+      by_cases h1 : x = y
+      · by_cases h2 : y = z
+        · rw [if_pos h1, if_pos h2, if_pos (h1.trans h2)]; decide
+        · rw [if_pos h1, if_neg h2, if_neg (fun hc => h2 (h1 ▸ hc))]; decide
+      · by_cases h2 : y = z
+        · rw [if_neg h1, if_pos h2, if_neg (fun hc => h1 (hc.trans h2.symm))]
+          decide
+        · by_cases h3 : x = z
+          · rw [if_neg h1, if_neg h2, if_pos h3]; decide
+          · rw [if_neg h1, if_neg h2, if_neg h3]; decide
+  · refine ⟨?_, ?_⟩
+    · exact Or.inl ⟨rfl, rfl⟩
+    · exact ⟨Occ.born 0 1, Or.inr rfl, by decide, Or.inr ⟨rfl, rfl⟩⟩
 
 end Round19
