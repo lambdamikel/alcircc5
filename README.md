@@ -233,7 +233,7 @@ Readers familiar with Lutz and Wolter's "Modal Logics of Topological Relations" 
 
 Both problems — ALCI\_RCC5 and ALCI\_RCC8 satisfiability — have been **open for over 20 years** (Wessel 2002/2003, Lutz-Wolter 2006). No known undecidability reduction applies to the abstract composition-table semantics. This repository documents multiple approaches toward settling them.
 
-> **New to this problem? Read [`WHY_ITS_HARD.md`](WHY_ITS_HARD.md) first.** It is a plain-language, no-symbols guide to *why* the question is hard — the two axes (nesting vs. side-by-side), the "loop trick," shadows, live width, and the single open lemma (F6) that everything now reduces to. Written for non-specialists; it is the gentlest entry point to the whole project.
+> **New to this problem? Read [`WHY_ITS_HARD.md`](WHY_ITS_HARD.md) first** (also as a [PDF](papers/why_its_hard.pdf))**.** It is a plain-language, no-symbols guide to *why* the question is hard — the two axes (nesting vs. side-by-side), the "loop trick," shadows, live width, and the single open lemma (F6) that everything now reduces to. Written for non-specialists; it is the gentlest entry point to the whole project.
 
 ### Why standard undecidability reductions fail for ALCI\_RCC5
 

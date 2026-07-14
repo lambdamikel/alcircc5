@@ -282,11 +282,71 @@ space and termination) together with a minor uniformization property
 W2$'$ affecting only extraction faithfulness --- a failure of which can
 only cause over-rejection, never unsoundness. \qed
 
+\subsection{Soundness and completeness: what is certified}\label{sec:certstatus}
+
+It is worth separating the two directions of the reduction and stating
+exactly what the Lean development establishes for each, since the
+completeness side is more subtle than a single ``machine-checked''
+would suggest.
+
+\emph{Soundness} --- a valid finite certificate yields a genuine RCC5
+model --- is machine-checked in full (items (1)--(3) above:
+\code{catalogue\_soundness}, \code{frame\_closed},
+\code{sat\_from\_hintikka}).
+
+\emph{Completeness} splits into two layers, and they have different
+status.
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{Abstraction completeness (infinitary) --- certified.}
+Allowing an arbitrary, possibly infinite Hintikka labelling,
+completeness \emph{is} machine-checked: \code{satisfiable\_iff\_hintikkaP}
+proves that $C_0$ is satisfiable \emph{if and only if} some RCC5 frame
+carries a Hintikka labelling with $C_0$ at a point --- both directions,
+no \code{sorry}. The non-trivial half, \code{model\_hintikkaP} (every
+model induces a Hintikka labelling), is immediate once one observes that
+the Hintikka clauses are exactly the recursion clauses of satisfaction
+(\S\ref{sec:conditional}, item (4)). Thus the type-system abstraction is
+\emph{provably faithful}: it captures satisfiability exactly and loses
+nothing relative to models.
+\item \textbf{Finitary completeness --- open, and equal to
+$\mathrm{F6}\wedge\mathrm{W2}'$.} Requiring a \emph{finite} certificate,
+as decidability demands, completeness is precisely the obligation
+\code{CompletenessObligation}: every satisfiable $C_0$ admits a finite
+catalogue, plan, and Hintikka labelling with $C_0$ at a root. This is
+\emph{stated} in the development but deliberately \emph{not proved} and
+\emph{not axiomatized}; it is the conjunction of F6 (bounded width, which
+makes the catalogue finite and the search terminating) with W2$'$
+(uniformization, which makes finite extraction faithful, and whose
+failure can only over-reject).
+\end{itemize}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Direction & Lean witness & Status\\
+\midrule
+Soundness: certificate $\Rightarrow$ model
+  & \code{sat\_from\_hintikka} & certified\\
+Completeness (abstraction): model $\Leftrightarrow$ Hintikka
+  & \code{satisfiable\_iff\_hintikkaP} & certified\\
+Completeness (finitary): sat $\Rightarrow$ finite certificate
+  & \code{CompletenessObligation} & open $=\mathrm{F6}\wedge\mathrm{W2}'$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent In one line: the reduction is \emph{sound} and \emph{complete
+modulo $\mathrm{F6}\wedge\mathrm{W2}'$} --- with soundness and the
+infinitary abstraction-completeness both certified, and the sole
+unformalized remainder being exactly $\mathrm{F6}\wedge\mathrm{W2}'$,
+which the rest of this report analyses.
+
 \begin{remark}
 Theorem~\ref{thm:conditional} is a genuine reduction, not a
 restatement: F6 is a single, precisely-posed property, and everything
 around it is machine-checked. What is \emph{not} established is F6
-itself. The rest of this report analyses F6.
+itself (with the minor W2$'$). The rest of this report analyses it.
 \end{remark}
 
 \section{The anatomy of forcing}\label{sec:anatomy}
