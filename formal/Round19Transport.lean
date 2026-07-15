@@ -2796,7 +2796,8 @@ structure SCat (C : Cert) : Prop where
       = C.coreNet c c'
   net_r3 : ∀ i, i < C.steps.length →
     ∀ p ∈ memberPortsList C i, ∀ q ∈ memberPortsList C i,
-    ∀ j, j < (C.template (C.step i).tmpl).nFresh → p ≠ q →
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    p ≠ q → p ≠ .inr (.inr j) → q ≠ .inr (.inr j) →
     (C.template (C.step i).tmpl).net p q ∈
       comp ((C.template (C.step i).tmpl).net p (.inr (.inr j)))
            (conv ((C.template (C.step i).tmpl).net q (.inr (.inr j))))
@@ -2897,6 +2898,8 @@ theorem fresh_tri (C : Cert) (hwf : Wellformed C) (hcat : SCat C)
           member_val hwf hi hy hmpy jz]
       exact hcat.net_r3 i hi px hpxm py hpym jz hjz
         (fun h => hxy (by rw [← hpxo, h, hpyo]))
+        (fun h => hxz (by rw [← hpxo, h]; rfl))
+        (fun h => hyz (by rw [← hpyo, h]; rfl))
     | none =>
       -- x member, y steered
       have hyo : y ∈ existingBefore C i := old_of_not_member hy hmpy
@@ -3241,6 +3244,7 @@ theorem scat_frame_closed (C : Cert) (hwf : Wellformed C) (hcat : SCat C)
 
 /-! ### Kernel-checked catalogue witnesses -/
 
+set_option synthInstance.maxSize 4000 in
 /-- `certC` passes the catalogue-level check (all values `DR`;
     `comp dr dr` is the full atom set). -/
 theorem certC_scat : SCat certC := by
@@ -4047,6 +4051,7 @@ theorem certK_planok : PlanOk certK planK := by
   · decide
   · native_decide
 
+set_option synthInstance.maxSize 4000 in
 theorem certK_scat : SCat (buildCert certK planK) := by
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro c c'; rfl
@@ -5091,7 +5096,8 @@ def SCatFin (C : Cert) : Prop :=
       = C.coreNet c c') ∧
   (∀ i, i < C.steps.length →
     ∀ p ∈ memberPortsList C i, ∀ q ∈ memberPortsList C i,
-    ∀ j, j < (C.template (C.step i).tmpl).nFresh → p ≠ q →
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    p ≠ q → p ≠ .inr (.inr j) → q ≠ .inr (.inr j) →
     (C.template (C.step i).tmpl).net p q ∈
       comp ((C.template (C.step i).tmpl).net p (.inr (.inr j)))
            (conv ((C.template (C.step i).tmpl).net q (.inr (.inr j))))) ∧
