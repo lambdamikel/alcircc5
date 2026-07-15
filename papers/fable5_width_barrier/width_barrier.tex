@@ -349,6 +349,30 @@ around it is machine-checked. What is \emph{not} established is F6
 itself (with the minor W2$'$). The rest of this report analyses it.
 \end{remark}
 
+\begin{remark}[Fourteenth review, GPT-5.5 cold]
+The first cold review of the Lean development (July 2026) confirmed the
+\emph{adequacy of the soundness pipeline} --- correct NNF syntax,
+correct \code{sat} polarity and role reading, the correct strong-EQ
+frame \code{RCC5Interp}, and correct composition/converse tables, with
+no soundness defect and no vacuity. Its findings are formalization-level
+and lie on the completeness interface: the certificate structures carry
+higher-order \emph{function} fields rather than finite syntax;
+\code{Satisfiable} fixes the carrier to the occurrence type rather than
+arbitrary domains; and \code{CompletenessObligation} is an unbounded
+existence rather than a bounded, decidable search statement. None is a
+second mathematical conjecture beyond $\mathrm{F6}\wedge\mathrm{W2}'$;
+each is the \emph{under-formalization} of the finitary step, and each is
+repairable (finite codes with total evaluators; a countable-model
+bridge; a decision-grade bounded obligation with an executable checker).
+The review also confirmed one concrete over-restriction (the catalogue
+check inspects unused diagonal template values; machine-verified,
+completeness-side only). Thus the ``machine-checked surround'' of
+Theorem~\ref{thm:conditional} is \emph{exact} for soundness and the
+infinitary abstraction-completeness, while the finitary reduction still
+requires the finite-code restatement above --- work orthogonal to, and
+downstream of, F6.
+\end{remark}
+
 \section{The anatomy of forcing}\label{sec:anatomy}
 
 We now isolate what the composition table can and cannot \emph{force}.
@@ -454,6 +478,32 @@ type with mergeable surroundings closes the loop, exactly as in the
 vertical blocking (\S\ref{sec:axes}). A two- or three-element cyclic
 model satisfies the displayed concept.
 \end{proof}
+
+\begin{proposition}[No non-EQ horizontal recurrence --- path form]\label{prop:pathauto}
+Form the composition-path automaton whose states are the reachable
+relation sets $\mathrm{Rel}(w)$, with $\mathrm{Rel}(\varepsilon)=\{\EQ\}$
+and $\mathrm{Rel}(w\cdot a)=\bigcup_{r\in\mathrm{Rel}(w)}\Comp(r,a)$,
+restricted to states not containing $\EQ$. Every cycle in this
+restricted automaton uses only vertical labels ($\PP$ or $\PPI$); no
+cycle uses a horizontal label ($\DR$ or $\PO$).
+\end{proposition}
+
+\begin{proof}
+Exhaustive finite computation: there are $11$ reachable relation sets,
+$8$ without $\EQ$, and the six cyclic edges among them are the
+self-loops $\{\PP\},\{\PO,\PP\},\{\DR,\PO,\PP\}$ under $\PP$ and
+$\{\PPI\},\{\DR\},\{\DR,\PO,\PPI\}$ under $\PPI$; none is horizontal.
+\end{proof}
+
+Proposition~\ref{prop:pathauto} strengthens
+Proposition~\ref{prop:singletons} from single compositions to whole
+paths, and sharpens Proposition~\ref{prop:block}: \emph{any} support
+recurrence that never admits an equality fold is eventually vertical,
+hence absorbed by vertical cyclic unfolding, not by a horizontal crowd.
+It removes a class of would-be counterexamples but does not close F6,
+which is a statement about \emph{width} rather than about paths. (This
+proposition was contributed by the fourteenth review and independently
+verified.)
 
 Propositions~\ref{prop:substrate} and~\ref{prop:block} isolate the
 issue. A large live horizontal crowd is trivial to \emph{exhibit}

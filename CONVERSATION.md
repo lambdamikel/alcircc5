@@ -7498,3 +7498,36 @@ forcible grid) as two faces of one fact: the abstract composition table is too
 loose to pin rigid horizontal structure. Status unchanged: strongly supported,
 NOT certified — but the frontier is now a single, well-posed, two-sided
 question.
+
+## 2026-07-14 — 14th review: GPT-5.5 cold on the Lean development (adequacy)
+
+First cold review of the Lean artifact (`papers/gpt5.5_round25_review/`). An
+ADEQUACY review; most important outcome is a POSITIVE: the soundness pipeline
+is faithful — no `sat` polarity error, no missing NNF constructor, correct
+comp/conv table, correct strong-EQ `RCC5Interp`, no vacuity. The thing the
+kernel cannot check came back clean. Verdict "gap, repairable".
+
+Gaps, all formalization-level on the finite-certificate/completeness
+interface, none a second conjecture beyond F6/W2′: F1 certificate structures
+carry higher-order FUNCTION fields (not finite syntax); F2 `Satisfiable` fixes
+the carrier to `Occ`; F3 `CompletenessObligation` is unbounded existence, not
+decision-grade; F4 `SCat.net_r3` over-checks unused diagonal template values
+(machine-verified: PP ∉ comp(PP,DR)={DR}); F5 all-DR witnesses too weak; F6
+minor prose. Each repairable. These sharpen the honest status: the
+"machine-certified surround" is exact for soundness + infinitary
+abstraction-completeness, but the FINITARY reduction still needs a finite-code
+restatement (orthogonal to and downstream of F6).
+
+Verified new result: GPT's PATH-AUTOMATON LEMMA — no non-EQ cycle in the
+composition-path automaton uses a horizontal (DR/PO) label; every
+non-foldable recurrence is vertical. Machine-verified (wp38), folded into the
+report (Prop:pathauto). Strengthens WP36 to the path level; does NOT close F6.
+
+Process: GPT's initial "counterexample" was a misread (mistook a finite
+certificate unfolding to an infinite model for a framework failure; retracted
+after steering). Its ω-limit `StableCertifiedRun` + decidability-from-checker
+sketch could not be kernel-checked (no Lean in its container) and builds on
+the pre-repair interface, so recorded not integrated. The F4 Lean fix was
+drafted, verified correct, but reverted (native_decide instance friction;
+completeness-side over-rejection only). Lean artifact UNCHANGED. Ledger: 14
+reviews. Status: strongly supported, NOT certified.

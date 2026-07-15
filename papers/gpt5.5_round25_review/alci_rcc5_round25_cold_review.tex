@@ -1,0 +1,717 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  urlcolor=blue!60!black,
+  citecolor=blue!60!black,
+  pdftitle={Cold Review of ALCI_RCC5 Lean Development, Rounds 19--25},
+  pdfauthor={OpenAI GPT-5.5 Pro}
+}
+
+\lstdefinelanguage{LeanPseudo}{
+  morekeywords={structure,where,def,theorem,Prop,inductive,abbrev,forall,exists,fun,if,then,else,by,match,with,deriving},
+  sensitive=true,
+  morecomment=[l]{--}
+}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  framerule=0.3pt,
+  rulecolor=\color{black!25},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  language=LeanPseudo
+}
+
+\setlist[itemize]{topsep=3pt,itemsep=2pt,parsep=1pt,leftmargin=1.35em}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,parsep=1pt,leftmargin=1.55em}
+\renewcommand{\arraystretch}{1.16}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Cold review: ALCI\_RCC5 Lean rounds 19--25}
+\rhead{\thepage}
+
+\title{Cold Review of the \texttt{ALCI\_RCC5} Lean Development\\Rounds 19--25}
+\author{Adversarial adequacy review of definitions and theorem statements}
+\date{14 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report reviews the uploaded artifact \texttt{Round19Transport.lean}
+against the neutral reference semantics in \texttt{ALCI\_RCC5\_REFERENCE.md}.
+It does not re-check kernel proofs.  The target is adequacy: whether the
+formal statements mean ALCI\_RCC5 concept satisfiability and whether the
+certificate/catalo\-gue interface is non-vacuous and finite enough to support
+the advertised reduction.
+
+The bottom line is \textbf{gap, repairable}.  I agree that the defects appear
+fixable and local to the modelling/reduction interface rather than signs that
+the kernel-checked proofs are invalid.  I do \emph{not} regard all of them as
+minor relative to the advertised decidability story: the soundness pipeline is
+credible, but the finite-certificate/completeness interface needs substantive
+tightening before it can honestly support a decision-procedure claim.  This is
+not a second mathematical conjecture beyond bounded-width/F3 completeness; it
+is a formalization-level objection that the current Lean statement does not yet
+express that assumption as a bounded, finite, computably checkable obligation.
+\end{abstract}
+
+\section{Scope and standard of review}
+
+The submitted source says it is the normative artifact and that the prose
+companions are commentary.  I used \texttt{ALCI\_RCC5\_REFERENCE.md} as the
+yardstick.  Line numbers in this report refer to the file as archived in
+\texttt{cold\_review\_round25.zip}.
+
+The review question is not whether Lean accepted the proofs.  It is whether
+the Lean definitions and theorem statements match:
+\begin{itemize}
+  \item the standard RCC5 atomic-network semantics with strong equality;
+  \item NNF ALCI syntax with RCC5 atoms as roles and inverse roles absorbed by
+        converse;
+  \item concept satisfiability as nonempty extension of the input concept;
+  \item a finite and computably searchable certificate/catalogue reduction.
+\end{itemize}
+
+\section{Verdict}
+
+\textbf{Verdict: gap, repairable.}
+
+The core soundness chain is largely adequate:
+\[
+  \texttt{Wellformed} + \texttt{SCond} + \texttt{Hintikka}
+  \quad\Longrightarrow\quad
+  \texttt{certInterp\_rcc5}
+  \quad\Longrightarrow\quad
+  \texttt{truth\_lemma}
+  \quad\Longrightarrow\quad
+  \texttt{Satisfiable}.
+\]
+I found no polarity error in \texttt{sat}, no missing NNF constructor in
+\texttt{Concept}, and no apparent RCC5 composition-table error.
+
+The gap is in the reduction interface.  The current formalization proves a
+sound machine from generated objects to models.  It does not yet formalize an
+honest finite, bounded, decidable search space for those generated objects.
+The most important defects are:
+\begin{enumerate}
+  \item \texttt{Cert}, \texttt{Template}, and \texttt{Catalog} contain arbitrary
+        higher-order function fields, so they are not finite syntactic
+        certificates as Lean objects.
+  \item \texttt{Satisfiable} is monomorphic over the countable occurrence
+        carrier \texttt{Occ}, whereas the reference semantics quantifies over
+        arbitrary nonempty domains of regions.
+  \item \texttt{CompletenessObligation} is an unbounded existence proposition,
+        not a finite bounded search theorem.
+  \item \texttt{SCat.net\_r3} is over-strong on degenerate template triples and
+        can reject semantically equivalent certificates because of unused
+        diagonal template values.
+\end{enumerate}
+
+These are not proof failures; they are definitional and statement-level gaps.
+They are repairable, but they are substantive for the advertised reduction to
+decidability.
+
+\paragraph{Relation to bounded-width/F3.}
+The finite-certificate finding should not be read as a new open mathematical
+assumption in addition to the bounded-width/F3 completeness claim.  The latter
+remains the main unproved mathematical step: every satisfiable concept should
+have a bounded generated certificate of the advertised kind.  The formalization
+problem is that the current \texttt{CompletenessObligation} does not yet state
+that step in a decision-grade form.  It quantifies over higher-order catalogue
+objects and an unbounded labelling rather than over finite codes bounded by a
+computable function of the input concept.  Thus the defect is serious for the
+claim that the Lean artifact has isolated exactly one decision-ready
+assumption, but it is not evidence of an additional RCC5 obstruction.
+
+\section{Summary table}
+
+The IDs in the following table are referee finding labels only; in particular,
+Finding F3 is unrelated to the project's bounded-width/F3 terminology.
+
+{\small
+\begin{longtable}{L{0.055\linewidth}L{0.265\linewidth}L{0.405\linewidth}L{0.185\linewidth}}
+\toprule
+ID & Location & Finding & Severity \\
+\midrule
+F1 & \texttt{Template}; \texttt{Cert}; \texttt{Catalog}; \texttt{CatOk.F\_reads}; \texttt{Completeness-}\linebreak\texttt{Obligation} & Certificates/catalogues are represented by arbitrary total and higher-order functions, not finite syntax. & Fatal to finite-decision claim; repairable \\
+F2 & \texttt{Interp}; \texttt{Satisfiable} & Satisfiability is over subdomains of \texttt{Occ}, not arbitrary reference domains. & Major adequacy gap; repairable \\
+F3 & \texttt{Completeness-}\linebreak\texttt{Obligation} & Obligation lacks computable bounds, finite code, closure restriction, and decidability theorem. & Fatal to current reduction claim; repairable \\
+F4 & \texttt{SCat.net\_r3} versus \texttt{SCond.tri} & Catalogue check quantifies degenerate triples involving the fresh port itself; semantic condition excludes them. & Moderate over-restriction; repairable \\
+F5 & \texttt{certC}; \texttt{certK}; \texttt{sample-}\linebreak\texttt{satisfiable\_ex} & Positive witnesses are mostly all-DR and do not exercise hard positive composition/catalogue cases. & Evidence gap, not fatal \\
+F6 & Headline theorem statements & Main soundness statements are mostly honest; some prose overstates hypotheses or finiteness. & Mostly adequate; wording repairs \\
+\bottomrule
+\end{longtable}
+}
+
+\section{Findings}
+
+\subsection{F1. \texttt{Catalog} and \texttt{Cert} are not finite certificates}
+
+\textbf{Locations.}
+\begin{itemize}
+  \item \texttt{Template.net}: lines 224--228.
+  \item \texttt{Cert.coreNet} and \texttt{Cert.f}: lines 234--241.
+  \item \texttt{Catalog.coreNet} and \texttt{Catalog.F}: lines 3311--3317.
+  \item \texttt{CatOk.F\_reads}: lines 3505--3514.
+  \item \texttt{CompletenessObligation}: lines 4459--4476.
+\end{itemize}
+
+The artifact repeatedly uses finite-certificate language, but the Lean
+structures contain fields of the following shape:
+
+\begin{lstlisting}
+structure Template where
+  nSlots : Nat
+  nFresh : Nat
+  net : TPort -> TPort -> Atom
+
+structure Cert where
+  nCore : Nat
+  coreNet : Nat -> Nat -> Atom
+  templates : List Template
+  steps : List Step
+  f : Nat -> (Nat -> Atom) -> (Nat -> Atom) -> Nat -> Atom
+
+structure Catalog where
+  nCore : Nat
+  coreNet : Nat -> Nat -> Atom
+  templates : List Template
+  root : Nat
+  attaches : List Attach
+  F : Nat -> (Nat -> Atom) -> (Nat -> Atom) -> Nat -> Atom
+\end{lstlisting}
+
+These fields are arbitrary functions.  The field \texttt{F} is higher-order in
+row functions.  The later predicates constrain finite slices of their behavior,
+but the witnesses themselves are not finite codes.  In particular,
+\texttt{CatOk.F\_reads} is an extensionality discipline over arbitrary row
+functions, not a finite lookup table.
+
+\paragraph{Why this matters.}
+A Lean proof of \texttt{CompletenessObligation} could choose a function
+\texttt{F} that hides an infinite or noncomputable construction.  Even if all
+queries made by \texttt{SCat} and \texttt{Hintikka} are finite for a fixed
+object, the object being existentially quantified is not itself a finite
+certificate.  Thus the current statement does not by itself support finite
+search.
+
+\paragraph{Concrete symptom.}
+Two catalogues may agree on every value ever inspected by a given plan and
+\texttt{Hintikka} labelling, while differing arbitrarily on unused template
+indices, unused ports, unused fresh indices, or row-function arguments.  The
+formalization has no finite normal form or quotient identifying these as the
+same certificate.
+
+\paragraph{Required repair.}
+Introduce finite encoded syntax and make total evaluators derived from it.  A
+repair can take either of these forms:
+\begin{enumerate}
+  \item Replace functional fields by bounded finite tables, for example
+\begin{lstlisting}
+structure FinTemplate where
+  nSlots : Nat
+  nFresh : Nat
+  netTable : Array Atom       -- indexed by bounded ports
+
+structure FinCatalog where
+  nCore : Nat
+  coreNetTable : Array Atom   -- indexed by Fin nCore x Fin nCore
+  templates : Array FinTemplate
+  root : Fin templates.size
+  attaches : Array FinAttach
+  FTable : Array Atom         -- indexed by template, row-code, row-code, fresh index
+\end{lstlisting}
+  and define \texttt{evalTemplate}, \texttt{evalCatalog}, \texttt{evalF} as
+  total functions from these finite codes.
+
+  \item Or keep the existing functional structures only as semantic views, but
+  add a separate finite-code predicate:
+\begin{lstlisting}
+structure EncodedByFiniteCode (K : Catalog) (code : FinCatalogCode) : Prop := ...
+\end{lstlisting}
+  and require \texttt{CompletenessObligation} to produce such a code, with a
+  computable size bound.
+\end{enumerate}
+In both approaches, \texttt{F\_reads} should become a theorem about a finite
+row-code evaluator, not an unrestricted higher-order assumption.
+
+\subsection{F2. \texttt{Satisfiable} fixes the carrier to \texttt{Occ}}
+
+\textbf{Locations.}
+\begin{itemize}
+  \item Reference semantics: \texttt{ALCI\_RCC5\_REFERENCE.md}, lines 50--55
+        and 70--73.
+  \item \texttt{Interp}: lines 4129--4135.
+  \item \texttt{Satisfiable}: lines 4280--4282.
+\end{itemize}
+
+The reference interpretation is \(I=(\Delta,\rho,\cdot^I)\), where
+\(\Delta\) is an arbitrary nonempty domain of regions.  The Lean structure is:
+
+\begin{lstlisting}
+structure Interp where
+  dom : Occ -> Prop
+  rho : Occ -> Occ -> Atom
+  val : Nat -> Occ -> Prop
+
+def Satisfiable (C0 : Concept) : Prop :=
+  exists I : Interp, RCC5Interp I /\ exists x, I.dom x /\ sat I x C0
+\end{lstlisting}
+
+Thus satisfiability is quantified only over subdomains of the countable carrier
+\texttt{Occ}.  This is plausibly harmless for ordinary ALC-style concept
+satisfiability if one proves a generated-submodel/countable-model property.  An
+ALCI model can usually be restricted to the root and recursively chosen
+existential witnesses; universal restrictions are downward-preserved, and RCC5
+R1/R2/R3 are inherited by induced substructures.  But that theorem is not
+stated here.
+
+\paragraph{Required repair.}
+Use a carrier-polymorphic interpretation:
+
+\begin{lstlisting}
+structure Interp (alpha : Type) where
+  dom : alpha -> Prop
+  rho : alpha -> alpha -> Atom
+  val : Nat -> alpha -> Prop
+
+def ReferenceSatisfiable (C0 : Concept) : Prop :=
+  exists alpha, exists I : Interp alpha,
+    RCC5Interp I /\ exists x, I.dom x /\ sat I x C0
+\end{lstlisting}
+
+Then prove that the certificate semantics embeds into this reference predicate.
+Alternatively, keep \texttt{Occ} for the generated model but add an explicit
+bridge theorem:
+
+\begin{lstlisting}
+theorem reference_satisfiable_iff_occ_satisfiable (C0 : Concept) :
+  ReferenceSatisfiable C0 <-> Satisfiable C0 := ...
+\end{lstlisting}
+
+Until that bridge exists, the Lean target predicate is an under-approximation
+of the reference semantics.
+
+\subsection{F3. \texttt{CompletenessObligation} is not a finite decision statement}
+
+\textbf{Location.} \texttt{CompletenessObligation}, lines 4459--4476.
+
+The obligation says that every \texttt{Satisfiable} concept has some catalogue,
+plan, list labelling, and root satisfying the generated soundness interface.
+It does not assert any of the following:
+\begin{itemize}
+  \item a computable bound on the number of templates, core nodes, slots,
+        fresh ports, plan length, or row codes;
+  \item that catalogues and certificates are finite encoded data rather than
+        arbitrary functions;
+  \item that \texttt{tau} ranges only over the closure of \(C_0\);
+  \item that \texttt{CatOk}, \texttt{PlanOk}, \texttt{SCat}, and
+        \texttt{Hintikka} are decidable over the encoded search space;
+  \item a theorem of the form \texttt{Decidable (ReferenceSatisfiable C0)} or
+        an executable Boolean decision procedure with correctness proof.
+\end{itemize}
+
+The source comment at lines 4451--4458 mentions the finite type space
+\(\leq 2^{|closure(C_0)|}\), but this bound is not part of the proposition.
+As stated, \texttt{CompletenessObligation} is a semantic existence theorem over
+higher-order Lean objects.  It can close a semantic equivalence, but not by
+itself a finite search reduction.  In the project's terminology, this is best
+understood as an underformalized bounded-width/F3 interface, not as an
+additional independent completeness conjecture.
+
+\paragraph{Required repair.}
+Replace or supplement \texttt{CompletenessObligation} with a bounded finite
+version.  A suitable shape is:
+
+\begin{lstlisting}
+def CompletenessBounded : Prop :=
+  forall C0, ReferenceSatisfiable C0 ->
+    exists code : FinCatalogCode C0,
+      code.size <= bound C0 /\
+      Decodable code /\
+      let K := decodeCatalog code
+      exists planCode tauCode rootCode,
+        planCode.size <= planBound C0 /\
+        tauCode.closedUnder (closure C0) /\
+        CatOk K /\ PlanOk K (decodePlan planCode) /\
+        SCat (buildCert K (decodePlan planCode)) /\
+        Hintikka ... /\ rootCarries C0
+\end{lstlisting}
+
+Then add the actual decision theorem:
+
+\begin{lstlisting}
+theorem decidable_reference_satisfiable (C0 : Concept) :
+  Decidable (ReferenceSatisfiable C0) := ...
+\end{lstlisting}
+
+or, preferably, an executable checker:
+
+\begin{lstlisting}
+def decideSat (C0 : Concept) : Bool := ...
+
+theorem decideSat_correct (C0 : Concept) :
+  decideSat C0 = true <-> ReferenceSatisfiable C0 := ...
+\end{lstlisting}
+
+This is the most important repair for the advertised decidability claim.
+
+\subsection{F4. \texttt{SCat.net\_r3} over-checks degenerate template triples}
+
+\textbf{Locations.}
+\begin{itemize}
+  \item \texttt{SCond.tri}: lines 1861--1866.
+  \item \texttt{SCat.net\_r3}: lines 2797--2802.
+\end{itemize}
+
+The semantic S-condition excludes all degenerate triples through a fresh
+occurrence:
+
+\begin{lstlisting}
+SCond.tri : ...
+  x != y -> x != born i jz -> y != born i jz ->
+  pairVal C x y in comp (pairVal C x (born i jz))
+                       (pairVal C (born i jz) y)
+\end{lstlisting}
+
+The catalogue check has only \texttt{p != q}:
+
+\begin{lstlisting}
+SCat.net_r3 : ...
+  p in memberPortsList C i -> q in memberPortsList C i ->
+  j < nFresh -> p != q ->
+  net p q in comp (net p fresh_j) (conv (net q fresh_j))
+\end{lstlisting}
+
+It does not require \texttt{p != fresh\_j} or \texttt{q != fresh\_j}.  Hence
+it can inspect \texttt{net fresh\_j fresh\_j}, a diagonal template value that
+is not used as an off-diagonal semantic relation.  This makes \texttt{SCat}
+strictly stronger than the intended local R3 check unless template diagonals are
+normalized.
+
+\paragraph{Concrete calculation.}
+Consider one template with two fresh ports and no core/slots.  Set:
+\begin{lstlisting}
+net fresh0 fresh1 = PP
+net fresh1 fresh0 = PPI
+net fresh0 fresh0 = DR
+net fresh1 fresh1 = DR
+\end{lstlisting}
+Converse coherence holds for these entries.  Semantically, \texttt{SCond.tri}
+has no nondegenerate triple among only two fresh occurrences.  But
+\texttt{SCat.net\_r3}, with \texttt{p = fresh0}, \texttt{q = fresh1}, and
+\texttt{j = 1}, demands:
+\begin{lstlisting}
+PP in comp PP (conv DR)
+\end{lstlisting}
+Since \texttt{conv DR = DR} and \texttt{comp PP DR = [DR]}, this is false.
+Thus \texttt{SCat} rejects an object for an irrelevant diagonal choice.
+
+\paragraph{Required repair.}
+Use one of the following fixes.
+\begin{enumerate}
+  \item Align \texttt{SCat.net\_r3} with \texttt{SCond.tri} by adding side
+        conditions:
+\begin{lstlisting}
+p != inr (inr j) -> q != inr (inr j) ->
+net p q in comp (net p fresh_j) (conv (net q fresh_j))
+\end{lstlisting}
+  \item Alternatively, require normalized template diagonals:
+\begin{lstlisting}
+net_diag : forall t p, validPort t p -> (K.tmpl t).net p p = EQ
+\end{lstlisting}
+        and include this in \texttt{CatOk}/\texttt{Wellformed}.  Then make
+        explicit that templates are total atomic networks including diagonal
+        EQ, not just off-diagonal ledgers.
+\end{enumerate}
+The first repair is semantically minimal.  The second is also acceptable if
+normalization is intended.
+
+\subsection{F5. Current positive witnesses are not rich enough}
+
+\textbf{Locations.}
+\begin{itemize}
+  \item \texttt{certC}: lines 1657--1664.
+  \item \texttt{certK}: lines 3995--4003.
+  \item \texttt{sample\_satisfiable\_ex}: lines 4483--4534.
+\end{itemize}
+
+The provided positive certificate/catalogue witnesses use \texttt{nCore := 0}
+and all-DR template/core/steering data.  They exercise plumbing and inherited
+slot paths but not the hard positive cases: PP/PPI transitivity, PO cases,
+core rows, nontrivial steering, and non-DR successful composition.
+\texttt{sample\_satisfiable\_ex} does exercise a real existential, but it is a
+hand-built two-point interpretation, not a generated certificate plus Hintikka
+labelling passed through \texttt{sat\_from\_hintikka}.
+
+This is not evidence of vacuity.  A simple rich positive certificate should be
+available: three fresh occurrences with
+\[
+  0\;PP\;1, \qquad 1\;PP\;2, \qquad 0\;PP\;2,
+\]
+converses in the opposite direction and diagonal EQ.  This exercises
+\texttt{comp PP PP = [PP]} positively.
+
+\paragraph{Required repair.}
+Add at least one generated positive witness with:
+\begin{itemize}
+  \item three fresh points and a PP-chain using \texttt{comp PP PP};
+  \item at least one PO case;
+  \item at least one inherited slot;
+  \item nonzero core or an explicit explanation why core-free certificates
+        suffice for the witness suite;
+  \item a root-anchored \texttt{Hintikka} labelling discharged through
+        \texttt{sat\_from\_hintikka} or \texttt{generated\_satisfiable}.
+\end{itemize}
+
+\section{Adequacy checks with no defect found}
+
+\subsection{Syntax}
+
+\textbf{Location.} \texttt{Concept}, lines 4117--4127.
+
+The constructors match the reference grammar in NNF:
+\begin{lstlisting}
+top | bot | atom | natom | and | or | ex Atom | all Atom
+\end{lstlisting}
+There is no general negation constructor, which correctly builds the NNF
+discipline into the syntax.  Roles are exactly RCC5 atoms; inverse roles are
+absorbed by converse, so \(PP^{-}=PPI\) is representable without a separate
+inverse-role constructor.
+
+\subsection{Satisfaction}
+
+\textbf{Location.} \texttt{sat}, lines 4137--4146.
+
+The role reading and quantifier polarity are correct:
+\begin{lstlisting}
+| x, ex r c  => exists y, I.dom y /\ I.rho x y = r /\ sat I y c
+| x, all r c => forall y, I.dom y -> I.rho x y = r -> sat I y c
+\end{lstlisting}
+This matches the reference reading \(R(x,y)\) iff \(\rho(x,y)=R\).  The guard
+is on the quantified element \(y\).  The only caveat is that \texttt{sat I x C}
+is defined for any \texttt{x : Occ}; theorem statements that use it as model
+truth carry a domain hypothesis, so this is not a soundness bug.
+
+\subsection{RCC5 interpretation frame}
+
+\textbf{Location.} \texttt{RCC5Interp}, lines 4206--4214.
+
+The fields encode reflexive EQ, strong EQ as identity, converse coherence, and
+R3 composition closure:
+\begin{lstlisting}
+refl_eq : dom x -> rho x x = EQ
+eq_id   : dom x -> dom y -> rho x y = EQ -> x = y
+conv_   : dom x -> dom y -> rho y x = conv (rho x y)
+comp_   : dom x -> dom y -> dom z ->
+          rho x z in comp (rho x y) (rho y z)
+\end{lstlisting}
+The R3 clause is stated for all triples, not just distinct triples, but the EQ
+identity rows make the degenerate cases harmless in actual interpretations.
+Standalone \texttt{RCC5Interp} permits an empty domain; \texttt{Satisfiable}
+supplies the root witness.
+
+\subsection{RCC5 table}
+
+\textbf{Location.} \texttt{conv} and \texttt{comp}, lines 138--159.
+
+The converse table and the relevant composition entries agree with the standard
+RCC5 atomic composition table, including:
+\begin{lstlisting}
+comp PP PP   = [PP]
+comp PP DR   = [DR]
+comp DR PPI  = [DR]
+comp PPI PP  = [EQ, PP, PPI, PO]
+comp PO PO   = all atoms
+comp DR DR   = all atoms
+\end{lstlisting}
+I found no table-orientation defect.
+
+\section{Headline theorem statement audit}
+
+\subsection{\texttt{frame\_closed}}
+
+\textbf{Location.} Lines 2291--2300.
+
+The theorem is conditional on operational frame entries existing:
+\begin{lstlisting}
+Frame.get? (unfoldAll C) x y = some v1
+Frame.get? (unfoldAll C) x z = some v2
+Frame.get? (unfoldAll C) z y = some v3
+\end{lstlisting}
+Therefore it is not by itself a theorem that the unfolded frame is a total
+atomic network.  This is acceptable because later model construction uses
+\texttt{pairVal}; the prose should not overstate \texttt{frame\_closed} as a
+total-frame closure theorem.
+
+\subsection{\texttt{scat\_scond}}
+
+\textbf{Location.} Lines 3205--3227.
+
+The statement is good:
+\begin{lstlisting}
+Wellformed C -> SCat C -> Faithful C -> SCond C
+\end{lstlisting}
+It does not smuggle in \texttt{SCond}.  The caveat is the over-strong
+\texttt{SCat.net\_r3} clause described in F4.
+
+\subsection{\texttt{catalogue\_soundness}}
+
+\textbf{Location.} Lines 3946--3958.
+
+The theorem is sound but has extra hypotheses beyond a slogan like
+``\texttt{SCat} alone yields \texttt{SCond}'':
+\begin{lstlisting}
+CatOk K -> hcc -> hcr -> PlanOk K plan ->
+SCat (buildCert K plan) -> SCond (buildCert K plan)
+\end{lstlisting}
+The converse-coherence hypothesis \texttt{hcc} and core-row hypothesis
+\texttt{hcr} should either be folded into \texttt{CatOk} or named as part of
+the generated-catalogue wellformedness predicate.
+
+\subsection{\texttt{build\_wellformed} and \texttt{build\_faithful}}
+
+\textbf{Locations.} \texttt{build\_wellformed}, line 3708; \texttt{build\_faithful}, line 3815.
+
+\texttt{build\_wellformed} has the expected form:
+\begin{lstlisting}
+CatOk K -> PlanOk K plan -> Wellformed (buildCert K plan)
+\end{lstlisting}
+\texttt{build\_faithful} also requires global \texttt{hcc}/\texttt{hcr}
+hypotheses.  This is not unsound, but those hypotheses are part of the finite
+catalogue data and should be included in the eventual encoded check.
+
+\subsection{\texttt{truth\_lemma} and \texttt{sat\_from\_hintikka}}
+
+\textbf{Locations.} \texttt{truth\_lemma}, lines 4173--4197;
+\texttt{sat\_from\_hintikka}, lines 4292--4300.
+
+These statements are clean.  \texttt{sat\_from\_hintikka} is the central
+soundness theorem:
+\begin{lstlisting}
+Wellformed C -> SCond C -> Hintikka dom rho tau ->
+root in domain -> C0 in tau root -> Satisfiable C0
+\end{lstlisting}
+It neither assumes the conclusion nor hides the root witness.
+
+\subsection{\texttt{model\_hintikkaP} and \texttt{satisfiable\_iff\_hintikkaP}}
+
+\textbf{Locations.} Lines 4383--4405.
+
+These are correct but weak relative to the prose phrase ``type-system
+certificate loses nothing''.  The forward direction of
+\texttt{satisfiable\_iff\_hintikkaP} chooses:
+\begin{lstlisting}
+tau x C := sat I x C
+\end{lstlisting}
+So the theorem proves unrestricted semantic Hintikka-realizability, not finite
+closure-bounded type realizability, not generated-certificate realizability, and
+not a decision procedure.  The theorem is useful as a semantic abstraction
+lemma, but it should not be advertised as finite type-system completeness.
+
+\subsection{\texttt{generated\_satisfiable}}
+
+\textbf{Location.} Lines 4428--4449.
+
+This is a sound composition theorem: a generated catalogue/plan satisfying the
+listed conditions and carrying a root-anchored \texttt{Hintikka} labelling
+produces \texttt{Satisfiable C0}.  It is not itself a completeness theorem; it
+is the target interface for the missing generator.
+
+\section{Required repairs as a consolidated checklist}
+
+\begin{enumerate}
+  \item \textbf{Separate reference semantics from generated semantics.}
+        Define carrier-polymorphic \texttt{ReferenceSatisfiable}, or prove an
+        explicit countable/\texttt{Occ}-model theorem bridging arbitrary
+        reference models to the generated carrier.
+
+  \item \textbf{Finite-code the certificate and catalogue syntax.}
+        Replace arbitrary \texttt{Nat -> Nat -> Atom}, \texttt{TPort -> TPort -> Atom},
+        and higher-order \texttt{F} fields by finite arrays or finite codes,
+        with total evaluators and proofs that all semantic views are decoded
+        from those codes.
+
+  \item \textbf{Strengthen \texttt{CompletenessObligation}.}
+        State a bounded obligation that produces finite codes of size bounded
+        by computable functions of \(C_0\), closure-bounded type labels, and
+        finite plan/root codes.  This is the place where the bounded-width/F3
+        mathematical assumption should be formalized.  Add a proved checker or
+        \texttt{Decidable}-theorem for the bounded search space.
+
+  \item \textbf{Fix \texttt{SCat.net\_r3}.}
+        Add \texttt{p != fresh\_j} and \texttt{q != fresh\_j}, or require
+        normalized diagonal EQ for all valid template ports and document that
+        templates are total atomic networks with diagonal EQ.
+
+  \item \textbf{Fold global catalogue coherence into \texttt{CatOk}.}
+        The hypotheses \texttt{hcc} and \texttt{hcr} occur in
+        \texttt{build\_faithful}, \texttt{catalogue\_soundness},
+        \texttt{generated\_satisfiable}, and \texttt{CompletenessObligation}.
+        They should be part of a single decidable finite catalogue-wellformedness
+        predicate.
+
+  \item \textbf{Add rich non-vacuity witnesses.}
+        Include generated positive certificates exercising non-DR composition,
+        PP/PPI chains, PO, inherited slots, and a real Hintikka existential
+        discharged through the certificate pipeline.
+
+  \item \textbf{Revise prose claims and theorem comments.}
+        Keep the strong claim for the soundness pipeline.  Qualify
+        \texttt{satisfiable\_iff\_hintikkaP} as semantic Hintikka completeness,
+        not finite type-system completeness.  State explicitly that the
+        current \texttt{CompletenessObligation} is not yet the finite bounded
+        obligation needed for decidability.
+\end{enumerate}
+
+\section{What survives the review}
+
+The important positive result is that the formalized soundness theorem looks
+semantically meaningful.  A wellformed, S-conditioned certificate with a
+Hintikka labelling yields an RCC5 interpretation and a root satisfying the
+input concept.  The syntax and satisfaction clauses line up with the reference
+logic.  The RCC5 frame predicate is the right strong-EQ atomic-frame notion.
+
+Thus the defects do not suggest that the kernel has checked a vacuous proof of
+an obviously wrong satisfaction relation.  They instead identify the missing
+finite and reference-semantics bridges needed before the artifact can honestly
+claim a finite decidability reduction.
+
+\appendix
+\section{Accompanying scripts}
+
+The package contains the following scripts.
+\begin{itemize}
+  \item \texttt{scripts/audit\_static.py}: extracts source locations and flags
+        the higher-order fields and theorem signatures discussed above.
+  \item \texttt{scripts/scat\_degenerate\_check.py}: computes the concrete RCC5
+        table calculation behind F4.
+  \item \texttt{scripts/build\_report.sh}: recompiles this PDF from the TeX
+        source.
+  \item \texttt{scripts/optional\_lean\_check.sh}: optionally invokes Lean on
+        \texttt{Round19Transport.lean} when Lean is installed.
+\end{itemize}
+
+\end{document}

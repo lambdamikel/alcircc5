@@ -1,0 +1,47 @@
+RCC5 no-EQ path automaton audit
+================================
+No-EQ states: 15
+No-EQ transitions: 28
+
+No-EQ transitions:
+  {DR}               --PO --> {DR,PO,PP}
+  {DR}               --PP --> {DR,PO,PP}
+  {DR}               --PPI--> {DR}
+  {PO}               --DR --> {DR,PO,PPI}
+  {PO}               --PP --> {PO,PP}
+  {PO}               --PPI--> {DR,PO,PPI}
+  {PPI}              --DR --> {DR,PO,PPI}
+  {PPI}              --PO --> {PO,PPI}
+  {PPI}              --PPI--> {PPI}
+  {PP}               --DR --> {DR}
+  {PP}               --PO --> {DR,PO,PP}
+  {PP}               --PP --> {PP}
+  {DR,PO}            --PP --> {DR,PO,PP}
+  {DR,PO}            --PPI--> {DR,PO,PPI}
+  {DR,PPI}           --PO --> {DR,PO,PP,PPI}
+  {DR,PPI}           --PPI--> {DR,PPI}
+  {DR,PP}            --PO --> {DR,PO,PP}
+  {DR,PP}            --PP --> {DR,PO,PP}
+  {PO,PPI}           --DR --> {DR,PO,PPI}
+  {PO,PPI}           --PPI--> {DR,PO,PPI}
+  {PO,PP}            --DR --> {DR,PO,PPI}
+  {PO,PP}            --PP --> {PO,PP}
+  {PP,PPI}           --DR --> {DR,PO,PPI}
+  {PP,PPI}           --PO --> {DR,PO,PP,PPI}
+  {DR,PO,PPI}        --PPI--> {DR,PO,PPI}
+  {DR,PO,PP}         --PP --> {DR,PO,PP}
+  {DR,PP,PPI}        --PO --> {DR,PO,PP,PPI}
+  {PO,PP,PPI}        --DR --> {DR,PO,PPI}
+
+Cyclic no-EQ SCCs:
+  [{DR,PO,PP}]  internal labels = ['PP']
+  [{DR}]  internal labels = ['PPI']
+  [{DR,PO,PPI}]  internal labels = ['PPI']
+  [{PO,PP}]  internal labels = ['PP']
+  [{PP}]  internal labels = ['PP']
+  [{PPI}]  internal labels = ['PPI']
+  [{DR,PPI}]  internal labels = ['PPI']
+
+PASS: every no-EQ cycle is vertical-only.
+Consequence: any infinite path that never admits EQ is eventually trapped
+in a PP-cone or a PPI-cone. Horizontal recurrence is foldable.

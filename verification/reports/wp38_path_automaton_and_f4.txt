@@ -1,0 +1,22 @@
+WP38: 14th-review verified items
+======================================================================
+
+(1) path-automaton lemma:
+    reachable Rel-states=11, no-EQ states=8, no-EQ cycle edges=6
+    HORIZONTAL (DR/PO) cycle edges: 0  []
+    VERTICAL (PP/PPI) cycle edges:  6
+        PP: ['DR', 'PO', 'PP'] (self-loop)
+        PP: ['PO', 'PP'] (self-loop)
+        PP: ['PP'] (self-loop)
+        PPI: ['DR'] (self-loop)
+        PPI: ['DR', 'PO', 'PPI'] (self-loop)
+        PPI: ['PPI'] (self-loop)
+    LEMMA HOLDS (no horizontal non-EQ cycle): True
+
+(2) F4 over-restriction:
+    conv DR = DR; comp(PP,DR) = ['DR']; PP in it? False
+    => SCat.net_r3 demands PP in {DR} on a junk diagonal: rejects a valid certificate (F4 CONFIRMED)
+    all-DR masking: comp(DR,DR) = ['DR', 'EQ', 'PO', 'PP', 'PPI'] (absorbs everything)
+
+======================================================================
+WP38 OVERALL: PASS -- path-automaton lemma verified (no horizontal non-EQ cycle; a genuine strengthening of WP36) and F4 over-restriction confirmed (repairable, completeness-side only).
