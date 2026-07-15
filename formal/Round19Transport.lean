@@ -4129,13 +4129,13 @@ deriving DecidableEq, Repr
 /-- An interpretation: a domain predicate, the atomic RCC5 relation
     (a total single-valued function — a proper atomic network), and an
     atomic-concept extension. -/
-structure Interp where
-  dom : Occ → Prop
-  rho : Occ → Occ → Atom
-  val : Nat → Occ → Prop
+structure Interp (α : Type) where
+  dom : α → Prop
+  rho : α → α → Atom
+  val : Nat → α → Prop
 
 /-- Satisfaction, structural on the concept. -/
-def sat (I : Interp) : Occ → Concept → Prop
+def sat {α : Type} (I : Interp α) : α → Concept → Prop
   | _, .top => True
   | _, .bot => False
   | x, .atom a => I.val a x
@@ -4148,7 +4148,7 @@ def sat (I : Interp) : Occ → Concept → Prop
 /-- The canonical interpretation induced by a type labelling: an atom
     holds exactly where its concept is in the type. -/
 def typeInterp (dom : Occ → Prop) (rho : Occ → Occ → Atom)
-    (τ : Occ → List Concept) : Interp :=
+    (τ : Occ → List Concept) : Interp Occ :=
   ⟨dom, rho, fun a x => Concept.atom a ∈ τ x⟩
 
 /-- A Hintikka system: a locally coherent type labelling.  Clash-free
@@ -4206,7 +4206,7 @@ open Atom
 /-- What makes an interpretation a legitimate ALCI_RCC5 model: the
     relation is reflexively EQ, strong-EQ is identity, converse-coherent
     (R2), and composition-closed (R3). -/
-structure RCC5Interp (I : Interp) : Prop where
+structure RCC5Interp {α : Type} (I : Interp α) : Prop where
   refl_eq : ∀ x, I.dom x → I.rho x x = Atom.eq
   eq_id : ∀ x y, I.dom x → I.dom y → I.rho x y = Atom.eq → x = y
   conv_ : ∀ x y, I.dom x → I.dom y → I.rho y x = conv (I.rho x y)
@@ -4221,7 +4221,7 @@ theorem eq_mem_comp_conv : ∀ a, Atom.eq ∈ comp a (conv a) := by
 /-- The interpretation induced by a certificate: domain = existing
     occurrences, relation = `pairVal` off the diagonal and EQ on it,
     atoms from a type labelling. -/
-def certInterp (C : Cert) (τ : Occ → List Concept) : Interp :=
+def certInterp (C : Cert) (τ : Occ → List Concept) : Interp Occ :=
   typeInterp (fun x => x ∈ existingBefore C C.steps.length)
     (fun x y => if x = y then Atom.eq else pairVal C x y) τ
 
@@ -4279,7 +4279,7 @@ theorem certInterp_rcc5 (C : Cert) (hwf : Wellformed C) (hs : SCond C)
 
 /-- Concept satisfiability over an RCC5 frame. -/
 def Satisfiable (C0 : Concept) : Prop :=
-  ∃ I : Interp, RCC5Interp I ∧ ∃ x, I.dom x ∧ sat I x C0
+  ∃ (α : Type), ∃ I : Interp α, RCC5Interp I ∧ ∃ x, I.dom x ∧ sat I x C0
 
 /-! ### Capstone: a certificate + a Hintikka labelling = a model -/
 
@@ -4296,7 +4296,7 @@ theorem sat_from_hintikka (C : Cert) (hwf : Wellformed C) (hs : SCond C)
     (root : Occ) (hroot : root ∈ existingBefore C C.steps.length)
     (C0 : Concept) (hC0 : C0 ∈ τ root) :
     Satisfiable C0 :=
-  ⟨certInterp C τ, certInterp_rcc5 C hwf hs τ, root, hroot,
+  ⟨Occ, certInterp C τ, certInterp_rcc5 C hwf hs τ, root, hroot,
     truth_lemma _ _ τ H C0 root hroot hC0⟩
 
 /-! ### Non-vacuity: a concrete satisfiable concept and model -/
@@ -4305,7 +4305,7 @@ theorem sat_from_hintikka (C : Cert) (hwf : Wellformed C) (hs : SCond C)
     has no DR-neighbour, so the ∀DR is vacuous). -/
 theorem sample_satisfiable :
     Satisfiable (Concept.and (.atom 0) (.all Atom.dr .bot)) := by
-  refine ⟨⟨fun x => x = Occ.core 0, fun _ _ => Atom.eq,
+  refine ⟨Occ, ⟨fun x => x = Occ.core 0, fun _ _ => Atom.eq,
            fun a x => a = 0 ∧ x = Occ.core 0⟩, ?_, Occ.core 0, rfl, ?_⟩
   · constructor
     · intro x _; rfl
@@ -4340,7 +4340,7 @@ prove that obligation and we do NOT axiomatize it. -/
 /-- Hintikka labelling as a predicate (subsumes the List version;
     used for the abstract completeness theorem where the domain need
     not be a certificate's occurrences). -/
-structure HintikkaP (I : Interp) (τ : Occ → Concept → Prop) : Prop where
+structure HintikkaP {α : Type} (I : Interp α) (τ : α → Concept → Prop) : Prop where
   val_atom : ∀ x a, I.dom x → τ x (.atom a) → I.val a x
   val_natom : ∀ x a, I.dom x → τ x (.natom a) → ¬ I.val a x
   nobot : ∀ x, I.dom x → ¬ τ x .bot
@@ -4352,7 +4352,7 @@ structure HintikkaP (I : Interp) (τ : Occ → Concept → Prop) : Prop where
     ∃ y, I.dom y ∧ I.rho x y = r ∧ τ y c
 
 /-- Truth lemma, predicate form: every labelled concept is satisfied. -/
-theorem truth_lemmaP (I : Interp) (τ : Occ → Concept → Prop)
+theorem truth_lemmaP {α : Type} (I : Interp α) (τ : α → Concept → Prop)
     (H : HintikkaP I τ) : ∀ C x, I.dom x → τ x C → sat I x C := by
   intro C
   induction C with
@@ -4380,7 +4380,7 @@ theorem truth_lemmaP (I : Interp) (τ : Occ → Concept → Prop)
 /-- COMPLETENESS of the abstraction: every interpretation's own
     satisfaction relation is a Hintikka labelling — the Hintikka
     clauses are literally the recursion clauses of `sat`. -/
-theorem model_hintikkaP (I : Interp) :
+theorem model_hintikkaP {α : Type} (I : Interp α) :
     HintikkaP I (fun x C => sat I x C) := by
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro x a _ h; exact h
@@ -4397,12 +4397,13 @@ theorem model_hintikkaP (I : Interp) :
     abstraction of models — it loses nothing. -/
 theorem satisfiable_iff_hintikkaP (C0 : Concept) :
     Satisfiable C0 ↔
-      ∃ I, RCC5Interp I ∧ ∃ τ, HintikkaP I τ ∧ ∃ x, I.dom x ∧ τ x C0 := by
+      ∃ (α : Type), ∃ I : Interp α,
+        RCC5Interp I ∧ ∃ τ, HintikkaP I τ ∧ ∃ x, I.dom x ∧ τ x C0 := by
   constructor
-  · rintro ⟨I, hI, x, hx, hsat⟩
-    exact ⟨I, hI, (fun x C => sat I x C), model_hintikkaP I, x, hx, hsat⟩
-  · rintro ⟨I, hI, τ, H, x, hx, hmem⟩
-    exact ⟨I, hI, x, hx, truth_lemmaP I τ H C0 x hx hmem⟩
+  · rintro ⟨α, I, hI, x, hx, hsat⟩
+    exact ⟨α, I, hI, (fun x C => sat I x C), model_hintikkaP I, x, hx, hsat⟩
+  · rintro ⟨α, I, hI, τ, H, x, hx, hmem⟩
+    exact ⟨α, I, hI, x, hx, truth_lemmaP I τ H C0 x hx hmem⟩
 
 /-- A List-`Hintikka` labelling induces a `HintikkaP` labelling over
     the canonical interpretation — feeding round-24's certificate
@@ -4488,7 +4489,7 @@ open Atom
     closure holding (all off-diagonal DR, `comp DR DR ∋ DR, EQ`). -/
 theorem sample_satisfiable_ex :
     Satisfiable (Concept.and (.atom 0) (.ex Atom.dr (.atom 1))) := by
-  refine ⟨⟨fun x => x = Occ.born 0 0 ∨ x = Occ.born 0 1,
+  refine ⟨Occ, ⟨fun x => x = Occ.born 0 0 ∨ x = Occ.born 0 1,
            fun x y => if x = y then Atom.eq else Atom.dr,
            fun a x => (a = 0 ∧ x = Occ.born 0 0)
                     ∨ (a = 1 ∧ x = Occ.born 0 1)⟩,

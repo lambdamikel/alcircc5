@@ -392,6 +392,16 @@ finite-coding of certificates --- but the passage from a bounded
 decidable certificate to actual decidability is no longer a gap. (This is
 the reduction the fourteenth reviewer's own sketch gestured at but could
 not kernel-check for want of a Lean installation.)
+
+Independently, the review's carrier finding (F2) is now closed:
+\code{Interp} and \code{Satisfiable} are carrier-polymorphic, so
+\code{Satisfiable} is \emph{arbitrary-domain} (reference) satisfiability
+--- $\exists\,\alpha\;\exists\,I:\mathtt{Interp}\,\alpha\,\dots$ ---
+with the occurrence-based pipeline as the $\alpha=\mathtt{Occ}$ instance.
+The decision-grade theorem therefore concerns reference satisfiability,
+and the carrier bridge (reducing an arbitrary-domain model to a
+certificate) joins F6, W2$'$ and finite-coding on the single open
+completeness side.
 \end{remark}
 
 \section{The anatomy of forcing}\label{sec:anatomy}

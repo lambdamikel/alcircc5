@@ -7550,3 +7550,25 @@ theorem GPT's `decidability_from_bounded_stable_F3` gestured at but couldn't
 kernel-check (no Lean in its container). Folded into the width-barrier
 report. Lean grows to ~4,605 lines, zero sorries. Status: strongly
 supported, NOT certified.
+
+## 2026-07-14 — Round-27: F2 closed (carrier-polymorphic Satisfiable)
+
+Continued the finishable formalization push: closed the 14th review's F2
+(the `Satisfiable` predicate fixed the carrier to `Occ`, under-approximating
+the arbitrary-domain reference semantics). Made `Interp`, `sat`, `RCC5Interp`,
+`Satisfiable`, `HintikkaP`, `truth_lemmaP`, `model_hintikkaP`,
+`satisfiable_iff_hintikkaP` CARRIER-POLYMORPHIC over `α : Type`. Now
+`Satisfiable C0 = ∃ (α : Type), ∃ I : Interp α, RCC5Interp I ∧ ∃ x, dom x ∧
+sat I x C0` — genuine reference satisfiability. The occurrence-based pipeline
+(certInterp / sat_from_hintikka / the soundness chain) is the α=Occ instance
+(soundness still produces a real reference model); the abstract completeness
+theorems generalise unchanged. Compiled first try, still zero sorries (~4,610
+lines).
+
+Combined with round-26, the decision-grade reduction now yields
+`Decidable (ReferenceSatisfiable C0)`, and the carrier bridge (arbitrary-domain
+model → certificate) joins F6 ∧ W2′ ∧ finite-coding as one open completeness
+obligation. Two of the review's four interface gaps (F2 = carrier, F3 =
+decision-grade) are now discharged in Lean; F1 (finite-coding the certificate
+syntax) and the open mathematics (F6, W2′) remain. Status: strongly supported,
+NOT certified.
