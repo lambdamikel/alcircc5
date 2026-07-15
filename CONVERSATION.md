@@ -7531,3 +7531,22 @@ the pre-repair interface, so recorded not integrated. The F4 Lean fix was
 drafted, verified correct, but reverted (native_decide instance friction;
 completeness-side over-rejection only). Lean artifact UNCHANGED. Ledger: 14
 reviews. Status: strongly supported, NOT certified.
+
+## 2026-07-14 — Round-26: decision-grade reduction (answering the 14th review's F3)
+
+Chose the finishable "push forward": make the reduction genuinely
+decision-grade, closing the review's most important formalization gap.
+`formal/Round19Transport.lean` (still zero sorries) now proves
+`BoundedDecider.decidable`: a bounded, decidable certificate
+characterization (computable `bound`, decidable Boolean `check`, soundness
++ bounded-completeness laws) DERIVES `Decidable (Satisfiable C0)` via a
+finite search over `List.range (bound C0)`. So the conditional decidability
+theorem is now decision-grade — `Nonempty BoundedDecider ⟹ Decidable` — not
+merely a semantic equivalence. The remaining obligation is to INHABIT
+`BoundedDecider`, which is exactly F6 (computable width bound ⟹ finite
+search) ∧ W2′ (faithful finite extraction) ∧ finite-coding of certificates
+(the review's F1) — the open work, now the sole remainder. This is the
+theorem GPT's `decidability_from_bounded_stable_F3` gestured at but couldn't
+kernel-check (no Lean in its container). Folded into the width-barrier
+report. Lean grows to ~4,605 lines, zero sorries. Status: strongly
+supported, NOT certified.

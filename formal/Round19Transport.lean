@@ -4534,3 +4534,72 @@ theorem sample_satisfiable_ex :
     · exact ⟨Occ.born 0 1, Or.inr rfl, by decide, Or.inr ⟨rfl, rfl⟩⟩
 
 end Round19
+
+namespace Round19
+open Atom
+
+/-! ## 13. Round-26: decidability from a bounded, decidable certificate
+
+The 14th review's central formalization finding (its F3): the round-25
+`CompletenessObligation` is an unbounded existence over higher-order
+objects, so it does not by itself yield `Decidable (Satisfiable C0)` --
+the "conditional decidability" was not stated in decision-grade form.
+
+This section supplies exactly that shape, kernel-checked. A
+`BoundedDecider` packages a computable bound, a decidable Boolean
+checker, and the two correctness laws (soundness: a passing code
+witnesses satisfiability; completeness: every satisfiable concept has a
+passing code below the bound). `BoundedDecider.decidable` then DERIVES
+`Decidable (Satisfiable C0)` by a finite search over
+`List.range (bound C0)`. This is the theorem GPT's
+`decidability_from_bounded_stable_F3` gestured at but could not
+kernel-check (no Lean in its container); here it is proved.
+
+INHABITING `BoundedDecider` is the open work: it is exactly F6 (a
+computable width bound making the catalogue search finite) + W2'
+(faithful finite extraction) + the finite-coding of certificates (the
+review's F1). But the REDUCTION from a bounded decidable certificate to
+genuine decidability is now certified, so the conditional decidability
+theorem is decision-grade:
+`Nonempty BoundedDecider ⟹ ∀ C0, Decidable (Satisfiable C0)`. -/
+
+/-- A bounded, decidable certificate characterization of satisfiability.
+    `check C0 n` tests candidate code `n` (intended: a Godel index of a
+    finite catalogue + plan + labelling); `bound C0` caps the search. -/
+structure BoundedDecider where
+  bound : Concept → Nat
+  check : Concept → Nat → Bool
+  sound : ∀ C0 n, check C0 n = true → Satisfiable C0
+  complete : ∀ C0, Satisfiable C0 → ∃ n, n < bound C0 ∧ check C0 n = true
+
+/-- The decision-grade reduction (round-26): a bounded decidable
+    certificate yields a decision procedure for satisfiability -- decide
+    by searching the finite range below the bound. -/
+def BoundedDecider.decidable (D : BoundedDecider) (C0 : Concept) :
+    Decidable (Satisfiable C0) :=
+  decidable_of_iff (∃ n ∈ List.range (D.bound C0), D.check C0 n = true)
+    (by
+      constructor
+      · rintro ⟨n, _, hn⟩; exact D.sound C0 n hn
+      · intro h
+        obtain ⟨n, hlt, hn⟩ := D.complete C0 h
+        exact ⟨n, List.mem_range.mpr hlt, hn⟩)
+
+/-- ALCI_RCC5 satisfiability is decidable given an explicit
+    `BoundedDecider` -- the COMPUTABLE decision procedure: for each
+    concept, search the finite range below the bound. This is the
+    decision-grade form of the conditional decidability theorem (the
+    14th review's F3 discharged: the reduction now genuinely produces
+    `Decidable`, not merely a semantic equivalence). -/
+def decidableSat_of_boundedDecider (D : BoundedDecider) :
+    ∀ C0 : Concept, Decidable (Satisfiable C0) :=
+  fun C0 => D.decidable C0
+
+/-- The "if one exists" form: a `BoundedDecider` need only EXIST for
+    satisfiability to be decidable (extraction via choice is
+    noncomputable, but decidability is about existence of a procedure). -/
+noncomputable def decidableSat_of_nonempty (h : Nonempty BoundedDecider) :
+    ∀ C0 : Concept, Decidable (Satisfiable C0) :=
+  fun C0 => (Classical.choice h).decidable C0
+
+end Round19
