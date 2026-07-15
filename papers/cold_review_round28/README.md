@@ -8,7 +8,7 @@ cosmetic/vacuous "closure" would hide.
 
 ## Contents
 
-- `REVIEW_PROMPT.md` — the review request. **Start here.**
+- `REVIEW_PROMPT.md` — the review request. **Start here.** Its **Section 0 is a primer** on the structural assumptions a reviewer must not misread (esp.: a *finite* certificate legitimately unfolds to a *possibly infinite* model — the 14th review's misstep), so the same basic-assumption error does not recur.
 - `ALCI_RCC5_REFERENCE.md` — neutral statement of the logic (the yardstick).
 - `Round19Transport.lean` — the normative artifact (≈4,756 lines, Lean 4
   core, no mathlib, **zero `sorry`**).
