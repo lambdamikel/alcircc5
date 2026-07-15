@@ -4957,4 +4957,347 @@ theorem convTableOk_sound {β : Type} [DecidableEq β]
   · have hmem := lookupT_fst_mem Atom.dr table (p, q) hpq
     exact entry p q hmem
 
+/-! ### Stage 2: a bridge decoder with `F_reads` by construction
+
+`FinCatalog.decode` keys steering on a global `slotBound`, but
+`CatOk.F_reads` needs per-template `nSlots`-agreement (and for
+out-of-range `t`, `nSlots = 0`). The bridge decoder reads exactly
+`(tmpl t).nSlots` steering columns, so `F_reads` holds by construction
+for every `t`. -/
+
+/-- The per-index slot count (of the coded template). -/
+def FinCatalog.nSlotsAt (K : FinCatalog) (t : Nat) : Nat :=
+  (K.templates.getD t ⟨0, 0, []⟩).nSlots
+
+/-- Bridge decoder: nets by table lookup; steering reads exactly the
+    per-template slot columns. -/
+def FinCatalog.decodeB (K : FinCatalog) : Catalog where
+  nCore := K.nCore
+  coreNet := fun i j => lookupT Atom.dr K.coreNetTable (i, j)
+  templates := K.templates.map FinTemplate.decode
+  root := K.root
+  attaches := K.attaches
+  F := fun t r1 r2 j =>
+    lookupT Atom.dr K.fTable (t, fnToList K.nCore r1, fnToList (K.nSlotsAt t) r2, j)
+
+/-- The decoded template at `t` has the coded slot count. -/
+theorem decodeB_tmpl_nSlots (K : FinCatalog) (t : Nat) :
+    ((K.decodeB).tmpl t).nSlots = K.nSlotsAt t := by
+  show ((K.templates.map FinTemplate.decode).getD t ⟨0, 0, fun _ _ => Atom.dr⟩).nSlots
+     = (K.templates.getD t ⟨0, 0, []⟩).nSlots
+  rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_map]
+  cases K.templates[t]? with
+  | none => rfl
+  | some T => rfl
+
+/-- `CatOk.F_reads` holds for the bridge decoder BY CONSTRUCTION: `F`
+    reads only the finite core row (below `nCore`) and the finite slot
+    row (below `(tmpl t).nSlots`). -/
+theorem decodeB_F_reads (K : FinCatalog) :
+    ∀ t r1 r1' r2 r2' j,
+      (∀ c, c < K.decodeB.nCore → r1 c = r1' c) →
+      (∀ k, k < (K.decodeB.tmpl t).nSlots → r2 k = r2' k) →
+      K.decodeB.F t r1 r2 j = K.decodeB.F t r1' r2' j := by
+  intro t r1 r1' r2 r2' j h1 h2
+  show lookupT Atom.dr K.fTable (t, fnToList K.nCore r1, fnToList (K.nSlotsAt t) r2, j)
+     = lookupT Atom.dr K.fTable (t, fnToList K.nCore r1', fnToList (K.nSlotsAt t) r2', j)
+  have e1 : fnToList K.nCore r1 = fnToList K.nCore r1' := by
+    unfold fnToList
+    apply List.map_congr_left
+    intro c hc; exact h1 c (List.mem_range.mp hc)
+  have e2 : fnToList (K.nSlotsAt t) r2 = fnToList (K.nSlotsAt t) r2' := by
+    unfold fnToList
+    apply List.map_congr_left
+    intro k hk
+    have hk' : k < (K.decodeB.tmpl t).nSlots := by
+      rw [decodeB_tmpl_nSlots]; exact List.mem_range.mp hk
+    exact h2 k hk'
+  rw [e1, e2]
+
+/-- The decoded template's net is the coded net table. -/
+theorem decodeB_tmpl_net (K : FinCatalog) (t : Nat) (p q : TPort) :
+    ((K.decodeB).tmpl t).net p q
+      = lookupT Atom.dr (K.templates.getD t ⟨0, 0, []⟩).netTable (p, q) := by
+  show ((K.templates.map FinTemplate.decode).getD t ⟨0, 0, fun _ _ => Atom.dr⟩).net p q = _
+  rw [List.getD_eq_getElem?_getD, List.getElem?_map, List.getD_eq_getElem?_getD]
+  cases K.templates[t]? with
+  | none => rfl
+  | some T => rfl
+
+theorem decodeB_templates_length (K : FinCatalog) :
+    (K.decodeB).templates.length = K.templates.length := by
+  simp [FinCatalog.decodeB]
+
+/-- `CatOk.net_conv` for the bridge decoder: every decoded template net is
+    converse-coherent, from the finite per-template converse checks. -/
+theorem decodeB_net_conv (K : FinCatalog)
+    (hall : K.templates.all (fun T => convTableOk T.netTable) = true) :
+    ∀ t, t < (K.decodeB).templates.length → ∀ p q,
+      ((K.decodeB).tmpl t).net q p = conv (((K.decodeB).tmpl t).net p q) := by
+  intro t ht p q
+  rw [decodeB_tmpl_net, decodeB_tmpl_net]
+  apply convTableOk_sound
+  have htlen : t < K.templates.length := by
+    rw [decodeB_templates_length] at ht; exact ht
+  have hmem : (K.templates.getD t ⟨0, 0, []⟩) ∈ K.templates := by
+    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem htlen, Option.getD_some]
+    exact List.getElem_mem _
+  exact (List.all_eq_true.mp hall) _ hmem
+
+/-! ### Stage 3: the finite (decidable) fragments of `CatOk` and `SCat` -/
+
+/-- `AttachOk` is decidable: all its fields are finite/bounded. -/
+instance instAttachOk (K : Catalog) (r : Attach) : Decidable (AttachOk K r) :=
+  decidable_of_iff
+    (r.tmpl < K.templates.length ∧ r.parentTmpl < K.templates.length ∧
+     r.slotMap.length = (K.tmpl r.tmpl).nSlots ∧ r.slotMap.Nodup ∧
+     (∀ p ∈ r.slotMap,
+        (∃ k, k < (K.tmpl r.parentTmpl).nSlots ∧ p = .inl k) ∨
+        (∃ j, j < (K.tmpl r.parentTmpl).nFresh ∧ p = .inr (.inr j))) ∧
+     (∀ p ∈ oldPorts (K.tmpl r.tmpl) K.nCore, ∀ q ∈ oldPorts (K.tmpl r.tmpl) K.nCore,
+        (K.tmpl r.tmpl).net p q = (K.tmpl r.parentTmpl).net (mapPort r p) (mapPort r q)))
+    ⟨fun ⟨a, b, c, d, e, f⟩ => ⟨a, b, c, d, e, f⟩,
+     fun ⟨a, b, c, d, e, f⟩ => ⟨a, b, c, d, e, f⟩⟩
+
+/-- The finite (decidable) part of `CatOk`: everything except the
+    infinite-domain `net_conv` and the higher-order `F_reads`. -/
+def CatOkFin (K : Catalog) : Prop :=
+  K.root < K.templates.length ∧
+  (K.tmpl K.root).nSlots = 0 ∧
+  (∀ r ∈ K.attaches, AttachOk K r)
+
+instance (K : Catalog) : Decidable (CatOkFin K) := by unfold CatOkFin; infer_instance
+
+/-- `CatOk` from its finite part + net-converse + `F_reads`. -/
+theorem catOk_of_fin (K : Catalog) (hfin : CatOkFin K)
+    (hnetconv : ∀ t, t < K.templates.length → ∀ p q,
+      (K.tmpl t).net q p = conv ((K.tmpl t).net p q))
+    (hFreads : ∀ t r1 r1' r2 r2' j,
+      (∀ c, c < K.nCore → r1 c = r1' c) →
+      (∀ k, k < (K.tmpl t).nSlots → r2 k = r2' k) →
+      K.F t r1 r2 j = K.F t r1' r2' j) : CatOk K := by
+  obtain ⟨hrv, hrs, hru⟩ := hfin
+  exact ⟨hrv, hrs, hnetconv, hFreads, hru⟩
+
+/-- The finite (decidable) part of `SCat`: everything except the
+    infinite-domain `core_conv`. -/
+def SCatFin (C : Cert) : Prop :=
+  (∀ c, c < C.nCore → ∀ c', c' < C.nCore → c ≠ c' → C.coreNet c c' ≠ Atom.eq) ∧
+  (∀ c1, c1 < C.nCore → ∀ c2, c2 < C.nCore → ∀ c3, c3 < C.nCore →
+    c1 ≠ c2 → c1 ≠ c3 → c3 ≠ c2 →
+    C.coreNet c1 c2 ∈ comp (C.coreNet c1 c3) (C.coreNet c3 c2)) ∧
+  (∀ i, i < C.steps.length → ∀ c, c < C.nCore → ∀ c', c' < C.nCore → c ≠ c' →
+    (C.template (C.step i).tmpl).net (.inr (.inl c)) (.inr (.inl c'))
+      = C.coreNet c c') ∧
+  (∀ i, i < C.steps.length →
+    ∀ p ∈ memberPortsList C i, ∀ q ∈ memberPortsList C i,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh → p ≠ q →
+    (C.template (C.step i).tmpl).net p q ∈
+      comp ((C.template (C.step i).tmpl).net p (.inr (.inr j)))
+           (conv ((C.template (C.step i).tmpl).net q (.inr (.inr j))))) ∧
+  (∀ i, i < C.steps.length →
+    ∀ p ∈ memberPortsList C i,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh → p ≠ .inr (.inr j) →
+    (C.template (C.step i).tmpl).net p (.inr (.inr j)) ≠ Atom.eq) ∧
+  (∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ p ∈ oldPorts (C.template (C.step i).tmpl) C.nCore,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    conv (rowval r1 r2 p) ∈
+      comp ((C.template (C.step i).tmpl).net p (.inr (.inr j)))
+           (conv (fOn C i r1 r2 j))) ∧
+  (∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ q ∈ oldPorts (C.template (C.step i).tmpl) C.nCore,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    rowval r1 r2 q ∈
+      comp (fOn C i r1 r2 j)
+           (conv ((C.template (C.step i).tmpl).net q (.inr (.inr j))))) ∧
+  (∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ jx, jx < (C.template (C.step i).tmpl).nFresh →
+    ∀ jz, jz < (C.template (C.step i).tmpl).nFresh → jx ≠ jz →
+    conv (fOn C i r1 r2 jx) ∈
+      comp ((C.template (C.step i).tmpl).net (.inr (.inr jx)) (.inr (.inr jz)))
+           (conv (fOn C i r1 r2 jz))) ∧
+  (∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ jy, jy < (C.template (C.step i).tmpl).nFresh →
+    ∀ jz, jz < (C.template (C.step i).tmpl).nFresh → jy ≠ jz →
+    fOn C i r1 r2 jy ∈
+      comp (fOn C i r1 r2 jz)
+           ((C.template (C.step i).tmpl).net (.inr (.inr jz)) (.inr (.inr jy)))) ∧
+  (∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ r1' ∈ atomLists C.nCore,
+    ∀ r2' ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ v ∈ atoms,
+    (∀ a ∈ oldPorts (C.template (C.step i).tmpl) C.nCore,
+      v ∈ comp (rowval r1 r2 a) (conv (rowval r1' r2' a))) →
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    v ∈ comp (fOn C i r1 r2 j) (conv (fOn C i r1' r2' j))) ∧
+  (∀ i, i < C.steps.length →
+    ∀ r1 ∈ atomLists C.nCore,
+    ∀ r2 ∈ atomLists (C.template (C.step i).tmpl).nSlots,
+    ∀ j, j < (C.template (C.step i).tmpl).nFresh →
+    fOn C i r1 r2 j ≠ Atom.eq)
+
+set_option synthInstance.maxSize 2000 in
+instance (C : Cert) : Decidable (SCatFin C) := by unfold SCatFin; infer_instance
+
+/-- `SCat` from its finite part + core-net converse. -/
+theorem scat_of_fin (C : Cert)
+    (hconv : ∀ c c', C.coreNet c' c = conv (C.coreNet c c'))
+    (hfin : SCatFin C) : SCat C := by
+  obtain ⟨a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11⟩ := hfin
+  exact ⟨hconv,
+    fun c c' hc hc' hne => a1 c hc c' hc' hne,
+    fun c1 c2 c3 h1 h2 h3 h4 h5 h6 => a2 c1 h1 c2 h2 c3 h3 h4 h5 h6,
+    fun i hi c c' hc hc' hne => a3 i hi c hc c' hc' hne,
+    a4, a5, a6, a7, a8, a9, a10, a11⟩
+
+instance instPlanOk (K : Catalog) (plan : List (Nat × Nat)) :
+    Decidable (PlanOk K plan) := by unfold PlanOk; infer_instance
+
+/-- The N3 core-row agreement, finite/guarded form (for `decide`). -/
+def HcrFin (K : Catalog) : Prop :=
+  ∀ t, t < K.templates.length → ∀ c, c < K.nCore → ∀ c', c' < K.nCore → c ≠ c' →
+    (K.tmpl t).net (.inr (.inl c)) (.inr (.inl c')) = K.coreNet c c'
+
+set_option synthInstance.maxSize 2000 in
+instance (K : Catalog) : Decidable (HcrFin K) := by unfold HcrFin; infer_instance
+
+/-! ### Stage 4: the finite-code acceptance and the honest decision-grade reduction -/
+
+/-- SOUNDNESS at the catalogue level: the finite-code checks (converse
+    tables + finite `CatOk`/`SCat` parts + plan + N3) plus a passing
+    Boolean Hintikka labelling yield an RCC5 model of `C0`. Everything is
+    reconstructed for the bridge decoder: net-converse from the tables,
+    `F_reads` by construction, the bounded fields by decision. -/
+theorem finCatalog_satisfiable (FK : FinCatalog) (plan : List (Nat × Nat))
+    (τ : Occ → List Concept) (root : Occ) (C0 : Concept)
+    (hcore : convTableOk FK.coreNetTable = true)
+    (htmpl : FK.templates.all (fun T => convTableOk T.netTable) = true)
+    (hcatfin : CatOkFin FK.decodeB)
+    (hplan : PlanOk FK.decodeB plan)
+    (hcr : HcrFin FK.decodeB)
+    (hscatfin : SCatFin (buildCert FK.decodeB plan))
+    (hchk : hintikkaB
+      (existingBefore (buildCert FK.decodeB plan) (buildCert FK.decodeB plan).steps.length)
+      (fun x y => if x = y then Atom.eq else pairVal (buildCert FK.decodeB plan) x y) τ = true)
+    (hroot : root ∈
+      existingBefore (buildCert FK.decodeB plan) (buildCert FK.decodeB plan).steps.length)
+    (hC0 : C0 ∈ τ root) :
+    Satisfiable C0 := by
+  have hconv : ∀ c c', FK.decodeB.coreNet c' c = conv (FK.decodeB.coreNet c c') :=
+    convTableOk_sound FK.coreNetTable hcore
+  have hok : CatOk FK.decodeB :=
+    catOk_of_fin FK.decodeB hcatfin (decodeB_net_conv FK htmpl) (decodeB_F_reads FK)
+  have hcr' : ∀ t, t < FK.decodeB.templates.length → ∀ c c', c < FK.decodeB.nCore →
+      c' < FK.decodeB.nCore → c ≠ c' →
+      (FK.decodeB.tmpl t).net (.inr (.inl c)) (.inr (.inl c')) = FK.decodeB.coreNet c c' :=
+    fun t ht c c' hc hc' hne => hcr t ht c hc c' hc' hne
+  have hscat : SCat (buildCert FK.decodeB plan) := scat_of_fin _ hconv hscatfin
+  have hs : SCond (buildCert FK.decodeB plan) :=
+    catalogue_soundness FK.decodeB hok hconv hcr' plan hplan hscat
+  have hwf : Wellformed (buildCert FK.decodeB plan) :=
+    build_wellformed FK.decodeB hok plan hplan
+  exact sat_from_hintikkaB (buildCert FK.decodeB plan) hwf hs τ hchk root hroot C0 hC0
+
+/-- Total decoder for the labelling: a finite `(Occ, type-list)` table
+    becomes a total `Occ → List Concept` by lookup (default empty). So
+    the labelling too is FIRST-ORDER FINITE DATA — the last higher-order
+    field the fifteenth review flagged (`τ`). -/
+def decodeTau (tab : List (Occ × List Concept)) : Occ → List Concept :=
+  fun x => lookupT [] tab x
+
+/-- The FIXED, NON-ORACULAR acceptance check: a single Boolean function of
+    the FIRST-ORDER FINITE code `(FK, plan, τ-table, root)` and `C0`. It
+    mentions neither `Satisfiable` nor any oracle — only finite
+    table/decision checks and the Boolean Hintikka checker — so it cannot
+    be the free field the fifteenth review's oracle exploited, and every
+    component of the code is finite syntax (catalogue AND labelling). -/
+def finAcceptB (FK : FinCatalog) (plan : List (Nat × Nat))
+    (tab : List (Occ × List Concept)) (root : Occ) (C0 : Concept) : Bool :=
+  convTableOk FK.coreNetTable &&
+  FK.templates.all (fun T => convTableOk T.netTable) &&
+  decide (CatOkFin FK.decodeB) &&
+  decide (PlanOk FK.decodeB plan) &&
+  decide (HcrFin FK.decodeB) &&
+  decide (SCatFin (buildCert FK.decodeB plan)) &&
+  hintikkaB
+    (existingBefore (buildCert FK.decodeB plan) (buildCert FK.decodeB plan).steps.length)
+    (fun x y => if x = y then Atom.eq else pairVal (buildCert FK.decodeB plan) x y)
+    (decodeTau tab) &&
+  decide (root ∈
+    existingBefore (buildCert FK.decodeB plan) (buildCert FK.decodeB plan).steps.length) &&
+  decide (C0 ∈ decodeTau tab root)
+
+/-- SOUNDNESS of the fixed checker: a passing `finAcceptB` proves
+    `Satisfiable C0`. This is the theorem that makes the reduction honest
+    — the checker is fixed, so its `complete` premise cannot be inhabited
+    by an oracle. -/
+theorem finAccept_sound (FK : FinCatalog) (plan : List (Nat × Nat))
+    (tab : List (Occ × List Concept)) (root : Occ) (C0 : Concept)
+    (h : finAcceptB FK plan tab root C0 = true) : Satisfiable C0 := by
+  unfold finAcceptB at h
+  simp only [Bool.and_eq_true] at h
+  obtain ⟨⟨⟨⟨⟨⟨⟨⟨hcore, htmpl⟩, hcat⟩, hpl⟩, hcr⟩, hsc⟩, hchk⟩, hrt⟩, hc0⟩ := h
+  exact finCatalog_satisfiable FK plan (decodeTau tab) root C0 hcore htmpl
+    (of_decide_eq_true hcat) (of_decide_eq_true hpl) (of_decide_eq_true hcr)
+    (of_decide_eq_true hsc) hchk (of_decide_eq_true hrt) (of_decide_eq_true hc0)
+
+/-- THE HONEST DECISION-GRADE REDUCTION (round-29, closing the fifteenth
+    review's F3, and wiring the finite codes of F1 into the checker).
+    Given a fixed enumeration of candidate FIRST-ORDER FINITE codes per
+    concept and the COMPLETENESS premise — every satisfiable concept has,
+    in its enumeration, a code the FIXED `finAcceptB` accepts — RCC5
+    satisfiability is decidable, by a finite search.
+
+    Unlike round-26's `BoundedDecider` (whose free `check` field let a
+    classical oracle inhabit the premise vacuously), here the checker
+    `finAcceptB` is a FIXED non-oracular function of finite data and its
+    soundness is a THEOREM (`finAccept_sound`). The premise therefore
+    forces exhibiting a real finite certificate + labelling for each
+    satisfiable concept — exactly F6 ∧ W2′ (a computable, complete
+    enumeration) — and cannot be met by an oracle that merely knows the
+    answer: `Satisfiable C0` yields a possibly-infinite model, not a
+    finite code, and no such code exists for free. -/
+def decidableSat_of_finScheme
+    (enum : Concept →
+      List (FinCatalog × List (Nat × Nat) × List (Occ × List Concept) × Occ))
+    (complete : ∀ C0, Satisfiable C0 →
+      ∃ e ∈ enum C0, finAcceptB e.1 e.2.1 e.2.2.1 e.2.2.2 C0 = true) :
+    ∀ C0, Decidable (Satisfiable C0) :=
+  fun C0 => decidable_of_iff
+    (∃ e ∈ enum C0, finAcceptB e.1 e.2.1 e.2.2.1 e.2.2.2 C0 = true)
+    ⟨fun ⟨e, _, h⟩ => finAccept_sound e.1 e.2.1 e.2.2.1 e.2.2.2 C0 h, complete C0⟩
+
+/-! ### Non-vacuity: the fixed checker genuinely accepts -/
+
+/-- `certK`'s catalogue as a first-order finite code (all nets const `dr`,
+    so empty tables suffice). Its `decodeB` is `certK`. -/
+def FKcertK : FinCatalog :=
+  ⟨0, [], [⟨0, 2, []⟩, ⟨1, 1, []⟩], 0, [⟨1, 0, [.inr (.inr 1)]⟩], 0, []⟩
+
+/-- NON-VACUITY: the fixed checker `finAcceptB` returns `true` on a real
+    finite code — `certK` with a one-point labelling putting `atom 0` at
+    the root. So the reduction is not vacuous: `finAcceptB` genuinely
+    accepts (and hence, by `finAccept_sound`, `atom 0` is satisfiable). -/
+theorem finAccept_nonvacuous :
+    finAcceptB FKcertK [(0, 0)] [(Occ.born 0 0, [Concept.atom 0])]
+      (Occ.born 0 0) (Concept.atom 0) = true := by native_decide
+
+/-- Consequently the checker accepts SOME code — the `complete` premise of
+    `decidableSat_of_finScheme` is genuinely inhabitable (for this concept
+    at least), not vacuously false. -/
+theorem finAccept_accepts_something :
+    ∃ FK plan tab root C0, finAcceptB FK plan tab root C0 = true :=
+  ⟨_, _, _, _, _, finAccept_nonvacuous⟩
+
 end Round19
