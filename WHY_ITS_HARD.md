@@ -284,6 +284,18 @@ Side-by-side chains block just like nested ones. So the language cannot force
 a runaway crowd merely by *asking* for more and more blobs; the crowd folds
 back on itself.
 
+This last point is no longer just a hunch. An outside reviewer of this work
+(itself an AI, from a different lab) checked it *exhaustively*: following any
+chain of "how this relates to that relates to the next," and asking when such
+a chain can ever loop back on itself, one finds that **every loop is a nesting
+loop** — there is no purely *sideways* loop that resists folding. Put plainly:
+a sideways chain always either folds into a small cycle, or it stops being
+sideways and turns into a nesting chain (which the loop trick already tames).
+That closes off a whole family of "maybe the crowd can grow this way" attempts
+in one stroke. It does *not* settle the real question — that is about *width*,
+not chains — but it is a clean, checkable fact that hardens exactly this leg of
+the argument.
+
 **What it would take.** To stop the fold, every blob in the crowd would need
 a permanent, *unique address* — a fixed coordinate — so that no two could
 ever be quietly identified. That's rigid coordination: a spatial grid, a
