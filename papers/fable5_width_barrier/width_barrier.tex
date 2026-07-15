@@ -440,10 +440,25 @@ finite syntactic certificate scheme. \textbf{F1 is not closed}: round 28
 supplies correct \emph{local} tabulation lemmas and total decoders, but
 the normative completeness witness remains higher-order (including the
 labelling $\tau : \mathtt{Occ} \to \mathtt{List\;Concept}$), the
-finite codes are not wired into the checker, there is no global
-inspected-domain coverage, and the non-vacuity witness
-(\code{certK\_finitely\_codable}) is \emph{degenerate} (empty domain,
-zero templates --- verified). \textbf{F4} also remains. Accordingly the
+finite codes are not wired into the checker, and there is no global
+inspected-domain coverage. The one \emph{immediately} repairable part
+has been repaired: the non-vacuity witness
+(\code{certK\_finitely\_codable}), which the review correctly called
+\emph{degenerate} (empty domain, zero templates), now proves
+\emph{total} agreement --- the decoded code reproduces \code{certK}'s
+core net on all indices and its entire two-template list --- and a
+companion \code{fin\_coding\_nontrivial} exhibits the tabulation
+reconstructing a genuinely non-constant net (both constructive, no
+axioms). The substantive F1 gap (a finite-code bridge \emph{into the
+checker}, and a finite-code $\tau$) is untouched by this and remains
+open. Closing F3 for real is a related, load-bearing construction: the
+fixed non-oracular checker must decide the pipeline's hypotheses on
+finite data, which needs a Boolean \code{Hintikka}-checker with an
+adequacy proof (the structural \code{Hintikka} predicate quantifies over
+the infinite \code{Nat}/\code{Concept} types, guarded by finite-list
+membership, so it is decidable only after reformulation) --- deliberate
+work, deferred to a reviewed round rather than bolted on here.
+\textbf{F4} also remains. Accordingly the
 claim ``decidable modulo exactly F6 $\wedge$ W2$'$'' is \emph{not yet
 honest}: closing the reduction additionally requires a non-oracular
 finite checker, a finite-code bridge for the certificate and the

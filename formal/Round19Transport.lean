@@ -4742,15 +4742,34 @@ theorem f_factors_through_rows
 
 /-! ### Non-vacuity: a concrete finite code decodes to a genuine catalogue -/
 
-/-- `certK`'s catalogue data is finitely codable: a `FinCatalog` whose
-    decode reproduces `certK`'s core net and template nets on the
-    inspected domains. (Constructed from `certK` by tabulation.) -/
+/-- `certK`'s catalogue data is finitely codable, NON-DEGENERATELY: a
+    `FinCatalog` whose decode reproduces `certK`'s core net on ALL
+    indices and its ENTIRE template list (same count, same nets) — not
+    merely on an empty inspected domain. `certK`'s nets are constant
+    `dr`, and an empty `netTable` decodes to the constant-`dr` net (the
+    `lookupT` default on `[]`), so the agreement is total, and the code
+    carries the same two templates certK does (the fifteenth review's
+    degeneracy — empty domain, zero templates — is removed). -/
 theorem certK_finitely_codable :
     ∃ FK : FinCatalog,
       FK.nCore = certK.nCore ∧
-      (∀ i j, (i, j) ∈ ([] : List (Nat × Nat)) →
-        (FinCatalog.decode FK).coreNet i j = certK.coreNet i j) := by
-  refine ⟨⟨certK.nCore, [], [], certK.root, certK.attaches, 0, []⟩, rfl, ?_⟩
-  intro i j h; cases h
+      (∀ i j, (FinCatalog.decode FK).coreNet i j = certK.coreNet i j) ∧
+      (FinCatalog.decode FK).templates = certK.templates := by
+  refine ⟨⟨0, [], [⟨0, 2, []⟩, ⟨1, 1, []⟩], certK.root, certK.attaches, 0, []⟩,
+    rfl, ?_, ?_⟩
+  · intro i j; rfl
+  · rfl
+
+/-- The finite coding does non-trivial work on a genuinely NON-constant
+    net: a template whose net is `PP` on one port pair and `DR`
+    elsewhere is reproduced exactly by a non-empty `netTable`. (certK
+    itself is all-`dr`, so its own code is all-`dr` and exercises only
+    the default; this witnesses that the tabulation reconstructs a real,
+    non-constant net — the coding is not vacuous.) -/
+theorem fin_coding_nontrivial :
+    ∃ ft : FinTemplate, ft.netTable ≠ [] ∧
+      ft.decode.net (.inl 0) (.inl 0) = Atom.pp ∧
+      ft.decode.net (.inl 0) (.inl 1) = Atom.dr := by
+  refine ⟨⟨1, 0, [((.inl 0, .inl 0), Atom.pp)]⟩, by decide, by decide, by decide⟩
 
 end Round19
