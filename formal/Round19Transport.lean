@@ -4894,4 +4894,67 @@ theorem sat_from_hintikkaB (C : Cert) (hwf : Wellformed C) (hs : SCond C)
     Satisfiable C0 :=
   sat_from_hintikka C hwf hs τ (hintikkaB_sound _ _ _ hchk) root hroot C0 hC0
 
+/-! ### The finite-code bridge: decidable acceptance for decoded catalogues
+
+The remaining F1/F3 work: turn the pipeline's acceptance hypotheses
+(`Wellformed`, `SCond`) into FINITE Boolean checks on the finite code, so
+the fixed non-oracular checker is total. The obstacles were exactly two:
+the CONVERSE conditions quantify over the infinite index/port types
+(`SCat.core_conv`, `CatOk.net_conv`), and the certificate function fields
+are higher-order. Both dissolve for a DECODED `FinCatalog`, whose nets
+are `lookupT` tables: a converse condition on a table reduces to a finite
+check on its entries, and the steering `F` reads only finite rows. -/
+
+/-- The finite converse check on a net table: every entry's swapped key
+    carries the converse value. -/
+def convTableOk {β : Type} [DecidableEq β]
+    (table : List ((β × β) × Atom)) : Bool :=
+  table.all fun kv =>
+    decide (lookupT Atom.dr table (kv.1.2, kv.1.1)
+              = conv (lookupT Atom.dr table (kv.1.1, kv.1.2)))
+
+/-- A non-default lookup means the key is present among the entries. -/
+theorem lookupT_fst_mem {β γ : Type} [DecidableEq β] (d : γ) :
+    ∀ (l : List (β × γ)) (k : β), lookupT d l k ≠ d → k ∈ l.map Prod.fst := by
+  intro l
+  induction l with
+  | nil => intro k h; exact absurd rfl h
+  | cons hd tl ih =>
+    intro k h
+    obtain ⟨a, v⟩ := hd
+    show k ∈ a :: tl.map Prod.fst
+    by_cases hak : a = k
+    · exact hak ▸ List.mem_cons_self
+    · have hne : lookupT d ((a, v) :: tl) k = lookupT d tl k := by
+        show (if a = k then v else lookupT d tl k) = lookupT d tl k
+        rw [if_neg hak]
+      rw [hne] at h
+      exact List.mem_cons_of_mem _ (ih k h)
+
+/-- SOUNDNESS of the finite converse check: a passing `convTableOk`
+    forces the FULL (infinite-domain) converse condition on the decoded
+    net — because off-table pairs read the self-converse default `dr`. -/
+theorem convTableOk_sound {β : Type} [DecidableEq β]
+    (table : List ((β × β) × Atom)) (h : convTableOk table = true) :
+    ∀ p q : β, lookupT Atom.dr table (q, p)
+      = conv (lookupT Atom.dr table (p, q)) := by
+  have entry : ∀ a b : β, (a, b) ∈ table.map Prod.fst →
+      lookupT Atom.dr table (b, a) = conv (lookupT Atom.dr table (a, b)) := by
+    intro a b hab
+    obtain ⟨kv, hkv, hkeq⟩ := List.mem_map.mp hab
+    have := (List.all_eq_true.mp h) kv hkv
+    have hd := of_decide_eq_true this
+    rw [hkeq] at hd
+    exact hd
+  intro p q
+  by_cases hpq : lookupT Atom.dr table (p, q) = Atom.dr
+  · by_cases hqp : lookupT Atom.dr table (q, p) = Atom.dr
+    · rw [hpq, hqp]; decide
+    · have hmem := lookupT_fst_mem Atom.dr table (q, p) hqp
+      have hqpc := entry q p hmem
+      -- hqpc : lookupT (p,q) = conv (lookupT (q,p)); goal: lookupT (q,p) = conv (lookupT (p,q))
+      rw [hqpc, conv_involution]
+  · have hmem := lookupT_fst_mem Atom.dr table (p, q) hpq
+    exact entry p q hmem
+
 end Round19
