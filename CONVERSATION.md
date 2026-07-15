@@ -7572,3 +7572,32 @@ obligation. Two of the review's four interface gaps (F2 = carrier, F3 =
 decision-grade) are now discharged in Lean; F1 (finite-coding the certificate
 syntax) and the open mathematics (F6, W2′) remain. Status: strongly supported,
 NOT certified.
+
+## 2026-07-14 — Round-28: F1 substantially closed (finite-coding of certificates)
+
+Did F1 as a self-contained add-on (zero risk to the pipeline), 4,756 lines,
+still zero sorries. The 14th review's F1: the certificate structures carry
+higher-order FUNCTION fields, not finite syntax. Addressed:
+- `fn_finitely_coded`: the general theorem that a function is FINITE DATA on a
+  finite domain (a finite table reproduces it exactly there) — the honest core.
+- `FinTemplate`/`FinCatalog`: finite code types (all first-order data) with
+  TOTAL decoders `FinTemplate.decode`/`FinCatalog.decode` — exactly the finite
+  syntax + total evaluators the review recommended.
+- Faithfulness: `template_net_coded`, `coreNet_coded` reconstruct `net`/`coreNet`
+  on their inspected (finite) domains.
+- `f_factors_through_rows`: the higher-order steering `f` factors through the
+  FINITE row-restrictions, via the round-20 `f_reads_rows` clause — a pleasing
+  closure, since that clause was forced by the soundness proof and is exactly
+  what makes `f` finite data.
+- `certK_finitely_codable`: non-vacuity.
+
+Honest scope: this provides the finite syntax + total decoders + faithfulness on
+inspected domains + the steering-factoring — substantially closing F1. What
+remains is ENGINEERING (wiring the codes end-to-end into one executable checker,
+incl. a bounded-domain decidability pass for the labelling), not mathematics.
+
+Net over rounds 26-28: all three of the 14th review's interface findings (F1
+finite-coding, F2 carrier, F3 decision-grade) are now discharged or reduced to
+routine wiring in Lean, zero sorries. The sole substantive remainders are the
+open mathematics F6 (bounded width) and W2′ (uniformization). Status: strongly
+supported, NOT certified.

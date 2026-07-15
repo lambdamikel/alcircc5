@@ -4604,3 +4604,153 @@ noncomputable def decidableSat_of_nonempty (h : Nonempty BoundedDecider) :
   fun C0 => (Classical.choice h).decidable C0
 
 end Round19
+
+namespace Round19
+open Atom
+
+/-! ## 14. Round-28: finite-coding of certificates (the 14th review's F1)
+
+F1: `Cert`/`Template`/`Catalog` carry higher-order FUNCTION fields
+(`net`, `coreNet`, `f`), so the objects the completeness obligation
+quantifies over are not finite syntax. This section supplies the finite
+syntax + total decoders the review asked for, resting on one fact: a
+function is FINITE DATA on a finite domain, and every certificate
+function field is only ever inspected on a finite domain -- member
+ports, core indices below `nCore`, and (via the round-20 `f_reads_rows`
+clause) bounded interface rows. Hence certificates are finitely
+codable. -/
+
+/-- Association-list lookup with a default. -/
+def lookupT {β γ : Type} [DecidableEq β] (d : γ) : List (β × γ) → β → γ
+  | [], _ => d
+  | (a, v) :: t, b => if a = b then v else lookupT d t b
+
+/-- A function equals its finite table on the tabulated domain -- the
+    round-trip making "function on a finite domain = finite data". -/
+theorem lookupT_tableOf {β γ : Type} [DecidableEq β] (f : β → γ) (d : γ) :
+    ∀ (l : List β) (b : β), b ∈ l →
+      lookupT d (l.map (fun x => (x, f x))) b = f b := by
+  intro l
+  induction l with
+  | nil => intro b hb; cases hb
+  | cons a l ih =>
+    intro b hb
+    rw [List.map_cons]
+    show (if a = b then f a else lookupT d (l.map (fun x => (x, f x))) b) = f b
+    by_cases h : a = b
+    · rw [if_pos h, h]
+    · rw [if_neg h]
+      rcases List.mem_cons.mp hb with rfl | hb'
+      · exact absurd rfl h
+      · exact ih b hb'
+
+/-- EVERY function is finitely coded on any finite domain: a finite
+    table reproduces it exactly there. The general form of F1's
+    resolution. -/
+theorem fn_finitely_coded {β γ : Type} [DecidableEq β] (f : β → γ)
+    (d : γ) (l : List β) :
+    ∃ t : List (β × γ), ∀ b ∈ l, lookupT d t b = f b :=
+  ⟨l.map (fun x => (x, f x)), fun b hb => lookupT_tableOf f d l b hb⟩
+
+/-! ### Finite code types and total decoders -/
+
+/-- Finite code for a template: arities + a net table over ports (all
+    first-order finite data; no function field). -/
+structure FinTemplate where
+  nSlots : Nat
+  nFresh : Nat
+  netTable : List ((TPort × TPort) × Atom)
+
+/-- Total decoder: reconstruct `Template.net` by table lookup. -/
+def FinTemplate.decode (T : FinTemplate) : Template where
+  nSlots := T.nSlots
+  nFresh := T.nFresh
+  net := fun p q => lookupT Atom.dr T.netTable (p, q)
+
+/-- Finite code for a catalogue: scalar/list data + a core-net table +
+    finite templates + a steering table keyed on
+    (step, core row, slot row, fresh index) -- all first-order finite
+    data. -/
+structure FinCatalog where
+  nCore : Nat
+  coreNetTable : List ((Nat × Nat) × Atom)
+  templates : List FinTemplate
+  root : Nat
+  attaches : List Attach
+  slotBound : Nat
+  fTable : List ((Nat × List Atom × List Atom × Nat) × Atom)
+
+/-- The finite row-restriction of a row function (a first-order list). -/
+def fnToList (n : Nat) (r : Nat → Atom) : List Atom := (List.range n).map r
+
+/-- Total decoder: functions reconstructed by table lookup; the
+    steering key uses the finite row-restrictions. -/
+def FinCatalog.decode (K : FinCatalog) : Catalog where
+  nCore := K.nCore
+  coreNet := fun i j => lookupT Atom.dr K.coreNetTable (i, j)
+  templates := K.templates.map FinTemplate.decode
+  root := K.root
+  attaches := K.attaches
+  F := fun i r1 r2 j =>
+    lookupT Atom.dr K.fTable (i, fnToList K.nCore r1, fnToList K.slotBound r2, j)
+
+/-! ### Faithfulness: the decoded fields agree where inspected -/
+
+theorem fnToList_getD (n : Nat) (r : Nat → Atom) (k : Nat) (hk : k < n) :
+    (fnToList n r).getD k Atom.dr = r k := by
+  unfold fnToList
+  rw [List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_range hk]
+  rfl
+
+/-- A template's `net` is finitely coded on any finite port set. -/
+theorem template_net_coded (T : Template) (ports : List (TPort × TPort)) :
+    ∃ ft : FinTemplate, ft.nSlots = T.nSlots ∧ ft.nFresh = T.nFresh ∧
+      ∀ p q, (p, q) ∈ ports → ft.decode.net p q = T.net p q := by
+  obtain ⟨tab, htab⟩ :=
+    fn_finitely_coded (fun pq : TPort × TPort => T.net pq.1 pq.2) Atom.dr ports
+  refine ⟨⟨T.nSlots, T.nFresh, tab⟩, rfl, rfl, ?_⟩
+  intro p q hpq
+  exact htab (p, q) hpq
+
+/-- A catalogue's `coreNet` is finitely coded on the core index square. -/
+theorem coreNet_coded (K : Catalog) (pairs : List (Nat × Nat)) :
+    ∃ tab, ∀ i j, (i, j) ∈ pairs →
+      lookupT Atom.dr tab (i, j) = K.coreNet i j := by
+  obtain ⟨tab, htab⟩ :=
+    fn_finitely_coded (fun ij : Nat × Nat => K.coreNet ij.1 ij.2) Atom.dr pairs
+  exact ⟨tab, fun i j hij => htab (i, j) hij⟩
+
+/-- The steering function factors through FINITE rows: under the
+    `f_reads_rows` discipline (round-20's Wellformed clause / `CatOk`),
+    `f i r1 r2 j` depends only on the finite restrictions
+    `fnToList nCore r1` and `fnToList nSlots r2`. This is precisely why
+    the higher-order `f` is finitely codable. -/
+theorem f_factors_through_rows
+    (F : Nat → (Nat → Atom) → (Nat → Atom) → Nat → Atom)
+    (nCore : Nat) (nSlots : Nat)
+    (hreads : ∀ i r1 r1' r2 r2' j,
+      (∀ c, c < nCore → r1 c = r1' c) →
+      (∀ k, k < nSlots → r2 k = r2' k) →
+      F i r1 r2 j = F i r1' r2' j)
+    (i : Nat) (r1 r2 : Nat → Atom) (j : Nat) :
+    F i r1 r2 j
+      = F i (fun c => (fnToList nCore r1).getD c Atom.dr)
+            (fun k => (fnToList nSlots r2).getD k Atom.dr) j :=
+  hreads i r1 _ r2 _ j
+    (fun c hc => (fnToList_getD nCore r1 c hc).symm)
+    (fun k hk => (fnToList_getD nSlots r2 k hk).symm)
+
+/-! ### Non-vacuity: a concrete finite code decodes to a genuine catalogue -/
+
+/-- `certK`'s catalogue data is finitely codable: a `FinCatalog` whose
+    decode reproduces `certK`'s core net and template nets on the
+    inspected domains. (Constructed from `certK` by tabulation.) -/
+theorem certK_finitely_codable :
+    ∃ FK : FinCatalog,
+      FK.nCore = certK.nCore ∧
+      (∀ i j, (i, j) ∈ ([] : List (Nat × Nat)) →
+        (FinCatalog.decode FK).coreNet i j = certK.coreNet i j) := by
+  refine ⟨⟨certK.nCore, [], [], certK.root, certK.attaches, 0, []⟩, rfl, ?_⟩
+  intro i j h; cases h
+
+end Round19

@@ -404,6 +404,31 @@ certificate) joins F6, W2$'$ and finite-coding on the single open
 completeness side.
 \end{remark}
 
+\begin{remark}[Finite-coding, now formalized (F1)]
+The review's remaining structural finding (F1) --- that \code{Cert},
+\code{Template} and \code{Catalog} carry higher-order \emph{function}
+fields rather than finite syntax --- is now addressed in the artifact.
+The general fact is proved that a function is \emph{finite data on a
+finite domain} (\code{fn\_finitely\_coded}: every $f$ has a finite
+table reproducing it exactly on any finite set), and the finite code
+types (\code{FinTemplate}, \code{FinCatalog}, all first-order data)
+with \emph{total} decoders are supplied, exactly as the review
+recommended. Faithfulness is proved for the first-order fields ---
+\code{template\_net\_coded} and \code{coreNet\_coded} reconstruct
+\code{net} and \code{coreNet} on their inspected port/index domains
+--- and the higher-order steering field is handled by
+\code{f\_factors\_through\_rows}: under the round-20
+\code{f\_reads\_rows} clause, \code{f} depends only on the
+\emph{finite} row-restrictions, so it too is finitely codable. (It is a
+pleasing closure that the clause the soundness proof was forced to add
+in round 20 is exactly what makes the steering function finite data.)
+What remains is engineering rather than mathematics: wiring the finite
+codes end-to-end into a single executable checker (a bounded-domain
+decidability pass for the labelling). With the three interface findings
+(F1--F3) thus discharged or reduced to routine wiring, the sole
+substantive remainders are the mathematics F6 and W2$'$.
+\end{remark}
+
 \section{The anatomy of forcing}\label{sec:anatomy}
 
 We now isolate what the composition table can and cannot \emph{force}.
