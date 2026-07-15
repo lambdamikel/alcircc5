@@ -4772,4 +4772,126 @@ theorem fin_coding_nontrivial :
       ft.decode.net (.inl 0) (.inl 1) = Atom.dr := by
   refine ⟨⟨1, 0, [((.inl 0, .inl 0), Atom.pp)]⟩, by decide, by decide, by decide⟩
 
+/-! ### A decidable Hintikka-checker (toward a non-oracular F3)
+
+The fifteenth review's F3: `BoundedDecider.check` is a FREE `Bool` field,
+so `Nonempty BoundedDecider` is inhabitable by a classical oracle
+(`check C _ := decide (Satisfiable C)`), which proves decidability from a
+vacuous premise. The honest fix makes the checker a FIXED, non-oracular
+function whose `= true` PROVABLY implies `Satisfiable` via the pipeline.
+
+The one acceptance test that is a genuine finite computation yet has NO
+`Decidable` instance as stated is the Hintikka labelling: the structural
+`Hintikka` predicate quantifies over the infinite `Nat` (atom indices)
+and `Concept` types, guarded only by finite-list membership. This section
+supplies the decidable Boolean checker `hintikkaB` over the finite frame
+and proves it SOUND (`= true ⟹ Hintikka`) — the liveness heart of a
+non-oracular verifier. (`Wellformed`/`SCond` stay higher-order over the
+certificate's function fields; deciding THEM from finite tables is the
+remaining finite-code bridge — the open F1 work.) -/
+
+/-- Boolean Hintikka check over the finite occurrence list `dom` and the
+    finite type lists `τ x`: clash-free, bot-free, ∧/∨ decomposed, ∀
+    propagated to r-neighbours in `dom`, ∃ fulfilled by an r-neighbour in
+    `dom`. Every quantifier ranges over a finite list, so it is
+    computable — unlike the structural `Hintikka`. -/
+def hintikkaB (dom : List Occ) (rho : Occ → Occ → Atom)
+    (τ : Occ → List Concept) : Bool :=
+  dom.all fun x => (τ x).all fun c =>
+    match c with
+    | Concept.bot => false
+    | Concept.atom a => !decide (Concept.natom a ∈ τ x)
+    | Concept.and p q => decide (p ∈ τ x) && decide (q ∈ τ x)
+    | Concept.or p q => decide (p ∈ τ x) || decide (q ∈ τ x)
+    | Concept.all r p => dom.all fun y => !decide (rho x y = r) || decide (p ∈ τ y)
+    | Concept.ex r p => dom.any fun y => decide (rho x y = r) && decide (p ∈ τ y)
+    | _ => true
+
+/-- SOUNDNESS of the Boolean checker: a passing `hintikkaB` witnesses a
+    genuine `Hintikka` system on the finite frame. This makes
+    `Hintikka (· ∈ dom) rho τ` effectively decidable (via a passing
+    Boolean check) and supplies the labelling hypothesis of
+    `sat_from_hintikka` from a finite computation — no oracle. -/
+theorem hintikkaB_sound (dom : List Occ) (rho : Occ → Occ → Atom)
+    (τ : Occ → List Concept) (h : hintikkaB dom rho τ = true) :
+    Hintikka (fun x => x ∈ dom) rho τ := by
+  unfold hintikkaB at h
+  have row : ∀ x, x ∈ dom → ∀ c, c ∈ τ x →
+      (match c with
+       | Concept.bot => false
+       | Concept.atom a => !decide (Concept.natom a ∈ τ x)
+       | Concept.and p q => decide (p ∈ τ x) && decide (q ∈ τ x)
+       | Concept.or p q => decide (p ∈ τ x) || decide (q ∈ τ x)
+       | Concept.all r p => dom.all fun y => !decide (rho x y = r) || decide (p ∈ τ y)
+       | Concept.ex r p => dom.any fun y => decide (rho x y = r) && decide (p ∈ τ y)
+       | _ => true) = true :=
+    fun x hx c hc => (List.all_eq_true.mp ((List.all_eq_true.mp h) x hx)) c hc
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- clashfree
+    intro x a hx hmem
+    have hb : (!decide (Concept.natom a ∈ τ x)) = true := row x hx (Concept.atom a) hmem
+    have hf : decide (Concept.natom a ∈ τ x) = false := by
+      cases hd : decide (Concept.natom a ∈ τ x) with
+      | true => rw [hd] at hb; exact absurd hb (by decide)
+      | false => rfl
+    exact of_decide_eq_false hf
+  · -- nobot
+    intro x hx hbot
+    have hb : (false : Bool) = true := row x hx Concept.bot hbot
+    exact absurd hb (by decide)
+  · -- and_c
+    intro x c d hx hmem
+    have hb : (decide (c ∈ τ x) && decide (d ∈ τ x)) = true :=
+      row x hx (Concept.and c d) hmem
+    rw [Bool.and_eq_true] at hb
+    exact ⟨of_decide_eq_true hb.1, of_decide_eq_true hb.2⟩
+  · -- or_c
+    intro x c d hx hmem
+    have hb : (decide (c ∈ τ x) || decide (d ∈ τ x)) = true :=
+      row x hx (Concept.or c d) hmem
+    rw [Bool.or_eq_true] at hb
+    rcases hb with h1 | h1
+    · exact Or.inl (of_decide_eq_true h1)
+    · exact Or.inr (of_decide_eq_true h1)
+  · -- all_c
+    intro x r c hx hmem y hy hxy
+    have hb : (dom.all fun y => !decide (rho x y = r) || decide (c ∈ τ y)) = true :=
+      row x hx (Concept.all r c) hmem
+    have hy' := (List.all_eq_true.mp hb) y hy
+    rw [Bool.or_eq_true] at hy'
+    rcases hy' with hno | hyes
+    · have hf : decide (rho x y = r) = false := by
+        cases hd : decide (rho x y = r) with
+        | true => rw [hd] at hno; exact absurd hno (by decide)
+        | false => rfl
+      exact absurd hxy (of_decide_eq_false hf)
+    · exact of_decide_eq_true hyes
+  · -- ex_f
+    intro x r c hx hmem
+    have hb : (dom.any fun y => decide (rho x y = r) && decide (c ∈ τ y)) = true :=
+      row x hx (Concept.ex r c) hmem
+    rw [List.any_eq_true] at hb
+    obtain ⟨y, hy, hyb⟩ := hb
+    rw [Bool.and_eq_true] at hyb
+    exact ⟨y, hy, of_decide_eq_true hyb.1, of_decide_eq_true hyb.2⟩
+
+/-- CAPSTONE with the labelling discharged by a FINITE COMPUTATION: a
+    wellformed, S-conditioned certificate whose type labelling passes the
+    Boolean `hintikkaB` check (root-anchored at `C0`) yields an RCC5
+    model of `C0`. This strengthens `sat_from_hintikka`: the Hintikka
+    hypothesis — the labelling coherence, the liveness heart — is no
+    longer an ASSUMED structure but a decidable Boolean test of the
+    finite frame. (The residual non-finite hypotheses are `Wellformed`
+    and `SCond`; making THEM finite Boolean checks over the certificate's
+    tables is the remaining finite-code bridge, the open F1 work — but
+    the labelling is now non-oracular.) -/
+theorem sat_from_hintikkaB (C : Cert) (hwf : Wellformed C) (hs : SCond C)
+    (τ : Occ → List Concept)
+    (hchk : hintikkaB (existingBefore C C.steps.length)
+      (fun x y => if x = y then Atom.eq else pairVal C x y) τ = true)
+    (root : Occ) (hroot : root ∈ existingBefore C C.steps.length)
+    (C0 : Concept) (hC0 : C0 ∈ τ root) :
+    Satisfiable C0 :=
+  sat_from_hintikka C hwf hs τ (hintikkaB_sound _ _ _ hchk) root hroot C0 hC0
+
 end Round19

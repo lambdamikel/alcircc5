@@ -451,14 +451,26 @@ companion \code{fin\_coding\_nontrivial} exhibits the tabulation
 reconstructing a genuinely non-constant net (both constructive, no
 axioms). The substantive F1 gap (a finite-code bridge \emph{into the
 checker}, and a finite-code $\tau$) is untouched by this and remains
-open. Closing F3 for real is a related, load-bearing construction: the
-fixed non-oracular checker must decide the pipeline's hypotheses on
-finite data, which needs a Boolean \code{Hintikka}-checker with an
-adequacy proof (the structural \code{Hintikka} predicate quantifies over
-the infinite \code{Nat}/\code{Concept} types, guarded by finite-list
-membership, so it is decidable only after reformulation) --- deliberate
-work, deferred to a reviewed round rather than bolted on here.
-\textbf{F4} also remains. Accordingly the
+open. Toward closing F3, the decidable heart of the checker is now in the
+artifact and machine-checked: \code{hintikkaB}, a Boolean
+Hintikka-checker over the finite frame, is proved \emph{sound}
+(\code{hintikkaB\_sound}: a passing check yields a genuine
+\code{Hintikka} system), and \code{sat\_from\_hintikkaB} strengthens the
+capstone so the labelling coherence --- the liveness heart, the one
+acceptance test that is a finite computation yet had \emph{no}
+\code{Decidable} instance as stated (the structural \code{Hintikka}
+quantifies over the infinite \code{Nat}/\code{Concept} types) --- is
+discharged by that finite Boolean test rather than \emph{assumed} (all
+axiom-clean: \code{propext}/\code{Quot.sound} only, no \code{sorry}, no
+choice). The residual, and it is the bulk of the finite-code bridge, is
+the finite-table decidability of \code{Wellformed} and \code{SCond} ---
+equivalently \code{CatOk}'s \code{net\_conv} and the core-net converse
+as finite-table checks, \code{AttachOk}/\code{PlanOk}/\code{SCat} as
+Boolean checks (each quantifies over finite lists), and the
+by-construction \code{F\_reads} of a decoded \code{FinCatalog}. With
+those the fixed non-oracular checker becomes total and F3 closes; it is
+bounded, deliberate work, and honestly still open. \textbf{F4} also
+remains. Accordingly the
 claim ``decidable modulo exactly F6 $\wedge$ W2$'$'' is \emph{not yet
 honest}: closing the reduction additionally requires a non-oracular
 finite checker, a finite-code bridge for the certificate and the
