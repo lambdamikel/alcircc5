@@ -7639,3 +7639,43 @@ of these (the degenerate witness, the "substantially closed" honesty question)
 in my own review prompt — good instinct, but I should not have shipped the
 overclaim in the first place. Ledger: 15 reviews. Status: strongly supported,
 NOT certified.
+
+## 2026-07-15 — round-29: the finite-code bridge, finished (F3 closed, F1 wired)
+
+After integrating the 15th review (which correctly caught that round-26/28
+overclaimed), the user asked to actually correct the Lean — first the
+degenerate witness, then "build F3 properly", then "continue to finish the
+bridge". Done, in verified stages, all kernel-checked (propext/Quot.sound
+only; native_decide only in the witness):
+
+- Degeneracy (F1 Finding 6): certK_finitely_codable now proves TOTAL
+  agreement + fin_coding_nontrivial (non-constant net). No axioms.
+- Labelling: hintikkaB + hintikkaB_sound (the Boolean Hintikka-checker the
+  structural Hintikka lacked — it quantifies over infinite Nat/Concept),
+  sat_from_hintikkaB (capstone with the labelling discharged by a finite
+  Boolean test, not assumed).
+- Converse bridge: convTableOk + convTableOk_sound — a finite table check
+  forces the infinite-domain net_conv/core_conv (off-table pairs read the
+  self-converse default dr). Generic in the key type.
+- Bridge decoder: FinCatalog.decodeB reads exactly (tmpl t).nSlots
+  steering columns, so CatOk.F_reads holds BY CONSTRUCTION; decodeB_net_conv
+  reconstructs net_conv from the per-template checks.
+- Finite fragments: CatOkFin/SCatFin/HcrFin with Decidable instances
+  (synthInstance.maxSize bumped for the triple-nested bounded-forall);
+  catOk_of_fin/scat_of_fin rebuild CatOk/SCat from finite part + facts.
+- The honest reduction: decodeTau (labelling table -> the last higher-order
+  field gone); finAcceptB (FIXED non-oracular Bool checker of first-order
+  finite code); finAccept_sound (passing -> Satisfiable); 
+  decidableSat_of_finScheme (fixed enum + completeness premise -> Decidable).
+  Non-vacuity: finAccept_nonvacuous (finAcceptB true on certK coded).
+
+Why this is honest and not the round-26 oracle again: finAcceptB is a
+FIXED def (not a free field), so to inhabit the completeness premise you
+must EXHIBIT a real finite certificate whose checks + hintikkaB pass —
+classical choice on Satisfiable gives a (possibly infinite) model, not a
+finite code. So the premise is exactly F6 ∧ W2′ ∧ finite-coding, not
+oracle-inhabitable. This does NOT prove decidability; it makes the
+reduction honest and decision-grade with the residual premise pinned to
+the open mathematics. F4 (completeness-side over-restriction) still
+outstanding. 5,303 lines, zero sorries, WP34 gate green. Status: strongly
+supported, NOT certified.

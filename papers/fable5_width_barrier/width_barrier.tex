@@ -483,6 +483,42 @@ obstruction; the interface repairs above are finishable formalization,
 not new mathematics.
 \end{remark}
 
+\begin{remark}[Round-29: the non-oracular finite checker --- F3 closed, F1 wired]
+The finishable formalization above has now been finished, and
+machine-checked (all \code{propext}/\code{Quot.sound} only; no
+\code{sorry}, no choice; \code{native\_decide} only in the witness). The
+artifact now carries a \emph{fixed}, non-oracular Boolean checker
+\code{finAcceptB} of a \emph{first-order finite} code --- a coded
+catalogue (\code{FinCatalog}), a plan, a labelling \emph{table}, and a
+root --- that mentions neither \code{Satisfiable} nor any oracle, only
+finite table/decision checks and the Boolean Hintikka checker
+\code{hintikkaB}. Its soundness is a theorem (\code{finAccept\_sound}: a
+passing check yields an RCC5 model, via the whole pipeline
+--- converse tables give net-coherence, the bridge decoder gives
+\code{F\_reads} by construction, the bounded fields are decided,
+\code{catalogue\_soundness} and \code{build\_wellformed} give
+\code{SCond}/\code{Wellformed}, and \code{sat\_from\_hintikkaB} gives the
+model). The decision-grade reduction \code{decidableSat\_of\_finScheme}
+then derives \code{Decidable (Satisfiable}~$C_0$\code{)} from a fixed
+enumeration and a completeness premise \emph{about the fixed checker}.
+Because the checker is fixed and forces exhibiting a real finite
+certificate, that premise is \emph{not} oracle-inhabitable (a
+\code{Satisfiable} proof yields a possibly-infinite model, not a finite
+code) --- unlike round-26's free-field \code{BoundedDecider}, which it
+supersedes. Non-vacuity is witnessed (\code{finAccept\_nonvacuous}:
+\code{finAcceptB} returns \code{true} on \code{certK} coded as a
+\code{FinCatalog}, with \code{atom 0} at the root). So the fifteenth
+review's F3 (oracle-vacuity) is \emph{closed}, and F1's finite codes ---
+catalogue \emph{and} labelling --- are now \emph{wired into} a total
+checker. What remains is exactly the completeness premise itself: a
+\emph{computable, complete} enumeration, which is precisely the open
+mathematics F6 $\wedge$ W2$'$. This does \emph{not} prove decidability;
+it makes ``decidable modulo a complete finite-certificate enumeration''
+an honest, kernel-checked reduction, with the residual premise pinned to
+F6 $\wedge$ W2$'$ (and F4, a completeness-side over-restriction,
+outstanding). Status unchanged: strongly supported, not certified.
+\end{remark}
+
 \section{The anatomy of forcing}\label{sec:anatomy}
 
 We now isolate what the composition table can and cannot \emph{force}.
