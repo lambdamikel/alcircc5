@@ -1,0 +1,508 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{fontspec}
+\setmainfont{Noto Serif}
+\setsansfont{Noto Sans}
+\setmonofont{DejaVu Sans Mono}[Scale=0.88]
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fvextra}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\definecolor{lightgray}{gray}{0.96}
+\DefineVerbatimEnvironment{leancode}{Verbatim}{fontsize=\small,breaklines=true,breakanywhere=true,frame=single,framerule=0.2pt,framesep=3pt,bgcolor=lightgray}
+\newcommand{\lean}[1]{\texttt{#1}}
+\newcommand{\sev}[1]{\textbf{Severity: #1}}
+\setlist[itemize]{topsep=3pt,itemsep=2pt,parsep=0pt,leftmargin=1.4em}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,parsep=0pt,leftmargin=1.6em}
+\title{Referee Report on the ALCI\_RCC5 Lean Development\\Rounds 26--28 Cold Review}
+\author{Adversarial technical review of \texttt{Round19Transport.lean}}
+\date{July 15, 2026}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report reviews the rounds 26--28 changes in the supplied Lean 4 artifact \texttt{Round19Transport.lean}, using \texttt{ALCI\_RCC5\_REFERENCE.md} and the round-14 review findings as the yardstick. The question is not whether the Lean proofs typecheck; it is whether the statements now express a genuine decision-grade, arbitrary-domain, finite-certificate account of ALCI\_RCC5 satisfiability. My verdict is \textbf{gap}. Round 27 genuinely repairs the old occurrence-only satisfiability interface. Round 26 is a correct finite-search reduction relative to an honest bounded Boolean checker, but the stated \texttt{Nonempty BoundedDecider} premise can be inhabited by an oracle that calls \texttt{Satisfiable}. Round 28 provides useful local tabulation lemmas and total decoders, but it does not replace the higher-order completeness witness with finite syntax, does not finite-code the labelling \texttt{τ}, and does not wire finite codes into the bounded checker. Therefore F1 is not closed and F3 is only partially reduced.
+\end{abstract}
+
+\section{Scope and basis}
+
+I reviewed the supplied archive \texttt{cold\_review\_round28.zip}, in particular \texttt{Round19Transport.lean}. Line numbers in this report refer to that file as extracted from the archive. The review accepts the primer assumptions in the prompt: finite certificates may unfold to infinite generated models; \texttt{EQ} has strong identity semantics; inverse roles are absorbed; \texttt{Occ} is the generated occurrence type; and after round 27 \texttt{Satisfiable} is carrier-polymorphic.
+
+The target is the interface layer: whether the new statements genuinely close the round-14 findings F1--F3. The key distinction is between a semantically true proposition in Lean and an honest finite decision procedure for the reference logic. A field of type \texttt{Concept -> Nat -> Bool} is Boolean-valued, but unless its definition is restricted to finite syntactic verification it can still encode non-finite or semantic information.
+
+\section{Executive verdict}
+
+\textbf{Overall verdict: gap, repairable but not cosmetic.}
+
+\begin{center}
+\begin{tabular}{@{}p{0.17\linewidth}p{0.18\linewidth}p{0.54\linewidth}@{}}
+\toprule
+Issue & Status & Reason \\
+\midrule
+F2 & Fixed & \texttt{Satisfiable} now quantifies over an arbitrary carrier \texttt{α : Type}; the soundness pipeline instantiates \texttt{α = Occ} as a genuine reference model. \\
+F3 & Partially fixed & \texttt{BoundedDecider.decidable} is a correct finite-search reduction for an honest checker, but \texttt{Nonempty BoundedDecider} allows an oracle checker. \\
+F1 & Not fixed & The normative completeness obligation still quantifies over \texttt{Catalog}, \texttt{Template}, function field \texttt{F}, and labelling \texttt{τ : Occ -> List Concept}; finite codes are not integrated. \\
+Global conditional decidability & Overclaimed & The current development does not yet justify ``decidable modulo exactly F6 ∧ W2′''. Additional interface and finite-coding obligations remain. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Finding 1: \texttt{BoundedDecider} can smuggle satisfiability}
+
+\sev{Critical.}\quad \textbf{Location:} \texttt{BoundedDecider}, \texttt{BoundedDecider.decidable}, \texttt{decidableSat\_of\_nonempty}; lines 4567--4604.
+
+The round-26 interface is:
+
+\begin{leancode}
+structure BoundedDecider where
+  bound : Concept → Nat
+  check : Concept → Nat → Bool
+  sound : ∀ C0 n, check C0 n = true → Satisfiable C0
+  complete : ∀ C0, Satisfiable C0 → ∃ n, n < bound C0 ∧ check C0 n = true
+\end{leancode}
+
+The theorem \texttt{BoundedDecider.decidable} is correct relative to such a structure. It searches \texttt{List.range (D.bound C0)} and uses \texttt{sound} and \texttt{complete} to connect the Boolean search result with \texttt{Satisfiable C0}. That is the right proof shape for a bounded certificate checker.
+
+The defect is that the structure itself does not enforce that \texttt{check} is finite, syntactic, executable in the intended sense, or independent of the semantic predicate being decided. In Lean, \texttt{check : Concept -> Nat -> Bool} is an arbitrary function. With classical choice, it can simply query \texttt{Satisfiable C}. The following witness illustrates the problem:
+
+\begin{leancode}
+namespace Round19
+
+noncomputable def oracleBoundedDecider : BoundedDecider := by
+  classical
+  refine
+    { bound := fun _ => 1
+      check := fun C _ => if Satisfiable C then true else false
+      sound := ?sound
+      complete := ?complete }
+  · intro C n hcheck
+    by_cases h : Satisfiable C
+    · exact h
+    · have hfalse : False := by simpa [h] using hcheck
+      cases hfalse
+  · intro C hsat
+    refine ⟨0, by decide, ?_⟩
+    simp [hsat]
+
+noncomputable example : Nonempty BoundedDecider :=
+  ⟨oracleBoundedDecider⟩
+
+end Round19
+\end{leancode}
+
+This witness ignores the candidate code \texttt{n}; the semantic answer is stored directly in \texttt{check}. It satisfies the stated \texttt{sound} and \texttt{complete} fields. Therefore \texttt{Nonempty BoundedDecider -> forall C0, Decidable (Satisfiable C0)} is not an honest algorithmic premise as currently stated. It proves decidability from the existence of a Boolean oracle, not from a finite syntactic certificate scheme.
+
+This does not make \texttt{BoundedDecider.decidable} useless. It is a good target theorem once \texttt{check} is replaced by, or derived from, a first-order finite-code parser and verifier. But as an answer to F3, the current \texttt{Nonempty} theorem is too permissive.
+
+\section{Finding 2: finite coding is not wired into the completeness obligation}
+
+\sev{Critical.}\quad \textbf{Location:} \texttt{Template}, \texttt{Cert}, \texttt{Catalog}, \texttt{CompletenessObligation}, \texttt{FinTemplate}, \texttt{FinCatalog}; lines 224--241, 3311--3317, 4460--4477, 4659--4695.
+
+The old higher-order certificate objects remain the normative objects:
+
+\begin{leancode}
+structure Template where
+  nSlots : Nat
+  nFresh : Nat
+  net : TPort → TPort → Atom
+
+structure Cert where
+  nCore : Nat
+  coreNet : Nat → Nat → Atom
+  templates : List Template
+  steps : List Step
+  f : Nat → (Nat → Atom) → (Nat → Atom) → Nat → Atom
+
+structure Catalog where
+  nCore : Nat
+  coreNet : Nat → Nat → Atom
+  templates : List Template
+  root : Nat
+  attaches : List Attach
+  F : Nat → (Nat → Atom) → (Nat → Atom) → Nat → Atom
+\end{leancode}
+
+The round-25 completeness obligation still quantifies over these higher-order witnesses:
+
+\begin{leancode}
+def CompletenessObligation : Prop :=
+  ∀ C0 : Concept, Satisfiable C0 →
+    ∃ (K : Catalog) (plan : List (Nat × Nat))
+      (τ : Occ → List Concept) (root : Occ),
+      CatOk K ∧ ... ∧
+      PlanOk K plan ∧ SCat (buildCert K plan) ∧
+      Hintikka ... τ ∧
+      root ∈ existingBefore (buildCert K plan)
+        (buildCert K plan).steps.length ∧
+      C0 ∈ τ root
+\end{leancode}
+
+Round 28 introduces \texttt{FinTemplate} and \texttt{FinCatalog}, but no theorem replaces or bridges this obligation with a finite-code obligation. There is no theorem of the form:
+
+\begin{leancode}
+∀ C0, Satisfiable C0 →
+  ∃ code : Nat, check C0 code = true
+\end{leancode}
+
+nor a structured bridge of the form:
+
+\begin{leancode}
+∀ K plan τ root,
+  oldCompletenessWitness K plan τ root →
+  ∃ FK finiteTauCode,
+    decodedFiniteWitness FK finiteTauCode plan root
+\end{leancode}
+
+This is not merely engineering wiring. The completeness theorem still speaks the old higher-order language, while the decision theorem speaks an unconstrained Boolean checker. The finite-code objects sit between them but are not connected to either endpoint.
+
+\section{Finding 3: \texttt{fn\_finitely\_coded} is true but too weak for F1}
+
+\sev{Major.}\quad \textbf{Location:} \texttt{lookupT}, \texttt{lookupT\_tableOf}, \texttt{fn\_finitely\_coded}; lines 4623--4653.
+
+The theorem states:
+
+\begin{leancode}
+theorem fn_finitely_coded {β γ : Type} [DecidableEq β] (f : β → γ)
+    (d : γ) (l : List β) :
+    ∃ t : List (β × γ), ∀ b ∈ l, lookupT d t b = f b
+\end{leancode}
+
+This is a correct local tabulation lemma: given a finite list \texttt{l}, one can store the values of \texttt{f} on \texttt{l} in an association list.
+
+It does not prove that the certificate language is finite syntax. The table is constructed by evaluating the original function \texttt{f}. If \texttt{f} was a higher-order oracle field, the theorem merely copies finitely many oracle answers into a list. For F1, the missing result is global: all function values inspected by \texttt{CatOk}, \texttt{SCat}, \texttt{PlanOk}, \texttt{buildCert}, \texttt{Hintikka}, and \texttt{sat\_from\_hintikka} must be drawn from computably enumerable finite domains, and decoding the finite tables must preserve the required obligations.
+
+Thus \texttt{fn\_finitely\_coded} is a useful lemma, not a closure of F1.
+
+\section{Finding 4: finite decoders are total, but no global faithfulness theorem exists}
+
+\sev{Major.}\quad \textbf{Location:} \texttt{FinTemplate.decode}, \texttt{FinCatalog.decode}; lines 4665--4695.
+
+The decoders are total and do produce genuine Lean \texttt{Template} and \texttt{Catalog} values:
+
+\begin{leancode}
+def FinTemplate.decode (T : FinTemplate) : Template where
+  nSlots := T.nSlots
+  nFresh := T.nFresh
+  net := fun p q => lookupT Atom.dr T.netTable (p, q)
+
+def FinCatalog.decode (K : FinCatalog) : Catalog where
+  nCore := K.nCore
+  coreNet := fun i j => lookupT Atom.dr K.coreNetTable (i, j)
+  templates := K.templates.map FinTemplate.decode
+  root := K.root
+  attaches := K.attaches
+  F := fun i r1 r2 j =>
+    lookupT Atom.dr K.fTable
+      (i, fnToList K.nCore r1, fnToList K.slotBound r2, j)
+\end{leancode}
+
+Defaulting missing entries to \texttt{Atom.dr} is fine for a total decoder. The problem is that total decoding is harmless only if all inspected entries are present and faithfully tabulated. The file does not prove decoded finite catalogues preserve the actual obligations used by the pipeline, such as \texttt{CatOk}, \texttt{SCat}, \texttt{PlanOk}, \texttt{buildCert} faithfulness, \texttt{Hintikka}, or root membership and satisfaction.
+
+Local faithfulness on a supplied finite domain is not enough. A real closure theorem would identify the inspected domain from the certificate/checker and prove that every query made by the pipeline lands inside the tabulated part.
+
+\section{Finding 5: \texttt{f\_factors\_through\_rows} is real but only pointwise}
+
+\sev{Major.}\quad \textbf{Location:} \texttt{CatOk.F\_reads}, \texttt{f\_factors\_through\_rows}; lines 3510--3513 and 4728--4741.
+
+The theorem correctly formalizes a row-read principle:
+
+\begin{leancode}
+theorem f_factors_through_rows
+    (F : Nat → (Nat → Atom) → (Nat → Atom) → Nat → Atom)
+    (nCore : Nat) (nSlots : Nat)
+    (hreads : ∀ i r1 r1' r2 r2' j,
+      (∀ c, c < nCore → r1 c = r1' c) →
+      (∀ k, k < nSlots → r2 k = r2' k) →
+      F i r1 r2 j = F i r1' r2' j)
+    (i : Nat) (r1 r2 : Nat → Atom) (j : Nat) :
+    F i r1 r2 j
+      = F i (fun c => (fnToList nCore r1).getD c Atom.dr)
+            (fun k => (fnToList nSlots r2).getD k Atom.dr) j
+\end{leancode}
+
+This is not fake; it is the right extensional idea. However, it is only a pointwise factoring lemma. It does not construct the finite \texttt{fTable}; does not bound \texttt{i} or \texttt{j}; does not enumerate possible atom rows; and does not connect the global \texttt{slotBound} in \texttt{FinCatalog} with every template arity in \texttt{K.templates}. The corresponding \texttt{CatOk.F\_reads} clause is template-indexed:
+
+\begin{leancode}
+F_reads : ∀ t r1 r1' r2 r2' j,
+  (∀ c, c < K.nCore → r1 c = r1' c) →
+  (∀ k, k < (K.tmpl t).nSlots → r2 k = r2' k) →
+  K.F t r1 r2 j = K.F t r1' r2' j
+\end{leancode}
+
+Round 28 moves toward a finite key for \texttt{F}, but it does not yet show that the finite key space covers all \texttt{F} calls made by the generated certificates.
+
+\section{Finding 6: \texttt{certK\_finitely\_codable} is degenerate}
+
+\sev{Major.}\quad \textbf{Location:} \texttt{certK\_finitely\_codable}; lines 4745--4754.
+
+The theorem is advertised as showing that \texttt{certK}'s catalogue data is finitely codable and that decoding reproduces \texttt{certK}'s core net and template nets on inspected domains. The actual statement is:
+
+\begin{leancode}
+theorem certK_finitely_codable :
+    ∃ FK : FinCatalog,
+      FK.nCore = certK.nCore ∧
+      (∀ i j, (i, j) ∈ ([] : List (Nat × Nat)) →
+        (FinCatalog.decode FK).coreNet i j = certK.coreNet i j) := by
+  refine ⟨⟨certK.nCore, [], [], certK.root, certK.attaches, 0, []⟩, rfl, ?_⟩
+  intro i j h; cases h
+\end{leancode}
+
+The inspected domain is the empty list. The chosen finite catalogue has no templates and no tables. Since \texttt{certK} itself has two templates (lines 3998--4000), the witness does not even preserve template count:
+
+\begin{leancode}
+def FK_emptyForCertK : FinCatalog :=
+  { nCore := certK.nCore
+    coreNetTable := []
+    templates := []
+    root := certK.root
+    attaches := certK.attaches
+    slotBound := 0
+    fTable := [] }
+
+example : (FinCatalog.decode FK_emptyForCertK).templates.length = 0 := rfl
+example : certK.templates.length = 2 := rfl
+
+example :
+    (∀ i j, (i, j) ∈ ([] : List (Nat × Nat)) →
+      (FinCatalog.decode FK_emptyForCertK).coreNet i j = certK.coreNet i j) := by
+  intro i j h
+  cases h
+\end{leancode}
+
+This is a red flag for the honesty of the non-vacuity claim. Because \texttt{certK.nCore = 0}, an empty core-pair table is not itself suspicious; the suspicious part is the theorem name and comment, which claim reproduction of catalogue data and template nets but prove only vacuous core-net agreement over an empty domain.
+
+\section{Finding 7: the labelling \texttt{τ} remains higher-order}
+
+\sev{Major.}\quad \textbf{Location:} \texttt{CompletenessObligation}, \texttt{Hintikka}; lines 4158--4167 and 4460--4477.
+
+The completeness witness still includes:
+
+\begin{leancode}
+τ : Occ → List Concept
+\end{leancode}
+
+A decision procedure needs a finite representation of the labelling information relevant to \texttt{C0}. The usual target would be a finite type assignment over closure concepts, perhaps with a blocking or regular representation for the finite generator. Round 28 does not introduce such a code and does not connect \texttt{BoundedDecider.check} to verification of a finite labelling.
+
+This is independent of the catalogue-field coding issue. Even if \texttt{Template.net}, \texttt{Catalog.coreNet}, and \texttt{Catalog.F} were fully tabulated, the current completeness obligation would still quantify over a function \texttt{Occ -> List Concept}.
+
+\section{Finding 8: Round 27 genuinely fixes the old carrier defect}
+
+\sev{Positive finding.}\quad \textbf{Location:} \texttt{Interp}, \texttt{sat}, \texttt{RCC5Interp}, \texttt{Satisfiable}, \texttt{certInterp}, \texttt{sat\_from\_hintikka}; lines 4132--4146, 4209--4214, 4224--4300.
+
+Round 27 is the strongest part of the fix. The new interpretation type is carrier-polymorphic:
+
+\begin{leancode}
+structure Interp (α : Type) where
+  dom : α → Prop
+  rho : α → α → Atom
+  val : Nat → α → Prop
+\end{leancode}
+
+Satisfaction quantifies over domain elements in the modal clauses:
+
+\begin{leancode}
+| x, .ex r c => ∃ y, I.dom y ∧ I.rho x y = r ∧ sat I y c
+| x, .all r c => ∀ y, I.dom y → I.rho x y = r → sat I y c
+\end{leancode}
+
+The RCC5 model condition enforces reflexive \texttt{EQ}, strong \texttt{EQ} as identity, converse coherence, and composition closure on domain elements:
+
+\begin{leancode}
+structure RCC5Interp {α : Type} (I : Interp α) : Prop where
+  refl_eq : ∀ x, I.dom x → I.rho x x = Atom.eq
+  eq_id : ∀ x y, I.dom x → I.dom y → I.rho x y = Atom.eq → x = y
+  conv_ : ∀ x y, I.dom x → I.dom y → I.rho y x = conv (I.rho x y)
+  comp_ : ∀ x y z, I.dom x → I.dom y → I.dom z →
+    I.rho x z ∈ comp (I.rho x y) (I.rho y z)
+\end{leancode}
+
+The new satisfiability predicate is:
+
+\begin{leancode}
+def Satisfiable (C0 : Concept) : Prop :=
+  ∃ (α : Type), ∃ I : Interp α,
+    RCC5Interp I ∧ ∃ x, I.dom x ∧ sat I x C0
+\end{leancode}
+
+This no longer fixes the carrier to \texttt{Occ}. The soundness pipeline still produces a genuine reference model by choosing \texttt{α = Occ}:
+
+\begin{leancode}
+theorem sat_from_hintikka ... : Satisfiable C0 :=
+  ⟨Occ, certInterp C τ, certInterp_rcc5 C hwf hs τ, root, hroot,
+    truth_lemma _ _ τ H C0 root hroot hC0⟩
+\end{leancode}
+
+I do not see the old F2 defect after this refactor. If one wanted maximum universe generality, the carrier could be parameterized as \texttt{Type u}; however, for the stated reference semantics this is not the Occ-only under-approximation that F2 identified.
+
+\section{Finding 9: \texttt{satisfiable\_iff\_hintikkaP} remains meaningful but is not finite completeness}
+
+\sev{Minor / explanatory.}\quad \textbf{Location:} \texttt{satisfiable\_iff\_hintikkaP}; lines 4398--4406.
+
+The theorem states:
+
+\begin{leancode}
+theorem satisfiable_iff_hintikkaP (C0 : Concept) :
+    Satisfiable C0 ↔
+      ∃ (α : Type), ∃ I : Interp α,
+        RCC5Interp I ∧ ∃ τ, HintikkaP I τ ∧ ∃ x, I.dom x ∧ τ x C0
+\end{leancode}
+
+The forward direction sets \texttt{τ x C := sat I x C}; the reverse direction uses the polymorphic truth lemma. This is tautological in the good sense: the Hintikka abstraction loses no semantic information. It remains meaningful after the refactor.
+
+It should not, however, be counted as finite certificate completeness. It supplies neither a finite carrier, nor a finite type code, nor a bounded search space.
+
+\section{Finding 10: the F4 ledger remains unresolved}
+
+\sev{Moderate.}\quad \textbf{Location:} deferred \texttt{SCat.net\_r3} over-check.
+
+The prompt states that F4 was verified and repair deferred. Rounds 26--28 do not repair it. Therefore the global claim should not say the only remaining obstacles are exactly F6 ∧ W2′ unless F4 has been shown irrelevant to the completeness route or explicitly excluded from the current claim. This point is secondary to the F1/F3 gaps, but it matters for the advertised obstacle ledger.
+
+\section{Direct answers to the review questions}
+
+\begin{enumerate}
+\item \texttt{BoundedDecider.decidable} genuinely derives \texttt{Decidable (Satisfiable C0)} from a supplied \texttt{D}; however, \texttt{D} may smuggle the answer through \texttt{check}.
+\item \texttt{sound} and \texttt{complete} are the right semantic obligations for a bounded Boolean characterization. They are not enough to ensure an honest computable checker because \texttt{check} is an arbitrary function.
+\item \texttt{Nonempty BoundedDecider} is not an honest algorithmic premise. The oracle witness above has \texttt{bound = 1} and \texttt{check C n = if Satisfiable C then true else false}.
+\item \texttt{Satisfiable} is genuinely arbitrary-domain in the relevant reference-semantics sense. The old \texttt{Occ}-only defect is fixed.
+\item The soundness pipeline still produces a genuine reference model by instantiating \texttt{α = Occ}; the polymorphic refactor did not silently weaken the soundness theorem.
+\item \texttt{satisfiable\_iff\_hintikkaP} is meaningful as semantic abstraction completeness, but it is not finite-certificate completeness.
+\item \texttt{fn\_finitely\_coded} is correct but local: it tabulates a function on a supplied finite list. It does not itself finite-code the certificate language.
+\item \texttt{FinTemplate.decode} and \texttt{FinCatalog.decode} are total and produce genuine old-style objects. The faithfulness theorems are only local, and \texttt{certK\_finitely\_codable} is degenerate.
+\item \texttt{f\_factors\_through\_rows} is a real consequence of row-read discipline, but it is not a finite \texttt{F}-table construction and does not bound all keys used by generated certificates.
+\item Calling F1 ``substantially closed'' is overclaiming. Real closure requires restating or bridging the completeness/decision pipeline over finite codes, including finite labellings.
+\item The collective conditional-decidability claim is not yet honest as ``modulo exactly F6 ∧ W2′''. Remaining issues include non-oracular checking, finite-code integration, finite labelling, and the deferred F4 over-check.
+\item The main bad interaction is that round 26's \texttt{Nat}-code Boolean checker is not connected to round 28's finite codes. The checker can be an oracle while the finite-code structures remain unused by the decision theorem.
+\end{enumerate}
+
+\section{What would close the gap}
+
+A convincing repair would include the following formal interface changes.
+
+\begin{enumerate}
+\item Replace the bare \texttt{check : Concept -> Nat -> Bool} premise, or derive it, from a first-order parser and verifier for finite witness codes. The verifier should not mention \texttt{Satisfiable} or any semantic oracle.
+\item State the completeness obligation directly over finite witness codes, or prove a bridge from old \texttt{Catalog}/\texttt{Template}/\texttt{τ} witnesses to finite codes that preserve every predicate consumed by \texttt{sat\_from\_hintikka} and the catalogue soundness theorem.
+\item Finite-code \texttt{τ}. For a decision procedure this is at least as important as finite-coding \texttt{coreNet}, \texttt{net}, and \texttt{F}.
+\item Prove global inspected-domain coverage: every lookup performed by \texttt{CatOk}, \texttt{SCat}, \texttt{buildCert}, \texttt{pairVal}, \texttt{Hintikka}, and the final satisfaction witness must be inside the decoded tables.
+\item Replace \texttt{certK\_finitely\_codable} with a non-degenerate theorem preserving the actual template list, core net on the relevant core square, template nets on all relevant ports, and the steering table on all relevant row keys.
+\end{enumerate}
+
+\section{Final assessment}
+
+Round 27 is adequate and closes F2. Round 26 gives a useful target theorem for a future honest checker, but its \texttt{Nonempty BoundedDecider} theorem is vulnerable to exactly the oracle-smuggling objection that a decision-grade interface must exclude. Round 28 supplies local finite-tabulation ingredients but does not close F1: the main completeness witness remains higher-order, the finite-code layer is not used by the decision theorem, and the non-vacuity theorem is degenerate.
+
+Accordingly, the correct status is \textbf{gap}. The fixes are repairable, but the missing work is not merely cosmetic or implementation-level. It requires a formal bridge from finite syntactic codes to the existing soundness/completeness pipeline, plus an explicitly non-oracular bounded checker.
+
+\appendix
+\section{Witness snippets}
+
+The following snippets are provided in the accompanying \texttt{supporting\_witnesses.lean} file. They are intended to be placed next to \texttt{Round19Transport.lean} and imported with \texttt{import Round19Transport}. The local execution environment used to prepare this report did not have Lean installed, so these snippets were not kernel-run here. Their role in the report is to expose the weakness of the statements, not to re-check the artifact's existing proofs.
+
+\begin{leancode}
+import Round19Transport
+
+namespace Round19
+
+noncomputable def oracleBoundedDecider : BoundedDecider := by
+  classical
+  refine
+    { bound := fun _ => 1
+      check := fun C _ => if Satisfiable C then true else false
+      sound := ?sound
+      complete := ?complete }
+  · intro C n hcheck
+    by_cases h : Satisfiable C
+    · exact h
+    · have hfalse : False := by simpa [h] using hcheck
+      cases hfalse
+  · intro C hsat
+    refine ⟨0, by decide, ?_⟩
+    simp [hsat]
+
+noncomputable example : Nonempty BoundedDecider :=
+  ⟨oracleBoundedDecider⟩
+
+def FK_emptyForCertK : FinCatalog :=
+  { nCore := certK.nCore
+    coreNetTable := []
+    templates := []
+    root := certK.root
+    attaches := certK.attaches
+    slotBound := 0
+    fTable := [] }
+
+example : (FinCatalog.decode FK_emptyForCertK).templates.length = 0 := rfl
+example : certK.templates.length = 2 := rfl
+
+example :
+    (∀ i j, (i, j) ∈ ([] : List (Nat × Nat)) →
+      (FinCatalog.decode FK_emptyForCertK).coreNet i j = certK.coreNet i j) := by
+  intro i j h
+  cases h
+
+end Round19
+\end{leancode}
+
+\end{document}
+
+The satisfaction relation ranges only over \texttt{I.dom}, and \texttt{RCC5Interp} enforces reflexive EQ, strong-EQ identity, converse, and composition closure on domain elements. The soundness pipeline still produces a genuine reference model by instantiating \texttt{α = Occ}:
+
+\begin{leancode}
+⟨Occ, certInterp C τ, certInterp_rcc5 C hwf hs τ, root, hroot, ...⟩
+\end{leancode}
+
+This matches the reference semantics. No silent weakening is apparent in the polymorphic refactor.
+
+\section{Finding 9: \texttt{satisfiable\_iff\_hintikkaP} remains meaningful}
+
+\sev{Moderate.}\quad \textbf{Location:} \texttt{satisfiable\_iff\_hintikkaP}; lines 4398--4406.
+
+The theorem
+
+\begin{leancode}
+Satisfiable C0 ↔
+  ∃ (α : Type), ∃ I : Interp α,
+    RCC5Interp I ∧ ∃ τ, HintikkaP I τ ∧ ∃ x, I.dom x ∧ τ x C0
+\end{leancode}
+
+is the expected abstraction equivalence: taking \texttt{τ x C := sat I x C} yields a Hintikka labelling, and conversely \texttt{truth\_lemmaP} recovers satisfaction. This is meaningful as a lossless abstraction theorem, but it does not address finiteness or decision procedures.
+
+\section{Cross-cutting assessment}
+
+Rounds 26--28 move in the right direction, but the interfaces do not yet line up:
+
+\begin{itemize}
+\item The decision theorem (round 26) expects a bounded Boolean checker over natural codes.
+\item The completeness theorem (round 25) still produces higher-order objects \texttt{Catalog}, \texttt{Template}, and \texttt{τ}.
+\item The finite-coding layer (round 28) introduces tables and decoders, but does not connect them to either the completeness witness or the decision procedure.
+\end{itemize}
+
+As a result, the system has three layers that are individually reasonable but not yet composed into a single finite, executable account.
+
+\section{Recommendations for closing the gaps}
+
+To turn the current partial fixes into a genuine closure of F1--F3, the following steps are needed.
+
+\begin{enumerate}
+\item \textbf{Replace or refine \texttt{BoundedDecider}.} Restrict \texttt{check} to a syntactic verifier over a finite code type. Concretely, define an inductive or record type of finite witnesses (e.g. \texttt{FinCatalog} plus a finite labelling code) and make \texttt{check} a total function that parses a natural number into such a code and verifies all obligations without calling \texttt{Satisfiable}.
+
+\item \textbf{Bridge completeness to finite codes.} Prove that any witness produced by \texttt{CompletenessObligation} can be transformed into a finite-code witness that satisfies the same obligations after decoding. This includes identifying the finite domains actually inspected by the pipeline.
+
+\item \textbf{Finite-code the labelling.} Replace \texttt{τ : Occ -> List Concept} by a finite representation of types over a bounded domain (for example, closure types indexed by a finite set of generators), and prove that the Hintikka and truth-lemma arguments go through this representation.
+
+\item \textbf{Global faithfulness theorem.} Show that for decoded finite catalogues, all queries made by \texttt{buildCert}, \texttt{pairVal}, and the Hintikka conditions land inside the tabulated domains, so that defaults are never used on inspected entries.
+
+\item \textbf{Correct the non-vacuity claims.} Strengthen \texttt{certK\_finitely\_codable} to a statement that actually tabulates non-empty domains (e.g. all core pairs, all template ports used in a concrete plan) and reproduces the corresponding parts of \texttt{certK}.
+\end{enumerate}
+
+\section{Conclusion}
+
+Round 27 is a genuine and correct repair of the old carrier-restriction defect. Round 26 provides the correct target theorem for a bounded certificate checker. Round 28 supplies useful local ingredients for finite coding. However, the three pieces are not yet assembled into a single statement that justifies decision-grade finite satisfiability for ALCI\_RCC5.
+
+The current claim that the project has reduced decidability to exactly the mathematical obstacles F6 ∧ W2′ is therefore premature. Additional interface work is required to eliminate oracle-style checkers and to replace higher-order completeness witnesses by finite syntactic codes throughout the pipeline.
+
+\end{document}

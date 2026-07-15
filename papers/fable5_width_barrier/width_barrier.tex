@@ -332,8 +332,8 @@ Completeness (abstraction): model $\Leftrightarrow$ Hintikka
   & \code{satisfiable\_iff\_hintikkaP} & certified\\
 Completeness (finitary): sat $\Rightarrow$ finite certificate
   & \code{CompletenessObligation} & open $=\mathrm{F6}\wedge\mathrm{W2}'$\\
-Decision-grade reduction: bounded checker $\Rightarrow$ \code{Decidable}
-  & \code{BoundedDecider.decidable} & certified\\
+Decision-grade reduction (shape only; premise oracle-inhabitable)
+  & \code{BoundedDecider.decidable} & certified*\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -422,11 +422,38 @@ recommended. Faithfulness is proved for the first-order fields ---
 \emph{finite} row-restrictions, so it too is finitely codable. (It is a
 pleasing closure that the clause the soundness proof was forced to add
 in round 20 is exactly what makes the steering function finite data.)
-What remains is engineering rather than mathematics: wiring the finite
-codes end-to-end into a single executable checker (a bounded-domain
-decidability pass for the labelling). With the three interface findings
-(F1--F3) thus discharged or reduced to routine wiring, the sole
-substantive remainders are the mathematics F6 and W2$'$.
+What remains is a finite-code bridge into the pipeline (see the
+fifteenth-review correction below).
+\end{remark}
+
+\begin{remark}[Fifteenth review, GPT-5.5 cold --- corrections]
+A cold review of rounds 26--28 (`papers/gpt5.5\_round28\_review/`)
+returned \emph{gap, repairable but not cosmetic}, and it is correct; two
+overclaims above are hereby withdrawn. \textbf{F2 is genuinely closed}
+(round 27). \textbf{F3 is only partially reduced}: the reduction
+\code{BoundedDecider.decidable} is correct, but its premise
+\code{Nonempty BoundedDecider} is inhabitable by a \emph{classical
+oracle} (\code{check}\,$C$\,$\_ :=$ \code{if Satisfiable}\,$C$
+\code{then true else false}, verified to compile), so it proves
+decidability from a classically vacuous premise rather than from a
+finite syntactic certificate scheme. \textbf{F1 is not closed}: round 28
+supplies correct \emph{local} tabulation lemmas and total decoders, but
+the normative completeness witness remains higher-order (including the
+labelling $\tau : \mathtt{Occ} \to \mathtt{List\;Concept}$), the
+finite codes are not wired into the checker, there is no global
+inspected-domain coverage, and the non-vacuity witness
+(\code{certK\_finitely\_codable}) is \emph{degenerate} (empty domain,
+zero templates --- verified). \textbf{F4} also remains. Accordingly the
+claim ``decidable modulo exactly F6 $\wedge$ W2$'$'' is \emph{not yet
+honest}: closing the reduction additionally requires a non-oracular
+finite checker, a finite-code bridge for the certificate and the
+labelling, global domain coverage, and the F4 repair. What is genuinely
+established is narrower: soundness and infinitary abstraction-completeness
+(certified), the reference-semantics target (F2, certified), and a
+correct finite-search reduction \emph{shape} awaiting an honest checker.
+The open mathematics F6 and W2$'$ are unchanged and remain the deep
+obstruction; the interface repairs above are finishable formalization,
+not new mathematics.
 \end{remark}
 
 \section{The anatomy of forcing}\label{sec:anatomy}

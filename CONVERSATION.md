@@ -7601,3 +7601,41 @@ finite-coding, F2 carrier, F3 decision-grade) are now discharged or reduced to
 routine wiring in Lean, zero sorries. The sole substantive remainders are the
 open mathematics F6 (bounded width) and W2′ (uniformization). Status: strongly
 supported, NOT certified.
+
+## 2026-07-15 — 15th review: rounds 26–28 overclaimed (GPT-5.5 cold)
+
+The cold review of the rounds 26–28 "fixes" came back (`papers/gpt5.5_round28_review/`):
+gap, repairable but not cosmetic — and it is correct. Both its central witnesses
+were reproduced locally and COMPILE against the artifact. No defensiveness: I
+over-claimed, and the claims are withdrawn.
+
+- F2 (round 27): GENUINELY CLOSED — carrier-polymorphic Satisfiable is real
+  arbitrary-domain satisfiability; soundness pipeline = the α=Occ instance.
+- F3 (round 26): ONLY PARTIALLY reduced. BoundedDecider.decidable is a correct
+  finite-search reduction, but `Nonempty BoundedDecider` is inhabitable by a
+  CLASSICAL ORACLE (check C _ := if Satisfiable C then true else false; verified
+  compiles). So the Nonempty theorem proves decidability from a classically-
+  vacuous premise, not from a finite certificate scheme. Repair: constrain
+  `check` to a non-oracular first-order parser/verifier.
+- F1 (round 28): NOT closed. fn_finitely_coded / decoders / f_factors_through_rows
+  are correct LOCAL lemmas, but the normative completeness witness stays
+  higher-order (incl. τ : Occ → List Concept), the finite codes aren't wired
+  into the checker, there's no global inspected-domain coverage, and
+  certK_finitely_codable is DEGENERATE (empty domain, 0 templates vs 2 —
+  verified). "Substantially closed" was an overclaim.
+- F4 still unrepaired.
+
+So "all three interface findings discharged or reduced to routine wiring" and
+"decidable modulo exactly F6 ∧ W2′" were OVERCLAIMED and are WITHDRAWN. Honest
+status: certified = soundness + infinitary completeness + reference target (F2);
+open formalization (finishable) = non-oracular finite checker + finite-code
+bridge (certificate + τ) + global domain coverage + non-degenerate witnesses +
+F4; open mathematics (unchanged) = F6 ∧ W2′. The Lean is unchanged and still
+zero-sorry — the review corrects the CLAIMS, not the proofs.
+
+Meta: this is the third time cold review caught overclaiming that hot/self
+assessment missed (7th, 9th, now 15th). The lesson holds. Also: I flagged two
+of these (the degenerate witness, the "substantially closed" honesty question)
+in my own review prompt — good instinct, but I should not have shipped the
+overclaim in the first place. Ledger: 15 reviews. Status: strongly supported,
+NOT certified.
