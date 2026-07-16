@@ -1960,10 +1960,17 @@ produced, and what is genuinely certified, is the following.
     the identity-selector-minor dichotomy, with W2$'$ folded in.  This is
     a single lemma a future solver can aim at, not a diffuse open
     question.
-  \item \textbf{A certified local theory and a decidable fragment.}  The
-    $\mathrm{RCC5}$ normal form is machine-certified
-    (\texttt{formal/RCC5NormalForm.lean}); the $\forall\PO$-free /
-    PO-coherent fragment is decidable~\cite{TwoTierQuotient}.
+  \item \textbf{A certified local theory and an unconditionally decidable
+    fragment.}  The $\mathrm{RCC5}$ normal form is machine-certified
+    (\texttt{formal/RCC5NormalForm.lean}).  The
+    \emph{$\forall\PO$-free} fragment---concepts with no $\forall\PO$
+    subformula, but \emph{retaining} $\exists\PO$, $\forall\DR$,
+    $\exists\DR$, and all vertical part-of modalities, hence still a
+    genuinely expressive spatial fragment---is unconditionally
+    decidable~\cite{TwoTierQuotient}: it is the syntactic case of the
+    two-tier PO-coherent fragment in which $\PO$---the only relation the
+    composition table cannot pin to a single value---is the sole source
+    of difficulty, and is therefore harmless.
   \item \textbf{The undecidability routes shown blocked}
     (\S\ref{sec:undecidability}), with the coincidence obstruction identified
     as the fact shared with the decidability keystone.
