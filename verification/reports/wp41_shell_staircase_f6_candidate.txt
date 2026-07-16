@@ -1,0 +1,14 @@
+WP41: shell-staircase F6 candidate finite-prefix check
+comp(PO,DR)= ['DR', 'PO', 'PPI'] (non-singleton, excludes EQ)
+comp(DR,PO)= ['DR', 'PO', 'PP'] (non-singleton, excludes EQ)
+N=2: PASS; P_N has 2 previous shell witnesses Y_0..Y_1;
+     adding a fresh Y_N would create 2 non-singleton EQ-excluding cross domains comp(PO,DR).
+N=3: PASS; P_N has 3 previous shell witnesses Y_0..Y_2;
+     adding a fresh Y_N would create 3 non-singleton EQ-excluding cross domains comp(PO,DR).
+N=5: PASS; P_N has 5 previous shell witnesses Y_0..Y_4;
+     adding a fresh Y_N would create 5 non-singleton EQ-excluding cross domains comp(PO,DR).
+N=8: PASS; P_N has 8 previous shell witnesses Y_0..Y_7;
+     adding a fresh Y_N would create 8 non-singleton EQ-excluding cross domains comp(PO,DR).
+N=12: PASS; P_N has 12 previous shell witnesses Y_0..Y_11;
+     adding a fresh Y_N would create 12 non-singleton EQ-excluding cross domains comp(PO,DR).
+OVERALL: finite prefixes satisfy the advertised staircase and RCC5 composition closure.

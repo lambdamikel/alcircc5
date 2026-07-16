@@ -1,0 +1,18 @@
+n=1: objects=4 closed_errors=0 min_separator_cover=1
+n=2: objects=7 closed_errors=0 min_separator_cover=2
+n=3: objects=10 closed_errors=0 min_separator_cover=3
+n=4: objects=13 closed_errors=0 min_separator_cover=4
+n=5: objects=16 closed_errors=0 min_separator_cover=5
+n=6: objects=19 closed_errors=0 min_separator_cover=6
+n=8: objects=25 closed_errors=0 min_separator_cover=8
+
+Example n=5 incidence over A_j selectors:
+separator incidence: row i needs a separator distinguishing L_i/U_i
+       A0  A1  A2  A3  A4
+i=0   1   .   .   .   . 
+i=1   .   1   .   .   . 
+i=2   .   .   1   .   . 
+i=3   .   .   .   1   . 
+i=4   .   .   .   .   1 
+
+WP44 OVERALL: PASS -- arbitrary jointly-realizable RCC5 glue steps can have unbounded separator-cover number.  Any positive theorem must use the ALCI-forced/quotientable hypothesis, not RCC5 path-consistency alone.

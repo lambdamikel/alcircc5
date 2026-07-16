@@ -1,0 +1,16 @@
+root: template-level SCat check errors = 0
+recursive: template-level SCat check errors = 0
+
+Reachable recursive rows and steering:
+  old P ancestors: row (to core, to slot) = ('ppi','pp') -> ('pp', 'dr')
+  old shell y_i:    row (to core, to slot) = ('dr','po')  -> ('po', 'dr')
+  fresh order is (next P, new shell Y)
+prefix with 1 shell steps: objects=3, errors=0
+prefix with 2 shell steps: objects=5, errors=0
+prefix with 3 shell steps: objects=7, errors=0
+prefix with 5 shell steps: objects=11, errors=0
+prefix with 8 shell steps: objects=17, errors=0
+
+Conclusion: finite row-keyed steering represents the entire shell staircase.
+The shell half-graph has unbounded raw horizontal witnesses, but only two reachable
+old-row classes at recursive interfaces: old P ancestors and old shell witnesses.

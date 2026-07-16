@@ -1,0 +1,4 @@
+PASS: small W2' coarse-state failure verified
+coarse_state(y) = coarse_state(z) = ('T', ('PP',), (('DR', 'PPI'),))
+unique joint row (y-b, z-b, a-b) = ('DR', 'PPI', 'PO')
+principal-row refinement: {'y': ('DR',), 'z': ('PPI',), 'a': ('PO',)}

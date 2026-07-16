@@ -1,0 +1,37 @@
+n_chain= 5 nodes= 8 witnesses= 3 CLOSED=True
+  chain-witness edges: total= 15, singleton-shadow=  8, local-live=  7, max live per witness=3
+  max live incident per chain point=2
+    w0: [('d0', 'w0', 'PO'), ('d1', 'w0', 'PPI')]
+    w1: [('d1', 'w1', 'DR'), ('d2', 'w1', 'PO'), ('d3', 'w1', 'PPI')]
+    w2: [('d3', 'w2', 'DR'), ('d4', 'w2', 'PO')]
+n_chain= 7 nodes=11 witnesses= 4 CLOSED=True
+  chain-witness edges: total= 28, singleton-shadow= 18, local-live= 10, max live per witness=3
+  max live incident per chain point=2
+    w0: [('d0', 'w0', 'PO'), ('d1', 'w0', 'PPI')]
+    w1: [('d1', 'w1', 'DR'), ('d2', 'w1', 'PO'), ('d3', 'w1', 'PPI')]
+    w2: [('d3', 'w2', 'DR'), ('d4', 'w2', 'PO'), ('d5', 'w2', 'PPI')]
+    w3: [('d5', 'w3', 'DR'), ('d6', 'w3', 'PO')]
+n_chain= 9 nodes=14 witnesses= 5 CLOSED=True
+  chain-witness edges: total= 45, singleton-shadow= 32, local-live= 13, max live per witness=3
+  max live incident per chain point=2
+    w0: [('d0', 'w0', 'PO'), ('d1', 'w0', 'PPI')]
+    w1: [('d1', 'w1', 'DR'), ('d2', 'w1', 'PO'), ('d3', 'w1', 'PPI')]
+    w2: [('d3', 'w2', 'DR'), ('d4', 'w2', 'PO'), ('d5', 'w2', 'PPI')]
+    w3: [('d5', 'w3', 'DR'), ('d6', 'w3', 'PO'), ('d7', 'w3', 'PPI')]
+    ...
+n_chain=13 nodes=20 witnesses= 7 CLOSED=True
+  chain-witness edges: total= 91, singleton-shadow= 72, local-live= 19, max live per witness=3
+  max live incident per chain point=2
+    w0: [('d0', 'w0', 'PO'), ('d1', 'w0', 'PPI')]
+    w1: [('d1', 'w1', 'DR'), ('d2', 'w1', 'PO'), ('d3', 'w1', 'PPI')]
+    w2: [('d3', 'w2', 'DR'), ('d4', 'w2', 'PO'), ('d5', 'w2', 'PPI')]
+    w3: [('d5', 'w3', 'DR'), ('d6', 'w3', 'PO'), ('d7', 'w3', 'PPI')]
+    ...
+n_chain=21 nodes=32 witnesses=11 CLOSED=True
+  chain-witness edges: total=231, singleton-shadow=200, local-live= 31, max live per witness=3
+  max live incident per chain point=2
+    w0: [('d0', 'w0', 'PO'), ('d1', 'w0', 'PPI')]
+    w1: [('d1', 'w1', 'DR'), ('d2', 'w1', 'PO'), ('d3', 'w1', 'PPI')]
+    w2: [('d3', 'w2', 'DR'), ('d4', 'w2', 'PO'), ('d5', 'w2', 'PPI')]
+    w3: [('d5', 'w3', 'DR'), ('d6', 'w3', 'PO'), ('d7', 'w3', 'PPI')]
+    ...

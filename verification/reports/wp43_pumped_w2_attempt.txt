@@ -1,0 +1,7 @@
+N=2: closed set-model prefix; raw P-row collisions=1; previous-B slot separates all
+N=3: closed set-model prefix; raw P-row collisions=3; previous-B slot separates all
+N=5: closed set-model prefix; raw P-row collisions=10; previous-B slot separates all
+N=8: closed set-model prefix; raw P-row collisions=28; previous-B slot separates all
+composition checks:
+  PP ; PO -> ['DR', 'PO', 'PP'] and B forbids PO/PPI-to-T => L-B=DR
+  PPI ; PO -> ['PO', 'PPI'] and B forbids PO-to-T => U-B=PPI
