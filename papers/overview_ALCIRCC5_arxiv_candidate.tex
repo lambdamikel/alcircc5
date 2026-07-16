@@ -1797,822 +1797,229 @@ combinatorial claim of any round was found.
 \label{sec:outlook}
 %% ====================================================================
 
-\subsection{Preliminary conclusion (end of May~2026)}
-\label{ssec:prelim-conclusion}
+\subsection{From automata to Lean: how the argument settled}
+\label{ssec:settled}
 
-We state the status plainly, as it is provisional.  The decidability of
-$\ALCIRCC{5}$ \emph{remains open} (and $\ALCIRCC{8}$ likewise); as of the end of
-May~2026 the decidability argument is \emph{strongly supported but not
-certified}.  Two layers should be kept apart.
+By the end of May~2026 the decidability argument had reached its
+automata form (Theorems~A/B/C, \S\ref{ssec:soundness-completeness}), and
+we regarded that as a natural consolidation point.  It did not remain
+one.  A materially stronger reviewer became available (Claude
+Fable~5, a capability tier above the round-12 author), and the
+adversarial-review series resumed: across July~2026 the work went through
+a further sequence of reviews and repairs, migrated its load-bearing
+soundness argument into the Lean~4 proof assistant, and---most
+importantly---localized the entire remaining difficulty into a single,
+well-posed lemma.  Rather than recount that as a round-by-round
+chronology (the blow-by-blow ledger lives in the repository's
+\texttt{CONVERSATION.md}, and the formalization history in
+\texttt{LEAN.md}), we describe the \emph{routes} that were investigated
+and where each one led.  This is the honest shape of the project as it
+now stands.
 
-\emph{The settled foundation} is the split-forest model class---the semantic
-normal form of Theorem~A (witness thinning, generated containment covers, split
-copies for incomparable superparts, side-interface mosaics, typed-$\EQ$
-quotient).  Every satisfiable concept admits a witness-generated, tree-like
-split-forest model, and this normal form has been found sound by \emph{every one
-of the six cold reviews} conducted on the project---it is the one component that
-has never broken.  Everything downstream is built \emph{on top of} it: the finite
-patchwork-bag abstraction and the two-way alternating parity tree automaton
-\emph{consume} the split forest rather than replace it.
+\subsection{The routes investigated}
+\label{ssec:routes}
 
-\emph{The open layer} is exactly that finite abstraction.  The current canonical
-manuscript (round~12) replaces the earlier transformer-based abstraction---which
-a cold review found unproved---by a patchwork-bag abstraction whose global RCC5
-coherence follows from the patchwork property of RCC5, with infinite
-eventualities decided by two-way parity-automaton emptiness.  It is a complete,
-self-contained manuscript that \emph{proves} its finite-abstraction adequacy on
-paper, modulo two standard external theorems (the RCC5 patchwork property;
-emptiness of two-way alternating parity tree automata).  A subsequent
-self-contained 29-page edition makes this fully explicit, expanding the
-theorem spine with appendices that discharge every load-bearing step---in
-particular deriving the global RCC5 labelling by a compactness argument over the
-finite relation alphabet (given finite patchwork), with no route-dependent
-transformer, which is precisely the global-coherence step the cold review had
-faulted in the earlier transformer-based abstraction.  What the manuscript has
-\emph{not} yet received is an independent cold review or a machine-checked
-certification.
-``Strongly supported, not certified'' should be read in precisely this
-sense---proved on paper, not independently verified---and not as a claim that any
-step is known to be missing.  \emph{(Update, July~2026: that last clause has
-since been overtaken---the seventh review identified one concretely unproved
-step; see \S\ref{ssec:july2026-update}.)}
+Every route shares one foundation and differs only in how it tries to
+make a \emph{decision procedure} rigorous on top of it.
 
-The trajectory across the rounds is convergent: the repairs have moved from
-bespoke, hand-built machinery towards standard, citable theorems, so we regard
-the present state as a natural consolidation point.  Settling the question
-definitively will require either mechanization (Lean/Coq) of the
-finite-abstraction keystone---axiomatizing the two external theorems and
-formalizing the normal form and the adequacy argument---or human expert peer
-review.  Until then we offer the work as a discussion piece: a problem open for
-over twenty years, with the standard undecidability routes shown blocked and a
-convergent-but-uncertified decidability argument resting on the sound
-split-forest model class.
+\paragraph{The shared foundation: the split-forest normal form (Theorem~A).}
+Every satisfiable concept admits a witness-generated, tree-like
+\emph{split-forest} model---obtained by witness thinning, generated
+containment covers, split copies for incomparable superparts,
+side-interface mosaics, and a typed-$\EQ$ quotient.  This semantic normal
+form is the one component that has \emph{never} broken: it was found
+sound by every cold review across the project.  All of the routes below
+consume it rather than replace it; they differ in how they turn ``a
+model of this shape exists'' into ``an algorithm can decide whether one
+exists.''
 
+\paragraph{Route 1 --- the cover-tree tableau (operational).}
+Claude's cover-tree tableau (\S\ref{sec:cover-tree}) is a concrete,
+implemented decision procedure with exact-occurrence blocking.  It is
+trustworthy on satisfiable inputs and has a known blind spot on certain
+unsatisfiable inputs (the strong-$\EQ$ \PO-loop pattern).  It is the
+project's operational oracle and cross-validation tool---not the
+decidability proof, but the thing every proposed proof was checked
+against.
 
-\subsection{Update (July 2026): the seventh review}
-\label{ssec:july2026-update}
+\paragraph{Route 2 --- the no-automata split-forest certificate (rounds~2--10).}
+A hand-built finite certificate for satisfiability, validated by local
+checks over the split forest.  Across rounds~2--10 it repeatedly reduced
+to automaton-shaped machinery it could not fully discharge:
+request-closed cycles behave like B\"uchi/parity acceptance, and ``finite
+product-state exhaustion'' behaves like product-automaton reachability.
+Successive cold reviews found successive defects---an ancestor-tower gap,
+then the dual descendant tower, then that finite-checkability was
+asserted rather than proved.  The thread converged, honestly, onto an
+automaton.
 
-The consolidation stance above held for five weeks, until a genuinely stronger
-reviewer became available: Claude Fable~5 (Anthropic's first Mythos-class
-model, a capability tier above Opus, and a different model lineage from the
-round-12 author, GPT-5.5).  A materially stronger reviewer is itself new
-information, so the freeze was broken once for a \emph{seventh review}---a
-context-loaded (``hot'') adversarial audit of the canonical round-12
-manuscript, explicitly \emph{not} a cold review, accompanied by three new
-computational work packages (WP14--WP16); see
-\texttt{papers/fable5\_review/} in the repository for the full report and
-probes.  It continued the series' pattern: every review so far has found a
-defect, and this one did too (seven reviews, seven defects).
+\paragraph{Route 3 --- the automata split-forest proof (rounds~11--12).}
+This made the convergence explicit and became the canonical statement for
+a time: Theorem~A (normal form) $\to$ Theorem~B (a \emph{finite
+abstraction} captures saturated split forests up to satisfiability) $\to$
+Theorem~C (a two-way alternating parity tree automaton accepts exactly
+the valid abstractions, and its emptiness is decidable).  Theorem~B is
+the single load-bearing keystone.  Cold reviews (the 5th and 6th) found
+its global-coherence step \emph{assumed, not proved}; round~12 rebuilt
+the abstraction on \emph{patchwork bags} so that global $\mathrm{RCC5}$
+consistency follows from the citable patchwork property of $\mathrm{RCC5}$
+(Renz--Nebel), with eventualities decided by two-way automaton emptiness
+(Vardi).  A 7th (hot) review then found a residual Shadow-Amalgamation
+gap in the truth lemma.  The keystone had become smaller and rested on
+standard external theorems, but it was still the keystone.
 
-The critical finding is that the round-12 truth lemma rests on an unproved
-\emph{shadow-amalgamation} step: the global RCC5 relation $\rho_T$ is
-amalgamated by patchwork from the \emph{bag networks only}, yet the lemma
-assumes the declared relation-vector shadow entries agree with $\rho_T$.  No
-legality test constrains two shadows against each other, and the implicit
-lemma---bags plus all declared shadow rows are jointly realizable in one
-frame---is in fact false for the tests as written: WP15 exhibits a three-bag
-configuration (declared entries $x_1\,\DR\,x_2$, $x_1\,\PP\,p$,
-$x_2\,\PPI\,p$; $\comp(\PP,\PP)=\{\PP\}$ forces $x_1\,\PP\,x_2$) that passes
-every listed test and admits no realizing frame; 23 of 64 assignments on the
-minimal pattern fail.  This is the sixth review's transformer-coherence gap
-recurring one layer up, but strictly smaller: the single-shadow case is
-provable from the patchwork theorem itself, and no counterexample exists
-under a \emph{vertical-liveness} repair discipline ($\PP/\PPI/\EQ$ pairs
-always co-bagged, shadow entries restricted to $\{\DR,\PO\}$---the
-saturation rules extended to the shadow layer; 358/358 random and exhaustive
-configurations clean) or under an extended-bag discipline (200/200).  Two
-specification loopholes were also found ($\EQ$-valued shadow entries;
-undefined shadow propagation scope), each independently soundness-fatal as
-literally written and each a one-line fix: WP16 machine-checks that either
-loophole makes the mechanism wrongly accept four unsatisfiable
-forced-composition concepts, while under the repaired discipline it agrees
-with the cover-tree tableau on all ten referee diagnostics---including,
-notably, the strong-$\EQ$ PO-loop concept that the retired quasimodel
-reasoner decided wrongly---and on a 148-concept random sweep without
-disagreement.  The $K(C_0)$ finiteness argument also remains an assertion.
+\paragraph{Route 4 --- the cluster-quasimodel decision layer (rounds~15--18).}
+Following a cold review's recommendation, the tree automaton was dropped
+in favour of a mosaic / type-elimination procedure on the infinitary
+abstraction directly: a finite \emph{catalogue} of interface patterns
+carrying \emph{steering functions}, with one-step demand fulfilment (no
+promissory witnesses, hence no parity/eventuality condition).  This is
+the route on which the whole difficulty was finally \emph{localized}.
+Once the construction was written explicitly, everything reduced to two
+named lemmas: \textbf{F6}, a computable bound on the \emph{live width} of
+the certificate (the genuine, non-shadow branching an interface must
+record), and \textbf{W2$'$}, uniformization of the extraction (that
+locally realizable glue steps factor through the finite catalogue's
+states).  Cold reviews sharpened the steering condition from pointwise to
+joint and pinned down the transport rule; no new mathematical obstacle
+beyond F6/W2$'$ appeared.
 
-What held up under attack is equally important: the RCC5 patchwork theorem
-\emph{in exactly the round-12 form} was verified exhaustively at small
-widths (WP14: 63{,}219 two-bag amalgamations and 300 tree-of-bags patchings
-executed literally along the manuscript's own induction, zero failures), as
-did the finite-to-countable compactness passage, strong equality, the
-running-intersection layer, and Theorem~A's normal form.  No
-accepted-but-unsatisfiable \emph{concept} was found.  The status label is
-therefore unchanged---\emph{strongly supported, not certified}---with the
-keystone sharpened from ``patchwork-bag adequacy'' generically to a
-\emph{shadow-amalgamation lemma} (plus the $K(C_0)$ accounting)
-specifically.  The consolidation stance otherwise stands: mechanization or
-human peer review remain the decisive next steps, with frontier-model audits
-as the sanctioned exception whenever a genuinely stronger reviewer appears.
+\paragraph{Route 5 --- the Lean formalization (rounds~19--30).}
+The certificate transport, S-layer, catalogue, and logic layers were
+ported into Lean~4 (core, no \texttt{mathlib}).  The result is a
+kernel-checked development (\texttt{formal/Round19Transport.lean}, zero
+\texttt{sorry}) in which the \emph{soundness} pipeline---certificate
+syntax $\to$ a genuine $\mathrm{RCC5}$ model of the logic---and the
+\emph{faithfulness} of the Hintikka abstraction (the type-level
+certificate loses nothing relative to models) are proved by the kernel.
+On top of it sits a \emph{decision-grade, non-oracular} reduction: a
+fixed Boolean checker of first-order finite certificate data, proved
+sound, from which \texttt{Decidable} satisfiability follows by finite
+search---leaving exactly one open premise, a computable complete
+enumeration of bounded certificates, which is precisely F6 $\wedge$
+W2$'$.  Two cold reviews of the Lean confirmed there is no
+\emph{soundness} defect and found only completeness-interface gaps, which
+subsequent rounds closed.  The concrete history is in \texttt{LEAN.md}.
 
+\paragraph{The reduction to one keystone, and the recent attacks.}
+All five routes bottom out at the same place: \emph{does some concept
+force unbounded live width?}  Two independent cold research attacks then
+sharpened this question.  Every naive counterexample---shell half-graphs,
+prefix pumps, single-chain \PO-gaps---collapses to a finite catalogue, so
+raw pairwise non-mergeability is the wrong invariant; the sharp
+obstruction is a forced, unbounded family of \emph{identity-selector
+minors} (private matching of unbounded hitting number).  W2$'$ was shown
+to \emph{fold into} F6 (its coarse form is false, but repairable by a
+state refinement whose size F6 itself bounds).  A regular-cover
+reframing---finite generators whose infinite unfoldings are the
+models---gave a complete \emph{local} algebra, of which one durable
+piece was harvested and machine-\emph{certified}: the $\mathrm{RCC5}$
+\emph{normal form} (every strong-$\EQ$ $\mathrm{RCC5}$ network is an
+ordered-disjoint structure---a strict partial order for $\PP$ plus a
+downward-closed disjointness for $\DR$, with $\PO$ residual).  But the
+regular-cover route's own keystone is F6 relabelled, and its authors
+concede the remainder ``cannot be a purely local $\mathrm{RCC5}$
+composition problem.''
 
-\paragraph{Round 13 (July 2026, unreviewed).}
-The seventh reviewer then executed its own repair programme
-(\texttt{papers/fable5\_round13/} in the repository): a ten-page delta on
-round-12 that tightens the abstraction language --- shadow entries
-restricted to the horizontal relations $\{\DR,\PO\}$, with vertical and
-equality relationships co-bagged (the existing saturation and
-residual-frontier regime extended to the shadow layer), mandatory shadow
-propagation with a verticalization fallback, type-propagation of
-transitive vertical universals, request-source liveness, and a
-pair-coherence rule --- and, under that discipline, \emph{proves} the
-previously missing shadow-amalgamation lemma from four exhaustively
-machine-checked composition-table facts plus the patchwork-and-compactness
-apparatus; the truth lemma then holds with the declared shadow entries
-literally equal to the amalgamated relation.  The residual proof burden
-moves, explicitly, to the completeness side (a coverage lemma, and the
-interaction of on-demand verticalization with the effective width bound),
-which the manuscript designates as the next review target; the effective
-width bound itself is re-derived from a witness-generated accounting.  A
-further harness (WP17) checks the finite facts exhaustively and the
-lemma's constructive content on four hundred random tree-shaped
-configurations, with a functioning negative control.  Round 13 is
-authored by the reviewer, is unreviewed, and inherits the project's
-presumption of a defect until a genuinely cold review fails to find one;
-the status label is unchanged: strongly supported, not certified.
-
-
-\paragraph{Round 14 (July 2026, GPT-5.5; the eighth review).}
-The presumption was correct.  Handed a targeted task packet for round 13's
-self-designated weak points, GPT-5.5 broke the round-13 extraction clause
-exactly there (the eighth review; eight reviews, eight defects): the
-satisfiable tower concept
-$\exists\PP.\top\sqcap\forall\PP.(\exists\PP.\top\sqcap(\forall\PP.\exists\PP.\top
-\sqcap\forall\DR.A))$ gives every tower level a horizontal universal
-obligation, and round 13's literal propagation-with-verticalization clause
-then forces every remote level into the root bag --- unbounded width for a
-fixed concept, machine-checked; a second finding shows mixed
-$\PP/\PPI$ paths defeat the orientation assumption of the type-propagation
-rule.  The shadow-amalgamation lemma itself survived re-testing.  GPT-5.5's
-round-14 repair withdraws the horizontal-shadow discipline in favour of the
-\emph{active-virtual-bag} form of the extended-bag route (the alternative
-the seventh review had outlined): every universal source is treated as a
-virtual active occurrence at every bag, with exact --- possibly vertical ---
-relation vectors; validity requires every \emph{finite} restriction of an
-active bag to be a closed complete atomic RCC5 network, with adjacent
-agreement; patchwork and compactness then realize all declared values
-verbatim, the coverage lemma becomes trivial, and extraction adds no live
-ports (the tower is absorbed with two live ports and virtual shadows).
-Claude reproduced all seven new harnesses and hot-audited the manuscript;
-the designated cold-review targets are the automaton's pair/triple monitor
-bookkeeping (self-flagged by the author), the explicitness of the
-single-shadow closure check, and the inherited width accounting.  Two
-structural observations deserve record: both the seventh and eighth defects
-were found precisely where the preceding round's ``what would invalidate''
-list pointed, and the two model lineages have now each broken and each
-repaired the other's round --- the review-and-designate discipline is
-functioning as designed.  Status unchanged: strongly supported, not
-certified; a genuinely cold review of round 14 is the next step.
-
-
-\paragraph{The ninth review (July 2026, cold): the decision layer is the gap.}
-Round 14 was then reviewed \emph{cold} by a fresh session of the strongest
-available model, per the project's packet protocol (manuscripts only; all
-prior reports withheld).  The verdict was \emph{gap}, with the most precise
-delimitation the project has had.  On the positive side, the reviewer
-\emph{reconstructed} --- not merely read --- the active-virtual-bag semantic
-layer and found it sound, calling its amalgamation and truth lemmas the
-strongest versions of these results in the stack's history; strong equality
-survived its sharpest uniqueness probes in both directions; the composition
-table and the small-width patchwork instances were re-derived from scratch.
-On the negative side, the critical finding is structural: a valid
-active-virtual-bag abstraction is a \emph{pair} --- a finitely-labelled tree
-plus an unbounded relational enrichment that is not carried by any label ---
-so the automaton theorem must decide an existential-\emph{projection}
-language, a statement the stack never formulates; and the sketched monitor
-design is \emph{unsound as described}, because independent alternating run
-copies cannot be forced to guess the off-label data consistently (the
-reviewer exhibits a machine-checked configuration in which every sketched
-check passes while no coherent enrichment exists, the required value being
-pinned to the empty set $\comp(\PP,\PP)\cap\comp(\PP,\DR)=\varnothing$).
-Three natural repairs (label annotation, profile quotienting, canonical
-guessing) are each shown blocked by facts the stack itself establishes.
-Two further findings concern the width layer: the liveness cost of deferred
-existential requests is never integrated into the width accounting, and the
-surviving width lemma's recurrence does not close as written (its witness
-generation can cascade at fixed rank; the identified fix is a single
-decreasing measure).  The reviewer's structural summary deserves quotation:
-across the last three rounds ``the gap has migrated; it has not closed'' ---
-from bounded labels with an unproved existence claim, to restricted rows
-that broke width, to total semantic data with no decision procedure.  The
-ledger stands at nine reviews, nine defects; for the third time, a cold
-review found what context-loaded audits had missed.  The recommended
-round-15 alternatives are a bounded-interface or uniformization lemma making
-the enrichment label-representable, or abandoning the tree-automaton layer
-for a mosaic/type-elimination decision procedure running directly on the
-infinitary abstraction, whose model-construction half the review certifies
-as already in place.  Status unchanged: \emph{strongly supported, not
-certified} --- a semantic theory in the best shape it has ever been, and a
-decision layer that remains unwritten.
-
-
-\paragraph{Round 15 (July 2026): the decision layer, without automata.}
-Executing the ninth review's second alternative, round 15 removes the
-automaton layer entirely and replaces it by a \emph{cluster quasimodel}
-certificate: a finite set of Hintikka types with safe links, a finite
-catalogue of small closed atomic cluster patterns in which every
-existential demand is fulfilled within one gluing step (so there are no
-promissory witnesses and no parity condition at all --- the deferral
-defects of the early rounds are structurally excluded), long-range
-conditions over a newly isolated \emph{fold lattice} --- the closure of
-the RCC5 atoms under set-composition, shown by exhaustive machine check
-to contain exactly ten sets, each a vertical singleton or containing a
-horizontal atom --- and a shared core cluster for uniquely realizable
-types (absorbing the ninth review's shared-witness probe with no
-liveness cost).  Global coherence is constructed once, in the soundness
-proof, by iterated patchwork over the unfolding together with a
-canonical horizontal selection on the fold lattice; no run-time device
-guesses anything, so the ninth review's critical finding does not apply
-structurally.  The width bound is re-proved under a single strictly
-decreasing measure, resolving the review's third finding, and the sole
-remaining external input is the RCC5 patchwork property --- the two-way
-parity-automaton emptiness dependency is gone, which also shortens the
-eventual mechanization path.  A new harness checks the fold lattice
-exhaustively, probes the steering keystone on 250 random glue steps
-(all realizable; a negative control fails as it must), and
-cross-validates the acceptance semantics against the cover-tree tableau
-on all eleven historical diagnostics plus a 200-concept random sweep
-with no disagreements.  Round 15 designates its own weak points (the
-steering induction, the horizontal normal form for extraction, and
-one-step saturation at bounded width), is authored by the same lineage
-that wrote round 13, and is unreviewed: after nine reviews and nine
-defects it should be presumed to contain the tenth until an adversarial
-review --- next, by the other lineage --- fails to find it.  Status
-unchanged: \emph{strongly supported, not certified}.
-
-
-\paragraph{What survives of the split-forest models in round 15.}
-Since the decision layer has now changed shape three times, it is worth
-stating precisely how much of the original split-forest model class
-(GPT-5.4, April 2026) is still load-bearing.  The answer is: essentially
-all of the model theory, and none of the successive decision machinery.
-Witness thinning is unchanged and remains the first step of the
-extraction.  The saturated side contexts survive \emph{verbatim} --- the
-round-15 cluster patterns are exactly the saturated bags of Theorem A,
-and the one-step demand condition is the saturation discipline restated.
-Split copies for incomparable superparts survive as the gluing
-interfaces of the pattern catalogue (running intersection playing the
-role of the old overlap maps).  The generated containment forest
-survives as the \emph{unfolding}: infinite towers are infinite chains of
-pattern copies, and the old vertical-closure lemma
-($\comp(\PP,\PP)=\{\PP\}$) survives as the transitive-safety condition
-together with the singleton case of the fold analysis.  Strong equality
-as exact occurrence identity survives and is extended by the core
-cluster, which gives semantically unique elements one global occurrence
-rather than quotienting copies.  Finally, the residual-frontier
-principle of the early rounds --- only $\DR/\PO$ may remain
-unrepresented --- reappears, generalized and machine-checked, as the
-fold-lattice fact that every unrepresented long-range relation is
-chain-forced vertical or admits a horizontal value.  What has been
-discarded along the way is exactly the succession of decision devices:
-the hand-written certificate clauses of rounds 2--10, the interface
-transformers of round 11, the relation-vector shadows of rounds 12--13,
-the guessed enrichment and parity automata of rounds 11--14.  In this
-sense the round-15 certificate is the most literal finite image of the
-split-forest model class the project has produced: it \emph{is} the
-split forest, folded by pattern isomorphism, with the fold lattice
-bounding what the folding forgets.
-
-
-\paragraph{The tenth review (July 2026): round 15 falls at its designated
-keystone.}
-GPT-5.5's targeted pass broke round 15 exactly where the manuscript
-pointed: the steering condition of the canonical completion is stated
-pairwise (each unrepresented pair must admit a safe horizontal value in
-its fold), and a minimal machine-checked witness --- two safe sets
-$\{\PO\}$ and $\{\DR\}$ over an already-realized $\PP$ edge, with
-$\comp(\PP,\DR)=\{\DR\}$ pinning the pair the first set cannot reach ---
-shows the pairwise condition passes while no joint completion exists.
-The post-mortem sharpened the finding: the witness configuration is
-semantically unrealizable, so the condition accepts what it should
-reject, and the repair --- making the condition \emph{joint}, requiring
-a closed completion of the finite domain problem per gluing profile ---
-provably cannot hurt completeness, since extraction from a real model
-always supplies the joint solution.  The review also exposed a
-spec-versus-test mismatch in the accompanying harness, which had
-validated a stronger discipline than the manuscript stated; the harness
-now tests the condition as written and confirms the defect at scale.
-The ledger stands at ten reviews, ten defects, and the failure genus is
-the project's single recurring shape --- pointwise checks that do not
-compose jointly --- in its fourth incarnation.  Two things did not
-break, again: the split-forest model class, and the round-15
-architecture around the failed condition (the fold lattice, one-step
-clusters, and the core were not reached).  The round-16 direction is
-fixed and small: replace the pairwise steering condition by the joint
-per-profile amalgamation check.  Status unchanged: \emph{strongly
-supported, not certified}.
-
-
-\paragraph{Round 16 (July 2026): the joint selection becomes certificate
-data.}
-The repair of the tenth defect implements the reviewer's own closing
-recommendation: the certificate now stores, per gluing edge, a
-\emph{steering function} from finite interface states (type, row over
-the separator, safety signature) to fresh rows, subject to four finite
-conditions including a pair condition over the \emph{reachable} pair
-states --- computable from the certificate itself by a least fixed
-point, because every long-range value in the unfolding is generated by
-the certified functions.  The canonical completion of the soundness
-proof thereby becomes deterministic: no pointwise choice survives
-anywhere, each triangle class is discharged by a certified condition,
-and the tenth review's witness family is provably rejected (machine
-checks: soundness on all accepted random glue steps, zero false
-accepts).  The residual debt is concentrated in one named and
-\emph{measured} obligation: the uniformization lemma --- extraction
-must factor the model's per-instance values through states --- which at
-the coarsest granularity fails on $1.4\%$ of random jointly-realizable
-steps, with two finite repair routes identified; soundness does not
-depend on it, so the risk direction is over-rejection only.  The ledger
-stands at ten reviews, ten defects; round 16 is reviewer-authored and
-unreviewed, and should be presumed to contain the eleventh.  Status
-unchanged: \emph{strongly supported, not certified}.
-
-
-\paragraph{The eleventh review (July 2026, cold): the first no-counterexample
-verdict.}
-The round-16 stack was cold-reviewed by a fresh session of the other
-lineage.  For the first time in eleven reviews, the referee found
-\emph{no counterexample and no false lemma}: the verdict is ``gap ---
-not certified as written,'' with the explicit assessments that no
-algebraic counterexample to the intended theorem was found, that the
-four-class triangle taxonomy is algebraically adequate under
-strengthened invariants, that the uniformization delimitation is sound
-(failure would mean over-rejection, not wrong answers), and that with
-six named repairs ``the intended soundness argument [is] very likely
-correct.''  The repairs demanded are formalization obligations rather
-than corrections: an explicit finite transition system for the
-reachability fixed point, an ordered-pair transport rule (supplied
-verbatim by the reviewer), a proved operational-inclusion invariant
-including the shared-core case, the separator-covers-core statement,
-explicit pair orientation, and stored witness choices; the width
-budgets remain the standing deeper item, alongside uniformization.  The
-reviewer independently re-derived the ten-set fold lattice, matching
-the project's computation exactly.  The ledger is now eleven reviews:
-ten defects with witnesses, and one demand for unwritten formalization
---- the qualitative shift the choice-free round-16 design was built to
-force.  The status label does not change on one such verdict:
-\emph{strongly supported, not certified}.
-
-
-\paragraph{Round 17 (July 2026): the work order implemented.}
-Round 17 supplies everything the eleventh review demanded: the gluing
-normal form (every pre-existing member of a new pattern copy lies in
-the separator; separators consist of parent-copy members and core
-references; the core is a permanent interface at every step), the
-explicit finite transition system (singleton states with persistent
-core rows and a total three-case row decomposition; ordered pair states
-with simultaneous converses, seeded, created at birth, and transported
-by the reviewer's own rule, underpinned by a no-overwrite lemma), a
-\emph{proof} of the operational-inclusion invariant --- every state and
-every ordered pair actually occurring in an unfolding lies in the
-computed reachable sets, with the shared-core cases discharged by core
-persistence and birth-pattern membership --- and a stored witness map
-making the canonical unfolding a function of the certificate, so the
-determinism claim is exact.  An executable rendering of the system
-verifies the inclusion invariant on twelve hundred random unfoldings
-without a violation and confirms that the transport rule is
-load-bearing (birth-only fixed points miss transported pairs in every
-catalogue that has them).  By the eleventh reviewer's stated criterion,
-the soundness half of the decision layer is now fully written ---
-explicit system, proved inclusion, no free choices --- and, being
-literally in transition-system form, has become a transcription target
-for mechanization rather than a research problem.  The delta is
-unreviewed; the completeness side retains its two named open lemmas
-(the width budgets and uniformization).  Status unchanged:
-\emph{strongly supported, not certified}.
-
-
-\paragraph{The twelfth review (July 2026): the transport rule has a seam.}
-Framed as an acceptance test against the eleventh review's own work
-order, the twelfth review rejected round 17 on a precise, finite
-finding: the written ordered-pair transport rule fires only when both
-endpoints are updated by the ambient transition, while a pre-existing
-member of the parent copy outside the child separator receives a
-birth-adjacent catalogue state instead --- so mixed ambient/parent-copy
-pairs silently escape the fixed point, the pair condition never
-inspects them, and the round-16 counterexample triangle recurs at
-exactly that seam (machine-checked, reproduced).  Two instructive
-meta-findings accompany it: the executable harness had implicitly
-implemented the correct \emph{total} transport, which is why twelve
-hundred simulations showed nothing --- the defect lives in the written
-rule, not the intended construction --- and the harness itself was
-caught being hash-seed-nondeterministic.  The stack also grew stronger
-where it held: the reviewer failed to break the parent-plus-core normal
-form and volunteered the running-intersection argument for its
-extractability, found no overwrite witness, and discharged the
-ordered-pair item cleanly.  The ledger stands at twelve reviews: eleven
-defects with witnesses, one no-counterexample verdict.  The round-18
-repair is fully specified by the reviewer (a total endpoint-update
-operation, transport under it, the re-proved inclusion case analysis,
-defined path semantics, and a deterministic branching harness).
-Status unchanged: \emph{strongly supported, not certified}.
-
-
-\paragraph{Round 18 (July 2026): total transport, and the birth flip.}
-Round 18 implements the twelfth review's repair package in full, with
-one sharpening that working out the demanded path semantics forces: the
-total endpoint update has \emph{three} clauses, not two.  Besides the
-review's ambient case (recorded steering rows carried forward) and
-resident case (catalogue read-off), cross-branch occurrences require a
-\emph{birth-flip} clause --- a younger occurrence's entry to an older
-separator member is the converse of the steering value the older side
-received at the younger's birth --- which is precisely the
-least-common-ancestor role change the review had flagged as undefined.
-A birth-dichotomy lemma (at every step, every pre-existing occurrence
-is co-patterned or steered; there is no third case) makes the update
-total and every pair value single-assignment; pairs are transported in
-lockstep; the inclusion theorem is re-proved by a five-way
-endpoint-class analysis in which the review's mixed seam becomes an
-ordinary transport step; and an order-invariance lemma derives the
-path semantics.  The accompanying harness makes the review's
-methodological lesson structural: states are computed from the written
-rules alone, never from the realized structure, and cross-checked
-against ground truth on genuinely branching unfoldings --- one hundred
-and fifty runs without divergence, thousands of mixed and flip pairs
-exercised, a constructed negative control, and hash-seed-deterministic
-output; its own development re-derived, empirically, the review's
-injective-slot-map discipline before it was enforced.  The two open
-completeness lemmas (width budgets, uniformization) are unchanged; the
-delta is unreviewed, and after twelve reviews the presumption of a
-further finding applies.  Status unchanged: \emph{strongly supported,
-not certified}.
-
-
-\paragraph{The thirteenth review (July 2026): the flip vindicated; the
-prose still short.}
-The thirteenth review rejected round 18 while confirming its central
-claim: the birth-flip clause is necessary --- the previous review's own
-two-case update was incomplete, exactly as round 18 had argued --- and
-correct as far as it goes.  What failed, again, is the prose rendition
-of a total recursive definition: the written case split misses the
-co-birth inherited-slot configuration (two occurrences born in the same
-copy, only one carried forward), the down-clause reads its value from
-the wrong step for inherited separator members, the omission is
-composition-critical, and the order-invariance lemma is refuted outright
-by a sibling-interleaving witness --- only canonical-order determinism,
-which the certificate's witness map already provides, survives.  The
-accompanying harness was caught, for the second time, knowing more than
-the manuscript: its code contained both correct lookup rules absent
-from the text, and its negative control used a salted hash despite a
-determinism claim.  The ledger stands at thirteen reviews: twelve
-defects with witnesses, one no-counterexample verdict.  The repair is
-again fully specified (a source-oriented update that looks every value
-up where it was recorded, and the weakened determinism lemma) --- and
-the meta-lesson of three consecutive text-versus-code defects, against
-zero mathematical ones, is that the next round should be written in a
-proof assistant, where the definition and the artifact cannot diverge.
-Status unchanged: \emph{strongly supported, not certified}.
-
-\paragraph{Round 19 (July 2026): the transport layer moves to Lean.}
-Round 19 executes that meta-lesson literally.  The certificate transport
-layer --- the operational unfolding and the thirteenth review's
-source-oriented update --- is now \emph{defined} in Lean~4 (core
-language, no libraries): the file \texttt{formal/Round19Transport.lean}
-is the normative artifact, and the accompanying paper is commentary on
-it.  Totality of the update, the exact property whose prose renditions
-failed in rounds 17 and 18, is enforced by the compiler: the definition
-is accepted only if every case is covered.  Canonical-order determinism
-is definitional --- a certificate's attachments are a list, so the
-refuted invariance lemma is not restated but replaced by construction.
-The kernel checks, on every build, the finite composition facts the
-argument leans on (among them
-$\comp(\PP,\DR)=\{\DR\}$ and horizontal absorption), and --- notably ---
-the thirteenth review's own findings as theorems: the round-18 case
-split provably fires no clause on the co-birth witness, and the repaired
-update provably agrees with the operationally unfolded frame on both
-witnesses.  A mirror harness cross-checks a Python transcription of the
-Lean definitions against the operational fold on random certificates
-whose attachment targets range over arbitrary inherited members ---
-precisely the geometry of the last two defects --- with fourteen
-thousand pairs and no disagreement.  One proof obligation is stated and
-deliberately left open (the single \texttt{sorry}): that the update
-characterizes the unfolded frame on all wellformed certificates ---
-the statement itself can no longer drift, and proving it is round 20.
-During development the mirror caught three definitional defects in the
-Lean file before any reviewer saw them (a padding inconsistency, a
-duplicated-occurrence configuration now excluded by a wellformedness
-clause, an insufficient recursion bound) --- the dominant defect class
-of the last three reviews, now caught by the toolchain instead of the
-referee.  Round 19 is unreviewed; its natural review is different in
-kind: attack the Lean statements, or prove the \texttt{sorry}.  Status
-unchanged: \emph{strongly supported, not certified}.
-
-\paragraph{Round 20 (July 2026): the \texttt{sorry} is proved.}
-Round 19's single stated obligation is discharged: the
-characterization theorem --- the source-oriented update agrees with
-the operationally unfolded frame on every distinct existing pair ---
-is now a kernel-checked theorem, and the Lean artifact builds with
-\emph{zero} \texttt{sorry}.  The proof is a plain induction on the
-canonical step list, available exactly because the thirteenth
-review's canonical-order determinism is definitional in the encoding;
-the companion fuel-adequacy obligation is proved with an exact
-recursion threshold, and non-vacuity is witnessed by a concrete
-wellformed certificate with an inherited slot to which the theorem is
-applied end to end.  The mathematically substantive outcome is that
-the proof \emph{forced four additional wellformedness clauses}, each
-intended since the cluster-quasimodel rounds and silently honored by
-the mirror harness's generator, none previously stated: slot targets
-must be real in-range occurrences; each template slot has exactly one
-target; pattern nets are converse-coherent (the R2 half of ``patterns
-are closed atomic networks'' --- without which the birth flip is
-unsound); and the steering function reads only the actual interface
-rows.  In prose, each of these would have been the fourteenth
-review's defect; in the proof assistant they surfaced as
-unprovable-goal errors during development and were fixed the same
-session.  What remains above the transport layer is the port of the
-steering conditions, canonical completion, and inclusion theorem to
-Lean; below it, the standing completeness mathematics and the single
-external input (the RCC5 patchwork property).  Rounds 19--20 are
-unreviewed; the natural review is to attack the Lean statements.
-Status unchanged: \emph{strongly supported, not certified}.
-
-\paragraph{Round 21 (July 2026): the S-layer soundness kernel, in the
-kernel.}
-The same Lean artifact (still zero \texttt{sorry}) now proves the
-statement the transition-system harnesses only ever checked
-empirically: a wellformed certificate whose steering satisfies the
-S-condition --- the manuscripts' composition check S4, stated on
-certificate-computable values --- unfolds operationally to a frame
-that is composition-closed on every distinct triangle,
-converse-coherent, and EQ-free on distinct pairs; that is, to a proper
-atomic RCC5 network presentation.  The proof is a max-birth rotation
-argument: every triple contains an occurrence of maximal birth step,
-the S-condition covers the triangle with that occurrence in the middle
-position, and two finite kernel-checked rotation facts together with
-converse coherence of the update rotate everything else into place ---
-the birth structure of the canonical fold does all the work, with no
-induction beyond a trichotomy.  Both poles are witnessed concretely in
-the kernel: a certificate satisfying the S-condition whose frame
-closes end to end, and an adversarial certificate --- the harness-era
-negative control, now a theorem --- that steers against a
-$\comp(\DR,\PO)$-pinned geometry, provably violates the triangle
-clause, and provably breaks closure at exactly the predicted triple.
-What remains above this layer is the catalogue level: the manuscripts
-check the S-condition on finitely many interface states and conclude
-closure for \emph{all} unfoldings, while the formalized certificate
-encodes one canonical unfolding; lifting the condition to a finite
-catalogue with a reachability fixed point is the natural next round.
-Rounds 19--21 are unreviewed.  Status unchanged: \emph{strongly
-supported, not certified}.
-
-\paragraph{Round 22 (July 2026): the catalogue level.}
-The per-unfolding S-condition quantifies over the occurrences of one
-canonical unfolding; the same Lean artifact (still zero
-\texttt{sorry}) now lifts the check to the catalogue.  The
-catalogue-level condition is stated on the certificate's shared data
-alone --- core net, templates, steering function --- with enumerated
-abstract rows in place of occurrences, so one finite check is
-independent of the step count; together with pattern faithfulness
-(the thirteenth review's parent-pattern agreement, a structural
-per-certificate condition the next round's generator discharges by
-construction), it provably implies the full per-unfolding S-condition
---- one finite check certifies unboundedly many unfoldings, with the
-closure, converse-coherence and properness theorems downstream.  The
-mathematical heart is the steered-steered case: the joint steering of
-the certified-steering round, made exact --- the old pair's value
-enters the abstract check constrained through every separator member,
-the constraint supplied by closure below the current step in a
-strengthened induction.  Both poles are again kernel-checked: the
-positive witness passes the catalogue check and recovers its
-per-unfolding condition through the abstract route, while the
-adversarial witness's catalogue check provably fails at exactly the
-reachable row --- the same triple where its operational frame breaks.
-Next: the catalogue generator (attachment rules in the gluing normal
-form, with wellformedness and faithfulness by construction), then the
-logic layer and the limit passage.  Rounds 19--22 are unreviewed.
-Status unchanged: \emph{strongly supported, not certified}.
-
-\paragraph{Round 23 (July 2026): the catalogue generator.}
-Round 22 certified a given certificate but still required, per
-certificate, that it be wellformed and faithful; round 23 discharges
-both by construction.  The same Lean artifact (still zero
-\texttt{sorry}) now defines a catalogue --- templates, attachment
-rules in the gluing normal form (each child slot inherits a parent
-member occurrence, never core), a root, and template-indexed steering
---- and a builder that turns a plan into a certificate.  For any
-structurally sound catalogue and any valid plan, the built
-certificate is provably wellformed and faithful; faithfulness ---
-the thirteenth review's parent-pattern agreement, which the previous
-round had isolated as the last per-certificate hypothesis --- is
-obtained by a parent-chain induction from each rule's local
-port-agreement condition.  Consequently the catalogue-level check
-alone yields the full per-unfolding soundness condition, and hence
-closed atomic frames, for \emph{every} plan: ``every unfolding of the
-catalogue'' is now a theorem about a syntactic object rather than a
-hypothesis pair.  A concrete catalogue witness drives the entire
-transport-to-closure pipeline to a closed frame with no
-per-certificate proof.  With this the relational soundness pipeline is
-complete end to end, from catalogue syntax to closed atomic frames;
-what remains on the soundness side is the logic layer (the description
-logic's syntax, types and truth lemma) and the limit passage
-(absorbing the patchwork property), and on the completeness side the
-open width and uniformization questions.  Rounds 19--23 are
-unreviewed.  Status unchanged: \emph{strongly supported, not
-certified}.
-
-\paragraph{Round 24 (July 2026): the logic layer.}
-Rounds 19--23 build the atomic RCC5 frame; round 24 puts the
-description logic itself on top --- the first time $\ALCIRCC$, and not
-merely the relational geometry, enters the kernel.  The same Lean
-artifact (still zero \texttt{sorry}) now defines the concept syntax in
-negation normal form, its semantics over a frame, Hintikka systems
-(locally coherent type labellings with one-step existential
-fulfilment), and proves the truth lemma: every concept in an
-occurrence's type is satisfied there.  Notably, one-step fulfilment ---
-no promissory witnesses, hence no parity or eventuality condition --- is
-the structural payoff of the split-forest normal form, and is exactly
-the obligation the earlier no-automata thread repeatedly failed to
-discharge; here it is a non-issue by construction.  Two bridges connect
-the layer to the pipeline: the induced interpretation of a wellformed,
-S-conditioned certificate is proved to be a legitimate RCC5
-interpretation frame (the frame conditions read straight off the
-closure and converse theorems), and the capstone turns any such
-certificate carrying a root-anchored Hintikka labelling into an RCC5
-model of the target concept.  A concrete witness exhibits a
-satisfiable concept together with its model.  The soundness pipeline
-now runs end to end, from catalogue syntax to a model of the logic;
-the one hypothesis not yet produced by construction is the Hintikka
-labelling itself, which the next round's generator must emit for a
-satisfiable input.  Rounds 19--24 are unreviewed.  Status unchanged:
-\emph{strongly supported, not certified}.
-
-\paragraph{Round 25 (July 2026): completeness of the Hintikka
-abstraction.}
-Round 24 proved the soundness direction; round 25 proves the
-abstraction is also complete, and --- as importantly --- states
-precisely what remains open.  The same Lean artifact (still zero
-\texttt{sorry}) now proves that every interpretation's own
-satisfaction relation is a Hintikka labelling, whence satisfiability
-and Hintikka-realizability coincide: a concept is satisfiable over an
-RCC5 frame if and only if some RCC5 frame carries a Hintikka labelling
-containing it.  The type-system certificate therefore loses nothing
-relative to models.  The certificate/generation interface is also
-proved, and a concrete two-point model discharges a genuine
-existential in one step --- the demand-fulfilment the earlier
-no-automata thread never achieved by hand.  What round 25 does not do,
-and explicitly neither proves nor assumes, is the one remaining
-target, stated as a named proposition in the artifact: that every
-satisfiable concept admits a \emph{finite} catalogue and labelling.
-Its two sub-parts are the project's long-standing open items --- the
-width budget and uniformization --- which are genuine mathematics.
-The value of the round is the delimitation it makes machine-legible:
-the entire soundness pipeline and the completeness of the abstraction
-are now kernel-checked, and nothing else stands between the
-development and decidability except finite realizability.  Rounds
-19--25 are unreviewed.  Status unchanged: \emph{strongly supported,
-not certified}.
+\paragraph{The knife's edge.}
+F6 is not merely the decidability keystone; it is \emph{the same fact} as
+the obstruction to proving the problem \emph{undecidable}.  To force
+undecidability one would force a rigid coordinate grid, and the abstract
+composition table cannot force the coincidence condition
+(``east-of-north $=$ north-of-east'')---exactly because it cannot pin a
+horizontal relation to a single value.  Turn that looseness into a bound
+and one obtains decidability; circumvent it and force a grid and one
+obtains undecidability.  The two open directions are one question seen
+from two sides, which is why neither has been settled in over twenty
+years.
 
 \subsection{What has been achieved}
+\label{ssec:achieved}
 
-If the split-forest decidability argument is correct---and the
-soundness direction together with the extensive computational
-evidence support this---then concept satisfiability in
-$\ALCIRCC{5}$ is decidable.  This would settle a problem that
-has been open since Wessel's doctoral work in 2002/2003 and was
-explicitly flagged by Lutz \& Wolter in 2006 as ``perhaps the
-most interesting'' open problem suggested by their work.  As of
-this writing the argument is \emph{strongly supported but not
-certified}.  The primary statement is the split-forest $+$
-parity-tree-automata proof (\S\ref{ssec:soundness-completeness}); the
-no-automata thread that preceded it reached round~10 after a cold
-review of round-9 found a dual descendant-tower defect and two
-foundational gaps (\S\ref{ssec:round10-automata}), and its repairs
-reduced to automaton-shaped lemmas.  That automata proof was itself then
-cold-reviewed twice (the 5th and 6th cold reviews) and repaired; the current
-round-12 patchwork-bag manuscript (see the preliminary conclusion above) has
-not been cold-reviewed or machine-certified; a seventh (hot) review in
-July~2026 found its truth lemma incomplete (\S\ref{ssec:july2026-update}).
-
-The decidability argument as of May~2026 rests on \emph{two}
-core papers, which together aim to establish:
-\[
-  \text{$C_0$ satisfiable}
-  \;\;\Longleftrightarrow\;\;
-  \text{$C_0$ admits a valid finite split-forest certificate.}
-\]
-The ($\Leftarrow$) (soundness) direction is established; the
-($\Rightarrow$) (completeness) direction is the one with the open
-gap.  A separate operational layer realizes the check
-algorithmically and is empirically validated.
-
-\medskip\noindent\textbf{Theoretical layer (establishes
-decidability).}
-\begin{enumerate}
-  \item The \emph{v1 split-forest paper}~\cite{SiblingCompleted}
-    (GPT-5.4): defines the cover-tree decomposition, the
-    sibling-interface descriptors, and the patchwork-lemma route,
-    and proves Thms~1.17--1.19 (\textbf{soundness}: a valid
-    finite quotient unfolds to a strong abstract RCC5 model
-    satisfying $C_0$).  The v2 sibling-interface
-    delta~\cite{SiblingInterfaceV2} replaces the surrounding
-    Def~1.5 / Def~1.7 / Thm~1.20-sketch with the corrected
-    generated-cover statements; the proofs of Thms~1.17--1.19
-    carry over verbatim.
-  \item The \emph{GPT-5.5 split-forest $+$ parity-tree-automata
-    proof}~\cite{GPT55AutomataRoute} (21~pages, the route promoted to
-    primary on 29~May~2026; its finite-abstraction keystone was then
-    twice repaired after cold review --- 5th review, then the 6th of
-    Theorem~B --- the current canonical statement being GPT-5.5's
-    round-12 patchwork-bag proof, which rests global RCC5 consistency
-    on the patchwork property and decides it with a two-way automaton):
-    the split-forest normal form
-    (shared with the v1 paper) plus a reduction of the finite search
-    problem to non-emptiness of a parity tree automaton, which is
-    decidable by construction.  The no-automata route that preceded
-    it --- most developed in the round-9 forced-verticalization
-    proof~\cite{GPT55Round9Sketch} with
-    companion~\cite{GPT55Round9Expanded}, reaching round~10 after the
-    round-9 cold review (\S\ref{ssec:round10-automata}) ---
-    formulates finite occurrence-sensitive split-forest certificates
-    with twelve validity conditions (V1)--(V12), establishes
-    \textbf{soundness} in full, and \emph{aimed} at
-    \textbf{completeness} via a finite certificate.  The
-    central architectural move (introduced in round 7, preserved
-    through rounds 8--9) is that finite labels live on
-    occurrence-sensitive \emph{pair shapes}
-    $\alpha(u,v)=(s_u,p_u,s_v,p_v,\iota(u,v))$ with incidence
-    tags $\iota\in\{\self,\eqtag,\up,\down,\side_R,\front_R\}$;
-    distinct laps of a blocking cycle satisfy $\iota\ne\self$ and
-    $\iota\ne\eqtag$, so the labelling preserves
-    blocking-not-equality while still discharging
-    $\PP/\PPI$ eventualities by request-closed cycles.  The one
-    completeness gap a cold Opus~4.8 review found in round-8 (D-1,
-    \S\ref{ssec:round8-review}):\@ a $\DR/\PO$ witness
-    composition-forced into an infinite pumped tower is repaired in
-    round-9 by composition-forced verticalization
-    (\S\ref{ssec:round9}), which GPT-5.5 ratified and integrated
-    with monotone-trace, bounded-threshold, and global-residual-frontier
-    lemmas.  Round-9 supersedes round-8, Claude's earlier
-    round-5/round-6 manuscripts, and the round-2 31-page repaired
-    proof~\cite{GPT55Repaired}, all retained as the historical audit
-    trail (see~\texttt{OUTDATED.md}~\cite{ALCIRCC5Outdated}).
-\end{enumerate}
-Subject to the D-1 repair not yet being independently certified,
-(1) and (2) aim to establish the biconditional displayed above; the
-soundness direction ($\Leftarrow$) is established unconditionally.  The certificate
-space is bounded by $B(C_0) = 2^{2^{p(n)}}$ as an effectively
-computable bound, validity is finite-graph checkable, and the
-enumeration terminates.
-
-\medskip\noindent\textbf{Operational layer (algorithmic
-realization, empirically validated).}
-\begin{enumerate}\setcounter{enumi}{2}
-  \item The \emph{cover-tree tableau}~\cite{CoverTree} (GPT-5.4):
-    packages the split-forest approach as an operational calculus
-    with rank-$d$ blocking.
-  \item The \emph{implementation paper}~\cite{CoverTreeImpl}
-    (Claude): documents a concrete five-check algorithm (CT1--CT5),
-    cross-validated against an independent quasimodel reasoner on
-    911 original tests plus 400+ Round-2 adversarial tests with
-    zero mismatches.
-\end{enumerate}
-
-\medskip\noindent\textbf{Computational verification of the
-combinatorial claims.}  In parallel with the proof work, six
-Python work packages (WP1--WP6) cross-check the finite
-combinatorial content of the round-2 31-page repaired
-proof~\cite{GPT55Repaired} (now historical):  RCC5 composition
-table by exhaustive subset enumeration (WP1), bounded
-certificate-soundness fuzzing for (V1)/(V3)/(V4)/(V5)/(V9)/(V10)
-(WP2), small-model SAT/UNSAT oracle (WP3), multiple-superpart
-$C_{AB}$ stress (WP4, folded into WP2/WP3), request-closed
-blocking-cycle tests (WP5, folded into WP2), and mosaic closure
-search (WP6).  Three further self-contained pure-stdlib scripts
-(WP7--WP9) exercise the round-7 stress concepts: comparable side
-witnesses, blocking-not-equality, and split copies.  All nine
-\textbf{PASS}; no counterexample was found.
-
-\medskip\noindent\textbf{The gap between the two layers.}
-The decidability claim for $\ALCIRCC{5}$ rests on (1) and (2)
-alone.  Papers (3) and (4) describe a \emph{plausible and
-empirically validated} algorithmic realization, but a formal
-derivation showing that CT1--CT5 exactly capture the round-7
-valid-certificate conditions (V1)--(V12) has not been written.
-CT5 in particular was added as a patch after Opus~4.7's
-adversarial review---not derived from the split-forest
-semantics---and while empirical agreement between two
-independently designed reasoners is strong evidence that such a
-derivation should be possible, it is not itself a proof.
-See~\cite[\S7]{CoverTreeImpl} for a detailed breakdown.
-
-\subsection{What remains open}
+Decidability of $\ALCIRCC{5}$ remains \emph{open}.  What the project has
+produced, and what is genuinely certified, is the following.
 
 \begin{itemize}
-  \item \textbf{Exact complexity.}  The PO-coherent fragment has a
-    doubly exponential quotient bound
-    (2-$\EXPTIME$)~\cite{TwoTierQuotient}.  An $\EXPTIME$ upper
-    bound matching the lower bound is not established.
-
-  \item \textbf{$\ALCIRCC{8}$.}  RCC8 also has the patchwork
-    property, so the cover-tree approach should extend.  The key
-    difference is the $\TPP/\NTPP$ distinction, which may require
-    a finer status partition.  This has not been worked out.
-
-  \item \textbf{Human verification.}  \emph{None of the proofs in
-    this project have been verified by human domain experts.}  The
-    AI-generated results should be treated as conjectures supported
-    by computational evidence, not as established theorems.
+  \item \textbf{The sound semantic foundation.}  The split-forest normal
+    form (Theorem~A)~\cite{SiblingCompleted,SiblingInterfaceV2}: every
+    satisfiable concept has a tree-like split-forest model.  Found sound
+    by every cold review; never broken.
+  \item \textbf{A machine-checked soundness pipeline and
+    abstraction-completeness.}  In Lean~4 (zero \texttt{sorry}): a valid
+    finite certificate unfolds to a genuine $\mathrm{RCC5}$ model of the
+    concept, and the Hintikka abstraction is faithful (satisfiability and
+    Hintikka-realizability coincide).  The soundness half of the
+    decidability equivalence is thus kernel-certified.
+  \item \textbf{A machine-checked, non-oracular decision-grade
+    reduction.}  A fixed Boolean checker of first-order finite
+    certificate data, proved sound, yielding \texttt{Decidable}
+    satisfiability by finite search modulo a single open premise---which
+    is exactly F6 $\wedge$ W2$'$.
+  \item \textbf{The problem reduced to one well-posed keystone.}  The
+    entire remaining difficulty is F6 (bounded live width), sharpened to
+    the identity-selector-minor dichotomy, with W2$'$ folded in.  This is
+    a single lemma a future solver can aim at, not a diffuse open
+    question.
+  \item \textbf{A certified local theory and a decidable fragment.}  The
+    $\mathrm{RCC5}$ normal form is machine-certified
+    (\texttt{formal/RCC5NormalForm.lean}); the $\forall\PO$-free /
+    PO-coherent fragment is decidable~\cite{TwoTierQuotient}.
+  \item \textbf{The undecidability routes shown blocked}
+    (\S\ref{sec:undecidability}), with the coincidence obstruction identified
+    as the fact shared with the decidability keystone.
+  \item \textbf{A methodology.}  Adversarial cold review as a standard
+    step, and a division of labour between models, both discussed below.
 \end{itemize}
+
+The formalization details (the round-19--30 progression, the two cold
+reviews of the Lean, the exact theorem names and axiom footprints) are
+recorded in \texttt{LEAN.md}; \texttt{README.md} gives the current-status
+summary.
+
+\subsection{What remains open, and a final assessment}
+\label{ssec:final}
+
+\paragraph{Open.}
+\begin{itemize}
+  \item \textbf{Decidability itself (F6).}  Whether some concept forces
+    unbounded live width---equivalently, an unbounded rigid horizontal
+    crowd, equivalently unbounded identity-selector minors.  This is the
+    24-year-old open problem, now cleanly stated.  W2$'$ folds into it.
+  \item \textbf{Exact complexity.}  The PO-coherent fragment has a
+    doubly exponential quotient bound (2-$\EXPTIME$)~\cite{TwoTierQuotient};
+    a matching $\EXPTIME$ upper bound for it is not established, and no
+    complexity bound is claimed for the full logic.
+  \item \textbf{$\ALCIRCC{8}$.}  RCC8 also has the patchwork property, so
+    the approach should extend; the $\mathrm{TPP}/\mathrm{NTPP}$
+    distinction may require a finer status partition.  Not worked out.
+  \item \textbf{Human verification.}  \emph{None of these proofs have
+    been verified by human domain experts.}  The AI-generated results
+    should be treated as conjectures supported by machine checking and
+    computational evidence, not as established theorems---with the
+    kernel-certified soundness pipeline and the certified normal form the
+    exceptions, and those still unreviewed by humans.
+\end{itemize}
+
+\paragraph{A final honest assessment.}
+After roughly thirty repair rounds and fifteen adversarial reviews, the
+project has reached a genuine \emph{local optimum}.  The local algebra of
+$\mathrm{RCC5}$ is exhausted and, in one case, certified; the soundness
+side of the decidability argument is machine-checked; and the entire
+remaining difficulty has been compressed into a single well-posed lemma
+(F6) which is provably the \emph{same} fact that blocks a proof of
+undecidability.  Each further round now buys a smaller delta---a cleaner
+restatement of the same keystone, or a more specific local lemma---rather
+than movement on the summit.  The honest one-line status is unchanged
+from the project's standing label: \emph{strongly supported, not
+certified}, with the soundness pipeline, the abstraction faithfulness,
+and the $\mathrm{RCC5}$ normal form the certified exceptions.
+
+We therefore offer the work in the shape it has actually taken: not a
+resolution of a two-decade open problem, but that problem
+\emph{reduced}---honestly, checkably, and with a machine-checked
+surround---to its irreducible core, together with a map of why that core
+is hard and a named toolbox for attacking it.  If the question is ever
+settled, we expect the resolution to begin from a map of this shape.
 
 \subsection{On LLM capabilities, strengths, and weaknesses
 (May~2026)}
