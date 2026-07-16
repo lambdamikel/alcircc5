@@ -7679,3 +7679,32 @@ reduction honest and decision-grade with the residual premise pinned to
 the open mathematics. F4 (completeness-side over-restriction) still
 outstanding. 5,303 lines, zero sorries, WP34 gate green. Status: strongly
 supported, NOT certified.
+
+## 2026-07-16 — round-30: F4 fixed (the last interface finding)
+
+User asked what F4's outstanding issue was, whether fixable, and whether
+to do it. Answer: F4 is SCat.net_r3 over-checking degenerate triples --
+when a member port p or q equals the fresh port .inr(.inr j), the check
+reads the template's junk diagonal (DR by default; the frame overrides
+diagonals to EQ), so it can spuriously reject valid non-DR certificates.
+Completeness-side over-restriction only, never unsound; masked by all-DR
+witnesses. Deferred at the 14th review over native_decide friction.
+
+Fixed cleanly (round-30):
+- SCat.net_r3 (and its SCatFin mirror) now guard p ≠ .inr(.inr j) and
+  q ≠ .inr(.inr j).
+- The KEY fact that makes this safe: the only consumer, fresh_tri, never
+  needs the degenerate case. Its ports px/py are memberPort of x/y, and
+  fresh_tri's own hxz/hyz give x,y ≠ born i jz, so px,py ≠ .inr(.inr jz)
+  (portOcc C i (.inr(.inr jz)) = born i jz definitionally). So fresh_tri
+  supplies the two new guards, and soundness (fresh_tri -> scat_scond ->
+  catalogue_soundness) is unchanged.
+- certC_scat / certK_scat: synthInstance.maxSize 4000 for the triple-
+  nested guarded implication -- the exact friction that deferred this,
+  now resolved with the round-29 maxSize knowledge.
+
+WP34 gate green (returncode 0 / 0 sorries; 5,309 lines); negative control
+certD still fires. All four interface findings F1-F4 are now addressed;
+the open items are exactly the mathematics F6 and W2'. Status unchanged:
+strongly supported, NOT certified. (Rounds 26-30 remain unreviewed --
+presume a 16th review finds something in the new ~560 lines.)

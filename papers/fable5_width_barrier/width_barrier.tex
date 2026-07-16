@@ -515,8 +515,27 @@ checker. What remains is exactly the completeness premise itself: a
 mathematics F6 $\wedge$ W2$'$. This does \emph{not} prove decidability;
 it makes ``decidable modulo a complete finite-certificate enumeration''
 an honest, kernel-checked reduction, with the residual premise pinned to
-F6 $\wedge$ W2$'$ (and F4, a completeness-side over-restriction,
-outstanding). Status unchanged: strongly supported, not certified.
+F6 $\wedge$ W2$'$. Status unchanged: strongly supported, not certified.
+\end{remark}
+
+\begin{remark}[Round-30: F4 fixed --- the last interface finding closed]
+The one interface finding still outstanding after round-29 --- F4, the
+\code{SCat.net\_r3} over-restriction --- is now repaired and
+machine-checked. The catalogue check enforced its triangle law for
+\emph{all} member-port pairs, including the degenerate case where a port
+\emph{is} the fresh port $\mathtt{inr(inr\ }j)$, where it read the
+template's junk diagonal self-value and could spuriously reject a valid
+certificate (\code{PP}$\notin\Comp(\code{PP},\code{conv DR})=\{\code{DR}\}$;
+machine-verified). It now guards $p\neq\mathtt{inr(inr\ }j)$ and
+$q\neq\mathtt{inr(inr\ }j)$, excluding exactly those junk triples. The
+repair is \emph{sound} because the sole consumer of \code{net\_r3} ---
+\code{fresh\_tri} --- never needs the degenerate case: its member ports
+map to real occurrences $x,y\neq\mathtt{born}\ i\ j$, so it supplies the
+two guards from its own hypotheses, and the soundness chain
+(\code{fresh\_tri}$\to$\code{scat\_scond}$\to$\code{catalogue\_soundness})
+is unchanged. So all four of the fifteenth review's interface findings
+(F1--F4) are now addressed, and the only open items are the mathematics
+F6 $\wedge$ W2$'$. Status unchanged: strongly supported, not certified.
 \end{remark}
 
 \section{The anatomy of forcing}\label{sec:anatomy}
