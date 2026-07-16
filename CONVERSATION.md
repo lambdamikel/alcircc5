@@ -7708,3 +7708,41 @@ certD still fires. All four interface findings F1-F4 are now addressed;
 the open items are exactly the mathematics F6 and W2'. Status unchanged:
 strongly supported, NOT certified. (Rounds 26-30 remain unreviewed --
 presume a 16th review finds something in the new ~560 lines.)
+
+## 2026-07-16 — consolidation: harvest the local theory, freeze keystone-chasing
+
+The regular-cover pivot's three-round update (WP81-83: ghost-guard
+elimination + uniform/non-uniform cross-policy characterizations + a
+FOURTH restatement of the keystone, Conjecture 20) confirmed the
+diminishing-returns diagnosis: the local algebra is now complete and the
+pivot itself admits the remainder "cannot be a purely local RCC5
+composition problem" (= F6, the 24-year keystone, unmoved). Decision:
+stop chasing the keystone on either route; harvest the genuinely-new,
+F6-independent local theory; keep the split-forest Lean artifact as the
+certified spine.
+
+Done:
+- formal/RCC5NormalForm.lean (CERTIFIED, propext-only, zero sorries): the
+  RCC5 normal form forward -- every strong-EQ RCC5 network is an
+  ordered-disjoint structure (PP=strict partial order, DR=downward-closed
+  disjointness, PO=residual). The one strictly-new certifiable result
+  from either recent attack. Converse = wp47 exhaustive (n<=4), left as
+  follow-up.
+- papers/rcc5_local_amalgamation_theory.tex (3pp): the complete local
+  theory (normal form + free amalgamation + one-point extension + ghost
+  elimination + uniform/non-uniform cross-policy), with an explicit
+  "boundary of this theory" section: it does NOT yield decidability; the
+  keystone is global (F6) and wp78 shows no off-the-shelf cover theorem
+  applies (RCC5 totality => complete Gaifman graphs).
+- Curated pivot probes (wp47/48/49/71/78/81/82/83) landed + ledger.
+- papers/regular_cover_route_pivot/ archived (v1 + v2/update).
+
+Assessment recorded for the record: neither the split-forest/F6 route nor
+the regular-cover route is closer to the summit; the regular-cover route
+is the better VOCABULARY (finer invariant, cleaner algebra, subsumes the
+width view) and the right thing for a future solver to pick up, but its
+keystone IS F6. The two independent cold attacks converging on the same
+structure (PO-guarding + one global boundedness keystone; ∀PO-free
+decidable) is evidence the problem is correctly mapped. Recommendation
+adopted: pivot from summiting to shipping -- certified local theory +
+honest capstone. Status unchanged: strongly supported, NOT certified.

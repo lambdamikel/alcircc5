@@ -1,0 +1,208 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Comp}{\mathrm{comp}}
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{The finite local amalgamation theory of\\ strong-EQ RCC5 networks}
+\author{}
+\date{2026-07-16}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We collect a self-contained, exhaustively machine-checked \emph{local}
+theory of strong-EQ atomic RCC5 networks: a normal form identifying such
+networks with ordered-disjoint structures (a strict partial order plus a
+downward-closed disjointness relation), free amalgamation in that normal
+form, an exact one-point extension criterion, and exact characterizations
+of uniform and arbitrary non-uniform cross-pocket guard policies. The
+normal form's forward direction is machine-\emph{certified} in Lean~4
+(\code{formal/RCC5NormalForm.lean}, axioms: \code{propext} only); the
+remaining results are exhaustively verified by finite computation. We are
+deliberately clear about the boundary of this theory: it is complete
+\emph{local} algebra and it does \emph{not} yield decidability of
+$\ALCIRCC$. The residual keystone (a global bounded-cover / bounded-width
+property) is provably not a local composition problem, and remains open.
+Provenance: this theory was distilled from a cold regular-cover attack
+(GPT-5.5) on the $\ALCIRCC$ decidability problem; we record it with its
+verification status attached.
+\end{abstract}
+
+\section{Setting}
+
+The RCC5 relation alphabet is $\{\EQ,\PP,\PPI,\PO,\DR\}$. Under strong-EQ
+semantics $\EQ$ is identity, so between distinct elements exactly one of
+$\PP,\PPI,\PO,\DR$ holds; converse is
+$\PP^{-1}=\PPI$, $\PPI^{-1}=\PP$, $\PO^{-1}=\PO$, $\DR^{-1}=\DR$. A
+network on a set is a total labelling $\rho$ of ordered pairs by atoms.
+It is a (strong-EQ) RCC5 network if it is reflexively $\EQ$, has $\EQ$
+only on the diagonal, is converse-closed, and is composition-closed:
+$\rho(x,z)\in\Comp(\rho(x,y),\rho(y,z))$ for all $x,y,z$, over the RCC5
+composition table.
+
+\section{The normal form}
+
+\begin{definition}[Ordered-disjoint structure]
+A set with a strict partial order $<$ and a symmetric irreflexive
+relation $\#$ is \emph{ordered-disjoint} if (i) $x<y \Rightarrow \neg\,
+x\#y$, and (ii) $\#$ is downward closed: $x\#y$, $x'\le x$, $y'\le y
+\Rightarrow x'\#y'$ (where $\le$ is $<$ or $=$).
+\end{definition}
+
+\begin{theorem}[RCC5 normal form]\label{thm:nf}
+For strong-EQ atomic networks, RCC5 composition closure is equivalent to
+an ordered-disjoint structure via
+\[
+x<y \iff x\mathbin{\PP}y,\qquad x\#y \iff x\mathbin{\DR}y,
+\]
+with $\PPI$ the converse of $\PP$ and $\PO$ residual: for distinct $x,y$,
+$x\mathbin{\PO}y$ iff $\neg(x<y)$, $\neg(y<x)$, $\neg(x\#y)$.
+\end{theorem}
+
+The forward direction --- \emph{every RCC5 network is ordered-disjoint}
+--- rests on exactly three composition cells:
+\[
+\Comp(\PP,\PP)=\{\PP\}\ (\text{transitivity}),\quad
+\Comp(\PP,\DR)=\{\DR\},\quad
+\Comp(\DR,\PPI)=\{\DR\}\ (\text{downward closure}),
+\]
+together with converse and strong-EQ reflexivity. It is
+machine-\emph{certified} in Lean~4:
+\code{formal/RCC5NormalForm.lean} proves, for an arbitrary domain and any
+\code{RCC5Net}, that the $\PP/\DR$ read-off satisfies all six
+ordered-disjoint axioms (\code{toOrderedDisjoint}), with the strict-order
+and downward-closure facts exposed as corollaries
+(\code{pp\_strict\_order}, \code{dr\_downward\_closed}); the file depends
+on \code{propext} only and has zero \code{sorry}. The converse
+direction (an ordered-disjoint structure's read-off is
+composition-closed) is exhaustively checked by finite computation
+(\code{wp47}: all complete atomic networks up to $n=4$, $916/916$
+composition-closed networks matching the characterization, $0$
+mismatches) and is a natural formalization follow-up.
+
+\section{Amalgamation and extension}
+
+\begin{theorem}[Free amalgamation]\label{thm:amalg}
+Ordered-disjoint structures freely amalgamate over a common induced
+substructure: taking $<^{*}$ the transitive closure of the union of the
+orders and $\#^{*}$ the downward closure of the union of the
+disjointness relations along $<^{*}$ yields an ordered-disjoint
+structure whose restriction to each factor is the original.
+\end{theorem}
+(Verified: \code{wp48}.) The proof compresses any putative order cycle
+or comparable-disjoint conflict into one factor, where it is impossible.
+
+\begin{proposition}[One-point extension]\label{prop:onepoint}
+Let $P$ be a finite closed pocket and add one connector $e$ with
+$U=\{x:e\mathbin{\PP}x\}$, $L=\{x:e\mathbin{\PPI}x\}$,
+$D=\{x:e\mathbin{\DR}x\}$. The extension is RCC5-consistent iff $U$ is
+upward closed, $L$ downward closed, $D$ downward closed, $x\in U\wedge
+x\#y\Rightarrow y\in D$, and every $\ell\in L$ lies below every $u\in U$
+and is disjoint from every $d\in D$ already in $P$.
+\end{proposition}
+(Verified against brute-force closure: \code{wp71}, pockets up to size
+$4$.) Finite multi-connector topology reduces to sequential one-point
+traces, and every finite pocket admits a canonical principal connector
+basis of size $2|P|+1$.
+
+\begin{lemma}[Ghost-connector elimination]\label{lem:ghost}
+Guard-only connectors --- connectors that are neither existential
+witnesses nor otherwise formula-visible --- may be erased: an induced
+subnetwork of a closed network is closed, so such connectors compile
+into direct pair policies among the remaining nodes.
+\end{lemma}
+(Verified: \code{wp81}.)
+
+\section{Cross-pocket policies}
+
+\begin{theorem}[Uniform cross-policy]\label{thm:uniform}
+For finite closed pockets $A,B$: all-cross $\DR$ and all-cross $\PO$ are
+always RCC5-safe; all-cross $A<B$ (every $a\mathbin{\PP}b$) is safe iff
+$B$ has no internal $\DR$ pair; all-cross $B<A$ is safe iff $A$ has no
+internal $\DR$ pair.
+\end{theorem}
+(Verified: \code{wp82}, exhaustive to $3{\times}3$, $0$ mismatches.)
+
+\begin{theorem}[Non-uniform cross-policy]\label{thm:nonuniform}
+For finite closed pockets $A,B$ and an arbitrary atom assignment $\chi$
+to all cross pairs, $A\cup B\cup\chi$ is a strong-EQ composition-closed
+amalgam preserving both pockets iff the six ordered-disjoint closure
+conditions hold: $<^{*}$ (transitive closure of the orders plus cross
+$\PP/\PPI$) is irreflexive and restricts to each pocket's order; $\#^{*}$
+(downward closure of the disjointness plus cross $\DR$) is irreflexive
+and restricts to each pocket's disjointness; no comparable pair is
+disjoint; and $\chi$ agrees with the atoms read off $<^{*},\#^{*}$.
+\end{theorem}
+(Verified against brute force: \code{wp83}, $0$ mismatches on exhaustive
+small cases and $2500$ random larger tests.)
+
+Together, Theorems~\ref{thm:nf}--\ref{thm:nonuniform} with
+Proposition~\ref{prop:onepoint} and Lemma~\ref{lem:ghost} \emph{exhaust
+the local algebra}: arbitrary finite guard policies among finite pockets
+are checkable by finite order/disjointness closure, and no higher
+RCC5-specific arity than the ternary composition is needed (RCC5
+composition is a finite set of forbidden edge-coloured triangles).
+
+\section{The boundary of this theory}
+
+We state plainly what this local theory does \emph{not} give.
+
+\begin{remark}[No decidability]
+Theorem~\ref{thm:nf} and its companions characterize \emph{when a given
+network is RCC5-consistent} and \emph{how finite pieces amalgamate}. They
+do not bound the size of a finite presentation realizing a given
+$\ALCIRCC$ concept. Concept satisfiability additionally requires a global
+property --- that every satisfiable concept has a bounded coherent
+regular cover / bounded live-width presentation --- which is the standing
+open keystone (equivalently the bounded-width property F6). The local
+theory is on the settled side of the local/global divide.
+\end{remark}
+
+\begin{remark}[Why standard covers do not close it]
+Because RCC5 relations are total, the Gaifman graph of every nontrivial
+model is complete, and even a one-dimensional $\PP$-chain has finite
+prefixes of unbounded clique number and treewidth (\code{wp78}). Hence
+off-the-shelf guarded / clique-guarded bounded-treewidth cover theorems
+do not apply; the keystone would require a bespoke cover theorem for
+complete edge-coloured regular structures. This is exactly the two-decade
+obstruction, unmoved by the local theory above.
+\end{remark}
+
+\section{Provenance and status}
+
+This theory was distilled from a cold regular-cover attack (GPT-5.5) on
+$\ALCIRCC$ decidability (packages under
+\code{papers/regular\_cover\_route\_pivot}; probes \code{wp45}--\code{wp83}).
+The normal form's forward direction is Lean-certified
+(\code{RCC5NormalForm.lean}); every other result here is
+exhaustively machine-checked by finite computation but is
+\emph{theorem-level, not kernel-certified}, and should be independently
+reviewed (and ideally Lean-transcribed) before being cited as
+established. The one $\ALCIRCC$-level corollary in reach --- decidability
+of the $\forall\PO$-free fragment --- is a re-derivation of an already
+known result (the two-tier PO-coherent fragment; see
+\code{papers/po\_free\_fragment\_ALCIRCC5.tex} and
+\code{papers/two\_tier\_quotient\_ALCIRCC5.tex}, Remark on automatic
+PO-coherence). Consistent with the project's standing discipline, the
+honest label is \emph{strongly supported, not certified}, with the
+normal form's forward direction the exception (certified).
+
+\end{document}
