@@ -1,0 +1,65 @@
+WP81 ghost guard / uniform amalgam tests
+Composition table derived from finite set semantics; singleton cells:
+  DR;PPI -> ['DR']
+  PP;DR -> ['DR']
+  PP;PP -> ['PP']
+  PPI;PPI -> ['PPI']
+
+closed pockets sizes A=1, B=1: 1 x 1
+  policy DR      : failures=0/1
+  policy A_PP_B  : failures=0/1
+  policy A_PPI_B : failures=0/1
+  policy PO      : failures=0/1
+
+closed pockets sizes A=1, B=2: 1 x 4
+  policy DR      : failures=0/4
+  policy A_PP_B  : failures=1/4 first=(0, 1, 2, 'PP', 'DR', 'PP', ['DR'])
+  policy A_PPI_B : failures=0/4
+  policy PO      : failures=0/4
+
+closed pockets sizes A=1, B=3: 1 x 41
+  policy DR      : failures=0/41
+  policy A_PP_B  : failures=22/41 first=(0, 1, 3, 'PP', 'DR', 'PP', ['DR'])
+  policy A_PPI_B : failures=0/41
+  policy PO      : failures=0/41
+
+closed pockets sizes A=2, B=1: 4 x 1
+  policy DR      : failures=0/4
+  policy A_PP_B  : failures=0/4
+  policy A_PPI_B : failures=1/4 first=(0, 1, 2, 'DR', 'PPI', 'PPI', ['DR'])
+  policy PO      : failures=0/4
+
+closed pockets sizes A=2, B=2: 4 x 4
+  policy DR      : failures=0/16
+  policy A_PP_B  : failures=4/16 first=(0, 2, 3, 'PP', 'DR', 'PP', ['DR'])
+  policy A_PPI_B : failures=4/16 first=(0, 1, 2, 'DR', 'PPI', 'PPI', ['DR'])
+  policy PO      : failures=0/16
+
+closed pockets sizes A=2, B=3: 4 x 41
+  policy DR      : failures=0/164
+  policy A_PP_B  : failures=88/164 first=(0, 2, 4, 'PP', 'DR', 'PP', ['DR'])
+  policy A_PPI_B : failures=41/164 first=(0, 1, 2, 'DR', 'PPI', 'PPI', ['DR'])
+  policy PO      : failures=0/164
+
+closed pockets sizes A=3, B=1: 41 x 1
+  policy DR      : failures=0/41
+  policy A_PP_B  : failures=0/41
+  policy A_PPI_B : failures=22/41 first=(0, 2, 3, 'DR', 'PPI', 'PPI', ['DR'])
+  policy PO      : failures=0/41
+
+closed pockets sizes A=3, B=2: 41 x 4
+  policy DR      : failures=0/164
+  policy A_PP_B  : failures=41/164 first=(0, 3, 4, 'PP', 'DR', 'PP', ['DR'])
+  policy A_PPI_B : failures=88/164 first=(0, 2, 3, 'DR', 'PPI', 'PPI', ['DR'])
+  policy PO      : failures=0/164
+
+closed pockets sizes A=3, B=3: 41 x 41
+  policy DR      : failures=0/1681
+  policy A_PP_B  : failures=902/1681 first=(0, 3, 5, 'PP', 'DR', 'PP', ['DR'])
+  policy A_PPI_B : failures=902/1681 first=(0, 2, 3, 'DR', 'PPI', 'PPI', ['DR'])
+  policy PO      : failures=0/1681
+
+Conclusion:
+  Uniform all-DR and all-PO amalgams never fail in the exhaustive small tests.
+  Uniform order amalgams can fail when a common lower side is below internally DR nodes.
+  Thus many guard connectors can be replaced by direct regular cross-relation policies.

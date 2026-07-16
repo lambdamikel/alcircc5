@@ -1,0 +1,14 @@
+n=1: random ordered-disjoint structures checked=200, all RCC5-closed
+n=2: random ordered-disjoint structures checked=200, all RCC5-closed
+n=3: random ordered-disjoint structures checked=198, all RCC5-closed
+n=4: random ordered-disjoint structures checked=187, all RCC5-closed
+n=5: random ordered-disjoint structures checked=173, all RCC5-closed
+n=6: random ordered-disjoint structures checked=160, all RCC5-closed
+n=7: random ordered-disjoint structures checked=130, all RCC5-closed
+random compatible pairs tested: good=646 bad_cycle=0 bad_cmp_disj=0 skipped=1354
+exhaustive strong-amalgam S=1, one new each side: compatible_pairs=16, failures=0
+exhaustive strong-amalgam S=2, one new each side: compatible_pairs=427, failures=0
+exhaustive strong-amalgam S=3, one new each side: compatible_pairs=21094, failures=0
+hand amalgam with a<s and b<s: ok
+  order= [('a', 's'), ('b', 's')] disj= []
+PASS: free amalgams that pass ordered-disjoint checks are RCC5 composition-closed.

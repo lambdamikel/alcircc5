@@ -1,0 +1,15 @@
+WP71 one-point extension characterization
+Criterion uses U={x:ePPx}, L={x:ePPIx}, D={x:eDRx}.
+Checks: U up-closed, U#-closure into D, L down-closed, L<U, D down-closed, L#D.
+n=1: closed_pockets=1 tested_extensions=4 mismatches=0
+n=2: closed_pockets=4 tested_extensions=64 mismatches=0
+n=3: closed_pockets=41 tested_extensions=2624 mismatches=0
+n=4: closed_pockets=916 tested_extensions=234496 mismatches=0
+
+Sample pocket: 0 DR 1
+  e relations ('PP', 'PP'): criterion=False reason=U_disj_not_in_D brute_closed=False
+  e relations ('DR', 'DR'): criterion=True reason=ok brute_closed=True
+  e relations ('PP', 'DR'): criterion=True reason=ok brute_closed=True
+  e relations ('PO', 'PO'): criterion=True reason=ok brute_closed=True
+
+PASS if all mismatch counts are 0.

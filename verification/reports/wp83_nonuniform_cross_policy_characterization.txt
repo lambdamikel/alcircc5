@@ -1,0 +1,10 @@
+WP83 non-uniform cross-policy characterization
+Criterion: cross order/disjointness closure preserves internal pockets and assigned labels.
+A=1, B=1: total=4 full_ok=4 crit_ok=4 mismatches=0
+A=1, B=2: total=64 full_ok=41 crit_ok=41 mismatches=0
+A=2, B=1: total=64 full_ok=41 crit_ok=41 mismatches=0
+A=2, B=2: total=4096 full_ok=916 crit_ok=916 mismatches=0
+A=1, B=3: total=2624 full_ok=916 crit_ok=916 mismatches=0
+A=3, B=1: total=2624 full_ok=916 crit_ok=916 mismatches=0
+random larger tests=2500, mismatches=0
+PASS: arbitrary non-uniform cross policies are characterized by finite order/disjointness closure preservation.

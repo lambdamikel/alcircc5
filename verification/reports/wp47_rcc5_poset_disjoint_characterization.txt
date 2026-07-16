@@ -1,0 +1,10 @@
+RCC5 composition table (proper/proper singleton cells):
+  comp(PP,PP) = ['PP']
+  comp(PP,DR) = ['DR']
+  comp(PPI,PPI) = ['PPI']
+  comp(DR,PPI) = ['DR']
+n=1: total=1 closure_ok=1 poset_DR_ok=1 both=1 mismatch=0
+n=2: total=4 closure_ok=4 poset_DR_ok=4 both=4 mismatch=0
+n=3: total=64 closure_ok=41 poset_DR_ok=41 both=41 mismatch=0
+n=4: total=4096 closure_ok=916 poset_DR_ok=916 both=916 mismatch=0
+PASS: exhaustive n<=4 agrees: RCC5 closure == strict PP poset + downward-closed DR residual PO.

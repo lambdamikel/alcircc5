@@ -1,0 +1,836 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{listings}
+\usepackage{fancyvrb}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\setlist[itemize]{topsep=3pt,itemsep=2pt,parsep=0pt}
+\setlist[enumerate]{topsep=3pt,itemsep=2pt,parsep=0pt}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{observation}[theorem]{Observation}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\comp}{\mathsf{comp}}
+\newcommand{\cl}{\mathsf{cl}}
+\newcommand{\tp}{\mathsf{tp}}
+\newcommand{\POK}{\mathsf{POK}}
+\newcommand{\DROK}{\mathsf{DROK}}
+\newcommand{\OK}{\mathsf{OK}}
+\newcommand{\up}{\uparrow}
+\newcommand{\down}{\downarrow}
+\newcommand{\wit}{\mathsf{Wit}}
+\newcommand{\col}{\mathsf{col}}
+\newcommand{\prof}{\mathsf{prof}}
+\newcommand{\dom}{\mathsf{dom}}
+\newcommand{\ALCI}{\mathcal{ALCI}_{\mathsf{RCC5}}}
+\newcommand{\note}[1]{\noindent\textbf{#1}}
+\lstdefinestyle{plain}{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible}
+\lstset{style=plain}
+\title{Regular-Cover Route for $\mathcal{ALCI}_{\mathsf{RCC5}}$:\\Findings, Lemmas, Probes, and Remaining Proof Obligation}
+\author{Technical note prepared from the exploratory dialogue}
+\date{\today}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report records the regular-cover line of attack developed after the suggestion to view infinite $\PP/\PPI$ behaviour not as a finite RCC5 model with illegal proper-part cycles, but as a finite cyclic generator whose unfolding is an ordinary strong-EQ RCC5 model.  The resulting proof architecture is different from the earlier bounded-live-width route.  It represents infinite vertical depth by regular addresses, permits unbounded raw horizontal width when the incidence is regular, and shifts the full-logic obstruction to bounded coherent regular-cover existence.
+
+The main positive results are: (i) a sound and effectively checkable coherent regular-cover certificate; (ii) a normal form identifying atomic strong-EQ RCC5 networks with strict $\PP$ orders plus downward-closed $\DR$ relations; (iii) free amalgamation and several exact finite connector-extension criteria in that normal form; (iv) an unconditional decidability proof for the $\forall\PO$-free fragment; (v) a finite forbidden-triangle formulation of RCC5 composition; and (vi) a canonical principal connector basis for arbitrary finite RCC5 pockets.  The main remaining obstacle is not local RCC5 algebra.  It is a bounded recursive profile/connector assignment theorem: every satisfiable full concept should have a computably bounded finite extension basis whose universal-cover unfolding is a coherent regular cover.  This final theorem is not proved here.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section*{Acknowledgment and scope}
+\addcontentsline{toc}{section}{Acknowledgment and scope}
+This report covers the part of the exploration that began with the user's proposal to replace literal finite $\PP/\PPI$ ``rings'' by finite state abstractions or cyclic presentations whose unfoldings reproduce the infinite $\PP/\PPI$ behaviour.  That intervention was mathematically substantive: it redirected the attack away from finite model quotients and toward regular covers / cyclic generators.  The regular-cover route developed below is a direct response to that suggestion, and the resulting architecture is more promising than the bounded-live-width-only viewpoint because it can finitely represent patterns such as $i=j$, $i<j$, and recurring protected $\PO$ pockets, all of which may have unbounded raw occurrence width.
+
+The report includes theorem-level statements, proof sketches, caveats, and a manifest of the supporting probes.  It is intentionally conservative: full decidability of $\ALCI$ is not claimed.  The strongest current theorem stack is conditional on a bounded coherent regular-cover / finite extension-basis property, plus an unconditional decidable fragment without $\forall\PO$.
+
+\section{Executive summary}
+
+\subsection{What changed after the cyclic-presentation idea}
+A literal finite quotient of an infinite $\PP$-chain is invalid.  If
+\[
+x_0\PP x_1\PP \cdots \PP x_m\PP x_0,
+\]
+then $\comp(\PP,\PP)=\{\PP\}$ forces $x_0\PP x_0$, contradicting strong-EQ semantics.  However, a finite generator loop
+\[
+q\xrightarrow{\PP}q
+\]
+can safely represent the infinite unfolding
+\[
+q_0\PP q_1\PP q_2\PP\cdots,
+\]
+where the copies $q_i$ are distinct.  Thus the right object is not a finite model quotient but a \emph{regular cover}: a finite presentation with an infinite unfolded model.
+
+This change of viewpoint led to the following replacement for the old goal:
+\[
+\text{bounded live width}
+\quad\leadsto\quad
+\text{bounded coherent regular-cover existence}.
+\]
+The new route is strictly more flexible: it can represent unbounded identity-selector patterns using address equality $i=j$, unbounded shell half-graphs using order tests $i<j$, and recursive full-logic $\PO$-pockets using finite extension blocks.
+
+\subsection{Main theorem stack obtained}
+The exploration supports the following theorem stack.
+
+\begin{enumerate}
+\item \textbf{Regular-cover soundness and checking.} A finite coherent regular cover with profiles, formula-visible pair colours, selected witness subrelations, and realized triple patterns is effectively checkable.  If it passes, its unfolding is a genuine strong-EQ RCC5 model satisfying the represented Hintikka types.
+
+\item \textbf{RCC5 normal form.} Atomic strong-EQ RCC5 composition closure is equivalent to a strict partial order $<$ for $\PP$, plus a symmetric irreflexive disjointness relation $\#$ for $\DR$, with $\#$ downward closed along $<$ and incompatible with comparability.  $\PO$ is residual.
+
+\item \textbf{Free amalgamation in the normal form.} Ordered-disjoint structures freely amalgamate over common induced substructures: order is transitive closure and disjointness is downward closure.
+
+\item \textbf{$\forall\PO$-free decidability.} If the concept contains no subformula $\forall\PO.D$, then a finite regular witness-template can be extracted from any model and checked by finite search.  This independently recovers a previously known decidable fragment.
+
+\item \textbf{Full logic as $\PO$-guarding.} In the full logic, $\forall\PO$ has no propagation tail; it only forbids residual $\PO$ pairs whose endpoint types are incompatible.  Thus the full problem is to guard $\PO$-unsafe residual pairs by $\PP$, $\PPI$, or $\DR$ in a regular way.
+
+\item \textbf{Local pocket and connector topology.} Protected $\PO$ pockets can force order guards through cells such as $\PO;\PP=\{\PO,\PP\}$.  Nevertheless, arbitrary finite pockets admit canonical finite principal connector bases.  One-point connector extension has an exact finite criterion, and finite multi-connector topologies reduce to sequential one-point traces.
+
+\item \textbf{Pair-aware interface theorem.} For a fixed block, one-old traces over-accept; old-old pair colours are necessary.  Pair-aware mixed-triple checking is necessary and sufficient for finite block amalgamation.
+
+\item \textbf{Coloured-triangle theory.} RCC5 composition is exactly a finite set of forbidden edge-coloured triangles.  However, standard guarded/clique-guarded cover theorems do not apply directly because total RCC5 edge-colouring makes Gaifman graphs complete.
+\end{enumerate}
+
+\subsection{Remaining proof obligation}
+The current hard theorem is:
+
+\begin{conjecture}[Bounded coherent regular-cover / extension-basis property]
+For every satisfiable full $\ALCI$ concept $C$, there is a computably bounded finite extension basis whose universal-cover unfolding is a coherent regular cover satisfying $C$.
+\end{conjecture}
+
+Equivalently, after internalizing any TBox into the concept, the remaining task is to assign globally saturated profiles to the canonical principal connector bases and recursively reuse those finite block types so that all universal constraints, selected witnesses, and pair-aware triple constraints remain satisfied.
+
+\section{Strong-EQ RCC5 and regular covers}
+
+\subsection{Strong-EQ and proper atoms}
+The relation alphabet is
+\[
+\{\EQ,\PP,\PPI,\PO,\DR\}.
+\]
+Under strong-EQ semantics, $\EQ$ is identity.  Between distinct elements exactly one of
+\[
+\PP,\PPI,\PO,\DR
+\]
+holds.  Converse is given by
+\[
+\PP^{-1}=\PPI,
+\quad
+\PPI^{-1}=\PP,
+\quad
+\PO^{-1}=\PO,
+\quad
+\DR^{-1}=\DR.
+\]
+A network is RCC5-closed if for every ordered triple $x,y,z$,
+\[
+\rho(x,z)\in \comp(\rho(x,y),\rho(y,z)).
+\]
+
+\subsection{Finite quotient versus regular cover}
+A finite quotient-as-model literally identifies elements.  That is invalid for infinite $\PP$ chains because any $\PP$ cycle contradicts strong-EQ.
+
+A regular cover instead uses a finite generator.  A state loop $q\xrightarrow{\PP}q$ is not a model edge $q\PP q$.  Its unfolding is a sequence of distinct copies $q_0,q_1,q_2,\ldots$ with $q_i\PP q_j$ for $i<j$.
+
+\begin{definition}[Regular cover]
+A regular cover is a finite presentation whose unfolded domain consists of addressed copies $p@u$, where $p$ is a finite profile and $u$ is a regular address.  RCC5 atoms and selected witness relations are given by finite-state relations on addresses.  The unfolding, not the finite presentation itself, is the RCC5 model.
+\end{definition}
+
+\subsection{TBox internalization}
+A TBox does not materially change the setting because RCC5 relations are total.  Given inclusions $C_i\sqsubseteq D_i$, put
+\[
+G_{\mathcal T}=\bigwedge_i \operatorname{NNF}(\neg C_i\sqcup D_i).
+\]
+Then requiring every domain element to satisfy $G_{\mathcal T}$ is achieved from the root by
+\[
+C' = C\sqcap G_{\mathcal T}\sqcap
+\forall\PP.G_{\mathcal T}\sqcap
+\forall\PPI.G_{\mathcal T}\sqcap
+\forall\PO.G_{\mathcal T}\sqcap
+\forall\DR.G_{\mathcal T}.
+\]
+The root itself satisfies $G_{\mathcal T}$ by the explicit conjunct; every other element is a proper RCC5 neighbour of the root.  Thus the full construction must work over globally saturated types, not merely unconstrained auxiliary connector points.
+
+\section{Coherent regular covers}
+
+\begin{definition}[Formula-visible pair colour]
+For an ordered pair $(x,y)$ in a regular cover, its formula-visible pair colour is
+\[
+\col(x,y)=(\prof(x),\prof(y),\rho(x,y),W(x,y)),
+\]
+where $\rho(x,y)$ is the RCC5 atom and $W(x,y)$ is the finite set of existential witness labels for which $y$ is selected as a witness for $x$.
+\end{definition}
+
+The pair colour does not store arbitrary address facts such as ``same index'' unless those facts change the RCC5 atom or selected witness labels.  This was confirmed by the private-witness probes: equality of indices matters only insofar as it selects a $\PO$ atom or witness subrelation.
+
+\begin{definition}[Coherent regular cover]
+A coherent regular cover for a concept $C$ consists of:
+\begin{enumerate}
+\item a finite profile set $P$, each $p\in P$ carrying a saturated Hintikka type $\tau(p)\subseteq \cl(C)$;
+\item a regular address space of occurrences $p@u$;
+\item regular pair-colour relations partitioning all ordered pairs of occurrences;
+\item regular selected witness subrelations for every existential subformula;
+\item the realized triple-colour relation, computed from address triples.
+\end{enumerate}
+It is valid if the checks in Theorem~\ref{thm:coherent-soundness} hold.
+\end{definition}
+
+\begin{theorem}[Coherent-cover soundness and effective checking]\label{thm:coherent-soundness}
+Suppose a finite coherent regular cover satisfies:
+\begin{enumerate}
+\item every ordered pair receives exactly one RCC5 atom;
+\item $\EQ(x,y)$ iff $x=y$;
+\item converse is respected;
+\item every realized triple pattern satisfies RCC5 composition;
+\item every universal $\forall R.D\in\tau(p)$ is respected by every pair colour from $p$ labelled $R$;
+\item every existential $\exists R.D\in\tau(p)$ has a total selected witness subrelation into an $R$-neighbour profile containing $D$.
+\end{enumerate}
+Then its unfolding is a strong-EQ RCC5 model, and every occurrence of profile $p$ satisfies all formulas in $\tau(p)$.  The validity of a proposed finite regular cover is decidable by regular-language emptiness and projection operations.
+\end{theorem}
+
+\begin{proof}
+The pair partition, strong-EQ check, converse check, and realized-triple composition check give a total converse-closed, composition-closed strong-EQ RCC5 network.  The Hintikka truth lemma is by induction over $\cl(C)$.  Boolean cases use type coherence.  Existential cases use the selected total witness subrelation.  Universal cases use the endpoint compatibility check over all pair colours labelled by the relevant role.  Effective checking reduces bad pair or bad triple sets to regular-language emptiness; totality of witness subrelations is a projection/complement check.
+\end{proof}
+
+\begin{corollary}[Conditional decidability]
+If there is a computable bound $B(C)$ such that every satisfiable $C$ has a valid coherent regular cover of description size at most $B(C)$, then satisfiability of $\ALCI$ is decidable.
+\end{corollary}
+
+\section{RCC5 normal form: order plus disjointness}
+
+\begin{definition}[Ordered-disjoint structure]
+An ordered-disjoint structure is a set with a strict partial order $<$ and a symmetric irreflexive relation $\#$ such that:
+\begin{enumerate}
+\item $x<y$ implies not $x\#y$;
+\item $\#$ is downward closed: if $x\#y$, $x'\le x$, and $y'\le y$, then $x'\#y'$.
+\end{enumerate}
+Here $x'\le x$ abbreviates $x'=x$ or $x'<x$.
+\end{definition}
+
+\begin{theorem}[RCC5 normal form]\label{thm:normal-form}
+For atomic strong-EQ networks, RCC5 composition closure is equivalent to an ordered-disjoint structure via
+\[
+x<y \iff x\PP y,
+\quad
+x\#y\iff x\DR y,
+\]
+and, for distinct elements,
+\[
+x\PO y \iff x\ne y,
+eg(x<y),\neg(y<x),\neg(x\#y).
+\]
+\end{theorem}
+
+\begin{proof}
+Forward direction.  From $\PP;\PP=\{\PP\}$, $\PP$ is transitive.  Strong-EQ makes it irreflexive.  Hence $<$ is a strict partial order.  $\DR$ is symmetric and irreflexive.  The singleton cells $\PP;\DR=\{\DR\}$ and $\DR;\PPI=\{\DR\}$ give downward closure of $\#$.  Comparable-disjoint pairs are impossible by the same closure plus strong-EQ.
+
+Reverse direction.  Define atoms from $<$ and $\#$ as above.  The singleton composition cells follow directly from transitivity and downward closure.  The non-singleton exclusions are checked by order/disjointness reasoning.  For instance, if $x\PO y$ and $y<z$, then $x\DR z$ would imply $x\DR y$ by downward closure, contradiction; and $z<x$ would imply $y<x$, contradiction.  Thus $x-z$ is only $\PO$ or $\PP$, exactly as $\PO;\PP=\{\PO,\PP\}$.  The remaining cells are finite and symmetric/converse variants.
+\end{proof}
+
+\noindent\textbf{Evidence.} WP47 exhaustively checked all complete atomic networks up to four elements and found exact agreement between RCC5 closure and the ordered-disjoint characterization:
+\begin{Verbatim}[fontsize=\small]
+n=4: total=4096 closure_ok=916 poset_DR_ok=916 both=916 mismatch=0
+\end{Verbatim}
+
+\begin{theorem}[Free amalgamation]
+Ordered-disjoint structures freely amalgamate over common induced substructures.  If $A$ and $B$ share $S$, define $<^*$ as the transitive closure of $<_A\cup <_B$, and define $\#^*$ as the downward closure of $\#_A\cup \#_B$ along $<^*$.  Then $(A\cup_S B,<^*,\#^*)$ is ordered-disjoint.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+A cycle in $<^*$ would give a shortest alternating cycle through $A\setminus S$ and $B\setminus S$.  Compressing maximal within-factor order segments yields a cycle in the shared substructure, impossible.  Disjointness is symmetric and downward closed by construction.  A comparable-disjoint conflict would compress to such a conflict in one factor containing the seed disjointness edge.  Hence the amalgam is valid.
+\end{proof}
+
+\noindent\textbf{Evidence.} WP48 checked random ordered-disjoint structures and exhaustive one-new-on-each-side amalgams over separators of size up to three, with no failures.
+
+\section{The $\forall\PO$-free fragment}
+
+The $\forall\PO$-free fragment allows $\exists\PO$, $\exists\DR$, $\forall\DR$, and all vertical quantifiers.  It forbids subformulas $\forall\PO.D$.
+
+\begin{theorem}[$\forall\PO$-free decidability]\label{thm:forallpo-free}
+Satisfiability of $\ALCI$ concepts containing no $\forall\PO.D$ subformula is decidable.
+\end{theorem}
+
+\begin{proof}
+Let $\Gamma=\cl(C)$ and close it under the propagation markers forced by non-$\PO$ universals.  The composition table yields the following relevant rules:
+\begin{itemize}
+\item $\forall\PP.D$ propagates across $\PP$ and requires $D$ at the target.
+\item $\forall\PPI.D$ propagates across $\PPI$ and requires $D$ at the target.
+\item $\forall\DR.D$ propagates upward across $\PP$ as $\forall\DR.D$, and across a $\DR$ edge requires $D$ and $\forall\PPI.D$ at the target.
+\end{itemize}
+No rule requires a $\forall\PO$ marker.  Enumerate finite saturated types over this closure.  For every existential $\exists R.D$ in a type $p$, choose a realized witness type $q$ from some model if $C$ is satisfiable.  The finite witness-template unfolds as a regular tree.  Define $\PP$ as the generated strict order, $\DR$ as downward closure of generated disjointness, and $\PO$ as residual.  Residual $\PO$ edges are harmless because no $\forall\PO$ formulas exist.  The propagation rules prove all non-$\PO$ universals.  Conversely, a passing finite template unfolds to a model by Theorem~\ref{thm:normal-form} and the Hintikka lemma.  Since there are finitely many types and witness choices, finite search decides satisfiability.
+\end{proof}
+
+\noindent\textbf{Evidence.} WP49 prints the universal-propagation table and confirms that no non-$\PO$ propagation creates a $\forall\PO$ requirement.
+
+\section{The full logic: $\PO$-guarding}
+
+For full concepts, $\forall\PO$ is the only remaining source of difficulty.  It has no propagation tail: if $x\models\forall\PO.D$ and $x\PO y$, only $D\in\tp(y)$ is required; no new universal marker is forced at $y$.
+
+\begin{definition}[$\PO$ compatibility]
+For saturated profiles $p,q$, define
+\[
+\POK(p,q)
+\]
+iff
+\[
+\forall\PO.D\in p\Rightarrow D\in q
+\quad\text{and}\quad
+\forall\PO.D\in q\Rightarrow D\in p.
+\]
+If $\POK(p,q)$ fails, then a $p/q$ pair must be guarded by $\PP$, $\PPI$, or $\DR$.
+\end{definition}
+
+The full problem is therefore to ensure that every residual $\PO$ pair is $\PO$-compatible.  Equivalently, every $\PO$-unsafe pair must be made comparable or disjoint in a regular way.
+
+\subsection{Finite repair operators}
+For fixed finite guard/profile systems, $\DR$ repair and order repair are finite search problems.  The $\DR$ repair closes an unsafe residual set $U$ downward:
+\[
+\#^+ = \#\cup \down U.
+\]
+It succeeds if no diagonal or comparable-disjoint conflict arises, all new $\DR$ pairs are type-compatible, and protected $\PO$ witnesses remain unguarded.  Order repair adds oriented guards and checks acyclicity; cyclic type-level orders can often be realized by periodic vertical SCCs rather than finite cycles.
+
+\subsection{Protected $\PO$ pockets}
+A protected $\PO$ witness can force guards by composition plus $\PO$ incompatibility.  The key narrowing cells are
+\[
+\PO;\PP=\{\PO,\PP\},
+\quad
+\PPI;\PO=\{\PO,\PPI\}.
+\]
+Thus, if $x\PO y$, $y\PP z$, and $x,z$ are not $\PO$-compatible, then $x\PP z$ is forced.  This is not universal propagation; it is domain narrowing.
+
+\noindent\textbf{Evidence.} WP50--WP57 cover: no propagation tail for $\forall\PO$; regular guard schemas; periodic guard regularity; $\DR$ repair; finite order/SCC guard synthesis; pocket propagation; and finite profile-domain closure.
+
+\section{Why binary domains and pair palettes are not enough}
+
+Several false simplifications were ruled out.
+
+\subsection{Binary profile domains lack one-point extension}
+A closed finite profile-domain abstraction may be nonempty and path-consistent but fail to extend by a fresh witness.  WP58 exhibited profiles $A,T,N$ with domains
+\[
+D(A,T)=\{\DR,\PPI\},\quad D(T,N)=\{\PO\},\quad D(A,N)=\{\DR,\PPI\},
+\]
+and old nodes $a:A$, $b,c:T$ with
+\[
+a\DR b,
+\quad a\PPI c,
+\quad b\DR c.
+\]
+Adding $d:N$ with $b\PO d$ and $c\PO d$ forces simultaneously $a\DR d$ and $a\PPI d$, contradiction.
+
+The correction is that an existential $\exists R.D$ is a selected witness edge requirement, not a complete bipartite profile-pair requirement.
+
+\subsection{Selected witness subrelations}
+A regular cover must contain selected total witness subrelations
+\[
+W_e(x,y)\subseteq R_{p,q}(x,y)
+\]
+for each existential $e=\exists R.D\in p$.  WP59 repaired the WP58 pattern by allowing $D(T,N)=\{\PO,\DR\}$ and selecting only matching-index $\PO$ witnesses.
+
+\subsection{Formula-visible pair colours}
+The pair-colour palette need only record endpoint profiles, RCC5 atom, and selected witness labels.  Address distinctions such as $i=j$ are not colours unless they change the atom or witness label.  WP61 showed stabilization of formula-visible colours in private-witness families.
+
+\subsection{Realized triple patterns are essential}
+Pair-colour palettes alone over-reject.  In a vertical $\PP$-chain with one profile, the pair atoms are $\EQ,\PP,\PPI$.  A palette all-combinations check sees the impossible pattern $(\PP,\PP,\PPI)$ and falsely rejects, although it is never realized.  Therefore a coherent cover needs realized triple patterns or address automata from which they are computed.
+
+\noindent\textbf{Evidence.} WP62 and WP63 demonstrate this with finite prefixes; WP63 confirms both the vertical-chain case and private witness subrelations.
+
+\section{Universal-cover extension bases}
+
+\begin{definition}[Extension basis]
+An extension basis is a finite set of block templates.  Blocks contain finite witness pockets, selected witness edges, connector points, order and disjointness seeds, and continuation ports.  Its semantics is the universal-cover unfolding: distinct witness paths are kept distinct unless equality is formula-visible.
+\end{definition}
+
+The universal-cover semantics is crucial.  Local successor schemes with two directions $E,N$ need not satisfy the grid coincidence $EN(x)=NE(x)$.  The universal cover splits these paths.  This reflects Wessel's obstruction: the abstract RCC5 table does not force the commuting-square coincidence needed for a grid.
+
+\subsection{Protected pocket blocks}
+WP64--WP68 tested increasingly complex full-logic pockets:
+\begin{itemize}
+\item one protected $\PO$ pocket with forced vertical guard;
+\item recursive protected pockets;
+\item prefix interval guards eliminating cross-level $\PO$ hazards;
+\item multi-witness pockets with internal $\DR$, where a common lower connector fails;
+\item separated-star guards repairing the multi-witness case.
+\end{itemize}
+These examples showed that no single interval pattern is universal, but finite guard topologies can handle the tested protected pockets.
+
+\section{Connector topology}
+
+\subsection{Envelope guard}
+Every finite pocket $P$ admits an algebraically valid envelope guard: add $L,U$, put $L<U$, every $x\in P$ below $U$, and $L\DR x$ for all $x\in P$.  This isolates previous material below $L$ from the pocket by downward closure.  WP69 exhaustively checked all closed atomic pockets up to size four.
+
+\subsection{Lower-connector colouring}
+For a lower connector $L$, choosing which pocket nodes lie above $L$ is a finite colouring problem.  Let
+\[
+U_L=\{x:L\PP x\}.
+\]
+Then $U_L$ must be upward closed and $\DR$-independent; endpoint type constraints further restrict choices.  WP70 verified the criterion on interval and separated-star examples.
+
+\subsection{One-point extension criterion}
+Let $P$ be a finite pocket and add one external connector $e$.  Define
+\[
+U=\{x:e\PP x\},\quad L=\{x:e\PPI x\},\quad D=\{x:e\DR x\}.
+\]
+The extension is RCC5-consistent iff:
+\begin{enumerate}
+\item $U$ is upward closed;
+\item $x\in U$ and $x\#y$ imply $y\in D$;
+\item $L$ is downward closed;
+\item $\ell\in L,u\in U$ imply $\ell<u$ already in the pocket;
+\item $D$ is downward closed;
+\item $\ell\in L,d\in D$ imply $\ell\#d$ already in the pocket.
+\end{enumerate}
+WP71 exhaustively checked the criterion against brute-force RCC5 closure for pockets up to size four.
+
+\subsection{Multi-connector sequentialization}
+Finite multi-connector topology reduces to sequential one-point traces.  If a final extension is closed, every induced subextension is closed, so any connector order passes the one-point criterion; conversely sequential valid additions are closed by induction.  WP72 exhaustively checked the two-connector case over pockets up to size three.
+
+\subsection{Principal connector basis}
+The strongest local topology result is the canonical principal basis.
+
+\begin{theorem}[Principal connector basis]\label{thm:principal}
+For any finite closed RCC5 pocket $P$, there is a finite extension with one top connector $T$ and one principal lower connector $L_p$ for each $p\in P$, such that $P$ is preserved, every $p\in P$ lies below $T$, and each $L_p$ lies below the upward cone $\up p$.  Disjointness among connectors is generated by disjointness among their upward cones.  The extension is RCC5-closed and has size $2|P|+1$ including the original pocket.
+\end{theorem}
+
+\begin{proof}
+In the ordered-disjoint normal form, $\up p$ is $\DR$-independent: if $u,v\in\up p$ and $u\#v$, downward closure gives $p\#p$, impossible.  Thus a new $L_p$ can be placed below all of $\up p$ without self-disjointness.  If upward cones of $p$ and $q$ contain disjoint elements, then set $L_p\#L_q$; otherwise leave them residual.  Add a common top $T$ above all pocket and lower connector points.  Downward closure creates exactly the forced disjointness and no diagonal or comparable-disjoint conflict.  The normal form yields RCC5 closure.
+\end{proof}
+
+\noindent\textbf{Evidence.} WP80 exhaustively checked all closed pockets up to size four; no principal-basis failures occurred.
+
+\section{Trace interfaces and finite-state propagation}
+
+For a fixed block with inherited ports $I$ and fresh ports $F$, an old occurrence has a boundary trace in $\Rel^I$ and a fresh trace in $\Rel^F$.  However, unary traces are not enough: if $x\PP y$ and $y\DR b$, then $x\DR b$ is forced.  Thus pair-aware propagation is necessary.
+
+\begin{theorem}[Finite block amalgamation criterion]\label{thm:mixed}
+Let $O$ be an old closed RCC5 context, $F$ a fresh closed finite block, and assign atoms to all cross pairs $O\times F$.  Then the union is RCC5-closed iff every mixed triple containing both old and fresh elements satisfies the RCC5 composition condition.
+\end{theorem}
+
+\begin{proof}
+All-old and all-fresh triples are valid by assumption.  Therefore only mixed triples remain; if all mixed triples are valid, every ordered triple in the union is valid.
+\end{proof}
+
+WP76 exhaustively checked this equivalence on small networks.  WP75 showed why one-old traces over-accept, and WP79 showed that for a fixed fresh block the old context quotients into finitely many trace classes plus old-old atom domains between trace classes.
+
+\section{Coloured-triangle abstraction and guarded-fragment caveat}
+
+RCC5 composition can be written as finitely many forbidden coloured triangles:
+\[
+\neg(R(x,y)\wedge S(y,z)\wedge T(x,z))
+\quad\text{for }T\notin\comp(R,S).
+\]
+WP77 derived 71 forbidden proper/identity triangle colour triples.
+
+This explains why pair colours plus realized triple patterns are the natural stopping point: RCC5 composition is ternary and no higher RCC5-specific arity is needed for local algebra.
+
+However, ordinary guarded/clique-guarded cover theorems do not directly apply.  Because RCC5 relations are total, the Gaifman graph of every nontrivial model is complete.  Even a one-dimensional $\PP$-chain has finite prefixes $K_n$ of unbounded clique number and treewidth.  WP78 demonstrates this.  Thus the required cover theorem must be specialized to complete edge-coloured regular structures, not imported directly from bounded-treewidth guarded covers.
+
+\section{Finite bounded searches and the remaining lemma}
+
+For fixed bounds on profiles, pocket size, connector budget, block count, pair colours, and trace states, existence of a coherent extension basis is decidable by finite enumeration plus the coherent-cover checker.  WP73 packages one-connector behaviours into finite trace alphabets: a pocket of size $m$ has at most $4^m$ raw traces, pruned by the WP71 criterion and endpoint compatibility.  WP74--WP79 refine this to pair-aware trace propagation.
+
+Thus the full decidability proof would follow from a computable bound.
+
+\begin{conjecture}[Bounded finite extension-basis property]\label{conj:basis}
+For every satisfiable full $\ALCI$ concept $C$ (after TBox internalization if desired), there is a finite universal-cover extension basis of computably bounded size whose coherent regular unfolding satisfies $C$.
+\end{conjecture}
+
+The remaining work is to prove Conjecture~\ref{conj:basis}, or to construct a concept forcing genuinely nonregular formula-visible pair-colour/triple-pattern co-realization.  The latter would have to be stronger than half-graphs, prefix pumps, identity selectors, recursive pockets, or finite connector-topology complications, all of which have been shown compatible with regular covers.
+
+\section{Script and evidence manifest}
+
+The archive includes all available probes and captured outputs from the regular-cover phase.  The table below lists the principal role of each probe.  Some auxiliary probes that were created during side explorations are included in the package even if not used in the main theorem stack.
+
+\begin{itemize}
+\small
+\item \path{wp45_regular_cover_identity_selectors.py}: Shows that identity-selector patterns i=j are bad for bounded live width but regular-cover representable.
+\item \path{wp46_no_global_path_selector.py}: Exhaustive negative: no singleton-fixed converse-respecting multiplicative selector for complex RCC5 domains.
+\item \path{wp47_rcc5_poset_disjoint_characterization.py}: Exhaustive evidence for the RCC5 normal form PP=< and DR=\#.
+\item \path{wp48_free_amalgam_order_disjoint.py}: Checks free amalgamation in the ordered-disjoint view.
+\item \path{wp49_forallPO_free_propagation.py}: Derives non-PO universal propagation rules and supports the forall-PO-free decidability proof.
+\item \path{wp50_full_logic_po_guard.py}: Shows forall PO has only immediate endpoint constraint and reduces the full logic to PO guarding.
+\item \path{wp51_regular_po_guard_schemas.py}: Tests regular vertical guard schemas beyond static type-pair guards.
+\item \path{wp52_periodic_po_guard_closure.py}: Shows periodic vertical PO guard obligations remain regular under downward DR closure.
+\item \path{wp53_dr_po_repair_operator.py}: Implements least downward DR repair for unsafe residual PO pairs.
+\item \path{wp54_order_guard_synthesis.py}: Finite order/DR guard synthesis for fixed profile systems.
+\item \path{wp55_scc_vertical_lift.py}: Realizes cyclic order constraints as periodic vertical SCCs when compatible.
+\item \path{wp56_po_pocket_propagation.py}: Derives protected-PO pocket narrowing rules such as PO;PP leading to PP when PO is forbidden.
+\item \path{wp57_profile_domain_closure.py}: Finite profile-domain closure; useful necessary filter.
+\item \path{wp58_binary_domains_no_extension.py}: Counterexample: binary profile domains lack one-point extension.
+\item \path{wp59_private_witness_subrelations.py}: Repairs WP58 by selected regular witness subrelations.
+\item \path{wp60_pair_color_abstraction.py}: Introduces pair colours for regular correlations such as same index.
+\item \path{wp61_formula_visible_pair_colours.py}: Refines pair colours to atom plus selected witness labels only.
+\item \path{wp62_pair_palette_needs_triples.py}: Shows pair-colour palettes alone over-reject vertical chains; realized triple patterns are needed.
+\item \path{wp63_coherent_cover_checker.py}: Finite-prefix checker for coherent regular-cover conditions.
+\item \path{wp64_extension_basis_po_pocket_cover.py}: Finite extension-basis block with protected PO pocket and forced guard.
+\item \path{wp65_universal_cover_commutation_gap.py}: Demonstrates universal-cover splitting of commuting-grid-looking witness paths.
+\item \path{wp66_recursive_star_basis.py}: Recursive protected-PO pocket basis; pair/triple data stabilize.
+\item \path{wp67_recursive_pocket_prefix_guard.py}: Prefix interval guard eliminates cross-level residual PO for simple pockets.
+\item \path{wp68_multi_po_star_guard.py}: Shows interval guard fails with internal DR witnesses; separated-star repair works.
+\item \path{wp69_envelope_guard_pockets.py}: General envelope guard for arbitrary finite pockets; exhaustive evidence.
+\item \path{wp70_lower_guard_coloring.py}: Lower connector guardability as upward-closed DR-independent colouring.
+\item \path{wp71_one_point_extension_characterization.py}: Exact finite one-point connector extension criterion.
+\item \path{wp72_multi_connector_sequentialization.py}: Multi-connector topology reduces to sequential one-point traces.
+\item \path{wp73_bounded_trace_alphabet.py}: Finite trace alphabet for fixed pockets and endpoint compatibility.
+\item \path{wp74_trace_interface_automaton.py}: Initial finite-state trace-interface result; later corrected to pair-aware form.
+\item \path{wp75_pair_aware_trace_interface.py}: Shows one-old traces over-accept; pair-aware traces are necessary.
+\item \path{wp76_pair_aware_amalgamation.py}: Proves/checks pair-aware mixed-triple criterion for finite block amalgamation.
+\item \path{wp77_cgf_triangle_translation.py}: Translates RCC5 composition to forbidden coloured triangles.
+\item \path{wp78_guarded_complete_graph_obstruction.py}: Shows standard guarded/clique-guarded treewidth intuition fails because total edge-colouring makes Gaifman graphs complete.
+\item \path{wp79_trace_class_quotient.py}: Trace-class quotient for old context relative to a fixed fresh block.
+\item \path{wp80_principal_lower_connector_basis.py}: Canonical principal connector basis for arbitrary finite pockets.
+\normalsize
+\end{itemize}
+
+
+\section{Additional exploratory scripts in the package}
+The archive also includes several auxiliary probes created during the regular-cover exploration.  These are preserved for reproducibility and may contain useful side checks, but the main theorem stack above does not rely on them.
+\begin{itemize}
+\small
+\item \path{wp77_canonical_self_components.py}
+\item \path{wp78_cgf_shortcut_fails.py}
+\item \path{wp78_cgf_totality_gap.py}
+\item \path{wp79_pair_colour_transition_algebra.py}
+\item \path{wp79_typed_connector_synthesis.py}
+\item \path{wp80_context_signature_stabilization.py}
+\item \path{wp80_one_spine_trace_monoid.py}
+\normalsize
+\end{itemize}
+
+\section{Recommendations}
+
+\subsection{Immediate formalization targets}
+\begin{enumerate}
+\item Formalize Theorem~\ref{thm:normal-form} in Lean: RCC5 closure iff strict order plus downward-closed disjointness.
+\item Formalize the coherent-cover soundness theorem, using realized triple patterns rather than palette closure.
+\item Formalize the $\forall\PO$-free decidability proof as a finite template construction.
+\item Formalize the one-point connector extension criterion and principal connector basis lemma.
+\end{enumerate}
+
+\subsection{Main mathematical target}
+Attack Conjecture~\ref{conj:basis}: bounded finite extension-basis existence over globally saturated types.  The strongest current route is:
+\begin{enumerate}
+\item use finite realized witness pockets, one selected witness per existential demand;
+\item expand each pocket by the principal connector basis;
+\item assign connector profiles compatible with all globalized universal constraints;
+\item use pair-aware trace transition tables for recursive unfolding;
+\item show only computably many such profile/trace/block types are needed.
+\end{enumerate}
+
+\subsection{Counterexample target}
+A genuine counterexample to the regular-cover route should force nonregular formula-visible pair-colour or triple-pattern co-realization.  It is not enough to force unbounded raw width, identity selectors, half-graphs, prefix pumps, or recursive protected $\PO$ pockets; all of those have finite regular presentations in the probes.
+
+
+
+
+\section{Detailed chronology of the regular-cover line}
+
+This section records the main logical progression, including the false starts that were useful in narrowing the target.
+
+\subsection{WP45--WP46: regular covers are stronger than bounded width}
+
+The identity-selector pattern
+\[
+A_j\text{ separates }L_i/U_i\quad\Longleftrightarrow\quad i=j
+\]
+was previously a threat to bounded live width: each row appears to require its own private selector.  WP45 showed that this pattern has a compact regular cover.  The generator has profiles $A,L,U,B$ and uses address equality to decide the private selector relation.  Thus unbounded private selectors do not by themselves refute a regular-cover model property.
+
+WP46 then ruled out a very simple regular-realization shortcut.  A path-domain construction would be easy if there were a selector
+\[
+\sigma(S)\in S
+\]
+for every nonempty set of RCC5 atoms, fixed on singletons, respecting converse, and satisfying
+\[
+\sigma(S*T)\in\comp(\sigma(S),\sigma(T)).
+\]
+The exhaustive search found no such selector.  Hence regular covers cannot be obtained by a one-state canonical atom choice from complex path domains; address-sensitive memory is necessary.
+
+\subsection{WP47--WP48: RCC5 algebra becomes order/disjointness algebra}
+
+The ordered-disjoint normal form and free amalgamation lemmas are the algebraic backbone of the whole route.  After these results, local RCC5 consistency is no longer treated as a five-atom mystery.  One builds a strict order $<$ and downward-closed disjointness $\#$, and then derives $\PO$ as the residual case.
+
+This explains the meaning of many later guard operations.  Adding a $\DR$ guard means adding a disjointness seed and closing downward.  Adding a $\PP$ guard means adding an order edge and closing transitively.  A protected $\PO$ witness is preserved precisely by ensuring that its endpoints remain incomparable and non-disjoint.
+
+\subsection{WP49--WP55: from the $\forall\PO$-free theorem to PO-guard synthesis}
+
+The independent $\forall\PO$-free decidability proof emerged because residual $\PO$ edges are harmless in that fragment.  Once $\forall\PO$ is allowed, the problem becomes a guard problem: any type pair that is not $\PO$-compatible must be made comparable or disjoint.
+
+WP51 showed that static guards are insufficient.  If types $P,Q$ each require both upward and downward vertical witnesses of the other, neither $P<Q$ nor $Q<P$ works as a static orientation, while the periodic chain
+\[
+\cdots<P_{-1}<Q_{-1}<P_0<Q_0<P_1<Q_1<\cdots
+\]
+works.  This forced the move from static quotients to regular vertical components.  WP54 and WP55 made fixed finite guard synthesis decidable and added SCC vertical lifting for cyclic orientation constraints.
+
+\subsection{WP56--WP59: protected PO pockets and selected witnesses}
+
+WP56 exposed the ``PO pocket'' rule:
+\[
+ x\PO y,
+ \quad y\PP z,
+ \quad \neg\POK(\tp(x),\tp(z))
+ \quad\Rightarrow\quad x\PP z.
+\]
+This is not universal propagation; it is composition-domain narrowing after deleting $\PO$.  WP57 encoded such consequences in profile-domain closure.
+
+WP58 then showed that closed binary domains are not enough for extension.  A fresh node cannot be forced to be a global $\PO$ witness for all old copies of a profile.  WP59 corrected this: existential requirements must be represented by selected witness subrelations.  This is a decisive conceptual shift: $\exists R.D$ is a Skolem edge condition, not a complete bipartite profile-pair condition.
+
+\subsection{WP60--WP63: pair colours and realized triples}
+
+WP60 introduced pair colours to remember address correlations such as same-index versus different-index.  WP61 refined this to formula-visible colours, namely endpoint profiles, RCC5 atom, and selected witness labels.  WP62 then showed why the realized triple relation is essential: a vertical chain has pair colours $\PP,\PPI,\EQ$, but the palette cross-product contains impossible triples.  WP63 closed the soundness/checking theorem for coherent regular covers.
+
+\subsection{WP64--WP68: extension bases and guard topologies}
+
+WP64 introduced finite extension bases, block rules whose universal-cover unfoldings generate coherent covers.  WP65 emphasized that universal-cover semantics should split unforced witness path coincidences; this avoids importing grid commutation equations such as $EN=NE$.
+
+WP66 and WP67 tested recursive protected-$\PO$ pockets.  WP68 found an important correction: a common lower connector below two internally disjoint witnesses is impossible.  This showed that guard topology must respect the finite RCC5 diagram of the witness pocket.
+
+\subsection{WP69--WP73: connector topology becomes finite trace search}
+
+WP69 gave an envelope guard for arbitrary finite pockets.  WP70 formulated lower-connector guardability as choosing an upward-closed $\DR$-independent set.  WP71 gave the exact one-point connector criterion, and WP72 generalized multi-connector topology by sequentialization.  WP73 packaged possible connector behaviours as finite trace alphabets.
+
+These results changed the remaining question from ``what guard topology should we invent?'' to ``how many connector traces/profiles are needed recursively?''
+
+\subsection{WP74--WP79: pair-aware interfaces}
+
+WP74 initially suggested unary trace-interface automata for fixed blocks, but WP75 corrected this: unary traces over-accept because RCC5 composition is ternary.  Pair-aware old-old colours are necessary.  WP76 then proved that mixed-triple checking is necessary and sufficient for finite block amalgamation.  WP79 quotientized old context relative to a fixed fresh block by trace classes plus old-old atom domains between trace classes.
+
+The local interface theory is therefore stable: fixed finite bases have finite-state pair-aware propagation.
+
+\subsection{WP80: principal connector bases}
+
+The principal lower-connector basis gives a canonical topology for every finite pocket.  For each pocket node $p$ add a lower connector $L_p$ below the upward cone of $p$, and add one top connector $T$ above the whole pocket.  This uniformly handles interval guards, separated-star guards, and envelope-style isolation.  It is the strongest local topological closure obtained in this line.
+
+\section{False proof routes eliminated}
+
+The investigation eliminated several tempting but unsound shortcuts.
+
+\begin{enumerate}[label=(\arabic*)]
+\item \textbf{Literal finite $\PP$ rings.} These create $x\PP x$ and violate strong-EQ. Cycles are permitted only in generators, not in models.
+\item \textbf{Hintikka filtration.} Unary types do not remember hidden selector incidence.
+\item \textbf{Binary profile domains as complete witness relations.} This over-globalizes existential witnesses and fails the WP58 one-point extension test.
+\item \textbf{Palette-only pair-colour checking.} This rejects even a vertical $\PP$-chain, because it combines pair colours around triples that are not realized.
+\item \textbf{Unary trace automata.} These miss old-old-fresh constraints such as $\PP;\DR=\{\DR\}$.
+\item \textbf{Off-the-shelf guarded cover theorems.} The Gaifman graph is complete because RCC5 edge-colouring is total. The relevant width notion is edge-colour regularity, not guarded treewidth.
+\item \textbf{A universal interval guard for $\PO$ pockets.} It fails when two protected witnesses are internally $\DR$.
+\end{enumerate}
+
+These failures are not merely negative; each one led to a corrected finite object: regular generators, formula-visible pair colours, selected witness subrelations, realized triple patterns, pair-aware interfaces, and principal connector bases.
+
+\section{More detailed proof notes for connector lemmas}
+
+\subsection{Lower-connector colouring}
+
+Given a pocket $P$ and a connector $L$ intended to be below some pocket nodes and disjoint from others, set
+\[
+U_L=\{x\in P:L<x\}.
+\]
+The necessary and sufficient algebraic constraints in the one-sided lower case are:
+\begin{enumerate}[label=(\roman*)]
+\item $U_L$ is upward closed;
+\item $U_L$ is $\#$-independent: no two elements of $U_L$ are internally disjoint;
+\item endpoint type compatibility permits $L\PP x$ for $x\in U_L$ and $L\DR x$ for $x\notin U_L$ when such guarding is chosen.
+\end{enumerate}
+The independence condition is exactly the strong-EQ obstruction: if $a,b\in U_L$ and $a\#b$, downward closure gives $L\#L$.
+
+\subsection{One-point connector criterion}
+
+The full one-point criterion in WP71 allows the new connector $e$ to be below some old nodes, above some old nodes, disjoint from some, and residual $\PO$ to the rest. The sets $U,L,D$ encode these choices. The conditions are forced by avoiding new old-old relations and avoiding $e\#e$.
+
+For example, if $\ell\in L$ and $u\in U$, then the extension creates
+\[
+\ell<e<u.
+\]
+Therefore the old pocket must already have $\ell<u$, otherwise adding $e$ imposes a new old-old $\PP$ relation not present in the pocket. Similarly, if $\ell\in L$ and $d\in D$, then $\ell<e$ and $e\#d$ force $\ell\#d$ in the old pocket.
+
+\subsection{Principal basis}
+
+The principal basis proof can be viewed as a canonical way to provide all safe lower supports without ever putting one lower point below two disjoint pocket points. The connector $L_p$ supports only the upset $\uparrow p$. Because $\uparrow p$ is internally disjointness-free, $L_p$ never becomes self-disjoint. Disjointness between $L_p$ and $L_q$ is exactly the disjointness forced by disjointness between the two upsets.
+
+This yields a bounded algebraic topology for each pocket. The remaining type problem is independent: assign saturated profiles to $L_p$ and $T$ compatibly with all adjacent universal constraints.
+
+\section{Profile assignment: the current live issue}
+
+The principal connector basis is purely algebraic. In a model of an internalized concept, connectors must be ordinary elements satisfying saturated types. If $L_p\DR x$ and $L_p$ contains $\forall\DR.D$, then $x$ must contain $D$. If $L_p\PP y$ and $y$ contains $\forall\PPI.E$, then $L_p$ must contain $E$. These obligations propagate into connector types.
+
+A plausible approach is finite fixed-point type assignment:
+\begin{enumerate}[label=(\arabic*)]
+\item Take a finite realized witness pocket from a model.
+\item Add its principal basis.
+\item Collect all formulas forced into connector types by endpoint universals of adjacent pocket nodes.
+\item Close connector types under Boolean coherence and universal propagation.
+\item For connector existential demands, add selected witness pockets or choose types that avoid non-forced existential demands when possible.
+\item Iterate over the finite closure until a finite set of connector profiles stabilizes.
+\end{enumerate}
+The open question is whether this process always stabilizes with a computable bound depending only on $C$.
+
+\section{Implications for F6}
+
+The regular-cover route does not prove F6 as originally stated. It may bypass it. Bounded live width requires a bounded number of live representatives at an interface. Regular covers allow unboundedly many representatives when their incidence is finite-state, such as:
+\[
+i=j,
+\qquad
+ i<j,
+\qquad
+ i\le j.
+\]
+Thus a failure of F6 by an identity-selector family would not necessarily imply failure of regular-cover decidability. The regular-cover obstruction is stronger: forced nonregular edge-colour or guard incidence.
+
+\section{Conclusion}
+
+The user's cyclic-state suggestion led to a substantial reframing. The local RCC5 algebra is now well understood, and the full problem has been compressed to a bounded regular extension-basis existence lemma. The route is promising because all attempted hard patterns so far are regular-cover tame. It remains incomplete because the final profile-compatible recursive basis theorem has not been proved.
+
+
+\appendix
+\section{Detailed chronological findings from the regular-cover phase}
+This appendix records the chronological development from the user's cyclic $\PP/\PPI$ abstraction proposal through the principal connector basis.  The individual probes are in \texttt{support/scripts/}; captured outputs are in \texttt{support/outputs/}.
+
+\subsection{WP45--WP48: regular covers and the order/disjointness normal form}
+\paragraph{WP45. Identity selectors are regular.}
+The earlier $M_n$ identity-selector obstruction is an obstruction to static bounded live width, not automatically to regular covers.  A finite cover can represent
+\[
+A@j\text{ separates }L@i/U@i \quad\Longleftrightarrow\quad i=j
+\]
+by address equality.  This was the first decisive sign that a regular-cover route may be strictly stronger than F6.
+
+\paragraph{WP46. No global canonical atom selector.}
+The tempting path-domain construction would require a selector $\sigma(S)\in S$ satisfying singleton preservation, converse preservation, and multiplicative coherence
+\[
+\sigma(S*T)\in \comp(\sigma(S),\sigma(T)).
+\]
+Exhaustive search over nonempty RCC5 domain sets found no such selector.  Thus regular covers need finite-state address rules, not a single canonical atom choice from each domain.
+
+\paragraph{WP47. RCC5 normal form.}
+The script exhaustively confirmed the equivalence of RCC5 closure and the ordered-disjoint presentation for all complete atomic networks up to four elements.  This normal form became the central algebraic simplification.
+
+\paragraph{WP48. Free amalgamation.}
+Ordered-disjoint structures admit a clean free amalgam: close order transitively and close disjointness downward.  This reframed gluing as an order/disjointness construction rather than a five-atom RCC5 calculation.
+
+\subsection{WP49--WP55: fragments and $\PO$ guard synthesis}
+\paragraph{WP49. $\forall\PO$-free decidability.}
+The non-$\PO$ universal propagation rules close without generating any $\forall\PO$ marker.  This gives a finite regular witness-template proof for the fragment with no $\forall\PO$ subformula.
+
+\paragraph{WP50. Full logic reduces to $\PO$ guarding.}
+$\forall\PO.D$ imposes only the immediate endpoint condition $D$ on $\PO$ neighbours.  It does not propagate another universal marker.  Therefore the full problem is guarding $\PO$-unsafe residual pairs.
+
+\paragraph{WP51--WP55. Regular guard schemas.}
+Static type-pair guards are insufficient: cyclic order constraints such as $P<Q$ and $Q<P$ can be realized by periodic vertical components.  Fixed finite guard synthesis by $\DR$ and order guards is decidable, with cyclic order SCCs lifted to periodic vertical chains when pairwise $\PP$ compatibility holds.
+
+\subsection{WP56--WP63: witnesses, domains, pair colours, and triples}
+\paragraph{WP56. Protected $\PO$ pockets force guards.}
+If $x\PO y$ is protected and $y\PP z$, then $x-z\in\{\PO,\PP\}$.  If $x,z$ are $\PO$-incompatible, $x\PP z$ is forced.  This is a composition-plus-endpoint-compatibility effect, not a universal propagation tail.
+
+\paragraph{WP57. Finite profile-domain closure.}
+Profile-domain closure computes forced consequences and detects impossible finite abstractions.  It is necessary but not sufficient.
+
+\paragraph{WP58. Binary domains lack one-point extension.}
+A closed binary profile-domain abstraction can fail to add a fresh witness because two same-profile old occurrences may impose incompatible singleton choices through different hidden selectors.  This is W2'-style nonuniformity reappearing at the profile-domain level.
+
+\paragraph{WP59. Witnesses are selected subrelations.}
+The remedy is to represent $\exists R.D$ by a selected total witness subrelation, not by making an entire profile-pair singleton $R$.  This repaired the WP58 obstruction using private regular witnesses.
+
+\paragraph{WP60--WP61. Formula-visible pair colours.}
+The pair-colour abstraction records source profile, target profile, RCC5 atom, and selected witness labels.  Address relations such as same-index are not recorded unless they change the atom or witness label.
+
+\paragraph{WP62--WP63. Realized triple patterns are required.}
+A vertical chain has pair colours $\EQ,\PP,\PPI$, but not every triple of those colours is realized.  Palette-only composition checking over-rejects.  Coherent covers must use realized triple patterns or equivalent address automata.
+
+\subsection{WP64--WP68: extension bases and protected pockets}
+\paragraph{WP64. Extension basis for a pocket.}
+A finite guard-closed local block with selected witnesses and forced guard consequences unfolds to a coherent cover.  Protected $\PO$ pockets with forced order guards stabilize in pair/triple colours.
+
+\paragraph{WP65. Universal-cover semantics.}
+Grid-like local diamonds do not force commuting coincidences.  A universal cover splits $EN(x)$ and $NE(x)$ unless equality is formula-visible.  This aligns with the known Wessel coincidence obstruction.
+
+\paragraph{WP66--WP67. Recursive pockets and prefix guards.}
+Recursive protected $\PO$ pockets can be generated by finite blocks.  Cross-level residual $\PO$ hazards in simple pocket chains are removed by interval/prefix order guards.
+
+\paragraph{WP68. Interval guards are not universal.}
+A common lower connector below two internally $\DR$ witnesses creates self-disjointness.  Separated-star guards repair this.  This forced the move from fixed ad hoc guard topologies to general connector criteria.
+
+\subsection{WP69--WP73: connector topology becomes finite algebra}
+\paragraph{WP69. Envelope guard.}
+Every finite RCC5 pocket can be algebraically isolated by a lower connector disjoint from the pocket and a common upper connector above the pocket.
+
+\paragraph{WP70. Lower connector colouring.}
+Choosing which pocket nodes lie above a lower connector is exactly the choice of an upward-closed $\DR$-independent set, subject to endpoint type permissions.
+
+\paragraph{WP71. Exact one-point extension.}
+For a connector $e$ and pocket $P$, the sets $U=\{x:e\PP x\}$, $L=\{x:e\PPI x\}$, and $D=\{x:e\DR x\}$ satisfy six finite closure conditions iff the one-point extension is RCC5-consistent.
+
+\paragraph{WP72. Multi-connector sequentialization.}
+A finite multi-connector extension is closed iff its connectors can be added sequentially, each passing the WP71 criterion over the structure built so far.
+
+\paragraph{WP73. Trace alphabet.}
+For a fixed finite pocket, valid connector behaviours form a finite trace alphabet.  Thus bounded pocket size and connector budget imply finite local search.
+
+\subsection{WP74--WP80: pair-aware propagation, triangle theory, and principal bases}
+\paragraph{WP74--WP76. Pair-aware interfaces.}
+Unary old traces over-accept.  Pair-aware mixed-triple checking is necessary and sufficient for finite block amalgamation.  This closes the local RCC5 interface theory for fixed finite blocks.
+
+\paragraph{WP77--WP78. Coloured triangles and guarded caveat.}
+RCC5 composition is a finite forbidden coloured-triangle theory.  Standard guarded/clique-guarded cover machinery does not directly apply because total RCC5 edge-colouring makes Gaifman graphs complete.
+
+\paragraph{WP79. Trace-class quotient.}
+For a fixed fresh block, old elements quotient by their row to the block plus old-old atom domains between trace classes.  This is the finite pair-aware interface abstraction.
+
+\paragraph{WP80. Principal lower connector basis.}
+Every finite pocket has a canonical finite connector supply: one lower connector $L_p$ per pocket point $p$, plus a common top connector.  This uniformly bounds local connector topology by pocket size.
+
+\section{Exact current proof state}
+
+\subsection{Closed or near-closed components}
+The following components are mature enough to be formalization targets:
+\begin{enumerate}
+\item strong-EQ RCC5 normal form as strict order plus downward-closed disjointness;
+\item coherent regular-cover soundness and effective checking;
+\item finite forbidden-triangle formulation of RCC5 composition;
+\item selected-witness-subrelation treatment of existentials;
+\item $\forall\PO$-free decidability by finite regular witness templates;
+\item one-point connector extension criterion;
+\item multi-connector sequentialization;
+\item principal connector basis for arbitrary finite pockets;
+\item pair-aware finite block amalgamation.
+\end{enumerate}
+
+\subsection{The remaining lemma in its most compressed form}
+The unresolved statement is not a local RCC5 calculation.  It is the following model-existence property.
+
+\begin{conjecture}[Profile-compatible recursive principal-basis lemma]
+Let $C$ be a satisfiable full $\ALCI$ concept, after internalizing any TBox.  Then there exists a computably bounded finite set of globally saturated profiles and a computably bounded finite set of block templates such that every finite witness pocket needed by the profiles can be expanded by its principal connector basis, labelled by those profiles, and recursively unfolded as a coherent regular cover satisfying $C$.
+\end{conjecture}
+
+If this holds, full decidability follows by enumerating bounded coherent regular covers / extension bases and applying Theorem~\ref{thm:coherent-soundness}.  If it fails, a counterexample should force genuinely nonregular formula-visible atom or triple-pattern co-realization, or unbounded recursive connector-profile demand.
+
+\section{Package contents}
+The zip package contains:
+\begin{itemize}
+\item \texttt{report/regular\_cover\_route\_report.tex}: this source file;
+\item \texttt{report/regular\_cover\_route\_report.pdf}: compiled PDF;
+\item \texttt{support/scripts/}: all WP45--WP80 Python probes found in the workspace;
+\item \texttt{support/outputs/}: captured outputs for each probe;
+\item \texttt{MANIFEST.txt}: a relative-path manifest;
+\item \texttt{README.md}: package overview and reproduction notes.
+\end{itemize}
+
+
+\section{Conclusion}
+The regular-cover route does not yet prove full decidability of $\ALCI$, but it substantially changes the shape of the problem.  Infinite vertical depth, RCC5 composition closure, local protected $\PO$ pockets, and arbitrary finite connector topology are now controlled by explicit finite mechanisms.  The remaining issue is global boundedness of a recursive, globally saturated extension basis.  This is narrower than the original F6 formulation and appears more promising, but it remains an open completeness theorem.
+
+\end{document}

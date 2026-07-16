@@ -1,0 +1,30 @@
+RCC5 composition singleton cells among proper atoms:
+  PP  ; PP  -> PP
+  PP  ; DR  -> DR
+  PPI ; PPI -> PPI
+  DR  ; PPI -> DR
+
+Propagation obligations for universals forall R.D with R in {PP,PPI,DR}.
+If x satisfies forall R.D and x --S--> y, then y must satisfy:
+  D, if S = R; and forall T.D whenever comp(S,T) is a subset of {R}.
+
+forall PP.D:
+  across PP : require D, forall PP.D
+
+forall PPI.D:
+  across PPI: require D, forall PPI.D
+
+forall DR.D:
+  across PP : require forall DR.D
+  across DR : require D, forall PPI.D
+
+Check: no non-PO universal propagation requires forall PO.D
+  bad rules: []
+
+Key singleton rules used by the order/disjointness tree induction:
+  PP ; PP = {'PP'}
+  PPI ; PPI = {'PPI'}
+  PP ; DR = {'DR'}
+  DR ; PPI = {'DR'}
+
+PASS

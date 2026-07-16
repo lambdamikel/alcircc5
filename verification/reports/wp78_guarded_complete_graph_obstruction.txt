@@ -1,0 +1,22 @@
+WP78 guarded/clique-guarded obstruction under total RCC5 edge-colouring
+Finite prefixes of one infinite PP-chain x0 PP x1 PP x2 ...
+
+n= 1: closure_errors= 0 gaifman_edges=  0 clique_number= 1 treewidth_Kn= 0
+n= 2: closure_errors= 0 gaifman_edges=  1 clique_number= 2 treewidth_Kn= 1
+n= 3: closure_errors= 0 gaifman_edges=  3 clique_number= 3 treewidth_Kn= 2
+n= 4: closure_errors= 0 gaifman_edges=  6 clique_number= 4 treewidth_Kn= 3
+n= 5: closure_errors= 0 gaifman_edges= 10 clique_number= 5 treewidth_Kn= 4
+n= 8: closure_errors= 0 gaifman_edges= 28 clique_number= 8 treewidth_Kn= 7
+n=12: closure_errors= 0 gaifman_edges= 66 clique_number=12 treewidth_Kn=11
+n=20: closure_errors= 0 gaifman_edges=190 clique_number=20 treewidth_Kn=19
+
+Observation:
+  Even this one-state regular vertical chain has complete Gaifman graph K_n on every n-prefix.
+  Any standard guarded/tree-decomposition argument that treats every RCC atom as a guard
+  sees unbounded clique/tree width. The model is regular, but not guarded-tree-like
+  in the ordinary sparse-Gaifman sense.
+
+Conclusion:
+  Off-the-shelf guarded/clique-guarded covers do not directly close the proof.
+  The needed cover theorem must exploit finite edge colours and realized triple patterns,
+  rather than bounded Gaifman/clique width.

@@ -1,0 +1,45 @@
+WP82 uniform cross-policy characterization
+closed pockets n=1: 1, with internal DR=0
+closed pockets n=2: 4, with internal DR=1
+closed pockets n=3: 41, with internal DR=22
+closed pockets n=4: 916, with internal DR=697
+
+A size=1, B size=1, pairs=1
+  DR     : failures=0, mismatches_vs_characterization=0
+  PO     : failures=0, mismatches_vs_characterization=0
+  A_PP_B : failures=0, mismatches_vs_characterization=0
+  B_PP_A : failures=0, mismatches_vs_characterization=0
+
+A size=1, B size=2, pairs=4
+  DR     : failures=0, mismatches_vs_characterization=0
+  PO     : failures=0, mismatches_vs_characterization=0
+  A_PP_B : failures=1, mismatches_vs_characterization=0
+    sample=(False, True, (0, 1, 2, 'PP', 'DR', 'PP', ['DR']))
+  B_PP_A : failures=0, mismatches_vs_characterization=0
+
+A size=2, B size=2, pairs=16
+  DR     : failures=0, mismatches_vs_characterization=0
+  PO     : failures=0, mismatches_vs_characterization=0
+  A_PP_B : failures=4, mismatches_vs_characterization=0
+    sample=(False, True, (0, 2, 3, 'PP', 'DR', 'PP', ['DR']))
+  B_PP_A : failures=4, mismatches_vs_characterization=0
+    sample=(True, False, (0, 1, 2, 'DR', 'PPI', 'PPI', ['DR']))
+
+A size=2, B size=3, pairs=164
+  DR     : failures=0, mismatches_vs_characterization=0
+  PO     : failures=0, mismatches_vs_characterization=0
+  A_PP_B : failures=88, mismatches_vs_characterization=0
+    sample=(False, True, (0, 2, 4, 'PP', 'DR', 'PP', ['DR']))
+  B_PP_A : failures=41, mismatches_vs_characterization=0
+    sample=(True, False, (0, 1, 2, 'DR', 'PPI', 'PPI', ['DR']))
+
+A size=3, B size=3, pairs=1681
+  DR     : failures=0, mismatches_vs_characterization=0
+  PO     : failures=0, mismatches_vs_characterization=0
+  A_PP_B : failures=902, mismatches_vs_characterization=0
+    sample=(False, True, (0, 3, 5, 'PP', 'DR', 'PP', ['DR']))
+  B_PP_A : failures=902, mismatches_vs_characterization=0
+    sample=(True, False, (0, 2, 3, 'DR', 'PPI', 'PPI', ['DR']))
+
+sampled size-4 pairs: tests=1200, mismatches=0
+Theorem supported: DR and PO free amalgams are always safe; A<B is safe exactly when B is DR-free; B<A exactly when A is DR-free.
