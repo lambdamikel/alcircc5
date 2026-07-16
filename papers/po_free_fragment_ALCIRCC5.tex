@@ -1,0 +1,198 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Comp}{\mathrm{comp}}
+\newcommand{\cl}{\mathrm{cl}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{A decidable fragment of $\ALCIRCC$:\\ the $\forall\PO$-free
+concepts}
+\author{}
+\date{2026-07-16}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Concept satisfiability for $\ALCIRCC$ --- the description logic
+$\mathcal{ALCI}$ over the five RCC5 base relations under abstract
+composition-table semantics --- is open (Wessel 2002/2003), and reduces
+to a bounded-live-width property F6 whose status is the standing
+obstruction. We isolate a syntactically defined, unconditionally
+decidable fragment: concepts with \emph{no $\forall\PO$ subformula}. The
+key algebraic fact is that $\PO$ is the only relation whose recurrence
+along a vertical chain requires an all-phase safety condition not
+supplied by backward forcing or forward absorption; absent
+$\forall\PO$, that condition is vacuous, the two-tier quotient is
+finite, and the live width is bounded by a computable function of the
+concept. The fragment retains $\exists\PO$, $\forall\DR$, $\exists\DR$
+and arbitrary vertical ($\PP/\PPI$) modalities. This note is a
+theorem-level write-up; its proof rests on the lemmas of the two-tier
+quotient development (\code{papers/two\_tier\_quotient\_ALCIRCC5.tex})
+and is not yet machine-certified. Its provenance is a cold research
+attack on the F6/W2$'$ problem (GPT-5.5); we record it here with that
+status.
+\end{abstract}
+
+\section{The fragment}
+
+We work in negation normal form (NNF) with inverse roles absorbed
+($\exists\PP^-.D = \exists\PPI.D$), under strong-EQ semantics ($\EQ$ is
+identity; between distinct elements only $\{\DR,\PO,\PP,\PPI\}$ occur),
+and abstract composition-table semantics: a model is a set with a
+total, converse-closed, composition-closed labelling of ordered pairs by
+RCC5 relations. Let $\cl(C)$ be the closure of $C$ (subformulas closed
+under the usual Fischer--Ladner conditions) and $m=|\cl(C)|$.
+
+\begin{definition}[$\forall\PO$-free]
+A concept $C$ is \emph{$\forall\PO$-free} if no subformula of $C$ has the
+form $\forall\PO.D$.
+\end{definition}
+
+The fragment is strictly weaker than banning ``horizontal universals
+under horizontal existentials'': it still allows $\exists\PO.D$,
+$\forall\DR.D$, $\exists\DR.D$, and unbounded vertical chains, so it
+retains infinite models and genuine horizontal existentials.
+
+\section{Why $\PO$ is the unstable case}
+
+Recall the four determining (singleton) compositions of proper
+relations,
+\[
+\Comp(\DR,\PPI)=\{\DR\},\quad
+\Comp(\PP,\DR)=\{\DR\},\quad
+\Comp(\PP,\PP)=\{\PP\},\quad
+\Comp(\PPI,\PPI)=\{\PPI\},
+\]
+and the two relevant non-singleton facts
+\[
+\Comp(\PP,\PO)=\{\DR,\PO,\PP\},\qquad
+\Comp(\PPI,\PO)=\{\PO,\PPI\}.
+\]
+Along a vertical chain $d_0\mathbin{\PP}d_1\mathbin{\PP}d_2\cdots$, the
+relation of an external witness $e$ to the chain \emph{stabilizes}: the
+RCC5 transition table admits only finitely many monotone exits among
+$\DR,\PO,\PP,\PPI$ (external-relation stabilization). For the three
+``stable'' relations this gives an all-phase witness by a determining
+composition:
+\begin{itemize}
+\item a $\DR$-demand is carried to all deeper phases by
+$\Comp(\PP,\DR)=\{\DR\}$ (backward forcing);
+\item a $\PP$-demand by $\Comp(\PP,\PP)=\{\PP\}$;
+\item a $\PPI$-demand to all shallower phases by
+$\Comp(\PPI,\PPI)=\{\PPI\}$ (forward absorption).
+\end{itemize}
+$\PO$ has \emph{neither}: $\Comp(\PP,\PO)$ and $\Comp(\PPI,\PO)$ are
+non-singletons, so a witness that is $\PO$-related at one phase need not
+be $\PO$-related at another. This is precisely the point at which the
+two-tier quotient's PO-coherence condition can be violated --- but only
+by a \emph{universal} $\PO$-obligation.
+
+\begin{lemma}[Automatic PO-coherence]\label{lem:pocoh}
+Every $\forall\PO$-free concept is PO-coherent in the period-descriptor
+sense: for every recurrent descriptor $\mathrm{Desc}=(\tau_1,\dots,
+\tau_p)$ and every $\exists\PO.D\in\bigcup_j\tau_j$, any Hintikka type
+$\sigma$ with $D\in\sigma$ is $\PO$-safe for all phases $\tau_j$ with
+respect to $\PO$-universal obligations.
+\end{lemma}
+
+\begin{proof}
+The type-safety test for a $\PO$-edge $\tau_j\to\sigma$ requires, for the
+$\PO$-universal part, that if $\forall\PO.E\in\tau_j$ then $E\in\sigma$,
+and (since $\PO$ is symmetric) the analogous condition from $\sigma$ to
+$\tau_j$. In a $\forall\PO$-free concept no type contains any
+$\forall\PO.E$, so the $\PO$-universal part of $\mathrm{Safe}(\tau_j,
+\sigma)$ is empty for every phase. The remaining requirements are the
+propositional/type conditions already secured by $D\in\sigma$; hence the
+same $\sigma$ is safe for all phases.
+\end{proof}
+
+\section{Bounded quotient and decidability}
+
+\begin{theorem}[Bounded live width; decidability]\label{thm:main}
+For every satisfiable $\forall\PO$-free concept $C$ there is a
+split-forest presentation of a model of $C$ with live width at most
+\[
+K(C)=(1+m)^2\,2^{2^m},\qquad m=|\cl(C)|.
+\]
+Consequently concept satisfiability for the $\forall\PO$-free fragment
+of $\ALCIRCC$ is decidable.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Start from any model of $C$. Along each infinite $\PP$-chain record the
+recurrent set of Hintikka types with its cyclic order as a
+\emph{period descriptor}; there are at most $2^m$ types and hence at most
+$D(C)\le 2^{2^m}$ descriptors. By external-relation stabilization,
+$\DR/\PP$-demands obtain all-phase witnesses through backward forcing,
+$\PPI$-demands through forward absorption, and (Lemma~\ref{lem:pocoh})
+$\PO$-demands obtain all-phase safety because there are no $\forall\PO$
+constraints. Thus every recurrent descriptor has finitely many all-phase
+witnesses, at most one regular/designated witness per existential demand
+per descriptor, giving a two-tier quotient of size
+$Q(C)\le D(C)(1+m)\le(1+m)\,2^{2^m}$.
+
+The quotient network is checked by ordinary RCC5 path-consistency, which
+the patchwork property (Renz--Nebel) turns into global realizability;
+unfolding each kernel as its periodic $\PP$-chain yields a model of $C$.
+All repeated vertical material is folded into the kernel loop, and
+cross-edges to external witnesses are constant quotient edges or
+vertical shadows, so the live interface width is bounded by the quotient
+size times the local number of existential demands:
+$K(C)\le Q(C)(1+m)$. Decidability follows by enumerating all quotients
+up to this computable bound and checking the finite type, witness,
+safety, and RCC5 composition conditions.
+\end{proof}
+
+\begin{remark}[What the bound is and is not]
+The constant is not meant to be tight; only its \emph{computability}
+matters, as decidability then follows from the conditional theorem of
+the width-barrier development (a computable live-width bound inhabits F6
+for the fragment). The exponents reflect the type/descriptor counting,
+not a claimed complexity result.
+\end{remark}
+
+\begin{remark}[Relation to W2$'$]
+The mathematical fragment result uses an explicit quotient with
+designated witnesses; it does not require arbitrary glue steps to factor
+through a fixed coarse interface state, so it does not depend on the
+(false) coarse uniformization property W2$'$. A \emph{catalogue}
+implementation with a fixed finite steering syntax would still need
+row-coloured steering or a principal-row-profile refinement, but the
+decidability of the fragment does not.
+\end{remark}
+
+\section{Provenance and status}
+
+This fragment and its proof were produced by a cold research attack on
+the F6/W2$'$ problem (GPT-5.5, on the packet
+\code{papers/cold\_review\_f6\_w2prime}; the response and its supporting
+scripts are archived under \code{attack\_req/}). The underlying
+ingredients --- external-relation stabilization, backward-forcing safety
+for $\DR/\PP$, forward absorption for $\PPI$, and the PO-coherence
+condition --- are those of the two-tier quotient development
+(\code{papers/two\_tier\_quotient\_ALCIRCC5.tex}), specialized here by a
+syntactic sufficient condition (Lemma~\ref{lem:pocoh}). The result is
+\emph{theorem-level and not machine-certified}; it should be read as a
+proof obligation whose lemmas are already present in that development,
+and it should be independently reviewed (and ideally Lean-transcribed)
+before being cited as established. Consistent with the project's standing
+discipline, the honest label remains: \emph{strongly supported, not
+certified}.
+
+\end{document}

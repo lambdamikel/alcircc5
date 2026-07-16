@@ -742,6 +742,93 @@ question seen from two sides, and the reason neither has been settled in
 two decades is that the same fact must be turned one way or the other.
 \end{observation}
 
+\section{The cold-attack sharpening: identity-selector minors}\label{sec:sharpen}
+
+A cold research attack on this report (GPT-5.5, on the F6/W2$'$ packet
+\code{papers/cold\_review\_f6\_w2prime}) did not settle F6 --- as
+expected --- but it \emph{sharpened} the target and eliminated several
+would-be shortcuts. The machine-checkable witnesses below were
+reproduced locally (\code{wp39}--\code{wp44}); the accompanying
+theorem-level claims are the attacker's and are \emph{not} yet
+independently verified.
+
+\paragraph{``Rigid horizontal crowd'' is too broad.}
+Observation~\ref{obs:reduction} asked whether a concept can force
+unboundedly many pairwise non-mergeable horizontal occurrences. That
+condition is satisfied by constructions that are nonetheless harmless:
+a shell half-graph ($y_i\mathbin{\DR}p_j$ for $j\le i$,
+$y_i\mathbin{\PO}p_j$ for $j>i$) forces an unbounded raw horizontal
+crowd, yet all shells share the same relevant row at the recursive
+interface, so a finite row-keyed catalogue represents the whole family
+(\code{wp41}/\code{wp42}); a prefix-monotone ``pumped'' staircase is
+finite-state with one moving inherited slot (\code{wp43}); and a
+single-chain PO-gap ($\exists\PO.A$ in one phase, $\forall\PO.\neg A$ in
+another) has a \emph{bounded live window} --- its PO-events are singleton
+shadows except three local edges, so at most two live edges meet each
+chain point (\code{wp40}). Raw non-mergeability is thus the wrong
+invariant; the certificate-relevant one is unbounded row/profile
+inequivalence that survives bounded refinement.
+
+\paragraph{The sharp target.}
+The precise obstruction is an \emph{$M_n$ identity-selector minor}: pairs
+$(L_i,U_i)_{i<n}$ with selectors $(A_i)_{i<n}$ and a fresh splitter $b$
+such that $A_i$ separates $L_i,U_i$ (i.e.\ $\rho(L_i,A_i)\neq
+\rho(U_i,A_i)$) while $A_j$ does \emph{not} for $j\neq i$, and the
+splitter forces $L_i$ and $U_i$ apart ($L_i\mathbin{\DR}b$,
+$U_i\mathbin{\PPI}b$). The selector incidence matrix is the $n\times n$
+identity; the minimum \emph{separator-cover} is $n$. Half-graphs and
+prefix pumps have separator-cover $O(1)$ (one carried memory slot);
+identity minors have cover $n$ by design. The reduction sharpens to:
+\begin{center}
+\emph{F6 holds} $\iff$ \emph{no finite $\ALCIRCC$ concept forces
+unbounded $M_n$ identity-selector minors};\\
+\emph{F6 fails} $\iff$ \emph{some concept forces them for all $n$.}
+\end{center}
+
+\paragraph{An algebra-only proof of F6 is refuted.}
+One tempting route --- bound the live width by compressing
+path-completion support trees --- is blocked. For every $n$ there is a
+finite, composition-closed RCC5 \emph{set} network realizing an $M_n$
+minor with separator-cover exactly $n$, while each individual support
+tree has height one (\code{wp44}, verified through $n=8$). So bounded
+support depth does \emph{not} imply bounded separator cover. Crucially
+this family is a bare RCC5 network, \emph{not} forced by any concept, so
+it refutes a proof \emph{strategy}, not F6. Any F6 proof must use that
+the bad glue steps are $\ALCIRCC$-\emph{unforceable}, not merely that
+they are RCC5-consistent. The recommended positive route is a
+\emph{selector-sharing lemma} over bounded \emph{tuple} profiles (not
+unary types) --- if many same-profile selector gadgets must share or
+collapse, unbounded identity minors cannot be forced --- which is a
+back-and-forth/bisimulation argument, not a locality one (horizontal
+degree is unbounded, so Gaifman locality alone does not apply).
+
+\paragraph{W2$'$ folds into F6.}
+The uniformization property W2$'$ is not an independent obstacle. Its
+coarse form is \emph{false}: a five-point witness (\code{wp39}) has two
+old occurrences $y,z$ of identical coarse state (type, separator row,
+safe domain to the fresh $b$) whose every joint completion forces
+$y\mathbin{\DR}b$ but $z\mathbin{\PPI}b$ --- separated only by their
+relation to a third occurrence $a$ \emph{outside} the separator. The
+failure is completeness-side (over-rejection, never unsoundness), and it
+is repaired by refining the interface state with the row to the bounded
+set of \emph{live} old anchors; since F6 bounds that set, the refinement
+is bounded \emph{by F6}. Thus the honest conditional is F6 plus a
+\emph{live-neighbourhood uniformization lemma} whose size is controlled
+by F6 itself --- one open problem, not two.
+
+\paragraph{A decidable fragment.}
+Finally, one unconditional fragment falls out. In the two-tier quotient
+analysis $\PO$ is the only relation whose recurrence needs an all-phase
+safety condition; a concept with \emph{no $\forall\PO$ subformula} makes
+that condition vacuous, so it admits a finite two-tier quotient and a
+computable live-width bound $K(C)=(1+m)^2\,2^{2^m}$ with
+$m=|\mathrm{cl}(C)|$.
+Hence the \emph{$\forall\PO$-free fragment} of $\ALCIRCC$ (retaining
+$\exists\PO$, $\forall\DR$, and all vertical modalities) is decidable
+--- a Target-B win independent of full F6, resting on the two-tier
+manuscript's stabilization and forcing/absorption lemmas
+(theorem-level, not yet certified).
+
 \section{Discussion}\label{sec:discussion}
 
 \paragraph{Why the combinatorics did not fit.}
