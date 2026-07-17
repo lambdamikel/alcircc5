@@ -3,7 +3,10 @@
 Is concept satisfiability in **ALCI_RCC5** (the description logic *ALCI* with
 the RCC5 spatial relations as roles, under abstract composition-table
 semantics) decidable? The question has been open since Wessel's 2002/2003
-work. This repository documents a sustained, adversarially-reviewed, partly
+work ([report7.pdf](papers/report7.pdf); the family is defined and the open
+problem stated there, alongside the earlier
+[report4](papers/report4.pdf)–[report6](papers/report6.pdf)). This
+repository documents a sustained, adversarially-reviewed, partly
 machine-checked attack on it, conducted by AI assistants under human
 direction.
 
