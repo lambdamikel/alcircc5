@@ -10,6 +10,12 @@ repository documents a sustained, adversarially-reviewed, partly
 machine-checked attack on it, conducted by AI assistants under human
 direction.
 
+<p align="center">
+  <img src="papers/report7_figure10_grid.png" width="760" alt="An RCC8 network isomorphic to a 3x3 grid (Wessel 2002/2003, report7 Figure 10)">
+</p>
+
+<p align="center"><em>Wessel's 2002/2003 construction of an RCC8 network isomorphic to an n×n grid (<a href="papers/report7.pdf">report7</a>, Fig. 10). Such grid models <strong>exist</strong> — yet no concept term can <strong>force</strong> one. That gap (the "coincidence obstruction") is exactly why the problem has resisted both a decidability and an undecidability proof for two decades.</em></p>
+
 > **Disclaimer.** The papers and code here were produced by AI assistants
 > (Claude / Anthropic and GPT-5.4 / GPT-5.5 / OpenAI), prompted and directed
 > by Michael Wessel. They have **not** been peer-reviewed or verified by
@@ -77,6 +83,31 @@ RCC*k* relation sets coarsen as *k* decreases; RCC1–3 are decidable
 
 Both directions rely on the **patchwork property** of RCC5/RCC8 (Renz &
 Nebel 1999): path-consistent atomic networks are globally consistent.
+
+## The reasoner, and a GIS example spanning 23 years
+
+Alongside the theory, the project ships a working **cover-tree tableau
+reasoner** ([`src/cover_tree_tableau.py`](src/cover_tree_tableau.py)) —
+cross-validated on 911 concepts against an independent oracle with **zero
+mismatches**, and never once contradicted anywhere in the campaign. Its most
+satisfying test spans 23 years: it recomputes, in 2026, the exact GIS
+concept taxonomy Wessel worked out by hand in his 2003 report — all **21/21**
+subsumptions, multiple inheritance and all.
+
+The 2003 original ([report7](papers/report7.pdf), Figure 6):
+
+<p align="center">
+  <img src="papers/report7_figure6_taxonomy.png" width="600" alt="GIS taxonomy, 2003 original (report7 Figure 6)">
+</p>
+
+The same taxonomy recomputed in 2026 by the reasoner (green = individuals;
+note that *Hamburg* and *Alster* each have **two** parents — the taxonomy is
+a DAG, not a tree, which is exactly the multiple-inheritance the reasoner has
+to get right):
+
+<p align="center">
+  <img src="papers/gis_taxonomy_reasoner_2026.png" width="760" alt="GIS taxonomy recomputed by the cover-tree tableau reasoner, 2026">
+</p>
 
 ## Approaches, by technique
 
