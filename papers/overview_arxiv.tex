@@ -1160,6 +1160,34 @@ correctly by the tableau but not by the quasimodel oracle. It is strong
 evidence, not a proof: no completeness theorem is claimed for the
 implementation.
 
+\paragraph{Evidence statistics, and the absence of a counterexample.} The
+empirical case is substantial, and it is worth stating precisely because
+it is the strongest thing short of a proof. The two reasoners agree on a
+$911$-concept cross-validation suite (zero mismatches after the single
+known $\PO$-loop blind spot of the quasimodel oracle is excluded), and the
+cover-tree decomposition passes $775/775$ of its structured tests. Beyond
+the reasoners, some eighty self-contained verification work packages
+(\texttt{verification/python/}, WP1--WP83) cross-check the finite
+combinatorial content of every proof route against the RCC5 composition
+table \emph{re-derived from finite set semantics}, so the underlying
+algebra cannot be fudged. Representative results: the RCC5 patchwork
+property holds on $63{,}219$ two-bag amalgamations plus $300$
+tree-shaped patchings with zero failures (WP14); the finite acceptance
+mechanism matches the cover-tree tableau on ten diagnostic concepts plus a
+$148$-concept random sweep with zero disagreements (WP16); the
+cluster-quasimodel decision layer matches the tableau on $11/11$
+diagnostics plus a $200$-concept sweep (WP26); the RCC5 normal form agrees
+with brute-force composition closure on all networks up to size four
+(WP47); and the Lean development builds with zero \texttt{sorry} on every
+run (WP34). Most tellingly, \emph{across all thirty rounds and fifteen
+adversarial reviews, no accepted-but-unsatisfiable concept was ever
+found}: every defect the reviews turned up was a gap in an
+\emph{argument}, never a semantic counterexample to the intended theorem
+(the absence of nominals in $\mathcal{ALCI}$ appears to block
+concept-level exploitation of the seams the reviews located). This is not
+a proof---no amount of it can be---but it is the reason we describe the
+decidability argument as \emph{strongly supported}.
+
 \paragraph{A GIS example.} As a sanity check spanning $23$ years, the
 tableau recomputes the GIS concept taxonomy of Wessel's original
 report~\cite{Wessel2003} (its Figure~6, reproduced here as
