@@ -1,9 +1,13 @@
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
+\usepackage{array}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage[htt]{hyphenat}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage{hyperref}
+\emergencystretch=3em
 \usepackage{xcolor}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 
@@ -48,10 +52,8 @@
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{remark}[theorem]{Remark}
 
-\title{On the Decidability of $\ALCIRCC{5}$ (and $\ALCIRCC{8}$)\\
-Concept Satisfiability:\\
-Split-Forest Models, a Conditional Decidability Theorem,\\
-and a Machine-Checked Reduction to One Keystone}
+\title{On the Decidability of $\ALCIRCC{5}$ Concept Satisfiability:\\
+Split-Forest Models and a Machine-Checked Reduction to One Keystone}
 
 \author{Michael Wessel\\
 \small (with AI assistants: Claude / Anthropic, GPT-5.5 / OpenAI)}
@@ -61,10 +63,10 @@ and a Machine-Checked Reduction to One Keystone}
 \maketitle
 
 \begin{abstract}
-Whether concept satisfiability in $\ALCIRCC{5}$ and $\ALCIRCC{8}$---the
-description logic $\mathcal{ALCI}$ with the RCC5/RCC8 base relations as
-roles under \emph{abstract composition-table} semantics---is decidable
-has been open since Wessel's 2002/2003 work. This paper reports a
+Whether concept satisfiability in $\ALCIRCC{5}$---the description logic
+$\mathcal{ALCI}$ with the RCC5 base relations as roles under
+\emph{abstract composition-table} semantics---is decidable has been open
+since Wessel's 2002/2003 work. This paper reports a
 sustained, adversarially-reviewed, partly machine-checked attack on the
 problem, conducted by AI assistants under human direction. We do not
 settle the question. What we establish is: (i) a \emph{conditional
@@ -203,8 +205,9 @@ project's actual wins.
 \section{Current status: where we stand after twenty-five years}
 \label{sec:status}
 
-\emph{Decidability of $\ALCIRCC{5}$ (and $\ALCIRCC{8}$) concept
-satisfiability remains open.} A current-literature check (July~2026)
+\emph{Decidability of $\ALCIRCC{5}$ concept satisfiability remains open}
+(the closely related $\ALCIRCC{8}$ likewise, but it is not our focus
+here). A current-literature check (July~2026)
 found no published resolution; the closest neighbours are decided in the
 other direction and are discussed in \S\ref{sec:history}. What the
 present work adds is not an answer but a sharp reduction and a
@@ -449,9 +452,11 @@ no arbitrary role box, and no geometric coincidence conditions.
 \subsection{Blocked reduction routes}
 
 \begin{table}[t]
+\centering
 \caption{Why standard undecidability reductions fail for $\ALCIRCC{5}$.}
 \label{tab:blocked}
-\begin{tabular}{p{3.0cm}p{3.8cm}p{3.5cm}}
+\small
+\begin{tabular}{L{0.29\textwidth}L{0.34\textwidth}L{0.27\textwidth}}
 \toprule
 \textbf{Source Problem} & \textbf{Technique} & \textbf{Missing in $\ALCIRCC{5}$} \\
 \midrule
