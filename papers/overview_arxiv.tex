@@ -2,6 +2,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{xcolor}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
@@ -350,14 +351,14 @@ $\PPI(b,c)$ & $\DR$ & $\DR,\PO,\PPI$ & $\PPI$ & $\PPI$ & $*$ \\
 
 \noindent
 Key composition facts exploited in the cover-tree theory
-(Sections~\ref{sec:split-forest}--\ref{sec:cover-tree}):
+(\S\ref{ssec:approach-splitforest}, \S\ref{sec:reasoners}):
 $\comp(\PP,\DR) = \{\DR\}$ and $\comp(\DR,\PPI) = \{\DR\}$
 (DR rigidity);
 $\comp(\PP,\PP) = \{\PP\}$ and $\comp(\PPI,\PPI) = \{\PPI\}$
 (transitivity);
 and $\comp(\DR,\PO) = \{\DR,\PO,\PP\}$
 (PP can be \emph{forced} by composition and universal filtering;
-see Example~\ref{ex:pp-forcing}).
+see the forced-composition examples in \S\ref{ssec:approach-tableaux}).
 
 \subsection{Wessel's grid constructions and the coincidence obstruction}
 \label{sec:wessel-grid}
@@ -737,20 +738,37 @@ split-forest.
 \subsection{The split-forest idea}
 \label{ssec:approach-splitforest}
 
-\paragraph{Idea (the human's whiteboard).} Decompose a model into a
-\emph{forest} of trees --- one per connected component --- by splitting
-each join node into $\EQ$-mates, so the tree skeleton is explicit and the
-(global) relational completion is handled separately by the patchwork
-property. Tree-like presentations of infinite models are the classical
-route to decidability (tree-model property, then automata or
-type-elimination).
+\paragraph{Idea (the human author's, on a whiteboard).} The split-forest
+decomposition was the human author's contribution, sketched on a
+whiteboard (Figure~\ref{fig:whiteboard}) and handed to the AI assistants
+to make precise. Decompose a model into a \emph{forest} of trees --- one
+per connected component --- by splitting each join node into $\EQ$-mates,
+so the tree skeleton is explicit and the (global) relational completion
+is handled separately by the patchwork property. Tree-like presentations
+of infinite models are the classical route to decidability (tree-model
+property, then automata or type-elimination); the insight was that this
+setting, despite its complete relational graph, still admits such a
+presentation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.72\textwidth]{20260407_062616.jpg}
+\caption{The original whiteboard sketch of the split-forest model
+decomposition (M.\ Wessel, April~2026): the intuition that a
+complete-graph RCC5 model can be presented as a forest of trees by
+splitting join nodes into $\EQ$-mates and completing the relational graph
+by patchwork. This idea---the human author's---is the semantic
+foundation that every subsequent proof route consumes, and the one
+component no cold review ever broke.}
+\label{fig:whiteboard}
+\end{figure}
 
 \paragraph{The normal form (Theorem~A).} Every satisfiable concept admits
 a witness-generated, tree-like split-forest model, obtained by
 \emph{witness thinning} $\to$ \emph{generated containment covers} $\to$
 \emph{split copies} for incomparable superparts $\to$
 \emph{side-interface mosaics} $\to$ a \emph{typed-$\EQ$ quotient}
-(\S\ref{sec:split-forest};
+(
 \texttt{trees/}, \texttt{cover\_tree\_tableau\_ALCIRCC5}). This is the one
 component found sound by \emph{every} cold review --- the semantic
 foundation everything downstream \emph{consumes}.
@@ -881,34 +899,161 @@ attack, but it does not move the summit.
 
 \section{Current implementation: reasoners}
 \label{sec:reasoners}
-%% TO FILL (reuse from arxiv_candidate + README):
-%%  - the cover-tree tableau reasoner; what foundation it rests on;
-%%  - strong empirical evidence but no proof; the known blind spot;
-%%  - the GIS taxonomy example (21/21 subsumptions from report7 Fig 6).
 
-%% ====================================================================
+The project ships working reasoners, on the same foundation as the proof
+attempts but validated empirically rather than proved.
+
+\paragraph{The cover-tree tableau.} \texttt{src/cover\_tree\_tableau.py}
+($\approx 350$ lines) is an operational concept-satisfiability procedure
+with exact-occurrence blocking, resting on the split-forest normal form
+and patchwork completion (\S\ref{ssec:approach-splitforest}). It is
+cross-validated against an independent quasimodel oracle on $911$
+concepts (zero mismatches after the known blind spot is excluded) and
+against an independent model verifier
+(\texttt{src/model\_verifier.py}). It is trustworthy on satisfiable
+inputs; its one known limitation is the strong-$\EQ$ $\PO$-loop, decided
+correctly by the tableau but not by the quasimodel oracle. It is strong
+evidence, not a proof: no completeness theorem is claimed for the
+implementation.
+
+\paragraph{A GIS example.} As a sanity check spanning $23$ years, the
+tableau recomputes the GIS concept taxonomy of Wessel's original
+report~\cite{Wessel2003} (its Figure~6, reproduced here as
+Figure~\ref{fig:gis}): all $21/21$ subsumptions are reproduced
+(\texttt{src/gis\_taxonomy.py}). A taxonomy computed by hand in $2003$ is
+reproduced, in $2026$, by an AI-written reasoner resting on the
+split-forest foundation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\textwidth]{report7_figure6_taxonomy.png}
+\caption{The GIS concept taxonomy of Wessel's 2002/2003 report
+(report7, Figure~6), recomputed in full ($21/21$ subsumptions) by the
+cover-tree tableau reasoner \texttt{src/gis\_taxonomy.py}.}
+\label{fig:gis}
+\end{figure}
+
 \section{On agentic AI usage}
 \label{sec:agentic}
-%% TO FILL (reuse the LLM-capabilities section from arxiv_candidate,
-%% AUDITED for staleness; add: cold review as a standard step;
-%% don't-trust-but-verify; scripts/probes as ground truth; the division
-%% of labour; the human-bottleneck / autonomous-sub-agent point).
 
-%% ====================================================================
+We report candidly on the workflow, because the methodology may outlast
+the mathematics.
+
+\paragraph{The loop.} The human posed the problem, supplied the central
+intuitions and directions (the split-forest decomposition, the
+cluster/loop and regular-cover reframings, the honesty discipline), and
+after each round reviewed, corrected, and re-prompted. An AI proposed a
+proof or a repair; a \emph{fresh} AI session---with no memory of how the
+proof was built---then reviewed it adversarially. Repeat.
+
+\paragraph{Cold review as a standard step.} The single most transferable
+finding: a \emph{cold} reviewer consistently found defects that a
+\emph{warm} reviewer (primed by the construction) missed---including, on
+this project, unsoundness proofs and scope errors that two hot audits had
+passed over. Across fifteen reviews, a defect or overclaim was found in
+all but two. We recommend cold, cross-lineage adversarial review as a
+default intermediate step in AI-assisted mathematics, not an optional
+one.
+
+\paragraph{Don't trust, verify.} Every load-bearing claim was
+cross-checked against something mechanical: self-contained Python probes
+that re-derive the RCC5 composition table from finite set semantics
+(so the algebra cannot be fudged), and ultimately the Lean kernel.
+Overclaiming was treated as the cardinal sin---and it happened: the
+author model twice overstated what the Lean established, and a cold
+review caught both; the claims were withdrawn. The machine checks, not
+the model's confidence, are the ground truth.
+
+\paragraph{What frontier models did well, and did not.} Both models
+sustained long-context, rigorous, multi-round formal development and
+produced genuinely useful adversarial reviews and machine-checkable
+artifacts. What was \emph{not} demonstrated is the decisive novel
+idea---no model cracked F6, and the honest expectation is that none will
+by the incremental means used here. The models excel at rigorous
+local formalization and at finding flaws; the genuinely new keystone is
+where human insight (or a qualitatively different search) is still
+required. We regard the AI contributions as co-authorship-grade in a
+human collaborator; we also regard the human's role---problem, intuition,
+direction, and the discipline of honest labelling---as indispensable.
+
 \section{Summary and conclusion}
 \label{sec:conclusion}
-%% TO FILL:
-%%  - what we learned; what remains to investigate that would move the
-%%    needle; what AI vs. the human contributed;
-%%  - an honest estimate of the chances of closing F6 (very low; it is the
-%%    24-year problem; it would be foolish to re-tread what is done here);
-%%  - the project's actual wins (forall-PO-free, Lean, RCC5 normal form,
-%%    the reasoners, the conditional verified decidability theorem);
-%%  - is this a real scientific contribution / arXiv-worthy? honest yes-with-caveats;
-%%  - the human-is-the-bottleneck / autonomous-sub-agents outlook.
-%%  - LINKS to main papers, Lean artifacts, implementations (\cite / \url).
 
-%% ====================================================================
+\paragraph{What we learned.} A twenty-five-year-old open problem has been
+\emph{reduced}, honestly and largely machine-checkably, to a single
+well-posed lemma (F6, bounded live width), which is provably the same
+fact that blocks a proof of undecidability. The local algebra of RCC5 is
+exhausted and, in one case, certified. Adversarial cold review plus
+machine verification is a repeatable methodology for this kind of work.
+
+\paragraph{What would move the needle.} F6 is a \emph{definability}
+question---can a formula \emph{force} unbounded rigid horizontal
+structure?---so the tools that fit are model-theoretic: locality
+(Gaifman/Hanf), Ehrenfeucht--Fra\"iss\'e / back-and-forth over bounded
+tuple profiles, the composition method, and bounded-model machinery. The
+concrete positive target is a \emph{selector-sharing lemma}: that many
+same-profile selector gadgets must coalesce, so unbounded
+identity-selector minors cannot be forced. The concrete negative target
+is a concept forcing such minors (which would prove undecidability).
+Ordinary locality alone is insufficient because horizontal degree is
+unbounded; this is the ``correct room,'' not a solved problem.
+
+\paragraph{The chances of closing F6.} We are frank: they are low, and
+re-treading the ground covered here will not change that. F6 is the
+open problem itself, and the two independent cold attacks converged on
+the same wall---evidence that the problem is correctly \emph{mapped},
+not that it is about to yield. It would be a poor use of effort to
+reconstruct the split-forest, automata, Lean, or regular-cover
+developments; the value of what remains is a genuinely new
+definability-theoretic idea, or a machine-assisted search of a different
+kind (below).
+
+\paragraph{The wins.} Independent of F6, this project produced:
+(i) an unconditionally \emph{decidable fragment}, the $\forall\PO$-free
+concepts; (ii) a machine-\emph{certified} RCC5 normal form; (iii) a
+machine-checked \emph{conditional decidability theorem}
+($\text{F6}\Rightarrow$ decidable, soundness certified, resting on the
+F6 oracle); (iv) working \emph{reasoners} reproducing a $2003$ GIS
+taxonomy; (v) a sharp \emph{map} of the problem with a named toolbox; and
+(vi) a candid \emph{methodology} for adversarial AI-assisted mathematics.
+
+\paragraph{Is this a scientific contribution?} We believe so, with the
+labelling kept honest: not a resolution of the open problem, but its
+reduction---checkably, and with a certified surround---to an irreducible
+core, plus one unconditional fragment, one certified lemma, working tools,
+and an honest account of an AI-assisted attack and its dead ends. That is
+an accurate and, we think, respectable terminal state for a discussion
+piece on a problem open for over two decades.
+
+\paragraph{Outlook: the human is the bottleneck.} Although the key
+insights, intuitions, and directional choices came from the human, each
+round still required the human to orchestrate, review, and rewrite the
+prompts---and at that cadence roughly eighty rounds consumed about four
+months. Autonomous sub-agents \emph{directing} the research could
+plausibly automate the diminishing-delta local work (formalization, local
+lemmas, probe-driven counterexample search) and remove that bottleneck.
+The cost may be prohibitive and it sacrifices direct oversight, but it is
+worth attempting for one reason this project is unusually well-suited to
+it: the objective is clearly defined and \emph{machine-verifiable in
+Lean}. A closed, adversarial loop---propose, formalize, let the kernel
+accept or reject---has a built-in ground-truth oracle, exactly the guard
+the manual cold-review methodology provided. The honest caveat: Lean
+verifies \emph{proofs}, not the \emph{truth of a conjecture}, so such a
+loop can tighten the certified surround but the summit (F6) still needs a
+genuine idea; orchestration alone is unlikely to supply it.
+
+\paragraph{Materials.} The machine-checked development is
+\texttt{formal/Round19Transport.lean}, \texttt{formal/RCC5NormalForm.lean},
+and \texttt{formal/ForcingReduction.lean} (see \texttt{LEAN.md}); the
+status report and the F6/W2$'$ analysis are in
+\texttt{papers/fable5\_width\_barrier/}; the decidable fragment in
+\texttt{papers/two\_tier\_quotient\_ALCIRCC5} and
+\texttt{papers/po\_free\_fragment\_ALCIRCC5}; the certified local theory
+in \texttt{papers/rcc5\_local\_amalgamation\_theory}; the reasoners under
+\texttt{src/}; the probes under \texttt{verification/python/}; and the
+full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md}.
+The repository is at \url{https://github.com/lambdamikel/alcircc5}.
+
 
 \begin{thebibliography}{99}
 
@@ -1327,10 +1472,26 @@ OpenAI.
 \end{thebibliography}
 
 \appendix
-\section{The DL~2026 rejection}
+\section{On the DL~2026 rejection}
 \label{app:dl2026}
-%% TO FILL (reuse the DL 2026 rejection discussion + open letter from
-%% dl2026-rejected/open_letter.md and reviews.txt; the grievance about
-%% the community not engaging; peer-review discussion).
+
+An abstract of this work was submitted to the $2026$ International
+Workshop on Description Logics and rejected. We record the episode not
+out of grievance alone but because it bears on the paper's own subject:
+what peer review is for, and how a community engages with an unusual
+result on one of its long-standing open problems.
+
+The submission was labelled exactly as this paper is---\emph{strongly
+supported, not certified}, an AI-assisted attack offered as a discussion
+piece. The reviews did not engage with the substance (the split-forest
+normal form, the reduction to F6, the machine-checked soundness), and no
+poster was granted. There is a recursive irony in an AI-assisted result
+on a twenty-year-old problem being declined without engagement in the
+same period that frontier AI began contributing checkable mathematics.
+The full open letter and the reviews are preserved in the repository
+(\texttt{dl2026-rejected/open\_letter.md}, \texttt{reviews.txt}); we
+reproduce neither in full here, but stand by the position that a
+correctly-labelled, machine-checkable reduction of a two-decade open
+problem merits engagement on its merits.
 
 \end{document}
