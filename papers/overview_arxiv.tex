@@ -1,0 +1,364 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+
+\newcommand{\ALCIRCC}[1]{\mathcal{ALCI}_{\mathrm{RCC#1}}}
+\newcommand{\ALCRCC}[1]{\mathcal{ALC}_{\mathrm{RCC#1}}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Comp}{\mathrm{comp}}
+\newcommand{\EXPTIME}{\textsc{ExpTime}}
+\newcommand{\PSPACE}{\textsc{PSpace}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{On the Decidability of $\ALCIRCC{5}$ (and $\ALCIRCC{8}$)\\
+Concept Satisfiability:\\
+Split-Forest Models, a Conditional Decidability Theorem,\\
+and a Machine-Checked Reduction to One Keystone}
+
+\author{Michael Wessel\\
+\small (with AI assistants: Claude / Anthropic, GPT-5.5 / OpenAI)}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Whether concept satisfiability in $\ALCIRCC{5}$ and $\ALCIRCC{8}$---the
+description logic $\mathcal{ALCI}$ with the RCC5/RCC8 base relations as
+roles under \emph{abstract composition-table} semantics---is decidable
+has been open since Wessel's 2002/2003 work. This paper reports a
+sustained, adversarially-reviewed, partly machine-checked attack on the
+problem, conducted by AI assistants under human direction. We do not
+settle the question. What we establish is: (i) a \emph{conditional
+decidability theorem}---if the ``live width'' of models is bounded by a
+computable function of the concept (property~F6), then satisfiability is
+decidable---whose soundness direction is \emph{machine-checked in Lean~4};
+(ii) that the entire remaining difficulty compresses into that single
+property~F6, which we show is the \emph{same fact} that blocks a proof of
+undecidability; (iii) a certified fragment of the local algebra (an RCC5
+normal form) and an unconditionally decidable fragment (the
+$\forall\PO$-free concepts); and (iv) an honest map of the routes tried,
+the dead ends, and the missing hard pieces. We also report, candidly, on
+the methodology---adversarial ``cold review,'' machine verification, and
+a human-in-the-loop workflow---and on what frontier AI could and could
+not do.
+\end{abstract}
+
+\tableofcontents
+
+%% ====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+\subsection{AI disclaimer and authorship}
+\label{ssec:ai-disclaimer}
+
+The mathematical content of this paper was produced by AI assistants
+(Anthropic's Claude models and OpenAI's GPT-5.5), prompted, steered, and
+reviewed by the human author (Michael Wessel), who posed the problem,
+supplied the central intuitions and directions, orchestrated the
+review--repair cycles, and takes responsibility for the framing.
+\textbf{The results are unverified by human domain experts and should be
+read as AI-generated conjectures supported by machine checking and
+computational evidence---not as established theorems}, with the explicit
+exceptions of the parts stated to be kernel-checked in Lean~4 (the
+soundness pipeline, the abstraction's faithfulness, and the RCC5 normal
+form), which are machine-verified but still human-unreviewed. We are
+deliberate about this labelling throughout: the standing one-line status
+is \emph{strongly supported, not certified}. We regard the AI systems as
+having made contributions of a kind that, in a human collaborator, would
+warrant co-authorship, and we discuss this in \S\ref{sec:agentic}.
+
+\subsection{Why the problem is hard, in one page}
+\label{ssec:whyhard}
+
+RCC5 relates two regions by exactly one of five relations: equal ($\EQ$),
+proper part ($\PP$), proper superpart ($\PPI$), partial overlap ($\PO$),
+or discreteness/disjointness ($\DR$). Under \emph{abstract
+composition-table} semantics a model is not a set of actual regions but a
+set with a total labelling of ordered pairs by these relations, required
+only to be converse-closed and \emph{composition-closed}: if $x\,R\,y$
+and $y\,S\,z$ then $x\,T\,z$ for some $T$ the composition table allows.
+
+The five relations split into two axes that behave completely
+differently.
+\begin{itemize}
+  \item \textbf{The vertical axis} ($\PP,\PPI$: nesting) is \emph{tame}.
+    Composition can \emph{force} vertical structure---the only four
+    ``determining'' compositions (those returning a single relation) all
+    run through $\PP$ or $\PPI$---but an unbounded vertical chain folds
+    into a finite loop, exactly as in ordinary modal logic. Infinite
+    depth is not the problem.
+  \item \textbf{The horizontal axis} ($\DR,\PO$: side-by-side) is
+    \emph{wild}. Composition can never \emph{determine} a horizontal
+    relation ($\PO$ is never a forced value), yet it can force two
+    occurrences to be \emph{distinct} (a shared horizontal anchor
+    excludes $\EQ$). So horizontal ``crowds'' of pairwise-distinct
+    occurrences are the danger.
+\end{itemize}
+
+A finite decision procedure must record, at each interface of a model,
+the genuine branching it cannot reconstruct---the \emph{live width}. Many
+forced edges are \emph{shadows} (implied by composition from edges
+already present) and cost nothing; live width counts only the rest. The
+whole decidability question reduces to one property:
+
+\begin{quote}
+\textbf{(F6)} Is the live width of models bounded by a computable
+function of the input concept?
+\end{quote}
+
+If yes, the certificate space is finite and satisfiability is decidable.
+And here is the knife's edge: F6 is \emph{the same fact} that blocks
+proving the problem \emph{undecidable}. To force undecidability one would
+encode a rigid coordinate grid, which requires forcing a horizontal
+relation to a single value---exactly what the composition table cannot
+do (the ``coincidence obstruction'' Wessel identified in 2002/2003). Turn
+that looseness into a bound and one gets decidability; circumvent it and
+force a grid and one gets undecidability. The two open directions are one
+question seen from two sides, which is why neither has been settled in
+over twenty years.
+
+\subsection{Scope, contributions, and structure}
+\label{ssec:scope}
+
+This is both a technical report and a discussion piece. Its
+contributions are:
+\begin{enumerate}
+  \item A \emph{conditional decidability theorem} (F6 $\Rightarrow$
+    decidable) whose soundness half is machine-checked in Lean~4
+    (\S\ref{ssec:approach-lean}), and the reduction of the whole problem
+    to F6.
+  \item The identification of F6 as the shared keystone of the
+    decidability and undecidability directions (\S\ref{ssec:whyhard},
+    \S\ref{sec:conclusion}).
+  \item A certified RCC5 \emph{normal form} and an unconditionally
+    decidable \emph{$\forall\PO$-free} fragment
+    (\S\ref{ssec:approach-finite}, \S\ref{ssec:approach-regcov}).
+  \item An honest, technique-organized account of every route tried, the
+    counterexamples that killed the wrong ideas, and the lessons
+    (\S\ref{sec:approaches}), so that others need not repeat them.
+  \item A candid methodology report on adversarial AI-assisted
+    mathematics (\S\ref{sec:agentic}).
+\end{enumerate}
+
+The paper is organized as follows.
+\S\ref{sec:status} states, in largely non-technical terms, where the
+problem stands after twenty-five years.
+\S\ref{sec:history} gives the history ($\mathcal{ALCI}_{\mathrm{RCC}}$
+from Cohn~1993 through Wessel~2002/2003 and Lutz--Wolter~2006) and
+carefully distinguishes our object from the neighbouring logics that
+\emph{are} known undecidable.
+\S\ref{sec:undec} explains why the standard undecidability reductions
+fail.
+\S\ref{sec:approaches}---the core of the paper---surveys the approaches
+\emph{by technique}: naive tableaux and blocking, finite-model and
+reduction attempts, the split-forest idea, the automata route, the Lean
+line culminating in F6, and the regular-cover pivot.
+\S\ref{sec:reasoners} describes the working reasoners and a GIS example.
+\S\ref{sec:agentic} reports on the AI methodology.
+\S\ref{sec:conclusion} concludes with what was learned, what would move
+the needle, an honest estimate of the chances of closing F6, and the
+project's actual wins.
+
+%% ====================================================================
+\section{Current status: where we stand after twenty-five years}
+\label{sec:status}
+
+\emph{Decidability of $\ALCIRCC{5}$ (and $\ALCIRCC{8}$) concept
+satisfiability remains open.} A current-literature check (July~2026)
+found no published resolution; the closest neighbours are decided in the
+other direction and are discussed in \S\ref{sec:history}. What the
+present work adds is not an answer but a sharp reduction and a
+machine-checked surround.
+
+\paragraph{The positive result---conditional decidability.}
+\emph{If} the live width of models is bounded by a computable function of
+the concept (property~F6), \emph{then} concept satisfiability is
+decidable; and the \textbf{soundness half of that reduction is
+machine-checked in Lean~4} (a valid finite certificate provably unfolds
+to a genuine RCC5 model of the concept, and the finite type abstraction
+is faithful). What is open is the antecedent F6 itself---equivalently the
+completeness direction, that every satisfiable concept has a
+\emph{bounded} finite certificate.
+
+\paragraph{What is certified} (machine-checked, Lean~4, zero
+\code{sorry}):
+\begin{itemize}
+  \item the \emph{soundness} pipeline: a valid finite certificate unfolds
+    to a genuine RCC5 model of the concept;
+  \item the \emph{faithfulness} of the finite (Hintikka) abstraction:
+    satisfiability and abstraction-realizability coincide;
+  \item the \emph{RCC5 normal form} (forward): every strong-$\EQ$ RCC5
+    network is an ordered-disjoint structure---a strict partial order for
+    $\PP$ with a downward-closed disjointness for $\DR$, $\PO$ residual.
+\end{itemize}
+
+\paragraph{What is strongly supported but not certified:} F6, the single
+open keystone---now sharpened to a precise combinatorial dichotomy (does
+some concept force unbounded ``identity-selector minors''?), with the
+auxiliary uniformization property W2$'$ shown to \emph{fold into} it.
+
+\paragraph{Unconditional by-products (independent of F6):}
+\begin{itemize}
+  \item the $\forall\PO$-free fragment is \emph{decidable}---concepts
+    with no $\forall\PO$ subformula, still retaining $\exists\PO$,
+    $\forall\DR$, $\exists\DR$, and all vertical modalities, so a
+    genuinely expressive spatial fragment;
+  \item the certified RCC5 normal form above;
+  \item working reasoners (a cover-tree tableau) that reproduce, $23$
+    years later, the GIS taxonomy of Wessel's original report;
+  \item the standard undecidability routes shown blocked, with the
+    coincidence obstruction identified as the shared fact.
+\end{itemize}
+
+\paragraph{The honest bottom line.} After roughly thirty repair rounds
+and fifteen adversarial reviews the project has reached a genuine
+\emph{local optimum}: the local algebra is exhausted (and in one case
+certified), the soundness side is machine-checked, and the whole
+remaining difficulty is one well-posed lemma. We offer the work not as a
+resolution but as a two-decade open problem \emph{reduced, honestly and
+checkably, to its irreducible core.}
+
+%% ====================================================================
+\section{History of $\ALCIRCC{}$ and why the known results do not settle it}
+\label{sec:history}
+
+%% TO FILL (reuse from overview_ALCIRCC5_arxiv_candidate.tex, audited):
+%%  - Cohn 1993 (RCC as modalities)
+%%  - Wessel's ALCI_RCC family (2002/2003), report7, the GIS taxonomy,
+%%    the coincidence obstruction, EXPTIME-hardness lower bound
+%%  - Lutz & Wolter 2006 (topological undecidability) and WHY it does not
+%%    transfer to abstract composition-table semantics
+%%  - CRUCIAL (from the July 2026 literature check): distinguish our
+%%    object from ALC(RCC8)-as-concrete-domain (Lutz-Milicic: DECIDABLE)
+%%    and from ALC_RA / ALCI_RA with general role-composition axioms
+%%    (Wessel 2001: UNDECIDABLE). Our abstract-composition-table semantics
+%%    is neither; the undecidability does not transfer because the table
+%%    cannot force the coincidence condition.  [pull LRCC8_vs_ALCIRCC8.tex]
+
+%% ====================================================================
+\section{Why standard undecidability reductions fail}
+\label{sec:undec}
+
+%% TO FILL (reuse from overview_ALCIRCC5_arxiv_candidate.tex, audited):
+%%  - blocked reduction routes; the concrete domino attempts (RCC5, RCC8)
+%%    verified blocked; the coincidence obstruction in detail.
+
+%% ====================================================================
+\section{Overview of approaches, by technique}
+\label{sec:approaches}
+
+We organize the attack by \emph{technique}, in roughly the order tried,
+not by round or date. Each subsection follows the same shape: the
+high-level idea; the concrete techniques investigated; where and why they
+fail (with the examples that made the failure clear); pointers to the
+papers, probes, and reasoners; and the lessons.
+
+\subsection{Naive tableaux and blocking}
+\label{ssec:approach-tableaux}
+%% TO FILL from approaches/Tableaux/Overview.md:
+%%  - idea: cover-tree tableau, exact-occurrence blocking
+%%  - blocking conditions investigated: triangle types, quadruple types,
+%%    profile blocking, double blocking, ...
+%%  - why they fail: the one-point extension problem, dormant foralls,
+%%    new qualifications into old (blocked) nodes causing unblocking, ...
+%%  - the key counterexamples (name them; link probes)
+%%  - lessons
+
+\subsection{Finite-model and reduction attempts}
+\label{ssec:approach-finite}
+%% TO FILL from approaches/FiniteModel_TwoTier/Overview.md:
+%%  - idea: bound the model / collapse PP/PPI chains into clusters/loops;
+%%    enumerate-and-check; two-tier quotient; MSO encoding
+%%  - why/where they fail; counterexamples
+%%  - THE WIN: forall-PO-free fragment decidable (two-tier); frame it.
+
+\subsection{The split-forest idea}
+\label{ssec:approach-splitforest}
+%% TO FILL from approaches/SplitForest/Overview.md:
+%%  - the whiteboard idea; why tree-like infinite-model abstraction is
+%%    promising (tree usually buys decidability); the split-forest normal
+%%    form (Theorem A); how/why we transitioned to proofs on top of it.
+
+\subsection{The no-automata certificate, and the automata route}
+\label{ssec:approach-automata}
+%% TO FILL from approaches/NoAutomataCertificate + Automata_Parity Overview.md:
+%%  - the hand certificate (rounds 2-10); how it converged onto automata;
+%%  - the parity-tree-automaton route that "consumed" the split forests
+%%    (Theorems A/B/C); what was achieved; the counterexamples/gaps;
+%%  - why we abandoned the parity-automaton route (the keystone stayed a
+%%    keystone; decision layer moved to type-elimination).
+
+\subsection{The Lean line and F6}
+\label{ssec:approach-lean}
+%% TO FILL from approaches/Lean_F6/Overview.md and LEAN.md:
+%%  - short intro to Lean and how we use it (kernel as ground-truth oracle)
+%%  - the certificate/soundness/logic layers; what is formalized;
+%%  - the conditional decidability theorem and the non-oracular reduction;
+%%  - the localization to F6 (+ W2'); the sharpening to identity-selector
+%%    minors.
+
+\subsection{The regular-cover pivot}
+\label{ssec:approach-regcov}
+%% TO FILL from approaches/RegularCovers/Overview.md:
+%%  - the reframing (finite generators, infinite unfoldings; two-tier-like);
+%%  - the certified RCC5 normal form; the same forall-PO-free result;
+%%  - why it is a better vocabulary but its keystone is F6 relabelled.
+
+%% ====================================================================
+\section{Current implementation: reasoners}
+\label{sec:reasoners}
+%% TO FILL (reuse from arxiv_candidate + README):
+%%  - the cover-tree tableau reasoner; what foundation it rests on;
+%%  - strong empirical evidence but no proof; the known blind spot;
+%%  - the GIS taxonomy example (21/21 subsumptions from report7 Fig 6).
+
+%% ====================================================================
+\section{On agentic AI usage}
+\label{sec:agentic}
+%% TO FILL (reuse the LLM-capabilities section from arxiv_candidate,
+%% AUDITED for staleness; add: cold review as a standard step;
+%% don't-trust-but-verify; scripts/probes as ground truth; the division
+%% of labour; the human-bottleneck / autonomous-sub-agent point).
+
+%% ====================================================================
+\section{Summary and conclusion}
+\label{sec:conclusion}
+%% TO FILL:
+%%  - what we learned; what remains to investigate that would move the
+%%    needle; what AI vs. the human contributed;
+%%  - an honest estimate of the chances of closing F6 (very low; it is the
+%%    24-year problem; it would be foolish to re-tread what is done here);
+%%  - the project's actual wins (forall-PO-free, Lean, RCC5 normal form,
+%%    the reasoners, the conditional verified decidability theorem);
+%%  - is this a real scientific contribution / arXiv-worthy? honest yes-with-caveats;
+%%  - the human-is-the-bottleneck / autonomous-sub-agents outlook.
+%%  - LINKS to main papers, Lean artifacts, implementations (\cite / \url).
+
+%% ====================================================================
+\appendix
+\section{The DL~2026 rejection}
+\label{app:dl2026}
+%% TO FILL (reuse the DL 2026 rejection discussion + open letter from
+%% dl2026-rejected/open_letter.md and reviews.txt; the grievance about
+%% the community not engaging; peer-review discussion).
+
+\end{document}
