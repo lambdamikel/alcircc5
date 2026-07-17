@@ -7709,6 +7709,26 @@ the open items are exactly the mathematics F6 and W2'. Status unchanged:
 strongly supported, NOT certified. (Rounds 26-30 remain unreviewed --
 presume a 16th review finds something in the new ~560 lines.)
 
+## 2026-07-15 — F6/W2′ cold attack: W2′ folds into F6; the forcing reduction formalized
+
+A cold research request (not a review) attacked the two residual open
+sub-problems head-on (packet: `papers/cold_review_f6_w2prime/`; probes
+wp39–wp44). High-level outcome:
+
+- **W2′ (uniformization) is not an independent obstacle** — it folds into
+  F6 (a bounded state refinement repairs the coarse failure; the effect is
+  over-rejection only, never unsoundness).
+- **F6 stays open but is sharpened** to a precise dichotomy (does some
+  concept force unbounded "identity-selector minors"?). Several proposed
+  proof routes were refuted at the witness level; no theorem-level claim was
+  verified beyond the machine-checked witnesses.
+- `formal/ForcingReduction.lean` added: an abstract Lean formalization of
+  the width-crowd forcing reduction (F6 fails iff some concept forces an
+  unbounded rigid horizontal crowd), modulo a single carried adequacy
+  hypothesis; zero sorries.
+
+Status unchanged: strongly supported, NOT certified.
+
 ## 2026-07-16 — consolidation: harvest the local theory, freeze keystone-chasing
 
 The regular-cover pivot's three-round update (WP81-83: ghost-guard
@@ -7746,3 +7766,23 @@ structure (PO-guarding + one global boundedness keystone; ∀PO-free
 decidable) is evidence the problem is correctly mapped. Recommendation
 adopted: pivot from summiting to shipping -- certified local theory +
 honest capstone. Status unchanged: strongly supported, NOT certified.
+
+## 2026-07-17 — documentation restructure: one canonical paper, slim README
+
+Consolidated the write-up into a single deliverable and prepared it for
+arXiv.
+
+- `papers/overview_arxiv.tex` is now THE overview paper (~32pp): reworked
+  end-to-end and made arXiv-ready. It absorbs everything of substance --
+  history, why undecidability fails, concrete-domain related work, the
+  approaches by technique, the certified local theory, the ∀PO-free
+  decidable fragment, the machine-checked reduction to F6, the reasoners,
+  and the agentic-AI methodology.
+- README slimmed from ~720 to ~140 lines: now just a map that points to the
+  one paper, with link-based `approaches/*/Overview.md` hubs (no duplicated
+  prose). Retired the two superseded overview papers; kept the DL 2026
+  abstract.
+- Rationale: one good paper, no drifting duplicates; detail lives in the
+  paper and in git history.
+
+Status unchanged: strongly supported, NOT certified.
