@@ -1364,7 +1364,7 @@ from Wessel's report~\cite{Wessel2003}.
 \end{figure*}
 
 %% ====================================================================
-\section{History of Attempts (April--May 2026)}
+\section{History of Attempts (April--July 2026)}
 \label{sec:history-of-attempts}
 %% ====================================================================
 
@@ -1793,10 +1793,6 @@ certificate-emission test.  All PASS.  No counterexample to any
 combinatorial claim of any round was found.
 
 %% ====================================================================
-\section{Outlook and Conclusion}
-\label{sec:outlook}
-%% ====================================================================
-
 \subsection{From automata to Lean: how the argument settled}
 \label{ssec:settled}
 
@@ -1933,6 +1929,10 @@ obtains undecidability.  The two open directions are one question seen
 from two sides, which is why neither has been settled in over twenty
 years.
 
+\section{Conclusion and Outlook}
+\label{sec:outlook}
+%% ====================================================================
+
 \subsection{What has been achieved}
 \label{ssec:achieved}
 
@@ -1983,15 +1983,77 @@ reviews of the Lean, the exact theorem names and axiom footprints) are
 recorded in \texttt{LEAN.md}; \texttt{README.md} gives the current-status
 summary.
 
-\subsection{What remains open, and a final assessment}
-\label{ssec:final}
+\subsection{Dead ends}
+\label{ssec:deadends}
 
-\paragraph{Open.}
+Several routes and proof strategies were pursued and abandoned.  Each is
+a genuine negative result about the problem, not merely a failed attempt.
+
 \begin{itemize}
-  \item \textbf{Decidability itself (F6).}  Whether some concept forces
-    unbounded live width---equivalently, an unbounded rigid horizontal
-    crowd, equivalently unbounded identity-selector minors.  This is the
-    24-year-old open problem, now cleanly stated.  W2$'$ folds into it.
+  \item \textbf{A hand certificate for satisfiability.}  The no-automata
+    split-forest thread (rounds~2--10) repeatedly reduced to
+    automaton-shaped machinery it could not discharge by hand
+    (request-closed cycles behave like B\"uchi/parity acceptance; ``finite
+    product-state exhaustion'' like product-automaton reachability); it
+    converged, honestly, onto an automaton.  The lesson---the keystones a
+    hand proof kept rediscovering (finite checkability, simultaneous
+    eventuality fulfilment) are exactly what an automaton discharges by
+    construction---is why the automata route exists.
+  \item \textbf{Route-dependent global coherence.}  The round-11
+    interface-transformer abstraction derived a globally consistent
+    labelling of an infinite tree from purely local checks, assuming a
+    confluence law it never proved; a cold review broke it.  It was
+    replaced by resting global consistency on the citable $\mathrm{RCC5}$
+    patchwork property.
+  \item \textbf{Forcing a counterexample by raw crowds.}  Every naive
+    attempt to force unbounded width---shell half-graphs, prefix pumps,
+    single-chain $\PO$-gaps---collapses to a finite catalogue.  Raw
+    pairwise non-mergeability is the wrong invariant; the
+    certificate-relevant one is unbounded row/profile inequivalence
+    surviving bounded refinement (identity-selector minors).
+  \item \textbf{Proving F6 by local compression.}  An algebra-only
+    ``compress the support tree'' proof of F6 is refuted: arbitrary
+    jointly-realizable $\mathrm{RCC5}$ glue steps can have unbounded
+    separator cover (machine-checked), so any F6 proof must use that the
+    bad steps are \emph{not $\ALCIRCC{5}$-forceable}, not merely
+    $\mathrm{RCC5}$-consistent.
+  \item \textbf{Ramsey-type combinatorics.}  Wrong quantifier order:
+    Ramsey theory gives unavoidable structure in a large fixed object,
+    whereas F6 concerns structure a formula can \emph{force}.  The
+    substrate is Ramsey-friendly (large irreducible $\{\DR,\PO\}$ crowds
+    exist freely), which is exactly why Ramsey does not fit.
+  \item \textbf{Coarse uniformization (W2$'$).}  Its coarse form is false:
+    two occurrences of identical coarse state can be forced apart by their
+    relation to a third occurrence outside the interface.  It is repaired
+    by a bounded state refinement---and that refinement is bounded by F6,
+    so W2$'$ folds into F6 rather than standing beside it.
+  \item \textbf{The regular-cover reframing as a shortcut.}  A finer,
+    cleaner vocabulary (finite generators, infinite unfoldings) that
+    subsumes the width view and exhausts the local algebra---but its own
+    keystone is F6 relabelled, and it concedes the remainder ``cannot be
+    a purely local $\mathrm{RCC5}$ composition problem.''  A better map,
+    not a shorter path.
+\end{itemize}
+
+\subsection{Missing hard pieces}
+\label{ssec:missing}
+
+\begin{itemize}
+  \item \textbf{Decidability itself (F6)}---the keystone.  Whether some
+    concept forces unbounded live width---equivalently, an unbounded rigid
+    horizontal crowd, equivalently unbounded identity-selector minors.
+    This is the 24-year-old open problem, now cleanly stated; W2$'$ folds
+    into it.  It is provably the \emph{same} fact that blocks a proof of
+    undecidability.
+  \item \textbf{The converse of the $\mathrm{RCC5}$ normal form.}  The
+    forward direction (every $\mathrm{RCC5}$ network is ordered-disjoint)
+    is certified; the converse (ordered-disjoint structures realize
+    $\mathrm{RCC5}$ closure) is exhaustively machine-checked at small size
+    but not yet formalized.
+  \item \textbf{A fully wired, human-reviewed decision procedure.}  The
+    Lean decision-grade reduction is non-oracular and sound, but its
+    completeness premise is exactly F6; and no part of the development has
+    been reviewed by human domain experts.
   \item \textbf{Exact complexity.}  The PO-coherent fragment has a
     doubly exponential quotient bound (2-$\EXPTIME$)~\cite{TwoTierQuotient};
     a matching $\EXPTIME$ upper bound for it is not established, and no
@@ -1999,15 +2061,11 @@ summary.
   \item \textbf{$\ALCIRCC{8}$.}  RCC8 also has the patchwork property, so
     the approach should extend; the $\mathrm{TPP}/\mathrm{NTPP}$
     distinction may require a finer status partition.  Not worked out.
-  \item \textbf{Human verification.}  \emph{None of these proofs have
-    been verified by human domain experts.}  The AI-generated results
-    should be treated as conjectures supported by machine checking and
-    computational evidence, not as established theorems---with the
-    kernel-certified soundness pipeline and the certified normal form the
-    exceptions, and those still unreviewed by humans.
 \end{itemize}
 
-\paragraph{A final honest assessment.}
+\subsection{Final assessment}
+\label{ssec:final}
+
 After roughly thirty repair rounds and fifteen adversarial reviews, the
 project has reached a genuine \emph{local optimum}.  The local algebra of
 $\mathrm{RCC5}$ is exhausted and, in one case, certified; the soundness
