@@ -5,12 +5,18 @@
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,shapes.geometric}
 \usepackage[htt]{hyphenat}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage{hyperref}
 \emergencystretch=3em
 \usepackage{xcolor}
-\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
+  pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5, a New Decidable Fragment, and a Certified Lean Formalization Reducing It to One Keystone},
+  pdfauthor={Michael Wessel (with AI assistants: Claude/Anthropic and GPT-5.4/GPT-5.5/OpenAI)},
+  pdfsubject={Description logics; qualitative spatial reasoning; decidability of concept satisfiability},
+  pdfkeywords={description logics, ALCI, RCC5, region connection calculus, qualitative spatial reasoning, decidability, concept satisfiability, patchwork property, Lean, interactive theorem proving, AI-assisted mathematics}}
 
 \newcommand{\ALCIRCC}[1]{\mathcal{ALCI}_{\mathrm{RCC#1}}}
 \newcommand{\ALCRCC}[1]{\mathcal{ALC}_{\mathrm{RCC#1}}}
@@ -53,11 +59,21 @@
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{remark}[theorem]{Remark}
 
-\title{On the Decidability of $\ALCIRCC{5}$ Concept Satisfiability:\\
-Split-Forest Models and a Machine-Checked Reduction to One Keystone}
+%% ====================================================================
+%% arXiv submission metadata (paste into the arXiv submission form):
+%%   Primary category:  cs.LO   (Logic in Computer Science)
+%%   Secondary:         cs.AI   (Artificial Intelligence)
+%%   MSC-class: 03B70; 68T27; 68T30; 68V15
+%%   ACM-class: F.4.1; I.2.4; I.2.3
+%% ====================================================================
+
+\title{Can Agentic AI Settle a 20-Year-Old\\ Description Logic Problem?\\[0.35em]
+\large On the Decidability of $\ALCIRCC{5}$, a New Decidable Fragment,\\
+and a Certified Lean Formalization Reducing It to One Keystone}
 
 \author{Michael Wessel\\
-\small (with AI assistants: Claude / Anthropic, GPT-5.5 / OpenAI)}
+\small LambdaMikel@Home \quad\textbullet\quad \texttt{miacwess@gmail.com}\\
+\small (with AI assistants: Claude / Anthropic and GPT-5.4\,/\,GPT-5.5 / OpenAI)}
 \date{July 2026}
 
 \begin{document}
@@ -78,12 +94,33 @@ decidable---whose soundness direction is \emph{machine-checked in Lean~4};
 property~F6, which we show is the \emph{same fact} that blocks a proof of
 undecidability; (iii) a certified fragment of the local algebra (an RCC5
 normal form) and an unconditionally decidable fragment (the
-$\forall\PO$-free concepts); and (iv) an honest map of the routes tried,
-the dead ends, and the missing hard pieces. We also report, candidly, on
+$\forall\PO$-free concepts); (iv) a \emph{working, empirically-validated
+decision procedure}---a cover-tree tableau reasoner that reproduces, $23$
+years on, the GIS concept taxonomy of the original report, cross-validated
+on $911$ concepts with zero mismatches and never once contradicted by an
+independent oracle or a hand analysis; and (v) an honest map of the routes
+tried, the dead ends, and the missing hard pieces. We also report,
+candidly, on
 the methodology---adversarial ``cold review,'' machine verification, and
 a human-in-the-loop workflow---and on what frontier AI could and could
 not do.
 \end{abstract}
+
+\medskip
+\noindent\textbf{Keywords:} description logics; $\ALCI$; RCC5; region
+connection calculus; qualitative spatial reasoning; decidability; concept
+satisfiability; patchwork property; interactive theorem proving (Lean);
+AI-assisted mathematics.
+
+\smallskip
+\noindent\textbf{ACM CCS:} Theory of computation $\rightarrow$ Description
+logics; Automated reasoning; Logic and verification. Computing
+methodologies $\rightarrow$ Spatial and physical reasoning.
+
+\smallskip
+\noindent\textbf{MSC 2020:} 03B70 (logic in computer science); 68T27
+(logic in artificial intelligence); 68T30 (knowledge representation);
+68V15 (theorem proving).
 
 \tableofcontents
 
@@ -248,8 +285,12 @@ auxiliary uniformization property W2$'$ shown to \emph{fold into} it.
     $\forall\DR$, $\exists\DR$, and all vertical modalities, so a
     genuinely expressive spatial fragment;
   \item the certified RCC5 normal form above;
-  \item working reasoners (a cover-tree tableau) that reproduce, $23$
-    years later, the GIS taxonomy of Wessel's original report;
+  \item a working, empirically validated decision procedure (the
+    cover-tree tableau): cross-validated on $911$ concepts against an
+    independent oracle with zero mismatches, reproducing $23$ years later
+    the full GIS subsumption taxonomy of Wessel's original report, and
+    never once contradicted---no counterexample to its verdicts was found
+    anywhere in the campaign;
   \item the standard undecidability routes shown blocked, with the
     coincidence obstruction identified as the shared fact.
 \end{itemize}
@@ -298,9 +339,10 @@ $x\in C_0^{\mathcal I}$ for some $\mathcal I$ and some $x\in\Delta$. Thus a
 model is a complete graph carrying a composition-closed RCC5
 edge-labelling; \emph{models may be infinite}. This is precisely the
 \emph{abstract} (composition-table) semantics---not a semantics of actual
-regions in a topological space; weak-$\EQ$ semantics reduces to strong via
-TBox internalization, so we fix strong $\EQ$ throughout. The decision
-problem is: given $C_0$, is it satisfiable?
+regions in a topological space. We fix the \emph{strong} $\EQ$ semantics
+throughout (the standard convention for this problem; strong versus weak
+$\EQ$ is discussed below). The decision problem is: given $C_0$, is it
+satisfiable?
 
 \paragraph{The sister logic $\ALCIRCC{8}$.} $\ALCIRCC{8}$ is defined
 identically, over the eight RCC8 relations
@@ -314,6 +356,38 @@ patchwork property. $\ALCIRCC{5}$ is our focus; we invoke $\ALCIRCC{8}$
 only where it matters---its $\EXPTIME$-hardness (\S\ref{sec:history}) and
 the domino attempts (\S\ref{sec:undec}), which turn on the extra
 $\TPP/\NTPP$ distinction.
+
+\paragraph{The RCC granularity hierarchy.} $\ALCIRCC5$ and $\ALCIRCC8$ sit
+atop a family of five logics $\ALCIRCC{k}$, $k\in\{1,2,3,5,8\}$, whose
+relation sets \emph{coarsen} as $k$ decreases~\cite{Wessel2003}:
+$\ALCIRCC1$ has the single relation $\mathsf{SR}$ (``spatially related'');
+$\ALCIRCC2$ has $\{\DR,\mathsf{O}\}$ (with $\mathsf{O}$ = ``overlapping'');
+and $\ALCIRCC3$ has $\{\DR,\mathsf{ONE},\EQ\}$ (with $\mathsf{ONE}$ =
+``overlapping but not equal''). Each coarser set is definable in the finer
+one---$\mathsf{ONE}=\{\PP,\PPI,\PO\}$, $\mathsf{O}=\{\mathsf{ONE},\EQ\}$,
+$\mathsf{SR}=\{\DR,\mathsf{O}\}$---so the family forms a granularity
+lattice. The three coarsest logics are \emph{decidable}
+(Wessel~\cite{Wessel2003}); $\ALCIRCC5$ and $\ALCIRCC8$ are the open cases
+this paper concerns. The full landscape is Table~\ref{tab:complexity}
+(\S\ref{sec:history}).
+
+\paragraph{Strong versus weak $\EQ$.} Two semantics for $\EQ$ appear in
+the literature~\cite{Wessel2003}: the \emph{strong} one, $\EQ^{\mathcal
+I}=\mathrm{Id}(\Delta)$ ($\EQ$ is exactly identity), and the \emph{weak}
+one, $\mathrm{Id}(\Delta)\subseteq\EQ^{\mathcal I}$ ($\EQ$ contains
+identity but may relate distinct, mutually indistinguishable elements). We
+fix the \emph{strong} semantics throughout---the standard choice for this
+problem, and the more expressive one: Wessel observed that under strong
+$\EQ$, from $\ALCIRCC3$ upward the \emph{difference role}
+$R_D =_{\mathrm{def}} N_R\setminus\{\EQ\}$ becomes definable, so
+\emph{nominals} are encodable ($i\sqcap\forall R_D.\neg i$ forces $i$ to
+name a single element)---a reminder of how narrow the margin to
+undecidability is (adding a $\downarrow$-binder would cross it, cf.\
+\S\ref{sec:wessel-grid}). The choice costs no generality for decidability:
+Wessel showed decidability under the weak semantics would carry over to the
+strong one, and conversely a weak-$\EQ$ model collapses to a strong one by
+internalizing $\EQ$ as identity in the TBox, so the two satisfiability
+problems are inter-reducible.
 
 \paragraph{The two axes, made precise.} Call $\PP,\PPI$ \emph{vertical}
 (nesting) and $\DR,\PO$ \emph{horizontal} (side-by-side). The composition
@@ -392,17 +466,40 @@ assigned exactly one RCC$k$ base relation, and the composition table
 is enforced globally (\emph{strong $\EQ$ semantics}: $\EQ$ is identity).
 Models are complete graphs with RCC$k$ edge-colorings.
 
-Wessel established the following:
-\begin{itemize}
-  \item \textbf{Decidable cases:} $\ALCIRCC{1}$, $\ALCIRCC{2}$,
-    and $\ALCIRCC{3}$ are decidable, because their composition
-    tables are deterministic or near-deterministic, admitting
-    reduction to standard DL techniques.
-  \item \textbf{Lower bounds:} $\ALCIRCC{5}$ is $\PSPACE$-hard;
-    $\ALCIRCC{8}$ is $\EXPTIME$-hard.
-  \item \textbf{Open:} The decidability of $\ALCIRCC{5}$ and
-    $\ALCIRCC{8}$ was left as the central open problem.
-\end{itemize}
+Wessel established the decidability and complexity landscape summarized in
+Table~\ref{tab:complexity}. The three coarsest logics are \emph{decidable}:
+$\ALCIRCC1$ is essentially the modal logic S5 (hence \textsc{NP}-complete);
+$\ALCIRCC2$ and $\ALCIRCC3$ are decidable because their composition tables
+are deterministic or near-deterministic, admitting reduction to standard DL
+techniques (for $\ALCIRCC3$ under strong $\EQ$, via the definable
+difference role). The two finest logics---$\ALCIRCC5$ ($\PSPACE$-hard) and
+$\ALCIRCC8$ ($\EXPTIME$-hard)---were left as the central open problem.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Logic & Base relations $N_R$ & Concept satisfiability \\
+\midrule
+$\ALCI$ (no RCC)             & arbitrary roles                & \EXPTIME-complete (known) \\
+$\ALCIRCC1$                  & $\{\mathsf{SR}\}$              & decidable; \textsc{NP}-complete ($\equiv$ S5) \\
+$\ALCIRCC2$                  & $\{\DR,\mathsf{O}\}$          & decidable; \textsc{NP}-hard, in \PSPACE \\
+$\ALCIRCC3$                  & $\{\DR,\mathsf{ONE},\EQ\}$    & decidable; \textsc{NP}-hard \\
+$\ALCIRCC5$, $\forall\PO$-free & RCC5 without $\forall\PO$   & \textbf{decidable} (this paper, Thm~\ref{thm:pofree}) \\
+$\ALCIRCC5$ (full)          & $\{\DR,\PO,\EQ,\PP,\PPI\}$    & \textbf{open}; $\PSPACE$-hard \\
+$\ALCIRCC8$                 & RCC8 (eight relations)         & \textbf{open}; $\EXPTIME$-hard \\
+\bottomrule
+\end{tabular}
+\caption{The complexity landscape of the $\ALCIRCC{}$ family (concept
+satisfiability, strong $\EQ$). RCC$k$ relation sets coarsen as $k$
+decreases; $\ALCIRCC1$--$\ALCIRCC3$ were shown decidable by
+Wessel~\cite{Wessel2003}, while $\ALCIRCC5$ and $\ALCIRCC8$ are the
+standing open cases.}
+\label{tab:complexity}
+\end{table}
 
 In a series of companion reports, Wessel also mapped out the
 decidability landscape for description logics with general
@@ -439,10 +536,8 @@ For reference, the full RCC5 composition table is given in
 Table~\ref{tab:comp}.  Reading: row = $S(b,c)$, column = $R(a,b)$,
 entry = possible relations for $(a,c)$.
 
-\begin{table}[ht]
+\begin{table}[t]
 \centering
-\caption{The RCC5 composition table ($*$ = all five relations).}
-\label{tab:comp}
 \renewcommand{\arraystretch}{1.15}
 \begin{tabular}{l|ccccc}
 \toprule
@@ -455,6 +550,8 @@ $\PP(b,c)$ & $\DR,\PO,\PP$ & $\PO,\PP$ & $\PP$ & $\PO,\EQ,\PP,\PPI$ & $\PP$ \\
 $\PPI(b,c)$ & $\DR$ & $\DR,\PO,\PPI$ & $\PPI$ & $\PPI$ & $*$ \\
 \bottomrule
 \end{tabular}
+\caption{The RCC5 composition table ($*$ = all five relations).}
+\label{tab:comp}
 \end{table}
 
 \noindent
@@ -499,7 +596,25 @@ to \emph{enforce} the depicted model(s) by means of a concept term.''
 Wessel further observed that adding a hybrid logic binding operator
 $\downarrow$ (nominals) would immediately yield undecidability,
 confirming that the coincidence condition is the \emph{precise
-boundary}.
+boundary}.  His explicit grid frame is reproduced here as
+Figure~\ref{fig:rcc8grid}, and the merge obstruction that blocks enforcing
+it as Figure~\ref{fig:merge}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{report7_figure10_grid.png}
+\caption{Wessel's original $\ALCIRCC{8}$ grid construction, reproduced
+\emph{directly from report7.pdf (2002/2003)}, Figure~10 (Section~4.4.3):
+a complete-graph RCC8 ``frame'' (left) that is isomorphic to a $3\times3$
+grid (right) and extends to $n\times n$.  Horizontal and vertical
+successors are $\TPP$ edges (the intended roles $R_X$, $R_Y$); $\PO$
+(cyan) and $\NTPP$ (green) are the induced diagonal and long-range
+relations.  Such grid models \emph{exist}---but, as the same report
+already argued, no concept term can \emph{enforce} them.  The construction
+and the obstruction are the human author's, two decades before this
+AI-assisted work.}
+\label{fig:rcc8grid}
+\end{figure}
 
 Wessel thus independently developed, three to four years before
 Lutz--Wolter, the RCC8 description-logic analogues of these
@@ -538,6 +653,74 @@ arbitrary complete-graph models with composition-table semantics.
 The problem has been recognized as open by leading researchers
 since 2006.
 
+\paragraph{On priority and citation.} Two honest caveats, in both
+directions. First, Wessel proved \emph{neither} decidability nor
+undecidability of $\ALCIRCC{5}$ or $\ALCIRCC{8}$: report7 constructs the
+grid models and pins the coincidence obstruction as the precise boundary,
+but stops there, explicitly leaving both problems open. The contribution
+was to \emph{locate} the wall, not to breach it. Second, and less
+comfortably: the Lutz--Wolter paper does not cite report7, although it was
+a publicly available official technical report of the University of Hamburg
+(2002/2003) that already developed the $\ALCIRCC{}$ description logics, the
+even-odd counter construction, the explicit two-dimensional $\TPP/\NTPP$
+grid, and the coincidence obstruction as the decisive obstacle. We record
+this as a matter of \emph{priority}, not of dependence---their
+undecidability proof takes a genuinely different (topological, linearized)
+route and in no way relies on report7---but the overlap in ingredients was
+substantial and the material was findable.
+
+\subsection{Concrete-domain approaches, and why they do not settle it}
+\label{sec:concrete-domains}
+
+A natural objection is that decidability of description logics with RCC
+constraints is surely already known. It is---but for a \emph{different},
+expressively incomparable formalism: the \emph{concrete-domain} approach,
+in which spatial relations constrain \emph{functional attributes} of
+individuals rather than serving as roles. The distinction is decisive
+(Table~\ref{tab:concrete}). A concrete domain reasons about the spatial
+\emph{attributes} of elements; $\ALCIRCC{}$ instead makes the spatial
+relations \emph{themselves} the roles, and so permits
+\emph{quantification over} them---concepts such as $\forall\PP.C$ (``every
+proper part satisfies $C$'') and $\exists\DR.D$ (``some discrete region
+satisfies $D$'')---which the concrete-domain setting cannot express.
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Approach & $\forall\PP.C$? & $\exists\DR.D$? & Quantify over relations? \\
+\midrule
+Concrete domains, e.g.\ $\ALC(\text{RCC8})$ & no & no & no \\
+Composition-based role boxes ($\ALCIRCC5$) & \textbf{yes} & \textbf{yes} & \textbf{yes} \\
+\bottomrule
+\end{tabular}
+\caption{Concrete domains versus composition-based role boxes. Only the
+latter can \emph{quantify over} spatial relations, which is exactly what
+puts $\ALCIRCC5$ outside the reach of the concrete-domain results.}
+\label{tab:concrete}
+\end{table}
+
+The known decidability results all sit on the concrete-domain side. Lutz
+and Mili\v{c}i\'{c}~\cite{LutzMilicic2007} showed $\ALC$ with
+$\omega$-admissible concrete domains (which include RCC5 and RCC8)
+decidable, without inverse roles; Baader and
+Rydval~\cite{BaaderRydval2020} revisited and generalized the
+$\omega$-admissibility conditions (and strengthened the matching
+undecidability results); Borgwardt, De~Bortoli and
+Koopmann~\cite{BorgwardtEtAl2024} pinned $\ALC(\mathcal D)$ ontology
+consistency at $\EXPTIME$-complete for $\omega$-admissible $\mathcal D$
+($\ALC$ only, no inverse); and Demri and Gu~\cite{DemriGu2026} recently
+extended the constraint-automaton method to \emph{inverse} roles and
+functional role names with $\EXPTIME$ membership---the closest published
+result to $\ALCIRCC{}$, yet still within the concrete-domain formalism.
+None settles $\ALCIRCC5$ or $\ALCIRCC8$: the composition-based role box
+allows quantification over the spatial relations themselves, and the
+complete-graph semantics is not a concrete-domain constraint. The two
+lines are complementary---attributes versus relationships---which is why
+twenty years of progress on the former left the latter open.
+
 %% ====================================================================
 
 \section{Why standard undecidability reductions fail}
@@ -558,8 +741,6 @@ no arbitrary role box, and no geometric coincidence conditions.
 
 \begin{table}[t]
 \centering
-\caption{Why standard undecidability reductions fail for $\ALCIRCC{5}$.}
-\label{tab:blocked}
 \small
 \begin{tabular}{L{0.29\textwidth}L{0.34\textwidth}L{0.27\textwidth}}
 \toprule
@@ -573,6 +754,8 @@ $\LRCC{8}$ (Lutz--Wolter) & Linearized topological enumeration & Topological rig
 $\LRCC{5}(\mathit{RS}^\exists)$ & $S5^3$ via supremum regions & Supremum closure \\
 \bottomrule
 \end{tabular}
+\caption{Why standard undecidability reductions fail for $\ALCIRCC{5}$.}
+\label{tab:blocked}
 \end{table}
 
 Table~\ref{tab:blocked} summarizes the blocked routes.
@@ -694,6 +877,26 @@ RCC8 base relation.  Since $z$ carries $\textsf{Corner}$, every
 non-$\EQ$ neighbor of $z$ lies in $\neg C \sqcap \neg D$.  But
 $w \in C \sqcap D$.  Therefore $z = w$ under strong-$\EQ$.
 \textbf{All corners across the grid coincide at a single point.}
+Figure~\ref{fig:merge} isolates this local ``merge attempt'' on two
+successors.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{report7_figure11_coincidence.png}
+\caption{Wessel's original statement of the coincidence obstruction,
+reproduced \emph{directly from report7.pdf (2002/2003)}, Figure~11
+(``Tightening the grid?'').  The two successors $z$ (reached
+east-then-north) and $z'$ (north-then-east) ought to be the \emph{same}
+grid corner, but the composition table permits the edge $z\,{*}\,z'$ to be
+any of $* =_{\mathrm{def}} \{\PO,\EQ,\TPP,\NTPP,\TPPI,\NTPPI\}$ (the
+legend below the graphs), so nothing \emph{forces} the merge $z = z'$
+(right).  Read in the present notation: leave it unforced and the two
+branches never join (no grid); force it with the $\textsf{Corner}$
+isolation markers of the construction above and \emph{every} corner
+collapses to one point.  This ``merge the wrong successors'' problem was
+identified by the human author two decades before this AI-assisted work.}
+\label{fig:merge}
+\end{figure}
 
 \medskip\noindent\textbf{Why the $\TPPI/\NTPPI$ trick fails.} In
 the RCC5 attempt the collapse is a \emph{transitive-propagation}
@@ -925,7 +1128,7 @@ despite its complete relational graph, still admits such a presentation.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.72\textwidth]{20260407_062616.jpg}
+\includegraphics[width=0.95\textwidth]{20260407_062616.jpg}
 \caption{The original whiteboard sketch of the split-forest model
 decomposition (M.\ Wessel, April~2026): the intuition that a
 complete-graph RCC5 model can be presented as a forest of trees by
@@ -1188,21 +1391,84 @@ concept-level exploitation of the seams the reviews located). This is not
 a proof---no amount of it can be---but it is the reason we describe the
 decidability argument as \emph{strongly supported}.
 
-\paragraph{A GIS example.} As a sanity check spanning $23$ years, the
-tableau recomputes the GIS concept taxonomy of Wessel's original
-report~\cite{Wessel2003} (its Figure~6, reproduced here as
-Figure~\ref{fig:gis}): all $21/21$ subsumptions are reproduced
-(\texttt{src/gis\_taxonomy.py}). A taxonomy computed by hand in $2003$ is
-reproduced, in $2026$, by an AI-written reasoner resting on the
-split-forest foundation.
+\paragraph{A GIS example spanning 23 years.} The tableau recomputes the
+GIS concept taxonomy of Wessel's original report~\cite{Wessel2003} (its
+Figure~6, the hand-drawn 2003 original, reproduced here as
+Figure~\ref{fig:gis}): all $21/21$ subsumptions are recovered
+(\texttt{src/gis\_taxonomy.py}), and the reasoner emits its own rendering
+of the resulting hierarchy, shown as Figure~\ref{fig:gis-reasoner}. A
+taxonomy computed by hand in $2003$ is reproduced, in $2026$, by an
+AI-written reasoner resting on the split-forest foundation---and the two
+diagrams agree edge for edge.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\textwidth]{report7_figure6_taxonomy.png}
-\caption{The GIS concept taxonomy of Wessel's 2002/2003 report
-(report7, Figure~6), recomputed in full ($21/21$ subsumptions) by the
-cover-tree tableau reasoner \texttt{src/gis\_taxonomy.py}.}
+\includegraphics[width=0.82\textwidth]{report7_figure6_taxonomy.png}
+\caption{The GIS concept taxonomy as drawn by hand in Wessel's 2002/2003
+report (report7, Figure~6): the original.}
 \label{fig:gis}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  every node/.style={font=\scriptsize},
+  cpt/.style={draw, rounded corners=2pt, align=center, inner sep=2.2pt,
+              minimum height=5mm, fill=blue!6},
+  ind/.style={draw, rounded corners=2pt, align=center, inner sep=2.2pt,
+              minimum height=5mm, fill=green!14},
+  top/.style={draw, rounded corners=2pt, align=center, inner sep=2.2pt,
+              minimum height=5mm, fill=gray!14},
+  e/.style={-{Latex[length=1.5mm]}, gray, shorten >=1pt, shorten <=1pt}
+]
+% rank 0-1
+\node[top] (top)  at (8.6, 0)   {$\top$};
+\node[cpt] (area) at (8.6,-1.5) {Area};
+% rank 2
+\node[cpt] (river)   at (2.3,-3.0)  {River};
+\node[cpt] (lake)    at (6.9,-3.0)  {Lake};
+\node[ind] (mount)   at (8.6,-3.0)  {Mountain};
+\node[cpt] (city)    at (10.35,-3.0){City};
+\node[cpt] (country) at (14.95,-3.0){Country};
+% rank 3
+\node[cpt] (rfil)  at (0.0,-4.7)  {River Flowing\\Into A Lake};
+\node[cpt] (nlr)   at (2.3,-4.7)  {Non Local\\River};
+\node[cpt] (lr)    at (4.6,-4.7)  {Local River};
+\node[ind] (alake) at (6.9,-4.7)  {Alster Lake};
+\node[cpt] (car)   at (9.2,-4.7)  {City At\\River};
+\node[cpt] (gcity) at (11.5,-4.7) {German City};
+\node[ind] (czech) at (13.8,-4.7) {Czech Rep.};
+\node[ind] (germ)  at (16.1,-4.7) {Germany};
+% rank 4
+\node[ind] (elbe)   at (2.3,-6.4)  {Elbe};
+\node[cpt] (griver) at (4.6,-6.4)  {German\\River};
+\node[ind] (hamb)   at (10.35,-6.4){Hamburg};
+% rank 5
+\node[ind] (alster) at (1.8,-8.0) {Alster};
+% edges
+\draw[e] (top)--(area);
+\draw[e] (area)--(river); \draw[e] (area)--(lake); \draw[e] (area)--(city);
+\draw[e] (area)--(country); \draw[e] (area)--(mount);
+\draw[e] (river)--(rfil); \draw[e] (river)--(nlr); \draw[e] (river)--(lr);
+\draw[e] (lake)--(alake);
+\draw[e] (city)--(car); \draw[e] (city)--(gcity);
+\draw[e] (country)--(czech); \draw[e] (country)--(germ);
+\draw[e] (nlr)--(elbe); \draw[e] (lr)--(griver);
+\draw[e] (car)--(hamb); \draw[e] (gcity)--(hamb);
+\draw[e] (rfil)--(alster); \draw[e] (griver)--(alster);
+\end{tikzpicture}%
+}
+\caption{The \emph{same} GIS taxonomy recomputed in $2026$ by the
+cover-tree tableau reasoner (\texttt{src/gis\_taxonomy.py}), rendered
+directly from the reasoner's own output (arrows point from the more
+general concept to the more specific; green $=$ individuals). All $21/21$
+subsumptions match Figure~\ref{fig:gis} edge for edge. Note that
+\emph{Hamburg} (a German city at a river) and \emph{Alster} (a German
+river flowing into a lake) each have two parents: the taxonomy is a
+directed acyclic graph, not a tree---exactly the multiple-inheritance the
+reasoner must get right.}
+\label{fig:gis-reasoner}
 \end{figure}
 
 \section{On agentic AI usage}
@@ -1217,6 +1483,34 @@ cluster/loop and regular-cover reframings, the honesty discipline), and
 after each round reviewed, corrected, and re-prompted. An AI proposed a
 proof or a repair; a \emph{fresh} AI session---with no memory of how the
 proof was built---then reviewed it adversarially. Repeat.
+
+\paragraph{Division of labour, and a calibrated comparison.} The roles
+were asymmetric: one model (GPT-5.5) chiefly authored proofs, another
+(Claude) chiefly implemented, verified, audited, and documented, and the
+human supplied the direction and the original insight. It is tempting to
+read the review record---each model repeatedly finding defects in the
+other's drafts---as ranking them, and we resist that inference: it is
+confounded by role (proof-authoring and cold-reviewing were never
+swapped), by model version (both lineages advanced mid-project), and by
+task (cold-reviewing a finished manuscript is a different, arguably easier
+job than authoring one). The robust finding, independent of which model is
+sharper, is that \emph{neither is self-sufficient}: both write fluent
+long-context formal mathematics, both fail to reliably self-review, both
+at times declared results ``closed'' prematurely, and neither produced the
+decisive original idea. What carried the project was the loop, not any
+single model.
+
+\paragraph{An auditable record, for honest attribution.} Because ``who
+contributed what'' is exactly the question that AI-assisted work makes
+fraught, we kept the entire, timestamped conversation log
+public~\cite{ConversationLog}, alongside the round-by-round manuscripts and
+a superseded-work archive (\texttt{OUTDATED.md}). A reader can trace each
+idea, defect, and repair to its origin---human or model---rather than take
+our word for the division of labour above. We treat this as part of the
+methodology, not an afterthought: a human director should not quietly
+absorb credit for a model's mathematics, nor should a model's fluent prose
+obscure the human's insight, and the only reliable guard is a record open
+to inspection.
 
 \paragraph{Cold review as a standard step.} The single most transferable
 finding: a \emph{cold} reviewer consistently found defects that a
@@ -1285,9 +1579,29 @@ kind (below).
 concepts; (ii) a machine-\emph{certified} RCC5 normal form; (iii) a
 machine-checked \emph{conditional decidability theorem}
 ($\text{F6}\Rightarrow$ decidable, soundness certified, resting on the
-F6 oracle); (iv) working \emph{reasoners} reproducing a $2003$ GIS
-taxonomy; (v) a sharp \emph{map} of the problem with a named toolbox; and
+F6 oracle); (iv) a \emph{working, empirically validated decision
+procedure}---the cover-tree tableau (\S\ref{sec:reasoners}),
+cross-validated against an independent quasimodel oracle on $911$ concepts
+with \emph{zero} mismatches, reproducing $23$ years later the full GIS
+subsumption taxonomy of Wessel's original report ($21/21$), and across the
+entire campaign never once producing a decision contradicted by any other
+oracle or by a hand analysis---\emph{no counterexample was ever found};
+(v) a sharp \emph{map} of the problem with a named toolbox; and
 (vi) a candid \emph{methodology} for adversarial AI-assisted mathematics.
+
+Two of these are the project's flagship artifacts, and they are
+complementary rather than ranked. The Lean development
+(items~ii--iii) is a \emph{certified} surround: the kernel guarantees the
+soundness pipeline and the abstraction's faithfulness contain no gap. The
+reasoner (item~iv) is the \emph{empirical} counterpart: a real algorithm
+that decides concepts, has been run on thousands of them, agrees with an
+independent implementation everywhere it has been tested, and reproduces a
+two-decade-old published taxonomy. Neither proves decidability---but that a
+running procedure and a machine-checked proof both point the same way,
+and that no adversarial search over the whole campaign ever exhibited an
+accepted-but-unsatisfiable (or rejected-but-satisfiable) concept, is the
+strongest \emph{evidence} short of a certificate that the conjecture is
+true.
 
 \paragraph{Is this a scientific contribution?} We believe so, with the
 labelling kept honest: not a resolution of the open problem, but its
@@ -1326,7 +1640,23 @@ in \texttt{papers/rcc5\_local\_amalgamation\_theory}; the reasoners under
 full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md}.
 The repository is at \url{https://github.com/lambdamikel/alcircc5}.
 
+\section*{Acknowledgments}
 
+The $\ALCIRCC{}$ family was introduced by the (human) author in his
+doctoral work at the University of Hamburg, under the DFG project
+``Description Logics and Spatial Reasoning'' (grant NE~279/8-1); the author
+was additionally supported by a \emph{Grundstipendium} of the University of
+Hamburg from 1999 to 2001. The
+present investigation was carried out by AI assistants---Claude
+(Anthropic) and GPT-5.4~/~GPT-5.5 (OpenAI)---under the author's direction,
+across many rounds of proposal, adversarial review, and revision; GPT-5.4
+Pro contributed the split-forest semantics and cover-tree tableau
+formalization, and GPT-5.5 the repaired decidability manuscripts and the
+majority of the formal proofs. Per the discipline described in
+\S\ref{sec:agentic}, the full record of who contributed what is public in
+\texttt{CONVERSATION.md}~\cite{ConversationLog}.
+
+\newpage
 \begin{thebibliography}{99}
 
 %% --- Classical background (chronological) ---------------------------
@@ -1392,6 +1722,34 @@ M.\ Wessel.
 C.\ Lutz and F.\ Wolter.
 \newblock Modal logics of topological relations.
 \newblock \emph{Logical Methods in Computer Science}, 2(2):1--41, 2006.
+
+%% --- Concrete-domain approaches (related, expressively incomparable) ---
+
+\bibitem{LutzMilicic2007}
+C.\ Lutz and M.\ Mili\v{c}i\'{c}.
+\newblock A tableau algorithm for description logics with concrete domains and
+  general TBoxes.
+\newblock \emph{Journal of Automated Reasoning}, 38:227--259, 2007.
+
+\bibitem{BaaderRydval2020}
+F.\ Baader and M.\ Rydval.
+\newblock Description logics with concrete domains and general concept
+  inclusions revisited.
+\newblock In \emph{Proc.\ IJCAR}, volume 12166 of LNCS, pages 413--431.
+  Springer, 2020.
+
+\bibitem{BorgwardtEtAl2024}
+S.\ Borgwardt, F.\ De~Bortoli, and P.\ Koopmann.
+\newblock The precise complexity of reasoning in $\ALC$ with
+  $\omega$-admissible concrete domains.
+\newblock In \emph{Proc.\ 37th Int.\ Workshop on Description Logics (DL~2024)},
+  CEUR Workshop Proceedings, vol.\ 3739, 2024.
+
+\bibitem{DemriGu2026}
+S.\ Demri and T.\ Gu.
+\newblock Robustness of constraint automata for description logics with
+  concrete domains.
+\newblock In \emph{Proc.\ CSL}, volume 363 of LIPIcs, 2026.
 
 %% --- Core 2026 decidability pillars ---------------------------------
 
@@ -1741,29 +2099,95 @@ OpenAI.
 \newblock Large language model, 2026.
 \newblock \url{https://openai.com}
 
+\bibitem{ConversationLog}
+M.\ Wessel (with AI assistants).
+\newblock \texttt{CONVERSATION.md}: the full timestamped project
+  conversation log (human prompts and AI responses), for auditable
+  attribution.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/CONVERSATION.md}
+
 \end{thebibliography}
 
+\newpage
 \appendix
 \section{On the DL~2026 rejection}
 \label{app:dl2026}
 
-An abstract of this work was submitted to the $2026$ International
-Workshop on Description Logics and rejected. We record the episode not
-out of grievance alone but because it bears on the paper's own subject:
-what peer review is for, and how a community engages with an unusual
-result on one of its long-standing open problems.
+An extended abstract of this work was submitted to the $2026$
+International Workshop on Description Logics (DL~2026) and rejected. We
+record the episode---and dissent from the decision---not merely out of
+grievance but because it bears directly on this paper's subject: how a
+research community engages with an AI-assisted attack on one of its own
+long-standing open problems. The submission was labelled exactly as this
+paper is (\emph{strongly supported, not certified}, an AI-assisted
+discussion piece), and its stated motivation, twice, was to raise
+awareness of the emerging capabilities of agentic AI for description-logic
+research. We contend it was rejected on the wrong basis.
 
-The submission was labelled exactly as this paper is---\emph{strongly
-supported, not certified}, an AI-assisted attack offered as a discussion
-piece. The reviews did not engage with the substance (the split-forest
-normal form, the reduction to F6, the machine-checked soundness), and no
-poster was granted. There is a recursive irony in an AI-assisted result
-on a twenty-year-old problem being declined without engagement in the
-same period that frontier AI began contributing checkable mathematics.
-The full open letter and the reviews are preserved in the repository
-(\texttt{dl2026-rejected/open\_letter.md}, \texttt{reviews.txt}); we
-reproduce neither in full here, but stand by the position that a
-correctly-labelled, machine-checkable reduction of a two-decade open
-problem merits engagement on its merits.
+\begin{enumerate}
+  \item \textbf{The technical objections targeted the optional appendix.}
+    DL~2026's own guidelines state that the appendix ``will not be
+    included in the proceedings'' and is reviewed only at reviewer
+    discretion. Yet nearly every concrete objection---missing
+    definitions, a broken cross-reference, an under-specified
+    lemma---concerned appendix material, not the extended abstract that is
+    the reviewed artifact.
+  \item \textbf{The reviews attacked a position the paper did not take.}
+    The abstract called the proof a ``candidate,'' wrote ``if found
+    correct by human experts,'' and carried an explicit non-verification
+    disclaimer. It was nonetheless assessed as a settled-theorem
+    submission and rejected for not clearing that bar---a strawman.
+  \item \textbf{Honest hedging was quoted back as a fault.} The very
+    disclaimers included to avoid over-claiming were cited as grounds for
+    rejection. Punishing calibrated uncertainty inverts the incentive peer
+    review should create.
+  \item \textbf{No review engaged the actual thesis} (agentic AI's
+    capabilities), nor the concrete contributions the submission
+    \emph{did} present: a working cover-tree tableau reasoner reproducing
+    the $2003$ GIS taxonomy, and an unconditionally decidable fragment.
+    (The split-forest normal form, the reduction to a single keystone, and
+    the machine-checked Lean soundness reported in the present paper came
+    later, in the months \emph{after} the rejection---so they cannot have
+    been the basis for it.)
+  \item \textbf{The verdict was a value judgment, not a technical
+    assessment.} The three reviews largely agreed on the defect inventory
+    but split on the verdict---one reviewer believed the result true and
+    named the right approach, yet recommended reject on presentation;
+    another recommended accept. The decision was escalated to the Steering
+    Committee, and the covering letter offered that the paper ``could be a
+    good scientific contribution if it \dots\ focus[ed] on the advantages
+    and disadvantages of using LLMs \dots\ rather than claiming
+    decidability results.'' But that discussion---the advantages and
+    disadvantages of agentic AI for this kind of research---is exactly what
+    the submission's main text \emph{did} provide, alongside the concrete
+    results above; it simply was not engaged with. The ``acceptable''
+    paper being described was, in substance, the paper already submitted.
+    The objection was to the framing and the precedent, not the substance.
+  \item \textbf{A disclosure paradox.} The integrity choice---front-loading
+    the AI co-authorship, in the title and from page one---was precisely
+    what made the submission unacceptable, while the offered path to
+    acceptance was to write it in standard single-voice style with a
+    tail-of-paper note. A process that rewards understating AI's
+    contribution and penalizes overstating it selects for
+    under-disclosure, not for science.
+\end{enumerate}
+
+We grant one point: a single introductory sentence (``We hereby claim:
+$\ALCIRCC{5}$ is decidable'') read more assertively than the surrounding,
+carefully hedged text supported, and a constructive ``tone this down and
+resubmit'' would have been met immediately. That does not carry the
+verdict. There is, finally, a recursive irony: the rejected abstract had
+warned, by name, about the failure modes---network effects,
+not-invented-here bias, dismissive reviewing---that the rejection then
+illustrated. The deeper concern is not one abstract's fate but that
+agentic AI now lets ideas reach decades-old open problems from outside the
+established networks, and a review process that answers this by rejecting
+on framing while ignoring substance constrains rather than protects
+science. Peer review exists to surface and stress-test new ideas, not to
+keep them out; when it functions as the latter, it has stopped doing the
+job the community delegated to it. The full extended abstract, the three
+reviews, and a detailed analysis are public (\texttt{dl2026-rejected/};
+the open letter is \texttt{open\_letter.md}); readers are encouraged to
+form their own view.
 
 \end{document}
