@@ -229,8 +229,8 @@ carefully distinguishes our object from the neighbouring logics that
 \emph{are} known undecidable.
 \S\ref{sec:fofragments} views the problem as first-order satisfiability
 and asks whether it falls inside a decidable fragment of first-order
-logic---it does not, and the reason (totality) previews the central
-obstruction.
+logic---it does not, and the deepest reason (totality) previews the
+central obstruction.
 \S\ref{sec:undec} explains why the standard undecidability reductions
 fail.
 \S\ref{sec:approaches}---the core of the paper---surveys the approaches
@@ -763,8 +763,11 @@ the concept $C_0$ becomes a sentence $\exists x\,\mathrm{ST}(C_0,x)$ under the
 standard modal translation. Thus $C_0$ is satisfiable iff
 $T_{\mathrm{RCC5}}\cup\{\exists x\,\mathrm{ST}(C_0,x)\}$ has a model. If this
 theory fell inside a \emph{decidable fragment} of first-order logic we would
-be done---a natural first thing to try, and one the human author probed in the
-original reports. It does not, and the reason is uniform: it is the same
+be done---a natural first thing to try, and, at coarser granularity, exactly
+how the decidable family members fell: report7 settles $\ALCIRCC3$ by
+precisely this route (below). At RCC5 it does not work; the surface reasons
+vary by fragment, but the deepest one---the one that defeats even the
+fragments tailor-made for relational theories like this---is the same
 totality that underlies F6.
 
 Two invariants of $\ALCIRCC{5}$ models constrain which fragment could contain
@@ -792,9 +795,17 @@ it.
 
 \noindent Against these, the standard fragments fall as follows.
 
-\emph{Two variables ($\mathrm{FO}^2$).} Excluded twice over: the composition
-axiom is genuinely ternary, and $\mathrm{FO}^2$ has the finite model
-property~\cite{GradelKolaitisVardi1997}. Worse, the ternary step is into
+\emph{Two variables ($\mathrm{FO}^2$).} This is how the coarser family
+members actually fell: report7 proves $\ALCIRCC3$ (strong $\EQ$) decidable by
+translating concepts, via the standard translation, into \emph{two-variable}
+first-order logic with equality~\cite{Wessel2003}---possible there because
+the RCC3 role theory needs no ternary composition axiom at all (report7's
+role theory is exactly-one plus converse symmetry, all two-variable; the
+RCC3 table constrains no triple of distinct elements). At RCC5 the route is
+excluded twice over: the composition axiom is now genuinely ternary
+($\comp(\PP,\DR)=\{\DR\}$ constrains distinct triples), and $\mathrm{FO}^2$
+has the finite model property~\cite{GradelKolaitisVardi1997}, which
+$\ALCIRCC5$ lacks. Worse, the ternary step is into
 hostile territory---the three-variable fragment $\mathrm{FO}^3$ is already
 \emph{undecidable} (it captures the equational theory of relation
 algebras~\cite{TarskiGivant1987})---so variable-counting alone offers no
@@ -829,18 +840,28 @@ that does the damage; the composition axiom is the tamer half.
 \emph{Other fragments.} The fluted fragment requires predicate arguments to
 form a suffix of the quantifier sequence; the composition atom $R_t(x,z)$
 skips $y$, so it is not fluted. The unary-negation and guarded-negation
-fragments require negations to be unary or single-atom-guarded, and the
-forbidden triangles are neither. And the one extension that would embrace the
+fragments are a subtler near-miss: negation of \emph{sentences} is
+unrestricted there, so the forbidden triangles themselves \emph{are}
+expressible (each is the negation of an existential-positive
+sentence)---but both fragments have the finite model
+property~\cite{BaranyTenCateSegoufin2015}, which $\ALCIRCC5$ lacks, and
+totality is again out of reach (its inner negations carry two free
+variables and no atom to guard them). And the one extension that would embrace the
 vertical structure directly---the guarded fragment \emph{with transitive
 relations}, since $\PP,\PPI$ are transitive ($\comp(\PP,\PP)=\{\PP\}$)---is
 \emph{undecidable} once transitivity is used outside guards, as it must be
 here~\cite{GanzingerMeyerVeanes1999}, so even the most sympathetic extension
 supplies no decision procedure.
 
-\paragraph{The lesson.} Every fragment fails, and always for the same fact:
-\emph{totality}, i.e.\ the complete Gaifman graph. This is precisely the
-obstruction F6 names from the width side and \texttt{wp78} from the cover
-side; the FO-fragment view rediscovers it from classical model theory. It
+\paragraph{The lesson.} The surface reasons vary---arity, prefix shape, atom
+shape, the finite model property---but those are boundary mismatches that
+fragment engineering could in principle negotiate. The failure that matters
+is the guarded family's, and there the culprit is \emph{totality}, i.e.\ the
+complete Gaifman graph: the one axiom of $T_{\mathrm{RCC5}}$ no guard can
+carry, and the one obstruction no choice of fragment removes, because it is
+a property of the \emph{models}, not of the axioms' syntax. It is precisely
+the obstruction F6 names from the width side and \texttt{wp78} from the
+cover side; the FO-fragment view rediscovers it from classical model theory. It
 also tells us which tools are the wrong ones: guardedness and locality
 (Gaifman, Hanf) are exactly what totality defeats, so the productive
 machinery is the totality-tolerant kind---Ehrenfeucht--Fra\"iss\'e /
@@ -1572,7 +1593,9 @@ recursively enumerable, and completeness hands us one such
 side---enumerability of \textsc{unsat}---for free. The classical way to get
 the \emph{other} side, enumerability of \textsc{sat}, is the \emph{finite
 model property} (enumerate finite models), the textbook route ``recursively
-axiomatizable $+$ finite model property $\Rightarrow$ decidable.'' But
+axiomatizable $+$ finite model property $\Rightarrow$ decidable''---a
+principle report7 itself already invoked, en route to a bounded variant of
+these logics~\cite{Wessel2003}. But
 $\ALCIRCC{5}$ has \emph{no} finite model property (\S\ref{sec:fofragments}:
 the ascending $\PP$-tower needs an infinite model), so that route is shut,
 and enumerating \textsc{sat} the honest way means enumerating \emph{finite
@@ -2077,6 +2100,11 @@ H.\ Andr\'eka, J.\ van Benthem, and I.\ N\'emeti.
 E.\ Gr\"adel.
 \newblock On the restraining power of guards.
 \newblock \emph{Journal of Symbolic Logic}, 64(4):1719--1742, 1999.
+
+\bibitem{BaranyTenCateSegoufin2015}
+V.\ B\'ar\'any, B.\ ten~Cate, and L.\ Segoufin.
+\newblock Guarded negation.
+\newblock \emph{Journal of the ACM}, 62(3):22:1--22:26, 2015.
 
 \bibitem{GanzingerMeyerVeanes1999}
 H.\ Ganzinger, C.\ Meyer, and M.\ Veanes.
