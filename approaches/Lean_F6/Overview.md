@@ -53,7 +53,7 @@ the mathematics they formalize:
   presentation. Live width is the count of live (non-shadow) occurrences at
   an interface — the quantity F6 must bound.
 
-Toolchain: `elan`-installed Lean 4.31.0 at `~/.elan/bin`; build each file
+Toolchain: `elan`-installed Lean 4.32.0 at `~/.elan/bin`; build each file
 directly with `lean <file>` (no build system). See [`../../LEAN.md`](../../LEAN.md)
 for the per-file table and axiom list.
 

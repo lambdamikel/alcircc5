@@ -7862,3 +7862,34 @@ SemiDecidability.lean + wp84), 4881b61 (this section + the Π⁰₁ sharpening);
 all pushed. Paper 36pp, clean.
 
 Status unchanged: strongly supported, NOT certified.
+
+## 2026-07-18 — verification pass, and pausing at the local optimum
+
+A full verification read of the paper (every claim in the new sections
+checked against the certified artifacts or the primary sources). The
+pre-existing material held up — the composition table verified cell-by-cell
+against the certified Lean table, the four determining compositions,
+half-determinism, W2′, the clique-guardedness of the forbidden triangles,
+the Church/Gödel framing. Two genuine errors found in the day-old
+FO-fragments section, both fixed (d202a0c): UNFO/guarded-negation *do*
+express the forbidden triangles (negations of sentences) — the correct
+exclusion is the finite model property + totality (new cite:
+Bárány–ten Cate–Segoufin, JACM 2015); and "every fragment fails for
+totality" was an overclaim (totality is FO²-expressible; FO² fails on
+arity/FMP) — the lesson paragraph now says precisely which failures are
+boundary mismatches and why totality is the one that matters. Bonus from
+checking the primary source: report7 §4.3.2 settles ALCIRCC3 *by
+translation into two-variable FO with equality*, and report7 already
+invoked the FMP⇒decidable principle — both now credited in the paper.
+
+With that, the project is **paused at the local optimum** (tag
+`arxiv-candidate-2026-07-18`; retirement tidy synced the docs — Lean
+toolchain 4.32.0, commit ledger, pause notes). Likely return triggers: the
+arXiv affiliation permission (the placeholder `LambdaMikel@Home` becomes
+real and the paper ships), or a genuinely new idea on qualitative F6. For
+whoever picks it up: the map is the paper's concluding section, the
+width-barrier report, `papers/cold_review_f6_w2prime/ATTACK_PROMPT.md`, and
+LEAN.md's recorded next stone (Gödel-number the `FinCatalog` codes + the
+finScheme ⟹ DovetailScheme bridge).
+
+Status at pause: strongly supported, NOT certified.

@@ -21,7 +21,7 @@ full logic. Standing label: **strongly supported, not certified.**
 | `formal/ForcingReduction.lean` | ~145 | `propext`, `Quot.sound`, `Classical.choice` | The forcing reduction (Obs. 7.5 formalized): `F6_fin` holds iff no satisfiable concept forces an unbounded rigid horizontal crowd — modulo the width-crowd adequacy lemma, carried as a hypothesis field (not an axiom). |
 | `formal/SemiDecidability.lean` | ~262 | `propext`, `Quot.sound`, `Classical.choice` (+ `ofReduceBool` in the toy witness only) | The semi-decidability schema: since SAT is Π⁰₁ (see below), decidability follows from a dovetailed certificate/refutation search — `decidableSat` — needing only *qualitative* F6 (some finite certificate), **no computable width bound**; `quantitative_free` recovers the bound a posteriori. Four inputs are hypothesis fields, not axioms; the Markov search core is classical-free. Zero `sorry`. |
 
-**Toolchain.** `elan`-installed Lean 4.31.0 at `~/.elan/bin`. No mathlib,
+**Toolchain.** `elan`-installed Lean 4.32.0 at `~/.elan/bin`. No mathlib,
 no lakefile. Build each file directly:
 
 ```
@@ -175,7 +175,11 @@ standard external theorem (Gödel completeness) to the RCC5 patchwork property
 and parity-automaton emptiness. The Proposition itself is prose + probe, not
 Lean (formalizing Gödel completeness is out of scope for the core-Lean,
 no-mathlib artifact); `SemiDecidability.lean` formalizes the *reduction* that
-consumes it. Standing label unchanged: strongly supported, not certified.
+consumes it. The natural next stone (recorded, not laid): a Gödel-numbering
+of `FinCatalog` codes to instantiate `certB` concretely, plus a bridge lemma
+finScheme ⟹ DovetailScheme, which would make the "strictly weaker premise"
+ordering itself kernel-checked. Standing label unchanged: strongly
+supported, not certified.
 
 ## The two cold reviews of the Lean
 

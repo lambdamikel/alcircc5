@@ -38,13 +38,16 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-07-16): a local optimum
+## Status (2026-07-18): a local optimum, paused here
 
 Decidability of ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30 repair
 rounds and 15 adversarial reviews the project has reached a genuine local
 optimum: the local algebra is exhausted, the soundness side is
 machine-checked, and the entire remaining difficulty compresses into one
-well-posed lemma.
+well-posed lemma. Work is **paused** at this state (git tag
+`arxiv-candidate-2026-07-18`); what a future attack needs is recorded in the
+paper's concluding section and in
+[`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
 
 - **Certified** (Lean 4, zero `sorry`; see [LEAN.md](LEAN.md)): the
   **soundness** pipeline (a valid finite certificate unfolds to a genuine
@@ -152,7 +155,7 @@ python3 stress_test_cover_tree.py    # cross-validation vs the quasimodel oracle
 python3 gis_taxonomy.py              # reproduces the 2003 GIS taxonomy (21/21)
 ```
 
-Check the Lean development (Lean 4.31.0 via `elan`; no mathlib):
+Check the Lean development (Lean 4.32.0 via `elan`; no mathlib):
 
 ```
 cd formal && lean Round19Transport.lean   # see LEAN.md for all artifacts
