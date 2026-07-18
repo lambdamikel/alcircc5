@@ -7824,3 +7824,41 @@ external theorem (Gödel completeness). The Proposition is prose + probe; the
 *reduction* consuming it is the Lean file.
 
 Status unchanged: strongly supported, NOT certified.
+
+## 2026-07-17 (later) — decidable FO fragments, and why SAT is Π⁰₁
+
+Two more additions to the overview paper, both from the first-order view of
+the problem.
+
+A new top-level section, "Decidable fragments of first-order logic, and why
+none captures it." ALCI_RCC5 satisfiability *is* a first-order satisfiability
+problem (the finite theory T_RCC5 — forbidden triangles + converse +
+strong-EQ — plus the standard translation), so the natural question is
+whether it sits in a decidable FO fragment. It does not, and always for the
+same reason. FO² (composition is genuinely ternary; and FO³ is already
+undecidable), the guarded family (the concept part is guarded, and
+composition in forbidden-triangle form is even *clique*-guarded — but
+TOTALITY is unguardable and forces complete Gaifman graphs, defeating the
+tree-model property these fragments rest on: the wp78 obstruction, reached
+from the classical-model-theory side), fluted, guarded-negation, and
+GF+transitivity (undecidable) all fail. The uniform culprit is *totality* —
+the same complete-Gaifman-graph fact behind F6 — not the ternary composition
+axiom, which is the tamer, clique-guardable half. Placed as its own section
+next to "Why standard undecidability reductions fail" (a placement call from
+the human); added five citations and a plain-language footnote defining the
+Gaifman graph.
+
+Sharpened the Π⁰₁ discussion to say precisely *why*: it is a *computable
+reduction to plain first-order satisfiability* (each concept ↦ one sentence),
+and FO-SAT is Π⁰₁ by the co-r.e. side of Church's theorem = Gödel
+completeness. The elegant dual, now spelled out: completeness gives the
+UNSAT-r.e. side for free; the SAT-r.e. side would be free too under a finite
+model property ("recursively axiomatizable + FMP ⇒ decidable"), which
+ALCI_RCC5 lacks (the ascending PP-tower) — so enumerating SAT the honest way
+means enumerating finite certificates for infinite models = qualitative F6.
+
+Commits this day: d9ce373 (accessibility pass), e604e32 (Π⁰₁ observation +
+SemiDecidability.lean + wp84), 4881b61 (this section + the Π⁰₁ sharpening);
+all pushed. Paper 36pp, clean.
+
+Status unchanged: strongly supported, NOT certified.
