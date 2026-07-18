@@ -424,12 +424,23 @@ Proposition~\ref{prop:vertical} concerns \emph{one} length-two path; it does
 several composition constraints can pin a horizontal edge to a single value:
 $\comp(\DR,\PO)=\{\DR,\PO,\PP\}$ and $\comp(\PPI,\PO)=\{\PPI,\PO\}$ intersect
 in $\{\PO\}$, so an edge forced through two different intermediates can be
-\emph{compelled} to be $\PO$ (machine-checked). Consequently ``shadow'' and
-``live'' (Definition~\ref{def:f6}) must be read against the \emph{joint}
-closure of all constraints, never single-path forcing. What composition
-genuinely never does is force two occurrences \emph{together}: it forces only
-\emph{apart} (a shared horizontal anchor excludes $\EQ$). That one-sidedness
-is the real horizontal asymmetry.
+\emph{compelled} to be $\PO$ (machine-checked, \texttt{wp85}); indeed every
+proper relation---$\DR,\PO,\PP,\PPI$---is reachable as such a joint singleton,
+so $\PO$ is not special among them. Consequently ``shadow'' and ``live''
+(Definition~\ref{def:f6}) must be read against the \emph{joint} closure of all
+constraints, never single-path forcing. What \emph{composition} genuinely
+never forces is a merge: no intersection of table cells ever narrows to
+$\{\EQ\}$ (\texttt{wp85}), so composition can only force occurrences
+\emph{apart} (a shared horizontal anchor excludes $\EQ$), never
+\emph{together}. Concept-level isolation \emph{can} still force a
+merge---but only self-defeatingly: the markers that would force $z=z'$ also
+collapse the construction to unsatisfiability
+(\S\ref{sec:domino-attempt}). So the coincidence obstruction is really a
+\emph{dichotomy}---a would-be grid merge is either \emph{unforced} (the
+branches never join) or \emph{fatal} (it collapses to \textsc{unsat}), never
+a clean forced grid---not a blanket ``EQ cannot be forced.'' That
+one-sidedness, forcing apart but not (usefully) together, is the real
+horizontal asymmetry.
 \end{remark}
 
 There is one further asymmetry, and it is the one the split-forest
@@ -1852,7 +1863,7 @@ risk, not two wholly independent oracles; and the model verifier confirms
 explicit \emph{finite} SAT witnesses, not UNSAT verdicts or infinite-model
 SAT. Beyond
 the reasoners, some eighty self-contained verification work packages
-(\texttt{verification/python/}, WP1--WP83) cross-check the finite
+(\texttt{verification/python/}, WP1--WP85) cross-check the finite
 combinatorial content of every proof route against the RCC5 composition
 table \emph{re-derived from finite set semantics}, so the underlying
 algebra cannot be fudged. Representative results: the RCC5 patchwork

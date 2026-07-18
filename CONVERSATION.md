@@ -7947,3 +7947,17 @@ extraction; an exact amalgamation statement; the exact ALCIRCC5 = LRCC5(RS)
 identification. Flagged but not done (Michael's deliberate choices): removing
 the DL 2026 appendix/advocacy and the question-form title. Ledger: 16 reviews,
 a defect or overclaim in all but two.
+
+Follow-on (same day): sharpened the coincidence obstruction to its correct
+**dichotomy** form (Michael's point). Composition alone never forces a merge
+(no intersection of table cells narrows to {EQ} — new probe `wp85`), so a grid
+is never forced *for free*; concept-level isolation *can* force the merge, but
+self-defeatingly — it collapses to UNSAT beyond level 2 (the §domino
+analysis). So a would-be grid merge is either unforced or fatal, never a clean
+forced grid — the accurate statement, replacing my looser "EQ can never be
+forced." Paper's Remark updated + cross-linked to §domino; `wp85` also records
+that all four *proper* relations (incl. PO) are joint-forceable, so PO is not
+special. Also produced a **conference talk** (`papers/talk_ALCIRCC5.tex`, ~38
+slides, Beamer/metropolis, graphics) aligned with the corrected paper. Next:
+prove the ∀PO-free fragment rigorously — if false, it comes out of the paper;
+if it holds, add Lean proofs (the reviewer's pick for publishable-beyond-arXiv).
