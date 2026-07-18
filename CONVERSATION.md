@@ -7893,3 +7893,18 @@ LEAN.md's recorded next stone (Gödel-number the `FinCatalog` codes + the
 finScheme ⟹ DovetailScheme bridge).
 
 Status at pause: strongly supported, NOT certified.
+
+Post-pause addenda (same day, prompted by Michael): Remark 6 in the
+FO-fragments section — *the two renderings of the composition table*: the
+natural implication form (R ∧ S → T₁ ∨ … ∨ Tₙ) is *less* guarded, not more
+(its guard is a path; for PP it is literally transitivity in the
+non-guardable shape), while the contrapositive forbidden triangles are
+clique-guarded because the third edge moves into the guard; the two are
+equivalent only modulo exactly-one, so the equivalence broker is totality —
+exactly the axiom the guarded family cannot have; Π⁰₁ unaffected. And a
+closing conclusion paragraph, "If nothing else: a demonstration, addressed
+to our peers": the report is at minimum a demonstration of frontier-model
+capabilities as of July 2026 that working logicians should know about;
+ignoring them does not advance science; informing peers was a major purpose,
+first attempted at DL 2026 (Appendix A) and rejected without engagement. Tag
+`arxiv-candidate-2026-07-18` moved to the amended freeze.

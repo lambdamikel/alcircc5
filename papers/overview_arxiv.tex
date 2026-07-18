@@ -837,6 +837,41 @@ rests. The guarded route thus fails for exactly the reason \texttt{wp78}
 records---and note it is \emph{totality}, not the ternary composition axiom,
 that does the damage; the composition axiom is the tamer half.
 
+\begin{remark}[On the two renderings of the composition table]
+\label{rem:renderings}
+The \emph{natural} first-order rendering of a table cell is not the
+forbidden triangle but the implication
+\[
+\forall x\,y\,z\;\bigl(R_r(x,y)\wedge R_s(y,z)\;\rightarrow\;
+R_{t_1}(x,z)\vee\dots\vee R_{t_n}(x,z)\bigr),
+\qquad \{t_1,\dots,t_n\}=\comp(r,s),
+\]
+and it is instructive that this form is \emph{less} guarded, not more. Its
+guard $R_r(x,y)\wedge R_s(y,z)$ is a \emph{path}, not a clique: the pair
+$\{x,z\}$ the consequent speaks about never co-occurs in a guard
+atom---indeed for $r=s=t_1=\PP$ the sentence \emph{is} transitivity,
+$\forall xyz\,(R_\PP(x,y)\wedge R_\PP(y,z)\rightarrow R_\PP(x,z))$, the
+textbook non-guardable shape (and the one behind the transitivity
+undecidability cited below). The contrapositive forbidden triangles are
+clique-guarded precisely because the offending third edge moves \emph{into
+the guard}. The two renderings are equivalent only modulo
+exactly-one: the implication additionally \emph{forces} an atom on
+$(x,z)$---a relativized piece of totality---and the negative rewriting is
+available at all only because the relation alphabet is finite and
+exhaustive (for a single transitive relation over an open vocabulary no
+such rewriting exists). Nor is the rewriting a loophole: within the
+clique-guarded fragment the triangle sentences are \emph{strictly weaker}
+than transitivity, since a model may leave $(x,z)$ atom-free; the
+equivalence broker is totality, which is exactly the axiom the fragment
+cannot have. Nothing downstream is sensitive to the choice---both are
+finite first-order renderings, interchangeable over $T_{\mathrm{RCC5}}$,
+so the $\Pi^0_1$ placement (\S\ref{ssec:approach-lean}) is
+unaffected---but the diagnosis is: written with implications, composition \emph{looks}
+unguarded for a repairable, surface reason; written with triangles, every
+axiom of $T_{\mathrm{RCC5}}$ dresses in guards \emph{except} totality,
+which is the honest accounting.
+\end{remark}
+
 \emph{Other fragments.} The fluted fragment requires predicate arguments to
 form a suffix of the quantifier sequence; the composition atom $R_t(x,z)$
 skips $y$, so it is not fluted. The unary-negation and guarded-negation
@@ -1936,6 +1971,24 @@ core, plus one unconditional fragment, one certified lemma, working tools,
 and an honest account of an AI-assisted attack and its dead ends. That is
 an accurate and, we think, respectable terminal state for a discussion
 piece on a problem open for over two decades.
+
+\paragraph{If nothing else: a demonstration, addressed to our peers.}
+Whatever the eventual fate of the mathematics, this report is at minimum an
+expressive demonstration of what frontier AI models could do in serious
+formal research at the time of writing (July~2026): sustain a months-long,
+adversarially-reviewed attack on a twenty-year-old open problem, author and
+repair proofs across some thirty rounds, catch one another's defects with
+machine-checked witnesses, drive the surviving core into a kernel-checked
+Lean development, and ship working, validated reasoners along the way.
+Every description-logic researcher---indeed every logician and
+mathematician doing serious work---should be aware that this is what the
+instruments can now do. Ignoring these capabilities does not advance
+science, and declining to use them is, we think, simply unwise. Informing
+our peers of exactly this was itself a major purpose of the present
+report---a message first offered through the community's own venue and, as
+Appendix~\ref{app:dl2026} documents, rejected on grounds that engaged
+neither the mathematics nor the message. We record it here again, in the
+open.
 
 \paragraph{Outlook: the human is the bottleneck.} Although the key
 insights, intuitions, and directional choices came from the human, each
