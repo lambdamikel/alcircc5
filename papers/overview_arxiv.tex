@@ -92,10 +92,10 @@ computable function of the concept (property~F6), then satisfiability is
 decidable---whose soundness direction is \emph{machine-checked in Lean~4};
 (ii) that the entire remaining difficulty compresses into that single
 property~F6, which we show is the \emph{same fact} that blocks a proof of
-undecidability; (iii) a certified fragment of the local algebra (an RCC5
-normal form) and an unconditionally decidable fragment (the
+undecidability; (iii) an RCC5 normal form (forward direction
+machine-certified) and an unconditionally decidable fragment (the
 $\forall\PO$-free concepts); (iv) a \emph{working, empirically-validated
-decision procedure}---a cover-tree tableau reasoner that reproduces, $23$
+prototype reasoner}---a cover-tree tableau that reproduces, $23$
 years on, the GIS concept taxonomy of the original report, cross-validated
 on $911$ concepts with zero mismatches and never once contradicted by an
 independent oracle or a hand analysis; and (v) an honest map of the routes
@@ -164,15 +164,19 @@ differently.
   \item \textbf{The vertical axis} ($\PP,\PPI$: nesting) is \emph{tame}.
     Composition can \emph{force} vertical structure---the only four
     ``determining'' compositions (those returning a single relation) all
-    run through $\PP$ or $\PPI$---but an unbounded vertical chain folds
-    into a finite loop, exactly as in ordinary modal logic. Infinite
-    depth is not the problem.
+    run through $\PP$ or $\PPI$---but an unbounded vertical chain is captured
+    by a finite \emph{generator}: a self-loop that \emph{unfolds} into
+    infinitely many distinct points (never an actual $\PP$-cycle, which
+    strong $\EQ$ forbids), just as regular structures capture infinite paths
+    in modal logic. Infinite depth is not the problem.
   \item \textbf{The horizontal axis} ($\DR,\PO$: side-by-side) is
-    \emph{wild}. Composition can never \emph{determine} a horizontal
-    relation ($\PO$ is never a forced value), yet it can force two
-    occurrences to be \emph{distinct} (a shared horizontal anchor
-    excludes $\EQ$). So horizontal ``crowds'' of pairwise-distinct
-    occurrences are the danger.
+    \emph{wild}. No \emph{single} composition step pins a horizontal
+    relation to one value ($\PO$ is never a singleton table entry)---though
+    as constraints accumulate, their \emph{intersection} sometimes can. What
+    composition still cannot do is force two occurrences \emph{together}; it
+    can only force them \emph{apart} (a shared horizontal anchor excludes
+    $\EQ$). So horizontal ``crowds'' of pairwise-distinct occurrences are
+    the danger.
 \end{itemize}
 
 A finite decision procedure must record, at each interface of a model,
@@ -210,8 +214,8 @@ contributions are:
   \item The identification of F6 as the shared keystone of the
     decidability and undecidability directions (\S\ref{ssec:whyhard},
     \S\ref{sec:conclusion}).
-  \item A certified RCC5 \emph{normal form} and an unconditionally
-    decidable \emph{$\forall\PO$-free} fragment
+  \item An RCC5 \emph{normal form} (forward direction machine-certified) and
+    an unconditionally decidable \emph{$\forall\PO$-free} fragment
     (\S\ref{ssec:approach-finite}, \S\ref{ssec:approach-regcov}).
   \item An honest, technique-organized account of every route tried, the
     counterexamples that killed the wrong ideas, and the lessons
@@ -288,9 +292,10 @@ auxiliary uniformization property W2$'$ shown to \emph{fold into} it.
     with no $\forall\PO$ subformula, still retaining $\exists\PO$,
     $\forall\DR$, $\exists\DR$, and all vertical modalities, so a
     genuinely expressive spatial fragment;
-  \item the certified RCC5 normal form above;
-  \item a working, empirically validated decision procedure (the
-    cover-tree tableau): cross-validated on $911$ concepts against an
+  \item the RCC5 normal form above (forward direction certified);
+  \item a working, empirically validated \emph{prototype reasoner} (the
+    cover-tree tableau; no completeness theorem is claimed): cross-validated
+    on $911$ concepts against an
     independent oracle with zero mismatches, reproducing $23$ years later
     the full GIS subsumption taxonomy of Wessel's original report, and
     never once contradicted---no counterexample to its verdicts was found
@@ -300,7 +305,7 @@ auxiliary uniformization property W2$'$ shown to \emph{fold into} it.
 \end{itemize}
 
 \paragraph{The honest bottom line.} After roughly thirty repair rounds
-and fifteen adversarial reviews the project has reached a genuine
+and sixteen adversarial reviews the project has reached a genuine
 \emph{local optimum}: the local algebra is exhausted (and in one case
 certified), the soundness side is machine-checked, and the whole
 remaining difficulty is one well-posed lemma. We offer the work not as a
@@ -410,9 +415,22 @@ the value of any determining composition. (Exhaustive over
 Table~\ref{tab:comp}; machine-verified.)
 \end{proposition}
 
-So composition can \emph{force} an edge only through the vertical axis;
-it can force two occurrences to be \emph{distinct} (a shared horizontal
-anchor excludes $\EQ$) but never to a single horizontal value.
+So no \emph{single} composition step forces a horizontal value---the four
+determining steps are all vertical. This must not be overread:
+
+\begin{remark}[Single-step versus joint forcing]\label{rem:pojoint}
+Proposition~\ref{prop:vertical} concerns \emph{one} length-two path; it does
+\emph{not} say horizontal edges are always free. The \emph{intersection} of
+several composition constraints can pin a horizontal edge to a single value:
+$\comp(\DR,\PO)=\{\DR,\PO,\PP\}$ and $\comp(\PPI,\PO)=\{\PPI,\PO\}$ intersect
+in $\{\PO\}$, so an edge forced through two different intermediates can be
+\emph{compelled} to be $\PO$ (machine-checked). Consequently ``shadow'' and
+``live'' (Definition~\ref{def:f6}) must be read against the \emph{joint}
+closure of all constraints, never single-path forcing. What composition
+genuinely never does is force two occurrences \emph{together}: it forces only
+\emph{apart} (a shared horizontal anchor excludes $\EQ$). That one-sidedness
+is the real horizontal asymmetry.
+\end{remark}
 
 There is one further asymmetry, and it is the one the split-forest
 presentation (\S\ref{ssec:approach-splitforest}) turns to its advantage:
@@ -427,8 +445,8 @@ a disjoint region may be disjoint from, overlap, or contain the other
 region---$\comp(\PPI,\DR)=\{\PPI,\PO,\DR\}$ is not a singleton, so nothing
 is forced. Disjointness thus propagates deterministically to descendants
 in the $\PP$-order, and to nothing else---the \emph{downward-closed
-disjointness} that the certified RCC5 normal form
-(Theorem~\ref{thm:normalform}) makes exact.
+disjointness} that the RCC5 normal form (Theorem~\ref{thm:normalform},
+forward direction certified) makes exact.
 \end{proposition}
 
 This ``half-determinism'' (deterministic downward, free upward) is what
@@ -440,28 +458,34 @@ as genuine branching. Vertical recurrence, moreover, always folds:
 \begin{lemma}[No horizontal recurrence]\label{lem:pathauto}
 Form the composition-path subset automaton whose states are the reachable
 relation sets, with $\mathrm{Rel}(\varepsilon)=\{\EQ\}$ and
-$\mathrm{Rel}(w\,a)=\bigcup_{r\in\mathrm{Rel}(w)}\comp(r,a)$, restricted to
-states not containing $\EQ$. Every cycle in this automaton uses only
-vertical labels; no cycle uses a horizontal label. Hence any support
-recurrence that never folds by an equality is \emph{eventually vertical},
-and is absorbed by vertical looping rather than by a horizontal crowd.
-(Exhaustive finite computation; machine-verified, \texttt{wp38}.)
+$\mathrm{Rel}(w\,a)=\bigcup_{r\in\mathrm{Rel}(w)}\comp(r,a)$. Restrict to
+states not containing $\EQ$, and to non-$\EQ$ labels (an $\EQ$ label is a
+self-loop on every state, since $\EQ$ is the composition identity). Then no
+cycle uses a \emph{horizontal} ($\DR$/$\PO$) label: every cycle is built
+from vertical ($\PP$/$\PPI$) steps. Hence any support recurrence that never
+folds by an equality is \emph{eventually vertical}, and is absorbed by
+vertical looping rather than by a horizontal crowd. (Exhaustive finite
+computation; machine-verified, \texttt{wp38}.)
 \end{lemma}
 
 Proposition~\ref{prop:vertical} and Lemma~\ref{lem:pathauto} explain why
 infinite \emph{depth} is never the obstacle: forced structure is
 vertical, and vertical chains loop. Everything hard is horizontal---and,
-crucially, horizontal structure can be \emph{exhibited} freely but seems
-impossible to \emph{force} rigidly. A decision procedure must record only
-the horizontal branching it cannot reconstruct:
+crucially, while \emph{individual} horizontal edges can be pinned (by the
+joint closure of several constraints, Remark~\ref{rem:pojoint}), no concept
+is known to \emph{force an unboundedly wide rigid} horizontal pattern.
+Whether one can is exactly F6. A decision procedure must record only the
+horizontal branching it cannot reconstruct:
 
 \begin{definition}[Shadows, live width, and F6]\label{def:f6}
 In a model, or in a finite presentation of one, an edge is a
-\emph{shadow} if its RCC5 value is forced by composition from edges
-already present (e.g.\ $x\mathbin{\PP}y,\,y\mathbin{\DR}z$ force
-$x\mathbin{\DR}z$ by $\comp(\PP,\DR)=\{\DR\}$); a shadow costs a decision
-procedure nothing. The \emph{live width} at an interface is the number of
-non-shadow edges there---the genuine branching that must be recorded.
+\emph{shadow} if its RCC5 value is forced by the \emph{joint}
+composition-closure of the edges already present---which may be a single
+triangle ($x\mathbin{\PP}y,\,y\mathbin{\DR}z$ force $x\mathbin{\DR}z$ by
+$\comp(\PP,\DR)=\{\DR\}$) \emph{or} the intersection of several
+(Remark~\ref{rem:pojoint}); a shadow costs a decision procedure nothing. The
+\emph{live width} at an interface is the number of non-shadow edges
+there---the genuine branching that must be recorded.
 Property \textbf{F6} states: for every satisfiable $C_0$, the live width
 of some presentation of a model of $C_0$ is bounded by a computable
 function of $C_0$.
@@ -510,7 +534,7 @@ $\ALCIRCC8$ ($\EXPTIME$-hard)---were left as the central open problem.
 \toprule
 Logic & Base relations $N_R$ & Concept satisfiability \\
 \midrule
-$\ALCI$ (no RCC)             & arbitrary roles                & \EXPTIME-complete (known) \\
+$\ALCI$ (no RCC)             & arbitrary roles                & \PSPACE-complete (bare); \EXPTIME\ w/ TBoxes \\
 $\ALCIRCC1$                  & $\{\mathsf{SR}\}$              & decidable; \textsc{NP}-complete ($\equiv$ S5) \\
 $\ALCIRCC2$                  & $\{\DR,\mathsf{O}\}$          & decidable; \textsc{NP}-hard, in \PSPACE \\
 $\ALCIRCC3$                  & $\{\DR,\mathsf{ONE},\EQ\}$    & decidable; \textsc{NP}-hard \\
@@ -959,12 +983,21 @@ Consider the concept:
   &\qquad\qquad\qquad\quad\;\;
     \sqcap\; \forall\PPI.(\neg C \sqcap \neg D)
     \sqcap \forall\PP.(\neg C \sqcap \neg D)) \\
-  &\sqcap\; \forall\PPI.\exists\PPI.X
+  &\sqcap\; \forall\PPI.X
 \end{align*}
 The intent: each $X$-node has two $\PPI$-grandchildren colored $C$
 and $D$ (the ``square''), and the universals isolate the colored
-nodes from all non-$\EQ$ neighbors.  The recursive
-$\forall\PPI.\exists\PPI.X$ forces infinite repetition.
+nodes from all non-$\EQ$ neighbors.  The recursive conjunct
+$\forall\PPI.X$ forces infinite repetition.\footnote{The recursive
+occurrence of $X$ abbreviates a TBox axiom $X\sqsubseteq F(X)$; no fixpoint
+constructor is needed. Since the five relations partition the square of the
+domain, the \emph{universal modality} $[U]D:=\forall\EQ.D\sqcap\forall\PP.D
+\sqcap\forall\PPI.D\sqcap\forall\PO.D\sqcap\forall\DR.D$ is definable, and a
+finite TBox internalizes: $C$ is satisfiable w.r.t.\ $\mathcal T$ iff
+$C\sqcap[U]G_{\mathcal T}$ is, where $G_{\mathcal T}$ conjoins
+$\mathrm{nnf}(\neg C_i)\sqcup D_i$ over the axioms $C_i\sqsubseteq D_i$ of
+$\mathcal T$. The internalization uses $\forall\PO$, so it does \emph{not}
+preserve the $\forall\PO$-free fragment of Theorem~\ref{thm:pofree}.}
 
 \medskip\noindent\textbf{One level is satisfiable.}
 Without the recursive conjunct, $X$ has a 3-element model:
@@ -1168,15 +1201,21 @@ three compounding ways, each of which we hit in practice.
     The cascade of re-qualifications need not terminate, and---worse---may
     be \emph{unsound} if ignored: the block asserted a repetition that the
     later edge invalidates.
-  \item \textbf{Local consistency is not extensibility (the one-point
-    extension problem).} Even a configuration in which every triangle is
-    composition-closed may admit \emph{no} valid fresh witness. A minimal
-    instance: old nodes $a,b,c$ with $a\mathbin{\DR}b$,
-    $a\mathbin{\PPI}c$, $b\mathbin{\DR}c$, all consistent; requiring a new
-    $d$ with $b\mathbin{\PO}d$ and $c\mathbin{\PO}d$ forces, through the
-    two triangles, $a\mathbin{\DR}d$ \emph{and} $a\mathbin{\PPI}d$
-    simultaneously---a contradiction invisible to any check that looks
-    only at the existing network.
+  \item \textbf{A fresh witness's relations are forced by the \emph{joint}
+    closure, and can collide with a universal.} Adding $d$ does not leave its
+    relations to old nodes free: they are pinned by \emph{all} triangles at
+    once, and (Remark~\ref{rem:pojoint}) the intersection of several can fix
+    even a horizontal edge. Take old $a\mathbin{\DR}b$, $a\mathbin{\PPI}c$,
+    $b\mathbin{\DR}c$ and a request $b\mathbin{\PO}d$, $c\mathbin{\PO}d$: this
+    is consistent, but it \emph{forces} $a\mathbin{\PO}d$---from
+    $\comp(\DR,\PO)\cap\comp(\PPI,\PO)=\{\DR,\PO,\PP\}\cap\{\PPI,\PO\}=\{\PO\}$,
+    an edge $a$ never chose. Now let $a$ carry $\forall\PO.\neg A$ while $d$
+    must satisfy $A$: the \emph{forced} $a\mathbin{\PO}d$ fires the universal
+    and closes the branch. That is the real hazard---a value fixed by joint
+    closure, not by any single step, silently contradicting a distant
+    universal (the diagnostic $C_{\mathrm{force}}$ below is exactly this
+    shape)---and it is invisible to any check that reads edges one path at a
+    time.
 \end{enumerate}
 
 \paragraph{The ladder of blocking conditions we tried.} Each rung tracks
@@ -1301,7 +1340,10 @@ whiteboard (Figure~\ref{fig:whiteboard}) and handed to the AI assistants
 to make precise. The insight: even though a model is a complete graph,
 one can \emph{present} it as a \emph{forest of trees}---one tree per
 connected component of the vertical ($\PP$) order---by \emph{splitting}
-each node that is a common part of several superparts into $\EQ$-mates,
+each node that is a common part of several superparts into separate
+\emph{occurrence copies} (which are \emph{not} $\EQ$-related model
+elements---under strong $\EQ$ that would mean identity---but occurrences of
+an occurrence cover, re-identified afterwards by an explicit quotient),
 so the tree skeleton becomes explicit, and then \emph{completing} the
 missing (horizontal) edges by the RCC5 patchwork property. Tree-like
 presentations of infinite models are the classical gateway to
@@ -1315,7 +1357,8 @@ despite its complete relational graph, still admits such a presentation.
 \caption{The original whiteboard sketch of the split-forest model
 decomposition (M.\ Wessel, April~2026): the intuition that a
 complete-graph RCC5 model can be presented as a forest of trees by
-splitting join nodes into $\EQ$-mates and completing the relational graph
+splitting join nodes into occurrence copies (re-identified by a quotient)
+and completing the relational graph
 by patchwork. This idea---the human author's---is the semantic foundation
 that every subsequent proof route consumes, and the one component no cold
 review ever broke.}
@@ -1357,7 +1400,8 @@ completion for free. Once a $\DR$ edge is placed between two subtrees,
 shadows, none of them live---so a $\DR$ crowd of any width is generated by a
 few high $\DR$ edges and pushed downward deterministically, costing a finite
 presentation almost nothing. What resists this is precisely the residue:
-$\PO$ (never forced, never propagating, Proposition~\ref{prop:vertical}) and
+$\PO$ (never forced by a single step, and not downward-propagating,
+Proposition~\ref{prop:vertical}) and
 the \emph{upward} direction of disjointness (a superpart of a disjoint
 region is unconstrained). The genuine branching a finite presentation must
 record---the live width (Definition~\ref{def:f6})---is this horizontal
@@ -1614,13 +1658,15 @@ T_{\mathrm{RCC5}}\wedge\exists x\,\mathrm{ST}(C_0,x)$, which has a first-order
 model iff $C_0$ is satisfiable. And first-order satisfiability is itself
 $\Pi^0_1$---the co-r.e.\ side of Church's undecidability theorem, which is
 G\"odel completeness in action: unsatisfiability equals refutability, and FO
-refutations enumerate. So satisfiability sits at level $\Pi^0_1$ of the
-arithmetical hierarchy---the \emph{same} level as the domino problem, which
-makes the knife's edge (\S\ref{ssec:whyhard}) literal. The \emph{reduction}
-alone would not fix the level: a non-first-order model
-condition---well-foundedness, finiteness, anything genuinely
-second-order---could push it higher; the finite axiomatization is what keeps
-the reduction a single sentence.
+refutations enumerate. So satisfiability is \emph{in} $\Pi^0_1$---and this is
+an upper bound only: we establish \emph{membership}, not $\Pi^0_1$-hardness
+(a \emph{decidable} problem is also in $\Pi^0_1$). It shares its
+\emph{ceiling} with the domino problem, but we do not show it as hard, so the
+``knife's edge'' (\S\ref{ssec:whyhard}) is a suggestive analogy here, not a
+completeness result. The \emph{reduction} alone would not even fix this
+ceiling: a non-first-order model condition---well-foundedness, finiteness,
+anything genuinely second-order---could push it higher; the finite
+axiomatization is what keeps the reduction a single sentence.
 
 The consequence for the keystone is best seen through the missing
 \emph{dual}. A $\Pi^0_1$ problem is decidable iff it is \emph{also}
@@ -1798,7 +1844,13 @@ empirical case is substantial, and it is worth stating precisely because
 it is the strongest thing short of a proof. The two reasoners agree on a
 $911$-concept cross-validation suite (zero mismatches after the single
 known $\PO$-loop blind spot of the quasimodel oracle is excluded), and the
-cover-tree decomposition passes $775/775$ of its structured tests. Beyond
+cover-tree decomposition passes $775/775$ of its structured tests. We state
+its scope honestly: the two implementations are genuinely different
+algorithms (tableau versus type elimination) but share the composition
+table and test harness, so this is cross-validation with some common-mode
+risk, not two wholly independent oracles; and the model verifier confirms
+explicit \emph{finite} SAT witnesses, not UNSAT verdicts or infinite-model
+SAT. Beyond
 the reasoners, some eighty self-contained verification work packages
 (\texttt{verification/python/}, WP1--WP83) cross-check the finite
 combinatorial content of every proof route against the RCC5 composition
@@ -1812,12 +1864,15 @@ cluster-quasimodel decision layer matches the tableau on $11/11$
 diagnostics plus a $200$-concept sweep (WP26); the RCC5 normal form agrees
 with brute-force composition closure on all networks up to size four
 (WP47); and the Lean development builds with zero \texttt{sorry} on every
-run (WP34). Most tellingly, \emph{across all thirty rounds and fifteen
+run (WP34). Most tellingly, \emph{across all thirty rounds and sixteen
 adversarial reviews, no accepted-but-unsatisfiable concept was ever
 found}: every defect the reviews turned up was a gap in an
 \emph{argument}, never a semantic counterexample to the intended theorem
-(the absence of nominals in $\mathcal{ALCI}$ appears to block
-concept-level exploitation of the seams the reviews located). This is not
+(the absence of a hybrid $\downarrow$-binder---a way to name the current
+point and reuse that name inside nested modalities---appears to block
+concept-level exploitation of the seams the reviews located; note that
+\emph{nominals} themselves \emph{are} definable under strong $\EQ$, so it is
+the binder, not nominals, that is missing). This is not
 a proof---no amount of it can be---but it is the reason we describe the
 decidability argument as \emph{strongly supported}.
 
@@ -1876,7 +1931,7 @@ to inspection.
 finding: a \emph{cold} reviewer consistently found defects that a
 \emph{warm} reviewer (primed by the construction) missed---including, on
 this project, unsoundness proofs and scope errors that two hot audits had
-passed over. Across fifteen reviews, a defect or overclaim was found in
+passed over. Across sixteen reviews, a defect or overclaim was found in
 all but two. We recommend cold, cross-lineage adversarial review as a
 default intermediate step in AI-assisted mathematics, not an optional
 one.
@@ -1887,8 +1942,17 @@ that re-derive the RCC5 composition table from finite set semantics
 (so the algebra cannot be fudged), and ultimately the Lean kernel.
 Overclaiming was treated as the cardinal sin---and it happened: the
 author model twice overstated what the Lean established, and a cold
-review caught both; the claims were withdrawn. The machine checks, not
-the model's confidence, are the ground truth.
+review caught both; the claims were withdrawn. A sixteenth (cold) review of
+this very manuscript then found a \emph{definite} error---an illustrative
+one-point-extension example whose claimed contradiction does not hold, the
+two triangles in fact forcing the single relation $\PO$ by \emph{joint}
+constraint (Remark~\ref{rem:pojoint})---and, with it, that the informal
+``$\PO$ is never forced'' intuition had been stated too strongly. Both were
+corrected, and the distinction between single-step and joint forcing is now
+made explicit throughout. That an error of this kind survived into a tagged
+manuscript is exactly why the standing label is \emph{not certified}: the
+machine checks, not the model's (or the author's) confidence, are the ground
+truth.
 
 \paragraph{What frontier models did well, and did not.} Both models
 sustained long-context, rigorous, multi-round formal development and
@@ -2411,9 +2475,9 @@ Claude (Anthropic), prompted by M.\ Wessel.
 Claude (Anthropic), prompted by M.\ Wessel.
 \newblock Cover-tree tableau reasoner for $\ALCIRCC{5}$.
 \newblock Python implementation, April 2026.
-\newblock The main candidate decision procedure; cross-validated
-  against the quasimodel oracle on 911 concepts and on the 775-case
-  decomposition suite.
+\newblock The main prototype reasoner (no completeness theorem claimed);
+  cross-validated against the quasimodel oracle on 911 concepts and on the
+  775-case decomposition suite.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/src/cover_tree_tableau.py}
 
 \bibitem{QuasimodelReasoner}

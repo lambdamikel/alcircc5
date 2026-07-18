@@ -41,13 +41,25 @@ dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 ## Status (2026-07-18): a local optimum, paused here
 
 Decidability of ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30 repair
-rounds and 15 adversarial reviews the project has reached a genuine local
+rounds and 16 adversarial reviews the project has reached a genuine local
 optimum: the local algebra is exhausted, the soundness side is
 machine-checked, and the entire remaining difficulty compresses into one
 well-posed lemma. Work is **paused** at this state (git tag
 `arxiv-candidate-2026-07-18`); what a future attack needs is recorded in the
 paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
+
+> **16th review (2026-07-18):** a cold review of the overview paper
+> ([`papers/final_gpt_review_overview_paper/`](papers/final_gpt_review_overview_paper/))
+> found a **definite error** — a broken one-point-extension example, rooted
+> in an overstated "PO is never forced" intuition (in truth, no *single*
+> composition step forces PO, but the *intersection* of several can). The
+> certified Lean core was unaffected. The error and the overstatements have
+> been corrected, and many claims qualified (Π⁰₁ = membership not hardness;
+> "prototype reasoner" not "decision procedure"; forward-direction-certified
+> normal form). The reviewer's larger call — full self-contained proofs and a
+> narrower theorem paper — is the standing open work, exactly what the
+> "not certified" label denotes.
 
 - **Certified** (Lean 4, zero `sorry`; see [LEAN.md](LEAN.md)): the
   **soundness** pipeline (a valid finite certificate unfolds to a genuine

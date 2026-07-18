@@ -7908,3 +7908,42 @@ capabilities as of July 2026 that working logicians should know about;
 ignoring them does not advance science; informing peers was a major purpose,
 first attempted at DL 2026 (Appendix A) and rejected without engagement. Tag
 `arxiv-candidate-2026-07-18` moved to the amended freeze.
+
+## 2026-07-18 — the 16th review: a definite error, and the honesty-fix pass
+
+We celebrated too early. A cold GPT review of the overview paper
+(`papers/final_gpt_review_overview_paper/`, 16pp) found a **definite
+mathematical error**, verified locally: the p.16 one-point-extension example
+is false. Old `a DR b, a PPI c, b DR c` with request `b PO d, c PO d` forces
+no contradiction — `comp(DR,PO) ∩ comp(PPI,PO) = {DR,PO,PP} ∩ {PPI,PO} =
+{PO}`, so `a PO d`, and a concrete set model exists. The root cause is a real
+overstatement pervading the prose: "PO is never forced." Proposition 1 (no
+*single* length-two path yields the singleton {PO}) is true, but the
+*intersection* of several path-constraints can force PO. Crucially, the
+certified Lean core is untouched — the S-condition checks full composition
+closure, not single-path forcing — so the error lived only in prose and in
+the already-uncertified informal arguments. In that sense the review
+vindicated the "strongly supported, NOT certified" label while correctly
+demanding we stop overstating past it.
+
+Michael chose "honesty fixes now" over the reviewer's full theorem-paper
+restructure. Done this session: the p.16 example replaced by the *correct*
+phenomenon (a joint-closure-forced edge colliding with a universal — the
+C_force shape); a new remark distinguishing single-step from joint forcing;
+shadows/live-width redefined against joint closure; the path-automaton lemma
+fixed for EQ self-loops; "certified normal form" qualified to its
+forward direction everywhere; Π⁰₁ downgraded to membership (not hardness);
+the ALCI baseline corrected to PSpace; nominal→↓-binder; "decision
+procedure"→"prototype reasoner"; the §6.2 domino formula/prose/experiment
+aligned plus a TBox-internalization footnote (the reviewer's own gift);
+split "EQ-mates"→occurrence-cover/quotient; a common-mode-risk caveat on the
+reasoner evidence; and a candid sentence in the methodology section
+recording this very error. Review count bumped to sixteen. Paper 38pp, clean.
+
+Deferred (the reviewer's substantial program, which the honesty label already
+covers): full self-contained proofs of the ∀PO-free theorem, both
+normal-form directions, the split-occurrence quotient, and the F6→certificate
+extraction; an exact amalgamation statement; the exact ALCIRCC5 = LRCC5(RS)
+identification. Flagged but not done (Michael's deliberate choices): removing
+the DL 2026 appendix/advocacy and the question-form title. Ledger: 16 reviews,
+a defect or overclaim in all but two.
