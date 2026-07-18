@@ -69,16 +69,30 @@ the completeness direction, the open mathematics — now sharpened to the
 *identity-selector-minor dichotomy*, with the uniformization property W2′
 folded into it.
 
+**The problem is Π⁰₁ (a later observation).** The composition-table semantics
+is finitely first-order axiomatizable and ALCI embeds by the standard
+translation over arbitrary carriers, so by Gödel completeness UNSAT is r.e.
+and SAT sits at **Π⁰₁** — the domino problem's level. Hence decidability needs
+only *qualitative* F6 (every satisfiable concept has *some* finite certificate,
+**no computable bound**): dovetail a certificate enumeration against an
+FO-refutation enumeration. `formal/SemiDecidability.lean` formalizes that
+reduction (`decidableSat`), and `quantitative_free` recovers the bound a
+posteriori. This reshapes the keystone — retiring the width-accounting
+obligations — but does **not** settle it: qualitative F6 is untouched, and the
+Proposition adds one external theorem (Gödel completeness). See
+[`../../LEAN.md`](../../LEAN.md) § "The Π⁰₁ observation."
+
 Full treatment: overview paper, §"The Lean line and F6"; the
 artifact-by-artifact history (rounds 19–30 + the two cold reviews of the
 Lean) is in [`../../LEAN.md`](../../LEAN.md).
 
 **Artifacts**
 - [`formal/Round19Transport.lean`](../../formal/Round19Transport.lean) — the normative development
+- [`formal/SemiDecidability.lean`](../../formal/SemiDecidability.lean) — the Π⁰₁ / dovetailing reduction
 - [width-barrier status report and F6/W2′ analysis](../../papers/fable5_width_barrier/)
 
-**Probes:** WP34 (Lean mirror), WP39–WP44 (F6/W2′ cold attacks) in
-[`verification/python/`](../../verification/python/).
+**Probes:** WP34 (Lean mirror), WP39–WP44 (F6/W2′ cold attacks), WP84 (Π⁰₁ FO
+transcription) in [`verification/python/`](../../verification/python/).
 
 **Result.** A *certified surround* for a still-open problem: it kernel-checks
 the soundness half and the shape of the decision procedure, but does **not**

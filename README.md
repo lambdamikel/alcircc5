@@ -58,6 +58,16 @@ well-posed lemma.
 - **Open (the keystone):** F6 itself — equivalently, that every satisfiable
   concept admits a *bounded* finite certificate. This is the standing open
   mathematics.
+- **The problem is Π⁰₁ (a later observation).** Satisfiability is finitely
+  first-order axiomatizable, so by Gödel completeness its complement is
+  recursively enumerable and SAT sits at **Π⁰₁** — the domino problem's own
+  level. Decidability therefore needs only *qualitative* F6 (every satisfiable
+  concept has *some* finite certificate — **no computable bound**): dovetail a
+  certificate enumeration against an FO-refutation enumeration. The reduction
+  is machine-checked ([`formal/SemiDecidability.lean`](formal/SemiDecidability.lean)),
+  and the bound returns for free a posteriori. This *reshapes* the keystone —
+  retiring the width-accounting burden — but does **not** settle it: qualitative
+  F6 is untouched.
 - **The knife's edge:** F6 is the *same* looseness that blocks a proof of
   *undecidability*. Bound it ⇒ decidability; circumvent it to force a grid ⇒
   undecidability. Two sides of one question — why neither has moved in 20+

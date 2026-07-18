@@ -1440,6 +1440,40 @@ probes \texttt{wp35}--\texttt{wp44}, incl.\ \texttt{wp44}: arbitrary RCC5
 glue steps \emph{can} have unbounded separator cover, so any F6 proof must
 use $\ALCIRCC{5}$-forceability, not RCC5-consistency alone).
 
+\paragraph{The problem is $\Pi^0_1$, and F6 weakens to its qualitative
+core.} One further observation---new to this project---sharpens what F6 must
+deliver. The abstract composition-table semantics is finitely
+\emph{first-order} axiomatizable: exactly-one-atom on each ordered pair of
+distinct elements, $\EQ$ as identity, converse coherence, and composition
+closure are all universal FO sentences over the finite table, and $\ALCI$
+embeds by the standard translation---over \emph{arbitrary} carriers, which
+is exactly what the carrier-polymorphic satisfiability of the Lean
+development means. Hence, by G\"odel completeness, \emph{un}satisfiability is
+recursively enumerable, and satisfiability sits at level $\Pi^0_1$ of the
+arithmetical hierarchy---the \emph{same} level as the domino problem, which
+makes the knife's edge (\S\ref{ssec:whyhard}) literal. The consequence for
+the keystone is concrete: a $\Pi^0_1$ problem is decidable iff it is
+\emph{also} recursively enumerable, i.e.\ iff every satisfiable concept has
+\emph{some} finite certificate---\emph{with no computable bound demanded}.
+One dovetails an enumeration of finite certificates (whose checker is the
+already-certified \code{finAccept\_sound}) against an enumeration of FO
+refutations; on every input, one side must eventually fire. So F6 weakens
+from its \emph{quantitative} form (a live-width bound \emph{computable} from
+$C_0$---the target behind most of the width-accounting defects the reviews
+found) to its \emph{qualitative} core (every satisfiable concept has
+\emph{some} finite-width model), and the computable bound then returns for
+free \emph{a posteriori}. The dovetailing reduction is itself machine-checked
+(\code{formal/SemiDecidability.lean}, zero \code{sorry}), and the FO
+transcription it rests on---that the axioms above carve out exactly the
+Lean frame conditions, and that the standard translation matches the
+certified satisfaction relation---is cross-checked in \code{wp84}
+(exhaustively for domains up to three points). Two honest caveats: the
+qualitative core of F6 is \emph{untouched}, so this reshapes the target
+rather than hitting it; and the $\Pi^0_1$ placement adds one standard
+external theorem (G\"odel completeness) to those the argument already
+invokes (the RCC5 patchwork property; parity-automaton emptiness in the
+historical automata route). No complexity bound is claimed or implied.
+
 \subsection{The regular-cover pivot}
 \label{ssec:approach-regcov}
 
@@ -1774,7 +1808,8 @@ genuine idea; orchestration alone is unlikely to supply it.
 
 \paragraph{Materials.} The machine-checked development is
 \texttt{formal/Round19Transport.lean}, \texttt{formal/RCC5NormalForm.lean},
-and \texttt{formal/ForcingReduction.lean} (see \texttt{LEAN.md}); the
+\texttt{formal/ForcingReduction.lean}, and
+\texttt{formal/SemiDecidability.lean} (see \texttt{LEAN.md}); the
 status report and the F6/W2$'$ analysis are in
 \texttt{papers/fable5\_width\_barrier/}; the decidable fragment in
 \texttt{papers/two\_tier\_quotient\_ALCIRCC5} and

@@ -7786,3 +7786,41 @@ arXiv.
   paper and in git history.
 
 Status unchanged: strongly supported, NOT certified.
+
+## 2026-07-17 — accessibility pass, and the Π⁰₁ observation
+
+Two things, after the restructure.
+
+First, an accessibility pass on `papers/overview_arxiv.tex` (and the
+`approaches/Lean_F6/` stub), filling in explanations that were too terse for
+a reader without the full history: the two-axis half-determinism (DR
+propagates deterministically *downward* in the PP-order, free upward — tied
+to the certified normal form); the split-forest discipline (vertical tree
+skeleton vs. horizontal completion, re-orienting vertical edges into the
+tree); a concrete description of what a *certificate* is (catalogue = core
+network + attachment templates + steering function, plus a plan); a proper
+definition of W2′ (uniformization, over-rejection only); the Lean foundation
+(Lean 4 core, no mathlib, the exact encoding); and the Lean *method basis* —
+that it is a cluster-quasimodel / mosaic / type-elimination construction with
+a Hintikka truth lemma, **not** an automaton, and emerged from the pivot off
+the tree automaton (one-step fulfilment removes eventualities, so no parity
+condition is needed).
+
+Second, a genuinely new observation (nothing in the papers, reviews, or
+status docs had discussed semi-decidability or the arithmetical level of the
+problem): **SAT(ALCI_RCC5) is Π⁰₁.** The composition-table semantics is
+finitely first-order axiomatizable and ALCI embeds by the standard
+translation over arbitrary carriers, so by Gödel completeness UNSAT is r.e.
+and SAT sits at Π⁰₁ — the domino problem's level. Consequence: decidability
+needs only *qualitative* F6 (some finite certificate per satisfiable concept,
+no computable bound), via a dovetailed certificate/refutation search. Landed
+`formal/SemiDecidability.lean` (the dovetailing schema, 4 hypothesis fields,
+0 `sorry`, classical-free search core) and `verification/python/wp84_*.py`
+(machine-checks the FO transcription against the certified frame conditions
+and `sat`, exhaustive for domains ≤ 3). This *reshapes* the keystone —
+retiring the width-accounting burden that produced most review defects — but
+does **not** settle it: qualitative F6 is untouched, and it adds one standard
+external theorem (Gödel completeness). The Proposition is prose + probe; the
+*reduction* consuming it is the Lean file.
+
+Status unchanged: strongly supported, NOT certified.

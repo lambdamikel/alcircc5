@@ -19,6 +19,7 @@ full logic. Standing label: **strongly supported, not certified.**
 | `formal/Round19Transport.lean` | ~5,300 | `propext`, `Quot.sound` (+ `ofReduceBool` in `native_decide` witnesses only) | The normative development: certificate transport → S-layer closure → catalogue → logic layer → abstraction-completeness → non-oracular decision-grade reduction. Zero `sorry`. |
 | `formal/RCC5NormalForm.lean` | ~152 | `propext` | The RCC5 normal form (forward): every strong-EQ RCC5 network is an ordered-disjoint structure (PP = strict partial order, DR = downward-closed disjointness). Certified for arbitrary domains. |
 | `formal/ForcingReduction.lean` | ~145 | `propext`, `Quot.sound`, `Classical.choice` | The forcing reduction (Obs. 7.5 formalized): `F6_fin` holds iff no satisfiable concept forces an unbounded rigid horizontal crowd — modulo the width-crowd adequacy lemma, carried as a hypothesis field (not an axiom). |
+| `formal/SemiDecidability.lean` | ~262 | `propext`, `Quot.sound`, `Classical.choice` (+ `ofReduceBool` in the toy witness only) | The semi-decidability schema: since SAT is Π⁰₁ (see below), decidability follows from a dovetailed certificate/refutation search — `decidableSat` — needing only *qualitative* F6 (some finite certificate), **no computable width bound**; `quantitative_free` recovers the bound a posteriori. Four inputs are hypothesis fields, not axioms; the Markov search core is classical-free. Zero `sorry`. |
 
 **Toolchain.** `elan`-installed Lean 4.31.0 at `~/.elan/bin`. No mathlib,
 no lakefile. Build each file directly:
@@ -27,6 +28,7 @@ no lakefile. Build each file directly:
 cd formal && ~/.elan/bin/lean Round19Transport.lean
 cd formal && ~/.elan/bin/lean RCC5NormalForm.lean
 cd formal && ~/.elan/bin/lean ForcingReduction.lean
+cd formal && ~/.elan/bin/lean SemiDecidability.lean
 ```
 
 The mirror harness `verification/python/wp34_round19_lean_mirror.py`
@@ -137,6 +139,43 @@ Alongside the normative file: `RCC5NormalForm.lean` (the certified RCC5
 normal form, harvested from the regular-cover pivot) and
 `ForcingReduction.lean` (the forcing reduction of Observation 7.5,
 formalized modulo a single adequacy hypothesis).
+
+## The Π⁰₁ observation (2026-07-17)
+
+A late observation, separate from the normative development and new to the
+project record: **SAT(ALCI_RCC5) is Π⁰₁.** The abstract composition-table
+semantics is finitely first-order axiomatizable (exactly-one-atom per pair,
+EQ = identity, converse coherence, composition closure — all universal FO
+sentences over the finite table), and ALCI embeds by the standard translation
+over arbitrary carriers (exactly the round-27 carrier-polymorphic
+`Satisfiable`). By Gödel completeness, UNSAT is r.e.; so SAT sits at Π⁰₁ — the
+domino problem's level.
+
+Consequence: decidability ⟺ SAT is *also* r.e. ⟺ every satisfiable concept has
+*some* finite certificate, **with no computable bound demanded.**
+`formal/SemiDecidability.lean` formalizes the dovetailing schema. Its four
+inputs are hypothesis fields (never axiomatized): checker soundness (the
+project's `finAccept_sound`), refutation soundness, *qualitative*
+certificate-completeness (= F6 ∧ W2′ minus the width budgets), and Gödel
+completeness. From them it derives `decideB_correct`, `decidableSat`, and
+`quantitative_free` (the computable bound returns for free a posteriori). The
+Markov search core (`firstHit`) is classical-free (propext + Quot.sound);
+`Classical.choice` enters only through the termination certificate, an erased
+`Prop`, so the compiled program is a plain loop and `#eval` runs it. The FO
+transcription the observation rests on — that the axioms carve out exactly the
+Lean frame conditions, and that the standard translation matches the certified
+`sat` — is cross-checked in `verification/python/wp84_fo_pi01_transcription.py`
+(exhaustive for domains ≤ 3 points, 0 mismatches).
+
+**What it does and does not do.** It weakens the keystone from *quantitative*
+F6 (a width bound computable from C₀ — the target behind most review defects)
+to its *qualitative* core (some finite-width model exists). It does **not**
+settle the problem: qualitative F6 is untouched, and the Π⁰₁ placement adds one
+standard external theorem (Gödel completeness) to the RCC5 patchwork property
+and parity-automaton emptiness. The Proposition itself is prose + probe, not
+Lean (formalizing Gödel completeness is out of scope for the core-Lean,
+no-mathlib artifact); `SemiDecidability.lean` formalizes the *reduction* that
+consumes it. Standing label unchanged: strongly supported, not certified.
 
 ## The two cold reviews of the Lean
 
