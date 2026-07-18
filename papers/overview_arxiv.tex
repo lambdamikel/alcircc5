@@ -227,6 +227,10 @@ problem stands after twenty-five years.
 from Cohn~1993 through Wessel~2002/2003 and Lutz--Wolter~2006) and
 carefully distinguishes our object from the neighbouring logics that
 \emph{are} known undecidable.
+\S\ref{sec:fofragments} views the problem as first-order satisfiability
+and asks whether it falls inside a decidable fragment of first-order
+logic---it does not, and the reason (totality) previews the central
+obstruction.
 \S\ref{sec:undec} explains why the standard undecidability reductions
 fail.
 \S\ref{sec:approaches}---the core of the paper---surveys the approaches
@@ -742,6 +746,107 @@ allows quantification over the spatial relations themselves, and the
 complete-graph semantics is not a concrete-domain constraint. The two
 lines are complementary---attributes versus relationships---which is why
 twenty years of progress on the former left the latter open.
+
+%% ====================================================================
+
+\section{Decidable fragments of first-order logic, and why none captures it}
+\label{sec:fofragments}
+
+$\ALCIRCC{5}$ satisfiability is, quite literally, a \emph{first-order}
+satisfiability problem. The five relations are binary predicates; the
+composition-table semantics is a finite set of first-order axioms
+$T_{\mathrm{RCC5}}$---exactly one atom on each ordered pair of distinct
+elements, $\EQ$ as identity, converse coherence, and, for every pair of atoms
+$r,s$ and every $t\notin\comp(r,s)$, the \emph{forbidden triangle}
+$\forall x\,y\,z\;\neg\bigl(R_r(x,y)\wedge R_s(y,z)\wedge R_t(x,z)\bigr)$---while
+the concept $C_0$ becomes a sentence $\exists x\,\mathrm{ST}(C_0,x)$ under the
+standard modal translation. Thus $C_0$ is satisfiable iff
+$T_{\mathrm{RCC5}}\cup\{\exists x\,\mathrm{ST}(C_0,x)\}$ has a model. If this
+theory fell inside a \emph{decidable fragment} of first-order logic we would
+be done---a natural first thing to try, and one the human author probed in the
+original reports. It does not, and the reason is uniform: it is the same
+totality that underlies F6.
+
+Two invariants of $\ALCIRCC{5}$ models constrain which fragment could contain
+it.
+\begin{itemize}
+  \item \textbf{No finite model property.} An ascending $\PP$-tower
+    ($\exists\PPI.\top\sqcap\forall\PPI.\exists\PPI.\top$, with $\PP$ a strict
+    order) is satisfiable only in infinite models. Any fragment with the
+    finite model property is excluded outright.
+  \item \textbf{Complete Gaifman graph.} Totality forces every two distinct
+    elements to be related, so the Gaifman graph\footnote{The \emph{Gaifman
+    graph} of a relational structure is the undirected graph on its elements
+    in which two distinct elements are joined whenever they occur together in
+    some tuple of some relation---for binary relations, whenever $R(x,y)$ or
+    $R(y,x)$ holds for some $R$. It is the standard way to speak of the
+    ``locality'' or ``sparsity'' of a model: bounded degree, bounded
+    treewidth, and similar tameness conditions are all read off it. Here,
+    because every pair of elements carries an RCC5 atom, this graph is
+    \emph{complete}---maximally non-local.} of every model is
+    \emph{complete}: a $\PP$-chain of length $n$ already has treewidth $n-1$
+    and clique number $n$ (\texttt{wp78}). Any fragment whose decidability
+    rests on models of bounded treewidth---the whole guarded family---is
+    excluded as well.
+\end{itemize}
+
+\noindent Against these, the standard fragments fall as follows.
+
+\emph{Two variables ($\mathrm{FO}^2$).} Excluded twice over: the composition
+axiom is genuinely ternary, and $\mathrm{FO}^2$ has the finite model
+property~\cite{GradelKolaitisVardi1997}. Worse, the ternary step is into
+hostile territory---the three-variable fragment $\mathrm{FO}^3$ is already
+\emph{undecidable} (it captures the equational theory of relation
+algebras~\cite{TarskiGivant1987})---so variable-counting alone offers no
+route: any decidability must come from the \emph{shape} of the axioms, not
+their arity.
+
+\emph{Prefix classes (Bernays--Sch\"onfinkel--Ramsey and relatives).} The
+standard translation of nested modalities produces unbounded
+$\forall\exists$ alternation, so no bounded quantifier-prefix class applies;
+these classes also have the finite model property.
+
+\emph{The guarded fragment and its relatives.} This is the interesting
+near-miss, and it is worth being precise about where it breaks. The concept
+part is \emph{guarded} outright---the modal translation is the paradigm
+guarded formula, each quantifier relativized by its role atom
+($\exists\PP.C\leadsto\exists y(R_\PP(x,y)\wedge\cdots)$)~\cite{AndrekaVanBenthemNemeti1998}.
+The composition constraint, in forbidden-triangle form, is
+\emph{clique-guarded}: in $R_r(x,y)\wedge R_s(y,z)\wedge R_t(x,z)$ every pair
+of variables co-occurs in an atom---exactly a clique guard---so
+composition-closure lives in Gr\"adel's clique-guarded fragment~\cite{Gradel1999};
+converse and mutual-exclusion are guarded too. In other words \emph{almost}
+the entire theory is clique-guarded. What is not---and cannot be---is
+\textbf{totality}: ``every two elements are related'' is the archetypal
+non-guarded assertion (it is not invariant under the guarded bisimulation
+these fragments are built around). And totality is not a technicality one may
+drop: it is what forces the complete Gaifman graphs above, which destroy the
+generalized tree-model property on which the guarded family's decidability
+rests. The guarded route thus fails for exactly the reason \texttt{wp78}
+records---and note it is \emph{totality}, not the ternary composition axiom,
+that does the damage; the composition axiom is the tamer half.
+
+\emph{Other fragments.} The fluted fragment requires predicate arguments to
+form a suffix of the quantifier sequence; the composition atom $R_t(x,z)$
+skips $y$, so it is not fluted. The unary-negation and guarded-negation
+fragments require negations to be unary or single-atom-guarded, and the
+forbidden triangles are neither. And the one extension that would embrace the
+vertical structure directly---the guarded fragment \emph{with transitive
+relations}, since $\PP,\PPI$ are transitive ($\comp(\PP,\PP)=\{\PP\}$)---is
+\emph{undecidable} once transitivity is used outside guards, as it must be
+here~\cite{GanzingerMeyerVeanes1999}, so even the most sympathetic extension
+supplies no decision procedure.
+
+\paragraph{The lesson.} Every fragment fails, and always for the same fact:
+\emph{totality}, i.e.\ the complete Gaifman graph. This is precisely the
+obstruction F6 names from the width side and \texttt{wp78} from the cover
+side; the FO-fragment view rediscovers it from classical model theory. It
+also tells us which tools are the wrong ones: guardedness and locality
+(Gaifman, Hanf) are exactly what totality defeats, so the productive
+machinery is the totality-tolerant kind---Ehrenfeucht--Fra\"iss\'e /
+back-and-forth and the composition method over bounded \emph{tuple}
+profiles---which is the ``correct room'' the keystone analysis independently
+points to (\S\ref{sec:conclusion}).
 
 %% ====================================================================
 
@@ -1442,27 +1547,47 @@ use $\ALCIRCC{5}$-forceability, not RCC5-consistency alone).
 
 \paragraph{The problem is $\Pi^0_1$, and F6 weakens to its qualitative
 core.} One further observation---new to this project---sharpens what F6 must
-deliver. The abstract composition-table semantics is finitely
-\emph{first-order} axiomatizable: exactly-one-atom on each ordered pair of
-distinct elements, $\EQ$ as identity, converse coherence, and composition
-closure are all universal FO sentences over the finite table, and $\ALCI$
-embeds by the standard translation---over \emph{arbitrary} carriers, which
-is exactly what the carrier-polymorphic satisfiability of the Lean
-development means. Hence, by G\"odel completeness, \emph{un}satisfiability is
-recursively enumerable, and satisfiability sits at level $\Pi^0_1$ of the
+deliver. As \S\ref{sec:fofragments} sets up, the semantics is finitely
+\emph{first-order} axiomatizable (the theory $T_{\mathrm{RCC5}}$ plus the
+standard translation of $C_0$), over \emph{arbitrary} carriers---exactly what
+the carrier-polymorphic satisfiability of the Lean development means.
+
+Concretely this is a \emph{computable reduction to plain first-order
+satisfiability}: each $C_0$ maps to the single sentence $\bigwedge
+T_{\mathrm{RCC5}}\wedge\exists x\,\mathrm{ST}(C_0,x)$, which has a first-order
+model iff $C_0$ is satisfiable. And first-order satisfiability is itself
+$\Pi^0_1$---the co-r.e.\ side of Church's undecidability theorem, which is
+G\"odel completeness in action: unsatisfiability equals refutability, and FO
+refutations enumerate. So satisfiability sits at level $\Pi^0_1$ of the
 arithmetical hierarchy---the \emph{same} level as the domino problem, which
-makes the knife's edge (\S\ref{ssec:whyhard}) literal. The consequence for
-the keystone is concrete: a $\Pi^0_1$ problem is decidable iff it is
-\emph{also} recursively enumerable, i.e.\ iff every satisfiable concept has
-\emph{some} finite certificate---\emph{with no computable bound demanded}.
-One dovetails an enumeration of finite certificates (whose checker is the
-already-certified \code{finAccept\_sound}) against an enumeration of FO
-refutations; on every input, one side must eventually fire. So F6 weakens
-from its \emph{quantitative} form (a live-width bound \emph{computable} from
+makes the knife's edge (\S\ref{ssec:whyhard}) literal. The \emph{reduction}
+alone would not fix the level: a non-first-order model
+condition---well-foundedness, finiteness, anything genuinely
+second-order---could push it higher; the finite axiomatization is what keeps
+the reduction a single sentence.
+
+The consequence for the keystone is best seen through the missing
+\emph{dual}. A $\Pi^0_1$ problem is decidable iff it is \emph{also}
+recursively enumerable, and completeness hands us one such
+side---enumerability of \textsc{unsat}---for free. The classical way to get
+the \emph{other} side, enumerability of \textsc{sat}, is the \emph{finite
+model property} (enumerate finite models), the textbook route ``recursively
+axiomatizable $+$ finite model property $\Rightarrow$ decidable.'' But
+$\ALCIRCC{5}$ has \emph{no} finite model property (\S\ref{sec:fofragments}:
+the ascending $\PP$-tower needs an infinite model), so that route is shut,
+and enumerating \textsc{sat} the honest way means enumerating \emph{finite
+certificates for possibly-infinite models}---which is precisely
+\emph{qualitative} F6: every satisfiable concept has \emph{some} finite
+certificate, \emph{with no computable bound demanded}. One dovetails such a
+certificate enumeration (its checker the already-certified
+\code{finAccept\_sound}) against the enumeration of FO refutations; on every
+input, one side must eventually fire. So F6 weakens from its
+\emph{quantitative} form (a live-width bound \emph{computable} from
 $C_0$---the target behind most of the width-accounting defects the reviews
-found) to its \emph{qualitative} core (every satisfiable concept has
-\emph{some} finite-width model), and the computable bound then returns for
-free \emph{a posteriori}. The dovetailing reduction is itself machine-checked
+found) to the \emph{qualitative} core just isolated, and the computable bound
+then returns for free \emph{a posteriori}.
+
+The dovetailing reduction is itself machine-checked
 (\code{formal/SemiDecidability.lean}, zero \code{sorry}), and the FO
 transcription it rests on---that the axioms above carve out exactly the
 Lean frame conditions, and that the standard translation matches the
@@ -1929,6 +2054,35 @@ S.\ Demri and T.\ Gu.
 \newblock Robustness of constraint automata for description logics with
   concrete domains.
 \newblock In \emph{Proc.\ CSL}, volume 363 of LIPIcs, 2026.
+
+%% --- Decidable fragments of first-order logic -----------------------
+
+\bibitem{GradelKolaitisVardi1997}
+E.\ Gr\"adel, P.\,G.\ Kolaitis, and M.\,Y.\ Vardi.
+\newblock On the decision problem for two-variable first-order logic.
+\newblock \emph{Bulletin of Symbolic Logic}, 3(1):53--69, 1997.
+
+\bibitem{TarskiGivant1987}
+A.\ Tarski and S.\ Givant.
+\newblock \emph{A Formalization of Set Theory without Variables}.
+\newblock AMS Colloquium Publications, vol.~41, American Mathematical
+  Society, 1987.
+
+\bibitem{AndrekaVanBenthemNemeti1998}
+H.\ Andr\'eka, J.\ van Benthem, and I.\ N\'emeti.
+\newblock Modal languages and bounded fragments of predicate logic.
+\newblock \emph{Journal of Philosophical Logic}, 27(3):217--274, 1998.
+
+\bibitem{Gradel1999}
+E.\ Gr\"adel.
+\newblock On the restraining power of guards.
+\newblock \emph{Journal of Symbolic Logic}, 64(4):1719--1742, 1999.
+
+\bibitem{GanzingerMeyerVeanes1999}
+H.\ Ganzinger, C.\ Meyer, and M.\ Veanes.
+\newblock The two-variable guarded fragment with transitive relations.
+\newblock In \emph{Proc.\ 14th IEEE Symposium on Logic in Computer Science
+  (LICS)}, pages 24--34, 1999.
 
 %% --- Core 2026 decidability pillars ---------------------------------
 
