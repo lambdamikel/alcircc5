@@ -7982,6 +7982,20 @@ is now machine-certified, and it is firmer than before the review — but NOT
 yet end-to-end formalized (the model-of-C0 Hintikka layer and the completeness
 extraction with the K(C0) bound remain theorem-level).
 
+**Provenance (confirmed by Michael, and cross-checked against the GPT
+transcript `papers/trees/gpt-chat-trees.docx`).** The ∀PO-free (PO-coherent)
+fragment has a specific lineage: (1) the **human author seeded it** with the
+PP-kernel idea (collapse same-Hintikka-type occurrences on a PP-chain into a
+kernel node with a reflexive PP-loop — see Part 24 above); (2) **Claude built
+that into the two-tier quotient construction** (the GPT transcript itself
+opens the two-tier discussion with "here is a new paper by Claude, please
+evaluate it"); (3) **GPT-5.4 Pro's review exposed the "PO gap"** ("the
+quotient forgets too much about the actual chain types"; "V6 is only RCC-side,
+not DL-side"), which is exactly what narrowed the result to the ∀PO-free
+fragment where it is sound. Note it was GPT-5.4 Pro, not GPT-5.5, in this
+thread (GPT-5.5 enters later, on the split-forest/automata/F6 rounds). This
+lineage is now recorded in the overview paper's Acknowledgments.
+
 Follow-on (same day): sharpened the coincidence obstruction to its correct
 **dichotomy** form (Michael's point). Composition alone never forces a merge
 (no intersection of table cells narrows to {EQ} — new probe `wp85`), so a grid

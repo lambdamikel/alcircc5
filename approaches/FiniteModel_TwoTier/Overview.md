@@ -15,6 +15,24 @@ forward absorption); remove the ability to universally constrain it and the
 logic becomes decidable, while still retaining ∃PO, ∀DR, ∃DR, and all
 part-of modalities.
 
+**Provenance.** The route has a specific lineage: the **human author**
+seeded it with the *PP-kernel* idea (collapse same-type occurrences on a
+PP-chain into a kernel node with a reflexive PP-loop); **Claude** built that
+into the two-tier quotient construction; and **GPT-5.4 Pro**'s review exposed
+the "PO gap," which narrowed the result to the ∀PO-free fragment where it is
+sound. (It is *not* a consequence of the split-forest models — a different
+route that shares only the RCC5 patchwork property; and it was GPT-5.4 Pro,
+not GPT-5.5, in this thread.)
+
+**Certified soundness core (2026-07-18).** Re-examined after the 16th review;
+the chain-unfolding lift is now kernel-checked in
+[`formal/POFreeLift.lean`](../../formal/POFreeLift.lean) (`lift_cc`,
+`unf_is_frame`), and two independent decision procedures agree on the
+fragment with zero mismatches ([`wp86`](../../verification/python/wp86_two_tier_lift_check.py),
+[`wp87`](../../verification/python/wp87_po_free_end_to_end.py)). Full
+end-to-end certification (the model-of-C₀ layer + completeness extraction)
+remains open.
+
 Full treatment: overview paper, §"Finite-model and reduction attempts"
 (Theorem: the ∀PO-free fragment is decidable).
 
