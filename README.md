@@ -89,7 +89,17 @@ paper's concluding section and in
   years.
 - **Unconditional win:** the **∀PO-free fragment** is decidable (a genuinely
   expressive spatial fragment — it keeps ∃PO, ∀DR, ∃DR, and all part-of
-  modalities).
+  modalities), via the two-tier quotient route (not the split-forest models).
+  Re-examined after the 16th review and strengthened: its **soundness core is
+  now machine-certified** ([`formal/POFreeLift.lean`](formal/POFreeLift.lean)
+  — the chain-unfolding lift; the unfolding is a genuine RCC5 frame), and two
+  independent decision procedures agree on it with **zero mismatches**
+  ([`wp86`](verification/python/wp86_two_tier_lift_check.py),
+  [`wp87`](verification/python/wp87_po_free_end_to_end.py)). The reviewer's
+  "PO is never forced" concern is closed: the construction enforces full
+  composition-consistency, which subsumes multi-path PO forcing. (Full
+  end-to-end certification — the model-of-C₀ layer and the completeness
+  extraction — remains open.)
 
 ## Complexity landscape
 
@@ -174,7 +184,9 @@ cd formal && lean Round19Transport.lean   # see LEAN.md for all artifacts
 ```
 
 The self-contained verification probes are in
-[`verification/python/`](verification/python/) (WP1–WP83).
+[`verification/python/`](verification/python/) (WP1–WP87; the latest —
+wp84 Π⁰₁ transcription, wp85 multi-path forcing, wp86 two-tier lift,
+wp87 ∀PO-free end-to-end cross-check).
 
 ## Repository map
 

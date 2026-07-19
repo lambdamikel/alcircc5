@@ -7948,6 +7948,40 @@ identification. Flagged but not done (Michael's deliberate choices): removing
 the DL 2026 appendix/advocacy and the question-form title. Ledger: 16 reviews,
 a defect or overclaim in all but two.
 
+## 2026-07-18 (later) — rigorously re-examining the ∀PO-free fragment
+
+The reviewer's pick for "publishable beyond arXiv." Its informal rationale
+was the one dented by the 16th review, so we checked it properly.
+
+Provenance first (Michael asked): ∀PO-free decidability is NOT a consequence
+of the split-forest models — it is the **two-tier quotient** route
+(`papers/two_tier_quotient_ALCIRCC5.tex`: Hintikka types + PP-chain
+regularity/period-descriptors + patchwork), independently re-derived by the
+regular-cover pivot (wp49). The split-forest is the foundation for the harder
+full-logic F6 route; the two routes share only the RCC5 patchwork property.
+
+Step (a), empirical: `wp86` (the chain-unfolding lift = soundness crux;
+composition-consistency preserved on the p.16 config + 2,000 random CC
+networks, 11k+ genuine multi-path-forced PO edges, 0 breaks) and `wp87` (two
+independent decision procedures agree on 244 random + curated ∀PO-free
+concepts, 0 mismatches; cost tracks the 2-EXP K(C0) bound; slow cases
+terminate). The reviewer's "PO is free" worry is cleared: the construction
+enforces full CC, which subsumes joint PO forcing.
+
+Step (b), Lean: `formal/POFreeLift.lean` (Lean 4 core, propext/Quot.sound,
+0 sorry) — `lift_cc` (unfolding preserves CC) and `unf_is_frame` (the
+unfolding is a full RCC5 frame: reflexive-EQ + strong-EQ + converse + CC). A
+byproduct, matching the review's own §3.4: the abstract-semantics core needs
+NO patchwork/compactness — a CC + converse + strong-EQ network already IS a
+model.
+
+Consolidated into the overview paper (§ "The win" / Thm pofree): a
+"re-examined, soundness core certified" paragraph; Materials + WP range
+updated; 39pp, clean. Honest verdict: the fragment HOLDS, its soundness core
+is now machine-certified, and it is firmer than before the review — but NOT
+yet end-to-end formalized (the model-of-C0 Hintikka layer and the completeness
+extraction with the K(C0) bound remain theorem-level).
+
 Follow-on (same day): sharpened the coincidence obstruction to its correct
 **dichotomy** form (Michael's point). Composition alone never forces a merge
 (no intersection of table cells narrows to {EQ} — new probe `wp85`), so a grid

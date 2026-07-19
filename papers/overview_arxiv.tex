@@ -1338,6 +1338,31 @@ $A$'' ($\exists\PO.A$), ``all disjoint things are $B$''
 ($\forall\DR.B$), and impose arbitrary part-of nesting---so this is the
 project's strongest unconditional $\ALCIRCC{5}$ result.
 
+\paragraph{Re-examined, and its soundness core certified (2026-07-18).} A
+cold review (\S\ref{sec:agentic}) rightly flagged that the rationale above
+leans on the ``horizontal freedom'' intuition that
+Remark~\ref{rem:pojoint} corrects. We therefore re-examined the fragment; it
+holds. The soundness crux---the \emph{chain-unfolding lift} (a recurrent
+chain's kernel, unfolded under a constant interface, stays a valid RCC5
+frame)---is now \emph{kernel-checked} in Lean~4
+(\texttt{formal/POFreeLift.lean}: \code{lift\_cc}, \code{unf\_is\_frame};
+axioms \texttt{propext}/\texttt{Quot.sound}, zero \code{sorry}), and it
+enforces \emph{full} composition-consistency (every triangle closed), which
+\emph{subsumes} multi-path $\PO$ forcing---so the construction does \emph{not}
+assume $\PO$ edges are free, closing the review's concern. Two independent
+decision procedures moreover agree on every $\forall\PO$-free concept tested
+(\texttt{wp86}, \texttt{wp87}: $244$ random $+$ curated, zero mismatches; the
+quasimodel oracle's lone blind spot requires $\forall\PO$ and so cannot arise
+here). A byproduct worth noting: the abstract-semantics core needs \emph{no}
+patchwork or compactness---a composition-closed, converse-coherent,
+strong-$\EQ$ network already \emph{is} a model, so \code{unf\_is\_frame}
+delivers an actual (infinite) frame outright. What remains for full
+certification is the model-of-$C_0$ layer (Hintikka demand/universal
+satisfaction) and the completeness extraction carrying the $K(C_0)$ bound. So
+Theorem~\ref{thm:pofree} now stands as \emph{strongly supported with its
+soundness core machine-certified}---firmer than before the review, though not
+yet end-to-end formalized.
+
 \paragraph{Lesson.} Finiteness is the wrong target: models are
 legitimately infinite (unbounded $\PP$-towers are satisfiable). The right
 target is a finite \emph{presentation} of a possibly-infinite model.
@@ -1863,7 +1888,7 @@ risk, not two wholly independent oracles; and the model verifier confirms
 explicit \emph{finite} SAT witnesses, not UNSAT verdicts or infinite-model
 SAT. Beyond
 the reasoners, some eighty self-contained verification work packages
-(\texttt{verification/python/}, WP1--WP85) cross-check the finite
+(\texttt{verification/python/}, WP1--WP87) cross-check the finite
 combinatorial content of every proof route against the RCC5 composition
 table \emph{re-derived from finite set semantics}, so the underlying
 algebra cannot be fudged. Representative results: the RCC5 patchwork
@@ -2087,8 +2112,8 @@ genuine idea; orchestration alone is unlikely to supply it.
 
 \paragraph{Materials.} The machine-checked development is
 \texttt{formal/Round19Transport.lean}, \texttt{formal/RCC5NormalForm.lean},
-\texttt{formal/ForcingReduction.lean}, and
-\texttt{formal/SemiDecidability.lean} (see \texttt{LEAN.md}); the
+\texttt{formal/ForcingReduction.lean}, \texttt{formal/SemiDecidability.lean},
+and \texttt{formal/POFreeLift.lean} (see \texttt{LEAN.md}); the
 status report and the F6/W2$'$ analysis are in
 \texttt{papers/fable5\_width\_barrier/}; the decidable fragment in
 \texttt{papers/two\_tier\_quotient\_ALCIRCC5} and
