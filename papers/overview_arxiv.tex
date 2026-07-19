@@ -2072,6 +2072,30 @@ developments; the value of what remains is a genuinely new
 definability-theoretic idea, or a machine-assisted search of a different
 kind (below).
 
+\paragraph{The sharpened target: automatic covers, not static width.} The
+target has since shifted, and it is worth stating precisely, because it
+changes \emph{where} to dig without changing the difficulty. Static F6 (a
+\emph{computable} width bound) is now understood as \emph{sufficient but not
+necessary}: identity selectors and half-graphs have unbounded static
+separator cover yet are word-automatic (GPT-5.6~Pro,
+\texttt{papers/final\_paper\_gpt\_5.6\_review/}), so static F6 could
+\emph{fail} with the logic still decidable. The exact equivalent of
+decidability is the \emph{qualitative} form---some finite certificate per
+satisfiable concept (\S\ref{ssec:approach-lean}, the $\Pi^0_1$
+observation)---and the most promising \emph{sufficient} route is now the
+\emph{automatic-cover} target: \emph{every satisfiable concept has a
+tree-automatic model}, which yields decidability by the same dovetailing and,
+unlike static F6, \emph{admits} selectors and half-graphs. This is a better
+map---a standard object (automatic structures) with mature theory, and the
+width-specific obstruction defused. It is not, however, a shorter climb: one
+still owes a \emph{positive} existence statement over all satisfiable
+concepts, and the hard gap is unchanged---``the bare pattern is automatic''
+is not ``every concept-forced model is uniformly automatic,'' and totality
+(complete Gaifman graphs, \texttt{wp78}) still blocks every off-the-shelf
+cover theorem. So the honest estimate is unmoved: better-mapped, with standard
+tools and a fully certified base camp, but the summit is where it was---and
+the crispest target, qualitative F6, is decidability itself in other clothes.
+
 \paragraph{The wins.} Independent of F6, this project produced:
 (i) an unconditionally \emph{decidable fragment}, the $\forall\PO$-free
 concepts; (ii) a machine-\emph{certified} RCC5 normal form; (iii) a
