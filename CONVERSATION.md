@@ -8009,3 +8009,36 @@ special. Also produced a **conference talk** (`papers/talk_ALCIRCC5.tex`, ~38
 slides, Beamer/metropolis, graphics) aligned with the corrected paper. Next:
 prove the ∀PO-free fragment rigorously — if false, it comes out of the paper;
 if it holds, add Lean proofs (the reviewer's pick for publishable-beyond-arXiv).
+
+## 2026-07-18 — GPT-5.6 Pro's F6 technical note (a positive contribution)
+
+`papers/final_paper_gpt_5.6_review/` — a technical note by GPT-5.6 Pro (a
+newer model) that READ our corrected manuscript + width-barrier + Π⁰₁ material
+and built on them. Not a defect hunt: it withdraws the (already-fixed) p.16
+point and delivers genuine two-track math. The four results and what we did
+with them:
+
+1. **Canonical set representation (converse normal form, arbitrary domains).**
+   We had only tested the converse to n≤4 (wp47). GPT's η-construction proves
+   it in general. VERIFIED independently (wp88: 36k strong-EQ networks, n≤9,
+   0 failures) and read the proof (clean). **Formalized the core in
+   `formal/RCC5NormalForm.lean`**: `OrderedDisjoint.eta` + `sub_iff_le`,
+   `eta_injective` (both ZERO axioms), `disj_iff_eta_disjoint` (+Classical for
+   the one non-constructive direction). So the normal form is now a certified
+   **biconditional** on arbitrary domains (forward stays propext-only). Paper
+   Thm + LEAN.md + README updated.
+2. **Ideal-interval one-point extension (§5):** the exact criterion the 16th
+   review asked for; covered by GPT's own sanity script (n≤4, 237k assignments).
+3. **Identity selectors are word-automatic (§7):** the sharp static-F6
+   obstruction is finite-state given addresses — so refuting static F6 would
+   refute the certificate architecture, not imply undecidability. Verified
+   (wp88 part B).
+4. **Effective-presentation ⟹ decidability (§8):** our Π⁰₁/qualitative-F6
+   reduction recast in automatic-structures terms; sharpens the open target to
+   "every satisfiable concept has a (tree-)automatic model."
+
+Honest verdict: does NOT settle F6/decidability (stated). It closes a real
+local-algebra gap (converse normal form — now certified), gives the exact
+extension criterion, defuses the identity-selector worry, and makes the
+regular-cover target precise — converging with our work. The loop continues,
+now with a newer model building on the corrected results. Probe: wp88.

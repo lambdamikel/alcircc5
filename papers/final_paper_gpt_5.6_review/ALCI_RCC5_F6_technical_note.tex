@@ -1,0 +1,536 @@
+\documentclass[11pt]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+
+\definecolor{linkblue}{RGB}{28,76,132}
+\definecolor{shade}{RGB}{246,247,249}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=linkblue,
+  citecolor=linkblue,
+  urlcolor=linkblue,
+  pdftitle={Technical Note on the F6 Conjecture for ALCI-RCC5},
+  pdfauthor={GPT-5.6 Pro, prepared for Michael Wessel},
+  pdfsubject={Description logics, RCC5, bounded live width, regular covers},
+  pdfkeywords={ALCI, RCC5, description logic, decidability, F6, automatic structures}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Technical Note on the F6 Conjecture}
+\fancyhead[R]{July 2026}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{14pt}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\RCC}{\mathrm{RCC5}}
+\newcommand{\ALCIRCC}{\mathcal{ALCI}_{\mathrm{RCC5}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\ST}{\operatorname{ST}}
+\newcommand{\down}{\mathord{\downarrow}}
+\newcommand{\up}{\mathord{\uparrow}}
+\newcommand{\Pow}{\mathcal{P}}
+\newcommand{\modelsC}{\models}
+\newcommand{\tp}{\operatorname{tp}}
+\newcommand{\Rel}{\operatorname{rel}}
+\newcommand{\Idl}{\operatorname{Idl}}
+
+\title{\textbf{Technical Note on the F6 Conjecture for $\ALCIRCC$}\\[0.5em]
+\large Corrected review, a canonical ordered--disjoint representation,\\
+an exact one-point extension theorem, and a regular-cover research program}
+\author{GPT-5.6 Pro\\
+\small Prepared for Michael Wessel}
+\date{19 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note reassesses the F6 conjecture after reading the corrected July 2026 overview and the companion width-barrier report.  A criticism made against the earlier overview is withdrawn: the corrected manuscript now explicitly distinguishes singleton composition from joint forcing and repairs the illustrative one-point-extension example.  The note then gives four self-contained mathematical results.  First, every ordered--disjoint structure has a canonical representation by nonempty sets; this proves, for arbitrary domains, the previously only finitely checked converse direction of the ordered--disjoint normal form.  Second, all one-point extensions are characterized exactly by an interval of down-sets between a forced-disjoint lower bound and an admissible-disjoint upper bound.  Third, horizontal universal and existential restrictions become an explicit ideal-selection problem; this isolates the special role of $\forall\PO$.  Fourth, unbounded identity-selector minors have a simple word-automatic $\RCC$ presentation, so they obstruct a particular static-width certificate but not finite-state presentation in general.  A generic theorem shows that a qualitative word- or tree-automatic model property would already imply decidability by dovetailing against first-order refutations.  The resulting recommendation is to continue the research, but to place the main speculative effort on a finite-index/automatic-cover theorem rather than on selector merging alone.  No resolution of F6 or of full $\ALCIRCC$ satisfiability is claimed.
+\end{abstract}
+
+\begin{center}
+\fcolorbox{black!25}{shade}{\parbox{0.92\textwidth}{\small
+\textbf{Status and provenance.}  This is an AI-generated research memorandum, not a peer-reviewed paper.  Claims about the supplied Lean developments are reported from the corrected overview and were not independently kernel-checked here.  Theorems \ref{thm:representation}, \ref{thm:extension}, \ref{prop:modal-ideals}, \ref{thm:selector-auto}, and \ref{thm:effective-presentations} are proved in this note.  Independent finite sanity checks enumerated all ordered--disjoint structures up to four points and all one-point relation assignments over them; these checks support, but are not used in, the proofs.}}
+\end{center}
+
+\tableofcontents
+
+\section{Scope, corrected source, and revised verdict}
+
+The primary source for this review is the corrected 38-page overview of Wessel~\cite{WesselOverviewCorrected}, together with the width-barrier report~\cite{WidthBarrier}.  The corrected overview states the following status: the certificate-to-model soundness pipeline and the faithfulness of the Hintikka abstraction are claimed to be kernel-checked; the forward ordered--disjoint normal form is claimed to be kernel-checked; the converse normal form is reported as exhaustively checked only up to size four; and the model-to-finite-certificate direction remains the open F6 problem.  It also observes that the quantitative width bound can be weakened to the qualitative assertion that every satisfiable concept has some finite certificate, because satisfiability has a first-order co-r.e. complement and the two semidecision procedures can be dovetailed~\cite[Sec.~7.5]{WesselOverviewCorrected}.
+
+\subsection{Withdrawal of the earlier criticism}
+
+The earlier overview contained an incorrect one-point-extension example and informally overread the fact that no single composition-table cell equals $\{\PO\}$.  The corrected overview now fixes both issues.  Its Remark~2 explicitly states that intersections of several path constraints can force a horizontal edge, gives
+\[
+  \operatorname{comp}(\DR,\PO)\cap \operatorname{comp}(\PPI,\PO)
+  =\{\DR,\PO,\PP\}\cap\{\PPI,\PO\}=\{\PO\},
+\]
+and requires ``shadow'' and ``live'' to be evaluated against joint closure rather than one path at a time~\cite[pp.~6--7]{WesselOverviewCorrected}.  The tableau discussion likewise replaces the alleged contradiction with a consistent extension in which the edge $a\PO d$ is jointly forced, and then uses a $\forall\PO$ restriction to obtain the intended clash~\cite[p.~17]{WesselOverviewCorrected}.  Accordingly, that point is no longer an objection to the current manuscript and is not counted as a new result of this note.
+
+\subsection{Revised high-level verdict}
+
+Continued research is warranted.  The corrected manuscript has a coherent certified surround, a sharply stated completeness bottleneck, and a useful regular-cover pivot.  Two qualifications remain essential.
+
+\begin{enumerate}[label=(\roman*),leftmargin=2.2em]
+\item The claimed equivalence between failure of F6 and forceability of unbounded identity-selector minors is still presented at theorem-level or structural level rather than as a fully formal semantic theorem.  The notions of presentation, interface, joint closure, minor, and forceability must be fixed before the biconditional can carry proof-theoretic weight.
+\item Even a refutation of static F6 would refute that certificate architecture, not imply undecidability.  The corrected overview now says this explicitly~\cite[Sec.~10]{WesselOverviewCorrected}.  Regular or automatic presentations can encode patterns, including identity selectors and half-graphs, that have unbounded static separator cover.
+\end{enumerate}
+
+The substantial mathematical contribution below is therefore deliberately two-track: it closes a local algebraic gap, and it converts the regular-cover intuition into a precise conditional decision principle.
+
+\section{Formal setting}
+
+Let $X$ be a nonempty set.  An abstract strong-$\EQ$ atomic $\RCC$ network assigns to every ordered pair $(x,y)$ exactly one relation in
+\[
+  \{\EQ,\PP,\PPI,\PO,\DR\},
+\]
+with $\EQ$ interpreted as identity, $\PP^{-1}=\PPI$, $\PO^{-1}=\PO$, $\DR^{-1}=\DR$, and with the usual $\RCC$ composition table.  We use the convention that $\operatorname{comp}(R,S)$ contains the possible relation between $x$ and $z$ when $xRy$ and $ySz$.
+
+\begin{center}
+\small
+\begin{tabular}{c|ccccc}
+\toprule
+$\operatorname{comp}(R,S)$ & $\EQ$ & $\DR$ & $\PO$ & $\PP$ & $\PPI$\\
+\midrule
+$\EQ$  & $\EQ$ & $\DR$ & $\PO$ & $\PP$ & $\PPI$\\
+$\DR$  & $\DR$ & $*$ & $\DR,\PO,\PP$ & $\DR,\PO,\PP$ & $\DR$\\
+$\PO$  & $\PO$ & $\DR,\PO,\PPI$ & $*$ & $\PO,\PP$ & $\DR,\PO,\PPI$\\
+$\PP$  & $\PP$ & $\DR$ & $\DR,\PO,\PP$ & $\PP$ & $*$\\
+$\PPI$ & $\PPI$ & $\DR,\PO,\PPI$ & $\PO,\PPI$ & $\EQ,\PO,\PP,\PPI$ & $\PPI$\\
+\bottomrule
+\end{tabular}
+\end{center}
+Here $*$ denotes all five relations.
+
+\begin{definition}[Ordered--disjoint structure]
+An \emph{ordered--disjoint structure} is a triple $(X,\leq,D)$ such that $\leq$ is a partial order and $D\subseteq X^2$ is symmetric, irreflexive, and downward closed in both coordinates:
+\[
+ xDy,\quad x'\leq x,\quad y'\leq y
+ \quad\Longrightarrow\quad x'Dy'.
+\]
+Write $x<y$ for $x\leq y$ and $x\neq y$.  The induced $\RCC$ relation is
+\[
+\Rel(x,y)=
+\begin{cases}
+\EQ,&x=y,\\
+\PP,&x<y,\\
+\PPI,&y<x,\\
+\DR,&xDy,\\
+\PO,&\text{otherwise.}
+\end{cases}
+\]
+\end{definition}
+
+Comparable points cannot be $D$-related: if $x<y$ and $xDy$, downward closure with $x\leq x$ and $x\leq y$ gives $xDx$, contradicting irreflexivity.  Thus the five cases above are disjoint and exhaustive.
+
+\section{A canonical representation theorem}
+
+The corrected overview reports only the forward normal-form direction as Lean-certified and the converse as exhaustively checked up to size four~\cite[p.~25]{WesselOverviewCorrected}.  The following construction proves the converse on arbitrary domains and, in fact, gives an explicit set representation.
+
+\begin{theorem}[Canonical set representation]\label{thm:representation}
+Let $(X,\leq,D)$ be an ordered--disjoint structure.  Define
+\[
+  \Omega=\{(u,v)\in X^2: \neg(uDv)\}
+\]
+and, for each $x\in X$,
+\[
+  \eta(x)=\{(u,v)\in\Omega: u\leq x\ \text{or}\ v\leq x\}.
+\]
+Then every $\eta(x)$ is nonempty, $\eta$ is injective, and for all $x,y\in X$:
+\begin{align*}
+ x<y &\iff \eta(x)\subsetneq\eta(y),\\
+ xDy &\iff \eta(x)\cap\eta(y)=\varnothing,\\
+ x\parallel y\ \text{and}\ \neg xDy
+   &\iff \eta(x)\ \text{and}\ \eta(y)\ \text{partially overlap}.
+\end{align*}
+Consequently the induced relation $\Rel$ is exactly the ordinary set-theoretic $\RCC$ relation among the nonempty subsets $\eta(x)\subseteq\Omega$.  In particular, every ordered--disjoint structure induces a composition-closed strong-$\EQ$ atomic $\RCC$ network.
+\end{theorem}
+
+\begin{proof}
+Because $D$ is irreflexive, $(x,x)\in\Omega$; hence $(x,x)\in\eta(x)$ and every region is nonempty.
+
+If $x\leq y$, then $u\leq x$ implies $u\leq y$, and similarly for $v$, so $\eta(x)\subseteq\eta(y)$.  Conversely, if $x\nleq y$, then $(x,x)\in\eta(x)$ but $(x,x)\notin\eta(y)$.  Therefore
+\[
+  \eta(x)\subseteq\eta(y)\iff x\leq y.
+\]
+It follows immediately that $x<y$ iff $\eta(x)\subsetneq\eta(y)$ and that $\eta$ is injective.
+
+Assume $xDy$ and suppose, toward a contradiction, that $(u,v)\in\eta(x)\cap\eta(y)$.  There are four choices witnessing membership.  If the same coordinate lies below both $x$ and $y$, for example $u\leq x$ and $u\leq y$, downward closure gives $uDu$, impossible.  If opposite coordinates witness membership, for example $u\leq x$ and $v\leq y$, downward closure gives $uDv$, contradicting $(u,v)\in\Omega$.  The remaining two cases are symmetric.  Hence $\eta(x)\cap\eta(y)=\varnothing$.
+
+Conversely, suppose $\neg xDy$.  Then $(x,y)\in\Omega$, and $(x,y)$ belongs to both $\eta(x)$ and $\eta(y)$; thus the two sets intersect.  If in addition $x$ and $y$ are incomparable, then $(x,x)\in\eta(x)\setminus\eta(y)$ and $(y,y)\in\eta(y)\setminus\eta(x)$.  Hence they overlap without containment.  The three displayed equivalences follow.
+
+The ordinary set relations on nonempty subsets satisfy the $\RCC$ composition table.  Since $\Rel(x,y)$ agrees exactly with the set relation between $\eta(x)$ and $\eta(y)$, the induced network is converse-coherent, strong-$\EQ$, and composition-closed.
+\end{proof}
+
+\begin{corollary}[Full ordered--disjoint normal form]\label{cor:normal-form}
+Assuming the forward direction reported in the corrected overview, a strong-$\EQ$ atomic network is composition-closed if and only if it is induced by an ordered--disjoint structure.  The reverse implication requires no finiteness assumption.
+\end{corollary}
+
+\begin{corollary}[Arbitrary horizontal graphs]\label{cor:graphs}
+Let $G=(X,E)$ be any simple graph.  Take the order to be equality only and let $D$ be adjacency in $G$.  Then $D$ labels the $\DR$ pairs and its complement off the diagonal labels the $\PO$ pairs of a valid strong-$\EQ$ $\RCC$ network.  Thus local $\RCC$ consistency alone places no graph-theoretic bound on horizontal complexity.
+\end{corollary}
+
+\begin{remark}
+The representation in \cref{thm:representation} is set-theoretic.  It does not claim representation by regular closed regions in a fixed topological space.  That distinction is exactly the difference between the abstract composition-table semantics at issue here and topological $\RCC$ logics.
+\end{remark}
+
+\section{Exact one-point extensions as an interval of ideals}
+
+The next theorem gives an order-independent account of joint forcing for one fresh point.  Besides closing a local proof obligation, it supplies a concrete candidate for the ``live'' part of an interface.
+
+For $A\subseteq X$, call $A$ a \emph{down-set} if $x\in A$ and $y\leq x$ imply $y\in A$, and an \emph{up-set} dually.  Fix an ordered--disjoint structure $(X,\leq,D)$.  For $L,U\subseteq X$ define
+\begin{align*}
+ F(U)&=\{x\in X: \exists u\in U\ (uDx)\},\\
+ A(L)&=\{x\in X: \forall \ell\in L\ (\ell Dx)\},
+\end{align*}
+with $A(\varnothing)=X$.  Intuitively, $F(U)$ is the set that must become disjoint from a new point lying below every element of $U$, while $A(L)$ is the largest set that may become disjoint from a new point lying above every element of $L$.
+
+\begin{theorem}[Ideal-interval extension theorem]\label{thm:extension}
+Let $p\notin X$.  There is an ordered--disjoint extension on $X\cup\{p\}$ satisfying
+\[
+ L=\{x\in X:x<p\},\qquad
+ U=\{x\in X:p<x\}
+\]
+if and only if all of the following hold:
+\begin{enumerate}[label=(E\arabic*),leftmargin=3em]
+\item $L$ is a down-set and $U$ is an up-set;
+\item $\ell<u$ for every $\ell\in L$ and $u\in U$;
+\item $F(U)\subseteq A(L)\setminus U$.
+\end{enumerate}
+When these conditions hold, the possible disjoint neighborhoods
+\[
+ E_p=\{x\in X:pDx\}
+\]
+are exactly the down-sets in the interval
+\[
+  F(U)\subseteq E_p\subseteq A(L)\setminus U.\tag{\(*\)}
+\]
+In particular, $E_p=F(U)$ always yields an extension.
+\end{theorem}
+
+\begin{proof}
+Assume first that an extension exists.  Transitivity of the extended order makes $L$ a down-set and $U$ an up-set.  If $\ell\in L$ and $u\in U$, then $\ell<p<u$, so $\ell<u$.
+
+The set $E_p$ is a down-set: from $pDx$ and $y\leq x$, downward closure gives $pDy$.  If $x\in F(U)$, choose $u\in U$ with $uDx$.  Since $p\leq u$, downward closure gives $pDx$, so $F(U)\subseteq E_p$.  If $x\in E_p$ and $\ell\in L$, then $\ell\leq p$ and $pDx$ imply $\ell Dx$; hence $x\in A(L)$.  Finally, $E_p\cap U=\varnothing$ because a point comparable with $p$ cannot be disjoint from it.  This proves \((*)\) and the three necessary conditions.
+
+Conversely, suppose (E1)--(E3), and let $E$ be any down-set satisfying \((*)\).  Extend the order by declaring $\ell<p$ for $\ell\in L$ and $p<u$ for $u\in U$, with no other new comparisons.  Conditions (E1) and (E2) make this relation a partial order: the only new transitivity case crossing $p$ is $\ell<p<u$, and (E2) supplies the required old comparison $\ell<u$.
+
+Extend $D$ symmetrically by declaring $pDx$ exactly for $x\in E$.  Because $E\subseteq A(L)\setminus U$, the new disjoint pairs are incomparable.  It remains to verify downward closure.  For a new pair $pDx$, moving downward on the $x$ side stays in $E$ because $E$ is a down-set; moving downward on the $p$ side replaces $p$ by some $\ell\in L$, and $E\subseteq A(L)$ gives $\ell Dx$.  For an old pair $aDb$, the only genuinely new possibility is to move one coordinate down to $p$.  If $p\leq a$, then $a\in U$, and $aDb$ implies $b\in F(U)\subseteq E$, hence $pDb$; moving the other coordinate further downward is handled by the down-set property of $E$.  The symmetric case is identical.  The forbidden case of moving both coordinates to $p$ would require two $D$-related members of $U$; then one would lie in $F(U)\cap U$, contradicting (E3).  Thus the extended $D$ is downward closed.
+
+The resulting structure is ordered--disjoint, and \cref{thm:representation} supplies a valid $\RCC$ network.  Since $F(U)$ is itself a down-set and (E3) places it inside the upper bound, choosing $E=F(U)$ proves existence.
+\end{proof}
+
+\begin{corollary}[Forced and live horizontal zones]\label{cor:zones}
+Fix a valid vertical cut $(L,U)$.  Across all one-point extensions with that cut:
+\begin{align*}
+\text{forced }\DR\text{ points} &= F(U),\\
+\text{forced }\PO\text{ points} &= X\setminus\bigl(L\cup U\cup A(L)\bigr),\\
+\text{optional horizontal zone} &= A(L)\setminus\bigl(U\cup F(U)\bigr).
+\end{align*}
+For every $x$ in the optional zone there is an extension with $p\PO x$ and another with $p\DR x$.
+\end{corollary}
+
+\begin{proof}
+The first two statements follow from the interval in \cref{thm:extension}: every admissible $E_p$ contains $F(U)$, and no admissible $E_p$ contains a point outside $A(L)\setminus U$.  A point outside $L\cup U$ that is not disjoint is necessarily $\PO$-related to $p$.  If $x\in A(L)\setminus(U\cup F(U))$, take $E_p=F(U)$ to obtain $p\PO x$.  Since $A(L)\setminus U$ is a down-set, $F(U)\cup\down x$ is another admissible down-set and gives $p\DR x$.
+\end{proof}
+
+\begin{remark}[The corrected joint-forcing example]
+The example on page 17 of the corrected overview is transparent in this normal form.  From $a\DR b$, $c<a$, $b\DR c$, $b\PO d$, and $c\PO d$, the relation between $a$ and $d$ cannot be $\DR$ (else $c\DR d$ by downward closure), cannot be $\PP$ (else $c<d$), cannot be $\PPI$ (else $d\DR b$ by downward closure from $a\DR b$), and cannot be $\EQ$.  Hence $a\PO d$.  This independently confirms the manuscript's correction.
+\end{remark}
+
+\section{Horizontal modal obligations are ideal constraints}
+
+The extension theorem exposes the precise combinatorics introduced by $\forall\PO$.  Let an old interpreted structure $\mathfrak M$ on $X$ be fixed, and let a new point $p$ have a valid vertical cut $(L,U)$.  Put
+\[
+  H=X\setminus(L\cup U),
+\]
+so that $E_p\subseteq H$ is the $\DR$ neighborhood and $H\setminus E_p$ is the $\PO$ neighborhood.
+
+Let $\tau$ be a proposed closure type for $p$.  Define
+\begin{align*}
+ G_{\DR}(\tau)&=\bigcap\{\varphi^{\mathfrak M}: \forall\DR.\varphi\in\tau\},\\
+ B_{\PO}(\tau)&=\bigcup\{H\setminus\varphi^{\mathfrak M}: \forall\PO.\varphi\in\tau\},
+\end{align*}
+with empty intersection $X$ and empty union $\varnothing$.
+
+\begin{proposition}[Universal restrictions as an ideal interval]\label{prop:modal-ideals}
+The $\forall\DR$ and $\forall\PO$ requirements in $\tau$ are simultaneously satisfiable at $p$ exactly when there is a down-set $E$ such that
+\[
+ F(U)\cup B_{\PO}(\tau)
+ \ \subseteq\ E\ \subseteq\
+ \bigl(A(L)\setminus U\bigr)\cap G_{\DR}(\tau).\tag{\(**\)}
+\]
+Equivalently, universal requirements alone are feasible exactly when
+\[
+ \down\bigl(F(U)\cup B_{\PO}(\tau)\bigr)
+ \subseteq
+ \bigl(A(L)\setminus U\bigr)\cap G_{\DR}(\tau).
+\]
+For such an $E$, each $\exists\DR.\psi\in\tau$ additionally requires
+$E\cap\psi^{\mathfrak M}\neq\varnothing$, while each $\exists\PO.\psi\in\tau$ requires
+$(H\setminus E)\cap\psi^{\mathfrak M}\neq\varnothing$.
+\end{proposition}
+
+\begin{proof}
+By \cref{thm:extension}, $E$ must be a down-set in the interval $[F(U),A(L)\setminus U]$.  A $\forall\DR.\varphi$ clause says that every member of $E$ lies in $\varphi^{\mathfrak M}$; intersecting all such constraints yields $E\subseteq G_{\DR}(\tau)$.  A $\forall\PO.\varphi$ clause says that every point in $H\setminus E$ lies in $\varphi^{\mathfrak M}$, equivalently every point of $H$ violating $\varphi$ must lie in $E$; taking the union yields $B_{\PO}(\tau)\subseteq E$.  This proves \((**)\).  The least down-set containing its lower bound is the displayed downward closure, giving the equivalent criterion.  The existential clauses are immediate from the meanings of $\DR$ and $\PO$.
+\end{proof}
+
+\paragraph{Interpretation.}
+Without $\forall\PO$, the formula contributes no arbitrary lower bound $B_{\PO}(\tau)$ to the disjointness ideal.  One may begin with the structurally forced ideal $F(U)$ and add only boundedly many witnesses for $\exists\DR$ while preserving witnesses outside the ideal for $\exists\PO$.  With $\forall\PO$, every old point of a forbidden type must be absorbed into $E$, and downward closure can propagate that choice.  This is a direct local explanation of why the $\forall\PO$-free fragment is substantially easier and why the full problem becomes a width or finite-index question.
+
+The proposition also suggests a cleaner formal definition of an interface state: record the vertical cut, the forced lower ideal $F(U)$, the admissible upper region $A(L)\setminus U$, and the finitely visible existential requirements.  The missing global theorem is not local $\RCC$ consistency; it is that the continuation behavior of these ideal constraints has finite index for each fixed input concept.
+
+\section{Identity selectors are not an obstruction to automatic presentation}
+
+The width-barrier report isolates an $n\times n$ identity-selector pattern as the sharp obstruction to a static separator-cover bound~\cite[Sec.~9]{WidthBarrier}.  That is plausible for the stated certificate architecture, but identity matrices are finite-state when indices are available as addresses.  The following construction makes this precise within $\RCC$ itself.
+
+\begin{theorem}[An automatic infinite identity-selector network]\label{thm:selector-auto}
+Let $I$ be any nonempty index set and let
+\[
+ X=\{b\}\cup\{L_i,U_i,A_i:i\in I\}.
+\]
+Define the strict order only by $b<U_i$ for each $i$, and let $D$ be the symmetric closure of
+\[
+ \{(b,L_i):i\in I\}\ \cup\ \{(L_i,A_i):i\in I\}.
+\]
+Let $\PO$ be residual.  Then $(X,\leq,D)$ is ordered--disjoint and hence induces a valid strong-$\EQ$ $\RCC$ network.  Moreover,
+\begin{align*}
+ L_i\DR b,\qquad &U_i\PPI b,\\
+ \Rel(L_i,A_j)=\DR\ \Longleftrightarrow\ i=j,\qquad
+ &\Rel(U_i,A_j)=\PO\quad\text{for all }i,j.
+\end{align*}
+Thus $A_j$ separates the pair $(L_i,U_i)$ exactly when $i=j$.
+
+For $I=\mathbb N$, the structure has an injective word-automatic presentation: encode $b$ by a distinguished word and encode $L_i,U_i,A_i$ by a tag followed by $1^i$.  The relations $\PP$, $\PPI$, and $\DR$ are recognized by synchronous finite automata, and $\PO$ is their residual complement off equality.
+\end{theorem}
+
+\begin{proof}
+The relation $\leq$ is a partial order.  The only nontrivial lower element is $b\leq U_i$, and no $D$-edge is incident with any $U_i$.  Every listed $D$-edge therefore remains $D$ under movement to smaller coordinates; symmetry and irreflexivity are immediate.  Hence the structure is ordered--disjoint, and \cref{thm:representation} gives a valid $\RCC$ network.
+
+The displayed selector equations follow directly from the definitions.  For $i=j$, $L_iDA_i$, while $U_i$ is incomparable with and not disjoint from $A_i$, hence $U_i\PO A_i$.  For $i\neq j$, neither $L_i$ nor $U_i$ is ordered or disjoint with $A_j$, so both relations are $\PO$.  The splitter equations are built into the order and $D$ relation.
+
+For $I=\mathbb N$, a synchronous automaton can recognize the finite tag patterns and equality of the unary suffixes.  These tests define the order and disjointness relations; regular languages are closed under Boolean operations, so the residual $\PO$ relation is automatic as well.
+\end{proof}
+
+\begin{corollary}
+Unbounded identity-selector minors do not, by themselves, obstruct finite-state or automatic descriptions of $\RCC$ models.  They can still obstruct a certificate discipline that must store every private selector as a separate live anchor.  Therefore a negative result for static F6 would not settle decidability, and a positive proof strategy based solely on forcing selectors to merge is unnecessarily strong.
+\end{corollary}
+
+\section{A precise regular-cover conditional}
+
+The corrected overview's regular-cover pivot is conceptually sound but leaves the class of allowed generators informal.  Automatic structures provide a standard, auditable formalization.
+
+\begin{definition}[Effective presentation class]
+An \emph{effective presentation class} consists of a recursively enumerable set of finite codes $e$ and a uniform procedure that, given $e$ and a first-order sentence $\varphi$, decides whether the structure $\mathfrak A_e$ presented by $e$ satisfies $\varphi$.
+\end{definition}
+
+Word-automatic and tree-automatic structures are standard examples: finite automata present the domain and relations, and first-order model checking is effective~\cite{KhoussainovNerode,BlumensathGraedel}.
+
+\begin{theorem}[Qualitative effective-presentation property implies decidability]\label{thm:effective-presentations}
+Let $\mathcal P$ be an effective presentation class.  Suppose every satisfiable $\ALCIRCC$ concept $C$ has some model $\mathfrak A_e\in\mathcal P$.  Then $\ALCIRCC$ concept satisfiability is decidable.  No computable bound on the size of $e$ as a function of $C$ is required.
+\end{theorem}
+
+\begin{proof}
+For an input concept $C$, form the finite first-order sentence
+\[
+ \Phi_C=T_{\RCC}\wedge\exists x\,\ST(C,x),
+\]
+where $T_{\RCC}$ axiomatizes totality, strong equality, converse, and the composition table.  First-order unsatisfiability is recursively enumerable: enumerate formal first-order refutations of $\Phi_C$.
+
+In parallel, enumerate all presentation codes $e\in\mathcal P$.  For each $e$, use the uniform first-order decision procedure to test whether $\mathfrak A_e\modelsC\Phi_C$.  If so, accept.  If $C$ is satisfiable, the qualitative presentation hypothesis supplies some code that will eventually be enumerated and accepted.  If $C$ is unsatisfiable, first-order completeness supplies a refutation that will eventually be enumerated.  Dovetailing the two searches terminates on every input.
+\end{proof}
+
+\begin{corollary}[Automatic-cover target]
+If every satisfiable $\ALCIRCC$ concept has a word-automatic model, or more generally a tree-automatic model, then satisfiability is decidable.
+\end{corollary}
+
+\begin{remark}
+This theorem is the regular-cover analogue of the corrected overview's qualitative-F6 observation.  It does not assert that the automatic-model property holds.  Its value is that the target is precise, the certificates are finite syntax, the checker is standard and non-oracular, and identity selectors as well as half-graphs are admissible.  Tree-automatic presentations are especially natural for split-forest unfoldings.
+\end{remark}
+
+\section{What has and has not been advanced}
+
+\begin{longtable}{p{0.27\textwidth}p{0.31\textwidth}p{0.34\textwidth}}
+\toprule
+Issue & Corrected-source status & Assessment in this note\\
+\midrule
+\endfirsthead
+\toprule
+Issue & Corrected-source status & Assessment in this note\\
+\midrule
+\endhead
+Joint forcing of $\PO$ & Explicitly corrected; closure must combine all paths & Confirmed independently by the ordered--disjoint analysis; prior criticism withdrawn.\\[0.5em]
+Ordered--disjoint normal form & Forward direction claimed Lean-certified; converse finitely checked & \Cref{thm:representation} proves the converse for arbitrary domains and gives a concrete representation.\\[0.5em]
+One-point extension & Claimed exact local criterion in the regular-cover work & \Cref{thm:extension} gives a self-contained exact criterion and identifies forced/live zones.\\[0.5em]
+Role of $\forall\PO$ & The $\forall\PO$-free fragment is claimed decidable & \Cref{prop:modal-ideals} shows locally that $\forall\PO$ contributes an arbitrary lower bound to the disjointness ideal.\\[0.5em]
+F6 $\leftrightarrow$ identity minors & Strongly supported/sharpened, not fully formalized & Still an open formalization burden.  Identity minors are automatic, so the equivalence is architecture-specific, not a general decidability barrier.\\[0.5em]
+Regular covers & Promising vocabulary, bespoke theorem missing & \Cref{thm:effective-presentations} supplies a precise conditional target via word/tree-automatic structures.\\
+\bottomrule
+\end{longtable}
+
+No proof of F6 has been obtained.  No concept forcing a nonregular horizontal policy has been found.  The concrete advance is a stronger local algebraic foundation and a more permissive, formally checkable global target.
+
+\section{Recommended research program}
+
+\subsection{Priority A: formalize the local results}
+
+The canonical representation and ideal-interval theorem should be added to the Lean development.  They are short, first-order, and independent of F6.  This would upgrade the normal form from a one-directional certified statement plus finite testing to a full arbitrary-domain theorem, and it would give the project an exact semantic closure operator for one-point attachments.
+
+A minimal formal milestone is:
+\begin{enumerate}[label=A\arabic*.,leftmargin=3em]
+\item define ordered--disjoint structures and the map $\eta$ from \cref{thm:representation};
+\item prove exact recovery of $\PP$, $\DR$, and $\PO$;
+\item formalize \cref{thm:extension} and \cref{cor:zones};
+\item connect the resulting local ``optional ideal zone'' to the catalogue's steering data.
+\end{enumerate}
+
+\subsection{Priority B: replace selector sharing by finite continuation index}
+
+The positive target should not require private selectors to merge, since equality-indexed selector families are finite-state.  Define an equivalence on interface summaries by future behavior:
+\[
+\begin{aligned}
+  \sigma\equiv_C\tau
+  \quad\Longleftrightarrow\quad &
+  \text{for every finite attachment sequence $w$,}\\
+  &\text{$w$ is realizable from $\sigma$ if and only if it is realizable from $\tau$.}
+\end{aligned}
+\]
+where only formulas in $\cl(C)$ are observed.  The decisive conjecture is:
+
+\begin{conjecture}[Finite continuation index]\label{conj:index}
+For every fixed concept $C$, the continuation equivalence $\equiv_C$ on ideal-interface states has finite index, effectively representable by finite automata or a finite transition algebra.
+\end{conjecture}
+
+A proof would yield a regular cover without requiring bounded raw width.  It is a Myhill--Nerode or back-and-forth statement, not a Gaifman-locality statement; totality makes the latter ill-suited.
+
+\subsection{Priority C: define tree-automatic certificates}
+
+Fix a concrete tree-automatic certificate schema for split forests:
+\begin{enumerate}[label=C\arabic*.,leftmargin=3em]
+\item a regular tree language for occurrences;
+\item synchronous tree automata for $\PP$, $\DR$, and unary closure types;
+\item $\PPI$, $\PO$, and $\EQ$ derived by converse, residual, and identity;
+\item a first-order checker for totality, strong equality, composition, and root satisfaction.
+\end{enumerate}
+The conditional theorem then follows immediately from \cref{thm:effective-presentations}.  The hard theorem is the extraction of such a presentation from an arbitrary satisfying model, but the target is now exact and demonstrably broad enough for the known width counterpatterns.
+
+\subsection{Priority D: sharpen the negative target}
+
+A negative program should seek a concept forcing a cross-interface relation whose continuation language has infinite Myhill--Nerode index or otherwise fails every chosen automatic presentation class.  Identity matrices and half-graphs are not sufficient: equality and order tests recognize them.  More credible targets would encode copying, multiplication, an arbitrary binary relation, or another demonstrably nonautomatic dependency while preserving $\RCC$ composition and strong equality.
+
+\subsection{Priority E: machine-assisted experiments}
+
+The most informative experiment is not another random finite-model sweep.  Enumerate small recursive concept/TBox schemes, compute bounded-depth interface transition systems using the ideal criterion, minimize the resulting automata, and search for systematic state growth.  A positive pattern suggests a finite-index invariant; a negative pattern supplies a candidate nonregular forcing construction.  Every conjectured local transition should be checked against \cref{thm:extension} and then ported to Lean.
+
+\section{Research-prior estimates}
+
+The following are subjective research priors, not statistical measurements.
+
+\begin{center}
+\begin{tabularx}{0.94\textwidth}{Xr}
+\toprule
+Outcome & Estimated probability\\
+\midrule
+Full $\ALCIRCC$ concept satisfiability is decidable & $65$--$75\%$\\
+Static bounded-live-width F6, under the present certificate architecture, is true & $35$--$50\%$\\
+Every satisfiable concept has an effective regular/tree-automatic presentation & $50$--$65\%$\\
+A focused twelve-month project settles the full problem & $20$--$35\%$\\
+A rigorous publishable partial result emerges within six months & $75$--$90\%$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The correction of the joint-forcing issue increases confidence in the local foundation.  The explicit automatic selector construction decreases confidence that static width is the uniquely right invariant, while increasing confidence that a broader regular-cover route could succeed.  The strongest near-term publication target is the package consisting of the canonical representation, the ideal-interval extension theorem, its formalization, and the automatic-cover conditional.
+
+\section{Conclusion}
+
+The corrected overview already repairs the error identified in the earlier version, so that criticism should be retired.  Continued work is nevertheless justified.  This note supplies a full arbitrary-domain proof of the ordered--disjoint converse, an exact ideal-theoretic account of one-point extensions and joint horizontal forcing, and a precise explanation of how $\forall\PO$ creates the difficult lower-bound constraints.  It also shows that the identity-selector obstruction is specific to static width: an infinite private-selector family has a trivial word-automatic presentation.
+
+The recommended strategy is therefore bifurcated.  Complete and certify the local algebra now; this is low-risk and publishable.  For the summit, replace ``all selectors must share'' by the weaker and more natural demand that formula-visible continuation behavior have finite automata index.  Proving that every satisfiable concept has a tree-automatic or comparably effective regular cover would decide the logic by a clean dovetailing argument, even if static F6 fails.
+
+\appendix
+\section{Finite sanity checks}
+
+The proofs above are independent of computation.  As a guard against orientation and boundary mistakes, two exhaustive checks were run using the standard $\RCC$ table re-derived from finite nonempty-set semantics.
+
+\begin{itemize}[leftmargin=2em]
+\item All $962$ ordered--disjoint structures on at most four labelled points were tested.  Their induced relation networks were composition-closed, and the canonical regions from \cref{thm:representation} recovered every relation exactly.
+\item All $237{,}188$ assignments of a prospective new point to the four relation classes ``below'', ``above'', ``disjoint'', and ``overlap'' over those structures were tested.  The direct ordered--disjoint extension test agreed with the conditions of \cref{thm:extension} in every case.
+\end{itemize}
+
+These checks are useful regression tests for a future Lean formalization, but they do not replace the arbitrary-domain proofs.
+
+\section{Proof sketch by composition cells}
+
+For readers who prefer a direct table argument, the converse of the normal form can also be checked without the set representation.  For example:
+\begin{itemize}[leftmargin=2em]
+\item $x<y<z$ forces $x<z$, giving $\operatorname{comp}(\PP,\PP)=\{\PP\}$.
+\item $x<y$ and $yDz$ imply $xDz$ by downward closure, giving $\operatorname{comp}(\PP,\DR)=\{\DR\}$.
+\item $y<x$ and $y\PO z$ exclude $x=z$ and $x<z$ by comparability, and exclude $xDz$ because it would force $yDz$; hence $x\Rel z\in\{\PO,\PPI\}=\operatorname{comp}(\PPI,\PO)$.
+\item $x\PO y$ and $y<z$ exclude $x=z$, $z<x$, and $xDz$; hence $x\Rel z\in\{\PO,\PP\}=\operatorname{comp}(\PO,\PP)$.
+\end{itemize}
+The remaining cells are symmetric or vacuous.  The canonical representation theorem packages all of these cases into one construction.
+
+\begin{thebibliography}{99}
+
+\bibitem{WesselOverviewCorrected}
+M.~Wessel (with AI assistants),
+\newblock \emph{Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of $\mathcal{ALCI}_{\mathrm{RCC5}}$, a New Decidable Fragment, and a Certified Lean Formalization Reducing It to One Keystone},
+\newblock corrected manuscript, 38 pages, July 2026.
+
+\bibitem{WidthBarrier}
+Claude (Fable 5), prepared for M.~Wessel,
+\newblock \emph{The Width Barrier: A Conditional Decidability Result for $\mathcal{ALCI}_{\mathrm{RCC5}}$, and the Unity of Its Two Open Directions},
+\newblock technical report, 14 July 2026.
+
+\bibitem{RenzNebel}
+J.~Renz and B.~Nebel,
+\newblock On the complexity of qualitative spatial reasoning: A maximal tractable fragment of the Region Connection Calculus,
+\newblock \emph{Artificial Intelligence} 108(1--2):69--123, 1999.
+
+\bibitem{LutzWolter}
+C.~Lutz and F.~Wolter,
+\newblock Modal logics of topological relations,
+\newblock \emph{Logical Methods in Computer Science} 2(2):1--41, 2006.
+
+\bibitem{KhoussainovNerode}
+B.~Khoussainov and A.~Nerode,
+\newblock Automatic presentations of structures,
+\newblock in \emph{Logic and Computational Complexity}, Lecture Notes in Computer Science 960, pp.~367--392, Springer, 1995.
+
+\bibitem{BlumensathGraedel}
+A.~Blumensath and E.~Gr\"adel,
+\newblock Automatic structures,
+\newblock in \emph{Proceedings of the 15th Annual IEEE Symposium on Logic in Computer Science}, pp.~51--62, 2000; see also \emph{Theory of Computing Systems} 37:641--674, 2004.
+
+\end{thebibliography}
+
+\end{document}

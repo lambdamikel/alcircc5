@@ -149,4 +149,83 @@ theorem dr_downward_closed (N : RCC5Net α) :
       N.rho x' y' = dr :=
   (toOrderedDisjoint N).disj_down
 
+/-! ### The converse: canonical set representation (arbitrary domains)
+
+The forward direction sends any RCC5 network to an ordered-disjoint structure.
+The CONVERSE -- that every ordered-disjoint structure genuinely arises this way
+-- was previously only machine-checked to size four (wp47). GPT-5.6 Pro
+(`papers/final_paper_gpt_5.6_review/`) gave an explicit set representation
+proving it on arbitrary domains; verified independently in wp88. We certify its
+core here.
+
+For `x`, its canonical region `eta x` is the set of non-disjoint pairs having a
+coordinate `≤ x` (with `≤` the reflexive closure of the strict order). The
+three theorems below show `eta` is injective and reproduces `<`, `D`, and (by
+residue) `PO` exactly -- so an ordered-disjoint structure is faithfully a
+family of sets under the ordinary set-`RCC5` relations, which are
+composition-closed. No finiteness assumption is used. -/
+
+/-- Reflexive closure of the strict order. -/
+def OrderedDisjoint.le {α : Type} (O : OrderedDisjoint α) (x y : α) : Prop :=
+  x = y ∨ O.lt x y
+
+theorem OrderedDisjoint.le_refl {α : Type} (O : OrderedDisjoint α) (x : α) :
+    O.le x x := Or.inl rfl
+
+theorem OrderedDisjoint.le_trans {α : Type} (O : OrderedDisjoint α) {x y z : α}
+    (h1 : O.le x y) (h2 : O.le y z) : O.le x z := by
+  rcases h1 with rfl | h1
+  · exact h2
+  · rcases h2 with rfl | h2
+    · exact Or.inr h1
+    · exact Or.inr (O.lt_trans _ _ _ h1 h2)
+
+theorem OrderedDisjoint.le_antisymm {α : Type} (O : OrderedDisjoint α) {x y : α}
+    (h1 : O.le x y) (h2 : O.le y x) : x = y := by
+  rcases h1 with rfl | h1
+  · rfl
+  · rcases h2 with rfl | h2
+    · rfl
+    · exact absurd (O.lt_trans _ _ _ h1 h2) (O.lt_irrefl x)
+
+/-- The canonical region of `x`: non-disjoint pairs with a coordinate `≤ x`. -/
+def OrderedDisjoint.eta {α : Type} (O : OrderedDisjoint α) (x : α) :
+    α × α → Prop :=
+  fun p => ¬ O.disj p.1 p.2 ∧ (O.le p.1 x ∨ O.le p.2 x)
+
+/-- `eta` reproduces the order: `eta x ⊆ eta y` iff `x ≤ y`. -/
+theorem OrderedDisjoint.sub_iff_le {α : Type} (O : OrderedDisjoint α) (x y : α) :
+    (∀ p, O.eta x p → O.eta y p) ↔ O.le x y := by
+  constructor
+  · intro hsub
+    have hx : O.eta x (x, x) := ⟨O.disj_irrefl x, Or.inl (O.le_refl x)⟩
+    rcases (hsub (x, x) hx).2 with h | h <;> exact h
+  · intro hle p hp
+    exact ⟨hp.1, hp.2.imp (fun h => O.le_trans h hle) (fun h => O.le_trans h hle)⟩
+
+/-- `eta` is injective. -/
+theorem OrderedDisjoint.eta_injective {α : Type} (O : OrderedDisjoint α)
+    {x y : α} (h : O.eta x = O.eta y) : x = y := by
+  have h1 : ∀ p, O.eta x p → O.eta y p := by intro p; rw [h]; exact id
+  have h2 : ∀ p, O.eta y p → O.eta x p := by intro p; rw [h]; exact id
+  exact O.le_antisymm ((O.sub_iff_le x y).mp h1) ((O.sub_iff_le y x).mp h2)
+
+/-- `eta` reproduces disjointness: `x D y` iff `eta x` and `eta y` are disjoint
+    as sets. -/
+theorem OrderedDisjoint.disj_iff_eta_disjoint {α : Type} (O : OrderedDisjoint α)
+    (x y : α) : O.disj x y ↔ ∀ p, ¬ (O.eta x p ∧ O.eta y p) := by
+  constructor
+  · intro hxy p hp
+    obtain ⟨⟨hnd, hx⟩, ⟨_, hy⟩⟩ := hp
+    rcases hx with hux | hvx
+    · rcases hy with huy | hvy
+      · exact O.disj_irrefl p.1 (O.disj_down x y p.1 p.1 hxy hux huy)
+      · exact hnd (O.disj_down x y p.1 p.2 hxy hux hvy)
+    · rcases hy with huy | hvy
+      · exact hnd (O.disj_symm p.2 p.1 (O.disj_down x y p.2 p.1 hxy hvx huy))
+      · exact O.disj_irrefl p.2 (O.disj_down x y p.2 p.2 hxy hvx hvy)
+  · intro h
+    refine Classical.byContradiction (fun hnd => ?_)
+    exact h (x, y) ⟨⟨hnd, Or.inl (O.le_refl x)⟩, ⟨hnd, Or.inr (O.le_refl y)⟩⟩
+
 end RCC5NormalForm

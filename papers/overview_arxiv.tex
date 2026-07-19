@@ -1764,9 +1764,16 @@ $x\mathbin{\DR}y$ and $x'\!\le\!x$, $y'\!\le\!y$ then
 $x'\mathbin{\DR}y'$), comparable pairs are never disjoint, and $\PO$ is
 the residual. The forward direction (every RCC5 network is
 ordered-disjoint) is \emph{machine-certified for arbitrary domains}
-(\texttt{formal/RCC5NormalForm.lean}, axioms \texttt{propext} only); the
-converse is exhaustively machine-checked up to size four
-(\texttt{wp47}).
+(\texttt{formal/RCC5NormalForm.lean}, axioms \texttt{propext} only). The
+\emph{converse} is now certified too: GPT-5.6 Pro
+(\texttt{papers/final\_paper\_gpt\_5.6\_review/}) gave an explicit
+\emph{canonical set representation}---each element $x$ maps to the
+non-disjoint pairs with a coordinate ${\le}x$---and its core is machine-checked
+for arbitrary domains (\code{OrderedDisjoint.sub\_iff\_le},
+\code{eta\_injective}: \emph{zero} axioms; \code{disj\_iff\_eta\_disjoint}:
+$+\,$\texttt{Classical.choice} for the one non-constructive direction),
+independently cross-checked past size four in \texttt{wp88}. So the
+biconditional holds on arbitrary domains.
 \end{theorem}
 
 With it come free amalgamation of ordered-disjoint structures, an exact
@@ -1888,7 +1895,7 @@ risk, not two wholly independent oracles; and the model verifier confirms
 explicit \emph{finite} SAT witnesses, not UNSAT verdicts or infinite-model
 SAT. Beyond
 the reasoners, some eighty self-contained verification work packages
-(\texttt{verification/python/}, WP1--WP87) cross-check the finite
+(\texttt{verification/python/}, WP1--WP88) cross-check the finite
 combinatorial content of every proof route against the RCC5 composition
 table \emph{re-derived from finite set semantics}, so the underlying
 algebra cannot be fudged. Representative results: the RCC5 patchwork

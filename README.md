@@ -64,8 +64,11 @@ paper's concluding section and in
 - **Certified** (Lean 4, zero `sorry`; see [LEAN.md](LEAN.md)): the
   **soundness** pipeline (a valid finite certificate unfolds to a genuine
   RCC5 model); the **faithfulness** of the Hintikka abstraction; the
-  **RCC5 normal form** (every strong-EQ RCC5 network is an ordered-disjoint
-  structure).
+  **RCC5 normal form** — now **both directions** on arbitrary domains
+  (forward: every strong-EQ RCC5 network is an ordered-disjoint structure,
+  `propext` only; converse: GPT-5.6 Pro's canonical set representation,
+  `sub_iff_le`/`eta_injective` zero-axiom, verified in
+  [`wp88`](verification/python/wp88_canonical_representation.py)).
 - **The positive result** is a *conditional* decidability theorem: **if** the
   *live* (non-shadow) width of models is bounded by a computable function of
   the concept — property **F6** — **then** satisfiability is decidable, and
@@ -184,7 +187,7 @@ cd formal && lean Round19Transport.lean   # see LEAN.md for all artifacts
 ```
 
 The self-contained verification probes are in
-[`verification/python/`](verification/python/) (WP1–WP87; the latest —
+[`verification/python/`](verification/python/) (WP1–WP88; the latest —
 wp84 Π⁰₁ transcription, wp85 multi-path forcing, wp86 two-tier lift,
 wp87 ∀PO-free end-to-end cross-check).
 
