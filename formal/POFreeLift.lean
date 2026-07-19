@@ -110,6 +110,9 @@ theorem conv_ne_eq (S : Atom) (h : S ≠ eq) : conv S ≠ eq := by
   | po => decide
   | dr => decide
 
+/-- Converse is an involution. -/
+theorem conv_invol (S : Atom) : conv (conv S) = S := by cases S <;> rfl
+
 /-! ### The chain interface -/
 
 /-- The within-chain relation: strictly earlier is `PP`, equal is `EQ`,
@@ -150,6 +153,20 @@ theorem chain_cc (i j k : Nat) :
       rcases chain_vals i k with h | h | h <;> simp only [h] <;> decide
     · subst hjk; simp only [chain_gt hij, chain_self]; decide
     · simp only [chain_gt hij, chain_gt hjk, chain_gt (Nat.lt_trans hjk hij)]; decide
+
+/-- The chain is converse-coherent: `chain j i = conv (chain i j)`. -/
+theorem chain_conv (i j : Nat) : chain j i = conv (chain i j) := by
+  rcases Nat.lt_trichotomy i j with h | h | h
+  · rw [chain_lt h, chain_gt h]; rfl
+  · subst h; rw [chain_self]; rfl
+  · rw [chain_gt h, chain_lt h]; rfl
+
+/-- The chain is strong-EQ: `chain i j = EQ` only on the diagonal. -/
+theorem chain_eq_imp {i j : Nat} (h : chain i j = eq) : i = j := by
+  rcases Nat.lt_trichotomy i j with hlt | he | hgt
+  · rw [chain_lt hlt] at h; exact absurd h (by decide)
+  · exact he
+  · rw [chain_gt hgt] at h; exact absurd h (by decide)
 
 /-! ### The augmented one-point network and its unfolding -/
 
@@ -204,6 +221,62 @@ theorem lift_cc (E : β → β → Atom) (K : β → Atom)
   · -- (chain i, chain j, chain k)
     exact chain_cc i j k
 
+/-! ### From lift to a genuine RCC5 frame (abstract semantics)
+
+Under the abstract composition-table semantics a model IS a total labelling
+that is reflexive-EQ, strong-EQ (EQ only on the diagonal), converse-coherent,
+and composition-closed (CC).  So no patchwork/compactness is needed for the
+CORE unfolded network: once we show the unfolding satisfies all four frame
+conditions, it *is* an ALCI_RCC5 frame.  (Patchwork enters only for the
+off-chain-witness refinement, condition V6, which is separate.) -/
+
+/-- A strong-EQ atomic RCC5 frame: a total labelling that is reflexive-EQ,
+    strong-EQ, converse-coherent, and composition-closed. This is exactly the
+    frame part of `RCC5Interp` in the normative artifact. -/
+structure Frame {V : Type} (N : V → V → Atom) : Prop where
+  refl_eq : ∀ x, N x x = eq
+  eq_id : ∀ x y, N x y = eq → x = y
+  conv_ : ∀ x y, N y x = conv (N x y)
+  comp_ : ∀ x y z, N x z ∈ comp (N x y) (N y z)
+
+/-- THE FRAME LIFT: if the augmented one-point network is a genuine RCC5 frame
+    (finite valid atomic quotient) and the kernel is distinct from every
+    external, then the infinite chain-unfolding is a genuine RCC5 frame. So a
+    valid atomic quotient unfolds to an actual model of the abstract semantics
+    — with no patchwork/compactness required for the core network. -/
+theorem unf_is_frame (E : β → β → Atom) (K : β → Atom)
+    (h : Frame (aug E K)) (Kproper : ∀ e, K e ≠ eq) :
+    Frame (unf E K) where
+  refl_eq := by
+    intro x
+    rcases x with e | i
+    · simpa only [unf, aug] using h.refl_eq (some e)
+    · simp only [unf]; exact chain_self i
+  eq_id := by
+    intro x y hxy
+    rcases x with e | i <;> rcases y with f | j
+    · -- inl e, inl f
+      simp only [unf] at hxy
+      have hae : aug E K (some e) (some f) = eq := by simpa only [aug] using hxy
+      exact congrArg Sum.inl (Option.some.inj (h.eq_id (some e) (some f) hae))
+    · -- inl e, inr j: conv (K e) = eq is impossible
+      simp only [unf] at hxy
+      exact absurd hxy (conv_ne_eq (K e) (Kproper e))
+    · -- inr i, inl f: K f = eq is impossible
+      simp only [unf] at hxy
+      exact absurd hxy (Kproper f)
+    · -- inr i, inr j
+      simp only [unf] at hxy
+      rw [chain_eq_imp hxy]
+  conv_ := by
+    intro x y
+    rcases x with e | i <;> rcases y with f | j
+    · simpa only [unf, aug] using h.conv_ (some e) (some f)
+    · simp only [unf, conv_invol]
+    · simp only [unf]
+    · simp only [unf]; exact chain_conv i j
+  comp_ := lift_cc E K h.comp_ Kproper
+
 /-! ### Non-vacuity: the hypotheses are inhabitable
 
 With `β = Empty` (no external nodes), `aug` is trivially CC and the kernel
@@ -228,6 +301,35 @@ theorem lift_nonvacuous :
         | none => decide
   · intro e; exact e.elim
 
+/-- Frame-level non-vacuity: the empty external world unfolds to a pure
+    PP-chain, which is a genuine RCC5 frame. -/
+theorem frame_nonvacuous :
+    Frame (unf (β := Empty) (fun e _ => e.elim) (fun e => e.elim)) := by
+  apply unf_is_frame
+  · exact
+      { refl_eq := by intro x; cases x with
+          | some e => exact e.elim
+          | none => rfl
+        eq_id := by intro x y hxy; cases x with
+          | some e => exact e.elim
+          | none => cases y with
+            | some e => exact e.elim
+            | none => rfl
+        conv_ := by intro x y; cases x with
+          | some e => exact e.elim
+          | none => cases y with
+            | some e => exact e.elim
+            | none => rfl
+        comp_ := by intro x y z; cases x with
+          | some e => exact e.elim
+          | none => cases y with
+            | some e => exact e.elim
+            | none => cases z with
+              | some e => exact e.elim
+              | none => decide }
+  · intro e; exact e.elim
+
 #print axioms lift_cc
+#print axioms unf_is_frame
 
 end POFreeLift
