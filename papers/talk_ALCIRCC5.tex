@@ -60,7 +60,7 @@
 \title{Can Agentic AI Settle a\\ 20-Year-Old Open Problem?}
 \subtitle{The decidability of $\ALCIRCC{5}$ --- a machine-checked campaign}
 \author{Michael Wessel\\[2pt]
-  {\small with AI assistants: Claude (Anthropic) and GPT-5.4/5.5 (OpenAI)}}
+  {\small with AI assistants: Claude (Anthropic) and GPT-5.4/5.5/5.6~Pro (OpenAI)}}
 \date{July 2026}
 
 \begin{document}
@@ -246,15 +246,14 @@ Recognized open by the leading experts --- for \alert{twenty years}.
 \begin{frame}{One logic, two completely different axes}
 \begin{center}
 \begin{tikzpicture}[scale=.95]
-  \draw[-{Latex},very thick,petrol] (0,-1.6) -- (0,1.6)
+  \draw[-{Latex},very thick,petrol] (0,-1.9) -- (0,1.9)
      node[above] {\textbf{vertical} $\PP,\PPI$ (nesting)};
-  \draw[-{Latex},very thick,warm] (-3.4,0) -- (3.4,0)
-     node[right] {\textbf{horizontal} $\DR,\PO$ (side by side)};
-  \node[petrol,align=left,anchor=west] at (.25,1.1)
-     {\small\emph{tame}: composition can force it,\\ \small infinite chains fold into loops};
-  \node[warm,align=left,anchor=west] at (-3.3,-.85)
-     {\small\emph{wild}: no \emph{single} step forces a value\\
-      \small (joint constraints can); forces only \emph{apart}};
+  \draw[-{Latex},very thick,warm] (-3.6,0) -- (3.6,0)
+     node[right] {\textbf{horizontal} $\DR,\PO$};
+  \node[petrol,align=left,anchor=west,text width=3.3cm] at (.35,.95)
+     {\footnotesize\emph{tame}: composition can force it; infinite chains fold into loops};
+  \node[warm,align=right,anchor=east,text width=3.3cm] at (-.35,-.95)
+     {\footnotesize\emph{wild}: no \emph{single} step forces a value (joint constraints can); forces only \emph{apart}};
 \end{tikzpicture}
 \end{center}
 \vfill
@@ -314,14 +313,16 @@ disjointnesses below it, for free. What resists: $\PO$, and the upward direction
 \begin{frame}{The knife's edge: one fact, two futures}
 \begin{center}
 \begin{tikzpicture}[
-  box/.style={draw, rounded corners=3pt, align=center, inner sep=7pt},
-  lab/.style={font=\small, align=center}]
+  box/.style={draw, rounded corners=3pt, align=center, inner sep=6pt},
+  lab/.style={font=\scriptsize, align=center}]
   \node[box, fill=petrol!12, very thick] (f6) at (0,0)
     {\textbf{F6}\\ can a concept force\\ \emph{unbounded rigid}\\ \emph{horizontal structure}?};
-  \node[box, fill=good!15] (dec) at (-4.4,0) {\textbf{NO}\\ $\Rightarrow$ \textbf{decidable}};
-  \node[box, fill=openc!20] (und) at (4.4,0) {\textbf{YES}\\ $\Rightarrow$ grids $\Rightarrow$ dominoes\\ $\Rightarrow$ \textbf{undecidable}};
-  \draw[-{Latex}, thick] (f6) -- (dec) node[midway, above, lab] {bound the\\ looseness};
-  \draw[-{Latex}, thick] (f6) -- (und) node[midway, above, lab] {circumvent the\\ looseness};
+  \node[box, fill=good!15] (dec) at (-4.6,0) {\textbf{NO}\\ $\Rightarrow$ \textbf{decidable}};
+  \node[box, fill=openc!20] (und) at (4.5,0) {\textbf{YES}\\ $\Rightarrow$ dominoes\\ $\Rightarrow$ \textbf{undecidable}};
+  \draw[-{Latex}, thick] (f6) -- (dec);
+  \draw[-{Latex}, thick] (f6) -- (und);
+  \node[lab, good] at (-2.65,1.35) {bound the\\ looseness};
+  \node[lab, warm] at (2.7,1.35) {circumvent\\ the looseness};
 \end{tikzpicture}
 \end{center}
 \vfill
@@ -355,9 +356,9 @@ years --- it is one question seen from two sides.
 \includegraphics[width=.72\textwidth]{report7_figure10_grid.png}
 \end{center}
 \vspace{-4pt}
-{\small An RCC8 network isomorphic to an $n\times n$ grid --- constructed by
-hand in my 2002/2003 report (report7, Fig.~10). The models are
-\emph{out there}.}
+{\small An RCC8 network isomorphic to an $n\times n$ grid (report7,
+Fig.~10, 2002/2003) --- the construction \emph{found by a Lisp enumerator}
+and drawn with CLIM (MCL), not by hand. The models are \emph{out there}.}
 \end{frame}
 
 %% ==================================================================== 15
@@ -407,9 +408,9 @@ March--July 2026.
 \column{.48\textwidth}
 \begin{itemize}
   \item $\sim$4 months, $\sim$\alert{30 repair rounds}
-  \item \alert{15 adversarial reviews} --- a defect or overclaim found in
+  \item \alert{17 adversarial reviews} --- a defect or overclaim found in
         \emph{all but two}
-  \item \alert{84} self-contained verification probes (each re-derives the
+  \item \alert{88} self-contained verification probes (each re-derives the
         algebra from set semantics)
   \item 4 Lean files, $\sim$\alert{5{,}900 lines}, \alert{zero \texttt{sorry}}
   \item 2 working reasoners, cross-validated on \alert{911 concepts}
@@ -505,7 +506,7 @@ instead of an acceptance condition. (This is what got formalized.)
   \end{itemize}
 \column{.44\textwidth}
   \begin{block}{Why we moved to Lean}
-    Thirteen of fifteen reviews broke a \emph{prose} proof --- typically at a
+    Most reviews broke a \emph{prose} proof --- typically at a
     step that was \emph{assumed}, not proved. The kernel cannot be talked
     past. After the move, reviews stopped finding soundness defects and
     started finding only \emph{interface} gaps --- which were then closed.
@@ -527,8 +528,8 @@ Result & Meaning & File\\
 \textcolor{good}{\textbf{Abstraction faithful}} &
   satisfiable $\Leftrightarrow$ Hintikka-realizable &
   \texttt{Round19Transport}\\
-\textcolor{good}{\textbf{RCC5 normal form}} (fwd) &
-  every network $\Rightarrow$ order + disjointness &
+\textcolor{good}{\textbf{RCC5 normal form}} (both dir.) &
+  network $\Leftrightarrow$ order + disjointness &
   \texttt{RCC5NormalForm}\\
 \textcolor{good}{\textbf{Forcing reduction}} &
   F6 fails $\Leftrightarrow$ a concept forces crowds &
@@ -585,11 +586,9 @@ boundary between what is proved and what is conjectured.
 
 %% ==================================================================== 25
 \begin{frame}{Unconditional win \#2: the RCC5 normal form}
-\begin{block}{Theorem (forward direction kernel-checked, arbitrary domains;
-converse tested to size 4)}
+\begin{block}{Theorem (both directions kernel-checked, arbitrary domains)}
   A strong-$\EQ$ RCC5 network is composition-closed \emph{iff} it is an
-  \alert{ordered-disjoint structure} (the ``$\Rightarrow$'' is the certified
-  half):
+  \alert{ordered-disjoint structure}:
   \begin{itemize}
     \item $\PP$ is a strict partial order (a genuine part-of hierarchy);
     \item $\DR$ is a symmetric, \alert{downward-closed} disjointness;
@@ -599,28 +598,32 @@ converse tested to size 4)}
 \vfill
 Every RCC5 model, anywhere, \emph{is} just: a hierarchy + a
 downward-inherited ``keeps-apart'' relation + overlap as the leftover.
-The clean structural fact both major proof routes silently relied on ---
-now a theorem with a 150-line proof the kernel accepts.
+The ``$\Rightarrow$'' is a 150-line kernel proof (\texttt{propext} only);
+the ``$\Leftarrow$'' is GPT-5.6~Pro's \alert{canonical set representation},
+also kernel-checked for arbitrary domains --- the structural fact both major
+proof routes silently relied on, now a certified biconditional.
 \end{frame}
 
 %% ==================================================================== 26
 \begin{frame}{A late surprise: the problem's exact address is $\Pi^0_1$}
 \begin{columns}[T]
-\column{.5\textwidth}
-\begin{tikzpicture}[scale=.82]
-  \draw[thick,black!40] (-1.1,0) ellipse (2.1 and 1.25);
-  \draw[thick,black!40] (1.1,0) ellipse (2.1 and 1.25);
-  \node at (-2.55,1.15) {\small $\Sigma^0_1$};
-  \node at (2.55,1.15) {\small $\Pi^0_1$};
-  \node[align=center] at (0,.35) {\small $\Delta^0_1$\\ \scriptsize decidable};
-  \fill[black!50] (-2.15,-.35) circle (2pt) node[below,font=\scriptsize] {halting};
-  \fill[black!50] (2.3,.45) circle (2pt) node[above,font=\scriptsize] {domino};
-  \fill[petrol] (2.05,-.55) circle (2.6pt)
-     node[below,font=\scriptsize,petrol] {\textbf{SAT}$(\ALCIRCC{5})$};
-  \draw[-{Latex}, dashed, petrol, thick] (1.85,-.45) to[bend left=12] (.45,-.15);
-  \node[petrol,font=\scriptsize] at (1.5,.05) {quantit.-free F6?};
+\column{.54\textwidth}
+\begin{center}
+\begin{tikzpicture}[scale=1.0]
+  \draw[thick,black!40] (-1.15,0) ellipse (2.2 and 1.35);
+  \draw[thick,black!40] (1.15,0) ellipse (2.2 and 1.35);
+  \node at (-2.75,1.25) {\small $\Sigma^0_1$};
+  \node at (2.75,1.25) {\small $\Pi^0_1$};
+  \node[align=center] at (0,.55) {\small $\Delta^0_1$\\ \scriptsize decidable};
+  \fill[black!50] (-2.3,-.4) circle (2pt) node[below,font=\scriptsize] {halting};
+  \fill[black!50] (2.45,.55) circle (2pt) node[above,font=\scriptsize] {domino};
+  \fill[petrol] (2.05,-.55) circle (2.8pt)
+     node[above,font=\scriptsize,petrol] {\textbf{SAT}$(\ALCIRCC{5})$};
+  \draw[-{Latex}, dashed, petrol, thick] (1.9,-.65) to[bend left=15] (.55,-.4);
+  \node[petrol,font=\scriptsize,align=center] at (1.15,-1.2) {qualitative\\ F6?};
 \end{tikzpicture}
-\column{.46\textwidth}
+\end{center}
+\column{.44\textwidth}
 \begin{itemize}
   \item The whole semantics is \alert{finitely first-order axiomatizable};
         by G\"odel completeness, \emph{un}satisfiability is enumerable.
@@ -704,23 +707,25 @@ way} --- the strongest evidence short of a certificate.
 \end{frame}
 
 %% ==================================================================== 30
-\begin{frame}{2003, by hand}
+\begin{frame}{2003: a prototype reasoner}
 \begin{center}
 \includegraphics[height=.72\textheight]{report7_figure6_taxonomy.png}
 \end{center}
 \vspace{-4pt}
-{\small The GIS concept taxonomy I drew by hand in report7 (Fig.~6), 2003.}
+{\small The GIS concept taxonomy in report7 (Fig.~6), 2003 --- itself
+\emph{computed by a prototype reasoner} of the era, not drawn by hand.}
 \end{frame}
 
 %% ==================================================================== 31
-\begin{frame}{2026, by the reasoner: all 21/21 subsumptions --- edge for edge}
+\begin{frame}{2026, the cover-tree reasoner: all 21/21 --- edge for edge}
 \begin{center}
 \includegraphics[width=.9\textwidth]{gis_taxonomy_reasoner_2026.png}
 \end{center}
 \vspace{-2pt}
-{\small Recomputed automatically 23 years later (green = individuals; note
-\emph{Hamburg} and \emph{Alster} each have \alert{two} parents --- the DAG
-the reasoner must get right).}
+{\small The 2026 cover-tree tableau reproduces it exactly --- \alert{two
+different reasoners, 23 years apart, identical result} (green = individuals;
+note \emph{Hamburg} and \emph{Alster} each have \alert{two} parents --- the
+DAG the reasoner must get right).}
 \end{frame}
 
 %% ==================================================================== 32
@@ -756,7 +761,7 @@ Neither model is self-sufficient. \alert{What carried the project was the loop, 
         memory of the construction found what warm reviewers missed ---
         every time it mattered. Make it a standard step.
   \item \textbf{Don't trust --- verify.} Every load-bearing claim was
-        cross-checked mechanically: 84 probes that re-derive the algebra
+        cross-checked mechanically: 88 probes that re-derive the algebra
         from set semantics, and ultimately the Lean kernel. The machine
         checks are the ground truth, \alert{not the model's confidence}.
   \item \textbf{Label honestly.} \emph{Strongly supported} $\neq$
@@ -789,6 +794,42 @@ adversarial review, honest labels --- matter more than ever.}
 \end{center}
 \end{frame}
 
+%% ==================================================================== 34b
+\begin{frame}{The results, by verification level}
+\begin{center}
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}p{2.3cm}p{6.1cm}p{2.6cm}@{}}
+\toprule
+\textbf{Level} & \textbf{Results} & \textbf{What it means}\\
+\midrule
+\textcolor{good}{\textbf{Lean-certified}} &
+  soundness pipeline; abstraction faithfulness; RCC5 normal form (both
+  directions); $\forall\PO$-free lift core; F6\,$\Rightarrow$\,decidable;
+  $\Pi^0_1$ dovetail &
+  kernel-checked, with a stated axiom footprint\\
+\addlinespace
+\textbf{Theorem-level} &
+  $\forall\PO$-free decidability + bound; identity-selector
+  characterization; W2$'$ folds into F6 &
+  proof in a work package, often with probes\\
+\addlinespace
+\textbf{Empirical} &
+  cover-tree tableau; 911-concept cross-validation; model verifier &
+  test evidence, not a decision theorem\\
+\addlinespace
+\textcolor{openc}{\textbf{Open}} &
+  static F6; completeness of the certificate scheme; automatic-cover
+  property; full decidability &
+  no proof claimed\\
+\bottomrule
+\end{tabular}
+\end{center}
+\vfill
+{\small Four levels kept rigorously distinct --- conflating them is the
+easiest way to misread the project.}
+\end{frame}
+
 %% ==================================================================== 35
 \begin{frame}{Where it stands}
 \begin{center}
@@ -805,8 +846,8 @@ adversarial review, honest labels --- matter more than ever.}
 \begin{itemize}
   \item 20+ years of difficulty, compressed into one lemma --- with certified
         machinery waiting on \alert{both} sides of the answer.
-  \item Everything is frozen, tagged, reproducible: paper (37pp), 4 Lean
-        files, 84 probes, 2 reasoners, full conversation log.
+  \item Everything is frozen, tagged, reproducible: paper (42pp), 4 Lean
+        files, 88 probes, 2 reasoners, full conversation log.
 \end{itemize}
 \vfill
 \begin{center}
