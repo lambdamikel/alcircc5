@@ -252,7 +252,7 @@ Recognized open by the leading experts --- for \alert{twenty years}.
      node[right] {\textbf{horizontal} $\DR,\PO$};
   \node[petrol,align=left,anchor=west,text width=3.3cm] at (.35,.95)
      {\footnotesize\emph{tame}: composition can force it; infinite chains fold into loops};
-  \node[warm,align=right,anchor=east,text width=3.3cm] at (-.35,-.95)
+  \node[warm,align=right,anchor=east,text width=3.3cm] at (-.35,-1.2)
      {\footnotesize\emph{wild}: no \emph{single} step forces a value (joint constraints can); forces only \emph{apart}};
 \end{tikzpicture}
 \end{center}
@@ -269,22 +269,24 @@ Recognized open by the leading experts --- for \alert{twenty years}.
 \textbf{No \emph{single} step forces a horizontal value.} Of the 16
 compositions of proper relations, exactly \alert{four} return a single value:
 \begin{center}
-\resizebox{\textwidth}{!}{$\comp(\DR,\PPI)=\comp(\PP,\DR)=\{\DR\},\quad
+\resizebox{0.72\textwidth}{!}{$\comp(\DR,\PPI)=\comp(\PP,\DR)=\{\DR\},\quad
 \comp(\PP,\PP)=\{\PP\},\quad \comp(\PPI,\PPI)=\{\PPI\}$}
 \end{center}
 --- every one runs through $\PP/\PPI$; no single cell yields $\{\PO\}$.
 \alert{But the \emph{intersection} of several can force $\PO$}
 ($\comp(\DR,\PO)\cap\comp(\PPI,\PO)=\{\PO\}$) --- so ``shadow'' is joint
 closure, not single-path.
-\vfill
+\medskip
+
 \textbf{Disjointness is half-deterministic.}
 \begin{center}\small
 \textcolor{good}{\textbf{downward}}: $x\,\DR\,y \Rightarrow$ every part of $x$
-is $\DR$ from every part of $y$\\[3pt]
+is $\DR$ from every part of $y$\\[2pt]
 \textcolor{openc}{\textbf{upward}}: a superpart of $x$ may be $\DR$, $\PO$, or
 $\PPI$ to $y$ --- \alert{free}
 \end{center}
-\vfill
+\medskip
+
 So one high $\DR$ edge dispatches an \emph{arbitrarily wide} crowd of
 disjointnesses below it, for free. What resists: $\PO$, and the upward direction.
 \end{frame}
@@ -364,15 +366,16 @@ and drawn with CLIM (MCL), not by hand. The models are \emph{out there}.}
 %% ==================================================================== 15
 \begin{frame}{\dots but no concept can \emph{force} them: the coincidence obstruction}
 \begin{center}
-\includegraphics[width=.66\textwidth]{report7_figure11_coincidence.png}
+\includegraphics[width=.55\textwidth]{report7_figure11_coincidence.png}
 \end{center}
 \vspace{-4pt}
-{\small report7, Fig.~11: the two successors $z$ (east-north) and $z'$
-(north-east) \emph{should} be the same corner --- but the table allows
-\alert{six} relations between them. Leave it loose: the branches never join.
-Force a merge with isolation markers: \emph{every} corner collapses to one
-point (verified again in 2026, at depth 2, for RCC5 \emph{and} RCC8).}
-\vfill
+{\small report7, Fig.~11: successors $z$ (east-north) and $z'$ (north-east)
+\emph{should} be one corner --- but the table allows \alert{six} relations
+between them. Loose: the branches never join. Forced merge (isolation
+markers): \emph{every} corner collapses to a point (re-verified 2026, depth
+2, RCC5 \emph{and} RCC8).}
+\medskip
+
 \begin{quote}\small
 ``Even though these infinite models do exist, we have found no way to
 \emph{enforce} the depicted model(s) by means of a concept term.''
@@ -719,13 +722,13 @@ way} --- the strongest evidence short of a certificate.
 %% ==================================================================== 31
 \begin{frame}{2026, the cover-tree reasoner: all 21/21 --- edge for edge}
 \begin{center}
-\includegraphics[width=.9\textwidth]{gis_taxonomy_reasoner_2026.png}
+\includegraphics[width=.82\textwidth]{gis_taxonomy_reasoner_2026.png}
 \end{center}
 \vspace{-2pt}
 {\small The 2026 cover-tree tableau reproduces it exactly --- \alert{two
-different reasoners, 23 years apart, identical result} (green = individuals;
-note \emph{Hamburg} and \emph{Alster} each have \alert{two} parents --- the
-DAG the reasoner must get right).}
+reasoners, 23 years apart, identical result}. (Green = individuals;
+\emph{Hamburg} and \emph{Alster} each have \alert{two} parents --- a DAG,
+not a tree.)}
 \end{frame}
 
 %% ==================================================================== 32
