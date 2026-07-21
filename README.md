@@ -41,10 +41,10 @@ dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 ## Status (2026-07-18): a local optimum, paused here
 
 Decidability of ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30 repair
-rounds and 16 adversarial reviews the project has reached a genuine local
+rounds and 17 adversarial reviews the project has reached a genuine local
 optimum: the local algebra is exhausted, the soundness side is
-machine-checked, and the entire remaining difficulty compresses into one
-well-posed lemma. Work is **paused** at this state (git tag
+machine-checked, and the entire remaining difficulty *of the present
+certificate architecture* compresses into one well-posed lemma. Work is **paused** at this state (git tag
 `arxiv-candidate-2026-07-18`); what a future attack needs is recorded in the
 paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
@@ -60,6 +60,23 @@ paper's concluding section and in
 > normal form). The reviewer's larger call — full self-contained proofs and a
 > narrower theorem paper — is the standing open work, exactly what the
 > "not certified" label denotes.
+
+> **17th review (2026-07-20):** a **cold, scope-aware** review of the
+> overview paper by GPT-5.6 Pro
+> ([`papers/really_final_gpt_5.6_review/`](papers/really_final_gpt_5.6_review/)),
+> told explicitly that this is an *overview*. Verdict: **accept as an
+> overview after a focused calibration pass**, and a companion
+> recommendation to **post to arXiv** as a status report and research
+> handoff (not a claimed solution). It found **no new counterexample** to
+> the normal form, the conditional soundness theorem, or the ∀PO-free
+> result. The calibration fixes — all now applied — separate static F6
+> (which controls *this* certificate route) from an undecidability theorem
+> and from decidability by *some* other presentation; sync the normal-form
+> status to **both directions**; add GPT-5.6 Pro to the attribution; keep
+> "prototype reasoner" (not "decision procedure"); add a four-level status
+> table and a result-to-artifact map; and drop "new" from the title
+> (novelty vs. the prior literature is unvetted). The certified Lean core
+> was unaffected (prose/calibration only). Paper now 42pp.
 
 - **Certified** (Lean 4, zero `sorry`; see [LEAN.md](LEAN.md)): the
   **soundness** pipeline (a valid finite certificate unfolds to a genuine

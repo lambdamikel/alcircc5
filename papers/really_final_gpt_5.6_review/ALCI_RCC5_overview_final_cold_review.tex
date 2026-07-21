@@ -1,0 +1,266 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,longtable,tabularx,array}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Scope-Aware Final Cold Review of the ALCI RCC5 Overview},pdfauthor={GPT-5.6 Pro},pdfsubject={Claim calibration, internal consistency, and artifact traceability}}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{parskip}
+
+\definecolor{reviewblue}{RGB}{37,76,118}
+\definecolor{reviewred}{RGB}{145,31,39}
+\definecolor{reviewamber}{RGB}{145,91,0}
+\definecolor{reviewgreen}{RGB}{31,105,63}
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\mustfix}{\textcolor{reviewred}{\textbf{Must fix}}}
+\newcommand{\shouldfix}{\textcolor{reviewamber}{\textbf{Should fix}}}
+\newcommand{\sound}{\textcolor{reviewgreen}{\textbf{Sound as stated}}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Final cold review: \ALCIRCC\ overview}
+\rhead{20 July 2026}
+\cfoot{\thepage\ of \pageref{LastPage}}
+\setlength{\headheight}{14pt}
+
+\title{\textbf{Scope-Aware Final Cold Review of the \ALCIRCC\ Overview}\\[0.4em]
+\large Claim calibration, internal consistency, and artifact traceability}
+\author{GPT-5.6 Pro\\prepared for Michael Wessel}
+\date{20 July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This review treats the submitted 40-page manuscript as what its author says it is: an overview and discussion paper whose purpose is to survey the project, state the status of its results, and direct future researchers to the underlying work packages. It therefore does \emph{not} demand that the overview reproduce the individual proofs. The audit is instead confined to four questions: whether the top-level claims match the detailed status later in the paper; whether the stated logical implications are valid; whether the examples are internally consistent; and whether the artifact pointers are precise enough for future reuse. The revised manuscript is substantially stronger than the earlier versions, and I found no new counterexample to the ordered--disjoint normal form, the conditional certificate soundness theorem, or the proposed \(\forall\PO\)-free result. I did, however, find several remaining statements that should be corrected before calling this version final. The most important are the claim that forcing identity-selector minors would prove undecidability, the conflation of static F6 with generic finite-certificate completeness, and the statement that concept-level forced merges are always self-defeating. These are targeted repairs, not a request for a self-contained proof paper.
+\end{abstract}
+
+\section{Verdict}
+
+\textbf{Recommendation: accept as an overview after a focused final correction pass.}
+
+The paper now succeeds at the task the author has clarified: it gives a broad map of the problem, distinguishes certified, theorem-level, empirical, and open components, preserves the audit trail, and points to a large body of work packages. The corrected treatment of joint forcing is incorporated, the 40-page PDF is visually clean, and the late regular/automatic-cover pivot is a useful addition.
+
+The remaining defects are concentrated in \emph{claim calibration and synchronization}. Three are substantive enough that I would not leave them in a final archival version:
+\begin{enumerate}[leftmargin=2em]
+  \item forcing unbounded identity-selector minors would refute static F6, but would not by itself prove undecidability;
+  \item completeness of the project-specific finite-certificate checker is sufficient for decidability, but is not known to be necessary for decidability by some other method;
+  \item the paper's own one-level domino gadget gives a satisfiable example in which concept labels force two witnesses to coincide, contradicting the blanket claim that concept-level forced merges are only self-defeating.
+\end{enumerate}
+
+Everything else below is either a local mathematical qualifier, a status mismatch, or a recommendation that directly supports the paper's overview function.
+
+\section{Scope and limits of this review}
+
+I reviewed the supplied \TeX{} source and rendered PDF page by page. I also checked the relevant RCC5 table claims against the finite set-semantics checker supplied in the prior technical-note packet. I did not have the repository's Lean files or the newly cited work-package directories in the uploaded packet, so statements about kernel compilation and work-package contents are assessed for internal consistency rather than independently re-run.
+
+Live web search is unavailable in this session. I therefore did not independently verify the manuscript's July 2026 literature-survey claims, the current publication status of cited 2026 work, or the state of the linked GitHub branch. Those claims should be checked against a frozen repository release before archival submission.
+
+\section{Findings requiring correction}
+
+\subsection{Identity-selector minors do not imply undecidability}
+
+\mustfix. On page 29, the paper calls a concept forcing unbounded identity-selector minors the negative target and adds ``which would prove undecidability.'' Page 30 correctly says the opposite: failure of static F6 would refute this certificate route without by itself proving undecidability. The automatic-presentation discussion strengthens the latter point, because equality-indexed selectors can be word-automatic.
+
+The correct implication is
+\[
+  \text{concept forces unbounded identity-selector minors}
+  \quad\Longrightarrow\quad
+  \text{static live-width F6 fails},
+\]
+not undecidability. An undecidability theorem would require an additional reduction showing how those minors encode an unbounded computation, tiling, or another undecidable problem.
+
+\textbf{Suggested replacement on page 29:}
+\begin{quote}
+The concrete negative target for \emph{static F6} is a concept forcing such minors. This would refute the bounded-live-width certificate architecture; an undecidability result would require an additional computation-encoding reduction.
+\end{quote}
+
+\subsection{Separate static F6, the fixed checker, and generic effective presentations}
+
+\mustfix. Pages 24--25 and 30 use ``qualitative F6'' in a way that slides between three different statements:
+\begin{enumerate}[label=(\alph*),leftmargin=2em]
+  \item a computable bound on static live width;
+  \item completeness of the particular finite certificate checker \code{finAcceptB};
+  \item existence of some effective finite presentation system, such as tree-automatic models.
+\end{enumerate}
+These are not interchangeable.
+
+The valid implication chain for the current architecture is
+\[
+\boxed{\text{static F6 + the required uniformization}}
+\Longrightarrow
+\boxed{\text{completeness of \code{finAcceptB}}}
+\Longrightarrow
+\boxed{\text{decidability}.}
+\]
+A uniform tree-automatic model property is a separate sufficient route:
+\[
+\boxed{\text{every satisfiable concept has an effectively presented tree-automatic model}}
+\Longrightarrow
+\boxed{\text{decidability}.}
+\]
+Because unsatisfiability is recursively enumerable, decidability is equivalent to the existence of \emph{some} sound and complete recursively enumerable certificate relation. It is not equivalent to completeness of this particular split-forest/live-width checker unless an additional universality theorem for that checker is proved.
+
+Consequently, the sentence on page 30 saying that the ``exact equivalent of decidability'' is ``some finite certificate per satisfiable concept'' needs one of two repairs:
+\begin{itemize}[leftmargin=2em]
+  \item either say ``some certificate accepted by \emph{some} fixed sound, decidable, complete certificate relation,'' which is the recursion-theoretic characterization; or
+  \item keep the project-specific checker, but call its completeness a \emph{sufficient target}, not an exact equivalent of decidability.
+\end{itemize}
+
+This same distinction should be reflected in the abstract and current-status section: static F6 is the remaining completeness problem of the \emph{present certificate architecture}, not demonstrably the sole remaining obstacle to every possible decision procedure.
+
+\subsection{The ``same fact'' claim is an interpretation, not a theorem}
+
+\mustfix. The abstract, introduction, and conclusion say that F6 is ``the same fact'' that blocks a proof of undecidability, and the conclusion calls this ``provable.'' The strongest statement supported by the manuscript is narrower:
+\begin{quote}
+The inability to enforce reusable horizontal coordinates or clean coincidence is a common obstruction both to the present bounded-certificate construction and to the \emph{known grid-style} undecidability attempts.
+\end{quote}
+This does not rule out a different undecidability reduction, and the manuscript itself later acknowledges that failure of F6 need not imply undecidability.
+
+The one-page intuition also still says that a grid requires forcing a horizontal relation to a singleton ``exactly what the table cannot do.'' Remark 2 now shows that joint constraints can force every proper RCC5 relation. The high-level obstacle should therefore be described as \emph{clean, reusable coincidence/addressing}, not as the impossibility of forcing a proper horizontal value.
+
+\subsection{Concept-level merges can be satisfiable}
+
+\mustfix. Remark 2 on pages 6--7 says that concept-level isolation can force a merge ``but only self-defeatingly.'' The paper's own page-14 gadget refutes that blanket statement: at one level, the two colored grandchildren are forced to be equal and the model remains satisfiable. What fails is the attempt to \emph{propagate} this isolation recursively into a grid.
+
+\textbf{Suggested replacement:}
+\begin{quote}
+Concept labels can force local witness coincidence, as the satisfiable one-level gadget of Section 6.2 shows. In the recursive grid attempts studied here, however, the same isolation discipline does not propagate cleanly: it collapses the construction to unsatisfiability.
+\end{quote}
+
+\subsection{Qualify the no-\(\EQ\)-intersection statement}
+
+\shouldfix. Page 6 says that ``no intersection of table cells ever narrows to \(\{\EQ\}\).'' Literally this is false because \(\operatorname{comp}(\EQ,\EQ)=\{\EQ\}\). The intended and useful statement is about cells generated by proper, non-\(\EQ\) premise labels.
+
+\textbf{Suggested replacement:}
+\begin{quote}
+No intersection of composition cells whose two premise labels are proper (non-\(\EQ\)) relations narrows to \(\{\EQ\}\).
+\end{quote}
+The finite composition check supports this qualified statement.
+
+\subsection{Synchronize the normal-form status and GPT-5.6 attribution}
+
+\mustfix. The title page, abstract, scope section, current-status list, and Proposition 3 still describe only the forward normal-form direction as certified. Theorem 13 on page 25 says that the converse is now machine-checked for arbitrary domains as well. One status must be used consistently.
+
+Theorem 13 also credits GPT-5.6 Pro, while the author line, PDF metadata, AI disclaimer, acknowledgments, and model bibliography mention only GPT-5.4/GPT-5.5. Because the paper makes auditable attribution a central methodological claim, this mismatch should be repaired. Add GPT-5.6 Pro to the relevant attribution statements and add an exact bibliographic entry for the final-review technical note or repository file, not only a directory name.
+
+\subsection{Do not call the unproved prototype a decision procedure}
+
+\mustfix. The abstract's ``prototype reasoner'' is appropriately calibrated. Pages 26 and 30 later call it a ``decision procedure,'' say it is ``trustworthy on satisfiable inputs,'' and describe it as an algorithm that ``decides concepts,'' while also saying that no completeness theorem is claimed and that the model verifier checks only explicit finite SAT witnesses.
+
+Use ``prototype reasoner,'' ``candidate procedure,'' or ``terminating implementation'' consistently. A precise replacement for page 26 is:
+\begin{quote}
+SAT outputs accompanied by an explicit finite model are independently checkable by the model verifier. No completeness theorem is claimed; UNSAT outputs and SAT cases requiring infinite models remain empirical.
+\end{quote}
+
+\subsection{Resolve the half-graph inconsistency}
+
+\shouldfix. Page 24 says that shell half-graphs have \(O(1)\) separator cover and collapse to finite catalogues. Page 30 says that half-graphs have unbounded static separator cover. These may refer to different variants or different width measures, but the overview does not distinguish them. Either define the distinction or remove ``half-graphs'' from the page-30 sentence; identity selectors alone make the automatic-presentation point.
+
+\subsection{The page-14 universals are not vacuous}
+
+\shouldfix. In the one-level RCC5 gadget, the paragraph says the universals at \(z\) are vacuously satisfied because its other neighbors are \(\PP\)-predecessors. But the displayed isolation formula includes \(\forall\PP.(\neg C\sqcap\neg D)\), so those restrictions do fire. The model remains valid by assigning neither \(C\) nor \(D\) to the relevant superregions.
+
+\textbf{Suggested replacement:}
+\begin{quote}
+The universal restrictions are satisfied by interpreting the other chain elements outside \(C\cup D\); they are not vacuous, because the \(\forall\PP\) conjunct applies to them.
+\end{quote}
+
+\section{Status and survey-design recommendations}
+
+These recommendations respond directly to the stated overview scope. They do not ask for proof reproduction.
+
+\subsection{Use a four-level result-status table}
+
+The current status section says that F6 is the item that is ``strongly supported but not certified,'' yet the \(\forall\PO\)-free theorem is also not end-to-end Lean-certified, and the identity-selector characterization is theorem-level rather than kernel-checked. A compact table would prevent readers from conflating these layers:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lY Y@{}}
+\toprule
+\textbf{Status} & \textbf{Examples} & \textbf{What the label means} \\
+\midrule
+Lean-certified & certificate soundness; finite-type Hintikka faithfulness; full ordered--disjoint normal form; \(\forall\PO\)-free lift core & kernel-checked theorem names and stated axiom footprint \\
+Theorem-level, not end-to-end certified & \(\forall\PO\)-free decidability and bound; identity-selector characterization; W2' refinement; local extension/cross-policy results & proof in named work package, possibly with finite probes \\
+Empirical & cover-tree tableau, cross-validation suites, finite model verifier & test evidence only; not a decision theorem \\
+Open & static F6; completeness of the chosen certificate scheme; automatic-cover property; full decidability & no proof claimed \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+In the certified bullet, call the Hintikka object a ``finite-\emph{type} (possibly infinitary) abstraction.'' Calling it simply a ``finite abstraction'' risks suggesting that finite-certificate completeness has already been proved.
+
+\subsection{Add an artifact map and freeze the cited state}
+
+For a paper intended to let future researchers resume the project, the most valuable addition is a one-page artifact map with columns:
+\[
+\text{claim} \mid \text{status} \mid \text{paper/file} \mid \text{Lean theorem} \mid \text{probe/WP}.
+\]
+Directory names such as \code{papers/final\_paper\_gpt\_5.6\_review/} and ranges such as WP45--WP83 are useful internally but not archival citations. Give exact filenames and theorem identifiers. Pin all repository links to a release tag or commit hash, and preferably archive the release with a DOI. Links to \code{master} can drift and make the overview's status claims irreproducible.
+
+\subsection{State the overview scope explicitly}
+
+Add one sentence to Section 1.3:
+\begin{quote}
+This article is an overview and status map; it states the results and their verification level but leaves the full proofs to the cited work packages and formal artifacts.
+\end{quote}
+That sentence will head off the wrong review criterion without burdening the paper with duplicated proofs.
+
+\subsection{Remove ``new'' from the title unless novelty has been checked}
+
+\mustfix\ for scholarly positioning. The title calls the \(\forall\PO\)-free fragment ``new,'' while page 29 says that its novelty relative to the prior description-logic literature has not been vetted and that a priority claim would require such a check. Until that check is complete, use ``a decidable fragment'' rather than ``a new decidable fragment.''
+
+\subsection{Optional publication-strategy note}
+
+The DL 2026 appendix and the lines asserting that declining to use these tools is ``simply unwise'' are not mathematical errors. They are, however, likely to dominate some readers' reaction to an otherwise careful technical overview. For maximum uptake by future researchers, consider moving the detailed rejection analysis to the already linked open letter and keeping a short neutral note in the paper. This is an editorial recommendation, not a correctness condition.
+
+\section{Minimal edit sheet}
+
+The following small set of edits would resolve nearly all substantive issues without changing the paper's overview character.
+
+\begin{longtable}{@{}p{0.17\textwidth}p{0.77\textwidth}@{}}
+\toprule
+\textbf{Location} & \textbf{Minimal replacement} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Location} & \textbf{Minimal replacement} \\
+\midrule
+\endhead
+Title & Replace ``a New Decidable Fragment'' by ``a Decidable Fragment'' unless an external novelty check has been completed. \\
+Abstract / pages 3 and 29 & Replace ``the entire remaining difficulty'' by ``the remaining completeness problem of the present finite-certificate architecture.'' Replace ``the same fact blocks a proof of undecidability'' by ``the same horizontal-coordination obstruction appears in the known grid-style undecidability attempts.'' \\
+Page 3 & Replace the claim that the table cannot force a horizontal singleton by a claim about the absence of clean, reusable coincidence/addressing. Joint constraints can force any proper relation. \\
+Pages 4, 7, 25, 30 & Synchronize the normal-form status: either full biconditional certified everywhere or forward-only everywhere. The detailed Theorem 13 currently supports the former. \\
+Pages 6--7 & Restrict the no-\(\EQ\) intersection claim to proper-relation premise cells, and replace ``only self-defeatingly'' by the local-versus-recursive distinction. \\
+Page 14 & Replace ``vacuously satisfied'' by an explicit assignment of the chain elements outside \(C\cup D\). \\
+Pages 24--25 & Rename ``qualitative F6'' as ``completeness of the fixed finite-certificate scheme,'' or state that the recursion-theoretic equivalence concerns the existence of \emph{some} sound complete effective certificate relation. \\
+Page 24 & Mark the identity-selector biconditional as theorem-level/proposed unless the exact formal theorem is now present in the cited packet; give its exact file and definition numbers. \\
+Page 26 & Replace ``trustworthy on satisfiable inputs'' with the finite-witness verification statement; retain ``prototype reasoner.'' \\
+Pages 29--30 & Delete ``which would prove undecidability.'' Replace ``decision procedure'' and ``decides concepts'' by ``prototype reasoner.'' Resolve the half-graph width terminology. \\
+Attribution / references & Add GPT-5.6 Pro and the exact final-review artifact to the byline/disclaimer/acknowledgments/metadata and bibliography, or remove the personal attribution from Theorem 13. \\
+Materials & Add a frozen repository tag/commit and a result-to-artifact table. \\
+\bottomrule
+\end{longtable}
+
+\section{Final assessment}
+
+The latest revision is a credible and useful overview of a serious research program. It no longer contains the old joint-forcing error; it incorporates the stronger ordered--disjoint representation, gives a much clearer account of the certificate architecture, and candidly distinguishes proof, formalization, and experiment in many places. Its strongest contribution as an overview is the map of failed routes and the audit trail that lets another researcher avoid repeating them.
+
+The final corrections above do not require additional proof development. They require the paper to say exactly which architecture F6 controls, to avoid turning a static-width obstruction into an undecidability theorem, to keep its certified-status statements synchronized, and to make the artifact map stable enough for future use. Once those repairs are made, the manuscript is about as strong as an overview paper of this project can presently be.
+
+\smallskip
+\noindent\textbf{Review basis.} Supplied 40-page final overview PDF and \TeX{} source, the 12-page \emph{Width Barrier} report, and the prior 12-page GPT-5.6 technical note. The latter was used only to cross-check the normal-form and automatic-presentation discussion.
+
+\end{document}

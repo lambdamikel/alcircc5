@@ -8042,3 +8042,75 @@ local-algebra gap (converse normal form — now certified), gives the exact
 extension criterion, defuses the identity-selector worry, and makes the
 regular-cover target precise — converging with our work. The loop continues,
 now with a newer model building on the corrected results. Probe: wp88.
+
+## 2026-07-20 — the 17th review: GPT-5.6 Pro, scope-aware, "accept as an overview + post to arXiv"
+
+Michael requested one more review from GPT-5.6 Pro, this time stating plainly
+up front that this is an **overview paper** and what it is for (a survey, a
+status map, and a durable research handoff) — so the reviewer would judge it
+as such rather than demand self-contained proofs.
+`papers/really_final_gpt_5.6_review/` holds two documents: a scope-aware cold
+review (`ALCI_RCC5_overview_final_cold_review` — claim calibration, internal
+consistency, artifact traceability) and a companion publication
+recommendation (`ALCI_RCC5_arXiv_publication_recommendation`).
+
+**Verdict:** *accept as an overview after a focused calibration pass*, and
+*post to arXiv as v1* — a status report and research handoff, explicitly NOT
+a claimed solution. It found **no new counterexample** to the ordered-disjoint
+normal form, the conditional certificate-soundness theorem, or the ∀PO-free
+result, and confirmed the 16th review's joint-forcing correction had landed.
+Every fix below is prose/claim-calibration; the **certified Lean core is
+untouched**.
+
+**Must-fixes (all applied 2026-07-20):**
+1. **Identity-selector minors ≠ undecidability.** Deleted "which would prove
+   undecidability"; forcing such minors refutes only *this* static-width
+   certificate architecture — an undecidability theorem needs an *additional*
+   computation-encoding reduction. (The genuine error of this review.)
+2. **Separated static F6 / `finAcceptB`-completeness / some effective
+   presentation.** The recursion-theoretic *equivalent* of decidability is
+   "some sound, decidable, complete certificate relation"; completeness of our
+   checker is *sufficient*, not necessary. Scoped F6 to "the present
+   certificate architecture" in abstract/status/Π⁰₁/conclusion.
+3. **"Same fact" → shared obstruction.** Now a *shared* horizontal-coordination
+   obstruction, not a theorem that F6's failure *entails* undecidability; and
+   a grid needs "clean, reusable coincidence/addressing," not "a horizontal
+   singleton the table cannot force" (joint constraints *can* force a proper
+   relation, Remark:pojoint).
+4. **Local merges can be satisfiable.** Remark:pojoint no longer says forced
+   merges are "only self-defeating" — the §6.2 one-level gadget forces a merge
+   and stays SAT; what fails is *recursive* propagation.
+5. **Normal form synced to both directions** everywhere (abstract, contribs,
+   status bullets, prop:drdown), matching Thm 13's biconditional.
+6. **GPT-5.6 Pro attribution** added: byline, PDF metadata, AI disclaimer,
+   acknowledgments, and two bibitems (`GPT56TechNote`, `GPT56Pro`); Thm 13 now
+   cites the exact file.
+7. **"Prototype reasoner"** (not "decision procedure"/"decides
+   concepts"/"trustworthy on satisfiable inputs") throughout.
+8. **Title:** "a New Decidable Fragment" → "a Decidable Fragment" (novelty
+   unvetted).
+
+**Should-fixes:** the no-EQ-intersection claim restricted to proper (non-EQ)
+premise cells (comp(EQ,EQ)={EQ}); the shell-half-graph inconsistency resolved
+(dropped from the page-30 unbounded-cover sentence); the page-14 ∀PP conjunct
+is not vacuous (it fires on the PP-successors, satisfied by keeping them
+outside C∪D).
+
+**Recommendations adopted:** a four-level status table (`tab:status`:
+Lean-certified / Theorem-level / Empirical / Open) with "finite-*type*
+(possibly infinitary)" Hintikka wording; a result-to-artifact map
+(`tab:artifacts`) with a tag-pinning note (cite `arxiv-candidate-2026-07-18`,
+not `master`); an overview-scope sentence in §1.3.
+
+**Deliberately left** (both reviewers flagged these as editorial, not
+correctness — Michael's standing choices): the DL2026 appendix + the "unwise"
+advocacy line; the agentic-AI title framing (the reviewer's "more searchable
+title" was optional).
+
+Meta: the single genuine error was #1 — an overclaim that survived into a
+tagged, already-16-times-reviewed manuscript, and one the paper's own later
+text quietly contradicted. Same lesson as the ledger keeps teaching: a fresh
+*cold* reader, told the right scope, still finds calibration slips the warm
+campaign passed over. Paper now 42pp, 0 overfull, 0 undefined refs. Ledger:
+**17 reviews**, a defect/overclaim in all but two. Tag
+`arxiv-candidate-2026-07-18` moved to include this pass.

@@ -13,8 +13,8 @@
 \emergencystretch=3em
 \usepackage{xcolor}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
-  pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5, a New Decidable Fragment, and a Certified Lean Formalization Reducing It to One Keystone},
-  pdfauthor={Michael Wessel (with AI assistants: Claude/Anthropic and GPT-5.4/GPT-5.5/OpenAI)},
+  pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5, a Decidable Fragment, and a Certified Lean Formalization Reducing It to One Keystone},
+  pdfauthor={Michael Wessel (with AI assistants: Claude/Anthropic and GPT-5.4/GPT-5.5/GPT-5.6 Pro/OpenAI)},
   pdfsubject={Description logics; qualitative spatial reasoning; decidability of concept satisfiability},
   pdfkeywords={description logics, ALCI, RCC5, region connection calculus, qualitative spatial reasoning, decidability, concept satisfiability, patchwork property, Lean, interactive theorem proving, AI-assisted mathematics}}
 
@@ -68,12 +68,12 @@
 %% ====================================================================
 
 \title{Can Agentic AI Settle a 20-Year-Old\\ Description Logic Problem?\\[0.35em]
-\large On the Decidability of $\ALCIRCC{5}$, a New Decidable Fragment,\\
+\large On the Decidability of $\ALCIRCC{5}$, a Decidable Fragment,\\
 and a Certified Lean Formalization Reducing It to One Keystone}
 
 \author{Michael Wessel\\
 \small LambdaMikel@Home \quad\textbullet\quad \texttt{miacwess@gmail.com}\\
-\small (with AI assistants: Claude / Anthropic and GPT-5.4\,/\,GPT-5.5 / OpenAI)}
+\small (with AI assistants: Claude / Anthropic and GPT-5.4\,/\,GPT-5.5\,/\,GPT-5.6~Pro / OpenAI)}
 \date{July 2026}
 
 \begin{document}
@@ -90,10 +90,12 @@ settle the question. What we establish is: (i) a \emph{conditional
 decidability theorem}---if the ``live width'' of models is bounded by a
 computable function of the concept (property~F6), then satisfiability is
 decidable---whose soundness direction is \emph{machine-checked in Lean~4};
-(ii) that the entire remaining difficulty compresses into that single
-property~F6, which we show is the \emph{same fact} that blocks a proof of
-undecidability; (iii) an RCC5 normal form (forward direction
-machine-certified) and an unconditionally decidable fragment (the
+(ii) that the remaining completeness problem of \emph{this}
+finite-certificate architecture compresses into that single
+property~F6---the \emph{same horizontal-coordination obstruction} that
+appears in the known grid-style attempts to prove the problem
+undecidable; (iii) an RCC5 normal form (now machine-certified in
+\emph{both} directions) and an unconditionally decidable fragment (the
 $\forall\PO$-free concepts); (iv) a \emph{working, empirically-validated
 prototype reasoner}---a cover-tree tableau that reproduces, $23$
 years on, the GIS concept taxonomy of the original report, cross-validated
@@ -132,7 +134,8 @@ methodologies $\rightarrow$ Spatial and physical reasoning.
 \label{ssec:ai-disclaimer}
 
 The mathematical content of this paper was produced by AI assistants
-(Anthropic's Claude models and OpenAI's GPT-5.5), prompted, steered, and
+(Anthropic's Claude models and OpenAI's GPT-5.4, GPT-5.5, and GPT-5.6
+Pro), prompted, steered, and
 reviewed by Wessel, who posed the problem,
 supplied the central intuitions and directions, orchestrated the
 review--repair cycles, and takes responsibility for the framing.
@@ -191,30 +194,40 @@ function of the input concept?
 \end{quote}
 
 If yes, the certificate space is finite and satisfiability is decidable.
-And here is the knife's edge: F6 is \emph{the same fact} that blocks
-proving the problem \emph{undecidable}. To force undecidability one would
-encode a rigid coordinate grid, which requires forcing a horizontal
-relation to a single value---exactly what the composition table cannot
-do (the ``coincidence obstruction'' Wessel identified in 2002/2003). Turn
-that looseness into a bound and one gets decidability; circumvent it and
-force a grid and one gets undecidability. The two open directions are one
-question seen from two sides, which is why neither has been settled in
-over twenty years.
+And here is the knife's edge: the looseness F6 must tame is the
+\emph{same horizontal-coordination obstruction} that has blocked every
+known attempt to prove the problem \emph{undecidable}. To force
+undecidability one would encode a rigid coordinate grid, which needs
+\emph{clean, reusable coincidence}---a horizontal addressing scheme
+reused across the grid. Individual horizontal edges \emph{can} be pinned
+to a single value by the joint closure of several constraints
+(Remark~\ref{rem:pojoint}), but no concept is known to make such
+coincidence \emph{reusable} rather than one-off (the ``coincidence
+obstruction'' Wessel identified in 2002/2003). Turn that looseness into a
+computable bound and one gets decidability by \emph{this} route;
+circumvent it to reuse coincidence and force a grid and one gets
+undecidability. The two open directions face the same obstruction from
+two sides---a \emph{shared} wall, not a theorem that F6's failure would
+by itself \emph{entail} undecidability (\S\ref{sec:conclusion})---which
+is why neither has been settled in over twenty years.
 
 \subsection{Scope, contributions, and structure}
 \label{ssec:scope}
 
-This is both a technical report and a discussion piece. Its
-contributions are:
+This is both a technical report and a discussion piece. It is,
+specifically, an \emph{overview and status map}: it states the results
+and their verification level but leaves the full proofs to the cited work
+packages and formal artifacts. Its contributions are:
 \begin{enumerate}
   \item A \emph{conditional decidability theorem} (F6 $\Rightarrow$
     decidable) whose soundness half is machine-checked in Lean~4
     (\S\ref{ssec:approach-lean}), and the reduction of the whole problem
     to F6.
-  \item The identification of F6 as the shared keystone of the
-    decidability and undecidability directions (\S\ref{ssec:whyhard},
+  \item The identification of F6 as the shared \emph{obstruction} facing
+    both the present certificate route and the known grid-style
+    undecidability attempts (\S\ref{ssec:whyhard},
     \S\ref{sec:conclusion}).
-  \item An RCC5 \emph{normal form} (forward direction machine-certified) and
+  \item An RCC5 \emph{normal form} (both directions machine-certified) and
     an unconditionally decidable \emph{$\forall\PO$-free} fragment
     (\S\ref{ssec:approach-finite}, \S\ref{ssec:approach-regcov}).
   \item An honest, technique-organized account of every route tried, the
@@ -274,17 +287,24 @@ completeness direction, that every satisfiable concept has a
 \begin{itemize}
   \item the \emph{soundness} pipeline: a valid finite certificate unfolds
     to a genuine RCC5 model of the concept;
-  \item the \emph{faithfulness} of the finite (Hintikka) abstraction:
-    satisfiability and abstraction-realizability coincide;
-  \item the \emph{RCC5 normal form} (forward): every strong-$\EQ$ RCC5
-    network is an ordered-disjoint structure---a strict partial order for
-    $\PP$ with a downward-closed disjointness for $\DR$, $\PO$ residual.
+  \item the \emph{faithfulness} of the finite-\emph{type} (Hintikka,
+    possibly infinitary) abstraction: satisfiability and
+    abstraction-realizability coincide;
+  \item the \emph{RCC5 normal form}, \emph{both directions}: every
+    strong-$\EQ$ RCC5 network is an ordered-disjoint structure---a strict
+    partial order for $\PP$ with a downward-closed disjointness for
+    $\DR$, $\PO$ residual---and, conversely, every ordered-disjoint
+    structure is realized by sets under set-RCC5 (GPT-5.6 Pro's canonical
+    representation, Theorem~\ref{thm:normalform}).
 \end{itemize}
 
-\paragraph{What is strongly supported but not certified:} F6, the single
-open keystone---now sharpened to a precise combinatorial dichotomy (does
-some concept force unbounded ``identity-selector minors''?), with the
-auxiliary uniformization property W2$'$ shown to \emph{fold into} it.
+\paragraph{What is strongly supported but not certified:} F6, the open
+keystone \emph{of the present certificate architecture}---now sharpened to
+a precise combinatorial dichotomy (does some concept force unbounded
+``identity-selector minors''?), with the auxiliary uniformization property
+W2$'$ shown to \emph{fold into} it. (F6 controls \emph{this} route; its
+failure would not by itself close off decidability by some other
+representation---\S\ref{sec:conclusion}.)
 
 \paragraph{Unconditional by-products (independent of F6):}
 \begin{itemize}
@@ -292,7 +312,7 @@ auxiliary uniformization property W2$'$ shown to \emph{fold into} it.
     with no $\forall\PO$ subformula, still retaining $\exists\PO$,
     $\forall\DR$, $\exists\DR$, and all vertical modalities, so a
     genuinely expressive spatial fragment;
-  \item the RCC5 normal form above (forward direction certified);
+  \item the RCC5 normal form above (both directions certified);
   \item a working, empirically validated \emph{prototype reasoner} (the
     cover-tree tableau; no completeness theorem is claimed): cross-validated
     on $911$ concepts against an
@@ -305,12 +325,49 @@ auxiliary uniformization property W2$'$ shown to \emph{fold into} it.
 \end{itemize}
 
 \paragraph{The honest bottom line.} After roughly thirty repair rounds
-and sixteen adversarial reviews the project has reached a genuine
-\emph{local optimum}: the local algebra is exhausted (and in one case
+and seventeen adversarial reviews the project has reached a genuine
+\emph{local optimum}: the local algebra is exhausted (and now
 certified), the soundness side is machine-checked, and the whole
-remaining difficulty is one well-posed lemma. We offer the work not as a
+remaining difficulty \emph{of the present certificate architecture} is one
+well-posed lemma. We offer the work not as a
 resolution but as a two-decade open problem \emph{reduced, honestly and
 checkably, to its irreducible core.}
+
+\paragraph{The status levels, at a glance.} Throughout this paper we keep
+four verification levels distinct; Table~\ref{tab:status} is the key, and
+the prose above and below assigns each result to one level. Conflating
+them is the single easiest way to misread the project.
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}L{0.19\textwidth}L{0.45\textwidth}L{0.26\textwidth}@{}}
+\toprule
+\textbf{Status} & \textbf{Examples} & \textbf{What the label means}\\
+\midrule
+\emph{Lean-certified} & certificate soundness; finite-\emph{type} Hintikka
+faithfulness; the full (both-direction) ordered--disjoint normal form; the
+$\forall\PO$-free lift core & kernel-checked theorem names with a stated
+axiom footprint\\
+\addlinespace
+\emph{Theorem-level} (not end-to-end certified) & $\forall\PO$-free
+decidability and its bound; the identity-selector characterization; the
+W2$'$ refinement; the local extension / cross-policy results & a proof in a
+named work package, often with finite probes\\
+\addlinespace
+\emph{Empirical} & the cover-tree tableau; the cross-validation suites; the
+finite model verifier & test evidence only; not a decision theorem\\
+\addlinespace
+\emph{Open} & static F6; completeness of the chosen certificate scheme; the
+automatic-cover property; full decidability & no proof claimed\\
+\bottomrule
+\end{tabular}
+\caption{The four verification levels used throughout. The paragraphs of
+\S\ref{sec:status} assign each result to a level; this table is the
+at-a-glance key.}
+\label{tab:status}
+\end{table}
 
 %% ====================================================================
 \section{Preliminaries}
@@ -429,18 +486,22 @@ proper relation---$\DR,\PO,\PP,\PPI$---is reachable as such a joint singleton,
 so $\PO$ is not special among them. Consequently ``shadow'' and ``live''
 (Definition~\ref{def:f6}) must be read against the \emph{joint} closure of all
 constraints, never single-path forcing. What \emph{composition} genuinely
-never forces is a merge: no intersection of table cells ever narrows to
+never forces is a merge: no intersection of composition cells whose two
+premise labels are \emph{proper} (non-$\EQ$) relations ever narrows to
 $\{\EQ\}$ (\texttt{wp85}), so composition can only force occurrences
 \emph{apart} (a shared horizontal anchor excludes $\EQ$), never
-\emph{together}. Concept-level isolation \emph{can} still force a
-merge---but only self-defeatingly: the markers that would force $z=z'$ also
-collapse the construction to unsatisfiability
-(\S\ref{sec:domino-attempt}). So the coincidence obstruction is really a
-\emph{dichotomy}---a would-be grid merge is either \emph{unforced} (the
-branches never join) or \emph{fatal} (it collapses to \textsc{unsat}), never
-a clean forced grid---not a blanket ``EQ cannot be forced.'' That
-one-sidedness, forcing apart but not (usefully) together, is the real
-horizontal asymmetry.
+\emph{together}. Concept \emph{labels}, by contrast, \emph{can} force a
+\emph{local} merge: the satisfiable one-level gadget of
+\S\ref{sec:domino-attempt} forces its two coloured witnesses to coincide
+and remains satisfiable. What fails is \emph{propagating} that isolation
+recursively---the discipline that would tile a grid collapses the
+construction to unsatisfiability. So the coincidence obstruction is really
+a \emph{dichotomy} at the level of the would-be grid: a grid merge is
+either \emph{unforced} (the branches never join) or \emph{fatal}
+(recursion collapses it to \textsc{unsat}), never a clean forced
+grid---not a blanket ``EQ cannot be forced,'' and not a claim that no
+merge is ever satisfiable. That one-sidedness---composition forces apart
+but not (usefully) together---is the real horizontal asymmetry.
 \end{remark}
 
 There is one further asymmetry, and it is the one the split-forest
@@ -457,7 +518,7 @@ region---$\comp(\PPI,\DR)=\{\PPI,\PO,\DR\}$ is not a singleton, so nothing
 is forced. Disjointness thus propagates deterministically to descendants
 in the $\PP$-order, and to nothing else---the \emph{downward-closed
 disjointness} that the RCC5 normal form (Theorem~\ref{thm:normalform},
-forward direction certified) makes exact.
+certified) makes exact.
 \end{proposition}
 
 This ``half-determinism'' (deterministic downward, free upward) is what
@@ -1017,9 +1078,11 @@ The two grandchildren are forced to be \emph{the same element}
 ($\EQ$ collapse): if $z_1 \neq z_2$, they would be related by
 some $R \in \RCCfive$, and the universals would require $z_2 \notin D$
 (firing $z_1$'s $\forall R.\neg C \sqcap \neg D$).
-So $z_1 = z_2 \in C \sqcap D$, and the universals are vacuously
-satisfied (the only neighbors of~$z$ are PP-predecessors, not
-PO/DR/PPI-neighbors).
+So $z_1 = z_2 \in C \sqcap D$. The $\forall\PP$ conjunct is \emph{not}
+vacuous---$z$'s neighbors are its $\PP$-successors $y,x$, on which it
+fires---but it is satisfied by interpreting $y,x$ outside $C\cup D$; the
+$\forall\PO/\forall\DR/\forall\PPI$ conjuncts are vacuous, as $z$ has no
+such neighbors.
 
 \medskip\noindent\textbf{Two levels is unsatisfiable.}
 Adding $\forall\PPI.X$: the $\PPI$-child $y$ must itself satisfy~$X$
@@ -1716,12 +1779,17 @@ these logics~\cite{Wessel2003}. But
 $\ALCIRCC{5}$ has \emph{no} finite model property (\S\ref{sec:fofragments}:
 the ascending $\PP$-tower needs an infinite model), so that route is shut,
 and enumerating \textsc{sat} the honest way means enumerating \emph{finite
-certificates for possibly-infinite models}---which is precisely
-\emph{qualitative} F6: every satisfiable concept has \emph{some} finite
-certificate, \emph{with no computable bound demanded}. One dovetails such a
-certificate enumeration (its checker the already-certified
-\code{finAccept\_sound}) against the enumeration of FO refutations; on every
-input, one side must eventually fire. So F6 weakens from its
+certificates for possibly-infinite models}---which, for \emph{this}
+certificate scheme, is \emph{qualitative} F6: every satisfiable concept
+has \emph{some} finite certificate accepted by our checker, \emph{with no
+computable bound demanded}. One dovetails such a certificate enumeration
+(its checker the already-certified \code{finAccept\_sound}) against the
+enumeration of FO refutations; on every input, one side must eventually
+fire. This is a \emph{sufficient} route, not the recursion-theoretic
+minimum: decidability is equivalent only to the existence of \emph{some}
+sound, decidable, complete certificate relation, and completeness of
+\emph{this particular} split-forest/live-width checker is not known to be
+necessary. So F6 weakens from its
 \emph{quantitative} form (a live-width bound \emph{computable} from
 $C_0$---the target behind most of the width-accounting defects the reviews
 found) to the \emph{qualitative} core just isolated, and the computable bound
@@ -1765,8 +1833,10 @@ $x'\mathbin{\DR}y'$), comparable pairs are never disjoint, and $\PO$ is
 the residual. The forward direction (every RCC5 network is
 ordered-disjoint) is \emph{machine-certified for arbitrary domains}
 (\texttt{formal/RCC5NormalForm.lean}, axioms \texttt{propext} only). The
-\emph{converse} is now certified too: GPT-5.6 Pro
-(\texttt{papers/final\_paper\_gpt\_5.6\_review/}) gave an explicit
+\emph{converse} is now certified too: GPT-5.6 Pro's technical
+note~\cite{GPT56TechNote}
+(\texttt{papers/final\_paper\_gpt\_5.6\_review/ALCI\_RCC5\_F6\_technical\_note.pdf})
+gave an explicit
 \emph{canonical set representation}---each element $x$ maps to the
 non-disjoint pairs with a coordinate ${\le}x$---and its core is machine-checked
 for arbitrary domains (\code{OrderedDisjoint.sub\_iff\_le},
@@ -1807,11 +1877,12 @@ and patchwork completion (\S\ref{ssec:approach-splitforest}). It is
 cross-validated against an independent quasimodel oracle on $911$
 concepts (zero mismatches after the known blind spot is excluded) and
 against an independent model verifier
-(\texttt{src/model\_verifier.py}). It is trustworthy on satisfiable
-inputs; its one known limitation is the strong-$\EQ$ $\PO$-loop, decided
-correctly by the tableau but not by the quasimodel oracle. It is strong
-evidence, not a proof: no completeness theorem is claimed for the
-implementation.
+(\texttt{src/model\_verifier.py}). SAT outputs accompanied by an explicit
+finite model are independently checkable by that verifier; no completeness
+theorem is claimed, and UNSAT outputs and SAT cases requiring infinite
+models remain empirical. Its one known limitation is the strong-$\EQ$
+$\PO$-loop, decided correctly by the tableau but not by the quasimodel
+oracle. It is strong evidence, not a proof.
 
 \begin{figure}[p]
 \centering
@@ -1907,7 +1978,7 @@ cluster-quasimodel decision layer matches the tableau on $11/11$
 diagnostics plus a $200$-concept sweep (WP26); the RCC5 normal form agrees
 with brute-force composition closure on all networks up to size four
 (WP47); and the Lean development builds with zero \texttt{sorry} on every
-run (WP34). Most tellingly, \emph{across all thirty rounds and sixteen
+run (WP34). Most tellingly, \emph{across all thirty rounds and seventeen
 adversarial reviews, no accepted-but-unsatisfiable concept was ever
 found}: every defect the reviews turned up was a gap in an
 \emph{argument}, never a semantic counterexample to the intended theorem
@@ -1974,7 +2045,7 @@ to inspection.
 finding: a \emph{cold} reviewer consistently found defects that a
 \emph{warm} reviewer (primed by the construction) missed---including, on
 this project, unsoundness proofs and scope errors that two hot audits had
-passed over. Across sixteen reviews, a defect or overclaim was found in
+passed over. Across seventeen reviews, a defect or overclaim was found in
 all but two. We recommend cold, cross-lineage adversarial review as a
 default intermediate step in AI-assisted mathematics, not an optional
 one.
@@ -1995,7 +2066,18 @@ corrected, and the distinction between single-step and joint forcing is now
 made explicit throughout. That an error of this kind survived into a tagged
 manuscript is exactly why the standing label is \emph{not certified}: the
 machine checks, not the model's (or the author's) confidence, are the ground
-truth.
+truth. A seventeenth review---cold, scope-aware, and told explicitly that
+this is an overview---then confirmed the joint-forcing correction had landed
+and found no new counterexample to the normal form, the conditional
+soundness theorem, or the $\forall\PO$-free result, but flagged a residual
+cluster of \emph{calibration} slips: an identity-selector minor was said to
+\emph{prove} undecidability (it refutes only \emph{this} width
+architecture); ``completeness of our checker'' was conflated with
+decidability itself (it is sufficient, not equivalent); and a blanket
+``forced merges are only self-defeating'' contradicted the paper's own
+satisfiable one-level gadget. All were corrected in the present version,
+and the review's recommendation was to post the overview to arXiv as a
+status report and research handoff---not as a claimed solution.
 
 \paragraph{What frontier models did well, and did not.} Both models
 sustained long-context, rigorous, multi-round formal development and
@@ -2041,9 +2123,11 @@ unambiguous.
 
 \paragraph{What we learned.} A twenty-five-year-old open problem has been
 \emph{reduced}, honestly and largely machine-checkably, to a single
-well-posed lemma (F6, bounded live width), which is provably the same
-fact that blocks a proof of undecidability. The local algebra of RCC5 is
-exhausted and, in one case, certified. Adversarial cold review plus
+well-posed lemma (F6, bounded live width): the same
+horizontal-coordination obstruction that has blocked every known attempt
+to prove the problem undecidable---a \emph{shared} obstruction, not a
+proof that F6's failure would by itself entail undecidability. The local
+algebra of RCC5 is exhausted and now certified. Adversarial cold review plus
 machine verification is a repeatable methodology for this kind of work.
 
 \paragraph{What would move the needle.} F6 is a \emph{definability}
@@ -2054,7 +2138,11 @@ tuple profiles, the composition method, and bounded-model machinery. The
 concrete positive target is a \emph{selector-sharing lemma}: that many
 same-profile selector gadgets must coalesce, so unbounded
 identity-selector minors cannot be forced. The concrete negative target
-is a concept forcing such minors (which would prove undecidability).
+\emph{for static F6} is a concept forcing such minors; this would refute
+the bounded-live-width certificate architecture, but not, by itself,
+settle undecidability---an undecidability theorem would require an
+\emph{additional} reduction showing how those minors encode a tiling or
+other undecidable computation.
 Ordinary locality alone is insufficient because horizontal degree is
 unbounded; this is the ``correct room,'' not a solved problem.
 
@@ -2076,16 +2164,20 @@ kind (below).
 target has since shifted, and it is worth stating precisely, because it
 changes \emph{where} to dig without changing the difficulty. Static F6 (a
 \emph{computable} width bound) is now understood as \emph{sufficient but not
-necessary}: identity selectors and half-graphs have unbounded static
-separator cover yet are word-automatic (GPT-5.6~Pro,
-\texttt{papers/final\_paper\_gpt\_5.6\_review/}), so static F6 could
-\emph{fail} with the logic still decidable. The exact equivalent of
-decidability is the \emph{qualitative} form---some finite certificate per
-satisfiable concept (\S\ref{ssec:approach-lean}, the $\Pi^0_1$
-observation)---and the most promising \emph{sufficient} route is now the
+necessary}: identity selectors have unbounded static
+separator cover yet are word-automatic (GPT-5.6~Pro's technical
+note~\cite{GPT56TechNote}), so static F6 could
+\emph{fail} with the logic still decidable. The recursion-theoretic
+\emph{equivalent} of decidability is weaker than any particular checker:
+that \emph{some} fixed sound, decidable, complete certificate relation
+accept exactly the satisfiable concepts (equivalently, by the $\Pi^0_1$
+observation of \S\ref{ssec:approach-lean}, that every satisfiable concept
+have \emph{some} finite certificate). Completeness of \emph{this}
+split-forest/live-width checker is a \emph{sufficient} target, not known
+to be necessary; and the most promising sufficient route is now the
 \emph{automatic-cover} target: \emph{every satisfiable concept has a
 tree-automatic model}, which yields decidability by the same dovetailing and,
-unlike static F6, \emph{admits} selectors and half-graphs. This is a better
+unlike static F6, \emph{admits} such selectors. This is a better
 map---a standard object (automatic structures) with mature theory, and the
 width-specific obstruction defused. It is not, however, a shorter climb: one
 still owes a \emph{positive} existence statement over all satisfiable
@@ -2101,8 +2193,8 @@ the crispest target, qualitative F6, is decidability itself in other clothes.
 concepts; (ii) a machine-\emph{certified} RCC5 normal form; (iii) a
 machine-checked \emph{conditional decidability theorem}
 ($\text{F6}\Rightarrow$ decidable, soundness certified, resting on the
-F6 oracle); (iv) a \emph{working, empirically validated decision
-procedure}---the cover-tree tableau (\S\ref{sec:reasoners}),
+F6 oracle); (iv) a \emph{working, empirically validated prototype
+reasoner}---the cover-tree tableau (\S\ref{sec:reasoners}),
 cross-validated against an independent quasimodel oracle on $911$ concepts
 with \emph{zero} mismatches, reproducing $23$ years later the full GIS
 subsumption taxonomy of Wessel's original report ($21/21$), and across the
@@ -2115,10 +2207,10 @@ Two of these are the project's flagship artifacts, and they are
 complementary rather than ranked. The Lean development
 (items~ii--iii) is a \emph{certified} surround: the kernel guarantees the
 soundness pipeline and the abstraction's faithfulness contain no gap. The
-reasoner (item~iv) is the \emph{empirical} counterpart: a real algorithm
-that decides concepts, has been run on thousands of them, agrees with an
-independent implementation everywhere it has been tested, and reproduces a
-two-decade-old published taxonomy. Neither proves decidability---but that a
+reasoner (item~iv) is the \emph{empirical} counterpart: a real,
+terminating implementation, run on thousands of concepts, that agrees with
+an independent implementation everywhere it has been tested and reproduces
+a two-decade-old published taxonomy. Neither proves decidability---but that a
 running procedure and a machine-checked proof both point the same way,
 and that no adversarial search over the whole campaign ever exhibited an
 accepted-but-unsatisfiable (or rejected-but-satisfiable) concept, is the
@@ -2178,8 +2270,41 @@ status report and the F6/W2$'$ analysis are in
 \texttt{papers/po\_free\_fragment\_ALCIRCC5}; the certified local theory
 in \texttt{papers/rcc5\_local\_amalgamation\_theory}; the reasoners under
 \texttt{src/}; the probes under \texttt{verification/python/}; and the
-full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md}.
-The repository is at \url{https://github.com/lambdamikel/alcircc5}.
+full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md};
+and GPT-5.6~Pro's canonical-representation note is
+\texttt{papers/final\_paper\_gpt\_5.6\_review/ALCI\_RCC5\_F6\_technical\_note.pdf}~\cite{GPT56TechNote}.
+The repository is at \url{https://github.com/lambdamikel/alcircc5}. The
+state described in this paper is frozen at the git tag
+\texttt{arxiv-candidate-2026-07-18}; for reproducibility cite that tag (or
+its commit hash), not the mutable \texttt{master} branch.
+Table~\ref{tab:artifacts} maps each principal claim to its verification
+level, its file or Lean theorem, and its probe.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}L{0.235\textwidth}L{0.115\textwidth}L{0.40\textwidth}L{0.11\textwidth}@{}}
+\toprule
+\textbf{Claim} & \textbf{Status} & \textbf{File / Lean theorem} & \textbf{Probe}\\
+\midrule
+Certificate soundness & Lean-certified & \texttt{Round19Transport.lean}: \code{finAccept\_sound} & \texttt{wp34}\\
+Hintikka faithfulness & Lean-certified & \texttt{Round19Transport.lean}: \code{satisfiable\_iff\_hintikkaP} & ---\\
+RCC5 normal form (both directions) & Lean-certified & \texttt{RCC5NormalForm.lean}: \code{toOrderedDisjoint}, \code{sub\_iff\_le}, \code{eta\_injective} & \texttt{wp47}, \texttt{wp88}\\
+$\forall\PO$-free lift core & Lean-certified & \texttt{POFreeLift.lean}: \code{lift\_cc}, \code{unf\_is\_frame} & \texttt{wp86}\\
+F6\,$\Rightarrow$\,decidability (soundness) & Lean-certified & \texttt{Round19Transport.lean}: \code{decidableSat\_of\_finScheme} & ---\\
+$\Pi^0_1$ / dovetailing reduction & Lean-certified & \texttt{SemiDecidability.lean}: \code{decidableSat} & \texttt{wp84}\\
+$\forall\PO$-free decidability (end to end) & Theorem-level & \texttt{papers/po\_free\_fragment\_ALCIRCC5} & \texttt{wp87}\\
+Identity-selector characterization & Theorem-level & \texttt{papers/fable5\_width\_barrier} & \texttt{wp44}\\
+Cover-tree tableau & Empirical & \texttt{src/cover\_tree\_tableau.py} (911-concept cross-validation) & \texttt{wp}\,---\\
+Static F6; automatic-cover; full decidability & Open & --- (no proof claimed) & ---\\
+\bottomrule
+\end{tabular}
+\caption{Result-to-artifact map. Statuses are those of
+Table~\ref{tab:status}. Filenames are relative to the repository root at
+tag \texttt{arxiv-candidate-2026-07-18}.}
+\label{tab:artifacts}
+\end{table}
 
 \newpage
 \section*{Acknowledgments}
@@ -2190,11 +2315,15 @@ doctoral work at the University of Hamburg, under the DFG project
 was additionally supported by a \emph{Grundstipendium} of the University of
 Hamburg from 1999 to 2001. The
 present investigation was carried out by AI assistants---Claude
-(Anthropic) and GPT-5.4~/~GPT-5.5 (OpenAI)---under the author's direction,
-across many rounds of proposal, adversarial review, and revision; GPT-5.4
+(Anthropic) and GPT-5.4~/~GPT-5.5~/~GPT-5.6~Pro (OpenAI)---under the
+author's direction, across many rounds of proposal, adversarial review, and
+revision; GPT-5.4
 Pro contributed the split-forest semantics and cover-tree tableau
-formalization, and GPT-5.5 the repaired decidability manuscripts and the
-majority of the formal proofs. The $\forall\PO$-free (PO-coherent) fragment
+formalization, GPT-5.5 the repaired decidability manuscripts and the
+majority of the formal proofs, and GPT-5.6~Pro the canonical set
+representation certifying the converse of the RCC5 normal form
+(Theorem~\ref{thm:normalform})~\cite{GPT56TechNote} together with the final
+scope-aware review of this overview. The $\forall\PO$-free (PO-coherent) fragment
 of \S\ref{ssec:approach-finite} has a specific lineage worth recording: the
 human author seeded it with the \emph{PP-kernel} idea (collapse
 same-type occurrences on a $\PP$-chain into a kernel node with a reflexive
@@ -2530,6 +2659,19 @@ Claude (Anthropic), prompted by M.\ Wessel.
 \newblock Technical report, April 2026.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/two_tier_quotient_ALCIRCC5.pdf}
 
+\bibitem{GPT56TechNote}
+GPT-5.6 Pro (OpenAI), prompted by M.\ Wessel.
+\newblock A canonical set representation for $\ALCIRCC{5}$: the converse of
+  the ordered-disjoint RCC5 normal form, and identity-selector minors as
+  the F6 obstruction (technical note).
+\newblock Technical report, July 2026.
+\newblock File
+  \texttt{papers/final\_paper\_gpt\_5.6\_review/ALCI\_RCC5\_F6\_technical\_note.pdf};
+  the core is machine-checked in \texttt{formal/RCC5NormalForm.lean}
+  (\code{sub\_iff\_le}, \code{eta\_injective}) and cross-checked in
+  \texttt{verification/python/wp88\_canonical\_representation.py}.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/arxiv-candidate-2026-07-18/papers/final_paper_gpt_5.6_review/ALCI_RCC5_F6_technical_note.pdf}
+
 %% --- Failed-attempt investigations (2026) ---------------------------
 
 \bibitem{FWProof}
@@ -2678,6 +2820,12 @@ Anthropic.
 \bibitem{GPT54Pro}
 OpenAI.
 \newblock GPT-5.4 Pro.
+\newblock Large language model, 2026.
+\newblock \url{https://openai.com}
+
+\bibitem{GPT56Pro}
+OpenAI.
+\newblock GPT-5.6 Pro.
 \newblock Large language model, 2026.
 \newblock \url{https://openai.com}
 
