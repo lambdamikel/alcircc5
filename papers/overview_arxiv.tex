@@ -732,7 +732,9 @@ grid (right) and extends to $n\times n$.  Horizontal and vertical
 successors are $\TPP$ edges (the intended roles $R_X$, $R_Y$); $\PO$
 (cyan) and $\NTPP$ (green) are the induced diagonal and long-range
 relations.  Such grid models \emph{exist}---but, as the same report
-already argued, no concept term can \emph{enforce} them.  The construction
+already argued, no concept term can \emph{enforce} them.  (The frame was
+\emph{found by a Lisp enumerator} and rendered with CLIM under MCL, not
+drawn by hand.)  The construction
 and the obstruction are Wessel's, two decades before this
 AI-assisted work.}
 \label{fig:rcc8grid}
@@ -1887,8 +1889,10 @@ oracle. It is strong evidence, not a proof.
 \begin{figure}[p]
 \centering
 \includegraphics[width=0.82\textwidth]{report7_figure6_taxonomy.png}
-\caption{The GIS concept taxonomy as drawn by hand in Wessel's 2002/2003
-report (report7, Figure~6): the original.}
+\caption{The GIS concept taxonomy \emph{computed by a prototype reasoner}
+in Wessel's 2002/2003 report (report7, Figure~6): the original (``the
+subsumption hierarchy \dots\ was actually computed by a working prototype
+system,'' report7, \S4.3.1).}
 \label{fig:gis}
 
 \bigskip
@@ -1992,13 +1996,14 @@ decidability argument as \emph{strongly supported}.
 
 \paragraph{A GIS example spanning 23 years.} The tableau recomputes the
 GIS concept taxonomy of Wessel's original report~\cite{Wessel2003} (its
-Figure~6, the hand-drawn 2003 original, reproduced here as
+Figure~6, the 2003 original, reproduced here as
 Figure~\ref{fig:gis}): all $21/21$ subsumptions are recovered
 (\texttt{src/gis\_taxonomy.py}), and the reasoner emits its own rendering
 of the resulting hierarchy, shown as Figure~\ref{fig:gis-reasoner}. A
-taxonomy computed by hand in $2003$ is reproduced, in $2026$, by an
-AI-written reasoner resting on the split-forest foundation---and the two
-diagrams agree edge for edge.
+taxonomy computed in $2003$ by a \emph{prototype reasoner} of unproven
+soundness (report7's own caveat) is reproduced, in $2026$, by an
+AI-written reasoner resting on the split-forest foundation---two reasoners,
+twenty-three years apart, agreeing edge for edge.
 
 \section{On agentic AI usage}
 \label{sec:agentic}
