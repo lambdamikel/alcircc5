@@ -33,6 +33,13 @@ domains do not settle it, the approaches tried route by route, the
 machine-checked reduction to a single keystone, the decidable fragment, the
 reasoners, and an honest account of the AI-assisted methodology.
 
+**Prefer slides?** A talk version of the same material is in
+[**`papers/talk_ALCIRCC5.pdf`**](papers/talk_ALCIRCC5.pdf) ·
+[source](papers/talk_ALCIRCC5.tex) — a ~40-minute deck covering the problem,
+why it is hard (the two axes and the coincidence obstruction), the routes
+tried, what is certified, the $\Pi^0_1$ observation, the reasoner, and the
+lessons on working with frontier AI.
+
 The rest of this README is just a map. To avoid duplicated, drifting prose,
 the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
