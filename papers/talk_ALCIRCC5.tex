@@ -136,27 +136,58 @@ If I know $x \mathrel{R} y$ and $y \mathrel{S} z$, what can $x \mathrel{?} z$ be
 \end{frame}
 
 %% ==================================================================== 5
-\begin{frame}{Description logic in one slide}
-Concepts = definitions built from properties and \alert{quantified relations}:
+\begin{frame}{A description logic: you write definitions and facts}
+A \alert{TBox} is a set of concept \emph{definitions}, built from properties
+and \alert{quantified spatial relations}:
 \begin{align*}
-  \textsf{GermanCity} &\equiv \textsf{City} \sqcap \exists\PP.\,\textsf{Germany}
-      && \text{``a city \emph{properly inside} Germany''}\\
-  \textsf{CityAtRiver} &\equiv \textsf{City} \sqcap \exists\PO.\,\textsf{River}
-      && \text{``a city \emph{overlapping} some river''}
+  \textsf{CityAtRiver} &\;\equiv\; \textsf{City} \sqcap \exists\PO.\,\textsf{River}
+      && \text{\small a city \emph{overlapping} a river}\\
+  \textsf{GermanCity} &\;\equiv\; \textsf{City} \sqcap
+      \forall\PP.(\neg\textsf{Country}\sqcup\textsf{Germany})
+      && \text{\small a city in \emph{no country but} Germany}
 \end{align*}
 \vfill
-A \alert{reasoner} then derives the taxonomy \emph{automatically}:
-\[
-  \textsf{Hamburg} \;\sqsubseteq\; \textsf{GermanCity}
-  \qquad\text{and}\qquad
-  \textsf{Hamburg} \;\sqsubseteq\; \textsf{CityAtRiver}.
-\]
+Then we \alert{assert} a few primitive facts --- and nothing more:
+\begin{align*}
+  \textsf{Hamburg} &\;\sqsubseteq\; \textsf{City} \sqcap \exists\PO.\,\textsf{Alster}
+      \qquad\text{\small(a city, overlapping the Alster)}\\
+  \textsf{Alster} &\;\sqsubseteq\; \textsf{River} \sqcap \exists\PP.\textsf{Germany}
+      \sqcap \forall\PO.\neg\textsf{Country}
+      \sqcap \forall\PP.(\neg\textsf{Country}\sqcup\textsf{Germany})
+\end{align*}
 \vfill
-\begin{itemize}
-  \item The decision problem underneath everything:
-        \alert{concept satisfiability} --- ``can this definition be realized at all?''
-  \item Subsumption, classification, consistency all reduce to it.
+{\small Note what we did \emph{not} say: that Hamburg is a
+\textsf{GermanCity}, or a \textsf{CityAtRiver}.}
+\end{frame}
+
+%% ==================================================================== 5b
+\begin{frame}{\dots\ and the reasoner \emph{infers} the classification}
+We never \emph{asserted} that Hamburg is a \textsf{GermanCity} or a
+\textsf{CityAtRiver} --- the \alert{reasoner derives both}.
+\smallskip
+
+\textbf{City at a river} (immediate):
+\[
+  \textsf{Hamburg}\ \PO\ \textsf{Alster}
+  \;\wedge\; \textsf{Alster}\sqsubseteq\textsf{River}
+  \;\Longrightarrow\;
+  \textsf{Hamburg}\sqsubseteq\textsf{City}\sqcap\exists\PO.\textsf{River}
+  = \textsf{CityAtRiver}.
+\]
+
+\textbf{German city} --- needs the \alert{composition table}. For any country
+$c$ with $\textsf{Hamburg}\ \PP\ c$:
+\begin{itemize}\small
+  \item $\textsf{Alster}\ \PO\ \textsf{Hamburg}\ \PP\ c
+        \;\Rightarrow\; \textsf{Alster}\,\{\PO,\PP\}\,c$
+        \hfill $\comp(\PO,\PP)=\{\PO,\PP\}$
+  \item Alster overlaps no country ($\forall\PO.\neg\textsf{Country}$)
+        $\;\Rightarrow\; \textsf{Alster}\ \PP\ c$
+  \item Alster's only country-superpart is Germany
+        $\;\Rightarrow\; c=\textsf{Germany}$
 \end{itemize}
+So Hamburg \emph{is} a German city --- and every hidden fact reduces to
+\alert{concept satisfiability}: $C\sqsubseteq D$ iff $C\sqcap\neg D$ unsat.
 \end{frame}
 
 %% ==================================================================== 6

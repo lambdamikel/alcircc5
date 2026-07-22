@@ -150,6 +150,55 @@ is \emph{strongly supported, not certified}. We regard the AI systems as
 having made contributions of a kind that, in a human collaborator, would
 warrant co-authorship, and we discuss this in \S\ref{sec:agentic}.
 
+\subsection{A motivating example: what the logic does}
+\label{ssec:example}
+
+Before the difficulties, a concrete picture of the object. In
+$\ALCIRCC{5}$ the five RCC5 relations serve as \emph{roles}: a concept may
+quantify over the regions a given region is part of, overlaps, or is
+disjoint from. A small GIS vocabulary (from Wessel's original
+report~\cite{Wessel2003}) shows what this buys. Define
+\[
+  \textsf{CityAtRiver} \equiv \textsf{City}\sqcap\exists\PO.\textsf{River},
+  \qquad
+  \textsf{GermanCity} \equiv
+     \textsf{City}\sqcap\forall\PP.(\neg\textsf{Country}\sqcup\textsf{Germany})
+\]
+---``a city overlapping a river'' and ``a city lying in no country but
+Germany''---and \emph{assert} only a few primitive facts:
+\[
+\begin{aligned}
+  \textsf{Hamburg} &\sqsubseteq \textsf{City}\sqcap\exists\PO.\textsf{Alster},\\
+  \textsf{Alster} &\sqsubseteq \textsf{River}\sqcap\exists\PP.\textsf{Germany}
+    \sqcap\forall\PO.\neg\textsf{Country}
+    \sqcap\forall\PP.(\neg\textsf{Country}\sqcup\textsf{Germany}).
+\end{aligned}
+\]
+Nothing here \emph{states} that Hamburg is a German city or a city at a
+river; a reasoner \emph{infers} both. \textsf{CityAtRiver} is
+immediate---Hamburg overlaps the Alster and the Alster is a river, so
+Hamburg overlaps a river. \textsf{GermanCity} is subtler and, tellingly for
+what follows, runs through the \emph{composition table}: for any country
+$c$ with $\textsf{Hamburg}\,\PP\,c$, the path
+$\textsf{Alster}\,\PO\,\textsf{Hamburg}\,\PP\,c$ forces
+$\textsf{Alster}\,R\,c$ with $R\in\comp(\PO,\PP)=\{\PO,\PP\}$
+(\S\ref{sec:prelim}); the Alster overlaps no country, which excludes
+$\PO$, so $\textsf{Alster}\,\PP\,c$; and the Alster's only
+country-superpart is Germany, so $c=\textsf{Germany}$. Hence Hamburg is a
+German city.
+
+Two things survive into the rest of the paper. First, this is the
+\emph{reasoning service}---classification---and it reduces, as all such
+services do, to one decision problem: \emph{concept satisfiability}
+($C\sqsubseteq D$ iff $C\sqcap\neg D$ is unsatisfiable), whose decidability
+is exactly what is open. Second, even this benign inference already leans
+on the RCC5 composition table; the whole difficulty is that the \emph{same}
+table is, on other inputs, too loose to force what one would need
+(\S\ref{ssec:whyhard}). The full taxonomy this example lives in is the one
+our reasoner recomputes $23$ years on (\S\ref{sec:reasoners},
+Figures~\ref{fig:gis}--\ref{fig:gis-reasoner}); how the tableau actually
+derives the \textsf{GermanCity} inference is spelled out there.
+
 \subsection{Why the problem is hard, in one page}
 \label{ssec:whyhard}
 
@@ -2005,6 +2054,29 @@ soundness (report7's own caveat) is reproduced, in $2026$, by an
 AI-written reasoner resting on the split-forest foundation---two reasoners,
 twenty-three years apart, agreeing edge for edge.
 
+\paragraph{How the tableau derives it.} The \textsf{GermanCity} subsumption
+of the motivating example (\S\ref{ssec:example}) is a good window on the
+calculus. To decide $\textsf{Hamburg}\sqsubseteq\textsf{GermanCity}$ the
+tableau tests $\textsf{Hamburg}\sqcap\neg\textsf{GermanCity}$ for
+\emph{un}satisfiability. Unfolding,
+$\neg\textsf{GermanCity}=\neg\textsf{City}\sqcup
+\exists\PP.(\textsf{Country}\sqcap\neg\textsf{Germany})$; the
+$\neg\textsf{City}$ disjunct clashes at once (Hamburg is a city), so the
+procedure must realize a $\PP$-successor $c$---a country other than
+Germany---beside Hamburg's asserted $\PO$-successor, the Alster. Here the
+\emph{cover-tree} step does what the hand argument did: closing the node
+under composition forces the Alster--$c$ edge, and the Alster's
+$\forall\PO.\neg\textsf{Country}$ excludes the $\PO$ option of
+$\comp(\PO,\PP)$, so the edge is $\PP$. The Alster's
+$\forall\PP.(\neg\textsf{Country}\sqcup\textsf{Germany})$ then propagates to
+$c$, forcing $c$ to be $\neg\textsf{Country}$ or
+\textsf{Germany}---contradicting ``country other than Germany.'' Every
+branch clashes, the concept is unsatisfiable, and the subsumption holds.
+The two ingredients---\emph{composition-closure} of the interface and
+\emph{universal propagation} along the forced edge---are exactly the
+operations the split-forest procedure performs at every node.
+
+\newpage
 \section{On agentic AI usage}
 \label{sec:agentic}
 
