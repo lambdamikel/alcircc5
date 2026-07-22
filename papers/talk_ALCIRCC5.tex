@@ -401,10 +401,12 @@ and drawn with CLIM (MCL), not by hand. The models are \emph{out there}.}
 \end{center}
 \vspace{-4pt}
 {\small report7, Fig.~11: successors $z$ (east-north) and $z'$ (north-east)
-\emph{should} be one corner --- but the table allows \alert{six} relations
-between them. Loose: the branches never join. Forced merge (isolation
-markers): \emph{every} corner collapses to a point (re-verified 2026, depth
-2, RCC5 \emph{and} RCC8).}
+\emph{should} be one corner --- the table \emph{alone} allows \alert{six}
+relations, forcing neither merge nor split. You \emph{can} force the merge
+(clash out the five non-$\EQ$ options, $\EQ$ remains) --- but that's the
+trap: those markers collapse \emph{every} corner at the next level (SAT at
+level~1, UNSAT at~2; RCC5 \emph{and} RCC8). Neither gives a grid: loose
+$\Rightarrow$ no join, forced $\Rightarrow$ total collapse.}
 \medskip
 
 \begin{quote}\small

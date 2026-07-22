@@ -1230,12 +1230,19 @@ reproduced \emph{directly from report7.pdf (2002/2003)}, Figure~11
 east-then-north) and $z'$ (north-then-east) ought to be the \emph{same}
 grid corner, but the composition table permits the edge $z\,{*}\,z'$ to be
 any of $* =_{\mathrm{def}} \{\PO,\EQ,\TPP,\NTPP,\TPPI,\NTPPI\}$ (the
-legend below the graphs), so nothing \emph{forces} the merge $z = z'$
-(right).  Read in the present notation: leave it unforced and the two
-branches never join (no grid); force it with the $\textsf{Corner}$
-isolation markers of the construction above and \emph{every} corner
-collapses to one point.  This ``merge the wrong successors'' problem was
-identified by Wessel two decades before this AI-assisted work.}
+legend below the graphs): the table \emph{by itself} under-determines the
+edge, forcing neither a merge nor a split.  One \emph{can} nonetheless
+force the merge at the concept level---clash out all five non-$\EQ$ options
+with universals, and $\EQ$ is all that remains---and this is exactly the
+trap: the very $\textsf{Corner}$ markers that force $z=z'$ at one level,
+once propagated to build the grid, force \emph{every} corner together and
+the construction collapses (satisfiable at one level, \textsc{unsat} at
+two---\S\ref{sec:domino-attempt}, Remark~\ref{rem:pojoint}).  So neither
+option yields a rigid grid: leave the edge loose and the branches never
+join; force the merge and all corners collapse to a single point.  It is
+this ``merge the wrong successors'' \emph{dichotomy}---not an inability to
+force $\EQ$ at all---that Wessel identified two decades before this
+AI-assisted work.}
 \label{fig:merge}
 \end{figure}
 
