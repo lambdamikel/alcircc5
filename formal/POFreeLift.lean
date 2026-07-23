@@ -3137,6 +3137,381 @@ theorem ppi_witness_all_above {D : Concept}
 
 end WitnessSelection
 
+/-! ## Round E0 (2026-07-23): the assembly — certificate glue
+
+The compositional backbone of the extraction: the all-cross-`PO`
+amalgamation of two valid multi-tier certificates is valid.  This is
+the certificate-level form of free amalgamation (wp48) powered by the
+fragment's escape valve: cross edges are always frame-safe (`PO`
+inhabits every cell of its row and column, and `comp(PO,PO)` is
+everything), and — given that no listed type carries a `∀PO`
+obligation (`MTNoPo`, discharged in context by `pofree_cl_all`) —
+cross edges never fire an obligation.  Kernels never need to talk
+across the glue; fulfilment stays within each side.  The assembly will
+build one block per demand component and glue. -/
+
+/-- The `PO` row: `PO ∈ comp(PO, a)` for every atom. -/
+theorem po_mem_comp_left : ∀ a : Atom, po ∈ comp po a := by
+  intro a
+  cases a <;> decide
+
+/-- The `PO` column: `PO ∈ comp(a, PO)` for every atom. -/
+theorem po_mem_comp_right : ∀ a : Atom, po ∈ comp a po := by
+  intro a
+  cases a <;> decide
+
+/-- `comp(PO,PO)` is everything. -/
+theorem mem_comp_po_po : ∀ a : Atom, a ∈ comp po po := by
+  intro a
+  cases a <;> decide
+
+/-- No `∀PO` obligation in a type list. -/
+def NoPo (L : List Concept) : Prop :=
+  ∀ E : Concept, Concept.all po E ∉ L
+
+/-- No `∀PO` obligation anywhere in a certificate — the fragment's
+    standing situation (`pofree_cl_all`). -/
+structure MTNoPo {β κ : Type} (T : MultiTier β κ) : Prop where
+  ext : ∀ e, NoPo (T.tauE e)
+  ker : ∀ k a, a < T.p k → NoPo (T.phase k a)
+
+section Glue
+
+variable {β1 κ1 β2 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+
+/-- The all-cross-`PO` glue of two certificates. -/
+def glueMT (T1 : MultiTier β1 κ1) (T2 : MultiTier β2 κ2) :
+    MultiTier (β1 ⊕ β2) (κ1 ⊕ κ2) where
+  E := fun e f => match e, f with
+    | .inl e, .inl f => T1.E e f
+    | .inr e, .inr f => T2.E e f
+    | _, _ => po
+  K := fun k e => match k, e with
+    | .inl k, .inl e => T1.K k e
+    | .inr k, .inr e => T2.K k e
+    | _, _ => po
+  Q := fun k k' => match k, k' with
+    | .inl k, .inl k' => T1.Q k k'
+    | .inr k, .inr k' => T2.Q k k'
+    | _, _ => po
+  up := fun k => match k with
+    | .inl k => T1.up k
+    | .inr k => T2.up k
+  tauE := fun e => match e with
+    | .inl e => T1.tauE e
+    | .inr e => T2.tauE e
+  p := fun k => match k with
+    | .inl k => T1.p k
+    | .inr k => T2.p k
+  phase := fun k a => match k with
+    | .inl k => T1.phase k a
+    | .inr k => T2.phase k a
+
+variable {T1 : MultiTier β1 κ1} {T2 : MultiTier β2 κ2}
+
+/-- Embed side 1 into the glued quotient carrier. -/
+def gembN1 : (β1 ⊕ κ1) → ((β1 ⊕ β2) ⊕ (κ1 ⊕ κ2))
+  | .inl e => .inl (.inl e)
+  | .inr k => .inr (.inl k)
+
+/-- Embed side 2. -/
+def gembN2 : (β2 ⊕ κ2) → ((β1 ⊕ β2) ⊕ (κ1 ⊕ κ2))
+  | .inl e => .inl (.inr e)
+  | .inr k => .inr (.inr k)
+
+theorem qnet_glue_11 (x y : β1 ⊕ κ1) :
+    qnet (glueMT T1 T2).E (glueMT T1 T2).K (glueMT T1 T2).Q
+      (gembN1 x) (gembN1 y) = qnet T1.E T1.K T1.Q x y := by
+  rcases x with e | k <;> rcases y with f | k'
+  · rfl
+  · rfl
+  · rfl
+  · show (if (Sum.inl k : κ1 ⊕ κ2) = Sum.inl k' then eq
+        else (glueMT T1 T2).Q (Sum.inl k) (Sum.inl k'))
+      = (if k = k' then eq else T1.Q k k')
+    by_cases hk : k = k'
+    · subst hk
+      rw [if_pos rfl, if_pos rfl]
+    · rw [if_neg (fun h => hk (Sum.inl.inj h)), if_neg hk]
+      rfl
+
+theorem qnet_glue_22 (x y : β2 ⊕ κ2) :
+    qnet (glueMT T1 T2).E (glueMT T1 T2).K (glueMT T1 T2).Q
+      (gembN2 x) (gembN2 y) = qnet T2.E T2.K T2.Q x y := by
+  rcases x with e | k <;> rcases y with f | k'
+  · rfl
+  · rfl
+  · rfl
+  · show (if (Sum.inr k : κ1 ⊕ κ2) = Sum.inr k' then eq
+        else (glueMT T1 T2).Q (Sum.inr k) (Sum.inr k'))
+      = (if k = k' then eq else T2.Q k k')
+    by_cases hk : k = k'
+    · subst hk
+      rw [if_pos rfl, if_pos rfl]
+    · rw [if_neg (fun h => hk (Sum.inr.inj h)), if_neg hk]
+      rfl
+
+theorem qnet_glue_12 (x : β1 ⊕ κ1) (y : β2 ⊕ κ2) :
+    qnet (glueMT T1 T2).E (glueMT T1 T2).K (glueMT T1 T2).Q
+      (gembN1 x) (gembN2 y) = po := by
+  rcases x with e | k <;> rcases y with f | k'
+  · rfl
+  · rfl
+  · rfl
+  · show (if (Sum.inl k : κ1 ⊕ κ2) = Sum.inr k' then eq
+        else (glueMT T1 T2).Q (Sum.inl k) (Sum.inr k')) = po
+    rw [if_neg (fun h => nomatch h)]
+    rfl
+
+theorem qnet_glue_21 (x : β2 ⊕ κ2) (y : β1 ⊕ κ1) :
+    qnet (glueMT T1 T2).E (glueMT T1 T2).K (glueMT T1 T2).Q
+      (gembN2 x) (gembN1 y) = po := by
+  rcases x with e | k <;> rcases y with f | k'
+  · rfl
+  · rfl
+  · rfl
+  · show (if (Sum.inr k : κ1 ⊕ κ2) = Sum.inl k' then eq
+        else (glueMT T1 T2).Q (Sum.inr k) (Sum.inl k')) = po
+    rw [if_neg (fun h => nomatch h)]
+    rfl
+
+omit [DecidableEq κ1] [DecidableEq κ2] in
+/-- Every glued index comes from one side. -/
+theorem glue_rep (z : (β1 ⊕ β2) ⊕ (κ1 ⊕ κ2)) :
+    (∃ x, z = gembN1 (β2 := β2) (κ2 := κ2) x) ∨
+    (∃ x, z = gembN2 (β1 := β1) (κ1 := κ1) x) := by
+  rcases z with (e | e) | (k | k)
+  · exact Or.inl ⟨.inl e, rfl⟩
+  · exact Or.inr ⟨.inl e, rfl⟩
+  · exact Or.inl ⟨.inr k, rfl⟩
+  · exact Or.inr ⟨.inr k, rfl⟩
+
+/-- THE GLUE FRAME: the glued quotient network is a frame — cross
+    triangles close by the `PO` row/column facts alone. -/
+theorem glue_frame (h1 : Frame (qnet T1.E T1.K T1.Q))
+    (h2 : Frame (qnet T2.E T2.K T2.Q)) :
+    Frame (qnet (glueMT T1 T2).E (glueMT T1 T2).K (glueMT T1 T2).Q) := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro z
+    rcases glue_rep z with ⟨x, rfl⟩ | ⟨x, rfl⟩
+    · rw [qnet_glue_11]
+      exact h1.refl_eq x
+    · rw [qnet_glue_22]
+      exact h2.refl_eq x
+  · intro z w hzw
+    rcases glue_rep z with ⟨x, rfl⟩ | ⟨x, rfl⟩ <;>
+      rcases glue_rep w with ⟨y, rfl⟩ | ⟨y, rfl⟩
+    · rw [qnet_glue_11] at hzw
+      rw [h1.eq_id x y hzw]
+    · rw [qnet_glue_12] at hzw
+      exact absurd hzw (by decide)
+    · rw [qnet_glue_21] at hzw
+      exact absurd hzw (by decide)
+    · rw [qnet_glue_22] at hzw
+      rw [h2.eq_id x y hzw]
+  · intro z w
+    rcases glue_rep z with ⟨x, rfl⟩ | ⟨x, rfl⟩ <;>
+      rcases glue_rep w with ⟨y, rfl⟩ | ⟨y, rfl⟩
+    · rw [qnet_glue_11, qnet_glue_11]
+      exact h1.conv_ x y
+    · rw [qnet_glue_21, qnet_glue_12]
+      rfl
+    · rw [qnet_glue_12, qnet_glue_21]
+      rfl
+    · rw [qnet_glue_22, qnet_glue_22]
+      exact h2.conv_ x y
+  · intro z w v
+    rcases glue_rep z with ⟨x, rfl⟩ | ⟨x, rfl⟩ <;>
+      rcases glue_rep w with ⟨y, rfl⟩ | ⟨y, rfl⟩ <;>
+      rcases glue_rep v with ⟨u, rfl⟩ | ⟨u, rfl⟩
+    · rw [qnet_glue_11, qnet_glue_11, qnet_glue_11]
+      exact h1.comp_ x y u
+    · rw [qnet_glue_12, qnet_glue_11, qnet_glue_12]
+      exact po_mem_comp_right _
+    · rw [qnet_glue_11, qnet_glue_12, qnet_glue_21]
+      exact mem_comp_po_po _
+    · rw [qnet_glue_12, qnet_glue_12, qnet_glue_22]
+      exact po_mem_comp_left _
+    · rw [qnet_glue_21, qnet_glue_21, qnet_glue_11]
+      exact po_mem_comp_left _
+    · rw [qnet_glue_22, qnet_glue_21, qnet_glue_12]
+      exact mem_comp_po_po _
+    · rw [qnet_glue_21, qnet_glue_22, qnet_glue_21]
+      exact po_mem_comp_right _
+    · rw [qnet_glue_22, qnet_glue_22, qnet_glue_22]
+      exact h2.comp_ x y u
+
+/-- THE GLUE THEOREM: the all-cross-`PO` amalgamation of two valid,
+    `∀PO`-obligation-free certificates is valid. -/
+theorem glue_ok (h1 : MultiTierOk T1) (h2 : MultiTierOk T2)
+    (n1 : MTNoPo T1) (n2 : MTNoPo T2) :
+    MultiTierOk (glueMT T1 T2) := by
+  refine
+    { hp := ?_, frame_q := glue_frame h1.frame_q h2.frame_q,
+      e_clash := ?_, e_nobot := ?_, e_and := ?_, e_or := ?_,
+      k_clash := ?_, k_nobot := ?_, k_and := ?_, k_or := ?_,
+      ee_all := ?_, ek_all := ?_, ke_all := ?_,
+      kk_pp := ?_, kk_ppi := ?_, kk_eq := ?_, kq_all := ?_,
+      e_ex := ?_, k_ex := ?_ }
+  · intro k
+    rcases k with k | k
+    · exact h1.hp k
+    · exact h2.hp k
+  · intro e a hmem
+    rcases e with e | e
+    · exact h1.e_clash e a hmem
+    · exact h2.e_clash e a hmem
+  · intro e
+    rcases e with e | e
+    · exact h1.e_nobot e
+    · exact h2.e_nobot e
+  · intro e c d hmem
+    rcases e with e | e
+    · exact h1.e_and e c d hmem
+    · exact h2.e_and e c d hmem
+  · intro e c d hmem
+    rcases e with e | e
+    · exact h1.e_or e c d hmem
+    · exact h2.e_or e c d hmem
+  · intro k a ha n hmem
+    rcases k with k | k
+    · exact h1.k_clash k a ha n hmem
+    · exact h2.k_clash k a ha n hmem
+  · intro k a ha
+    rcases k with k | k
+    · exact h1.k_nobot k a ha
+    · exact h2.k_nobot k a ha
+  · intro k a ha c d hmem
+    rcases k with k | k
+    · exact h1.k_and k a ha c d hmem
+    · exact h2.k_and k a ha c d hmem
+  · intro k a ha c d hmem
+    rcases k with k | k
+    · exact h1.k_or k a ha c d hmem
+    · exact h2.k_or k a ha c d hmem
+  · intro e f r c hmem hr
+    rcases e with e | e <;> rcases f with f | f
+    · exact h1.ee_all e f r c hmem hr
+    · have hr' : po = r := hr
+      subst hr'
+      exact absurd hmem (n1.ext e c)
+    · have hr' : po = r := hr
+      subst hr'
+      exact absurd hmem (n2.ext e c)
+    · exact h2.ee_all e f r c hmem hr
+  · intro e r c hmem k hr a ha
+    rcases e with e | e <;> rcases k with k | k
+    · exact h1.ek_all e r c hmem k hr a ha
+    · have hr' : po = r := hr
+      subst hr'
+      exact absurd hmem (n1.ext e c)
+    · have hr' : po = r := hr
+      subst hr'
+      exact absurd hmem (n2.ext e c)
+    · exact h2.ek_all e r c hmem k hr a ha
+  · intro k a ha r c hmem f hK
+    rcases k with k | k <;> rcases f with f | f
+    · exact h1.ke_all k a ha r c hmem f hK
+    · have hK' : po = r := hK
+      subst hK'
+      exact absurd hmem (n1.ker k a ha c)
+    · have hK' : po = r := hK
+      subst hK'
+      exact absurd hmem (n2.ker k a ha c)
+    · exact h2.ke_all k a ha r c hmem f hK
+  · intro k a ha c hmem b hb
+    rcases k with k | k
+    · exact h1.kk_pp k a ha c hmem b hb
+    · exact h2.kk_pp k a ha c hmem b hb
+  · intro k a ha c hmem b hb
+    rcases k with k | k
+    · exact h1.kk_ppi k a ha c hmem b hb
+    · exact h2.kk_ppi k a ha c hmem b hb
+  · intro k a ha c hmem
+    rcases k with k | k
+    · exact h1.kk_eq k a ha c hmem
+    · exact h2.kk_eq k a ha c hmem
+  · intro k k' hne a ha r c hmem hQ b hb
+    rcases k with k | k <;> rcases k' with k' | k'
+    · exact h1.kq_all k k' (fun h => hne (congrArg Sum.inl h))
+        a ha r c hmem hQ b hb
+    · have hQ' : po = r := hQ
+      subst hQ'
+      exact absurd hmem (n1.ker k a ha c)
+    · have hQ' : po = r := hQ
+      subst hQ'
+      exact absurd hmem (n2.ker k a ha c)
+    · exact h2.kq_all k k' (fun h => hne (congrArg Sum.inr h))
+        a ha r c hmem hQ b hb
+  · intro e r c hmem
+    rcases e with e | e
+    · rcases h1.e_ex e r c hmem with ⟨f, hEf, hcf⟩ | ⟨k, hK, a, ha, hca⟩
+      · exact Or.inl ⟨.inl f, hEf, hcf⟩
+      · exact Or.inr ⟨.inl k, hK, a, ha, hca⟩
+    · rcases h2.e_ex e r c hmem with ⟨f, hEf, hcf⟩ | ⟨k, hK, a, ha, hca⟩
+      · exact Or.inl ⟨.inr f, hEf, hcf⟩
+      · exact Or.inr ⟨.inr k, hK, a, ha, hca⟩
+  · intro k a ha r c hmem
+    rcases k with k | k
+    · rcases h1.k_ex k a ha r c hmem with
+        ⟨f, hKf, hcf⟩ | ⟨hrd, b, hb, hcb⟩ | ⟨hreq, hc⟩ |
+        ⟨k', hne, hQ, b, hb, hcb⟩
+      · exact Or.inl ⟨.inl f, hKf, hcf⟩
+      · exact Or.inr (Or.inl ⟨hrd, b, hb, hcb⟩)
+      · exact Or.inr (Or.inr (Or.inl ⟨hreq, hc⟩))
+      · exact Or.inr (Or.inr (Or.inr ⟨.inl k',
+          fun h => hne (Sum.inl.inj h), hQ, b, hb, hcb⟩))
+    · rcases h2.k_ex k a ha r c hmem with
+        ⟨f, hKf, hcf⟩ | ⟨hrd, b, hb, hcb⟩ | ⟨hreq, hc⟩ |
+        ⟨k', hne, hQ, b, hb, hcb⟩
+      · exact Or.inl ⟨.inr f, hKf, hcf⟩
+      · exact Or.inr (Or.inl ⟨hrd, b, hb, hcb⟩)
+      · exact Or.inr (Or.inr (Or.inl ⟨hreq, hc⟩))
+      · exact Or.inr (Or.inr (Or.inr ⟨.inr k',
+          fun h => hne (Sum.inr.inj h), hQ, b, hb, hcb⟩))
+
+omit [DecidableEq κ1] [DecidableEq κ2] in
+/-- Gluing preserves `∀PO`-obligation-freeness (for iterated glue). -/
+theorem glue_noPo (n1 : MTNoPo T1) (n2 : MTNoPo T2) :
+    MTNoPo (glueMT T1 T2) := by
+  constructor
+  · intro e
+    rcases e with e | e
+    · exact n1.ext e
+    · exact n2.ext e
+  · intro k a ha
+    rcases k with k | k
+    · exact n1.ker k a ha
+    · exact n2.ker k a ha
+
+/-- Embed side 1 into the glued unfolding carrier. -/
+def gembM1 : (β1 ⊕ κ1 × Nat) → ((β1 ⊕ β2) ⊕ (κ1 ⊕ κ2) × Nat)
+  | .inl e => .inl (.inl e)
+  | .inr (k, i) => .inr (.inl k, i)
+
+/-- Embed side 2. -/
+def gembM2 : (β2 ⊕ κ2 × Nat) → ((β1 ⊕ β2) ⊕ (κ1 ⊕ κ2) × Nat)
+  | .inl e => .inl (.inr e)
+  | .inr (k, i) => .inr (.inr k, i)
+
+omit [DecidableEq κ1] [DecidableEq κ2] in
+/-- Labels are preserved by the side-1 embedding. -/
+theorem glue_label_1 (x : β1 ⊕ κ1 × Nat) :
+    mtLabel (glueMT T1 T2) (gembM1 x) = mtLabel T1 x := by
+  rcases x with e | ⟨k, i⟩
+  · rfl
+  · rfl
+
+omit [DecidableEq κ1] [DecidableEq κ2] in
+/-- Labels are preserved by the side-2 embedding. -/
+theorem glue_label_2 (x : β2 ⊕ κ2 × Nat) :
+    mtLabel (glueMT T1 T2) (gembM2 x) = mtLabel T2 x := by
+  rcases x with e | ⟨k, i⟩
+  · rfl
+  · rfl
+
+end Glue
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -3157,5 +3532,7 @@ end WitnessSelection
 #print axioms mty_no_all_po
 #print axioms dr_witness_all_below
 #print axioms ppi_witness_all_above
+#print axioms glue_ok
+#print axioms glue_frame
 
 end POFreeLift
