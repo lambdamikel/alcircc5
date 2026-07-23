@@ -420,6 +420,36 @@ in-phase (`seg_ex_eq`); `∃PO` demands pend against the pool (E1) —
 neither needs a witness row. Zero `sorry`; file now ~4,919 lines;
 axioms unchanged (choice only in the model-side layer).
 
+**Round E3a (landed, 2026-07-23): the one-kernel block.** The
+kernel-attachment move certified end-to-end at the CERTIFICATE level —
+the inner loop of item 2's assembly recursion. **`BlockOk`** =
+`MTOkPool` minus exactly ONE field: the externals' own fulfilment
+`e_ex`, the residual the recursion discharges by growing the block (an
+external's non-`PO` demands are demands of a MODEL type, so `mty_ex`
+re-applies; its `PO` demands pend against the pool);
+**`mtOkPool_of_block`** (axiom-FREE) restores full pooled validity
+once the residual is discharged. **`one_kernel_block`**: from a kernel
+site, an actual `MultiTier β Unit` — externals indexed by the SUBTYPE
+of carrier elements that are context elements or designated witnesses
+(`Classical.choose` of the serving clause), so the representative map
+is injective BY CONSTRUCTION (no deduplication machinery) and
+`readoff_qnet_frame` gives `frame_q` for free; kernel representative =
+the segment base `c i`, provably distinct from every external (an `EQ`
+row would identify it with two distinct chain elements); phases = the
+segment's model types; propositional/universal fields = `mty` facts +
+row constancy; `k_ex` routes `DR`/`PP`/`PPI` demands to their
+designated witnesses (row at offset 0 = the demanded atom), `EQ`
+in-phase, `PO` to the pool; `MTNoPo` free from `mty_no_all_po`.
+**`kernel_block_of_chain`** composes site + block: EVERY ascending
+model chain carries, past any bound, a valid one-kernel block whose
+phases are the model types of a type-equal segment, with the pool
+premise reduced to `PO`-demand coverage over `cl C₀`. The β index is
+finitely generated (context list + one witness per demand triple
+`(a ≤ p, r, D ∈ cl C₀)`) — its finite ENUMERATION is D2d's business.
+NOT yet: the multi-kernel block (declared `Q` values — the rectangle
+problem) and the recursion that discharges `e_ex`. Zero `sorry`; file
+now ~5,228 lines; axioms unchanged.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted

@@ -4870,6 +4870,312 @@ theorem dkernel_site (C0 : Concept) (exts : List α)
 
 end DescKernelSite
 
+/-! ## Round E3a (2026-07-23): the one-kernel block
+
+The kernel-attachment move certified end-to-end at the CERTIFICATE
+level: from a kernel site (round E2b) an actual `MultiTier` certificate
+with one kernel, every declared value read off the model, and every
+kernel-side validity obligation discharged.
+
+`BlockOk` is `MTOkPool` minus exactly ONE field: the externals' own
+fulfilment `e_ex` — the residual the assembly recursion discharges by
+growing the block (an external's non-`PO` demands are demands of a
+MODEL type, so `mty_ex` applies to them again; its `PO` demands pend
+against the pool).  `mtOkPool_of_block` restores the full pooled
+validity once the residual is discharged.
+
+The construction (`one_kernel_block`): externals are indexed by the
+SUBTYPE of carrier elements that are context elements or designated
+witnesses (`Classical.choose` of the site's serving clause) — so the
+representative map is injective BY CONSTRUCTION, no deduplication
+machinery, and `readoff_qnet_frame` gives `frame_q` for free.  The
+kernel representative is the segment base `c i`; no external can
+coincide with it (its row to the segment is constant, and an `EQ` row
+would identify it with two distinct chain elements).  Phases are the
+segment's model types; every propositional/universal field is a `mty`
+fact plus row constancy; `k_ex` routes `DR`/`PP`/`PPI` demands to
+their designated witnesses (row at offset `0` = the demanded atom),
+`EQ` demands in-phase (`seg_ex_eq`), `PO` demands to the pool.
+`kernel_block_of_chain` composes the site and the block: EVERY
+ascending model chain carries a valid one-kernel block past any bound,
+with the pool premise reduced to `PO`-demand coverage over `cl C₀`.
+The β index is finitely generated (context list + one witness per
+demand triple `(a ≤ p, r, D ∈ cl C₀)`) — its finite enumeration is
+D2d's business.  The multi-kernel block (declared `Q` values — the
+rectangle problem) is the standing next obstacle, unchanged. -/
+
+/-- Kernel-side validity: every `MTOkPool` field EXCEPT the externals'
+    own fulfilment `e_ex` — the residual the assembly recursion
+    discharges. -/
+structure BlockOk {β κ : Type} [DecidableEq κ] (T : MultiTier β κ)
+    (myTag : Nat) (P : List (Nat × List Concept)) : Prop where
+  hp : ∀ k, 0 < T.p k
+  frame_q : Frame (qnet T.E T.K T.Q)
+  e_clash : ∀ e a, Concept.atom a ∈ T.tauE e → Concept.natom a ∉ T.tauE e
+  e_nobot : ∀ e, Concept.bot ∉ T.tauE e
+  e_and : ∀ e c d, Concept.and c d ∈ T.tauE e → c ∈ T.tauE e ∧ d ∈ T.tauE e
+  e_or : ∀ e c d, Concept.or c d ∈ T.tauE e → c ∈ T.tauE e ∨ d ∈ T.tauE e
+  k_clash : ∀ k a, a < T.p k → ∀ n, Concept.atom n ∈ T.phase k a →
+    Concept.natom n ∉ T.phase k a
+  k_nobot : ∀ k a, a < T.p k → Concept.bot ∉ T.phase k a
+  k_and : ∀ k a, a < T.p k → ∀ c d, Concept.and c d ∈ T.phase k a →
+    c ∈ T.phase k a ∧ d ∈ T.phase k a
+  k_or : ∀ k a, a < T.p k → ∀ c d, Concept.or c d ∈ T.phase k a →
+    c ∈ T.phase k a ∨ d ∈ T.phase k a
+  ee_all : ∀ e f r c, Concept.all r c ∈ T.tauE e → T.E e f = r →
+    c ∈ T.tauE f
+  ek_all : ∀ e r c, Concept.all r c ∈ T.tauE e →
+    ∀ k, conv (T.K k e) = r → ∀ a, a < T.p k → c ∈ T.phase k a
+  ke_all : ∀ k a, a < T.p k → ∀ r c, Concept.all r c ∈ T.phase k a →
+    ∀ f, T.K k f = r → c ∈ T.tauE f
+  kk_pp : ∀ k a, a < T.p k → ∀ c, Concept.all pp c ∈ T.phase k a →
+    ∀ b, b < T.p k → c ∈ T.phase k b
+  kk_ppi : ∀ k a, a < T.p k → ∀ c, Concept.all ppi c ∈ T.phase k a →
+    ∀ b, b < T.p k → c ∈ T.phase k b
+  kk_eq : ∀ k a, a < T.p k → ∀ c, Concept.all eq c ∈ T.phase k a →
+    c ∈ T.phase k a
+  kq_all : ∀ k k', k ≠ k' → ∀ a, a < T.p k → ∀ r c,
+    Concept.all r c ∈ T.phase k a → T.Q k k' = r →
+    ∀ b, b < T.p k' → c ∈ T.phase k' b
+  k_ex : ∀ k a, a < T.p k → ∀ r c, Concept.ex r c ∈ T.phase k a →
+    (∃ f, T.K k f = r ∧ c ∈ T.tauE f) ∨
+    (r = cdir (T.up k) ∧ ∃ b, b < T.p k ∧ c ∈ T.phase k b) ∨
+    (r = eq ∧ c ∈ T.phase k a) ∨
+    (∃ k', k ≠ k' ∧ T.Q k k' = r ∧ ∃ b, b < T.p k' ∧ c ∈ T.phase k' b) ∨
+    (r = po ∧ ∃ q ∈ P, q.1 ≠ myTag ∧ c ∈ q.2)
+
+/-- Discharging the residual `e_ex` restores full pooled validity. -/
+theorem mtOkPool_of_block {β κ : Type} [DecidableEq κ]
+    {T : MultiTier β κ} {myTag : Nat} {P : List (Nat × List Concept)}
+    (h : BlockOk T myTag P)
+    (he : ∀ e r c, Concept.ex r c ∈ T.tauE e →
+      (∃ f, T.E e f = r ∧ c ∈ T.tauE f) ∨
+      (∃ k, conv (T.K k e) = r ∧ ∃ a, a < T.p k ∧ c ∈ T.phase k a) ∨
+      (r = po ∧ ∃ q ∈ P, q.1 ≠ myTag ∧ c ∈ q.2)) :
+    MTOkPool T myTag P where
+  hp := h.hp
+  frame_q := h.frame_q
+  e_clash := h.e_clash
+  e_nobot := h.e_nobot
+  e_and := h.e_and
+  e_or := h.e_or
+  k_clash := h.k_clash
+  k_nobot := h.k_nobot
+  k_and := h.k_and
+  k_or := h.k_or
+  ee_all := h.ee_all
+  ek_all := h.ek_all
+  ke_all := h.ke_all
+  kk_pp := h.kk_pp
+  kk_ppi := h.kk_ppi
+  kk_eq := h.kk_eq
+  kq_all := h.kq_all
+  e_ex := he
+  k_ex := h.k_ex
+
+section OneKernelBlock
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+  (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+
+include hI hdom hstep
+
+/-- THE ONE-KERNEL BLOCK: a kernel site yields an actual `MultiTier`
+    certificate — externals = context elements + designated witnesses
+    (a subtype of the carrier, so representatives are injective by
+    construction), one ascending kernel with the segment's model types
+    as phases, every declared value read off the model — satisfying
+    every `MTOkPool` field except the externals' residual `e_ex`,
+    with the fragment's `MTNoPo` for free. -/
+theorem one_kernel_block (C0 : Concept) (myTag : Nat)
+    (P : List (Nat × List Concept)) (ctx : List α)
+    (hctxdom : ∀ e ∈ ctx, I.dom e)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hctx : ∀ e ∈ ctx, ∀ m, i ≤ m → I.rho (c m) e = I.rho (c i) e)
+    (hserve : ∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+      Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, b ≤ p → I.rho (c (i + b)) w = r)
+    (hpool : ∀ a, a < p → ∀ D, Concept.ex po D ∈ mty C0 I (c (i + a)) →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    ∃ (β : Type) (T : MultiTier β Unit),
+      BlockOk T myTag P ∧
+      T.p () = p ∧
+      (∀ a, T.phase () a = mty C0 I (c (i + a))) ∧
+      (∀ e : β, ∃ x, I.dom x ∧ T.tauE e = mty C0 I x) ∧
+      (∀ e ∈ ctx, ∃ eb : β, T.tauE eb = mty C0 I e) ∧
+      (POFree C0 → MTNoPo T) := by
+  classical
+  -- the external predicate: context elements and designated witnesses
+  let W : α → Prop := fun w => w ∈ ctx ∨
+    ∃ a r D, ∃ (ha : a ≤ p) (hr : r = dr ∨ r = pp ∨ r = ppi)
+      (hD : Concept.ex r D ∈ mty C0 I (c (i + a))),
+      w = Classical.choose (hserve a r D ha hr hD)
+  have hWdom : ∀ w, W w → I.dom w := by
+    intro w hw
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · exact hctxdom w hctxm
+    · exact (Classical.choose_spec (hserve a r D ha hr hD)).1
+  -- every external's row to the segment is constant
+  have hWconst : ∀ w, W w → ∀ b, b ≤ p →
+      I.rho (c (i + b)) w = I.rho (c i) w := by
+    intro w hw b hb
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · exact hctx w hctxm (i + b) (Nat.le_add_right i b)
+    · have hspec := (Classical.choose_spec (hserve a r D ha hr hD)).2.2
+      have h0 : I.rho (c i)
+          (Classical.choose (hserve a r D ha hr hD)) = r := by
+        have h1 := hspec 0 (Nat.zero_le p)
+        rwa [Nat.add_zero] at h1
+      rw [hspec b hb, h0]
+  -- no external coincides with the kernel representative
+  have hcne : c (i + 1) ≠ c i := by
+    intro hcc
+    have h1 := hstep i
+    rw [hcc] at h1
+    have h2 := hI.refl_eq (c i) (hdom i)
+    rw [h1] at h2
+    exact absurd h2 (by decide)
+  have hWne : ∀ w, W w → w ≠ c i := by
+    intro w hw heq
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · have h1 := hctx w hctxm (i + 1) (Nat.le_add_right i 1)
+      rw [heq] at h1
+      rw [hI.refl_eq (c i) (hdom i)] at h1
+      exact hcne (hI.eq_id (c (i + 1)) (c i) (hdom (i + 1)) (hdom i) h1)
+    · have hspec := (Classical.choose_spec (hserve a r D ha hr hD)).2.2
+      have h0 := hspec 0 (Nat.zero_le p)
+      rw [Nat.add_zero, heq] at h0
+      rw [hI.refl_eq (c i) (hdom i)] at h0
+      rcases hr with rfl | rfl | rfl
+      · exact absurd h0 (by decide)
+      · exact absurd h0 (by decide)
+      · exact absurd h0 (by decide)
+  refine ⟨{w : α // W w},
+    { E := fun e f => I.rho e.val f.val
+      K := fun _ f => I.rho (c i) f.val
+      Q := fun _ _ => I.rho (c i) (c i)
+      up := fun _ => true
+      tauE := fun e => mty C0 I e.val
+      p := fun _ => p
+      phase := fun _ a => mty C0 I (c (i + a)) },
+    ?_, rfl, fun _ => rfl,
+    fun (e : {w : α // W w}) => ⟨e.val, hWdom e.val e.2, rfl⟩,
+    fun e he => ⟨⟨e, Or.inl he⟩, rfl⟩,
+    fun hpo => ⟨fun _ _ => mty_no_all_po hpo,
+      fun _ a _ _ => mty_no_all_po hpo⟩⟩
+  refine
+    { hp := fun _ => hp
+      frame_q := ?_
+      e_clash := fun e a h => mty_clash h
+      e_nobot := fun e => mty_nobot
+      e_and := fun e c d h => mty_and h
+      e_or := fun e c d h => mty_or h
+      k_clash := fun k a ha n h => mty_clash h
+      k_nobot := fun k a ha => mty_nobot
+      k_and := fun k a ha c d h => mty_and h
+      k_or := fun k a ha c d h => mty_or h
+      ee_all := fun e f r E hE hr => mty_all hE (hWdom f.val f.2) hr
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun k a ha E hE b hb =>
+        segment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun k a ha E hE b hb =>
+        segment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun k a ha E hE => seg_eq hI hdom hE
+      kq_all := fun k k' hne => absurd rfl hne
+      k_ex := ?_ }
+  · -- frame_q: the read-off quotient frame
+    refine readoff_qnet_frame hI
+      (fun (e : {w : α // W w}) => e.val) (fun _ => c i)
+      (fun (e : {w : α // W w}) => hWdom e.val e.2) (fun _ => hdom i) ?_
+    intro v w hvw
+    rcases v with e | u <;> rcases w with f | u'
+    · exact congrArg Sum.inl (Subtype.ext hvw)
+    · exact absurd hvw (hWne e.val e.2)
+    · exact absurd hvw.symm (hWne f.val f.2)
+    · cases u; cases u'; rfl
+  · -- ek_all: an external's obligation fires into every phase
+    intro e r E hE k hK a ha
+    have h2 : I.rho e.val (c (i + a)) = r := by
+      rw [hI.conv_ (c (i + a)) e.val (hdom (i + a)) (hWdom e.val e.2),
+        hWconst e.val e.2 a (Nat.le_of_lt ha)]
+      exact hK
+    exact mty_all hE (hdom (i + a)) h2
+  · -- ke_all: a phase obligation fires at every matching external
+    intro k a ha r E hE f hK
+    have h1 : I.rho (c (i + a)) f.val = r := by
+      rw [hWconst f.val f.2 a (Nat.le_of_lt ha)]
+      exact hK
+    exact mty_all hE (hWdom f.val f.2) h1
+  · -- k_ex: demands routed by relation
+    intro k a ha r E hE
+    cases r with
+    | dr =>
+      refine Or.inl ⟨⟨Classical.choose
+          (hserve a dr E (Nat.le_of_lt ha) (Or.inl rfl) hE),
+        Or.inr ⟨a, dr, E, Nat.le_of_lt ha, Or.inl rfl, hE, rfl⟩⟩,
+        ?_, ?_⟩
+      · have hspec := (Classical.choose_spec
+          (hserve a dr E (Nat.le_of_lt ha) (Or.inl rfl) hE)).2.2
+        have h1 := hspec 0 (Nat.zero_le p)
+        rwa [Nat.add_zero] at h1
+      · exact (Classical.choose_spec
+          (hserve a dr E (Nat.le_of_lt ha) (Or.inl rfl) hE)).2.1
+    | pp =>
+      refine Or.inl ⟨⟨Classical.choose
+          (hserve a pp E (Nat.le_of_lt ha) (Or.inr (Or.inl rfl)) hE),
+        Or.inr ⟨a, pp, E, Nat.le_of_lt ha, Or.inr (Or.inl rfl), hE,
+          rfl⟩⟩, ?_, ?_⟩
+      · have hspec := (Classical.choose_spec
+          (hserve a pp E (Nat.le_of_lt ha) (Or.inr (Or.inl rfl)) hE)).2.2
+        have h1 := hspec 0 (Nat.zero_le p)
+        rwa [Nat.add_zero] at h1
+      · exact (Classical.choose_spec
+          (hserve a pp E (Nat.le_of_lt ha) (Or.inr (Or.inl rfl)) hE)).2.1
+    | ppi =>
+      refine Or.inl ⟨⟨Classical.choose
+          (hserve a ppi E (Nat.le_of_lt ha) (Or.inr (Or.inr rfl)) hE),
+        Or.inr ⟨a, ppi, E, Nat.le_of_lt ha, Or.inr (Or.inr rfl), hE,
+          rfl⟩⟩, ?_, ?_⟩
+      · have hspec := (Classical.choose_spec
+          (hserve a ppi E (Nat.le_of_lt ha) (Or.inr (Or.inr rfl)) hE)).2.2
+        have h1 := hspec 0 (Nat.zero_le p)
+        rwa [Nat.add_zero] at h1
+      · exact (Classical.choose_spec
+          (hserve a ppi E (Nat.le_of_lt ha) (Or.inr (Or.inr rfl)) hE)).2.1
+    | eq =>
+      exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hE⟩))
+    | po =>
+      exact Or.inr (Or.inr (Or.inr (Or.inr ⟨rfl, hpool a ha E hE⟩)))
+
+/-- THE KERNEL-ATTACHMENT COROLLARY: every ascending model chain
+    carries, past any bound, a valid one-kernel block whose phases are
+    the model types of a type-equal segment — with the pool premise
+    reduced to `PO`-demand coverage over the closure. -/
+theorem kernel_block_of_chain (C0 : Concept) (myTag : Nat)
+    (P : List (Nat × List Concept)) (ctx : List α)
+    (hctxdom : ∀ e ∈ ctx, I.dom e) (L : Nat)
+    (hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧
+        T.p () = p ∧
+        (∀ a, T.phase () a = mty C0 I (c (i + a))) ∧
+        (∀ e : β, ∃ x, I.dom x ∧ T.tauE e = mty C0 I x) ∧
+        (∀ e ∈ ctx, ∃ eb : β, T.tauE eb = mty C0 I e) ∧
+        (POFree C0 → MTNoPo T) := by
+  obtain ⟨i, p, hLi, hp, hty, hctx, _, hserve⟩ :=
+    kernel_site hI hdom hstep C0 ctx hctxdom L
+  exact ⟨i, p, hLi, hp, one_kernel_block hI hdom hstep C0 myTag P ctx
+    hctxdom hp hty hctx hserve
+    (fun a _ D hD => hpoolcl D (mty_sub _ hD))⟩
+
+end OneKernelBlock
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -4915,5 +5221,8 @@ end DescKernelSite
 #print axioms kernel_site
 #print axioms ddrpp_witness_bank
 #print axioms dkernel_site
+#print axioms mtOkPool_of_block
+#print axioms one_kernel_block
+#print axioms kernel_block_of_chain
 
 end POFreeLift
