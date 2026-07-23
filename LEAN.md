@@ -395,6 +395,31 @@ direction-agnostic and needed no duals. Zero `sorry`; file now ~4,643
 lines; the forcing duals are choice-free like their ascending
 counterparts.
 
+**Round E2b (landed, 2026-07-23): witness banks + the kernel site.**
+The second stone of the block construction: segment selection (E2a/
+E2a′) composed with witness selection (D2c/E2a′) so that EVERY
+`DR`/`PP`/`PPI` demand of every phase type gets a designated witness
+whose relation to the WHOLE segment is the constant demanded atom —
+the external row `K k w` the certificate kernel will declare. The
+round resolves the SINGLE-KERNEL selection-order subtlety (the first
+piece of item 3's circularity below): witnesses whose constancy comes
+from BACKWARD forcing (`DR`/`PP` ascending, `PPI` descending) are
+picked AFTER the segment — constancy below a late pick covers any
+fixed segment; witnesses whose constancy comes from FORWARD absorption
+(`PPI` ascending, `DR`/`PP` descending) are collected BEFORE it into
+an anchored BANK — one witness per recurring type and demand, uniform
+anchor by `anchored_all` (generic finite anchor-uniformization,
+propext-only), classical case split on recurrence, nested fold over
+the `sublists (cl C₀)` universe — and the segment is then selected
+past the bank's anchor (`ppi_witness_bank`, `ddrpp_witness_bank`).
+Capstones **`kernel_site`**/**`dkernel_site`**: past any bound, a
+model chain has a segment with type-equal endpoints, constant context
+rows, cofinally recurring phase types, AND a constant-row witness for
+every `DR`/`PP`/`PPI` demand of every phase type. `∃EQ` demands are
+in-phase (`seg_ex_eq`); `∃PO` demands pend against the pool (E1) —
+neither needs a witness row. Zero `sorry`; file now ~4,919 lines;
+axioms unchanged (choice only in the model-side layer).
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
@@ -437,8 +462,13 @@ design work):
      there `Q := po` needs a mixed (not pure read-off) frame argument
      — or a DR-edge variant of the glue. Related: witnesses picked
      AFTER segments break other kernels' constancy (selection-order
-     circularity) — resolve by per-kernel witness privacy or a
-     finite-closure/priority argument. Cross-BLOCK edges stay
+     circularity) — the SINGLE-kernel half is now SETTLED by E2b
+     (banks before the segment for forward-absorption witnesses,
+     late picks after it for backward-forcing ones; `kernel_site`);
+     what remains is the CROSS-kernel half (a witness of one kernel
+     needing a declared value to ANOTHER kernel's segment) — resolve
+     by per-kernel witness privacy or a finite-closure/priority
+     argument. Cross-BLOCK edges stay
      uniformly `PO` (E0/E1, unchanged). Also recorded: `∃PP` demands
      never need chain-internal fulfilment — off-chain `PP`-witnesses
      via `pp_witness_all_below` always serve (the paper's V6); the

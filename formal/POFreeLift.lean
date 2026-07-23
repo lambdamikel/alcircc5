@@ -4599,6 +4599,277 @@ theorem dsegment_kk_pp {C0 : Concept} {i p : Nat}
 
 end DescSegmentSelect
 
+/-! ## Round E2b (2026-07-23): witness banks + the kernel site
+
+The second stone of the block construction: composing segment selection
+(round E2a/E2a′) with witness selection (rounds D2c/E2a′) so that EVERY
+`DR`/`PP`/`PPI` demand of a segment-kernel gets a designated witness
+whose relation to the WHOLE segment is the constant demanded atom —
+the external row `K k w` the certificate kernel will declare.
+
+The selection-order subtlety this round resolves (the first piece of
+LEAN.md item 3's circularity): witnesses whose constancy comes from
+BACKWARD forcing (`DR`/`PP` on ascending chains, `PPI` on descending
+ones) can be picked AFTER the segment — constancy below a late pick
+covers any fixed segment below it; witnesses whose constancy comes
+from FORWARD absorption (`PPI` ascending, `DR`/`PP` descending) must
+be picked BEFORE it — so they are collected into an anchored BANK (one
+witness per recurring type and demand, uniform anchor by
+`anchored_all`, classical case split on recurrence), and the segment
+is then selected past the bank's anchor.
+
+Capstones `kernel_site` / `dkernel_site`: past any bound, a model
+chain has a segment with type-equal endpoints, constant context rows,
+cofinally recurring phase types, AND a constant-row witness for every
+`DR`/`PP`/`PPI` demand of every phase type.  `∃EQ` demands are
+fulfilled in-phase (`seg_ex_eq`); `∃PO` demands are the pool's
+business (round E1) — neither needs a witness row. -/
+
+/-! ### Anchor uniformization -/
+
+/-- Finitely many anchor-monotone goals admit a uniform anchor. -/
+theorem anchored_all {γ : Type} (Φ : γ → Nat → Prop)
+    (hmono : ∀ x A A', A ≤ A' → Φ x A → Φ x A') :
+    ∀ l : List γ, (∀ x ∈ l, ∃ A, Φ x A) → ∃ A, ∀ x ∈ l, Φ x A := by
+  intro l
+  induction l with
+  | nil => exact fun _ => ⟨0, fun x hx => nomatch hx⟩
+  | cons a t ih =>
+    intro hex
+    obtain ⟨At, hAt⟩ := ih (fun x hx => hex x (List.mem_cons_of_mem a hx))
+    obtain ⟨Aa, hAa⟩ := hex a (List.Mem.head t)
+    refine ⟨max Aa At, fun x hx => ?_⟩
+    rcases List.mem_cons.mp hx with rfl | hmem
+    · exact hmono x Aa _ (Nat.le_max_left Aa At) hAa
+    · exact hmono x At _ (Nat.le_max_right Aa At) (hAt x hmem)
+
+/-! ### The ascending kernel site -/
+
+section KernelSite
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+  (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+
+include hI hdom hstep
+
+/-- THE `PPI` WITNESS BANK: one witness per recurring type and
+    `∃PPI`-demand, with a UNIFORM anchor past which every bank witness
+    contains every chain position.  Collected BEFORE segment selection
+    (forward absorption anchors forward). -/
+theorem ppi_witness_bank (C0 : Concept) :
+    ∃ A : Nat, ∀ t, t ∈ sublists (cl C0) →
+      (∀ N, ∃ a, N ≤ a ∧ mty C0 I (c a) = t) →
+      ∀ D, Concept.ex ppi D ∈ t →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, A ≤ b → I.rho (c b) w = ppi := by
+  refine anchored_all
+    (fun t A => (∀ N, ∃ a, N ≤ a ∧ mty C0 I (c a) = t) →
+      ∀ D, Concept.ex ppi D ∈ t →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, A ≤ b → I.rho (c b) w = ppi)
+    ?_ (sublists (cl C0)) ?_
+  · intro t A A' hAA h hrec D hD
+    obtain ⟨w, hw, hDw, hall⟩ := h hrec D hD
+    exact ⟨w, hw, hDw, fun b hb => hall b (Nat.le_trans hAA hb)⟩
+  · intro t _
+    by_cases hrec : ∀ N, ∃ a, N ≤ a ∧ mty C0 I (c a) = t
+    · -- the type recurs: one anchored witness per `∃PPI`-demand,
+      -- uniformized over the type's members
+      have hex' : ∀ x ∈ t, ∃ A, ∀ D, x = Concept.ex ppi D →
+          ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+            ∀ b, A ≤ b → I.rho (c b) w = ppi := by
+        intro x hx
+        by_cases hsh : ∃ D, x = Concept.ex ppi D
+        · obtain ⟨D, rfl⟩ := hsh
+          obtain ⟨a, w, hw, hDw, hall⟩ :=
+            ppi_witness_all_above hI hdom hstep hrec hx
+          refine ⟨a, fun D' hD' => ?_⟩
+          injection hD' with hinj1 hinj2
+          subst hinj2
+          exact ⟨w, hw, hDw, hall⟩
+        · exact ⟨0, fun D hxD => absurd ⟨D, hxD⟩ hsh⟩
+      have hmono' : ∀ (x : Concept) (A A' : Nat), A ≤ A' →
+          (∀ D, x = Concept.ex ppi D →
+            ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+              ∀ b, A ≤ b → I.rho (c b) w = ppi) →
+          ∀ D, x = Concept.ex ppi D →
+            ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+              ∀ b, A' ≤ b → I.rho (c b) w = ppi := by
+        intro x A A' hAA h D hxD
+        obtain ⟨w, hw, hDw, hall⟩ := h D hxD
+        exact ⟨w, hw, hDw, fun b hb => hall b (Nat.le_trans hAA hb)⟩
+      obtain ⟨A, hA⟩ := anchored_all
+        (fun x A => ∀ D, x = Concept.ex ppi D →
+          ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+            ∀ b, A ≤ b → I.rho (c b) w = ppi)
+        hmono' t hex'
+      exact ⟨A, fun _ D hD => hA (Concept.ex ppi D) hD D rfl⟩
+    · exact ⟨0, fun hr => absurd hr hrec⟩
+
+/-- THE KERNEL SITE (the round's ascending capstone): past any bound,
+    an ascending model chain has a segment with type-equal endpoints,
+    constant rows to the given context, cofinally recurring phase
+    types, and — the new content — a designated witness with the
+    CONSTANT demanded relation across the whole segment for every
+    `DR`/`PP`/`PPI` demand of every phase type.  These constant rows
+    are exactly the external rows `K k w` the certificate kernel will
+    declare; `∃EQ` demands are in-phase (`seg_ex_eq`) and `∃PO`
+    demands pend against the pool (round E1). -/
+theorem kernel_site (C0 : Concept) (exts : List α)
+    (hexts : ∀ e ∈ exts, I.dom e) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ e ∈ exts, ∀ m, i ≤ m → I.rho (c m) e = I.rho (c i) e) ∧
+      (∀ a, i ≤ a → ∀ N, ∃ m, N ≤ m ∧
+        mty C0 I (c m) = mty C0 I (c a)) ∧
+      (∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+        Concept.ex r D ∈ mty C0 I (c (i + a)) →
+        ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+          ∀ b, b ≤ p → I.rho (c (i + b)) w = r) := by
+  obtain ⟨A, hA⟩ := ppi_witness_bank hI hdom hstep C0
+  obtain ⟨i, p, hLi, hp, hty, hctx, hrec⟩ :=
+    segment_select hI hdom hstep C0 exts hexts (max L A)
+  have hLi' : L ≤ i := Nat.le_trans (Nat.le_max_left L A) hLi
+  have hAi : A ≤ i := Nat.le_trans (Nat.le_max_right L A) hLi
+  refine ⟨i, p, hLi', hp, hty, hctx, hrec, ?_⟩
+  intro a r D _ hr hD
+  have hrecA : ∀ N, ∃ m, N ≤ m ∧
+      mty C0 I (c m) = mty C0 I (c (i + a)) :=
+    hrec (i + a) (Nat.le_add_right i a)
+  rcases hr with rfl | rfl | rfl
+  · -- `DR`: pick AFTER the segment, backward forcing covers it
+    obtain ⟨w, hw, hDw, hall⟩ :=
+      dr_witness_all_below hI hdom hstep hrecA hD (i + p)
+    exact ⟨w, hw, hDw, fun b hb => hall (i + b) (by omega)⟩
+  · -- `PP`: likewise
+    obtain ⟨w, hw, hDw, hall⟩ :=
+      pp_witness_all_below hI hdom hstep hrecA hD (i + p)
+    exact ⟨w, hw, hDw, fun b hb => hall (i + b) (by omega)⟩
+  · -- `PPI`: from the pre-selected bank, anchor below the segment
+    obtain ⟨w, hw, hDw, hall⟩ :=
+      hA (mty C0 I (c (i + a))) (mty_mem_sublists (c (i + a))) hrecA D hD
+    exact ⟨w, hw, hDw, fun b _ => hall (i + b) (by omega)⟩
+
+end KernelSite
+
+/-! ### The descending kernel site -/
+
+section DescKernelSite
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+  (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi)
+
+include hI hdom hstep
+
+/-- THE `DR`/`PP` WITNESS BANK (descending): forward forcing anchors
+    forward, so `DR`- and `PP`-demand witnesses are collected before
+    segment selection, with a uniform anchor. -/
+theorem ddrpp_witness_bank (C0 : Concept) :
+    ∃ A : Nat, ∀ t, t ∈ sublists (cl C0) →
+      (∀ N, ∃ a, N ≤ a ∧ mty C0 I (d a) = t) →
+      ∀ r D, (r = dr ∨ r = pp) → Concept.ex r D ∈ t →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, A ≤ b → I.rho (d b) w = r := by
+  refine anchored_all
+    (fun t A => (∀ N, ∃ a, N ≤ a ∧ mty C0 I (d a) = t) →
+      ∀ r D, (r = dr ∨ r = pp) → Concept.ex r D ∈ t →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, A ≤ b → I.rho (d b) w = r)
+    ?_ (sublists (cl C0)) ?_
+  · intro t A A' hAA h hrec r D hr hD
+    obtain ⟨w, hw, hDw, hall⟩ := h hrec r D hr hD
+    exact ⟨w, hw, hDw, fun b hb => hall b (Nat.le_trans hAA hb)⟩
+  · intro t _
+    by_cases hrec : ∀ N, ∃ a, N ≤ a ∧ mty C0 I (d a) = t
+    · have hex' : ∀ x ∈ t, ∃ A, ∀ r D, x = Concept.ex r D →
+          (r = dr ∨ r = pp) →
+          ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+            ∀ b, A ≤ b → I.rho (d b) w = r := by
+        intro x hx
+        by_cases hdr : ∃ D, x = Concept.ex dr D
+        · obtain ⟨D, rfl⟩ := hdr
+          obtain ⟨a, w, hw, hDw, hall⟩ :=
+            ddr_witness_all_above hI hdom hstep hrec hx
+          refine ⟨a, fun r D' heq _ => ?_⟩
+          injection heq with hinj1 hinj2
+          subst hinj1
+          subst hinj2
+          exact ⟨w, hw, hDw, hall⟩
+        · by_cases hpp : ∃ D, x = Concept.ex pp D
+          · obtain ⟨D, rfl⟩ := hpp
+            obtain ⟨a, w, hw, hDw, hall⟩ :=
+              dpp_witness_all_above hI hdom hstep hrec hx
+            refine ⟨a, fun r D' heq _ => ?_⟩
+            injection heq with hinj1 hinj2
+            subst hinj1
+            subst hinj2
+            exact ⟨w, hw, hDw, hall⟩
+          · refine ⟨0, fun r D' heq hr => ?_⟩
+            rcases hr with rfl | rfl
+            · exact absurd ⟨D', heq⟩ hdr
+            · exact absurd ⟨D', heq⟩ hpp
+      have hmono' : ∀ (x : Concept) (A A' : Nat), A ≤ A' →
+          (∀ r D, x = Concept.ex r D → (r = dr ∨ r = pp) →
+            ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+              ∀ b, A ≤ b → I.rho (d b) w = r) →
+          ∀ r D, x = Concept.ex r D → (r = dr ∨ r = pp) →
+            ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+              ∀ b, A' ≤ b → I.rho (d b) w = r := by
+        intro x A A' hAA h r D hxD hr
+        obtain ⟨w, hw, hDw, hall⟩ := h r D hxD hr
+        exact ⟨w, hw, hDw, fun b hb => hall b (Nat.le_trans hAA hb)⟩
+      obtain ⟨A, hA⟩ := anchored_all
+        (fun x A => ∀ r D, x = Concept.ex r D → (r = dr ∨ r = pp) →
+          ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+            ∀ b, A ≤ b → I.rho (d b) w = r)
+        hmono' t hex'
+      exact ⟨A, fun _ r D hr hD => hA (Concept.ex r D) hD r D rfl hr⟩
+    · exact ⟨0, fun hr => absurd hr hrec⟩
+
+/-- THE DESCENDING KERNEL SITE (the mirror capstone): `DR`/`PP`
+    demands read the pre-selected bank, `PPI` demands are picked after
+    the segment (backward absorption). -/
+theorem dkernel_site (C0 : Concept) (exts : List α)
+    (hexts : ∀ e ∈ exts, I.dom e) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      mty C0 I (d i) = mty C0 I (d (i + p)) ∧
+      (∀ e ∈ exts, ∀ m, i ≤ m → I.rho (d m) e = I.rho (d i) e) ∧
+      (∀ a, i ≤ a → ∀ N, ∃ m, N ≤ m ∧
+        mty C0 I (d m) = mty C0 I (d a)) ∧
+      (∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+        Concept.ex r D ∈ mty C0 I (d (i + a)) →
+        ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+          ∀ b, b ≤ p → I.rho (d (i + b)) w = r) := by
+  obtain ⟨A, hA⟩ := ddrpp_witness_bank hI hdom hstep C0
+  obtain ⟨i, p, hLi, hp, hty, hctx, hrec⟩ :=
+    dsegment_select hI hdom hstep C0 exts hexts (max L A)
+  have hLi' : L ≤ i := Nat.le_trans (Nat.le_max_left L A) hLi
+  have hAi : A ≤ i := Nat.le_trans (Nat.le_max_right L A) hLi
+  refine ⟨i, p, hLi', hp, hty, hctx, hrec, ?_⟩
+  intro a r D _ hr hD
+  have hrecA : ∀ N, ∃ m, N ≤ m ∧
+      mty C0 I (d m) = mty C0 I (d (i + a)) :=
+    hrec (i + a) (Nat.le_add_right i a)
+  rcases hr with rfl | rfl | rfl
+  · -- `DR`: from the bank
+    obtain ⟨w, hw, hDw, hall⟩ :=
+      hA (mty C0 I (d (i + a))) (mty_mem_sublists (d (i + a))) hrecA
+        dr D (Or.inl rfl) hD
+    exact ⟨w, hw, hDw, fun b _ => hall (i + b) (by omega)⟩
+  · -- `PP`: from the bank
+    obtain ⟨w, hw, hDw, hall⟩ :=
+      hA (mty C0 I (d (i + a))) (mty_mem_sublists (d (i + a))) hrecA
+        pp D (Or.inr rfl) hD
+    exact ⟨w, hw, hDw, fun b _ => hall (i + b) (by omega)⟩
+  · -- `PPI`: pick AFTER the segment, backward absorption covers it
+    obtain ⟨w, hw, hDw, hall⟩ :=
+      dppi_witness_all_below hI hdom hstep hrecA hD (i + p)
+    exact ⟨w, hw, hDw, fun b hb => hall (i + b) (by omega)⟩
+
+end DescKernelSite
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -4639,5 +4910,10 @@ end DescSegmentSelect
 #print axioms dbuildChain_step
 #print axioms dsegment_select
 #print axioms dsegment_kk_ppi
+#print axioms anchored_all
+#print axioms ppi_witness_bank
+#print axioms kernel_site
+#print axioms ddrpp_witness_bank
+#print axioms dkernel_site
 
 end POFreeLift
