@@ -706,17 +706,21 @@ boundary is natural.
 | Composition/converse tables; the singleton and PO cells of §4 | Kernel-certified (Lean, `decide`) and derived from set semantics in every probe |
 | RCC5 normal form (network ⟺ ordered-disjoint), arbitrary domains | **Certified**, both directions (`RCC5NormalForm.lean` + canonical representation) |
 | Chain-unfolding lift (finite CC certificate ⟹ CC infinite unfolding) | **Certified** (`POFreeLift.lean`, zero sorries) |
+| Certificate-to-model soundness: a valid single-kernel two-tier certificate yields a model of the concept, through the logic (Hintikka + truth lemma on the unfolding) | **Certified** (`POFreeLift.lean` round A, 2026-07-22: `twoTier_sound`; witness `cinf_satisfiable` — the no-finite-model concept ∃PP.⊤ ⊓ ∀PP.∃PP.⊤, satisfiable end-to-end) |
 | Propagation closure (no non-PO universal creates a ∀PO obligation) | Machine-checked exhaustively (`wp49`) |
 | Free amalgamation; all-cross-PO safety; non-uniform cross-policies | Machine-checked exhaustively (`wp48`, `wp82`, `wp83`) |
 | Lift lemma stress-test incl. multi-path PO forcing; fragment boundary | Machine-checked empirically (`wp86`) |
 | Two independent reasoners agree on the fragment (244 concepts) | Machine-checked empirically (`wp87`) |
 | The full fragment theorem (K(C₀) bound, extraction, assembly) | **Theorem-level** — argued, twice, independently; *not* end-to-end formalized |
 
-Remaining for full certification: the model-of-C₀ layer (Hintikka
-demand/universal satisfaction over the unfolding) and the completeness
-extraction carrying the K(C₀) bound. Until then, the honest label is
-the project's standing one: **strongly supported, with the soundness
-core machine-certified — not certified end-to-end.**
+Remaining for full certification — the campaign is underway (round A,
+2026-07-22, landed the model-of-C₀ layer: a valid single-kernel
+two-tier certificate now yields a model of the concept, kernel-checked
+end to end): multi-kernel certificate formats (round B), an executable
+Boolean checker (round C), and the completeness extraction carrying the
+K(C₀) bound (round D, the bulk — see `LEAN.md`). Until then, the
+honest label is the project's standing one: **strongly supported, with
+the soundness core machine-certified — not certified end-to-end.**
 
 ---
 

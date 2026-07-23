@@ -838,6 +838,13 @@ arbitrary domains & \textbf{Certified}, both directions
 Chain-unfolding lift (finite CC certificate $\Rightarrow$ CC infinite
 unfolding) & \textbf{Certified} (\code{POFreeLift.lean}, zero
 sorries)\\[0.3em]
+Certificate-to-model soundness: a valid single-kernel two-tier
+certificate yields a model of the concept, through the logic (Hintikka
+$+$ truth lemma on the unfolding) & \textbf{Certified}
+(\code{POFreeLift.lean} round~A, 2026-07-22: \code{twoTier\_sound};
+witness \code{cinf\_satisfiable} --- the no-finite-model concept
+$\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$, satisfiable
+end-to-end)\\[0.3em]
 Propagation closure (no non-$\PO$ universal creates a $\forall\PO$
 obligation) & Machine-checked exhaustively (\code{wp49})\\[0.3em]
 Free amalgamation; all-cross-$\PO$ safety; non-uniform cross-policies
@@ -854,11 +861,15 @@ end-to-end formalized\\
 \end{tabular}
 \end{center}
 
-Remaining for full certification: the model-of-$C_0$ layer (Hintikka
-demand/universal satisfaction over the unfolding) and the completeness
-extraction carrying the $K(C_0)$ bound. Until then, the honest label is
-the project's standing one: \textbf{strongly supported, with the
-soundness core machine-certified --- not certified end-to-end.}
+Remaining for full certification --- the campaign is underway
+(round~A, 2026-07-22, landed the model-of-$C_0$ layer: a valid
+single-kernel two-tier certificate now yields a model of the concept,
+kernel-checked end to end): multi-kernel certificate formats
+(round~B), an executable Boolean checker (round~C), and the
+completeness extraction carrying the $K(C_0)$ bound (round~D, the bulk
+--- see \code{LEAN.md}). Until then, the honest label is the project's
+standing one: \textbf{strongly supported, with the soundness core
+machine-certified --- not certified end-to-end.}
 
 \section{The one-paragraph version}\label{sec:summary}
 

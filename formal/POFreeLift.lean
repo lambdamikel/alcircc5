@@ -1,7 +1,12 @@
 /-
-  POFreeLift.lean  (2026-07-18)
+  POFreeLift.lean  (2026-07-18; extended 2026-07-22)
 
-  The two-tier "chain-unfolding lift" lemma, certified in Lean 4 core.
+  The two-tier "chain-unfolding lift" lemma, certified in Lean 4 core —
+  and (2026-07-22, fragment-certification ROUND A, see the section
+  header further down) the logic layer over the unfolding: the two-tier
+  single-kernel certificate, its Hintikka labelling, the truth lemma,
+  and the capstone `twoTier_sound` (valid certificate ⟹ Satisfiable),
+  with the no-finite-model witness `cinf_satisfiable`.
 
   This is the SOUNDNESS CRUX of the two-tier quotient decidability argument
   for the PO-coherent (hence ∀PO-free) fragment of ALCI_RCC5
@@ -331,5 +336,520 @@ theorem frame_nonvacuous :
 
 #print axioms lift_cc
 #print axioms unf_is_frame
+
+/-! ## Round A of the fragment certification (2026-07-22): the logic layer
+
+The sections below extend the certified lift toward an END-TO-END
+kernel-checked decidability theorem for the ∀PO-free fragment, along the
+established two-tier route (papers/two_tier_quotient_ALCIRCC5.tex;
+explainer papers/WHY_PO_FREE_IS_DECIDABLE.md).
+
+Round A = SOUNDNESS through the logic: a two-tier single-kernel
+certificate (finite external part + one kernel with cyclic phase types +
+constant interfaces), stated as propositional validity conditions, yields
+an actual RCC5 model of the concept — via a Hintikka labelling on the
+`unf` unfolding and a truth lemma.  The definitions of `Concept`,
+`Interp`, `sat`, `Hintikka`, `truth_lemma`, `RCC5Interp`, `Satisfiable`
+MIRROR the normative artifact `Round19Transport.lean` (same constructor
+set, same satisfaction clauses, same satisfiability shape), so a future
+bridge between the two files is transcription.
+
+Deliberately NOT in round A (the roadmap, in order):
+  B. multi-kernel certificates (iterate the lift: `Frame N` on `V` +
+     a designated node ⟹ `Frame` on `{x // x ≠ v} ⊕ ℕ`), descending
+     (PPI) kernels by converse symmetry;
+  C. an executable Boolean checker + `Decidable` instances for the
+     validity conditions (the round-29 `finAcceptB` pattern);
+  D. the completeness extraction: every satisfiable ∀PO-free concept
+     admits a valid certificate within K(C₀) — the two-tier paper's
+     extraction (period descriptors, stabilization, backward forcing /
+     forward absorption, automatic PO-coherence), which is where
+     `POFree` does its work.  Note the PO-padding fact proved useful
+     here: a constant-PO kernel interface is ALWAYS frame-valid (PO is
+     in every cell of the PO row/column), so the mandatory kernel is no
+     obstruction to presenting finite models — the "escape valve" of
+     the explainer, doing formal work.
+-/
+
+/-! ### Concepts and satisfaction (mirroring the normative artifact) -/
+
+/-- ALCI_RCC5 concepts in NNF; inverse roles absorbed (roles are the five
+    RCC5 atoms). Same constructors as the normative artifact. -/
+inductive Concept
+  | top | bot
+  | atom (a : Nat)
+  | natom (a : Nat)
+  | and (c d : Concept)
+  | or (c d : Concept)
+  | ex (r : Atom) (c : Concept)
+  | all (r : Atom) (c : Concept)
+deriving DecidableEq, Repr
+
+/-- An interpretation: a domain predicate, the atomic RCC5 relation, and
+    an atomic-concept extension. Mirrors the normative artifact. -/
+structure Interp (α : Type) where
+  dom : α → Prop
+  rho : α → α → Atom
+  val : Nat → α → Prop
+
+/-- Satisfaction, structural on the concept. Mirrors the normative
+    artifact clause for clause. -/
+def sat {α : Type} (I : Interp α) : α → Concept → Prop
+  | _, .top => True
+  | _, .bot => False
+  | x, .atom a => I.val a x
+  | x, .natom a => ¬ I.val a x
+  | x, .and c d => sat I x c ∧ sat I x d
+  | x, .or c d => sat I x c ∨ sat I x d
+  | x, .ex r c => ∃ y, I.dom y ∧ I.rho x y = r ∧ sat I y c
+  | x, .all r c => ∀ y, I.dom y → I.rho x y = r → sat I y c
+
+/-- What makes an interpretation a legitimate ALCI_RCC5 model (mirrors
+    the normative `RCC5Interp`): reflexive-EQ, strong-EQ = identity,
+    converse-coherent, composition-closed — relative to the domain. -/
+structure RCC5Interp {α : Type} (I : Interp α) : Prop where
+  refl_eq : ∀ x, I.dom x → I.rho x x = eq
+  eq_id : ∀ x y, I.dom x → I.dom y → I.rho x y = eq → x = y
+  conv_ : ∀ x y, I.dom x → I.dom y → I.rho y x = conv (I.rho x y)
+  comp_ : ∀ x y z, I.dom x → I.dom y → I.dom z →
+    I.rho x z ∈ comp (I.rho x y) (I.rho y z)
+
+/-- Concept satisfiability over an RCC5 frame (carrier-polymorphic;
+    mirrors the normative artifact). -/
+def Satisfiable (C0 : Concept) : Prop :=
+  ∃ (α : Type), ∃ I : Interp α, RCC5Interp I ∧ ∃ x, I.dom x ∧ sat I x C0
+
+/-- A total `Frame` is an `RCC5Interp` with full domain (bridge from the
+    lift layer to the logic layer). -/
+theorem frame_rcc5 {V : Type} (N : V → V → Atom) (h : Frame N)
+    (val : Nat → V → Prop) :
+    RCC5Interp ⟨fun _ => True, N, val⟩ where
+  refl_eq := fun x _ => h.refl_eq x
+  eq_id := fun x y _ _ hxy => h.eq_id x y hxy
+  conv_ := fun x y _ _ => h.conv_ x y
+  comp_ := fun x y z _ _ _ => h.comp_ x y z
+
+/-! ### Hintikka labellings and the truth lemma -/
+
+/-- The canonical interpretation induced by a type labelling: an atom
+    holds exactly where its concept is in the type. -/
+def typeInterp {α : Type} (dom : α → Prop) (rho : α → α → Atom)
+    (τ : α → List Concept) : Interp α :=
+  ⟨dom, rho, fun a x => Concept.atom a ∈ τ x⟩
+
+/-- A Hintikka system: a locally coherent type labelling (clash-free and
+    bot-free literals; ∧/∨ decomposed; ∀ propagated to r-neighbours; ∃
+    fulfilled by an actual r-neighbour = one-step fulfilment). Mirrors
+    the normative artifact, generalized to an arbitrary carrier. -/
+structure Hintikka {α : Type} (dom : α → Prop) (rho : α → α → Atom)
+    (τ : α → List Concept) : Prop where
+  clashfree : ∀ x a, dom x → Concept.atom a ∈ τ x → Concept.natom a ∉ τ x
+  nobot : ∀ x, dom x → Concept.bot ∉ τ x
+  and_c : ∀ x c d, dom x → Concept.and c d ∈ τ x → c ∈ τ x ∧ d ∈ τ x
+  or_c : ∀ x c d, dom x → Concept.or c d ∈ τ x → c ∈ τ x ∨ d ∈ τ x
+  all_c : ∀ x r c, dom x → Concept.all r c ∈ τ x →
+    ∀ y, dom y → rho x y = r → c ∈ τ y
+  ex_f : ∀ x r c, dom x → Concept.ex r c ∈ τ x →
+    ∃ y, dom y ∧ rho x y = r ∧ c ∈ τ y
+
+/-- THE TRUTH LEMMA: every concept in a node's type is satisfied there,
+    under the canonical interpretation. Structural induction; each case
+    is one Hintikka clause plus the induction hypotheses. Mirrors the
+    normative artifact. -/
+theorem truth_lemma {α : Type} (dom : α → Prop) (rho : α → α → Atom)
+    (τ : α → List Concept) (H : Hintikka dom rho τ) :
+    ∀ C x, dom x → C ∈ τ x → sat (typeInterp dom rho τ) x C := by
+  intro C
+  induction C with
+  | top => intro x _ _; exact True.intro
+  | bot => intro x hx hmem; exact absurd hmem (H.nobot x hx)
+  | atom a => intro x _ hmem; exact hmem
+  | natom a => intro x hx hmem hval; exact H.clashfree x a hx hval hmem
+  | and c d ihc ihd =>
+    intro x hx hmem
+    obtain ⟨hc, hd⟩ := H.and_c x c d hx hmem
+    exact ⟨ihc x hx hc, ihd x hx hd⟩
+  | or c d ihc ihd =>
+    intro x hx hmem
+    cases H.or_c x c d hx hmem with
+    | inl h => exact Or.inl (ihc x hx h)
+    | inr h => exact Or.inr (ihd x hx h)
+  | ex r c ihc =>
+    intro x hx hmem
+    obtain ⟨y, hy, hr, hcy⟩ := H.ex_f x r c hx hmem
+    exact ⟨y, hy, hr, ihc y hy hcy⟩
+  | all r c ihc =>
+    intro x hx hmem y hy hr
+    exact ihc y hy (H.all_c x r c hx hmem y hy hr)
+
+/-- Any total frame carrying a Hintikka labelling with `C0` at some node
+    is a model of `C0`: frame conditions + truth lemma. Works for ANY
+    carrier — a finite network directly, or the `unf` unfolding. -/
+theorem sat_from_hintikka_frame {V : Type} (N : V → V → Atom)
+    (hf : Frame N) (τ : V → List Concept)
+    (H : Hintikka (fun _ => True) N τ)
+    (root : V) (C0 : Concept) (hC0 : C0 ∈ τ root) :
+    Satisfiable C0 :=
+  ⟨V, typeInterp (fun _ => True) N τ,
+    frame_rcc5 N hf _,
+    root, True.intro,
+    truth_lemma _ N τ H C0 root True.intro hC0⟩
+
+/-! ### The two-tier single-kernel certificate
+
+Data: a finite-in-spirit external part (`E`, `K`, external types `tauE` —
+stated over an arbitrary carrier `β`; the finite/decidable instantiation
+is round C) plus ONE ascending kernel with `p` cyclic phase types.  The
+generated structure is the `unf` unfolding: externals keep `E`, the
+kernel becomes the ℕ-chain, every chain node relates to external `e` by
+the CONSTANT interface `conv (K e)` / `K e`, and chain node `i` carries
+phase type `phase (i % p)`.
+
+The validity conditions (`TwoTierOk`) are exactly the Hintikka
+obligations of the unfolding, quotiented by its finitely many EDGE
+CLASSES: ext–ext edges carry `E`; ext–chain edges carry the constant
+interface against EVERY phase (each phase occurs at infinitely many
+rungs); chain–chain edges carry `PP` upward / `PPI` downward between
+EVERY ordered pair of phases (any two residues occur in either order),
+and `EQ` on the diagonal.  Existential demands are fulfilled by
+designated external witnesses, chain-internally upward (`PP`, at any
+phase — a later rung of every residue exists), or reflexively (`EQ`).
+Round-A restriction, by design: no chain-internal `PPI` fulfilment
+(rung 0 has no chain predecessor); the extraction (round D) uses
+stabilized external `PPI`-witnesses instead, per the two-tier paper's
+forward-absorption discipline. -/
+
+structure TwoTier (β : Type) where
+  E : β → β → Atom
+  K : β → Atom
+  tauE : β → List Concept
+  p : Nat
+  phase : Nat → List Concept
+
+/-- The type labelling of the unfolding. -/
+def ttLabel (T : TwoTier β) : (β ⊕ Nat) → List Concept
+  | Sum.inl e => T.tauE e
+  | Sum.inr i => T.phase (i % T.p)
+
+/-- Validity of a two-tier certificate: the frame hypotheses of the
+    certified lift + the Hintikka obligations per edge class. -/
+structure TwoTierOk (T : TwoTier β) : Prop where
+  hp : 0 < T.p
+  frame_aug : Frame (aug T.E T.K)
+  kproper : ∀ e, T.K e ≠ eq
+  -- propositional coherence, externals
+  e_clash : ∀ e a, Concept.atom a ∈ T.tauE e → Concept.natom a ∉ T.tauE e
+  e_nobot : ∀ e, Concept.bot ∉ T.tauE e
+  e_and : ∀ e c d, Concept.and c d ∈ T.tauE e → c ∈ T.tauE e ∧ d ∈ T.tauE e
+  e_or : ∀ e c d, Concept.or c d ∈ T.tauE e → c ∈ T.tauE e ∨ d ∈ T.tauE e
+  -- propositional coherence, phases
+  k_clash : ∀ a, a < T.p → ∀ n, Concept.atom n ∈ T.phase a →
+    Concept.natom n ∉ T.phase a
+  k_nobot : ∀ a, a < T.p → Concept.bot ∉ T.phase a
+  k_and : ∀ a, a < T.p → ∀ c d, Concept.and c d ∈ T.phase a →
+    c ∈ T.phase a ∧ d ∈ T.phase a
+  k_or : ∀ a, a < T.p → ∀ c d, Concept.or c d ∈ T.phase a →
+    c ∈ T.phase a ∨ d ∈ T.phase a
+  -- universal propagation, per edge class of the unfolding
+  ee_all : ∀ e f r c, Concept.all r c ∈ T.tauE e → T.E e f = r →
+    c ∈ T.tauE f
+  ek_all : ∀ e r c, Concept.all r c ∈ T.tauE e → conv (T.K e) = r →
+    ∀ a, a < T.p → c ∈ T.phase a
+  ke_all : ∀ a, a < T.p → ∀ r c, Concept.all r c ∈ T.phase a →
+    ∀ f, T.K f = r → c ∈ T.tauE f
+  kk_pp : ∀ a, a < T.p → ∀ c, Concept.all pp c ∈ T.phase a →
+    ∀ b, b < T.p → c ∈ T.phase b
+  kk_ppi : ∀ a, a < T.p → ∀ c, Concept.all ppi c ∈ T.phase a →
+    ∀ b, b < T.p → c ∈ T.phase b
+  kk_eq : ∀ a, a < T.p → ∀ c, Concept.all eq c ∈ T.phase a →
+    c ∈ T.phase a
+  -- existential fulfilment, per node class
+  e_ex : ∀ e r c, Concept.ex r c ∈ T.tauE e →
+    (∃ f, T.E e f = r ∧ c ∈ T.tauE f) ∨
+    (conv (T.K e) = r ∧ ∃ a, a < T.p ∧ c ∈ T.phase a)
+  k_ex : ∀ a, a < T.p → ∀ r c, Concept.ex r c ∈ T.phase a →
+    (∃ f, T.K f = r ∧ c ∈ T.tauE f) ∨
+    (r = pp ∧ ∃ b, b < T.p ∧ c ∈ T.phase b) ∨
+    (r = eq ∧ c ∈ T.phase a)
+
+/-- Arithmetic for chain-internal `PP` fulfilment: above any rung `i`
+    there is a rung of every phase residue `b < p`. -/
+theorem exists_later_phase (p : Nat) (hp : 0 < p) (i b : Nat)
+    (hb : b < p) : ∃ j, i < j ∧ j % p = b := by
+  refine ⟨p * (i / p + 1) + b, ?_, ?_⟩
+  · have h1 := Nat.div_add_mod i p
+    have h2 := Nat.mod_lt i hp
+    have h3 : p * (i / p + 1) = p * (i / p) + p := Nat.mul_succ p (i / p)
+    omega
+  · rw [Nat.add_comm (p * (i / p + 1)) b, Nat.add_mul_mod_self_left]
+    exact Nat.mod_eq_of_lt hb
+
+/-- ROUND-A CENTRAL LEMMA: a valid two-tier certificate's labelling is a
+    Hintikka labelling of the unfolding.  Each Hintikka clause reduces to
+    the edge-class condition covering the node/edge class at hand; the
+    chain-side arithmetic is `Nat.mod_lt` (every rung has a phase) and
+    `exists_later_phase` (every phase recurs above every rung). -/
+theorem twoTier_hintikka (T : TwoTier β) (h : TwoTierOk T) :
+    Hintikka (fun _ => True) (unf T.E T.K) (ttLabel T) where
+  clashfree := by
+    intro x a _ hmem
+    rcases x with e | i
+    · exact h.e_clash e a hmem
+    · exact h.k_clash (i % T.p) (Nat.mod_lt i h.hp) a hmem
+  nobot := by
+    intro x _
+    rcases x with e | i
+    · exact h.e_nobot e
+    · exact h.k_nobot (i % T.p) (Nat.mod_lt i h.hp)
+  and_c := by
+    intro x c d _ hmem
+    rcases x with e | i
+    · exact h.e_and e c d hmem
+    · exact h.k_and (i % T.p) (Nat.mod_lt i h.hp) c d hmem
+  or_c := by
+    intro x c d _ hmem
+    rcases x with e | i
+    · exact h.e_or e c d hmem
+    · exact h.k_or (i % T.p) (Nat.mod_lt i h.hp) c d hmem
+  all_c := by
+    intro x r c _ hmem y _ hr
+    rcases x with e | i <;> rcases y with f | j
+    · -- ext → ext
+      exact h.ee_all e f r c hmem hr
+    · -- ext → chain: constant interface, every phase occurs
+      exact h.ek_all e r c hmem hr (j % T.p) (Nat.mod_lt j h.hp)
+    · -- chain → ext: constant interface
+      exact h.ke_all (i % T.p) (Nat.mod_lt i h.hp) r c hmem f hr
+    · -- chain → chain: PP upward / EQ diagonal / PPI downward
+      have hr' : chain i j = r := hr
+      have hm' : Concept.all r c ∈ T.phase (i % T.p) := hmem
+      rcases Nat.lt_trichotomy i j with hij | hij | hij
+      · rw [chain_lt hij] at hr'; subst hr'
+        exact h.kk_pp (i % T.p) (Nat.mod_lt i h.hp) c hm'
+          (j % T.p) (Nat.mod_lt j h.hp)
+      · subst hij
+        rw [chain_self] at hr'; subst hr'
+        exact h.kk_eq (i % T.p) (Nat.mod_lt i h.hp) c hm'
+      · rw [chain_gt hij] at hr'; subst hr'
+        exact h.kk_ppi (i % T.p) (Nat.mod_lt i h.hp) c hm'
+          (j % T.p) (Nat.mod_lt j h.hp)
+  ex_f := by
+    intro x r c _ hmem
+    rcases x with e | i
+    · rcases h.e_ex e r c hmem with ⟨f, hEf, hcf⟩ | ⟨hK, a, ha, hca⟩
+      · exact ⟨Sum.inl f, True.intro, hEf, hcf⟩
+      · refine ⟨Sum.inr a, True.intro, hK, ?_⟩
+        show c ∈ T.phase (a % T.p)
+        rw [Nat.mod_eq_of_lt ha]
+        exact hca
+    · have hm' : Concept.ex r c ∈ T.phase (i % T.p) := hmem
+      rcases h.k_ex (i % T.p) (Nat.mod_lt i h.hp) r c hm' with
+        ⟨f, hKf, hcf⟩ | ⟨hrpp, b, hb, hcb⟩ | ⟨hreq, hc⟩
+      · exact ⟨Sum.inl f, True.intro, hKf, hcf⟩
+      · obtain ⟨j, hij, hjb⟩ := exists_later_phase T.p h.hp i b hb
+        refine ⟨Sum.inr j, True.intro, ?_, ?_⟩
+        · show chain i j = r
+          rw [chain_lt hij, hrpp]
+        · show c ∈ T.phase (j % T.p)
+          rw [hjb]
+          exact hcb
+      · refine ⟨Sum.inr i, True.intro, ?_, ?_⟩
+        · show chain i i = r
+          rw [chain_self, hreq]
+        · exact hc
+
+/-- ROUND-A CAPSTONE: a valid two-tier certificate with the target
+    concept at some node yields an actual RCC5 model — soundness of the
+    certificate through the LOGIC, end to end: certified lift
+    (`unf_is_frame`) + Hintikka construction + truth lemma. -/
+theorem twoTier_sound (T : TwoTier β) (h : TwoTierOk T)
+    (root : β ⊕ Nat) (C0 : Concept) (hC0 : C0 ∈ ttLabel T root) :
+    Satisfiable C0 :=
+  sat_from_hintikka_frame (unf T.E T.K)
+    (unf_is_frame T.E T.K h.frame_aug h.kproper)
+    (ttLabel T) (twoTier_hintikka T h) root C0 hC0
+
+/-! ### The fragment predicate
+
+Soundness above is fragment-agnostic (the checker verifies ALL
+universals on all edge classes).  `POFree` is where the fragment enters:
+the COMPLETENESS side (round D) claims every satisfiable ∀PO-free
+concept admits a valid certificate — the two-tier extraction. -/
+
+/-- The ∀PO-free fragment: no subformula `∀PO.D`. -/
+def POFree : Concept → Prop
+  | .top => True
+  | .bot => True
+  | .atom _ => True
+  | .natom _ => True
+  | .and c d => POFree c ∧ POFree d
+  | .or c d => POFree c ∧ POFree d
+  | .ex _ c => POFree c
+  | .all r c => r ≠ po ∧ POFree c
+
+/-! ### Non-vacuity: an infinite-model concept, certified satisfiable
+
+`Cinf = ∃PP.⊤ ⊓ ∀PP.∃PP.⊤` has NO finite model (it forces an infinite
+ascending PP-chain), and it is ∀PO-free.  A two-tier certificate with an
+empty external part and one phase carries it, so the round-A pipeline
+produces an actual infinite model end-to-end — the certificate machinery
+is exercised exactly where finite-model methods cannot go. -/
+
+def Cinf : Concept := .and (.ex pp .top) (.all pp (.ex pp .top))
+
+theorem cinf_pofree : POFree Cinf :=
+  ⟨trivial, by decide, trivial⟩
+
+/-- The empty-external augmented network is a frame (as inside
+    `frame_nonvacuous`, restated standalone for reuse). -/
+theorem aug_empty_frame :
+    Frame (aug (β := Empty) (fun e _ => e.elim) (fun e => e.elim)) where
+  refl_eq := by
+    intro x
+    cases x with
+    | some e => exact e.elim
+    | none => rfl
+  eq_id := by
+    intro x y hxy
+    cases x with
+    | some e => exact e.elim
+    | none =>
+      cases y with
+      | some e => exact e.elim
+      | none => rfl
+  conv_ := by
+    intro x y
+    cases x with
+    | some e => exact e.elim
+    | none =>
+      cases y with
+      | some e => exact e.elim
+      | none => rfl
+  comp_ := by
+    intro x y z
+    cases x with
+    | some e => exact e.elim
+    | none =>
+      cases y with
+      | some e => exact e.elim
+      | none =>
+        cases z with
+        | some e => exact e.elim
+        | none => decide
+
+/-- The phase type for the `Cinf` certificate. -/
+def cinfPhase : List Concept :=
+  [Cinf, .ex pp .top, .all pp (.ex pp .top), .top]
+
+/-- The one-phase certificate for `Cinf`: no externals, phase type
+    `{Cinf, ∃PP.⊤, ∀PP.∃PP.⊤, ⊤}`. -/
+def cinfTT : TwoTier Empty where
+  E := fun e _ => e.elim
+  K := fun e => e.elim
+  tauE := fun e => e.elim
+  p := 1
+  phase := fun _ => cinfPhase
+
+theorem cinfTT_ok : TwoTierOk cinfTT where
+  hp := Nat.one_pos
+  frame_aug := aug_empty_frame
+  kproper := fun e => e.elim
+  e_clash := fun e => e.elim
+  e_nobot := fun e => e.elim
+  e_and := fun e => e.elim
+  e_or := fun e => e.elim
+  k_clash := by
+    intro a _ n hmem
+    simp only [cinfTT, cinfPhase, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h | h | h
+    · simp only [Cinf] at h; exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+  k_nobot := by
+    intro a _
+    show Concept.bot ∉ cinfPhase
+    decide
+  k_and := by
+    intro a _ c d hmem
+    simp only [cinfTT, cinfPhase, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h | h | h
+    · simp only [Cinf] at h
+      injection h with h1 h2
+      subst h1; subst h2
+      show Concept.ex pp Concept.top ∈ cinfPhase ∧
+        Concept.all pp (Concept.ex pp Concept.top) ∈ cinfPhase
+      decide
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+  k_or := by
+    intro a _ c d hmem
+    simp only [cinfTT, cinfPhase, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h | h | h
+    · simp only [Cinf] at h; exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+  ee_all := fun e => e.elim
+  ek_all := fun e => e.elim
+  ke_all := by
+    intro a _ r c _ f
+    exact f.elim
+  kk_pp := by
+    intro a _ c hmem b _
+    simp only [cinfTT, cinfPhase, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h | h | h
+    · simp only [Cinf] at h; exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · injection h with h1 h2
+      subst h2
+      show Concept.ex pp Concept.top ∈ cinfPhase
+      decide
+    · exact Concept.noConfusion h
+  kk_ppi := by
+    intro a _ c hmem b _
+    simp only [cinfTT, cinfPhase, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h | h | h
+    · simp only [Cinf] at h; exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · injection h with h1 h2
+      exact Atom.noConfusion h1
+    · exact Concept.noConfusion h
+  kk_eq := by
+    intro a _ c hmem
+    simp only [cinfTT, cinfPhase, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h | h | h
+    · simp only [Cinf] at h; exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · injection h with h1 h2
+      exact Atom.noConfusion h1
+    · exact Concept.noConfusion h
+  e_ex := fun e => e.elim
+  k_ex := by
+    intro a _ r c hmem
+    simp only [cinfTT, cinfPhase, List.mem_cons, List.not_mem_nil,
+      or_false] at hmem
+    rcases hmem with h | h | h | h
+    · simp only [Cinf] at h; exact Concept.noConfusion h
+    · injection h with h1 h2
+      subst h1; subst h2
+      exact Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos, by decide⟩)
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+
+/-- `Cinf` — satisfiable only in infinite models — is `Satisfiable`,
+    through the full round-A pipeline. -/
+theorem cinf_satisfiable : Satisfiable Cinf :=
+  twoTier_sound cinfTT cinfTT_ok (Sum.inr 0) Cinf (by decide)
+
+#print axioms twoTier_sound
+#print axioms cinf_satisfiable
 
 end POFreeLift
