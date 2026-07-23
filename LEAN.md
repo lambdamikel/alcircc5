@@ -463,6 +463,31 @@ file now ~5,427 lines; axioms unchanged. Both chain directions of the
 kernel-attachment inner loop are now certified; the assembly's block
 builders can consume either.
 
+**Round E3b (landed, 2026-07-23): the ordered-disjoint frame — the
+rectangle problem RESTRUCTURED.** **`ordered_disjoint_frame`**
+(axioms: `propext` ONLY): a labelling with reflexive strong `EQ` and
+coherent converses whose `PP` is TRANSITIVE and whose `DR` is
+DOWNWARD-CLOSED along `PP` is composition-closed — a `Frame`. This is
+wp47's CONVERSE direction certified at the artifact's composition
+table (the forward direction is `formal/RCC5NormalForm.lean`; the
+follow-up recorded there is now closed at this table). Proof anatomy:
+of the 16 non-`EQ` composition cells, 4 are forced (`pp;pp`, `pp;dr`,
+`ppi;ppi`, `dr;ppi` — exactly the two laws and their converses), 3
+unconstrained, and all 9 remaining cells' exclusions derive from the
+same two laws + converse coherence + strong `EQ`. `PO` imposes NO
+condition — it is the normal form's residual value. CONSEQUENCE for
+the multi-kernel block (item 3 below, revised): declare TIGHT values
+(model-backed) on a skeleton transitively closed in `PP` and downward
+closed in `DR` — both closures are model-FORCED through singleton
+cells (`comp(pp,pp)={pp}`, `comp(pp,dr)={dr}`), hence automatically
+RECTANGLE-CONSTANT — and declare LOOSE `PO` everywhere else with NO
+model rectangle at all; frame closure is this theorem, and on the
+Hintikka side every loose edge is inert for the fragment
+(`mty_no_all_po`: no `∀PO` obligation fires across it, no demand is
+routed through it). The rectangle problem thus survives ONLY for
+tight values, where forcing gives constancy for free. Zero `sorry`;
+file now ~5,684 lines.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
@@ -490,28 +515,28 @@ design work):
      library block for `D` could demand `∃PO.D` itself; a
      requirement-typed library only demands strict subformulas of `D`,
      so the pool closes without self-reference).
-  3. **Declared values and defaults** (revised — the earlier "all
-     cross-kernel values PO, always frame-safe" was too strong):
-     within a block, every DECLARED value is read off the model at
-     representative elements (E2a's read-off discipline ⟹ `frame_q`
-     free); `kq_all` with `Q = po` is indeed vacuous
-     (`mty_no_all_po`), but frame closure can FORCE vertical
-     cross-kernel values (e.g. a kernel above a `PP`-witness of
-     another kernel: `Q` is forced `pp` — happily also constant on
-     the model rectangle, by transitivity). The genuinely open E2c
-     point is the **rectangle problem**: a single `Q` value must be
-     constant across BOTH segments; for vertical-recursion kernels it
-     is forced-constant, for DR-branch kernels it is not forced, and
-     there `Q := po` needs a mixed (not pure read-off) frame argument
-     — or a DR-edge variant of the glue. Related: witnesses picked
-     AFTER segments break other kernels' constancy (selection-order
-     circularity) — the SINGLE-kernel half is now SETTLED by E2b
-     (banks before the segment for forward-absorption witnesses,
-     late picks after it for backward-forcing ones; `kernel_site`);
-     what remains is the CROSS-kernel half (a witness of one kernel
-     needing a declared value to ANOTHER kernel's segment) — resolve
-     by per-kernel witness privacy or a finite-closure/priority
-     argument. Cross-BLOCK edges stay
+  3. **Declared values and defaults** (REVISED AGAIN after E3b — the
+     mixed frame argument is now CERTIFIED): the block's declaration
+     discipline is TWO-SORTED. TIGHT values (model-backed, read off at
+     representatives) live on a skeleton that must be transitively
+     closed in `PP` and downward closed in `DR` — both closures are
+     model-forced through singleton composition cells, hence
+     automatically rectangle-constant; LOOSE `PO` is declared
+     everywhere else with NO model backing needed. Frame closure =
+     `ordered_disjoint_frame` (E3b, propext-only); Hintikka inertness
+     of loose edges = `mty_no_all_po` + never routing a demand through
+     them. What REMAINS of this item: define the tight skeleton for a
+     concrete multi-kernel block (kernel-witness rows + in-cluster
+     read-offs + forced closure), prove its two closure laws from the
+     model, and prove rectangle-constancy for the tight cross-kernel
+     values (transitivity-forced, e.g. a kernel ascending from a
+     `PP`-witness of another kernel). The old "rectangle problem for
+     DR-branch kernels" is DISSOLVED: their cross value is loose `PO`.
+     The cross-kernel witness circularity (a witness of one kernel
+     needing a declared value to ANOTHER kernel's segment) likewise
+     collapses to: tight where forced (constant for free), loose `PO`
+     otherwise. The SINGLE-kernel selection order was settled by E2b.
+     Cross-BLOCK edges stay
      uniformly `PO` (E0/E1, unchanged). Also recorded: `∃PP` demands
      never need chain-internal fulfilment — off-chain `PP`-witnesses
      via `pp_witness_all_below` always serve (the paper's V6); the

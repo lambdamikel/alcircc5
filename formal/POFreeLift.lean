@@ -5373,6 +5373,262 @@ theorem dkernel_block_of_chain (C0 : Concept) (myTag : Nat)
 
 end DescOneKernelBlock
 
+/-! ## Round E3b (2026-07-23): the ordered-disjoint frame — the mixed
+frame argument for multi-kernel blocks
+
+The certified CONVERSE of the RCC5 normal form (wp47's other
+direction, at this artifact's composition table; the forward direction
+is `formal/RCC5NormalForm.lean` — this closes the follow-up recorded
+there): a labelling with reflexive strong `EQ` and coherent converses
+whose `PP` is TRANSITIVE and whose `DR` is DOWNWARD-CLOSED along `PP`
+is composition-closed — a `Frame`.  Everything else is derived: the 16
+non-`EQ` composition cells split into 4 FORCED cells (`pp;pp`,
+`pp;dr`, `ppi;ppi`, `dr;ppi` — closed by transitivity/downward closure
+directly), 3 unconstrained cells (`pp;ppi`, `po;po`, `dr;dr`), and 9
+cells whose exclusions all follow from the same two laws plus converse
+coherence and strong `EQ`.
+
+`PO` imposes NO condition — it is the residual value of the normal
+form.  This is the mixed frame argument the multi-kernel block needs
+(LEAN.md item 3's rectangle problem, restructured): declare TIGHT
+values (model-backed, rectangle-constant) on a skeleton that is
+transitively closed in `PP` and downward closed in `DR` — both
+closures are model-forced through singleton composition cells
+(`comp(pp,pp)={pp}`, `comp(pp,dr)={dr}`), hence automatically
+rectangle-constant — and declare LOOSE `PO` everywhere else, with NO
+model rectangle needed.  Frame closure is then THIS theorem; on the
+Hintikka side every loose edge is inert for the fragment
+(`mty_no_all_po`: no `∀PO` obligation exists to fire across it, and no
+demand is ever routed through it).  The rectangle problem thus
+survives only for tight values, where forcing gives constancy. -/
+
+/-- THE ORDERED-DISJOINT FRAME: reflexive strong-`EQ` + coherent
+    converses + transitive `PP` + `DR` downward-closed along `PP`
+    ⟹ composition closure.  `PO` is residual — no condition. -/
+theorem ordered_disjoint_frame {V : Type} (N : V → V → Atom)
+    (hrefl : ∀ x, N x x = eq)
+    (heqid : ∀ x y, N x y = eq → x = y)
+    (hconv : ∀ x y, N y x = conv (N x y))
+    (htrans : ∀ x y z, N x y = pp → N y z = pp → N x z = pp)
+    (hdown : ∀ x y z, N x y = pp → N y z = dr → N x z = dr) :
+    Frame N where
+  refl_eq := hrefl
+  eq_id := heqid
+  conv_ := hconv
+  comp_ := by
+    intro x y z
+    cases hxy : N x y with
+    | eq =>
+      have h := heqid x y hxy
+      subst h
+      exact List.Mem.head _
+    | pp =>
+      cases hyz : N y z with
+      | eq =>
+        have h := heqid y z hyz
+        subst h
+        rw [hxy]
+        decide
+      | pp =>
+        rw [htrans x y z hxy hyz]
+        decide
+      | ppi =>
+        cases N x z <;> decide
+      | po =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have hyx : N y x = ppi := by rw [hconv x y, hxy]; rfl
+          rw [hyx] at hyz
+          exact absurd hyz (by decide)
+        | pp => decide
+        | ppi =>
+          have hzx : N z x = pp := by rw [hconv x z, hxz]; rfl
+          have hzy := htrans z x y hzx hxy
+          have h2 : N y z = ppi := by rw [hconv z y, hzy]; rfl
+          rw [h2] at hyz
+          exact absurd hyz (by decide)
+        | po => decide
+        | dr => decide
+      | dr =>
+        rw [hdown x y z hxy hyz]
+        decide
+    | ppi =>
+      cases hyz : N y z with
+      | eq =>
+        have h := heqid y z hyz
+        subst h
+        rw [hxy]
+        decide
+      | pp =>
+        cases hxz : N x z with
+        | eq => decide
+        | pp => decide
+        | ppi => decide
+        | po => decide
+        | dr =>
+          have hyx : N y x = pp := by rw [hconv x y, hxy]; rfl
+          have h2 := hdown y x z hyx hxz
+          rw [h2] at hyz
+          exact absurd hyz (by decide)
+      | ppi =>
+        have hzy : N z y = pp := by rw [hconv y z, hyz]; rfl
+        have hyx : N y x = pp := by rw [hconv x y, hxy]; rfl
+        have hzx := htrans z y x hzy hyx
+        have h4 : N x z = ppi := by rw [hconv z x, hzx]; rfl
+        rw [h4]
+        decide
+      | po =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have hyx : N y x = pp := by rw [hconv x y, hxy]; rfl
+          rw [hyx] at hyz
+          exact absurd hyz (by decide)
+        | pp =>
+          have hyx : N y x = pp := by rw [hconv x y, hxy]; rfl
+          have h2 := htrans y x z hyx hxz
+          rw [h2] at hyz
+          exact absurd hyz (by decide)
+        | ppi => decide
+        | po => decide
+        | dr =>
+          have hyx : N y x = pp := by rw [hconv x y, hxy]; rfl
+          have h2 := hdown y x z hyx hxz
+          rw [h2] at hyz
+          exact absurd hyz (by decide)
+      | dr =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have hyx : N y x = pp := by rw [hconv x y, hxy]; rfl
+          rw [hyx] at hyz
+          exact absurd hyz (by decide)
+        | pp =>
+          have hyx : N y x = pp := by rw [hconv x y, hxy]; rfl
+          have h2 := htrans y x z hyx hxz
+          rw [h2] at hyz
+          exact absurd hyz (by decide)
+        | ppi => decide
+        | po => decide
+        | dr => decide
+    | po =>
+      cases hyz : N y z with
+      | eq =>
+        have h := heqid y z hyz
+        subst h
+        rw [hxy]
+        decide
+      | pp =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have hyx : N y x = po := by rw [hconv x y, hxy]; rfl
+          rw [hyx] at hyz
+          exact absurd hyz (by decide)
+        | pp => decide
+        | ppi =>
+          have hzx : N z x = pp := by rw [hconv x z, hxz]; rfl
+          have h2 := htrans y z x hyz hzx
+          have h3 : N x y = ppi := by rw [hconv y x, h2]; rfl
+          rw [h3] at hxy
+          exact absurd hxy (by decide)
+        | po => decide
+        | dr =>
+          have hzx : N z x = dr := by rw [hconv x z, hxz]; rfl
+          have h2 := hdown y z x hyz hzx
+          have h3 : N x y = dr := by rw [hconv y x, h2]; rfl
+          rw [h3] at hxy
+          exact absurd hxy (by decide)
+      | ppi =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have hyx : N y x = po := by rw [hconv x y, hxy]; rfl
+          rw [hyx] at hyz
+          exact absurd hyz (by decide)
+        | pp =>
+          have hzy : N z y = pp := by rw [hconv y z, hyz]; rfl
+          have h2 := htrans x z y hxz hzy
+          rw [h2] at hxy
+          exact absurd hxy (by decide)
+        | ppi => decide
+        | po => decide
+        | dr => decide
+      | po =>
+        cases N x z <;> decide
+      | dr =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have hyx : N y x = po := by rw [hconv x y, hxy]; rfl
+          rw [hyx] at hyz
+          exact absurd hyz (by decide)
+        | pp =>
+          have hzy : N z y = dr := by rw [hconv y z, hyz]; rfl
+          have h2 := hdown x z y hxz hzy
+          rw [h2] at hxy
+          exact absurd hxy (by decide)
+        | ppi => decide
+        | po => decide
+        | dr => decide
+    | dr =>
+      cases hyz : N y z with
+      | eq =>
+        have h := heqid y z hyz
+        subst h
+        rw [hxy]
+        decide
+      | pp =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have h2 : N x y = ppi := by rw [hconv y x, hyz]; rfl
+          rw [h2] at hxy
+          exact absurd hxy (by decide)
+        | pp => decide
+        | ppi =>
+          have hzx : N z x = pp := by rw [hconv x z, hxz]; rfl
+          have h2 := htrans y z x hyz hzx
+          have h3 : N x y = ppi := by rw [hconv y x, h2]; rfl
+          rw [h3] at hxy
+          exact absurd hxy (by decide)
+        | po => decide
+        | dr => decide
+      | ppi =>
+        have hzy : N z y = pp := by rw [hconv y z, hyz]; rfl
+        have hyx : N y x = dr := by rw [hconv x y, hxy]; rfl
+        have h3 := hdown z y x hzy hyx
+        have h4 : N x z = dr := by rw [hconv z x, h3]; rfl
+        rw [h4]
+        decide
+      | po =>
+        cases hxz : N x z with
+        | eq =>
+          have h := heqid x z hxz
+          subst h
+          have h2 : N x y = po := by rw [hconv y x, hyz]; rfl
+          rw [h2] at hxy
+          exact absurd hxy (by decide)
+        | pp => decide
+        | ppi =>
+          have hzx : N z x = pp := by rw [hconv x z, hxz]; rfl
+          have h2 := hdown z x y hzx hxy
+          have h3 : N y z = dr := by rw [hconv z y, h2]; rfl
+          rw [h3] at hyz
+          exact absurd hyz (by decide)
+        | po => decide
+        | dr => decide
+      | dr =>
+        cases N x z <;> decide
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -5423,5 +5679,6 @@ end DescOneKernelBlock
 #print axioms kernel_block_of_chain
 #print axioms done_kernel_block
 #print axioms dkernel_block_of_chain
+#print axioms ordered_disjoint_frame
 
 end POFreeLift
