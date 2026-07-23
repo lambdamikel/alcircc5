@@ -2154,11 +2154,302 @@ theorem cbothFin_accept : cbothFin.mtAcceptB 0 Cboth = true := by
 theorem cboth_satisfiable_exec : Satisfiable Cboth :=
   mtAcceptB_sound cbothFin 0 Cboth cbothFin_accept
 
+/-! ## Round D1 (2026-07-23): checker completeness + the decision
+reduction
+
+The checker so far is SOUND (acceptance ⟹ model).  Round D1 adds the
+converse — `mtOkB_iff`: the Boolean checker accepts EXACTLY the valid
+decoded certificates — plus acceptance-completeness (a valid
+certificate carrying `C0` at any node yields an accepted root index)
+and the fragment's decision-grade reduction
+`decidableSat_of_codes`: a fixed candidate list + the completeness
+premise (exactly the round-D2 extraction: every satisfiable ∀PO-free
+concept has an accepted code in the list) decide satisfiability.
+This mirrors the normative artifact's `decidableSat_of_finScheme`;
+what remains open is solely the premise — the extraction with its
+`K(C₀)` bound. -/
+
+/-! ### Intro-direction Bool helpers -/
+
+theorem ballB_intro {n : Nat} {f : Nat → Bool}
+    (h : ∀ i, i < n → f i = true) : ballB n f = true :=
+  List.all_eq_true.mpr (fun i hi => h i (List.mem_range.mp hi))
+
+theorem bexB_intro {n : Nat} {f : Nat → Bool} (i : Nat) (hi : i < n)
+    (hf : f i = true) : bexB n f = true :=
+  List.any_eq_true.mpr ⟨i, List.mem_range.mpr hi, hf⟩
+
+theorem impB_intro {a b : Bool} (h : a = true → b = true) :
+    impB a b = true := by
+  cases a with
+  | false => rfl
+  | true => exact h rfl
+
+theorem andB_intro {a b : Bool} (ha : a = true) (hb : b = true) :
+    (a && b) = true := by
+  subst ha; subst hb; rfl
+
+theorem orB_inl {a b : Bool} (ha : a = true) : (a || b) = true := by
+  subst ha; rfl
+
+theorem orB_inr {a b : Bool} (hb : b = true) : (a || b) = true := by
+  subst hb
+  cases a <;> rfl
+
+theorem notB_intro {b : Bool} (h : b = false) : (!b) = true := by
+  subst h; rfl
+
+/-! ### The inverse index correspondence -/
+
+/-- Decode a raw index into the certificate carrier. -/
+def decIdx (F : FinMT) (x : Nat) (hx : x < F.nE + F.nK) :
+    Fin F.nE ⊕ Fin F.nK :=
+  if h : x < F.nE then .inl ⟨x, h⟩ else .inr ⟨x - F.nE, by omega⟩
+
+theorem encIdx_decIdx (F : FinMT) (x : Nat) (hx : x < F.nE + F.nK) :
+    encIdx F (decIdx F x hx) = x := by
+  unfold decIdx
+  by_cases h : x < F.nE
+  · rw [dif_pos h]
+    rfl
+  · rw [dif_neg h]
+    show F.nE + (x - F.nE) = x
+    omega
+
+/-- The raw network at arbitrary in-range indices IS the decoded
+    quotient network (inverse form of `qraw_corr`). -/
+theorem qraw_eq (F : FinMT) (x y : Nat) (hx : x < F.nE + F.nK)
+    (hy : y < F.nE + F.nK) :
+    F.qraw x y = qnet (decodeMT F).E (decodeMT F).K (decodeMT F).Q
+      (decIdx F x hx) (decIdx F y hy) :=
+  calc F.qraw x y
+      = F.qraw (encIdx F (decIdx F x hx)) (encIdx F (decIdx F y hy)) :=
+        by rw [encIdx_decIdx, encIdx_decIdx]
+    _ = qnet (decodeMT F).E (decodeMT F).K (decodeMT F).Q
+        (decIdx F x hx) (decIdx F y hy) :=
+        qraw_corr F (decIdx F x hx) (decIdx F y hy)
+
+/-! ### Completeness of each check group -/
+
+theorem frameB_complete (F : FinMT)
+    (h : Frame (qnet (decodeMT F).E (decodeMT F).K (decodeMT F).Q)) :
+    F.frameB = true := by
+  refine andB_intro (andB_intro (andB_intro ?_ ?_) ?_) ?_
+  · exact ballB_intro (fun x hx => decide_eq_true
+      (by rw [qraw_eq F x x hx hx]; exact h.refl_eq _))
+  · refine ballB_intro (fun x hx => ballB_intro (fun y hy =>
+      impB_intro (fun hd => ?_)))
+    have hq := of_decide_eq_true hd
+    rw [qraw_eq F x y hx hy] at hq
+    have h2 := congrArg (encIdx F) (h.eq_id _ _ hq)
+    rw [encIdx_decIdx F x hx, encIdx_decIdx F y hy] at h2
+    exact decide_eq_true h2
+  · exact ballB_intro (fun x hx => ballB_intro (fun y hy =>
+      decide_eq_true (by
+        rw [qraw_eq F y x hy hx, qraw_eq F x y hx hy]
+        exact h.conv_ _ _)))
+  · exact ballB_intro (fun x hx => ballB_intro (fun y hy =>
+      ballB_intro (fun z hz => decide_eq_true (by
+        rw [qraw_eq F x z hx hz, qraw_eq F x y hx hy,
+          qraw_eq F y z hy hz]
+        exact h.comp_ _ _ _))))
+
+theorem propB_complete {L : List Concept}
+    (hnb : Concept.bot ∉ L)
+    (hcl : ∀ a, Concept.atom a ∈ L → Concept.natom a ∉ L)
+    (hand : ∀ c d, Concept.and c d ∈ L → c ∈ L ∧ d ∈ L)
+    (hor : ∀ c d, Concept.or c d ∈ L → c ∈ L ∨ d ∈ L) :
+    FinMT.propB L = true := by
+  refine andB_intro (notB_intro (decide_eq_false hnb))
+    (List.all_eq_true.mpr (fun D hD => ?_))
+  cases D with
+  | top => rfl
+  | bot => rfl
+  | atom a => exact notB_intro (decide_eq_false (hcl a hD))
+  | natom a => rfl
+  | and c d =>
+    obtain ⟨hc, hd⟩ := hand c d hD
+    exact andB_intro (decide_eq_true hc) (decide_eq_true hd)
+  | or c d =>
+    rcases hor c d hD with hc | hc
+    · exact orB_inl (decide_eq_true hc)
+    · exact orB_inr (decide_eq_true hc)
+  | ex r c => rfl
+  | all r c => rfl
+
+theorem eAllB_complete (F : FinMT) (h : MultiTierOk (decodeMT F))
+    {e : Nat} (he : e < F.nE) : F.eAllB e = true := by
+  refine List.all_eq_true.mpr (fun D hD => ?_)
+  cases D with
+  | top => rfl
+  | bot => rfl
+  | atom a => rfl
+  | natom a => rfl
+  | and c d => rfl
+  | or c d => rfl
+  | ex r c => rfl
+  | all r c =>
+    refine andB_intro ?_ ?_
+    · exact ballB_intro (fun f hf => impB_intro (fun hd =>
+        decide_eq_true (h.ee_all ⟨e, he⟩ ⟨f, hf⟩ r c hD
+          (of_decide_eq_true hd))))
+    · exact ballB_intro (fun k hk => impB_intro (fun hd =>
+        ballB_intro (fun a ha => decide_eq_true
+          (h.ek_all ⟨e, he⟩ r c hD ⟨k, hk⟩
+            (of_decide_eq_true hd) a ha))))
+
+theorem kAllB_complete (F : FinMT) (h : MultiTierOk (decodeMT F))
+    {k a : Nat} (hk : k < F.nK) (ha : a < F.pk k) :
+    F.kAllB k a = true := by
+  refine List.all_eq_true.mpr (fun D hD => ?_)
+  cases D with
+  | top => rfl
+  | bot => rfl
+  | atom n => rfl
+  | natom n => rfl
+  | and c d => rfl
+  | or c d => rfl
+  | ex r c => rfl
+  | all r c =>
+    refine andB_intro (andB_intro ?_ ?_) ?_
+    · exact ballB_intro (fun f hf => impB_intro (fun hd =>
+        decide_eq_true (h.ke_all ⟨k, hk⟩ a ha r c hD ⟨f, hf⟩
+          (of_decide_eq_true hd))))
+    · refine ballB_intro (fun k' hk' => impB_intro (fun hprem => ?_))
+      have h2 := andB_split hprem
+      have hne : (⟨k, hk⟩ : Fin F.nK) ≠ ⟨k', hk'⟩ := fun heq =>
+        (of_decide_eq_false (notB_true h2.1)) (congrArg Fin.val heq)
+      exact ballB_intro (fun b hb => decide_eq_true
+        (h.kq_all ⟨k, hk⟩ ⟨k', hk'⟩ hne a ha r c hD
+          (of_decide_eq_true h2.2) b hb))
+    · cases r with
+      | pp => exact ballB_intro (fun b hb => decide_eq_true
+          (h.kk_pp ⟨k, hk⟩ a ha c hD b hb))
+      | ppi => exact ballB_intro (fun b hb => decide_eq_true
+          (h.kk_ppi ⟨k, hk⟩ a ha c hD b hb))
+      | eq => exact decide_eq_true (h.kk_eq ⟨k, hk⟩ a ha c hD)
+      | po => rfl
+      | dr => rfl
+
+theorem eExB_complete (F : FinMT) (h : MultiTierOk (decodeMT F))
+    {e : Nat} (he : e < F.nE) : F.eExB e = true := by
+  refine List.all_eq_true.mpr (fun D hD => ?_)
+  cases D with
+  | top => rfl
+  | bot => rfl
+  | atom a => rfl
+  | natom a => rfl
+  | and c d => rfl
+  | or c d => rfl
+  | all r c => rfl
+  | ex r c =>
+    rcases h.e_ex ⟨e, he⟩ r c hD with ⟨f, hEf, hcf⟩ | ⟨k, hK, a, ha, hca⟩
+    · exact orB_inl (bexB_intro f.val f.isLt
+        (andB_intro (decide_eq_true hEf) (decide_eq_true hcf)))
+    · exact orB_inr (bexB_intro k.val k.isLt
+        (andB_intro (decide_eq_true hK)
+          (bexB_intro a ha (decide_eq_true hca))))
+
+theorem kExB_complete (F : FinMT) (h : MultiTierOk (decodeMT F))
+    {k a : Nat} (hk : k < F.nK) (ha : a < F.pk k) :
+    F.kExB k a = true := by
+  refine List.all_eq_true.mpr (fun D hD => ?_)
+  cases D with
+  | top => rfl
+  | bot => rfl
+  | atom n => rfl
+  | natom n => rfl
+  | and c d => rfl
+  | or c d => rfl
+  | all r c => rfl
+  | ex r c =>
+    rcases h.k_ex ⟨k, hk⟩ a ha r c hD with
+      ⟨f, hKf, hcf⟩ | ⟨hrd, b, hb, hcb⟩ | ⟨hreq, hc⟩ |
+      ⟨k', hne, hQ, b, hb, hcb⟩
+    · exact orB_inl (orB_inl (orB_inl (bexB_intro f.val f.isLt
+        (andB_intro (decide_eq_true hKf) (decide_eq_true hcf)))))
+    · exact orB_inl (orB_inl (orB_inr
+        (andB_intro (decide_eq_true hrd)
+          (bexB_intro b hb (decide_eq_true hcb)))))
+    · exact orB_inl (orB_inr
+        (andB_intro (decide_eq_true hreq) (decide_eq_true hc)))
+    · refine orB_inr (bexB_intro k'.val k'.isLt
+        (andB_intro (andB_intro ?_ (decide_eq_true hQ))
+          (bexB_intro b hb (decide_eq_true hcb))))
+      exact notB_intro (decide_eq_false (fun hh => hne (Fin.ext hh)))
+
+/-- ROUND-D1 COMPLETENESS: the checker accepts every valid decoded
+    certificate. -/
+theorem mtOkB_complete (F : FinMT) (h : MultiTierOk (decodeMT F)) :
+    F.mtOkB = true := by
+  refine andB_intro (andB_intro (andB_intro (andB_intro (andB_intro
+    (andB_intro (andB_intro ?_ ?_) ?_) ?_) ?_) ?_) ?_) ?_
+  · exact ballB_intro (fun k hk => decide_eq_true (h.hp ⟨k, hk⟩))
+  · exact frameB_complete F h.frame_q
+  · exact ballB_intro (fun e he => propB_complete
+      (h.e_nobot ⟨e, he⟩) (h.e_clash ⟨e, he⟩)
+      (h.e_and ⟨e, he⟩) (h.e_or ⟨e, he⟩))
+  · exact ballB_intro (fun k hk => ballB_intro (fun a ha =>
+      propB_complete (h.k_nobot ⟨k, hk⟩ a ha) (h.k_clash ⟨k, hk⟩ a ha)
+        (h.k_and ⟨k, hk⟩ a ha) (h.k_or ⟨k, hk⟩ a ha)))
+  · exact ballB_intro (fun e he => eAllB_complete F h he)
+  · exact ballB_intro (fun k hk => ballB_intro (fun a ha =>
+      kAllB_complete F h hk ha))
+  · exact ballB_intro (fun e he => eExB_complete F h he)
+  · exact ballB_intro (fun k hk => ballB_intro (fun a ha =>
+      kExB_complete F h hk ha))
+
+/-- The checker accepts EXACTLY the valid decoded certificates. -/
+theorem mtOkB_iff (F : FinMT) :
+    F.mtOkB = true ↔ MultiTierOk (decodeMT F) :=
+  ⟨mtOkB_sound F, mtOkB_complete F⟩
+
+/-- ACCEPTANCE COMPLETENESS: a valid certificate carrying `C0` at any
+    node of its unfolding yields an accepted root index. -/
+theorem mtAcceptB_complete (F : FinMT) (h : MultiTierOk (decodeMT F))
+    (x : Fin F.nE ⊕ Fin F.nK × Nat) (C0 : Concept)
+    (hC0 : C0 ∈ mtLabel (decodeMT F) x) :
+    ∃ root, F.mtAcceptB root C0 = true := by
+  rcases x with e | ⟨k, i⟩
+  · refine ⟨e.val, andB_intro (mtOkB_complete F h) ?_⟩
+    show F.rootB e.val C0 = true
+    rw [FinMT.rootB, if_pos e.isLt]
+    exact decide_eq_true hC0
+  · refine ⟨F.nE + k.val, andB_intro (mtOkB_complete F h) ?_⟩
+    show F.rootB (F.nE + k.val) C0 = true
+    rw [FinMT.rootB, if_neg (by omega : ¬ F.nE + k.val < F.nE),
+      Nat.add_sub_cancel_left]
+    refine andB_intro (decide_eq_true (by have := k.isLt; omega)) ?_
+    exact bexB_intro (i % F.pk k.val) (Nat.mod_lt i (h.hp k))
+      (decide_eq_true hC0)
+
+/-- THE DECISION REDUCTION (the fragment's
+    `decidableSat_of_finScheme`): a fixed finite list of candidate
+    codes + the completeness premise — every satisfiable concept has an
+    accepted code in the list, which is EXACTLY the round-D2 extraction
+    with its `K(C₀)` bound — decide satisfiability.  Soundness needs no
+    premise: any accepted code yields a model. -/
+def decidableSat_of_codes (C0 : Concept) (codes : List (FinMT × Nat))
+    (hcompl : Satisfiable C0 →
+      ∃ p ∈ codes, (p.1).mtAcceptB p.2 C0 = true) :
+    Decidable (Satisfiable C0) :=
+  if h : codes.any (fun p => (p.1).mtAcceptB p.2 C0) = true then
+    .isTrue (by
+      obtain ⟨p, _, hacc⟩ := List.any_eq_true.mp h
+      exact mtAcceptB_sound p.1 p.2 C0 hacc)
+  else
+    .isFalse (fun hsat => by
+      obtain ⟨p, hmem, hacc⟩ := hcompl hsat
+      exact h (List.any_eq_true.mpr ⟨p, hmem, hacc⟩))
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
 #print axioms cboth_satisfiable
 #print axioms mtAcceptB_sound
 #print axioms cboth_satisfiable_exec
+#print axioms mtOkB_iff
+#print axioms mtAcceptB_complete
+#print axioms decidableSat_of_codes
 
 end POFreeLift

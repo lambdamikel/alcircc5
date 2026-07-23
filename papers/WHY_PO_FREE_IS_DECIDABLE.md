@@ -715,17 +715,19 @@ boundary is natural.
 | The full fragment theorem (K(C₀) bound, extraction, assembly) | **Theorem-level** — argued, twice, independently; *not* end-to-end formalized |
 
 Remaining for full certification — the campaign is underway: rounds
-A–C (2026-07-22/23) landed the entire **soundness side**: a valid
-two-tier certificate, with any family of ascending or descending
-kernels, presented as **pure first-order list data** and checked by a
-computable oracle-free Boolean checker, yields a model of the concept
-— kernel-checked end to end (the two-tower witness's acceptance runs
-inside the kernel via plain `decide`). Still open: the completeness
-extraction carrying the K(C₀) bound plus the checker-completeness and
-code-enumeration wiring (round D, the bulk — see `LEAN.md`). Until
-then, the honest label is the project's standing one: **strongly
-supported, with the soundness core machine-certified — not certified
-end-to-end.**
+A–D1 (2026-07-22/23) landed the entire **soundness side plus the
+decision architecture**: a valid two-tier certificate, with any family
+of ascending or descending kernels, presented as **pure first-order
+list data**, is accepted by a computable oracle-free Boolean checker
+**exactly when valid** (`mtOkB_iff`), acceptance yields a model
+(kernel-checked end to end; the two-tower witness's acceptance runs
+inside the kernel via plain `decide`), and a certified reduction
+(`decidableSat_of_codes`) turns any candidate-code list plus a
+completeness premise into `Decidable (Satisfiable C₀)`. Still open:
+exactly that premise — the extraction carrying the K(C₀) bound (round
+D2, the bulk — see `LEAN.md`). Until then, the honest label is the
+project's standing one: **strongly supported, with the soundness core
+machine-certified — not certified end-to-end.**
 
 ---
 
