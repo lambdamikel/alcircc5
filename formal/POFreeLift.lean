@@ -2657,6 +2657,350 @@ theorem forward_absorption_ppi {i : Nat} (h : I.rho (c i) e = ppi) :
 
 end ModelChain
 
+/-! ## Round D2b (2026-07-23): types, pigeonhole, and segment coherence
+
+The combinatorial spine of the extraction. Three packages:
+
+1. **Subformula closure and model types.** `cl C0` (the finite
+   subformula list) and `mty C0 I x` (the classical model type: the
+   members of `cl C0` satisfied at `x`), with the semantic Hintikka
+   facts every certificate condition will be discharged against
+   (clash-freeness, ∧/∨ decomposition, ∀-firing along real edges,
+   ∃-witnessing).
+
+2. **The infinite pigeonhole.** Along any infinite sequence over a
+   finite universe: a recurrent tail exists (`recurrent_tail`: beyond
+   some index, every value that occurs recurs infinitely often), and
+   equal-typed pairs exist past any bound (`segment_exists`) — the
+   classical selection underlying period descriptors.
+
+3. **Segment coherence.** The theorems justifying the two-tier move of
+   cycling a chain segment into a kernel: if `mty (c i) = mty (c j)`,
+   then the phase types `mty (c i) … mty (c (j-1))` satisfy the
+   kernel's `kk` conditions — `∀PP` obligations propagate UP the chain
+   and re-enter through the type-equal endpoints (`seg_pp`), `∀PPI`
+   dually down (`seg_ppi`), `∀EQ` reflexively (`seg_eq`). -/
+
+/-! ### Subformula closure -/
+
+/-- The subformula closure, as a list (the formula itself included). -/
+def cl : Concept → List Concept
+  | .and c d => .and c d :: (cl c ++ cl d)
+  | .or c d => .or c d :: (cl c ++ cl d)
+  | .ex r c => .ex r c :: cl c
+  | .all r c => .all r c :: cl c
+  | c => [c]
+
+theorem cl_self : ∀ c : Concept, c ∈ cl c := by
+  intro c
+  cases c <;> exact List.Mem.head _
+
+/-- `cl` is transitively closed. -/
+theorem cl_trans : ∀ e x y : Concept, x ∈ cl e → y ∈ cl x → y ∈ cl e := by
+  intro e
+  induction e with
+  | top =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · exact nomatch hx'
+  | bot =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · exact nomatch hx'
+  | atom a =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · exact nomatch hx'
+  | natom a =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · exact nomatch hx'
+  | and c d ihc ihd =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · rcases List.mem_append.mp hx' with h | h
+      · exact List.mem_cons_of_mem _
+          (List.mem_append.mpr (Or.inl (ihc x y h hy)))
+      · exact List.mem_cons_of_mem _
+          (List.mem_append.mpr (Or.inr (ihd x y h hy)))
+  | or c d ihc ihd =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · rcases List.mem_append.mp hx' with h | h
+      · exact List.mem_cons_of_mem _
+          (List.mem_append.mpr (Or.inl (ihc x y h hy)))
+      · exact List.mem_cons_of_mem _
+          (List.mem_append.mpr (Or.inr (ihd x y h hy)))
+  | ex r c ihc =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · exact List.mem_cons_of_mem _ (ihc x y hx' hy)
+  | all r c ihc =>
+    intro x y hx hy
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hy
+    · exact List.mem_cons_of_mem _ (ihc x y hx' hy)
+
+theorem cl_and_left {e c d : Concept} (h : Concept.and c d ∈ cl e) :
+    c ∈ cl e :=
+  cl_trans e _ c h
+    (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl (cl_self c))))
+
+theorem cl_and_right {e c d : Concept} (h : Concept.and c d ∈ cl e) :
+    d ∈ cl e :=
+  cl_trans e _ d h
+    (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr (cl_self d))))
+
+theorem cl_or_left {e c d : Concept} (h : Concept.or c d ∈ cl e) :
+    c ∈ cl e :=
+  cl_trans e _ c h
+    (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl (cl_self c))))
+
+theorem cl_or_right {e c d : Concept} (h : Concept.or c d ∈ cl e) :
+    d ∈ cl e :=
+  cl_trans e _ d h
+    (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr (cl_self d))))
+
+theorem cl_ex {e : Concept} {r : Atom} {c : Concept}
+    (h : Concept.ex r c ∈ cl e) : c ∈ cl e :=
+  cl_trans e _ c h (List.mem_cons_of_mem _ (cl_self c))
+
+theorem cl_all {e : Concept} {r : Atom} {c : Concept}
+    (h : Concept.all r c ∈ cl e) : c ∈ cl e :=
+  cl_trans e _ c h (List.mem_cons_of_mem _ (cl_self c))
+
+/-! ### Model types (classical) -/
+
+open Classical in
+/-- The model type of `x`: the subformulas of `C0` satisfied at `x`.
+    Classical (satisfaction over an abstract model is undecidable). -/
+noncomputable def mty (C0 : Concept) {α : Type} (I : Interp α)
+    (x : α) : List Concept :=
+  (cl C0).filter (fun D => decide (sat I x D))
+
+open Classical in
+theorem mem_mty {C0 : Concept} {α : Type} {I : Interp α} {x : α}
+    {D : Concept} : D ∈ mty C0 I x ↔ D ∈ cl C0 ∧ sat I x D := by
+  constructor
+  · intro h
+    have h2 := List.mem_filter.mp h
+    exact ⟨h2.1, of_decide_eq_true h2.2⟩
+  · intro ⟨h1, h2⟩
+    exact List.mem_filter.mpr ⟨h1, decide_eq_true h2⟩
+
+section ModelTypes
+
+variable {C0 : Concept} {α : Type} {I : Interp α}
+
+theorem mty_clash {x : α} {a : Nat}
+    (h : Concept.atom a ∈ mty C0 I x) :
+    Concept.natom a ∉ mty C0 I x := by
+  intro h2
+  exact (mem_mty.mp h2).2 (mem_mty.mp h).2
+
+theorem mty_nobot {x : α} : Concept.bot ∉ mty C0 I x := by
+  intro h
+  exact (mem_mty.mp h).2
+
+theorem mty_and {x : α} {c d : Concept}
+    (h : Concept.and c d ∈ mty C0 I x) :
+    c ∈ mty C0 I x ∧ d ∈ mty C0 I x := by
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp h
+  exact ⟨mem_mty.mpr ⟨cl_and_left hcl, hsat.1⟩,
+    mem_mty.mpr ⟨cl_and_right hcl, hsat.2⟩⟩
+
+theorem mty_or {x : α} {c d : Concept}
+    (h : Concept.or c d ∈ mty C0 I x) :
+    c ∈ mty C0 I x ∨ d ∈ mty C0 I x := by
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp h
+  rcases hsat with hs | hs
+  · exact Or.inl (mem_mty.mpr ⟨cl_or_left hcl, hs⟩)
+  · exact Or.inr (mem_mty.mpr ⟨cl_or_right hcl, hs⟩)
+
+/-- ∀-firing along a real edge. -/
+theorem mty_all {x y : α} {r : Atom} {E : Concept}
+    (h : Concept.all r E ∈ mty C0 I x) (hy : I.dom y)
+    (hr : I.rho x y = r) : E ∈ mty C0 I y := by
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp h
+  exact mem_mty.mpr ⟨cl_all hcl, hsat y hy hr⟩
+
+/-- ∃-witnessing in the model. -/
+theorem mty_ex {x : α} {r : Atom} {E : Concept}
+    (h : Concept.ex r E ∈ mty C0 I x) :
+    ∃ y, I.dom y ∧ I.rho x y = r ∧ E ∈ mty C0 I y := by
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp h
+  obtain ⟨y, hy, hr, hE⟩ := hsat
+  exact ⟨y, hy, hr, mem_mty.mpr ⟨cl_ex hcl, hE⟩⟩
+
+/-- `mty` lands in `cl` — the finite type universe. -/
+theorem mty_sub {x : α} : ∀ D ∈ mty C0 I x, D ∈ cl C0 :=
+  fun _ hD => (mem_mty.mp hD).1
+
+end ModelTypes
+
+/-! ### The infinite pigeonhole (classical) -/
+
+section Pigeonhole
+
+variable {β : Type}
+
+/-- Values that die out have a common horizon: past `M`, only values
+    that recur infinitely often occur. -/
+theorem tail_aux (univ : List β) (f : Nat → β) :
+    ∃ M, ∀ b ∈ univ, (∃ N, ∀ j, N ≤ j → f j ≠ b) →
+      ∀ j, M ≤ j → f j ≠ b := by
+  induction univ with
+  | nil => exact ⟨0, fun b hb => nomatch hb⟩
+  | cons b rest ih =>
+    obtain ⟨Mr, hMr⟩ := ih
+    by_cases hb : ∃ N, ∀ j, N ≤ j → f j ≠ b
+    · obtain ⟨N0, hN0⟩ := hb
+      refine ⟨max Mr N0, fun b' hb' hex j hj => ?_⟩
+      rcases List.mem_cons.mp hb' with rfl | hmem
+      · exact hN0 j (Nat.le_trans (Nat.le_max_right Mr N0) hj)
+      · exact hMr b' hmem hex j
+          (Nat.le_trans (Nat.le_max_left Mr N0) hj)
+    · refine ⟨Mr, fun b' hb' hex j hj => ?_⟩
+      rcases List.mem_cons.mp hb' with rfl | hmem
+      · exact absurd hex hb
+      · exact hMr b' hmem hex j hj
+
+/-- THE RECURRENT TAIL: past some index, every occurring value occurs
+    infinitely often. -/
+theorem recurrent_tail (univ : List β) (f : Nat → β)
+    (hf : ∀ i, f i ∈ univ) :
+    ∃ M, ∀ j, M ≤ j → ∀ N, ∃ i, N ≤ i ∧ f i = f j := by
+  obtain ⟨M, hM⟩ := tail_aux univ f
+  refine ⟨M, fun j hj N => Classical.byContradiction (fun hno => ?_)⟩
+  exact hM (f j) (hf j) ⟨N, fun i hi heq => hno ⟨i, hi, heq⟩⟩ j hj rfl
+
+/-- Equal values exist past any bound — the segment selector. -/
+theorem segment_exists (univ : List β) (f : Nat → β)
+    (hf : ∀ i, f i ∈ univ) (L : Nat) :
+    ∃ i j, L ≤ i ∧ i < j ∧ f i = f j := by
+  obtain ⟨M, hM⟩ := recurrent_tail univ f hf
+  obtain ⟨j, hj, heq⟩ := hM (max M L) (Nat.le_max_left M L) (max M L + 1)
+  exact ⟨max M L, j, Nat.le_max_right M L, hj, heq.symm⟩
+
+end Pigeonhole
+
+/-! ### Segment coherence -/
+
+section Segment
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {C0 : Concept}
+
+include hI
+
+/-- `∀PP` climbs: it holds at everything above its holder. -/
+theorem sat_all_pp_up {x y : α} (hx : I.dom x) (hy : I.dom y)
+    (hr : I.rho x y = pp) {E : Concept}
+    (h : sat I x (.all pp E)) : sat I y (.all pp E) := by
+  intro z hz hrz
+  apply h z hz
+  have h1 := hI.comp_ x y z hx hy hz
+  rw [hr, hrz] at h1
+  rw [show comp pp pp = [pp] from rfl] at h1
+  exact List.mem_singleton.mp h1
+
+/-- `∀PPI` descends: it holds at everything below its holder. -/
+theorem sat_all_ppi_down {x y : α} (hx : I.dom x) (hy : I.dom y)
+    (hr : I.rho y x = pp) {E : Concept}
+    (h : sat I x (.all ppi E)) : sat I y (.all ppi E) := by
+  intro z hz hrz
+  apply h z hz
+  have hxy : I.rho x y = ppi := by
+    have h2 := hI.conv_ y x hy hx
+    rw [hr] at h2
+    -- h2 : pp = conv (rho x y)  wait: conv_ y x : rho x y = conv (rho y x)
+    rw [h2]
+    rfl
+  have h1 := hI.comp_ x y z hx hy hz
+  rw [hxy, hrz] at h1
+  rw [show comp ppi ppi = [ppi] from rfl] at h1
+  exact List.mem_singleton.mp h1
+
+variable {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+  (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+
+include hdom hstep
+
+/-- SEGMENT COHERENCE, `PP` side: with type-equal endpoints, a `∀PP`
+    obligation anywhere in the segment puts its argument in EVERY
+    segment type. -/
+theorem seg_pp {i j : Nat} (hij : i < j)
+    (hty : mty C0 I (c i) = mty C0 I (c j))
+    {a : Nat} (hia : i ≤ a) (haj : a < j) {E : Concept}
+    (hE : Concept.all pp E ∈ mty C0 I (c a)) :
+    ∀ b, i ≤ b → b < j → E ∈ mty C0 I (c b) := by
+  -- the obligation climbs to the top endpoint, transfers to the bottom
+  have htop : Concept.all pp E ∈ mty C0 I (c j) := by
+    rcases Nat.lt_or_ge a j with hlt | hge
+    · obtain ⟨hcl, hsat⟩ := mem_mty.mp hE
+      exact mem_mty.mpr ⟨hcl, sat_all_pp_up hI (hdom a) (hdom j)
+        (chain_model_pp hI hdom hstep a j hlt) hsat⟩
+    · omega
+  have hbot : Concept.all pp E ∈ mty C0 I (c i) := by
+    rw [hty]; exact htop
+  intro b hib hbj
+  rcases Nat.lt_or_ge i b with hlt | hge
+  · exact mty_all hbot (hdom b) (chain_model_pp hI hdom hstep i b hlt)
+  · have hbi : b = i := by omega
+    subst hbi
+    -- E at the bottom endpoint: fire at the top, transfer back
+    have hEj : E ∈ mty C0 I (c j) :=
+      mty_all hbot (hdom j) (chain_model_pp hI hdom hstep b j (by omega))
+    rw [← hty] at hEj
+    exact hEj
+
+/-- SEGMENT COHERENCE, `PPI` side (dual). -/
+theorem seg_ppi {i j : Nat} (hij : i < j)
+    (hty : mty C0 I (c i) = mty C0 I (c j))
+    {a : Nat} (hia : i ≤ a) (_haj : a < j) {E : Concept}
+    (hE : Concept.all ppi E ∈ mty C0 I (c a)) :
+    ∀ b, i ≤ b → b < j → E ∈ mty C0 I (c b) := by
+  -- the obligation descends to the bottom endpoint, transfers to the top
+  have hbot : Concept.all ppi E ∈ mty C0 I (c i) := by
+    rcases Nat.lt_or_ge i a with hlt | hge
+    · obtain ⟨hcl, hsat⟩ := mem_mty.mp hE
+      exact mem_mty.mpr ⟨hcl, sat_all_ppi_down hI (hdom a) (hdom i)
+        (chain_model_pp hI hdom hstep i a hlt) hsat⟩
+    · have hai : a = i := by omega
+      subst hai
+      exact hE
+  have htop : Concept.all ppi E ∈ mty C0 I (c j) := by
+    rw [← hty]; exact hbot
+  intro b hib hbj
+  -- every segment rung is below the top endpoint
+  have hppi : I.rho (c j) (c b) = ppi :=
+    chain_model_ppi hI hdom hstep b j (by omega)
+  exact mty_all htop (hdom b) hppi
+
+omit hstep in
+/-- SEGMENT COHERENCE, `EQ` side: reflexive firing. -/
+theorem seg_eq {a : Nat} {E : Concept}
+    (hE : Concept.all eq E ∈ mty C0 I (c a)) : E ∈ mty C0 I (c a) :=
+  mty_all hE (hdom a) (hI.refl_eq (c a) (hdom a))
+
+omit hstep in
+/-- `∃EQ` demands are reflexively fulfilled in the model. -/
+theorem seg_ex_eq {a : Nat} {E : Concept}
+    (hE : Concept.ex eq E ∈ mty C0 I (c a)) : E ∈ mty C0 I (c a) := by
+  obtain ⟨y, hy, hr, hEy⟩ := mty_ex hE
+  have hxy : c a = y := hI.eq_id (c a) y (hdom a) hy hr
+  rw [hxy]
+  exact hEy
+
+end Segment
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -2669,5 +3013,9 @@ end ModelChain
 #print axioms external_stabilizes
 #print axioms backward_forcing_dr
 #print axioms forward_absorption_ppi
+#print axioms recurrent_tail
+#print axioms segment_exists
+#print axioms seg_pp
+#print axioms seg_ppi
 
 end POFreeLift
