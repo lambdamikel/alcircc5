@@ -20,7 +20,7 @@ full logic. Standing label: **strongly supported, not certified.**
 | `formal/RCC5NormalForm.lean` | ~215 | `propext` (forward); `+ Classical.choice` (one converse direction) | The RCC5 normal form, **both directions**, arbitrary domains. Forward (`toOrderedDisjoint`): every strong-EQ RCC5 network is an ordered-disjoint structure (PP = strict partial order, DR = downward-closed disjointness) — `propext` only. Converse (GPT-5.6 Pro's canonical set representation, `papers/final_paper_gpt_5.6_review/`; verified in wp88): `eta` maps each x to the non-disjoint pairs with a coordinate ≤ x; `sub_iff_le` (order reproduced) and `eta_injective` are **fully constructive (zero axioms)**, `disj_iff_eta_disjoint` needs `Classical.choice` only for the "sets-disjoint ⟹ D" direction. So the biconditional holds on arbitrary domains. |
 | `formal/ForcingReduction.lean` | ~145 | `propext`, `Quot.sound`, `Classical.choice` | The forcing reduction (Obs. 7.5 formalized): `F6_fin` holds iff no satisfiable concept forces an unbounded rigid horizontal crowd — modulo the width-crowd adequacy lemma, carried as a hypothesis field (not an axiom). |
 | `formal/SemiDecidability.lean` | ~262 | `propext`, `Quot.sound`, `Classical.choice` (+ `ofReduceBool` in the toy witness only) | The semi-decidability schema: since SAT is Π⁰₁ (see below), decidability follows from a dovetailed certificate/refutation search — `decidableSat` — needing only *qualitative* F6 (some finite certificate), **no computable width bound**; `quantitative_free` recovers the bound a posteriori. Four inputs are hypothesis fields, not axioms; the Markov search core is classical-free. Zero `sorry`. |
-| `formal/POFreeLift.lean` | ~3,870 | `propext`, `Quot.sound` (+ `Classical.choice` in the D2 model-side analysis only) | The two-tier **chain-unfolding lift** + (2026-07-22, fragment-certification **round A**) the **logic layer over the unfolding**. Lift: `lift_cc` — if the augmented one-point network (`aug` on `Option β`) is composition-consistent and the kernel is distinct from every external (`K e ≠ EQ`, strong-EQ), then replacing the kernel by an infinite PP-chain under the constant interface (`unf` on `β ⊕ ℕ`) stays composition-consistent. CC = every ordered triple closed, so this **subsumes multi-path PO forcing** — the argument does NOT assume "PO is free" (the 16th review's concern). Eight-case ordered-triple proof. **`unf_is_frame`** strengthens this to a full RCC5 `Frame` (reflexive-EQ + strong-EQ + converse + CC): a finite valid atomic quotient unfolds to an infinite genuine ALCI_RCC5 frame — **no patchwork/compactness needed for the abstract-semantics core**. Round A (see below): `Concept`/`Interp`/`sat`/`Hintikka`/`truth_lemma`/`RCC5Interp`/`Satisfiable` mirroring the normative artifact + the **two-tier single-kernel certificate** (`TwoTier`: external part `E`/`K`/`tauE` + one kernel with `p` cyclic phase types; validity `TwoTierOk` = the lift's frame hypotheses + the Hintikka obligations per **edge class** of the unfolding) + **`twoTier_hintikka`** (a valid certificate's labelling is a Hintikka labelling of the unfolding; chain arithmetic: every rung has a phase, every phase recurs above every rung) + capstone **`twoTier_sound`** (valid certificate + concept at a node ⟹ `Satisfiable` — certificate-to-model soundness THROUGH THE LOGIC, end to end) + `POFree` (the fragment predicate; soundness is fragment-agnostic, `POFree` is completeness-side vocabulary) + witness **`cinf_satisfiable`** (`∃PP.⊤ ⊓ ∀PP.∃PP.⊤` — a concept with NO finite model — proved `Satisfiable` through the full pipeline). Round B (2026-07-22, same day): the **multi-kernel lift** — `desc_cc`/`cchain` (directed chains, ascending or descending), the finite quotient `qnet` on `β ⊕ κ`, the unfolding `munf` on `β ⊕ κ×ℕ`, **`munf_is_frame`** (`Frame qnet ⟹ Frame munf`, all properness derived from the quotient's own strong-EQ — no extra hypotheses), the **`MultiTier`** certificate (any kernel family, per-kernel direction, constant cross-kernel interfaces; validity = Hintikka obligations per edge class incl. cross-kernel `kq_all` and cross-kernel fulfilment), **`multiTier_hintikka`** + capstone **`multiTier_sound`**, and witness **`cboth_satisfiable`** (`Cinf ⊓ ∃DR.(∃PPI.⊤ ⊓ ∀PPI.∃PPI.⊤)` — an ascending AND a descending infinite tower, DR-linked: two kernels of opposite direction, beyond any single-kernel certificate with finite external part). Round C (2026-07-22/23): the **executable first-order checker** — `FinMT` (certificates as pure list data: atom tables, concept lists, direction flags; Gödel-numerable), total decoder `decodeMT`, computable oracle-free Boolean checker **`mtOkB`/`mtAcceptB`** (folds over index ranges and type lists; the frame conditions checked uniformly on a raw `Nat`-encoded quotient `qraw`), soundness **`mtOkB_sound`** (checker ⟹ `MultiTierOk (decodeMT F)`) and capstone **`mtAcceptB_sound`** (acceptance ⟹ `Satisfiable` — first-order data to model, end to end); witness `cboth_satisfiable_exec` re-derives the two-tower result through the checker with the certificate as plain lists, and the acceptance is proved **by kernel `decide`** — no `native_decide`, so the axiom profile stays `propext`/`Quot.sound` even for the executable witness. Round D1 (2026-07-23): checker **completeness** — **`mtOkB_iff`** (the Boolean checker accepts EXACTLY the valid decoded certificates), acceptance-completeness **`mtAcceptB_complete`** (a valid certificate carrying `C0` at any node yields an accepted root index), and the fragment's decision-grade reduction **`decidableSat_of_codes`** (a fixed candidate-code list + the completeness premise — every satisfiable concept has an accepted code in the list, i.e. exactly the round-D2 extraction — yields `Decidable (Satisfiable C0)`; soundness side premise-free). Zero `sorry`. |
+| `formal/POFreeLift.lean` | ~4,166 | `propext`, `Quot.sound` (+ `Classical.choice` in the D2/E2 model-side analysis only) | The two-tier **chain-unfolding lift** + (2026-07-22, fragment-certification **round A**) the **logic layer over the unfolding**. Lift: `lift_cc` — if the augmented one-point network (`aug` on `Option β`) is composition-consistent and the kernel is distinct from every external (`K e ≠ EQ`, strong-EQ), then replacing the kernel by an infinite PP-chain under the constant interface (`unf` on `β ⊕ ℕ`) stays composition-consistent. CC = every ordered triple closed, so this **subsumes multi-path PO forcing** — the argument does NOT assume "PO is free" (the 16th review's concern). Eight-case ordered-triple proof. **`unf_is_frame`** strengthens this to a full RCC5 `Frame` (reflexive-EQ + strong-EQ + converse + CC): a finite valid atomic quotient unfolds to an infinite genuine ALCI_RCC5 frame — **no patchwork/compactness needed for the abstract-semantics core**. Round A (see below): `Concept`/`Interp`/`sat`/`Hintikka`/`truth_lemma`/`RCC5Interp`/`Satisfiable` mirroring the normative artifact + the **two-tier single-kernel certificate** (`TwoTier`: external part `E`/`K`/`tauE` + one kernel with `p` cyclic phase types; validity `TwoTierOk` = the lift's frame hypotheses + the Hintikka obligations per **edge class** of the unfolding) + **`twoTier_hintikka`** (a valid certificate's labelling is a Hintikka labelling of the unfolding; chain arithmetic: every rung has a phase, every phase recurs above every rung) + capstone **`twoTier_sound`** (valid certificate + concept at a node ⟹ `Satisfiable` — certificate-to-model soundness THROUGH THE LOGIC, end to end) + `POFree` (the fragment predicate; soundness is fragment-agnostic, `POFree` is completeness-side vocabulary) + witness **`cinf_satisfiable`** (`∃PP.⊤ ⊓ ∀PP.∃PP.⊤` — a concept with NO finite model — proved `Satisfiable` through the full pipeline). Round B (2026-07-22, same day): the **multi-kernel lift** — `desc_cc`/`cchain` (directed chains, ascending or descending), the finite quotient `qnet` on `β ⊕ κ`, the unfolding `munf` on `β ⊕ κ×ℕ`, **`munf_is_frame`** (`Frame qnet ⟹ Frame munf`, all properness derived from the quotient's own strong-EQ — no extra hypotheses), the **`MultiTier`** certificate (any kernel family, per-kernel direction, constant cross-kernel interfaces; validity = Hintikka obligations per edge class incl. cross-kernel `kq_all` and cross-kernel fulfilment), **`multiTier_hintikka`** + capstone **`multiTier_sound`**, and witness **`cboth_satisfiable`** (`Cinf ⊓ ∃DR.(∃PPI.⊤ ⊓ ∀PPI.∃PPI.⊤)` — an ascending AND a descending infinite tower, DR-linked: two kernels of opposite direction, beyond any single-kernel certificate with finite external part). Round C (2026-07-22/23): the **executable first-order checker** — `FinMT` (certificates as pure list data: atom tables, concept lists, direction flags; Gödel-numerable), total decoder `decodeMT`, computable oracle-free Boolean checker **`mtOkB`/`mtAcceptB`** (folds over index ranges and type lists; the frame conditions checked uniformly on a raw `Nat`-encoded quotient `qraw`), soundness **`mtOkB_sound`** (checker ⟹ `MultiTierOk (decodeMT F)`) and capstone **`mtAcceptB_sound`** (acceptance ⟹ `Satisfiable` — first-order data to model, end to end); witness `cboth_satisfiable_exec` re-derives the two-tower result through the checker with the certificate as plain lists, and the acceptance is proved **by kernel `decide`** — no `native_decide`, so the axiom profile stays `propext`/`Quot.sound` even for the executable witness. Round D1 (2026-07-23): checker **completeness** — **`mtOkB_iff`** (the Boolean checker accepts EXACTLY the valid decoded certificates), acceptance-completeness **`mtAcceptB_complete`** (a valid certificate carrying `C0` at any node yields an accepted root index), and the fragment's decision-grade reduction **`decidableSat_of_codes`** (a fixed candidate-code list + the completeness premise — every satisfiable concept has an accepted code in the list, i.e. exactly the round-D2 extraction — yields `Decidable (Satisfiable C0)`; soundness side premise-free). Zero `sorry`. |
 
 **Toolchain.** `elan`-installed Lean 4.32.0 at `~/.elan/bin`. No mathlib,
 no lakefile. Build each file directly:
@@ -344,6 +344,34 @@ Intended instantiation: one block per vertical/DR demand component +
 one "library" block per `∃PO`-subformula; libraries only demand
 strictly smaller libraries, so the pool closes.
 
+**Round E2a (landed, 2026-07-23): assembly site preparation.** The
+first stone of the block construction — the moves every block builder
+makes, certified once: (1) **the finite type universe**
+(`sublists`/`filter_mem_sublists`/`mty_mem_sublists`: every model type
+is a sublist of `cl C0`, instantiating D2b's pigeonhole for the type
+sequence of any model chain); (2) **read-off frames** (`frame_ext`,
+`readoff_frame`, `readoff_qnet_frame` — the last AXIOM-FREE): the
+restriction of a model's atomic relation to any family of pairwise
+distinct domain elements is a `Frame`, and a quotient network whose
+external values, kernel rows, and kernel–kernel values are read off
+the model at distinct representatives satisfies `frame_q` FOR FREE —
+the assembly never re-proves composition closure; (3) **the chain
+builder** (`buildChain` + `_zero`/`_prop`/`_step`/`_dom`): dependent
+choice turns any productive predicate (`S x` guarantees a
+`PP`-successor satisfying `S`) into an infinite ascending model chain
+— the only place the vertical recursion needs choice; (4) **segment
+selection** (`segment_select`, the capstone): past any bound, a model
+chain has a segment with type-equal endpoints chosen past BOTH the
+recurrent tail (every phase type recurs cofinally — exactly the
+recurrence hypothesis of D2c's witness selection) and the joint
+stabilization horizon of any finite external list
+(`externals_stabilize`; relations constant from the segment base on —
+the kernel's constant interface rows), plus `segment_kk_pp`/
+`segment_kk_ppi` re-indexing D2b's segment coherence to the
+phase-offset `MultiTierOk.kk_*` shape. Ascending chains only,
+mirroring D2a–D2c; the descending duals are a mirrored round. Zero
+`sorry`; file now ~4,166 lines.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
@@ -351,11 +379,12 @@ construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
 the assembly itself is genuinely large, and parts of it are only
 SKETCHED in the two-tier paper, so it needs careful proof engineering,
 not a rushed transcription (the round-19/20 lesson). Recorded design
-(from the 2026-07-23 analysis):
-  1. **Chain construction**: vertical demand recursion (`∃PP`/`∃PPI`
-     towers) needs dependent choice to build `c : ℕ → α` from repeated
-     `mty_ex` — then D2b/c supply the recurrent tail, the segment, and
-     the constant-interface witnesses.
+(from the 2026-07-23 analysis; items 1 and 3 revised after round E2a's
+design work):
+  1. **Chain construction** — LAID by E2a (`buildChain` +
+     `segment_select` + the D2b/c toolkit). What remains of this item
+     is only instantiating the productive predicate `S` from the
+     actual vertical demand structure of a type.
   2. **The finite part**: requirement-typed unraveling — certificate
      types are the REQUIRED formulas (root `C₀`, ∧/∨ decomposition,
      ∀-firing along declared edges), not full model types; model
@@ -365,18 +394,43 @@ not a rushed transcription (the round-19/20 lesson). Recorded design
      once to `∀PPI` and then feeds only vertical structure), so the
      horizontal unraveling terminates; vertical demand paths either
      terminate (finite external ladders) or pigeonhole into
-     segment-kernels.
-  3. **Defaults**: all undeclared edges and ALL cross-kernel values are
-     `PO` — always frame-safe (`PO` inhabits every cell of its row and
-     column, and `po ∈ comp(R,S)` for all horizontal `R,S`) and, by
-     `mty_no_all_po`, never obligated. `kq_all` is vacuous; kernels
-     never need to talk to each other.
+     segment-kernels. Requirement-typing is essential TWICE: for the
+     `K(C₀)` bound, and for the pool's tag-inequality (a full-`mty`
+     library block for `D` could demand `∃PO.D` itself; a
+     requirement-typed library only demands strict subformulas of `D`,
+     so the pool closes without self-reference).
+  3. **Declared values and defaults** (revised — the earlier "all
+     cross-kernel values PO, always frame-safe" was too strong):
+     within a block, every DECLARED value is read off the model at
+     representative elements (E2a's read-off discipline ⟹ `frame_q`
+     free); `kq_all` with `Q = po` is indeed vacuous
+     (`mty_no_all_po`), but frame closure can FORCE vertical
+     cross-kernel values (e.g. a kernel above a `PP`-witness of
+     another kernel: `Q` is forced `pp` — happily also constant on
+     the model rectangle, by transitivity). The genuinely open E2c
+     point is the **rectangle problem**: a single `Q` value must be
+     constant across BOTH segments; for vertical-recursion kernels it
+     is forced-constant, for DR-branch kernels it is not forced, and
+     there `Q := po` needs a mixed (not pure read-off) frame argument
+     — or a DR-edge variant of the glue. Related: witnesses picked
+     AFTER segments break other kernels' constancy (selection-order
+     circularity) — resolve by per-kernel witness privacy or a
+     finite-closure/priority argument. Cross-BLOCK edges stay
+     uniformly `PO` (E0/E1, unchanged). Also recorded: `∃PP` demands
+     never need chain-internal fulfilment — off-chain `PP`-witnesses
+     via `pp_witness_all_below` always serve (the paper's V6); the
+     chain-internal `k_ex` branch is needed only for `r = eq`
+     (`seg_ex_eq`) and opportunistic reuse.
   4. **D2d**: the `K(C₀)` counting (certificate dimensions bounded by
      computable functions of `|cl C₀|`) + a `FinMT` enumerator with a
      membership-completeness lemma, instantiating `codes` in
      `decidableSat_of_codes` — then `Decidable (Satisfiable C₀)` for
      ∀PO-free `C₀`, the project's first end-to-end kernel-checked
      decidability theorem.
+  5. **The descending mirror**: D2a–D2c and E2a are ascending-only;
+     descending kernels (`∃PPI` towers) need the mirrored lemma set
+     (dual stabilization rank, dual forcing, dual segment coherence,
+     dual witness selection, dual chain builder).
 
 ## The two cold reviews of the Lean
 

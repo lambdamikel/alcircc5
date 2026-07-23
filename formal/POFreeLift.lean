@@ -3843,6 +3843,295 @@ theorem glueFam_label (b : Fin B) (x : β ⊕ κ × Nat) :
 
 end FamGlue
 
+/-! ## Round E2a (2026-07-23): assembly site preparation — sublist
+universes, read-off frames, the chain builder, and segment selection
+
+The first stone of the block construction (the "remaining assembly" of
+LEAN.md).  Every block the assembly builds starts from the same moves,
+certified here once and for all:
+
+1. **The type universe is finite** (`mty_mem_sublists`): every model
+   type is a sublist of `cl C0`, so D2b's pigeonhole machinery applies
+   to the type sequence of any model chain.
+
+2. **Read-off frames** (`readoff_frame` / `readoff_qnet_frame`): the
+   restriction of a model's atomic relation to ANY family of pairwise
+   distinct domain elements is a `Frame`; in particular a quotient
+   network whose external values, kernel rows, and kernel–kernel
+   values are all read off the model at distinct representative
+   elements satisfies `frame_q` FOR FREE.  This is why the assembly
+   never re-proves composition closure: wherever a certificate value
+   is declared, it is read off the model.
+
+3. **The chain builder** (`buildChain`): from any productive predicate
+   (`S x` guarantees a `PP`-successor satisfying `S`), dependent
+   choice yields an infinite ascending model chain — the input to the
+   whole D2 layer.  This is the only place the extraction's vertical
+   recursion needs choice.
+
+4. **Segment selection** (`segment_select`, the capstone): along any
+   model chain, past any bound, there is a segment with type-equal
+   endpoints (`mty (c i) = mty (c (i+p))`) chosen PAST the recurrent
+   tail (every phase type recurs cofinally — exactly the recurrence
+   hypothesis of D2c's witness selection) and PAST the stabilization
+   horizon of any finite list of externals (their relations to the
+   chain are constant from `i` on — the constant-interface rows of the
+   kernel).  `segment_kk_pp` / `segment_kk_ppi` re-index D2b's segment
+   coherence to the phase-offset form of `MultiTierOk.kk_pp`/`kk_ppi`.
+
+Ascending chains only, mirroring D2a–D2c; the descending duals are the
+mirrored round (as round B was to round A). -/
+
+/-! ### The sublist universe -/
+
+section Sublists
+
+variable {γ : Type}
+
+/-- All sublists (in order) of a list — the finite universe every
+    `List.filter` of it inhabits. -/
+def sublists : List γ → List (List γ)
+  | [] => [[]]
+  | a :: t => sublists t ++ (sublists t).map (a :: ·)
+
+theorem filter_mem_sublists (p : γ → Bool) :
+    ∀ l : List γ, l.filter p ∈ sublists l := by
+  intro l
+  induction l with
+  | nil => exact List.Mem.head _
+  | cons a t ih =>
+    show List.filter p (a :: t) ∈ sublists t ++ (sublists t).map (a :: ·)
+    cases hp : p a with
+    | true =>
+      have hf : List.filter p (a :: t) = a :: t.filter p := by
+        simp only [List.filter, hp]
+      rw [hf]
+      exact List.mem_append.mpr
+        (Or.inr (List.mem_map.mpr ⟨t.filter p, ih, rfl⟩))
+    | false =>
+      have hf : List.filter p (a :: t) = t.filter p := by
+        simp only [List.filter, hp]
+      rw [hf]
+      exact List.mem_append.mpr (Or.inl ih)
+
+end Sublists
+
+/-- Every model type inhabits the finite sublist universe of the
+    closure — the pigeonhole universe of the extraction. -/
+theorem mty_mem_sublists {C0 : Concept} {α : Type} {I : Interp α}
+    (x : α) : mty C0 I x ∈ sublists (cl C0) :=
+  filter_mem_sublists _ (cl C0)
+
+/-! ### Read-off frames -/
+
+/-- Frames transfer along pointwise-equal labellings. -/
+theorem frame_ext {V : Type} {N N' : V → V → Atom}
+    (hNN : ∀ x y, N x y = N' x y) (h : Frame N) : Frame N' where
+  refl_eq := by
+    intro x
+    rw [← hNN x x]
+    exact h.refl_eq x
+  eq_id := by
+    intro x y hxy
+    rw [← hNN x y] at hxy
+    exact h.eq_id x y hxy
+  conv_ := by
+    intro x y
+    rw [← hNN y x, ← hNN x y]
+    exact h.conv_ x y
+  comp_ := by
+    intro x y z
+    rw [← hNN x z, ← hNN x y, ← hNN y z]
+    exact h.comp_ x y z
+
+section ReadOff
+
+variable {α V : Type} {I : Interp α}
+
+/-- THE READ-OFF FRAME: the restriction of a model's atomic relation
+    to any family of pairwise distinct domain elements is a frame. -/
+theorem readoff_frame (hI : RCC5Interp I) (elt : V → α)
+    (hdom : ∀ v, I.dom (elt v))
+    (hinj : ∀ v w, elt v = elt w → v = w) :
+    Frame (fun v w => I.rho (elt v) (elt w)) where
+  refl_eq v := hI.refl_eq (elt v) (hdom v)
+  eq_id v w h := hinj v w (hI.eq_id (elt v) (elt w) (hdom v) (hdom w) h)
+  conv_ v w := hI.conv_ (elt v) (elt w) (hdom v) (hdom w)
+  comp_ v w u :=
+    hI.comp_ (elt v) (elt w) (elt u) (hdom v) (hdom w) (hdom u)
+
+end ReadOff
+
+section ReadOffQnet
+
+variable {α : Type} {I : Interp α}
+
+/-- THE READ-OFF QUOTIENT FRAME (`frame_q` for free): a quotient
+    network whose external values, kernel rows, and kernel–kernel
+    values are all read off a model at pairwise distinct
+    representative elements is a frame. -/
+theorem readoff_qnet_frame [DecidableEq κ] (hI : RCC5Interp I)
+    (eltE : β → α) (eltK : κ → α)
+    (hdE : ∀ e, I.dom (eltE e)) (hdK : ∀ k, I.dom (eltK k))
+    (hinj : ∀ v w : β ⊕ κ,
+      Sum.elim eltE eltK v = Sum.elim eltE eltK w → v = w) :
+    Frame (qnet (fun e f => I.rho (eltE e) (eltE f))
+      (fun k f => I.rho (eltK k) (eltE f))
+      (fun k k' => I.rho (eltK k) (eltK k'))) := by
+  refine frame_ext (fun x y => ?_)
+    (readoff_frame hI (Sum.elim eltE eltK)
+      (fun v => match v with
+        | .inl e => hdE e
+        | .inr k => hdK k) hinj)
+  rcases x with e | k <;> rcases y with f | k'
+  · rfl
+  · show I.rho (eltE e) (eltK k') = conv (I.rho (eltK k') (eltE e))
+    exact hI.conv_ (eltK k') (eltE e) (hdK k') (hdE e)
+  · rfl
+  · show I.rho (eltK k) (eltK k')
+      = if k = k' then eq else I.rho (eltK k) (eltK k')
+    by_cases hk : k = k'
+    · subst hk
+      rw [if_pos rfl]
+      exact hI.refl_eq (eltK k) (hdK k)
+    · rw [if_neg hk]
+
+end ReadOffQnet
+
+/-! ### The chain builder (dependent choice) -/
+
+section ChainBuilder
+
+variable {α : Type} {I : Interp α} (S : α → Prop)
+  (hprod : ∀ x, S x → ∃ y, S y ∧ I.dom y ∧ I.rho x y = pp)
+
+/-- The chain, bundled with its invariant. -/
+noncomputable def chainAux (x0 : α) (h0 : S x0) : Nat → {a : α // S a}
+  | 0 => ⟨x0, h0⟩
+  | n + 1 =>
+    ⟨Classical.choose (hprod (chainAux x0 h0 n).1 (chainAux x0 h0 n).2),
+     (Classical.choose_spec
+       (hprod (chainAux x0 h0 n).1 (chainAux x0 h0 n).2)).1⟩
+
+/-- THE CHAIN BUILDER: from a productive predicate, an infinite
+    ascending model chain. -/
+noncomputable def buildChain (x0 : α) (h0 : S x0) (n : Nat) : α :=
+  (chainAux S hprod x0 h0 n).1
+
+theorem buildChain_zero (x0 : α) (h0 : S x0) :
+    buildChain S hprod x0 h0 0 = x0 := rfl
+
+theorem buildChain_prop (x0 : α) (h0 : S x0) (n : Nat) :
+    S (buildChain S hprod x0 h0 n) :=
+  (chainAux S hprod x0 h0 n).2
+
+theorem buildChain_step (x0 : α) (h0 : S x0) (n : Nat) :
+    I.rho (buildChain S hprod x0 h0 n)
+      (buildChain S hprod x0 h0 (n + 1)) = pp :=
+  (Classical.choose_spec
+    (hprod (chainAux S hprod x0 h0 n).1 (chainAux S hprod x0 h0 n).2)).2.2
+
+theorem buildChain_dom (x0 : α) (h0 : S x0) (hd0 : I.dom x0) :
+    ∀ n, I.dom (buildChain S hprod x0 h0 n)
+  | 0 => hd0
+  | n + 1 =>
+    (Classical.choose_spec
+      (hprod (chainAux S hprod x0 h0 n).1
+        (chainAux S hprod x0 h0 n).2)).2.1
+
+end ChainBuilder
+
+/-! ### Segment selection -/
+
+section SegmentSelect
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+  (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+
+include hI hdom hstep
+
+/-- THE FINITE STABILIZATION HORIZON: the relations of finitely many
+    externals to an ascending chain are jointly eventually constant. -/
+theorem externals_stabilize (exts : List α) :
+    (∀ e ∈ exts, I.dom e) →
+    ∃ N, ∀ e ∈ exts, ∀ m n, N ≤ m → N ≤ n →
+      I.rho (c m) e = I.rho (c n) e := by
+  induction exts with
+  | nil => exact fun _ => ⟨0, fun e he => nomatch he⟩
+  | cons e rest ih =>
+    intro hexts
+    obtain ⟨Nr, hNr⟩ := ih (fun f hf => hexts f (List.mem_cons_of_mem e hf))
+    obtain ⟨Ne, w, hNe⟩ :=
+      external_stabilizes hI hdom hstep (hexts e (List.Mem.head rest))
+    refine ⟨max Ne Nr, fun f hf m n hm hn => ?_⟩
+    rcases List.mem_cons.mp hf with rfl | hmem
+    · rw [hNe m (Nat.le_trans (Nat.le_max_left Ne Nr) hm),
+        hNe n (Nat.le_trans (Nat.le_max_left Ne Nr) hn)]
+    · exact hNr f hmem m n (Nat.le_trans (Nat.le_max_right Ne Nr) hm)
+        (Nat.le_trans (Nat.le_max_right Ne Nr) hn)
+
+/-- SEGMENT SELECTION (the round's capstone): past any bound, an
+    ascending model chain has a segment with type-equal endpoints,
+    every phase type recurring cofinally (the recurrence hypothesis of
+    the witness-selection lemmas), and constant relations to any given
+    finite list of externals from the segment base on (the constant
+    interface rows of the kernel). -/
+theorem segment_select (C0 : Concept) (exts : List α)
+    (hexts : ∀ e ∈ exts, I.dom e) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ e ∈ exts, ∀ m, i ≤ m → I.rho (c m) e = I.rho (c i) e) ∧
+      (∀ a, i ≤ a → ∀ N, ∃ m, N ≤ m ∧
+        mty C0 I (c m) = mty C0 I (c a)) := by
+  obtain ⟨M, hM⟩ := recurrent_tail (sublists (cl C0))
+    (fun m => mty C0 I (c m)) (fun m => mty_mem_sublists (c m))
+  obtain ⟨Ns, hNs⟩ := externals_stabilize hI hdom hstep exts hexts
+  obtain ⟨i, j, hLi, hij, heq⟩ := segment_exists (sublists (cl C0))
+    (fun m => mty C0 I (c m)) (fun m => mty_mem_sublists (c m))
+    (max L (max M Ns))
+  have hLi' : L ≤ i := Nat.le_trans (Nat.le_max_left L (max M Ns)) hLi
+  have hMi : M ≤ i := Nat.le_trans
+    (Nat.le_trans (Nat.le_max_left M Ns) (Nat.le_max_right L (max M Ns)))
+    hLi
+  have hNsi : Ns ≤ i := Nat.le_trans
+    (Nat.le_trans (Nat.le_max_right M Ns) (Nat.le_max_right L (max M Ns)))
+    hLi
+  refine ⟨i, j - i, hLi', by omega, ?_, ?_, ?_⟩
+  · have hj : i + (j - i) = j := by omega
+    rw [hj]
+    exact heq
+  · intro e he m him
+    exact hNs e he m i (Nat.le_trans hNsi him) hNsi
+  · intro a hia N
+    exact hM a (Nat.le_trans hMi hia) N
+
+/-- Segment coherence in phase-offset form (the `kk_pp` shape): a
+    `∀PP` obligation at any phase offset puts its argument at every
+    phase offset. -/
+theorem segment_kk_pp {C0 : Concept} {i p : Nat}
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) {E : Concept}
+    (hE : Concept.all pp E ∈ mty C0 I (c (i + a))) :
+    ∀ b, b < p → E ∈ mty C0 I (c (i + b)) := by
+  intro b hb
+  exact seg_pp hI hdom hstep (show i < i + p by omega) hty
+    (show i ≤ i + a by omega) (show i + a < i + p by omega) hE
+    (i + b) (by omega) (by omega)
+
+/-- Segment coherence in phase-offset form (the `kk_ppi` shape). -/
+theorem segment_kk_ppi {C0 : Concept} {i p : Nat}
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) {E : Concept}
+    (hE : Concept.all ppi E ∈ mty C0 I (c (i + a))) :
+    ∀ b, b < p → E ∈ mty C0 I (c (i + b)) := by
+  intro b hb
+  exact seg_ppi hI hdom hstep (show i < i + p by omega) hty
+    (show i ≤ i + a by omega) (show i + a < i + p by omega) hE
+    (i + b) (by omega) (by omega)
+
+end SegmentSelect
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -3866,5 +4155,12 @@ end FamGlue
 #print axioms glue_ok
 #print axioms glue_frame
 #print axioms glueFam_ok
+#print axioms mty_mem_sublists
+#print axioms readoff_qnet_frame
+#print axioms buildChain_step
+#print axioms externals_stabilize
+#print axioms segment_select
+#print axioms segment_kk_pp
+#print axioms segment_kk_ppi
 
 end POFreeLift
