@@ -5629,6 +5629,142 @@ theorem ordered_disjoint_frame {V : Type} (N : V → V → Atom)
       | dr =>
         cases N x z <;> decide
 
+/-! ## Round E3c (2026-07-23): the two-sorted block labelling
+
+`ordered_disjoint_frame` packaged as the exact tool the multi-kernel
+block builder calls: a carrier of representatives, a symmetric TIGHT
+relation whose model values satisfy the two closure laws, and the
+labelling `EQ` on the diagonal / read-off model value on tight pairs /
+loose `PO` everywhere else — a `Frame`, with the loose pairs never
+consulting the model.  The closure laws' VALUE side is free (the
+model's own composition runs through the singleton cells); only the
+skeleton's closure under the two forcings is the builder's
+obligation. -/
+
+section TwoSorted
+
+variable {α V : Type} {I : Interp α}
+
+open Classical in
+/-- The two-sorted block labelling: `EQ` on the diagonal, the model
+    value on TIGHT pairs, loose `PO` elsewhere. -/
+noncomputable def twoSorted (I : Interp α) (elt : V → α)
+    (Tight : V → V → Prop) : V → V → Atom :=
+  fun v w => if v = w then eq
+    else if Tight v w then I.rho (elt v) (elt w) else po
+
+/-- A non-`EQ`, non-`PO` value can only come from the tight branch. -/
+theorem twoSorted_elim {elt : V → α} {Tight : V → V → Prop}
+    {x y : V} {a : Atom} (hne : a ≠ eq) (hnpo : a ≠ po)
+    (h : twoSorted I elt Tight x y = a) :
+    x ≠ y ∧ Tight x y ∧ I.rho (elt x) (elt y) = a := by
+  unfold twoSorted at h
+  by_cases hxy : x = y
+  · rw [if_pos hxy] at h
+    exact absurd h.symm hne
+  · rw [if_neg hxy] at h
+    by_cases ht : Tight x y
+    · rw [if_pos ht] at h
+      exact ⟨hxy, ht, h⟩
+    · rw [if_neg ht] at h
+      exact absurd h.symm hnpo
+
+/-- Tight off-diagonal pairs read the model. -/
+theorem twoSorted_tight {elt : V → α} {Tight : V → V → Prop}
+    {x y : V} (hxy : x ≠ y) (ht : Tight x y) :
+    twoSorted I elt Tight x y = I.rho (elt x) (elt y) := by
+  unfold twoSorted
+  rw [if_neg hxy, if_pos ht]
+
+/-- Loose off-diagonal pairs are `PO`. -/
+theorem twoSorted_loose {elt : V → α} {Tight : V → V → Prop}
+    {x y : V} (hxy : x ≠ y) (ht : ¬ Tight x y) :
+    twoSorted I elt Tight x y = po := by
+  unfold twoSorted
+  rw [if_neg hxy, if_neg ht]
+
+/-- THE TWO-SORTED FRAME: a symmetric tight skeleton closed under the
+    two ordered-disjoint forcings (`PP`-transitivity, `DR` downward
+    closure), with values read off the model at injective
+    representatives, makes the two-sorted labelling a `Frame` — the
+    loose `PO` pairs never consult the model. -/
+theorem twoSorted_frame (hI : RCC5Interp I)
+    (elt : V → α) (hdom : ∀ v, I.dom (elt v))
+    (hinj : ∀ v w, elt v = elt w → v = w)
+    (Tight : V → V → Prop)
+    (hsymm : ∀ v w, Tight v w → Tight w v)
+    (htpp : ∀ v w u, Tight v w → Tight w u →
+      I.rho (elt v) (elt w) = pp → I.rho (elt w) (elt u) = pp →
+      Tight v u)
+    (htdr : ∀ v w u, Tight v w → Tight w u →
+      I.rho (elt v) (elt w) = pp → I.rho (elt w) (elt u) = dr →
+      Tight v u) :
+    Frame (twoSorted I elt Tight) := by
+  refine ordered_disjoint_frame _ ?_ ?_ ?_ ?_ ?_
+  · -- reflexive EQ
+    intro x
+    unfold twoSorted
+    rw [if_pos rfl]
+  · -- strong EQ
+    intro x y h
+    unfold twoSorted at h
+    by_cases hxy : x = y
+    · exact hxy
+    · rw [if_neg hxy] at h
+      by_cases ht : Tight x y
+      · rw [if_pos ht] at h
+        exact hinj x y (hI.eq_id _ _ (hdom x) (hdom y) h)
+      · rw [if_neg ht] at h
+        exact absurd h (by decide)
+  · -- converse coherence
+    intro x y
+    unfold twoSorted
+    by_cases hxy : x = y
+    · rw [if_pos hxy, if_pos hxy.symm]
+      rfl
+    · rw [if_neg hxy, if_neg (fun hh => hxy hh.symm)]
+      by_cases ht : Tight x y
+      · rw [if_pos ht, if_pos (hsymm x y ht)]
+        exact hI.conv_ _ _ (hdom x) (hdom y)
+      · rw [if_neg ht, if_neg (fun hh => ht (hsymm y x hh))]
+        rfl
+  · -- PP-transitivity
+    intro x y z h1 h2
+    obtain ⟨hxy, ht1, hr1⟩ := twoSorted_elim (by decide) (by decide) h1
+    obtain ⟨hyz, ht2, hr2⟩ := twoSorted_elim (by decide) (by decide) h2
+    have hxz : x ≠ z := by
+      intro hh
+      subst hh
+      have hc := hI.conv_ (elt x) (elt y) (hdom x) (hdom y)
+      rw [hr1, hr2] at hc
+      exact absurd hc (by decide)
+    have htz := htpp x y z ht1 ht2 hr1 hr2
+    have hval : I.rho (elt x) (elt z) = pp := by
+      have hm := hI.comp_ (elt x) (elt y) (elt z) (hdom x) (hdom y)
+        (hdom z)
+      rw [hr1, hr2] at hm
+      exact List.mem_singleton.mp hm
+    rw [twoSorted_tight hxz htz, hval]
+  · -- DR downward closure
+    intro x y z h1 h2
+    obtain ⟨hxy, ht1, hr1⟩ := twoSorted_elim (by decide) (by decide) h1
+    obtain ⟨hyz, ht2, hr2⟩ := twoSorted_elim (by decide) (by decide) h2
+    have hxz : x ≠ z := by
+      intro hh
+      subst hh
+      have hc := hI.conv_ (elt x) (elt y) (hdom x) (hdom y)
+      rw [hr1, hr2] at hc
+      exact absurd hc (by decide)
+    have htz := htdr x y z ht1 ht2 hr1 hr2
+    have hval : I.rho (elt x) (elt z) = dr := by
+      have hm := hI.comp_ (elt x) (elt y) (elt z) (hdom x) (hdom y)
+        (hdom z)
+      rw [hr1, hr2] at hm
+      exact List.mem_singleton.mp hm
+    rw [twoSorted_tight hxz htz, hval]
+
+end TwoSorted
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -5680,5 +5816,6 @@ theorem ordered_disjoint_frame {V : Type} (N : V → V → Atom)
 #print axioms done_kernel_block
 #print axioms dkernel_block_of_chain
 #print axioms ordered_disjoint_frame
+#print axioms twoSorted_frame
 
 end POFreeLift

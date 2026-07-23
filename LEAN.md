@@ -488,6 +488,20 @@ routed through it). The rectangle problem thus survives ONLY for
 tight values, where forcing gives constancy for free. Zero `sorry`;
 file now ~5,684 lines.
 
+**Round E3c (landed, 2026-07-23): the two-sorted block labelling.**
+E3b packaged as the exact tool the multi-kernel builder calls:
+**`twoSorted`** (`EQ` diagonal / read-off model value on TIGHT pairs /
+loose `PO` elsewhere; classical `if`) with `twoSorted_elim`/`_tight`/
+`_loose`, and **`twoSorted_frame`**: a SYMMETRIC tight skeleton closed
+under the two ordered-disjoint forcings (`PP`-transitivity, `DR`
+downward closure), values read off the model at INJECTIVE
+representatives ⟹ the two-sorted labelling is a `Frame` — the loose
+`PO` pairs never consult the model. The closure laws' VALUE side is
+free (the model's own composition runs through the singleton cells);
+only the skeleton's closure under the two forcings is the builder's
+obligation. Zero `sorry`; file now ~5,821 lines; axioms as usual
+(choice only via the classical `if`).
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
