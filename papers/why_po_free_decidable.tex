@@ -877,11 +877,17 @@ acceptance yields a model (kernel-checked end to end; the two-tower
 witness's acceptance runs inside the kernel via plain \code{decide}),
 and a certified reduction (\code{decidableSat\_of\_codes}) turns any
 candidate-code list plus a completeness premise into
-$\mathrm{Decidable}$ satisfiability. Still open: exactly that premise
---- the extraction carrying the $K(C_0)$ bound (round~D2 --- see
-\code{LEAN.md}; its model-side core, the external-relation
-stabilization theorem of \S\ref{ssec:crux} with both forcing
-corollaries, is already kernel-checked). Until then, the honest label is the project's
+$\mathrm{Decidable}$ satisfiability. Rounds D2a--c further certified
+the extraction's entire \textbf{model-side toolkit}: the stabilization
+theorem of \S\ref{ssec:crux} with both forcing corollaries, the
+infinite pigeonhole (recurrent tails, segment selection), segment
+coherence (cycling a type-equal chain segment into a kernel is
+legitimate), witness selection (late picking), and the syntactic
+$\forall\PO$-vacuity (\code{pofree\_cl\_all}: no $\forall\PO$ ever
+appears in the fragment's closure --- the escape valve,
+kernel-checked). Still open: the assembly construction gluing these
+into an accepted code, and the $K(C_0)$ counting/enumeration (see
+\code{LEAN.md} for the recorded design). Until then, the honest label is the project's
 standing one: \textbf{strongly supported, with the soundness core
 machine-certified --- not certified end-to-end.}
 

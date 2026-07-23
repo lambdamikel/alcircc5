@@ -74,6 +74,22 @@ certificate architecture* compresses into one well-posed lemma. Work is **paused
 paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
 
+> **Update (2026-07-22/23): the ∀PO-free fragment certification
+> campaign.** The full-logic question stays open and paused, but the
+> project's strongest *unconditional* theorem — decidability of the
+> **∀PO-free fragment** — is now being certified end-to-end in
+> [`formal/POFreeLift.lean`](formal/POFreeLift.lean) (~3,160 lines,
+> zero sorries): the certificate-to-model soundness pipeline
+> (multi-kernel, both chain directions), an executable first-order
+> checker that provably accepts *exactly* the valid certificates, the
+> decision reduction, and the extraction's complete model-side toolkit
+> (stabilization, pigeonhole, segment coherence, witness selection,
+> and the kernel-checked "escape valve": no ∀PO obligation exists
+> anywhere in the fragment's closure). Remaining: the assembly
+> construction and the K(C₀) counting — staged with a recorded design
+> in [LEAN.md](LEAN.md). See the explainer
+> [`papers/why_po_free_decidable.pdf`](papers/why_po_free_decidable.pdf).
+
 > **16th review (2026-07-18):** a cold review of the overview paper
 > ([`papers/final_gpt_review_overview_paper/`](papers/final_gpt_review_overview_paper/))
 > found a **definite error** — a broken one-point-extension example, rooted

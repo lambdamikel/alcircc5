@@ -723,11 +723,16 @@ list data**, is accepted by a computable oracle-free Boolean checker
 (kernel-checked end to end; the two-tower witness's acceptance runs
 inside the kernel via plain `decide`), and a certified reduction
 (`decidableSat_of_codes`) turns any candidate-code list plus a
-completeness premise into `Decidable (Satisfiable C₀)`. Still open:
-exactly that premise — the extraction carrying the K(C₀) bound (round
-D2 — see `LEAN.md`; its model-side core, the external-relation
-stabilization theorem of §5.2 with both forcing corollaries, is
-already kernel-checked). Until then, the honest label is the
+completeness premise into `Decidable (Satisfiable C₀)`. Rounds D2a–c
+further certified the extraction's entire **model-side toolkit**: the
+stabilization theorem of §5.2 with both forcing corollaries, the
+infinite pigeonhole (recurrent tails, segment selection), segment
+coherence (cycling a type-equal chain segment into a kernel is
+legitimate), witness selection (late picking), and the syntactic
+∀PO-vacuity (`pofree_cl_all`: no ∀PO ever appears in the fragment's
+closure — the escape valve, kernel-checked). Still open: the assembly
+construction gluing these into an accepted code, and the K(C₀)
+counting/enumeration (see `LEAN.md` for the recorded design). Until then, the honest label is the
 project's standing one: **strongly supported, with the soundness core
 machine-certified — not certified end-to-end.**
 
