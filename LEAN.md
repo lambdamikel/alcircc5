@@ -450,6 +450,19 @@ NOT yet: the multi-kernel block (declared `Q` values — the rectangle
 problem) and the recursion that discharges `e_ex`. Zero `sorry`; file
 now ~5,228 lines; axioms unchanged.
 
+**Round E3a′ (landed, 2026-07-23): the descending one-kernel block.**
+The mirror of E3a (as E2a′ was to E2a): **`done_kernel_block`** — a
+descending kernel site yields a `MultiTier β Unit` certificate with
+one DESCENDING kernel (`up = false`), same external-subtype
+construction, same read-off discipline, `kk_pp`/`kk_ppi` from the
+descending segment-coherence duals (`dsegment_kk_pp`/`dsegment_kk_ppi`);
+`seg_eq`/`seg_ex_eq` are direction-agnostic and reused as-is.
+**`dkernel_block_of_chain`**: every descending model chain carries,
+past any bound, a valid descending one-kernel block. Zero `sorry`;
+file now ~5,427 lines; axioms unchanged. Both chain directions of the
+kernel-attachment inner loop are now certified; the assembly's block
+builders can consume either.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
