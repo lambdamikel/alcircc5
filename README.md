@@ -40,6 +40,24 @@ why it is hard (the two axes and the coincidence obstruction), the routes
 tried, what is certified, the $\Pi^0_1$ observation, the reasoner, and the
 lessons on working with frontier AI.
 
+**Want the positive result explained?** The project's strongest
+unconditional theorem — decidability of the **∀PO-free fragment** — has a
+dedicated explainer:
+[**`papers/why_po_free_decidable.pdf`**](papers/why_po_free_decidable.pdf) ·
+[TeX](papers/why_po_free_decidable.tex) ·
+[Markdown](papers/WHY_PO_FREE_IS_DECIDABLE.md). It is the technical sibling
+of the non-technical
+[`WHY_ITS_HARD.md`](papers/cold_review_f6_w2prime/WHY_ITS_HARD.md): written
+for a reader who knows description logics, tableaux, and blocking (but not
+automata or model theory), it explains the finite-certificate architecture,
+the handful of composition-table facts everything rides on (four
+deterministic cells; PO forced by nothing yet available wherever anything
+is), and **both independent proof routes** — the two-tier quotient
+(chain-and-phase) and the ordered-disjoint normal form (structural) —
+at "yes, I believe that" depth rather than full-proof depth, with an
+honest per-claim status table (what is Lean-certified vs. machine-checked
+vs. theorem-level).
+
 The rest of this README is just a map. To avoid duplicated, drifting prose,
 the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in

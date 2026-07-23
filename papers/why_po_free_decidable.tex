@@ -1,0 +1,912 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[colorlinks=true,linkcolor=blue!45!black,citecolor=blue!45!black,urlcolor=blue!45!black]{hyperref}
+\usepackage{xcolor}
+
+\hypersetup{pdftitle={Why the forall-PO-Free Fragment Is Decidable},
+  pdfauthor={Michael Wessel --- with Claude (Opus 4.8, Anthropic)}}
+
+\newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\Comp}{\mathrm{comp}}
+\newcommand{\cl}{\mathrm{cl}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+\title{\textbf{Why the $\forall\PO$-Free Fragment Is Decidable}\\[0.35em]
+\large A Guide for the Tableau-Minded}
+\author{Michael Wessel --- with Claude (Opus 4.8, Anthropic)}
+\date{2026-07-22}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{\itshape
+A companion to the $\ALCIRCC$ decidability project, pitched one level
+more technical than \code{WHY\_ITS\_HARD.md}: for a reader who knows
+basic description logics, tableau calculi, and blocking, but not
+automata theory or model theory. The goal is not to walk you through
+the proofs --- it is to put enough intuition and enough hard, checkable
+facts in front of you that you can honestly say ``yes, I believe
+that.''
+
+\smallskip
+\textbf{Honesty note, up front:} the fragment theorem is
+\textbf{theorem-level, not end-to-end machine-certified}. Its soundness
+crux is kernel-checked in Lean~4 (\code{formal/POFreeLift.lean}, zero
+sorries), its algebraic ingredients are exhaustively machine-checked,
+and two independent argument routes arrive at it --- but the full
+assembly has not been formalized, and the project's standing label
+applies: strongly supported, not certified.}}
+\end{center}
+
+\section{The claim}\label{sec:claim}
+
+\textbf{Theorem ($\forall\PO$-free fragment).} Concept satisfiability
+for the $\forall\PO$-free fragment of $\ALCIRCC$ --- concepts in NNF
+containing \textbf{no subformula of the form $\forall\PO.D$} --- is
+decidable, with a computable live-width bound
+$K(C_0)=(1+m)^2\,2^{2^m}$, where $m=|\cl(C_0)|$.
+
+Read the fine print, because it is generous. The fragment
+\textbf{keeps}:
+\begin{itemize}
+\item $\exists\PO.D$ --- ``overlaps something satisfying $D$'';
+\item $\forall\DR.D$ and $\exists\DR.D$ --- universal \emph{and}
+  existential disjointness;
+\item all vertical modalities --- $\exists\PP$, $\forall\PP$,
+  $\exists\PPI$, $\forall\PPI$, nested to any depth;
+\item infinite models --- $\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$
+  is in the fragment and is satisfiable only in models with an infinite
+  ascending $\PP$-chain.
+\end{itemize}
+
+The \emph{only} thing removed is the universal restriction over partial
+overlap. That is a strikingly thin excision, and the whole story of
+this document is why the difficulty of the full logic is concentrated
+in exactly that one constructor.
+
+A calibration point that matters: the fragment is \textbf{not} a toy
+that dodges the hard diagnostics. The concept
+\[
+C_{\mathrm{force}} \;=\; \exists\PP.(\exists\DR.A)\sqcap\forall\DR.\neg A
+\]
+is $\forall\PO$-free and \textsc{unsat} --- because
+$x\mathbin{\PP}y$ and $y\mathbin{\DR}z$ \emph{force} $x\mathbin{\DR}z$
+($\Comp(\PP,\DR)=\{\DR\}$), and then $\forall\DR.\neg A$ kills the
+required $z\!:\!A$. Every naive tableau that ignores forced edges
+accepts it wrongly. So a decision procedure for the fragment must still
+do genuine composition-table reasoning; it just never has to fight the
+one battle that has defeated every full-logic attempt.
+
+\section{The setting, and why your tableau instincts don't directly
+apply}\label{sec:setting}
+
+Three facts about $\ALCIRCC$ that break the standard playbook.
+(Strong-$\EQ$ semantics throughout: $\EQ$ means identity, so between
+distinct elements only $\DR,\PO,\PP,\PPI$ occur.)
+
+\paragraph{Fact 1: every model is a complete graph.} The five RCC5
+relations are jointly exhaustive and pairwise disjoint. Any two
+elements of any model stand in exactly one of them --- there is no
+``unrelated.'' In $\mathcal{ALC}$, a tableau builds a \emph{tree} and
+elements in different branches simply have nothing to do with each
+other. Here, every pair of nodes you ever create carries a relation,
+whether you asked for it or not, and the composition table
+\[
+\rho(x,z)\in\Comp(\rho(x,y),\rho(y,z))\qquad\text{for all }x,y,z
+\]
+constrains all of them, globally. Adding one node adds $n$ new edges,
+each of which must close every triangle it participates in.
+
+\paragraph{Fact 2: no finite model property.}
+$\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$ forces an infinite
+strictly ascending chain of regions ($\PP$ is a strict order under
+strong $\EQ$ --- a $\PP$-cycle would collapse by composition into
+$x\mathbin{\PP}x$, which is impossible). So you cannot hope to
+enumerate finite models: satisfiable concepts may have none.
+
+\paragraph{Fact 3: local blocking is unsound or incomplete.} In
+$\mathcal{ALC}$, blocking works because ``same label set'' means ``same
+future obligations.'' Here a node's future obligations depend on its
+relations to \emph{the whole graph built so far} (Fact~1), which no
+fixed-arity local summary captures. The project tried subset blocking,
+triangle blocking, quadruple types, profile blocking, double blocking
+--- each fails on a concrete diagnostic. This is not a technicality; it
+is the open problem of the full logic (the width bound F6) in disguise.
+
+So the fragment result has to earn its termination some other way. That
+way is the \emph{finite-certificate architecture}, and it is worth
+understanding on its own before either proof route, because both routes
+are instances of it.
+
+\section{The architecture: finite certificates for infinite
+models}\label{sec:architecture}
+
+When models are legitimately infinite, ``decidable'' cannot mean
+``search for a model.'' It means:
+
+\begin{quote}
+\textbf{Replace ``model'' by ``finite blueprint of a model,'' so that
+(a) a computer can enumerate and check blueprints, (b) every blueprint
+that checks out really describes a model, and (c) every satisfiable
+concept has a blueprint of computably bounded size.}
+\end{quote}
+
+Call the blueprint a \textbf{certificate}. A decidability proof in this
+architecture always has exactly three parts:
+\begin{enumerate}
+\item \textbf{A finite certificate format} with finitely many
+  \emph{finitely checkable} conditions (type coherence, witness
+  presence, triangle closure on the finite object, \dots). Checking a
+  candidate certificate is trivially decidable.
+\item \textbf{Soundness (unfolding).} If a certificate passes the
+  checks, the possibly-infinite structure it \emph{generates} ---
+  obtained by unrolling its loops --- is a genuine model of the
+  concept. This is the direction that must not cheat: the checks are
+  finite, the generated object is infinite, and you must prove the
+  finite checks control the infinite unfolding.
+\item \textbf{Completeness (extraction $+$ compression).} If the
+  concept has \emph{any} model, you can extract from it a certificate
+  within the computable size bound. This is where ``run out of colors''
+  pigeonhole arguments live --- and where a bound on the certificate's
+  size must come from.
+\end{enumerate}
+
+Given all three, the decision procedure is embarrassing: enumerate all
+certificates up to the bound, check each, answer \textsc{sat} iff one
+passes. All the mathematics is in (2) and (3); the algorithm itself is
+a for-loop.
+
+Four remarks that make this concrete for a tableau reader.
+
+\paragraph{A blocked tableau \emph{is} a certificate.} When your
+$\mathcal{ALC}$ tableau stops because node $y$ is blocked by ancestor
+$x$, the finished tree with its blocking pointers is precisely a finite
+certificate: the ``model'' it describes is the infinite unraveling in
+which $y$'s subtree ``continues like $x$'s.'' Soundness of blocking
+$=$ the unfolding lemma. So the architecture is not exotic; it is what
+blocking always secretly was.
+
+\paragraph{Loops are generators, not quotients.} One subtlety is
+promoted to a design principle here. The blocking loop must be read as
+``\emph{the pattern continues like this}'' (unfold the loop into
+infinitely many distinct copies), never as ``\emph{$y$ equals $x$}''
+(bend the edge back). Under strong $\EQ$ the second reading is
+inconsistent for vertical loops --- it would make a region a proper
+part of itself. The certificate has a $\PP$-self-loop; the model it
+generates has an infinite chain of \emph{distinct} elements. Finite
+generator, infinite unfolding, no finite quotient.
+
+\paragraph{Under abstract semantics, model-checking is
+triangle-checking.} A gift of the composition-table semantics: an
+interpretation is \emph{any} set with a total labelling $\rho$
+satisfying (i) $\rho(d,d)=\EQ$ and strong $\EQ$, (ii) converse
+coherence, (iii) composition closure. Nothing else. So ``the unfolding
+is a model'' reduces to ``every triangle of the unfolding is closed
+under the table'' --- a purely combinatorial statement, exactly the
+kind of thing one can prove by case analysis on where the three corners
+sit, and exactly what is kernel-checked in \code{POFreeLift.lean}. (For
+networks that are only partially specified, RCC5's \emph{patchwork
+property} --- path-consistent atomic networks are globally consistent,
+Renz--Nebel 1999 --- completes the missing edges; for a fully labelled
+unfolding the network \emph{is} the model outright.)
+
+\paragraph{Live width: what has to be bounded.} The size bound in (3)
+is the whole game. The key observation is that most of a certificate's
+edges cost nothing: an edge whose value is \emph{forced} by composition
+from other edges (a ``shadow'') need not be stored or chosen --- it is
+recoverable. What must be bounded is the number of \textbf{live} edges:
+genuinely free choices attached to each part of the certificate. The
+conjecture that every satisfiable $\ALCIRCC$ concept admits a
+presentation of computably bounded live width is \textbf{F6} --- the
+single open keystone of the full problem, machine-formalized as the
+hypothesis of a certified conditional theorem. \textbf{The
+$\forall\PO$-free fragment is precisely the place where a live width
+bound is actually proved} rather than conjectured. That is what ``a
+fragment result'' means in this project: F6, inhabited.
+
+With the architecture fixed, both proofs of the fragment theorem can be
+stated in one sentence each:
+\begin{itemize}
+\item \textbf{Route 1 (two-tier quotient):} vertical blocking gives a
+  finite set of chain-descriptors; the composition table makes every
+  witness's relation to a chain \emph{stabilize}, so one certificate
+  edge can honestly summarize infinitely many model edges --- for
+  $\DR,\PP,\PPI$ always, and for $\PO$ exactly when no $\forall\PO$
+  constraint watches.
+\item \textbf{Route 2 (ordered-disjoint normal form):} an RCC5 model
+  \emph{is} just a strict order plus a well-behaved disjointness
+  relation, with $\PO$ as the unconstrained residual;
+  $\forall\PP/\forall\PPI/\forall\DR$ obligations are order- and
+  disjointness-closure conditions that propagate deterministically, and
+  no propagation ever manufactures a $\forall\PO$ obligation --- so a
+  standard tree tableau with blocking terminates.
+\end{itemize}
+
+The rest of this document unpacks those two sentences.
+
+\section{The algebraic heart: four forced cells, and the relation that
+is never forced}\label{sec:algebra}
+
+Everything in both routes reduces to a handful of cells of the RCC5
+composition table. You can check each mentally with blobs, and each is
+machine-verified from finite set semantics (and, for those used in the
+Lean artifacts, kernel-checked).
+
+\textbf{The four singleton cells among proper relations:}
+\[
+\begin{aligned}
+\Comp(\PP,\PP)&=\{\PP\}   &&\text{nesting is transitive}\\
+\Comp(\PPI,\PPI)&=\{\PPI\} &&\text{\dots in both directions}\\
+\Comp(\PP,\DR)&=\{\DR\}   &&\text{a part of something disjoint from $e$
+                              is disjoint from $e$}\\
+\Comp(\DR,\PPI)&=\{\DR\}  &&\text{\dots converse form}
+\end{aligned}
+\]
+
+The third one deserves a picture: if the table is far from the moon,
+the coin \emph{on} the table is far from the moon. Disjointness rains
+\textbf{down} into parts, deterministically. Together with transitivity
+of nesting, these four cells are the \emph{only} deterministic
+machinery the whole algebra offers between distinct proper relations.
+
+\textbf{The two cells that define the problem:}
+\[
+\Comp(\PP,\PO)=\{\PP,\PO,\DR\},\qquad
+\Comp(\PPI,\PO)=\{\PPI,\PO\}\qquad\text{--- not singletons.}
+\]
+
+Picture the first: a cake $y$ partially overlaps a plate $e$. Now take
+a crumb $x$ of the cake ($x\mathbin{\PP}y$). Where is the crumb
+relative to the plate? Maybe on the plate ($\PP$), maybe straddling its
+rim ($\PO$), maybe on the tablecloth ($\DR$). \emph{Partial overlap
+tells you nothing determinate about parts.} The second cell is the
+upward version: if something inside $y$ overlaps $e$, then $y$ overlaps
+$e$ or contains it --- two options, not one.
+
+And one global fact you can scan the whole table for:
+
+\paragraph{No cell of the table equals $\{\PO\}$.} Partial overlap is
+never the uniquely forced outcome of any single composition. $\DR$ is
+forced by two cells, $\PP$ and $\PPI$ by transitivity --- but no
+\emph{single} path $x$--$y$--$z$ ever pins $x\mathbin{\PO}z$. $\PO$ is
+forced by nothing.
+
+\paragraph{And the dual: $\PO$ is available wherever anything is.} Scan
+the table again: every \emph{non}-singleton proper cell
+\textbf{contains} $\PO$ --- and this propagates along paths (of the ten
+composition-sets reachable by composing along paths of any length,
+every non-singleton one contains $\PO$; machine-checked, \code{wp26}).
+Moreover every entry of the $\PO$ row and column contains $\PO$, and
+$\Comp(\PO,\PO)$ is everything --- so $\PO$, once present, stays
+available in every direction, and an all-$\PO$ region constrains
+nothing. Put the two facts together and every pair of elements faces a
+clean dichotomy: either some composition path \emph{pins} it (a
+singleton --- forced, deterministic, a recoverable ``shadow''), or
+\textbf{$\PO$ is among its options}. $\PO$ is the algebra's escape
+valve: never forced on you, always offered where anything is. The only
+way a logic can close that valve is to make $\PO$-edges \emph{illegal}
+--- and the only constructor that can do so is $\forall\PO$. That, in
+one sentence, is why its removal is worth a decidability theorem: in
+the fragment, the escape valve is structurally un-closable, and the
+unfolding's unboundedly many unpinned pairs all take the value that is
+always permitted and never watched.
+
+\paragraph{Calibration, learned the hard way.} That last fact is about
+\emph{single} compositions. The \emph{intersection} of several path
+constraints \textsc{can} force a $\PO$ edge --- e.g.
+$\Comp(\DR,\PO)\cap\Comp(\PPI,\PO)=\{\DR,\PO,\PP\}\cap\{\PPI,\PO\}=\{\PO\}$.
+An earlier version of the project's prose overstated ``$\PO$ is never
+forced,'' and a cold review caught it (the 16th, with a concrete
+two-path witness). Neither proof route below relies on the overstated
+version: both enforce \emph{full} composition closure on every
+triangle, which subsumes multi-path forcing. Where ``$\PO$ is loose''
+is used below, it is always in the precise single-cell sense above.
+
+\paragraph{Yes, $\PO$ can be forced --- and it is harmless.} Do not
+read the caveat as fragility. Even inside the fragment, $\PO$ edges can
+be pinned: algebraically by joint paths (above), and logically by the
+\emph{allowed} universals clashing out the alternatives. In
+\[
+C \;=\; \forall\PP.\neg A \sqcap \forall\DR.\neg A \sqcap
+        \exists\PP.(\neg A \sqcap \exists\PO.A)
+\]
+the demanded $e\!:\!A$ sits at $\Comp(\PP,\PO)=\{\PP,\PO,\DR\}$ from
+the root; $\forall\PP.\neg A$ strikes $\PP$, $\forall\DR.\neg A$
+strikes $\DR$, and $\rho(\mathrm{root},e)=\PO$ is \emph{forced} (and
+the concept is satisfiable --- $x=\{1,2\}$, $y=\{1,2,3\}$,
+$e=\{2,3,4\}$). So the fragment can steer edges \emph{into} $\PO$. Why
+is that safe, when steering was the full logic's downfall? Because a
+forced $\PO$ edge is \textbf{doubly inert}. \emph{Logically inert:} the
+only constructor that fires on a $\PO$ edge --- at either endpoint;
+$\PO$ is self-converse and the safety test is two-sided --- is
+$\forall\PO$, and none exists in the input or in any label that
+propagation will ever write (\S\ref{sec:route2}). The forced edge
+lands, and nothing happens. \emph{Compositionally, it never forces
+onward alone:} $\PO$ is an argument of \textbf{no} singleton cell (look
+at the four: $\PP;\PP$, $\PP;\DR$, $\PPI;\PPI$, $\DR;\PPI$ --- $\PO$
+appears in none), so a $\PO$ edge never single-handedly pins another
+edge; it can narrow options in joint configurations, and full triangle
+closure tracks exactly that. Contrast forcing $\DR$: a forced $\DR$
+edge can fire a waiting $\forall\DR$ at its far endpoint --- that is
+literally $C_{\mathrm{force}}$ --- real consequences, but
+\emph{deterministic} ones the singleton cells propagate. Forcing $\PO$
+has no consequences at all. Steering into the watched relations is
+trackable; steering into the unwatched one is a dead end for any
+adversarial concept.
+
+Now the punchline of the whole section. A universal restriction
+$\forall R.D$ is a \emph{standing obligation}: it must hold of every
+$R$-neighbor, including $R$-neighbors that arise \emph{indirectly},
+forced by composition, at any distance, at any time. Whether such an
+obligation is manageable depends entirely on whether the algebra moves
+$R$-neighbors around predictably:
+\begin{itemize}
+\item \textbf{$\forall\DR.D$ is manageable} because $\DR$ propagates
+  deterministically downward ($\Comp(\PP,\DR)=\{\DR\}$): the set of
+  $\DR$-neighbors of a region grows in a controlled, forced,
+  \emph{monotone} way as you descend the nesting order. You always know
+  where the obligation will land next.
+\item \textbf{$\forall\PP.D$ and $\forall\PPI.D$ are manageable} for
+  the same reason via transitivity.
+\item \textbf{$\forall\PO.D$ is the wild one}: $\PO$-neighborhoods are
+  not transported determinately in \emph{either} vertical direction
+  (the two non-singleton cells), and $\PO$ is never created by any
+  single composition --- so the obligation must be re-verified against
+  a set of neighbors that the algebra refuses to pin down. The
+  recurring failure shape across this project's seventeen-review
+  history --- jointly coordinating horizontal edges against universal
+  obligations at a gluing step --- is only \emph{hard} for edges no
+  singleton cell controls; and $\PO$ is the relation with no singleton
+  cell anywhere.
+\end{itemize}
+
+The fragment theorem is the statement that once $\forall\PO$ is gone,
+the remaining obligations are exactly the ones the four singleton cells
+can carry. Two independent routes cash this in.
+
+\section{Route 1: the two-tier quotient (the chain-and-phase
+argument)}\label{sec:route1}
+
+{\small(Sources, under \code{papers/}:
+\code{two\_tier\_quotient\_ALCIRCC5.tex} --- Claude, April 2026, four
+revisions under GPT-5.4 review --- and the fragment specialization
+\code{po\_free\_fragment\_ALCIRCC5.tex}. Soundness crux certified
+2026-07-18 in \code{formal/POFreeLift.lean}.)}
+
+\subsection{The certificate}\label{ssec:cert}
+
+Since models contain infinite $\PP$-chains, start where the infinity
+is. Walk up an infinite chain $d_0\mathbin{\PP}d_1\mathbin{\PP}d_2\cdots$
+and record each element's Hintikka type. There are at most $2^m$ types,
+so the sequence of types is eventually periodic --- familiar
+pigeonhole, exactly the intuition behind blocking. Call the recurring
+cyclic pattern of types $(\tau_1,\dots,\tau_p)$ a \textbf{period
+descriptor}. There are at most $2^{2^m}$ descriptors.
+
+The certificate (``two-tier quotient'') is:
+\begin{itemize}
+\item \textbf{Tier 1:} finitely many period descriptors, one
+  \textbf{kernel} node per descriptor carrying its cyclic type pattern
+  with a $\PP$-self-loop (a generator: unfolds to the infinite chain,
+  per \S\ref{sec:architecture});
+\item \textbf{Tier 2:} finitely many \textbf{designated witnesses} ---
+  at most one per existential demand per descriptor --- with
+  \textbf{one constant relation} recorded between each witness and each
+  kernel: a single edge ``kernel${}\leftrightarrow e:R$''.
+\end{itemize}
+Plus finite checks: types are Hintikka, every $\exists$ demand has its
+witness, every recorded triangle is composition-closed, every recorded
+edge respects the universals in both endpoint types (the Safe test).
+
+\subsection{The crux: when can one edge summarize infinitely
+many?}\label{ssec:crux}
+
+Here is the exact point where this differs from $\mathcal{ALC}$
+blocking, and where the reader should slow down. When the kernel
+unfolds into the infinite chain $d_0\mathbin{\PP}d_1\mathbin{\PP}\cdots$,
+the certificate's single edge ``kernel${}\leftrightarrow e:R$'' must
+stand for \emph{infinitely many} model edges: $\rho(d_i,e)$ for every
+$i$. The certificate records one value; the model needs a value at
+every rung. For the summary to be honest, the witness's relation to the
+chain must be \textbf{the same at every rung that matters} ---
+otherwise a finite certificate with constant interfaces simply cannot
+express the model.
+
+Does the algebra cooperate? Watch a fixed external region $e$ against a
+growing chain $d_0\subset d_1\subset d_2\subset\cdots$, using
+$\Comp(\PPI,\cdot)$ to step up the chain:
+\[
+\begin{aligned}
+\text{from }\DR &:\ \text{next}\in\{\DR,\PO,\PPI\}\\
+\text{from }\PO &:\ \text{next}\in\{\PO,\PPI\}\\
+\text{from }\PPI&:\ \text{next}\in\{\PPI\}\quad\text{(absorbing)}\\
+\text{from }\PP &:\ \text{next}\in\{\PP,\PO,\PPI\}
+\end{aligned}
+\]
+Read it as a picture: the chain elements grow; a fixed $e$ can go from
+disjoint, to overlapping, to \emph{swallowed} ($\PPI$) --- and never
+backward. The relation \textbf{stabilizes}: after finitely many
+monotone switches it is constant forever. This is the
+``external-relation stabilization'' lemma, and it is checkable from the
+table by eye.
+
+Stabilization alone is not enough --- the certificate needs the
+relation to be right at \emph{all} phases, not just eventually. This is
+where the singleton cells become load-bearing, one relation at a time:
+\begin{itemize}
+\item \textbf{$\DR$ --- backward forcing.} Suppose an $\exists\DR$-demand
+  is satisfied by witness $e$ at a late chain position $d_i$. Then for
+  every earlier $j<i$: $d_j\mathbin{\PP}d_i$ and $d_i\mathbin{\DR}e$
+  give $\rho(d_j,e)\in\Comp(\PP,\DR)=\{\DR\}$. \textbf{Forced.} A
+  $\DR$-witness picked late enough (past the point where all recurrent
+  types have appeared) is automatically a $\DR$-witness at every phase.
+  The constant edge ``kernel${}\leftrightarrow e:\DR$'' is honest, for
+  free.
+\item \textbf{$\PP$ --- same cell, same argument.} If $e$ contains
+  $d_i$, then by $\Comp(\PP,\PP)=\{\PP\}$ it contains every $d_j$
+  below. Constant edge honest.
+\item \textbf{$\PPI$ --- forward absorption.} If $e$ is inside $d_i$,
+  it is inside every $d_j$ above ($\Comp(\PPI,\PPI)=\{\PPI\}$).
+  Constant edge honest.
+\end{itemize}
+
+So for $\DR,\PP,\PPI$ the composition table itself \emph{converts} a
+one-position witness into an all-position witness. The finite summary
+is not an approximation; it is exact. If you believe those three
+singleton cells --- and you can check them with blobs in a margin ---
+you believe the constant-interface certificate is sound and complete
+for these three relations. That is the ``yes!'' moment for Route~1.
+
+\subsection{Where $\PO$ breaks it --- a concrete satisfiable
+villain}\label{ssec:villain}
+
+For $\PO$, \emph{neither} direction is forced:
+$\Comp(\PP,\PO)=\{\PP,\PO,\DR\}$ says earlier positions are free;
+$\Comp(\PPI,\PO)=\{\PPI,\PO\}$ says later ones are. A $\PO$-witness at
+one phase need not be a $\PO$-witness at any other. And this is not a
+hypothetical weakness of the proof --- the two-tier paper exhibits a
+satisfiable concept that \emph{provably defeats} the constant-interface
+architecture.
+
+Take a chain with alternating types, $\tau_A$ at even positions
+demanding $\exists\PO.A$, $\tau_B$ at odd positions demanding
+$\forall\PO.\neg A$. Satisfiable? Yes --- by \textbf{wandering
+witnesses}. For each $k$, witness $w_k$ (satisfying $A$) is:
+\[
+\begin{aligned}
+\DR  &\ \text{ to the chain positions below } 2k
+      &&\text{(disjoint from the small ones)}\\
+\PO  &\ \text{ at exactly position } 2k
+      &&\text{(overlaps that one)}\\
+\PPI &\ \text{ to the positions above } 2k
+      &&\text{(swallowed by the big ones)}
+\end{aligned}
+\]
+Each $w_k$ slides through the chain: disjoint, then transiently
+overlapping \emph{exactly one} rung, then swallowed forever. Every even
+rung gets its $\exists\PO.A$ witness; every odd rung has \emph{no}
+$\PO$-neighbor at all, so $\forall\PO.\neg A$ holds vacuously; all the
+transitions are exactly the monotone ones from the table above; and the
+witnesses are pairwise $\DR$ by forced composition. A perfectly good
+infinite model.
+
+But no \emph{constant-interface} certificate describes it: a witness
+with recorded edge ``kernel${}\leftrightarrow w:\PO$'' would be $\PO$
+to the $\tau_B$-rungs too, violating $\forall\PO.\neg A$. The demand at
+every phase is real, but no \emph{single} witness serves two phases ---
+the model needs infinitely many transient witnesses, and the finite
+summary has no slot for ``transient.'' The architecture is provably
+incomplete here. (Contrast $\DR$: the analogous villain with
+$\exists\DR.A\,/\,\forall\DR.\neg A$ is \emph{unrealizable} ---
+backward forcing drags any late $\DR$-witness back across the
+$\forall\DR.\neg A$ rungs and clashes. The gap is a $\PO$-only
+phenomenon; the table itself closes it for $\DR$.)
+
+\subsection{Why $\forall\PO$-freeness dissolves the
+gap}\label{ssec:dissolve}
+
+Look at what actually went wrong: the constant-$\PO$ edge was fine
+\emph{algebraically} (a constant-$\PO$ interface closes every triangle
+along the chain --- check: $\PO\in\Comp(\PP,\PO)$ and
+$\PO\in\Comp(\PPI,\PO)$, so the constant value is always among the
+permitted ones) and failed only \emph{logically} --- it collided with a
+$\forall\PO$ obligation at another phase. The Safe test for a
+$\PO$-edge between types $\tau$ and $\sigma$ has exactly two parts: the
+$\forall\PO$-universal part (``every $\forall\PO.E\in\tau$ must have
+$E\in\sigma$,'' and symmetrically), and propositional bookkeeping.
+
+\textbf{In a $\forall\PO$-free concept, no type contains any
+$\forall\PO.E$.} The $\forall\PO$-universal part of every Safe test is
+vacuous --- at every phase, for every witness. A witness type
+containing $D$ is $\PO$-safe for \emph{all} phases the moment it is
+$\PO$-safe for one (``automatic PO-coherence,'' Lemma~2 of the fragment
+note). The one relation the table refuses to transport is also the one
+relation nobody is watching. Constant-$\PO$ edges are algebraically
+consistent and logically unchallenged; the wandering villain needs a
+$\forall\PO$ to exist, and there are none.
+
+\subsection{Counting, and the finish line}\label{ssec:count}
+
+\begin{itemize}
+\item Descriptors: $\le 2^{2^m}$. Witnesses: at most one per demand per
+  descriptor, $\le(1+m)$ each. Quotient size
+  $Q\le(1+m)\,2^{2^m}$; live width
+  $K(C_0)\le Q\,(1+m)=(1+m)^2\,2^{2^m}$. Computable. (Nobody claims it
+  is tight --- only computability matters, and no complexity bound is
+  asserted.)
+\item \textbf{Completeness:} extract from any model --- record
+  recurrent types along each chain as descriptors, pick witnesses past
+  the exhaustion index, let stabilization $+$ backward forcing $+$
+  forward absorption $+$ automatic PO-coherence make them all-phase.
+  Everything repeated folds into the kernels.
+\item \textbf{Soundness:} unfold each kernel into its infinite chain
+  under the constant interface, and prove the unfolding is still
+  composition-closed on \emph{every} triple --- including triples whose
+  closure jointly forces a $\PO$ edge (the multi-path caveat of
+  \S\ref{sec:algebra} is enforced, not assumed away). This
+  \textbf{chain-unfolding lift} is the soundness crux, and it is the
+  part that is now \textbf{kernel-checked}: \code{POFreeLift.lean}
+  proves, in Lean~4 with zero sorries, that if the finite augmented
+  network is composition-consistent and strong-$\EQ$, then replacing
+  the kernel by an infinite $\PP$-chain under the constant interface
+  preserves composition-consistency. And under abstract semantics a
+  composition-closed total network \emph{is} a model
+  (\S\ref{sec:architecture}) --- so a valid certificate delivers an
+  actual infinite model outright.
+\end{itemize}
+
+Enumerate certificates up to $K(C_0)$, check, done.
+
+\section{Route 2: the ordered-disjoint normal form (the structural
+argument)}\label{sec:route2}
+
+{\small(The regular-cover pivot, GPT-5.5, July 2026:
+\code{papers/rcc5\_local\_amalgamation\_theory.tex}, probes
+\code{wp47}--\code{wp49}, \code{wp82}/\code{wp83}; normal form
+certified in \code{formal/RCC5NormalForm.lean}, both directions.)}
+
+Route 1 fought the composition table cell by cell. Route 2 wins by
+changing the data structure so the fight never starts.
+
+\subsection{A model is just an order and a disjointness
+relation}\label{ssec:nf}
+
+\textbf{Certified normal form.} A strong-$\EQ$ atomic RCC5 network is
+composition-closed \textbf{iff} it is an \emph{ordered-disjoint
+structure}:
+\begin{itemize}
+\item ${<}$ (that is, $\PP$) is a strict partial order;
+\item ${\#}$ (that is, $\DR$) is symmetric, irreflexive, and
+  \textbf{downward closed}: if $x\#y$, $x'\le x$, $y'\le y$, then
+  $x'\#y'$;
+\item comparable pairs are never disjoint;
+\item \textbf{$\PO$ is the residual} --- it is \emph{defined} as
+  ``neither comparable nor disjoint.'' It is not data. It is what's
+  left.
+\end{itemize}
+(Forward direction kernel-checked for arbitrary domains in
+\code{RCC5NormalForm.lean}; converse certified via an explicit
+canonical set representation, cross-checked exhaustively to size four
+and beyond, \code{wp47}/\code{wp88}.)
+
+Let that reframing land: sixteen composition-table cells collapse into
+two familiar closure laws --- transitivity of an order, downward
+closure of a disjointness --- plus one compatibility condition. To
+build a model you never ``place'' a $\PO$ edge, ever. You build an
+order, you build a disjointness relation, you check two closure laws,
+and every pair you said nothing about \emph{is} $\PO$, automatically,
+consistently. The wild relation of \S\ref{sec:algebra} turns out to be
+bookkeeping for ``no constraint here.''
+
+With it come two machine-checked amalgamation facts we'll need:
+\begin{itemize}
+\item \textbf{Free amalgamation} (\code{wp48}): two ordered-disjoint
+  structures glued along a shared part, with no new order or
+  disjointness across, form an ordered-disjoint structure. Cross pairs
+  land on the residual --- $\PO$.
+\item \textbf{All-cross $\PO$ is always safe} (\code{wp82}): declaring
+  \emph{every} cross pair of two closed pockets $\PO$ is always
+  composition-closed.
+\end{itemize}
+
+\subsection{The tableau, and why it terminates}\label{ssec:tableau}
+
+Now think like a tableau designer. Your nodes will form the vertical
+skeleton (a tree of ${<}$-edges, one tree per component --- the
+split-forest discipline); your constraints are $({<},{\#})$; $\PO$ is
+whatever remains. Which obligations can arise, and how do they move?
+
+Universals over $\PP,\PPI,\DR$ are exactly constraints on ${<}$ and
+${\#}$: ``everything below me satisfies $D$,'' ``everything above me
+satisfies $D$,'' ``everything disjoint from me satisfies $D$.'' How do
+they propagate when edges compose? The general rule: if $x$ carries
+$\forall R.D$ and $x\xrightarrow{\,S\,}y$, then $y$ must carry
+$\forall T.D$ whenever $\Comp(S,T)\subseteq\{R\}$ (any $T$-successor of
+$y$ is then a forced $R$-successor of $x$). Instantiating against the
+table yields the \emph{complete} rule set (probe \code{wp49},
+machine-checked from set semantics):
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+$\forall\PP.D$  & across $\PP$:  & require $D$, $\forall\PP.D$
+  \quad(transitivity of ${<}$)\\
+$\forall\PPI.D$ & across $\PPI$: & require $D$, $\forall\PPI.D$
+  \quad(transitivity, downward)\\
+$\forall\DR.D$  & across $\PP$:  & require $\forall\DR.D$
+  \quad(my container's disjointnesses rain down onto me ---\\
+  & & \phantom{require }so my container inherits my duty)\\
+$\forall\DR.D$  & across $\DR$:  & require $D$, $\forall\PPI.D$
+  \quad(my $\DR$-neighbor's parts are also my $\DR$-neighbors)
+\end{tabular}
+\end{center}
+
+--- four rules, all riding the four singleton cells, and, decisively:
+
+\begin{quote}
+\textbf{No propagation rule from a $\forall\PP$, $\forall\PPI$, or
+$\forall\DR$ obligation ever produces a $\forall\PO$ obligation.}
+(Checked: no $\Comp(S,\PO)$ is contained in $\{\PP\}$, $\{\PPI\}$, or
+$\{\DR\}$.)
+\end{quote}
+
+So the obligation vocabulary
+$\{\forall\PP,\forall\PPI,\forall\DR\}\times\cl(C_0)$ is \textbf{closed
+under propagation}. Start $\forall\PO$-free, stay $\forall\PO$-free ---
+not just syntactically in the input, but dynamically, in every label
+the tableau will ever write. Obligations are drawn from a fixed finite
+set, and they move \emph{deterministically} along the singleton cells
+(the same four cells as Route~1, wearing different clothes:
+transitivity of ${<}$, downward closure of ${\#}$). Node labels $=$
+type $+$ obligation set $=$ finitely many possibilities
+$\Rightarrow$ standard subformula blocking on the vertical tree
+terminates, with the loops read as generators
+(\S\ref{sec:architecture}).
+
+What about the demands?
+\begin{itemize}
+\item \textbf{$\exists\PP\,/\,\exists\PPI\,/\,\exists\DR$:} create the
+  witness in the skeleton or as a sibling; its forced consequences are
+  computed by the two closure laws --- finitely, deterministically
+  (down-closure of ${\#}$ is a forced flood, but a flood of
+  \emph{shadows}: recoverable, costless, per \S\ref{sec:architecture}).
+\item \textbf{$\exists\PO.D$:} here is the beautiful step. Build a
+  satisfying structure for $D$ separately (recursion), then glue it on
+  declaring \textbf{no cross order and no cross disjointness at all}
+  --- free amalgamation. Every cross pair, \emph{including the
+  demanding node and its witness}, lands on the residual: $\PO$. The
+  demand is satisfied by the default itself. Is that legal?
+  \emph{Algebraically} always (all-cross $\PO$ is always safe,
+  \code{wp82}). \emph{Logically} --- a cross-$\PO$ edge could only
+  violate a $\forall\PO$ obligation, \textbf{and there are none, and
+  there never will be any} (closure of the vocabulary). Both halves of
+  ``safe'' hold, and the second half is exactly $\forall\PO$-freeness.
+\end{itemize}
+
+That is the ``yes!'' moment for Route~2: \textbf{the always-consistent
+default policy (make everything unconstrained overlap) is also always
+obligation-free --- precisely in this fragment.} The full logic's
+nightmare --- steering $\PO$ edges jointly against watching universals
+--- never engages, because nothing ever watches. The horizontal axis
+carries no obligations; all real work happens on the vertical skeleton,
+where the singleton cells make propagation deterministic and blocking
+sound.
+
+Status, honestly: Route~2 is a \emph{re-derivation} --- its ingredients
+(the normal form, the propagation table, the amalgamation and
+cross-policy facts) are individually machine-checked, two of them
+kernel-certified, but the assembly into a standalone
+tableau-completeness proof is theorem-level prose. It independently
+confirms the fragment result; it does not independently certify it.
+
+\section{The boundary is exactly right --- and it is not ``horizontal
+vs.\ vertical''}\label{sec:boundary}
+
+A skeptical reader should now ask: is $\forall\PO$-freeness really the
+boundary, or just a convenient place to stop? Four checks.
+
+\paragraph{The fragment keeps a horizontal universal.} Note what did
+\emph{not} have to go: $\forall\DR$. Disjointness is as ``horizontal''
+as overlap, yet $\forall\DR.D$ is harmless. The dividing line is not
+horizontal-vs-vertical but \textbf{stable vs.\ unstable under vertical
+motion}: $\DR$ is transported deterministically by the singleton cells
+(rains down into parts); $\PO$ is transported by no singleton cell in
+either direction and is never the forced outcome of any single
+composition. The fragment excises the unstable relation's universal and
+nothing else. That the cut lands on a single constructor is a fact
+about the composition table, not a choice.
+
+\paragraph{The gap on the other side is real.} The wandering-witness
+concept of \S\ref{ssec:villain} is a \emph{satisfiable} concept just
+outside the fragment (one $\forall\PO$) that provably defeats the
+constant-interface certificate; the probe \code{wp86} (Part~C) confirms
+the boundary computationally --- the PO-incoherent descriptor forces an
+unsatisfiable interface, the coherent ones never do. And the full
+logic's signature satisfiable diagnostic, the strong-$\EQ$ $\PO$-loop
+$C\sqcap\exists\PO.\exists\PO.C\sqcap\forall\{\PO,\DR,\PP,\PPI\}.\neg C$,
+needs its $\forall\PO$ conjunct to force the loop closure --- it, too,
+lives outside. Everything that has ever been \emph{hard} here has a
+$\forall\PO$ in it.
+
+\paragraph{The connection to the open problem is exact.} The full-logic
+keystone F6 asks for a computable live-width bound. Both routes above
+\emph{prove} one for the fragment (Route~1 explicitly: $K(C_0)$). And
+the fragment theorem is itself the sharpest available evidence about
+where the full problem's difficulty lives: remove \emph{one}
+constructor --- the universal over the one relation the singleton cells
+don't control --- and the coordination problem that every full-logic
+attempt has broken on dissolves. ($\forall\DR$ also coordinates
+horizontal edges, but its coordination is \emph{deterministic}, which
+is exactly why it may stay.) The fragment is thus not a lucky island;
+it is the complement of the obstruction, and its proof shows \emph{why}
+the obstruction is where it is.
+
+\paragraph{A corollary: in the fragment, identity can never be forced.}
+The project's knife's-edge analysis (the coincidence obstruction of the
+overview paper) turns on \emph{merge-forcing}: clash out all
+non-$\EQ$ options between two witnesses, and $\EQ$ --- identity, under
+strong $\EQ$ --- is all that remains. Such forced merges are the raw
+material of grid corners and rigid addressing, the machinery every
+undecidability attempt needs. In the fragment the trick is
+inexpressible, by the same escape-valve fact one level up:
+machine-checked (\code{wp14}, part~T4), \textbf{every composition cell
+containing $\EQ$ also contains $\PO$} --- and hence so does every
+\emph{intersection} of such cells (if $\EQ$ survives a joint
+constraint, every constituent contained $\EQ$, so every constituent
+contained $\PO$, so $\PO$ survives too). Wherever identity is on a
+pair's menu, partial overlap is on it as well, and the fragment has no
+eraser for $\PO$. No $\forall\PO$-free concept ever forces two nodes to
+be one. So the fragment sits provably on the ``loose'' side of the
+knife's edge: not only does the decidability proof close --- the
+undecidability \emph{machinery} cannot even be assembled.
+
+\section{So --- was it proved twice, or three times?}\label{sec:ledger}
+
+Honest ledger. There are \textbf{two genuinely different argument
+shapes} and \textbf{three arrivals}, plus one certification pass.
+
+\begin{enumerate}
+\item \textbf{April 2026 --- the two-tier quotient} (Claude, reviewed
+  through four revisions by GPT-5.4). Proves decidability for the
+  \emph{PO-coherent} fragment --- concepts whose $\forall\PO$
+  obligations, if any, are uniform across phases --- with
+  $\forall\PO$-free concepts as the clean special case, and honestly
+  exhibits the $\PO$ gap (\S\ref{ssec:villain}) as the boundary.
+  Route~1 above.
+\item \textbf{July 2026 --- the cold F6/W2$'$ attack} (GPT-5.5, given
+  the open problem cold, asked to attack it). Independently arrived at
+  the $\forall\PO$-free fragment as its ``Target B'' deliverable, with
+  the $K(C_0)$ bound (\code{papers/po\_free\_fragment\_ALCIRCC5.tex}).
+  On inspection its algebra --- stabilization, backward forcing,
+  forward absorption, automatic PO-coherence --- is the two-tier
+  argument's, so it counts as an independent \emph{re-derivation} of
+  Route~1, not a new route: the same theorem found again by a different
+  mind from a different starting point, which is worth something
+  evidentially but is not a second proof shape.
+\item \textbf{July 2026 --- the regular-cover pivot} (GPT-5.5, later
+  phase). Re-derives the fragment through the ordered-disjoint normal
+  form and the propagation-closure fact (\code{wp49}) --- Route~2
+  above, a genuinely different shape: no chains, no phases, no
+  stabilization; instead a change of data structure that makes $\PO$
+  disappear as data.
+\item \textbf{2026-07-18 --- the certification pass.} After a cold
+  review flagged that the fragment's original rationale leaned on an
+  overstated ``$\PO$ is never forced'' (the calibration of
+  \S\ref{sec:algebra}), the fragment was re-examined: it holds, the
+  argument enforces full composition closure, and the soundness crux
+  --- the chain-unfolding lift --- was kernel-checked
+  (\code{POFreeLift.lean}, zero sorries). Additionally, two
+  \emph{independent} decision procedures (the cover-tree tableau and
+  the quasimodel reasoner) were run on 244 random and curated
+  $\forall\PO$-free concepts with zero mismatches (\code{wp87}) --- a
+  clean cross-validation, because the quasimodel oracle's one known
+  blind spot needs a $\forall\PO$ and so cannot arise in the fragment.
+\end{enumerate}
+
+So: ``2 (or 3?)'' resolves to \textbf{two independent proof routes,
+three independent arrivals at the theorem} --- and the fact that a cold
+attacker, pointed at the open problem with no steer, walked to this
+exact fragment on its own is perhaps the best evidence that the
+boundary is natural.
+
+\section{What is certified, what is checked, what is
+argued}\label{sec:status}
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.52\textwidth}>{\raggedright\arraybackslash}p{0.42\textwidth}@{}}
+\toprule
+\textbf{Claim} & \textbf{Status}\\
+\midrule
+Composition/converse tables; the singleton and $\PO$ cells of
+\S\ref{sec:algebra} & Kernel-certified (Lean, \code{decide}) and
+derived from set semantics in every probe\\[0.3em]
+RCC5 normal form (network $\Leftrightarrow$ ordered-disjoint),
+arbitrary domains & \textbf{Certified}, both directions
+(\code{RCC5NormalForm.lean} $+$ canonical representation)\\[0.3em]
+Chain-unfolding lift (finite CC certificate $\Rightarrow$ CC infinite
+unfolding) & \textbf{Certified} (\code{POFreeLift.lean}, zero
+sorries)\\[0.3em]
+Propagation closure (no non-$\PO$ universal creates a $\forall\PO$
+obligation) & Machine-checked exhaustively (\code{wp49})\\[0.3em]
+Free amalgamation; all-cross-$\PO$ safety; non-uniform cross-policies
+& Machine-checked exhaustively (\code{wp48}, \code{wp82},
+\code{wp83})\\[0.3em]
+Lift-lemma stress-test incl.\ multi-path $\PO$ forcing; fragment
+boundary & Machine-checked empirically (\code{wp86})\\[0.3em]
+Two independent reasoners agree on the fragment (244 concepts) &
+Machine-checked empirically (\code{wp87})\\[0.3em]
+The full fragment theorem ($K(C_0)$ bound, extraction, assembly) &
+\textbf{Theorem-level} --- argued, twice, independently; \emph{not}
+end-to-end formalized\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Remaining for full certification: the model-of-$C_0$ layer (Hintikka
+demand/universal satisfaction over the unfolding) and the completeness
+extraction carrying the $K(C_0)$ bound. Until then, the honest label is
+the project's standing one: \textbf{strongly supported, with the
+soundness core machine-certified --- not certified end-to-end.}
+
+\section{The one-paragraph version}\label{sec:summary}
+
+$\ALCIRCC$ models are complete graphs with a composition law, and they
+are legitimately infinite, so deciding satisfiability means enumerating
+and checking \emph{finite certificates} --- blueprints whose loops are
+generators of infinite models --- and the whole difficulty is bounding
+the certificate's genuinely-free (``live'') content. The composition
+table transports $\DR,\PP,\PPI$ deterministically along the nesting
+order (four singleton cells: transitivity, and disjointness raining
+down into parts) but refuses to transport $\PO$ in either direction,
+and no single composition ever forces $\PO$. Consequently universal
+obligations over $\DR/\PP/\PPI$ are trackable --- they propagate
+deterministically in a closed finite vocabulary --- while $\forall\PO$
+obligations must chase neighbors the algebra refuses to pin down; a
+concrete satisfiable concept with one $\forall\PO$ provably defeats the
+finite constant-interface certificate via ``wandering witnesses'' that
+each overlap a chain only transiently. Ban $\forall\PO$ and both known
+proof shapes close: the \emph{two-tier quotient} folds each infinite
+chain into a kernel whose witnesses' relations stabilize and are
+all-phase by forced composition (with constant-$\PO$ edges
+algebraically consistent and, now, unchallenged), giving a computable
+live-width bound and enumerate-and-check decidability; the
+\emph{ordered-disjoint normal form} --- certified --- shows a model is
+nothing but a strict order plus a downward-closed disjointness with
+$\PO$ as the residual non-constraint, so a standard tree tableau
+tracking only order/disjointness obligations (whose propagation
+calculus provably never manufactures a $\forall\PO$ obligation)
+terminates by ordinary blocking, discharging $\exists\PO$ by
+always-safe free amalgamation. Two shapes, three independent arrivals,
+the soundness crux kernel-checked in Lean; the fragment is exactly the
+region where the open keystone F6 --- bound the live width --- is a
+theorem instead of a conjecture, and its boundary, one constructor
+wide, is drawn by the composition table itself.
+
+\bigskip
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{\small\itshape
+Companions: \code{WHY\_ITS\_HARD.md} (the full problem, non-technical),
+\code{papers/two\_tier\_quotient\_ALCIRCC5.tex} (Route~1 in full),
+\code{papers/po\_free\_fragment\_ALCIRCC5.tex} (the fragment note),
+\code{papers/rcc5\_local\_amalgamation\_theory.tex} (Route~2's local
+algebra), \code{papers/overview\_arxiv.tex}, \S``The win'' (the
+calibrated summary), \code{formal/POFreeLift.lean},
+\code{formal/RCC5NormalForm.lean} (the certified parts). The Markdown
+original of this note is \code{papers/WHY\_PO\_FREE\_IS\_DECIDABLE.md}.
+Where this document and the formal artifacts disagree, the formal
+artifacts win.}}
+\end{center}
+
+\end{document}
