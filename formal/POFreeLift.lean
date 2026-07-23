@@ -3001,6 +3001,142 @@ theorem seg_ex_eq {a : Nat} {E : Concept}
 
 end Segment
 
+/-! ## Round D2c (2026-07-23): witness selection + syntactic vacuity
+
+Two packages, completing the model-side toolkit of the extraction:
+
+1. **The fragment's syntactic vacuity** — `pofree_cl_all`: a ∀PO-free
+   concept's closure contains NO `∀PO` subformula, hence
+   (`mty_no_all_po`) no model type ever carries a `∀PO` obligation.
+   This is the formal escape-valve fact: every certificate condition
+   that quantifies over `∀PO` obligations is VACUOUS on the fragment —
+   constant-`PO` interfaces are logically unchallengeable.
+
+2. **Witness selection** ("late picking") — for a type `t` recurring
+   infinitely often along a chain: a `DR`- or `PP`-demand in `t` has,
+   PAST ANY BOUND, a witness with the CONSTANT demanded relation to all
+   chain positions up to that bound (`dr_witness_all_below`,
+   `pp_witness_all_below` — pick the witness at a late occurrence,
+   backward forcing does the rest); a `PPI`-demand has a witness with
+   the constant relation to all positions past some anchor
+   (`ppi_witness_all_above` — forward absorption).  These are exactly
+   the constant-interface rows a segment-kernel's designated witnesses
+   need. -/
+
+/-! ### Syntactic vacuity of ∀PO on the fragment -/
+
+/-- A ∀PO-free concept's subformula closure contains no `∀PO`. -/
+theorem pofree_cl_all : ∀ e : Concept, POFree e →
+    ∀ (r : Atom) (E : Concept), Concept.all r E ∈ cl e → r ≠ po := by
+  intro e
+  induction e with
+  | top =>
+    intro _ r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact absurd h (by intro hh; exact Concept.noConfusion hh)
+    · exact nomatch h
+  | bot =>
+    intro _ r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact absurd h (by intro hh; exact Concept.noConfusion hh)
+    · exact nomatch h
+  | atom a =>
+    intro _ r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact absurd h (by intro hh; exact Concept.noConfusion hh)
+    · exact nomatch h
+  | natom a =>
+    intro _ r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact absurd h (by intro hh; exact Concept.noConfusion hh)
+    · exact nomatch h
+  | and c d ihc ihd =>
+    intro hpo r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · rcases List.mem_append.mp h with h' | h'
+      · exact ihc hpo.1 r E h'
+      · exact ihd hpo.2 r E h'
+  | or c d ihc ihd =>
+    intro hpo r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · rcases List.mem_append.mp h with h' | h'
+      · exact ihc hpo.1 r E h'
+      · exact ihd hpo.2 r E h'
+  | ex r' c ihc =>
+    intro hpo r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · exact ihc hpo r E h
+  | all r' c ihc =>
+    intro hpo r E hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · injection h with h1 h2
+      subst h1
+      exact hpo.1
+    · exact ihc hpo.2 r E h
+
+/-- No model type of a ∀PO-free concept carries a `∀PO` obligation. -/
+theorem mty_no_all_po {C0 : Concept} (hpo : POFree C0) {α : Type}
+    {I : Interp α} {x : α} {E : Concept} :
+    Concept.all po E ∉ mty C0 I x := by
+  intro h
+  exact pofree_cl_all C0 hpo po E (mty_sub _ h) rfl
+
+/-! ### Witness selection ("late picking") -/
+
+section WitnessSelection
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+  (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+  {C0 : Concept} {t : List Concept}
+  (hrec : ∀ N, ∃ a, N ≤ a ∧ mty C0 I (c a) = t)
+
+include hI hdom hstep hrec
+
+/-- A recurring `∃DR`-demand has, past any bound, a witness `DR` to ALL
+    chain positions up to that bound. -/
+theorem dr_witness_all_below {D : Concept}
+    (hD : Concept.ex dr D ∈ t) (B : Nat) :
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, b ≤ B → I.rho (c b) w = dr := by
+  obtain ⟨a, hBa, hta⟩ := hrec B
+  have hDa : Concept.ex dr D ∈ mty C0 I (c a) := by
+    rw [hta]; exact hD
+  obtain ⟨w, hw, hr, hDw⟩ := mty_ex hDa
+  exact ⟨w, hw, hDw, fun b hb =>
+    backward_forcing_dr hI hdom hstep hw hr b (Nat.le_trans hb hBa)⟩
+
+/-- A recurring `∃PP`-demand has, past any bound, a witness containing
+    ALL chain positions up to that bound. -/
+theorem pp_witness_all_below {D : Concept}
+    (hD : Concept.ex pp D ∈ t) (B : Nat) :
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, b ≤ B → I.rho (c b) w = pp := by
+  obtain ⟨a, hBa, hta⟩ := hrec B
+  have hDa : Concept.ex pp D ∈ mty C0 I (c a) := by
+    rw [hta]; exact hD
+  obtain ⟨w, hw, hr, hDw⟩ := mty_ex hDa
+  exact ⟨w, hw, hDw, fun b hb =>
+    backward_forcing_pp hI hdom hstep hw hr b (Nat.le_trans hb hBa)⟩
+
+/-- A recurring `∃PPI`-demand has a witness inside ALL chain positions
+    past some anchor. -/
+theorem ppi_witness_all_above {D : Concept}
+    (hD : Concept.ex ppi D ∈ t) :
+    ∃ a w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, a ≤ b → I.rho (c b) w = ppi := by
+  obtain ⟨a, _, hta⟩ := hrec 0
+  have hDa : Concept.ex ppi D ∈ mty C0 I (c a) := by
+    rw [hta]; exact hD
+  obtain ⟨w, hw, hr, hDw⟩ := mty_ex hDa
+  exact ⟨a, w, hw, hDw, fun b hb =>
+    forward_absorption_ppi hI hdom hstep hw hr b hb⟩
+
+end WitnessSelection
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -3017,5 +3153,9 @@ end Segment
 #print axioms segment_exists
 #print axioms seg_pp
 #print axioms seg_ppi
+#print axioms pofree_cl_all
+#print axioms mty_no_all_po
+#print axioms dr_witness_all_below
+#print axioms ppi_witness_all_above
 
 end POFreeLift
