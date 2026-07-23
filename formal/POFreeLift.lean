@@ -3512,6 +3512,337 @@ theorem glue_label_2 (x : β2 ⊕ κ2 × Nat) :
 
 end Glue
 
+/-! ## Round E1 (2026-07-23): the family glue with pending pools
+
+The n-ary, FLAT form of the glue, shaped for the top-level assembly:
+a family of blocks over COMMON index types (`Fin B → MultiTier β κ`),
+glued all-cross-`PO`.  Each block may leave `∃PO`-demands PENDING
+against a pool `P` of tagged types (`MTOkPool`): a pending demand
+`∃PO.c` is admissible if some pool entry with a DIFFERENT tag contains
+`c`.  If every pool entry is realized as (a subset of) the label of an
+actual node in the block carrying its tag (`hreal`), the glued family
+is STRICTLY valid (`glueFam_ok`): the pending demand's realizer sits in
+a different block, so the cross edge is `PO` — exactly the demanded
+relation — and never fires an obligation.  The intended instantiation:
+one block per vertical/DR demand component, one "library" block per
+`∃PO`-subformula `D` (tagged, rooted at a type containing `D`);
+libraries only demand strictly smaller libraries, so the pool closes. -/
+
+section FamGlue
+
+variable {β κ : Type} [DecidableEq κ] {B : Nat}
+
+/-- The all-cross-`PO` glue of a block family. -/
+def glueFam (F : Fin B → MultiTier β κ) :
+    MultiTier (Fin B × β) (Fin B × κ) where
+  E := fun e f =>
+    if e.1 = f.1 then (F e.1).E e.2 f.2 else po
+  K := fun k e =>
+    if k.1 = e.1 then (F k.1).K k.2 e.2 else po
+  Q := fun k k' =>
+    if k.1 = k'.1 then (F k.1).Q k.2 k'.2 else po
+  up := fun k => (F k.1).up k.2
+  tauE := fun e => (F e.1).tauE e.2
+  p := fun k => (F k.1).p k.2
+  phase := fun k a => (F k.1).phase k.2 a
+
+/-- Validity with pending `∃PO`-demands against a tagged pool: as
+    `MultiTierOk`, except `e_ex`/`k_ex` admit a pending branch — the
+    demanded relation is `PO` and the demanded concept sits in a pool
+    entry with a different tag. -/
+structure MTOkPool (T : MultiTier β κ) (myTag : Nat)
+    (P : List (Nat × List Concept)) : Prop where
+  hp : ∀ k, 0 < T.p k
+  frame_q : Frame (qnet T.E T.K T.Q)
+  e_clash : ∀ e a, Concept.atom a ∈ T.tauE e → Concept.natom a ∉ T.tauE e
+  e_nobot : ∀ e, Concept.bot ∉ T.tauE e
+  e_and : ∀ e c d, Concept.and c d ∈ T.tauE e → c ∈ T.tauE e ∧ d ∈ T.tauE e
+  e_or : ∀ e c d, Concept.or c d ∈ T.tauE e → c ∈ T.tauE e ∨ d ∈ T.tauE e
+  k_clash : ∀ k a, a < T.p k → ∀ n, Concept.atom n ∈ T.phase k a →
+    Concept.natom n ∉ T.phase k a
+  k_nobot : ∀ k a, a < T.p k → Concept.bot ∉ T.phase k a
+  k_and : ∀ k a, a < T.p k → ∀ c d, Concept.and c d ∈ T.phase k a →
+    c ∈ T.phase k a ∧ d ∈ T.phase k a
+  k_or : ∀ k a, a < T.p k → ∀ c d, Concept.or c d ∈ T.phase k a →
+    c ∈ T.phase k a ∨ d ∈ T.phase k a
+  ee_all : ∀ e f r c, Concept.all r c ∈ T.tauE e → T.E e f = r →
+    c ∈ T.tauE f
+  ek_all : ∀ e r c, Concept.all r c ∈ T.tauE e →
+    ∀ k, conv (T.K k e) = r → ∀ a, a < T.p k → c ∈ T.phase k a
+  ke_all : ∀ k a, a < T.p k → ∀ r c, Concept.all r c ∈ T.phase k a →
+    ∀ f, T.K k f = r → c ∈ T.tauE f
+  kk_pp : ∀ k a, a < T.p k → ∀ c, Concept.all pp c ∈ T.phase k a →
+    ∀ b, b < T.p k → c ∈ T.phase k b
+  kk_ppi : ∀ k a, a < T.p k → ∀ c, Concept.all ppi c ∈ T.phase k a →
+    ∀ b, b < T.p k → c ∈ T.phase k b
+  kk_eq : ∀ k a, a < T.p k → ∀ c, Concept.all eq c ∈ T.phase k a →
+    c ∈ T.phase k a
+  kq_all : ∀ k k', k ≠ k' → ∀ a, a < T.p k → ∀ r c,
+    Concept.all r c ∈ T.phase k a → T.Q k k' = r →
+    ∀ b, b < T.p k' → c ∈ T.phase k' b
+  e_ex : ∀ e r c, Concept.ex r c ∈ T.tauE e →
+    (∃ f, T.E e f = r ∧ c ∈ T.tauE f) ∨
+    (∃ k, conv (T.K k e) = r ∧ ∃ a, a < T.p k ∧ c ∈ T.phase k a) ∨
+    (r = po ∧ ∃ q ∈ P, q.1 ≠ myTag ∧ c ∈ q.2)
+  k_ex : ∀ k a, a < T.p k → ∀ r c, Concept.ex r c ∈ T.phase k a →
+    (∃ f, T.K k f = r ∧ c ∈ T.tauE f) ∨
+    (r = cdir (T.up k) ∧ ∃ b, b < T.p k ∧ c ∈ T.phase k b) ∨
+    (r = eq ∧ c ∈ T.phase k a) ∨
+    (∃ k', k ≠ k' ∧ T.Q k k' = r ∧ ∃ b, b < T.p k' ∧ c ∈ T.phase k' b) ∨
+    (r = po ∧ ∃ q ∈ P, q.1 ≠ myTag ∧ c ∈ q.2)
+
+variable {F : Fin B → MultiTier β κ}
+
+/-- Embed a block's quotient index into the family carrier. -/
+def gembF (b : Fin B) : (β ⊕ κ) → ((Fin B × β) ⊕ (Fin B × κ))
+  | .inl e => .inl (b, e)
+  | .inr k => .inr (b, k)
+
+omit [DecidableEq κ] in
+theorem gembF_rep (z : (Fin B × β) ⊕ (Fin B × κ)) :
+    ∃ b x, z = gembF b x := by
+  rcases z with ⟨b, e⟩ | ⟨b, k⟩
+  · exact ⟨b, .inl e, rfl⟩
+  · exact ⟨b, .inr k, rfl⟩
+
+theorem qnet_fam_same (b : Fin B) (x y : β ⊕ κ) :
+    qnet (glueFam F).E (glueFam F).K (glueFam F).Q (gembF b x) (gembF b y)
+      = qnet (F b).E (F b).K (F b).Q x y := by
+  rcases x with e | k <;> rcases y with f | k'
+  · show (if b = b then (F b).E e f else po) = (F b).E e f
+    rw [if_pos rfl]
+  · show conv (if b = b then (F b).K k' e else po) = conv ((F b).K k' e)
+    rw [if_pos rfl]
+  · show (if b = b then (F b).K k f else po) = (F b).K k f
+    rw [if_pos rfl]
+  · show (if ((b, k) : Fin B × κ) = (b, k') then eq
+        else (glueFam F).Q (b, k) (b, k'))
+      = (if k = k' then eq else (F b).Q k k')
+    by_cases hk : k = k'
+    · subst hk
+      rw [if_pos rfl, if_pos rfl]
+    · rw [if_neg (fun h => hk (congrArg Prod.snd h)), if_neg hk]
+      show (if b = b then (F b).Q k k' else po) = (F b).Q k k'
+      rw [if_pos rfl]
+
+theorem qnet_fam_cross {b b' : Fin B} (hbb : b ≠ b') (x y : β ⊕ κ) :
+    qnet (glueFam F).E (glueFam F).K (glueFam F).Q (gembF b x) (gembF b' y)
+      = po := by
+  rcases x with e | k <;> rcases y with f | k'
+  · show (if b = b' then (F b).E e f else po) = po
+    rw [if_neg hbb]
+  · show conv (if b' = b then (F b').K k' e else po) = po
+    rw [if_neg (fun h => hbb h.symm)]
+    rfl
+  · show (if b = b' then (F b).K k f else po) = po
+    rw [if_neg hbb]
+  · show (if ((b, k) : Fin B × κ) = (b', k') then eq
+        else (glueFam F).Q (b, k) (b', k')) = po
+    rw [if_neg (fun h => hbb (congrArg Prod.fst h))]
+    show (if b = b' then (F b).Q k k' else po) = po
+    rw [if_neg hbb]
+
+/-- THE FAMILY GLUE FRAME. -/
+theorem glueFam_frame (h : ∀ b, Frame (qnet (F b).E (F b).K (F b).Q)) :
+    Frame (qnet (glueFam F).E (glueFam F).K (glueFam F).Q) := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro z
+    obtain ⟨b, x, rfl⟩ := gembF_rep z
+    rw [qnet_fam_same]
+    exact (h b).refl_eq x
+  · intro z w hzw
+    obtain ⟨b, x, rfl⟩ := gembF_rep z
+    obtain ⟨b', y, rfl⟩ := gembF_rep w
+    by_cases hbb : b = b'
+    · subst hbb
+      rw [qnet_fam_same] at hzw
+      rw [(h b).eq_id x y hzw]
+    · rw [qnet_fam_cross hbb] at hzw
+      exact absurd hzw (by decide)
+  · intro z w
+    obtain ⟨b, x, rfl⟩ := gembF_rep z
+    obtain ⟨b', y, rfl⟩ := gembF_rep w
+    by_cases hbb : b = b'
+    · subst hbb
+      rw [qnet_fam_same, qnet_fam_same]
+      exact (h b).conv_ x y
+    · rw [qnet_fam_cross (fun hh => hbb hh.symm),
+        qnet_fam_cross hbb]
+      rfl
+  · intro z w v
+    obtain ⟨b1, x, rfl⟩ := gembF_rep z
+    obtain ⟨b2, y, rfl⟩ := gembF_rep w
+    obtain ⟨b3, u, rfl⟩ := gembF_rep v
+    by_cases h12 : b1 = b2
+    · subst h12
+      by_cases h13 : b1 = b3
+      · subst h13
+        rw [qnet_fam_same, qnet_fam_same, qnet_fam_same]
+        exact (h b1).comp_ x y u
+      · rw [qnet_fam_cross h13, qnet_fam_same, qnet_fam_cross h13]
+        exact po_mem_comp_right _
+    · by_cases h23 : b2 = b3
+      · subst h23
+        rw [qnet_fam_cross h12, qnet_fam_cross h12, qnet_fam_same]
+        exact po_mem_comp_left _
+      · by_cases h13 : b1 = b3
+        · subst h13
+          rw [qnet_fam_same, qnet_fam_cross h12, qnet_fam_cross h23]
+          exact mem_comp_po_po _
+        · rw [qnet_fam_cross h13, qnet_fam_cross h12,
+            qnet_fam_cross h23]
+          exact po_mem_comp_left _
+
+/-- THE FAMILY GLUE THEOREM: pooled blocks + pool realization give a
+    strictly valid glued certificate. -/
+theorem glueFam_ok {P : List (Nat × List Concept)}
+    (hpool : ∀ b : Fin B, MTOkPool (F b) b.val P)
+    (hnopo : ∀ b : Fin B, MTNoPo (F b))
+    (hreal : ∀ q ∈ P, ∃ (b : Fin B) (x : β ⊕ κ × Nat),
+      b.val = q.1 ∧ ∀ c ∈ q.2, c ∈ mtLabel (F b) x) :
+    MultiTierOk (glueFam F) := by
+  refine
+    { hp := ?_, frame_q := glueFam_frame (fun b => (hpool b).frame_q),
+      e_clash := ?_, e_nobot := ?_, e_and := ?_, e_or := ?_,
+      k_clash := ?_, k_nobot := ?_, k_and := ?_, k_or := ?_,
+      ee_all := ?_, ek_all := ?_, ke_all := ?_,
+      kk_pp := ?_, kk_ppi := ?_, kk_eq := ?_, kq_all := ?_,
+      e_ex := ?_, k_ex := ?_ }
+  · intro ⟨b, k⟩
+    exact (hpool b).hp k
+  · intro ⟨b, e⟩ a hmem
+    exact (hpool b).e_clash e a hmem
+  · intro ⟨b, e⟩
+    exact (hpool b).e_nobot e
+  · intro ⟨b, e⟩ c d hmem
+    exact (hpool b).e_and e c d hmem
+  · intro ⟨b, e⟩ c d hmem
+    exact (hpool b).e_or e c d hmem
+  · intro ⟨b, k⟩ a ha n hmem
+    exact (hpool b).k_clash k a ha n hmem
+  · intro ⟨b, k⟩ a ha
+    exact (hpool b).k_nobot k a ha
+  · intro ⟨b, k⟩ a ha c d hmem
+    exact (hpool b).k_and k a ha c d hmem
+  · intro ⟨b, k⟩ a ha c d hmem
+    exact (hpool b).k_or k a ha c d hmem
+  · intro ⟨b, e⟩ ⟨b', f⟩ r c hmem hr
+    by_cases hbb : b = b'
+    · subst hbb
+      have hr' : (F b).E e f = r := by
+        have h2 : (if b = b then (F b).E e f else po) = r := hr
+        rwa [if_pos rfl] at h2
+      exact (hpool b).ee_all e f r c hmem hr'
+    · have hr' : po = r := by
+        have h2 : (if b = b' then (F b).E e f else po) = r := hr
+        rwa [if_neg hbb] at h2
+      subst hr'
+      exact absurd hmem ((hnopo b).ext e c)
+  · intro ⟨b, e⟩ r c hmem ⟨b', k⟩ hr a ha
+    by_cases hbb : b' = b
+    · subst hbb
+      have hr' : conv ((F b').K k e) = r := by
+        have h2 : conv (if b' = b' then (F b').K k e else po) = r := hr
+        rwa [if_pos rfl] at h2
+      exact (hpool b').ek_all e r c hmem k hr' a ha
+    · have hr' : po = r := by
+        have h2 : conv (if b' = b then (F b').K k e else po) = r := hr
+        rwa [if_neg hbb] at h2
+      subst hr'
+      exact absurd hmem ((hnopo b).ext e c)
+  · intro ⟨b, k⟩ a ha r c hmem ⟨b', f⟩ hK
+    by_cases hbb : b = b'
+    · subst hbb
+      have hK' : (F b).K k f = r := by
+        have h2 : (if b = b then (F b).K k f else po) = r := hK
+        rwa [if_pos rfl] at h2
+      exact (hpool b).ke_all k a ha r c hmem f hK'
+    · have hK' : po = r := by
+        have h2 : (if b = b' then (F b).K k f else po) = r := hK
+        rwa [if_neg hbb] at h2
+      subst hK'
+      exact absurd hmem ((hnopo b).ker k a ha c)
+  · intro ⟨b, k⟩ a ha c hmem bb hbb
+    exact (hpool b).kk_pp k a ha c hmem bb hbb
+  · intro ⟨b, k⟩ a ha c hmem bb hbb
+    exact (hpool b).kk_ppi k a ha c hmem bb hbb
+  · intro ⟨b, k⟩ a ha c hmem
+    exact (hpool b).kk_eq k a ha c hmem
+  · intro ⟨b, k⟩ ⟨b', k'⟩ hne a ha r c hmem hQ bb hbb
+    by_cases hbb' : b = b'
+    · subst hbb'
+      have hkk : k ≠ k' := fun h => hne (by rw [h])
+      have hQ' : (F b).Q k k' = r := by
+        have h2 : (if b = b then (F b).Q k k' else po) = r := hQ
+        rwa [if_pos rfl] at h2
+      exact (hpool b).kq_all k k' hkk a ha r c hmem hQ' bb hbb
+    · have hQ' : po = r := by
+        have h2 : (if b = b' then (F b).Q k k' else po) = r := hQ
+        rwa [if_neg hbb'] at h2
+      subst hQ'
+      exact absurd hmem ((hnopo b).ker k a ha c)
+  · intro ⟨b, e⟩ r c hmem
+    rcases (hpool b).e_ex e r c hmem with
+      ⟨f, hEf, hcf⟩ | ⟨k, hK, a, ha, hca⟩ | ⟨hrpo, q, hqP, hqt, hqc⟩
+    · refine Or.inl ⟨(b, f), ?_, hcf⟩
+      show (if b = b then (F b).E e f else po) = r
+      rwa [if_pos rfl]
+    · refine Or.inr ⟨(b, k), ?_, a, ha, hca⟩
+      show conv (if b = b then (F b).K k e else po) = r
+      rwa [if_pos rfl]
+    · subst hrpo
+      obtain ⟨b', x, hb't, hsub⟩ := hreal q hqP
+      have hne : b' ≠ b := fun h => hqt (by rw [← hb't, h])
+      rcases x with e' | ⟨k', i⟩
+      · refine Or.inl ⟨(b', e'), ?_, hsub c hqc⟩
+        show (if b = b' then (F b).E e e' else po) = po
+        rw [if_neg (fun h => hne h.symm)]
+      · refine Or.inr ⟨(b', k'), ?_, i % (F b').p k',
+          Nat.mod_lt i ((hpool b').hp k'), hsub c hqc⟩
+        show conv (if b' = b then (F b').K k' e else po) = po
+        rw [if_neg hne]
+        rfl
+  · intro ⟨b, k⟩ a ha r c hmem
+    rcases (hpool b).k_ex k a ha r c hmem with
+      ⟨f, hKf, hcf⟩ | ⟨hrd, bb, hbb, hcb⟩ | ⟨hreq, hc⟩ |
+      ⟨k', hne, hQ, bb, hbb, hcb⟩ | ⟨hrpo, q, hqP, hqt, hqc⟩
+    · refine Or.inl ⟨(b, f), ?_, hcf⟩
+      show (if b = b then (F b).K k f else po) = r
+      rwa [if_pos rfl]
+    · exact Or.inr (Or.inl ⟨hrd, bb, hbb, hcb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨hreq, hc⟩))
+    · refine Or.inr (Or.inr (Or.inr ⟨(b, k'),
+        fun h => hne (congrArg Prod.snd h), ?_, bb, hbb, hcb⟩))
+      show (if b = b then (F b).Q k k' else po) = r
+      rwa [if_pos rfl]
+    · subst hrpo
+      obtain ⟨b', x, hb't, hsub⟩ := hreal q hqP
+      have hbne : b' ≠ b := fun h => hqt (by rw [← hb't, h])
+      rcases x with e' | ⟨k', i⟩
+      · refine Or.inl ⟨(b', e'), ?_, hsub c hqc⟩
+        show (if b = b' then (F b).K k e' else po) = po
+        rw [if_neg (fun h => hbne h.symm)]
+      · refine Or.inr (Or.inr (Or.inr ⟨(b', k'),
+          fun h => hbne (congrArg Prod.fst h).symm, ?_,
+          i % (F b').p k', Nat.mod_lt i ((hpool b').hp k'),
+          hsub c hqc⟩))
+        show (if b = b' then (F b).Q k k' else po) = po
+        rw [if_neg (fun h => hbne h.symm)]
+
+omit [DecidableEq κ] in
+/-- Labels in the family glue: block `b`'s node keeps its label. -/
+theorem glueFam_label (b : Fin B) (x : β ⊕ κ × Nat) :
+    mtLabel (glueFam F)
+      (match x with
+        | .inl e => .inl (b, e)
+        | .inr (k, i) => .inr ((b, k), i))
+      = mtLabel (F b) x := by
+  rcases x with e | ⟨k, i⟩
+  · rfl
+  · rfl
+
+end FamGlue
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -3534,5 +3865,6 @@ end Glue
 #print axioms ppi_witness_all_above
 #print axioms glue_ok
 #print axioms glue_frame
+#print axioms glueFam_ok
 
 end POFreeLift
