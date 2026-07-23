@@ -4132,6 +4132,473 @@ theorem segment_kk_ppi {C0 : Concept} {i p : Nat}
 
 end SegmentSelect
 
+/-! ## Round E2a′ (2026-07-23): the descending mirror
+
+The D2a–D2c + E2a toolkit for DESCENDING chains
+(`rho (d i) (d (i+1)) = ppi` — each rung properly contains the next),
+the model-side counterpart of the descending kernels (`up = false`)
+that round B's `munf` already unfolds soundly (witness: `cboth`'s
+second tower).  Mirrored DIRECTLY, as round B mirrored round A: a
+transpose-duality functor exists in principle (flip `rho`, swap
+`PP ↔ PPI` in concepts), but the assembly mixes ascending and
+descending kernels over the SAME interpretation and the SAME concept,
+so every statement is proved here in the exact shape the block
+construction consumes — no transposition layer to thread through.
+
+The mirrored algebra: stepping DOWN the chain is `comp(PP, ·)`, so the
+rank order reverses —
+
+    {PPI}  →  {PO, EQ}  →  {DR, PP}     (dstabRank 0 → 1 → 2)
+
+with `comp(PP,DR) = {DR}` and `comp(PP,PP) = {PP}` now the ABSORBING
+cells (forward forcing: a `DR`/`PP` external at one position is
+`DR`/`PP` at all later, smaller rungs) and `comp(PPI,PPI) = {PPI}` the
+backward one (a contained external is inside all earlier, larger
+rungs).  Segment coherence swaps roles: `∀PPI` obligations travel down
+to the far endpoint and re-enter through the type equality
+(`dseg_ppi`, the mirror of `seg_pp`), `∀PP` obligations climb to the
+segment base and fire down from the far endpoint (`dseg_pp`, the
+mirror of `seg_ppi`).  `seg_eq`/`seg_ex_eq` are direction-agnostic
+(they never touch the chain step) and apply to descending chains
+verbatim — no duals needed. -/
+
+/-- The descending stabilization rank: `PPI` can still become
+    anything, `PO`/`EQ` only sharpen, `DR`/`PP` are absorbing. -/
+def dstabRank : Atom → Nat
+  | ppi => 0
+  | eq => 1
+  | po => 1
+  | dr => 2
+  | pp => 2
+
+/-- Each downward chain step moves the external relation monotonically
+    in descending rank. -/
+theorem dstabRank_mono : ∀ a b : Atom, b ∈ comp pp a →
+    dstabRank a ≤ dstabRank b := by
+  intro a b
+  cases a <;> cases b <;> decide
+
+/-- A rank-preserving downward step preserves the value. -/
+theorem dstabRank_fix : ∀ a b : Atom, b ∈ comp pp a →
+    dstabRank a = dstabRank b → b = a := by
+  intro a b
+  cases a <;> cases b <;> decide
+
+theorem dstabRank_le_two : ∀ a : Atom, dstabRank a ≤ 2 := by
+  intro a
+  cases a <;> decide
+
+section DescModelChain
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+  (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi)
+
+include hI hdom hstep
+
+/-- Descending chain transitivity: strictly later is `PPI`. -/
+theorem dchain_model_ppi : ∀ i j, i < j → I.rho (d i) (d j) = ppi := by
+  have aux : ∀ i k, I.rho (d i) (d (i + 1 + k)) = ppi := by
+    intro i k
+    induction k with
+    | zero => exact hstep i
+    | succ k ih =>
+      have h1 := hI.comp_ (d i) (d (i + 1 + k)) (d (i + 1 + k + 1))
+        (hdom i) (hdom (i + 1 + k)) (hdom (i + 1 + k + 1))
+      rw [ih, hstep (i + 1 + k)] at h1
+      rw [show comp ppi ppi = [ppi] from rfl] at h1
+      exact List.mem_singleton.mp h1
+  intro i j hij
+  have hj : j = i + 1 + (j - i - 1) := by omega
+  rw [hj]
+  exact aux i (j - i - 1)
+
+/-- Descending chain elements are pairwise distinct (strong EQ). -/
+theorem dchain_model_distinct : ∀ i j, i < j → d i ≠ d j := by
+  intro i j hij heq
+  have h1 := dchain_model_ppi hI hdom hstep i j hij
+  rw [heq] at h1
+  rw [hI.refl_eq (d j) (hdom j)] at h1
+  exact absurd h1 (by decide)
+
+/-- Strictly earlier is `PP` (seen from the later, smaller rung). -/
+theorem dchain_model_pp : ∀ i j, i < j → I.rho (d j) (d i) = pp := by
+  intro i j hij
+  rw [hI.conv_ (d i) (d j) (hdom i) (hdom j),
+    dchain_model_ppi hI hdom hstep i j hij]
+  rfl
+
+variable {e : α} (hedom : I.dom e)
+
+include hedom
+
+/-- The descending step fact for the external-relation sequence. -/
+theorem dvstep : ∀ j,
+    I.rho (d (j + 1)) e ∈ comp pp (I.rho (d j) e) := by
+  intro j
+  have h1 := hI.comp_ (d (j + 1)) (d j) e (hdom (j + 1)) (hdom j) hedom
+  rw [dchain_model_pp hI hdom hstep j (j + 1) (Nat.lt_succ_self j)]
+    at h1
+  exact h1
+
+/-- Rank monotonicity along the descending chain. -/
+theorem dvrank_mono : ∀ i j, i ≤ j →
+    dstabRank (I.rho (d i) e) ≤ dstabRank (I.rho (d j) e) := by
+  have aux : ∀ i k, dstabRank (I.rho (d i) e)
+      ≤ dstabRank (I.rho (d (i + k)) e) := by
+    intro i k
+    induction k with
+    | zero => exact Nat.le_refl _
+    | succ k ih =>
+      exact Nat.le_trans ih
+        (dstabRank_mono _ _ (dvstep hI hdom hstep hedom (i + k)))
+  intro i j hij
+  have hj : j = i + (j - i) := by omega
+  rw [hj]
+  exact aux i (j - i)
+
+/-- THE DESCENDING STABILIZATION THEOREM: the relation of a fixed
+    external element to a descending chain is eventually constant. -/
+theorem dexternal_stabilizes :
+    ∃ N w, ∀ j, N ≤ j → I.rho (d j) e = w := by
+  have hrank : ∃ N, ∀ j, N ≤ j →
+      dstabRank (I.rho (d j) e) = dstabRank (I.rho (d N) e) := by
+    by_cases h2 : ∃ i, dstabRank (I.rho (d i) e) = 2
+    · obtain ⟨i, hi⟩ := h2
+      refine ⟨i, fun j hj => ?_⟩
+      have h3 := dvrank_mono hI hdom hstep hedom i j hj
+      have h4 := dstabRank_le_two (I.rho (d j) e)
+      omega
+    · by_cases h1 : ∃ i, dstabRank (I.rho (d i) e) = 1
+      · obtain ⟨i, hi⟩ := h1
+        refine ⟨i, fun j hj => ?_⟩
+        have h3 := dvrank_mono hI hdom hstep hedom i j hj
+        have h4 : dstabRank (I.rho (d j) e) ≠ 2 :=
+          fun hh => h2 ⟨j, hh⟩
+        have h5 := dstabRank_le_two (I.rho (d j) e)
+        omega
+      · refine ⟨0, fun j _ => ?_⟩
+        have h4 : dstabRank (I.rho (d j) e) ≠ 2 :=
+          fun hh => h2 ⟨j, hh⟩
+        have h5 : dstabRank (I.rho (d j) e) ≠ 1 :=
+          fun hh => h1 ⟨j, hh⟩
+        have h6 := dstabRank_le_two (I.rho (d j) e)
+        have h7 : dstabRank (I.rho (d 0) e) ≠ 2 :=
+          fun hh => h2 ⟨0, hh⟩
+        have h8 : dstabRank (I.rho (d 0) e) ≠ 1 :=
+          fun hh => h1 ⟨0, hh⟩
+        have h9 := dstabRank_le_two (I.rho (d 0) e)
+        omega
+  obtain ⟨N, hN⟩ := hrank
+  refine ⟨N, I.rho (d N) e, ?_⟩
+  have aux : ∀ k, I.rho (d (N + k)) e = I.rho (d N) e := by
+    intro k
+    induction k with
+    | zero => rfl
+    | succ k ih =>
+      have h1 := dvstep hI hdom hstep hedom (N + k)
+      rw [ih] at h1
+      have h2 : dstabRank (I.rho (d N) e)
+          = dstabRank (I.rho (d (N + k + 1)) e) := by
+        rw [hN (N + k + 1) (by omega)]
+      exact dstabRank_fix _ _ h1 h2
+  intro j hj
+  have hj2 : j = N + (j - N) := by omega
+  rw [hj2]
+  exact aux (j - N)
+
+/-- FORWARD FORCING (`DR`, descending): a disjoint external is `DR` to
+    ALL later (smaller) chain positions — `comp(PP,DR) = {DR}`. -/
+theorem dforward_forcing_dr {i : Nat} (h : I.rho (d i) e = dr) :
+    ∀ j, i ≤ j → I.rho (d j) e = dr := by
+  intro j hj
+  rcases Nat.lt_or_ge i j with hlt | hge
+  · have h1 := hI.comp_ (d j) (d i) e (hdom j) (hdom i) hedom
+    rw [dchain_model_pp hI hdom hstep i j hlt, h] at h1
+    rw [show comp pp dr = [dr] from rfl] at h1
+    exact List.mem_singleton.mp h1
+  · have hji : j = i := by omega
+    rw [hji]
+    exact h
+
+/-- FORWARD FORCING (`PP`, descending): a containing external contains
+    ALL later (smaller) chain positions — `comp(PP,PP) = {PP}`. -/
+theorem dforward_forcing_pp {i : Nat} (h : I.rho (d i) e = pp) :
+    ∀ j, i ≤ j → I.rho (d j) e = pp := by
+  intro j hj
+  rcases Nat.lt_or_ge i j with hlt | hge
+  · have h1 := hI.comp_ (d j) (d i) e (hdom j) (hdom i) hedom
+    rw [dchain_model_pp hI hdom hstep i j hlt, h] at h1
+    rw [show comp pp pp = [pp] from rfl] at h1
+    exact List.mem_singleton.mp h1
+  · have hji : j = i := by omega
+    rw [hji]
+    exact h
+
+/-- BACKWARD ABSORPTION (`PPI`, descending): a contained external
+    stays inside ALL earlier (larger) chain positions —
+    `comp(PPI,PPI) = {PPI}`. -/
+theorem dbackward_absorption_ppi {i : Nat} (h : I.rho (d i) e = ppi) :
+    ∀ j, j ≤ i → I.rho (d j) e = ppi := by
+  intro j hj
+  rcases Nat.lt_or_ge j i with hlt | hge
+  · have h1 := hI.comp_ (d j) (d i) e (hdom j) (hdom i) hedom
+    rw [dchain_model_ppi hI hdom hstep j i hlt, h] at h1
+    rw [show comp ppi ppi = [ppi] from rfl] at h1
+    exact List.mem_singleton.mp h1
+  · have hji : j = i := by omega
+    rw [hji]
+    exact h
+
+end DescModelChain
+
+/-! ### Descending segment coherence -/
+
+section DescSegment
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {C0 : Concept}
+  {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+  (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi)
+
+include hI hdom hstep
+
+/-- SEGMENT COHERENCE, descending `PPI` side (the mirror of `seg_pp`):
+    with type-equal endpoints, a `∀PPI` obligation anywhere in the
+    segment puts its argument in EVERY segment type. -/
+theorem dseg_ppi {i j : Nat} (hij : i < j)
+    (hty : mty C0 I (d i) = mty C0 I (d j))
+    {a : Nat} (hia : i ≤ a) (haj : a < j) {E : Concept}
+    (hE : Concept.all ppi E ∈ mty C0 I (d a)) :
+    ∀ b, i ≤ b → b < j → E ∈ mty C0 I (d b) := by
+  -- the obligation descends to the far endpoint, transfers to the base
+  have htop : Concept.all ppi E ∈ mty C0 I (d j) := by
+    obtain ⟨hcl, hsat⟩ := mem_mty.mp hE
+    exact mem_mty.mpr ⟨hcl, sat_all_ppi_down hI (hdom a) (hdom j)
+      (dchain_model_pp hI hdom hstep a j haj) hsat⟩
+  have hbot : Concept.all ppi E ∈ mty C0 I (d i) := by
+    rw [hty]; exact htop
+  intro b hib hbj
+  rcases Nat.lt_or_ge i b with hlt | hge
+  · exact mty_all hbot (hdom b) (dchain_model_ppi hI hdom hstep i b hlt)
+  · have hbi : b = i := by omega
+    subst hbi
+    -- E at the base endpoint: fire at the far endpoint, transfer back
+    have hEj : E ∈ mty C0 I (d j) :=
+      mty_all hbot (hdom j) (dchain_model_ppi hI hdom hstep b j (by omega))
+    rw [← hty] at hEj
+    exact hEj
+
+/-- SEGMENT COHERENCE, descending `PP` side (the mirror of `seg_ppi`). -/
+theorem dseg_pp {i j : Nat} (hij : i < j)
+    (hty : mty C0 I (d i) = mty C0 I (d j))
+    {a : Nat} (hia : i ≤ a) (_haj : a < j) {E : Concept}
+    (hE : Concept.all pp E ∈ mty C0 I (d a)) :
+    ∀ b, i ≤ b → b < j → E ∈ mty C0 I (d b) := by
+  -- the obligation climbs to the base endpoint, transfers to the far one
+  have hbot : Concept.all pp E ∈ mty C0 I (d i) := by
+    rcases Nat.lt_or_ge i a with hlt | hge
+    · obtain ⟨hcl, hsat⟩ := mem_mty.mp hE
+      exact mem_mty.mpr ⟨hcl, sat_all_pp_up hI (hdom a) (hdom i)
+        (dchain_model_pp hI hdom hstep i a hlt) hsat⟩
+    · have hai : a = i := by omega
+      subst hai
+      exact hE
+  have htop : Concept.all pp E ∈ mty C0 I (d j) := by
+    rw [← hty]; exact hbot
+  intro b hib hbj
+  -- every segment rung contains the far endpoint's view: fire down
+  have hpp : I.rho (d j) (d b) = pp :=
+    dchain_model_pp hI hdom hstep b j (by omega)
+  exact mty_all htop (hdom b) hpp
+
+end DescSegment
+
+/-! ### Descending witness selection -/
+
+section DescWitnessSelection
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+  (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi)
+  {C0 : Concept} {t : List Concept}
+  (hrec : ∀ N, ∃ a, N ≤ a ∧ mty C0 I (d a) = t)
+
+include hI hdom hstep hrec
+
+/-- A recurring `∃PPI`-demand on a descending chain has, past any
+    bound, a witness inside ALL chain positions up to that bound. -/
+theorem dppi_witness_all_below {D : Concept}
+    (hD : Concept.ex ppi D ∈ t) (B : Nat) :
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, b ≤ B → I.rho (d b) w = ppi := by
+  obtain ⟨a, hBa, hta⟩ := hrec B
+  have hDa : Concept.ex ppi D ∈ mty C0 I (d a) := by
+    rw [hta]; exact hD
+  obtain ⟨w, hw, hr, hDw⟩ := mty_ex hDa
+  exact ⟨w, hw, hDw, fun b hb =>
+    dbackward_absorption_ppi hI hdom hstep hw hr b
+      (Nat.le_trans hb hBa)⟩
+
+/-- A recurring `∃DR`-demand on a descending chain has a witness `DR`
+    to ALL chain positions past some anchor. -/
+theorem ddr_witness_all_above {D : Concept}
+    (hD : Concept.ex dr D ∈ t) :
+    ∃ a w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, a ≤ b → I.rho (d b) w = dr := by
+  obtain ⟨a, _, hta⟩ := hrec 0
+  have hDa : Concept.ex dr D ∈ mty C0 I (d a) := by
+    rw [hta]; exact hD
+  obtain ⟨w, hw, hr, hDw⟩ := mty_ex hDa
+  exact ⟨a, w, hw, hDw, fun b hb =>
+    dforward_forcing_dr hI hdom hstep hw hr b hb⟩
+
+/-- A recurring `∃PP`-demand on a descending chain has a witness
+    containing ALL chain positions past some anchor. -/
+theorem dpp_witness_all_above {D : Concept}
+    (hD : Concept.ex pp D ∈ t) :
+    ∃ a w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, a ≤ b → I.rho (d b) w = pp := by
+  obtain ⟨a, _, hta⟩ := hrec 0
+  have hDa : Concept.ex pp D ∈ mty C0 I (d a) := by
+    rw [hta]; exact hD
+  obtain ⟨w, hw, hr, hDw⟩ := mty_ex hDa
+  exact ⟨a, w, hw, hDw, fun b hb =>
+    dforward_forcing_pp hI hdom hstep hw hr b hb⟩
+
+end DescWitnessSelection
+
+/-! ### The descending chain builder -/
+
+section DescChainBuilder
+
+variable {α : Type} {I : Interp α} (S : α → Prop)
+  (hprod : ∀ x, S x → ∃ y, S y ∧ I.dom y ∧ I.rho x y = ppi)
+
+/-- The descending chain, bundled with its invariant. -/
+noncomputable def dchainAux (x0 : α) (h0 : S x0) :
+    Nat → {a : α // S a}
+  | 0 => ⟨x0, h0⟩
+  | n + 1 =>
+    ⟨Classical.choose
+       (hprod (dchainAux x0 h0 n).1 (dchainAux x0 h0 n).2),
+     (Classical.choose_spec
+       (hprod (dchainAux x0 h0 n).1 (dchainAux x0 h0 n).2)).1⟩
+
+/-- THE DESCENDING CHAIN BUILDER: from a productive predicate, an
+    infinite descending model chain. -/
+noncomputable def dbuildChain (x0 : α) (h0 : S x0) (n : Nat) : α :=
+  (dchainAux S hprod x0 h0 n).1
+
+theorem dbuildChain_zero (x0 : α) (h0 : S x0) :
+    dbuildChain S hprod x0 h0 0 = x0 := rfl
+
+theorem dbuildChain_prop (x0 : α) (h0 : S x0) (n : Nat) :
+    S (dbuildChain S hprod x0 h0 n) :=
+  (dchainAux S hprod x0 h0 n).2
+
+theorem dbuildChain_step (x0 : α) (h0 : S x0) (n : Nat) :
+    I.rho (dbuildChain S hprod x0 h0 n)
+      (dbuildChain S hprod x0 h0 (n + 1)) = ppi :=
+  (Classical.choose_spec
+    (hprod (dchainAux S hprod x0 h0 n).1
+      (dchainAux S hprod x0 h0 n).2)).2.2
+
+theorem dbuildChain_dom (x0 : α) (h0 : S x0) (hd0 : I.dom x0) :
+    ∀ n, I.dom (dbuildChain S hprod x0 h0 n)
+  | 0 => hd0
+  | n + 1 =>
+    (Classical.choose_spec
+      (hprod (dchainAux S hprod x0 h0 n).1
+        (dchainAux S hprod x0 h0 n).2)).2.1
+
+end DescChainBuilder
+
+/-! ### Descending segment selection -/
+
+section DescSegmentSelect
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+  (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi)
+
+include hI hdom hstep
+
+/-- The descending finite stabilization horizon. -/
+theorem dexternals_stabilize (exts : List α) :
+    (∀ e ∈ exts, I.dom e) →
+    ∃ N, ∀ e ∈ exts, ∀ m n, N ≤ m → N ≤ n →
+      I.rho (d m) e = I.rho (d n) e := by
+  induction exts with
+  | nil => exact fun _ => ⟨0, fun e he => nomatch he⟩
+  | cons e rest ih =>
+    intro hexts
+    obtain ⟨Nr, hNr⟩ := ih (fun f hf => hexts f (List.mem_cons_of_mem e hf))
+    obtain ⟨Ne, w, hNe⟩ :=
+      dexternal_stabilizes hI hdom hstep (hexts e (List.Mem.head rest))
+    refine ⟨max Ne Nr, fun f hf m n hm hn => ?_⟩
+    rcases List.mem_cons.mp hf with rfl | hmem
+    · rw [hNe m (Nat.le_trans (Nat.le_max_left Ne Nr) hm),
+        hNe n (Nat.le_trans (Nat.le_max_left Ne Nr) hn)]
+    · exact hNr f hmem m n (Nat.le_trans (Nat.le_max_right Ne Nr) hm)
+        (Nat.le_trans (Nat.le_max_right Ne Nr) hn)
+
+/-- DESCENDING SEGMENT SELECTION (the mirror capstone). -/
+theorem dsegment_select (C0 : Concept) (exts : List α)
+    (hexts : ∀ e ∈ exts, I.dom e) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      mty C0 I (d i) = mty C0 I (d (i + p)) ∧
+      (∀ e ∈ exts, ∀ m, i ≤ m → I.rho (d m) e = I.rho (d i) e) ∧
+      (∀ a, i ≤ a → ∀ N, ∃ m, N ≤ m ∧
+        mty C0 I (d m) = mty C0 I (d a)) := by
+  obtain ⟨M, hM⟩ := recurrent_tail (sublists (cl C0))
+    (fun m => mty C0 I (d m)) (fun m => mty_mem_sublists (d m))
+  obtain ⟨Ns, hNs⟩ := dexternals_stabilize hI hdom hstep exts hexts
+  obtain ⟨i, j, hLi, hij, heq⟩ := segment_exists (sublists (cl C0))
+    (fun m => mty C0 I (d m)) (fun m => mty_mem_sublists (d m))
+    (max L (max M Ns))
+  have hLi' : L ≤ i := Nat.le_trans (Nat.le_max_left L (max M Ns)) hLi
+  have hMi : M ≤ i := Nat.le_trans
+    (Nat.le_trans (Nat.le_max_left M Ns) (Nat.le_max_right L (max M Ns)))
+    hLi
+  have hNsi : Ns ≤ i := Nat.le_trans
+    (Nat.le_trans (Nat.le_max_right M Ns) (Nat.le_max_right L (max M Ns)))
+    hLi
+  refine ⟨i, j - i, hLi', by omega, ?_, ?_, ?_⟩
+  · have hj : i + (j - i) = j := by omega
+    rw [hj]
+    exact heq
+  · intro e he m him
+    exact hNs e he m i (Nat.le_trans hNsi him) hNsi
+  · intro a hia N
+    exact hM a (Nat.le_trans hMi hia) N
+
+/-- Descending segment coherence in phase-offset form (`kk_ppi`
+    shape). -/
+theorem dsegment_kk_ppi {C0 : Concept} {i p : Nat}
+    (hty : mty C0 I (d i) = mty C0 I (d (i + p)))
+    {a : Nat} (ha : a < p) {E : Concept}
+    (hE : Concept.all ppi E ∈ mty C0 I (d (i + a))) :
+    ∀ b, b < p → E ∈ mty C0 I (d (i + b)) := by
+  intro b hb
+  exact dseg_ppi hI hdom hstep (show i < i + p by omega) hty
+    (show i ≤ i + a by omega) (show i + a < i + p by omega) hE
+    (i + b) (by omega) (by omega)
+
+/-- Descending segment coherence in phase-offset form (`kk_pp`
+    shape). -/
+theorem dsegment_kk_pp {C0 : Concept} {i p : Nat}
+    (hty : mty C0 I (d i) = mty C0 I (d (i + p)))
+    {a : Nat} (ha : a < p) {E : Concept}
+    (hE : Concept.all pp E ∈ mty C0 I (d (i + a))) :
+    ∀ b, b < p → E ∈ mty C0 I (d (i + b)) := by
+  intro b hb
+  exact dseg_pp hI hdom hstep (show i < i + p by omega) hty
+    (show i ≤ i + a by omega) (show i + a < i + p by omega) hE
+    (i + b) (by omega) (by omega)
+
+end DescSegmentSelect
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -4162,5 +4629,15 @@ end SegmentSelect
 #print axioms segment_select
 #print axioms segment_kk_pp
 #print axioms segment_kk_ppi
+#print axioms dexternal_stabilizes
+#print axioms dforward_forcing_dr
+#print axioms dbackward_absorption_ppi
+#print axioms dseg_ppi
+#print axioms dseg_pp
+#print axioms dppi_witness_all_below
+#print axioms ddr_witness_all_above
+#print axioms dbuildChain_step
+#print axioms dsegment_select
+#print axioms dsegment_kk_ppi
 
 end POFreeLift
