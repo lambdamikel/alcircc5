@@ -669,6 +669,469 @@ theorem twoTier_sound (T : TwoTier β) (h : TwoTierOk T)
     (unf_is_frame T.E T.K h.frame_aug h.kproper)
     (ttLabel T) (twoTier_hintikka T h) root C0 hC0
 
+/-! ## Round B (2026-07-22): the multi-kernel unfolding
+
+Round A supports ONE ascending kernel.  Round B generalizes to any
+family of kernels indexed by a type `κ`, each ascending or descending,
+with constant kernel–kernel interfaces: the certificate's finite
+quotient is `qnet` on `β ⊕ κ` (externals + one node per kernel), the
+generated structure is `munf` on `β ⊕ κ × ℕ` (externals + one ℕ-chain
+per kernel).  Within a kernel the chain runs upward (`chain`) or
+downward (its mirror `desc`); across kernels and to externals every
+rung carries the kernel's constant row.  `munf_is_frame` is the
+multi-kernel lift: `Frame qnet ⟹ Frame munf` — with NO extra
+properness hypotheses (they all follow from `qnet`'s own strong-EQ
+condition).  Needed for concepts forcing several independent towers,
+e.g. an ascending and a descending tower linked by `DR`. -/
+
+/-- The mirrored (descending) chain is composition-consistent: the
+    descending triangle fact, proved like `chain_cc`. -/
+theorem desc_cc (i j k : Nat) :
+    chain k i ∈ comp (chain j i) (chain k j) := by
+  rcases Nat.lt_trichotomy i j with hij | hij | hij
+  · rcases Nat.lt_trichotomy j k with hjk | hjk | hjk
+    · simp only [chain_gt hij, chain_gt hjk,
+        chain_gt (Nat.lt_trans hij hjk)]
+      decide
+    · subst hjk
+      simp only [chain_self]
+      rcases chain_vals j i with h | h | h <;> simp only [h] <;> decide
+    · rcases chain_vals k i with h | h | h <;>
+        simp only [chain_gt hij, chain_lt hjk, h] <;> decide
+  · subst hij
+    simp only [chain_self]
+    rcases chain_vals k i with h | h | h <;> simp only [h] <;> decide
+  · rcases Nat.lt_trichotomy j k with hjk | hjk | hjk
+    · rcases chain_vals k i with h | h | h <;>
+        simp only [chain_lt hij, chain_gt hjk, h] <;> decide
+    · subst hjk
+      simp only [chain_self]
+      rcases chain_vals j i with h | h | h <;> simp only [h] <;> decide
+    · simp only [chain_lt hij, chain_lt hjk,
+        chain_lt (Nat.lt_trans hjk hij)]
+      decide
+
+/-- A directed chain: `true` = ascending (rung `i` inside rung `j` for
+    `i < j`), `false` = descending (the mirror). -/
+def cchain : Bool → Nat → Nat → Atom
+  | true, i, j => chain i j
+  | false, i, j => chain j i
+
+/-- The forward step relation of a directed chain: `PP` ascending,
+    `PPI` descending. -/
+def cdir : Bool → Atom
+  | true => pp
+  | false => ppi
+
+theorem cchain_self (b : Bool) (i : Nat) : cchain b i i = eq := by
+  cases b with
+  | true => exact chain_self i
+  | false => exact chain_self i
+
+theorem cchain_vals (b : Bool) (i j : Nat) :
+    cchain b i j = pp ∨ cchain b i j = eq ∨ cchain b i j = ppi := by
+  cases b with
+  | true => exact chain_vals i j
+  | false => exact chain_vals j i
+
+theorem cchain_conv (b : Bool) (i j : Nat) :
+    cchain b j i = conv (cchain b i j) := by
+  cases b with
+  | true => exact chain_conv i j
+  | false => exact chain_conv j i
+
+theorem cchain_eq_imp {b : Bool} {i j : Nat} (h : cchain b i j = eq) :
+    i = j := by
+  cases b with
+  | true => exact chain_eq_imp h
+  | false => exact (chain_eq_imp h).symm
+
+theorem cchain_lt (b : Bool) {i j : Nat} (h : i < j) :
+    cchain b i j = cdir b := by
+  cases b with
+  | true => exact chain_lt h
+  | false => exact chain_gt h
+
+theorem cchain_cc (b : Bool) (i j k : Nat) :
+    cchain b i k ∈ comp (cchain b i j) (cchain b j k) := by
+  cases b with
+  | true => exact chain_cc i j k
+  | false => exact desc_cc i j k
+
+variable {κ : Type}
+
+/-- The finite quotient network: externals + ONE node per kernel.
+    `Frame qnet` is the "valid multi-kernel quotient" hypothesis. -/
+def qnet [DecidableEq κ] (E : β → β → Atom) (K : κ → β → Atom)
+    (Q : κ → κ → Atom) : (β ⊕ κ) → (β ⊕ κ) → Atom
+  | .inl e, .inl f => E e f
+  | .inl e, .inr k => conv (K k e)
+  | .inr k, .inl f => K k f
+  | .inr k, .inr k' => if k = k' then eq else Q k k'
+
+/-- The multi-kernel unfolding: one directed ℕ-chain per kernel, all
+    interfaces constant. -/
+def munf [DecidableEq κ] (E : β → β → Atom) (K : κ → β → Atom)
+    (Q : κ → κ → Atom) (up : κ → Bool) :
+    (β ⊕ κ × Nat) → (β ⊕ κ × Nat) → Atom
+  | .inl e, .inl f => E e f
+  | .inl e, .inr (k, _) => conv (K k e)
+  | .inr (k, _), .inl f => K k f
+  | .inr (k, i), .inr (k', j) =>
+      if k = k' then cchain (up k) i j else Q k k'
+
+section MultiKernel
+
+variable [DecidableEq κ] {E : β → β → Atom} {K : κ → β → Atom}
+  {Q : κ → κ → Atom} {up : κ → Bool}
+
+/-- Kernel rows are proper — derived from the quotient frame's own
+    strong-EQ condition, no extra hypothesis. -/
+theorem qnet_K_proper (h : Frame (qnet E K Q)) :
+    ∀ k e, K k e ≠ eq := by
+  intro k e heq
+  have h2 : qnet E K Q (.inr k) (.inl e) = eq := heq
+  have h3 := h.eq_id _ _ h2
+  cases h3
+
+/-- Distinct-kernel values are proper — likewise derived. -/
+theorem qnet_Q_proper (h : Frame (qnet E K Q)) :
+    ∀ k k', k ≠ k' → Q k k' ≠ eq := by
+  intro k k' hne heq
+  have h2 : qnet E K Q (.inr k) (.inr k') = eq := by
+    show (if k = k' then eq else Q k k') = eq
+    rw [if_neg hne]
+    exact heq
+  exact hne (Sum.inr.inj (h.eq_id _ _ h2))
+
+/-- Kernel–kernel values are converse-coherent — derived. -/
+theorem qnet_Q_conv (h : Frame (qnet E K Q)) :
+    ∀ k k', k ≠ k' → Q k' k = conv (Q k k') := by
+  intro k k' hne
+  have h2 := h.conv_ (.inr k) (.inr k')
+  have e1 : qnet E K Q (.inr k') (.inr k) = Q k' k := by
+    show (if k' = k then eq else Q k' k) = _
+    rw [if_neg (fun hh => hne hh.symm)]
+  have e2 : qnet E K Q (.inr k) (.inr k') = Q k k' := by
+    show (if k = k' then eq else Q k k') = _
+    rw [if_neg hne]
+  rw [e1, e2] at h2
+  exact h2
+
+/-- THE MULTI-KERNEL LIFT: a valid finite quotient (externals + one
+    node per kernel) unfolds to a genuine RCC5 frame with one directed
+    infinite chain per kernel.  Generalizes `unf_is_frame`; the new
+    triple cases are the same-kernel-pair configurations, discharged by
+    the self-absorption/`conv_super` toolkit with the chain value in
+    `{PP, EQ, PPI}`, and the all-distinct configurations, which project
+    onto quotient triples. -/
+theorem munf_is_frame (h : Frame (qnet E K Q)) :
+    Frame (munf E K Q up) where
+  refl_eq := by
+    intro x
+    rcases x with e | ⟨k, i⟩
+    · exact h.refl_eq (.inl e)
+    · show (if k = k then cchain (up k) i i else Q k k) = eq
+      rw [if_pos rfl]
+      exact cchain_self _ _
+  eq_id := by
+    intro x y hxy
+    rcases x with e | ⟨k, i⟩ <;> rcases y with f | ⟨k', j⟩
+    · have h2 := h.eq_id (.inl e) (.inl f) hxy
+      injection h2 with h3
+      exact congrArg Sum.inl h3
+    · exact absurd hxy (conv_ne_eq _ (qnet_K_proper h k' e))
+    · exact absurd hxy (qnet_K_proper h k f)
+    · have hxy' : (if k = k' then cchain (up k) i j else Q k k') = eq :=
+        hxy
+      by_cases hk : k = k'
+      · subst hk
+        rw [if_pos rfl] at hxy'
+        rw [cchain_eq_imp hxy']
+      · rw [if_neg hk] at hxy'
+        exact absurd hxy' (qnet_Q_proper h k k' hk)
+  conv_ := by
+    intro x y
+    rcases x with e | ⟨k, i⟩ <;> rcases y with f | ⟨k', j⟩
+    · exact h.conv_ (.inl e) (.inl f)
+    · exact (conv_invol _).symm
+    · rfl
+    · show (if k' = k then cchain (up k') j i else Q k' k)
+        = conv (if k = k' then cchain (up k) i j else Q k k')
+      by_cases hk : k = k'
+      · subst hk
+        rw [if_pos rfl, if_pos rfl]
+        exact cchain_conv _ _ _
+      · rw [if_neg (fun hh => hk hh.symm), if_neg hk]
+        exact qnet_Q_conv h k k' hk
+  comp_ := by
+    intro x y z
+    rcases x with e | ⟨k1, i1⟩ <;> rcases y with f | ⟨k2, i2⟩ <;>
+      rcases z with g | ⟨k3, i3⟩
+    · -- (ext, ext, ext)
+      exact h.comp_ (.inl e) (.inl f) (.inl g)
+    · -- (ext, ext, chain)
+      exact h.comp_ (.inl e) (.inl f) (.inr k3)
+    · -- (ext, chain, ext)
+      exact h.comp_ (.inl e) (.inr k2) (.inl g)
+    · -- (ext, chain, chain)
+      show conv (K k3 e) ∈ comp (conv (K k2 e))
+        (if k2 = k3 then cchain (up k2) i2 i3 else Q k2 k3)
+      by_cases hk : k2 = k3
+      · subst hk
+        rw [if_pos rfl]
+        exact self_right _ _ (conv_ne_eq _ (qnet_K_proper h k2 e))
+          (cchain_vals _ _ _)
+      · rw [if_neg hk]
+        have h2 := h.comp_ (.inl e) (.inr k2) (.inr k3)
+        have e2 : qnet E K Q (.inr k2) (.inr k3) = Q k2 k3 := by
+          show (if k2 = k3 then eq else Q k2 k3) = _
+          rw [if_neg hk]
+        rw [e2] at h2
+        exact h2
+    · -- (chain, ext, ext)
+      exact h.comp_ (.inr k1) (.inl f) (.inl g)
+    · -- (chain, ext, chain)
+      show (if k1 = k3 then cchain (up k1) i1 i3 else Q k1 k3)
+        ∈ comp (K k1 f) (conv (K k3 f))
+      by_cases hk : k1 = k3
+      · subst hk
+        rw [if_pos rfl]
+        obtain ⟨hpp, heq, hppi⟩ :=
+          conv_super (K k1 f) (qnet_K_proper h k1 f)
+        rcases cchain_vals (up k1) i1 i3 with hc | hc | hc <;>
+          rw [hc] <;> assumption
+      · rw [if_neg hk]
+        have h2 := h.comp_ (.inr k1) (.inl f) (.inr k3)
+        have e2 : qnet E K Q (.inr k1) (.inr k3) = Q k1 k3 := by
+          show (if k1 = k3 then eq else Q k1 k3) = _
+          rw [if_neg hk]
+        rw [e2] at h2
+        exact h2
+    · -- (chain, chain, ext)
+      show K k1 g ∈ comp
+        (if k1 = k2 then cchain (up k1) i1 i2 else Q k1 k2) (K k2 g)
+
+      by_cases hk : k1 = k2
+      · subst hk
+        rw [if_pos rfl]
+        exact self_left _ _ (qnet_K_proper h k1 g) (cchain_vals _ _ _)
+      · rw [if_neg hk]
+        have h2 := h.comp_ (.inr k1) (.inr k2) (.inl g)
+        have e2 : qnet E K Q (.inr k1) (.inr k2) = Q k1 k2 := by
+          show (if k1 = k2 then eq else Q k1 k2) = _
+          rw [if_neg hk]
+        rw [e2] at h2
+        exact h2
+    · -- (chain, chain, chain)
+      show (if k1 = k3 then cchain (up k1) i1 i3 else Q k1 k3) ∈
+        comp (if k1 = k2 then cchain (up k1) i1 i2 else Q k1 k2)
+             (if k2 = k3 then cchain (up k2) i2 i3 else Q k2 k3)
+      by_cases h12 : k1 = k2
+      · subst h12
+        by_cases h13 : k1 = k3
+        · subst h13
+          rw [if_pos rfl, if_pos rfl, if_pos rfl]
+          exact cchain_cc _ i1 i2 i3
+        · rw [if_neg h13, if_pos rfl, if_neg h13]
+          exact self_left _ _ (qnet_Q_proper h k1 k3 h13)
+            (cchain_vals _ _ _)
+      · by_cases h23 : k2 = k3
+        · subst h23
+          rw [if_neg h12, if_neg h12, if_pos rfl]
+          exact self_right _ _ (qnet_Q_proper h k1 k2 h12)
+            (cchain_vals _ _ _)
+        · by_cases h13 : k1 = k3
+          · subst h13
+            rw [if_pos rfl, if_neg h12, if_neg h23]
+            rw [show Q k2 k1 = conv (Q k1 k2) from
+              qnet_Q_conv h k1 k2 h12]
+            obtain ⟨hpp, heq, hppi⟩ :=
+              conv_super (Q k1 k2) (qnet_Q_proper h k1 k2 h12)
+            rcases cchain_vals (up k1) i1 i3 with hc | hc | hc <;>
+              rw [hc] <;> assumption
+          · rw [if_neg h13, if_neg h12, if_neg h23]
+            have h2 := h.comp_ (.inr k1) (.inr k2) (.inr k3)
+            have e13 : qnet E K Q (.inr k1) (.inr k3) = Q k1 k3 := by
+              show (if k1 = k3 then eq else Q k1 k3) = _
+              rw [if_neg h13]
+            have e12 : qnet E K Q (.inr k1) (.inr k2) = Q k1 k2 := by
+              show (if k1 = k2 then eq else Q k1 k2) = _
+              rw [if_neg h12]
+            have e23 : qnet E K Q (.inr k2) (.inr k3) = Q k2 k3 := by
+              show (if k2 = k3 then eq else Q k2 k3) = _
+              rw [if_neg h23]
+            rw [e13, e12, e23] at h2
+            exact h2
+
+end MultiKernel
+
+/-! ### The multi-tier certificate
+
+The round-B generalization of `TwoTier`: any family of directed kernels
+over an index type `κ`, kernel–kernel interfaces constant (`Q`), each
+kernel ascending or descending (`up`).  Chain-internal fulfilment runs
+in each kernel's own direction (`cdir`): ascending kernels discharge
+`∃PP` demands rung-to-rung, descending kernels `∃PPI` — the descending
+tower `∃PPI.⊤ ⊓ ∀PPI.∃PPI.⊤` becomes presentable. -/
+
+structure MultiTier (β κ : Type) where
+  E : β → β → Atom
+  K : κ → β → Atom
+  Q : κ → κ → Atom
+  up : κ → Bool
+  tauE : β → List Concept
+  p : κ → Nat
+  phase : κ → Nat → List Concept
+
+/-- The type labelling of the multi-kernel unfolding. -/
+def mtLabel (T : MultiTier β κ) : (β ⊕ κ × Nat) → List Concept
+  | .inl e => T.tauE e
+  | .inr (k, i) => T.phase k (i % T.p k)
+
+/-- Validity of a multi-tier certificate: the quotient-frame hypothesis
+    + the Hintikka obligations per edge class (now including the
+    cross-kernel classes `kq_all` and the cross-kernel fulfilment branch
+    of `k_ex`). -/
+structure MultiTierOk [DecidableEq κ] (T : MultiTier β κ) : Prop where
+  hp : ∀ k, 0 < T.p k
+  frame_q : Frame (qnet T.E T.K T.Q)
+  -- propositional coherence, externals
+  e_clash : ∀ e a, Concept.atom a ∈ T.tauE e → Concept.natom a ∉ T.tauE e
+  e_nobot : ∀ e, Concept.bot ∉ T.tauE e
+  e_and : ∀ e c d, Concept.and c d ∈ T.tauE e → c ∈ T.tauE e ∧ d ∈ T.tauE e
+  e_or : ∀ e c d, Concept.or c d ∈ T.tauE e → c ∈ T.tauE e ∨ d ∈ T.tauE e
+  -- propositional coherence, phases
+  k_clash : ∀ k a, a < T.p k → ∀ n, Concept.atom n ∈ T.phase k a →
+    Concept.natom n ∉ T.phase k a
+  k_nobot : ∀ k a, a < T.p k → Concept.bot ∉ T.phase k a
+  k_and : ∀ k a, a < T.p k → ∀ c d, Concept.and c d ∈ T.phase k a →
+    c ∈ T.phase k a ∧ d ∈ T.phase k a
+  k_or : ∀ k a, a < T.p k → ∀ c d, Concept.or c d ∈ T.phase k a →
+    c ∈ T.phase k a ∨ d ∈ T.phase k a
+  -- universal propagation, per edge class
+  ee_all : ∀ e f r c, Concept.all r c ∈ T.tauE e → T.E e f = r →
+    c ∈ T.tauE f
+  ek_all : ∀ e r c, Concept.all r c ∈ T.tauE e →
+    ∀ k, conv (T.K k e) = r → ∀ a, a < T.p k → c ∈ T.phase k a
+  ke_all : ∀ k a, a < T.p k → ∀ r c, Concept.all r c ∈ T.phase k a →
+    ∀ f, T.K k f = r → c ∈ T.tauE f
+  kk_pp : ∀ k a, a < T.p k → ∀ c, Concept.all pp c ∈ T.phase k a →
+    ∀ b, b < T.p k → c ∈ T.phase k b
+  kk_ppi : ∀ k a, a < T.p k → ∀ c, Concept.all ppi c ∈ T.phase k a →
+    ∀ b, b < T.p k → c ∈ T.phase k b
+  kk_eq : ∀ k a, a < T.p k → ∀ c, Concept.all eq c ∈ T.phase k a →
+    c ∈ T.phase k a
+  kq_all : ∀ k k', k ≠ k' → ∀ a, a < T.p k → ∀ r c,
+    Concept.all r c ∈ T.phase k a → T.Q k k' = r →
+    ∀ b, b < T.p k' → c ∈ T.phase k' b
+  -- existential fulfilment, per node class
+  e_ex : ∀ e r c, Concept.ex r c ∈ T.tauE e →
+    (∃ f, T.E e f = r ∧ c ∈ T.tauE f) ∨
+    (∃ k, conv (T.K k e) = r ∧ ∃ a, a < T.p k ∧ c ∈ T.phase k a)
+  k_ex : ∀ k a, a < T.p k → ∀ r c, Concept.ex r c ∈ T.phase k a →
+    (∃ f, T.K k f = r ∧ c ∈ T.tauE f) ∨
+    (r = cdir (T.up k) ∧ ∃ b, b < T.p k ∧ c ∈ T.phase k b) ∨
+    (r = eq ∧ c ∈ T.phase k a) ∨
+    (∃ k', k ≠ k' ∧ T.Q k k' = r ∧ ∃ b, b < T.p k' ∧ c ∈ T.phase k' b)
+
+/-- ROUND-B CENTRAL LEMMA: a valid multi-tier certificate's labelling is
+    a Hintikka labelling of the multi-kernel unfolding. -/
+theorem multiTier_hintikka [DecidableEq κ] (T : MultiTier β κ)
+    (h : MultiTierOk T) :
+    Hintikka (fun _ => True) (munf T.E T.K T.Q T.up) (mtLabel T) where
+  clashfree := by
+    intro x a _ hmem
+    rcases x with e | ⟨k, i⟩
+    · exact h.e_clash e a hmem
+    · exact h.k_clash k (i % T.p k) (Nat.mod_lt i (h.hp k)) a hmem
+  nobot := by
+    intro x _
+    rcases x with e | ⟨k, i⟩
+    · exact h.e_nobot e
+    · exact h.k_nobot k (i % T.p k) (Nat.mod_lt i (h.hp k))
+  and_c := by
+    intro x c d _ hmem
+    rcases x with e | ⟨k, i⟩
+    · exact h.e_and e c d hmem
+    · exact h.k_and k (i % T.p k) (Nat.mod_lt i (h.hp k)) c d hmem
+  or_c := by
+    intro x c d _ hmem
+    rcases x with e | ⟨k, i⟩
+    · exact h.e_or e c d hmem
+    · exact h.k_or k (i % T.p k) (Nat.mod_lt i (h.hp k)) c d hmem
+  all_c := by
+    intro x r c _ hmem y _ hr
+    rcases x with e | ⟨k, i⟩ <;> rcases y with f | ⟨k', j⟩
+    · exact h.ee_all e f r c hmem hr
+    · exact h.ek_all e r c hmem k' hr (j % T.p k')
+        (Nat.mod_lt j (h.hp k'))
+    · exact h.ke_all k (i % T.p k) (Nat.mod_lt i (h.hp k)) r c hmem f hr
+    · have hr' : (if k = k' then cchain (T.up k) i j else T.Q k k') = r :=
+        hr
+      have hm' : Concept.all r c ∈ T.phase k (i % T.p k) := hmem
+      by_cases hk : k = k'
+      · subst hk
+        rw [if_pos rfl] at hr'
+        rcases cchain_vals (T.up k) i j with hc | hc | hc
+        · rw [hc] at hr'
+          subst hr'
+          exact h.kk_pp k (i % T.p k) (Nat.mod_lt i (h.hp k)) c hm'
+            (j % T.p k) (Nat.mod_lt j (h.hp k))
+        · rw [hc] at hr'
+          subst hr'
+          have hij := cchain_eq_imp hc
+          subst hij
+          exact h.kk_eq k (i % T.p k) (Nat.mod_lt i (h.hp k)) c hm'
+        · rw [hc] at hr'
+          subst hr'
+          exact h.kk_ppi k (i % T.p k) (Nat.mod_lt i (h.hp k)) c hm'
+            (j % T.p k) (Nat.mod_lt j (h.hp k))
+      · rw [if_neg hk] at hr'
+        exact h.kq_all k k' hk (i % T.p k) (Nat.mod_lt i (h.hp k)) r c
+          hm' hr' (j % T.p k') (Nat.mod_lt j (h.hp k'))
+  ex_f := by
+    intro x r c _ hmem
+    rcases x with e | ⟨k, i⟩
+    · rcases h.e_ex e r c hmem with ⟨f, hEf, hcf⟩ | ⟨k, hK, a, ha, hca⟩
+      · exact ⟨.inl f, True.intro, hEf, hcf⟩
+      · refine ⟨.inr (k, a), True.intro, hK, ?_⟩
+        show c ∈ T.phase k (a % T.p k)
+        rw [Nat.mod_eq_of_lt ha]
+        exact hca
+    · have hm' : Concept.ex r c ∈ T.phase k (i % T.p k) := hmem
+      rcases h.k_ex k (i % T.p k) (Nat.mod_lt i (h.hp k)) r c hm' with
+        ⟨f, hKf, hcf⟩ | ⟨hrd, b, hb, hcb⟩ | ⟨hreq, hc⟩ |
+        ⟨k', hne, hQ, b, hb, hcb⟩
+      · exact ⟨.inl f, True.intro, hKf, hcf⟩
+      · obtain ⟨j, hij, hjb⟩ := exists_later_phase (T.p k) (h.hp k) i b hb
+        refine ⟨.inr (k, j), True.intro, ?_, ?_⟩
+        · show (if k = k then cchain (T.up k) i j else T.Q k k) = r
+          rw [if_pos rfl, cchain_lt _ hij, hrd]
+        · show c ∈ T.phase k (j % T.p k)
+          rw [hjb]
+          exact hcb
+      · refine ⟨.inr (k, i), True.intro, ?_, ?_⟩
+        · show (if k = k then cchain (T.up k) i i else T.Q k k) = r
+          rw [if_pos rfl, cchain_self, hreq]
+        · exact hc
+      · refine ⟨.inr (k', b), True.intro, ?_, ?_⟩
+        · show (if k = k' then cchain (T.up k) i b else T.Q k k') = r
+          rw [if_neg hne]
+          exact hQ
+        · show c ∈ T.phase k' (b % T.p k')
+          rw [Nat.mod_eq_of_lt hb]
+          exact hcb
+
+/-- ROUND-B CAPSTONE: a valid multi-tier certificate with the target
+    concept at some node yields an actual RCC5 model. -/
+theorem multiTier_sound [DecidableEq κ] (T : MultiTier β κ)
+    (h : MultiTierOk T) (root : β ⊕ κ × Nat) (C0 : Concept)
+    (hC0 : C0 ∈ mtLabel T root) : Satisfiable C0 :=
+  sat_from_hintikka_frame (munf T.E T.K T.Q T.up)
+    (munf_is_frame h.frame_q)
+    (mtLabel T) (multiTier_hintikka T h) root C0 hC0
+
 /-! ### The fragment predicate
 
 Soundness above is fragment-agnostic (the checker verifies ALL
@@ -849,7 +1312,330 @@ theorem cinfTT_ok : TwoTierOk cinfTT where
 theorem cinf_satisfiable : Satisfiable Cinf :=
   twoTier_sound cinfTT cinfTT_ok (Sum.inr 0) Cinf (by decide)
 
+/-! ### Round-B non-vacuity: two towers, both directions, DR-linked
+
+`Cboth = Cinf ⊓ ∃DR.Dinf` where `Dinf = ∃PPI.⊤ ⊓ ∀PPI.∃PPI.⊤`: an
+ascending infinite tower whose root is disjoint from the head of an
+infinite DESCENDING tower.  Any model needs two independent infinite
+chains of opposite orientation — beyond the single-ascending-kernel
+format (with finite external part).  The multi-tier certificate: two
+kernels (`κ = Bool`; `true` ascending, `false` descending), one phase
+each, all cross-kernel values `DR`. -/
+
+def Dinf : Concept := .and (.ex ppi .top) (.all ppi (.ex ppi .top))
+
+def Cboth : Concept := .and Cinf (.ex dr Dinf)
+
+theorem cboth_pofree : POFree Cboth :=
+  ⟨⟨trivial, by decide, trivial⟩, trivial, by decide, trivial⟩
+
+def upList : List Concept :=
+  [Cboth, Cinf, .ex pp .top, .all pp (.ex pp .top), .ex dr Dinf, .top]
+
+def dnList : List Concept :=
+  [Dinf, .ex ppi .top, .all ppi (.ex ppi .top), .top]
+
+def bothPhase : Bool → List Concept
+  | true => upList
+  | false => dnList
+
+def cbothMT : MultiTier Empty Bool where
+  E := fun e _ => e.elim
+  K := fun _ e => e.elim
+  Q := fun _ _ => dr
+  up := fun k => k
+  tauE := fun e => e.elim
+  p := fun _ => 1
+  phase := fun k _ => bothPhase k
+
+/-- The two-kernel quotient (no externals, cross value `DR`) is a
+    frame. -/
+theorem cboth_qnet_frame :
+    Frame (qnet (β := Empty) (κ := Bool) (fun e _ => e.elim)
+      (fun _ e => e.elim) (fun _ _ => dr)) where
+  refl_eq := by
+    intro x
+    rcases x with e | k
+    · exact e.elim
+    · show (if k = k then eq else dr) = eq
+      rw [if_pos rfl]
+  eq_id := by
+    intro x y hxy
+    rcases x with e | k
+    · exact e.elim
+    · rcases y with f | k'
+      · exact f.elim
+      · have hxy' : (if k = k' then eq else dr) = eq := hxy
+        by_cases hk : k = k'
+        · subst hk; rfl
+        · rw [if_neg hk] at hxy'
+          exact absurd hxy' (by decide)
+  conv_ := by
+    intro x y
+    rcases x with e | k
+    · exact e.elim
+    · rcases y with f | k'
+      · exact f.elim
+      · show (if k' = k then eq else dr) = conv (if k = k' then eq else dr)
+        by_cases hk : k = k'
+        · subst hk
+          rw [if_pos rfl]
+          rfl
+        · rw [if_neg (fun hh => hk hh.symm), if_neg hk]
+          rfl
+  comp_ := by
+    intro x y z
+    rcases x with e | k1
+    · exact e.elim
+    · rcases y with f | k2
+      · exact f.elim
+      · rcases z with g | k3
+        · exact g.elim
+        · show (if k1 = k3 then eq else dr) ∈
+            comp (if k1 = k2 then eq else dr) (if k2 = k3 then eq else dr)
+          cases k1 <;> cases k2 <;> cases k3 <;> decide
+
+theorem cbothMT_ok : MultiTierOk cbothMT where
+  hp := fun _ => Nat.one_pos
+  frame_q := cboth_qnet_frame
+  e_clash := fun e => e.elim
+  e_nobot := fun e => e.elim
+  e_and := fun e => e.elim
+  e_or := fun e => e.elim
+  k_clash := by
+    intro k a _ n hmem
+    cases k with
+    | true =>
+      have hm : Concept.atom n ∈ upList := hmem
+      simp only [upList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h | h | h
+      · simp only [Cboth] at h; exact Concept.noConfusion h
+      · simp only [Cinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+    | false =>
+      have hm : Concept.atom n ∈ dnList := hmem
+      simp only [dnList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h
+      · simp only [Dinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+  k_nobot := by
+    intro k a _
+    cases k with
+    | true => show Concept.bot ∉ upList; decide
+    | false => show Concept.bot ∉ dnList; decide
+  k_and := by
+    intro k a _ c d hmem
+    cases k with
+    | true =>
+      have hm : Concept.and c d ∈ upList := hmem
+      simp only [upList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h | h | h
+      · simp only [Cboth] at h
+        injection h with h1 h2
+        subst h1; subst h2
+        show Cinf ∈ upList ∧ Concept.ex dr Dinf ∈ upList
+        decide
+      · simp only [Cinf] at h
+        injection h with h1 h2
+        subst h1; subst h2
+        show Concept.ex pp Concept.top ∈ upList ∧
+          Concept.all pp (Concept.ex pp Concept.top) ∈ upList
+        decide
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+    | false =>
+      have hm : Concept.and c d ∈ dnList := hmem
+      simp only [dnList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h
+      · simp only [Dinf] at h
+        injection h with h1 h2
+        subst h1; subst h2
+        show Concept.ex ppi Concept.top ∈ dnList ∧
+          Concept.all ppi (Concept.ex ppi Concept.top) ∈ dnList
+        decide
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+  k_or := by
+    intro k a _ c d hmem
+    cases k with
+    | true =>
+      have hm : Concept.or c d ∈ upList := hmem
+      simp only [upList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h | h | h
+      · simp only [Cboth] at h; exact Concept.noConfusion h
+      · simp only [Cinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+    | false =>
+      have hm : Concept.or c d ∈ dnList := hmem
+      simp only [dnList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h
+      · simp only [Dinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+  ee_all := fun e => e.elim
+  ek_all := fun e => e.elim
+  ke_all := by
+    intro k a _ r c _ f
+    exact f.elim
+  kk_pp := by
+    intro k a _ c hmem b _
+    cases k with
+    | true =>
+      have hm : Concept.all pp c ∈ upList := hmem
+      simp only [upList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h | h | h
+      · simp only [Cboth] at h; exact Concept.noConfusion h
+      · simp only [Cinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · injection h with h1 h2
+        subst h2
+        show Concept.ex pp Concept.top ∈ upList
+        decide
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+    | false =>
+      have hm : Concept.all pp c ∈ dnList := hmem
+      simp only [dnList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h
+      · simp only [Dinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · injection h with h1 h2
+        exact Atom.noConfusion h1
+      · exact Concept.noConfusion h
+  kk_ppi := by
+    intro k a _ c hmem b _
+    cases k with
+    | true =>
+      have hm : Concept.all ppi c ∈ upList := hmem
+      simp only [upList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h | h | h
+      · simp only [Cboth] at h; exact Concept.noConfusion h
+      · simp only [Cinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · injection h with h1 h2
+        exact Atom.noConfusion h1
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+    | false =>
+      have hm : Concept.all ppi c ∈ dnList := hmem
+      simp only [dnList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h
+      · simp only [Dinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · injection h with h1 h2
+        subst h2
+        show Concept.ex ppi Concept.top ∈ dnList
+        decide
+      · exact Concept.noConfusion h
+  kk_eq := by
+    intro k a _ c hmem
+    cases k with
+    | true =>
+      have hm : Concept.all eq c ∈ upList := hmem
+      simp only [upList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h | h | h
+      · simp only [Cboth] at h; exact Concept.noConfusion h
+      · simp only [Cinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · injection h with h1 h2
+        exact Atom.noConfusion h1
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+    | false =>
+      have hm : Concept.all eq c ∈ dnList := hmem
+      simp only [dnList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h
+      · simp only [Dinf] at h; exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+      · injection h with h1 h2
+        exact Atom.noConfusion h1
+      · exact Concept.noConfusion h
+  kq_all := by
+    intro k k' hne a _ r c hmem hQ b _
+    cases k with
+    | true =>
+      cases k' with
+      | true => exact absurd rfl hne
+      | false =>
+        have hm : Concept.all r c ∈ upList := hmem
+        simp only [upList, List.mem_cons, List.not_mem_nil, or_false]
+          at hm
+        rcases hm with h | h | h | h | h | h
+        · simp only [Cboth] at h; exact Concept.noConfusion h
+        · simp only [Cinf] at h; exact Concept.noConfusion h
+        · exact Concept.noConfusion h
+        · injection h with h1 h2
+          subst h1
+          exact Atom.noConfusion hQ
+        · exact Concept.noConfusion h
+        · exact Concept.noConfusion h
+    | false =>
+      cases k' with
+      | false => exact absurd rfl hne
+      | true =>
+        have hm : Concept.all r c ∈ dnList := hmem
+        simp only [dnList, List.mem_cons, List.not_mem_nil, or_false]
+          at hm
+        rcases hm with h | h | h | h
+        · simp only [Dinf] at h; exact Concept.noConfusion h
+        · exact Concept.noConfusion h
+        · injection h with h1 h2
+          subst h1
+          exact Atom.noConfusion hQ
+        · exact Concept.noConfusion h
+  e_ex := fun e => e.elim
+  k_ex := by
+    intro k a _ r c hmem
+    cases k with
+    | true =>
+      have hm : Concept.ex r c ∈ upList := hmem
+      simp only [upList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h | h | h
+      · simp only [Cboth] at h; exact Concept.noConfusion h
+      · simp only [Cinf] at h; exact Concept.noConfusion h
+      · injection h with h1 h2
+        subst h1; subst h2
+        exact Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos,
+          by show Concept.top ∈ upList; decide⟩)
+      · exact Concept.noConfusion h
+      · injection h with h1 h2
+        subst h1; subst h2
+        exact Or.inr (Or.inr (Or.inr ⟨false, by decide, rfl, 0,
+          Nat.one_pos, by show Dinf ∈ dnList; decide⟩))
+      · exact Concept.noConfusion h
+    | false =>
+      have hm : Concept.ex r c ∈ dnList := hmem
+      simp only [dnList, List.mem_cons, List.not_mem_nil, or_false] at hm
+      rcases hm with h | h | h | h
+      · simp only [Dinf] at h; exact Concept.noConfusion h
+      · injection h with h1 h2
+        subst h1; subst h2
+        exact Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos,
+          by show Concept.top ∈ dnList; decide⟩)
+      · exact Concept.noConfusion h
+      · exact Concept.noConfusion h
+
+/-- `Cboth` — needing an ascending AND a descending infinite tower,
+    DR-linked — is `Satisfiable`, through the full round-B pipeline. -/
+theorem cboth_satisfiable : Satisfiable Cboth :=
+  multiTier_sound cbothMT cbothMT_ok (Sum.inr (true, 0)) Cboth
+    (by show Cboth ∈ upList; decide)
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
+#print axioms multiTier_sound
+#print axioms cboth_satisfiable
 
 end POFreeLift

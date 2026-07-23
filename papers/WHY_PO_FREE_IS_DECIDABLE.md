@@ -713,14 +713,16 @@ boundary is natural.
 | Two independent reasoners agree on the fragment (244 concepts) | Machine-checked empirically (`wp87`) |
 | The full fragment theorem (K(C₀) bound, extraction, assembly) | **Theorem-level** — argued, twice, independently; *not* end-to-end formalized |
 
-Remaining for full certification — the campaign is underway (round A,
-2026-07-22, landed the model-of-C₀ layer: a valid single-kernel
-two-tier certificate now yields a model of the concept, kernel-checked
-end to end): multi-kernel certificate formats (round B), an executable
-Boolean checker (round C), and the completeness extraction carrying the
-K(C₀) bound (round D, the bulk — see `LEAN.md`). Until then, the
-honest label is the project's standing one: **strongly supported, with
-the soundness core machine-certified — not certified end-to-end.**
+Remaining for full certification — the campaign is underway: rounds A
+and B (2026-07-22) landed the model-of-C₀ layer, so a valid two-tier
+certificate, now with **any family of ascending or descending
+kernels**, yields a model of the concept, kernel-checked end to end
+(witnesses include the ascending-plus-descending two-tower concept).
+Still open: an executable Boolean checker (round C) and the
+completeness extraction carrying the K(C₀) bound (round D, the bulk —
+see `LEAN.md`). Until then, the honest label is the project's standing
+one: **strongly supported, with the soundness core machine-certified —
+not certified end-to-end.**
 
 ---
 
