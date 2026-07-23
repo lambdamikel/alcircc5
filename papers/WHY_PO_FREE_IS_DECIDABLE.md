@@ -707,22 +707,25 @@ boundary is natural.
 | RCC5 normal form (network ⟺ ordered-disjoint), arbitrary domains | **Certified**, both directions (`RCC5NormalForm.lean` + canonical representation) |
 | Chain-unfolding lift (finite CC certificate ⟹ CC infinite unfolding) | **Certified** (`POFreeLift.lean`, zero sorries) |
 | Certificate-to-model soundness: a valid single-kernel two-tier certificate yields a model of the concept, through the logic (Hintikka + truth lemma on the unfolding) | **Certified** (`POFreeLift.lean` round A, 2026-07-22: `twoTier_sound`; witness `cinf_satisfiable` — the no-finite-model concept ∃PP.⊤ ⊓ ∀PP.∃PP.⊤, satisfiable end-to-end) |
+| Multi-kernel certificates (any family of ascending/descending kernels) and the executable first-order checker (certificates as pure list data; acceptance ⟹ model) | **Certified** (`POFreeLift.lean` rounds B–C: `multiTier_sound`, `mtAcceptB_sound`; the ascending+descending two-tower witness accepted by kernel `decide`) |
 | Propagation closure (no non-PO universal creates a ∀PO obligation) | Machine-checked exhaustively (`wp49`) |
 | Free amalgamation; all-cross-PO safety; non-uniform cross-policies | Machine-checked exhaustively (`wp48`, `wp82`, `wp83`) |
 | Lift lemma stress-test incl. multi-path PO forcing; fragment boundary | Machine-checked empirically (`wp86`) |
 | Two independent reasoners agree on the fragment (244 concepts) | Machine-checked empirically (`wp87`) |
 | The full fragment theorem (K(C₀) bound, extraction, assembly) | **Theorem-level** — argued, twice, independently; *not* end-to-end formalized |
 
-Remaining for full certification — the campaign is underway: rounds A
-and B (2026-07-22) landed the model-of-C₀ layer, so a valid two-tier
-certificate, now with **any family of ascending or descending
-kernels**, yields a model of the concept, kernel-checked end to end
-(witnesses include the ascending-plus-descending two-tower concept).
-Still open: an executable Boolean checker (round C) and the
-completeness extraction carrying the K(C₀) bound (round D, the bulk —
-see `LEAN.md`). Until then, the honest label is the project's standing
-one: **strongly supported, with the soundness core machine-certified —
-not certified end-to-end.**
+Remaining for full certification — the campaign is underway: rounds
+A–C (2026-07-22/23) landed the entire **soundness side**: a valid
+two-tier certificate, with any family of ascending or descending
+kernels, presented as **pure first-order list data** and checked by a
+computable oracle-free Boolean checker, yields a model of the concept
+— kernel-checked end to end (the two-tower witness's acceptance runs
+inside the kernel via plain `decide`). Still open: the completeness
+extraction carrying the K(C₀) bound plus the checker-completeness and
+code-enumeration wiring (round D, the bulk — see `LEAN.md`). Until
+then, the honest label is the project's standing one: **strongly
+supported, with the soundness core machine-certified — not certified
+end-to-end.**
 
 ---
 

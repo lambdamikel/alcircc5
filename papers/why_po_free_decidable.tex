@@ -845,6 +845,12 @@ $+$ truth lemma on the unfolding) & \textbf{Certified}
 witness \code{cinf\_satisfiable} --- the no-finite-model concept
 $\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$, satisfiable
 end-to-end)\\[0.3em]
+Multi-kernel certificates (any family of ascending/descending kernels)
+and the executable first-order checker (certificates as pure list
+data; acceptance $\Rightarrow$ model) & \textbf{Certified}
+(\code{POFreeLift.lean} rounds~B--C: \code{multiTier\_sound},
+\code{mtAcceptB\_sound}; the ascending$+$descending two-tower witness
+accepted by kernel \code{decide})\\[0.3em]
 Propagation closure (no non-$\PO$ universal creates a $\forall\PO$
 obligation) & Machine-checked exhaustively (\code{wp49})\\[0.3em]
 Free amalgamation; all-cross-$\PO$ safety; non-uniform cross-policies
@@ -862,12 +868,14 @@ end-to-end formalized\\
 \end{center}
 
 Remaining for full certification --- the campaign is underway: rounds
-A and~B (2026-07-22) landed the model-of-$C_0$ layer, so a valid
-two-tier certificate, now with \textbf{any family of ascending or
-descending kernels}, yields a model of the concept, kernel-checked end
-to end (witnesses include the ascending-plus-descending two-tower
-concept). Still open: an executable Boolean checker (round~C) and the
-completeness extraction carrying the $K(C_0)$ bound (round~D, the bulk
+A--C (2026-07-22/23) landed the entire \textbf{soundness side}: a
+valid two-tier certificate, with any family of ascending or descending
+kernels, presented as \textbf{pure first-order list data} and checked
+by a computable oracle-free Boolean checker, yields a model of the
+concept --- kernel-checked end to end (the two-tower witness's
+acceptance runs inside the kernel via plain \code{decide}). Still
+open: the completeness extraction carrying the $K(C_0)$ bound plus the
+checker-completeness and code-enumeration wiring (round~D, the bulk
 --- see \code{LEAN.md}). Until then, the honest label is the project's
 standing one: \textbf{strongly supported, with the soundness core
 machine-certified --- not certified end-to-end.}

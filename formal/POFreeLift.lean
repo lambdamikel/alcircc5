@@ -1633,9 +1633,532 @@ theorem cboth_satisfiable : Satisfiable Cboth :=
   multiTier_sound cbothMT cbothMT_ok (Sum.inr (true, 0)) Cboth
     (by show Cboth ∈ upList; decide)
 
+/-! ## Round C (2026-07-22): the executable first-order checker
+
+The rounds-A/B certificates carry FUNCTION fields, adequate for
+soundness but not enumerable data.  Round C makes them first-order (the
+15th-review standard, the round-29 `finAcceptB` pattern): `FinMT` is
+pure list data (lists of atoms, concepts, booleans — Gödel-numerable),
+`decodeMT` a TOTAL decoder into a `MultiTier` over `Fin` index types,
+and `mtOkB`/`mtAcceptB` a computable Boolean checker whose acceptance
+is proved to yield a model (`mtAcceptB_sound`).  The checker mentions
+no oracle: it folds over index ranges and type lists.  A future
+enumeration of `FinMT` codes + the round-D completeness argument then
+give `Decidable (Satisfiable C0)` for ∀PO-free `C0`. -/
+
+/-- The first-order multi-tier certificate: pure list data.
+    `tauE.length` = number of externals; `phases.length` = number of
+    kernels; `phases[k]` = kernel `k`'s phase-type list (its length =
+    the period).  `E`/`K`/`Q` are atom tables (external×external,
+    kernel×external, kernel×kernel); `up` the direction flags.
+    Out-of-range reads default (`DR`, `[]`, `true`) — the checker and
+    decoder read the SAME accessors, so defaults are never a soundness
+    concern. -/
+structure FinMT where
+  tauE : List (List Concept)
+  E : List (List Atom)
+  K : List (List Atom)
+  Q : List (List Atom)
+  up : List Bool
+  phases : List (List (List Concept))
+
+namespace FinMT
+
+def nE (F : FinMT) : Nat := F.tauE.length
+def nK (F : FinMT) : Nat := F.phases.length
+def tE (F : FinMT) (i : Nat) : List Concept := F.tauE.getD i []
+def ph (F : FinMT) (k : Nat) : List (List Concept) := F.phases.getD k []
+def pk (F : FinMT) (k : Nat) : Nat := (F.ph k).length
+def phase (F : FinMT) (k a : Nat) : List Concept := (F.ph k).getD a []
+def Ea (F : FinMT) (i j : Nat) : Atom := (F.E.getD i []).getD j dr
+def Ka (F : FinMT) (k e : Nat) : Atom := (F.K.getD k []).getD e dr
+def Qa (F : FinMT) (k k' : Nat) : Atom := (F.Q.getD k []).getD k' dr
+def upa (F : FinMT) (k : Nat) : Bool := F.up.getD k true
+
+/-- The raw quotient network on `Nat` indices (`< nE` = external,
+    `nE ≤ · < nE + nK` = kernel), mirroring `qnet`. -/
+def qraw (F : FinMT) (x y : Nat) : Atom :=
+  if x < F.nE then
+    (if y < F.nE then F.Ea x y else conv (F.Ka (y - F.nE) x))
+  else
+    (if y < F.nE then F.Ka (x - F.nE) y
+     else (if x = y then eq else F.Qa (x - F.nE) (y - F.nE)))
+
+end FinMT
+
+/-- The total decoder: a `MultiTier` over `Fin` index types, reading
+    exactly the raw accessors. -/
+def decodeMT (F : FinMT) : MultiTier (Fin F.nE) (Fin F.nK) where
+  E := fun e f => F.Ea e.val f.val
+  K := fun k e => F.Ka k.val e.val
+  Q := fun k k' => F.Qa k.val k'.val
+  up := fun k => F.upa k.val
+  tauE := fun e => F.tE e.val
+  p := fun k => F.pk k.val
+  phase := fun k a => F.phase k.val a
+
+/-! ### Bool-level helpers -/
+
+/-- Bounded Boolean ∀. -/
+def ballB (n : Nat) (f : Nat → Bool) : Bool := (List.range n).all f
+
+/-- Bounded Boolean ∃. -/
+def bexB (n : Nat) (f : Nat → Bool) : Bool := (List.range n).any f
+
+/-- Boolean implication. -/
+def impB (a b : Bool) : Bool := !a || b
+
+theorem ballB_true {n : Nat} {f : Nat → Bool} (h : ballB n f = true) :
+    ∀ i, i < n → f i = true := by
+  intro i hi
+  exact List.all_eq_true.mp h i (List.mem_range.mpr hi)
+
+theorem bexB_true {n : Nat} {f : Nat → Bool} (h : bexB n f = true) :
+    ∃ i, i < n ∧ f i = true := by
+  obtain ⟨x, hx, hfx⟩ := List.any_eq_true.mp h
+  exact ⟨x, List.mem_range.mp hx, hfx⟩
+
+theorem impB_true {a b : Bool} (h : impB a b = true) (ha : a = true) :
+    b = true := by
+  subst ha
+  simpa [impB] using h
+
+theorem notB_true {b : Bool} (h : (!b) = true) : b = false := by
+  cases b with
+  | false => rfl
+  | true => exact absurd h (by decide)
+
+theorem andB_split {a b : Bool} (h : (a && b) = true) :
+    a = true ∧ b = true := by
+  cases a <;> cases b <;> first
+    | exact ⟨rfl, rfl⟩
+    | exact absurd h (by decide)
+
+theorem orB_split {a b : Bool} (h : (a || b) = true) :
+    a = true ∨ b = true := by
+  cases a with
+  | true => exact Or.inl rfl
+  | false =>
+    cases b with
+    | true => exact Or.inr rfl
+    | false => exact absurd h (by decide)
+
+/-! ### The executable checker -/
+
+namespace FinMT
+
+/-- Frame checks on the raw quotient network (uniform over the encoded
+    index range `nE + nK`). -/
+def frameB (F : FinMT) : Bool :=
+  ballB (F.nE + F.nK) (fun x => decide (F.qraw x x = eq)) &&
+  ballB (F.nE + F.nK) (fun x => ballB (F.nE + F.nK) (fun y =>
+    impB (decide (F.qraw x y = eq)) (decide (x = y)))) &&
+  ballB (F.nE + F.nK) (fun x => ballB (F.nE + F.nK) (fun y =>
+    decide (F.qraw y x = conv (F.qraw x y)))) &&
+  ballB (F.nE + F.nK) (fun x => ballB (F.nE + F.nK) (fun y =>
+    ballB (F.nE + F.nK) (fun z =>
+      decide (F.qraw x z ∈ comp (F.qraw x y) (F.qraw y z)))))
+
+/-- Propositional coherence of one type list, in-list. -/
+def propB (L : List Concept) : Bool :=
+  (!decide (Concept.bot ∈ L)) &&
+  L.all (fun D => match D with
+    | .atom a => !decide (Concept.natom a ∈ L)
+    | .and c d => decide (c ∈ L) && decide (d ∈ L)
+    | .or c d => decide (c ∈ L) || decide (d ∈ L)
+    | _ => true)
+
+/-- Universal-propagation checks for one external type list. -/
+def eAllB (F : FinMT) (e : Nat) : Bool :=
+  (F.tE e).all (fun D => match D with
+    | .all r c =>
+      ballB F.nE (fun f =>
+        impB (decide (F.Ea e f = r)) (decide (c ∈ F.tE f))) &&
+      ballB F.nK (fun k =>
+        impB (decide (conv (F.Ka k e) = r))
+          (ballB (F.pk k) (fun a => decide (c ∈ F.phase k a))))
+    | _ => true)
+
+/-- Universal-propagation checks for one kernel phase. -/
+def kAllB (F : FinMT) (k a : Nat) : Bool :=
+  (F.phase k a).all (fun D => match D with
+    | .all r c =>
+      ballB F.nE (fun f =>
+        impB (decide (F.Ka k f = r)) (decide (c ∈ F.tE f))) &&
+      ballB F.nK (fun k' =>
+        impB ((!decide (k = k')) && decide (F.Qa k k' = r))
+          (ballB (F.pk k') (fun b => decide (c ∈ F.phase k' b)))) &&
+      (match r with
+        | .pp => ballB (F.pk k) (fun b => decide (c ∈ F.phase k b))
+        | .ppi => ballB (F.pk k) (fun b => decide (c ∈ F.phase k b))
+        | .eq => decide (c ∈ F.phase k a)
+        | _ => true)
+    | _ => true)
+
+/-- Fulfilment checks for one external type list. -/
+def eExB (F : FinMT) (e : Nat) : Bool :=
+  (F.tE e).all (fun D => match D with
+    | .ex r c =>
+      bexB F.nE (fun f =>
+        decide (F.Ea e f = r) && decide (c ∈ F.tE f)) ||
+      bexB F.nK (fun k =>
+        decide (conv (F.Ka k e) = r) &&
+        bexB (F.pk k) (fun a => decide (c ∈ F.phase k a)))
+    | _ => true)
+
+/-- Fulfilment checks for one kernel phase. -/
+def kExB (F : FinMT) (k a : Nat) : Bool :=
+  (F.phase k a).all (fun D => match D with
+    | .ex r c =>
+      bexB F.nE (fun f =>
+        decide (F.Ka k f = r) && decide (c ∈ F.tE f)) ||
+      (decide (r = cdir (F.upa k)) &&
+        bexB (F.pk k) (fun b => decide (c ∈ F.phase k b))) ||
+      (decide (r = eq) && decide (c ∈ F.phase k a)) ||
+      bexB F.nK (fun k' =>
+        (!decide (k = k')) && decide (F.Qa k k' = r) &&
+        bexB (F.pk k') (fun b => decide (c ∈ F.phase k' b)))
+    | _ => true)
+
+/-- THE CHECKER: total, computable, oracle-free. -/
+def mtOkB (F : FinMT) : Bool :=
+  ballB F.nK (fun k => decide (0 < F.pk k)) &&
+  F.frameB &&
+  ballB F.nE (fun e => propB (F.tE e)) &&
+  ballB F.nK (fun k => ballB (F.pk k) (fun a => propB (F.phase k a))) &&
+  ballB F.nE (fun e => F.eAllB e) &&
+  ballB F.nK (fun k => ballB (F.pk k) (fun a => F.kAllB k a)) &&
+  ballB F.nE (fun e => F.eExB e) &&
+  ballB F.nK (fun k => ballB (F.pk k) (fun a => F.kExB k a))
+
+/-- Root acceptance: `root < nE` names an external; otherwise a kernel,
+    accepted if `C0` sits at ANY of its phases (rung `a` realizes phase
+    `a`). -/
+def rootB (F : FinMT) (root : Nat) (C0 : Concept) : Bool :=
+  if root < F.nE then decide (C0 ∈ F.tE root)
+  else decide (root < F.nE + F.nK) &&
+    bexB (F.pk (root - F.nE))
+      (fun a => decide (C0 ∈ F.phase (root - F.nE) a))
+
+/-- The acceptance predicate: certificate checks + root carries `C0`. -/
+def mtAcceptB (F : FinMT) (root : Nat) (C0 : Concept) : Bool :=
+  F.mtOkB && F.rootB root C0
+
+end FinMT
+
+/-! ### Soundness of the checker -/
+
+/-- Encode the decoded certificate's carrier indices into the raw
+    range: externals first, then kernels. -/
+def encIdx (F : FinMT) : (Fin F.nE ⊕ Fin F.nK) → Nat
+  | .inl e => e.val
+  | .inr k => F.nE + k.val
+
+theorem encIdx_lt (F : FinMT) (x : Fin F.nE ⊕ Fin F.nK) :
+    encIdx F x < F.nE + F.nK := by
+  rcases x with e | k
+  · have := e.isLt
+    show e.val < F.nE + F.nK
+    omega
+  · have := k.isLt
+    show F.nE + k.val < F.nE + F.nK
+    omega
+
+theorem encIdx_inj (F : FinMT) {x y : Fin F.nE ⊕ Fin F.nK}
+    (h : encIdx F x = encIdx F y) : x = y := by
+  rcases x with e | k <;> rcases y with f | k'
+  · exact congrArg Sum.inl (Fin.ext h)
+  · exfalso
+    have h1 : e.val = F.nE + k'.val := h
+    have := e.isLt
+    omega
+  · exfalso
+    have h1 : F.nE + k.val = f.val := h
+    have := f.isLt
+    omega
+  · have h1 : F.nE + k.val = F.nE + k'.val := h
+    exact congrArg Sum.inr (Fin.ext (by omega))
+
+/-- The raw network at encoded indices IS the decoded quotient
+    network. -/
+theorem qraw_corr (F : FinMT) (x y : Fin F.nE ⊕ Fin F.nK) :
+    F.qraw (encIdx F x) (encIdx F y)
+      = qnet (decodeMT F).E (decodeMT F).K (decodeMT F).Q x y := by
+  rcases x with e | k <;> rcases y with f | k'
+  · show F.qraw e.val f.val = F.Ea e.val f.val
+    unfold FinMT.qraw
+    rw [if_pos e.isLt, if_pos f.isLt]
+  · show F.qraw e.val (F.nE + k'.val) = conv (F.Ka k'.val e.val)
+    unfold FinMT.qraw
+    rw [if_pos e.isLt, if_neg (by omega : ¬ F.nE + k'.val < F.nE),
+      Nat.add_sub_cancel_left]
+  · show F.qraw (F.nE + k.val) f.val = F.Ka k.val f.val
+    unfold FinMT.qraw
+    rw [if_neg (by omega : ¬ F.nE + k.val < F.nE), if_pos f.isLt,
+      Nat.add_sub_cancel_left]
+  · show F.qraw (F.nE + k.val) (F.nE + k'.val)
+      = (if k = k' then eq else F.Qa k.val k'.val)
+    unfold FinMT.qraw
+    rw [if_neg (by omega : ¬ F.nE + k.val < F.nE),
+      if_neg (by omega : ¬ F.nE + k'.val < F.nE)]
+    by_cases hk : k = k'
+    · subst hk
+      rw [if_pos rfl, if_pos rfl]
+    · rw [if_neg (fun hh => hk (Fin.ext (Nat.add_left_cancel hh))),
+        if_neg hk, Nat.add_sub_cancel_left, Nat.add_sub_cancel_left]
+
+/-- The frame checks certify the decoded quotient frame. -/
+theorem frameB_sound (F : FinMT) (h : F.frameB = true) :
+    Frame (qnet (decodeMT F).E (decodeMT F).K (decodeMT F).Q) := by
+  simp only [FinMT.frameB, Bool.and_eq_true] at h
+  obtain ⟨⟨⟨hrefl, heqid⟩, hconv⟩, hcomp⟩ := h
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro x
+    have h1 := of_decide_eq_true
+      (ballB_true hrefl (encIdx F x) (encIdx_lt F x))
+    rw [qraw_corr F x x] at h1
+    exact h1
+  · intro x y hxy
+    have h1 := ballB_true (ballB_true heqid (encIdx F x) (encIdx_lt F x))
+      (encIdx F y) (encIdx_lt F y)
+    have hq : F.qraw (encIdx F x) (encIdx F y) = eq := by
+      rw [qraw_corr F x y]
+      exact hxy
+    exact encIdx_inj F (of_decide_eq_true (impB_true h1 (decide_eq_true hq)))
+  · intro x y
+    have h1 := of_decide_eq_true
+      (ballB_true (ballB_true hconv (encIdx F x) (encIdx_lt F x))
+        (encIdx F y) (encIdx_lt F y))
+    rw [qraw_corr F y x, qraw_corr F x y] at h1
+    exact h1
+  · intro x y z
+    have h1 := of_decide_eq_true
+      (ballB_true (ballB_true (ballB_true hcomp (encIdx F x)
+        (encIdx_lt F x)) (encIdx F y) (encIdx_lt F y))
+        (encIdx F z) (encIdx_lt F z))
+    rw [qraw_corr F x z, qraw_corr F x y, qraw_corr F y z] at h1
+    exact h1
+
+/-- Split the per-phase universal checks at a member. -/
+theorem kAllB_split (F : FinMT) {k a : Nat} (hk : k < F.nK)
+    (ha : a < F.pk k)
+    (h : ballB F.nK (fun k => ballB (F.pk k) (fun a => F.kAllB k a))
+      = true)
+    {r : Atom} {c : Concept} (hmem : Concept.all r c ∈ F.phase k a) :
+    ballB F.nE (fun f => impB (decide (F.Ka k f = r))
+      (decide (c ∈ F.tE f))) = true ∧
+    ballB F.nK (fun k' => impB ((!decide (k = k')) &&
+      decide (F.Qa k k' = r))
+      (ballB (F.pk k') (fun b => decide (c ∈ F.phase k' b)))) = true ∧
+    (r = pp →
+      ballB (F.pk k) (fun b => decide (c ∈ F.phase k b)) = true) ∧
+    (r = ppi →
+      ballB (F.pk k) (fun b => decide (c ∈ F.phase k b)) = true) ∧
+    (r = eq → decide (c ∈ F.phase k a) = true) := by
+  have h1 := ballB_true (ballB_true h k hk) a ha
+  simp only [FinMT.kAllB] at h1
+  have h2 := List.all_eq_true.mp h1 _ hmem
+  have h3 := andB_split h2
+  have h4 := andB_split h3.1
+  refine ⟨h4.1, h4.2, ?_, ?_, ?_⟩ <;>
+    (intro hr; subst hr; exact h3.2)
+
+/-- Split the per-external universal checks at a member. -/
+theorem eAllB_split (F : FinMT) {e : Nat} (he : e < F.nE)
+    (h : ballB F.nE (fun e => F.eAllB e) = true)
+    {r : Atom} {c : Concept} (hmem : Concept.all r c ∈ F.tE e) :
+    ballB F.nE (fun f => impB (decide (F.Ea e f = r))
+      (decide (c ∈ F.tE f))) = true ∧
+    ballB F.nK (fun k => impB (decide (conv (F.Ka k e) = r))
+      (ballB (F.pk k) (fun a => decide (c ∈ F.phase k a)))) = true := by
+  have h1 := ballB_true h e he
+  simp only [FinMT.eAllB] at h1
+  exact andB_split (List.all_eq_true.mp h1 _ hmem)
+
+/-- Split the propositional checks. -/
+theorem propB_parts {L : List Concept} (h : FinMT.propB L = true) :
+    Concept.bot ∉ L ∧
+    (∀ D ∈ L, (match D with
+      | Concept.atom a => !decide (Concept.natom a ∈ L)
+      | Concept.and c d => decide (c ∈ L) && decide (d ∈ L)
+      | Concept.or c d => decide (c ∈ L) || decide (d ∈ L)
+      | _ => true) = true) := by
+  simp only [FinMT.propB, Bool.and_eq_true] at h
+  exact ⟨of_decide_eq_false (notB_true h.1), List.all_eq_true.mp h.2⟩
+
+/-- ROUND-C SOUNDNESS: the Boolean checker certifies a valid decoded
+    certificate. -/
+theorem mtOkB_sound (F : FinMT) (h : F.mtOkB = true) :
+    MultiTierOk (decodeMT F) := by
+  simp only [FinMT.mtOkB, Bool.and_eq_true] at h
+  obtain ⟨⟨⟨⟨⟨⟨⟨hhp, hframe⟩, hpropE⟩, hpropK⟩, heall⟩, hkall⟩, heex⟩,
+    hkex⟩ := h
+  refine
+    { hp := ?_, frame_q := ?_, e_clash := ?_, e_nobot := ?_,
+      e_and := ?_, e_or := ?_, k_clash := ?_, k_nobot := ?_,
+      k_and := ?_, k_or := ?_, ee_all := ?_, ek_all := ?_,
+      ke_all := ?_, kk_pp := ?_, kk_ppi := ?_, kk_eq := ?_,
+      kq_all := ?_, e_ex := ?_, k_ex := ?_ }
+  · intro k
+    exact of_decide_eq_true (ballB_true hhp k.val k.isLt)
+  · exact frameB_sound F hframe
+  · intro e a hmem hn
+    obtain ⟨_, hall⟩ := propB_parts (ballB_true hpropE e.val e.isLt)
+    exact absurd hn
+      (of_decide_eq_false (notB_true (hall _ hmem)))
+  · intro e
+    exact (propB_parts (ballB_true hpropE e.val e.isLt)).1
+  · intro e c d hmem
+    obtain ⟨_, hall⟩ := propB_parts (ballB_true hpropE e.val e.isLt)
+    have h2 := andB_split (hall _ hmem)
+    exact ⟨of_decide_eq_true h2.1, of_decide_eq_true h2.2⟩
+  · intro e c d hmem
+    obtain ⟨_, hall⟩ := propB_parts (ballB_true hpropE e.val e.isLt)
+    rcases orB_split (hall _ hmem) with h2 | h2
+    · exact Or.inl (of_decide_eq_true h2)
+    · exact Or.inr (of_decide_eq_true h2)
+  · intro k a ha n hmem hn
+    obtain ⟨_, hall⟩ := propB_parts
+      (ballB_true (ballB_true hpropK k.val k.isLt) a ha)
+    exact absurd hn
+      (of_decide_eq_false (notB_true (hall _ hmem)))
+  · intro k a ha
+    exact (propB_parts
+      (ballB_true (ballB_true hpropK k.val k.isLt) a ha)).1
+  · intro k a ha c d hmem
+    obtain ⟨_, hall⟩ := propB_parts
+      (ballB_true (ballB_true hpropK k.val k.isLt) a ha)
+    have h2 := andB_split (hall _ hmem)
+    exact ⟨of_decide_eq_true h2.1, of_decide_eq_true h2.2⟩
+  · intro k a ha c d hmem
+    obtain ⟨_, hall⟩ := propB_parts
+      (ballB_true (ballB_true hpropK k.val k.isLt) a ha)
+    rcases orB_split (hall _ hmem) with h2 | h2
+    · exact Or.inl (of_decide_eq_true h2)
+    · exact Or.inr (of_decide_eq_true h2)
+  · intro e f r c hmem hEr
+    obtain ⟨hee, _⟩ := eAllB_split F e.isLt heall hmem
+    exact of_decide_eq_true
+      (impB_true (ballB_true hee f.val f.isLt) (decide_eq_true hEr))
+  · intro e r c hmem k hKr a ha
+    obtain ⟨_, hek⟩ := eAllB_split F e.isLt heall hmem
+    exact of_decide_eq_true
+      (ballB_true (impB_true (ballB_true hek k.val k.isLt)
+        (decide_eq_true hKr)) a ha)
+  · intro k a ha r c hmem f hKf
+    obtain ⟨hke, _, _⟩ := kAllB_split F k.isLt ha hkall hmem
+    exact of_decide_eq_true
+      (impB_true (ballB_true hke f.val f.isLt) (decide_eq_true hKf))
+  · intro k a ha c hmem b hb
+    obtain ⟨_, _, hkk, _, _⟩ := kAllB_split F k.isLt ha hkall hmem
+    exact of_decide_eq_true (ballB_true (hkk rfl) b hb)
+  · intro k a ha c hmem b hb
+    obtain ⟨_, _, _, hkk, _⟩ := kAllB_split F k.isLt ha hkall hmem
+    exact of_decide_eq_true (ballB_true (hkk rfl) b hb)
+  · intro k a ha c hmem
+    obtain ⟨_, _, _, _, hkk⟩ := kAllB_split F k.isLt ha hkall hmem
+    exact of_decide_eq_true (hkk rfl)
+  · intro k k' hne a ha r c hmem hQ b hb
+    obtain ⟨_, hkq, _, _, _⟩ := kAllB_split F k.isLt ha hkall hmem
+    have hQ' : F.Qa k.val k'.val = r := hQ
+    have hprem : ((!decide (k.val = k'.val)) &&
+        decide (F.Qa k.val k'.val = r)) = true := by
+      rw [decide_eq_false (fun hh => hne (Fin.ext hh)),
+        decide_eq_true hQ']
+      rfl
+    exact of_decide_eq_true
+      (ballB_true (impB_true (ballB_true hkq k'.val k'.isLt) hprem)
+        b hb)
+  · intro e r c hmem
+    have h1 := ballB_true heex e.val e.isLt
+    simp only [FinMT.eExB] at h1
+    rcases orB_split (List.all_eq_true.mp h1 _ hmem) with
+      h2 | h2
+    · obtain ⟨f, hf, hb⟩ := bexB_true h2
+      have h3 := andB_split hb
+      exact Or.inl ⟨⟨f, hf⟩, of_decide_eq_true h3.1,
+        of_decide_eq_true h3.2⟩
+    · obtain ⟨k, hk, hb⟩ := bexB_true h2
+      have h3 := andB_split hb
+      obtain ⟨a, ha, hca⟩ := bexB_true h3.2
+      exact Or.inr ⟨⟨k, hk⟩, of_decide_eq_true h3.1, a, ha,
+        of_decide_eq_true hca⟩
+  · intro k a ha r c hmem
+    have h1 := ballB_true (ballB_true hkex k.val k.isLt) a ha
+    simp only [FinMT.kExB] at h1
+    have h2 := List.all_eq_true.mp h1 _ hmem
+    rcases orB_split h2 with h3 | hD
+    · rcases orB_split h3 with h4 | hC
+      · rcases orB_split h4 with hA | hB
+        · obtain ⟨f, hf, hb⟩ := bexB_true hA
+          have h5 := andB_split hb
+          exact Or.inl ⟨⟨f, hf⟩, of_decide_eq_true h5.1,
+            of_decide_eq_true h5.2⟩
+        · have h5 := andB_split hB
+          obtain ⟨b, hb, hcb⟩ := bexB_true h5.2
+          exact Or.inr (Or.inl ⟨of_decide_eq_true h5.1, b, hb,
+            of_decide_eq_true hcb⟩)
+      · have h5 := andB_split hC
+        exact Or.inr (Or.inr (Or.inl ⟨of_decide_eq_true h5.1,
+          of_decide_eq_true h5.2⟩))
+    · obtain ⟨k', hk', hb⟩ := bexB_true hD
+      have h5 := andB_split hb
+      have h6 := andB_split h5.1
+      obtain ⟨b, hb', hcb⟩ := bexB_true h5.2
+      refine Or.inr (Or.inr (Or.inr ⟨⟨k', hk'⟩, ?_,
+        of_decide_eq_true h6.2, b, hb', of_decide_eq_true hcb⟩))
+      intro hh
+      exact absurd (congrArg Fin.val hh)
+        (of_decide_eq_false (notB_true h6.1))
+
+/-- ROUND-C CAPSTONE: acceptance by the executable checker yields a
+    model — first-order certificate to model, end to end. -/
+theorem mtAcceptB_sound (F : FinMT) (root : Nat) (C0 : Concept)
+    (h : F.mtAcceptB root C0 = true) : Satisfiable C0 := by
+  have h' := andB_split h
+  have hOk := mtOkB_sound F h'.1
+  have hroot := h'.2
+  rw [FinMT.rootB] at hroot
+  by_cases hr : root < F.nE
+  · rw [if_pos hr] at hroot
+    exact multiTier_sound (decodeMT F) hOk (Sum.inl ⟨root, hr⟩) C0
+      (of_decide_eq_true hroot)
+  · rw [if_neg hr] at hroot
+    have h2 := andB_split hroot
+    have hlt := of_decide_eq_true h2.1
+    obtain ⟨a, ha, hca⟩ := bexB_true h2.2
+    refine multiTier_sound (decodeMT F) hOk
+      (Sum.inr (⟨root - F.nE, by omega⟩, a)) C0 ?_
+    show C0 ∈ F.phase (root - F.nE) (a % F.pk (root - F.nE))
+    rw [Nat.mod_eq_of_lt ha]
+    exact of_decide_eq_true hca
+
+/-! ### Round-C non-vacuity: the two-tower certificate as pure data
+
+`cbothFin` is the `FinMT` encoding of the round-B certificate — plain
+lists, no functions.  The executable checker accepts it (`by decide` —
+the checker actually runs inside the kernel), giving a second,
+fully-computational route to `Satisfiable Cboth`. -/
+
+def cbothFin : FinMT where
+  tauE := []
+  E := []
+  K := [[], []]
+  Q := [[dr, dr], [dr, dr]]
+  up := [true, false]
+  phases := [[upList], [dnList]]
+
+theorem cbothFin_accept : cbothFin.mtAcceptB 0 Cboth = true := by
+  decide
+
+theorem cboth_satisfiable_exec : Satisfiable Cboth :=
+  mtAcceptB_sound cbothFin 0 Cboth cbothFin_accept
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
 #print axioms cboth_satisfiable
+#print axioms mtAcceptB_sound
+#print axioms cboth_satisfiable_exec
 
 end POFreeLift
