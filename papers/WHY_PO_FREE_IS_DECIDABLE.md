@@ -725,7 +725,9 @@ inside the kernel via plain `decide`), and a certified reduction
 (`decidableSat_of_codes`) turns any candidate-code list plus a
 completeness premise into `Decidable (Satisfiable C₀)`. Still open:
 exactly that premise — the extraction carrying the K(C₀) bound (round
-D2, the bulk — see `LEAN.md`). Until then, the honest label is the
+D2 — see `LEAN.md`; its model-side core, the external-relation
+stabilization theorem of §5.2 with both forcing corollaries, is
+already kernel-checked). Until then, the honest label is the
 project's standing one: **strongly supported, with the soundness core
 machine-certified — not certified end-to-end.**
 

@@ -2442,6 +2442,221 @@ def decidableSat_of_codes (C0 : Concept) (codes : List (FinMT × Nat))
       obtain ⟨p, hmem, hacc⟩ := hcompl hsat
       exact h (List.any_eq_true.mpr ⟨p, hmem, hacc⟩))
 
+/-! ## Round D2a (2026-07-23): model-side chain analysis —
+external-relation stabilization
+
+The first stone of the extraction (round D2): the two-tier paper's
+"external-relation stabilization" lemma, kernel-checked.  In any RCC5
+interpretation, along an ascending `PP`-chain, the relation of a FIXED
+external element to the chain follows the monotone transition order
+
+    {DR, PP}  →  {PO, EQ}  →  {PPI}        (rank 0 → 1 → 2)
+
+(each non-self transition strictly increases the rank; `EQ` cannot even
+self-loop), hence STABILIZES: it is eventually constant.  With the two
+forcing corollaries — `DR`/`PP` propagate backward to ALL earlier chain
+positions (`comp(PP,DR) = {DR}`, `comp(PP,PP) = {PP}`), `PPI` forward
+to all later ones (`comp(PPI,PPI) = {PPI}`) — this is exactly what
+makes one constant certificate edge an honest summary of infinitely
+many model edges, now as theorems about arbitrary models rather than
+about the unfolding.
+
+These proofs are CLASSICAL (`by_cases` on undecidable ∃ over ℕ —
+inevitable: the stabilization index is not computable from an abstract
+model), so this section is the first to add `Classical.choice` to the
+axiom profile.  Everything before it stays `propext`/`Quot.sound`. -/
+
+/-- The stabilization rank: `DR`/`PP` can still become anything
+    non-`PP`-ward, `PO`/`EQ` only deepen, `PPI` is absorbing. -/
+def stabRank : Atom → Nat
+  | dr => 0
+  | pp => 0
+  | eq => 1
+  | po => 1
+  | ppi => 2
+
+/-- Each upward chain step moves the external relation monotonically in
+    rank. -/
+theorem stabRank_mono : ∀ a b : Atom, b ∈ comp ppi a →
+    stabRank a ≤ stabRank b := by
+  intro a b
+  cases a <;> cases b <;> decide
+
+/-- A rank-preserving step preserves the value. -/
+theorem stabRank_fix : ∀ a b : Atom, b ∈ comp ppi a →
+    stabRank a = stabRank b → b = a := by
+  intro a b
+  cases a <;> cases b <;> decide
+
+theorem stabRank_le_two : ∀ a : Atom, stabRank a ≤ 2 := by
+  intro a
+  cases a <;> decide
+
+section ModelChain
+
+variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
+  {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+  (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+
+include hI hdom hstep
+
+/-- Chain transitivity in the model: strictly earlier is `PP`. -/
+theorem chain_model_pp : ∀ i j, i < j → I.rho (c i) (c j) = pp := by
+  have aux : ∀ i d, I.rho (c i) (c (i + 1 + d)) = pp := by
+    intro i d
+    induction d with
+    | zero => exact hstep i
+    | succ d ih =>
+      have h1 := hI.comp_ (c i) (c (i + 1 + d)) (c (i + 1 + d + 1))
+        (hdom i) (hdom (i + 1 + d)) (hdom (i + 1 + d + 1))
+      rw [ih, hstep (i + 1 + d)] at h1
+      rw [show comp pp pp = [pp] from rfl] at h1
+      exact List.mem_singleton.mp h1
+  intro i j hij
+  have hj : j = i + 1 + (j - i - 1) := by omega
+  rw [hj]
+  exact aux i (j - i - 1)
+
+/-- Chain elements are pairwise distinct (strong EQ). -/
+theorem chain_model_distinct : ∀ i j, i < j → c i ≠ c j := by
+  intro i j hij heq
+  have h1 := chain_model_pp hI hdom hstep i j hij
+  rw [heq] at h1
+  rw [hI.refl_eq (c j) (hdom j)] at h1
+  exact absurd h1 (by decide)
+
+/-- Strictly later is `PPI`. -/
+theorem chain_model_ppi : ∀ i j, i < j → I.rho (c j) (c i) = ppi := by
+  intro i j hij
+  rw [hI.conv_ (c i) (c j) (hdom i) (hdom j),
+    chain_model_pp hI hdom hstep i j hij]
+  rfl
+
+variable {e : α} (hedom : I.dom e)
+
+include hedom
+
+/-- The step fact for the external-relation sequence. -/
+theorem vstep : ∀ j,
+    I.rho (c (j + 1)) e ∈ comp ppi (I.rho (c j) e) := by
+  intro j
+  have h1 := hI.comp_ (c (j + 1)) (c j) e (hdom (j + 1)) (hdom j) hedom
+  rw [chain_model_ppi hI hdom hstep j (j + 1) (Nat.lt_succ_self j)]
+    at h1
+  exact h1
+
+/-- Rank monotonicity along the chain. -/
+theorem vrank_mono : ∀ i j, i ≤ j →
+    stabRank (I.rho (c i) e) ≤ stabRank (I.rho (c j) e) := by
+  have aux : ∀ i d, stabRank (I.rho (c i) e)
+      ≤ stabRank (I.rho (c (i + d)) e) := by
+    intro i d
+    induction d with
+    | zero => exact Nat.le_refl _
+    | succ d ih =>
+      exact Nat.le_trans ih
+        (stabRank_mono _ _ (vstep hI hdom hstep hedom (i + d)))
+  intro i j hij
+  have hj : j = i + (j - i) := by omega
+  rw [hj]
+  exact aux i (j - i)
+
+/-- THE STABILIZATION THEOREM (two-tier, model side): the relation of a
+    fixed external element to an ascending chain is eventually
+    constant. -/
+theorem external_stabilizes :
+    ∃ N w, ∀ j, N ≤ j → I.rho (c j) e = w := by
+  -- first stabilize the rank, by cases on which ranks are attained
+  have hrank : ∃ N, ∀ j, N ≤ j →
+      stabRank (I.rho (c j) e) = stabRank (I.rho (c N) e) := by
+    by_cases h2 : ∃ i, stabRank (I.rho (c i) e) = 2
+    · obtain ⟨i, hi⟩ := h2
+      refine ⟨i, fun j hj => ?_⟩
+      have h3 := vrank_mono hI hdom hstep hedom i j hj
+      have h4 := stabRank_le_two (I.rho (c j) e)
+      omega
+    · by_cases h1 : ∃ i, stabRank (I.rho (c i) e) = 1
+      · obtain ⟨i, hi⟩ := h1
+        refine ⟨i, fun j hj => ?_⟩
+        have h3 := vrank_mono hI hdom hstep hedom i j hj
+        have h4 : stabRank (I.rho (c j) e) ≠ 2 :=
+          fun hh => h2 ⟨j, hh⟩
+        have h5 := stabRank_le_two (I.rho (c j) e)
+        omega
+      · refine ⟨0, fun j _ => ?_⟩
+        have h4 : stabRank (I.rho (c j) e) ≠ 2 :=
+          fun hh => h2 ⟨j, hh⟩
+        have h5 : stabRank (I.rho (c j) e) ≠ 1 :=
+          fun hh => h1 ⟨j, hh⟩
+        have h6 := stabRank_le_two (I.rho (c j) e)
+        have h7 : stabRank (I.rho (c 0) e) ≠ 2 :=
+          fun hh => h2 ⟨0, hh⟩
+        have h8 : stabRank (I.rho (c 0) e) ≠ 1 :=
+          fun hh => h1 ⟨0, hh⟩
+        have h9 := stabRank_le_two (I.rho (c 0) e)
+        omega
+  obtain ⟨N, hN⟩ := hrank
+  refine ⟨N, I.rho (c N) e, ?_⟩
+  have aux : ∀ d, I.rho (c (N + d)) e = I.rho (c N) e := by
+    intro d
+    induction d with
+    | zero => rfl
+    | succ d ih =>
+      have h1 := vstep hI hdom hstep hedom (N + d)
+      rw [ih] at h1
+      have h2 : stabRank (I.rho (c N) e)
+          = stabRank (I.rho (c (N + d + 1)) e) := by
+        rw [hN (N + d + 1) (by omega)]
+      exact stabRank_fix _ _ h1 h2
+  intro j hj
+  have hj2 : j = N + (j - N) := by omega
+  rw [hj2]
+  exact aux (j - N)
+
+/-- BACKWARD FORCING (`DR`): a `DR`-related external is `DR` to ALL
+    earlier chain positions — `comp(PP,DR) = {DR}`. -/
+theorem backward_forcing_dr {i : Nat} (h : I.rho (c i) e = dr) :
+    ∀ j, j ≤ i → I.rho (c j) e = dr := by
+  intro j hj
+  rcases Nat.lt_or_ge j i with hlt | hge
+  · have h1 := hI.comp_ (c j) (c i) e (hdom j) (hdom i) hedom
+    rw [chain_model_pp hI hdom hstep j i hlt, h] at h1
+    rw [show comp pp dr = [dr] from rfl] at h1
+    exact List.mem_singleton.mp h1
+  · have hji : j = i := by omega
+    rw [hji]
+    exact h
+
+/-- BACKWARD FORCING (`PP`): a containing external contains ALL earlier
+    chain positions — `comp(PP,PP) = {PP}`. -/
+theorem backward_forcing_pp {i : Nat} (h : I.rho (c i) e = pp) :
+    ∀ j, j ≤ i → I.rho (c j) e = pp := by
+  intro j hj
+  rcases Nat.lt_or_ge j i with hlt | hge
+  · have h1 := hI.comp_ (c j) (c i) e (hdom j) (hdom i) hedom
+    rw [chain_model_pp hI hdom hstep j i hlt, h] at h1
+    rw [show comp pp pp = [pp] from rfl] at h1
+    exact List.mem_singleton.mp h1
+  · have hji : j = i := by omega
+    rw [hji]
+    exact h
+
+/-- FORWARD ABSORPTION (`PPI`): a contained external stays inside ALL
+    later chain positions — `comp(PPI,PPI) = {PPI}`. -/
+theorem forward_absorption_ppi {i : Nat} (h : I.rho (c i) e = ppi) :
+    ∀ j, i ≤ j → I.rho (c j) e = ppi := by
+  intro j hj
+  rcases Nat.lt_or_ge i j with hlt | hge
+  · have h1 := hI.comp_ (c j) (c i) e (hdom j) (hdom i) hedom
+    rw [chain_model_ppi hI hdom hstep i j hlt, h] at h1
+    rw [show comp ppi ppi = [ppi] from rfl] at h1
+    exact List.mem_singleton.mp h1
+  · have hji : j = i := by omega
+    rw [hji]
+    exact h
+
+end ModelChain
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -2451,5 +2666,8 @@ def decidableSat_of_codes (C0 : Concept) (codes : List (FinMT × Nat))
 #print axioms mtOkB_iff
 #print axioms mtAcceptB_complete
 #print axioms decidableSat_of_codes
+#print axioms external_stabilizes
+#print axioms backward_forcing_dr
+#print axioms forward_absorption_ppi
 
 end POFreeLift
