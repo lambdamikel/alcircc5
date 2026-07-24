@@ -578,8 +578,19 @@ carrying `∃PP.G` — a genuine kernel. Composed with
 persistent-`∃PP` element yields an ACTUAL certificate block, the
 demand → kernel → certificate link the assembly instantiates once per
 vertical demand component. Ascending only; the descending dual
-(persistent `∃PPI` on a `PPI`-chain) is a mirrored round. Zero
-`sorry`; file now ~6,433 lines.
+(persistent `∃PPI` on a `PPI`-chain) is E3g′. Zero `sorry`; file now
+~6,433 lines.
+
+**Round E3g′ (landed, 2026-07-23): the descending persistent kernel.**
+The mirror of E3g: `persistPPI I C0 G x` (`∃PPI.G` + guard
+`∀PPI.(∃PPI.G)`) is productive for `dbuildChain` (`persistPPI_productive`:
+the guard DESCENDS via `sat_all_ppi_down`, the `PP`-below step from
+converse coherence `conv PPI = PP`); `persistPPI_chain` builds the
+infinite descending kernel chain — the `up = false` kernel a mixed
+assembly consumes alongside ascending ones. (The descending
+demand → certificate link awaits a `dmultiBlock_of_site` mirror of E3f;
+the ascending `block_of_persistent` already exhibits the full pattern.)
+Zero `sorry`; file now ~6,485 lines.
 
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE

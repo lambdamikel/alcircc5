@@ -6366,6 +6366,56 @@ theorem block_of_persistent (hI : RCC5Interp I) {C0 G : Concept}
 
 end PersistentKernel
 
+/-! ## Round E3g′ (2026-07-23): the descending persistent kernel
+
+The mirror of E3g: a persistent `∃PPI` demand — `∃PPI.G` plus its
+guard `∀PPI.(∃PPI.G)` — is productive for the DESCENDING chain builder
+(`dbuildChain`).  The guard descends via `sat_all_ppi_down` (`∀PPI`
+holds at everything below its holder), the `PP`-below step supplied by
+converse coherence (`conv PPI = PP`).  So a persistent-`∃PPI` element
+builds an infinite descending model chain — the `up = false` kernel a
+mixed assembly consumes alongside ascending ones. -/
+
+section DescPersistentKernel
+
+variable {α : Type} {I : Interp α}
+
+/-- A persistent `∃PPI` demand: `∃PPI.G` plus its self-reproducing
+    guard `∀PPI.(∃PPI.G)`. -/
+def persistPPI (I : Interp α) (C0 G : Concept) (x : α) : Prop :=
+  I.dom x ∧ Concept.ex ppi G ∈ mty C0 I x ∧
+  Concept.all ppi (Concept.ex ppi G) ∈ mty C0 I x
+
+/-- Persistent `∃PPI` demand is PRODUCTIVE for the descending chain
+    builder: a `PPI`-successor inherits both the demand and its guard
+    (the guard descends via `sat_all_ppi_down`). -/
+theorem persistPPI_productive (hI : RCC5Interp I) {C0 G : Concept}
+    (x : α) (hx : persistPPI I C0 G x) :
+    ∃ y, persistPPI I C0 G y ∧ I.dom y ∧ I.rho x y = ppi := by
+  obtain ⟨hdx, hex, hall⟩ := hx
+  obtain ⟨y, hdy, hr, _⟩ := mty_ex hex
+  refine ⟨y, ⟨hdy, mty_all hall hdy hr, ?_⟩, hdy, hr⟩
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp hall
+  have hyx : I.rho y x = pp := by
+    rw [hI.conv_ x y hdx hdy, hr]; rfl
+  exact mem_mty.mpr ⟨hcl, sat_all_ppi_down hI hdx hdy hyx hsat⟩
+
+/-- THE DESCENDING PERSISTENT KERNEL CHAIN: a persistent-`∃PPI`
+    element builds an infinite descending model chain, every rung
+    carrying `∃PPI.G`. -/
+theorem persistPPI_chain (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
+    (h0 : persistPPI I C0 G x0) :
+    ∃ d : Nat → α, d 0 = x0 ∧ (∀ n, I.dom (d n)) ∧
+      (∀ n, I.rho (d n) (d (n + 1)) = ppi) ∧
+      (∀ n, Concept.ex ppi G ∈ mty C0 I (d n)) := by
+  refine ⟨dbuildChain (persistPPI I C0 G) (persistPPI_productive hI) x0 h0,
+    dbuildChain_zero _ _ x0 h0, ?_, ?_, ?_⟩
+  · exact fun n => (dbuildChain_prop _ _ x0 h0 n).1
+  · exact fun n => dbuildChain_step _ _ x0 h0 n
+  · exact fun n => (dbuildChain_prop _ _ x0 h0 n).2.1
+
+end DescPersistentKernel
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -6429,5 +6479,7 @@ end PersistentKernel
 #print axioms persistPP_productive
 #print axioms persistPP_chain
 #print axioms block_of_persistent
+#print axioms persistPPI_productive
+#print axioms persistPPI_chain
 
 end POFreeLift
