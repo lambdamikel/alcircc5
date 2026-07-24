@@ -528,6 +528,24 @@ INSTANTIATING the hypotheses (build the tight skeleton + prove its two
 closure laws + rectangle constancy + `hserve` from an actual model +
 the `e_ex` recursion), then finite enumeration.
 
+**Round E3e (landed, 2026-07-23): the maximal read-off tight
+predicate.** The two CLOSURE hypotheses of `multi_kernel_block`
+(`htpp`/`htdr`) are dischargeable: for the maximal `tightNePo v w :=
+ρ(elt v, elt w) ≠ PO` they follow PURELY from the two singleton
+composition cells (`tightNePo_htpp` via `comp(pp,pp)={pp}`,
+`tightNePo_htdr` via `comp(pp,dr)={dr}` — both `propext`-only, no
+demand structure); `tightNePo_symm` is converse coherence + `conv PO =
+PO` (`conv_ne_po`), AXIOM-FREE. `twoSorted_eq_readoff`: under this
+predicate the two-sorted labelling COLLAPSES to the plain read-off
+(`= ρ` pointwise — off-diagonal `PO` loose, non-`PO` reads the model,
+diagonal `EQ` by reflexivity). This isolates the reusable algebraic
+core: the closure obligation is SATISFIABLE, so the residual
+instantiation work is entirely RECTANGLE CONSTANCY (`hrectK`/`hrectQ`).
+A concrete assembly uses a SUB-predicate of `≠PO` (making varying
+cross-kernel pairs loose so their rectangle obligation goes vacuous)
+and re-verifies closure — but the comp facts are identical, so this is
+the reusable half. Zero `sorry`; file now ~6,203 lines.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted

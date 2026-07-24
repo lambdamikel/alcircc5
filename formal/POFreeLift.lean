@@ -6063,6 +6063,84 @@ theorem multi_kernel_block (hI : RCC5Interp I) (C0 : Concept)
 
 end MultiKernelBlock
 
+/-! ## Round E3e (2026-07-23): the maximal read-off tight predicate
+
+The two CLOSURE hypotheses of `multi_kernel_block` (`htpp`/`htdr`) are
+dischargeable: for the MAXIMAL tight predicate `Tight v w := ρ ≠ PO`
+they follow PURELY from the composition table (`comp(pp,pp)={pp}`,
+`comp(pp,dr)={dr}` — the two singleton cells), independent of any
+demand structure; `hsymm` is converse coherence + `conv PO = PO`.
+Under this predicate the two-sorted labelling COLLAPSES to the plain
+read-off (`twoSorted_eq_readoff`): every off-diagonal `PO` pair is
+loose (`= PO`), every non-`PO` pair reads the model, and the diagonal
+is `EQ` by reflexivity — so `twoSorted I elt (≠PO) = ρ` pointwise.
+
+This isolates the algebraic core every instantiation reuses: the
+closure obligation is SATISFIABLE, and the residual work is entirely
+the RECTANGLE-CONSTANCY side (`hrectK`/`hrectQ`).  A concrete assembly
+uses a SUB-predicate of `≠PO` (to make varying cross-kernel pairs
+loose so their rectangle obligation is vacuous), and must re-verify
+closure for it — but the comp facts are the same, so this is the
+reusable half. -/
+
+section ReadOffTight
+
+variable {α V : Type} (I : Interp α) (elt : V → α)
+
+/-- The maximal tight predicate: every non-`PO` model pair is tight. -/
+def tightNePo : V → V → Prop := fun v w => I.rho (elt v) (elt w) ≠ po
+
+/-- `conv` fixes only `PO` — so a non-`PO` value stays non-`PO`. -/
+theorem conv_ne_po {a : Atom} (h : a ≠ po) : conv a ≠ po := by
+  cases a <;> first | exact absurd rfl h | decide
+
+variable {I elt}
+
+/-- `≠PO` is symmetric (converse coherence + `conv PO = PO`). -/
+theorem tightNePo_symm (hI : RCC5Interp I) (hdom : ∀ v, I.dom (elt v))
+    (v w : V) (h : tightNePo I elt v w) : tightNePo I elt w v := by
+  unfold tightNePo at h ⊢
+  rw [hI.conv_ (elt v) (elt w) (hdom v) (hdom w)]
+  exact conv_ne_po h
+
+/-- `≠PO` is `PP`-transitively closed: `comp(pp,pp)={pp}`. -/
+theorem tightNePo_htpp (hI : RCC5Interp I) (hdom : ∀ v, I.dom (elt v))
+    (v w u : V)
+    (hr1 : I.rho (elt v) (elt w) = pp) (hr2 : I.rho (elt w) (elt u) = pp) :
+    tightNePo I elt v u := by
+  unfold tightNePo
+  have hm := hI.comp_ (elt v) (elt w) (elt u) (hdom v) (hdom w) (hdom u)
+  rw [hr1, hr2] at hm
+  rw [List.mem_singleton.mp hm]
+  decide
+
+/-- `≠PO` is `DR`-downward closed: `comp(pp,dr)={dr}`. -/
+theorem tightNePo_htdr (hI : RCC5Interp I) (hdom : ∀ v, I.dom (elt v))
+    (v w u : V)
+    (hr1 : I.rho (elt v) (elt w) = pp) (hr2 : I.rho (elt w) (elt u) = dr) :
+    tightNePo I elt v u := by
+  unfold tightNePo
+  have hm := hI.comp_ (elt v) (elt w) (elt u) (hdom v) (hdom w) (hdom u)
+  rw [hr1, hr2] at hm
+  rw [List.mem_singleton.mp hm]
+  decide
+
+/-- Under the maximal tight predicate the two-sorted labelling IS the
+    plain read-off. -/
+theorem twoSorted_eq_readoff (hI : RCC5Interp I)
+    (hdom : ∀ v, I.dom (elt v)) (x y : V) :
+    twoSorted I elt (tightNePo I elt) x y = I.rho (elt x) (elt y) := by
+  unfold twoSorted tightNePo
+  by_cases hxy : x = y
+  · subst hxy
+    rw [if_pos rfl, hI.refl_eq (elt x) (hdom x)]
+  · rw [if_neg hxy]
+    by_cases hpo : I.rho (elt x) (elt y) = po
+    · rw [if_neg (by rw [hpo]; exact fun h => h rfl), hpo]
+    · rw [if_pos hpo]
+
+end ReadOffTight
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -6117,5 +6195,9 @@ end MultiKernelBlock
 #print axioms twoSorted_frame
 #print axioms multi_kernel_block
 #print axioms mkBlock_nopo
+#print axioms tightNePo_symm
+#print axioms tightNePo_htpp
+#print axioms tightNePo_htdr
+#print axioms twoSorted_eq_readoff
 
 end POFreeLift
