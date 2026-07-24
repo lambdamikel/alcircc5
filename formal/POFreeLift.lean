@@ -8477,30 +8477,32 @@ theorem qnet_empty_frame {β : Type} (E : β → β → Atom) (hE : Frame E) :
 
 The first fragment with genuine `∀`-firing certified end-to-end without
 kernels: **`∀DR`-propagation over a `DR`/`PO`/`EQ` frame**.  Every
-existential is `∃DR`, every universal is `∀DR` (hence `∀PO`-free), and
-each `∀DR` guards a `DR`-free (propositional) body.  Concretely it
-contains `∀DR.A`, `∀DR.(A ⊔ B)`, `∃DR.(∀DR.A ⊓ C)` — constraint
-propagation to all `DR`-neighbours — the paradigm `∀DR` usage.
+existential is `∃DR` or `∃PO` (horizontal), every universal is `∀DR`
+(hence `∀PO`-free), and each `∀DR` guards a `DR`-free (propositional)
+body.  Concretely it contains `∀DR.A`, `∀DR.(A ⊔ B)`, `∃DR.(∀DR.A ⊓ C)`,
+`∃PO.A` — constraint propagation to all `DR`-neighbours plus `PO`
+existentials — the paradigm horizontal `∀DR` usage.
 
 The certificate: `β = snodes root` (the saturated-label coverage nodes),
 `tauE = slabel` (saturated so `∀DR` obligations fire reverse), the
 tree-structural frame (`symDrPo_frame`, `DR` on `∃DR`-demand edges, `PO`
-elsewhere, `EQ` on the diagonal), no kernels.  `ee_all` on `DR` edges is
-the `∀DR` reverse-firing (`slabel_dr_forward`/`_reverse`); on `PO`/`EQ`
-edges it is vacuous (no `∀PO`, no `∀EQ` in this fragment); `e_ex` is
-coverage (`snodes_covers` via the explicit `schildNode`). -/
+elsewhere — including `∃PO`-demand children, which `po_not_sAdj` keeps off
+the `DR`-adjacency — `EQ` on the diagonal), no kernels.  `ee_all` on `DR`
+edges is the `∀DR` reverse-firing (`slabel_dr_forward`/`_reverse`); on
+`PO`/`EQ` edges it is vacuous (no `∀PO`, no `∀EQ` in this fragment);
+`e_ex` is coverage (`snodes_covers` via the explicit `schildNode`). -/
 
 section PODRAssembly
 
 variable {α : Type} {I : Interp α} {C0 : Concept}
 
 /-- THE ∀DR-PROPAGATION FRAGMENT (assembly hypotheses on the closure):
-    every existential `∃DR`, every universal `∀DR` (so `∀PO`-free), each
-    `∀DR` DR-guard-free.  A concept satisfying `DRFrag` has, at every
-    reachable node, only `DR` demands and only `∀DR` universals with
-    propositional bodies. -/
+    every existential horizontal (`∃DR` or `∃PO`), every universal `∀DR`
+    (so `∀PO`-free), each `∀DR` DR-guard-free.  A concept satisfying
+    `DRFrag` has, at every reachable node, only `DR`/`PO` demands and only
+    `∀DR` universals with propositional bodies. -/
 structure DRFrag (C0 : Concept) : Prop where
-  hex : ∀ r c, Concept.ex r c ∈ cl C0 → r = dr
+  hex : ∀ r c, Concept.ex r c ∈ cl C0 → r = dr ∨ r = po
   hall : ∀ r c, Concept.all r c ∈ cl C0 → r = dr
   hgf : ∀ c, Concept.all dr c ∈ cl C0 → noDR c
 
@@ -8513,6 +8515,41 @@ def sAdj (hI : RCC5Interp I) (m m' : RNode I C0) : Prop :=
 theorem sAdj_symm (hI : RCC5Interp I) (m m' : RNode I C0) :
     sAdj hI m m' ↔ sAdj hI m' m :=
   ⟨Or.symm, Or.symm⟩
+
+/-- A child at a non-`EQ` demand is a genuinely fresh model element
+    (strong-EQ: `I.rho m.x child.x = r ≠ eq` forces `m.x ≠ child.x`).  So
+    a demand child is never the parent — the frame's off-diagonal. -/
+theorem schildNode_x_ne (hI : RCC5Interp I) (m : RNode I C0) {r : Atom}
+    {c : Concept} (hF : Concept.ex r c ∈ slabel m) (hrne : r ≠ eq) :
+    m.x ≠ (schildNode hI m hF).x := by
+  intro hx
+  have hrho := schildNode_rho hI m hF
+  rw [← hx, hI.refl_eq m.x m.hdom] at hrho
+  exact hrne hrho.symm
+
+/-- `DR`-adjacent nodes are `DR`-related in the model — either directly
+    (`m'` a `∃DR`-child of `m`) or via converse (`conv DR = DR`). -/
+theorem sAdj_rho_dr (hI : RCC5Interp I) {m m' : RNode I C0}
+    (h : sAdj hI m m') : I.rho m.x m'.x = dr := by
+  rcases h with ⟨_, hF, hchild⟩ | ⟨_, hF, hchild⟩
+  · have hrho := schildNode_rho hI m hF
+    rw [hchild] at hrho; exact hrho
+  · have hrho := schildNode_rho hI m' hF
+    rw [hchild] at hrho
+    have hc := hI.conv_ m'.x m.x m'.hdom m.hdom
+    rw [hrho] at hc
+    rw [hc]; decide
+
+/-- KEY FOR `∃PO`: a `PO`-child is NEVER `DR`-adjacent to its parent.  A
+    `DR`-adjacency would force `I.rho m.x m'.x = dr` (`sAdj_rho_dr`), but a
+    `PO`-child has `I.rho m.x m'.x = po` — `PO ≠ DR`, and `conv PO = PO`
+    blocks the reverse orientation too.  So `∃PO` demands land on genuine
+    `PO` frame edges (which fire nothing, `∀PO`-free). -/
+theorem po_not_sAdj (hI : RCC5Interp I) {m m' : RNode I C0}
+    (h : I.rho m.x m'.x = po) : ¬ sAdj hI m m' := by
+  intro hadj
+  rw [sAdj_rho_dr hI hadj] at h
+  exact absurd h (by decide)
 
 open Classical in
 /-- The frame's `DR`-adjacency as a decidable predicate on the coverage
@@ -8598,31 +8635,35 @@ theorem mtDR_ok (hI : RCC5Interp I) (hfrag : DRFrag C0)
   kq_all := fun k => k.elim
   e_ex := by
     intro e r c hdem
-    have hr : r = dr := hfrag.hex r c (slabel_sub_cl e.val _ hdem)
-    subst hr
+    have hrne : r ≠ eq := by
+      rcases hfrag.hex r c (slabel_sub_cl e.val _ hdem) with h | h <;>
+        rw [h] <;> decide
     have hmem : schildNode hI e.val hdem ∈ snodes hI root :=
       snodes_trans hI root e.val e.property _ (schildNode_mem hI e.val hdem)
-    refine Or.inl ⟨⟨schildNode hI e.val hdem, hmem⟩, ?_, ?_⟩
-    · have hrho : I.rho e.val.x (schildNode hI e.val hdem).x = dr :=
-        schildNode_rho hI e.val hdem
-      have hne : e ≠ ⟨schildNode hI e.val hdem, hmem⟩ := by
-        intro heq
-        have hx : e.val.x = (schildNode hI e.val hdem).x :=
-          congrArg (fun t => t.val.x) heq
-        rw [hx] at hrho
-        exact absurd (hrho.symm.trans
-          (hI.refl_eq _ (schildNode hI e.val hdem).hdom)) (by decide)
-      have hadj : sAdj hI e.val (schildNode hI e.val hdem) :=
-        Or.inl ⟨c, hdem, rfl⟩
+    have hne : e ≠ ⟨schildNode hI e.val hdem, hmem⟩ := fun heq =>
+      schildNode_x_ne hI e.val hdem hrne (congrArg (fun t => t.val.x) heq)
+    refine Or.inl ⟨⟨schildNode hI e.val hdem, hmem⟩, ?_,
+      schildNode_arg hI e.val hdem⟩
+    rcases hfrag.hex r c (slabel_sub_cl e.val _ hdem) with hr | hr
+    · -- `∃DR` demand: `DR`-adjacent child, frame edge = `DR`
+      subst hr
       have hd : dadjB hI root e ⟨schildNode hI e.val hdem, hmem⟩ = true := by
         show decide (sAdj hI e.val (schildNode hI e.val hdem)) = true
-        rw [decide_eq_true_eq]; exact hadj
+        rw [decide_eq_true_eq]; exact Or.inl ⟨c, hdem, rfl⟩
       show (if e = ⟨schildNode hI e.val hdem, hmem⟩ then eq
         else if dadjB hI root e ⟨schildNode hI e.val hdem, hmem⟩ then dr
           else po) = dr
-      rw [if_neg hne]
-      exact if_pos hd
-    · exact schildNode_arg hI e.val hdem
+      rw [if_neg hne]; exact if_pos hd
+    · -- `∃PO` demand: `PO`-child is NOT `DR`-adjacent, frame edge = `PO`
+      subst hr
+      have hd : ¬ dadjB hI root e ⟨schildNode hI e.val hdem, hmem⟩ = true := by
+        show ¬ decide (sAdj hI e.val (schildNode hI e.val hdem)) = true
+        rw [decide_eq_true_eq]
+        exact po_not_sAdj hI (schildNode_rho hI e.val hdem)
+      show (if e = ⟨schildNode hI e.val hdem, hmem⟩ then eq
+        else if dadjB hI root e ⟨schildNode hI e.val hdem, hmem⟩ then dr
+          else po) = po
+      rw [if_neg hne]; exact if_neg hd
   k_ex := fun k => k.elim
 
 /-- THE ∀DR-PROPAGATION EXTRACTION: every satisfiable `DRFrag` concept has
