@@ -7775,6 +7775,18 @@ theorem symDrPo_frame {V : Type} (d : V → V → Bool)
             rcases Loff w u hwu with h2 | h2 <;>
             rw [hu, h1, h2] <;> decide
 
+/-- MODEL-SOUNDNESS OF REVERSE `DR`-FIRING (the safety property of the
+    `∀DR`-closure that lifts past ∀-free): if `x DR w` and `∀DR.c` holds
+    at `w`, then `c` holds at `x` — because `x` is itself a `DR`-neighbour
+    of `w` (`conv DR = DR`).  So the formulas the reverse firing adds to
+    a node are genuinely in its model type, keeping labels `⊆ mty`. -/
+theorem dr_reverse_sat {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {x w : α} (hx : I.dom x) (hw : I.dom w)
+    (hxw : I.rho x w = dr) {c : Concept}
+    (h : Concept.all dr c ∈ mty C0 I w) : c ∈ mty C0 I x := by
+  have hwx : I.rho w x = dr := by rw [hI.conv_ x w hx hw, hxw]; rfl
+  exact mty_all h hx hwx
+
 /-- The tree-structural labelling only takes values in `{EQ, DR, PO}`,
     so in the ∀PO-free fragment `ee_all` reduces to exactly the `DR`
     edges (the crux: the `∀DR` reverse-firing) and the `EQ` diagonal
