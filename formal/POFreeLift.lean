@@ -7006,6 +7006,72 @@ theorem expand_or (I : Interp α) (x : α) :
     · exact Concept.noConfusion h
     · exact nomatch h
 
+/-! ### The node label (round 4, component 2)
+
+A recursion node requires a LIST of formulas — the root `C₀`, plus the
+`∀`-consequences fired into it from its parents.  Its label is the
+union of their expansions, `reqType I x s`.  The per-formula saturation
+(component 1) lifts to the list: the node label is propositionally
+Hintikka-saturated, clash-free and model-realizable (inside the guide's
+type), contains its seeds, and is finite (a sublist universe of
+`⋃ cl F`).  These are exactly the propositional block-node conditions
+`e_clash`/`e_nobot`/`e_and`/`e_or` for a requirement-typed node. -/
+
+/-- The node label: the union of the guided expansions of the required
+    seed formulas. -/
+noncomputable def reqType (I : Interp α) (x : α) (s : List Concept) :
+    List Concept :=
+  s.flatMap (expand I x)
+
+theorem mem_reqType {I : Interp α} {x : α} {s : List Concept}
+    {G : Concept} : G ∈ reqType I x s ↔ ∃ F ∈ s, G ∈ expand I x F :=
+  List.mem_flatMap
+
+/-- Seeds are in the label. -/
+theorem mem_reqType_of_mem {I : Interp α} {x : α} {s : List Concept}
+    {F : Concept} (h : F ∈ s) : F ∈ reqType I x s :=
+  mem_reqType.mpr ⟨F, h, mem_expand_self I x F⟩
+
+/-- The label is model-realizable: guided by `x`, with seeds in `x`'s
+    type, it stays inside `x`'s type. -/
+theorem reqType_sub_mty {C0 : Concept} {I : Interp α} {x : α}
+    {s : List Concept} (hs : ∀ F ∈ s, F ∈ mty C0 I x) :
+    ∀ G ∈ reqType I x s, G ∈ mty C0 I x := by
+  intro G hG
+  obtain ⟨F, hF, hGF⟩ := mem_reqType.mp hG
+  exact expand_sub_mty F (hs F hF) G hGF
+
+/-- Node condition `e_clash`: clash-free (a subset of a clash-free
+    model type). -/
+theorem reqType_clash {C0 : Concept} {I : Interp α} {x : α}
+    {s : List Concept} (hs : ∀ F ∈ s, F ∈ mty C0 I x) {a : Nat}
+    (h : Concept.atom a ∈ reqType I x s) :
+    Concept.natom a ∉ reqType I x s :=
+  fun h2 => mty_clash (reqType_sub_mty hs _ h) (reqType_sub_mty hs _ h2)
+
+/-- Node condition `e_nobot`: bot-free. -/
+theorem reqType_nobot {C0 : Concept} {I : Interp α} {x : α}
+    {s : List Concept} (hs : ∀ F ∈ s, F ∈ mty C0 I x) :
+    Concept.bot ∉ reqType I x s :=
+  fun h => mty_nobot (reqType_sub_mty hs _ h)
+
+/-- Node condition `e_and`: closed under conjunction decomposition. -/
+theorem reqType_and {I : Interp α} {x : α} {s : List Concept}
+    {c d : Concept} (h : Concept.and c d ∈ reqType I x s) :
+    c ∈ reqType I x s ∧ d ∈ reqType I x s := by
+  obtain ⟨F, hF, hGF⟩ := mem_reqType.mp h
+  obtain ⟨hc, hd⟩ := expand_and I x F c d hGF
+  exact ⟨mem_reqType.mpr ⟨F, hF, hc⟩, mem_reqType.mpr ⟨F, hF, hd⟩⟩
+
+/-- Node condition `e_or`: every disjunction resolved. -/
+theorem reqType_or {I : Interp α} {x : α} {s : List Concept}
+    {c d : Concept} (h : Concept.or c d ∈ reqType I x s) :
+    c ∈ reqType I x s ∨ d ∈ reqType I x s := by
+  obtain ⟨F, hF, hGF⟩ := mem_reqType.mp h
+  rcases expand_or I x F c d hGF with hc | hd
+  · exact Or.inl (mem_reqType.mpr ⟨F, hF, hc⟩)
+  · exact Or.inr (mem_reqType.mpr ⟨F, hF, hd⟩)
+
 end RequirementTypes
 
 #print axioms twoTier_sound
@@ -7086,5 +7152,8 @@ end RequirementTypes
 #print axioms expand_sub_mty
 #print axioms expand_and
 #print axioms expand_or
+#print axioms reqType_sub_mty
+#print axioms reqType_and
+#print axioms reqType_or
 
 end POFreeLift

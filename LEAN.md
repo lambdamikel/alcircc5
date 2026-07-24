@@ -644,6 +644,18 @@ a clean, closed foundation; the coupled hard core REMAINS — the
 (the designated risk, ASSEMBLY_DESIGN.md §8). Zero `sorry`; file now
 ~7,090 lines.
 
+**Round E3k cont'd (component 2, 2026-07-24): the node label.** A node
+requires a LIST of formulas (root `C₀` + `∀`-consequences fired in),
+so its label is `reqType I x s = s.flatMap (expand I x)`. The
+per-formula saturation lifts to the list: `reqType_sub_mty`
+(model-realizable), `reqType_clash`/`reqType_nobot` (clash-/bot-free
+from `⊆ mty`), `reqType_and`/`reqType_or` (propositional saturation),
+`mem_reqType_of_mem` (seeds included) — exactly the propositional
+block-node conditions `e_clash`/`e_nobot`/`e_and`/`e_or` for a
+requirement-typed node. Zero `sorry`; file now ~7,159 lines. Still
+REMAINING: ∀-firing closure across edges + ∃-demand coverage + block
+assembly.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
