@@ -7685,6 +7685,97 @@ theorem slabel_reverse (node : RNode I C0) {d : Concept}
     ⟨⟨Concept.ex dr d, hF⟩, List.mem_attach _ _,
      List.mem_flatMap.mpr ⟨c, mem_fire.mpr h, mem_expand_self I node.x c⟩⟩)
 
+/-- Membership in the reverse batch lands in the saturated label: an
+    expansion `F ∈ expand node.x c'` of a reverse-fired formula
+    `c' ∈ fire(slabel child, dr)` is a member of `slabel node`.  Factors
+    the batch-reconstruction shared by the propositional-saturation
+    lemmas below. -/
+theorem slabel_batch_mem (node : RNode I C0) {d' : Concept}
+    (hG : Concept.ex dr d' ∈ reqType I node.x node.s) {c' F : Concept}
+    (hc' : c' ∈ fire (slabel (childNode node hG)) dr)
+    (hF : F ∈ expand I node.x c') : F ∈ slabel node := by
+  rw [slabel]
+  exact List.mem_append_right _ (List.mem_flatMap.mpr
+    ⟨⟨Concept.ex dr d', hG⟩, List.mem_attach _ _,
+     List.mem_flatMap.mpr ⟨c', hc', hF⟩⟩)
+
+/-- Node condition `e_and` on the saturated label: `slabel` is closed
+    under conjuncts.  `reqType` is (`reqType_and`), and each batch entry
+    lives in an `expand node.x c'` which is (`expand_and`) — so the whole
+    saturated label is propositionally conjunct-closed. -/
+theorem slabel_and (node : RNode I C0) {c d : Concept}
+    (h : Concept.and c d ∈ slabel node) :
+    c ∈ slabel node ∧ d ∈ slabel node := by
+  rw [slabel] at h
+  rcases List.mem_append.mp h with h1 | h2
+  · obtain ⟨hc, hd⟩ := reqType_and h1
+    exact ⟨reqType_sub_slabel node c hc, reqType_sub_slabel node d hd⟩
+  · obtain ⟨⟨G, hG⟩, _, hFm⟩ := List.mem_flatMap.mp h2
+    cases G with
+    | ex r d' =>
+      cases r with
+      | dr =>
+        obtain ⟨c', hc', hcc⟩ := List.mem_flatMap.mp hFm
+        obtain ⟨hce, hde⟩ := expand_and I node.x c' c d hcc
+        exact ⟨slabel_batch_mem node hG hc' hce,
+               slabel_batch_mem node hG hc' hde⟩
+      | eq => exact absurd hFm List.not_mem_nil
+      | pp => exact absurd hFm List.not_mem_nil
+      | ppi => exact absurd hFm List.not_mem_nil
+      | po => exact absurd hFm List.not_mem_nil
+    | top => exact absurd hFm List.not_mem_nil
+    | bot => exact absurd hFm List.not_mem_nil
+    | atom a => exact absurd hFm List.not_mem_nil
+    | natom a => exact absurd hFm List.not_mem_nil
+    | and a b => exact absurd hFm List.not_mem_nil
+    | or a b => exact absurd hFm List.not_mem_nil
+    | all r a => exact absurd hFm List.not_mem_nil
+
+/-- Node condition `e_or` on the saturated label: `slabel` resolves every
+    disjunction (some disjunct is present).  `reqType_or` on the type
+    part, `expand_or` on each batch entry. -/
+theorem slabel_or (node : RNode I C0) {c d : Concept}
+    (h : Concept.or c d ∈ slabel node) :
+    c ∈ slabel node ∨ d ∈ slabel node := by
+  rw [slabel] at h
+  rcases List.mem_append.mp h with h1 | h2
+  · rcases reqType_or h1 with hc | hd
+    · exact Or.inl (reqType_sub_slabel node c hc)
+    · exact Or.inr (reqType_sub_slabel node d hd)
+  · obtain ⟨⟨G, hG⟩, _, hFm⟩ := List.mem_flatMap.mp h2
+    cases G with
+    | ex r d' =>
+      cases r with
+      | dr =>
+        obtain ⟨c', hc', hcc⟩ := List.mem_flatMap.mp hFm
+        rcases expand_or I node.x c' c d hcc with hce | hde
+        · exact Or.inl (slabel_batch_mem node hG hc' hce)
+        · exact Or.inr (slabel_batch_mem node hG hc' hde)
+      | eq => exact absurd hFm List.not_mem_nil
+      | pp => exact absurd hFm List.not_mem_nil
+      | ppi => exact absurd hFm List.not_mem_nil
+      | po => exact absurd hFm List.not_mem_nil
+    | top => exact absurd hFm List.not_mem_nil
+    | bot => exact absurd hFm List.not_mem_nil
+    | atom a => exact absurd hFm List.not_mem_nil
+    | natom a => exact absurd hFm List.not_mem_nil
+    | and a b => exact absurd hFm List.not_mem_nil
+    | or a b => exact absurd hFm List.not_mem_nil
+    | all r a => exact absurd hFm List.not_mem_nil
+
+/-- Node condition `e_clash` on the saturated label: no atom/negated-atom
+    clash — inherited from `mty` (`slabel ⊆ mty`, `mty_clash`). -/
+theorem slabel_clash (hI : RCC5Interp I) (node : RNode I C0) {a : Nat}
+    (h : Concept.atom a ∈ slabel node) :
+    Concept.natom a ∉ slabel node :=
+  fun h2 => mty_clash (slabel_sub_mty hI node _ h) (slabel_sub_mty hI node _ h2)
+
+/-- Node condition `e_nobot` on the saturated label: `⊥` absent —
+    inherited from `mty` (`slabel ⊆ mty`, `mty_nobot`). -/
+theorem slabel_nobot (hI : RCC5Interp I) (node : RNode I C0) :
+    Concept.bot ∉ slabel node :=
+  fun h => mty_nobot (slabel_sub_mty hI node _ h)
+
 /-- FORWARD `∀DR`-FIRING FROM THE REQUIREMENT TYPE: a `∀DR.c` obligation
     in a node's REQUIREMENT type puts its argument into every
     `∃DR`-child's (saturated) label — the forward `ee_all` for the
