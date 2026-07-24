@@ -8449,6 +8449,225 @@ theorem symDrPo_vals {V : Type} (d : V → V → Bool) [DecidableEq V]
     · exact Or.inr (Or.inr rfl)
     · exact Or.inr (Or.inl rfl)
 
+/-- Lift a `β`-frame to the `κ = Empty` quotient frame: with no kernels,
+    `qnet E _ _` on `β ⊕ Empty` is a frame iff `E` is (the `inr` cases are
+    vacuous).  This is `frame_q` for the tree-structural (kernel-free)
+    assembly, the analogue of `readoff_qnet_frame` for the read-off one. -/
+theorem qnet_empty_frame {β : Type} (E : β → β → Atom) (hE : Frame E) :
+    Frame (qnet E (fun (k : Empty) _ => k.elim)
+      (fun (k : Empty) _ => k.elim)) where
+  refl_eq
+    | .inl m => hE.refl_eq m
+    | .inr k => k.elim
+  eq_id
+    | .inl m, .inl m', h => congrArg Sum.inl (hE.eq_id m m' h)
+    | .inl _, .inr k, _ => k.elim
+    | .inr k, _, _ => k.elim
+  conv_
+    | .inl m, .inl m' => hE.conv_ m m'
+    | .inl _, .inr k => k.elim
+    | .inr k, _ => k.elim
+  comp_
+    | .inl m, .inl m', .inl m'' => hE.comp_ m m' m''
+    | .inl _, .inl _, .inr k => k.elim
+    | .inl _, .inr k, _ => k.elim
+    | .inr k, _, _ => k.elim
+
+/-! ### The ∀DR-propagation fragment: tree-structural assembly (lift Step 2)
+
+The first fragment with genuine `∀`-firing certified end-to-end without
+kernels: **`∀DR`-propagation over a `DR`/`PO`/`EQ` frame**.  Every
+existential is `∃DR`, every universal is `∀DR` (hence `∀PO`-free), and
+each `∀DR` guards a `DR`-free (propositional) body.  Concretely it
+contains `∀DR.A`, `∀DR.(A ⊔ B)`, `∃DR.(∀DR.A ⊓ C)` — constraint
+propagation to all `DR`-neighbours — the paradigm `∀DR` usage.
+
+The certificate: `β = snodes root` (the saturated-label coverage nodes),
+`tauE = slabel` (saturated so `∀DR` obligations fire reverse), the
+tree-structural frame (`symDrPo_frame`, `DR` on `∃DR`-demand edges, `PO`
+elsewhere, `EQ` on the diagonal), no kernels.  `ee_all` on `DR` edges is
+the `∀DR` reverse-firing (`slabel_dr_forward`/`_reverse`); on `PO`/`EQ`
+edges it is vacuous (no `∀PO`, no `∀EQ` in this fragment); `e_ex` is
+coverage (`snodes_covers` via the explicit `schildNode`). -/
+
+section PODRAssembly
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- THE ∀DR-PROPAGATION FRAGMENT (assembly hypotheses on the closure):
+    every existential `∃DR`, every universal `∀DR` (so `∀PO`-free), each
+    `∀DR` DR-guard-free.  A concept satisfying `DRFrag` has, at every
+    reachable node, only `DR` demands and only `∀DR` universals with
+    propositional bodies. -/
+structure DRFrag (C0 : Concept) : Prop where
+  hex : ∀ r c, Concept.ex r c ∈ cl C0 → r = dr
+  hall : ∀ r c, Concept.all r c ∈ cl C0 → r = dr
+  hgf : ∀ c, Concept.all dr c ∈ cl C0 → noDR c
+
+/-- Symmetric `DR`-adjacency of reachable nodes: `m'` is a `∃DR`-child of
+    `m`, or vice versa.  The tree-structural frame's `DR` predicate. -/
+def sAdj (hI : RCC5Interp I) (m m' : RNode I C0) : Prop :=
+  (∃ (c : Concept) (hF : Concept.ex dr c ∈ slabel m), schildNode hI m hF = m') ∨
+  (∃ (c : Concept) (hF : Concept.ex dr c ∈ slabel m'), schildNode hI m' hF = m)
+
+theorem sAdj_symm (hI : RCC5Interp I) (m m' : RNode I C0) :
+    sAdj hI m m' ↔ sAdj hI m' m :=
+  ⟨Or.symm, Or.symm⟩
+
+open Classical in
+/-- The frame's `DR`-adjacency as a decidable predicate on the coverage
+    nodes (classical, matching the model-side layer). -/
+noncomputable def dadjB (hI : RCC5Interp I) (root : RNode I C0)
+    (m m' : {m // m ∈ snodes hI root}) : Bool :=
+  decide (sAdj hI m.val m'.val)
+
+theorem dadjB_symm (hI : RCC5Interp I) (root : RNode I C0)
+    (m m' : {m // m ∈ snodes hI root}) :
+    dadjB hI root m m' = dadjB hI root m' m := by
+  unfold dadjB
+  rw [propext (sAdj_symm hI m.val m'.val)]
+
+open Classical in
+/-- THE ∀DR-PROPAGATION CERTIFICATE: coverage nodes, tree-structural
+    frame, saturated labels, no kernels. -/
+noncomputable def mtDR (hI : RCC5Interp I) (root : RNode I C0) :
+    MultiTier {m // m ∈ snodes hI root} Empty where
+  E m m' := if m = m' then eq else if dadjB hI root m m' then dr else po
+  K k _ := k.elim
+  Q k _ := k.elim
+  up k := k.elim
+  tauE m := slabel m.val
+  p k := k.elim
+  phase k _ := k.elim
+
+/-- The certificate's frame is a genuine RCC5 frame — the tree-structural
+    `{DR,PO,EQ}` labelling (`symDrPo_frame`), lifted through the empty
+    kernel quotient (`qnet_empty_frame`). -/
+theorem mtDR_frame (hI : RCC5Interp I) (root : RNode I C0) :
+    Frame (qnet (mtDR hI root).E (mtDR hI root).K (mtDR hI root).Q) := by
+  apply qnet_empty_frame
+  refine frame_ext ?_ (symDrPo_frame (dadjB hI root) (dadjB_symm hI root))
+  intro v w
+  simp only [mtDR]
+  by_cases h : v = w
+  · rw [if_pos h, if_pos h]
+  · rw [if_neg h, if_neg h]
+
+open Classical in
+/-- THE ∀DR-PROPAGATION CERTIFICATE IS VALID.  Propositional conditions
+    from `slabel` saturation; `ee_all` on `DR` edges = the `∀DR`
+    reverse-firing, on `PO`/`EQ` edges vacuous (no `∀PO`/`∀EQ`); `e_ex` =
+    coverage; kernels vacuous. -/
+theorem mtDR_ok (hI : RCC5Interp I) (hfrag : DRFrag C0)
+    (root : RNode I C0) : MultiTierOk (mtDR hI root) where
+  hp := fun k => k.elim
+  frame_q := mtDR_frame hI root
+  e_clash := fun e _ h => slabel_clash hI e.val h
+  e_nobot := fun e => slabel_nobot hI e.val
+  e_and := fun e _ _ h => slabel_and e.val h
+  e_or := fun e _ _ h => slabel_or e.val h
+  k_clash := fun k => k.elim
+  k_nobot := fun k => k.elim
+  k_and := fun k => k.elim
+  k_or := fun k => k.elim
+  ee_all := by
+    intro e f r c hallc hEf
+    have hr : r = dr := hfrag.hall r c (slabel_sub_cl e.val _ hallc)
+    subst hr
+    have hEf' : (if e = f then eq
+        else if dadjB hI root e f then dr else po) = dr := hEf
+    by_cases hef : e = f
+    · rw [if_pos hef] at hEf'; exact absurd hEf' (by decide)
+    · rw [if_neg hef] at hEf'
+      have hd : dadjB hI root e f = true := by
+        cases hb : dadjB hI root e f with
+        | true => rfl
+        | false => rw [hb] at hEf'; exact absurd hEf' (by decide)
+      have hadj : sAdj hI e.val f.val := of_decide_eq_true hd
+      show c ∈ slabel f.val
+      rcases hadj with ⟨_, hF, hchild⟩ | ⟨_, hF, hchild⟩
+      · have hc := slabel_dr_forward hfrag.hgf hI e.val hF hallc
+        rw [hchild] at hc; exact hc
+      · apply slabel_dr_reverse hfrag.hgf hI f.val hF
+        rw [hchild]; exact hallc
+  ek_all := fun _ _ _ _ k => k.elim
+  ke_all := fun k => k.elim
+  kk_pp := fun k => k.elim
+  kk_ppi := fun k => k.elim
+  kk_eq := fun k => k.elim
+  kq_all := fun k => k.elim
+  e_ex := by
+    intro e r c hdem
+    have hr : r = dr := hfrag.hex r c (slabel_sub_cl e.val _ hdem)
+    subst hr
+    have hmem : schildNode hI e.val hdem ∈ snodes hI root :=
+      snodes_trans hI root e.val e.property _ (schildNode_mem hI e.val hdem)
+    refine Or.inl ⟨⟨schildNode hI e.val hdem, hmem⟩, ?_, ?_⟩
+    · have hrho : I.rho e.val.x (schildNode hI e.val hdem).x = dr :=
+        schildNode_rho hI e.val hdem
+      have hne : e ≠ ⟨schildNode hI e.val hdem, hmem⟩ := by
+        intro heq
+        have hx : e.val.x = (schildNode hI e.val hdem).x :=
+          congrArg (fun t => t.val.x) heq
+        rw [hx] at hrho
+        exact absurd (hrho.symm.trans
+          (hI.refl_eq _ (schildNode hI e.val hdem).hdom)) (by decide)
+      have hadj : sAdj hI e.val (schildNode hI e.val hdem) :=
+        Or.inl ⟨c, hdem, rfl⟩
+      have hd : dadjB hI root e ⟨schildNode hI e.val hdem, hmem⟩ = true := by
+        show decide (sAdj hI e.val (schildNode hI e.val hdem)) = true
+        rw [decide_eq_true_eq]; exact hadj
+      show (if e = ⟨schildNode hI e.val hdem, hmem⟩ then eq
+        else if dadjB hI root e ⟨schildNode hI e.val hdem, hmem⟩ then dr
+          else po) = dr
+      rw [if_neg hne]
+      exact if_pos hd
+    · exact schildNode_arg hI e.val hdem
+  k_ex := fun k => k.elim
+
+/-- THE ∀DR-PROPAGATION EXTRACTION: every satisfiable `DRFrag` concept has
+    a VALID FINITE multi-tier certificate carrying it — the horizontal
+    recursion with saturated labels, `ee_all` discharged by the `∀DR`
+    reverse-firing, `e_ex` by coverage. -/
+theorem extract_podr (C0 : Concept) (hfrag : DRFrag C0)
+    (hsat : Satisfiable C0) :
+    ∃ (β : Type) (T : MultiTier β Empty) (g : β),
+      MultiTierOk T ∧ C0 ∈ T.tauE g := by
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  let root : RNode I C0 :=
+    { x := x0, s := [C0], hdom := hdom0
+      hmty := fun F hF => by
+        rw [List.mem_singleton.mp hF]
+        exact mem_mty.mpr ⟨cl_self C0, hsat0⟩
+      hcl := fun F hF => by
+        rw [List.mem_singleton.mp hF]
+        exact cl_self C0 }
+  refine ⟨{m // m ∈ snodes hI root}, mtDR hI root,
+    ⟨root, self_mem_snodes hI root⟩, mtDR_ok hI hfrag root, ?_⟩
+  show C0 ∈ slabel root
+  exact reqType_sub_slabel root C0
+    (mem_reqType_of_mem (x := root.x) List.mem_cons_self)
+
+/-- **∀DR-PROPAGATION SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
+    directions kernel-checked: `←` the certified soundness pipeline
+    (`multiTier_sound`), `→` the extraction (`extract_podr`).  This is the
+    lift beyond `AllFree`: a fragment with genuine `∀`-firing (`∀DR`
+    constraint propagation), certified via the saturated-label recursion
+    and the tree-structural frame, no kernels.  Like the `AllFree` case
+    this is a CERTIFICATE CHARACTERIZATION — `β` is quantified as an
+    arbitrary `Type`; the finite-`β`/`K(C₀)` bound giving Decidability is
+    the remaining step. -/
+theorem satisfiable_iff_podr_cert (C0 : Concept) (hfrag : DRFrag C0) :
+    Satisfiable C0 ↔
+      ∃ (β : Type) (T : MultiTier β Empty) (g : β),
+        MultiTierOk T ∧ C0 ∈ T.tauE g := by
+  constructor
+  · exact extract_podr C0 hfrag
+  · rintro ⟨β, T, g, hok, hC0⟩
+    exact multiTier_sound T hok (Sum.inl g) C0 hC0
+
+end PODRAssembly
+
 /-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
     directions now kernel-checked: `←` is the certified soundness
     pipeline (`multiTier_sound`), `→` is the extraction
@@ -8592,5 +8811,10 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms satisfiable_iff_allfree_cert
 #print axioms allfree_imp_pofree
 #print axioms symDrPo_frame
+#print axioms qnet_empty_frame
+#print axioms mtDR_frame
+#print axioms mtDR_ok
+#print axioms extract_podr
+#print axioms satisfiable_iff_podr_cert
 
 end POFreeLift
