@@ -8917,6 +8917,222 @@ theorem mtkNodes_covers (root : MTKNode I C0) :
 
 end MtkRecursion
 
+/-! ### The horizontal ∀PO-free fragment (`ASSEMBLY_DESIGN.md §15`)
+
+The full ∀PO-free fragment MINUS vertical existentials (`∃PP`/`∃PPI`),
+certified both directions via the `mtk` label and the tree-structural
+frame — nested `∀DR`, `∀PP`/`∀PPI` (vacuous), `∀EQ`/`∃EQ` (reflexive),
+`∃PO`, `∃DR`.  Strictly generalises `AllFree` and `DRFrag`. -/
+
+section HorizFragAssembly
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- THE HORIZONTAL ∀PO-FREE FRAGMENT: every existential is `DR`/`PO`/`EQ`
+    (no vertical `∃PP`/`∃PPI` — those need kernels), every universal is
+    non-`PO` (∀PO-free).  NO guard-freeness — nested `∀DR` is handled by
+    the model-closed `mtk` label. -/
+structure HFrag (C0 : Concept) : Prop where
+  hex : ∀ r c, Concept.ex r c ∈ cl C0 → r = dr ∨ r = po ∨ r = eq
+  hall : ∀ r c, Concept.all r c ∈ cl C0 → r ≠ po
+
+/-- Symmetric `DR`-adjacency of coverage nodes (via `mtkWitness`). -/
+def sAdjK (n n' : MTKNode I C0) : Prop :=
+  (∃ (c : Concept) (hF : Concept.ex dr c ∈ mtk C0 I n.x n.k),
+    mtkWitness n hF = n') ∨
+  (∃ (c : Concept) (hF : Concept.ex dr c ∈ mtk C0 I n'.x n'.k),
+    mtkWitness n' hF = n)
+
+theorem sAdjK_symm (n n' : MTKNode I C0) : sAdjK n n' ↔ sAdjK n' n :=
+  ⟨Or.symm, Or.symm⟩
+
+theorem mtkWitness_x_ne (hI : RCC5Interp I) (n : MTKNode I C0) {r : Atom}
+    {c : Concept} (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) (hrne : r ≠ eq) :
+    n.x ≠ (mtkWitness n hF).x := by
+  intro hx
+  have hrho := mtkWitness_rho n hF
+  rw [← hx, hI.refl_eq n.x n.hx] at hrho
+  exact hrne hrho.symm
+
+theorem sAdjK_rho_dr (hI : RCC5Interp I) {n n' : MTKNode I C0}
+    (h : sAdjK n n') : I.rho n.x n'.x = dr := by
+  rcases h with ⟨_, hF, hchild⟩ | ⟨_, hF, hchild⟩
+  · have hrho := mtkWitness_rho n hF
+    rw [hchild] at hrho; exact hrho
+  · have hrho := mtkWitness_rho n' hF
+    rw [hchild] at hrho
+    have hc := hI.conv_ n'.x n.x n'.hx n.hx
+    rw [hrho] at hc
+    rw [hc]; decide
+
+theorem po_not_sAdjK (hI : RCC5Interp I) {n n' : MTKNode I C0}
+    (h : I.rho n.x n'.x = po) : ¬ sAdjK n n' := by
+  intro hadj
+  rw [sAdjK_rho_dr hI hadj] at h
+  exact absurd h (by decide)
+
+open Classical in
+noncomputable def dadjBK (_hI : RCC5Interp I) (root : MTKNode I C0)
+    (m m' : {n // n ∈ mtkNodes root}) : Bool :=
+  decide (sAdjK m.val m'.val)
+
+theorem dadjBK_symm (hI : RCC5Interp I) (root : MTKNode I C0)
+    (m m' : {n // n ∈ mtkNodes root}) :
+    dadjBK hI root m m' = dadjBK hI root m' m := by
+  unfold dadjBK
+  rw [propext (sAdjK_symm m.val m'.val)]
+
+open Classical in
+/-- THE HORIZONTAL-FRAGMENT CERTIFICATE: coverage nodes, tree-structural
+    frame, depth-bounded model-type labels, no kernels. -/
+noncomputable def mtHF (hI : RCC5Interp I) (root : MTKNode I C0) :
+    MultiTier {n // n ∈ mtkNodes root} Empty where
+  E m m' := if m = m' then eq else if dadjBK hI root m m' then dr else po
+  K k _ := k.elim
+  Q k _ := k.elim
+  up k := k.elim
+  tauE m := mtk C0 I m.val.x m.val.k
+  p k := k.elim
+  phase k _ := k.elim
+
+theorem mtHF_frame (hI : RCC5Interp I) (root : MTKNode I C0) :
+    Frame (qnet (mtHF hI root).E (mtHF hI root).K (mtHF hI root).Q) := by
+  apply qnet_empty_frame
+  refine frame_ext ?_ (symDrPo_frame (dadjBK hI root) (dadjBK_symm hI root))
+  intro v w
+  simp only [mtHF]
+  by_cases h : v = w
+  · rw [if_pos h, if_pos h]
+  · rw [if_neg h, if_neg h]
+
+open Classical in
+/-- THE HORIZONTAL-FRAGMENT CERTIFICATE IS VALID.  `ee_all`: `EQ` diagonal
+    reflexive (`mtk_all_eq`), `DR` via forward/reverse model firing
+    (`mtk_all_fwd`/`mtk_all_dr_rev`), `PO` excluded (∀PO-free), `PP`/`PPI`
+    never occur on the frame; `e_ex`: `DR`/`PO` children + `EQ` reflexive
+    (same node); kernels vacuous. -/
+theorem mtHF_ok (hI : RCC5Interp I) (hfrag : HFrag C0)
+    (root : MTKNode I C0) : MultiTierOk (mtHF hI root) where
+  hp := fun k => k.elim
+  frame_q := mtHF_frame hI root
+  e_clash := fun e _ h => mtk_clash h
+  e_nobot := fun _ => mtk_nobot
+  e_and := fun _ _ _ h => mtk_and h
+  e_or := fun _ _ _ h => mtk_or h
+  k_clash := fun k => k.elim
+  k_nobot := fun k => k.elim
+  k_and := fun k => k.elim
+  k_or := fun k => k.elim
+  ee_all := by
+    intro e f r c hall hEf
+    have hEf' : (if e = f then eq
+        else if dadjBK hI root e f then dr else po) = r := hEf
+    by_cases hef : e = f
+    · subst hef
+      rw [if_pos rfl] at hEf'
+      subst hEf'
+      exact mtk_all_eq hI hall e.val.hx
+    · rw [if_neg hef] at hEf'
+      by_cases hd : dadjBK hI root e f = true
+      · -- `DR` edge
+        have hrdr : dr = r := (if_pos hd).symm.trans hEf'
+        subst hrdr
+        have hall' : Concept.all dr c ∈ mtk C0 I e.val.x e.val.k := hall
+        rcases of_decide_eq_true hd with ⟨_, hF, hchild⟩ | ⟨_, hF, hchild⟩
+        · -- forward: `f.val = mtkWitness e.val hF`
+          show c ∈ mtk C0 I f.val.x f.val.k
+          rw [← hchild]
+          exact mtk_all_fwd hall' (mtkWitness e.val hF).hx
+            (mtkWitness_rho e.val hF)
+        · -- reverse: `e.val = mtkWitness f.val hF`
+          show c ∈ mtk C0 I f.val.x f.val.k
+          rw [← hchild] at hall'
+          exact mtk_all_dr_rev hI hall' f.val.hx (mtkWitness f.val hF).hx
+            (mtkWitness_rho f.val hF)
+      · -- `PO` edge: `∀PO`-free, vacuous
+        have hrpo : po = r := (if_neg hd).symm.trans hEf'
+        exact absurd hrpo.symm (hfrag.hall r c (mtk_sub_cl _ hall))
+  ek_all := fun _ _ _ _ k => k.elim
+  ke_all := fun k => k.elim
+  kk_pp := fun k => k.elim
+  kk_ppi := fun k => k.elim
+  kk_eq := fun k => k.elim
+  kq_all := fun k => k.elim
+  e_ex := by
+    intro e r c hdem
+    rcases hfrag.hex r c (mtk_sub_cl _ hdem) with hr | hr | hr
+    · -- `∃DR`: `DR`-adjacent child
+      subst hr
+      have hmem : mtkWitness e.val hdem ∈ mtkNodes root :=
+        mtkNodes_trans root e.val e.property _ (mtkWitness_mem e.val hdem)
+      have hne : e ≠ ⟨mtkWitness e.val hdem, hmem⟩ := fun heq =>
+        mtkWitness_x_ne hI e.val hdem (by decide)
+          (congrArg (fun t => t.val.x) heq)
+      refine Or.inl ⟨⟨mtkWitness e.val hdem, hmem⟩, ?_,
+        mtkWitness_arg e.val hdem⟩
+      have hd : dadjBK hI root e ⟨mtkWitness e.val hdem, hmem⟩ = true := by
+        show decide (sAdjK e.val (mtkWitness e.val hdem)) = true
+        rw [decide_eq_true_eq]; exact Or.inl ⟨c, hdem, rfl⟩
+      show (if e = ⟨mtkWitness e.val hdem, hmem⟩ then eq
+        else if dadjBK hI root e ⟨mtkWitness e.val hdem, hmem⟩ then dr
+          else po) = dr
+      rw [if_neg hne]; exact if_pos hd
+    · -- `∃PO`: `PO`-child (not `DR`-adjacent)
+      subst hr
+      have hmem : mtkWitness e.val hdem ∈ mtkNodes root :=
+        mtkNodes_trans root e.val e.property _ (mtkWitness_mem e.val hdem)
+      have hne : e ≠ ⟨mtkWitness e.val hdem, hmem⟩ := fun heq =>
+        mtkWitness_x_ne hI e.val hdem (by decide)
+          (congrArg (fun t => t.val.x) heq)
+      refine Or.inl ⟨⟨mtkWitness e.val hdem, hmem⟩, ?_,
+        mtkWitness_arg e.val hdem⟩
+      have hd : ¬ dadjBK hI root e ⟨mtkWitness e.val hdem, hmem⟩ = true := by
+        show ¬ decide (sAdjK e.val (mtkWitness e.val hdem)) = true
+        rw [decide_eq_true_eq]
+        exact po_not_sAdjK hI (mtkWitness_rho e.val hdem)
+      show (if e = ⟨mtkWitness e.val hdem, hmem⟩ then eq
+        else if dadjBK hI root e ⟨mtkWitness e.val hdem, hmem⟩ then dr
+          else po) = po
+      rw [if_neg hne]; exact if_neg hd
+    · -- `∃EQ`: reflexive, the SAME node (`E e e = eq`)
+      subst hr
+      refine Or.inl ⟨e, ?_, mtk_ex_eq hI hdem e.val.hx⟩
+      show (if e = e then eq
+        else if dadjBK hI root e e then dr else po) = eq
+      rw [if_pos rfl]
+  k_ex := fun k => k.elim
+
+/-- THE HORIZONTAL-FRAGMENT EXTRACTION: every satisfiable `HFrag` concept
+    has a valid finite multi-tier certificate carrying it. -/
+theorem extract_hfrag (C0 : Concept) (hfrag : HFrag C0)
+    (hsat : Satisfiable C0) :
+    ∃ (β : Type) (T : MultiTier β Empty) (g : β),
+      MultiTierOk T ∧ C0 ∈ T.tauE g := by
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  let root : MTKNode I C0 := ⟨x0, mdepth C0, hdom0⟩
+  refine ⟨{n // n ∈ mtkNodes root}, mtHF hI root,
+    ⟨root, self_mem_mtkNodes root⟩, mtHF_ok hI hfrag root, ?_⟩
+  show C0 ∈ mtk C0 I x0 (mdepth C0)
+  exact mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self C0, hsat0⟩, Nat.le_refl _⟩
+
+/-- **HORIZONTAL ∀PO-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**
+    Both directions kernel-checked.  This is the full ∀PO-free fragment
+    MINUS vertical existentials `∃PP`/`∃PPI`: nested `∀DR`, `∀PP`/`∀PPI`,
+    `∀EQ`/`∃EQ`, `∃PO`, `∃DR` — via the model-type-truncated-by-depth
+    label, no fixpoint, no kernels.  Strictly generalises both
+    `satisfiable_iff_allfree_cert` and `satisfiable_iff_podr_cert`.  Still
+    a CERTIFICATE CHARACTERIZATION (`β` an arbitrary `Type`). -/
+theorem satisfiable_iff_hfrag_cert (C0 : Concept) (hfrag : HFrag C0) :
+    Satisfiable C0 ↔
+      ∃ (β : Type) (T : MultiTier β Empty) (g : β),
+        MultiTierOk T ∧ C0 ∈ T.tauE g := by
+  constructor
+  · exact extract_hfrag C0 hfrag
+  · rintro ⟨β, T, g, hok, hC0⟩
+    exact multiTier_sound T hok (Sum.inl g) C0 hC0
+
+end HorizFragAssembly
+
 /-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
     directions now kernel-checked: `←` is the certified soundness
     pipeline (`multiTier_sound`), `→` is the extraction
@@ -9065,5 +9281,9 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms mtDR_ok
 #print axioms extract_podr
 #print axioms satisfiable_iff_podr_cert
+#print axioms mtkNodes_covers
+#print axioms mtHF_ok
+#print axioms extract_hfrag
+#print axioms satisfiable_iff_hfrag_cert
 
 end POFreeLift
