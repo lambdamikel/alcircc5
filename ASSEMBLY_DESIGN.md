@@ -524,3 +524,58 @@ one), plus a small `noDR_cl`. No new mathematics; all supporting lemmas
 `MultiTierOk` assembly (§11 plan) goes through: `e_and/e_or` from the
 now-saturated `slabel`, `ee_all` on `DR` via `slabel_dr_forward/reverse`,
 `e_ex` via `snodes_covers`.
+
+---
+
+## 13. DONE (2026-07-24): the ∀DR-propagation fragment, certified
+
+The §11–§12 plan is **built and certified**, 0 sorries:
+`satisfiable_iff_podr_cert` — the **first fragment with genuine `∀`-firing
+certified end-to-end**, both directions, no kernels.
+
+**The fragment `DRFrag C₀`** (hypotheses on `cl C₀`): every existential
+`∃DR`, every universal `∀DR` (hence `∀PO`-free), each `∀DR` DR-guard-free
+(`noDR` body). Semantically: `∀DR`-constraint-propagation over a
+`DR`/`PO`/`EQ` frame — `∀DR.A`, `∀DR.(A ⊔ B)`, `∃DR.(∀DR.A ⊓ C)`. A
+**proper lift beyond `AllFree`** (which had NO `∀`-firing).
+
+**What landed (all in `POFreeLift.lean`):**
+- `qnet_empty_frame` (axiom-free): lift any `β`-frame through the
+  `κ = Empty` quotient — `frame_q` for the kernel-free assembly, the
+  analogue of `readoff_qnet_frame`.
+- `sAdj` / `dadjB` / `dadjB_symm`: symmetric `DR`-adjacency (`m'` a
+  `∃DR`-child of `m` or vice versa) as the frame's `DR` predicate.
+- `mtDR` / `mtDR_frame`: the certificate + its frame validity
+  (`symDrPo_frame` lifted via `frame_ext`, bridging the
+  subtype-`DecidableEq` vs `Classical.propDecidable` instance gap).
+- `mtDR_ok`: propositional from `slabel_and/or/clash/nobot`; `ee_all` on
+  `DR` = the `∀DR` reverse-firing (`slabel_dr_forward/reverse`), on
+  `PO`/`EQ` vacuous (no `∀PO`/`∀EQ`, from `DRFrag.hall`); `e_ex` from
+  `schildNode` + `snodes_covers`, child `≠` parent by strong-EQ
+  (`dr ≠ eq`); kernels vacuous (`Empty`).
+- `extract_podr` / `satisfiable_iff_podr_cert`: soundness
+  (`multiTier_sound`) + extraction ⟹ the iff.
+
+Axioms: propext, Quot.sound, Classical.choice (choice model-side only).
+
+**The one honest caveat (shared with `AllFree`).** This is a
+**certificate characterization**, not a certified finite-model property:
+`β` is quantified as an arbitrary `Type` (no `Fintype`, no cardinality).
+Getting **Decidability** needs a `Fintype β` + a computable `K(C₀)` width
+bound, then `decidableSat_of_codes`. That is the next step and is the
+same remaining step the `AllFree` fragment faces — now with a genuine
+`∀`-firing fragment underneath it.
+
+**Two axes still open toward the FULL ∀PO-free target:**
+1. **Roles beyond DR/PO.** `DRFrag` restricts to `DR` existentials and
+   `∀DR` universals. Adding `∃PO` (PO edges, already `∀PO`-free so they
+   fire nothing) is a small extension of the frame's `e_ex` (a demand
+   whose child is *not* `d`-adjacent ⟹ `PO` edge). Adding `∃PP`/`∃PPI`
+   (vertical) needs the **kernel** machinery (`kk_pp`/`kk_ppi`, segment
+   coherence, rounds E3d/E1/E2) spliced in — the vertical step, whose
+   pieces are already certified; wiring them to `snodes` is the work.
+   `∃EQ`/`∀EQ` fold reflexively into `expand`.
+2. **`∀DR` guarding `∀DR`/`∃DR`** (dropping DR-guard-freeness) needs the
+   **within-node fixpoint** (§10 tail): iterate the reverse `∀DR`-firing
+   to closure at each node, `lmd`-bounded so terminating. The last piece
+   of real construction.
