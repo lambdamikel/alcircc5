@@ -9173,6 +9173,38 @@ theorem satisfiable_iff_hfrag_cert (C0 : Concept) (hfrag : HFrag C0) :
 
 end HorizFragAssembly
 
+/-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
+    universals are non-`PO`. -/
+def hfragOk (F : Concept) : Bool :=
+  match F with
+  | .ex r _ => decide (r = dr ∨ r = po ∨ r = eq)
+  | .all r _ => decide (r ≠ po)
+  | _ => true
+
+/-- DECIDABLE FRAGMENT MEMBERSHIP: `HFrag C₀` reduces to a Boolean check
+    over the finite closure `cl C₀` — so membership is `by decide`. -/
+def hfragB (C0 : Concept) : Bool := (cl C0).all hfragOk
+
+theorem hfragB_iff (C0 : Concept) : hfragB C0 = true ↔ HFrag C0 := by
+  rw [hfragB, List.all_eq_true]
+  constructor
+  · intro h
+    refine ⟨fun r c hmem => ?_, fun r c hmem => ?_⟩
+    · have hc := h (Concept.ex r c) hmem
+      simpa only [hfragOk, decide_eq_true_eq] using hc
+    · have hc := h (Concept.all r c) hmem
+      simpa only [hfragOk, decide_eq_true_eq] using hc
+  · intro ⟨hex, hall⟩ F hmem
+    cases F with
+    | ex r c => simpa only [hfragOk, decide_eq_true_eq] using hex r c hmem
+    | all r c => simpa only [hfragOk, decide_eq_true_eq] using hall r c hmem
+    | top => rfl
+    | bot => rfl
+    | atom a => rfl
+    | natom a => rfl
+    | and a b => rfl
+    | or a b => rfl
+
 /-! ### Non-vacuity: the horizontal fragment fires on a nested-`∀DR` concept
 
 `Cwit = ∃DR.⊤ ⊓ ∀DR.(∀DR.A)` is EXCLUDED from `DRFrag` (its `∀DR` guards
@@ -9212,29 +9244,7 @@ theorem Cwit_sat : Satisfiable Cwit :=
         | true => exact ⟨rfl, rfl⟩
         | false => exact absurd hz (by decide)⟩⟩
 
-theorem Cwit_hfrag : HFrag Cwit where
-  hex := by
-    intro r c hmem
-    simp only [Cwit, cl, List.cons_append, List.nil_append, List.mem_cons,
-      List.not_mem_nil, or_false] at hmem
-    rcases hmem with h | h | h | h | h | h
-    · exact Concept.noConfusion h
-    · injection h with hr _; exact Or.inl hr
-    · exact Concept.noConfusion h
-    · exact Concept.noConfusion h
-    · exact Concept.noConfusion h
-    · exact Concept.noConfusion h
-  hall := by
-    intro r c hmem
-    simp only [Cwit, cl, List.cons_append, List.nil_append, List.mem_cons,
-      List.not_mem_nil, or_false] at hmem
-    rcases hmem with h | h | h | h | h | h
-    · exact Concept.noConfusion h
-    · exact Concept.noConfusion h
-    · exact Concept.noConfusion h
-    · injection h with hr _; rw [hr]; decide
-    · injection h with hr _; rw [hr]; decide
-    · exact Concept.noConfusion h
+theorem Cwit_hfrag : HFrag Cwit := (hfragB_iff Cwit).mp (by decide)
 
 /-- The `∀DR`-nested `Cwit` is NOT DR-guard-free, so `DRFrag Cwit` fails —
     `HFrag` strictly extends the `∀DR`-propagation fragment. -/
