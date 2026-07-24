@@ -7335,6 +7335,30 @@ descends only through the requirement structure, which is finite by
 `lmd`.  Coverage (every demand routed to a node in the set) and the
 block assembly are the next components. -/
 
+/-- MODEL-SOUNDNESS OF REVERSE `DR`-FIRING (the safety property of the
+    `∀DR`-closure that lifts past ∀-free): if `x DR w` and `∀DR.c` holds
+    at `w`, then `c` holds at `x` — because `x` is itself a `DR`-neighbour
+    of `w` (`conv DR = DR`).  So the formulas the reverse firing adds to
+    a node are genuinely in its model type, keeping labels `⊆ mty`. -/
+theorem dr_reverse_sat {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {x w : α} (hx : I.dom x) (hw : I.dom w)
+    (hxw : I.rho x w = dr) {c : Concept}
+    (h : Concept.all dr c ∈ mty C0 I w) : c ∈ mty C0 I x := by
+  have hwx : I.rho w x = dr := by rw [hI.conv_ x w hx hw, hxw]; rfl
+  exact mty_all h hx hwx
+
+/-- REVERSE-FIRING PRESERVES `⊆ mty` (the fixpoint's step soundness):
+    firing the `∀DR`-consequences of a `DR`-child's label back into the
+    parent lands inside the parent's model type — so a label saturated
+    under reverse `DR`-firing stays clash-free and model-realizable. -/
+theorem fire_dr_reverse {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {x w : α} (hx : I.dom x) (hw : I.dom w)
+    (hxw : I.rho x w = dr) {wlabel : List Concept}
+    (hwlab : ∀ F ∈ wlabel, F ∈ mty C0 I w) :
+    ∀ c ∈ fire wlabel dr, c ∈ mty C0 I x := by
+  intro c hc
+  exact dr_reverse_sat hI hx hw hxw (hwlab _ (mem_fire.mp hc))
+
 section HorizontalRecursion
 
 variable {α : Type} {I : Interp α} {C0 : Concept}
@@ -7428,6 +7452,64 @@ theorem rnodes_covers (root : RNode I C0) :
   refine ⟨childNode m hF, rnodes_trans root m hm _ (childNode_mem m hF),
     (Classical.choose_spec (reqType_ex_witness m.hmty hF)).2.1,
     mem_reqType_of_mem List.mem_cons_self⟩
+
+/-- A demand's child is `r`-related to the demanding node in the model. -/
+theorem childNode_rho (node : RNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ reqType I node.x node.s) :
+    I.rho node.x (childNode node hF).x = r :=
+  (Classical.choose_spec (reqType_ex_witness node.hmty hF)).2.1
+
+/-- THE REVERSE-`∀DR`-SATURATED LABEL: a node's requirement type plus
+    the `∀DR`-consequences fired back from each of its `∃DR`-children
+    (recursively saturated).  Terminates by `child_lmd_lt` (children
+    are strictly shallower); by `revfire_lmd_lt` the fired formulas
+    themselves stay within the node's `lmd` budget. -/
+noncomputable def slabel (node : RNode I C0) : List Concept :=
+  reqType I node.x node.s ++
+  (reqType I node.x node.s).attach.flatMap
+    (fun p => match p with
+      | ⟨.ex dr d, hF⟩ => fire (slabel (childNode node hF)) dr
+      | _ => [])
+termination_by lmd (reqType I node.x node.s)
+decreasing_by exact child_lmd_lt hF
+
+/-- The requirement type is contained in the saturated label. -/
+theorem reqType_sub_slabel (node : RNode I C0) :
+    ∀ F ∈ reqType I node.x node.s, F ∈ slabel node := by
+  intro F hF
+  rw [slabel]
+  exact List.mem_append_left _ hF
+
+/-- THE SATURATED LABEL IS MODEL-REALIZABLE: it stays inside the node's
+    model type — `reqType` does (`hmty`), and each reverse-fired batch
+    does by `fire_dr_reverse` (the child is a `DR`-neighbour), inducting
+    on the saturation. -/
+theorem slabel_sub_mty (hI : RCC5Interp I) (node : RNode I C0) :
+    ∀ F ∈ slabel node, F ∈ mty C0 I node.x := by
+  induction node using slabel.induct with
+  | _ node ih =>
+    intro F hF
+    rw [slabel] at hF
+    rcases List.mem_append.mp hF with h | h
+    · exact reqType_sub_mty node.hmty F h
+    · obtain ⟨⟨G, hG⟩, _, hFm⟩ := List.mem_flatMap.mp h
+      cases G with
+      | ex r d =>
+        cases r with
+        | dr =>
+          exact fire_dr_reverse hI node.hdom (childNode node hG).hdom
+            (childNode_rho node hG) (ih d hG) F hFm
+        | eq => exact absurd hFm List.not_mem_nil
+        | pp => exact absurd hFm List.not_mem_nil
+        | ppi => exact absurd hFm List.not_mem_nil
+        | po => exact absurd hFm List.not_mem_nil
+      | top => exact absurd hFm List.not_mem_nil
+      | bot => exact absurd hFm List.not_mem_nil
+      | atom a => exact absurd hFm List.not_mem_nil
+      | natom a => exact absurd hFm List.not_mem_nil
+      | and a b => exact absurd hFm List.not_mem_nil
+      | or a b => exact absurd hFm List.not_mem_nil
+      | all r a => exact absurd hFm List.not_mem_nil
 
 end HorizontalRecursion
 
@@ -7793,30 +7875,6 @@ theorem symDrPo_frame {V : Type} (d : V → V → Bool)
             rcases Loff w u hwu with h2 | h2 <;>
             rw [hu, h1, h2] <;> decide
 
-/-- MODEL-SOUNDNESS OF REVERSE `DR`-FIRING (the safety property of the
-    `∀DR`-closure that lifts past ∀-free): if `x DR w` and `∀DR.c` holds
-    at `w`, then `c` holds at `x` — because `x` is itself a `DR`-neighbour
-    of `w` (`conv DR = DR`).  So the formulas the reverse firing adds to
-    a node are genuinely in its model type, keeping labels `⊆ mty`. -/
-theorem dr_reverse_sat {α : Type} {I : Interp α} (hI : RCC5Interp I)
-    {C0 : Concept} {x w : α} (hx : I.dom x) (hw : I.dom w)
-    (hxw : I.rho x w = dr) {c : Concept}
-    (h : Concept.all dr c ∈ mty C0 I w) : c ∈ mty C0 I x := by
-  have hwx : I.rho w x = dr := by rw [hI.conv_ x w hx hw, hxw]; rfl
-  exact mty_all h hx hwx
-
-/-- REVERSE-FIRING PRESERVES `⊆ mty` (the fixpoint's step soundness):
-    firing the `∀DR`-consequences of a `DR`-child's label back into the
-    parent lands inside the parent's model type — so a label saturated
-    under reverse `DR`-firing stays clash-free and model-realizable. -/
-theorem fire_dr_reverse {α : Type} {I : Interp α} (hI : RCC5Interp I)
-    {C0 : Concept} {x w : α} (hx : I.dom x) (hw : I.dom w)
-    (hxw : I.rho x w = dr) {wlabel : List Concept}
-    (hwlab : ∀ F ∈ wlabel, F ∈ mty C0 I w) :
-    ∀ c ∈ fire wlabel dr, c ∈ mty C0 I x := by
-  intro c hc
-  exact dr_reverse_sat hI hx hw hxw (hwlab _ (mem_fire.mp hc))
-
 /-- The tree-structural labelling only takes values in `{EQ, DR, PO}`,
     so in the ∀PO-free fragment `ee_all` reduces to exactly the `DR`
     edges (the crux: the `∀DR` reverse-firing) and the `EQ` diagonal
@@ -7950,6 +8008,10 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms childNode_mem
 #print axioms rnodes_trans
 #print axioms rnodes_covers
+#print axioms slabel
+#print axioms slabel_sub_mty
+#print axioms revfire_lmd_lt
+#print axioms dr_reverse_sat
 #print axioms allfree_cl_no_all
 #print axioms allfree_reqType_no_all
 #print axioms mtVF_frame
