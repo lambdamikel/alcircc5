@@ -6560,6 +6560,107 @@ theorem block_of_persistent_desc (hI : RCC5Interp I) {C0 G : Concept}
 
 end DescPersistentKernel
 
+/-! ## Round E3i (2026-07-23): the modal-depth termination measure
+
+Design plan (ASSEMBLY_DESIGN.md §§3–4) round 2: the requirement-typing
+scaffold, concretely the TERMINATION measure that makes the horizontal
+recursion well-founded.  `mdepth C` = the nesting depth of `∃`/`∀` in
+`C`.  Every demand step strictly DECREASES it — `mdepth c <
+mdepth (∃r.c)` and `mdepth c < mdepth (∀r.c)` — and the subformula
+closure never increases it (`cl_mdepth_le`).  So a demand whose
+formula lies in `cl C₀` has argument depth `< mdepth C₀`
+(`cl_ex_mdepth_lt`/`cl_all_mdepth_lt`): the horizontal unravelling has
+depth bounded by `mdepth C₀`.
+
+This is the horizontal half of the termination argument (design §4);
+vertical demands (`∃PP`/`∃PPI`) also strictly decrease `mdepth` per
+STEP but recur with the SAME formula along a kernel chain (the guard
+`∀PP.(∃PP.G)` reproduces `∃PP.G`), so they do not terminate by this
+measure — they are absorbed by kernels (E3g/E3g′), not unravelled. -/
+
+section ModalDepth
+
+/-- The `∃`/`∀` nesting depth of a concept. -/
+def mdepth : Concept → Nat
+  | .and c d => Nat.max (mdepth c) (mdepth d)
+  | .or c d => Nat.max (mdepth c) (mdepth d)
+  | .ex _ c => mdepth c + 1
+  | .all _ c => mdepth c + 1
+  | _ => 0
+
+/-- A demand's argument is strictly shallower. -/
+theorem mdepth_ex_lt (r : Atom) (c : Concept) : mdepth c < mdepth (.ex r c) :=
+  Nat.lt_succ_self _
+
+/-- A universal's argument is strictly shallower. -/
+theorem mdepth_all_lt (r : Atom) (c : Concept) :
+    mdepth c < mdepth (.all r c) :=
+  Nat.lt_succ_self _
+
+/-- The subformula closure never increases modal depth — so the whole
+    recursion lives at depth `≤ mdepth C₀`. -/
+theorem cl_mdepth_le : ∀ e x : Concept, x ∈ cl e → mdepth x ≤ mdepth e := by
+  intro e
+  induction e with
+  | top =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | h
+    · exact Nat.le_refl _
+    · exact nomatch h
+  | bot =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | h
+    · exact Nat.le_refl _
+    · exact nomatch h
+  | atom a =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | h
+    · exact Nat.le_refl _
+    · exact nomatch h
+  | natom a =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | h
+    · exact Nat.le_refl _
+    · exact nomatch h
+  | and c d ihc ihd =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact Nat.le_refl _
+    · rcases List.mem_append.mp hx' with h | h
+      · exact Nat.le_trans (ihc x h) (Nat.le_max_left _ _)
+      · exact Nat.le_trans (ihd x h) (Nat.le_max_right _ _)
+  | or c d ihc ihd =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact Nat.le_refl _
+    · rcases List.mem_append.mp hx' with h | h
+      · exact Nat.le_trans (ihc x h) (Nat.le_max_left _ _)
+      · exact Nat.le_trans (ihd x h) (Nat.le_max_right _ _)
+  | ex r c ihc =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact Nat.le_refl _
+    · exact Nat.le_trans (ihc x hx') (Nat.le_succ _)
+  | all r c ihc =>
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact Nat.le_refl _
+    · exact Nat.le_trans (ihc x hx') (Nat.le_succ _)
+
+/-- A demand occurring in the closure has argument depth strictly below
+    `mdepth C₀` — the horizontal recursion's decreasing measure. -/
+theorem cl_ex_mdepth_lt {C0 : Concept} {r : Atom} {c : Concept}
+    (h : Concept.ex r c ∈ cl C0) : mdepth c < mdepth C0 :=
+  Nat.lt_of_lt_of_le (mdepth_ex_lt r c) (cl_mdepth_le C0 _ h)
+
+/-- A universal occurring in the closure has argument depth strictly
+    below `mdepth C₀`. -/
+theorem cl_all_mdepth_lt {C0 : Concept} {r : Atom} {c : Concept}
+    (h : Concept.all r c ∈ cl C0) : mdepth c < mdepth C0 :=
+  Nat.lt_of_lt_of_le (mdepth_all_lt r c) (cl_mdepth_le C0 _ h)
+
+end ModalDepth
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -6628,5 +6729,8 @@ end DescPersistentKernel
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
+#print axioms cl_mdepth_le
+#print axioms cl_ex_mdepth_lt
+#print axioms cl_all_mdepth_lt
 
 end POFreeLift

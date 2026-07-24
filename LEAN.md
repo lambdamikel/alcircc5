@@ -599,6 +599,19 @@ pipeline end-to-end. Mechanical mirror; zero `sorry`; file now ~6,632
 lines. Design plan (ASSEMBLY_DESIGN.md §8) round 1 of 5 DONE; next =
 requirement types as a Lean object.
 
+**Round E3i (landed, 2026-07-23): the modal-depth termination measure
+(design plan round 2).** The horizontal recursion's well-founded
+measure: `mdepth C` = the `∃`/`∀` nesting depth. Every demand step
+strictly decreases it — `mdepth_ex_lt`/`mdepth_all_lt` — and the
+subformula closure never increases it (`cl_mdepth_le`, `propext`-only),
+so a demand in `cl C₀` has argument depth `< mdepth C₀`
+(`cl_ex_mdepth_lt`/`cl_all_mdepth_lt`): the horizontal unravelling has
+depth bounded by `mdepth C₀`. The vertical half (`∃PP`/`∃PPI`) does not
+terminate by this measure (the guard reproduces the SAME formula) — it
+is kernel-absorbed (E3g/E3g′), design §4. Zero `sorry`; file now
+~6,736 lines. Design plan round 2 of 5 DONE; next = the loose-`PO`
+frame instance (reuse E3e).
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
