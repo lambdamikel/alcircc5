@@ -7511,6 +7511,45 @@ theorem slabel_sub_mty (hI : RCC5Interp I) (node : RNode I C0) :
       | or a b => exact absurd hFm List.not_mem_nil
       | all r a => exact absurd hFm List.not_mem_nil
 
+/-- The saturated label stays in the closure — finite. -/
+theorem slabel_sub_cl (node : RNode I C0) :
+    ∀ F ∈ slabel node, F ∈ cl C0 := by
+  induction node using slabel.induct with
+  | _ node ih =>
+    intro F hF
+    rw [slabel] at hF
+    rcases List.mem_append.mp hF with h | h
+    · exact reqType_sub_cl node.hcl F h
+    · obtain ⟨⟨G, hG⟩, _, hFm⟩ := List.mem_flatMap.mp h
+      cases G with
+      | ex r d =>
+        cases r with
+        | dr => exact fire_sub_cl (ih d hG) F hFm
+        | eq => exact absurd hFm List.not_mem_nil
+        | pp => exact absurd hFm List.not_mem_nil
+        | ppi => exact absurd hFm List.not_mem_nil
+        | po => exact absurd hFm List.not_mem_nil
+      | top => exact absurd hFm List.not_mem_nil
+      | bot => exact absurd hFm List.not_mem_nil
+      | atom a => exact absurd hFm List.not_mem_nil
+      | natom a => exact absurd hFm List.not_mem_nil
+      | and a b => exact absurd hFm List.not_mem_nil
+      | or a b => exact absurd hFm List.not_mem_nil
+      | all r a => exact absurd hFm List.not_mem_nil
+
+/-- REVERSE `∀DR`-FIRING FROM THE SATURATED LABEL (the property `slabel`
+    is built to satisfy): a `∀DR.c` obligation in a `∃DR`-child's
+    saturated label puts its argument `c` in the PARENT's saturated
+    label — the reverse `ee_all` on a `DR` demand edge, discharged by
+    construction. -/
+theorem slabel_reverse (node : RNode I C0) {d : Concept}
+    (hF : Concept.ex dr d ∈ reqType I node.x node.s) {c : Concept}
+    (h : Concept.all dr c ∈ slabel (childNode node hF)) :
+    c ∈ slabel node := by
+  rw [slabel]
+  exact List.mem_append_right _ (List.mem_flatMap.mpr
+    ⟨⟨Concept.ex dr d, hF⟩, List.mem_attach _ _, mem_fire.mpr h⟩)
+
 end HorizontalRecursion
 
 /-! ### The ∀-free fragment: `∀`-conditions vacuous (round 4, component 9)
@@ -8010,6 +8049,8 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms rnodes_covers
 #print axioms slabel
 #print axioms slabel_sub_mty
+#print axioms slabel_sub_cl
+#print axioms slabel_reverse
 #print axioms revfire_lmd_lt
 #print axioms dr_reverse_sat
 #print axioms allfree_cl_no_all
