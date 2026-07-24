@@ -7138,6 +7138,52 @@ theorem fire_sub_cl {C0 : Concept} {label : List Concept} {r : Atom}
 
 end AllFiring
 
+/-! ### Per-demand coverage primitives (round 4, component 4)
+
+What the recursion invokes at each `∃`-demand of a node.  A node
+labelled `reqType I x s` (seeds inside `x`'s type) has, for every
+demand `∃r.c` it carries, a genuine MODEL witness (`reqType_ex_witness`
+— `mty_ex` through the label); its argument stays in the closure
+(`reqType_sub_cl`, so the node universe is finite); and a HORIZONTAL
+demand's argument is strictly shallower (`reqType_ex_mdepth` via
+`cl_ex_mdepth_lt`) — the recursion's decreasing measure.  These are the
+model-side coverage step; the remaining work is threading them into a
+finite closed node set (the fixpoint) and the block assembly. -/
+
+section Coverage
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- A single formula's expansion stays in `cl C₀` when the seed does. -/
+theorem expand_sub_cl_of {x : α} {F : Concept} (hF : F ∈ cl C0) :
+    ∀ G ∈ expand I x F, G ∈ cl C0 :=
+  fun G hG => cl_trans C0 F G hF (expand_sub_cl I x F G hG)
+
+/-- The node label is finite: within `cl C₀` when the seeds are. -/
+theorem reqType_sub_cl {x : α} {s : List Concept}
+    (hs : ∀ F ∈ s, F ∈ cl C0) : ∀ G ∈ reqType I x s, G ∈ cl C0 := by
+  intro G hG
+  obtain ⟨F, hF, hGF⟩ := mem_reqType.mp hG
+  exact expand_sub_cl_of (hs F hF) G hGF
+
+/-- COVERAGE STEP: every demand a requirement node carries has a
+    genuine model witness. -/
+theorem reqType_ex_witness {x : α} {s : List Concept}
+    (hs : ∀ F ∈ s, F ∈ mty C0 I x) {r : Atom} {c : Concept}
+    (h : Concept.ex r c ∈ reqType I x s) :
+    ∃ w, I.dom w ∧ I.rho x w = r ∧ c ∈ mty C0 I w :=
+  mty_ex (reqType_sub_mty hs _ h)
+
+/-- TERMINATION STEP: a demand a requirement node carries has an
+    argument strictly shallower than `C₀` — the horizontal recursion's
+    decreasing measure. -/
+theorem reqType_ex_mdepth {x : α} {s : List Concept}
+    (hs : ∀ F ∈ s, F ∈ cl C0) {r : Atom} {c : Concept}
+    (h : Concept.ex r c ∈ reqType I x s) : mdepth c < mdepth C0 :=
+  cl_ex_mdepth_lt (reqType_sub_cl hs _ h)
+
+end Coverage
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -7222,5 +7268,8 @@ end AllFiring
 #print axioms mem_fire
 #print axioms fire_sat
 #print axioms fire_sub_cl
+#print axioms reqType_sub_cl
+#print axioms reqType_ex_witness
+#print axioms reqType_ex_mdepth
 
 end POFreeLift

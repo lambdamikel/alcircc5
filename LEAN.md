@@ -670,6 +670,19 @@ proper (the finite fixpoint closed under demand-witnessing + ∀-firing,
 the ∃-demand COVERAGE) + K(C₀) counting. Zero `sorry`; file now ~7,226
 lines.
 
+**Round E3k cont'd (component 4, 2026-07-24): per-demand coverage
+primitives.** What the recursion invokes at each `∃`-demand of a
+requirement node: `reqType_ex_witness` (every demand a node carries has
+a genuine MODEL witness — `mty_ex` through the label), `reqType_sub_cl`
+(the node label is finite, within `cl C₀`), `reqType_ex_mdepth` (a
+demand's argument is strictly shallower than `C₀` — the recursion's
+decreasing measure, via `cl_ex_mdepth_lt`), + `expand_sub_cl_of`. These
+are the model-side coverage STEP; REMAINING = threading them into a
+finite closed node set (the fixpoint) + block assembly + K(C₀). Zero
+`sorry`; file now ~7,275 lines. Round-4 primitives + per-demand steps
+all certified; the recursion's global fixpoint/coverage is the coupled
+core still open.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
