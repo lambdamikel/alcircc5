@@ -6720,6 +6720,294 @@ theorem ext_dr_desc_const (hI : RCC5Interp I)
 
 end ForcedConstancy
 
+/-! ## Round E3k (2026-07-23): the requirement-type generator
+
+Design plan (ASSEMBLY_DESIGN.md §§2–3) round 4, component 1: the node
+label of the assembly recursion.  `expand I x F` is the model-GUIDED
+propositional expansion of a required formula `F` — its demanded
+propositional consequences, with each disjunction resolved by the
+guide `x`.  This is a REQUIREMENT type (not a model type): it contains
+only SUBFORMULAS of `F` (`expand_sub_cl`), which is exactly what makes
+a `∃PO.D` library demand only strict subformulas of `D` — the
+well-foundedness of the `∃PO` pool (design §3.1).  Guided by a real
+model element it lands inside the model type (`expand_sub_mty`), so
+every node is clash-free and model-realizable for free, and it is
+propositionally saturated (`expand_and`/`expand_or`) — the
+propositional Hintikka conditions of a block node.
+
+This is component 1 of the recursion (round 4); the ∀-firing closure
+across the edge structure and the ∃-demand coverage — the coupled hard
+core — are the remaining components. -/
+
+section RequirementTypes
+
+variable {α : Type} {I : Interp α}
+
+open Classical in
+/-- The model-guided propositional expansion of a required formula:
+    its demanded propositional consequences, each disjunction resolved
+    by the guide `x`.  A REQUIREMENT type — subformulas only. -/
+noncomputable def expand (I : Interp α) (x : α) : Concept → List Concept
+  | .and c d => Concept.and c d :: (expand I x c ++ expand I x d)
+  | .or c d =>
+      Concept.or c d :: (if sat I x c then expand I x c else expand I x d)
+  | c => [c]
+
+/-- The seed formula is always in its own expansion. -/
+theorem mem_expand_self (I : Interp α) (x : α) (F : Concept) :
+    F ∈ expand I x F := by
+  cases F <;> exact List.mem_cons_self
+
+/-- REQUIREMENT-TYPING: the expansion contains only subformulas of the
+    seed — the key to the `∃PO` pool's well-foundedness (a library for
+    `D` demands only strict subformulas of `D`). -/
+theorem expand_sub_cl (I : Interp α) (x : α) :
+    ∀ F, ∀ G ∈ expand I x F, G ∈ cl F := by
+  intro F
+  induction F with
+  | top =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact List.mem_cons_self
+    · exact nomatch h
+  | bot =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact List.mem_cons_self
+    · exact nomatch h
+  | atom a =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact List.mem_cons_self
+    · exact nomatch h
+  | natom a =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact List.mem_cons_self
+    · exact nomatch h
+  | and c d ihc ihd =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | hG'
+    · exact List.mem_cons_self
+    · rcases List.mem_append.mp hG' with h | h
+      · exact List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl (ihc G h)))
+      · exact List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr (ihd G h)))
+  | or c d ihc ihd =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | hG'
+    · exact List.mem_cons_self
+    · by_cases hs : sat I x c
+      · simp only [if_pos hs] at hG'
+        exact List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl (ihc G hG')))
+      · simp only [if_neg hs] at hG'
+        exact List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr (ihd G hG')))
+  | ex r c ihc =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact List.mem_cons_self
+    · exact nomatch h
+  | all r c ihc =>
+    intro G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact List.mem_cons_self
+    · exact nomatch h
+
+/-- MODEL REALIZABILITY: guided by a model element `x`, the expansion
+    of a formula in `x`'s type stays inside `x`'s type — so every
+    requirement node is clash-free and demand-witnessed for free. -/
+theorem expand_sub_mty {C0 : Concept} {x : α} :
+    ∀ F, F ∈ mty C0 I x → ∀ G ∈ expand I x F, G ∈ mty C0 I x := by
+  intro F
+  induction F with
+  | top =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact hF
+    · exact nomatch h
+  | bot =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact hF
+    · exact nomatch h
+  | atom a =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact hF
+    · exact nomatch h
+  | natom a =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact hF
+    · exact nomatch h
+  | and c d ihc ihd =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | hG'
+    · exact hF
+    · obtain ⟨hc, hd⟩ := mty_and hF
+      rcases List.mem_append.mp hG' with h | h
+      · exact ihc hc G h
+      · exact ihd hd G h
+  | or c d ihc ihd =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | hG'
+    · exact hF
+    · by_cases hs : sat I x c
+      · simp only [if_pos hs] at hG'
+        exact ihc (mem_mty.mpr ⟨cl_or_left (mty_sub _ hF), hs⟩) G hG'
+      · simp only [if_neg hs] at hG'
+        have hd : d ∈ mty C0 I x := by
+          rcases mty_or hF with h | h
+          · exact absurd (mem_mty.mp h).2 hs
+          · exact h
+        exact ihd hd G hG'
+  | ex r c ihc =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact hF
+    · exact nomatch h
+  | all r c ihc =>
+    intro hF G hG
+    rcases List.mem_cons.mp hG with rfl | h
+    · exact hF
+    · exact nomatch h
+
+/-- PROPOSITIONAL SATURATION (`∧`): the expansion is closed under
+    conjunction decomposition. -/
+theorem expand_and (I : Interp α) (x : α) :
+    ∀ F c d, Concept.and c d ∈ expand I x F →
+      c ∈ expand I x F ∧ d ∈ expand I x F := by
+  intro F
+  induction F with
+  | top =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | bot =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | atom a =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | natom a =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | and a b iha ihb =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with heq | hG'
+    · injection heq with h1 h2
+      subst h1; subst h2
+      exact ⟨List.mem_cons_of_mem _
+          (List.mem_append.mpr (Or.inl (mem_expand_self I x c))),
+        List.mem_cons_of_mem _
+          (List.mem_append.mpr (Or.inr (mem_expand_self I x d)))⟩
+    · rcases List.mem_append.mp hG' with h | h
+      · obtain ⟨hc, hd⟩ := iha c d h
+        exact ⟨List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl hc)),
+          List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl hd))⟩
+      · obtain ⟨hc, hd⟩ := ihb c d h
+        exact ⟨List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr hc)),
+          List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr hd))⟩
+  | or a b iha ihb =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with heq | hG'
+    · exact Concept.noConfusion heq
+    · by_cases hs : sat I x a
+      · simp only [if_pos hs] at hG'
+        obtain ⟨hc, hd⟩ := iha c d hG'
+        exact ⟨List.mem_cons_of_mem _ (by simp only [if_pos hs]; exact hc),
+          List.mem_cons_of_mem _ (by simp only [if_pos hs]; exact hd)⟩
+      · simp only [if_neg hs] at hG'
+        obtain ⟨hc, hd⟩ := ihb c d hG'
+        exact ⟨List.mem_cons_of_mem _ (by simp only [if_neg hs]; exact hc),
+          List.mem_cons_of_mem _ (by simp only [if_neg hs]; exact hd)⟩
+  | ex r a iha =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | all r a iha =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+
+/-- PROPOSITIONAL SATURATION (`∨`): the expansion resolves every
+    disjunction it contains (the guide-chosen branch is present). -/
+theorem expand_or (I : Interp α) (x : α) :
+    ∀ F c d, Concept.or c d ∈ expand I x F →
+      c ∈ expand I x F ∨ d ∈ expand I x F := by
+  intro F
+  induction F with
+  | top =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | bot =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | atom a =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | natom a =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | and a b iha ihb =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with heq | hG'
+    · exact Concept.noConfusion heq
+    · rcases List.mem_append.mp hG' with h | h
+      · rcases iha c d h with hc | hd
+        · exact Or.inl (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl hc)))
+        · exact Or.inr (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl hd)))
+      · rcases ihb c d h with hc | hd
+        · exact Or.inl (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr hc)))
+        · exact Or.inr (List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr hd)))
+  | or a b iha ihb =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with heq | hG'
+    · injection heq with h1 h2
+      subst h1; subst h2
+      by_cases hs : sat I x c
+      · exact Or.inl (List.mem_cons_of_mem _
+          (by simp only [if_pos hs]; exact mem_expand_self I x c))
+      · exact Or.inr (List.mem_cons_of_mem _
+          (by simp only [if_neg hs]; exact mem_expand_self I x d))
+    · by_cases hs : sat I x a
+      · simp only [if_pos hs] at hG'
+        rcases iha c d hG' with hc | hd
+        · exact Or.inl (List.mem_cons_of_mem _ (by simp only [if_pos hs]; exact hc))
+        · exact Or.inr (List.mem_cons_of_mem _ (by simp only [if_pos hs]; exact hd))
+      · simp only [if_neg hs] at hG'
+        rcases ihb c d hG' with hc | hd
+        · exact Or.inl (List.mem_cons_of_mem _ (by simp only [if_neg hs]; exact hc))
+        · exact Or.inr (List.mem_cons_of_mem _ (by simp only [if_neg hs]; exact hd))
+  | ex r a iha =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | all r a iha =>
+    intro c d hG
+    rcases List.mem_cons.mp hG with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+
+end RequirementTypes
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -6793,5 +7081,10 @@ end ForcedConstancy
 #print axioms cl_all_mdepth_lt
 #print axioms ext_pp_asc_const
 #print axioms ext_dr_desc_const
+#print axioms mem_expand_self
+#print axioms expand_sub_cl
+#print axioms expand_sub_mty
+#print axioms expand_and
+#print axioms expand_or
 
 end POFreeLift

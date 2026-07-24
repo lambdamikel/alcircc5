@@ -628,6 +628,22 @@ the rectangle problem is carried entirely by these singleton-cell
 forcings. Zero `sorry`; file now ~6,797 lines. Design plan round 3 of
 5 DONE; next = THE RECURSION (round 4, the big one, `e_ex` coverage).
 
+**Round E3k (landed, 2026-07-24): the requirement-type generator
+(round 4, component 1).** THE RECURSION begins — its node label first.
+`expand I x F` = the model-GUIDED propositional expansion of a required
+formula (its demanded propositional consequences, each `∨` resolved by
+the guide `x`). A REQUIREMENT type, not a model type: `expand_sub_cl`
+(subformulas of the seed ONLY — the well-foundedness of the `∃PO` pool,
+design §3.1: a library for `D` demands only strict subformulas of `D`),
+`expand_sub_mty` (guided by a model element, stays inside its type —
+clash-free + demand-witnessed for free), `mem_expand_self` (seed
+included), `expand_and`/`expand_or` (propositional Hintikka saturation
+— the block-node propositional conditions). Component 1 of round 4 is
+a clean, closed foundation; the coupled hard core REMAINS — the
+∀-firing closure across the edge structure and the ∃-demand COVERAGE
+(the designated risk, ASSEMBLY_DESIGN.md §8). Zero `sorry`; file now
+~7,090 lines.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
