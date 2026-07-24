@@ -7615,6 +7615,133 @@ theorem slabel_lmd_le (node : RNode I C0) :
     lmd (slabel node) ≤ lmd (reqType I node.x node.s) :=
   lmd_le (slabel node) (slabel_mdepth_le node)
 
+/-! ### The saturated-label coverage recursion (`snodes`)
+
+`rnodes` covers the demands of a node's REQUIREMENT type; saturation
+(`slabel`) adds `∀DR`-consequences that may themselves be demands, so
+the full mosaic needs a recursion covering the demands of the SATURATED
+label.  `snodes` is that recursion — a parallel of `rnodes` over
+`slabel` instead of `reqType`, terminating by the SAME `lmd` measure
+because saturation stays inside the budget (`slabel_lmd_le`,
+`schild_lmd_lt`). -/
+
+/-- The child node covering a demand carried in the SATURATED label:
+    guide = the demand's model witness (`slabel ⊆ mty`), seed = the
+    demand's argument plus the `∀`-consequences fired forward from the
+    saturated label. -/
+noncomputable def schildNode (hI : RCC5Interp I) (node : RNode I C0)
+    {r : Atom} {c : Concept} (hF : Concept.ex r c ∈ slabel node) :
+    RNode I C0 :=
+  let hw := Classical.choose_spec (mty_ex (slabel_sub_mty hI node _ hF))
+  { x := Classical.choose (mty_ex (slabel_sub_mty hI node _ hF))
+    s := c :: fire (slabel node) r
+    hdom := hw.1
+    hmty := by
+      intro F hFm
+      rcases List.mem_cons.mp hFm with rfl | h
+      · exact hw.2.2
+      · exact fire_sat (slabel_sub_mty hI node) hw.1 hw.2.1 F h
+    hcl := by
+      intro F hFm
+      rcases List.mem_cons.mp hFm with rfl | h
+      · exact cl_ex (slabel_sub_cl node _ hF)
+      · exact fire_sub_cl (slabel_sub_cl node) F h }
+
+/-- The saturated-label child is `r`-related to its node in the model. -/
+theorem schildNode_rho (hI : RCC5Interp I) (node : RNode I C0)
+    {r : Atom} {c : Concept} (hF : Concept.ex r c ∈ slabel node) :
+    I.rho node.x (schildNode hI node hF).x = r :=
+  (Classical.choose_spec (mty_ex (slabel_sub_mty hI node _ hF))).2.1
+
+/-- The saturated-label child's argument lands in its own label. -/
+theorem schildNode_arg (hI : RCC5Interp I) (node : RNode I C0)
+    {r : Atom} {c : Concept} (hF : Concept.ex r c ∈ slabel node) :
+    c ∈ slabel (schildNode hI node hF) :=
+  reqType_sub_slabel _ c
+    (mem_reqType_of_mem (x := (schildNode hI node hF).x) List.mem_cons_self)
+
+/-- Termination for `snodes`: the saturated-label child is strictly
+    shallower — its argument and forward-fired formulas are below the
+    node's `lmd` (`slabel_lmd_le`). -/
+theorem schild_lmd_lt (node : RNode I C0) {w : α} {r : Atom} {c : Concept}
+    (hdem : Concept.ex r c ∈ slabel node) :
+    lmd (reqType I w (c :: fire (slabel node) r)) <
+      lmd (reqType I node.x node.s) := by
+  have hpos : 0 < lmd (reqType I node.x node.s) :=
+    Nat.lt_of_lt_of_le (show 0 < mdepth (Concept.ex r c) from Nat.succ_pos _)
+      (Nat.le_trans (mem_mdepth_le_lmd _ _ hdem) (slabel_lmd_le node))
+  refine lmd_lt hpos _ (fun G hG => ?_)
+  obtain ⟨F, hF, hGF⟩ := mem_reqType.mp hG
+  have hGle : mdepth G ≤ mdepth F := cl_mdepth_le F G (expand_sub_cl I w F G hGF)
+  have hFlt : mdepth F < lmd (reqType I node.x node.s) := by
+    rcases List.mem_cons.mp hF with hFeq | hFfire
+    · rw [hFeq]
+      exact Nat.lt_of_lt_of_le (mdepth_ex_lt r c)
+        (Nat.le_trans (mem_mdepth_le_lmd _ _ hdem) (slabel_lmd_le node))
+    · have hall : Concept.all r F ∈ slabel node := mem_fire.mp hFfire
+      exact Nat.lt_of_lt_of_le (mdepth_all_lt r F)
+        (Nat.le_trans (mem_mdepth_le_lmd _ _ hall) (slabel_lmd_le node))
+  exact Nat.lt_of_le_of_lt hGle hFlt
+
+/-- THE SATURATED-LABEL COVERAGE RECURSION: the finite set of nodes
+    reachable by covering the demands of the SATURATED labels. -/
+noncomputable def snodes (hI : RCC5Interp I) (node : RNode I C0) :
+    List (RNode I C0) :=
+  node :: (slabel node).attach.flatMap
+    (fun p => match p with
+      | ⟨.ex r c, hF⟩ => snodes hI (schildNode hI node hF)
+      | _ => [])
+termination_by lmd (reqType I node.x node.s)
+decreasing_by exact schild_lmd_lt node hF
+
+theorem self_mem_snodes (hI : RCC5Interp I) (node : RNode I C0) :
+    node ∈ snodes hI node := by
+  rw [snodes]; exact List.mem_cons_self
+
+theorem sub_snodes_schildNode (hI : RCC5Interp I) (node : RNode I C0)
+    {r : Atom} {c : Concept} (hF : Concept.ex r c ∈ slabel node) :
+    ∀ k ∈ snodes hI (schildNode hI node hF), k ∈ snodes hI node := by
+  intro k hk
+  rw [snodes]
+  exact List.mem_cons_of_mem _ (List.mem_flatMap.mpr
+    ⟨⟨Concept.ex r c, hF⟩, List.mem_attach _ _, hk⟩)
+
+theorem schildNode_mem (hI : RCC5Interp I) (node : RNode I C0)
+    {r : Atom} {c : Concept} (hF : Concept.ex r c ∈ slabel node) :
+    schildNode hI node hF ∈ snodes hI node :=
+  sub_snodes_schildNode hI node hF _ (self_mem_snodes hI _)
+
+theorem snodes_trans (hI : RCC5Interp I) (node : RNode I C0) :
+    ∀ m ∈ snodes hI node, ∀ k ∈ snodes hI m, k ∈ snodes hI node := by
+  induction node using snodes.induct (hI := hI) with
+  | _ x ih =>
+    intro m hm k hk
+    rw [snodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact hk
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        exact sub_snodes_schildNode hI x hF k (ih r c hF m hmm k hk)
+      | top => exact absurd hmm List.not_mem_nil
+      | bot => exact absurd hmm List.not_mem_nil
+      | atom a => exact absurd hmm List.not_mem_nil
+      | natom a => exact absurd hmm List.not_mem_nil
+      | and a b => exact absurd hmm List.not_mem_nil
+      | or a b => exact absurd hmm List.not_mem_nil
+      | all r c => exact absurd hmm List.not_mem_nil
+
+/-- SATURATED-LABEL COVERAGE: every demand carried at any reachable
+    node's SATURATED label is fulfilled by a reachable node. -/
+theorem snodes_covers (hI : RCC5Interp I) (root : RNode I C0) :
+    ∀ m ∈ snodes hI root, ∀ (r : Atom) (c : Concept),
+      Concept.ex r c ∈ slabel m →
+      ∃ m' ∈ snodes hI root, I.rho m.x m'.x = r ∧ c ∈ slabel m' := by
+  intro m hm r c hF
+  exact ⟨schildNode hI m hF,
+    snodes_trans hI root m hm _ (schildNode_mem hI m hF),
+    schildNode_rho hI m hF, schildNode_arg hI m hF⟩
+
 end HorizontalRecursion
 
 /-! ### The ∀-free fragment: `∀`-conditions vacuous (round 4, component 9)
@@ -8118,6 +8245,9 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms slabel_reverse
 #print axioms slabel_forward_reqType
 #print axioms slabel_lmd_le
+#print axioms snodes
+#print axioms snodes_covers
+#print axioms schild_lmd_lt
 #print axioms revfire_lmd_lt
 #print axioms dr_reverse_sat
 #print axioms allfree_cl_no_all
