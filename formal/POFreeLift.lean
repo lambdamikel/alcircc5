@@ -7787,6 +7787,18 @@ theorem dr_reverse_sat {α : Type} {I : Interp α} (hI : RCC5Interp I)
   have hwx : I.rho w x = dr := by rw [hI.conv_ x w hx hw, hxw]; rfl
   exact mty_all h hx hwx
 
+/-- REVERSE-FIRING PRESERVES `⊆ mty` (the fixpoint's step soundness):
+    firing the `∀DR`-consequences of a `DR`-child's label back into the
+    parent lands inside the parent's model type — so a label saturated
+    under reverse `DR`-firing stays clash-free and model-realizable. -/
+theorem fire_dr_reverse {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {x w : α} (hx : I.dom x) (hw : I.dom w)
+    (hxw : I.rho x w = dr) {wlabel : List Concept}
+    (hwlab : ∀ F ∈ wlabel, F ∈ mty C0 I w) :
+    ∀ c ∈ fire wlabel dr, c ∈ mty C0 I x := by
+  intro c hc
+  exact dr_reverse_sat hI hx hw hxw (hwlab _ (mem_fire.mp hc))
+
 /-- The tree-structural labelling only takes values in `{EQ, DR, PO}`,
     so in the ∀PO-free fragment `ee_all` reduces to exactly the `DR`
     edges (the crux: the `∀DR` reverse-firing) and the `EQ` diagonal
