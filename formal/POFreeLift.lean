@@ -7358,6 +7358,59 @@ theorem self_mem_rnodes (node : RNode I C0) : node ∈ rnodes node := by
   rw [rnodes]
   exact List.mem_cons_self
 
+/-- A demand's whole child-subtree sits inside the parent's reachable
+    set (from the unfolding — no induction). -/
+theorem sub_rnodes_childNode (node : RNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ reqType I node.x node.s) :
+    ∀ k ∈ rnodes (childNode node hF), k ∈ rnodes node := by
+  intro k hk
+  rw [rnodes]
+  refine List.mem_cons_of_mem _ (List.mem_flatMap.mpr
+    ⟨⟨Concept.ex r c, hF⟩, List.mem_attach _ _, ?_⟩)
+  exact hk
+
+/-- The child node itself is reachable. -/
+theorem childNode_mem (node : RNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ reqType I node.x node.s) :
+    childNode node hF ∈ rnodes node :=
+  sub_rnodes_childNode node hF _ (self_mem_rnodes _)
+
+/-- TRANSITIVITY of reachability: the whole reachable subtree of any
+    reachable node is reachable — by well-founded induction on the
+    recursion (each child's label is strictly shallower). -/
+theorem rnodes_trans (node : RNode I C0) :
+    ∀ m ∈ rnodes node, ∀ k ∈ rnodes m, k ∈ rnodes node := by
+  induction node using rnodes.induct with
+  | _ x ih =>
+    intro m hm k hk
+    rw [rnodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact hk
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        exact sub_rnodes_childNode x hF k (ih r c hF m hmm k hk)
+      | top => exact absurd hmm List.not_mem_nil
+      | bot => exact absurd hmm List.not_mem_nil
+      | atom a => exact absurd hmm List.not_mem_nil
+      | natom a => exact absurd hmm List.not_mem_nil
+      | and a b => exact absurd hmm List.not_mem_nil
+      | or a b => exact absurd hmm List.not_mem_nil
+      | all r c => exact absurd hmm List.not_mem_nil
+
+/-- COVERAGE (the crux): every demand carried at any reachable node is
+    fulfilled by a reachable node — its model witness, which realizes
+    the demand's argument in its own label and is `r`-related to the
+    demanding node. -/
+theorem rnodes_covers (root : RNode I C0) :
+    ∀ m ∈ rnodes root, ∀ (r : Atom) (c : Concept),
+      Concept.ex r c ∈ reqType I m.x m.s →
+      ∃ m' ∈ rnodes root, I.rho m.x m'.x = r ∧ c ∈ reqType I m'.x m'.s := by
+  intro m hm r c hF
+  refine ⟨childNode m hF, rnodes_trans root m hm _ (childNode_mem m hF),
+    (Classical.choose_spec (reqType_ex_witness m.hmty hF)).2.1,
+    mem_reqType_of_mem List.mem_cons_self⟩
+
 end HorizontalRecursion
 
 #print axioms twoTier_sound
@@ -7453,5 +7506,9 @@ end HorizontalRecursion
 #print axioms childSeed_sub_cl
 #print axioms child_lmd_lt
 #print axioms self_mem_rnodes
+#print axioms sub_rnodes_childNode
+#print axioms childNode_mem
+#print axioms rnodes_trans
+#print axioms rnodes_covers
 
 end POFreeLift

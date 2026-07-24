@@ -715,6 +715,22 @@ recursion descends only through the finite requirement structure). Zero
 routed to a node of `rnodes` — the risk) + block assembly (`rnodes` →
 `MultiTierOk`) + K(C₀)/FinMT.
 
+**Round E3k cont'd (component 8, 2026-07-24): COVERAGE PROVEN — the
+designated risk cleared.** For the horizontal recursion:
+`sub_rnodes_childNode` (a demand's whole child-subtree ⊆ the parent's
+set), `childNode_mem` (the child is reachable), `rnodes_trans`
+(TRANSITIVITY — the whole reachable subtree of any reachable node is
+reachable, by `rnodes.induct` well-founded induction), and the
+capstone **`rnodes_covers`**: EVERY demand `∃r.c` carried at ANY
+reachable node is fulfilled by a reachable node — its model witness,
+which is `r`-related to the demanding node and carries `c` in its own
+requirement label. This is the exact Coverage-Lemma the no-automata
+thread kept re-opening and the design note (ASSEMBLY_DESIGN.md §8)
+flagged as THE RISK — now a kernel-checked theorem for the horizontal
+skeleton. Zero `sorry`; file now ~7,510 lines. REMAINING = the block
+assembly (`rnodes` + `rnodes_covers` → a `MultiTier`/`MultiTierOk` with
+`e_ex` discharged) + K(C₀)/FinMT + the vertical (kernel) integration.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
