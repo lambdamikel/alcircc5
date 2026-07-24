@@ -683,6 +683,23 @@ finite closed node set (the fixpoint) + block assembly + K(C₀). Zero
 all certified; the recursion's global fixpoint/coverage is the coupled
 core still open.
 
+**Round E3k cont'd (components 5–6, 2026-07-24): the recursion measure
++ THE WELL-FOUNDEDNESS CRUX.** The horizontal recursion's termination
+is now certified. `lmd s` = max modal depth over a seed list
+(`mem_mdepth_le_lmd`, `lmd_lt`, both `propext`-only). `childSeed I x s
+r c = c :: fire (reqType I x s) r` = the seed a demand `∃r.c` spawns
+(argument + `∀r`-consequences across the new edge); `childSeed_sub_mty`
+(realized at the demand's witness), `childSeed_sub_cl` (finite).
+**`child_lmd_lt`**: the child label is STRICTLY shallower than the
+parent — `lmd (reqType I w (childSeed …)) < lmd (reqType I x s)`. This
+is where REQUIREMENT types earn their keep: every child-seed formula is
+a strict-subformula consequence of a formula the parent carried, so the
+measure genuinely descends (with full model types it would NOT — a
+witness can satisfy fresh deep formulas). This is the decreasing
+measure for the well-founded horizontal recursion. Zero `sorry`; file
+now ~7,398 lines. REMAINING = the well-founded recursion itself (the
+node set) + coverage + block assembly + K(C₀).
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =

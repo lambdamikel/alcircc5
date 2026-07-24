@@ -7184,6 +7184,124 @@ theorem reqType_ex_mdepth {x : α} {s : List Concept}
 
 end Coverage
 
+/-! ### The recursion measure (round 4, component 5)
+
+The well-founded measure for the horizontal recursion: `lmd s` = the
+maximum modal depth over a seed list.  This is where REQUIREMENT types
+earn their keep — a demand step's child seed is `c :: fire(label, r)`,
+every formula of which is a strict-subformula consequence of a
+formula the node already carried, hence strictly shallower; so the
+child's `lmd` is strictly smaller (`child_lmd_lt`).  With full model
+types this would fail (a witness can satisfy fresh deep formulas); with
+requirement types the measure genuinely descends. -/
+
+section Measure
+
+/-- The maximum modal depth in a seed list. -/
+def lmd : List Concept → Nat
+  | [] => 0
+  | F :: t => Nat.max (mdepth F) (lmd t)
+
+/-- Every seed is no deeper than the list maximum. -/
+theorem mem_mdepth_le_lmd : ∀ (s : List Concept) F, F ∈ s → mdepth F ≤ lmd s := by
+  intro s
+  induction s with
+  | nil => intro F hF; exact nomatch hF
+  | cons G t ih =>
+    intro F hF
+    rcases List.mem_cons.mp hF with rfl | h
+    · exact Nat.le_max_left _ _
+    · exact Nat.le_trans (ih F h) (Nat.le_max_right _ _)
+
+/-- If every seed is shallower than `n > 0`, so is the maximum. -/
+theorem lmd_lt {n : Nat} (hn : 0 < n) :
+    ∀ (s : List Concept), (∀ F ∈ s, mdepth F < n) → lmd s < n := by
+  intro s
+  induction s with
+  | nil => intro _; exact hn
+  | cons G t ih =>
+    intro h
+    have hG : mdepth G < n := h G (List.mem_cons_self)
+    have ht : lmd t < n := ih (fun F hF => h F (List.mem_cons_of_mem G hF))
+    exact Nat.max_lt.mpr ⟨hG, ht⟩
+
+end Measure
+
+/-! ### The child seed and its measure decrease (round 4, component 6)
+
+At a node labelled `reqType I x s` (seeds in `x`'s type, in `cl C₀`), a
+demand `∃r.c` in the label spawns a child whose seed is
+`childSeed x s r c = c :: fire (reqType I x s) r` — the demand's
+argument plus the `∀r`-consequences fired across the new edge.  The
+child seed is model-realizable at the demand's witness `w`
+(`childSeed_sub_mty`), stays in the closure (`childSeed_sub_cl`), and —
+the well-foundedness crux — has strictly smaller `lmd` than the parent
+label (`child_lmd_lt`): every child seed formula is a strict-subformula
+consequence of a formula the parent carried. -/
+
+section ChildSeed
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- The child seed spawned by a demand `∃r.c` at a `reqType` node. -/
+noncomputable def childSeed (I : Interp α) (x : α) (s : List Concept)
+    (r : Atom) (c : Concept) : List Concept :=
+  c :: fire (reqType I x s) r
+
+/-- The child seed is realized at the demand's witness `w` (which is an
+    `r`-successor carrying `c`). -/
+theorem childSeed_sub_mty {x w : α} {s : List Concept} {r : Atom}
+    {c : Concept} (hs : ∀ F ∈ s, F ∈ mty C0 I x)
+    (hw : I.dom w) (hrw : I.rho x w = r) (hc : c ∈ mty C0 I w) :
+    ∀ F ∈ childSeed I x s r c, F ∈ mty C0 I w := by
+  intro F hF
+  rcases List.mem_cons.mp hF with rfl | h
+  · exact hc
+  · exact fire_sat (fun E hE => reqType_sub_mty hs E hE) hw hrw F h
+
+/-- The child seed stays in the closure. -/
+theorem childSeed_sub_cl {x : α} {s : List Concept} {r : Atom}
+    {c : Concept} (hs : ∀ F ∈ s, F ∈ cl C0)
+    (hc : c ∈ cl C0) : ∀ F ∈ childSeed I x s r c, F ∈ cl C0 := by
+  intro F hF
+  rcases List.mem_cons.mp hF with rfl | h
+  · exact hc
+  · exact fire_sub_cl (fun E hE => reqType_sub_cl hs E hE) F h
+
+/-- THE WELL-FOUNDEDNESS CRUX: the child node's label is strictly
+    shallower than the parent's.  Every child seed formula is a
+    strict-subformula consequence of a formula the parent label carried,
+    so its expansion — hence the child label's `lmd` — drops below the
+    parent's. -/
+theorem child_lmd_lt {x w : α} {s : List Concept} {r : Atom}
+    {c : Concept} (hdem : Concept.ex r c ∈ reqType I x s) :
+    lmd (reqType I w (childSeed I x s r c)) < lmd (reqType I x s) := by
+  -- the parent label depth is positive (it carries `∃r.c`, depth ≥ 1)
+  have hpos : 0 < lmd (reqType I x s) :=
+    Nat.lt_of_lt_of_le
+      (show 0 < mdepth (Concept.ex r c) from Nat.succ_pos _)
+      (mem_mdepth_le_lmd _ _ hdem)
+  -- every formula of the child label is strictly shallower than the parent max
+  refine lmd_lt hpos _ (fun G hG => ?_)
+  obtain ⟨F, hF, hGF⟩ := mem_reqType.mp hG
+  -- `G` expands a child seed formula `F`; `mdepth G ≤ mdepth F`
+  have hGle : mdepth G ≤ mdepth F :=
+    cl_mdepth_le F G (expand_sub_cl I w F G hGF)
+  -- and `mdepth F < lmd (reqType I x s)` in both child-seed cases
+  have hFlt : mdepth F < lmd (reqType I x s) := by
+    rcases List.mem_cons.mp hF with hFeq | hFfire
+    · -- F = c : shallower than the demand `∃r.c`, which is in the label
+      rw [hFeq]
+      exact Nat.lt_of_lt_of_le (mdepth_ex_lt r c)
+        (mem_mdepth_le_lmd _ _ hdem)
+    · -- F ∈ fire : F = c'' from `∀r.c'' ∈ label`, shallower than it
+      have hall : Concept.all r F ∈ reqType I x s := mem_fire.mp hFfire
+      exact Nat.lt_of_lt_of_le (mdepth_all_lt r F)
+        (mem_mdepth_le_lmd _ _ hall)
+  exact Nat.lt_of_le_of_lt hGle hFlt
+
+end ChildSeed
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -7271,5 +7389,10 @@ end Coverage
 #print axioms reqType_sub_cl
 #print axioms reqType_ex_witness
 #print axioms reqType_ex_mdepth
+#print axioms mem_mdepth_le_lmd
+#print axioms lmd_lt
+#print axioms childSeed_sub_mty
+#print axioms childSeed_sub_cl
+#print axioms child_lmd_lt
 
 end POFreeLift
