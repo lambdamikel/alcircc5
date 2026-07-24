@@ -746,12 +746,18 @@ carrying it); and the capstone **`satisfiable_iff_allfree_cert`**: for
 the ∀-free fragment, `Satisfiable C₀ ↔ ∃ valid MultiTier certificate
 carrying C₀` — BOTH directions kernel-checked (`←` = the certified
 soundness pipeline `multiTier_sound`; `→` = `extract_allfree`). This is
-the FINITE MODEL PROPERTY of the ∀-free fragment, certified end to end
-— the first time the project has closed BOTH the soundness AND the
-extraction side of a real satisfiability characterization. Axioms:
-`propext`/`Quot.sound`/`Classical.choice` (model-side layer). Zero
-`sorry`; file now ~7,799 lines. REMAINING for Decidability: FinMT-encode
-`mtVF` + K(C₀) bound → `decidableSat_of_codes`. REMAINING for the FULL
+the first time the project has closed BOTH the soundness AND the
+extraction side of a real satisfiability characterization. **Honest
+label (calibrated after Michael's catch): this is a CERTIFICATE
+CHARACTERIZATION, NOT a certified finite-model property.** The
+certificate is built from a finite node set (and with `κ = Empty` the
+unfolded model is in fact finite), but the theorem quantifies `β` as an
+ARBITRARY `Type` — no `Fintype`/cardinality is stated or proved. So
+"FMP" would overclaim; what is certified is "satisfiable ⟺ a valid
+certificate exists". Axioms: `propext`/`Quot.sound`/`Classical.choice`
+(model-side layer). Zero `sorry`; file now ~7,799 lines. REMAINING for
+Decidability (and for a genuine certified FMP): a `Fintype β` + K(C₀)
+bound + FinMT-encode `mtVF` → `decidableSat_of_codes`. REMAINING for the FULL
 ∀PO-free fragment: ∀DR-firing (bidirectional along DR-edges — needs the
 tree-structural frame, not merged read-off) + vertical (`∃PP`/`∃PPI`)
 kernel integration (splice E3a–E3h).

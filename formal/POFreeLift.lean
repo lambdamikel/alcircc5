@@ -7425,13 +7425,31 @@ a certificate with no `∀`-firing bookkeeping and no kernels. -/
 
 section AllFree
 
-/-- No universal subformula. -/
+/-- No universal subformula.  STRICTLY STRONGER than `POFree` (which
+    bans only `∀PO`): `AllFree` bans EVERY universal (`∀PO`/`∀DR`/`∀PP`/
+    `∀PPI`/`∀EQ`).  So the ∀-free fragment is a PROPER sub-fragment of
+    the ∀PO-free target — see `allfree_imp_pofree`. -/
 def AllFree : Concept → Prop
   | .all _ _ => False
   | .and c d => AllFree c ∧ AllFree d
   | .or c d => AllFree c ∧ AllFree d
   | .ex _ c => AllFree c
   | _ => True
+
+/-- The ∀-free fragment is contained in the ∀PO-free fragment
+    (∀-free ⟹ ∀PO-free; the converse fails — e.g. `∀DR.A` is ∀PO-free
+    but not ∀-free). -/
+theorem allfree_imp_pofree : ∀ c : Concept, AllFree c → POFree c := by
+  intro c
+  induction c with
+  | top => intro _; trivial
+  | bot => intro _; trivial
+  | atom a => intro _; trivial
+  | natom a => intro _; trivial
+  | and a b iha ihb => intro h; exact ⟨iha h.1, ihb h.2⟩
+  | or a b iha ihb => intro h; exact ⟨iha h.1, ihb h.2⟩
+  | ex r a iha => intro h; exact iha h
+  | all r a iha => intro h; exact h.elim
 
 /-- A ∀-free concept's closure contains no universal. -/
 theorem allfree_cl_no_all : ∀ e : Concept, AllFree e →
@@ -7677,12 +7695,18 @@ theorem extract_allfree (C0 : Concept) (haf : AllFree C0)
   exact mem_mlabel.mpr
     ⟨root, self_mem_rnodes root, rfl, mem_reqType_of_mem List.mem_cons_self⟩
 
-/-- **∀-FREE SATISFIABILITY = A FINITE CERTIFICATE.**  Both directions
-    now kernel-checked: `←` is the certified soundness pipeline
-    (`multiTier_sound`), `→` is the extraction (`extract_allfree`, the
-    horizontal recursion with coverage).  So for the ∀-free fragment a
-    concept is satisfiable IFF it admits a valid multi-tier certificate
-    — the finite-model property of the fragment, certified end to end. -/
+/-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
+    directions now kernel-checked: `←` is the certified soundness
+    pipeline (`multiTier_sound`), `→` is the extraction
+    (`extract_allfree`, the horizontal recursion with coverage).  So for
+    the ∀-free fragment a concept is satisfiable IFF it admits a valid
+    multi-tier certificate.  NB: this is a CERTIFICATE CHARACTERIZATION,
+    not a certified finite-model property — the certificate is built
+    from a finite node set (and with `κ = Empty` the unfolded model is
+    in fact finite), but the theorem quantifies `β` as an ARBITRARY
+    `Type` with no `Fintype`/cardinality claim.  Certifying finiteness
+    (a `Fintype β` + `K(C₀)` bound) is the remaining step, and it is
+    exactly what yields Decidability via `decidableSat_of_codes`. -/
 theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
     Satisfiable C0 ↔
       ∃ (β : Type) (T : MultiTier β Empty) (g : β),
