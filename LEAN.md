@@ -656,6 +656,20 @@ requirement-typed node. Zero `sorry`; file now ~7,159 lines. Still
 REMAINING: ∀-firing closure across edges + ∃-demand coverage + block
 assembly.
 
+**Round E3k cont'd (component 3, 2026-07-24): the `∀`-firing
+operation.** The primitive coupling node labels across edges: when the
+recursion declares `u →r v`, every `∀r.c` in `u`'s label must land in
+`v`'s SEED. `fire label r = label.flatMap (fireOne r)` is that seed.
+`mem_fire` (`c ∈ fire label r ↔ ∀r.c ∈ label`, choice-free), `fire_sat`
+(model-sound: a label in `x`'s type fires into any `r`-successor's
+type, via `mty_all`), `fire_sub_cl` (fired seed stays in `cl`, finite,
+choice-free). These close `ee_all`/`ek_all`/`ke_all`/`kk_*` once the
+recursion threads them along its declared edges. Round 4 now has its
+three primitives (`expand`/`reqType`/`fire`); REMAINING = the recursion
+proper (the finite fixpoint closed under demand-witnessing + ∀-firing,
+the ∃-demand COVERAGE) + K(C₀) counting. Zero `sorry`; file now ~7,226
+lines.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
