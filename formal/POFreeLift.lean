@@ -6295,6 +6295,77 @@ theorem multiBlock_of_chain (hI : RCC5Interp I)
 
 end BlockFromSite
 
+/-! ## Round E3g (2026-07-23): kernels from persistent vertical demand
+
+The first stone of the assembly RECURSION (LEAN.md item 1): where do
+the kernels come from?  A model element carrying a PERSISTENT `∃PP`
+demand — `∃PP.G` together with its guard `∀PP.(∃PP.G)` — is a
+PRODUCTIVE predicate for the chain builder: its `∃PP.G` yields a
+`PP`-successor `y` that again carries `∃PP.G` (from the guard,
+`mty_all`) AND re-establishes the guard (because `∀PP` CLIMBS —
+`sat_all_pp_up`, `comp(pp,pp)={pp}`).  So `buildChain` turns any such
+element into an infinite ascending model chain, every rung carrying
+`∃PP.G` — a genuine kernel.  Composed with `multiBlock_of_chain`
+(E3f), a persistent-`∃PP` element yields an actual certificate block:
+`block_of_persistent`.  This is the demand → kernel → certificate
+link the assembly instantiates once per vertical demand component.
+
+Ascending only (persistent `∃PP`); the descending dual (persistent
+`∃PPI` on a `PPI`-chain) is a mirrored round. -/
+
+section PersistentKernel
+
+variable {α : Type} {I : Interp α}
+
+/-- A persistent `∃PP` demand: `∃PP.G` plus its self-reproducing guard
+    `∀PP.(∃PP.G)`. -/
+def persistPP (I : Interp α) (C0 G : Concept) (x : α) : Prop :=
+  I.dom x ∧ Concept.ex pp G ∈ mty C0 I x ∧
+  Concept.all pp (Concept.ex pp G) ∈ mty C0 I x
+
+/-- Persistent `∃PP` demand is PRODUCTIVE for the chain builder: a
+    `PP`-successor inherits both the demand and its guard. -/
+theorem persistPP_productive (hI : RCC5Interp I) {C0 G : Concept}
+    (x : α) (hx : persistPP I C0 G x) :
+    ∃ y, persistPP I C0 G y ∧ I.dom y ∧ I.rho x y = pp := by
+  obtain ⟨hdx, hex, hall⟩ := hx
+  obtain ⟨y, hdy, hr, _⟩ := mty_ex hex
+  refine ⟨y, ⟨hdy, mty_all hall hdy hr, ?_⟩, hdy, hr⟩
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp hall
+  exact mem_mty.mpr ⟨hcl, sat_all_pp_up hI hdx hdy hr hsat⟩
+
+/-- THE PERSISTENT KERNEL CHAIN: a persistent-`∃PP` element builds an
+    infinite ascending model chain, every rung carrying `∃PP.G`. -/
+theorem persistPP_chain (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
+    (h0 : persistPP I C0 G x0) :
+    ∃ c : Nat → α, c 0 = x0 ∧ (∀ n, I.dom (c n)) ∧
+      (∀ n, I.rho (c n) (c (n + 1)) = pp) ∧
+      (∀ n, Concept.ex pp G ∈ mty C0 I (c n)) := by
+  refine ⟨buildChain (persistPP I C0 G) (persistPP_productive hI) x0 h0,
+    buildChain_zero _ _ x0 h0, ?_, ?_, ?_⟩
+  · exact fun n => (buildChain_prop _ _ x0 h0 n).1
+  · exact fun n => buildChain_step _ _ x0 h0 n
+  · exact fun n => (buildChain_prop _ _ x0 h0 n).2.1
+
+/-- THE DEMAND → CERTIFICATE LINK: a persistent-`∃PP` element yields an
+    actual certificate block (via `multiBlock_of_chain`). -/
+theorem block_of_persistent (hI : RCC5Interp I) {C0 G : Concept}
+    (hpo : POFree C0) (myTag : Nat) (P : List (Nat × List Concept))
+    (ctx : List α) (hctxdom : ∀ e ∈ ctx, I.dom e)
+    (hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2)
+    (x0 : α) (h0 : persistPP I C0 G x0) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧ T.p () = p ∧
+        (POFree C0 → MTNoPo T) := by
+  obtain ⟨c, _, hdom, hstep, _⟩ := persistPP_chain hI x0 h0
+  obtain ⟨i, p, hLi, hp, β, T, hBlock, hpT, _, hnopo⟩ :=
+    multiBlock_of_chain hI hdom hstep C0 hpo myTag P ctx hctxdom L hpoolcl
+  exact ⟨i, p, hLi, hp, β, T, hBlock, hpT, hnopo⟩
+
+end PersistentKernel
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -6355,5 +6426,8 @@ end BlockFromSite
 #print axioms twoSorted_eq_readoff
 #print axioms multiBlock_of_site
 #print axioms multiBlock_of_chain
+#print axioms persistPP_productive
+#print axioms persistPP_chain
+#print axioms block_of_persistent
 
 end POFreeLift

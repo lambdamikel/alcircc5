@@ -563,6 +563,24 @@ the multi-cluster assembly leans on it, and gives the
 `kernel_site ⟹ mkBlock` bridge that assembly generalizes. Zero
 `sorry`; file now ~6,359 lines.
 
+**Round E3g (landed, 2026-07-23): kernels from persistent vertical
+demand — the first stone of the assembly RECURSION.** WHERE the
+kernels come from (LEAN.md item 1): a model element carrying a
+PERSISTENT `∃PP` demand — `persistPP I C0 G x` := `∃PP.G` plus its
+self-reproducing guard `∀PP.(∃PP.G)` — is a PRODUCTIVE predicate for
+`buildChain` (**`persistPP_productive`**): the `∃PP.G` yields a
+`PP`-successor `y` that again carries `∃PP.G` (from the guard,
+`mty_all`) AND re-establishes the guard (because `∀PP` CLIMBS —
+`sat_all_pp_up`, `comp(pp,pp)={pp}`). **`persistPP_chain`** turns any
+such element into an infinite ascending model chain, every rung
+carrying `∃PP.G` — a genuine kernel. Composed with
+`multiBlock_of_chain` (E3f): **`block_of_persistent`** — a
+persistent-`∃PP` element yields an ACTUAL certificate block, the
+demand → kernel → certificate link the assembly instantiates once per
+vertical demand component. Ascending only; the descending dual
+(persistent `∃PPI` on a `PPI`-chain) is a mirrored round. Zero
+`sorry`; file now ~6,433 lines.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
