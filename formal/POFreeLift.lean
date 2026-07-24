@@ -7550,6 +7550,20 @@ theorem slabel_reverse (node : RNode I C0) {d : Concept}
   exact List.mem_append_right _ (List.mem_flatMap.mpr
     ⟨⟨Concept.ex dr d, hF⟩, List.mem_attach _ _, mem_fire.mpr h⟩)
 
+/-- FORWARD `∀DR`-FIRING FROM THE REQUIREMENT TYPE: a `∀DR.c` obligation
+    in a node's REQUIREMENT type puts its argument into every
+    `∃DR`-child's (saturated) label — the forward `ee_all` for the
+    directly-required universals (`c` lands in the child's seed via
+    `fire`). -/
+theorem slabel_forward_reqType (node : RNode I C0) {d : Concept}
+    (hF : Concept.ex dr d ∈ reqType I node.x node.s) {c : Concept}
+    (h : Concept.all dr c ∈ reqType I node.x node.s) :
+    c ∈ slabel (childNode node hF) := by
+  have h2 : c ∈ (childNode node hF).s :=
+    List.mem_cons_of_mem d (mem_fire.mpr h)
+  exact reqType_sub_slabel (childNode node hF) c
+    (mem_reqType_of_mem (x := (childNode node hF).x) h2)
+
 end HorizontalRecursion
 
 /-! ### The ∀-free fragment: `∀`-conditions vacuous (round 4, component 9)
