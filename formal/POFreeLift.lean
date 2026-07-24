@@ -9361,6 +9361,121 @@ theorem vkernel_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
   · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
   · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
 
+/-! ### Round E3h′ (2026-07-24): the FIRST `e_ex` discharge — a root
+external below the kernel
+
+The vertical kernel with ONE external `x0` sitting BELOW the chain
+(`x0 PP c i`, so `x0 PP c m` for the whole segment).  This is the first
+`MultiTierOk` with a genuine external whose `e_ex` residual is
+DISCHARGED — not vacuously (β ≠ Empty) — and it carries `C0` at that
+external node (the model root, where `C0` actually holds).  The move:
+`x0`'s own `∃PP.G` demand routes DOWN-UP into the kernel (`e_ex`
+disjunct 2, `conv (K () x0) = pp` since `x0 PP c i`, `G ∈ phase 0`);
+its `∃EQ` demands are self-served.  The external's `∀`-obligations fire
+by `mty_all` through the constant `pp`-row `x0 → segment`.  This is the
+first stone of the mixing: an external served by an existing kernel.
+(The open summit is externals that need NEW kernels — the multi-cluster
+recursion — where `x0`'s `∃PP` argument is off the one chain.) -/
+
+/-- The vertical kernel with a single below-external `x0` (the root):
+    `β = Unit`.  Every value read off the model. -/
+noncomputable def vkernel1 (I : Interp α) (C0 : Concept) (c : Nat → α)
+    (x0 : α) (i p : Nat) : MultiTier Unit Unit where
+  E := fun _ _ => I.rho x0 x0
+  K := fun _ _ => I.rho (c i) x0
+  Q := fun _ _ => I.rho (c i) (c i)
+  up := fun _ => true
+  tauE := fun _ => mty C0 I x0
+  p := fun _ => p
+  phase := fun _ a => mty C0 I (c (i + a))
+
+/-- THE ROOT-EXTERNAL KERNEL IS VALID: with `x0 PP` the whole segment
+    (`hx0pp`) and `x0`'s existentials the single chain demand `∃PP.G` or
+    `∃EQ` (`hx0dem`), the one-external kernel is a full `MultiTierOk` —
+    `x0`'s `e_ex` discharged INTO the kernel, `∀`-firing via the
+    constant `pp`-row. -/
+theorem vkernel1_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
+    (x0 : α) (hx0dom : I.dom x0)
+    (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hG0 : G ∈ mty C0 I (c i))
+    (hx0pp : ∀ a, I.rho x0 (c (i + a)) = pp)
+    (hdemands : ∀ a r D, Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      (r = pp ∧ D = G) ∨ r = eq)
+    (hx0dem : ∀ r D, Concept.ex r D ∈ mty C0 I x0 →
+      (r = pp ∧ D = G) ∨ r = eq) :
+    MultiTierOk (vkernel1 I C0 c x0 i p) := by
+  -- the kernel base sits ABOVE the root: `c i → x0 = PPI`
+  have hKppi : I.rho (c i) x0 = ppi := by
+    have h0 := hx0pp 0
+    rw [Nat.add_zero] at h0
+    rw [hI.conv_ x0 (c i) hx0dom (hdom i), h0]; rfl
+  have hx0ne : x0 ≠ c i := by
+    intro h
+    have h0 := hx0pp 0
+    rw [Nat.add_zero, h, hI.refl_eq (c i) (hdom i)] at h0
+    exact absurd h0 (by decide)
+  have hEK : ∀ a, I.rho (c (i + a)) x0 = ppi := by
+    intro a
+    rw [hI.conv_ x0 (c (i + a)) hx0dom (hdom (i + a)), hx0pp a]; rfl
+  have hinj : ∀ v w : Unit ⊕ Unit,
+      Sum.elim (fun _ : Unit => x0) (fun _ : Unit => c i) v
+        = Sum.elim (fun _ : Unit => x0) (fun _ : Unit => c i) w → v = w := by
+    rintro (⟨⟩ | ⟨⟩) (⟨⟩ | ⟨⟩) h
+    · rfl
+    · exact absurd h hx0ne
+    · exact absurd h.symm hx0ne
+    · rfl
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI (fun _ : Unit => x0)
+        (fun _ : Unit => c i) (fun _ => hx0dom) (fun _ => hdom i) hinj
+      e_clash := fun _ _ h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ _ _ h => mty_and h
+      e_or := fun _ _ _ h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ _ _ _ hmem hEr => mty_all hmem hx0dom hEr
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun _ _ ha E hE b hb =>
+        segment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun _ _ ha E hE b hb =>
+        segment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun _ _ _ E hE => seg_eq hI hdom hE
+      kq_all := fun k k' hne => absurd rfl hne
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all: x0's `∀` fires into every phase through the constant `pp`-row
+    intro _ r X hmem k hr a _
+    have hrpp : r = pp := by
+      rw [← hr]; show conv (I.rho (c i) x0) = pp; rw [hKppi]; rfl
+    subst hrpp
+    exact mty_all hmem (hdom (i + a)) (hx0pp a)
+  · -- ke_all: a phase's `∀` fires at x0 through the `ppi`-row
+    intro k a _ r X hmem f hr
+    have hrppi : r = ppi := by rw [← hr]; exact hKppi
+    subst hrppi
+    exact mty_all hmem hx0dom (hEK a)
+  · -- e_ex: x0's `∃PP.G` routes INTO the kernel; `∃EQ` self-serves
+    intro _ r D hmem
+    rcases hx0dem r D hmem with ⟨rfl, rfl⟩ | rfl
+    · refine Or.inr ⟨(), ?_, 0, hp, hG0⟩
+      show conv (I.rho (c i) x0) = pp; rw [hKppi]; rfl
+    · refine Or.inl ⟨(), hI.refl_eq x0 hx0dom, ?_⟩
+      obtain ⟨y, hy, hyr, hyD⟩ := mty_ex hmem
+      rwa [hI.eq_id x0 y hx0dom hy hyr]
+  · -- k_ex: as the externals-free kernel (chain / in-phase)
+    intro _ a _ r D hmem
+    rcases hdemands a r D hmem with ⟨rfl, rfl⟩ | rfl
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -9444,6 +9559,26 @@ theorem cvert_satisfiable : Satisfiable Cvert := by
   have h1 : Cvert ∈ mty Cvert Ivert (0 + (0 % 1)) := by
     rw [vfull (0 + (0 % 1))]; exact cl_self Cvert
   exact h1
+
+/-- `Cvert` is satisfiable via `vkernel1_ok` — the kernel PLUS the root
+    external `0` (below the chain), which carries `Cvert` and whose
+    `∃PP.A` demand is discharged INTO the kernel.  The first `e_ex`
+    discharge with a genuine external. -/
+theorem cvert_satisfiable_ext : Satisfiable Cvert := by
+  have hok : MultiTierOk (vkernel1 Ivert Cvert (fun n => n) 0 1 1) :=
+    vkernel1_ok Ivert_rcc5 Cvert (Concept.atom 0) (fun n => n) 0 trivial
+      (fun _ => trivial)
+      (fun n => chain_lt (Nat.lt_succ_self n))
+      Nat.one_pos
+      ((vfull 1).trans (vfull (1 + 1)).symm)
+      (by rw [vfull 1]; decide)
+      (fun a => chain_lt (by omega))
+      (fun a r D h => Or.inl (cvert_demands r D (by rw [vfull (1 + a)] at h; exact h)))
+      (fun r D h => Or.inl (cvert_demands r D (by rw [vfull 0] at h; exact h)))
+  refine multiTier_sound (vkernel1 Ivert Cvert (fun n => n) 0 1 1) hok
+    (Sum.inl ()) Cvert ?_
+  show Cvert ∈ mty Cvert Ivert 0
+  rw [vfull 0]; exact cl_self Cvert
 
 end VerticalWitness
 
@@ -9584,5 +9719,7 @@ end VerticalWitness
 #print axioms multiTierOk_of_pool_nil
 #print axioms vkernel_ok
 #print axioms VerticalWitness.cvert_satisfiable
+#print axioms vkernel1_ok
+#print axioms VerticalWitness.cvert_satisfiable_ext
 
 end POFreeLift

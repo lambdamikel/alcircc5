@@ -874,3 +874,31 @@ an external, whose own `∃PP` recurses. That is the multi-cluster
 `e_ex`/`hserve` recursion, `block_of_persistent` + `mtOkPool_of_block`
 territory, still open. `vkernel_ok` de-risks the kernel interior; the
 mixing is the next build.
+
+### E3h′ (2026-07-24): the FIRST `e_ex` discharge — a root external
+
+`vkernel1`/`vkernel1_ok` add ONE external `x0` sitting BELOW the chain
+(`x0 PP c i`, hypothesis `hx0pp : ∀ a, ρ x0 (c (i+a)) = pp`), giving the
+first `MultiTierOk` with a genuine external whose `e_ex` residual is
+DISCHARGED — β = Unit, not vacuous. Two moves:
+- **`x0`'s `∃PP.G` routes DOWN-UP into the kernel** — `e_ex` disjunct 2,
+  `conv (K () x0) = pp` because `x0 PP c i` (so `ρ (c i) x0 = ppi`,
+  `hKppi`), `G ∈ phase 0` (`hG0`). The external's demand is fulfilled by
+  the EXISTING kernel — no new kernel needed.
+- **`x0`'s `∃EQ` self-serves** (`e_ex` disjunct 1, `E x0 x0 = eq`).
+- The external's `∀`-obligations (`ee_all`/`ek_all`/`ke_all`) fire by
+  `mty_all` through the constant `pp`-row `x0 → segment` (`ek_all`
+  `r = pp`; `ke_all` `r = ppi = ρ (c(i+a)) x0`, `hEK`).
+
+It **carries `C0` at the external node** — the model root, where `C0`
+actually holds — resolving the "far segment doesn't carry the root type"
+problem of the β=Empty version. Witness `cvert_satisfiable_ext`: `Cvert`
+at the root external `0`, chain `= id`, segment `[1,2]`; `0 PP` the whole
+segment via `chain_lt`. Axioms `propext`/`Quot.sound`/`Classical.choice`.
+
+This is the first stone of the mixing — **an external served by an
+existing kernel**. The open summit is the OTHER external shape: one whose
+`∃PP` argument is off the one chain, needing a NEW kernel (indexed by
+recurrent type, with `Q` rectangle values and `K(C₀)` counting for
+finiteness). `vkernel1` shows the down-into-kernel routing; the
+up-into-a-fresh-kernel routing is the multi-cluster recursion proper.
