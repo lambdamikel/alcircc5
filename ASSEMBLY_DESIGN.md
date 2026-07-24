@@ -360,3 +360,75 @@ mechanism for the horizontal universals; the vertical universals ride
 on the existing kernel machinery. This is a well-scoped construction,
 not an open problem — but a real one, to be built `lmd`-guided with the
 checker as oracle, not rushed.
+
+---
+
+## 10. Postscript (2026-07-24): the ∀DR mosaic — both halves built, and
+the composition condition
+
+The `∀DR` reverse-firing of §9 is now **built and certified as two
+halves** (round E3-slabel/snodes), each a well-founded recursion, 0
+sorries:
+
+- **Label side** — `slabel node = reqType node ++ ⋃_{∃DR.d ∈ reqType
+  node} fire(slabel child, dr)` (child `= childNode`, i.e. seed
+  `arg :: fire(reqType,dr)`). Proved: `slabel_sub_mty` (⊆ mty, via
+  `fire_dr_reverse`), `slabel_sub_cl` (⊆ cl), `slabel_lmd_le` (stays in
+  the `lmd` budget, via `revfire_lmd_lt`), **`slabel_reverse`** (∀DR.c
+  in a child's saturated label ⟹ c in the parent's — reverse `ee_all`),
+  `slabel_forward_reqType` (forward `ee_all` for required ∀DR).
+- **Node side** — `snodes node = node :: ⋃_{∃r.c ∈ slabel node} snodes
+  (schildNode …)` (child `= schildNode`, seed `arg :: fire(SLABEL,dr)`).
+  Proved: termination (`schild_lmd_lt`), transitivity (`snodes_trans`),
+  **`snodes_covers`** (every demand in a reachable node's *saturated*
+  label is fulfilled by a reachable node).
+
+**The composition point.** The two halves use different child seeds:
+`slabel` fires from `fire(reqType,dr)`, `snodes` from
+`fire(slabel,dr)`. The difference is exactly
+
+    fire(slabel,dr) \ fire(reqType,dr)  =  { c : ∀DR.c ∈ reverse-batch },
+
+i.e. the `∀DR`-**headed** formulas sitting inside the reverse batch. The
+reverse batch consists of `∀DR`-*arguments* (`c` where `∀DR.c ∈ slabel
+child`); such a `c` is `∀DR`-headed only when the original was
+`∀DR.(∀DR.…)`. So:
+
+**Composition holds directly when `∀DR` guards neither `∀DR` nor `∃DR`.**
+Precisely: restrict to concepts where every `∀DR.c ∈ cl C₀` has `c` both
+`∀DR`-free and `∃DR`-free. Then
+- the reverse batch carries no `∀DR` ⟹ `fire(slabel)=fire(reqType)` ⟹
+  `schildNode = childNode` on `∃DR` demands, so the frame's `DR` edges
+  are exactly the `childNode` edges `slabel` fires reverse from —
+  `slabel_reverse` gives reverse `ee_all` and `slabel_forward_reqType`
+  gives forward `ee_all`;
+- the reverse batch adds no new `∃DR` demand ⟹ no reverse-added `DR`
+  edge to re-fire; reverse-added `∃PO`/`∃EQ` demands ride on `PO`
+  edges (which fire nothing, ∀PO-free) / the `EQ` fold; and `snodes`
+  degenerates to the `rnodes`-style coverage `snodes_covers` supplies.
+
+This fragment is genuinely useful — it contains `∀DR.A`,
+`∀DR.(∃PO.B ⊓ ∀PP.C)`, and the like (constraint-propagation `∀DR`),
+excluding only `∀DR.(∃DR.…)` and `∀DR.(∀DR.…)`.
+
+**Full generality** (`∀DR` guarding `∀DR`/`∃DR`) needs the **within-node
+fixpoint**: `schildNode` fires forward from `slabel`, but for the
+reverse direction `slabel` would then have to fire back from
+`schildNode` — which needs `slabel` — a genuine circularity, resolved by
+iterating the reverse firing to a fixpoint at each node (bounded by
+`lmd`/`revfire_lmd_lt`, so terminating). That is the last piece of real
+construction; everything up to it is proved.
+
+**Plan for the assembly (no-`∀DR`-guarded-`DR` fragment):**
+1. `GuardFreeDR` predicate + lemma `fire(slabel node,dr) = fire(reqType
+   node,dr)` (reverse batch has no `∀DR`), hence `schildNode hF =
+   childNode hF'` on `∃DR` demands (seed + witness equal by proof
+   irrelevance).
+2. Tree-structural `MultiTier` over `β = snodes root`: `E = symDrPo`
+   frame with `d m m' = "∃DR-demand-adjacent"`; `tauE = slabel`.
+3. `MultiTierOk`: frame `symDrPo_frame`; propositional from `slabel`
+   saturation; `ee_all` on `DR` via `slabel_reverse`/`_forward`, on
+   `PP`/`PPI` vacuous (`symDrPo_vals`), on `PO` vacuous (∀PO-free), on
+   `EQ` via the fold; `e_ex` = `snodes_covers`.
+4. `∃EQ`/`∀EQ` reflexive fold in `expand` (as for the ∀-free case's
+   diagonal, now as a syntactic fold).
