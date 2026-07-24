@@ -7413,6 +7413,89 @@ theorem rnodes_covers (root : RNode I C0) :
 
 end HorizontalRecursion
 
+/-! ### The ∀-free fragment: `∀`-conditions vacuous (round 4, component 9)
+
+For the ∀-FREE sub-fragment (no universal anywhere — a fortiori
+∀PO-free), a node's requirement label carries NO `∀` obligation, so
+every universal-propagation condition of `MultiTierOk`
+(`ee_all`/`ek_all`/`ke_all`/`kk_*`) is VACUOUS.  Combined with the
+read-off frame (any relation, valid by `readoff_frame`) and `e_ex` =
+coverage, this is the fragment the horizontal recursion assembles into
+a certificate with no `∀`-firing bookkeeping and no kernels. -/
+
+section AllFree
+
+/-- No universal subformula. -/
+def AllFree : Concept → Prop
+  | .all _ _ => False
+  | .and c d => AllFree c ∧ AllFree d
+  | .or c d => AllFree c ∧ AllFree d
+  | .ex _ c => AllFree c
+  | _ => True
+
+/-- A ∀-free concept's closure contains no universal. -/
+theorem allfree_cl_no_all : ∀ e : Concept, AllFree e →
+    ∀ (r : Atom) (c : Concept), Concept.all r c ∉ cl e := by
+  intro e
+  induction e with
+  | top =>
+    intro _ r c hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | bot =>
+    intro _ r c hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | atom a =>
+    intro _ r c hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | natom a =>
+    intro _ r c hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · exact nomatch h
+  | and a b iha ihb =>
+    intro haf r c hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · rcases List.mem_append.mp h with h' | h'
+      · exact iha haf.1 r c h'
+      · exact ihb haf.2 r c h'
+  | or a b iha ihb =>
+    intro haf r c hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · rcases List.mem_append.mp h with h' | h'
+      · exact iha haf.1 r c h'
+      · exact ihb haf.2 r c h'
+  | ex r' a iha =>
+    intro haf r c hmem
+    rcases List.mem_cons.mp hmem with h | h
+    · exact Concept.noConfusion h
+    · exact iha haf r c h
+  | all r' a iha =>
+    intro haf r c hmem
+    exact haf
+
+/-- A ∀-free concept's model types carry no universal. -/
+theorem allfree_mty_no_all {C0 : Concept} (haf : AllFree C0) {α : Type}
+    {I : Interp α} {x : α} {r : Atom} {c : Concept} :
+    Concept.all r c ∉ mty C0 I x :=
+  fun h => allfree_cl_no_all C0 haf r c (mty_sub _ h)
+
+/-- A ∀-free concept's requirement labels carry no universal. -/
+theorem allfree_reqType_no_all {C0 : Concept} (haf : AllFree C0)
+    {α : Type} {I : Interp α} {x : α} {s : List Concept}
+    (hs : ∀ F ∈ s, F ∈ cl C0) {r : Atom} {c : Concept} :
+    Concept.all r c ∉ reqType I x s :=
+  fun h => allfree_cl_no_all C0 haf r c (reqType_sub_cl hs _ h)
+
+end AllFree
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -7510,5 +7593,7 @@ end HorizontalRecursion
 #print axioms childNode_mem
 #print axioms rnodes_trans
 #print axioms rnodes_covers
+#print axioms allfree_cl_no_all
+#print axioms allfree_reqType_no_all
 
 end POFreeLift
