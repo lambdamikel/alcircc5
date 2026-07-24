@@ -587,10 +587,17 @@ The mirror of E3g: `persistPPI I C0 G x` (`∃PPI.G` + guard
 the guard DESCENDS via `sat_all_ppi_down`, the `PP`-below step from
 converse coherence `conv PPI = PP`); `persistPPI_chain` builds the
 infinite descending kernel chain — the `up = false` kernel a mixed
-assembly consumes alongside ascending ones. (The descending
-demand → certificate link awaits a `dmultiBlock_of_site` mirror of E3f;
-the ascending `block_of_persistent` already exhibits the full pattern.)
-Zero `sorry`; file now ~6,485 lines.
+assembly consumes alongside ascending ones. Zero `sorry`; file now ~6,485 lines.
+
+**Round E3h (landed, 2026-07-23): the descending block mirror
+(design plan round 1).** `dmultiBlock_of_site`/`dmultiBlock_of_chain` —
+the descending mirror of E3f (`dkernel_site` + `multi_kernel_block` at
+`κ = Unit`, `up = false`); `block_of_persistent_desc` — the descending
+demand → kernel → certificate link (`persistPPI_chain` +
+`dmultiBlock_of_chain`). Both chain directions now run the full
+pipeline end-to-end. Mechanical mirror; zero `sorry`; file now ~6,632
+lines. Design plan (ASSEMBLY_DESIGN.md §8) round 1 of 5 DONE; next =
+requirement types as a Lean object.
 
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:

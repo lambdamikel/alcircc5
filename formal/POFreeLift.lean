@@ -6293,6 +6293,132 @@ theorem multiBlock_of_chain (hI : RCC5Interp I)
     ctx hctxdom hp hty hctx hserve
     (fun a _ D hD => hpoolcl D (mty_sub _ hD))⟩
 
+/-- THE DESCENDING GENERAL BLOCK FROM A SITE (mirror of
+    `multiBlock_of_site`): a descending kernel site yields a `BlockOk`
+    for `mkBlock` at `κ = Unit`, `up = false`, via `multi_kernel_block`. -/
+theorem dmultiBlock_of_site (hI : RCC5Interp I)
+    {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+    (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi)
+    (C0 : Concept) (hpo : POFree C0) (myTag : Nat)
+    (P : List (Nat × List Concept)) (ctx : List α)
+    (hctxdom : ∀ e ∈ ctx, I.dom e)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (d i) = mty C0 I (d (i + p)))
+    (hctx : ∀ e ∈ ctx, ∀ m, i ≤ m → I.rho (d m) e = I.rho (d i) e)
+    (hserve : ∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+      Concept.ex r D ∈ mty C0 I (d (i + a)) →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, b ≤ p → I.rho (d (i + b)) w = r)
+    (hpool : ∀ a, a < p → ∀ D, Concept.ex po D ∈ mty C0 I (d (i + a)) →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    ∃ (β : Type) (T : MultiTier β Unit),
+      BlockOk T myTag P ∧ T.p () = p ∧
+      (∀ a, T.phase () a = mty C0 I (d (i + a))) ∧
+      (POFree C0 → MTNoPo T) := by
+  classical
+  let W : α → Prop := fun w => w ∈ ctx ∨
+    ∃ a r D, ∃ (ha : a ≤ p) (hr : r = dr ∨ r = pp ∨ r = ppi)
+      (hD : Concept.ex r D ∈ mty C0 I (d (i + a))),
+      w = Classical.choose (hserve a r D ha hr hD)
+  have hWdom : ∀ w, W w → I.dom w := by
+    intro w hw
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · exact hctxdom w hctxm
+    · exact (Classical.choose_spec (hserve a r D ha hr hD)).1
+  have hWconst : ∀ w, W w → ∀ b, b ≤ p →
+      I.rho (d (i + b)) w = I.rho (d i) w := by
+    intro w hw b hb
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · exact hctx w hctxm (i + b) (Nat.le_add_right i b)
+    · have hspec := (Classical.choose_spec (hserve a r D ha hr hD)).2.2
+      have h0 : I.rho (d i)
+          (Classical.choose (hserve a r D ha hr hD)) = r := by
+        have h1 := hspec 0 (Nat.zero_le p)
+        rwa [Nat.add_zero] at h1
+      rw [hspec b hb, h0]
+  have hcne : d (i + 1) ≠ d i := by
+    intro hcc
+    have h1 := hstep i
+    rw [hcc, hI.refl_eq (d i) (hdom i)] at h1
+    exact absurd h1 (by decide)
+  have hWne : ∀ w, W w → w ≠ d i := by
+    intro w hw heq
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · have h1 := hctx w hctxm (i + 1) (Nat.le_add_right i 1)
+      rw [heq, hI.refl_eq (d i) (hdom i)] at h1
+      exact hcne (hI.eq_id (d (i + 1)) (d i) (hdom (i + 1)) (hdom i) h1)
+    · have hspec := (Classical.choose_spec (hserve a r D ha hr hD)).2.2
+      have h0 := hspec 0 (Nat.zero_le p)
+      rw [Nat.add_zero, heq, hI.refl_eq (d i) (hdom i)] at h0
+      rcases hr with rfl | rfl | rfl <;> exact absurd h0 (by decide)
+  let β := {w : α // W w}
+  let eltE : β → α := Subtype.val
+  let ck : Unit → Nat → α := fun _ m => d m
+  let ik : Unit → Nat := fun _ => i
+  let pk : Unit → Nat := fun _ => p
+  let elt : β ⊕ Unit → α := blockElt eltE ck ik
+  have hdomV : ∀ v : β ⊕ Unit, I.dom (elt v) := by
+    intro v; rcases v with e | u
+    · exact hWdom e.val e.2
+    · exact hdom i
+  have hinj : ∀ v w : β ⊕ Unit, elt v = elt w → v = w := by
+    intro v w hvw
+    rcases v with e | u <;> rcases w with f | u'
+    · exact congrArg Sum.inl (Subtype.ext hvw)
+    · exact absurd hvw (hWne e.val e.2)
+    · exact absurd hvw.symm (hWne f.val f.2)
+    · cases u; cases u'; rfl
+  refine ⟨β, mkBlock I C0 eltE ck (fun _ => false) ik pk
+    (tightNePo I elt), ?_, rfl, fun _ => rfl, fun hpo' => mkBlock_nopo hpo'⟩
+  refine multi_kernel_block hI C0 hpo myTag P eltE ck (fun _ => false)
+    ik pk (tightNePo I elt)
+    (fun e => hWdom e.val e.2) (fun _ m => hdom m)
+    (fun _ m => hstep m) (fun _ => hp) (fun _ => hty) hinj
+    (tightNePo_symm hI hdomV)
+    (fun v w u _ _ h1 h2 => tightNePo_htpp hI hdomV v w u h1 h2)
+    (fun v w u _ _ h1 h2 => tightNePo_htdr hI hdomV v w u h1 h2)
+    (fun _ e _ a ha => hWconst e.val e.2 a ha)
+    (fun k k' hkk => absurd (by cases k; cases k'; rfl) hkk)
+    ?_
+    (fun _ a ha D hD => hpool a ha D hD)
+  · intro _ a r D ha hr hD
+    have hchosen : W (Classical.choose (hserve a r D (Nat.le_of_lt ha) hr hD)) :=
+      Or.inr ⟨a, r, D, Nat.le_of_lt ha, hr, hD, rfl⟩
+    have hspec := (Classical.choose_spec (hserve a r D (Nat.le_of_lt ha) hr hD))
+    have hrow : I.rho (d i)
+        (Classical.choose (hserve a r D (Nat.le_of_lt ha) hr hD)) = r := by
+      have h1 := hspec.2.2 0 (Nat.zero_le p)
+      rwa [Nat.add_zero] at h1
+    refine ⟨⟨_, hchosen⟩, ?_, hrow, hspec.2.1⟩
+    have hedge : I.rho (elt (.inr ()))
+        (elt (.inl (⟨_, hchosen⟩ : β))) = r := hrow
+    show tightNePo I elt (.inr ()) (.inl ⟨_, hchosen⟩)
+    unfold tightNePo
+    rw [hedge]
+    rcases hr with rfl | rfl | rfl <;> decide
+
+/-- THE DESCENDING GENERAL BLOCK FROM A CHAIN (mirror of
+    `multiBlock_of_chain`): every descending model chain carries, past
+    any bound, a `BlockOk` built by `mkBlock`. -/
+theorem dmultiBlock_of_chain (hI : RCC5Interp I)
+    {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+    (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi)
+    (C0 : Concept) (hpo : POFree C0) (myTag : Nat)
+    (P : List (Nat × List Concept)) (ctx : List α)
+    (hctxdom : ∀ e ∈ ctx, I.dom e) (L : Nat)
+    (hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧ T.p () = p ∧
+        (∀ a, T.phase () a = mty C0 I (d (i + a))) ∧
+        (POFree C0 → MTNoPo T) := by
+  obtain ⟨i, p, hLi, hp, hty, hctx, _, hserve⟩ :=
+    dkernel_site hI hdom hstep C0 ctx hctxdom L
+  exact ⟨i, p, hLi, hp, dmultiBlock_of_site hI hdom hstep C0 hpo myTag P
+    ctx hctxdom hp hty hctx hserve
+    (fun a _ D hD => hpoolcl D (mty_sub _ hD))⟩
+
 end BlockFromSite
 
 /-! ## Round E3g (2026-07-23): kernels from persistent vertical demand
@@ -6414,6 +6540,24 @@ theorem persistPPI_chain (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
   · exact fun n => dbuildChain_step _ _ x0 h0 n
   · exact fun n => (dbuildChain_prop _ _ x0 h0 n).2.1
 
+/-- THE DESCENDING DEMAND → CERTIFICATE LINK (mirror of
+    `block_of_persistent`): a persistent-`∃PPI` element yields an actual
+    certificate block (via `dmultiBlock_of_chain`). -/
+theorem block_of_persistent_desc (hI : RCC5Interp I) {C0 G : Concept}
+    (hpo : POFree C0) (myTag : Nat) (P : List (Nat × List Concept))
+    (ctx : List α) (hctxdom : ∀ e ∈ ctx, I.dom e)
+    (hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2)
+    (x0 : α) (h0 : persistPPI I C0 G x0) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧ T.p () = p ∧
+        (POFree C0 → MTNoPo T) := by
+  obtain ⟨d, _, hdom, hstep, _⟩ := persistPPI_chain hI x0 h0
+  obtain ⟨i, p, hLi, hp, β, T, hBlock, hpT, _, hnopo⟩ :=
+    dmultiBlock_of_chain hI hdom hstep C0 hpo myTag P ctx hctxdom L hpoolcl
+  exact ⟨i, p, hLi, hp, β, T, hBlock, hpT, hnopo⟩
+
 end DescPersistentKernel
 
 #print axioms twoTier_sound
@@ -6476,10 +6620,13 @@ end DescPersistentKernel
 #print axioms twoSorted_eq_readoff
 #print axioms multiBlock_of_site
 #print axioms multiBlock_of_chain
+#print axioms dmultiBlock_of_site
+#print axioms dmultiBlock_of_chain
 #print axioms persistPP_productive
 #print axioms persistPP_chain
 #print axioms block_of_persistent
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
+#print axioms block_of_persistent_desc
 
 end POFreeLift
