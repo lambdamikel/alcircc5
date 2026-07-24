@@ -7597,7 +7597,8 @@ noncomputable def slabel (node : RNode I C0) : List Concept :=
   reqType I node.x node.s ++
   (reqType I node.x node.s).attach.flatMap
     (fun p => match p with
-      | ⟨.ex dr d, hF⟩ => fire (slabel (childNode node hF)) dr
+      | ⟨.ex dr d, hF⟩ =>
+          (fire (slabel (childNode node hF)) dr).flatMap (expand I node.x)
       | _ => [])
 termination_by lmd (reqType I node.x node.s)
 decreasing_by exact child_lmd_lt hF
@@ -7626,8 +7627,10 @@ theorem slabel_sub_mty (hI : RCC5Interp I) (node : RNode I C0) :
       | ex r d =>
         cases r with
         | dr =>
-          exact fire_dr_reverse hI node.hdom (childNode node hG).hdom
-            (childNode_rho node hG) (ih d hG) F hFm
+          obtain ⟨c, hc, hFc⟩ := List.mem_flatMap.mp hFm
+          exact expand_sub_mty c
+            (fire_dr_reverse hI node.hdom (childNode node hG).hdom
+              (childNode_rho node hG) (ih d hG) c hc) F hFc
         | eq => exact absurd hFm List.not_mem_nil
         | pp => exact absurd hFm List.not_mem_nil
         | ppi => exact absurd hFm List.not_mem_nil
@@ -7653,7 +7656,9 @@ theorem slabel_sub_cl (node : RNode I C0) :
       cases G with
       | ex r d =>
         cases r with
-        | dr => exact fire_sub_cl (ih d hG) F hFm
+        | dr =>
+          obtain ⟨c, hc, hFc⟩ := List.mem_flatMap.mp hFm
+          exact expand_sub_cl_of (fire_sub_cl (ih d hG) c hc) F hFc
         | eq => exact absurd hFm List.not_mem_nil
         | pp => exact absurd hFm List.not_mem_nil
         | ppi => exact absurd hFm List.not_mem_nil
@@ -7677,7 +7682,8 @@ theorem slabel_reverse (node : RNode I C0) {d : Concept}
     c ∈ slabel node := by
   rw [slabel]
   exact List.mem_append_right _ (List.mem_flatMap.mpr
-    ⟨⟨Concept.ex dr d, hF⟩, List.mem_attach _ _, mem_fire.mpr h⟩)
+    ⟨⟨Concept.ex dr d, hF⟩, List.mem_attach _ _,
+     List.mem_flatMap.mpr ⟨c, mem_fire.mpr h, mem_expand_self I node.x c⟩⟩)
 
 /-- FORWARD `∀DR`-FIRING FROM THE REQUIREMENT TYPE: a `∀DR.c` obligation
     in a node's REQUIREMENT type puts its argument into every
@@ -7709,11 +7715,14 @@ theorem slabel_mdepth_le (node : RNode I C0) :
       | ex r d =>
         cases r with
         | dr =>
-          have hall : Concept.all dr F ∈ slabel (childNode node hG) :=
-            mem_fire.mp hFm
-          exact Nat.le_of_lt (Nat.lt_of_lt_of_le (mdepth_all_lt dr F)
-            (Nat.le_trans (ih d hG _ hall)
-              (Nat.le_of_lt (child_lmd_lt hG))))
+          obtain ⟨c, hc, hFc⟩ := List.mem_flatMap.mp hFm
+          have hall : Concept.all dr c ∈ slabel (childNode node hG) :=
+            mem_fire.mp hc
+          exact Nat.le_of_lt (Nat.lt_of_le_of_lt
+            (cl_mdepth_le c F (expand_sub_cl I node.x c F hFc))
+            (Nat.lt_of_lt_of_le (mdepth_all_lt dr c)
+              (Nat.le_trans (ih d hG _ hall)
+                (Nat.le_of_lt (child_lmd_lt hG)))))
         | eq => exact absurd hFm List.not_mem_nil
         | pp => exact absurd hFm List.not_mem_nil
         | ppi => exact absurd hFm List.not_mem_nil
@@ -7754,9 +7763,11 @@ theorem slabel_alldr_reqType
     | ex r d =>
       cases r with
       | dr =>
-        have hall : Concept.all dr (Concept.all dr c) ∈
-            slabel (childNode node hG) := mem_fire.mp hFm
-        exact hgf (Concept.all dr c) (slabel_sub_cl _ _ hall)
+        obtain ⟨c', hc', hcc⟩ := List.mem_flatMap.mp hFm
+        have hall : Concept.all dr c' ∈ slabel (childNode node hG) :=
+          mem_fire.mp hc'
+        exact (noDR_cl c' (hgf c' (slabel_sub_cl _ _ hall)) c).1
+          (expand_sub_cl I node.x c' _ hcc)
       | eq => exact absurd hFm List.not_mem_nil
       | pp => exact absurd hFm List.not_mem_nil
       | ppi => exact absurd hFm List.not_mem_nil
@@ -7787,9 +7798,11 @@ theorem slabel_exdr_reqType
     | ex r d' =>
       cases r with
       | dr =>
-        have hall : Concept.all dr (Concept.ex dr d) ∈
-            slabel (childNode node hG) := mem_fire.mp hFm
-        exact hgf (Concept.ex dr d) (slabel_sub_cl _ _ hall)
+        obtain ⟨c', hc', hcc⟩ := List.mem_flatMap.mp hFm
+        have hall : Concept.all dr c' ∈ slabel (childNode node hG) :=
+          mem_fire.mp hc'
+        exact (noDR_cl c' (hgf c' (slabel_sub_cl _ _ hall)) d).2
+          (expand_sub_cl I node.x c' _ hcc)
       | eq => exact absurd hFm List.not_mem_nil
       | pp => exact absurd hFm List.not_mem_nil
       | ppi => exact absurd hFm List.not_mem_nil
