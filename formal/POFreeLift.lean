@@ -9133,6 +9133,83 @@ theorem satisfiable_iff_hfrag_cert (C0 : Concept) (hfrag : HFrag C0) :
 
 end HorizFragAssembly
 
+/-! ### Non-vacuity: the horizontal fragment fires on a nested-`∀DR` concept
+
+`Cwit = ∃DR.⊤ ⊓ ∀DR.(∀DR.A)` is EXCLUDED from `DRFrag` (its `∀DR` guards
+a `∀DR`, so it is not DR-guard-free) but lies IN `HFrag`.  It is
+satisfiable in a two-point all-`DR` model, so `satisfiable_iff_hfrag_cert`
+produces a valid certificate — demonstrating the lift is non-vacuous and
+strictly beyond the `∀DR`-propagation fragment. -/
+
+namespace HFragWitness
+
+/-- The two-point all-`DR` frame (`EQ` on the diagonal). -/
+def Nwit : Bool → Bool → Atom := fun v w => if v = w then eq else dr
+
+theorem Nwit_frame : Frame Nwit := by
+  refine ⟨?_, ?_, ?_, ?_⟩ <;> decide
+
+/-- `A = atom 0`, true at the point `true`. -/
+def valwit : Nat → Bool → Prop := fun a x => a = 0 ∧ x = true
+
+def Iwit : Interp Bool := ⟨fun _ => True, Nwit, valwit⟩
+
+theorem Iwit_rcc5 : RCC5Interp Iwit := frame_rcc5 Nwit Nwit_frame valwit
+
+/-- `∃DR.⊤ ⊓ ∀DR.(∀DR.A)` — nested `∀DR`, excluded from `DRFrag`. -/
+def Cwit : Concept :=
+  .and (.ex dr .top) (.all dr (.all dr (.atom 0)))
+
+theorem Cwit_sat : Satisfiable Cwit :=
+  ⟨Bool, Iwit, Iwit_rcc5, true, trivial,
+    ⟨⟨false, trivial, rfl, trivial⟩, by
+      intro y _ hy
+      cases y with
+      | true => exact absurd hy (by decide)
+      | false =>
+        intro z _ hz
+        cases z with
+        | true => exact ⟨rfl, rfl⟩
+        | false => exact absurd hz (by decide)⟩⟩
+
+theorem Cwit_hfrag : HFrag Cwit where
+  hex := by
+    intro r c hmem
+    simp only [Cwit, cl, List.cons_append, List.nil_append, List.mem_cons,
+      List.not_mem_nil, or_false] at hmem
+    rcases hmem with h | h | h | h | h | h
+    · exact Concept.noConfusion h
+    · injection h with hr _; exact Or.inl hr
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+  hall := by
+    intro r c hmem
+    simp only [Cwit, cl, List.cons_append, List.nil_append, List.mem_cons,
+      List.not_mem_nil, or_false] at hmem
+    rcases hmem with h | h | h | h | h | h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · exact Concept.noConfusion h
+    · injection h with hr _; rw [hr]; decide
+    · injection h with hr _; rw [hr]; decide
+    · exact Concept.noConfusion h
+
+/-- The `∀DR`-nested `Cwit` is NOT DR-guard-free, so `DRFrag Cwit` fails —
+    `HFrag` strictly extends the `∀DR`-propagation fragment. -/
+theorem Cwit_not_drfrag : ¬ DRFrag Cwit := fun h =>
+  h.hgf (Concept.all dr (Concept.atom 0)) (by decide)
+
+/-- THE HORIZONTAL FRAGMENT THEOREM FIRES on the nested-`∀DR` `Cwit`:
+    a valid finite multi-tier certificate carrying it exists. -/
+theorem Cwit_has_cert :
+    ∃ (β : Type) (T : MultiTier β Empty) (g : β),
+      MultiTierOk T ∧ Cwit ∈ T.tauE g :=
+  (satisfiable_iff_hfrag_cert Cwit Cwit_hfrag).mp Cwit_sat
+
+end HFragWitness
+
 /-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
     directions now kernel-checked: `←` is the certified soundness
     pipeline (`multiTier_sound`), `→` is the extraction
@@ -9285,5 +9362,8 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms mtHF_ok
 #print axioms extract_hfrag
 #print axioms satisfiable_iff_hfrag_cert
+#print axioms HFragWitness.Cwit_sat
+#print axioms HFragWitness.Cwit_has_cert
+#print axioms HFragWitness.Cwit_not_drfrag
 
 end POFreeLift
