@@ -771,3 +771,51 @@ pool-free block give full `MultiTierOk` directly?) — investigate
 chain with the terminal type, or bounded `PP`-externals) → horizontal +
 vertical mixing (the full `β ⊕ κ` frame, `K`/`Q` values from the model,
 pool for cross-cluster `∃PO`) → the full ∀PO-free characterization.
+
+---
+
+## 18. The vertical investigation (2026-07-24): β=Empty path + the key gap
+
+Investigated whether a **single kernel with `β = Empty`** (no externals)
+could give a clean first vertical fragment — it's much simpler than
+`block_of_persistent` (no `ctx`/witnesses/`BlockOk` layer). The result
+sharply delimits what's possible.
+
+**The β=Empty single-kernel `MultiTier`** (`κ = Unit`, `up = true`,
+`phase () a = mty C₀ I (c (i+a))` from `segment_select`): nearly every
+`MultiTierOk` field is FREE —
+- externals `e_*`/`ee_all`/`ek_all`/`ke_all` vacuous (`Empty`);
+- `k_clash`/`k_nobot`/`k_and`/`k_or` from `mty_*`;
+- `kk_pp`/`kk_ppi` are EXACTLY `segment_kk_pp`/`segment_kk_ppi` (E2a);
+- `kk_eq` reflexive (`mty_all` at `eq`, `refl_eq`);
+- `kq_all` vacuous (no distinct `Unit` kernels);
+- `frame_q` a one-point `eq` frame ⟹ `munf_is_frame`.
+
+**The one hard field is `k_ex`.** A `∃r.c` demand at phase `a`:
+- `r = pp` (`= cdir true`) routes to `∃ b<p, c ∈ phase b` — i.e. **`c`
+  must be carried by a chain point**.
+- `r = eq` in-phase; other `r` need externals (`Empty` — impossible).
+
+**THE GAP (decisive).** `persistPP I C₀ G x` = `∃PP.G ∈ mty x ∧
+∀PP.(∃PP.G) ∈ mty x`. The chain carries the **demand** `∃PP.G` at every
+rung (via the guard, `mty_all`) but NOT its **argument** `G` — the witness
+of `∃PP.G` is off-chain. `block_of_persistent`'s own comment confirms it:
+"every rung carrying `∃PP.G`". So the chain fulfils `∃PP.G` internally
+ONLY when `G` is already true at chain points — i.e. `G = ⊤` (the `Cinf`
+shape). For a general `G`, the argument needs an **off-chain external
+witness** ⟹ externals ⟹ the `e_ex`/`hserve` recursion ⟹ the block
+machinery. There is no β=Empty shortcut past `Cinf`.
+
+**Kept insight (`k_ex` routing).** A chain-carried `∃PP.c` at phase `a`
+routes to phase `(a+1) mod p`; the recurrence `hty` wraps the `a+1 = p`
+case to phase `0` (`c ∈ mty(c(i+p)) = mty(c(i)) = phase 0`).
+
+**Conclusion.** β=Empty certifies only the `Cinf`-shape (essentially
+`cinf_satisfiable` as a characterization — low marginal value). **The
+general persistent-vertical fragment genuinely requires the
+`block_of_persistent` integration**, whose crux is discharging the
+externals' `e_ex` (the `hserve` witnesses for the off-chain `G`, which
+themselves carry `∃PP.G` and recurse) — that IS the multi-cluster
+recursion. So (C) has no shortcut; the next build is the block-integration
+proper, best started with fresh context on the E3 `mkBlock`/`hserve`
+contract. The paths are now precisely mapped.
