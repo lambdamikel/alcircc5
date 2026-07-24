@@ -8819,6 +8819,104 @@ theorem mtk_ex_eq (hI : RCC5Interp I) {x : α} {k : Nat} {c : Concept}
 
 end MtkLabel
 
+/-! ### The depth-bounded coverage recursion (`mtkNodes`)
+
+Parallels `rnodes`/`snodes`, but terminates on the budget `k` directly
+(no `lmd`): each demand's witness lives at depth `k-1`, and any demand
+forces `k ≥ 1`.  Its coverage theorem `mtkNodes_covers` discharges `e_ex`. -/
+
+section MtkRecursion
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- A reachable node: a model element with a depth budget.  `C0` is
+    carried in the type so the (phantom) label parameter is inferable. -/
+structure MTKNode (I : Interp α) (C0 : Concept) where
+  x : α
+  k : Nat
+  hx : I.dom x
+
+/-- The child covering a demand: its model witness, budget one less. -/
+noncomputable def mtkWitness (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) : MTKNode I C0 :=
+  ⟨Classical.choose (mtk_ex hF), n.k - 1, (Classical.choose_spec (mtk_ex hF)).1⟩
+
+theorem mtkWitness_rho (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) :
+    I.rho n.x (mtkWitness n hF).x = r :=
+  (Classical.choose_spec (mtk_ex hF)).2.1
+
+theorem mtkWitness_arg (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) :
+    c ∈ mtk C0 I (mtkWitness n hF).x (mtkWitness n hF).k :=
+  (Classical.choose_spec (mtk_ex hF)).2.2
+
+/-- Termination for `mtkNodes`: the child's budget is strictly smaller
+    (a demand forces `n.k ≥ 1`). -/
+theorem mtkWitness_k_lt (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) : (mtkWitness n hF).k < n.k := by
+  have hk : mdepth c + 1 ≤ n.k := (mem_mtk.mp hF).2
+  show n.k - 1 < n.k
+  omega
+
+/-- The depth-bounded coverage node set. -/
+noncomputable def mtkNodes (n : MTKNode I C0) : List (MTKNode I C0) :=
+  n :: (mtk C0 I n.x n.k).attach.flatMap
+    (fun p => match p with
+      | ⟨.ex r c, hF⟩ => mtkNodes (mtkWitness n hF)
+      | _ => [])
+termination_by n.k
+decreasing_by exact mtkWitness_k_lt n hF
+
+theorem self_mem_mtkNodes (n : MTKNode I C0) : n ∈ mtkNodes n := by
+  rw [mtkNodes]; exact List.mem_cons_self
+
+theorem sub_mtkNodes_witness (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) :
+    ∀ m ∈ mtkNodes (mtkWitness n hF), m ∈ mtkNodes n := by
+  intro m hm
+  rw [mtkNodes]
+  exact List.mem_cons_of_mem _ (List.mem_flatMap.mpr
+    ⟨⟨Concept.ex r c, hF⟩, List.mem_attach _ _, hm⟩)
+
+theorem mtkWitness_mem (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) :
+    mtkWitness n hF ∈ mtkNodes n :=
+  sub_mtkNodes_witness n hF _ (self_mem_mtkNodes _)
+
+theorem mtkNodes_trans (n : MTKNode I C0) :
+    ∀ m ∈ mtkNodes n, ∀ k ∈ mtkNodes m, k ∈ mtkNodes n := by
+  induction n using mtkNodes.induct with
+  | _ x ih =>
+    intro m hm k hk
+    rw [mtkNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact hk
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c => exact sub_mtkNodes_witness x hF k (ih r c hF m hmm k hk)
+      | top => exact absurd hmm List.not_mem_nil
+      | bot => exact absurd hmm List.not_mem_nil
+      | atom a => exact absurd hmm List.not_mem_nil
+      | natom a => exact absurd hmm List.not_mem_nil
+      | and a b => exact absurd hmm List.not_mem_nil
+      | or a b => exact absurd hmm List.not_mem_nil
+      | all r c => exact absurd hmm List.not_mem_nil
+
+/-- COVERAGE: every demand at any reachable node is fulfilled by a
+    reachable node (its model witness). -/
+theorem mtkNodes_covers (root : MTKNode I C0) :
+    ∀ m ∈ mtkNodes root, ∀ (r : Atom) (c : Concept),
+      Concept.ex r c ∈ mtk C0 I m.x m.k →
+      ∃ m' ∈ mtkNodes root,
+        I.rho m.x m'.x = r ∧ c ∈ mtk C0 I m'.x m'.k := by
+  intro m hm r c hF
+  exact ⟨mtkWitness m hF,
+    mtkNodes_trans root m hm _ (mtkWitness_mem m hF),
+    mtkWitness_rho m hF, mtkWitness_arg m hF⟩
+
+end MtkRecursion
+
 /-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
     directions now kernel-checked: `←` is the certified soundness
     pipeline (`multiTier_sound`), `→` is the extraction
