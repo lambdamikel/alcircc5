@@ -685,3 +685,36 @@ path, where labels must be model-independent syntactic data (`reqType`, for
 for the eventual decidability layer; `mtk` is the clean characterization
 route. This leaves ONLY `∃PP`/`∃PPI` (C, the vertical kernels) between here
 and the full ∀PO-free characterization.
+
+**DONE (2026-07-24): `satisfiable_iff_hfrag_cert`.** Built exactly as
+above, 0 sorries, 0 warnings, axioms `propext`/`Quot.sound`/`Classical.choice`
+(choice model-side). `HFrag`: `∃` ∈ {DR,PO,EQ}, `∀` ≠ PO. `mtk` label
+layer + `mtkNodes` recursion (terminates on `k`) + coverage
+`mtkNodes_covers` + the `mtHF`/`mtHF_ok` assembly (tree-structural frame,
+`ee_all` three-way, `e_ex` three-way incl. `∃EQ` = same node). Designs (A)
+and (B) are both discharged by this one route. **Only (C) — vertical
+`∃PP`/`∃PPI` via kernels — now stands between here and the full ∀PO-free
+characterization.**
+
+### The vertical step (C), sharpened by the `mtk` route
+
+The `mtk` idea should extend to the vertical case, and this reshapes (C).
+The obstruction to putting `∃PP`/`∃PPI` on the tree-structural frame was
+that `∀PP`/`∀PPI` fire along `PP`/`PPI` edges (unlike `∀PO`), so an
+`∃PP`-child edge would impose real obligations both ways along an
+unbounded vertical chain — which is why the design routed vertical demands
+to *kernels* (cyclic phase towers). Two routes now:
+1. **Kernels, as designed (E3a–E3h).** Splice the certified kernel blocks
+   into the `mtkNodes` assembly: a *persistent* `∃PP`/`∃PPI` demand
+   becomes a kernel chain (`block_of_persistent`), `κ ≠ Empty`, the frame
+   over `β ⊕ κ`. The `mtk` label makes the *external* side clean; the
+   kernel side already has `kk_pp`/`kk_ppi`. The open work is which demands
+   become kernels and the `e_ex` routing — the multi-cluster recursion.
+2. **A depth-AND-height budget?** Worth a look: whether a *two-budget*
+   `mtk`-style label (modal depth for horizontal, a separate vertical
+   bound) can absorb bounded vertical chains directly, deferring only the
+   genuinely-infinite towers to kernels. Speculative; the `∀PP` transitive
+   firing (`comp(PP,PP)={PP}`) is the thing to check. Not yet designed.
+
+Route 1 is the safe, certified-pieces path; route 2 is a possible
+simplification to scope before committing. Either way, (C) is the summit.
