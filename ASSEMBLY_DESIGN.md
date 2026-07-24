@@ -477,3 +477,50 @@ lemmas to route `ee_all`. No member-invariance lemma is needed — the
 `reqType`-fire seed makes the two children *definitionally* the same on
 `∃DR`. This is the last design point; the build is now mechanical
 (refactor `schildNode`'s seed, then the tree-structural `MultiTierOk`).
+
+---
+
+## 12. One more requirement: `slabel` must be propositionally closed
+(2026-07-24)
+
+Checking `MultiTierOk`'s `e_and`/`e_or` on `tauE = slabel` exposed a
+requirement. `slabel node = reqType node ++ ⋃ fire(slabel child, dr)`
+adds RAW `∀DR`-arguments to the reverse batch; a `∀DR.(X ⊓ Y)` in a
+child yields `X ⊓ Y` in the parent's reverse batch **without**
+decomposing it. So `slabel` is not `∧`/`∨`-closed, and `e_and`
+(`and c d ∈ tauE ⟹ c,d ∈ tauE`) fails on reverse-added conjunctions.
+
+**Fix: `expand`-close the reverse batch.** Change the batch to
+
+    ⋃_{∃DR.d ∈ reqType node} (fire(slabel child, dr)).flatMap (expand node.x)
+
+i.e. add the guided *expansion* of each fired argument, not the raw
+argument. Then:
+- `slabel` is propositionally saturated — `reqType` is (`reqType_and/or`),
+  and each `expand node.x c` is (`expand_and/or`), so their union is.
+- It stays `⊆ mty` (each fired `c ∈ mty node.x` by `fire_dr_reverse`, and
+  `expand node.x c ⊆ mty node.x` by `expand_sub_mty`) and `⊆ cl`
+  (`expand_sub_cl_of`).
+- `slabel_reverse` still holds: `∀DR.c ∈ slabel child ⟹ c ∈ fire(slabel
+  child,dr)`, and `c ∈ expand node.x c` (`mem_expand_self`), so `c` is in
+  the batch.
+- It *strengthens* `slabel_dr_forward`: a reverse-added `∀DR.c` now sits
+  in `slabel` directly (via `expand`), so the forward firing reaches it
+  — this was the deeper reason `expand`-closing is the right move, not
+  just a patch for `e_and`.
+- The `∀DR`/`∃DR` reconciliation (`slabel_alldr_reqType`,
+  `slabel_exdr_reqType`) still holds, now via `noDR_cl` (a `noDR`
+  concept's closure has no `∀DR`/`∃DR`): a `∀DR`/`∃DR` in the batch would
+  come from `expand(c')` with `c'` a `∀DR`-argument, hence `noDR c'`
+  under guard-freeness, hence no `∀DR`/`∃DR` in `cl c' ⊇ expand c'`.
+- `slabel_mdepth_le`/`_lmd_le` still hold (`expand` doesn't increase
+  `mdepth`: `cl_mdepth_le`).
+
+**Cost:** re-prove the ~8 `slabel` lemmas over the `expand`-closed batch
+(each a local edit — the batch is now a `flatMap expand` of the old
+one), plus a small `noDR_cl`. No new mathematics; all supporting lemmas
+(`expand_and/or`, `expand_sub_mty/cl`, `mem_expand_self`,
+`cl_mdepth_le`) are already proved. After that, the tree-structural
+`MultiTierOk` assembly (§11 plan) goes through: `e_and/e_or` from the
+now-saturated `slabel`, `ee_all` on `DR` via `slabel_dr_forward/reverse`,
+`e_ex` via `snodes_covers`.
