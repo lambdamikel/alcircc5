@@ -297,3 +297,66 @@ left with an unfulfilled `∃`?), the analogue of the Coverage Lemma the
 no-automata thread kept re-opening. Build it slowly, model-guided,
 with the checker (`mtAcceptB`) as an executable oracle on witnesses at
 each step.
+
+---
+
+## 9. Postscript (2026-07-24): what was built, and the lift analysis
+
+The horizontal recursion of §§3–4 is now **built and certified**
+(`rnodes` + `rnodes_covers`, round E3k) and the §8 "designated risk"
+— coverage — is a kernel-checked theorem. On top of it the **∀-free
+fragment** was closed end to end: `satisfiable_iff_allfree_cert`
+(soundness ⟺ extraction). Honest caveats: (a) it is a *certificate
+characterization*, not a certified finite-model property (β quantified
+as an arbitrary `Type`, no `Fintype`); (b) `AllFree ⊊ POFree` — ∀-free
+is a *proper* sub-fragment (bans **all** universals), tractable only
+because every `∀`-condition is then vacuous.
+
+**The lift to the real ∀PO-free target — the precise obstacle.** The
+merged read-off frame that worked for ∀-free fails once universals
+appear, and the tree-structural frame (round E3l, `symDrPo_frame`,
+frame side done) exposes the true crux: **reverse `∀`-firing**.
+
+A demand edge `m →r m'` is created with the *forward* `∀r`-consequences
+threaded into the child (`childSeed = c :: fire(label m, r)`, so
+`∀r.c' ∈ label m ⟹ c' ∈ label m'`). But an RCC5 frame edge is
+converse-coherent, so the edge also carries `conv r` the other way, and
+`ee_all` then demands the *reverse*: `∀(conv r).c'' ∈ label m' ⟹ c'' ∈
+label m`. The recursion never put `m'`'s `∀`-consequences into its
+**parent** `m`.
+
+- For `r = PO`: `conv PO = PO`, and the fragment is ∀PO-free, so the
+  reverse fires nothing. **Fine.**
+- For `r = PP`/`PPI`: the reverse is `∀PPI`/`∀PP` back up/down the
+  vertical chain — this is exactly what the **kernel** machinery
+  (`kk_pp`/`kk_ppi`, segment coherence, E3d) already discharges, once
+  kernels are spliced in. **Deferred to the vertical step, but solved.**
+- For `r = DR`: `conv DR = DR`, so a `DR` demand edge fires `∀DR`
+  **both ways**. The child's `∀DR`-consequences must land in the
+  parent. This is the one genuinely new mechanism. **The crux.**
+
+**Why it is a joint fixpoint.** The child's label is
+`reqType(d :: fire(label m, DR))`, which depends on the parent's label;
+the parent must absorb `fire(child label, DR)`, which depends on the
+child's. So parent and child **share their `∀DR`-closure**. It
+terminates: every added formula `c''` (from `∀DR.c''` in the child)
+has `mdepth c'' < mdepth(∀DR.c'') ≤ mdepth(∃DR.d)`, strictly below the
+demand that generated it — so the shared closure is bounded by the
+same `lmd` measure the recursion already decreases on. Concretely, the
+lift needs: (i) a `drSat` operation saturating a node's requirement set
+so that for every `∃DR.d` it carries, the `∀DR`-consequences its
+witness would require are present (a bounded fixpoint on the label,
+`lmd`-decreasing); (ii) re-running coverage on the (finitely many)
+formulas `drSat` adds — which are themselves smaller demands, so
+`rnodes`/`rnodes_covers` apply unchanged; (iii) the tree-adjacency
+predicate `d` for `symDrPo_frame`, marking exactly the `∃DR` demand
+pairs. `∀EQ`/`∃EQ` fold reflexively into `expand` (mdepth-decreasing,
+like the `∧`-closure). Nothing here re-opens coverage — it is the same
+recursion over a `drSat`-saturated seed.
+
+**Status.** The `∃`-side (coverage) and the frame side are done. The
+`∀DR` reverse-firing (the `drSat` shared closure) is the remaining
+mechanism for the horizontal universals; the vertical universals ride
+on the existing kernel machinery. This is a well-scoped construction,
+not an open problem — but a real one, to be built `lmd`-guided with the
+checker as oracle, not rushed.

@@ -7775,6 +7775,21 @@ theorem symDrPo_frame {V : Type} (d : V → V → Bool)
             rcases Loff w u hwu with h2 | h2 <;>
             rw [hu, h1, h2] <;> decide
 
+/-- The tree-structural labelling only takes values in `{EQ, DR, PO}`,
+    so in the ∀PO-free fragment `ee_all` reduces to exactly the `DR`
+    edges (the crux: the `∀DR` reverse-firing) and the `EQ` diagonal
+    (reflexive) — `PP`/`PPI` never occur, `PO` fires nothing. -/
+theorem symDrPo_vals {V : Type} (d : V → V → Bool) [DecidableEq V]
+    (v w : V) :
+    (if v = w then eq else if d v w then dr else po) = eq ∨
+    (if v = w then eq else if d v w then dr else po) = dr ∨
+    (if v = w then eq else if d v w then dr else po) = po := by
+  by_cases hvw : v = w
+  · rw [if_pos hvw]; exact Or.inl rfl
+  · rw [if_neg hvw]; cases d v w
+    · exact Or.inr (Or.inr rfl)
+    · exact Or.inr (Or.inl rfl)
+
 /-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
     directions now kernel-checked: `←` is the certified soundness
     pipeline (`multiTier_sound`), `→` is the extraction
