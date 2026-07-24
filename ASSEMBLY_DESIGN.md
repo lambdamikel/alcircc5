@@ -432,3 +432,48 @@ construction; everything up to it is proved.
    `EQ` via the fold; `e_ex` = `snodes_covers`.
 4. `∃EQ`/`∀EQ` reflexive fold in `expand` (as for the ∀-free case's
    diagonal, now as a syntactic fold).
+
+---
+
+## 11. Resolution of the composition subtlety (2026-07-24)
+
+Building the reconciliation lemmas (`slabel_alldr_reqType`,
+`slabel_exdr_reqType` — under `noDR`-guard-freeness the saturated
+label's `∀DR`/`∃DR` obligations equal the requirement type's) exposed a
+concrete wiring subtlety and its fix.
+
+`slabel` fires reverse from `childNode` (seed `arg :: fire(reqType,dr)`);
+`snodes` currently covers via `schildNode` (seed `arg :: fire(slabel,dr)`).
+For `ee_all` on the frame's `DR` edges (which are `snodes` edges) the
+reverse direction needs `slabel_reverse`, which is proved against
+`childNode`. So the two child notions must coincide on `∃DR` demands.
+
+**Fix: define `schildNode` to fire from `reqType`, not `slabel`.**
+`schildNode.s := arg :: fire(reqType node, r)`. Then:
+
+- Under guard-freeness, forward `ee_all` still holds: `∀DR.c ∈ slabel
+  node` ⟹ (`slabel_alldr_reqType`) `∀DR.c ∈ reqType node` ⟹ `c ∈
+  fire(reqType node, dr) ⊆ schildNode.s ⊆ slabel(schildNode)`.
+- On an `∃DR` demand `∃DR.d ∈ slabel node` (`= reqType node` by
+  `slabel_exdr_reqType`), `schildNode` and `childNode` have the **same
+  seed** (`d :: fire(reqType node, dr)`) and the **same witness**
+  (`Classical.choose` of `mty_ex` of the *same* proposition `∃r.c ∈ mty
+  node.x` — equal by proof irrelevance). `RNode`'s remaining fields are
+  `Prop`s, so `schildNode hF = childNode hF'` as structures. Hence
+  `slabel_reverse` (about `childNode`) *is* the reverse `ee_all` for the
+  frame edge.
+- Coverage (`snodes_covers`) is unaffected — it never used the seed's
+  fire source, only that the child's argument lands in its own label
+  (`schildNode_arg`), which still holds.
+- Reverse-added non-`DR` demands (`∃PO`/`∃EQ`, allowed by `noDR`) are
+  covered by `snodes`; their edges are `PO` (fire nothing, ∀PO-free) or
+  the `EQ` fold. `schildNode.s = arg :: fire(reqType,po) = [arg]` for
+  them (no `∀PO`), which is exactly right.
+
+So the whole assembly runs on ONE child notion (`schildNode` firing from
+`reqType`, `= childNode` on `∃DR`), `slabel` for labels, `snodes` for
+the node set, `symDrPo_frame` for the frame, and the reconciliation
+lemmas to route `ee_all`. No member-invariance lemma is needed — the
+`reqType`-fire seed makes the two children *definitionally* the same on
+`∃DR`. This is the last design point; the build is now mechanical
+(refactor `schildNode`'s seed, then the tree-structural `MultiTierOk`).
