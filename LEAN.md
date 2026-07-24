@@ -546,6 +546,23 @@ cross-kernel pairs loose so their rectangle obligation goes vacuous)
 and re-verifies closure — but the comp facts are identical, so this is
 the reusable half. Zero `sorry`; file now ~6,203 lines.
 
+**Round E3f (landed, 2026-07-23): the general block fires from a real
+chain.** The integration checkpoint — `multi_kernel_block` (E3d)
+instantiated at `κ = Unit` with the maximal read-off predicate (E3e),
+fed from an ascending `kernel_site` (E2b): **`multiBlock_of_site`**
+discharges EVERY hypothesis of the general multi-kernel theorem from an
+actual model chain (`hrectQ` vacuous — no distinct `Unit` kernels;
+`htpp`/`htdr`/`hsymm` from E3e; `hrectK`/`hserve` from the site's
+constant witness/context rows; the external subtype `W` = context ∪
+designated witnesses, injective by `hWne`), and **`multiBlock_of_chain`**
+runs the full pipeline `chain ⟹ kernel_site ⟹ multi_kernel_block ⟹
+BlockOk`. This PROVES the general theorem's hypothesis bundle is
+JOINTLY SATISFIABLE (not vacuously — the recurring defect class this
+project's reviews kept finding), de-risking `multi_kernel_block` before
+the multi-cluster assembly leans on it, and gives the
+`kernel_site ⟹ mkBlock` bridge that assembly generalizes. Zero
+`sorry`; file now ~6,359 lines.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted

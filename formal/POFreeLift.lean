@@ -6141,6 +6141,160 @@ theorem twoSorted_eq_readoff (hI : RCC5Interp I)
 
 end ReadOffTight
 
+/-! ## Round E3f (2026-07-23): the general block fires from a real chain
+
+The integration checkpoint: `multi_kernel_block` (E3d) instantiated at
+`κ = Unit` with the maximal read-off predicate (E3e), fed from an
+ascending `kernel_site` (E2b) — every hypothesis of the general
+multi-kernel theorem DISCHARGED from an actual model chain.  This
+proves the theorem's hypothesis bundle is JOINTLY SATISFIABLE (not
+vacuously so — the recurring defect class this project's reviews kept
+finding), and gives the `kernel_site ⟹ mkBlock ⟹ BlockOk` bridge the
+multi-cluster assembly generalizes.  `hrectQ` is vacuous (no distinct
+`Unit` kernels), `htpp`/`htdr`/`hsymm` come from E3e, `hrectK`/`hserve`
+from the site's constant witness/context rows. -/
+
+section BlockFromSite
+
+variable {α : Type} {I : Interp α}
+
+/-- THE GENERAL BLOCK FROM A SITE: an ascending kernel site yields a
+    `BlockOk` for `mkBlock` at `κ = Unit`, via `multi_kernel_block` —
+    the general multi-kernel theorem's first end-to-end instance. -/
+theorem multiBlock_of_site (hI : RCC5Interp I)
+    {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+    (C0 : Concept) (hpo : POFree C0) (myTag : Nat)
+    (P : List (Nat × List Concept)) (ctx : List α)
+    (hctxdom : ∀ e ∈ ctx, I.dom e)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hctx : ∀ e ∈ ctx, ∀ m, i ≤ m → I.rho (c m) e = I.rho (c i) e)
+    (hserve : ∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+      Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, b ≤ p → I.rho (c (i + b)) w = r)
+    (hpool : ∀ a, a < p → ∀ D, Concept.ex po D ∈ mty C0 I (c (i + a)) →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    ∃ (β : Type) (T : MultiTier β Unit),
+      BlockOk T myTag P ∧ T.p () = p ∧
+      (∀ a, T.phase () a = mty C0 I (c (i + a))) ∧
+      (POFree C0 → MTNoPo T) := by
+  classical
+  -- the external predicate: context elements and designated witnesses
+  let W : α → Prop := fun w => w ∈ ctx ∨
+    ∃ a r D, ∃ (ha : a ≤ p) (hr : r = dr ∨ r = pp ∨ r = ppi)
+      (hD : Concept.ex r D ∈ mty C0 I (c (i + a))),
+      w = Classical.choose (hserve a r D ha hr hD)
+  have hWdom : ∀ w, W w → I.dom w := by
+    intro w hw
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · exact hctxdom w hctxm
+    · exact (Classical.choose_spec (hserve a r D ha hr hD)).1
+  have hWconst : ∀ w, W w → ∀ b, b ≤ p →
+      I.rho (c (i + b)) w = I.rho (c i) w := by
+    intro w hw b hb
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · exact hctx w hctxm (i + b) (Nat.le_add_right i b)
+    · have hspec := (Classical.choose_spec (hserve a r D ha hr hD)).2.2
+      have h0 : I.rho (c i)
+          (Classical.choose (hserve a r D ha hr hD)) = r := by
+        have h1 := hspec 0 (Nat.zero_le p)
+        rwa [Nat.add_zero] at h1
+      rw [hspec b hb, h0]
+  have hcne : c (i + 1) ≠ c i := by
+    intro hcc
+    have h1 := hstep i
+    rw [hcc, hI.refl_eq (c i) (hdom i)] at h1
+    exact absurd h1 (by decide)
+  have hWne : ∀ w, W w → w ≠ c i := by
+    intro w hw heq
+    rcases hw with hctxm | ⟨a, r, D, ha, hr, hD, rfl⟩
+    · have h1 := hctx w hctxm (i + 1) (Nat.le_add_right i 1)
+      rw [heq, hI.refl_eq (c i) (hdom i)] at h1
+      exact hcne (hI.eq_id (c (i + 1)) (c i) (hdom (i + 1)) (hdom i) h1)
+    · have hspec := (Classical.choose_spec (hserve a r D ha hr hD)).2.2
+      have h0 := hspec 0 (Nat.zero_le p)
+      rw [Nat.add_zero, heq, hI.refl_eq (c i) (hdom i)] at h0
+      rcases hr with rfl | rfl | rfl <;> exact absurd h0 (by decide)
+  -- the block data
+  let β := {w : α // W w}
+  let eltE : β → α := Subtype.val
+  let ck : Unit → Nat → α := fun _ m => c m
+  let ik : Unit → Nat := fun _ => i
+  let pk : Unit → Nat := fun _ => p
+  let elt : β ⊕ Unit → α := blockElt eltE ck ik
+  have heltE : ∀ e : β, elt (.inl e) = e.val := fun _ => rfl
+  have heltK : ∀ u : Unit, elt (.inr u) = c i := fun _ => rfl
+  have hdomV : ∀ v : β ⊕ Unit, I.dom (elt v) := by
+    intro v; rcases v with e | u
+    · exact hWdom e.val e.2
+    · exact hdom i
+  have hinj : ∀ v w : β ⊕ Unit, elt v = elt w → v = w := by
+    intro v w hvw
+    rcases v with e | u <;> rcases w with f | u'
+    · exact congrArg Sum.inl (Subtype.ext hvw)
+    · exact absurd hvw (hWne e.val e.2)
+    · exact absurd hvw.symm (hWne f.val f.2)
+    · cases u; cases u'; rfl
+  refine ⟨β, mkBlock I C0 eltE ck (fun _ => true) ik pk
+    (tightNePo I elt), ?_, rfl, fun _ => rfl, fun hpo' => mkBlock_nopo hpo'⟩
+  refine multi_kernel_block hI C0 hpo myTag P eltE ck (fun _ => true)
+    ik pk (tightNePo I elt)
+    (fun e => hWdom e.val e.2) (fun _ m => hdom m)
+    (fun _ m => hstep m) (fun _ => hp) (fun _ => hty) hinj
+    (tightNePo_symm hI hdomV)
+    (fun v w u _ _ h1 h2 => tightNePo_htpp hI hdomV v w u h1 h2)
+    (fun v w u _ _ h1 h2 => tightNePo_htdr hI hdomV v w u h1 h2)
+    -- hrectK: kernel-to-external rows are constant (site)
+    (fun _ e _ a ha => hWconst e.val e.2 a ha)
+    -- hrectQ: no distinct Unit kernels
+    (fun k k' hkk => absurd (by cases k; cases k'; rfl) hkk)
+    ?_
+    -- hpool: PO demands pend against the pool
+    (fun _ a ha D hD => hpool a ha D hD)
+  · -- hserve: designated witnesses are tight with the demanded row
+    intro _ a r D ha hr hD
+    have hchosen : W (Classical.choose (hserve a r D (Nat.le_of_lt ha) hr hD)) :=
+      Or.inr ⟨a, r, D, Nat.le_of_lt ha, hr, hD, rfl⟩
+    have hspec := (Classical.choose_spec (hserve a r D (Nat.le_of_lt ha) hr hD))
+    have hrow : I.rho (c i)
+        (Classical.choose (hserve a r D (Nat.le_of_lt ha) hr hD)) = r := by
+      have h1 := hspec.2.2 0 (Nat.zero_le p)
+      rwa [Nat.add_zero] at h1
+    refine ⟨⟨_, hchosen⟩, ?_, hrow, hspec.2.1⟩
+    have hedge : I.rho (elt (.inr ()))
+        (elt (.inl (⟨_, hchosen⟩ : β))) = r := hrow
+    show tightNePo I elt (.inr ()) (.inl ⟨_, hchosen⟩)
+    unfold tightNePo
+    rw [hedge]
+    rcases hr with rfl | rfl | rfl <;> decide
+
+/-- THE GENERAL BLOCK FROM A CHAIN: every ascending model chain
+    carries, past any bound, a `BlockOk` built by `mkBlock` through the
+    general multi-kernel theorem — the pipeline `chain ⟹ kernel_site
+    ⟹ multi_kernel_block` end-to-end. -/
+theorem multiBlock_of_chain (hI : RCC5Interp I)
+    {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+    (C0 : Concept) (hpo : POFree C0) (myTag : Nat)
+    (P : List (Nat × List Concept)) (ctx : List α)
+    (hctxdom : ∀ e ∈ ctx, I.dom e) (L : Nat)
+    (hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧ T.p () = p ∧
+        (∀ a, T.phase () a = mty C0 I (c (i + a))) ∧
+        (POFree C0 → MTNoPo T) := by
+  obtain ⟨i, p, hLi, hp, hty, hctx, _, hserve⟩ :=
+    kernel_site hI hdom hstep C0 ctx hctxdom L
+  exact ⟨i, p, hLi, hp, multiBlock_of_site hI hdom hstep C0 hpo myTag P
+    ctx hctxdom hp hty hctx hserve
+    (fun a _ D hD => hpoolcl D (mty_sub _ hD))⟩
+
+end BlockFromSite
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -6199,5 +6353,7 @@ end ReadOffTight
 #print axioms tightNePo_htpp
 #print axioms tightNePo_htdr
 #print axioms twoSorted_eq_readoff
+#print axioms multiBlock_of_site
+#print axioms multiBlock_of_chain
 
 end POFreeLift
