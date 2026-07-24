@@ -7300,6 +7300,24 @@ theorem child_lmd_lt {x w : α} {s : List Concept} {r : Atom}
         (mem_mdepth_le_lmd _ _ hall)
   exact Nat.lt_of_le_of_lt hGle hFlt
 
+/-- REVERSE FIRING PRESERVES THE MEASURE (the termination key for the
+    `∀DR`-saturation): a formula fired back from a `∃DR`-child's label is
+    strictly shallower than the parent's label — it is a `∀DR`-argument
+    (one level down) of a formula in the child's label, whose depth is
+    already below the parent's (`child_lmd_lt`).  So absorbing the
+    reverse `∀DR`-consequences of its children never raises a node's
+    `lmd`; the saturation stays inside the same well-founded budget the
+    recursion already descends on. -/
+theorem revfire_lmd_lt {x w : α} {s : List Concept} {d : Concept}
+    (hdem : Concept.ex dr d ∈ reqType I x s) {c : Concept}
+    (hc : c ∈ fire (reqType I w (childSeed I x s dr d)) dr) :
+    mdepth c < lmd (reqType I x s) := by
+  have hall : Concept.all dr c ∈ reqType I w (childSeed I x s dr d) :=
+    mem_fire.mp hc
+  exact Nat.lt_of_lt_of_le (mdepth_all_lt dr c)
+    (Nat.le_trans (mem_mdepth_le_lmd _ _ hall)
+      (Nat.le_of_lt (child_lmd_lt hdem)))
+
 end ChildSeed
 
 /-! ### The horizontal recursion (round 4, component 7)
