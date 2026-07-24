@@ -7496,6 +7496,202 @@ theorem allfree_reqType_no_all {C0 : Concept} (haf : AllFree C0)
 
 end AllFree
 
+/-! ### The ∀-free block assembly (round 4, component 10)
+
+Turning the reachable node set into a certificate.  Same-guide nodes
+are MERGED (`mlabel` — a guide's label is the union of the requirement
+labels of all reachable nodes carrying that guide), so the read-off
+frame's strong-EQ holds (distinct guides, never `EQ` off-diagonal).
+The merged label inherits every propositional block-node fact from the
+per-node requirement labels, and — for the ∀-free fragment — carries no
+universal (`mlabel_no_all`), so the universal conditions are vacuous. -/
+
+section AllFreeAssembly
+
+open Classical
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- The guide values of the reachable node set. -/
+noncomputable def guides (root : RNode I C0) : List α :=
+  (rnodes root).map (·.x)
+
+/-- The merged label of a guide: the union of the requirement labels of
+    all reachable nodes carrying it. -/
+noncomputable def mlabel (root : RNode I C0) (g : α) : List Concept :=
+  (rnodes root).flatMap (fun m => if m.x = g then reqType I m.x m.s else [])
+
+theorem mem_mlabel {root : RNode I C0} {g : α} {F : Concept} :
+    F ∈ mlabel root g ↔
+      ∃ m ∈ rnodes root, m.x = g ∧ F ∈ reqType I m.x m.s := by
+  rw [mlabel, List.mem_flatMap]
+  constructor
+  · rintro ⟨m, hm, hF⟩
+    by_cases h : m.x = g
+    · rw [if_pos h] at hF; exact ⟨m, hm, h, hF⟩
+    · rw [if_neg h] at hF; exact absurd hF List.not_mem_nil
+  · rintro ⟨m, hm, hxg, hF⟩
+    exact ⟨m, hm, by rw [if_pos hxg]; exact hF⟩
+
+/-- The merged label is model-realizable at its guide. -/
+theorem mlabel_sub_mty {root : RNode I C0} {g : α} :
+    ∀ F ∈ mlabel root g, F ∈ mty C0 I g := by
+  intro F hF
+  obtain ⟨m, _, hxg, hFr⟩ := mem_mlabel.mp hF
+  rw [← hxg]
+  exact reqType_sub_mty m.hmty F hFr
+
+/-- Node condition `e_clash`. -/
+theorem mlabel_clash {root : RNode I C0} {g : α} {a : Nat}
+    (h : Concept.atom a ∈ mlabel root g) :
+    Concept.natom a ∉ mlabel root g :=
+  fun h2 => mty_clash (mlabel_sub_mty _ h) (mlabel_sub_mty _ h2)
+
+/-- Node condition `e_nobot`. -/
+theorem mlabel_nobot {root : RNode I C0} {g : α} :
+    Concept.bot ∉ mlabel root g :=
+  fun h => mty_nobot (mlabel_sub_mty _ h)
+
+/-- Node condition `e_and`. -/
+theorem mlabel_and {root : RNode I C0} {g : α} {c d : Concept}
+    (h : Concept.and c d ∈ mlabel root g) :
+    c ∈ mlabel root g ∧ d ∈ mlabel root g := by
+  obtain ⟨m, hm, hxg, hF⟩ := mem_mlabel.mp h
+  obtain ⟨hc, hd⟩ := reqType_and hF
+  exact ⟨mem_mlabel.mpr ⟨m, hm, hxg, hc⟩, mem_mlabel.mpr ⟨m, hm, hxg, hd⟩⟩
+
+/-- Node condition `e_or`. -/
+theorem mlabel_or {root : RNode I C0} {g : α} {c d : Concept}
+    (h : Concept.or c d ∈ mlabel root g) :
+    c ∈ mlabel root g ∨ d ∈ mlabel root g := by
+  obtain ⟨m, hm, hxg, hF⟩ := mem_mlabel.mp h
+  rcases reqType_or hF with hc | hd
+  · exact Or.inl (mem_mlabel.mpr ⟨m, hm, hxg, hc⟩)
+  · exact Or.inr (mem_mlabel.mpr ⟨m, hm, hxg, hd⟩)
+
+/-- For the ∀-free fragment: the merged label carries no universal. -/
+theorem mlabel_no_all (haf : AllFree C0) {root : RNode I C0} {g : α}
+    {r : Atom} {c : Concept} : Concept.all r c ∉ mlabel root g := by
+  intro h
+  obtain ⟨m, _, _, hF⟩ := mem_mlabel.mp h
+  exact allfree_reqType_no_all haf m.hcl hF
+
+/-- Guides are in the domain. -/
+theorem guide_dom {root : RNode I C0} {g : α} (hg : g ∈ guides root) :
+    I.dom g := by
+  obtain ⟨m, hm, hmx⟩ := List.mem_map.mp hg
+  rw [← hmx]; exact m.hdom
+
+/-- The certificate index type: one node per distinct guide. -/
+abbrev GB (root : RNode I C0) : Type := { x : α // x ∈ guides root }
+
+/-- THE ∀-FREE CERTIFICATE: externals = distinct guides, read-off
+    relations, merged requirement labels; no kernels. -/
+noncomputable def mtVF (root : RNode I C0) : MultiTier (GB root) Empty where
+  E g g' := I.rho g.val g'.val
+  K k _ := k.elim
+  Q k _ := k.elim
+  up k := k.elim
+  tauE g := mlabel root g.val
+  p k := k.elim
+  phase k _ := k.elim
+
+/-- The certificate's frame is a genuine RCC5 frame (read-off at
+    distinct guides). -/
+theorem mtVF_frame (hI : RCC5Interp I) (root : RNode I C0) :
+    Frame (qnet (mtVF root).E (mtVF root).K (mtVF root).Q) := by
+  refine frame_ext (fun x y => ?_)
+    (readoff_qnet_frame hI (κ := Empty) (Subtype.val) (fun k => k.elim)
+      (fun g => guide_dom g.2) (fun k => k.elim)
+      (fun v w hvw => by
+        rcases v with g | k
+        · rcases w with g' | k'
+          · exact congrArg Sum.inl (Subtype.ext hvw)
+          · exact k'.elim
+        · exact k.elim))
+  rcases x with g | k
+  · rcases y with g' | k'
+    · rfl
+    · exact k'.elim
+  · exact k.elim
+
+/-- THE ∀-FREE CERTIFICATE IS VALID: `MultiTierOk (mtVF root)`.  The
+    universal conditions are vacuous (∀-free); the propositional
+    conditions come from the merged label; `e_ex` is exactly coverage
+    (`rnodes_covers`). -/
+theorem mtVF_ok (hI : RCC5Interp I) (haf : AllFree C0)
+    (root : RNode I C0) : MultiTierOk (mtVF root) where
+  hp := fun k => k.elim
+  frame_q := mtVF_frame hI root
+  e_clash := fun _ _ h => mlabel_clash h
+  e_nobot := fun _ => mlabel_nobot
+  e_and := fun _ c d h => mlabel_and h
+  e_or := fun _ c d h => mlabel_or h
+  k_clash := fun k => k.elim
+  k_nobot := fun k => k.elim
+  k_and := fun k => k.elim
+  k_or := fun k => k.elim
+  ee_all := fun _ _ r c h => absurd h (mlabel_no_all haf)
+  ek_all := fun _ r c h => absurd h (mlabel_no_all haf)
+  ke_all := fun k => k.elim
+  kk_pp := fun k => k.elim
+  kk_ppi := fun k => k.elim
+  kk_eq := fun k => k.elim
+  kq_all := fun k => k.elim
+  e_ex := by
+    intro g r c hdem
+    obtain ⟨m, hm, hxg, hFr⟩ := mem_mlabel.mp hdem
+    have hdem' : Concept.ex r c ∈ reqType I m.x m.s := hFr
+    obtain ⟨m', hm', hrho, hc⟩ := rnodes_covers root m hm r c hdem'
+    refine Or.inl ⟨⟨m'.x, List.mem_map.mpr ⟨m', hm', rfl⟩⟩, ?_, ?_⟩
+    · show I.rho g.val m'.x = r
+      rw [← hxg]; exact hrho
+    · exact mem_mlabel.mpr ⟨m', hm', rfl, hc⟩
+  k_ex := fun k => k.elim
+
+end AllFreeAssembly
+
+/-- THE ∀-FREE EXTRACTION (the completeness capstone): every satisfiable
+    ∀-free concept has a VALID FINITE multi-tier certificate carrying it
+    — built by the horizontal recursion, its `e_ex` discharged by
+    coverage.  Together with the certified soundness pipeline
+    (`multiTier_sound`) this makes ∀-free satisfiability equivalent to
+    the existence of such a certificate. -/
+theorem extract_allfree (C0 : Concept) (haf : AllFree C0)
+    (hsat : Satisfiable C0) :
+    ∃ (β : Type) (T : MultiTier β Empty) (g : β),
+      MultiTierOk T ∧ C0 ∈ T.tauE g := by
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  let root : RNode I C0 :=
+    { x := x0, s := [C0], hdom := hdom0
+      hmty := fun F hF => by
+        rw [List.mem_singleton.mp hF]
+        exact mem_mty.mpr ⟨cl_self C0, hsat0⟩
+      hcl := fun F hF => by
+        rw [List.mem_singleton.mp hF]
+        exact cl_self C0 }
+  refine ⟨GB root, mtVF root,
+    ⟨x0, List.mem_map.mpr ⟨root, self_mem_rnodes root, rfl⟩⟩,
+    mtVF_ok hI haf root, ?_⟩
+  show C0 ∈ mlabel root x0
+  exact mem_mlabel.mpr
+    ⟨root, self_mem_rnodes root, rfl, mem_reqType_of_mem List.mem_cons_self⟩
+
+/-- **∀-FREE SATISFIABILITY = A FINITE CERTIFICATE.**  Both directions
+    now kernel-checked: `←` is the certified soundness pipeline
+    (`multiTier_sound`), `→` is the extraction (`extract_allfree`, the
+    horizontal recursion with coverage).  So for the ∀-free fragment a
+    concept is satisfiable IFF it admits a valid multi-tier certificate
+    — the finite-model property of the fragment, certified end to end. -/
+theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
+    Satisfiable C0 ↔
+      ∃ (β : Type) (T : MultiTier β Empty) (g : β),
+        MultiTierOk T ∧ C0 ∈ T.tauE g := by
+  constructor
+  · exact extract_allfree C0 haf
+  · rintro ⟨β, T, g, hok, hC0⟩
+    exact multiTier_sound T hok (Sum.inl g) C0 hC0
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -7595,5 +7791,9 @@ end AllFree
 #print axioms rnodes_covers
 #print axioms allfree_cl_no_all
 #print axioms allfree_reqType_no_all
+#print axioms mtVF_frame
+#print axioms mtVF_ok
+#print axioms extract_allfree
+#print axioms satisfiable_iff_allfree_cert
 
 end POFreeLift

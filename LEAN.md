@@ -727,9 +727,34 @@ which is `r`-related to the demanding node and carries `c` in its own
 requirement label. This is the exact Coverage-Lemma the no-automata
 thread kept re-opening and the design note (ASSEMBLY_DESIGN.md §8)
 flagged as THE RISK — now a kernel-checked theorem for the horizontal
-skeleton. Zero `sorry`; file now ~7,510 lines. REMAINING = the block
-assembly (`rnodes` + `rnodes_covers` → a `MultiTier`/`MultiTierOk` with
-`e_ex` discharged) + K(C₀)/FinMT + the vertical (kernel) integration.
+skeleton. Zero `sorry`; file now ~7,510 lines.
+
+**Round E3k FINISHED (components 9–12, 2026-07-24): THE ∀-FREE FRAGMENT
+IS CERTIFIED SATISFIABILITY-COMPLETE — the project's FIRST end-to-end
+extraction.** Assembling the recursion into an actual certificate:
+`AllFree` + `allfree_cl_no_all`/`allfree_reqType_no_all` (a ∀-free
+concept carries no universal anywhere — so the `MultiTierOk` universal
+conditions are VACUOUS); `mlabel` (merged label — same-guide nodes
+collapsed so the read-off frame's strong-EQ holds) + its block-node
+facts; `mtVF` (the certificate: externals = distinct guides, `κ =
+Empty`, read-off relations, merged labels) + `mtVF_frame`
+(`readoff_qnet_frame` at distinct guides) + **`mtVF_ok`** (`MultiTierOk
+(mtVF root)` — universals vacuous, propositional from the merged label,
+`e_ex` EXACTLY `rnodes_covers`); **`extract_allfree`** (every
+satisfiable ∀-free concept has a valid finite multi-tier certificate
+carrying it); and the capstone **`satisfiable_iff_allfree_cert`**: for
+the ∀-free fragment, `Satisfiable C₀ ↔ ∃ valid MultiTier certificate
+carrying C₀` — BOTH directions kernel-checked (`←` = the certified
+soundness pipeline `multiTier_sound`; `→` = `extract_allfree`). This is
+the FINITE MODEL PROPERTY of the ∀-free fragment, certified end to end
+— the first time the project has closed BOTH the soundness AND the
+extraction side of a real satisfiability characterization. Axioms:
+`propext`/`Quot.sound`/`Classical.choice` (model-side layer). Zero
+`sorry`; file now ~7,799 lines. REMAINING for Decidability: FinMT-encode
+`mtVF` + K(C₀) bound → `decidableSat_of_codes`. REMAINING for the FULL
+∀PO-free fragment: ∀DR-firing (bidirectional along DR-edges — needs the
+tree-structural frame, not merged read-off) + vertical (`∃PP`/`∃PPI`)
+kernel integration (splice E3a–E3h).
 
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
