@@ -7695,6 +7695,86 @@ theorem extract_allfree (C0 : Concept) (haf : AllFree C0)
   exact mem_mlabel.mpr
     ⟨root, self_mem_rnodes root, rfl, mem_reqType_of_mem List.mem_cons_self⟩
 
+/-! ### The tree-structural frame (lift Step 1, foundation)
+
+Toward the FULL ∀PO-free fragment (universals allowed).  The merged
+read-off frame breaks once universals appear: a real `DR` edge fires
+`∀DR` BOTH ways (converse symmetry), so an "accidental" `DR` pair — two
+guides that happen to be `DR` in the model but are not a demand edge —
+would impose an unmet obligation.  The fix is the TREE-STRUCTURAL frame:
+`DR` only on actual tree (demand) edges, `PO` everywhere else (and `PO`
+fires NOTHING in the ∀PO-free fragment).  Its frame validity is purely
+combinatorial and holds for ANY symmetric `{DR,PO}` off-diagonal
+labelling: `comp` of `{DR,PO}` always contains `{DR,PO}`, and `EQ` sits
+only on the diagonal.  (Wiring the tree-adjacency `d` and the `∀DR`
+fire-threading — the bidirectional `∀DR`-closure — is the remaining
+work; this lemma discharges the frame side once and for all.) -/
+
+/-- `{DR,PO}` compositions contain `{DR,PO}`. -/
+theorem drpo_closed : ∀ a b : Atom, (a = dr ∨ a = po) → (b = dr ∨ b = po) →
+    dr ∈ comp a b ∧ po ∈ comp a b := by
+  intro a b ha hb
+  rcases ha with rfl | rfl <;> rcases hb with rfl | rfl <;>
+    exact ⟨by decide, by decide⟩
+
+/-- Self-composition of `DR`/`PO` contains `EQ`. -/
+theorem drpo_self_eq : ∀ a : Atom, (a = dr ∨ a = po) → eq ∈ comp a a := by
+  intro a ha; rcases ha with rfl | rfl <;> decide
+
+open Classical in
+/-- THE TREE-STRUCTURAL FRAME (frame side): any symmetric `{DR,PO}`
+    off-diagonal labelling — `EQ` on the diagonal, `DR` where a symmetric
+    predicate `d` holds, `PO` elsewhere — is a genuine RCC5 frame.  This
+    is the frame the ∀PO-free assembly uses: `d` = "tree (demand)
+    adjacent".  (Irreflexivity of `d` is not even needed — the diagonal
+    is `EQ` regardless.) -/
+theorem symDrPo_frame {V : Type} (d : V → V → Bool)
+    (hsym : ∀ v w, d v w = d w v) :
+    Frame (fun v w => if v = w then eq else if d v w then dr else po) := by
+  have Loff : ∀ v w : V, v ≠ w →
+      (if v = w then eq else if d v w then dr else po) = dr ∨
+      (if v = w then eq else if d v w then dr else po) = po := by
+    intro v w h
+    rw [if_neg h]
+    cases d v w
+    · exact Or.inr rfl
+    · exact Or.inl rfl
+  have Lsymm : ∀ v w : V,
+      (if w = v then eq else if d w v then dr else po) =
+      (if v = w then eq else if d v w then dr else po) := by
+    intro v w
+    by_cases h : v = w
+    · subst h; rfl
+    · rw [if_neg (Ne.symm h), if_neg h, hsym w v]
+  refine ⟨fun v => by simp, ?_, ?_, ?_⟩
+  · intro v w h
+    by_cases hvw : v = w
+    · exact hvw
+    · rcases Loff v w hvw with hh | hh <;> rw [hh] at h <;>
+        exact absurd h (by decide)
+  · intro v w
+    rw [Lsymm v w]
+    by_cases hvw : v = w
+    · subst hvw; rw [if_pos rfl]; rfl
+    · rcases Loff v w hvw with hh | hh <;> rw [hh] <;> rfl
+  · intro v w u
+    by_cases hvu : v = u
+    · subst hvu; rw [if_pos rfl]
+      by_cases hvw : v = w
+      · subst hvw; rw [if_pos rfl]; decide
+      · rw [Lsymm v w]
+        rcases Loff v w hvw with hh | hh <;> rw [hh] <;> decide
+    · by_cases hvw : v = w
+      · subst hvw; rw [if_pos rfl]
+        rcases Loff v u hvu with hh | hh <;> rw [hh] <;> decide
+      · by_cases hwu : w = u
+        · subst hwu; rw [if_pos rfl]
+          rcases Loff v w hvw with hh | hh <;> rw [hh] <;> decide
+        · rcases Loff v u hvu with hu | hu <;>
+            rcases Loff v w hvw with h1 | h1 <;>
+            rcases Loff w u hwu with h2 | h2 <;>
+            rw [hu, h1, h2] <;> decide
+
 /-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
     directions now kernel-checked: `←` is the certified soundness
     pipeline (`multiTier_sound`), `→` is the extraction
@@ -7819,5 +7899,7 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms mtVF_ok
 #print axioms extract_allfree
 #print axioms satisfiable_iff_allfree_cert
+#print axioms allfree_imp_pofree
+#print axioms symDrPo_frame
 
 end POFreeLift

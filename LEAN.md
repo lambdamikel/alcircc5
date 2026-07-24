@@ -762,6 +762,24 @@ bound + FinMT-encode `mtVF` → `decidableSat_of_codes`. REMAINING for the FULL
 tree-structural frame, not merged read-off) + vertical (`∃PP`/`∃PPI`)
 kernel integration (splice E3a–E3h).
 
+**Round E3l (2026-07-24, THE LIFT begun — Michael chose "lift to
+∀PO-free" over grinding ∀-free Decidability): the tree-structural frame,
+Step 1 foundation.** `symDrPo_frame`: ANY symmetric `{DR,PO}`
+off-diagonal labelling (`EQ` diagonal, `DR` where a symmetric `d` holds,
+`PO` elsewhere) is a genuine RCC5 Frame — because `comp` of `{DR,PO}`
+always contains `{DR,PO}` (`drpo_closed`), `EQ` only on the diagonal,
+irreflexivity not even needed. This is the frame the ∀PO-free assembly
+needs: with the merged read-off frame, a real `DR` edge fires `∀DR`
+BOTH ways (converse symmetry), so an ACCIDENTAL `DR` pair imposes an
+unmet obligation; the tree-structural frame puts `DR` only on demand
+edges and `PO` (which fires NOTHING in the ∀PO-free fragment) elsewhere.
+`allfree_imp_pofree` records `AllFree ⊊ POFree`. Zero `sorry`; file now
+~7,905 lines. STILL REMAINING (the hard part of the lift): wiring the
+tree-adjacency `d` + the `∀DR` bidirectional fire-threading (the child
+of a `∃DR` demand and its parent must SHARE their `∀DR`-closure) — this
+needs augmenting the recursion; then `∀PP`/`∀PPI` via the vertical
+kernels. The frame side is now discharged.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
