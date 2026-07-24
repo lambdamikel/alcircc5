@@ -502,6 +502,32 @@ only the skeleton's closure under the two forcings is the builder's
 obligation. Zero `sorry`; file now ~5,821 lines; axioms as usual
 (choice only via the classical `if`).
 
+**Round E3d (landed, 2026-07-23): the multi-kernel block.** The
+kernel-attachment layer generalized to ANY family of kernels over the
+two-sorted discipline — the standing next obstacle since E3a, now
+certified. **`mkBlock`** declares EVERY certificate value (`E`, `K`,
+`Q`) through `twoSorted` on `β ⊕ κ` (externals ⊕ kernels, kernel
+representative = its segment base `ck k (ik k)`); phases are the
+segments' model types. **`multi_kernel_block`** proves `BlockOk` from
+exactly the builder's obligations: (i) `frame_q` via E3c's
+`twoSorted_frame` through the `qnet` bridge (`frame_ext` + a
+four-case `rcases`, the kernel-diagonal `EQ` handled explicitly);
+(ii) `ee_/ek_/ke_/kq_all` by `twoSorted_cases` (a full three-way split
+of a declared value) — the tight branch fires `mty_all` after
+RECTANGLE CONSTANCY (`hrectK` kernel-row / `hrectQ` kernel-pair
+constancy across the segment) transports the row to the current phase,
+the loose `PO` branch is killed by `mty_no_all_po` (this is where
+`POFree C0` enters as a block-layer hypothesis, unlike the
+all-read-off one-kernel case); (iii) `kk_pp`/`kk_ppi` dispatch
+per-direction (`upf k`) to the E2a/E2a′ segment-coherence duals;
+(iv) `k_ex` routes `DR`/`PP`/`PPI` to tight designated witnesses
+(`hserve`, giving both `Tight` and the read-off row), `EQ` in-phase,
+`PO` to the pool. `mkBlock_nopo` gives `MTNoPo` for free. Zero
+`sorry`; file now ~6,121 lines; axioms unchanged. What this leaves:
+INSTANTIATING the hypotheses (build the tight skeleton + prove its two
+closure laws + rectangle constancy + `hserve` from an actual model +
+the `e_ex` recursion), then finite enumeration.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted

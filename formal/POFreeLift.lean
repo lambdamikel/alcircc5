@@ -5765,6 +5765,304 @@ theorem twoSorted_frame (hI : RCC5Interp I)
 
 end TwoSorted
 
+/-! ## Round E3d (2026-07-23): the multi-kernel block
+
+The kernel-attachment layer generalized to ANY family of kernels over
+the two-sorted discipline.  `mkBlock` declares every certificate value
+through `twoSorted` on `β ⊕ κ` (externals ⊕ kernels, kernel
+representative = segment base): `EQ` diagonal, model read-off on the
+TIGHT skeleton, loose `PO` elsewhere.  `multi_kernel_block` proves
+`BlockOk` from exactly the builder's obligations:
+
+  * the tight skeleton is symmetric and closed under the two
+    ordered-disjoint forcings (E3c's `twoSorted_frame` gives
+    `frame_q` through the `qnet` bridge `frame_ext`);
+  * tight values touching kernels are RECTANGLE-CONSTANT (`hrectK`
+    row constancy across the segment, `hrectQ` on kernel pairs) — the
+    ∀-side then fires through `mty_all`; LOOSE `PO` edges fire only
+    `∀PO` obligations, which the fragment does not have
+    (`mty_no_all_po` — this is where `POFree C0` becomes a hypothesis
+    of the block layer, unlike the all-read-off one-kernel case);
+  * each kernel's `DR`/`PP`/`PPI` demands have TIGHT designated
+    witnesses among the externals (`hserve`); `EQ` demands are
+    in-phase, `PO` demands pend against the pool.
+
+Chains carry their direction uniformly (`hstep` in `cdir` form);
+segment coherence dispatches per direction to the E2a/E2a′ duals. -/
+
+section MultiKernelBlock
+
+variable {α : Type} {I : Interp α} {β κ : Type} [DecidableEq κ]
+
+/-- The block's representative map: externals to their elements,
+    kernels to their segment bases. -/
+def blockElt (eltE : β → α) (ck : κ → Nat → α) (ik : κ → Nat) :
+    (β ⊕ κ) → α :=
+  Sum.elim eltE (fun k => ck k (ik k))
+
+/-- Full case analysis of a two-sorted value. -/
+theorem twoSorted_cases {V : Type} {elt : V → α} {Tight : V → V → Prop}
+    {x y : V} {a : Atom} (h : twoSorted I elt Tight x y = a) :
+    (x = y ∧ a = eq) ∨
+    (x ≠ y ∧ Tight x y ∧ I.rho (elt x) (elt y) = a) ∨
+    (x ≠ y ∧ ¬ Tight x y ∧ a = po) := by
+  unfold twoSorted at h
+  by_cases hxy : x = y
+  · rw [if_pos hxy] at h
+    exact Or.inl ⟨hxy, h.symm⟩
+  · rw [if_neg hxy] at h
+    by_cases ht : Tight x y
+    · rw [if_pos ht] at h
+      exact Or.inr (Or.inl ⟨hxy, ht, h⟩)
+    · rw [if_neg ht] at h
+      exact Or.inr (Or.inr ⟨hxy, ht, h.symm⟩)
+
+open Classical in
+/-- THE MULTI-KERNEL BLOCK: every value declared through the
+    two-sorted labelling over externals ⊕ kernels; phases are the
+    segments' model types. -/
+noncomputable def mkBlock (I : Interp α) (C0 : Concept) (eltE : β → α)
+    (ck : κ → Nat → α) (upf : κ → Bool) (ik pk : κ → Nat)
+    (Tight : (β ⊕ κ) → (β ⊕ κ) → Prop) : MultiTier β κ where
+  E e f := twoSorted I (blockElt eltE ck ik) Tight (.inl e) (.inl f)
+  K k f := twoSorted I (blockElt eltE ck ik) Tight (.inr k) (.inl f)
+  Q k k' := twoSorted I (blockElt eltE ck ik) Tight (.inr k) (.inr k')
+  up := upf
+  tauE e := mty C0 I (eltE e)
+  p := pk
+  phase k a := mty C0 I (ck k (ik k + a))
+
+omit [DecidableEq κ] in
+/-- The fragment's vacuity holds on any `mkBlock`. -/
+theorem mkBlock_nopo {C0 : Concept} (hpo : POFree C0) {eltE : β → α}
+    {ck : κ → Nat → α} {upf : κ → Bool} {ik pk : κ → Nat}
+    {Tight : (β ⊕ κ) → (β ⊕ κ) → Prop} :
+    MTNoPo (mkBlock I C0 eltE ck upf ik pk Tight) where
+  ext := fun _ _ => mty_no_all_po hpo
+  ker := fun _ _ _ _ => mty_no_all_po hpo
+
+/-- THE MULTI-KERNEL BLOCK THEOREM: the two-sorted declaration
+    discipline + rectangle constancy of tight kernel values + tight
+    designated witnesses + pool coverage give kernel-side validity
+    (`BlockOk`) for ANY family of directed kernels. -/
+theorem multi_kernel_block (hI : RCC5Interp I) (C0 : Concept)
+    (hpo : POFree C0) (myTag : Nat) (P : List (Nat × List Concept))
+    (eltE : β → α) (ck : κ → Nat → α) (upf : κ → Bool) (ik pk : κ → Nat)
+    (Tight : (β ⊕ κ) → (β ⊕ κ) → Prop)
+    (hdomE : ∀ e, I.dom (eltE e))
+    (hdomc : ∀ k m, I.dom (ck k m))
+    (hstep : ∀ k m, I.rho (ck k m) (ck k (m + 1)) = cdir (upf k))
+    (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hinj : ∀ v w : β ⊕ κ,
+      blockElt eltE ck ik v = blockElt eltE ck ik w → v = w)
+    (hsymm : ∀ v w, Tight v w → Tight w v)
+    (htpp : ∀ v w u, Tight v w → Tight w u →
+      I.rho (blockElt eltE ck ik v) (blockElt eltE ck ik w) = pp →
+      I.rho (blockElt eltE ck ik w) (blockElt eltE ck ik u) = pp →
+      Tight v u)
+    (htdr : ∀ v w u, Tight v w → Tight w u →
+      I.rho (blockElt eltE ck ik v) (blockElt eltE ck ik w) = pp →
+      I.rho (blockElt eltE ck ik w) (blockElt eltE ck ik u) = dr →
+      Tight v u)
+    (hrectK : ∀ k e, Tight (.inr k) (.inl e) → ∀ a, a ≤ pk k →
+      I.rho (ck k (ik k + a)) (eltE e) = I.rho (ck k (ik k)) (eltE e))
+    (hrectQ : ∀ k k', k ≠ k' → Tight (.inr k) (.inr k') →
+      ∀ a b, a ≤ pk k → b ≤ pk k' →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (hserve : ∀ k a r D, a < pk k → (r = dr ∨ r = pp ∨ r = ppi) →
+      Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      ∃ e : β, Tight (.inr k) (.inl e) ∧
+        I.rho (ck k (ik k)) (eltE e) = r ∧ D ∈ mty C0 I (eltE e))
+    (hpool : ∀ k a, a < pk k → ∀ D,
+      Concept.ex po D ∈ mty C0 I (ck k (ik k + a)) →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    BlockOk (mkBlock I C0 eltE ck upf ik pk Tight) myTag P := by
+  have hdomV : ∀ v : β ⊕ κ, I.dom (blockElt eltE ck ik v) := by
+    intro v
+    rcases v with e | k
+    · exact hdomE e
+    · exact hdomc k (ik k)
+  have hF : Frame (twoSorted I (blockElt eltE ck ik) Tight) :=
+    twoSorted_frame hI (blockElt eltE ck ik) hdomV hinj Tight
+      hsymm htpp htdr
+  refine
+    { hp := hp
+      frame_q := ?_
+      e_clash := fun e a h => mty_clash h
+      e_nobot := fun e => mty_nobot
+      e_and := fun e c d h => mty_and h
+      e_or := fun e c d h => mty_or h
+      k_clash := fun k a ha n h => mty_clash h
+      k_nobot := fun k a ha => mty_nobot
+      k_and := fun k a ha c d h => mty_and h
+      k_or := fun k a ha c d h => mty_or h
+      ee_all := ?_
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := ?_
+      kk_ppi := ?_
+      kk_eq := fun k a ha E hE => seg_eq hI (fun m => hdomc k m) hE
+      kq_all := ?_
+      k_ex := ?_ }
+  · -- frame_q: the qnet bridge to the two-sorted frame
+    refine frame_ext (fun x y => ?_) hF
+    rcases x with e | k <;> rcases y with f | k'
+    · rfl
+    · exact hF.conv_ (.inr k') (.inl e)
+    · rfl
+    · by_cases hkk : k = k'
+      · subst hkk
+        show twoSorted I (blockElt eltE ck ik) Tight (.inr k) (.inr k)
+          = if k = k then eq
+            else (mkBlock I C0 eltE ck upf ik pk Tight).Q k k
+        rw [if_pos rfl]
+        unfold twoSorted
+        rw [if_pos rfl]
+      · show twoSorted I (blockElt eltE ck ik) Tight (.inr k) (.inr k')
+          = if k = k' then eq
+            else (mkBlock I C0 eltE ck upf ik pk Tight).Q k k'
+        rw [if_neg hkk]
+        rfl
+  · -- ee_all
+    intro e f r E hE hr
+    have hr' : twoSorted I (blockElt eltE ck ik) Tight
+        (.inl e) (.inl f) = r := hr
+    rcases twoSorted_cases hr' with ⟨hxy, rfl⟩ | ⟨_, _, hval⟩ |
+      ⟨_, _, rfl⟩
+    · have hef : e = f := Sum.inl.inj hxy
+      subst hef
+      exact mty_all hE (hdomE e) (hI.refl_eq (eltE e) (hdomE e))
+    · have hval' : I.rho (eltE e) (eltE f) = r := hval
+      exact mty_all hE (hdomE f) hval'
+    · exact absurd hE (mty_no_all_po hpo)
+  · -- ek_all
+    intro e r E hE k hK a ha
+    have hK2 : twoSorted I (blockElt eltE ck ik) Tight
+        (.inr k) (.inl e) = conv r := by
+      have hK' : conv (twoSorted I (blockElt eltE ck ik) Tight
+          (.inr k) (.inl e)) = r := hK
+      rw [← hK']
+      exact (conv_invol _).symm
+    rcases twoSorted_cases hK2 with ⟨hxy, _⟩ | ⟨_, ht, hval⟩ |
+      ⟨_, _, hcr⟩
+    · exact nomatch hxy
+    · have hval' : I.rho (ck k (ik k)) (eltE e) = conv r := hval
+      have hedge : I.rho (eltE e) (ck k (ik k + a)) = r := by
+        rw [hI.conv_ (ck k (ik k + a)) (eltE e) (hdomc k _) (hdomE e),
+          hrectK k e ht a (Nat.le_of_lt ha), hval']
+        exact conv_invol r
+      exact mty_all hE (hdomc k (ik k + a)) hedge
+    · have hr : r = po := by
+        rw [← conv_invol r, hcr]
+        rfl
+      subst hr
+      exact absurd hE (mty_no_all_po hpo)
+  · -- ke_all
+    intro k a ha r E hE f hK
+    have hK' : twoSorted I (blockElt eltE ck ik) Tight
+        (.inr k) (.inl f) = r := hK
+    rcases twoSorted_cases hK' with ⟨hxy, _⟩ | ⟨_, ht, hval⟩ |
+      ⟨_, _, rfl⟩
+    · exact nomatch hxy
+    · have hval' : I.rho (ck k (ik k)) (eltE f) = r := hval
+      have hedge : I.rho (ck k (ik k + a)) (eltE f) = r := by
+        rw [hrectK k f ht a (Nat.le_of_lt ha)]
+        exact hval'
+      exact mty_all hE (hdomE f) hedge
+    · exact absurd hE (mty_no_all_po hpo)
+  · -- kk_pp: per-direction segment coherence
+    intro k a ha E hE b hb
+    cases hu : upf k with
+    | true =>
+      have hstep' : ∀ m, I.rho (ck k m) (ck k (m + 1)) = pp := by
+        intro m
+        have h := hstep k m
+        rw [hu] at h
+        exact h
+      exact segment_kk_pp hI (fun m => hdomc k m) hstep' (hty k)
+        ha hE b hb
+    | false =>
+      have hstep' : ∀ m, I.rho (ck k m) (ck k (m + 1)) = ppi := by
+        intro m
+        have h := hstep k m
+        rw [hu] at h
+        exact h
+      exact dsegment_kk_pp hI (fun m => hdomc k m) hstep' (hty k)
+        ha hE b hb
+  · -- kk_ppi
+    intro k a ha E hE b hb
+    cases hu : upf k with
+    | true =>
+      have hstep' : ∀ m, I.rho (ck k m) (ck k (m + 1)) = pp := by
+        intro m
+        have h := hstep k m
+        rw [hu] at h
+        exact h
+      exact segment_kk_ppi hI (fun m => hdomc k m) hstep' (hty k)
+        ha hE b hb
+    | false =>
+      have hstep' : ∀ m, I.rho (ck k m) (ck k (m + 1)) = ppi := by
+        intro m
+        have h := hstep k m
+        rw [hu] at h
+        exact h
+      exact dsegment_kk_ppi hI (fun m => hdomc k m) hstep' (hty k)
+        ha hE b hb
+  · -- kq_all
+    intro k k' hkk a ha r E hE hQ b hb
+    have hQ' : twoSorted I (blockElt eltE ck ik) Tight
+        (.inr k) (.inr k') = r := hQ
+    rcases twoSorted_cases hQ' with ⟨hxy, _⟩ | ⟨_, ht, hval⟩ |
+      ⟨_, _, rfl⟩
+    · exact absurd (Sum.inr.inj hxy) hkk
+    · have hval' : I.rho (ck k (ik k)) (ck k' (ik k')) = r := hval
+      have hedge : I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = r := by
+        rw [hrectQ k k' hkk ht a b (Nat.le_of_lt ha) (Nat.le_of_lt hb)]
+        exact hval'
+      exact mty_all hE (hdomc k' (ik k' + b)) hedge
+    · exact absurd hE (mty_no_all_po hpo)
+  · -- k_ex: demands routed by relation
+    intro k a ha r E hE
+    cases r with
+    | dr =>
+      obtain ⟨e, ht, hrow, hD⟩ := hserve k a dr E ha (Or.inl rfl) hE
+      refine Or.inl ⟨e, ?_, hD⟩
+      have h2 := twoSorted_tight (I := I) (elt := blockElt eltE ck ik)
+        (x := Sum.inr k) (y := Sum.inl e)
+        nofun ht
+      have h3 : I.rho (blockElt eltE ck ik (Sum.inr k))
+          (blockElt eltE ck ik (Sum.inl e)) = dr := hrow
+      exact h2.trans h3
+    | pp =>
+      obtain ⟨e, ht, hrow, hD⟩ :=
+        hserve k a pp E ha (Or.inr (Or.inl rfl)) hE
+      refine Or.inl ⟨e, ?_, hD⟩
+      have h2 := twoSorted_tight (I := I) (elt := blockElt eltE ck ik)
+        (x := Sum.inr k) (y := Sum.inl e)
+        nofun ht
+      have h3 : I.rho (blockElt eltE ck ik (Sum.inr k))
+          (blockElt eltE ck ik (Sum.inl e)) = pp := hrow
+      exact h2.trans h3
+    | ppi =>
+      obtain ⟨e, ht, hrow, hD⟩ :=
+        hserve k a ppi E ha (Or.inr (Or.inr rfl)) hE
+      refine Or.inl ⟨e, ?_, hD⟩
+      have h2 := twoSorted_tight (I := I) (elt := blockElt eltE ck ik)
+        (x := Sum.inr k) (y := Sum.inl e)
+        nofun ht
+      have h3 : I.rho (blockElt eltE ck ik (Sum.inr k))
+          (blockElt eltE ck ik (Sum.inl e)) = ppi := hrow
+      exact h2.trans h3
+    | eq =>
+      exact Or.inr (Or.inr (Or.inl
+        ⟨rfl, seg_ex_eq hI (fun m => hdomc k m) hE⟩))
+    | po =>
+      exact Or.inr (Or.inr (Or.inr (Or.inr ⟨rfl, hpool k a ha E hE⟩)))
+
+end MultiKernelBlock
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -5817,5 +6115,7 @@ end TwoSorted
 #print axioms dkernel_block_of_chain
 #print axioms ordered_disjoint_frame
 #print axioms twoSorted_frame
+#print axioms multi_kernel_block
+#print axioms mkBlock_nopo
 
 end POFreeLift
