@@ -700,6 +700,21 @@ measure for the well-founded horizontal recursion. Zero `sorry`; file
 now ~7,398 lines. REMAINING = the well-founded recursion itself (the
 node set) + coverage + block assembly + K(C₀).
 
+**Round E3k cont'd (component 7, 2026-07-24): THE HORIZONTAL RECURSION
+— defined and terminating.** The global fixpoint's core now exists in
+the kernel. `RNode` bundles a model guide with its label invariants
+(`hdom`/`hmty`/`hcl`); `childNode` spawns the child node at a demand's
+model witness (all invariants discharged by components 4–6);
+**`rnodes`** is the well-founded recursion collecting the finite tree
+of requirement nodes reachable by demand-witnessing — it type-checks
+with `termination_by lmd (reqType I node.x node.s)` and `decreasing_by
+exact child_lmd_lt hF` (compiled first try). `self_mem_rnodes` (root in
+its own set). This is the vertical-free skeleton (no kernels yet — the
+recursion descends only through the finite requirement structure). Zero
+`sorry`; file now ~7,456 lines. REMAINING = COVERAGE (every demand
+routed to a node of `rnodes` — the risk) + block assembly (`rnodes` →
+`MultiTierOk`) + K(C₀)/FinMT.
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =

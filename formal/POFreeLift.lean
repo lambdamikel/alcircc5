@@ -7302,6 +7302,64 @@ theorem child_lmd_lt {x w : α} {s : List Concept} {r : Atom}
 
 end ChildSeed
 
+/-! ### The horizontal recursion (round 4, component 7)
+
+The global fixpoint for the HORIZONTAL part: a well-founded recursion
+on `lmd` (component 6) that collects the finite set of requirement
+nodes reachable from a root by demand-witnessing.  A node bundles its
+model guide with the invariants the coverage step needs (`RNode`); a
+demand spawns a child node at the demand's witness (`childNode`); and
+`rnodes` unfolds the whole finite tree, terminating because every
+child's label is strictly shallower (`child_lmd_lt`).
+
+This is the vertical-free skeleton — no kernels yet; the recursion
+descends only through the requirement structure, which is finite by
+`lmd`.  Coverage (every demand routed to a node in the set) and the
+block assembly are the next components. -/
+
+section HorizontalRecursion
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- A recursion node: a model guide with the invariants its label
+    needs — inside the guide's type, and in the closure. -/
+structure RNode (I : Interp α) (C0 : Concept) where
+  x : α
+  s : List Concept
+  hdom : I.dom x
+  hmty : ∀ F ∈ s, F ∈ mty C0 I x
+  hcl : ∀ F ∈ s, F ∈ cl C0
+
+/-- The child node spawned by a demand `∃r.c` carried at `node`: its
+    guide is the demand's model witness, its seed the child seed. -/
+noncomputable def childNode (node : RNode I C0) {r : Atom} {c : Concept}
+    (hdem : Concept.ex r c ∈ reqType I node.x node.s) : RNode I C0 :=
+  let hw := Classical.choose_spec (reqType_ex_witness node.hmty hdem)
+  { x := Classical.choose (reqType_ex_witness node.hmty hdem)
+    s := childSeed I node.x node.s r c
+    hdom := hw.1
+    hmty := childSeed_sub_mty node.hmty hw.1 hw.2.1 hw.2.2
+    hcl := childSeed_sub_cl node.hcl
+      (cl_ex (reqType_sub_cl node.hcl _ hdem)) }
+
+/-- THE HORIZONTAL RECURSION: the finite tree of requirement nodes
+    reachable from `node` by demand-witnessing.  Terminates by
+    `child_lmd_lt` (every child's label is strictly shallower). -/
+noncomputable def rnodes (node : RNode I C0) : List (RNode I C0) :=
+  node :: (reqType I node.x node.s).attach.flatMap
+    (fun p => match p with
+      | ⟨.ex r c, hF⟩ => rnodes (childNode node hF)
+      | _ => [])
+termination_by lmd (reqType I node.x node.s)
+decreasing_by exact child_lmd_lt hF
+
+/-- The root node is in its own reachable set. -/
+theorem self_mem_rnodes (node : RNode I C0) : node ∈ rnodes node := by
+  rw [rnodes]
+  exact List.mem_cons_self
+
+end HorizontalRecursion
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -7394,5 +7452,6 @@ end ChildSeed
 #print axioms childSeed_sub_mty
 #print axioms childSeed_sub_cl
 #print axioms child_lmd_lt
+#print axioms self_mem_rnodes
 
 end POFreeLift
