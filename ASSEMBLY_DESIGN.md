@@ -902,3 +902,36 @@ existing kernel**. The open summit is the OTHER external shape: one whose
 recurrent type, with `Q` rectangle values and `K(C₀)` counting for
 finiteness). `vkernel1` shows the down-into-kernel routing; the
 up-into-a-fresh-kernel routing is the multi-cluster recursion proper.
+
+### E3h″ (2026-07-24): the first MULTI-kernel certificate
+
+`vkernel2`/`vkernel2_ok` add a SECOND kernel (`κ = Bool`, `β = Empty`):
+TWO ascending `PP`-kernels, each serving its own `∃PP` via its own
+chain. The genuinely new field is **`kq_all`** — a `∀`-obligation in
+kernel `k`'s phase fires along the cross-kernel `Q`-edge into ALL of
+kernel `k'`'s phases — discharged by `mty_all` through the cross-row
+constancy `hrectQ` (the "rectangle" condition; supplied as a hypothesis,
+trivial on the witness where the cross-value is a constant `DR`). Plus
+the two-kernel FRAME (`readoff_qnet_frame` over two distinct bases,
+`hbase` for injectivity). This is the shape `cbothMT` hand-built (two
+DR-linked kernels), now a GENERAL lemma from two model chains.
+
+**The two-tower model** `chain2` (`Bool × ℕ`, same-tower = `chain`,
+cross-tower = `DR`) is a genuine RCC5 frame — `chain2_frame`, the cross
+cases resting on `comp(·,DR) ∋ DR` and `comp(DR,DR) ⊇ {PP,EQ,PPI}`
+(machine-checked against the table). `Cvert` holds at every point of both
+towers, so `cvert2_satisfiable` produces a two-kernel certificate for
+`Cvert`. Axioms `propext`/`Quot.sound`/`Classical.choice`.
+
+**What's still missing toward the summit** (in increasing difficulty):
+1. **Cross-kernel `∃`** — `k_ex` disjunct 4: a demand in one kernel
+   served by the OTHER kernel (as `cbothMT`'s `∃DR.Dinf` is). Modest:
+   route by the `Q`-value + the other kernel's phase.
+2. **Externals that spawn NEW kernels** — an external whose `∃PP`
+   argument is off every existing chain, so a fresh kernel is created.
+   This is the recursion, and it needs **`K(C₀)` counting** (finitely
+   many recurrent types ⟹ finitely many kernels) for termination — the
+   genuine open mathematics of the fragment.
+
+`vkernel2_ok` de-risks the two-kernel FRAME + cross-kernel `∀`; (1) and
+(2) — cross-`∃` and kernel-spawning — remain.

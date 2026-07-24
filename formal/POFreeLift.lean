@@ -9476,6 +9476,102 @@ theorem vkernel1_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
     · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
 
+/-! ### Round E3h″ (2026-07-24): the first MULTI-kernel certificate
+
+`vkernel2`/`vkernel2_ok`: TWO ascending `PP`-kernels (`κ = Bool`,
+`β = Empty`), each serving its own `∃PP` via its own chain.  The new
+content over the single-kernel case is **`kq_all`** — a `∀`-obligation
+in one kernel's phase fires along the cross-kernel `Q`-edge into the
+OTHER kernel's phases — discharged by `mty_all` through the cross-row
+constancy `hrectQ` (the rectangle condition, here supplied as a
+hypothesis and, on the witness, trivial because the cross-value is a
+constant `DR`).  This is the two-kernel FRAME (`readoff_qnet_frame` over
+two bases) plus genuine cross-kernel universal propagation — the shape
+`cbothMT` hand-built, now a GENERAL lemma from two model chains.  (Still
+no cross-kernel `∃`: each kernel is `∃`-self-contained; a demand that
+crosses to the other kernel — `k_ex` disjunct 4 — is the next step, and
+the summit adds externals that spawn NEW kernels.) -/
+
+/-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
+    the model, the cross-value `Q` from the two bases. -/
+noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
+    (ik pk : Bool → Nat) : MultiTier Empty Bool where
+  E := fun e f => I.rho e.elim f.elim
+  K := fun k f => I.rho (ck k (ik k)) f.elim
+  Q := fun k k' => I.rho (ck k (ik k)) (ck k' (ik k'))
+  up := fun _ => true
+  tauE := fun e => e.elim
+  p := pk
+  phase := fun k a => mty C0 I (ck k (ik k + a))
+
+/-- THE TWO-KERNEL BLOCK IS VALID: two ascending chains with distinct
+    bases (`hbase`), each type-recurrent (`hty`) and serving the single
+    chain demand `∃PP.G`/`∃EQ` (`hdemands`), with constant cross-rows
+    (`hrectQ`), give a full `MultiTierOk` — `kq_all` cross-kernel
+    `∀`-firing via `mty_all`+`hrectQ`. -/
+theorem vkernel2_ok (hI : RCC5Interp I) (C0 G : Concept) (ck : Bool → Nat → α)
+    (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    {ik pk : Bool → Nat} (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hG0 : ∀ k, G ∈ mty C0 I (ck k (ik k)))
+    (hbase : ck true (ik true) ≠ ck false (ik false))
+    (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (hdemands : ∀ k a r D, Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      (r = pp ∧ D = G) ∨ r = eq) :
+    MultiTierOk (vkernel2 I C0 ck ik pk) := by
+  have hinj : ∀ v w : Empty ⊕ Bool,
+      Sum.elim (fun e : Empty => e.elim) (fun k : Bool => ck k (ik k)) v
+        = Sum.elim (fun e : Empty => e.elim) (fun k : Bool => ck k (ik k)) w → v = w := by
+    rintro (e | k) (f | k') h
+    · exact e.elim
+    · exact e.elim
+    · exact f.elim
+    · simp only [Sum.elim_inr] at h
+      by_cases hk : k = k'
+      · rw [hk]
+      · exfalso
+        cases k <;> cases k'
+        · exact hk rfl
+        · exact hbase h.symm
+        · exact hbase h
+        · exact hk rfl
+  refine
+    { hp := hp
+      frame_q := readoff_qnet_frame hI (fun e : Empty => e.elim)
+        (fun k : Bool => ck k (ik k)) (fun e => e.elim) (fun k => hdom k (ik k)) hinj
+      e_clash := fun e => e.elim
+      e_nobot := fun e => e.elim
+      e_and := fun e => e.elim
+      e_or := fun e => e.elim
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun e => e.elim
+      ek_all := fun e => e.elim
+      ke_all := fun _ _ _ _ _ _ f => f.elim
+      kk_pp := fun k _ ha E hE b hb =>
+        segment_kk_pp hI (fun n => hdom k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_ppi := fun k _ ha E hE b hb =>
+        segment_kk_ppi hI (fun n => hdom k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_eq := fun k _ _ E hE => seg_eq hI (fun n => hdom k n) hE
+      kq_all := ?_
+      e_ex := fun e => e.elim
+      k_ex := ?_ }
+  · -- kq_all: cross-kernel `∀` fires through the constant cross-row
+    intro k k' hkk a _ r c hmem hr b _
+    apply mty_all hmem (hdom k' (ik k' + b))
+    rw [hrectQ k k' hkk a b]
+    exact hr
+  · -- k_ex: each kernel serves its own `∃PP` via its chain
+    intro k a _ r D hmem
+    rcases hdemands k a r D hmem with ⟨rfl, rfl⟩ | rfl
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp k, hG0 k⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (fun n => hdom k n) hmem⟩))
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -9579,6 +9675,116 @@ theorem cvert_satisfiable_ext : Satisfiable Cvert := by
     (Sum.inl ()) Cvert ?_
   show Cvert ∈ mty Cvert Ivert 0
   rw [vfull 0]; exact cl_self Cvert
+
+/-! #### The two-tower model, for the first MULTI-kernel certificate
+
+`chain2` = two disjoint `ℕ`-order towers (`Bool × ℕ`), cross-tower = `DR`
+(disjoint), same-tower = the `chain` order.  It is a genuine RCC5 frame
+(the cross cases rest on `comp(·,DR) ∋ DR` and `comp(DR,DR) ⊇ {PP,EQ,PPI}`).
+`A = atom 0` holds everywhere, so `Cvert` holds at every point of both
+towers — the two-ascending-kernel witness. -/
+
+/-- Two disjoint `ℕ`-order towers; cross-tower is `DR`. -/
+def chain2 : (Bool × Nat) → (Bool × Nat) → Atom :=
+  fun p q => if p.1 = q.1 then chain p.2 q.2 else dr
+
+theorem chain2_same (b : Bool) (n m : Nat) : chain2 (b, n) (b, m) = chain n m := by
+  show (if b = b then chain n m else dr) = chain n m
+  rw [if_pos rfl]
+
+theorem chain2_diff {b b' : Bool} (n m : Nat) (h : b ≠ b') :
+    chain2 (b, n) (b', m) = dr := by
+  show (if b = b' then chain n m else dr) = dr
+  rw [if_neg h]
+
+theorem chain2_frame : Frame chain2 where
+  refl_eq := fun ⟨b, n⟩ => by rw [chain2_same]; exact chain_self n
+  eq_id := by
+    rintro ⟨b, n⟩ ⟨b', m⟩ h
+    by_cases hb : b = b'
+    · subst hb; rw [chain2_same] at h
+      have hnm := chain_eq_imp h; subst hnm; rfl
+    · rw [chain2_diff n m hb] at h; exact absurd h (by decide)
+  conv_ := by
+    rintro ⟨b, n⟩ ⟨b', m⟩
+    by_cases hb : b = b'
+    · subst hb; rw [chain2_same, chain2_same]; exact chain_conv n m
+    · rw [chain2_diff m n (fun h => hb h.symm), chain2_diff n m hb]; rfl
+  comp_ := by
+    rintro ⟨b, n⟩ ⟨b', m⟩ ⟨b'', k⟩
+    by_cases h1 : b = b' <;> by_cases h2 : b' = b''
+    · subst h1; subst h2
+      rw [chain2_same, chain2_same, chain2_same]; exact chain_cc n m k
+    · subst h1
+      rw [chain2_same, chain2_diff n k h2, chain2_diff m k h2]
+      rcases chain_vals n m with hc | hc | hc <;> rw [hc] <;> decide
+    · subst h2
+      rw [chain2_same, chain2_diff n m h1, chain2_diff n k h1]
+      rcases chain_vals m k with hc | hc | hc <;> rw [hc] <;> decide
+    · have hbb : b = b'' := by cases b <;> cases b' <;> cases b'' <;> simp_all
+      subst hbb
+      rw [chain2_same, chain2_diff n m h1, chain2_diff m k h2]
+      rcases chain_vals n k with hc | hc | hc <;> rw [hc] <;> decide
+
+/-- The two-tower interpretation (`A` true everywhere). -/
+def Ivert2 : Interp (Bool × Nat) := ⟨fun _ => True, chain2, fun a _ => a = 0⟩
+
+theorem Ivert2_rcc5 : RCC5Interp Ivert2 := frame_rcc5 chain2 chain2_frame _
+
+/-- `Cvert` holds at every point of both towers. -/
+theorem vsat_all2 (p : Bool × Nat) : ∀ D ∈ cl Cvert, sat Ivert2 p D := by
+  have ha : ∀ q : Bool × Nat, sat Ivert2 q (Concept.atom 0) := fun _ => rfl
+  have he : ∀ q : Bool × Nat, sat Ivert2 q (Concept.ex pp (Concept.atom 0)) := by
+    rintro ⟨b, n⟩
+    exact ⟨(b, n + 1), trivial,
+      (chain2_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)), ha _⟩
+  have hal : ∀ q : Bool × Nat,
+      sat Ivert2 q (Concept.all pp (Concept.ex pp (Concept.atom 0))) :=
+    fun _ y _ _ => he y
+  intro D hD
+  simp only [Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨ha p, he p⟩, hal p⟩
+  · exact ⟨ha p, he p⟩
+  · exact ha p
+  · exact he p
+  · exact ha p
+  · exact hal p
+  · exact he p
+  · exact ha p
+
+open Classical in
+theorem vfull2 (p : Bool × Nat) : mty Cvert Ivert2 p = cl Cvert := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (vsat_all2 p D hD)
+
+/-- `Cvert` via TWO ascending kernels — one per tower of the two-tower
+    model, cross-`DR`.  The first multi-kernel certificate (`kq_all`
+    non-trivially wired, though vacuous here as `Cvert` has no `∀DR`). -/
+theorem cvert2_satisfiable : Satisfiable Cvert := by
+  have hok : MultiTierOk
+      (vkernel2 Ivert2 Cvert (fun b n => (b, n)) (fun _ => 0) (fun _ => 1)) :=
+    vkernel2_ok Ivert2_rcc5 Cvert (Concept.atom 0) (fun b n => (b, n))
+      (fun _ _ => trivial)
+      (fun b n => (chain2_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)))
+      (fun _ => Nat.one_pos)
+      (fun k => (vfull2 (k, 0)).trans (vfull2 (k, 0 + 1)).symm)
+      (fun k => by show Concept.atom 0 ∈ mty Cvert Ivert2 (k, 0);
+                   rw [vfull2 (k, 0)]; decide)
+      (by decide)
+      (fun k k' hkk a b =>
+        (chain2_diff (0 + a) (0 + b) hkk).trans (chain2_diff 0 0 hkk).symm)
+      (fun k a r D h =>
+        Or.inl (cvert_demands r D (by rw [vfull2 (k, 0 + a)] at h; exact h)))
+  refine multiTier_sound
+    (vkernel2 Ivert2 Cvert (fun b n => (b, n)) (fun _ => 0) (fun _ => 1)) hok
+    (Sum.inr (true, 0)) Cvert ?_
+  have h1 : Cvert ∈ mty Cvert Ivert2 (true, 0 + (0 % 1)) := by
+    rw [vfull2 (true, 0 + (0 % 1))]; exact cl_self Cvert
+  exact h1
 
 end VerticalWitness
 
@@ -9721,5 +9927,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cvert_satisfiable
 #print axioms vkernel1_ok
 #print axioms VerticalWitness.cvert_satisfiable_ext
+#print axioms vkernel2_ok
+#print axioms VerticalWitness.cvert2_satisfiable
 
 end POFreeLift
