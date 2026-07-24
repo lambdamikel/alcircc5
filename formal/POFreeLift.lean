@@ -7371,6 +7371,19 @@ theorem fire_dr_reverse {α : Type} {I : Interp α} (hI : RCC5Interp I)
   intro c hc
   exact dr_reverse_sat hI hx hw hxw (hwlab _ (mem_fire.mp hc))
 
+/-- `noDR c`: `c` has no `∀DR` and no `∃DR` subformula.  The
+    `∀DR`-arguments of a DR-GUARD-FREE concept satisfy it, which is what
+    keeps the `slabel` reverse batch free of new `∀DR`/`∃DR` — so the two
+    mosaic halves compose (see `ASSEMBLY_DESIGN.md §10`). -/
+def noDR : Concept → Prop
+  | .all dr _ => False
+  | .ex dr _ => False
+  | .all _ c => noDR c
+  | .ex _ c => noDR c
+  | .and c d => noDR c ∧ noDR d
+  | .or c d => noDR c ∧ noDR d
+  | _ => True
+
 section HorizontalRecursion
 
 variable {α : Type} {I : Interp α} {C0 : Concept}
@@ -7614,6 +7627,76 @@ theorem slabel_mdepth_le (node : RNode I C0) :
 theorem slabel_lmd_le (node : RNode I C0) :
     lmd (slabel node) ≤ lmd (reqType I node.x node.s) :=
   lmd_le (slabel node) (slabel_mdepth_le node)
+
+/-- THE RECONCILIATION LEMMA (`ASSEMBLY_DESIGN.md §10`): in a
+    DR-guard-free concept (`∀DR.c ∈ cl C₀ ⟹ noDR c`) the saturated
+    label's `∀DR` obligations are exactly the requirement type's — the
+    reverse batch carries no `∀DR` (a `∀DR` there would come from
+    `∀DR.(∀DR c) ∈ cl C₀`, forbidden).  This is what makes the frame's
+    `DR` edges (`schildNode`, firing from `slabel`) coincide with the
+    ones `slabel_reverse` fires reverse from (`childNode`, firing from
+    `reqType`): `fire(slabel,dr) = fire(reqType,dr)` on members. -/
+theorem slabel_alldr_reqType
+    (hgf : ∀ c, Concept.all dr c ∈ cl C0 → noDR c)
+    (node : RNode I C0) {c : Concept}
+    (h : Concept.all dr c ∈ slabel node) :
+    Concept.all dr c ∈ reqType I node.x node.s := by
+  rw [slabel] at h
+  rcases List.mem_append.mp h with h1 | h2
+  · exact h1
+  · exfalso
+    obtain ⟨⟨G, hG⟩, _, hFm⟩ := List.mem_flatMap.mp h2
+    cases G with
+    | ex r d =>
+      cases r with
+      | dr =>
+        have hall : Concept.all dr (Concept.all dr c) ∈
+            slabel (childNode node hG) := mem_fire.mp hFm
+        exact hgf (Concept.all dr c) (slabel_sub_cl _ _ hall)
+      | eq => exact absurd hFm List.not_mem_nil
+      | pp => exact absurd hFm List.not_mem_nil
+      | ppi => exact absurd hFm List.not_mem_nil
+      | po => exact absurd hFm List.not_mem_nil
+    | top => exact absurd hFm List.not_mem_nil
+    | bot => exact absurd hFm List.not_mem_nil
+    | atom a => exact absurd hFm List.not_mem_nil
+    | natom a => exact absurd hFm List.not_mem_nil
+    | and a b => exact absurd hFm List.not_mem_nil
+    | or a b => exact absurd hFm List.not_mem_nil
+    | all r a => exact absurd hFm List.not_mem_nil
+
+/-- The `∃DR` analogue: saturation adds no new `DR` DEMANDS in a
+    DR-guard-free concept — so the saturated-label `DR` demands are the
+    requirement-type ones, and `snodes`' `DR` children are `rnodes`'
+    (`schildNode = childNode`). -/
+theorem slabel_exdr_reqType
+    (hgf : ∀ c, Concept.all dr c ∈ cl C0 → noDR c)
+    (node : RNode I C0) {d : Concept}
+    (h : Concept.ex dr d ∈ slabel node) :
+    Concept.ex dr d ∈ reqType I node.x node.s := by
+  rw [slabel] at h
+  rcases List.mem_append.mp h with h1 | h2
+  · exact h1
+  · exfalso
+    obtain ⟨⟨G, hG⟩, _, hFm⟩ := List.mem_flatMap.mp h2
+    cases G with
+    | ex r d' =>
+      cases r with
+      | dr =>
+        have hall : Concept.all dr (Concept.ex dr d) ∈
+            slabel (childNode node hG) := mem_fire.mp hFm
+        exact hgf (Concept.ex dr d) (slabel_sub_cl _ _ hall)
+      | eq => exact absurd hFm List.not_mem_nil
+      | pp => exact absurd hFm List.not_mem_nil
+      | ppi => exact absurd hFm List.not_mem_nil
+      | po => exact absurd hFm List.not_mem_nil
+    | top => exact absurd hFm List.not_mem_nil
+    | bot => exact absurd hFm List.not_mem_nil
+    | atom a => exact absurd hFm List.not_mem_nil
+    | natom a => exact absurd hFm List.not_mem_nil
+    | and a b => exact absurd hFm List.not_mem_nil
+    | or a b => exact absurd hFm List.not_mem_nil
+    | all r a => exact absurd hFm List.not_mem_nil
 
 /-! ### The saturated-label coverage recursion (`snodes`)
 
@@ -8248,6 +8331,8 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms snodes
 #print axioms snodes_covers
 #print axioms schild_lmd_lt
+#print axioms slabel_alldr_reqType
+#print axioms slabel_exdr_reqType
 #print axioms revfire_lmd_lt
 #print axioms dr_reverse_sat
 #print axioms allfree_cl_no_all
