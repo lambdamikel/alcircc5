@@ -7717,18 +7717,18 @@ noncomputable def schildNode (hI : RCC5Interp I) (node : RNode I C0)
     RNode I C0 :=
   let hw := Classical.choose_spec (mty_ex (slabel_sub_mty hI node _ hF))
   { x := Classical.choose (mty_ex (slabel_sub_mty hI node _ hF))
-    s := c :: fire (slabel node) r
+    s := c :: fire (reqType I node.x node.s) r
     hdom := hw.1
     hmty := by
       intro F hFm
       rcases List.mem_cons.mp hFm with rfl | h
       · exact hw.2.2
-      · exact fire_sat (slabel_sub_mty hI node) hw.1 hw.2.1 F h
+      · exact fire_sat (reqType_sub_mty node.hmty) hw.1 hw.2.1 F h
     hcl := by
       intro F hFm
       rcases List.mem_cons.mp hFm with rfl | h
       · exact cl_ex (slabel_sub_cl node _ hF)
-      · exact fire_sub_cl (slabel_sub_cl node) F h }
+      · exact fire_sub_cl (reqType_sub_cl node.hcl) F h }
 
 /-- The saturated-label child is `r`-related to its node in the model. -/
 theorem schildNode_rho (hI : RCC5Interp I) (node : RNode I C0)
@@ -7748,7 +7748,7 @@ theorem schildNode_arg (hI : RCC5Interp I) (node : RNode I C0)
     node's `lmd` (`slabel_lmd_le`). -/
 theorem schild_lmd_lt (node : RNode I C0) {w : α} {r : Atom} {c : Concept}
     (hdem : Concept.ex r c ∈ slabel node) :
-    lmd (reqType I w (c :: fire (slabel node) r)) <
+    lmd (reqType I w (c :: fire (reqType I node.x node.s) r)) <
       lmd (reqType I node.x node.s) := by
   have hpos : 0 < lmd (reqType I node.x node.s) :=
     Nat.lt_of_lt_of_le (show 0 < mdepth (Concept.ex r c) from Nat.succ_pos _)
@@ -7761,9 +7761,9 @@ theorem schild_lmd_lt (node : RNode I C0) {w : α} {r : Atom} {c : Concept}
     · rw [hFeq]
       exact Nat.lt_of_lt_of_le (mdepth_ex_lt r c)
         (Nat.le_trans (mem_mdepth_le_lmd _ _ hdem) (slabel_lmd_le node))
-    · have hall : Concept.all r F ∈ slabel node := mem_fire.mp hFfire
-      exact Nat.lt_of_lt_of_le (mdepth_all_lt r F)
-        (Nat.le_trans (mem_mdepth_le_lmd _ _ hall) (slabel_lmd_le node))
+    · have hall : Concept.all r F ∈ reqType I node.x node.s :=
+        mem_fire.mp hFfire
+      exact Nat.lt_of_lt_of_le (mdepth_all_lt r F) (mem_mdepth_le_lmd _ _ hall)
   exact Nat.lt_of_le_of_lt hGle hFlt
 
 /-- THE SATURATED-LABEL COVERAGE RECURSION: the finite set of nodes
