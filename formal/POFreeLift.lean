@@ -7225,6 +7225,18 @@ theorem lmd_lt {n : Nat} (hn : 0 < n) :
     have ht : lmd t < n := ih (fun F hF => h F (List.mem_cons_of_mem G hF))
     exact Nat.max_lt.mpr ⟨hG, ht⟩
 
+/-- The `≤` companion: if every seed is no deeper than `n`, neither is
+    the maximum. -/
+theorem lmd_le {n : Nat} :
+    ∀ (s : List Concept), (∀ F ∈ s, mdepth F ≤ n) → lmd s ≤ n := by
+  intro s
+  induction s with
+  | nil => intro _; exact Nat.zero_le n
+  | cons G t ih =>
+    intro h
+    exact Nat.max_le.mpr ⟨h G List.mem_cons_self,
+      ih (fun F hF => h F (List.mem_cons_of_mem G hF))⟩
+
 end Measure
 
 /-! ### The child seed and its measure decrease (round 4, component 6)
@@ -7563,6 +7575,45 @@ theorem slabel_forward_reqType (node : RNode I C0) {d : Concept}
     List.mem_cons_of_mem d (mem_fire.mpr h)
   exact reqType_sub_slabel (childNode node hF) c
     (mem_reqType_of_mem (x := (childNode node hF).x) h2)
+
+/-- Every saturated-label formula is no deeper than the node's
+    requirement-type `lmd` — the reverse batch stays shallow
+    (`revfire_lmd_lt`, recursively). -/
+theorem slabel_mdepth_le (node : RNode I C0) :
+    ∀ F ∈ slabel node, mdepth F ≤ lmd (reqType I node.x node.s) := by
+  induction node using slabel.induct with
+  | _ node ih =>
+    intro F hF
+    rw [slabel] at hF
+    rcases List.mem_append.mp hF with h | h
+    · exact mem_mdepth_le_lmd _ _ h
+    · obtain ⟨⟨G, hG⟩, _, hFm⟩ := List.mem_flatMap.mp h
+      cases G with
+      | ex r d =>
+        cases r with
+        | dr =>
+          have hall : Concept.all dr F ∈ slabel (childNode node hG) :=
+            mem_fire.mp hFm
+          exact Nat.le_of_lt (Nat.lt_of_lt_of_le (mdepth_all_lt dr F)
+            (Nat.le_trans (ih d hG _ hall)
+              (Nat.le_of_lt (child_lmd_lt hG))))
+        | eq => exact absurd hFm List.not_mem_nil
+        | pp => exact absurd hFm List.not_mem_nil
+        | ppi => exact absurd hFm List.not_mem_nil
+        | po => exact absurd hFm List.not_mem_nil
+      | top => exact absurd hFm List.not_mem_nil
+      | bot => exact absurd hFm List.not_mem_nil
+      | atom a => exact absurd hFm List.not_mem_nil
+      | natom a => exact absurd hFm List.not_mem_nil
+      | and a b => exact absurd hFm List.not_mem_nil
+      | or a b => exact absurd hFm List.not_mem_nil
+      | all r a => exact absurd hFm List.not_mem_nil
+
+/-- The saturated label's `lmd` does not exceed the requirement type's —
+    saturation stays inside the recursion's well-founded budget. -/
+theorem slabel_lmd_le (node : RNode I C0) :
+    lmd (slabel node) ≤ lmd (reqType I node.x node.s) :=
+  lmd_le (slabel node) (slabel_mdepth_le node)
 
 end HorizontalRecursion
 
@@ -8065,6 +8116,8 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms slabel_sub_mty
 #print axioms slabel_sub_cl
 #print axioms slabel_reverse
+#print axioms slabel_forward_reqType
+#print axioms slabel_lmd_le
 #print axioms revfire_lmd_lt
 #print axioms dr_reverse_sat
 #print axioms allfree_cl_no_all
