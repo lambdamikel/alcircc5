@@ -612,6 +612,22 @@ is kernel-absorbed (E3g/E3g′), design §4. Zero `sorry`; file now
 ~6,736 lines. Design plan round 2 of 5 DONE; next = the loose-`PO`
 frame instance (reuse E3e).
 
+**Round E3j (landed, 2026-07-23): rectangle constancy of forced edges
+(design plan round 3).** The loose-`PO` frame instance rests on FORCED
+tight edges being auto-rectangle-constant (pinned through a singleton
+composition cell). The two shapes the assembly declares tight, both
+now certified (`propext`/`Quot.sound`, no choice): `ext_pp_asc_const`
+(an external `PP`-below an ascending kernel's base is `PP` to the WHOLE
+chain — `comp(pp,pp)={pp}`; the `∃DR`-witness's ascending demand row)
+and `ext_dr_desc_const` (an external `DR` to a descending kernel's top
+is `DR` to the WHOLE chain — `comp(dr,ppi)={dr}`; the descending
+`∃DR`-witness row). These are the `hrectK`/`hrectQ` inputs for forced
+edges; every non-forced cross edge is loose `PO` (harmless via
+`mty_no_all_po`), so NO joint/mutual chain stabilization is needed —
+the rectangle problem is carried entirely by these singleton-cell
+forcings. Zero `sorry`; file now ~6,797 lines. Design plan round 3 of
+5 DONE; next = THE RECURSION (round 4, the big one, `e_ex` coverage).
+
 **The remaining assembly (recorded, not laid — the honest boundary).**
 A full DESIGN SKETCH of this construction now exists:
 `ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =

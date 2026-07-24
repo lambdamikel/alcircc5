@@ -6661,6 +6661,65 @@ theorem cl_all_mdepth_lt {C0 : Concept} {r : Atom} {c : Concept}
 
 end ModalDepth
 
+/-! ## Round E3j (2026-07-23): rectangle constancy of forced edges
+
+Design plan (ASSEMBLY_DESIGN.md §5) round 3: the loose-`PO` frame
+instance rests on the fact that FORCED tight edges are automatically
+rectangle-constant — their value is pinned through a SINGLETON
+composition cell, so it cannot vary along a kernel chain.  The two
+shapes the assembly declares tight:
+
+- **external below an ASCENDING kernel** (`ext_pp_asc_const`): if `e`
+  is `PP`-below the chain base, `comp(pp,pp)={pp}` forces `e PP` the
+  WHOLE chain — the constant `PP` row of an external sitting under its
+  own kernel (the `∃DR`-witness's ascending demand, design §5).
+- **external `DR` to a DESCENDING kernel's top** (`ext_dr_desc_const`):
+  if `e DR` the chain base, `comp(dr,ppi)={dr}` forces `e DR` the WHOLE
+  descending chain — the constant `DR` row of a `DR`-witness whose
+  demand descends (the clean `∃DR`-witness case).
+
+These are the `hrectK`/`hrectQ` inputs for the forced tight edges;
+every non-forced cross edge is declared loose `PO` (harmless —
+`mty_no_all_po`), so no other rectangle obligation arises.  No joint
+(mutual) chain stabilization is needed — the rectangle problem is
+carried entirely by these singleton-cell forcings. -/
+
+section ForcedConstancy
+
+variable {α : Type} {I : Interp α}
+
+/-- FORCED `PP` CONSTANCY: an external `PP`-below an ascending kernel's
+    base is `PP` to the whole chain (`comp(pp,pp)={pp}`). -/
+theorem ext_pp_asc_const (hI : RCC5Interp I)
+    {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp) {e : α} (hde : I.dom e)
+    (h0 : I.rho e (c 0) = pp) : ∀ j, I.rho e (c j) = pp := by
+  intro j
+  cases j with
+  | zero => exact h0
+  | succ k =>
+    have hcc := chain_model_pp hI hdom hstep 0 (k + 1) (Nat.succ_pos k)
+    have hm := hI.comp_ e (c 0) (c (k + 1)) hde (hdom 0) (hdom (k + 1))
+    rw [h0, hcc] at hm
+    exact List.mem_singleton.mp hm
+
+/-- FORCED `DR` CONSTANCY: an external `DR` to a descending kernel's
+    top is `DR` to the whole chain (`comp(dr,ppi)={dr}`). -/
+theorem ext_dr_desc_const (hI : RCC5Interp I)
+    {d : Nat → α} (hdom : ∀ i, I.dom (d i))
+    (hstep : ∀ i, I.rho (d i) (d (i + 1)) = ppi) {e : α} (hde : I.dom e)
+    (h0 : I.rho e (d 0) = dr) : ∀ j, I.rho e (d j) = dr := by
+  intro j
+  cases j with
+  | zero => exact h0
+  | succ k =>
+    have hcc := dchain_model_ppi hI hdom hstep 0 (k + 1) (Nat.succ_pos k)
+    have hm := hI.comp_ e (d 0) (d (k + 1)) hde (hdom 0) (hdom (k + 1))
+    rw [h0, hcc] at hm
+    exact List.mem_singleton.mp hm
+
+end ForcedConstancy
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -6732,5 +6791,7 @@ end ModalDepth
 #print axioms cl_mdepth_le
 #print axioms cl_ex_mdepth_lt
 #print axioms cl_all_mdepth_lt
+#print axioms ext_pp_asc_const
+#print axioms ext_dr_desc_const
 
 end POFreeLift
