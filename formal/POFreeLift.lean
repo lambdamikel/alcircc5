@@ -7074,6 +7074,70 @@ theorem reqType_or {I : Interp α} {x : α} {s : List Concept}
 
 end RequirementTypes
 
+/-! ### The `∀`-firing operation (round 4, component 3)
+
+The primitive that couples node labels across the edge structure: when
+the recursion declares an edge `u →r v`, every `∀r.c` in `u`'s label
+must be discharged by having `c` in `v`'s SEED.  `fire label r` is that
+seed — the `∀r`-consequences of a label.  It is model-SOUND (`fire_sat`:
+a label inside `x`'s type fires into any `r`-successor's type, by
+`mty_all`) and stays in the closure (`fire_sub_cl`: the fired seed is
+finite).  These are the ingredients that make a requirement node's
+outgoing seeds close the `ee_all`/`ek_all`/`ke_all`/`kk_*` conditions,
+once the recursion threads them along its declared edges. -/
+
+section AllFiring
+
+/-- The formulas fired by a single `∀r`-obligation. -/
+def fireOne (r : Atom) : Concept → List Concept
+  | .all r' c => if r' = r then [c] else []
+  | _ => []
+
+/-- The `∀r`-consequences of a label — the seed fired into an
+    `r`-successor. -/
+def fire (label : List Concept) (r : Atom) : List Concept :=
+  label.flatMap (fireOne r)
+
+theorem mem_fire {label : List Concept} {r : Atom} {c : Concept} :
+    c ∈ fire label r ↔ Concept.all r c ∈ label := by
+  constructor
+  · intro h
+    obtain ⟨E, hE, hcE⟩ := List.mem_flatMap.mp h
+    cases E with
+    | all r' c' =>
+      by_cases hr : r' = r
+      · simp only [fireOne, if_pos hr, List.mem_singleton] at hcE
+        subst hcE; subst hr; exact hE
+      · simp only [fireOne, if_neg hr] at hcE
+        exact absurd hcE List.not_mem_nil
+    | top => simp only [fireOne] at hcE; exact absurd hcE List.not_mem_nil
+    | bot => simp only [fireOne] at hcE; exact absurd hcE List.not_mem_nil
+    | atom n => simp only [fireOne] at hcE; exact absurd hcE List.not_mem_nil
+    | natom n => simp only [fireOne] at hcE; exact absurd hcE List.not_mem_nil
+    | and a b => simp only [fireOne] at hcE; exact absurd hcE List.not_mem_nil
+    | or a b => simp only [fireOne] at hcE; exact absurd hcE List.not_mem_nil
+    | ex r' c' => simp only [fireOne] at hcE; exact absurd hcE List.not_mem_nil
+  · intro h
+    exact List.mem_flatMap.mpr
+      ⟨Concept.all r c, h, by simp only [fireOne, if_pos]; exact List.mem_singleton.mpr rfl⟩
+
+/-- `∀`-firing is model-sound: a label inside `x`'s type fires its
+    `∀r`-consequences into any `r`-successor's type. -/
+theorem fire_sat {α : Type} {I : Interp α} {C0 : Concept} {x y : α}
+    {label : List Concept} {r : Atom}
+    (hlab : ∀ E ∈ label, E ∈ mty C0 I x) (hy : I.dom y)
+    (hr : I.rho x y = r) : ∀ c ∈ fire label r, c ∈ mty C0 I y := by
+  intro c hc
+  exact mty_all (hlab _ (mem_fire.mp hc)) hy hr
+
+/-- `∀`-firing stays in the closure — the fired seed is finite. -/
+theorem fire_sub_cl {C0 : Concept} {label : List Concept} {r : Atom}
+    (hlab : ∀ E ∈ label, E ∈ cl C0) : ∀ c ∈ fire label r, c ∈ cl C0 := by
+  intro c hc
+  exact cl_all (hlab _ (mem_fire.mp hc))
+
+end AllFiring
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -7155,5 +7219,8 @@ end RequirementTypes
 #print axioms reqType_sub_mty
 #print axioms reqType_and
 #print axioms reqType_or
+#print axioms mem_fire
+#print axioms fire_sat
+#print axioms fire_sub_cl
 
 end POFreeLift
