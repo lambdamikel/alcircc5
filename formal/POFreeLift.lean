@@ -7397,6 +7397,12 @@ structure RNode (I : Interp α) (C0 : Concept) where
   hmty : ∀ F ∈ s, F ∈ mty C0 I x
   hcl : ∀ F ∈ s, F ∈ cl C0
 
+/-- `RNode` extensionality: nodes are equal once guide and seed agree
+    (the remaining fields are `Prop`s). -/
+theorem RNode_ext (a b : RNode I C0) (hx : a.x = b.x) (hs : a.s = b.s) :
+    a = b := by
+  cases a; cases b; cases hx; cases hs; rfl
+
 /-- The child node spawned by a demand `∃r.c` carried at `node`: its
     guide is the demand's model witness, its seed the child seed. -/
 noncomputable def childNode (node : RNode I C0) {r : Atom} {c : Concept}
@@ -7742,6 +7748,43 @@ theorem schildNode_arg (hI : RCC5Interp I) (node : RNode I C0)
     c ∈ slabel (schildNode hI node hF) :=
   reqType_sub_slabel _ c
     (mem_reqType_of_mem (x := (schildNode hI node hF).x) List.mem_cons_self)
+
+/-- ON `∃DR` DEMANDS, THE SATURATED-LABEL CHILD IS THE REQUIREMENT-TYPE
+    CHILD (under DR-guard-freeness): same seed (`d :: fire(reqType,dr)`,
+    since `∃DR.d ∈ slabel ⟹ ∈ reqType` by `slabel_exdr_reqType`) and same
+    witness (`Classical.choose` of `mty_ex` of the same proposition, by
+    proof irrelevance).  So `slabel_reverse` (about `childNode`) is the
+    reverse `ee_all` for the frame's `DR` edges (`schildNode`). -/
+theorem schildNode_eq_childNode
+    (hgf : ∀ c, Concept.all dr c ∈ cl C0 → noDR c) (hI : RCC5Interp I)
+    (node : RNode I C0) {d : Concept}
+    (hF : Concept.ex dr d ∈ slabel node) :
+    schildNode hI node hF = childNode node (slabel_exdr_reqType hgf node hF) :=
+  RNode_ext _ _ (congrArg Classical.choose (proof_irrel _ _)) rfl
+
+/-- FORWARD `ee_all` ON A FRAME `DR` EDGE: `∀DR.c` in a node's saturated
+    label puts `c` in its `∃DR`-child's saturated label — via
+    `slabel_alldr_reqType` (`slabel`'s `∀DR` = `reqType`'s) then
+    `slabel_forward_reqType`, on the `= childNode` frame edge. -/
+theorem slabel_dr_forward (hgf : ∀ c, Concept.all dr c ∈ cl C0 → noDR c)
+    (hI : RCC5Interp I) (node : RNode I C0) {d : Concept}
+    (hF : Concept.ex dr d ∈ slabel node) {c : Concept}
+    (h : Concept.all dr c ∈ slabel node) :
+    c ∈ slabel (schildNode hI node hF) := by
+  rw [schildNode_eq_childNode hgf hI node hF]
+  exact slabel_forward_reqType node (slabel_exdr_reqType hgf node hF)
+    (slabel_alldr_reqType hgf node h)
+
+/-- REVERSE `ee_all` ON A FRAME `DR` EDGE: `∀DR.c` in an `∃DR`-child's
+    saturated label puts `c` in the parent's — `slabel_reverse` on the
+    `= childNode` frame edge.  (The hard direction, now for `snodes`.) -/
+theorem slabel_dr_reverse (hgf : ∀ c, Concept.all dr c ∈ cl C0 → noDR c)
+    (hI : RCC5Interp I) (node : RNode I C0) {d : Concept}
+    (hF : Concept.ex dr d ∈ slabel node) {c : Concept}
+    (h : Concept.all dr c ∈ slabel (schildNode hI node hF)) :
+    c ∈ slabel node := by
+  rw [schildNode_eq_childNode hgf hI node hF] at h
+  exact slabel_reverse node (slabel_exdr_reqType hgf node hF) h
 
 /-- Termination for `snodes`: the saturated-label child is strictly
     shallower — its argument and forward-fired formulas are below the
@@ -8333,6 +8376,9 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms schild_lmd_lt
 #print axioms slabel_alldr_reqType
 #print axioms slabel_exdr_reqType
+#print axioms schildNode_eq_childNode
+#print axioms slabel_dr_forward
+#print axioms slabel_dr_reverse
 #print axioms revfire_lmd_lt
 #print axioms dr_reverse_sat
 #print axioms allfree_cl_no_all
