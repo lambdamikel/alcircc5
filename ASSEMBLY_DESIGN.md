@@ -566,16 +566,65 @@ bound, then `decidableSat_of_codes`. That is the next step and is the
 same remaining step the `AllFree` fragment faces — now with a genuine
 `∀`-firing fragment underneath it.
 
-**Two axes still open toward the FULL ∀PO-free target:**
-1. **Roles beyond DR/PO.** `DRFrag` restricts to `DR` existentials and
-   `∀DR` universals. Adding `∃PO` (PO edges, already `∀PO`-free so they
-   fire nothing) is a small extension of the frame's `e_ex` (a demand
-   whose child is *not* `d`-adjacent ⟹ `PO` edge). Adding `∃PP`/`∃PPI`
-   (vertical) needs the **kernel** machinery (`kk_pp`/`kk_ppi`, segment
-   coherence, rounds E3d/E1/E2) spliced in — the vertical step, whose
-   pieces are already certified; wiring them to `snodes` is the work.
-   `∃EQ`/`∀EQ` fold reflexively into `expand`.
-2. **`∀DR` guarding `∀DR`/`∃DR`** (dropping DR-guard-freeness) needs the
-   **within-node fixpoint** (§10 tail): iterate the reverse `∀DR`-firing
-   to closure at each node, `lmd`-bounded so terminating. The last piece
-   of real construction.
+**Roles beyond DR/PO (partly done).** `∃PO` **landed** (2026-07-24):
+`DRFrag.hex` broadened to `r = dr ∨ r = po`; `e_ex` cases on the demand
+relation, `∃PO` children routed to genuine `PO` frame edges via
+`po_not_sAdj` (a `PO`-child is never `DR`-adjacent — `conv PO = PO ≠ DR`).
+So the fragment is now **horizontal DR/PO** with `∀DR` propagation. The
+frame stays tree-structural (no position indexing) because model
+relations are functional + converse-coherent.
+
+---
+
+## 14. The remaining map (2026-07-24): three lifts, in difficulty order
+
+The horizontal DR/PO `∀DR`-propagation fragment is **done**
+(`satisfiable_iff_podr_cert`). What remains toward the FULL ∀PO-free
+target, smallest-first:
+
+**(A) `∃EQ`/`∀EQ` — low value, foundation-invasive.** EQ is the diagonal
+(identity under strong-EQ), so `∃EQ.c` and `∀EQ.c` both reduce to `c` at
+the same node — a reflexive fold. The natural home is `expand` (add
+`.ex eq c ↦ ex eq c :: expand c`, `.all eq c ↦ all eq c :: expand c`).
+BUT the soundness of the fold (`expand_sub_mty`) needs strong-EQ
+(`hI.refl_eq` for `∀EQ`, `hI.eq_id` for `∃EQ`), and `expand`/`expand_sub_mty`
+are currently `hI`-free — so this threads `hI : RCC5Interp I` through the
+whole `_sub_mty` chain (`expand`→`reqType`→`slabel`). Invasive for a
+degenerate feature; **deferred**.
+
+**(B) `∀DR` guarding `∀DR`/`∃DR` — medium value, self-contained, intricate.**
+Drop DR-guard-freeness (`hgf`). Then the reverse batch can carry `∀DR.c'`
+(from `∀DR.(∀DR.c')`) and `∃DR.d'` (from `∀DR.(∃DR.d')`), so
+`slabel_alldr_reqType`/`slabel_exdr_reqType` fail — `slabel`'s `∀DR`/`∃DR`
+obligations exceed `reqType`'s, and `schildNode ≠ childNode`. The fix is
+the **within-node fixpoint**: a node's fully-saturated label must be
+closed under BOTH forward `∀DR`-firing (into `∃DR`-children, whose seeds
+then fire from the SATURATED label) AND reverse `∀DR`-absorption (from
+children's saturated labels) — a genuine mutual parent/child dependency.
+It terminates (`revfire_lmd_lt`/`child_lmd_lt`: every fired formula is
+strictly shallower), so it is a least fixpoint of a monotone,
+depth-decreasing operator on the finite `cl C₀`. In Lean core (no
+mathlib) that means a well-founded recursion on `lmd` computing the
+saturated label directly, then re-proving `slabel_dr_forward/reverse`,
+coverage, and the `schildNode = childNode` reconciliation over it — the
+"last piece of real construction" for the horizontal fragment.
+**~200–300 lines, multi-round, design-first.**
+
+**(C) Vertical `∃PP`/`∃PPI` + `∀PP`/`∀PPI` — high value, THE big open
+construction.** This is what makes "∀PO-free" a meaningful fragment
+(vertical existentials/universals are the interesting content). The
+kernel pieces are individually certified as BLOCKS (E3a–E3h:
+`multiBlock_of_chain`, `block_of_persistent`, `kernel_site`, the
+two-sorted ordered-disjoint frame, per-direction `kk_pp`/`kk_ppi`), but
+**wiring them into the `snodes` assembly is the genuinely-open
+multi-cluster recursion**: which model elements become kernels
+(persistent `∃PP`/`∃PPI` towers) vs tree externals, the `κ ≠ Empty`
+frame over `β ⊕ κ` mixing the tree-structural externals with kernel
+chains, cross-cluster tightness, and the `e_ex` recursion routing every
+demand. The design's "loose-PO default" dissolves the rectangle problem,
+but the assembly itself is large and carries real design risk. **Do not
+rush (round-19/20 lesson).**
+
+Recommended order: **(B) then (C)** — (B) completes the horizontal
+fragment and is self-contained; (C) is the summit. (A) is optional polish
+whenever convenient.
