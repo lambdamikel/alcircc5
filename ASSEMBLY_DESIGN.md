@@ -718,3 +718,56 @@ to *kernels* (cyclic phase towers). Two routes now:
 
 Route 1 is the safe, certified-pieces path; route 2 is a possible
 simplification to scope before committing. Either way, (C) is the summit.
+
+---
+
+## 17. The vertical step (C), full analysis + first target (2026-07-24)
+
+**The two sub-cases of `∃PP`, and why the frame is the obstruction.**
+- **Infinite PP-chains** (persistent `∃PP`: `∃PP.G ⊓ ∀PP.(∃PP.G)`) — no
+  finite model; represented by a **kernel** (cyclic phase tower). The
+  certified `block_of_persistent` + the pigeonhole `segment_select`
+  (E2a) build exactly this: an infinite model chain, its recurrent type
+  cycled into `p` phases.
+- **Finite PP-chains** (non-persistent `∃PP.A`) — satisfiable with a
+  bounded chain, which needs **genuine `PP` edges** in the frame.
+
+**The core obstruction (why `mtk`/tree-frame can't just add `PP`).** The
+tree-structural `symDrPo` frame works because `{DR,PO}` is composition-
+*free*: ANY symmetric `{DR,PO}` off-diagonal labelling is RCC5-valid
+(`symDrPo_frame`). `PP`/`PPI` are NOT free — `comp(PP,PP)={PP}` forces
+transitivity, `comp(PP,DR)={DR}` forces DR-inheritance down the order.
+So `PP` edges cannot be sprinkled on a tree; a `PP`-structure must be a
+genuine linear order. A **kernel represents one such order cleanly**;
+multiple orders + horizontal links = the multi-cluster frame over `β ⊕ κ`
+with `K` (external–kernel) and `Q` (kernel–kernel) values — the
+`twoSorted`/`multi_kernel_block` machinery (E3d–E3f).
+
+**Certified pieces in hand.** `block_of_persistent`/`_desc` (kernel from a
+persistent `∃PP`/`∃PPI`); `multi_kernel_block` (`BlockOk` for a kernel
+family via the `twoSorted` ordered-disjoint frame); `mtOkPool_of_block`
+(`BlockOk` + the missing `e_ex` ⟹ `MTOkPool`); `glueFam`/`glueFam_ok`
+(glue blocks, all-cross-`PO`); the pigeonhole segment toolkit.
+
+**The gap = the EXTRACTION recursion.** Given a satisfiable full-∀PO-free
+`C0`, decide per demand: `DR`/`PO` → tree external (the `mtk` machinery),
+`∃PP`/`∃PPI` → kernel, `∃PO` cross-cluster → pool; then discharge each
+block's `e_ex` and glue. This is "the multi-cluster recursion" — the
+genuinely-open piece the whole project circled.
+
+**FIRST TARGET (clean intermediate): the PERSISTENT-VERTICAL fragment.**
+No `DR`/`PO`; existentials `∃PP` (persistent) + `∃EQ`; universals `∀PP`/
+`∀EQ`. Every `∃PP` is persistent ⟹ always a kernel ⟹ **no finite-chain
+problem, no horizontal mixing**. A single ascending kernel (`κ = Unit`)
+via `block_of_persistent`, `e_ex` vacuous (no externals), pool empty (no
+`∃PO`). This is the vertical analogue of the `podr` milestone — a clean
+fragment with genuine `∀PP`-firing, certified from one kernel. It de-risks
+the kernel side before the mixing. **The scoping question to answer first:
+the exact `BlockOk → MultiTierOk` gap** (does an externals-free,
+pool-free block give full `MultiTierOk` directly?) — investigate
+`mtOkPool_of_block` before committing.
+
+**Then, in order:** finite PP-chains (kernel-padding: pad a terminated
+chain with the terminal type, or bounded `PP`-externals) → horizontal +
+vertical mixing (the full `β ⊕ κ` frame, `K`/`Q` values from the model,
+pool for cross-cluster `∃PO`) → the full ∀PO-free characterization.

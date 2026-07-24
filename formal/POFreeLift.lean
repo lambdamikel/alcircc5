@@ -4973,6 +4973,46 @@ theorem mtOkPool_of_block {β κ : Type} [DecidableEq κ]
   e_ex := he
   k_ex := h.k_ex
 
+/-- EMPTY POOL ⟹ PLAIN VALIDITY: a pooled certificate with no pool
+    entries (`P = []`) is a full `MultiTierOk` — the `∃PO`-pool disjunct
+    of `e_ex`/`k_ex` is vacuous (no `q ∈ []`).  So a kernel block with no
+    `∃PO` demands (hence empty pool) is a genuine `MultiTier` certificate;
+    the bridge the vertical assembly's pure-kernel clusters use. -/
+theorem multiTierOk_of_pool_nil {β κ : Type} [DecidableEq κ]
+    {T : MultiTier β κ} {myTag : Nat} (h : MTOkPool T myTag []) :
+    MultiTierOk T where
+  hp := h.hp
+  frame_q := h.frame_q
+  e_clash := h.e_clash
+  e_nobot := h.e_nobot
+  e_and := h.e_and
+  e_or := h.e_or
+  k_clash := h.k_clash
+  k_nobot := h.k_nobot
+  k_and := h.k_and
+  k_or := h.k_or
+  ee_all := h.ee_all
+  ek_all := h.ek_all
+  ke_all := h.ke_all
+  kk_pp := h.kk_pp
+  kk_ppi := h.kk_ppi
+  kk_eq := h.kk_eq
+  kq_all := h.kq_all
+  e_ex := by
+    intro e r c hmem
+    rcases h.e_ex e r c hmem with h1 | h2 | ⟨_, q, hq, _⟩
+    · exact Or.inl h1
+    · exact Or.inr h2
+    · exact absurd hq List.not_mem_nil
+  k_ex := by
+    intro k a ha r c hmem
+    rcases h.k_ex k a ha r c hmem with h1 | h2 | h3 | h4 | ⟨_, q, hq, _⟩
+    · exact Or.inl h1
+    · exact Or.inr (Or.inl h2)
+    · exact Or.inr (Or.inr (Or.inl h3))
+    · exact Or.inr (Or.inr (Or.inr h4))
+    · exact absurd hq List.not_mem_nil
+
 section OneKernelBlock
 
 variable {α : Type} {I : Interp α} (hI : RCC5Interp I)
@@ -9365,5 +9405,6 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms HFragWitness.Cwit_sat
 #print axioms HFragWitness.Cwit_has_cert
 #print axioms HFragWitness.Cwit_not_drfrag
+#print axioms multiTierOk_of_pool_nil
 
 end POFreeLift
