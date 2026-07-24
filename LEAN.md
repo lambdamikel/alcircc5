@@ -593,6 +593,21 @@ the ascending `block_of_persistent` already exhibits the full pattern.)
 Zero `sorry`; file now ~6,485 lines.
 
 **The remaining assembly (recorded, not laid — the honest boundary).**
+A full DESIGN SKETCH of this construction now exists:
+`ASSEMBLY_DESIGN.md` (2026-07-23) — the two-layer picture (horizontal =
+finite requirement-typed recursion, vertical = kernels), the
+`glueFam` + `∃PO`-pool forest, the rank-recursion discharging the
+`e_ex` residual, the termination measure, and — the key move — the
+**loose-`PO` default** that dissolves the rectangle problem and AVOIDS
+mutual chain stabilization (declare only composition-FORCED edges
+tight, auto-rectangle-constant; everything else loose `PO`, sound
+because `PO` fires no obligation in the fragment and the certificate
+need only unfold to SOME model). It maps every need to a certified
+round, lists the 5 remaining rounds (descending block mirror →
+requirement types → the loose-PO frame instance → the recursion → K(C₀)
+counting), and flags the `e_ex` coverage argument as the designated
+risk (the Coverage-Lemma analogue). Read it before resuming.
+
 What separates the current state from end-to-end decidability is ONE
 construction: from `Satisfiable C₀` (∀PO-free), assemble an accepted
 `FinMT` code within `K(C₀)`. Every ingredient lemma is now certified;
