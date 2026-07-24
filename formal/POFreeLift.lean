@@ -8709,6 +8709,116 @@ theorem satisfiable_iff_podr_cert (C0 : Concept) (hfrag : DRFrag C0) :
 
 end PODRAssembly
 
+/-! ### The model-type-truncated-by-depth label (`mtk`, `ASSEMBLY_DESIGN.md §15`)
+
+A cleaner route to the full horizontal fragment (nested `∀DR`, `∀PP`/
+`∀PPI`, `∀EQ`/`∃EQ`, `∃PO`) — dissolving the `∀DR`-fixpoint of design (B)
+and the `∃EQ`/`∀EQ` fold of (A) at once.  The label is the model type
+TRUNCATED BY MODAL DEPTH: model-true formulas of depth `≤ k`.  The model
+is already `∀`-closed (it satisfies every universal, both directions via
+`conv`), and depth-truncation gives termination — so no syntactic
+reverse-firing recursion is needed.  Valid only for a CERTIFICATE
+CHARACTERIZATION (the extraction has the model in hand); the syntactic
+`reqType` labels stay for the eventual decidability layer. -/
+
+section MtkLabel
+
+variable {C0 : Concept} {α : Type} {I : Interp α}
+
+/-- The depth-`k` model type: model-true formulas of modal depth `≤ k`. -/
+noncomputable def mtk (C0 : Concept) (I : Interp α) (x : α) (k : Nat) :
+    List Concept :=
+  (mty C0 I x).filter (fun F => decide (mdepth F ≤ k))
+
+theorem mem_mtk {x : α} {k : Nat} {F : Concept} :
+    F ∈ mtk C0 I x k ↔ F ∈ mty C0 I x ∧ mdepth F ≤ k := by
+  constructor
+  · intro h
+    have h2 := List.mem_filter.mp h
+    exact ⟨h2.1, of_decide_eq_true h2.2⟩
+  · intro ⟨h1, h2⟩
+    exact List.mem_filter.mpr ⟨h1, decide_eq_true h2⟩
+
+theorem mtk_sub_cl {x : α} {k : Nat} : ∀ F ∈ mtk C0 I x k, F ∈ cl C0 :=
+  fun _ hF => mty_sub _ (mem_mtk.mp hF).1
+
+theorem mtk_clash {x : α} {k : Nat} {a : Nat}
+    (h : Concept.atom a ∈ mtk C0 I x k) : Concept.natom a ∉ mtk C0 I x k :=
+  fun h2 => mty_clash (mem_mtk.mp h).1 (mem_mtk.mp h2).1
+
+theorem mtk_nobot {x : α} {k : Nat} : Concept.bot ∉ mtk C0 I x k :=
+  fun h => mty_nobot (mem_mtk.mp h).1
+
+theorem mtk_and {x : α} {k : Nat} {c d : Concept}
+    (h : Concept.and c d ∈ mtk C0 I x k) :
+    c ∈ mtk C0 I x k ∧ d ∈ mtk C0 I x k := by
+  obtain ⟨hmty, hk⟩ := mem_mtk.mp h
+  obtain ⟨hc, hd⟩ := mty_and hmty
+  exact ⟨mem_mtk.mpr ⟨hc, Nat.le_trans (Nat.le_max_left _ _) hk⟩,
+    mem_mtk.mpr ⟨hd, Nat.le_trans (Nat.le_max_right _ _) hk⟩⟩
+
+theorem mtk_or {x : α} {k : Nat} {c d : Concept}
+    (h : Concept.or c d ∈ mtk C0 I x k) :
+    c ∈ mtk C0 I x k ∨ d ∈ mtk C0 I x k := by
+  obtain ⟨hmty, hk⟩ := mem_mtk.mp h
+  rcases mty_or hmty with hc | hd
+  · exact Or.inl (mem_mtk.mpr ⟨hc, Nat.le_trans (Nat.le_max_left _ _) hk⟩)
+  · exact Or.inr (mem_mtk.mpr ⟨hd, Nat.le_trans (Nat.le_max_right _ _) hk⟩)
+
+/-- FORWARD `∀`-firing: a depth-`k` universal fires its argument into an
+    `r`-neighbour's depth-`(k-1)` label (the model gives `c`, depth drops). -/
+theorem mtk_all_fwd {x y : α} {k : Nat} {r : Atom} {c : Concept}
+    (h : Concept.all r c ∈ mtk C0 I x k) (hy : I.dom y) (hr : I.rho x y = r) :
+    c ∈ mtk C0 I y (k - 1) := by
+  obtain ⟨hmty, hk⟩ := mem_mtk.mp h
+  refine mem_mtk.mpr ⟨mty_all hmty hy hr, ?_⟩
+  have : mdepth c + 1 ≤ k := hk
+  omega
+
+/-- REVERSE `∀DR`-firing (the crux, free from the model): a `∀DR` at a
+    depth-`(k-1)` `DR`-child fires back into the parent's depth-`k` label
+    — `conv DR = DR` makes the parent a `DR`-neighbour (`dr_reverse_sat`). -/
+theorem mtk_all_dr_rev (hI : RCC5Interp I) {x y : α} {k : Nat} {c : Concept}
+    (h : Concept.all dr c ∈ mtk C0 I y (k - 1)) (hx : I.dom x) (hy : I.dom y)
+    (hr : I.rho x y = dr) : c ∈ mtk C0 I x k := by
+  obtain ⟨hmty, hk⟩ := mem_mtk.mp h
+  refine mem_mtk.mpr ⟨dr_reverse_sat hI hx hy hr hmty, ?_⟩
+  have : mdepth c + 1 ≤ k - 1 := hk
+  omega
+
+/-- `∀EQ` reflexive fold: `∀EQ.c` at `x` gives `c` at `x` (`ρ x x = eq`). -/
+theorem mtk_all_eq (hI : RCC5Interp I) {x : α} {k : Nat} {c : Concept}
+    (h : Concept.all eq c ∈ mtk C0 I x k) (hx : I.dom x) : c ∈ mtk C0 I x k := by
+  obtain ⟨hmty, hk⟩ := mem_mtk.mp h
+  refine mem_mtk.mpr ⟨mty_all hmty hx (hI.refl_eq x hx), ?_⟩
+  have : mdepth c + 1 ≤ k := hk
+  omega
+
+/-- `∃`-witnessing: a depth-`k` existential has a model witness carrying
+    its argument at depth `k-1`. -/
+theorem mtk_ex {x : α} {k : Nat} {r : Atom} {c : Concept}
+    (h : Concept.ex r c ∈ mtk C0 I x k) :
+    ∃ y, I.dom y ∧ I.rho x y = r ∧ c ∈ mtk C0 I y (k - 1) := by
+  obtain ⟨hmty, hk⟩ := mem_mtk.mp h
+  obtain ⟨y, hy, hr, hc⟩ := mty_ex hmty
+  refine ⟨y, hy, hr, mem_mtk.mpr ⟨hc, ?_⟩⟩
+  have : mdepth c + 1 ≤ k := hk
+  omega
+
+/-- `∃EQ` reflexive fold: `∃EQ.c` at `x` gives `c` at `x` (strong EQ:
+    the `EQ`-witness IS `x`). -/
+theorem mtk_ex_eq (hI : RCC5Interp I) {x : α} {k : Nat} {c : Concept}
+    (h : Concept.ex eq c ∈ mtk C0 I x k) (hx : I.dom x) : c ∈ mtk C0 I x k := by
+  obtain ⟨hmty, hk⟩ := mem_mtk.mp h
+  obtain ⟨y, hy, hr, hc⟩ := mty_ex hmty
+  have hxy : x = y := hI.eq_id x y hx hy hr
+  rw [← hxy] at hc
+  refine mem_mtk.mpr ⟨hc, ?_⟩
+  have : mdepth c + 1 ≤ k := hk
+  omega
+
+end MtkLabel
+
 /-- **∀-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**  Both
     directions now kernel-checked: `←` is the certified soundness
     pipeline (`multiTier_sound`), `→` is the extraction

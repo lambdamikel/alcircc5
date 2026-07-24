@@ -628,3 +628,60 @@ rush (round-19/20 lesson).**
 Recommended order: **(B) then (C)** — (B) completes the horizontal
 fragment and is self-contained; (C) is the summit. (A) is optional polish
 whenever convenient.
+
+---
+
+## 15. The clean pivot (2026-07-24): model-type-truncated-by-depth labels
+
+Designing (B) exposed a **much simpler architecture that dissolves (A) AND
+(B) together** — and even the vacuous `∀PP`/`∀PPI` universals — with NO
+fixpoint. The insight: the `reqType`/`slabel` machinery builds *syntactic*
+labels that must be *explicitly closed* under `∀DR`-firing (the reverse
+batch), and nested `∀DR` makes that a mutual fixpoint. But the label need
+not be syntactic for a *certificate characterization* (the extraction has
+the model `I` in hand). The **model type is already `∀DR`-closed both
+ways** — the model satisfies every `∀DR` obligation — and the only reason
+not to use it directly was termination (a witness satisfies unboundedly
+deep formulas). **Truncating the model type by modal depth fixes exactly
+that.**
+
+**The label.** `mtk C₀ I x k := (mty C₀ I x).filter (mdepth · ≤ k)` —
+model-true formulas of modal depth `≤ k`. Then:
+- **Propositional** (`mtk_and`/`mtk_or`/`clash`/`nobot`): from `mty_*`;
+  `mdepth` of a conjunct `≤ mdepth(and) ≤ k`.
+- **Forward `∀`-firing** (`mtk_all_fwd`): `∀r.c ∈ mtk x k`, `ρ x y = r` ⟹
+  `c ∈ mtk y (k-1)` — `mty_all` gives `c ∈ mty y`, and
+  `mdepth c < mdepth(∀r.c) ≤ k` gives `mdepth c ≤ k-1`.
+- **Reverse `∀DR`-firing** (`mtk_all_dr_rev`): `∀DR.c ∈ mtk y (k-1)`,
+  `ρ x y = dr` ⟹ `c ∈ mtk x k` — **`dr_reverse_sat`** (already proved:
+  `conv DR = DR` makes `x` a DR-neighbour of `y`) gives `c ∈ mty x`, and
+  `mdepth c ≤ k-1 < k`. **This is the crux the whole project circled — and
+  here it is free from the model.**
+- **`∃`-witnessing** (`mtk_ex`): `∃r.c ∈ mtk x k` ⟹ a witness `y`,
+  `ρ x y = r`, `c ∈ mtk y (k-1)` — `mty_ex` + depth drop.
+
+**The recursion.** `MTKNode = (x, k, dom x)`; `mtkNodes` recurses on the
+demands of `mtk x k`, each child at budget `k-1`. **Terminates on `k`
+directly** (`k > 0` from any demand's `mdepth ≥ 1 ≤ k`) — no `lmd`
+measure. `mtkNodes_covers` mirrors `snodes_covers`.
+
+**The fragment `HFrag`.** `hex : ∃r.c ∈ cl C₀ ⟹ r ∈ {DR,PO,EQ}` (no
+vertical existentials — those still need kernels), `hall : ∀r.c ∈ cl C₀ ⟹
+r ≠ PO` (∀PO-free — the only real restriction). NO guard-freeness.
+
+**What it certifies** (`satisfiable_iff_hfrag_cert`, both directions, same
+tree-structural `symDrPo` frame): **the full ∀PO-free fragment MINUS
+vertical existentials `∃PP`/`∃PPI`** — nested `∀DR.(∀DR.A)`, `∀DR.(∃DR.B)`
+(B, done), `∀PP`/`∀PPI` (vacuous on the DR/PO/EQ frame, sound), `∀EQ`/`∃EQ`
+(reflexive, A done), `∃PO`, `∃DR`. `ee_all`: `EQ` diagonal reflexive, `DR`
+via `mtk_all_fwd`/`mtk_all_dr_rev`, `PO`/`PP`/`PPI` vacuous; `e_ex` via
+`mtkNodes_covers` (+ `∃EQ` returns the same node). Strictly generalises
+both `satisfiable_iff_allfree_cert` and `satisfiable_iff_podr_cert`.
+
+**Why the project didn't use this before:** the focus was the *decidability*
+path, where labels must be model-independent syntactic data (`reqType`, for
+`K(C₀)` counting) — model types are unavailable there. For the
+*characterization*, model types are ideal. So `reqType`/`slabel` are kept
+for the eventual decidability layer; `mtk` is the clean characterization
+route. This leaves ONLY `∃PP`/`∃PPI` (C, the vertical kernels) between here
+and the full ∀PO-free characterization.
