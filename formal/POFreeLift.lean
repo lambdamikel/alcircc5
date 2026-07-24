@@ -7384,6 +7384,104 @@ def noDR : Concept → Prop
   | .or c d => noDR c ∧ noDR d
   | _ => True
 
+theorem noDR_cl_ex_aux {a : Concept} {r : Atom}
+    (ih : noDR a → ∀ X, Concept.all dr X ∉ cl a ∧ Concept.ex dr X ∉ cl a)
+    (hnd : noDR a) (hr : r ≠ dr) :
+    ∀ X, Concept.all dr X ∉ cl (Concept.ex r a) ∧
+      Concept.ex dr X ∉ cl (Concept.ex r a) := by
+  intro X
+  refine ⟨fun h => ?_, fun h => ?_⟩
+  · rcases List.mem_cons.mp h with h' | h'
+    · exact Concept.noConfusion h'
+    · exact (ih hnd X).1 h'
+  · rcases List.mem_cons.mp h with h' | h'
+    · injection h' with hr' _; exact hr hr'.symm
+    · exact (ih hnd X).2 h'
+
+theorem noDR_cl_all_aux {a : Concept} {r : Atom}
+    (ih : noDR a → ∀ X, Concept.all dr X ∉ cl a ∧ Concept.ex dr X ∉ cl a)
+    (hnd : noDR a) (hr : r ≠ dr) :
+    ∀ X, Concept.all dr X ∉ cl (Concept.all r a) ∧
+      Concept.ex dr X ∉ cl (Concept.all r a) := by
+  intro X
+  refine ⟨fun h => ?_, fun h => ?_⟩
+  · rcases List.mem_cons.mp h with h' | h'
+    · injection h' with hr' _; exact hr hr'.symm
+    · exact (ih hnd X).1 h'
+  · rcases List.mem_cons.mp h with h' | h'
+    · exact Concept.noConfusion h'
+    · exact (ih hnd X).2 h'
+
+/-- A `noDR` concept's subformula closure contains no `∀DR` and no
+    `∃DR` — the fact the reconciliation lemmas need once the reverse
+    batch is `expand`-closed (`ASSEMBLY_DESIGN.md §12`). -/
+theorem noDR_cl : ∀ (e : Concept), noDR e →
+    ∀ X, Concept.all dr X ∉ cl e ∧ Concept.ex dr X ∉ cl e := by
+  intro e
+  induction e with
+  | top =>
+    intro _ X
+    refine ⟨fun h => ?_, fun h => ?_⟩ <;>
+      rcases List.mem_cons.mp h with h' | h' <;>
+      first | exact Concept.noConfusion h' | exact nomatch h'
+  | bot =>
+    intro _ X
+    refine ⟨fun h => ?_, fun h => ?_⟩ <;>
+      rcases List.mem_cons.mp h with h' | h' <;>
+      first | exact Concept.noConfusion h' | exact nomatch h'
+  | atom a =>
+    intro _ X
+    refine ⟨fun h => ?_, fun h => ?_⟩ <;>
+      rcases List.mem_cons.mp h with h' | h' <;>
+      first | exact Concept.noConfusion h' | exact nomatch h'
+  | natom a =>
+    intro _ X
+    refine ⟨fun h => ?_, fun h => ?_⟩ <;>
+      rcases List.mem_cons.mp h with h' | h' <;>
+      first | exact Concept.noConfusion h' | exact nomatch h'
+  | and a b iha ihb =>
+    intro hnd X
+    obtain ⟨ha, hb⟩ := hnd
+    refine ⟨fun h => ?_, fun h => ?_⟩ <;>
+      rcases List.mem_cons.mp h with h' | h'
+    · exact Concept.noConfusion h'
+    · rcases List.mem_append.mp h' with hh | hh
+      · exact (iha ha X).1 hh
+      · exact (ihb hb X).1 hh
+    · exact Concept.noConfusion h'
+    · rcases List.mem_append.mp h' with hh | hh
+      · exact (iha ha X).2 hh
+      · exact (ihb hb X).2 hh
+  | or a b iha ihb =>
+    intro hnd X
+    obtain ⟨ha, hb⟩ := hnd
+    refine ⟨fun h => ?_, fun h => ?_⟩ <;>
+      rcases List.mem_cons.mp h with h' | h'
+    · exact Concept.noConfusion h'
+    · rcases List.mem_append.mp h' with hh | hh
+      · exact (iha ha X).1 hh
+      · exact (ihb hb X).1 hh
+    · exact Concept.noConfusion h'
+    · rcases List.mem_append.mp h' with hh | hh
+      · exact (iha ha X).2 hh
+      · exact (ihb hb X).2 hh
+  | ex r a ih =>
+    intro hnd X
+    cases r with
+    | dr => exact hnd.elim
+    | eq => exact noDR_cl_ex_aux (r := eq) ih hnd (by decide) X
+    | pp => exact noDR_cl_ex_aux (r := pp) ih hnd (by decide) X
+    | ppi => exact noDR_cl_ex_aux (r := ppi) ih hnd (by decide) X
+    | po => exact noDR_cl_ex_aux (r := po) ih hnd (by decide) X
+  | all r a ih =>
+    intro hnd X
+    cases r with
+    | dr => exact hnd.elim
+    | eq => exact noDR_cl_all_aux (r := eq) ih hnd (by decide) X
+    | pp => exact noDR_cl_all_aux (r := pp) ih hnd (by decide) X
+    | ppi => exact noDR_cl_all_aux (r := ppi) ih hnd (by decide) X
+    | po => exact noDR_cl_all_aux (r := po) ih hnd (by decide) X
+
 section HorizontalRecursion
 
 variable {α : Type} {I : Interp α} {C0 : Concept}
@@ -8379,6 +8477,7 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms schildNode_eq_childNode
 #print axioms slabel_dr_forward
 #print axioms slabel_dr_reverse
+#print axioms noDR_cl
 #print axioms revfire_lmd_lt
 #print axioms dr_reverse_sat
 #print axioms allfree_cl_no_all
