@@ -819,3 +819,58 @@ themselves carry `∃PP.G` and recurse) — that IS the multi-cluster
 recursion. So (C) has no shortcut; the next build is the block-integration
 proper, best started with fresh context on the E3 `mkBlock`/`hserve`
 contract. The paths are now precisely mapped.
+
+---
+
+## 19. The vertical kernel, CERTIFIED (2026-07-24): `vkernel_ok`
+
+The β=Empty single-kernel milestone of §17/§18 is now **built and
+kernel-checked** (`POFreeLift.lean`, section `VerticalKernel`), closing
+the "de-risk the kernel side" step before the mixing.
+
+**Correction to §18.** §18 concluded β=Empty "certifies only the
+`Cinf`-shape (G=⊤)", reasoning that the chain carries the *demand*
+`∃PP.G` but not its *argument* `G`. **That is wrong for the chain
+`persistPP_chain` actually builds**: its `n+1` rung IS the `mty_ex`
+witness of `∃PP.G` at rung `n`, so `G ∈ mty (c (n+1))` — the argument is
+carried at every rung ≥ 1. `persistPP_productive` proves this and merely
+*discards* it (the `_` in `obtain ⟨y, hdy, hr, _⟩`). So a chain-carried
+`∃PP.G` routes to `k_ex` disjunct 2 (chain), needing only `G ∈ phase b`
+for **one** `b` — take `b = 0`, i.e. `hG0 : G ∈ mty (c i)`. No external,
+no `e_ex`, β = Empty.
+
+**What `vkernel_ok` certifies.** For any RCC5 model `I`, any ascending
+`PP`-chain `c` (`hstep : ρ (c n) (c (n+1)) = pp`), a type-recurrent
+segment `[i, i+p]` (`hty : mty (c i) = mty (c (i+p))`), with
+- `hG0 : G ∈ mty C0 I (c i)` (the argument lives in phase 0), and
+- `hdemands : ∀ a r D, ∃r.D ∈ mty (c (i+a)) → (r = pp ∧ D = G) ∨ r = eq`
+  (every phase existential is the single chain demand `∃PP.G`, or `∃EQ`),
+
+the β=Empty κ=Unit `vkernel` is a full **`MultiTierOk`** — genuine
+`∀PP`-firing (`kk_pp` via `segment_kk_pp`), cyclic phases, `∃PP` served
+by the chain, `∃EQ` in-phase (`seg_ex_eq`), externals vacuous (`Empty`),
+pool empty. `frame_q` is `readoff_qnet_frame` on the one-point
+`{c i}` kernel. This is a GENERAL theorem (any such chain), not the one
+hand-built `cinfTT`; it is the reusable kernel-certificate builder the
+assembly instantiates per persistent demand — the externals-free case of
+what `block_of_persistent` does with externals.
+
+**Non-vacuity, strictly beyond `Cinf`.** `Cvert = A ⊓ ∃PP.A ⊓ ∀PP.∃PP.A`
+(`A = atom 0`) has no finite model (forced ascending `PP`-tower) and
+carries a real atom. Its ℕ-order model (`Ivert = ⟨_, chain, atom-0-
+everywhere⟩`, RCC5 via `frame_rcc5 chain chainFrame`) feeds `vkernel_ok`
+(chain `= id`, `i=0`, `p=1`, all `mty n = cl Cvert`), yielding
+`MultiTierOk` and hence `Satisfiable Cvert` (`cvert_satisfiable`) THROUGH
+the kernel machinery — demonstrating the hypotheses are jointly
+satisfiable (the recurring "vacuous premise" defect class avoided).
+`hdemands` is discharged by a decidable list check (`cvert_demands_b :
+(cl Cvert).all okDemand`, `by decide`) — the single ∃ in the closure is
+`∃PP.A`. Axioms: `propext`/`Quot.sound`/`Classical.choice` (model-side).
+
+**What remains (unchanged, the summit).** The single-`∃PP` restriction is
+essential to β=Empty: two distinct `∃PP.G₁`, `∃PP.G₂` have distinct
+witnesses, only one of which is the chain's `n+1` rung — the other needs
+an external, whose own `∃PP` recurses. That is the multi-cluster
+`e_ex`/`hserve` recursion, `block_of_persistent` + `mtOkPool_of_block`
+territory, still open. `vkernel_ok` de-risks the kernel interior; the
+mixing is the next build.

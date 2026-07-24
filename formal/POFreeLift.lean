@@ -9281,6 +9281,172 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
   · rintro ⟨β, T, g, hok, hC0⟩
     exact multiTier_sound T hok (Sum.inl g) C0 hC0
 
+/-! ## Round E3h (2026-07-24): the vertical kernel, β = Empty — certified
+
+The persistent-vertical milestone of ASSEMBLY_DESIGN.md §§17–19: a single
+ascending `PP`-kernel with NO externals is a full `MultiTierOk`.  The key
+(correcting §18): the chain `persistPP_chain` builds CARRIES the `∃PP.G`
+argument `G` at every rung (the discarded `_` in `persistPP_productive`),
+so a chain-carried `∃PP.G` routes to `k_ex` disjunct 2 — the CHAIN, not
+an external.  Given only `hG0 : G ∈ phase 0` and `hdemands` (every phase
+existential is the chain demand `∃PP.G`, or an `∃EQ`), `vkernel` is
+valid: `∀PP`-firing via `segment_kk_pp`, `∃EQ` in-phase via `seg_ex_eq`,
+externals/pool vacuous.  The reusable kernel-certificate builder for the
+externals-free case — the summit's mixing (multiple `∃PP` demands ⟹
+externals ⟹ the `e_ex`/`hserve` recursion) remains open. -/
+
+section VerticalKernel
+
+variable {α : Type} {I : Interp α}
+
+/-- The β = Empty, κ = Unit vertical kernel: one ascending `PP`-chain,
+    phases = the segment's model types, kernel representative = `c i`. -/
+noncomputable def vkernel (I : Interp α) (C0 : Concept) (c : Nat → α)
+    (i p : Nat) : MultiTier Empty Unit where
+  E := fun e f => I.rho e.elim f.elim
+  K := fun _ f => I.rho (c i) f.elim
+  Q := fun _ _ => I.rho (c i) (c i)
+  up := fun _ => true
+  tauE := fun e => e.elim
+  p := fun _ => p
+  phase := fun _ a => mty C0 I (c (i + a))
+
+/-- THE VERTICAL KERNEL IS VALID: an ascending model chain with a
+    type-recurrent segment, whose phase existentials are all the single
+    chain demand `∃PP.G` (served by the chain) or `∃EQ` (served
+    in-phase), yields a full `MultiTierOk` with NO externals — genuine
+    `∀PP`-firing, cyclic phases, `∃PP` fulfilled by the chain itself. -/
+theorem vkernel_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hG0 : G ∈ mty C0 I (c i))
+    (hdemands : ∀ a r D, Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      (r = pp ∧ D = G) ∨ r = eq) :
+    MultiTierOk (vkernel I C0 c i p) := by
+  have hinj : ∀ v w : Empty ⊕ Unit,
+      Sum.elim (fun e : Empty => e.elim) (fun _ : Unit => c i) v
+        = Sum.elim (fun e : Empty => e.elim) (fun _ : Unit => c i) w → v = w := by
+    rintro (e | ⟨⟩) (f | ⟨⟩) _
+    · exact e.elim
+    · exact e.elim
+    · exact f.elim
+    · rfl
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI (fun e : Empty => e.elim)
+        (fun _ : Unit => c i) (fun e => e.elim) (fun _ => hdom i) hinj
+      e_clash := fun e => e.elim
+      e_nobot := fun e => e.elim
+      e_and := fun e => e.elim
+      e_or := fun e => e.elim
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun e => e.elim
+      ek_all := fun e => e.elim
+      ke_all := fun _ _ _ _ _ _ f => f.elim
+      kk_pp := fun _ _ ha E hE b hb =>
+        segment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun _ _ ha E hE b hb =>
+        segment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun _ _ _ E hE => seg_eq hI hdom hE
+      kq_all := fun k k' hne => absurd rfl hne
+      e_ex := fun e => e.elim
+      k_ex := ?_ }
+  intro _ a _ r D hmem
+  rcases hdemands a r D hmem with ⟨rfl, rfl⟩ | rfl
+  · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
+  · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
+
+end VerticalKernel
+
+/-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
+
+`Cvert = A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A)` (`A = atom 0`) forces an infinite
+ascending `PP`-tower (no finite model) and carries a real atom.  Its
+ℕ-order model feeds `vkernel_ok`, so `Satisfiable Cvert` is produced
+THROUGH the kernel machinery — the hypotheses are jointly satisfiable. -/
+
+namespace VerticalWitness
+
+/-- The ℕ-order chain is a frame. -/
+theorem chainFrame : Frame chain :=
+  ⟨chain_self, fun _ _ h => chain_eq_imp h, chain_conv, chain_cc⟩
+
+/-- `A = atom 0`, true at every point; the domain is all of `ℕ`. -/
+def Ivert : Interp Nat := ⟨fun _ => True, chain, fun a _ => a = 0⟩
+
+theorem Ivert_rcc5 : RCC5Interp Ivert := frame_rcc5 chain chainFrame _
+
+/-- `Cvert = (A ⊓ ∃PP.A) ⊓ ∀PP.(∃PP.A)`. -/
+def Cvert : Concept :=
+  .and (.and (.atom 0) (.ex pp (.atom 0))) (.all pp (.ex pp (.atom 0)))
+
+/-- Every concept in `cl Cvert` is satisfied at every point (`A` holds
+    everywhere and the `PP`-order is unbounded above). -/
+theorem vsat_all (n : Nat) : ∀ D ∈ cl Cvert, sat Ivert n D := by
+  have ha : ∀ m, sat Ivert m (Concept.atom 0) := fun _ => rfl
+  have he : ∀ m, sat Ivert m (Concept.ex pp (Concept.atom 0)) :=
+    fun m => ⟨m + 1, trivial, chain_lt (Nat.lt_succ_self m), ha (m + 1)⟩
+  have hal : ∀ m, sat Ivert m (Concept.all pp (Concept.ex pp (Concept.atom 0))) :=
+    fun _ y _ _ => he y
+  intro D hD
+  simp only [Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨ha n, he n⟩, hal n⟩
+  · exact ⟨ha n, he n⟩
+  · exact ha n
+  · exact he n
+  · exact ha n
+  · exact hal n
+  · exact he n
+  · exact ha n
+
+open Classical in
+/-- Consequently every model type along the chain is the full closure. -/
+theorem vfull (n : Nat) : mty Cvert Ivert n = cl Cvert := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (vsat_all n D hD)
+
+/-- The only existential in the closure is `∃PP.A`. -/
+def okDemand (E : Concept) : Bool :=
+  match E with
+  | Concept.ex r D => decide (r = pp ∧ D = Concept.atom 0)
+  | _ => true
+
+theorem cvert_demands_b : (cl Cvert).all okDemand = true := by decide
+
+theorem cvert_demands : ∀ r D, Concept.ex r D ∈ cl Cvert →
+    r = pp ∧ D = Concept.atom 0 := by
+  intro r D h
+  have hb := List.all_eq_true.mp cvert_demands_b (Concept.ex r D) h
+  simpa only [okDemand, decide_eq_true_eq] using hb
+
+/-- `Cvert` is satisfiable — produced THROUGH `vkernel_ok` (a genuine
+    kernel certificate), not by exhibiting the ℕ-model directly. -/
+theorem cvert_satisfiable : Satisfiable Cvert := by
+  have hok : MultiTierOk (vkernel Ivert Cvert (fun n => n) 0 1) :=
+    vkernel_ok Ivert_rcc5 Cvert (Concept.atom 0) (fun n => n)
+      (fun _ => trivial)
+      (fun n => chain_lt (Nat.lt_succ_self n))
+      Nat.one_pos
+      ((vfull 0).trans (vfull (0 + 1)).symm)
+      (by rw [vfull 0]; decide)
+      (fun a r D h => Or.inl (cvert_demands r D (by rw [vfull (0 + a)] at h; exact h)))
+  refine multiTier_sound (vkernel Ivert Cvert (fun n => n) 0 1) hok
+    (Sum.inr ((), 0)) Cvert ?_
+  have h1 : Cvert ∈ mty Cvert Ivert (0 + (0 % 1)) := by
+    rw [vfull (0 + (0 % 1))]; exact cl_self Cvert
+  exact h1
+
+end VerticalWitness
+
 #print axioms twoTier_sound
 #print axioms cinf_satisfiable
 #print axioms multiTier_sound
@@ -9416,5 +9582,7 @@ theorem satisfiable_iff_allfree_cert (C0 : Concept) (haf : AllFree C0) :
 #print axioms HFragWitness.Cwit_has_cert
 #print axioms HFragWitness.Cwit_not_drfrag
 #print axioms multiTierOk_of_pool_nil
+#print axioms vkernel_ok
+#print axioms VerticalWitness.cvert_satisfiable
 
 end POFreeLift
