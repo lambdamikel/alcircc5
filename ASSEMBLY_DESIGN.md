@@ -929,9 +929,21 @@ towers, so `cvert2_satisfiable` produces a two-kernel certificate for
    route by the `Q`-value + the other kernel's phase.
 2. **Externals that spawn NEW kernels** — an external whose `∃PP`
    argument is off every existing chain, so a fresh kernel is created.
-   This is the recursion, and it needs **`K(C₀)` counting** (finitely
-   many recurrent types ⟹ finitely many kernels) for termination — the
-   genuine open mathematics of the fragment.
+   This is the recursion (§§3–8).
+
+**On "open" vs "mechanical" (correcting a slip).** This step is NOT open
+mathematics *for the fragment*. Its counting is **mechanical**: §6 bounds
+every dimension by a computable function of `n = |cl C₀|` (types `≤ 2ⁿ`,
+kernels `≤ 2ⁿ·n`, …), precisely because ∀PO-freeness keeps PO loose
+(`mty_no_all_po`) and so blocks the rigid-crowd blow-up that makes **F6**
+hard. **F6 is a FULL-LOGIC obstruction** (the width barrier / M_n
+identity-selector minors), and the fragment is designed to sit *below*
+it. Per §8 the one item with "genuine mathematical risk" is step 3's
+`e_ex` coverage/termination *bookkeeping* (is every generated node's
+demand routed?) — a "presume-a-snag" concern from the 17-review ledger,
+not new mathematics. So: mechanical-by-design, uncertified — which is
+exactly why turning each move into a kernel-checked theorem (this
+session's three) is the work that matters.
 
 `vkernel2_ok` de-risks the two-kernel FRAME + cross-kernel `∀`; (1) and
 (2) — cross-`∃` and kernel-spawning — remain.
