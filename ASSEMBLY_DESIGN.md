@@ -985,3 +985,31 @@ one of the five routings above (the `e_ex` coverage argument — §8's one
 "genuine risk"); (c) `K(C₀)`-bound the family (§6, mechanical). The
 pieces are all theorems; the recursion that wires them for an arbitrary
 ∀PO-free `C₀` is the last build.
+
+### E3i (2026-07-24): the cluster-glue operation
+
+`glueMTOk` combines a FINITE FAMILY of independent `MultiTierOk`
+no-`∀PO` clusters into ONE `MultiTierOk` — the assembly's "combine
+independent clusters" step, built on the certified `glueFam_ok`
+(all-cross-`PO`, empty pool).  Support: `mtOkPool_nil_of_mtOk`
+(`MultiTierOk → MTOkPool []`, pure weakening, **axioms: `propext` only**)
++ vacuous pool realization + `vkernel_nopo` (the fragment's `∀PO`-vacuity
+for a `vkernel`).  Witness `cvert_glue2`: `Cvert` via TWO independent
+vkernels glued cross-`PO`.
+
+So the assembly's PRIMITIVES are now all certified:
+
+| primitive | lemma |
+|---|---|
+| per-cluster routing (both directions) | `vkernel_ok`/`vkernel1_ok`/`dvkernel_ok` |
+| cross-cluster `∀` / `∃` | `vkernel2_ok` / `vkernel2x_ok` |
+| combine INDEPENDENT clusters | `glueMTOk` (this round) |
+
+**What `glueMTOk` does NOT do (still the summit):** (i) cross-`∃`-LINKED
+clusters — a demand crossing clusters uses `vkernel2x_ok`'s read-off
+routing, not `glueFam`'s loose cross-`PO`; (ii) the GENERATOR — deciding,
+from a satisfiable `C₀`, WHICH model elements are kernel bases vs
+externals and how many clusters, with the `e_ex` coverage proof (§8's
+one "genuine risk") and the `K(C₀)` bound (§6, mechanical).  The
+combine-step is now a certified theorem; the generate-and-cover step is
+the remaining build.

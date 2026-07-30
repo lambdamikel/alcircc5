@@ -9723,6 +9723,68 @@ theorem dvkernel_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
   · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
   · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
 
+/-! ### Round E3i (2026-07-24): the cluster-glue operation
+
+`glueMTOk` combines a FINITE FAMILY of independent (cross-`PO`)
+`MultiTierOk` clusters into ONE `MultiTierOk`, on the certified
+`glueFam_ok` (all-cross-`PO`, empty pool).  This is the assembly's
+"combine independent clusters" step: each cluster keeps its own
+routings, cross-cluster edges are loose `PO` (inert on the ∀PO-free
+fragment).  The cross-`∃`-LINKED case (a demand crossing clusters) uses
+`vkernel2x_ok`'s routing instead; this handles the disjoint case that
+the recursion produces when clusters share no demand. -/
+
+/-- Weakening: a plain `MultiTierOk` block is `MTOkPool` against the
+    EMPTY pool (the pool disjuncts of `e_ex`/`k_ex` simply go unused). -/
+theorem mtOkPool_nil_of_mtOk {β κ : Type} [DecidableEq κ] {T : MultiTier β κ}
+    (tag : Nat) (h : MultiTierOk T) : MTOkPool T tag [] where
+  hp := h.hp
+  frame_q := h.frame_q
+  e_clash := h.e_clash
+  e_nobot := h.e_nobot
+  e_and := h.e_and
+  e_or := h.e_or
+  k_clash := h.k_clash
+  k_nobot := h.k_nobot
+  k_and := h.k_and
+  k_or := h.k_or
+  ee_all := h.ee_all
+  ek_all := h.ek_all
+  ke_all := h.ke_all
+  kk_pp := h.kk_pp
+  kk_ppi := h.kk_ppi
+  kk_eq := h.kk_eq
+  kq_all := h.kq_all
+  e_ex := by
+    intro e r c hmem
+    rcases h.e_ex e r c hmem with h1 | h2
+    · exact Or.inl h1
+    · exact Or.inr (Or.inl h2)
+  k_ex := by
+    intro k a ha r c hmem
+    rcases h.k_ex k a ha r c hmem with h1 | h2 | h3 | h4
+    · exact Or.inl h1
+    · exact Or.inr (Or.inl h2)
+    · exact Or.inr (Or.inr (Or.inl h3))
+    · exact Or.inr (Or.inr (Or.inr (Or.inl h4)))
+
+/-- THE CLUSTER-GLUE: a finite family of independent `MultiTierOk`
+    no-`∀PO` clusters glues (all-cross-`PO`) to a single `MultiTierOk`.
+    Built directly on `glueFam_ok` with the empty pool. -/
+theorem glueMTOk {β κ : Type} [DecidableEq κ] {B : Nat}
+    {F : Fin B → MultiTier β κ}
+    (hoks : ∀ b, MultiTierOk (F b)) (hnopo : ∀ b, MTNoPo (F b)) :
+    MultiTierOk (glueFam F) :=
+  glueFam_ok (P := []) (fun b => mtOkPool_nil_of_mtOk b.val (hoks b)) hnopo
+    (fun _ hq => absurd hq List.not_mem_nil)
+
+/-- The fragment's `∀PO`-vacuity for a `vkernel` (β = Empty externals
+    vacuous; phases are model types with no `∀PO` by `mty_no_all_po`). -/
+theorem vkernel_nopo {C0 : Concept} (hpo : POFree C0) (c : Nat → α) (i p : Nat) :
+    MTNoPo (vkernel I C0 c i p) where
+  ext := fun e => e.elim
+  ker := fun _ _ _ _ => mty_no_all_po hpo
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -10124,6 +10186,25 @@ theorem dvert_satisfiable : Satisfiable Dvert := by
     rw [dvfull (0 + (0 % 1))]; exact cl_self Dvert
   exact h1
 
+theorem Cvert_pofree : POFree Cvert := ⟨⟨trivial, trivial⟩, by decide, trivial⟩
+
+/-- `Cvert` via the CLUSTER-GLUE `glueMTOk` of two independent vkernels
+    (cross-`PO`) — demonstrating the assembly's combine-clusters step. -/
+theorem cvert_glue2 : Satisfiable Cvert := by
+  have hoks : ∀ _ : Fin 2, MultiTierOk (vkernel Ivert Cvert (fun n => n) 0 1) :=
+    fun _ => vkernel_ok Ivert_rcc5 Cvert (Concept.atom 0) (fun n => n)
+      (fun _ => trivial) (fun n => chain_lt (Nat.lt_succ_self n)) Nat.one_pos
+      ((vfull 0).trans (vfull (0 + 1)).symm) (by rw [vfull 0]; decide)
+      (fun a r D h => Or.inl (cvert_demands r D (by rw [vfull (0 + a)] at h; exact h)))
+  have hnopo : ∀ _ : Fin 2, MTNoPo (vkernel Ivert Cvert (fun n => n) 0 1) :=
+    fun _ => vkernel_nopo Cvert_pofree _ 0 1
+  have hok := glueMTOk (F := fun _ : Fin 2 => vkernel Ivert Cvert (fun n => n) 0 1)
+    hoks hnopo
+  refine multiTier_sound _ hok (Sum.inr ((⟨0, by decide⟩, ()), 0)) Cvert ?_
+  have h1 : Cvert ∈ mty Cvert Ivert (0 + (0 % 1)) := by
+    rw [vfull (0 + (0 % 1))]; exact cl_self Cvert
+  exact h1
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -10271,5 +10352,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cvert2x_satisfiable
 #print axioms dvkernel_ok
 #print axioms VerticalWitness.dvert_satisfiable
+#print axioms glueMTOk
+#print axioms VerticalWitness.cvert_glue2
 
 end POFreeLift
