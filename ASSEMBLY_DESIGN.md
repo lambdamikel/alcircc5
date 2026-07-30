@@ -963,10 +963,18 @@ a certified GENERAL lemma:
 | routing | disjunct | certified by |
 |---|---|---|
 | `∃PP` up the chain | `k_ex` 2 | `vkernel_ok` |
+| `∃PPI` down the chain (descending) | `k_ex` 2 | `dvkernel_ok` (E3h⁗) |
 | `∃EQ` in-phase | `k_ex` 3 | `seg_ex_eq` |
 | external `∃PP` down-into-kernel | `e_ex` 2 | `vkernel1_ok` |
 | cross-kernel `∀` | `kq_all` | `vkernel2_ok` |
 | cross-kernel `∃` | `k_ex` 4 | `vkernel2x_ok` |
+
+**E3h⁗** added the DESCENDING kernel `dvkernel_ok` (`up = false`,
+`PPI`-chain), mirror of `vkernel_ok`, via a reversed-`ℕ` model
+`dchainN i j := chain j i` (a genuine RCC5 frame, no `ℤ` needed) and
+witness `Dvert = A ⊓ ∃PPI.A ⊓ ∀PPI.(∃PPI.A)` (`dvert_satisfiable`).  So
+the toolkit now covers BOTH vertical directions, as the fragment's
+`∃PP`/`∃PPI` demands require.
 
 So the remaining summit (step 2, kernel-spawning) is **pure assembly of
 certified routings + the coverage/termination bookkeeping** — no new

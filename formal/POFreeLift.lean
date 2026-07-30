@@ -9654,6 +9654,75 @@ theorem vkernel2x_ok (hI : RCC5Interp I) (C0 G Gx : Concept) (ck : Bool → Nat 
         ⟨! k, (by cases k <;> decide), hQdr k, 0, hp (! k), hGx k⟩))
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (fun n => hdom k n) hmem⟩))
 
+/-! ### Round E3h⁗ (2026-07-24): the DESCENDING vertical kernel
+
+The mirror of `vkernel_ok` for `∃PPI` — a single DESCENDING kernel
+(`up = false`, `PPI`-chain).  Same structure; `∃PPI` served by the chain
+(`k_ex` disjunct 2, `cdir false = ppi`), `∀PP`/`∀PPI` via the descending
+segment coherence `dsegment_kk_pp`/`dsegment_kk_ppi`, `∃EQ`/`∀EQ`
+direction-agnostic (`seg_ex_eq`/`seg_eq`).  Completes the vertical
+routing toolkit in BOTH directions (ascending `∃PP` + descending
+`∃PPI`), as the fragment's kernels require. -/
+
+/-- The β = Empty, κ = Unit DESCENDING kernel (`up = false`). -/
+noncomputable def dvkernel (I : Interp α) (C0 : Concept) (c : Nat → α)
+    (i p : Nat) : MultiTier Empty Unit where
+  E := fun e f => I.rho e.elim f.elim
+  K := fun _ f => I.rho (c i) f.elim
+  Q := fun _ _ => I.rho (c i) (c i)
+  up := fun _ => false
+  tauE := fun e => e.elim
+  p := fun _ => p
+  phase := fun _ a => mty C0 I (c (i + a))
+
+/-- THE DESCENDING VERTICAL KERNEL IS VALID (mirror of `vkernel_ok`): a
+    descending `PPI`-chain, type-recurrent segment, `∃PPI.G`/`∃EQ`
+    demands, gives a full `MultiTierOk`. -/
+theorem dvkernel_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = ppi)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hG0 : G ∈ mty C0 I (c i))
+    (hdemands : ∀ a r D, Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      (r = ppi ∧ D = G) ∨ r = eq) :
+    MultiTierOk (dvkernel I C0 c i p) := by
+  have hinj : ∀ v w : Empty ⊕ Unit,
+      Sum.elim (fun e : Empty => e.elim) (fun _ : Unit => c i) v
+        = Sum.elim (fun e : Empty => e.elim) (fun _ : Unit => c i) w → v = w := by
+    rintro (e | ⟨⟩) (f | ⟨⟩) _
+    · exact e.elim
+    · exact e.elim
+    · exact f.elim
+    · rfl
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI (fun e : Empty => e.elim)
+        (fun _ : Unit => c i) (fun e => e.elim) (fun _ => hdom i) hinj
+      e_clash := fun e => e.elim
+      e_nobot := fun e => e.elim
+      e_and := fun e => e.elim
+      e_or := fun e => e.elim
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun e => e.elim
+      ek_all := fun e => e.elim
+      ke_all := fun _ _ _ _ _ _ f => f.elim
+      kk_pp := fun _ _ ha E hE b hb =>
+        dsegment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun _ _ ha E hE b hb =>
+        dsegment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun _ _ _ E hE => seg_eq hI hdom hE
+      kq_all := fun k k' hne => absurd rfl hne
+      e_ex := fun e => e.elim
+      k_ex := ?_ }
+  intro _ a _ r D hmem
+  rcases hdemands a r D hmem with ⟨rfl, rfl⟩ | rfl
+  · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
+  · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -9959,6 +10028,102 @@ theorem cvert2x_satisfiable : Satisfiable Cvert2x := by
     rw [vfull2x (true, 0 + (0 % 1))]; exact cl_self Cvert2x
   exact h1
 
+/-! #### The DESCENDING witness (reversed `ℕ`-order, no `ℤ` needed)
+
+`dchainN i j := chain j i` is the `ℕ`-order READ BACKWARDS — a genuine
+RCC5 frame whose step `dchainN n (n+1) = chain (n+1) n = PPI` is
+descending.  `Dvert = A ⊓ ∃PPI.A ⊓ ∀PPI.(∃PPI.A)` (no finite model)
+feeds `dvkernel_ok`. -/
+
+/-- The `ℕ`-order reversed: an infinite DESCENDING `PPI`-chain. -/
+def dchainN (i j : Nat) : Atom := chain j i
+
+theorem dchainN_frame : Frame dchainN where
+  refl_eq := fun i => chain_self i
+  eq_id := fun i j h => (chain_eq_imp h).symm
+  conv_ := fun i j => chain_conv j i
+  comp_ := by
+    intro i j k
+    show chain k i ∈ comp (chain j i) (chain k j)
+    rcases Nat.lt_trichotomy i j with hij | hij | hij
+    · rcases Nat.lt_trichotomy j k with hjk | hjk | hjk
+      · simp only [chain_gt hij, chain_gt hjk, chain_gt (Nat.lt_trans hij hjk)]; decide
+      · subst hjk; simp only [chain_gt hij, chain_self]; decide
+      · simp only [chain_gt hij, chain_lt hjk]
+        rcases chain_vals k i with h | h | h <;> simp only [h] <;> decide
+    · subst hij
+      simp only [chain_self]
+      rcases chain_vals k i with h | h | h <;> simp only [h] <;> decide
+    · rcases Nat.lt_trichotomy j k with hjk | hjk | hjk
+      · simp only [chain_lt hij, chain_gt hjk]
+        rcases chain_vals k i with h | h | h <;> simp only [h] <;> decide
+      · subst hjk; simp only [chain_lt hij, chain_self]; decide
+      · simp only [chain_lt hij, chain_lt hjk, chain_lt (Nat.lt_trans hjk hij)]; decide
+
+/-- The descending interpretation (`A` true everywhere). -/
+def Idvert : Interp Nat := ⟨fun _ => True, dchainN, fun a _ => a = 0⟩
+
+theorem Idvert_rcc5 : RCC5Interp Idvert := frame_rcc5 dchainN dchainN_frame _
+
+/-- `Dvert = (A ⊓ ∃PPI.A) ⊓ ∀PPI.(∃PPI.A)`. -/
+def Dvert : Concept :=
+  .and (.and (.atom 0) (.ex ppi (.atom 0))) (.all ppi (.ex ppi (.atom 0)))
+
+theorem dvsat_all (n : Nat) : ∀ D ∈ cl Dvert, sat Idvert n D := by
+  have ha : ∀ m, sat Idvert m (Concept.atom 0) := fun _ => rfl
+  have he : ∀ m, sat Idvert m (Concept.ex ppi (Concept.atom 0)) :=
+    fun m => ⟨m + 1, trivial, chain_gt (Nat.lt_succ_self m), ha (m + 1)⟩
+  have hal : ∀ m, sat Idvert m (Concept.all ppi (Concept.ex ppi (Concept.atom 0))) :=
+    fun _ y _ _ => he y
+  intro D hD
+  simp only [Dvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨ha n, he n⟩, hal n⟩
+  · exact ⟨ha n, he n⟩
+  · exact ha n
+  · exact he n
+  · exact ha n
+  · exact hal n
+  · exact he n
+  · exact ha n
+
+open Classical in
+theorem dvfull (n : Nat) : mty Dvert Idvert n = cl Dvert := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (dvsat_all n D hD)
+
+def okDemandD (E : Concept) : Bool :=
+  match E with
+  | Concept.ex r D => decide (r = ppi ∧ D = Concept.atom 0)
+  | _ => true
+
+theorem dvert_demands_b : (cl Dvert).all okDemandD = true := by decide
+
+theorem dvert_demands : ∀ r D, Concept.ex r D ∈ cl Dvert →
+    r = ppi ∧ D = Concept.atom 0 := by
+  intro r D h
+  have hb := List.all_eq_true.mp dvert_demands_b (Concept.ex r D) h
+  simpa only [okDemandD, decide_eq_true_eq] using hb
+
+/-- `Dvert` is satisfiable via the DESCENDING kernel `dvkernel_ok`. -/
+theorem dvert_satisfiable : Satisfiable Dvert := by
+  have hok : MultiTierOk (dvkernel Idvert Dvert (fun n => n) 0 1) :=
+    dvkernel_ok Idvert_rcc5 Dvert (Concept.atom 0) (fun n => n)
+      (fun _ => trivial)
+      (fun n => chain_gt (Nat.lt_succ_self n))
+      Nat.one_pos
+      ((dvfull 0).trans (dvfull (0 + 1)).symm)
+      (by rw [dvfull 0]; decide)
+      (fun a r D h => Or.inl (dvert_demands r D (by rw [dvfull (0 + a)] at h; exact h)))
+  refine multiTier_sound (dvkernel Idvert Dvert (fun n => n) 0 1) hok
+    (Sum.inr ((), 0)) Dvert ?_
+  have h1 : Dvert ∈ mty Dvert Idvert (0 + (0 % 1)) := by
+    rw [dvfull (0 + (0 % 1))]; exact cl_self Dvert
+  exact h1
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -10104,5 +10269,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
+#print axioms dvkernel_ok
+#print axioms VerticalWitness.dvert_satisfiable
 
 end POFreeLift
