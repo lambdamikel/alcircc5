@@ -9572,6 +9572,88 @@ theorem vkernel2_ok (hI : RCC5Interp I) (C0 G : Concept) (ck : Bool → Nat → 
     · exact Or.inr (Or.inl ⟨rfl, 0, hp k, hG0 k⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (fun n => hdom k n) hmem⟩))
 
+/-! ### Round E3h‴ (2026-07-24): cross-kernel `∃` — the last routing primitive
+
+`vkernel2x_ok` extends `vkernel2_ok` with the ONE routing not yet in the
+`vkernel` family: a kernel's `∃DR.Gx` demand served by the OTHER kernel
+(`k_ex` disjunct 4), via the cross-`DR` value `Q k (!k)` (`hQdr`) and the
+argument living in the other kernel's phase (`hGx`).  This is the shape
+`cbothMT` hand-built (`∃DR.Dinf` served across), now GENERAL.  With it,
+EVERY `k_ex`/`e_ex` disjunct has a certified general lemma — chain
+(`vkernel_ok`), in-phase `∃EQ` (`seg_ex_eq`), down-into-kernel external
+(`vkernel1_ok`), cross-kernel `∀` (`vkernel2_ok`), and now cross-kernel
+`∃` — so the coverage recursion is pure assembly of certified routings. -/
+
+/-- Two ascending kernels where each also serves an `∃DR.Gx` demand by
+    the OTHER kernel (`k_ex` disjunct 4).  A genuine two-cluster
+    certificate (the `∃DR` forces a second cluster). -/
+theorem vkernel2x_ok (hI : RCC5Interp I) (C0 G Gx : Concept) (ck : Bool → Nat → α)
+    (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    {ik pk : Bool → Nat} (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hG0 : ∀ k, G ∈ mty C0 I (ck k (ik k)))
+    (hbase : ck true (ik true) ≠ ck false (ik false))
+    (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (hGx : ∀ k, Gx ∈ mty C0 I (ck (! k) (ik (! k))))
+    (hQdr : ∀ k, I.rho (ck k (ik k)) (ck (! k) (ik (! k))) = dr)
+    (hdemands : ∀ k a r D, Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      (r = pp ∧ D = G) ∨ (r = dr ∧ D = Gx) ∨ r = eq) :
+    MultiTierOk (vkernel2 I C0 ck ik pk) := by
+  have hinj : ∀ v w : Empty ⊕ Bool,
+      Sum.elim (fun e : Empty => e.elim) (fun k : Bool => ck k (ik k)) v
+        = Sum.elim (fun e : Empty => e.elim) (fun k : Bool => ck k (ik k)) w → v = w := by
+    rintro (e | k) (f | k') h
+    · exact e.elim
+    · exact e.elim
+    · exact f.elim
+    · simp only [Sum.elim_inr] at h
+      by_cases hk : k = k'
+      · rw [hk]
+      · exfalso
+        cases k <;> cases k'
+        · exact hk rfl
+        · exact hbase h.symm
+        · exact hbase h
+        · exact hk rfl
+  refine
+    { hp := hp
+      frame_q := readoff_qnet_frame hI (fun e : Empty => e.elim)
+        (fun k : Bool => ck k (ik k)) (fun e => e.elim) (fun k => hdom k (ik k)) hinj
+      e_clash := fun e => e.elim
+      e_nobot := fun e => e.elim
+      e_and := fun e => e.elim
+      e_or := fun e => e.elim
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun e => e.elim
+      ek_all := fun e => e.elim
+      ke_all := fun _ _ _ _ _ _ f => f.elim
+      kk_pp := fun k _ ha E hE b hb =>
+        segment_kk_pp hI (fun n => hdom k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_ppi := fun k _ ha E hE b hb =>
+        segment_kk_ppi hI (fun n => hdom k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_eq := fun k _ _ E hE => seg_eq hI (fun n => hdom k n) hE
+      kq_all := ?_
+      e_ex := fun e => e.elim
+      k_ex := ?_ }
+  · -- kq_all: unchanged from `vkernel2_ok`
+    intro k k' hkk a _ r c hmem hr b _
+    apply mty_all hmem (hdom k' (ik k' + b))
+    rw [hrectQ k k' hkk a b]
+    exact hr
+  · -- k_ex: `∃PP`→chain, `∃DR.Gx`→the OTHER kernel, `∃EQ`→in-phase
+    intro k a _ r D hmem
+    rcases hdemands k a r D hmem with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | rfl
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp k, hG0 k⟩)
+    · exact Or.inr (Or.inr (Or.inr
+        ⟨! k, (by cases k <;> decide), hQdr k, 0, hp (! k), hGx k⟩))
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (fun n => hdom k n) hmem⟩))
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -9786,6 +9868,97 @@ theorem cvert2_satisfiable : Satisfiable Cvert := by
     rw [vfull2 (true, 0 + (0 % 1))]; exact cl_self Cvert
   exact h1
 
+/-! #### A GENUINE two-cluster concept, via `vkernel2x_ok`
+
+`Cvert2x = Cvert ⊓ ∃DR.A` genuinely needs two clusters (the `∃DR` forces
+a DR-neighbour, impossible inside one PP-tower).  In the two-tower model
+each tower's `∃DR.A` is served by the OTHER tower — cross-kernel `∃`. -/
+
+/-- `Cvert2x = Cvert ⊓ ∃DR.A` — a concept with no finite model that
+    genuinely needs two DR-linked clusters. -/
+def Cvert2x : Concept := .and Cvert (.ex dr (.atom 0))
+
+theorem vsat_all2x (p : Bool × Nat) : ∀ D ∈ cl Cvert2x, sat Ivert2 p D := by
+  have ha : ∀ q : Bool × Nat, sat Ivert2 q (Concept.atom 0) := fun _ => rfl
+  have he : ∀ q : Bool × Nat, sat Ivert2 q (Concept.ex pp (Concept.atom 0)) := by
+    rintro ⟨b, n⟩
+    exact ⟨(b, n + 1), trivial,
+      (chain2_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)), ha _⟩
+  have hal : ∀ q : Bool × Nat,
+      sat Ivert2 q (Concept.all pp (Concept.ex pp (Concept.atom 0))) :=
+    fun _ y _ _ => he y
+  have hdr : ∀ q : Bool × Nat, sat Ivert2 q (Concept.ex dr (Concept.atom 0)) := by
+    rintro ⟨b, n⟩
+    exact ⟨(! b, 0), trivial, chain2_diff n 0 (by cases b <;> decide), ha _⟩
+  intro D hD
+  simp only [Cvert2x, Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨⟨ha p, he p⟩, hal p⟩, hdr p⟩
+  · exact ⟨⟨ha p, he p⟩, hal p⟩
+  · exact ⟨ha p, he p⟩
+  · exact ha p
+  · exact he p
+  · exact ha p
+  · exact hal p
+  · exact he p
+  · exact ha p
+  · exact hdr p
+  · exact ha p
+
+open Classical in
+theorem vfull2x (p : Bool × Nat) : mty Cvert2x Ivert2 p = cl Cvert2x := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (vsat_all2x p D hD)
+
+/-- Existentials of `cl Cvert2x`: `∃PP.A` and `∃DR.A` (arg always `A`). -/
+def okDemand2x (E : Concept) : Bool :=
+  match E with
+  | Concept.ex r D => decide ((r = pp ∨ r = dr) ∧ D = Concept.atom 0)
+  | _ => true
+
+theorem cvert2x_demands_b : (cl Cvert2x).all okDemand2x = true := by decide
+
+theorem cvert2x_demands : ∀ r D, Concept.ex r D ∈ cl Cvert2x →
+    (r = pp ∨ r = dr) ∧ D = Concept.atom 0 := by
+  intro r D h
+  have hb := List.all_eq_true.mp cvert2x_demands_b (Concept.ex r D) h
+  simpa only [okDemand2x, decide_eq_true_eq] using hb
+
+/-- `Cvert2x` is satisfiable via `vkernel2x_ok` — TWO towers, each
+    serving the other's `∃DR.A` (cross-kernel `∃`).  The first GENUINE
+    (non-artificial) multi-kernel certificate. -/
+theorem cvert2x_satisfiable : Satisfiable Cvert2x := by
+  have hok : MultiTierOk
+      (vkernel2 Ivert2 Cvert2x (fun b n => (b, n)) (fun _ => 0) (fun _ => 1)) :=
+    vkernel2x_ok Ivert2_rcc5 Cvert2x (Concept.atom 0) (Concept.atom 0)
+      (fun b n => (b, n))
+      (fun _ _ => trivial)
+      (fun b n => (chain2_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)))
+      (fun _ => Nat.one_pos)
+      (fun k => (vfull2x (k, 0)).trans (vfull2x (k, 0 + 1)).symm)
+      (fun k => by show Concept.atom 0 ∈ mty Cvert2x Ivert2 (k, 0);
+                   rw [vfull2x (k, 0)]; decide)
+      (by decide)
+      (fun k k' hkk a b =>
+        (chain2_diff (0 + a) (0 + b) hkk).trans (chain2_diff 0 0 hkk).symm)
+      (fun k => by show Concept.atom 0 ∈ mty Cvert2x Ivert2 (! k, 0);
+                   rw [vfull2x (! k, 0)]; decide)
+      (fun k => chain2_diff 0 0 (by cases k <;> decide))
+      (fun k a r D h => by
+        have hrd := cvert2x_demands r D (by rw [vfull2x (k, 0 + a)] at h; exact h)
+        rcases hrd.1 with rfl | rfl
+        · exact Or.inl ⟨rfl, hrd.2⟩
+        · exact Or.inr (Or.inl ⟨rfl, hrd.2⟩))
+  refine multiTier_sound
+    (vkernel2 Ivert2 Cvert2x (fun b n => (b, n)) (fun _ => 0) (fun _ => 1)) hok
+    (Sum.inr (true, 0)) Cvert2x ?_
+  have h1 : Cvert2x ∈ mty Cvert2x Ivert2 (true, 0 + (0 % 1)) := by
+    rw [vfull2x (true, 0 + (0 % 1))]; exact cl_self Cvert2x
+  exact h1
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -9929,5 +10102,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cvert_satisfiable_ext
 #print axioms vkernel2_ok
 #print axioms VerticalWitness.cvert2_satisfiable
+#print axioms vkernel2x_ok
+#print axioms VerticalWitness.cvert2x_satisfiable
 
 end POFreeLift

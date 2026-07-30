@@ -924,9 +924,7 @@ towers, so `cvert2_satisfiable` produces a two-kernel certificate for
 `Cvert`. Axioms `propext`/`Quot.sound`/`Classical.choice`.
 
 **What's still missing toward the summit** (in increasing difficulty):
-1. **Cross-kernel `∃`** — `k_ex` disjunct 4: a demand in one kernel
-   served by the OTHER kernel (as `cbothMT`'s `∃DR.Dinf` is). Modest:
-   route by the `Q`-value + the other kernel's phase.
+1. ~~**Cross-kernel `∃`** — `k_ex` disjunct 4~~ — **DONE (E3h‴ below).**
 2. **Externals that spawn NEW kernels** — an external whose `∃PP`
    argument is off every existing chain, so a fresh kernel is created.
    This is the recursion (§§3–8).
@@ -947,3 +945,35 @@ session's three) is the work that matters.
 
 `vkernel2_ok` de-risks the two-kernel FRAME + cross-kernel `∀`; (1) and
 (2) — cross-`∃` and kernel-spawning — remain.
+
+### E3h‴ (2026-07-24): cross-kernel `∃` — the routing toolkit is COMPLETE
+
+`vkernel2x_ok` adds the last routing primitive: a kernel's `∃DR.Gx`
+demand served by the OTHER kernel (`k_ex` disjunct 4), via the cross-`DR`
+value `Q k (!k)` (`hQdr`) and the argument living in the other kernel's
+phase (`hGx`). This is `cbothMT`'s hand-built `∃DR.Dinf`-across, now a
+GENERAL lemma. Witness `Cvert2x = Cvert ⊓ ∃DR.A` — a concept that
+GENUINELY needs two clusters (`∃DR` cannot be served inside one PP-tower)
+— `cvert2x_satisfiable`, the first *non-artificial* multi-kernel
+certificate (each tower serves the other's `∃DR.A`).
+
+**The routing toolkit is now complete.** Every `k_ex`/`e_ex` disjunct has
+a certified GENERAL lemma:
+
+| routing | disjunct | certified by |
+|---|---|---|
+| `∃PP` up the chain | `k_ex` 2 | `vkernel_ok` |
+| `∃EQ` in-phase | `k_ex` 3 | `seg_ex_eq` |
+| external `∃PP` down-into-kernel | `e_ex` 2 | `vkernel1_ok` |
+| cross-kernel `∀` | `kq_all` | `vkernel2_ok` |
+| cross-kernel `∃` | `k_ex` 4 | `vkernel2x_ok` |
+
+So the remaining summit (step 2, kernel-spawning) is **pure assembly of
+certified routings + the coverage/termination bookkeeping** — no new
+routing to invent. What the recursion must still do: (a) decide, per
+model element, whether it is a kernel base or an external and which
+kernel serves each demand; (b) prove every generated node's demand hits
+one of the five routings above (the `e_ex` coverage argument — §8's one
+"genuine risk"); (c) `K(C₀)`-bound the family (§6, mechanical). The
+pieces are all theorems; the recursion that wires them for an arbitrary
+∀PO-free `C₀` is the last build.
