@@ -9785,6 +9785,81 @@ theorem vkernel_nopo {C0 : Concept} (hpo : POFree C0) (c : Nat → α) (i p : Na
   ext := fun e => e.elim
   ker := fun _ _ _ _ => mty_no_all_po hpo
 
+/-! ### Round E3j (2026-07-29): the single-`∃PP` GENERATOR
+
+The first extraction on the vertical side: from a model element carrying
+a persistent `∃PP.G` demand, BUILD a finite certificate carrying `C₀`.
+This is `satisfiable_of_persistPP` — the vertical analogue of
+`extract_hfrag`, for the fragment whose only existentials are ONE
+persistent `∃PP.G` (plus `∃EQ`).  It threads: `persistPP_productive'`
+(the demand's witness carries `G`) → `persistPP_chain'` (a chain carrying
+`G` at EVERY rung — the correction of §18 made into a lemma) → a
+type-recurrent segment → the root as a below-external whose `∃PP.G`
+routes into the kernel (`vkernel1_ok`), with `chain_model_pp` placing the
+root below the whole segment.  No `e_ex` recursion: the SINGLE demand is
+chain-served, the root is the only external.  The MULTI-demand case (many
+`∃PP.Gₖ`, each a kernel) is the next piece — this de-risks the extraction
+skeleton on the one-kernel case. -/
+
+/-- `persistPP_productive` strengthened: the chosen `PP`-successor also
+    CARRIES the argument `G` (the fact `persistPP_productive` discarded). -/
+theorem persistPP_productive' (hI : RCC5Interp I) {C0 G : Concept}
+    (x : α) (hx : persistPP I C0 G x) :
+    ∃ y, persistPP I C0 G y ∧ I.dom y ∧ I.rho x y = pp ∧ G ∈ mty C0 I y := by
+  obtain ⟨hdx, hex, hall⟩ := hx
+  obtain ⟨y, hdy, hr, hGy⟩ := mty_ex hex
+  refine ⟨y, ⟨hdy, mty_all hall hdy hr, ?_⟩, hdy, hr, hGy⟩
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp hall
+  exact mem_mty.mpr ⟨hcl, sat_all_pp_up hI hdx hdy hr hsat⟩
+
+/-- A persistent-`∃PP` chain that CARRIES `G` at every rung (invariant
+    `persistPP ∧ G ∈ mty`), started from a `G`-carrying persistent
+    element. -/
+theorem persistPP_chain' (hI : RCC5Interp I) {C0 G : Concept} (x1 : α)
+    (hS1 : persistPP I C0 G x1 ∧ G ∈ mty C0 I x1) :
+    ∃ d : Nat → α, d 0 = x1 ∧ (∀ n, I.dom (d n)) ∧
+      (∀ n, I.rho (d n) (d (n + 1)) = pp) ∧ (∀ n, G ∈ mty C0 I (d n)) := by
+  have hprod : ∀ x, (persistPP I C0 G x ∧ G ∈ mty C0 I x) →
+      ∃ y, (persistPP I C0 G y ∧ G ∈ mty C0 I y) ∧ I.dom y ∧ I.rho x y = pp := by
+    intro x hx
+    obtain ⟨y, hpy, hdy, hry, hGy⟩ := persistPP_productive' hI x hx.1
+    exact ⟨y, ⟨hpy, hGy⟩, hdy, hry⟩
+  refine ⟨buildChain _ hprod x1 hS1, buildChain_zero _ hprod x1 hS1, ?_, ?_, ?_⟩
+  · intro n
+    obtain ⟨⟨hdn, _, _⟩, _⟩ := buildChain_prop _ hprod x1 hS1 n
+    exact hdn
+  · exact fun n => buildChain_step _ hprod x1 hS1 n
+  · intro n
+    obtain ⟨_, hGn⟩ := buildChain_prop _ hprod x1 hS1 n
+    exact hGn
+
+/-- THE SINGLE-`∃PP` GENERATOR: a persistent `∃PP.G` element whose model
+    types carry only the demands `∃PP.G`/`∃EQ` yields a finite
+    certificate carrying `C₀` — extraction for the one-kernel vertical
+    fragment. -/
+theorem satisfiable_of_persistPP (hI : RCC5Interp I) (C0 G : Concept)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → (r = pp ∧ D = G) ∨ r = eq)
+    {x0 : α} (hx0 : persistPP I C0 G x0) (hC0 : C0 ∈ mty C0 I x0) :
+    Satisfiable C0 := by
+  obtain ⟨x1, hp1, _, hr01, hG1⟩ := persistPP_productive' hI x0 hx0
+  obtain ⟨d, hd0, hdom_d, hstep_d, hG_d⟩ := persistPP_chain' hI x1 ⟨hp1, hG1⟩
+  obtain ⟨i, p, _, hp, hty, _, _⟩ := segment_select hI hdom_d hstep_d C0 [x0]
+    (by intro e he; rw [List.mem_singleton.mp he]; exact hx0.1) 0
+  have hx0d0 : I.rho x0 (d 0) = pp := by rw [hd0]; exact hr01
+  have hx0pp : ∀ a, I.rho x0 (d (i + a)) = pp := by
+    intro a
+    rcases Nat.eq_zero_or_pos (i + a) with h0 | h0
+    · rw [h0]; exact hx0d0
+    · have hcomp := hI.comp_ x0 (d 0) (d (i + a)) hx0.1 (hdom_d 0) (hdom_d (i + a))
+      rw [hx0d0, chain_model_pp hI hdom_d hstep_d 0 (i + a) h0,
+        show comp pp pp = [pp] from rfl] at hcomp
+      exact List.mem_singleton.mp hcomp
+  have hok : MultiTierOk (vkernel1 I C0 d x0 i p) :=
+    vkernel1_ok hI C0 G d x0 hx0.1 hdom_d hstep_d hp hty (hG_d i) hx0pp
+      (fun a r D hmem => hdem r D (mty_sub _ hmem))
+      (fun r D hmem => hdem r D (mty_sub _ hmem))
+  exact multiTier_sound (vkernel1 I C0 d x0 i p) hok (Sum.inl ()) C0 hC0
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -10205,6 +10280,14 @@ theorem cvert_glue2 : Satisfiable Cvert := by
     rw [vfull (0 + (0 % 1))]; exact cl_self Cvert
   exact h1
 
+/-- `Cvert` recovered THROUGH the generator `satisfiable_of_persistPP`
+    (not the hand-built kernel) — the generator fires on a real concept. -/
+theorem cvert_via_generator : Satisfiable Cvert :=
+  satisfiable_of_persistPP Ivert_rcc5 Cvert (Concept.atom 0)
+    (fun r D h => Or.inl (cvert_demands r D h))
+    ⟨trivial, by rw [vfull 0]; decide, by rw [vfull 0]; decide⟩
+    (by rw [vfull 0]; exact cl_self Cvert)
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -10354,5 +10437,7 @@ end VerticalWitness
 #print axioms VerticalWitness.dvert_satisfiable
 #print axioms glueMTOk
 #print axioms VerticalWitness.cvert_glue2
+#print axioms satisfiable_of_persistPP
+#print axioms VerticalWitness.cvert_via_generator
 
 end POFreeLift

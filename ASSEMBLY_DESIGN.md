@@ -1013,3 +1013,34 @@ externals and how many clusters, with the `e_ex` coverage proof (§8's
 one "genuine risk") and the `K(C₀)` bound (§6, mechanical).  The
 combine-step is now a certified theorem; the generate-and-cover step is
 the remaining build.
+
+### E3j (2026-07-29): the single-`∃PP` GENERATOR (extraction begins)
+
+`satisfiable_of_persistPP` is the FIRST extraction on the vertical side —
+the vertical analogue of `extract_hfrag`.  From a model element `x0`
+carrying a persistent `∃PP.G` demand (`persistPP`), whose model types
+carry only `∃PP.G`/`∃EQ` demands (`hdem`, a syntactic condition on
+`cl C₀`), it BUILDS a finite certificate carrying `C₀`.  It threads the
+generator's plumbing, now certified:
+- **`persistPP_productive'`** — the `∃PP.G` witness carries `G` (the fact
+  `persistPP_productive` discarded; §18's correction as a lemma).
+- **`persistPP_chain'`** — a chain carrying `G` at EVERY rung (invariant
+  `persistPP ∧ G ∈ mty`).
+- **`segment_select`** — a type-recurrent segment.
+- **`chain_model_pp`** — the root sits `PP`-below the whole segment.
+- **`vkernel1_ok`** — the root is the below-external whose `∃PP.G` routes
+  into the kernel; the single demand is chain-served, so NO `e_ex`
+  recursion.
+
+Fires on a real concept: `cvert_via_generator` recovers `Cvert` THROUGH
+the generator (not the hand-built kernel).  Axioms
+`propext`/`Quot.sound`/`Classical.choice`.
+
+**Scope (honest).** This is the ONE-kernel extraction: a SINGLE
+persistent `∃PP.G`.  What it does not yet do — the MULTI-demand case
+(several `∃PP.Gₖ`, each spawning a kernel, glued by `glueMTOk`/cross-`∃`
+links) with the coverage argument that every generated node's demand is
+routed, and the `K(C₀)` bound.  That coupled generate-and-cover step is
+the summit.  But the extraction SKELETON — witness → `G`-carrying chain →
+recurrent segment → below-external + kernel → certificate — is now a
+certified pipeline, ready to be iterated per demand.
