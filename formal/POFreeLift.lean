@@ -9939,6 +9939,96 @@ theorem starNet_frame : Frame (@starNet N _) where
         · subst hkk''; rw [starNet_diag, starNet_off hkk', starNet_off hk'k'']; decide
         · rw [starNet_off hkk'', starNet_off hkk', starNet_off hk'k'']; decide
 
+/-! ### Round E3l (2026-07-30): the multi-demand star certificate
+
+`starKernel` is the `MultiTier` over the star frame: one root external
+(carrying `C₀`) `PPI`-below `N` ascending kernels, cross-`PO`.
+`starKernel_ok` proves validity: the root routes each `∃PP.(Gₖ k)` into
+kernel `k` (`e_ex` disjunct 2), each kernel serves its own `∃PP.(Gₖ k)`
+via its chain (`k_ex` disjunct 2), `∃EQ` self/in-phase, `kq_all` vacuous
+(cross-`PO`, `∀PO`-free), the root↔kernel `∀`-obligations firing by
+`mty_all` through the model's `x₀ PP`-chain rows.  This is the
+multi-demand validity — the coverage CLOSES because each kernel's phases
+carry only that kernel's demand (`hphase_dem`). -/
+
+/-- The star `MultiTier`: root `Unit` (label `mty x₀`), `N` ascending
+    kernels, frame `= starNet`. -/
+noncomputable def starKernel (I : Interp α) (C0 : Concept) (x0 : α)
+    (ck : N → Nat → α) (ik pk : N → Nat) : MultiTier Unit N where
+  E := fun _ _ => eq
+  K := fun _ _ => ppi
+  Q := fun _ _ => po
+  up := fun _ => true
+  tauE := fun _ => mty C0 I x0
+  p := pk
+  phase := fun k a => mty C0 I (ck k (ik k + a))
+
+/-- THE MULTI-DEMAND STAR CERTIFICATE IS VALID: a root `x₀` `PP`-below
+    `N` ascending chains (`hbelow`), each type-recurrent (`hty`) and
+    serving its own demand `∃PP.(Gₖ k)` (`hphase_dem`, `hchainG`), with
+    the root's demands each some `Gₖ k` (`hroot_dem`), gives a full
+    `MultiTierOk`. -/
+theorem starKernel_ok (hI : RCC5Interp I) (C0 : Concept) (hpo : POFree C0)
+    (x0 : α) (hx0dom : I.dom x0) (ck : N → Nat → α) {ik pk : N → Nat}
+    (hdomc : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hbelow : ∀ k a, I.rho x0 (ck k (ik k + a)) = pp)
+    (Gk : N → Concept)
+    (hchainG : ∀ k, Gk k ∈ mty C0 I (ck k (ik k)))
+    (hphase_dem : ∀ k a r D, Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      (r = pp ∧ D = Gk k) ∨ r = eq)
+    (hroot_dem : ∀ r D, Concept.ex r D ∈ mty C0 I x0 →
+      (r = pp ∧ ∃ k, D = Gk k) ∨ r = eq) :
+    MultiTierOk (starKernel I C0 x0 ck ik pk) := by
+  have hbc : ∀ k a, I.rho (ck k (ik k + a)) x0 = ppi := by
+    intro k a
+    rw [hI.conv_ x0 (ck k (ik k + a)) hx0dom (hdomc k _), hbelow k a]; rfl
+  refine
+    { hp := hp
+      frame_q := frame_ext (fun x y => by
+        rcases x with ⟨⟩ | k <;> rcases y with ⟨⟩ | k' <;> rfl) starNet_frame
+      e_clash := fun _ a h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ x y h => mty_and h
+      e_or := fun _ x y h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ _ r c hmem hr =>
+        mty_all hmem hx0dom ((hI.refl_eq x0 hx0dom).trans hr)
+      ek_all := fun _ r c hmem k hr a _ =>
+        mty_all hmem (hdomc k _) ((hbelow k a).trans hr)
+      ke_all := fun k a _ r c hmem _ hr =>
+        mty_all hmem hx0dom ((hbc k a).trans hr)
+      kk_pp := fun k _ ha E hE b hb =>
+        segment_kk_pp hI (fun n => hdomc k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_ppi := fun k _ ha E hE b hb =>
+        segment_kk_ppi hI (fun n => hdomc k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_eq := fun k _ _ E hE => seg_eq hI (fun n => hdomc k n) hE
+      kq_all := ?_
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- kq_all: cross-`PO` fires only `∀PO`, vacuous on the fragment
+    intro k k' _ a _ r c hmem hr _ _
+    have hrpo : r = po := hr.symm
+    subst hrpo
+    exact absurd hmem (mty_no_all_po hpo)
+  · -- e_ex: root routes each `∃PP.(Gₖ k)` into kernel k; `∃EQ` self
+    intro _ r c hmem
+    rcases hroot_dem r c hmem with ⟨rfl, k, rfl⟩ | rfl
+    · exact Or.inr ⟨k, rfl, 0, hp k, hchainG k⟩
+    · refine Or.inl ⟨(), rfl, ?_⟩
+      obtain ⟨y, hy, hyr, hyc⟩ := mty_ex hmem
+      rwa [hI.eq_id x0 y hx0dom hy hyr]
+  · -- k_ex: each kernel serves its own `∃PP.(Gₖ k)` via its chain
+    intro k a _ r c hmem
+    rcases hphase_dem k a r c hmem with ⟨rfl, rfl⟩ | rfl
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp k, hchainG k⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (fun n => hdomc k n) hmem⟩))
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -10519,5 +10609,6 @@ end VerticalWitness
 #print axioms satisfiable_of_persistPP
 #print axioms VerticalWitness.cvert_via_generator
 #print axioms starNet_frame
+#print axioms starKernel_ok
 
 end POFreeLift

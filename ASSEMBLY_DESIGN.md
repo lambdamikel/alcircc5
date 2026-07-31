@@ -1060,3 +1060,32 @@ sit below ARBITRARILY MANY cross-`PO` kernels.  Next: `starKernel` (the
 `MultiTier` over this frame) + `starKernel_ok` (the root routes each
 `∃PP.Gₖ` into kernel `k`; each kernel is self-served; `kq_all` vacuous),
 then the extraction that enumerates the demands.
+
+### E3l (2026-07-30): the multi-demand VALIDITY, certified
+
+`starKernel` (the `MultiTier` over `starNet`: root `Unit` labelled
+`mty x₀`, `N` ascending kernels) + **`starKernel_ok`** — the multi-demand
+`MultiTierOk`, given the model data:
+- `hbelow` (`x₀ PP` every chain), `hty` (each chain type-recurrent);
+- `Gk : N → Concept`, `hchainG` (chain `k` carries `Gk k`);
+- **`hphase_dem`** (kernel `k`'s phases demand ONLY `∃PP.(Gk k)`/`∃EQ` —
+  this is why COVERAGE CLOSES: no cross-`∃`);
+- **`hroot_dem`** (the root's demands are each some `∃PP.(Gk k)`/`∃EQ` —
+  the demand→kernel map).
+
+Every field discharged: `frame_q` via `frame_ext`+`starNet_frame`;
+root↔kernel `∀`-obligations (`ee_all`/`ek_all`/`ke_all`) by `mty_all`
+through the model's `x₀ PP`-chain rows (`hbelow`/`hbc`); `kq_all` vacuous
+(`mty_no_all_po`); `e_ex` routes each `∃PP.(Gk k)` INTO kernel `k`
+(disjunct 2), `∃EQ` self; `k_ex` each kernel chain-serves its own demand,
+`∃EQ` in-phase.  Compiled first try; axioms
+`propext`/`Quot.sound`/`Classical.choice`.
+
+**This is the coupled coverage-closing multi-demand certificate** — the
+piece the project flagged as the summit's genuine risk, now a certified
+theorem MODULO its model-data hypotheses.  What remains is the
+EXTRACTION: from a satisfiable multi-`∃PP` `C₀`, produce `ck`/`Gk`/… and
+verify `hbelow`/`hphase_dem`/`hroot_dem` — enumerating the (finitely many)
+demands of `cl C₀` and building one chain per demand, `x₀` below each.
+The validity no longer has the coverage risk; the extraction is the
+demand-enumeration + geometry (`x₀ PP` each witness's tower).
