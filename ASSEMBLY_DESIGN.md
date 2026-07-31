@@ -1044,3 +1044,19 @@ routed, and the `K(C₀)` bound.  That coupled generate-and-cover step is
 the summit.  But the extraction SKELETON — witness → `G`-carrying chain →
 recurrent segment → below-external + kernel → certificate — is now a
 certified pipeline, ready to be iterated per demand.
+
+### E3k (2026-07-30): the STAR frame — the multi-demand keystone
+
+The multi-demand geometry forces a STAR: the witnesses of distinct
+`∃PP.Gₖ` demands at one root are pairwise `PO`/`PP`/`PPI`/`EQ`
+(composition forbids `DR` there), so the root is `PPI`-below every kernel
+and the kernels are cross-`PO` (loose, `∀PO`-free ⟹ `kq_all` vacuous).
+**`starNet`** declares exactly this
+(`= qnet (fun _ _ => eq) (fun _ _ => ppi) (fun _ _ => po)` over
+`Unit ⊕ N`), and **`starNet_frame`** proves it is a genuine RCC5 frame —
+**axioms `propext` only** (a pure structural composition check via the
+`rfl`-helpers `starNet_ll`/`lr`/`rl`/`diag`/`off`).  So a shared root can
+sit below ARBITRARILY MANY cross-`PO` kernels.  Next: `starKernel` (the
+`MultiTier` over this frame) + `starKernel_ok` (the root routes each
+`∃PP.Gₖ` into kernel `k`; each kernel is self-served; `kq_all` vacuous),
+then the extraction that enumerates the demands.

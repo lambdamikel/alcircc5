@@ -9860,6 +9860,85 @@ theorem satisfiable_of_persistPP (hI : RCC5Interp I) (C0 G : Concept)
       (fun r D hmem => hdem r D (mty_sub _ hmem))
   exact multiTier_sound (vkernel1 I C0 d x0 i p) hok (Sum.inl ()) C0 hC0
 
+/-! ### Round E3k (2026-07-30): the STAR frame — root below many kernels
+
+The multi-demand geometry: the witnesses of distinct `∃PP.Gₖ` demands at
+one root are pairwise `PO`/`PP`/`PPI`/`EQ` (composition forbids `DR`
+there), so the natural multi-kernel certificate is a STAR — the root
+`PPI`-below every kernel base (so `x₀ PP` every tower), kernels cross-`PO`
+(loose, `∀PO`-free ⟹ `kq_all` vacuous).  `starNet` declares exactly this
+(`= qnet (fun _ _ => eq) (fun _ _ => ppi) (fun _ _ => po)`); its RCC5
+validity is the keystone the multi-demand construction rests on. -/
+
+/-- The star network on `Unit ⊕ N`: the `Unit` root is `PPI`-below every
+    kernel point (`ppi` from point to root, `pp` from root to point);
+    distinct kernel points are cross-`PO`. -/
+def starNet {N : Type} [DecidableEq N] : (Unit ⊕ N) → (Unit ⊕ N) → Atom
+  | .inl _, .inl _ => eq
+  | .inl _, .inr _ => pp
+  | .inr _, .inl _ => ppi
+  | .inr k, .inr k' => if k = k' then eq else po
+
+variable {N : Type} [DecidableEq N]
+
+theorem starNet_ll : starNet (Sum.inl () : Unit ⊕ N) (Sum.inl ()) = eq := rfl
+theorem starNet_lr (k : N) : starNet (Sum.inl ()) (Sum.inr k) = pp := rfl
+theorem starNet_rl (k : N) : starNet (Sum.inr k) (Sum.inl ()) = ppi := rfl
+theorem starNet_diag (k : N) : starNet (Sum.inr k) (Sum.inr k) = eq := if_pos rfl
+theorem starNet_off {k k' : N} (h : k ≠ k') :
+    starNet (Sum.inr k) (Sum.inr k') = po := if_neg h
+
+/-- THE STAR FRAME: `starNet` is a genuine RCC5 frame.  The keystone of
+    the multi-demand certificate.  Every case reduces each `starNet`
+    entry (via the `rfl`-helpers, resolving the kernel-diagonal `if`) to
+    a concrete atom, then `decide`s the composition membership. -/
+theorem starNet_frame : Frame (@starNet N _) where
+  refl_eq := by
+    rintro (⟨⟩ | k)
+    · rfl
+    · exact starNet_diag k
+  eq_id := by
+    rintro (⟨⟩ | k) (⟨⟩ | k') h
+    · rfl
+    · rw [starNet_lr] at h; exact absurd h (by decide)
+    · rw [starNet_rl] at h; exact absurd h (by decide)
+    · by_cases hk : k = k'
+      · rw [hk]
+      · rw [starNet_off hk] at h; exact absurd h (by decide)
+  conv_ := by
+    rintro (⟨⟩ | k) (⟨⟩ | k')
+    · rfl
+    · rw [starNet_rl, starNet_lr]; rfl
+    · rw [starNet_lr, starNet_rl]; rfl
+    · by_cases hk : k = k'
+      · subst hk; rw [starNet_diag]; rfl
+      · rw [starNet_off hk, starNet_off (fun h => hk h.symm)]; rfl
+  comp_ := by
+    rintro (⟨⟩ | k) (⟨⟩ | k') (⟨⟩ | k'')
+    · rw [starNet_ll]; decide
+    · rw [starNet_ll, starNet_lr]; decide
+    · rw [starNet_lr, starNet_rl, starNet_ll]; decide
+    · rw [starNet_lr, starNet_lr]
+      by_cases hk : k' = k''
+      · subst hk; rw [starNet_diag]; decide
+      · rw [starNet_off hk]; decide
+    · rw [starNet_rl, starNet_ll]; decide
+    · rw [starNet_rl, starNet_lr]
+      by_cases hk : k = k''
+      · subst hk; rw [starNet_diag]; decide
+      · rw [starNet_off hk]; decide
+    · rw [starNet_rl, starNet_rl]
+      by_cases hk : k = k'
+      · subst hk; rw [starNet_diag]; decide
+      · rw [starNet_off hk]; decide
+    · by_cases hkk' : k = k' <;> by_cases hk'k'' : k' = k''
+      · subst hkk'; subst hk'k''; rw [starNet_diag]; decide
+      · subst hkk'; rw [starNet_diag, starNet_off hk'k'']; decide
+      · subst hk'k''; rw [starNet_diag, starNet_off hkk']; decide
+      · by_cases hkk'' : k = k''
+        · subst hkk''; rw [starNet_diag, starNet_off hkk', starNet_off hk'k'']; decide
+        · rw [starNet_off hkk'', starNet_off hkk', starNet_off hk'k'']; decide
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -10439,5 +10518,6 @@ end VerticalWitness
 #print axioms VerticalWitness.cvert_glue2
 #print axioms satisfiable_of_persistPP
 #print axioms VerticalWitness.cvert_via_generator
+#print axioms starNet_frame
 
 end POFreeLift
