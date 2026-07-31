@@ -1175,7 +1175,9 @@ that is the machinery already certified:
   (rectangle constancy) + `mty_all` — with `Q = pp` (constant, from the
   `hserve` row), it is the `∀pp`-across-the-nest propagation, sound as in
   20.3. My `cvert2` witness used `Q = dr` (making `kq_all` vacuous); the
-  same lemma covers `Q = pp` with `kq_all` FIRING.
+  same lemma covers `Q = pp` with `kq_all` FIRING.  **Now WITNESSED**
+  (`cnest_satisfiable`, the `nestNet` model — `false`-tower `PP`-below
+  `true`-tower — where `∀pp.(∃pp.A)` propagates up the nest via `kq_all`).
 - **`vkernel2x_ok`** routes cross-kernel `∃` (`k_ex` disjunct 4); the
   `a`-kernel's `∃PP.D` routes to the `C`-kernel via `Q(a,C) = pp`.
 - If `C` is self-contained, the `C`-kernel serves its own `∃PP.D` by

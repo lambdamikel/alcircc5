@@ -10585,6 +10585,124 @@ theorem clin_satisfiable : Satisfiable Clin := by
     rw [lfull (0 + (0 % 1))]; exact cl_self Clin
   exact h1
 
+/-! #### The NESTING model: `kq_all` fires at a cross-`PP` edge
+
+`nestNet` = two `ℕ`-order towers with the `false`-tower entirely
+`PP`-BELOW the `true`-tower (cross `false→true = pp`, `true→false = ppi`).
+Feeding it to `vkernel2_ok` (which reads the cross value off the model,
+here `pp`, and fires `kq_all` via `hrectQ`) demonstrates the cross-`PP`
+`kq_all` FIRING — the `∀pp`-across-the-nest propagation that the
+`DR`-cross `cvert2` witness left vacuous.  Grounds §20.4: cross-`PP`
+kernels are sound and covered by `vkernel2_ok`. -/
+
+/-- `false`-tower `PP`-below `true`-tower; same-tower is the `chain`. -/
+def nestNet : (Bool × Nat) → (Bool × Nat) → Atom :=
+  fun p q => if p.1 = q.1 then chain p.2 q.2 else if p.1 = true then ppi else pp
+
+theorem nestNet_same (b : Bool) (n m : Nat) : nestNet (b, n) (b, m) = chain n m := by
+  show (if b = b then chain n m else _) = chain n m
+  rw [if_pos rfl]
+
+theorem nestNet_ft (n m : Nat) : nestNet (false, n) (true, m) = pp := rfl
+theorem nestNet_tf (n m : Nat) : nestNet (true, n) (false, m) = ppi := rfl
+
+theorem nestNet_frame : Frame nestNet where
+  refl_eq := fun ⟨b, n⟩ => by rw [nestNet_same]; exact chain_self n
+  eq_id := by
+    rintro ⟨b, n⟩ ⟨b', m⟩ h
+    cases b <;> cases b'
+    · rw [nestNet_same] at h; have := chain_eq_imp h; subst this; rfl
+    · rw [nestNet_ft] at h; exact absurd h (by decide)
+    · rw [nestNet_tf] at h; exact absurd h (by decide)
+    · rw [nestNet_same] at h; have := chain_eq_imp h; subst this; rfl
+  conv_ := by
+    rintro ⟨b, n⟩ ⟨b', m⟩
+    cases b <;> cases b'
+    · rw [nestNet_same, nestNet_same]; exact chain_conv n m
+    · rw [nestNet_tf, nestNet_ft]; rfl
+    · rw [nestNet_ft, nestNet_tf]; rfl
+    · rw [nestNet_same, nestNet_same]; exact chain_conv n m
+  comp_ := by
+    rintro ⟨bx, nx⟩ ⟨by_, ny⟩ ⟨bz, nz⟩
+    cases bx <;> cases by_ <;> cases bz
+    · exact chain_cc nx ny nz
+    · rw [nestNet_ft, nestNet_same, nestNet_ft]
+      rcases chain_vals nx ny with h | h | h <;> rw [h] <;> decide
+    · rw [nestNet_same, nestNet_ft, nestNet_tf]
+      rcases chain_vals nx nz with h | h | h <;> rw [h] <;> decide
+    · rw [nestNet_ft, nestNet_ft, nestNet_same]
+      rcases chain_vals ny nz with h | h | h <;> rw [h] <;> decide
+    · rw [nestNet_tf, nestNet_tf, nestNet_same]
+      rcases chain_vals ny nz with h | h | h <;> rw [h] <;> decide
+    · rw [nestNet_same, nestNet_tf, nestNet_ft]
+      rcases chain_vals nx nz with h | h | h <;> rw [h] <;> decide
+    · rw [nestNet_tf, nestNet_same, nestNet_tf]
+      rcases chain_vals nx ny with h | h | h <;> rw [h] <;> decide
+    · exact chain_cc nx ny nz
+
+def Inest : Interp (Bool × Nat) := ⟨fun _ => True, nestNet, fun a _ => a = 0⟩
+
+theorem Inest_rcc5 : RCC5Interp Inest := frame_rcc5 nestNet nestNet_frame _
+
+theorem nsat_all (p : Bool × Nat) : ∀ D ∈ cl Cvert, sat Inest p D := by
+  have ha : ∀ q : Bool × Nat, sat Inest q (Concept.atom 0) := fun _ => rfl
+  have he : ∀ q : Bool × Nat, sat Inest q (Concept.ex pp (Concept.atom 0)) := by
+    rintro ⟨b, n⟩
+    exact ⟨(b, n + 1), trivial,
+      (nestNet_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)), ha _⟩
+  have hal : ∀ q : Bool × Nat,
+      sat Inest q (Concept.all pp (Concept.ex pp (Concept.atom 0))) :=
+    fun _ y _ _ => he y
+  intro D hD
+  simp only [Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨ha p, he p⟩, hal p⟩
+  · exact ⟨ha p, he p⟩
+  · exact ha p
+  · exact he p
+  · exact ha p
+  · exact hal p
+  · exact he p
+  · exact ha p
+
+open Classical in
+theorem nfull (p : Bool × Nat) : mty Cvert Inest p = cl Cvert := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (nsat_all p D hD)
+
+/-- `Cvert` via TWO kernels in the NESTING model — `vkernel2_ok` fires
+    `kq_all` at the cross-`PP` edge (`∀pp.(∃pp.A)` propagates from the
+    lower tower into the upper), NON-vacuous unlike the `DR`-cross
+    `cvert2`.  Grounds §20: cross-`PP` kernels are sound + covered. -/
+theorem cnest_satisfiable : Satisfiable Cvert := by
+  have hok : MultiTierOk
+      (vkernel2 Inest Cvert (fun b n => (b, n)) (fun _ => 0) (fun _ => 1)) :=
+    vkernel2_ok Inest_rcc5 Cvert (Concept.atom 0) (fun b n => (b, n))
+      (fun _ _ => trivial)
+      (fun b n => (nestNet_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)))
+      (fun _ => Nat.one_pos)
+      (fun k => (nfull (k, 0)).trans (nfull (k, 0 + 1)).symm)
+      (fun k => by show Concept.atom 0 ∈ mty Cvert Inest (k, 0);
+                   rw [nfull (k, 0)]; decide)
+      (by decide)
+      (fun k k' hkk _ _ => by
+        cases k <;> cases k'
+        · exact absurd rfl hkk
+        · rfl
+        · rfl
+        · exact absurd rfl hkk)
+      (fun k a r D h =>
+        Or.inl (cvert_demands r D (by rw [nfull (k, 0 + a)] at h; exact h)))
+  refine multiTier_sound
+    (vkernel2 Inest Cvert (fun b n => (b, n)) (fun _ => 0) (fun _ => 1)) hok
+    (Sum.inr (true, 0)) Cvert ?_
+  have h1 : Cvert ∈ mty Cvert Inest (true, 0 + (0 % 1)) := by
+    rw [nfull (true, 0 + (0 % 1))]; exact cl_self Cvert
+  exact h1
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -10740,5 +10858,7 @@ end VerticalWitness
 #print axioms starKernel_ok
 #print axioms vkernelG_ok
 #print axioms VerticalWitness.clin_satisfiable
+#print axioms VerticalWitness.nestNet_frame
+#print axioms VerticalWitness.cnest_satisfiable
 
 end POFreeLift
