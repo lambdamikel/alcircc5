@@ -1113,3 +1113,108 @@ which `vkernel_ok` cannot do (its `hdemands` forces a single `G`).
 cross-`PO`); horizontal+vertical MIXING; `K(C₀)` COUNTING for
 decidability.  The star (independent) + `vkernelG` (linear-nested) are
 two of the three vertical sub-cases; branching is the hard third.
+
+---
+
+## 20. The branching case, RECONSIDERED (2026-07-30): sound, and it reduces to cross-`PP` kernels
+
+A research round (prompted by Michael's "doesn't cross-linked `∃PP`
+merge the towers into one?") **overturns the pessimistic reading** at the
+end of §E3m. Branching is NOT the unsound rectangle-problem wall I
+claimed; it is sound, and it reduces to the multi-kernel machinery
+already in hand. Here is the corrected analysis, grounded in a certified
+lemma.
+
+### 20.1 The apparent wall (what I feared)
+
+Branching: a main-tower element `aᵢ` demands `∃PP.C` for a side type `C`
+not on the main chain, and the witnesses seemed to force a **staircase**
+— pick `sᵢ` as `aᵢ`'s *own* `C`-witness, then `aᵢ PP sᵢ'` for `i ≤ i'`
+but `aᵢ PO sᵢ'` for `i > i'` (`comp(ppi,pp) ∋ po`). That relation is
+NON-constant, the `MultiTier` frame forces ONE constant `Q(k,k')`, and
+declaring it `PP` is unsound (`aᵢ₊₁`'s `∀pp` obligation would demand
+things at `sᵢ'` that the real model — where `aᵢ₊₁ PO sᵢ'` — doesn't
+guarantee). That is the half-graph / M_n pattern of the F6 width
+analysis (wp41–wp43), and it looked like the frontier.
+
+### 20.2 The resolution: pick the witness ABOVE THE WHOLE SEGMENT
+
+The staircase comes from picking `sᵢ` *just above `aᵢ`*. But the
+certified `kernel_site` (E2b) already picks side-witnesses the OTHER way
+— its `hserve` clause gives, for a `∃PP.D` demand on a recurrent-type
+segment `[i, i+p]`, a witness `w` with
+
+    D ∈ mty w  ∧  ∀ b ≤ p, ρ(c(i+b)) w = pp
+
+i.e. `w` is `PP`-ABOVE THE ENTIRE SEGMENT, with a **constant** `pp`-row
+(via `pp_witness_all_below` / late-picking — the "witness with the
+constant demanded relation to all chain positions up to the bound").
+So the rectangle IS constant: one `w` above the whole cyclic segment,
+`Q`/`K` row `= pp` for every position. The staircase is an artefact of
+the naive per-position witness; the recurrence lets us pick a high,
+uniform one.
+
+### 20.3 Why it is sound
+
+`kq_all`/`ek_all` fire soundly through the MODEL, not by fiat: the
+segment element `c(i+b)` genuinely satisfies `c(i+b) PP w` (that IS the
+constant row), so `c(i+b) ⊨ ∀pp.X ⟹ w ⊨ X` in the model, hence
+`X ∈ mty w`. The abstract unfolding then declares "every cyclic copy of
+the segment `PP w`", which is frame-consistent (an infinite ascending
+chain may have an upper bound; `comp(ppi,pp) ∋ pp`). So the certificate
+unfolds to a valid model even though the ORIGINAL model's tower may be
+unbounded — exactly the "unfold to SOME model" licence the soundness
+pipeline already uses.
+
+### 20.4 The reduction: branching ⟶ cross-`PP`-linked kernels
+
+With the uniform high-witness, the geometry is **nesting**, not
+staircase: the `a`-kernel sits `PP`-below a `C`-kernel (`w`'s tower). And
+that is the machinery already certified:
+- **`vkernel2_ok`** fires `kq_all` for a cross value via `hrectQ`
+  (rectangle constancy) + `mty_all` — with `Q = pp` (constant, from the
+  `hserve` row), it is the `∀pp`-across-the-nest propagation, sound as in
+  20.3. My `cvert2` witness used `Q = dr` (making `kq_all` vacuous); the
+  same lemma covers `Q = pp` with `kq_all` FIRING.
+- **`vkernel2x_ok`** routes cross-kernel `∃` (`k_ex` disjunct 4); the
+  `a`-kernel's `∃PP.D` routes to the `C`-kernel via `Q(a,C) = pp`.
+- If `C` is self-contained, the `C`-kernel serves its own `∃PP.D` by
+  `vkernelG_ok` (self-carrying). If `C` branches again, recurse — and
+  the recurrent TYPES are finite (`≤ 2^{|cl C₀|}`), so finitely many
+  kernels.
+
+So branching is **cross-`PP` multi-kernel**: `starKernel` with some
+cross edges `PP` (forced, rectangle-constant via `hserve`) instead of
+all `PO`. `kq_all` fires on the `PP` edges (sound), stays vacuous on the
+`PO` edges.
+
+### 20.5 What is actually left (and it is finite + sound, not a wall)
+
+1. **A `Q = pp` cross-kernel variant** — combine `vkernel2_ok`'s
+   `kq_all`-via-`hrectQ` (firing) with `vkernel2x_ok`'s cross-`∃`
+   routing, at `Q = pp`. Mechanical: both halves exist; this is wiring
+   them at a `PP` cross-value with the `hrectQ` supplied by `hserve`'s
+   constant row.
+2. **The extraction recursion** (the summit, still): enumerate the
+   demands, build the tower per demand, pick the high `hserve` witnesses,
+   type-quotient the witnesses into finitely many kernels, discharge
+   `e_ex`. This is `one_kernel_block` + `mtOkPool_of_block` territory —
+   the multi-cluster recursion — now with the branching links understood
+   as rectangle-constant cross-`PP`.
+3. **Finiteness / coverage bookkeeping** — §8's standing "genuine risk",
+   unchanged (is every generated node's demand routed; does the
+   type-quotient close). This is the real remaining mathematics, and it
+   is a FINITENESS/coverage question, not the soundness wall of §20.1.
+
+### 20.6 Correction to the record
+
+§E3m called true branching "the hard third — the rectangle problem,
+unsound to declare cross-`PP`". That was **wrong**: the E2b constant-row
+high-witness makes it sound and rectangle-constant, and it reduces to
+cross-`PP` kernels (machinery in hand). The honest remaining difficulty
+is the SAME as it always was — the extraction recursion's coverage +
+`K(C₀)` finiteness (§8), plus horizontal+vertical mixing — not a new
+unsoundness frontier. The vertical geometry is now fully mapped: linear
+(self-carrying, `vkernelG` ✓), independent (cross-`PO` star,
+`starKernel` ✓), branching (cross-`PP` nest, reduces to the above). The
+summit is the recursion that assembles them, and it is finite and sound.
