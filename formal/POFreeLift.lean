@@ -9990,6 +9990,133 @@ theorem starNet_frame : Frame (@starNet N _) where
         · subst hkk''; rw [starNet_diag, starNet_off hkk', starNet_off hk'k'']; decide
         · rw [starNet_off hkk'', starNet_off hkk', starNet_off hk'k'']; decide
 
+/-! ### Round E3o (2026-07-31): the POSET frame — the general vertical frame
+
+Research finding (ASSEMBLY_DESIGN §21): the vertical structure of a
+∀PO-free concept is a FINITE POSET of kernels (one per recurrent type),
+root below all, `PP` up the nesting order, `PO` for incomparable types,
+NO `DR`.  `posetNet` declares exactly this for any strict partial order
+`lt` on the kernel index; `posetNet_frame` proves it a genuine RCC5 frame
+via the CERTIFIED `ordered_disjoint_frame` (whose `DR`-downward-closure
+hypothesis is vacuous here — the frame has no `DR`).  `starNet` is the
+special case `lt = ∅` (all `PO`); this is the general keystone. -/
+
+/-- The poset frame on `Unit ⊕ N`: root `PP`-below every kernel; kernels
+    ordered by `lt` (`PP`/`PPI`), incomparable kernels cross-`PO`. -/
+def posetNet {N : Type} [DecidableEq N] (lt : N → N → Prop) [DecidableRel lt] :
+    (Unit ⊕ N) → (Unit ⊕ N) → Atom
+  | .inl _, .inl _ => eq
+  | .inl _, .inr _ => pp
+  | .inr _, .inl _ => ppi
+  | .inr k, .inr k' =>
+      if k = k' then eq else if lt k k' then pp else if lt k' k then ppi else po
+
+section PosetFrame
+variable {N : Type} [DecidableEq N] (lt : N → N → Prop) [DecidableRel lt]
+
+theorem posetNet_ll : posetNet lt (Sum.inl ()) (Sum.inl ()) = eq := rfl
+theorem posetNet_lr (k : N) : posetNet lt (Sum.inl ()) (Sum.inr k) = pp := rfl
+theorem posetNet_rl (k : N) : posetNet lt (Sum.inr k) (Sum.inl ()) = ppi := rfl
+theorem posetNet_rr (k k' : N) :
+    posetNet lt (Sum.inr k) (Sum.inr k')
+      = if k = k' then eq else if lt k k' then pp else if lt k' k then ppi else po :=
+  rfl
+
+/-- The kernel–kernel value is one of `eq/pp/ppi/po`: extract which. -/
+theorem posetNet_rr_cases (k k' : N) :
+    posetNet lt (Sum.inr k) (Sum.inr k') = eq ∧ k = k'
+    ∨ posetNet lt (Sum.inr k) (Sum.inr k') = pp ∧ lt k k'
+    ∨ posetNet lt (Sum.inr k) (Sum.inr k') = ppi ∧ lt k' k
+    ∨ posetNet lt (Sum.inr k) (Sum.inr k') = po := by
+  rw [posetNet_rr]
+  by_cases hk : k = k'
+  · rw [if_pos hk]; exact Or.inl ⟨rfl, hk⟩
+  · rw [if_neg hk]
+    by_cases h1 : lt k k'
+    · rw [if_pos h1]; exact Or.inr (Or.inl ⟨rfl, h1⟩)
+    · rw [if_neg h1]
+      by_cases h2 : lt k' k
+      · rw [if_pos h2]; exact Or.inr (Or.inr (Or.inl ⟨rfl, h2⟩))
+      · rw [if_neg h2]; exact Or.inr (Or.inr (Or.inr rfl))
+
+theorem posetNet_ne_dr (x y : Unit ⊕ N) : posetNet lt x y ≠ dr := by
+  rcases x with ⟨⟩ | k <;> rcases y with ⟨⟩ | k'
+  · rw [posetNet_ll]; decide
+  · rw [posetNet_lr]; decide
+  · rw [posetNet_rl]; decide
+  · rcases posetNet_rr_cases lt k k' with ⟨h, _⟩ | ⟨h, _⟩ | ⟨h, _⟩ | h <;>
+      rw [h] <;> decide
+
+/-- THE POSET FRAME: for any strict partial order `lt`, `posetNet lt` is
+    an RCC5 frame.  Generalises `starNet_frame` (`lt = ∅`). -/
+theorem posetNet_frame (hirr : ∀ k, ¬ lt k k)
+    (htr : ∀ a b c, lt a b → lt b c → lt a c) : Frame (posetNet lt) := by
+  have hasym : ∀ a b, lt a b → ¬ lt b a := fun a b hab hba => hirr a (htr a b a hab hba)
+  -- kernel–kernel value lemmas (robust against `if`-ordering)
+  have hppv : ∀ k k', lt k k' → posetNet lt (Sum.inr k) (Sum.inr k') = pp := by
+    intro k k' h
+    have hne : k ≠ k' := by rintro rfl; exact hirr k h
+    rw [posetNet_rr, if_neg hne, if_pos h]
+  have hppiv : ∀ k k', lt k' k → posetNet lt (Sum.inr k) (Sum.inr k') = ppi := by
+    intro k k' h
+    have hne : k ≠ k' := by rintro rfl; exact hirr k h
+    rw [posetNet_rr, if_neg hne, if_neg (hasym k' k h), if_pos h]
+  have hpov : ∀ k k', k ≠ k' → ¬ lt k k' → ¬ lt k' k →
+      posetNet lt (Sum.inr k) (Sum.inr k') = po := by
+    intro k k' hne h1 h2; rw [posetNet_rr, if_neg hne, if_neg h1, if_neg h2]
+  have hkpp : ∀ k k', posetNet lt (Sum.inr k) (Sum.inr k') = pp → lt k k' := by
+    intro k k' h
+    rcases posetNet_rr_cases lt k k' with ⟨h', _⟩ | ⟨_, h1⟩ | ⟨h', _⟩ | h' <;>
+      first | exact h1 | (rw [h'] at h; exact absurd h (by decide))
+  -- strengthened case split (`po` carries the `¬lt` facts)
+  have hval : ∀ k k',
+      posetNet lt (Sum.inr k) (Sum.inr k') = eq ∧ k = k'
+      ∨ posetNet lt (Sum.inr k) (Sum.inr k') = pp ∧ lt k k'
+      ∨ posetNet lt (Sum.inr k) (Sum.inr k') = ppi ∧ lt k' k
+      ∨ posetNet lt (Sum.inr k) (Sum.inr k') = po ∧ k ≠ k' ∧ ¬ lt k k' ∧ ¬ lt k' k := by
+    intro k k'
+    by_cases hk : k = k'
+    · exact Or.inl ⟨by rw [posetNet_rr, if_pos hk], hk⟩
+    · by_cases h1 : lt k k'
+      · exact Or.inr (Or.inl ⟨hppv k k' h1, h1⟩)
+      · by_cases h2 : lt k' k
+        · exact Or.inr (Or.inr (Or.inl ⟨hppiv k k' h2, h2⟩))
+        · exact Or.inr (Or.inr (Or.inr ⟨hpov k k' hk h1 h2, hk, h1, h2⟩))
+  refine ordered_disjoint_frame _ ?_ ?_ ?_ ?_ ?_
+  · rintro (⟨⟩ | k)
+    · rfl
+    · rw [posetNet_rr, if_pos rfl]
+  · rintro (⟨⟩ | k) (⟨⟩ | k') h
+    · rfl
+    · rw [posetNet_lr] at h; exact absurd h (by decide)
+    · rw [posetNet_rl] at h; exact absurd h (by decide)
+    · rcases hval k k' with ⟨_, hkk⟩ | ⟨h', _⟩ | ⟨h', _⟩ | ⟨h', _⟩ <;>
+        first
+          | exact congrArg Sum.inr hkk
+          | (rw [h'] at h; exact absurd h (by decide))
+  · rintro (⟨⟩ | k) (⟨⟩ | k')
+    · rfl
+    · rw [posetNet_rl, posetNet_lr]; rfl
+    · rw [posetNet_lr, posetNet_rl]; rfl
+    · rcases hval k k' with ⟨h, hkk⟩ | ⟨h, h1⟩ | ⟨h, h1⟩ | ⟨h, hne, hn1, hn2⟩
+      · subst hkk; rw [h]; rfl
+      · rw [h, hppiv k' k h1]; rfl
+      · rw [h, hppv k' k h1]; rfl
+      · rw [h, hpov k' k (fun e => hne e.symm) hn2 hn1]; rfl
+  · rintro (⟨⟩ | kx) (⟨⟩ | ky) (⟨⟩ | kz) hxy hyz
+    · rw [posetNet_ll] at hxy; exact absurd hxy (by decide)
+    · rw [posetNet_ll] at hxy; exact absurd hxy (by decide)
+    · rw [posetNet_rl] at hyz; exact absurd hyz (by decide)
+    · rfl
+    · rw [posetNet_rl] at hxy; exact absurd hxy (by decide)
+    · rw [posetNet_rl] at hxy; exact absurd hxy (by decide)
+    · rw [posetNet_rl] at hyz; exact absurd hyz (by decide)
+    · exact hppv kx kz (htr kx ky kz (hkpp kx ky hxy) (hkpp ky kz hyz))
+  · intro x y z _ h2
+    exact absurd h2 (posetNet_ne_dr lt y z)
+
+end PosetFrame
+
 /-! ### Round E3l (2026-07-30): the multi-demand star certificate
 
 `starKernel` is the `MultiTier` over the star frame: one root external
@@ -10855,6 +10982,7 @@ end VerticalWitness
 #print axioms satisfiable_of_persistPP
 #print axioms VerticalWitness.cvert_via_generator
 #print axioms starNet_frame
+#print axioms posetNet_frame
 #print axioms starKernel_ok
 #print axioms vkernelG_ok
 #print axioms VerticalWitness.clin_satisfiable

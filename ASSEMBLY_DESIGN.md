@@ -1220,3 +1220,92 @@ unsoundness frontier. The vertical geometry is now fully mapped: linear
 (self-carrying, `vkernelG` ✓), independent (cross-`PO` star,
 `starKernel` ✓), branching (cross-`PP` nest, reduces to the above). The
 summit is the recursion that assembles them, and it is finite and sound.
+
+## 21. Branching TERMINATES: the vertical structure is a finite poset of kernels (2026-07-31)
+
+§20 established branching is *sound*. The question left open was whether
+it stays *finite* — i.e. whether the extraction recursion terminates.
+It does, and the argument pins down the exact shape of the vertical
+extraction.
+
+### 21.1 The termination argument
+
+Take a main `∃PP`-tower with recurrent type `T`, and suppose `T` carries
+a `∀PP`-guarded side-demand `∃PP.H` (i.e. `∀PP.(∃PP.H) ∈ T`). The guard
+**propagates up the order**: every occurrence above a `T`-element
+inherits `∃PP.H`. So the `H`-witness `w` (placed above the whole
+`T`-segment by `hserve`) inherits *all of `T`'s `∀PP`-guarded
+obligations* — in particular `∃PP.G-main`. Guarded branches therefore do
+**not** stay disjoint: their obligation sets accumulate, and the
+recurrent types converge.
+
+Two exhaustive cases:
+
+- **Guarded demand** (`∀PP.(∃PP.G) ∈ T`): re-forced at every level ⟹ the
+  witnesses accumulate the whole guard set ⟹ a **recurrent type**
+  (possibly a period-`p` cycle). Its tower is self-carrying for the
+  same-type demands (`vkernelG`), or cross-`PP`-links to *another*
+  recurrent type.
+- **Unguarded demand** (`∃PP.G` without the `∀PP` guard): a **one-time**
+  request, not re-forced up. Its witness starts a *separate* tower if
+  `G` is itself persistent, else it is a bounded finite branch (padding,
+  no kernel).
+
+Since every type is a subset of `cl C₀`, there are `≤ 2^{|cl C₀|}`
+distinct types, hence **finitely many kernels** — one per recurrent
+type. The recursion terminates. (This matches the F6 probes wp42/wp43:
+the horizontal "staircase" *collapses to finite-state* at recursive
+interfaces.)
+
+### 21.2 The shape: a finite poset of self-carrying kernels
+
+The vertical extraction of a ∀PO-free concept is therefore:
+
+> a **finite poset** `(K, <)` of kernels, one per recurrent type, where
+> `k < k'` iff type-`k` occurrences are `PP`-below type-`k'` occurrences;
+> each kernel **self-carries** its same-type `∃PP` demands (`vkernelG`)
+> and **cross-`PP`-links** (`vkernel2x` at `Q = pp`, `kq_all` firing via
+> the rectangle-constant `hserve` row) to the kernels above it;
+> incomparable kernels are cross-`PO` (`kq_all` vacuous, ∀PO-free); the
+> root `x₀` (carrying `C₀`) is `PP`-below every kernel.
+
+There is **no genuine infinite branching**: the "merge into one" the user
+anticipated is exactly the `∀PP`-accumulation collapse, and what does not
+collapse is a *finite* poset of distinct-type kernels.
+
+### 21.3 The frame is certified: `posetNet_frame`
+
+The frame underlying that poset — root `PP`-below all, kernels ordered by
+any strict partial order, `PO` for incomparable, **no `DR`** — is now a
+kernel-checked theorem: `posetNet lt` (E3o) is a `Frame` for every
+irreflexive-transitive `lt`, proved through the certified
+`ordered_disjoint_frame` (its `DR`-downward-closure hypothesis is vacuous
+because the frame has no `DR`). Axioms: `propext` only. `starNet` is the
+special case `lt = ∅` (all `PO`). This is the general vertical frame the
+finite kernel poset is built over.
+
+### 21.4 What is genuinely left
+
+The soundness question is settled and the frame is built. The residual
+work is the ASSEMBLY over `posetNet`:
+
+1. **The multi-kernel `MultiTierOk` over `posetNet`** — generalise
+   `starKernel_ok` (which used the discrete `starNet`) to an arbitrary
+   poset: same-type kernels self-carry, `k < k'` fires `kq_all` at
+   `Q = pp` (`hrectQ` from `hserve`'s constant row), incomparable stay
+   `PO`. All the per-edge machinery exists; this is wiring it over
+   `posetNet` instead of `starNet`.
+2. **The extraction** — from a satisfiable ∀PO-free `C₀`: enumerate the
+   `∃PP` demands of `cl C₀`, build one tower per demand, take the high
+   `hserve` witnesses, **quotient the witnesses by recurrent type** into
+   the finite poset, read off `<`, discharge `e_ex`. The termination is
+   §21.1; the one real subtlety is the type-quotient's exactness
+   (uniformization / W2′ — do same-type occurrences carry the same
+   cross-rows? the `hserve` constant-row discipline is designed to force
+   yes, but this is the step to prove, not assert).
+3. **Horizontal + vertical mixing** and **`K(C₀)` counting** — the
+   finiteness bookkeeping of §8, unchanged.
+
+The frontier is now precise: **one general multi-kernel lemma over
+`posetNet`, then the type-quotient extraction whose only open point is
+uniformization.** No soundness wall, no infinite branching, finite poset.
