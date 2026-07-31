@@ -1289,12 +1289,19 @@ finite kernel poset is built over.
 The soundness question is settled and the frame is built. The residual
 work is the ASSEMBLY over `posetNet`:
 
-1. **The multi-kernel `MultiTierOk` over `posetNet`** — generalise
-   `starKernel_ok` (which used the discrete `starNet`) to an arbitrary
-   poset: same-type kernels self-carry, `k < k'` fires `kq_all` at
-   `Q = pp` (`hrectQ` from `hserve`'s constant row), incomparable stay
-   `PO`. All the per-edge machinery exists; this is wiring it over
-   `posetNet` instead of `starNet`.
+1. **The multi-kernel `MultiTierOk`** — ✅ **DONE (E3p, `posetKernel_ok`,
+   2026-07-31).** Generalises `starKernel_ok` off the discrete
+   (all-`PO`) star to `N` kernels with cross-values read off the model:
+   the rectangle-constancy `hrectQ` makes `kq_all` FIRE across comparable
+   (`PP`/`PPI`) kernels — `vkernel2`'s mechanism at arbitrary index `N`,
+   with a root. The root machinery (`e_ex`/`k_ex`/`ee`/`ek`/`ke_all`) is
+   `starKernel`'s; frame via `readoff` + `frame_ext`. **No `POFree`
+   needed** — the rectangle transports every cross-`∀` uniformly, so
+   `kq_all` is a single `mty_all` + `hrectQ` step regardless of the
+   cross-value (the `∀PO`-vacuity of `starKernel` is subsumed). Axioms:
+   `propext`/`Classical.choice`/`Quot.sound` (model-side, = `starKernel`).
+   Remaining: a dedicated `N`-kernel non-vacuity witness (the mechanism
+   is already witnessed by `cnest_satisfiable` at `N = 2`).
 2. **The extraction** — from a satisfiable ∀PO-free `C₀`: enumerate the
    `∃PP` demands of `cl C₀`, build one tower per demand, take the high
    `hserve` witnesses, **quotient the witnesses by recurrent type** into

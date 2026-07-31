@@ -10207,6 +10207,115 @@ theorem starKernel_ok (hI : RCC5Interp I) (C0 : Concept) (hpo : POFree C0)
     · exact Or.inr (Or.inl ⟨rfl, 0, hp k, hchainG k⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (fun n => hdomc k n) hmem⟩))
 
+/-! ### Round E3p (2026-07-31): the POSET multi-kernel — cross-`PP` fires
+
+`posetKernel` generalises `starKernel` off the discrete (all-`PO`) star to
+an ARBITRARY constant-cross poset of kernels: the kernel–kernel value `Q`
+is read off the model, and the rectangle-constancy `hrectQ` makes
+`kq_all` FIRE across comparable (`PP`/`PPI`) kernels — exactly
+`vkernel2`'s mechanism, now with a root and any index `N`.  The root
+machinery (`e_ex` routing, `k_ex` serving, `ee`/`ek`/`ke_all`) is
+`starKernel`'s; only `kq_all` (now `hrectQ`, not vacuous-`PO`) and the
+frame (`readoff` + `frame_ext`, not `starNet`) change.  This is §21.4's
+general assembly lemma: no `POFree` needed, the rectangle transports
+every cross-`∀` uniformly. -/
+
+/-- The poset `MultiTier`: root `Unit` (label `mty x₀`), `N` kernels with
+    cross-values read off the model. -/
+noncomputable def posetKernel (I : Interp α) (C0 : Concept) (x0 : α)
+    (ck : N → Nat → α) (ik pk : N → Nat) : MultiTier Unit N where
+  E := fun _ _ => eq
+  K := fun _ _ => ppi
+  Q := fun k k' => I.rho (ck k (ik k)) (ck k' (ik k'))
+  up := fun _ => true
+  tauE := fun _ => mty C0 I x0
+  p := pk
+  phase := fun k a => mty C0 I (ck k (ik k + a))
+
+/-- THE POSET MULTI-KERNEL IS VALID: a root `x₀` `PP`-below `N` kernels
+    (`hbelow`), distinct (`hdist`/`hkinj`), each type-recurrent (`hty`)
+    serving its own demand `∃PP.(Gₖ k)` (`hphase_dem`), with all
+    cross-rectangles constant (`hrectQ`) so `kq_all` fires across
+    comparable kernels.  Generalises `starKernel_ok`. -/
+theorem posetKernel_ok (hI : RCC5Interp I) (C0 : Concept)
+    (x0 : α) (hx0dom : I.dom x0) (ck : N → Nat → α) {ik pk : N → Nat}
+    (hdomc : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hbelow : ∀ k a, I.rho x0 (ck k (ik k + a)) = pp)
+    (hdist : ∀ k, x0 ≠ ck k (ik k))
+    (hkinj : ∀ k k', ck k (ik k) = ck k' (ik k') → k = k')
+    (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (Gk : N → Concept)
+    (hchainG : ∀ k, Gk k ∈ mty C0 I (ck k (ik k)))
+    (hphase_dem : ∀ k a r D, Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      (r = pp ∧ D = Gk k) ∨ r = eq)
+    (hroot_dem : ∀ r D, Concept.ex r D ∈ mty C0 I x0 →
+      (r = pp ∧ ∃ k, D = Gk k) ∨ r = eq) :
+    MultiTierOk (posetKernel I C0 x0 ck ik pk) := by
+  have hbc : ∀ k a, I.rho (ck k (ik k + a)) x0 = ppi := by
+    intro k a
+    rw [hI.conv_ x0 (ck k (ik k + a)) hx0dom (hdomc k _), hbelow k a]; rfl
+  have hbc0 : ∀ k, I.rho (ck k (ik k)) x0 = ppi := fun k => hbc k 0
+  have hinj : ∀ v w : Unit ⊕ N,
+      Sum.elim (fun _ : Unit => x0) (fun k => ck k (ik k)) v
+        = Sum.elim (fun _ : Unit => x0) (fun k => ck k (ik k)) w → v = w := by
+    rintro (⟨⟩ | k) (⟨⟩ | k') h
+    · rfl
+    · exact absurd h (hdist k')
+    · exact absurd h.symm (hdist k)
+    · exact congrArg Sum.inr (hkinj k k' h)
+  refine
+    { hp := hp
+      frame_q := frame_ext (by
+        rintro (⟨⟩ | k) (⟨⟩ | k')
+        · exact hI.refl_eq x0 hx0dom
+        · show conv (I.rho (ck k' (ik k')) x0) = conv ppi; rw [hbc0 k']
+        · exact hbc0 k
+        · rfl) (readoff_qnet_frame hI (fun _ : Unit => x0) (fun k => ck k (ik k))
+          (fun _ => hx0dom) (fun k => hdomc k (ik k)) hinj)
+      e_clash := fun _ a h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ x y h => mty_and h
+      e_or := fun _ x y h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ _ r c hmem hr =>
+        mty_all hmem hx0dom ((hI.refl_eq x0 hx0dom).trans hr)
+      ek_all := fun _ r c hmem k hr a _ =>
+        mty_all hmem (hdomc k _) ((hbelow k a).trans hr)
+      ke_all := fun k a _ r c hmem _ hr =>
+        mty_all hmem hx0dom ((hbc k a).trans hr)
+      kk_pp := fun k _ ha E hE b hb =>
+        segment_kk_pp hI (fun n => hdomc k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_ppi := fun k _ ha E hE b hb =>
+        segment_kk_ppi hI (fun n => hdomc k n) (fun n => hstep k n) (hty k) ha hE b hb
+      kk_eq := fun k _ _ E hE => seg_eq hI (fun n => hdomc k n) hE
+      kq_all := ?_
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- kq_all: cross-value read off the model; `hrectQ` transports the `∀`
+    intro k k' hkk a _ r c hmem hr b _
+    apply mty_all hmem (hdomc k' _)
+    rw [hrectQ k k' hkk a b]; exact hr
+  · -- e_ex: root routes each `∃PP.(Gₖ k)` into kernel k; `∃EQ` self
+    intro _ r c hmem
+    rcases hroot_dem r c hmem with ⟨rfl, k, rfl⟩ | rfl
+    · exact Or.inr ⟨k, rfl, 0, hp k, hchainG k⟩
+    · refine Or.inl ⟨(), rfl, ?_⟩
+      obtain ⟨y, hy, hyr, hyc⟩ := mty_ex hmem
+      rwa [hI.eq_id x0 y hx0dom hy hyr]
+  · -- k_ex: each kernel serves its own `∃PP.(Gₖ k)` via its chain
+    intro k a _ r c hmem
+    rcases hphase_dem k a r c hmem with ⟨rfl, rfl⟩ | rfl
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp k, hchainG k⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (fun n => hdomc k n) hmem⟩))
+
 end VerticalKernel
 
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
@@ -10984,6 +11093,7 @@ end VerticalWitness
 #print axioms starNet_frame
 #print axioms posetNet_frame
 #print axioms starKernel_ok
+#print axioms posetKernel_ok
 #print axioms vkernelG_ok
 #print axioms VerticalWitness.clin_satisfiable
 #print axioms VerticalWitness.nestNet_frame
