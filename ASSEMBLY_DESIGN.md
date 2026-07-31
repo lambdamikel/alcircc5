@@ -1300,8 +1300,11 @@ work is the ASSEMBLY over `posetNet`:
    `kq_all` is a single `mty_all` + `hrectQ` step regardless of the
    cross-value (the `∀PO`-vacuity of `starKernel` is subsumed). Axioms:
    `propext`/`Classical.choice`/`Quot.sound` (model-side, = `starKernel`).
-   Remaining: a dedicated `N`-kernel non-vacuity witness (the mechanism
-   is already witnessed by `cnest_satisfiable` at `N = 2`).
+   **Non-vacuity witnessed** (`crnest_satisfiable`, `rootNest` model —
+   root `PP`-below the two nesting towers): `posetKernel_ok`'s hypotheses
+   are jointly satisfiable AND the cross-`PP` `kq_all` fires over the
+   root, the full §21 shape (root + finite poset of kernels) at `N = 2`.
+   `rootNest_frame` is `propext`/`Quot.sound` only.
 2. **The extraction** — from a satisfiable ∀PO-free `C₀`: enumerate the
    `∃PP` demands of `cl C₀`, build one tower per demand, take the high
    `hserve` witnesses, **quotient the witnesses by recurrent type** into

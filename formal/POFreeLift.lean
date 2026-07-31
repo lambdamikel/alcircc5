@@ -10939,6 +10939,131 @@ theorem cnest_satisfiable : Satisfiable Cvert := by
     rw [nfull (true, 0 + (0 % 1))]; exact cl_self Cvert
   exact h1
 
+/-! ### The strong `posetKernel` witness: cross-`PP` FIRES WITH A ROOT
+
+`rootNest` adds a root below the two nesting towers (`Unit ⊕ Bool × Nat`,
+root `PP` below all, towers `= nestNet`).  Feeding it to `posetKernel_ok`
+(`x₀ = root`, kernels `= the two towers`, cross `= PP`) proves that
+lemma's hypotheses are jointly satisfiable AND exercises the new
+capability: `kq_all` firing across the cross-`PP` kernel link over a root
+— the full §21 shape (root + finite poset of kernels) at `N = 2`. -/
+
+/-- Which side of the nesting a `nestNet` value lands on: never `dr`. -/
+theorem nestNet_vals (p q : Bool × Nat) :
+    nestNet p q = pp ∨ nestNet p q = ppi ∨ nestNet p q = eq := by
+  unfold nestNet
+  by_cases h : p.1 = q.1
+  · rw [if_pos h]
+    rcases chain_vals p.2 q.2 with h1 | h1 | h1
+    · exact Or.inl h1
+    · exact Or.inr (Or.inr h1)
+    · exact Or.inr (Or.inl h1)
+  · rw [if_neg h]
+    by_cases h2 : p.1 = true
+    · rw [if_pos h2]; exact Or.inr (Or.inl rfl)
+    · rw [if_neg h2]; exact Or.inl rfl
+
+/-- Root `PP`-below the two nesting towers. -/
+def rootNest : (Unit ⊕ Bool × Nat) → (Unit ⊕ Bool × Nat) → Atom
+  | .inl _, .inl _ => eq
+  | .inl _, .inr _ => pp
+  | .inr _, .inl _ => ppi
+  | .inr p, .inr q => nestNet p q
+
+theorem rootNest_frame : Frame rootNest := by
+  have hn := nestNet_frame
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rintro (⟨⟩ | p)
+    · rfl
+    · exact hn.refl_eq p
+  · rintro (⟨⟩ | p) (⟨⟩ | q) h
+    · rfl
+    · exact absurd h (show pp ≠ eq by decide)
+    · exact absurd h (show ppi ≠ eq by decide)
+    · exact congrArg Sum.inr (hn.eq_id p q h)
+  · rintro (⟨⟩ | p) (⟨⟩ | q)
+    · rfl
+    · rfl
+    · rfl
+    · exact hn.conv_ p q
+  · rintro (⟨⟩ | px) (⟨⟩ | py) (⟨⟩ | pz)
+    · show eq ∈ comp eq eq; decide
+    · show pp ∈ comp eq pp; decide
+    · show eq ∈ comp pp ppi; decide
+    · show pp ∈ comp pp (nestNet py pz)
+      rcases nestNet_vals py pz with h | h | h <;> rw [h] <;> decide
+    · show ppi ∈ comp ppi eq; decide
+    · show nestNet px pz ∈ comp ppi pp
+      rcases nestNet_vals px pz with h | h | h <;> rw [h] <;> decide
+    · show ppi ∈ comp (nestNet px py) ppi
+      rcases nestNet_vals px py with h | h | h <;> rw [h] <;> decide
+    · exact hn.comp_ px py pz
+
+/-- The rooted-nesting model: `A = atom 0` everywhere, domain all. -/
+def Irnest : Interp (Unit ⊕ Bool × Nat) := ⟨fun _ => True, rootNest, fun a _ => a = 0⟩
+
+theorem Irnest_rcc5 : RCC5Interp Irnest := frame_rcc5 rootNest rootNest_frame _
+
+theorem rnsat_all (x : Unit ⊕ Bool × Nat) : ∀ D ∈ cl Cvert, sat Irnest x D := by
+  have ha : ∀ y, sat Irnest y (Concept.atom 0) := fun _ => rfl
+  have he : ∀ y, sat Irnest y (Concept.ex pp (Concept.atom 0)) := by
+    rintro (⟨⟩ | ⟨b, n⟩)
+    · exact ⟨Sum.inr (false, 0), trivial, rfl, rfl⟩
+    · exact ⟨Sum.inr (b, n + 1), trivial,
+        (nestNet_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)), rfl⟩
+  have hal : ∀ y, sat Irnest y (Concept.all pp (Concept.ex pp (Concept.atom 0))) :=
+    fun _ z _ _ => he z
+  intro D hD
+  simp only [Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨ha x, he x⟩, hal x⟩
+  · exact ⟨ha x, he x⟩
+  · exact ha x
+  · exact he x
+  · exact ha x
+  · exact hal x
+  · exact he x
+  · exact ha x
+
+open Classical in
+theorem rnfull (x : Unit ⊕ Bool × Nat) : mty Cvert Irnest x = cl Cvert := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (rnsat_all x D hD)
+
+/-- `Cvert` via the POSET multi-kernel — root `PP`-below two cross-`PP`
+    kernels, `kq_all` firing over the root.  Non-vacuity for
+    `posetKernel_ok` at `N = 2`. -/
+theorem crnest_satisfiable : Satisfiable Cvert := by
+  have hok : MultiTierOk (posetKernel Irnest Cvert (Sum.inl ())
+      (fun b n => Sum.inr (b, n)) (fun _ => 0) (fun _ => 1)) :=
+    posetKernel_ok Irnest_rcc5 Cvert (Sum.inl ()) trivial
+      (fun b n => Sum.inr (b, n))
+      (fun _ _ => trivial)
+      (fun b n => (nestNet_same b n (n + 1)).trans (chain_lt (Nat.lt_succ_self n)))
+      (fun _ => Nat.one_pos)
+      (fun b => (rnfull (Sum.inr (b, 0))).trans (rnfull (Sum.inr (b, 0 + 1))).symm)
+      (fun _ _ => rfl)
+      (fun _ => by simp)
+      (fun b b' h => by simp only [Sum.inr.injEq, Prod.mk.injEq] at h; exact h.1)
+      (fun b b' hbb a c => by
+        show nestNet (b, 0 + a) (b', 0 + c) = nestNet (b, 0) (b', 0)
+        cases b <;> cases b' <;> first | exact absurd rfl hbb | rfl)
+      (fun _ => Concept.atom 0)
+      (fun b => by rw [rnfull (Sum.inr (b, 0))]; decide)
+      (fun b a r D h =>
+        Or.inl (cvert_demands r D (by rw [rnfull (Sum.inr (b, 0 + a))] at h; exact h)))
+      (fun r D h => by
+        have hd := cvert_demands r D (by rw [rnfull (Sum.inl ())] at h; exact h)
+        exact Or.inl ⟨hd.1, false, hd.2⟩)
+  refine multiTier_sound (posetKernel Irnest Cvert (Sum.inl ())
+    (fun b n => Sum.inr (b, n)) (fun _ => 0) (fun _ => 1)) hok
+    (Sum.inl ()) Cvert ?_
+  show Cvert ∈ mty Cvert Irnest (Sum.inl ())
+  rw [rnfull (Sum.inl ())]; exact cl_self Cvert
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -11098,5 +11223,7 @@ end VerticalWitness
 #print axioms VerticalWitness.clin_satisfiable
 #print axioms VerticalWitness.nestNet_frame
 #print axioms VerticalWitness.cnest_satisfiable
+#print axioms VerticalWitness.rootNest_frame
+#print axioms VerticalWitness.crnest_satisfiable
 
 end POFreeLift
