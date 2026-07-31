@@ -1089,3 +1089,27 @@ verify `hbelow`/`hphase_dem`/`hroot_dem` — enumerating the (finitely many)
 demands of `cl C₀` and building one chain per demand, `x₀` below each.
 The validity no longer has the coverage risk; the extraction is the
 demand-enumeration + geometry (`x₀ PP` each witness's tower).
+
+### E3m (2026-07-30): linear-nested `∃PP` — `vkernelG_ok` (cross-link, easy half)
+
+A course-correction (Michael): the star handles only INDEPENDENT towers;
+the full ∀PO-free logic has CROSS-LINKED `∃PP` (`∃PP.G` where
+`G ⟹ ∃PP.G'`).  That splits geometrically:
+- **linear nesting** (`∃PP.G₁`, `G₁ ⟹ ∃PP.G₂`, …): the witnesses form
+  ONE ascending chain (`wᵢ₊₁` = `wᵢ`'s `∃PP.Gᵢ₊₁` witness), carrying
+  every nested argument — "merge into one chain = one kernel";
+- **branching nesting** (a tower demanding two INCOMPARABLE `∃PP`
+  witnesses, `comp(ppi,pp) ∋ po`): a genuine `PP`-tree — the hard case.
+
+**`vkernelG_ok`** does the linear half: a self-carrying kernel where
+every phase's `∃PP.D` has `D` carried by SOME phase (`hdemands` weakened
+from `D = G` to `∃ b, D ∈ phase b`); `k_ex` serves each nested demand at
+the phase holding its argument.  Witness `clin_satisfiable`: `Clin =
+∃PP.A₀ ⊓ ∃PP.A₁ ⊓ ∀PP.(…)` — two DISTINCT `∃PP` arguments on one chain,
+which `vkernel_ok` cannot do (its `hdemands` forces a single `G`).
+
+**Still open toward full ∀PO-free** (difficulty order): branching `∃PP`
+(cross-`PP` kernels, `kq_all` FIRES — `∀pp` propagation, not vacuous
+cross-`PO`); horizontal+vertical MIXING; `K(C₀)` COUNTING for
+decidability.  The star (independent) + `vkernelG` (linear-nested) are
+two of the three vertical sub-cases; branching is the hard third.

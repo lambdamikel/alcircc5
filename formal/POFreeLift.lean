@@ -9361,6 +9361,57 @@ theorem vkernel_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
   · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
   · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
 
+/-- THE SELF-CARRYING VERTICAL KERNEL (linear-nested `∃PP`): if every
+    phase's `∃PP.D` demand has its argument `D` carried by SOME phase of
+    the chain (self-carrying), the kernel is valid — the chain serves
+    EACH nested demand at the phase carrying its argument, `∃EQ`
+    in-phase.  Generalises `vkernel_ok` (single fixed `G`) to a CASCADE
+    of arguments (the "one chain = one kernel" case of cross-linked
+    `∃PP`).  β = Empty, no `e_ex` recursion. -/
+theorem vkernelG_ok (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hdemands : ∀ a r D, Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) ∨ r = eq) :
+    MultiTierOk (vkernel I C0 c i p) := by
+  have hinj : ∀ v w : Empty ⊕ Unit,
+      Sum.elim (fun e : Empty => e.elim) (fun _ : Unit => c i) v
+        = Sum.elim (fun e : Empty => e.elim) (fun _ : Unit => c i) w → v = w := by
+    rintro (e | ⟨⟩) (f | ⟨⟩) _
+    · exact e.elim
+    · exact e.elim
+    · exact f.elim
+    · rfl
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI (fun e : Empty => e.elim)
+        (fun _ : Unit => c i) (fun e => e.elim) (fun _ => hdom i) hinj
+      e_clash := fun e => e.elim
+      e_nobot := fun e => e.elim
+      e_and := fun e => e.elim
+      e_or := fun e => e.elim
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun e => e.elim
+      ek_all := fun e => e.elim
+      ke_all := fun _ _ _ _ _ _ f => f.elim
+      kk_pp := fun _ _ ha E hE b hb =>
+        segment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun _ _ ha E hE b hb =>
+        segment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun _ _ _ E hE => seg_eq hI hdom hE
+      kq_all := fun k k' hne => absurd rfl hne
+      e_ex := fun e => e.elim
+      k_ex := ?_ }
+  intro _ a _ r D hmem
+  rcases hdemands a r D hmem with ⟨rfl, b, hb, hDb⟩ | rfl
+  · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+  · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
+
 /-! ### Round E3h′ (2026-07-24): the FIRST `e_ex` discharge — a root
 external below the kernel
 
@@ -10457,6 +10508,83 @@ theorem cvert_via_generator : Satisfiable Cvert :=
     ⟨trivial, by rw [vfull 0]; decide, by rw [vfull 0]; decide⟩
     (by rw [vfull 0]; exact cl_self Cvert)
 
+/-! #### `vkernelG` fires: a chain carrying TWO `∃PP` arguments
+
+`Clin = ∃PP.A₀ ⊓ ∃PP.A₁ ⊓ ∀PP.(∃PP.A₀ ⊓ ∃PP.A₁)` has two distinct
+`∃PP` demands; a single self-carrying chain (both `A₀`, `A₁` on it)
+serves both via `vkernelG_ok` — impossible for `vkernel_ok` (single
+`G`).  Model: `A₀`, `A₁` both true everywhere on the ℕ-order. -/
+
+def Ilin : Interp Nat := ⟨fun _ => True, chain, fun a _ => a = 0 ∨ a = 1⟩
+
+theorem Ilin_rcc5 : RCC5Interp Ilin := frame_rcc5 chain chainFrame _
+
+def Clin : Concept :=
+  .and (.and (.ex pp (.atom 0)) (.ex pp (.atom 1)))
+    (.all pp (.and (.ex pp (.atom 0)) (.ex pp (.atom 1))))
+
+theorem lsat_all (n : Nat) : ∀ D ∈ cl Clin, sat Ilin n D := by
+  have ha0 : ∀ m, sat Ilin m (Concept.atom 0) := fun _ => Or.inl rfl
+  have ha1 : ∀ m, sat Ilin m (Concept.atom 1) := fun _ => Or.inr rfl
+  have he0 : ∀ m, sat Ilin m (Concept.ex pp (Concept.atom 0)) :=
+    fun m => ⟨m + 1, trivial, chain_lt (Nat.lt_succ_self m), ha0 _⟩
+  have he1 : ∀ m, sat Ilin m (Concept.ex pp (Concept.atom 1)) :=
+    fun m => ⟨m + 1, trivial, chain_lt (Nat.lt_succ_self m), ha1 _⟩
+  have hal : ∀ m, sat Ilin m
+      (Concept.all pp (Concept.and (Concept.ex pp (Concept.atom 0))
+        (Concept.ex pp (Concept.atom 1)))) :=
+    fun _ y _ _ => ⟨he0 y, he1 y⟩
+  intro D hD
+  simp only [Clin, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨he0 n, he1 n⟩, hal n⟩
+  · exact ⟨he0 n, he1 n⟩
+  · exact he0 n
+  · exact ha0 n
+  · exact he1 n
+  · exact ha1 n
+  · exact hal n
+  · exact ⟨he0 n, he1 n⟩
+  · exact he0 n
+  · exact ha0 n
+  · exact he1 n
+  · exact ha1 n
+
+open Classical in
+theorem lfull (n : Nat) : mty Clin Ilin n = cl Clin := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (lsat_all n D hD)
+
+/-- The self-carrying demand check: every `∃` in `cl Clin` is `∃PP.A₀`
+    or `∃PP.A₁`. -/
+def okDemandL (E : Concept) : Bool :=
+  match E with
+  | Concept.ex r D => decide (r = pp ∧ (D = Concept.atom 0 ∨ D = Concept.atom 1))
+  | _ => true
+
+theorem clin_demands_b : (cl Clin).all okDemandL = true := by decide
+
+/-- `Clin` is satisfiable via `vkernelG_ok` — one chain, TWO arguments. -/
+theorem clin_satisfiable : Satisfiable Clin := by
+  have hok : MultiTierOk (vkernel Ilin Clin (fun n => n) 0 1) :=
+    vkernelG_ok Ilin_rcc5 Clin (fun n => n) (fun _ => trivial)
+      (fun n => chain_lt (Nat.lt_succ_self n)) Nat.one_pos
+      ((lfull 0).trans (lfull (0 + 1)).symm)
+      (fun a r D h => by
+        have hb := List.all_eq_true.mp clin_demands_b (Concept.ex r D)
+          (by rw [lfull (0 + a)] at h; exact h)
+        simp only [okDemandL, decide_eq_true_eq] at hb
+        exact Or.inl ⟨hb.1, 0, Nat.one_pos, by
+          rw [lfull (0 + 0)]; rcases hb.2 with rfl | rfl <;> decide⟩)
+  refine multiTier_sound (vkernel Ilin Clin (fun n => n) 0 1) hok
+    (Sum.inr ((), 0)) Clin ?_
+  have h1 : Clin ∈ mty Clin Ilin (0 + (0 % 1)) := by
+    rw [lfull (0 + (0 % 1))]; exact cl_self Clin
+  exact h1
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -10610,5 +10738,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cvert_via_generator
 #print axioms starNet_frame
 #print axioms starKernel_ok
+#print axioms vkernelG_ok
+#print axioms VerticalWitness.clin_satisfiable
 
 end POFreeLift
