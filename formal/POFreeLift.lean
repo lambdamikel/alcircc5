@@ -8513,6 +8513,29 @@ theorem qnet_empty_frame {β : Type} (E : β → β → Atom) (hE : Frame E) :
     | .inl _, .inr k, _ => k.elim
     | .inr k, _, _ => k.elim
 
+/-- `qnet_empty_frame` for ANY empty kernel type (via `hemp : κ → False`),
+    not just `Empty` — needed for `decodeMT` of a kernel-free `FinMT`,
+    whose kernel type is `Fin 0`. -/
+theorem qnet_empty_frame' {β κ : Type} [DecidableEq κ] (E : β → β → Atom)
+    (K : κ → β → Atom) (Q : κ → κ → Atom) (hemp : κ → False) (hE : Frame E) :
+    Frame (qnet E K Q) where
+  refl_eq
+    | .inl m => hE.refl_eq m
+    | .inr k => (hemp k).elim
+  eq_id
+    | .inl m, .inl m', h => congrArg Sum.inl (hE.eq_id m m' h)
+    | .inl _, .inr k, _ => (hemp k).elim
+    | .inr k, _, _ => (hemp k).elim
+  conv_
+    | .inl m, .inl m' => hE.conv_ m m'
+    | .inl _, .inr k => (hemp k).elim
+    | .inr k, _ => (hemp k).elim
+  comp_
+    | .inl m, .inl m', .inl m'' => hE.comp_ m m' m''
+    | .inl _, .inl _, .inr k => (hemp k).elim
+    | .inl _, .inr k, _ => (hemp k).elim
+    | .inr k, _, _ => (hemp k).elim
+
 /-! ### The ∀DR-propagation fragment: tree-structural assembly (lift Step 2)
 
 The first fragment with genuine `∀`-firing certified end-to-end without
