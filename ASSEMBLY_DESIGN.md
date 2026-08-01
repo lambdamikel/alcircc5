@@ -1352,3 +1352,65 @@ The frontier is now precise: **one general multi-kernel lemma over
 `posetNet`, then the type-quotient extraction whose only open point is
 uniformization — a fragment-level width fact, not full-logic F6.** No
 soundness wall, no infinite branching, finite poset.
+
+## 22. The decidability roadmap (2026-07-31)
+
+Decision to pursue `Decidable (Satisfiable C₀)` for ∀PO-free `C₀`.
+The picture, after scoping the existing artifact:
+
+### 22.1 The decision layer is DONE
+
+Already certified (rounds C–D2, 15th-review `finAcceptB` lineage):
+
+- `FinMT` — the first-order certificate: pure list data (`tauE`, `E`/`K`/
+  `Q` atom tables, `up`, `phases`), Gödel-numerable.
+- `decodeMT : FinMT → MultiTier (Fin nE) (Fin nK)` — total decoder.
+- `mtOkB : FinMT → Bool` + `mtOkB_iff` — the Boolean checker accepts
+  EXACTLY the valid decoded certificates.
+- `mtAcceptB_sound` — an accepted code yields a real RCC5 model.
+- **`decidableSat_of_codes`** — given a FIXED `codes : List (FinMT × Nat)`
+  and `hcompl : Satisfiable C₀ → ∃ p ∈ codes, mtAcceptB p C₀`, returns
+  `Decidable (Satisfiable C₀)`. Soundness needs no premise.
+
+So decidability of any fragment reduces to producing `codes` (a bounded,
+model-independent enumeration) + `hcompl` (completeness of that
+enumeration). Nothing else.
+
+### 22.2 Horizontal ∀PO-free first — gap-free
+
+`satisfiable_iff_hfrag_cert` already gives, for `HFrag C₀`, a certificate
+`MultiTier β Empty` with `β = {n // n ∈ mtkNodes root}` (FINITE — a
+subtype of a finite list), `κ = Empty` (NO kernels), `tauE = mtk` (labels
+⊆ `cl C₀`), `E = eq/dr/po`. No width, no uniformization — the fragment
+terminates by modal-depth truncation. The remaining arc, all plumbing:
+
+1. **Encode** the finite `(β, Empty)` external network as a `FinMT`
+   (`nK = 0`, `phases = []`, `tauE =` the node labels, `E =` the
+   `eq/dr/po` table indexed by list position). Prove
+   `mtOkB (encodeHF …) = true` — either transport `mtHF_ok` across the
+   `Fin nE ≃ {n // n ∈ mtkNodes}` position bijection, or re-establish the
+   obligations for the `Fin`-indexed decode. **This is the fiddly step**
+   (index bijection + the four external obligations `propB`/`frameB`/
+   `eAllB`/`eExB`).
+2. **Bound `codes`**: `mtkNodes.length ≤ K(C₀)` (branching `≤ |cl C₀|`,
+   depth `≤ md C₀`), labels are sublists of `cl C₀`. Enumerate all
+   `FinMT`s with `nK = 0`, `tauE` entries ⊆ `cl C₀`, `nE ≤ K(C₀)` — a
+   finite (huge, but computable — efficiency irrelevant) list.
+3. **`hcompl`**: `Satisfiable C₀` →(`extract_hfrag`)→ the certificate →
+   (encode) an accepted `FinMT` that lies in `codes` → `decidableSat_of_codes`.
+
+Yields the project's FIRST kernel-checked `Decidable (Satisfiable C₀)`,
+on the fragment with no open piece.
+
+### 22.3 Then vertical + mixing
+
+Same skeleton with kernels (`nK > 0`): the certificate is the
+`posetKernel`/`posetKernelG` poset. The extra ingredient is the
+extraction's **uniformization** — a FRAGMENT-level bounded-width fact
+(§21.5), NOT full-logic F6. Do it with the width bound as an explicit
+hypothesis first (isolating the one not-yet-closed fact), then discharge
+it from the finite-type kernel count + the collapse probes.
+
+The order is deliberate: front-load the gap-free horizontal decidability
+(establishing the enumeration + completeness machinery on `nK = 0`), then
+extend to the kernel case where the sole open fact is fragment-width.
