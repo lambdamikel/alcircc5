@@ -9155,6 +9155,47 @@ theorem extract_hfrag (C0 : Concept) (hfrag : HFrag C0)
   show C0 ∈ mtk C0 I x0 (mdepth C0)
   exact mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self C0, hsat0⟩, Nat.le_refl _⟩
 
+/-! ### Round E3s (2026-07-31): FinMT-encoding the horizontal certificate
+
+Toward `Decidable (Satisfiable C0)` (roadmap §22): encode the kernel-free
+`mtHF` certificate as a first-order `FinMT` and transport its
+`MultiTierOk` across the position↔node map, so the Boolean checker
+`mtOkB` accepts it.  Externals = the nodes of `mtkNodes root` indexed by
+list position; labels = `mtk`; relations = `eq/dr/po`; no kernels. -/
+
+/-- In-range `getD` commutes with `map` (default-independent). -/
+theorem getD_map_lt {A B : Type} (f : A → B) (l : List A) :
+    ∀ (i : Nat) (d1 : B) (d2 : A), i < l.length →
+    (l.map f).getD i d1 = f (l.getD i d2) := by
+  induction l with
+  | nil => intro i _ _ h; exact absurd h (Nat.not_lt_zero i)
+  | cons a t ih =>
+    intro i d1 d2 h
+    match i with
+    | 0 => rfl
+    | j + 1 => exact ih j d1 d2 (Nat.lt_of_succ_lt_succ h)
+
+open Classical in
+/-- FinMT encoding of the horizontal (kernel-free) certificate.  Externals
+    are the subtype elements `(mtkNodes root).attach` (indexed by list
+    position); labels `= mtk`, relations `= mtHF`'s `eq/dr/po` table. -/
+noncomputable def encodeHF (hI : RCC5Interp I) (root : MTKNode I C0) : FinMT where
+  tauE := (mtkNodes root).attach.map (fun m => mtk C0 I m.val.x m.val.k)
+  E := (mtkNodes root).attach.map (fun m =>
+        (mtkNodes root).attach.map (fun m' =>
+          if m = m' then eq else if dadjBK hI root m m' then dr else po))
+  K := []
+  Q := []
+  up := []
+  phases := []
+
+theorem encodeHF_nE (hI : RCC5Interp I) (root : MTKNode I C0) :
+    (encodeHF hI root).nE = (mtkNodes root).length := by
+  simp [FinMT.nE, encodeHF, List.length_attach]
+
+theorem encodeHF_nK (hI : RCC5Interp I) (root : MTKNode I C0) :
+    (encodeHF hI root).nK = 0 := rfl
+
 /-- **HORIZONTAL ∀PO-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**
     Both directions kernel-checked.  This is the full ∀PO-free fragment
     MINUS vertical existentials `∃PP`/`∃PPI`: nested `∀DR`, `∀PP`/`∀PPI`,
