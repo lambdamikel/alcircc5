@@ -1305,6 +1305,13 @@ work is the ASSEMBLY over `posetNet`:
    are jointly satisfiable AND the cross-`PP` `kq_all` fires over the
    root, the full §21 shape (root + finite poset of kernels) at `N = 2`.
    `rootNest_frame` is `propext`/`Quot.sound` only.
+   **Self-carrying variant** (`posetKernelG_ok`, E3r): `hphase_dem`
+   weakened to `∃ b, D ∈ phase b` (`vkernelG`-style) so a SINGLE kernel
+   serves SEVERAL `∃PP` demands from its own chain — removes the
+   single-demand-per-kernel limit inherited from `starKernel` (the root
+   still routes to primary demands `Gₖ`). This is the shape the
+   extraction actually produces: recurrent-type kernels each carrying
+   multiple same-tower demands.
 2. **The extraction** — from a satisfiable ∀PO-free `C₀`: enumerate the
    `∃PP` demands of `cl C₀`, build one tower per demand, take the high
    `hserve` witnesses, **quotient the witnesses by recurrent type** into
