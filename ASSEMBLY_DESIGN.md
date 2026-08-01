@@ -1323,6 +1323,32 @@ work is the ASSEMBLY over `posetNet`:
 3. **Horizontal + vertical mixing** and **`K(C₀)` counting** — the
    finiteness bookkeeping of §8, unchanged.
 
+### 21.5 Uniformization is NOT the open full-logic F6 (calibration)
+
+An earlier framing (and some chat) called the uniformization step
+"F6-hard". **That is wrong and must not be repeated.** Full-logic F6 (the
+rigid horizontal crowd / `M_n` identity-selector minor) is forced BY
+`∀PO`: universal PO-constraints pin the PO relations so the crowd cannot
+be quotiented. The ∀PO-free fragment REMOVES that mechanism — PO stays
+loose, crowds are mergeable, width is bounded by design. Concretely:
+
+- Horizontal ∀PO-free is already certified (`satisfiable_iff_hfrag_cert`)
+  and never touched width at all — it terminates by modal-depth
+  truncation (`mtk`).
+- Vertical ∀PO-free needs the kernel machinery, and the `hrectQ`
+  uniformization needs only a bounded LIVE NEIGHBOURHOOD — the fragment's
+  OWN width question, bounded by §21.1's finite-type kernels
+  (`≤ 2^{|cl C₀|}`) and the collapse probes `wp41`–`wp43`.
+
+So uniformization here is **fragment-level formalization**, categorically
+easier than full-logic F6, which the fragment is *designed* to escape.
+Honest caveat: the general "∀PO-free ⟹ bounded width" is strongly
+supported (design + finite types + witness probes) but not yet a closed,
+formalized theorem — so not trivially done, just NOT the open research
+problem. The `wp39` "W2′ folds into F6" result is a FULL-logic statement;
+it does not transfer to the fragment.
+
 The frontier is now precise: **one general multi-kernel lemma over
 `posetNet`, then the type-quotient extraction whose only open point is
-uniformization.** No soundness wall, no infinite branching, finite poset.
+uniformization — a fragment-level width fact, not full-logic F6.** No
+soundness wall, no infinite branching, finite poset.
