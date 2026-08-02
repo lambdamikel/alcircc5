@@ -9691,6 +9691,17 @@ theorem encodeMT_phase (T : MultiTier (Fin nE) (Fin nK)) (k : Fin nK) (a : Nat)
 
 end EncodeMT
 
+/-- A `Frame` transports backward along an injective reindex `φ` (data
+    matching pointwise: `N' x y = N (φ x) (φ y)`). -/
+theorem frame_reindex {V V' : Type} (φ : V' → V)
+    (hinj : ∀ x y, φ x = φ y → x = y)
+    (N : V → V → Atom) (N' : V' → V' → Atom)
+    (hNN : ∀ x y, N' x y = N (φ x) (φ y)) (h : Frame N) : Frame N' where
+  refl_eq := fun x => by rw [hNN]; exact h.refl_eq (φ x)
+  eq_id := fun x y hxy => by rw [hNN] at hxy; exact hinj x y (h.eq_id _ _ hxy)
+  conv_ := fun x y => by rw [hNN, hNN]; exact h.conv_ (φ x) (φ y)
+  comp_ := fun x y z => by rw [hNN, hNN, hNN]; exact h.comp_ (φ x) (φ y) (φ z)
+
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
 def hfragOk (F : Concept) : Bool :=
