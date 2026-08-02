@@ -9594,6 +9594,103 @@ theorem satisfiable_iff_hfrag_cert (C0 : Concept) (hfrag : HFrag C0) :
 
 end HorizFragAssembly
 
+/-! ### Round E3v (2026-08-02): the GENERAL FinMT encoder (for kernels)
+
+Toward VERTICAL decidability (roadmap §24): a `MultiTier` over `Fin nE ×
+Fin nK` (any finite index — the shape a reindexed kernel certificate
+takes) encodes to a `FinMT` by direct table tabulation.  Cleaner than
+`encodeHF`: the index types are preserved, so `e_ex`/`k_ex` witnesses
+transfer with NO pullback. -/
+
+section EncodeMT
+variable {nE nK : Nat}
+
+/-- Tabulate a `Fin`-indexed `MultiTier` into a first-order `FinMT`. -/
+def encodeMT (T : MultiTier (Fin nE) (Fin nK)) : FinMT where
+  tauE := (List.finRange nE).map T.tauE
+  E := (List.finRange nE).map (fun e => (List.finRange nE).map (T.E e))
+  K := (List.finRange nK).map (fun k => (List.finRange nE).map (T.K k))
+  Q := (List.finRange nK).map (fun k => (List.finRange nK).map (T.Q k))
+  up := (List.finRange nK).map T.up
+  phases := (List.finRange nK).map (fun k => (List.range (T.p k)).map (T.phase k))
+
+theorem finRange_getD_self {n : Nat} (e : Fin n) (d : Fin n) :
+    (List.finRange n).getD e.val d = e := by
+  have h1 : e.val < (List.finRange n).length := by rw [List.length_finRange]; exact e.isLt
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h1, List.getElem_finRange,
+    Option.getD_some]
+  exact Fin.ext rfl
+
+theorem range_getD_self {n : Nat} (a : Nat) (ha : a < n) (d : Nat) :
+    (List.range n).getD a d = a := by
+  rw [List.getD_eq_getElem?_getD,
+    List.getElem?_eq_getElem (by rw [List.length_range]; exact ha),
+    List.getElem_range, Option.getD_some]
+
+theorem encodeMT_nE (T : MultiTier (Fin nE) (Fin nK)) : (encodeMT T).nE = nE := by
+  show ((List.finRange nE).map _).length = nE; rw [List.length_map, List.length_finRange]
+
+theorem encodeMT_nK (T : MultiTier (Fin nE) (Fin nK)) : (encodeMT T).nK = nK := by
+  show ((List.finRange nK).map _).length = nK; rw [List.length_map, List.length_finRange]
+
+theorem encodeMT_tE (T : MultiTier (Fin nE) (Fin nK)) (e : Fin nE) :
+    (encodeMT T).tE e.val = T.tauE e := by
+  show ((List.finRange nE).map T.tauE).getD e.val [] = T.tauE e
+  rw [getD_map_lt T.tauE (List.finRange nE) e.val [] e
+    (by rw [List.length_finRange]; exact e.isLt), finRange_getD_self]
+
+theorem encodeMT_Ea (T : MultiTier (Fin nE) (Fin nK)) (e f : Fin nE) :
+    (encodeMT T).Ea e.val f.val = T.E e f := by
+  show (((List.finRange nE).map (fun e => (List.finRange nE).map (T.E e))).getD
+    e.val []).getD f.val dr = T.E e f
+  rw [getD_map_lt _ (List.finRange nE) e.val [] e
+    (by rw [List.length_finRange]; exact e.isLt), finRange_getD_self,
+    getD_map_lt (T.E e) (List.finRange nE) f.val dr f
+    (by rw [List.length_finRange]; exact f.isLt), finRange_getD_self]
+
+theorem encodeMT_Ka (T : MultiTier (Fin nE) (Fin nK)) (k : Fin nK) (e : Fin nE) :
+    (encodeMT T).Ka k.val e.val = T.K k e := by
+  show (((List.finRange nK).map (fun k => (List.finRange nE).map (T.K k))).getD
+    k.val []).getD e.val dr = T.K k e
+  rw [getD_map_lt _ (List.finRange nK) k.val [] k
+    (by rw [List.length_finRange]; exact k.isLt), finRange_getD_self,
+    getD_map_lt (T.K k) (List.finRange nE) e.val dr e
+    (by rw [List.length_finRange]; exact e.isLt), finRange_getD_self]
+
+theorem encodeMT_Qa (T : MultiTier (Fin nE) (Fin nK)) (k k' : Fin nK) :
+    (encodeMT T).Qa k.val k'.val = T.Q k k' := by
+  show (((List.finRange nK).map (fun k => (List.finRange nK).map (T.Q k))).getD
+    k.val []).getD k'.val dr = T.Q k k'
+  rw [getD_map_lt _ (List.finRange nK) k.val [] k
+    (by rw [List.length_finRange]; exact k.isLt), finRange_getD_self,
+    getD_map_lt (T.Q k) (List.finRange nK) k'.val dr k'
+    (by rw [List.length_finRange]; exact k'.isLt), finRange_getD_self]
+
+theorem encodeMT_upa (T : MultiTier (Fin nE) (Fin nK)) (k : Fin nK) :
+    (encodeMT T).upa k.val = T.up k := by
+  show ((List.finRange nK).map T.up).getD k.val true = T.up k
+  rw [getD_map_lt T.up (List.finRange nK) k.val true k
+    (by rw [List.length_finRange]; exact k.isLt), finRange_getD_self]
+
+theorem encodeMT_pk (T : MultiTier (Fin nE) (Fin nK)) (k : Fin nK) :
+    (encodeMT T).pk k.val = T.p k := by
+  show (((List.finRange nK).map (fun k => (List.range (T.p k)).map (T.phase k))).getD
+    k.val []).length = T.p k
+  rw [getD_map_lt _ (List.finRange nK) k.val [] k
+    (by rw [List.length_finRange]; exact k.isLt), finRange_getD_self,
+    List.length_map, List.length_range]
+
+theorem encodeMT_phase (T : MultiTier (Fin nE) (Fin nK)) (k : Fin nK) (a : Nat)
+    (ha : a < T.p k) : (encodeMT T).phase k.val a = T.phase k a := by
+  show (((List.finRange nK).map (fun k => (List.range (T.p k)).map (T.phase k))).getD
+    k.val []).getD a [] = T.phase k a
+  rw [getD_map_lt _ (List.finRange nK) k.val [] k
+    (by rw [List.length_finRange]; exact k.isLt), finRange_getD_self,
+    getD_map_lt (T.phase k) (List.range (T.p k)) a [] a
+    (by rw [List.length_range]; exact ha), range_getD_self a ha]
+
+end EncodeMT
+
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
 def hfragOk (F : Concept) : Bool :=
