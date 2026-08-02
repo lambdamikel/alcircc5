@@ -9290,6 +9290,98 @@ theorem encodeHF_Ea (hI : RCC5Interp I) (root : MTKNode I C0) (i j : Nat)
     getD_map_lt _ _ j dr (hfRootN root) hj]
   rfl
 
+/-- In-range, `hfNode` is `getElem`. -/
+theorem hfNode_getElem (root : MTKNode I C0) (j : Nat)
+    (hj : j < (hfExt root).length) : hfNode root j = (hfExt root)[j] := by
+  show (hfExt root).getD j (hfRootN root) = (hfExt root)[j]
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hj]; rfl
+
+/-- **THE HORIZONTAL CERTIFICATE'S FinMT ENCODING IS VALID.**  Transport
+    `mtHF_ok` across the position↔node map: labels/relations agree
+    (`encodeHF_tE`/`encodeHF_Ea`), the frame comes from `mtHF.E`'s
+    (`symDrPo`) frame + `hfNode` injectivity (`Nodup`), and `e_ex` pulls
+    each witness node back to its list index (surjectivity). -/
+theorem encodeHF_mtOk (hI : RCC5Interp I) (hfrag : HFrag C0)
+    (root : MTKNode I C0) : MultiTierOk (decodeMT (encodeHF hI root)) := by
+  have hlen : (encodeHF hI root).nE = (hfExt root).length := encodeHF_nE hI root
+  have hlt : ∀ e : Fin (encodeHF hI root).nE, e.val < (hfExt root).length :=
+    fun e => hlen ▸ e.isLt
+  have hDtau : ∀ e : Fin (encodeHF hI root).nE,
+      (decodeMT (encodeHF hI root)).tauE e = (mtHF hI root).tauE (hfNode root e.val) :=
+    fun e => encodeHF_tE hI root e.val (hlt e)
+  have hDE : ∀ e f : Fin (encodeHF hI root).nE,
+      (decodeMT (encodeHF hI root)).E e f
+        = (mtHF hI root).E (hfNode root e.val) (hfNode root f.val) :=
+    fun e f => encodeHF_Ea hI root e.val f.val (hlt e) (hlt f)
+  have hME : Frame (mtHF hI root).E := by
+    refine frame_ext ?_ (symDrPo_frame (dadjBK hI root) (dadjBK_symm hI root))
+    intro v w
+    simp only [mtHF]
+    by_cases h : v = w
+    · rw [if_pos h, if_pos h]
+    · rw [if_neg h, if_neg h]
+  have hMok := mtHF_ok hI hfrag root
+  have hDEframe : Frame (decodeMT (encodeHF hI root)).E :=
+    { refl_eq := fun e => by rw [hDE e e]; exact hME.refl_eq _
+      eq_id := fun e f h => by
+        rw [hDE e f] at h
+        exact Fin.ext ((List.getD_inj (hlt e) (hlt f) (nodup_cdedup _)).mp (hME.eq_id _ _ h))
+      conv_ := fun e f => by rw [hDE f e, hDE e f]; exact hME.conv_ _ _
+      comp_ := fun e f g => by rw [hDE e g, hDE e f, hDE f g]; exact hME.comp_ _ _ _ }
+  refine
+    { hp := fun k => k.elim0
+      frame_q := qnet_empty_frame' _ _ _ (fun k => k.elim0) hDEframe
+      e_clash := fun e a h => by rw [hDtau e] at h ⊢; exact hMok.e_clash _ a h
+      e_nobot := fun e => by rw [hDtau e]; exact hMok.e_nobot _
+      e_and := fun e c d h => by rw [hDtau e] at h ⊢; exact hMok.e_and _ c d h
+      e_or := fun e c d h => by rw [hDtau e] at h ⊢; exact hMok.e_or _ c d h
+      k_clash := fun k => k.elim0
+      k_nobot := fun k => k.elim0
+      k_and := fun k => k.elim0
+      k_or := fun k => k.elim0
+      ee_all := fun e f r c hall hEf => by
+        rw [hDtau f]; rw [hDtau e] at hall; rw [hDE e f] at hEf
+        exact hMok.ee_all _ _ r c hall hEf
+      ek_all := fun e r c _ k => k.elim0
+      ke_all := fun k => k.elim0
+      kk_pp := fun k => k.elim0
+      kk_ppi := fun k => k.elim0
+      kk_eq := fun k => k.elim0
+      kq_all := fun k => k.elim0
+      e_ex := fun e r c hmem => by
+        rw [hDtau e] at hmem
+        rcases hMok.e_ex _ r c hmem with ⟨f', hEf', harg'⟩ | ⟨k, _⟩
+        · have hf'mem : f' ∈ hfExt root :=
+            (mem_cdedup f' ((mtkNodes root).attach)).mpr (List.mem_attach (mtkNodes root) f')
+          obtain ⟨j, hj, hjf⟩ := List.getElem_of_mem hf'mem
+          have hjnode : hfNode root j = f' := (hfNode_getElem root j hj).trans hjf
+          have hjE : j < (encodeHF hI root).nE := hlen ▸ hj
+          refine Or.inl ⟨⟨j, hjE⟩, ?_, ?_⟩
+          · rw [hDE e ⟨j, hjE⟩]
+            show (mtHF hI root).E (hfNode root e.val) (hfNode root j) = r
+            rw [hjnode]; exact hEf'
+          · rw [hDtau ⟨j, hjE⟩]
+            show c ∈ (mtHF hI root).tauE (hfNode root j)
+            rw [hjnode]; exact harg'
+        · exact k.elim
+      k_ex := fun k => k.elim0 }
+
+/-- The encoded certificate is ACCEPTED, carrying `C0` at the root's
+    external index. -/
+theorem encodeHF_accepts (hI : RCC5Interp I) (hfrag : HFrag C0)
+    (root : MTKNode I C0) (hC0 : C0 ∈ mtk C0 I root.x root.k) :
+    ∃ rootIdx, (encodeHF hI root).mtAcceptB rootIdx C0 = true := by
+  have hok := encodeHF_mtOk hI hfrag root
+  have hrootmem : hfRootN root ∈ hfExt root :=
+    (mem_cdedup _ _).mpr (List.mem_attach _ _)
+  obtain ⟨e0, he0, he0f⟩ := List.getElem_of_mem hrootmem
+  have he0node : hfNode root e0 = hfRootN root := (hfNode_getElem root e0 he0).trans he0f
+  have he0E : e0 < (encodeHF hI root).nE := (encodeHF_nE hI root) ▸ he0
+  refine mtAcceptB_complete (encodeHF hI root) hok (Sum.inl ⟨e0, he0E⟩) C0 ?_
+  show C0 ∈ (encodeHF hI root).tE e0
+  rw [encodeHF_tE hI root e0 he0, he0node]
+  exact hC0
+
 /-- **HORIZONTAL ∀PO-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**
     Both directions kernel-checked.  This is the full ∀PO-free fragment
     MINUS vertical existentials `∃PP`/`∃PPI`: nested `∀DR`, `∀PP`/`∀PPI`,
@@ -11444,5 +11536,6 @@ end VerticalWitness
 #print axioms VerticalWitness.cnest_satisfiable
 #print axioms VerticalWitness.rootNest_frame
 #print axioms VerticalWitness.crnest_satisfiable
+#print axioms encodeHF_mtOk
 
 end POFreeLift
