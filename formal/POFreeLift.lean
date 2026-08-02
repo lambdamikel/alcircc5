@@ -9237,24 +9237,58 @@ theorem getD_map_lt {A B : Type} (f : A → B) (l : List A) :
 
 open Classical in
 /-- FinMT encoding of the horizontal (kernel-free) certificate.  Externals
-    are the subtype elements `(mtkNodes root).attach` (indexed by list
-    position); labels `= mtk`, relations `= mtHF`'s `eq/dr/po` table. -/
+    are the DISTINCT subtype elements `cdedup (mtkNodes root).attach`
+    (indexed by list position — `Nodup`, so `eq` stays on the diagonal);
+    labels `= mtk`, relations `= mtHF`'s `eq/dr/po` table. -/
 noncomputable def encodeHF (hI : RCC5Interp I) (root : MTKNode I C0) : FinMT where
-  tauE := (mtkNodes root).attach.map (fun m => mtk C0 I m.val.x m.val.k)
-  E := (mtkNodes root).attach.map (fun m =>
-        (mtkNodes root).attach.map (fun m' =>
+  tauE := (cdedup (mtkNodes root).attach).map (fun m => mtk C0 I m.val.x m.val.k)
+  E := (cdedup (mtkNodes root).attach).map (fun m =>
+        (cdedup (mtkNodes root).attach).map (fun m' =>
           if m = m' then eq else if dadjBK hI root m m' then dr else po))
   K := []
   Q := []
   up := []
   phases := []
 
+/-- The distinct-external list. -/
+noncomputable def hfExt (root : MTKNode I C0) : List {n // n ∈ mtkNodes root} :=
+  cdedup (mtkNodes root).attach
+
+/-- The default external (the root node itself). -/
+noncomputable def hfRootN (root : MTKNode I C0) : {n // n ∈ mtkNodes root} :=
+  ⟨root, self_mem_mtkNodes root⟩
+
+/-- The external at position `i` (a subtype node). -/
+noncomputable def hfNode (root : MTKNode I C0) (i : Nat) : {n // n ∈ mtkNodes root} :=
+  (hfExt root).getD i (hfRootN root)
+
 theorem encodeHF_nE (hI : RCC5Interp I) (root : MTKNode I C0) :
-    (encodeHF hI root).nE = (mtkNodes root).length := by
-  simp [FinMT.nE, encodeHF, List.length_attach]
+    (encodeHF hI root).nE = (hfExt root).length := by
+  simp [FinMT.nE, encodeHF, hfExt, List.length_map]
 
 theorem encodeHF_nK (hI : RCC5Interp I) (root : MTKNode I C0) :
     (encodeHF hI root).nK = 0 := rfl
+
+/-- Data-preservation for labels: `decodeMT`'s external label at position
+    `i` is `mtHF`'s label at node `hfNode i`. -/
+theorem encodeHF_tE (hI : RCC5Interp I) (root : MTKNode I C0) (i : Nat)
+    (h : i < (hfExt root).length) :
+    (encodeHF hI root).tE i = (mtHF hI root).tauE (hfNode root i) := by
+  show ((hfExt root).map (fun m => mtk C0 I m.val.x m.val.k)).getD i [] = _
+  rw [getD_map_lt (fun m => mtk C0 I m.val.x m.val.k) _ i [] (hfRootN root) h]
+  rfl
+
+open Classical in
+/-- Data-preservation for relations: `decodeMT`'s external table at `(i,j)`
+    is `mtHF`'s relation between nodes `hfNode i`, `hfNode j`. -/
+theorem encodeHF_Ea (hI : RCC5Interp I) (root : MTKNode I C0) (i j : Nat)
+    (hi : i < (hfExt root).length) (hj : j < (hfExt root).length) :
+    (encodeHF hI root).Ea i j = (mtHF hI root).E (hfNode root i) (hfNode root j) := by
+  show (((hfExt root).map (fun m => (hfExt root).map (fun m' =>
+      if m = m' then eq else if dadjBK hI root m m' then dr else po))).getD i []).getD j dr = _
+  rw [getD_map_lt _ _ i [] (hfRootN root) hi,
+    getD_map_lt _ _ j dr (hfRootN root) hj]
+  rfl
 
 /-- **HORIZONTAL ∀PO-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**
     Both directions kernel-checked.  This is the full ∀PO-free fragment
