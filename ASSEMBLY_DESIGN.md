@@ -1414,3 +1414,37 @@ it from the finite-type kernel count + the collapse probes.
 The order is deliberate: front-load the gap-free horizontal decidability
 (establishing the enumeration + completeness machinery on `nK = 0`), then
 extend to the kernel case where the sole open fact is fragment-width.
+
+
+## 23. Horizontal ∀PO-free is DECIDABLE — done (2026-08-02)
+
+§22's plan is complete. `decidableSat_hfrag (C0) (hfrag : HFrag C0) :
+Decidable (Satisfiable C0)` — the project's FIRST kernel-checked
+decidability theorem, a genuinely **computable** `def` (the decision is
+the finite search `codes.any (fun p => mtAcceptB p.1 p.2 C0)`;
+`Classical.choice` appears only in the erased correctness proof, so this
+is a real decision procedure, not a vacuous `Classical.dec`).
+
+Pipeline, all certified (0 sorries/warnings):
+- `encodeHF` / `encodeHF_mtOk` / `encodeHF_accepts` — encode the mtHF
+  certificate as a `FinMT`, prove it valid + accepting (E3s).
+- `mtkNodes_length_le` — the certificate is size-bounded by `K(C0) =
+  mtkBound C0 (mdepth C0)` (E3t).
+- `allListsLen`/`allListsLe`/`allAtoms`, `codes C0` — the fixed
+  computable enumeration (labels `allListsLe (cl C0) |cl C0|`; no
+  `List.sublists` needed since `mtk`'s elements ∈ `cl C0` and
+  `|mtk| ≤ |cl C0|`).
+- `encodeHF_mem_codes` — the encoded code lies in `codes`.
+- `hfrag_hcompl` — satisfiable ⟹ an accepted code in `codes`.
+- `decidableSat_hfrag = decidableSat_of_codes C0 (codes C0)
+  (hfrag_hcompl …)`.
+
+No width, no uniformization — the horizontal fragment terminates by
+modal-depth truncation. Axioms: propext / Classical.choice / Quot.sound.
+
+**Next (§24): the VERTICAL fragment's decidability** reuses this same
+`codes` / `decidableSat_of_codes` machinery with kernels (`nK > 0`). The
+assembly lemmas (`posetNet_frame`, `posetKernel_ok`, `posetKernelG_ok`)
+and witnesses are already certified; the one open ingredient is the
+fragment-level uniformization (§21.5) — a bounded-width fact, NOT the
+open full-logic F6.
