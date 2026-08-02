@@ -9183,8 +9183,45 @@ theorem extract_hfrag (C0 : Concept) (hfrag : HFrag C0)
 Toward `Decidable (Satisfiable C0)` (roadmap §22): encode the kernel-free
 `mtHF` certificate as a first-order `FinMT` and transport its
 `MultiTierOk` across the position↔node map, so the Boolean checker
-`mtOkB` accepts it.  Externals = the nodes of `mtkNodes root` indexed by
-list position; labels = `mtk`; relations = `eq/dr/po`; no kernels. -/
+`mtOkB` accepts it.  Externals = the DISTINCT nodes of `mtkNodes root`
+indexed by list position; labels = `mtk`; relations = `eq/dr/po`; no
+kernels. -/
+
+section CDedup
+open Classical
+
+/-- Classical dedup — core lacks `List.dedup` for `DecidableEq` (only
+    `eraseDups` for `BEq`, and `MTKNode` has no `BEq`).  Keeps the last
+    occurrence of each element; the result is `Nodup` with the same
+    membership. -/
+noncomputable def cdedup {A : Type} : List A → List A
+  | [] => []
+  | a :: l => if a ∈ cdedup l then cdedup l else a :: cdedup l
+
+theorem mem_cdedup {A : Type} (a : A) (l : List A) : a ∈ cdedup l ↔ a ∈ l := by
+  induction l with
+  | nil => exact Iff.rfl
+  | cons b t ih =>
+    show a ∈ (if b ∈ cdedup t then cdedup t else b :: cdedup t) ↔ a ∈ b :: t
+    by_cases hb : b ∈ cdedup t
+    · rw [if_pos hb, List.mem_cons, ih]
+      constructor
+      · exact fun h => Or.inr h
+      · rintro (rfl | h)
+        · exact ih.mp hb
+        · exact h
+    · rw [if_neg hb, List.mem_cons, List.mem_cons, ih]
+
+theorem nodup_cdedup {A : Type} (l : List A) : (cdedup l).Nodup := by
+  induction l with
+  | nil => exact List.nodup_nil
+  | cons b t ih =>
+    show (if b ∈ cdedup t then cdedup t else b :: cdedup t).Nodup
+    by_cases hb : b ∈ cdedup t
+    · rw [if_pos hb]; exact ih
+    · rw [if_neg hb]; exact List.nodup_cons.mpr ⟨hb, ih⟩
+
+end CDedup
 
 /-- In-range `getD` commutes with `map` (default-independent). -/
 theorem getD_map_lt {A B : Type} (f : A → B) (l : List A) :
