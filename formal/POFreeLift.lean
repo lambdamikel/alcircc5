@@ -8978,6 +8978,58 @@ theorem mtkNodes_covers (root : MTKNode I C0) :
     mtkNodes_trans root m hm _ (mtkWitness_mem m hF),
     mtkWitness_rho m hF, mtkWitness_arg m hF⟩
 
+/-- A computable size bound: `mtkBound C0 k = 1 + |cl C0|·(previous)`,
+    i.e. `(|cl C0|+1)^k` unrolled — bounds `|mtkNodes n|` at budget `k`. -/
+def mtkBound (C0 : Concept) : Nat → Nat
+  | 0 => 1
+  | k + 1 => 1 + (cl C0).length * mtkBound C0 k
+
+/-- `sum (map g l) ≤ |l| · M` when every `g a ≤ M`. -/
+theorem sum_map_le {A : Type} (l : List A) (g : A → Nat) (M : Nat)
+    (h : ∀ a ∈ l, g a ≤ M) : (l.map g).sum ≤ l.length * M := by
+  induction l with
+  | nil => simp
+  | cons a t ih =>
+    simp only [List.map_cons, List.sum_cons, List.length_cons]
+    have h1 : g a ≤ M := h a (List.mem_cons_self ..)
+    have h2 : (t.map g).sum ≤ t.length * M :=
+      ih (fun x hx => h x (List.mem_cons_of_mem a hx))
+    calc g a + (t.map g).sum ≤ M + t.length * M := Nat.add_le_add h1 h2
+      _ = (t.length + 1) * M := by rw [Nat.succ_mul, Nat.add_comm]
+
+/-- **THE COVERAGE NODE SET IS SIZE-BOUNDED** by `mtkBound C0 n.k`
+    (`K(C₀)` for the root, budget `= mdepth C0`).  Makes the `codes`
+    enumeration finite. -/
+theorem mtkNodes_length_le (n : MTKNode I C0) :
+    (mtkNodes n).length ≤ mtkBound C0 n.k := by
+  induction n using mtkNodes.induct with
+  | _ x ih =>
+    rw [mtkNodes, List.length_cons, List.length_flatMap]
+    have hmtklen : (mtk C0 I x.x x.k).attach.length ≤ (cl C0).length := by
+      rw [List.length_attach, mtk]
+      exact Nat.le_trans (List.length_filter_le _ _) (List.length_filter_le _ _)
+    by_cases hx0 : x.k = 0
+    · refine Nat.le_trans (Nat.add_le_add_right (sum_map_le _ _ 0 ?_) 1) ?_
+      · rintro ⟨F, hF⟩ _
+        cases F with
+        | ex r c => exact absurd (mem_mtk.mp hF).2 (by rw [hx0]; exact Nat.not_succ_le_zero _)
+        | _ => exact Nat.le_refl 0
+      · rw [Nat.mul_zero, Nat.zero_add, hx0]; exact Nat.le_refl 1
+    · obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero hx0
+      refine Nat.le_trans (Nat.add_le_add_right
+        (Nat.le_trans (sum_map_le _ _ (mtkBound C0 m) ?_)
+          (Nat.mul_le_mul_right _ hmtklen)) 1) ?_
+      · rintro ⟨F, hF⟩ _
+        cases F with
+        | ex r c =>
+          have hih := ih r c hF
+          rwa [show (mtkWitness x hF).k = m from by
+            show x.k - 1 = m; omega] at hih
+        | _ => exact Nat.zero_le _
+      · rw [hm]
+        show (cl C0).length * mtkBound C0 m + 1 ≤ 1 + (cl C0).length * mtkBound C0 m
+        omega
+
 end MtkRecursion
 
 /-! ### The horizontal ∀PO-free fragment (`ASSEMBLY_DESIGN.md §15`)
@@ -11537,5 +11589,6 @@ end VerticalWitness
 #print axioms VerticalWitness.rootNest_frame
 #print axioms VerticalWitness.crnest_satisfiable
 #print axioms encodeHF_mtOk
+#print axioms mtkNodes_length_le
 
 end POFreeLift
