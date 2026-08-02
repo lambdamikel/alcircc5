@@ -9418,21 +9418,163 @@ theorem encodeHF_mtOk (hI : RCC5Interp I) (hfrag : HFrag C0)
         · exact k.elim
       k_ex := fun k => k.elim0 }
 
-/-- The encoded certificate is ACCEPTED, carrying `C0` at the root's
-    external index. -/
+/-- The encoded certificate is ACCEPTED at a BOUNDED root index (the
+    root node's external position `< nE`). -/
 theorem encodeHF_accepts (hI : RCC5Interp I) (hfrag : HFrag C0)
     (root : MTKNode I C0) (hC0 : C0 ∈ mtk C0 I root.x root.k) :
-    ∃ rootIdx, (encodeHF hI root).mtAcceptB rootIdx C0 = true := by
+    ∃ rootIdx, rootIdx < (encodeHF hI root).nE ∧
+      (encodeHF hI root).mtAcceptB rootIdx C0 = true := by
   have hok := encodeHF_mtOk hI hfrag root
   have hrootmem : hfRootN root ∈ hfExt root :=
     (mem_cdedup _ _).mpr (List.mem_attach _ _)
   obtain ⟨e0, he0, he0f⟩ := List.getElem_of_mem hrootmem
   have he0node : hfNode root e0 = hfRootN root := (hfNode_getElem root e0 he0).trans he0f
   have he0E : e0 < (encodeHF hI root).nE := (encodeHF_nE hI root) ▸ he0
-  refine mtAcceptB_complete (encodeHF hI root) hok (Sum.inl ⟨e0, he0E⟩) C0 ?_
+  refine ⟨e0, he0E, ?_⟩
+  rw [FinMT.mtAcceptB]
+  refine andB_intro (mtOkB_complete _ hok) ?_
+  rw [FinMT.rootB, if_pos he0E]
+  apply decide_eq_true
   show C0 ∈ (encodeHF hI root).tE e0
   rw [encodeHF_tE hI root e0 he0, he0node]
   exact hC0
+
+/-! ### Enumeration combinators (core lacks `List.pi`/`sublists`) -/
+
+/-- All lists of length exactly `n` over `L`. -/
+def allListsLen {A : Type} (L : List A) : Nat → List (List A)
+  | 0 => [[]]
+  | n + 1 => L.flatMap (fun a => (allListsLen L n).map (fun l => a :: l))
+
+theorem mem_allListsLen {A : Type} (L : List A) (n : Nat) (l : List A) :
+    l ∈ allListsLen L n ↔ l.length = n ∧ ∀ x ∈ l, x ∈ L := by
+  induction n generalizing l with
+  | zero =>
+    constructor
+    · intro h
+      simp only [allListsLen, List.mem_singleton] at h
+      subst h; exact ⟨rfl, fun x hx => absurd hx List.not_mem_nil⟩
+    · rintro ⟨hlen, _⟩
+      have hl : l = [] := List.length_eq_zero_iff.mp hlen
+      subst hl; exact List.mem_singleton.mpr rfl
+  | succ n ih =>
+    constructor
+    · intro h
+      simp only [allListsLen, List.mem_flatMap, List.mem_map] at h
+      obtain ⟨a, ha, l', hl', rfl⟩ := h
+      obtain ⟨hlen, hmem⟩ := (ih l').mp hl'
+      refine ⟨by rw [List.length_cons, hlen], fun x hx => ?_⟩
+      rcases List.mem_cons.mp hx with rfl | hx'
+      · exact ha
+      · exact hmem x hx'
+    · rintro ⟨hlen, hmem⟩
+      cases l with
+      | nil => simp at hlen
+      | cons a l' =>
+        simp only [allListsLen, List.mem_flatMap, List.mem_map]
+        exact ⟨a, hmem a (List.mem_cons_self ..), l',
+          (ih l').mpr ⟨by simpa using hlen, fun x hx => hmem x (List.mem_cons_of_mem a hx)⟩, rfl⟩
+
+/-- All lists of length `≤ n` over `L`. -/
+def allListsLe {A : Type} (L : List A) (n : Nat) : List (List A) :=
+  (List.range (n + 1)).flatMap (allListsLen L)
+
+theorem mem_allListsLe {A : Type} (L : List A) (n : Nat) (l : List A) :
+    l ∈ allListsLe L n ↔ l.length ≤ n ∧ ∀ x ∈ l, x ∈ L := by
+  simp only [allListsLe, List.mem_flatMap, List.mem_range]
+  constructor
+  · rintro ⟨m, hm, hl⟩
+    obtain ⟨hlen, hmem⟩ := (mem_allListsLen L m l).mp hl
+    exact ⟨by omega, hmem⟩
+  · rintro ⟨hlen, hmem⟩
+    exact ⟨l.length, by omega, (mem_allListsLen L l.length l).mpr ⟨rfl, hmem⟩⟩
+
+/-- All five RCC5 atoms. -/
+def allAtoms : List Atom := [Atom.eq, Atom.pp, Atom.ppi, Atom.po, Atom.dr]
+
+theorem mem_allAtoms (a : Atom) : a ∈ allAtoms := by cases a <;> decide
+
+open Classical in
+theorem length_cdedup_le {A : Type} (l : List A) : (cdedup l).length ≤ l.length := by
+  induction l with
+  | nil => exact Nat.le_refl 0
+  | cons a t ih =>
+    show (if a ∈ cdedup t then cdedup t else a :: cdedup t).length ≤ (a :: t).length
+    rw [List.length_cons]
+    by_cases h : a ∈ cdedup t
+    · rw [if_pos h]; exact Nat.le_trans ih (Nat.le_succ _)
+    · rw [if_neg h, List.length_cons]; exact Nat.succ_le_succ ih
+
+/-- The fixed, model-independent code enumeration for `C0`: all kernel-free
+    `FinMT`s with labels drawn from `cl C0` (length `≤ |cl C0|`), `≤ K(C0)`
+    externals, `eq/dr/po/…` tables, paired with a root index `≤ K(C0)`. -/
+def codes (C0 : Concept) : List (FinMT × Nat) :=
+  (allListsLe (allListsLe (cl C0) (cl C0).length) (mtkBound C0 (mdepth C0))).flatMap
+    (fun tauE => (allListsLe (allListsLe allAtoms (mtkBound C0 (mdepth C0)))
+        (mtkBound C0 (mdepth C0))).flatMap
+      (fun E => (List.range (mtkBound C0 (mdepth C0) + 1)).map
+        (fun rootIdx => (⟨tauE, E, [], [], [], []⟩, rootIdx))))
+
+/-- The encoded certificate's code lies in the enumeration. -/
+theorem encodeHF_mem_codes (hI : RCC5Interp I) (root : MTKNode I C0)
+    (hrk : root.k = mdepth C0) (rootIdx : Nat)
+    (hri : rootIdx < (encodeHF hI root).nE) :
+    (encodeHF hI root, rootIdx) ∈ codes C0 := by
+  have hExtLe : (hfExt root).length ≤ mtkBound C0 (mdepth C0) := by
+    calc (hfExt root).length
+        ≤ (mtkNodes root).attach.length := length_cdedup_le _
+      _ = (mtkNodes root).length := List.length_attach
+      _ ≤ mtkBound C0 root.k := mtkNodes_length_le root
+      _ = mtkBound C0 (mdepth C0) := by rw [hrk]
+  have htauElen : (encodeHF hI root).tauE.length = (hfExt root).length := by
+    show ((hfExt root).map _).length = _; rw [List.length_map]
+  have hElen : (encodeHF hI root).E.length = (hfExt root).length := by
+    show ((hfExt root).map _).length = _; rw [List.length_map]
+  refine List.mem_flatMap.mpr ⟨(encodeHF hI root).tauE, ?_,
+    List.mem_flatMap.mpr ⟨(encodeHF hI root).E, ?_,
+      List.mem_map.mpr ⟨rootIdx, List.mem_range.mpr (by
+        have := (encodeHF_nE hI root) ▸ hri; omega), rfl⟩⟩⟩
+  · -- tauE ∈ allListsLe labels B
+    rw [mem_allListsLe]
+    refine ⟨?_, fun lab hlab => ?_⟩
+    · rw [htauElen]; exact hExtLe
+    · rw [mem_allListsLe]
+      obtain ⟨m, _, rfl⟩ := List.mem_map.mp (show lab ∈ (hfExt root).map _ from hlab)
+      refine ⟨?_, fun y hy => mtk_sub_cl _ hy⟩
+      rw [mtk, mty]
+      exact Nat.le_trans (List.length_filter_le _ _) (List.length_filter_le _ _)
+  · -- E ∈ allListsLe (allListsLe allAtoms B) B
+    rw [mem_allListsLe]
+    refine ⟨?_, fun row hrow => ?_⟩
+    · rw [hElen]; exact hExtLe
+    · rw [mem_allListsLe]
+      obtain ⟨m, _, rfl⟩ := List.mem_map.mp (show row ∈ (hfExt root).map _ from hrow)
+      refine ⟨?_, fun y _ => mem_allAtoms y⟩
+      show ((hfExt root).map _).length ≤ _
+      rw [List.length_map]; exact hExtLe
+
+/-- COMPLETENESS of the enumeration: every satisfiable `HFrag` concept has
+    an accepted code in the fixed list `codes C0`. -/
+theorem hfrag_hcompl (C0 : Concept) (hfrag : HFrag C0) :
+    Satisfiable C0 → ∃ p ∈ codes C0, (p.1).mtAcceptB p.2 C0 = true := by
+  intro hsat
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  have hC0 : C0 ∈ mtk C0 I (⟨x0, mdepth C0, hdom0⟩ : MTKNode I C0).x
+      (⟨x0, mdepth C0, hdom0⟩ : MTKNode I C0).k :=
+    mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self C0, hsat0⟩, Nat.le_refl _⟩
+  obtain ⟨rootIdx, hri, hacc⟩ :=
+    encodeHF_accepts hI hfrag ⟨x0, mdepth C0, hdom0⟩ hC0
+  exact ⟨(encodeHF hI ⟨x0, mdepth C0, hdom0⟩, rootIdx),
+    encodeHF_mem_codes hI ⟨x0, mdepth C0, hdom0⟩ rfl rootIdx hri, hacc⟩
+
+/-- **THE HORIZONTAL ∀PO-FREE FRAGMENT IS DECIDABLE.**  The project's first
+    kernel-checked `Decidable (Satisfiable C0)`: soundness from
+    `mtAcceptB_sound`, completeness from `hfrag_hcompl` (encode the
+    depth-truncated certificate, size-bounded by `K(C0)`, into the fixed
+    enumeration `codes C0`). -/
+def decidableSat_hfrag (C0 : Concept) (hfrag : HFrag C0) :
+    Decidable (Satisfiable C0) :=
+  decidableSat_of_codes C0 (codes C0) (hfrag_hcompl C0 hfrag)
 
 /-- **HORIZONTAL ∀PO-FREE SATISFIABILITY ⟺ A MULTI-TIER CERTIFICATE.**
     Both directions kernel-checked.  This is the full ∀PO-free fragment
@@ -11590,5 +11732,7 @@ end VerticalWitness
 #print axioms VerticalWitness.crnest_satisfiable
 #print axioms encodeHF_mtOk
 #print axioms mtkNodes_length_le
+#print axioms decidableSat_hfrag
+#print axioms hfrag_hcompl
 
 end POFreeLift
