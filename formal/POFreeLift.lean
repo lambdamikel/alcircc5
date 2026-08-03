@@ -10708,6 +10708,34 @@ theorem satisfiable_of_persistPP (hI : RCC5Interp I) (C0 G : Concept)
       (fun r D hmem => hdem r D (mty_sub _ hmem))
   exact multiTier_sound (vkernel1 I C0 d x0 i p) hok (Sum.inl ()) C0 hC0
 
+/-- From a persistent `∃PP` demand, a BOUNDED-period single-tower
+    certificate: `mty_segment_bounded` supplies `(i, p)` with `p ≤ B`, and
+    `vkernel1_ok` needs only that recurrence.  Returns the chain + valid
+    kernel carrying `C0` at its external. -/
+theorem vkernel1_bounded_ok (hI : RCC5Interp I) (C0 G : Concept)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → (r = pp ∧ D = G) ∨ r = eq)
+    {x0 : α} (hx0 : persistPP I C0 G x0) (hC0 : C0 ∈ mty C0 I x0) :
+    ∃ (c : Nat → α) (i p : Nat),
+      p ≤ (allListsLe (cl C0) (cl C0).length).length ∧ 0 < p ∧
+      MultiTierOk (vkernel1 I C0 c x0 i p) ∧
+      C0 ∈ (vkernel1 I C0 c x0 i p).tauE () := by
+  obtain ⟨x1, hp1, _, hr01, hG1⟩ := persistPP_productive' hI x0 hx0
+  obtain ⟨d, hd0, hdom_d, hstep_d, hG_d⟩ := persistPP_chain' hI x1 ⟨hp1, hG1⟩
+  obtain ⟨i, p, _, hp, hpB, hty⟩ := mty_segment_bounded (I := I) C0 d 0
+  have hx0d0 : I.rho x0 (d 0) = pp := by rw [hd0]; exact hr01
+  have hx0pp : ∀ a, I.rho x0 (d (i + a)) = pp := by
+    intro a
+    rcases Nat.eq_zero_or_pos (i + a) with h0 | h0
+    · rw [h0]; exact hx0d0
+    · have hcomp := hI.comp_ x0 (d 0) (d (i + a)) hx0.1 (hdom_d 0) (hdom_d (i + a))
+      rw [hx0d0, chain_model_pp hI hdom_d hstep_d 0 (i + a) h0,
+        show comp pp pp = [pp] from rfl] at hcomp
+      exact List.mem_singleton.mp hcomp
+  have hok := vkernel1_ok hI C0 G d x0 hx0.1 hdom_d hstep_d hp hty (hG_d i) hx0pp
+    (fun a r D hmem => hdem r D (mty_sub _ hmem))
+    (fun r D hmem => hdem r D (mty_sub _ hmem))
+  exact ⟨d, i, p, hpB, hp, hok, hC0⟩
+
 /-! ### Round E3k (2026-07-30): the STAR frame — root below many kernels
 
 The multi-demand geometry: the witnesses of distinct `∃PP.Gₖ` demands at
