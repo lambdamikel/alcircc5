@@ -2891,6 +2891,30 @@ theorem segment_exists (univ : List β) (f : Nat → β)
 
 end Pigeonhole
 
+/-- A `Nodup` list whose elements all lie in `univ` is no longer than
+    `univ` (finite pigeonhole; `eraseP`-based, no `BEq`). -/
+theorem nodup_len_le {A : Type} [DecidableEq A] :
+    ∀ (l univ : List A), (∀ x ∈ l, x ∈ univ) → l.Nodup → l.length ≤ univ.length := by
+  intro l
+  induction l with
+  | nil => intro univ _ _; exact Nat.zero_le _
+  | cons a t ih =>
+    intro univ hsub hnd
+    have ha : a ∈ univ := hsub a List.mem_cons_self
+    have hant : a ∉ t := (List.nodup_cons.mp hnd).1
+    have hndt : t.Nodup := (List.nodup_cons.mp hnd).2
+    have hsubt : ∀ x ∈ t, x ∈ univ.eraseP (fun y => decide (y = a)) := by
+      intro x hx
+      have hxa : ¬ ((fun y => decide (y = a)) x = true) := by
+        simp only [decide_eq_true_eq]; exact fun h => hant (h ▸ hx)
+      exact (List.mem_eraseP_of_neg (p := fun y => decide (y = a)) hxa).mpr
+        (hsub x (List.mem_cons_of_mem a hx))
+    have hlen := ih (univ.eraseP (fun y => decide (y = a))) hsubt hndt
+    rw [List.length_eraseP_of_mem ha (by simp)] at hlen
+    have hpos : 0 < univ.length := List.length_pos_of_mem ha
+    show t.length + 1 ≤ univ.length
+    omega
+
 /-! ### Segment coherence -/
 
 section Segment
