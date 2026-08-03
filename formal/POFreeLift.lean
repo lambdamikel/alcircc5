@@ -9951,6 +9951,22 @@ theorem reindexMT_ok {β κ β' κ' : Type} [DecidableEq κ] [DecidableEq κ']
     · obtain ⟨k'', rfl⟩ := hκsurj k'
       exact Or.inr (Or.inr (Or.inr ⟨k'', fun h => hkk (by rw [h]), hQ, b, hb, harg⟩))
 
+/-- The `Fin 1`-reindexed encoding of a valid `(Unit, Unit)` certificate
+    carrying `C0` is accepted (the `Fin 1 → Unit` maps are bijections since
+    both are subsingletons). -/
+theorem unitTower_accepted (T : MultiTier Unit Unit) (hok : MultiTierOk T)
+    (C0 : Concept) (hC0 : C0 ∈ T.tauE ()) :
+    ∃ rootIdx, (encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+      (fun _ : Fin 1 => (() : Unit)) T)).mtAcceptB rootIdx C0 = true := by
+  have hokR : MultiTierOk (reindexMT (fun _ : Fin 1 => (() : Unit))
+      (fun _ : Fin 1 => (() : Unit)) T) :=
+    reindexMT_ok _ _ T hok
+      (fun e f _ => Subsingleton.elim e f)
+      (fun _ => ⟨0, Subsingleton.elim _ _⟩)
+      (fun k k' _ => Subsingleton.elim k k')
+      (fun _ => ⟨0, Subsingleton.elim _ _⟩)
+  exact encodeMT_accepts _ hokR C0 0 hC0
+
 /-- The chain's model type recurs with a COMPUTABLY BOUNDED period `p ≤ B`
     (`B = |allListsLe (cl C0) |cl C0||`), past any `L` — the type sequence
     lives in `allListsLe (cl C0) |cl C0|`, so `segment_exists_bounded`
