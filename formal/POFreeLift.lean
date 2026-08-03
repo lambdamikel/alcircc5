@@ -9836,6 +9836,74 @@ theorem encodeMT_accepts {nE nK : Nat} (T : MultiTier (Fin nE) (Fin nK))
   apply decide_eq_true
   rw [encodeMT_tE T e]; exact hC0
 
+/-! ### Reindexing a certificate onto new index types (e.g. `Unit → Fin 1`) -/
+
+/-- Reindex a `MultiTier` along maps on the index types. -/
+def reindexMT {β κ β' κ' : Type} (fβ : β' → β) (fκ : κ' → κ)
+    (T : MultiTier β κ) : MultiTier β' κ' where
+  E := fun e f => T.E (fβ e) (fβ f)
+  K := fun k e => T.K (fκ k) (fβ e)
+  Q := fun k k' => T.Q (fκ k) (fκ k')
+  up := fun k => T.up (fκ k)
+  tauE := fun e => T.tauE (fβ e)
+  p := fun k => T.p (fκ k)
+  phase := fun k a => T.phase (fκ k) a
+
+/-- Reindexing along BIJECTIVE index maps preserves validity (injective for
+    the frame, surjective for existential-witness pullback). -/
+theorem reindexMT_ok {β κ β' κ' : Type} [DecidableEq κ] [DecidableEq κ']
+    (fβ : β' → β) (fκ : κ' → κ) (T : MultiTier β κ) (hok : MultiTierOk T)
+    (hβinj : ∀ e f, fβ e = fβ f → e = f) (hβsurj : ∀ b, ∃ e, fβ e = b)
+    (hκinj : ∀ k k', fκ k = fκ k' → k = k') (hκsurj : ∀ k, ∃ k', fκ k' = k) :
+    MultiTierOk (reindexMT fβ fκ T) := by
+  refine
+    { hp := fun k => hok.hp (fκ k)
+      frame_q := frame_reindex (Sum.map fβ fκ) ?_ (qnet T.E T.K T.Q) _ ?_ hok.frame_q
+      e_clash := fun e a h => hok.e_clash (fβ e) a h
+      e_nobot := fun e => hok.e_nobot (fβ e)
+      e_and := fun e c d h => hok.e_and (fβ e) c d h
+      e_or := fun e c d h => hok.e_or (fβ e) c d h
+      k_clash := fun k a ha n h => hok.k_clash (fκ k) a ha n h
+      k_nobot := fun k a ha => hok.k_nobot (fκ k) a ha
+      k_and := fun k a ha c d h => hok.k_and (fκ k) a ha c d h
+      k_or := fun k a ha c d h => hok.k_or (fκ k) a ha c d h
+      ee_all := fun e f r c hall hEf => hok.ee_all (fβ e) (fβ f) r c hall hEf
+      ek_all := fun e r c hall k hK a ha => hok.ek_all (fβ e) r c hall (fκ k) hK a ha
+      ke_all := fun k a ha r c hall f hK => hok.ke_all (fκ k) a ha r c hall (fβ f) hK
+      kk_pp := fun k a ha c hall b hb => hok.kk_pp (fκ k) a ha c hall b hb
+      kk_ppi := fun k a ha c hall b hb => hok.kk_ppi (fκ k) a ha c hall b hb
+      kk_eq := fun k a ha c hall => hok.kk_eq (fκ k) a ha c hall
+      kq_all := fun k k' hkk a ha r c hall hQ b hb =>
+        hok.kq_all (fκ k) (fκ k') (fun h => hkk (hκinj k k' h)) a ha r c hall hQ b hb
+      e_ex := ?_
+      k_ex := ?_ }
+  · rintro (x | x) (y | y) h
+    · exact congrArg Sum.inl (hβinj x y (by simpa [Sum.map] using h))
+    · simp [Sum.map] at h
+    · simp [Sum.map] at h
+    · exact congrArg Sum.inr (hκinj x y (by simpa [Sum.map] using h))
+  · rintro (e | k) (f | k')
+    · rfl
+    · rfl
+    · rfl
+    · show (if k = k' then eq else (reindexMT fβ fκ T).Q k k')
+        = (if fκ k = fκ k' then eq else T.Q (fκ k) (fκ k'))
+      by_cases hkk : k = k'
+      · rw [if_pos hkk, if_pos (by rw [hkk])]
+      · rw [if_neg hkk, if_neg (fun h => hkk (hκinj k k' h))]; rfl
+  · intro e r c hmem
+    rcases hok.e_ex (fβ e) r c hmem with ⟨f, hEf, harg⟩ | ⟨k, hK, a, ha, harg⟩
+    · obtain ⟨f', rfl⟩ := hβsurj f; exact Or.inl ⟨f', hEf, harg⟩
+    · obtain ⟨k', rfl⟩ := hκsurj k; exact Or.inr ⟨k', hK, a, ha, harg⟩
+  · intro k a ha r c hmem
+    rcases hok.k_ex (fκ k) a ha r c hmem with
+      ⟨f, hK, harg⟩ | ⟨hr, b, hb, harg⟩ | ⟨hr, harg⟩ | ⟨k', hkk, hQ, b, hb, harg⟩
+    · obtain ⟨f', rfl⟩ := hβsurj f; exact Or.inl ⟨f', hK, harg⟩
+    · exact Or.inr (Or.inl ⟨hr, b, hb, harg⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨hr, harg⟩))
+    · obtain ⟨k'', rfl⟩ := hκsurj k'
+      exact Or.inr (Or.inr (Or.inr ⟨k'', fun h => hkk (by rw [h]), hQ, b, hb, harg⟩))
+
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
 def hfragOk (F : Concept) : Bool :=
