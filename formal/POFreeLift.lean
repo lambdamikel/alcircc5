@@ -9825,6 +9825,17 @@ theorem encodeMT_mtOk {nE nK : Nat} (T : MultiTier (Fin nE) (Fin nK))
       · rw [hDQ k (Fin.cast henK.symm k'), hcK k']; exact hQ
       · rw [hDphase (Fin.cast henK.symm k') b hb', hcK k']; exact harg
 
+/-- The encoded certificate is ACCEPTED at an external carrying `C0`. -/
+theorem encodeMT_accepts {nE nK : Nat} (T : MultiTier (Fin nE) (Fin nK))
+    (hok : MultiTierOk T) (C0 : Concept) (e : Fin nE) (hC0 : C0 ∈ T.tauE e) :
+    ∃ rootIdx, (encodeMT T).mtAcceptB rootIdx C0 = true := by
+  refine ⟨e.val, ?_⟩
+  rw [FinMT.mtAcceptB]
+  refine andB_intro (encodeMT_mtOk T hok) ?_
+  rw [FinMT.rootB, if_pos (by rw [encodeMT_nE]; exact e.isLt)]
+  apply decide_eq_true
+  rw [encodeMT_tE T e]; exact hC0
+
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
 def hfragOk (F : Concept) : Bool :=
