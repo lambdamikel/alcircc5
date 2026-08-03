@@ -9872,11 +9872,11 @@ theorem encodeMT_mtOk {nE nK : Nat} (T : MultiTier (Fin nE) (Fin nK))
       · rw [hDQ k (Fin.cast henK.symm k'), hcK k']; exact hQ
       · rw [hDphase (Fin.cast henK.symm k') b hb', hcK k']; exact harg
 
-/-- The encoded certificate is ACCEPTED at an external carrying `C0`. -/
+/-- The encoded certificate is ACCEPTED at external index `e.val`
+    (carrying `C0`). -/
 theorem encodeMT_accepts {nE nK : Nat} (T : MultiTier (Fin nE) (Fin nK))
     (hok : MultiTierOk T) (C0 : Concept) (e : Fin nE) (hC0 : C0 ∈ T.tauE e) :
-    ∃ rootIdx, (encodeMT T).mtAcceptB rootIdx C0 = true := by
-  refine ⟨e.val, ?_⟩
+    (encodeMT T).mtAcceptB e.val C0 = true := by
   rw [FinMT.mtAcceptB]
   refine andB_intro (encodeMT_mtOk T hok) ?_
   rw [FinMT.rootB, if_pos (by rw [encodeMT_nE]; exact e.isLt)]
@@ -9956,8 +9956,8 @@ theorem reindexMT_ok {β κ β' κ' : Type} [DecidableEq κ] [DecidableEq κ']
     both are subsingletons). -/
 theorem unitTower_accepted (T : MultiTier Unit Unit) (hok : MultiTierOk T)
     (C0 : Concept) (hC0 : C0 ∈ T.tauE ()) :
-    ∃ rootIdx, (encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
-      (fun _ : Fin 1 => (() : Unit)) T)).mtAcceptB rootIdx C0 = true := by
+    (encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+      (fun _ : Fin 1 => (() : Unit)) T)).mtAcceptB 0 C0 = true := by
   have hokR : MultiTierOk (reindexMT (fun _ : Fin 1 => (() : Unit))
       (fun _ : Fin 1 => (() : Unit)) T) :=
     reindexMT_ok _ _ T hok
@@ -9966,6 +9966,24 @@ theorem unitTower_accepted (T : MultiTier Unit Unit) (hok : MultiTierOk T)
       (fun k k' _ => Subsingleton.elim k k')
       (fun _ => ⟨0, Subsingleton.elim _ _⟩)
   exact encodeMT_accepts _ hokR C0 0 hC0
+
+/-- `1×1` atom tables (`nE = nK = 1`); the free `bool` column. -/
+def atomTab1 : List (List (List Atom)) := allListsLe (allListsLe allAtoms 1) 1
+def boolCol : List (List Bool) := allListsLe [true, false] 1
+
+/-- The fixed, model-independent enumeration for the SINGLE-TOWER case:
+    kernel-ful `FinMT`s (`nE ≤ 1`, `nK ≤ 1`) with labels/phase-types drawn
+    from `cl C0`, `≤ B` phases per kernel, `1×1` atom tables, root index
+    `0`.  Computable. -/
+def codesV (C0 : Concept) : List (FinMT × Nat) :=
+  let labels := allListsLe (cl C0) (cl C0).length
+  let phaseCol := allListsLe (allListsLe labels labels.length) 1
+  (allListsLe labels 1).flatMap fun tauE =>
+    atomTab1.flatMap fun E =>
+      atomTab1.flatMap fun K =>
+        atomTab1.flatMap fun Q =>
+          boolCol.flatMap fun up =>
+            phaseCol.map fun phases => (⟨tauE, E, K, Q, up, phases⟩, 0)
 
 /-- The chain's model type recurs with a COMPUTABLY BOUNDED period `p ≤ B`
     (`B = |allListsLe (cl C0) |cl C0||`), past any `L` — the type sequence
