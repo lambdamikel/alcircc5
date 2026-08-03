@@ -2915,6 +2915,29 @@ theorem nodup_len_le {A : Type} [DecidableEq A] :
     show t.length + 1 ≤ univ.length
     omega
 
+/-- **BOUNDED PIGEONHOLE**: past any `L`, two of the first `|univ|+1`
+    values coincide — so the recurrence period is `≤ |univ|`. -/
+theorem segment_exists_bounded {β : Type} [DecidableEq β] (univ : List β)
+    (f : Nat → β) (hf : ∀ i, f i ∈ univ) (L : Nat) :
+    ∃ i j, L ≤ i ∧ i < j ∧ j ≤ L + univ.length ∧ f i = f j := by
+  apply Classical.byContradiction
+  intro hno
+  have hwnd : ((List.range (univ.length + 1)).map (fun k => f (L + k))).Nodup := by
+    show List.Pairwise (· ≠ ·) ((List.range (univ.length + 1)).map (fun k => f (L + k)))
+    rw [List.pairwise_map]
+    refine List.Pairwise.imp_of_mem ?_ List.pairwise_lt_range
+    intro a b _ hb hab heq
+    have hbn : b ≤ univ.length := by have := List.mem_range.mp hb; omega
+    exact hno ⟨L + a, L + b, Nat.le_add_right L a,
+      Nat.add_lt_add_left hab L, by omega, heq⟩
+  have hwsub : ∀ x ∈ ((List.range (univ.length + 1)).map (fun k => f (L + k))), x ∈ univ := by
+    intro x hx
+    obtain ⟨k, _, rfl⟩ := List.mem_map.mp hx
+    exact hf (L + k)
+  have hle := nodup_len_le _ univ hwsub hwnd
+  rw [List.length_map, List.length_range] at hle
+  omega
+
 /-! ### Segment coherence -/
 
 section Segment
