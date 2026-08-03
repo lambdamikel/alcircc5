@@ -9702,6 +9702,129 @@ theorem frame_reindex {V V' : Type} (φ : V' → V)
   conv_ := fun x y => by rw [hNN, hNN]; exact h.conv_ (φ x) (φ y)
   comp_ := fun x y z => by rw [hNN, hNN, hNN]; exact h.comp_ (φ x) (φ y) (φ z)
 
+/-- **THE GENERAL ENCODER IS VALID.**  A `Fin`-indexed valid certificate
+    encodes to a `FinMT` the Boolean checker accepts.  Transports all 12
+    `MultiTierOk` fields across the `Fin.cast` (index equality is a
+    theorem, not defeq); `frame_q` via `frame_reindex`; `e_ex`/`k_ex`
+    witnesses via the cast round-trips (no pullback — index types match). -/
+theorem encodeMT_mtOk {nE nK : Nat} (T : MultiTier (Fin nE) (Fin nK))
+    (hok : MultiTierOk T) : (encodeMT T).mtOkB = true := by
+  apply mtOkB_complete
+  have henE : (encodeMT T).nE = nE := encodeMT_nE T
+  have henK : (encodeMT T).nK = nK := encodeMT_nK T
+  have hDtau : ∀ e, (decodeMT (encodeMT T)).tauE e = T.tauE (Fin.cast henE e) :=
+    fun e => encodeMT_tE T (Fin.cast henE e)
+  have hDE : ∀ e f, (decodeMT (encodeMT T)).E e f
+      = T.E (Fin.cast henE e) (Fin.cast henE f) :=
+    fun e f => encodeMT_Ea T (Fin.cast henE e) (Fin.cast henE f)
+  have hDK : ∀ k e, (decodeMT (encodeMT T)).K k e
+      = T.K (Fin.cast henK k) (Fin.cast henE e) :=
+    fun k e => encodeMT_Ka T (Fin.cast henK k) (Fin.cast henE e)
+  have hDQ : ∀ k k', (decodeMT (encodeMT T)).Q k k'
+      = T.Q (Fin.cast henK k) (Fin.cast henK k') :=
+    fun k k' => encodeMT_Qa T (Fin.cast henK k) (Fin.cast henK k')
+  have hDup : ∀ k, (decodeMT (encodeMT T)).up k = T.up (Fin.cast henK k) :=
+    fun k => encodeMT_upa T (Fin.cast henK k)
+  have hDp : ∀ k, (decodeMT (encodeMT T)).p k = T.p (Fin.cast henK k) :=
+    fun k => encodeMT_pk T (Fin.cast henK k)
+  have hDphase : ∀ k a, a < (decodeMT (encodeMT T)).p k →
+      (decodeMT (encodeMT T)).phase k a = T.phase (Fin.cast henK k) a :=
+    fun k a ha => encodeMT_phase T (Fin.cast henK k) a (hDp k ▸ ha)
+  have hcE : ∀ f : Fin nE, (Fin.cast henE (Fin.cast henE.symm f) : Fin nE) = f :=
+    fun f => Fin.ext rfl
+  have hcK : ∀ k : Fin nK, (Fin.cast henK (Fin.cast henK.symm k) : Fin nK) = k :=
+    fun k => Fin.ext rfl
+  have hceinj : ∀ a b : Fin (encodeMT T).nE, Fin.cast henE a = Fin.cast henE b → a = b :=
+    fun a b h => congrArg (Fin.cast henE.symm) h
+  have hckinj : ∀ a b : Fin (encodeMT T).nK, Fin.cast henK a = Fin.cast henK b → a = b :=
+    fun a b h => congrArg (Fin.cast henK.symm) h
+  refine
+    { hp := fun k => by rw [hDp k]; exact hok.hp _
+      frame_q := ?_
+      e_clash := fun e a h => by rw [hDtau e] at h ⊢; exact hok.e_clash _ a h
+      e_nobot := fun e => by rw [hDtau e]; exact hok.e_nobot _
+      e_and := fun e c d h => by rw [hDtau e] at h ⊢; exact hok.e_and _ c d h
+      e_or := fun e c d h => by rw [hDtau e] at h ⊢; exact hok.e_or _ c d h
+      k_clash := fun k a ha n h => by
+        rw [hDphase k a ha] at h ⊢; exact hok.k_clash _ a (hDp k ▸ ha) n h
+      k_nobot := fun k a ha => by
+        rw [hDphase k a ha]; exact hok.k_nobot _ a (hDp k ▸ ha)
+      k_and := fun k a ha c d h => by
+        rw [hDphase k a ha] at h ⊢; exact hok.k_and _ a (hDp k ▸ ha) c d h
+      k_or := fun k a ha c d h => by
+        rw [hDphase k a ha] at h ⊢; exact hok.k_or _ a (hDp k ▸ ha) c d h
+      ee_all := fun e f r c hall hEf => by
+        rw [hDtau f]; rw [hDtau e] at hall; rw [hDE e f] at hEf
+        exact hok.ee_all _ _ r c hall hEf
+      ek_all := fun e r c hall k hK a ha => by
+        rw [hDphase k a ha]; rw [hDtau e] at hall; rw [hDK k e] at hK
+        exact hok.ek_all _ r c hall _ hK a (hDp k ▸ ha)
+      ke_all := fun k a ha r c hall f hK => by
+        rw [hDtau f]; rw [hDphase k a ha] at hall; rw [hDK k f] at hK
+        exact hok.ke_all _ a (hDp k ▸ ha) r c hall _ hK
+      kk_pp := fun k a ha c hall b hb => by
+        rw [hDphase k b hb]; rw [hDphase k a ha] at hall
+        exact hok.kk_pp _ a (hDp k ▸ ha) c hall b (hDp k ▸ hb)
+      kk_ppi := fun k a ha c hall b hb => by
+        rw [hDphase k b hb]; rw [hDphase k a ha] at hall
+        exact hok.kk_ppi _ a (hDp k ▸ ha) c hall b (hDp k ▸ hb)
+      kk_eq := fun k a ha c hall => by
+        rw [hDphase k a ha] at hall ⊢; exact hok.kk_eq _ a (hDp k ▸ ha) c hall
+      kq_all := fun k k' hkk a ha r c hall hQ b hb => by
+        rw [hDphase k' b hb]; rw [hDphase k a ha] at hall; rw [hDQ k k'] at hQ
+        exact hok.kq_all _ _ (fun h => hkk (hckinj k k' h))
+          a (hDp k ▸ ha) r c hall hQ b (hDp k' ▸ hb)
+      e_ex := ?_
+      k_ex := ?_ }
+  · refine frame_reindex (Sum.map (Fin.cast henE) (Fin.cast henK)) ?_
+      (qnet T.E T.K T.Q) _ ?_ hok.frame_q
+    · rintro (x | x) (y | y) h
+      · exact congrArg Sum.inl (hceinj x y (by simpa [Sum.map] using h))
+      · simp [Sum.map] at h
+      · simp [Sum.map] at h
+      · exact congrArg Sum.inr (hckinj x y (by simpa [Sum.map] using h))
+    · rintro (e | k) (f | k')
+      · exact hDE e f
+      · show conv ((decodeMT (encodeMT T)).K k' e)
+          = conv (T.K (Fin.cast henK k') (Fin.cast henE e))
+        rw [hDK k' e]
+      · exact hDK k f
+      · show (if k = k' then eq else (decodeMT (encodeMT T)).Q k k')
+          = (if Fin.cast henK k = Fin.cast henK k' then eq
+             else T.Q (Fin.cast henK k) (Fin.cast henK k'))
+        by_cases hkk : k = k'
+        · rw [if_pos hkk, if_pos (by rw [hkk])]
+        · rw [if_neg hkk, if_neg (fun h => hkk (hckinj k k' h)), hDQ k k']
+  · intro e r c hmem
+    rw [hDtau e] at hmem
+    rcases hok.e_ex (Fin.cast henE e) r c hmem with ⟨f, hEf, harg⟩ | ⟨k, hK, a, ha, harg⟩
+    · refine Or.inl ⟨Fin.cast henE.symm f, ?_, ?_⟩
+      · rw [hDE e (Fin.cast henE.symm f), hcE f]; exact hEf
+      · rw [hDtau (Fin.cast henE.symm f), hcE f]; exact harg
+    · have ha' : a < (decodeMT (encodeMT T)).p (Fin.cast henK.symm k) := by
+        rw [hDp, hcK k]; exact ha
+      refine Or.inr ⟨Fin.cast henK.symm k, ?_, a, ha', ?_⟩
+      · rw [hDK (Fin.cast henK.symm k) e, hcK k]; exact hK
+      · rw [hDphase (Fin.cast henK.symm k) a ha', hcK k]; exact harg
+  · intro k a ha r c hmem
+    rw [hDphase k a ha] at hmem
+    rcases hok.k_ex (Fin.cast henK k) a (hDp k ▸ ha) r c hmem with
+      ⟨f, hK, harg⟩ | ⟨hr, b, hb, harg⟩ | ⟨hr, harg⟩ | ⟨k', hkk, hQ, b, hb, harg⟩
+    · refine Or.inl ⟨Fin.cast henE.symm f, ?_, ?_⟩
+      · rw [hDK k (Fin.cast henE.symm f), hcE f]; exact hK
+      · rw [hDtau (Fin.cast henE.symm f), hcE f]; exact harg
+    · have hb' : b < (decodeMT (encodeMT T)).p k := by rw [hDp k]; exact hb
+      refine Or.inr (Or.inl ⟨?_, b, hb', ?_⟩)
+      · rw [hDup k]; exact hr
+      · rw [hDphase k b hb']; exact harg
+    · exact Or.inr (Or.inr (Or.inl ⟨hr, by rw [hDphase k a ha]; exact harg⟩))
+    · have hb' : b < (decodeMT (encodeMT T)).p (Fin.cast henK.symm k') := by
+        rw [hDp, hcK k']; exact hb
+      refine Or.inr (Or.inr (Or.inr ⟨Fin.cast henK.symm k',
+        fun h => hkk (by rw [h]; exact hcK k'), ?_, b, hb', ?_⟩))
+      · rw [hDQ k (Fin.cast henK.symm k'), hcK k']; exact hQ
+      · rw [hDphase (Fin.cast henK.symm k') b hb', hcK k']; exact harg
+
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
 def hfragOk (F : Concept) : Bool :=
@@ -11842,5 +11965,6 @@ end VerticalWitness
 #print axioms mtkNodes_length_le
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
+#print axioms encodeMT_mtOk
 
 end POFreeLift
