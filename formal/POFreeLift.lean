@@ -9951,6 +9951,25 @@ theorem reindexMT_ok {β κ β' κ' : Type} [DecidableEq κ] [DecidableEq κ']
     · obtain ⟨k'', rfl⟩ := hκsurj k'
       exact Or.inr (Or.inr (Or.inr ⟨k'', fun h => hkk (by rw [h]), hQ, b, hb, harg⟩))
 
+/-- The chain's model type recurs with a COMPUTABLY BOUNDED period `p ≤ B`
+    (`B = |allListsLe (cl C0) |cl C0||`), past any `L` — the type sequence
+    lives in `allListsLe (cl C0) |cl C0|`, so `segment_exists_bounded`
+    applies. -/
+theorem mty_segment_bounded {α : Type} {I : Interp α} (C0 : Concept)
+    (c : Nat → α) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧ p ≤ (allListsLe (cl C0) (cl C0).length).length ∧
+      mty C0 I (c i) = mty C0 I (c (i + p)) := by
+  have hmem : ∀ n, mty C0 I (c n) ∈ allListsLe (cl C0) (cl C0).length := by
+    intro n
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun x hx => by rw [mty] at hx; exact (List.mem_filter.mp hx).1⟩
+  obtain ⟨i, j, hLi, hij, hjB, heq⟩ :=
+    segment_exists_bounded (allListsLe (cl C0) (cl C0).length)
+      (fun n => mty C0 I (c n)) hmem L
+  exact ⟨i, j - i, hLi, by omega, by omega,
+    by rw [show i + (j - i) = j from by omega]; exact heq⟩
+
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
 def hfragOk (F : Concept) : Bool :=
