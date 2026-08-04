@@ -9967,6 +9967,22 @@ theorem unitTower_accepted (T : MultiTier Unit Unit) (hok : MultiTierOk T)
       (fun _ => ⟨0, Subsingleton.elim _ _⟩)
   exact encodeMT_accepts _ hokR C0 0 hC0
 
+/-- The `Fin 1`-reindexed encoding of a valid `(Unit, Fin nK)` certificate
+    (root + `N` kernels) carrying `C0` is accepted — the external map is a
+    subsingleton bijection, the kernel map is the identity. -/
+theorem multiTower_accepted {nK : Nat} (T : MultiTier Unit (Fin nK))
+    (hok : MultiTierOk T) (C0 : Concept) (hC0 : C0 ∈ T.tauE ()) :
+    (encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit)) (id : Fin nK → Fin nK)
+      T)).mtAcceptB 0 C0 = true := by
+  have hokR : MultiTierOk (reindexMT (fun _ : Fin 1 => (() : Unit))
+      (id : Fin nK → Fin nK) T) :=
+    reindexMT_ok _ _ T hok
+      (fun e f _ => Subsingleton.elim e f)
+      (fun _ => ⟨0, Subsingleton.elim _ _⟩)
+      (fun _ _ h => h)
+      (fun k => ⟨k, rfl⟩)
+  exact encodeMT_accepts _ hokR C0 0 hC0
+
 /-- `1×1` atom tables (`nE = nK = 1`); the free `bool` column. -/
 def atomTab1 : List (List (List Atom)) := allListsLe (allListsLe allAtoms 1) 1
 def boolCol : List (List Bool) := allListsLe [true, false] 1
