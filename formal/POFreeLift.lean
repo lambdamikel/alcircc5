@@ -9985,6 +9985,36 @@ def codesV (C0 : Concept) : List (FinMT × Nat) :=
           boolCol.flatMap fun up =>
             phaseCol.map fun phases => (⟨tauE, E, K, Q, up, phases⟩, 0)
 
+/-- The `Fin 1`-encoded certificate's code lies in `codesV C0`, given its
+    label + phase-types are drawn from `cl C0` and its period is `≤ B`. -/
+theorem unitTower_mem_codesV (T : MultiTier Unit Unit) (C0 : Concept)
+    (htauL : T.tauE () ∈ allListsLe (cl C0) (cl C0).length)
+    (hphL : ∀ a, T.phase () a ∈ allListsLe (cl C0) (cl C0).length)
+    (hpB : T.p () ≤ (allListsLe (cl C0) (cl C0).length).length) :
+    (encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+      (fun _ : Fin 1 => (() : Unit)) T), 0) ∈ codesV C0 := by
+  have hmap1 : ∀ {A : Type} (g : Fin 1 → A) (univ : List A), g 0 ∈ univ →
+      (List.finRange 1).map g ∈ allListsLe univ 1 := by
+    intro A g univ hg
+    rw [mem_allListsLe]
+    refine ⟨Nat.le_of_eq (by rw [List.length_map, List.length_finRange]),
+      fun x hx => ?_⟩
+    obtain ⟨e, _, rfl⟩ := List.mem_map.mp hx
+    rw [Subsingleton.elim e 0]; exact hg
+  have hbool : ∀ b : Bool, b ∈ [true, false] := by intro b; cases b <;> decide
+  simp only [codesV, atomTab1, boolCol, List.mem_flatMap, List.mem_map]
+  refine ⟨_, ?_, _, ?_, _, ?_, _, ?_, _, ?_, _, ?_, rfl⟩
+  · exact hmap1 _ _ htauL
+  · exact hmap1 _ _ (hmap1 _ _ (mem_allAtoms _))
+  · exact hmap1 _ _ (hmap1 _ _ (mem_allAtoms _))
+  · exact hmap1 _ _ (hmap1 _ _ (mem_allAtoms _))
+  · exact hmap1 _ _ (hbool _)
+  · refine hmap1 _ _ ?_
+    rw [mem_allListsLe]
+    refine ⟨by rw [List.length_map, List.length_range]; exact hpB, fun x hx => ?_⟩
+    obtain ⟨a, _, rfl⟩ := List.mem_map.mp hx
+    exact hphL a
+
 /-- The chain's model type recurs with a COMPUTABLY BOUNDED period `p ≤ B`
     (`B = |allListsLe (cl C0) |cl C0||`), past any `L` — the type sequence
     lives in `allListsLe (cl C0) |cl C0|`, so `segment_exists_bounded`
