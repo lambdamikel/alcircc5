@@ -11290,6 +11290,42 @@ theorem posetKernelG_ok (hI : RCC5Interp I) (C0 : Concept)
 
 end VerticalKernel
 
+/-- COMPLETENESS for the single-tower case: given the demand condition
+    `hdem` and that `C0` forces `persistPP` (`hforce`), every satisfiable
+    such `C0` has an accepted code in `codesV C0`. -/
+theorem vtower_hcompl (C0 G : Concept)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → (r = pp ∧ D = G) ∨ r = eq)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistPP I C0 G x) :
+    Satisfiable C0 → ∃ p ∈ codesV C0, (p.1).mtAcceptB p.2 C0 = true := by
+  intro hsat
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  have hC0 : C0 ∈ mty C0 I x0 := mem_mty.mpr ⟨cl_self C0, hsat0⟩
+  have hpp : persistPP I C0 G x0 := hforce I x0 hI hdom0 hsat0
+  obtain ⟨c, i, p, hpB, hp, hok, hCtau⟩ := vkernel1_bounded_ok hI C0 G hdem hpp hC0
+  have hmtylbl : ∀ (x : α), mty C0 I x ∈ allListsLe (cl C0) (cl C0).length := by
+    intro x
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun y hy => by rw [mty] at hy; exact (List.mem_filter.mp hy).1⟩
+  refine ⟨(encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+    (fun _ : Fin 1 => (() : Unit)) (vkernel1 I C0 c x0 i p)), 0), ?_, ?_⟩
+  · exact unitTower_mem_codesV (vkernel1 I C0 c x0 i p) C0
+      (hmtylbl x0) (fun a => hmtylbl (c (i + a))) hpB
+  · exact unitTower_accepted (vkernel1 I C0 c x0 i p) hok C0 hCtau
+
+/-- **THE SINGLE-TOWER VERTICAL FRAGMENT IS DECIDABLE.**  A concept whose
+    only existentials are `∃PP.G`/`∃EQ` (`hdem`) and which forces the
+    persistent `∃PP.G` tower (`hforce`) has decidable satisfiability — the
+    FIRST kernel-checked VERTICAL decidability, built on the general
+    encoder + the bounded pigeonhole (period `≤ K(C0)`). -/
+def decidableSat_vtower (C0 G : Concept)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → (r = pp ∧ D = G) ∨ r = eq)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistPP I C0 G x) :
+    Decidable (Satisfiable C0) :=
+  decidableSat_of_codes C0 (codesV C0) (vtower_hcompl C0 G hdem hforce)
+
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
 
 `Cvert = A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A)` (`A = atom 0`) forces an infinite
@@ -12203,5 +12239,6 @@ end VerticalWitness
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
 #print axioms encodeMT_mtOk
+#print axioms decidableSat_vtower
 
 end POFreeLift
