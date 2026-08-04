@@ -11391,6 +11391,22 @@ theorem cvert_demands : ∀ r D, Concept.ex r D ∈ cl Cvert →
   have hb := List.all_eq_true.mp cvert_demands_b (Concept.ex r D) h
   simpa only [okDemand, decide_eq_true_eq] using hb
 
+/-- `Cvert` forces the persistent `∃PP.A` tower in EVERY model: its
+    `∃PP.A` and `∀PP.(∃PP.A)` conjuncts hold, and both are in `cl Cvert`. -/
+theorem cvert_force {α : Type} (I : Interp α) (x : α) (hI : RCC5Interp I)
+    (hdom : I.dom x) (hsat : sat I x Cvert) :
+    persistPP I Cvert (Concept.atom 0) x := by
+  obtain ⟨⟨_, hex⟩, hall⟩ := hsat
+  exact ⟨hdom, mem_mty.mpr ⟨by decide, hex⟩, mem_mty.mpr ⟨by decide, hall⟩⟩
+
+/-- **`Cvert`'s satisfiability is DECIDABLE via the vertical procedure** —
+    the non-vacuity witness for `decidableSat_vtower`: `Cvert`'s demands
+    are `∃PP.A` (`cvert_demands`) and it forces the tower (`cvert_force`). -/
+def decidableSat_Cvert : Decidable (Satisfiable Cvert) :=
+  decidableSat_vtower Cvert (Concept.atom 0)
+    (fun r D h => Or.inl (cvert_demands r D h))
+    (fun I x hI hdom hsat => cvert_force I x hI hdom hsat)
+
 /-- `Cvert` is satisfiable — produced THROUGH `vkernel_ok` (a genuine
     kernel certificate), not by exhibiting the ℕ-model directly. -/
 theorem cvert_satisfiable : Satisfiable Cvert := by
