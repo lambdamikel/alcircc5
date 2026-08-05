@@ -6572,6 +6572,52 @@ theorem persistAll_productive (hI : RCC5Interp I) {C0 : Concept}
   obtain ⟨hcl', hsat'⟩ := mem_mty.mp hall'
   exact mem_mty.mpr ⟨hcl', sat_all_pp_up hI hdx hdy hr hsat'⟩
 
+/-- The ROUND-ROBIN chain (subtype-bundled): step `n+1` serves demand
+    `Ds[n % L]`, so the chain cycles through ALL demands while every rung
+    stays multi-persistent. -/
+noncomputable def rrChain (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) :
+    Nat → {a : α // persistAll I C0 Ds a}
+  | 0 => ⟨x0, h0⟩
+  | n + 1 =>
+    ⟨Classical.choose (persistAll_productive hI (rrChain hI C0 Ds hL x0 h0 n).1
+        (rrChain hI C0 Ds hL x0 h0 n).2
+        (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩)),
+     (Classical.choose_spec (persistAll_productive hI (rrChain hI C0 Ds hL x0 h0 n).1
+        (rrChain hI C0 Ds hL x0 h0 n).2
+        (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩))).1⟩
+
+/-- The round-robin chain points. -/
+noncomputable def rrPt (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) (n : Nat) : α :=
+  (rrChain hI C0 Ds hL x0 h0 n).1
+
+theorem rrPt_prop (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) (n : Nat) :
+    persistAll I C0 Ds (rrPt hI C0 Ds hL x0 h0 n) :=
+  (rrChain hI C0 Ds hL x0 h0 n).2
+
+theorem rrPt_dom (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) (n : Nat) :
+    I.dom (rrPt hI C0 Ds hL x0 h0 n) :=
+  (rrPt_prop hI C0 Ds hL x0 h0 n).1
+
+theorem rrPt_step (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) (n : Nat) :
+    I.rho (rrPt hI C0 Ds hL x0 h0 n) (rrPt hI C0 Ds hL x0 h0 (n + 1)) = pp :=
+  (Classical.choose_spec (persistAll_productive hI (rrChain hI C0 Ds hL x0 h0 n).1
+    (rrChain hI C0 Ds hL x0 h0 n).2
+    (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩))).2.2.1
+
+/-- Step `n+1` CARRIES the demand `Ds[n % L]` it served. -/
+theorem rrPt_serves (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) (n : Nat) :
+    Ds.get ⟨n % Ds.length, Nat.mod_lt n hL⟩ ∈
+      mty C0 I (rrPt hI C0 Ds hL x0 h0 (n + 1)) :=
+  (Classical.choose_spec (persistAll_productive hI (rrChain hI C0 Ds hL x0 h0 n).1
+    (rrChain hI C0 Ds hL x0 h0 n).2
+    (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩))).2.2.2
+
 /-- THE PERSISTENT KERNEL CHAIN: a persistent-`∃PP` element builds an
     infinite ascending model chain, every rung carrying `∃PP.G`. -/
 theorem persistPP_chain (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
