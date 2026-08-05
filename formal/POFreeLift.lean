@@ -10121,6 +10121,23 @@ theorem mty_segment_bounded {α : Type} {I : Interp α} (C0 : Concept)
   exact ⟨i, j - i, hLi, by omega, by omega,
     by rw [show i + (j - i) = j from by omega]; exact heq⟩
 
+/-- Consecutive `L` residues cover `[0, L)`: for any target `k < L` and any
+    offset `c`, some `b < L` has `(c + b) % L = k`.  The arithmetic heart of
+    round-robin coverage — every demand-arg is reached within one cycle. -/
+theorem mod_shift_cover (c k L : Nat) (hL : 0 < L) (hk : k < L) :
+    ∃ b, b < L ∧ (c + b) % L = k := by
+  rcases Nat.lt_or_ge k (c % L) with h | h
+  · refine ⟨k + L - c % L, by have := Nat.mod_lt c hL; omega, ?_⟩
+    have hb : c + (k + L - c % L) = k + (c / L + 1) * L := by
+      have hdm := Nat.div_add_mod' c L
+      have hcm := Nat.mod_lt c hL
+      rw [Nat.add_mul, Nat.one_mul]; omega
+    rw [hb, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hk]
+  · refine ⟨k - c % L, by omega, ?_⟩
+    have hb : c + (k - c % L) = k + c / L * L := by
+      have hdm := Nat.div_add_mod' c L; omega
+    rw [hb, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hk]
+
 /-- ROUND-ROBIN RECURRENCE: the type recurs along the round-robin chain
     with a period that is a MULTIPLE of `L = Ds.length` — got for free by
     pigeonholing only the sub-sequence at multiples of `L`, so the period
@@ -10146,6 +10163,23 @@ theorem rr_segment {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept
     Nat.mul_pos (by omega) hL, ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_⟩
   rw [harith]
   exact heq
+
+/-- ROUND-ROBIN COVERAGE: within a recurrent segment `[i, i+p)` whose
+    period `p` is a multiple of `L`, EVERY demand-arg `Ds[k]` is carried at
+    some phase `b < p`.  Combines `mod_shift_cover` (pick the phase whose
+    served-demand index is `k`) with `rrPt_serves`. -/
+theorem rr_covers {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAll I C0 Ds x0) (i p : Nat) (hi : 0 < i) (hp : 0 < p)
+    (hdvd : Ds.length ∣ p) (k : Nat) (hk : k < Ds.length) :
+    ∃ b, b < p ∧ Ds.get ⟨k, hk⟩ ∈ mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + b)) := by
+  obtain ⟨b, hbL, hbmod⟩ := mod_shift_cover (i - 1) k Ds.length hL hk
+  refine ⟨b, by have := Nat.le_of_dvd hp hdvd; omega, ?_⟩
+  have hs := rrPt_serves hI C0 Ds hL x0 h0 (i - 1 + b)
+  rw [show i - 1 + b + 1 = i + b from by omega] at hs
+  rw [show (⟨(i - 1 + b) % Ds.length, Nat.mod_lt _ hL⟩ : Fin Ds.length) = ⟨k, hk⟩
+    from Fin.ext hbmod] at hs
+  exact hs
 
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
