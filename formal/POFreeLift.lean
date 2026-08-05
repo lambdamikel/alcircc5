@@ -10102,6 +10102,48 @@ theorem unitTower_mem_codesV (T : MultiTier Unit Unit) (C0 : Concept)
     obtain ⟨a, _, rfl⟩ := List.mem_map.mp hx
     exact hphL a
 
+/-- WIDER-period enumeration: `codesV` with the phase-list length bound as
+    a parameter `Pb` (the round-robin period is `≤ B·L > B`, so it needs
+    `Pb = B·L`, not `codesV`'s single-demand `B`). -/
+def codesVB (C0 : Concept) (Pb : Nat) : List (FinMT × Nat) :=
+  let labels := allListsLe (cl C0) (cl C0).length
+  let phaseCol := allListsLe (allListsLe labels Pb) 1
+  (allListsLe labels 1).flatMap fun tauE =>
+    atomTab1.flatMap fun E =>
+      atomTab1.flatMap fun K =>
+        atomTab1.flatMap fun Q =>
+          boolCol.flatMap fun up =>
+            phaseCol.map fun phases => (⟨tauE, E, K, Q, up, phases⟩, 0)
+
+/-- Membership for the wider enumeration: period bound `p ≤ Pb`. -/
+theorem unitTower_mem_codesVB (T : MultiTier Unit Unit) (C0 : Concept) (Pb : Nat)
+    (htauL : T.tauE () ∈ allListsLe (cl C0) (cl C0).length)
+    (hphL : ∀ a, T.phase () a ∈ allListsLe (cl C0) (cl C0).length)
+    (hpB : T.p () ≤ Pb) :
+    (encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+      (fun _ : Fin 1 => (() : Unit)) T), 0) ∈ codesVB C0 Pb := by
+  have hmap1 : ∀ {A : Type} (g : Fin 1 → A) (univ : List A), g 0 ∈ univ →
+      (List.finRange 1).map g ∈ allListsLe univ 1 := by
+    intro A g univ hg
+    rw [mem_allListsLe]
+    refine ⟨Nat.le_of_eq (by rw [List.length_map, List.length_finRange]),
+      fun x hx => ?_⟩
+    obtain ⟨e, _, rfl⟩ := List.mem_map.mp hx
+    rw [Subsingleton.elim e 0]; exact hg
+  have hbool : ∀ b : Bool, b ∈ [true, false] := by intro b; cases b <;> decide
+  simp only [codesVB, atomTab1, boolCol, List.mem_flatMap, List.mem_map]
+  refine ⟨_, ?_, _, ?_, _, ?_, _, ?_, _, ?_, _, ?_, rfl⟩
+  · exact hmap1 _ _ htauL
+  · exact hmap1 _ _ (hmap1 _ _ (mem_allAtoms _))
+  · exact hmap1 _ _ (hmap1 _ _ (mem_allAtoms _))
+  · exact hmap1 _ _ (hmap1 _ _ (mem_allAtoms _))
+  · exact hmap1 _ _ (hbool _)
+  · refine hmap1 _ _ ?_
+    rw [mem_allListsLe]
+    refine ⟨by rw [List.length_map, List.length_range]; exact hpB, fun x hx => ?_⟩
+    obtain ⟨a, _, rfl⟩ := List.mem_map.mp hx
+    exact hphL a
+
 /-- The chain's model type recurs with a COMPUTABLY BOUNDED period `p ≤ B`
     (`B = |allListsLe (cl C0) |cl C0||`), past any `L` — the type sequence
     lives in `allListsLe (cl C0) |cl C0|`, so `segment_exists_bounded`
@@ -10145,7 +10187,9 @@ theorem mod_shift_cover (c k L : Nat) (hL : 0 < L) (hk : k < L) :
 theorem rr_segment {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
     (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
     (h0 : persistAll I C0 Ds x0) :
-    ∃ i p, 0 < i ∧ 0 < p ∧ Ds.length ∣ p ∧
+    ∃ i p, 0 < i ∧ 0 < p ∧
+      p ≤ (allListsLe (cl C0) (cl C0).length).length * Ds.length ∧
+      Ds.length ∣ p ∧
       mty C0 I (rrPt hI C0 Ds hL x0 h0 i) =
       mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + p)) := by
   have hmem : ∀ n, mty C0 I (rrPt hI C0 Ds hL x0 h0 (n * Ds.length)) ∈
@@ -10154,13 +10198,14 @@ theorem rr_segment {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept
     rw [mem_allListsLe]
     exact ⟨by rw [mty]; exact List.length_filter_le _ _,
       fun x hx => by rw [mty] at hx; exact (List.mem_filter.mp hx).1⟩
-  obtain ⟨a, b, hLa, hab, _, heq⟩ :=
+  obtain ⟨a, b, hLa, hab, hjB, heq⟩ :=
     segment_exists_bounded (allListsLe (cl C0) (cl C0).length)
       (fun n => mty C0 I (rrPt hI C0 Ds hL x0 h0 (n * Ds.length))) hmem 1
   have harith : a * Ds.length + (b - a) * Ds.length = b * Ds.length := by
     rw [← Nat.add_mul, show a + (b - a) = b from by omega]
   refine ⟨a * Ds.length, (b - a) * Ds.length, Nat.mul_pos (by omega) hL,
-    Nat.mul_pos (by omega) hL, ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_⟩
+    Nat.mul_pos (by omega) hL, Nat.mul_le_mul (by omega) (Nat.le_refl _),
+    ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_⟩
   rw [harith]
   exact heq
 
