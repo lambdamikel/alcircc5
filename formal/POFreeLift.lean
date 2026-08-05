@@ -6547,6 +6547,31 @@ theorem persistPP_productive (hI : RCC5Interp I) {C0 G : Concept}
   obtain ⟨hcl, hsat⟩ := mem_mty.mp hall
   exact mem_mty.mpr ⟨hcl, sat_all_pp_up hI hdx hdy hr hsat⟩
 
+/-- MULTI-persistence: every demand in `Ds` is persistent (`∃PP.D` + its
+    guard `∀PP.(∃PP.D)`) at `x`.  The foundation for round-robin serving:
+    all demands stay live along an ascending chain. -/
+def persistAll (I : Interp α) (C0 : Concept) (Ds : List Concept) (x : α) : Prop :=
+  I.dom x ∧ ∀ D ∈ Ds, Concept.ex pp D ∈ mty C0 I x ∧
+    Concept.all pp (Concept.ex pp D) ∈ mty C0 I x
+
+/-- ROUND-ROBIN PRODUCTIVITY: from a multi-persistent `x`, serving ANY
+    chosen demand `D ∈ Ds` gives a `PP`-successor `y` that (i) carries `D`
+    and (ii) is STILL multi-persistent — every demand's guard propagates
+    up.  So demands can be served one at a time without losing the others. -/
+theorem persistAll_productive (hI : RCC5Interp I) {C0 : Concept}
+    {Ds : List Concept} (x : α) (hx : persistAll I C0 Ds x)
+    {D : Concept} (hD : D ∈ Ds) :
+    ∃ y, persistAll I C0 Ds y ∧ I.dom y ∧ I.rho x y = pp ∧ D ∈ mty C0 I y := by
+  obtain ⟨hdx, hguards⟩ := hx
+  obtain ⟨hex, _⟩ := hguards D hD
+  obtain ⟨y, hdy, hr, hDy⟩ := mty_ex hex
+  refine ⟨y, ⟨hdy, ?_⟩, hdy, hr, hDy⟩
+  intro D' hD'
+  obtain ⟨_, hall'⟩ := hguards D' hD'
+  refine ⟨mty_all hall' hdy hr, ?_⟩
+  obtain ⟨hcl', hsat'⟩ := mem_mty.mp hall'
+  exact mem_mty.mpr ⟨hcl', sat_all_pp_up hI hdx hdy hr hsat'⟩
+
 /-- THE PERSISTENT KERNEL CHAIN: a persistent-`∃PP` element builds an
     infinite ascending model chain, every rung carrying `∃PP.G`. -/
 theorem persistPP_chain (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
