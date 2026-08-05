@@ -10121,6 +10121,32 @@ theorem mty_segment_bounded {α : Type} {I : Interp α} (C0 : Concept)
   exact ⟨i, j - i, hLi, by omega, by omega,
     by rw [show i + (j - i) = j from by omega]; exact heq⟩
 
+/-- ROUND-ROBIN RECURRENCE: the type recurs along the round-robin chain
+    with a period that is a MULTIPLE of `L = Ds.length` — got for free by
+    pigeonholing only the sub-sequence at multiples of `L`, so the period
+    `(b−a)·L` covers whole cycles.  Avoids a product pigeonhole. -/
+theorem rr_segment {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAll I C0 Ds x0) :
+    ∃ i p, 0 < i ∧ 0 < p ∧ Ds.length ∣ p ∧
+      mty C0 I (rrPt hI C0 Ds hL x0 h0 i) =
+      mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + p)) := by
+  have hmem : ∀ n, mty C0 I (rrPt hI C0 Ds hL x0 h0 (n * Ds.length)) ∈
+      allListsLe (cl C0) (cl C0).length := by
+    intro n
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun x hx => by rw [mty] at hx; exact (List.mem_filter.mp hx).1⟩
+  obtain ⟨a, b, hLa, hab, _, heq⟩ :=
+    segment_exists_bounded (allListsLe (cl C0) (cl C0).length)
+      (fun n => mty C0 I (rrPt hI C0 Ds hL x0 h0 (n * Ds.length))) hmem 1
+  have harith : a * Ds.length + (b - a) * Ds.length = b * Ds.length := by
+    rw [← Nat.add_mul, show a + (b - a) = b from by omega]
+  refine ⟨a * Ds.length, (b - a) * Ds.length, Nat.mul_pos (by omega) hL,
+    Nat.mul_pos (by omega) hL, ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_⟩
+  rw [harith]
+  exact heq
+
 /-- Per-formula fragment check: existentials are `DR`/`PO`/`EQ`,
     universals are non-`PO`. -/
 def hfragOk (F : Concept) : Bool :=
