@@ -10404,6 +10404,88 @@ theorem vkernel1_ok (hI : RCC5Interp I) (C0 G : Concept) (c : Nat → α)
     · exact Or.inr (Or.inl ⟨rfl, 0, hp, hG0⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
 
+/-- THE SELF-CARRYING KERNEL IS VALID: like `vkernel1_ok`, but each `∃PP.D`
+    demand (of `x0` or of a phase) is served by WHATEVER phase `b` carries
+    `D` (`hdemands`/`hx0dem` give `∃ b, D ∈ phase b`), not a single fixed
+    `G`.  This is the summit's routing mechanism, proved here where the
+    concept FORCES the co-carrying.  Everything but the two `∃`-routing
+    disjuncts is verbatim `vkernel1_ok`. -/
+theorem vkernel1G_ok (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
+    (x0 : α) (hx0dom : I.dom x0)
+    (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hx0pp : ∀ a, I.rho x0 (c (i + a)) = pp)
+    (hdemands : ∀ a r D, Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) ∨ r = eq)
+    (hx0dem : ∀ r D, Concept.ex r D ∈ mty C0 I x0 →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) ∨ r = eq) :
+    MultiTierOk (vkernel1 I C0 c x0 i p) := by
+  have hKppi : I.rho (c i) x0 = ppi := by
+    have h0 := hx0pp 0
+    rw [Nat.add_zero] at h0
+    rw [hI.conv_ x0 (c i) hx0dom (hdom i), h0]; rfl
+  have hx0ne : x0 ≠ c i := by
+    intro h
+    have h0 := hx0pp 0
+    rw [Nat.add_zero, h, hI.refl_eq (c i) (hdom i)] at h0
+    exact absurd h0 (by decide)
+  have hEK : ∀ a, I.rho (c (i + a)) x0 = ppi := by
+    intro a
+    rw [hI.conv_ x0 (c (i + a)) hx0dom (hdom (i + a)), hx0pp a]; rfl
+  have hinj : ∀ v w : Unit ⊕ Unit,
+      Sum.elim (fun _ : Unit => x0) (fun _ : Unit => c i) v
+        = Sum.elim (fun _ : Unit => x0) (fun _ : Unit => c i) w → v = w := by
+    rintro (⟨⟩ | ⟨⟩) (⟨⟩ | ⟨⟩) h
+    · rfl
+    · exact absurd h hx0ne
+    · exact absurd h.symm hx0ne
+    · rfl
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI (fun _ : Unit => x0)
+        (fun _ : Unit => c i) (fun _ => hx0dom) (fun _ => hdom i) hinj
+      e_clash := fun _ _ h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ _ _ h => mty_and h
+      e_or := fun _ _ _ h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ _ _ _ hmem hEr => mty_all hmem hx0dom hEr
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun _ _ ha E hE b hb =>
+        segment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun _ _ ha E hE b hb =>
+        segment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun _ _ _ E hE => seg_eq hI hdom hE
+      kq_all := fun k k' hne => absurd rfl hne
+      e_ex := ?_
+      k_ex := ?_ }
+  · intro _ r X hmem k hr a _
+    have hrpp : r = pp := by
+      rw [← hr]; show conv (I.rho (c i) x0) = pp; rw [hKppi]; rfl
+    subst hrpp
+    exact mty_all hmem (hdom (i + a)) (hx0pp a)
+  · intro k a _ r X hmem f hr
+    have hrppi : r = ppi := by rw [← hr]; exact hKppi
+    subst hrppi
+    exact mty_all hmem hx0dom (hEK a)
+  · intro _ r D hmem
+    rcases hx0dem r D hmem with ⟨rfl, b, hb, hDb⟩ | rfl
+    · refine Or.inr ⟨(), ?_, b, hb, hDb⟩
+      show conv (I.rho (c i) x0) = pp; rw [hKppi]; rfl
+    · refine Or.inl ⟨(), hI.refl_eq x0 hx0dom, ?_⟩
+      obtain ⟨y, hy, hyr, hyD⟩ := mty_ex hmem
+      rwa [hI.eq_id x0 y hx0dom hy hyr]
+  · intro _ a _ r D hmem
+    rcases hdemands a r D hmem with ⟨rfl, b, hb, hDb⟩ | rfl
+    · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
+
 /-! ### Round E3h″ (2026-07-24): the first MULTI-kernel certificate
 
 `vkernel2`/`vkernel2_ok`: TWO ascending `PP`-kernels (`κ = Bool`,
