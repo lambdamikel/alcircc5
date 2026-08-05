@@ -12603,6 +12603,82 @@ theorem ccar_satisfiable : Satisfiable Ccar := by
     ⟨⟨⟨⟨⟨he0 0, he1 0⟩, fun y _ _ => ha0 y⟩, fun y _ _ => ha1 y⟩,
       fun y _ _ => he0 y⟩, fun y _ _ => he1 y⟩⟩
 
+/-! ### `Calt`: a genuinely NON-CO-CARRYING round-robin witness
+
+`Calt = ∃PP.A₀ ⊓ ∃PP.¬A₀ ⊓ ∀PP.(∃PP.A₀) ⊓ ∀PP.(∃PP.¬A₀)` demands both an
+`A₀`-witness and a `¬A₀`-witness above every point — NO single point can
+carry both, so it is beyond `decidableSat_vtowerG` (co-carrying); it is
+decided by `decidableSat_vtowerRR` (round-robin: `A₀`, `¬A₀` served on
+alternating rungs). -/
+
+/-- `Calt` — two INCOMPATIBLE persistent `∃PP` demands (`A₀`, `¬A₀`). -/
+def Calt : Concept :=
+  .and (.and (.and (.ex pp (.atom 0)) (.ex pp (.natom 0)))
+    (.all pp (.ex pp (.atom 0)))) (.all pp (.ex pp (.natom 0)))
+
+def caltDem (E : Concept) : Bool :=
+  match E with
+  | Concept.ex r _ => decide (r = pp ∨ r = eq)
+  | _ => true
+
+theorem calt_dem_b : (cl Calt).all caltDem = true := by decide
+
+theorem calt_dem : ∀ r D, Concept.ex r D ∈ cl Calt → r = pp ∨ r = eq := by
+  intro r D h
+  have hb := List.all_eq_true.mp calt_dem_b (Concept.ex r D) h
+  simpa only [caltDem, decide_eq_true_eq] using hb
+
+def caltArg (E : Concept) : Bool :=
+  match E with
+  | Concept.ex _ D => decide (D = Concept.atom 0 ∨ D = Concept.natom 0)
+  | _ => true
+
+theorem calt_arg_b : (cl Calt).all caltArg = true := by decide
+
+theorem calt_dscov : ∀ D, Concept.ex pp D ∈ cl Calt →
+    D ∈ [Concept.atom 0, Concept.natom 0] := by
+  intro D h
+  have hb := List.all_eq_true.mp calt_arg_b (Concept.ex pp D) h
+  simp only [caltArg, decide_eq_true_eq] at hb
+  simp only [List.mem_cons, List.not_mem_nil, or_false]
+  exact hb
+
+/-- `Calt` forces both demands multi-persistent at every model point. -/
+theorem calt_force {α : Type} (I : Interp α) (x : α) (_hI : RCC5Interp I)
+    (hdom : I.dom x) (hsat : sat I x Calt) :
+    persistAll I Calt [Concept.atom 0, Concept.natom 0] x := by
+  obtain ⟨⟨⟨he0, he1⟩, hae0⟩, hae1⟩ := hsat
+  refine ⟨hdom, ?_⟩
+  intro D hD
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hD
+  rcases hD with rfl | rfl
+  · exact ⟨mem_mty.mpr ⟨by decide, he0⟩, mem_mty.mpr ⟨by decide, hae0⟩⟩
+  · exact ⟨mem_mty.mpr ⟨by decide, he1⟩, mem_mty.mpr ⟨by decide, hae1⟩⟩
+
+/-- **`Calt`'s satisfiability is DECIDABLE via the round-robin procedure**
+    — the non-vacuity witness for `decidableSat_vtowerRR`: two INCOMPATIBLE
+    `∃PP` demands, impossible to co-carry, served on alternating rungs. -/
+def decidableSat_Calt : Decidable (Satisfiable Calt) :=
+  decidableSat_vtowerRR Calt [Concept.atom 0, Concept.natom 0] (by decide)
+    calt_dem calt_dscov
+    (fun I x hI hdom hsat => calt_force I x hI hdom hsat)
+
+/-- `Calt` IS satisfiable: the ℕ-chain `Ialt` with `A₀` at EVEN points
+    only — every point has both an even (`A₀`) and an odd (`¬A₀`) witness
+    above, but NO point carries both. -/
+def Ialt : Interp Nat := ⟨fun _ => True, chain, fun a n => a = 0 ∧ n % 2 = 0⟩
+
+theorem Ialt_rcc5 : RCC5Interp Ialt := frame_rcc5 chain chainFrame _
+
+theorem calt_satisfiable : Satisfiable Calt := by
+  have he0 : ∀ n, sat Ialt n (Concept.ex pp (Concept.atom 0)) :=
+    fun n => ⟨2 * n + 2, trivial, chain_lt (by omega), ⟨rfl, by omega⟩⟩
+  have he1 : ∀ n, sat Ialt n (Concept.ex pp (Concept.natom 0)) :=
+    fun n => ⟨2 * n + 1, trivial, chain_lt (by omega),
+      fun h => by obtain ⟨_, h2⟩ := h; omega⟩
+  exact ⟨Nat, Ialt, Ialt_rcc5, 0, trivial,
+    ⟨⟨⟨he0 0, he1 0⟩, fun y _ _ => he0 y⟩, fun y _ _ => he1 y⟩⟩
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -12775,5 +12851,7 @@ end VerticalWitness
 #print axioms decidableSat_vtowerRR
 #print axioms VerticalWitness.decidableSat_Ccar
 #print axioms VerticalWitness.ccar_satisfiable
+#print axioms VerticalWitness.decidableSat_Calt
+#print axioms VerticalWitness.calt_satisfiable
 
 end POFreeLift
