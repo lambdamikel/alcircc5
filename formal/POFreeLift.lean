@@ -12277,6 +12277,83 @@ theorem crnest_satisfiable : Satisfiable Cvert := by
   show Cvert ∈ mty Cvert Irnest (Sum.inl ())
   rw [rnfull (Sum.inl ())]; exact cl_self Cvert
 
+/-! ### `Ccar`: a genuinely MULTI-`∃PP`-demand CO-CARRYING concept
+
+`Ccar = ∃PP.A₀ ⊓ ∃PP.A₁ ⊓ ∀PP.A₀ ⊓ ∀PP.A₁ ⊓ ∀PP.(∃PP.A₀) ⊓ ∀PP.(∃PP.A₁)`
+has TWO distinct `∃PP` demands (`A₀ = atom 0`, `A₁ = atom 1`) whose ATOMS
+are force-carried (`∀PP.A₀`/`∀PP.A₁`), so ONE self-carrying chain serves
+both.  Distinct from the pre-existing `Clin` (which forces only the
+demands' recurrence, not the atoms).  Beyond `decidableSat_vtower` (single
+fixed `G`); the non-vacuity witness for `decidableSat_vtowerG`. -/
+
+/-- `Ccar` — two distinct persistent `∃PP` demands + their co-carrying
+    atom-universals. -/
+def Ccar : Concept :=
+  .and (.and (.and (.and (.and
+    (.ex pp (.atom 0)) (.ex pp (.atom 1)))
+    (.all pp (.atom 0))) (.all pp (.atom 1)))
+    (.all pp (.ex pp (.atom 0)))) (.all pp (.ex pp (.atom 1)))
+
+/-- Every existential in `cl Ccar` is `∃PP`/`∃EQ` (in fact all `∃PP`). -/
+def ccarDem (E : Concept) : Bool :=
+  match E with
+  | Concept.ex r _ => decide (r = pp ∨ r = eq)
+  | _ => true
+
+theorem ccar_dem_b : (cl Ccar).all ccarDem = true := by decide
+
+theorem ccar_dem : ∀ r D, Concept.ex r D ∈ cl Ccar → r = pp ∨ r = eq := by
+  intro r D h
+  have hb := List.all_eq_true.mp ccar_dem_b (Concept.ex r D) h
+  simpa only [ccarDem, decide_eq_true_eq] using hb
+
+/-- Every `∃`-argument in `cl Ccar` is `A₀` or `A₁`. -/
+def ccarArg (E : Concept) : Bool :=
+  match E with
+  | Concept.ex _ D => decide (D = Concept.atom 0 ∨ D = Concept.atom 1)
+  | _ => true
+
+theorem ccar_arg_b : (cl Ccar).all ccarArg = true := by decide
+
+theorem ccar_arg : ∀ D, Concept.ex pp D ∈ cl Ccar →
+    D = Concept.atom 0 ∨ D = Concept.atom 1 := by
+  intro D h
+  have hb := List.all_eq_true.mp ccar_arg_b (Concept.ex pp D) h
+  simpa only [ccarArg, decide_eq_true_eq] using hb
+
+/-- `Ccar` forces a persistent `∃PP.A₀` chain AND co-carrying (every
+    `∃PP`-arg's `∀PP` holds) in every model — from its six conjuncts. -/
+theorem ccar_force {α : Type} (I : Interp α) (x : α) (_hI : RCC5Interp I)
+    (hdom : I.dom x) (hsat : sat I x Ccar) :
+    persistPP I Ccar (Concept.atom 0) x ∧
+      (∀ D, Concept.ex pp D ∈ cl Ccar → sat I x (Concept.all pp D)) := by
+  obtain ⟨⟨⟨⟨⟨he0, _he1⟩, ha0u⟩, ha1u⟩, hae0⟩, _hae1⟩ := hsat
+  refine ⟨⟨hdom, mem_mty.mpr ⟨by decide, he0⟩, mem_mty.mpr ⟨by decide, hae0⟩⟩, ?_⟩
+  intro D hD
+  rcases ccar_arg D hD with rfl | rfl
+  · exact ha0u
+  · exact ha1u
+
+/-- **`Ccar`'s satisfiability is DECIDABLE via the self-carrying procedure**
+    — the non-vacuity witness for `decidableSat_vtowerG`, a concept with
+    TWO distinct `∃PP` demands that `decidableSat_vtower` cannot express. -/
+def decidableSat_Ccar : Decidable (Satisfiable Ccar) :=
+  decidableSat_vtowerG Ccar (Concept.atom 0) ccar_dem
+    (fun I x hI hdom hsat => ccar_force I x hI hdom hsat)
+
+/-- `Ccar` IS satisfiable: the ℕ-chain `Ilin` with both `A₀` and `A₁` true
+    everywhere — every rung carries both demand-args, unbounded above. -/
+theorem ccar_satisfiable : Satisfiable Ccar := by
+  have ha0 : ∀ n, sat Ilin n (Concept.atom 0) := fun _ => Or.inl rfl
+  have ha1 : ∀ n, sat Ilin n (Concept.atom 1) := fun _ => Or.inr rfl
+  have he0 : ∀ n, sat Ilin n (Concept.ex pp (Concept.atom 0)) :=
+    fun n => ⟨n + 1, trivial, chain_lt (Nat.lt_succ_self n), ha0 (n + 1)⟩
+  have he1 : ∀ n, sat Ilin n (Concept.ex pp (Concept.atom 1)) :=
+    fun n => ⟨n + 1, trivial, chain_lt (Nat.lt_succ_self n), ha1 (n + 1)⟩
+  exact ⟨Nat, Ilin, Ilin_rcc5, 0, trivial,
+    ⟨⟨⟨⟨⟨he0 0, he1 0⟩, fun y _ _ => ha0 y⟩, fun y _ _ => ha1 y⟩,
+      fun y _ _ => he0 y⟩, fun y _ _ => he1 y⟩⟩
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -12446,5 +12523,7 @@ end VerticalWitness
 #print axioms encodeMT_mtOk
 #print axioms decidableSat_vtower
 #print axioms decidableSat_vtowerG
+#print axioms VerticalWitness.decidableSat_Ccar
+#print axioms VerticalWitness.ccar_satisfiable
 
 end POFreeLift
