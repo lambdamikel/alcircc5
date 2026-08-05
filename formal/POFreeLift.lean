@@ -11691,6 +11691,79 @@ def decidableSat_vtowerG (C0 G0 : Concept)
     Decidable (Satisfiable C0) :=
   decidableSat_of_codes C0 (codesV C0) (vtower_hcomplG C0 G0 hdem hforce)
 
+/-- COMPLETENESS for the ROUND-ROBIN (general non-co-carrying) case: a
+    demand list `Ds` covering every `∃PP`-arg (`hDscov`), all `∃PP`/`∃EQ`
+    (`hdem`), forced multi-persistent at the root (`hforce`).  Every
+    satisfiable such `C0` has an accepted code in the wider `codesVB` —
+    the round-robin chain's period covers all demands (`rr_covers`), so the
+    self-carrying `vkernel1G_ok` fires WITHOUT co-carrying. -/
+theorem vtower_rr_hcompl (C0 : Concept) (Ds : List Concept) (hLpos : 0 < Ds.length)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → r = pp ∨ r = eq)
+    (hDscov : ∀ D, Concept.ex pp D ∈ cl C0 → D ∈ Ds)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistAll I C0 Ds x) :
+    Satisfiable C0 → ∃ q ∈ codesVB C0
+      ((allListsLe (cl C0) (cl C0).length).length * Ds.length),
+      (q.1).mtAcceptB q.2 C0 = true := by
+  intro hsat
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  have hC0 : C0 ∈ mty C0 I x0 := mem_mty.mpr ⟨cl_self C0, hsat0⟩
+  have hpa : persistAll I C0 Ds x0 := hforce I x0 hI hdom0 hsat0
+  obtain ⟨i, p, hi, hp, hpbd, hdvd, hty⟩ := rr_segment hI C0 Ds hLpos x0 hpa
+  have hdom_d : ∀ n, I.dom (rrPt hI C0 Ds hLpos x0 hpa n) :=
+    fun n => rrPt_dom hI C0 Ds hLpos x0 hpa n
+  have hstep_d : ∀ n, I.rho (rrPt hI C0 Ds hLpos x0 hpa n)
+      (rrPt hI C0 Ds hLpos x0 hpa (n + 1)) = pp :=
+    fun n => rrPt_step hI C0 Ds hLpos x0 hpa n
+  have hd0 : rrPt hI C0 Ds hLpos x0 hpa 0 = x0 := rfl
+  have hx0pp : ∀ a, I.rho x0 (rrPt hI C0 Ds hLpos x0 hpa (i + a)) = pp := by
+    intro a
+    have h := chain_model_pp hI hdom_d hstep_d 0 (i + a) (by omega)
+    rwa [hd0] at h
+  have hmtylbl : ∀ (x : α), mty C0 I x ∈ allListsLe (cl C0) (cl C0).length := by
+    intro x
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun y hy => by rw [mty] at hy; exact (List.mem_filter.mp hy).1⟩
+  have hcov : ∀ r D, Concept.ex r D ∈ cl C0 →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mty C0 I (rrPt hI C0 Ds hLpos x0 hpa (i + b))) ∨
+        r = eq := by
+    intro r D hcl
+    rcases hdem r D hcl with rfl | rfl
+    · have hDDs : D ∈ Ds := hDscov D hcl
+      obtain ⟨⟨k, hk⟩, hget⟩ := List.get_of_mem hDDs
+      obtain ⟨b, hbp, hb⟩ := rr_covers hI C0 Ds hLpos x0 hpa i p hi hp hdvd k hk
+      exact Or.inl ⟨rfl, b, hbp, hget ▸ hb⟩
+    · exact Or.inr rfl
+  have hok := vkernel1G_ok hI C0 (rrPt hI C0 Ds hLpos x0 hpa) x0 hdom0 hdom_d
+    hstep_d hp hty hx0pp
+    (fun a r D hmem => hcov r D (mty_sub _ hmem))
+    (fun r D hmem => hcov r D (mty_sub _ hmem))
+  refine ⟨(encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+    (fun _ : Fin 1 => (() : Unit))
+    (vkernel1 I C0 (rrPt hI C0 Ds hLpos x0 hpa) x0 i p)), 0), ?_, ?_⟩
+  · exact unitTower_mem_codesVB
+      (vkernel1 I C0 (rrPt hI C0 Ds hLpos x0 hpa) x0 i p) C0 _
+      (hmtylbl x0) (fun a => hmtylbl (rrPt hI C0 Ds hLpos x0 hpa (i + a))) hpbd
+  · exact unitTower_accepted
+      (vkernel1 I C0 (rrPt hI C0 Ds hLpos x0 hpa) x0 i p) hok C0 hC0
+
+/-- **THE ROUND-ROBIN VERTICAL FRAGMENT IS DECIDABLE.**  Concepts whose
+    existentials are all `∃PP`/`∃EQ`, whose `∃PP`-args are covered by a
+    demand list `Ds` that is forced multi-persistent at the root — decided
+    via the round-robin chain + the wider `codesVB`.  Handles NON-co-carrying
+    concepts (distinct demands served round-robin), strictly beyond
+    `decidableSat_vtowerG`; `∀PPI`-free. -/
+def decidableSat_vtowerRR (C0 : Concept) (Ds : List Concept) (hLpos : 0 < Ds.length)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → r = pp ∨ r = eq)
+    (hDscov : ∀ D, Concept.ex pp D ∈ cl C0 → D ∈ Ds)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistAll I C0 Ds x) :
+    Decidable (Satisfiable C0) :=
+  decidableSat_of_codes C0
+    (codesVB C0 ((allListsLe (cl C0) (cl C0).length).length * Ds.length))
+    (vtower_rr_hcompl C0 Ds hLpos hdem hDscov hforce)
+
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
 
 `Cvert = A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A)` (`A = atom 0`) forces an infinite
@@ -12699,6 +12772,7 @@ end VerticalWitness
 #print axioms encodeMT_mtOk
 #print axioms decidableSat_vtower
 #print axioms decidableSat_vtowerG
+#print axioms decidableSat_vtowerRR
 #print axioms VerticalWitness.decidableSat_Ccar
 #print axioms VerticalWitness.ccar_satisfiable
 
