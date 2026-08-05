@@ -10898,6 +10898,55 @@ theorem vkernel1_bounded_ok (hI : RCC5Interp I) (C0 G : Concept)
     (fun r D hmem => hdem r D (mty_sub _ hmem))
   exact ⟨d, i, p, hpB, hp, hok, hC0⟩
 
+/-- SELF-CARRYING bounded extraction: a persistent `∃PP.G0` chain generator
+    `hx0` PLUS co-carrying `hcarry` (every `∃PP`-demand-arg `D` satisfies
+    `∀PP.D` at `x0`, so every chain point carries it) yields a
+    bounded-period `vkernel1` valid by `vkernel1G_ok`.  `hdem` only needs
+    every existential to be `∃PP`/`∃EQ` (the pure-vertical fragment) — the
+    single fixed `G` of `vkernel1_bounded_ok` is gone. -/
+theorem vkernel1G_bounded_ok (hI : RCC5Interp I) (C0 G0 : Concept)
+    {x0 : α}
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → r = pp ∨ r = eq)
+    (hcarry : ∀ D, Concept.ex pp D ∈ cl C0 → sat I x0 (Concept.all pp D))
+    (hx0 : persistPP I C0 G0 x0) (hC0 : C0 ∈ mty C0 I x0) :
+    ∃ (c : Nat → α) (i p : Nat),
+      p ≤ (allListsLe (cl C0) (cl C0).length).length ∧ 0 < p ∧
+      MultiTierOk (vkernel1 I C0 c x0 i p) ∧
+      C0 ∈ (vkernel1 I C0 c x0 i p).tauE () := by
+  obtain ⟨x1, hp1, _, hr01, hG1⟩ := persistPP_productive' hI x0 hx0
+  obtain ⟨d, hd0, hdom_d, hstep_d, hG_d⟩ := persistPP_chain' hI x1 ⟨hp1, hG1⟩
+  obtain ⟨i, p, _, hp, hpB, hty⟩ := mty_segment_bounded (I := I) C0 d 0
+  have hx0d0 : I.rho x0 (d 0) = pp := by rw [hd0]; exact hr01
+  have hx0pp : ∀ a, I.rho x0 (d (i + a)) = pp := by
+    intro a
+    rcases Nat.eq_zero_or_pos (i + a) with h0 | h0
+    · rw [h0]; exact hx0d0
+    · have hcomp := hI.comp_ x0 (d 0) (d (i + a)) hx0.1 (hdom_d 0) (hdom_d (i + a))
+      rw [hx0d0, chain_model_pp hI hdom_d hstep_d 0 (i + a) h0,
+        show comp pp pp = [pp] from rfl] at hcomp
+      exact List.mem_singleton.mp hcomp
+  -- co-carrying: every PP-demand-arg is carried at chain base `d i`
+  have hcarry_d : ∀ D, Concept.ex pp D ∈ cl C0 → D ∈ mty C0 I (d (i + 0)) := by
+    intro D hD
+    exact mem_mty.mpr ⟨cl_ex hD, hcarry D hD (d (i + 0)) (hdom_d (i + 0)) (hx0pp 0)⟩
+  have hdemands : ∀ a r D, Concept.ex r D ∈ mty C0 I (d (i + a)) →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mty C0 I (d (i + b))) ∨ r = eq := by
+    intro a r D hmem
+    have hcl : Concept.ex r D ∈ cl C0 := mty_sub _ hmem
+    rcases hdem r D hcl with rfl | rfl
+    · exact Or.inl ⟨rfl, 0, hp, hcarry_d D hcl⟩
+    · exact Or.inr rfl
+  have hx0dem : ∀ r D, Concept.ex r D ∈ mty C0 I x0 →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mty C0 I (d (i + b))) ∨ r = eq := by
+    intro r D hmem
+    have hcl : Concept.ex r D ∈ cl C0 := mty_sub _ hmem
+    rcases hdem r D hcl with rfl | rfl
+    · exact Or.inl ⟨rfl, 0, hp, hcarry_d D hcl⟩
+    · exact Or.inr rfl
+  have hok := vkernel1G_ok hI C0 d x0 hx0.1 hdom_d hstep_d hp hty hx0pp
+    hdemands hx0dem
+  exact ⟨d, i, p, hpB, hp, hok, hC0⟩
+
 /-! ### Round E3k (2026-07-30): the STAR frame — root below many kernels
 
 The multi-demand geometry: the witnesses of distinct `∃PP.Gₖ` demands at
@@ -11424,6 +11473,48 @@ def decidableSat_vtower (C0 G : Concept)
     Decidable (Satisfiable C0) :=
   decidableSat_of_codes C0 (codesV C0) (vtower_hcompl C0 G hdem hforce)
 
+/-- COMPLETENESS for the SELF-CARRYING case: `hdem` only needs every
+    existential `∃PP`/`∃EQ`; `hforce` gives a persistent `∃PP.G0` chain
+    generator AND co-carrying (every `∃PP`-demand-arg's `∀PP` holds at the
+    root).  Every satisfiable such `C0` has an accepted code in `codesV`. -/
+theorem vtower_hcomplG (C0 G0 : Concept)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → r = pp ∨ r = eq)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistPP I C0 G0 x ∧
+        (∀ D, Concept.ex pp D ∈ cl C0 → sat I x (Concept.all pp D))) :
+    Satisfiable C0 → ∃ p ∈ codesV C0, (p.1).mtAcceptB p.2 C0 = true := by
+  intro hsat
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  have hC0 : C0 ∈ mty C0 I x0 := mem_mty.mpr ⟨cl_self C0, hsat0⟩
+  obtain ⟨hpp, hcarry⟩ := hforce I x0 hI hdom0 hsat0
+  obtain ⟨c, i, p, hpB, hp, hok, hCtau⟩ :=
+    vkernel1G_bounded_ok hI C0 G0 hdem hcarry hpp hC0
+  have hmtylbl : ∀ (x : α), mty C0 I x ∈ allListsLe (cl C0) (cl C0).length := by
+    intro x
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun y hy => by rw [mty] at hy; exact (List.mem_filter.mp hy).1⟩
+  refine ⟨(encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+    (fun _ : Fin 1 => (() : Unit)) (vkernel1 I C0 c x0 i p)), 0), ?_, ?_⟩
+  · exact unitTower_mem_codesV (vkernel1 I C0 c x0 i p) C0
+      (hmtylbl x0) (fun a => hmtylbl (c (i + a))) hpB
+  · exact unitTower_accepted (vkernel1 I C0 c x0 i p) hok C0 hCtau
+
+/-- **THE SELF-CARRYING VERTICAL FRAGMENT IS DECIDABLE.**  A concept whose
+    existentials are all `∃PP`/`∃EQ` (`hdem`, no single fixed `G`) and
+    which forces a persistent chain + co-carrying (`hforce`) has decidable
+    satisfiability.  Strictly generalises `decidableSat_vtower` (multi
+    `∃PP`-demand, served by one self-carrying chain) — and its `k_ex`
+    routing (`vkernel1G_ok`) is the mechanism the multi-tower summit
+    reuses. -/
+def decidableSat_vtowerG (C0 G0 : Concept)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → r = pp ∨ r = eq)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistPP I C0 G0 x ∧
+        (∀ D, Concept.ex pp D ∈ cl C0 → sat I x (Concept.all pp D))) :
+    Decidable (Satisfiable C0) :=
+  decidableSat_of_codes C0 (codesV C0) (vtower_hcomplG C0 G0 hdem hforce)
+
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
 
 `Cvert = A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A)` (`A = atom 0`) forces an infinite
@@ -11491,7 +11582,7 @@ theorem cvert_demands : ∀ r D, Concept.ex r D ∈ cl Cvert →
 
 /-- `Cvert` forces the persistent `∃PP.A` tower in EVERY model: its
     `∃PP.A` and `∀PP.(∃PP.A)` conjuncts hold, and both are in `cl Cvert`. -/
-theorem cvert_force {α : Type} (I : Interp α) (x : α) (hI : RCC5Interp I)
+theorem cvert_force {α : Type} (I : Interp α) (x : α) (_hI : RCC5Interp I)
     (hdom : I.dom x) (hsat : sat I x Cvert) :
     persistPP I Cvert (Concept.atom 0) x := by
   obtain ⟨⟨_, hex⟩, hall⟩ := hsat
@@ -12354,5 +12445,6 @@ end VerticalWitness
 #print axioms hfrag_hcompl
 #print axioms encodeMT_mtOk
 #print axioms decidableSat_vtower
+#print axioms decidableSat_vtowerG
 
 end POFreeLift
