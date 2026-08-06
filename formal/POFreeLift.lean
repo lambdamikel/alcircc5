@@ -1150,6 +1150,31 @@ def POFree : Concept → Prop
   | .ex _ c => POFree c
   | .all r c => r ≠ po ∧ POFree c
 
+/-- DECIDABLE fragment membership for the FULL ∀PO-free fragment (`MFrag`
+    of the mixing design §25.4): `POFree` reduces to a structural Boolean
+    check, so `POFree C0` is `by decide`.  The mixing decidability's entry
+    point (like `hfragB` for the horizontal fragment). -/
+def pofreeB : Concept → Bool
+  | .top => true
+  | .bot => true
+  | .atom _ => true
+  | .natom _ => true
+  | .and c d => pofreeB c && pofreeB d
+  | .or c d => pofreeB c && pofreeB d
+  | .ex _ c => pofreeB c
+  | .all r c => decide (r ≠ po) && pofreeB c
+
+theorem pofreeB_iff (c : Concept) : pofreeB c = true ↔ POFree c := by
+  induction c with
+  | top => simp [pofreeB, POFree]
+  | bot => simp [pofreeB, POFree]
+  | atom => simp [pofreeB, POFree]
+  | natom => simp [pofreeB, POFree]
+  | and c d hc hd => simp [pofreeB, POFree, hc, hd]
+  | or c d hc hd => simp [pofreeB, POFree, hc, hd]
+  | ex r c hc => simp [pofreeB, POFree, hc]
+  | all r c hc => simp [pofreeB, POFree, hc]
+
 /-! ### Non-vacuity: an infinite-model concept, certified satisfiable
 
 `Cinf = ∃PP.⊤ ⊓ ∀PP.∃PP.⊤` has NO finite model (it forces an infinite
