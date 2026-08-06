@@ -1448,3 +1448,176 @@ assembly lemmas (`posetNet_frame`, `posetKernel_ok`, `posetKernelG_ok`)
 and witnesses are already certified; the one open ingredient is the
 fragment-level uniformization (§21.5) — a bounded-width fact, NOT the
 open full-logic F6.
+
+## 24. THE VERTICAL FRAGMENT IS DECIDABLE — both directions (2026-08-05/06, E4–E5)
+
+§22.3's plan is complete for **both** the ascending (`∃PP`) and descending
+(`∃PPI`) vertical fragments. Four `Decidable (Satisfiable C0)` theorems,
+all certified (0 sorries/warnings, axioms propext / Classical.choice /
+Quot.sound), each with a genuine SAT witness.
+
+### 24.1 The round-robin CONSTRUCTIVE UNIFORMIZATION (the key result)
+
+The §21.5 "uniformization" turned out **not** to require a bounded-width
+oracle. The insight: `vkernel1G_ok`'s `k_ex` serves each demand `∃PP.D`
+from **whatever phase carries `D`** (`∃ b, b < p ∧ D ∈ phase b`), not one
+fixed `G`. So I do not need co-carrying at a point — I need the recurrent
+**period** to carry each demand-arg at *some* phase. And that is
+**constructible**: guard all demands (`∀PP.(∃PP.Dⱼ)`), then from any
+point serve `D₀` (go to a `D₀`-witness), which inherits the guards and
+demands `D₁`, serve that, … cycling. Pigeonholing only the sub-sequence
+at multiples of `L = |Ds|` gives a recurrent period that is a *multiple*
+of `L`, hence covers a whole cycle — every demand-arg. This is
+`rr_covers`, and it is a **theorem**, not the open W2′.
+
+So W2′ is discharged for the vertical case. Chain of lemmas (`persistAll`
+→ `persistAll_productive` → `rrChain`/`rrPt_serves` → `rr_segment`
+[period `= B·L`, multiple of `L`] → `mod_shift_cover` → `rr_covers`).
+
+### 24.2 The four ascending sub-fragments
+
+- `decidableSat_vtower` (E4) — single `∃PP.G` tower. Witness `Cvert`.
+- `decidableSat_vtowerG` (E5a–d) — CO-CARRYING multi-demand (one
+  self-carrying chain via `vkernel1G_ok`). Witness `Ccar`. The
+  `persistAll` guard is **sat-based** (`sat x (∀PP.(∃PP.D))`, not mty),
+  so combined-guard concepts (`Clin`'s `∀PP.(∃PP.A₀ ⊓ A₁)`) also fit.
+- `decidableSat_vtowerRR` (E5e–l) — the round-robin, NON-CO-CARRYING
+  case (distinct/incompatible demands). Witnesses `Calt` (`∃PP.A₀ ⊓
+  ∃PP.¬A₀`), `Clin` (combined guard). Uses `codesVB` (the period bound
+  parameterized to `B·L`, since round-robin periods exceed `codesV`'s
+  single-demand `B`).
+
+### 24.3 The descending mirror (E5n–r)
+
+`decidableSat_vtowerRRI` — the `∃PPI` dual, witness `Cdesc`. Went fast
+because the FOUNDATION pre-existed (`persistPPI`, `dbuildChain`,
+`dchain_model_ppi/pp`, `dseg_ppi/pp`, `dsegment_kk_pp/ppi`). The one
+new piece was `vkernel1GI_ok` (the `up=false` descending kernel: root
+ABOVE the chain, `K` reads `pp`, chain serves `∃PPI` via
+`cdir false = ppi`) — compiled first try. Then `persistAllI`, `rrChainI`,
+`rr_segmentI`, `rr_coversI` were direct mirrors.
+
+### 24.4 ARCHITECTURAL LESSON: the encoding side is direction-agnostic
+
+`encodeMT` / `reindexMT` / `codesVB` / `unitTower_accepted` /
+`unitTower_mem_codesVB` **do not care** about `up` (it is a free `boolCol`
+field) or `pp` vs `ppi` (`E/K/Q` read the model into `atomTab1`). So
+descending required mirroring ONLY the kernel + chain + persist/segment —
+and those `d`-lemmas already existed. **No free duality**: `conv∘rho` is
+NOT an RCC5 interpretation (composition fails order-wise — counterexample
+`ρ(x,y)=ppi, ρ(y,z)=dr, ρ(x,z)=po ∈ comp(ppi,dr)` but `conv(po)=po ∉
+comp(pp,dr)={dr}`). So the mirror was genuine, not a reduction.
+
+## 25. MIXING — the design for the last quadrant (2026-08-06, E6)
+
+**Goal:** `decidableSat_mix (C0) : Decidable (Satisfiable C0)` for the
+FULL ∀PO-free fragment — concepts with BOTH horizontal existentials
+(`∃DR`/`∃PO`/`∃EQ`) AND vertical ones (`∃PP`/`∃PPI`), all `∀` non-`PO`.
+This is the one remaining quadrant, and it is a genuine COMBINATION, not a
+mirror.
+
+### 25.1 What is done (E6a–b, committed)
+
+- `mixRho` + `mixRho_frame` — the carrier: a `PP`-tower plus one node `nb`
+  that is `PO` to every tower point, proven a real RCC5 Frame.
+- `cmix_satisfiable` — a genuinely mixed concept `Cmix = A₀ ⊓ ∃PO.A₁ ⊓
+  ∃PP.A₀ ⊓ ∀PP.(∃PP.A₀)` is satisfiable in one model (SEMANTIC witness).
+- `Cmix_pofree`, `cmix_demands`, `mixCert` (def), `nb_no_ex` — the mixed
+  certificate's building blocks.
+
+### 25.2 The KEY discovery: the mixed-CERT machinery is already PROVEN
+
+`MTOkPool`'s `e_ex` has a THIRD disjunct `(r = po ∧ ∃ q ∈ P, q.1 ≠ myTag
+∧ c ∈ q.2)` — the **pool `P` serves `∃PO` demands**. `block_of_persistent`
+(ascending) / `block_of_persistent_desc` (descending) build a `BlockOk`
+carrying BOTH a kernel (`∃PP`/`∃PPI`) AND `∃PO` (via the pool).
+`mtOkPool_of_block` → `MTOkPool`; `glueFam_ok` combines clusters
+(cross-`PO`, pools cross-reference); `multiTier_sound` → `Satisfiable`.
+So a certificate mixing kernels and horizontal `∃PO` is NOT a remaining
+task — it EXISTS.
+
+### 25.3 TWO extraction architectures — pick the cleaner one
+
+There are two ways to serve `∃PO` in a mixed certificate:
+
+**(A) Direct external (one cluster, no pool).** If the `∃PO` target is a
+DIRECT external in the SAME certificate, plain `MultiTierOk`'s `e_ex`
+disjunct 1 (`∃ f, E e f = po ∧ c ∈ tauE f`) serves it — no pool. This is
+what `mixCert` does (`∃PO.A₁ → nb`). **Cleaner for a single connected
+mixed component.**
+
+**(B) Pool + glue (many clusters).** For `∃PO` targets in OTHER clusters,
+the pool routes cross-cluster and `glueFam_ok` combines. Needed when the
+horizontal structure has multiple `PO`-separated pieces.
+
+**Recommendation:** the horizontal fragment's own certificate `mtHF` is a
+SINGLE `MultiTier {mtkNodes} Empty` that already serves `∃DR`/`∃PO`/`∃EQ`
+among its externals via `E`. So the natural mixing certificate is
+**`mtHF`-WITH-KERNELS**, architecture (A): the externals are the `mtk`
+horizontal nodes (serving `∃DR`/`∃PO`/`∃EQ` directly), and each node that
+demands `∃PP`/`∃PPI` gets a kernel. Route: `e_ex` sends `∃DR`/`∃PO`/`∃EQ`
+→ externals (`E`), `∃PP`/`∃PPI` → kernels (`K`); `k_ex` sends the tower's
+own horizontal demands (`∃PO` etc.) → externals (`K`) or other kernels
+(`Q`). No pool, no glue — one certificate.
+
+### 25.4 THE DECIDABILITY STRATEGY (the plan to execute)
+
+Fit the `decidableSat_of_codes` template (as horizontal and vertical did):
+
+1. **Fragment** `MFrag C0`: `∀PO`-free; every `∃` is `∃DR`/`∃PO`/`∃EQ`/
+   `∃PP`/`∃PPI`; every `∀` is non-`PO`. (Decidable via `by decide` on a
+   Boolean `all` over `cl C0`, like `hfragB`.)
+
+2. **The mixed certificate** `MultiTier {externals} {kernels}` extending
+   `mtHF` with kernels (architecture A). Its `MultiTierOk` combines
+   `mtHF_ok`'s external handling (`ee_all` on `DR/PO/EQ` edges, `e_ex`
+   horizontal routing) with `vkernel1G_ok`/`vkernel1GI_ok`'s kernel
+   handling (`kk_*`, `k_ex` vertical), PLUS the cross fields `ek_all` /
+   `ke_all` (external↔kernel `∀`-propagation) and `kq_all` (kernel↔kernel,
+   VACUOUS in the ∀PO-free fragment since cross-kernel `Q` is `po`/`dr` and
+   there is no `∀PO`, and cross-kernel `∀DR` handled by rank). This is the
+   crux new construction — a genuine merge of the two `_ok` proofs.
+
+3. **Extraction** (satisfiable ⟹ mixed certificate). This is where the
+   HOMOGENEITY problem that blocked the *specific* `mixCert` DISSOLVES:
+   the general extraction reads the MODEL's own `mty`s, and the tower `mty`
+   recurs by `mty_segment_bounded` (the pigeonhole) — NO per-concept
+   bisimulation needed. The horizontal skeleton comes from `mtk`
+   (model-type-truncated by modal depth, already finite and certified);
+   the towers come from `persistAll`/`persistAllI` + the round-robin.
+
+4. **Codes** `codesM C0` — extend `codesVB` to enumerate mixed `FinMT`
+   (both `nE > 1` externals with `DR/PO/EQ` tables AND `nK > 0` kernels).
+   The encoder (`encodeMT`) already handles arbitrary `nE`, `nK`, so this
+   is enumeration bookkeeping, like `codesV → codesVB`.
+
+5. `decidableSat_mix = decidableSat_of_codes C0 (codesM C0) (mix_hcompl)`.
+
+### 25.5 Difficulty assessment (honest)
+
+- **Step 2 (the merged `MultiTierOk`)** is the crux — a genuine merge of
+  `mtHF_ok` (horizontal) and the round-robin kernel proof (vertical),
+  with the `ek_all`/`ke_all`/`kq_all` cross-fields. ~150–250 lines. The
+  `∀PO`-free vacuity (`mty_no_all_po`) discharges all `PO`-edge
+  obligations; the `DR`-edge cross-obligations are the real content.
+- **Step 3 (extraction)** reuses `mtk` (horizontal) + `persistAll` +
+  round-robin (vertical); the homogeneity problem is sidestepped by
+  `mty_segment_bounded`. Moderate.
+- **Step 4 (codes)** is bookkeeping.
+
+The SPECIFIC `mixCert` (E6b) is NOT on the critical path — it is a
+demonstration whose SAT is already witnessed by `cmix_satisfiable`, and
+its homogeneity obstacle does not arise in the general extraction. **Do
+not finish `mixCert_ok`; go straight to the general `MFrag` decidability
+via architecture (A) + `mty_segment_bounded`.**
+
+### 25.6 The one genuine open question
+
+Whether `mtk` (horizontal, modal-depth truncated) and the vertical
+round-robin (period-bounded) compose into ONE finite certificate whose
+size is computably bounded by `K(C0)`. Both are individually bounded
+(`mtkBound`, `B·L`); the mixed bound is their product-ish combination.
+This is finite-combinatorial, not the open F6 — but it is the one place
+the two termination arguments (modal-depth for horizontal, pigeonhole for
+vertical) must be shown to interleave without blowup. That interleaving
+is the real intellectual content of the last quadrant.
