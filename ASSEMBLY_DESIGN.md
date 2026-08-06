@@ -1611,13 +1611,44 @@ its homogeneity obstacle does not arise in the general extraction. **Do
 not finish `mixCert_ok`; go straight to the general `MFrag` decidability
 via architecture (A) + `mty_segment_bounded`.**
 
-### 25.6 The one genuine open question
+### 25.6 The one genuine open question — and its resolution (E6c)
 
 Whether `mtk` (horizontal, modal-depth truncated) and the vertical
 round-robin (period-bounded) compose into ONE finite certificate whose
-size is computably bounded by `K(C0)`. Both are individually bounded
-(`mtkBound`, `B·L`); the mixed bound is their product-ish combination.
-This is finite-combinatorial, not the open F6 — but it is the one place
-the two termination arguments (modal-depth for horizontal, pigeonhole for
-vertical) must be shown to interleave without blowup. That interleaving
-is the real intellectual content of the last quadrant.
+size is computably bounded by `K(C0)`.
+
+**Sharpening (E6c).** The merge is NOT a mechanical extension of `mtHF`,
+because the two termination arguments are *different in kind*: `mtk`
+truncates by MODAL DEPTH, which would CUT an `∃PP` tower (unbounded
+depth); the vertical demands instead loop via PIGEONHOLE (period `B·L`).
+And the demands INTERLEAVE: a horizontal node demands `∃PP` → a tower; the
+tower points demand `∃PO` → new horizontal nodes; those demand `∃PP` →
+new towers; … So a single measure does not obviously bound the whole.
+
+**Resolution (the termination argument that works).** Use a **lexicographic
+/ combined measure**:
+- The `∃PP`/`∃PPI` steps (going up/down a tower) do NOT decrease modal
+  depth — they are absorbed by the pigeonhole (a tower recurs within
+  `B·L` rungs, `mty_segment_bounded`), so each tower is a FINITE kernel.
+- The `∃DR`/`∃PO`/`∃EQ` steps (horizontal, and the tower points' own
+  horizontal demands) DECREASE modal depth (`cl_ex_mdepth_lt`) — so the
+  horizontal branching, INCLUDING branches spawned off tower points,
+  is bounded by `mdepth C0`.
+
+So the interleaving terminates: vertical loops are pigeonhole-finite,
+horizontal descent (from anywhere, including off towers) is depth-finite.
+The certificate is a horizontal skeleton (depth-bounded) each of whose
+nodes may carry a kernel (period-bounded), and the kernels' horizontal
+demands re-enter the skeleton at STRICTLY smaller depth. The size bound is
+therefore the depth-`mdepth` unfolding of (nodes × ≤ `B·L`-kernels) —
+finite, computable, NOT F6.
+
+**So the last quadrant is tractable, not open.** The remaining work is the
+FORMALIZATION (~200–250 lines): (i) generalize `mtk`/`mtkNodes` so a node
+whose type carries an `∃PP`/`∃PPI` demand attaches a round-robin kernel
+instead of recursing by depth; (ii) the merged `MultiTierOk` (`mtHF_ok`
+externals + round-robin kernels + `ek/ke/kq` cross-fields, `PO`-edges
+vacuous by `mty_no_all_po`); (iii) `codesM` + `mix_hcompl` +
+`decidableSat_mix = decidableSat_of_codes`. The checker soundness
+(`mtAcceptB_sound`) is already generic over `nE`/`nK`, so only the
+COMPLETENESS side (the extraction above) is new.
