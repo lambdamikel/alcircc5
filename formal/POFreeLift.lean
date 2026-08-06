@@ -6571,6 +6571,29 @@ theorem persistAll_productive (hI : RCC5Interp I) {C0 : Concept}
   exact ⟨mem_mty.mpr ⟨mty_sub _ hex', hall' y hdy hr⟩,
     sat_all_pp_up hI hdx hdy hr hall'⟩
 
+/-- DESCENDING multi-persistence (mirror of `persistAll`): every demand in
+    `Ds` is persistent as `∃PPI.D` with a sat-based `∀PPI` guard. -/
+def persistAllI (I : Interp α) (C0 : Concept) (Ds : List Concept) (x : α) : Prop :=
+  I.dom x ∧ ∀ D ∈ Ds, Concept.ex ppi D ∈ mty C0 I x ∧
+    sat I x (Concept.all ppi (Concept.ex ppi D))
+
+/-- Descending round-robin productivity: serving any `D ∈ Ds` gives a
+    `PPI`-successor carrying `D` that stays multi-persistent (the `∀PPI`
+    guards descend via `sat_all_ppi_down`). -/
+theorem persistAllI_productive (hI : RCC5Interp I) {C0 : Concept}
+    {Ds : List Concept} (x : α) (hx : persistAllI I C0 Ds x)
+    {D : Concept} (hD : D ∈ Ds) :
+    ∃ y, persistAllI I C0 Ds y ∧ I.dom y ∧ I.rho x y = ppi ∧ D ∈ mty C0 I y := by
+  obtain ⟨hdx, hguards⟩ := hx
+  obtain ⟨hex, _⟩ := hguards D hD
+  obtain ⟨y, hdy, hr, hDy⟩ := mty_ex hex
+  have hyx : I.rho y x = pp := by rw [hI.conv_ x y hdx hdy, hr]; rfl
+  refine ⟨y, ⟨hdy, ?_⟩, hdy, hr, hDy⟩
+  intro D' hD'
+  obtain ⟨hex', hall'⟩ := hguards D' hD'
+  exact ⟨mem_mty.mpr ⟨mty_sub _ hex', hall' y hdy hr⟩,
+    sat_all_ppi_down hI hdx hdy hyx hall'⟩
+
 /-- The ROUND-ROBIN chain (subtype-bundled): step `n+1` serves demand
     `Ds[n % L]`, so the chain cycles through ALL demands while every rung
     stays multi-persistent. -/
