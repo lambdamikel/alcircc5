@@ -11966,6 +11966,74 @@ def decidableSat_vtowerRR (C0 : Concept) (Ds : List Concept) (hLpos : 0 < Ds.len
     (codesVB C0 ((allListsLe (cl C0) (cl C0).length).length * Ds.length))
     (vtower_rr_hcompl C0 Ds hLpos hdem hDscov hforce)
 
+/-- COMPLETENESS for the DESCENDING round-robin (mirror of
+    `vtower_rr_hcompl`): `∃PPI`/`∃EQ` demands (`hdem`), covered by `Ds`
+    (`hDscov`), forced multi-persistent-down at the root (`hforce`).
+    Uses the descending chain + `vkernel1GI_ok`. -/
+theorem vtower_rrI_hcompl (C0 : Concept) (Ds : List Concept) (hLpos : 0 < Ds.length)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → r = ppi ∨ r = eq)
+    (hDscov : ∀ D, Concept.ex ppi D ∈ cl C0 → D ∈ Ds)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistAllI I C0 Ds x) :
+    Satisfiable C0 → ∃ q ∈ codesVB C0
+      ((allListsLe (cl C0) (cl C0).length).length * Ds.length),
+      (q.1).mtAcceptB q.2 C0 = true := by
+  intro hsat
+  obtain ⟨α, I, hI, x0, hdom0, hsat0⟩ := hsat
+  have hC0 : C0 ∈ mty C0 I x0 := mem_mty.mpr ⟨cl_self C0, hsat0⟩
+  have hpa : persistAllI I C0 Ds x0 := hforce I x0 hI hdom0 hsat0
+  obtain ⟨i, p, hi, hp, hpbd, hdvd, hty⟩ := rr_segmentI hI C0 Ds hLpos x0 hpa
+  have hdom_d : ∀ n, I.dom (rrPtI hI C0 Ds hLpos x0 hpa n) :=
+    fun n => rrPtI_dom hI C0 Ds hLpos x0 hpa n
+  have hstep_d : ∀ n, I.rho (rrPtI hI C0 Ds hLpos x0 hpa n)
+      (rrPtI hI C0 Ds hLpos x0 hpa (n + 1)) = ppi :=
+    fun n => rrPtI_step hI C0 Ds hLpos x0 hpa n
+  have hd0 : rrPtI hI C0 Ds hLpos x0 hpa 0 = x0 := rfl
+  have hx0ppi : ∀ a, I.rho x0 (rrPtI hI C0 Ds hLpos x0 hpa (i + a)) = ppi := by
+    intro a
+    have h := dchain_model_ppi hI hdom_d hstep_d 0 (i + a) (by omega)
+    rwa [hd0] at h
+  have hmtylbl : ∀ (x : α), mty C0 I x ∈ allListsLe (cl C0) (cl C0).length := by
+    intro x
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun y hy => by rw [mty] at hy; exact (List.mem_filter.mp hy).1⟩
+  have hcov : ∀ r D, Concept.ex r D ∈ cl C0 →
+      (r = ppi ∧ ∃ b, b < p ∧ D ∈ mty C0 I (rrPtI hI C0 Ds hLpos x0 hpa (i + b))) ∨
+        r = eq := by
+    intro r D hcl
+    rcases hdem r D hcl with rfl | rfl
+    · have hDDs : D ∈ Ds := hDscov D hcl
+      obtain ⟨⟨k, hk⟩, hget⟩ := List.get_of_mem hDDs
+      obtain ⟨b, hbp, hb⟩ := rr_coversI hI C0 Ds hLpos x0 hpa i p hi hp hdvd k hk
+      exact Or.inl ⟨rfl, b, hbp, hget ▸ hb⟩
+    · exact Or.inr rfl
+  have hok := vkernel1GI_ok hI C0 (rrPtI hI C0 Ds hLpos x0 hpa) x0 hdom0 hdom_d
+    hstep_d hp hty hx0ppi
+    (fun a r D hmem => hcov r D (mty_sub _ hmem))
+    (fun r D hmem => hcov r D (mty_sub _ hmem))
+  refine ⟨(encodeMT (reindexMT (fun _ : Fin 1 => (() : Unit))
+    (fun _ : Fin 1 => (() : Unit))
+    (vkernel1I I C0 (rrPtI hI C0 Ds hLpos x0 hpa) x0 i p)), 0), ?_, ?_⟩
+  · exact unitTower_mem_codesVB
+      (vkernel1I I C0 (rrPtI hI C0 Ds hLpos x0 hpa) x0 i p) C0 _
+      (hmtylbl x0) (fun a => hmtylbl (rrPtI hI C0 Ds hLpos x0 hpa (i + a))) hpbd
+  · exact unitTower_accepted
+      (vkernel1I I C0 (rrPtI hI C0 Ds hLpos x0 hpa) x0 i p) hok C0 hC0
+
+/-- **THE DESCENDING ROUND-ROBIN VERTICAL FRAGMENT IS DECIDABLE.**  The
+    `∃PPI` dual of `decidableSat_vtowerRR` — distinct/incompatible `∃PPI`
+    demands served round-robin down a descending tower.  `∀PP`-free. -/
+def decidableSat_vtowerRRI (C0 : Concept) (Ds : List Concept) (hLpos : 0 < Ds.length)
+    (hdem : ∀ r D, Concept.ex r D ∈ cl C0 → r = ppi ∨ r = eq)
+    (hDscov : ∀ D, Concept.ex ppi D ∈ cl C0 → D ∈ Ds)
+    (hforce : ∀ {α : Type} (I : Interp α) (x : α), RCC5Interp I → I.dom x →
+      sat I x C0 → persistAllI I C0 Ds x) :
+    Decidable (Satisfiable C0) :=
+  decidableSat_of_codes C0
+    (codesVB C0 ((allListsLe (cl C0) (cl C0).length).length * Ds.length))
+    (vtower_rrI_hcompl C0 Ds hLpos hdem hDscov hforce)
+
 /-! ### Non-vacuity: `Cvert`, a persistent-vertical concept beyond `Cinf`
 
 `Cvert = A ⊓ ∃PP.A ⊓ ∀PP.(∃PP.A)` (`A = atom 0`) forces an infinite
@@ -13090,6 +13158,7 @@ end VerticalWitness
 #print axioms decidableSat_vtower
 #print axioms decidableSat_vtowerG
 #print axioms decidableSat_vtowerRR
+#print axioms decidableSat_vtowerRRI
 #print axioms VerticalWitness.decidableSat_Ccar
 #print axioms VerticalWitness.ccar_satisfiable
 #print axioms VerticalWitness.decidableSat_Calt
