@@ -10684,6 +10684,100 @@ theorem vkernel1G_ok (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
     · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
 
+/-- The DESCENDING one-external kernel (`up = false`): the root `x0` sits
+    ABOVE the chain (`x0 ⊃ dᵢ`), so `K` reads `pp` and the chain serves
+    `∃PPI` (`cdir false = ppi`).  Mirror of `vkernel1`. -/
+noncomputable def vkernel1I (I : Interp α) (C0 : Concept) (d : Nat → α)
+    (x0 : α) (i p : Nat) : MultiTier Unit Unit where
+  E := fun _ _ => I.rho x0 x0
+  K := fun _ _ => I.rho (d i) x0
+  Q := fun _ _ => I.rho (d i) (d i)
+  up := fun _ => false
+  tauE := fun _ => mty C0 I x0
+  p := fun _ => p
+  phase := fun _ a => mty C0 I (d (i + a))
+
+/-- THE DESCENDING SELF-CARRYING KERNEL IS VALID: mirror of `vkernel1G_ok`
+    with `up := false`, the descending segment lemmas (`dsegment_kk_pp`/
+    `dsegment_kk_ppi`), and the geometry flipped (`x0 ⊃ dᵢ`, `K = pp`,
+    chain serves `∃PPI`). -/
+theorem vkernel1GI_ok (hI : RCC5Interp I) (C0 : Concept) (d : Nat → α)
+    (x0 : α) (hx0dom : I.dom x0)
+    (hdom : ∀ n, I.dom (d n))
+    (hstep : ∀ n, I.rho (d n) (d (n + 1)) = ppi)
+    {i p : Nat} (hp : 0 < p)
+    (hty : mty C0 I (d i) = mty C0 I (d (i + p)))
+    (hx0ppi : ∀ a, I.rho x0 (d (i + a)) = ppi)
+    (hdemands : ∀ a r D, Concept.ex r D ∈ mty C0 I (d (i + a)) →
+      (r = ppi ∧ ∃ b, b < p ∧ D ∈ mty C0 I (d (i + b))) ∨ r = eq)
+    (hx0dem : ∀ r D, Concept.ex r D ∈ mty C0 I x0 →
+      (r = ppi ∧ ∃ b, b < p ∧ D ∈ mty C0 I (d (i + b))) ∨ r = eq) :
+    MultiTierOk (vkernel1I I C0 d x0 i p) := by
+  have hKpp : I.rho (d i) x0 = pp := by
+    have h0 := hx0ppi 0
+    rw [Nat.add_zero] at h0
+    rw [hI.conv_ x0 (d i) hx0dom (hdom i), h0]; rfl
+  have hx0ne : x0 ≠ d i := by
+    intro h
+    have h0 := hx0ppi 0
+    rw [Nat.add_zero, h, hI.refl_eq (d i) (hdom i)] at h0
+    exact absurd h0 (by decide)
+  have hEK : ∀ a, I.rho (d (i + a)) x0 = pp := by
+    intro a
+    rw [hI.conv_ x0 (d (i + a)) hx0dom (hdom (i + a)), hx0ppi a]; rfl
+  have hinj : ∀ v w : Unit ⊕ Unit,
+      Sum.elim (fun _ : Unit => x0) (fun _ : Unit => d i) v
+        = Sum.elim (fun _ : Unit => x0) (fun _ : Unit => d i) w → v = w := by
+    rintro (⟨⟩ | ⟨⟩) (⟨⟩ | ⟨⟩) h
+    · rfl
+    · exact absurd h hx0ne
+    · exact absurd h.symm hx0ne
+    · rfl
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI (fun _ : Unit => x0)
+        (fun _ : Unit => d i) (fun _ => hx0dom) (fun _ => hdom i) hinj
+      e_clash := fun _ _ h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ _ _ h => mty_and h
+      e_or := fun _ _ _ h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ _ _ _ hmem hEr => mty_all hmem hx0dom hEr
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun _ _ ha E hE b hb =>
+        dsegment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun _ _ ha E hE b hb =>
+        dsegment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun _ a _ E hE =>
+        mty_all hE (hdom (i + a)) (hI.refl_eq (d (i + a)) (hdom (i + a)))
+      kq_all := fun k k' hne => absurd rfl hne
+      e_ex := ?_
+      k_ex := ?_ }
+  · intro _ r X hmem k hr a _
+    have hrppi : r = ppi := by
+      rw [← hr]; show conv (I.rho (d i) x0) = ppi; rw [hKpp]; rfl
+    subst hrppi
+    exact mty_all hmem (hdom (i + a)) (hx0ppi a)
+  · intro k a _ r X hmem f hr
+    have hrpp : r = pp := by rw [← hr]; exact hKpp
+    subst hrpp
+    exact mty_all hmem hx0dom (hEK a)
+  · intro _ r D hmem
+    rcases hx0dem r D hmem with ⟨rfl, b, hb, hDb⟩ | rfl
+    · refine Or.inr ⟨(), ?_, b, hb, hDb⟩
+      show conv (I.rho (d i) x0) = ppi; rw [hKpp]; rfl
+    · refine Or.inl ⟨(), hI.refl_eq x0 hx0dom, ?_⟩
+      obtain ⟨y, hy, hyr, hyD⟩ := mty_ex hmem
+      rwa [hI.eq_id x0 y hx0dom hy hyr]
+  · intro _ a _ r D hmem
+    rcases hdemands a r D hmem with ⟨rfl, b, hb, hDb⟩ | rfl
+    · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, seg_ex_eq hI hdom hmem⟩))
+
 /-! ### Round E3h″ (2026-07-24): the first MULTI-kernel certificate
 
 `vkernel2`/`vkernel2_ok`: TWO ascending `PP`-kernels (`κ = Bool`,
