@@ -12449,6 +12449,78 @@ theorem dvert_satisfiable : Satisfiable Dvert := by
     rw [dvfull (0 + (0 % 1))]; exact cl_self Dvert
   exact h1
 
+/-! ### `Cdesc`: the DESCENDING non-co-carrying witness (`Calt` dual)
+
+`Cdesc = ∃PPI.A₀ ⊓ ∃PPI.¬A₀ ⊓ ∀PPI.(∃PPI.A₀) ⊓ ∀PPI.(∃PPI.¬A₀)` — two
+INCOMPATIBLE `∃PPI` demands served round-robin down a descending tower;
+the non-vacuity witness for `decidableSat_vtowerRRI`. -/
+
+def Cdesc : Concept :=
+  .and (.and (.and (.ex ppi (.atom 0)) (.ex ppi (.natom 0)))
+    (.all ppi (.ex ppi (.atom 0)))) (.all ppi (.ex ppi (.natom 0)))
+
+def cdescDem (E : Concept) : Bool :=
+  match E with
+  | Concept.ex r _ => decide (r = ppi ∨ r = eq)
+  | _ => true
+
+theorem cdesc_dem_b : (cl Cdesc).all cdescDem = true := by decide
+
+theorem cdesc_dem : ∀ r D, Concept.ex r D ∈ cl Cdesc → r = ppi ∨ r = eq := by
+  intro r D h
+  have hb := List.all_eq_true.mp cdesc_dem_b (Concept.ex r D) h
+  simpa only [cdescDem, decide_eq_true_eq] using hb
+
+def cdescArg (E : Concept) : Bool :=
+  match E with
+  | Concept.ex _ D => decide (D = Concept.atom 0 ∨ D = Concept.natom 0)
+  | _ => true
+
+theorem cdesc_arg_b : (cl Cdesc).all cdescArg = true := by decide
+
+theorem cdesc_dscov : ∀ D, Concept.ex ppi D ∈ cl Cdesc →
+    D ∈ [Concept.atom 0, Concept.natom 0] := by
+  intro D h
+  have hb := List.all_eq_true.mp cdesc_arg_b (Concept.ex ppi D) h
+  simp only [cdescArg, decide_eq_true_eq] at hb
+  simp only [List.mem_cons, List.not_mem_nil, or_false]
+  exact hb
+
+/-- `Cdesc` forces both `∃PPI` demands multi-persistent-down at every point. -/
+theorem cdesc_force {α : Type} (I : Interp α) (x : α) (_hI : RCC5Interp I)
+    (hdom : I.dom x) (hsat : sat I x Cdesc) :
+    persistAllI I Cdesc [Concept.atom 0, Concept.natom 0] x := by
+  obtain ⟨⟨⟨he0, he1⟩, hae0⟩, hae1⟩ := hsat
+  refine ⟨hdom, ?_⟩
+  intro D hD
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hD
+  rcases hD with rfl | rfl
+  · exact ⟨mem_mty.mpr ⟨by decide, he0⟩, hae0⟩
+  · exact ⟨mem_mty.mpr ⟨by decide, he1⟩, hae1⟩
+
+/-- **`Cdesc`'s satisfiability is DECIDABLE via the descending round-robin
+    procedure** — the non-vacuity witness for `decidableSat_vtowerRRI`. -/
+def decidableSat_Cdesc : Decidable (Satisfiable Cdesc) :=
+  decidableSat_vtowerRRI Cdesc [Concept.atom 0, Concept.natom 0] (by decide)
+    cdesc_dem cdesc_dscov
+    (fun I x hI hdom hsat => cdesc_force I x hI hdom hsat)
+
+/-- The reversed-`ℕ` model with `A₀` at EVEN indices only. -/
+def Idalt : Interp Nat := ⟨fun _ => True, dchainN, fun a n => a = 0 ∧ n % 2 = 0⟩
+
+theorem Idalt_rcc5 : RCC5Interp Idalt := frame_rcc5 dchainN dchainN_frame _
+
+/-- `Cdesc` IS satisfiable: down the descending tower, each point has both
+    an even (`A₀`) and an odd (`¬A₀`) proper part below, but none both. -/
+theorem cdesc_satisfiable : Satisfiable Cdesc := by
+  have he0 : ∀ n, sat Idalt n (Concept.ex ppi (Concept.atom 0)) :=
+    fun n => ⟨2 * n + 2, trivial, chain_gt (by omega), ⟨rfl, by omega⟩⟩
+  have he1 : ∀ n, sat Idalt n (Concept.ex ppi (Concept.natom 0)) :=
+    fun n => ⟨2 * n + 1, trivial, chain_gt (by omega),
+      fun h => by obtain ⟨_, h2⟩ := h; omega⟩
+  exact ⟨Nat, Idalt, Idalt_rcc5, 0, trivial,
+    ⟨⟨⟨he0 0, he1 0⟩, fun y _ _ => he0 y⟩, fun y _ _ => he1 y⟩⟩
+
 theorem Cvert_pofree : POFree Cvert := ⟨⟨trivial, trivial⟩, by decide, trivial⟩
 
 /-- `Cvert` via the CLUSTER-GLUE `glueMTOk` of two independent vkernels
@@ -13163,5 +13235,7 @@ end VerticalWitness
 #print axioms VerticalWitness.ccar_satisfiable
 #print axioms VerticalWitness.decidableSat_Calt
 #print axioms VerticalWitness.calt_satisfiable
+#print axioms VerticalWitness.decidableSat_Cdesc
+#print axioms VerticalWitness.cdesc_satisfiable
 
 end POFreeLift
