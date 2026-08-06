@@ -6640,6 +6640,49 @@ theorem rrPt_serves (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
     (rrChain hI C0 Ds hL x0 h0 n).2
     (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩))).2.2.2
 
+/-- DESCENDING round-robin chain (mirror of `rrChain`): step `n+1` serves
+    `Ds[n % L]` DOWN a `PPI`-chain, every rung multi-persistent. -/
+noncomputable def rrChainI (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAllI I C0 Ds x0) :
+    Nat → {a : α // persistAllI I C0 Ds a}
+  | 0 => ⟨x0, h0⟩
+  | n + 1 =>
+    ⟨Classical.choose (persistAllI_productive hI (rrChainI hI C0 Ds hL x0 h0 n).1
+        (rrChainI hI C0 Ds hL x0 h0 n).2
+        (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩)),
+     (Classical.choose_spec (persistAllI_productive hI (rrChainI hI C0 Ds hL x0 h0 n).1
+        (rrChainI hI C0 Ds hL x0 h0 n).2
+        (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩))).1⟩
+
+noncomputable def rrPtI (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAllI I C0 Ds x0) (n : Nat) : α :=
+  (rrChainI hI C0 Ds hL x0 h0 n).1
+
+theorem rrPtI_prop (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAllI I C0 Ds x0) (n : Nat) :
+    persistAllI I C0 Ds (rrPtI hI C0 Ds hL x0 h0 n) :=
+  (rrChainI hI C0 Ds hL x0 h0 n).2
+
+theorem rrPtI_dom (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAllI I C0 Ds x0) (n : Nat) :
+    I.dom (rrPtI hI C0 Ds hL x0 h0 n) :=
+  (rrPtI_prop hI C0 Ds hL x0 h0 n).1
+
+theorem rrPtI_step (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAllI I C0 Ds x0) (n : Nat) :
+    I.rho (rrPtI hI C0 Ds hL x0 h0 n) (rrPtI hI C0 Ds hL x0 h0 (n + 1)) = ppi :=
+  (Classical.choose_spec (persistAllI_productive hI (rrChainI hI C0 Ds hL x0 h0 n).1
+    (rrChainI hI C0 Ds hL x0 h0 n).2
+    (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩))).2.2.1
+
+theorem rrPtI_serves (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAllI I C0 Ds x0) (n : Nat) :
+    Ds.get ⟨n % Ds.length, Nat.mod_lt n hL⟩ ∈
+      mty C0 I (rrPtI hI C0 Ds hL x0 h0 (n + 1)) :=
+  (Classical.choose_spec (persistAllI_productive hI (rrChainI hI C0 Ds hL x0 h0 n).1
+    (rrChainI hI C0 Ds hL x0 h0 n).2
+    (List.get_mem Ds ⟨n % Ds.length, Nat.mod_lt n hL⟩))).2.2.2
+
 /-- THE PERSISTENT KERNEL CHAIN: a persistent-`∃PP` element builds an
     infinite ascending model chain, every rung carrying `∃PP.G`. -/
 theorem persistPP_chain (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
@@ -10243,6 +10286,49 @@ theorem rr_covers {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
   obtain ⟨b, hbL, hbmod⟩ := mod_shift_cover (i - 1) k Ds.length hL hk
   refine ⟨b, by have := Nat.le_of_dvd hp hdvd; omega, ?_⟩
   have hs := rrPt_serves hI C0 Ds hL x0 h0 (i - 1 + b)
+  rw [show i - 1 + b + 1 = i + b from by omega] at hs
+  rw [show (⟨(i - 1 + b) % Ds.length, Nat.mod_lt _ hL⟩ : Fin Ds.length) = ⟨k, hk⟩
+    from Fin.ext hbmod] at hs
+  exact hs
+
+/-- DESCENDING recurrence (mirror of `rr_segment`): period a multiple of
+    `L`, `≤ B·L`.  Proof is direction-agnostic (pigeonhole on the
+    sub-sequence at multiples of `L`). -/
+theorem rr_segmentI {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAllI I C0 Ds x0) :
+    ∃ i p, 0 < i ∧ 0 < p ∧
+      p ≤ (allListsLe (cl C0) (cl C0).length).length * Ds.length ∧
+      Ds.length ∣ p ∧
+      mty C0 I (rrPtI hI C0 Ds hL x0 h0 i) =
+      mty C0 I (rrPtI hI C0 Ds hL x0 h0 (i + p)) := by
+  have hmem : ∀ n, mty C0 I (rrPtI hI C0 Ds hL x0 h0 (n * Ds.length)) ∈
+      allListsLe (cl C0) (cl C0).length := by
+    intro n
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun x hx => by rw [mty] at hx; exact (List.mem_filter.mp hx).1⟩
+  obtain ⟨a, b, hLa, hab, hjB, heq⟩ :=
+    segment_exists_bounded (allListsLe (cl C0) (cl C0).length)
+      (fun n => mty C0 I (rrPtI hI C0 Ds hL x0 h0 (n * Ds.length))) hmem 1
+  have harith : a * Ds.length + (b - a) * Ds.length = b * Ds.length := by
+    rw [← Nat.add_mul, show a + (b - a) = b from by omega]
+  refine ⟨a * Ds.length, (b - a) * Ds.length, Nat.mul_pos (by omega) hL,
+    Nat.mul_pos (by omega) hL, Nat.mul_le_mul (by omega) (Nat.le_refl _),
+    ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_⟩
+  rw [harith]
+  exact heq
+
+/-- DESCENDING coverage (mirror of `rr_covers`): every demand-arg is
+    carried at some phase in the recurrent period. -/
+theorem rr_coversI {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAllI I C0 Ds x0) (i p : Nat) (hi : 0 < i) (hp : 0 < p)
+    (hdvd : Ds.length ∣ p) (k : Nat) (hk : k < Ds.length) :
+    ∃ b, b < p ∧ Ds.get ⟨k, hk⟩ ∈ mty C0 I (rrPtI hI C0 Ds hL x0 h0 (i + b)) := by
+  obtain ⟨b, hbL, hbmod⟩ := mod_shift_cover (i - 1) k Ds.length hL hk
+  refine ⟨b, by have := Nat.le_of_dvd hp hdvd; omega, ?_⟩
+  have hs := rrPtI_serves hI C0 Ds hL x0 h0 (i - 1 + b)
   rw [show i - 1 + b + 1 = i + b from by omega] at hs
   rw [show (⟨(i - 1 + b) % Ds.length, Nat.mod_lt _ hL⟩ : Fin Ds.length) = ⟨k, hk⟩
     from Fin.ext hbmod] at hs
