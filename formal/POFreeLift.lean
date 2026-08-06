@@ -6552,7 +6552,7 @@ theorem persistPP_productive (hI : RCC5Interp I) {C0 G : Concept}
     all demands stay live along an ascending chain. -/
 def persistAll (I : Interp α) (C0 : Concept) (Ds : List Concept) (x : α) : Prop :=
   I.dom x ∧ ∀ D ∈ Ds, Concept.ex pp D ∈ mty C0 I x ∧
-    Concept.all pp (Concept.ex pp D) ∈ mty C0 I x
+    sat I x (Concept.all pp (Concept.ex pp D))
 
 /-- ROUND-ROBIN PRODUCTIVITY: from a multi-persistent `x`, serving ANY
     chosen demand `D ∈ Ds` gives a `PP`-successor `y` that (i) carries `D`
@@ -6567,10 +6567,9 @@ theorem persistAll_productive (hI : RCC5Interp I) {C0 : Concept}
   obtain ⟨y, hdy, hr, hDy⟩ := mty_ex hex
   refine ⟨y, ⟨hdy, ?_⟩, hdy, hr, hDy⟩
   intro D' hD'
-  obtain ⟨_, hall'⟩ := hguards D' hD'
-  refine ⟨mty_all hall' hdy hr, ?_⟩
-  obtain ⟨hcl', hsat'⟩ := mem_mty.mp hall'
-  exact mem_mty.mpr ⟨hcl', sat_all_pp_up hI hdx hdy hr hsat'⟩
+  obtain ⟨hex', hall'⟩ := hguards D' hD'
+  exact ⟨mem_mty.mpr ⟨mty_sub _ hex', hall' y hdy hr⟩,
+    sat_all_pp_up hI hdx hdy hr hall'⟩
 
 /-- The ROUND-ROBIN chain (subtype-bundled): step `n+1` serves demand
     `Ds[n % L]`, so the chain cycles through ALL demands while every rung
@@ -12283,6 +12282,45 @@ theorem clin_satisfiable : Satisfiable Clin := by
     rw [lfull (0 + (0 % 1))]; exact cl_self Clin
   exact h1
 
+/-- `Clin`'s existentials are all `∃PP` (hence `∃PP`/`∃EQ`). -/
+theorem clin_dem : ∀ r D, Concept.ex r D ∈ cl Clin → r = pp ∨ r = eq := by
+  intro r D h
+  have hb := List.all_eq_true.mp clin_demands_b (Concept.ex r D) h
+  simp only [okDemandL, decide_eq_true_eq] at hb
+  exact Or.inl hb.1
+
+/-- `Clin`'s `∃PP`-args are `A₀`/`A₁`. -/
+theorem clin_dscov : ∀ D, Concept.ex pp D ∈ cl Clin →
+    D ∈ [Concept.atom 0, Concept.atom 1] := by
+  intro D h
+  have hb := List.all_eq_true.mp clin_demands_b (Concept.ex pp D) h
+  simp only [okDemandL, decide_eq_true_eq] at hb
+  simp only [List.mem_cons, List.not_mem_nil, or_false]
+  exact hb.2
+
+/-- `Clin` forces both demands multi-persistent — its COMBINED guard
+    `∀PP.(∃PP.A₀ ⊓ ∃PP.A₁)` yields each `sat x (∀PP.(∃PP.Aᵢ))` (the
+    sat-based `persistAll` guard makes this fit; the mty-based one did
+    not, since `∀PP.(∃PP.A₀) ∉ cl Clin`). -/
+theorem clin_force {α : Type} (I : Interp α) (x : α) (_hI : RCC5Interp I)
+    (hdom : I.dom x) (hsat : sat I x Clin) :
+    persistAll I Clin [Concept.atom 0, Concept.atom 1] x := by
+  obtain ⟨⟨he0, he1⟩, hcomb⟩ := hsat
+  refine ⟨hdom, ?_⟩
+  intro D hD
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at hD
+  rcases hD with rfl | rfl
+  · exact ⟨mem_mty.mpr ⟨by decide, he0⟩, fun y hy hr => (hcomb y hy hr).1⟩
+  · exact ⟨mem_mty.mpr ⟨by decide, he1⟩, fun y hy hr => (hcomb y hy hr).2⟩
+
+/-- **`Clin`'s satisfiability is DECIDABLE via the round-robin procedure**
+    — a COMBINED-guard concept, now fitting `decidableSat_vtowerRR` thanks
+    to the sat-based `persistAll`. -/
+def decidableSat_Clin_rr : Decidable (Satisfiable Clin) :=
+  decidableSat_vtowerRR Clin [Concept.atom 0, Concept.atom 1] (by decide)
+    clin_dem clin_dscov
+    (fun I x hI hdom hsat => clin_force I x hI hdom hsat)
+
 /-! #### The NESTING model: `kq_all` fires at a cross-`PP` edge
 
 `nestNet` = two `ℕ`-order towers with the `false`-tower entirely
@@ -12652,8 +12690,8 @@ theorem calt_force {α : Type} (I : Interp α) (x : α) (_hI : RCC5Interp I)
   intro D hD
   simp only [List.mem_cons, List.not_mem_nil, or_false] at hD
   rcases hD with rfl | rfl
-  · exact ⟨mem_mty.mpr ⟨by decide, he0⟩, mem_mty.mpr ⟨by decide, hae0⟩⟩
-  · exact ⟨mem_mty.mpr ⟨by decide, he1⟩, mem_mty.mpr ⟨by decide, hae1⟩⟩
+  · exact ⟨mem_mty.mpr ⟨by decide, he0⟩, hae0⟩
+  · exact ⟨mem_mty.mpr ⟨by decide, he1⟩, hae1⟩
 
 /-- **`Calt`'s satisfiability is DECIDABLE via the round-robin procedure**
     — the non-vacuity witness for `decidableSat_vtowerRR`: two INCOMPATIBLE
