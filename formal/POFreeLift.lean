@@ -12598,6 +12598,52 @@ theorem cmix_satisfiable : Satisfiable Cmix := by
   · exact hePP j
   · change po = pp at hr; exact absurd hr (by decide)
 
+theorem Cmix_pofree : POFree Cmix := ⟨⟨⟨trivial, trivial⟩, trivial⟩, by decide, trivial⟩
+
+/-- `Cmix`'s existentials are exactly `∃PO.A₁` (horizontal) and `∃PP.A₀`
+    (vertical). -/
+theorem cmix_demands : ∀ r D, Concept.ex r D ∈ cl Cmix →
+    (r = po ∧ D = Concept.atom 1) ∨ (r = pp ∧ D = Concept.atom 0) := by
+  intro r D h
+  have hb := List.all_eq_true.mp
+    (show (cl Cmix).all (fun E => match E with
+      | Concept.ex r D => decide ((r = po ∧ D = Concept.atom 1) ∨
+          (r = pp ∧ D = Concept.atom 0))
+      | _ => true) = true from by decide) (Concept.ex r D) h
+  simpa only [decide_eq_true_eq] using hb
+
+/-- The MIXED certificate reading off `Imix`: TWO externals — the root
+    `inl 0` (`false`) and the `PO`-node `nb = inr ()` (`true`) — and ONE
+    kernel (the `A₀`-tower `inl 1, inl 2, …`).  `∃PO.A₁` is served by the
+    direct external `nb`; `∃PP.A₀` by the kernel.  The first certificate
+    with BOTH non-trivial externals AND a kernel. -/
+noncomputable def mixEltE : Bool → (Nat ⊕ Unit) :=
+  fun b => if b then Sum.inr () else Sum.inl 0
+
+noncomputable def mixCert : MultiTier Bool Unit where
+  E := fun e f => Imix.rho (mixEltE e) (mixEltE f)
+  K := fun _ e => Imix.rho (Sum.inl 1) (mixEltE e)
+  Q := fun _ _ => Imix.rho (Sum.inl 1) (Sum.inl 1)
+  up := fun _ => true
+  tauE := fun e => mty Cmix Imix (mixEltE e)
+  p := fun _ => 1
+  phase := fun _ a => mty Cmix Imix (Sum.inl (1 + a))
+
+/-- `nb` (the `PO`-node) satisfies NO existential of `Cmix` — it has no
+    `PP`-successor and no `PO`-successor carrying `A₁`. -/
+theorem nb_no_ex : ∀ r D, Concept.ex r D ∉ mty Cmix Imix (Sum.inr ()) := by
+  intro r D hmem
+  rcases cmix_demands r D (mty_sub _ hmem) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+  · obtain ⟨y, _, hr, hy⟩ := mty_ex hmem
+    rcases y with j | ⟨⟩
+    · have h2 := (mem_mty.mp hy).2; change (1 : Nat) = 0 at h2
+      exact absurd h2 (by decide)
+    · change eq = po at hr; exact absurd hr (by decide)
+  · obtain ⟨y, _, hr, _⟩ := mty_ex hmem
+    rcases y with j | ⟨⟩
+    · change po = pp at hr; exact absurd hr (by decide)
+    · change eq = pp at hr; exact absurd hr (by decide)
+
 /-- `Cvert` via the CLUSTER-GLUE `glueMTOk` of two independent vkernels
     (cross-`PO`) — demonstrating the assembly's combine-clusters step. -/
 theorem cvert_glue2 : Satisfiable Cvert := by
