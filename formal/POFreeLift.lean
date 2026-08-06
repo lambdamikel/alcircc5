@@ -12523,6 +12523,81 @@ theorem cdesc_satisfiable : Satisfiable Cdesc := by
 
 theorem Cvert_pofree : POFree Cvert := ⟨⟨trivial, trivial⟩, by decide, trivial⟩
 
+/-! ### The MIXING carrier: an ascending tower + one `PO`-node
+
+`mixRho` on `ℕ ⊕ Unit`: the `ℕ`-tower (ascending `PP`) plus a single node
+`nb = inr ()` that is `PO` to every tower point.  The minimal
+horizontal+vertical frame — `∃PO` served by `nb`, `∃PP` up the tower —
+and (since `∀PO`-free) `nb`'s universal propagation is vacuous. -/
+
+/-- Tower `PP` on `ℕ`, `PO` between the tower and the extra node `nb`. -/
+def mixRho : (Nat ⊕ Unit) → (Nat ⊕ Unit) → Atom
+  | .inl i, .inl j => chain i j
+  | .inl _, .inr _ => po
+  | .inr _, .inl _ => po
+  | .inr _, .inr _ => eq
+
+theorem mixRho_frame : Frame mixRho where
+  refl_eq := by
+    rintro (i | ⟨⟩)
+    · exact chain_self i
+    · rfl
+  eq_id := by
+    rintro (a | ⟨⟩) (b | ⟨⟩) h
+    · exact congrArg Sum.inl (chain_eq_imp h)
+    · change po = eq at h; exact absurd h (by decide)
+    · change po = eq at h; exact absurd h (by decide)
+    · rfl
+  conv_ := by
+    rintro (a | ⟨⟩) (b | ⟨⟩)
+    · exact chain_conv a b
+    · rfl
+    · rfl
+    · rfl
+  comp_ := by
+    rintro (i | ⟨⟩) (j | ⟨⟩) (k | ⟨⟩)
+    · exact chainFrame.comp_ i j k
+    · show po ∈ comp (chain i j) po
+      rcases chain_vals i j with h | h | h <;> rw [h] <;> decide
+    · show chain i k ∈ comp po po
+      rcases chain_vals i k with h | h | h <;> rw [h] <;> decide
+    · show po ∈ comp po eq
+      decide
+    · show po ∈ comp po (chain j k)
+      rcases chain_vals j k with h | h | h <;> rw [h] <;> decide
+    · show eq ∈ comp po po
+      decide
+    · show po ∈ comp eq po
+      decide
+    · show eq ∈ comp eq eq
+      decide
+
+/-- The mixing model: `A₀` at every tower point, `A₁` at the node `nb`. -/
+def Imix : Interp (Nat ⊕ Unit) :=
+  ⟨fun _ => True, mixRho, fun a x => match x with | .inl _ => a = 0 | .inr _ => a = 1⟩
+
+theorem Imix_rcc5 : RCC5Interp Imix := frame_rcc5 mixRho mixRho_frame _
+
+/-- A genuinely MIXED concept: a horizontal `∃PO.A₁` demand AND a vertical
+    `∃PP.A₀` tower, both at the root. -/
+def Cmix : Concept :=
+  .and (.and (.and (.atom 0) (.ex po (.atom 1))) (.ex pp (.atom 0)))
+    (.all pp (.ex pp (.atom 0)))
+
+/-- `Cmix` IS satisfiable: at the tower root `inl 0`, the `PO`-node `nb`
+    serves `∃PO.A₁` while the tower above serves `∃PP.A₀` — horizontal and
+    vertical demands coexisting in one model. -/
+theorem cmix_satisfiable : Satisfiable Cmix := by
+  have hA : ∀ i, sat Imix (Sum.inl i) (Concept.atom 0) := fun _ => rfl
+  have hB : sat Imix (Sum.inr ()) (Concept.atom 1) := rfl
+  have hePP : ∀ i, sat Imix (Sum.inl i) (Concept.ex pp (Concept.atom 0)) :=
+    fun i => ⟨Sum.inl (i + 1), trivial, chain_lt (Nat.lt_succ_self i), hA (i + 1)⟩
+  refine ⟨Nat ⊕ Unit, Imix, Imix_rcc5, Sum.inl 0, trivial,
+    ⟨⟨⟨hA 0, ⟨Sum.inr (), trivial, rfl, hB⟩⟩, hePP 0⟩, ?_⟩⟩
+  rintro (j | ⟨⟩) _ hr
+  · exact hePP j
+  · change po = pp at hr; exact absurd hr (by decide)
+
 /-- `Cvert` via the CLUSTER-GLUE `glueMTOk` of two independent vkernels
     (cross-`PO`) — demonstrating the assembly's combine-clusters step. -/
 theorem cvert_glue2 : Satisfiable Cvert := by
@@ -13237,5 +13312,7 @@ end VerticalWitness
 #print axioms VerticalWitness.calt_satisfiable
 #print axioms VerticalWitness.decidableSat_Cdesc
 #print axioms VerticalWitness.cdesc_satisfiable
+#print axioms VerticalWitness.cmix_satisfiable
+#print axioms VerticalWitness.mixRho_frame
 
 end POFreeLift
