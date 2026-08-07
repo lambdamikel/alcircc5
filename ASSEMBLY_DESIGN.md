@@ -1698,3 +1698,44 @@ plan; the `ke_all` depth obligation is the next thing to pin down.
 
 Commits: fe0c5be (`mixKernel_ok`), 4b43819 (`mixKernelI_ok`), 0db11e7
 (`mixKernels_ok`).
+
+### 25.8 The `ke_all` depth seam — RESOLVED (wp89, 2026-08-07): PO-default the kernel edges
+
+`verification/python/wp89_keall_depth_seam.py` settles the "one genuine open
+question" concretely. It builds a ∀PO-free villain
+`C0 = (∀DR.∀DR.∀DR.∀DR.A) ⊓ ∃PP.⊤ ⊓ ∃DR.∃DR.⊤` (mdepth 4) and a genuine
+finite-set RCC5 model (`R ⊂ T`, `R DR g1 DR g2`, `T DR g2`, A everywhere).
+
+- **The naive route (K read off the model, as in `mixKernels`) is BROKEN.**
+  The tower/kernel universal `∀DR.c` (`c` mdepth 3) fires at the grandchild
+  `g2` via the real `K g2 = DR`, but `c` is DROPPED from `mtk(g2, 2)` (mdepth
+  3 > budget 2). `ke_all` fails on a *satisfiable* concept — pure
+  over-truncation (the naive frame is still closed). So node-set finiteness
+  (§25.6) genuinely does NOT imply the truncated cert satisfies `ke_all`; it
+  was a hidden clause.
+- **The FIX: PO-default the kernel's `K`/`Q` to non-kernel-adjacent nodes**,
+  exactly the trick `mtHF` already uses for its horizontal `E` (non-tree
+  edges = PO, vacuous under ∀PO-freeness via `mty_no_all_po`). The probe
+  confirms this makes `ke_all` VACUOUS and keeps the combined frame
+  composition-closed on the villain.
+
+**Architectural consequence for step 3 (extraction).** The extraction must
+NOT read `K`/`Q` off the model. It should build the kernel edges like `mtHF`
+builds `E`: real relation only on the bounded ADJACENT set (the attaching
+node, and whatever the kernel genuinely needs for its own demand-service),
+PO elsewhere. Then:
+- `ee_all`/`ke_all`/`kq_all` are VACUOUS on all PO-defaulted edges (no ∀PO in
+  closure) — the depth seam never bites, because deep externals connect to
+  kernels by PO, not the real DR.
+- the real-relation hypotheses of `mixKernels_ok` (`hstab`, `hrectQ`, the
+  real `K`/`Q` reads) apply only to the small adjacent set, where budgets are
+  adequate (adjacency = one step, budget = parent − 1 ≥ any firing depth).
+- the new obligation is a `mtHF`-style FRAME lemma for the PO-defaulted
+  combined network (like `mtHF_frame`/`symDrPo_frame`, now spanning externals
+  AND kernel bases) — provable, not open.
+
+So the seam is closed at the DESIGN level: the merge lemma stays as proven
+(`mixKernels_ok`, real edges), and the extraction feeds it PO-defaulted far
+edges so the truncation is harmless. Route (a) survives; route (b)
+(type-quotient / horizontal uniformization) is not needed. Next Lean step: the
+PO-default combined-frame lemma + the `mtk`-with-kernels node construction.
