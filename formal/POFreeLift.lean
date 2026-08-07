@@ -8870,6 +8870,119 @@ theorem po_default_asc_frame {β : Type}
       show eq ∈ comp eq eq
       decide
 
+open Classical in
+/-- **PP-BELOW-TWIN FRAME** (descending kernel — mixing extraction step 1, the
+    FORCING case, validated by wp90).  Given any RCC5 frame `N` and a node
+    `v0`, adjoin one node (the descending kernel base `b ⊂ v0`) that is a
+    PP-below TWIN of `v0`: `PP` to `v0`, and to every OTHER node the SAME
+    relation `v0` has (`N v0 e`).  The result is a frame.  The base's row is
+    FORCED to mirror `v0`'s (`comp(PP,DR)={DR}`, ...), so base-triangles reduce
+    to `N`'s own closure at `v0` plus finite `comp` facts.  Instantiated with
+    the `symDrPo` external network this is the descending quadrant's `frame_q`
+    (the base is `DR` to `v0`'s `DR`-children — forced — and `PO` to `v0`'s
+    `PO`-neighbours — free). -/
+theorem pp_twin_frame {V : Type} (N : V → V → Atom) (hN : Frame N) (v0 : V) :
+    Frame (qnet N (fun (_ : Unit) e => if e = v0 then pp else N v0 e)
+                  (fun (_ : Unit) (_ : Unit) => eq)) := by
+  have hcv : ∀ r : Atom, conv (conv r) = r := by intro r; cases r <;> rfl
+  have hce : ∀ r : Atom, conv r = eq → r = eq := by
+    intro r h; cases r <;> first | rfl | exact absurd h (by decide)
+  have hne : ∀ e, e ≠ v0 → N v0 e ≠ eq := fun e he h => he (hN.eq_id v0 e h).symm
+  have hne' : ∀ a, a ≠ v0 → N a v0 ≠ eq := fun a ha h => ha (hN.eq_id a v0 h)
+  have f1 : ∀ r : Atom, r ≠ eq → r ∈ comp pp r := by
+    intro r hr; cases r <;> first | exact absurd rfl hr | decide
+  have f2 : ∀ r : Atom, r ≠ eq → r ∈ comp r pp := by
+    intro r hr; cases r <;> first | exact absurd rfl hr | decide
+  have f3 : ∀ r : Atom, r ≠ eq → r ∈ comp ppi r := by
+    intro r hr; cases r <;> first | exact absurd rfl hr | decide
+  have f4 : ∀ r : Atom, r ≠ eq → r ∈ comp r ppi := by
+    intro r hr; cases r <;> first | exact absurd rfl hr | decide
+  have f5 : ∀ r : Atom, r ≠ eq → pp ∈ comp r (conv r) := by
+    intro r hr; cases r <;> first | exact absurd rfl hr | decide
+  have f6 : ∀ r : Atom, r ≠ eq → ppi ∈ comp r (conv r) := by
+    intro r hr; cases r <;> first | exact absurd rfl hr | decide
+  have f7 : ∀ r : Atom, r ∈ comp r eq := by intro r; cases r <;> decide
+  have f8 : ∀ r : Atom, r ∈ comp eq r := by intro r; cases r <;> decide
+  have f9 : ∀ r : Atom, eq ∈ comp r (conv r) := by intro r; cases r <;> decide
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · -- refl_eq
+    rintro (a | ⟨⟩)
+    · exact hN.refl_eq a
+    · rfl
+  · -- eq_id
+    rintro (a | ⟨⟩) (b | ⟨⟩) h
+    · exact congrArg Sum.inl (hN.eq_id a b h)
+    · refine absurd (show conv (if a = v0 then pp else N v0 a) = eq from h) ?_
+      by_cases ha : a = v0
+      · rw [if_pos ha]; decide
+      · rw [if_neg ha]; intro hh; exact hne a ha (hce _ hh)
+    · refine absurd (show (if b = v0 then pp else N v0 b) = eq from h) ?_
+      by_cases hb : b = v0
+      · rw [if_pos hb]; decide
+      · rw [if_neg hb]; exact hne b hb
+    · rfl
+  · -- conv_
+    rintro (a | ⟨⟩) (b | ⟨⟩)
+    · exact hN.conv_ a b
+    · show (if a = v0 then pp else N v0 a)
+        = conv (conv (if a = v0 then pp else N v0 a))
+      rw [hcv]
+    · rfl
+    · rfl
+  · -- comp_
+    rintro (a | ⟨⟩) (b | ⟨⟩) (c | ⟨⟩)
+    · exact hN.comp_ a b c
+    · -- (b) inl a, inl b, inr(): a→base ∈ comp(N a b, b→base)
+      show conv (if a = v0 then pp else N v0 a)
+        ∈ comp (N a b) (conv (if b = v0 then pp else N v0 b))
+      by_cases ha : a = v0 <;> by_cases hb : b = v0
+      · rw [ha, hb, if_pos rfl, hN.refl_eq v0]; decide
+      · rw [ha, if_pos rfl, if_neg hb]; exact f6 (N v0 b) (hne b hb)
+      · rw [hb, if_neg ha, if_pos rfl, ← hN.conv_ v0 a]
+        exact f4 (N a v0) (hne' a ha)
+      · rw [if_neg ha, if_neg hb, ← hN.conv_ v0 a, ← hN.conv_ v0 b]
+        exact hN.comp_ a b v0
+    · -- (c) inl a, inr(), inl c: N a c ∈ comp(a→base, base→c)
+      show N a c ∈ comp (conv (if a = v0 then pp else N v0 a))
+                        (if c = v0 then pp else N v0 c)
+      by_cases ha : a = v0 <;> by_cases hc : c = v0
+      · rw [ha, hc, if_pos rfl, hN.refl_eq v0]; decide
+      · rw [ha, if_pos rfl, if_neg hc]; exact f3 (N v0 c) (hne c hc)
+      · rw [hc, if_neg ha, if_pos rfl, ← hN.conv_ v0 a]
+        exact f2 (N a v0) (hne' a ha)
+      · rw [if_neg ha, if_neg hc, ← hN.conv_ v0 a]; exact hN.comp_ a v0 c
+    · -- (d) inl a, inr(), inr(): a→base ∈ comp(a→base, eq)
+      exact f7 (conv (if a = v0 then pp else N v0 a))
+    · -- (e) inr(), inl b, inl c: base→c ∈ comp(base→b, N b c)
+      show (if c = v0 then pp else N v0 c)
+        ∈ comp (if b = v0 then pp else N v0 b) (N b c)
+      by_cases hb : b = v0 <;> by_cases hc : c = v0
+      · rw [hb, hc, if_pos rfl, hN.refl_eq v0]; decide
+      · rw [hb, if_pos rfl, if_neg hc]; exact f1 (N v0 c) (hne c hc)
+      · rw [hc, if_pos rfl, if_neg hb, hN.conv_ v0 b]
+        exact f5 (N v0 b) (hne b hb)
+      · rw [if_neg hb, if_neg hc]; exact hN.comp_ v0 b c
+    · -- (f) inr(), inl b, inr(): eq ∈ comp(base→b, b→base)
+      exact f9 (if b = v0 then pp else N v0 b)
+    · -- (g) inr(), inr(), inl c: base→c ∈ comp(eq, base→c)
+      exact f8 (if c = v0 then pp else N v0 c)
+    · -- (h) inr(), inr(), inr()
+      show eq ∈ comp eq eq
+      decide
+
+open Classical in
+/-- The descending quadrant's `frame_q`: `pp_twin_frame` at the `symDrPo`
+    external network.  The base is `PP` to `v0`, `DR` to `v0`'s `DR`-children
+    (forced), `PO` to `v0`'s `PO`-neighbours (free). -/
+theorem po_default_desc_frame {β : Type} (d : β → β → Bool)
+    (hsym : ∀ v w, d v w = d w v) (v0 : β) :
+    Frame (qnet
+      (fun e f => if e = f then eq else if d e f then dr else po)
+      (fun (_ : Unit) e => if e = v0 then pp
+        else (if v0 = e then eq else if d v0 e then dr else po))
+      (fun (_ : Unit) (_ : Unit) => eq)) :=
+  pp_twin_frame _ (symDrPo_frame d hsym) v0
+
 /-! ### The ∀DR-propagation fragment: tree-structural assembly (lift Step 2)
 
 The first fragment with genuine `∀`-firing certified end-to-end without
@@ -13973,6 +14086,8 @@ end VerticalWitness
 #print axioms mixKernelI_ok
 #print axioms mixKernels_ok
 #print axioms po_default_asc_frame
+#print axioms pp_twin_frame
+#print axioms po_default_desc_frame
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
