@@ -11071,6 +11071,137 @@ theorem mixKernelI_ok (hI : RCC5Interp I) (C0 : Concept)
     · exact Or.inr (Or.inl ⟨rfl, b, hb, hXb⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, hX⟩))
 
+/-- **THE FULL MULTI-KERNEL MERGE** (§25.4 step 2, general form): arbitrary
+    externals `g : β → α` (full `mty` labels) PLUS a family of kernels
+    `ck : κ → ℕ → α`, each with its own base `ik k`, period `pk k`, and
+    DIRECTION `dir k` (ascending `PP` / descending `PPI`).  Every edge read off
+    the model — `E` among externals, `K` each base↔external, `Q` between the
+    bases.  Generalizes both `mixKernel` (κ = Unit) and `vkernel2` (β = Empty),
+    with the cross-kernel field `kq_all` NON-vacuous. -/
+noncomputable def mixKernels (I : Interp α) (C0 : Concept) {β κ : Type}
+    (g : β → α) (ck : κ → Nat → α) (ik pk : κ → Nat) (dir : κ → Bool) :
+    MultiTier β κ where
+  E := fun e f => I.rho (g e) (g f)
+  K := fun k e => I.rho (ck k (ik k)) (g e)
+  Q := fun k k' => I.rho (ck k (ik k)) (ck k' (ik k'))
+  up := dir
+  tauE := fun e => mty C0 I (g e)
+  p := pk
+  phase := fun k a => mty C0 I (ck k (ik k + a))
+
+/-- **THE FULL MULTI-KERNEL MERGE IS VALID.**  Combines `mixKernel_ok`'s
+    external↔kernel handling (`ek_all`/`ke_all` via the per-kernel
+    stabilization `hstab`) with `vkernel2_ok`'s cross-kernel handling
+    (`kq_all` via the rectangle condition `hrectQ` — the cross-kernel relation
+    is constant across all phase-pairs).  `kk_pp`/`kk_ppi` branch on the
+    kernel's `dir` (ascending `segment_*` / descending `dsegment_*`).  Demands
+    are routed in the FULL `e_ex`/`k_ex` disjunction shape — `k_ex` now
+    including the cross-kernel disjunct (a phase demand served by ANOTHER
+    kernel).  Still C0-general (no `POFree` needed for soundness). -/
+theorem mixKernels_ok [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
+    {β : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (ik pk : κ → Nat) (dir : κ → Bool)
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
+    (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hstab : ∀ k e a,
+      I.rho (g e) (ck k (ik k + a)) = I.rho (g e) (ck k (ik k)))
+    (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (hinj : ∀ v w : β ⊕ κ,
+      Sum.elim g (fun k => ck k (ik k)) v
+        = Sum.elim g (fun k => ck k (ik k)) w → v = w)
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mty C0 I (g e) →
+      (∃ f, I.rho (g e) (g f) = r ∧ D ∈ mty C0 I (g f)) ∨
+      (∃ k, conv (I.rho (ck k (ik k)) (g e)) = r ∧
+        ∃ b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b))))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      (∃ f, I.rho (ck k (ik k)) (g f) = r ∧ D ∈ mty C0 I (g f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b))) ∨
+      (r = eq ∧ D ∈ mty C0 I (ck k (ik k + a))) ∨
+      (∃ k', k ≠ k' ∧ I.rho (ck k (ik k)) (ck k' (ik k')) = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mty C0 I (ck k' (ik k' + b)))) :
+    MultiTierOk (mixKernels I C0 g ck ik pk dir) := by
+  refine
+    { hp := hp
+      frame_q := readoff_qnet_frame hI g (fun k => ck k (ik k))
+        hgdom (fun k => hdom k (ik k)) hinj
+      e_clash := fun _ _ h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ _ _ h => mty_and h
+      e_or := fun _ _ _ h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ f _ _ hmem hEr => mty_all hmem (hgdom f) hEr
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := ?_
+      kk_ppi := ?_
+      kk_eq := fun k a _ E hE =>
+        mty_all hE (hdom k (ik k + a)) (hI.refl_eq (ck k (ik k + a)) (hdom k (ik k + a)))
+      kq_all := ?_
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all
+    intro e r X hmem k hr a _
+    apply mty_all hmem (hdom k (ik k + a))
+    rw [hstab k e a, hI.conv_ (ck k (ik k)) (g e) (hdom k (ik k)) (hgdom e)]
+    exact hr
+  · -- ke_all
+    intro k a _ r X hmem f hr
+    apply mty_all hmem (hgdom f)
+    rw [hI.conv_ (g f) (ck k (ik k + a)) (hgdom f) (hdom k (ik k + a)), hstab k f a,
+      ← hI.conv_ (g f) (ck k (ik k)) (hgdom f) (hdom k (ik k))]
+    exact hr
+  · -- kk_pp: `all pp` propagates in both directions (segment / dsegment)
+    intro k a ha E hE b hb
+    by_cases hd : dir k = true
+    · have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = pp := by
+        intro n; have h := hstep k n; rw [hd] at h; exact h
+      exact segment_kk_pp hI (fun n => hdom k n) hs (hty k) ha hE b hb
+    · have hd' : dir k = false := by
+        cases hh : dir k with
+        | false => rfl
+        | true => exact absurd hh hd
+      have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = ppi := by
+        intro n; have h := hstep k n; rw [hd'] at h; exact h
+      exact dsegment_kk_pp hI (fun n => hdom k n) hs (hty k) ha hE b hb
+  · -- kk_ppi: `all ppi` propagates in both directions
+    intro k a ha E hE b hb
+    by_cases hd : dir k = true
+    · have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = pp := by
+        intro n; have h := hstep k n; rw [hd] at h; exact h
+      exact segment_kk_ppi hI (fun n => hdom k n) hs (hty k) ha hE b hb
+    · have hd' : dir k = false := by
+        cases hh : dir k with
+        | false => rfl
+        | true => exact absurd hh hd
+      have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = ppi := by
+        intro n; have h := hstep k n; rw [hd'] at h; exact h
+      exact dsegment_kk_ppi hI (fun n => hdom k n) hs (hty k) ha hE b hb
+  · -- kq_all: cross-kernel `∀` fires through the constant cross-row `hrectQ`
+    intro k k' hkk a _ r c hmem hr b _
+    apply mty_all hmem (hdom k' (ik k' + b))
+    rw [hrectQ k k' hkk a b]
+    exact hr
+  · -- e_ex: horizontal child or into some kernel
+    intro e r X hmem
+    rcases he_ex e r X hmem with ⟨f, hEf, hXf⟩ | ⟨k, hK, b, hb, hXb⟩
+    · exact Or.inl ⟨f, hEf, hXf⟩
+    · exact Or.inr ⟨k, hK, b, hb, hXb⟩
+  · -- k_ex: external child / up own chain / reflexive / cross-kernel
+    intro k a _ r X hmem
+    rcases hk_ex k a r X hmem with ⟨f, hKf, hXf⟩ | ⟨hcd, b, hb, hXb⟩ |
+      ⟨rfl, hX⟩ | ⟨k', hne, hQ, b, hb, hXb⟩
+    · exact Or.inl ⟨f, hKf, hXf⟩
+    · exact Or.inr (Or.inl ⟨hcd, b, hb, hXb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hX⟩))
+    · exact Or.inr (Or.inr (Or.inr ⟨k', hne, hQ, b, hb, hXb⟩))
+
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
 noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
@@ -13714,6 +13845,7 @@ end VerticalWitness
 #print axioms vkernel2_ok
 #print axioms mixKernel_ok
 #print axioms mixKernelI_ok
+#print axioms mixKernels_ok
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
