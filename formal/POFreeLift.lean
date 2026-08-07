@@ -11144,6 +11144,61 @@ no cross-kernel `∃`: each kernel is `∃`-self-contained; a demand that
 crosses to the other kernel — `k_ex` disjunct 4 — is the next step, and
 the summit adds externals that spawn NEW kernels.) -/
 
+/-- **`mtk` propagation AT THE SAME BUDGET**: a `∀r.cc` at budget `b` lands its
+    argument `cc` at the SAME budget `b` in any `r`-neighbour — not `b-1`,
+    because `cc` is one modal level shallower than `∀r.cc`, so it fits the full
+    budget.  This is exactly what lets a kernel's `∀`-obligation cross to a
+    same-budget node (the attaching node and the tower phases), which is the
+    key to the `mtk`-truncated merge's `ek_all`/`ke_all`. -/
+theorem all_into {C0 : Concept} {x y : α} {b : Nat} {r : Atom} {cc : Concept}
+    (hmem : Concept.all r cc ∈ mtk C0 I x b) (hr : I.rho x y = r) (hy : I.dom y) :
+    cc ∈ mtk C0 I y b := by
+  obtain ⟨hmty, hb⟩ := mem_mtk.mp hmem
+  refine mem_mtk.mpr ⟨mty_all hmty hy hr, ?_⟩
+  have hlt : mdepth cc + 1 ≤ b := hb
+  omega
+
+open Classical in
+/-- **THE PO-DEFAULT KERNEL'S `ek_all`** (the wp89 depth-seam fix, formalized).
+    An external `e`'s `∀r.cc` fires into the kernel only through
+    `conv(K e) = if e=v0 then pp else po`.  `PO` edges are VACUOUS (no `∀PO` in
+    the `∀PO`-free closure); the one `PP` edge — from the attaching node `v0`,
+    which sits BELOW the tower (`ρ(g v0, phase) = pp`) — lands `cc` at the
+    phase's SAME budget via `all_into`.  So the phases stay `mtk`-truncated at
+    `v0`'s budget with no over-truncation. -/
+theorem podefault_ek {C0 : Concept} (hpofree : POFree C0) {β : Type}
+    (g : β → α) (v0 : β) (bud : β → Nat)
+    {phasept : α} (hpp : I.rho (g v0) phasept = pp) (hpdom : I.dom phasept)
+    {e : β} {r : Atom} {cc : Concept}
+    (hmem : Concept.all r cc ∈ mtk C0 I (g e) (bud e))
+    (hconv : (if e = v0 then pp else po) = r) :
+    cc ∈ mtk C0 I phasept (bud v0) := by
+  by_cases he : e = v0
+  · subst he; rw [if_pos rfl] at hconv; subst hconv
+    exact all_into hmem hpp hpdom
+  · rw [if_neg he] at hconv; subst hconv
+    exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+
+open Classical in
+/-- **THE PO-DEFAULT KERNEL'S `ke_all`** (the wp89 depth-seam fix, formalized).
+    A phase's `∀r.cc` fires at external `f` only through
+    `K f = if f=v0 then ppi else po`.  `PO` edges VACUOUS (no `∀PO`); the one
+    `PPI` edge — to `v0`, above which the phase sits (`ρ(phase, g v0) = ppi`) —
+    lands `cc` at `v0`'s SAME budget via `all_into`.  With PO-default `K` the
+    depth seam never bites: no forced far edge, so no deep universal reaches an
+    under-budget external. -/
+theorem podefault_ke {C0 : Concept} (hpofree : POFree C0) {β : Type}
+    (g : β → α) (v0 : β) (bud : β → Nat) (hv0dom : I.dom (g v0))
+    {x : α} (hppi : I.rho x (g v0) = ppi)
+    {r : Atom} {cc : Concept} (hmem : Concept.all r cc ∈ mtk C0 I x (bud v0))
+    {f : β} (hK : (if f = v0 then ppi else po) = r) :
+    cc ∈ mtk C0 I (g f) (bud f) := by
+  by_cases hf : f = v0
+  · subst hf; rw [if_pos rfl] at hK; subst hK
+    exact all_into hmem hppi hv0dom
+  · rw [if_neg hf] at hK; subst hK
+    exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -14088,6 +14143,9 @@ end VerticalWitness
 #print axioms po_default_asc_frame
 #print axioms pp_twin_frame
 #print axioms po_default_desc_frame
+#print axioms all_into
+#print axioms podefault_ek
+#print axioms podefault_ke
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
