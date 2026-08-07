@@ -1652,3 +1652,49 @@ vacuous by `mty_no_all_po`); (iii) `codesM` + `mix_hcompl` +
 `decidableSat_mix = decidableSat_of_codes`. The checker soundness
 (`mtAcceptB_sound`) is already generic over `nE`/`nK`, so only the
 COMPLETENESS side (the extraction above) is new.
+
+### 25.7 Progress (E7, 2026-08-06/07): the merge's coordination is proven
+
+The externals+kernels **soundness coordination** is now certified in three
+landed lemmas (all 0-sorry, axioms propext/Classical.choice/Quot.sound):
+
+- **`mixKernel_ok`** / **`mixKernelI_ok`** — arbitrary externals `g : β → α`
+  (full `mty` labels) + a SINGLE ascending / descending kernel. The
+  cross-fields `ek_all`/`ke_all` ride one stabilization `hstab` and are
+  DIRECTION-AGNOSTIC (never mention pp/ppi), so the descending mirror is
+  byte-identical.
+- **`mixKernels_ok`** — the FULL multi-kernel form: arbitrary externals + a
+  family of kernels `ck : κ → ℕ → α` with per-kernel `dir : κ → Bool`.
+  Generalizes both `mixKernel` (κ=Unit) and `vkernel2` (β=Empty). `kq_all`
+  NON-vacuous (cross-kernel ∀ via the rectangle `hrectQ`); `k_ex` with the
+  cross-kernel disjunct; `kk_pp`/`kk_ppi` branch on `dir k`
+  (`segment_*`/`dsegment_*`). This is exactly step-2's "merged `MultiTierOk`".
+
+KEY finding: all three are **C0-general** (no `POFree` hypothesis) — `ee_all`
+is pure `mty_all` (universal closure of `mty`). ∀PO-freeness is what makes the
+demand hypotheses (`he_ex`/`hk_ex`) SATISFIABLE in the extraction, not what the
+soundness needs.
+
+**The remaining crux — the `mtk`/`mty` finiteness seam.** These lemmas use
+UNIFORM full-`mty` externals, so `β` is arbitrary (not yet finite). The
+extraction needs FINITE `β`, which (per §25.6) comes from `mtk`-truncated
+externals (`mtk C0 I x k = (mty C0 I x).filter (mdepth · ≤ k)`, depth-bounded
+node set). Porting the merge to `mtk` externals splits cleanly:
+- `ek_all` (external `mtk`-∀ → kernel `mty`-phase): EASY — lift `mtk`→`mty` by
+  `mem_mtk`, then `mty_all` (kernel phases are full `mty`, no truncation).
+- `ke_all` (kernel `mty`-∀ → external `mtk`): the HARD seam — `mty_all` gives
+  `c ∈ mty(g f)`, but the truncated external needs `c ∈ mtk(g f) kᶠ`, i.e.
+  ALSO `mdepth c ≤ kᶠ`. This depth-accounting is the design's flagged "one
+  genuine open question" (§25.6). It is NOT resolved by `mixKernels_ok`.
+
+So E7 de-risks the COORDINATION (all cross-fields proven, both directions,
+multi-kernel, C0-general) but the FINITENESS bridge (`ke_all` depth-matching
+under `mtk` truncation) + the extraction remain. Two routes for the bridge:
+(a) `mtk` truncation — avoids horizontal uniformization but has the `ke_all`
+depth seam (the design's choice); (b) type-quotient externals — full `mty`
+(no depth seam) but reintroduces horizontal uniformization (W2′-horizontal,
+NOT obviously constructive, unlike the vertical round-robin). Route (a) is the
+plan; the `ke_all` depth obligation is the next thing to pin down.
+
+Commits: fe0c5be (`mixKernel_ok`), 4b43819 (`mixKernelI_ok`), 0db11e7
+(`mixKernels_ok`).
