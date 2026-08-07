@@ -12808,6 +12808,65 @@ theorem mixTower_accepted (i p : Nat) (hi : 0 < i) (hp : 0 < p)
     (fun _ => ⟨0, Subsingleton.elim _ _⟩)
   exact encodeMT_accepts _ hokR Cmix 0 cmix_at_root
 
+/-- The fixed mixed enumeration for `Cmix` (`nE = 2`, `nK = 1`): finitely
+    many candidate `FinMT` codes.  Contains the merged certificate's code. -/
+def codesMCmix : List (FinMT × Nat) :=
+  let labels := allListsLe (cl Cmix) (cl Cmix).length
+  let phaseCol := allListsLe (allListsLe labels labels.length) 1
+  (allListsLe labels 2).flatMap fun tauE =>
+    (allListsLe (allListsLe allAtoms 2) 2).flatMap fun E =>
+      (allListsLe (allListsLe allAtoms 2) 1).flatMap fun K =>
+        (allListsLe (allListsLe allAtoms 1) 1).flatMap fun Q =>
+          (allListsLe [true, false] 1).flatMap fun up =>
+            phaseCol.map fun phases => (⟨tauE, E, K, Q, up, phases⟩, 0)
+
+/-- The encoded merged certificate lies in `codesMCmix`. -/
+theorem mixCode_mem (i p : Nat)
+    (hpB : p ≤ (allListsLe (cl Cmix) (cl Cmix).length).length) :
+    (encodeMT (reindexMT (fun j : Fin 2 => decide (j = 1))
+      (fun _ : Fin 1 => (() : Unit)) (mixCert i p)), 0) ∈ codesMCmix := by
+  have hmap1 : ∀ {A : Type} (g : Fin 1 → A) (u : List A), g 0 ∈ u →
+      (List.finRange 1).map g ∈ allListsLe u 1 := by
+    intro A g u hg; rw [mem_allListsLe]
+    refine ⟨Nat.le_of_eq (by rw [List.length_map, List.length_finRange]), fun x hx => ?_⟩
+    obtain ⟨e, _, rfl⟩ := List.mem_map.mp hx; rw [Subsingleton.elim e 0]; exact hg
+  have hmap2 : ∀ {A : Type} (g : Fin 2 → A) (u : List A), g 0 ∈ u → g 1 ∈ u →
+      (List.finRange 2).map g ∈ allListsLe u 2 := by
+    intro A g u h0 h1; rw [mem_allListsLe]
+    refine ⟨Nat.le_of_eq (by rw [List.length_map, List.length_finRange]), fun x hx => ?_⟩
+    obtain ⟨e, _, rfl⟩ := List.mem_map.mp hx
+    rcases (show e = 0 ∨ e = 1 by omega) with rfl | rfl
+    · exact h0
+    · exact h1
+  have hlbl : ∀ x, mty Cmix Imix x ∈ allListsLe (cl Cmix) (cl Cmix).length := by
+    intro x; rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun y hy => by rw [mty] at hy; exact (List.mem_filter.mp hy).1⟩
+  have hbool : ∀ b : Bool, b ∈ [true, false] := by intro b; cases b <;> decide
+  simp only [codesMCmix, List.mem_flatMap, List.mem_map]
+  refine ⟨_, ?_, _, ?_, _, ?_, _, ?_, _, ?_, _, ?_, rfl⟩
+  · exact hmap2 _ _ (hlbl _) (hlbl _)
+  · exact hmap2 _ _ (hmap2 _ _ (mem_allAtoms _) (mem_allAtoms _))
+      (hmap2 _ _ (mem_allAtoms _) (mem_allAtoms _))
+  · exact hmap1 _ _ (hmap2 _ _ (mem_allAtoms _) (mem_allAtoms _))
+  · exact hmap1 _ _ (hmap1 _ _ (mem_allAtoms _))
+  · exact hmap1 _ _ (hbool _)
+  · refine hmap1 _ _ ?_
+    rw [mem_allListsLe]
+    refine ⟨by rw [List.length_map, List.length_range]; exact hpB, fun x hx => ?_⟩
+    obtain ⟨a, _, rfl⟩ := List.mem_map.mp hx; exact hlbl _
+
+/-- **`Cmix`'s satisfiability is DECIDABLE** — the FIRST mixing decidability:
+    the merged certificate's code, in the fixed `codesMCmix` enumeration and
+    accepted, drives `decidableSat_of_codes`.  A concept with BOTH a
+    horizontal `∃PO` and a vertical `∃PP` demand, decided. -/
+def decidableSat_Cmix : Decidable (Satisfiable Cmix) :=
+  decidableSat_of_codes Cmix codesMCmix (by
+    intro _
+    obtain ⟨i, p, hLi, hp, hpB, hty⟩ :=
+      mty_segment_bounded (I := Imix) Cmix (fun n => Sum.inl n) 1
+    exact ⟨_, mixCode_mem i p hpB, mixTower_accepted i p (by omega) hp hty⟩)
+
 /-- `Cvert` via the CLUSTER-GLUE `glueMTOk` of two independent vkernels
     (cross-`PO`) — demonstrating the assembly's combine-clusters step. -/
 theorem cvert_glue2 : Satisfiable Cvert := by
@@ -13526,5 +13585,6 @@ end VerticalWitness
 #print axioms VerticalWitness.mixRho_frame
 #print axioms VerticalWitness.mixCert_ok
 #print axioms VerticalWitness.mix_cert_satisfiable
+#print axioms VerticalWitness.decidableSat_Cmix
 
 end POFreeLift
