@@ -12645,14 +12645,14 @@ theorem cmix_demands : ∀ r D, Concept.ex r D ∈ cl Cmix →
 noncomputable def mixEltE : Bool → (Nat ⊕ Unit) :=
   fun b => if b then Sum.inr () else Sum.inl 0
 
-noncomputable def mixCert : MultiTier Bool Unit where
+noncomputable def mixCert (i p : Nat) : MultiTier Bool Unit where
   E := fun e f => Imix.rho (mixEltE e) (mixEltE f)
-  K := fun _ e => Imix.rho (Sum.inl 1) (mixEltE e)
-  Q := fun _ _ => Imix.rho (Sum.inl 1) (Sum.inl 1)
+  K := fun _ e => Imix.rho (Sum.inl i) (mixEltE e)
+  Q := fun _ _ => Imix.rho (Sum.inl i) (Sum.inl i)
   up := fun _ => true
   tauE := fun e => mty Cmix Imix (mixEltE e)
-  p := fun _ => 1
-  phase := fun _ a => mty Cmix Imix (Sum.inl (1 + a))
+  p := fun _ => p
+  phase := fun _ a => mty Cmix Imix (Sum.inl (i + a))
 
 /-- `nb` (the `PO`-node) satisfies NO existential of `Cmix` — it has no
     `PP`-successor and no `PO`-successor carrying `A₁`. -/
@@ -12668,6 +12668,117 @@ theorem nb_no_ex : ∀ r D, Concept.ex r D ∉ mty Cmix Imix (Sum.inr ()) := by
     rcases y with j | ⟨⟩
     · change po = pp at hr; exact absurd hr (by decide)
     · change eq = pp at hr; exact absurd hr (by decide)
+
+/-- `cl Cmix` has no `∀PPI` (its only `∀` is `∀PP.(∃PP.A₀)`) — so the
+    kernel's `ke_all` at the `PPI`-edge to the root is vacuous. -/
+theorem cmix_no_allppi : ∀ c, Concept.all ppi c ∉ cl Cmix := by
+  intro c hmem
+  have hb := List.all_eq_true.mp
+    (show (cl Cmix).all (fun F => match F with
+      | Concept.all ppi _ => false | _ => true) = true from by decide)
+    (Concept.all ppi c) hmem
+  simp at hb
+
+/-- **THE MIXED CERTIFICATE IS VALID.**  The first `MultiTierOk` with BOTH
+    non-trivial externals (root `inl 0` + `PO`-node `nb`) AND a kernel (the
+    `A₀`-tower).  `∃PO.A₁` served by `nb` (direct external, `E`/`K`), `∃PP.A₀`
+    by the kernel.  All `PO`-edges vacuous (`mty_no_all_po`); the recurrence
+    `hty` comes from `mty_segment_bounded`, so NO homogeneity bisimulation. -/
+theorem mixCert_ok (i p : Nat) (hi : 0 < i) (hp : 0 < p)
+    (hty : mty Cmix Imix (Sum.inl i) = mty Cmix Imix (Sum.inl (i + p))) :
+    MultiTierOk (mixCert i p) := by
+  have hI : RCC5Interp Imix := Imix_rcc5
+  have hdomI : ∀ n : Nat, Imix.dom (Sum.inl n) := fun _ => trivial
+  have hstepI : ∀ n : Nat, Imix.rho (Sum.inl n) (Sum.inl (n + 1)) = pp :=
+    fun n => chain_lt (Nat.lt_succ_self n)
+  have hKppi : Imix.rho (Sum.inl i) (Sum.inl 0) = ppi := chain_gt hi
+  have hx0pp : ∀ a, Imix.rho (Sum.inl 0) (Sum.inl (i + a)) = pp :=
+    fun a => chain_lt (by omega)
+  have hA0 : ∀ j, Concept.atom 0 ∈ mty Cmix Imix (Sum.inl j) :=
+    fun j => mem_mty.mpr ⟨by decide, rfl⟩
+  have hA1 : Concept.atom 1 ∈ mty Cmix Imix (Sum.inr ()) :=
+    mem_mty.mpr ⟨by decide, rfl⟩
+  have hinj : ∀ v w : Bool ⊕ Unit,
+      Sum.elim mixEltE (fun _ : Unit => Sum.inl i) v
+        = Sum.elim mixEltE (fun _ : Unit => Sum.inl i) w → v = w := by
+    rintro (b | ⟨⟩) (b' | ⟨⟩) h <;>
+      simp only [Sum.elim_inl, Sum.elim_inr, mixEltE] at h ⊢
+    · cases b <;> cases b' <;> simp_all
+    · cases b <;> simp_all <;> omega
+    · cases b' <;> simp_all <;> omega
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI mixEltE (fun _ : Unit => Sum.inl i)
+        (fun _ => trivial) (fun _ => trivial) hinj
+      e_clash := fun _ _ h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ _ _ h => mty_and h
+      e_or := fun _ _ _ h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := ?_
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun _ a ha E hE b hb =>
+        segment_kk_pp hI hdomI hstepI hty ha hE b hb
+      kk_ppi := fun _ a ha E hE b hb =>
+        segment_kk_ppi hI hdomI hstepI hty ha hE b hb
+      kk_eq := fun _ a _ E hE =>
+        mty_all hE trivial (hI.refl_eq (Sum.inl (i + a)) trivial)
+      kq_all := fun k k' hne => absurd rfl hne
+      e_ex := ?_
+      k_ex := ?_ }
+  · intro e f r c hmem hEr
+    cases e <;> cases f
+    · subst hEr; exact mty_all hmem trivial (hI.refl_eq _ trivial)
+    · subst hEr; exact absurd hmem (mty_no_all_po Cmix_pofree)
+    · subst hEr; exact absurd hmem (mty_no_all_po Cmix_pofree)
+    · subst hEr; exact mty_all hmem trivial (hI.refl_eq _ trivial)
+  · intro e r c hmem k hK a _
+    cases e
+    · rw [show (mixCert i p).K k false = ppi from hKppi,
+        show conv ppi = pp from rfl] at hK
+      subst hK; exact mty_all hmem trivial (hx0pp a)
+    · subst hK; exact absurd hmem (mty_no_all_po Cmix_pofree)
+  · intro k a _ r c hmem f hK
+    cases f
+    · rw [show (mixCert i p).K k false = ppi from hKppi] at hK
+      subst hK; exact absurd (mty_sub _ hmem) (cmix_no_allppi c)
+    · subst hK; exact absurd hmem (mty_no_all_po Cmix_pofree)
+  · intro e r c hmem
+    cases e
+    · rcases cmix_demands r c (mty_sub _ hmem) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+      · exact Or.inl ⟨true, rfl, hA1⟩
+      · refine Or.inr ⟨(), ?_, 0, hp, hA0 i⟩
+        rw [show (mixCert i p).K () false = ppi from hKppi, show conv ppi = pp from rfl]
+    · exact absurd hmem (nb_no_ex r c)
+  · intro k a _ r c hmem
+    rcases cmix_demands r c (mty_sub _ hmem) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · exact Or.inl ⟨true, rfl, hA1⟩
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp, hA0 i⟩)
+
+/-- **`Cmix` is satisfiable THROUGH the mixed certificate** — the first
+    end-to-end mixing result: `mty_segment_bounded` supplies the tower
+    recurrence `hty`, `mixCert_ok` validates the merged (externals+kernel)
+    certificate, and `multiTier_sound` reads off a model with `Cmix` at the
+    root.  The `∀PO`-free mixing quadrant's certificate machinery, closed. -/
+theorem mix_cert_satisfiable : Satisfiable Cmix := by
+  obtain ⟨i, p, hLi, hp, _, hty⟩ :=
+    mty_segment_bounded (I := Imix) Cmix (fun n => Sum.inl n) 1
+  have hok := mixCert_ok i p (by omega) hp hty
+  refine multiTier_sound (mixCert i p) hok (Sum.inl false) Cmix ?_
+  show Cmix ∈ mty Cmix Imix (Sum.inl 0)
+  have hA : ∀ j, sat Imix (Sum.inl j) (Concept.atom 0) := fun _ => rfl
+  have hB : sat Imix (Sum.inr ()) (Concept.atom 1) := rfl
+  have hePP : ∀ j, sat Imix (Sum.inl j) (Concept.ex pp (Concept.atom 0)) :=
+    fun j => ⟨Sum.inl (j + 1), trivial, chain_lt (Nat.lt_succ_self j), hA (j + 1)⟩
+  refine mem_mty.mpr ⟨cl_self Cmix,
+    ⟨⟨⟨hA 0, ⟨Sum.inr (), trivial, rfl, hB⟩⟩, hePP 0⟩, ?_⟩⟩
+  rintro (j | ⟨⟩) _ hr
+  · exact hePP j
+  · change po = pp at hr; exact absurd hr (by decide)
 
 /-- `Cvert` via the CLUSTER-GLUE `glueMTOk` of two independent vkernels
     (cross-`PO`) — demonstrating the assembly's combine-clusters step. -/
@@ -13385,5 +13496,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cdesc_satisfiable
 #print axioms VerticalWitness.cmix_satisfiable
 #print axioms VerticalWitness.mixRho_frame
+#print axioms VerticalWitness.mixCert_ok
+#print axioms VerticalWitness.mix_cert_satisfiable
 
 end POFreeLift
