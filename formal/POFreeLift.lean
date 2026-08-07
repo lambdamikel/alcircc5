@@ -10905,6 +10905,95 @@ no cross-kernel `∃`: each kernel is `∃`-self-contained; a demand that
 crosses to the other kernel — `k_ex` disjunct 4 — is the next step, and
 the summit adds externals that spawn NEW kernels.) -/
 
+/-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
+    `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
+    (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
+    edge value is read off the model — `E` among externals, `K` external↔base,
+    `Q` the (diagonal) base.  This is the externals-with-kernel shape that
+    complements `vkernel2`'s kernels-only shape. -/
+noncomputable def mixKernel (I : Interp α) (C0 : Concept) {β : Type}
+    (g : β → α) (c : Nat → α) (i p : Nat) : MultiTier β Unit where
+  E := fun e f => I.rho (g e) (g f)
+  K := fun _ e => I.rho (c i) (g e)
+  Q := fun _ _ => I.rho (c i) (c i)
+  up := fun _ => true
+  tauE := fun e => mty C0 I (g e)
+  p := fun _ => p
+  phase := fun _ a => mty C0 I (c (i + a))
+
+/-- **THE MERGED CERTIFICATE IS VALID** — the crux merge of `mtHF_ok`'s
+    external handling and `vkernel1G_ok`'s kernel handling.  `ee_all` is pure
+    `mty_all` (universal closure of `mty`, so C0-general — no `POFree` needed
+    here; ∀PO-freeness is what makes the demand hypotheses SATISFIABLE in the
+    extraction, not what the soundness needs).  The cross-fields
+    `ek_all`/`ke_all` ride the external↔chain STABILIZATION `hstab` (each
+    external's relation to the chain is phase-independent — the "all-phase"
+    condition the extraction guarantees by late picking); `kq_all` is vacuous
+    (single kernel).  Demands are routed in the `e_ex`/`k_ex` disjunction
+    shape via the hypotheses `he_ex`/`hk_ex`. -/
+theorem mixKernel_ok (hI : RCC5Interp I) (C0 : Concept)
+    {β : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (i p : Nat) (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hstab : ∀ e a, I.rho (g e) (c (i + a)) = I.rho (g e) (c i))
+    (hinj : ∀ v w : β ⊕ Unit,
+      Sum.elim g (fun _ : Unit => c i) v
+        = Sum.elim g (fun _ : Unit => c i) w → v = w)
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mty C0 I (g e) →
+      (∃ f, I.rho (g e) (g f) = r ∧ D ∈ mty C0 I (g f)) ∨
+      (conv (I.rho (c i) (g e)) = r ∧ ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))))
+    (hk_ex : ∀ a r D, Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      (∃ f, I.rho (c i) (g f) = r ∧ D ∈ mty C0 I (g f)) ∨
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) ∨
+      (r = eq ∧ D ∈ mty C0 I (c (i + a)))) :
+    MultiTierOk (mixKernel I C0 g c i p) := by
+  refine
+    { hp := fun _ => hp
+      frame_q := readoff_qnet_frame hI g (fun _ : Unit => c i)
+        hgdom (fun _ => hdom i) hinj
+      e_clash := fun _ _ h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ _ _ h => mty_and h
+      e_or := fun _ _ _ h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ f _ _ hmem hEr => mty_all hmem (hgdom f) hEr
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun _ a ha E hE b hb => segment_kk_pp hI hdom hstep hty ha hE b hb
+      kk_ppi := fun _ a ha E hE b hb => segment_kk_ppi hI hdom hstep hty ha hE b hb
+      kk_eq := fun _ a _ E hE =>
+        mty_all hE (hdom (i + a)) (hI.refl_eq (c (i + a)) (hdom (i + a)))
+      kq_all := fun _ _ hne => absurd rfl hne
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all: external `∀r.X`, `conv(K k e) = r` ⟹ every phase, via `hstab`
+    intro e r X hmem k hr a _
+    apply mty_all hmem (hdom (i + a))
+    rw [hstab e a, hI.conv_ (c i) (g e) (hdom i) (hgdom e)]
+    exact hr
+  · -- ke_all: phase `∀r.X`, `K k f = r` ⟹ external `f`, via `hstab`
+    intro k a _ r X hmem f hr
+    apply mty_all hmem (hgdom f)
+    rw [hI.conv_ (g f) (c (i + a)) (hgdom f) (hdom (i + a)), hstab f a,
+      ← hI.conv_ (g f) (c i) (hgdom f) (hdom i)]
+    exact hr
+  · -- e_ex: horizontal child (external) or into the kernel
+    intro e r X hmem
+    rcases he_ex e r X hmem with ⟨f, hEf, hXf⟩ | ⟨hK, b, hb, hXb⟩
+    · exact Or.inl ⟨f, hEf, hXf⟩
+    · exact Or.inr ⟨(), hK, b, hb, hXb⟩
+  · -- k_ex: external child, up the chain (`cdir true = pp`), or reflexive `eq`
+    intro k a _ r X hmem
+    rcases hk_ex a r X hmem with ⟨f, hKf, hXf⟩ | ⟨rfl, b, hb, hXb⟩ | ⟨rfl, hX⟩
+    · exact Or.inl ⟨f, hKf, hXf⟩
+    · exact Or.inr (Or.inl ⟨rfl, b, hb, hXb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hX⟩))
+
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
 noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
@@ -13546,6 +13635,7 @@ end VerticalWitness
 #print axioms vkernel1_ok
 #print axioms VerticalWitness.cvert_satisfiable_ext
 #print axioms vkernel2_ok
+#print axioms mixKernel_ok
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
