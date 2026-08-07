@@ -9425,6 +9425,76 @@ theorem mtkNodes_covers (root : MTKNode I C0) :
     mtkNodes_trans root m hm _ (mtkWitness_mem m hF),
     mtkWitness_rho m hF, mtkWitness_arg m hF⟩
 
+/-- **THE HORIZONTAL-ONLY COVERAGE NODE SET** (step 4): like `mtkNodes` but the
+    recursion STOPS at `∃PP`/`∃PPI` demands — those attach a kernel (the tree
+    frame has no `PP`/`PPI` edges), only `∃DR`/`∃PO`/`∃EQ` spawn horizontal
+    children.  So `mtkNodesH` is the horizontal skeleton; the vertical demands
+    are the kernel's job. -/
+noncomputable def mtkNodesH (n : MTKNode I C0) : List (MTKNode I C0) :=
+  n :: (mtk C0 I n.x n.k).attach.flatMap
+    (fun p => match p with
+      | ⟨.ex r c, hF⟩ =>
+        if r = pp ∨ r = ppi then [] else mtkNodesH (mtkWitness n hF)
+      | _ => [])
+termination_by n.k
+decreasing_by exact mtkWitness_k_lt n hF
+
+theorem self_mem_mtkNodesH (n : MTKNode I C0) : n ∈ mtkNodesH n := by
+  rw [mtkNodesH]; exact List.mem_cons_self
+
+theorem sub_mtkNodesH_witness (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) (hv : ¬ (r = pp ∨ r = ppi)) :
+    ∀ m ∈ mtkNodesH (mtkWitness n hF), m ∈ mtkNodesH n := by
+  intro m hm
+  rw [mtkNodesH]
+  refine List.mem_cons_of_mem _ (List.mem_flatMap.mpr
+    ⟨⟨Concept.ex r c, hF⟩, List.mem_attach _ _, ?_⟩)
+  show m ∈ (if r = pp ∨ r = ppi then ([] : List (MTKNode I C0))
+    else mtkNodesH (mtkWitness n hF))
+  rw [if_neg hv]; exact hm
+
+theorem mtkWitnessH_mem (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) (hv : ¬ (r = pp ∨ r = ppi)) :
+    mtkWitness n hF ∈ mtkNodesH n :=
+  sub_mtkNodesH_witness n hF hv _ (self_mem_mtkNodesH _)
+
+theorem mtkNodesH_trans (n : MTKNode I C0) :
+    ∀ m ∈ mtkNodesH n, ∀ k ∈ mtkNodesH m, k ∈ mtkNodesH n := by
+  induction n using mtkNodesH.induct with
+  | _ x ih =>
+    intro m hm k hk
+    rw [mtkNodesH] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact hk
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        have hmm2 : m ∈ (if r = pp ∨ r = ppi then ([] : List (MTKNode I C0))
+            else mtkNodesH (mtkWitness x hF)) := hmm
+        by_cases hv : r = pp ∨ r = ppi
+        · rw [if_pos hv] at hmm2; exact absurd hmm2 List.not_mem_nil
+        · rw [if_neg hv] at hmm2
+          exact sub_mtkNodesH_witness x hF hv k (ih r c hF m hmm2 k hk)
+      | top => exact absurd hmm List.not_mem_nil
+      | bot => exact absurd hmm List.not_mem_nil
+      | atom a => exact absurd hmm List.not_mem_nil
+      | natom a => exact absurd hmm List.not_mem_nil
+      | and a b => exact absurd hmm List.not_mem_nil
+      | or a b => exact absurd hmm List.not_mem_nil
+      | all r c => exact absurd hmm List.not_mem_nil
+
+/-- HORIZONTAL COVERAGE: every NON-vertical demand (`∃DR`/`∃PO`/`∃EQ`) at any
+    reachable node is fulfilled by a reachable node. -/
+theorem mtkNodesH_covers (root : MTKNode I C0) :
+    ∀ m ∈ mtkNodesH root, ∀ (r : Atom) (c : Concept),
+      Concept.ex r c ∈ mtk C0 I m.x m.k → ¬ (r = pp ∨ r = ppi) →
+      ∃ m' ∈ mtkNodesH root,
+        I.rho m.x m'.x = r ∧ c ∈ mtk C0 I m'.x m'.k := by
+  intro m hm r c hF hv
+  exact ⟨mtkWitness m hF,
+    mtkNodesH_trans root m hm _ (mtkWitnessH_mem m hF hv),
+    mtkWitness_rho m hF, mtkWitness_arg m hF⟩
+
 /-- A computable size bound: `mtkBound C0 k = 1 + |cl C0|·(previous)`,
     i.e. `(|cl C0|+1)^k` unrolled — bounds `|mtkNodes n|` at budget `k`. -/
 def mtkBound (C0 : Concept) : Nat → Nat
@@ -14307,6 +14377,7 @@ end VerticalWitness
 #print axioms mtk_kk_pp
 #print axioms mtkKernel_ok
 #print axioms mtk_ee_all
+#print axioms mtkNodesH_covers
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
