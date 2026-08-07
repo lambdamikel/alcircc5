@@ -41,13 +41,24 @@ facts in front of you that you can honestly say ``yes, I believe
 that.''
 
 \smallskip
-\textbf{Honesty note, up front:} the fragment theorem is
-\textbf{theorem-level, not end-to-end machine-certified}. Its soundness
-crux is kernel-checked in Lean~4 (\code{formal/POFreeLift.lean}, zero
-sorries), its algebraic ingredients are exhaustively machine-checked,
-and two independent argument routes arrive at it --- but the full
-assembly has not been formalized, and the project's standing label
-applies: strongly supported, not certified.}}
+\textbf{Honesty note (updated 2026-08-06):} the fragment is now
+\textbf{certified decidable across three of its four quadrants} --- genuine
+\emph{computable} \code{Decidable (Satisfiable C0)} in Lean~4
+(\code{formal/POFreeLift.lean}, ${\sim}13{,}600$ lines, \textbf{zero
+sorries}) for horizontal ($\exists\DR/\PO/\EQ$), ascending-vertical
+($\exists\PP$), and descending-vertical ($\exists\PPI$) concepts, each
+non-vacuously witnessed. The fourth quadrant (mixing,
+$\exists\PO + \exists\PP$) has its merged certificate, its encoding, and a
+complete decision certified on a concrete witness; the \emph{general}
+mixed extraction is the one remaining formalization. The keystone is a
+\emph{constructive} uniformization (\code{rr\_covers}) --- the vertical
+``W2$'$'' is a kernel-checked theorem, not an oracle, because removing
+$\forall\PO$ lets the cross-relations coordinate for free. These fragment
+theorems are \textbf{unreviewed}, and the \emph{full-logic} decidability
+(F6) stays \textbf{open} --- forced by $\forall\PO$, which the fragment
+removes. This supersedes the 2026-07-22 ``strongly supported, not
+certified'' status for the three general quadrants; see \code{LEAN.md} and
+\code{ASSEMBLY\_DESIGN.md} \S\S24--25.}}
 \end{center}
 
 \section{The claim}\label{sec:claim}
