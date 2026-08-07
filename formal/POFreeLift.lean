@@ -9664,6 +9664,43 @@ theorem mtHF_ok (hI : RCC5Interp I) (hfrag : HFrag C0)
       rw [if_pos rfl]
   k_ex := fun k => k.elim
 
+open Classical in
+/-- **`ee_all` for the `mtHF` skeleton, generalized to `POFree`** (step 4 — the
+    reusable horizontal handling of the `mtk`-with-kernels extraction).  Same
+    proof as `mtHF_ok`'s `ee_all` (`EQ` diagonal reflexive, `DR` forward/reverse
+    firing, `PP`/`PPI` never on the tree-structural frame), but the `PO`-edge
+    vacuity uses `pofree_cl_all` (no `∀PO` in the `POFree` closure) instead of
+    `HFrag`.  This is exactly `mtkKernel_ok`'s `hee` hypothesis when the cert's
+    externals are the `mtHF` nodes (`g = ·.val.x`, `bud = ·.val.k`,
+    `dadj = dadjBK`). -/
+theorem mtk_ee_all (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    (root : MTKNode I C0) (e f : {n // n ∈ mtkNodes root}) (r : Atom)
+    (c : Concept) (hall : Concept.all r c ∈ mtk C0 I e.val.x e.val.k)
+    (hEf : (if e = f then eq else if dadjBK hI root e f then dr else po) = r) :
+    c ∈ mtk C0 I f.val.x f.val.k := by
+  by_cases hef : e = f
+  · subst hef
+    rw [if_pos rfl] at hEf
+    subst hEf
+    exact mtk_all_eq hI hall e.val.hx
+  · rw [if_neg hef] at hEf
+    by_cases hd : dadjBK hI root e f = true
+    · -- `DR` edge
+      have hrdr : dr = r := (if_pos hd).symm.trans hEf
+      subst hrdr
+      have hall' : Concept.all dr c ∈ mtk C0 I e.val.x e.val.k := hall
+      rcases of_decide_eq_true hd with ⟨_, hF, hchild⟩ | ⟨_, hF, hchild⟩
+      · show c ∈ mtk C0 I f.val.x f.val.k
+        rw [← hchild]
+        exact mtk_all_fwd hall' (mtkWitness e.val hF).hx (mtkWitness_rho e.val hF)
+      · show c ∈ mtk C0 I f.val.x f.val.k
+        rw [← hchild] at hall'
+        exact mtk_all_dr_rev hI hall' f.val.hx (mtkWitness f.val hF).hx
+          (mtkWitness_rho f.val hF)
+    · -- `PO` edge: `∀PO`-free, vacuous
+      have hrpo : po = r := (if_neg hd).symm.trans hEf
+      exact absurd hrpo.symm (pofree_cl_all C0 hpofree r c (mtk_sub_cl _ hall))
+
 /-- THE HORIZONTAL-FRAGMENT EXTRACTION: every satisfiable `HFrag` concept
     has a valid finite multi-tier certificate carrying it. -/
 theorem extract_hfrag (C0 : Concept) (hfrag : HFrag C0)
@@ -14269,6 +14306,7 @@ end VerticalWitness
 #print axioms podefault_ke
 #print axioms mtk_kk_pp
 #print axioms mtkKernel_ok
+#print axioms mtk_ee_all
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
