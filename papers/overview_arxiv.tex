@@ -1493,35 +1493,114 @@ how the certification was subsequently carried through to the decision
 procedure itself.
 
 \paragraph{Certified as a decision procedure (2026-08-06).} The certification
-has since been carried through to the decision itself. In
+has since been carried through to the decision itself: in
 \texttt{formal/POFreeLift.lean} (${\sim}13{,}600$ lines, zero \code{sorry};
 axioms \texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}, the
 choice confined to erased termination proofs, so the procedure is genuinely
 computable) a \code{Decidable} instance for satisfiability of $C_0$ is now
-machine-checked for the fragment's three \emph{pure} quadrants---the
-\emph{horizontal} concepts ($\exists\DR$, $\exists\PO$, $\exists\EQ$), the
-\emph{ascending-vertical} concepts ($\exists\PP$), and the
-\emph{descending-vertical} concepts ($\exists\PPI$)---each generally, and each
-with a non-vacuous satisfiable witness. For the \emph{mixed} quadrant
-($\exists\PO$ together with $\exists\PP$) the merged Hintikka certificate
-(\code{mixCert\_ok}, the first that carries \emph{both} external neighbours
-\emph{and} a recurrent kernel), its finite G\"odel encoding, and a complete
-decision are machine-checked on a witness (\code{decidableSat\_Cmix}); the
-\emph{general} mixed extraction is the one remaining---scoped, not
-open---formalization. The intellectual crux is a \emph{constructive
-uniformization} (\code{rr\_covers}): a single recurrent kernel serves every
-$\exists\PP$ demand in round-robin over the recurrent period, so the auxiliary
-property~W2$'$---feared as an oracle in the full-logic setting---is here a
-kernel-checked \emph{theorem}. It is provable for exactly the reason the
-fragment is defined: with no $\forall\PO$ obligation anywhere in the closure
-(\code{mty\_no\_all\_po}), the horizontal edges the kernel emits are
-unconstrained, so the cross-relations coordinate for free. None of this bears
-on the full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment
-removes---and these fragment theorems are as yet \emph{unreviewed}.
+machine-checked---\emph{generally} for the fragment's three \emph{pure}
+quadrants (horizontal, ascending-vertical, descending-vertical) and on a
+witness for the \emph{mixed} quadrant.
+Section~\ref{ssec:pofree-quadrants} gives the construction: the finite
+certificate, the four quadrants, and the constructive round-robin
+uniformization (\code{rr\_covers}) that turns the full logic's open
+``W2$'$'' oracle into a kernel-checked theorem once $\forall\PO$ is removed.
+These fragment theorems are as yet \emph{unreviewed}, and none of it bears on
+the full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment
+removes.
 
 \paragraph{Lesson.} Finiteness is the wrong target: models are
 legitimately infinite (unbounded $\PP$-towers are satisfiable). The right
 target is a finite \emph{presentation} of a possibly-infinite model.
+
+\subsection{The $\forall\PO$-free fragment, certified: four quadrants and a
+round-robin kernel}
+\label{ssec:pofree-quadrants}
+
+This subsection describes the construction behind
+Theorem~\ref{thm:pofree}'s certified \code{Decidable} instance: what the finite
+certificate is, how each kind of concept is discharged, and the one genuinely
+new device that makes it go through. It is deliberately concrete, because the
+point of the fragment is that here the full logic's open live-width keystone
+F6 is replaced by an explicit construction rather than remaining a conjecture.
+
+\paragraph{The certificate, and the decision loop.} A certificate is a
+\emph{multi-tier} object (\code{MultiTier}): finitely many \emph{external}
+neighbour-types together with finitely many recurrent \emph{kernels}---chain
+generators, read as ``the pattern continues like this'' and unfolded into
+infinitely many distinct elements, never bent into a finite quotient. Each is
+decorated with Hintikka bookkeeping: which existential demand each node
+discharges, which universal obligations propagate along which edges, and a
+declared RCC5 value for every relevant pair, required composition-closed. A
+total Boolean checker \code{mtAcceptB} accepts a certificate exactly when all
+of this holds, and acceptance is \emph{sound}---a passing certificate unfolds,
+through a Hintikka labelling and truth lemma, to a genuine RCC5 model of $C_0$
+(\code{mtAcceptB\_sound}). Certificates are finite list data with a total
+G\"odel decoder (\code{FinMT}), so the decision procedure is immediate
+(\code{decidableSat\_of\_codes}): enumerate the finitely many codes a concept
+admits, run the checker, answer \textsc{sat} iff one passes. All the
+mathematics is in emitting the right code for a satisfiable concept; the
+algorithm itself is a bounded for-loop.
+
+\paragraph{Four quadrants.} A $\forall\PO$-free concept's existential demands
+fall into four combinations, each with its own certificate shape:
+\begin{itemize}
+  \item \emph{Horizontal} ($\exists\DR$, $\exists\PO$, $\exists\EQ$ only): a
+    node's label is its model type \emph{truncated at the concept's modal
+    depth} (\code{mtk}). The frame is universally closed in both directions
+    (disjointness is self-converse, so a $\forall\DR$ obligation propagates
+    identically each way), and depth-truncation terminates the recursion, so
+    finitely many labels exhaust the demands (\code{decidableSat\_hfrag}). No
+    kernel is needed---the horizontal world is bounded outright.
+  \item \emph{Ascending vertical} ($\exists\PP$): a single recurrent kernel
+    generating one $\PP$-chain. Along any ascending chain the Hintikka type
+    recurs with a \emph{bounded period} (an infinite-pigeonhole segment
+    lemma, \code{mty\_segment\_bounded}); that period \emph{is} the kernel
+    (\code{decidableSat\_vtower}).
+  \item \emph{Descending vertical} ($\exists\PPI$): the exact dual. The
+    certificate carries the chain's direction as a single bit, so the whole
+    encoding and decision side is direction-agnostic and the ascending
+    development transports verbatim (\code{decidableSat\_vtowerRRI}).
+  \item \emph{Mixed} ($\exists\PO$ \emph{and} $\exists\PP$): the merged
+    certificate \code{mixCert\_ok}---the first that carries \emph{both}
+    non-trivial externals \emph{and} a kernel. Each $\exists\PO$ demand is
+    served by a direct external neighbour, each $\exists\PP$ demand by the
+    kernel, and every cross-obligation living on a $\PO$-edge is \emph{vacuous},
+    because no $\forall\PO$ clause occurs anywhere in the fragment's closure
+    (\code{mty\_no\_all\_po}). Its encoding and a complete decision are
+    certified on a concrete witness (\code{decidableSat\_Cmix}).
+\end{itemize}
+
+\paragraph{The keystone: a constructive uniformization.} One recurrent kernel
+must often serve \emph{several} distinct $\exists\PP$ demands at once, and on
+the full logic this is exactly the feared uniformization property W2$'$: can a
+single repeating interface discharge every demand without two of them colliding
+on a horizontal edge? In the fragment the answer is \emph{constructive}. The
+kernel serves the demands in \emph{round-robin} over its recurrent period---at
+period position $n$ it discharges the $n$-th demand, drawing the witness from
+whatever phase carries it---so across one full period \emph{every} demand is
+met (\code{rr\_covers}). This turns W2$'$ from an oracle into a kernel-checked
+theorem, and it works for one precise reason: with $\forall\PO$ absent, the
+horizontal edges the kernel emits at successive steps are \emph{unconstrained},
+so the phases never conflict and the round-robin schedule is always realizable.
+That is the exact sense in which removing $\forall\PO$ lets the cross-relations
+coordinate for free.
+
+\paragraph{Why the boundary is exactly here, and the honest labels.} The
+construction stops precisely at $\forall\PO$-freeness because F6---the full
+logic's open live-width keystone---is \emph{forced by} $\forall\PO$: it is a
+$\forall\PO$ obligation that can watch a kernel's emitted horizontal edges and
+so demand a bounded, coordinated interface across phases. Remove that one
+constructor and the coordination F6 abstracts becomes free, which is what every
+device above cashes in. Scope, stated exactly: the three \emph{pure} quadrants
+are certified \emph{generally}, each with a non-vacuous satisfiable witness
+(\code{Cvert}, \code{Ccar}, \code{Calt}, \code{Clin}, \code{Cdesc}); the
+\emph{mixed} quadrant's certificate, encoding, and decision are certified on a
+witness, with the \emph{general} mixed extraction---an \code{mtk}-with-kernels
+construction---the one remaining formalization (scoped, not open). And, as with
+every result in this project that a cold reviewer has not yet seen, these
+fragment theorems are \emph{unreviewed}: the standing ledger presumption
+(\S\ref{sec:agentic}) applies to them in full.
 
 \subsection{The split-forest idea}
 \label{ssec:approach-splitforest}
