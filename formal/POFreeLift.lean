@@ -12780,6 +12780,34 @@ theorem mix_cert_satisfiable : Satisfiable Cmix := by
   · exact hePP j
   · change po = pp at hr; exact absurd hr (by decide)
 
+/-- `Cmix` holds at the tower root `inl 0` (the merged certificate's root
+    external). -/
+theorem cmix_at_root : Cmix ∈ mty Cmix Imix (Sum.inl 0) := by
+  have hA : ∀ j, sat Imix (Sum.inl j) (Concept.atom 0) := fun _ => rfl
+  have hB : sat Imix (Sum.inr ()) (Concept.atom 1) := rfl
+  have hePP : ∀ j, sat Imix (Sum.inl j) (Concept.ex pp (Concept.atom 0)) :=
+    fun j => ⟨Sum.inl (j + 1), trivial, chain_lt (Nat.lt_succ_self j), hA (j + 1)⟩
+  refine mem_mty.mpr ⟨cl_self Cmix,
+    ⟨⟨⟨hA 0, ⟨Sum.inr (), trivial, rfl, hB⟩⟩, hePP 0⟩, ?_⟩⟩
+  rintro (j | ⟨⟩) _ hr
+  · exact hePP j
+  · change po = pp at hr; exact absurd hr (by decide)
+
+/-- The merged certificate, encoded as a `FinMT` (`nE = 2`, `nK = 1`) and
+    ACCEPTED at the root — the encoding side of the mixed decision
+    procedure.  `Bool ↔ Fin 2` / `Unit ↔ Fin 1` bijections are `by decide`. -/
+theorem mixTower_accepted (i p : Nat) (hi : 0 < i) (hp : 0 < p)
+    (hty : mty Cmix Imix (Sum.inl i) = mty Cmix Imix (Sum.inl (i + p))) :
+    (encodeMT (reindexMT (fun j : Fin 2 => decide (j = 1))
+      (fun _ : Fin 1 => (() : Unit)) (mixCert i p))).mtAcceptB 0 Cmix = true := by
+  have hok := mixCert_ok i p hi hp hty
+  have hokR := reindexMT_ok (fun j : Fin 2 => decide (j = 1))
+    (fun _ : Fin 1 => (() : Unit)) (mixCert i p) hok
+    (by decide) (by decide)
+    (fun k k' _ => Subsingleton.elim k k')
+    (fun _ => ⟨0, Subsingleton.elim _ _⟩)
+  exact encodeMT_accepts _ hokR Cmix 0 cmix_at_root
+
 /-- `Cvert` via the CLUSTER-GLUE `glueMTOk` of two independent vkernels
     (cross-`PO`) — demonstrating the assembly's combine-clusters step. -/
 theorem cvert_glue2 : Satisfiable Cvert := by
