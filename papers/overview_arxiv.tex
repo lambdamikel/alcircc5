@@ -360,7 +360,9 @@ representation---\S\ref{sec:conclusion}.)
   \item the $\forall\PO$-free fragment is \emph{decidable}---concepts
     with no $\forall\PO$ subformula, still retaining $\exists\PO$,
     $\forall\DR$, $\exists\DR$, and all vertical modalities, so a
-    genuinely expressive spatial fragment;
+    genuinely expressive spatial fragment (its decision procedure now
+    machine-checked in Lean for the three pure quadrants and the mixed case
+    on a witness; Theorem~\ref{thm:pofree});
   \item the RCC5 normal form above (both directions certified);
   \item a working, empirically validated \emph{prototype reasoner} (the
     cover-tree tableau; no completeness theorem is claimed): cross-validated
@@ -397,11 +399,14 @@ them is the single easiest way to misread the project.
 \midrule
 \emph{Lean-certified} & certificate soundness; finite-\emph{type} Hintikka
 faithfulness; the full (both-direction) ordered--disjoint normal form; the
-$\forall\PO$-free lift core & kernel-checked theorem names with a stated
+$\forall\PO$-free lift core \emph{and its decision procedure} for the three
+pure quadrants ($\exists\DR/\PO/\EQ$, $\exists\PP$, $\exists\PPI$) plus the
+mixed-case decision on a witness & kernel-checked theorem names with a stated
 axiom footprint\\
 \addlinespace
-\emph{Theorem-level} (not end-to-end certified) & $\forall\PO$-free
-decidability and its bound; the identity-selector characterization; the
+\emph{Theorem-level} (not end-to-end certified) & the $\forall\PO$-free
+fragment's specific $K(C_0)$ closed-form bound and its \emph{general}
+mixed-quadrant extraction; the identity-selector characterization; the
 W2$'$ refinement; the local extension / cross-policy results & a proof in a
 named work package, often with finite probes\\
 \addlinespace
@@ -513,8 +518,8 @@ the whole difficulty.
 Of the sixteen compositions of proper (non-$\EQ$) relations, exactly four
 are \emph{determining} (return a singleton):
 \[
-\comp(\DR,\PPI)=\{\DR\},\;\; \comp(\PP,\DR)=\{\DR\},\;\;
-\comp(\PP,\PP)=\{\PP\},\;\; \comp(\PPI,\PPI)=\{\PPI\}.
+\comp(\DR,\PPI)=\{\DR\},\; \comp(\PP,\DR)=\{\DR\},\;
+\comp(\PP,\PP)=\{\PP\},\; \comp(\PPI,\PPI)=\{\PPI\}.
 \]
 Every one has a vertical ($\PP$ or $\PPI$) argument, and $\PO$ is never
 the value of any determining composition. (Exhaustive over
@@ -1449,9 +1454,10 @@ Concept satisfiability for the $\forall\PO$-free fragment of $\ALCIRCC{5}$
 $\forall\DR$, $\exists\DR$, and all vertical modalities---is decidable,
 with a computable live-width bound $K(C_0)=(1+m)^2\,2^{2^{m}}$,
 $m=|\cl(C_0)|$.
-\textup{(\texttt{two\_tier\_quotient\_ALCIRCC5},
-\texttt{po\_free\_fragment\_ALCIRCC5}; theorem-level, resting on the
-two-tier quotient lemmas.)}
+\textup{(\texttt{two\_tier\_quotient\_ALCIRCC5}; the closed-form bound is
+theorem-level, but the underlying \code{Decidable} instance is machine-checked
+in \texttt{formal/POFreeLift.lean} for the three pure quadrants and the mixed
+case on a witness---see the 2026-08-06 note below.)}
 \end{theorem}
 
 The fragment is genuinely expressive---one may still say ``overlaps some
@@ -1477,12 +1483,41 @@ quasimodel oracle's lone blind spot requires $\forall\PO$ and so cannot arise
 here). A byproduct worth noting: the abstract-semantics core needs \emph{no}
 patchwork or compactness---a composition-closed, converse-coherent,
 strong-$\EQ$ network already \emph{is} a model, so \code{unf\_is\_frame}
-delivers an actual (infinite) frame outright. What remains for full
-certification is the model-of-$C_0$ layer (Hintikka demand/universal
-satisfaction) and the completeness extraction carrying the $K(C_0)$ bound. So
-Theorem~\ref{thm:pofree} now stands as \emph{strongly supported with its
-soundness core machine-certified}---firmer than before the review, though not
-yet end-to-end formalized.
+delivers an actual (infinite) frame outright. What remained for full
+certification at that point was the model-of-$C_0$ layer (Hintikka
+demand/universal satisfaction) and the completeness extraction carrying the
+$K(C_0)$ bound. So as of that review Theorem~\ref{thm:pofree} stood as
+\emph{strongly supported with its soundness core machine-certified}---firmer
+than before, though not yet end-to-end formalized; the following note records
+how the certification was subsequently carried through to the decision
+procedure itself.
+
+\paragraph{Certified as a decision procedure (2026-08-06).} The certification
+has since been carried through to the decision itself. In
+\texttt{formal/POFreeLift.lean} (${\sim}13{,}600$ lines, zero \code{sorry};
+axioms \texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}, the
+choice confined to erased termination proofs, so the procedure is genuinely
+computable) a \code{Decidable} instance for satisfiability of $C_0$ is now
+machine-checked for the fragment's three \emph{pure} quadrants---the
+\emph{horizontal} concepts ($\exists\DR$, $\exists\PO$, $\exists\EQ$), the
+\emph{ascending-vertical} concepts ($\exists\PP$), and the
+\emph{descending-vertical} concepts ($\exists\PPI$)---each generally, and each
+with a non-vacuous satisfiable witness. For the \emph{mixed} quadrant
+($\exists\PO$ together with $\exists\PP$) the merged Hintikka certificate
+(\code{mixCert\_ok}, the first that carries \emph{both} external neighbours
+\emph{and} a recurrent kernel), its finite G\"odel encoding, and a complete
+decision are machine-checked on a witness (\code{decidableSat\_Cmix}); the
+\emph{general} mixed extraction is the one remaining---scoped, not
+open---formalization. The intellectual crux is a \emph{constructive
+uniformization} (\code{rr\_covers}): a single recurrent kernel serves every
+$\exists\PP$ demand in round-robin over the recurrent period, so the auxiliary
+property~W2$'$---feared as an oracle in the full-logic setting---is here a
+kernel-checked \emph{theorem}. It is provable for exactly the reason the
+fragment is defined: with no $\forall\PO$ obligation anywhere in the closure
+(\code{mty\_no\_all\_po}), the horizontal edges the kernel emits are
+unconstrained, so the cross-relations coordinate for free. None of this bears
+on the full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment
+removes---and these fragment theorems are as yet \emph{unreviewed}.
 
 \paragraph{Lesson.} Finiteness is the wrong target: models are
 legitimately infinite (unbounded $\PP$-towers are satisfiable). The right
