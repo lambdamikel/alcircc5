@@ -8114,3 +8114,65 @@ text quietly contradicted. Same lesson as the ledger keeps teaching: a fresh
 campaign passed over. Paper now 42pp, 0 overfull, 0 undefined refs. Ledger:
 **17 reviews**, a defect/overclaim in all but two. Tag
 `arxiv-candidate-2026-07-18` moved to include this pass.
+
+## 2026-08-02 … 08-06 — the ∀PO-free fragment is DECIDABLE (three quadrants + the mixing pipeline)
+
+The single biggest *positive* stretch of the project. Where the campaign
+(2026-07-22 onward) had certified the ∀PO-free fragment's *soundness*
+pipeline and left "the assembly + K(C₀) counting" as the open remainder,
+this arc **closed the decidability** — as genuine, computable
+`Decidable (Satisfiable C₀)` theorems — for three of the fragment's four
+quadrants, and proved the fourth's decision pipeline end-to-end.
+`formal/POFreeLift.lean` grew to ~13,600 lines, still **0 sorries**, axioms
+`propext` / `Classical.choice` / `Quot.sound` (choice only in erased
+proofs, so the procedures are real, not `Classical.dec`).
+
+**The four quadrants.** (1) Horizontal (`∃DR/PO/EQ`, ∀ non-PO):
+`decidableSat_hfrag`, via model-type-depth truncation (`mtk`) — the first
+kernel-checked decidability of the project. (2) Ascending vertical
+(`∃PP`): `decidableSat_vtower` (single demand) → `…G` (co-carrying, a
+sat-based `persistAll` guard so combined guards fit) → `…RR` (round-robin,
+NON-co-carrying — distinct/incompatible demands). (3) Descending vertical
+(`∃PPI`): `decidableSat_vtowerRRI`, the dual — it went fast because the
+descending foundation (`persistPPI`, `dbuildChain`, the `dseg_*`/
+`dsegment_kk_*` lemmas) already existed and the one new piece
+(`vkernel1GI_ok`, the `up=false` kernel) compiled first try. Each fragment
+is non-vacuously witnessed (`Cvert`/`Ccar`/`Calt`/`Clin`/`Cdesc`).
+
+**The keystone — constructive uniformization.** The vertical fragments
+turned on the realization that the kernel certificate serves each `∃PP.D`
+from *whatever phase carries D*, so co-carrying at a point is unnecessary —
+the recurrent *period* just has to carry each demand-arg somewhere. That is
+**constructible** by round-robin serving (`rr_covers`), a kernel-checked
+theorem. So the project's long-feared "W2′ uniformization" is, for the
+∀PO-free vertical case, *solved* — not an oracle. It is fragment-level and
+does **not** touch the full-logic F6 (which is forced *by* ∀PO; the
+uniformization is constructive precisely *because* ∀PO is absent).
+
+**The mixing quadrant (E6).** The fourth quadrant combines both
+machineries in one certificate. Semantic foundation first (`mixRho_frame`
++ `cmix_satisfiable`: a mixed `∃PO`+`∃PP` concept is satisfiable in one
+model). Then the crux — `mixCert_ok`, the **first `MultiTierOk` with both
+non-trivial externals AND a kernel**: `∃PO` served by a direct external,
+`∃PP` by the kernel, every `PO`-edge cross-obligation vacuous by
+`mty_no_all_po` (which is *why* ∀PO-freeness makes the merge tractable).
+Notably, a design round written mid-arc (`ASSEMBLY_DESIGN.md` §25) *predicted*
+two things that then held in the formalization: the `PO`-node is handled
+generically (no model-specific work), and `mty_segment_bounded` dissolves
+the tower-homogeneity obstacle that had blocked the specific certificate.
+Then `mixTower_accepted` (encode as a `FinMT`, `Bool↔Fin 2` bijection by
+`decide`) and `decidableSat_Cmix` — the **first mixed decidability**,
+running the full `decidableSat_of_codes` pipeline with two externals and a
+kernel. The *general* mixed extraction (arbitrary `POFree` concepts, the
+`mtk`-with-kernels construction) is the one remaining formalization; §25.6
+resolves its interleaving (∃PP absorbed by the pigeonhole, ∃DR/∃PO/∃EQ
+decrease modal depth) — finite, computable, **not F6**.
+
+**Honest labels.** Three quadrants: certified **general** decidability,
+witnessed. Mixing: certificate machinery + encoding + a complete decision
+certified on `Cmix`; general extraction scoped (not open). Full logic
+`ALCI_RCC5`: decidability **open** (F6). These fragment theorems are
+**unreviewed** — the ledger's presumption (a future cold review finds
+something) stands. Design + provenance: `ASSEMBLY_DESIGN.md` §§17–25;
+Lean write-up: `LEAN.md`; campaign log: the auto-memory
+`pofree-certification-campaign.md`.

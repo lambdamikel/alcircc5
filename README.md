@@ -74,6 +74,32 @@ certificate architecture* compresses into one well-posed lemma. Work is **paused
 paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
 
+> **★ Update (2026-08-06): the ∀PO-free fragment is now DECIDABLE (three
+> quadrants certified, the fourth's pipeline proven).** The full-logic
+> question stays open (F6), but the campaign below is now **complete** for
+> most of the fragment. [`formal/POFreeLift.lean`](formal/POFreeLift.lean)
+> (~13,600 lines, **0 sorries**, axioms propext / Classical.choice /
+> Quot.sound) certifies **`Decidable (Satisfiable C₀)`** — a genuine
+> *computable* decision procedure (`Classical.choice` only in erased
+> proofs) — for:
+> - **horizontal** (`∃DR/PO/EQ`), **ascending vertical** (`∃PP`), and
+>   **descending vertical** (`∃PPI`) concepts — *general* decidability,
+>   each non-vacuously witnessed (`decidableSat_hfrag` / `…_vtower*` /
+>   `…_vtowerRRI`);
+> - **mixed** (`∃PO` + `∃PP`) concepts — the merged certificate
+>   (`mixCert_ok`, the first `MultiTierOk` with both externals *and* a
+>   kernel), its encoding, and a complete decision certified on the witness
+>   `Cmix` (`decidableSat_Cmix`); the *general* mixed extraction is the one
+>   remaining (scoped, **not** open) formalization.
+>
+> The keystone is a **constructive uniformization** (`rr_covers`): the
+> vertical fragment's "W2′" is a kernel-checked theorem, not an oracle,
+> because removing `∀PO` lets the cross-relations coordinate for free.
+> **This does not close the full logic** — F6 is forced by `∀PO`, which the
+> fragment removes. These fragment theorems are *unreviewed*; details in
+> [LEAN.md](LEAN.md), design in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md)
+> §§24–25.
+
 > **Update (2026-07-22/23): the ∀PO-free fragment certification
 > campaign.** The full-logic question stays open and paused, but the
 > project's strongest *unconditional* theorem — decidability of the

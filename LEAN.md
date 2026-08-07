@@ -887,9 +887,110 @@ mathematics.
 The Lean development is a *certified surround* for a still-open problem.
 It kernel-checks the soundness pipeline, the abstraction's faithfulness,
 and the shape of a non-oracular decision procedure; it does **not** prove
-decidability. The single remaining premise of the decision-grade
-reduction — a computable, complete enumeration of bounded finite
-certificates — is exactly F6 ∧ W2′, the open mathematics, unmoved by any
-amount of the formalization above. Rounds 26–30 are themselves
+decidability **of the full logic**. The single remaining premise of the
+decision-grade reduction — a computable, complete enumeration of bounded
+finite certificates — is exactly F6 ∧ W2′, the open mathematics, unmoved
+by any amount of the formalization above. Rounds 26–30 are themselves
 unreviewed; on this project's ledger, presume a future review finds
 something in them.
+
+*The boundary above is about the **full** logic. The section below records
+a genuine theorem-level result on a **fragment** — the ∀PO-free fragment
+is now certified decidable — which does not touch the full-logic F6.*
+
+## THE ∀PO-FREE FRAGMENT IS DECIDABLE (E4–E6, 2026-08-02 … 08-06)
+
+`formal/POFreeLift.lean` (Lean 4 core, no mathlib; ~13,600 lines, **0
+sorries**, axioms `propext` / `Classical.choice` / `Quot.sound`) now
+certifies **`Decidable (Satisfiable C₀)`** for the ∀PO-free fragment
+across three of its four quadrants, with the fourth's decision pipeline
+proven end-to-end on a witness. These are the project's first
+machine-checked decidability theorems, and they are genuine **computable**
+`def`s — the decision is a finite search `codes.any (mtAcceptB …)`;
+`Classical.choice` appears only in the *erased* correctness proofs, so
+these are real decision procedures, not vacuous `Classical.dec`.
+
+### The four quadrants
+
+| Quadrant | Existentials | Theorem | Scope |
+|---|---|---|---|
+| Horizontal | `∃DR/PO/EQ` | `decidableSat_hfrag` | **general** |
+| Ascending vertical | `∃PP` | `decidableSat_vtower` / `…G` / `…RR` | **general** |
+| Descending vertical | `∃PPI` | `decidableSat_vtowerRRI` | **general** |
+| Mixing | `∃PO` + `∃PP` | `decidableSat_Cmix` | first witness; pipeline proven |
+
+Each general theorem takes a decidable fragment-membership hypothesis
+(`hfragB` / `pofreeB`, both `by decide`) and produces a computable
+`Decidable`. Each fragment is non-vacuously witnessed by a concept proven
+`Satisfiable` via a real model (`Cvert`, `Ccar`, `Calt`, `Clin`, `Cdesc`,
+`Cmix`), most with `[propext, Quot.sound]` only (no choice).
+
+### The keystone: constructive uniformization (W2′ is a *theorem* here)
+
+The vertical fragments' termination rests on a result that dissolves the
+project's standing "uniformization" worry (W2′) **for the ∀PO-free
+vertical case**: `rr_covers`. The observation is that the kernel
+certificate `vkernel1G_ok` serves each `∃PP.D` demand from *whatever phase
+carries `D`*, so one does not need co-carrying at a point — one needs the
+recurrent *period* to carry every demand-arg at *some* phase. And that is
+**constructible** by round-robin serving (cycle through the guarded
+demands; a `(type, cycle-phase)` pigeonhole gives a period covering a
+whole cycle). So `rr_covers` is a kernel-checked theorem, not the open
+oracle. It handles genuinely non-co-carrying concepts (`∃PP.A₀ ⊓ ∃PP.¬A₀`)
+that no single-demand certificate could.
+
+### The pipeline (shared across all quadrants)
+
+`MultiTier`/`MultiTierOk` (a Hintikka certificate: externals + kernels
+with an RCC5 frame + one-step demand fulfilment) → `FinMT` (its Gödel
+code) → `mtOkB`/`mtAcceptB` (a total Boolean checker, `mtAcceptB_sound`
+generic over `nE`/`nK`) → `codes…` (a fixed finite enumeration bounded by
+`K(C₀)`) → `decidableSat_of_codes`. The horizontal fragment uses
+model-type-depth truncation (`mtk`); the vertical fragments use the
+round-robin chain + a period-bounded kernel (`mty_segment_bounded`).
+
+### The mixing quadrant, in detail
+
+The fourth quadrant combines the two machineries in ONE certificate.
+`mixCert_ok` is the first `MultiTierOk` with **both** non-trivial
+externals (a root and a `PO`-node) **and** a kernel (a `∃PP`-tower): the
+`∃PO` demand is served by the direct external, the `∃PP` by the kernel,
+and — the crux — every `PO`-edge cross-obligation is *vacuous* by
+`mty_no_all_po` (this is exactly *why* `∀PO`-freeness makes the merge
+tractable). `mix_cert_satisfiable` closes it to `Satisfiable Cmix`, with
+`mty_segment_bounded` supplying the tower recurrence so no homogeneity
+bisimulation is needed. `mixTower_accepted` encodes it (`Bool ↔ Fin 2`
+bijection by `decide`), and `decidableSat_Cmix` runs the full
+`decidableSat_of_codes` pipeline — proving the decision machinery works
+with mixed externals and kernels. The **general** mixing decidability
+(arbitrary-shape `POFree` concepts) is the one remaining formalization: an
+`mtk`-with-kernels extraction that interleaves the horizontal modal-depth
+bound with the vertical pigeonhole bound (design `ASSEMBLY_DESIGN.md`
+§25.6 resolves the interleaving via a combined measure — finite,
+computable, **not F6**).
+
+### Why this does NOT close the full logic
+
+The full logic's F6 is forced by `∀PO` — the composition
+`comp(_, PO)` is what lets a concept pin an unbounded rigid horizontal
+crowd. The fragment **removes `∀PO`**, and the vertical uniformization
+(`rr_covers`) is constructive *precisely because* `∀PO` is absent (all the
+cross-relations that would need coordinating are `PO`, which is never
+forced and never propagates a `∀`). So the fragment result is honest and
+self-contained, and it leaves F6 for the full logic exactly where the
+"Honest boundary" above puts it: open.
+
+### Honest labels
+
+- **Horizontal / ascending vertical / descending vertical**: certified
+  **general** decidability, non-vacuously witnessed. Kernel-checked.
+- **Mixing**: certificate machinery + encoding + a complete decision
+  certified on the concrete witness `Cmix`; the general extraction is a
+  scoped (not open) formalization.
+- **Full logic `ALCI_RCC5`**: decidability **open** (F6), as above.
+
+These fragment theorems are **unreviewed**; the project ledger's
+presumption (a future cold review finds something) applies to them in
+full. The design and per-step provenance live in `ASSEMBLY_DESIGN.md`
+§§17–25; the campaign log is in the auto-memory
+`pofree-certification-campaign.md`.
