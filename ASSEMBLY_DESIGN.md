@@ -1739,3 +1739,44 @@ So the seam is closed at the DESIGN level: the merge lemma stays as proven
 edges so the truncation is harmless. Route (a) survives; route (b)
 (type-quotient / horizontal uniformization) is not needed. Next Lean step: the
 PO-default combined-frame lemma + the `mtk`-with-kernels node construction.
+
+### 25.9 The full architecture, VALIDATED end-to-end (wp90, 2026-08-07)
+
+`verification/python/wp90_mtk_kernel_architecture.py` validates the WHOLE
+`mtk`-with-kernels extraction — for BOTH kernel directions and mixed — before
+Lean. Uniforming observation: every `MultiTierOk` universal clause
+(`ee_all`/`ek_all`/`ke_all`/`kk_*`/`kq_all`) is ONE property — a `∀r.c` at `x`
+with `ρ(x,y)=r` forces `c ∈ label(y)` — and every existential clause is
+`∃r.c` at `x` ⟹ a witness `y`. So a truncated cert is valid iff its completed
+network is a FRAME and satisfies these two, which wp90 checks over all node
+pairs. Results (all 0 mismatches): **ascending, descending, AND mixed
+canonical certs are FULLY VALID** (frame-closed + ∀-prop + ∃-ful); the naive
+certs (real edges + truncation) FAIL ∀-prop — the wp89 seam.
+
+Three architectural facts the probe pinned down (these are the Lean spec):
+
+1. **The far-edge policy is the CANONICAL COMPLETION, not naive PO-default.**
+   A greedy "relax real → PO" gets stuck (order-dependent: `R→g2` can't relax
+   until `g2→T0` does, and vice-versa). The correct rule: adjacency edges
+   (demand tree + kernel-attaching) = real; then FORCE every
+   singleton-determined edge to fixpoint (`comp(PP,PP)={PP}` forces tower
+   transitivity `R→T1`; `comp(PP,DR)={DR}` forces the descending `B0→g1`); PO
+   the genuinely-free rest. Closed BY CONSTRUCTION: a free edge sits in no
+   singleton cell, and PO is in every non-singleton cell (the escape valve).
+   So the Lean `frame_q` target is "the forcing completion is a frame" — a
+   finite patchwork, NOT the simple symDrPo+kernel special case I first
+   attempted (that case doesn't force the descending/tower edges).
+2. **Descending works** (route (a) confirmed for `∃PPI`): the forced edge
+   `B0→g1` (`B0` a part of `R`, `R DR g1`) is DR, and `g1`'s budget
+   (`k_v − 1`) always covers the firing universal's argument (`mdepth ≤
+   k_v − 1`); deeper nodes (`B0→g2`) relax to PO (`comp(DR,DR)` non-singleton).
+   No forced-edge ever hits an under-budget node.
+3. **Kernel phases SPAWN their own horizontal children** (§25.6's "re-enter the
+   skeleton"): a tower point carrying `∃DR.∃DR.⊤` needs its own DR-witnesses
+   added as externals adjacent to the phase (budget = phase budget − 1). Both
+   `∃-ful` and the budget accounting then hold. Phases truncate at the
+   ATTACHING node's budget.
+
+Net: the architecture is sound in all quadrants; the Lean extraction spec is
+(1)+(2)+(3) above. The remaining Lean work is faithful transcription — the one
+non-trivial new lemma is the forcing-completion frame lemma (finite patchwork).
