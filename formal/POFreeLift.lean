@@ -11199,6 +11199,127 @@ theorem podefault_ke {C0 : Concept} (hpofree : POFree C0) {β : Type}
   · rw [if_neg hf] at hK; subst hK
     exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
 
+/-- `kk_pp` on `mtk`-truncated phases: lift to `mty`, apply `segment_kk_pp`,
+    restrict back (the argument fits the same budget, one level shallower). -/
+theorem mtk_kk_pp (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) (bv : Nat) {cc : Concept}
+    (hmem : Concept.all pp cc ∈ mtk C0 I (c (i + a)) bv)
+    {b : Nat} (hb : b < p) : cc ∈ mtk C0 I (c (i + b)) bv := by
+  obtain ⟨hmty, hbd⟩ := mem_mtk.mp hmem
+  refine mem_mtk.mpr ⟨segment_kk_pp hI hdom hstep hty ha hmty b hb, ?_⟩
+  have hlt : mdepth cc + 1 ≤ bv := hbd; omega
+
+/-- `kk_ppi` on `mtk`-truncated phases (mirror of `mtk_kk_pp`). -/
+theorem mtk_kk_ppi (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) (bv : Nat) {cc : Concept}
+    (hmem : Concept.all ppi cc ∈ mtk C0 I (c (i + a)) bv)
+    {b : Nat} (hb : b < p) : cc ∈ mtk C0 I (c (i + b)) bv := by
+  obtain ⟨hmty, hbd⟩ := mem_mtk.mp hmem
+  refine mem_mtk.mpr ⟨segment_kk_ppi hI hdom hstep hty ha hmty b hb, ?_⟩
+  have hlt : mdepth cc + 1 ≤ bv := hbd; omega
+
+open Classical in
+/-- **THE PO-DEFAULT SINGLE-KERNEL CERTIFICATE** (`mtk`-truncated).  A `symDrPo`
+    external skeleton (labels `mtk(g e)(bud e)`) plus one ascending kernel
+    attached at `v0`: `K` is `PPI` to `v0`, `PO` elsewhere (the wp90 policy);
+    phases `mtk`-truncated at `v0`'s budget. -/
+noncomputable def mtkKernel (I : Interp α) (C0 : Concept) {β : Type}
+    (g : β → α) (bud : β → Nat) (dadj : β → β → Bool) (v0 : β)
+    (c : Nat → α) (i p : Nat) : MultiTier β Unit where
+  E e f := if e = f then eq else if dadj e f then dr else po
+  K _ e := if e = v0 then ppi else po
+  Q _ _ := eq
+  up _ := true
+  tauE e := mtk C0 I (g e) (bud e)
+  p _ := p
+  phase _ a := mtk C0 I (c (i + a)) (bud v0)
+
+open Classical in
+/-- **THE PO-DEFAULT SINGLE-KERNEL MERGE IS VALID.**  Combines the certified
+    pieces: `frame_q` = `po_default_asc_frame`; `ek_all`/`ke_all` = the wp89
+    fix (`podefault_ek`/`podefault_ke`, the depth seam avoided by PO-default);
+    `kk_*` = `mtk_kk_pp/ppi` + `all_into`; propositional clauses from `mtk`.
+    The horizontal `ee_all` and the demand routing `e_ex`/`k_ex` are supplied
+    as hypotheses (what the `mtk`-with-kernels node construction provides — the
+    same `mtHF` external handling, now with an `∃PP` node routed to the
+    kernel). -/
+theorem mtkKernel_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    {β : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat)
+    (dadj : β → β → Bool) (hsym : ∀ e f, dadj e f = dadj f e) (v0 : β)
+    (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (i p : Nat) (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hv0pp : ∀ a, I.rho (g v0) (c (i + a)) = pp)
+    (hee : ∀ e f r cc, Concept.all r cc ∈ mtk C0 I (g e) (bud e) →
+      (if e = f then eq else if dadj e f then dr else po) = r →
+      cc ∈ mtk C0 I (g f) (bud f))
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, (if e = f then eq else if dadj e f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (conv (if e = v0 then ppi else po) = r ∧
+        ∃ a, a < p ∧ D ∈ mtk C0 I (c (i + a)) (bud v0)))
+    (hk_ex : ∀ a r D, Concept.ex r D ∈ mtk C0 I (c (i + a)) (bud v0) →
+      (∃ f, (if f = v0 then ppi else po) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) (bud v0)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (c (i + a)) (bud v0))) :
+    MultiTierOk (mtkKernel I C0 g bud dadj v0 c i p) := by
+  have hv0dom : I.dom (g v0) := hgdom v0
+  have hppi : ∀ a, I.rho (c (i + a)) (g v0) = ppi := fun a => by
+    rw [hI.conv_ (g v0) (c (i + a)) hv0dom (hdom (i + a)), hv0pp a]; rfl
+  have hKe : ∀ (k : Unit) (e : β),
+      conv ((mtkKernel I C0 g bud dadj v0 c i p).K k e)
+        = if e = v0 then pp else po := by
+    intro _ e; show conv (if e = v0 then ppi else po) = if e = v0 then pp else po
+    by_cases he : e = v0
+    · rw [if_pos he, if_pos he]; rfl
+    · rw [if_neg he, if_neg he]; rfl
+  refine
+    { hp := fun _ => hp
+      frame_q := po_default_asc_frame dadj hsym v0
+      e_clash := fun _ _ h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ _ _ h => mtk_and h
+      e_or := fun _ _ _ h => mtk_or h
+      k_clash := fun _ _ _ _ h => mtk_clash h
+      k_nobot := fun _ _ _ => mtk_nobot
+      k_and := fun _ _ _ _ _ h => mtk_and h
+      k_or := fun _ _ _ _ _ h => mtk_or h
+      ee_all := fun e f r cc hmem hE => hee e f r cc hmem hE
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun _ a ha cc hmem b hb =>
+        mtk_kk_pp hI c hdom hstep hty ha (bud v0) hmem hb
+      kk_ppi := fun _ a ha cc hmem b hb =>
+        mtk_kk_ppi hI c hdom hstep hty ha (bud v0) hmem hb
+      kk_eq := fun _ a _ cc hmem =>
+        all_into hmem (hI.refl_eq (c (i + a)) (hdom (i + a))) (hdom (i + a))
+      kq_all := fun _ _ hne => absurd rfl hne
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all
+    intro e r cc hmem k hr a _
+    rw [hKe k e] at hr
+    exact podefault_ek hpofree g v0 bud (hv0pp a) (hdom (i + a)) hmem hr
+  · -- ke_all
+    intro k a _ r cc hmem f hK
+    exact podefault_ke hpofree g v0 bud hv0dom (hppi a) hmem hK
+  · -- e_ex
+    intro e r D hmem
+    rcases he_ex e r D hmem with ⟨f, hf, hDf⟩ | ⟨hK, a, ha, hDa⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr ⟨(), hK, a, ha, hDa⟩
+  · -- k_ex
+    intro k a _ r D hmem
+    rcases hk_ex a r D hmem with ⟨f, hf, hDf⟩ | ⟨rfl, b, hb, hDb⟩ | ⟨rfl, hD⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -14146,6 +14267,8 @@ end VerticalWitness
 #print axioms all_into
 #print axioms podefault_ek
 #print axioms podefault_ke
+#print axioms mtk_kk_pp
+#print axioms mtkKernel_ok
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
