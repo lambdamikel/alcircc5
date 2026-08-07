@@ -20,8 +20,9 @@ direction.
 > (Claude / Anthropic and GPT-5.4 / GPT-5.5 / OpenAI), prompted and directed
 > by Michael Wessel. They have **not** been peer-reviewed or verified by
 > human domain experts, and are offered as a **discussion piece**. Standing
-> label: **strongly supported, not certified** (with three machine-certified
-> exceptions, below).
+> label: **strongly supported, not certified** (with four machine-certified
+> exceptions, below — the newest being decidability of the ∀PO-free
+> fragment).
 
 ## Read this first: the paper
 
@@ -63,16 +64,22 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-07-18): a local optimum, paused here
+## Status (2026-08-06): the ∀PO-free fragment is decidable; the full logic stays open
 
-Decidability of ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30 repair
-rounds and 17 adversarial reviews the project has reached a genuine local
-optimum: the local algebra is exhausted, the soundness side is
-machine-checked, and the entire remaining difficulty *of the present
-certificate architecture* compresses into one well-posed lemma. Work is **paused** at this state (git tag
-`arxiv-candidate-2026-07-18`); what a future attack needs is recorded in the
-paper's concluding section and in
+Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
+repair rounds and 17 adversarial reviews the *full-logic* certificate
+architecture reached a genuine local optimum: the local algebra is exhausted,
+the soundness side is machine-checked, and the entire remaining difficulty *of
+that certificate architecture* compresses into one well-posed lemma (F6). That
+line of attack is **paused** (git tag `arxiv-candidate-2026-07-18`); what a
+future attack needs is recorded in the paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
+
+**What has moved since is the fragment.** Dropping `∀PO` makes the keystone
+*constructive*, and the ∀PO-free fragment is now **certified decidable** —
+three quadrants generally, the mixed case's pipeline proven — as the box
+below records. The full-logic question and the fragment result are
+independent: F6 is forced by `∀PO`, which the fragment removes.
 
 > **★ Update (2026-08-06): the ∀PO-free fragment is now DECIDABLE (three
 > quadrants certified, the fourth's pipeline proven).** The full-logic
@@ -174,19 +181,29 @@ paper's concluding section and in
   *undecidability*. Bound it ⇒ decidability; circumvent it to force a grid ⇒
   undecidability. Two sides of one question — why neither has moved in 20+
   years.
-- **Unconditional win:** the **∀PO-free fragment** is decidable (a genuinely
-  expressive spatial fragment — it keeps ∃PO, ∀DR, ∃DR, and all part-of
-  modalities), via the two-tier quotient route (not the split-forest models).
-  Re-examined after the 16th review and strengthened: its **soundness core is
-  now machine-certified** ([`formal/POFreeLift.lean`](formal/POFreeLift.lean)
-  — the chain-unfolding lift; the unfolding is a genuine RCC5 frame), and two
-  independent decision procedures agree on it with **zero mismatches**
-  ([`wp86`](verification/python/wp86_two_tier_lift_check.py),
-  [`wp87`](verification/python/wp87_po_free_end_to_end.py)). The reviewer's
-  "PO is never forced" concern is closed: the construction enforces full
-  composition-consistency, which subsumes multi-path PO forcing. (Full
-  end-to-end certification — the model-of-C₀ layer and the completeness
-  extraction — remains open.)
+- **Unconditional win:** the **∀PO-free fragment** is **decidable** (a
+  genuinely expressive spatial fragment — it keeps ∃PO, ∀DR, ∃DR, and all
+  part-of modalities), via the two-tier quotient route (not the split-forest
+  models). As of 2026-08-06 this is machine-certified as an actual **decision
+  procedure** — `Decidable (Satisfiable C₀)` in
+  [`formal/POFreeLift.lean`](formal/POFreeLift.lean) (~13,600 lines, **0
+  sorries**) — for the **horizontal** (∃DR/PO/EQ), **ascending-vertical**
+  (∃PP), and **descending-vertical** (∃PPI) quadrants *generally*, each
+  non-vacuously witnessed; and for the **mixed** (∃PO + ∃PP) case the merged
+  certificate (`mixCert_ok` — the first `MultiTierOk` carrying both externals
+  and a kernel), its encoding, and a complete decision are certified on a
+  witness (`decidableSat_Cmix`), with the *general* mixed extraction the one
+  remaining (scoped, **not** open) formalization. The keystone is a
+  **constructive uniformization** (`rr_covers`): removing ∀PO lets the
+  cross-relations coordinate for free, so the vertical "W2′" becomes a
+  kernel-checked theorem rather than an oracle. The 16th review's "PO is never
+  forced" concern is closed structurally — the construction enforces full
+  composition-consistency, which subsumes multi-path PO forcing; two
+  independent decision procedures also agree on the fragment with **zero
+  mismatches** ([`wp86`](verification/python/wp86_two_tier_lift_check.py),
+  [`wp87`](verification/python/wp87_po_free_end_to_end.py)). These fragment
+  theorems are **unreviewed**, and the result does **not** close the full logic
+  (F6 is forced by ∀PO, which the fragment removes).
 
 ## Complexity landscape
 
