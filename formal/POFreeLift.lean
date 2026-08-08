@@ -13517,6 +13517,83 @@ theorem cdesc_satisfiable : Satisfiable Cdesc := by
 
 theorem Cvert_pofree : POFree Cvert := ⟨⟨trivial, trivial⟩, by decide, trivial⟩
 
+/-- **The `Cvert` coverage skeleton is the SINGLETON `{n}`.**  `Cvert`'s only
+    demand is the vertical `∃PP.A₀` (`cvert_demands`), which stops the
+    `mtkNodesH` recursion — so there are no horizontal witnesses and every node
+    in `mtkNodesH n` is `n` itself.  This discharges `hpp_v0` in the degenerate
+    (trivial-skeleton) merge: the sole node is the root. -/
+theorem cvert_nodes_singleton :
+    ∀ (n : MTKNode Ivert Cvert), ∀ m ∈ mtkNodesH n, m = n := by
+  intro n
+  induction n using mtkNodesH.induct with
+  | _ x _ih =>
+    intro m hm
+    rw [mtkNodesH] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · rfl
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        have hmm2 : m ∈ (if r = pp ∨ r = ppi then ([] : List (MTKNode Ivert Cvert))
+            else mtkNodesH (mtkWitness x hF)) := hmm
+        have hr : r = pp := (cvert_demands r c (mty_sub _ (mem_mtk.mp hF).1)).1
+        rw [if_pos (Or.inl hr)] at hmm2
+        exact absurd hmm2 List.not_mem_nil
+      | top => exact absurd hmm List.not_mem_nil
+      | bot => exact absurd hmm List.not_mem_nil
+      | atom a => exact absurd hmm List.not_mem_nil
+      | natom a => exact absurd hmm List.not_mem_nil
+      | and a b => exact absurd hmm List.not_mem_nil
+      | or a b => exact absurd hmm List.not_mem_nil
+      | all r c => exact absurd hmm List.not_mem_nil
+
+/-- The root node of the `Cvert` extraction: point `0`, budget `mdepth Cvert`
+    (so `Cvert` itself sits in its own `mtk` label). -/
+def cvertRoot : MTKNode Ivert Cvert := ⟨0, mdepth Cvert, trivial⟩
+
+/-- `A₀` sits in every chain point's `mtk` label at the root budget. -/
+theorem cvert_atom0_mtk (n : Nat) :
+    Concept.atom 0 ∈ mtk Cvert Ivert n cvertRoot.k :=
+  mem_mtk.mpr ⟨(vfull n).symm ▸ (by decide : Concept.atom 0 ∈ cl Cvert),
+    Nat.zero_le _⟩
+
+open Classical in
+/-- **`Cvert` extracts through the GENERIC merged engine** — the completeness
+    (extraction) direction fired end-to-end.  All three model-side inputs to
+    `extract_mtkKernel` are discharged on `Ivert`: `hno_ppi` from
+    `no_ppi_demand` (no `∃PPI` in `cl Cvert`), `hpp_v0` from
+    `cvert_nodes_singleton` (the skeleton is `{root}`, so only the root carries
+    `∃PP`, served by the tower), `hk_class` from `cvert_demands` (each phase's
+    only demand is the self-carrying `∃PP.A₀`).  So the generic `mtkKernel`
+    certificate is valid and `multiTier_sound` reads off a model — the same
+    `Satisfiable Cvert` as `cvert_satisfiable`, now through the UNIFORM
+    skeleton+kernel engine rather than the bespoke `vkernel`. -/
+theorem cvert_generic_satisfiable : Satisfiable Cvert := by
+  have hnoppi : ∀ D, Concept.ex ppi D ∉ cl Cvert := fun D h =>
+    absurd (cvert_demands ppi D h).1 (by decide)
+  have hok : MultiTierOk (mtkKernel Ivert Cvert
+      (fun e : {n // n ∈ mtkNodesH cvertRoot} => e.val.x) (fun e => e.val.k)
+      (fun e f => decide (sAdjK e.val f.val))
+      ⟨cvertRoot, self_mem_mtkNodesH cvertRoot⟩ (fun n => n) 1 1) := by
+    refine extract_mtkKernel Ivert_rcc5 Cvert_pofree cvertRoot (fun n => n)
+      (fun _ => trivial) (fun n => chain_lt (Nat.lt_succ_self n)) 1 1 (by decide)
+      ((vfull 1).trans (vfull (1 + 1)).symm) ?_ ?_ ?_ ?_
+    · intro a; show chain 0 (1 + a) = pp; exact chain_lt (by omega)
+    · intro e D hdem
+      have he : e.val = cvertRoot := cvert_nodes_singleton cvertRoot e.val e.property
+      have hmty : Concept.ex pp D ∈ mty Cvert Ivert e.val.x := (mem_mtk.mp hdem).1
+      have hD : D = Concept.atom 0 := (cvert_demands pp D (mty_sub _ hmty)).2
+      subst hD
+      exact ⟨Subtype.ext he, 0, by decide, cvert_atom0_mtk (1 + 0)⟩
+    · exact no_ppi_demand cvertRoot hnoppi
+    · intro a r D hmem
+      have hmty : Concept.ex r D ∈ mty Cvert Ivert (1 + a) := (mem_mtk.mp hmem).1
+      obtain ⟨hr, hD⟩ := cvert_demands r D (mty_sub _ hmty)
+      subst hr; subst hD
+      exact Or.inl ⟨rfl, 0, by decide, cvert_atom0_mtk (1 + 0)⟩
+  exact multiTier_sound _ hok (Sum.inl ⟨cvertRoot, self_mem_mtkNodesH cvertRoot⟩)
+    Cvert (mem_mtk.mpr ⟨(vfull 0).symm ▸ cl_self Cvert, Nat.le_refl _⟩)
+
 /-! ### The MIXING carrier: an ascending tower + one `PO`-node
 
 `mixRho` on `ℕ ⊕ Unit`: the `ℕ`-tower (ascending `PP`) plus a single node
@@ -14631,5 +14708,7 @@ end VerticalWitness
 #print axioms VerticalWitness.decidableSat_Cmix
 #print axioms VerticalWitness.cmix_nodes_root
 #print axioms VerticalWitness.mixRho_po_lemma
+#print axioms VerticalWitness.cvert_nodes_singleton
+#print axioms VerticalWitness.cvert_generic_satisfiable
 
 end POFreeLift
