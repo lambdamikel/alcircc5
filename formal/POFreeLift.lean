@@ -9771,6 +9771,66 @@ theorem mtk_ee_all (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
       have hrpo : po = r := (if_neg hd).symm.trans hEf
       exact absurd hrpo.symm (pofree_cl_all C0 hpofree r c (mtk_sub_cl _ hall))
 
+open Classical in
+/-- **`e_ex` for the `mtk`-with-kernels cert** (step 4).  A node `e`'s demand
+    `∃r.D` is routed: `∃DR`/`∃PO`/`∃EQ` to a horizontal child (the `mtHF`
+    routing, now over `mtkNodesH`); `∃PP` — which the fragment restricts to the
+    attaching node `v0`, with the tower carrying its argument (`hpp_v0`) — to
+    the KERNEL (`conv(K v0) = PP`); `∃PPI` excluded (`hno_ppi`).  Discharges
+    `mtkKernel_ok`'s `he_ex` hypothesis for the `mtHF`-node instantiation. -/
+theorem mtk_e_ex (hI : RCC5Interp I) {C0 : Concept} (root : MTKNode I C0)
+    (c : Nat → α) (p i : Nat) (v0 : {n // n ∈ mtkNodesH root})
+    (hpp_v0 : ∀ (e : {n // n ∈ mtkNodesH root}) (D : Concept),
+      Concept.ex pp D ∈ mtk C0 I e.val.x e.val.k →
+      e = v0 ∧ ∃ a, a < p ∧ D ∈ mtk C0 I (c (i + a)) v0.val.k)
+    (hno_ppi : ∀ (e : {n // n ∈ mtkNodesH root}) (D : Concept),
+      Concept.ex ppi D ∈ mtk C0 I e.val.x e.val.k → False)
+    (e : {n // n ∈ mtkNodesH root}) (r : Atom) (D : Concept)
+    (hdem : Concept.ex r D ∈ mtk C0 I e.val.x e.val.k) :
+    (∃ f : {n // n ∈ mtkNodesH root},
+      (if e = f then eq else if decide (sAdjK e.val f.val) then dr else po) = r ∧
+      D ∈ mtk C0 I f.val.x f.val.k) ∨
+    (conv (if e = v0 then ppi else po) = r ∧
+      ∃ a, a < p ∧ D ∈ mtk C0 I (c (i + a)) v0.val.k) := by
+  by_cases heq : r = eq
+  · subst heq
+    refine Or.inl ⟨e, ?_, mtk_ex_eq hI hdem e.val.hx⟩
+    show (if e = e then eq else if decide (sAdjK e.val e.val) then dr else po) = eq
+    rw [if_pos rfl]
+  by_cases hdr : r = dr
+  · subst hdr
+    have hmem : mtkWitness e.val hdem ∈ mtkNodesH root :=
+      mtkNodesH_trans root e.val e.property _ (mtkWitnessH_mem e.val hdem (by decide))
+    have hne : e ≠ ⟨mtkWitness e.val hdem, hmem⟩ := fun heq =>
+      mtkWitness_x_ne hI e.val hdem (by decide) (congrArg (fun t => t.val.x) heq)
+    refine Or.inl ⟨⟨mtkWitness e.val hdem, hmem⟩, ?_, mtkWitness_arg e.val hdem⟩
+    have hd : decide (sAdjK e.val (mtkWitness e.val hdem)) = true := by
+      rw [decide_eq_true_eq]; exact Or.inl ⟨D, hdem, rfl⟩
+    show (if e = ⟨mtkWitness e.val hdem, hmem⟩ then eq
+      else if decide (sAdjK e.val (mtkWitness e.val hdem)) then dr else po) = dr
+    rw [if_neg hne]; exact if_pos hd
+  by_cases hpo : r = po
+  · subst hpo
+    have hmem : mtkWitness e.val hdem ∈ mtkNodesH root :=
+      mtkNodesH_trans root e.val e.property _ (mtkWitnessH_mem e.val hdem (by decide))
+    have hne : e ≠ ⟨mtkWitness e.val hdem, hmem⟩ := fun heq =>
+      mtkWitness_x_ne hI e.val hdem (by decide) (congrArg (fun t => t.val.x) heq)
+    refine Or.inl ⟨⟨mtkWitness e.val hdem, hmem⟩, ?_, mtkWitness_arg e.val hdem⟩
+    have hd : ¬ decide (sAdjK e.val (mtkWitness e.val hdem)) = true := by
+      rw [decide_eq_true_eq]
+      exact po_not_sAdjK hI (mtkWitness_rho e.val hdem)
+    show (if e = ⟨mtkWitness e.val hdem, hmem⟩ then eq
+      else if decide (sAdjK e.val (mtkWitness e.val hdem)) then dr else po) = po
+    rw [if_neg hne]; exact if_neg hd
+  by_cases hpp : r = pp
+  · subst hpp
+    obtain ⟨hev0, a, ha, hDa⟩ := hpp_v0 e D hdem
+    refine Or.inr ⟨?_, a, ha, hDa⟩
+    rw [hev0, if_pos rfl]; rfl
+  · have hppi : r = ppi := by cases r <;> simp_all
+    subst hppi
+    exact (hno_ppi e D hdem).elim
+
 /-- THE HORIZONTAL-FRAGMENT EXTRACTION: every satisfiable `HFrag` concept
     has a valid finite multi-tier certificate carrying it. -/
 theorem extract_hfrag (C0 : Concept) (hfrag : HFrag C0)
@@ -14378,6 +14438,7 @@ end VerticalWitness
 #print axioms mtkKernel_ok
 #print axioms mtk_ee_all
 #print axioms mtkNodesH_covers
+#print axioms mtk_e_ex
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
