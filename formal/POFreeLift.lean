@@ -14585,6 +14585,175 @@ def Imerge : Interp (Nat ⊕ Unit) :=
 
 theorem Imerge_rcc5 : RCC5Interp Imerge := frame_rcc5 cleanRho cleanRho_frame _
 
+/-- The non-trivial-skeleton merge concept: a horizontal `∃DR.B` demand AND a
+    vertical `∃PP.A` tower, both at the root. -/
+def Cmerge : Concept :=
+  .and (.and (.and (.atom 0) (.ex dr (.atom 1))) (.ex pp (.atom 0)))
+    (.all pp (.ex pp (.atom 0)))
+
+theorem Cmerge_pofree : POFree Cmerge :=
+  ⟨⟨⟨trivial, trivial⟩, trivial⟩, by decide, trivial⟩
+
+/-- `Cmerge`'s existentials are exactly `∃DR.A₁` (horizontal) and `∃PP.A₀`
+    (vertical). -/
+theorem cmerge_demands : ∀ r D, Concept.ex r D ∈ cl Cmerge →
+    (r = dr ∧ D = Concept.atom 1) ∨ (r = pp ∧ D = Concept.atom 0) := by
+  intro r D h
+  have hb := List.all_eq_true.mp
+    (show (cl Cmerge).all (fun E => match E with
+      | Concept.ex r D => decide ((r = dr ∧ D = Concept.atom 1) ∨
+          (r = pp ∧ D = Concept.atom 0))
+      | _ => true) = true from by decide) (Concept.ex r D) h
+  simpa only [decide_eq_true_eq] using hb
+
+/-- In `Imerge` a `DR` edge always has an endpoint at the leaf `nb = inr ()`
+    (chain edges are never `DR`; the leaf is `PO`, not `DR`, to every phase). -/
+theorem cleanRho_dr_lemma : ∀ (a b : Nat ⊕ Unit), Imerge.rho a b = dr →
+    b = Sum.inr () ∨ a = Sum.inr () := by
+  rintro (i | ⟨⟩) (j | ⟨⟩) h
+  · exfalso
+    rw [show Imerge.rho (Sum.inl i) (Sum.inl j) = chain i j from rfl] at h
+    rcases chain_vals i j with h' | h' | h' <;> rw [h'] at h <;> exact absurd h (by decide)
+  · exact Or.inl rfl
+  · exact Or.inr rfl
+  · exact Or.inl rfl
+
+/-- The leaf `nb` satisfies NO existential of `Cmerge`: its only `DR`-neighbour
+    is the root (carrying `A₀`, not `A₁`), and it has no `PP`-neighbour. -/
+theorem nb_merge_no_ex : ∀ r D, Concept.ex r D ∉ mty Cmerge Imerge (Sum.inr ()) := by
+  intro r D hmem
+  obtain ⟨y, _, hr, hy⟩ := mty_ex hmem
+  rcases cmerge_demands r D (mty_sub _ hmem) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+  · rcases y with j | ⟨⟩
+    · cases j with
+      | zero =>
+        have h2 := (mem_mty.mp hy).2; change (1 : Nat) = 0 at h2
+        exact absurd h2 (by decide)
+      | succ j' => change po = dr at hr; exact absurd hr (by decide)
+    · change eq = dr at hr; exact absurd hr (by decide)
+  · rcases y with j | ⟨⟩
+    · cases j with
+      | zero => change dr = pp at hr; exact absurd hr (by decide)
+      | succ j' => change po = pp at hr; exact absurd hr (by decide)
+    · change eq = pp at hr; exact absurd hr (by decide)
+
+/-- A tower phase `inl (n+1)` has NO `DR`-successor (its off-chain neighbour is
+    the leaf, at `PO`). -/
+theorem cmerge_pos_dr_none : ∀ (n : Nat), 0 < n → ∀ (y : Nat ⊕ Unit),
+    Imerge.rho (Sum.inl n) y ≠ dr := by
+  intro n hn y hr
+  cases n with
+  | zero => omega
+  | succ n' =>
+    rcases y with j | ⟨⟩
+    · rw [show Imerge.rho (Sum.inl (n' + 1)) (Sum.inl j) = chain (n' + 1) j from rfl] at hr
+      rcases chain_vals (n' + 1) j with h | h | h <;> rw [h] at hr <;> exact absurd hr (by decide)
+    · rw [show Imerge.rho (Sum.inl (n' + 1)) (Sum.inr ()) = po from rfl] at hr
+      exact absurd hr (by decide)
+
+/-- **The `Cmerge` coverage skeleton is `{n} ∪ {nb}`.**  Every node in
+    `mtkNodesH n` is either `n` or the leaf `inr ()`: a chain node's only
+    non-vertical demand is `∃DR.A₁` (served by `nb`, `cleanRho_dr_lemma`), and
+    `nb` has no demand (`nb_merge_no_ex`).  The NON-DEGENERATE analogue of
+    `cvert_nodes_singleton`. -/
+theorem cmerge_nodes :
+    ∀ (n : MTKNode Imerge Cmerge), ∀ m ∈ mtkNodesH n, m = n ∨ m.x = Sum.inr () := by
+  intro n
+  induction n using mtkNodesH.induct with
+  | _ x ih =>
+    intro m hm
+    rw [mtkNodesH] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact Or.inl rfl
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        have hmm2 : m ∈ (if r = pp ∨ r = ppi then ([] : List (MTKNode Imerge Cmerge))
+            else mtkNodesH (mtkWitness x hF)) := hmm
+        by_cases hv : r = pp ∨ r = ppi
+        · rw [if_pos hv] at hmm2; exact absurd hmm2 List.not_mem_nil
+        · rw [if_neg hv] at hmm2
+          have hwit : (mtkWitness x hF).x = Sum.inr () := by
+            have hrho : Imerge.rho x.x (mtkWitness x hF).x = r := mtkWitness_rho x hF
+            have hmty : Concept.ex r c ∈ mty Cmerge Imerge x.x := (mem_mtk.mp hF).1
+            have hr_dr : r = dr := by
+              rcases cmerge_demands r c (mty_sub _ hmty) with ⟨rfl, _⟩ | ⟨rfl, _⟩
+              · rfl
+              · exact absurd (Or.inl rfl) hv
+            rcases cleanRho_dr_lemma x.x (mtkWitness x hF).x (hrho.trans hr_dr) with hb | ha
+            · exact hb
+            · exact absurd (ha ▸ hmty) (nb_merge_no_ex r c)
+          rcases ih r c hF m hmm2 with hmw | hmr
+          · rw [hmw]; exact Or.inr hwit
+          · exact Or.inr hmr
+      | top => exact absurd hmm List.not_mem_nil
+      | bot => exact absurd hmm List.not_mem_nil
+      | atom a => exact absurd hmm List.not_mem_nil
+      | natom a => exact absurd hmm List.not_mem_nil
+      | and a b => exact absurd hmm List.not_mem_nil
+      | or a b => exact absurd hmm List.not_mem_nil
+      | all r c => exact absurd hmm List.not_mem_nil
+
+/-- The root node: point `inl 0`, budget `mdepth Cmerge`. -/
+def cmergeRoot : MTKNode Imerge Cmerge := ⟨Sum.inl 0, mdepth Cmerge, trivial⟩
+
+/-- `A₀` sits in every tower point's `mtk` label at the root budget. -/
+theorem cmerge_atom0_mtk (n : Nat) :
+    Concept.atom 0 ∈ mtk Cmerge Imerge (Sum.inl n) cmergeRoot.k :=
+  mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, Nat.zero_le _⟩
+
+/-- The root `inl 0` satisfies `Cmerge`. -/
+theorem cmerge_sat_root : sat Imerge (Sum.inl 0) Cmerge := by
+  refine ⟨⟨⟨rfl, ⟨Sum.inr (), trivial, rfl, rfl⟩⟩,
+    ⟨Sum.inl 1, trivial, ?_, rfl⟩⟩, ?_⟩
+  · show chain 0 1 = pp; exact chain_lt (by omega)
+  · rintro (j | ⟨⟩) _ hr
+    · refine ⟨Sum.inl (j + 1), trivial, ?_, rfl⟩
+      show chain j (j + 1) = pp; exact chain_lt (Nat.lt_succ_self j)
+    · change dr = pp at hr; exact absurd hr (by decide)
+
+open Classical in
+/-- **`Cmerge` extracts through the GENERIC merged engine with a NON-DEGENERATE
+    skeleton** — the completeness (extraction) direction on a concept whose
+    horizontal skeleton `{root, nb}` genuinely fires (root's `∃DR.A₁` served by
+    the second skeleton node), merged with the self-carrying `∃PP.A₀` tower.
+    `hpp_v0` = `cmerge_nodes` + `nb_merge_no_ex` (only the root carries `∃PP`);
+    `hk_class` = `cmerge_demands` + `cmerge_pos_dr_none` (a phase's `∃DR.A₁` is
+    unsatisfiable — no `DR`-successor — so phases demand only `∃PP.A₀`);
+    `hno_ppi` = `no_ppi_demand`.  Unlike `Cvert` (singleton skeleton) this
+    exercises the horizontal routing merged with the kernel. -/
+theorem cmerge_generic_satisfiable : Satisfiable Cmerge := by
+  have hnoppi : ∀ D, Concept.ex ppi D ∉ cl Cmerge := fun D h => by
+    rcases cmerge_demands ppi D h with ⟨h', _⟩ | ⟨h', _⟩ <;> exact absurd h' (by decide)
+  obtain ⟨i, p, hLi, hp, _, hty⟩ :=
+    mty_segment_bounded (I := Imerge) Cmerge (fun n => Sum.inl n) 1
+  have hok : MultiTierOk (mtkKernel Imerge Cmerge
+      (fun e : {n // n ∈ mtkNodesH cmergeRoot} => e.val.x) (fun e => e.val.k)
+      (fun e f => decide (sAdjK e.val f.val))
+      ⟨cmergeRoot, self_mem_mtkNodesH cmergeRoot⟩ (fun n => Sum.inl n) i p) := by
+    refine extract_mtkKernel Imerge_rcc5 Cmerge_pofree cmergeRoot (fun n => Sum.inl n)
+      (fun _ => trivial) (fun n => chain_lt (Nat.lt_succ_self n)) i p hp hty ?_ ?_ ?_ ?_
+    · intro a; show chain 0 (i + a) = pp; exact chain_lt (by omega)
+    · intro e D hdem
+      rcases cmerge_nodes cmergeRoot e.val e.property with he | hinr
+      · have hmty : Concept.ex pp D ∈ mty Cmerge Imerge e.val.x := (mem_mtk.mp hdem).1
+        have hD : D = Concept.atom 0 := by
+          rcases cmerge_demands pp D (mty_sub _ hmty) with ⟨h', _⟩ | ⟨_, h'⟩
+          · exact absurd h' (by decide)
+          · exact h'
+        subst hD
+        exact ⟨Subtype.ext he, 0, hp, cmerge_atom0_mtk (i + 0)⟩
+      · exact absurd ((mem_mtk.mp hdem).1) (hinr ▸ nb_merge_no_ex pp D)
+    · exact no_ppi_demand cmergeRoot hnoppi
+    · intro a r D hmem
+      have hmty : Concept.ex r D ∈ mty Cmerge Imerge (Sum.inl (i + a)) := (mem_mtk.mp hmem).1
+      rcases cmerge_demands r D (mty_sub _ hmty) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+      · obtain ⟨y, _, hr, _⟩ := mty_ex hmty
+        exact absurd hr (cmerge_pos_dr_none (i + a) (by omega) y)
+      · exact Or.inl ⟨rfl, 0, hp, cmerge_atom0_mtk (i + 0)⟩
+  exact multiTier_sound _ hok (Sum.inl ⟨cmergeRoot, self_mem_mtkNodesH cmergeRoot⟩)
+    Cmerge (mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self Cmerge, cmerge_sat_root⟩, Nat.le_refl _⟩)
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -14790,5 +14959,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cvert_generic_satisfiable
 #print axioms VerticalWitness.cleanRho_frame
 #print axioms VerticalWitness.Imerge_rcc5
+#print axioms VerticalWitness.cmerge_nodes
+#print axioms VerticalWitness.cmerge_generic_satisfiable
 
 end POFreeLift
