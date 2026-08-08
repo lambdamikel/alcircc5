@@ -13666,6 +13666,28 @@ theorem cvert_generic_satisfiable : Satisfiable Cvert := by
   exact multiTier_sound _ hok (Sum.inl ⟨cvertRoot, self_mem_mtkNodesH cvertRoot⟩)
     Cvert (mem_mtk.mpr ⟨(vfull 0).symm ▸ cl_self Cvert, Nat.le_refl _⟩)
 
+/-- **Non-vacuity of `extract_from_tower`** — `Cvert` fires through the GENERAL
+    theorem (degenerate skeleton), kernel-checking that the isolated cleanliness
+    premise is inhabitable and the wrapper's `hv0pp`/root/`hno_ppi` plumbing all
+    fire (`hv0pp` now comes from `pp_chain_below`, not the ad-hoc `chain_lt`). -/
+theorem cvert_via_tower : Satisfiable Cvert := by
+  refine extract_from_tower Ivert_rcc5 Cvert_pofree (fun n => n) (fun _ => trivial)
+    (fun n => chain_lt (Nat.lt_succ_self n))
+    (mem_mty.mpr ⟨cl_self Cvert, vsat_all 0 Cvert (cl_self Cvert)⟩)
+    (fun D h => absurd (cvert_demands ppi D h).1 (by decide))
+    1 1 Nat.one_pos Nat.one_pos ((vfull 1).trans (vfull (1 + 1)).symm) ?_ ?_
+  · intro e D hdem
+    have he := cvert_nodes_singleton _ e.val e.property
+    have hmty : Concept.ex pp D ∈ mty Cvert Ivert e.val.x := (mem_mtk.mp hdem).1
+    have hD : D = Concept.atom 0 := (cvert_demands pp D (mty_sub _ hmty)).2
+    subst hD
+    exact ⟨Subtype.ext he, 0, Nat.one_pos, cvert_atom0_mtk (1 + 0)⟩
+  · intro a r D hmem
+    have hmty : Concept.ex r D ∈ mty Cvert Ivert (1 + a) := (mem_mtk.mp hmem).1
+    obtain ⟨hr, hD⟩ := cvert_demands r D (mty_sub _ hmty)
+    subst hr; subst hD
+    exact Or.inl ⟨rfl, 0, Nat.one_pos, cvert_atom0_mtk (1 + 0)⟩
+
 /-! ### The MIXING carrier: an ascending tower + one `PO`-node
 
 `mixRho` on `ℕ ⊕ Unit`: the `ℕ`-tower (ascending `PP`) plus a single node
@@ -15032,6 +15054,7 @@ end VerticalWitness
 #print axioms VerticalWitness.mixRho_po_lemma
 #print axioms VerticalWitness.cvert_nodes_singleton
 #print axioms VerticalWitness.cvert_generic_satisfiable
+#print axioms VerticalWitness.cvert_via_tower
 #print axioms VerticalWitness.cleanRho_frame
 #print axioms VerticalWitness.Imerge_rcc5
 #print axioms VerticalWitness.cmerge_nodes
