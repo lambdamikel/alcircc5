@@ -9833,15 +9833,20 @@ theorem mtk_e_ex (hI : RCC5Interp I) {C0 : Concept} (root : MTKNode I C0)
 
 open Classical in
 /-- **`k_ex` for the `mtk`-with-kernels cert** (step 4).  A tower phase's demand
-    routes `∃PP` up the tower (`cdir true = PP`) and `∃EQ` reflexively — the
-    self-carrying-tower fragment (tower points have no horizontal demands).
-    Thin given the phase-demand classification `hk_class`, which the extraction
-    proves from the tower's self-carrying structure.  Discharges
-    `mtkKernel_ok`'s `hk_ex`. -/
+    routes `∃PP` up the tower (`cdir true = PP`), `∃EQ` reflexively, AND a
+    phase's HORIZONTAL `∃PO.D` demand OUT to a non-root external `f` carrying
+    `D` via the `PO` `K`-edge (`K k f = po` for `f ≠ v0`) — route 1 of the
+    `k_ex` clause.  This is what removes the "clean phases" restriction:
+    `∀PO`-freeness makes the `PO` `K`-edge sound (no `∀PO` obligation to
+    violate), so a phase need NOT be horizontally trivial.  `hk_class` supplies,
+    per phase demand, one of: `∃PO` served by an external / `∃PP` up the tower /
+    `∃EQ`.  Discharges `mtkKernel_ok`'s `hk_ex`. -/
 theorem mtk_k_ex (hI : RCC5Interp I) {C0 : Concept} (root : MTKNode I C0)
     (c : Nat → α) (p i : Nat) (v0 : {n // n ∈ mtkNodesH root})
     (hdom : ∀ n, I.dom (c n))
     (hk_class : ∀ a r D, Concept.ex r D ∈ mtk C0 I (c (i + a)) v0.val.k →
+      (∃ f : {n // n ∈ mtkNodesH root}, f ≠ v0 ∧ r = po ∧
+        D ∈ mtk C0 I f.val.x f.val.k) ∨
       (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) v0.val.k) ∨ r = eq)
     (a : Nat) (r : Atom) (D : Concept)
     (hmem : Concept.ex r D ∈ mtk C0 I (c (i + a)) v0.val.k) :
@@ -9849,7 +9854,8 @@ theorem mtk_k_ex (hI : RCC5Interp I) {C0 : Concept} (root : MTKNode I C0)
       (if f = v0 then ppi else po) = r ∧ D ∈ mtk C0 I f.val.x f.val.k) ∨
     (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) v0.val.k) ∨
     (r = eq ∧ D ∈ mtk C0 I (c (i + a)) v0.val.k) := by
-  rcases hk_class a r D hmem with ⟨rfl, b, hb, hDb⟩ | rfl
+  rcases hk_class a r D hmem with ⟨f, hfv0, rfl, hDf⟩ | ⟨rfl, b, hb, hDb⟩ | rfl
+  · exact Or.inl ⟨f, by rw [if_neg hfv0], hDf⟩
   · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
   · exact Or.inr (Or.inr ⟨rfl, mtk_ex_eq hI hmem (hdom (i + a))⟩)
 
@@ -11546,6 +11552,8 @@ theorem extract_mtkKernel (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C
     (hno_ppi : ∀ (e : {n // n ∈ mtkNodesH root}) (D : Concept),
       Concept.ex ppi D ∈ mtk C0 I e.val.x e.val.k → False)
     (hk_class : ∀ a r D, Concept.ex r D ∈ mtk C0 I (c (i + a)) root.k →
+      (∃ f : {n // n ∈ mtkNodesH root}, f ≠ ⟨root, self_mem_mtkNodesH root⟩ ∧
+        r = po ∧ D ∈ mtk C0 I f.val.x f.val.k) ∨
       (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) root.k) ∨ r = eq) :
     MultiTierOk (mtkKernel I C0 (fun e : {n // n ∈ mtkNodesH root} => e.val.x)
       (fun e => e.val.k) (fun e f => decide (sAdjK e.val f.val))
@@ -11638,6 +11646,9 @@ theorem extract_from_tower (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree 
       e = ⟨⟨c 0, mdepth C0, hdom 0⟩, self_mem_mtkNodesH ⟨c 0, mdepth C0, hdom 0⟩⟩ ∧
         ∃ a, a < p ∧ D ∈ mtk C0 I (c (i + a)) (mdepth C0))
     (hk_class : ∀ a r D, Concept.ex r D ∈ mtk C0 I (c (i + a)) (mdepth C0) →
+      (∃ f : {n // n ∈ mtkNodesH (⟨c 0, mdepth C0, hdom 0⟩ : MTKNode I C0)},
+        f ≠ ⟨⟨c 0, mdepth C0, hdom 0⟩, self_mem_mtkNodesH ⟨c 0, mdepth C0, hdom 0⟩⟩ ∧
+        r = po ∧ D ∈ mtk C0 I f.val.x f.val.k) ∨
       (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) (mdepth C0)) ∨ r = eq) :
     Satisfiable C0 :=
   multiTier_sound _
@@ -13662,7 +13673,7 @@ theorem cvert_generic_satisfiable : Satisfiable Cvert := by
       have hmty : Concept.ex r D ∈ mty Cvert Ivert (1 + a) := (mem_mtk.mp hmem).1
       obtain ⟨hr, hD⟩ := cvert_demands r D (mty_sub _ hmty)
       subst hr; subst hD
-      exact Or.inl ⟨rfl, 0, by decide, cvert_atom0_mtk (1 + 0)⟩
+      exact Or.inr (Or.inl ⟨rfl, 0, by decide, cvert_atom0_mtk (1 + 0)⟩)
   exact multiTier_sound _ hok (Sum.inl ⟨cvertRoot, self_mem_mtkNodesH cvertRoot⟩)
     Cvert (mem_mtk.mpr ⟨(vfull 0).symm ▸ cl_self Cvert, Nat.le_refl _⟩)
 
@@ -13686,7 +13697,7 @@ theorem cvert_via_tower : Satisfiable Cvert := by
     have hmty : Concept.ex r D ∈ mty Cvert Ivert (1 + a) := (mem_mtk.mp hmem).1
     obtain ⟨hr, hD⟩ := cvert_demands r D (mty_sub _ hmty)
     subst hr; subst hD
-    exact Or.inl ⟨rfl, 0, Nat.one_pos, cvert_atom0_mtk (1 + 0)⟩
+    exact Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos, cvert_atom0_mtk (1 + 0)⟩)
 
 /-! ### The MIXING carrier: an ascending tower + one `PO`-node
 
@@ -14844,7 +14855,7 @@ theorem cmerge_generic_satisfiable : Satisfiable Cmerge := by
       rcases cmerge_demands r D (mty_sub _ hmty) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
       · obtain ⟨y, _, hr, _⟩ := mty_ex hmty
         exact absurd hr (cmerge_pos_dr_none (i + a) (by omega) y)
-      · exact Or.inl ⟨rfl, 0, hp, cmerge_atom0_mtk (i + 0)⟩
+      · exact Or.inr (Or.inl ⟨rfl, 0, hp, cmerge_atom0_mtk (i + 0)⟩)
   exact multiTier_sound _ hok (Sum.inl ⟨cmergeRoot, self_mem_mtkNodesH cmergeRoot⟩)
     Cmerge (mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self Cmerge, cmerge_sat_root⟩, Nat.le_refl _⟩)
 
