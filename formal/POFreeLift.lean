@@ -9744,9 +9744,9 @@ open Classical in
     externals are the `mtHF` nodes (`g = ·.val.x`, `bud = ·.val.k`,
     `dadj = dadjBK`). -/
 theorem mtk_ee_all (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
-    (root : MTKNode I C0) (e f : {n // n ∈ mtkNodes root}) (r : Atom)
+    (root : MTKNode I C0) (e f : {n // n ∈ mtkNodesH root}) (r : Atom)
     (c : Concept) (hall : Concept.all r c ∈ mtk C0 I e.val.x e.val.k)
-    (hEf : (if e = f then eq else if dadjBK hI root e f then dr else po) = r) :
+    (hEf : (if e = f then eq else if decide (sAdjK e.val f.val) then dr else po) = r) :
     c ∈ mtk C0 I f.val.x f.val.k := by
   by_cases hef : e = f
   · subst hef
@@ -9754,7 +9754,7 @@ theorem mtk_ee_all (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
     subst hEf
     exact mtk_all_eq hI hall e.val.hx
   · rw [if_neg hef] at hEf
-    by_cases hd : dadjBK hI root e f = true
+    by_cases hd : decide (sAdjK e.val f.val) = true
     · -- `DR` edge
       have hrdr : dr = r := (if_pos hd).symm.trans hEf
       subst hrdr
@@ -9830,6 +9830,28 @@ theorem mtk_e_ex (hI : RCC5Interp I) {C0 : Concept} (root : MTKNode I C0)
   · have hppi : r = ppi := by cases r <;> simp_all
     subst hppi
     exact (hno_ppi e D hdem).elim
+
+open Classical in
+/-- **`k_ex` for the `mtk`-with-kernels cert** (step 4).  A tower phase's demand
+    routes `∃PP` up the tower (`cdir true = PP`) and `∃EQ` reflexively — the
+    self-carrying-tower fragment (tower points have no horizontal demands).
+    Thin given the phase-demand classification `hk_class`, which the extraction
+    proves from the tower's self-carrying structure.  Discharges
+    `mtkKernel_ok`'s `hk_ex`. -/
+theorem mtk_k_ex (hI : RCC5Interp I) {C0 : Concept} (root : MTKNode I C0)
+    (c : Nat → α) (p i : Nat) (v0 : {n // n ∈ mtkNodesH root})
+    (hdom : ∀ n, I.dom (c n))
+    (hk_class : ∀ a r D, Concept.ex r D ∈ mtk C0 I (c (i + a)) v0.val.k →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) v0.val.k) ∨ r = eq)
+    (a : Nat) (r : Atom) (D : Concept)
+    (hmem : Concept.ex r D ∈ mtk C0 I (c (i + a)) v0.val.k) :
+    (∃ f : {n // n ∈ mtkNodesH root},
+      (if f = v0 then ppi else po) = r ∧ D ∈ mtk C0 I f.val.x f.val.k) ∨
+    (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) v0.val.k) ∨
+    (r = eq ∧ D ∈ mtk C0 I (c (i + a)) v0.val.k) := by
+  rcases hk_class a r D hmem with ⟨rfl, b, hb, hDb⟩ | rfl
+  · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+  · exact Or.inr (Or.inr ⟨rfl, mtk_ex_eq hI hmem (hdom (i + a))⟩)
 
 /-- THE HORIZONTAL-FRAGMENT EXTRACTION: every satisfiable `HFrag` concept
     has a valid finite multi-tier certificate carrying it. -/
@@ -14439,6 +14461,7 @@ end VerticalWitness
 #print axioms mtk_ee_all
 #print axioms mtkNodesH_covers
 #print axioms mtk_e_ex
+#print axioms mtk_k_ex
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
