@@ -11509,6 +11509,64 @@ theorem mtkKernel_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
     · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
 
+/-- `ite` does not depend on the `Decidable` instance (it is a `Subsingleton`) —
+    the bridge between the `mtkNodesH`-subtype's `DecidableEq` (used by the
+    routing lemmas) and the `Classical.propDecidable` the generic `mtkKernel`
+    bakes in.  Core Lean has no `convert`, so this is proved by hand. -/
+theorem ite_inst_irrel {γ : Type} {cc : Prop} (i1 i2 : Decidable cc) (a b : γ) :
+    @ite γ cc i1 a b = @ite γ cc i2 a b := by
+  cases i1 with
+  | isTrue h1 => cases i2 with
+    | isTrue _ => rfl
+    | isFalse h2 => exact absurd h1 h2
+  | isFalse h1 => cases i2 with
+    | isTrue h2 => exact absurd h2 h1
+    | isFalse _ => rfl
+
+open Classical in
+/-- **THE `mtk`-WITH-KERNELS CERTIFICATE IS VALID** (step 4 capstone,
+    single-kernel).  The whole extraction assembled: `mtHF` horizontal skeleton
+    (`mtkNodesH`) + one ascending kernel at the root, PO-default `K`,
+    `mtk`-truncated labels — a valid `MultiTierOk`.  `mtkKernel_ok` fed the
+    three routing lemmas (`mtk_ee_all`/`mtk_e_ex`/`mtk_k_ex`), the `Decidable`
+    instance bridged by `ite_inst_irrel`.  The certificate SOUNDNESS is now
+    complete; a full extraction theorem additionally needs the MODEL-side
+    supply of `hpp_v0`/`hno_ppi`/`hk_class` (the demand structure of a
+    single-self-carrying-tower `POFree` concept). -/
+theorem extract_mtkKernel (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    (root : MTKNode I C0) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (i p : Nat) (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hv0pp : ∀ a, I.rho root.x (c (i + a)) = pp)
+    (hpp_v0 : ∀ (e : {n // n ∈ mtkNodesH root}) (D : Concept),
+      Concept.ex pp D ∈ mtk C0 I e.val.x e.val.k →
+      e = ⟨root, self_mem_mtkNodesH root⟩ ∧
+        ∃ a, a < p ∧ D ∈ mtk C0 I (c (i + a)) root.k)
+    (hno_ppi : ∀ (e : {n // n ∈ mtkNodesH root}) (D : Concept),
+      Concept.ex ppi D ∈ mtk C0 I e.val.x e.val.k → False)
+    (hk_class : ∀ a r D, Concept.ex r D ∈ mtk C0 I (c (i + a)) root.k →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) root.k) ∨ r = eq) :
+    MultiTierOk (mtkKernel I C0 (fun e : {n // n ∈ mtkNodesH root} => e.val.x)
+      (fun e => e.val.k) (fun e f => decide (sAdjK e.val f.val))
+      ⟨root, self_mem_mtkNodesH root⟩ c i p) := by
+  refine mtkKernel_ok (β := {n // n ∈ mtkNodesH root}) hI hpofree (fun e => e.val.x) (fun e => e.val.hx)
+    (fun e => e.val.k) (fun e f => decide (sAdjK e.val f.val))
+    (fun e f => by rw [propext (sAdjK_symm e.val f.val)])
+    ⟨root, self_mem_mtkNodesH root⟩ c hdom hstep i p hp hty hv0pp ?_ ?_ ?_
+  · intro e f r cc hall hEf
+    exact mtk_ee_all hI hpofree root e f r cc hall (Eq.trans (ite_inst_irrel _ _ _ _) hEf)
+  · intro e r D hdem
+    rcases mtk_e_ex hI root c p i ⟨root, self_mem_mtkNodesH root⟩ hpp_v0 hno_ppi
+      e r D hdem with ⟨f, hEf, hDf⟩ | ⟨hK, a, ha, hDa⟩
+    · exact Or.inl ⟨f, Eq.trans (ite_inst_irrel _ _ _ _) hEf, hDf⟩
+    · exact Or.inr ⟨Eq.trans (congrArg conv (ite_inst_irrel _ _ _ _)) hK, a, ha, hDa⟩
+  · intro a r D hmem
+    rcases mtk_k_ex hI root c p i ⟨root, self_mem_mtkNodesH root⟩ hdom hk_class
+      a r D hmem with ⟨f, hf, hDf⟩ | h
+    · exact Or.inl ⟨f, Eq.trans (ite_inst_irrel _ _ _ _) hf, hDf⟩
+    · exact Or.inr h
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -14462,6 +14520,7 @@ end VerticalWitness
 #print axioms mtkNodesH_covers
 #print axioms mtk_e_ex
 #print axioms mtk_k_ex
+#print axioms extract_mtkKernel
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
