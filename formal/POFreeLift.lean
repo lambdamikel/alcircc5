@@ -11567,6 +11567,16 @@ theorem extract_mtkKernel (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C
     · exact Or.inl ⟨f, Eq.trans (ite_inst_irrel _ _ _ _) hf, hDf⟩
     · exact Or.inr h
 
+/-- **`hno_ppi` for free** — the SYNTACTIC third of the completeness inputs to
+    `extract_mtkKernel`.  A concept with no `∃PPI` in its closure can never have
+    a node demanding `∃PPI`: every `mtk` label sits inside `mty ⊆ cl C0`
+    (`mem_mtk`, `mty_sub`).  Reusable for any `∃PPI`-free `C0` and any `root`. -/
+theorem no_ppi_demand {C0 : Concept} (root : MTKNode I C0)
+    (hcl : ∀ D, Concept.ex ppi D ∉ cl C0) :
+    ∀ (e : {n // n ∈ mtkNodesH root}) (D : Concept),
+      Concept.ex ppi D ∈ mtk C0 I e.val.x e.val.k → False :=
+  fun _ D hdem => hcl D (mty_sub _ (mem_mtk.mp hdem).1)
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -13638,6 +13648,63 @@ theorem cmix_no_allppi : ∀ c, Concept.all ppi c ∉ cl Cmix := by
     (Concept.all ppi c) hmem
   simp at hb
 
+/-- In `Imix`, a `PO` edge always has an endpoint at the `PO`-node `nb = inr ()`
+    (chain edges are never `PO`). -/
+theorem mixRho_po_lemma : ∀ (a b : Nat ⊕ Unit), Imix.rho a b = po →
+    b = Sum.inr () ∨ a = Sum.inr () := by
+  rintro (i | ⟨⟩) (j | ⟨⟩) h
+  · exfalso
+    rcases chain_vals i j with h' | h' | h' <;>
+      · rw [show Imix.rho (Sum.inl i) (Sum.inl j) = chain i j from rfl, h'] at h
+        exact absurd h (by decide)
+  · exact Or.inl rfl
+  · exact Or.inr rfl
+  · exact Or.inl rfl
+
+/-- **The `Cmix` coverage skeleton is `{n} ∪ {nb}`.**  Every node in
+    `mtkNodesH n` is either `n` itself or the `PO`-node `inr ()`: a chain node's
+    only non-vertical demand is `∃PO.A₁` (served by `nb`), and `nb` has no demand
+    at all (`nb_no_ex`).  This is the characterization that discharges `hpp_v0`
+    (only the root can carry `∃PP` among skeleton nodes) for the generic
+    extraction of `Cmix` through `extract_mtkKernel`. -/
+theorem cmix_nodes_root :
+    ∀ (n : MTKNode Imix Cmix), ∀ m ∈ mtkNodesH n, m = n ∨ m.x = Sum.inr () := by
+  intro n
+  induction n using mtkNodesH.induct with
+  | _ x ih =>
+    intro m hm
+    rw [mtkNodesH] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact Or.inl rfl
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        have hmm2 : m ∈ (if r = pp ∨ r = ppi then ([] : List (MTKNode Imix Cmix))
+            else mtkNodesH (mtkWitness x hF)) := hmm
+        by_cases hv : r = pp ∨ r = ppi
+        · rw [if_pos hv] at hmm2; exact absurd hmm2 List.not_mem_nil
+        · rw [if_neg hv] at hmm2
+          have hwit : (mtkWitness x hF).x = Sum.inr () := by
+            have hrho : Imix.rho x.x (mtkWitness x hF).x = r := mtkWitness_rho x hF
+            have hmty : Concept.ex r c ∈ mty Cmix Imix x.x := (mem_mtk.mp hF).1
+            have hr_po : r = po := by
+              rcases cmix_demands r c (mty_sub _ hmty) with ⟨rfl, _⟩ | ⟨rfl, _⟩
+              · rfl
+              · exact absurd (Or.inl rfl) hv
+            rcases mixRho_po_lemma x.x (mtkWitness x hF).x (hrho.trans hr_po) with hb | ha
+            · exact hb
+            · exact absurd (ha ▸ hmty) (nb_no_ex r c)
+          rcases ih r c hF m hmm2 with hmw | hmr
+          · rw [hmw]; exact Or.inr hwit
+          · exact Or.inr hmr
+      | top => exact absurd hmm List.not_mem_nil
+      | bot => exact absurd hmm List.not_mem_nil
+      | atom a => exact absurd hmm List.not_mem_nil
+      | natom a => exact absurd hmm List.not_mem_nil
+      | and a b => exact absurd hmm List.not_mem_nil
+      | or a b => exact absurd hmm List.not_mem_nil
+      | all r c => exact absurd hmm List.not_mem_nil
+
 /-- **THE MIXED CERTIFICATE IS VALID.**  The first `MultiTierOk` with BOTH
     non-trivial externals (root `inl 0` + `PO`-node `nb`) AND a kernel (the
     `A₀`-tower).  `∃PO.A₁` served by `nb` (direct external, `E`/`K`), `∃PP.A₀`
@@ -14521,6 +14588,7 @@ end VerticalWitness
 #print axioms mtk_e_ex
 #print axioms mtk_k_ex
 #print axioms extract_mtkKernel
+#print axioms no_ppi_demand
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
 #print axioms VerticalWitness.cvert2x_satisfiable
@@ -14561,5 +14629,7 @@ end VerticalWitness
 #print axioms VerticalWitness.mixCert_ok
 #print axioms VerticalWitness.mix_cert_satisfiable
 #print axioms VerticalWitness.decidableSat_Cmix
+#print axioms VerticalWitness.cmix_nodes_root
+#print axioms VerticalWitness.mixRho_po_lemma
 
 end POFreeLift
