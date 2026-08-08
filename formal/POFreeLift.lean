@@ -11577,6 +11577,78 @@ theorem no_ppi_demand {C0 : Concept} (root : MTKNode I C0)
       Concept.ex ppi D ∈ mtk C0 I e.val.x e.val.k → False :=
   fun _ D hdem => hcl D (mty_sub _ (mem_mtk.mp hdem).1)
 
+/-- **`PP`-transitivity along a chain** — in any `PP`-ascending chain `c`, the
+    base `c 0` sits `PP`-below every later point (`comp(PP,PP) = {PP}` forces the
+    composite).  Gives `hv0pp` for a root placed at `c 0` over ANY model,
+    generalising the concrete `chain_lt` the ℕ-chain witnesses used. -/
+theorem pp_chain_below (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp) :
+    ∀ m, I.rho (c 0) (c (m + 1)) = pp := by
+  intro m
+  induction m with
+  | zero => exact hstep 0
+  | succ m ih =>
+    have hc := hI.comp_ (c 0) (c (m + 1)) (c (m + 1 + 1))
+      (hdom 0) (hdom (m + 1)) (hdom (m + 1 + 1))
+    rw [ih, hstep (m + 1), show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
+    exact hc
+
+/-- **Auto-build the tower from the model** — a single persistent-`∃PP` point
+    `x0` (`persistPP`) yields the whole ascending `PP`-tower via `buildChain` +
+    `persistPP_productive`: `c 0 = x0`, every point is in-domain, adjacent points
+    are `PP`, and persistence propagates (so `mty_segment_bounded` + `pp_chain_below`
+    apply).  Discharges `extract_mtkKernel`'s `c`/`hdom`/`hstep` for ANY model
+    from just the forced-tower witness. -/
+theorem tower_from_persistPP (hI : RCC5Interp I) {C0 G : Concept} {x0 : α}
+    (hpers : persistPP I C0 G x0) :
+    ∃ c : Nat → α, c 0 = x0 ∧ (∀ n, I.dom (c n)) ∧
+      (∀ n, I.rho (c n) (c (n + 1)) = pp) ∧ (∀ n, persistPP I C0 G (c n)) := by
+  have hprod : ∀ x, persistPP I C0 G x →
+      ∃ y, persistPP I C0 G y ∧ I.dom y ∧ I.rho x y = pp :=
+    fun x hx => persistPP_productive hI x hx
+  exact ⟨buildChain (persistPP I C0 G) hprod x0 hpers,
+    buildChain_zero (persistPP I C0 G) hprod x0 hpers,
+    buildChain_dom (persistPP I C0 G) hprod x0 hpers hpers.1,
+    buildChain_step (persistPP I C0 G) hprod x0 hpers,
+    buildChain_prop (persistPP I C0 G) hprod x0 hpers⟩
+
+open Classical in
+/-- **GENERAL EXTRACTION MODULO CLEANLINESS** — the completeness direction for
+    the single-tower ∀PO-free fragment, with the open content isolated.  Given a
+    `PP`-tower `c` in a model (root `c 0` carrying `C0`), the syntactic
+    `∃PPI`-freeness of `C0`, and a recurrence `(i,p)`, this discharges ALL of
+    `extract_mtkKernel`'s structural inputs — `hv0pp` (via `pp_chain_below`, root
+    `PP`-below every phase), `hno_ppi` (via `no_ppi_demand`), the root, and the
+    `multiTier_sound` read-off — leaving EXACTLY the two model-side CLEANLINESS
+    obligations as hypotheses: `hpp_v0` (only the root carries `∃PP` among
+    skeleton nodes) and `hk_class` (each phase demands only a served `∃PP` or
+    `∃EQ`).  The witnesses `cvert_generic_satisfiable` (degenerate skeleton) and
+    `cmerge_generic_satisfiable` (non-degenerate) discharge cleanliness
+    concretely; the GENERAL discharge (a clean model always exists) is the
+    remaining analytic content (W2′/F6 territory). -/
+theorem extract_from_tower (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hC0 : C0 ∈ mty C0 I (c 0)) (hnoppi : ∀ D, Concept.ex ppi D ∉ cl C0)
+    (i p : Nat) (hi : 0 < i) (hp : 0 < p)
+    (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (hpp_v0 : ∀ (e : {n // n ∈ mtkNodesH (⟨c 0, mdepth C0, hdom 0⟩ : MTKNode I C0)})
+        (D : Concept),
+      Concept.ex pp D ∈ mtk C0 I e.val.x e.val.k →
+      e = ⟨⟨c 0, mdepth C0, hdom 0⟩, self_mem_mtkNodesH ⟨c 0, mdepth C0, hdom 0⟩⟩ ∧
+        ∃ a, a < p ∧ D ∈ mtk C0 I (c (i + a)) (mdepth C0))
+    (hk_class : ∀ a r D, Concept.ex r D ∈ mtk C0 I (c (i + a)) (mdepth C0) →
+      (r = pp ∧ ∃ b, b < p ∧ D ∈ mtk C0 I (c (i + b)) (mdepth C0)) ∨ r = eq) :
+    Satisfiable C0 :=
+  multiTier_sound _
+    (extract_mtkKernel hI hpofree ⟨c 0, mdepth C0, hdom 0⟩ c hdom hstep i p hp hty
+      (fun a => by
+        have h := pp_chain_below hI c hdom hstep (i + a - 1)
+        rwa [show i + a - 1 + 1 = i + a from by omega] at h)
+      hpp_v0 (no_ppi_demand ⟨c 0, mdepth C0, hdom 0⟩ hnoppi) hk_class)
+    (Sum.inl ⟨⟨c 0, mdepth C0, hdom 0⟩, self_mem_mtkNodesH ⟨c 0, mdepth C0, hdom 0⟩⟩)
+    C0 (mem_mtk.mpr ⟨hC0, Nat.le_refl _⟩)
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -14912,6 +14984,9 @@ end VerticalWitness
 #print axioms mtk_e_ex
 #print axioms mtk_k_ex
 #print axioms extract_mtkKernel
+#print axioms pp_chain_below
+#print axioms tower_from_persistPP
+#print axioms extract_from_tower
 #print axioms no_ppi_demand
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
