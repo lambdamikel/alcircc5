@@ -14001,6 +14001,71 @@ theorem cmix_at_root : Cmix ∈ mty Cmix Imix (Sum.inl 0) := by
   · exact hePP j
   · change po = pp at hr; exact absurd hr (by decide)
 
+/-- The root node for the generic `Cmix` extraction. -/
+def cmixRoot : MTKNode Imix Cmix := ⟨Sum.inl 0, mdepth Cmix, trivial⟩
+
+/-- `A₀` sits in every tower point's `mtk` label at the root budget. -/
+theorem cmix_atom0_mtk (n : Nat) :
+    Concept.atom 0 ∈ mtk Cmix Imix (Sum.inl n) cmixRoot.k :=
+  mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, Nat.zero_le _⟩
+
+/-- The root's `∃PO.A₁` demand, as an `mtk` membership — drives the `nb`
+    external witness that serves the phases' horizontal demand. -/
+theorem cmix_root_po_demand :
+    Concept.ex po (Concept.atom 1) ∈ mtk Cmix Imix cmixRoot.x cmixRoot.k :=
+  mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, ⟨Sum.inr (), trivial, rfl, rfl⟩⟩, by decide⟩
+
+open Classical in
+/-- **`Cmix` extracts through the GENERIC engine** — the first FULLY MIXED
+    concept certified through `extract_mtkKernel` (NOT the bespoke `mixCert`):
+    every tower phase demands a HORIZONTAL `∃PO.A₁`, served OUT to the external
+    `nb` via the `PO` `K`-edge (`mtk_k_ex`'s new route-1), while `∃PP.A₀` goes up
+    the tower.  So the general mixed extraction handles the very concept
+    `mixCert` needed a hand-built certificate for — the clean-phase restriction
+    is gone, exactly because `∀PO`-freeness makes the `PO` `K`-edge sound. -/
+theorem cmix_generic_satisfiable : Satisfiable Cmix := by
+  have hnoppi : ∀ D, Concept.ex ppi D ∉ cl Cmix := fun D h => by
+    rcases cmix_demands ppi D h with ⟨h', _⟩ | ⟨h', _⟩ <;> exact absurd h' (by decide)
+  obtain ⟨i, p, hLi, hp, _, hty⟩ :=
+    mty_segment_bounded (I := Imix) Cmix (fun n => Sum.inl n) 1
+  have hok : MultiTierOk (mtkKernel Imix Cmix
+      (fun e : {n // n ∈ mtkNodesH cmixRoot} => e.val.x) (fun e => e.val.k)
+      (fun e f => decide (sAdjK e.val f.val))
+      ⟨cmixRoot, self_mem_mtkNodesH cmixRoot⟩ (fun n => Sum.inl n) i p) := by
+    refine extract_mtkKernel Imix_rcc5 Cmix_pofree cmixRoot (fun n => Sum.inl n)
+      (fun _ => trivial) (fun n => chain_lt (Nat.lt_succ_self n)) i p hp hty ?_ ?_ ?_ ?_
+    · intro a; show chain 0 (i + a) = pp; exact chain_lt (by omega)
+    · intro e D hdem
+      rcases cmix_nodes_root cmixRoot e.val e.property with he | hinr
+      · have hmty : Concept.ex pp D ∈ mty Cmix Imix e.val.x := (mem_mtk.mp hdem).1
+        have hD : D = Concept.atom 0 := by
+          rcases cmix_demands pp D (mty_sub _ hmty) with ⟨h', _⟩ | ⟨_, h'⟩
+          · exact absurd h' (by decide)
+          · exact h'
+        subst hD
+        exact ⟨Subtype.ext he, 0, hp, cmix_atom0_mtk (i + 0)⟩
+      · exact absurd ((mem_mtk.mp hdem).1) (hinr ▸ nb_no_ex pp D)
+    · exact no_ppi_demand cmixRoot hnoppi
+    · intro a r D hmem
+      have hmty : Concept.ex r D ∈ mty Cmix Imix (Sum.inl (i + a)) := (mem_mtk.mp hmem).1
+      rcases cmix_demands r D (mty_sub _ hmty) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+      · refine Or.inl ⟨⟨mtkWitness cmixRoot cmix_root_po_demand,
+          mtkWitnessH_mem cmixRoot cmix_root_po_demand (by decide)⟩, ?_, rfl,
+          mtkWitness_arg cmixRoot cmix_root_po_demand⟩
+        intro h
+        have hx : (mtkWitness cmixRoot cmix_root_po_demand).x = Sum.inr () := by
+          rcases mixRho_po_lemma cmixRoot.x _
+            (mtkWitness_rho cmixRoot cmix_root_po_demand) with hb | ha
+          · exact hb
+          · exact absurd ha (by rw [show cmixRoot.x = Sum.inl 0 from rfl]; decide)
+        have h2 : (mtkWitness cmixRoot cmix_root_po_demand).x = cmixRoot.x :=
+          congrArg (fun z => (z : MTKNode Imix Cmix).x) (Subtype.ext_iff.mp h)
+        rw [hx, show cmixRoot.x = Sum.inl 0 from rfl] at h2
+        exact absurd h2 (by decide)
+      · exact Or.inr (Or.inl ⟨rfl, 0, hp, cmix_atom0_mtk (i + 0)⟩)
+  exact multiTier_sound _ hok (Sum.inl ⟨cmixRoot, self_mem_mtkNodesH cmixRoot⟩)
+    Cmix (mem_mtk.mpr ⟨cmix_at_root, Nat.le_refl _⟩)
+
 /-- The merged certificate, encoded as a `FinMT` (`nE = 2`, `nK = 1`) and
     ACCEPTED at the root — the encoding side of the mixed decision
     procedure.  `Bool ↔ Fin 2` / `Unit ↔ Fin 1` bijections are `by decide`. -/
@@ -15070,5 +15135,6 @@ end VerticalWitness
 #print axioms VerticalWitness.Imerge_rcc5
 #print axioms VerticalWitness.cmerge_nodes
 #print axioms VerticalWitness.cmerge_generic_satisfiable
+#print axioms VerticalWitness.cmix_generic_satisfiable
 
 end POFreeLift
