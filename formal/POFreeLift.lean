@@ -14507,6 +14507,84 @@ theorem calt_satisfiable : Satisfiable Calt := by
   exact ⟨Nat, Ialt, Ialt_rcc5, 0, trivial,
     ⟨⟨⟨he0 0, he1 0⟩, fun y _ _ => he0 y⟩, fun y _ _ => he1 y⟩⟩
 
+/-! ### A NON-TRIVIAL-skeleton merge witness: `Cmerge`
+
+The clean-tower carrier `cleanRho` on `ℕ ⊕ Unit`: the ascending `PP`-tower
+(`inl`) plus a leaf `nb = inr ()` that is `DR` to the ROOT `inl 0` but `PO` to
+every tower phase `inl (j+1)`.  So the root has a genuine horizontal `∃DR.B`
+demand (served by `nb`, a second skeleton node), while the tower stays
+horizontally CLEAN: a phase's only neighbour off the chain is `nb` at `PO`, and
+`∃PO.B ∉ cl Cmerge`, so phases demand only the self-carrying `∃PP.A`.  `nb`
+itself has no `PP`-neighbour (so it never inherits `∃PP`) and its sole
+`DR`-neighbour is the root (carrying `A`, not `B`), so it has no `cl Cmerge`
+demand at all.  This is the first extraction through `extract_mtkKernel` with a
+NON-DEGENERATE horizontal skeleton `{root, nb}`. -/
+
+/-- The clean-tower relation: chain on the tower; `DR` root↔leaf, `PO`
+    phase↔leaf. -/
+def cleanRho : (Nat ⊕ Unit) → (Nat ⊕ Unit) → Atom
+  | .inl i, .inl j => chain i j
+  | .inl 0, .inr _ => dr
+  | .inl (_ + 1), .inr _ => po
+  | .inr _, .inl 0 => dr
+  | .inr _, .inl (_ + 1) => po
+  | .inr _, .inr _ => eq
+
+theorem cleanRho_frame : Frame cleanRho where
+  refl_eq := by
+    rintro (i | ⟨⟩)
+    · exact chain_self i
+    · rfl
+  eq_id := by
+    rintro (a | ⟨⟩) (b | ⟨⟩) h
+    · exact congrArg Sum.inl (chain_eq_imp h)
+    · cases a <;> simp only [cleanRho] at h <;> exact absurd h (by decide)
+    · cases b <;> simp only [cleanRho] at h <;> exact absurd h (by decide)
+    · rfl
+  conv_ := by
+    rintro (a | ⟨⟩) (b | ⟨⟩)
+    · exact chain_conv a b
+    · cases a <;> rfl
+    · cases b <;> rfl
+    · rfl
+  comp_ := by
+    rintro (i | ⟨⟩) (j | ⟨⟩) (k | ⟨⟩)
+    · exact chainFrame.comp_ i j k
+    · cases i with
+      | zero => cases j with
+        | zero => simp only [cleanRho]; decide
+        | succ j' => simp only [cleanRho]; rw [chain_lt (Nat.succ_pos j')]; decide
+      | succ i' => cases j with
+        | zero => simp only [cleanRho]; rw [chain_gt (Nat.succ_pos i')]; decide
+        | succ j' => simp only [cleanRho]
+                     rcases chain_vals (i' + 1) (j' + 1) with h | h | h <;> rw [h] <;> decide
+    · cases i with
+      | zero => cases k with
+        | zero => simp only [cleanRho]; decide
+        | succ k' => simp only [cleanRho]; rw [chain_lt (Nat.succ_pos k')]; decide
+      | succ i' => cases k with
+        | zero => simp only [cleanRho]; rw [chain_gt (Nat.succ_pos i')]; decide
+        | succ k' => simp only [cleanRho]
+                     rcases chain_vals (i' + 1) (k' + 1) with h | h | h <;> rw [h] <;> decide
+    · cases i <;> simp only [cleanRho] <;> decide
+    · cases j with
+      | zero => cases k with
+        | zero => simp only [cleanRho]; decide
+        | succ k' => simp only [cleanRho]; rw [chain_lt (Nat.succ_pos k')]; decide
+      | succ j' => cases k with
+        | zero => simp only [cleanRho]; rw [chain_gt (Nat.succ_pos j')]; decide
+        | succ k' => simp only [cleanRho]
+                     rcases chain_vals (j' + 1) (k' + 1) with h | h | h <;> rw [h] <;> decide
+    · cases j <;> simp only [cleanRho] <;> decide
+    · cases k <;> simp only [cleanRho] <;> decide
+    · simp only [cleanRho]; decide
+
+/-- The clean-tower model: `A₀` at every tower point, `B = A₁` at the leaf. -/
+def Imerge : Interp (Nat ⊕ Unit) :=
+  ⟨fun _ => True, cleanRho, fun a x => match x with | .inl _ => a = 0 | .inr _ => a = 1⟩
+
+theorem Imerge_rcc5 : RCC5Interp Imerge := frame_rcc5 cleanRho cleanRho_frame _
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -14710,5 +14788,7 @@ end VerticalWitness
 #print axioms VerticalWitness.mixRho_po_lemma
 #print axioms VerticalWitness.cvert_nodes_singleton
 #print axioms VerticalWitness.cvert_generic_satisfiable
+#print axioms VerticalWitness.cleanRho_frame
+#print axioms VerticalWitness.Imerge_rcc5
 
 end POFreeLift
