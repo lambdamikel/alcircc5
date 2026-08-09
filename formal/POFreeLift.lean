@@ -14066,6 +14066,49 @@ theorem cmix_generic_satisfiable : Satisfiable Cmix := by
   exact multiTier_sound _ hok (Sum.inl ⟨cmixRoot, self_mem_mtkNodesH cmixRoot⟩)
     Cmix (mem_mtk.mpr ⟨cmix_at_root, Nat.le_refl _⟩)
 
+open Classical in
+/-- **`Cmix` through the GENERAL `extract_from_tower`** — the general mixed
+    extraction fires on the HORIZONTAL-phase class (route-1).  Together with
+    `cvert_via_tower` (degenerate) and `cmerge_via_tower` (non-degenerate, clean
+    phases) this witnesses that the ONE general theorem spans all three current
+    mixing patterns; only cleanliness (a clean model exists) is the isolated
+    remaining obligation. -/
+theorem cmix_via_tower : Satisfiable Cmix := by
+  obtain ⟨i, p, hLi, hp, _, hty⟩ :=
+    mty_segment_bounded (I := Imix) Cmix (fun n => Sum.inl n) 1
+  refine extract_from_tower Imix_rcc5 Cmix_pofree (fun n => Sum.inl n)
+    (fun _ => trivial) (fun n => chain_lt (Nat.lt_succ_self n)) cmix_at_root
+    (fun D h => by
+      rcases cmix_demands ppi D h with ⟨h', _⟩ | ⟨h', _⟩ <;> exact absurd h' (by decide))
+    i p (by omega) hp hty ?_ ?_
+  · intro e D hdem
+    rcases cmix_nodes_root _ e.val e.property with he | hinr
+    · have hmty : Concept.ex pp D ∈ mty Cmix Imix e.val.x := (mem_mtk.mp hdem).1
+      have hD : D = Concept.atom 0 := by
+        rcases cmix_demands pp D (mty_sub _ hmty) with ⟨h', _⟩ | ⟨_, h'⟩
+        · exact absurd h' (by decide)
+        · exact h'
+      subst hD
+      exact ⟨Subtype.ext he, 0, hp, cmix_atom0_mtk (i + 0)⟩
+    · exact absurd ((mem_mtk.mp hdem).1) (hinr ▸ nb_no_ex pp D)
+  · intro a r D hmem
+    have hmty : Concept.ex r D ∈ mty Cmix Imix (Sum.inl (i + a)) := (mem_mtk.mp hmem).1
+    rcases cmix_demands r D (mty_sub _ hmty) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · refine Or.inl ⟨⟨mtkWitness cmixRoot cmix_root_po_demand,
+        mtkWitnessH_mem cmixRoot cmix_root_po_demand (by decide)⟩, ?_, rfl,
+        mtkWitness_arg cmixRoot cmix_root_po_demand⟩
+      intro h
+      have hx : (mtkWitness cmixRoot cmix_root_po_demand).x = Sum.inr () := by
+        rcases mixRho_po_lemma cmixRoot.x _
+          (mtkWitness_rho cmixRoot cmix_root_po_demand) with hb | ha
+        · exact hb
+        · exact absurd ha (by rw [show cmixRoot.x = Sum.inl 0 from rfl]; decide)
+      have h2 : (mtkWitness cmixRoot cmix_root_po_demand).x = cmixRoot.x :=
+        congrArg (fun z => (z : MTKNode Imix Cmix).x) (Subtype.ext_iff.mp h)
+      rw [hx, show cmixRoot.x = Sum.inl 0 from rfl] at h2
+      exact absurd h2 (by decide)
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp, cmix_atom0_mtk (i + 0)⟩)
+
 /-- The merged certificate, encoded as a `FinMT` (`nE = 2`, `nK = 1`) and
     ACCEPTED at the root — the encoding side of the mixed decision
     procedure.  `Bool ↔ Fin 2` / `Unit ↔ Fin 1` bijections are `by decide`. -/
@@ -14924,6 +14967,37 @@ theorem cmerge_generic_satisfiable : Satisfiable Cmerge := by
   exact multiTier_sound _ hok (Sum.inl ⟨cmergeRoot, self_mem_mtkNodesH cmergeRoot⟩)
     Cmerge (mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self Cmerge, cmerge_sat_root⟩, Nat.le_refl _⟩)
 
+open Classical in
+/-- **`Cmerge` through the GENERAL `extract_from_tower`** — the general mixed
+    extraction fires on the NON-DEGENERATE clean-phase class (root `∃DR.A₁`
+    served by the skeleton node `nb`; phases demand only the tower `∃PP.A₀`).
+    The middle of the three witness classes spanned by the one general theorem. -/
+theorem cmerge_via_tower : Satisfiable Cmerge := by
+  obtain ⟨i, p, hLi, hp, _, hty⟩ :=
+    mty_segment_bounded (I := Imerge) Cmerge (fun n => Sum.inl n) 1
+  refine extract_from_tower Imerge_rcc5 Cmerge_pofree (fun n => Sum.inl n)
+    (fun _ => trivial) (fun n => chain_lt (Nat.lt_succ_self n))
+    (mem_mty.mpr ⟨cl_self Cmerge, cmerge_sat_root⟩)
+    (fun D h => by
+      rcases cmerge_demands ppi D h with ⟨h', _⟩ | ⟨h', _⟩ <;> exact absurd h' (by decide))
+    i p (by omega) hp hty ?_ ?_
+  · intro e D hdem
+    rcases cmerge_nodes _ e.val e.property with he | hinr
+    · have hmty : Concept.ex pp D ∈ mty Cmerge Imerge e.val.x := (mem_mtk.mp hdem).1
+      have hD : D = Concept.atom 0 := by
+        rcases cmerge_demands pp D (mty_sub _ hmty) with ⟨h', _⟩ | ⟨_, h'⟩
+        · exact absurd h' (by decide)
+        · exact h'
+      subst hD
+      exact ⟨Subtype.ext he, 0, hp, cmerge_atom0_mtk (i + 0)⟩
+    · exact absurd ((mem_mtk.mp hdem).1) (hinr ▸ nb_merge_no_ex pp D)
+  · intro a r D hmem
+    have hmty : Concept.ex r D ∈ mty Cmerge Imerge (Sum.inl (i + a)) := (mem_mtk.mp hmem).1
+    rcases cmerge_demands r D (mty_sub _ hmty) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · obtain ⟨y, _, hr, _⟩ := mty_ex hmty
+      exact absurd hr (cmerge_pos_dr_none (i + a) (by omega) y)
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp, cmerge_atom0_mtk (i + 0)⟩)
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -15136,5 +15210,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cmerge_nodes
 #print axioms VerticalWitness.cmerge_generic_satisfiable
 #print axioms VerticalWitness.cmix_generic_satisfiable
+#print axioms VerticalWitness.cmix_via_tower
+#print axioms VerticalWitness.cmerge_via_tower
 
 end POFreeLift
