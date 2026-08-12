@@ -15301,6 +15301,64 @@ theorem cmerge_via_tower : Satisfiable Cmerge := by
       exact absurd hr (cmerge_pos_dr_none (i + a) (by omega) y)
     · exact Or.inr (Or.inl ⟨rfl, 0, hp, cmerge_atom0_mtk (i + 0)⟩)
 
+/-! ### A NESTED TWO-TOWER witness `Cnest`, through the MULTI-kernel engine
+
+`Cnest = Cvert ⊓ ∃PO.Cvert` on the all-cross-`PO` two-region carrier
+`Bool × ℕ`: within a region the ascending `PP`-chain, across regions `PO`.
+Each region's base carries its OWN `∃PP.A` tower — so `Cnest` needs TWO
+kernels (`κ = Bool`), the first genuinely multi-kernel extraction.  The
+cross-tower `∃PO.Cvert` demand routes to the OTHER region's base via the `PO`
+`K`-edge (`mtk_k_ex` route-1) — no `∃DR` summit.  Validates `mtkKernels_ok`
+end-to-end, as `cmix` did for the single kernel. -/
+
+/-- All-cross-`PO` two-region relation: within a region the chain, across `PO`. -/
+def nestRho : (Bool × Nat) → (Bool × Nat) → Atom
+  | (b, i), (b', j) => if b = b' then chain i j else po
+
+theorem nestRho_frame : Frame nestRho where
+  refl_eq := by rintro ⟨b, i⟩; show (if b = b then chain i i else po) = eq
+                rw [if_pos rfl]; exact chain_self i
+  eq_id := by
+    rintro ⟨b, i⟩ ⟨b', j⟩ h
+    show (⟨b, i⟩ : Bool × Nat) = ⟨b', j⟩
+    by_cases hb : b = b'
+    · have h' : chain i j = eq := by
+        have : (if b = b' then chain i j else po) = eq := h
+        rwa [if_pos hb] at this
+      subst hb; rw [chain_eq_imp h']
+    · have : (if b = b' then chain i j else po) = eq := h
+      rw [if_neg hb] at this; exact absurd this (by decide)
+  conv_ := by
+    rintro ⟨b, i⟩ ⟨b', j⟩
+    show (if b' = b then chain j i else po) = conv (if b = b' then chain i j else po)
+    by_cases hb : b = b'
+    · rw [if_pos hb, if_pos hb.symm]; exact chain_conv i j
+    · rw [if_neg hb, if_neg (fun h => hb h.symm)]; rfl
+  comp_ := by
+    rintro ⟨b, i⟩ ⟨b', j⟩ ⟨b'', k⟩
+    show (if b = b'' then chain i k else po)
+      ∈ comp (if b = b' then chain i j else po) (if b' = b'' then chain j k else po)
+    by_cases hbb' : b = b' <;> by_cases hb'b'' : b' = b''
+    · subst hbb'; subst hb'b''; rw [if_pos rfl, if_pos rfl, if_pos rfl]
+      exact chainFrame.comp_ i j k
+    · rw [if_pos hbb', if_neg hb'b'', if_neg (hbb' ▸ hb'b'')]
+      exact po_mem_comp_right _
+    · rw [if_neg hbb', if_pos hb'b'', if_neg (fun h => hbb' (h.trans hb'b''.symm))]
+      exact po_mem_comp_left _
+    · by_cases hbb'' : b = b''
+      · rw [if_pos hbb'', if_neg hbb', if_neg hb'b'']; exact mem_comp_po_po _
+      · rw [if_neg hbb'', if_neg hbb', if_neg hb'b'']; exact mem_comp_po_po _
+
+/-- The all-cross-`PO` model: `A₀` at every point. -/
+def Ipo : Interp (Bool × Nat) := ⟨fun _ => True, nestRho, fun a _ => a = 0⟩
+
+theorem Ipo_rcc5 : RCC5Interp Ipo := frame_rcc5 nestRho nestRho_frame _
+
+/-- `Cnest = Cvert ⊓ ∃PO.Cvert`. -/
+def Cnest : Concept := .and Cvert (.ex po Cvert)
+
+theorem Cnest_pofree : POFree Cnest := ⟨Cvert_pofree, Cvert_pofree⟩
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -15518,6 +15576,8 @@ end VerticalWitness
 #print axioms VerticalWitness.cmerge_generic_satisfiable
 #print axioms VerticalWitness.cmix_generic_satisfiable
 #print axioms VerticalWitness.cmix_via_tower
+#print axioms VerticalWitness.nestRho_frame
+#print axioms VerticalWitness.Ipo_rcc5
 #print axioms VerticalWitness.cmerge_via_tower
 
 end POFreeLift
