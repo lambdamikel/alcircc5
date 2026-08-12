@@ -11963,6 +11963,63 @@ theorem extract_from_tower (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree 
     (Sum.inl ⟨⟨c 0, mdepth C0, hdom 0⟩, self_mem_mtkNodesH ⟨c 0, mdepth C0, hdom 0⟩⟩)
     C0 (mem_mtk.mpr ⟨hC0, Nat.le_refl _⟩)
 
+open Classical in
+/-- **THE FLAT MULTI-TOWER EXTRACTION** — `cnest` generalised to ARBITRARY `κ`.
+    `κ` ascending towers over one model, all bases mutually `PO` (the flat
+    cross-`PO` skeleton, `dadj ≡ false`), each base `ck k 0` carrying `C0` and
+    `PP`-below its own phase window (`ik k ≥ 1`).  The demand routing (base and
+    phase): `∃PP` → own kernel, `∃PO` → another base, `∃EQ` → self; NO `∃DR`
+    (no `DR` among flat bases) and NO `∃PPI` (excluded by the routing shape).
+    Feeds `mtkKernels_ok`
+    and reads off `Satisfiable C0`.  `cnest` is the `κ = Bool` instance; this is
+    the general "N cross-`PO` towers" extraction. -/
+theorem extract_flat_towers (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    {κ : Type} (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (ik pk : κ → Nat) (hik : ∀ k, 0 < ik k) (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hbase : ∀ e r D, Concept.ex r D ∈ mtk C0 I (ck e 0) (mdepth C0) →
+      (r = pp ∧ D ∈ mtk C0 I (ck e (ik e)) (mdepth C0)) ∨
+      (r = po ∧ ∃ f, f ≠ e ∧ D ∈ mtk C0 I (ck f 0) (mdepth C0)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck e 0) (mdepth C0)))
+    (hphase : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (mdepth C0) →
+      (r = pp ∧ ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (mdepth C0)) ∨
+      (r = po ∧ ∃ f, f ≠ k ∧ D ∈ mtk C0 I (ck f 0) (mdepth C0)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (mdepth C0)))
+    (kroot : κ) (hroot : C0 ∈ mty C0 I (ck kroot 0)) :
+    Satisfiable C0 := by
+  have hok := mtkKernels_ok hI hpofree (fun k => ck k 0) (fun k => hdom k 0)
+    (fun _ => mdepth C0) (fun _ _ => false) (fun _ _ => rfl) (id) ck hdom hstep ik pk hp hty
+    (by intro k a
+        have h := pp_chain_below hI (ck k) (hdom k) (hstep k) (ik k + a - 1)
+        rwa [show ik k + a - 1 + 1 = ik k + a from by have := hik k; omega] at h)
+    (by intro e f r cc hmem hE
+        by_cases hef : e = f
+        · subst hef
+          rw [if_pos rfl] at hE; subst hE
+          exact all_into hmem (hI.refl_eq (ck e 0) (hdom e 0)) (hdom e 0)
+        · rw [if_neg hef] at hE
+          have hrpo : r = po := hE.symm
+          subst hrpo
+          exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree))
+    (by intro e r D hmem
+        rcases hbase e r D hmem with ⟨rfl, hD⟩ | ⟨rfl, f, hfe, hDf⟩ | ⟨rfl, hD⟩
+        · refine Or.inr ⟨e, ?_, 0, hp e, hD⟩
+          split
+          · rfl
+          · exact absurd (rfl : e = id e) (by assumption)
+        · refine Or.inl ⟨f, ?_, hDf⟩
+          rw [if_neg (fun h => hfe h.symm)]; rfl
+        · exact Or.inl ⟨e, by rw [if_pos rfl], hD⟩)
+    (by intro k a r D hmem
+        rcases hphase k a r D hmem with ⟨rfl, b, hb, hDb⟩ | ⟨rfl, f, hfk, hDf⟩ | ⟨rfl, hD⟩
+        · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+        · refine Or.inl ⟨f, ?_, hDf⟩
+          rw [if_neg (show f ≠ id k from hfk)]
+        · exact Or.inr (Or.inr ⟨rfl, hD⟩))
+  exact @multiTier_sound κ κ (fun a b => Classical.propDecidable (a = b)) _ hok
+    (Sum.inl kroot) C0 (mem_mtk.mpr ⟨hroot, Nat.le_refl _⟩)
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -15663,6 +15720,7 @@ end VerticalWitness
 #print axioms po_default_multi_frame
 #print axioms mtkKernels_ok
 #print axioms mtkKernels_nopo
+#print axioms extract_flat_towers
 #print axioms no_ppi_demand
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
