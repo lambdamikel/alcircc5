@@ -8983,6 +8983,178 @@ theorem po_default_desc_frame {β : Type} (d : β → β → Bool)
       (fun (_ : Unit) (_ : Unit) => eq)) :=
   pp_twin_frame _ (symDrPo_frame d hsym) v0
 
+open Classical in
+/-- **MULTI-KERNEL PO-DEFAULT FRAME** — the uniform-`β` multi-tower frame.  A
+    `symDrPo` external skeleton plus `κ` ascending kernels, each `PPI` to its own
+    attach point `v0 k` and `PO` to everything else; cross-kernel `Q`-edges
+    `PO`-default (`qnet` supplies the `eq` diagonal).  A frame for ARBITRARY
+    `v0 : κ → β` — two kernels MAY even share an attach point (`comp(pp,po) ∋
+    pp`).  This is `frame_q` for the mtk-truncated MULTI-kernel certificate: the
+    cross-`Q` FORCING that made the full-`mty` multi-kernel frame hard is
+    DISSOLVED by PO-default, which `∀PO`-freeness also renders `kq_all`-vacuous.
+    Generalises `po_default_asc_frame` (`κ = Unit`). -/
+theorem po_default_multi_frame {β κ : Type}
+    (d : β → β → Bool) (hsym : ∀ v w, d v w = d w v) (v0 : κ → β) :
+    Frame (qnet
+      (fun e f => if e = f then eq else if d e f then dr else po)
+      (fun k e => if e = v0 k then ppi else po)
+      (fun (_ : κ) (_ : κ) => po)) := by
+  have hE := symDrPo_frame d hsym
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · -- refl_eq
+    rintro (e | k)
+    · show (if e = e then eq else if d e e then dr else po) = eq
+      rw [if_pos rfl]
+    · show (if k = k then eq else po) = eq
+      rw [if_pos rfl]
+  · -- eq_id
+    rintro (e | k) (f | k') h
+    · refine congrArg Sum.inl ?_
+      have h' : (if e = f then eq else if d e f then dr else po) = eq := h
+      by_cases hef : e = f
+      · exact hef
+      · rw [if_neg hef] at h'
+        by_cases hd : d e f = true
+        · rw [if_pos hd] at h'; exact absurd h' (by decide)
+        · rw [if_neg hd] at h'; exact absurd h' (by decide)
+    · refine absurd (show conv (if e = v0 k' then ppi else po) = eq from h) ?_
+      by_cases he : e = v0 k'
+      · rw [if_pos he]; decide
+      · rw [if_neg he]; decide
+    · refine absurd (show (if f = v0 k then ppi else po) = eq from h) ?_
+      by_cases hf : f = v0 k
+      · rw [if_pos hf]; decide
+      · rw [if_neg hf]; decide
+    · refine congrArg Sum.inr ?_
+      have h' : (if k = k' then eq else po) = eq := h
+      by_cases hkk : k = k'
+      · exact hkk
+      · rw [if_neg hkk] at h'; exact absurd h' (by decide)
+  · -- conv_
+    rintro (e | k) (f | k')
+    · show (if f = e then eq else if d f e then dr else po)
+        = conv (if e = f then eq else if d e f then dr else po)
+      exact hE.conv_ e f
+    · show (if e = v0 k' then ppi else po)
+        = conv (conv (if e = v0 k' then ppi else po))
+      by_cases he : e = v0 k'
+      · rw [if_pos he]; decide
+      · rw [if_neg he]; decide
+    · rfl
+    · show (if k' = k then eq else po) = conv (if k = k' then eq else po)
+      by_cases hkk : k = k'
+      · rw [if_pos hkk, if_pos hkk.symm]; decide
+      · rw [if_neg hkk, if_neg (fun h => hkk h.symm)]; decide
+  · -- comp_
+    rintro (e | k) (f | k') (g | k'')
+    · -- (1) ext, ext, ext
+      show (if e = g then eq else if d e g then dr else po)
+        ∈ comp (if e = f then eq else if d e f then dr else po)
+               (if f = g then eq else if d f g then dr else po)
+      exact hE.comp_ e f g
+    · -- (2) inl e, inl f, inr k''
+      show conv (if e = v0 k'' then ppi else po)
+        ∈ comp (if e = f then eq else if d e f then dr else po)
+               (conv (if f = v0 k'' then ppi else po))
+      by_cases hef : e = f
+      · subst hef; rw [if_pos rfl]
+        by_cases he : e = v0 k''
+        · rw [if_pos he]; decide
+        · rw [if_neg he]; decide
+      · by_cases he : e = v0 k'' <;> by_cases hf : f = v0 k''
+        · exact absurd (he.trans hf.symm) hef
+        · rw [if_neg hef, if_pos he, if_neg hf]; cases d e f <;> decide
+        · rw [if_neg hef, if_neg he, if_pos hf]; cases d e f <;> decide
+        · rw [if_neg hef, if_neg he, if_neg hf]; cases d e f <;> decide
+    · -- (3) inl e, inr k', inl g
+      show (if e = g then eq else if d e g then dr else po)
+        ∈ comp (conv (if e = v0 k' then ppi else po))
+               (if g = v0 k' then ppi else po)
+      by_cases heg : e = g
+      · subst heg; rw [if_pos rfl]
+        by_cases he : e = v0 k'
+        · rw [if_pos he]; decide
+        · rw [if_neg he]; decide
+      · by_cases he : e = v0 k' <;> by_cases hg : g = v0 k'
+        · exact absurd (he.trans hg.symm) heg
+        · rw [if_neg heg, if_pos he, if_neg hg]; cases d e g <;> decide
+        · rw [if_neg heg, if_neg he, if_pos hg]; cases d e g <;> decide
+        · rw [if_neg heg, if_neg he, if_neg hg]; cases d e g <;> decide
+    · -- (4) inl e, inr k', inr k''
+      show conv (if e = v0 k'' then ppi else po)
+        ∈ comp (conv (if e = v0 k' then ppi else po))
+               (if k' = k'' then eq else po)
+      by_cases hkk : k' = k''
+      · subst hkk; rw [if_pos rfl]
+        by_cases he : e = v0 k'
+        · rw [if_pos he]; decide
+        · rw [if_neg he]; decide
+      · rw [if_neg hkk]
+        by_cases he'' : e = v0 k'' <;> by_cases he' : e = v0 k'
+        · rw [if_pos he'', if_pos he']; decide
+        · rw [if_pos he'', if_neg he']; decide
+        · rw [if_neg he'', if_pos he']; decide
+        · rw [if_neg he'', if_neg he']; decide
+    · -- (5) inr k, inl f, inl g
+      show (if g = v0 k then ppi else po)
+        ∈ comp (if f = v0 k then ppi else po)
+               (if f = g then eq else if d f g then dr else po)
+      by_cases hfg : f = g
+      · subst hfg; rw [if_pos rfl]
+        by_cases hf : f = v0 k
+        · rw [if_pos hf]; decide
+        · rw [if_neg hf]; decide
+      · by_cases hf : f = v0 k <;> by_cases hg : g = v0 k
+        · exact absurd (hf.trans hg.symm) hfg
+        · rw [if_pos hf, if_neg hg, if_neg hfg]; cases d f g <;> decide
+        · rw [if_neg hf, if_pos hg, if_neg hfg]; cases d f g <;> decide
+        · rw [if_neg hf, if_neg hg, if_neg hfg]; cases d f g <;> decide
+    · -- (6) inr k, inl f, inr k''
+      show (if k = k'' then eq else po)
+        ∈ comp (if f = v0 k then ppi else po)
+               (conv (if f = v0 k'' then ppi else po))
+      by_cases hkk : k = k''
+      · subst hkk; rw [if_pos rfl]
+        by_cases hf : f = v0 k
+        · rw [if_pos hf]; decide
+        · rw [if_neg hf]; decide
+      · rw [if_neg hkk]
+        by_cases hf : f = v0 k <;> by_cases hf'' : f = v0 k''
+        · rw [if_pos hf, if_pos hf'']; decide
+        · rw [if_pos hf, if_neg hf'']; decide
+        · rw [if_neg hf, if_pos hf'']; decide
+        · rw [if_neg hf, if_neg hf'']; decide
+    · -- (7) inr k, inr k', inl g
+      show (if g = v0 k then ppi else po)
+        ∈ comp (if k = k' then eq else po)
+               (if g = v0 k' then ppi else po)
+      by_cases hkk : k = k'
+      · subst hkk; rw [if_pos rfl]
+        by_cases hg : g = v0 k
+        · rw [if_pos hg]; decide
+        · rw [if_neg hg]; decide
+      · rw [if_neg hkk]
+        by_cases hg : g = v0 k <;> by_cases hg' : g = v0 k'
+        · rw [if_pos hg, if_pos hg']; decide
+        · rw [if_pos hg, if_neg hg']; decide
+        · rw [if_neg hg, if_pos hg']; decide
+        · rw [if_neg hg, if_neg hg']; decide
+    · -- (8) inr k, inr k', inr k''
+      show (if k = k'' then eq else po)
+        ∈ comp (if k = k' then eq else po) (if k' = k'' then eq else po)
+      by_cases hkk'' : k = k''
+      · by_cases hkk' : k = k'
+        · have hk'k'' : k' = k'' := hkk'.symm.trans hkk''
+          rw [if_pos hkk'', if_pos hkk', if_pos hk'k'']; decide
+        · have hk'k'' : k' ≠ k'' := fun h => hkk' (hkk''.trans h.symm)
+          rw [if_pos hkk'', if_neg hkk', if_neg hk'k'']; decide
+      · rw [if_neg hkk'']
+        by_cases hkk' : k = k' <;> by_cases hk'k'' : k' = k''
+        · exact absurd (hkk'.trans hk'k'') hkk''
+        · rw [if_pos hkk', if_neg hk'k'']; decide
+        · rw [if_neg hkk', if_pos hk'k'']; decide
+        · rw [if_neg hkk', if_neg hk'k'']; decide
+
 /-! ### The ∀DR-propagation fragment: tree-structural assembly (lift Step 2)
 
 The first fragment with genuine `∀`-firing certified end-to-end without
@@ -15174,6 +15346,7 @@ end VerticalWitness
 #print axioms tower_from_persistPP
 #print axioms extract_from_tower
 #print axioms mtkKernel_nopo
+#print axioms po_default_multi_frame
 #print axioms no_ppi_demand
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
