@@ -11515,6 +11515,20 @@ theorem mtkKernel_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
     · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
 
+/-- **`mtkKernel` is `∀PO`-obligation-free** — the GLUABILITY property.  Both
+    `tauE` and `phase` are `mtk` labels (`⊆ mty`), which carry no `∀PO` for a
+    `POFree` concept (`mty_no_all_po`, lifted through `mem_mtk`).  So a
+    single-kernel `mtkKernel` certificate is `MTNoPo`, hence a valid amalgamand
+    for `glueMTOk`: FAMILIES of towers glue all-cross-`PO` into one valid
+    certificate.  This is the certificate-level patchwork closing the multi-tower
+    general theorem — `∀PO`-freeness makes the cross-tower `PO` edges free. -/
+theorem mtkKernel_nopo {C0 : Concept} (hpo : POFree C0) {β : Type}
+    (g : β → α) (bud : β → Nat) (dadj : β → β → Bool) (v0 : β)
+    (c : Nat → α) (i p : Nat) :
+    MTNoPo (mtkKernel I C0 g bud dadj v0 c i p) where
+  ext := fun _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+  ker := fun _ _ _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+
 /-- `ite` does not depend on the `Decidable` instance (it is a `Subsingleton`) —
     the bridge between the `mtkNodesH`-subtype's `DecidableEq` (used by the
     routing lemmas) and the `Classical.propDecidable` the generic `mtkKernel`
@@ -15159,6 +15173,7 @@ end VerticalWitness
 #print axioms pp_chain_below
 #print axioms tower_from_persistPP
 #print axioms extract_from_tower
+#print axioms mtkKernel_nopo
 #print axioms no_ppi_demand
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
