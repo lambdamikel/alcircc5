@@ -1780,3 +1780,58 @@ Three architectural facts the probe pinned down (these are the Lean spec):
 Net: the architecture is sound in all quadrants; the Lean extraction spec is
 (1)+(2)+(3) above. The remaining Lean work is faithful transcription — the one
 non-trivial new lemma is the forcing-completion frame lemma (finite patchwork).
+
+## 26. Completeness/extraction, and the precisely-localized general-theorem gap (2026-08-12)
+
+The extraction (completeness) direction — `Satisfiable C0 → valid certificate`
+— is now built end-to-end for the SINGLE-TOWER case, with the remaining gap
+localized to one construction.
+
+**What is certified (completeness side):**
+- `extract_mtkKernel` — a model + its demand facts BUILD a valid `MultiTierOk`
+  (the `mtk`-with-kernels single-tower cert): horizontal skeleton `mtkNodesH`
+  + one ascending kernel, PO-default cross-edges. The routing lemmas
+  `mtk_ee_all` / `mtk_e_ex` / `mtk_k_ex` discharge its hypotheses.
+- `mtk_k_ex` routes a phase's HORIZONTAL `∃PO.D` OUT to a non-root external via
+  the PO `K`-edge (route-1 of `k_ex`), sound because `∀PO`-free. This removed
+  the "clean-phase" restriction: phases need not be horizontally trivial.
+- `extract_from_tower` — the general single-tower theorem: from a `PP`-tower
+  (root carrying `C0`) + syntactic `∃PPI`-freeness + a recurrence, discharges
+  ALL structural inputs (`hv0pp` via `pp_chain_below`, `hno_ppi` via
+  `no_ppi_demand`, root, read-off), leaving EXACTLY two model-side cleanliness
+  obligations: `hpp_v0` (skeleton `∃PP`-free) + `hk_class` (phases demand only
+  served `∃PP`/`∃PO`/`∃EQ`).
+- Three witnesses span the mixing classes, all through the general
+  `extract_from_tower`: `cvert_via_tower` (degenerate skeleton),
+  `cmerge_via_tower` (non-degenerate, clean phases), `cmix_via_tower`
+  (non-degenerate, HORIZONTAL phase demands).
+- **`mtkKernel_nopo`** — the single-kernel certs are `MTNoPo`, hence GLUABLE
+  by `glueMTOk`. Certificate-level patchwork (all-cross-`PO` amalgamation of a
+  family of towers) was already certified (`glue_ok`/`glueFam_ok`/`glueMTOk`),
+  gated on `MTNoPo`; `mtkKernel_nopo` brings the full horizontal+vertical certs
+  under that gate (previously only pure `vkernel`s, via `vkernel_nopo`).
+
+**The precisely-localized remaining gap (the general theorem).** The honest
+`Satisfiable C0 → Decidable`-enabling theorem needs a certificate over a SINGLE
+FINITE `β`. Two facts pin the gap:
+1. `glueFam (F : Fin B → MultiTier β κ) : MultiTier (Fin B × β) (Fin B × κ)`
+   requires a UNIFORM `β` across all towers. Extracting from one model's several
+   towers gives per-tower node-subtypes `{n // n ∈ mtkNodesH root_b}` — DIFFERENT
+   `β` per root. So gluing per-tower extractions is not immediate.
+2. From an ARBITRARY (dirty) model, a skeleton node might carry `∃PP` (→ its own
+   nested tower) or a phase might carry `∃DR` (→ the "summit": phases spawn
+   adjacent DR-children as externals, §25.9 fact 3). So `extract_from_tower`'s
+   cleanliness hypotheses are model-dependent.
+
+So the remaining general-theorem work is the **uniform finite-`β`
+multi-tower/multi-kernel node construction**: a single `β = ` (a finite node
+set closed under BOTH horizontal demands AND kernel-spawning, bounded by
+`K(C₀)`) that covers every tower of the model at once — then `glueMTOk` (with
+`mtkKernel_nopo`) assembles, and cleanliness is discharged by the construction
+(nodes are spawned exactly where demands need them). This is the same
+"general `mtk`-with-kernels construction" flagged since E6 — now with BOTH its
+halves' interfaces certified (gluability = `mtkKernel_nopo`; single-tower
+extraction = `extract_from_tower`), so what remains is the finite uniform-node
+assembly, not the per-tower soundness. It is formalization (bounded by `K(C₀)`
+counting + the §25.9 forcing-completion frame), NOT the open `F6`/`W2′` problem
+— that is the FULL logic's obstacle, which `∀PO`-freeness removes.
