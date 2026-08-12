@@ -15359,6 +15359,145 @@ def Cnest : Concept := .and Cvert (.ex po Cvert)
 
 theorem Cnest_pofree : POFree Cnest := ⟨Cvert_pofree, Cvert_pofree⟩
 
+/-- `A₀` at every `Ipo` point. -/
+theorem po_ha : ∀ q : Bool × Nat, sat Ipo q (Concept.atom 0) := fun _ => rfl
+
+/-- `∃PP.A₀` at every point (same-region successor). -/
+theorem po_he : ∀ q : Bool × Nat, sat Ipo q (Concept.ex pp (Concept.atom 0)) := by
+  rintro ⟨b, n⟩
+  refine ⟨(b, n + 1), trivial, ?_, rfl⟩
+  show (if b = b then chain n (n + 1) else po) = pp
+  rw [if_pos rfl]; exact chain_lt (Nat.lt_succ_self n)
+
+/-- `∀PP.(∃PP.A₀)` at every point. -/
+theorem po_hal : ∀ q : Bool × Nat,
+    sat Ipo q (Concept.all pp (Concept.ex pp (Concept.atom 0))) :=
+  fun _ y _ _ => po_he y
+
+/-- `Cvert` at every `Ipo` point. -/
+theorem po_hcv : ∀ q : Bool × Nat, sat Ipo q Cvert :=
+  fun q => ⟨⟨po_ha q, po_he q⟩, po_hal q⟩
+
+/-- `∃PO.Cvert` at every point (the OTHER region's base). -/
+theorem po_hpo : ∀ q : Bool × Nat, sat Ipo q (Concept.ex po Cvert) := by
+  rintro ⟨b, n⟩
+  refine ⟨(!b, 0), trivial, ?_, po_hcv (!b, 0)⟩
+  show (if b = !b then chain n 0 else po) = po
+  rw [if_neg (by cases b <;> decide)]
+
+/-- `Cnest` at every point. -/
+theorem po_hcn : ∀ q : Bool × Nat, sat Ipo q Cnest :=
+  fun q => ⟨po_hcv q, po_hpo q⟩
+
+/-- Everything in `cl Cvert` is satisfied at every `Ipo` point (mirror of the
+    `nestNet` `nsat_all`, now for the all-cross-`PO` model). -/
+theorem pcv_all (p : Bool × Nat) : ∀ D ∈ cl Cvert, sat Ipo p D := by
+  intro D hD
+  simp only [Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨po_ha p, po_he p⟩, po_hal p⟩
+  · exact ⟨po_ha p, po_he p⟩
+  · exact po_ha p
+  · exact po_he p
+  · exact po_ha p
+  · exact po_hal p
+  · exact po_he p
+  · exact po_ha p
+
+/-- Everything in `cl Cnest` is satisfied at every `Ipo` point. -/
+theorem psat_all (p : Bool × Nat) : ∀ D ∈ cl Cnest, sat Ipo p D := by
+  intro D hD
+  rcases List.mem_cons.mp hD with rfl | hD2
+  · exact po_hcn p
+  rcases List.mem_append.mp hD2 with hD3 | hD4
+  · exact pcv_all p D hD3
+  · rcases List.mem_cons.mp hD4 with rfl | hD5
+    · exact po_hpo p
+    · exact pcv_all p D hD5
+
+open Classical in
+/-- `mty Cnest Ipo` is CONSTANT `= cl Cnest` (everything sat everywhere). -/
+theorem pfull (p : Bool × Nat) : mty Cnest Ipo p = cl Cnest := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (psat_all p D hD)
+
+/-- `Cnest`'s existentials are exactly `∃PP.A₀` and `∃PO.Cvert`. -/
+theorem cnest_demands : ∀ r D, Concept.ex r D ∈ cl Cnest →
+    (r = pp ∧ D = Concept.atom 0) ∨ (r = po ∧ D = Cvert) := by
+  intro r D h
+  have hb := List.all_eq_true.mp
+    (show (cl Cnest).all (fun E => match E with
+      | Concept.ex r D => decide ((r = pp ∧ D = Concept.atom 0) ∨
+          (r = po ∧ D = Cvert))
+      | _ => true) = true from by decide) (Concept.ex r D) h
+  simpa only [decide_eq_true_eq] using hb
+
+/-- The only universal in `cl Cnest` is `∀PP.(∃PP.A₀)`. -/
+theorem cnest_all_pp : ∀ r cc, Concept.all r cc ∈ cl Cnest → r = pp := by
+  intro r cc h
+  have hb := List.all_eq_true.mp
+    (show (cl Cnest).all (fun E => match E with
+      | Concept.all r _ => decide (r = pp)
+      | _ => true) = true from by decide) (Concept.all r cc) h
+  simpa only [decide_eq_true_eq] using hb
+
+/-- `A₀` in every point's `mtk` label at the `Cnest` root budget. -/
+theorem po_atom0_mtk (b : Bool) (n : Nat) :
+    Concept.atom 0 ∈ mtk Cnest Ipo (b, n) (mdepth Cnest) :=
+  mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, by decide⟩
+
+/-- `Cvert` in a base's `mtk` label. -/
+theorem po_cvert_mtk (b : Bool) :
+    Cvert ∈ mtk Cnest Ipo (b, 0) (mdepth Cnest) :=
+  mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, po_hcv (b, 0)⟩, by decide⟩
+
+open Classical in
+/-- **`Cnest` extracts through the MULTI-kernel engine `mtkKernels_ok`** — the
+    FIRST genuine two-kernel extraction.  Two ascending towers (`κ = Bool`),
+    each region's base carrying its own `∃PP.A₀`; the cross-tower `∃PO.Cvert`
+    routes to the OTHER base via the `PO` `K`-edge (route-1).  Validates the
+    multi-kernel certificate `mtkKernels_ok` end-to-end, as `cmix` did for the
+    single kernel. -/
+theorem cnest_generic_satisfiable : Satisfiable Cnest := by
+  have hok := mtkKernels_ok Ipo_rcc5 Cnest_pofree (fun b : Bool => (b, 0))
+    (fun _ => trivial) (fun _ => mdepth Cnest) (fun _ _ => false) (fun _ _ => rfl)
+    (id) (fun b n => (b, n)) (fun _ _ => trivial)
+    (by intro k n; show (if k = k then chain n (n + 1) else po) = pp
+        rw [if_pos rfl]; exact chain_lt (Nat.lt_succ_self n))
+    (fun _ => 1) (fun _ => 1) (fun _ => Nat.one_pos)
+    (by intro k; exact (pfull (k, 1)).trans (pfull (k, 1 + 1)).symm)
+    (by intro k a; show (if k = k then chain 0 (1 + a) else po) = pp
+        rw [if_pos rfl]; exact chain_lt (by omega))
+    (by intro e f r cc hmem hE
+        have hr : r = pp := cnest_all_pp r cc (mty_sub _ (mem_mtk.mp hmem).1)
+        subst hr
+        by_cases hef : e = f
+        · rw [if_pos hef] at hE; exact absurd hE (by decide)
+        · rw [if_neg hef] at hE; exact absurd hE (by cases e <;> cases f <;> decide))
+    (by intro e r D hmem
+        rcases cnest_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with
+          ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+        · refine Or.inr ⟨e, ?_, 0, Nat.one_pos, po_atom0_mtk e 1⟩
+          split
+          · rfl
+          · exact absurd (rfl : e = id e) (by assumption)
+        · refine Or.inl ⟨!e, ?_, po_cvert_mtk !e⟩
+          rw [if_neg (show e ≠ !e from by cases e <;> decide)]
+          cases e <;> rfl)
+    (by intro k a r D hmem
+        rcases cnest_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with
+          ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+        · exact Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos, po_atom0_mtk k 1⟩)
+        · refine Or.inl ⟨!k, ?_, po_cvert_mtk !k⟩
+          rw [if_neg (show (!k) ≠ id k from by cases k <;> decide)])
+  exact @multiTier_sound Bool Bool (fun a b => Classical.propDecidable (a = b)) _ hok
+    (Sum.inl false) Cnest
+    (by show Cnest ∈ mtk Cnest Ipo (false, 0) (mdepth Cnest)
+        exact mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self Cnest, po_hcn (false, 0)⟩, Nat.le_refl _⟩)
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -15578,6 +15717,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cmix_via_tower
 #print axioms VerticalWitness.nestRho_frame
 #print axioms VerticalWitness.Ipo_rcc5
+#print axioms VerticalWitness.cnest_generic_satisfiable
 #print axioms VerticalWitness.cmerge_via_tower
 
 end POFreeLift
