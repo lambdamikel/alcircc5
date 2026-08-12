@@ -11701,6 +11701,123 @@ theorem mtkKernel_nopo {C0 : Concept} (hpo : POFree C0) {β : Type}
   ext := fun _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
   ker := fun _ _ _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
 
+open Classical in
+/-- **THE MtkK MULTI-KERNEL CERTIFICATE** (`mtk`-truncated, PO-default).  The
+    uniform-`β` multi-tower cert: a `symDrPo` external skeleton + `κ` ascending
+    kernels, each `PPI` to its attach point `v0 k`, `PO` elsewhere; cross-kernel
+    `Q` = `PO` (`qnet` diagonal `eq`).  Generalises `mtkKernel` (`κ = Unit`) —
+    the whole point of the mtk multi-kernel route: with PO-default `Q` the
+    kernels coexist in ONE certificate over a shared external skeleton (nested
+    towers: a skeleton node's own `∃PP`-tower is another kernel), NOT via
+    `glueMTOk` copies. -/
+noncomputable def mtkKernels (I : Interp α) (C0 : Concept) {β κ : Type}
+    (g : β → α) (bud : β → Nat) (dadj : β → β → Bool) (v0 : κ → β)
+    (ck : κ → Nat → α) (ik pk : κ → Nat) : MultiTier β κ where
+  E e f := if e = f then eq else if dadj e f then dr else po
+  K k e := if e = v0 k then ppi else po
+  Q _ _ := po
+  up _ := true
+  tauE e := mtk C0 I (g e) (bud e)
+  p := pk
+  phase k a := mtk C0 I (ck k (ik k + a)) (bud (v0 k))
+
+open Classical in
+/-- **THE MtkK MULTI-KERNEL MERGE IS VALID.**  Generalises `mtkKernel_ok` to
+    `κ` kernels.  `frame_q` = `po_default_multi_frame`; `ek_all`/`ke_all` =
+    `podefault_ek`/`podefault_ke` per kernel; `kk_pp`/`kk_ppi` = `mtk_kk_*` on
+    each kernel's own chain; `kk_eq`/`all_into`; **`kq_all` VACUOUS** (cross-`Q`
+    = `PO`, no `∀PO` in the `mtk` phases — the PO-default insight); `ee_all`,
+    `e_ex`, `k_ex` supplied as hypotheses (what the multi-tower node
+    construction provides).  `hk_ex` is the single-kernel shape per kernel —
+    each phase demand serves via external (`∃PO`/`∃DR`/`∃EQ`) / up-tower
+    (`∃PP`) / self (`∃EQ`); no cross-kernel `∃` needed. -/
+theorem mtkKernels_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    {β κ : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat)
+    (dadj : β → β → Bool) (hsym : ∀ e f, dadj e f = dadj f e) (v0 : κ → β)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hv0pp : ∀ k a, I.rho (g (v0 k)) (ck k (ik k + a)) = pp)
+    (hee : ∀ e f r cc, Concept.all r cc ∈ mtk C0 I (g e) (bud e) →
+      (if e = f then eq else if dadj e f then dr else po) = r →
+      cc ∈ mtk C0 I (g f) (bud f))
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, (if e = f then eq else if dadj e f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (if e = v0 k then ppi else po) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k))))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k)) →
+      (∃ f, (if f = v0 k then ppi else po) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = pp ∧ ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bud (v0 k))) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k)))) :
+    MultiTierOk (mtkKernels I C0 g bud dadj v0 ck ik pk) := by
+  have hv0dom : ∀ k, I.dom (g (v0 k)) := fun k => hgdom (v0 k)
+  have hppi : ∀ k a, I.rho (ck k (ik k + a)) (g (v0 k)) = ppi := fun k a => by
+    rw [hI.conv_ (g (v0 k)) (ck k (ik k + a)) (hv0dom k) (hdom k (ik k + a)), hv0pp k a]; rfl
+  have hKe : ∀ (k : κ) (e : β),
+      conv ((mtkKernels I C0 g bud dadj v0 ck ik pk).K k e)
+        = if e = v0 k then pp else po := by
+    intro k e; show conv (if e = v0 k then ppi else po) = if e = v0 k then pp else po
+    by_cases he : e = v0 k
+    · rw [if_pos he, if_pos he]; rfl
+    · rw [if_neg he, if_neg he]; rfl
+  refine
+    { hp := hp
+      frame_q := po_default_multi_frame dadj hsym v0
+      e_clash := fun _ _ h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ _ _ h => mtk_and h
+      e_or := fun _ _ _ h => mtk_or h
+      k_clash := fun _ _ _ _ h => mtk_clash h
+      k_nobot := fun _ _ _ => mtk_nobot
+      k_and := fun _ _ _ _ _ h => mtk_and h
+      k_or := fun _ _ _ _ _ h => mtk_or h
+      ee_all := fun e f r cc hmem hE => hee e f r cc hmem hE
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun k a ha cc hmem b hb =>
+        mtk_kk_pp hI (ck k) (hdom k) (hstep k) (hty k) ha (bud (v0 k)) hmem hb
+      kk_ppi := fun k a ha cc hmem b hb =>
+        mtk_kk_ppi hI (ck k) (hdom k) (hstep k) (hty k) ha (bud (v0 k)) hmem hb
+      kk_eq := fun k a _ cc hmem =>
+        all_into hmem (hI.refl_eq (ck k (ik k + a)) (hdom k (ik k + a))) (hdom k (ik k + a))
+      kq_all := ?_
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all
+    intro e r cc hmem k hr a _
+    rw [hKe k e] at hr
+    exact podefault_ek hpofree g (v0 k) bud (hv0pp k a) (hdom k (ik k + a)) hmem hr
+  · -- ke_all
+    intro k a _ r cc hmem f hK
+    exact podefault_ke hpofree g (v0 k) bud (hv0dom k) (hppi k a) hmem hK
+  · -- kq_all: VACUOUS — cross-Q = PO, no ∀PO in mtk phases
+    intro k k' _ a _ r cc hmem hQ b _
+    have hr : r = po := hQ.symm
+    subst hr
+    exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+  · -- e_ex
+    intro e r D hmem
+    rcases he_ex e r D hmem with ⟨f, hf, hDf⟩ | ⟨k, hK, a, ha, hDa⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr ⟨k, hK, a, ha, hDa⟩
+  · -- k_ex
+    intro k a _ r D hmem
+    rcases hk_ex k a r D hmem with ⟨f, hf, hDf⟩ | ⟨rfl, b, hb, hDb⟩ | ⟨rfl, hD⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
+
+/-- **`mtkKernels` is `∀PO`-obligation-free** — gluability + `kq_all`-vacuity
+    source for the multi-kernel cert (same `mkBlock_nopo` pattern). -/
+theorem mtkKernels_nopo {C0 : Concept} (hpo : POFree C0) {β κ : Type}
+    (g : β → α) (bud : β → Nat) (dadj : β → β → Bool) (v0 : κ → β)
+    (ck : κ → Nat → α) (ik pk : κ → Nat) :
+    MTNoPo (mtkKernels I C0 g bud dadj v0 ck ik pk) where
+  ext := fun _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+  ker := fun _ _ _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+
 /-- `ite` does not depend on the `Decidable` instance (it is a `Subsingleton`) —
     the bridge between the `mtkNodesH`-subtype's `DecidableEq` (used by the
     routing lemmas) and the `Classical.propDecidable` the generic `mtkKernel`
@@ -15347,6 +15464,8 @@ end VerticalWitness
 #print axioms extract_from_tower
 #print axioms mtkKernel_nopo
 #print axioms po_default_multi_frame
+#print axioms mtkKernels_ok
+#print axioms mtkKernels_nopo
 #print axioms no_ppi_demand
 #print axioms VerticalWitness.cvert2_satisfiable
 #print axioms vkernel2x_ok
