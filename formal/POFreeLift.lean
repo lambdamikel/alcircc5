@@ -13002,6 +13002,60 @@ theorem ppPhaseNodes_spec (hI : RCC5Interp I) {C0 G : Concept} (n : MTKNode I C0
   obtain ⟨a, ha, rfl⟩ := hm
   exact ⟨a, ha, rfl, rfl⟩
 
+open Classical in
+/-- **THE ASCENDING-MIXED COVERAGE NODE SET** (§31.4, non-nested case).  The
+    β-externals reachable from `n`: `n` itself, the horizontal closures of its
+    `∃DR`/`∃PO`/`∃EQ` witnesses, and — for a persistent `∃PP` site — the
+    horizontal closures of its kernel PHASES' horizontal witnesses.  A phase's own
+    `∃PP` (the up-tower demand) is served inside the kernel, so it is NOT recursed
+    (that is the non-nested restriction; nested `∃PP.(∃PP.·)` = the
+    (budget, demand-mdepth) lexicographic case, deferred).  Every recursive call
+    is at budget `n.k − 1`, so termination is the single measure `n.k`. -/
+noncomputable def ascNodes (hI : RCC5Interp I) (n : MTKNode I C0) : List (MTKNode I C0) :=
+  n :: (mtk C0 I n.x n.k).attach.flatMap
+    (fun p => match p with
+      | ⟨.ex r c, hF⟩ =>
+        if r = dr ∨ r = po ∨ r = eq then ascNodes hI (mtkWitness n hF)
+        else if r = pp then
+          if hpp : persistPP I C0 c n.x then
+            (ppPhaseNodes hI n hpp).flatMap (fun q =>
+              (mtk C0 I q.x q.k).attach.flatMap (fun p' => match p' with
+                | ⟨.ex r' c', hF'⟩ =>
+                  if r' = dr ∨ r' = po ∨ r' = eq then
+                    ascNodes hI ⟨(mtkWitness q hF').x, n.k - 1, (mtkWitness q hF').hx⟩
+                  else []
+                | _ => []))
+          else ascNodes hI (mtkWitness n hF)
+        else []
+      | _ => [])
+termination_by n.k
+decreasing_by
+  · exact mtkWitness_k_lt n hF
+  · show n.k - 1 < n.k
+    have h1 : mdepth (Concept.ex pp c) ≤ n.k := (mem_mtk.mp hF).2
+    have h2 : 1 ≤ mdepth (Concept.ex pp c) := Nat.succ_le_succ (Nat.zero_le _)
+    omega
+  · exact mtkWitness_k_lt n hF
+
+/-- The root node is in its own ascending-coverage set. -/
+theorem self_mem_ascNodes (hI : RCC5Interp I) (n : MTKNode I C0) :
+    n ∈ ascNodes hI n := by
+  rw [ascNodes]; exact List.mem_cons_self ..
+
+/-- A horizontal (`∃DR`/`∃PO`/`∃EQ`) witness's whole coverage set is contained in
+    the parent's — the horizontal-recursion inclusion (the analogue of
+    `sub_mtkNodes_witness`, restricted to the non-`pp`/`ppi` branch). -/
+theorem sub_ascNodes_hwitness (hI : RCC5Interp I) (n : MTKNode I C0) {r : Atom}
+    {c : Concept} (hF : Concept.ex r c ∈ mtk C0 I n.x n.k)
+    (hr : r = dr ∨ r = po ∨ r = eq) :
+    ∀ m ∈ ascNodes hI (mtkWitness n hF), m ∈ ascNodes hI n := by
+  intro m hm
+  rw [ascNodes]
+  refine List.mem_cons_of_mem _ (List.mem_flatMap.mpr ⟨⟨Concept.ex r c, hF⟩,
+    List.mem_attach _ _, ?_⟩)
+  simp only [if_pos hr]
+  exact hm
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16839,6 +16893,9 @@ end VerticalWitness
 #print axioms ascKernelPack
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
+#print axioms ascNodes
+#print axioms self_mem_ascNodes
+#print axioms sub_ascNodes_hwitness
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
