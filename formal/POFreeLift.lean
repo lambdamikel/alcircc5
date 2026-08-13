@@ -9330,6 +9330,159 @@ theorem po_dr_asc_frame {β : Type} (dadj : β → β → Bool)
       show eq ∈ comp eq eq
       decide
 
+open Classical in
+/-- **THE FORCING-COMPLETION FRAME (second brick): MANY real DR-children.**
+    `po_dr_asc_frame` generalised from one child to a predicate `kdr : β → Bool`
+    marking the kernel's `DR`-children — one kernel serving MANY phase-`∃DR`
+    demands.  Coherence: every `DR`-child is `DR`-adjacent to the attach `v0`
+    (`hcoh`).  The children's mutual relations are FREE (`comp(DR,DR) = all`), so
+    only the child↔attach edges are forced.  Generalises `po_dr_asc_frame`
+    (`kdr := (· = c0)`). -/
+theorem po_dr_multi_child_frame {β : Type} (dadj : β → β → Bool)
+    (hsym : ∀ v w, dadj v w = dadj w v) (v0 : β) (kdr : β → Bool)
+    (hcoh : ∀ e, kdr e = true → dadj e v0 = true) :
+    Frame (qnet
+      (fun e f => if e = f then eq else if dadj e f then dr else po)
+      (fun (_ : Unit) e => if e = v0 then ppi else if kdr e then dr else po)
+      (fun (_ : Unit) (_ : Unit) => eq)) := by
+  have hE := symDrPo_frame dadj hsym
+  have hce_r : ∀ r : Atom, r ∈ comp r eq := fun r => by cases r <;> decide
+  have hce_l : ∀ r : Atom, r ∈ comp eq r := fun r => by cases r <;> decide
+  -- child→v0 and v0→child forced to DR
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rintro (e | ⟨⟩)
+    · show (if e = e then eq else if dadj e e then dr else po) = eq
+      rw [if_pos rfl]
+    · rfl
+  · rintro (e | ⟨⟩) (f | ⟨⟩) h
+    · refine congrArg Sum.inl ?_
+      have h' : (if e = f then eq else if dadj e f then dr else po) = eq := h
+      by_cases hef : e = f
+      · exact hef
+      · rw [if_neg hef] at h'
+        by_cases hd : dadj e f = true
+        · rw [if_pos hd] at h'; exact absurd h' (by decide)
+        · rw [if_neg hd] at h'; exact absurd h' (by decide)
+    · refine absurd (show conv (if e = v0 then ppi else if kdr e then dr else po) = eq
+        from h) ?_
+      by_cases he : e = v0
+      · rw [if_pos he]; decide
+      · by_cases he2 : kdr e = true
+        · rw [if_neg he, if_pos he2]; decide
+        · rw [if_neg he, if_neg he2]; decide
+    · refine absurd (show (if f = v0 then ppi else if kdr f then dr else po) = eq
+        from h) ?_
+      by_cases hf : f = v0
+      · rw [if_pos hf]; decide
+      · by_cases hf2 : kdr f = true
+        · rw [if_neg hf, if_pos hf2]; decide
+        · rw [if_neg hf, if_neg hf2]; decide
+    · rfl
+  · rintro (e | ⟨⟩) (f | ⟨⟩)
+    · show (if f = e then eq else if dadj f e then dr else po)
+        = conv (if e = f then eq else if dadj e f then dr else po)
+      exact hE.conv_ e f
+    · show (if e = v0 then ppi else if kdr e then dr else po)
+        = conv (conv (if e = v0 then ppi else if kdr e then dr else po))
+      by_cases he : e = v0
+      · rw [if_pos he]; decide
+      · by_cases he2 : kdr e = true
+        · rw [if_neg he, if_pos he2]; decide
+        · rw [if_neg he, if_neg he2]; decide
+    · rfl
+    · rfl
+  · rintro (e | ⟨⟩) (f | ⟨⟩) (g | ⟨⟩)
+    · show (if e = g then eq else if dadj e g then dr else po)
+        ∈ comp (if e = f then eq else if dadj e f then dr else po)
+               (if f = g then eq else if dadj f g then dr else po)
+      exact hE.comp_ e f g
+    · -- (b) inl e, inl f, inr(): conv(K e) ∈ comp(E e f, conv(K f))
+      show conv (if e = v0 then ppi else if kdr e then dr else po)
+        ∈ comp (if e = f then eq else if dadj e f then dr else po)
+               (conv (if f = v0 then ppi else if kdr f then dr else po))
+      by_cases hef : e = f
+      · subst hef
+        by_cases he : e = v0
+        · rw [if_pos rfl, if_pos he]; decide
+        · by_cases he2 : kdr e = true
+          · rw [if_pos rfl, if_neg he, if_pos he2]; decide
+          · rw [if_pos rfl, if_neg he, if_neg he2]; decide
+      · rw [if_neg hef]
+        by_cases he : e = v0 <;> by_cases he2 : kdr e = true <;>
+          by_cases hf : f = v0 <;> by_cases hf2 : kdr f = true
+        all_goals first
+          | (subst he; subst hf; exact absurd rfl hef)
+          | (rw [he, if_pos rfl, if_pos (show dadj v0 f = true from by rw [hsym v0 f]; exact hcoh f hf2), if_neg hf, if_pos hf2]; decide)
+          | (rw [if_pos he, if_neg hf, if_neg hf2]; cases hd : dadj e f <;> decide)
+          | (rw [hf, if_neg he, if_pos he2, if_pos (hcoh e he2), if_pos rfl]; decide)
+          | (rw [if_neg he, if_pos he2, if_neg hf, if_pos hf2]; cases hd : dadj e f <;> decide)
+          | (rw [if_neg he, if_pos he2, if_neg hf, if_neg hf2]; cases hd : dadj e f <;> decide)
+          | (rw [if_neg he, if_neg he2, if_pos hf]; cases hd : dadj e f <;> decide)
+          | (rw [if_neg he, if_neg he2, if_neg hf, if_pos hf2]; cases hd : dadj e f <;> decide)
+          | (rw [if_neg he, if_neg he2, if_neg hf, if_neg hf2]; cases hd : dadj e f <;> decide)
+    · -- (c) inl e, inr(), inl g: E e g ∈ comp(conv(K e), K g)
+      show (if e = g then eq else if dadj e g then dr else po)
+        ∈ comp (conv (if e = v0 then ppi else if kdr e then dr else po))
+               (if g = v0 then ppi else if kdr g then dr else po)
+      by_cases heg : e = g
+      · subst heg
+        by_cases he : e = v0
+        · rw [if_pos rfl, if_pos he]; decide
+        · by_cases he2 : kdr e = true
+          · rw [if_pos rfl, if_neg he, if_pos he2]; decide
+          · rw [if_pos rfl, if_neg he, if_neg he2]; decide
+      · rw [if_neg heg]
+        by_cases he : e = v0 <;> by_cases he2 : kdr e = true <;>
+          by_cases hg : g = v0 <;> by_cases hg2 : kdr g = true
+        all_goals first
+          | (subst he; subst hg; exact absurd rfl heg)
+          | (rw [he, if_pos (show dadj v0 g = true from by rw [hsym v0 g]; exact hcoh g hg2), if_pos rfl, if_neg hg, if_pos hg2]; decide)
+          | (rw [if_pos he, if_neg hg, if_neg hg2]; cases hd : dadj e g <;> decide)
+          | (rw [hg, if_pos (hcoh e he2), if_neg he, if_pos he2, if_pos rfl]; decide)
+          | (rw [if_neg he, if_pos he2, if_neg hg, if_pos hg2]; cases hd : dadj e g <;> decide)
+          | (rw [if_neg he, if_pos he2, if_neg hg, if_neg hg2]; cases hd : dadj e g <;> decide)
+          | (rw [if_neg he, if_neg he2, if_pos hg]; cases hd : dadj e g <;> decide)
+          | (rw [if_neg he, if_neg he2, if_neg hg, if_pos hg2]; cases hd : dadj e g <;> decide)
+          | (rw [if_neg he, if_neg he2, if_neg hg, if_neg hg2]; cases hd : dadj e g <;> decide)
+    · -- (d)
+      exact hce_r _
+    · -- (e) inr(), inl f, inl g: K g ∈ comp(K f, E f g)
+      show (if g = v0 then ppi else if kdr g then dr else po)
+        ∈ comp (if f = v0 then ppi else if kdr f then dr else po)
+               (if f = g then eq else if dadj f g then dr else po)
+      by_cases hfg : f = g
+      · subst hfg
+        by_cases hf : f = v0
+        · rw [if_pos rfl, if_pos hf]; decide
+        · by_cases hf2 : kdr f = true
+          · rw [if_pos rfl, if_neg hf, if_pos hf2]; decide
+          · rw [if_pos rfl, if_neg hf, if_neg hf2]; decide
+      · rw [if_neg hfg]
+        by_cases hf : f = v0 <;> by_cases hf2 : kdr f = true <;>
+          by_cases hg : g = v0 <;> by_cases hg2 : kdr g = true
+        all_goals first
+          | (subst hf; subst hg; exact absurd rfl hfg)
+          | (rw [hf, if_neg hg, if_pos hg2, if_pos rfl, if_pos (show dadj v0 g = true from by rw [hsym v0 g]; exact hcoh g hg2)]; decide)
+          | (rw [if_neg hg, if_neg hg2, if_pos hf]; cases hd : dadj f g <;> decide)
+          | (rw [hg, if_pos rfl, if_neg hf, if_pos hf2, if_pos (hcoh f hf2)]; decide)
+          | (rw [if_neg hg, if_pos hg2, if_neg hf, if_pos hf2]; cases hd : dadj f g <;> decide)
+          | (rw [if_neg hg, if_neg hg2, if_neg hf, if_pos hf2]; cases hd : dadj f g <;> decide)
+          | (rw [if_pos hg, if_neg hf, if_neg hf2]; cases hd : dadj f g <;> decide)
+          | (rw [if_neg hg, if_pos hg2, if_neg hf, if_neg hf2]; cases hd : dadj f g <;> decide)
+          | (rw [if_neg hg, if_neg hg2, if_neg hf, if_neg hf2]; cases hd : dadj f g <;> decide)
+    · -- (f)
+      show eq ∈ comp (if f = v0 then ppi else if kdr f then dr else po)
+                     (conv (if f = v0 then ppi else if kdr f then dr else po))
+      by_cases hf : f = v0
+      · rw [if_pos hf]; decide
+      · by_cases hf2 : kdr f = true
+        · rw [if_neg hf, if_pos hf2]; decide
+        · rw [if_neg hf, if_neg hf2]; decide
+    · -- (g)
+      exact hce_l _
+    · show eq ∈ comp eq eq
+      decide
+
 /-! ### The ∀DR-propagation fragment: tree-structural assembly (lift Step 2)
 
 The first fragment with genuine `∀`-firing certified end-to-end without
@@ -15983,6 +16136,7 @@ end VerticalWitness
 #print axioms mtkKernel_nopo
 #print axioms po_default_multi_frame
 #print axioms po_dr_asc_frame
+#print axioms po_dr_multi_child_frame
 #print axioms mtkKernels_ok
 #print axioms mtkKernels_nopo
 #print axioms extract_flat_towers
