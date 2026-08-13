@@ -12087,11 +12087,14 @@ open Classical in
     reaches the child `f`, which is a REAL `DR`-successor of the phase (`hdr`,
     the child `DR` to EVERY phase, matching budget); `PO` edges are vacuous
     (`∀PO`-free).  This is what serves phase-`∃DR`: the depth seam is avoided
-    because the child budget equals the phase budget (`all_into` same-budget). -/
+    because the child budget need only satisfy `bud v0 ≤ bud f + 1` — a `∀DR.cc`
+    at a phase of budget `bud v0` has `mdepth cc ≤ bud v0 - 1`, so it fits a child
+    at budget `bud v0 - 1` (DECREASING — this is what lets a general DR-child
+    recursion TERMINATE, not just the leaf-child witness where `bud f = bud v0`). -/
 theorem podefault_ke_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
     (g : β → α) (hgdom : ∀ e, I.dom (g e)) (v0 : β) (kdr : β → Bool) (bud : β → Nat)
     (hv0dom : I.dom (g v0)) {x : α} (hppi : I.rho x (g v0) = ppi)
-    (hdr : ∀ f, kdr f = true → I.rho x (g f) = dr ∧ bud f = bud v0)
+    (hdr : ∀ f, kdr f = true → I.rho x (g f) = dr ∧ bud v0 ≤ bud f + 1)
     {r : Atom} {cc : Concept} (hmem : Concept.all r cc ∈ mtk C0 I x (bud v0))
     {f : β} (hK : (if f = v0 then ppi else if kdr f then dr else po) = r) :
     cc ∈ mtk C0 I (g f) (bud f) := by
@@ -12102,8 +12105,10 @@ theorem podefault_ke_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
     by_cases hc : kdr f = true
     · rw [if_pos hc] at hK; subst hK
       obtain ⟨hdrf, hbudf⟩ := hdr f hc
-      rw [hbudf]
-      exact all_into hmem hdrf (hgdom f)
+      have h1 : cc ∈ mtk C0 I (g f) (bud v0) := all_into hmem hdrf (hgdom f)
+      refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+      have hmd : mdepth cc + 1 ≤ bud v0 := (mem_mtk.mp hmem).2
+      omega
     · rw [if_neg hc] at hK; subst hK
       exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
 
@@ -12113,12 +12118,13 @@ open Classical in
     then pp else if kdr e then dr else po`.  The `PP` edge (attach, `e = v0`)
     lands via `all_into` (attach below phase); the `DR` edge (a child external)
     lands via `all_into` too — a `∀DR.cc` at a child reaches the phase (a real
-    `DR`-neighbour, `hdr`), same budget; `PO` vacuous.  Needed only if a
-    DR-child external itself carries a `∀DR`. -/
+    `DR`-neighbour, `hdr`), budget `bud e ≤ bud v0 + 1` (the child may sit one
+    budget BELOW — decreasing); `PO` vacuous.  Needed only if a DR-child external
+    itself carries a `∀DR`. -/
 theorem podefault_ek_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
     (g : β → α) (v0 : β) (kdr : β → Bool) (bud : β → Nat)
     {phasept : α} (hpp : I.rho (g v0) phasept = pp) (hpdom : I.dom phasept)
-    (hdr : ∀ e, kdr e = true → I.rho (g e) phasept = dr ∧ bud e = bud v0)
+    (hdr : ∀ e, kdr e = true → I.rho (g e) phasept = dr ∧ bud e ≤ bud v0 + 1)
     {e : β} {r : Atom} {cc : Concept}
     (hmem : Concept.all r cc ∈ mtk C0 I (g e) (bud e))
     (hconv : (if e = v0 then pp else if kdr e then dr else po) = r) :
@@ -12130,7 +12136,10 @@ theorem podefault_ek_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
     by_cases hc : kdr e = true
     · rw [if_pos hc] at hconv; subst hconv
       obtain ⟨hdre, hbude⟩ := hdr e hc
-      exact hbude ▸ all_into hmem hdre hpdom
+      have h1 : cc ∈ mtk C0 I phasept (bud e) := all_into hmem hdre hpdom
+      refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+      have hmd : mdepth cc + 1 ≤ bud e := (mem_mtk.mp hmem).2
+      omega
     · rw [if_neg hc] at hconv; subst hconv
       exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
 
@@ -12420,7 +12429,8 @@ theorem mtkKernelsDR_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
     (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
     (hv0pp : ∀ k a, I.rho (g (v0 k)) (ck k (ik k + a)) = pp)
     (hdr : ∀ k a e, kdr k e = true →
-      I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e = bud (v0 k))
+      I.rho (g e) (ck k (ik k + a)) = dr ∧
+        bud (v0 k) ≤ bud e + 1 ∧ bud e ≤ bud (v0 k) + 1)
     (hee : ∀ e f r cc, Concept.all r cc ∈ mtk C0 I (g e) (bud e) →
       (if e = f then eq else if dadj e f then dr else po) = r →
       cc ∈ mtk C0 I (g f) (bud f))
@@ -12476,11 +12486,11 @@ theorem mtkKernelsDR_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
     intro e r cc hmem k hr a _
     rw [hKe k e] at hr
     exact podefault_ek_dr hpofree g (v0 k) (kdr k) bud (hv0pp k a) (hdom k (ik k + a))
-      (fun e' he' => hdr k a e' he') hmem hr
+      (fun e' he' => ⟨(hdr k a e' he').1, (hdr k a e' he').2.2⟩) hmem hr
   · -- ke_all
     intro k a _ r cc hmem f hK
     refine podefault_ke_dr hpofree g hgdom (v0 k) (kdr k) bud (hv0dom k) (hppi k a)
-      (fun f' hf' => ⟨?_, (hdr k a f' hf').2⟩) hmem hK
+      (fun f' hf' => ⟨?_, (hdr k a f' hf').2.1⟩) hmem hK
     rw [hI.conv_ (g f') (ck k (ik k + a)) (hgdom f') (hdom k (ik k + a)), (hdr k a f' hf').1]; rfl
   · -- kq_all vacuous
     intro k k' _ a _ r cc hmem hQ b _
@@ -16512,7 +16522,7 @@ theorem cpdr_generic_satisfiable : Satisfiable Cpdr := by
           cases e with
           | false => exact absurd he (by decide)
           | true =>
-            refine ⟨?_, rfl⟩
+            refine ⟨?_, by omega, by omega⟩
             show (if true = false then chain (i + a) 0 else dr) = dr
             rw [if_neg (by decide)])
       ?_ ?_ ?_
