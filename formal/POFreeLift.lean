@@ -16324,6 +16324,65 @@ theorem cnest_via_flat : Satisfiable Cnest := by
     · exact Or.inl ⟨rfl, 0, Nat.one_pos, po_atom0_mtk k 1⟩
     · exact Or.inr (Or.inl ⟨rfl, !k, by cases k <;> decide, po_cvert_mtk !k⟩)
 
+/-! ### A PHASE-∃DR witness `Cpdr`, through the DR-children cert `mtkKernelsDR_ok`
+
+`Cpdr = Cvert ⊓ ∃DR.A₁ ⊓ ∀PP.(∃DR.A₁)` on the cross-`DR` carrier `Bool × ℕ`:
+within a region the ascending `PP`-tower, ACROSS regions `DR`.  Because
+`comp(PP,DR) = {DR}`, `DR` propagates DOWN the tower — the whole tower region is
+`DR` to the other region.  So every tower PHASE (via `∀PP`) demands `∃DR.A₁`,
+served by the OTHER region's `DR`-child through the forced `DR` `K`-edge.  This
+fires `mtkKernelsDR_ok` — the first phase-`∃DR` extraction. -/
+
+/-- Cross-`DR` two-region relation: within a region the chain, across `DR`. -/
+def drRho : (Bool × Nat) → (Bool × Nat) → Atom
+  | (b, i), (b', j) => if b = b' then chain i j else dr
+
+theorem drRho_frame : Frame drRho where
+  refl_eq := by
+    rintro ⟨b, i⟩
+    show (if b = b then chain i i else dr) = eq
+    rw [if_pos rfl]; exact chain_self i
+  eq_id := by
+    rintro ⟨b, i⟩ ⟨b', j⟩ h
+    show (⟨b, i⟩ : Bool × Nat) = ⟨b', j⟩
+    by_cases hb : b = b'
+    · have h' : chain i j = eq := by
+        have hh : (if b = b' then chain i j else dr) = eq := h
+        rwa [if_pos hb] at hh
+      subst hb; rw [chain_eq_imp h']
+    · have hh : (if b = b' then chain i j else dr) = eq := h
+      rw [if_neg hb] at hh; exact absurd hh (by decide)
+  conv_ := by
+    rintro ⟨b, i⟩ ⟨b', j⟩
+    show (if b' = b then chain j i else dr) = conv (if b = b' then chain i j else dr)
+    by_cases hb : b = b'
+    · rw [if_pos hb, if_pos hb.symm]; exact chain_conv i j
+    · rw [if_neg hb, if_neg (fun h => hb h.symm)]; rfl
+  comp_ := by
+    rintro ⟨b, i⟩ ⟨b', j⟩ ⟨b'', k⟩
+    show (if b = b'' then chain i k else dr)
+      ∈ comp (if b = b' then chain i j else dr) (if b' = b'' then chain j k else dr)
+    by_cases hbb' : b = b'
+    · by_cases hb'b'' : b' = b''
+      · subst hbb'; subst hb'b''; rw [if_pos rfl, if_pos rfl, if_pos rfl]
+        exact chainFrame.comp_ i j k
+      · rw [if_pos hbb', if_neg hb'b'', if_neg (fun h => hb'b'' (hbb'.symm.trans h))]
+        rcases chain_vals i j with h | h | h <;> rw [h] <;> decide
+    · by_cases hb'b'' : b' = b''
+      · rw [if_neg hbb', if_pos hb'b'', if_neg (fun h => hbb' (h.trans hb'b''.symm))]
+        rcases chain_vals j k with h | h | h <;> rw [h] <;> decide
+      · by_cases hbb'' : b = b''
+        · rw [if_pos hbb'', if_neg hbb', if_neg hb'b'']
+          rcases chain_vals i k with h | h | h <;> rw [h] <;> decide
+        · rw [if_neg hbb'', if_neg hbb', if_neg hb'b'']; decide
+
+/-- The phase-`∃DR` model: `A₀` on region `false` (the tower), `A₁` on region
+    `true` (the `DR`-child). -/
+def Idr : Interp (Bool × Nat) :=
+  ⟨fun _ => True, drRho, fun a p => match p with | (false, _) => a = 0 | (true, _) => a = 1⟩
+
+theorem Idr_rcc5 : RCC5Interp Idr := frame_rcc5 drRho drRho_frame _
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -16493,6 +16552,8 @@ end VerticalWitness
 #print axioms podefault_ke_dr
 #print axioms podefault_ek_dr
 #print axioms mtkKernelsDR_ok
+#print axioms VerticalWitness.drRho_frame
+#print axioms VerticalWitness.Idr_rcc5
 #print axioms mtkKernels_ok
 #print axioms mtkKernels_nopo
 #print axioms extract_flat_towers
