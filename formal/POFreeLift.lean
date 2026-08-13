@@ -12107,6 +12107,33 @@ theorem podefault_ke_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
     · rw [if_neg hc] at hK; subst hK
       exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
 
+open Classical in
+/-- **THE DR-CHILDREN `ek_all`** (the dual of `podefault_ke_dr`).  An external
+    `e`'s `∀r.cc` fires into kernel `k`'s phases through `conv(K k e) = if e = v0
+    then pp else if kdr e then dr else po`.  The `PP` edge (attach, `e = v0`)
+    lands via `all_into` (attach below phase); the `DR` edge (a child external)
+    lands via `all_into` too — a `∀DR.cc` at a child reaches the phase (a real
+    `DR`-neighbour, `hdr`), same budget; `PO` vacuous.  Needed only if a
+    DR-child external itself carries a `∀DR`. -/
+theorem podefault_ek_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
+    (g : β → α) (v0 : β) (kdr : β → Bool) (bud : β → Nat)
+    {phasept : α} (hpp : I.rho (g v0) phasept = pp) (hpdom : I.dom phasept)
+    (hdr : ∀ e, kdr e = true → I.rho (g e) phasept = dr ∧ bud e = bud v0)
+    {e : β} {r : Atom} {cc : Concept}
+    (hmem : Concept.all r cc ∈ mtk C0 I (g e) (bud e))
+    (hconv : (if e = v0 then pp else if kdr e then dr else po) = r) :
+    cc ∈ mtk C0 I phasept (bud v0) := by
+  by_cases he : e = v0
+  · subst he; rw [if_pos rfl] at hconv; subst hconv
+    exact all_into hmem hpp hpdom
+  · rw [if_neg he] at hconv
+    by_cases hc : kdr e = true
+    · rw [if_pos hc] at hconv; subst hconv
+      obtain ⟨hdre, hbude⟩ := hdr e hc
+      exact hbude ▸ all_into hmem hdre hpdom
+    · rw [if_neg hc] at hconv; subst hconv
+      exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+
 /-- `kk_pp` on `mtk`-truncated phases: lift to `mty`, apply `segment_kk_pp`,
     restrict back (the argument fits the same budget, one level shallower). -/
 theorem mtk_kk_pp (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
@@ -12358,6 +12385,118 @@ theorem mtkKernels_nopo {C0 : Concept} (hpo : POFree C0) {β κ : Type}
     MTNoPo (mtkKernels I C0 g bud dadj v0 ck ik pk) where
   ext := fun _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
   ker := fun _ _ _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+
+open Classical in
+/-- **THE MtkK MULTI-KERNEL CERTIFICATE WITH DR-CHILDREN** — `mtkKernels` with
+    forced `DR` `K`-edges (phase-`∃DR` service).  `K k e` = `PPI` to attach /
+    `DR` to `k`'s children (`kdr k e`) / `PO` else. -/
+noncomputable def mtkKernelsDR (I : Interp α) (C0 : Concept) {β κ : Type}
+    (g : β → α) (bud : β → Nat) (dadj : β → β → Bool) (v0 : κ → β) (kdr : κ → β → Bool)
+    (ck : κ → Nat → α) (ik pk : κ → Nat) : MultiTier β κ where
+  E e f := if e = f then eq else if dadj e f then dr else po
+  K k e := if e = v0 k then ppi else if kdr k e then dr else po
+  Q _ _ := po
+  up _ := true
+  tauE e := mtk C0 I (g e) (bud e)
+  p := pk
+  phase k a := mtk C0 I (ck k (ik k + a)) (bud (v0 k))
+
+open Classical in
+/-- **THE DR-CHILDREN MULTI-KERNEL MERGE IS VALID** — the phase-`∃DR` wiring
+    assembled.  `frame_q` = `po_dr_multi_kernel_frame` (forcing-completion frame);
+    `ek_all`/`ke_all` = `podefault_ek_dr`/`podefault_ke_dr` (DR children served at
+    the SAME budget, no depth seam); `kk_*`/`kq_all` as `mtkKernels_ok`.  `hcoh`
+    (children `DR`-adjacent to attach) feeds the frame; `hdr` (children `DR` to
+    EVERY phase, matching budget) feeds the `∀DR` propagation.  `hee`/`he_ex`/
+    `hk_ex` carry the routing (now with `DR` `K`-edges: a phase's `∃DR.D` is
+    served by a child via `k_ex` disjunct-1). -/
+theorem mtkKernelsDR_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    {β κ : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat)
+    (dadj : β → β → Bool) (hsym : ∀ e f, dadj e f = dadj f e) (v0 : κ → β)
+    (kdr : κ → β → Bool) (hcoh : ∀ k e, kdr k e = true → dadj e (v0 k) = true)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hv0pp : ∀ k a, I.rho (g (v0 k)) (ck k (ik k + a)) = pp)
+    (hdr : ∀ k a e, kdr k e = true →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e = bud (v0 k))
+    (hee : ∀ e f r cc, Concept.all r cc ∈ mtk C0 I (g e) (bud e) →
+      (if e = f then eq else if dadj e f then dr else po) = r →
+      cc ∈ mtk C0 I (g f) (bud f))
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, (if e = f then eq else if dadj e f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (if e = v0 k then ppi else if kdr k e then dr else po) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k))))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k)) →
+      (∃ f, (if f = v0 k then ppi else if kdr k f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = pp ∧ ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bud (v0 k))) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k)))) :
+    MultiTierOk (mtkKernelsDR I C0 g bud dadj v0 kdr ck ik pk) := by
+  have hv0dom : ∀ k, I.dom (g (v0 k)) := fun k => hgdom (v0 k)
+  have hppi : ∀ k a, I.rho (ck k (ik k + a)) (g (v0 k)) = ppi := fun k a => by
+    rw [hI.conv_ (g (v0 k)) (ck k (ik k + a)) (hv0dom k) (hdom k (ik k + a)), hv0pp k a]; rfl
+  have hKe : ∀ (k : κ) (e : β),
+      conv ((mtkKernelsDR I C0 g bud dadj v0 kdr ck ik pk).K k e)
+        = if e = v0 k then pp else if kdr k e then dr else po := by
+    intro k e
+    show conv (if e = v0 k then ppi else if kdr k e then dr else po)
+      = if e = v0 k then pp else if kdr k e then dr else po
+    by_cases he : e = v0 k
+    · rw [if_pos he, if_pos he]; rfl
+    · by_cases hc : kdr k e = true
+      · rw [if_neg he, if_pos hc, if_neg he]; rfl
+      · rw [if_neg he, if_neg hc, if_neg he]; rfl
+  refine
+    { hp := hp
+      frame_q := po_dr_multi_kernel_frame dadj hsym v0 kdr hcoh
+      e_clash := fun _ _ h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ _ _ h => mtk_and h
+      e_or := fun _ _ _ h => mtk_or h
+      k_clash := fun _ _ _ _ h => mtk_clash h
+      k_nobot := fun _ _ _ => mtk_nobot
+      k_and := fun _ _ _ _ _ h => mtk_and h
+      k_or := fun _ _ _ _ _ h => mtk_or h
+      ee_all := fun e f r cc hmem hE => hee e f r cc hmem hE
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun k a ha cc hmem b hb =>
+        mtk_kk_pp hI (ck k) (hdom k) (hstep k) (hty k) ha (bud (v0 k)) hmem hb
+      kk_ppi := fun k a ha cc hmem b hb =>
+        mtk_kk_ppi hI (ck k) (hdom k) (hstep k) (hty k) ha (bud (v0 k)) hmem hb
+      kk_eq := fun k a _ cc hmem =>
+        all_into hmem (hI.refl_eq (ck k (ik k + a)) (hdom k (ik k + a))) (hdom k (ik k + a))
+      kq_all := ?_
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all
+    intro e r cc hmem k hr a _
+    rw [hKe k e] at hr
+    exact podefault_ek_dr hpofree g (v0 k) (kdr k) bud (hv0pp k a) (hdom k (ik k + a))
+      (fun e' he' => hdr k a e' he') hmem hr
+  · -- ke_all
+    intro k a _ r cc hmem f hK
+    refine podefault_ke_dr hpofree g hgdom (v0 k) (kdr k) bud (hv0dom k) (hppi k a)
+      (fun f' hf' => ⟨?_, (hdr k a f' hf').2⟩) hmem hK
+    rw [hI.conv_ (g f') (ck k (ik k + a)) (hgdom f') (hdom k (ik k + a)), (hdr k a f' hf').1]; rfl
+  · -- kq_all vacuous
+    intro k k' _ a _ r cc hmem hQ b _
+    have hr : r = po := hQ.symm; subst hr
+    exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+  · -- e_ex
+    intro e r D hmem
+    rcases he_ex e r D hmem with ⟨f, hf, hDf⟩ | ⟨k, hK, a, ha, hDa⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr ⟨k, hK, a, ha, hDa⟩
+  · -- k_ex
+    intro k a _ r D hmem
+    rcases hk_ex k a r D hmem with ⟨f, hf, hDf⟩ | ⟨rfl, b, hb, hDb⟩ | ⟨rfl, hD⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
 
 /-- `ite` does not depend on the `Decidable` instance (it is a `Subsingleton`) —
     the bridge between the `mtkNodesH`-subtype's `DecidableEq` (used by the
@@ -16352,6 +16491,8 @@ end VerticalWitness
 #print axioms po_dr_multi_child_frame
 #print axioms po_dr_multi_kernel_frame
 #print axioms podefault_ke_dr
+#print axioms podefault_ek_dr
+#print axioms mtkKernelsDR_ok
 #print axioms mtkKernels_ok
 #print axioms mtkKernels_nopo
 #print axioms extract_flat_towers
