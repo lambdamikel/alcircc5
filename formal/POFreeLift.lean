@@ -13056,6 +13056,24 @@ theorem sub_ascNodes_hwitness (hI : RCC5Interp I) (n : MTKNode I C0) {r : Atom}
   simp only [if_pos hr]
   exact hm
 
+/-- A phase-witness's whole coverage set is contained in the parent's — the
+    VERTICAL-branch inclusion (for a persistent `∃PP` site's kernel phase's
+    horizontal witness). -/
+theorem sub_ascNodes_phasewitness (hI : RCC5Interp I) (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) (hpp : persistPP I C0 c n.x)
+    {q : MTKNode I C0} (hq : q ∈ ppPhaseNodes hI n hpp)
+    {r' : Atom} {c' : Concept} (hF' : Concept.ex r' c' ∈ mtk C0 I q.x q.k)
+    (hr' : r' = dr ∨ r' = po ∨ r' = eq) :
+    ∀ m ∈ ascNodes hI ⟨(mtkWitness q hF').x, n.k - 1, (mtkWitness q hF').hx⟩,
+      m ∈ ascNodes hI n := by
+  intro m hm
+  rw [ascNodes]
+  refine List.mem_cons_of_mem _ (List.mem_flatMap.mpr ⟨⟨Concept.ex pp c, hF⟩,
+    List.mem_attach _ _, ?_⟩)
+  simp only [if_neg (show ¬ (pp = dr ∨ pp = po ∨ pp = eq) by decide), dif_pos hpp]
+  exact List.mem_flatMap.mpr ⟨q, hq, List.mem_flatMap.mpr ⟨⟨Concept.ex r' c', hF'⟩,
+    List.mem_attach _ _, by simp only [if_pos hr']; exact hm⟩⟩
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16896,6 +16914,7 @@ end VerticalWitness
 #print axioms ascNodes
 #print axioms self_mem_ascNodes
 #print axioms sub_ascNodes_hwitness
+#print axioms sub_ascNodes_phasewitness
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
