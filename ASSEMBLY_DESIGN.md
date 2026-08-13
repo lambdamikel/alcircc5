@@ -1891,3 +1891,57 @@ open mathematics — every ingredient's interface is certified (frame, cert
 validity, gluability, flat extraction, single-tower routing `mtk_ee_all`/
 `mtk_e_ex`/`mtk_k_ex`). It is the genuine remaining formalization toward
 `decidableSat_pofree`.
+
+## 28. Item 2, precisely: phase-∃DR and the forcing-completion frame (2026-08-12)
+
+`extract_skel_towers` (item 1) gives a DR/PO skeleton among the bases with
+`∃DR`-CLEAN phases. Item 2 is the phase-spawning case, and pinning down WHY it is
+hard is itself progress.
+
+**The obstruction — the phase→external edge.** In `mtkKernels` the kernel↔external
+edge is `K k e = if e = v0 k then ppi else po` — the PO-default, deliberately in
+`{ppi, po}`. A tower phase reaches an external only through `K` (composed with
+`phase PPI base`). So a phase can serve `∃PO`/`∃EQ`/`∃PP` but **NOT `∃DR`** (no DR
+`K`-edge). That is exactly why item 1 keeps phases `∃DR`-clean.
+
+**The fork.** Serving phase-`∃DR` needs a DR `K`-edge to the phase's DR-witness.
+Two `K` policies exist in the artifact:
+- `mtkKernels` — PO-default `K` (`{ppi,po}`), `mtk`-TRUNCATED labels: finite
+  (`Fintype β` reachable), `ke_all` clean (the wp89 seam avoided), but no
+  phase-`∃DR`.
+- `mixKernels` — `K := I.rho (ck k (ik k)) (g e)` READ OFF the model (can be DR),
+  FULL `mty` labels: serves phase-`∃DR`, but `mty` is not truncated (the
+  finiteness seam) and a naive read-off-`K` + `mtk`-truncation breaks `ke_all`
+  (wp89: a deep kernel universal fires at a shallow external, its argument
+  truncated away).
+
+So item 2's phase-`∃DR` sits in genuine tension: **phase-DR needs read-off `K`;
+decidability needs `mtk`-truncation; the two collide at the `ke_all` depth seam.**
+
+**The resolution (wp90 / §25.9) — the forcing-completion frame.** The correct
+`K`/`Q` far-edge policy is NEITHER naive read-off NOR blanket PO-default: it is
+the CANONICAL COMPLETION. Adjacency edges (a phase's demand to an ADJACENT
+budget-safe child) are REAL (so a phase-`∃DR` to a child at budget `k-1`,
+`mdepth arg ≤ k-1`, is a genuine DR edge); then FORCE every singleton-determined
+edge (`comp(PP,DR)={DR}` etc.) to a fixpoint; PO the genuinely-free rest (free
+edges sit in no singleton `comp` cell, and PO ∈ every non-singleton cell). This
+keeps labels `mtk`-truncated (finite) AND serves phase-`∃DR` at adjacency, with
+the depth seam avoided because the DR edge is budget-safe by construction.
+
+**So item 2's keystone is the FORCING-COMPLETION FRAME** — a frame lemma
+generalising `po_default_multi_frame` where SOME kernel/cross edges are real
+(adjacency + forced singletons) rather than all PO-defaulted. This is the "one
+non-trivial new lemma" §25.9 flagged. It is strictly harder than
+`po_default_multi_frame` (a real DR `K`-edge FORCES the child's other edges via
+composition — the completion is a finite patchwork, not a free PO fill), and it
+must interlock with the phase-child budget accounting (adjacency at `k-1`, deeper
+edges PO-defaulted) and the coverage lemma (every phase demand served by an
+adjacency child or an existing node).
+
+**What is certified (the ingredients):** `po_default_multi_frame` (the all-PO
+special case), `mtkKernels_ok` (the PO-default cert), `mixKernels_ok` (the
+read-off cert, full `mty`), the finite `comp`-forcing facts (`po_mem_comp_*`,
+`segment_kk_pp/ppi`), the single-tower routing. **What remains (the summit):** the
+forcing-completion frame + phase-child spawning (adjacency-real DR `K`-edges) +
+the coverage lemma + `Fintype`/`codesM`. This is the genuine research frontier —
+a substantial construction, not a wrapper.
