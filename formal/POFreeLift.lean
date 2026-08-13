@@ -12953,6 +12953,55 @@ theorem dascKernel (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
   rw [show i + a = (i + a - 1) + 1 from by omega]
   exact ppi_chain_below hI d hdom hstep (i + a - 1)
 
+/-- **BUNDLED ascending-kernel data** — `ascKernel`'s output as a `Type`-level
+    structure, so it can be DESTRUCTURED inside a (noncomputable) definition (the
+    node-set construction needs the chain `c`/period `i,p` as data, not just an
+    existential).  Every field is a projection of `ascKernel`'s conjunction. -/
+structure AscKernelPack {α : Type} (I : Interp α) (C0 G : Concept) (x0 : α) (L : Nat) where
+  c : Nat → α
+  i : Nat
+  p : Nat
+  c0 : c 0 = x0
+  dom : ∀ n, I.dom (c n)
+  step : ∀ n, I.rho (c n) (c (n + 1)) = pp
+  iLE : L ≤ i
+  pPos : 0 < p
+  period : mty C0 I (c i) = mty C0 I (c (i + p))
+  dem : ∀ n, Concept.ex pp G ∈ mty C0 I (c n)
+  base : 0 < i → ∀ a, I.rho x0 (c (i + a)) = pp
+
+/-- Extract the bundled kernel data from a `persistPP` node — via
+    `Nonempty` + `Classical.choice` (so the existential in `ascKernel` is
+    eliminated into a `Type` result legitimately). -/
+noncomputable def ascKernelPack (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
+    (h0 : persistPP I C0 G x0) (L : Nat) : AscKernelPack I C0 G x0 L :=
+  Classical.choice (by
+    obtain ⟨c, i, p, hc0, hdom, hstep, hiLE, hpPos, hperiod, hdem, hbase⟩ :=
+      ascKernel hI x0 h0 L
+    exact ⟨⟨c, i, p, hc0, hdom, hstep, hiLE, hpPos, hperiod, hdem, hbase⟩⟩)
+
+/-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
+    `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
+    at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
+    demands the coverage must serve as β-externals (their PP relations stay in the
+    kernel clauses).  The base-`L` is `1`, so `0 < i` and `n.x PP` every phase. -/
+noncomputable def ppPhaseNodes (hI : RCC5Interp I) {C0 G : Concept} (n : MTKNode I C0)
+    (hpp : persistPP I C0 G n.x) : List (MTKNode I C0) :=
+  let pk := ascKernelPack hI n.x hpp 1
+  (List.range pk.p).map (fun a => ⟨pk.c (pk.i + a), n.k, pk.dom (pk.i + a)⟩)
+
+/-- Each phase node's element is a genuine chain position `c(i+a)`, `a < p`. -/
+theorem ppPhaseNodes_spec (hI : RCC5Interp I) {C0 G : Concept} (n : MTKNode I C0)
+    (hpp : persistPP I C0 G n.x) :
+    ∀ m ∈ ppPhaseNodes hI n hpp,
+      ∃ a, a < (ascKernelPack hI n.x hpp 1).p ∧
+        m.x = (ascKernelPack hI n.x hpp 1).c ((ascKernelPack hI n.x hpp 1).i + a) ∧
+        m.k = n.k := by
+  intro m hm
+  simp only [ppPhaseNodes, List.mem_map, List.mem_range] at hm
+  obtain ⟨a, ha, rfl⟩ := hm
+  exact ⟨a, ha, rfl, rfl⟩
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16787,6 +16836,9 @@ end VerticalWitness
 #print axioms block_of_persistent
 #print axioms ascKernel
 #print axioms dascKernel
+#print axioms ascKernelPack
+#print axioms ppPhaseNodes
+#print axioms ppPhaseNodes_spec
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
