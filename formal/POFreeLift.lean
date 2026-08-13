@@ -12788,6 +12788,52 @@ theorem extract_skel_towers (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree
   exact @multiTier_sound κ κ (fun a b => Classical.propDecidable (a = b)) _ hok
     (Sum.inl kroot) C0 (mem_mtk.mpr ⟨hroot, Nat.le_refl _⟩)
 
+open Classical in
+/-- **THE PHASE-`∃DR` MULTI-KERNEL EXTRACTION ENGINE** — the reusable entry
+    point for the DR-children route, parallel to `extract_skel_towers` but built
+    on `mtkKernelsDR_ok` (which serves phase-`∃DR` via `DR`-children, not just
+    base-`∃DR`).  β indexes ALL externals (bases `v0 k` AND their `DR`-children,
+    selected by `kdr`); κ indexes the ascending kernels; `bud : β → Nat` is the
+    per-node truncation budget, allowing a `DR`-child to sit at a budget STRICTLY
+    below its phase (the budget-slack of `podefault_ke/ek_dr`, the termination
+    measure of the general recursion).  Given the model correspondences + the
+    routing hypotheses (`hee`/`he_ex`/`hk_ex`, in the frame's raw `if`-form) and
+    a root external carrying `C0`, it discharges `Satisfiable C0`.  This packages
+    the whole `mtkKernelsDR_ok → multiTier_sound` pipeline the `Cpdr` witness ran
+    inline, so the eventual coverage construction only has to produce β/κ + the
+    routing, not re-thread the certificate. -/
+theorem extract_dr_children (hI : RCC5Interp I) {C0 : Concept}
+    (hpofree : POFree C0) {β κ : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (bud : β → Nat) (dadj : β → β → Bool) (hsym : ∀ e f, dadj e f = dadj f e)
+    (v0 : κ → β) (kdr : κ → β → Bool)
+    (hcoh : ∀ k e, kdr k e = true → dadj e (v0 k) = true)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hv0pp : ∀ k a, I.rho (g (v0 k)) (ck k (ik k + a)) = pp)
+    (hdr : ∀ k a e, kdr k e = true →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧
+        bud (v0 k) ≤ bud e + 1 ∧ bud e ≤ bud (v0 k) + 1)
+    (hee : ∀ e f r cc, Concept.all r cc ∈ mtk C0 I (g e) (bud e) →
+      (if e = f then eq else if dadj e f then dr else po) = r →
+      cc ∈ mtk C0 I (g f) (bud f))
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, (if e = f then eq else if dadj e f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (if e = v0 k then ppi else if kdr k e then dr else po) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k))))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k)) →
+      (∃ f, (if f = v0 k then ppi else if kdr k f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = pp ∧ ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bud (v0 k))) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bud (v0 k))))
+    (root : β) (hroot : C0 ∈ mtk C0 I (g root) (bud root)) :
+    Satisfiable C0 := by
+  have hok := mtkKernelsDR_ok hI hpofree g hgdom bud dadj hsym v0 kdr hcoh ck hdom
+    hstep ik pk hp hty hv0pp hdr hee he_ex hk_ex
+  exact multiTier_sound _ hok (Sum.inl root) C0 hroot
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16503,11 +16549,7 @@ open Classical in
 theorem cpdr_generic_satisfiable : Satisfiable Cpdr := by
   obtain ⟨i, p, hLi, hp, _, hty⟩ :=
     mty_segment_bounded (I := Idr) Cpdr (fun n => (false, n)) 1
-  have hok : @MultiTierOk Bool Unit (fun a b => Classical.propDecidable (a = b))
-      (mtkKernelsDR Idr Cpdr (fun e : Bool => (e, 0))
-      (fun _ => mdepth Cpdr) (fun e f => decide (e ≠ f)) (fun _ : Unit => false)
-      (fun _ e => e) (fun _ n => (false, n)) (fun _ => i) (fun _ => p)) := by
-    refine mtkKernelsDR_ok Idr_rcc5 Cpdr_pofree (fun e : Bool => (e, 0))
+  refine extract_dr_children Idr_rcc5 Cpdr_pofree (fun e : Bool => (e, 0))
       (fun _ => trivial) (fun _ => mdepth Cpdr) (fun e f => decide (e ≠ f))
       (by intro e f; cases e <;> cases f <;> rfl) (fun _ : Unit => false)
       (fun _ e => e)
@@ -16525,41 +16567,37 @@ theorem cpdr_generic_satisfiable : Satisfiable Cpdr := by
             refine ⟨?_, by omega, by omega⟩
             show (if true = false then chain (i + a) 0 else dr) = dr
             rw [if_neg (by decide)])
-      ?_ ?_ ?_
-    · -- hee: only ∀ is ∀PP; E ∈ {eq, dr}, never pp
-      intro e f r cc hmem hE
-      have hr : r = pp := cpdr_all_pp r cc (mty_sub _ (mem_mtk.mp hmem).1)
-      subst hr
-      by_cases hef : e = f
-      · rw [if_pos hef] at hE; exact absurd hE (by decide)
-      · rw [if_neg hef] at hE
-        cases e <;> cases f <;> simp_all <;> exact absurd hE (by decide)
-    · -- he_ex
-      intro e r D hmem
-      cases e with
-      | false =>
-        rcases cpdr_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
-        · refine Or.inr ⟨(), ?_, 0, hp, dr_a0_mtk (i + 0)⟩
-          split
-          · rfl
-          · rename_i h; exact absurd rfl h
-        · refine Or.inl ⟨true, ?_, dr_a1_mtk⟩
-          split
-          · rename_i h; exact absurd h (by decide)
-          · rfl
-      | true => exact absurd (mem_mtk.mp hmem).1 (dchild_no_ex r D)
-    · -- hk_ex
-      intro _ a r D hmem
+      ?_ ?_ ?_ false (mem_mtk.mpr ⟨cpdr_at_root, Nat.le_refl _⟩)
+  · -- hee: only ∀ is ∀PP; E ∈ {eq, dr}, never pp
+    intro e f r cc hmem hE
+    have hr : r = pp := cpdr_all_pp r cc (mty_sub _ (mem_mtk.mp hmem).1)
+    subst hr
+    by_cases hef : e = f
+    · rw [if_pos hef] at hE; exact absurd hE (by decide)
+    · rw [if_neg hef] at hE
+      cases e <;> cases f <;> simp_all <;> exact absurd hE (by decide)
+  · -- he_ex
+    intro e r D hmem
+    cases e with
+    | false =>
       rcases cpdr_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
-      · exact Or.inr (Or.inl ⟨rfl, 0, hp, dr_a0_mtk (i + 0)⟩)
+      · refine Or.inr ⟨(), ?_, 0, hp, dr_a0_mtk (i + 0)⟩
+        split
+        · rfl
+        · rename_i h; exact absurd rfl h
       · refine Or.inl ⟨true, ?_, dr_a1_mtk⟩
         split
         · rename_i h; exact absurd h (by decide)
         · rfl
-  exact @multiTier_sound Bool Unit (fun a b => Classical.propDecidable (a = b)) _ hok
-    (Sum.inl false) Cpdr
-    (by show Cpdr ∈ mtk Cpdr Idr (false, 0) (mdepth Cpdr)
-        exact mem_mtk.mpr ⟨cpdr_at_root, Nat.le_refl _⟩)
+    | true => exact absurd (mem_mtk.mp hmem).1 (dchild_no_ex r D)
+  · -- hk_ex
+    intro _ a r D hmem
+    rcases cpdr_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · exact Or.inr (Or.inl ⟨rfl, 0, hp, dr_a0_mtk (i + 0)⟩)
+    · refine Or.inl ⟨true, ?_, dr_a1_mtk⟩
+      split
+      · rename_i h; exact absurd h (by decide)
+      · rfl
 
 end VerticalWitness
 
