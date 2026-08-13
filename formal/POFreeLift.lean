@@ -15555,6 +15555,27 @@ theorem cnest_generic_satisfiable : Satisfiable Cnest := by
     (by show Cnest ∈ mtk Cnest Ipo (false, 0) (mdepth Cnest)
         exact mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self Cnest, po_hcn (false, 0)⟩, Nat.le_refl _⟩)
 
+/-- **`Cnest` is an instance of `extract_flat_towers`** — the general
+    arbitrary-`κ` flat multi-tower extraction fires on `Cnest` (`κ = Bool`),
+    confirming the general lemma is correctly general and non-vacuous.  The
+    routing: `∃PP.A₀` → own kernel, `∃PO.Cvert` → the other base. -/
+theorem cnest_via_flat : Satisfiable Cnest := by
+  refine extract_flat_towers Ipo_rcc5 Cnest_pofree (fun b n => (b, n))
+    (fun _ _ => trivial)
+    (by intro k n; show (if k = k then chain n (n + 1) else po) = pp
+        rw [if_pos rfl]; exact chain_lt (Nat.lt_succ_self n))
+    (fun _ => 1) (fun _ => 1) (fun _ => Nat.one_pos) (fun _ => Nat.one_pos)
+    (fun k => (pfull (k, 1)).trans (pfull (k, 1 + 1)).symm)
+    ?_ ?_ false (mem_mty.mpr ⟨cl_self Cnest, po_hcn (false, 0)⟩)
+  · intro e r D hmem
+    rcases cnest_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · exact Or.inl ⟨rfl, po_atom0_mtk e 1⟩
+    · exact Or.inr (Or.inl ⟨rfl, !e, by cases e <;> decide, po_cvert_mtk !e⟩)
+  · intro k a r D hmem
+    rcases cnest_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+    · exact Or.inl ⟨rfl, 0, Nat.one_pos, po_atom0_mtk k 1⟩
+    · exact Or.inr (Or.inl ⟨rfl, !k, by cases k <;> decide, po_cvert_mtk !k⟩)
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -15776,6 +15797,7 @@ end VerticalWitness
 #print axioms VerticalWitness.nestRho_frame
 #print axioms VerticalWitness.Ipo_rcc5
 #print axioms VerticalWitness.cnest_generic_satisfiable
+#print axioms VerticalWitness.cnest_via_flat
 #print axioms VerticalWitness.cmerge_via_tower
 
 end POFreeLift
