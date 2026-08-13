@@ -16769,6 +16769,7 @@ end VerticalWitness
 #print axioms podefault_ek_dr
 #print axioms mtkKernelsDR_ok
 #print axioms mtkKernelsDR_nopo
+#print axioms extract_dr_children
 #print axioms VerticalWitness.drRho_frame
 #print axioms VerticalWitness.Idr_rcc5
 #print axioms VerticalWitness.dchild_no_ex
