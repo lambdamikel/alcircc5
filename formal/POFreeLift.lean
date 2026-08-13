@@ -12498,6 +12498,16 @@ theorem mtkKernelsDR_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
     · exact Or.inr (Or.inl ⟨rfl, b, hb, hDb⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
 
+/-- **`mtkKernelsDR` is `∀PO`-obligation-free** — gluability of the DR-children
+    cert (same `mkBlock_nopo` pattern: `tauE`/`phase` are `mtk` labels ⊆ `mty`,
+    no `∀PO` for a `POFree` concept). -/
+theorem mtkKernelsDR_nopo {C0 : Concept} (hpo : POFree C0) {β κ : Type}
+    (g : β → α) (bud : β → Nat) (dadj : β → β → Bool) (v0 : κ → β) (kdr : κ → β → Bool)
+    (ck : κ → Nat → α) (ik pk : κ → Nat) :
+    MTNoPo (mtkKernelsDR I C0 g bud dadj v0 kdr ck ik pk) where
+  ext := fun _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+  ker := fun _ _ _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+
 /-- `ite` does not depend on the `Decidable` instance (it is a `Subsingleton`) —
     the bridge between the `mtkNodesH`-subtype's `DecidableEq` (used by the
     routing lemmas) and the `Classical.propDecidable` the generic `mtkKernel`
@@ -16710,6 +16720,7 @@ end VerticalWitness
 #print axioms podefault_ke_dr
 #print axioms podefault_ek_dr
 #print axioms mtkKernelsDR_ok
+#print axioms mtkKernelsDR_nopo
 #print axioms VerticalWitness.drRho_frame
 #print axioms VerticalWitness.Idr_rcc5
 #print axioms VerticalWitness.dchild_no_ex

@@ -1945,3 +1945,62 @@ read-off cert, full `mty`), the finite `comp`-forcing facts (`po_mem_comp_*`,
 forcing-completion frame + phase-child spawning (adjacency-real DR `K`-edges) +
 the coverage lemma + `Fintype`/`codesM`. This is the genuine research frontier —
 a substantial construction, not a wrapper.
+
+## 29. Item 2 — phase-∃DR, CERTIFIED END-TO-END (2026-08-13)
+
+Item 2 (the phase-spawning summit) is now certified as a working mechanism.
+`extract_skel_towers` (§ item 1) kept phases `∃DR`-clean because a tower phase
+reaches externals only via `K`, and the PO-default `K` has no `DR` edge. Item 2
+gives phases a `DR` edge — the forcing-completion frame — and wires it into a
+valid certificate that serves phase-`∃DR`, demonstrated end-to-end.
+
+**The certified chain (all 0-sorry, propext/Classical.choice/Quot.sound):**
+1. **Forcing-completion frame** — `K` = `PPI` to attach `v0 k` / `DR` to `k`'s
+   children (`kdr k e`) / `PO` else; cross-kernel `Q` = `PO`. Three bricks:
+   - `po_dr_asc_frame` — one DR-child, one kernel. The DR edge is FORCED
+     (`comp(PP,DR)=comp(DR,PPI)={DR}`): the child must be `DR`-adjacent to the
+     attach (`hcoh`). Everything else lands in non-singleton comp cells.
+   - `po_dr_multi_child_frame` — many DR-children (`kdr : β → Bool`), one kernel.
+     Children's mutual relations FREE (`comp(DR,DR)=all`); only child↔attach
+     forced.
+   - `po_dr_multi_kernel_frame` — many kernels, each with its children, full
+     generality. Cross-kernel triangles ABSORB any `K` values via PO-default
+     (`hKr` + `decide`); ext-ext-through-one-kernel = the multi-child forcing.
+2. **The `∀DR` propagation** — `podefault_ke_dr` (phase's `∀DR.cc` → child) and
+   `podefault_ek_dr` (child's `∀DR.cc` → phase). Both via `all_into` at the SAME
+   budget — the wp89 depth seam is beaten because the child budget equals the
+   phase budget. Enabled by the munf fact `munf (.inr(k,_)) (.inl f) = K k f`:
+   every tower phase relates to external `f` via the base's `K`-edge, so a
+   base-level DR-child is `DR` to ALL phases in munf; sound iff the child is `DR`
+   to all phases in the label-model (`hdr`, geometrically a disjoint-region
+   child).
+3. **The certificate** — `mtkKernelsDR` / `mtkKernelsDR_ok` / `mtkKernelsDR_nopo`.
+   `frame_q` = the multi-kernel forcing frame; `ke_all`/`ek_all` = the `_dr`
+   lemmas; `kk_*`/`kq_all` as `mtkKernels_ok`; routing `hee`/`he_ex`/`hk_ex`
+   with DR `K`-edges (phase's `∃DR.D` → child via `k_ex` disjunct-1). New model
+   hypotheses: `hcoh` (frame coherence) + `hdr` (children `DR` to every phase,
+   matching budget).
+4. **The witness** — `cpdr_generic_satisfiable`. `Cpdr = Cvert ⊓ ∃DR.A₁ ⊓
+   ∀PP.(∃DR.A₁)` on the cross-`DR` carrier `drRho` (a frame because
+   `comp(PP,DR)={DR}` propagates DR down the tower). Every tower PHASE demands
+   `∃DR.A₁` (via `∀PP`), served by the child `(true,0)` through the forced `DR`
+   `K`-edge. The first phase-level `∃DR` extraction.
+
+**What remains toward `decidableSat_pofree`.** The forcing mechanism is done; two
+standing pieces remain:
+- **The general node construction (coverage).** A single uniform FINITE node set
+  that unifies the horizontal skeleton (`mtkNodesH`), the kernels (`∃PP`-nodes),
+  and their DR-children (`∃DR`-at-phase witnesses), built from an ARBITRARY
+  satisfiable ∀PO-free concept, `K(C₀)`-bounded by mtk-truncation. This is the
+  mutual skeleton↔kernel↔child recursion + the coverage lemma (every demand
+  served by a node in the finite set). Every INGREDIENT is now certified (frame,
+  cert validity, gluability, all the extraction engines, the routing lemmas); the
+  remaining work is the finite uniform assembly + coverage.
+- **`Fintype`/`codesM`** — finite `β`/`κ`, the `K(C₀)` size bound, a `codesM`
+  enumeration → `Decidable (Satisfiable C0)` via `decidableSat_of_codes`.
+
+So the two conceptual hearts of the fragment (mtk truncation for the horizontal
+width; the forcing-completion + same-budget children for phase-`∃DR`) are both
+certified. The remainder is the finite-assembly engineering the whole campaign
+has been converging on — NOT the open `F6`/`W2′` problem, which is the FULL
+logic's obstacle that `∀PO`-freeness removes.
