@@ -11509,6 +11509,69 @@ theorem hfragB_iff (C0 : Concept) : hfragB C0 = true ↔ HFrag C0 := by
     | and a b => rfl
     | or a b => rfl
 
+/-! ### The ASCENDING-MIXED fragment `AscMix` (∀PO-free ∧ ∃PPI-free)
+
+The first mixing milestone.  `AscMix C0` = `POFree C0` (∀PO-free) together with
+∃PPI-freeness (no *descending* existential in the closure).  Existentials may be
+`DR`/`PO`/`EQ`/`PP` — so this is a STRICT extension of `HFrag` (which forbids
+`∃PP`).  The point of isolating it: with only ascending verticals, every kernel
+is reached from the root along a path that takes a horizontal step (budget−1)
+before each new kernel base, so the coverage recursion TERMINATES ON BUDGET
+ALONE — no §21 finite-poset-of-kernels argument (that is only forced by
+same-budget OPPOSITE-direction nesting, which ∃PPI-freeness rules out). -/
+
+/-- Per-formula ascending-mixed check: existentials avoid `PPI` (descending);
+    universals are non-`PO`. -/
+def ascExOk (F : Concept) : Bool :=
+  match F with
+  | .ex ppi _ => false
+  | .all r _ => decide (r ≠ po)
+  | _ => true
+
+/-- The ASCENDING-MIXED fragment: `∀PO`-free and `∃PPI`-free.  Carries `POFree`
+    directly (so no cl→structural derivation is needed) plus ∃PPI-freeness. -/
+structure AscMix (C0 : Concept) : Prop where
+  pofree : POFree C0
+  hnoppi : ∀ c, Concept.ex ppi c ∉ cl C0
+
+/-- DECIDABLE membership: `AscMix C₀` is a Boolean check over `cl C₀`. -/
+def ascMixB (C0 : Concept) : Bool := pofreeB C0 && (cl C0).all ascExOk
+
+theorem ascMixB_iff (C0 : Concept) : ascMixB C0 = true ↔ AscMix C0 := by
+  rw [ascMixB, Bool.and_eq_true, pofreeB_iff, List.all_eq_true]
+  constructor
+  · intro ⟨hpo, hall⟩
+    refine ⟨hpo, fun c hmem => ?_⟩
+    exact absurd (hall (Concept.ex ppi c) hmem) (by simp [ascExOk])
+  · intro ⟨hpo, hnoppi⟩
+    refine ⟨hpo, fun F hmem => ?_⟩
+    cases F with
+    | ex r c =>
+      cases r with
+      | ppi => exact absurd hmem (hnoppi c)
+      | dr => rfl
+      | po => rfl
+      | eq => rfl
+      | pp => rfl
+    | all r c =>
+      simpa only [ascExOk, decide_eq_true_eq] using pofree_cl_all C0 hpo r c hmem
+    | top => rfl
+    | bot => rfl
+    | atom a => rfl
+    | natom a => rfl
+    | and a b => rfl
+    | or a b => rfl
+
+/-- Non-vacuity + strictness: `Casc = ∃PP.A₀` is in `AscMix` but NOT in `HFrag`
+    (its `∃PP` is forbidden horizontally) — the fragment genuinely extends the
+    horizontal one with ascending verticals. -/
+def Casc : Concept := .ex pp (.atom 0)
+
+theorem casc_ascmix : AscMix Casc := (ascMixB_iff Casc).mp (by decide)
+
+theorem casc_not_hfrag : ¬ HFrag Casc :=
+  fun h => absurd (h.hex pp (Concept.atom 0) (cl_self Casc)) (by decide)
+
 /-! ### Non-vacuity: the horizontal fragment fires on a nested-`∀DR` concept
 
 `Cwit = ∃DR.⊤ ⊓ ∀DR.(∀DR.A)` is EXCLUDED from `DRFrag` (its `∀DR` guards
@@ -16732,6 +16795,9 @@ end VerticalWitness
 #print axioms mtHF_ok
 #print axioms extract_hfrag
 #print axioms satisfiable_iff_hfrag_cert
+#print axioms ascMixB_iff
+#print axioms casc_ascmix
+#print axioms casc_not_hfrag
 #print axioms HFragWitness.Cwit_sat
 #print axioms HFragWitness.Cwit_has_cert
 #print axioms HFragWitness.Cwit_not_drfrag
