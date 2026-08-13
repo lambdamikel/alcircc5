@@ -2129,3 +2129,77 @@ None of (1)–(3) is `F6`/`W2′`. Each is finite-combinatorial assembly over
 certified parts. The honest status stays: three quadrants + the mixing pipeline
 certified GENERAL/end-to-end, UNREVIEWED; `decidableSat_pofree` is the assembly
 of §30, not yet done; full-logic `ALCI_RCC5` decidability remains OPEN.
+
+## 31. The AscMix coverage — refined design (2026-08-13)
+
+`AscMix C0` (§ commit ea89598) = `POFree C0` ∧ ∃PPI-free. The first mixing
+decidability target, because its coverage recursion is well-founded on the
+BUDGET alone. This section records the coverage design worked out toward
+`decidableSat_ascmix`.
+
+### 31.1 Why budget-termination suffices (no §21)
+
+Every kernel is ascending. A new kernel base is a horizontal descendant of an
+existing node (its `∃DR`/`∃PO`/`∃EQ` witness) or a DR-child of a phase — both at
+budget−1. A node's OWN `∃PP` goes up its own tower (same kernel, no new one). A
+phase's `∃PP` goes up-tower too. So the ONLY way to reach a fresh kernel is via a
+horizontal step down = budget−1. There is no same-budget escalation (that needs
+an opposite-direction `∃PPI`, excluded). Hence the whole node/kernel structure is
+bounded by the root budget `mdepth C0`; termination is a single measure `n.k`,
+exactly like `mtkNodesH`. This is the concrete cash-value of isolating AscMix.
+
+### 31.2 The phase-`∃DR` child's `hdr` is AUTOMATIC (no W2′ here)
+
+`mtkKernelsDR_ok`'s `hdr` wants each DR-child `DR` to EVERY phase of its kernel.
+In a real model this is FREE: if the child is `DR` to one phase `q_a`, then for
+any other phase, the tower is `PP`-linked, and
+
+    comp(DR, PP) = {DR}   (child DR q_a, q_a PP q_{a+1}  ⟹  child DR q_{a+1})
+    comp(DR, PPI) = {DR}  (child DR q_a, q_{a-1} PP q_a  ⟹  child DR q_{a-1})
+
+so `DR` to one phase propagates to ALL phases. The phase-`∃DR` witness is `DR` to
+its phase by definition, hence `DR` to the whole tower — `hdr` holds with no
+uniformization/W2′ obligation. (W2′ is a FULL-logic obstruction; ∀PO-freeness +
+this composition fact dissolve it for the fragment's phase-`∃DR`.)
+
+### 31.3 `∃PP` splits: one-shot vs persistent
+
+Not every `∃PP.G` needs a kernel:
+- **One-shot** `∃PP.G` (the truncated tower's leaf carries no further `∃PP`
+  obligation — no `∀PP` forces `G`'s continuation): served by a FINITE witness at
+  budget−1, exactly as `mtkNodes` already does (`mtkWitness`). No cycle.
+- **Persistent** `∃PP.G` (a `∀PP` guard reproduces the demand, so the truncated
+  leaf WOULD violate `∀PP`): needs a kernel CYCLE. Only here does
+  `mty_segment_bounded` apply (it needs the infinite model chain, which exists
+  iff the demand persists), giving the period.
+
+The node-set recursion must therefore, at an `∃PP.G` demand, either recurse on
+the finite witness (one-shot) or spawn a kernel + recurse on the phases'
+horizontal witnesses at budget−1 (persistent). Both branches strictly decrease
+the budget, so the single measure `n.k` still governs termination.
+
+### 31.4 The node set (single recursion on budget)
+
+`ascNodes (n : MTKNode) : List MTKNode`, `termination_by n.k`:
+- `n ::` for each `∃r.c ∈ mtk n`:
+  - `r ∈ {dr,po,eq}` → `ascNodes (mtkWitness n hF)` (budget−1);
+  - `r = pp`, one-shot → `ascNodes (mtkWitness n hF)` (budget−1);
+  - `r = pp`, persistent → the kernel's phase witnesses, each
+    `ascNodes (·)` at budget−1 (phases inlined, tower internal to κ);
+  - `r = ppi` → `[]` (dead in AscMix).
+
+κ = the kernels spawned (persistent `∃PP` sites). β = `ascNodes root`. Then feed
+`extract_dr_children` (dadj = the horizontal DR/PO skeleton; kdr = the phase-`∃DR`
+children; `hdr` by §31.2; routing by the coverage) and encode into `codesM` for
+`decidableSat_ascmix`.
+
+### 31.5 Work remaining for `decidableSat_ascmix`
+
+1. `ascNodes` + finiteness/size bound (mirror `mtkNodes`/`mtkNodes_length_le`;
+   the one-shot/persistent split is the new content).
+2. `ascNodes_covers` — the routing discharge (horizontal by `mtkNodesH_covers`;
+   vertical-persistent by the kernel; phase-`∃DR` by §31.2).
+3. `codesAM` + `ascmix_hcompl` + `decidableSat_ascmix = decidableSat_of_codes …`.
+
+Then descending (the ∃PPI mirror) and full mixing (opposite-direction nesting =
+the §21 finite-poset-of-kernels) complete `decidableSat_pofree`.
