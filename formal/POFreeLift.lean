@@ -12078,6 +12078,35 @@ theorem podefault_ke {C0 : Concept} (hpofree : POFree C0) {β : Type}
   · rw [if_neg hf] at hK; subst hK
     exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
 
+open Classical in
+/-- **THE PO-DEFAULT-WITH-DR-CHILDREN `ke_all`** (the forcing-completion wiring:
+    the `ke_all` for the `po_dr_multi_kernel_frame` `K`-edge).  A phase's `∀r.cc`
+    fires at external `f` through `K f = if f = v0 then ppi else if kdr f then dr
+    else po`.  The `PPI` edge (attach) lands via `all_into` (phase above attach);
+    the `DR` edge (a child) lands via `all_into` too — a `∀DR.cc` at the phase
+    reaches the child `f`, which is a REAL `DR`-successor of the phase (`hdr`,
+    the child `DR` to EVERY phase, matching budget); `PO` edges are vacuous
+    (`∀PO`-free).  This is what serves phase-`∃DR`: the depth seam is avoided
+    because the child budget equals the phase budget (`all_into` same-budget). -/
+theorem podefault_ke_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
+    (g : β → α) (hgdom : ∀ e, I.dom (g e)) (v0 : β) (kdr : β → Bool) (bud : β → Nat)
+    (hv0dom : I.dom (g v0)) {x : α} (hppi : I.rho x (g v0) = ppi)
+    (hdr : ∀ f, kdr f = true → I.rho x (g f) = dr ∧ bud f = bud v0)
+    {r : Atom} {cc : Concept} (hmem : Concept.all r cc ∈ mtk C0 I x (bud v0))
+    {f : β} (hK : (if f = v0 then ppi else if kdr f then dr else po) = r) :
+    cc ∈ mtk C0 I (g f) (bud f) := by
+  by_cases hf : f = v0
+  · subst hf; rw [if_pos rfl] at hK; subst hK
+    exact all_into hmem hppi hv0dom
+  · rw [if_neg hf] at hK
+    by_cases hc : kdr f = true
+    · rw [if_pos hc] at hK; subst hK
+      obtain ⟨hdrf, hbudf⟩ := hdr f hc
+      rw [hbudf]
+      exact all_into hmem hdrf (hgdom f)
+    · rw [if_neg hc] at hK; subst hK
+      exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+
 /-- `kk_pp` on `mtk`-truncated phases: lift to `mty`, apply `segment_kk_pp`,
     restrict back (the argument fits the same budget, one level shallower). -/
 theorem mtk_kk_pp (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
@@ -16322,6 +16351,7 @@ end VerticalWitness
 #print axioms po_dr_asc_frame
 #print axioms po_dr_multi_child_frame
 #print axioms po_dr_multi_kernel_frame
+#print axioms podefault_ke_dr
 #print axioms mtkKernels_ok
 #print axioms mtkKernels_nopo
 #print axioms extract_flat_towers
