@@ -16383,6 +16383,97 @@ def Idr : Interp (Bool × Nat) :=
 
 theorem Idr_rcc5 : RCC5Interp Idr := frame_rcc5 drRho drRho_frame _
 
+/-- `Cpdr = Cvert ⊓ ∃DR.A₁ ⊓ ∀PP.(∃DR.A₁)` — a PHASE-`∃DR` concept. -/
+def Cpdr : Concept :=
+  .and (.and Cvert (.ex dr (.atom 1))) (.all pp (.ex dr (.atom 1)))
+
+theorem Cpdr_pofree : POFree Cpdr := ⟨⟨Cvert_pofree, trivial⟩, by decide, trivial⟩
+
+theorem dr_ha : ∀ n, sat Idr (false, n) (Concept.atom 0) := fun _ => rfl
+theorem dr_ha1 : sat Idr (true, 0) (Concept.atom 1) := rfl
+
+theorem dr_hpp : ∀ n, sat Idr (false, n) (Concept.ex pp (Concept.atom 0)) := by
+  intro n
+  refine ⟨(false, n + 1), trivial, ?_, rfl⟩
+  show (if false = false then chain n (n + 1) else dr) = pp
+  rw [if_pos rfl]; exact chain_lt (Nat.lt_succ_self n)
+
+theorem dr_hdr : ∀ n, sat Idr (false, n) (Concept.ex dr (Concept.atom 1)) := by
+  intro n
+  exact ⟨(true, 0), trivial, rfl, rfl⟩
+
+theorem dr_hall_pp : ∀ n, sat Idr (false, n)
+    (Concept.all pp (Concept.ex pp (Concept.atom 0))) := by
+  rintro n ⟨b, m⟩ _ hr
+  cases b with
+  | false => exact dr_hpp m
+  | true => exact absurd (show (dr : Atom) = pp from hr) (by decide)
+
+theorem dr_hall_dr : ∀ n, sat Idr (false, n)
+    (Concept.all pp (Concept.ex dr (Concept.atom 1))) := by
+  rintro n ⟨b, m⟩ _ hr
+  cases b with
+  | false => exact dr_hdr m
+  | true => exact absurd (show (dr : Atom) = pp from hr) (by decide)
+
+theorem dr_hcv : ∀ n, sat Idr (false, n) Cvert :=
+  fun n => ⟨⟨dr_ha n, dr_hpp n⟩, dr_hall_pp n⟩
+
+theorem dr_hcpdr : ∀ n, sat Idr (false, n) Cpdr :=
+  fun n => ⟨⟨dr_hcv n, dr_hdr n⟩, dr_hall_dr n⟩
+
+/-- `Cpdr`'s existentials are exactly `∃PP.A₀` and `∃DR.A₁`. -/
+theorem cpdr_demands : ∀ r D, Concept.ex r D ∈ cl Cpdr →
+    (r = pp ∧ D = Concept.atom 0) ∨ (r = dr ∧ D = Concept.atom 1) := by
+  intro r D h
+  have hb := List.all_eq_true.mp
+    (show (cl Cpdr).all (fun E => match E with
+      | Concept.ex r D => decide ((r = pp ∧ D = Concept.atom 0) ∨
+          (r = dr ∧ D = Concept.atom 1))
+      | _ => true) = true from by decide) (Concept.ex r D) h
+  simpa only [decide_eq_true_eq] using hb
+
+/-- The only universals in `cl Cpdr` are `∀PP`. -/
+theorem cpdr_all_pp : ∀ r cc, Concept.all r cc ∈ cl Cpdr → r = pp := by
+  intro r cc h
+  have hb := List.all_eq_true.mp
+    (show (cl Cpdr).all (fun E => match E with
+      | Concept.all r _ => decide (r = pp) | _ => true) = true from by decide)
+    (Concept.all r cc) h
+  simpa only [decide_eq_true_eq] using hb
+
+theorem dr_a0_mtk (n : Nat) :
+    Concept.atom 0 ∈ mtk Cpdr Idr (false, n) (mdepth Cpdr) :=
+  mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, by decide⟩
+
+theorem dr_a1_mtk :
+    Concept.atom 1 ∈ mtk Cpdr Idr (true, 0) (mdepth Cpdr) :=
+  mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, by decide⟩
+
+theorem cpdr_at_root : Cpdr ∈ mty Cpdr Idr (false, 0) :=
+  mem_mty.mpr ⟨cl_self Cpdr, dr_hcpdr 0⟩
+
+/-- The child `(true,0)` has NO existential of `cl Cpdr`: it carries `A₁` but its
+    `PP`/`DR`-successors never carry the demanded atom (its `DR`-neighbours are
+    the tower region, which carries `A₀`, not `A₁`). -/
+theorem dchild_no_ex : ∀ r D, Concept.ex r D ∉ mty Cpdr Idr (true, 0) := by
+  intro r D hmem
+  obtain ⟨y, _, hr, hy⟩ := mty_ex hmem
+  rcases cpdr_demands r D (mty_sub _ hmem) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+  · rcases y with ⟨b, m⟩
+    cases b with
+    | true =>
+      have h2 : (0 : Nat) = 1 := (mem_mty.mp hy).2
+      exact absurd h2 (by decide)
+    | false => exact absurd (show (dr : Atom) = pp from hr) (by decide)
+  · rcases y with ⟨b, m⟩
+    cases b with
+    | true => exact absurd (show chain 0 m = dr from hr)
+                (by rcases chain_vals 0 m with h | h | h <;> rw [h] <;> decide)
+    | false =>
+      have h2 : (1 : Nat) = 0 := (mem_mty.mp hy).2
+      exact absurd h2 (by decide)
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -16554,6 +16645,8 @@ end VerticalWitness
 #print axioms mtkKernelsDR_ok
 #print axioms VerticalWitness.drRho_frame
 #print axioms VerticalWitness.Idr_rcc5
+#print axioms VerticalWitness.dchild_no_ex
+#print axioms VerticalWitness.dr_hcpdr
 #print axioms mtkKernels_ok
 #print axioms mtkKernels_nopo
 #print axioms extract_flat_towers
