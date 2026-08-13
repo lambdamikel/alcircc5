@@ -16474,6 +16474,73 @@ theorem dchild_no_ex : ∀ r D, Concept.ex r D ∉ mty Cpdr Idr (true, 0) := by
       have h2 : (1 : Nat) = 0 := (mem_mty.mp hy).2
       exact absurd h2 (by decide)
 
+open Classical in
+/-- **`Cpdr` extracts through `mtkKernelsDR_ok` — the FIRST phase-`∃DR`
+    extraction.**  Every tower phase demands `∃DR.A₁` (via `∀PP`), served by the
+    child `(true,0)` through the forced `DR` `K`-edge (`kdr () true`); `∃PP.A₀`
+    goes up the tower.  So the forcing-completion frame + DR-children cert serve
+    a genuine phase-level `∃DR` — the item-2 mechanism, end-to-end. -/
+theorem cpdr_generic_satisfiable : Satisfiable Cpdr := by
+  obtain ⟨i, p, hLi, hp, _, hty⟩ :=
+    mty_segment_bounded (I := Idr) Cpdr (fun n => (false, n)) 1
+  have hok : @MultiTierOk Bool Unit (fun a b => Classical.propDecidable (a = b))
+      (mtkKernelsDR Idr Cpdr (fun e : Bool => (e, 0))
+      (fun _ => mdepth Cpdr) (fun e f => decide (e ≠ f)) (fun _ : Unit => false)
+      (fun _ e => e) (fun _ n => (false, n)) (fun _ => i) (fun _ => p)) := by
+    refine mtkKernelsDR_ok Idr_rcc5 Cpdr_pofree (fun e : Bool => (e, 0))
+      (fun _ => trivial) (fun _ => mdepth Cpdr) (fun e f => decide (e ≠ f))
+      (by intro e f; cases e <;> cases f <;> rfl) (fun _ : Unit => false)
+      (fun _ e => e)
+      (fun _ e he => by cases e with | false => exact absurd he (by decide) | true => decide)
+      (fun _ n => (false, n)) (fun _ _ => trivial)
+      (by intro _ n; show (if false = false then chain n (n + 1) else dr) = pp
+          rw [if_pos rfl]; exact chain_lt (Nat.lt_succ_self n))
+      (fun _ => i) (fun _ => p) (fun _ => hp) (fun _ => hty)
+      (by intro _ a; show (if false = false then chain 0 (i + a) else dr) = pp
+          rw [if_pos rfl]; exact chain_lt (by omega))
+      (by intro _ a e he
+          cases e with
+          | false => exact absurd he (by decide)
+          | true =>
+            refine ⟨?_, rfl⟩
+            show (if true = false then chain (i + a) 0 else dr) = dr
+            rw [if_neg (by decide)])
+      ?_ ?_ ?_
+    · -- hee: only ∀ is ∀PP; E ∈ {eq, dr}, never pp
+      intro e f r cc hmem hE
+      have hr : r = pp := cpdr_all_pp r cc (mty_sub _ (mem_mtk.mp hmem).1)
+      subst hr
+      by_cases hef : e = f
+      · rw [if_pos hef] at hE; exact absurd hE (by decide)
+      · rw [if_neg hef] at hE
+        cases e <;> cases f <;> simp_all <;> exact absurd hE (by decide)
+    · -- he_ex
+      intro e r D hmem
+      cases e with
+      | false =>
+        rcases cpdr_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+        · refine Or.inr ⟨(), ?_, 0, hp, dr_a0_mtk (i + 0)⟩
+          split
+          · rfl
+          · rename_i h; exact absurd rfl h
+        · refine Or.inl ⟨true, ?_, dr_a1_mtk⟩
+          split
+          · rename_i h; exact absurd h (by decide)
+          · rfl
+      | true => exact absurd (mem_mtk.mp hmem).1 (dchild_no_ex r D)
+    · -- hk_ex
+      intro _ a r D hmem
+      rcases cpdr_demands r D (mty_sub _ (mem_mtk.mp hmem).1) with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+      · exact Or.inr (Or.inl ⟨rfl, 0, hp, dr_a0_mtk (i + 0)⟩)
+      · refine Or.inl ⟨true, ?_, dr_a1_mtk⟩
+        split
+        · rename_i h; exact absurd h (by decide)
+        · rfl
+  exact @multiTier_sound Bool Unit (fun a b => Classical.propDecidable (a = b)) _ hok
+    (Sum.inl false) Cpdr
+    (by show Cpdr ∈ mtk Cpdr Idr (false, 0) (mdepth Cpdr)
+        exact mem_mtk.mpr ⟨cpdr_at_root, Nat.le_refl _⟩)
+
 end VerticalWitness
 
 #print axioms twoTier_sound
@@ -16646,6 +16713,7 @@ end VerticalWitness
 #print axioms VerticalWitness.drRho_frame
 #print axioms VerticalWitness.Idr_rcc5
 #print axioms VerticalWitness.dchild_no_ex
+#print axioms VerticalWitness.cpdr_generic_satisfiable
 #print axioms VerticalWitness.dr_hcpdr
 #print axioms mtkKernels_ok
 #print axioms mtkKernels_nopo
