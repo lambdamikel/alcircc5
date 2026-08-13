@@ -1835,3 +1835,59 @@ extraction = `extract_from_tower`), so what remains is the finite uniform-node
 assembly, not the per-tower soundness. It is formalization (bounded by `K(C₀)`
 counting + the §25.9 forcing-completion frame), NOT the open `F6`/`W2′` problem
 — that is the FULL logic's obstacle, which `∀PO`-freeness removes.
+
+## 27. The multi-kernel machinery, DONE — and the precise summit (2026-08-12)
+
+The whole **multi-kernel certificate machinery** is now certified (0 sorries/
+warnings), and the general extraction is complete for the FLAT sub-fragment.
+
+**Certified this round:**
+- `po_default_multi_frame` — the multi-kernel PO-default frame (κ kernels over a
+  `symDrPo` external skeleton, cross-`Q` PO-default). The cross-`Q` forcing that
+  made the full-`mty` multi-kernel hard is DISSOLVED by PO-default (every
+  cross-kernel triangle closes via `po_mem_comp_left/right` + `comp(po,po)=all`);
+  two kernels may even share an attach point, no injectivity.
+- `mtkKernels`/`mtkKernels_ok`/`mtkKernels_nopo` — the mtk-truncated multi-kernel
+  certificate is valid + gluable. `kq_all` is VACUOUS (cross-`Q`=PO, no `∀PO` in
+  mtk phases) — the payoff of `∀PO`-freeness.
+- `cnest`/`cnest_generic_satisfiable` — the first genuine TWO-kernel extraction
+  (nested two-tower `Cvert ⊓ ∃PO.Cvert` on the all-cross-PO carrier), validating
+  `mtkKernels_ok` end-to-end.
+- `extract_flat_towers` — `cnest` generalised to ARBITRARY `κ`: the "N cross-PO
+  towers" extraction (analogue of `extract_from_tower` for κ kernels). Clean
+  routing hyps; `cnest_via_flat` witnesses `cnest` as its `κ=Bool` instance.
+
+**The precise remaining summit — the NESTED node construction.** `extract_flat_
+towers` handles the FLAT case: bases only mutually PO, and kernel phases route
+their horizontal demands BACK to existing bases. The general `decidableSat_
+pofree` needs two things `extract_flat_towers` does not do:
+
+1. **DR/PO structure AMONG skeleton nodes** (not just cross-PO). Concepts with
+   `∃DR` between nodes need `dadj` = real DR-adjacency (the `dadjBK`/`symDrPo`
+   machinery of `mtHF`), with the `dadj`↔model correspondence. The frame already
+   supports it (`po_default_multi_frame` takes arbitrary `dadj`); the work is the
+   `hee`/`he_ex` discharge over a DR skeleton (via `all_into` on the forced DR
+   edge). This is a bounded extension.
+
+2. **Phases spawning NEW nodes — the CRUX.** A kernel phase's `∃DR`/`∃PO`/`∃EQ`
+   demand may need a node NOT in the root's horizontal closure. So the skeleton
+   `β` must be closed under BOTH the horizontal demands of skeleton nodes AND the
+   horizontal demands of kernel phases — a MUTUAL recursion (skeleton nodes with
+   `∃PP` → kernels; kernel phases with horizontal demands → new skeleton nodes;
+   those with `∃PP` → more kernels). The finiteness is by `mtk`-truncation: a
+   phase at budget `k` has demands of `mdepth ≤ k`, its children have budget
+   `k-1`, terminating at `0`; the total node+kernel set is `K(C₀)`-bounded. The
+   **phase-horizontal-COVERAGE lemma** — every phase demand is served by a node
+   in `β` — is the keystone, the multi-kernel analogue of `mtkNodesH_covers`.
+
+3. **Finiteness for decidability.** `Fintype β`/`Fintype κ` + the `K(C₀)` size
+   bound + a `codesM` enumeration → `Decidable (Satisfiable C0)` via
+   `decidableSat_of_codes`. (The single-model → cert extraction is completeness;
+   decidability additionally needs the finite code enumeration.)
+
+So the summit is a well-defined recursive construction (the `mtkNodesH` skeleton
+generalised to co-recurse with kernels, + the coverage lemma + finiteness), NOT
+open mathematics — every ingredient's interface is certified (frame, cert
+validity, gluability, flat extraction, single-tower routing `mtk_ee_all`/
+`mtk_e_ex`/`mtk_k_ex`). It is the genuine remaining formalization toward
+`decidableSat_pofree`.
