@@ -12920,6 +12920,39 @@ theorem ascKernel (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
   rw [show i + a = (i + a - 1) + 1 from by omega]
   exact pp_chain_below hI c hdom hstep (i + a - 1)
 
+/-- Descending analog of `pp_chain_below`: a `PPI`-chain's base is `PPI` to every
+    later point (`comp(PPI,PPI) = {PPI}`). -/
+theorem ppi_chain_below (hI : RCC5Interp I) (d : Nat → α)
+    (hdom : ∀ n, I.dom (d n)) (hstep : ∀ n, I.rho (d n) (d (n + 1)) = ppi) :
+    ∀ m, I.rho (d 0) (d (m + 1)) = ppi := by
+  intro m
+  induction m with
+  | zero => exact hstep 0
+  | succ m ih =>
+    have hc := hI.comp_ (d 0) (d (m + 1)) (d (m + 1 + 1))
+      (hdom 0) (hdom (m + 1)) (hdom (m + 1 + 1))
+    rw [ih, hstep (m + 1), show comp ppi ppi = [ppi] from rfl, List.mem_singleton] at hc
+    exact hc
+
+/-- **DESCENDING KERNEL FROM A PERSISTENT `∃PPI` NODE** — the `dascKernel` mirror
+    of `ascKernel`, for the eventual descending (`∃PPI`) arm of the full pofree
+    assembly.  A `persistPPI` node `x0` yields the descending `PPI`-chain data
+    (`persistPPI_chain` + `mty_segment_bounded` + `ppi_chain_below`). -/
+theorem dascKernel (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
+    (h0 : persistPPI I C0 G x0) (L : Nat) :
+    ∃ (d : Nat → α) (i p : Nat),
+      d 0 = x0 ∧ (∀ n, I.dom (d n)) ∧ (∀ n, I.rho (d n) (d (n + 1)) = ppi) ∧
+      L ≤ i ∧ 0 < p ∧ mty C0 I (d i) = mty C0 I (d (i + p)) ∧
+      (∀ n, Concept.ex ppi G ∈ mty C0 I (d n)) ∧
+      (0 < i → ∀ a, I.rho x0 (d (i + a)) = ppi) := by
+  obtain ⟨d, hd0, hdom, hstep, hdem⟩ := persistPPI_chain hI x0 h0
+  obtain ⟨i, p, hLi, hp, _, hty⟩ := mty_segment_bounded C0 d L
+  refine ⟨d, i, p, hd0, hdom, hstep, hLi, hp, hty, hdem, ?_⟩
+  intro hi a
+  rw [← hd0]
+  rw [show i + a = (i + a - 1) + 1 from by omega]
+  exact ppi_chain_below hI d hdom hstep (i + a - 1)
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16753,6 +16786,7 @@ end VerticalWitness
 #print axioms persistPP_chain
 #print axioms block_of_persistent
 #print axioms ascKernel
+#print axioms dascKernel
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
