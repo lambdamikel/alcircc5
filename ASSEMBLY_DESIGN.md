@@ -2007,6 +2007,19 @@ standing pieces remain:
   served by a node in the finite set). Every INGREDIENT is now certified (frame,
   cert validity, gluability, all the extraction engines, the routing lemmas); the
   remaining work is the finite uniform assembly + coverage.
+  - **`extract_dr_children` (2026-08-13, commit fda9413).** The phase-`∃DR`
+    pipeline is now a REUSABLE ENGINE — parallel to `extract_skel_towers` but on
+    `mtkKernelsDR_ok`: given the model correspondences + the `hee`/`he_ex`/`hk_ex`
+    routing + a root, it discharges `Satisfiable C0` (β = all externals incl.
+    DR-children via `kdr`; κ = kernels; `bud : β → Nat` per-node with the
+    budget-slack). So the coverage step no longer has to re-thread the cert +
+    `multiTier_sound`; it only has to PRODUCE β/κ + the routing. `Cpdr` now goes
+    THROUGH the engine (non-vacuous against β=Bool/κ=Unit). The extract engines
+    for the fragment are now: `extract_hfrag` (horizontal), `extract_flat_towers`
+    / `extract_skel_towers` (base-`∃`/`∃PP` towers with a DR/PO skeleton),
+    `extract_dr_children` (phase-`∃DR`). The missing engine is the one that
+    UNIFIES them (a β-node with BOTH a horizontal subtree AND its own kernels)
+    + coverage — the summit.
 - **`Fintype`/`codesM`** — finite `β`/`κ`, the `K(C₀)` size bound, a `codesM`
   enumeration → `Decidable (Satisfiable C0)` via `decidableSat_of_codes`.
 
