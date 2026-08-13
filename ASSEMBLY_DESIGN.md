@@ -2028,3 +2028,104 @@ width; the forcing-completion + same-budget children for phase-`∃DR`) are both
 certified. The remainder is the finite-assembly engineering the whole campaign
 has been converging on — NOT the open `F6`/`W2′` problem, which is the FULL
 logic's obstacle that `∀PO`-freeness removes.
+
+## 30. The summit, precisely: the unifier + coverage + decidability (2026-08-13)
+
+With `extract_dr_children` (§29) the phase-`∃DR` pipeline is a reusable engine.
+This section pins down EXACTLY what is left for `decidableSat_pofree`, grounded
+in the concrete artifacts that already exist, so the remaining construction is a
+known quantity rather than open research (the open research — `F6`/`W2′` — is the
+FULL logic's, which `∀PO`-freeness removes).
+
+### 30.1 The decidability skeleton already exists per-quadrant
+
+Every certified quadrant is `decidableSat_of_codes C0 (<codes>) (<hcompl>)`:
+- `decidableSat_hfrag` = `codes C0` + `hfrag_hcompl`.
+- `decidableSat_vtower…` = `codesV C0` + `vtower_hcompl…`.
+- `decidableSat_Cmix` = `codesMCmix` + the `Cmix`-specific completeness (the
+  FIRST mixed one, but for the single witness `Cmix`).
+
+`decidableSat_of_codes` runs `codes.any mtAcceptB`; soundness is
+`mtAcceptB_sound` (done, general). The ONLY per-quadrant obligation is
+`hcompl : Satisfiable C0 → ∃ p ∈ codes, (p.1).mtAcceptB p.2 C0 = true`.
+
+So the summit = produce, for the FULL ∀PO-free fragment:
+1. `codesM C0` — a `K(C₀)`-bounded `List (FinMT × Nat)` enumeration.
+2. `pofree_hcompl : Satisfiable C0 → ∃ p ∈ codesM C0, mtAcceptB …` — the
+   extraction + encoding.
+Then `decidableSat_pofree C0 (h : POFree C0) := decidableSat_of_codes C0
+(codesM C0) (pofree_hcompl C0 h)`.
+
+### 30.2 What the engine already covers (so is NOT missing)
+
+`mtkKernelsDR` / `extract_dr_children` are more general than the `Cpdr` witness
+uses:
+- `dadj : β → β → Bool` is an ARBITRARY symmetric DR/PO skeleton among externals
+  — so externals may be a full horizontal `mtkNodesH`-style set, not just
+  base+child.
+- `v0 : κ → β` assigns each kernel its base — and NOTHING forces the base to be a
+  "root": a kernel's base can be ANY external, including a DR-child. So NESTING
+  (an external with its own `∃PP`-tower) is already expressible in the frame.
+- `bud : β → Nat` is per-node with the budget-slack (§29), so DR-children (and,
+  by the same token, deeper horizontal descendants) sit at a strictly decreasing
+  budget — the well-founded measure.
+
+Hence the missing content is NOT a new frame or a new merge theorem. It is:
+
+### 30.3 The two genuinely-missing pieces
+
+**(A) Coverage — produce β/κ + routing from a model.** Given `POFree C0`, a model
+`I`, and `x0 ⊨ C0`, build a FINITE node set and discharge `hee`/`he_ex`/`hk_ex`/
+`hdr`/`hcoh`:
+- β = the mtk-truncated horizontal closure of the relevant nodes (root x0, each
+  kernel phase, each DR-child), `mtkNodesH`-style, recursion on budget.
+  `mtkNodesH_covers` is the horizontal template; the mixed recursion adds, at
+  each node with a persistent `∃PP` (resp. `∃PPI`) demand, a kernel via
+  `block_of_persistent` (resp. `block_of_persistent_desc`).
+- The routing:
+  - `he_ex` horizontal (`∃DR`/`∃PO`/`∃EQ`) → a sibling external (the mtkNodesH
+    coverage); vertical (`∃PP`) → the node's own kernel (the `k`-disjunct, `conv
+    K = pp`).
+  - `hk_ex` phase (`∃DR` → a DR-child; `∃PO`/`∃EQ` → an external; `∃PP` → up the
+    tower).
+  - `hee` — `mty_no_all_po` kills every `∀PO`; `∀DR`/`∀PP`/`∀PPI`/`∀EQ` fire via
+    `all_into` / the segment lemmas (already the shape inside `mtkKernelsDR_ok`).
+- Termination: budget strictly decreases into horizontal descendants and
+  DR-children (§29 slack); `∃PP`/`∃PPI` go to kernels whose PERIOD is finite
+  (`mty_segment_bounded`), not into the budget recursion. So the node set is
+  finite. This is the "which elements → externals vs kernels" decision the
+  campaign has flagged since E3: the answer is LOCAL — a node's persistent
+  vertical demand spawns a kernel, everything else is a budget-decreasing
+  external.
+- Descending (`∃PPI`) needs the descending-kernel arm: either extend
+  `mtkKernelsDR` to `dir : κ → Bool` (mirror `mixKernels`' bidirectional
+  `kk_pp`/`kk_ppi` + a PPI-forcing `K`-edge for descending kernels), or glue an
+  ascending block and a descending block with `glueMTOk` (both are `MTNoPo` via
+  `mkBlock_nopo`, so gluable). The bidirectional single-engine route is cleaner.
+
+**(B) Encode + count.** `codesM C0`:
+- Bound `|β|` by `K(C₀)` (the number of mtk-node-labels reachable within
+  `mdepth C0`; `mtkNodes_length_le` is the horizontal precedent) and `|κ|`
+  likewise (one kernel per persistent vertical demand type, `≤ K(C₀)`).
+- Enumerate `FinMT` codes over (root label, external labels `≤ |β|`, kernel phase
+  lists `≤ |κ|` each of period `≤ K(C₀)`) — `allListsLe` is the enumerator
+  precedent; `codesMCmix` is the concrete mixed precedent.
+- `pofree_hcompl` = (A) gives a finite `mtkKernelsDR`-cert ⟹ `encodeMT_mtOk`
+  (reindex β/κ to `Fin`) ⟹ `mtAcceptB_complete` (the code is accepted) ⟹ the
+  code ∈ `codesM C0`.
+
+### 30.4 Order of work
+
+1. Bidirectional `mtkKernelsDR` (add descending kernels) — bounded, mirrors
+   `mixKernels`. Gives a single engine covering `∃PP` AND `∃PPI` at phases +
+   bases.
+2. `mixNodes` finite node set + `mixNodes_covers` (the coverage recursion on
+   budget, spawning kernels at persistent vertical demands) — the hard piece, but
+   `mtkNodesH_covers` is the template and the measure is in place.
+3. `codesM` + `pofree_hcompl` + `decidableSat_pofree` — mechanical, `codesMCmix`/
+   `encodeMT_mtOk`/`mtAcceptB_complete` are the templates.
+
+None of (1)–(3) is `F6`/`W2′`. Each is finite-combinatorial assembly over
+certified parts. The honest status stays: three quadrants + the mixing pipeline
+certified GENERAL/end-to-end, UNREVIEWED; `decidableSat_pofree` is the assembly
+of §30, not yet done; full-logic `ALCI_RCC5` decidability remains OPEN.
