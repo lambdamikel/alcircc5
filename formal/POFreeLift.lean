@@ -12897,6 +12897,29 @@ theorem extract_dr_children (hI : RCC5Interp I) {C0 : Concept}
     hstep ik pk hp hty hv0pp hdr hee he_ex hk_ex
   exact multiTier_sound _ hok (Sum.inl root) C0 hroot
 
+/-- **KERNEL FROM A PERSISTENT `∃PP` NODE** (the AscMix coverage's vertical
+    core, §31.3).  A `persistPP` node `x0` (carrying `∃PP.G` and its `∀PP` guard)
+    yields the raw kernel data `extract_dr_children`/`mtkKernels_ok` consume: an
+    ascending `PP`-chain `c` from `x0`, a period `(i, p)` with `mty`-coincidence
+    (`mty_segment_bounded`), the demand `∃PP.G` carried at every chain point, and
+    — for a period start `i ≥ 1` — the base-to-phase relation `x0 PP c(i+a)`
+    (`pp_chain_below`).  Packages `persistPP_chain` + `mty_segment_bounded` +
+    `pp_chain_below` into the exact shape the mixing assembly needs. -/
+theorem ascKernel (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
+    (h0 : persistPP I C0 G x0) (L : Nat) :
+    ∃ (c : Nat → α) (i p : Nat),
+      c 0 = x0 ∧ (∀ n, I.dom (c n)) ∧ (∀ n, I.rho (c n) (c (n + 1)) = pp) ∧
+      L ≤ i ∧ 0 < p ∧ mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ n, Concept.ex pp G ∈ mty C0 I (c n)) ∧
+      (0 < i → ∀ a, I.rho x0 (c (i + a)) = pp) := by
+  obtain ⟨c, hc0, hdom, hstep, hdem⟩ := persistPP_chain hI x0 h0
+  obtain ⟨i, p, hLi, hp, _, hty⟩ := mty_segment_bounded C0 c L
+  refine ⟨c, i, p, hc0, hdom, hstep, hLi, hp, hty, hdem, ?_⟩
+  intro hi a
+  rw [← hc0]
+  rw [show i + a = (i + a - 1) + 1 from by omega]
+  exact pp_chain_below hI c hdom hstep (i + a - 1)
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16729,6 +16752,7 @@ end VerticalWitness
 #print axioms persistPP_productive
 #print axioms persistPP_chain
 #print axioms block_of_persistent
+#print axioms ascKernel
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
