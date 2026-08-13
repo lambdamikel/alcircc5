@@ -2139,14 +2139,26 @@ BUDGET alone. This section records the coverage design worked out toward
 
 ### 31.1 Why budget-termination suffices (no §21)
 
-Every kernel is ascending. A new kernel base is a horizontal descendant of an
-existing node (its `∃DR`/`∃PO`/`∃EQ` witness) or a DR-child of a phase — both at
-budget−1. A node's OWN `∃PP` goes up its own tower (same kernel, no new one). A
-phase's `∃PP` goes up-tower too. So the ONLY way to reach a fresh kernel is via a
-horizontal step down = budget−1. There is no same-budget escalation (that needs
-an opposite-direction `∃PPI`, excluded). Hence the whole node/kernel structure is
-bounded by the root budget `mdepth C0`; termination is a single measure `n.k`,
-exactly like `mtkNodesH`. This is the concrete cash-value of isolating AscMix.
+Every kernel is ascending. Two ways a fresh kernel is reached:
+- **horizontal** — a kernel base that is a `∃DR`/`∃PO`/`∃EQ` witness or a DR-child
+  of a phase: at budget−1 (the horizontal measure decreases).
+- **same-direction vertical nesting** — a kernel serving `∃PP.G` where `G` itself
+  carries a persistent `∃PP.G'` (e.g. `∃PP.(∃PP.G')`). A phase carries `∃PP.G`
+  (served up its own tower), but NOT `G`'s inner demand, so `∃PP.G'` at a phase
+  spawns a SUB-kernel. This sub-kernel is at the SAME budget, but serves a
+  demand of STRICTLY SMALLER `mdepth` (`mdepth G' < mdepth G`).
+
+**Correction (2026-08-13) to an earlier over-claim here.** AscMix does NOT
+terminate on the horizontal budget ALONE: same-direction nesting escalates at
+fixed budget. Termination is LEXICOGRAPHIC **(budget, demand-`mdepth`)** — the
+horizontal budget decreases on horizontal/DR-child steps, and the served
+demand's `mdepth` decreases on each vertical nesting step (bounded by
+`mdepth C0`). Both are finite, so the node/kernel structure is finite. What
+AscMix genuinely avoids is the §21 finite-poset argument for OPPOSITE-direction
+(`∃PP` vs `∃PPI`) nesting — that needs `∃PPI`, excluded here. Same-direction
+nesting is governed by the clean `mdepth` measure, not by §21. So the cash-value
+of isolating AscMix stands (no §21), but the measure is the lexicographic pair,
+not a single budget.
 
 ### 31.2 The phase-`∃DR` child's `hdr` is AUTOMATIC (no W2′ here)
 
@@ -2174,18 +2186,23 @@ Not every `∃PP.G` needs a kernel:
   iff the demand persists), giving the period.
 
 The node-set recursion must therefore, at an `∃PP.G` demand, either recurse on
-the finite witness (one-shot) or spawn a kernel + recurse on the phases'
-horizontal witnesses at budget−1 (persistent). Both branches strictly decrease
-the budget, so the single measure `n.k` still governs termination.
+the finite witness (one-shot) or spawn a kernel (persistent). Horizontal and
+one-shot branches decrease the budget; the persistent branch recurses on the
+phases' horizontal witnesses at budget−1 AND, for a phase's inner persistent
+`∃PP.G'`, spawns a sub-kernel at the SAME budget but strictly smaller
+demand-`mdepth` (§31.1). So termination is the lexicographic pair
+**(budget, demand-`mdepth`)**, not a single measure.
 
-### 31.4 The node set (single recursion on budget)
+### 31.4 The node set (lexicographic recursion)
 
-`ascNodes (n : MTKNode) : List MTKNode`, `termination_by n.k`:
+`ascNodes (n : MTKNode) : List MTKNode`, `termination_by (n.k, <demand-mdepth>)`:
 - `n ::` for each `∃r.c ∈ mtk n`:
   - `r ∈ {dr,po,eq}` → `ascNodes (mtkWitness n hF)` (budget−1);
   - `r = pp`, one-shot → `ascNodes (mtkWitness n hF)` (budget−1);
   - `r = pp`, persistent → the kernel's phase witnesses, each
-    `ascNodes (·)` at budget−1 (phases inlined, tower internal to κ);
+    `ascNodes (·)` at budget−1; a phase's inner persistent `∃PP` recurses at the
+    same budget with strictly smaller demand-`mdepth` (phases/towers internal to
+    κ);
   - `r = ppi` → `[]` (dead in AscMix).
 
 κ = the kernels spawned (persistent `∃PP` sites). β = `ascNodes root`. Then feed
