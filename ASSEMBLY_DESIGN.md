@@ -1967,13 +1967,24 @@ valid certificate that serves phase-`∃DR`, demonstrated end-to-end.
      generality. Cross-kernel triangles ABSORB any `K` values via PO-default
      (`hKr` + `decide`); ext-ext-through-one-kernel = the multi-child forcing.
 2. **The `∀DR` propagation** — `podefault_ke_dr` (phase's `∀DR.cc` → child) and
-   `podefault_ek_dr` (child's `∀DR.cc` → phase). Both via `all_into` at the SAME
-   budget — the wp89 depth seam is beaten because the child budget equals the
-   phase budget. Enabled by the munf fact `munf (.inr(k,_)) (.inl f) = K k f`:
-   every tower phase relates to external `f` via the base's `K`-edge, so a
-   base-level DR-child is `DR` to ALL phases in munf; sound iff the child is `DR`
-   to all phases in the label-model (`hdr`, geometrically a disjoint-region
-   child).
+   `podefault_ek_dr` (child's `∀DR.cc` → phase). Both via `all_into` (same-budget
+   membership transfer) followed by `mem_mtk.mpr` + `omega` on `mdepth`. Enabled
+   by the munf fact `munf (.inr(k,_)) (.inl f) = K k f`: every tower phase relates
+   to external `f` via the base's `K`-edge, so a base-level DR-child is `DR` to
+   ALL phases in munf; sound iff the child is `DR` to all phases in the
+   label-model (`hdr`, geometrically a disjoint-region child).
+
+   **Budget SLACK (2026-08-13, commit afb4262).** The two `_dr` lemmas were
+   generalized from budget-EQUALITY (`bud f = bud v0`) to budget-SLACK:
+   `podefault_ke_dr` needs only `bud v0 ≤ bud f + 1`, `podefault_ek_dr` only
+   `bud e ≤ bud v0 + 1`. So a DR-served child may sit at a budget STRICTLY BELOW
+   its phase. This is the termination prerequisite for the general recursion: a
+   `∀DR.cc` at a phase of budget `b` carries `mdepth cc ≤ b−1`, so its DR-child
+   fits at `b−1` and the skeleton→kernel→child recursion is well-founded on the
+   budget. `mtkKernelsDR_ok`'s `hdr` now yields both slack bounds; the `Cpdr`
+   witness supplies them by `omega` (trivially, at equality — the strict-`<` path
+   is INFRASTRUCTURE, exercised by the coming general construction, not yet by a
+   standalone witness).
 3. **The certificate** — `mtkKernelsDR` / `mtkKernelsDR_ok` / `mtkKernelsDR_nopo`.
    `frame_q` = the multi-kernel forcing frame; `ke_all`/`ek_all` = the `_dr`
    lemmas; `kk_*`/`kq_all` as `mtkKernels_ok`; routing `hee`/`he_ex`/`hk_ex`
