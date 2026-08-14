@@ -13944,6 +13944,41 @@ noncomputable def ascKernelPackG (hI : RCC5Interp I) {C0 G : Concept} (e : α)
     obtain ⟨c, i, p, hdom, hstep, hiLE, hpPos, hperiod, hdem, hbase⟩ := ascKernelG hI e h L
     exact ⟨⟨c, i, p, hdom, hstep, hiLE, hpPos, hperiod, hdem, hbase⟩⟩)
 
+/-! ### The SAME-BUDGET PP-chain propagation (§34 building block 1 core)
+
+The finite-PP-tower certificate (§33/§34) must keep all chain nodes at the SAME
+budget `b` — a decreasing-budget tower re-hits the `∀PP`-across-transitive-edges
+budget failure that forced kernels. At a fixed budget the `∀`-propagation along
+the chain order is clean: `∀PP.E` climbs (`comp(PP,PP)={PP}`), `∀PPI.E` descends,
+both via `mty_all` + the fixed-budget bound `mdepth E ≤ b−1 ≤ b`. These are the
+`ee_all` core of the poset/chain `MultiTierOk`; `posetNet_frame` gives the frame. -/
+
+/-- `∀PP.E` at a lower chain node propagates to every HIGHER one (same budget). -/
+theorem chain_ee_up {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (b : Nat)
+    (hpp : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    {i j : Nat} (hij : i < j) {E : Concept}
+    (hall : Concept.all pp E ∈ mtk C0 I (c i) b) :
+    E ∈ mtk C0 I (c j) b := by
+  have hE : E ∈ mty C0 I (c j) := mty_all (mem_mtk.mp hall).1 (hdom j) (hpp i j hij)
+  refine mem_mtk.mpr ⟨hE, ?_⟩
+  have hmd : mdepth E + 1 ≤ b := (mem_mtk.mp hall).2
+  omega
+
+/-- `∀PPI.E` at a higher chain node propagates to every LOWER one (same budget). -/
+theorem chain_ee_down (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (b : Nat)
+    (hpp : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    {i j : Nat} (hij : j < i) {E : Concept}
+    (hall : Concept.all ppi E ∈ mtk C0 I (c i) b) :
+    E ∈ mtk C0 I (c j) b := by
+  have hrho : I.rho (c i) (c j) = ppi := by
+    rw [hI.conv_ (c j) (c i) (hdom j) (hdom i), hpp j i hij]; rfl
+  have hE : E ∈ mty C0 I (c j) := mty_all (mem_mtk.mp hall).1 (hdom j) hrho
+  refine mem_mtk.mpr ⟨hE, ?_⟩
+  have hmd : mdepth E + 1 ≤ b := (mem_mtk.mp hall).2
+  omega
+
 /-- THE SINGLE-`∃PP` GENERATOR: a persistent `∃PP.G` element whose model
     types carry only the demands `∃PP.G`/`∃EQ` yields a finite
     certificate carrying `C₀` — extraction for the one-kernel vertical
@@ -17140,6 +17175,8 @@ end VerticalWitness
 #print axioms block_of_persistent
 #print axioms ascKernel
 #print axioms ascKernelG
+#print axioms chain_ee_up
+#print axioms chain_ee_down
 #print axioms dascKernel
 #print axioms ascKernelPack
 #print axioms ppPhaseNodes
