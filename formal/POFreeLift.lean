@@ -13209,6 +13209,53 @@ theorem ascNodes_ee_all (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
     · have hrpo : po = r := (if_neg hd).symm.trans hEf
       exact absurd hrpo.symm (pofree_cl_all C0 hpofree r c (mtk_sub_cl _ hall))
 
+/-- **THE MIXED DR/PO SKELETON** for the AscMix assembly: `DR` between two nodes
+    that are `DR`-related in the model AND at CONSECUTIVE budgets (`k ± 1`).  This
+    captures BOTH the horizontal `DR`-children AND the phase-`∃DR` witnesses (all
+    at `base.k − 1`, `DR` to the base by `comp(PP,DR)={DR}`), while a deeper
+    `DR`-relative gets a composition-consistent `PO`-default edge.  Symmetric by
+    construction (`DR` is self-converse, the budget guard is symmetric). -/
+def ascDadj (hI : RCC5Interp I) {C0 : Concept} {root : MTKNode I C0}
+    (e f : {n // n ∈ ascNodes hI root}) : Bool :=
+  (decide (I.rho e.val.x f.val.x = dr) || decide (I.rho f.val.x e.val.x = dr)) &&
+    (decide (f.val.k + 1 = e.val.k) || decide (e.val.k + 1 = f.val.k))
+
+theorem ascDadj_symm (hI : RCC5Interp I) {C0 : Concept} {root : MTKNode I C0}
+    (e f : {n // n ∈ ascNodes hI root}) : ascDadj hI e f = ascDadj hI f e := by
+  unfold ascDadj; ac_rfl
+
+open Classical in
+/-- **`hee` for the AscMix assembly** over the `ascDadj` skeleton: the β-β
+    `∀`-propagation.  `∀EQ` reflexive; `∀DR` via `mty_all` + the UNIFORM budget
+    bound `mdepth c ≤ e.k − 1 ≤ f.k` (holds for BOTH consecutive-budget
+    directions); `∀PO` vacuous by `∀PO`-freeness.  The consecutive-budget guard is
+    exactly what makes the `mty_all` route sound (deeper `DR`-relatives are
+    `PO`-default, not fired on). -/
+theorem ascNodes_ee_all2 (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    (root : MTKNode I C0) (e f : {n // n ∈ ascNodes hI root}) (r : Atom)
+    (c : Concept) (hall : Concept.all r c ∈ mtk C0 I e.val.x e.val.k)
+    (hEf : (if e = f then eq else if ascDadj hI e f then dr else po) = r) :
+    c ∈ mtk C0 I f.val.x f.val.k := by
+  by_cases hef : e = f
+  · subst hef; rw [if_pos rfl] at hEf; subst hEf; exact mtk_all_eq hI hall e.val.hx
+  · rw [if_neg hef] at hEf
+    by_cases hd : ascDadj hI e f = true
+    · rw [if_pos hd] at hEf
+      subst hEf
+      simp only [ascDadj, Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq] at hd
+      obtain ⟨hrho, hbud⟩ := hd
+      have hrhoef : I.rho e.val.x f.val.x = dr := by
+        rcases hrho with h | h
+        · exact h
+        · rw [hI.conv_ f.val.x e.val.x f.val.hx e.val.hx, h]; rfl
+      have hcmty : c ∈ mty C0 I f.val.x :=
+        mty_all (mem_mtk.mp hall).1 f.val.hx hrhoef
+      have hmd2 : mdepth c + 1 ≤ e.val.k := (mem_mtk.mp hall).2
+      refine mem_mtk.mpr ⟨hcmty, ?_⟩
+      rcases hbud with h | h <;> omega
+    · rw [if_neg hd] at hEf
+      exact absurd hEf.symm (pofree_cl_all C0 hpofree r c (mtk_sub_cl _ hall))
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -17106,6 +17153,8 @@ end VerticalWitness
 #print axioms ascNodes_covers
 #print axioms ascNodes_covers_phase
 #print axioms ascNodes_ee_all
+#print axioms ascDadj_symm
+#print axioms ascNodes_ee_all2
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
