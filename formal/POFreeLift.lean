@@ -13177,6 +13177,38 @@ theorem ascNodes_covers_phase (hI : RCC5Interp I) (root : MTKNode I C0)
   · show c' ∈ mtk C0 I (mtkWitness q hF').x (m.k - 1)
     rw [← hqk]; exact mtkWitness_arg q hF'
 
+open Classical in
+/-- **`hee` for the AscMix node set** — the β-β `∀`-propagation over the
+    `sAdjK` (DR/PO) skeleton on `{n // n ∈ ascNodes root}`.  Same proof as
+    `mtk_ee_all` (node-set-agnostic: `∀EQ` reflexive, `∀DR` fwd/rev via
+    `mtk_all_fwd`/`mtk_all_dr_rev`, `∀PO` vacuous by `∀PO`-freeness) — the
+    `hee` hypothesis for the AscMix `extract_dr_children` assembly. -/
+theorem ascNodes_ee_all (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    (root : MTKNode I C0) (e f : {n // n ∈ ascNodes hI root}) (r : Atom)
+    (c : Concept) (hall : Concept.all r c ∈ mtk C0 I e.val.x e.val.k)
+    (hEf : (if e = f then eq else if decide (sAdjK e.val f.val) then dr else po) = r) :
+    c ∈ mtk C0 I f.val.x f.val.k := by
+  by_cases hef : e = f
+  · subst hef
+    rw [if_pos rfl] at hEf
+    subst hEf
+    exact mtk_all_eq hI hall e.val.hx
+  · rw [if_neg hef] at hEf
+    by_cases hd : decide (sAdjK e.val f.val) = true
+    · have hrdr : dr = r := (if_pos hd).symm.trans hEf
+      subst hrdr
+      have hall' : Concept.all dr c ∈ mtk C0 I e.val.x e.val.k := hall
+      rcases of_decide_eq_true hd with ⟨_, hF, hchild⟩ | ⟨_, hF, hchild⟩
+      · show c ∈ mtk C0 I f.val.x f.val.k
+        rw [← hchild]
+        exact mtk_all_fwd hall' (mtkWitness e.val hF).hx (mtkWitness_rho e.val hF)
+      · show c ∈ mtk C0 I f.val.x f.val.k
+        rw [← hchild] at hall'
+        exact mtk_all_dr_rev hI hall' f.val.hx (mtkWitness f.val hF).hx
+          (mtkWitness_rho f.val hF)
+    · have hrpo : po = r := (if_neg hd).symm.trans hEf
+      exact absurd hrpo.symm (pofree_cl_all C0 hpofree r c (mtk_sub_cl _ hall))
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -17050,6 +17082,7 @@ end VerticalWitness
 #print axioms ascNodes_trans
 #print axioms ascNodes_covers
 #print axioms ascNodes_covers_phase
+#print axioms ascNodes_ee_all
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
