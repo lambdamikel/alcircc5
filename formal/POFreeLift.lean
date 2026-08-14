@@ -14289,6 +14289,17 @@ theorem posetNet_frame (hirr : ∀ k, ¬ lt k k)
 
 end PosetFrame
 
+/-- **THE FINITE-CHAIN FRAME** (§34 block 1): the ordered-disjoint read-off of the
+    strict LINEAR order `<` on `Fin L` is an RCC5 Frame — a `base (Unit)` `PP`-below
+    a linear chain of `L` nodes.  Just `posetNet_frame` at the total order `<`
+    (`Nat.lt_irrefl` + `Nat.lt_trans`); no bespoke composition proof.  This is the
+    frame the same-budget finite-PP-tower `MultiTierOk` uses (with `chain_ee_up`/
+    `chain_ee_down` for `ee_all`). -/
+theorem linChain_frame (L : Nat) :
+    Frame (posetNet (fun i j : Fin L => i.val < j.val)) :=
+  posetNet_frame _ (fun k => Nat.lt_irrefl k.val)
+    (fun _ _ _ hab hbc => Nat.lt_trans hab hbc)
+
 /-! ### Round E3l (2026-07-30): the multi-demand star certificate
 
 `starKernel` is the `MultiTier` over the star frame: one root external
@@ -17177,6 +17188,7 @@ end VerticalWitness
 #print axioms ascKernelG
 #print axioms chain_ee_up
 #print axioms chain_ee_down
+#print axioms linChain_frame
 #print axioms dascKernel
 #print axioms ascKernelPack
 #print axioms ppPhaseNodes
