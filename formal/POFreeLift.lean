@@ -14300,6 +14300,79 @@ theorem linChain_frame (L : Nat) :
   posetNet_frame _ (fun k => Nat.lt_irrefl k.val)
     (fun _ _ _ hab hbc => Nat.lt_trans hab hbc)
 
+/-- The chain position of a node: base `= 0`, poset node `i = i+1`. -/
+def cidx (L : Nat) : Unit ⊕ Fin L → Nat := Sum.elim (fun _ => 0) (fun i => i.val + 1)
+
+/-- **THE FINITE-CHAIN MultiTier** (§34 block 1): the base `PP`-below a linear
+    chain of `L` same-budget nodes; `κ` empty (no cycles — this is the ONE-SHOT
+    tower). `E = posetNet (<)`, `tauE` = each node's `mtk`-label at the FIXED
+    budget `b`. -/
+noncomputable def chainMT (I : Interp α) (C0 : Concept) (c : Nat → α) (L b : Nat) :
+    MultiTier (Unit ⊕ Fin L) Empty where
+  E := posetNet (fun i j : Fin L => i.val < j.val)
+  K := fun e => e.elim
+  Q := fun e => e.elim
+  up := fun e => e.elim
+  tauE := fun e => mtk C0 I (c (cidx L e)) b
+  p := fun e => e.elim
+  phase := fun e => e.elim
+
+/-- **THE FINITE-CHAIN CERTIFICATE IS VALID.**  `ee_all` = the same-budget PP-order
+    propagation (`chain_ee_up`/`chain_ee_down` + `mtk_all_eq`, via `posetNet`'s
+    value lemmas; the `po` case is impossible on a linear order); `e_ex` is the
+    supplied demand routing (`hdem`); all `κ`-clauses vacuous (`Empty`).  This is
+    the finite-PP-tower certificate the one-shot `∃PP` class needs. -/
+theorem chainMT_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    (c : Nat → α) (hdom : ∀ n, I.dom (c n)) (L b : Nat)
+    (hpp : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    (hdem : ∀ e r D, Concept.ex r D ∈ mtk C0 I (c (cidx L e)) b →
+      ∃ f, posetNet (fun i j : Fin L => i.val < j.val) e f = r ∧
+        D ∈ mtk C0 I (c (cidx L f)) b) :
+    MultiTierOk (chainMT I C0 c L b) := by
+  refine
+    { hp := fun e => e.elim
+      frame_q := qnet_empty_frame' _ _ _ (fun e => e.elim) (linChain_frame L)
+      e_clash := fun _ a h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ x y h => mtk_and h
+      e_or := fun _ x y h => mtk_or h
+      k_clash := fun k => k.elim
+      k_nobot := fun k => k.elim
+      k_and := fun k => k.elim
+      k_or := fun k => k.elim
+      ee_all := ?_
+      ek_all := fun _ _ _ _ k => k.elim
+      ke_all := fun k => k.elim
+      kk_pp := fun k => k.elim
+      kk_ppi := fun k => k.elim
+      kk_eq := fun k => k.elim
+      kq_all := fun k => k.elim
+      e_ex := fun e r D hmem => Or.inl (hdem e r D hmem)
+      k_ex := fun k => k.elim }
+  intro e f r c' hmem hEf
+  simp only [chainMT] at hmem hEf ⊢
+  rcases e with ⟨⟩ | i <;> rcases f with ⟨⟩ | j
+  · -- inl, inl: eq, self
+    rw [posetNet_ll] at hEf; subst hEf; exact mtk_all_eq hI hmem (hdom _)
+  · -- inl (0), inr j (j+1): pp, up
+    rw [posetNet_lr] at hEf; subst hEf
+    exact chain_ee_up c hdom b hpp (Nat.succ_pos j.val) hmem
+  · -- inr i (i+1), inl (0): ppi, down
+    rw [posetNet_rl] at hEf; subst hEf
+    exact chain_ee_down hI c hdom b hpp (Nat.succ_pos i.val) hmem
+  · -- inr i, inr j
+    rcases posetNet_rr_cases (fun i j : Fin L => i.val < j.val) i j with
+      ⟨hv, hij⟩ | ⟨hv, hij⟩ | ⟨hv, hij⟩ | hv
+    · rw [hv] at hEf; subst hEf; subst hij; exact mtk_all_eq hI hmem (hdom _)
+    · rw [hv] at hEf; subst hEf
+      have hij2 : i.val < j.val := hij
+      exact chain_ee_up c hdom b hpp (by simp only [cidx, Sum.elim_inr]; omega) hmem
+    · rw [hv] at hEf; subst hEf
+      have hij2 : j.val < i.val := hij
+      exact chain_ee_down hI c hdom b hpp (by simp only [cidx, Sum.elim_inr]; omega) hmem
+    · rw [hv] at hEf; subst hEf
+      exact absurd rfl (pofree_cl_all C0 hpofree po c' (mtk_sub_cl _ hmem))
+
 /-! ### Round E3l (2026-07-30): the multi-demand star certificate
 
 `starKernel` is the `MultiTier` over the star frame: one root external
@@ -17189,6 +17262,7 @@ end VerticalWitness
 #print axioms chain_ee_up
 #print axioms chain_ee_down
 #print axioms linChain_frame
+#print axioms chainMT_ok
 #print axioms dascKernel
 #print axioms ascKernelPack
 #print axioms ppPhaseNodes
