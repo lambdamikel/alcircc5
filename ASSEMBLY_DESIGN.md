@@ -2212,11 +2212,33 @@ children; `hdr` by §31.2; routing by the coverage) and encode into `codesM` for
 
 ### 31.5 Work remaining for `decidableSat_ascmix`
 
-1. `ascNodes` + finiteness/size bound (mirror `mtkNodes`/`mtkNodes_length_le`;
-   the one-shot/persistent split is the new content).
-2. `ascNodes_covers` — the routing discharge (horizontal by `mtkNodesH_covers`;
-   vertical-persistent by the kernel; phase-`∃DR` by §31.2).
-3. `codesAM` + `ascmix_hcompl` + `decidableSat_ascmix = decidableSat_of_codes …`.
+**DONE (2026-08-13) — the node set + coverage core.** `ascNodes` (terminating) +
+`self_mem_ascNodes` + the three branch-inclusions (`sub_ascNodes_hwitness` /
+`_phasewitness` / `_oneshot`) + `ascNodes_trans` (transitivity) +
+`ascNodes_covers` (node `∃DR`/`∃PO`/`∃EQ` → he_ex horizontal disjunct) +
+`ascNodes_covers_phase` (phase `∃DR`/`∃PO`/`∃EQ` → hk_ex horizontal disjunct).
+All 0-sorry. The genuinely-hard recursive construction + its termination is
+behind us.
 
-Then descending (the ∃PPI mirror) and full mixing (opposite-direction nesting =
-the §21 finite-poset-of-kernels) complete `decidableSat_pofree`.
+**REMAINING.**
+1. **Vertical routing** (∃PP → kernel). Design: for a node `e` with `persistPP G
+   e`, the kernel base is NOT `e` but `e`'s G-CARRYING PP-witness `y`
+   (`persistPP_productive'` already yields `y` with `e PP y ∧ persistPP G y ∧
+   G ∈ mty y`). So phase 0 = `mty y ∋ G`, `v0 = e` (attach), `K = ppi` (`e PP`
+   phase), `conv K = pp` = the demand relation, and `D = G ∈ phase 0` discharges
+   the he_ex vertical disjunct. `ascKernel`/`ppPhaseNodes` are built on `e`
+   itself (phases carry `∃PP.G`, not `G`); the routing wants the `y`-based chain
+   (`persistPP_chain'`, phases carry `G`) — reconcile in the wiring.
+2. **The `extract_dr_children` assembly** — β = `{n // n ∈ ascNodes root}`
+   (Fintype), κ = the persistent-`∃PP` sites; discharge `hee` (via `mtk_ee_all` on
+   the horizontal β-β frame), `he_ex` (horizontal by `ascNodes_covers`, vertical
+   by (1)), `hk_ex` (horizontal by `ascNodes_covers_phase`, vertical up-tower,
+   phase-`∃DR` by §31.2's automatic `hdr`), `hdr`/`hcoh`.
+3. **`codesAM` + `ascmix_hcompl` + `decidableSat_ascmix`** — finiteness/size bound
+   (`ascNodes` is a `List`, so β/κ are Fintypes; the phase count is `≤ K(C₀)` by
+   `mty_segment_bounded`), the `FinMT` encoding (`encodeMT_mtOk`), completeness
+   (`mtAcceptB_complete`), then `decidableSat_of_codes`.
+
+Then descending (the ∃PPI mirror, `dascKernel` ready) and full mixing
+(opposite-direction nesting = the §21 finite-poset-of-kernels) complete
+`decidableSat_pofree`.
