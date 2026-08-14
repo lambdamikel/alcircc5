@@ -13140,6 +13140,22 @@ theorem ascNodes_trans (hI : RCC5Interp I) (n : MTKNode I C0) :
       | or a b => simp at hmm
       | all r c => simp at hmm
 
+/-- **HORIZONTAL COVERAGE of the ascending-coverage set**: every `∃DR`/`∃PO`/`∃EQ`
+    demand at a reachable node is fulfilled by a node in the SAME set (its model
+    witness) — the `he_ex` horizontal disjunct (analogue of `mtkNodesH_covers`).
+    The witness `mtkWitness m hF` lies in `ascNodes m` (self-membership through the
+    horizontal branch) and hence in `ascNodes root` by transitivity.  (The
+    VERTICAL `∃PP` demands are served by the kernels, not by β-externals.) -/
+theorem ascNodes_covers (hI : RCC5Interp I) (root : MTKNode I C0) :
+    ∀ m ∈ ascNodes hI root, ∀ (r : Atom) (c : Concept),
+      Concept.ex r c ∈ mtk C0 I m.x m.k → (r = dr ∨ r = po ∨ r = eq) →
+      ∃ m' ∈ ascNodes hI root,
+        I.rho m.x m'.x = r ∧ c ∈ mtk C0 I m'.x m'.k := by
+  intro m hm r c hF hr
+  refine ⟨mtkWitness m hF, ?_, mtkWitness_rho m hF, mtkWitness_arg m hF⟩
+  exact ascNodes_trans hI root m hm _
+    (sub_ascNodes_hwitness hI m hF hr _ (self_mem_ascNodes hI (mtkWitness m hF)))
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16983,6 +16999,7 @@ end VerticalWitness
 #print axioms sub_ascNodes_phasewitness
 #print axioms sub_ascNodes_oneshot
 #print axioms ascNodes_trans
+#print axioms ascNodes_covers
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
