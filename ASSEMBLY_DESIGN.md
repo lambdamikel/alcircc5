@@ -2242,3 +2242,58 @@ behind us.
 Then descending (the ∃PPI mirror, `dascKernel` ready) and full mixing
 (opposite-direction nesting = the §21 finite-poset-of-kernels) complete
 `decidableSat_pofree`.
+
+## 32. The AscMix integration — the concrete assembly blueprint (2026-08-13/14)
+
+Every INGREDIENT for `decidableSat_ascmix` is certified (§31.5). What remains is
+the integration, and studying the horizontal (`encodeHF`/`codes`/`hfrag_hcompl`/
+`decidableSat_hfrag`) + vertical (`codesV`/`unitTower_mem_codesV`/`encodeMT`) +
+mixing (`codesMCmix`/`decidableSat_Cmix`) certified paths gives the EXACT
+template for each step. This section maps it.
+
+### 32.1 The FinMT code shape
+
+`FinMT = ⟨tauE, E, K, Q, up, phase⟩` (six list-of-lists / list fields).
+- HORIZONTAL (`codes`): `⟨tauE, E, [], [], [], []⟩` — κ empty, only β.
+- SINGLE KERNEL (`codesV`): all six populated, nE = nK = 1.
+- ASCMIX (`codesAM`, to build): nE = |ascNodes root| ≤ `K(C₀)`, nK = |sites| ≤
+  `K(C₀)`, per-kernel period ≤ `K(C₀)`. Generalise `codesMCmix` (already
+  multi-external+multi-kernel) with the three bounds as `mtkBound`-style limits.
+
+### 32.2 The six concrete steps (each mirrors a certified theorem)
+
+1. **β size bound** `ascNodes_length_le` — mirror `mtkNodes_length_le`, but the
+   kernel branch adds `pk · |cl C₀|` per level, so the bound is
+   `mtkBound`-with-a-period-factor. (Only SOME computable bound is needed;
+   loosen if the tight one is painful.) `ppPhaseNodes` length = `pk ≤
+   (allListsLe (cl C₀) …).length` via `mty_segment_bounded`.
+2. **κ definition** — `κ = {(n, G) // n ∈ ascNodes root ∧ ∃PP.G ∈ mtk n ∧
+   persistPP G n.x}` (a finite sigma over ascNodes × cl C₀). Per-`k` kernel data
+   from `ascKernelG` via `Classical` (like `ascKernelPack`): `ck k`, `ik k`,
+   `pk k`, `v0 k = n`, `kdr k` = the phase-`∃DR` witnesses.
+3. **The node-set MultiTier + `mtOk`** `encodeAM_mtOk` — THE HARD PIECE, mirror
+   `encodeHF_mtOk` but with κ NON-empty. β-`hee` = adapt `mtk_ee_all` (it is
+   node-set-agnostic — sAdjK + mtk, re-provable for ascNodes); `he_ex` horizontal
+   = `ascNodes_covers`, vertical = `ascKernelG` (v0=e, phase 0 ∋ G, conv K = pp);
+   `hk_ex` horizontal = `ascNodes_covers_phase`, up-tower + phase-`∃DR` via the
+   automatic `hdr` (§31.2); `kk_*` = `segment_kk_*`; `kq_all` VACUOUS (PO-default,
+   `mty_no_all_po`). Build via `mtkKernelsDR_ok` then `encodeMT`+`encodeMT_mtOk`
+   (relate decoded FinMT to the node-set MultiTier by the encode lemmas).
+4. **acceptance** `encodeAM_accepts` — mirror `encodeHF_accepts` (root index
+   `< nE`, `mtAcceptB` true).
+5. **membership** `encodeAM_mem_codes` — mirror `encodeHF_mem_codes` +
+   `unitTower_mem_codesV` (the code is size-bounded, so ∈ `codesAM`).
+6. **the theorem** `ascmix_hcompl` (mirror `hfrag_hcompl`) then
+   `decidableSat_ascmix = decidableSat_of_codes C₀ (codesAM C₀) (ascmix_hcompl …)`.
+
+### 32.3 Effort + risk
+
+Step 3 (`encodeAM_mtOk`) is ~1–2 sessions (the routing discharge with kernels —
+the largest new piece; roughly the size of this session's coverage work). Steps
+1,2,4,5,6 are ~1–2 sessions (patterned on the certified horizontal/vtower code).
+Total AscMix integration ≈ 2–4 sessions. Residual risk: the routing discharge or
+the β/κ Fintype bookkeeping could surface a real adaptation need — Lean's 0-sorry
+discipline would EXPOSE it (not hide it), but "all ingredients certified" ≠ "the
+assembly goes through" until built. Then descending (∃PPI mirror, ~1–2 sessions)
++ full mixing (§21 opposite-direction nesting, ~3–6 sessions, the real unknown)
+complete `decidableSat_pofree`. Full-logic F6 stays OPEN (separate).
