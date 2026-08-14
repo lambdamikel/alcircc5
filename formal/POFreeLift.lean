@@ -13156,6 +13156,27 @@ theorem ascNodes_covers (hI : RCC5Interp I) (root : MTKNode I C0) :
   exact ascNodes_trans hI root m hm _
     (sub_ascNodes_hwitness hI m hF hr _ (self_mem_ascNodes hI (mtkWitness m hF)))
 
+/-- **PHASE-HORIZONTAL COVERAGE**: a kernel PHASE's `∃DR`/`∃PO`/`∃EQ` demand is
+    fulfilled by a node in `ascNodes root` (its model witness) — the `hk_ex`
+    horizontal disjunct.  The phase-witness lies in `ascNodes m` (via
+    `sub_ascNodes_phasewitness` + self-membership) and hence in `ascNodes root` by
+    transitivity; `ppPhaseNodes_spec` bridges `q.k = m.k` for the argument. -/
+theorem ascNodes_covers_phase (hI : RCC5Interp I) (root : MTKNode I C0)
+    {m : MTKNode I C0} (hm : m ∈ ascNodes hI root) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I m.x m.k) (hpp : persistPP I C0 c m.x)
+    {q : MTKNode I C0} (hq : q ∈ ppPhaseNodes hI m hpp)
+    {r' : Atom} {c' : Concept} (hF' : Concept.ex r' c' ∈ mtk C0 I q.x q.k)
+    (hr' : r' = dr ∨ r' = po ∨ r' = eq) :
+    ∃ w ∈ ascNodes hI root, I.rho q.x w.x = r' ∧ c' ∈ mtk C0 I w.x w.k := by
+  obtain ⟨_, _, _, hqk⟩ := ppPhaseNodes_spec hI m hpp q hq
+  refine ⟨⟨(mtkWitness q hF').x, m.k - 1, (mtkWitness q hF').hx⟩, ?_,
+    mtkWitness_rho q hF', ?_⟩
+  · exact ascNodes_trans hI root m hm _
+      (sub_ascNodes_phasewitness hI m hF hpp hq hF' hr' _
+        (self_mem_ascNodes hI ⟨(mtkWitness q hF').x, m.k - 1, (mtkWitness q hF').hx⟩))
+  · show c' ∈ mtk C0 I (mtkWitness q hF').x (m.k - 1)
+    rw [← hqk]; exact mtkWitness_arg q hF'
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -17000,6 +17021,7 @@ end VerticalWitness
 #print axioms sub_ascNodes_oneshot
 #print axioms ascNodes_trans
 #print axioms ascNodes_covers
+#print axioms ascNodes_covers_phase
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
