@@ -13074,6 +13074,72 @@ theorem sub_ascNodes_phasewitness (hI : RCC5Interp I) (n : MTKNode I C0) {c : Co
   exact List.mem_flatMap.mpr ⟨q, hq, List.mem_flatMap.mpr ⟨⟨Concept.ex r' c', hF'⟩,
     List.mem_attach _ _, by simp only [if_pos hr']; exact hm⟩⟩
 
+/-- A ONE-SHOT `∃PP` witness's coverage set is contained in the parent's (the
+    `r = pp`, non-`persistPP` branch — the finite-tower witness). -/
+theorem sub_ascNodes_oneshot (hI : RCC5Interp I) (x : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I x.x x.k) (hnp : ¬ persistPP I C0 c x.x) :
+    ∀ m ∈ ascNodes hI (mtkWitness x hF), m ∈ ascNodes hI x := by
+  intro m hm
+  rw [ascNodes]
+  refine List.mem_cons_of_mem _ (List.mem_flatMap.mpr ⟨⟨Concept.ex pp c, hF⟩,
+    List.mem_attach _ _, ?_⟩)
+  simp only [if_neg (show ¬ (pp = dr ∨ pp = po ∨ pp = eq) by decide), dif_neg hnp]
+  exact hm
+
+/-- **TRANSITIVITY of the ascending-coverage set**: the coverage set of any
+    reachable node is contained in the root's.  Case-splits the three recursion
+    branches (horizontal / one-shot `∃PP` / persistent-`∃PP` phase) and applies
+    the matching inclusion lemma + IH (`ih2` = the `mtkWitness` recursion,
+    `ih1` = the phase-witness recursion, from `ascNodes.induct`). -/
+theorem ascNodes_trans (hI : RCC5Interp I) (n : MTKNode I C0) :
+    ∀ m ∈ ascNodes hI n, ∀ k ∈ ascNodes hI m, k ∈ ascNodes hI n := by
+  induction n using ascNodes.induct with
+  | case1 x ih2 ih1 =>
+    intro m hm k hk
+    rw [ascNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact hk
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        simp only at hmm
+        by_cases hr : r = dr ∨ r = po ∨ r = eq
+        · rw [if_pos hr] at hmm
+          exact sub_ascNodes_hwitness hI x hF hr k (ih2 r c hF m hmm k hk)
+        · rw [if_neg hr] at hmm
+          by_cases hrpp : r = pp
+          · rw [if_pos hrpp] at hmm
+            subst hrpp
+            by_cases hpp : persistPP I C0 c x.x
+            · rw [dif_pos hpp] at hmm
+              obtain ⟨q, hq, hmq⟩ := List.mem_flatMap.mp hmm
+              obtain ⟨⟨F', hF'⟩, _, hmm'⟩ := List.mem_flatMap.mp hmq
+              cases F' with
+              | ex r' c' =>
+                simp only at hmm'
+                by_cases hr' : r' = dr ∨ r' = po ∨ r' = eq
+                · rw [if_pos hr'] at hmm'
+                  exact sub_ascNodes_phasewitness hI x hF hpp hq hF' hr' k
+                    (ih1 pp c hF q r' c' hF' m hmm' k hk)
+                · rw [if_neg hr'] at hmm'; simp at hmm'
+              | top => simp at hmm'
+              | bot => simp at hmm'
+              | atom a => simp at hmm'
+              | natom a => simp at hmm'
+              | and a b => simp at hmm'
+              | or a b => simp at hmm'
+              | all r'' c'' => simp at hmm'
+            · rw [dif_neg hpp] at hmm
+              exact sub_ascNodes_oneshot hI x hF hpp k (ih2 pp c hF m hmm k hk)
+          · rw [if_neg hrpp] at hmm; simp at hmm
+      | top => simp at hmm
+      | bot => simp at hmm
+      | atom a => simp at hmm
+      | natom a => simp at hmm
+      | and a b => simp at hmm
+      | or a b => simp at hmm
+      | all r c => simp at hmm
+
 /-- **THE GENERIC MERGED KERNEL** (§25.4 step 2 — `mixCert_ok` generalized off
     `Imix`/`Cmix`): a `MultiTier` with an ARBITRARY external family `g : β → α`
     (full `mty` labels) PLUS a SINGLE ascending kernel (the tower `c`).  Every
@@ -16915,6 +16981,8 @@ end VerticalWitness
 #print axioms self_mem_ascNodes
 #print axioms sub_ascNodes_hwitness
 #print axioms sub_ascNodes_phasewitness
+#print axioms sub_ascNodes_oneshot
+#print axioms ascNodes_trans
 #print axioms persistPPI_productive
 #print axioms persistPPI_chain
 #print axioms block_of_persistent_desc
