@@ -13874,6 +13874,29 @@ theorem ascKernelG (hI : RCC5Interp I) {C0 G : Concept} (e : α)
   rw [hey, hyc, show comp pp pp = [pp] from rfl, List.mem_singleton] at hcomp
   exact hcomp
 
+/-- **BUNDLED G-carrying kernel data** — `ascKernelG`'s output as a `Type`-level
+    structure, so the κ-construction can read the chain/period as DATA per site.
+    Mirrors `AscKernelPack` but on `ascKernelG` (phases carry `G`; `base` is the
+    `e PP` phase fact). -/
+structure AscKernelPackG {α : Type} (I : Interp α) (C0 G : Concept) (e : α) (L : Nat) where
+  c : Nat → α
+  i : Nat
+  p : Nat
+  dom : ∀ n, I.dom (c n)
+  step : ∀ n, I.rho (c n) (c (n + 1)) = pp
+  iLE : L ≤ i
+  pPos : 0 < p
+  period : mty C0 I (c i) = mty C0 I (c (i + p))
+  dem : ∀ n, G ∈ mty C0 I (c n)
+  base : 0 < i → ∀ a, I.rho e (c (i + a)) = pp
+
+/-- Extract the bundled G-carrying kernel data from a `persistPP` node. -/
+noncomputable def ascKernelPackG (hI : RCC5Interp I) {C0 G : Concept} (e : α)
+    (h : persistPP I C0 G e) (L : Nat) : AscKernelPackG I C0 G e L :=
+  Classical.choice (by
+    obtain ⟨c, i, p, hdom, hstep, hiLE, hpPos, hperiod, hdem, hbase⟩ := ascKernelG hI e h L
+    exact ⟨⟨c, i, p, hdom, hstep, hiLE, hpPos, hperiod, hdem, hbase⟩⟩)
+
 /-- THE SINGLE-`∃PP` GENERATOR: a persistent `∃PP.G` element whose model
     types carry only the demands `∃PP.G`/`∃EQ` yields a finite
     certificate carrying `C₀` — extraction for the one-kernel vertical
