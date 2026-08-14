@@ -13815,6 +13815,33 @@ theorem persistPP_chain' (hI : RCC5Interp I) {C0 G : Concept} (x1 : α)
     obtain ⟨_, hGn⟩ := buildChain_prop _ hprod x1 hS1 n
     exact hGn
 
+/-- **G-CARRYING KERNEL for the vertical routing** — from a `persistPP G e` node,
+    the ascending kernel whose phases carry `G` ITSELF (not just `∃PP.G`) and to
+    which `e` is `PP`-below.  The base is `e`'s G-carrying `PP`-witness `y`
+    (`persistPP_productive'`); `persistPP_chain'` carries `G` at every point,
+    `mty_segment_bounded` gives the period, and `e PP c(i+a)` follows from
+    `e PP y PP c(i+a)` via `comp(PP,PP)={PP}`.  This is exactly the data
+    `extract_dr_children`'s he_ex vertical disjunct + `hv0pp` consume: `v0 = e`,
+    `ck = c`, `phase 0 ∋ G`, `rho e (c(i+a)) = pp`. -/
+theorem ascKernelG (hI : RCC5Interp I) {C0 G : Concept} (e : α)
+    (h : persistPP I C0 G e) (L : Nat) :
+    ∃ (c : Nat → α) (i p : Nat),
+      (∀ n, I.dom (c n)) ∧ (∀ n, I.rho (c n) (c (n + 1)) = pp) ∧
+      L ≤ i ∧ 0 < p ∧ mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ n, G ∈ mty C0 I (c n)) ∧
+      (0 < i → ∀ a, I.rho e (c (i + a)) = pp) := by
+  obtain ⟨y, hpy, hdy, hey, hGy⟩ := persistPP_productive' hI e h
+  obtain ⟨c, hc0, hdom, hstep, hG⟩ := persistPP_chain' hI y ⟨hpy, hGy⟩
+  obtain ⟨i, p, hLi, hp, _, hty⟩ := mty_segment_bounded C0 c L
+  refine ⟨c, i, p, hdom, hstep, hLi, hp, hty, hG, ?_⟩
+  intro hi a
+  have hyc : I.rho y (c (i + a)) = pp := by
+    rw [← hc0, show i + a = (i + a - 1) + 1 from by omega]
+    exact pp_chain_below hI c hdom hstep (i + a - 1)
+  have hcomp := hI.comp_ e y (c (i + a)) h.1 hdy (hdom (i + a))
+  rw [hey, hyc, show comp pp pp = [pp] from rfl, List.mem_singleton] at hcomp
+  exact hcomp
+
 /-- THE SINGLE-`∃PP` GENERATOR: a persistent `∃PP.G` element whose model
     types carry only the demands `∃PP.G`/`∃EQ` yields a finite
     certificate carrying `C₀` — extraction for the one-kernel vertical
@@ -17010,6 +17037,7 @@ end VerticalWitness
 #print axioms persistPP_chain
 #print axioms block_of_persistent
 #print axioms ascKernel
+#print axioms ascKernelG
 #print axioms dascKernel
 #print axioms ascKernelPack
 #print axioms ppPhaseNodes
