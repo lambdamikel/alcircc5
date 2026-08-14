@@ -2356,3 +2356,66 @@ frame-control resolution (§ ascDadj) and all the coverage/kernel machinery stan
 this is an ADDITIONAL mechanism, not a correction of what's built. The residual
 risk I flagged ("ingredients certified ≠ assembly proven") materialized here —
 which is exactly what pushing into the assembly is for.
+
+## 34. The unified ordered-disjoint architecture — the general path (2026-08-14)
+
+The one-shot-∃PP finding (§33) is not a special case to patch; it points at the
+RIGHT general structure for the WHOLE vertical side. PP is a transitive strict
+order, so the vertical skeleton is a PARTIAL ORDER, and RCC5 closure ⟺ the
+ORDERED-DISJOINT normal form (PP = strict order, DR = downward-closed
+disjointness, PO = residual) — already CERTIFIED forward in
+`formal/RCC5NormalForm.lean` (wp47 the converse, n≤4). The frame for it is
+already certified too: `posetNet_frame` (§ posetNet) proves the ordered-disjoint
+read-off of ANY strict partial order is an RCC5 Frame. This is the general
+foundation; the PO-default frame (`po_default_multi_frame`) is the special case
+where the PP-order is empty and everything incomparable is PO.
+
+### 34.1 One uniform representation of the vertical structure
+
+Represent the vertical skeleton of a node as a FINITE POSET of "tower-tops",
+where each tower-top is either
+- a FINITE chain ending at a leaf (a one-shot `∃PP`, §33), or
+- an INFINITE chain represented by a CYCLE (a persistent `∃PP` — the existing
+  kernel/`mtkKernelsDR`),
+and the frame among all β-nodes + tower-tops is the ordered-disjoint read-off
+(`posetNet`-style): comparable ⟹ PP/PPI, incomparable-and-disjoint ⟹ DR
+(downward-closed), incomparable-and-overlapping ⟹ PO. This SUBSUMES:
+- the horizontal PO-default frame (empty PP-order),
+- the DR-children skeleton (`ascDadj` — DR at consecutive budgets),
+- the persistent kernels,
+- and — the new piece — the FINITE PP-towers (one-shot).
+
+So the whole ∀PO-free certificate is ONE ordered-disjoint frame, not three glued
+mechanisms. This is the class-level solution.
+
+### 34.2 The concrete building blocks (what's certified, what's to build)
+
+CERTIFIED: `RCC5NormalForm.toOrderedDisjoint`; `posetNet_frame` (PP-order ⟹
+Frame); `mtkNodesH`/coverage; the persistent kernels; `ascDadj`/`ascNodes_ee_all2`
+(consecutive-DR hee); `ascKernelG`.
+
+TO BUILD (the general vertical mechanism):
+1. **Poset-of-model-nodes `MultiTierOk`** — a `MultiTierOk` over `posetNet` where
+   the poset nodes carry their `mty`/`mtk` types, with `ee_all` for the PP-ORDER
+   (`∀PP` propagates UP the order via `comp(PP,PP)={PP}`; `∀PPI` DOWN; budget via
+   the tower depth) and `e_ex` serving `∃PP` by a comparable-above node. This is
+   the finite-PP-tower certificate; `posetNet_frame` gives the frame for free.
+2. **Finite-tower extraction** — from a one-shot `∃PP.D` at a node, the finite
+   `mtkWitness`-chain (already in `ascNodes`) as poset nodes; the poset order =
+   the PP-ancestry; leaves have no `∃PP`.
+3. **Unify with kernels** — a poset element may itself be a cycle (kernel);
+   `posetKernel_ok` already handles a poset OF kernels, so the unification is:
+   poset elements = finite chains ⊎ kernels.
+4. **Coverage + codesAM + decidability** — as §32, over the unified frame.
+
+### 34.3 Why this is the productive general path
+
+It (a) handles the one-shot `∃PP` CLASS (not a witness), (b) is grounded in TWO
+certified results (`RCC5NormalForm` + `posetNet_frame`), (c) subsumes the
+horizontal + DR-children + kernel machinery as special cases of one frame, and
+(d) is the exact structure the overview paper's "ordered-disjoint normal form"
+predicts. The first concrete Lean target is (1) — the poset-of-model-nodes
+`MultiTierOk` — which is the finite-PP-tower certificate and the general vertical
+`e_ex`/`ee_all` the whole fragment needs. Estimate stands revised (§33): this
+adds ~2–4 sessions over the persistent-only path, but it is the path that
+actually reaches ∀PO-free decidability rather than a persistent-only sub-fragment.
