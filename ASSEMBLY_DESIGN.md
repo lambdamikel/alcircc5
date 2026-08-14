@@ -2297,3 +2297,62 @@ discipline would EXPOSE it (not hide it), but "all ingredients certified" ≠ "t
 assembly goes through" until built. Then descending (∃PPI mirror, ~1–2 sessions)
 + full mixing (§21 opposite-direction nesting, ~3–6 sessions, the real unknown)
 complete `decidableSat_pofree`. Full-logic F6 stays OPEN (separate).
+
+## 33. The one-shot-∃PP finding — a genuine architectural gap (2026-08-14)
+
+Pushing into the `he_ex` discharge for the AscMix assembly surfaced a REAL gap
+the §31/§32 blueprint glossed. It is not mechanical wiring; it is a genuine
+missing piece, and honesty requires flagging it.
+
+### 33.1 The gap
+
+`mtkKernelsDR` serves an `∃PP.D` demand at a node `e` ONLY through a KERNEL
+(`conv(K k e)=pp`, `D ∈ phase`), and a kernel requires `persistPP` — an INFINITE
+`PP`-chain reproducing the demand (`ascKernelG` needs it via `mty_segment_bounded`).
+So it handles **persistent** `∃PP` (∀PP-guarded, vtower-style).
+
+A **one-shot** `∃PP.D` (e.g. the bare `∃PP.A`, or `∃PP.(A ⊓ ∀PP.⊥)` where the
+witness is a forced leaf) has NO infinite chain, hence no kernel. Can it instead
+be a `PP` EDGE in the β-frame (`E e w = pp`)? **No** — and this is the crux:
+
+    comp(PP,PP) = {PP}   (transitive: e⊂w⊂g ⟹ e⊂g)
+
+so a `PP` edge CANNOT be PO-defaulted: `e PP w PP g` FORCES `e PP g`, but the
+PO-default frame would set the non-adjacent `e–g` edge to `PO ∉ {PP}` —
+composition VIOLATION. (This is exactly why DR-children work and PP-witnesses
+don't: `comp(DR,DR)` ⊇ {PO}, so DR CAN PO-default; PP cannot.)
+
+So one-shot `∃PP` is served by NEITHER a kernel NOR a PO-default β-edge. The
+current architecture does not handle it. And one-shot `∃PP` is COMMON (any bare
+`∃PP.A`), and IN SCOPE for the full ∀PO-free fragment.
+
+### 33.2 Cross-check: the campaign's vertical results are all persistent
+
+`decidableSat_vtower`/`…G`/`…RR`/`…RRI` and every vertical witness (`Cvert`,
+`Ccar`, …) carry the `∀PP`-guard — they are PERSISTENT `∃PP`. One-shot `∃PP` was
+never in the certified scope; this finding makes that explicit rather than
+implicit.
+
+### 33.3 What it costs
+
+Two real options, both more than wiring:
+- **Finite-PP-tower certificate** — a certificate with EXPLICIT `PP` edges (all
+  transitive edges present, composition-closed) for the `∀PP`-free / one-shot case
+  (finite towers bounded by `mdepth`). Distinct frame from `mtkKernelsDR` (PP has
+  no PO-default). ~1–2 sessions.
+- **Model-surgery ("persistify")** — show every satisfiable ∀PO-free concept has a
+  model where every `∃PP` is persistent (pad each one-shot leaf into an infinite
+  self-reproducing tower). FAILS when a `∀PP.⊥`-style guard forces a leaf, so it
+  is NOT a complete fix by itself.
+
+### 33.4 Honest revision
+
+The AscMix milestone as blueprinted (arbitrary `∃PP`) is HARDER than the §32
+estimate: it needs the one-shot handling (33.3) ON TOP of the kernel handling.
+Revised: either narrow the first milestone to **persistent-`∃PP`-mixed** (the
+kernel path, matching what's built — but its clean syntactic characterization is
+itself a task), or add the finite-PP-tower certificate (~+1–2 sessions). The
+frame-control resolution (§ ascDadj) and all the coverage/kernel machinery stand;
+this is an ADDITIONAL mechanism, not a correction of what's built. The residual
+risk I flagged ("ingredients certified ≠ assembly proven") materialized here —
+which is exactly what pushing into the assembly is for.
