@@ -13608,6 +13608,39 @@ theorem exists_maximal_tower (hI : RCC5Interp I) {n : Nat} (ck : Fin n → Nat �
     fun a m => ⟨m, Or.inr (hI.refl_eq (ck a m) (hdom a m))⟩
   exact maximal_dominated emb htrans hrefl
 
+/-- A function on a finite LIST is bounded (list analogue of `exists_bound`). -/
+theorem list_bound {β : Type} (f : β → Nat) :
+    ∀ (l : List β), ∃ B, ∀ x ∈ l, f x ≤ B := by
+  intro l
+  induction l with
+  | nil => exact ⟨0, fun x hx => nomatch hx⟩
+  | cons a rest ih =>
+    obtain ⟨B, hB⟩ := ih
+    refine ⟨max (f a) B, fun x hx => ?_⟩
+    rcases List.mem_cons.mp hx with rfl | hx
+    · exact Nat.le_max_left _ _
+    · exact Nat.le_trans (hB x hx) (Nat.le_max_right _ _)
+
+/-- **THE COMMON UPPER NODE ON A TOWER** (§37) — given a finite list of `roots`
+    each `PP`-below tower `d` at level `lvl x` (`ρ x (d (lvl x)) = PP`), the single
+    node `d (B+1)` with `B = max lvl` is `PP`-above ALL of them (`comp(PP,PP)={PP}`
+    through `d (lvl x) PP d (B+1)`), and `B+1 > 0` so `d 0` is below it too.  This
+    is the node `merge_persistAll` needs: one node above every root of the demands
+    dominated by a maximal tower — hence a `persistAll` node for the whole
+    comparability class. -/
+theorem common_upper_on_tower (hI : RCC5Interp I) (d : Nat → α)
+    (hddom : ∀ n, I.dom (d n)) (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    (roots : List α) (hrdom : ∀ x ∈ roots, I.dom x) (lvl : α → Nat)
+    (hlvl : ∀ x ∈ roots, I.rho x (d (lvl x)) = pp) :
+    ∃ N, 0 < N ∧ ∀ x ∈ roots, I.rho x (d N) = pp := by
+  obtain ⟨B, hB⟩ := list_bound lvl roots
+  refine ⟨B + 1, Nat.succ_pos B, fun x hx => ?_⟩
+  have hll : I.rho (d (lvl x)) (d (B + 1)) = pp :=
+    chain_pp_lt hI d hddom hdstep (lvl x) (B + 1) (by have := hB x hx; omega)
+  have hc := hI.comp_ x (d (lvl x)) (d (B + 1)) (hrdom x hx) (hddom (lvl x)) (hddom (B + 1))
+  rw [hlvl x hx, hll, show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
+  exact hc
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17995,6 +18028,7 @@ end VerticalWitness
 #print axioms embed_trans
 #print axioms maximal_dominated
 #print axioms exists_maximal_tower
+#print axioms common_upper_on_tower
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
