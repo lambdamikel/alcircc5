@@ -2604,10 +2604,44 @@ classify_cross          -- pairwise: constant-at-horizon v, OR comparable
 
 **The single remaining `hrectQ`-side residue is the MERGE** (comparable pairs →
 one shared tower) so that every surviving pair lands in `classify_cross`
-disjunct 1. Everything else on the cross-kernel side is done.  The merge is the
-poset-with-cycles construction (§34 for the persistent case) and is the honest
-next hard target; after it, the summit residue is coverage (`he_ex`/`hk_ex`) +
-`codesM`.
+disjunct 1. Everything else on the cross-kernel side is done.
+
+### 36.7 The MERGE is NOT a poset-with-cycles (commit 6505314)
+
+Scoping the merge overturned the §34/§36.6 assumption that it needs a
+poset-with-cycles. It does not. The reason: a persistent demand's `∀PP`-guard
+**propagates up the order**.
+
+- `guard_propagates` — `z` `PP`-above `x`, and `∀PP.(∃PP.D) ∈ mty x`, gives `z`
+  BOTH `∃PP.D` (`mty_all`) and the guard `∀PP.(∃PP.D)` (`sat_all_pp_up`).
+- `merge_persistAll` — if `z` is `PP`-above a guard-carrier for every `D ∈ Ds`,
+  then `persistAll I C0 Ds z`. So a node above the roots of a comparability class
+  is a `persistAll` node for the whole class, and `rr_covers` serves all of `Ds`
+  from `z`'s SINGLE tower by round-robin.
+
+So comparable persistent towers merge into **one round-robin kernel** — the
+larger tower, whose sufficiently-high node absorbs every smaller demand's guard.
+No 2-D staircase needs finite representation; the staircase pair simply never
+becomes two kernels. Distinct kernels then stay pairwise incomparable/disjoint,
+which is exactly `hrectQ`-ready (`classify_cross` disjunct 1 → the two
+stabilization bricks → `family_hrectQ_bounded`).
+
+**The cross-kernel + merge story is therefore complete at the lemma level.** The
+whole vertical/mixing pipeline reduces to:
+
+```
+classify_cross           pairwise: constant-at-horizon  OR  comparable
+  ├─ constant → cross_dr_stabilizes / cross_po_stabilizes → family_hrectQ_bounded  (hrectQ)
+  └─ comparable → guard_propagates → merge_persistAll → rr_covers  (one kernel)
+```
+
+**Residue for the general theorem** — now all model-side existence + wiring, no
+new analytic obstacle:
+- construct the common upper node `z` (pairwise: `z = d(j)` past where `d(j)`
+  covers `x_c` — `guard_propagates` inputs come from the embedding);
+- partition persistent demands into comparability classes (`classify_cross`
+  applied pairwise);
+- coverage (`he_ex`/`hk_ex`) + `codesM` + the `decidableSat_of_codes` premise.
 
 ### 36.5 Why this is progress, not a setback
 
