@@ -13413,6 +13413,30 @@ theorem merge_persistAll (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
   obtain ⟨x, hx, hxz, hgx⟩ := hguards D hD
   exact guard_propagates hI hx hz hxz hgx
 
+/-- **THE PAIRWISE MERGE, CONSTRUCTED** — the common upper node exists.  From two
+    persistent roots `xc` (demand `Dc`) and `d 0` (demand `Dd`, the base of `d`'s
+    tower) and the embedding `xc PP d j0` (`classify_cross` disjunct 2), the node
+    `z = d (j0+1)` is `PP`-above BOTH roots (`xc` via `comp(PP,PP)={PP}`, `d 0`
+    via `chain_pp_lt`), so `merge_persistAll` makes it a `persistAll` node for
+    `[Dc, Dd]`.  This discharges the merge's model-side existence for the pairwise
+    case; `rr_covers` then serves both demands from `d`'s tower. -/
+theorem merge_pair (hI : RCC5Interp I) {C0 Dc Dd : Concept} {xc : α}
+    (hxc : persistPP I C0 Dc xc)
+    (d : Nat → α) (hddom : ∀ n, I.dom (d n))
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    (hxd : Concept.all pp (Concept.ex pp Dd) ∈ mty C0 I (d 0))
+    (j0 : Nat) (hemb : I.rho xc (d j0) = pp) :
+    persistAll I C0 [Dc, Dd] (d (j0 + 1)) := by
+  refine merge_persistAll hI (hddom (j0 + 1)) (fun D hD => ?_)
+  rcases List.mem_cons.mp hD with rfl | hD
+  · refine ⟨xc, hxc.1, ?_, hxc.2.2⟩
+    have hc := hI.comp_ xc (d j0) (d (j0 + 1)) hxc.1 (hddom j0) (hddom (j0 + 1))
+    rw [hemb, hdstep j0, show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
+    exact hc
+  · rcases List.mem_cons.mp hD with rfl | hD
+    · exact ⟨d 0, hddom 0, chain_pp_lt hI d hddom hdstep 0 (j0 + 1) (Nat.succ_pos j0), hxd⟩
+    · nomatch hD
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17795,6 +17819,7 @@ end VerticalWitness
 #print axioms family_hrectQ_bounded
 #print axioms guard_propagates
 #print axioms merge_persistAll
+#print axioms merge_pair
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
