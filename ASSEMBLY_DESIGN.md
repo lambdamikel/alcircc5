@@ -2657,3 +2657,42 @@ genuinely new lemma (`cross_po_stabilizes`) to a clean `eta`-based argument. It
 also re-vindicates §34's ordered-disjoint instinct: the vertical structure is a
 poset of DR/PO-separated towers, comparable chains collapsed — the same normal
 form. `cross_po_stabilizes` (with `eta`) is the honest next Lean target.
+
+## 37. The partition = domination by MAXIMAL towers (2026-08-15)
+
+Scoping the "comparability-class partition" surfaced a subtlety: **comparability
+(embeds either way) is NOT transitive** (`c ⊆ d` and `e ⊆ d` leave `c`, `e`
+possibly incomparable), so "comparability classes" is ill-defined. The correct
+structure is **domination by maximal towers**, valid because *embedding* is:
+
+- `embed_trans` (commit ce20857, `propext`-only): "tower `c` embeds in tower `d`"
+  = `∀ i, ∃ j, ρ(c i)(d j) ∈ {PP,EQ}` (`classify_cross` disjunct 2) is a
+  **transitive preorder** — `comp({PP,EQ},{PP,EQ}) ⊆ {PP,EQ}`.
+
+So the finitely many persistent-demand towers form a finite preorder. Its
+**maximal towers** are a dominating antichain:
+- every tower embeds in some maximal tower (finite preorder ⟹ maximal-domination);
+- each maximal tower `z` serves every demand below it: a high node of `z` is above
+  all their roots, hence `persistAll` for the whole set (`merge_persistAll` +
+  `merge_pair`/`embed_to_pp` per demand);
+- distinct maximal towers are incomparable ⟹ `classify_cross` disjunct 1 ⟹
+  constant cross-relation ⟹ `hrectQ` (`cross_po_stabilizes` + `family_hrectQ_bounded`).
+
+So `κ` = the maximal towers; coverage routes each demand to the maximal tower
+above it. This is why the merge partition is well-defined despite non-transitive
+comparability.
+
+### 37.1 The next Lean target: `maximal_dominated`
+
+The one abstract fact still owed: **in a finite preorder every element is `≤` a
+maximal element.** Statement (over `Fin n`, `le` transitive + reflexive,
+`DecidableRel`):
+`∀ a, ∃ m, le a m ∧ ∀ k, le m k → le k m`.
+Proof = strong induction on the count `#{k : le a k}`: if `a` is maximal, done;
+else `∃ a', le a a' ∧ ¬le a' a`, and `#{k : le a' k} < #{k : le a k}` (subset by
+transitivity, strict since `a` is in the first not the second) — recurse on `a'`.
+Core-Lean note: no mathlib `Finset.exists_maximal`, and a preorder has no total
+`max` to fold, so this needs the count-measure well-founded recursion +
+`List.countP` monotonicity (subset ⟹ `countP ≤`, strict ⟹ `<`), proved inline
+if not in core. This is the honest next brick; after it, the partition is a
+theorem and only coverage (`he_ex`/`hk_ex`) + `codesM` remain.
