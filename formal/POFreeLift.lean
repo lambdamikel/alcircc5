@@ -13382,6 +13382,37 @@ theorem family_hrectQ_bounded {n : Nat} (ck : Fin n → Nat → α) (hN : Fin n 
   exact ⟨fun _ => B, family_hrectQ ck (fun _ => B) hN hconst
     (fun k k' _ => hB k k') (fun k k' _ => hB k k')⟩
 
+/-- **THE MERGE CORE** (§36): a persistent demand's `∀PP`-guard PROPAGATES UP.
+    If `z` is `PP`-above a node `x` carrying `∀PP.(∃PP.D)`, then `z` carries BOTH
+    `∃PP.D` (`mty_all`) and the guard itself (`sat_all_pp_up`).  Consequence: a
+    node above TWO persistent roots is a `persistAll` node for BOTH demands, so
+    round-robin (`rr_covers`) serves them from ONE tower.  This dispels the
+    "poset-with-cycles" fear for the merge — comparable towers merge because the
+    larger tower ABSORBS the smaller's demand. -/
+theorem guard_propagates (hI : RCC5Interp I) {C0 D : Concept} {x z : α}
+    (hx : I.dom x) (hz : I.dom z) (hxz : I.rho x z = pp)
+    (hguard : Concept.all pp (Concept.ex pp D) ∈ mty C0 I x) :
+    Concept.ex pp D ∈ mty C0 I z ∧ sat I z (Concept.all pp (Concept.ex pp D)) :=
+  ⟨mty_all hguard hz hxz, sat_all_pp_up hI hx hz hxz (mem_mty.mp hguard).2⟩
+
+/-- **THE MERGE** (§36): a comparability class collapses to ONE round-robin
+    kernel.  If a node `z` is `PP`-above a guard-carrier for EVERY demand in `Ds`
+    (each `D`'s persistent root sits `PP`-below `z`), then `z` is a `persistAll`
+    node for the whole list `Ds` — so `rr_covers` serves all of `Ds` from `z`'s
+    single tower by round-robin.  Comparable persistent towers thus MERGE into one
+    kernel (the larger tower, whose sufficiently-high node absorbs every demand's
+    guard), leaving distinct kernels pairwise incomparable/disjoint —
+    `hrectQ`-ready via `classify_cross`/`family_hrectQ_bounded`.  So the merge is
+    `guard_propagates` per demand, NOT a poset-with-cycles. -/
+theorem merge_persistAll (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {z : α} (hz : I.dom z)
+    (hguards : ∀ D ∈ Ds, ∃ x, I.dom x ∧ I.rho x z = pp ∧
+      Concept.all pp (Concept.ex pp D) ∈ mty C0 I x) :
+    persistAll I C0 Ds z := by
+  refine ⟨hz, fun D hD => ?_⟩
+  obtain ⟨x, hx, hxz, hgx⟩ := hguards D hD
+  exact guard_propagates hI hx hz hxz hgx
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17762,6 +17793,8 @@ end VerticalWitness
 #print axioms family_hrectQ
 #print axioms exists_bound2
 #print axioms family_hrectQ_bounded
+#print axioms guard_propagates
+#print axioms merge_persistAll
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
