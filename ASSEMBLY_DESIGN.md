@@ -2586,6 +2586,29 @@ late-witness bump. What remains for the summit:
 No further interface-stabilization theorem is owed; the classification *decision*
 is done; the remaining work is merge + family-lift + coverage + codes.
 
+### 36.6 The `hrectQ` pipeline is now assembled (commits ec37cac, d4ea56b)
+
+`family_hrectQ` + `exists_bound`/`exists_bound2` + `family_hrectQ_bounded` close
+the family-lift: for `κ = Fin n` kernels, given per-pair constancy at a horizon
+`hN` (`classify_cross` disjunct 1), `family_hrectQ_bounded` *exhibits* bases
+(every `ik k := B = max hN`, via `exists_bound2`) for which `mixKernels_ok`'s
+`hrectQ` holds verbatim. So the whole `hrectQ` obligation is certified for
+pairwise-incomparable/disjoint kernels:
+
+```
+classify_cross          -- pairwise: constant-at-horizon v, OR comparable
+  → cross_dr_stabilizes  -- v = DR  (disjoint)
+  → cross_po_stabilizes  -- v = PO  (incomparable + overlapping)
+  → family_hrectQ_bounded -- choose bases past the joint max  ⟹  hrectQ
+```
+
+**The single remaining `hrectQ`-side residue is the MERGE** (comparable pairs →
+one shared tower) so that every surviving pair lands in `classify_cross`
+disjunct 1. Everything else on the cross-kernel side is done.  The merge is the
+poset-with-cycles construction (§34 for the persistent case) and is the honest
+next hard target; after it, the summit residue is coverage (`he_ex`/`hk_ex`) +
+`codesM`.
+
 ### 36.5 Why this is progress, not a setback
 
 The research round converted a *false* obligation (general `hrectQ`) into a
