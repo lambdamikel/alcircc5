@@ -13584,6 +13584,30 @@ theorem maximal_dominated {n : Nat} (le : Fin n → Fin n → Prop) [DecidableRe
   intro a
   exact key _ a (Nat.le_refl _)
 
+/-- **κ = THE MAXIMAL TOWERS** (§37) — `maximal_dominated` instantiated at the
+    tower-embedding relation.  For a finite family of ascending towers
+    `ck : Fin n → ℕ → α`, every tower `i` embeds in a MAXIMAL tower `j`
+    (`∀ a, ∃ b, ρ(ck i a)(ck j b) ∈ {PP,EQ}`, and `j` is maximal: any tower `j`
+    embeds in is `≈ j`).  Embedding is a preorder — reflexive by `refl_eq`,
+    transitive by `embed_trans` — and `DecidableRel` classically; this is the
+    direct application.  So `κ` = the maximal towers is a dominating antichain
+    (up to mutual embedding), each serving every tower below it by guard
+    absorption. -/
+theorem exists_maximal_tower (hI : RCC5Interp I) {n : Nat} (ck : Fin n → Nat → α)
+    (hdom : ∀ i m, I.dom (ck i m)) :
+    ∀ i, ∃ j,
+      (∀ a, ∃ b, I.rho (ck i a) (ck j b) = pp ∨ I.rho (ck i a) (ck j b) = eq) ∧
+      (∀ k, (∀ a, ∃ b, I.rho (ck j a) (ck k b) = pp ∨ I.rho (ck j a) (ck k b) = eq) →
+            (∀ a, ∃ b, I.rho (ck k a) (ck j b) = pp ∨ I.rho (ck k a) (ck j b) = eq)) := by
+  let emb : Fin n → Fin n → Prop := fun i j =>
+    ∀ a, ∃ b, I.rho (ck i a) (ck j b) = pp ∨ I.rho (ck i a) (ck j b) = eq
+  haveI : DecidableRel emb := fun _ _ => Classical.propDecidable _
+  have htrans : ∀ a b c, emb a b → emb b c → emb a c :=
+    fun a b c hab hbc => embed_trans hI (hdom a) (hdom b) (hdom c) hab hbc
+  have hrefl : ∀ a, emb a a :=
+    fun a m => ⟨m, Or.inr (hI.refl_eq (ck a m) (hdom a m))⟩
+  exact maximal_dominated emb htrans hrefl
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17970,6 +17994,7 @@ end VerticalWitness
 #print axioms embed_to_pp
 #print axioms embed_trans
 #print axioms maximal_dominated
+#print axioms exists_maximal_tower
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
