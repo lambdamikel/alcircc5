@@ -2490,3 +2490,80 @@ direction, given a finite external list.
 obligations; once both are theorems, the remaining work (classification +
 routing + codes) is coverage bookkeeping over the already-certified engines.
 The honest next target is piece 1.
+
+## 36. RESEARCH ROUND: `hrectQ` is FALSE in general — the cross-kernel staircase (2026-08-15)
+
+Before writing more Lean for `hrectQ`, a research round. It overturns the §35
+premise that `hrectQ` is "just a hard theorem": **`hrectQ` is false in general.**
+
+### 36.1 The counterexample (airtight, from `chain_pp_lt`)
+
+Take two kernels sharing a chain, `c = d`. Then
+`F(m,n) = ρ(c m)(c n) = PP` for `m<n`, `EQ` for `m=n`, `PPI` for `m>n`
+(exactly `chain_pp_lt`, already proved). Every NE-quadrant contains both `m<n`
+and `m>n`, so `F` is a **staircase**, not constant — no `N` satisfies
+`hrectQ`. This is not a pathology of equal chains: any two ascending towers
+whose set-unions are ⊆-**comparable** (one inside the other, "racing" up)
+staircase along the boundary `m ≈ αn` (machine-checked, `/tmp/staircase_check.py`:
+`c={0..m}`, `d={0..2n}` staircases along `m=2n`).
+
+### 36.2 The trichotomy (machine-confirmed on set models)
+
+For two ascending PP-towers, `F(m,n)` is eventually constant on a NE-quadrant
+**iff** their unions are not ⊆-comparable-and-distinct:
+
+| union relation of `C_a=⋃aᵢ`, `C_b=⋃bⱼ` | eventual `F` | status |
+|---|---|---|
+| **disjoint** (`C_a ∩ C_b = ∅`) | `DR` | ✅ `cross_dr_stabilizes` (commit 8e75a41) |
+| **incomparable + overlapping** (each has a permanent private part) | `PO` | ⬜ `cross_po_stabilizes` (route below) — 2000/2000 confirmed |
+| **⊆-comparable, distinct** (`C_a ⊊ C_b`, racing) | **staircase** | ✗ `hrectQ` unsatisfiable — must MERGE |
+
+Crucially, two `∃PP`-witnesses of a **common** node always overlap (both ⊇ that
+node) so are **never** `DR`; they are `PO` (incomparable) or comparable — so the
+`DR` case alone never suffices, and PO/comparable towers are unavoidable in the
+∀PO-free fragment.
+
+### 36.3 The resolution
+
+1. **DR kernels** — `cross_dr_stabilizes` (done).
+2. **Incomparable (PO) kernels** — `hrectQ` holds with constant value `PO`,
+   provable via `cross_po_stabilizes`: incomparable unions ⟹ a **permanent
+   private point**. The clean point (why this is provable where the general
+   uniform-quadrant claim was not): a *point* of a directed union lies in *some*
+   member (no compactness), whereas a *region* ⊆ a union needs compactness. Via
+   the certified `eta` set-representation (`RCC5NormalForm`: `sub_iff_le`,
+   `disj_iff_eta_disjoint`), `¬(⋃η(aᵢ) ⊆ ⋃η(bⱼ))` gives `P ∈ η(a_{i₀})`,
+   `P ∉ η(bⱼ) ∀j`; symmetrically `Q`; plus overlap at the shared node ⟹
+   `ρ(aᵢ)(bⱼ) = PO` for `i≥i₀, j≥j₀`. So `cross_po_stabilizes` is the PO analogue
+   of `cross_dr_stabilizes`, provable but needing `eta` ported into POFreeLift.
+3. **Comparable (nested/racing) towers** — cannot be two constant-`Q` kernels.
+   They must be **MERGED**: a tower whose union is ⊆ another's is served *within*
+   that tower. This is exactly **shared-tower round-robin serving** — the
+   existing `rr_covers` / `decidableSat_vtowerRR` machinery (one tower discharging
+   several nested `∃PP` demands over its recurrent period). So the merge is not
+   new mathematics; it is routing nested demands to a shared kernel.
+
+### 36.4 Revised summit plan (supersedes §35.2 piece 1)
+
+`hrectQ` splits by the trichotomy, and the classification must guarantee that
+**distinct kernels are pairwise ⊆-incomparable** (comparable ones merged via
+round-robin). Then every surviving cross-pair is `DR` or `PO`, and `hrectQ` holds
+via `cross_dr_stabilizes` ⊎ `cross_po_stabilizes`. Concretely:
+
+- (a) **`cross_po_stabilizes`** — port `eta` (or its three theorems) into
+  POFreeLift and prove the incomparable ⟹ eventual-`PO` lemma. This replaces the
+  uncracked "uniform quadrant" of §35.2 with a *true, clean* statement.
+- (b) **Comparability classification + merge** — `Classical.em` on
+  `⋃η(aᵢ) ⊆ ⋃η(bⱼ)`; comparable ⟹ route to a shared round-robin kernel
+  (`rr_covers`); incomparable ⟹ distinct kernels.
+- (c) Then `hrectQ`, `hstab` (done), `he_ex`/`hk_ex`, `codesM` as before.
+
+### 36.5 Why this is progress, not a setback
+
+The research round converted a *false* obligation (general `hrectQ`) into a
+*true* one (per-trichotomy-case), reused two already-built assets
+(`cross_dr_stabilizes`, the round-robin kernels) exactly, and localized the one
+genuinely new lemma (`cross_po_stabilizes`) to a clean `eta`-based argument. It
+also re-vindicates §34's ordered-disjoint instinct: the vertical structure is a
+poset of DR/PO-separated towers, comparable chains collapsed — the same normal
+form. `cross_po_stabilizes` (with `eta`) is the honest next Lean target.
