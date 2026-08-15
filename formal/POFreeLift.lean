@@ -13341,6 +13341,47 @@ theorem family_hrectQ {κ : Type} (ck : κ → Nat → α) (ik : κ → Nat)
   rw [hconst k k' hkk (ik k + a) (ik k' + b) (by omega) (by omega),
       hconst k k' hkk (ik k) (ik k') hk hk']
 
+/-- A function on a finite `Fin n` domain is bounded — the base-choice step:
+    it lets the extraction pick a single `B` above every per-pair horizon
+    `hN k k'`, then set every base `ik k := B` to satisfy `family_hrectQ`'s
+    `hbk`/`hbk'`. -/
+theorem exists_bound : ∀ (n : Nat) (f : Fin n → Nat), ∃ B, ∀ k, f k ≤ B := by
+  intro n
+  induction n with
+  | zero => exact fun _ => ⟨0, fun k => k.elim0⟩
+  | succ n ih =>
+    intro f
+    obtain ⟨B, hB⟩ := ih (fun i => f i.succ)
+    refine ⟨max (f 0) B, fun k => ?_⟩
+    refine Fin.cases ?_ ?_ k
+    · exact Nat.le_max_left _ _
+    · exact fun i => Nat.le_trans (hB i) (Nat.le_max_right _ _)
+
+/-- A function on `Fin n × Fin n` is bounded — the JOINT horizon for
+    `family_hrectQ` over a finite kernel family (`κ = Fin n`). -/
+theorem exists_bound2 (n : Nat) (f : Fin n → Fin n → Nat) :
+    ∃ B, ∀ k k', f k k' ≤ B := by
+  obtain ⟨g, hgspec⟩ := Classical.axiomOfChoice (fun k => exists_bound n (f k))
+  obtain ⟨B, hB⟩ := exists_bound n g
+  exact ⟨B, fun k k' => Nat.le_trans (hgspec k k') (hB k)⟩
+
+/-- **`hrectQ` IS DISCHARGEABLE FOR A FINITE KERNEL FAMILY** — the capstone of
+    the `hrectQ` assembly.  For `κ = Fin n` kernels, given a per-pair horizon `hN`
+    past which each cross-relation is constant (`classify_cross` disjunct 1),
+    there EXIST bases `ik` (every one set to the joint bound `B = max hN`, via
+    `exists_bound2`) for which `mixKernels_ok`'s `hrectQ` holds (via
+    `family_hrectQ`).  So once the extraction supplies the per-pair constancy for
+    pairwise-incomparable/disjoint kernels, `hrectQ` is free. -/
+theorem family_hrectQ_bounded {n : Nat} (ck : Fin n → Nat → α) (hN : Fin n → Fin n → Nat)
+    (hconst : ∀ k k', k ≠ k' → ∀ i j, hN k k' ≤ i → hN k k' ≤ j →
+      I.rho (ck k i) (ck k' j) = I.rho (ck k (hN k k')) (ck k' (hN k k'))) :
+    ∃ ik : Fin n → Nat, ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')) := by
+  obtain ⟨B, hB⟩ := exists_bound2 n hN
+  exact ⟨fun _ => B, family_hrectQ ck (fun _ => B) hN hconst
+    (fun k k' _ => hB k k') (fun k k' _ => hB k k')⟩
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17719,6 +17760,8 @@ end VerticalWitness
 #print axioms cross_po_stabilizes
 #print axioms classify_cross
 #print axioms family_hrectQ
+#print axioms exists_bound2
+#print axioms family_hrectQ_bounded
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
