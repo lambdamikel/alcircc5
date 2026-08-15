@@ -2702,3 +2702,38 @@ extraction is the **assembly**, no new abstract fact:
 - cross-pairs (distinct maximals) are incomparable ⟹ `classify_cross` disjunct 1
   ⟹ `family_hrectQ_bounded` gives `hrectQ`;
 - coverage (`he_ex`/`hk_ex`) + `codesM` + the `decidableSat_of_codes` premise.
+
+## 38. The partition assembly — progress (2026-08-15)
+
+The partition foundation being complete (§37.1), the vertical-extraction assembly
+has begun, connecting the certified bricks:
+
+- `exists_maximal_tower` (commit 426ff4e) — `maximal_dominated` at the
+  tower-embedding relation: every demand-tower embeds in a MAXIMAL tower, `κ` =
+  the maximal towers (a dominating antichain up to mutual embedding).
+- `common_upper_on_tower` (commit ae45aef) + `list_bound` — for the demands
+  dominated by a maximal tower `d`, the single node `d(B+1)` (`B = max` of their
+  embedding levels) is `PP`-above every root, and `B+1 > 0`. This is exactly the
+  common node `merge_persistAll` consumes.
+
+So the vertical chain is:
+```
+exists_maximal_tower   (κ = maximal towers)
+  → common_upper_on_tower  (one node above a class's roots)
+  → merge_persistAll       (⟹ persistAll for the class)
+  → rr_covers              (one round-robin kernel serves the class)
+  + family_hrectQ_bounded  (cross-pairs of maximal towers, hrectQ)
+```
+
+### 38.1 Remaining — assembly plumbing, no new abstract fact
+
+- **The connection** — for each maximal tower `j`, gather the demands below it
+  (filter the demand list by `emb · j`), map to their roots with per-root levels
+  (`embed_to_pp` + `Classical.choose`), apply `common_upper_on_tower`, harvest the
+  `persistPP` guards, and call `merge_persistAll` ⟹ a `persistAll` node per class.
+- **Wire** the vertical kernels with the horizontal externals (`ascNodes`) into
+  one `mixKernels` `MultiTierOk`; discharge coverage (`he_ex`/`hk_ex`).
+- **`codesM`** enumeration + the `decidableSat_of_codes` completeness premise.
+
+This is laborious list/`Classical.choose` plumbing rather than new mathematics —
+every abstract obstacle is already a proved lemma (§35–§37).
