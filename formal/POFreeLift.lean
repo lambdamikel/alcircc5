@@ -13065,6 +13065,110 @@ noncomputable def dStabKernelPack (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
       hI.conv_ (d i) e (hdom i) (hexts e he)
     rw [h1, h2, ← h3])
 
+/-! ### Cross-kernel disjointness stabilization (toward `hrectQ`)
+
+`mixKernels_ok`'s `hrectQ` needs the relation between two kernels' chains
+constant across all phase-pairs.  The relation `ρ(c m)(d n)` decomposes into
+three monotone indicators (disjoint / `c ⊆ d` / `d ⊆ c`); the DISJOINTNESS
+indicator is the clean, pure-composition-table one: for two ascending
+PP-towers, "overlap" (`≠ DR`) is closed to the NE (both towers only grow), so
+disjointness is eventually constant on a NE-quadrant.  This is that brick. -/
+
+/-- Along an ascending `PP`-chain, `c i PP c j` for `i < j`
+    (`comp(PP,PP) = {PP}`). -/
+theorem chain_pp_lt (hI : RCC5Interp I) (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp) :
+    ∀ i j, i < j → I.rho (c i) (c j) = pp := by
+  intro i j
+  induction j with
+  | zero => intro h; exact absurd h (Nat.not_lt_zero i)
+  | succ j ih =>
+    intro h
+    rcases Nat.lt_or_ge i j with hlt | hge
+    · have hc := hI.comp_ (c i) (c j) (c (j + 1)) (hdom i) (hdom j) (hdom (j + 1))
+      rw [ih hlt, hstep j, show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
+      exact hc
+    · have hij : i = j := Nat.le_antisymm (Nat.lt_succ_iff.mp h) hge
+      subst hij; exact hstep i
+
+/-- Overlap is preserved as the LEFT tower grows (`m ≤ m'`): if `c m` is not
+    disjoint from `d n`, neither is the larger `c m'`.  Pure composition:
+    `dr ∉ comp(PPI, X)` for every non-`DR` `X`. -/
+theorem cross_overlap_mono_m (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {m m' n : Nat} (hm : m ≤ m') (h : I.rho (c m) (d n) ≠ dr) :
+    I.rho (c m') (d n) ≠ dr := by
+  rcases Nat.lt_or_ge m m' with hlt | hge
+  · have hppi : I.rho (c m') (c m) = ppi := by
+      rw [hI.conv_ (c m) (c m') (hcdom m) (hcdom m'), chain_pp_lt hI c hcdom hcstep m m' hlt]
+      rfl
+    have hc := hI.comp_ (c m') (c m) (d n) (hcdom m') (hcdom m) (hddom n)
+    rw [hppi] at hc
+    intro hbad
+    rw [hbad] at hc
+    generalize hF : I.rho (c m) (d n) = F at hc h
+    cases F <;> first | exact h rfl | exact absurd hc (by decide)
+  · have hmm : m = m' := Nat.le_antisymm hm hge
+    subst hmm; exact h
+
+/-- Overlap is preserved as the RIGHT tower grows (`n ≤ n'`).  Pure
+    composition: `dr ∉ comp(X, PP)` for every non-`DR` `X`. -/
+theorem cross_overlap_mono_n (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    {m n n' : Nat} (hn : n ≤ n') (h : I.rho (c m) (d n) ≠ dr) :
+    I.rho (c m) (d n') ≠ dr := by
+  rcases Nat.lt_or_ge n n' with hlt | hge
+  · have hc := hI.comp_ (c m) (d n) (d n') (hcdom m) (hddom n) (hddom n')
+    rw [chain_pp_lt hI d hddom hdstep n n' hlt] at hc
+    intro hbad
+    rw [hbad] at hc
+    generalize hF : I.rho (c m) (d n) = F at hc h
+    cases F <;> first | exact h rfl | exact absurd hc (by decide)
+  · have hnn : n = n' := Nat.le_antisymm hn hge
+    subst hnn; exact h
+
+/-- Overlap between two ascending `PP`-towers is closed to the NE. -/
+theorem cross_overlap_mono (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    {m n m' n' : Nat} (hm : m ≤ m') (hn : n ≤ n') (h : I.rho (c m) (d n) ≠ dr) :
+    I.rho (c m') (d n') ≠ dr :=
+  cross_overlap_mono_n hI c d hcdom hddom hdstep hn
+    (cross_overlap_mono_m hI c d hcdom hddom hcstep hm h)
+
+/-- **DISJOINTNESS STABILIZES** — for two ascending kernels' chains, whether
+    they are disjoint is eventually constant on a NE-quadrant.  The `DR`-indicator
+    third of `mixKernels_ok`'s `hrectQ` (the `⊆`-indicators, needing the rank
+    argument + marginal stabilization, are the remaining two thirds). -/
+theorem cross_dr_stabilizes (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp) :
+    ∃ N, ∀ m n, N ≤ m → N ≤ n →
+      (I.rho (c m) (d n) = dr ↔ I.rho (c N) (d N) = dr) := by
+  rcases Classical.em (∃ a b, I.rho (c a) (d b) ≠ dr) with ⟨a, b, hab⟩ | hnone
+  · refine ⟨max a b, fun m n hm hn => ?_⟩
+    have h1 : I.rho (c m) (d n) ≠ dr :=
+      cross_overlap_mono hI c d hcdom hddom hcstep hdstep
+        (Nat.le_trans (Nat.le_max_left a b) hm) (Nat.le_trans (Nat.le_max_right a b) hn) hab
+    have h2 : I.rho (c (max a b)) (d (max a b)) ≠ dr :=
+      cross_overlap_mono hI c d hcdom hddom hcstep hdstep
+        (Nat.le_max_left a b) (Nat.le_max_right a b) hab
+    exact ⟨fun hh => absurd hh h1, fun hh => absurd hh h2⟩
+  · refine ⟨0, fun m n _ _ => ?_⟩
+    have hmn : I.rho (c m) (d n) = dr := by
+      rcases Classical.em (I.rho (c m) (d n) = dr) with hd | hnd
+      · exact hd
+      · exact absurd ⟨m, n, hnd⟩ hnone
+    have h00 : I.rho (c 0) (d 0) = dr := by
+      rcases Classical.em (I.rho (c 0) (d 0) = dr) with hd | hnd
+      · exact hd
+      · exact absurd ⟨0, 0, hnd⟩ hnone
+    exact ⟨fun _ => h00, fun _ => hmn⟩
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17438,6 +17542,8 @@ end VerticalWitness
 #print axioms ascKernelPack
 #print axioms stabKernelPack
 #print axioms dStabKernelPack
+#print axioms chain_pp_lt
+#print axioms cross_dr_stabilizes
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
