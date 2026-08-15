@@ -13679,6 +13679,25 @@ theorem class_persistAll (hI : RCC5Interp I) {C0 : Concept} {n : Nat}
   obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hDm
   exact ⟨ck i 0, hdom i 0, hN (ck i 0) (List.mem_map.mpr ⟨i, hi, rfl⟩), hguard i⟩
 
+/-- **TOWERS FROM PERSISTENT ROOTS** (§38, the input side) — a finite family of
+    `persistPP` roots `xs : Fin n → α` (demand `D i`) yields the tower FUNCTION
+    `ck : Fin n → ℕ → α` (each `ck i` the ascending `PP`-chain from `xs i`,
+    `persistPP_chain` + `Classical.axiomOfChoice` to make it a function).  With
+    `ck i 0 = xs i`, the per-root guards `hpersist i` are exactly
+    `class_persistAll`/`exists_maximal_tower`'s inputs. -/
+theorem towers_from_persistPP (hI : RCC5Interp I) {C0 : Concept} {n : Nat}
+    (D : Fin n → Concept) (xs : Fin n → α)
+    (hpersist : ∀ i, persistPP I C0 (D i) (xs i)) :
+    ∃ ck : Fin n → Nat → α, (∀ i, ck i 0 = xs i) ∧ (∀ i m, I.dom (ck i m)) ∧
+      (∀ i m, I.rho (ck i m) (ck i (m + 1)) = pp) := by
+  have h : ∀ i, ∃ c : Nat → α, c 0 = xs i ∧ (∀ m, I.dom (c m)) ∧
+      (∀ m, I.rho (c m) (c (m + 1)) = pp) := by
+    intro i
+    obtain ⟨c, hc0, hcdom, hcstep, _⟩ := persistPP_chain hI (xs i) (hpersist i)
+    exact ⟨c, hc0, hcdom, hcstep⟩
+  obtain ⟨ck, hck⟩ := Classical.axiomOfChoice h
+  exact ⟨ck, fun i => (hck i).1, fun i m => (hck i).2.1 m, fun i m => (hck i).2.2 m⟩
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -18068,6 +18087,7 @@ end VerticalWitness
 #print axioms exists_maximal_tower
 #print axioms common_upper_on_tower
 #print axioms class_persistAll
+#print axioms towers_from_persistPP
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
