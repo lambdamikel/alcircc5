@@ -2515,7 +2515,7 @@ For two ascending PP-towers, `F(m,n)` is eventually constant on a NE-quadrant
 | union relation of `C_a=⋃aᵢ`, `C_b=⋃bⱼ` | eventual `F` | status |
 |---|---|---|
 | **disjoint** (`C_a ∩ C_b = ∅`) | `DR` | ✅ `cross_dr_stabilizes` (commit 8e75a41) |
-| **incomparable + overlapping** (each has a permanent private part) | `PO` | ⬜ `cross_po_stabilizes` (route below) — 2000/2000 confirmed |
+| **incomparable + overlapping** (each has a permanent private part) | `PO` | ✅ `cross_po_stabilizes` (commit 1124c95) — no `eta` needed |
 | **⊆-comparable, distinct** (`C_a ⊊ C_b`, racing) | **staircase** | ✗ `hrectQ` unsatisfiable — must MERGE |
 
 Crucially, two `∃PP`-witnesses of a **common** node always overlap (both ⊇ that
@@ -2550,13 +2550,25 @@ node) so are **never** `DR`; they are `PO` (incomparable) or comparable — so t
 round-robin). Then every surviving cross-pair is `DR` or `PO`, and `hrectQ` holds
 via `cross_dr_stabilizes` ⊎ `cross_po_stabilizes`. Concretely:
 
-- (a) **`cross_po_stabilizes`** — port `eta` (or its three theorems) into
-  POFreeLift and prove the incomparable ⟹ eventual-`PO` lemma. This replaces the
-  uncracked "uniform quadrant" of §35.2 with a *true, clean* statement.
-- (b) **Comparability classification + merge** — `Classical.em` on
-  `⋃η(aᵢ) ⊆ ⋃η(bⱼ)`; comparable ⟹ route to a shared round-robin kernel
-  (`rr_covers`); incomparable ⟹ distinct kernels.
-- (c) Then `hrectQ`, `hstab` (done), `he_ex`/`hk_ex`, `codesM` as before.
+- (a) **`cross_po_stabilizes`** — ✅ DONE (commit 1124c95), and it needed no
+  `eta` at all: the private-part conditions are stated relationally
+  (`ρ(c i0)(d j) ∉ {PP,EQ}`, `ρ(c i)(d j0) ≠ PPI`) and propagate up each tower
+  by `chain_pp_lt` + `comp(PP,PP)={PP}` + `eq_id`. `propext`-only. This replaced
+  the uncracked "uniform quadrant" of §35.2 with a *true, clean, proved* lemma.
+- (b) **Comparability classification + merge** — the remaining `hrectQ` work,
+  now folded into the extraction's classification piece: decide each kernel pair
+  DR / incomparable / comparable (`Classical.em` on the private-part predicates —
+  exactly `cross_po_stabilizes`'s `hc`/`hd`/`ho` hypotheses, or their negation);
+  DR ⟹ `cross_dr_stabilizes`, incomparable ⟹ `cross_po_stabilizes`, comparable ⟹
+  route to a shared round-robin kernel (`rr_covers`).
+- (c) Then `hrectQ` (assembled from the two bricks over incomparable/DR pairs),
+  `hstab` (done), `he_ex`/`hk_ex`, `codesM` as before.
+
+**Status after this round:** both interface-stabilization *bricks* are proved —
+`hstab` (`StabKernelPack`/`dStabKernelPack`) and both non-degenerate `hrectQ`
+cases (`cross_dr_stabilizes`, `cross_po_stabilizes`). What remains for the summit
+is the *classification + merge + coverage + codes* bookkeeping over the
+already-certified engines — no further interface-stabilization theorem is owed.
 
 ### 36.5 Why this is progress, not a setback
 
