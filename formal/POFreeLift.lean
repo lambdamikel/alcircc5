@@ -13169,6 +13169,63 @@ theorem cross_dr_stabilizes (hI : RCC5Interp I) (c d : Nat → α)
       · exact absurd ⟨0, 0, hnd⟩ hnone
     exact ⟨fun _ => h00, fun _ => hmn⟩
 
+/-- **PO STABILIZES** — the incomparable-overlap third of `hrectQ` (§36).  If the
+    two towers are INCOMPARABLE (each has a "private part": `c i0` is a subregion
+    of NO `d j` — `ρ(c i0)(d j) ∉ {PP,EQ}` — and `d j0` a subregion of no `c i` —
+    `ρ(c i)(d j0) ≠ PPI`) and OVERLAP (`ρ(c i0)(d j0) ≠ DR`), then `ρ(c i)(d j) =
+    PO` for all `i ≥ i0, j ≥ j0` — a CONSTANT `PO` NE-quadrant.  Proved directly
+    (no `eta` needed): the private-part conditions PROPAGATE up each tower
+    (`c i0 ⊆ c i` and `comp(PP,PP)={PP}` / `eq_id` carry `⊄ d j` from `i0` to `i`;
+    dually for `d`), and `≠DR` rides `cross_overlap_mono`; the four exclusions
+    leave exactly `PO`.  This is the PO analogue of `cross_dr_stabilizes`. -/
+theorem cross_po_stabilizes (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    (i0 j0 : Nat)
+    (hc : ∀ j, I.rho (c i0) (d j) ≠ pp ∧ I.rho (c i0) (d j) ≠ eq)
+    (hd : ∀ i, I.rho (c i) (d j0) ≠ ppi)
+    (ho : I.rho (c i0) (d j0) ≠ dr) :
+    ∀ i j, i0 ≤ i → j0 ≤ j → I.rho (c i) (d j) = po := by
+  intro i j hi hj
+  have hndr : I.rho (c i) (d j) ≠ dr :=
+    cross_overlap_mono hI c d hcdom hddom hcstep hdstep hi hj ho
+  have hnpp : I.rho (c i) (d j) ≠ pp := by
+    intro hpp
+    rcases Nat.lt_or_ge i0 i with hlt | hge
+    · have hci0i : I.rho (c i0) (c i) = pp := chain_pp_lt hI c hcdom hcstep i0 i hlt
+      have hcomp := hI.comp_ (c i0) (c i) (d j) (hcdom i0) (hcdom i) (hddom j)
+      rw [hci0i, hpp, show comp pp pp = [pp] from rfl, List.mem_singleton] at hcomp
+      exact (hc j).1 hcomp
+    · have hii : i0 = i := Nat.le_antisymm hi hge
+      exact (hc j).1 (by rw [hii]; exact hpp)
+  have hneq : I.rho (c i) (d j) ≠ eq := by
+    intro heq
+    rcases Nat.lt_or_ge i0 i with hlt | hge
+    · have hij : c i = d j := hI.eq_id (c i) (d j) (hcdom i) (hddom j) heq
+      have hci0i : I.rho (c i0) (c i) = pp := chain_pp_lt hI c hcdom hcstep i0 i hlt
+      rw [hij] at hci0i
+      exact (hc j).1 hci0i
+    · have hii : i0 = i := Nat.le_antisymm hi hge
+      exact (hc j).2 (by rw [hii]; exact heq)
+  have hnppi : I.rho (c i) (d j) ≠ ppi := by
+    intro hppi
+    rcases Nat.lt_or_ge j0 j with hlt | hge
+    · have hdj0j : I.rho (d j0) (d j) = pp := chain_pp_lt hI d hddom hdstep j0 j hlt
+      have hdjj0 : I.rho (d j) (d j0) = ppi := by
+        rw [hI.conv_ (d j0) (d j) (hddom j0) (hddom j), hdj0j]; rfl
+      have hcomp := hI.comp_ (c i) (d j) (d j0) (hcdom i) (hddom j) (hddom j0)
+      rw [hppi, hdjj0, show comp ppi ppi = [ppi] from rfl, List.mem_singleton] at hcomp
+      exact hd i hcomp
+    · have hjj : j0 = j := Nat.le_antisymm hj hge
+      exact hd i (by rw [hjj]; exact hppi)
+  cases hrel : I.rho (c i) (d j) with
+  | eq => exact absurd hrel hneq
+  | pp => exact absurd hrel hnpp
+  | ppi => exact absurd hrel hnppi
+  | po => rfl
+  | dr => exact absurd hrel hndr
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17544,6 +17601,7 @@ end VerticalWitness
 #print axioms dStabKernelPack
 #print axioms chain_pp_lt
 #print axioms cross_dr_stabilizes
+#print axioms cross_po_stabilizes
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
