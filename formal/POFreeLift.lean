@@ -13437,6 +13437,21 @@ theorem merge_pair (hI : RCC5Interp I) {C0 Dc Dd : Concept} {xc : α}
     · exact ⟨d 0, hddom 0, chain_pp_lt hI d hddom hdstep 0 (j0 + 1) (Nat.succ_pos j0), hxd⟩
     · nomatch hD
 
+/-- Bridge `classify_cross`'s embedding output (`ρ x (d j) ∈ {PP,EQ}`) to
+    `merge_pair`'s `PP` input: the `EQ` case means `x = d j` (strong-EQ), so
+    `x PP d (j+1)`.  So `x` being a subregion of some `d`-node always yields a
+    `d`-level STRICTLY above `x`. -/
+theorem embed_to_pp (hI : RCC5Interp I) {d : Nat → α}
+    (hddom : ∀ n, I.dom (d n)) (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    {x : α} (hx : I.dom x) {j0 : Nat}
+    (hemb : I.rho x (d j0) = pp ∨ I.rho x (d j0) = eq) :
+    ∃ j', I.rho x (d j') = pp := by
+  rcases hemb with hpp | heq
+  · exact ⟨j0, hpp⟩
+  · refine ⟨j0 + 1, ?_⟩
+    rw [hI.eq_id x (d j0) hx (hddom j0) heq]
+    exact hdstep j0
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17820,6 +17835,7 @@ end VerticalWitness
 #print axioms guard_propagates
 #print axioms merge_persistAll
 #print axioms merge_pair
+#print axioms embed_to_pp
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
