@@ -2637,8 +2637,13 @@ classify_cross           pairwise: constant-at-horizon  OR  comparable
 
 **Residue for the general theorem** — now all model-side existence + wiring, no
 new analytic obstacle:
-- construct the common upper node `z` (pairwise: `z = d(j)` past where `d(j)`
-  covers `x_c` — `guard_propagates` inputs come from the embedding);
+- ✅ construct the common upper node `z` (pairwise) — DONE (`merge_pair`, commit
+  5dc2cc8: `z = d(j0+1)` from the embedding `x_c PP d j0`; `embed_to_pp`, commit
+  4a4feb4, axiom-free, bridges `classify_cross`'s `{PP,EQ}` output to the `PP`
+  input). So the pairwise merge input chain is complete:
+  `classify_cross (comparable) → embed_to_pp → merge_pair → persistAll → rr_covers`.
+  The class case (a common node above ALL roots of a comparability class) folds
+  the pairwise construction, or takes the top of the class's `⊆`-chain.
 - partition persistent demands into comparability classes (`classify_cross`
   applied pairwise);
 - coverage (`he_ex`/`hk_ex`) + `codesM` + the `decidableSat_of_codes` premise.
