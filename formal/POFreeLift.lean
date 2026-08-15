@@ -13025,6 +13025,46 @@ noncomputable def stabKernelPack (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
       hI.conv_ (c i) e (hdom i) (hexts e he)
     rw [h1, h2, ← h3])
 
+/-- **DESCENDING KERNEL WITH STABILIZED EXTERNALS** — the `dascKernel` mirror of
+    `StabKernelPack`, for a `persistPPI` node: a descending `PPI`-chain plus the
+    stabilized external interface + recurrence.  Same `stab` orientation
+    (external→chain) and same `recur`; `step` is `ppi`.  Together with
+    `StabKernelPack` this supplies the per-kernel data `mixKernels_ok` needs for
+    kernels of EITHER direction (`dir k`). -/
+structure DStabKernelPack {α : Type} (I : Interp α) (C0 G : Concept) (x0 : α)
+    (exts : List α) (L : Nat) where
+  d : Nat → α
+  i : Nat
+  p : Nat
+  d0 : d 0 = x0
+  dom : ∀ n, I.dom (d n)
+  step : ∀ n, I.rho (d n) (d (n + 1)) = ppi
+  iLE : L ≤ i
+  pPos : 0 < p
+  period : mty C0 I (d i) = mty C0 I (d (i + p))
+  dem : ∀ n, Concept.ex ppi G ∈ mty C0 I (d n)
+  stab : ∀ e ∈ exts, ∀ a, I.rho e (d (i + a)) = I.rho e (d i)
+  recur : ∀ a, i ≤ a → ∀ N, ∃ m, N ≤ m ∧ mty C0 I (d m) = mty C0 I (d a)
+
+/-- Extract the descending bundled data from a `persistPPI` node + a finite
+    external list — `persistPPI_chain` + `dsegment_select`, the exact mirror of
+    `stabKernelPack`. -/
+noncomputable def dStabKernelPack (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
+    (h0 : persistPPI I C0 G x0) (exts : List α) (hexts : ∀ e ∈ exts, I.dom e)
+    (L : Nat) : DStabKernelPack I C0 G x0 exts L :=
+  Classical.choice (by
+    obtain ⟨d, hd0, hdom, hstep, hdem⟩ := persistPPI_chain hI x0 h0
+    obtain ⟨i, p, hLi, hp, hty, hstabraw, hrecur⟩ :=
+      dsegment_select hI hdom hstep C0 exts hexts L
+    refine ⟨⟨d, i, p, hd0, hdom, hstep, hLi, hp, hty, hdem, ?_, hrecur⟩⟩
+    intro e he a
+    have h1 : I.rho e (d (i + a)) = conv (I.rho (d (i + a)) e) :=
+      hI.conv_ (d (i + a)) e (hdom (i + a)) (hexts e he)
+    have h2 : I.rho (d (i + a)) e = I.rho (d i) e := hstabraw e he (i + a) (by omega)
+    have h3 : I.rho e (d i) = conv (I.rho (d i) e) :=
+      hI.conv_ (d i) e (hdom i) (hexts e he)
+    rw [h1, h2, ← h3])
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17397,6 +17437,7 @@ end VerticalWitness
 #print axioms dascKernel
 #print axioms ascKernelPack
 #print axioms stabKernelPack
+#print axioms dStabKernelPack
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
