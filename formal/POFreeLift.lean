@@ -13318,6 +13318,29 @@ theorem classify_cross (hI : RCC5Interp I) (c d : Nat → α)
     · exact h
     · exact absurd ⟨i, fun j => ⟨fun hpp => h ⟨j, Or.inl hpp⟩, fun heq => h ⟨j, Or.inr heq⟩⟩⟩ hnP
 
+/-- **THE FAMILY `hrectQ` LIFT** — `mixKernels_ok`'s cross-kernel rectangle from
+    the pairwise classification.  If every ordered pair `k ≠ k'` has a horizon
+    `hN k k'` past which the cross-relation is CONSTANT (`classify_cross`
+    disjunct 1, for pairwise-incomparable/disjoint kernels), and every base
+    `ik k` is ≥ that horizon (chosen past the joint `max` over the finite `κ`),
+    then `hrectQ` holds: both `ρ(ck k (ik k+a))(ck k'(ik k'+b))` and
+    `ρ(ck k (ik k))(ck k'(ik k'))` sit in the constant region and collapse to the
+    same value.  This is the exact `hrectQ` field `mixKernels_ok` consumes. -/
+theorem family_hrectQ {κ : Type} (ck : κ → Nat → α) (ik : κ → Nat)
+    (hN : κ → κ → Nat)
+    (hconst : ∀ k k', k ≠ k' → ∀ i j, hN k k' ≤ i → hN k k' ≤ j →
+      I.rho (ck k i) (ck k' j) = I.rho (ck k (hN k k')) (ck k' (hN k k')))
+    (hbk : ∀ k k', k ≠ k' → hN k k' ≤ ik k)
+    (hbk' : ∀ k k', k ≠ k' → hN k k' ≤ ik k') :
+    ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')) := by
+  intro k k' hkk a b
+  have hk := hbk k k' hkk
+  have hk' := hbk' k k' hkk
+  rw [hconst k k' hkk (ik k + a) (ik k' + b) (by omega) (by omega),
+      hconst k k' hkk (ik k) (ik k') hk hk']
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17695,6 +17718,7 @@ end VerticalWitness
 #print axioms cross_dr_stabilizes
 #print axioms cross_po_stabilizes
 #print axioms classify_cross
+#print axioms family_hrectQ
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
