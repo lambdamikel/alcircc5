@@ -2566,9 +2566,25 @@ via `cross_dr_stabilizes` ⊎ `cross_po_stabilizes`. Concretely:
 
 **Status after this round:** both interface-stabilization *bricks* are proved —
 `hstab` (`StabKernelPack`/`dStabKernelPack`) and both non-degenerate `hrectQ`
-cases (`cross_dr_stabilizes`, `cross_po_stabilizes`). What remains for the summit
-is the *classification + merge + coverage + codes* bookkeeping over the
-already-certified engines — no further interface-stabilization theorem is owed.
+cases (`cross_dr_stabilizes`, `cross_po_stabilizes`) — AND the pairwise
+**classification** `classify_cross` (commit 0f03401): for any two ascending
+kernels' chains, a `Classical.em` split yields exactly one of
+{cross eventually constant `v` (hrectQ-ready: `v=PO`/`DR` via the two bricks) ;
+`c` embeds in `d` ; `d` embeds in `c`} — the whole §36 trichotomy in one lemma,
+with `cprivate_up`/`dprivate_up` (private-part propagates up the tower) doing the
+late-witness bump. What remains for the summit:
+
+- **Merge** (comparable pairs → shared round-robin kernel `rr_covers`): consume
+  `classify_cross` disjuncts 2/3 so that surviving distinct kernels are pairwise
+  incomparable-or-disjoint.
+- **Family `hrectQ`**: lift pairwise `classify_cross` disjunct-1 to all pairs at
+  once — choose every base `ik k` past the joint horizon `N` (finite `max` over
+  the `κ×κ` pairs, `κ` a Fintype), so every cross-pair is constant at its bases.
+- **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
+  premise.
+
+No further interface-stabilization theorem is owed; the classification *decision*
+is done; the remaining work is merge + family-lift + coverage + codes.
 
 ### 36.5 Why this is progress, not a setback
 
