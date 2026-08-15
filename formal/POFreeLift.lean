@@ -13226,6 +13226,98 @@ theorem cross_po_stabilizes (hI : RCC5Interp I) (c d : Nat → α)
   | po => rfl
   | dr => exact absurd hrel hndr
 
+/-- The c-side private-part condition (`c i0 ⊄ any d j`) PROPAGATES UP the
+    c-tower: if it holds at `i0` it holds at every `i ≥ i0` (a larger `c i` is
+    even less a subregion of `d j`).  Same argument as `cross_po_stabilizes`'s
+    `¬PP`/`¬EQ` steps, isolated for the classification's late-witness bump. -/
+theorem cprivate_up (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i0 i : Nat} (hii : i0 ≤ i)
+    (h : ∀ j, I.rho (c i0) (d j) ≠ pp ∧ I.rho (c i0) (d j) ≠ eq) :
+    ∀ j, I.rho (c i) (d j) ≠ pp ∧ I.rho (c i) (d j) ≠ eq := by
+  intro j
+  refine ⟨fun hpp => ?_, fun heq => ?_⟩
+  · rcases Nat.lt_or_ge i0 i with hlt | hge
+    · have hci0i : I.rho (c i0) (c i) = pp := chain_pp_lt hI c hcdom hcstep i0 i hlt
+      have hcomp := hI.comp_ (c i0) (c i) (d j) (hcdom i0) (hcdom i) (hddom j)
+      rw [hci0i, hpp, show comp pp pp = [pp] from rfl, List.mem_singleton] at hcomp
+      exact (h j).1 hcomp
+    · exact (h j).1 (by rw [Nat.le_antisymm hii hge]; exact hpp)
+  · rcases Nat.lt_or_ge i0 i with hlt | hge
+    · have hij : c i = d j := hI.eq_id (c i) (d j) (hcdom i) (hddom j) heq
+      have hci0i : I.rho (c i0) (c i) = pp := chain_pp_lt hI c hcdom hcstep i0 i hlt
+      rw [hij] at hci0i
+      exact (h j).1 hci0i
+    · exact (h j).2 (by rw [Nat.le_antisymm hii hge]; exact heq)
+
+/-- The d-side private-part condition (`d j0 ⊄ any c i`) propagates up the
+    d-tower (mirror of `cprivate_up`). -/
+theorem dprivate_up (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    {j0 j : Nat} (hjj : j0 ≤ j)
+    (h : ∀ i, I.rho (c i) (d j0) ≠ ppi) :
+    ∀ i, I.rho (c i) (d j) ≠ ppi := by
+  intro i hppi
+  rcases Nat.lt_or_ge j0 j with hlt | hge
+  · have hdj0j : I.rho (d j0) (d j) = pp := chain_pp_lt hI d hddom hdstep j0 j hlt
+    have hdjj0 : I.rho (d j) (d j0) = ppi := by
+      rw [hI.conv_ (d j0) (d j) (hddom j0) (hddom j), hdj0j]; rfl
+    have hcomp := hI.comp_ (c i) (d j) (d j0) (hcdom i) (hddom j) (hddom j0)
+    rw [hppi, hdjj0, show comp ppi ppi = [ppi] from rfl, List.mem_singleton] at hcomp
+    exact h i hcomp
+  · exact h i (by rw [Nat.le_antisymm hjj hge]; exact hppi)
+
+/-- **THE CROSS-KERNEL CLASSIFICATION** (§36): for two ascending kernels'
+    chains, EXACTLY one of three holds — either the cross-relation is eventually
+    CONSTANT (some `v`, on a NE-quadrant — this is `hrectQ` for the pair, `v = PO`
+    when incomparable+overlapping via `cross_po_stabilizes`, `v = DR` when
+    disjoint), OR one tower EMBEDS in the other (`c i ⊆` some `d j` for every `i`,
+    or dually) — the comparable/staircase case that must be MERGED via a shared
+    round-robin kernel.  Pure `Classical.em` on the two private-part predicates
+    and overlap; the constant-`PO` witness is bumped to a common level
+    (`cprivate_up`/`dprivate_up`) so overlap is secured there. -/
+theorem classify_cross (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n))
+    (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp) :
+    (∃ N v, ∀ i j, N ≤ i → N ≤ j → I.rho (c i) (d j) = v)
+    ∨ (∀ i, ∃ j, I.rho (c i) (d j) = pp ∨ I.rho (c i) (d j) = eq)
+    ∨ (∀ j, ∃ i, I.rho (c i) (d j) = ppi) := by
+  rcases Classical.em (∃ i0, ∀ j, I.rho (c i0) (d j) ≠ pp ∧ I.rho (c i0) (d j) ≠ eq)
+    with hP | hnP
+  · rcases Classical.em (∃ j0, ∀ i, I.rho (c i) (d j0) ≠ ppi) with hQ | hnQ
+    · rcases Classical.em (∃ i1 j1, I.rho (c i1) (d j1) ≠ dr) with hov | hnov
+      · -- incomparable + overlapping ⟹ constant PO
+        obtain ⟨i0, hi0⟩ := hP
+        obtain ⟨j0, hj0⟩ := hQ
+        obtain ⟨i1, j1, hov1⟩ := hov
+        refine Or.inl ⟨max (max i0 i1) (max j0 j1), po, fun i j hi hj => ?_⟩
+        have hI0c := cprivate_up hI c d hcdom hddom hcstep (Nat.le_max_left i0 i1) hi0
+        have hJ0d := dprivate_up hI c d hcdom hddom hdstep (Nat.le_max_left j0 j1) hj0
+        have hoIJ : I.rho (c (max i0 i1)) (d (max j0 j1)) ≠ dr :=
+          cross_overlap_mono hI c d hcdom hddom hcstep hdstep
+            (Nat.le_max_right i0 i1) (Nat.le_max_right j0 j1) hov1
+        exact cross_po_stabilizes hI c d hcdom hddom hcstep hdstep
+          (max i0 i1) (max j0 j1) hI0c hJ0d hoIJ i j
+          (Nat.le_trans (Nat.le_max_left _ _) hi) (Nat.le_trans (Nat.le_max_right _ _) hj)
+      · -- disjoint everywhere ⟹ constant DR
+        refine Or.inl ⟨0, dr, fun i j _ _ => ?_⟩
+        rcases Classical.em (I.rho (c i) (d j) = dr) with hd | hnd
+        · exact hd
+        · exact absurd ⟨i, j, hnd⟩ hnov
+    · -- ¬Q: every d-level embeds in some c-level (merge d into c)
+      refine Or.inr (Or.inr (fun j => ?_))
+      rcases Classical.em (∃ i, I.rho (c i) (d j) = ppi) with h | h
+      · exact h
+      · exact absurd ⟨j, fun i hppi => h ⟨i, hppi⟩⟩ hnQ
+  · -- ¬P: every c-level embeds in some d-level (merge c into d)
+    refine Or.inr (Or.inl (fun i => ?_))
+    rcases Classical.em (∃ j, I.rho (c i) (d j) = pp ∨ I.rho (c i) (d j) = eq) with h | h
+    · exact h
+    · exact absurd ⟨i, fun j => ⟨fun hpp => h ⟨j, Or.inl hpp⟩, fun heq => h ⟨j, Or.inr heq⟩⟩⟩ hnP
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17602,6 +17694,7 @@ end VerticalWitness
 #print axioms chain_pp_lt
 #print axioms cross_dr_stabilizes
 #print axioms cross_po_stabilizes
+#print axioms classify_cross
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
