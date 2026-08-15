@@ -13979,6 +13979,18 @@ theorem chain_ee_down (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
   have hmd : mdepth E + 1 ≤ b := (mem_mtk.mp hall).2
   omega
 
+/-- **FIXED-BUDGET `∀`-PROPAGATION** (§34 block 1, the poset core): `∀r.E` at `x`
+    propagates to any `r`-neighbour `y` at the SAME budget — `mty_all` + the bound
+    `mdepth E ≤ b−1 ≤ b`.  General over the relation `r`; subsumes
+    `chain_ee_up`/`chain_ee_down` (the `PP`/`PPI` chain cases) and is the `ee_all`
+    core of a general POSET-of-nodes certificate. -/
+theorem mtk_all_same {C0 : Concept} {x y : α} {r : Atom} {E : Concept} {b : Nat}
+    (hall : Concept.all r E ∈ mtk C0 I x b) (hy : I.dom y) (hr : I.rho x y = r) :
+    E ∈ mtk C0 I y b := by
+  refine mem_mtk.mpr ⟨mty_all (mem_mtk.mp hall).1 hy hr, ?_⟩
+  have hmd : mdepth E + 1 ≤ b := (mem_mtk.mp hall).2
+  omega
+
 /-- THE SINGLE-`∃PP` GENERATOR: a persistent `∃PP.G` element whose model
     types carry only the demands `∃PP.G`/`∃EQ` yields a finite
     certificate carrying `C₀` — extraction for the one-kernel vertical
@@ -14299,6 +14311,78 @@ theorem linChain_frame (L : Nat) :
     Frame (posetNet (fun i j : Fin L => i.val < j.val)) :=
   posetNet_frame _ (fun k => Nat.lt_irrefl k.val)
     (fun _ _ _ hab hbc => Nat.lt_trans hab hbc)
+
+/-- **THE GENERAL FINITE-POSET-OF-NODES MultiTier** (§34 block 1, general): a base
+    `PP`-below a finite POSET of same-budget nodes (`E = posetNet lt`, comparable
+    ⟹ `PP`/`PPI`, incomparable ⟹ `PO`), `κ` empty.  Generalises `chainMT` (linear
+    order) to a BRANCHING vertical structure — the actual shape of the vertical
+    skeleton in the ordered-disjoint certificate. -/
+noncomputable def posetMT (I : Interp α) (C0 : Concept) {N : Type} [DecidableEq N]
+    (lt : N → N → Prop) [DecidableRel lt] (x0 : α) (g : N → α) (b : Nat) :
+    MultiTier (Unit ⊕ N) Empty where
+  E := posetNet lt
+  K := fun e => e.elim
+  Q := fun e => e.elim
+  up := fun e => e.elim
+  tauE := fun e => mtk C0 I (Sum.elim (fun _ => x0) g e) b
+  p := fun e => e.elim
+  phase := fun e => e.elim
+
+/-- **THE GENERAL POSET CERTIFICATE IS VALID.**  `ee_all` = the fixed-budget
+    order-propagation (`mtk_all_same` on `posetNet`'s value lemmas: base↔node via
+    `hbelow`, node↔node via `hpp` + converse; the incomparable `PO` case
+    discharged by `∀PO`-freeness); `e_ex` = the supplied `hdem`; `κ`-clauses
+    vacuous.  Subsumes `chainMT_ok`; handles branching (`∃PP` to incomparable
+    superparts). -/
+theorem posetMT_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    {N : Type} [DecidableEq N] (lt : N → N → Prop) [DecidableRel lt]
+    (hirr : ∀ k, ¬ lt k k) (htr : ∀ a b c, lt a b → lt b c → lt a c)
+    (x0 : α) (hx0dom : I.dom x0) (g : N → α) (hgdom : ∀ k, I.dom (g k)) (b : Nat)
+    (hbelow : ∀ k, I.rho x0 (g k) = pp)
+    (hpp : ∀ k k', lt k k' → I.rho (g k) (g k') = pp)
+    (hdem : ∀ e r D, Concept.ex r D ∈ (posetMT I C0 lt x0 g b).tauE e →
+      ∃ f, posetNet lt e f = r ∧ D ∈ (posetMT I C0 lt x0 g b).tauE f) :
+    MultiTierOk (posetMT I C0 lt x0 g b) := by
+  refine
+    { hp := fun e => e.elim
+      frame_q := qnet_empty_frame' _ _ _ (fun e => e.elim) (posetNet_frame lt hirr htr)
+      e_clash := fun _ a h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ x y h => mtk_and h
+      e_or := fun _ x y h => mtk_or h
+      k_clash := fun k => k.elim
+      k_nobot := fun k => k.elim
+      k_and := fun k => k.elim
+      k_or := fun k => k.elim
+      ee_all := ?_
+      ek_all := fun _ _ _ _ k => k.elim
+      ke_all := fun k => k.elim
+      kk_pp := fun k => k.elim
+      kk_ppi := fun k => k.elim
+      kk_eq := fun k => k.elim
+      kq_all := fun k => k.elim
+      e_ex := fun e r D hmem => Or.inl (hdem e r D hmem)
+      k_ex := fun k => k.elim }
+  intro e f r c' hmem hEf
+  rcases e with ⟨⟩ | k <;> rcases f with ⟨⟩ | k' <;>
+    simp only [posetMT, Sum.elim_inl, Sum.elim_inr] at hmem hEf ⊢
+  · rw [posetNet_ll] at hEf; subst hEf
+    exact mtk_all_same hmem hx0dom (hI.refl_eq x0 hx0dom)
+  · rw [posetNet_lr] at hEf; subst hEf
+    exact mtk_all_same hmem (hgdom k') (hbelow k')
+  · rw [posetNet_rl] at hEf; subst hEf
+    exact mtk_all_same hmem hx0dom
+      (by rw [hI.conv_ x0 (g k) hx0dom (hgdom k), hbelow k]; rfl)
+  · rcases posetNet_rr_cases lt k k' with ⟨hv, hkk⟩ | ⟨hv, hkk⟩ | ⟨hv, hkk⟩ | hv
+    · rw [hv] at hEf; subst hEf; subst hkk
+      exact mtk_all_same hmem (hgdom k) (hI.refl_eq (g k) (hgdom k))
+    · rw [hv] at hEf; subst hEf
+      exact mtk_all_same hmem (hgdom k') (hpp k k' hkk)
+    · rw [hv] at hEf; subst hEf
+      exact mtk_all_same hmem (hgdom k')
+        (by rw [hI.conv_ (g k') (g k) (hgdom k') (hgdom k), hpp k' k hkk]; rfl)
+    · rw [hv] at hEf; subst hEf
+      exact absurd rfl (pofree_cl_all C0 hpofree po c' (mtk_sub_cl _ hmem))
 
 /-- The chain position of a node: base `= 0`, poset node `i = i+1`. -/
 def cidx (L : Nat) : Unit ⊕ Fin L → Nat := Sum.elim (fun _ => 0) (fun i => i.val + 1)
@@ -17261,8 +17345,10 @@ end VerticalWitness
 #print axioms ascKernelG
 #print axioms chain_ee_up
 #print axioms chain_ee_down
+#print axioms mtk_all_same
 #print axioms linChain_frame
 #print axioms chainMT_ok
+#print axioms posetMT_ok
 #print axioms dascKernel
 #print axioms ascKernelPack
 #print axioms ppPhaseNodes
