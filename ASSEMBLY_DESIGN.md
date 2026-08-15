@@ -2454,14 +2454,26 @@ direction, given a finite external list.
 ### 35.2 The four remaining pieces (in dependency order)
 
 1. **`hrectQ` — the cross-kernel rectangle.** For two *moving* chains `ck k`,
-   `ck k'`, the relation `ρ (ck k (ik+a)) (ck k'(ik'+b))` must be constant in
-   `a,b` past chosen bases. This is a genuine 2-D uniform stabilization —
-   `externals_stabilize` only handles a chain vs a *fixed* external. Route: for
-   each ordered pair of kernels, stabilize `k'` against `ck k (ik k)` (one
-   external) to fix the `b`-direction, then stabilize `k` against the now-fixed
-   `ck k' (ik k')` for the `a`-direction, using RCC5 monotonicity to make the
-   horizon uniform. Finitely many kernel pairs ⟹ a joint horizon; pick every
-   `ik k` past it. This is the next substantial theorem.
+   `ck k'`, the relation `F(a,b) = ρ (ck k (ik+a)) (ck k'(ik'+b))` must be
+   constant past chosen bases. `F` decomposes into three monotone indicators —
+   disjoint (`=DR`), `c⊆d` (`∈{PP,EQ}`), `d⊆c` (`∈{PPI,EQ}`):
+   - **DR third — DONE** (`cross_dr_stabilizes`, commit 8e75a41): overlap
+     (`≠DR`) between two ascending PP-towers is NE-closed, because
+     `dr ∉ comp(PPI,X)` and `dr ∉ comp(X,PP)` for every non-DR `X` (pure comp
+     table). So the DR-indicator is eventually constant on a NE-quadrant.
+     Support bricks: `chain_pp_lt` (propext-only), `cross_overlap_mono_m/_n`.
+   - **`⊆` thirds — TO BUILD.** `Q = c⊆d` is down-in-`m`, up-in-`n`; `R = d⊆c`
+     is up-in-`m`, down-in-`n` — neither is NE-monotone, so pure-comp closure
+     does NOT suffice. Route: the rank `ppi=3, dr=eq=2, po=1, pp=0` makes
+     `comp(·,pp)` non-increasing (a `by decide` fact `rank_comp_pp_le`), so the
+     per-row `n`-limit `φ(n)` has non-increasing rank hence eventually constant;
+     mirror for the `m`-limit; the OPEN subtlety is upgrading the two per-margin
+     limits to a single UNIFORM NE-quadrant value (the marginals stabilize only
+     at per-external horizons — `externals_stabilize` gives no uniform horizon).
+     This uniformity step, on the overlap region where the DR-third already
+     pins `≠DR`, is the crux of the remaining ~150-line chunk.
+   Finitely many kernel pairs (`κ` a Fintype) ⟹ a joint horizon; pick every
+   `ik k` past it.
 2. **Classification.** A `Classical.em`-driven split of each `β`-node's `∃PP`/
    `∃PPI` demand into persistent (→ a kernel via `ascKernelG`/`dascKernel`,
    `κ` = the persistent sites) vs served-in-`ascNodes`. Persistence is
