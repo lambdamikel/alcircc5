@@ -12980,6 +12980,51 @@ noncomputable def ascKernelPack (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
       ascKernel hI x0 h0 L
     exact ⟨⟨c, i, p, hc0, hdom, hstep, hiLE, hpPos, hperiod, hdem, hbase⟩⟩)
 
+/-- **KERNEL WITH STABILIZED EXTERNALS** — `AscKernelPack` extended with the
+    external-interface data `mixKernel_ok` needs as a SINGLE object.  On top of the
+    ascending chain + period, it carries `stab`: every external `e ∈ exts` has a
+    phase-INDEPENDENT relation to the chain from `c i` on (`ρ e (c(i+a)) = ρ e (c i)`
+    — the external→chain orientation of `mixKernel_ok`'s `hstab`), plus `recur`, the
+    cofinal recurrence of every phase type (for the round-robin serving of the
+    kernel's own `∃PP`).  This is precisely what makes the "late picking" of the
+    period `i` legitimate: past the finite stabilization horizon of `exts`, the
+    externals see a constant kernel interface. -/
+structure StabKernelPack {α : Type} (I : Interp α) (C0 G : Concept) (x0 : α)
+    (exts : List α) (L : Nat) where
+  c : Nat → α
+  i : Nat
+  p : Nat
+  c0 : c 0 = x0
+  dom : ∀ n, I.dom (c n)
+  step : ∀ n, I.rho (c n) (c (n + 1)) = pp
+  iLE : L ≤ i
+  pPos : 0 < p
+  period : mty C0 I (c i) = mty C0 I (c (i + p))
+  dem : ∀ n, Concept.ex pp G ∈ mty C0 I (c n)
+  stab : ∀ e ∈ exts, ∀ a, I.rho e (c (i + a)) = I.rho e (c i)
+  recur : ∀ a, i ≤ a → ∀ N, ∃ m, N ≤ m ∧ mty C0 I (c m) = mty C0 I (c a)
+
+/-- Extract the bundled kernel-with-externals data from a `persistPP` node and a
+    finite external list — `persistPP_chain` for the chain, `segment_select` for
+    the period + stabilized interface + recurrence (all at once).  The `stab`
+    field converts `segment_select`'s chain→external rows into the external→chain
+    orientation via `hI.conv_`. -/
+noncomputable def stabKernelPack (hI : RCC5Interp I) {C0 G : Concept} (x0 : α)
+    (h0 : persistPP I C0 G x0) (exts : List α) (hexts : ∀ e ∈ exts, I.dom e)
+    (L : Nat) : StabKernelPack I C0 G x0 exts L :=
+  Classical.choice (by
+    obtain ⟨c, hc0, hdom, hstep, hdem⟩ := persistPP_chain hI x0 h0
+    obtain ⟨i, p, hLi, hp, hty, hstabraw, hrecur⟩ :=
+      segment_select hI hdom hstep C0 exts hexts L
+    refine ⟨⟨c, i, p, hc0, hdom, hstep, hLi, hp, hty, hdem, ?_, hrecur⟩⟩
+    intro e he a
+    have h1 : I.rho e (c (i + a)) = conv (I.rho (c (i + a)) e) :=
+      hI.conv_ (c (i + a)) e (hdom (i + a)) (hexts e he)
+    have h2 : I.rho (c (i + a)) e = I.rho (c i) e := hstabraw e he (i + a) (by omega)
+    have h3 : I.rho e (c i) = conv (I.rho (c i) e) :=
+      hI.conv_ (c i) e (hdom i) (hexts e he)
+    rw [h1, h2, ← h3])
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17351,6 +17396,7 @@ end VerticalWitness
 #print axioms posetMT_ok
 #print axioms dascKernel
 #print axioms ascKernelPack
+#print axioms stabKernelPack
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
