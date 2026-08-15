@@ -13698,6 +13698,25 @@ theorem towers_from_persistPP (hI : RCC5Interp I) {C0 : Concept} {n : Nat}
   obtain ⟨ck, hck⟩ := Classical.axiomOfChoice h
   exact ⟨ck, fun i => (hck i).1, fun i m => (hck i).2.1 m, fun i m => (hck i).2.2 m⟩
 
+/-- **THE CLASS KERNEL** (§38) — a `persistAll` node yields complete round-robin
+    kernel data.  From `persistAll I C0 Ds x0`, the round-robin tower `rrPt` is an
+    ascending `PP`-chain (`rrPt_dom`/`rrPt_step`) with a period `(i,p)`
+    (`rr_segment`) at which every demand in `Ds` is carried at some phase in
+    `[i, i+p)` (`rr_covers`).  This is exactly the ascending-kernel data
+    `mixKernels_ok` consumes (`ck`, `ik`, `pk`, `hstep`, `hp`, `hty`) plus the
+    per-demand serving that its `k_ex` routing needs — one kernel for a whole
+    comparability class. -/
+theorem class_kernel (hI : RCC5Interp I) {C0 : Concept} (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) :
+    ∃ (c : Nat → α) (i p : Nat),
+      (∀ n, I.dom (c n)) ∧ (∀ n, I.rho (c n) (c (n + 1)) = pp) ∧
+      0 < i ∧ 0 < p ∧ mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ k (hk : k < Ds.length), ∃ b, b < p ∧ Ds.get ⟨k, hk⟩ ∈ mty C0 I (c (i + b))) := by
+  obtain ⟨i, p, hi, hp, _, hdvd, hty⟩ := rr_segment hI C0 Ds hL x0 h0
+  exact ⟨rrPt hI C0 Ds hL x0 h0, i, p, rrPt_dom hI C0 Ds hL x0 h0,
+    rrPt_step hI C0 Ds hL x0 h0, hi, hp, hty,
+    fun k hk => rr_covers hI C0 Ds hL x0 h0 i p hi hp hdvd k hk⟩
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -18088,6 +18107,7 @@ end VerticalWitness
 #print axioms common_upper_on_tower
 #print axioms class_persistAll
 #print axioms towers_from_persistPP
+#print axioms class_kernel
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
