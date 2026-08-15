@@ -13452,6 +13452,31 @@ theorem embed_to_pp (hI : RCC5Interp I) {d : Nat → α}
     rw [hI.eq_id x (d j0) hx (hddom j0) heq]
     exact hdstep j0
 
+/-- **EMBEDDING IS TRANSITIVE** (§37) — the key to the partition.  "Tower `c`
+    embeds in tower `d`" (`∀ i, ∃ j, ρ(c i)(d j) ∈ {PP,EQ}`, `classify_cross`
+    disjunct 2) is a TRANSITIVE preorder: `c ⊆ d ⊆ e ⟹ c ⊆ e`, because
+    `comp({PP,EQ},{PP,EQ}) ⊆ {PP,EQ}`.  So although *comparability* (embeds either
+    way) is NOT transitive, embedding IS — hence the persistent demands' towers
+    form a finite preorder, whose MAXIMAL towers are a dominating antichain (each
+    maximal tower serves every tower below it by guard absorption; distinct
+    maximal towers are incomparable, so `hrectQ`-ready).  This is why the "merge"
+    partition is well-defined. -/
+theorem embed_trans (hI : RCC5Interp I) {c d e : Nat → α}
+    (hcdom : ∀ n, I.dom (c n)) (hddom : ∀ n, I.dom (d n)) (hedom : ∀ n, I.dom (e n))
+    (hcd : ∀ i, ∃ j, I.rho (c i) (d j) = pp ∨ I.rho (c i) (d j) = eq)
+    (hde : ∀ j, ∃ k, I.rho (d j) (e k) = pp ∨ I.rho (d j) (e k) = eq) :
+    ∀ i, ∃ k, I.rho (c i) (e k) = pp ∨ I.rho (c i) (e k) = eq := by
+  intro i
+  obtain ⟨j, hij⟩ := hcd i
+  obtain ⟨k, hjk⟩ := hde j
+  have hcomp := hI.comp_ (c i) (d j) (e k) (hcdom i) (hddom j) (hedom k)
+  refine ⟨k, ?_⟩
+  rcases hij with h1 | h1 <;> rcases hjk with h2 | h2 <;> rw [h1, h2] at hcomp <;>
+    simp only [show comp pp pp = [pp] from rfl, show comp pp eq = [pp] from rfl,
+      show comp eq pp = [pp] from rfl, show comp eq eq = [eq] from rfl,
+      List.mem_singleton] at hcomp <;>
+    (first | exact Or.inl hcomp | exact Or.inr hcomp)
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17836,6 +17861,7 @@ end VerticalWitness
 #print axioms merge_persistAll
 #print axioms merge_pair
 #print axioms embed_to_pp
+#print axioms embed_trans
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
