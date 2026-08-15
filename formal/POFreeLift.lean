@@ -13477,6 +13477,113 @@ theorem embed_trans (hI : RCC5Interp I) {c d e : Nat → α}
       List.mem_singleton] at hcomp <;>
     (first | exact Or.inl hcomp | exact Or.inr hcomp)
 
+/-! ### Maximal-element domination in a finite preorder (§37.1)
+
+The one abstract order-theory fact the partition needs: in a finite preorder
+every element is `≤` a maximal element.  Proved via strong induction on the
+count `#{k : le a k}` (a maximal ⟹ done; else a strictly-greater `a'` drops the
+count).  Core Lean has no `Finset.exists_maximal` and a preorder has no total
+`max`, so the two `List.countP` steps (`countP_mono`, `countP_lt`) are proved
+inline. -/
+
+/-- `p a` holds and `a ∈ l` ⟹ `1 ≤ countP p l`. -/
+theorem one_le_countP_of_mem {β : Type} (p : β → Bool) {a : β} {l : List β}
+    (ha : a ∈ l) (hpa : p a = true) : 1 ≤ l.countP p := by
+  induction l with
+  | nil => nomatch ha
+  | cons b rest ih =>
+    rw [List.countP_cons]
+    rcases List.mem_cons.mp ha with rfl | ha
+    · rw [if_pos hpa]; omega
+    · have := ih ha; omega
+
+/-- `countP` is monotone: `q ⟹ p` on `l` gives `countP q l ≤ countP p l`. -/
+theorem countP_mono {β : Type} (p q : β → Bool) :
+    ∀ (l : List β), (∀ x ∈ l, q x = true → p x = true) → l.countP q ≤ l.countP p := by
+  intro l
+  induction l with
+  | nil => intro _; simp
+  | cons a rest ih =>
+    intro h
+    rw [List.countP_cons, List.countP_cons]
+    have hrest : rest.countP q ≤ rest.countP p :=
+      ih (fun x hx => h x (List.mem_cons_of_mem a hx))
+    have himpl : q a = true → p a = true := h a (List.mem_cons.mpr (Or.inl rfl))
+    have ha : (if q a = true then 1 else 0) ≤ (if p a = true then 1 else 0) := by
+      cases hq : q a <;> cases hp : p a <;> simp_all
+    omega
+
+/-- Strict version: `q ⟹ p` on `l`, and some `x ∈ l` has `p x` but not `q x`,
+    gives `countP q l < countP p l`. -/
+theorem countP_lt {β : Type} (p q : β → Bool) :
+    ∀ (l : List β), (∀ x ∈ l, q x = true → p x = true) →
+      (∃ x ∈ l, p x = true ∧ q x = false) → l.countP q < l.countP p := by
+  intro l
+  induction l with
+  | nil => intro _ hex; obtain ⟨x, hx, _⟩ := hex; nomatch hx
+  | cons a rest ih =>
+    intro h hex
+    rw [List.countP_cons, List.countP_cons]
+    have hmono : rest.countP q ≤ rest.countP p :=
+      countP_mono p q rest (fun x hx => h x (List.mem_cons_of_mem a hx))
+    by_cases hcase : p a = true ∧ q a = false
+    · obtain ⟨hpa, hqa⟩ := hcase
+      rw [if_pos hpa, if_neg (by rw [hqa]; simp)]
+      omega
+    · have hexr : ∃ x ∈ rest, p x = true ∧ q x = false := by
+        obtain ⟨x, hx, hpx, hqx⟩ := hex
+        rcases List.mem_cons.mp hx with rfl | hx
+        · exact absurd ⟨hpx, hqx⟩ hcase
+        · exact ⟨x, hx, hpx, hqx⟩
+      have hlt : rest.countP q < rest.countP p :=
+        ih (fun x hx => h x (List.mem_cons_of_mem a hx)) hexr
+      have himpl : q a = true → p a = true := h a (List.mem_cons.mpr (Or.inl rfl))
+      have ha : (if q a = true then 1 else 0) ≤ (if p a = true then 1 else 0) := by
+        cases hq : q a <;> cases hp : p a <;> simp_all
+      omega
+
+/-- **MAXIMAL-ELEMENT DOMINATION** — in a finite preorder (`le` on `Fin n`,
+    transitive + reflexive) every element is `≤` a maximal element `m`
+    (`∀ k, le m k → le k m`).  This is the abstract fact the partition rests on:
+    the demand-towers form a finite preorder (`embed_trans`), so `κ` = the
+    maximal towers, and every demand embeds in one. -/
+theorem maximal_dominated {n : Nat} (le : Fin n → Fin n → Prop) [DecidableRel le]
+    (htrans : ∀ a b c, le a b → le b c → le a c) (hrefl : ∀ a, le a a) :
+    ∀ a, ∃ m, le a m ∧ ∀ k, le m k → le k m := by
+  have key : ∀ N (a : Fin n),
+      (List.finRange n).countP (fun k => decide (le a k)) ≤ N →
+      ∃ m, le a m ∧ ∀ k, le m k → le k m := by
+    intro N
+    induction N with
+    | zero =>
+      intro a hcnt
+      have hpos : 1 ≤ (List.finRange n).countP (fun k => decide (le a k)) :=
+        one_le_countP_of_mem _ (List.mem_finRange a) (by simp [hrefl a])
+      omega
+    | succ N ih =>
+      intro a hcnt
+      by_cases hmax : ∀ k, le a k → le k a
+      · exact ⟨a, hrefl a, hmax⟩
+      · have hne : ∃ a', le a a' ∧ ¬ le a' a := by
+          rcases Classical.em (∃ a', le a a' ∧ ¬ le a' a) with h | h
+          · exact h
+          · exfalso; apply hmax; intro k hak
+            rcases Classical.em (le k a) with hka | hka
+            · exact hka
+            · exact absurd ⟨k, hak, hka⟩ h
+        obtain ⟨a', haa', hna'a⟩ := hne
+        have hlt : (List.finRange n).countP (fun k => decide (le a' k)) <
+            (List.finRange n).countP (fun k => decide (le a k)) := by
+          apply countP_lt (fun k => decide (le a k)) (fun k => decide (le a' k))
+          · intro x _ hx
+            simp only [decide_eq_true_eq] at hx ⊢
+            exact htrans a a' x haa' hx
+          · exact ⟨a, List.mem_finRange a, by simp [hrefl a], by simp [hna'a]⟩
+        obtain ⟨m, ha'm, hmax_m⟩ := ih a' (by omega)
+        exact ⟨m, htrans a a' m haa' ha'm, hmax_m⟩
+  intro a
+  exact key _ a (Nat.le_refl _)
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -17862,6 +17969,7 @@ end VerticalWitness
 #print axioms merge_pair
 #print axioms embed_to_pp
 #print axioms embed_trans
+#print axioms maximal_dominated
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
