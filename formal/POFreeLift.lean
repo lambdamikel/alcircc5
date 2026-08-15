@@ -13641,6 +13641,44 @@ theorem common_upper_on_tower (hI : RCC5Interp I) (d : Nat → α)
   rw [hlvl x hx, hll, show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
   exact hc
 
+/-- **THE CLASS `persistAll` NODE** (§38) — each maximal tower serves its whole
+    comparability class.  Given ascending towers `ck` with per-root persistence
+    guards, a maximal tower `j`, and the list `below` of demands whose roots embed
+    into `j`'s tower, there is a node `ck j N` that is a `persistAll` node for ALL
+    of `below`'s demand formulas.  Combines `embed_to_pp` (levels), the level
+    function (`classical` `Classical.choose`), `common_upper_on_tower` (the common
+    node), and `merge_persistAll` (guard absorption).  So `rr_covers` then serves
+    the entire class from `ck j`'s single tower. -/
+theorem class_persistAll (hI : RCC5Interp I) {C0 : Concept} {n : Nat}
+    (ck : Fin n → Nat → α) (hdom : ∀ i m, I.dom (ck i m))
+    (hstep : ∀ i m, I.rho (ck i m) (ck i (m + 1)) = pp)
+    (D : Fin n → Concept)
+    (hguard : ∀ i, Concept.all pp (Concept.ex pp (D i)) ∈ mty C0 I (ck i 0))
+    (j : Fin n) (below : List (Fin n))
+    (hbelow : ∀ i ∈ below, ∃ b,
+      I.rho (ck i 0) (ck j b) = pp ∨ I.rho (ck i 0) (ck j b) = eq) :
+    ∃ N, persistAll I C0 (below.map D) (ck j N) := by
+  classical
+  let lvl : α → Nat := fun x => if h : ∃ b, I.rho x (ck j b) = pp then Classical.choose h else 0
+  have hrdom : ∀ x ∈ below.map (fun i => ck i 0), I.dom x := by
+    intro x hx
+    obtain ⟨i, _, rfl⟩ := List.mem_map.mp hx
+    exact hdom i 0
+  have hlvl : ∀ x ∈ below.map (fun i => ck i 0), I.rho x (ck j (lvl x)) = pp := by
+    intro x hx
+    obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hx
+    have hex : ∃ b, I.rho (ck i 0) (ck j b) = pp := by
+      obtain ⟨b, hb⟩ := hbelow i hi
+      exact embed_to_pp hI (hdom j) (hstep j) (hdom i 0) hb
+    have hlvli : lvl (ck i 0) = Classical.choose hex := dif_pos hex
+    rw [hlvli]
+    exact Classical.choose_spec hex
+  obtain ⟨N, _, hN⟩ := common_upper_on_tower hI (ck j) (hdom j) (hstep j)
+    (below.map (fun i => ck i 0)) hrdom lvl hlvl
+  refine ⟨N, merge_persistAll hI (hdom j N) (fun Dm hDm => ?_)⟩
+  obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hDm
+  exact ⟨ck i 0, hdom i 0, hN (ck i 0) (List.mem_map.mpr ⟨i, hi, rfl⟩), hguard i⟩
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -18029,6 +18067,7 @@ end VerticalWitness
 #print axioms maximal_dominated
 #print axioms exists_maximal_tower
 #print axioms common_upper_on_tower
+#print axioms class_persistAll
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
