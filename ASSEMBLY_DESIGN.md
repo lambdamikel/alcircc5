@@ -2682,17 +2682,23 @@ So `κ` = the maximal towers; coverage routes each demand to the maximal tower
 above it. This is why the merge partition is well-defined despite non-transitive
 comparability.
 
-### 37.1 The next Lean target: `maximal_dominated`
+### 37.1 `maximal_dominated` — DONE (commit f023cb9)
 
-The one abstract fact still owed: **in a finite preorder every element is `≤` a
-maximal element.** Statement (over `Fin n`, `le` transitive + reflexive,
-`DecidableRel`):
-`∀ a, ∃ m, le a m ∧ ∀ k, le m k → le k m`.
-Proof = strong induction on the count `#{k : le a k}`: if `a` is maximal, done;
-else `∃ a', le a a' ∧ ¬le a' a`, and `#{k : le a' k} < #{k : le a k}` (subset by
-transitivity, strict since `a` is in the first not the second) — recurse on `a'`.
-Core-Lean note: no mathlib `Finset.exists_maximal`, and a preorder has no total
-`max` to fold, so this needs the count-measure well-founded recursion +
-`List.countP` monotonicity (subset ⟹ `countP ≤`, strict ⟹ `<`), proved inline
-if not in core. This is the honest next brick; after it, the partition is a
-theorem and only coverage (`he_ex`/`hk_ex`) + `codesM` remain.
+The one abstract fact the partition owed — **in a finite preorder every element
+is `≤` a maximal element** (`∀ a : Fin n, ∃ m, le a m ∧ ∀ k, le m k → le k m`) —
+is now proved in core Lean. Strong induction on `#{k : le a k}`: `a` maximal ⟹
+done; else `∃ a', le a a' ∧ ¬le a' a`, and the count strictly drops. The two
+`List.countP` steps are inline (`countP_mono`, `countP_lt`, `one_le_countP_of_mem`)
+since core has no `Finset.exists_maximal` and a preorder has no total `max`.
+
+**So the partition's abstract foundation is complete:** `embed_trans` (embedding
+is a transitive preorder) + `maximal_dominated` (maximal domination) ⟹ `κ` = the
+maximal demand-towers, a dominating antichain. What remains for the vertical
+extraction is the **assembly**, no new abstract fact:
+- instantiate `maximal_dominated` at `le :=` the embedding on the (finite) list
+  of persistent demands — `DecidableRel` for the embedding is `Classical.dec`;
+- for each maximal tower, gather the demands below it and build its `persistAll`
+  node (`merge_persistAll` + `merge_pair`/`embed_to_pp`), then `rr_covers`;
+- cross-pairs (distinct maximals) are incomparable ⟹ `classify_cross` disjunct 1
+  ⟹ `family_hrectQ_bounded` gives `hrectQ`;
+- coverage (`he_ex`/`hk_ex`) + `codesM` + the `decidableSat_of_codes` premise.
