@@ -2419,3 +2419,62 @@ predicts. The first concrete Lean target is (1) — the poset-of-model-nodes
 `e_ex`/`ee_all` the whole fragment needs. Estimate stands revised (§33): this
 adds ~2–4 sessions over the persistent-only path, but it is the path that
 actually reaches ∀PO-free decidability rather than a persistent-only sub-fragment.
+
+## 35. The extraction summit, pinned to `mixKernels_ok` (2026-08-15)
+
+The general merged **soundness** is finished: `mixKernel_ok`/`mixKernelI_ok`
+(one kernel + arbitrary externals) and `mixKernels_ok` (the FULL multi-kernel
+merge, ascending⊎descending kernels via `dir k`, non-vacuous cross-kernel
+`kq_all`) are all proven, 0-sorry. So the entire remaining task — the
+extraction (model → certificate) — is exactly: **produce `mixKernels_ok`'s
+hypotheses from a satisfiable ∀PO-free model.** That interface is the precise
+spec of the summit:
+
+```
+mixKernels_ok (hI) (C0) (g : β→α) (hgdom) (ck : κ→ℕ→α) (hdom) (ik pk dir)
+  (hstep) (hp) (hty)
+  (hstab   : ∀ k e a, ρ (g e) (ck k (ik k + a)) = ρ (g e) (ck k (ik k)))   -- ✅ StabKernelPack / dStabKernelPack
+  (hrectQ  : ∀ k≠k' a b, ρ (ck k (ik+a)) (ck k'(ik'+b)) = ρ (ck k ik)(ck k' ik'))  -- ⬜ (1)
+  (hinj)                                                                    -- ⬜ (from distinctness of chosen nodes)
+  (he_ex   : external ∃-demand → horizontal child ∨ into some kernel)       -- ⬜ (3)
+  (hk_ex   : phase ∃-demand → external ∨ up-chain ∨ eq ∨ cross-kernel)      -- ⬜ (3)
+  : MultiTierOk (mixKernels …)
+```
+
+### 35.1 What is now supplied
+
+`StabKernelPack` (ascending) / `dStabKernelPack` (descending) bundle
+`persistPP_chain`/`persistPPI_chain` + `segment_select`/`dsegment_select` into
+`{c/i/p, dom, step, period, dem, stab, recur}`. The `stab` field IS
+`mixKernels_ok`'s per-kernel `hstab` (external→chain orientation, via
+`hI.conv_`); `recur` gives the cofinal phase recurrence for round-robin serving
+of a kernel's own `∃PP`. So `hstab` is discharged for a kernel of either
+direction, given a finite external list.
+
+### 35.2 The four remaining pieces (in dependency order)
+
+1. **`hrectQ` — the cross-kernel rectangle.** For two *moving* chains `ck k`,
+   `ck k'`, the relation `ρ (ck k (ik+a)) (ck k'(ik'+b))` must be constant in
+   `a,b` past chosen bases. This is a genuine 2-D uniform stabilization —
+   `externals_stabilize` only handles a chain vs a *fixed* external. Route: for
+   each ordered pair of kernels, stabilize `k'` against `ck k (ik k)` (one
+   external) to fix the `b`-direction, then stabilize `k` against the now-fixed
+   `ck k' (ik k')` for the `a`-direction, using RCC5 monotonicity to make the
+   horizon uniform. Finitely many kernel pairs ⟹ a joint horizon; pick every
+   `ik k` past it. This is the next substantial theorem.
+2. **Classification.** A `Classical.em`-driven split of each `β`-node's `∃PP`/
+   `∃PPI` demand into persistent (→ a kernel via `ascKernelG`/`dascKernel`,
+   `κ` = the persistent sites) vs served-in-`ascNodes`. Persistence is
+   `persistPP`/`persistPPI` (already defined).
+3. **`he_ex`/`hk_ex` routing.** Horizontal disjuncts from `ascNodes_covers` /
+   `ascNodes_covers_phase` (built); vertical + cross-kernel disjuncts from the
+   kernels' `dem`/`recur`. This is the coverage discharge over the chosen
+   `β`,`κ`.
+4. **`codesM` + `hcompl`.** Finite enumeration of merged codes (template =
+   `codesMCmix` + `encodeMT`/`mtAcceptB_complete`) and the completeness premise
+   for `decidableSat_of_codes`.
+
+`hstab` (done) and `hrectQ` (piece 1) are the two *interface-stabilization*
+obligations; once both are theorems, the remaining work (classification +
+routing + codes) is coverage bookkeeping over the already-certified engines.
+The honest next target is piece 1.
