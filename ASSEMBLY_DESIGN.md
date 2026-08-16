@@ -2868,3 +2868,92 @@ exists (`posetMT_ok`/`posetKernel_ok`, §34 item 1), but the EXTRACTION of finit
 PP-towers from a model (§34 item 2) and their unification with kernels in one
 certificate (§34 item 3) are unbuilt. So the honest label for the vertical side
 is: **persistent-∃PP vertical is complete; one-shot `∃PP` is open.**
+
+## 39. PROBE: the mixing ordering cycle (2026-08-16)
+
+Probing the externals/phases interdependency BEFORE building on it, as agreed.
+Outcome: **there is a real ordering cycle in the mixed assembly.** It is not
+resolved by existing machinery, it does not arise in the vertical-only case, and
+it is *not* shown to be mathematically vicious — it is an obstruction to the
+proof order, with candidate repairs below.
+
+### 39.1 The two facts that collide
+
+- **`externals_stabilize` needs the external list IN ADVANCE.** It takes
+  `exts : List α` and returns one horizon `N` uniform over that list. So
+  `segment_select`/`stabKernelPack` can only place a base past the horizon of
+  externals already chosen. (`StabKernelPack.iLE : L ≤ i` — the base can be
+  pushed past any threshold, but the threshold must be computable first.)
+- **`kernel_site`'s DR/PP phase-witnesses are picked AFTER the base.**
+  `dr_witness_all_below`/`pp_witness_all_below` are applied at the bound `i + p`,
+  i.e. the witness is chosen ABOVE the segment.
+
+That the second is structural, not an artifact, is now kernel-checked
+(`stab_swallowed_ppi`, `stab_swallowed_no_dr_pp`, both `propext`-only): an
+external whose row to a chain is CONSTANT (`hstab`) and which the chain has
+SWALLOWED at any point at or above the base has row `PPI` at every phase — so it
+serves `∃PPI` demands and nothing else. A `∃DR`/`∃PP` phase-witness must
+therefore be un-swallowed, hence picked above the segment.
+
+### 39.2 Why the vertical case escaped and the mixed one does not
+
+For a kernel's OWN chain there is no cycle: `kernel_site` hands back the constant
+row `∀ b ≤ p, ρ (c (i+b)) w = r` for free, by backward forcing
+(`comp(PP,DR) = {DR}`). No horizon is consulted, so no advance list is needed.
+`β = Empty` (§38) has no externals at all, which is why the vertical assembly
+went through.
+
+The CROSS-kernel direction has no such gift. `mixKernels_ok`'s
+`hstab : ∀ k e a, …` quantifies over ALL kernels, so kernel `k`'s phase-witness
+`w` is a β-external of kernel `k'` too and needs a constant row there — for which
+`i_{k'}` must be past `w`'s horizon. The cycle, for `k ≠ k'`:
+
+```
+i_k  chosen  ──▶  W_k (phase-witnesses, above the segment)
+  ▲                     │  must be in k'-externals before i_{k'}
+  │                     ▼
+W_{k'} ◀── i_{k'} chosen
+```
+
+Length-4 and symmetric, so no sequential order discharges it. Composition does
+not rescue it either: from `ρ (c_k(i_k+b)) w = dr` and a constant cross-value `Q`
+one gets only `ρ w (c_{k'}(i_{k'}+a)) ∈ comp(dr, Q)`, a SET, not a value.
+
+### 39.3 Candidate repairs, ranked
+
+- **R4 — un-swallowed selection (most promising, uses §38's merge).** Show a
+  DR/PP phase-witness for kernel `k` can always be chosen NOT swallowed by any
+  other kernel. Distinct kernels are now pairwise non-comparable (§38.3), so
+  their cross-relation is a constant `DR`/`PO`; the question is whether that
+  constrains where the witnesses can sit. If yes, the witness's row to `c_{k'}`
+  is `DR`/`PO` with a base-independent horizon and the cycle collapses.
+- **R2 — route swallowed witnesses CROSS-KERNEL instead.** If `w` is swallowed by
+  kernel `k'`, serve the demand by `hk_ex` disjunct 4 (another kernel) rather
+  than by an external; then `hrectQ` (certified this session) does the work
+  instead of `hstab`. Gap: `w` being inside `k'`'s tail does not make `D` a member
+  of a `k'`-PHASE type. Needs an argument.
+- **R4 ⊎ R2 as a DICHOTOMY** is the natural shape: every DR/PP phase-witness is
+  either un-swallowed (→ external) or swallowed by some kernel (→ that kernel's
+  cross-kernel disjunct). Worth attacking as one lemma.
+- **R1 — phase-dependent `K`** (`K : κ → Nat → β → Atom`), dropping `hstab`
+  entirely. Certain to work, largest blast radius: it changes the certificate
+  shape and therefore the `codesM`/finite-coding story.
+- **R3 — joint fixed point** (all bases and witnesses simultaneously, product
+  pigeonhole). No descending measure is evident: each round pushes bases and
+  witnesses up together. Would need a genuinely new argument.
+
+### 39.4 Recommended next experiment (cheap, decisive)
+
+Test R4's core question on concrete set models BEFORE any Lean: *for two
+pairwise non-comparable ascending towers, can a phase's `∃DR` demand always be
+served by a witness un-swallowed by the other tower?* A finite search over small
+set models settles it. A counterexample kills R4 and forces R2/R1; a clean result
+makes R4 the formalization target. Either way it is a probe, not a build.
+
+### 39.5 Status effect
+
+No certified statement changes. §38's vertical result stands (it has no
+externals). What changes is the estimate for MIXING: §38.4's "the merge is a
+prerequisite and is now available" is true but not sufficient — mixing also owes
+a resolution of this cycle, which is new work of unknown size, on top of the
+one-shot `∃PP` gap (§33) that was already outstanding.

@@ -14901,6 +14901,56 @@ theorem vtowers_merged (hI : RCC5Interp I) (C0 : Concept)
   exact ⟨m, ck, ik, pk, hok, fun s hs D hD =>
     hserve D (List.mem_flatMap.mpr ⟨s, hs, hD⟩)⟩
 
+/-! ### §39 — the stabilization/serving tension (mixing probe)
+
+Two facts about `mixKernels_ok`'s `hstab` that together pin why the MIXED
+assembly has an ordering problem the vertical one does not.  `hstab` demands
+that every β-external's row to every kernel be CONSTANT across phases.  The
+lemmas below show what a constant row costs: once an external has been SWALLOWED
+by an ascending chain at any point at or above the base, constancy forces its row
+to be `PPI` at every phase — so it can serve `∃PPI` demands and nothing else.
+A `∃DR`/`∃PP` phase-witness therefore has to be un-swallowed, i.e. picked ABOVE
+the segment (which is exactly what `kernel_site` does, via
+`dr_witness_all_below`/`pp_witness_all_below` at the bound `i + p`).
+
+That is harmless for a kernel's OWN chain — `kernel_site` hands back the
+constant row `∀ b ≤ p, ρ (c (i+b)) w = r` for free.  It is the CROSS-kernel
+direction that has no such gift: such a `w` is a β-external for every OTHER
+kernel too, and `externals_stabilize` only produces a horizon for a list of
+externals given IN ADVANCE.  See ASSEMBLY_DESIGN §39 for the resulting cycle. -/
+
+/-- **A STABILIZED, SWALLOWED EXTERNAL IS `PPI` AT EVERY PHASE.**  If `w`'s row to
+    the chain is constant from the base `i` on (`mixKernels_ok`'s `hstab`) and the
+    chain has swallowed `w` at some `j ≥ i` (`ρ (c j) w = ppi`), then
+    `ρ (c (i+a)) w = ppi` for every phase. -/
+theorem stab_swallowed_ppi (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) {w : α} (hw : I.dom w) (i : Nat)
+    (hstab : ∀ a, I.rho w (c (i + a)) = I.rho w (c i))
+    {j : Nat} (hj : i ≤ j) (hsw : I.rho (c j) w = ppi) :
+    ∀ a, I.rho (c (i + a)) w = ppi := by
+  have hwj : I.rho w (c j) = pp := by
+    rw [hI.conv_ (c j) w (hdom j) hw, hsw]; rfl
+  have hwi : I.rho w (c i) = pp := by
+    have h := hstab (j - i)
+    rw [show i + (j - i) = j from by omega] at h
+    rw [← h, hwj]
+  intro a
+  rw [hI.conv_ w (c (i + a)) hw (hdom (i + a)), hstab a, hwi]
+  rfl
+
+/-- Consequently such an external serves NO `∃DR` and NO `∃PP` demand of any
+    phase: the certificate's declared `K`-row for it is `PPI`.  This is why the
+    DR/PP phase-witnesses of `kernel_site` must be picked ABOVE the segment, and
+    hence AFTER the base — the ordering constraint §39 turns on. -/
+theorem stab_swallowed_no_dr_pp (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) {w : α} (hw : I.dom w) (i : Nat)
+    (hstab : ∀ a, I.rho w (c (i + a)) = I.rho w (c i))
+    {j : Nat} (hj : i ≤ j) (hsw : I.rho (c j) w = ppi) :
+    ∀ a r, (r = dr ∨ r = pp) → I.rho (c (i + a)) w ≠ r := by
+  intro a r hr
+  rw [stab_swallowed_ppi hI c hdom hw i hstab hj hsw a]
+  rcases hr with rfl | rfl <;> exact by decide
+
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
 noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
@@ -18944,6 +18994,8 @@ end VerticalWitness
 #print axioms merge_step
 #print axioms merge_sites
 #print axioms vtowers_merged
+#print axioms stab_swallowed_ppi
+#print axioms stab_swallowed_no_dr_pp
 #print axioms VerticalWitness.persistAll_merge2_nonvacuous
 #print axioms VerticalWitness.vtowers_merged_nonvacuous
 #print axioms VerticalWitness.vtowers_two_nonvacuous
