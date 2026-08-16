@@ -14438,7 +14438,8 @@ theorem vtowers_ok (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
     (hdem : ∀ k m r D, Concept.ex r D ∈ mty C0 I (ck k m) →
       (r = pp ∧ D ∈ Ds k) ∨ r = eq) :
     ∃ ik pk : Fin n → Nat,
-      MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) ck ik pk (fun _ => true)) := by
+      MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) ck ik pk (fun _ => true)) ∧
+      ∀ k, ∀ D ∈ Ds k, ∃ b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b)) := by
   classical
   obtain ⟨B, hB⟩ := exists_bound2 n hN
   have hpair : ∀ k : Fin n, ∃ ip : Nat × Nat, B ≤ ip.1 ∧ 0 < ip.2 ∧
@@ -14448,7 +14449,7 @@ theorem vtowers_ok (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
     obtain ⟨i, p, h1, h2, h3, h4⟩ := hrec k B
     exact ⟨(i, p), h1, h2, h3, h4⟩
   obtain ⟨f, hf⟩ := Classical.axiomOfChoice hpair
-  refine ⟨fun k => (f k).1, fun k => (f k).2, ?_⟩
+  refine ⟨fun k => (f k).1, fun k => (f k).2, ?_, fun k => (hf k).2.2.2⟩
   have hbk : ∀ k k' : Fin n, k ≠ k' → hN k k' ≤ (f k).1 :=
     fun k k' _ => Nat.le_trans (hB k k') (hf k).1
   have hbk' : ∀ k k' : Fin n, k ≠ k' → hN k k' ≤ (f k').1 :=
@@ -14556,7 +14557,8 @@ theorem vtowers_or_comparable_gen (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
     (hdem : ∀ k m r D, Concept.ex r D ∈ mty C0 I (C k m) →
       (r = pp ∧ D ∈ Ds k) ∨ r = eq) :
     (∃ ik pk : Fin n → Nat,
-        MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) C ik pk (fun _ => true)))
+        MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) C ik pk (fun _ => true)) ∧
+        ∀ k, ∀ D ∈ Ds k, ∃ b, b < pk k ∧ D ∈ mty C0 I (C k (ik k + b)))
     ∨ (∃ k k' : Fin n, k ≠ k' ∧
         ((∀ i, ∃ j, I.rho (C k i) (C k' j) = pp ∨ I.rho (C k i) (C k' j) = eq) ∨
          (∀ j, ∃ i, I.rho (C k i) (C k' j) = ppi))) := by
@@ -14605,7 +14607,9 @@ theorem vtowers_or_comparable (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
       ∀ r D, Concept.ex r D ∈ mty C0 I z → (r = pp ∧ D ∈ Ds k) ∨ r = eq) :
     (∃ ik pk : Fin n → Nat,
         MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim)
-          (classChain hI C0 Ds hL x0 h0) ik pk (fun _ => true)))
+          (classChain hI C0 Ds hL x0 h0) ik pk (fun _ => true)) ∧
+        ∀ k, ∀ D ∈ Ds k, ∃ b, b < pk k ∧
+          D ∈ mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k + b)))
     ∨ (∃ k k' : Fin n, k ≠ k' ∧
         ((∀ i, ∃ j, I.rho (classChain hI C0 Ds hL x0 h0 k i)
                       (classChain hI C0 Ds hL x0 h0 k' j) = pp ∨
@@ -14618,6 +14622,284 @@ theorem vtowers_or_comparable (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
     (classChain_rec hI C0 Ds hL x0 h0)
     (fun k m r D hmem => hdem k _ (classChain_dom hI C0 Ds hL x0 h0 k m)
       (classChain_above hI C0 Ds hL x0 h0 k m) r D hmem)
+
+/-! ### §38.3 — the MERGE: closing the comparable branch
+
+`vtowers_or_comparable`'s escape branch is closed by MERGING the comparable
+pair.  §37's maximal-tower domination does NOT close it: that is a statement
+about the *demand* towers, whereas the kernels are the ROUND-ROBIN re-towers
+built above each class node, and incomparability does NOT transfer between the
+two layers — `rrPt` ascends through chosen witnesses and can leave the demand
+tower entirely, so two incomparable demand towers sitting inside a common region
+can have mutually embedding round-robin towers.  The merge therefore has to run
+on the KERNELS, as a recursion: a comparable pair becomes ONE merged
+`persistAll` site carrying both demand lists, the site count strictly drops, and
+the family is re-entered.  It terminates because the count decreases.
+
+Corroboration that a single round never sufficed: `merge_persistAll` wants the
+guard as `∀PP.(∃PP.D) ∈ mty C0 I x`, which `persistPP` ROOTS supply but
+`persistAll` SITES do not (they carry it as `sat`).  `merge_persistAll_sat` is
+the missing bridge, and it is exactly what a SECOND merge round needs. -/
+
+/-- The per-site purely-vertical condition, carried through the merge: in the
+    `PP`-cone of the site's node, every `∃`-demand is `∃PP` with argument in the
+    site's OWN list, or `∃EQ`.  Preserved by merging because the merged node's
+    cone is contained in each parent's (`comp(PP,PP) = {PP}`). -/
+abbrev SiteDem (I : Interp α) (C0 : Concept) (s : α × List Concept) : Prop :=
+  ∀ z, I.dom z → (z = s.1 ∨ I.rho s.1 z = pp) →
+    ∀ r D, Concept.ex r D ∈ mty C0 I z → (r = pp ∧ D ∈ s.2) ∨ r = eq
+
+/-- `merge_persistAll` with the guard in `sat` form — which is what a
+    `persistAll` SITE actually carries.  The `mty` form only covers merges of
+    `persistPP` roots, so this is the bridge the second merge round needs. -/
+theorem merge_persistAll_sat (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {z : α} (hz : I.dom z)
+    (hguards : ∀ D ∈ Ds, ∃ x, I.dom x ∧ I.rho x z = pp ∧
+      Concept.ex pp D ∈ mty C0 I x ∧ sat I x (Concept.all pp (Concept.ex pp D))) :
+    persistAll I C0 Ds z := by
+  refine ⟨hz, fun D hD => ?_⟩
+  obtain ⟨x, hx, hxz, hex, hall⟩ := hguards D hD
+  exact ⟨mem_mty.mpr ⟨mty_sub _ hex, hall z hz hxz⟩, sat_all_pp_up hI hx hz hxz hall⟩
+
+/-- **THE PAIRWISE SITE MERGE** — two `persistAll` sites with a common `PP`-upper
+    node collapse to ONE site carrying both demand lists. -/
+theorem persistAll_merge2 (hI : RCC5Interp I) {C0 : Concept} {Ds Ds' : List Concept}
+    {x x' z : α} (h : persistAll I C0 Ds x) (h' : persistAll I C0 Ds' x')
+    (hz : I.dom z) (hxz : I.rho x z = pp) (hxz' : I.rho x' z = pp) :
+    persistAll I C0 (Ds ++ Ds') z := by
+  refine merge_persistAll_sat hI hz (fun D hD => ?_)
+  rcases List.mem_append.mp hD with hD | hD
+  · exact ⟨x, h.1, hxz, (h.2 D hD).1, (h.2 D hD).2⟩
+  · exact ⟨x', h'.1, hxz', (h'.2 D hD).1, (h'.2 D hD).2⟩
+
+/-- **A COMPARABLE PAIR HAS A COMMON UPPER NODE.**  Either disjunct of the
+    comparability output yields one node `PP`-above BOTH chain roots: from
+    `c 0 ⊆ d j` take `d (j+1)`; from `d 0 ⊆ c i` take `c (i+1)`.  This is the
+    input `persistAll_merge2` consumes. -/
+theorem comparable_common_upper (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ m, I.dom (c m)) (hddom : ∀ m, I.dom (d m))
+    (hcstep : ∀ m, I.rho (c m) (c (m + 1)) = pp)
+    (hdstep : ∀ m, I.rho (d m) (d (m + 1)) = pp)
+    (h : (∀ i, ∃ j, I.rho (c i) (d j) = pp ∨ I.rho (c i) (d j) = eq) ∨
+         (∀ j, ∃ i, I.rho (c i) (d j) = ppi)) :
+    ∃ w, I.dom w ∧ I.rho (c 0) w = pp ∧ I.rho (d 0) w = pp := by
+  rcases h with hemb | hemb'
+  · obtain ⟨j, hj⟩ := hemb 0
+    obtain ⟨j', hj'⟩ := embed_to_pp hI hddom hdstep (hcdom 0) hj
+    refine ⟨d (j' + 1), hddom _, ?_,
+      chain_pp_lt hI d hddom hdstep 0 (j' + 1) (Nat.succ_pos j')⟩
+    have hc := hI.comp_ (c 0) (d j') (d (j' + 1)) (hcdom 0) (hddom j') (hddom (j' + 1))
+    rw [hj', hdstep j', show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
+    exact hc
+  · obtain ⟨i, hi⟩ := hemb' 0
+    have hdc : I.rho (d 0) (c i) = pp := by
+      rw [hI.conv_ (c i) (d 0) (hcdom i) (hddom 0), hi]; rfl
+    refine ⟨c (i + 1), hcdom _,
+      chain_pp_lt hI c hcdom hcstep 0 (i + 1) (Nat.succ_pos i), ?_⟩
+    have hc := hI.comp_ (d 0) (c i) (c (i + 1)) (hddom 0) (hcdom i) (hcdom (i + 1))
+    rw [hdc, hcstep i, show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
+    exact hc
+
+/-- A `filter` that drops at least one element of the list is strictly shorter
+    (the measure step of the merge recursion). -/
+theorem filter_length_lt {β : Type} (p : β → Bool) :
+    ∀ (l : List β) (a : β), a ∈ l → p a = false → (l.filter p).length < l.length := by
+  intro l
+  induction l with
+  | nil => intro a ha _; nomatch ha
+  | cons b rest ih =>
+    intro a ha hpa
+    rw [List.filter_cons]
+    have hle := List.length_filter_le p rest
+    by_cases hb : p b = true
+    · have hane : a ≠ b := by intro h; subst h; simp [hb] at hpa
+      have harest : a ∈ rest := by
+        rcases List.mem_cons.mp ha with h | h
+        · exact absurd h hane
+        · exact h
+      have hlt := ih a harest hpa
+      rw [if_pos hb]
+      simp only [List.length_cons]
+      omega
+    · rw [if_neg hb]
+      simp only [List.length_cons]
+      omega
+
+/-- The dichotomy with BOTH branches' chains abstracted — the shape the merge
+    recursion consumes (the `classChain` terms are long, and the recursion only
+    needs the chain's root/dom/step). -/
+theorem vtowers_or_comparable_ex (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k))
+    (hdem : ∀ k z, I.dom z → (z = x0 k ∨ I.rho (x0 k) z = pp) →
+      ∀ r D, Concept.ex r D ∈ mty C0 I z → (r = pp ∧ D ∈ Ds k) ∨ r = eq) :
+    (∃ (ck : Fin n → Nat → α) (ik pk : Fin n → Nat),
+        MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) ck ik pk (fun _ => true)) ∧
+        ∀ k, ∀ D ∈ Ds k, ∃ b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b)))
+    ∨ (∃ C : Fin n → Nat → α, (∀ k, C k 0 = x0 k) ∧ (∀ k m, I.dom (C k m)) ∧
+        (∀ k m, I.rho (C k m) (C k (m + 1)) = pp) ∧
+        ∃ k k', k ≠ k' ∧
+          ((∀ i, ∃ j, I.rho (C k i) (C k' j) = pp ∨ I.rho (C k i) (C k' j) = eq) ∨
+           (∀ j, ∃ i, I.rho (C k i) (C k' j) = ppi))) := by
+  rcases vtowers_or_comparable hI C0 Ds hL x0 h0 hdem with
+    ⟨ik, pk, hok, hserve⟩ | ⟨k, k', hne, hcomp⟩
+  · exact Or.inl ⟨classChain hI C0 Ds hL x0 h0, ik, pk, hok, hserve⟩
+  · exact Or.inr ⟨classChain hI C0 Ds hL x0 h0, fun _ => rfl,
+      classChain_dom hI C0 Ds hL x0 h0, classChain_step hI C0 Ds hL x0 h0,
+      k, k', hne, hcomp⟩
+
+/-- **ONE MERGE STEP** — replacing a comparable pair of sites by their merge
+    yields a STRICTLY SHORTER site list with every invariant preserved and every
+    old demand list contained in a new one.  The new list is built by mapping the
+    index range with `k` filtered out and `k'` overwritten by the merged site, so
+    no double-erasure index arithmetic is needed. -/
+theorem merge_step (hI : RCC5Interp I) (C0 : Concept) (L : List (α × List Concept))
+    (hpa : ∀ s ∈ L, persistAll I C0 s.2 s.1)
+    (hpos : ∀ s ∈ L, 0 < s.2.length)
+    (hdemL : ∀ s ∈ L, SiteDem I C0 s)
+    (k k' : Fin L.length) (hne : k ≠ k')
+    (w : α) (hwdom : I.dom w)
+    (hwk : I.rho (L.get k).1 w = pp) (hwk' : I.rho (L.get k').1 w = pp) :
+    ∃ L' : List (α × List Concept), L'.length < L.length ∧
+      (∀ s ∈ L', persistAll I C0 s.2 s.1) ∧
+      (∀ s ∈ L', 0 < s.2.length) ∧
+      (∀ s ∈ L', SiteDem I C0 s) ∧
+      (∀ s ∈ L, ∃ t ∈ L', ∀ D ∈ s.2, D ∈ t.2) := by
+  classical
+  have hgk : L.get k ∈ L := List.get_mem L k
+  have hgk' : L.get k' ∈ L := List.get_mem L k'
+  have hmergeP : persistAll I C0 ((L.get k).2 ++ (L.get k').2) w :=
+    persistAll_merge2 hI (hpa _ hgk) (hpa _ hgk') hwdom hwk hwk'
+  obtain ⟨L', hL'def⟩ : ∃ L' : List (α × List Concept),
+      L' = ((List.finRange L.length).filter (fun i => decide (i ≠ k))).map
+        (fun i => if i = k' then (w, (L.get k).2 ++ (L.get k').2) else L.get i) := ⟨_, rfl⟩
+  have hmemchar : ∀ s ∈ L', s = (w, (L.get k).2 ++ (L.get k').2) ∨ s ∈ L := by
+    intro s hs
+    rw [hL'def] at hs
+    obtain ⟨i, _, rfl⟩ := List.mem_map.mp hs
+    by_cases hik : i = k'
+    · exact Or.inl (by rw [if_pos hik])
+    · exact Or.inr (by rw [if_neg hik]; exact List.get_mem L i)
+  have hmerged : (w, (L.get k).2 ++ (L.get k').2) ∈ L' := by
+    rw [hL'def]
+    exact List.mem_map.mpr ⟨k', List.mem_filter.mpr ⟨List.mem_finRange k',
+      by simp only [decide_eq_true_eq]; exact fun h => hne h.symm⟩, by rw [if_pos rfl]⟩
+  refine ⟨L', ?_, ?_, ?_, ?_, ?_⟩
+  · -- strictly shorter
+    rw [hL'def, List.length_map]
+    have h := filter_length_lt (fun i : Fin L.length => decide (i ≠ k))
+      (List.finRange L.length) k (List.mem_finRange k) (by simp)
+    rwa [List.length_finRange] at h
+  · -- persistAll
+    intro s hs
+    rcases hmemchar s hs with rfl | hsL
+    · exact hmergeP
+    · exact hpa s hsL
+  · -- demand lists nonempty
+    intro s hs
+    rcases hmemchar s hs with rfl | hsL
+    · have hk0 := hpos _ hgk
+      show 0 < ((L.get k).2 ++ (L.get k').2).length
+      simp only [List.length_append]; omega
+    · exact hpos s hsL
+  · -- SiteDem
+    intro s hs
+    rcases hmemchar s hs with rfl | hsL
+    · intro z hz hcone r D hmemD
+      have hcone' : z = (L.get k).1 ∨ I.rho (L.get k).1 z = pp := by
+        rcases hcone with rfl | hwz
+        · exact Or.inr hwk
+        · refine Or.inr ?_
+          have hc := hI.comp_ (L.get k).1 w z (hpa _ hgk).1 hwdom hz
+          rw [hwk, hwz, show comp pp pp = [pp] from rfl, List.mem_singleton] at hc
+          exact hc
+      rcases hdemL _ hgk z hz hcone' r D hmemD with ⟨hr, hD⟩ | hr
+      · exact Or.inl ⟨hr, List.mem_append.mpr (Or.inl hD)⟩
+      · exact Or.inr hr
+    · exact hdemL s hsL
+  · -- every old list lands in a new one
+    intro s hs
+    obtain ⟨i, hi⟩ := List.get_of_mem hs
+    by_cases hik : i = k
+    · refine ⟨_, hmerged, fun D hD => List.mem_append.mpr (Or.inl ?_)⟩
+      rw [← hi, hik] at hD; exact hD
+    · by_cases hik' : i = k'
+      · refine ⟨_, hmerged, fun D hD => List.mem_append.mpr (Or.inr ?_)⟩
+        rw [← hi, hik'] at hD; exact hD
+      · refine ⟨s, ?_, fun D hD => hD⟩
+        rw [hL'def]
+        exact List.mem_map.mpr ⟨i, List.mem_filter.mpr ⟨List.mem_finRange i,
+          by simp only [decide_eq_true_eq]; exact hik⟩, by rw [if_neg hik']; exact hi⟩
+
+/-- **THE MERGE RECURSION** (§38.3) — the site count is the measure.  Given a
+    finite family of purely-vertical `persistAll` sites, either the class towers
+    are pairwise non-comparable and `vtowers_ok` assembles the certificate, or a
+    comparable pair merges (`comparable_common_upper` + `persistAll_merge2` +
+    `merge_step`) and the strictly shorter family is re-entered.  The output
+    certificate SERVES every demand in `Dall`. -/
+theorem merge_sites (hI : RCC5Interp I) (C0 : Concept) (Dall : List Concept) :
+    ∀ (N : Nat) (L : List (α × List Concept)), L.length ≤ N →
+      (∀ s ∈ L, persistAll I C0 s.2 s.1) →
+      (∀ s ∈ L, 0 < s.2.length) →
+      (∀ s ∈ L, SiteDem I C0 s) →
+      (∀ D ∈ Dall, ∃ s ∈ L, D ∈ s.2) →
+      ∃ (m : Nat) (ck : Fin m → Nat → α) (ik pk : Fin m → Nat),
+        MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) ck ik pk (fun _ => true)) ∧
+        ∀ D ∈ Dall, ∃ k b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b)) := by
+  intro N
+  induction N with
+  | zero =>
+    intro L hlen _ _ _ hcov
+    have hnil : L = [] := List.eq_nil_of_length_eq_zero (by omega)
+    subst hnil
+    obtain ⟨ik, pk, hok, _⟩ := vtowers_ok hI C0 (fun k : Fin 0 => k.elim0)
+      (fun k : Fin 0 => k.elim0) (fun k => k.elim0) (fun k => k.elim0)
+      (fun k => k.elim0) (fun k => k.elim0) (fun k => k.elim0) (fun k => k.elim0)
+    exact ⟨0, fun k => k.elim0, ik, pk, hok, fun D hD => by
+      obtain ⟨s, hs, _⟩ := hcov D hD; nomatch hs⟩
+  | succ N ih =>
+    intro L hlen hpa hpos hdemL hcov
+    have hget : ∀ k : Fin L.length, L.get k ∈ L := fun k => List.get_mem L k
+    rcases vtowers_or_comparable_ex hI C0 (fun k : Fin L.length => (L.get k).2)
+        (fun k => hpos _ (hget k)) (fun k : Fin L.length => (L.get k).1)
+        (fun k => hpa _ (hget k)) (fun k => hdemL _ (hget k))
+      with ⟨ck, ik, pk, hok, hserve⟩ | ⟨C, hC0, hCdom, hCstep, k, k', hne, hcomp⟩
+    · -- pairwise non-comparable: the family IS the certificate
+      refine ⟨L.length, ck, ik, pk, hok, fun D hD => ?_⟩
+      obtain ⟨s, hs, hDs⟩ := hcov D hD
+      obtain ⟨i, hi⟩ := List.get_of_mem hs
+      obtain ⟨b, hb, hDb⟩ := hserve i D (by rw [hi]; exact hDs)
+      exact ⟨i, b, hb, hDb⟩
+    · -- a comparable pair: merge and re-enter with one site fewer
+      obtain ⟨w, hwdom, hwk, hwk'⟩ := comparable_common_upper hI (C k) (C k')
+        (hCdom k) (hCdom k') (hCstep k) (hCstep k') hcomp
+      rw [hC0 k] at hwk
+      rw [hC0 k'] at hwk'
+      obtain ⟨L', hlt, hpa', hpos', hdem', hsub⟩ :=
+        merge_step hI C0 L hpa hpos hdemL k k' hne w hwdom hwk hwk'
+      refine ih L' (by omega) hpa' hpos' hdem' (fun D hD => ?_)
+      obtain ⟨s, hs, hDs⟩ := hcov D hD
+      obtain ⟨t, ht, hst⟩ := hsub s hs
+      exact ⟨t, ht, hst D hDs⟩
+
+/-- **THE VERTICAL MULTI-TOWER CERTIFICATE, UNCONDITIONAL** (§38.3) — the merge
+    closes the dichotomy.  EVERY finite family of purely-vertical `persistAll`
+    sites yields a `MultiTierOk` certificate serving every demand of every site;
+    no comparability hypothesis is owed.  Comparable kernels are merged (the
+    site count drops), non-comparable ones assemble by `vtowers_ok`. -/
+theorem vtowers_merged (hI : RCC5Interp I) (C0 : Concept)
+    (L : List (α × List Concept))
+    (hpa : ∀ s ∈ L, persistAll I C0 s.2 s.1)
+    (hpos : ∀ s ∈ L, 0 < s.2.length)
+    (hdemL : ∀ s ∈ L, SiteDem I C0 s) :
+    ∃ (m : Nat) (ck : Fin m → Nat → α) (ik pk : Fin m → Nat),
+      MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) ck ik pk (fun _ => true)) ∧
+      ∀ s ∈ L, ∀ D ∈ s.2, ∃ k b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b)) := by
+  obtain ⟨m, ck, ik, pk, hok, hserve⟩ :=
+    merge_sites hI C0 (L.flatMap (fun s => s.2)) L.length L (Nat.le_refl _)
+      hpa hpos hdemL (fun D hD => List.mem_flatMap.mp hD)
+  exact ⟨m, ck, ik, pk, hok, fun s hs D hD =>
+    hserve D (List.mem_flatMap.mpr ⟨s, hs, hD⟩)⟩
 
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
@@ -18048,7 +18330,9 @@ def twoTowers (k : Fin 2) (m : Nat) : Bool × Nat := (reg2 k, m)
 theorem vtowers_two_nonvacuous :
     ∃ ik pk : Fin 2 → Nat,
       MultiTierOk (mixKernels Ipo Cvert (fun e : Empty => e.elim)
-        twoTowers ik pk (fun _ => true)) := by
+        twoTowers ik pk (fun _ => true)) ∧
+      ∀ k, ∀ D ∈ [Concept.atom 0], ∃ b, b < pk k ∧
+        D ∈ mty Cvert Ipo (twoTowers k (ik k + b)) := by
   refine vtowers_ok Ipo_rcc5 Cvert (fun _ => [Concept.atom 0]) twoTowers
     (fun _ _ => trivial) ?_ ?_ (fun _ _ => 0) ?_ ?_
   · -- each tower ascends by `PP` inside its own region
@@ -18100,10 +18384,21 @@ theorem classChain_region {n : Nat} (Ds : Fin n → List Concept)
     exact (po_pp_same_region (classChain_step Ipo_rcc5 Cvert Ds hL x0 h0 k m)).symm
 
 /-- Each region base is a `persistAll` node for `Cvert`'s single demand `A₀`. -/
-theorem po_persistAll (b : Bool) : persistAll Ipo Cvert [Concept.atom 0] (b, 0) :=
+theorem po_persistAllAt (q : Bool × Nat) : persistAll Ipo Cvert [Concept.atom 0] q :=
   ⟨trivial, fun D hD => by
     rcases List.mem_singleton.mp hD with rfl
-    exact ⟨mem_mty.mpr ⟨by decide, po_he (b, 0)⟩, po_hal (b, 0)⟩⟩
+    exact ⟨mem_mty.mpr ⟨by decide, po_he q⟩, po_hal q⟩⟩
+
+theorem po_persistAll (b : Bool) : persistAll Ipo Cvert [Concept.atom 0] (b, 0) :=
+  po_persistAllAt (b, 0)
+
+/-- Every `Ipo` site with `Cvert`'s single demand satisfies the purely-vertical
+    site condition: `cl Cvert`'s only existential is `∃PP.A₀` (`cvert_demands`),
+    so no cone reasoning is needed. -/
+theorem po_siteDem (q : Bool × Nat) : SiteDem Ipo Cvert (q, [Concept.atom 0]) := by
+  intro z _ _ r D hmem
+  obtain ⟨rfl, rfl⟩ := cvert_demands r D (mty_sub _ hmem)
+  exact Or.inl ⟨rfl, List.mem_singleton.mpr rfl⟩
 
 /-- **NON-VACUITY OF THE MODEL-SIDE ENTRY POINT `vtowers_or_comparable`** — the
     CERTIFICATE branch actually fires.  Starting from two `persistAll` NODES (the
@@ -18117,7 +18412,11 @@ theorem vtowers_from_nodes_nonvacuous :
       MultiTierOk (mixKernels Ipo Cvert (fun e : Empty => e.elim)
         (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0]) (fun _ => Nat.one_pos)
           (fun k => (reg2 k, 0)) (fun k => po_persistAll (reg2 k)))
-        ik pk (fun _ => true)) := by
+        ik pk (fun _ => true)) ∧
+      ∀ k, ∀ D ∈ [Concept.atom 0], ∃ b, b < pk k ∧
+        D ∈ mty Cvert Ipo (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+          (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+          (fun k => po_persistAll (reg2 k)) k (ik k + b)) := by
   have hdem : ∀ (k : Fin 2) (z : Bool × Nat), Ipo.dom z →
       (z = (reg2 k, 0) ∨ Ipo.rho (reg2 k, 0) z = pp) →
       ∀ r D, Concept.ex r D ∈ mty Cvert Ipo z →
@@ -18150,6 +18449,64 @@ theorem vtowers_from_nodes_nonvacuous :
     · obtain ⟨i, hi⟩ := hemb' 0
       rw [hpo i 0] at hi
       exact absurd hi (by decide)
+
+/-- **THE MERGE PRIMITIVE FIRES** — two `persistAll` sites at different heights
+    of the SAME `Ipo` region (`(false,0)` and `(false,7)`: the nested geometry
+    the merge exists for) collapse into ONE site at `(false,8)` carrying both
+    demand lists.  `persistAll_merge2` is therefore not vacuous, and in
+    particular its `sat`-form guard bridge `merge_persistAll_sat` is exercised on
+    genuine `persistAll` sites — the case `merge_persistAll`'s `mty`-form guard
+    could not reach. -/
+theorem persistAll_merge2_nonvacuous :
+    persistAll Ipo Cvert ([Concept.atom 0] ++ [Concept.atom 0]) (false, 8) :=
+  persistAll_merge2 Ipo_rcc5 (po_persistAllAt (false, 0)) (po_persistAllAt (false, 7))
+    trivial
+    (by show (if false = false then chain 0 8 else po) = pp
+        rw [if_pos rfl]; exact chain_lt (by omega))
+    (by show (if false = false then chain 7 8 else po) = pp
+        rw [if_pos rfl]; exact chain_lt (by omega))
+
+/-- **NON-VACUITY OF `vtowers_merged`** — the unconditional certificate is
+    delivered on a two-site family sitting at different heights of ONE `Ipo`
+    region, the nested geometry the merge exists for.  Honest scope: this
+    witnesses that the hypotheses are satisfiable and the serving conclusion is
+    reached; it does NOT claim which branch the recursion took (that would need
+    the staircase argument of §36.1).  The merge primitive itself is witnessed
+    firing by `persistAll_merge2_nonvacuous`. -/
+theorem vtowers_merged_nonvacuous :
+    ∃ (m : Nat) (ck : Fin m → Nat → (Bool × Nat)) (ik pk : Fin m → Nat),
+      MultiTierOk (mixKernels Ipo Cvert (fun e : Empty => e.elim) ck ik pk (fun _ => true)) ∧
+      ∃ k b, b < pk k ∧ Concept.atom 0 ∈ mty Cvert Ipo (ck k (ik k + b)) := by
+  have hpa : ∀ s ∈ ([(((false, 0) : Bool × Nat), [Concept.atom 0]),
+      (((false, 7) : Bool × Nat), [Concept.atom 0])] : List ((Bool × Nat) × List Concept)),
+      persistAll Ipo Cvert s.2 s.1 := by
+    intro s hs
+    rcases List.mem_cons.mp hs with rfl | hs
+    · exact po_persistAllAt (false, 0)
+    · rcases List.mem_cons.mp hs with rfl | hs
+      · exact po_persistAllAt (false, 7)
+      · nomatch hs
+  have hpos : ∀ s ∈ ([(((false, 0) : Bool × Nat), [Concept.atom 0]),
+      (((false, 7) : Bool × Nat), [Concept.atom 0])] : List ((Bool × Nat) × List Concept)),
+      0 < s.2.length := by
+    intro s hs
+    rcases List.mem_cons.mp hs with rfl | hs
+    · exact Nat.one_pos
+    · rcases List.mem_cons.mp hs with rfl | hs
+      · exact Nat.one_pos
+      · nomatch hs
+  have hdem : ∀ s ∈ ([(((false, 0) : Bool × Nat), [Concept.atom 0]),
+      (((false, 7) : Bool × Nat), [Concept.atom 0])] : List ((Bool × Nat) × List Concept)),
+      SiteDem Ipo Cvert s := by
+    intro s hs
+    rcases List.mem_cons.mp hs with rfl | hs
+    · exact po_siteDem (false, 0)
+    · rcases List.mem_cons.mp hs with rfl | hs
+      · exact po_siteDem (false, 7)
+      · nomatch hs
+  obtain ⟨m, ck, ik, pk, hok, hserve⟩ := vtowers_merged Ipo_rcc5 Cvert _ hpa hpos hdem
+  exact ⟨m, ck, ik, pk, hok,
+    hserve _ (List.mem_cons.mpr (Or.inl rfl)) _ (List.mem_singleton.mpr rfl)⟩
 
 /-- Everything in `cl Cnest` is satisfied at every `Ipo` point. -/
 theorem psat_all (p : Bool × Nat) : ∀ D ∈ cl Cnest, sat Ipo p D := by
@@ -18580,6 +18937,15 @@ end VerticalWitness
 #print axioms classChain_rec
 #print axioms vtowers_or_comparable_gen
 #print axioms vtowers_or_comparable
+#print axioms merge_persistAll_sat
+#print axioms persistAll_merge2
+#print axioms comparable_common_upper
+#print axioms filter_length_lt
+#print axioms merge_step
+#print axioms merge_sites
+#print axioms vtowers_merged
+#print axioms VerticalWitness.persistAll_merge2_nonvacuous
+#print axioms VerticalWitness.vtowers_merged_nonvacuous
 #print axioms VerticalWitness.vtowers_two_nonvacuous
 #print axioms VerticalWitness.classChain_region
 #print axioms VerticalWitness.vtowers_from_nodes_nonvacuous

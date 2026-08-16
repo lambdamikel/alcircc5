@@ -2682,6 +2682,19 @@ So `κ` = the maximal towers; coverage routes each demand to the maximal tower
 above it. This is why the merge partition is well-defined despite non-transitive
 comparability.
 
+> **CORRECTION (2026-08-15, §38.3).** The third bullet above is a LAYER ERROR and
+> is superseded. The kernels are not the maximal *demand* towers — they are the
+> ROUND-ROBIN re-towers built above each class's `persistAll` node — and
+> incomparability does not transfer between the layers: `rrPt` ascends through
+> chosen witnesses and can leave the demand tower, so two incomparable demand
+> towers sitting inside a common region can have mutually embedding round-robin
+> towers. `hrectQ` must therefore be established for the round-robin towers, and
+> the merge must run on THEM, as the recursion of §38.3. The first two bullets
+> (`embed_trans`, `maximal_dominated`, guard absorption) are unaffected and
+> remain correct about the demand towers. No certified statement was wrong:
+> `vtowers_or_comparable` applies `classify_cross` to `classChain`, the actual
+> kernels.
+
 ### 37.1 `maximal_dominated` — DONE (commit f023cb9)
 
 The one abstract fact the partition owed — **in a finite preorder every element
@@ -2781,16 +2794,70 @@ what `β = Empty` means, and is exactly what the mixing quadrant will relax.
   rules out the degenerate reading in which `vtowers_or_comparable` is an
   always-comparable tautology.
 
-### 38.2 Remaining
+### 38.2 THE LAYER ERROR that scoping the merge exposed
 
-- **The merge wiring** — the comparable branch of `vtowers_or_comparable` is
-  currently returned to the caller; §37's `exists_maximal_tower` +
-  `class_persistAll` should consume it (re-index `κ` to the maximal towers and
-  re-enter), turning the dichotomy into an unconditional theorem.
+Closing the dichotomy's escape branch was planned (§37, §38 diagram) as: κ = the
+maximal demand towers, which are pairwise incomparable, so `classify_cross`
+disjunct 1 gives `hrectQ`. **That is wrong by one layer.** The kernels are the
+ROUND-ROBIN re-towers `rrPt` built above each class's `persistAll` node, not the
+demand towers, and incomparability does not transfer: `rrPt` ascends through
+`Classical.choose`n witnesses and can leave its demand tower entirely, so two
+*incomparable* demand towers both contained in a common region can have
+*mutually embedding* round-robin towers.
+
+Corroboration inside the code: `merge_persistAll` requires the guard as
+`∀PP.(∃PP.D) ∈ mty C0 I x`, which `persistPP` ROOTS supply but `persistAll`
+SITES do not (they carry it as `sat`). The existing bricks were built for exactly
+ONE merge round. A second round needs `merge_persistAll_sat`, which did not
+exist — precisely the missing piece the layer error concealed.
+
+Nothing certified was wrong: `vtowers_or_comparable` classifies `classChain`,
+the actual kernels, and honestly returns the comparable case as an escape.
+
+### 38.3 THE MERGE, DONE (2026-08-15) — the vertical side is unconditional
+
+The merge runs on the KERNELS, as a recursion whose measure is the site count:
+
+```
+vtowers_or_comparable_ex   dichotomy, both branches' chains abstracted
+  ├─ non-comparable → vtowers_ok                        (the certificate)
+  └─ comparable     → comparable_common_upper           (one node above both roots)
+                    → persistAll_merge2                 (ONE site, both demand lists)
+                      (via merge_persistAll_sat, the sat-form guard bridge)
+                    → merge_step                        (site count STRICTLY drops)
+                    → re-enter                          (induction on the count)
+```
+
+`merge_sites` is the recursion, `vtowers_merged` the capstone:
+
+> **`vtowers_merged`** — every finite family of purely-vertical `persistAll`
+> sites yields a `MultiTierOk` certificate that SERVES every demand of every
+> site. No comparability hypothesis is owed.
+
+Two details worth recording:
+
+- **No double-erasure arithmetic.** `merge_step` builds the shorter list as
+  `((finRange n).filter (· ≠ k)).map (fun i => if i = k' then merged else L.get i)`
+  — index `k` filtered out, index `k'` overwritten by the merged site. Length
+  strictly drops by `filter_length_lt`; membership is `mem_map`+`mem_filter`.
+- **`SiteDem` survives the merge** because the merged node's `PP`-cone is
+  contained in each parent's (`comp(PP,PP) = {PP}`), and each parent's demands
+  land in the concatenated list.
+
+**Non-vacuity.** `persistAll_merge2_nonvacuous` — the merge primitive fires on
+two sites at different heights of one `Ipo` region, exercising exactly the
+`sat`-form guard bridge that `merge_persistAll` could not reach.
+`vtowers_merged_nonvacuous` — the unconditional certificate is delivered on that
+same two-site family. Honest scope: the latter does not claim which branch the
+recursion took (that needs §36.1's staircase argument); the former is airtight.
+
+### 38.4 Remaining
+
 - **Mixing** — replace `β = Empty` by the horizontal externals (`ascNodes`):
   `hstab` (`StabKernelPack`, done), `he_ex`/`hk_ex` with horizontal disjuncts,
-  and dropping the purely-vertical `hdem`.
+  and dropping the purely-vertical `hdem`. The merge is a prerequisite and is
+  now available: a mixed certificate with several vertical kernels needs the
+  same pairwise non-comparability.
 - **`codesM`** enumeration + the `decidableSat_of_codes` completeness premise.
 
-The first two are wiring over proved lemmas; the third is the decidability
-layer. No new abstract fact is owed on the vertical side.
+The vertical side owes nothing further.
