@@ -2725,15 +2725,72 @@ exists_maximal_tower   (κ = maximal towers)
   + family_hrectQ_bounded  (cross-pairs of maximal towers, hrectQ)
 ```
 
-### 38.1 Remaining — assembly plumbing, no new abstract fact
+### 38.1 THE FIRST `mixKernels_ok` INSTANTIATION — DONE (2026-08-15)
 
-- **The connection** — for each maximal tower `j`, gather the demands below it
-  (filter the demand list by `emb · j`), map to their roots with per-root levels
-  (`embed_to_pp` + `Classical.choose`), apply `common_upper_on_tower`, harvest the
-  `persistPP` guards, and call `merge_persistAll` ⟹ a `persistAll` node per class.
-- **Wire** the vertical kernels with the horizontal externals (`ascNodes`) into
-  one `mixKernels` `MultiTierOk`; discharge coverage (`he_ex`/`hk_ex`).
+The purely-vertical multi-tower certificate (`β = Empty`) is **certified**, and
+it is **doubly witnessed** (chain-level and node-level). Chain:
+
+```
+class_tower           persistAll node  -> a FIXED chain + bases past ANY threshold
+  → vtowers_ok        Fin n towers     -> ∃ ik pk, MultiTierOk (mixKernels … Empty …)
+  → vtowers_or_comparable_gen          the dichotomy: certificate OR comparable pair
+  → vtowers_or_comparable              the same, entered from persistAll NODES
+```
+
+**The one real obstacle the assembly hit, and its fix.** `hty` (per-kernel type
+recurrence) and `hrectQ` (cross-kernel constancy) are produced by *different*
+arguments choosing *different* bases: the pigeonhole picks a recurrence base,
+`classify_cross` picks a constancy horizon, and `mixKernels_ok` needs both at
+**one** base. `family_hrectQ_bounded` (§36.6) exhibits bases past the joint
+horizon but then dictates them (`ik k := B`), which the recurrence cannot honor.
+The fix is `rr_segment_from` — `rr_segment` with a THRESHOLD (the pigeonhole on
+the sub-sequence at multiples of `L` started at `L0+1` rather than `1`), so the
+recurrence base is available past *any* bound. Order of construction:
+
+1. fix each class's chain (`class_tower` / `classChain`) — chains must exist
+   *before* the classification, since `classify_cross` classifies chains;
+2. join the per-pair horizons (`exists_bound2` ⟹ `B`);
+3. only then pick each base via `hrec k B` (base `≥ B`, its own period);
+4. `hrectQ` via `family_hrectQ` (not `…_bounded`, which fixes the bases).
+
+So `family_hrectQ_bounded` is superseded here by `family_hrectQ` + a *chosen*
+late base — the bounded form remains correct, just not the usable one.
+
+**`hinj` is FREE.** `cross_const_ne_eq` (axiom-free): a constant cross-relation
+between two towers is never `EQ`, since strong-EQ identity would force
+`d N = d (N+1)` against the strict `PP` step. So distinct bases follow from the
+constancy already in hand — no distinctness hypothesis is owed.
+
+**What `vtowers_ok` assumes, stated honestly.** Beyond the chain data it takes
+(i) `hrec` — recurrence + round-robin coverage of the tower's demand list past
+any threshold (supplied by `class_tower`); (ii) `hconst` — per-pair cross-
+constancy horizons, i.e. the towers are pairwise NON-comparable (`classify_cross`
+disjunct 1); (iii) `hdem` — the *purely vertical* phase condition: every phase
+`∃`-demand is `∃PP` with argument in that tower's own list, or `∃EQ`. (iii) is
+what `β = Empty` means, and is exactly what the mixing quadrant will relax.
+
+**Non-vacuity, both levels** (the ledger's standing discipline):
+- `vtowers_two_nonvacuous` — in the two-region all-cross-`PO` model `Ipo`, the
+  two regions' `PP`-chains give a `MultiTierOk` with `κ = Fin 2`: TWO kernels,
+  cross-value a real `PO` (not `EQ`, not a disguised single kernel), so `hrectQ`
+  and `cross_const_ne_eq` are both genuinely exercised.
+- `vtowers_from_nodes_nonvacuous` — the same from `persistAll` NODES, with the
+  dichotomy's escape branch REFUTED: `classChain_region` (an `Ipo` `PP`-step
+  never leaves its region) forces every cross-value to `PO`, so neither
+  comparability disjunct can hold and the certificate branch must fire. This
+  rules out the degenerate reading in which `vtowers_or_comparable` is an
+  always-comparable tautology.
+
+### 38.2 Remaining
+
+- **The merge wiring** — the comparable branch of `vtowers_or_comparable` is
+  currently returned to the caller; §37's `exists_maximal_tower` +
+  `class_persistAll` should consume it (re-index `κ` to the maximal towers and
+  re-enter), turning the dichotomy into an unconditional theorem.
+- **Mixing** — replace `β = Empty` by the horizontal externals (`ascNodes`):
+  `hstab` (`StabKernelPack`, done), `he_ex`/`hk_ex` with horizontal disjuncts,
+  and dropping the purely-vertical `hdem`.
 - **`codesM`** enumeration + the `decidableSat_of_codes` completeness premise.
 
-This is laborious list/`Classical.choose` plumbing rather than new mathematics —
-every abstract obstacle is already a proved lemma (§35–§37).
+The first two are wiring over proved lemmas; the third is the decidability
+layer. No new abstract fact is owed on the vertical side.

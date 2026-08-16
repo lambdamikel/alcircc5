@@ -13717,6 +13717,89 @@ theorem class_kernel (hI : RCC5Interp I) {C0 : Concept} (Ds : List Concept)
     rrPt_step hI C0 Ds hL x0 h0, hi, hp, hty,
     fun k hk => rr_covers hI C0 Ds hL x0 h0 i p hi hp hdvd k hk⟩
 
+/-! ### §38.1 — the purely-vertical multi-tower certificate
+
+The first `mixKernels_ok` INSTANTIATION: a finite family of persistent towers
+(one per maximal tower, §37) with NO externals (`β = Empty`) is a full
+`MultiTierOk`.  The one scheduling problem the assembly has to solve is that
+`hty` (per-kernel type recurrence) and `hrectQ` (cross-kernel constancy) are
+produced by *different* arguments at *different* bases: the pigeonhole picks a
+recurrence base, `classify_cross` picks a constancy horizon.  The fix is
+`rr_segment_from` — the recurrence base is available past ANY threshold — so
+the chain is fixed first, the horizons are joined (`exists_bound2`), and only
+then is each base chosen above the joint horizon.  Both obligations then hold at
+the same bases.  `hinj` is FREE (`cross_const_ne_eq`), `hstab`/`he_ex` are
+vacuous. -/
+
+/-- `rr_segment` with a THRESHOLD: the round-robin recurrence base can be taken
+    past any `L0` (the pigeonhole on the sub-sequence at multiples of `L` is
+    started at `L0+1` instead of `1`).  This is what lets a single base carry the
+    type recurrence AND sit above the cross-kernel constancy horizon. -/
+theorem rr_segment_from (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAll I C0 Ds x0) (L0 : Nat) :
+    ∃ i p, L0 ≤ i ∧ 0 < i ∧ 0 < p ∧ Ds.length ∣ p ∧
+      mty C0 I (rrPt hI C0 Ds hL x0 h0 i) =
+      mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + p)) := by
+  have hmem : ∀ m, mty C0 I (rrPt hI C0 Ds hL x0 h0 (m * Ds.length)) ∈
+      allListsLe (cl C0) (cl C0).length := by
+    intro m
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun x hx => by rw [mty] at hx; exact (List.mem_filter.mp hx).1⟩
+  obtain ⟨a, b, hLa, hab, _, heq⟩ :=
+    segment_exists_bounded (allListsLe (cl C0) (cl C0).length)
+      (fun m => mty C0 I (rrPt hI C0 Ds hL x0 h0 (m * Ds.length))) hmem (L0 + 1)
+  have harith : a * Ds.length + (b - a) * Ds.length = b * Ds.length := by
+    rw [← Nat.add_mul, show a + (b - a) = b from by omega]
+  have hL1 : 1 ≤ Ds.length := hL
+  have hge : a ≤ a * Ds.length := by
+    have h := Nat.mul_le_mul (Nat.le_refl a) hL1
+    rwa [Nat.mul_one] at h
+  refine ⟨a * Ds.length, (b - a) * Ds.length, by omega, Nat.mul_pos (by omega) hL,
+    Nat.mul_pos (by omega) hL, ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_⟩
+  rw [harith]
+  exact heq
+
+/-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
+    needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
+    while the base `i` and period `p` are available at ARBITRARILY LATE `L0`,
+    with the full round-robin demand coverage stated by MEMBERSHIP (`D ∈ Ds`)
+    rather than by index.  So a comparability class contributes one chain, and
+    its base is chosen only after the cross-kernel horizons are known. -/
+theorem class_tower (hI : RCC5Interp I) {C0 : Concept} (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0) :
+    ∃ c : Nat → α, (∀ m, I.dom (c m)) ∧ (∀ m, I.rho (c m) (c (m + 1)) = pp) ∧
+      ∀ L0, ∃ i p, L0 ≤ i ∧ 0 < p ∧
+        mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+        ∀ D ∈ Ds, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b)) := by
+  refine ⟨rrPt hI C0 Ds hL x0 h0, rrPt_dom hI C0 Ds hL x0 h0,
+    rrPt_step hI C0 Ds hL x0 h0, fun L0 => ?_⟩
+  obtain ⟨i, p, hL0, hi, hp, hdvd, hty⟩ := rr_segment_from hI C0 Ds hL x0 h0 L0
+  refine ⟨i, p, hL0, hp, hty, fun D hD => ?_⟩
+  obtain ⟨jj, hget⟩ := List.get_of_mem hD
+  obtain ⟨b, hb, hDb⟩ := rr_covers hI C0 Ds hL x0 h0 i p hi hp hdvd jj.1 jj.2
+  exact ⟨b, hb, hget ▸ hDb⟩
+
+/-- A CONSTANT cross-relation between two towers is never `EQ`: strong-EQ
+    identity would force `d N = d (N+1)` against the strict `PP` step.  So
+    `mixKernels_ok`'s `hinj` (distinct bases) comes FREE for pairwise
+    non-comparable kernels — no separate distinctness hypothesis is owed. -/
+theorem cross_const_ne_eq (hI : RCC5Interp I) (c d : Nat → α)
+    (hcdom : ∀ m, I.dom (c m)) (hddom : ∀ m, I.dom (d m))
+    (hdstep : ∀ m, I.rho (d m) (d (m + 1)) = pp)
+    (N : Nat) (v : Atom)
+    (hconst : ∀ i j, N ≤ i → N ≤ j → I.rho (c i) (d j) = v) : v ≠ eq := by
+  intro hv
+  have h1 : I.rho (c N) (d N) = eq := by
+    rw [hconst N N (Nat.le_refl N) (Nat.le_refl N), hv]
+  have h2 : I.rho (c N) (d (N + 1)) = eq := by
+    rw [hconst N (N + 1) (Nat.le_refl N) (Nat.le_succ N), hv]
+  have e1 : c N = d N := hI.eq_id _ _ (hcdom N) (hddom N) h1
+  have hstepeq : I.rho (d N) (d (N + 1)) = eq := by rw [← e1]; exact h2
+  rw [hdstep N] at hstepeq
+  exact absurd hstepeq (by decide)
+
 /-- **THE KERNEL PHASE NODES** of a `persistPP` node `n` (demand `∃PP.G`): the
     `p` phase elements `c(i), …, c(i+p-1)` of its ascending kernel, as `MTKNode`s
     at `n`'s budget.  These are the κ-internal tower positions whose HORIZONTAL
@@ -14289,6 +14372,252 @@ theorem mixKernels_ok [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
     · exact Or.inr (Or.inl ⟨hcd, b, hb, hXb⟩)
     · exact Or.inr (Or.inr (Or.inl ⟨rfl, hX⟩))
     · exact Or.inr (Or.inr (Or.inr ⟨k', hne, hQ, b, hb, hXb⟩))
+
+/-- **THE PURELY-VERTICAL MULTI-KERNEL CERTIFICATE** (§38) — `mixKernels_ok` at
+    `β = Empty`, every kernel ASCENDING.  Every external obligation (`hstab`,
+    `he_ex`, and the external half of `hinj`) is vacuous, leaving exactly the
+    vertical interface: per-kernel recurrence `hty`, cross-kernel constancy
+    `hrectQ`, distinct bases `hbase`, and the phase-demand routing `hk_ex`
+    (own chain / reflexive `∃EQ` / another kernel). -/
+theorem mixKernelsV_ok {κ : Type} [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
+    (ck : κ → Nat → α) (hdom : ∀ k m, I.dom (ck k m))
+    (ik pk : κ → Nat)
+    (hstep : ∀ k m, I.rho (ck k m) (ck k (m + 1)) = pp)
+    (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (hbase : ∀ k k', ck k (ik k) = ck k' (ik k') → k = k')
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      (r = pp ∧ ∃ b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b))) ∨
+      (r = eq ∧ D ∈ mty C0 I (ck k (ik k + a))) ∨
+      (∃ k', k ≠ k' ∧ I.rho (ck k (ik k)) (ck k' (ik k')) = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mty C0 I (ck k' (ik k' + b)))) :
+    MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) ck ik pk (fun _ => true)) := by
+  refine mixKernels_ok hI C0 (fun e : Empty => e.elim) (fun e => e.elim) ck hdom
+    ik pk (fun _ => true) hstep hp hty (fun _ e => e.elim) hrectQ ?_
+    (fun e => e.elim) ?_
+  · rintro (e | k) (f | k') h
+    · exact e.elim
+    · exact e.elim
+    · exact f.elim
+    · simp only [Sum.elim_inr] at h
+      rw [hbase k k' h]
+  · intro k a r D hmem
+    rcases hk_ex k a r D hmem with ⟨rfl, hb⟩ | ⟨rfl, hD⟩ | hcross
+    · exact Or.inr (Or.inl ⟨rfl, hb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
+    · exact Or.inr (Or.inr (Or.inr hcross))
+
+/-- **THE VERTICAL MULTI-TOWER CERTIFICATE, ASSEMBLED** (§38) — the first
+    `mixKernels_ok` instantiation from model-side data.  Inputs: `n` ascending
+    towers `ck` (each a class's `class_tower` chain), each with recurrence +
+    round-robin coverage of its demand list `Ds k` past any threshold (`hrec`),
+    pairwise cross-constancy horizons `hN` (`classify_cross` disjunct 1, i.e.
+    the towers are pairwise non-comparable — comparable ones having been merged
+    by §37's maximal-tower domination), and the purely-vertical phase condition
+    `hdem` (every phase `∃`-demand is `∃PP` with argument in the tower's own
+    round-robin list, or `∃EQ`).  Output: bases `ik` and periods `pk` at which
+    the whole family is a valid `MultiTier` certificate.
+
+    The base choice is the content: `exists_bound2` joins the per-pair horizons
+    to a single `B`, and `hrec k B` supplies a recurrence base ABOVE `B` for
+    every kernel — so `hty` and `hrectQ` (via `family_hrectQ`) hold at the same
+    bases, and `hinj` follows from `cross_const_ne_eq`. -/
+theorem vtowers_ok (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (ck : Fin n → Nat → α)
+    (hdom : ∀ k m, I.dom (ck k m))
+    (hstep : ∀ k m, I.rho (ck k m) (ck k (m + 1)) = pp)
+    (hrec : ∀ k L0, ∃ i p, L0 ≤ i ∧ 0 < p ∧
+      mty C0 I (ck k i) = mty C0 I (ck k (i + p)) ∧
+      ∀ D ∈ Ds k, ∃ b, b < p ∧ D ∈ mty C0 I (ck k (i + b)))
+    (hN : Fin n → Fin n → Nat)
+    (hconst : ∀ k k', k ≠ k' → ∀ i j, hN k k' ≤ i → hN k k' ≤ j →
+      I.rho (ck k i) (ck k' j) = I.rho (ck k (hN k k')) (ck k' (hN k k')))
+    (hdem : ∀ k m r D, Concept.ex r D ∈ mty C0 I (ck k m) →
+      (r = pp ∧ D ∈ Ds k) ∨ r = eq) :
+    ∃ ik pk : Fin n → Nat,
+      MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) ck ik pk (fun _ => true)) := by
+  classical
+  obtain ⟨B, hB⟩ := exists_bound2 n hN
+  have hpair : ∀ k : Fin n, ∃ ip : Nat × Nat, B ≤ ip.1 ∧ 0 < ip.2 ∧
+      mty C0 I (ck k ip.1) = mty C0 I (ck k (ip.1 + ip.2)) ∧
+      ∀ D ∈ Ds k, ∃ b, b < ip.2 ∧ D ∈ mty C0 I (ck k (ip.1 + b)) := by
+    intro k
+    obtain ⟨i, p, h1, h2, h3, h4⟩ := hrec k B
+    exact ⟨(i, p), h1, h2, h3, h4⟩
+  obtain ⟨f, hf⟩ := Classical.axiomOfChoice hpair
+  refine ⟨fun k => (f k).1, fun k => (f k).2, ?_⟩
+  have hbk : ∀ k k' : Fin n, k ≠ k' → hN k k' ≤ (f k).1 :=
+    fun k k' _ => Nat.le_trans (hB k k') (hf k).1
+  have hbk' : ∀ k k' : Fin n, k ≠ k' → hN k k' ≤ (f k').1 :=
+    fun k k' _ => Nat.le_trans (hB k k') (hf k').1
+  refine mixKernelsV_ok hI C0 ck hdom (fun k => (f k).1) (fun k => (f k).2)
+    hstep (fun k => (hf k).2.1) (fun k => (hf k).2.2.1)
+    (family_hrectQ ck (fun k => (f k).1) hN hconst hbk hbk') ?_ ?_
+  · -- distinct bases: a constant cross-relation is never `EQ`
+    intro k k' heq
+    rcases Classical.em (k = k') with hkk | hne
+    · exact hkk
+    exfalso
+    have hcv : I.rho (ck k (f k).1) (ck k' (f k').1)
+        = I.rho (ck k (hN k k')) (ck k' (hN k k')) :=
+      hconst k k' hne _ _ (hbk k k' hne) (hbk' k k' hne)
+    refine cross_const_ne_eq hI (ck k) (ck k') (hdom k) (hdom k') (hstep k')
+      (hN k k') _ (fun i j hi hj => hconst k k' hne i j hi hj) ?_
+    rw [← hcv, heq]
+    exact hI.refl_eq _ (hdom k' (f k').1)
+  · -- phase-demand routing: own chain (round-robin) or reflexive `∃EQ`
+    intro k a r D hmem
+    rcases hdem k ((f k).1 + a) r D hmem with ⟨rfl, hD⟩ | rfl
+    · exact Or.inl ⟨rfl, (hf k).2.2.2 D hD⟩
+    · exact Or.inr (Or.inl ⟨rfl, seg_ex_eq hI (hdom k) hmem⟩)
+
+/-! ### §38.2 — the model-side connection: `persistAll` nodes ⟹ the certificate
+
+`vtowers_ok` consumes CHAINS, but the extraction starts from `persistAll` NODES,
+and the classification (non-comparability) is a statement ABOUT the chains — so
+the chains cannot stay existential.  `classChain` NAMES them (the round-robin
+tower of each class), which lets hypothesis and conclusion both quote the same
+object, and reduces the vertical extraction to the honest DICHOTOMY
+`vtowers_or_comparable`: either the family is pairwise non-comparable and the
+certificate exists, or two towers are comparable — the case §37 removes by
+merging them under their dominating maximal tower. -/
+
+/-- The named round-robin tower of a class (the chain `class_tower` produces). -/
+noncomputable def classChain (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (k : Fin n) : Nat → α :=
+  rrPt hI C0 (Ds k) (hL k) (x0 k) (h0 k)
+
+theorem classChain_dom (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (k : Fin n) (m : Nat) :
+    I.dom (classChain hI C0 Ds hL x0 h0 k m) :=
+  rrPt_dom hI C0 (Ds k) (hL k) (x0 k) (h0 k) m
+
+theorem classChain_step (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (k : Fin n) (m : Nat) :
+    I.rho (classChain hI C0 Ds hL x0 h0 k m)
+      (classChain hI C0 Ds hL x0 h0 k (m + 1)) = pp :=
+  rrPt_step hI C0 (Ds k) (hL k) (x0 k) (h0 k) m
+
+/-- Every rung of a class tower is the root or `PP`-above it — so a model-side
+    condition imposed on the `PP`-cone of the root reaches the whole tower. -/
+theorem classChain_above (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (k : Fin n) (m : Nat) :
+    classChain hI C0 Ds hL x0 h0 k m = x0 k ∨
+      I.rho (x0 k) (classChain hI C0 Ds hL x0 h0 k m) = pp := by
+  cases m with
+  | zero => exact Or.inl rfl
+  | succ m =>
+    refine Or.inr ?_
+    have h := chain_pp_lt hI (classChain hI C0 Ds hL x0 h0 k)
+      (classChain_dom hI C0 Ds hL x0 h0 k) (classChain_step hI C0 Ds hL x0 h0 k)
+      0 (m + 1) (Nat.succ_pos m)
+    exact h
+
+/-- Each class tower has its recurrence + full round-robin demand coverage
+    available past ANY threshold — `class_tower`'s content, on the named chain. -/
+theorem classChain_rec (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (k : Fin n) (L0 : Nat) :
+    ∃ i p, L0 ≤ i ∧ 0 < p ∧
+      mty C0 I (classChain hI C0 Ds hL x0 h0 k i)
+        = mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + p)) ∧
+      ∀ D ∈ Ds k, ∃ b, b < p ∧ D ∈ mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + b)) := by
+  obtain ⟨i, p, hL0, hi, hp, hdvd, hty⟩ :=
+    rr_segment_from hI C0 (Ds k) (hL k) (x0 k) (h0 k) L0
+  refine ⟨i, p, hL0, hp, hty, fun D hD => ?_⟩
+  obtain ⟨jj, hget⟩ := List.get_of_mem hD
+  obtain ⟨b, hb, hDb⟩ :=
+    rr_covers hI C0 (Ds k) (hL k) (x0 k) (h0 k) i p hi hp hdvd jj.1 jj.2
+  exact ⟨b, hb, hget ▸ hDb⟩
+
+/-- **THE VERTICAL EXTRACTION DICHOTOMY** (§38.2), chain-generic form.  For any
+    finite family of ascending towers with per-tower recurrence + round-robin
+    coverage (`hrec`) and purely vertical phase demands (`hdem`), EITHER the
+    family assembles into a full `MultiTierOk` certificate (`vtowers_ok`), OR two
+    of the towers are COMPARABLE — the case §37 removes by merging them under
+    their dominating maximal tower.  The split is `classify_cross`: its
+    disjunct 1 (eventual constancy) is precisely what `vtowers_ok` needs, and
+    its disjuncts 2/3 are precisely the merge trigger.  So no third case can
+    arise, and nothing beyond the merge is owed on the vertical side. -/
+theorem vtowers_or_comparable_gen (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (C : Fin n → Nat → α)
+    (hdom : ∀ k m, I.dom (C k m))
+    (hstep : ∀ k m, I.rho (C k m) (C k (m + 1)) = pp)
+    (hrec : ∀ k L0, ∃ i p, L0 ≤ i ∧ 0 < p ∧
+      mty C0 I (C k i) = mty C0 I (C k (i + p)) ∧
+      ∀ D ∈ Ds k, ∃ b, b < p ∧ D ∈ mty C0 I (C k (i + b)))
+    (hdem : ∀ k m r D, Concept.ex r D ∈ mty C0 I (C k m) →
+      (r = pp ∧ D ∈ Ds k) ∨ r = eq) :
+    (∃ ik pk : Fin n → Nat,
+        MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim) C ik pk (fun _ => true)))
+    ∨ (∃ k k' : Fin n, k ≠ k' ∧
+        ((∀ i, ∃ j, I.rho (C k i) (C k' j) = pp ∨ I.rho (C k i) (C k' j) = eq) ∨
+         (∀ j, ∃ i, I.rho (C k i) (C k' j) = ppi))) := by
+  classical
+  rcases Classical.em (∀ k k' : Fin n, k ≠ k' →
+      ∃ N v, ∀ i j, N ≤ i → N ≤ j → I.rho (C k i) (C k' j) = v) with hall | hsome
+  · -- every cross-pair is eventually constant: build the certificate
+    refine Or.inl ?_
+    have hex : ∀ q : Fin n × Fin n, ∃ N : Nat, q.1 ≠ q.2 →
+        ∀ i j, N ≤ i → N ≤ j → I.rho (C q.1 i) (C q.2 j) = I.rho (C q.1 N) (C q.2 N) := by
+      intro q
+      rcases Classical.em (q.1 ≠ q.2) with hne | hnn
+      · obtain ⟨N, v, hv⟩ := hall q.1 q.2 hne
+        exact ⟨N, fun _ i j hi hj => by
+          rw [hv i j hi hj, hv N N (Nat.le_refl N) (Nat.le_refl N)]⟩
+      · exact ⟨0, fun h => absurd h hnn⟩
+    obtain ⟨hNf, hNspec⟩ := Classical.axiomOfChoice hex
+    exact vtowers_ok hI C0 Ds C hdom hstep hrec
+      (fun k k' => hNf (k, k')) (fun k k' hne => hNspec (k, k') hne) hdem
+  · -- some cross-pair is NOT eventually constant: `classify_cross` ⟹ comparable
+    refine Or.inr ?_
+    rcases Classical.em (∃ k k' : Fin n, k ≠ k' ∧
+        ¬ ∃ N v, ∀ i j, N ≤ i → N ≤ j → I.rho (C k i) (C k' j) = v)
+      with ⟨k, k', hne, hnc⟩ | hno
+    · refine ⟨k, k', hne, ?_⟩
+      rcases classify_cross hI (C k) (C k') (hdom k) (hdom k') (hstep k) (hstep k')
+        with hconst | hemb | hemb'
+      · exact absurd hconst hnc
+      · exact Or.inl hemb
+      · exact Or.inr hemb'
+    · exact absurd (fun k k' hne => Classical.byContradiction
+        (fun hnc => hno ⟨k, k', hne, hnc⟩)) hsome
+
+/-- **THE VERTICAL EXTRACTION DICHOTOMY, FROM `persistAll` NODES** (§38.2) — the
+    model-side entry point.  Given `n` persistent roots `x0 k` with demand lists
+    `Ds k`, and the purely vertical model-side condition `hdem` (in the `PP`-cone
+    of each root, every `∃`-demand is `∃PP` with argument in that root's OWN
+    list, or `∃EQ`), the class towers either assemble into a full `MultiTierOk`
+    certificate or contain a comparable pair.  This is `vtowers_or_comparable_gen`
+    at the named `classChain`, with `hrec` supplied by `classChain_rec` and the
+    phase condition pulled back along `classChain_above`. -/
+theorem vtowers_or_comparable (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k))
+    (hdem : ∀ k z, I.dom z → (z = x0 k ∨ I.rho (x0 k) z = pp) →
+      ∀ r D, Concept.ex r D ∈ mty C0 I z → (r = pp ∧ D ∈ Ds k) ∨ r = eq) :
+    (∃ ik pk : Fin n → Nat,
+        MultiTierOk (mixKernels I C0 (fun e : Empty => e.elim)
+          (classChain hI C0 Ds hL x0 h0) ik pk (fun _ => true)))
+    ∨ (∃ k k' : Fin n, k ≠ k' ∧
+        ((∀ i, ∃ j, I.rho (classChain hI C0 Ds hL x0 h0 k i)
+                      (classChain hI C0 Ds hL x0 h0 k' j) = pp ∨
+                    I.rho (classChain hI C0 Ds hL x0 h0 k i)
+                      (classChain hI C0 Ds hL x0 h0 k' j) = eq) ∨
+         (∀ j, ∃ i, I.rho (classChain hI C0 Ds hL x0 h0 k i)
+                      (classChain hI C0 Ds hL x0 h0 k' j) = ppi))) :=
+  vtowers_or_comparable_gen hI C0 Ds (classChain hI C0 Ds hL x0 h0)
+    (classChain_dom hI C0 Ds hL x0 h0) (classChain_step hI C0 Ds hL x0 h0)
+    (classChain_rec hI C0 Ds hL x0 h0)
+    (fun k m r D hmem => hdem k _ (classChain_dom hI C0 Ds hL x0 h0 k m)
+      (classChain_above hI C0 Ds hL x0 h0 k m) r D hmem)
 
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
@@ -17688,6 +18017,140 @@ theorem pcv_all (p : Bool × Nat) : ∀ D ∈ cl Cvert, sat Ipo p D := by
   · exact po_he p
   · exact po_ha p
 
+open Classical in
+/-- `mty Cvert Ipo` is CONSTANT `= cl Cvert` on the two-region model. -/
+theorem pcvfull (p : Bool × Nat) : mty Cvert Ipo p = cl Cvert := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  exact decide_eq_true (pcv_all p D hD)
+
+/-- The region selector of the two-tower witness. -/
+def reg2 (k : Fin 2) : Bool := k.val == 1
+
+theorem reg2_ne : ∀ k k' : Fin 2, k ≠ k' → reg2 k ≠ reg2 k' := by decide
+
+/-- The `Fin 2`-indexed family of ascending towers of the all-cross-`PO` model:
+    tower `k` is region `reg2 k`'s `PP`-chain. -/
+def twoTowers (k : Fin 2) (m : Nat) : Bool × Nat := (reg2 k, m)
+
+/-- **NON-VACUITY OF `vtowers_ok` — A GENUINE TWO-KERNEL PURELY-VERTICAL
+    CERTIFICATE** (§38.1).  In the two-region all-cross-`PO` model `Ipo`, the two
+    regions' ascending `PP`-chains are pairwise NON-comparable with constant
+    cross-value `PO` (the `cross_po_stabilizes` third of the §36 trichotomy),
+    each serves the single demand `A₀` of `Cvert`, and no phase carries a
+    horizontal demand (`cvert_demands`) — so `vtowers_ok`'s hypotheses are
+    jointly satisfiable at `n = 2` and the assembled certificate exists.  This
+    rules out the degenerate readings the review ledger keeps finding: `κ` has
+    TWO elements (not a disguised single kernel), and the cross-kernel rectangle
+    `hrectQ` is exercised at a REAL non-`EQ` value, so `hinj` is discharged by
+    `cross_const_ne_eq` rather than holding trivially. -/
+theorem vtowers_two_nonvacuous :
+    ∃ ik pk : Fin 2 → Nat,
+      MultiTierOk (mixKernels Ipo Cvert (fun e : Empty => e.elim)
+        twoTowers ik pk (fun _ => true)) := by
+  refine vtowers_ok Ipo_rcc5 Cvert (fun _ => [Concept.atom 0]) twoTowers
+    (fun _ _ => trivial) ?_ ?_ (fun _ _ => 0) ?_ ?_
+  · -- each tower ascends by `PP` inside its own region
+    intro k m
+    show (if reg2 k = reg2 k then chain m (m + 1) else po) = pp
+    rw [if_pos rfl]; exact chain_lt (Nat.lt_succ_self m)
+  · -- recurrence + round-robin coverage past ANY threshold
+    intro k L0
+    refine ⟨L0, 1, Nat.le_refl _, Nat.one_pos, by rw [pcvfull, pcvfull], ?_⟩
+    intro D hD
+    rcases List.mem_singleton.mp hD with rfl
+    exact ⟨0, Nat.one_pos, by rw [pcvfull]; decide⟩
+  · -- the cross-kernel relation is CONSTANT `PO` (never `EQ`)
+    intro k k' hne i j _ _
+    have hb : reg2 k ≠ reg2 k' := reg2_ne k k' hne
+    show (if reg2 k = reg2 k' then chain i j else po)
+      = (if reg2 k = reg2 k' then chain 0 0 else po)
+    rw [if_neg hb, if_neg hb]
+  · -- every phase demand is `∃PP.A₀` — purely vertical
+    intro k m r D hmem
+    obtain ⟨rfl, rfl⟩ := cvert_demands r D (mty_sub _ hmem)
+    exact Or.inl ⟨rfl, List.mem_singleton.mpr rfl⟩
+
+/-- `nestRho` in projection form (so it applies to non-literal pairs). -/
+theorem nestRho_eq (p q : Bool × Nat) :
+    nestRho p q = if p.1 = q.1 then chain p.2 q.2 else po := by
+  cases p; cases q; rfl
+
+/-- A `PP`-step of `Ipo` never leaves its region (across regions the value is
+    `PO`).  So an ascending tower of `Ipo` stays inside the region of its root. -/
+theorem po_pp_same_region {p q : Bool × Nat} (h : Ipo.rho p q = pp) : p.1 = q.1 := by
+  rcases Classical.em (p.1 = q.1) with hb | hb
+  · exact hb
+  · exfalso
+    have h' : nestRho p q = pp := h
+    rw [nestRho_eq, if_neg hb] at h'
+    exact absurd h' (by decide)
+
+/-- Consequently the class tower of a root stays in the root's region. -/
+theorem classChain_region {n : Nat} (Ds : Fin n → List Concept)
+    (hL : ∀ k, 0 < (Ds k).length) (x0 : Fin n → Bool × Nat)
+    (h0 : ∀ k, persistAll Ipo Cvert (Ds k) (x0 k)) (k : Fin n) :
+    ∀ m, (classChain Ipo_rcc5 Cvert Ds hL x0 h0 k m).1 = (x0 k).1 := by
+  intro m
+  induction m with
+  | zero => rfl
+  | succ m ih =>
+    rw [← ih]
+    exact (po_pp_same_region (classChain_step Ipo_rcc5 Cvert Ds hL x0 h0 k m)).symm
+
+/-- Each region base is a `persistAll` node for `Cvert`'s single demand `A₀`. -/
+theorem po_persistAll (b : Bool) : persistAll Ipo Cvert [Concept.atom 0] (b, 0) :=
+  ⟨trivial, fun D hD => by
+    rcases List.mem_singleton.mp hD with rfl
+    exact ⟨mem_mty.mpr ⟨by decide, po_he (b, 0)⟩, po_hal (b, 0)⟩⟩
+
+/-- **NON-VACUITY OF THE MODEL-SIDE ENTRY POINT `vtowers_or_comparable`** — the
+    CERTIFICATE branch actually fires.  Starting from two `persistAll` NODES (the
+    two region bases of `Ipo`), the dichotomy's escape branch is REFUTED: each
+    class tower stays in its root's region (`classChain_region`), so every
+    cross-value is `PO`, and neither comparability disjunct can hold.  Hence the
+    model-side entry point delivers a genuine two-kernel `MultiTierOk` and is not
+    a disguised "always comparable" statement. -/
+theorem vtowers_from_nodes_nonvacuous :
+    ∃ ik pk : Fin 2 → Nat,
+      MultiTierOk (mixKernels Ipo Cvert (fun e : Empty => e.elim)
+        (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0]) (fun _ => Nat.one_pos)
+          (fun k => (reg2 k, 0)) (fun k => po_persistAll (reg2 k)))
+        ik pk (fun _ => true)) := by
+  have hdem : ∀ (k : Fin 2) (z : Bool × Nat), Ipo.dom z →
+      (z = (reg2 k, 0) ∨ Ipo.rho (reg2 k, 0) z = pp) →
+      ∀ r D, Concept.ex r D ∈ mty Cvert Ipo z →
+        (r = pp ∧ D ∈ [Concept.atom 0]) ∨ r = eq := by
+    intro _ _ _ _ r D hmem
+    obtain ⟨rfl, rfl⟩ := cvert_demands r D (mty_sub _ hmem)
+    exact Or.inl ⟨rfl, List.mem_singleton.mpr rfl⟩
+  rcases vtowers_or_comparable Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+      (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+      (fun k => po_persistAll (reg2 k)) hdem with hcert | ⟨k, k', hne, hcomp⟩
+  · exact hcert
+  · exfalso
+    have key : ∀ p q : Bool × Nat, p.1 ≠ q.1 → Ipo.rho p q = po := by
+      intro p q h
+      show nestRho p q = po
+      rw [nestRho_eq, if_neg h]
+    have hr := classChain_region (fun _ => [Concept.atom 0]) (fun _ => Nat.one_pos)
+      (fun k : Fin 2 => (reg2 k, 0)) (fun k => po_persistAll (reg2 k))
+    have hpo : ∀ i j,
+        Ipo.rho (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                  (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                  (fun k => po_persistAll (reg2 k)) k i)
+                (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                  (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                  (fun k => po_persistAll (reg2 k)) k' j) = po :=
+      fun i j => key _ _ (by rw [hr k i, hr k' j]; exact reg2_ne k k' hne)
+    rcases hcomp with hemb | hemb'
+    · obtain ⟨j, hj⟩ := hemb 0
+      rcases hj with h | h <;> rw [hpo 0 j] at h <;> exact absurd h (by decide)
+    · obtain ⟨i, hi⟩ := hemb' 0
+      rw [hpo i 0] at hi
+      exact absurd hi (by decide)
+
 /-- Everything in `cl Cnest` is satisfied at every `Ipo` point. -/
 theorem psat_all (p : Bool × Nat) : ∀ D ∈ cl Cnest, sat Ipo p D := by
   intro D hD
@@ -18108,6 +18571,18 @@ end VerticalWitness
 #print axioms class_persistAll
 #print axioms towers_from_persistPP
 #print axioms class_kernel
+#print axioms rr_segment_from
+#print axioms class_tower
+#print axioms cross_const_ne_eq
+#print axioms mixKernelsV_ok
+#print axioms vtowers_ok
+#print axioms classChain_above
+#print axioms classChain_rec
+#print axioms vtowers_or_comparable_gen
+#print axioms vtowers_or_comparable
+#print axioms VerticalWitness.vtowers_two_nonvacuous
+#print axioms VerticalWitness.classChain_region
+#print axioms VerticalWitness.vtowers_from_nodes_nonvacuous
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
