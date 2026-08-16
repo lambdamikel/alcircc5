@@ -2860,4 +2860,11 @@ recursion took (that needs §36.1's staircase argument); the former is airtight.
   same pairwise non-comparability.
 - **`codesM`** enumeration + the `decidableSat_of_codes` completeness premise.
 
-The vertical side owes nothing further.
+**Scope correction to this section's own wording.** "The vertical side owes
+nothing further" would be an overclaim: §38.1–§38.3 close the **persistent**
+vertical side (`persistAll` sites, i.e. `∀PP`-guarded `∃PP`). **One-shot `∃PP`**
+— §33's architectural gap — is still owed and is still vertical. Its FRAME
+exists (`posetMT_ok`/`posetKernel_ok`, §34 item 1), but the EXTRACTION of finite
+PP-towers from a model (§34 item 2) and their unification with kernels in one
+certificate (§34 item 3) are unbuilt. So the honest label for the vertical side
+is: **persistent-∃PP vertical is complete; one-shot `∃PP` is open.**
