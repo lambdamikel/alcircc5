@@ -909,6 +909,147 @@ def part_n(models=200, banks_per=5, n=16, L=12, T=3, seed=31415):
     print("     a Lean-shaped argument, not a fixed-point search.")
 
 
+# ---- part O: does the GREEDY staged procedure succeed (not merely: a vector exists)?
+
+
+def greedy_staged(chains, slots, L, p, T):
+    """Part N showed an increasing base VECTOR exists.  That is NOT the same as
+    the CONSTRUCTIVE left-to-right procedure succeeding: once `i_j` is fixed and
+    `w_j` picked above it, 'w_j stable on the EARLIER windows' is no longer under
+    our control.  This runs the actual greedy -- commit to each base and its
+    witnesses in turn, with no lookahead and no backtracking."""
+    m = len(chains)
+    bases, chosen = [], []          # chosen : list of (kernel, witness)
+
+    def stable_on(w, k, i):
+        return len({rel(chains[k][i + b], w) for b in range(p)}) == 1
+
+    for j in range(m):
+        lo = max(T, bases[-1] + 1) if bases else T
+        pick = None
+        for i in range(lo, L - p + 1):
+            # every ALREADY-chosen witness must be stable on this new window
+            if not all(stable_on(w, j, i) for (_, w) in chosen):
+                continue
+            # and every slot of kernel j must find a witness serving its own
+            # window AND stable on all EARLIER windows
+            newly = []
+            ok = True
+            for (k, r, bank) in slots:
+                if k != j:
+                    continue
+                cand = None
+                for w in bank:
+                    if not all(rel(chains[j][i + b], w) == r for b in range(p)):
+                        continue
+                    if all(stable_on(w, k2, bases[k2]) for k2 in range(j)):
+                        cand = w
+                        break
+                if cand is None:
+                    ok = False
+                    break
+                newly.append((j, cand))
+            if ok:
+                pick = (i, newly)
+                break
+        if pick is None:
+            return None
+        bases.append(pick[0])
+        chosen.extend(pick[1])
+    return bases
+
+
+def part_o(models=200, banks_per=5, n=16, L=12, T=3, seed=161803):
+    print("\nPART O -- GREEDY staged procedure vs mere EXISTENCE of a vector")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for m in (2, 3, 4):
+        for p in (2, 3):
+            tested = bad_exist = bad_greedy = 0
+            for _ in range(models):
+                chains = [rand_chain(rng, univ, L, maxstep=1) for _ in range(m)]
+                if any(c is None for c in chains):
+                    continue
+                for _ in range(banks_per):
+                    slots = []
+                    for k in range(m):
+                        for t in range(3):
+                            r = DR if t % 2 == 0 else PP
+                            bk = rand_bank_rel(rng, chains[k], univ, r)
+                            if bk:
+                                slots.append((k, r, bk))
+                    if not slots:
+                        continue
+                    tested += 1
+                    if valid_slots_increasing(chains, slots, L, p, minbase=T) is None:
+                        bad_exist += 1
+                    if greedy_staged(chains, slots, L, p, T) is None:
+                        bad_greedy += 1
+            print(f"  kernels={m}  period={p}   systems {tested:5d}"
+                  f"   EXISTS fails {bad_exist:4d} ({100.0 * bad_exist / max(tested,1):5.2f}%)"
+                  f"   |  GREEDY fails {bad_greedy:4d} ({100.0 * bad_greedy / max(tested,1):5.2f}%)")
+    print("  => GREEDY matching EXISTS means the construction is CONSTRUCTIVE:")
+    print("     one left-to-right pass, no backtracking -- directly formalizable.")
+    print("     A gap would mean the Lean proof needs search, not a construction.")
+
+
+# ---- part P: does SOME kernel ORDER make the greedy work?  (a weaker plan)
+
+
+def greedy_any_order(chains, slots, L, p, T):
+    """Part O killed the plain left-to-right greedy.  Weaker candidate plan: is
+    there SOME processing order for which the greedy succeeds?  That would still
+    be a clean statement ('choose the right order'), just with a finite search
+    over orders instead of a fixed left-to-right pass."""
+    from itertools import permutations
+    m = len(chains)
+    for perm in permutations(range(m)):
+        rechain = [chains[k] for k in perm]
+        pos = {k: idx for idx, k in enumerate(perm)}
+        reslots = [(pos[k], r, bank) for (k, r, bank) in slots]
+        if greedy_staged(rechain, reslots, L, p, T) is not None:
+            return perm
+    return None
+
+
+def part_p(models=150, banks_per=4, n=16, L=12, T=3, seed=271828):
+    print("\nPART P -- does SOME kernel order rescue the greedy?")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for m in (3, 4):
+        for p in (2, 3):
+            tested = bad_fixed = bad_any = 0
+            for _ in range(models):
+                chains = [rand_chain(rng, univ, L, maxstep=1) for _ in range(m)]
+                if any(c is None for c in chains):
+                    continue
+                for _ in range(banks_per):
+                    slots = []
+                    for k in range(m):
+                        for t in range(3):
+                            r = DR if t % 2 == 0 else PP
+                            bk = rand_bank_rel(rng, chains[k], univ, r)
+                            if bk:
+                                slots.append((k, r, bk))
+                    if not slots:
+                        continue
+                    tested += 1
+                    if greedy_staged(chains, slots, L, p, T) is None:
+                        bad_fixed += 1
+                    if greedy_any_order(chains, slots, L, p, T) is None:
+                        bad_any += 1
+            print(f"  kernels={m}  period={p}   systems {tested:5d}"
+                  f"   fixed-order greedy fails {bad_fixed:4d}"
+                  f" ({100.0 * bad_fixed / max(tested,1):5.2f}%)"
+                  f"   |  SOME-order greedy fails {bad_any:4d}"
+                  f" ({100.0 * bad_any / max(tested,1):5.2f}%)")
+    print("  => if SOME-order is ~0%, the plan becomes 'process the kernels in a")
+    print("     suitable order' -- still one pass, choosing the order first.")
+    print("     If not, the selection needs genuine simultaneity, not staging.")
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -928,6 +1069,8 @@ def main():
     part_l()
     part_m()
     part_n()
+    part_o()
+    part_p()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")

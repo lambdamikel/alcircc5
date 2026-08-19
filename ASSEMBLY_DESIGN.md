@@ -3145,17 +3145,51 @@ This also explains parts I and J at once: stay-low dominates at low bases,
 push-past at high ones, and both are needed — exactly what a staged construction
 consumes.
 
-### 40.1 The Lean plan (one pass, no fixed point)
+### 40.1 The one-pass plan — PROPOSED, then REFUTED by part O
 
-Process kernels in increasing base order. For kernel `j`: choose its base past
-(a) its own type recurrence, and (b) the horizons of all witnesses of kernels
-`< j`; then choose `j`'s witnesses above `j`'s window. Discharge the two
-cross-directions by the table above. No iteration, no fixed point — which is why
-§39.8's framing of the residue as a "finite fixed-point question" was still the
-wrong shape.
+The plan drafted from part N was: process kernels in increasing base order; for
+kernel `j` choose its base past its own recurrence and past the horizons of all
+witnesses of kernels `< j`, then choose `j`'s witnesses above `j`'s window.
 
-**Still owed:** the "stay low" direction needs the *earlier* windows to sit
-inside the *later* witnesses' initial rank-0 blocks. Parts I/J/N say this holds
-in practice; it is NOT proved, and it is the single remaining mathematical
-content of `MixSelect`. That is a sharper and smaller target than anything §39
-had.
+**Part O refutes it.** Part N established only that an increasing base VECTOR
+EXISTS — not that the constructive left-to-right procedure finds one. Those
+differ exactly where it matters: once `i_j` is fixed and `w_j` is picked above
+it, "`w_j` stable on the EARLIER windows" is no longer under our control. Running
+the actual greedy (commit each base and its witnesses in turn, no lookahead, no
+backtracking): **fails up to 44.3%** (4 kernels, period 3), while an increasing
+vector exists in ~100% of the same systems. Had this been formalized first, the
+Lean proof would have hit a wall at exactly that step.
+
+### 40.2 Part P: some ORDER always works — but that is not yet a proof
+
+Trying every processing order: the greedy succeeds under SOME permutation in
+**0%-failure** across all tested regimes (3–4 kernels, periods 2–3), against up
+to 44.8% for the fixed order. So "process the kernels in a suitable order" is
+sound empirically.
+
+But this is close to circular as a *proof* strategy: the successful order is
+essentially the order of the bases in a valid vector, so "some order works" is a
+restatement of "a valid vector exists", which is the very thing to be proved.
+Staging is how one would COMPUTE the vector; it is not an argument that one
+exists.
+
+### 40.3 Honest status: three plans refuted, the claim still well-supported
+
+| plan | verdict |
+|---|---|
+| all windows at one common late level | **FALSE** (part M, up to 35% failure) |
+| fixed-order staged greedy | **FALSE** (part O, up to 44.3% failure) |
+| some-order staged greedy | works empirically, but ≈ restates the existence claim (part P) |
+
+What survives: the existence of a valid base vector is EMPIRICALLY ROBUST (0%
+failure across densities up to 4 kernels × 3 demands, DR and PP, late bases,
+truncation excluded), and its relational content is fully certified
+(`window_stab_dichotomy` and the two branch lemmas). What is missing is any
+*argument* for existence — and the three natural constructive routes are now
+refuted rather than untried.
+
+**Recommendation: do NOT start the Lean selection proof.** The route is not
+mapped cleanly enough; the next step is mathematical (find an existence argument
+for the base vector, or a genuinely different certificate shape), not
+formalization. Independent work that does NOT depend on this: the one-shot `∃PP`
+gap (§33/§34) and `codesM`.
