@@ -689,6 +689,226 @@ def part_k(models=250, banks_per=8, n=16, T=4, Ls=(6, 8, 10, 12), seed=24680):
     print("     always room above any recurrence base.")
 
 
+# ------- part L: the DENSE constraint system -- many demands, PP too, m up to 4
+
+
+def rand_bank_rel(rng, chain, univ, r):
+    """A bank making an `exists r . D` demand live at every level (r = DR or PP).
+    Witnesses are CONSTRUCTED rather than filtered from a pool, so that PP
+    witnesses (which must strictly CONTAIN a chain node) exist at every level:
+    DR -> a nonempty subset of the node's complement; PP -> the node plus one."""
+    bank = set()
+    us = sorted(univ)
+    for node in chain:
+        comp = [x for x in us if x not in node]
+        if not comp:
+            return None
+        k = rng.randint(1, min(3, len(comp)))
+        extra = frozenset(rng.sample(comp, k))
+        bank.add(extra if r == DR else (node | extra))
+    return sorted(bank, key=lambda t: (len(t), sorted(t)))
+
+
+def valid_slots(chains, slots, L, minp, maxp, minbase=0):
+    """`MixSelect` verbatim: slots = [(kernel, relation, bank)].  NOTE the
+    structure -- once the base/period VECTOR is fixed the slots are INDEPENDENT
+    (no constraint couples two witnesses), so all the joint content sits in
+    choosing ONE base vector that satisfies every slot at once."""
+    m = len(chains)
+    opts = [(i, p) for p in range(minp, maxp + 1)
+            for i in range(minbase, L - p + 1)]
+
+    def ok(chosen):
+        wins = [[chains[k][i + b] for b in range(p)] for k, (i, p) in enumerate(chosen)]
+        for (k, r, bank) in slots:
+            if not any(all(rel(x, w) == r for x in wins[k]) and
+                       all(len({rel(x, w) for x in wins[k2]}) == 1
+                           for k2 in range(m) if k2 != k)
+                       for w in bank):
+                return False
+        return True
+
+    def rec(idx, chosen):
+        if idx == m:
+            return chosen if ok(chosen) else None
+        for o in opts:
+            r = rec(idx + 1, chosen + [o])
+            if r is not None:
+                return r
+        return None
+
+    return rec(0, [])
+
+
+def part_l(models=120, banks_per=5, n=16, L=10, T=4, seed=97531):
+    """Every earlier part gave each kernel ONE DR-demand.  Real kernels carry
+    SEVERAL DR/PP demands, each needing its own witness, and every witness
+    constrains EVERY kernel's window.  This sweeps the density: m kernels x d
+    demands per kernel, with both DR and PP demands, bases forced late (>= T)."""
+    print(f"\nPART L -- dense constraint systems (bases >= {T}, DR and PP demands)")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for m in (2, 3, 4):
+        for d in (1, 2, 3):
+            tested = bad = 0
+            for _ in range(models):
+                chains = [rand_chain(rng, univ, L, maxstep=1) for _ in range(m)]
+                if any(c is None for c in chains):
+                    continue
+                for _ in range(banks_per):
+                    slots = []
+                    okgen = True
+                    for k in range(m):
+                        for t in range(d):
+                            r = DR if t % 2 == 0 else PP
+                            bk = rand_bank_rel(rng, chains[k], univ, r)
+                            if bk is None:
+                                okgen = False
+                                break
+                            slots.append((k, r, bk))
+                        if not okgen:
+                            break
+                    if not okgen:
+                        continue
+                    tested += 1
+                    if valid_slots(chains, slots, L, 2, 3, minbase=T) is None:
+                        bad += 1
+            print(f"  kernels={m}  demands/kernel={d}  (slots={m * d:2d})"
+                  f"   systems {tested:5d}   NO valid config {bad:4d}"
+                  f"  ({100.0 * bad / max(tested, 1):5.2f}%)")
+    print("  => the density sweep is the sharpest test of the joint selection:")
+    print("     every added slot is another witness that must be simultaneously")
+    print("     stable on EVERY kernel's window, under ONE base vector.")
+
+
+# ------ part M: does ONE COMMON BASE suffice?  (the shape of the proof)
+
+
+def common_base_ok(chains, slots, T, p):
+    """All kernels at the SAME base T with the SAME period p -- the simplest
+    conceivable selection.  If this always works, the joint selection collapses
+    to 'push every window to one common late level', and no genuine
+    fixed-point/iteration argument is needed at all."""
+    m = len(chains)
+    wins = [[chains[k][T + b] for b in range(p)] for k in range(m)]
+    for (k, r, bank) in slots:
+        if not any(all(rel(x, w) == r for x in wins[k]) and
+                   all(len({rel(x, w) for x in wins[k2]}) == 1
+                       for k2 in range(m) if k2 != k)
+                   for w in bank):
+            return False
+    return True
+
+
+def part_m(models=200, banks_per=5, n=16, L=10, seed=112358,
+           Ts=(4, 5, 6), ps=(2, 3)):
+    print("\nPART M -- does ONE COMMON BASE suffice?  (would collapse the selection)")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for m in (2, 3, 4):
+        for T in Ts:
+            for p in ps:
+                if T + p > L:
+                    continue
+                tested = bad = 0
+                for _ in range(models):
+                    chains = [rand_chain(rng, univ, L, maxstep=1) for _ in range(m)]
+                    if any(c is None for c in chains):
+                        continue
+                    for _ in range(banks_per):
+                        slots = []
+                        for k in range(m):
+                            for t in range(3):
+                                r = DR if t % 2 == 0 else PP
+                                bk = rand_bank_rel(rng, chains[k], univ, r)
+                                if bk:
+                                    slots.append((k, r, bk))
+                        if not slots:
+                            continue
+                        tested += 1
+                        if not common_base_ok(chains, slots, T, p):
+                            bad += 1
+                print(f"  kernels={m}  common base={T}  period={p}"
+                      f"   systems {tested:5d}   FAILS {bad:4d}"
+                      f"  ({100.0 * bad / max(tested, 1):5.2f}%)")
+    print("  => a 0% column would mean the joint selection COLLAPSES: put every")
+    print("     window at one common late level and pick witnesses per slot.")
+    print("     A nonzero column means the bases genuinely have to differ, and")
+    print("     the proof must choose them jointly.")
+
+
+# ------ part N: the STAGED construction -- strictly increasing bases
+
+
+def valid_slots_increasing(chains, slots, L, p, minbase=0):
+    """Part M killed the common base, so the bases must differ.  The natural
+    replacement is a STAGED construction: process kernels in increasing base
+    order i_1 < i_2 < ... < i_m.  Then each cross-constraint has a designated
+    branch of the sec.39.10 dichotomy --
+      * a LATER kernel's window vs an EARLIER kernel's witness: push the later
+        base past that witness's horizon  ('push past'),
+      * an EARLIER (low) window vs a LATER kernel's witness: the row is still in
+        its initial rank-0 block down there  ('stay low').
+    If this restricted search succeeds as often as the free one, the staged
+    construction is the Lean proof plan."""
+    m = len(chains)
+
+    def rec(k, prev, chosen):
+        if k == m:
+            wins = [[chains[j][chosen[j] + b] for b in range(p)] for j in range(m)]
+            for (kk, r, bank) in slots:
+                if not any(all(rel(x, w) == r for x in wins[kk]) and
+                           all(len({rel(x, w) for x in wins[k2]}) == 1
+                               for k2 in range(m) if k2 != kk)
+                           for w in bank):
+                    return None
+            return chosen
+        for i in range(max(minbase, prev + 1), L - p + 1):
+            r = rec(k + 1, i, chosen + [i])
+            if r is not None:
+                return r
+        return None
+
+    return rec(0, minbase - 1, [])
+
+
+def part_n(models=200, banks_per=5, n=16, L=12, T=3, seed=31415):
+    print("\nPART N -- the STAGED construction (strictly increasing bases)")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for m in (2, 3, 4):
+        for p in (2, 3):
+            tested = bad_free = bad_inc = 0
+            for _ in range(models):
+                chains = [rand_chain(rng, univ, L, maxstep=1) for _ in range(m)]
+                if any(c is None for c in chains):
+                    continue
+                for _ in range(banks_per):
+                    slots = []
+                    for k in range(m):
+                        for t in range(3):
+                            r = DR if t % 2 == 0 else PP
+                            bk = rand_bank_rel(rng, chains[k], univ, r)
+                            if bk:
+                                slots.append((k, r, bk))
+                    if not slots:
+                        continue
+                    tested += 1
+                    if valid_slots(chains, slots, L, p, p, minbase=T) is None:
+                        bad_free += 1
+                    if valid_slots_increasing(chains, slots, L, p, minbase=T) is None:
+                        bad_inc += 1
+            print(f"  kernels={m}  period={p}   systems {tested:5d}"
+                  f"   free bases FAIL {bad_free:4d} ({100.0 * bad_free / max(tested,1):5.2f}%)"
+                  f"   |  STAGED FAIL {bad_inc:4d} ({100.0 * bad_inc / max(tested,1):5.2f}%)")
+    print("  => if STAGED matches FREE, the joint selection can be done in one")
+    print("     pass with a designated dichotomy branch per direction -- that is")
+    print("     a Lean-shaped argument, not a fixed-point search.")
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -705,6 +925,9 @@ def main():
     part_i()
     part_j()
     part_k()
+    part_l()
+    part_m()
+    part_n()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")
@@ -716,6 +939,13 @@ def main():
     print("  geometric one:  cross-kernel constancy is NOT free (B), the horizon")
     print("  cannot be pre-committed (C), yet every row does eventually stabilize")
     print("  (D).  So repair R4 is dead in its naive form.")
+    print()
+    print("  PARTS L-N (the selection): dense systems (up to 4 kernels x 3")
+    print("  demands, DR and PP, late bases) NEVER failed; a single COMMON base")
+    print("  does NOT suffice (up to 35% failure), so the bases must genuinely")
+    print("  differ; and the STAGED construction (strictly increasing bases)")
+    print("  matches the free search exactly at 0%.  That is the proof plan:")
+    print("  one pass, with a designated dichotomy branch per direction.")
     print()
     print("  E narrows it: the rank-0 block of a row is CONSTANT, so an external")
     print("  cofinally DR from a chain is DR from index 0 -- no horizon at all")

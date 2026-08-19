@@ -3107,3 +3107,55 @@ externals). What changes is the estimate for MIXING: §38.4's "the merge is a
 prerequisite and is now available" is true but not sufficient — mixing also owes
 a resolution of this cycle, which is new work of unknown size, on top of the
 one-shot `∃PP` gap (§33) that was already outstanding.
+
+## 40. The SELECTION probed — the proof plan is a STAGED construction (2026-08-19)
+
+Asked whether another probe was needed before attempting the `MixSelect`
+selection argument. It was, and it changed the plan twice.
+
+**The untested dimension.** Every earlier part gave each kernel ONE `DR` demand.
+Real kernels carry SEVERAL `DR`/`PP` demands, each needing its own witness, and
+every witness constrains EVERY kernel's window. A structural observation while
+setting this up: once the base VECTOR is fixed, the witness choices are
+**independent** across slots (no constraint couples two witnesses) — so all the
+joint content sits in choosing one base vector satisfying every slot at once.
+
+**Part L — density.** `m` kernels × `d` demands, both `DR` and `PP`, bases forced
+late: 0 failures at every point of the sweep, up to 4 kernels × 3 demands
+(12 slots). The joint selection does not degrade with density.
+
+**Part M — the simplest strategy is FALSE.** "Put every window at one common
+late level" — the obvious first thing to try in Lean — **fails**, up to **35%**
+(4 kernels, base 6, period 3), and the failure rate grows with both kernel count
+and period. Since part L's free search never failed, the bases must GENUINELY
+DIFFER per kernel. This is the finding that most changes the work: it rules out
+the proof I would otherwise have written.
+
+**Part N — the staged construction matches the free search.** Restricting to
+strictly increasing bases `i₁ < i₂ < … < i_m` gives **0% failure, identical to
+the free search**, at every density. And the ordering assigns each
+cross-constraint a designated branch of the §39.10 dichotomy:
+
+| direction | branch | why |
+|---|---|---|
+| later kernel's window vs earlier kernel's witness | **push past** | the later base can be pushed beyond that witness's horizon (`stab_window_family`) |
+| earlier (low) window vs later kernel's witness | **stay low** | down there the row is still in its initial rank-0 block (`stab_window_of_rank0`) |
+
+This also explains parts I and J at once: stay-low dominates at low bases,
+push-past at high ones, and both are needed — exactly what a staged construction
+consumes.
+
+### 40.1 The Lean plan (one pass, no fixed point)
+
+Process kernels in increasing base order. For kernel `j`: choose its base past
+(a) its own type recurrence, and (b) the horizons of all witnesses of kernels
+`< j`; then choose `j`'s witnesses above `j`'s window. Discharge the two
+cross-directions by the table above. No iteration, no fixed point — which is why
+§39.8's framing of the residue as a "finite fixed-point question" was still the
+wrong shape.
+
+**Still owed:** the "stay low" direction needs the *earlier* windows to sit
+inside the *later* witnesses' initial rank-0 blocks. Parts I/J/N say this holds
+in practice; it is NOT proved, and it is the single remaining mathematical
+content of `MixSelect`. That is a sharper and smaller target than anything §39
+had.
