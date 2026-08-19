@@ -1050,6 +1050,52 @@ def part_p(models=150, banks_per=4, n=16, L=12, T=3, seed=271828):
     print("     If not, the selection needs genuine simultaneity, not staging.")
 
 
+# ---- part Q: is the COLLAPSE hypothesis (a cofinal witness) actually available?
+
+
+def part_q(L=14):
+    """`mixSelect_of_cofinal_bank` (certified) dissolves the whole joint selection
+    IF every horizontal demand has a witness bearing that relation to the ENTIRE
+    chain.  Is that hypothesis available?  The ESCAPING family says no: the
+    demand is live at every level, yet each witness is swallowed one level later,
+    so the decreasing sets W_n = {w : rho(c n, w) = DR} are all nonempty with
+    EMPTY intersection.  Then: does a valid config still exist for two such
+    escaping kernels (i.e. is the collapse sufficient-but-not-necessary)?"""
+    print("\nPART Q -- is the collapse hypothesis available?  (escaping witnesses)")
+    # c_n = {0..n} ascending;  D-witnesses are the singletons {n+1}.
+    # The chain runs LONGER than the witness list so that EVERY witness is
+    # actually tested past its eating level (else the last one is never eaten --
+    # the finite-prefix trap that part K already caught once).
+    c = [frozenset(range(n + 1)) for n in range(L + 2)]
+    wits = [frozenset({n + 1}) for n in range(L)]
+    live = all(any(rel(c[n], w) == DR for w in wits) for n in range(L))
+    cofinal = [w for w in wits if all(rel(x, w) == DR for x in c)]
+    eats = [min(j for j, x in enumerate(c) if rel(x, w) != DR) for w in wits]
+    print(f"  every witness has a finite 'eating level'  : {max(eats)} (max)")
+    print(f"  demand live at EVERY level                 : {live}")
+    print(f"  witnesses DR from the WHOLE chain (cofinal): {len(cofinal)}")
+    print(f"  => W_n all nonempty, intersection EMPTY    : {live and not cofinal}")
+    print("     so `CofinalWitness` is NOT always available -- the collapse is")
+    print("     SUFFICIENT, not necessary.")
+
+    # two escaping kernels on disjoint halves: does a valid config still exist?
+    A = [frozenset(range(0, 2 * n + 2, 2)) for n in range(L + 2)]    # evens
+    B = [frozenset(range(1, 2 * n + 3, 2)) for n in range(L + 2)]    # odds
+    WA = [frozenset({2 * n + 2}) for n in range(L)]                  # eaten by A later
+    WB = [frozenset({2 * n + 3}) for n in range(L)]                  # eaten by B later
+    okA = all(any(rel(A[n], w) == DR for w in WA) for n in range(L))
+    okB = all(any(rel(B[n], w) == DR for w in WB) for n in range(L))
+    cofA = [w for w in WA if all(rel(x, w) == DR for x in A)]
+    print(f"  two escaping kernels: demands live         : {okA and okB}")
+    print(f"    cofinal witnesses for kernel A           : {len(cofA)}  (collapse unavailable)")
+    for p in (2, 3):
+        cfg = valid_slots([A, B], [(0, DR, WA), (1, DR, WB)], L, p, p, minbase=3)
+        print(f"    period {p}: valid config with bases >= 3 : "
+              f"{'YES ' + str(cfg) if cfg else 'NONE'}")
+    print("  => a valid config existing WITHOUT a cofinal witness means the")
+    print("     general case needs the sec.39.10 DICHOTOMY, not the collapse.")
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -1071,6 +1117,7 @@ def main():
     part_n()
     part_o()
     part_p()
+    part_q()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")

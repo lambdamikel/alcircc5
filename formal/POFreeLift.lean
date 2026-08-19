@@ -15068,6 +15068,49 @@ theorem window_stab_dichotomy (hI : RCC5Interp I) (c : Nat → α)
       hhigh (i + b) i (by omega) (Nat.le_refl i),
       ← hI.conv_ (c i) w (hdom i) hw]
 
+/-- **STABILITY OVER THE WHOLE KERNEL FAMILY** (§41) — `stab_window_family` lifted
+    from one chain to the finite family: for a FIXED finite witness list and a
+    window-length bound `p`, there is a SINGLE horizon `H` past which every
+    witness's row is constant on every kernel's window.  `Fin m` finiteness via
+    `exists_bound`; per-chain horizons via `stab_window_family`. -/
+theorem stab_window_family_multi (hI : RCC5Interp I) {m : Nat} (ck : Fin m → Nat → α)
+    (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (ws : List α) (hws : ∀ w ∈ ws, I.dom w) (p : Nat) :
+    ∃ H, ∀ ik : Fin m → Nat, (∀ k, H ≤ ik k) →
+      ∀ w ∈ ws, ∀ k b, b < p →
+        I.rho w (ck k (ik k + b)) = I.rho w (ck k (ik k)) := by
+  have h : ∀ k : Fin m, ∃ N, ∀ w ∈ ws, ∀ i, N ≤ i → ∀ a, a < p →
+      I.rho w (ck k (i + a)) = I.rho w (ck k i) :=
+    fun k => stab_window_family hI (hdom k) (hstep k) ws hws p
+  obtain ⟨f, hf⟩ := Classical.axiomOfChoice h
+  obtain ⟨B, hB⟩ := exists_bound m f
+  exact ⟨B, fun ik hik w hw k b hb =>
+    hf k w hw (ik k) (Nat.le_trans (hB k) (hik k)) b hb⟩
+
+/-- **THE COFINAL-WITNESS QUESTION** (§41) — what the whole mixed selection now
+    rests on, stated on a SINGLE chain.  Every horizontal demand occurring
+    anywhere on the chain is served by a witness bearing that relation to the
+    ENTIRE chain.  Equivalently: the decreasing family
+    `W_n = {w : ρ (c n) w = r ∧ D ∈ mty w}` (decreasing by backward forcing) has
+    nonempty intersection.  Each `W_n` is nonempty exactly when the demand is
+    live at level `n`. -/
+def CofinalWitness (I : Interp α) (C0 : Concept) (c : Nat → α) : Prop :=
+  ∀ (n : Nat) (r : Atom) (D : Concept), (r = dr ∨ r = pp) →
+    Concept.ex r D ∈ mty C0 I (c n) →
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧ ∀ j, I.rho (c j) w = r
+
+/-- The family `W_n` really is DECREASING — backward forcing, so the cofinal
+    question is exactly "a decreasing family of nonempty sets has a common
+    element", not an arbitrary intersection. -/
+theorem witness_sets_decreasing (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {w : α} (hw : I.dom w) {r : Atom} (hr : r = dr ∨ r = pp) {n : Nat}
+    (h : I.rho (c n) w = r) : ∀ j, j ≤ n → I.rho (c j) w = r := by
+  rcases hr with rfl | rfl
+  · exact backward_forcing_dr hI hdom hstep hw h
+  · exact backward_forcing_pp hI hdom hstep hw h
+
 /-- **THE R6 SELECTION OBLIGATION** (§39.11) — the one thing the MIXED assembly
     still owes, stated rather than assumed (the project's `CompletenessObligation`
     pattern).  For every kernel `k` and every horizontal (`DR`/`PP`) demand of one
@@ -15105,6 +15148,39 @@ theorem mixSelect_cross_of_dichotomy (hI : RCC5Interp I) {m : Nat}
     ∀ k' b, b < pk k' → I.rho w (ck k' (ik k' + b)) = I.rho w (ck k' (ik k')) :=
   fun k' b hb =>
     window_stab_dichotomy hI (ck k') (hdom k') (hstep k') hw (ik k') (pk k') (h k') b hb
+
+/-- **THE COLLAPSE** (§41) — the multi-kernel JOINT selection reduces to a
+    SINGLE-CHAIN question.  Suppose every horizontal (`DR`/`PP`) phase demand is
+    served by a witness from a FIXED finite bank whose relation to its OWN chain
+    is that value at EVERY level (`∀ j, ρ (ck k j) w = r` — "cofinal serving").
+    Then there is a horizon `H` such that EVERY base vector above `H` satisfies
+    `MixSelect`.
+
+    Why this dissolves the §39 cycle: serving no longer depends on where the
+    window sits (it holds at *all* levels, so no witness must be picked above the
+    window), and the bank is fixed in advance, so `stab_window_family_multi`
+    gives one horizon for all of it. The circular dependency — witness above
+    base, base above witness's horizon — never forms. Note also that the
+    §39.10 dichotomy is not even needed here: pure "push past" suffices.
+
+    So the whole remaining question is the hypothesis `hcover`: does every
+    persistent `∃DR`/`∃PP` demand admit a witness related to the whole chain?
+    That is ONE chain and ONE demand — no kernels, no bases, no windows. -/
+theorem mixSelect_of_cofinal_bank (hI : RCC5Interp I) (C0 : Concept) {m : Nat}
+    (ck : Fin m → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (p : Nat) (ws : List α) (hws : ∀ w ∈ ws, I.dom w)
+    (hcover : ∀ (k : Fin m) (n : Nat) (r : Atom) (D : Concept),
+      (r = dr ∨ r = pp) → Concept.ex r D ∈ mty C0 I (ck k n) →
+      ∃ w ∈ ws, D ∈ mty C0 I w ∧ ∀ j, I.rho (ck k j) w = r) :
+    ∃ H, ∀ ik pk : Fin m → Nat, (∀ k, H ≤ ik k) → (∀ k, pk k ≤ p) →
+      MixSelect I C0 ck ik pk := by
+  obtain ⟨H, hH⟩ := stab_window_family_multi hI ck hdom hstep ws hws p
+  refine ⟨H, fun ik pk hik hpk => ?_⟩
+  intro k a r D ha hr hmem
+  obtain ⟨w, hwmem, hD, hall⟩ := hcover k (ik k + a) r D hr hmem
+  exact ⟨w, hws w hwmem, hD, fun b _ => hall (ik k + b),
+    fun k' b hb => hH ik hik w hwmem k' b (Nat.lt_of_lt_of_le hb (hpk k'))⟩
 
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
@@ -19152,6 +19228,9 @@ end VerticalWitness
 #print axioms stab_swallowed_ppi
 #print axioms stab_swallowed_no_dr_pp
 #print axioms stab_window_family
+#print axioms stab_window_family_multi
+#print axioms mixSelect_of_cofinal_bank
+#print axioms witness_sets_decreasing
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy
 #print axioms stab_window_of_dr

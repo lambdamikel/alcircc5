@@ -3193,3 +3193,73 @@ mapped cleanly enough; the next step is mathematical (find an existence argument
 for the base vector, or a genuinely different certificate shape), not
 formalization. Independent work that does NOT depend on this: the one-shot `∃PP`
 gap (§33/§34) and `codesM`.
+
+## 41. The COLLAPSE — the joint selection reduces to a single-chain question (2026-08-19)
+
+Working the constraint from both ends produced a genuine reduction, now
+certified. First, a scoping correction that widens the options:
+
+**We do NOT need a constructive argument.** Decidability comes from
+`decidableSat_of_codes` — enumerate finite codes, check with a Boolean checker.
+The extraction only has to prove that SOME code exists, and `Classical.choice`
+is already used throughout the model-side layer. So part O's failure of the
+greedy is not fatal; a classical existence proof is exactly what the
+architecture wants.
+
+### 41.1 The collapse (certified)
+
+`mixSelect_of_cofinal_bank`: suppose every horizontal (`DR`/`PP`) phase demand is
+served by a witness from a FIXED finite bank whose relation to its OWN chain is
+that value at EVERY level ("cofinal serving"). Then there is a horizon `H` such
+that EVERY base vector above `H` satisfies `MixSelect`.
+
+Why this dissolves the §39 cycle outright: serving no longer depends on where
+the window sits (it holds at *all* levels, so no witness has to be picked above
+its window), and the bank is fixed in advance, so `stab_window_family_multi`
+supplies one horizon for all of it. The circular dependency never forms — and
+the §39.10 dichotomy is not even needed, pure "push past" suffices.
+
+Supporting: `stab_window_family_multi` (one horizon over the whole kernel
+family) and `witness_sets_decreasing` (the sets `W_n = {w : ρ(c n) w = r}` are
+DECREASING by backward forcing, so the hypothesis is exactly "a decreasing family
+of nonempty sets has a common element").
+
+### 41.2 The hypothesis is SUFFICIENT but NOT NECESSARY — and not always available
+
+Probe part Q, on the ESCAPING family `c_n = {0..n}` with witnesses `{n+1}`:
+the demand is live at every level (each `W_n` nonempty), every witness has a
+finite eating level, and **no** witness is `DR` from the whole chain — `⋂ W_n =
+∅`. So `CofinalWitness` genuinely fails for some ∀PO-free-expressible shapes,
+and the collapse covers a sub-class rather than the general case.
+
+(Note the probe hit the finite-prefix trap once more: with the chain the same
+length as the witness list, the last witness is never tested past its eating
+level and appears "cofinal". Running the chain longer than the witness list
+fixes it — the same truncation lesson as part K, now twice.)
+
+Crucially, part Q also checks the general case on TWO escaping kernels: valid
+configurations still exist (bases `(3,3)` at periods 2 and 3). So where the
+collapse is unavailable the §39.10 dichotomy still carries it — consistent with
+parts L/N, which never failed.
+
+### 41.3 Honest status of the base-vector existence problem
+
+| route | status |
+|---|---|
+| common base | refuted (part M) |
+| fixed-order greedy | refuted (part O) |
+| some-order greedy | empirical; restates the claim (part P) |
+| **cofinal-witness collapse** | **CERTIFIED**, but hypothesis not always available (part Q) |
+
+So the general existence argument is still open, but the problem is now properly
+decomposed: the collapse handles every kernel family whose horizontal demands
+admit cofinal witnesses, and what remains is exactly the **escaping** case —
+demands whose witness sets decrease with empty intersection. That is a single
+named phenomenon on a single chain, not a multi-kernel scheduling problem.
+
+**The honest read on difficulty.** Four attacks, one certified sufficient
+condition, and a precisely-identified residue. This is a real roadblock in the
+sense that no complete argument exists yet; it is NOT a wall in the sense of
+being ill-understood — each failed route was refuted for a specific, recorded
+reason, and the residue keeps shrinking. But it should not be presented as
+nearly finished.
