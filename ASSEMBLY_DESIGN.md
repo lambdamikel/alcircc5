@@ -3061,6 +3061,45 @@ branches already certified, rather than the open fixed-point question of §39.8.
 **Not claimed:** that R6 is true. The search is over finite prefixes and random
 models; a proof still has to handle the joint selection.
 
+### 39.11 The probe's OWN gap, closed — and the certified R6 toolkit
+
+Applying the probe-first discipline to the probe itself: parts G–I did **not**
+model a constraint the real extraction imposes — a base must sit at a TYPE
+RECURRENCE, and `rr_segment_from` can only push it **up**, never down. Since
+part I found 92.7% of successes using the "stay low" mechanism (windows in the
+row's *initial* block), the result was potentially optimistic.
+
+- **Part J** re-ran the search with every base forced `≥ T`. Failures stay at
+  **0%** through `T = 3`, then appear (7.67%) at `T = 4` — and the mechanism mix
+  inverts as bases rise: stay-low 88.3% → 21.3%, push-past 11.7% → 78.7%. So in
+  the REAL regime (late bases) the dominant branch is "push past".
+- **Part K** asked whether that 7.67% is real or an artifact: with `L = 6` and
+  `p ≥ 2` a base `≥ 4` leaves exactly ONE legal window. Fixing `T = 4` and
+  growing the prefix: **0.90% at L=6, then 0% at L=8, 10, 12.** The failures are
+  **TRUNCATION** — the finite prefix running out of room above the base. Real
+  chains are infinite, so the route survives the recurrence constraint.
+
+**The certified R6 toolkit** (all `propext`-only except the choice-using
+`stab_window_family`):
+
+| brick | branch | content |
+|---|---|---|
+| `stab_window_of_dr/_pp/_rank0` | stay low | window under a rank-0 point is constant — **no horizon** |
+| `stab_window_family` | push past | for a FINITE external list, all high enough bases give window-constancy |
+| `window_stab_dichotomy` | both | either branch ⟹ the same `hstab` conclusion |
+| `mixSelect_cross_of_dichotomy` | both | the dichotomy in the obligation's own shape |
+
+**`MixSelect`** now STATES the residue as a Lean `def` (the project's
+`CompletenessObligation` pattern): for each kernel `k` and each `DR`/`PP` demand
+of a phase, a witness that (i) serves the demand across `k`'s whole window and
+(ii) has a constant row on EVERY kernel's window. Both ways of discharging (ii)
+are certified; what is unproved is that ONE witness meets (i) and (ii)
+*simultaneously* for all kernels — the joint selection, and nothing else.
+
+That is a materially better position than §39.8: the obligation is named, its
+relational content is discharged, and the search found no counterexample under
+the recurrence constraint once truncation is excluded. It is still **unproved**.
+
 ### 39.9 Status effect
 
 No certified statement changes. §38's vertical result stands (it has no

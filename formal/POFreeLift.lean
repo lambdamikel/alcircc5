@@ -4213,6 +4213,23 @@ theorem externals_stabilize (exts : List α) :
     · exact hNr f hmem m n (Nat.le_trans (Nat.le_max_right Ne Nr) hm)
         (Nat.le_trans (Nat.le_max_right Ne Nr) hn)
 
+/-- **`hstab` ON A WINDOW, EVENTUALLY — the "push past" branch** (§39.11).  For a
+    FINITE list of externals and any window length `p`, all sufficiently high
+    bases make every external's row constant across the whole window `[i, i+p)`.
+    This is `externals_stabilize` re-expressed in exactly the shape
+    `mixKernels_ok`'s (window-form) `hstab` consumes, and it is the second branch
+    of the §39.10 dichotomy — the first being `stab_window_of_rank0`, which needs
+    no horizon at all.  Together they are the certified toolkit for R6. -/
+theorem stab_window_family (exts : List α) (hexts : ∀ e ∈ exts, I.dom e) (p : Nat) :
+    ∃ N, ∀ e ∈ exts, ∀ i, N ≤ i → ∀ a, a < p →
+      I.rho e (c (i + a)) = I.rho e (c i) := by
+  obtain ⟨N, hN⟩ := externals_stabilize hI hdom hstep exts hexts
+  refine ⟨N, fun e he i hi a _ => ?_⟩
+  have hde : I.dom e := hexts e he
+  rw [hI.conv_ (c (i + a)) e (hdom (i + a)) hde,
+    hN e he (i + a) i (by omega) hi,
+    ← hI.conv_ (c i) e (hdom i) hde]
+
 /-- SEGMENT SELECTION (the round's capstone): past any bound, an
     ascending model chain has a segment with type-equal endpoints,
     every phase type recurring cofinally (the recurrence hypothesis of
@@ -15030,6 +15047,65 @@ theorem stab_swallowed_no_dr_pp (hI : RCC5Interp I) (c : Nat → α)
   rw [stab_swallowed_ppi hI c hdom hw i hstab hj hsw a]
   rcases hr with rfl | rfl <;> exact by decide
 
+/-- **THE `hstab` WINDOW DICHOTOMY** (§39.10/§39.11) — the two certified branches
+    land in the SAME conclusion.  A window `[i, i+p)` is stable for an external
+    `w` either because the row is still in its INITIAL rank-0 block at the top of
+    the window ("stay low" — no horizon consulted at all) or because the row has
+    already stabilized from `i` on ("push past" — `external_stabilizes` /
+    `stab_window_family`).  Probe `wp91` part I measured BOTH as necessary (345
+    of 2,552 solved configurations used one branch for one kernel and the other
+    branch for the other), so neither disjunct may be dropped. -/
+theorem window_stab_dichotomy (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {w : α} (hw : I.dom w) (i p : Nat)
+    (h : (I.rho (c (i + p)) w = dr ∨ I.rho (c (i + p)) w = pp) ∨
+         (∀ m n, i ≤ m → i ≤ n → I.rho (c m) w = I.rho (c n) w)) :
+    ∀ b, b < p → I.rho w (c (i + b)) = I.rho w (c i) := by
+  intro b hb
+  rcases h with hlow | hhigh
+  · exact stab_window_of_rank0 hI hdom hstep hw hlow i b (by omega)
+  · rw [hI.conv_ (c (i + b)) w (hdom (i + b)) hw,
+      hhigh (i + b) i (by omega) (Nat.le_refl i),
+      ← hI.conv_ (c i) w (hdom i) hw]
+
+/-- **THE R6 SELECTION OBLIGATION** (§39.11) — the one thing the MIXED assembly
+    still owes, stated rather than assumed (the project's `CompletenessObligation`
+    pattern).  For every kernel `k` and every horizontal (`DR`/`PP`) demand of one
+    of its phases, there is a witness that (i) serves that demand across `k`'s
+    WHOLE window (what `kernel_site` gives by backward forcing) and (ii) has a
+    CONSTANT row on EVERY kernel's window — which is exactly
+    `mixKernels_ok`'s `hstab` for the witness once it joins `β`.
+
+    Both ways of discharging (ii) are certified (`window_stab_dichotomy`); what
+    is NOT proved is that a single witness can meet (i) and (ii) SIMULTANEOUSLY
+    for all kernels at once — the joint selection.  Probe `wp91` parts G/H/K found
+    no counterexample (0 failures in ~10,700 configurations, 2 and 3 kernels,
+    periods ≥ 2, and with bases forced late once the prefix is long enough that
+    truncation is excluded), so this is well-supported but UNPROVED. -/
+def MixSelect (I : Interp α) (C0 : Concept) {m : Nat}
+    (ck : Fin m → Nat → α) (ik pk : Fin m → Nat) : Prop :=
+  ∀ (k : Fin m) (a : Nat) (r : Atom) (D : Concept), a < pk k →
+    (r = dr ∨ r = pp) → Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+      (∀ b, b < pk k → I.rho (ck k (ik k + b)) w = r) ∧
+      (∀ k' b, b < pk k' → I.rho w (ck k' (ik k' + b)) = I.rho w (ck k' (ik k')))
+
+/-- `MixSelect`'s cross-condition is DISCHARGEABLE FROM EITHER BRANCH — the
+    dichotomy in the obligation's own shape.  So the obligation is not asking for
+    new relational mathematics; it asks only that ONE witness can be chosen
+    meeting the branches for all kernels at once. -/
+theorem mixSelect_cross_of_dichotomy (hI : RCC5Interp I) {m : Nat}
+    (ck : Fin m → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (ik pk : Fin m → Nat) {w : α} (hw : I.dom w)
+    (h : ∀ k', (I.rho (ck k' (ik k' + pk k')) w = dr ∨
+                I.rho (ck k' (ik k' + pk k')) w = pp) ∨
+               (∀ x y, ik k' ≤ x → ik k' ≤ y →
+                 I.rho (ck k' x) w = I.rho (ck k' y) w)) :
+    ∀ k' b, b < pk k' → I.rho w (ck k' (ik k' + b)) = I.rho w (ck k' (ik k')) :=
+  fun k' b hb =>
+    window_stab_dichotomy hI (ck k') (hdom k') (hstep k') hw (ik k') (pk k') (h k') b hb
+
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
 noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
@@ -19075,6 +19151,9 @@ end VerticalWitness
 #print axioms vtowers_merged
 #print axioms stab_swallowed_ppi
 #print axioms stab_swallowed_no_dr_pp
+#print axioms stab_window_family
+#print axioms window_stab_dichotomy
+#print axioms mixSelect_cross_of_dichotomy
 #print axioms stab_window_of_dr
 #print axioms stab_window_of_pp
 #print axioms stab_window_of_rank0

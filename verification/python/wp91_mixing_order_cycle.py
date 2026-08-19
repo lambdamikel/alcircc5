@@ -354,8 +354,10 @@ def part_f(M=6):
 # ---------- part G: is R6 SATISFIABLE?  (search for an impossible configuration)
 
 
-def rand_chain(rng, univ, L):
-    """A random ascending chain of length L inside `univ`."""
+def rand_chain(rng, univ, L, maxstep=2):
+    """A random ascending chain of length L inside `univ`.  `maxstep=1` keeps the
+    chain thin, so that regions disjoint from it (DR-witnesses) still exist at
+    every level -- required when the demand must be live all the way up."""
     rest = sorted(univ)
     rng.shuffle(rest)
     cur = frozenset({rest.pop()})
@@ -363,7 +365,7 @@ def rand_chain(rng, univ, L):
     for _ in range(L - 1):
         if not rest:
             return None
-        k = min(len(rest), rng.choice([1, 1, 2]))
+        k = min(len(rest), 1 if maxstep == 1 else rng.choice([1, 1, 2]))
         cur = cur | frozenset(rest[:k])
         rest = rest[k:]
         ch.append(cur)
@@ -458,14 +460,15 @@ def part_g(trials=3000, n=8, L=5, seed=20260819):
 # ------------------ part H: the STRESS of R6 -- 3 kernels, bigger, adversarial
 
 
-def valid_multi(chains, banks, L, minp, maxp):
+def valid_multi(chains, banks, L, minp, maxp, minbase=0):
     """R6 for ANY number of kernels.  Key simplification: once the base/period
     VECTOR is fixed, each kernel's witness condition is INDEPENDENT of the other
     kernels' witness choices (w_k must be DR on k's own window and constant on
     every other window), so the search is linear in the number of kernels rather
     than exponential."""
     m = len(chains)
-    opts = [(i, p) for p in range(minp, maxp + 1) for i in range(L - p + 1)]
+    opts = [(i, p) for p in range(minp, maxp + 1)
+            for i in range(minbase, L - p + 1)]
 
     def rec(idx, chosen):
         if idx == m:
@@ -582,6 +585,110 @@ def part_i(models=500, banks_per=8, n=9, L=6, seed=7654321):
     print("     every transition (the sec.39.8 framing, which the cycle blocks).")
 
 
+# ---- part J: the probe's OWN gap -- bases must sit at a type recurrence (>= T)
+
+
+def part_j(models=300, banks_per=10, n=12, L=6, seed=13579, Ts=(0, 1, 2, 3, 4)):
+    """PARTS G-I DID NOT MODEL a constraint the real extraction imposes: a base
+    must be a TYPE-RECURRENCE point, and `rr_segment_from` can only push it UP,
+    never down.  Since part I found 92.7% of successes used the 'stay low'
+    mechanism (windows in the row's INITIAL block), the earlier result may be
+    optimistic.  This re-runs the search with every base forced >= T."""
+    print("\nPART J -- bases forced to a late recurrence (the gap in parts G-I)")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    regs = subsets(univ)
+    for T in Ts:
+        tested = bad = low = high = 0
+        for _ in range(models):
+            A = rand_chain(rng, univ, L, maxstep=1)
+            B = rand_chain(rng, univ, L, maxstep=1)
+            if A is None or B is None:
+                continue
+            for _ in range(banks_per):
+                WA = rand_bank(rng, A, regs)
+                WB = rand_bank(rng, B, regs)
+                if not WA or not WB:
+                    continue
+                tested += 1
+                cfg = valid_multi([A, B], [WA, WB], L, 2, 3, minbase=T)
+                if cfg is None:
+                    bad += 1
+                    continue
+                (iA, pA), (iB, pB) = cfg
+                winA = [A[iA + b] for b in range(pA)]
+                winB = [B[iB + b] for b in range(pB)]
+                for (own, other, bank) in ((winA, winB, WA), (winB, winA, WB)):
+                    for w in bank:
+                        if all(rel(x, w) == DR for x in own) and \
+                           len({rel(x, w) for x in other}) == 1:
+                            v = next(iter({rel(x, w) for x in other}))
+                            if v == DR:
+                                low += 1
+                            else:
+                                high += 1
+                            break
+        tot = low + high
+        print(f"  base >= {T}:  pairs {tested:5d}   NO valid config {bad:4d}"
+              f"  ({100.0 * bad / max(tested, 1):5.2f}%)"
+              f"   |  stay-low {100.0 * low / max(tot, 1):5.1f}%"
+              f"  push-past {100.0 * high / max(tot, 1):5.1f}%")
+    print("  => if the failure rate stays ~0 as T grows, the route SURVIVES the")
+    print("     recurrence constraint; if it climbs, 'stay low' was an artifact")
+    print("     of letting the windows sit at the bottom of the chain.")
+
+
+# ------- part K: is part J's failure a TRUNCATION artifact of finite prefixes?
+
+
+def sample_regs(rng, univ, count):
+    """A manageable pool of candidate witness regions (all singletons + random
+    small sets), so the search stays fast on a universe large enough to hold two
+    long disjointish chains."""
+    pool = {frozenset({x}) for x in univ}
+    us = sorted(univ)
+    for _ in range(count):
+        k = rng.randint(1, 3)
+        pool.add(frozenset(rng.sample(us, k)))
+    return sorted(pool, key=lambda t: (len(t), sorted(t)))
+
+
+def part_k(models=250, banks_per=8, n=16, T=4, Ls=(6, 8, 10, 12), seed=24680):
+    """Part J showed failures appearing at base >= 4 with L = 6 -- but there the
+    window had exactly ONE legal position, so the failure may be TRUNCATION (the
+    finite prefix running out of room above the base) rather than a genuine
+    obstruction.  Real chains are infinite.  Fixing T and GROWING L decides it:
+    if the failure rate falls to 0 as room is added above, it was truncation."""
+    print(f"\nPART K -- truncation or obstruction?  (base >= {T}, growing the prefix)")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    regs = sample_regs(rng, univ, 500)
+    for L in Ls:
+        tested = bad = 0
+        for _ in range(models):
+            A = rand_chain(rng, univ, L, maxstep=1)
+            B = rand_chain(rng, univ, L, maxstep=1)
+            if A is None or B is None:
+                continue
+            for _ in range(banks_per):
+                WA = rand_bank(rng, A, regs)
+                WB = rand_bank(rng, B, regs)
+                if not WA or not WB:
+                    continue
+                tested += 1
+                if valid_multi([A, B], [WA, WB], L, 2, 3, minbase=T) is None:
+                    bad += 1
+        room = max(0, L - T - 2 + 1)
+        print(f"  L={L:3d}  (legal window positions at base>={T}: {room:2d})"
+              f"   pairs {tested:5d}   NO valid config {bad:4d}"
+              f"  ({100.0 * bad / max(tested, 1):5.2f}%)")
+    print("  => failures vanishing as the prefix grows means part J's 7.67% was")
+    print("     TRUNCATION, not an obstruction: on an infinite chain there is")
+    print("     always room above any recurrence base.")
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -596,6 +703,8 @@ def main():
     part_g()   # reported, not pass/fail -- it measures rather than asserts
     part_h()
     part_i()
+    part_j()
+    part_k()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")
