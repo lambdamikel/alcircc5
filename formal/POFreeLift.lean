@@ -2666,6 +2666,31 @@ theorem backward_forcing_pp {i : Nat} (h : I.rho (c i) e = pp) :
     rw [hji]
     exact h
 
+/-- **COFINAL `DR` ⟹ `DR` EVERYWHERE, HORIZON 0** (§39.6).  A node that is `DR`
+    from COFINALLY many points of an ascending chain is `DR` from EVERY point:
+    `backward_forcing_dr` from an arbitrarily high witness.  Combined with
+    `cofinal_dr_stab` below this says such a node satisfies `mixKernels_ok`'s
+    `hstab` for that kernel with NO horizon — nothing has to be pushed past it.
+    This is what narrows the §39 ordering cycle: it bites ONLY for externals that
+    some other kernel eventually overlaps or swallows. -/
+theorem cofinal_dr_all (hcof : ∀ N, ∃ j, N ≤ j ∧ I.rho (c j) e = dr) :
+    ∀ n, I.rho (c n) e = dr := by
+  intro n
+  obtain ⟨j, hj, hdrj⟩ := hcof n
+  exact backward_forcing_dr hI hdom hstep hedom hdrj n hj
+
+/-- `hstab` for free: a cofinally-`DR` external's row to the chain is constant
+    (value `DR`) from ANY base, so no stabilization horizon is consulted. -/
+theorem cofinal_dr_stab (hcof : ∀ N, ∃ j, N ≤ j ∧ I.rho (c j) e = dr) :
+    ∀ i a, I.rho e (c (i + a)) = I.rho e (c i) := by
+  intro i a
+  have h1 : I.rho e (c (i + a)) = dr := by
+    rw [hI.conv_ (c (i + a)) e (hdom (i + a)) hedom,
+      cofinal_dr_all hI hdom hstep hedom hcof (i + a)]; rfl
+  have h2 : I.rho e (c i) = dr := by
+    rw [hI.conv_ (c i) e (hdom i) hedom, cofinal_dr_all hI hdom hstep hedom hcof i]; rfl
+  rw [h1, h2]
+
 /-- FORWARD ABSORPTION (`PPI`): a contained external stays inside ALL
     later chain positions — `comp(PPI,PPI) = {PPI}`. -/
 theorem forward_absorption_ppi {i : Nat} (h : I.rho (c i) e = ppi) :
@@ -18996,6 +19021,8 @@ end VerticalWitness
 #print axioms vtowers_merged
 #print axioms stab_swallowed_ppi
 #print axioms stab_swallowed_no_dr_pp
+#print axioms cofinal_dr_all
+#print axioms cofinal_dr_stab
 #print axioms VerticalWitness.persistAll_merge2_nonvacuous
 #print axioms VerticalWitness.vtowers_merged_nonvacuous
 #print axioms VerticalWitness.vtowers_two_nonvacuous

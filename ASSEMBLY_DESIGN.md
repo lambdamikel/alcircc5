@@ -2942,15 +2942,51 @@ one gets only `ρ w (c_{k'}(i_{k'}+a)) ∈ comp(dr, Q)`, a SET, not a value.
   pigeonhole). No descending measure is evident: each round pushes bases and
   witnesses up together. Would need a genuinely new argument.
 
-### 39.4 Recommended next experiment (cheap, decisive)
+### 39.4 The experiment, RUN — `wp91_mixing_order_cycle.py` (all parts PASS)
 
-Test R4's core question on concrete set models BEFORE any Lean: *for two
-pairwise non-comparable ascending towers, can a phase's `∃DR` demand always be
-served by a witness un-swallowed by the other tower?* A finite search over small
-set models settles it. A counterexample kills R4 and forces R2/R1; a clean result
-makes R4 the formalization target. Either way it is a probe, not a build.
+Self-contained (RCC5 relations + composition table re-derived from finite set
+semantics). Four findings:
 
-### 39.5 Status effect
+- **B — Q-crisp is FALSE.** The sub-question whose truth would have dissolved
+  the cycle — *does a DR-witness of chain `c` carry constancy w.r.t. a
+  non-comparable chain `d` for free?* — fails on an explicit configuration:
+  `c = [{0},{0,1},{0,1,2}]`, `d = [{4},{3,4},{2,3,4}]`, `w = {3}`. Row `c → w`
+  is `DR,DR,DR` (free, by backward forcing); row `d → w` is `DR,PPI,PPI`. The
+  towers are non-comparable and cross at `PO` — the `cross_po_stabilizes` case.
+- **C — the horizon is UNBOUNDED.** A parameterized family realizes horizon
+  exactly `N` for every `N` (checked at N = 1,2,3,5,8,13). So no bound on the
+  kernel bases can be pre-committed before the witnesses are known: the cycle
+  cannot be broken by "choose the bases high enough".
+- **D — the obstruction is ORDER, not geometry.** Rank is monotone along the
+  chain and changes at most twice (2,542 sampled chains), so every row does
+  eventually stabilize. Nothing is geometrically impossible; only the order of
+  choice fails.
+- **E — the sharp narrowing (exhaustive, |U| = 5, 12,090 pairs).** The row's
+  shape is `X* PO* EQ? PPI*` with `X ∈ {DR,PP}`, and **the rank-0 block is
+  CONSTANT** (a `DR`↔`PP` switch is impossible: `c_i ⊊ c_j` with `c_i ∩ w = ∅`
+  and `c_j ⊊ w` forces `c_i = ∅`). Consequently a node cofinally `DR` from a
+  chain is `DR` from index 0 — **horizon 0, `hstab` for free**.
+
+### 39.5 Verdict, and the narrowed target R4′
+
+R4 in its naive form is DEAD (B, C). But E narrows the cycle sharply, and the
+narrowing is now kernel-checked (`cofinal_dr_all`, `cofinal_dr_stab`, both
+`propext`-only): **a cofinally-`DR` external consults no horizon at all.** So
+
+> the §39 cycle bites ONLY for phase-witnesses that some OTHER kernel eventually
+> OVERLAPS or SWALLOWS.
+
+**R4′ (the live target).** Can a `∃DR`/`∃PP` phase-witness for kernel `k` always
+be chosen cofinally-`DR` from every other kernel? The candidates form an infinite
+family (one per cofinal recurrence of the phase type), so this is not the
+single-witness question B refuted. If YES, the cycle dissolves and mixing
+proceeds on the §38 machinery unchanged. If NO, R2 (route such witnesses
+cross-kernel via `hrectQ`) and R1 (phase-dependent `K`) remain — R1 certain but
+with the largest blast radius, since the unfolded frame would then need
+periodicity of the model relation rather than eventual constancy, which is a
+*stronger* demand, not a weaker one.
+
+### 39.6 Status effect
 
 No certified statement changes. §38's vertical result stands (it has no
 externals). What changes is the estimate for MIXING: §38.4's "the merge is a
