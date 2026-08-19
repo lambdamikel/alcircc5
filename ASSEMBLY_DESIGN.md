@@ -2967,7 +2967,7 @@ semantics). Four findings:
   and `c_j ⊊ w` forces `c_i = ∅`). Consequently a node cofinally `DR` from a
   chain is `DR` from index 0 — **horizon 0, `hstab` for free**.
 
-### 39.5 Verdict, and the narrowed target R4′
+### 39.5 Verdict: R4 dead, E narrows it, F closes the two obvious exploits
 
 R4 in its naive form is DEAD (B, C). But E narrows the cycle sharply, and the
 narrowing is now kernel-checked (`cofinal_dr_all`, `cofinal_dr_stab`, both
@@ -2976,17 +2976,50 @@ narrowing is now kernel-checked (`cofinal_dr_all`, `cofinal_dr_stab`, both
 > the §39 cycle bites ONLY for phase-witnesses that some OTHER kernel eventually
 > OVERLAPS or SWALLOWS.
 
-**R4′ (the live target).** Can a `∃DR`/`∃PP` phase-witness for kernel `k` always
-be chosen cofinally-`DR` from every other kernel? The candidates form an infinite
-family (one per cofinal recurrence of the phase type), so this is not the
-single-witness question B refuted. If YES, the cycle dissolves and mixing
-proceeds on the §38 machinery unchanged. If NO, R2 (route such witnesses
-cross-kernel via `hrectQ`) and R1 (phase-dependent `K`) remain — R1 certain but
-with the largest blast radius, since the unfolded frame would then need
-periodicity of the model relation rather than eventual constancy, which is a
-*stronger* demand, not a weaker one.
+### 39.6 R4′ and the base-independent bank — both REFUTED (probe part F)
 
-### 39.6 Status effect
+- *R4′* (always pick a phase-witness cofinally-`DR` from every other kernel)
+  FAILS: with `c` on the evens, `d` on the odds and the `D`-witnesses the odd
+  singletons, `c` and `d` are always `DR` (hence non-comparable), all six
+  `D`-witnesses are `DR` from the whole of `c`, and **none** is cofinally `DR`
+  from `d` — each is swallowed by the odd tower.
+- *Pre-selecting a base-independent bank* (one `D`-witness `DR` from the WHOLE
+  chain) FAILS too: if `c` exhausts the universe, **no** fixed region stays `DR`
+  from all of `c`, though every phase still has a witness.
+
+So neither exploitation of the E-narrowing is available in general.
+
+### 39.7 What survives: `hstab` on the PHASE WINDOW (implemented)
+
+The probe exposed a mismatch worth fixing on its own: `mixKernels_ok`'s `hstab`
+was stated for ALL `a`, i.e. constancy along the WHOLE infinite chain, but
+`kernel_site` delivers only the window fact `∀ b ≤ p, ρ (c (i+b)) w = r` — a
+witness picked above the segment may later be swallowed. **As stated,
+`mixKernels_ok` rejected exactly the witnesses the extraction produces.** Since
+the field is used only at `a < pk k` (in `ek_all`/`ke_all`), it is now weakened
+to `∀ k e a, a < pk k → …`. Costs nothing, admits `kernel_site`'s output, and
+pre-known externals still supply the stronger form via `StabKernelPack.stab`.
+
+### 39.8 The cycle after the probe — a FINITE combinatorial problem (R6)
+
+The window reading does not dissolve the cycle: kernel `k`'s witness `w` is
+constant on `k`'s own window for free, but on `k′`'s window only if that window
+avoids `w`'s transition points. What the probe changes is the SHAPE of what
+remains:
+
+- by part D each row has **at most 2 transition points**;
+- the witness banks are indexed by (phase type, demand), both bounded by `C₀`;
+- so the total number of bad positions is at most `2·|banks|·|κ|` — **a bound in
+  `C₀` alone, independent of the bases.**
+
+**R6 (the live target).** A window of length `p` placed to avoid finitely many
+bad positions always exists — the obstruction is only that the bad positions
+depend on the witnesses, which depend on the window. With the count now bounded
+uniformly, this is a finite fixed-point question (finitely many "bad-position
+patterns"), not the unbounded ordering problem of §39.2. That is the honest next
+target; it is NOT yet a proof sketch.
+
+### 39.9 Status effect
 
 No certified statement changes. §38's vertical result stands (it has no
 externals). What changes is the estimate for MIXING: §38.4's "the merge is a

@@ -306,6 +306,51 @@ def part_e(n=5):
     return rank0_const_ok and shape_ok and cofinal_ok
 
 
+# ------------------ part F: R4-prime itself, and what replaces it
+
+
+def part_f(M=6):
+    """F1 -- R4' FAILS per model: two always-DR (hence non-comparable) towers
+    where EVERY D-witness of the first is eventually swallowed by the second.
+    F2 -- and the natural strengthening (a BASE-INDEPENDENT witness bank: one
+    D-witness DR from the WHOLE chain) can fail too, because the chain itself
+    eventually swallows every fixed region."""
+    print("\nPART F -- R4' and the base-independent-bank alternative")
+
+    # F1: c on the evens, d on the odds, D-witnesses = odd singletons
+    c = [frozenset(range(0, 2 * m + 1, 2)) for m in range(1, M)]
+    d = [frozenset(range(1, 2 * j + 2, 2)) for j in range(1, M)]
+    wits = [frozenset({2 * t + 1}) for t in range(M)]
+    cross = {rel(x, y) for x in c for y in d}
+    dr_from_all_c = [w for w in wits if all(rel(x, w) == DR for x in c)]
+    cofinal_dr_from_d = [w for w in dr_from_all_c
+                         if rel(d[-1], w) == DR]
+    print(f"  F1  cross relations c vs d           : {sorted(cross)}"
+          f"   (always DR -> non-comparable)")
+    print(f"      D-witnesses DR from ALL of c     : {len(dr_from_all_c)}/{len(wits)}")
+    print(f"      ... of those, cofinally DR from d: {len(cofinal_dr_from_d)}")
+    f1 = len(dr_from_all_c) > 0 and len(cofinal_dr_from_d) == 0
+    print(f"      => R4' FAILS in this model       : {f1}")
+
+    # F2: c exhausts the universe -> no fixed region stays DR from all of c
+    univ = set(range(M))
+    c2 = [frozenset(range(0, m + 1)) for m in range(M)]
+    regs = subsets(univ)
+    base_indep = [w for w in regs if all(rel(x, w) == DR for x in c2)]
+    per_phase = all(any(rel(c2[m], w) == DR for w in regs) for m in range(M - 1))
+    print(f"  F2  regions DR from the WHOLE chain  : {len(base_indep)}"
+          f"   (chain exhausts the universe)")
+    print(f"      but every phase HAS some DR-witness : {per_phase}")
+    f2 = len(base_indep) == 0 and per_phase
+    print(f"      => a BASE-INDEPENDENT bank can fail : {f2}")
+
+    print("  => neither R4' nor 'pre-select a base-independent bank' is available")
+    print("     in general.  What survives is the WINDOW reading of hstab: a")
+    print("     witness need only be constant on [i, i+p), which is exactly what")
+    print("     kernel_site delivers (mixKernels_ok's hstab weakened, sec.39.7).")
+    return f1 and f2
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -315,6 +360,7 @@ def main():
         "C horizon unbounded": part_c(),
         "D row always stabilizes": part_d(),
         "E row shape / cofinal-DR": part_e(),
+        "F R4' and bank fail": part_f(),
     }
     print("\n" + "=" * 68)
     for k, v in results.items():
@@ -328,12 +374,22 @@ def main():
     print("  cannot be pre-committed (C), yet every row does eventually stabilize")
     print("  (D).  So repair R4 is dead in its naive form.")
     print()
-    print("  But E NARROWS it sharply: the rank-0 block of a row is CONSTANT, so")
-    print("  an external cofinally DR from a chain is DR from index 0 -- it needs")
-    print("  NO horizon at all (kernel-checked: cofinal_dr_all / cofinal_dr_stab).")
-    print("  The cycle therefore bites ONLY for externals that some OTHER kernel")
-    print("  eventually OVERLAPS or SWALLOWS.  Live target R4' (sec.39.6): can the")
-    print("  phase-witnesses always be chosen cofinally-DR from every other kernel?")
+    print("  E narrows it: the rank-0 block of a row is CONSTANT, so an external")
+    print("  cofinally DR from a chain is DR from index 0 -- no horizon at all")
+    print("  (kernel-checked: cofinal_dr_all / cofinal_dr_stab).  So the cycle")
+    print("  bites only for externals another kernel overlaps or swallows.")
+    print()
+    print("  F then kills the two obvious ways to exploit that: R4' (always pick")
+    print("  a witness cofinally-DR from every other kernel) FAILS, and so does")
+    print("  pre-selecting a base-independent bank -- a chain can swallow every")
+    print("  fixed region.  What survives is the WINDOW reading of hstab, now")
+    print("  implemented (sec.39.7): a witness need only be constant on")
+    print("  [i, i+p), which is exactly what kernel_site delivers.")
+    print()
+    print("  That does not dissolve the cycle, but it converts it into a FINITE")
+    print("  combinatorial one: by D each row has at most 2 transition points, so")
+    print("  the bad positions number at most 2*|banks|*|kappa| -- a bound in C0")
+    print("  alone.  Whether a clean window can then be found is sec.39.8 (R6).")
     return 0 if allok else 1
 
 

@@ -2672,7 +2672,9 @@ theorem backward_forcing_pp {i : Nat} (h : I.rho (c i) e = pp) :
     `cofinal_dr_stab` below this says such a node satisfies `mixKernels_ok`'s
     `hstab` for that kernel with NO horizon — nothing has to be pushed past it.
     This is what narrows the §39 ordering cycle: it bites ONLY for externals that
-    some other kernel eventually overlaps or swallows. -/
+    some other kernel eventually overlaps or swallows.  (§39.5.  The two obvious
+    ways to exploit the narrowing are both refuted by probe `wp91` part F, and
+    what survives is the WINDOW reading of `hstab`, §39.7.) -/
 theorem cofinal_dr_all (hcof : ∀ N, ∃ j, N ≤ j ∧ I.rho (c j) e = dr) :
     ∀ n, I.rho (c n) e = dr := by
   intro n
@@ -14293,7 +14295,16 @@ noncomputable def mixKernels (I : Interp α) (C0 : Concept) {β κ : Type}
     kernel's `dir` (ascending `segment_*` / descending `dsegment_*`).  Demands
     are routed in the FULL `e_ex`/`k_ex` disjunction shape — `k_ex` now
     including the cross-kernel disjunct (a phase demand served by ANOTHER
-    kernel).  Still C0-general (no `POFree` needed for soundness). -/
+    kernel).  Still C0-general (no `POFree` needed for soundness).
+
+    **`hstab` is on the PHASE WINDOW** (`a < pk k`), not on the whole chain
+    (§39.7).  The unrestricted form was strictly too strong to be discharged by
+    the extraction's own machinery: `kernel_site` produces phase-witnesses with
+    the constant row `∀ b ≤ p, ρ (c (i+b)) w = r` — a WINDOW fact, since such a
+    witness is picked above the segment and the chain may later swallow it. The
+    field is used only at `a < pk k` in `ek_all`/`ke_all`, so the window form
+    costs nothing and admits those witnesses.  Pre-known externals still supply
+    the stronger unrestricted form via `StabKernelPack.stab`. -/
 theorem mixKernels_ok [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
     {β : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e))
     (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
@@ -14301,7 +14312,7 @@ theorem mixKernels_ok [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
     (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
     (hp : ∀ k, 0 < pk k)
     (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
-    (hstab : ∀ k e a,
+    (hstab : ∀ k e a, a < pk k →
       I.rho (g e) (ck k (ik k + a)) = I.rho (g e) (ck k (ik k)))
     (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
@@ -14343,14 +14354,14 @@ theorem mixKernels_ok [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
       e_ex := ?_
       k_ex := ?_ }
   · -- ek_all
-    intro e r X hmem k hr a _
+    intro e r X hmem k hr a ha
     apply mty_all hmem (hdom k (ik k + a))
-    rw [hstab k e a, hI.conv_ (ck k (ik k)) (g e) (hdom k (ik k)) (hgdom e)]
+    rw [hstab k e a ha, hI.conv_ (ck k (ik k)) (g e) (hdom k (ik k)) (hgdom e)]
     exact hr
   · -- ke_all
-    intro k a _ r X hmem f hr
+    intro k a ha r X hmem f hr
     apply mty_all hmem (hgdom f)
-    rw [hI.conv_ (g f) (ck k (ik k + a)) (hgdom f) (hdom k (ik k + a)), hstab k f a,
+    rw [hI.conv_ (g f) (ck k (ik k + a)) (hgdom f) (hdom k (ik k + a)), hstab k f a ha,
       ← hI.conv_ (g f) (ck k (ik k)) (hgdom f) (hdom k (ik k))]
     exact hr
   · -- kk_pp: `all pp` propagates in both directions (segment / dsegment)
