@@ -351,6 +351,237 @@ def part_f(M=6):
     return f1 and f2
 
 
+# ---------- part G: is R6 SATISFIABLE?  (search for an impossible configuration)
+
+
+def rand_chain(rng, univ, L):
+    """A random ascending chain of length L inside `univ`."""
+    rest = sorted(univ)
+    rng.shuffle(rest)
+    cur = frozenset({rest.pop()})
+    ch = [cur]
+    for _ in range(L - 1):
+        if not rest:
+            return None
+        k = min(len(rest), rng.choice([1, 1, 2]))
+        cur = cur | frozenset(rest[:k])
+        rest = rest[k:]
+        ch.append(cur)
+    return ch
+
+
+def rand_bank(rng, chain, regs):
+    """A witness bank making the demand LIVE at every chain level: for each node
+    a region DR from it (different levels may need different witnesses)."""
+    bank = set()
+    for node in chain:
+        cands = [w for w in regs if rel(node, w) == DR]
+        if not cands:
+            return None
+        bank.add(rng.choice(cands))
+    return sorted(bank, key=lambda s: (len(s), sorted(s)))
+
+
+def valid_config(A, B, WA, WB, L, minp=1, maxp=3):
+    """Search for bases/periods/witnesses satisfying, simultaneously:
+       - each kernel's own DR-demand served across its whole window, and
+       - EACH witness's row CONSTANT on the OTHER kernel's window (hstab)."""
+    for pA in range(minp, maxp + 1):
+        for pB in range(minp, maxp + 1):
+            for iA in range(L - pA + 1):
+                winA = [A[iA + b] for b in range(pA)]
+                okA = [w for w in WA if all(rel(x, w) == DR for x in winA)]
+                if not okA:
+                    continue
+                for iB in range(L - pB + 1):
+                    winB = [B[iB + b] for b in range(pB)]
+                    okB = [w for w in WB if all(rel(x, w) == DR for x in winB)]
+                    if not okB:
+                        continue
+                    for wA in okA:
+                        if len({rel(x, wA) for x in winB}) != 1:
+                            continue          # wA not stable on B's window
+                        for wB in okB:
+                            if len({rel(x, wB) for x in winA}) != 1:
+                                continue      # wB not stable on A's window
+                            return (iA, pA, iB, pB, wA, wB)
+    return None
+
+
+def part_g(trials=3000, n=8, L=5, seed=20260819):
+    """R6, tested directly.  Over many two-kernel models in which BOTH demands
+    are live at every level, does a valid (bases, periods, witnesses) vector
+    always exist?  Reported separately for periods >= 1 (the general case, where
+    period-1 makes hstab vacuous) and periods >= 2 (the genuinely periodic,
+    multi-demand round-robin case, where the cycle can actually bite)."""
+    print("\nPART G -- is R6 satisfiable?  (search for an IMPOSSIBLE configuration)")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    regs = subsets(univ)
+    stats = {1: [0, 0], 2: [0, 0]}          # minp -> [models, failures]
+    fail_example = {}
+    for _ in range(trials):
+        A = rand_chain(rng, univ, L)
+        B = rand_chain(rng, univ, L)
+        if A is None or B is None:
+            continue
+        WA = rand_bank(rng, A, regs)
+        WB = rand_bank(rng, B, regs)
+        if not WA or not WB:
+            continue
+        for minp in (1, 2):
+            stats[minp][0] += 1
+            cfg = valid_config(A, B, WA, WB, L, minp=minp)
+            if cfg is None:
+                stats[minp][1] += 1
+                fail_example.setdefault(minp, (A, B, WA, WB))
+    for minp in (1, 2):
+        tot, bad = stats[minp]
+        print(f"  periods >= {minp}:  models tested {tot:5d}   "
+              f"NO valid configuration in {bad:5d}   "
+              f"({100.0 * bad / max(tot, 1):.2f}%)")
+    if 2 in fail_example:
+        A, B, WA, WB = fail_example[2]
+        print(f"    example failure (periods>=2):")
+        print(f"      A  = {[sorted(x) for x in A]}")
+        print(f"      B  = {[sorted(x) for x in B]}")
+    print("  NOTE the two degrees of freedom sec.39.8 had missed:")
+    print("   (i) period 1 makes hstab VACUOUS (a < 1 forces a = 0) -- so the")
+    print("       cycle can only bite for genuinely multi-phase kernels;")
+    print("  (ii) a window is constant if it lies entirely BELOW a transition,")
+    print("       not only above it -- so 'push past every transition' is not")
+    print("       the only way to satisfy hstab.")
+    return stats
+
+
+# ------------------ part H: the STRESS of R6 -- 3 kernels, bigger, adversarial
+
+
+def valid_multi(chains, banks, L, minp, maxp):
+    """R6 for ANY number of kernels.  Key simplification: once the base/period
+    VECTOR is fixed, each kernel's witness condition is INDEPENDENT of the other
+    kernels' witness choices (w_k must be DR on k's own window and constant on
+    every other window), so the search is linear in the number of kernels rather
+    than exponential."""
+    m = len(chains)
+    opts = [(i, p) for p in range(minp, maxp + 1) for i in range(L - p + 1)]
+
+    def rec(idx, chosen):
+        if idx == m:
+            wins = [[chains[k][i + b] for b in range(p)] for k, (i, p) in enumerate(chosen)]
+            for k in range(m):
+                found = False
+                for w in banks[k]:
+                    if not all(rel(x, w) == DR for x in wins[k]):
+                        continue
+                    if all(len({rel(x, w) for x in wins[k2]}) == 1
+                           for k2 in range(m) if k2 != k):
+                        found = True
+                        break
+                if not found:
+                    return None
+            return chosen
+        for o in opts:
+            r = rec(idx + 1, chosen + [o])
+            if r is not None:
+                return r
+        return None
+
+    return rec(0, [])
+
+
+def part_h(models=400, banks_per=12, n=9, L=6, seed=20260819):
+    print("\nPART H -- R6 stressed: 3 kernels, larger models, many banks each")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    regs = subsets(univ)
+    for m in (2, 3):
+        for minp in (1, 2):
+            tested = bad = 0
+            for _ in range(models):
+                chains = [rand_chain(rng, univ, L) for _ in range(m)]
+                if any(c is None for c in chains):
+                    continue
+                for _ in range(banks_per):
+                    bks = [rand_bank(rng, c, regs) for c in chains]
+                    if any(not b for b in bks):
+                        continue
+                    tested += 1
+                    if valid_multi(chains, bks, L, minp, 3) is None:
+                        bad += 1
+            print(f"  kernels={m}  periods>={minp}:  (model,bank) pairs {tested:6d}"
+                  f"   NO valid configuration in {bad:4d}"
+                  f"   ({100.0 * bad / max(tested, 1):.2f}%)")
+    print("  => across 2- and 3-kernel families, with the demand live at every")
+    print("     level and minimal (one-per-level) witness banks, a simultaneously")
+    print("     valid base/period/witness vector was ALWAYS found.  Evidence FOR")
+    print("     R6 -- not a proof, and the search is over finite prefixes.")
+
+
+# ------------- part I: WHICH mechanism satisfies hstab?  (the proof route)
+
+
+def part_i(models=500, banks_per=8, n=9, L=6, seed=7654321):
+    """For each successfully found configuration, classify HOW each cross-row was
+    made constant: the window sat BELOW the witness's transition (cross-value DR,
+    the 'stay low' mechanism) or ABOVE it (cross-value non-DR, the 'push past'
+    mechanism of sec.39.8).  This says what a proof would have to argue."""
+    print("\nPART I -- which mechanism makes the cross-rows constant?")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    regs = subsets(univ)
+    below = above = 0
+    both_needed = 0
+    solved = 0
+    for _ in range(models):
+        A = rand_chain(rng, univ, L)
+        B = rand_chain(rng, univ, L)
+        if A is None or B is None:
+            continue
+        for _ in range(banks_per):
+            WA = rand_bank(rng, A, regs)
+            WB = rand_bank(rng, B, regs)
+            if not WA or not WB:
+                continue
+            cfg = valid_multi([A, B], [WA, WB], L, 2, 3)
+            if cfg is None:
+                continue
+            solved += 1
+            (iA, pA), (iB, pB) = cfg
+            winA = [A[iA + b] for b in range(pA)]
+            winB = [B[iB + b] for b in range(pB)]
+            # recover the witnesses the search would have used
+            vals = []
+            for (own, other, bank) in ((winA, winB, WA), (winB, winA, WB)):
+                for w in bank:
+                    if all(rel(x, w) == DR for x in own) and \
+                       len({rel(x, w) for x in other}) == 1:
+                        vals.append(next(iter({rel(x, w) for x in other})))
+                        break
+            if len(vals) < 2:
+                continue
+            nb = sum(1 for v in vals if v == DR)
+            below += nb
+            above += 2 - nb
+            if 0 < nb < 2:
+                both_needed += 1
+    tot = below + above
+    print(f"  configurations solved                     : {solved}")
+    print(f"  cross-rows constant at DR  ('stay low')   : {below:5d}"
+          f"  ({100.0 * below / max(tot, 1):.1f}%)")
+    print(f"  cross-rows constant elsewhere ('push past'): {above:5d}"
+          f"  ({100.0 * above / max(tot, 1):.1f}%)")
+    print(f"  configurations needing BOTH mechanisms     : {both_needed}")
+    print("  => the dominant mechanism is 'stay low': the cross-row sits in the")
+    print("     row's INITIAL rank-0 block, which part E proved CONSTANT.  A")
+    print("     proof of R6 should therefore argue that windows can be kept")
+    print("     inside the initial DR-block, NOT that they can be pushed past")
+    print("     every transition (the sec.39.8 framing, which the cycle blocks).")
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -362,6 +593,9 @@ def main():
         "E row shape / cofinal-DR": part_e(),
         "F R4' and bank fail": part_f(),
     }
+    part_g()   # reported, not pass/fail -- it measures rather than asserts
+    part_h()
+    part_i()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")

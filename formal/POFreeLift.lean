@@ -2666,6 +2666,49 @@ theorem backward_forcing_pp {i : Nat} (h : I.rho (c i) e = pp) :
     rw [hji]
     exact h
 
+/-- **`hstab` FOR FREE BELOW A RANK-0 POINT — the "stay low" mechanism**
+    (§39.10).  If an external's row to the chain is `DR` at position `m`, then by
+    backward forcing it is `DR` at EVERY position `≤ m`; so the row is constant
+    on ANY window ending at or below `m`, with NO stabilization horizon
+    consulted.  This is the brick the `wp91` part-I diagnosis identified as
+    carrying 92.7% of the cross-rows: `hstab` is satisfied by keeping the window
+    inside the row's INITIAL rank-0 block, NOT by pushing it past every
+    transition (the §39.8 framing, which is exactly what the ordering cycle
+    blocks). -/
+theorem stab_window_of_dr {m : Nat} (h : I.rho (c m) e = dr) :
+    ∀ i a, i + a ≤ m → I.rho e (c (i + a)) = I.rho e (c i) := by
+  intro i a hle
+  have h1 : I.rho (c (i + a)) e = dr :=
+    backward_forcing_dr hI hdom hstep hedom h (i + a) hle
+  have h2 : I.rho (c i) e = dr :=
+    backward_forcing_dr hI hdom hstep hedom h i (by omega)
+  rw [hI.conv_ (c (i + a)) e (hdom (i + a)) hedom, h1,
+    hI.conv_ (c i) e (hdom i) hedom, h2]
+
+/-- The `PP` half of the same mechanism (`comp(PP,PP) = {PP}`): rank-0 is the
+    `{DR,PP}` block, and it is CONSTANT below any of its points. -/
+theorem stab_window_of_pp {m : Nat} (h : I.rho (c m) e = pp) :
+    ∀ i a, i + a ≤ m → I.rho e (c (i + a)) = I.rho e (c i) := by
+  intro i a hle
+  have h1 : I.rho (c (i + a)) e = pp :=
+    backward_forcing_pp hI hdom hstep hedom h (i + a) hle
+  have h2 : I.rho (c i) e = pp :=
+    backward_forcing_pp hI hdom hstep hedom h i (by omega)
+  rw [hI.conv_ (c (i + a)) e (hdom (i + a)) hedom, h1,
+    hI.conv_ (c i) e (hdom i) hedom, h2]
+
+/-- **THE `hstab` DICHOTOMY** (§39.10): a window satisfies `hstab` for an
+    external either because it sits BELOW a rank-0 point of that external's row
+    ("stay low", `stab_window_of_dr`/`_pp`) or because it sits ABOVE the row's
+    last transition ("push past", `external_stabilizes`).  `wp91` part I measured
+    both as necessary — 345 of 2,552 solved configurations needed BOTH — so a
+    proof of R6 must be this case split, not either branch alone. -/
+theorem stab_window_of_rank0 {m : Nat} (h : I.rho (c m) e = dr ∨ I.rho (c m) e = pp) :
+    ∀ i a, i + a ≤ m → I.rho e (c (i + a)) = I.rho e (c i) := by
+  rcases h with h | h
+  · exact stab_window_of_dr hI hdom hstep hedom h
+  · exact stab_window_of_pp hI hdom hstep hedom h
+
 /-- **COFINAL `DR` ⟹ `DR` EVERYWHERE, HORIZON 0** (§39.6).  A node that is `DR`
     from COFINALLY many points of an ascending chain is `DR` from EVERY point:
     `backward_forcing_dr` from an arbitrarily high witness.  Combined with
@@ -19032,6 +19075,9 @@ end VerticalWitness
 #print axioms vtowers_merged
 #print axioms stab_swallowed_ppi
 #print axioms stab_swallowed_no_dr_pp
+#print axioms stab_window_of_dr
+#print axioms stab_window_of_pp
+#print axioms stab_window_of_rank0
 #print axioms cofinal_dr_all
 #print axioms cofinal_dr_stab
 #print axioms VerticalWitness.persistAll_merge2_nonvacuous

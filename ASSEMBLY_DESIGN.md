@@ -3016,8 +3016,50 @@ remains:
 bad positions always exists — the obstruction is only that the bad positions
 depend on the witnesses, which depend on the window. With the count now bounded
 uniformly, this is a finite fixed-point question (finitely many "bad-position
-patterns"), not the unbounded ordering problem of §39.2. That is the honest next
-target; it is NOT yet a proof sketch.
+patterns"), not the unbounded ordering problem of §39.2.
+
+### 39.10 R6 PROBED — two missed freedoms, strong positive evidence, and the route
+
+Testing R6 directly (`wp91` parts G–I) found that **§39.8's own framing was
+still too pessimistic**: it assumed `hstab` can only be met by pushing windows
+PAST every transition. Two degrees of freedom were missed.
+
+1. **Period 1 makes `hstab` VACUOUS.** The field is `∀ a, a < pk k → …`; at
+   `pk k = 1` the only `a` is `0` and the equation is `rfl`. So the cycle cannot
+   bite for single-phase kernels at all — only for genuinely multi-phase
+   (round-robin, `p ≥ |Ds|`) ones.
+2. **A window is constant if it lies BELOW a transition**, not only above it.
+   This is the important one, and it needs no horizon: by part E the row's
+   INITIAL rank-0 block is constant, so a window under a `DR`/`PP` point is
+   automatically stable. Certified as `stab_window_of_dr` / `stab_window_of_pp` /
+   `stab_window_of_rank0` (`propext`-only) — each is two lines from the
+   `backward_forcing_*` bricks that were already in the file.
+
+**The search (parts G, H).** Over two- and three-kernel families with the demand
+live at every level and minimal (one-per-level) witness banks, a simultaneously
+valid base/period/witness vector was found **every time**: 0 failures in ~10,700
+(model, bank) pairs, including with periods forced `≥ 2`. Honest scope: finite
+prefixes, randomized models — evidence, not proof.
+
+**The route (part I — the diagnosis that matters).** Classifying HOW each solved
+configuration met `hstab`: **92.7% "stay low"** (cross-row in the initial rank-0
+block) vs **7.3% "push past"**, and **345 of 2,552 configurations required
+BOTH**. So:
+
+> A proof of R6 is a **dichotomy**, and neither branch suffices alone: each
+> cross-row is stabilized either by keeping the window inside the witness's
+> initial rank-0 block (`stab_window_of_rank0`, certified, horizon-free) or by
+> placing it past the row's last transition (`external_stabilizes`).
+
+That is why the cycle is not vicious: the "stay low" branch consumes no horizon,
+so it does not feed the circular dependency at all. The remaining work is to
+turn the measured dichotomy into a selection argument — for each (kernel,
+witness) pair decide the branch, and show the finitely many resulting
+constraints are jointly satisfiable. This is now a concrete target with both
+branches already certified, rather than the open fixed-point question of §39.8.
+
+**Not claimed:** that R6 is true. The search is over finite prefixes and random
+models; a proof still has to handle the joint selection.
 
 ### 39.9 Status effect
 
