@@ -3263,3 +3263,77 @@ sense that no complete argument exists yet; it is NOT a wall in the sense of
 being ill-understood — each failed route was refuted for a specific, recorded
 reason, and the residue keeps shrinking. But it should not be presented as
 nearly finished.
+
+## 42. THE EXISTENCE ARGUMENT: a union bound, not a hierarchy (2026-08-19)
+
+Michael's analogy — aperiodic (einstein/hat) tilings, where the plane *can* be
+tiled and every finite patch extends, yet greedy local choice gets stuck — is
+exactly the signature we had: part O (greedy fails) plus parts L/N (existence
+robust). In tiling theory the rescue is the **Extension Theorem**, proved by
+König/compactness, i.e. NON-constructively, and for aperiodic sets no local rule
+works at all — you need the hierarchical substitution structure.
+
+Two differences turned out to matter, and together they give the proof.
+
+**(1) Our object is finite and our conditions are finitary.** We need `m` bases;
+serving and stability each quantify over finitely many chain positions. So a
+configuration found in a finite prefix IS a genuine configuration — no limit, no
+compactness needed. What we lacked was not a limit theorem but the analogue of
+the tiling *hierarchy*: a reason a choice always exists.
+
+**(2) Our solutions are ABUNDANT, where aperiodic tilings are delicate.** Probe
+part S, on the escaping + non-comparable residue: the fraction of base vectors
+that work has mean **0.66** (p=2) / **0.55** (p=3), worst case **0.50** / **0.36**,
+and NO system had zero solutions. Valid choices are the majority, not a needle.
+
+Abundance means we do not need a hierarchy at all — a **counting/union bound**
+suffices, and that is a much cheaper proof.
+
+### 42.1 The argument
+
+Let `B` bound the number of "bad" bases per (witness, chain) — bases whose window
+is not constant for that witness. Choose each base from `R` candidate recurrence
+positions (cofinally many are available, `rr_segment_from`). For each ordered
+pair `k ≠ k'`: fixing `i_k` determines kernel `k`'s witness, which forbids at most
+`B` values of `i_k'`. So
+
+```
+#bad vectors  ≤  m(m-1) · B · R^(m-1)   <   R^m   ⟺   R > m(m-1)·B
+```
+
+and a valid base vector EXISTS. Non-constructive is fine (§41: decidability comes
+from the code enumeration, not from constructing the vector). This also explains
+part O: greedy fails because it commits, while counting never does.
+
+### 42.2 The engine, CERTIFIED
+
+`B` is bounded because the row is a monotone staircase that never returns:
+
+- **`row_no_return`** (`propext`-only) — if the row takes the SAME value at two
+  positions it is CONSTANT on the whole interval between them. Proof: `stabRank`
+  is monotone (`vrank_mono`), so equal endpoints pin the rank throughout; then
+  each rank pins the value — rank 0 `{DR,PP}` by backward forcing, rank 1
+  `{PO,EQ}` because an interior `EQ` would make the chain meet `e` and drop the
+  rank, rank 2 `{PPI}` being a singleton.
+- **`window_const_iff_ends`** — hence a window is constant iff its two ENDS
+  agree, which is the form the counting uses.
+
+So the row changes value at most twice, a window of length `p` is bad only if it
+straddles a transition, and `B ≤ 2(p-1)` — **a bound in `p` alone**, independent
+of the chain, the witness and the model. Probe part T confirms: at most 2
+transitions exhaustively, and bad-base counts 2/4/6 against the bound 3/6/9 for
+`p` = 2/3/4.
+
+### 42.3 What is left
+
+The remaining Lean work is the **counting step itself** (`#bad < #total` over
+`Fin m → Fin R`), which is ordinary finite combinatorics — the file already does
+this kind of `List.countP` argument in `maximal_dominated`. Everything the
+counting consumes is now certified: `row_no_return` / `window_const_iff_ends`
+(the bound `B`), `rr_segment_from` (cofinally many candidate bases),
+`stab_window_family_multi` and the §39.10 dichotomy.
+
+This is the first route to the base vector that has survived scrutiny: the other
+four (common base, fixed-order greedy, some-order greedy, cofinal collapse) were
+each refuted or shown non-general. It is NOT yet proved — the counting step is
+unwritten, and the probes remain finite-prefix evidence.

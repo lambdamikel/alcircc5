@@ -1096,6 +1096,212 @@ def part_q(L=14):
     print("     general case needs the sec.39.10 DICHOTOMY, not the collapse.")
 
 
+# ---- part R: the ESCAPING residue under NON-COMPARABILITY (what sec.38 leaves)
+
+
+def escaping_bank(rng, own, others, univ, adversarial=True):
+    """A witness bank that ESCAPES its own chain: the witness for level n is DR
+    from own[n] but NOT from own[n+1].  When `adversarial`, pick among the
+    escaping candidates the one whose transition level w.r.t. the OTHER chains
+    differs most from its own -- decorrelated transitions are what makes a window
+    straddle, so this is the worst case for the selection."""
+    us = sorted(univ)
+
+    def trans(ch, w):
+        for j, x in enumerate(ch):
+            if rel(x, w) != DR:
+                return j
+        return len(ch)
+
+    bank = set()
+    for n in range(len(own) - 1):
+        cands = []
+        for _ in range(40):
+            comp = [x for x in us if x not in own[n]]
+            if not comp:
+                break
+            k = rng.randint(1, min(2, len(comp)))
+            w = frozenset(rng.sample(comp, k))
+            if rel(own[n], w) == DR and rel(own[n + 1], w) != DR:   # escaping
+                cands.append(w)
+        if not cands:
+            return None
+        if adversarial and others:
+            cands.sort(key=lambda w: -max(abs(trans(o, w) - trans(own, w))
+                                          for o in others))
+        bank.add(cands[0])
+    return sorted(bank, key=lambda t: (len(t), sorted(t)))
+
+
+def part_r(models=400, n=14, L=10, T=3, seed=99991):
+    """Parts L/N used random banks, where escaping is rare.  This forces EVERY
+    demand to escape, picks witnesses ADVERSARIALLY to decorrelate their
+    transition levels across chains, and restricts to NON-COMPARABLE chain pairs
+    -- exactly what sec.38's merge leaves behind."""
+    print("\nPART R -- the ESCAPING residue, non-comparable chains, adversarial")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for p in (2, 3):
+        tested = bad = 0
+        skipped_comp = 0
+        maxgap = 0
+        for _ in range(models):
+            A = rand_chain(rng, univ, L, maxstep=1)
+            B = rand_chain(rng, univ, L, maxstep=1)
+            if A is None or B is None:
+                continue
+            if comparable(A, B):
+                skipped_comp += 1
+                continue                      # sec.38's merge removes these
+            WA = escaping_bank(rng, A, [B], univ)
+            WB = escaping_bank(rng, B, [A], univ)
+            if not WA or not WB:
+                continue
+            # measure transition decorrelation actually achieved
+            def trans(ch, w):
+                for j, x in enumerate(ch):
+                    if rel(x, w) != DR:
+                        return j
+                return len(ch)
+            for w in WA:
+                maxgap = max(maxgap, abs(trans(A, w) - trans(B, w)))
+            tested += 1
+            if valid_slots([A, B], [(0, DR, WA), (1, DR, WB)], L, p, p,
+                           minbase=T) is None:
+                bad += 1
+        print(f"  period={p}   non-comparable systems {tested:5d}"
+              f"  (comparable skipped {skipped_comp:5d})"
+              f"   NO valid config {bad:4d} ({100.0 * bad / max(tested,1):5.2f}%)"
+              f"   max transition gap {maxgap}")
+    print("  => escaping demands + adversarially decorrelated transitions, on the")
+    print("     NON-COMPARABLE pairs sec.38 actually leaves.  0% would say the")
+    print("     residue is benign once comparable towers are merged away.")
+
+
+# ---- part S: SOLUTION DENSITY -- are valid base vectors rare or abundant?
+
+
+def part_s(models=250, n=14, L=10, T=3, seed=123457):
+    """Greedy fails (part O) yet solutions always exist (L/N/R).  In aperiodic
+    tilings the resolution is a HIERARCHY telling you which choice to make.  A
+    cheaper possibility here: solutions may simply be ABUNDANT, in which case a
+    counting argument ('bad base vectors are a minority') proves existence with
+    no hierarchy at all.  This measures the fraction of base vectors that work,
+    on the escaping + non-comparable residue."""
+    print("\nPART S -- solution DENSITY on the escaping residue")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for p in (2, 3):
+        tot_frac = 0.0
+        worst = 1.0
+        systems = 0
+        zero = 0
+        for _ in range(models):
+            A = rand_chain(rng, univ, L, maxstep=1)
+            B = rand_chain(rng, univ, L, maxstep=1)
+            if A is None or B is None or comparable(A, B):
+                continue
+            WA = escaping_bank(rng, A, [B], univ)
+            WB = escaping_bank(rng, B, [A], univ)
+            if not WA or not WB:
+                continue
+            slots = [(0, DR, WA), (1, DR, WB)]
+            good = tot = 0
+            for iA in range(T, L - p + 1):
+                for iB in range(T, L - p + 1):
+                    tot += 1
+                    wins = [[A[iA + b] for b in range(p)],
+                            [B[iB + b] for b in range(p)]]
+                    okall = True
+                    for (k, r, bank) in slots:
+                        if not any(all(rel(x, w) == r for x in wins[k]) and
+                                   all(len({rel(x, w) for x in wins[k2]}) == 1
+                                       for k2 in (0, 1) if k2 != k)
+                                   for w in bank):
+                            okall = False
+                            break
+                    if okall:
+                        good += 1
+            if tot == 0:
+                continue
+            systems += 1
+            frac = good / tot
+            tot_frac += frac
+            worst = min(worst, frac)
+            if good == 0:
+                zero += 1
+        print(f"  period={p}  systems {systems:4d}"
+              f"   mean valid-vector fraction {tot_frac / max(systems,1):6.3f}"
+              f"   worst {worst:6.3f}   systems with NO solution {zero}")
+    print("  => a high mean with a bounded-away-from-zero WORST case would")
+    print("     support a counting proof; a tiny worst case means solutions are")
+    print("     rare and a structural (hierarchy-style) argument is needed.")
+
+
+# ---- part T: the COUNTING LEMMA behind a union-bound existence proof
+
+
+def part_t(nmax=5, plist=(2, 3, 4)):
+    """Abundance (part S) suggests a UNION BOUND rather than a hierarchy.  Its
+    engine is: for ONE witness and ONE chain, the bases whose window is NOT
+    constant are FEW.  Since the row has shape X* PO* EQ? PPI* (part E) it has at
+    most 3 transitions, and a window of length p is non-constant only if it
+    straddles one -- at most p-1 bases per transition, so at most 3(p-1) bad
+    bases, a bound depending on p ALONE (not on the chain, the witness, or the
+    model).  Verified exhaustively here."""
+    print("\nPART T -- the counting lemma:  #bad bases <= 3(p-1)")
+    univ = set(range(nmax))
+    regs = subsets(univ)
+    chains = []
+    for a in regs:
+        for b in regs:
+            if not a < b:
+                continue
+            for c3 in regs:
+                if b < c3:
+                    chains.append([a, b, c3])
+    # long chains for the base-count check
+    worst_tr = 0
+    for ch in chains:
+        for w in regs:
+            r = row(ch, w)
+            tr = sum(1 for i in range(len(r) - 1) if r[i] != r[i + 1])
+            worst_tr = max(worst_tr, tr)
+    print(f"  exhaustive rows (|U|={nmax}, 3-chains)   : max transitions {worst_tr}"
+          f"   (claim: <= 3)   {'OK' if worst_tr <= 3 else 'FAIL'}")
+
+    # bad-base count on longer random chains
+    import random
+    rng = random.Random(5150)
+    bigU = set(range(12))
+    bigR = subsets(bigU)
+    ok = True
+    for p in plist:
+        worst = 0
+        for _ in range(4000):
+            ch = rand_chain(rng, bigU, 9, maxstep=1)
+            if ch is None:
+                continue
+            w = rng.choice(bigR)
+            bad = sum(1 for i in range(len(ch) - p + 1)
+                      if len({rel(ch[i + b], w) for b in range(p)}) != 1)
+            worst = max(worst, bad)
+        bound = 3 * (p - 1)
+        good = worst <= bound
+        ok &= good
+        print(f"  p={p}: worst #bad bases {worst:2d}   bound 3(p-1) = {bound:2d}"
+              f"   {'OK' if good else 'FAIL'}")
+    print("  => with B := 3(p-1) bad bases per (witness, chain), choosing each")
+    print("     base from R candidate recurrences makes the bad vectors at most")
+    print("     m(m-1) * B * R^(m-1) out of R^m, which is < R^m once R > m^2 * B.")
+    print("     So a valid base vector EXISTS -- a counting proof, no hierarchy,")
+    print("     and non-constructive is fine (decidability comes from the code")
+    print("     enumeration, not from constructing the vector).")
+    return ok and worst_tr <= 3
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -1106,6 +1312,7 @@ def main():
         "D row always stabilizes": part_d(),
         "E row shape / cofinal-DR": part_e(),
         "F R4' and bank fail": part_f(),
+        "T counting lemma": part_t(),
     }
     part_g()   # reported, not pass/fail -- it measures rather than asserts
     part_h()
@@ -1118,6 +1325,8 @@ def main():
     part_o()
     part_p()
     part_q()
+    part_r()
+    part_s()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")

@@ -2666,6 +2666,95 @@ theorem backward_forcing_pp {i : Nat} (h : I.rho (c i) e = pp) :
     rw [hji]
     exact h
 
+/-- **THE ROW NEVER RETURNS** (§42) — the engine of the counting proof.  If an
+    external's row to the chain takes the SAME value at two positions, it is
+    constant on the whole interval between them.  Hence the row is a monotone
+    staircase: it changes value at most twice (rank 0 `{DR,PP}` → rank 1
+    `{PO,EQ}` → rank 2 `{PPI}`, and within each rank it cannot vary), so a window
+    of length `p` fails to be constant only if it STRADDLES one of at most two
+    transitions — at most `2(p-1)` bad bases, a bound depending on `p` ALONE.
+    That is what makes the union-bound existence proof for the base vector go
+    through (probe `wp91` part T: observed ≤2 transitions, and bad-base counts
+    2/4/6 against the bound 3/6/9 at `p` = 2/3/4). -/
+theorem row_no_return {i j : Nat} (hij : i ≤ j)
+    (h : I.rho (c i) e = I.rho (c j) e) :
+    ∀ k, i ≤ k → k ≤ j → I.rho (c k) e = I.rho (c i) e := by
+  intro k hik hkj
+  have hr1 : stabRank (I.rho (c i) e) ≤ stabRank (I.rho (c k) e) :=
+    vrank_mono hI hdom hstep hedom i k hik
+  have hr2 : stabRank (I.rho (c k) e) ≤ stabRank (I.rho (c j) e) :=
+    vrank_mono hI hdom hstep hedom k j hkj
+  rw [← h] at hr2
+  have hrank : stabRank (I.rho (c k) e) = stabRank (I.rho (c i) e) := by omega
+  -- with equal ranks, the value is pinned in every case
+  cases hvi : I.rho (c i) e with
+  | dr =>
+    cases hvk : I.rho (c k) e with
+    | dr => rfl
+    | pp => exact absurd (backward_forcing_pp hI hdom hstep hedom hvk i hik)
+              (by rw [hvi]; exact by decide)
+    | eq => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | po => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | ppi => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+  | pp =>
+    cases hvk : I.rho (c k) e with
+    | dr => exact absurd (backward_forcing_dr hI hdom hstep hedom hvk i hik)
+              (by rw [hvi]; exact by decide)
+    | pp => rfl
+    | eq => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | po => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | ppi => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+  | po =>
+    cases hvk : I.rho (c k) e with
+    | dr => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | pp => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | eq =>
+      -- `c k = e`, so the value at `i ≤ k` would be `PP` (rank 0) or `EQ`
+      exfalso
+      have hke : c k = e := hI.eq_id (c k) e (hdom k) hedom hvk
+      rcases Nat.lt_or_ge i k with hlt | hge
+      · have : I.rho (c i) e = pp := by
+          rw [← hke]; exact chain_model_pp hI hdom hstep i k hlt
+        rw [hvi] at this; exact absurd this (by decide)
+      · have hik' : i = k := by omega
+        rw [hik'] at hvi; rw [hvi] at hvk; exact absurd hvk (by decide)
+    | po => rfl
+    | ppi => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+  | eq =>
+    -- `c i = e = c j` forces `i = j` (strict chain), so `k = i`
+    have hie : c i = e := hI.eq_id (c i) e (hdom i) hedom hvi
+    have hje : I.rho (c j) e = eq := by rw [← h, hvi]
+    have hje' : c j = e := hI.eq_id (c j) e (hdom j) hedom hje
+    have hij' : i = j := by
+      rcases Nat.lt_or_ge i j with hlt | hge
+      · exfalso
+        have : I.rho (c i) (c j) = pp := chain_model_pp hI hdom hstep i j hlt
+        rw [hie, hje'] at this
+        rw [hI.refl_eq e hedom] at this
+        exact absurd this (by decide)
+      · omega
+    have hki : k = i := by omega
+    rw [hki, hvi]
+  | ppi =>
+    cases hvk : I.rho (c k) e with
+    | dr => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | pp => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | eq => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | po => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
+    | ppi => rfl
+
+/-- **A WINDOW IS CONSTANT IFF ITS ENDPOINTS AGREE** (§42) — immediate from
+    `row_no_return`, and the form the counting argument uses: to test a window
+    one need only compare its two ends. -/
+theorem window_const_iff_ends (i p : Nat) (hp : 0 < p) :
+    (I.rho (c i) e = I.rho (c (i + p - 1)) e) →
+    ∀ b, b < p → I.rho e (c (i + b)) = I.rho e (c i) := by
+  intro hends b hb
+  have h := row_no_return hI hdom hstep hedom (by omega : i ≤ i + p - 1) hends
+    (i + b) (by omega) (by omega)
+  rw [hI.conv_ (c (i + b)) e (hdom (i + b)) hedom, h,
+    ← hI.conv_ (c i) e (hdom i) hedom]
+
 /-- **`hstab` FOR FREE BELOW A RANK-0 POINT — the "stay low" mechanism**
     (§39.10).  If an external's row to the chain is `DR` at position `m`, then by
     backward forcing it is `DR` at EVERY position `≤ m`; so the row is constant
@@ -19233,6 +19322,8 @@ end VerticalWitness
 #print axioms witness_sets_decreasing
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy
+#print axioms row_no_return
+#print axioms window_const_iff_ends
 #print axioms stab_window_of_dr
 #print axioms stab_window_of_pp
 #print axioms stab_window_of_rank0
