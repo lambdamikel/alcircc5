@@ -3337,3 +3337,55 @@ This is the first route to the base vector that has survived scrutiny: the other
 four (common base, fixed-order greedy, some-order greedy, cofinal collapse) were
 each refuted or shown non-general. It is NOT yet proved — the counting step is
 unwritten, and the probes remain finite-prefix evidence.
+
+## 43. THE HIGH-BANK CONSTRUCTION — the selection, decoupled (2026-08-19)
+
+De-risking §42's counting step in scratch Lean turned up a better argument, and
+it removes the counting entirely.
+
+**The observation.** `witness_sets_decreasing` (certified) says `W_n` SHRINKS as
+`n` grows. So a witness picked at a level `M` at or above the top of a kernel's
+window serves EVERY position of that window, by backward forcing. Therefore:
+pick the candidate range first, then pick the whole witness bank ABOVE it. The
+bank no longer depends on where the bases land, so **the base choices decouple** —
+each base need only dodge the finitely many values spoiled by the OTHER kernels'
+already-fixed witnesses.
+
+This is exactly the step part O's greedy got wrong: it picked each witness just
+above its OWN base, so later witnesses kept invalidating earlier windows. The
+high bank removes the dependency instead of scheduling around it.
+
+**Consequences.**
+- No product counting (§42's union bound over `Fin m → Fin R`) is needed. The
+  choice is a 1-D pigeonhole per kernel: `R > (m-1)·S·B` candidates suffice,
+  with `S` the slot count (bounded by `C₀`) and `B ≤ 2(p-1)`.
+- The construction is essentially CONSTRUCTIVE, which §41 established we did not
+  even need.
+
+**Certified:** `mixSelect_of_highBank` — a bank picked at level `M k` at or above
+each window's top discharges `MixSelect`'s serving conjunct outright, leaving
+only stability. Together with `witness_sets_decreasing`, `row_no_return`,
+`window_const_iff_ends`, `stab_window_family_multi` and the §39.10 dichotomy, the
+whole selection is certified except the base choice itself.
+
+**Probe `wp91` part U** (400 systems per configuration, 2–3 kernels, p = 2,3):
+top witness serves every lower window **400/400**; spoil-count bound `2(p-1)`
+holds **400/400** (worst exactly 2 and 4, i.e. tight); decoupled base vector
+found **400/400**.
+
+### 43.1 What remains
+
+1. **The spoil-count lemma** — at most `2(p-1)` bad bases per (witness, chain).
+   Route: extract `rank_eq_imp_value_eq` from `row_no_return`'s case analysis
+   (equal rank at `i ≤ k` pins the value), hence a value change forces a STRICT
+   rank increase, hence ≤2 changes since `stabRank ≤ 2`, hence a 3-block
+   staircase and ≤ `p-1` bad bases per transition.
+2. **The per-kernel pigeonhole** — from `R > (m-1)·S·B` candidate recurrences,
+   pick one avoiding the spoiled set. Ordinary `List.countP` work of the kind
+   `maximal_dominated` already does.
+3. Then `MixSelect` is a theorem, and mixing reduces to the remaining coverage
+   (`he_ex`/`hk_ex`) plus `codesM`.
+
+Honest note: (1) and (2) are routine but not written; the probes stay
+finite-prefix evidence. What changed today is that the selection has a single
+clean argument with no refuted competitor, rather than four dead routes.

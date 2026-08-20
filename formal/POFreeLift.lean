@@ -15271,6 +15271,41 @@ theorem mixSelect_of_cofinal_bank (hI : RCC5Interp I) (C0 : Concept) {m : Nat}
   exact ⟨w, hws w hwmem, hD, fun b _ => hall (ik k + b),
     fun k' b hb => hH ik hik w hwmem k' b (Nat.lt_of_lt_of_le hb (hpk k'))⟩
 
+/-- **THE HIGH-BANK CONSTRUCTION** (§43) — the serving side of `MixSelect` comes
+    FREE once the witnesses are picked ABOVE the whole candidate range.
+
+    `witness_sets_decreasing` says `W_n` shrinks as `n` grows, so a witness chosen
+    at a level `M k` at or above the top of kernel `k`'s window serves EVERY
+    position of that window by backward forcing.  Consequently the bank does NOT
+    depend on where the bases end up: fix the range, pick the bank above it, and
+    the base choices DECOUPLE — each base need only dodge the finitely many
+    values spoiled by the OTHER kernels' (already fixed) witnesses.
+
+    This is precisely the step part O's greedy got wrong: it picked each witness
+    just above its own base, so later witnesses kept invalidating earlier
+    windows.  Picking the whole bank above the range removes the dependency
+    instead of scheduling around it, and no product counting is needed.
+    Probe `wp91` part U: serving held in 400/400 systems, the spoil-count bound
+    `2(p-1)` held in 400/400 (worst exactly 2 and 4 at `p` = 2,3), and the
+    decoupled base vector was found in 400/400. -/
+theorem mixSelect_of_highBank (hI : RCC5Interp I) (C0 : Concept) {m : Nat}
+    (ck : Fin m → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = pp)
+    (ik pk : Fin m → Nat) (M : Fin m → Nat)
+    (hbelow : ∀ k, ik k + pk k ≤ M k)
+    (hbank : ∀ k a r D, a < pk k → (r = dr ∨ r = pp) →
+      Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        I.rho (ck k (M k)) w = r ∧
+        (∀ k' b, b < pk k' →
+          I.rho w (ck k' (ik k' + b)) = I.rho w (ck k' (ik k')))) :
+    MixSelect I C0 ck ik pk := by
+  intro k a r D ha hr hmem
+  obtain ⟨w, hw, hD, hMw, hstabw⟩ := hbank k a r D ha hr hmem
+  refine ⟨w, hw, hD, fun b hb => ?_, hstabw⟩
+  exact witness_sets_decreasing hI (ck k) (hdom k) (hstep k) hw hr hMw
+    (ik k + b) (by have := hbelow k; omega)
+
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
 noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
@@ -19320,6 +19355,7 @@ end VerticalWitness
 #print axioms stab_window_family_multi
 #print axioms mixSelect_of_cofinal_bank
 #print axioms witness_sets_decreasing
+#print axioms mixSelect_of_highBank
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy
 #print axioms row_no_return

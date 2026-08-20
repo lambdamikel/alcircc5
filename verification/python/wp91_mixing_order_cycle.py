@@ -1302,6 +1302,88 @@ def part_t(nmax=5, plist=(2, 3, 4)):
     return ok and worst_tr <= 3
 
 
+# ---- part U: the HIGH-BANK construction -- decoupled choices, no product count
+
+
+def part_u(models=400, n=14, L=12, seed=777, Ms=(2, 3)):
+    """Since W_n is DECREASING (witness_sets_decreasing), a witness chosen for the
+    HIGHEST candidate base serves EVERY lower one.  So pick the whole bank ABOVE
+    the top of the candidate range: the witnesses are then FIXED independently of
+    the bases, every kernel's constraints DECOUPLE, and each base need only avoid
+    the <= (m-1)*S*B values spoiled by the other kernels' fixed witnesses.  This
+    is the construction part O's greedy got wrong -- it picked witnesses too low.
+
+    Checked here: (i) a top-level witness really does serve every lower window,
+    (ii) the forbidden-base count matches the bound 2(p-1) per (witness, chain),
+    (iii) a valid base vector always exists among the decoupled choices."""
+    print("\nPART U -- the HIGH-BANK construction (witnesses above the range)")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    for m in Ms:
+        for p in (2, 3):
+            systems = serves_ok = bound_ok = exists_ok = 0
+            worst_forbidden = 0
+            for _ in range(models):
+                chains = [rand_chain(rng, univ, L, maxstep=1) for _ in range(m)]
+                if any(c is None for c in chains):
+                    continue
+                top = L - 1                       # the "above the range" level
+                # bank: for each kernel, a witness DR from its chain AT THE TOP
+                bank = []
+                okgen = True
+                for k in range(m):
+                    cands = [frozenset(x) for x in
+                             [rng.sample(sorted(univ - chains[k][top]),
+                                         min(2, len(univ - chains[k][top])))
+                              for _ in range(30)]
+                             if x]
+                    cands = [w for w in cands if rel(chains[k][top], w) == DR]
+                    if not cands:
+                        okgen = False
+                        break
+                    bank.append(cands[0])
+                if not okgen:
+                    continue
+                systems += 1
+                # (i) does the top witness serve EVERY lower window?
+                if all(rel(chains[k][j], bank[k]) == DR
+                       for k in range(m) for j in range(top)):
+                    serves_ok += 1
+                # (ii) forbidden-base count per (witness, chain) vs 2(p-1)
+                worst = 0
+                for k in range(m):
+                    for k2 in range(m):
+                        if k2 == k:
+                            continue
+                        bad = sum(1 for i in range(top - p + 1)
+                                  if len({rel(chains[k2][i + b], bank[k])
+                                          for b in range(p)}) != 1)
+                        worst = max(worst, bad)
+                worst_forbidden = max(worst_forbidden, worst)
+                if worst <= 2 * (p - 1):
+                    bound_ok += 1
+                # (iii) decoupled choice: each base avoids the others' bad sets
+                choice = []
+                for k2 in range(m):
+                    good = [i for i in range(top - p + 1)
+                            if all(len({rel(chains[k2][i + b], bank[k])
+                                        for b in range(p)}) == 1
+                                   for k in range(m) if k != k2)]
+                    if good:
+                        choice.append(good[0])
+                if len(choice) == m:
+                    exists_ok += 1
+            print(f"  kernels={m} p={p}  systems {systems:4d}"
+                  f"   top witness serves all {serves_ok:4d}"
+                  f"   bound 2(p-1) held {bound_ok:4d}"
+                  f"   decoupled vector found {exists_ok:4d}"
+                  f"   (worst forbidden {worst_forbidden})")
+    print("  => 'serves all' should be 100% (backward forcing), the bound should")
+    print("     always hold, and the decoupled vector should always exist --")
+    print("     that is the whole proof, with NO product counting.")
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -1327,6 +1409,7 @@ def main():
     part_q()
     part_r()
     part_s()
+    part_u()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")
