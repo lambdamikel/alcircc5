@@ -3077,9 +3077,21 @@ again structural (one slot per `D ∈ cl C0`).
   row (constant across the window by `hstab`) to BE the demanded relation, no
   β-external can serve such a demand.
 
-  So `∃PO` at kernel phases requires the pool machinery (`MTOkPool` /
-  `glueFam_ok`, rounds E0/E1) as an ARCHITECTURAL necessity, not as one
-  convenient option among several.
+  So `∃PO` at kernel phases cannot be served by a β-external **in the READ-OFF
+  architecture** (`mixKernels`, whose `K k e := ρ (ck k (ik k)) (g e)` is the
+  model's own relation), and there it requires the pool machinery.
+
+  > **CORRECTION (2026-08-20).** This was first written as "`∃PO` requires the
+  > pool machinery, an ARCHITECTURAL necessity" — too broad. Part W's mathematics
+  > is right (no model-true `PO` relation is constant across a window), but
+  > `hk_ex`'s external disjunct compares the DECLARED `K` value, not the model's.
+  > The **PO-DEFAULT** architecture already in the file — `mtkKernelsDR`, with
+  > `K k e := ppi | dr | po` and `Q := po` DECLARED rather than read off — serves
+  > `∃PO.D` at a phase by any external carrying `D`, since its declared `K` is
+  > already `PO`. Soundness is unaffected because `multiTier_sound` builds a NEW
+  > model, and ∀PO-freeness (`mixKernels_noPo`/`mtkKernelsDR_nopo`) makes the
+  > declared `PO` edges obligation-free. So the pool is needed for the read-off
+  > route, not universally.
 
 ### 39.9 The pool interface, wired
 
@@ -3165,3 +3177,39 @@ the chain longer than whatever is being tested (parts K, Q). (b) Re-framing an
 obstacle in new vocabulary is not progress: the bad-position bound was recorded
 in the first working notes and then mis-framed as a fixed point, then as a staged
 construction, before the high bank dissolved it.
+
+## 40. ARCHITECTURE FORK: read-off vs PO-default (2026-08-20)
+
+Scoping `he_ex` surfaced that the file contains TWO mixed-certificate
+architectures, and the campaign's §35 pinned the summit to the more expensive one
+without recording the comparison. Stating it now so the choice is deliberate.
+
+| | **read-off** (`mixKernels`) | **PO-default** (`mtkKernelsDR`) |
+|---|---|---|
+| `E`/`K`/`Q` | the model's own relations | DECLARED: `E ∈ {eq,dr,po}`, `K ∈ {ppi,dr,po}`, `Q ≡ po` |
+| labels | `mty` (full model type) | `mtk` (truncated by modal depth) |
+| `hstab` | REQUIRED — the whole §39 apparatus | none |
+| `hrectQ` | REQUIRED | none (`Q ≡ po`, and `∀PO`-free ⟹ vacuous) |
+| `∃PO` at a phase | needs the POOL (part W) | FREE — declared `K = po` to any external carrying `D` |
+| directions | BOTH (`up := dir`) | ASCENDING only (`up _ := true`) |
+| model-side debts | `hstab`, `hrectQ`, banks | `hv0pp`, `hdr` (DR children genuinely `DR` to every phase), `hee`, closure |
+| reaches | `MultiTierOk` | `Satisfiable C0` directly (`extract_dr_children`) |
+
+**What this means for today's work.** §39's machinery (`hstab`, `hrectQ`, the
+high bank, the base selection, `mixSelect_assembled`) is certified and general,
+but it pays for the read-off frame. The PO-default route avoids those obligations
+entirely — and its model-side debts are things already built (`exists_bank` gives
+DR witnesses `DR` to everything below; the chain gives `hv0pp`).
+
+**Why it is not simply better.** PO-default as built is ASCENDING-ONLY. The
+∀PO-free fragment needs both directions (`∃PP` and `∃PPI` towers, §24). So either
+(a) the PO-default certificate is generalized with `up := dir` — the frame is
+independent of direction, and `kk_pp`/`kk_ppi` already branch on it in
+`mixKernels_ok`, so this looks modest; or (b) the read-off route is carried
+through as planned.
+
+**Recommendation: (a).** It would make the §39 apparatus unnecessary for the
+fragment (still correct, still reusable, but off the critical path), and it
+removes the `∃PO` pool requirement at phases. The honest cost of having pinned
+the summit to read-off is the §39 work; the honest gain is that its obligations
+are now understood well enough to know they can be avoided.
