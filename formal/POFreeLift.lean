@@ -15407,6 +15407,36 @@ theorem exists_stable_recurrence (hI : RCC5Interp I) (c : Nat → α)
     exists_stable_base hI c hdom hstep ws hws p hp l hsp (by omega)
   exact ⟨i, hge i hi, hP i hi, hgood⟩
 
+/-- **THE CANDIDATE RANGE, EXPOSED BEFORE THE BANK** (§39.5) — the lemma that
+    makes the high-bank construction formally coherent.
+
+    The subtlety: `exists_stable_base` needs a candidate list longer than
+    `2·|ws|`, but the high bank must be picked ABOVE the candidate range — so if
+    the list length were driven by `|ws|` the two would be circular.  It is not,
+    because the bank size is bounded A PRIORI (kernels × phase types × demands,
+    all bounded by `C₀`).  Taking a size bound `S` as input, the list is built
+    FIRST, its top `M` is exposed, and only THEN is `ws` quantified:
+
+    `∃ M, ∀ ws, |ws| ≤ S → ∃ i, …, i + p ≤ M ∧ (stability for all of ws)`
+
+    That quantifier order — `M` before `ws` — is the whole content.  The caller
+    picks the bank at or above `M`, `mixSelect_of_highBank` then makes it serve
+    every window (all of which end at or below `M`), and stability is already
+    guaranteed here. -/
+theorem stable_base_range (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (p : Nat) (hp : 0 < p) (S : Nat)
+    (P : Nat → Prop) (hcof : ∀ L, ∃ i, L ≤ i ∧ P i) (L : Nat) :
+    ∃ M, ∀ ws : List α, (∀ w ∈ ws, I.dom w) → ws.length ≤ S →
+      ∃ i, L ≤ i ∧ i + p ≤ M ∧ P i ∧
+        ∀ w ∈ ws, ∀ b, b < p → I.rho w (c (i + b)) = I.rho w (c i) := by
+  obtain ⟨l, hlen, hP, hge, hsp⟩ := exists_spaced_list P hcof p (2 * S + 1) L
+  obtain ⟨Bmax, hBmax⟩ := list_bound (fun x => x) l
+  refine ⟨Bmax + p, fun ws hws hS => ?_⟩
+  obtain ⟨i, hi, hgood⟩ :=
+    exists_stable_base hI c hdom hstep ws hws p hp l hsp (by omega)
+  exact ⟨i, hge i hi, by have := hBmax i hi; omega, hP i hi, hgood⟩
+
 /-- **THE KERNEL INTERFACE, FROM MODEL-SIDE DATA** (§39.5) — `hty` and `hstab`
     together, for one round-robin kernel and a given finite witness bank.
 
@@ -15451,6 +15481,102 @@ theorem kernel_interface_of_persistAll (hI : RCC5Interp I) (C0 : Concept)
       (fun i => 0 < q ∧ mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
         = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q))) hq L
   exact ⟨i, q, hLi, hq0, hPi.2, hstab⟩
+
+/-- **THE KERNEL RANGE** (§39.5) — `kernel_interface_of_persistAll` with the
+    candidate range EXPOSED, so the bank can be picked above it.  The period `q`
+    is extracted first (by `cofinal_fixed_param`, independent of any bank), then
+    `stable_base_range` fixes the top `M`; only afterwards is the bank `ws`
+    quantified.  Output: for every bank of size `≤ S`, a base `i ≥ L` whose whole
+    window ends at or below `M`, is a `q`-recurrence, and is stable for the bank. -/
+theorem kernel_range_of_persistAll (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAll I C0 Ds x0) (S : Nat) (L : Nat) :
+    ∃ q M, 0 < q ∧
+      ∀ ws : List α, (∀ w ∈ ws, I.dom w) → ws.length ≤ S →
+        ∃ i, L ≤ i ∧ i + q ≤ M ∧
+          mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
+            = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q)) ∧
+          (∀ w ∈ ws, ∀ b, b < q →
+            I.rho w (rrPt hI C0 Ds hL x0 h0 (i + b))
+              = I.rho w (rrPt hI C0 Ds hL x0 h0 i)) := by
+  classical
+  obtain ⟨q, _, hq⟩ :=
+    cofinal_fixed_param ((allListsLe (cl C0) (cl C0).length).length * Ds.length)
+      (fun i q => 0 < q ∧ mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
+        = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q)))
+      (by
+        intro L'
+        obtain ⟨i, pp', hL0, _, hp, _, hbnd, hty⟩ :=
+          rr_segment_from hI C0 Ds hL x0 h0 L'
+        exact ⟨i, pp', hL0, hbnd, hp, hty⟩)
+  obtain ⟨i0, _, hq0, _⟩ := hq 0
+  obtain ⟨M, hM⟩ :=
+    stable_base_range hI (rrPt hI C0 Ds hL x0 h0)
+      (rrPt_dom hI C0 Ds hL x0 h0) (rrPt_step hI C0 Ds hL x0 h0) q hq0 S
+      (fun i => 0 < q ∧ mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
+        = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q))) hq L
+  refine ⟨q, M, hq0, fun ws hws hS => ?_⟩
+  obtain ⟨i, hLi, hiM, hPi, hstab⟩ := hM ws hws hS
+  exact ⟨i, hLi, hiM, hPi.2, hstab⟩
+
+/-- **THE FAMILY RANGE** (§39.5) — the whole per-kernel interface of
+    `mixKernels_ok` with the candidate ranges exposed BEFORE the bank, which is
+    what `mixSelect_of_highBank` needs in order to be applicable.  Periods `pk`
+    and range tops `M` are fixed first; then for ANY bank of size `≤ S` there are
+    bases giving `hty`, `hstab`, `hrectQ`, and every window ending at or below its
+    kernel's `M` — so a bank picked at those `M`s serves every window. -/
+theorem family_range (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (S : Nat)
+    (hN : Fin n → Fin n → Nat)
+    (hconst : ∀ k k', k ≠ k' → ∀ i j, hN k k' ≤ i → hN k k' ≤ j →
+      I.rho (classChain hI C0 Ds hL x0 h0 k i)
+            (classChain hI C0 Ds hL x0 h0 k' j)
+        = I.rho (classChain hI C0 Ds hL x0 h0 k (hN k k'))
+                (classChain hI C0 Ds hL x0 h0 k' (hN k k'))) :
+    ∃ pk M : Fin n → Nat, (∀ k, 0 < pk k) ∧
+      ∀ ws : List α, (∀ w ∈ ws, I.dom w) → ws.length ≤ S →
+        ∃ ik : Fin n → Nat,
+          (∀ k, ik k + pk k ≤ M k) ∧
+          (∀ k, mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k))
+                = mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k + pk k))) ∧
+          (∀ w ∈ ws, ∀ k b, b < pk k →
+            I.rho w (classChain hI C0 Ds hL x0 h0 k (ik k + b))
+              = I.rho w (classChain hI C0 Ds hL x0 h0 k (ik k))) ∧
+          (∀ k k', k ≠ k' → ∀ a b,
+            I.rho (classChain hI C0 Ds hL x0 h0 k (ik k + a))
+                  (classChain hI C0 Ds hL x0 h0 k' (ik k' + b))
+              = I.rho (classChain hI C0 Ds hL x0 h0 k (ik k))
+                      (classChain hI C0 Ds hL x0 h0 k' (ik k'))) := by
+  classical
+  obtain ⟨B, hB⟩ := exists_bound2 n hN
+  have hk : ∀ k : Fin n, ∃ qM : Nat × Nat, 0 < qM.1 ∧
+      ∀ ws : List α, (∀ w ∈ ws, I.dom w) → ws.length ≤ S →
+        ∃ i, B ≤ i ∧ i + qM.1 ≤ qM.2 ∧
+          mty C0 I (classChain hI C0 Ds hL x0 h0 k i)
+            = mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + qM.1)) ∧
+          (∀ w ∈ ws, ∀ b, b < qM.1 →
+            I.rho w (classChain hI C0 Ds hL x0 h0 k (i + b))
+              = I.rho w (classChain hI C0 Ds hL x0 h0 k i)) := by
+    intro k
+    obtain ⟨q, M, hq, hspec⟩ :=
+      kernel_range_of_persistAll hI C0 (Ds k) (hL k) (x0 k) (h0 k) S B
+    exact ⟨(q, M), hq, hspec⟩
+  obtain ⟨g, hg⟩ := Classical.axiomOfChoice hk
+  refine ⟨fun k => (g k).1, fun k => (g k).2, fun k => (hg k).1, fun ws hws hS => ?_⟩
+  have hpick : ∀ k : Fin n, ∃ i, B ≤ i ∧ i + (g k).1 ≤ (g k).2 ∧
+      mty C0 I (classChain hI C0 Ds hL x0 h0 k i)
+        = mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + (g k).1)) ∧
+      (∀ w ∈ ws, ∀ b, b < (g k).1 →
+        I.rho w (classChain hI C0 Ds hL x0 h0 k (i + b))
+          = I.rho w (classChain hI C0 Ds hL x0 h0 k i)) :=
+    fun k => (hg k).2 ws hws hS
+  obtain ⟨ik, hik⟩ := Classical.axiomOfChoice hpick
+  refine ⟨ik, fun k => (hik k).2.1, fun k => (hik k).2.2.1, ?_, ?_⟩
+  · exact fun w hw k b hb => (hik k).2.2.2 w hw b hb
+  · exact family_hrectQ (classChain hI C0 Ds hL x0 h0) ik hN hconst
+      (fun k k' _ => Nat.le_trans (hB k k') (hik k).1)
+      (fun k k' _ => Nat.le_trans (hB k k') (hik k').1)
 
 /-- **THE FAMILY INTERFACE** (§39.5) — every per-kernel obligation of
     `mixKernels_ok` except the demand routing, discharged together from model-side
@@ -19742,7 +19868,10 @@ end VerticalWitness
 #print axioms exists_spaced_list
 #print axioms exists_stable_base
 #print axioms exists_stable_recurrence
+#print axioms stable_base_range
 #print axioms kernel_interface_of_persistAll
+#print axioms kernel_range_of_persistAll
+#print axioms family_range
 #print axioms family_interface
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy

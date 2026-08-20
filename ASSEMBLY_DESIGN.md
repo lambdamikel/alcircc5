@@ -2979,8 +2979,30 @@ with a NONEMPTY bank whose witness sits ON one of the chains — so that row is 
 globally constant (`chain 0 5 = PP`, `chain 6 5 = PPI`) and the theorem must
 actually place the window past the transition.
 
-**Still to wire:** supplying the bank itself from `kernel_site`'s witnesses above
-the range (the serving side, `mixSelect_of_highBank`'s `hbank`).
+**The candidate range, exposed before the bank.** One subtlety had to be got
+right for the high-bank construction to be formally coherent:
+`exists_stable_base` needs a candidate list longer than `2·|ws|`, yet the bank
+must be picked ABOVE the candidate range — circular if the list length is driven
+by `|ws|`. It is not, because the bank size is bounded A PRIORI (kernels × phase
+types × demands, all bounded by `C₀`). Taking a size bound `S` as input, the
+range is built FIRST and its top exposed, and only then is the bank quantified:
+
+```
+stable_base_range          ∃ M, ∀ ws, |ws| ≤ S → ∃ i, i + p ≤ M ∧ P i ∧ stable
+kernel_range_of_persistAll ∃ q M, ∀ ws, |ws| ≤ S → ∃ i, …  (period first, then M)
+family_range               ∃ pk M, ∀ ws, |ws| ≤ S → ∃ ik, hty ∧ hstab ∧ hrectQ
+                                                     ∧ every window ends ≤ M k
+```
+
+The quantifier order `M` **before** `ws` is the whole content: the caller picks
+the bank at or above the `M k`, `mixSelect_of_highBank` then makes it serve every
+window (all of which end at or below `M k`), and `family_range` has already
+delivered stability, recurrence and the cross-rectangle.
+
+**Still to wire:** the bank itself — for each kernel and each `DR`/`PP` phase
+demand, a witness at level `M k`, from the type recurrence plus late picking
+(`dr_witness_all_below` / `pp_witness_all_below`, as `kernel_site` does), with
+its size bounded by `S`. Then coverage (`he_ex`/`hk_ex`) and `codesM`.
 2. **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
    premise.
 3. Independently: **one-shot `∃PP`** (§33/§34) is still open and is still
