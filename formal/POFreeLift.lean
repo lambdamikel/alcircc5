@@ -2666,7 +2666,7 @@ theorem backward_forcing_pp {i : Nat} (h : I.rho (c i) e = pp) :
     rw [hji]
     exact h
 
-/-- **THE ROW NEVER RETURNS** (§42) — the engine of the counting proof.  If an
+/-- **THE ROW NEVER RETURNS** (§39.3) — the engine of the counting proof.  If an
     external's row to the chain takes the SAME value at two positions, it is
     constant on the whole interval between them.  Hence the row is a monotone
     staircase: it changes value at most twice (rank 0 `{DR,PP}` → rank 1
@@ -2747,7 +2747,7 @@ theorem row_no_return {i j : Nat} (_hij : i ≤ j)
   rw [← h] at hr2
   exact rank_eq_imp_value_eq hI hdom hstep hedom hik (by omega)
 
-/-- **A VALUE CHANGE COSTS A RANK** (§43.1) — differing endpoints force a STRICT
+/-- **A VALUE CHANGE COSTS A RANK** (§39.3) — differing endpoints force a STRICT
     rank increase.  Contrapositive of `rank_eq_imp_value_eq` plus monotonicity;
     this is what bounds the number of transitions by `stabRank`'s ceiling. -/
 theorem ends_differ_rank_lt {i j : Nat} (hij : i ≤ j)
@@ -2759,7 +2759,7 @@ theorem ends_differ_rank_lt {i j : Nat} (hij : i ≤ j)
   · exact h1
   · exact absurd (rank_eq_imp_value_eq hI hdom hstep hedom hij (by omega)).symm h
 
-/-- **AT MOST TWO SPACED WINDOWS ARE BAD** (§43.1) — the spoil-count lemma, in
+/-- **AT MOST TWO SPACED WINDOWS ARE BAD** (§39.3) — the spoil-count lemma, in
     the form the pigeonhole consumes.  Among any THREE candidate bases spaced at
     least `p` apart, at least one has a CONSTANT window: three bad windows would
     be disjoint, each costing a strict rank increase (`ends_differ_rank_lt`)
@@ -2781,7 +2781,7 @@ theorem three_spaced_not_all_bad (p : Nat) (hp : 0 < p) (i1 i2 i3 : Nat)
   have hb := stabRank_le_two (I.rho (c (i3 + p - 1)) e)
   omega
 
-/-- **A WINDOW IS CONSTANT IFF ITS ENDPOINTS AGREE** (§42) — immediate from
+/-- **A WINDOW IS CONSTANT IFF ITS ENDPOINTS AGREE** (§39.3) — immediate from
     `row_no_return`, and the form the counting argument uses: to test a window
     one need only compare its two ends. -/
 theorem window_const_iff_ends (i p : Nat) (hp : 0 < p) :
@@ -2794,13 +2794,13 @@ theorem window_const_iff_ends (i p : Nat) (hp : 0 < p) :
     ← hI.conv_ (c i) e (hdom i) hedom]
 
 /-- **`hstab` FOR FREE BELOW A RANK-0 POINT — the "stay low" mechanism**
-    (§39.10).  If an external's row to the chain is `DR` at position `m`, then by
+    (§39.3).  If an external's row to the chain is `DR` at position `m`, then by
     backward forcing it is `DR` at EVERY position `≤ m`; so the row is constant
     on ANY window ending at or below `m`, with NO stabilization horizon
     consulted.  This is the brick the `wp91` part-I diagnosis identified as
     carrying 92.7% of the cross-rows: `hstab` is satisfied by keeping the window
     inside the row's INITIAL rank-0 block, NOT by pushing it past every
-    transition (the §39.8 framing, which is exactly what the ordering cycle
+    transition (the §39.6 framing, which is exactly what the ordering cycle
     blocks). -/
 theorem stab_window_of_dr {m : Nat} (h : I.rho (c m) e = dr) :
     ∀ i a, i + a ≤ m → I.rho e (c (i + a)) = I.rho e (c i) := by
@@ -2824,7 +2824,7 @@ theorem stab_window_of_pp {m : Nat} (h : I.rho (c m) e = pp) :
   rw [hI.conv_ (c (i + a)) e (hdom (i + a)) hedom, h1,
     hI.conv_ (c i) e (hdom i) hedom, h2]
 
-/-- **THE `hstab` DICHOTOMY** (§39.10): a window satisfies `hstab` for an
+/-- **THE `hstab` DICHOTOMY** (§39.3): a window satisfies `hstab` for an
     external either because it sits BELOW a rank-0 point of that external's row
     ("stay low", `stab_window_of_dr`/`_pp`) or because it sits ABOVE the row's
     last transition ("push past", `external_stabilizes`).  `wp91` part I measured
@@ -2842,9 +2842,9 @@ theorem stab_window_of_rank0 {m : Nat} (h : I.rho (c m) e = dr ∨ I.rho (c m) e
     `cofinal_dr_stab` below this says such a node satisfies `mixKernels_ok`'s
     `hstab` for that kernel with NO horizon — nothing has to be pushed past it.
     This is what narrows the §39 ordering cycle: it bites ONLY for externals that
-    some other kernel eventually overlaps or swallows.  (§39.5.  The two obvious
+    some other kernel eventually overlaps or swallows.  (§39.6.  The two obvious
     ways to exploit the narrowing are both refuted by probe `wp91` part F, and
-    what survives is the WINDOW reading of `hstab`, §39.7.) -/
+    what survives is the WINDOW reading of `hstab`, §39.4.) -/
 theorem cofinal_dr_all (hcof : ∀ N, ∃ j, N ≤ j ∧ I.rho (c j) e = dr) :
     ∀ n, I.rho (c n) e = dr := by
   intro n
@@ -4340,12 +4340,12 @@ theorem externals_stabilize (exts : List α) :
     · exact hNr f hmem m n (Nat.le_trans (Nat.le_max_right Ne Nr) hm)
         (Nat.le_trans (Nat.le_max_right Ne Nr) hn)
 
-/-- **`hstab` ON A WINDOW, EVENTUALLY — the "push past" branch** (§39.11).  For a
+/-- **`hstab` ON A WINDOW, EVENTUALLY — the "push past" branch** (§39.3).  For a
     FINITE list of externals and any window length `p`, all sufficiently high
     bases make every external's row constant across the whole window `[i, i+p)`.
     This is `externals_stabilize` re-expressed in exactly the shape
     `mixKernels_ok`'s (window-form) `hstab` consumes, and it is the second branch
-    of the §39.10 dichotomy — the first being `stab_window_of_rank0`, which needs
+    of the §39.3 dichotomy — the first being `stab_window_of_rank0`, which needs
     no horizon at all.  Together they are the certified toolkit for R6. -/
 theorem stab_window_family (exts : List α) (hexts : ∀ e ∈ exts, I.dom e) (p : Nat) :
     ∃ N, ∀ e ∈ exts, ∀ i, N ≤ i → ∀ a, a < p →
@@ -14485,7 +14485,7 @@ noncomputable def mixKernels (I : Interp α) (C0 : Concept) {β κ : Type}
     kernel).  Still C0-general (no `POFree` needed for soundness).
 
     **`hstab` is on the PHASE WINDOW** (`a < pk k`), not on the whole chain
-    (§39.7).  The unrestricted form was strictly too strong to be discharged by
+    (§39.4).  The unrestricted form was strictly too strong to be discharged by
     the extraction's own machinery: `kernel_site` produces phase-witnesses with
     the constant row `∀ b ≤ p, ρ (c (i+b)) w = r` — a WINDOW fact, since such a
     witness is picked above the segment and the chain may later swallow it. The
@@ -15174,7 +15174,7 @@ theorem stab_swallowed_no_dr_pp (hI : RCC5Interp I) (c : Nat → α)
   rw [stab_swallowed_ppi hI c hdom hw i hstab hj hsw a]
   rcases hr with rfl | rfl <;> exact by decide
 
-/-- **THE `hstab` WINDOW DICHOTOMY** (§39.10/§39.11) — the two certified branches
+/-- **THE `hstab` WINDOW DICHOTOMY** (§39.3/§39.3) — the two certified branches
     land in the SAME conclusion.  A window `[i, i+p)` is stable for an external
     `w` either because the row is still in its INITIAL rank-0 block at the top of
     the window ("stay low" — no horizon consulted at all) or because the row has
@@ -15195,7 +15195,7 @@ theorem window_stab_dichotomy (hI : RCC5Interp I) (c : Nat → α)
       hhigh (i + b) i (by omega) (Nat.le_refl i),
       ← hI.conv_ (c i) w (hdom i) hw]
 
-/-- **STABILITY OVER THE WHOLE KERNEL FAMILY** (§41) — `stab_window_family` lifted
+/-- **STABILITY OVER THE WHOLE KERNEL FAMILY** (§39.2) — `stab_window_family` lifted
     from one chain to the finite family: for a FIXED finite witness list and a
     window-length bound `p`, there is a SINGLE horizon `H` past which every
     witness's row is constant on every kernel's window.  `Fin m` finiteness via
@@ -15215,7 +15215,7 @@ theorem stab_window_family_multi (hI : RCC5Interp I) {m : Nat} (ck : Fin m → N
   exact ⟨B, fun ik hik w hw k b hb =>
     hf k w hw (ik k) (Nat.le_trans (hB k) (hik k)) b hb⟩
 
-/-! ### §43.2 — the per-kernel pigeonhole
+/-! ### §39.3 — the per-kernel pigeonhole
 
 With `three_spaced_not_all_bad` bounding each witness's damage at 2 spaced
 candidates, choosing a base is a one-dimensional pigeonhole: a `p`-spaced
@@ -15257,7 +15257,7 @@ theorem spoiled_length_le_two (hI : RCC5Interp I) (c : Nat → α)
       (hall d (List.mem_cons.mpr (Or.inr (List.mem_cons.mpr
         (Or.inr (List.mem_cons.mpr (Or.inl rfl)))))))
 
-/-- **THE PIGEONHOLE** (§43.2) — abstract, so it applies to the whole witness
+/-- **THE PIGEONHOLE** (§39.3) — abstract, so it applies to the whole witness
     bank at once.  If every witness spoils at most 2 entries of any `p`-spaced
     list, then a `p`-spaced candidate list longer than `2·|ws|` contains an entry
     good for EVERY witness.  Induction on the witness list, the surviving
@@ -15294,7 +15294,7 @@ theorem exists_good_candidate {A : Type} (p : Nat) (bad : A → Nat → Bool) :
     · exact hgood v hv
 
 open Classical in
-/-- **THE BASE CHOICE, CERTIFIED** (§43.2) — the capstone of the selection.  Given
+/-- **THE BASE CHOICE, CERTIFIED** (§39.3) — the capstone of the selection.  Given
     a finite witness bank and a `p`-spaced candidate list longer than twice the
     bank, there is a base in the list whose whole window `[i, i+p)` is CONSTANT
     for EVERY witness — i.e. `mixKernels_ok`'s `hstab` holds at that base for the
@@ -15327,7 +15327,7 @@ theorem exists_stable_base (hI : RCC5Interp I) (c : Nat → α)
     exact this
   exact window_const_iff_ends hI hdom hstep (hws w hw) i p hp hends b hb
 
-/-- **THE COFINAL-WITNESS QUESTION** (§41) — what the whole mixed selection now
+/-- **THE COFINAL-WITNESS QUESTION** (§39.2) — what the whole mixed selection now
     rests on, stated on a SINGLE chain.  Every horizontal demand occurring
     anywhere on the chain is served by a witness bearing that relation to the
     ENTIRE chain.  Equivalently: the decreasing family
@@ -15350,7 +15350,7 @@ theorem witness_sets_decreasing (hI : RCC5Interp I) (c : Nat → α)
   · exact backward_forcing_dr hI hdom hstep hw h
   · exact backward_forcing_pp hI hdom hstep hw h
 
-/-- **THE R6 SELECTION OBLIGATION** (§39.11) — the one thing the MIXED assembly
+/-- **THE R6 SELECTION OBLIGATION** (§39.3) — the one thing the MIXED assembly
     still owes, stated rather than assumed (the project's `CompletenessObligation`
     pattern).  For every kernel `k` and every horizontal (`DR`/`PP`) demand of one
     of its phases, there is a witness that (i) serves that demand across `k`'s
@@ -15388,7 +15388,7 @@ theorem mixSelect_cross_of_dichotomy (hI : RCC5Interp I) {m : Nat}
   fun k' b hb =>
     window_stab_dichotomy hI (ck k') (hdom k') (hstep k') hw (ik k') (pk k') (h k') b hb
 
-/-- **THE COLLAPSE** (§41) — the multi-kernel JOINT selection reduces to a
+/-- **THE COLLAPSE** (§39.2) — the multi-kernel JOINT selection reduces to a
     SINGLE-CHAIN question.  Suppose every horizontal (`DR`/`PP`) phase demand is
     served by a witness from a FIXED finite bank whose relation to its OWN chain
     is that value at EVERY level (`∀ j, ρ (ck k j) w = r` — "cofinal serving").
@@ -15400,7 +15400,7 @@ theorem mixSelect_cross_of_dichotomy (hI : RCC5Interp I) {m : Nat}
     window), and the bank is fixed in advance, so `stab_window_family_multi`
     gives one horizon for all of it. The circular dependency — witness above
     base, base above witness's horizon — never forms. Note also that the
-    §39.10 dichotomy is not even needed here: pure "push past" suffices.
+    §39.3 dichotomy is not even needed here: pure "push past" suffices.
 
     So the whole remaining question is the hypothesis `hcover`: does every
     persistent `∃DR`/`∃PP` demand admit a witness related to the whole chain?
@@ -15421,7 +15421,7 @@ theorem mixSelect_of_cofinal_bank (hI : RCC5Interp I) (C0 : Concept) {m : Nat}
   exact ⟨w, hws w hwmem, hD, fun b _ => hall (ik k + b),
     fun k' b hb => hH ik hik w hwmem k' b (Nat.lt_of_lt_of_le hb (hpk k'))⟩
 
-/-- **THE HIGH-BANK CONSTRUCTION** (§43) — the serving side of `MixSelect` comes
+/-- **THE HIGH-BANK CONSTRUCTION** (§39.2) — the serving side of `MixSelect` comes
     FREE once the witnesses are picked ABOVE the whole candidate range.
 
     `witness_sets_decreasing` says `W_n` shrinks as `n` grows, so a witness chosen

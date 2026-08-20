@@ -2869,554 +2869,116 @@ PP-towers from a model (§34 item 2) and their unification with kernels in one
 certificate (§34 item 3) are unbuilt. So the honest label for the vertical side
 is: **persistent-∃PP vertical is complete; one-shot `∃PP` is open.**
 
-## 39. PROBE: the mixing ordering cycle (2026-08-16)
 
-Probing the externals/phases interdependency BEFORE building on it, as agreed.
-Outcome: **there is a real ordering cycle in the mixed assembly.** It is not
-resolved by existing machinery, it does not arise in the vertical-only case, and
-it is *not* shown to be mathematically vicious — it is an obstruction to the
-proof order, with candidate repairs below.
+## 39. THE MIXED SELECTION — RESOLVED (2026-08-19)
 
-### 39.1 The two facts that collide
+*This section supersedes and consolidates the working notes of the 2026-08-19
+session (formerly §§39–43: the ordering cycle, the staged plan, the collapse,
+the union bound). It states the ANSWER first; §39.6 keeps the refuted routes as
+a short ledger so they are not re-attempted.*
 
-- **`externals_stabilize` needs the external list IN ADVANCE.** It takes
-  `exts : List α` and returns one horizon `N` uniform over that list. So
-  `segment_select`/`stabKernelPack` can only place a base past the horizon of
-  externals already chosen. (`StabKernelPack.iLE : L ≤ i` — the base can be
-  pushed past any threshold, but the threshold must be computable first.)
-- **`kernel_site`'s DR/PP phase-witnesses are picked AFTER the base.**
-  `dr_witness_all_below`/`pp_witness_all_below` are applied at the bound `i + p`,
-  i.e. the witness is chosen ABOVE the segment.
+### 39.1 The problem
 
-That the second is structural, not an artifact, is now kernel-checked
-(`stab_swallowed_ppi`, `stab_swallowed_no_dr_pp`, both `propext`-only): an
-external whose row to a chain is CONSTANT (`hstab`) and which the chain has
-SWALLOWED at any point at or above the base has row `PPI` at every phase — so it
-serves `∃PPI` demands and nothing else. A `∃DR`/`∃PP` phase-witness must
-therefore be un-swallowed, hence picked above the segment.
+`mixKernels_ok` needs `hstab`: every β-external's row to every kernel chain must
+be CONSTANT across that kernel's phase window. The apparent obstruction was an
+ordering cycle — `externals_stabilize` supplies a horizon only for externals
+known IN ADVANCE, while `kernel_site`'s `DR`/`PP` phase-witnesses are picked
+AFTER the base (above the segment, so backward forcing covers the window). For
+one kernel this is harmless; across kernels it appears circular, since a witness
+of kernel `k` is an external of kernel `k'`.
 
-### 39.2 Why the vertical case escaped and the mixed one does not
+### 39.2 The resolution: pick the whole bank ABOVE the candidate range
 
-For a kernel's OWN chain there is no cycle: `kernel_site` hands back the constant
-row `∀ b ≤ p, ρ (c (i+b)) w = r` for free, by backward forcing
-(`comp(PP,DR) = {DR}`). No horizon is consulted, so no advance list is needed.
-`β = Empty` (§38) has no externals at all, which is why the vertical assembly
-went through.
+**The cycle was an artifact of picking witnesses too low.** `witness_sets_decreasing`
+(certified) says `W_n = {w : ρ (c n) w = r}` SHRINKS as `n` grows — backward
+forcing. So a witness picked at a level at or above the top of a window serves
+EVERY position of that window. Therefore:
 
-The CROSS-kernel direction has no such gift. `mixKernels_ok`'s
-`hstab : ∀ k e a, …` quantifies over ALL kernels, so kernel `k`'s phase-witness
-`w` is a β-external of kernel `k'` too and needs a constant row there — for which
-`i_{k'}` must be past `w`'s horizon. The cycle, for `k ≠ k'`:
+> fix the candidate range first, pick the entire witness bank ABOVE it, and the
+> bank no longer depends on where the bases land.
 
-```
-i_k  chosen  ──▶  W_k (phase-witnesses, above the segment)
-  ▲                     │  must be in k'-externals before i_{k'}
-  │                     ▼
-W_{k'} ◀── i_{k'} chosen
-```
+The kernels then DECOUPLE: each base need only dodge the finitely many values
+spoiled by the other kernels' already-fixed witnesses. No scheduling, no fixed
+point, no product counting.
 
-Length-4 and symmetric, so no sequential order discharges it. Composition does
-not rescue it either: from `ρ (c_k(i_k+b)) w = dr` and a constant cross-value `Q`
-one gets only `ρ w (c_{k'}(i_{k'}+a)) ∈ comp(dr, Q)`, a SET, not a value.
+### 39.3 The two certified halves of `MixSelect`
 
-### 39.3 Candidate repairs, ranked
+`MixSelect` (the Lean `def`) asks, per kernel and per `DR`/`PP` phase demand, for
+a witness that (i) serves the demand across that kernel's whole window and
+(ii) has a constant row on EVERY kernel's window.
 
-- **R4 — un-swallowed selection (most promising, uses §38's merge).** Show a
-  DR/PP phase-witness for kernel `k` can always be chosen NOT swallowed by any
-  other kernel. Distinct kernels are now pairwise non-comparable (§38.3), so
-  their cross-relation is a constant `DR`/`PO`; the question is whether that
-  constrains where the witnesses can sit. If yes, the witness's row to `c_{k'}`
-  is `DR`/`PO` with a base-independent horizon and the cycle collapses.
-- **R2 — route swallowed witnesses CROSS-KERNEL instead.** If `w` is swallowed by
-  kernel `k'`, serve the demand by `hk_ex` disjunct 4 (another kernel) rather
-  than by an external; then `hrectQ` (certified this session) does the work
-  instead of `hstab`. Gap: `w` being inside `k'`'s tail does not make `D` a member
-  of a `k'`-PHASE type. Needs an argument.
-- **R4 ⊎ R2 as a DICHOTOMY** is the natural shape: every DR/PP phase-witness is
-  either un-swallowed (→ external) or swallowed by some kernel (→ that kernel's
-  cross-kernel disjunct). Worth attacking as one lemma.
-- **R1 — phase-dependent `K`** (`K : κ → Nat → β → Atom`), dropping `hstab`
-  entirely. Certain to work, largest blast radius: it changes the certificate
-  shape and therefore the `codesM`/finite-coding story.
-- **R3 — joint fixed point** (all bases and witnesses simultaneously, product
-  pigeonhole). No descending measure is evident: each round pushes bases and
-  witnesses up together. Would need a genuinely new argument.
-
-### 39.4 The experiment, RUN — `wp91_mixing_order_cycle.py` (all parts PASS)
-
-Self-contained (RCC5 relations + composition table re-derived from finite set
-semantics). Four findings:
-
-- **B — Q-crisp is FALSE.** The sub-question whose truth would have dissolved
-  the cycle — *does a DR-witness of chain `c` carry constancy w.r.t. a
-  non-comparable chain `d` for free?* — fails on an explicit configuration:
-  `c = [{0},{0,1},{0,1,2}]`, `d = [{4},{3,4},{2,3,4}]`, `w = {3}`. Row `c → w`
-  is `DR,DR,DR` (free, by backward forcing); row `d → w` is `DR,PPI,PPI`. The
-  towers are non-comparable and cross at `PO` — the `cross_po_stabilizes` case.
-- **C — the horizon is UNBOUNDED.** A parameterized family realizes horizon
-  exactly `N` for every `N` (checked at N = 1,2,3,5,8,13). So no bound on the
-  kernel bases can be pre-committed before the witnesses are known: the cycle
-  cannot be broken by "choose the bases high enough".
-- **D — the obstruction is ORDER, not geometry.** Rank is monotone along the
-  chain and changes at most twice (2,542 sampled chains), so every row does
-  eventually stabilize. Nothing is geometrically impossible; only the order of
-  choice fails.
-- **E — the sharp narrowing (exhaustive, |U| = 5, 12,090 pairs).** The row's
-  shape is `X* PO* EQ? PPI*` with `X ∈ {DR,PP}`, and **the rank-0 block is
-  CONSTANT** (a `DR`↔`PP` switch is impossible: `c_i ⊊ c_j` with `c_i ∩ w = ∅`
-  and `c_j ⊊ w` forces `c_i = ∅`). Consequently a node cofinally `DR` from a
-  chain is `DR` from index 0 — **horizon 0, `hstab` for free**.
-
-### 39.5 Verdict: R4 dead, E narrows it, F closes the two obvious exploits
-
-R4 in its naive form is DEAD (B, C). But E narrows the cycle sharply, and the
-narrowing is now kernel-checked (`cofinal_dr_all`, `cofinal_dr_stab`, both
-`propext`-only): **a cofinally-`DR` external consults no horizon at all.** So
-
-> the §39 cycle bites ONLY for phase-witnesses that some OTHER kernel eventually
-> OVERLAPS or SWALLOWS.
-
-### 39.6 R4′ and the base-independent bank — both REFUTED (probe part F)
-
-- *R4′* (always pick a phase-witness cofinally-`DR` from every other kernel)
-  FAILS: with `c` on the evens, `d` on the odds and the `D`-witnesses the odd
-  singletons, `c` and `d` are always `DR` (hence non-comparable), all six
-  `D`-witnesses are `DR` from the whole of `c`, and **none** is cofinally `DR`
-  from `d` — each is swallowed by the odd tower.
-- *Pre-selecting a base-independent bank* (one `D`-witness `DR` from the WHOLE
-  chain) FAILS too: if `c` exhausts the universe, **no** fixed region stays `DR`
-  from all of `c`, though every phase still has a witness.
-
-So neither exploitation of the E-narrowing is available in general.
-
-### 39.7 What survives: `hstab` on the PHASE WINDOW (implemented)
-
-The probe exposed a mismatch worth fixing on its own: `mixKernels_ok`'s `hstab`
-was stated for ALL `a`, i.e. constancy along the WHOLE infinite chain, but
-`kernel_site` delivers only the window fact `∀ b ≤ p, ρ (c (i+b)) w = r` — a
-witness picked above the segment may later be swallowed. **As stated,
-`mixKernels_ok` rejected exactly the witnesses the extraction produces.** Since
-the field is used only at `a < pk k` (in `ek_all`/`ke_all`), it is now weakened
-to `∀ k e a, a < pk k → …`. Costs nothing, admits `kernel_site`'s output, and
-pre-known externals still supply the stronger form via `StabKernelPack.stab`.
-
-### 39.8 The cycle after the probe — a FINITE combinatorial problem (R6)
-
-The window reading does not dissolve the cycle: kernel `k`'s witness `w` is
-constant on `k`'s own window for free, but on `k′`'s window only if that window
-avoids `w`'s transition points. What the probe changes is the SHAPE of what
-remains:
-
-- by part D each row has **at most 2 transition points**;
-- the witness banks are indexed by (phase type, demand), both bounded by `C₀`;
-- so the total number of bad positions is at most `2·|banks|·|κ|` — **a bound in
-  `C₀` alone, independent of the bases.**
-
-**R6 (the live target).** A window of length `p` placed to avoid finitely many
-bad positions always exists — the obstruction is only that the bad positions
-depend on the witnesses, which depend on the window. With the count now bounded
-uniformly, this is a finite fixed-point question (finitely many "bad-position
-patterns"), not the unbounded ordering problem of §39.2.
-
-### 39.10 R6 PROBED — two missed freedoms, strong positive evidence, and the route
-
-Testing R6 directly (`wp91` parts G–I) found that **§39.8's own framing was
-still too pessimistic**: it assumed `hstab` can only be met by pushing windows
-PAST every transition. Two degrees of freedom were missed.
-
-1. **Period 1 makes `hstab` VACUOUS.** The field is `∀ a, a < pk k → …`; at
-   `pk k = 1` the only `a` is `0` and the equation is `rfl`. So the cycle cannot
-   bite for single-phase kernels at all — only for genuinely multi-phase
-   (round-robin, `p ≥ |Ds|`) ones.
-2. **A window is constant if it lies BELOW a transition**, not only above it.
-   This is the important one, and it needs no horizon: by part E the row's
-   INITIAL rank-0 block is constant, so a window under a `DR`/`PP` point is
-   automatically stable. Certified as `stab_window_of_dr` / `stab_window_of_pp` /
-   `stab_window_of_rank0` (`propext`-only) — each is two lines from the
-   `backward_forcing_*` bricks that were already in the file.
-
-**The search (parts G, H).** Over two- and three-kernel families with the demand
-live at every level and minimal (one-per-level) witness banks, a simultaneously
-valid base/period/witness vector was found **every time**: 0 failures in ~10,700
-(model, bank) pairs, including with periods forced `≥ 2`. Honest scope: finite
-prefixes, randomized models — evidence, not proof.
-
-**The route (part I — the diagnosis that matters).** Classifying HOW each solved
-configuration met `hstab`: **92.7% "stay low"** (cross-row in the initial rank-0
-block) vs **7.3% "push past"**, and **345 of 2,552 configurations required
-BOTH**. So:
-
-> A proof of R6 is a **dichotomy**, and neither branch suffices alone: each
-> cross-row is stabilized either by keeping the window inside the witness's
-> initial rank-0 block (`stab_window_of_rank0`, certified, horizon-free) or by
-> placing it past the row's last transition (`external_stabilizes`).
-
-That is why the cycle is not vicious: the "stay low" branch consumes no horizon,
-so it does not feed the circular dependency at all. The remaining work is to
-turn the measured dichotomy into a selection argument — for each (kernel,
-witness) pair decide the branch, and show the finitely many resulting
-constraints are jointly satisfiable. This is now a concrete target with both
-branches already certified, rather than the open fixed-point question of §39.8.
-
-**Not claimed:** that R6 is true. The search is over finite prefixes and random
-models; a proof still has to handle the joint selection.
-
-### 39.11 The probe's OWN gap, closed — and the certified R6 toolkit
-
-Applying the probe-first discipline to the probe itself: parts G–I did **not**
-model a constraint the real extraction imposes — a base must sit at a TYPE
-RECURRENCE, and `rr_segment_from` can only push it **up**, never down. Since
-part I found 92.7% of successes using the "stay low" mechanism (windows in the
-row's *initial* block), the result was potentially optimistic.
-
-- **Part J** re-ran the search with every base forced `≥ T`. Failures stay at
-  **0%** through `T = 3`, then appear (7.67%) at `T = 4` — and the mechanism mix
-  inverts as bases rise: stay-low 88.3% → 21.3%, push-past 11.7% → 78.7%. So in
-  the REAL regime (late bases) the dominant branch is "push past".
-- **Part K** asked whether that 7.67% is real or an artifact: with `L = 6` and
-  `p ≥ 2` a base `≥ 4` leaves exactly ONE legal window. Fixing `T = 4` and
-  growing the prefix: **0.90% at L=6, then 0% at L=8, 10, 12.** The failures are
-  **TRUNCATION** — the finite prefix running out of room above the base. Real
-  chains are infinite, so the route survives the recurrence constraint.
-
-**The certified R6 toolkit** (all `propext`-only except the choice-using
-`stab_window_family`):
-
-| brick | branch | content |
+| half | theorem | content |
 |---|---|---|
-| `stab_window_of_dr/_pp/_rank0` | stay low | window under a rank-0 point is constant — **no horizon** |
-| `stab_window_family` | push past | for a FINITE external list, all high enough bases give window-constancy |
-| `window_stab_dichotomy` | both | either branch ⟹ the same `hstab` conclusion |
-| `mixSelect_cross_of_dichotomy` | both | the dichotomy in the obligation's own shape |
+| (i) SERVING | `mixSelect_of_highBank` | a bank at or above each window's top serves the window outright, by `witness_sets_decreasing` |
+| (ii) STABILITY | `exists_stable_base` | a `p`-spaced candidate list longer than `2·|ws|` contains a base whose window is constant for the WHOLE bank |
 
-**`MixSelect`** now STATES the residue as a Lean `def` (the project's
-`CompletenessObligation` pattern): for each kernel `k` and each `DR`/`PP` demand
-of a phase, a witness that (i) serves the demand across `k`'s whole window and
-(ii) has a constant row on EVERY kernel's window. Both ways of discharging (ii)
-are certified; what is unproved is that ONE witness meets (i) and (ii)
-*simultaneously* for all kernels — the joint selection, and nothing else.
+Supporting chain, all `propext`-only:
 
-That is a materially better position than §39.8: the obligation is named, its
-relational content is discharged, and the search found no counterexample under
-the recurrence constraint once truncation is excluded. It is still **unproved**.
+```
+rank_eq_imp_value_eq      equal stabRank at i <= k PINS the value
+  → row_no_return         equal values at two positions ⟹ constant between
+  → ends_differ_rank_lt   differing endpoints ⟹ STRICT rank increase
+  → three_spaced_not_all_bad   among 3 candidates spaced >= p, one window is
+                               constant (3 bad ⟹ rank >= 3 > stabRank's ceiling)
+  → spoiled_length_le_two      list form: each witness spoils <= 2 spaced candidates
+  → exists_good_candidate      pigeonhole, survivors shrink by <= 2 per witness
+  → exists_stable_base         the base choice
+```
 
-### 39.9 Status effect
+plus `window_const_iff_ends` (a window is constant iff its two ENDS agree),
+`stab_window_family` / `stab_window_family_multi` (one horizon for a fixed finite
+bank), and `window_stab_dichotomy` (stay-low ⊎ push-past, both branches).
 
-No certified statement changes. §38's vertical result stands (it has no
-externals). What changes is the estimate for MIXING: §38.4's "the merge is a
-prerequisite and is now available" is true but not sufficient — mixing also owes
-a resolution of this cycle, which is new work of unknown size, on top of the
-one-shot `∃PP` gap (§33) that was already outstanding.
+### 39.4 Two interface facts worth remembering
 
-## 40. The SELECTION probed — the proof plan is a STAGED construction (2026-08-19)
+- **`hstab` is on the PHASE WINDOW** (`a < pk k`), not the whole chain. The
+  unrestricted form was strictly too strong to be discharged by the extraction's
+  own machinery: `kernel_site` delivers only the window fact, so as originally
+  stated `mixKernels_ok` REJECTED exactly the witnesses the extraction produces.
+  Fixed; pre-known externals still give the stronger form via `StabKernelPack.stab`.
+- **Period 1 makes `hstab` vacuous** (`a < 1` forces `a = 0`). The whole issue
+  only ever concerned genuinely multi-phase (round-robin) kernels.
 
-Asked whether another probe was needed before attempting the `MixSelect`
-selection argument. It was, and it changed the plan twice.
+### 39.5 What remains for mixing
 
-**The untested dimension.** Every earlier part gave each kernel ONE `DR` demand.
-Real kernels carry SEVERAL `DR`/`PP` demands, each needing its own witness, and
-every witness constrains EVERY kernel's window. A structural observation while
-setting this up: once the base VECTOR is fixed, the witness choices are
-**independent** across slots (no constraint couples two witnesses) — so all the
-joint content sits in choosing one base vector satisfying every slot at once.
+1. **Instantiation** — supply the bank from `kernel_site`'s witnesses above the
+   range; exhibit the `p`-spaced candidate list from type recurrences
+   (`rr_segment_from` gives cofinally many, so any length is available); apply
+   the two halves per kernel. Instantiation, not new mathematics.
+2. **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
+   premise.
+3. Independently: **one-shot `∃PP`** (§33/§34) is still open and is still
+   vertical.
 
-**Part L — density.** `m` kernels × `d` demands, both `DR` and `PP`, bases forced
-late: 0 failures at every point of the sweep, up to 4 kernels × 3 demands
-(12 slots). The joint selection does not degrade with density.
+### 39.6 Ledger of refuted routes (do not re-attempt)
 
-**Part M — the simplest strategy is FALSE.** "Put every window at one common
-late level" — the obvious first thing to try in Lean — **fails**, up to **35%**
-(4 kernels, base 6, period 3), and the failure rate grows with both kernel count
-and period. Since part L's free search never failed, the bases must GENUINELY
-DIFFER per kernel. This is the finding that most changes the work: it rules out
-the proof I would otherwise have written.
+Kept deliberately: each was refuted with a machine-checked witness in
+`verification/python/wp91_mixing_order_cycle.py`, and the reasons are the useful
+part.
 
-**Part N — the staged construction matches the free search.** Restricting to
-strictly increasing bases `i₁ < i₂ < … < i_m` gives **0% failure, identical to
-the free search**, at every density. And the ordering assigns each
-cross-constraint a designated branch of the §39.10 dichotomy:
-
-| direction | branch | why |
+| route | verdict | why |
 |---|---|---|
-| later kernel's window vs earlier kernel's witness | **push past** | the later base can be pushed beyond that witness's horizon (`stab_window_family`) |
-| earlier (low) window vs later kernel's witness | **stay low** | down there the row is still in its initial rank-0 block (`stab_window_of_rank0`) |
+| R4: witness cofinally `DR` from its own chain, free cross-constancy | **false** | part B — non-comparable chains, row `DR,DR,DR` vs `DR,PPI,PPI` |
+| pre-commit bases past a bound | **false** | part C — the horizon is UNBOUNDED (family realizing horizon exactly `N` for every `N`) |
+| R4′: witness cofinally `DR` from EVERY other chain | **false** | part F1 — evens/odds towers, every witness swallowed by the odd tower |
+| base-independent witness bank | **false** | part F2 — a chain exhausting the universe swallows every fixed region |
+| all windows at one common late level | **false** | part M — up to 35% failure (4 kernels, base 6, period 3) |
+| fixed-order staged greedy | **false** | part O — up to 44.3% failure, while a valid vector exists ~always |
+| some-order staged greedy | circular | part P — works empirically, but restates the existence claim |
+| cofinal-witness collapse (`mixSelect_of_cofinal_bank`) | true but not general | part Q — sufficient, and CERTIFIED, but the escaping family has `⋂ W_n = ∅` |
+| union bound over `Fin m → Fin R` | correct but unnecessary | superseded by the high bank, which decouples the kernels |
 
-This also explains parts I and J at once: stay-low dominates at low bases,
-push-past at high ones, and both are needed — exactly what a staged construction
-consumes.
+**Probe evidence for the resolution** (`wp91`, all parts PASS): existence never
+failed in ~10,700 configurations (2–4 kernels, densities to 12 slots, `DR` and
+`PP` demands, late bases, truncation excluded); solutions are ABUNDANT (mean
+0.55–0.66 of base vectors valid, worst 0.36–0.50, never zero); and part U's
+high-bank construction scored 400/400 on all three checks, with the spoil bound
+`2(p-1)` tight.
 
-### 40.1 The one-pass plan — PROPOSED, then REFUTED by part O
-
-The plan drafted from part N was: process kernels in increasing base order; for
-kernel `j` choose its base past its own recurrence and past the horizons of all
-witnesses of kernels `< j`, then choose `j`'s witnesses above `j`'s window.
-
-**Part O refutes it.** Part N established only that an increasing base VECTOR
-EXISTS — not that the constructive left-to-right procedure finds one. Those
-differ exactly where it matters: once `i_j` is fixed and `w_j` is picked above
-it, "`w_j` stable on the EARLIER windows" is no longer under our control. Running
-the actual greedy (commit each base and its witnesses in turn, no lookahead, no
-backtracking): **fails up to 44.3%** (4 kernels, period 3), while an increasing
-vector exists in ~100% of the same systems. Had this been formalized first, the
-Lean proof would have hit a wall at exactly that step.
-
-### 40.2 Part P: some ORDER always works — but that is not yet a proof
-
-Trying every processing order: the greedy succeeds under SOME permutation in
-**0%-failure** across all tested regimes (3–4 kernels, periods 2–3), against up
-to 44.8% for the fixed order. So "process the kernels in a suitable order" is
-sound empirically.
-
-But this is close to circular as a *proof* strategy: the successful order is
-essentially the order of the bases in a valid vector, so "some order works" is a
-restatement of "a valid vector exists", which is the very thing to be proved.
-Staging is how one would COMPUTE the vector; it is not an argument that one
-exists.
-
-### 40.3 Honest status: three plans refuted, the claim still well-supported
-
-| plan | verdict |
-|---|---|
-| all windows at one common late level | **FALSE** (part M, up to 35% failure) |
-| fixed-order staged greedy | **FALSE** (part O, up to 44.3% failure) |
-| some-order staged greedy | works empirically, but ≈ restates the existence claim (part P) |
-
-What survives: the existence of a valid base vector is EMPIRICALLY ROBUST (0%
-failure across densities up to 4 kernels × 3 demands, DR and PP, late bases,
-truncation excluded), and its relational content is fully certified
-(`window_stab_dichotomy` and the two branch lemmas). What is missing is any
-*argument* for existence — and the three natural constructive routes are now
-refuted rather than untried.
-
-**Recommendation: do NOT start the Lean selection proof.** The route is not
-mapped cleanly enough; the next step is mathematical (find an existence argument
-for the base vector, or a genuinely different certificate shape), not
-formalization. Independent work that does NOT depend on this: the one-shot `∃PP`
-gap (§33/§34) and `codesM`.
-
-## 41. The COLLAPSE — the joint selection reduces to a single-chain question (2026-08-19)
-
-Working the constraint from both ends produced a genuine reduction, now
-certified. First, a scoping correction that widens the options:
-
-**We do NOT need a constructive argument.** Decidability comes from
-`decidableSat_of_codes` — enumerate finite codes, check with a Boolean checker.
-The extraction only has to prove that SOME code exists, and `Classical.choice`
-is already used throughout the model-side layer. So part O's failure of the
-greedy is not fatal; a classical existence proof is exactly what the
-architecture wants.
-
-### 41.1 The collapse (certified)
-
-`mixSelect_of_cofinal_bank`: suppose every horizontal (`DR`/`PP`) phase demand is
-served by a witness from a FIXED finite bank whose relation to its OWN chain is
-that value at EVERY level ("cofinal serving"). Then there is a horizon `H` such
-that EVERY base vector above `H` satisfies `MixSelect`.
-
-Why this dissolves the §39 cycle outright: serving no longer depends on where
-the window sits (it holds at *all* levels, so no witness has to be picked above
-its window), and the bank is fixed in advance, so `stab_window_family_multi`
-supplies one horizon for all of it. The circular dependency never forms — and
-the §39.10 dichotomy is not even needed, pure "push past" suffices.
-
-Supporting: `stab_window_family_multi` (one horizon over the whole kernel
-family) and `witness_sets_decreasing` (the sets `W_n = {w : ρ(c n) w = r}` are
-DECREASING by backward forcing, so the hypothesis is exactly "a decreasing family
-of nonempty sets has a common element").
-
-### 41.2 The hypothesis is SUFFICIENT but NOT NECESSARY — and not always available
-
-Probe part Q, on the ESCAPING family `c_n = {0..n}` with witnesses `{n+1}`:
-the demand is live at every level (each `W_n` nonempty), every witness has a
-finite eating level, and **no** witness is `DR` from the whole chain — `⋂ W_n =
-∅`. So `CofinalWitness` genuinely fails for some ∀PO-free-expressible shapes,
-and the collapse covers a sub-class rather than the general case.
-
-(Note the probe hit the finite-prefix trap once more: with the chain the same
-length as the witness list, the last witness is never tested past its eating
-level and appears "cofinal". Running the chain longer than the witness list
-fixes it — the same truncation lesson as part K, now twice.)
-
-Crucially, part Q also checks the general case on TWO escaping kernels: valid
-configurations still exist (bases `(3,3)` at periods 2 and 3). So where the
-collapse is unavailable the §39.10 dichotomy still carries it — consistent with
-parts L/N, which never failed.
-
-### 41.3 Honest status of the base-vector existence problem
-
-| route | status |
-|---|---|
-| common base | refuted (part M) |
-| fixed-order greedy | refuted (part O) |
-| some-order greedy | empirical; restates the claim (part P) |
-| **cofinal-witness collapse** | **CERTIFIED**, but hypothesis not always available (part Q) |
-
-So the general existence argument is still open, but the problem is now properly
-decomposed: the collapse handles every kernel family whose horizontal demands
-admit cofinal witnesses, and what remains is exactly the **escaping** case —
-demands whose witness sets decrease with empty intersection. That is a single
-named phenomenon on a single chain, not a multi-kernel scheduling problem.
-
-**The honest read on difficulty.** Four attacks, one certified sufficient
-condition, and a precisely-identified residue. This is a real roadblock in the
-sense that no complete argument exists yet; it is NOT a wall in the sense of
-being ill-understood — each failed route was refuted for a specific, recorded
-reason, and the residue keeps shrinking. But it should not be presented as
-nearly finished.
-
-## 42. THE EXISTENCE ARGUMENT: a union bound, not a hierarchy (2026-08-19)
-
-Michael's analogy — aperiodic (einstein/hat) tilings, where the plane *can* be
-tiled and every finite patch extends, yet greedy local choice gets stuck — is
-exactly the signature we had: part O (greedy fails) plus parts L/N (existence
-robust). In tiling theory the rescue is the **Extension Theorem**, proved by
-König/compactness, i.e. NON-constructively, and for aperiodic sets no local rule
-works at all — you need the hierarchical substitution structure.
-
-Two differences turned out to matter, and together they give the proof.
-
-**(1) Our object is finite and our conditions are finitary.** We need `m` bases;
-serving and stability each quantify over finitely many chain positions. So a
-configuration found in a finite prefix IS a genuine configuration — no limit, no
-compactness needed. What we lacked was not a limit theorem but the analogue of
-the tiling *hierarchy*: a reason a choice always exists.
-
-**(2) Our solutions are ABUNDANT, where aperiodic tilings are delicate.** Probe
-part S, on the escaping + non-comparable residue: the fraction of base vectors
-that work has mean **0.66** (p=2) / **0.55** (p=3), worst case **0.50** / **0.36**,
-and NO system had zero solutions. Valid choices are the majority, not a needle.
-
-Abundance means we do not need a hierarchy at all — a **counting/union bound**
-suffices, and that is a much cheaper proof.
-
-### 42.1 The argument
-
-Let `B` bound the number of "bad" bases per (witness, chain) — bases whose window
-is not constant for that witness. Choose each base from `R` candidate recurrence
-positions (cofinally many are available, `rr_segment_from`). For each ordered
-pair `k ≠ k'`: fixing `i_k` determines kernel `k`'s witness, which forbids at most
-`B` values of `i_k'`. So
-
-```
-#bad vectors  ≤  m(m-1) · B · R^(m-1)   <   R^m   ⟺   R > m(m-1)·B
-```
-
-and a valid base vector EXISTS. Non-constructive is fine (§41: decidability comes
-from the code enumeration, not from constructing the vector). This also explains
-part O: greedy fails because it commits, while counting never does.
-
-### 42.2 The engine, CERTIFIED
-
-`B` is bounded because the row is a monotone staircase that never returns:
-
-- **`row_no_return`** (`propext`-only) — if the row takes the SAME value at two
-  positions it is CONSTANT on the whole interval between them. Proof: `stabRank`
-  is monotone (`vrank_mono`), so equal endpoints pin the rank throughout; then
-  each rank pins the value — rank 0 `{DR,PP}` by backward forcing, rank 1
-  `{PO,EQ}` because an interior `EQ` would make the chain meet `e` and drop the
-  rank, rank 2 `{PPI}` being a singleton.
-- **`window_const_iff_ends`** — hence a window is constant iff its two ENDS
-  agree, which is the form the counting uses.
-
-So the row changes value at most twice, a window of length `p` is bad only if it
-straddles a transition, and `B ≤ 2(p-1)` — **a bound in `p` alone**, independent
-of the chain, the witness and the model. Probe part T confirms: at most 2
-transitions exhaustively, and bad-base counts 2/4/6 against the bound 3/6/9 for
-`p` = 2/3/4.
-
-### 42.3 What is left
-
-The remaining Lean work is the **counting step itself** (`#bad < #total` over
-`Fin m → Fin R`), which is ordinary finite combinatorics — the file already does
-this kind of `List.countP` argument in `maximal_dominated`. Everything the
-counting consumes is now certified: `row_no_return` / `window_const_iff_ends`
-(the bound `B`), `rr_segment_from` (cofinally many candidate bases),
-`stab_window_family_multi` and the §39.10 dichotomy.
-
-This is the first route to the base vector that has survived scrutiny: the other
-four (common base, fixed-order greedy, some-order greedy, cofinal collapse) were
-each refuted or shown non-general. It is NOT yet proved — the counting step is
-unwritten, and the probes remain finite-prefix evidence.
-
-## 43. THE HIGH-BANK CONSTRUCTION — the selection, decoupled (2026-08-19)
-
-De-risking §42's counting step in scratch Lean turned up a better argument, and
-it removes the counting entirely.
-
-**The observation.** `witness_sets_decreasing` (certified) says `W_n` SHRINKS as
-`n` grows. So a witness picked at a level `M` at or above the top of a kernel's
-window serves EVERY position of that window, by backward forcing. Therefore:
-pick the candidate range first, then pick the whole witness bank ABOVE it. The
-bank no longer depends on where the bases land, so **the base choices decouple** —
-each base need only dodge the finitely many values spoiled by the OTHER kernels'
-already-fixed witnesses.
-
-This is exactly the step part O's greedy got wrong: it picked each witness just
-above its OWN base, so later witnesses kept invalidating earlier windows. The
-high bank removes the dependency instead of scheduling around it.
-
-**Consequences.**
-- No product counting (§42's union bound over `Fin m → Fin R`) is needed. The
-  choice is a 1-D pigeonhole per kernel: `R > (m-1)·S·B` candidates suffice,
-  with `S` the slot count (bounded by `C₀`) and `B ≤ 2(p-1)`.
-- The construction is essentially CONSTRUCTIVE, which §41 established we did not
-  even need.
-
-**Certified:** `mixSelect_of_highBank` — a bank picked at level `M k` at or above
-each window's top discharges `MixSelect`'s serving conjunct outright, leaving
-only stability. Together with `witness_sets_decreasing`, `row_no_return`,
-`window_const_iff_ends`, `stab_window_family_multi` and the §39.10 dichotomy, the
-whole selection is certified except the base choice itself.
-
-**Probe `wp91` part U** (400 systems per configuration, 2–3 kernels, p = 2,3):
-top witness serves every lower window **400/400**; spoil-count bound `2(p-1)`
-holds **400/400** (worst exactly 2 and 4, i.e. tight); decoupled base vector
-found **400/400**.
-
-### 43.1 BOTH REMAINING STEPS — DONE (2026-08-19)
-
-**1. The spoil-count lemma — CERTIFIED.** Refactoring `row_no_return` yields the
-sharper primitive and the count falls out:
-
-- `rank_eq_imp_value_eq` — equal `stabRank` at `i ≤ k` PINS the value (the case
-  analysis, `propext`-only); `row_no_return` is now a two-line corollary.
-- `ends_differ_rank_lt` — hence differing endpoints force a STRICT rank increase.
-- `three_spaced_not_all_bad` — among any THREE candidates spaced `≥ p`, one has a
-  constant window: three bad windows are disjoint, each costs a strict rank
-  increase while the gaps cost nothing, so the final rank would be ≥ 3, against
-  `stabRank ≤ 2`. So **each witness spoils at most 2 spaced candidates** — the
-  `B` of the counting, in the exact form the pigeonhole wants.
-
-**2. The pigeonhole — CERTIFIED.** `spoiled_length_le_two` (list form of the
-above: a `p`-spaced all-bad list has length ≤ 2), `filter_length_split`, and the
-abstract `exists_good_candidate` (induction on the witness list, survivors
-shrinking by ≤2 per witness). Capstone:
-
-> **`exists_stable_base`** — for a finite witness bank and a `p`-spaced candidate
-> list longer than `2·|ws|`, there is a base whose whole window is CONSTANT for
-> EVERY witness. That is `mixKernels_ok`'s `hstab` at that base for the entire
-> bank.
-
-All `propext`-only. Note the shape actually used: the abstract pigeonhole needs
-only `2·|ws| < |candidates|`, not the cruder `R > m(m-1)B` of §42's union bound —
-because the high bank already decoupled the kernels.
-
-### 43.2 Where `MixSelect` now stands
-
-```
-mixSelect_of_highBank   SERVING   — bank above the range serves every window
-                                    (witness_sets_decreasing + backward forcing)
-exists_stable_base      STABILITY — a spaced candidate list longer than 2|ws|
-                                    contains a base constant for the whole bank
-```
-
-Both halves of `MixSelect` are certified as reusable lemmas. What is NOT yet
-written is the wiring that instantiates them at the actual extraction data:
-supplying the bank from `kernel_site`'s witnesses above the range, exhibiting the
-`p`-spaced candidate list from the type recurrences (`rr_segment_from` gives
-cofinally many, so a spaced list of any length exists), and applying the pair
-per kernel. That is instantiation, not new mathematics — every ingredient it
-consumes is now a theorem.
-
-After that: coverage (`he_ex`/`hk_ex`) and `codesM`. And one-shot `∃PP` (§33)
-remains independently open.
+**Two methodological traps this session hit, both worth remembering.** (a) The
+FINITE-PREFIX trap, twice: a chain no longer than the witness list leaves the
+last witness untested, which reads as a false "cofinal" or a false failure — run
+the chain longer than whatever is being tested (parts K, Q). (b) Re-framing an
+obstacle in new vocabulary is not progress: the bad-position bound was recorded
+in the first working notes and then mis-framed as a fixed point, then as a staged
+construction, before the high bank dissolved it.
