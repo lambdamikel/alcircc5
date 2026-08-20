@@ -3373,19 +3373,50 @@ top witness serves every lower window **400/400**; spoil-count bound `2(p-1)`
 holds **400/400** (worst exactly 2 and 4, i.e. tight); decoupled base vector
 found **400/400**.
 
-### 43.1 What remains
+### 43.1 BOTH REMAINING STEPS — DONE (2026-08-19)
 
-1. **The spoil-count lemma** — at most `2(p-1)` bad bases per (witness, chain).
-   Route: extract `rank_eq_imp_value_eq` from `row_no_return`'s case analysis
-   (equal rank at `i ≤ k` pins the value), hence a value change forces a STRICT
-   rank increase, hence ≤2 changes since `stabRank ≤ 2`, hence a 3-block
-   staircase and ≤ `p-1` bad bases per transition.
-2. **The per-kernel pigeonhole** — from `R > (m-1)·S·B` candidate recurrences,
-   pick one avoiding the spoiled set. Ordinary `List.countP` work of the kind
-   `maximal_dominated` already does.
-3. Then `MixSelect` is a theorem, and mixing reduces to the remaining coverage
-   (`he_ex`/`hk_ex`) plus `codesM`.
+**1. The spoil-count lemma — CERTIFIED.** Refactoring `row_no_return` yields the
+sharper primitive and the count falls out:
 
-Honest note: (1) and (2) are routine but not written; the probes stay
-finite-prefix evidence. What changed today is that the selection has a single
-clean argument with no refuted competitor, rather than four dead routes.
+- `rank_eq_imp_value_eq` — equal `stabRank` at `i ≤ k` PINS the value (the case
+  analysis, `propext`-only); `row_no_return` is now a two-line corollary.
+- `ends_differ_rank_lt` — hence differing endpoints force a STRICT rank increase.
+- `three_spaced_not_all_bad` — among any THREE candidates spaced `≥ p`, one has a
+  constant window: three bad windows are disjoint, each costs a strict rank
+  increase while the gaps cost nothing, so the final rank would be ≥ 3, against
+  `stabRank ≤ 2`. So **each witness spoils at most 2 spaced candidates** — the
+  `B` of the counting, in the exact form the pigeonhole wants.
+
+**2. The pigeonhole — CERTIFIED.** `spoiled_length_le_two` (list form of the
+above: a `p`-spaced all-bad list has length ≤ 2), `filter_length_split`, and the
+abstract `exists_good_candidate` (induction on the witness list, survivors
+shrinking by ≤2 per witness). Capstone:
+
+> **`exists_stable_base`** — for a finite witness bank and a `p`-spaced candidate
+> list longer than `2·|ws|`, there is a base whose whole window is CONSTANT for
+> EVERY witness. That is `mixKernels_ok`'s `hstab` at that base for the entire
+> bank.
+
+All `propext`-only. Note the shape actually used: the abstract pigeonhole needs
+only `2·|ws| < |candidates|`, not the cruder `R > m(m-1)B` of §42's union bound —
+because the high bank already decoupled the kernels.
+
+### 43.2 Where `MixSelect` now stands
+
+```
+mixSelect_of_highBank   SERVING   — bank above the range serves every window
+                                    (witness_sets_decreasing + backward forcing)
+exists_stable_base      STABILITY — a spaced candidate list longer than 2|ws|
+                                    contains a base constant for the whole bank
+```
+
+Both halves of `MixSelect` are certified as reusable lemmas. What is NOT yet
+written is the wiring that instantiates them at the actual extraction data:
+supplying the bank from `kernel_site`'s witnesses above the range, exhibiting the
+`p`-spaced candidate list from the type recurrences (`rr_segment_from` gives
+cofinally many, so a spaced list of any length exists), and applying the pair
+per kernel. That is instantiation, not new mathematics — every ingredient it
+consumes is now a theorem.
+
+After that: coverage (`he_ex`/`hk_ex`) and `codesM`. And one-shot `∃PP` (§33)
+remains independently open.

@@ -2676,16 +2676,9 @@ theorem backward_forcing_pp {i : Nat} (h : I.rho (c i) e = pp) :
     That is what makes the union-bound existence proof for the base vector go
     through (probe `wp91` part T: observed ≤2 transitions, and bad-base counts
     2/4/6 against the bound 3/6/9 at `p` = 2/3/4). -/
-theorem row_no_return {i j : Nat} (hij : i ≤ j)
-    (h : I.rho (c i) e = I.rho (c j) e) :
-    ∀ k, i ≤ k → k ≤ j → I.rho (c k) e = I.rho (c i) e := by
-  intro k hik hkj
-  have hr1 : stabRank (I.rho (c i) e) ≤ stabRank (I.rho (c k) e) :=
-    vrank_mono hI hdom hstep hedom i k hik
-  have hr2 : stabRank (I.rho (c k) e) ≤ stabRank (I.rho (c j) e) :=
-    vrank_mono hI hdom hstep hedom k j hkj
-  rw [← h] at hr2
-  have hrank : stabRank (I.rho (c k) e) = stabRank (I.rho (c i) e) := by omega
+theorem rank_eq_imp_value_eq {i k : Nat} (hik : i ≤ k)
+    (hrank : stabRank (I.rho (c k) e) = stabRank (I.rho (c i) e)) :
+    I.rho (c k) e = I.rho (c i) e := by
   -- with equal ranks, the value is pinned in every case
   cases hvi : I.rho (c i) e with
   | dr =>
@@ -2721,20 +2714,18 @@ theorem row_no_return {i j : Nat} (hij : i ≤ j)
     | po => rfl
     | ppi => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
   | eq =>
-    -- `c i = e = c j` forces `i = j` (strict chain), so `k = i`
+    -- `c i = e`; an `i < k` would make `ρ (c k) e = PPI` (rank 2), not rank 1
     have hie : c i = e := hI.eq_id (c i) e (hdom i) hedom hvi
-    have hje : I.rho (c j) e = eq := by rw [← h, hvi]
-    have hje' : c j = e := hI.eq_id (c j) e (hdom j) hedom hje
-    have hij' : i = j := by
-      rcases Nat.lt_or_ge i j with hlt | hge
-      · exfalso
-        have : I.rho (c i) (c j) = pp := chain_model_pp hI hdom hstep i j hlt
-        rw [hie, hje'] at this
-        rw [hI.refl_eq e hedom] at this
-        exact absurd this (by decide)
-      · omega
-    have hki : k = i := by omega
-    rw [hki, hvi]
+    rcases Nat.lt_or_ge i k with hlt | hge
+    · exfalso
+      have hik' : I.rho (c i) (c k) = pp := chain_model_pp hI hdom hstep i k hlt
+      rw [hie] at hik'
+      have hki : I.rho (c k) e = ppi := by
+        rw [hI.conv_ e (c k) hedom (hdom k), hik']; rfl
+      rw [hki, hvi] at hrank
+      exact absurd hrank (by decide)
+    · have hki : k = i := by omega
+      rw [hki, hvi]
   | ppi =>
     cases hvk : I.rho (c k) e with
     | dr => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
@@ -2742,6 +2733,53 @@ theorem row_no_return {i j : Nat} (hij : i ≤ j)
     | eq => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
     | po => rw [hvi, hvk] at hrank; exact absurd hrank (by decide)
     | ppi => rfl
+
+/-- The staircase form: equal values at two positions ⟹ constant between them.
+    Immediate from `rank_eq_imp_value_eq` plus rank monotonicity. -/
+theorem row_no_return {i j : Nat} (_hij : i ≤ j)
+    (h : I.rho (c i) e = I.rho (c j) e) :
+    ∀ k, i ≤ k → k ≤ j → I.rho (c k) e = I.rho (c i) e := by
+  intro k hik hkj
+  have hr1 : stabRank (I.rho (c i) e) ≤ stabRank (I.rho (c k) e) :=
+    vrank_mono hI hdom hstep hedom i k hik
+  have hr2 : stabRank (I.rho (c k) e) ≤ stabRank (I.rho (c j) e) :=
+    vrank_mono hI hdom hstep hedom k j hkj
+  rw [← h] at hr2
+  exact rank_eq_imp_value_eq hI hdom hstep hedom hik (by omega)
+
+/-- **A VALUE CHANGE COSTS A RANK** (§43.1) — differing endpoints force a STRICT
+    rank increase.  Contrapositive of `rank_eq_imp_value_eq` plus monotonicity;
+    this is what bounds the number of transitions by `stabRank`'s ceiling. -/
+theorem ends_differ_rank_lt {i j : Nat} (hij : i ≤ j)
+    (h : I.rho (c i) e ≠ I.rho (c j) e) :
+    stabRank (I.rho (c i) e) < stabRank (I.rho (c j) e) := by
+  have hle : stabRank (I.rho (c i) e) ≤ stabRank (I.rho (c j) e) :=
+    vrank_mono hI hdom hstep hedom i j hij
+  rcases Nat.lt_or_ge (stabRank (I.rho (c i) e)) (stabRank (I.rho (c j) e)) with h1 | h2
+  · exact h1
+  · exact absurd (rank_eq_imp_value_eq hI hdom hstep hedom hij (by omega)).symm h
+
+/-- **AT MOST TWO SPACED WINDOWS ARE BAD** (§43.1) — the spoil-count lemma, in
+    the form the pigeonhole consumes.  Among any THREE candidate bases spaced at
+    least `p` apart, at least one has a CONSTANT window: three bad windows would
+    be disjoint, each costing a strict rank increase (`ends_differ_rank_lt`)
+    while the gaps cost nothing (`vrank_mono`), so the final rank would be ≥ 3 —
+    impossible since `stabRank ≤ 2`.  Hence each witness spoils at most 2 spaced
+    candidates of each chain, which is the `B` of the counting. -/
+theorem three_spaced_not_all_bad (p : Nat) (hp : 0 < p) (i1 i2 i3 : Nat)
+    (h12 : i1 + p ≤ i2) (h23 : i2 + p ≤ i3)
+    (b1 : I.rho (c i1) e ≠ I.rho (c (i1 + p - 1)) e)
+    (b2 : I.rho (c i2) e ≠ I.rho (c (i2 + p - 1)) e)
+    (b3 : I.rho (c i3) e ≠ I.rho (c (i3 + p - 1)) e) : False := by
+  have r1 := ends_differ_rank_lt hI hdom hstep hedom (by omega : i1 ≤ i1 + p - 1) b1
+  have r2 := ends_differ_rank_lt hI hdom hstep hedom (by omega : i2 ≤ i2 + p - 1) b2
+  have r3 := ends_differ_rank_lt hI hdom hstep hedom (by omega : i3 ≤ i3 + p - 1) b3
+  have m1 : stabRank (I.rho (c (i1 + p - 1)) e) ≤ stabRank (I.rho (c i2) e) :=
+    vrank_mono hI hdom hstep hedom _ _ (by omega)
+  have m2 : stabRank (I.rho (c (i2 + p - 1)) e) ≤ stabRank (I.rho (c i3) e) :=
+    vrank_mono hI hdom hstep hedom _ _ (by omega)
+  have hb := stabRank_le_two (I.rho (c (i3 + p - 1)) e)
+  omega
 
 /-- **A WINDOW IS CONSTANT IFF ITS ENDPOINTS AGREE** (§42) — immediate from
     `row_no_return`, and the form the counting argument uses: to test a window
@@ -15177,6 +15215,118 @@ theorem stab_window_family_multi (hI : RCC5Interp I) {m : Nat} (ck : Fin m → N
   exact ⟨B, fun ik hik w hw k b hb =>
     hf k w hw (ik k) (Nat.le_trans (hB k) (hik k)) b hb⟩
 
+/-! ### §43.2 — the per-kernel pigeonhole
+
+With `three_spaced_not_all_bad` bounding each witness's damage at 2 spaced
+candidates, choosing a base is a one-dimensional pigeonhole: a `p`-spaced
+candidate list longer than twice the witness count contains a base good for ALL
+of them.  No product counting over `Fin m → Fin R` (which core Lean would make
+expensive) is needed — that is the payoff of the high-bank decoupling. -/
+
+/-- Splitting a list by a Boolean predicate preserves total length. -/
+theorem filter_length_split {A : Type} (q : A → Bool) :
+    ∀ l : List A, (l.filter q).length + (l.filter (fun x => !q x)).length = l.length := by
+  intro l
+  induction l with
+  | nil => rfl
+  | cons a rest ih =>
+    cases hq : q a <;> simp [hq] <;> omega
+
+/-- **AT MOST TWO SPACED CANDIDATES ARE SPOILED** by one witness — the list form
+    of `three_spaced_not_all_bad`.  A `p`-spaced list all of whose entries have a
+    non-constant window has length ≤ 2, since its first three entries would
+    contradict the rank ceiling. -/
+theorem spoiled_length_le_two (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {w : α} (hw : I.dom w) (p : Nat) (hp : 0 < p)
+    (l : List Nat) (hsp : l.Pairwise (fun a b => a + p ≤ b))
+    (hall : ∀ x ∈ l, I.rho (c x) w ≠ I.rho (c (x + p - 1)) w) :
+    l.length ≤ 2 := by
+  rcases l with _ | ⟨a, _ | ⟨b, _ | ⟨d, rest⟩⟩⟩
+  · exact Nat.zero_le _
+  · exact Nat.le_of_lt (by simp)
+  · exact Nat.le_of_eq (by simp)
+  · exfalso
+    obtain ⟨hA, hsp1⟩ := List.pairwise_cons.mp hsp
+    obtain ⟨hB, _⟩ := List.pairwise_cons.mp hsp1
+    exact three_spaced_not_all_bad hI hdom hstep hw p hp a b d
+      (hA b (List.mem_cons.mpr (Or.inl rfl)))
+      (hB d (List.mem_cons.mpr (Or.inl rfl)))
+      (hall a (List.mem_cons.mpr (Or.inl rfl)))
+      (hall b (List.mem_cons.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl)))))
+      (hall d (List.mem_cons.mpr (Or.inr (List.mem_cons.mpr
+        (Or.inr (List.mem_cons.mpr (Or.inl rfl)))))))
+
+/-- **THE PIGEONHOLE** (§43.2) — abstract, so it applies to the whole witness
+    bank at once.  If every witness spoils at most 2 entries of any `p`-spaced
+    list, then a `p`-spaced candidate list longer than `2·|ws|` contains an entry
+    good for EVERY witness.  Induction on the witness list, the surviving
+    candidates shrinking by at most 2 each step. -/
+theorem exists_good_candidate {A : Type} (p : Nat) (bad : A → Nat → Bool) :
+    ∀ (ws : List A) (l : List Nat),
+      (∀ w ∈ ws, ∀ l' : List Nat, l'.Pairwise (fun a b => a + p ≤ b) →
+        (∀ x ∈ l', bad w x = true) → l'.length ≤ 2) →
+      l.Pairwise (fun a b => a + p ≤ b) →
+      2 * ws.length < l.length → ∃ i ∈ l, ∀ w ∈ ws, bad w i = false := by
+  intro ws
+  induction ws with
+  | nil =>
+    intro l _ _ hlen
+    rcases l with _ | ⟨a, rest⟩
+    · simp at hlen
+    · exact ⟨a, List.mem_cons.mpr (Or.inl rfl), fun w hw => nomatch hw⟩
+  | cons w rest ih =>
+    intro l hbad2 hsp hlen
+    have hkeep : (l.filter (fun x => !bad w x)).Pairwise (fun a b => a + p ≤ b) :=
+      hsp.sublist List.filter_sublist
+    have hdrop : (l.filter (fun x => bad w x)).length ≤ 2 :=
+      hbad2 w (List.mem_cons.mpr (Or.inl rfl)) _ (hsp.sublist List.filter_sublist)
+        (fun x hx => (List.mem_filter.mp hx).2)
+    have hsplit := filter_length_split (fun x => bad w x) l
+    have hlen' : 2 * rest.length < (l.filter (fun x => !bad w x)).length := by
+      simp only [List.length_cons] at hlen; omega
+    obtain ⟨i, hi, hgood⟩ := ih _
+      (fun v hv => hbad2 v (List.mem_cons.mpr (Or.inr hv))) hkeep hlen'
+    obtain ⟨hil, hiw⟩ := List.mem_filter.mp hi
+    refine ⟨i, hil, fun v hv => ?_⟩
+    rcases List.mem_cons.mp hv with rfl | hv
+    · simpa using hiw
+    · exact hgood v hv
+
+open Classical in
+/-- **THE BASE CHOICE, CERTIFIED** (§43.2) — the capstone of the selection.  Given
+    a finite witness bank and a `p`-spaced candidate list longer than twice the
+    bank, there is a base in the list whose whole window `[i, i+p)` is CONSTANT
+    for EVERY witness — i.e. `mixKernels_ok`'s `hstab` holds at that base for the
+    entire bank.  Combines `spoiled_length_le_two` (each witness spoils ≤2 spaced
+    candidates, via the rank ceiling) with the pigeonhole `exists_good_candidate`,
+    then converts "endpoints agree" to full window constancy by
+    `window_const_iff_ends`.
+
+    With `mixSelect_of_highBank` supplying the SERVING side (the bank picked above
+    the range serves every window by backward forcing), this is the whole of
+    `MixSelect` for a single chain — and since the high bank makes the kernels
+    independent, it applies to each kernel separately. -/
+theorem exists_stable_base (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (ws : List α) (hws : ∀ w ∈ ws, I.dom w) (p : Nat) (hp : 0 < p)
+    (l : List Nat) (hsp : l.Pairwise (fun a b => a + p ≤ b))
+    (hlen : 2 * ws.length < l.length) :
+    ∃ i ∈ l, ∀ w ∈ ws, ∀ b, b < p → I.rho w (c (i + b)) = I.rho w (c i) := by
+  obtain ⟨i, hi, hgood⟩ :=
+    exists_good_candidate p
+      (fun w x => decide (I.rho (c x) w ≠ I.rho (c (x + p - 1)) w)) ws l
+      (fun w hw l' hsp' hall =>
+        spoiled_length_le_two hI c hdom hstep (hws w hw) p hp l' hsp'
+          (fun x hx => of_decide_eq_true (hall x hx)))
+      hsp hlen
+  refine ⟨i, hi, fun w hw b hb => ?_⟩
+  have hends : I.rho (c i) w = I.rho (c (i + p - 1)) w := by
+    have := hgood w hw
+    simp only [decide_eq_false_iff_not, Decidable.not_not] at this
+    exact this
+  exact window_const_iff_ends hI hdom hstep (hws w hw) i p hp hends b hb
+
 /-- **THE COFINAL-WITNESS QUESTION** (§41) — what the whole mixed selection now
     rests on, stated on a SINGLE chain.  Every horizontal demand occurring
     anywhere on the chain is served by a witness bearing that relation to the
@@ -19356,9 +19506,16 @@ end VerticalWitness
 #print axioms mixSelect_of_cofinal_bank
 #print axioms witness_sets_decreasing
 #print axioms mixSelect_of_highBank
+#print axioms filter_length_split
+#print axioms spoiled_length_le_two
+#print axioms exists_good_candidate
+#print axioms exists_stable_base
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy
+#print axioms rank_eq_imp_value_eq
 #print axioms row_no_return
+#print axioms ends_differ_rank_lt
+#print axioms three_spaced_not_all_bad
 #print axioms window_const_iff_ends
 #print axioms stab_window_of_dr
 #print axioms stab_window_of_pp
