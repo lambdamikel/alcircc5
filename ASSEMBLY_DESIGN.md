@@ -3014,23 +3014,39 @@ is itself in the closure, so it has a slot).
 recurrent-tail bound `T` as well as the cross-constancy horizon `B` (it uses
 `max B L`). Without it the two halves would not have composed.
 
-### 39.7 The final assembly (recipe, not yet written)
+### 39.7 The final assembly — DONE: `mixSelect_assembled`
 
-Every ingredient is now a theorem; what remains is to run them in this order.
+The five-step recipe is now a theorem. From `n` `persistAll` sites whose class
+towers are pairwise NON-COMPARABLE (`classify_cross` disjunct 1; comparable ones
+merged away by §38), `mixSelect_assembled` produces bases and periods satisfying
+`hp`, `hty`, `hrectQ` **and** `MixSelect` — every per-kernel obligation of
+`mixKernels_ok` except the demand routing.
 
-1. `recurrent_tail` per chain ⟹ a threshold `T` past which all occurring types
-   recur cofinally; `classify_cross` on the pairwise non-comparable towers ⟹ the
-   horizons `hN`.
-2. `family_range … S T hN hconst` with `S := n · 2 · |cl C0|` ⟹ periods `pk` and
-   range tops `M`.
-3. `exists_bank` per kernel at `M k` ⟹ banks of size `≤ 2·|cl C0|`; concatenate
-   ⟹ a global bank of size `≤ S`.
-4. Feed that bank back to `family_range` ⟹ bases `ik` with `hty`, `hstab`,
-   `hrectQ`, all windows ending at or below `M k`, and all bases `≥ T`.
-5. `mixSelect_of_highBank` ⟹ `MixSelect`; `cross_const_ne_eq` ⟹ `hinj`.
+```
+1  recurrent_tail per chain     ⟹ threshold T (max over the finitely many kernels)
+2  family_range … S T hN hconst ⟹ periods pk, range tops M     [S := n·2·|cl C0|]
+                                   -- computed BEFORE any bank exists
+3  exists_bank per kernel AT M k ⟹ banks ≤ 2·|cl C0|; concatenated over Fin n
+                                   they stay within S (flatMap_length_le)
+4  feed that bank back to family_range ⟹ bases ik with hty, hstab, hrectQ,
+                                   windows ending ≤ M k, bases ≥ T
+5  mixSelect_of_highBank        ⟹ MixSelect (the bank sits at the range top, so
+                                   backward forcing serves every window)
+```
 
-Then only coverage (`he_ex`/`hk_ex`) and `codesM` remain for mixing, plus the
-independent one-shot `∃PP` gap (§33/§34).
+`hinj` comes separately from `cross_const_ne_eq`.
+
+**What the ordering buys.** Steps 2 and 3 are the resolution of §39 in executable
+form: the range top `M` is fixed before the bank exists, the bank is then placed
+at `M`, and only then are the bases chosen inside the range. Nothing is ever
+chosen twice, and no iteration or fixed point appears anywhere.
+
+### 39.8 Remaining for mixing
+
+- **Coverage** — `he_ex`/`hk_ex`, the demand routing (horizontal disjuncts from
+  `ascNodes_covers`, vertical and cross-kernel from the kernels themselves).
+- **`codesM`** + the `decidableSat_of_codes` completeness premise.
+- Independently: **one-shot `∃PP`** (§33/§34), still open, still vertical.
 2. **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
    premise.
 3. Independently: **one-shot `∃PP`** (§33/§34) is still open and is still

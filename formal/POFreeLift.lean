@@ -15592,6 +15592,22 @@ theorem exists_bank (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
     · exact List.mem_cons.mpr (Or.inl rfl)
     · exact List.mem_cons.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl)))
 
+/-- Concatenating `l.length` lists each of length `≤ b` gives length
+    `≤ l.length * b` — the bound that keeps the GLOBAL bank inside the a-priori
+    size `S` when the per-kernel banks are concatenated. -/
+theorem flatMap_length_le {A B : Type} (f : A → List B) (b : Nat) :
+    ∀ l : List A, (∀ a ∈ l, (f a).length ≤ b) → (l.flatMap f).length ≤ l.length * b := by
+  intro l
+  induction l with
+  | nil => intro _; simp
+  | cons a rest ih =>
+    intro h
+    have hrest := ih (fun x hx => h x (List.mem_cons_of_mem a hx))
+    have ha := h a (List.mem_cons.mpr (Or.inl rfl))
+    simp only [List.flatMap_cons, List.length_append, List.length_cons]
+    have hmul : (rest.length + 1) * b = rest.length * b + b := Nat.succ_mul _ _
+    omega
+
 /-- **THE FAMILY RANGE** (§39.5) — the whole per-kernel interface of
     `mixKernels_ok` with the candidate ranges exposed BEFORE the bank, which is
     what `mixSelect_of_highBank` needs in order to be applicable.  Periods `pk`
@@ -15841,6 +15857,99 @@ theorem mixSelect_of_highBank (hI : RCC5Interp I) (C0 : Concept) {m : Nat}
   refine ⟨w, hw, hD, fun b hb => ?_, hstabw⟩
   exact witness_sets_decreasing hI (ck k) (hdom k) (hstep k) hw hr hMw
     (ik k + b) (by have := hbelow k; omega)
+
+open Classical in
+/-- **THE MIXED SELECTION, ASSEMBLED** (§39.7) — the five-step recipe run.
+
+    From `n` `persistAll` sites whose class towers are pairwise NON-COMPARABLE
+    (`hconst`, i.e. `classify_cross` disjunct 1; comparable ones merged away by
+    §38), this produces bases and periods satisfying `hp`, `hty`, `hrectQ` AND
+    `MixSelect` — every per-kernel obligation of `mixKernels_ok` except the demand
+    routing (`he_ex`/`hk_ex`).
+
+    The order is what matters, and it is exactly the one §39.2 identified:
+    1. `recurrent_tail` per chain ⟹ a threshold `T` past which every occurring
+       type recurs cofinally (take the `max` over the finitely many kernels);
+    2. `family_range` at the a-priori bank bound `S = n·2·|cl C0|` and threshold
+       `T` ⟹ periods `pk` and range tops `M`, BEFORE any bank exists;
+    3. `exists_bank` per kernel AT `M k` ⟹ per-kernel banks of size `≤ 2·|cl C0|`;
+       concatenating over `Fin n` keeps the global bank within `S`
+       (`flatMap_length_le`);
+    4. feeding that bank back to `family_range` ⟹ bases `ik` with `hty`, `hstab`,
+       `hrectQ`, every window ending at or below `M k`, and every base `≥ T`;
+    5. `mixSelect_of_highBank` ⟹ `MixSelect`: the bank sits at the range top, so
+       backward forcing makes it serve every window, while stability came from
+       step 4. -/
+theorem mixSelect_assembled (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k))
+    (hN : Fin n → Fin n → Nat)
+    (hconst : ∀ k k', k ≠ k' → ∀ i j, hN k k' ≤ i → hN k k' ≤ j →
+      I.rho (classChain hI C0 Ds hL x0 h0 k i)
+            (classChain hI C0 Ds hL x0 h0 k' j)
+        = I.rho (classChain hI C0 Ds hL x0 h0 k (hN k k'))
+                (classChain hI C0 Ds hL x0 h0 k' (hN k k'))) :
+    ∃ ik pk : Fin n → Nat,
+      (∀ k, 0 < pk k) ∧
+      (∀ k, mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k))
+            = mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k + pk k))) ∧
+      (∀ k k', k ≠ k' → ∀ a b,
+        I.rho (classChain hI C0 Ds hL x0 h0 k (ik k + a))
+              (classChain hI C0 Ds hL x0 h0 k' (ik k' + b))
+          = I.rho (classChain hI C0 Ds hL x0 h0 k (ik k))
+                  (classChain hI C0 Ds hL x0 h0 k' (ik k'))) ∧
+      MixSelect I C0 (classChain hI C0 Ds hL x0 h0) ik pk := by
+  classical
+  -- step 1: a common recurrent-tail threshold
+  have hrt : ∀ k : Fin n, ∃ T, ∀ a, T ≤ a → ∀ N, ∃ m, N ≤ m ∧
+      mty C0 I (classChain hI C0 Ds hL x0 h0 k m)
+        = mty C0 I (classChain hI C0 Ds hL x0 h0 k a) := by
+    intro k
+    exact recurrent_tail (sublists (cl C0))
+      (fun m => mty C0 I (classChain hI C0 Ds hL x0 h0 k m))
+      (fun m => mty_mem_sublists _)
+  obtain ⟨Tf, hTf⟩ := Classical.axiomOfChoice hrt
+  obtain ⟨T, hT⟩ := exists_bound n Tf
+  -- step 2: periods and range tops, before any bank
+  obtain ⟨pk, M, hp, hrange⟩ :=
+    family_range hI C0 Ds hL x0 h0 (n * (2 * (cl C0).length)) T hN hconst
+  -- step 3: per-kernel banks at the range tops, concatenated
+  have hbk : ∀ k : Fin n, ∃ b : List α, (∀ w ∈ b, I.dom w) ∧
+      b.length ≤ 2 * (cl C0).length ∧
+      ∀ a, T ≤ a → ∀ r D, (r = dr ∨ r = pp) →
+        Concept.ex r D ∈ mty C0 I (classChain hI C0 Ds hL x0 h0 k a) →
+        ∃ w ∈ b, D ∈ mty C0 I w ∧ ∀ j, j ≤ M k →
+          I.rho (classChain hI C0 Ds hL x0 h0 k j) w = r := by
+    intro k
+    exact exists_bank hI C0 (classChain hI C0 Ds hL x0 h0 k)
+      (classChain_dom hI C0 Ds hL x0 h0 k) (classChain_step hI C0 Ds hL x0 h0 k)
+      T (M k)
+      (fun a ha N => hTf k a (Nat.le_trans (hT k) ha) N)
+  obtain ⟨bk, hbkspec⟩ := Classical.axiomOfChoice hbk
+  refine
+    let ws := (List.finRange n).flatMap bk
+    ?_
+  have hwsdom : ∀ w ∈ (List.finRange n).flatMap bk, I.dom w := by
+    intro w hw
+    obtain ⟨k, _, hk⟩ := List.mem_flatMap.mp hw
+    exact (hbkspec k).1 w hk
+  have hwslen : ((List.finRange n).flatMap bk).length ≤ n * (2 * (cl C0).length) := by
+    have h := flatMap_length_le bk (2 * (cl C0).length) (List.finRange n)
+      (fun k _ => (hbkspec k).2.1)
+    rwa [List.length_finRange] at h
+  -- step 4: the bases
+  obtain ⟨ik, hTik, hMik, hty, hstab, hrect⟩ := hrange _ hwsdom hwslen
+  refine ⟨ik, pk, hp, hty, hrect, ?_⟩
+  -- step 5: the high bank serves, so `MixSelect` follows
+  refine mixSelect_of_highBank hI C0 (classChain hI C0 Ds hL x0 h0)
+    (classChain_dom hI C0 Ds hL x0 h0) (classChain_step hI C0 Ds hL x0 h0)
+    ik pk M hMik ?_
+  intro k a r D ha hr hmem
+  obtain ⟨w, hwk, hDw, hMw⟩ :=
+    (hbkspec k).2.2 (ik k + a) (Nat.le_trans (hTik k) (Nat.le_add_right _ _)) r D hr hmem
+  refine ⟨w, (hbkspec k).1 w hwk, hDw, hMw (M k) (Nat.le_refl _), ?_⟩
+  intro k' b hb
+  exact hstab w (List.mem_flatMap.mpr ⟨k, List.mem_finRange k, hwk⟩) k' b hb
 
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
@@ -19946,9 +20055,11 @@ end VerticalWitness
 #print axioms stable_base_range
 #print axioms kernel_interface_of_persistAll
 #print axioms kernel_range_of_persistAll
+#print axioms flatMap_length_le
 #print axioms exists_bank
 #print axioms family_range
 #print axioms family_interface
+#print axioms mixSelect_assembled
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy
 #print axioms rank_eq_imp_value_eq
