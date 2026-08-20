@@ -3061,10 +3061,26 @@ again structural (one slot per `D ∈ cl C0`).
 
 **Remaining for mixing:**
 
-- **`∃PO` demands** — the one relation with no bank. `kernel_site`'s note is that
-  these "pend against the pool"; the `MTOkPool`/`glueFam_ok` machinery (rounds
-  E0/E1) is where they are discharged, and wiring it to the kernel phases is
-  unbuilt.
+- **`∃PO` demands — PROBED (`wp91` parts V/W); the external bank provably does
+  NOT work.** `DR`/`PP` are carried across a whole window by ONE high pick
+  because `comp(PP,DR) = {DR}` and `comp(PP,PP) = {PP}` force the window from
+  above. `PO` has no such law: `comp(PP,PO) = {DR,PO,PP}`. Its only law is
+  UPWARD and weak — `comp(PPI,PO) = {PO,PPI}`, certified as `po_up`: an
+  overlapping external stays overlapping-or-swallowed later, but says nothing
+  lower down.
+
+  Part W makes this decisive with an adversarial family: chain `c_j = {e_0..e_j}`
+  and witnesses `w_j = {e_j, e_{j+1}}` give `DR` at level `j-1`, `PO` at exactly
+  level `j`, `PPI` at level `j+1`. So every witness is `PO` at a SINGLE level,
+  the demand is live everywhere, and **no external is `PO` across a window of
+  length ≥ 2, at any base.** Since `hk_ex`'s external disjunct needs the declared
+  row (constant across the window by `hstab`) to BE the demanded relation, no
+  β-external can serve such a demand.
+
+  So `∃PO` at kernel phases requires the pool machinery (`MTOkPool` /
+  `glueFam_ok`, rounds E0/E1) as an ARCHITECTURAL necessity, not as one
+  convenient option among several. Wiring it to the kernel phases is unbuilt, and
+  it is now the substantive remaining piece of mixing.
 - **`he_ex`** — the same routing for β-externals rather than phases (horizontal
   disjuncts from `ascNodes_covers`).
 - **`codesM`** + the `decidableSat_of_codes` completeness premise.

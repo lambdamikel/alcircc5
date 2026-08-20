@@ -2863,6 +2863,29 @@ theorem cofinal_dr_stab (hcof : ∀ N, ∃ j, N ≤ j ∧ I.rho (c j) e = dr) :
     rw [hI.conv_ (c i) e (hdom i) hedom, cofinal_dr_all hI hdom hstep hedom hcof i]; rfl
   rw [h1, h2]
 
+/-- **`PO` PROPAGATES UP, BUT ONLY TO `{PO, PPI}`** (§39.8) — the one law `PO`
+    has, and the reason it cannot be treated like `DR`/`PP`.  An overlapping
+    external stays overlapping-or-swallowed at every LATER chain position
+    (`comp(PPI,PO) = {PO,PPI}`).  Downward there is no law at all:
+    `comp(PP,PO) = {DR,PO,PP}`, so a `PO` witness picked high says nothing lower
+    down — which is exactly why the high-bank discipline of §39.2 does NOT
+    extend to `∃PO` (see `wp91` part W: witnesses can be `PO` at a single level
+    only). -/
+theorem po_up {i : Nat} (h : I.rho (c i) e = po) :
+    ∀ j, i ≤ j → I.rho (c j) e = po ∨ I.rho (c j) e = ppi := by
+  intro j hj
+  rcases Nat.lt_or_ge i j with hlt | hge
+  · have h1 := hI.comp_ (c j) (c i) e (hdom j) (hdom i) hedom
+    rw [chain_model_ppi hI hdom hstep i j hlt, h] at h1
+    rw [show comp ppi po = [ppi, po] from rfl] at h1
+    rcases List.mem_cons.mp h1 with h2 | h2
+    · exact Or.inr h2
+    · rcases List.mem_cons.mp h2 with h3 | h3
+      · exact Or.inl h3
+      · nomatch h3
+  · have hji : j = i := by omega
+    rw [hji]; exact Or.inl h
+
 /-- FORWARD ABSORPTION (`PPI`): a contained external stays inside ALL
     later chain positions — `comp(PPI,PPI) = {PPI}`. -/
 theorem forward_absorption_ppi {i : Nat} (h : I.rho (c i) e = ppi) :
@@ -20117,6 +20140,7 @@ end VerticalWitness
 #print axioms stab_window_of_dr
 #print axioms stab_window_of_pp
 #print axioms stab_window_of_rank0
+#print axioms po_up
 #print axioms cofinal_dr_all
 #print axioms cofinal_dr_stab
 #print axioms VerticalWitness.persistAll_merge2_nonvacuous

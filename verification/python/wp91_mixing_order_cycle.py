@@ -1384,6 +1384,130 @@ def part_u(models=400, n=14, L=12, seed=777, Ms=(2, 3)):
     print("     that is the whole proof, with NO product counting.")
 
 
+# ---- part V: the exists-PO case -- no forcing law, so is the cycle back?
+
+
+def part_v(models=600, n=13, L=10, T=3, seed=246810):
+    """DR/PP demands are served by LATE picking: a witness above the range is
+    forced DR/PP down through the whole window by comp(PP,DR)={DR} /
+    comp(PP,PP)={PP}.  PO has NO such law -- comp(PP,PO) = {PP,PO,DR} -- so a
+    witness picked high need not be PO lower down, and the late-picking trick is
+    unavailable.  Does that reintroduce the sec.39 ordering problem?
+
+    What a PO demand needs: a witness whose row is CONSTANT PO across the window
+    (then hstab makes the base value PO too, and hk_ex's external disjunct
+    fires).  Since rank is monotone and PO is rank 1, that is equivalent to PO at
+    BOTH ENDS of the window (row_no_return).  Measured here: with the demand live
+    at every level, how often does such a witness exist?"""
+    print("\nPART V -- the exists-PO case (no forcing law)")
+    print(f"  comp(PP,PO) = {sorted(CT[(PP, PO)])}   "
+          f"(vs comp(PP,DR) = {sorted(CT[(PP, DR)])}, comp(PP,PP) = {sorted(CT[(PP, PP)])})")
+    import random
+    rng = random.Random(seed)
+    univ = set(range(n))
+    us = sorted(univ)
+    for p in (2, 3):
+        systems = solvable = late_ok = 0
+        for _ in range(models):
+            # NOTE: a SINGLETON region has no PO partner at all (a\b and a∩b
+            # cannot both be nonempty when |a| = 1), so an exists-PO demand
+            # cannot be live at a singleton node -- the chain must start with
+            # at least two elements.
+            base = frozenset(rng.sample(us, 2))
+            rest = [x for x in us if x not in base]
+            rng.shuffle(rest)
+            if len(rest) < L - 1:
+                continue
+            c, cur = [base], base
+            for t in range(L - 1):
+                cur = cur | {rest[t]}
+                c.append(cur)
+            # a PO-witness bank: for each level, some region overlapping it
+            bank = set()
+            ok = True
+            for nd in c:
+                cands = []
+                for _ in range(40):
+                    inside = rng.sample(sorted(nd), 1)
+                    outside = [x for x in us if x not in nd]
+                    if not outside:
+                        continue
+                    w = frozenset(inside + rng.sample(outside, 1))
+                    if rel(nd, w) == PO:
+                        cands.append(w)
+                if not cands:
+                    ok = False
+                    break
+                bank.add(rng.choice(cands))
+            if not ok:
+                continue
+            bank = sorted(bank, key=lambda t: (len(t), sorted(t)))
+            if not all(any(rel(c[j], w) == PO for w in bank) for j in range(L)):
+                continue
+            systems += 1
+            # (i) is there a base whose window has a constant-PO witness?
+            if any(any(all(rel(c[i + b], w) == PO for b in range(p)) for w in bank)
+                   for i in range(T, L - p + 1)):
+                solvable += 1
+            # (ii) does the LATE-picking trick work?  i.e. is a witness that is
+            #      PO at the TOP of the range also PO across a lower window?
+            top = L - 1
+            hi = [w for w in bank if rel(c[top], w) == PO]
+            if hi and any(all(rel(c[i + b], w) == PO for b in range(p))
+                          for w in hi for i in range(T, L - p + 1)):
+                late_ok += 1
+        print(f"  p={p}  systems {systems:4d}"
+              f"   constant-PO window exists {solvable:4d}"
+              f" ({100.0 * solvable / max(systems,1):5.1f}%)"
+              f"   |  LATE pick suffices {late_ok:4d}"
+              f" ({100.0 * late_ok / max(systems,1):5.1f}%)")
+    print("  => a gap between the two columns is the point: if constant-PO")
+    print("     windows exist but the LATE pick does not deliver them, the PO")
+    print("     bank cannot be placed above the range, and the sec.39.2")
+    print("     decoupling does NOT extend to PO.")
+
+
+# ---- part W: the ONE-LEVEL PO witness -- an adversarial family
+
+
+def part_w(L=9):
+    """Part V's random banks nearly always contained a witness PO across a whole
+    window.  Can that be defeated?  Yes, and cleanly.  Take the chain
+    c_j = {e_0,...,e_j} and the witnesses w_j = {e_j, e_{j+1}}:
+
+      * at level j-1:  w_j is DR   (neither element is in c_{j-1})
+      * at level j:    w_j is PO   (e_j inside, e_{j+1} outside, c_j not inside w_j)
+      * at level j+1:  w_j is PPI  (both elements now in c_{j+1}, properly)
+
+    so EVERY witness is PO at EXACTLY ONE level.  The demand is live everywhere,
+    yet no witness is PO across a window of length >= 2 -- so no single external
+    can serve an exists-PO demand across a whole window, at ANY base."""
+    print("\nPART W -- the one-level PO witness (adversarial)")
+    c = [frozenset(range(j + 2)) for j in range(L)]        # c_j = {0..j+1}
+    wits = [frozenset({j + 1, j + 2}) for j in range(L)]
+    live = all(any(rel(c[j], w) == PO for w in wits) for j in range(L - 1))
+    spans = {}
+    for w in wits:
+        po_levels = [j for j in range(L) if rel(c[j], w) == PO]
+        spans[tuple(sorted(w))] = po_levels
+    widest = max((len(v) for v in spans.values()), default=0)
+    ok2 = any(all(rel(c[i + b], w) == PO for b in range(2)) for w in wits
+              for i in range(L - 1))
+    print(f"  demand live at every level              : {live}")
+    print(f"  widest PO-span of any witness (levels)  : {widest}")
+    print(f"  some witness PO across a window of 2    : {ok2}")
+    print(f"  => no single external serves the exists-PO demand across a")
+    print(f"     window of length >= 2, at ANY base   : {not ok2}")
+    print("  Consequence: the sec.39.2 high-bank decoupling does NOT extend to")
+    print("  exists-PO.  DR/PP work because comp(PP,DR)={DR} and comp(PP,PP)={PP}")
+    print("  force the whole window from one high pick; PO has no such law")
+    print("  (comp(PP,PO)={DR,PO,PP}), and it can be pinned to a single level.")
+    print("  So exists-PO at kernel phases NEEDS the pool machinery (MTOkPool /")
+    print("  glueFam_ok), not an external bank -- an architectural requirement,")
+    print("  not bookkeeping.")
+    return live and widest <= 1 and not ok2
+
+
 # ----------------------------------------------------------------------- main
 
 def main():
@@ -1410,6 +1534,8 @@ def main():
     part_r()
     part_s()
     part_u()
+    part_v()
+    part_w()
     print("\n" + "=" * 68)
     for k, v in results.items():
         print(f"  {k:28s} : {'PASS' if v else 'FAIL'}")
