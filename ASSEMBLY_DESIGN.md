@@ -2961,10 +2961,26 @@ So per kernel, `hty` and `hstab` both come from model-side data. With
 `mixSelect_of_highBank` giving the serving side and the high bank making the
 kernels independent, the per-kernel interface is complete.
 
-**Still to wire:** assembling the per-kernel interfaces into the family
-(`hrectQ` is already certified via `family_hrectQ_bounded`; `hinj` via
-`cross_const_ne_eq`), and supplying the bank itself from `kernel_site`'s
-witnesses above the range.
+**The family, assembled.** `family_interface` discharges TOGETHER, from
+model-side data, every per-kernel obligation of `mixKernels_ok` except the demand
+routing: `hp`, `hty`, `hstab` and `hrectQ`. Given `n` `persistAll` sites whose
+class towers are pairwise non-comparable (`classify_cross` disjunct 1 —
+comparable ones merged away by §38) and a global witness bank, it produces bases
+and periods satisfying all four.
+
+The scheduling that made §39 look circular is handled by the THRESHOLD: the joint
+cross-constancy horizon `B` is computed FIRST (`exists_bound2` over the finitely
+many pairs), and each kernel's base is then chosen above `B` — possible because
+`kernel_interface_of_persistAll` delivers its base past ANY threshold. So
+`hrectQ` and `hty`/`hstab` hold at the SAME bases, with no iteration.
+
+Non-vacuity: `family_interface_nonvacuous` runs it on the two-region `Ipo` model
+with a NONEMPTY bank whose witness sits ON one of the chains — so that row is not
+globally constant (`chain 0 5 = PP`, `chain 6 5 = PPI`) and the theorem must
+actually place the window past the transition.
+
+**Still to wire:** supplying the bank itself from `kernel_site`'s witnesses above
+the range (the serving side, `mixSelect_of_highBank`'s `hbank`).
 2. **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
    premise.
 3. Independently: **one-shot `∃PP`** (§33/§34) is still open and is still

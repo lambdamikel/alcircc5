@@ -15398,13 +15398,14 @@ theorem exists_stable_base (hI : RCC5Interp I) (c : Nat → α)
 theorem exists_stable_recurrence (hI : RCC5Interp I) (c : Nat → α)
     (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
     (ws : List α) (hws : ∀ w ∈ ws, I.dom w) (p : Nat) (hp : 0 < p)
-    (P : Nat → Prop) (hcof : ∀ L, ∃ i, L ≤ i ∧ P i) :
-    ∃ i, P i ∧ ∀ w ∈ ws, ∀ b, b < p → I.rho w (c (i + b)) = I.rho w (c i) := by
-  obtain ⟨l, hlen, hP, _, hsp⟩ :=
-    exists_spaced_list P hcof p (2 * ws.length + 1) 0
+    (P : Nat → Prop) (hcof : ∀ L, ∃ i, L ≤ i ∧ P i) (L : Nat) :
+    ∃ i, L ≤ i ∧ P i ∧
+      ∀ w ∈ ws, ∀ b, b < p → I.rho w (c (i + b)) = I.rho w (c i) := by
+  obtain ⟨l, hlen, hP, hge, hsp⟩ :=
+    exists_spaced_list P hcof p (2 * ws.length + 1) L
   obtain ⟨i, hi, hgood⟩ :=
     exists_stable_base hI c hdom hstep ws hws p hp l hsp (by omega)
-  exact ⟨i, hP i hi, hgood⟩
+  exact ⟨i, hge i hi, hP i hi, hgood⟩
 
 /-- **THE KERNEL INTERFACE, FROM MODEL-SIDE DATA** (§39.5) — `hty` and `hstab`
     together, for one round-robin kernel and a given finite witness bank.
@@ -15423,8 +15424,8 @@ theorem exists_stable_recurrence (hI : RCC5Interp I) (c : Nat → α)
 theorem kernel_interface_of_persistAll (hI : RCC5Interp I) (C0 : Concept)
     (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
     (h0 : persistAll I C0 Ds x0)
-    (ws : List α) (hws : ∀ w ∈ ws, I.dom w) :
-    ∃ i q, 0 < q ∧
+    (ws : List α) (hws : ∀ w ∈ ws, I.dom w) (L : Nat) :
+    ∃ i q, L ≤ i ∧ 0 < q ∧
       mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
         = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q)) ∧
       (∀ w ∈ ws, ∀ b, b < q →
@@ -15444,12 +15445,72 @@ theorem kernel_interface_of_persistAll (hI : RCC5Interp I) (C0 : Concept)
   -- positivity of that period, from any one of its cofinally many witnesses
   obtain ⟨i0, _, hq0, _⟩ := hq 0
   -- a base among them whose window is stable for the whole bank
-  obtain ⟨i, hPi, hstab⟩ :=
+  obtain ⟨i, hLi, hPi, hstab⟩ :=
     exists_stable_recurrence hI (rrPt hI C0 Ds hL x0 h0)
       (rrPt_dom hI C0 Ds hL x0 h0) (rrPt_step hI C0 Ds hL x0 h0) ws hws q hq0
       (fun i => 0 < q ∧ mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
-        = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q))) hq
-  exact ⟨i, q, hq0, hPi.2, hstab⟩
+        = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q))) hq L
+  exact ⟨i, q, hLi, hq0, hPi.2, hstab⟩
+
+/-- **THE FAMILY INTERFACE** (§39.5) — every per-kernel obligation of
+    `mixKernels_ok` except the demand routing, discharged together from model-side
+    data.  Given `n` `persistAll` sites whose class towers are pairwise
+    NON-COMPARABLE (`hconst`, i.e. `classify_cross` disjunct 1 — comparable ones
+    having been merged away by §38), and a global witness bank `ws`, there are
+    bases `ik` and periods `pk` with:
+
+    * `hp`     — every period positive;
+    * `hty`    — per-kernel type recurrence at `(ik k, pk k)`;
+    * `hstab`  — every bank witness's row constant across every kernel's window;
+    * `hrectQ` — the cross-kernel rectangle.
+
+    The scheduling that made §39 look circular is handled by the THRESHOLD: the
+    joint cross-constancy horizon `B` is computed FIRST (`exists_bound2` over the
+    finitely many pairs), and each kernel's base is then chosen above `B` —
+    possible because `kernel_interface_of_persistAll` delivers its base past any
+    threshold.  So `hrectQ` and `hty`/`hstab` are satisfied at the SAME bases. -/
+theorem family_interface (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
+    (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k))
+    (ws : List α) (hws : ∀ w ∈ ws, I.dom w)
+    (hN : Fin n → Fin n → Nat)
+    (hconst : ∀ k k', k ≠ k' → ∀ i j, hN k k' ≤ i → hN k k' ≤ j →
+      I.rho (classChain hI C0 Ds hL x0 h0 k i)
+            (classChain hI C0 Ds hL x0 h0 k' j)
+        = I.rho (classChain hI C0 Ds hL x0 h0 k (hN k k'))
+                (classChain hI C0 Ds hL x0 h0 k' (hN k k'))) :
+    ∃ ik pk : Fin n → Nat,
+      (∀ k, 0 < pk k) ∧
+      (∀ k, mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k))
+            = mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k + pk k))) ∧
+      (∀ w ∈ ws, ∀ k b, b < pk k →
+        I.rho w (classChain hI C0 Ds hL x0 h0 k (ik k + b))
+          = I.rho w (classChain hI C0 Ds hL x0 h0 k (ik k))) ∧
+      (∀ k k', k ≠ k' → ∀ a b,
+        I.rho (classChain hI C0 Ds hL x0 h0 k (ik k + a))
+              (classChain hI C0 Ds hL x0 h0 k' (ik k' + b))
+          = I.rho (classChain hI C0 Ds hL x0 h0 k (ik k))
+                  (classChain hI C0 Ds hL x0 h0 k' (ik k'))) := by
+  classical
+  -- the joint cross-constancy horizon, computed BEFORE any base is chosen
+  obtain ⟨B, hB⟩ := exists_bound2 n hN
+  have hper : ∀ k : Fin n, ∃ ip : Nat × Nat, B ≤ ip.1 ∧ 0 < ip.2 ∧
+      mty C0 I (classChain hI C0 Ds hL x0 h0 k ip.1)
+        = mty C0 I (classChain hI C0 Ds hL x0 h0 k (ip.1 + ip.2)) ∧
+      (∀ w ∈ ws, ∀ b, b < ip.2 →
+        I.rho w (classChain hI C0 Ds hL x0 h0 k (ip.1 + b))
+          = I.rho w (classChain hI C0 Ds hL x0 h0 k ip.1)) := by
+    intro k
+    obtain ⟨i, q, hBi, hq, hty, hstab⟩ :=
+      kernel_interface_of_persistAll hI C0 (Ds k) (hL k) (x0 k) (h0 k) ws hws B
+    exact ⟨(i, q), hBi, hq, hty, hstab⟩
+  obtain ⟨f, hf⟩ := Classical.axiomOfChoice hper
+  refine ⟨fun k => (f k).1, fun k => (f k).2, fun k => (hf k).2.1,
+    fun k => (hf k).2.2.1, ?_, ?_⟩
+  · exact fun w hw k b hb => (hf k).2.2.2 w hw b hb
+  · exact family_hrectQ (classChain hI C0 Ds hL x0 h0) (fun k => (f k).1) hN hconst
+      (fun k k' _ => Nat.le_trans (hB k k') (hf k).1)
+      (fun k k' _ => Nat.le_trans (hB k k') (hf k').1)
 
 /-- **THE COFINAL-WITNESS QUESTION** (§39.2) — what the whole mixed selection now
     rests on, stated on a SINGLE chain.  Every horizontal demand occurring
@@ -19187,6 +19248,50 @@ theorem vtowers_merged_nonvacuous :
   exact ⟨m, ck, ik, pk, hok,
     hserve _ (List.mem_cons.mpr (Or.inl rfl)) _ (List.mem_singleton.mpr rfl)⟩
 
+/-- **NON-VACUITY OF `family_interface`** — with a NONEMPTY bank, so the base
+    choice is genuinely exercised.  The bank witness `(false,5)` sits ON one of
+    the two region chains, so its row to that chain is NOT constant globally
+    (`chain 0 5 = PP` but `chain 6 5 = PPI`) — the theorem has to place that
+    kernel's window past the transition.  Cross-pairs are constant `PO`
+    (`classChain_region`), so the non-comparability hypothesis holds with the
+    zero horizon. -/
+theorem family_interface_nonvacuous :
+    ∃ ik pk : Fin 2 → Nat, (∀ k, 0 < pk k) ∧
+      ∀ w ∈ [((false, 5) : Bool × Nat)], ∀ (k : Fin 2) (b : Nat), b < pk k →
+        Ipo.rho w (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                    (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                    (fun k => po_persistAll (reg2 k)) k (ik k + b))
+          = Ipo.rho w (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                    (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                    (fun k => po_persistAll (reg2 k)) k (ik k)) := by
+  have hr := classChain_region (fun _ => [Concept.atom 0]) (fun _ => Nat.one_pos)
+    (fun k : Fin 2 => (reg2 k, 0)) (fun k => po_persistAll (reg2 k))
+  have hconst : ∀ k k' : Fin 2, k ≠ k' → ∀ i j, (0 : Nat) ≤ i → (0 : Nat) ≤ j →
+      Ipo.rho (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                 (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                 (fun k => po_persistAll (reg2 k)) k i)
+              (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                 (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                 (fun k => po_persistAll (reg2 k)) k' j)
+        = Ipo.rho (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                 (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                 (fun k => po_persistAll (reg2 k)) k 0)
+                (classChain Ipo_rcc5 Cvert (fun _ => [Concept.atom 0])
+                 (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+                 (fun k => po_persistAll (reg2 k)) k' 0) := by
+    intro k k' hne i j _ _
+    have key : ∀ q q' : Bool × Nat, q.1 ≠ q'.1 → Ipo.rho q q' = po := by
+      intro q q' h
+      show nestRho q q' = po
+      rw [nestRho_eq, if_neg h]
+    rw [key _ _ (by rw [hr k i, hr k' j]; exact reg2_ne k k' hne),
+      key _ _ (by rw [hr k 0, hr k' 0]; exact reg2_ne k k' hne)]
+  obtain ⟨ik, pk, hp, _, hstab, _⟩ := family_interface Ipo_rcc5 Cvert
+    (fun _ => [Concept.atom 0]) (fun _ => Nat.one_pos) (fun k => (reg2 k, 0))
+    (fun k => po_persistAll (reg2 k)) [((false, 5) : Bool × Nat)]
+    (fun _ _ => trivial) (fun _ _ => 0) hconst
+  exact ⟨ik, pk, hp, hstab⟩
+
 /-- Everything in `cl Cnest` is satisfied at every `Ipo` point. -/
 theorem psat_all (p : Bool × Nat) : ∀ D ∈ cl Cnest, sat Ipo p D := by
   intro D hD
@@ -19638,6 +19743,7 @@ end VerticalWitness
 #print axioms exists_stable_base
 #print axioms exists_stable_recurrence
 #print axioms kernel_interface_of_persistAll
+#print axioms family_interface
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy
 #print axioms rank_eq_imp_value_eq
@@ -19655,6 +19761,7 @@ end VerticalWitness
 #print axioms VerticalWitness.vtowers_two_nonvacuous
 #print axioms VerticalWitness.classChain_region
 #print axioms VerticalWitness.vtowers_from_nodes_nonvacuous
+#print axioms VerticalWitness.family_interface_nonvacuous
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
