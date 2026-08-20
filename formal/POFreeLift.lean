@@ -15519,6 +15519,79 @@ theorem kernel_range_of_persistAll (hI : RCC5Interp I) (C0 : Concept)
   obtain ⟨i, hLi, hiM, hPi, hstab⟩ := hM ws hws hS
   exact ⟨i, hLi, hiM, hPi.2, hstab⟩
 
+open Classical in
+/-- **THE WITNESS BANK** (§39.5) — the serving side, supplied at the range top.
+
+    For a chain whose types recur cofinally past `T`, and any level `M`, there is
+    a witness list `ws` of size at most `2·|cl C0|` such that EVERY `DR`/`PP`
+    demand occurring at any phase past `T` is served by a member that is
+    `r`-related to the chain at every level up to `M` — in particular AT `M`,
+    which is what `mixSelect_of_highBank` consumes, and at every lower level, so
+    it serves any window ending at or below `M`.
+
+    Construction: one slot per `(D, r)` with `D ∈ cl C0` and `r ∈ {DR, PP}`,
+    filled by `dr_witness_all_below` / `pp_witness_all_below` at bound `M` when
+    such a witness exists and by the harmless default `c 0` otherwise — so the
+    size bound is structural (`flatMap` of two-element lists), independent of the
+    model.  Covering uses `cl_ex`: a demand's argument is itself in the closure,
+    so it really does have a slot. -/
+theorem exists_bank (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (T M : Nat)
+    (hrecall : ∀ a, T ≤ a → ∀ N, ∃ m, N ≤ m ∧ mty C0 I (c m) = mty C0 I (c a)) :
+    ∃ ws : List α, (∀ w ∈ ws, I.dom w) ∧ ws.length ≤ 2 * (cl C0).length ∧
+      ∀ a, T ≤ a → ∀ r D, (r = dr ∨ r = pp) →
+        Concept.ex r D ∈ mty C0 I (c a) →
+        ∃ w ∈ ws, D ∈ mty C0 I w ∧ ∀ b, b ≤ M → I.rho (c b) w = r := by
+  classical
+  -- one slot per (argument, relation); `c 0` is the harmless filler
+  let good : Atom → Concept → α → Prop :=
+    fun r D w => I.dom w ∧ D ∈ mty C0 I w ∧ ∀ b, b ≤ M → I.rho (c b) w = r
+  let pick : Atom → Concept → α :=
+    fun r D => if h : ∃ w, good r D w then Classical.choose h else c 0
+  have hpick_dom : ∀ r D, I.dom (pick r D) := by
+    intro r D
+    show I.dom (if h : ∃ w, good r D w then Classical.choose h else c 0)
+    split
+    · next h => exact (Classical.choose_spec h).1
+    · exact hdom 0
+  refine ⟨(cl C0).flatMap (fun D => [pick dr D, pick pp D]), ?_, ?_, ?_⟩
+  · intro w hw
+    obtain ⟨D, _, hmem⟩ := List.mem_flatMap.mp hw
+    rcases List.mem_cons.mp hmem with rfl | hmem
+    · exact hpick_dom dr D
+    · rcases List.mem_cons.mp hmem with rfl | hmem
+      · exact hpick_dom pp D
+      · nomatch hmem
+  · -- the size bound is structural
+    have : ((cl C0).flatMap (fun D => [pick dr D, pick pp D])).length
+        = 2 * (cl C0).length := by
+      induction (cl C0) with
+      | nil => rfl
+      | cons a rest ih => simp [List.flatMap_cons] at ih ⊢; omega
+    omega
+  · -- covering
+    intro a hTa r D hr hmem
+    have hDcl : D ∈ cl C0 := cl_ex (mty_sub _ hmem)
+    have hex : ∃ w, good r D w := by
+      have hrecT : ∀ N, ∃ m, N ≤ m ∧ mty C0 I (c m) = mty C0 I (c a) := hrecall a hTa
+      rcases hr with rfl | rfl
+      · obtain ⟨w, hw, hDw, hall⟩ :=
+          dr_witness_all_below hI hdom hstep hrecT hmem M
+        exact ⟨w, hw, hDw, hall⟩
+      · obtain ⟨w, hw, hDw, hall⟩ :=
+          pp_witness_all_below hI hdom hstep hrecT hmem M
+        exact ⟨w, hw, hDw, hall⟩
+    have hspec : good r D (pick r D) := by
+      show good r D (if h : ∃ w, good r D w then Classical.choose h else c 0)
+      rw [dif_pos hex]
+      exact Classical.choose_spec hex
+    refine ⟨pick r D, ?_, hspec.2.1, hspec.2.2⟩
+    refine List.mem_flatMap.mpr ⟨D, hDcl, ?_⟩
+    rcases hr with rfl | rfl
+    · exact List.mem_cons.mpr (Or.inl rfl)
+    · exact List.mem_cons.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl)))
+
 /-- **THE FAMILY RANGE** (§39.5) — the whole per-kernel interface of
     `mixKernels_ok` with the candidate ranges exposed BEFORE the bank, which is
     what `mixSelect_of_highBank` needs in order to be applicable.  Periods `pk`
@@ -15527,7 +15600,7 @@ theorem kernel_range_of_persistAll (hI : RCC5Interp I) (C0 : Concept)
     kernel's `M` — so a bank picked at those `M`s serves every window. -/
 theorem family_range (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
     (Ds : Fin n → List Concept) (hL : ∀ k, 0 < (Ds k).length)
-    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (S : Nat)
+    (x0 : Fin n → α) (h0 : ∀ k, persistAll I C0 (Ds k) (x0 k)) (S : Nat) (L : Nat)
     (hN : Fin n → Fin n → Nat)
     (hconst : ∀ k k', k ≠ k' → ∀ i j, hN k k' ≤ i → hN k k' ≤ j →
       I.rho (classChain hI C0 Ds hL x0 h0 k i)
@@ -15537,6 +15610,7 @@ theorem family_range (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
     ∃ pk M : Fin n → Nat, (∀ k, 0 < pk k) ∧
       ∀ ws : List α, (∀ w ∈ ws, I.dom w) → ws.length ≤ S →
         ∃ ik : Fin n → Nat,
+          (∀ k, L ≤ ik k) ∧
           (∀ k, ik k + pk k ≤ M k) ∧
           (∀ k, mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k))
                 = mty C0 I (classChain hI C0 Ds hL x0 h0 k (ik k + pk k))) ∧
@@ -15552,7 +15626,7 @@ theorem family_range (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
   obtain ⟨B, hB⟩ := exists_bound2 n hN
   have hk : ∀ k : Fin n, ∃ qM : Nat × Nat, 0 < qM.1 ∧
       ∀ ws : List α, (∀ w ∈ ws, I.dom w) → ws.length ≤ S →
-        ∃ i, B ≤ i ∧ i + qM.1 ≤ qM.2 ∧
+        ∃ i, max B L ≤ i ∧ i + qM.1 ≤ qM.2 ∧
           mty C0 I (classChain hI C0 Ds hL x0 h0 k i)
             = mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + qM.1)) ∧
           (∀ w ∈ ws, ∀ b, b < qM.1 →
@@ -15560,11 +15634,11 @@ theorem family_range (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
               = I.rho w (classChain hI C0 Ds hL x0 h0 k i)) := by
     intro k
     obtain ⟨q, M, hq, hspec⟩ :=
-      kernel_range_of_persistAll hI C0 (Ds k) (hL k) (x0 k) (h0 k) S B
+      kernel_range_of_persistAll hI C0 (Ds k) (hL k) (x0 k) (h0 k) S (max B L)
     exact ⟨(q, M), hq, hspec⟩
   obtain ⟨g, hg⟩ := Classical.axiomOfChoice hk
   refine ⟨fun k => (g k).1, fun k => (g k).2, fun k => (hg k).1, fun ws hws hS => ?_⟩
-  have hpick : ∀ k : Fin n, ∃ i, B ≤ i ∧ i + (g k).1 ≤ (g k).2 ∧
+  have hpick : ∀ k : Fin n, ∃ i, max B L ≤ i ∧ i + (g k).1 ≤ (g k).2 ∧
       mty C0 I (classChain hI C0 Ds hL x0 h0 k i)
         = mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + (g k).1)) ∧
       (∀ w ∈ ws, ∀ b, b < (g k).1 →
@@ -15572,11 +15646,12 @@ theorem family_range (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
           = I.rho w (classChain hI C0 Ds hL x0 h0 k i)) :=
     fun k => (hg k).2 ws hws hS
   obtain ⟨ik, hik⟩ := Classical.axiomOfChoice hpick
-  refine ⟨ik, fun k => (hik k).2.1, fun k => (hik k).2.2.1, ?_, ?_⟩
+  refine ⟨ik, fun k => Nat.le_trans (Nat.le_max_right B L) (hik k).1,
+    fun k => (hik k).2.1, fun k => (hik k).2.2.1, ?_, ?_⟩
   · exact fun w hw k b hb => (hik k).2.2.2 w hw b hb
   · exact family_hrectQ (classChain hI C0 Ds hL x0 h0) ik hN hconst
-      (fun k k' _ => Nat.le_trans (hB k k') (hik k).1)
-      (fun k k' _ => Nat.le_trans (hB k k') (hik k').1)
+      (fun k k' _ => Nat.le_trans (hB k k') (Nat.le_trans (Nat.le_max_left B L) (hik k).1))
+      (fun k k' _ => Nat.le_trans (hB k k') (Nat.le_trans (Nat.le_max_left B L) (hik k').1))
 
 /-- **THE FAMILY INTERFACE** (§39.5) — every per-kernel obligation of
     `mixKernels_ok` except the demand routing, discharged together from model-side
@@ -19871,6 +19946,7 @@ end VerticalWitness
 #print axioms stable_base_range
 #print axioms kernel_interface_of_persistAll
 #print axioms kernel_range_of_persistAll
+#print axioms exists_bank
 #print axioms family_range
 #print axioms family_interface
 #print axioms window_stab_dichotomy

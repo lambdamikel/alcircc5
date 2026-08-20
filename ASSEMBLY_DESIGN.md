@@ -2999,10 +2999,38 @@ the bank at or above the `M k`, `mixSelect_of_highBank` then makes it serve ever
 window (all of which end at or below `M k`), and `family_range` has already
 delivered stability, recurrence and the cross-rectangle.
 
-**Still to wire:** the bank itself — for each kernel and each `DR`/`PP` phase
-demand, a witness at level `M k`, from the type recurrence plus late picking
-(`dr_witness_all_below` / `pp_witness_all_below`, as `kernel_site` does), with
-its size bounded by `S`. Then coverage (`he_ex`/`hk_ex`) and `codesM`.
+**The bank, supplied.** `exists_bank`: for a chain whose types recur cofinally
+past `T`, and any level `M`, a witness list of size at most `2·|cl C0|` such that
+EVERY `DR`/`PP` demand occurring at any phase past `T` is served by a member
+`r`-related to the chain at every level up to `M` — in particular AT `M` (what
+`mixSelect_of_highBank` consumes) and at every lower level (so it serves any
+window ending at or below `M`). One slot per `(D, r)` with `D ∈ cl C0`,
+`r ∈ {DR, PP}`, filled by `dr_witness_all_below` / `pp_witness_all_below` at
+bound `M` where possible and by the filler `c 0` otherwise — so the size bound is
+STRUCTURAL, independent of the model. Covering uses `cl_ex` (a demand's argument
+is itself in the closure, so it has a slot).
+
+`family_range` also takes a threshold `L`, so the bases clear the bank's
+recurrent-tail bound `T` as well as the cross-constancy horizon `B` (it uses
+`max B L`). Without it the two halves would not have composed.
+
+### 39.7 The final assembly (recipe, not yet written)
+
+Every ingredient is now a theorem; what remains is to run them in this order.
+
+1. `recurrent_tail` per chain ⟹ a threshold `T` past which all occurring types
+   recur cofinally; `classify_cross` on the pairwise non-comparable towers ⟹ the
+   horizons `hN`.
+2. `family_range … S T hN hconst` with `S := n · 2 · |cl C0|` ⟹ periods `pk` and
+   range tops `M`.
+3. `exists_bank` per kernel at `M k` ⟹ banks of size `≤ 2·|cl C0|`; concatenate
+   ⟹ a global bank of size `≤ S`.
+4. Feed that bank back to `family_range` ⟹ bases `ik` with `hty`, `hstab`,
+   `hrectQ`, all windows ending at or below `M k`, and all bases `≥ T`.
+5. `mixSelect_of_highBank` ⟹ `MixSelect`; `cross_const_ne_eq` ⟹ `hinj`.
+
+Then only coverage (`he_ex`/`hk_ex`) and `codesM` remain for mixing, plus the
+independent one-shot `∃PP` gap (§33/§34).
 2. **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
    premise.
 3. Independently: **one-shot `∃PP`** (§33/§34) is still open and is still
