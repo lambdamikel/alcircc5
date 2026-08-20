@@ -13953,6 +13953,7 @@ theorem rr_segment_from (hI : RCC5Interp I) (C0 : Concept)
     (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
     (h0 : persistAll I C0 Ds x0) (L0 : Nat) :
     ∃ i p, L0 ≤ i ∧ 0 < i ∧ 0 < p ∧ Ds.length ∣ p ∧
+      p ≤ (allListsLe (cl C0) (cl C0).length).length * Ds.length ∧
       mty C0 I (rrPt hI C0 Ds hL x0 h0 i) =
       mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + p)) := by
   have hmem : ∀ m, mty C0 I (rrPt hI C0 Ds hL x0 h0 (m * Ds.length)) ∈
@@ -13961,7 +13962,7 @@ theorem rr_segment_from (hI : RCC5Interp I) (C0 : Concept)
     rw [mem_allListsLe]
     exact ⟨by rw [mty]; exact List.length_filter_le _ _,
       fun x hx => by rw [mty] at hx; exact (List.mem_filter.mp hx).1⟩
-  obtain ⟨a, b, hLa, hab, _, heq⟩ :=
+  obtain ⟨a, b, hLa, hab, hjB, heq⟩ :=
     segment_exists_bounded (allListsLe (cl C0) (cl C0).length)
       (fun m => mty C0 I (rrPt hI C0 Ds hL x0 h0 (m * Ds.length))) hmem (L0 + 1)
   have harith : a * Ds.length + (b - a) * Ds.length = b * Ds.length := by
@@ -13971,9 +13972,9 @@ theorem rr_segment_from (hI : RCC5Interp I) (C0 : Concept)
     have h := Nat.mul_le_mul (Nat.le_refl a) hL1
     rwa [Nat.mul_one] at h
   refine ⟨a * Ds.length, (b - a) * Ds.length, by omega, Nat.mul_pos (by omega) hL,
-    Nat.mul_pos (by omega) hL, ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_⟩
-  rw [harith]
-  exact heq
+    Nat.mul_pos (by omega) hL, ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_, ?_⟩
+  · exact Nat.mul_le_mul (by omega) (Nat.le_refl _)
+  · rw [harith]; exact heq
 
 /-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
     needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
@@ -13989,7 +13990,7 @@ theorem class_tower (hI : RCC5Interp I) {C0 : Concept} (Ds : List Concept)
         ∀ D ∈ Ds, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b)) := by
   refine ⟨rrPt hI C0 Ds hL x0 h0, rrPt_dom hI C0 Ds hL x0 h0,
     rrPt_step hI C0 Ds hL x0 h0, fun L0 => ?_⟩
-  obtain ⟨i, p, hL0, hi, hp, hdvd, hty⟩ := rr_segment_from hI C0 Ds hL x0 h0 L0
+  obtain ⟨i, p, hL0, hi, hp, hdvd, _, hty⟩ := rr_segment_from hI C0 Ds hL x0 h0 L0
   refine ⟨i, p, hL0, hp, hty, fun D hD => ?_⟩
   obtain ⟨jj, hget⟩ := List.get_of_mem hD
   obtain ⟨b, hb, hDb⟩ := rr_covers hI C0 Ds hL x0 h0 i p hi hp hdvd jj.1 jj.2
@@ -14753,7 +14754,7 @@ theorem classChain_rec (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
       mty C0 I (classChain hI C0 Ds hL x0 h0 k i)
         = mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + p)) ∧
       ∀ D ∈ Ds k, ∃ b, b < p ∧ D ∈ mty C0 I (classChain hI C0 Ds hL x0 h0 k (i + b)) := by
-  obtain ⟨i, p, hL0, hi, hp, hdvd, hty⟩ :=
+  obtain ⟨i, p, hL0, hi, hp, hdvd, _, hty⟩ :=
     rr_segment_from hI C0 (Ds k) (hL k) (x0 k) (h0 k) L0
   refine ⟨i, p, hL0, hp, hty, fun D hD => ?_⟩
   obtain ⟨jj, hget⟩ := List.get_of_mem hD
@@ -15293,6 +15294,65 @@ theorem exists_good_candidate {A : Type} (p : Nat) (bad : A → Nat → Bool) :
     · simpa using hiw
     · exact hgood v hv
 
+/-- **A BOUNDED PARAMETER RECURS COFINALLY** (§39.5) — the link that lets the
+    window length be FIXED.  `rr_segment_from` supplies a recurrence base past any
+    threshold, but its period varies with the base; the stability argument needs
+    ONE period.  Since the periods are bounded (`rr_segment`'s `p ≤ |types|·|Ds|`),
+    some single value must serve cofinally many bases: otherwise each `q ≤ Pmax`
+    would have a last base, and the max of those finitely many bounds would be
+    exceeded by the next base. -/
+theorem cofinal_fixed_param (Pmax : Nat) (Q : Nat → Nat → Prop)
+    (h : ∀ L, ∃ i q, L ≤ i ∧ q ≤ Pmax ∧ Q i q) :
+    ∃ q, q ≤ Pmax ∧ ∀ L, ∃ i, L ≤ i ∧ Q i q := by
+  classical
+  rcases Classical.em (∃ q, q ≤ Pmax ∧ ∀ L, ∃ i, L ≤ i ∧ Q i q) with hyes | hno
+  · exact hyes
+  · exfalso
+    have hbound : ∀ q : Fin (Pmax + 1), ∃ L, ∀ i, L ≤ i → ¬ Q i q.val := by
+      intro q
+      rcases Classical.em (∃ L, ∀ i, L ≤ i → ¬ Q i q.val) with hh | hh
+      · exact hh
+      · exfalso
+        refine hno ⟨q.val, by omega, fun L => ?_⟩
+        rcases Classical.em (∃ i, L ≤ i ∧ Q i q.val) with h2 | h2
+        · exact h2
+        · exact absurd ⟨L, fun i hi hQ => h2 ⟨i, hi, hQ⟩⟩ hh
+    obtain ⟨f, hf⟩ := Classical.axiomOfChoice hbound
+    obtain ⟨B, hB⟩ := exists_bound (Pmax + 1) f
+    obtain ⟨i, q, hLi, hq, hQ⟩ := h B
+    exact hf ⟨q, by omega⟩ i (Nat.le_trans (hB ⟨q, by omega⟩) hLi) hQ
+
+/-- **A SPACED LIST FROM A COFINAL PREDICATE** (§39.5) — the candidate list the
+    base choice consumes.  If `P` holds cofinally (which is exactly what
+    `rr_segment_from` gives for "is a type-recurrence base"), then for any length
+    `n` and any threshold `L` there is a list of `n` positions, all satisfying `P`,
+    all `≥ L`, pairwise spaced at least `p` apart.  Built by recursion: take the
+    next `P`-position above the running threshold, then recurse above it `+ p`. -/
+theorem exists_spaced_list (P : Nat → Prop) (hcof : ∀ L, ∃ i, L ≤ i ∧ P i) (p : Nat) :
+    ∀ n L, ∃ l : List Nat, l.length = n ∧ (∀ x ∈ l, P x) ∧ (∀ x ∈ l, L ≤ x) ∧
+      l.Pairwise (fun a b => a + p ≤ b) := by
+  intro n
+  induction n with
+  | zero =>
+    intro L
+    refine ⟨[], rfl, ?_, ?_, List.Pairwise.nil⟩
+    · intro x hx; nomatch hx
+    · intro x hx; nomatch hx
+  | succ n ih =>
+    intro L
+    obtain ⟨i, hLi, hPi⟩ := hcof L
+    obtain ⟨l, hlen, hP, hge, hsp⟩ := ih (i + p)
+    refine ⟨i :: l, by simp [hlen], ?_, ?_, ?_⟩
+    · intro x hx
+      rcases List.mem_cons.mp hx with rfl | hx
+      · exact hPi
+      · exact hP x hx
+    · intro x hx
+      rcases List.mem_cons.mp hx with rfl | hx
+      · exact hLi
+      · exact Nat.le_trans hLi (Nat.le_trans (Nat.le_add_right i p) (hge x hx))
+    · exact List.pairwise_cons.mpr ⟨fun b hb => hge b hb, hsp⟩
+
 open Classical in
 /-- **THE BASE CHOICE, CERTIFIED** (§39.3) — the capstone of the selection.  Given
     a finite witness bank and a `p`-spaced candidate list longer than twice the
@@ -15326,6 +15386,70 @@ theorem exists_stable_base (hI : RCC5Interp I) (c : Nat → α)
     simp only [decide_eq_false_iff_not, Decidable.not_not] at this
     exact this
   exact window_const_iff_ends hI hdom hstep (hws w hw) i p hp hends b hb
+
+/-- **THE STABILITY HALF, AT REAL EXTRACTION DATA** (§39.5) — `exists_stable_base`
+    fed by `exists_spaced_list`.  For a finite witness bank and ANY cofinal
+    supply of candidate positions (`P` = "is a type-recurrence base", cofinal by
+    `rr_segment_from`), there is a position satisfying `P` whose whole window is
+    constant for EVERY witness.  This is `mixKernels_ok`'s `hstab` for one kernel,
+    with no hypothesis left except the cofinality the extraction already has.
+    Because the high bank (`mixSelect_of_highBank`) makes the kernels
+    independent, applying this per kernel discharges `hstab` for the family. -/
+theorem exists_stable_recurrence (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (ws : List α) (hws : ∀ w ∈ ws, I.dom w) (p : Nat) (hp : 0 < p)
+    (P : Nat → Prop) (hcof : ∀ L, ∃ i, L ≤ i ∧ P i) :
+    ∃ i, P i ∧ ∀ w ∈ ws, ∀ b, b < p → I.rho w (c (i + b)) = I.rho w (c i) := by
+  obtain ⟨l, hlen, hP, _, hsp⟩ :=
+    exists_spaced_list P hcof p (2 * ws.length + 1) 0
+  obtain ⟨i, hi, hgood⟩ :=
+    exists_stable_base hI c hdom hstep ws hws p hp l hsp (by omega)
+  exact ⟨i, hP i hi, hgood⟩
+
+/-- **THE KERNEL INTERFACE, FROM MODEL-SIDE DATA** (§39.5) — `hty` and `hstab`
+    together, for one round-robin kernel and a given finite witness bank.
+
+    Chain of reasoning: `rr_segment_from` gives a recurrence base past ANY
+    threshold, but with a base-dependent period; its periods are bounded, so
+    `cofinal_fixed_param` extracts ONE period `q` that still recurs cofinally;
+    `exists_stable_recurrence` then picks, among those cofinally many `q`-bases,
+    one whose whole window is constant for the entire bank.
+
+    The output is exactly what `mixKernels_ok` consumes per kernel: a base `i`
+    and period `q` with `mty (c i) = mty (c (i+q))` (its `hty`) and constant
+    external rows across the window (its `hstab`).  With
+    `mixSelect_of_highBank` supplying the serving side and the high bank making
+    the kernels independent, this is the per-kernel interface complete. -/
+theorem kernel_interface_of_persistAll (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAll I C0 Ds x0)
+    (ws : List α) (hws : ∀ w ∈ ws, I.dom w) :
+    ∃ i q, 0 < q ∧
+      mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
+        = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q)) ∧
+      (∀ w ∈ ws, ∀ b, b < q →
+        I.rho w (rrPt hI C0 Ds hL x0 h0 (i + b))
+          = I.rho w (rrPt hI C0 Ds hL x0 h0 i)) := by
+  classical
+  -- one period that still recurs cofinally
+  obtain ⟨q, _, hq⟩ :=
+    cofinal_fixed_param ((allListsLe (cl C0) (cl C0).length).length * Ds.length)
+      (fun i q => 0 < q ∧ mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
+        = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q)))
+      (by
+        intro L
+        obtain ⟨i, pp', hL0, _, hp, _, hbnd, hty⟩ :=
+          rr_segment_from hI C0 Ds hL x0 h0 L
+        exact ⟨i, pp', hL0, hbnd, hp, hty⟩)
+  -- positivity of that period, from any one of its cofinally many witnesses
+  obtain ⟨i0, _, hq0, _⟩ := hq 0
+  -- a base among them whose window is stable for the whole bank
+  obtain ⟨i, hPi, hstab⟩ :=
+    exists_stable_recurrence hI (rrPt hI C0 Ds hL x0 h0)
+      (rrPt_dom hI C0 Ds hL x0 h0) (rrPt_step hI C0 Ds hL x0 h0) ws hws q hq0
+      (fun i => 0 < q ∧ mty C0 I (rrPt hI C0 Ds hL x0 h0 i)
+        = mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + q))) hq
+  exact ⟨i, q, hq0, hPi.2, hstab⟩
 
 /-- **THE COFINAL-WITNESS QUESTION** (§39.2) — what the whole mixed selection now
     rests on, stated on a SINGLE chain.  Every horizontal demand occurring
@@ -19509,7 +19633,11 @@ end VerticalWitness
 #print axioms filter_length_split
 #print axioms spoiled_length_le_two
 #print axioms exists_good_candidate
+#print axioms cofinal_fixed_param
+#print axioms exists_spaced_list
 #print axioms exists_stable_base
+#print axioms exists_stable_recurrence
+#print axioms kernel_interface_of_persistAll
 #print axioms window_stab_dichotomy
 #print axioms mixSelect_cross_of_dichotomy
 #print axioms rank_eq_imp_value_eq

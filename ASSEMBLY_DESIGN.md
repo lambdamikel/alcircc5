@@ -2939,12 +2939,32 @@ bank), and `window_stab_dichotomy` (stay-low ⊎ push-past, both branches).
 - **Period 1 makes `hstab` vacuous** (`a < 1` forces `a = 0`). The whole issue
   only ever concerned genuinely multi-phase (round-robin) kernels.
 
-### 39.5 What remains for mixing
+### 39.5 Instantiation — the per-kernel interface, DONE
 
-1. **Instantiation** — supply the bank from `kernel_site`'s witnesses above the
-   range; exhibit the `p`-spaced candidate list from type recurrences
-   (`rr_segment_from` gives cofinally many, so any length is available); apply
-   the two halves per kernel. Instantiation, not new mathematics.
+The stability half is now discharged at real extraction data, not just as a
+reusable lemma:
+
+- `exists_spaced_list` — a cofinal predicate yields a list of any length,
+  pairwise spaced `≥ p` (built by recursion above a running threshold).
+- `cofinal_fixed_param` — `rr_segment_from`'s period varies with the base, but
+  the periods are BOUNDED, so one period value still recurs cofinally. (This is
+  why `rr_segment_from` now also returns its period bound `p ≤ |types|·|Ds|`,
+  which the original statement discarded.)
+- `exists_stable_recurrence` — among the cofinally many bases of that fixed
+  period, one has a window constant for the entire bank.
+- **`kernel_interface_of_persistAll`** — the capstone: from a `persistAll` site
+  and a finite witness bank, a base `i` and period `q > 0` with
+  `mty (c i) = mty (c (i+q))` (`mixKernels_ok`'s `hty`) AND constant external
+  rows across the window (its `hstab`).
+
+So per kernel, `hty` and `hstab` both come from model-side data. With
+`mixSelect_of_highBank` giving the serving side and the high bank making the
+kernels independent, the per-kernel interface is complete.
+
+**Still to wire:** assembling the per-kernel interfaces into the family
+(`hrectQ` is already certified via `family_hrectQ_bounded`; `hinj` via
+`cross_const_ne_eq`), and supplying the bank itself from `kernel_site`'s
+witnesses above the range.
 2. **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
    premise.
 3. Independently: **one-shot `∃PP`** (§33/§34) is still open and is still
