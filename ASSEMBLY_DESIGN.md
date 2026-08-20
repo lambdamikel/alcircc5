@@ -3208,8 +3208,42 @@ independent of direction, and `kk_pp`/`kk_ppi` already branch on it in
 `mixKernels_ok`, so this looks modest; or (b) the read-off route is carried
 through as planned.
 
-**Recommendation: (a).** It would make the §39 apparatus unnecessary for the
-fragment (still correct, still reusable, but off the critical path), and it
-removes the `∃PO` pool requirement at phases. The honest cost of having pinned
-the summit to read-off is the §39 work; the honest gain is that its obligations
-are now understood well enough to know they can be avoided.
+### 40.1 Option (c) probed — `wp92`, all parts PASS
+
+Before committing to either route, the frame's CAPACITY was checked
+exhaustively (`verification/python/wp92_podefault_frame_capacity.py`, composition
+closure + converse coherence of the declared net):
+
+- **B — arbitrarily many `PPI`-children.** `mtkKernelsDR` declares only one (to
+  `v0`), but the frame is closed with any number: `u–u'` may be `PO`, while
+  `u–d` is FORCED `DR` (`comp(PP,DR) = {DR}`). So `∃PPI` at a phase is coverable,
+  which is exactly what a `dir`-generalization needs — and `exists_bank_ppi`
+  already supplies such children.
+- **C — the `DR` skeleton is free.** Every `dadj` pattern among the `DR`-children
+  is closed (296 skeletons swept); the skeleton imposes no extra burden.
+- **D — `PP` SIBLINGS are free; only `PP` CHAINS break.** Two `PP`-children of
+  one phase are fine PO-defaulted (`comp(PPI,PP)` is unrestricted). The violation
+  needs `e PP w PP g` with `e–g` defaulted, where `comp(PP,PP) = {PP}` forces the
+  non-adjacent pair.
+- **E — hence one-shot `∃PP` IS servable.** A `PP`-child attached at a phase,
+  with the edge propagated DOWN the chain (`p_j PP w` for `j ≤ i`, forced) and
+  `PO` above, is closed at every attachment point.
+
+**A correction this forces to §33.** §33 recorded that a one-shot `∃PP` "cannot
+be a `PP` edge in the β-frame" because `comp(PP,PP) = {PP}` forces the transitive
+edge. That argument silently assumes the `PP`-child ITSELF has a `PP`-successor.
+Without one there is no chain and no violation. So the gap is not "one-shot
+`∃PP`" but specifically **NESTED `∃PP`** — which matches `ascNodes`' own deferred
+"non-nested restriction", and is a materially smaller open item than §33 claims.
+
+*(Method note: part D initially tested two `PP`-siblings, found no violation, and
+I read that as the probe failing. It was the probe correcting me — siblings
+really are fine, and the obstruction is chaining. The wrong model produced the
+right information.)*
+
+**Recommendation: (a), now better supported.** A `dir`-generalized PO-default
+certificate is not blocked by frame capacity on any side the fragment needs. It
+would put the §39 apparatus off the critical path (still correct, still reusable)
+and remove the `∃PO` pool requirement at phases. The residual open item is nested
+`∃PP`, which is independent of the architecture choice — it is a frame fact, not
+an artifact of read-off vs PO-default.
