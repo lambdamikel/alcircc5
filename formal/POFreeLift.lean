@@ -15592,6 +15592,52 @@ theorem exists_bank (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
     · exact List.mem_cons.mpr (Or.inl rfl)
     · exact List.mem_cons.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl)))
 
+open Classical in
+/-- **THE `PPI` BANK** (§39.8) — the third external case of `hk_ex`.
+
+    `DR`/`PP` demands are served by LATE picking (`exists_bank`: a witness above
+    the range, backward forcing down through the window).  `∃PPI` is the opposite
+    orientation — the witness sits INSIDE the chain — so it is served by EARLY
+    picking with a uniform anchor (`ppi_witness_bank`), forward absorption then
+    keeping it inside every later position.  Hence the different shape: `∀ b ≥ A`
+    rather than `∀ b ≤ M`, with ONE anchor `A` for all types at once.
+
+    Slot per `D ∈ cl C0` (no relation index — `PPI` only), so the size bound is
+    again structural. -/
+theorem exists_bank_ppi (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (T : Nat)
+    (hrecall : ∀ a, T ≤ a → ∀ N, ∃ m, N ≤ m ∧ mty C0 I (c m) = mty C0 I (c a)) :
+    ∃ (A : Nat) (ws : List α), (∀ w ∈ ws, I.dom w) ∧ ws.length ≤ (cl C0).length ∧
+      ∀ a, T ≤ a → ∀ D, Concept.ex ppi D ∈ mty C0 I (c a) →
+        ∃ w ∈ ws, D ∈ mty C0 I w ∧ ∀ b, A ≤ b → I.rho (c b) w = ppi := by
+  classical
+  obtain ⟨A, hA⟩ := ppi_witness_bank hI hdom hstep C0
+  let good : Concept → α → Prop :=
+    fun D w => I.dom w ∧ D ∈ mty C0 I w ∧ ∀ b, A ≤ b → I.rho (c b) w = ppi
+  let pick : Concept → α :=
+    fun D => if h : ∃ w, good D w then Classical.choose h else c 0
+  have hpick_dom : ∀ D, I.dom (pick D) := by
+    intro D
+    show I.dom (if h : ∃ w, good D w then Classical.choose h else c 0)
+    split
+    · next h => exact (Classical.choose_spec h).1
+    · exact hdom 0
+  refine ⟨A, (cl C0).map pick, ?_, ?_, ?_⟩
+  · intro w hw
+    obtain ⟨D, _, rfl⟩ := List.mem_map.mp hw
+    exact hpick_dom D
+  · exact Nat.le_of_eq (List.length_map _)
+  · intro a hTa D hmem
+    have hDcl : D ∈ cl C0 := cl_ex (mty_sub _ hmem)
+    have hex : ∃ w, good D w :=
+      hA (mty C0 I (c a)) (mty_mem_sublists (c a)) (hrecall a hTa) D hmem
+    have hspec : good D (pick D) := by
+      show good D (if h : ∃ w, good D w then Classical.choose h else c 0)
+      rw [dif_pos hex]
+      exact Classical.choose_spec hex
+    exact ⟨pick D, List.mem_map.mpr ⟨D, hDcl, rfl⟩, hspec.2.1, hspec.2.2⟩
+
 /-- Concatenating `l.length` lists each of length `≤ b` gives length
     `≤ l.length * b` — the bound that keeps the GLOBAL bank inside the a-priori
     size `S` when the per-kernel banks are concatenated. -/
@@ -20055,6 +20101,7 @@ end VerticalWitness
 #print axioms stable_base_range
 #print axioms kernel_interface_of_persistAll
 #print axioms kernel_range_of_persistAll
+#print axioms exists_bank_ppi
 #print axioms flatMap_length_le
 #print axioms exists_bank
 #print axioms family_range

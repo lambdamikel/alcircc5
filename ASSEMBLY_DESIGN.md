@@ -3041,10 +3041,32 @@ form: the range top `M` is fixed before the bank exists, the bank is then placed
 at `M`, and only then are the bases chosen inside the range. Nothing is ever
 chosen twice, and no iteration or fixed point appears anywhere.
 
-### 39.8 Remaining for mixing
+### 39.8 Coverage — the external cases of `hk_ex`
 
-- **Coverage** — `he_ex`/`hk_ex`, the demand routing (horizontal disjuncts from
-  `ascNodes_covers`, vertical and cross-kernel from the kernels themselves).
+`hk_ex` routes a phase demand `∃r.D` four ways: an external, up the kernel's own
+chain, reflexively (`∃EQ`), or into another kernel. The external route needs a
+bank per relation, and the two orientations need OPPOSITE picking disciplines:
+
+| `r` | discipline | lemma |
+|---|---|---|
+| `DR`, `PP` | LATE — witness above the range, backward forcing down through the window | `exists_bank` |
+| `PPI` | EARLY — witness with a uniform anchor, forward absorption keeping it inside every later position | `exists_bank_ppi` |
+| `EQ` | reflexive, no external | `seg_ex_eq` |
+| `PP` (chain) | up the kernel's own chain | `rr_covers` |
+| `PO` | pool | open — see below |
+
+`exists_bank_ppi` has the mirrored shape (`∀ b ≥ A` rather than `∀ b ≤ M`), with
+ONE anchor `A` covering all types at once (`ppi_witness_bank`); its size bound is
+again structural (one slot per `D ∈ cl C0`).
+
+**Remaining for mixing:**
+
+- **`∃PO` demands** — the one relation with no bank. `kernel_site`'s note is that
+  these "pend against the pool"; the `MTOkPool`/`glueFam_ok` machinery (rounds
+  E0/E1) is where they are discharged, and wiring it to the kernel phases is
+  unbuilt.
+- **`he_ex`** — the same routing for β-externals rather than phases (horizontal
+  disjuncts from `ascNodes_covers`).
 - **`codesM`** + the `decidableSat_of_codes` completeness premise.
 - Independently: **one-shot `∃PP`** (§33/§34), still open, still vertical.
 2. **Coverage** (`he_ex`/`hk_ex`) and **`codesM`** + the `decidableSat_of_codes`
