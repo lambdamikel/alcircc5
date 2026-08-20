@@ -16020,6 +16020,70 @@ theorem mixSelect_assembled (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
   intro k' b hb
   exact hstab w (List.mem_flatMap.mpr ⟨k, List.mem_finRange k, hwk⟩) k' b hb
 
+/-- **TWO COPIES PER CONCEPT CLOSE THE POOL** (§39.9) — the design fact behind the
+    library construction.  A pending `∃PO.D` is admissible only against a pool
+    entry with a DIFFERENT tag, so a library block for `D` cannot serve its OWN
+    `∃PO.D` demand.  Duplicating each concept's entry under two tags (`2i` and
+    `2i+1`) removes the obstruction outright: whichever tag is asking, the other
+    copy is available.
+
+    Note this needs no well-founded descent between libraries — the pool
+    condition is only tag-difference, so mutually demanding libraries are fine.
+    (The blocks themselves are extracted from ONE fixed model in parallel, so
+    there is no recursion to justify either.) -/
+theorem pool_two_copies (n : Nat) (L : Nat → List Concept) (myTag : Nat)
+    {i : Nat} (hi : i < n) {D : Concept} (hD : D ∈ L i) :
+    ∃ q ∈ (List.range n).flatMap (fun j => [(2 * j, L j), (2 * j + 1, L j)]),
+      q.1 ≠ myTag ∧ D ∈ q.2 := by
+  have hmem : i ∈ List.range n := List.mem_range.mpr hi
+  rcases Classical.em (2 * i = myTag) with h | h
+  · exact ⟨(2 * i + 1, L i),
+      List.mem_flatMap.mpr ⟨i, hmem, by simp⟩, by omega, hD⟩
+  · exact ⟨(2 * i, L i),
+      List.mem_flatMap.mpr ⟨i, hmem, by simp⟩, h, hD⟩
+
+/-- The doubled pool has exactly `2n` entries — the bookkeeping bound the
+    finite-code layer will need. -/
+theorem pool_two_copies_length (n : Nat) (L : Nat → List Concept) :
+    ((List.range n).flatMap (fun j => [(2 * j, L j), (2 * j + 1, L j)])).length
+      = 2 * n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [List.range_succ, List.flatMap_append]
+    simp only [List.length_append, List.flatMap_cons, List.flatMap_nil,
+      List.append_nil, List.length_cons, List.length_nil] at ih ⊢
+    omega
+
+/-- **THE DOUBLED POOL IS REALIZED** (§39.9) — `glueFam_ok`'s `hreal`, discharged
+    for the two-copies layout.  With `2n` blocks, block `b` rooted at a node
+    whose label contains the entry for concept `b/2` (blocks `2j` and `2j+1` are
+    two copies rooted at the SAME model node, so both satisfy this), every pool
+    entry is realized in the block carrying its tag.
+
+    Together with `pool_two_copies` this is the whole pool bookkeeping —
+    covering and realization — and neither depends on HOW the individual blocks
+    are built. -/
+theorem pool_realized {β κ : Type} {n : Nat} (F : Fin (2 * n) → MultiTier β κ)
+    (L : Nat → List Concept) (root : Fin (2 * n) → (β ⊕ κ × Nat))
+    (hroot : ∀ b : Fin (2 * n), ∀ c ∈ L (b.val / 2), c ∈ mtLabel (F b) (root b)) :
+    ∀ q ∈ (List.range n).flatMap (fun j => [(2 * j, L j), (2 * j + 1, L j)]),
+      ∃ (b : Fin (2 * n)) (x : β ⊕ κ × Nat),
+        b.val = q.1 ∧ ∀ c ∈ q.2, c ∈ mtLabel (F b) x := by
+  intro q hq
+  obtain ⟨j, hj, hmem⟩ := List.mem_flatMap.mp hq
+  have hjn : j < n := List.mem_range.mp hj
+  rcases List.mem_cons.mp hmem with rfl | hmem
+  · refine ⟨⟨2 * j, by omega⟩, root ⟨2 * j, by omega⟩, rfl, ?_⟩
+    intro c hc
+    exact hroot ⟨2 * j, by omega⟩ c (by simpa [Nat.mul_div_cancel_left j (by omega : 0 < 2)] using hc)
+  · rcases List.mem_cons.mp hmem with rfl | hmem
+    · refine ⟨⟨2 * j + 1, by omega⟩, root ⟨2 * j + 1, by omega⟩, rfl, ?_⟩
+      intro c hc
+      have hdiv : (2 * j + 1) / 2 = j := by omega
+      exact hroot ⟨2 * j + 1, by omega⟩ c (by simpa [hdiv] using hc)
+    · nomatch hmem
+
 /-- **THE POOLED MIXED BLOCK** (§39.8) — `mixKernels_ok` with `∃PO` demands
     allowed to PEND.  Identical to `mixKernels_ok` except that `e_ex`/`k_ex` may
     also discharge a demand by `r = PO` plus a pool entry with a DIFFERENT tag —
@@ -20372,6 +20436,9 @@ end VerticalWitness
 #print axioms mixKernel_ok
 #print axioms mixKernelI_ok
 #print axioms mixKernels_ok
+#print axioms pool_two_copies
+#print axioms pool_two_copies_length
+#print axioms pool_realized
 #print axioms mixKernels_pool_ok
 #print axioms mixKernels_noPo
 #print axioms po_default_asc_frame

@@ -3105,8 +3105,25 @@ self-reference case where `D`'s own library demands `∃PO.D`. And the glue's
 declared `PO` need not match the model: `multiTier_sound` builds a NEW model, and
 `mixKernels_noPo` makes the declared edges obligation-free.
 
-**Remaining for mixing:** that block/pool construction, `he_ex` for β-externals,
-and `codesM`.
+**The pool bookkeeping, done.** Both halves are now certified, and neither
+depends on HOW the individual blocks are built:
+
+- `pool_two_copies` — COVERING. A pending `∃PO.D` is admissible only against a
+  DIFFERENT tag, so a library for `D` cannot serve its own `∃PO.D`. Duplicating
+  each concept's entry under tags `2i` and `2i+1` removes that outright:
+  whichever tag is asking, the other copy answers. No well-founded descent
+  between libraries is needed — the pool condition is only tag-difference, so
+  mutually demanding libraries are fine.
+- `pool_realized` — REALIZATION (`glueFam_ok`'s `hreal`). With `2n` blocks, block
+  `b` rooted at a node whose label contains the entry for concept `b/2` (blocks
+  `2j`, `2j+1` being two copies rooted at the SAME model node), every pool entry
+  is realized in the block carrying its tag.
+- `pool_two_copies_length` — the pool has exactly `2n` entries, the bound the
+  finite-code layer will want.
+
+**Remaining for mixing:** the per-root block extraction (each library block is
+itself a mixed certificate for a model node carrying `D` — the same construction
+applied in parallel, not a recursion), `he_ex` for β-externals, and `codesM`.
 - **`he_ex`** — the same routing for β-externals rather than phases (horizontal
   disjuncts from `ascNodes_covers`).
 - **`codesM`** + the `decidableSat_of_codes` completeness premise.
