@@ -3059,7 +3059,7 @@ bank per relation, and the two orientations need OPPOSITE picking disciplines:
 ONE anchor `A` covering all types at once (`ppi_witness_bank`); its size bound is
 again structural (one slot per `D ∈ cl C0`).
 
-**Remaining for mixing:**
+**Coverage status:**
 
 - **`∃PO` demands — PROBED (`wp91` parts V/W); the external bank provably does
   NOT work.** `DR`/`PP` are carried across a whole window by ONE high pick
@@ -3079,8 +3079,34 @@ again structural (one slot per `D ∈ cl C0`).
 
   So `∃PO` at kernel phases requires the pool machinery (`MTOkPool` /
   `glueFam_ok`, rounds E0/E1) as an ARCHITECTURAL necessity, not as one
-  convenient option among several. Wiring it to the kernel phases is unbuilt, and
-  it is now the substantive remaining piece of mixing.
+  convenient option among several.
+
+### 39.9 The pool interface, wired
+
+Two lemmas connect the mixed construction to the pool machinery:
+
+- **`mixKernels_pool_ok`** — `mixKernels_ok` with `∃PO` demands allowed to PEND:
+  `e_ex`/`k_ex` may also discharge a demand by `r = PO` plus a pool entry with a
+  DIFFERENT tag. This is exactly the interface part W forces — such a demand
+  provably cannot stay inside the block.
+- **`mixKernels_noPo`** — `glueFam_ok`'s side condition, FREE here: every label
+  of `mixKernels` is an `mty`, and a ∀PO-free `C0` has no `∀PO` in its closure
+  (`mty_no_all_po`). This is what lets the glue declare every cross-block edge
+  `PO` without firing an obligation — the fragment's defining escape valve, doing
+  real work.
+
+**The intended shape of the remaining construction** (scoped, not built): blocks
+= the main mixed block plus, for each `∃PO`-subformula `D` of `C0`, library
+blocks rooted at model nodes carrying `D`; pool entries = (tag, that root's
+label); `hreal` holds at the root by construction. Note the blocks are NOT
+recursive — all are extracted from the SAME fixed model in parallel, so there is
+no descent to justify. Two copies per `D` (distinct tags) handle the
+self-reference case where `D`'s own library demands `∃PO.D`. And the glue's
+declared `PO` need not match the model: `multiTier_sound` builds a NEW model, and
+`mixKernels_noPo` makes the declared edges obligation-free.
+
+**Remaining for mixing:** that block/pool construction, `he_ex` for β-externals,
+and `codesM`.
 - **`he_ex`** — the same routing for β-externals rather than phases (horizontal
   disjuncts from `ascNodes_covers`).
 - **`codesM`** + the `decidableSat_of_codes` completeness premise.

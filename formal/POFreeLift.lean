@@ -16020,6 +16020,135 @@ theorem mixSelect_assembled (hI : RCC5Interp I) (C0 : Concept) {n : Nat}
   intro k' b hb
   exact hstab w (List.mem_flatMap.mpr ⟨k, List.mem_finRange k, hwk⟩) k' b hb
 
+/-- **THE POOLED MIXED BLOCK** (§39.8) — `mixKernels_ok` with `∃PO` demands
+    allowed to PEND.  Identical to `mixKernels_ok` except that `e_ex`/`k_ex` may
+    also discharge a demand by `r = PO` plus a pool entry with a DIFFERENT tag —
+    which is what `glueFam_ok` then realizes in another block, the cross edge
+    being `PO` by construction.
+
+    This is the interface the `wp91` part-W finding forces: an `∃PO` demand at a
+    kernel phase provably cannot be served by a β-external (a witness can be `PO`
+    at a single level only), so it must leave the block. -/
+theorem mixKernels_pool_ok [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
+    {β : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (ik pk : κ → Nat) (dir : κ → Bool)
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
+    (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hstab : ∀ k e a, a < pk k →
+      I.rho (g e) (ck k (ik k + a)) = I.rho (g e) (ck k (ik k)))
+    (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (hinj : ∀ v w : β ⊕ κ,
+      Sum.elim g (fun k => ck k (ik k)) v
+        = Sum.elim g (fun k => ck k (ik k)) w → v = w)
+    (myTag : Nat) (P : List (Nat × List Concept))
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mty C0 I (g e) →
+      (∃ f, I.rho (g e) (g f) = r ∧ D ∈ mty C0 I (g f)) ∨
+      (∃ k, conv (I.rho (ck k (ik k)) (g e)) = r ∧
+        ∃ b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b))) ∨
+      (r = po ∧ ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mty C0 I (ck k (ik k + a)) →
+      (∃ f, I.rho (ck k (ik k)) (g f) = r ∧ D ∈ mty C0 I (g f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧ D ∈ mty C0 I (ck k (ik k + b))) ∨
+      (r = eq ∧ D ∈ mty C0 I (ck k (ik k + a))) ∨
+      (∃ k', k ≠ k' ∧ I.rho (ck k (ik k)) (ck k' (ik k')) = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mty C0 I (ck k' (ik k' + b))) ∨
+      (r = po ∧ ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2)) :
+    MTOkPool (mixKernels I C0 g ck ik pk dir) myTag P := by
+  refine
+    { hp := hp
+      frame_q := readoff_qnet_frame hI g (fun k => ck k (ik k))
+        hgdom (fun k => hdom k (ik k)) hinj
+      e_clash := fun _ _ h => mty_clash h
+      e_nobot := fun _ => mty_nobot
+      e_and := fun _ _ _ h => mty_and h
+      e_or := fun _ _ _ h => mty_or h
+      k_clash := fun _ _ _ n h => mty_clash h
+      k_nobot := fun _ _ _ => mty_nobot
+      k_and := fun _ _ _ x y h => mty_and h
+      k_or := fun _ _ _ x y h => mty_or h
+      ee_all := fun _ f _ _ hmem hEr => mty_all hmem (hgdom f) hEr
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := ?_
+      kk_ppi := ?_
+      kk_eq := fun k a _ E hE =>
+        mty_all hE (hdom k (ik k + a)) (hI.refl_eq (ck k (ik k + a)) (hdom k (ik k + a)))
+      kq_all := ?_
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all
+    intro e r X hmem k hr a ha
+    apply mty_all hmem (hdom k (ik k + a))
+    rw [hstab k e a ha, hI.conv_ (ck k (ik k)) (g e) (hdom k (ik k)) (hgdom e)]
+    exact hr
+  · -- ke_all
+    intro k a ha r X hmem f hr
+    apply mty_all hmem (hgdom f)
+    rw [hI.conv_ (g f) (ck k (ik k + a)) (hgdom f) (hdom k (ik k + a)), hstab k f a ha,
+      ← hI.conv_ (g f) (ck k (ik k)) (hgdom f) (hdom k (ik k))]
+    exact hr
+  · -- kk_pp: `all pp` propagates in both directions (segment / dsegment)
+    intro k a ha E hE b hb
+    by_cases hd : dir k = true
+    · have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = pp := by
+        intro n; have h := hstep k n; rw [hd] at h; exact h
+      exact segment_kk_pp hI (fun n => hdom k n) hs (hty k) ha hE b hb
+    · have hd' : dir k = false := by
+        cases hh : dir k with
+        | false => rfl
+        | true => exact absurd hh hd
+      have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = ppi := by
+        intro n; have h := hstep k n; rw [hd'] at h; exact h
+      exact dsegment_kk_pp hI (fun n => hdom k n) hs (hty k) ha hE b hb
+  · -- kk_ppi: `all ppi` propagates in both directions
+    intro k a ha E hE b hb
+    by_cases hd : dir k = true
+    · have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = pp := by
+        intro n; have h := hstep k n; rw [hd] at h; exact h
+      exact segment_kk_ppi hI (fun n => hdom k n) hs (hty k) ha hE b hb
+    · have hd' : dir k = false := by
+        cases hh : dir k with
+        | false => rfl
+        | true => exact absurd hh hd
+      have hs : ∀ n, I.rho (ck k n) (ck k (n + 1)) = ppi := by
+        intro n; have h := hstep k n; rw [hd'] at h; exact h
+      exact dsegment_kk_ppi hI (fun n => hdom k n) hs (hty k) ha hE b hb
+  · -- kq_all: cross-kernel `∀` fires through the constant cross-row `hrectQ`
+    intro k k' hkk a _ r c hmem hr b _
+    apply mty_all hmem (hdom k' (ik k' + b))
+    rw [hrectQ k k' hkk a b]
+    exact hr
+  · -- e_ex: horizontal child or into some kernel
+    intro e r X hmem
+    rcases he_ex e r X hmem with ⟨f, hEf, hXf⟩ | ⟨k, hK, b, hb, hXb⟩ | hpend
+    · exact Or.inl ⟨f, hEf, hXf⟩
+    · exact Or.inr (Or.inl ⟨k, hK, b, hb, hXb⟩)
+    · exact Or.inr (Or.inr hpend)
+  · -- k_ex: external child / up own chain / reflexive / cross-kernel
+    intro k a _ r X hmem
+    rcases hk_ex k a r X hmem with ⟨f, hKf, hXf⟩ | ⟨hcd, b, hb, hXb⟩ |
+      ⟨rfl, hX⟩ | ⟨k', hne, hQ, b, hb, hXb⟩ | hpend
+    · exact Or.inl ⟨f, hKf, hXf⟩
+    · exact Or.inr (Or.inl ⟨hcd, b, hb, hXb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hX⟩))
+    · exact Or.inr (Or.inr (Or.inr (Or.inl ⟨k', hne, hQ, b, hb, hXb⟩)))
+    · exact Or.inr (Or.inr (Or.inr (Or.inr hpend)))
+
+/-- **THE MIXED BLOCK IS `∀PO`-FREE** (§39.8) — `glueFam_ok`'s side condition,
+    free in this fragment.  Every label of `mixKernels` is an `mty`, and a
+    ∀PO-free `C0` has no `∀PO` anywhere in its closure (`mty_no_all_po`).  This
+    is the escape valve that lets the glue declare all cross-block edges `PO`
+    without firing any obligation. -/
+theorem mixKernels_noPo {κ : Type} (C0 : Concept) (hpo : POFree C0)
+    {β : Type} (g : β → α) (ck : κ → Nat → α) (ik pk : κ → Nat) (dir : κ → Bool) :
+    MTNoPo (mixKernels I C0 g ck ik pk dir) where
+  ext := fun _ _ => mty_no_all_po hpo
+  ker := fun _ _ _ _ => mty_no_all_po hpo
+
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
 noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
@@ -20243,6 +20372,8 @@ end VerticalWitness
 #print axioms mixKernel_ok
 #print axioms mixKernelI_ok
 #print axioms mixKernels_ok
+#print axioms mixKernels_pool_ok
+#print axioms mixKernels_noPo
 #print axioms po_default_asc_frame
 #print axioms pp_twin_frame
 #print axioms po_default_desc_frame
