@@ -3247,3 +3247,30 @@ would put the §39 apparatus off the critical path (still correct, still reusabl
 and remove the `∃PO` pool requirement at phases. The residual open item is nested
 `∃PP`, which is independent of the architecture choice — it is a frame fact, not
 an artifact of read-off vs PO-default.
+### 40.2 Route (a) begun: the generalized PO-default frame
+
+`po_dr_multi_kernel_frame'` — `po_dr_multi_kernel_frame` with ARBITRARILY MANY
+`PPI`-children per kernel (`kppi : κ → β → Bool`) in place of the single root
+`v0`. This is the foundation a `dir`-generalized PO-default certificate needs:
+`∃PPI` at a phase is served by a `PPI`-child, and `exists_bank_ppi` already
+supplies them.
+
+`wp92` part B predicted the capacity; deriving the coherence conditions from the
+composition table confirmed that **only ONE edge is forced** — `PPI`-child vs
+`DR`-child must be `DR` (`comp(conv PPI, DR) = {DR}`). Nothing is owed between
+two `PPI`-children, since `net(u,k) = PP` and `PP ∈ comp(DR,PP) ∩ comp(PO,PP)`,
+so `dadj` may be either there. So `hcoh` generalizes to "every `DR`-child is
+`dadj`-adjacent to every `PPI`-child" and the rest of the 212-line case analysis
+ports mechanically. The three genuinely NEW branches are the two-`PPI`-children
+cases, vacuous when there was a single `v0`.
+
+*(A hand-derivation error caught by the table: I first reasoned that two
+`PPI`-children must be non-adjacent, from `comp(DR,PPI) = {DR}`. That conflated
+`K k u` — the kernel-to-child value `PPI` — with `net(u,k)`, which is its
+converse `PP`. The frame condition uses the latter. Checking against the derived
+table rather than trusting the hand argument is what caught it.)*
+
+Next on this route: the `dir`-generalized certificate `mtkKernelsDir` over this
+frame, and its validity theorem (`kk_pp`/`kk_ppi` branching on `dir` as
+`mixKernels_ok` already does, `kq_all` vacuous since `Q ≡ po` and the fragment is
+∀PO-free).
