@@ -195,4 +195,49 @@ before being cited as established. Consistent with the project's standing
 discipline, the honest label remains: \emph{strongly supported, not
 certified}.
 
+\section{Relationship to the Lean artifact (added 2026-08-20)}
+\label{sec:leanrel}
+
+Since this paper was written, a substantial Lean development for this same
+fragment has grown in \code{formal/POFreeLift.lean}. The relationship is
+\emph{not} that the Lean transcribes the proof above, and the two must not be
+conflated when citing either. Precisely:
+
+\paragraph{Shared engine.} Every ingredient named in the sketch of
+Theorem~\ref{thm:main} is machine-checked in the Lean file, under these names:
+external-relation stabilization (\code{external\_stabilizes}), backward forcing
+for $\DR$ and $\PP$ (\code{backward\_forcing\_dr}, \code{backward\_forcing\_pp}),
+forward absorption for $\PPI$ (\code{forward\_absorption\_ppi}), and the
+$\forall\PO$-vacuity that makes Lemma~\ref{lem:pocoh} free
+(\code{mty\_no\_all\_po}, resting on \code{pofree\_cl\_all}).
+
+\paragraph{Different final step, and what is therefore NOT certified.} This paper
+concludes with a \emph{split-forest presentation} of live width at most
+$K(C)=(1+m)^2 2^{2^m}$, and derives decidability from that bound. The Lean
+development instead builds a finite \emph{certificate} (\code{MultiTier}:
+$\kappa$ periodic kernels plus $\beta$ externals) and obtains
+\code{Decidable (Satisfiable C0)} from a soundness theorem
+(\code{multiTier\_sound}) together with finite enumeration of certificate codes.
+Consequently the Lean file contains \emph{no width statement at all}: neither
+$K(C)$, nor live width, nor the existence of a split-forest presentation, is
+machine-checked. A reader must not take the Lean development as certifying
+Theorem~\ref{thm:main} as stated.
+
+\paragraph{The split-forest idea is nonetheless load-bearing.} The certificate's
+shape \emph{is} the split-forest discipline: kernels are the vertical
+$\PP/\PPI$ skeleton (with a direction flag), externals carry the horizontal
+$\DR/\PO$ completion, and the interface rows are the cross edges. So the
+decomposition remains the semantic foundation, exactly as the overview claims;
+what the Lean route dispenses with is the split forest as a formal object
+carrying a width measure, not the insight.
+
+\paragraph{Consequence for a rewrite.} Three registers are easy to conflate and
+should be separated explicitly in any revision: (i) the split-forest
+\emph{insight}, which is alive and formalized in structure; (ii) the
+split-forest \emph{presentation with its $K(C)$ bound}, which is this paper's
+theorem and is a proof sketch, unreviewed and not machine-checked; (iii) the
+split-forest \emph{plus patchwork bags and a parity automaton} of the
+full-logic argument (Theorems A/B/C), which is untouched by the Lean work and
+still gated on F6. See \code{PAPER\_REWRITE\_NOTES.md} for the full record.
+
 \end{document}
