@@ -4176,3 +4176,72 @@ kernel pairs, which this architecture never declares non-`PO`.
 Items 2–3 are construction work. Item 1 is the real unknown, and it is the same
 counting problem the campaign has always had — now localized to the kernels
 alone, which is progress over F6 in the full logic but not a solution.
+
+## 44. ROADBLOCK FLAGGED: one-shot `∃PP` (2026-08-21)
+
+Michael asked to be told when a restriction risks becoming a roadblock. **This is
+one, and it is load-bearing.** Probe: `wp98`.
+
+### 44.1 The finding
+
+`odSeed`'s order `mixLt` makes externals pairwise `lt`-INCOMPARABLE, so
+`E e f` is never `PP`. An `∃PP.D` at an external must therefore go to a KERNEL —
+and a kernel needs an infinite `PP`-chain reproducing the demand.
+
+`wp98` A: **88.8%** of `∃PP` demands with a witness are ONE-SHOT (the witness
+starts no such chain), present in 12.2% of satisfiable ∀PO-free instances. This
+is the common case, not a corner. `C0 = ∃PP.A ⊓ ∀PP.(A ⊓ ¬∃PP.⊤)` is satisfiable,
+∀PO-free, and has no infinite `PP`-chain at all.
+
+This is §33's finding, unresolved since 2026-08-14, and `odSeed` inherits it.
+§43's work is not wasted — the frame, the certificate, the debt reduction and the
+composition-forcing all stand — but the frame's ORDER is too flat.
+
+### 44.2 Why explicit `PP` edges collide with the budgets
+
+An ordered-disjoint frame FORCES transitive edges. With `e1 PP e2 PP e3` at
+budgets `N, N-1, N-2`, the forced `e1 PP e3` has `ee_all` demanding
+`bud e1 ≤ bud e3 + 1`, i.e. `N ≤ N-1`. `wp98` D constructs the witness:
+
+```
+C0 = ∀PP.(∃DR.∃DR.A) ⊓ ∃PP.∃PP.B      over  e1 ⊂ e2 ⊂ e3
+```
+
+the forced edge `e1 PP e3` carries a `∀PP` whose argument has depth 2 while a
+decreasing budget leaves `e3` at 1. **1 violation decreasing, 0 uniform.**
+
+### 44.3 The repair, and its one new ingredient
+
+Keep the budget CONSTANT along `PP`-paths; drop it only on `DR`/`PO`/`EQ` steps.
+Then every forced transitive edge has equal budgets and `ee_all` is satisfied.
+
+Two things must then be supplied:
+
+1. **The external order.** Read it OFF THE MODEL (`elt e f := I.rho (g e) (g f) = pp`)
+   rather than declaring it — transitivity is then `comp(PP,PP) = {PP}` for free,
+   and irreflexivity is `refl_eq`. Only `disj` stays declared (the seed closure),
+   so the read-off budget problem of `wp96` A does NOT return: it was caused by
+   read-off on ALL pairs, and here only the vertical block is read off.
+2. **Termination.** The budget no longer decreases along `PP`, so the measure
+   becomes lexicographic `(budget, remaining PP-path length)`. The path length is
+   bounded by the DICHOTOMY the campaign already owns:
+
+   > a `PP`-chain of demands either repeats a type — and a repetition gives a
+   > periodic tower, hence a KERNEL (`recurrent_tail`, `rr_segment_from`,
+   > certified) — or it does not, and is then shorter than the number of types.
+
+   So: cut every `PP`-path at its first type repetition. Below the cut it is a
+   finite explicit path at uniform budget; at the cut it becomes a kernel. This
+   is the one-shot/persistent dichotomy made structural, and it also bounds the
+   node count, which is §43.11 item 1.
+
+### 44.4 Honest status
+
+This is a genuine architectural change to the frame, not wiring: `mixLt` gains an
+external order, transitivity and `hsep` need re-proving over a taller order, and
+the dichotomy above needs to become a Lean construction. The ingredients
+(`recurrent_tail`, `rr_segment_from`, `comp(PP,PP) = {PP}`, `odSeed`'s
+seed-closure trick) are all certified; the assembly is not.
+
+Estimated: comparable to §43's frame work, i.e. a substantial piece rather than a
+session's wiring. Flagged BEFORE building on the flat order, which is the point.
