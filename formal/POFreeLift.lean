@@ -20449,6 +20449,152 @@ def Idir : Interp (Bool × Nat) := ⟨fun _ => True, dirRho, fun a q => a = 0 �
 
 theorem Idir_rcc5 : RCC5Interp Idir := frame_rcc5 dirRho dirRho_frame _
 
+/-- `A₀` holds exactly in the ascending region. -/
+theorem dir_a0 (n : Nat) : sat Idir (false, n) (Concept.atom 0) := ⟨rfl, rfl⟩
+
+theorem dir_no_a0 (i : Nat) : ¬ sat Idir (true, i) (Concept.atom 0) := by
+  intro h; exact absurd h.2 (by simp)
+
+/-- A `PP`-successor of an ascending-region node is another ascending-region
+    node further along; of a descending-region node, an EARLIER one. -/
+theorem dir_pp_char {b : Bool} {i : Nat} {q : Bool × Nat}
+    (h : Idir.rho (b, i) q = pp) : q.1 = b := by
+  rcases q with ⟨b', j⟩
+  rcases Classical.em (b = b') with hb | hb
+  · exact hb.symm
+  · exfalso
+    have : dirRho (b, i) (b', j) = pp := h
+    simp [dirRho, hb] at this
+
+theorem dir_ex_pp (n : Nat) : sat Idir (false, n) (Concept.ex pp (Concept.atom 0)) :=
+  ⟨(false, n + 1), trivial, by simp [Idir, dirRho, chain_lt (Nat.lt_succ_self n)],
+    dir_a0 (n + 1)⟩
+
+/-- The descending region has no `A₀` anywhere below, so `∃PP.A₀` fails there. -/
+theorem dir_no_ex_pp (i : Nat) :
+    ¬ sat Idir (true, i) (Concept.ex pp (Concept.atom 0)) := by
+  rintro ⟨q, -, hr, hA⟩
+  have hq : q.1 = true := dir_pp_char hr
+  rcases q with ⟨b', j⟩
+  simp only at hq; subst hq
+  exact dir_no_a0 j hA
+
+theorem dir_all_pp (n : Nat) :
+    sat Idir (false, n) (Concept.all pp (Concept.ex pp (Concept.atom 0))) := by
+  intro q _ hr
+  have hq : q.1 = false := dir_pp_char hr
+  rcases q with ⟨b', j⟩
+  simp only at hq; subst hq
+  exact dir_ex_pp j
+
+/-- Past the top of the descending region the `∀PP` guard fails too: `(true,0)`
+    has no `PP`-successor at all, so it falsifies `∃PP.A₀`, and every `(true,i)`
+    with `i ≥ 1` sees it. -/
+theorem dir_no_all_pp {i : Nat} (hi : 1 ≤ i) :
+    ¬ sat Idir (true, i) (Concept.all pp (Concept.ex pp (Concept.atom 0))) := by
+  intro h
+  exact dir_no_ex_pp 0 (h (true, 0) trivial
+    (by simp [Idir, dirRho, chain_lt (show 0 < i by omega)]))
+
+open Classical in
+/-- In the ascending region every closure concept holds, so the model type is
+    the whole closure — constant along the ascending chain. -/
+theorem dirfull (n : Nat) : mty Cvert Idir (false, n) = cl Cvert := by
+  unfold mty
+  apply List.filter_eq_self.mpr
+  intro D hD
+  refine decide_eq_true ?_
+  simp only [Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact ⟨⟨dir_a0 n, dir_ex_pp n⟩, dir_all_pp n⟩
+  · exact ⟨dir_a0 n, dir_ex_pp n⟩
+  · exact dir_a0 n
+  · exact dir_ex_pp n
+  · exact dir_a0 n
+  · exact dir_all_pp n
+  · exact dir_ex_pp n
+  · exact dir_a0 n
+
+open Classical in
+/-- In the descending region, past the top, NOTHING in the closure holds — the
+    model type is empty, hence trivially constant along the descending chain. -/
+theorem dirempty {i : Nat} (hi : 1 ≤ i) : mty Cvert Idir (true, i) = [] := by
+  unfold mty
+  apply List.filter_eq_nil_iff.mpr
+  intro D hD
+  simp only [Cvert, cl, List.mem_cons, List.mem_append, List.not_mem_nil,
+    or_false, or_assoc] at hD
+  refine fun hsat => ?_
+  have h : sat Idir (true, i) D := of_decide_eq_true hsat
+  rcases hD with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
+  · exact dir_no_a0 i h.1.1
+  · exact dir_no_a0 i h.1
+  · exact dir_no_a0 i h
+  · exact dir_no_ex_pp i h
+  · exact dir_no_a0 i h
+  · exact dir_no_all_pp hi h
+  · exact dir_no_ex_pp i h
+  · exact dir_no_a0 i h
+
+open Classical in
+/-- **NON-VACUITY OF THE `dir` GENERALIZATION — BOTH DIRECTIONS AT ONCE** (§40.4).
+    `κ = Bool` with `dir = id`: kernel `true` is an ASCENDING `PP`-chain through
+    the ascending region, kernel `false` a genuinely DESCENDING `PPI`-chain
+    through the descending region.  `mtkKernelsDR` could not state this — its
+    `up` is constantly `true`.
+
+    `β = Empty`, so all external obligations are vacuous and the cross-kernel
+    `Q ≡ po` is obligation-free by ∀PO-freeness; the ascending kernel serves its
+    own `∃PP.A₀` up its chain, and the descending kernel's phases carry NOTHING
+    (`dirempty`), so its `hk_ex` is vacuous while its `kk_pp`/`kk_ppi` still run
+    through the `dir = false` branch of `mtk_kk_*_dir`. -/
+theorem mtkKernelsDir_both_directions : Satisfiable Cvert := by
+  have hok := mtkKernelsDir_ok Idir_rcc5 Cvert_pofree
+    (g := fun e : Empty => e.elim) (fun e => e.elim)
+    (bud := fun e : Empty => e.elim) (bk := fun _ : Bool => mdepth Cvert)
+    (dadj := fun e _ => e.elim) (fun e => e.elim)
+    (kppi := fun _ e => e.elim) (kdr := fun _ e => e.elim)
+    (fun _ e => e.elim)
+    (dir := id)
+    (ck := fun k n => if k then ((false, n) : Bool × Nat) else ((true, n + 1) : Bool × Nat))
+    (fun _ _ => trivial)
+    (by intro k n; cases k
+        · show Idir.rho ((true, n + 1) : Bool × Nat) ((true, n + 1 + 1) : Bool × Nat) = ppi
+          show dirRho (true, n + 1) (true, n + 1 + 1) = ppi
+          simp only [dirRho, if_true]
+          exact chain_gt (by omega)
+        · show Idir.rho ((false, n) : Bool × Nat) ((false, n + 1) : Bool × Nat) = pp
+          show dirRho (false, n) (false, n + 1) = pp
+          simp only [dirRho, Bool.false_eq_true, if_false]
+          exact chain_lt (by omega))
+    (ik := fun _ => 0) (pk := fun _ => 1) (fun _ => Nat.one_pos)
+    (by intro k; cases k
+        · show mty Cvert Idir ((true, 0 + 1) : Bool × Nat)
+              = mty Cvert Idir ((true, 0 + 1 + 1) : Bool × Nat)
+          rw [dirempty (by omega), dirempty (by omega)]
+        · show mty Cvert Idir ((false, 0) : Bool × Nat)
+              = mty Cvert Idir ((false, 0 + 1) : Bool × Nat)
+          rw [dirfull, dirfull])
+    (fun _ _ e => e.elim) (fun _ _ e => e.elim)
+    (fun e => e.elim) (fun e => e.elim)
+    (by intro k a r D hmem
+        cases k
+        · exfalso
+          have h : Concept.ex r D ∈ mty Cvert Idir ((true, 0 + a + 1) : Bool × Nat) :=
+            (mem_mtk.mp hmem).1
+          rw [dirempty (by omega)] at h
+          nomatch h
+        · have hd := cvert_demands r D (mty_sub _ (mem_mtk.mp hmem).1)
+          obtain ⟨rfl, rfl⟩ := hd
+          refine Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos, ?_⟩)
+          show Concept.atom 0 ∈ mtk Cvert Idir ((false, 0 + 0) : Bool × Nat) (mdepth Cvert)
+          exact mem_mtk.mpr ⟨by rw [dirfull]; decide, by decide⟩)
+  exact @multiTier_sound Empty Bool (fun a b => Classical.propDecidable (a = b)) _
+    hok (Sum.inr (true, 0)) Cvert
+    (by show Cvert ∈ mtk Cvert Idir ((false, 0) : Bool × Nat) (mdepth Cvert)
+        exact mem_mtk.mpr ⟨by rw [dirfull]; exact cl_self Cvert, Nat.le_refl _⟩)
+
 /-- Everything in `cl Cnest` is satisfied at every `Ipo` point. -/
 theorem psat_all (p : Bool × Nat) : ∀ D ∈ cl Cnest, sat Ipo p D := by
   intro D hD
@@ -20938,6 +21084,9 @@ end VerticalWitness
 #print axioms VerticalWitness.rchain_cc
 #print axioms VerticalWitness.dirRho_frame
 #print axioms VerticalWitness.Idir_rcc5
+#print axioms VerticalWitness.dirfull
+#print axioms VerticalWitness.dirempty
+#print axioms VerticalWitness.mtkKernelsDir_both_directions
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes

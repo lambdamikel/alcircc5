@@ -3334,6 +3334,27 @@ Adding a `PP`-valued `K` edge would fix it, but that re-enters the `PP`-chaining
 obstruction (`wp92` part D), so it is not free. Recorded here rather than
 discovered later during coverage.
 
+**The `dir` generalization is now witnessed firing.**
+`mtkKernelsDir_both_directions`: `κ = Bool` with `dir = id` — kernel `true` an
+ASCENDING `PP`-chain through `Idir`'s ascending region, kernel `false` a
+genuinely DESCENDING `PPI`-chain through the descending region. `mtkKernelsDR`
+cannot state this at all (`up` is constantly `true`).
+
+`β = Empty`, so every external obligation is vacuous and the cross-kernel
+`Q ≡ po` is obligation-free by ∀PO-freeness. The ascending kernel serves its own
+`∃PP.A₀` up its chain; the descending kernel's phases carry NOTHING (`dirempty`
+— past the top of the descending region no closure concept holds, since `A₀`
+lives only in the ascending region), so its `hk_ex` is vacuous while its
+`kk_pp`/`kk_ppi` still run through the `dir = false` branch of `mtk_kk_*_dir`.
+
+Supporting: `dirfull` (the ascending region realizes the whole closure, so the
+type is constant there) and `dirempty` (the descending region past the top
+realizes nothing, so the type is constant there too — both give `hty` for free).
+
+So both halves of §40.3's generalization are now witnessed: many `PPI`-children
+(`mtkKernelsDir_two_ppi_children`) and both directions
+(`mtkKernelsDir_both_directions`).
+
 ### 40.5 Remaining on route (a)
 
 - **Extraction into this certificate**: supply `g`/`bud`/`bk`/`dadj`/`kppi`/`kdr`
