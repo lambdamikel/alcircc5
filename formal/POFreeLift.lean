@@ -16678,6 +16678,119 @@ theorem mixKernels_noPo {κ : Type} (C0 : Concept) (hpo : POFree C0)
   ext := fun _ _ => mty_no_all_po hpo
   ker := fun _ _ _ _ => mty_no_all_po hpo
 
+/-- **THE READ-OFF CERTIFICATE WITH TRUNCATED LABELS** (§42.3) — the combination
+    the route needs and the file did not have.
+
+    Every `mtk`-labelled certificate in the file uses DECLARED relations
+    (`mtkKernels*`, `posetMT`, `chainMT`); every read-off certificate uses
+    untruncated `mty` labels (`mixKernels`, `vkernel*`).  Read-off gives
+    generality — the model's own relations, so all five values, and nesting for
+    free — while `mtk` truncation gives FINITENESS, which is what
+    `mtkNodes_length_le` and the `codes` pipeline need.  `mixKernelsK` is
+    read-off relations with truncated labels. -/
+noncomputable def mixKernelsK (I : Interp α) (C0 : Concept) {β κ : Type}
+    (g : β → α) (bud : β → Nat) (bk : κ → Nat)
+    (ck : κ → Nat → α) (ik pk : κ → Nat) (dir : κ → Bool) : MultiTier β κ where
+  E := fun e f => I.rho (g e) (g f)
+  K := fun k e => I.rho (ck k (ik k)) (g e)
+  Q := fun k k' => I.rho (ck k (ik k)) (ck k' (ik k'))
+  up := dir
+  tauE := fun e => mtk C0 I (g e) (bud e)
+  p := pk
+  phase := fun k a => mtk C0 I (ck k (ik k + a)) (bk k)
+
+/-- **THE READ-OFF TRUNCATED CERTIFICATE IS VALID** (§42.3).  Same obligations as
+    `mixKernels_ok` — `hstab` (external rows constant across a phase window) and
+    `hrectQ` (cross-kernel rows constant), both discharged by the §39 apparatus —
+    plus BUDGET side-conditions, which is the whole price of truncation.  The
+    frame is `readoff_qnet_frame`, so it needs only distinct representatives. -/
+theorem mixKernelsK_ok [DecidableEq κ] (hI : RCC5Interp I) (C0 : Concept)
+    {β : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (bud : β → Nat) (bk : κ → Nat)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (ik pk : κ → Nat) (dir : κ → Bool)
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
+    (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hstab : ∀ k e a, a < pk k →
+      I.rho (g e) (ck k (ik k + a)) = I.rho (g e) (ck k (ik k)))
+    (hrectQ : ∀ k k', k ≠ k' → ∀ a b,
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = I.rho (ck k (ik k)) (ck k' (ik k')))
+    (hinj : ∀ v w : β ⊕ κ,
+      Sum.elim g (fun k => ck k (ik k)) v
+        = Sum.elim g (fun k => ck k (ik k)) w → v = w)
+    -- budget side-conditions: the price of truncation
+    (hbEE : ∀ e f, bud e ≤ bud f + 1)
+    (hbEK : ∀ e k, bud e ≤ bk k + 1)
+    (hbKE : ∀ k e, bk k ≤ bud e + 1)
+    (hbKK : ∀ k k', bk k ≤ bk k' + 1)
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, I.rho (g e) (g f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (I.rho (ck k (ik k)) (g e)) = r ∧
+        ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bk k)))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      (∃ f, I.rho (ck k (ik k)) (g f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
+        D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) ∨
+      (∃ k', k ≠ k' ∧ I.rho (ck k (ik k)) (ck k' (ik k')) = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mtk C0 I (ck k' (ik k' + b)) (bk k'))) :
+    MultiTierOk (mixKernelsK I C0 g bud bk ck ik pk dir) := by
+  -- the ∀ costs one level, so a source budget `b ≤ b' + 1` suffices
+  have rebud : ∀ (x y : α) (b b' : Nat) (r : Atom) (cc : Concept), b ≤ b' + 1 →
+      Concept.all r cc ∈ mtk C0 I x b → I.rho x y = r → I.dom y →
+      cc ∈ mtk C0 I y b' := by
+    intro x y b b' r cc hb hmem hr hy
+    have h1 : cc ∈ mtk C0 I y b := all_into hmem hr hy
+    refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+    have hmd : mdepth cc + 1 ≤ b := (mem_mtk.mp hmem).2
+    omega
+  refine
+    { hp := hp
+      frame_q := readoff_qnet_frame hI g (fun k => ck k (ik k))
+        hgdom (fun k => hdom k (ik k)) hinj
+      e_clash := fun _ _ h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ _ _ h => mtk_and h
+      e_or := fun _ _ _ h => mtk_or h
+      k_clash := fun _ _ _ _ h => mtk_clash h
+      k_nobot := fun _ _ _ => mtk_nobot
+      k_and := fun _ _ _ _ _ h => mtk_and h
+      k_or := fun _ _ _ _ _ h => mtk_or h
+      ee_all := ?_
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun k a ha cc hmem b hb =>
+        mtk_kk_pp_dir hI (ck k) (hdom k) (dir k) (hstep k) (hty k) ha (bk k) hmem hb
+      kk_ppi := fun k a ha cc hmem b hb =>
+        mtk_kk_ppi_dir hI (ck k) (hdom k) (dir k) (hstep k) (hty k) ha (bk k) hmem hb
+      kk_eq := fun k a _ cc hmem =>
+        all_into hmem (hI.refl_eq (ck k (ik k + a)) (hdom k (ik k + a)))
+          (hdom k (ik k + a))
+      kq_all := ?_
+      e_ex := he_ex
+      k_ex := fun k a _ r D hmem => hk_ex k a r D hmem }
+  · -- ee_all
+    intro e f r cc hmem hE
+    exact rebud _ _ _ _ _ _ (hbEE e f) hmem hE (hgdom f)
+  · -- ek_all
+    intro e r cc hmem k hr a ha
+    refine rebud _ _ _ _ _ _ (hbEK e k) hmem ?_ (hdom k (ik k + a))
+    rw [hstab k e a ha, hI.conv_ (ck k (ik k)) (g e) (hdom k (ik k)) (hgdom e)]
+    exact hr
+  · -- ke_all
+    intro k a ha r cc hmem f hK
+    refine rebud _ _ _ _ _ _ (hbKE k f) hmem ?_ (hgdom f)
+    rw [hI.conv_ (g f) (ck k (ik k + a)) (hgdom f) (hdom k (ik k + a)),
+      hstab k f a ha, ← hI.conv_ (g f) (ck k (ik k)) (hgdom f) (hdom k (ik k))]
+    exact hK
+  · -- kq_all
+    intro k k' hkk a _ r cc hmem hQ b _
+    refine rebud _ _ _ _ _ _ (hbKK k k') hmem ?_ (hdom k' (ik k' + b))
+    rw [hrectQ k k' hkk a b]
+    exact hQ
+
 /-- Two ascending `PP`-kernels indexed by `Bool`; every value read off
     the model, the cross-value `Q` from the two bases. -/
 noncomputable def vkernel2 (I : Interp α) (C0 : Concept) (ck : Bool → Nat → α)
@@ -21604,6 +21717,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cnest_via_flat
 #print axioms VerticalWitness.cmerge_via_tower
 
+#print axioms mixKernelsK_ok
 #print axioms odNet_frame
 #print axioms odNet_pp_inv
 #print axioms qnet_odNet

@@ -3701,6 +3701,34 @@ discharged by the §39 apparatus — `exists_bank`, `exists_bank_ppi`,
 `encodeM`/`codesM` (mirroring the certified `encodeHF_mem_codes` pattern), and
 the `decidableSat_of_codes` premise.
 
+### 42.3b The gap the restored route actually had: `mixKernelsK`
+
+Back on the read-off route, classifying every `MultiTier` definition in the file
+by (relation source, label kind) — by reading the definitions, per §42.4 —
+showed a clean split with one empty cell:
+
+| | `mty` labels (untruncated) | `mtk` labels (truncated) |
+|---|---|---|
+| **read-off** relations | `mixKernels`, `vkernel*`, `mixKernel*` | *(empty)* |
+| **declared** relations | — | `mtkKernels*`, `posetMT`, `chainMT` |
+
+Read-off gives generality (the model's own relations: all five values, nesting
+for free); `mtk` truncation gives FINITENESS, which is what `mtkNodes_length_le`
+and the `codes` pipeline consume. The route needs both, and the combination did
+not exist — which is why step 5's certified counting did not yet apply to
+`mixKernels`.
+
+**`mixKernelsK` / `mixKernelsK_ok`** fill that cell: read-off `E`/`K`/`Q` with
+`mtk` labels. Obligations are `mixKernels_ok`'s (`hstab`, `hrectQ` — the §39
+apparatus) plus four BUDGET side-conditions, which are the whole price of
+truncation. `frame_q` is `readoff_qnet_frame`, so it needs only distinct
+representatives.
+
+The budget arithmetic has one subtlety worth recording: a `∀`-membership costs
+one level (`mdepth (all r cc) = 1 + mdepth cc`), so a source budget `b ≤ b' + 1`
+suffices — the same trick `podefault_ek_dir` uses. A naive re-budgeting lemma
+that ignores this is unprovable.
+
 ### 42.4 The pattern, recorded
 
 This is the **third** time in one session that a conclusion rested on not
