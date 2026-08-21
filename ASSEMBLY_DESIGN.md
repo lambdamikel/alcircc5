@@ -7,6 +7,29 @@ remaining `Decidable (Satisfiable C₀)` theorem, with the hard cases
 located and their resolutions identified. Prose only — no Lean written
 under-designed (the round-19/20 lesson).*
 
+> ## ⚠ CURRENT ROUTE — read this before anything else
+>
+> **The live route is §41: the ORDERED-DISJOINT certificate (`odNet`).**
+> It is the only frame that expresses all five RCC5 relations and survives
+> nesting, and it is therefore the only one probed to reach the GENERAL
+> ∀PO-free fragment.
+>
+> Two earlier certificate architectures are **OFF THE CRITICAL PATH** — both
+> still correct, still certified, both provably unable to reach the general
+> fragment:
+> * **read-off `mixKernels`** (§35–§39) — needs `hstab`/`hrectQ`; the whole
+>   §39 selection apparatus exists to discharge those. Superseded because
+>   PO-default avoids the obligations entirely.
+> * **PO-default `mtkKernelsDir`** (§40) — no `PP`/`PPI` among externals, so
+>   nesting and externals' `∃PPI` are inexpressible.
+>
+> Both are special cases of `odNet` (empty `disj` ⇒ `posetNet`; empty `lt` ⇒
+> PO-default). Read §41 first; §§35–40 are the record of how the route was
+> found, and of what was refuted along the way.
+>
+> Before designing anything, consult **`CERTIFIED_INVENTORY.md`** — this
+> session twice re-derived machinery that already existed.
+
 ---
 
 ## 0. The target
@@ -2872,6 +2895,12 @@ is: **persistent-∃PP vertical is complete; one-shot `∃PP` is open.**
 
 ## 39. THE MIXED SELECTION — RESOLVED (2026-08-19)
 
+> **OFF THE CRITICAL PATH (2026-08-20).** Everything below discharges `hstab`
+> and `hrectQ`, which the READ-OFF certificate (`mixKernels`) needs and the
+> current §41 route does not have at all — `odNet` declares its relations rather
+> than reading them off. The results are correct and reusable; they are simply
+> not required for the fragment. Read §41 for the live route.
+
 *This section supersedes and consolidates the working notes of the 2026-08-19
 session (formerly §§39–43: the ordering cycle, the staged plan, the collapse,
 the union bound). It states the ANSWER first; §39.6 keeps the refuted routes as
@@ -3179,6 +3208,13 @@ in the first working notes and then mis-framed as a fixed point, then as a stage
 construction, before the high bank dissolved it.
 
 ## 40. ARCHITECTURE FORK: read-off vs PO-default (2026-08-20)
+
+> **BOTH BRANCHES OFF THE CRITICAL PATH (2026-08-20, same day).** This section
+> compares two architectures and recommends PO-default; §41 then shows PO-default
+> ALSO cannot reach the general fragment (no `PP`/`PPI` among externals, so
+> nesting is inexpressible). Kept because the comparison is what located the
+> real requirement — a frame with all five relations — and because
+> `mtkKernelsDir_ok` and its frame remain certified special cases of `odNet`.
 
 Scoping `he_ex` surfaced that the file contains TWO mixed-certificate
 architectures, and the campaign's §35 pinned the summit to the more expensive one
