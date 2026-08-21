@@ -16678,6 +16678,24 @@ theorem mixKernels_noPo {κ : Type} (C0 : Concept) (hpo : POFree C0)
   ext := fun _ _ => mty_no_all_po hpo
   ker := fun _ _ _ _ => mty_no_all_po hpo
 
+/-- **`mtk` IS MONOTONE IN THE BUDGET** (§42.5) — the enabling fact for a
+    read-off certificate over a deduplicated node set.  `mtkNodes` may visit the
+    SAME model element at several budgets; `readoff_qnet_frame` needs DISTINCT
+    representatives, so the external list must be deduplicated by model element,
+    keeping the LARGEST budget seen.  Monotonicity is what makes that safe: a
+    witness found at the smaller budget still lies in the larger label. -/
+theorem mtk_mono {C0 : Concept} {x : α} {b b' : Nat} (hb : b ≤ b')
+    {F : Concept} (h : F ∈ mtk C0 I x b) : F ∈ mtk C0 I x b' := by
+  obtain ⟨hmty, hd⟩ := mem_mtk.mp h
+  exact mem_mtk.mpr ⟨hmty, Nat.le_trans hd hb⟩
+
+/-- Conversely a demand present at the LARGER budget was already visited there,
+    so coverage taken at the max-budget occurrence transfers down: this is the
+    exact shape the dedup construction consumes. -/
+theorem mtk_covers_at_max {C0 : Concept} {x : α} {b b' : Nat} (hb : b ≤ b')
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ mtk C0 I x b) :
+    Concept.ex r D ∈ mtk C0 I x b' := mtk_mono hb h
+
 /-- **THE READ-OFF CERTIFICATE WITH TRUNCATED LABELS** (§42.3) — the combination
     the route needs and the file did not have.
 
@@ -21717,6 +21735,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cnest_via_flat
 #print axioms VerticalWitness.cmerge_via_tower
 
+#print axioms mtk_mono
 #print axioms mixKernelsK_ok
 #print axioms odNet_frame
 #print axioms odNet_pp_inv

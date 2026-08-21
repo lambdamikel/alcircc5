@@ -3729,6 +3729,40 @@ one level (`mdepth (all r cc) = 1 + mdepth cc`), so a source budget `b ≤ b' + 
 suffices — the same trick `podefault_ek_dir` uses. A naive re-budgeting lemma
 that ignores this is unprovable.
 
+### 42.5 Coverage on the restored route, and the one design point it turns on
+
+With `mixKernelsK`'s labels finally matching, the existing closure applies:
+
+- **`mtkNodes_covers` covers EVERY relation**, not just the horizontal ones —
+  for any `m` in the closure and any `∃r.c` in its label there is a closure node
+  `m'` with `ρ m.x m'.x = r` and `c` in ITS label. With read-off `E` that is
+  precisely `he_ex`'s horizontal disjunct, for all five values.
+- **`mtkNodes_length_le`** bounds the closure by `mtkBound C0 k`, which is what
+  the `codes` pipeline consumes.
+
+So `he_ex` and finiteness both come from machinery that exists. The one design
+point is the FRAME's hypothesis:
+
+> `readoff_qnet_frame` needs the representatives to be DISTINCT (`hinj`), and
+> `mtkNodes` may visit the SAME model element at several budgets.
+
+The horizontal fragment never hit this because its frame is PO-default
+(declared, via `dadjBK`), so it dedups on the PAIR `(x, k)` (`hfExt = cdedup …`)
+and never needs injectivity on `x`.
+
+**The fix, and why it is safe.** Deduplicate the external list by MODEL ELEMENT,
+keeping the LARGEST budget at which the element was visited. Then:
+- `g` is injective, so `hinj` holds and `readoff_qnet_frame` applies;
+- a witness found at a smaller budget still lies in the larger label
+  (`mtk_mono`, certified);
+- coverage is taken at the max-budget occurrence, and `mtkNodes` did recurse on
+  every demand present there — so no demand of the enlarged label is missed.
+
+`mtk_mono` / `mtk_covers_at_max` are the certified enabling facts. What remains
+is the dedup-by-element construction itself and its coverage transfer — ordinary
+list engineering over certified parts, with the `hfExt`/`cdedup` pattern as the
+template.
+
 ### 42.4 The pattern, recorded
 
 This is the **third** time in one session that a conclusion rested on not
