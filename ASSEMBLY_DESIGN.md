@@ -3573,3 +3573,49 @@ existing template, certified prerequisites.
 The honest summary: what I had labelled the riskiest step turns out to have a
 certified template, and the risk has migrated to the kernel/external seam, which
 is a much smaller and more concrete target.
+### 41.9 The kernel/external seam, probed — `wp95`
+
+The narrowest remaining unknown from §41.8, probed on PERIODIC models (which
+`wp94` could not reach, being restricted to finite ones).
+
+- **Part A.** Over 27,000 (model, window) pairs, **every** external had a
+  CONSTANT row across the phase window; not one non-constant case arose. That is
+  not luck: the externals the generator builds are exactly the ones the certified
+  banks produce — a `DR`-child disjoint from the whole tower, a `PPI`-child
+  inside it, a `PO`-external meeting the base — and each is constant BY
+  CONSTRUCTION.
+- **Part B.** On the declarable externals the seam net is composition-closed in
+  all 12,000 windows, and the declarables still cover ≥2 distinct child kinds in
+  all of them. Closure is what the certificate needs; coverage is what the
+  routing needs; there is no gap between the columns.
+- **Part C — the structural reason.** A phase-to-external row is constant across
+  a window iff it does not straddle a transition (`row_no_return`, certified).
+  For an ascending tower the row is rank-monotone `DR/PP → PO/EQ → PPI`, so a
+  `DR`-child picked ABOVE the window is `DR` at every phase, and a `PPI`-child
+  picked BELOW it is `PPI` at every phase — free, in both cases. Those are
+  exactly `exists_bank` (late picking) and `exists_bank_ppi` (early picking with
+  a uniform anchor), **both already certified**.
+
+**Conclusion.** The seam's routing requirement is supplied by machinery that
+already exists; what is unwritten is the wiring, not a new fact. Combined with
+§41.8 (the counting pipeline exists and is certified twice) and §41.7
+(`frame_q` is free), the ordered-disjoint route has **no identified open
+mathematical question** — every remaining item is assembly over certified parts.
+
+That is a claim about identified risk, not a guarantee: the campaign's ledger
+says a defect or overclaim has appeared in all but two of seventeen reviews, and
+none of this is reviewed.
+
+### 41.10 `CERTIFIED_INVENTORY.md` — against re-deriving what exists
+
+Twice in one session I treated certified machinery as absent: the two
+certificate architectures (§40) and the entire step-5 encoding pipeline (§41.8).
+Each cost real work. `CERTIFIED_INVENTORY.md` now lists the load-bearing results
+by ROLE — decidability results, soundness core, frames, certificate validity,
+finiteness/encoding, extraction, model-side analysis — and is to be consulted
+before designing anything.
+
+It also serves the eventual SLIMMING: the file has 1,036 top-level declarations
+and 364 `#print axioms` lines, of which the core needed for the fragment's
+decidability is a small subset; the rest is scaffolding, superseded routes
+(read-off `mixKernels`, PO-default `mtkKernelsDir`, `posetNet`) and witnesses.
