@@ -18973,21 +18973,23 @@ theorem mtkKernelsOD_ok {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
 /-! ### The extraction's ordered-disjoint structure
 
 `wp97` searched for ordered-disjoint completions of the extraction's data and
-found one for every small configuration.  `odMix` is the CANONICAL such
+found one for every small configuration.  `odSeed` is the CANONICAL such
 completion, so the extraction never has to search:
 
-* **externals are pairwise `lt`-incomparable** — so the external block of the
-  induced `odNet` is exactly the PO-default frame (`odMix_E`), and with it the
-  budget structure that `wp96` B measured;
-* **each kernel sits entirely on one SIDE of its externals** — `side k = true`
-  means above them (serving their `∃PP`), `false` below (serving `∃PPI`);
-* **the order has height two** — a down-kernel below an external below an
-  up-kernel — so transitivity has exactly one non-vacuous case;
-* **disjointness is the downward closure** of the externals' `DR` pattern.
+* **the order is `mixLt`** — externals pairwise `lt`-incomparable (so the
+  external block of the induced `odNet` is exactly the PO-default frame, and
+  with it the budget structure `wp96` B measured), each kernel entirely on one
+  SIDE of its externals (`side k = true` above them, serving their `∃PP`;
+  `false` below, serving their `∃PPI`).  HEIGHT TWO, so transitivity has exactly
+  one non-vacuous case and down-kernels are minima (`mixLt_no_below`);
+* **disjointness is the DOWNWARD CLOSURE of a seed relation.**  Closing downward
+  by construction is what makes this general and cheap: `djDown` becomes
+  transitivity of `≤`, and `djIrr` and `ltNotDj` BOTH collapse into the single
+  condition `hsep` — *no node lies below two seed-related nodes*.
 
-One coherence condition is needed and is forced: a down-kernel's externals are
-pairwise NON-disjoint (`hcoh`).  A region below two disjoint regions would be
-empty, and formally `djIrr` fails without it. -/
+An earlier version inherited disjointness only downward from the externals' `DR`
+pattern.  That was too weak: it cannot make an UP-kernel `DR` from an external,
+which an ascending tower whose rungs each carry an `∃DR` demand forces. -/
 
 theorem bool_clash {b : Bool} (h1 : b = false) (h2 : b = true) : False :=
   Bool.noConfusion (h1.symm.trans h2)
@@ -19001,16 +19003,6 @@ def mixLt {β κ : Type} (side : κ → Bool) (att : κ → β → Bool) :
   | .inr k, .inr k' => side k = false ∧ side k' = true ∧
       ∃ e, att k e = true ∧ att k' e = true
 
-/-- Disjointness: the externals' `DR` pattern, closed downward through the
-    down-kernels. -/
-def mixDj {β κ : Type} (dadj : β → β → Bool) (side : κ → Bool)
-    (att : κ → β → Bool) : β ⊕ κ → β ⊕ κ → Prop
-  | .inl e, .inl f => dadj e f = true
-  | .inl f, .inr k => side k = false ∧ ∃ e, att k e = true ∧ dadj e f = true
-  | .inr k, .inl f => side k = false ∧ ∃ e, att k e = true ∧ dadj e f = true
-  | .inr k, .inr k' => side k = false ∧ side k' = false ∧
-      ∃ e e', att k e = true ∧ att k' e' = true ∧ dadj e e' = true
-
 /-- Nothing lies strictly below a DOWN-kernel: they are the order's minima.
     This is what makes `djDown`'s case analysis terminate. -/
 theorem mixLt_no_below {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
@@ -19020,162 +19012,116 @@ theorem mixLt_no_below {β κ : Type} (side : κ → Bool) (att : κ → β → 
   · exact fun h => bool_clash hk h.1
   · exact fun h => bool_clash hk h.2.1
 
-/-- **THE CANONICAL COMPLETION.** -/
-def odMix {β κ : Type} (dadj : β → β → Bool) (side : κ → Bool)
-    (att : κ → β → Bool)
-    (hsym : ∀ e f, dadj e f = dadj f e) (hirr : ∀ e, dadj e e = false)
-    (hcoh : ∀ k e f, side k = false → att k e = true → att k f = true →
-      dadj e f = false) : ODStruct (β ⊕ κ) where
+/-- `mixLt` is TRANSITIVE.  The order has HEIGHT TWO — down-kernel < external <
+    up-kernel — so exactly one of the eight cases is non-vacuous. -/
+theorem mixLt_trans {β κ : Type} (side : κ → Bool) (att : κ → β → Bool) :
+    ∀ x y z : β ⊕ κ, mixLt side att x y → mixLt side att y z →
+      mixLt side att x z := by
+  rintro (e | k) (f | k') (g | k'') h1 h2
+  · exact h1.elim
+  · exact h1.elim
+  · exact (bool_clash h2.1 h1.1).elim
+  · exact (bool_clash h2.1 h1.1).elim
+  · exact h2.elim
+  · exact ⟨h1.1, h2.1, f, h1.2, h2.2⟩
+  · exact (bool_clash h2.1 h1.2.1).elim
+  · exact (bool_clash h2.1 h1.2.1).elim
+
+/-- `≤` for the mixed order — the shape `djDown` already speaks in. -/
+def mixLe {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
+    (x y : β ⊕ κ) : Prop := x = y ∨ mixLt side att x y
+
+theorem mixLe_trans {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
+    {x y z : β ⊕ κ} (h1 : mixLe side att x y) (h2 : mixLe side att y z) :
+    mixLe side att x z := by
+  rcases h1 with rfl | h1
+  · exact h2
+  · rcases h2 with rfl | h2
+    · exact Or.inr h1
+    · exact Or.inr (mixLt_trans side att _ _ _ h1 h2)
+
+/-- **THE EXTRACTION'S ORDERED-DISJOINT STRUCTURE.**  The order is `mixLt`;
+    disjointness is the DOWNWARD CLOSURE of an arbitrary symmetric `seed`.
+
+    Closing downward by construction is what makes this general and cheap:
+    `djDown` becomes transitivity of `≤`, and `djIrr` and `ltNotDj` BOTH reduce
+    to the single condition `hsep` — *no node lies below two seed-related
+    nodes*.  (For `ltNotDj`: if `x < y` then `x` is below both `x₀ ≥ x` and
+    `y₀ ≥ y`.)
+
+    The earlier `odMix` — disjointness inherited only downward from the
+    externals' `DR` pattern — is the special case `seed = dadj on externals`, and
+    it was too weak: it cannot make an UP-kernel `DR` from an external, which an
+    ascending tower whose rungs each carry an `∃DR` demand forces. -/
+def odSeed {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe side att x y → mixLe side att x z → ¬ seed y z) :
+    ODStruct (β ⊕ κ) where
   lt := mixLt side att
-  disj := mixDj dadj side att
+  disj x y := ∃ x₀ y₀, mixLe side att x x₀ ∧ mixLe side att y y₀ ∧ seed x₀ y₀
   ltIrr := by
     rintro (e | k)
     · exact fun h => h
     · exact fun h => bool_clash h.1 h.2.1
-  ltTr := by
-    rintro (e | k) (f | k') (g | k'') h1 h2
-    · exact h1.elim
-    · exact h1.elim
-    · exact (bool_clash h2.1 h1.1).elim
-    · exact (bool_clash h2.1 h1.1).elim
-    · exact h2.elim
-    · exact ⟨h1.1, h2.1, f, h1.2, h2.2⟩
-    · exact (bool_clash h2.1 h1.2.1).elim
-    · exact (bool_clash h2.1 h1.2.1).elim
+  ltTr := mixLt_trans side att
   djSym := by
-    rintro (e | k) (f | k') h
-    · exact (hsym f e).trans h
-    · exact h
-    · exact h
-    · obtain ⟨s1, s2, a, b, ha, hb, hab⟩ := h
-      exact ⟨s2, s1, b, a, hb, ha, (hsym b a).trans hab⟩
+    rintro x y ⟨x₀, y₀, hx, hy, hs⟩
+    exact ⟨y₀, x₀, hy, hx, hsym _ _ hs⟩
   djIrr := by
-    rintro (e | k)
-    · exact fun h => bool_clash (hirr e) h
-    · rintro ⟨s1, -, a, b, ha, hb, hab⟩
-      exact bool_clash (hcoh k a b s1 ha hb) hab
+    rintro x ⟨x₀, y₀, hx, hy, hs⟩
+    exact hsep x x₀ y₀ hx hy hs
   ltNotDj := by
-    rintro (e | k) (f | k') h
-    · exact h.elim
-    · exact fun hd => bool_clash hd.1 h.1
-    · rintro ⟨-, a, ha, haf⟩
-      exact bool_clash (hcoh k a f h.1 ha h.2) haf
-    · exact fun hd => bool_clash hd.2.1 h.2.1
+    rintro x y hxy ⟨x₀, y₀, hx, hy, hs⟩
+    exact hsep x x₀ y₀ hx (mixLe_trans side att (Or.inr hxy) hy) hs
   djDown := by
-    rintro (e | k) (f | k') x' y' hd hx hy
-    · -- external / external
-      rcases hx with rfl | hx <;> rcases hy with rfl | hy
-      · exact hd
-      · rcases y' with g | kk
-        · exact hy.elim
-        · exact ⟨hy.1, f, hy.2, (hsym f e).trans hd⟩
-      · rcases x' with g | kk
-        · exact hx.elim
-        · exact ⟨hx.1, e, hx.2, hd⟩
-      · rcases x' with g | kk <;> rcases y' with g' | kk'
-        · exact hx.elim
-        · exact hx.elim
-        · exact hy.elim
-        · exact ⟨hx.1, hy.1, e, f, hx.2, hy.2, hd⟩
-    · -- external / down-kernel: nothing lies below the kernel
-      have hy' : y' = Sum.inr k' := by
-        rcases hy with rfl | hy
-        · rfl
-        · exact absurd hy (mixLt_no_below side att hd.1 y')
-      subst hy'
-      rcases hx with rfl | hx
-      · exact hd
-      · rcases x' with g | kk
-        · exact hx.elim
-        · obtain ⟨hds, a, ha, hae⟩ := hd
-          exact ⟨hx.1, hds, e, a, hx.2, ha, (hsym e a).trans hae⟩
-    · -- down-kernel / external
-      have hx' : x' = Sum.inr k := by
-        rcases hx with rfl | hx
-        · rfl
-        · exact absurd hx (mixLt_no_below side att hd.1 x')
-      subst hx'
-      rcases hy with rfl | hy
-      · exact hd
-      · rcases y' with g | kk
-        · exact hy.elim
-        · obtain ⟨hds, a, ha, haf⟩ := hd
-          exact ⟨hds, hy.1, a, f, ha, hy.2, haf⟩
-    · -- down-kernel / down-kernel: both are minima
-      have hx' : x' = Sum.inr k := by
-        rcases hx with rfl | hx
-        · rfl
-        · exact absurd hx (mixLt_no_below side att hd.1 x')
-      have hy' : y' = Sum.inr k' := by
-        rcases hy with rfl | hy
-        · rfl
-        · exact absurd hy (mixLt_no_below side att hd.2.1 y')
-      subst hx'; subst hy'; exact hd
+    rintro x y x' y' ⟨x₀, y₀, hx, hy, hs⟩ hx' hy'
+    exact ⟨x₀, y₀, mixLe_trans side att hx' hx, mixLe_trans side att hy' hy, hs⟩
 
+section OdSeedReadOff
 
-section OdMixReadOff
+variable {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
+  (seed : β ⊕ κ → β ⊕ κ → Prop)
+  (hsym : ∀ x y, seed x y → seed y x)
+  (hsep : ∀ x y z, mixLe side att x y → mixLe side att x z → ¬ seed y z)
 
-variable {β κ : Type} (dadj : β → β → Bool) (side : κ → Bool) (att : κ → β → Bool)
-  (hsym : ∀ e f, dadj e f = dadj f e) (hirr : ∀ e, dadj e e = false)
-  (hcoh : ∀ k e f, side k = false → att k e = true → att k f = true →
-    dadj e f = false)
-
-/-- The EXTERNAL block of the induced net is exactly the PO-default frame — so
-    the hybrid inherits the budget structure `wp96` B measured, and the certified
-    external machinery (`mtk_ee_all`, `mtk_e_ex`) applies verbatim. -/
-theorem odMix_E [DecidableEq β] (e f : β) :
-    odNet (odMix dadj side att hsym hirr hcoh) (Sum.inl e) (Sum.inl f)
-      = if e = f then eq else if dadj e f then dr else po := by
-  by_cases hef : e = f
-  · subst hef; rw [if_pos rfl]; exact odNet_self _ _
-  · rw [if_neg hef]
-    have hne : (Sum.inl e : β ⊕ κ) ≠ Sum.inl f := fun h => hef (Sum.inl.inj h)
-    by_cases hdj : dadj e f = true
-    · rw [if_pos hdj]
-      exact odNet_dj _ (show mixDj dadj side att (Sum.inl e) (Sum.inl f) from hdj)
-    · rw [Bool.not_eq_true] at hdj
-      rw [hdj]
-      exact odNet_po _ hne (fun h => h.elim) (fun h => h.elim)
-        (fun h => bool_clash hdj (show dadj e f = true from h))
+theorem odSeed_lt (x y : β ⊕ κ) :
+    (odSeed side att seed hsym hsep).lt x y ↔ mixLt side att x y := Iff.rfl
 
 /-- A kernel ABOVE its external: `K k e = PPI`, so `conv (K k e) = PP` serves the
     external's `∃PP`. -/
-theorem odMix_K_up {k : κ} {e : β} (hk : side k = true) (ha : att k e = true) :
-    odNet (odMix dadj side att hsym hirr hcoh) (Sum.inr k) (Sum.inl e) = ppi :=
+theorem odSeed_K_up {k : κ} {e : β} (hk : side k = true) (ha : att k e = true) :
+    odNet (odSeed side att seed hsym hsep) (Sum.inr k) (Sum.inl e) = ppi :=
   odNet_gt _ (show mixLt side att (Sum.inl e) (Sum.inr k) from ⟨hk, ha⟩)
 
 /-- A kernel BELOW its external: `K k e = PP`, so `conv (K k e) = PPI` serves the
     external's `∃PPI` — the demand the PO-default frame could not express. -/
-theorem odMix_K_dn {k : κ} {e : β} (hk : side k = false) (ha : att k e = true) :
-    odNet (odMix dadj side att hsym hirr hcoh) (Sum.inr k) (Sum.inl e) = pp :=
+theorem odSeed_K_dn {k : κ} {e : β} (hk : side k = false) (ha : att k e = true) :
+    odNet (odSeed side att seed hsym hsep) (Sum.inr k) (Sum.inl e) = pp :=
   odNet_lt _ (show mixLt side att (Sum.inr k) (Sum.inl e) from ⟨hk, ha⟩)
 
 /-- **THE `wp96`-C FORCING, DISCHARGED.**  A down-kernel and an up-kernel sharing
     an external are `PP`-related — exactly what `comp(PP,PP) = {PP}` demands, and
-    exactly what a PO default gets wrong.  This is the edge that made the
-    ordered-disjoint frame necessary. -/
-theorem odMix_Q_forced {k k' : κ} {e : β} (hk : side k = false)
+    exactly what a PO default gets wrong. -/
+theorem odSeed_Q_forced {k k' : κ} {e : β} (hk : side k = false)
     (hk' : side k' = true) (ha : att k e = true) (ha' : att k' e = true) :
-    odNet (odMix dadj side att hsym hirr hcoh) (Sum.inr k) (Sum.inr k') = pp :=
+    odNet (odSeed side att seed hsym hsep) (Sum.inr k) (Sum.inr k') = pp :=
   odNet_lt _
     (show mixLt side att (Sum.inr k) (Sum.inr k') from ⟨hk, hk', e, ha, ha'⟩)
 
-/-- Two DOWN-kernels under DR-separated externals are `DR` — the `djDown`
-    inheritance, again not a PO default (`wp97` B). -/
-theorem odMix_Q_dr {k k' : κ} {e e' : β} (hk : side k = false)
-    (hk' : side k' = false) (ha : att k e = true) (ha' : att k' e' = true)
-    (hdj : dadj e e' = true) :
-    odNet (odMix dadj side att hsym hirr hcoh) (Sum.inr k) (Sum.inr k') = dr :=
-  odNet_dj _
-    (show mixDj dadj side att (Sum.inr k) (Sum.inr k') from
-      ⟨hk, hk', e, e', ha, ha', hdj⟩)
+/-- Any SEED pair is `DR` — including an up-kernel and an external, which the
+    old `odMix` could not express. -/
+theorem odSeed_dr {x y : β ⊕ κ} (h : seed x y) :
+    odNet (odSeed side att seed hsym hsep) x y = dr :=
+  odNet_dj _ ⟨x, y, Or.inl rfl, Or.inl rfl, h⟩
 
-end OdMixReadOff
+end OdSeedReadOff
+
 end ODKernels
 
 /-! ### The extraction, external side (§43.4 item 1)
 
-`odMix`'s external block is `EQ`/`DR`/`PO` only, so `mtkKernelsOD_ok`'s external
+The external block is `EQ`/`DR`/`PO` only, so `mtkKernelsOD_ok`'s external
 debt `hEreal` reduces to two facts about the declared `DR` pattern: a declared
 `DR` edge is a REAL `DR` edge, and its endpoints' budgets are within one.  For
 the extraction's `dadj` — `DR`-adjacency of coverage nodes — both are already
@@ -19235,43 +19181,36 @@ theorem dadjOD_bud (root : MTKNode I C0)
 
 end ODExtraction
 
-section ODExternalDebt
+section ODDebt
 
-variable {β κ : Type} (dadj : β → β → Bool) (side : κ → Bool) (att : κ → β → Bool)
-  (hsym : ∀ e f, dadj e f = dadj f e) (hirr : ∀ e, dadj e e = false)
-  (hcoh : ∀ k e f, side k = false → att k e = true → att k f = true →
-    dadj e f = false)
+variable {β κ : Type}
 
 /-- **THE EXTERNAL BLOCK IS `EQ`/`DR`/`PO` ONLY.**  Externals are pairwise
-    `lt`-incomparable in `odMix`, so an off-diagonal non-`PO` value can only be
-    `DR`, and then `dadj` witnesses it. -/
-theorem odMix_E_dr {e f : β} (hef : e ≠ f)
-    (hne : odNet (odMix dadj side att hsym hirr hcoh)
-      (Sum.inl e) (Sum.inl f) ≠ po) :
-    odNet (odMix dadj side att hsym hirr hcoh) (Sum.inl e) (Sum.inl f) = dr
-      ∧ dadj e f = true := by
-  rcases odNet_cases (odMix dadj side att hsym hirr hcoh)
-    (Sum.inl e) (Sum.inl f) with h | h | h | h | h
+    `lt`-incomparable, so an off-diagonal non-`PO` value can only be `DR`, and
+    then `O.disj` witnesses it. -/
+theorem odLt_E_dr (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
+    {e f : β} (hef : e ≠ f)
+    (hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po) :
+    odNet O (Sum.inl e) (Sum.inl f) = dr ∧ O.disj (Sum.inl e) (Sum.inl f) := by
+  rcases odNet_cases O (Sum.inl e) (Sum.inl f) with h | h | h | h | h
   · exact absurd (Sum.inl.inj (odNet_eq_inv _ h)) hef
-  · exact (show mixLt side att (Sum.inl e) (Sum.inl f) from odNet_pp_inv _ h).elim
-  · exact (show mixLt side att (Sum.inl f) (Sum.inl e) from odNet_ppi_inv _ h).elim
+  · exact ((hlt _ _).mp (odNet_pp_inv _ h)).elim
+  · exact ((hlt _ _).mp (odNet_ppi_inv _ h)).elim
   · exact ⟨h, odNet_dr_inv _ h⟩
   · exact absurd h hne
 
 /-- **`mtkKernelsOD_ok`'s EXTERNAL DEBT, DISCHARGED** from two facts about the
     declared `DR` pattern alone: a declared `DR` edge is a real `DR` edge, and
-    its endpoints' budgets are within one.  For the extraction these are
-    `dadjOD_rho` and `dadjOD_bud`. -/
-theorem odMix_hEreal {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
-    (hdr : ∀ e f, dadj e f = true → I.rho (g e) (g f) = dr)
-    (hb : ∀ e f, dadj e f = true → bud e ≤ bud f + 1)
-    (e f : β) (hef : e ≠ f)
-    (hne : odNet (odMix dadj side att hsym hirr hcoh)
-      (Sum.inl e) (Sum.inl f) ≠ po) :
-    I.rho (g e) (g f)
-        = odNet (odMix dadj side att hsym hirr hcoh) (Sum.inl e) (Sum.inl f)
-      ∧ bud e ≤ bud f + 1 := by
-  obtain ⟨hval, hd⟩ := odMix_E_dr dadj side att hsym hirr hcoh hef hne
+    its endpoints' budgets are within one. -/
+theorem odLt_hEreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
+    {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
+    (hdr : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → I.rho (g e) (g f) = dr)
+    (hb : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → bud e ≤ bud f + 1)
+    (e f : β) (hef : e ≠ f) (hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po) :
+    I.rho (g e) (g f) = odNet O (Sum.inl e) (Sum.inl f) ∧ bud e ≤ bud f + 1 := by
+  obtain ⟨hval, hd⟩ := odLt_E_dr O side att hlt hef hne
   exact ⟨(hdr e f hd).trans hval.symm, hb e f hd⟩
 
 /-- **`mtkKernelsOD_ok`'s KERNEL–EXTERNAL DEBT, DISCHARGED** into three concrete
@@ -19279,53 +19218,47 @@ theorem odMix_hEreal {α : Type} (I : Interp α) (g : β → α) (bud : β → N
     take.  Each has the shape the §39 bank machinery produces:
 
 * `hup`  — an UP-kernel's external is a proper part of every phase
-           (`exists_bank_ppi`);
-* `hdn`  — a DOWN-kernel's external is a proper SUPERpart of every phase (the
-           dual, and the `∃PPI`-at-an-external case the PO-default frame could
-           not express at all);
-* `hdrk` — a kernel `DR`-separated from an external by `djDown` is genuinely
-           disjoint from it in every phase (`exists_bank`). -/
-theorem odMix_hKreal {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
+           (`exists_bank_ppi`: early picking, uniform anchor);
+* `hdn`  — a DOWN-kernel's external is a proper SUPERpart of every phase
+           (`exists_bank`'s `PP` branch);
+* `hdrk` — a kernel disjoint from an external is genuinely disjoint from it in
+           every phase (`exists_bank`'s `DR` branch).  Note this case is stated
+           on `O.disj`, so it covers UP-kernels too. -/
+theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
+    {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
     (bk : κ → Nat) (ck : κ → Nat → α) (ik : κ → Nat)
     (hup : ∀ k e a, side k = true → att k e = true →
       I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     (hdn : ∀ k e a, side k = false → att k e = true →
       I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hdrk : ∀ k e a, side k = false →
-      (∃ e', att k e' = true ∧ dadj e' e = true) →
+    (hdrk : ∀ k e a, O.disj (Sum.inr k) (Sum.inl e) →
       I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     (k : κ) (e : β) (a : Nat)
-    (hne : odNet (odMix dadj side att hsym hirr hcoh)
-      (Sum.inr k) (Sum.inl e) ≠ po) :
-    I.rho (g e) (ck k (ik k + a))
-        = conv (odNet (odMix dadj side att hsym hirr hcoh)
-            (Sum.inr k) (Sum.inl e))
+    (hne : odNet O (Sum.inr k) (Sum.inl e) ≠ po) :
+    I.rho (g e) (ck k (ik k + a)) = conv (odNet O (Sum.inr k) (Sum.inl e))
       ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1 := by
-  rcases odNet_cases (odMix dadj side att hsym hirr hcoh)
-    (Sum.inr k) (Sum.inl e) with h | h | h | h | h
-  · have hcon : (Sum.inr k : β ⊕ κ) = Sum.inl e :=
-      odNet_eq_inv (odMix dadj side att hsym hirr hcoh) h
+  rcases odNet_cases O (Sum.inr k) (Sum.inl e) with h | h | h | h | h
+  · have hcon : (Sum.inr k : β ⊕ κ) = Sum.inl e := odNet_eq_inv O h
     have hb : false = true := congrArg Sum.isLeft hcon
     exact absurd hb (by decide)
-  · obtain ⟨hs, hat⟩ :=
-      (show mixLt side att (Sum.inr k) (Sum.inl e) from odNet_pp_inv _ h)
+  · obtain ⟨hs, hat⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
     obtain ⟨hr, hb1, hb2⟩ := hdn k e a hs hat
     rw [h]; exact ⟨hr, hb1, hb2⟩
-  · obtain ⟨hs, hat⟩ :=
-      (show mixLt side att (Sum.inl e) (Sum.inr k) from odNet_ppi_inv _ h)
+  · obtain ⟨hs, hat⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
     obtain ⟨hr, hb1, hb2⟩ := hup k e a hs hat
     rw [h]; exact ⟨hr, hb1, hb2⟩
-  · obtain ⟨hs, e', hae, hde⟩ :=
-      (show mixDj dadj side att (Sum.inr k) (Sum.inl e) from odNet_dr_inv _ h)
-    obtain ⟨hr, hb1, hb2⟩ := hdrk k e a hs ⟨e', hae, hde⟩
+  · obtain ⟨hr, hb1, hb2⟩ := hdrk k e a (odNet_dr_inv _ h)
     rw [h]; exact ⟨hr, hb1, hb2⟩
   · exact absurd h hne
 
 /-- **`mtkKernelsOD_ok`'s KERNEL–KERNEL DEBT, DISCHARGED** into three model-side
     conditions.  The first two are the `wp96`-C forcing — a down-kernel and an
     up-kernel sharing an external are genuinely nested — and the third is the
-    `djDown` inheritance under `DR`-separated externals (`wp97` B). -/
-theorem odMix_hQreal {α : Type} (I : Interp α) (bk : κ → Nat)
+    `djDown` inheritance (`wp97` B). -/
+theorem odLt_hQreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
+    {α : Type} (I : Interp α) (bk : κ → Nat)
     (ck : κ → Nat → α) (ik : κ → Nat)
     (hqpp : ∀ k k' a b, side k = false → side k' = true →
       (∃ e, att k e = true ∧ att k' e = true) →
@@ -19333,33 +19266,26 @@ theorem odMix_hQreal {α : Type} (I : Interp α) (bk : κ → Nat)
     (hqppi : ∀ k k' a b, side k' = false → side k = true →
       (∃ e, att k' e = true ∧ att k e = true) →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
-    (hqdr : ∀ k k' a b, side k = false → side k' = false →
-      (∃ e e', att k e = true ∧ att k' e' = true ∧ dadj e e' = true) →
+    (hqdr : ∀ k k' a b, O.disj (Sum.inr k) (Sum.inr k') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
     (k k' : κ) (a b : Nat) (hkk : k ≠ k')
-    (hne : odNet (odMix dadj side att hsym hirr hcoh)
-      (Sum.inr k) (Sum.inr k') ≠ po) :
+    (hne : odNet O (Sum.inr k) (Sum.inr k') ≠ po) :
     I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
-        = odNet (odMix dadj side att hsym hirr hcoh) (Sum.inr k) (Sum.inr k')
-      ∧ bk k ≤ bk k' + 1 := by
-  rcases odNet_cases (odMix dadj side att hsym hirr hcoh)
-    (Sum.inr k) (Sum.inr k') with h | h | h | h | h
+        = odNet O (Sum.inr k) (Sum.inr k') ∧ bk k ≤ bk k' + 1 := by
+  rcases odNet_cases O (Sum.inr k) (Sum.inr k') with h | h | h | h | h
   · exact absurd (Sum.inr.inj (odNet_eq_inv _ h)) hkk
-  · obtain ⟨hs, hs', e, hae, hae'⟩ :=
-      (show mixLt side att (Sum.inr k) (Sum.inr k') from odNet_pp_inv _ h)
+  · obtain ⟨hs, hs', e, hae, hae'⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
     obtain ⟨hr, hb⟩ := hqpp k k' a b hs hs' ⟨e, hae, hae'⟩
     rw [h]; exact ⟨hr, hb⟩
-  · obtain ⟨hs', hs, e, hae', hae⟩ :=
-      (show mixLt side att (Sum.inr k') (Sum.inr k) from odNet_ppi_inv _ h)
+  · obtain ⟨hs', hs, e, hae', hae⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
     obtain ⟨hr, hb⟩ := hqppi k k' a b hs' hs ⟨e, hae', hae⟩
     rw [h]; exact ⟨hr, hb⟩
-  · obtain ⟨hs, hs', e, e', hae, hae', hde⟩ :=
-      (show mixDj dadj side att (Sum.inr k) (Sum.inr k') from odNet_dr_inv _ h)
-    obtain ⟨hr, hb⟩ := hqdr k k' a b hs hs' ⟨e, e', hae, hae', hde⟩
+  · obtain ⟨hr, hb⟩ := hqdr k k' a b (odNet_dr_inv _ h)
     rw [h]; exact ⟨hr, hb⟩
   · exact absurd h hne
 
-end ODExternalDebt
+end ODDebt
+
 
 namespace VerticalWitness
 
@@ -22561,12 +22487,12 @@ end VerticalWitness
 #print axioms qnet_odNet
 #print axioms frame_q_of_odNet
 #print axioms mtkKernelsOD_ok
-#print axioms odMix
-#print axioms odMix_E
-#print axioms odMix_Q_forced
-#print axioms odMix_hEreal
-#print axioms odMix_hKreal
-#print axioms odMix_hQreal
+#print axioms odSeed
+#print axioms odSeed_dr
+#print axioms odSeed_Q_forced
+#print axioms odLt_hEreal
+#print axioms odLt_hKreal
+#print axioms odLt_hQreal
 #print axioms dadjOD_rho
 #print axioms sAdjK_bud
 
