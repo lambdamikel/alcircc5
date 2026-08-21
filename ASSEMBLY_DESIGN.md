@@ -3365,3 +3365,99 @@ So both halves of §40.3's generalization are now witnessed: many `PPI`-children
 - **Nested `∃PP`** (§33, as narrowed by `wp92` part E) — the one frame-level
   obstruction, independent of the architecture choice.
 - **`codesM`** and the `decidableSat_of_codes` premise.
+## 41. THE ROUTE TO THE GENERAL FRAGMENT (2026-08-20)
+
+Michael asked, rightly, whether the accumulated restrictions were preventing
+real progress, and — if we backtrack — for a route established in advance to
+reach the goal rather than the next milestone. This section is that audit and
+that route. Research: `verification/python/wp93_ordered_disjoint_frame.py`
+(all parts PASS).
+
+### 41.1 The audit: what was blocking generality
+
+| # | restriction | removable? |
+|---|---|---|
+| 1 | externals cannot carry `∃PPI` (`E` has no `PPI` value) | yes — two `PPI`-siblings PO-defaulted are composition-CLOSED |
+| 2 | one-shot `∃PP` at a phase | yes — `wp92` part E |
+| 3 | kernels need PERSISTENT (∀PP-guarded) demands | yes, given 1–2 |
+| 4 | **nested** `∃PP`/`∃PPI` | **no** — `comp(PP,PP) = {PP}` and `comp(PPI,PPI) = {PPI}` force the transitive edge, which a PO default contradicts |
+
+Three were artifacts of the certificate's edge repertoire; the fourth is
+structural. `∃DR.(∃PPI.A)` is ∀PO-free and was NOT coverable.
+
+### 41.2 Why neither existing frame can be the answer
+
+| frame | expresses | fatally missing |
+|---|---|---|
+| `posetNet` (`posetMT_ok`) | EQ, PP, PPI, PO | **DR** — incomparable is always `PO`, so `∃DR` is inexpressible |
+| PO-default (`mtkKernelsDir`) | EQ, DR, PO (+`PPI`/`DR` on `K`) | **PP/PPI among externals** — so nesting and externals' `∃PPI` are inexpressible |
+
+Both are special cases of the same thing, and each is missing exactly what the
+other has.
+
+### 41.3 The frame that can carry the goal: ORDERED-DISJOINT
+
+```
+odNet x y = EQ         if x = y
+          = PP / PPI   if x < y / y < x
+          = DR         if disj x y
+          = PO         otherwise
+```
+
+This is precisely the RCC5 normal form already certified FORWARD in
+`formal/RCC5NormalForm.lean` (`toOrderedDisjoint`). `wp93` establishes:
+
+- **A — expressiveness.** All FIVE relations are realized. `posetNet` realizes
+  four, the PO-default frame realizes three among externals.
+- **B — soundness.** Composition-closed for EVERY ordered-disjoint structure:
+  exhaustive over all 962 structures on ≤ 4 elements.
+- **C — the proof plan.** All 25 cells are reachable; only **13 are forced**,
+  and after the trivial `EQ`-cells the whole content is FOUR facts:
+  `PP;PP = {PP}` and `PPI;PPI = {PPI}` (from `lt_trans`), `PP;DR = {DR}` and
+  `DR;PPI = {DR}` (from `disj_down`).
+- **D — nesting is fixed.** A `PP`-chain with its transitive edge PRESENT is
+  closed, as is a chain with a `DR`-child disjoint from all of it. The order
+  carries transitivity EXPLICITLY instead of PO-defaulting the non-adjacent
+  pair — which is exactly what killed both other frames.
+
+### 41.4 The route, end to end
+
+1. **`odNet_frame`** — ordered-disjoint ⟹ `Frame`. The missing brick; content is
+   the four forced cells of §41.3C. Ingredients already certified on arbitrary
+   domains in `RCC5NormalForm.lean` (`eta`, `sub_iff_le`, `eta_injective`,
+   `disj_iff_eta_disjoint`), and that file has **no `Frame` theorem** today.
+2. **The general certificate** — a `MultiTier` whose `qnet E K Q` is `odNet` on
+   the whole of `β ⊕ κ`: externals AND kernel bases are ordinary nodes of ONE
+   ordered-disjoint structure. `frame_q` then follows from (1) directly. Kernel
+   phase conditions (`kk_pp`/`kk_ppi`/`kk_eq`) are about the chain and are
+   already certified, direction-branching included (`mtk_kk_*_dir`).
+3. **Extraction** — `toOrderedDisjoint` (certified) reads the structure off ANY
+   model; restrict to the chosen finite node set. Restriction preserves every
+   `OrderedDisjoint` axiom (each is universally quantified over the carrier), so
+   this step is free.
+4. **Coverage** — every demand has an edge to serve it: `∃PP` an `lt`-above
+   node, `∃PPI` an `lt`-below, `∃DR` a `disj` node, `∃PO` an incomparable
+   non-disjoint one, `∃EQ` reflexively. Nesting included, by (D).
+5. **Finiteness / decidability** — budget-truncated labels (`mtk`) bound the
+   node set; then `codesM` + `decidableSat_of_codes`.
+
+### 41.5 What carries over, and the honest risks
+
+Carries over unchanged: `exists_bank`, `exists_bank_ppi`, the §38 merge, the
+selection machinery, `Idir`/`rchain_cc`, `mtk_kk_*_dir`, `mty_no_all_po`, and
+every model-side stabilization lemma. Becomes a special case: `mtkKernelsDir`
+and its frame (`odNet` with empty `disj` is `posetNet`; with empty `lt` it is the
+PO-default frame).
+
+Risks, named in advance rather than discovered:
+- **(5) is the real remaining unknown.** Bounding the node set for a general
+  ∀PO-free concept is the K(C₀) counting problem; it is NOT settled by this
+  research, and it is where a further surprise would most likely live.
+- (2) needs `K` and `Q` to be ordered-disjoint-derived too, not just `E` — a
+  restatement of the certificate, not new mathematics.
+- (4) needs the coverage recursion to terminate at `mtk` budgets, as `ascNodes`
+  does.
+
+**This route is chosen because it is the only one probed to express all five
+relations and to survive nesting.** Steps 1–4 are bounded; step 5 is the honest
+open item, and it is the same counting problem the campaign has always had.
