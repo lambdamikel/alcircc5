@@ -4329,3 +4329,48 @@ the node-bound proof failed. Four for four now: `mixKernelsK`'s budgets, `odMix`
 disjointness, `hKreal`'s range, and this. Every one was an over-strong or
 over-hopeful claim about an interface or a bound, and every one fell to the first
 thing that actually tried to use it.
+
+### 44.8 `hsep` is free, and `elt` must stay abstract (2026-08-21)
+
+**Item 3 is done and costs nothing.** `odSeed`'s only real hypothesis is `hsep`
+— no node lies below two seed-related nodes — and over the taller order that
+looked like more work. It is instead automatic, because the model supplies the
+reason: *a node below two `DR`-related nodes would be a part of both, hence
+empty*. Formally it needs one bridge and two composition facts:
+
+* **`mixLt_rho`** — the declared order is SOUND for the model's `PP`. The
+  external part is the hypothesis `helt`; the kernel parts are the attachment
+  facts pushed through `comp(PP,PP) = {PP}`.
+* **`hsep_of_model`** — then `comp(PP,DR) = {DR}` and `PP ≠ DR` close it.
+
+Both **axiom-free**.
+
+**`elt` must stay ABSTRACT — a restriction avoided.** The obvious move is
+`elt := eltOf` (the model's own `PP` on the chosen externals). That would bake in
+a real restriction: it declares a `PP` edge between EVERY model-`PP`-related pair
+of externals, and two externals reached by different routes can have budgets far
+apart, so `ee_all`'s `bud e ≤ bud f + 1` fails — for instance a node at budget `N`
+and one at `N-3`.
+
+With `elt` abstract (any sub-relation of the model's `PP`), the extraction takes
+just the TRANSITIVE CLOSURE OF ITS OWN `PP`-demand steps. Budgets are constant
+along that by construction (§44.3), and soundness survives because the closure
+stays inside the model's `PP` — closure of model-`PP` edges is model-`PP` by
+`comp(PP,PP) = {PP}`. `eltOf_sub` records that `eltOf` is the maximal choice.
+
+This also collapses §44.6 item 1: `bud` constant along `elt` is now true by
+construction rather than something to arrange.
+
+### 44.9 §44 state
+
+| item | status |
+|---|---|
+| the external order, one-shot `∃PP` served | **done** (§44.5) |
+| the cut | **done** (§44.7, corrected) |
+| `hsep` over the taller order | **done, free** (§44.8) |
+| `bud` constant along `elt` | by construction, once `elt` is the demand-step closure |
+| coverage `he_ex`/`hk_ex` | open — `mtkNodesH_covers` + the banks |
+| reindex / bounds / `hcompl` | open, small, templated |
+
+The open mathematical content is now concentrated in coverage plus the node
+count, and the cut is the tool for the latter.
