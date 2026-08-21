@@ -18995,6 +18995,14 @@ which an ascending tower whose rungs each carry an `∃DR` demand forces. -/
 theorem bool_clash {b : Bool} (h1 : b = false) (h2 : b = true) : False :=
   Bool.noConfusion (h1.symm.trans h2)
 
+/-- Constructor disjointness for the node sum, via the `isLeft` discriminator
+    (`decide` cannot be used under a binder with free variables). -/
+theorem inr_ne_inl {β κ : Type} (k : κ) (f : β) :
+    (Sum.inr k : β ⊕ κ) ≠ Sum.inl f := by
+  intro h
+  have hb : false = true := congrArg Sum.isLeft h
+  exact Bool.noConfusion hb
+
 /-- `≤` for the EXTERNAL order (§44.3): externals are no longer pairwise
     incomparable — a one-shot `∃PP` is served by a genuine `PP` EDGE. -/
 def leE {β : Type} (elt : β → β → Prop) (e f : β) : Prop := e = f ∨ elt e f
@@ -19169,6 +19177,164 @@ theorem odSeed_dr {x y : β ⊕ κ} (h : seed x y) :
   odNet_dj _ ⟨x, y, Or.inl rfl, Or.inl rfl, h⟩
 
 end OdSeedReadOff
+
+section OdSeedCoverage
+
+/-! #### Coverage, in extraction terms (§44.9)
+
+`he_ex` is stated on `odNet` VALUES, which the extraction does not think in.
+This routing lemma performs the case analysis on the demanded relation once and
+restates each branch in terms of the extraction's own data — `seed`, `elt`,
+`side`, `att` — so what remains to supply is a witness list, not a frame fact.
+
+The five branches and their sources:
+
+| `r` | served by | read-off |
+|---|---|---|
+| `EQ` | the node itself | `odNet_self` + `mtk_ex_eq` |
+| `DR` | a seed-related external | `odSeed_dr` |
+| `PO` | an external the frame leaves alone | `odNet_po` |
+| `PP` | an `elt`-successor (one-shot) or an UP-kernel | `odSeed_E_pp` / `odSeed_K_up` |
+| `PPI` | an `elt`-predecessor or a DOWN-kernel | `odNet_gt` / `odSeed_K_dn` |
+-/
+
+variable {α : Type}
+
+theorem odSeed_he_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    {β κ : Type} (elt : β → β → Prop) (side : κ → Bool) (att : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
+      ¬ seed y z)
+    (g : β → α) (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat) (bk : κ → Nat)
+    (ck : κ → Nat → α) (ik pk : κ → Nat)
+    -- the four routing conditions, in extraction terms
+    (rDR : ∀ e D, Concept.ex dr D ∈ mtk C0 I (g e) (bud e) →
+      ∃ f, seed (Sum.inl e) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
+    (rPO : ∀ e D, Concept.ex po D ∈ mtk C0 I (g e) (bud e) →
+      ∃ f, e ≠ f ∧ ¬ elt e f ∧ ¬ elt f e ∧
+        ¬ (odSeed elt side att seed hirrE htr hsym hsep).disj
+            (Sum.inl e) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
+    (rPP : ∀ e D, Concept.ex pp D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, elt e f ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, side k = true ∧ att k e = true ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
+    (rPPI : ∀ e D, Concept.ex ppi D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, elt f e ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, side k = false ∧ att k e = true ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k))) :
+    ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, odNet (odSeed elt side att seed hirrE htr hsym hsep)
+          (Sum.inl e) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (odNet (odSeed elt side att seed hirrE htr hsym hsep)
+          (Sum.inr k) (Sum.inl e)) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) := by
+  intro e r D hdem
+  cases r with
+  | eq =>
+    exact Or.inl ⟨e, odNet_self _ _, mtk_ex_eq hI hdem (hgdom e)⟩
+  | dr =>
+    obtain ⟨f, hsd, hD⟩ := rDR e D hdem
+    exact Or.inl ⟨f, odSeed_dr elt side att seed hirrE htr hsym hsep hsd, hD⟩
+  | po =>
+    obtain ⟨f, hne, h1, h2, h3, hD⟩ := rPO e D hdem
+    refine Or.inl ⟨f, ?_, hD⟩
+    exact odNet_po _ (fun h => hne (Sum.inl.inj h)) h1 h2 h3
+  | pp =>
+    rcases rPP e D hdem with ⟨f, he, hD⟩ | ⟨k, hs, ha, a, haw, hD⟩
+    · exact Or.inl ⟨f, odSeed_E_pp elt side att seed hirrE htr hsym hsep he, hD⟩
+    · refine Or.inr ⟨k, ?_, a, haw, hD⟩
+      rw [odSeed_K_up elt side att seed hirrE htr hsym hsep hs ha]; rfl
+  | ppi =>
+    rcases rPPI e D hdem with ⟨f, he, hD⟩ | ⟨k, hs, ha, a, haw, hD⟩
+    · exact Or.inl ⟨f, odNet_gt _ (show mixLt elt side att (Sum.inl f)
+        (Sum.inl e) from he), hD⟩
+    · refine Or.inr ⟨k, ?_, a, haw, hD⟩
+      rw [odSeed_K_dn elt side att seed hirrE htr hsym hsep hs ha]; rfl
+
+
+/-! The kernel side.  The routing uses the §43.10 structural fact `side = dir`:
+an ASCENDING kernel (`dir = true`) discharges `∃PP` rung-to-rung and needs an
+external only for `∃PPI`, which wants `side = true`; a DESCENDING one is the
+mirror.  So the vertical-to-external branches land exactly where the attachment
+already puts them, and the cross-kernel branch is never used — which is what
+keeps §36's `hrectQ` staircase out of the picture (§43.11). -/
+theorem odSeed_hk_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    {β κ : Type} (elt : β → β → Prop) (side : κ → Bool) (att : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
+      ¬ seed y z)
+    (g : β → α) (bud : β → Nat) (bk : κ → Nat) (dir : κ → Bool)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n)) (ik pk : κ → Nat)
+    (kDIR : ∀ k a D, Concept.ex (cdir (dir k)) D ∈
+        mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bk k))
+    (kDR : ∀ k a D, Concept.ex dr D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f, seed (Sum.inr k) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
+    (kPO : ∀ k a D, Concept.ex po D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f, ¬ mixLt elt side att (Sum.inr k) (Sum.inl f) ∧
+        ¬ mixLt elt side att (Sum.inl f) (Sum.inr k) ∧
+        ¬ (odSeed elt side att seed hirrE htr hsym hsep).disj
+            (Sum.inr k) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
+    (kUP : ∀ k a D, dir k = false →
+        Concept.ex pp D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f e', side k = false ∧ att k e' = true ∧ leE elt e' f ∧
+        D ∈ mtk C0 I (g f) (bud f))
+    (kDN : ∀ k a D, dir k = true →
+        Concept.ex ppi D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f e', side k = true ∧ att k e' = true ∧ leE elt f e' ∧
+        D ∈ mtk C0 I (g f) (bud f)) :
+    ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      (∃ f, odNet (odSeed elt side att seed hirrE htr hsym hsep)
+          (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
+        D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) ∨
+      (∃ k', k ≠ k' ∧ odNet (odSeed elt side att seed hirrE htr hsym hsep)
+          (Sum.inr k) (Sum.inr k') = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mtk C0 I (ck k' (ik k' + b)) (bk k')) := by
+  intro k a r D hdem
+  cases hd : dir k with
+  | true =>
+    cases r with
+    | eq => exact Or.inr (Or.inr (Or.inl ⟨rfl, mtk_ex_eq hI hdem (hdom k _)⟩))
+    | pp =>
+      have : Concept.ex (cdir (dir k)) D ∈ mtk C0 I (ck k (ik k + a)) (bk k) := by
+        rw [hd]; exact hdem
+      obtain ⟨b, hb, hD⟩ := kDIR k a D this
+      exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
+    | ppi =>
+      obtain ⟨f, e', hs, hae, hle, hD⟩ := kDN k a D hd hdem
+      exact Or.inl ⟨f, odNet_gt _ (show mixLt elt side att (Sum.inl f)
+        (Sum.inr k) from ⟨hs, e', hae, hle⟩), hD⟩
+    | po =>
+      obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D hdem
+      exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
+    | dr =>
+      obtain ⟨f, hsd, hD⟩ := kDR k a D hdem
+      exact Or.inl ⟨f, odSeed_dr elt side att seed hirrE htr hsym hsep hsd, hD⟩
+  | false =>
+    cases r with
+    | eq => exact Or.inr (Or.inr (Or.inl ⟨rfl, mtk_ex_eq hI hdem (hdom k _)⟩))
+    | ppi =>
+      have : Concept.ex (cdir (dir k)) D ∈ mtk C0 I (ck k (ik k + a)) (bk k) := by
+        rw [hd]; exact hdem
+      obtain ⟨b, hb, hD⟩ := kDIR k a D this
+      exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
+    | pp =>
+      obtain ⟨f, e', hs, hae, hle, hD⟩ := kUP k a D hd hdem
+      exact Or.inl ⟨f, odNet_lt _ (show mixLt elt side att (Sum.inr k)
+        (Sum.inl f) from ⟨hs, e', hae, hle⟩), hD⟩
+    | po =>
+      obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D hdem
+      exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
+    | dr =>
+      obtain ⟨f, hsd, hD⟩ := kDR k a D hdem
+      exact Or.inl ⟨f, odSeed_dr elt side att seed hirrE htr hsym hsep hsd, hD⟩
+end OdSeedCoverage
 
 end ODKernels
 
@@ -22941,6 +23107,8 @@ end VerticalWitness
 #print axioms path_cut_mtk
 #print axioms mixLt_rho
 #print axioms hsep_of_model
+#print axioms odSeed_he_ex
+#print axioms odSeed_hk_ex
 #print axioms odLt_hKreal
 #print axioms odLt_hQreal
 #print axioms mtkKernelsOD_of_debts
