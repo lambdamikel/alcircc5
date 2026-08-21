@@ -3528,3 +3528,48 @@ ordered-disjoint structure while its phases are not. `qnet_odNet` shows the fram
 side composes; what is untested is the demand routing across that seam. That is
 now the narrowest remaining unknown, and it is a smaller target than "the
 counting problem".
+### 41.8 Step 5's status, corrected (2026-08-20)
+
+Asked directly whether §41.4 step 5 ("finiteness / `K(C₀)` / `codesM`") had
+changed status after `wp94`. Checking rather than answering from memory found
+that I had been carrying it as more open than it is. **The whole step-5 pattern
+already exists and is certified** — twice — and step 5 is a re-instantiation of
+it, not open research.
+
+The existing chain, all kernel-checked:
+
+```
+mtkNodes_length_le   (mtkNodes n).length ≤ mtkBound C0 n.k
+                     mtkBound C0 (k+1) = 1 + |cl C0| · mtkBound C0 k
+  → encodeHF_mem_codes   the encoded certificate IS in the fixed enumeration
+                          `codes C0`, using exactly that bound
+  → decidableSat_of_codes  fixed enum + completeness premise ⟹ Decidable
+  → decidableSat_hfrag     Decidable (Satisfiable C0) for the horizontal fragment
+```
+
+and the same pattern again on the vertical side via `codesV`
+(`decidableSat_vtower` and its three variants). So the node bound, the encoder,
+the code enumeration and the completeness premise are a WORKING, CERTIFIED
+pipeline — twice instantiated.
+
+Note also that `wp94` part B's measured bound `|cl C0|^mdepth(C0)` is exactly
+`mtkBound`'s shape (`1 + |cl C0|·prev`), so the probe was re-measuring a bound
+the file already proves.
+
+**Revised status of step 5.** Not "the honest open item where a surprise would
+most likely live". It is: write `encodeOD`/`codesOD` for the ordered-disjoint
+node set and its membership lemma, mirroring `encodeHF_mem_codes`. Known shape,
+existing template, certified prerequisites.
+
+**What genuinely remains open**, restated honestly:
+1. **The kernel/external seam** (§41.7) — routing demands in a certificate that
+   has BOTH `odNet` externals and periodic kernels. The frame side composes
+   (`qnet_odNet`); the routing is untested. This is now the narrowest unknown.
+2. Steps 2–4 as engineering: the certificate, the extraction, the coverage.
+3. Counting for the COMBINED case — `mtkBound` counts externals, `codesV`
+   counts kernel phases; the general certificate needs both at once. Mechanical,
+   but not literally either existing instance.
+
+The honest summary: what I had labelled the riskiest step turns out to have a
+certified template, and the risk has migrated to the kernel/external seam, which
+is a much smaller and more concrete target.
