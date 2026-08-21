@@ -3461,3 +3461,28 @@ Risks, named in advance rather than discovered:
 **This route is chosen because it is the only one probed to express all five
 relations and to survive nesting.** Steps 1–4 are bounded; step 5 is the honest
 open item, and it is the same counting problem the campaign has always had.
+
+### 41.6 Step 1 DONE: `odNet_frame`
+
+The missing brick is built. `ODStruct` (mirroring `RCC5NormalForm`'s
+`OrderedDisjoint`), the induced `odNet`, four inversion lemmas
+(`odNet_eq_inv`/`_pp_inv`/`_ppi_inv`/`_dr_inv`), and
+
+> **`odNet_frame`** — every ordered-disjoint structure induces an RCC5 `Frame`.
+
+Sixteen genuine cases, exactly as `wp93` part C predicted: four FORCED
+(`PP;PP`, `PPI;PPI` by `ltTr`; `PP;DR`, `DR;PPI` by `djDown`), three absorbed
+(`PP;PPI`, `DR;DR`, `PO;PO`), and nine needing one or two exclusions each,
+every one discharged by an inversion lemma plus a single structure axiom.
+
+Note the proof needed no `eta` machinery: the frame follows DIRECTLY from the
+`OrderedDisjoint` axioms, so `RCC5NormalForm`'s set-representation
+(`eta`, `sub_iff_le`, `disj_iff_eta_disjoint`) is not on the critical path for
+this step — it remains the independent justification that such structures are
+realizable.
+
+**Method note.** Two false starts, both worth remembering: the case analysis is
+unmanageable with `▸` transports (use `have e : x = z := …; subst e`), and I
+initially worked from a hand-recalled composition table whose `PO;PPI` cell was
+wrong — the real table has `[ppi, po, dr]`, matching set semantics. Reading the
+actual table first would have saved a pass.

@@ -18092,6 +18092,298 @@ ascending `PP`-tower (no finite model) and carries a real atom.  Its
 ℕ-order model feeds `vkernel_ok`, so `Satisfiable Cvert` is produced
 THROUGH the kernel machinery — the hypotheses are jointly satisfiable. -/
 
+/-! ### §41 — the ORDERED-DISJOINT frame, the general certificate frame
+
+`posetNet` has no `DR`; the PO-default frame has no `PP`/`PPI` among externals.
+The ordered-disjoint net has all five, and is the RCC5 normal form certified
+forward in `formal/RCC5NormalForm.lean`.  `wp93` checked it composition-closed
+over all 962 structures on ≤ 4 elements and reduced the proof to four forced
+cells: `PP;PP` and `PPI;PPI` (from transitivity), `PP;DR` and `DR;PPI` (from
+downward-closed disjointness). -/
+
+/-- An ordered-disjoint structure: a strict partial order plus a symmetric,
+    irreflexive, DOWNWARD-CLOSED disjointness disjoint from comparability.
+    Mirrors `RCC5NormalForm.OrderedDisjoint`. -/
+structure ODStruct (N : Type) where
+  lt : N → N → Prop
+  disj : N → N → Prop
+  ltIrr : ∀ x, ¬ lt x x
+  ltTr : ∀ x y z, lt x y → lt y z → lt x z
+  djSym : ∀ x y, disj x y → disj y x
+  djIrr : ∀ x, ¬ disj x x
+  ltNotDj : ∀ x y, lt x y → ¬ disj x y
+  djDown : ∀ x y x' y', disj x y → (x' = x ∨ lt x' x) → (y' = y ∨ lt y' y) →
+    disj x' y'
+
+variable {N : Type}
+
+theorem ODStruct.lt_ne (O : ODStruct N) {x y : N} (h : O.lt x y) : x ≠ y := by
+  intro hxy; subst hxy; exact O.ltIrr x h
+
+theorem ODStruct.lt_asymm (O : ODStruct N) {x y : N} (h : O.lt x y) :
+    ¬ O.lt y x := fun h2 => O.ltIrr x (O.ltTr x y x h h2)
+
+theorem ODStruct.dj_ne (O : ODStruct N) {x y : N} (h : O.disj x y) : x ≠ y := by
+  intro hxy; subst hxy; exact O.djIrr x h
+
+open Classical in
+/-- The induced net: `EQ` on the diagonal, `PP`/`PPI` on comparable pairs, `DR`
+    on disjoint ones, `PO` on the rest. -/
+noncomputable def odNet (O : ODStruct N) : N → N → Atom :=
+  fun x y => if x = y then eq else if O.lt x y then pp
+    else if O.lt y x then ppi else if O.disj x y then dr else po
+
+open Classical in
+theorem odNet_self (O : ODStruct N) (x : N) : odNet O x x = eq := by
+  show (if x = x then eq else _) = eq
+  rw [if_pos rfl]
+
+open Classical in
+theorem odNet_lt (O : ODStruct N) {x y : N} (h : O.lt x y) : odNet O x y = pp := by
+  show (if x = y then eq else if O.lt x y then pp else _) = pp
+  rw [if_neg (O.lt_ne h), if_pos h]
+
+open Classical in
+theorem odNet_gt (O : ODStruct N) {x y : N} (h : O.lt y x) : odNet O x y = ppi := by
+  show (if x = y then eq else if O.lt x y then pp
+    else if O.lt y x then ppi else _) = ppi
+  rw [if_neg (fun hxy => O.lt_ne h hxy.symm), if_neg (O.lt_asymm h), if_pos h]
+
+open Classical in
+theorem odNet_dj (O : ODStruct N) {x y : N} (h : O.disj x y) : odNet O x y = dr := by
+  show (if x = y then eq else if O.lt x y then pp
+    else if O.lt y x then ppi else if O.disj x y then dr else po) = dr
+  rw [if_neg (O.dj_ne h), if_neg (fun hl => O.ltNotDj x y hl h),
+    if_neg (fun hl => O.ltNotDj y x hl (O.djSym x y h)), if_pos h]
+
+open Classical in
+theorem odNet_po (O : ODStruct N) {x y : N} (h1 : x ≠ y) (h2 : ¬ O.lt x y)
+    (h3 : ¬ O.lt y x) (h4 : ¬ O.disj x y) : odNet O x y = po := by
+  show (if x = y then eq else if O.lt x y then pp
+    else if O.lt y x then ppi else if O.disj x y then dr else po) = po
+  rw [if_neg h1, if_neg h2, if_neg h3, if_neg h4]
+
+open Classical in
+theorem odNet_cases (O : ODStruct N) (x y : N) :
+    odNet O x y = eq ∨ odNet O x y = pp ∨ odNet O x y = ppi ∨
+    odNet O x y = dr ∨ odNet O x y = po := by
+  by_cases h1 : x = y
+  · exact Or.inl (by rw [h1]; exact odNet_self O y)
+  · by_cases h2 : O.lt x y
+    · exact Or.inr (Or.inl (odNet_lt O h2))
+    · by_cases h3 : O.lt y x
+      · exact Or.inr (Or.inr (Or.inl (odNet_gt O h3)))
+      · by_cases h4 : O.disj x y
+        · exact Or.inr (Or.inr (Or.inr (Or.inl (odNet_dj O h4))))
+        · exact Or.inr (Or.inr (Or.inr (Or.inr (odNet_po O h1 h2 h3 h4))))
+
+open Classical in
+theorem odNet_eq_inv (O : ODStruct N) {x y : N} (h : odNet O x y = eq) : x = y := by
+  by_cases hxy : x = y
+  · exact hxy
+  · exfalso
+    by_cases h2 : O.lt x y
+    · rw [odNet_lt O h2] at h; exact absurd h (by decide)
+    · by_cases h3 : O.lt y x
+      · rw [odNet_gt O h3] at h; exact absurd h (by decide)
+      · by_cases h4 : O.disj x y
+        · rw [odNet_dj O h4] at h; exact absurd h (by decide)
+        · rw [odNet_po O hxy h2 h3 h4] at h; exact absurd h (by decide)
+
+open Classical in
+theorem odNet_pp_inv (O : ODStruct N) {x y : N} (h : odNet O x y = pp) :
+    O.lt x y := by
+  by_cases h2 : O.lt x y
+  · exact h2
+  · exfalso
+    by_cases hxy : x = y
+    · subst hxy; rw [odNet_self] at h; exact absurd h (by decide)
+    · by_cases h3 : O.lt y x
+      · rw [odNet_gt O h3] at h; exact absurd h (by decide)
+      · by_cases h4 : O.disj x y
+        · rw [odNet_dj O h4] at h; exact absurd h (by decide)
+        · rw [odNet_po O hxy h2 h3 h4] at h; exact absurd h (by decide)
+
+open Classical in
+theorem odNet_ppi_inv (O : ODStruct N) {x y : N} (h : odNet O x y = ppi) :
+    O.lt y x := by
+  by_cases h3 : O.lt y x
+  · exact h3
+  · exfalso
+    by_cases hxy : x = y
+    · subst hxy; rw [odNet_self] at h; exact absurd h (by decide)
+    · by_cases h2 : O.lt x y
+      · rw [odNet_lt O h2] at h; exact absurd h (by decide)
+      · by_cases h4 : O.disj x y
+        · rw [odNet_dj O h4] at h; exact absurd h (by decide)
+        · rw [odNet_po O hxy h2 h3 h4] at h; exact absurd h (by decide)
+
+open Classical in
+theorem odNet_dr_inv (O : ODStruct N) {x y : N} (h : odNet O x y = dr) :
+    O.disj x y := by
+  by_cases h4 : O.disj x y
+  · exact h4
+  · exfalso
+    by_cases hxy : x = y
+    · subst hxy; rw [odNet_self] at h; exact absurd h (by decide)
+    · by_cases h2 : O.lt x y
+      · rw [odNet_lt O h2] at h; exact absurd h (by decide)
+      · by_cases h3 : O.lt y x
+        · rw [odNet_gt O h3] at h; exact absurd h (by decide)
+        · rw [odNet_po O hxy h2 h3 h4] at h; exact absurd h (by decide)
+
+open Classical in
+/-- **THE ORDERED-DISJOINT FRAME** (§41.4 step 1) — the missing brick.  Every
+    ordered-disjoint structure induces an RCC5 `Frame`.  This is the frame that
+    can carry the GENERAL ∀PO-free fragment: it expresses all five relations
+    (`posetNet` has no `DR`, the PO-default frame no `PP`/`PPI` among externals),
+    and it survives NESTING because the order carries transitivity explicitly
+    instead of PO-defaulting the non-adjacent pair.
+
+    Sixteen genuine cases (`wp93` part C): four are FORCED — `PP;PP` and
+    `PPI;PPI` by `ltTr`, `PP;DR` and `DR;PPI` by `djDown` — three are absorbed,
+    and the rest need one exclusion each, supplied by the inversion lemmas. -/
+theorem odNet_frame (O : ODStruct N) : Frame (odNet O) where
+  refl_eq := odNet_self O
+  eq_id := fun x y h => odNet_eq_inv O h
+  conv_ := by
+    intro x y
+    by_cases hxy : x = y
+    · subst hxy; rw [odNet_self]; rfl
+    · by_cases h2 : O.lt x y
+      · rw [odNet_lt O h2, odNet_gt O h2]; rfl
+      · by_cases h3 : O.lt y x
+        · rw [odNet_gt O h3, odNet_lt O h3]; rfl
+        · by_cases h4 : O.disj x y
+          · rw [odNet_dj O h4, odNet_dj O (O.djSym x y h4)]; rfl
+          · rw [odNet_po O hxy h2 h3 h4,
+              odNet_po O (fun h => hxy h.symm) h3 h2 (fun h => h4 (O.djSym y x h))]
+            rfl
+  comp_ := by
+    intro x y z
+    by_cases hxy : x = y
+    · subst hxy; rw [odNet_self]; simp [comp]
+    by_cases hyz : y = z
+    · subst hyz; rw [odNet_self O y]; cases h : odNet O x y <;> simp [comp]
+    by_cases h1 : O.lt x y
+    · by_cases h2 : O.lt y z
+      · -- PP;PP forced by transitivity
+        rw [odNet_lt O h1, odNet_lt O h2, odNet_lt O (O.ltTr x y z h1 h2)]; decide
+      · by_cases h3 : O.lt z y
+        · -- PP;PPI absorbed
+          rw [odNet_lt O h1, odNet_gt O h3]
+          rcases odNet_cases O x z with h|h|h|h|h <;> rw [h] <;> decide
+        · by_cases h4 : O.disj y z
+          · -- PP;DR forced by downward closure
+            rw [odNet_lt O h1, odNet_dj O h4,
+              odNet_dj O (O.djDown y z x z h4 (Or.inr h1) (Or.inl rfl))]; decide
+          · -- PP;PO : exclude EQ and PPI
+            rw [odNet_lt O h1, odNet_po O hyz h2 h3 h4]
+            rcases odNet_cases O x z with h|h|h|h|h
+            · exfalso; have e : x = z := odNet_eq_inv O h; subst e; exact h3 h1
+            · rw [h]; decide
+            · exact absurd (O.ltTr z x y (odNet_ppi_inv O h) h1) h3
+            · rw [h]; decide
+            · rw [h]; decide
+    · by_cases h1' : O.lt y x
+      · by_cases h2 : O.lt y z
+        · -- PPI;PP : exclude DR (both sides above y)
+          rw [odNet_gt O h1', odNet_lt O h2]
+          rcases odNet_cases O x z with h|h|h|h|h
+          · rw [h]; decide
+          · rw [h]; decide
+          · rw [h]; decide
+          · exact absurd (O.djDown x z y y (odNet_dr_inv O h) (Or.inr h1') (Or.inr h2))
+              (O.djIrr y)
+          · rw [h]; decide
+        · by_cases h3 : O.lt z y
+          · -- PPI;PPI forced by transitivity
+            rw [odNet_gt O h1', odNet_gt O h3, odNet_gt O (O.ltTr z y x h3 h1')]; decide
+          · by_cases h4 : O.disj y z
+            · -- PPI;DR : exclude EQ and PP
+              rw [odNet_gt O h1', odNet_dj O h4]
+              rcases odNet_cases O x z with h|h|h|h|h
+              · exfalso; have e : x = z := odNet_eq_inv O h; subst e
+                exact O.ltNotDj y x h1' h4
+              · exact absurd (O.ltTr y x z h1' (odNet_pp_inv O h))
+                  (fun hc => O.ltNotDj y z hc h4)
+              · rw [h]; decide
+              · rw [h]; decide
+              · rw [h]; decide
+            · -- PPI;PO : exclude EQ, PP, DR
+              rw [odNet_gt O h1', odNet_po O hyz h2 h3 h4]
+              rcases odNet_cases O x z with h|h|h|h|h
+              · exfalso; have e : x = z := odNet_eq_inv O h; subst e; exact h2 h1'
+              · exact absurd (O.ltTr y x z h1' (odNet_pp_inv O h)) h2
+              · rw [h]; decide
+              · exact absurd (O.djDown x z y z (odNet_dr_inv O h)
+                  (Or.inr h1') (Or.inl rfl)) h4
+              · rw [h]; decide
+      · by_cases hd1 : O.disj x y
+        · by_cases h2 : O.lt y z
+          · -- DR;PP : exclude EQ and PPI
+            rw [odNet_dj O hd1, odNet_lt O h2]
+            rcases odNet_cases O x z with h|h|h|h|h
+            · exfalso; have e : x = z := odNet_eq_inv O h; subst e
+              exact O.ltNotDj y x h2 (O.djSym x y hd1)
+            · rw [h]; decide
+            · exact absurd (O.ltTr y z x h2 (odNet_ppi_inv O h))
+                (fun hc => O.ltNotDj y x hc (O.djSym x y hd1))
+            · rw [h]; decide
+            · rw [h]; decide
+          · by_cases h3 : O.lt z y
+            · -- DR;PPI forced by downward closure
+              rw [odNet_dj O hd1, odNet_gt O h3,
+                odNet_dj O (O.djDown x y x z hd1 (Or.inl rfl) (Or.inr h3))]; decide
+            · by_cases h4 : O.disj y z
+              · -- DR;DR absorbed
+                rw [odNet_dj O hd1, odNet_dj O h4]
+                rcases odNet_cases O x z with h|h|h|h|h <;> rw [h] <;> decide
+              · -- DR;PO : exclude EQ and PPI
+                rw [odNet_dj O hd1, odNet_po O hyz h2 h3 h4]
+                rcases odNet_cases O x z with h|h|h|h|h
+                · exfalso; have e : x = z := odNet_eq_inv O h; subst e
+                  exact h4 (O.djSym x y hd1)
+                · rw [h]; decide
+                · exact absurd (O.djSym z y (O.djDown x y z y hd1
+                    (Or.inr (odNet_ppi_inv O h)) (Or.inl rfl))) h4
+                · rw [h]; decide
+                · rw [h]; decide
+        · by_cases h2 : O.lt y z
+          · -- PO;PP : exclude EQ, PPI, DR
+            rw [odNet_po O hxy h1 h1' hd1, odNet_lt O h2]
+            rcases odNet_cases O x z with h|h|h|h|h
+            · exfalso; have e : x = z := odNet_eq_inv O h; subst e; exact h1' h2
+            · rw [h]; decide
+            · exact absurd (O.ltTr y z x h2 (odNet_ppi_inv O h)) h1'
+            · exact absurd (O.djDown x z x y (odNet_dr_inv O h)
+                (Or.inl rfl) (Or.inr h2)) hd1
+            · rw [h]; decide
+          · by_cases h3 : O.lt z y
+            · -- PO;PPI : exclude EQ and PP
+              rw [odNet_po O hxy h1 h1' hd1, odNet_gt O h3]
+              rcases odNet_cases O x z with h|h|h|h|h
+              · exfalso; have e : x = z := odNet_eq_inv O h; subst e; exact h1 h3
+              · exact absurd (O.ltTr x z y (odNet_pp_inv O h) h3) h1
+              · rw [h]; decide
+              · rw [h]; decide
+              · rw [h]; decide
+            · by_cases h4 : O.disj y z
+              · -- PO;DR : exclude EQ and PP
+                rw [odNet_po O hxy h1 h1' hd1, odNet_dj O h4]
+                rcases odNet_cases O x z with h|h|h|h|h
+                · exfalso; have e : x = z := odNet_eq_inv O h; subst e
+                  exact hd1 (O.djSym y x h4)
+                · exact absurd (O.djSym y x (O.djDown y z y x h4 (Or.inl rfl)
+                    (Or.inr (odNet_pp_inv O h)))) hd1
+                · rw [h]; decide
+                · rw [h]; decide
+                · rw [h]; decide
+              · -- PO;PO absorbed
+                rw [odNet_po O hxy h1 h1' hd1, odNet_po O hyz h2 h3 h4]
+                rcases odNet_cases O x z with h|h|h|h|h <;> rw [h] <;> decide
+
+
 namespace VerticalWitness
 
 /-- The ℕ-order chain is a frame. -/
@@ -21278,5 +21570,8 @@ end VerticalWitness
 #print axioms VerticalWitness.cnest_generic_satisfiable
 #print axioms VerticalWitness.cnest_via_flat
 #print axioms VerticalWitness.cmerge_via_tower
+
+#print axioms odNet_frame
+#print axioms odNet_pp_inv
 
 end POFreeLift
