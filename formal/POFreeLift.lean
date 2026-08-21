@@ -19411,6 +19411,10 @@ theorem eltOf_irr {J : Interp α} (hJ : RCC5Interp J) (g : β → α)
   rw [hJ.refl_eq (g e) (hgdom e)] at h'
   exact absurd h' (by decide)
 
+/-- `eltOf` is itself such a sub-relation — the maximal one. -/
+theorem eltOf_sub {J : Interp α} (g : β → α) (e f : β) (h : eltOf J g e f) :
+    J.rho (g e) (g f) = pp := h
+
 theorem eltOf_trans {J : Interp α} (hJ : RCC5Interp J) (g : β → α)
     (hgdom : ∀ e, J.dom (g e)) (a b c : β)
     (h1 : eltOf J g a b) (h2 : eltOf J g b c) : eltOf J g a c :=
@@ -19425,6 +19429,100 @@ theorem hppE_of_bud {J : Interp α} (g : β → α) (bud : β → Nat)
   ⟨h, (hbud e f h).1, (hbud e f h).2⟩
 
 end EltOf
+
+section HsepFromModel
+
+/-! #### `hsep` is automatic when the seed is the model's `DR` (§44.6 item 3)
+
+`odSeed`'s only real hypothesis is `hsep` — *no node lies below two seed-related
+nodes*. Over the taller §44.3 order that looks like more work. It is instead
+FREE, for a reason the model supplies: a node below two `DR`-related nodes would
+be a part of both, hence empty.
+
+Formally it needs one bridge — that the declared order is SOUND for the model's
+`PP` (`mixLt_rho`) — and then two composition facts:
+`comp(PP,DR) = {DR}` and `PP ≠ DR`. -/
+
+variable {α β κ : Type}
+
+/-- The model element a certificate node stands for. -/
+def nodeOf (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) : β ⊕ κ → α :=
+  Sum.elim g (fun k => ck k (ik k))
+
+/-- **THE ORDER IS SOUND FOR THE MODEL'S `PP`.**  Every declared `lt` edge is a
+    real proper-part edge — the external part by definition of `eltOf`, the
+    kernel parts by the attachment facts pushed through `comp(PP,PP) = {PP}`. -/
+theorem mixLt_rho {I : Interp α} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hup0 : ∀ k e, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, side k = false → att k e = true →
+      I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (x y : β ⊕ κ) (h : mixLt elt side att x y) :
+    I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = pp := by
+  rcases x with e | k <;> rcases y with f | k'
+  · exact helt _ _ h
+  · obtain ⟨hs, e', hae, hle⟩ := h
+    rcases hle with rfl | hlt
+    · exact hup0 k' e hs hae
+    · exact rho_forced hI (hgdom e) (hkdom k') (hgdom e') (helt _ _ hlt)
+        (hup0 k' e' hs hae) (by decide)
+  · obtain ⟨hs, e', hae, hle⟩ := h
+    rcases hle with rfl | hlt
+    · exact hdn0 k e' hs hae
+    · exact rho_forced hI (hkdom k) (hgdom f) (hgdom e')
+        (hdn0 k e' hs hae) (helt _ _ hlt) (by decide)
+  · obtain ⟨hs, hs', e, e', hae, hae', hle⟩ := h
+    have step1 : I.rho (ck k (ik k)) (g e') = pp := by
+      rcases hle with rfl | hlt
+      · exact hdn0 k e hs hae
+      · exact rho_forced hI (hkdom k) (hgdom e') (hgdom e)
+          (hdn0 k e hs hae) (helt _ _ hlt) (by decide)
+    exact rho_forced hI (hkdom k) (hkdom k') (hgdom e') step1
+      (hup0 k' e' hs' hae') (by decide)
+
+/-- **`hsep` IS AUTOMATIC.**  A node below two `DR`-related nodes would be a part
+    of both — `comp(PP,DR) = {DR}` makes it `DR` from the second while the order
+    makes it `PP`, and `PP ≠ DR`. -/
+theorem hsep_of_model {I : Interp α} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hup0 : ∀ k e, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, side k = false → att k e = true →
+      I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr) :
+    ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
+      ¬ seed y z := by
+  have hlt := mixLt_rho hI g ck ik side att hgdom hkdom hup0 hdn0 elt helt
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (e | k)
+    · exact hgdom e
+    · exact hkdom k
+  intro x y z hxy hxz hs
+  have hyz : I.rho (nodeOf g ck ik y) (nodeOf g ck ik z) = dr := hseed y z hs
+  rcases hxy with rfl | hxy
+  · -- x = y : then x is below z as well as DR from it
+    rcases hxz with rfl | hxz
+    · rw [hI.refl_eq _ (hdomN x)] at hyz; exact absurd hyz (by decide)
+    · rw [hlt x z hxz] at hyz; exact absurd hyz (by decide)
+  · rcases hxz with rfl | hxz
+    · -- x = z : y is DR from x while x is PP into y
+      have := hI.conv_ (nodeOf g ck ik x) (nodeOf g ck ik y)
+        (hdomN x) (hdomN y)
+      rw [hlt x y hxy] at this
+      rw [this] at hyz; exact absurd hyz (by decide)
+    · -- both strict : comp(PP,DR) = {DR} contradicts the PP edge into z
+      have hxzdr : I.rho (nodeOf g ck ik x) (nodeOf g ck ik z) = dr :=
+        rho_forced hI (hdomN x) (hdomN z) (hdomN y) (hlt x y hxy) hyz (by decide)
+      rw [hlt x z hxz] at hxzdr; exact absurd hxzdr (by decide)
+
+end HsepFromModel
 
 section ODDebt
 
@@ -22841,6 +22939,8 @@ end VerticalWitness
 #print axioms odSeed_E_pp
 #print axioms path_cut
 #print axioms path_cut_mtk
+#print axioms mixLt_rho
+#print axioms hsep_of_model
 #print axioms odLt_hKreal
 #print axioms odLt_hQreal
 #print axioms mtkKernelsOD_of_debts
