@@ -4291,3 +4291,41 @@ and `mtkKernelsOD_of_debts`.
 
 Item 2 is the substantial one and is now the campaign's single open mathematical
 step for this fragment.
+
+### 44.7 THE CUT — §44.6 item 2 was wrong, and the correction (2026-08-21)
+
+§44.6 stated the dichotomy as *a `PP`-chain either repeats a type — and a
+repetition gives a periodic tower, hence a KERNEL — or is shorter than the number
+of types*, and rested the node bound on it. **`wp99` refutes the bound.** Type
+repeats DO occur on terminating paths (35 across 5,773 instances), and paths DO
+exceed the type count and `|cl C₀|`. A repeat does not by itself produce an
+infinite ascending chain, so it produces no kernel. The claim conflated two
+different things.
+
+**The correction.** A repeat on a FINITE path gives a **CUT**:
+
+```
+mty v = mty w,   u PP v PP w    ⟹    delete v, keep w
+```
+
+legitimate for exactly two reasons, both machine-checked (`wp99` E, 35/35) and
+now certified (`path_cut`, `path_cut_mtk`):
+
+* the re-linked edge survives — model `PP` is TRANSITIVE, `comp(PP,PP) = {PP}`;
+* the deleted node's serving role is inherited — the survivor has the SAME TYPE,
+  so it carries the same demand argument.
+
+So the honest dichotomy is:
+
+> a demand path either **TERMINATES** — and can then be CHOSEN repeat-free, which
+> bounds its length by the number of types — or is **INFINITE**, and *that* is
+> what yields a kernel (pigeonhole + `recurrent_tail`).
+
+The kernel comes from the infinite branch, not from the repeat.
+
+**Method note, and it is the same one again.** §44.6 was written from reasoning,
+not measurement, and it was wrong in a way that would have been invisible until
+the node-bound proof failed. Four for four now: `mixKernelsK`'s budgets, `odMix`'s
+disjointness, `hKreal`'s range, and this. Every one was an over-strong or
+over-hopeful claim about an interface or a bound, and every one fell to the first
+thing that actually tried to use it.
