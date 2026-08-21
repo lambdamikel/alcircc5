@@ -13560,6 +13560,45 @@ theorem extract_dr_children (hI : RCC5Interp I) {C0 : Concept}
     hstep ik pk hp hty hv0pp hdr hee he_ex hk_ex
   exact multiTier_sound _ hok (Sum.inl root) C0 hroot
 
+open Classical in
+/-- **EXTRACTION INTO THE `dir`-GENERALIZED CERTIFICATE** (§40.4) — the entry
+    point, mirroring `extract_dr_children`: valid PO-default data of either
+    direction plus a root whose label carries `C0` gives `Satisfiable C0`
+    directly, via `mtkKernelsDir_ok` and `multiTier_sound`. -/
+theorem extract_dir_children (hI : RCC5Interp I) {C0 : Concept}
+    (hpofree : POFree C0) {β κ : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (bud : β → Nat) (bk : κ → Nat) (dadj : β → β → Bool)
+    (hsym : ∀ e f, dadj e f = dadj f e) (kppi kdr : κ → β → Bool)
+    (hcoh : ∀ k e f, kdr k e = true → kppi k f = true → dadj e f = true)
+    (dir : κ → Bool) (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
+    (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hup : ∀ k a e, kppi k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp ∧
+        bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hdr : ∀ k a e, kdr k e = true →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧
+        bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hee : ∀ e f r cc, Concept.all r cc ∈ mtk C0 I (g e) (bud e) →
+      (if e = f then eq else if dadj e f then dr else po) = r →
+      cc ∈ mtk C0 I (g f) (bud f))
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, (if e = f then eq else if dadj e f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (if kppi k e then ppi else if kdr k e then dr else po) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      (∃ f, (if kppi k f then ppi else if kdr k f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
+    (root : β) (hroot : C0 ∈ mtk C0 I (g root) (bud root)) :
+    Satisfiable C0 := by
+  have hok := mtkKernelsDir_ok hI hpofree g hgdom bud bk dadj hsym kppi kdr hcoh
+    dir ck hdom hstep ik pk hp hty hup hdr hee he_ex hk_ex
+  exact multiTier_sound _ hok (Sum.inl root) C0 hroot
+
 /-- **KERNEL FROM A PERSISTENT `∃PP` NODE** (the AscMix coverage's vertical
     core, §31.3).  A `persistPP` node `x0` (carrying `∃PP.G` and its `∀PP` guard)
     yields the raw kernel data `extract_dr_children`/`mtkKernels_ok` consume: an
@@ -20290,6 +20329,60 @@ theorem family_interface_nonvacuous :
     (fun _ _ => trivial) (fun _ _ => 0) hconst
   exact ⟨ik, pk, hp, hstab⟩
 
+open Classical in
+/-- **NON-VACUITY OF `mtkKernelsDir_ok` — TWO `PPI`-CHILDREN** (§40.3).  The
+    generalization the old frame could not express: a single ascending kernel
+    with TWO distinct `PPI`-children, where `mtkKernelsDR` allowed only the root
+    `v0`.  Both children sit `PP`-inside every phase (they are earlier positions
+    of the same `Ipo` chain), `kdr` is empty so `hcoh` is vacuous, and `dadj` is
+    empty so the only external-external relations are `EQ` (diagonal) and the
+    `PO` default — the latter obligation-free by ∀PO-freeness.
+
+    `Cvert`'s single demand `∃PP.A₀` routes into the kernel from an external
+    (`conv (K k e) = conv PPI = PP`) and up the chain from a phase. -/
+theorem mtkKernelsDir_two_ppi_children :
+    Satisfiable Cvert := by
+  have hchain : ∀ (b : Bool) (i j : Nat), i < j →
+      Ipo.rho (b, i) (b, j) = pp := by
+    intro b i j hij
+    show (if b = b then chain i j else po) = pp
+    rw [if_pos rfl]; exact chain_lt hij
+  refine extract_dir_children Ipo_rcc5 Cvert_pofree
+    (g := fun e : Fin 2 => ((false, e.val) : Bool × Nat)) (fun _ => trivial)
+    (bud := fun _ => mdepth Cvert) (bk := fun _ : Unit => mdepth Cvert)
+    (dadj := fun _ _ => false) (fun _ _ => rfl)
+    (kppi := fun _ _ => true) (kdr := fun _ _ => false)
+    (fun _ e f h _ => absurd h (by simp))
+    (dir := fun _ => true) (ck := fun _ n => ((false, n + 2) : Bool × Nat))
+    (fun _ _ => trivial)
+    (by intro k n; exact hchain false (n + 2) (n + 3) (by omega))
+    (ik := fun _ => 0) (pk := fun _ => 1) (fun _ => Nat.one_pos)
+    (by intro k; exact (pcvfull (false, 0 + 2)).trans (pcvfull (false, 0 + 1 + 2)).symm)
+    ?hup ?hdr ?hee ?he_ex ?hk_ex
+    (root := ⟨0, by omega⟩)
+    (by exact mem_mtk.mpr ⟨mem_mty.mpr ⟨cl_self Cvert, po_hcv (false, 0)⟩, Nat.le_refl _⟩)
+  case hup =>
+    intro k a e _
+    exact ⟨hchain false e.val (0 + a + 2) (by omega), by omega, by omega⟩
+  case hdr => intro k a e h; exact absurd h (by simp)
+  case hee =>
+    intro e f r cc hmem hE
+    by_cases hef : e = f
+    · subst hef; rw [if_pos rfl] at hE; subst hE
+      exact all_into hmem (Ipo_rcc5.refl_eq _ trivial) trivial
+    · rw [if_neg hef] at hE; subst hE
+      exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po Cvert_pofree)
+  case he_ex =>
+    intro e r D hmem
+    obtain ⟨rfl, rfl⟩ := cvert_demands r D (mty_sub _ (mem_mtk.mp hmem).1)
+    exact Or.inr ⟨(), rfl, 0, Nat.one_pos,
+      mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, by decide⟩⟩
+  case hk_ex =>
+    intro k a r D hmem
+    obtain ⟨rfl, rfl⟩ := cvert_demands r D (mty_sub _ (mem_mtk.mp hmem).1)
+    exact Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos,
+      mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, by decide⟩⟩)
+
 /-- Everything in `cl Cnest` is satisfied at every `Ipo` point. -/
 theorem psat_all (p : Bool × Nat) : ∀ D ∈ cl Cnest, sat Ipo p D := by
   intro D hD
@@ -20639,6 +20732,7 @@ end VerticalWitness
 #print axioms glue_frame
 #print axioms po_dr_multi_kernel_frame'
 #print axioms mtkKernelsDir_ok
+#print axioms extract_dir_children
 #print axioms podefault_ek_dir
 #print axioms podefault_ke_dir
 #print axioms mtk_kk_pp_dir
@@ -20774,6 +20868,7 @@ end VerticalWitness
 #print axioms VerticalWitness.classChain_region
 #print axioms VerticalWitness.vtowers_from_nodes_nonvacuous
 #print axioms VerticalWitness.family_interface_nonvacuous
+#print axioms VerticalWitness.mtkKernelsDir_two_ppi_children
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes

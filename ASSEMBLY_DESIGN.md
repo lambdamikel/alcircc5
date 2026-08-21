@@ -3299,7 +3299,28 @@ Supporting lemmas added:
 (`mty_no_all_po`). That is the ∀PO-freeness doing the load-bearing work, exactly
 as in the glue.
 
-### 40.4 Remaining on route (a)
+### 40.4 Entry point and witness
+
+- `extract_dir_children` — the entry point mirroring `extract_dr_children`:
+  valid PO-default data of either direction plus a root carrying `C0` gives
+  `Satisfiable C0`, via `mtkKernelsDir_ok` and `multiTier_sound`.
+- `mtkKernelsDir_two_ppi_children` — non-vacuity, exercising the generalization
+  the OLD frame could not express: one ascending kernel with **two distinct
+  `PPI`-children** (earlier positions of the same `Ipo` chain, both `PP`-inside
+  every phase), `kdr` empty so `hcoh` is vacuous, `dadj` empty so the only
+  external-external values are `EQ` on the diagonal and the `PO` default — the
+  latter obligation-free by ∀PO-freeness. `Cvert`'s demand routes into the
+  kernel from an external (`conv (K k e) = conv PPI = PP`) and up the chain from
+  a phase.
+
+**Honest scope of the witness:** it exercises the many-`PPI`-children half of
+the generalization, NOT the `dir = false` half. A both-directions witness needs a
+model carrying an infinite ASCENDING and an infinite DESCENDING chain
+simultaneously; the file's current models do not (`Ivert` ascends on ℕ, `Idalt`
+descends on ℕ, neither does both), so it needs a new small model — a bounded and
+well-understood task, but not yet done.
+
+### 40.5 Remaining on route (a)
 
 - **Extraction into this certificate**: supply `g`/`bud`/`bk`/`dadj`/`kppi`/`kdr`
   and the routing hypotheses (`hee`, `he_ex`, `hk_ex`) from a model. The
