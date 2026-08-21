@@ -19324,7 +19324,65 @@ theorem cross_dr_of_shared (hI : RCC5Interp I) {u v w : α}
     (hdr : I.rho u v = dr) (hdn : I.rho v w = ppi) : I.rho u w = dr :=
   rho_forced hI hu hw hv hdr hdn (by decide)
 
+/-! #### The cut (§44.6 item 2, CORRECTED)
+
+§44.6 first claimed *a repeat gives a KERNEL*.  `wp99` A/B refutes the bound
+drawn from that: type repeats DO occur on terminating `PP`-paths (35 found), and
+paths DO exceed the type count.  A repeat does not by itself produce an infinite
+ascending chain, so it produces no kernel.
+
+The correct statement is that a repeat on a FINITE path gives a **CUT**:
+
+    mty v = mty w,  u PP v PP w   ⟹   delete v, keep w
+
+which is legitimate for two reasons, and only two — the re-linked edge survives
+because model `PP` is TRANSITIVE (`comp(PP,PP) = {PP}`), and the deleted node's
+role is inherited because the survivor has the SAME TYPE.  `wp99` E: 35/35 valid.
+
+So the dichotomy is: a demand path either TERMINATES — and can then be chosen
+repeat-free, bounding its length by the number of types — or is INFINITE, and
+*that* is what yields a kernel (pigeonhole + `recurrent_tail`).  The kernel comes
+from the infinite branch, not from the repeat. -/
+
+/-- Type equality transports a truncated label at the same budget. -/
+theorem mtk_of_mty_eq {C0 : Concept} {x y : α} {b : Nat}
+    (h : mty C0 I x = mty C0 I y) {D : Concept} (hD : D ∈ mtk C0 I x b) :
+    D ∈ mtk C0 I y b := by
+  refine mem_mtk.mpr ⟨?_, (mem_mtk.mp hD).2⟩
+  rw [← h]; exact (mem_mtk.mp hD).1
+
+/-- **THE CUT.**  A repeated type on a `PP`-path is removable: the edge into the
+    deleted node re-links to the survivor, and the deleted node's serving role is
+    inherited. -/
+theorem path_cut (hI : RCC5Interp I) {C0 : Concept} {u v w : α}
+    (hu : I.dom u) (hv : I.dom v) (hw : I.dom w)
+    (h1 : I.rho u v = pp) (h2 : I.rho v w = pp)
+    (hty : mty C0 I v = mty C0 I w)
+    {D : Concept} (hD : D ∈ mty C0 I v) :
+    I.rho u w = pp ∧ D ∈ mty C0 I w := by
+  refine ⟨rho_forced hI hu hw hv h1 h2 (by decide), ?_⟩
+  rw [← hty]; exact hD
+
+/-- The cut at truncated labels — the form the certificate uses, since the budget
+    is held CONSTANT along a `PP`-path (§44.3). -/
+theorem path_cut_mtk (hI : RCC5Interp I) {C0 : Concept} {u v w : α}
+    (hu : I.dom u) (hv : I.dom v) (hw : I.dom w)
+    (h1 : I.rho u v = pp) (h2 : I.rho v w = pp)
+    (hty : mty C0 I v = mty C0 I w)
+    {D : Concept} {b : Nat} (hD : D ∈ mtk C0 I v b) :
+    I.rho u w = pp ∧ D ∈ mtk C0 I w b :=
+  ⟨rho_forced hI hu hw hv h1 h2 (by decide), mtk_of_mty_eq hty hD⟩
+
+/-- The cut preserves the `elt` edge in BOTH directions when the deleted node had
+    something below it as well: `elt` is the model's `PP`, so this is again just
+    transitivity. -/
+theorem path_cut_below (hI : RCC5Interp I) {t u v : α}
+    (ht : I.dom t) (hu : I.dom u) (hv : I.dom v)
+    (h1 : I.rho t u = pp) (h2 : I.rho u v = pp) : I.rho t v = pp :=
+  rho_forced hI ht hv hu h1 h2 (by decide)
+
 end ODExtraction
+
 
 section EltOf
 
@@ -22781,6 +22839,8 @@ end VerticalWitness
 #print axioms odLt_E_cases
 #print axioms eltOf_trans
 #print axioms odSeed_E_pp
+#print axioms path_cut
+#print axioms path_cut_mtk
 #print axioms odLt_hKreal
 #print axioms odLt_hQreal
 #print axioms mtkKernelsOD_of_debts
