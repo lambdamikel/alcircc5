@@ -16678,6 +16678,49 @@ theorem mixKernels_noPo {κ : Type} (C0 : Concept) (hpo : POFree C0)
   ext := fun _ _ => mty_no_all_po hpo
   ker := fun _ _ _ _ => mty_no_all_po hpo
 
+/-- **A CHAIN BASE AVOIDING A FINITE SET** (§42.6) — the remaining `hinj`
+    obligation, discharged.
+
+    `readoff_qnet_frame` needs the representatives of `β ⊕ κ` to be pairwise
+    DISTINCT, so a kernel base must differ from every external. The externals
+    form a FINITE list (the bounded closure) while an ascending chain has
+    pairwise distinct nodes (`chain_model_distinct`), so all but finitely many
+    chain indices avoid the list — and a base can be taken past ANY threshold
+    (`rr_segment_from`). Hence the obligation costs nothing.
+
+    Proof: each excluded element is hit at most once along the chain, so the set
+    of hit indices injects into the list; taking the index bound past its size
+    forces a miss. -/
+theorem exists_index_avoiding (c : Nat → α)
+    (hinj : ∀ i j, i < j → c i ≠ c j) (l : List α) (L : Nat) :
+    ∃ n, L ≤ n ∧ c n ∉ l := by
+  classical
+  -- among L, L+1, …, L+|l| there are |l|+1 indices with pairwise distinct values
+  rcases Classical.em (∃ n, L ≤ n ∧ c n ∉ l) with hyes | hno
+  · exact hyes
+  exfalso
+  have hall : ∀ t, t ≤ l.length → c (L + t) ∈ l := by
+    intro t _
+    rcases Classical.em (c (L + t) ∈ l) with hm | hm
+    · exact hm
+    · exact absurd ⟨L + t, Nat.le_add_right L t, hm⟩ hno
+  -- the map t ↦ c (L+t) on {0,…,|l|} is injective into `l`
+  have hinj' : ∀ t u, t < u → u ≤ l.length → c (L + t) ≠ c (L + u) :=
+    fun t u htu _ => hinj (L + t) (L + u) (by omega)
+  have hnd : ((List.range (l.length + 1)).map (fun t => c (L + t))).Nodup := by
+    show List.Pairwise (· ≠ ·) _
+    rw [List.pairwise_map]
+    refine List.Pairwise.imp_of_mem ?_ List.pairwise_lt_range
+    intro a b _ hb hab
+    exact hinj' a b hab (by have := List.mem_range.mp hb; omega)
+  have hsub : ∀ x ∈ ((List.range (l.length + 1)).map (fun t => c (L + t))), x ∈ l := by
+    intro x hx
+    obtain ⟨t, ht, rfl⟩ := List.mem_map.mp hx
+    exact hall t (by have := List.mem_range.mp ht; omega)
+  have hle := nodup_len_le _ l hsub hnd
+  rw [List.length_map, List.length_range] at hle
+  omega
+
 /-- **`mtk` IS MONOTONE IN THE BUDGET** (§42.5) — the enabling fact for a
     read-off certificate over a deduplicated node set.  `mtkNodes` may visit the
     SAME model element at several budgets; `readoff_qnet_frame` needs DISTINCT
@@ -21735,6 +21778,7 @@ end VerticalWitness
 #print axioms VerticalWitness.cnest_via_flat
 #print axioms VerticalWitness.cmerge_via_tower
 
+#print axioms exists_index_avoiding
 #print axioms mtk_mono
 #print axioms mixKernelsK_ok
 #print axioms odNet_frame

@@ -3763,6 +3763,42 @@ is the dedup-by-element construction itself and its coverage transfer — ordina
 list engineering over certified parts, with the `hfExt`/`cdedup` pattern as the
 template.
 
+### 42.6 Reading, not probing: the two remaining risks located
+
+Asked whether to research or probe before building the rest. Neither: the
+remaining risks are about what the existing code SUPPORTS, not about
+mathematical facts, so a Python probe cannot touch them — §42.4's lesson says
+read the definitions. Doing so located both precisely.
+
+**Risk 1 — `hinj` across `β ⊕ κ`.** `readoff_qnet_frame` needs the
+representatives of externals AND kernel bases to be pairwise distinct. Dedup by
+model element handles the externals; a kernel base could still coincide with an
+external. **Discharged**: the externals form a FINITE list (the bounded closure)
+while an ascending chain has pairwise distinct nodes
+(`chain_model_distinct`), so all but finitely many indices avoid the list, and
+`rr_segment_from` supplies a base past any threshold.
+`exists_index_avoiding` (certified) is the general form: for a pairwise-distinct
+sequence and any finite list, some index past any bound misses the list. Proof by
+the pigeonhole already in the file (`nodup_len_le`).
+
+**Risk 2 — the code enumeration.** `FinMT` already carries `K`, `Q`, `up`,
+`phases`, so kernels are representable. But neither existing enumeration is the
+general one:
+- `codes` (horizontal) sets `K`/`Q`/`up`/`phases` to `[]` — externals only,
+  though sized by `mtkBound C0 (mdepth C0)`;
+- `codesV` carries both externals and kernels but is sized to **one** of each
+  (`allListsLe labels 1`, `atomTab1`, `boolCol`).
+
+So `codesM` is the same `allListsLe` pattern at the general bounds —
+`mtkBound`-many externals, `K(C₀)`-many kernels — with two working templates and
+the membership proofs (`encodeHF_mem_codes`, `unitTower_mem_codesV`) to mirror.
+Mechanical, but not free.
+
+**Net.** No mathematical unknown remains on the restored route; what is left is
+the dedup construction, `codesM` at general bounds, and the assembly. Both risks
+turned out to be answerable by reading — which is the third time today that
+reading beat reasoning.
+
 ### 42.4 The pattern, recorded
 
 This is the **third** time in one session that a conclusion rested on not
