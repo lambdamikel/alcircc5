@@ -3827,6 +3827,32 @@ So the read-off certificate now has, all certified: a general frame
 encoder and its membership lemma (template: `encodeHF_mem_codes`), and the final
 assembly into `decidableSat_of_codes`.
 
+### 42.8 `codesM` — the code enumeration at general bounds
+
+`codes` enumerates externals only (kernel fields `[]`); `codesV` carries kernels
+but is sized to ONE external and ONE kernel. The general certificate needs both
+at once. **`codesM C0 NE NK P`** is the same `allListsLe` pattern at general
+bounds — at most `NE` externals, `NK` kernels, periods `≤ P`, every label a
+sublist of `cl C0` — with helpers `atomTabN` (square atom tables) and
+`atomTabNM` (the rectangular `K` block).
+
+**`mem_codesM`** discharges membership from the block bounds alone, mirroring
+`encodeHF_mem_codes` / `unitTower_mem_codesV`. It is model-independent, so it
+can be proved once and applied to whatever certificate the extraction produces.
+
+Note `codesM` itself needs only `propext` — it is pure finite syntax.
+
+**What remains for `Decidable (Satisfiable C0)` on this route:**
+1. the ENCODER `encodeM` — a `mixKernelsK` certificate to a `FinMT`, mirroring
+   `encodeHF`;
+2. `encodeM_accepts` — the Boolean checker accepts it (template:
+   `encodeHF_accepts`, 19 lines, which reduces to the `MultiTierOk` fields);
+3. the size bounds, feeding `mem_codesM`: `NE` from `mtkNodes_length_le` (as
+   `extMax` is a sublist of `mtkNodes`), `NK` and `P` from the kernel side;
+4. `hcompl` and `decidableSat_of_codes`, mirroring `hfrag_hcompl` (11 lines).
+
+Every one of the four has a working template in the file.
+
 ### 42.4 The pattern, recorded
 
 This is the **third** time in one session that a conclusion rested on not

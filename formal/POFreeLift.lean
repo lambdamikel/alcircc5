@@ -16848,6 +16848,60 @@ theorem extMax_covers {C0 : Concept} (root : MTKNode I C0)
   have hc' : c ∈ mtk C0 I n'.x m.k := by rw [hx]; exact hc
   exact mtk_mono hk hc'
 
+/-! ### §42.8 — `codesM`: the code enumeration at GENERAL bounds
+
+`codes` enumerates externals only (kernel fields `[]`), sized by
+`mtkBound C0 (mdepth C0)`; `codesV` carries kernels but is sized to ONE external
+and ONE kernel. The general certificate needs both at once: `NE` externals and
+`NK` kernels, each kernel with period `≤ P`. `codesM` is the same `allListsLe`
+pattern at those bounds, so the two existing membership proofs are its
+templates. -/
+
+/-- Atom tables at a general width. -/
+def atomTabN (n : Nat) : List (List (List Atom)) :=
+  allListsLe (allListsLe allAtoms n) n
+
+/-- Rectangular atom tables (`nK` rows of `nE` entries) — the `K` block. -/
+def atomTabNM (rows cols : Nat) : List (List (List Atom)) :=
+  allListsLe (allListsLe allAtoms cols) rows
+
+/-- **THE GENERAL CODE ENUMERATION.**  All `FinMT`s with at most `NE` externals,
+    at most `NK` kernels, periods at most `P`, and every label a sublist of
+    `cl C0`.  Finite and model-independent, exactly as `codes`/`codesV`. -/
+def codesM (C0 : Concept) (NE NK P : Nat) : List (FinMT × Nat) :=
+  let labels := allListsLe (cl C0) (cl C0).length
+  let phaseCol := allListsLe (allListsLe labels P) NK
+  (allListsLe labels NE).flatMap fun tauE =>
+    (atomTabN NE).flatMap fun E =>
+      (atomTabNM NK NE).flatMap fun K =>
+        (atomTabN NK).flatMap fun Q =>
+          (allListsLe [true, false] NK).flatMap fun up =>
+            phaseCol.flatMap fun phases =>
+              (List.range (NE + 1)).map fun rootIdx =>
+                (⟨tauE, E, K, Q, up, phases⟩, rootIdx)
+
+/-- **MEMBERSHIP IN `codesM`** — a `FinMT` whose blocks are within the bounds and
+    whose labels come from `cl C0` lies in the enumeration.  Mirrors
+    `encodeHF_mem_codes` and `unitTower_mem_codesV`; the proof is the nested
+    `mem_flatMap`/`mem_allListsLe` unfolding those two perform. -/
+theorem mem_codesM (C0 : Concept) (NE NK P : Nat) (F : FinMT) (rootIdx : Nat)
+    (htauE : F.tauE ∈ allListsLe (allListsLe (cl C0) (cl C0).length) NE)
+    (hE : F.E ∈ atomTabN NE) (hK : F.K ∈ atomTabNM NK NE)
+    (hQ : F.Q ∈ atomTabN NK) (hup : F.up ∈ allListsLe [true, false] NK)
+    (hph : F.phases ∈ allListsLe
+      (allListsLe (allListsLe (cl C0) (cl C0).length) P) NK)
+    (hri : rootIdx ≤ NE) :
+    (F, rootIdx) ∈ codesM C0 NE NK P := by
+  refine List.mem_flatMap.mpr ⟨F.tauE, htauE, ?_⟩
+  refine List.mem_flatMap.mpr ⟨F.E, hE, ?_⟩
+  refine List.mem_flatMap.mpr ⟨F.K, hK, ?_⟩
+  refine List.mem_flatMap.mpr ⟨F.Q, hQ, ?_⟩
+  refine List.mem_flatMap.mpr ⟨F.up, hup, ?_⟩
+  refine List.mem_flatMap.mpr ⟨F.phases, hph, ?_⟩
+  refine List.mem_map.mpr ⟨rootIdx, List.mem_range.mpr (by omega), ?_⟩
+  cases F
+  rfl
+
 /-- **THE READ-OFF CERTIFICATE WITH TRUNCATED LABELS** (§42.3) — the combination
     the route needs and the file did not have.
 
@@ -21887,6 +21941,8 @@ end VerticalWitness
 #print axioms VerticalWitness.cnest_via_flat
 #print axioms VerticalWitness.cmerge_via_tower
 
+#print axioms codesM
+#print axioms mem_codesM
 #print axioms extMax_inj
 #print axioms extMax_covers
 #print axioms exists_index_avoiding
