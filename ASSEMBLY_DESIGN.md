@@ -9,22 +9,32 @@ under-designed (the round-19/20 lesson).*
 
 > ## ⚠ CURRENT ROUTE — read this before anything else
 >
-> **The live route is the READ-OFF certificate `mixKernels` (§35–§39).**
-> Its `E`/`K`/`Q` are the MODEL's own relations, so it expresses all five RCC5
-> relations, handles NESTING automatically (transitivity is inherited from the
-> model), and gets `frame_q` from `readoff_qnet_frame` on the sole hypothesis
-> that the chosen representatives are distinct. §39's machinery
-> (`hstab`, `hrectQ`, the banks, the merge, the selection) exists precisely to
-> discharge its obligations, and is largely complete.
+> **The live route is the HYBRID certificate `mtkKernelsOD` (§43).**
+> `mtk` labels read off a model, over a DECLARED **ordered-disjoint** frame on
+> `β ⊕ κ` built by `odMix`: externals pairwise `lt`-incomparable (so their block
+> is the PO-default frame), each kernel entirely above or entirely below its
+> externals, disjointness the downward closure of the externals' `DR` pattern.
+> `frame_q` is free (`frame_q_of_odNet`).
 >
-> **§40–§41 are a CORRECTED DETOUR — see §42.** They audited the PO-default
-> certificate `mtkKernelsDir`, correctly found it cannot express nesting or
-> externals' `∃PPI`, and pivoted to an ordered-disjoint frame (`odNet`). The
-> pivot was UNNECESSARY: those restrictions belong to the PO-default frame, not
-> to the read-off one, which was already general. `odNet_frame` and
-> `qnet_odNet` are genuine certified theorems but are NOT on the critical path,
-> because `readoff_qnet_frame` already supplies a read-off frame under a weaker
-> hypothesis.
+> **Why not the read-off frame `mixKernels`/`mixKernelsK` (§42's route):**
+> `wp96` A. With `E e f = I.rho (g e) (g f)` every external pair carries a real
+> relation, so `ee_all` fires on ALL of them — while the node set that makes the
+> certificate finite (`mtkNodes`) drops the budget at every step. A universal of
+> depth `bud e - 1` then has to land in a label truncated below it. Measured
+> break: **4.1%** of satisfiable ∀PO-free instances. Read-off is EXPRESSIVE (§42
+> was right about that) but forces UNIFORM budgets, and uniform budgets forfeit
+> the budget-decreasing finiteness the whole `codes` pipeline consumes.
+>
+> **Why not a PO DEFAULT either:** `wp96` C, `wp97` B/C. One external carrying
+> both an `∃PP` and an `∃PPI` demand needs a kernel above and one below, and
+> `comp(PP,PP) = {PP}` forces the two bases comparable; kernels under `DR`
+> externals inherit disjointness by `djDown`. A PO-defaulted kernel block is
+> composition-violating.
+>
+> **So `odNet_frame` IS on the critical path** — §42.2 said it was not, which
+> was wrong. §41's ordered-disjoint work was right; §42's correction of it
+> overshot. §42 remains correct that read-off EXPRESSES everything; what it
+> missed is that read-off cannot be USED, for budget reasons.
 >
 > Before designing anything, consult **`CERTIFIED_INVENTORY.md`**. This session
 > re-derived or mis-assessed existing machinery three times (§40's two
@@ -3890,3 +3900,127 @@ answer was one `sed` away.
 The `odNet` work is not wasted (it is a real theorem, and `wp93`–`wp95` are
 genuine evidence about the fragment's structure), but it should be recorded as
 what it is: a correct answer to a question the route did not need to ask.
+
+## 43. THE BUDGET/FRAME TENSION, AND THE HYBRID THAT RESOLVES IT (2026-08-21)
+
+**Probes: `verification/python/wp96_budget_frame_tension.py`,
+`wp97_hybrid_frame_feasibility.py` (all parts PASS).** Written before
+formalizing anything, per the standing directive. They found a defect in §42's
+restored route that neither §41 nor §42 examined, and they fix the architecture.
+
+### 43.1 The finding: read-off relations break the budgets
+
+`mixKernelsK_ok` carries four budget side-conditions, the external one being
+`hbEE : ∀ e f, bud e ≤ bud f + 1`. It is not an artefact of a strong hypothesis;
+it is exactly what the obligation needs. With `mtk` labels,
+
+```
+tauE e = { c ∈ cl C0 : model-sat at g e, mdepth c ≤ bud e }
+```
+
+so in `ee_all` the SEMANTIC half is free — the model satisfies the universal —
+and only the DEPTH half can fail:
+
+> `ee_all` holds iff `mdepth cc ≤ bud f` whenever `all r cc ∈ tauE e`
+> and `E e f = r`; and `all r cc ∈ tauE e` already gives `mdepth cc + 1 ≤ bud e`.
+
+The node set that supplies finiteness is `mtkNodes`, whose `mtkWitness` has
+budget `n.k - 1`. Budgets therefore span the whole range `N..0`. With **read-off**
+relations every external pair carries a real relation, so `ee_all` fires across
+those gaps. `wp96` A: **4.1%** of satisfiable ∀PO-free instances (mdepth ≥ 2)
+have at least one violation; largest budget gap on a violating edge: 3.
+
+The escape "use a uniform budget" is real but costly: at uniform budget the node
+set must be closed under ALL demands at that budget, which is the infinite
+unfolding — precisely the finiteness the `codes` pipeline was buying.
+
+`wp96` D measured the other uniform-budget escape, type-blocking (one
+representative per realized model type — finite in `C₀`, at most `2^|cl C₀|`):
+representative sets are small (mean 1.4, max 5), but **8.4%** of instances have a
+demand no read-off edge between representatives can serve. That is W2′
+uniformization reappearing, and it is why the frame cannot be read off.
+
+### 43.2 Why a declared frame fixes it, and why it cannot be a PO default
+
+`wp96` B: over the SAME node sets, a declared PO-default frame has **0**
+violations. The reason is structural, not statistical — the declared non-`PO`
+edges are exactly the closure-tree edges, where the budget drops by exactly one,
+and `PO` edges carry no obligation at all in the fragment (`pofree_cl_all`).
+This is why the horizontal fragment's budgets worked out, and it was never
+recorded as the reason.
+
+But the declared frame cannot be a PO DEFAULT once kernels are present. `wp96`
+C / `wp97` B, C: an external carrying both an `∃PP` and an `∃PPI` demand needs a
+kernel above and a kernel below; `comp(PP,PP) = {PP}` forces the two bases
+`PP`-comparable, and `PO` is not admissible there. Independently, kernels under
+`DR`-separated externals inherit disjointness by `djDown`, and forcing `PO`
+between them is both non-ordered-disjoint and composition-violating.
+
+**So the frame must be an order-plus-disjointness structure.** `odNet_frame` is
+on the critical path after all; §42.2's "not on the critical path" was wrong.
+
+### 43.3 The hybrid, and what is now certified
+
+`wp97` A: exhaustively, every configuration with ≤ 3 externals and ≤ 2 kernels
+admits an ordered-disjoint completion (382/382); `wp97` D: every completion
+realizes the attachment edges with the exact labels the demands need, and
+preserves the externals' `DR` pattern.
+
+Built and certified (0 sorries, 0 warnings):
+
+- **`mtkKernelsOD` / `mtkKernelsOD_ok`** — the hybrid certificate. `frame_q` is
+  FREE (`frame_q_of_odNet`); the kernel-internal obligations are the certified
+  `mtk_kk_*_dir`; and the three propagation classes reduce to ONE uniform
+  model-side debt:
+
+  > wherever the DECLARED frame says something other than `PO`, the model
+  > agrees, and the two budgets are within one.
+
+  `PO` edges carry no obligation — the fragment's escape valve — which is what
+  lets the declared frame be coarse everywhere except on the finitely many edges
+  the demands actually use.
+
+- **`odMix`** — the CANONICAL ordered-disjoint completion, so the extraction
+  never searches. Externals pairwise incomparable; each kernel entirely on one
+  `side` of its externals; order of HEIGHT TWO (down-kernel < external <
+  up-kernel), so transitivity has one non-vacuous case and down-kernels are
+  minima (`mixLt_no_below`), which terminates `djDown`'s analysis; disjointness
+  the downward closure of `dadj`. Depends on **no axioms**.
+
+  One coherence condition, and it is forced: a down-kernel's externals are
+  pairwise non-disjoint (`hcoh`). A region below two disjoint regions would be
+  empty; formally `djIrr` fails without it.
+
+- **read-off**: `odMix_E` (the external block IS the PO-default frame, so
+  `mtk_ee_all` / `mtk_e_ex` apply verbatim), `odMix_K_up`, `odMix_K_dn` (the
+  `∃PPI`-at-an-external demand the PO-default frame could not express),
+  `odMix_Q_forced`, `odMix_Q_dr` (the two edges that made the ordered-disjoint
+  frame necessary, now discharged).
+
+### 43.4 What this changes about the remaining work
+
+The four-item list is unchanged in shape; item A is now much better supported.
+
+1. **The extraction assembly.** Externals from `mtkNodesH` (budget-decreasing,
+   horizontal-only recursion — vertical demands are the kernels' job), `dadj`
+   from `sAdjK`, kernels from the persistent demands with `side` = their
+   direction, `att` from the attachment, and `odMix` for the frame. The debts
+   are then `hEreal`/`hKreal`/`hQreal` — the §39 apparatus (`exists_bank`,
+   `exists_bank_ppi`, `mixSelect_of_highBank`, `family_range`) is exactly what
+   supplies them, and `hcoh` is a condition on which externals share a kernel.
+2. reindex onto `Fin nE`/`Fin nK`;
+3. bounds for `encodeMT_mem_codesM`;
+4. `hcompl` + `decidableSat_of_codes`.
+
+### 43.5 The method note
+
+§42.4 recorded "read the definition before reasoning about what a component can
+express". That was the right lesson and it was applied here — but it was not
+sufficient. §42 read `mixKernels`'s definition correctly and concluded correctly
+that it expresses all five relations; what it did not do was check whether the
+certificate could be INSTANTIATED at a node set that is finite. Expressiveness
+and usability are different questions, and only the probe separated them.
+
+The sharpened rule: **read the definition, then ask what it costs to satisfy —
+and if that is a quantitative question, measure it.** `wp96` cost twenty minutes
+and would have saved several sessions of building on a 4.1%-broken interface.
