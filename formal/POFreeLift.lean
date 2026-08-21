@@ -19173,6 +19173,194 @@ theorem odMix_Q_dr {k k' : κ} {e e' : β} (hk : side k = false)
 end OdMixReadOff
 end ODKernels
 
+/-! ### The extraction, external side (§43.4 item 1)
+
+`odMix`'s external block is `EQ`/`DR`/`PO` only, so `mtkKernelsOD_ok`'s external
+debt `hEreal` reduces to two facts about the declared `DR` pattern: a declared
+`DR` edge is a REAL `DR` edge, and its endpoints' budgets are within one.  For
+the extraction's `dadj` — `DR`-adjacency of coverage nodes — both are already
+certified (`sAdjK_rho_dr`) or one lemma away (`sAdjK_bud`). -/
+
+section ODExtraction
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- A `DR`-adjacent pair's budgets differ by at most one: adjacency IS the
+    parent/child relation of the coverage recursion, and `mtkWitness` drops the
+    budget by exactly one.  (An `∃` demand cannot sit in a budget-`0` label, so
+    the parent's budget is positive and the subtraction is honest.) -/
+theorem sAdjK_bud {n n' : MTKNode I C0} (h : sAdjK n n') : n.k ≤ n'.k + 1 := by
+  rcases h with ⟨c, hF, hchild⟩ | ⟨c, hF, hchild⟩
+  · subst hchild
+    have hd : mdepth c + 1 ≤ n.k := (mem_mtk.mp hF).2
+    show n.k ≤ (n.k - 1) + 1
+    omega
+  · subst hchild
+    show n'.k - 1 ≤ n'.k + 1
+    omega
+
+/-- `DR`-adjacency is irreflexive: a node is `EQ` to itself, not `DR`. -/
+theorem sAdjK_irr (hI : RCC5Interp I) (n : MTKNode I C0) : ¬ sAdjK n n := by
+  intro h
+  have hr := sAdjK_rho_dr hI h
+  rw [hI.refl_eq n.x n.hx] at hr
+  exact absurd hr (by decide)
+
+open Classical in
+/-- The extraction's external `DR` pattern: `DR`-adjacency over the HORIZONTAL
+    coverage skeleton (`mtkNodesH` stops at `∃PP`/`∃PPI` — those are the
+    kernels' job). -/
+noncomputable def dadjOD (root : MTKNode I C0)
+    (m m' : {n // n ∈ mtkNodesH root}) : Bool := decide (sAdjK m.val m'.val)
+
+theorem dadjOD_symm (root : MTKNode I C0)
+    (m m' : {n // n ∈ mtkNodesH root}) : dadjOD root m m' = dadjOD root m' m := by
+  unfold dadjOD
+  rw [propext (sAdjK_symm m.val m'.val)]
+
+open Classical in
+theorem dadjOD_irr (hI : RCC5Interp I) (root : MTKNode I C0)
+    (m : {n // n ∈ mtkNodesH root}) : dadjOD root m m = false :=
+  decide_eq_false (sAdjK_irr hI m.val)
+
+open Classical in
+theorem dadjOD_rho (hI : RCC5Interp I) (root : MTKNode I C0)
+    {m m' : {n // n ∈ mtkNodesH root}} (h : dadjOD root m m' = true) :
+    I.rho m.val.x m'.val.x = dr := sAdjK_rho_dr hI (of_decide_eq_true h)
+
+open Classical in
+theorem dadjOD_bud (root : MTKNode I C0)
+    {m m' : {n // n ∈ mtkNodesH root}} (h : dadjOD root m m' = true) :
+    m.val.k ≤ m'.val.k + 1 := sAdjK_bud (of_decide_eq_true h)
+
+end ODExtraction
+
+section ODExternalDebt
+
+variable {β κ : Type} (dadj : β → β → Bool) (side : κ → Bool) (att : κ → β → Bool)
+  (hsym : ∀ e f, dadj e f = dadj f e) (hirr : ∀ e, dadj e e = false)
+  (hcoh : ∀ k e f, side k = false → att k e = true → att k f = true →
+    dadj e f = false)
+
+/-- **THE EXTERNAL BLOCK IS `EQ`/`DR`/`PO` ONLY.**  Externals are pairwise
+    `lt`-incomparable in `odMix`, so an off-diagonal non-`PO` value can only be
+    `DR`, and then `dadj` witnesses it. -/
+theorem odMix_E_dr {e f : β} (hef : e ≠ f)
+    (hne : odNet (odMix dadj side att hsym hirr hcoh)
+      (Sum.inl e) (Sum.inl f) ≠ po) :
+    odNet (odMix dadj side att hsym hirr hcoh) (Sum.inl e) (Sum.inl f) = dr
+      ∧ dadj e f = true := by
+  rcases odNet_cases (odMix dadj side att hsym hirr hcoh)
+    (Sum.inl e) (Sum.inl f) with h | h | h | h | h
+  · exact absurd (Sum.inl.inj (odNet_eq_inv _ h)) hef
+  · exact (show mixLt side att (Sum.inl e) (Sum.inl f) from odNet_pp_inv _ h).elim
+  · exact (show mixLt side att (Sum.inl f) (Sum.inl e) from odNet_ppi_inv _ h).elim
+  · exact ⟨h, odNet_dr_inv _ h⟩
+  · exact absurd h hne
+
+/-- **`mtkKernelsOD_ok`'s EXTERNAL DEBT, DISCHARGED** from two facts about the
+    declared `DR` pattern alone: a declared `DR` edge is a real `DR` edge, and
+    its endpoints' budgets are within one.  For the extraction these are
+    `dadjOD_rho` and `dadjOD_bud`. -/
+theorem odMix_hEreal {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
+    (hdr : ∀ e f, dadj e f = true → I.rho (g e) (g f) = dr)
+    (hb : ∀ e f, dadj e f = true → bud e ≤ bud f + 1)
+    (e f : β) (hef : e ≠ f)
+    (hne : odNet (odMix dadj side att hsym hirr hcoh)
+      (Sum.inl e) (Sum.inl f) ≠ po) :
+    I.rho (g e) (g f)
+        = odNet (odMix dadj side att hsym hirr hcoh) (Sum.inl e) (Sum.inl f)
+      ∧ bud e ≤ bud f + 1 := by
+  obtain ⟨hval, hd⟩ := odMix_E_dr dadj side att hsym hirr hcoh hef hne
+  exact ⟨(hdr e f hd).trans hval.symm, hb e f hd⟩
+
+/-- **`mtkKernelsOD_ok`'s KERNEL–EXTERNAL DEBT, DISCHARGED** into three concrete
+    model-side conditions, one per non-`PO` value the declared `K` block can
+    take.  Each has the shape the §39 bank machinery produces:
+
+* `hup`  — an UP-kernel's external is a proper part of every phase
+           (`exists_bank_ppi`);
+* `hdn`  — a DOWN-kernel's external is a proper SUPERpart of every phase (the
+           dual, and the `∃PPI`-at-an-external case the PO-default frame could
+           not express at all);
+* `hdrk` — a kernel `DR`-separated from an external by `djDown` is genuinely
+           disjoint from it in every phase (`exists_bank`). -/
+theorem odMix_hKreal {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
+    (bk : κ → Nat) (ck : κ → Nat → α) (ik : κ → Nat)
+    (hup : ∀ k e a, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hdn : ∀ k e a, side k = false → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hdrk : ∀ k e a, side k = false →
+      (∃ e', att k e' = true ∧ dadj e' e = true) →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (k : κ) (e : β) (a : Nat)
+    (hne : odNet (odMix dadj side att hsym hirr hcoh)
+      (Sum.inr k) (Sum.inl e) ≠ po) :
+    I.rho (g e) (ck k (ik k + a))
+        = conv (odNet (odMix dadj side att hsym hirr hcoh)
+            (Sum.inr k) (Sum.inl e))
+      ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1 := by
+  rcases odNet_cases (odMix dadj side att hsym hirr hcoh)
+    (Sum.inr k) (Sum.inl e) with h | h | h | h | h
+  · have hcon : (Sum.inr k : β ⊕ κ) = Sum.inl e :=
+      odNet_eq_inv (odMix dadj side att hsym hirr hcoh) h
+    have hb : false = true := congrArg Sum.isLeft hcon
+    exact absurd hb (by decide)
+  · obtain ⟨hs, hat⟩ :=
+      (show mixLt side att (Sum.inr k) (Sum.inl e) from odNet_pp_inv _ h)
+    obtain ⟨hr, hb1, hb2⟩ := hdn k e a hs hat
+    rw [h]; exact ⟨hr, hb1, hb2⟩
+  · obtain ⟨hs, hat⟩ :=
+      (show mixLt side att (Sum.inl e) (Sum.inr k) from odNet_ppi_inv _ h)
+    obtain ⟨hr, hb1, hb2⟩ := hup k e a hs hat
+    rw [h]; exact ⟨hr, hb1, hb2⟩
+  · obtain ⟨hs, e', hae, hde⟩ :=
+      (show mixDj dadj side att (Sum.inr k) (Sum.inl e) from odNet_dr_inv _ h)
+    obtain ⟨hr, hb1, hb2⟩ := hdrk k e a hs ⟨e', hae, hde⟩
+    rw [h]; exact ⟨hr, hb1, hb2⟩
+  · exact absurd h hne
+
+/-- **`mtkKernelsOD_ok`'s KERNEL–KERNEL DEBT, DISCHARGED** into three model-side
+    conditions.  The first two are the `wp96`-C forcing — a down-kernel and an
+    up-kernel sharing an external are genuinely nested — and the third is the
+    `djDown` inheritance under `DR`-separated externals (`wp97` B). -/
+theorem odMix_hQreal {α : Type} (I : Interp α) (bk : κ → Nat)
+    (ck : κ → Nat → α) (ik : κ → Nat)
+    (hqpp : ∀ k k' a b, side k = false → side k' = true →
+      (∃ e, att k e = true ∧ att k' e = true) →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp ∧ bk k ≤ bk k' + 1)
+    (hqppi : ∀ k k' a b, side k' = false → side k = true →
+      (∃ e, att k' e = true ∧ att k e = true) →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
+    (hqdr : ∀ k k' a b, side k = false → side k' = false →
+      (∃ e e', att k e = true ∧ att k' e' = true ∧ dadj e e' = true) →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
+    (k k' : κ) (a b : Nat) (hkk : k ≠ k')
+    (hne : odNet (odMix dadj side att hsym hirr hcoh)
+      (Sum.inr k) (Sum.inr k') ≠ po) :
+    I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+        = odNet (odMix dadj side att hsym hirr hcoh) (Sum.inr k) (Sum.inr k')
+      ∧ bk k ≤ bk k' + 1 := by
+  rcases odNet_cases (odMix dadj side att hsym hirr hcoh)
+    (Sum.inr k) (Sum.inr k') with h | h | h | h | h
+  · exact absurd (Sum.inr.inj (odNet_eq_inv _ h)) hkk
+  · obtain ⟨hs, hs', e, hae, hae'⟩ :=
+      (show mixLt side att (Sum.inr k) (Sum.inr k') from odNet_pp_inv _ h)
+    obtain ⟨hr, hb⟩ := hqpp k k' a b hs hs' ⟨e, hae, hae'⟩
+    rw [h]; exact ⟨hr, hb⟩
+  · obtain ⟨hs', hs, e, hae', hae⟩ :=
+      (show mixLt side att (Sum.inr k') (Sum.inr k) from odNet_ppi_inv _ h)
+    obtain ⟨hr, hb⟩ := hqppi k k' a b hs' hs ⟨e, hae', hae⟩
+    rw [h]; exact ⟨hr, hb⟩
+  · obtain ⟨hs, hs', e, e', hae, hae', hde⟩ :=
+      (show mixDj dadj side att (Sum.inr k) (Sum.inr k') from odNet_dr_inv _ h)
+    obtain ⟨hr, hb⟩ := hqdr k k' a b hs hs' ⟨e, e', hae, hae', hde⟩
+    rw [h]; exact ⟨hr, hb⟩
+  · exact absurd h hne
+
+end ODExternalDebt
+
 namespace VerticalWitness
 
 /-- The ℕ-order chain is a frame. -/
@@ -22376,5 +22564,10 @@ end VerticalWitness
 #print axioms odMix
 #print axioms odMix_E
 #print axioms odMix_Q_forced
+#print axioms odMix_hEreal
+#print axioms odMix_hKreal
+#print axioms odMix_hQreal
+#print axioms dadjOD_rho
+#print axioms sAdjK_bud
 
 end POFreeLift
