@@ -18384,6 +18384,39 @@ theorem odNet_frame (O : ODStruct N) : Frame (odNet O) where
                 rcases odNet_cases O x z with h|h|h|h|h <;> rw [h] <;> decide
 
 
+open Classical in
+/-- **THE `qnet` OF AN ORDERED-DISJOINT STRUCTURE IS THAT STRUCTURE** (§41.4
+    step 2) — the interface check that lets `odNet_frame` supply `frame_q`
+    directly.  Taking ONE ordered-disjoint structure on the whole of `β ⊕ κ`
+    (externals AND kernel bases as ordinary nodes) and reading `E`/`K`/`Q` off
+    it, the assembled `qnet` is literally `odNet` again: the `inl/inr` case uses
+    `conv`, which matches by `odNet`'s converse law, and the diagonal `inr/inr`
+    case matches by `odNet_self`. -/
+theorem qnet_odNet {β κ : Type} [DecidableEq κ] (O : ODStruct (β ⊕ κ)) :
+    qnet (fun e f => odNet O (Sum.inl e) (Sum.inl f))
+      (fun k e => odNet O (Sum.inr k) (Sum.inl e))
+      (fun k k' => odNet O (Sum.inr k) (Sum.inr k')) = odNet O := by
+  funext x y
+  rcases x with e | k <;> rcases y with f | k'
+  · rfl
+  · show conv (odNet O (Sum.inr k') (Sum.inl e)) = odNet O (Sum.inl e) (Sum.inr k')
+    exact ((odNet_frame O).conv_ (Sum.inr k') (Sum.inl e)).symm
+  · rfl
+  · show (if k = k' then eq else odNet O (Sum.inr k) (Sum.inr k'))
+      = odNet O (Sum.inr k) (Sum.inr k')
+    by_cases h : k = k'
+    · rw [if_pos h, h, odNet_self]
+    · rw [if_neg h]
+
+open Classical in
+/-- Consequently `frame_q` — the one `MultiTier` field that is usually the
+    work — is FREE for an ordered-disjoint certificate. -/
+theorem frame_q_of_odNet {β κ : Type} [DecidableEq κ] (O : ODStruct (β ⊕ κ)) :
+    Frame (qnet (fun e f => odNet O (Sum.inl e) (Sum.inl f))
+      (fun k e => odNet O (Sum.inr k) (Sum.inl e))
+      (fun k k' => odNet O (Sum.inr k) (Sum.inr k'))) := by
+  rw [qnet_odNet]; exact odNet_frame O
+
 namespace VerticalWitness
 
 /-- The ℕ-order chain is a frame. -/
@@ -21573,5 +21606,7 @@ end VerticalWitness
 
 #print axioms odNet_frame
 #print axioms odNet_pp_inv
+#print axioms qnet_odNet
+#print axioms frame_q_of_odNet
 
 end POFreeLift

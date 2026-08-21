@@ -3486,3 +3486,45 @@ unmanageable with `▸` transports (use `have e : x = z := …; subst e`), and I
 initially worked from a hand-recalled composition table whose `PO;PPI` cell was
 wrong — the real table has `[ppi, po, dr]`, matching set semantics. Reading the
 actual table first would have saved a pass.
+
+### 41.7 DE-RISKING step 5 before building — `wp94`, both parts PASS
+
+Asked whether the flagged risk could be reduced ahead of committing sessions.
+Two cheap moves, both done.
+
+**(a) The `qnet` interface, checked in Lean (cheap, decisive).** Taking ONE
+ordered-disjoint structure on the whole of `β ⊕ κ` — externals AND kernel bases
+as ordinary nodes — and reading `E`/`K`/`Q` off it, the assembled `qnet` is
+literally `odNet` again (`qnet_odNet`): the `inl/inr` case matches by `odNet`'s
+converse law, the `inr/inr` diagonal by `odNet_self`. Hence **`frame_q_of_odNet`
+— `frame_q` is FREE** for an ordered-disjoint certificate. That was step 2's
+hardest field, removed for the cost of one lemma.
+
+**(b) End-to-end acceptance test (`wp94`), the wp16 pattern.** Build the
+certificate on real ∀PO-free concepts and models by the intended recipe, then
+check every obligation:
+
+- **Part A — 3,833 satisfiable ∀PO-free concepts**, each given a model by a
+  reference search, node set built as the demand closure at `mtk` budgets,
+  structure read off the model. **Every obligation holds on every instance**:
+  `lt_trans`/`disj_down` (the read-off really IS ordered-disjoint), composition
+  closure of the induced net, `ee_all` (universals propagate along `odNet`
+  edges), and `e_ex` (every existential is served inside the node set).
+- **Part B — the counting, i.e. the flagged risk.** Node count against the
+  syntactic bound `|cl C0|^mdepth(C0)`, tabulated by `(|cl C0|, mdepth)`: the
+  bound holds in every bucket, with large headroom (mean node count 1.6, worst
+  10). Every recursive step drops the budget, so the closure is finite and
+  bounded by a function of `C0` alone.
+
+**Scope, stated honestly:** finite models only, so KERNELS (infinite periodic
+towers) are NOT exercised by `wp94`. That half is already certified separately
+(segment lemmas, `rr_covers`, `mtk_kk_*_dir`, the whole §38–§39 vertical
+apparatus). What this probe de-risks is the `odNet` certificate and the counting
+— which is precisely where §41.5 said a surprise would most likely live.
+
+**Residual risk after de-risking.** The kernel/external SEAM: a certificate with
+both `odNet` externals and periodic kernels, where a kernel base is a node of the
+ordered-disjoint structure while its phases are not. `qnet_odNet` shows the frame
+side composes; what is untested is the demand routing across that seam. That is
+now the narrowest remaining unknown, and it is a smaller target than "the
+counting problem".
