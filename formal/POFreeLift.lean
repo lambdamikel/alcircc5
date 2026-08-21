@@ -10656,6 +10656,107 @@ theorem mtkNodes_length_le (n : MTKNode I C0) :
         show (cl C0).length * mtkBound C0 m + 1 ≤ 1 + (cl C0).length * mtkBound C0 m
         omega
 
+
+/-! #### The `PP`-path closure and its bound (§44.11 item 2)
+
+§44.3 holds the budget CONSTANT along a `PP`-path, so the horizontal recursion's
+budget can no longer measure it.  The measure is instead lexicographic
+`(budget, remaining path length)`, and this is the inner component: a
+FUEL-bounded `PP`-path closure whose length is bounded by the same `mtkBound`
+the horizontal closure uses.
+
+The fuel is what the CUT (§44.7) supplies: a path can be chosen repeat-free, so
+the number of distinct model types is enough fuel. -/
+
+/-- A `PP`-demand's witness at the SAME budget.  Legitimate because `mtk_ex`
+    delivers the argument at `k-1` and the depth bound lifts it back to `k` — the
+    demand `∃PP.c` has `mdepth c + 1 ≤ k`, so `c` fits at every budget from
+    `k-1` up. -/
+noncomputable def ppWitness (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) : MTKNode I C0 :=
+  ⟨Classical.choose (mtk_ex hF), n.k, (Classical.choose_spec (mtk_ex hF)).1⟩
+
+theorem ppWitness_rho (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) :
+    I.rho n.x (ppWitness n hF).x = pp :=
+  (Classical.choose_spec (mtk_ex hF)).2.1
+
+theorem ppWitness_bud (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) : (ppWitness n hF).k = n.k := rfl
+
+theorem ppWitness_arg (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) :
+    c ∈ mtk C0 I (ppWitness n hF).x (ppWitness n hF).k :=
+  mem_mtk.mpr ⟨(mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).1,
+    Nat.le_trans (mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).2
+      (Nat.sub_le _ _)⟩
+
+/-- The `PP`-path closure, bounded by FUEL rather than by the budget. -/
+noncomputable def ppNodes (n : MTKNode I C0) : Nat → List (MTKNode I C0)
+  | 0 => [n]
+  | fuel + 1 => n :: (mtk C0 I n.x n.k).attach.flatMap
+      (fun p => match p with
+        | ⟨.ex pp _, hF⟩ => ppNodes (ppWitness n hF) fuel
+        | _ => [])
+
+theorem self_mem_ppNodes (n : MTKNode I C0) (fuel : Nat) : n ∈ ppNodes n fuel := by
+  cases fuel with
+  | zero => rw [ppNodes]; exact List.mem_cons_self
+  | succ f => rw [ppNodes]; exact List.mem_cons_self
+
+/-- Every node of a `PP`-path closure keeps the SAME budget — which is exactly
+    what §44.3 needs for `ee_all` on the forced transitive edges. -/
+theorem ppNodes_bud (n : MTKNode I C0) (fuel : Nat) :
+    ∀ m ∈ ppNodes n fuel, m.k = n.k := by
+  induction fuel generalizing n with
+  | zero =>
+    intro m hm
+    rw [ppNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · rfl
+    · exact absurd hm' List.not_mem_nil
+  | succ f ih =>
+    intro m hm
+    rw [ppNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · rfl
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp hm'
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp => exact ih (ppWitness n hF) m hmm
+        | _ => exact absurd hmm List.not_mem_nil
+      | _ => exact absurd hmm List.not_mem_nil
+
+/-- **THE `PP`-PATH CLOSURE IS SIZE-BOUNDED** by `mtkBound C0 fuel` — the same
+    bound the horizontal closure uses, with the fuel in place of the budget. -/
+theorem ppNodes_length_le (n : MTKNode I C0) (fuel : Nat) :
+    (ppNodes n fuel).length ≤ mtkBound C0 fuel := by
+  induction fuel generalizing n with
+  | zero => rw [ppNodes]; exact Nat.le_refl 1
+  | succ f ih =>
+    rw [ppNodes, List.length_cons, List.length_flatMap]
+    have hlen : (mtk C0 I n.x n.k).attach.length ≤ (cl C0).length := by
+      rw [List.length_attach, mtk]
+      exact Nat.le_trans (List.length_filter_le _ _) (List.length_filter_le _ _)
+    have hbound : ((mtk C0 I n.x n.k).attach.map
+        (fun p => (match p with
+          | ⟨.ex pp c, hF⟩ => ppNodes (ppWitness n hF) f
+          | _ => []).length)).sum
+        ≤ (mtk C0 I n.x n.k).attach.length * mtkBound C0 f := by
+      refine sum_map_le _ _ _ ?_
+      rintro ⟨F, hF⟩ _
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp => exact ih (ppWitness n hF)
+        | _ => exact Nat.zero_le _
+      | _ => exact Nat.zero_le _
+    calc _ ≤ (mtk C0 I n.x n.k).attach.length * mtkBound C0 f + 1 :=
+          Nat.add_le_add_right hbound 1
+      _ ≤ (cl C0).length * mtkBound C0 f + 1 :=
+          Nat.add_le_add_right (Nat.mul_le_mul_right _ hlen) 1
+      _ = mtkBound C0 (f + 1) := by rw [mtkBound]; omega
 end MtkRecursion
 
 /-! ### The horizontal ∀PO-free fragment (`ASSEMBLY_DESIGN.md §15`)
@@ -23049,6 +23150,8 @@ end VerticalWitness
 #print axioms VerticalWitness.crnest_satisfiable
 #print axioms encodeHF_mtOk
 #print axioms mtkNodes_length_le
+#print axioms ppNodes_length_le
+#print axioms ppNodes_bud
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
 #print axioms encodeMT_mtOk
