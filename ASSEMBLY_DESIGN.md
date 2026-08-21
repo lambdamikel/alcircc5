@@ -4134,3 +4134,45 @@ externals (a region below two disjoint regions would be empty).
 `bud w := bk k`; then `hup`/`hdn`/`hdrk`'s budget conjuncts are trivial. And
 bank-to-skeleton external pairs need no `DR` declaration at all — left `PO`,
 they carry no obligation, which is exactly what the declared frame is for.
+
+### 43.11 Restriction audit (asked for explicitly, 2026-08-21)
+
+Michael asked to be told when a restriction is being introduced that could
+become a roadblock. This is that audit, run against everything §43 has built.
+
+**Not restrictions — checked, and each is forced or free.**
+
+| choice | verdict |
+|---|---|
+| `side = dir` | FORCED, not a choice. An ascending kernel discharges `∃PP` rung-to-rung, so both its own `∃PPI` demands and any external whose `∃PP` it serves require `side = true`; dually for descending. A kernel that would need both sides is simply two kernels. |
+| private bank externals per kernel | multiplies the external COUNT; does not restrict what is expressible. Buys away `hsep`'s cross-kernel cases. |
+| bank externals at `bud w := bk k - 1` | needed for termination of the horizontal recursion, and the budget conjuncts `bud w ≤ bk k + 1 ∧ bk k ≤ bud w + 1` still hold. Free. |
+| bank↔skeleton pairs left `PO` | carries no obligation (no `∀PO`). This is what a DECLARED frame is for; it is the mechanism, not a compromise. |
+
+**The one large risk, now RESOLVED.** §36 showed `hrectQ` is false in general —
+the cross-kernel staircase — and that was the likeliest blocker on this route.
+It does not bite: `kq_all` is vacuous on `PO`, so a cross-kernel debt exists only
+for pairs the frame declares non-`PO`, and `odSeed` declares that only for
+kernels sharing an anchoring external (or seed-disjoint). For those the phase
+relation is composition-forced (`cross_pp_of_shared`, `cross_ppi_of_shared`,
+`cross_dr_of_shared` — all axiom-free). §36's staircase concerns ARBITRARY
+kernel pairs, which this architecture never declares non-`PO`.
+
+**Genuinely open, flagged now rather than on contact.**
+
+1. **The kernel COUNT — this fragment's descendant of F6.** Externals are
+   bounded (`mtkNodes_length_le`). Kernels are not yet. The budget-decreasing
+   recursion (skeleton external at budget `b` ⟹ its kernels at `b`, their bank
+   externals at `b-1`, their kernels at `b-1`, …) *suggests* a `mtkBound`-style
+   bound, but this is NOT proved and it is the item most likely to be hard.
+2. **`hup`/`hdn` for SKELETON externals is not a bank.** The banks serve KERNEL
+   demands with externals. A skeleton external's `∃PP.D` needs a kernel ABOVE it
+   whose phases carry `D` — that is the tower construction
+   (`towers_from_persistPP` + the §38 merge), and its budget must land within one
+   of `bud e`. Arrangeable in principle; not yet done.
+3. **Coverage** (`he_ex`/`hk_ex`) is still entirely to be wired, though
+   `mtkNodesH_covers` and the banks are the two halves.
+
+Items 2–3 are construction work. Item 1 is the real unknown, and it is the same
+counting problem the campaign has always had — now localized to the kernels
+alone, which is progress over F6 in the full logic but not a solution.
