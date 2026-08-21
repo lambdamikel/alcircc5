@@ -3842,16 +3842,34 @@ can be proved once and applied to whatever certificate the extraction produces.
 
 Note `codesM` itself needs only `propext` — it is pure finite syntax.
 
-**What remains for `Decidable (Satisfiable C0)` on this route:**
-1. the ENCODER `encodeM` — a `mixKernelsK` certificate to a `FinMT`, mirroring
-   `encodeHF`;
-2. `encodeM_accepts` — the Boolean checker accepts it (template:
-   `encodeHF_accepts`, 19 lines, which reduces to the `MultiTierOk` fields);
-3. the size bounds, feeding `mem_codesM`: `NE` from `mtkNodes_length_le` (as
-   `extMax` is a sublist of `mtkNodes`), `NK` and `P` from the kernel side;
-4. `hcompl` and `decidableSat_of_codes`, mirroring `hfrag_hcompl` (11 lines).
+**What remains — CORRECTED after reading (§42.9).** Items 1–2 of the list I
+first wrote here are ALREADY DONE and GENERAL:
 
-Every one of the four has a working template in the file.
+- `encodeMT : MultiTier (Fin nE) (Fin nK) → FinMT` — the general encoder;
+- `encodeMT_mtOk` — validity transports across the encode
+  (`mtOkB_complete` is itself fully general: any `FinMT` whose decode is valid is
+  accepted);
+- `encodeMT_accepts` — the checker accepts at a root index carrying `C0`.
+
+So the encoder is not to be written. What was genuinely missing is the BRIDGE to
+the enumeration, now built:
+
+> **`encodeMT_mem_codesM`** — `encodeMT T` lies in `codesM C0 NE NK P` given
+> `nE ≤ NE`, `nK ≤ NK`, periods `≤ P`, and labels/phase-types drawn from
+> `cl C0`. Every block of `encodeMT` is a `finRange`-map, so its length is
+> exactly the index count; the only real hypotheses are the label ones.
+
+**Genuinely remaining:**
+1. REINDEX the extraction's certificate onto `Fin nE` / `Fin nK` (there is a
+   reindexing section in the file already);
+2. supply the bounds — `NE` from `mtkNodes_length_le` (`extMax` is a sublist of
+   `mtkNodes`), `NK` and `P` from the kernel side;
+3. `hcompl` + `decidableSat_of_codes`, mirroring `hfrag_hcompl` (11 lines).
+
+*(This was the FOURTH time this session that a piece I was about to build already
+existed — but the first time I checked before building rather than after. The
+habit is the mitigation; the inventory alone was not enough, because these are
+questions about what a definition CONTAINS.)*
 
 ### 42.4 The pattern, recorded
 

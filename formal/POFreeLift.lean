@@ -16902,6 +16902,71 @@ theorem mem_codesM (C0 : Concept) (NE NK P : Nat) (F : FinMT) (rootIdx : Nat)
   cases F
   rfl
 
+/-- **THE ENCODER'S OUTPUT LIES IN `codesM`** (§42.9) — the bridge that was
+    genuinely missing.  The general encoder (`encodeMT`), its validity transport
+    (`encodeMT_mtOk`) and its acceptance lemma (`encodeMT_accepts`) already
+    exist; what did not is the statement that `encodeMT`'s blocks are within
+    `codesM`'s bounds.  Every block is a `finRange`-map, so its length is exactly
+    the index count; the only real hypotheses are that the labels and phase-types
+    are sublists of `cl C0` and that the periods are bounded. -/
+theorem encodeMT_mem_codesM {nE nK : Nat} (C0 : Concept) (NE NK P : Nat)
+    (T : MultiTier (Fin nE) (Fin nK))
+    (hnE : nE ≤ NE) (hnK : nK ≤ NK) (hP : ∀ k, T.p k ≤ P)
+    (htau : ∀ e, T.tauE e ∈ allListsLe (cl C0) (cl C0).length)
+    (hph : ∀ k a, T.phase k a ∈ allListsLe (cl C0) (cl C0).length)
+    (rootIdx : Nat) (hri : rootIdx ≤ NE) :
+    (encodeMT T, rootIdx) ∈ codesM C0 NE NK P := by
+  have hlenE : ((List.finRange nE).map (fun e => e)).length = nE := by
+    simp
+  refine mem_codesM C0 NE NK P (encodeMT T) rootIdx ?_ ?_ ?_ ?_ ?_ ?_ hri
+  · -- tauE
+    refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+    · show ((List.finRange nE).map T.tauE).length ≤ NE
+      rw [List.length_map, List.length_finRange]; exact hnE
+    · intro x hx
+      obtain ⟨e, _, rfl⟩ := List.mem_map.mp hx
+      exact htau e
+  · -- E : nE × nE
+    refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+    · show ((List.finRange nE).map _).length ≤ NE
+      rw [List.length_map, List.length_finRange]; exact hnE
+    · intro row hrow
+      obtain ⟨e, _, rfl⟩ := List.mem_map.mp hrow
+      refine (mem_allListsLe _ _ _).mpr ⟨?_, fun a _ => mem_allAtoms a⟩
+      rw [List.length_map, List.length_finRange]; exact hnE
+  · -- K : nK rows of nE
+    refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+    · show ((List.finRange nK).map _).length ≤ NK
+      rw [List.length_map, List.length_finRange]; exact hnK
+    · intro row hrow
+      obtain ⟨k, _, rfl⟩ := List.mem_map.mp hrow
+      refine (mem_allListsLe _ _ _).mpr ⟨?_, fun a _ => mem_allAtoms a⟩
+      rw [List.length_map, List.length_finRange]; exact hnE
+  · -- Q : nK × nK
+    refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+    · show ((List.finRange nK).map _).length ≤ NK
+      rw [List.length_map, List.length_finRange]; exact hnK
+    · intro row hrow
+      obtain ⟨k, _, rfl⟩ := List.mem_map.mp hrow
+      refine (mem_allListsLe _ _ _).mpr ⟨?_, fun a _ => mem_allAtoms a⟩
+      rw [List.length_map, List.length_finRange]; exact hnK
+  · -- up
+    refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+    · show ((List.finRange nK).map T.up).length ≤ NK
+      rw [List.length_map, List.length_finRange]; exact hnK
+    · intro b _; cases b <;> simp
+  · -- phases
+    refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+    · show ((List.finRange nK).map _).length ≤ NK
+      rw [List.length_map, List.length_finRange]; exact hnK
+    · intro col hcol
+      obtain ⟨k, _, rfl⟩ := List.mem_map.mp hcol
+      refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+      · rw [List.length_map, List.length_range]; exact hP k
+      · intro lab hlab
+        obtain ⟨a, _, rfl⟩ := List.mem_map.mp hlab
+        exact hph k a
+
 /-- **THE READ-OFF CERTIFICATE WITH TRUNCATED LABELS** (§42.3) — the combination
     the route needs and the file did not have.
 
@@ -21943,6 +22008,7 @@ end VerticalWitness
 
 #print axioms codesM
 #print axioms mem_codesM
+#print axioms encodeMT_mem_codesM
 #print axioms extMax_inj
 #print axioms extMax_covers
 #print axioms exists_index_avoiding
