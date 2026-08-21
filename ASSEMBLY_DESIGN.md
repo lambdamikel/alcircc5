@@ -4374,3 +4374,51 @@ construction rather than something to arrange.
 
 The open mathematical content is now concentrated in coverage plus the node
 count, and the cut is the tool for the latter.
+
+### 44.10 Coverage, restated in extraction terms (2026-08-21)
+
+`he_ex`/`hk_ex` are stated on `odNet` VALUES, which the extraction does not think
+in. Two routing lemmas now do the case analysis on the demanded relation once and
+restate each branch in terms of the extraction's own data — `seed`, `elt`,
+`side`, `att` — so what is left to supply is a WITNESS LIST, not a frame fact.
+
+**`odSeed_he_ex`** (externals):
+
+| `r` | served by |
+|---|---|
+| `EQ` | the node itself (`odNet_self` + `mtk_ex_eq`) |
+| `DR` | a seed-related external (`odSeed_dr`) |
+| `PO` | an external the frame leaves alone (`odNet_po`) |
+| `PP` | an `elt`-successor — **the one-shot case, §44's whole point** — or an UP-kernel |
+| `PPI` | an `elt`-predecessor or a DOWN-kernel |
+
+**`odSeed_hk_ex`** (kernel phases) is routed by §43.10's structural fact
+`side = dir`: an ASCENDING kernel discharges `∃PP` rung-to-rung and needs an
+external only for `∃PPI`, which wants `side = true`; a DESCENDING one is the
+mirror. So the vertical-to-external branches land exactly where the attachment
+already puts them, and no case analysis on `side` beyond `dir` is needed.
+
+**The cross-kernel branch of `hk_ex` is never used.** That is what keeps §36's
+`hrectQ` staircase out of the picture, and it is now visible in the proof rather
+than argued in prose (§43.11).
+
+### 44.11 §44 state, updated
+
+| item | status |
+|---|---|
+| external order, one-shot `∃PP` | **done** |
+| the cut | **done** (corrected) |
+| `hsep` | **done, free** |
+| `bud` constant along `elt` | by construction |
+| coverage `he_ex`/`hk_ex` | **done as routing**; the witness lists remain |
+| reindex / bounds / `hcompl` | open, small, templated |
+
+What remains for `Decidable (Satisfiable C₀)` on this fragment:
+
+1. **The witness lists** — instantiate `rDR`/`rPO`/`rPP`/`rPPI` and
+   `kDIR`/`kDR`/`kPO`/`kUP`/`kDN` from `mtkNodesH_covers`, the banks and
+   `rr_covers`. Construction, with every ingredient certified.
+2. **The node bound** — `|β|` and `|κ|` in terms of `C₀`, using the cut for the
+   `PP`-path length. This is the one with real content left.
+3. Reindex onto `Fin nE`/`Fin nK`, feed `encodeMT_mem_codesM`, then `hcompl` +
+   `decidableSat_of_codes`.
