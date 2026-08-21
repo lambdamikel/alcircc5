@@ -9,26 +9,27 @@ under-designed (the round-19/20 lesson).*
 
 > ## ⚠ CURRENT ROUTE — read this before anything else
 >
-> **The live route is §41: the ORDERED-DISJOINT certificate (`odNet`).**
-> It is the only frame that expresses all five RCC5 relations and survives
-> nesting, and it is therefore the only one probed to reach the GENERAL
-> ∀PO-free fragment.
+> **The live route is the READ-OFF certificate `mixKernels` (§35–§39).**
+> Its `E`/`K`/`Q` are the MODEL's own relations, so it expresses all five RCC5
+> relations, handles NESTING automatically (transitivity is inherited from the
+> model), and gets `frame_q` from `readoff_qnet_frame` on the sole hypothesis
+> that the chosen representatives are distinct. §39's machinery
+> (`hstab`, `hrectQ`, the banks, the merge, the selection) exists precisely to
+> discharge its obligations, and is largely complete.
 >
-> Two earlier certificate architectures are **OFF THE CRITICAL PATH** — both
-> still correct, still certified, both provably unable to reach the general
-> fragment:
-> * **read-off `mixKernels`** (§35–§39) — needs `hstab`/`hrectQ`; the whole
->   §39 selection apparatus exists to discharge those. Superseded because
->   PO-default avoids the obligations entirely.
-> * **PO-default `mtkKernelsDir`** (§40) — no `PP`/`PPI` among externals, so
->   nesting and externals' `∃PPI` are inexpressible.
+> **§40–§41 are a CORRECTED DETOUR — see §42.** They audited the PO-default
+> certificate `mtkKernelsDir`, correctly found it cannot express nesting or
+> externals' `∃PPI`, and pivoted to an ordered-disjoint frame (`odNet`). The
+> pivot was UNNECESSARY: those restrictions belong to the PO-default frame, not
+> to the read-off one, which was already general. `odNet_frame` and
+> `qnet_odNet` are genuine certified theorems but are NOT on the critical path,
+> because `readoff_qnet_frame` already supplies a read-off frame under a weaker
+> hypothesis.
 >
-> Both are special cases of `odNet` (empty `disj` ⇒ `posetNet`; empty `lt` ⇒
-> PO-default). Read §41 first; §§35–40 are the record of how the route was
-> found, and of what was refuted along the way.
->
-> Before designing anything, consult **`CERTIFIED_INVENTORY.md`** — this
-> session twice re-derived machinery that already existed.
+> Before designing anything, consult **`CERTIFIED_INVENTORY.md`**. This session
+> re-derived or mis-assessed existing machinery three times (§40's two
+> architectures, §41.8's step-5 pipeline, and the §42 detour); the inventory
+> exists to stop that.
 
 ---
 
@@ -2895,11 +2896,11 @@ is: **persistent-∃PP vertical is complete; one-shot `∃PP` is open.**
 
 ## 39. THE MIXED SELECTION — RESOLVED (2026-08-19)
 
-> **OFF THE CRITICAL PATH (2026-08-20).** Everything below discharges `hstab`
-> and `hrectQ`, which the READ-OFF certificate (`mixKernels`) needs and the
-> current §41 route does not have at all — `odNet` declares its relations rather
-> than reading them off. The results are correct and reusable; they are simply
-> not required for the fragment. Read §41 for the live route.
+> **ON THE CRITICAL PATH (restored 2026-08-20; see §42).** A banner added
+> earlier the same day called this section off-path, on the strength of the §41
+> pivot. That was wrong: the read-off certificate is the general one, and
+> everything below — `hstab`, `hrectQ`, the banks, the merge, the base
+> selection — is exactly what it needs.
 
 *This section supersedes and consolidates the working notes of the 2026-08-19
 session (formerly §§39–43: the ordering cycle, the staged plan, the collapse,
@@ -3209,12 +3210,11 @@ construction, before the high bank dissolved it.
 
 ## 40. ARCHITECTURE FORK: read-off vs PO-default (2026-08-20)
 
-> **BOTH BRANCHES OFF THE CRITICAL PATH (2026-08-20, same day).** This section
-> compares two architectures and recommends PO-default; §41 then shows PO-default
-> ALSO cannot reach the general fragment (no `PP`/`PPI` among externals, so
-> nesting is inexpressible). Kept because the comparison is what located the
-> real requirement — a frame with all five relations — and because
-> `mtkKernelsDir_ok` and its frame remain certified special cases of `odNet`.
+> **THE COMPARISON IN THIS SECTION IS INCOMPLETE — see §42.** It weighs
+> read-off against PO-default and recommends PO-default on cost grounds, without
+> checking that PO-default is EXPRESSIVE ENOUGH. It is not (§41.1). The correct
+> conclusion is the opposite one: read-off is the general architecture, and its
+> extra obligations are the price of that generality.
 
 Scoping `he_ex` surfaced that the file contains TWO mixed-certificate
 architectures, and the campaign's §35 pinned the summit to the more expensive one
@@ -3655,3 +3655,68 @@ It also serves the eventual SLIMMING: the file has 1,036 top-level declarations
 and 364 `#print axioms` lines, of which the core needed for the fragment's
 decidability is a small subset; the rest is scaffolding, superseded routes
 (read-off `mixKernels`, PO-default `mtkKernelsDir`, `posetNet`) and witnesses.
+## 42. CORRECTION: the §40–§41 pivot was unnecessary (2026-08-20)
+
+**The read-off certificate `mixKernels` was already general. The pivot to an
+ordered-disjoint frame answered a question about a different architecture.**
+
+### 42.1 The error
+
+§40 compared two certificate architectures and recommended PO-default
+(`mtkKernelsDir`) because its obligations are cheaper — no `hstab`, no `hrectQ`,
+`∃PO` free. §41 then audited PO-default, correctly found four restrictions (one
+structural: NESTING), correctly concluded that neither PO-default nor `posetNet`
+can reach the general fragment, and pivoted to `odNet`.
+
+Every step of that is sound **about the frames it examined**. The error is what
+it did not examine: **`mixKernels`, whose `E e f := I.rho (g e) (g f)` is the
+MODEL's own relation.** Therefore
+
+- externals CAN carry `∃PPI` — `E e f = ppi` is simply available;
+- one-shot `∃PP` is fine — `E e f = pp` likewise;
+- **NESTING is automatic** — for `e ⊂ w ⊂ g` the model already has
+  `E e g = pp`, so there is no PO-default to contradict transitivity.
+
+None of §41.1's four restrictions apply to it. They are restrictions of the
+PO-default frame.
+
+### 42.2 What `odNet` was for, and whether it is needed
+
+`odNet_frame` proves: an ordered-disjoint structure induces an RCC5 `Frame`. It
+was built to supply `frame_q` for a general certificate. But `readoff_qnet_frame`
+ALREADY supplies `frame_q` for a read-off certificate, under a **weaker**
+hypothesis — that the chosen representatives are distinct (`hinj`) — where
+`odNet` needs the full ordered-disjoint axiom set.
+
+So `odNet_frame`, `qnet_odNet` and `frame_q_of_odNet` are genuine certified
+theorems that are **not on the critical path**. They would matter for a
+certificate CONSTRUCTED rather than read off a model; that is not this route.
+
+### 42.3 Restored route
+
+The live route is §35–§39: read-off `mixKernels`, with `hstab`/`hrectQ`
+discharged by the §39 apparatus — `exists_bank`, `exists_bank_ppi`,
+`mixSelect_of_highBank`, `exists_stable_base`, `family_range`,
+`mixSelect_assembled`, the §38 merge. Remaining: `he_ex`/`hk_ex` coverage,
+`encodeM`/`codesM` (mirroring the certified `encodeHF_mem_codes` pattern), and
+the `decidableSat_of_codes` premise.
+
+### 42.4 The pattern, recorded
+
+This is the **third** time in one session that a conclusion rested on not
+checking what already existed:
+
+1. §40 — treated the two certificate architectures as needing comparison from
+   scratch;
+2. §41.8 — labelled step 5 open research when its pipeline was certified twice;
+3. §42 — pivoted the whole route without checking the read-off frame's
+   expressiveness.
+
+Each was caught, but only after work. `CERTIFIED_INVENTORY.md` and the
+route banner are the mitigation; the discipline is to **read the definition
+before reasoning about what a component can express** — in all three cases the
+answer was one `sed` away.
+
+The `odNet` work is not wasted (it is a real theorem, and `wp93`–`wp95` are
+genuine evidence about the fragment's structure), but it should be recorded as
+what it is: a correct answer to a question the route did not need to ask.
