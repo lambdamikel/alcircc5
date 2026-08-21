@@ -4422,3 +4422,30 @@ What remains for `Decidable (Satisfiable C₀)` on this fragment:
    `PP`-path length. This is the one with real content left.
 3. Reindex onto `Fin nE`/`Fin nK`, feed `encodeMT_mem_codesM`, then `hcompl` +
    `decidableSat_of_codes`.
+
+### 44.12 The `PP`-path closure and its bound (2026-08-21)
+
+§44.3 holds the budget constant along a `PP`-path, so the horizontal recursion's
+budget can no longer measure it. The measure is lexicographic
+`(budget, remaining path length)`; this is the inner component, built:
+
+* **`ppWitness`** — a `PP`-demand's witness at the SAME budget. Legitimate
+  because `mtk_ex` delivers the argument at `k-1` while the demand `∃PP.c` has
+  `mdepth c + 1 ≤ k`, so `c` fits at every budget from `k-1` up.
+* **`ppNodes`** — the `PP`-path closure, bounded by FUEL rather than budget.
+* **`ppNodes_bud`** — every node of the closure keeps the SAME budget. This was a
+  convention in §44.3 and is now a theorem, and it is precisely what `ee_all`
+  needs on the forced transitive edges.
+* **`ppNodes_length_le`** — bounded by `mtkBound C0 fuel`, the SAME bound the
+  horizontal closure uses, with fuel in place of budget.
+
+The fuel is what the cut supplies: a path can be chosen repeat-free, so the
+number of distinct model types is enough.
+
+**What the node bound still needs.** `ppNodes` bounds ONE path closure given
+fuel. The outer recursion — horizontal steps dropping the budget, each of whose
+nodes carries a `ppNodes` closure — has to be assembled and bounded in turn, and
+the fuel has to be instantiated from the cut (i.e. the number of types realized
+by `C₀`, which is at most `2^|cl C₀|`). Neither is written yet; both are now
+pattern-matched to certified code (`mtkNodes_length_le` for the outer shape,
+`path_cut` for the fuel).
