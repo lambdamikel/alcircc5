@@ -18995,51 +18995,92 @@ which an ascending tower whose rungs each carry an `∃DR` demand forces. -/
 theorem bool_clash {b : Bool} (h1 : b = false) (h2 : b = true) : False :=
   Bool.noConfusion (h1.symm.trans h2)
 
-/-- The order: down-kernel `<` external `<` up-kernel; externals incomparable. -/
-def mixLt {β κ : Type} (side : κ → Bool) (att : κ → β → Bool) :
-    β ⊕ κ → β ⊕ κ → Prop
-  | .inl _, .inl _ => False
-  | .inl e, .inr k => side k = true ∧ att k e = true
-  | .inr k, .inl e => side k = false ∧ att k e = true
-  | .inr k, .inr k' => side k = false ∧ side k' = true ∧
-      ∃ e, att k e = true ∧ att k' e = true
+/-- `≤` for the EXTERNAL order (§44.3): externals are no longer pairwise
+    incomparable — a one-shot `∃PP` is served by a genuine `PP` EDGE. -/
+def leE {β : Type} (elt : β → β → Prop) (e f : β) : Prop := e = f ∨ elt e f
 
-/-- Nothing lies strictly below a DOWN-kernel: they are the order's minima.
-    This is what makes `djDown`'s case analysis terminate. -/
-theorem mixLt_no_below {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
-    {k : κ} (hk : side k = false) (x : β ⊕ κ) :
-    ¬ mixLt side att x (Sum.inr k) := by
-  rcases x with e | k''
-  · exact fun h => bool_clash hk h.1
-  · exact fun h => bool_clash hk h.2.1
-
-/-- `mixLt` is TRANSITIVE.  The order has HEIGHT TWO — down-kernel < external <
-    up-kernel — so exactly one of the eight cases is non-vacuous. -/
-theorem mixLt_trans {β κ : Type} (side : κ → Bool) (att : κ → β → Bool) :
-    ∀ x y z : β ⊕ κ, mixLt side att x y → mixLt side att y z →
-      mixLt side att x z := by
-  rintro (e | k) (f | k') (g | k'') h1 h2
-  · exact h1.elim
-  · exact h1.elim
-  · exact (bool_clash h2.1 h1.1).elim
-  · exact (bool_clash h2.1 h1.1).elim
-  · exact h2.elim
-  · exact ⟨h1.1, h2.1, f, h1.2, h2.2⟩
-  · exact (bool_clash h2.1 h1.2.1).elim
-  · exact (bool_clash h2.1 h1.2.1).elim
-
-/-- `≤` for the mixed order — the shape `djDown` already speaks in. -/
-def mixLe {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
-    (x y : β ⊕ κ) : Prop := x = y ∨ mixLt side att x y
-
-theorem mixLe_trans {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
-    {x y z : β ⊕ κ} (h1 : mixLe side att x y) (h2 : mixLe side att y z) :
-    mixLe side att x z := by
+theorem leE_trans {β : Type} {elt : β → β → Prop}
+    (htr : ∀ a b c, elt a b → elt b c → elt a c) {a b c : β}
+    (h1 : leE elt a b) (h2 : leE elt b c) : leE elt a c := by
   rcases h1 with rfl | h1
   · exact h2
   · rcases h2 with rfl | h2
     · exact Or.inr h1
-    · exact Or.inr (mixLt_trans side att _ _ _ h1 h2)
+    · exact Or.inr (htr _ _ _ h1 h2)
+
+theorem lt_leE {β : Type} {elt : β → β → Prop}
+    (htr : ∀ a b c, elt a b → elt b c → elt a c) {a b c : β}
+    (h1 : elt a b) (h2 : leE elt b c) : elt a c := by
+  rcases h2 with rfl | h2
+  · exact h1
+  · exact htr _ _ _ h1 h2
+
+theorem leE_lt {β : Type} {elt : β → β → Prop}
+    (htr : ∀ a b c, elt a b → elt b c → elt a c) {a b c : β}
+    (h1 : leE elt a b) (h2 : elt b c) : elt a c := by
+  rcases h1 with rfl | h1
+  · exact h2
+  · exact htr _ _ _ h1 h2
+
+/-- The order (§44.3): the EXTERNAL order `elt` (read off the model, so
+    transitive and irreflexive for free), with each kernel entirely above
+    (`side = true`) or entirely below (`side = false`) its attached externals —
+    and, by transitivity, above/below everything `elt`-comparable to them.
+
+    §43's version had `elt` empty, which `wp98` showed cannot serve the fragment:
+    88.8% of `∃PP` demands are one-shot, and a one-shot `∃PP` needs a genuine
+    `PP` EDGE between externals. -/
+def mixLt {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool) : β ⊕ κ → β ⊕ κ → Prop
+  | .inl e, .inl f => elt e f
+  | .inl e, .inr k => side k = true ∧ ∃ e', att k e' = true ∧ leE elt e e'
+  | .inr k, .inl e => side k = false ∧ ∃ e', att k e' = true ∧ leE elt e' e
+  | .inr k, .inr k' => side k = false ∧ side k' = true ∧
+      ∃ e e', att k e = true ∧ att k' e' = true ∧ leE elt e e'
+
+/-- Nothing lies strictly below a DOWN-kernel: they are still the order's
+    minima, which is what makes `djDown`'s case analysis terminate. -/
+theorem mixLt_no_below {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool) {k : κ} (hk : side k = false) (x : β ⊕ κ) :
+    ¬ mixLt elt side att x (Sum.inr k) := by
+  rcases x with e | k''
+  · exact fun h => bool_clash hk h.1
+  · exact fun h => bool_clash hk h.2.1
+
+/-- `mixLt` is TRANSITIVE.  Up-kernels are maximal and down-kernels minimal, so
+    of the eight cases four are vacuous by a `side` clash; the rest are `elt`
+    transitivity pushed through `leE`. -/
+theorem mixLt_trans {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool) (htr : ∀ a b c, elt a b → elt b c → elt a c) :
+    ∀ x y z : β ⊕ κ, mixLt elt side att x y → mixLt elt side att y z →
+      mixLt elt side att x z := by
+  rintro (a | k) (b | k') (c | k'') h1 h2
+  · exact htr _ _ _ h1 h2
+  · obtain ⟨hs, e', hae, hle⟩ := h2
+    exact ⟨hs, e', hae, Or.inr (lt_leE htr h1 hle)⟩
+  · exact (bool_clash h2.1 h1.1).elim
+  · exact (bool_clash h2.1 h1.1).elim
+  · obtain ⟨hs, e', hae, hle⟩ := h1
+    exact ⟨hs, e', hae, Or.inr (leE_lt htr hle h2)⟩
+  · obtain ⟨hs, e1, hae1, hle1⟩ := h1
+    obtain ⟨hs', e2, hae2, hle2⟩ := h2
+    exact ⟨hs, hs', e1, e2, hae1, hae2, leE_trans htr hle1 hle2⟩
+  · exact (bool_clash h2.1 h1.2.1).elim
+  · exact (bool_clash h2.1 h1.2.1).elim
+
+/-- `≤` for the mixed order — the shape `djDown` already speaks in. -/
+def mixLe {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool) (x y : β ⊕ κ) : Prop := x = y ∨ mixLt elt side att x y
+
+theorem mixLe_trans {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    {x y z : β ⊕ κ} (h1 : mixLe elt side att x y) (h2 : mixLe elt side att y z) :
+    mixLe elt side att x z := by
+  rcases h1 with rfl | h1
+  · exact h2
+  · rcases h2 with rfl | h2
+    · exact Or.inr h1
+    · exact Or.inr (mixLt_trans elt side att htr _ _ _ h1 h2)
 
 /-- **THE EXTRACTION'S ORDERED-DISJOINT STRUCTURE.**  The order is `mixLt`;
     disjointness is the DOWNWARD CLOSURE of an arbitrary symmetric `seed`.
@@ -19048,24 +19089,22 @@ theorem mixLe_trans {β κ : Type} (side : κ → Bool) (att : κ → β → Boo
     `djDown` becomes transitivity of `≤`, and `djIrr` and `ltNotDj` BOTH reduce
     to the single condition `hsep` — *no node lies below two seed-related
     nodes*.  (For `ltNotDj`: if `x < y` then `x` is below both `x₀ ≥ x` and
-    `y₀ ≥ y`.)
-
-    The earlier `odMix` — disjointness inherited only downward from the
-    externals' `DR` pattern — is the special case `seed = dadj on externals`, and
-    it was too weak: it cannot make an UP-kernel `DR` from an external, which an
-    ascending tower whose rungs each carry an `∃DR` demand forces. -/
-def odSeed {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
-    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    `y₀ ≥ y`.) -/
+def odSeed {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool) (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
     (hsym : ∀ x y, seed x y → seed y x)
-    (hsep : ∀ x y z, mixLe side att x y → mixLe side att x z → ¬ seed y z) :
+    (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
+      ¬ seed y z) :
     ODStruct (β ⊕ κ) where
-  lt := mixLt side att
-  disj x y := ∃ x₀ y₀, mixLe side att x x₀ ∧ mixLe side att y y₀ ∧ seed x₀ y₀
+  lt := mixLt elt side att
+  disj x y := ∃ x₀ y₀, mixLe elt side att x x₀ ∧ mixLe elt side att y y₀ ∧
+    seed x₀ y₀
   ltIrr := by
     rintro (e | k)
-    · exact fun h => h
+    · exact hirrE e
     · exact fun h => bool_clash h.1 h.2.1
-  ltTr := mixLt_trans side att
+  ltTr := mixLt_trans elt side att htr
   djSym := by
     rintro x y ⟨x₀, y₀, hx, hy, hs⟩
     exact ⟨y₀, x₀, hy, hx, hsym _ _ hs⟩
@@ -19074,46 +19113,59 @@ def odSeed {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
     exact hsep x x₀ y₀ hx hy hs
   ltNotDj := by
     rintro x y hxy ⟨x₀, y₀, hx, hy, hs⟩
-    exact hsep x x₀ y₀ hx (mixLe_trans side att (Or.inr hxy) hy) hs
+    exact hsep x x₀ y₀ hx (mixLe_trans elt side att htr (Or.inr hxy) hy) hs
   djDown := by
     rintro x y x' y' ⟨x₀, y₀, hx, hy, hs⟩ hx' hy'
-    exact ⟨x₀, y₀, mixLe_trans side att hx' hx, mixLe_trans side att hy' hy, hs⟩
+    exact ⟨x₀, y₀, mixLe_trans elt side att htr hx' hx,
+      mixLe_trans elt side att htr hy' hy, hs⟩
 
 section OdSeedReadOff
 
-variable {β κ : Type} (side : κ → Bool) (att : κ → β → Bool)
-  (seed : β ⊕ κ → β ⊕ κ → Prop)
+variable {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+  (att : κ → β → Bool) (seed : β ⊕ κ → β ⊕ κ → Prop)
+  (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
   (hsym : ∀ x y, seed x y → seed y x)
-  (hsep : ∀ x y z, mixLe side att x y → mixLe side att x z → ¬ seed y z)
+  (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z → ¬ seed y z)
 
 theorem odSeed_lt (x y : β ⊕ κ) :
-    (odSeed side att seed hsym hsep).lt x y ↔ mixLt side att x y := Iff.rfl
+    (odSeed elt side att seed hirrE htr hsym hsep).lt x y
+      ↔ mixLt elt side att x y := Iff.rfl
+
+/-- **THE ONE-SHOT `∃PP` EDGE** (§44).  An `elt`-edge between externals IS a
+    `PP` edge of the frame, so a one-shot `∃PP.D` — 88.8% of `∃PP` demands, per
+    `wp98` A — is served WITHOUT a kernel. -/
+theorem odSeed_E_pp {e f : β} (h : elt e f) :
+    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (Sum.inl e) (Sum.inl f) = pp := odNet_lt _ h
 
 /-- A kernel ABOVE its external: `K k e = PPI`, so `conv (K k e) = PP` serves the
     external's `∃PP`. -/
 theorem odSeed_K_up {k : κ} {e : β} (hk : side k = true) (ha : att k e = true) :
-    odNet (odSeed side att seed hsym hsep) (Sum.inr k) (Sum.inl e) = ppi :=
-  odNet_gt _ (show mixLt side att (Sum.inl e) (Sum.inr k) from ⟨hk, ha⟩)
+    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (Sum.inr k) (Sum.inl e) = ppi :=
+  odNet_gt _ (show mixLt elt side att (Sum.inl e) (Sum.inr k) from
+    ⟨hk, e, ha, Or.inl rfl⟩)
 
 /-- A kernel BELOW its external: `K k e = PP`, so `conv (K k e) = PPI` serves the
-    external's `∃PPI` — the demand the PO-default frame could not express. -/
+    external's `∃PPI`. -/
 theorem odSeed_K_dn {k : κ} {e : β} (hk : side k = false) (ha : att k e = true) :
-    odNet (odSeed side att seed hsym hsep) (Sum.inr k) (Sum.inl e) = pp :=
-  odNet_lt _ (show mixLt side att (Sum.inr k) (Sum.inl e) from ⟨hk, ha⟩)
+    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (Sum.inr k) (Sum.inl e) = pp :=
+  odNet_lt _ (show mixLt elt side att (Sum.inr k) (Sum.inl e) from
+    ⟨hk, e, ha, Or.inl rfl⟩)
 
 /-- **THE `wp96`-C FORCING, DISCHARGED.**  A down-kernel and an up-kernel sharing
-    an external are `PP`-related — exactly what `comp(PP,PP) = {PP}` demands, and
-    exactly what a PO default gets wrong. -/
+    an external are `PP`-related — exactly what `comp(PP,PP) = {PP}` demands. -/
 theorem odSeed_Q_forced {k k' : κ} {e : β} (hk : side k = false)
     (hk' : side k' = true) (ha : att k e = true) (ha' : att k' e = true) :
-    odNet (odSeed side att seed hsym hsep) (Sum.inr k) (Sum.inr k') = pp :=
-  odNet_lt _
-    (show mixLt side att (Sum.inr k) (Sum.inr k') from ⟨hk, hk', e, ha, ha'⟩)
+    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (Sum.inr k) (Sum.inr k') = pp :=
+  odNet_lt _ (show mixLt elt side att (Sum.inr k) (Sum.inr k') from
+    ⟨hk, hk', e, e, ha, ha', Or.inl rfl⟩)
 
-/-- Any SEED pair is `DR` — including an up-kernel and an external, which the
-    old `odMix` could not express. -/
+/-- Any SEED pair is `DR`. -/
 theorem odSeed_dr {x y : β ⊕ κ} (h : seed x y) :
-    odNet (odSeed side att seed hsym hsep) x y = dr :=
+    odNet (odSeed elt side att seed hirrE htr hsym hsep) x y = dr :=
   odNet_dj _ ⟨x, y, Or.inl rfl, Or.inl rfl, h⟩
 
 end OdSeedReadOff
@@ -19274,56 +19326,108 @@ theorem cross_dr_of_shared (hI : RCC5Interp I) {u v w : α}
 
 end ODExtraction
 
+section EltOf
+
+/-! #### The external order, read off the model (§44.3 ingredient 1)
+
+Taking `elt` to be the model's own `PP` makes `odSeed`'s two order hypotheses
+FREE: transitivity is `comp(PP,PP) = {PP}`, irreflexivity is `refl_eq`.  And the
+first conjunct of the external debt `hppE` becomes definitional, leaving only the
+budget condition — which §44.3 discharges by holding the budget CONSTANT along
+`PP`-paths.
+
+`wp96` A's read-off budget problem does NOT return.  That was caused by reading
+off ALL pairs, so that `ee_all` fired on every one of them.  Here only the
+VERTICAL block is read off; `disj` stays declared (the seed closure), and
+everything else is `PO` and carries no obligation. -/
+
+variable {α : Type} {β : Type}
+
+/-- The external order: the model's own proper-part relation. -/
+def eltOf (J : Interp α) (g : β → α) (e f : β) : Prop := J.rho (g e) (g f) = pp
+
+theorem eltOf_irr {J : Interp α} (hJ : RCC5Interp J) (g : β → α)
+    (hgdom : ∀ e, J.dom (g e)) (e : β) : ¬ eltOf J g e e := by
+  intro h
+  have h' : J.rho (g e) (g e) = pp := h
+  rw [hJ.refl_eq (g e) (hgdom e)] at h'
+  exact absurd h' (by decide)
+
+theorem eltOf_trans {J : Interp α} (hJ : RCC5Interp J) (g : β → α)
+    (hgdom : ∀ e, J.dom (g e)) (a b c : β)
+    (h1 : eltOf J g a b) (h2 : eltOf J g b c) : eltOf J g a c :=
+  rho_forced hJ (hgdom a) (hgdom c) (hgdom b) h1 h2 (by decide)
+
+/-- With the order read off the model, the external debt `hppE` reduces to the
+    BUDGET condition alone — the relation half is definitional. -/
+theorem hppE_of_bud {J : Interp α} (g : β → α) (bud : β → Nat)
+    (hbud : ∀ e f, eltOf J g e f → bud e ≤ bud f + 1 ∧ bud f ≤ bud e + 1)
+    (e f : β) (h : eltOf J g e f) :
+    J.rho (g e) (g f) = pp ∧ bud e ≤ bud f + 1 ∧ bud f ≤ bud e + 1 :=
+  ⟨h, (hbud e f h).1, (hbud e f h).2⟩
+
+end EltOf
+
 section ODDebt
 
 variable {β κ : Type}
 
-/-- **THE EXTERNAL BLOCK IS `EQ`/`DR`/`PO` ONLY.**  Externals are pairwise
-    `lt`-incomparable, so an off-diagonal non-`PO` value can only be `DR`, and
-    then `O.disj` witnesses it. -/
-theorem odLt_E_dr (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
-    {e f : β} (hef : e ≠ f)
-    (hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po) :
-    odNet O (Sum.inl e) (Sum.inl f) = dr ∧ O.disj (Sum.inl e) (Sum.inl f) := by
+/-- **THE EXTERNAL BLOCK, CASE ANALYSIS.**  With `elt` non-empty (§44) an
+    off-diagonal non-`PO` external pair is `PP` (an `elt` edge — the one-shot
+    `∃PP` case), `PPI` (the reverse), or `DR` (a seed pair). -/
+theorem odLt_E_cases (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
+    (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    {e f : β} (hef : e ≠ f) (hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po) :
+    (odNet O (Sum.inl e) (Sum.inl f) = pp ∧ elt e f) ∨
+    (odNet O (Sum.inl e) (Sum.inl f) = ppi ∧ elt f e) ∨
+    (odNet O (Sum.inl e) (Sum.inl f) = dr ∧ O.disj (Sum.inl e) (Sum.inl f)) := by
   rcases odNet_cases O (Sum.inl e) (Sum.inl f) with h | h | h | h | h
   · exact absurd (Sum.inl.inj (odNet_eq_inv _ h)) hef
-  · exact ((hlt _ _).mp (odNet_pp_inv _ h)).elim
-  · exact ((hlt _ _).mp (odNet_ppi_inv _ h)).elim
-  · exact ⟨h, odNet_dr_inv _ h⟩
+  · exact Or.inl ⟨h, (hlt _ _).mp (odNet_pp_inv _ h)⟩
+  · exact Or.inr (Or.inl ⟨h, (hlt _ _).mp (odNet_ppi_inv _ h)⟩)
+  · exact Or.inr (Or.inr ⟨h, odNet_dr_inv _ h⟩)
   · exact absurd h hne
 
-/-- **`mtkKernelsOD_ok`'s EXTERNAL DEBT, DISCHARGED** from two facts about the
-    declared `DR` pattern alone: a declared `DR` edge is a real `DR` edge, and
-    its endpoints' budgets are within one. -/
-theorem odLt_hEreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
-    {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
+/-- **`mtkKernelsOD_ok`'s EXTERNAL DEBT, DISCHARGED.**  Two model-side facts:
+    an `elt` edge is a real `PP` edge with budgets within one IN BOTH DIRECTIONS
+    (§44.3: the budget is held CONSTANT along `PP`-paths, so this is free), and a
+    declared `DR` edge is a real `DR` edge with budgets within one. -/
+theorem odLt_hEreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
+    (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    {α : Type} {I : Interp α} (hI : RCC5Interp I) (g : β → α)
+    (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat)
+    (hppE : ∀ e f, elt e f →
+      I.rho (g e) (g f) = pp ∧ bud e ≤ bud f + 1 ∧ bud f ≤ bud e + 1)
     (hdr : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → I.rho (g e) (g f) = dr)
     (hb : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → bud e ≤ bud f + 1)
     (e f : β) (hef : e ≠ f) (hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po) :
     I.rho (g e) (g f) = odNet O (Sum.inl e) (Sum.inl f) ∧ bud e ≤ bud f + 1 := by
-  obtain ⟨hval, hd⟩ := odLt_E_dr O side att hlt hef hne
-  exact ⟨(hdr e f hd).trans hval.symm, hb e f hd⟩
+  rcases odLt_E_cases O elt side att hlt hef hne with
+    ⟨hv, he⟩ | ⟨hv, he⟩ | ⟨hv, hd⟩
+  · obtain ⟨hr, hb1, _⟩ := hppE e f he
+    exact ⟨hr.trans hv.symm, hb1⟩
+  · obtain ⟨hr, _, hb2⟩ := hppE f e he
+    refine ⟨?_, hb2⟩
+    rw [hv, hI.conv_ (g f) (g e) (hgdom f) (hgdom e), hr]; rfl
+  · exact ⟨(hdr e f hd).trans hv.symm, hb e f hd⟩
 
-/-- **`mtkKernelsOD_ok`'s KERNEL–EXTERNAL DEBT, DISCHARGED** into three concrete
-    model-side conditions, one per non-`PO` value the declared `K` block can
-    take.  Each has the shape the §39 bank machinery produces:
-
-* `hup`  — an UP-kernel's external is a proper part of every phase
-           (`exists_bank_ppi`: early picking, uniform anchor);
-* `hdn`  — a DOWN-kernel's external is a proper SUPERpart of every phase
-           (`exists_bank`'s `PP` branch);
-* `hdrk` — a kernel disjoint from an external is genuinely disjoint from it in
-           every phase (`exists_bank`'s `DR` branch).  Note this case is stated
-           on `O.disj`, so it covers UP-kernels too. -/
-theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
+/-- **`mtkKernelsOD_ok`'s KERNEL–EXTERNAL DEBT, DISCHARGED** into three model
+    conditions.  With `elt` non-empty the attachment reaches further: a kernel is
+    below every external at or above one of its own, so `hup`/`hdn` are stated
+    with `leE`.  That extra reach is itself composition-forced
+    (`cross_pp_of_shared`), so it costs nothing at extraction time. -/
+theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
+    (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
     {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
     (bk : κ → Nat) (ck : κ → Nat → α) (ik pk : κ → Nat)
-    (hup : ∀ k e a, a < pk k → side k = true → att k e = true →
+    (hup : ∀ k e a, a < pk k → side k = true →
+      (∃ e', att k e' = true ∧ leE elt e e') →
       I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hdn : ∀ k e a, a < pk k → side k = false → att k e = true →
+    (hdn : ∀ k e a, a < pk k → side k = false →
+      (∃ e', att k e' = true ∧ leE elt e' e) →
       I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     (hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
       I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
@@ -19333,8 +19437,8 @@ theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ �
       ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1 := by
   rcases odNet_cases O (Sum.inr k) (Sum.inl e) with h | h | h | h | h
   · have hcon : (Sum.inr k : β ⊕ κ) = Sum.inl e := odNet_eq_inv O h
-    have hb : false = true := congrArg Sum.isLeft hcon
-    exact absurd hb (by decide)
+    have hbb : false = true := congrArg Sum.isLeft hcon
+    exact absurd hbb (by decide)
   · obtain ⟨hs, hat⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
     obtain ⟨hr, hb1, hb2⟩ := hdn k e a ha hs hat
     rw [h]; exact ⟨hr, hb1, hb2⟩
@@ -19345,19 +19449,18 @@ theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ �
     rw [h]; exact ⟨hr, hb1, hb2⟩
   · exact absurd h hne
 
-/-- **`mtkKernelsOD_ok`'s KERNEL–KERNEL DEBT, DISCHARGED** into three model-side
-    conditions.  The first two are the `wp96`-C forcing — a down-kernel and an
-    up-kernel sharing an external are genuinely nested — and the third is the
-    `djDown` inheritance (`wp97` B). -/
-theorem odLt_hQreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
-    {α : Type} (I : Interp α) (bk : κ → Nat)
-    (ck : κ → Nat → α) (ik pk : κ → Nat)
+/-- **`mtkKernelsOD_ok`'s KERNEL–KERNEL DEBT, DISCHARGED.**  The first two are
+    the `wp96`-C forcing (now through an `elt`-path rather than a shared external
+    only); the third is the `djDown` inheritance. -/
+theorem odLt_hQreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
+    (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    {α : Type} (I : Interp α) (bk : κ → Nat) (ck : κ → Nat → α) (ik pk : κ → Nat)
     (hqpp : ∀ k k' a b, a < pk k → b < pk k' → side k = false → side k' = true →
-      (∃ e, att k e = true ∧ att k' e = true) →
+      (∃ e e', att k e = true ∧ att k' e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp ∧ bk k ≤ bk k' + 1)
     (hqppi : ∀ k k' a b, a < pk k → b < pk k' → side k' = false → side k = true →
-      (∃ e, att k' e = true ∧ att k e = true) →
+      (∃ e e', att k' e = true ∧ att k e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
     (hqdr : ∀ k k' a b, a < pk k → b < pk k' → O.disj (Sum.inr k) (Sum.inr k') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
@@ -19367,14 +19470,14 @@ theorem odLt_hQreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ �
         = odNet O (Sum.inr k) (Sum.inr k') ∧ bk k ≤ bk k' + 1 := by
   rcases odNet_cases O (Sum.inr k) (Sum.inr k') with h | h | h | h | h
   · exact absurd (Sum.inr.inj (odNet_eq_inv _ h)) hkk
-  · obtain ⟨hs, hs', e, hae, hae'⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
-    obtain ⟨hr, hb⟩ := hqpp k k' a b ha hbw hs hs' ⟨e, hae, hae'⟩
-    rw [h]; exact ⟨hr, hb⟩
-  · obtain ⟨hs', hs, e, hae', hae⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
-    obtain ⟨hr, hb⟩ := hqppi k k' a b ha hbw hs' hs ⟨e, hae', hae⟩
-    rw [h]; exact ⟨hr, hb⟩
-  · obtain ⟨hr, hb⟩ := hqdr k k' a b ha hbw (odNet_dr_inv _ h)
-    rw [h]; exact ⟨hr, hb⟩
+  · obtain ⟨hs, hs', hex⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
+    obtain ⟨hr, hbq⟩ := hqpp k k' a b ha hbw hs hs' hex
+    rw [h]; exact ⟨hr, hbq⟩
+  · obtain ⟨hs, hs', hex⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
+    obtain ⟨hr, hbq⟩ := hqppi k k' a b ha hbw hs hs' hex
+    rw [h]; exact ⟨hr, hbq⟩
+  · obtain ⟨hr, hbq⟩ := hqdr k k' a b ha hbw (odNet_dr_inv _ h)
+    rw [h]; exact ⟨hr, hbq⟩
   · exact absurd h hne
 
 end ODDebt
@@ -19414,30 +19517,35 @@ variable {α : Type}
 -/
 theorem mtkKernelsOD_of_debts {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
     (hpofree : POFree C0) {β κ : Type} [DecidableEq κ]
-    (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
+    (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
     (g : β → α) (hgdom : ∀ e, I.dom (g e))
     (bud : β → Nat) (bk : κ → Nat) (dir : κ → Bool)
     (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
     (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
     (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
     (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
-    -- external
+    -- external: the `elt` (one-shot `∃PP`) edges, and the declared `DR` edges
+    (hppE : ∀ e f, elt e f →
+      I.rho (g e) (g f) = pp ∧ bud e ≤ bud f + 1 ∧ bud f ≤ bud e + 1)
     (hdr : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → I.rho (g e) (g f) = dr)
     (hb : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → bud e ≤ bud f + 1)
     -- kernel–external
-    (hup : ∀ k e a, a < pk k → side k = true → att k e = true →
+    (hup : ∀ k e a, a < pk k → side k = true →
+      (∃ e', att k e' = true ∧ leE elt e e') →
       I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hdn : ∀ k e a, a < pk k → side k = false → att k e = true →
+    (hdn : ∀ k e a, a < pk k → side k = false →
+      (∃ e', att k e' = true ∧ leE elt e' e) →
       I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     (hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
       I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     -- kernel–kernel
     (hqpp : ∀ k k' a b, a < pk k → b < pk k' → side k = false → side k' = true →
-      (∃ e, att k e = true ∧ att k' e = true) →
+      (∃ e e', att k e = true ∧ att k' e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp ∧ bk k ≤ bk k' + 1)
     (hqppi : ∀ k k' a b, a < pk k → b < pk k' → side k' = false → side k = true →
-      (∃ e, att k' e = true ∧ att k e = true) →
+      (∃ e e', att k' e = true ∧ att k e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
     (hqdr : ∀ k k' a b, a < pk k → b < pk k' → O.disj (Sum.inr k) (Sum.inr k') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
@@ -19455,12 +19563,13 @@ theorem mtkKernelsOD_of_debts {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
         ∃ b, b < pk k' ∧ D ∈ mtk C0 I (ck k' (ik k' + b)) (bk k'))) :
     MultiTierOk (mtkKernelsOD I C0 O g bud bk dir ck ik pk) :=
   mtkKernelsOD_ok hI hpofree O g hgdom bud bk dir ck hdom ik pk hp hstep hty
-    (fun e f hef hne => odLt_hEreal O side att hlt I g bud hdr hb e f hef hne)
+    (fun e f hef hne =>
+      odLt_hEreal O elt side att hlt hI g hgdom bud hppE hdr hb e f hef hne)
     (fun k e a ha hne =>
-      odLt_hKreal O side att hlt I g bud bk ck ik pk hup hdn hdrk k e a ha hne)
+      odLt_hKreal O elt side att hlt I g bud bk ck ik pk hup hdn hdrk k e a ha hne)
     (fun k k' a b hkk ha hbw hne =>
-      odLt_hQreal O side att hlt I bk ck ik pk hqpp hqppi hqdr k k' a b hkk ha hbw
-        hne)
+      odLt_hQreal O elt side att hlt I bk ck ik pk hqpp hqppi hqdr k k' a b hkk
+        ha hbw hne)
     he_ex hk_ex
 
 end ODAssembly
@@ -22669,7 +22778,9 @@ end VerticalWitness
 #print axioms odSeed
 #print axioms odSeed_dr
 #print axioms odSeed_Q_forced
-#print axioms odLt_hEreal
+#print axioms odLt_E_cases
+#print axioms eltOf_trans
+#print axioms odSeed_E_pp
 #print axioms odLt_hKreal
 #print axioms odLt_hQreal
 #print axioms mtkKernelsOD_of_debts
