@@ -19218,6 +19218,60 @@ theorem bank_window_ge (hI : RCC5Interp I) (c : Nat → α)
   intro a
   have hge : A ≤ i + a := by omega
   rw [hI.conv_ (c (i + a)) w (hdom _) hw, hbank (i + a) hge]
+
+/-! #### The cross-kernel debt is COMPOSITION-FORCED
+
+§36 established that `hrectQ` — cross-kernel rows constant across the windows —
+is FALSE in general (the cross-kernel staircase).  That is the obstruction §§37–39
+were built to handle, and it is the one most likely to block this route.
+
+It does not bite here, for a structural reason.  `kq_all` is VACUOUS on `PO`
+edges (no `∀PO` in the fragment), so a cross-kernel debt arises ONLY for kernel
+pairs the frame declares non-`PO` — and `odSeed` declares that only when the two
+kernels share an anchoring external (`odSeed_Q_forced`) or are seed-disjoint.
+In both cases the relation between their phases is FORCED by composition through
+the shared node, so it is constant for free:
+
+* down-kernel `PP` external `PP` up-kernel — `comp(PP,PP) = {PP}`;
+* the mirror, `comp(PPI,PPI) = {PPI}`;
+* kernel `DR` external, other kernel below it — `comp(DR,PPI) = {DR}`.
+
+§36's staircase is about ARBITRARY kernel pairs; the architecture never declares
+those non-`PO`. -/
+
+/-- **COMPOSITION FORCING.**  When every value in `comp r₁ r₂` is `v`, a two-step
+    path pins the direct relation. -/
+theorem rho_forced (hI : RCC5Interp I) {x y z : α} (hx : I.dom x) (hy : I.dom y)
+    (hz : I.dom z) {r1 r2 v : Atom} (h1 : I.rho x z = r1) (h2 : I.rho z y = r2)
+    (hc : ∀ w ∈ comp r1 r2, w = v) : I.rho x y = v := by
+  have hm := hI.comp_ x z y hx hz hy
+  rw [h1, h2] at hm
+  exact hc _ hm
+
+/-- `hqpp`, forced: a DOWN-kernel phase `u` and an UP-kernel phase `w` anchored
+    to the SAME external `v` are `PP`-related.  This is the `wp96`-C forcing
+    turned from an obligation into a theorem. -/
+theorem cross_pp_of_shared (hI : RCC5Interp I) {u v w : α}
+    (hu : I.dom u) (hv : I.dom v) (hw : I.dom w)
+    (hdn : I.rho v u = ppi) (hup : I.rho v w = pp) : I.rho u w = pp := by
+  have h1 : I.rho u v = pp := by rw [hI.conv_ v u hv hu, hdn]; rfl
+  exact rho_forced hI hu hw hv h1 hup (by decide)
+
+/-- `hqppi`, forced: the mirror. -/
+theorem cross_ppi_of_shared (hI : RCC5Interp I) {u v w : α}
+    (hu : I.dom u) (hv : I.dom v) (hw : I.dom w)
+    (hup : I.rho v u = pp) (hdn : I.rho v w = ppi) : I.rho u w = ppi := by
+  have h1 : I.rho u v = ppi := by rw [hI.conv_ v u hv hu, hup]; rfl
+  exact rho_forced hI hu hw hv h1 hdn (by decide)
+
+/-- `hqdr`, forced: a kernel phase `u` disjoint from an external `v`, and any
+    kernel phase `w` BELOW `v`, are `DR` — `comp(DR,PPI) = {DR}`.  This is the
+    `djDown` inheritance, discharged rather than assumed. -/
+theorem cross_dr_of_shared (hI : RCC5Interp I) {u v w : α}
+    (hu : I.dom u) (hv : I.dom v) (hw : I.dom w)
+    (hdr : I.rho u v = dr) (hdn : I.rho v w = ppi) : I.rho u w = dr :=
+  rho_forced hI hu hw hv hdr hdn (by decide)
+
 end ODExtraction
 
 section ODDebt
@@ -22621,6 +22675,9 @@ end VerticalWitness
 #print axioms mtkKernelsOD_of_debts
 #print axioms bank_window
 #print axioms bank_window_ge
+#print axioms rho_forced
+#print axioms cross_pp_of_shared
+#print axioms cross_dr_of_shared
 #print axioms dadjOD_rho
 #print axioms sAdjK_bud
 
