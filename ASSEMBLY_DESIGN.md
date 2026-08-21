@@ -3799,6 +3799,34 @@ the dedup construction, `codesM` at general bounds, and the assembly. Both risks
 turned out to be answerable by reading — which is the third time today that
 reading beat reasoning.
 
+### 42.7 The max-budget external list — built
+
+The dedup construction §42.5 called for, now certified:
+
+- **`maxBudgetAt`** / **`extMax`** — the external list keeps, for each model
+  element, the occurrence of LARGEST budget (`cdedup` of the filtered closure).
+  Nodes are determined by `(x, k)`: `Interp.dom` is a `Prop`, so `MTKNode`'s
+  `hx` field is proof-irrelevant.
+- **`extMax_covers_elt`** — every visited element HAS a max-budget
+  representative. The budgets for a fixed `x` form a finite list, so one is
+  largest; the proof is a classical selection with `list_bound` supplying the
+  contradiction if no maximum existed (an unbounded strictly increasing chain of
+  budgets inside a finite list).
+- **`extMax_inj`** — the representatives are DISTINCT: two max-budget nodes with
+  the same element bound each other's budgets, hence are equal. This is exactly
+  `readoff_qnet_frame`'s `hinj`.
+- **`extMax_covers`** — coverage transfers: `mtkNodes_covers` supplies the
+  witness, `mtk_mono` lifts its argument to the representative's larger budget.
+
+So the read-off certificate now has, all certified: a general frame
+(`readoff_qnet_frame` + `extMax_inj`), coverage at truncated labels
+(`extMax_covers`), finiteness (`mtkNodes_length_le`, and `extMax` is a sublist of
+`mtkNodes`), and a base disjoint from the externals (`exists_index_avoiding`).
+
+**Remaining:** `codesM` at general bounds (template: `codes` + `codesV`), the
+encoder and its membership lemma (template: `encodeHF_mem_codes`), and the final
+assembly into `decidableSat_of_codes`.
+
 ### 42.4 The pattern, recorded
 
 This is the **third** time in one session that a conclusion rested on not

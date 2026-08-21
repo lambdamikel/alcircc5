@@ -16739,6 +16739,115 @@ theorem mtk_covers_at_max {C0 : Concept} {x : α} {b b' : Nat} (hb : b ≤ b')
     {r : Atom} {D : Concept} (h : Concept.ex r D ∈ mtk C0 I x b) :
     Concept.ex r D ∈ mtk C0 I x b' := mtk_mono hb h
 
+/-! ### §42.7 — the MAX-BUDGET external list (read-off needs distinct elements)
+
+`readoff_qnet_frame` needs the representatives DISTINCT, but `mtkNodes` may visit
+the same model element at several budgets. Keeping, for each element, only the
+occurrence of LARGEST budget makes the representative map injective, and
+`mtk_mono` makes it safe: a witness found at a smaller budget still lies in the
+larger label, and the closure did recurse on every demand present at the larger
+one. Nodes are determined by `(x, k)` — `dom` is a `Prop`, so `hx` is
+proof-irrelevant. -/
+
+/-- `n` is the LARGEST-budget occurrence of its own model element. -/
+def maxBudgetAt {C0 : Concept} (root : MTKNode I C0) (n : MTKNode I C0) : Prop :=
+  ∀ m ∈ mtkNodes root, m.x = n.x → m.k ≤ n.k
+
+open Classical in
+/-- The external list: one node per model element, at its largest budget. -/
+noncomputable def extMax {C0 : Concept} (root : MTKNode I C0) : List (MTKNode I C0) :=
+  cdedup ((mtkNodes root).filter (fun n => decide (maxBudgetAt root n)))
+
+open Classical in
+theorem extMax_mem {C0 : Concept} (root : MTKNode I C0) {n : MTKNode I C0} :
+    n ∈ extMax root ↔ n ∈ mtkNodes root ∧ maxBudgetAt root n := by
+  rw [extMax, mem_cdedup, List.mem_filter]
+  constructor
+  · rintro ⟨h1, h2⟩; exact ⟨h1, of_decide_eq_true h2⟩
+  · rintro ⟨h1, h2⟩; exact ⟨h1, decide_eq_true h2⟩
+
+open Classical in
+/-- **EVERY visited element has a max-budget representative in `extMax`.**  The
+    budgets occurring for a fixed `x` form a finite nonempty set, so one of them
+    is largest. -/
+theorem extMax_covers_elt {C0 : Concept} (root : MTKNode I C0)
+    {m : MTKNode I C0} (hm : m ∈ mtkNodes root) :
+    ∃ n ∈ extMax root, n.x = m.x ∧ m.k ≤ n.k := by
+  classical
+  -- the budgets of occurrences of `m.x`, as a finite list
+  let ks := ((mtkNodes root).filter (fun q => decide (q.x = m.x))).map (·.k)
+  have hmem : m.k ∈ ks := by
+    refine List.mem_map.mpr ⟨m, ?_, rfl⟩
+    exact List.mem_filter.mpr ⟨hm, by simp⟩
+  obtain ⟨B, hB⟩ := list_bound (fun t => t) ks
+  -- pick an occurrence achieving the maximum
+  have hex : ∃ q ∈ mtkNodes root, q.x = m.x ∧ ∀ p ∈ mtkNodes root, p.x = m.x → p.k ≤ q.k := by
+    -- induct on the bound: the largest attained budget
+    have hne : ∃ q ∈ mtkNodes root, q.x = m.x := ⟨m, hm, rfl⟩
+    obtain ⟨q, hq, hqx⟩ := hne
+    -- classical selection of a maximal one
+    rcases Classical.em (∃ q' ∈ mtkNodes root, q'.x = m.x ∧
+        ∀ p ∈ mtkNodes root, p.x = m.x → p.k ≤ q'.k) with h | h
+    · exact h
+    · exfalso
+      -- otherwise budgets are unbounded along a finite list: contradiction
+      have hgrow : ∀ q' ∈ mtkNodes root, q'.x = m.x →
+          ∃ p ∈ mtkNodes root, p.x = m.x ∧ q'.k < p.k := by
+        intro q' hq' hq'x
+        rcases Classical.em (∃ p ∈ mtkNodes root, p.x = m.x ∧ q'.k < p.k) with hh | hh
+        · exact hh
+        · exact absurd ⟨q', hq', hq'x, fun p hp hpx =>
+            by rcases Classical.em (q'.k < p.k) with hlt | hlt
+               · exact absurd ⟨p, hp, hpx, hlt⟩ hh
+               · omega⟩ h
+      -- build an infinite strictly increasing sequence of budgets bounded by B
+      have : ∀ t : Nat, ∃ p ∈ mtkNodes root, p.x = m.x ∧ t ≤ p.k := by
+        intro t
+        induction t with
+        | zero => exact ⟨q, hq, hqx, Nat.zero_le _⟩
+        | succ t ih =>
+          obtain ⟨p, hp, hpx, hpk⟩ := ih
+          obtain ⟨p', hp', hp'x, hlt⟩ := hgrow p hp hpx
+          exact ⟨p', hp', hp'x, by omega⟩
+      obtain ⟨p, hp, hpx, hpk⟩ := this (B + 1)
+      have : p.k ∈ ks := List.mem_map.mpr ⟨p, List.mem_filter.mpr ⟨hp, by simp [hpx]⟩, rfl⟩
+      have := hB _ this
+      omega
+  obtain ⟨q, hq, hqx, hqmax⟩ := hex
+  refine ⟨q, (extMax_mem root).mpr ⟨hq, fun p hp hpx => hqmax p hp (by rw [hpx, hqx])⟩,
+    hqx, hqmax m hm rfl⟩
+
+open Classical in
+/-- **THE REPRESENTATIVES ARE DISTINCT** — `extMax` has one node per model
+    element, so the map `n ↦ n.x` is injective on it.  This is what
+    `readoff_qnet_frame`'s `hinj` needs. -/
+theorem extMax_inj {C0 : Concept} (root : MTKNode I C0) {m n : MTKNode I C0}
+    (hm : m ∈ extMax root) (hn : n ∈ extMax root) (h : m.x = n.x) : m = n := by
+  obtain ⟨hmN, hmMax⟩ := (extMax_mem root).mp hm
+  obtain ⟨hnN, hnMax⟩ := (extMax_mem root).mp hn
+  have h1 : m.k ≤ n.k := hnMax m hmN h
+  have h2 : n.k ≤ m.k := hmMax n hnN h.symm
+  have hk : m.k = n.k := by omega
+  cases m; cases n
+  simp only at h hk
+  subst h; subst hk; rfl
+
+open Classical in
+/-- **COVERAGE TRANSFERS TO `extMax`** — every demand of a max-budget node is
+    served by another max-budget node, with the argument in ITS (larger) label.
+    `mtkNodes_covers` supplies the witness; `mtk_mono` lifts the argument to the
+    representative's budget. -/
+theorem extMax_covers {C0 : Concept} (root : MTKNode I C0)
+    {n : MTKNode I C0} (hn : n ∈ extMax root) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) :
+    ∃ n' ∈ extMax root, I.rho n.x n'.x = r ∧ c ∈ mtk C0 I n'.x n'.k := by
+  obtain ⟨hnN, _⟩ := (extMax_mem root).mp hn
+  obtain ⟨m, hmN, hrho, hc⟩ := mtkNodes_covers root n hnN r c hF
+  obtain ⟨n', hn', hx, hk⟩ := extMax_covers_elt root hmN
+  refine ⟨n', hn', by rw [hx]; exact hrho, ?_⟩
+  have hc' : c ∈ mtk C0 I n'.x m.k := by rw [hx]; exact hc
+  exact mtk_mono hk hc'
+
 /-- **THE READ-OFF CERTIFICATE WITH TRUNCATED LABELS** (§42.3) — the combination
     the route needs and the file did not have.
 
@@ -21778,6 +21887,8 @@ end VerticalWitness
 #print axioms VerticalWitness.cnest_via_flat
 #print axioms VerticalWitness.cmerge_via_tower
 
+#print axioms extMax_inj
+#print axioms extMax_covers
 #print axioms exists_index_avoiding
 #print axioms mtk_mono
 #print axioms mixKernelsK_ok
