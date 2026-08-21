@@ -18819,6 +18819,159 @@ theorem frame_q_of_odNet {β κ : Type} [DecidableEq κ] (O : ODStruct (β ⊕ �
       (fun k k' => odNet O (Sum.inr k) (Sum.inr k'))) := by
   rw [qnet_odNet]; exact odNet_frame O
 
+section ODKernels
+
+variable {α : Type}
+
+/-! ### The hybrid certificate: `mtk` labels over an ordered-disjoint frame
+
+`wp96`/`wp97` (2026-08-21) fix the architecture.  Three facts:
+
+* **read-off relations break the budgets.**  With `E e f = I.rho (g e) (g f)`
+  every pair of externals carries a real relation, so `ee_all` fires on all of
+  them — while the node set that makes the certificate FINITE (`mtkNodes`) drops
+  the budget at every step (`mtkWitness` has budget `n.k - 1`).  A universal of
+  depth `bud e - 1` then has to land in a label truncated below it.  `wp96` A
+  measures the break: 4.1% of satisfiable ∀PO-free instances.
+* **a DECLARED frame fixes the budgets** — it fires only on its non-`PO` edges,
+  and the fragment has no `∀PO` (`pofree_cl_all`).  `wp96` B: 0 violations over
+  the same node sets, because the declared non-`PO` edges are exactly the
+  closure-tree edges, where the budget drops by exactly one.
+* **but the declared frame cannot be a PO DEFAULT.**  One external carrying both
+  an `∃PP` and an `∃PPI` demand needs a kernel above and a kernel below, and
+  `comp(PP,PP) = {PP}` forces the two bases comparable; kernels under `DR`
+  externals inherit disjointness by `djDown`.  `wp96` C, `wp97` B/C.
+
+So the frame must be an order-plus-disjointness structure — an `ODStruct` on
+`β ⊕ κ` — and `frame_q` is then FREE (`frame_q_of_odNet`).  `wp97` A: every
+configuration with `≤ 3` externals and `≤ 2` kernels admits such a completion,
+`wp97` D: the completion realizes the attachment labels exactly. -/
+
+/-- **THE HYBRID CERTIFICATE**: externals and kernel bases are ordinary nodes of
+    ONE ordered-disjoint structure; labels are the model's `mtk` types. -/
+noncomputable def mtkKernelsOD (I : Interp α) (C0 : Concept) {β κ : Type}
+    (O : ODStruct (β ⊕ κ)) (g : β → α) (bud : β → Nat) (bk : κ → Nat)
+    (dir : κ → Bool) (ck : κ → Nat → α) (ik pk : κ → Nat) : MultiTier β κ where
+  E e f := odNet O (Sum.inl e) (Sum.inl f)
+  K k e := odNet O (Sum.inr k) (Sum.inl e)
+  Q k k' := odNet O (Sum.inr k) (Sum.inr k')
+  up := dir
+  tauE e := mtk C0 I (g e) (bud e)
+  p := pk
+  phase k a := mtk C0 I (ck k (ik k + a)) (bk k)
+
+/-- **THE HYBRID CERTIFICATE IS VALID.**  `frame_q` is free; the kernel-internal
+    obligations are the certified `mtk_kk_*_dir`; and the three propagation
+    classes reduce to ONE uniform model-side debt:
+
+> wherever the DECLARED frame says something other than `PO`, the model agrees,
+> and the two budgets are within one.
+
+`PO` edges carry no obligation at all — that is the fragment's escape valve
+(`pofree_cl_all`), and it is what lets the declared frame be coarse everywhere
+except on the finitely many edges the demands actually use. -/
+theorem mtkKernelsOD_ok {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
+    (hpofree : POFree C0) {β κ : Type} [DecidableEq κ]
+    (O : ODStruct (β ⊕ κ)) (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (bud : β → Nat) (bk : κ → Nat) (dir : κ → Bool)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hEreal : ∀ e f, e ≠ f → odNet O (Sum.inl e) (Sum.inl f) ≠ po →
+      I.rho (g e) (g f) = odNet O (Sum.inl e) (Sum.inl f) ∧ bud e ≤ bud f + 1)
+    (hKreal : ∀ k e a, odNet O (Sum.inr k) (Sum.inl e) ≠ po →
+      I.rho (g e) (ck k (ik k + a)) = conv (odNet O (Sum.inr k) (Sum.inl e)) ∧
+        bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hQreal : ∀ k k' a b, k ≠ k' → odNet O (Sum.inr k) (Sum.inr k') ≠ po →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+          = odNet O (Sum.inr k) (Sum.inr k') ∧ bk k ≤ bk k' + 1)
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, odNet O (Sum.inl e) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (odNet O (Sum.inr k) (Sum.inl e)) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      (∃ f, odNet O (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
+        D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) ∨
+      (∃ k', k ≠ k' ∧ odNet O (Sum.inr k) (Sum.inr k') = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mtk C0 I (ck k' (ik k' + b)) (bk k'))) :
+    MultiTierOk (mtkKernelsOD I C0 O g bud bk dir ck ik pk) := by
+  have rebud : ∀ (x y : α) (b b' : Nat) (r : Atom) (cc : Concept), b ≤ b' + 1 →
+      Concept.all r cc ∈ mtk C0 I x b → I.rho x y = r → I.dom y →
+      cc ∈ mtk C0 I y b' := by
+    intro x y b b' r cc hb hmem hr hy
+    have h1 : cc ∈ mtk C0 I y b := all_into hmem hr hy
+    refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+    have hmd : mdepth cc + 1 ≤ b := (mem_mtk.mp hmem).2
+    omega
+  refine
+    { hp := hp
+      frame_q := frame_q_of_odNet O
+      e_clash := fun _ _ h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ _ _ h => mtk_and h
+      e_or := fun _ _ _ h => mtk_or h
+      k_clash := fun _ _ _ _ h => mtk_clash h
+      k_nobot := fun _ _ _ => mtk_nobot
+      k_and := fun _ _ _ _ _ h => mtk_and h
+      k_or := fun _ _ _ _ _ h => mtk_or h
+      ee_all := ?_
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun k a ha cc hmem b hb =>
+        mtk_kk_pp_dir hI (ck k) (hdom k) (dir k) (hstep k) (hty k) ha (bk k) hmem hb
+      kk_ppi := fun k a ha cc hmem b hb =>
+        mtk_kk_ppi_dir hI (ck k) (hdom k) (dir k) (hstep k) (hty k) ha (bk k) hmem hb
+      kk_eq := fun k a _ cc hmem =>
+        all_into hmem (hI.refl_eq (ck k (ik k + a)) (hdom k (ik k + a)))
+          (hdom k (ik k + a))
+      kq_all := ?_
+      e_ex := he_ex
+      k_ex := fun k a _ r D hmem => hk_ex k a r D hmem }
+  · -- ee_all
+    intro e f r cc hall hE
+    have hE' : odNet O (Sum.inl e) (Sum.inl f) = r := hE
+    have hpo : r ≠ po := pofree_cl_all C0 hpofree r cc (mtk_sub_cl _ hall)
+    by_cases hef : e = f
+    · subst hef
+      have hr : r = eq := hE'.symm.trans (odNet_self O (Sum.inl e))
+      subst hr
+      exact all_into hall (hI.refl_eq (g e) (hgdom e)) (hgdom e)
+    · have hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po :=
+        fun h => hpo (hE'.symm.trans h)
+      obtain ⟨hrho, hb⟩ := hEreal e f hef hne
+      exact rebud _ _ _ _ _ _ hb hall (hrho.trans hE') (hgdom f)
+  · -- ek_all
+    intro e r cc hall k hK a _
+    have hK' : conv (odNet O (Sum.inr k) (Sum.inl e)) = r := hK
+    have hpo : r ≠ po := pofree_cl_all C0 hpofree r cc (mtk_sub_cl _ hall)
+    have hne : odNet O (Sum.inr k) (Sum.inl e) ≠ po := by
+      intro h; exact hpo (by rw [← hK', h]; rfl)
+    obtain ⟨hrho, hb1, _⟩ := hKreal k e a hne
+    exact rebud _ _ _ _ _ _ hb1 hall (hrho.trans hK') (hdom k _)
+  · -- ke_all
+    intro k a _ r cc hall f hK
+    have hK' : odNet O (Sum.inr k) (Sum.inl f) = r := hK
+    have hpo : r ≠ po := pofree_cl_all C0 hpofree r cc (mtk_sub_cl _ hall)
+    have hne : odNet O (Sum.inr k) (Sum.inl f) ≠ po :=
+      fun h => hpo (hK'.symm.trans h)
+    obtain ⟨hrho, _, hb2⟩ := hKreal k f a hne
+    refine rebud _ _ _ _ _ _ hb2 hall ?_ (hgdom f)
+    rw [hI.conv_ (g f) (ck k (ik k + a)) (hgdom f) (hdom k _), hrho, conv_invol]
+    exact hK'
+  · -- kq_all
+    intro k k' hkk a _ r cc hall hQ b _
+    have hQ' : odNet O (Sum.inr k) (Sum.inr k') = r := hQ
+    have hpo : r ≠ po := pofree_cl_all C0 hpofree r cc (mtk_sub_cl _ hall)
+    have hne : odNet O (Sum.inr k) (Sum.inr k') ≠ po :=
+      fun h => hpo (hQ'.symm.trans h)
+    obtain ⟨hrho, hbq⟩ := hQreal k k' a b hkk hne
+    exact rebud _ _ _ _ _ _ hbq hall (hrho.trans hQ') (hdom k' _)
+
+end ODKernels
+
 namespace VerticalWitness
 
 /-- The ℕ-order chain is a frame. -/
@@ -22018,5 +22171,6 @@ end VerticalWitness
 #print axioms odNet_pp_inv
 #print axioms qnet_odNet
 #print axioms frame_q_of_odNet
+#print axioms mtkKernelsOD_ok
 
 end POFreeLift
