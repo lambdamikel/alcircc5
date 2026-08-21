@@ -18880,10 +18880,11 @@ theorem mtkKernelsOD_ok {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
     (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
     (hEreal : ∀ e f, e ≠ f → odNet O (Sum.inl e) (Sum.inl f) ≠ po →
       I.rho (g e) (g f) = odNet O (Sum.inl e) (Sum.inl f) ∧ bud e ≤ bud f + 1)
-    (hKreal : ∀ k e a, odNet O (Sum.inr k) (Sum.inl e) ≠ po →
+    (hKreal : ∀ k e a, a < pk k → odNet O (Sum.inr k) (Sum.inl e) ≠ po →
       I.rho (g e) (ck k (ik k + a)) = conv (odNet O (Sum.inr k) (Sum.inl e)) ∧
         bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hQreal : ∀ k k' a b, k ≠ k' → odNet O (Sum.inr k) (Sum.inr k') ≠ po →
+    (hQreal : ∀ k k' a b, k ≠ k' → a < pk k → b < pk k' →
+      odNet O (Sum.inr k) (Sum.inr k') ≠ po →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
           = odNet O (Sum.inr k) (Sum.inr k') ∧ bk k ≤ bk k' + 1)
     (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
@@ -18944,30 +18945,30 @@ theorem mtkKernelsOD_ok {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
       obtain ⟨hrho, hb⟩ := hEreal e f hef hne
       exact rebud _ _ _ _ _ _ hb hall (hrho.trans hE') (hgdom f)
   · -- ek_all
-    intro e r cc hall k hK a _
+    intro e r cc hall k hK a ha
     have hK' : conv (odNet O (Sum.inr k) (Sum.inl e)) = r := hK
     have hpo : r ≠ po := pofree_cl_all C0 hpofree r cc (mtk_sub_cl _ hall)
     have hne : odNet O (Sum.inr k) (Sum.inl e) ≠ po := by
       intro h; exact hpo (by rw [← hK', h]; rfl)
-    obtain ⟨hrho, hb1, _⟩ := hKreal k e a hne
+    obtain ⟨hrho, hb1, _⟩ := hKreal k e a ha hne
     exact rebud _ _ _ _ _ _ hb1 hall (hrho.trans hK') (hdom k _)
   · -- ke_all
-    intro k a _ r cc hall f hK
+    intro k a ha r cc hall f hK
     have hK' : odNet O (Sum.inr k) (Sum.inl f) = r := hK
     have hpo : r ≠ po := pofree_cl_all C0 hpofree r cc (mtk_sub_cl _ hall)
     have hne : odNet O (Sum.inr k) (Sum.inl f) ≠ po :=
       fun h => hpo (hK'.symm.trans h)
-    obtain ⟨hrho, _, hb2⟩ := hKreal k f a hne
+    obtain ⟨hrho, _, hb2⟩ := hKreal k f a ha hne
     refine rebud _ _ _ _ _ _ hb2 hall ?_ (hgdom f)
     rw [hI.conv_ (g f) (ck k (ik k + a)) (hgdom f) (hdom k _), hrho, conv_invol]
     exact hK'
   · -- kq_all
-    intro k k' hkk a _ r cc hall hQ b _
+    intro k k' hkk a ha r cc hall hQ b hbw
     have hQ' : odNet O (Sum.inr k) (Sum.inr k') = r := hQ
     have hpo : r ≠ po := pofree_cl_all C0 hpofree r cc (mtk_sub_cl _ hall)
     have hne : odNet O (Sum.inr k) (Sum.inr k') ≠ po :=
       fun h => hpo (hQ'.symm.trans h)
-    obtain ⟨hrho, hbq⟩ := hQreal k k' a b hkk hne
+    obtain ⟨hrho, hbq⟩ := hQreal k k' a b hkk ha hbw hne
     exact rebud _ _ _ _ _ _ hbq hall (hrho.trans hQ') (hdom k' _)
 
 /-! ### The extraction's ordered-disjoint structure
@@ -19179,6 +19180,44 @@ theorem dadjOD_bud (root : MTKNode I C0)
     {m m' : {n // n ∈ mtkNodesH root}} (h : dadjOD root m m' = true) :
     m.val.k ≤ m'.val.k + 1 := sAdjK_bud (of_decide_eq_true h)
 
+
+/-! #### The bank seam
+
+`exists_bank` delivers `∀ b ≤ M, I.rho (c b) w = r` (LATE picking: a witness
+above the range, backward forcing down through the window) and
+`exists_bank_ppi` delivers `∀ b ≥ A, I.rho (c b) w = ppi` (EARLY picking with a
+uniform anchor, forward absorption keeping it inside every later position).
+
+`odLt_hKreal` asks for the OTHER orientation, `I.rho (g e) (ck k (ik k + a))`,
+and only on the phase WINDOW `a < p`.  These two lemmas are that seam.  With
+`conv pp = ppi`, `conv ppi = pp` and `conv dr = dr` all definitional, the three
+cases specialize with no further work:
+
+* a `PPI` bank gives `hup` (`conv ppi = pp` — the external is a proper part);
+* the `PP` branch of `exists_bank` gives `hdn` (`conv pp = ppi`);
+* its `DR` branch gives `hdrk` (`conv dr = dr`). -/
+
+/-- A LATE-picked bank member serves the whole phase window, provided the bank's
+    bound lies above it. -/
+theorem bank_window (hI : RCC5Interp I) (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (w : α) (hw : I.dom w) (r : Atom) (i p M : Nat) (hM : i + p ≤ M + 1)
+    (hbank : ∀ b, b ≤ M → I.rho (c b) w = r) :
+    ∀ a, a < p → I.rho w (c (i + a)) = conv r := by
+  intro a ha
+  have hle : i + a ≤ M := by omega
+  rw [hI.conv_ (c (i + a)) w (hdom _) hw, hbank (i + a) hle]
+
+/-- An EARLY-picked bank member serves every position past its anchor — so the
+    whole window, provided the window starts at or above the anchor.  No upper
+    bound is needed, which is why `exists_bank_ppi` can use ONE anchor for all
+    types at once. -/
+theorem bank_window_ge (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (w : α) (hw : I.dom w) (r : Atom) (i A : Nat)
+    (hA : A ≤ i) (hbank : ∀ b, A ≤ b → I.rho (c b) w = r) :
+    ∀ a, I.rho w (c (i + a)) = conv r := by
+  intro a
+  have hge : A ≤ i + a := by omega
+  rw [hI.conv_ (c (i + a)) w (hdom _) hw, hbank (i + a) hge]
 end ODExtraction
 
 section ODDebt
@@ -19227,14 +19266,14 @@ theorem odLt_hEreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ �
 theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
     (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
     {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
-    (bk : κ → Nat) (ck : κ → Nat → α) (ik : κ → Nat)
-    (hup : ∀ k e a, side k = true → att k e = true →
+    (bk : κ → Nat) (ck : κ → Nat → α) (ik pk : κ → Nat)
+    (hup : ∀ k e a, a < pk k → side k = true → att k e = true →
       I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hdn : ∀ k e a, side k = false → att k e = true →
+    (hdn : ∀ k e a, a < pk k → side k = false → att k e = true →
       I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hdrk : ∀ k e a, O.disj (Sum.inr k) (Sum.inl e) →
+    (hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
       I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (k : κ) (e : β) (a : Nat)
+    (k : κ) (e : β) (a : Nat) (ha : a < pk k)
     (hne : odNet O (Sum.inr k) (Sum.inl e) ≠ po) :
     I.rho (g e) (ck k (ik k + a)) = conv (odNet O (Sum.inr k) (Sum.inl e))
       ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1 := by
@@ -19243,12 +19282,12 @@ theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ �
     have hb : false = true := congrArg Sum.isLeft hcon
     exact absurd hb (by decide)
   · obtain ⟨hs, hat⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
-    obtain ⟨hr, hb1, hb2⟩ := hdn k e a hs hat
+    obtain ⟨hr, hb1, hb2⟩ := hdn k e a ha hs hat
     rw [h]; exact ⟨hr, hb1, hb2⟩
   · obtain ⟨hs, hat⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
-    obtain ⟨hr, hb1, hb2⟩ := hup k e a hs hat
+    obtain ⟨hr, hb1, hb2⟩ := hup k e a ha hs hat
     rw [h]; exact ⟨hr, hb1, hb2⟩
-  · obtain ⟨hr, hb1, hb2⟩ := hdrk k e a (odNet_dr_inv _ h)
+  · obtain ⟨hr, hb1, hb2⟩ := hdrk k e a ha (odNet_dr_inv _ h)
     rw [h]; exact ⟨hr, hb1, hb2⟩
   · exact absurd h hne
 
@@ -19259,32 +19298,118 @@ theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ �
 theorem odLt_hQreal (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
     (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
     {α : Type} (I : Interp α) (bk : κ → Nat)
-    (ck : κ → Nat → α) (ik : κ → Nat)
-    (hqpp : ∀ k k' a b, side k = false → side k' = true →
+    (ck : κ → Nat → α) (ik pk : κ → Nat)
+    (hqpp : ∀ k k' a b, a < pk k → b < pk k' → side k = false → side k' = true →
       (∃ e, att k e = true ∧ att k' e = true) →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp ∧ bk k ≤ bk k' + 1)
-    (hqppi : ∀ k k' a b, side k' = false → side k = true →
+    (hqppi : ∀ k k' a b, a < pk k → b < pk k' → side k' = false → side k = true →
       (∃ e, att k' e = true ∧ att k e = true) →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
-    (hqdr : ∀ k k' a b, O.disj (Sum.inr k) (Sum.inr k') →
+    (hqdr : ∀ k k' a b, a < pk k → b < pk k' → O.disj (Sum.inr k) (Sum.inr k') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
-    (k k' : κ) (a b : Nat) (hkk : k ≠ k')
+    (k k' : κ) (a b : Nat) (hkk : k ≠ k') (ha : a < pk k) (hbw : b < pk k')
     (hne : odNet O (Sum.inr k) (Sum.inr k') ≠ po) :
     I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
         = odNet O (Sum.inr k) (Sum.inr k') ∧ bk k ≤ bk k' + 1 := by
   rcases odNet_cases O (Sum.inr k) (Sum.inr k') with h | h | h | h | h
   · exact absurd (Sum.inr.inj (odNet_eq_inv _ h)) hkk
   · obtain ⟨hs, hs', e, hae, hae'⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
-    obtain ⟨hr, hb⟩ := hqpp k k' a b hs hs' ⟨e, hae, hae'⟩
+    obtain ⟨hr, hb⟩ := hqpp k k' a b ha hbw hs hs' ⟨e, hae, hae'⟩
     rw [h]; exact ⟨hr, hb⟩
   · obtain ⟨hs', hs, e, hae', hae⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
-    obtain ⟨hr, hb⟩ := hqppi k k' a b hs' hs ⟨e, hae', hae⟩
+    obtain ⟨hr, hb⟩ := hqppi k k' a b ha hbw hs' hs ⟨e, hae', hae⟩
     rw [h]; exact ⟨hr, hb⟩
-  · obtain ⟨hr, hb⟩ := hqdr k k' a b (odNet_dr_inv _ h)
+  · obtain ⟨hr, hb⟩ := hqdr k k' a b ha hbw (odNet_dr_inv _ h)
     rw [h]; exact ⟨hr, hb⟩
   · exact absurd h hne
 
 end ODDebt
+
+/-! ### The assembly interface (§43.7)
+
+The CONSUMER of everything above: a `MultiTierOk` from the model-side conditions
+alone.  Built before the conditions are supplied, deliberately — twice in this
+campaign the layer below was falsified only when something consumed it
+(`mixKernelsK`'s budgets, `odMix`'s disjointness), so the interface is worth
+pinning down first.
+
+Everything structural is discharged here: the frame (`frame_q_of_odNet`), the
+kernel-internal obligations (`mtk_kk_*_dir`), the propagation classes
+(`odLt_hEreal`/`_hKreal`/`_hQreal`).  What is left for the extraction is exactly
+the model-side list — and every item on it is the shape the §39 banks produce. -/
+
+section ODAssembly
+
+variable {α : Type}
+
+/-- **THE ASSEMBLY INTERFACE.**  Given an ordered-disjoint frame whose order is
+    `mixLt`, `mtk` labels read off a model, and the model-side conditions below,
+    the hybrid certificate is valid.
+
+    The conditions, and where each comes from:
+
+| condition | meaning | source |
+|---|---|---|
+| `hdr`/`hb` | a declared external `DR` edge is real, budgets within one | `dadjOD_rho`/`dadjOD_bud` |
+| `hup` | an UP-kernel's external is a proper part of every phase | `exists_bank_ppi` |
+| `hdn` | a DOWN-kernel's external is a proper SUPERpart of every phase | `exists_bank` `PP` branch |
+| `hdrk` | a kernel disjoint from an external really is, in every phase | `exists_bank` `DR` branch |
+| `hqpp`/`hqppi` | a down-kernel and an up-kernel sharing an external are nested | the `wp96`-C forcing |
+| `hqdr` | disjoint kernels really are, in every phase | `djDown` inheritance |
+| `he_ex`/`hk_ex` | coverage | `mtkNodesH_covers` + the banks |
+-/
+theorem mtkKernelsOD_of_debts {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
+    (hpofree : POFree C0) {β κ : Type} [DecidableEq κ]
+    (O : ODStruct (β ⊕ κ)) (side : κ → Bool) (att : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt side att x y)
+    (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (bud : β → Nat) (bk : κ → Nat) (dir : κ → Bool)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    -- external
+    (hdr : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → I.rho (g e) (g f) = dr)
+    (hb : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → bud e ≤ bud f + 1)
+    -- kernel–external
+    (hup : ∀ k e a, a < pk k → side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hdn : ∀ k e a, a < pk k → side k = false → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    -- kernel–kernel
+    (hqpp : ∀ k k' a b, a < pk k → b < pk k' → side k = false → side k' = true →
+      (∃ e, att k e = true ∧ att k' e = true) →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp ∧ bk k ≤ bk k' + 1)
+    (hqppi : ∀ k k' a b, a < pk k → b < pk k' → side k' = false → side k = true →
+      (∃ e, att k' e = true ∧ att k e = true) →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
+    (hqdr : ∀ k k' a b, a < pk k → b < pk k' → O.disj (Sum.inr k) (Sum.inr k') →
+      I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
+    -- coverage
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, odNet O (Sum.inl e) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (odNet O (Sum.inr k) (Sum.inl e)) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      (∃ f, odNet O (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
+        D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) ∨
+      (∃ k', k ≠ k' ∧ odNet O (Sum.inr k) (Sum.inr k') = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mtk C0 I (ck k' (ik k' + b)) (bk k'))) :
+    MultiTierOk (mtkKernelsOD I C0 O g bud bk dir ck ik pk) :=
+  mtkKernelsOD_ok hI hpofree O g hgdom bud bk dir ck hdom ik pk hp hstep hty
+    (fun e f hef hne => odLt_hEreal O side att hlt I g bud hdr hb e f hef hne)
+    (fun k e a ha hne =>
+      odLt_hKreal O side att hlt I g bud bk ck ik pk hup hdn hdrk k e a ha hne)
+    (fun k k' a b hkk ha hbw hne =>
+      odLt_hQreal O side att hlt I bk ck ik pk hqpp hqppi hqdr k k' a b hkk ha hbw
+        hne)
+    he_ex hk_ex
+
+end ODAssembly
 
 
 namespace VerticalWitness
@@ -22493,6 +22618,9 @@ end VerticalWitness
 #print axioms odLt_hEreal
 #print axioms odLt_hKreal
 #print axioms odLt_hQreal
+#print axioms mtkKernelsOD_of_debts
+#print axioms bank_window
+#print axioms bank_window_ge
 #print axioms dadjOD_rho
 #print axioms sAdjK_bud
 
