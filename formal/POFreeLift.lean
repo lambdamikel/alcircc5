@@ -12631,6 +12631,66 @@ theorem podefault_ek_dr {C0 : Concept} (hpofree : POFree C0) {β : Type}
     · rw [if_neg hc] at hconv; subst hconv
       exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
 
+/-- **`ek_all` WITH MANY `PPI`-CHILDREN** (§40) — `podefault_ek_dr` generalized
+    from the single root `v0` to a predicate `kppi`, and with the kernel's phase
+    budget `bk` an explicit parameter rather than `bud v0`.  Both child kinds now
+    carry the same budget side-condition (`bud e ≤ bk + 1`), and the `PO` default
+    is vacuous by ∀PO-freeness — so the three branches are uniform. -/
+theorem podefault_ek_dir {C0 : Concept} (hpofree : POFree C0) {β : Type}
+    (g : β → α) (kppi kdr : β → Bool) (bud : β → Nat) (bk : Nat)
+    {phasept : α} (hpdom : I.dom phasept)
+    (hup : ∀ e, kppi e = true → I.rho (g e) phasept = pp ∧ bud e ≤ bk + 1)
+    (hdr : ∀ e, kdr e = true → I.rho (g e) phasept = dr ∧ bud e ≤ bk + 1)
+    {e : β} {r : Atom} {cc : Concept}
+    (hmem : Concept.all r cc ∈ mtk C0 I (g e) (bud e))
+    (hconv : (if kppi e then pp else if kdr e then dr else po) = r) :
+    cc ∈ mtk C0 I phasept bk := by
+  by_cases he : kppi e = true
+  · rw [if_pos he] at hconv; subst hconv
+    obtain ⟨hppe, hbude⟩ := hup e he
+    have h1 : cc ∈ mtk C0 I phasept (bud e) := all_into hmem hppe hpdom
+    refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+    have hmd : mdepth cc + 1 ≤ bud e := (mem_mtk.mp hmem).2
+    omega
+  · rw [if_neg he] at hconv
+    by_cases hc : kdr e = true
+    · rw [if_pos hc] at hconv; subst hconv
+      obtain ⟨hdre, hbude⟩ := hdr e hc
+      have h1 : cc ∈ mtk C0 I phasept (bud e) := all_into hmem hdre hpdom
+      refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+      have hmd : mdepth cc + 1 ≤ bud e := (mem_mtk.mp hmem).2
+      omega
+    · rw [if_neg hc] at hconv; subst hconv
+      exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+
+/-- **`ke_all` WITH MANY `PPI`-CHILDREN** (§40) — the mirror of
+    `podefault_ek_dir`, generalizing `podefault_ke_dr`. -/
+theorem podefault_ke_dir {C0 : Concept} (hpofree : POFree C0) {β : Type}
+    (g : β → α) (hgdom : ∀ e, I.dom (g e))
+    (kppi kdr : β → Bool) (bud : β → Nat) (bk : Nat) {x : α}
+    (hup : ∀ f, kppi f = true → I.rho x (g f) = ppi ∧ bk ≤ bud f + 1)
+    (hdr : ∀ f, kdr f = true → I.rho x (g f) = dr ∧ bk ≤ bud f + 1)
+    {r : Atom} {cc : Concept} (hmem : Concept.all r cc ∈ mtk C0 I x bk)
+    {f : β} (hK : (if kppi f then ppi else if kdr f then dr else po) = r) :
+    cc ∈ mtk C0 I (g f) (bud f) := by
+  by_cases hf : kppi f = true
+  · rw [if_pos hf] at hK; subst hK
+    obtain ⟨hppif, hbudf⟩ := hup f hf
+    have h1 : cc ∈ mtk C0 I (g f) bk := all_into hmem hppif (hgdom f)
+    refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+    have hmd : mdepth cc + 1 ≤ bk := (mem_mtk.mp hmem).2
+    omega
+  · rw [if_neg hf] at hK
+    by_cases hc : kdr f = true
+    · rw [if_pos hc] at hK; subst hK
+      obtain ⟨hdrf, hbudf⟩ := hdr f hc
+      have h1 : cc ∈ mtk C0 I (g f) bk := all_into hmem hdrf (hgdom f)
+      refine mem_mtk.mpr ⟨(mem_mtk.mp h1).1, ?_⟩
+      have hmd : mdepth cc + 1 ≤ bk := (mem_mtk.mp hmem).2
+      omega
+    · rw [if_neg hc] at hK; subst hK
+      exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+
 /-- `kk_pp` on `mtk`-truncated phases: lift to `mty`, apply `segment_kk_pp`,
     restrict back (the argument fits the same budget, one level shallower). -/
 theorem mtk_kk_pp (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
@@ -12653,6 +12713,55 @@ theorem mtk_kk_ppi (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
   obtain ⟨hmty, hbd⟩ := mem_mtk.mp hmem
   refine mem_mtk.mpr ⟨segment_kk_ppi hI hdom hstep hty ha hmty b hb, ?_⟩
   have hlt : mdepth cc + 1 ≤ bv := hbd; omega
+
+/-- Descending mirror of `mtk_kk_pp` (chain step `PPI`). -/
+theorem dmtk_kk_pp (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = ppi)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) (bv : Nat) {cc : Concept}
+    (hmem : Concept.all pp cc ∈ mtk C0 I (c (i + a)) bv)
+    {b : Nat} (hb : b < p) : cc ∈ mtk C0 I (c (i + b)) bv := by
+  obtain ⟨hmty, hbd⟩ := mem_mtk.mp hmem
+  refine mem_mtk.mpr ⟨dsegment_kk_pp hI hdom hstep hty ha hmty b hb, ?_⟩
+  have hlt : mdepth cc + 1 ≤ bv := hbd; omega
+
+/-- Descending mirror of `mtk_kk_ppi`. -/
+theorem dmtk_kk_ppi (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = ppi)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) (bv : Nat) {cc : Concept}
+    (hmem : Concept.all ppi cc ∈ mtk C0 I (c (i + a)) bv)
+    {b : Nat} (hb : b < p) : cc ∈ mtk C0 I (c (i + b)) bv := by
+  obtain ⟨hmty, hbd⟩ := mem_mtk.mp hmem
+  refine mem_mtk.mpr ⟨dsegment_kk_ppi hI hdom hstep hty ha hmty b hb, ?_⟩
+  have hlt : mdepth cc + 1 ≤ bv := hbd; omega
+
+/-- **DIRECTION-BRANCHING `∀PP` PROPAGATION** (§40) — `mtk_kk_pp` for a chain of
+    EITHER direction, branching on `dir` exactly as `mixKernels_ok` does.  This is
+    what a `dir`-generalized PO-default certificate needs in place of the
+    ascending-only lemma. -/
+theorem mtk_kk_pp_dir (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (d : Bool)
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) (bv : Nat) {cc : Concept}
+    (hmem : Concept.all pp cc ∈ mtk C0 I (c (i + a)) bv)
+    {b : Nat} (hb : b < p) : cc ∈ mtk C0 I (c (i + b)) bv := by
+  cases d with
+  | true => exact mtk_kk_pp hI c hdom (fun n => hstep n) hty ha bv hmem hb
+  | false => exact dmtk_kk_pp hI c hdom (fun n => hstep n) hty ha bv hmem hb
+
+/-- Direction-branching `∀PPI` propagation (mirror of `mtk_kk_pp_dir`). -/
+theorem mtk_kk_ppi_dir (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (d : Bool)
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) (bv : Nat) {cc : Concept}
+    (hmem : Concept.all ppi cc ∈ mtk C0 I (c (i + a)) bv)
+    {b : Nat} (hb : b < p) : cc ∈ mtk C0 I (c (i + b)) bv := by
+  cases d with
+  | true => exact mtk_kk_ppi hI c hdom (fun n => hstep n) hty ha bv hmem hb
+  | false => exact dmtk_kk_ppi hI c hdom (fun n => hstep n) hty ha bv hmem hb
 
 open Classical in
 /-- **THE PO-DEFAULT SINGLE-KERNEL CERTIFICATE** (`mtk`-truncated).  A `symDrPo`
@@ -12882,6 +12991,135 @@ theorem mtkKernels_nopo {C0 : Concept} (hpo : POFree C0) {β κ : Type}
     MTNoPo (mtkKernels I C0 g bud dadj v0 ck ik pk) where
   ext := fun _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
   ker := fun _ _ _ _E h => mty_no_all_po hpo (mem_mtk.mp h).1
+
+open Classical in
+/-- **THE `dir`-GENERALIZED PO-DEFAULT CERTIFICATE** (§40, route (a)).
+    `mtkKernelsDR` with two generalizations:
+    * kernels of EITHER direction (`up := dir`), so `∃PP` towers and `∃PPI`
+      towers coexist — what the ∀PO-free fragment needs and `mtkKernelsDR`
+      (ascending-only) could not express;
+    * ARBITRARILY MANY `PPI`-children per kernel (`kppi`) instead of the single
+      root `v0`, so `∃PPI` demands at a phase are coverable.
+
+    `E`/`K`/`Q` remain DECLARED, `Q ≡ po`: no `hstab`, no `hrectQ`, and `∃PO` at
+    a phase is served by any external carrying the argument.  Per-kernel phase
+    budgets `bk`. -/
+noncomputable def mtkKernelsDir (I : Interp α) (C0 : Concept) {β κ : Type}
+    (g : β → α) (bud : β → Nat) (bk : κ → Nat) (dadj : β → β → Bool)
+    (kppi kdr : κ → β → Bool) (dir : κ → Bool)
+    (ck : κ → Nat → α) (ik pk : κ → Nat) : MultiTier β κ where
+  E e f := if e = f then eq else if dadj e f then dr else po
+  K k e := if kppi k e then ppi else if kdr k e then dr else po
+  Q _ _ := po
+  up := dir
+  tauE e := mtk C0 I (g e) (bud e)
+  p := pk
+  phase k a := mtk C0 I (ck k (ik k + a)) (bk k)
+
+open Classical in
+/-- **THE `dir`-GENERALIZED PO-DEFAULT CERTIFICATE IS VALID** (§40).  Same shape
+    as `mtkKernelsDR_ok`, with: the generalized frame
+    (`po_dr_multi_kernel_frame'`), direction-branching `kk_pp`/`kk_ppi`
+    (`mtk_kk_*_dir`), and the many-`PPI`-children `∀`-propagation
+    (`podefault_ek_dir`/`podefault_ke_dir`).  `kq_all` stays vacuous — `Q ≡ po`
+    and the fragment has no `∀PO`.
+
+    Model-side debts are only `hup` (every `PPI`-child is genuinely inside every
+    phase) and `hdr` (every `DR`-child genuinely disjoint from every phase) —
+    supplied by `exists_bank_ppi` and `exists_bank` respectively. -/
+theorem mtkKernelsDir_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    {β κ : Type} (g : β → α) (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat)
+    (bk : κ → Nat) (dadj : β → β → Bool) (hsym : ∀ e f, dadj e f = dadj f e)
+    (kppi kdr : κ → β → Bool)
+    (hcoh : ∀ k e f, kdr k e = true → kppi k f = true → dadj e f = true)
+    (dir : κ → Bool) (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dir k))
+    (ik pk : κ → Nat) (hp : ∀ k, 0 < pk k)
+    (hty : ∀ k, mty C0 I (ck k (ik k)) = mty C0 I (ck k (ik k + pk k)))
+    (hup : ∀ k a e, kppi k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp ∧
+        bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hdr : ∀ k a e, kdr k e = true →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧
+        bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
+    (hee : ∀ e f r cc, Concept.all r cc ∈ mtk C0 I (g e) (bud e) →
+      (if e = f then eq else if dadj e f then dr else po) = r →
+      cc ∈ mtk C0 I (g f) (bud f))
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
+      (∃ f, (if e = f then eq else if dadj e f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (∃ k, conv (if kppi k e then ppi else if kdr k e then dr else po) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
+    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      (∃ f, (if kppi k f then ppi else if kdr k f then dr else po) = r ∧
+        D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k))) :
+    MultiTierOk (mtkKernelsDir I C0 g bud bk dadj kppi kdr dir ck ik pk) := by
+  have hKe : ∀ (k : κ) (e : β),
+      conv ((mtkKernelsDir I C0 g bud bk dadj kppi kdr dir ck ik pk).K k e)
+        = if kppi k e then pp else if kdr k e then dr else po := by
+    intro k e
+    show conv (if kppi k e then ppi else if kdr k e then dr else po)
+      = if kppi k e then pp else if kdr k e then dr else po
+    by_cases he : kppi k e = true
+    · rw [if_pos he, if_pos he]; rfl
+    · by_cases hc : kdr k e = true
+      · rw [if_neg he, if_pos hc, if_neg he]; rfl
+      · rw [if_neg he, if_neg hc, if_neg he]; rfl
+  refine
+    { hp := hp
+      frame_q := po_dr_multi_kernel_frame' dadj hsym kppi kdr hcoh
+      e_clash := fun _ _ h => mtk_clash h
+      e_nobot := fun _ => mtk_nobot
+      e_and := fun _ _ _ h => mtk_and h
+      e_or := fun _ _ _ h => mtk_or h
+      k_clash := fun _ _ _ _ h => mtk_clash h
+      k_nobot := fun _ _ _ => mtk_nobot
+      k_and := fun _ _ _ _ _ h => mtk_and h
+      k_or := fun _ _ _ _ _ h => mtk_or h
+      ee_all := fun e f r cc hmem hE => hee e f r cc hmem hE
+      ek_all := ?_
+      ke_all := ?_
+      kk_pp := fun k a ha cc hmem b hb =>
+        mtk_kk_pp_dir hI (ck k) (hdom k) (dir k) (hstep k) (hty k) ha (bk k) hmem hb
+      kk_ppi := fun k a ha cc hmem b hb =>
+        mtk_kk_ppi_dir hI (ck k) (hdom k) (dir k) (hstep k) (hty k) ha (bk k) hmem hb
+      kk_eq := fun k a _ cc hmem =>
+        all_into hmem (hI.refl_eq (ck k (ik k + a)) (hdom k (ik k + a))) (hdom k (ik k + a))
+      kq_all := ?_
+      e_ex := ?_
+      k_ex := ?_ }
+  · -- ek_all
+    intro e r cc hmem k hr a _
+    rw [hKe k e] at hr
+    exact podefault_ek_dir hpofree g (kppi k) (kdr k) bud (bk k) (hdom k (ik k + a))
+      (fun e' he' => ⟨(hup k a e' he').1, (hup k a e' he').2.1⟩)
+      (fun e' he' => ⟨(hdr k a e' he').1, (hdr k a e' he').2.1⟩) hmem hr
+  · -- ke_all
+    intro k a _ r cc hmem f hK
+    refine podefault_ke_dir hpofree g hgdom (kppi k) (kdr k) bud (bk k)
+      (fun f' hf' => ⟨?_, (hup k a f' hf').2.2⟩)
+      (fun f' hf' => ⟨?_, (hdr k a f' hf').2.2⟩) hmem hK
+    · rw [hI.conv_ (g f') (ck k (ik k + a)) (hgdom f') (hdom k (ik k + a)),
+        (hup k a f' hf').1]; rfl
+    · rw [hI.conv_ (g f') (ck k (ik k + a)) (hgdom f') (hdom k (ik k + a)),
+        (hdr k a f' hf').1]; rfl
+  · -- kq_all vacuous: cross-kernel `Q` is `PO` and the fragment has no `∀PO`
+    intro k k' _ a _ r cc hmem hQ b _
+    have hr : r = po := hQ.symm; subst hr
+    exact absurd (mem_mtk.mp hmem).1 (mty_no_all_po hpofree)
+  · -- e_ex
+    intro e r D hmem
+    rcases he_ex e r D hmem with ⟨f, hf, hDf⟩ | ⟨k, hK, a, ha, hDa⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr ⟨k, hK, a, ha, hDa⟩
+  · -- k_ex
+    intro k a _ r D hmem
+    rcases hk_ex k a r D hmem with ⟨f, hf, hDf⟩ | ⟨hd, b, hb, hDb⟩ | ⟨rfl, hD⟩
+    · exact Or.inl ⟨f, hf, hDf⟩
+    · exact Or.inr (Or.inl ⟨hd, b, hb, hDb⟩)
+    · exact Or.inr (Or.inr (Or.inl ⟨rfl, hD⟩))
 
 open Classical in
 /-- **THE MtkK MULTI-KERNEL CERTIFICATE WITH DR-CHILDREN** — `mtkKernels` with
@@ -20400,6 +20638,11 @@ end VerticalWitness
 #print axioms glue_ok
 #print axioms glue_frame
 #print axioms po_dr_multi_kernel_frame'
+#print axioms mtkKernelsDir_ok
+#print axioms podefault_ek_dir
+#print axioms podefault_ke_dir
+#print axioms mtk_kk_pp_dir
+#print axioms mtk_kk_ppi_dir
 #print axioms glueFam_ok
 #print axioms mty_mem_sublists
 #print axioms readoff_qnet_frame

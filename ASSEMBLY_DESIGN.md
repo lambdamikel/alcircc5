@@ -3270,7 +3270,42 @@ cases, vacuous when there was a single `v0`.
 converse `PP`. The frame condition uses the latter. Checking against the derived
 table rather than trusting the hand argument is what caught it.)*
 
-Next on this route: the `dir`-generalized certificate `mtkKernelsDir` over this
-frame, and its validity theorem (`kk_pp`/`kk_ppi` branching on `dir` as
-`mixKernels_ok` already does, `kq_all` vacuous since `Q ≡ po` and the fragment is
-∀PO-free).
+### 40.3 The `dir`-generalized certificate, CERTIFIED
+
+`mtkKernelsDir` / `mtkKernelsDir_ok` — `mtkKernelsDR` with BOTH generalizations
+the fragment needs:
+
+- **kernels of either direction** (`up := dir`), so `∃PP` towers and `∃PPI`
+  towers coexist — what `mtkKernelsDR` (ascending-only) could not express;
+- **arbitrarily many `PPI`-children** per kernel (`kppi`) instead of the single
+  root `v0`, so `∃PPI` demands at a phase are coverable.
+
+`E`/`K`/`Q` stay DECLARED with `Q ≡ po`, so there is **no `hstab` and no
+`hrectQ`**, and `∃PO` at a phase is served by any external carrying the argument
+— no pool. The model-side debts are only `hup` (every `PPI`-child genuinely
+inside every phase) and `hdr` (every `DR`-child genuinely disjoint from every
+phase), which `exists_bank_ppi` and `exists_bank` already supply.
+
+Supporting lemmas added:
+
+| lemma | content |
+|---|---|
+| `po_dr_multi_kernel_frame'` | the frame, with many `PPI`-children (§40.2) |
+| `dmtk_kk_pp`, `dmtk_kk_ppi` | descending mirrors at the `mtk` level |
+| `mtk_kk_pp_dir`, `mtk_kk_ppi_dir` | direction-branching `∀PP`/`∀PPI` propagation |
+| `podefault_ek_dir`, `podefault_ke_dir` | `∀`-propagation with many `PPI`-children and an explicit per-kernel phase budget `bk` |
+
+`kq_all` remains vacuous — `Q ≡ po` and the fragment has no `∀PO`
+(`mty_no_all_po`). That is the ∀PO-freeness doing the load-bearing work, exactly
+as in the glue.
+
+### 40.4 Remaining on route (a)
+
+- **Extraction into this certificate**: supply `g`/`bud`/`bk`/`dadj`/`kppi`/`kdr`
+  and the routing hypotheses (`hee`, `he_ex`, `hk_ex`) from a model. The
+  vertical side is in hand (`towers_from_persistPP`, `class_kernel`,
+  `exists_bank`, `exists_bank_ppi`); the horizontal closure is `ascNodes` /
+  `ascNodes_covers` at `mtk` budgets.
+- **Nested `∃PP`** (§33, as narrowed by `wp92` part E) — the one frame-level
+  obstruction, independent of the architecture choice.
+- **`codesM`** and the `decidableSat_of_codes` premise.
