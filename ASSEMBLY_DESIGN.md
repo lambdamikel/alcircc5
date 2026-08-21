@@ -4024,3 +4024,53 @@ and usability are different questions, and only the probe separated them.
 The sharpened rule: **read the definition, then ask what it costs to satisfy —
 and if that is a quantitative question, measure it.** `wp96` cost twenty minutes
 and would have saved several sessions of building on a 4.1%-broken interface.
+
+### 43.6 The frame, generalized: disjointness as a downward closure
+
+Building the debt lemmas exposed a real limitation in the first version
+(`odMix`): it inherited disjointness only DOWNWARD from the externals' `DR`
+pattern, so it could not make an UP-kernel `DR` from an external. An ascending
+tower whose rungs each carry an `∃DR` demand — an ordinary ∀PO-free concept —
+forces exactly that: the kernel needs `side = true` to serve an external's
+`∃PP`, and `side = false` to have a `DR`-external. Contradiction, so `odMix` was
+too weak.
+
+The fix generalizes AND simplifies. Take disjointness to be the downward closure
+of an arbitrary symmetric seed:
+
+```
+disj x y  :=  ∃ x₀ y₀, x ≤ x₀ ∧ y ≤ y₀ ∧ seed x₀ y₀
+```
+
+Closing downward *by construction* means `djDown` is just transitivity of `≤`,
+and `djIrr` and `ltNotDj` BOTH collapse into one condition —
+
+> **`hsep`: no node lies below two seed-related nodes.**
+
+(For `ltNotDj`: if `x < y` then `x` is below both `x₀ ≥ x` and `y₀ ≥ y`, so it is
+an instance of the same condition.) Four `ODStruct` obligations for the price of
+one, the seed is unconstrained, and every `wp97`-style completion is
+expressible. `odSeed` depends on **no axioms**.
+
+The debt lemmas are correspondingly stated for ANY `ODStruct` whose `lt` is
+`mixLt`, with `disj` left ABSTRACT — so `hdrk` and `hqdr` are conditions on
+`O.disj` and cover up-kernels. `odMix` and its read-off lemmas were removed
+rather than kept as a weaker special case: net −74 lines.
+
+**Method note.** This is the second time in two days that building the next
+layer falsified the layer below (first `mixKernelsK`'s budgets, now `odMix`'s
+disjointness). Both were found by *use*, not by review — which is an argument
+for building the consumer early rather than perfecting the producer.
+
+### 43.7 State after §43
+
+| | piece | status |
+|---|---|---|
+| frame | `odSeed` + `frame_q_of_odNet` | **certified**, axiom-free |
+| certificate | `mtkKernelsOD` / `_ok` | **certified** |
+| debts → model conditions | `odLt_hEreal` / `_hKreal` / `_hQreal` | **certified** |
+| external debt, discharged | `sAdjK_bud`, `sAdjK_irr`, `dadjOD_*` | **certified** |
+| kernel debts | `hup`, `hdn`, `hdrk`, `hqpp`, `hqppi`, `hqdr` | the banks — NEXT |
+| seed separation | `hsep` | with the banks |
+| assembly | choose β, κ, `side`, `att`, `seed`; apply | after the banks |
+| reindex / bounds / `hcompl` | small, templated | after the assembly |
