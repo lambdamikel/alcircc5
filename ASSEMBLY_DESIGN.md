@@ -3313,12 +3313,26 @@ as in the glue.
   kernel from an external (`conv (K k e) = conv PPI = PP`) and up the chain from
   a phase.
 
-**Honest scope of the witness:** it exercises the many-`PPI`-children half of
-the generalization, NOT the `dir = false` half. A both-directions witness needs a
-model carrying an infinite ASCENDING and an infinite DESCENDING chain
-simultaneously; the file's current models do not (`Ivert` ascends on ℕ, `Idalt`
-descends on ℕ, neither does both), so it needs a new small model — a bounded and
-well-understood task, but not yet done.
+**A model carrying BOTH directions — built.** `Ivert` ascends on ℕ and `Idalt`
+descends on ℕ; neither does both, so `dir = false` had no witness. `Idir` fixes
+that: two regions, one ordered by `chain` (ascending in the index), one by its
+TRANSPOSE (descending in the index), cross-related `PO`, with `A₀` true in the
+ascending region only. The transpose of a linear order is a linear order, so the
+only new fact needed was `rchain_cc` (the reversed composition), and
+`dirRho_frame`/`Idir_rcc5` follow by case analysis on the two region bits.
+
+**An architectural limitation found while designing the witness.** In
+`mtkKernelsDir`, `K` ranges over `{PPI, DR, PO}` and `E` over `{EQ, DR, PO}`.
+So `conv (K k e)` ranges over `{PP, DR, PO}` — it is **never `PPI`**. Consequently
+an EXTERNAL's `∃PPI` demand cannot be served at all: not by another external
+(`E` has no `PPI`), and not by a kernel (`conv K` has no `PPI`). Externals may
+therefore carry `∃PP`, `∃DR`, `∃PO`, `∃EQ` demands but not `∃PPI`.
+
+That is a real constraint on which model nodes may be externals, and it is NOT
+an artifact of the `dir` generalization — `mtkKernelsDR` has the same `K` range.
+Adding a `PP`-valued `K` edge would fix it, but that re-enters the `PP`-chaining
+obstruction (`wp92` part D), so it is not free. Recorded here rather than
+discovered later during coverage.
 
 ### 40.5 Remaining on route (a)
 

@@ -20383,6 +20383,72 @@ theorem mtkKernelsDir_two_ppi_children :
     exact Or.inr (Or.inl ⟨rfl, 0, Nat.one_pos,
       mem_mtk.mpr ⟨mem_mty.mpr ⟨by decide, rfl⟩, by decide⟩⟩)
 
+/-! ### §40.4 — a model carrying BOTH chain directions
+
+`Ivert` ascends on ℕ and `Idalt` descends on ℕ; neither does both, so the
+`dir = false` half of `mtkKernelsDir` had no witness.  `Idir` fixes that: two
+regions, one ordered by `chain` (ascending in the index) and one by its
+TRANSPOSE (descending in the index), cross-related `PO`.  The transpose of a
+linear order is a linear order, so the only new fact needed is the reversed
+composition `rchain_cc`. -/
+
+/-- The reversed-chain composition fact: the transpose of the chain order is
+    itself composition-closed.  Same trichotomy proof as `chain_cc`, with the
+    roles of the outer indices exchanged. -/
+theorem rchain_cc (i j k : Nat) :
+    chain k i ∈ comp (chain j i) (chain k j) := by
+  rcases Nat.lt_trichotomy i j with hij | hij | hij
+  · rcases Nat.lt_trichotomy j k with hjk | hjk | hjk
+    · simp only [chain_gt hij, chain_gt hjk, chain_gt (Nat.lt_trans hij hjk)]; decide
+    · subst hjk; simp only [chain_gt hij, chain_self]; decide
+    · simp only [chain_gt hij, chain_lt hjk]
+      rcases chain_vals k i with h | h | h <;> simp only [h] <;> decide
+  · subst hij
+    simp only [chain_self]
+    rcases chain_vals k i with h | h | h <;> simp only [h] <;> decide
+  · rcases Nat.lt_trichotomy j k with hjk | hjk | hjk
+    · simp only [chain_lt hij, chain_gt hjk]
+      rcases chain_vals k i with h | h | h <;> simp only [h] <;> decide
+    · subst hjk; simp only [chain_lt hij, chain_self]; decide
+    · simp only [chain_lt hij, chain_lt hjk, chain_lt (Nat.lt_trans hjk hij)]; decide
+
+/-- Two regions: region `false` ordered by `chain` (ASCENDING in the index),
+    region `true` by its transpose (DESCENDING in the index); cross `PO`. -/
+def dirRho : (Bool × Nat) → (Bool × Nat) → Atom
+  | (b, i), (b', j) => if b = b' then (if b then chain j i else chain i j) else po
+
+theorem dirRho_frame : Frame dirRho where
+  refl_eq := by
+    rintro ⟨b, i⟩
+    cases b <;> simp [dirRho, chain_self]
+  eq_id := by
+    rintro ⟨b, i⟩ ⟨b', j⟩ h
+    cases b <;> cases b' <;> simp [dirRho] at h <;>
+      first
+        | (have hij : i = j := chain_eq_imp h; subst hij; rfl)
+        | (have hji : j = i := chain_eq_imp h; subst hji; rfl)
+  conv_ := by
+    rintro ⟨b, i⟩ ⟨b', j⟩
+    cases b <;> cases b' <;> simp [dirRho] <;>
+      first
+        | exact chain_conv i j
+        | exact chain_conv j i
+        | rfl
+  comp_ := by
+    rintro ⟨b, i⟩ ⟨b', j⟩ ⟨b'', k⟩
+    cases b <;> cases b' <;> cases b'' <;> simp [dirRho] <;>
+      first
+        | exact chain_cc i j k
+        | exact rchain_cc i j k
+        | exact po_mem_comp_right _
+        | exact po_mem_comp_left _
+        | exact mem_comp_po_po _
+
+/-- The both-directions model: `A₀` holds in region `false` only. -/
+def Idir : Interp (Bool × Nat) := ⟨fun _ => True, dirRho, fun a q => a = 0 ∧ q.1 = false⟩
+
+theorem Idir_rcc5 : RCC5Interp Idir := frame_rcc5 dirRho dirRho_frame _
+
 /-- Everything in `cl Cnest` is satisfied at every `Ipo` point. -/
 theorem psat_all (p : Bool × Nat) : ∀ D ∈ cl Cnest, sat Ipo p D := by
   intro D hD
@@ -20869,6 +20935,9 @@ end VerticalWitness
 #print axioms VerticalWitness.vtowers_from_nodes_nonvacuous
 #print axioms VerticalWitness.family_interface_nonvacuous
 #print axioms VerticalWitness.mtkKernelsDir_two_ppi_children
+#print axioms VerticalWitness.rchain_cc
+#print axioms VerticalWitness.dirRho_frame
+#print axioms VerticalWitness.Idir_rcc5
 #print axioms ppPhaseNodes
 #print axioms ppPhaseNodes_spec
 #print axioms ascNodes
