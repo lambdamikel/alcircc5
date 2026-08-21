@@ -4245,3 +4245,49 @@ seed-closure trick) are all certified; the assembly is not.
 
 Estimated: comparable to §43's frame work, i.e. a substantial piece rather than a
 session's wiring. Flagged BEFORE building on the flat order, which is the point.
+
+### 44.5 The repair, built (2026-08-21)
+
+§44.3's first ingredient is done and the whole stack follows it.
+
+**`mixLt` now carries an external order `elt`.** Each kernel is entirely above
+(`side = true`) or below (`side = false`) its attached externals and, by
+transitivity, everything `elt`-comparable to them. Up-kernels stay maximal and
+down-kernels minimal, so four of the eight transitivity cases remain vacuous by a
+`side` clash and the rest are `elt` transitivity pushed through `leE`.
+`mixLt_no_below` survives unchanged, which is what keeps `djDown` terminating,
+and `odSeed` is unchanged in structure — still **no axioms**.
+
+**`odSeed_E_pp` is the fix**: an `elt` edge IS a `PP` edge of the frame, so a
+one-shot `∃PP` is served with no kernel at all.
+
+**The order is read off the model**, which makes `odSeed`'s two order hypotheses
+free — `eltOf_irr` is `refl_eq`, `eltOf_trans` is `comp(PP,PP) = {PP}` (axiom-free)
+— and collapses the external debt: `hppE_of_bud` shows the relation half is
+DEFINITIONAL, leaving only the budget condition.
+
+**`wp96` A does not return.** That defect came from reading off ALL pairs, so
+`ee_all` fired on every one. Here only the VERTICAL block is read off; `disj`
+stays declared (the seed closure) and everything else is `PO`, carrying no
+obligation. The two are not the same move.
+
+Downstream, mechanically: `odLt_E_cases` (an off-diagonal non-`PO` external pair
+is `PP`, `PPI` or `DR`), `odLt_hEreal`, `odLt_hKreal`, `odLt_hQreal` — `hup`,
+`hdn`, `hqpp`, `hqppi` now stated with `leE`, since attachment reaches further —
+and `mtkKernelsOD_of_debts`.
+
+### 44.6 What §44 still owes
+
+1. **The budget assignment.** `hppE`'s residue: `bud` constant along `elt`. Needs
+   the assignment itself, plus `hb` for the `DR` block (`dadjOD_bud` already, but
+   over the new node set).
+2. **The cut.** The dichotomy — a `PP`-chain of demands either repeats a type
+   (⟹ kernel, via `recurrent_tail`/`rr_segment_from`) or is shorter than the
+   number of types — as a Lean construction. This bounds the path length, hence
+   the lexicographic measure, hence the node count (§43.11 item 1).
+3. **`hsep`** over the taller order: more cases, since externals can now lie below
+   externals.
+4. Coverage (`he_ex`/`hk_ex`), then reindex / bounds / `hcompl`.
+
+Item 2 is the substantial one and is now the campaign's single open mathematical
+step for this fragment.
