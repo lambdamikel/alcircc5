@@ -4074,3 +4074,63 @@ for building the consumer early rather than perfecting the producer.
 | seed separation | `hsep` | with the banks |
 | assembly | choose β, κ, `side`, `att`, `seed`; apply | after the banks |
 | reindex / bounds / `hcompl` | small, templated | after the assembly |
+
+### 43.8 The assembly interface, and the third catch
+
+`mtkKernelsOD_of_debts` is the CONSUMER: a `MultiTierOk` from the model-side
+conditions alone. Built before its inputs on purpose — §43.6's method note says
+the layer below gets falsified by use, not by review, so pin the interface down
+first.
+
+It paid immediately, and in the same defect class as the first two. `hKreal` and
+`hQreal` quantified over **all** `a`, while the banks deliver only a **window**
+(`exists_bank`: `∀ b ≤ M`). That is `hstab` again — an interface demanding more
+than the supplier can produce. Both are now bounded by the phase window, at zero
+cost: `ek_all`/`ke_all`/`kq_all` all had `a < pk k` in scope and were discarding
+it.
+
+**Three for three.** `mixKernelsK`'s budgets, `odMix`'s disjointness, and now
+`hKreal`'s range — each an over-strong interface, each invisible until something
+tried to satisfy it. The generalizable rule is not "check the definition" (§42.4)
+nor even "measure what it costs" (§43.5) but:
+
+> **Write the consumer against the interface before believing the interface.**
+> An obligation stated for a quantifier range wider than any supplier's is
+> indistinguishable from a correct one until you try to supply it.
+
+### 43.9 The bank seam
+
+`exists_bank` gives `∀ b ≤ M, I.rho (c b) w = r` (LATE picking: witness above
+the range, backward forcing down through the window). `exists_bank_ppi` gives
+`∀ b ≥ A, I.rho (c b) w = ppi` (EARLY picking, uniform anchor, forward
+absorption). `odLt_hKreal` wants the other orientation on the window only.
+`bank_window` / `bank_window_ge` are that seam, and with `conv pp = ppi`,
+`conv ppi = pp`, `conv dr = dr` definitional the three cases specialize free:
+
+| debt | bank | why |
+|---|---|---|
+| `hup` | `exists_bank_ppi` | `conv ppi = pp` — the external is a proper part of every phase |
+| `hdn` | `exists_bank`, `PP` branch | `conv pp = ppi` |
+| `hdrk` | `exists_bank`, `DR` branch | `conv dr = dr` |
+
+Both seam lemmas are `Classical.choice`-free.
+
+### 43.10 Two structural facts the assembly will use
+
+**`side = dir`.** An ASCENDING kernel discharges `∃PP` rung-to-rung, so its
+`∃PPI` demands need an external `f` with `K k f = ppi`, i.e. `side k = true`;
+and an external whose `∃PP` it serves needs `conv (K k e) = pp`, i.e.
+`K k e = ppi`, i.e. `side k = true` again. Dually for descending. So the
+attachment side is not a free choice — it is the kernel's own direction.
+
+**Private banks.** `hsep` (no node below two seed-related nodes) becomes a
+handful of coherence conditions on `att`/`seed`. Giving each kernel its OWN bank
+externals — rather than sharing one pool — kills the cross-kernel cases: a bank
+member of `k` is attached only to `k` and seeded only with `k`. The remaining
+condition is the old `hcoh`: no down-kernel attached to two `DR`-adjacent
+externals (a region below two disjoint regions would be empty).
+
+**Budgets are free for bank externals.** They are NEW nodes, so set
+`bud w := bk k`; then `hup`/`hdn`/`hdrk`'s budget conjuncts are trivial. And
+bank-to-skeleton external pairs need no `DR` declaration at all — left `PO`,
+they carry no obligation, which is exactly what the declared frame is for.
