@@ -4981,3 +4981,31 @@ Three ways it could resolve, in the order I would try them:
 Route 1 is the cheap one to test, and it is a crisp question a probe can attack:
 *can a ∀PO-free concept force an infinite ascending chain on which some `∃PP`
 demand is never persistent?*
+
+### 45.4 The probe failed, and why that matters (2026-08-22)
+
+`wp100` was written to test route 1 (*is the case unreachable?*). **It cannot
+answer the question, and the run shows why.**
+
+Over finite set models **100% of `∃PP` demands come out "non-persistent"** — not
+because non-persistence is common, but because the guard `∀PP.(∃PP.D)` ALWAYS
+fails at a maximal element, and every finite model has one. Persistence is by
+definition a property of infinite ascending chains, so a finite-model probe
+measures nothing about it. Part D confirms it from the other side: the
+constructed persistent tower is UNSATISFIABLE over finite models — correctly,
+since it forces an infinite chain.
+
+The 100% figure is an artifact of the model class. Reading it as evidence — in
+either direction — would have been wrong.
+
+**Why record a failed probe.** Every earlier probe in this campaign
+(`wp96`–`wp99`) worked over finite set models, and that was fine because every
+earlier question was about composition, budgets or counting — all finite-model
+questions. §45 is the first question about an *infinite* structural property,
+and the standing probe technique silently does not apply. That boundary is worth
+having written down: **the probe habit has a domain, and persistence is outside
+it.**
+
+Answering §45 needs either infinite models (intervals over ℚ, or a
+finitely-presented infinite structure) or a proof. §45.3's routes 2 and 3 remain
+available and are unaffected.
