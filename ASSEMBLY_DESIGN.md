@@ -4605,3 +4605,27 @@ identified", explicitly hedged as *identified* rather than *existing*. The hedge
 earned its keep within one round. The lesson is not "hedge more" but that the
 reliable way to find these is to try to USE the result — the same rule as §43.8,
 now confirmed on a claim I had already flagged as suspect.
+
+### 44.20 The frame side is complete (2026-08-22)
+
+`extFrame` builds the extraction's ordered-disjoint frame from model data alone,
+and both it and its two read-off lemmas are **axiom-free**.
+
+| | |
+|---|---|
+| `elt := tcl step` | the extraction's OWN `PP`-demand steps, closed transitively (§44.8 — NOT all of the model's `PP`, which would break the budgets) |
+| `seed := drSeed` | the model's own `DR`, so `hseed` is DEFINITIONAL |
+| irreflexive / transitive | `tcl_ok`, from the steps being `PP`-steps |
+| `hsep` | `hsep_of_model` |
+| `extFrame_lt` | the order IS `mixLt` over the closure — `Iff.rfl`, exactly the debt lemmas' `hlt` |
+| `extFrame_disj_dr` | disjointness IS the model's `DR`, by composition down both sides (`comp(PP,DR)={DR}` then `comp(DR,PPI)={DR}`) — so `hdr`/`hdrk`/`hqdr` are premises about a REAL relation |
+
+**Remaining for `Decidable (Satisfiable C₀)` on this fragment:**
+
+1. **The extraction proper** — choose `β` (from `mixNodes`), the step relation
+   (the `∃PP`-demand steps), `κ` and the kernels (from `pp_dichotomy`'s second
+   branch via `ascend` + `recurrent_tail`), `side := dir`, `att`.
+2. **The witness lists** — `rDR`/`rPO`/`rPP`/`rPPI`, `kDIR`/`kDR`/`kPO`/`kUP`/`kDN`.
+   With `extFrame_disj_dr` these are now model facts, not frame facts.
+3. **Reindex** onto `Fin nE`/`Fin nK`, feed `encodeMT_mem_codesM` with `mixKT`,
+   then `hcompl` + `decidableSat_of_codes`.
