@@ -4490,3 +4490,42 @@ piece with real content.
    then `hcompl` + `decidableSat_of_codes`.
 
 3 is templated. 2 is construction over certified parts. 1 is the one to watch.
+
+### 44.15 Adequacy: the three ingredients are in place (2026-08-22)
+
+The `β` closure adds, for each node and each `∃PP` demand, one model witness;
+the witnesses form a CHAIN, and its length is what the fuel must cover. Adequacy
+= that chain can be kept inside `|typeEnum C₀|`. Three ingredients, all now
+certified:
+
+| | |
+|---|---|
+| `chain_long_has_dup` | a chain past `\|typeEnum C₀\|` nodes HAS a repeated type — pigeonhole via `exists_ordered_dup_map`, in ORDERED form |
+| `chain_cut` | the repeat IS droppable — a demand at `u` served by `v` is equally served by any LATER member of the same type |
+| `repeatfree_len_le` | a repeat-free chain IS short |
+
+The order in `exists_ordered_dup_map` is not cosmetic: the cut needs the survivor
+to come AFTER the node it replaces, because `serveChain_rho` only reaches upward
+(`comp(PP,PP) = {PP}` gives `u PP w` from `u PP v PP w`, not the converse).
+
+**`serveChain_rho` is the lemma that makes all this work**: every chain member is
+a proper part of the START, not merely of its predecessor. Without it the cut's
+first obligation (`I.rho u w = pp`) would not be available. It depends on
+`propext` alone.
+
+**What remains of adequacy:** the SPLICE — rebuilding the `ServeChain` across the
+dropped segment — and the well-founded descent on length that iterates it to a
+repeat-free chain. Both are list plumbing over certified parts; neither is
+written.
+
+### 44.16 State
+
+| | |
+|---|---|
+| frame, certificate, debts, composition-forcing | done |
+| the cut, `hsep`, coverage routing | done |
+| node bound `mixNodes_length_le` / `mixKT` | done |
+| adequacy — ingredients | done |
+| adequacy — splice + descent | **open** |
+| witness lists | open |
+| reindex / bounds / `hcompl` | open, templated |
