@@ -4693,3 +4693,26 @@ their kernel.
 `hqpp`/`hqppi`/`hqdr` — the last three composition-forced by §43's
 `cross_*_of_shared`), the coverage witness lists, and reindex / bounds /
 `hcompl`.
+
+### 44.23 Obligation ledger for `mtkKernelsOD_of_debts` (2026-08-22)
+
+| obligation | status | by |
+|---|---|---|
+| `hppE` | **done** | `ppStep_hppE` |
+| `hdr` | **done** | `extFrame_disj_dr` |
+| `hb` | **done** | `seedMix_hb` (+ `mixLe_inl_bud`) |
+| `hup` relation | **done** | `hup_reach` from the base fact |
+| `hdn` relation | **done** | `hdn_reach` from the base fact |
+| `hqpp` | **done** | `hq_pp_of_bases` — **not a model debt at all**, it follows from `hup`/`hdn`'s bases |
+| `hqppi` | **done** | `hq_ppi_of_bases` |
+| `hdrk`, `hqdr` | open | the `DR` bank's window (`exists_bank` + `bank_window`) |
+| `hup`/`hdn` budgets | open | the extraction's budget assignment (§43.10: bank members one below their kernel) |
+| `he_ex`, `hk_ex` | routing **done** (`odSeed_he_ex`/`odSeed_hk_ex`); witness LISTS open | `mtkNodesH_covers`, the banks, `rr_covers` |
+| `hp`, `hstep`, `hty` | open | `ascend` + `recurrent_tail`/`rr_segment_from` |
+
+The pattern that keeps recurring is worth naming: **almost every kernel
+obligation is composition-forced rather than model-supplied.** `hqpp`/`hqppi`
+are the sharpest case — they looked like two more model debts and turned out to
+be consequences of `hup` and `hdn`. What the model genuinely has to supply is
+much smaller than the interface suggests: the base attachments, the `DR` bank
+windows, and the kernels' periodicity.
