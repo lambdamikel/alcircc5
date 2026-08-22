@@ -6882,6 +6882,33 @@ theorem persistDs_split {C0 : Concept} {x : α} {D : Concept}
   by_cases hg : sat I x (Concept.all pp (Concept.ex pp D))
   · exact Or.inl (mem_persistDs.mpr ⟨cl_ex (mty_sub _ hD), hD, hg⟩)
   · exact Or.inr hg
+
+/-- **PERSISTENCE CLIMBS** (§45.5).  The guard `∀PP.(∃PP.D)` propagates upward
+    (`sat_all_pp_up`, via `comp(PP,PP) = {PP}`), and it also DELIVERS `∃PP.D` at
+    everything above its holder.  So the persistent set only GROWS along an
+    ascending chain:
+
+        `x PP y  ⟹  persistDs x ⊆ persistDs y`.
+
+    Two consequences for §45.  A demand persistent at a kernel's BASE is
+    persistent at every phase — so the `Ds` chosen at the base never degrades.
+    And contrapositively, a demand non-persistent at a phase was already
+    non-persistent at the base. -/
+theorem persistDs_up (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hr : I.rho x y = pp) :
+    ∀ D ∈ persistDs C0 I x, D ∈ persistDs C0 I y := by
+  intro D hD
+  obtain ⟨hcl, hex, hguard⟩ := mem_persistDs.mp hD
+  refine mem_persistDs.mpr ⟨hcl, ?_, sat_all_pp_up hI hx hy hr hguard⟩
+  exact mem_mty.mpr ⟨mty_sub _ hex, hguard y hy hr⟩
+
+/-- The sharpened form of §45's open case: a phase's problematic demand must be
+    one the phase ACQUIRED — present there, and non-persistent there, hence
+    (by `persistDs_up`) non-persistent at the base too. -/
+theorem persistDs_gap_is_acquired (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hr : I.rho x y = pp) {E : Concept}
+    (hnp : E ∉ persistDs C0 I y) : E ∉ persistDs C0 I x :=
+  fun hE => hnp (persistDs_up hI hx hy hr E hE)
 /-- DESCENDING multi-persistence (mirror of `persistAll`): every demand in
     `Ds` is persistent as `∃PPI.D` with a sat-based `∀PPI` guard. -/
 def persistAllI (I : Interp α) (C0 : Concept) (Ds : List Concept) (x : α) : Prop :=
@@ -24459,6 +24486,7 @@ end VerticalWitness
 #print axioms rPPI_witness
 #print axioms persistAll_persistDs
 #print axioms persistDs_split
+#print axioms persistDs_up
 #print axioms ascKernel_of_node
 #print axioms seedMix_dr
 #print axioms seedMix_bud
