@@ -11500,6 +11500,23 @@ theorem chain_long_has_dup {α : Type} (C0 : Concept) (I : Interp α)
   refine exists_ordered_dup_map _ ns ?_
   intro hnd
   exact absurd (repeatfree_len_le C0 I ns hnd) (by omega)
+
+/-- **A KERNEL FROM AN ASCENDING CHAIN** (§44.24 item 4).  Model types along the
+    chain are drawn from `typeEnum C₀`, so `segment_exists` returns a recurrent
+    segment past any bound: a base and a POSITIVE period with equal model types.
+
+    That is the certificate's `hty` and `hp`; `ascend_step` supplies `hstep`.  So
+    `pp_dichotomy`'s infinite branch really does produce a kernel, with no new
+    mathematics — the pigeonhole is the same one the fuel uses. -/
+theorem kernel_of_chain {α : Type} {I : Interp α} (C0 : Concept) (c : Nat → α)
+    (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧ mty C0 I (c i) = mty C0 I (c (i + p)) := by
+  obtain ⟨i, j, hL, hij, heq⟩ := segment_exists (typeEnum C0)
+    (fun n => mty C0 I (c n)) (fun n => mty_mem_typeEnum C0 I (c n)) L
+  refine ⟨i, j - i, hL, by omega, ?_⟩
+  have hji : i + (j - i) = j := by omega
+  rw [hji]
+  exact heq
 /-- **`K(C₀)` FOR THE MIXED FRAGMENT**, with the fuel now pinned by the
     pigeonhole rather than by a crude power of two. -/
 def mixKT (C0 : Concept) : Nat :=
@@ -24086,6 +24103,7 @@ end VerticalWitness
 #print axioms mixNodes_length_le
 #print axioms repeatfree_len_le
 #print axioms chain_long_has_dup
+#print axioms kernel_of_chain
 #print axioms mixNodes_length_le_KT
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
