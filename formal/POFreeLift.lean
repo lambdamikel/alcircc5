@@ -20249,6 +20249,90 @@ theorem ppStep_hppE {C0 : Concept} (hI : RCC5Interp I) (e f : MTKNode I C0)
   refine ⟨tcl_sub_pp hI (fun n : MTKNode I C0 => n.x) (fun n => n.hx) ppStep
     (fun a b hs => ppStep_rho a b hs) e f h, ?_, ?_⟩ <;>
     rw [tcl_ppStep_bud e f h] <;> omega
+
+/-! #### The order must carry `∃PPI` steps too (§44.25 item 3)
+
+`rPP`'s first disjunct is immediate: the `∃PP` witness IS an `elt`-successor by
+one `ppStep`.  `rPPI`'s is not — its witness is a proper PART of the demanding
+node, so it is an `elt`-PREDECESSOR, and no `∃PP` demand need point at it.
+
+So the step relation is `stepAll e f := ppStep e f ∨ ppiStep f e`: a `∃PPI`
+demand contributes its step in the OTHER direction.  Both still point up the
+model's `PP`, so every fact `tcl` needs survives, and the budget is still
+constant. -/
+
+/-- A `∃PPI` demand's witness, at the SAME budget — same argument as
+    `ppWitness`. -/
+noncomputable def ppiWitness (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) : MTKNode I C0 :=
+  ⟨Classical.choose (mtk_ex hF), n.k, (Classical.choose_spec (mtk_ex hF)).1⟩
+
+theorem ppiWitness_rho (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
+    I.rho n.x (ppiWitness n hF).x = ppi :=
+  (Classical.choose_spec (mtk_ex hF)).2.1
+
+theorem ppiWitness_bud (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
+    (ppiWitness n hF).k = n.k := rfl
+
+theorem ppiWitness_arg (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
+    c ∈ mtk C0 I (ppiWitness n hF).x (ppiWitness n hF).k :=
+  mem_mtk.mpr ⟨(mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).1,
+    Nat.le_trans (mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).2
+      (Nat.sub_le _ _)⟩
+
+/-- The `∃PPI` step, oriented as the demand states it. -/
+def ppiStep (e f : MTKNode I C0) : Prop :=
+  ∃ (c : Concept) (hF : Concept.ex ppi c ∈ mtk C0 I e.x e.k), ppiWitness e hF = f
+
+/-- **THE EXTRACTION'S STEP RELATION.**  Both vertical demand kinds, each
+    oriented up the model's `PP`. -/
+def stepAll (e f : MTKNode I C0) : Prop := ppStep e f ∨ ppiStep f e
+
+theorem stepAll_rho (hI : RCC5Interp I) (e f : MTKNode I C0) (h : stepAll e f) :
+    I.rho e.x f.x = pp := by
+  rcases h with h | h
+  · exact ppStep_rho e f h
+  · obtain ⟨_, hF, hw⟩ := h
+    have hr : I.rho f.x e.x = ppi := by rw [← hw]; exact ppiWitness_rho f hF
+    rw [hI.conv_ f.x e.x f.hx e.hx, hr]
+    rfl
+
+theorem stepAll_bud (e f : MTKNode I C0) (h : stepAll e f) : f.k = e.k := by
+  rcases h with h | h
+  · exact ppStep_bud e f h
+  · obtain ⟨_, hF, hw⟩ := h
+    rw [← hw]; exact (ppiWitness_bud f hF).symm
+
+theorem tcl_stepAll_bud (e f : MTKNode I C0) (h : tcl stepAll e f) : f.k = e.k := by
+  induction h with
+  | base hs => exact stepAll_bud _ _ hs
+  | tail _ hs ih => rw [stepAll_bud _ _ hs]; exact ih
+
+/-- **`hppE` for the full step relation.** -/
+theorem stepAll_hppE (hI : RCC5Interp I) (e f : MTKNode I C0)
+    (h : tcl stepAll e f) :
+    I.rho e.x f.x = pp ∧ e.k ≤ f.k + 1 ∧ f.k ≤ e.k + 1 := by
+  refine ⟨tcl_sub_pp hI (fun n : MTKNode I C0 => n.x) (fun n => n.hx) stepAll
+    (fun a b hs => stepAll_rho hI a b hs) e f h, ?_, ?_⟩ <;>
+    rw [tcl_stepAll_bud e f h] <;> omega
+
+/-- **`rPP`'s witness** — one `ppStep`, hence an `elt`-successor. -/
+theorem rPP_witness (e : MTKNode I C0) {D : Concept}
+    (hF : Concept.ex pp D ∈ mtk C0 I e.x e.k) :
+    tcl stepAll e (ppWitness e hF) ∧
+      D ∈ mtk C0 I (ppWitness e hF).x (ppWitness e hF).k :=
+  ⟨tcl.base (Or.inl ⟨D, hF, rfl⟩), ppWitness_arg e hF⟩
+
+/-- **`rPPI`'s witness** — one `ppiStep`, hence an `elt`-PREDECESSOR, which is
+    the orientation that branch asks for. -/
+theorem rPPI_witness (e : MTKNode I C0) {D : Concept}
+    (hF : Concept.ex ppi D ∈ mtk C0 I e.x e.k) :
+    tcl stepAll (ppiWitness e hF) e ∧
+      D ∈ mtk C0 I (ppiWitness e hF).x (ppiWitness e hF).k :=
+  ⟨tcl.base (Or.inr ⟨D, hF, rfl⟩), ppiWitness_arg e hF⟩
 end ODExtraction
 
 
@@ -24224,6 +24308,9 @@ end VerticalWitness
 #print axioms extFrame_disj_dr
 #print axioms tcl_ppStep_bud
 #print axioms ppStep_hppE
+#print axioms stepAll_hppE
+#print axioms rPP_witness
+#print axioms rPPI_witness
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
