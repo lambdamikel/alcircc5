@@ -20398,6 +20398,64 @@ theorem extFrame_disj_dr {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
 
 end HsepFromModel
 
+section ExtSeed
+
+/-! #### The extraction's seed (§44.21)
+
+External block: `DR`-adjacency of coverage nodes — `sAdjK`, which the campaign
+already had and which IS the symmetrized `DR`-demand step, complete with
+`sAdjK_symm`, `sAdjK_rho_dr`, `sAdjK_bud` and `sAdjK_irr`.
+
+Kernel block: a declared kernel-external disjointness, supplied by
+`exists_bank`'s `DR` branch.
+
+NO kernel-kernel seed: cross-kernel `DR` arises only by `djDown` inheritance,
+which `odSeed` produces for free (§43.11), and declaring it directly would be
+the `hrectQ` staircase all over again. -/
+
+variable {α : Type} {I : Interp α} {C0 : Concept} {κ : Type}
+
+/-- The extraction's seed. -/
+def seedMix (kdr : κ → MTKNode I C0 → Prop) :
+    MTKNode I C0 ⊕ κ → MTKNode I C0 ⊕ κ → Prop
+  | .inl e, .inl f => sAdjK e f
+  | .inr k, .inl f => kdr k f
+  | .inl f, .inr k => kdr k f
+  | .inr _, .inr _ => False
+
+theorem seedMix_sym (kdr : κ → MTKNode I C0 → Prop) :
+    ∀ x y, seedMix kdr x y → seedMix kdr y x := by
+  rintro (e | k) (f | k') h
+  · exact (sAdjK_symm e f).mp h
+  · exact h
+  · exact h
+  · exact h.elim
+
+/-- **`hseed`, DISCHARGED.**  Both blocks are real model `DR`: the external one
+    by `sAdjK_rho_dr`, the kernel one by the bank, and the flipped orientation
+    by `conv dr = dr`. -/
+theorem seedMix_dr (hI : RCC5Interp I) (kdr : κ → MTKNode I C0 → Prop)
+    (ck : κ → Nat → α) (ik : κ → Nat) (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hkdr : ∀ k f, kdr k f → I.rho (ck k (ik k)) f.x = dr) :
+    ∀ x y, seedMix kdr x y →
+      I.rho (nodeOf (fun n : MTKNode I C0 => n.x) ck ik x)
+        (nodeOf (fun n : MTKNode I C0 => n.x) ck ik y) = dr := by
+  rintro (e | k) (f | k') h
+  · exact sAdjK_rho_dr hI h
+  · show I.rho e.x (ck k' (ik k')) = dr
+    rw [hI.conv_ (ck k' (ik k')) e.x (hkdom k') e.hx, hkdr k' e h]
+    rfl
+  · exact hkdr k f h
+  · exact h.elim
+
+/-- The external block's budgets are within one — `sAdjK_bud`, i.e. the
+    `DR`-demand step drops the budget by exactly one. -/
+theorem seedMix_bud (kdr : κ → MTKNode I C0 → Prop) (e f : MTKNode I C0)
+    (h : seedMix kdr (Sum.inl e) (Sum.inl f)) : e.k ≤ f.k + 1 :=
+  sAdjK_bud h
+
+end ExtSeed
+
 section ODDebt
 
 variable {β κ : Type}
@@ -23831,6 +23889,8 @@ end VerticalWitness
 #print axioms extFrame_disj_dr
 #print axioms tcl_ppStep_bud
 #print axioms ppStep_hppE
+#print axioms seedMix_dr
+#print axioms seedMix_bud
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
