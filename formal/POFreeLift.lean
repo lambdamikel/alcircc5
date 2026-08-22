@@ -6902,6 +6902,30 @@ theorem persistDs_up (hI : RCC5Interp I) {C0 : Concept} {x y : α}
   refine mem_persistDs.mpr ⟨hcl, ?_, sat_all_pp_up hI hx hy hr hguard⟩
   exact mem_mty.mpr ⟨mty_sub _ hex, hguard y hy hr⟩
 
+
+/-- **AN INHERITED DEMAND IS PERSISTENT** (§45.7).  If the guard
+    `∀PP.(∃PP.D)` holds anywhere BELOW `y`, then at `y` both the demand and its
+    own guard hold (`sat_all_pp_up`), so `D` is persistent at `y`.
+
+    Consequence, and it is the lead for §45: a demand that a chain node inherits
+    by `∀PP`-propagation from below is AUTOMATICALLY persistent.  The only
+    demands that can be one-shot at a chain node are those the model satisfies
+    ACCIDENTALLY — not forced by any guard beneath them. -/
+theorem persistDs_of_guard_below (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hr : I.rho x y = pp) {D : Concept}
+    (hcl : Concept.ex pp D ∈ cl C0)
+    (hguard : sat I x (Concept.all pp (Concept.ex pp D))) :
+    D ∈ persistDs C0 I y := by
+  refine mem_persistDs.mpr ⟨cl_ex hcl, ?_, sat_all_pp_up hI hx hy hr hguard⟩
+  exact mem_mty.mpr ⟨hcl, hguard y hy hr⟩
+
+/-- The contrapositive, in the form §45 needs: a ONE-SHOT demand at `y` has no
+    guard anywhere strictly below it. -/
+theorem oneshot_no_guard_below (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hr : I.rho x y = pp) {D : Concept}
+    (hcl : Concept.ex pp D ∈ cl C0) (hns : D ∉ persistDs C0 I y) :
+    ¬ sat I x (Concept.all pp (Concept.ex pp D)) :=
+  fun hg => hns (persistDs_of_guard_below hI hx hy hr hcl hg)
 /-- The sharpened form of §45's open case: a phase's problematic demand must be
     one the phase ACQUIRED — present there, and non-persistent there, hence
     (by `persistDs_up`) non-persistent at the base too. -/
@@ -24487,6 +24511,7 @@ end VerticalWitness
 #print axioms persistAll_persistDs
 #print axioms persistDs_split
 #print axioms persistDs_up
+#print axioms persistDs_of_guard_below
 #print axioms ascKernel_of_node
 #print axioms seedMix_dr
 #print axioms seedMix_bud
