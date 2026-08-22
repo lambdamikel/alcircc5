@@ -20454,6 +20454,56 @@ theorem seedMix_bud (kdr : κ → MTKNode I C0 → Prop) (e f : MTKNode I C0)
     (h : seedMix kdr (Sum.inl e) (Sum.inl f)) : e.k ≤ f.k + 1 :=
   sAdjK_bud h
 
+
+/-! #### `hb`, the last external obligation
+
+`O.disj (inl e) (inl f)` unfolds to a seed pair with `e` and `f` below its two
+ends.  Along the order the budget is CONSTANT (`tcl_ppStep_bud`), and going
+below a kernel lands on one of its attached externals — again at a constant
+budget.  So the whole obligation reduces to the budgets of the SEED blocks:
+`sAdjK_bud` for the external one, and a hypothesis for the kernel one, which is
+a condition on how the extraction budgets its bank members. -/
+
+/-- Descending from an external lands either on an external of the SAME budget,
+    or on a kernel whose attached external has the same budget. -/
+theorem mixLe_inl_bud {κ : Type} (side : κ → Bool)
+    (att : κ → MTKNode I C0 → Bool) (e : MTKNode I C0) :
+    ∀ x₀, mixLe (tcl ppStep) side att (Sum.inl e) x₀ →
+      (∃ e₀, x₀ = Sum.inl e₀ ∧ e₀.k = e.k) ∨
+      (∃ k e', x₀ = Sum.inr k ∧ att k e' = true ∧ e'.k = e.k) := by
+  rintro (e₀ | k) h
+  · rcases h with h | h
+    · exact Or.inl ⟨e₀, rfl, by rw [Sum.inl.inj h]⟩
+    · exact Or.inl ⟨e₀, rfl, tcl_ppStep_bud e e₀ h⟩
+  · rcases h with h | h
+    · exact absurd h (Ne.symm (inr_ne_inl k e))
+    · obtain ⟨_, e', hae, hle⟩ := h
+      refine Or.inr ⟨k, e', rfl, hae, ?_⟩
+      rcases hle with rfl | hlt
+      · rfl
+      · exact tcl_ppStep_bud e e' hlt
+
+/-- **`hb`, DISCHARGED.**  The only genuinely new input is `hkb`: the budget of
+    a kernel's attached external against the budget of its `DR`-bank member. -/
+theorem seedMix_hb {κ : Type} (kdr : κ → MTKNode I C0 → Prop)
+    (side : κ → Bool) (att : κ → MTKNode I C0 → Bool)
+    (hkb : ∀ k e' f₀, att k e' = true → kdr k f₀ → e'.k ≤ f₀.k + 1)
+    (hkb2 : ∀ k f' e₀, att k f' = true → kdr k e₀ → e₀.k ≤ f'.k + 1)
+    (e f : MTKNode I C0)
+    (h : ∃ x₀ y₀, mixLe (tcl ppStep) side att (Sum.inl e) x₀ ∧
+      mixLe (tcl ppStep) side att (Sum.inl f) y₀ ∧ seedMix kdr x₀ y₀) :
+    e.k ≤ f.k + 1 := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  rcases mixLe_inl_bud side att e x₀ hx with ⟨e₀, rfl, hek⟩ | ⟨k, e', rfl, hae, hek⟩
+  · rcases mixLe_inl_bud side att f y₀ hy with ⟨f₀, rfl, hfk⟩ | ⟨k', f', rfl, haf, hfk⟩
+    · have := sAdjK_bud (show sAdjK e₀ f₀ from hs)
+      omega
+    · have := hkb2 k' f' e₀ haf (show kdr k' e₀ from hs)
+      omega
+  · rcases mixLe_inl_bud side att f y₀ hy with ⟨f₀, rfl, hfk⟩ | ⟨k', f', rfl, haf, hfk⟩
+    · have := hkb k e' f₀ hae (show kdr k f₀ from hs)
+      omega
+    · exact absurd hs (fun hh => hh.elim)
 end ExtSeed
 
 section ODDebt
@@ -23891,6 +23941,7 @@ end VerticalWitness
 #print axioms ppStep_hppE
 #print axioms seedMix_dr
 #print axioms seedMix_bud
+#print axioms seedMix_hb
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
