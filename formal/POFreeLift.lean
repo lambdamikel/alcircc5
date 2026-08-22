@@ -20506,6 +20506,64 @@ theorem seedMix_hb {κ : Type} (kdr : κ → MTKNode I C0 → Prop)
     · exact absurd hs (fun hh => hh.elim)
 end ExtSeed
 
+section KernelReach
+
+/-! #### The kernel obligations, and the order's extra reach (§44.22)
+
+`odLt_hKreal` states `hup`/`hdn` with `leE`, because the attachment reaches
+further once `elt` is non-empty: a kernel is above/below not only its attached
+externals but everything `elt`-comparable to them.
+
+That extra reach costs nothing — it is composition through the attached
+external, `comp(PP,PP) = {PP}` yet again.  So the extraction only ever has to
+supply the BASE facts (`att k e'` itself), and these two lemmas carry them
+along the order. -/
+
+variable {α β : Type} {I : Interp α} {κ : Type}
+
+/-- **`hup`'s relation half, from the base fact.**  If the kernel is above its
+    attached external `e'`, it is above everything below `e'`. -/
+theorem hup_reach (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α)
+    (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (elt : β → β → Prop) (helt : ∀ a b, elt a b → I.rho (g a) (g b) = pp)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
+    (hbase : ∀ k e a, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp)
+    (k : κ) (e : β) (a : Nat) (hs : side k = true)
+    (hex : ∃ e', att k e' = true ∧ leE elt e e') :
+    I.rho (g e) (ck k (ik k + a)) = pp := by
+  obtain ⟨e', hae, hle⟩ := hex
+  rcases hle with rfl | hlt
+  · exact hbase k e a hs hae
+  · exact rho_forced hI (hgdom e) (hckdom k _) (hgdom e') (helt _ _ hlt)
+      (hbase k e' a hs hae) (by decide)
+
+/-- **`hdn`'s relation half, from the base fact.**  If the kernel is below its
+    attached external `e'`, it is below everything above `e'`. -/
+theorem hdn_reach (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α)
+    (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (elt : β → β → Prop) (helt : ∀ a b, elt a b → I.rho (g a) (g b) = pp)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
+    (hbase : ∀ k e a, side k = false → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = ppi)
+    (k : κ) (e : β) (a : Nat) (hs : side k = false)
+    (hex : ∃ e', att k e' = true ∧ leE elt e' e) :
+    I.rho (g e) (ck k (ik k + a)) = ppi := by
+  obtain ⟨e', hae, hle⟩ := hex
+  rcases hle with rfl | hlt
+  · exact hbase k _ a hs hae
+  · -- phase PP e' PP e, so phase PP e, and the converse is what is asked
+    have h1 : I.rho (ck k (ik k + a)) (g e') = pp := by
+      rw [hI.conv_ (g e') (ck k (ik k + a)) (hgdom e') (hckdom k _),
+        hbase k e' a hs hae]
+      rfl
+    have h2 : I.rho (ck k (ik k + a)) (g e) = pp :=
+      rho_forced hI (hckdom k _) (hgdom e) (hgdom e') h1 (helt _ _ hlt) (by decide)
+    rw [hI.conv_ (ck k (ik k + a)) (g e) (hckdom k _) (hgdom e), h2]
+    rfl
+
+end KernelReach
+
 section ODDebt
 
 variable {β κ : Type}
@@ -23942,6 +24000,8 @@ end VerticalWitness
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
+#print axioms hup_reach
+#print axioms hdn_reach
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
