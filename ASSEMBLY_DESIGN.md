@@ -5169,3 +5169,37 @@ is stated against.
 
 **This is a decision point, not a step**, and it should be taken deliberately
 rather than drifted into.
+
+### 45.9 Route 1a: the mechanism, identified and certified (2026-08-22)
+
+A guard `∀r.X` held at `z` reaches a node `w` only if `z` is `r`-related to `w`.
+Going UP from `y` to a superpart `w`, the relation `z`-to-`w` lies in
+`comp (z-to-y) PP`. The table decides which guards are unavoidable:
+
+| cell | value | consequence |
+|---|---|---|
+| `comp PP PP` | `{PP}` — **forced** | a `∀PP` guard reaches every superpart of every node it reaches (`sat_all_pp_up`), so `∀PP`-inherited demands are **persistent** |
+| `comp DR PP` | contains `PO` | a `∀DR` guard need NOT reach upward — the model may place `z PO w` |
+| `comp PPI PP` | contains `PO` | same |
+| `comp PO PP` | contains `PO` | same |
+
+Certified as `dodge_cells`; `forced_cells` records the dual (`PP` forced upward,
+`DR` forced downward via `comp DR PPI = {DR}`, nothing else forced either way).
+
+**So route 1a's mechanism is identified.** The `∃PP` demands a chain node cannot
+avoid are exactly the `∀PP`-inherited ones — and those are persistent
+(`persistDs_of_guard_below`). Any `∃PP` demand delivered by a NON-`PP` guard can
+be dodged: a model is free to choose `PO` above the chain where the table
+permits.
+
+**What 1a still needs.** The dodge is available cell-by-cell; making it a MODEL
+CONSTRUCTION requires choosing `PO` consistently for all such pairs at once and
+checking the result is still composition-closed and still a model of `C₀`. That
+is a patchwork/amalgamation argument — the project's oldest tool (`wp6`,
+`wp14`), and exactly the kind of thing the RCC5 patchwork property is for.
+
+**Assessment.** This is a genuinely better position than §45.8: the target moved
+from "unknown model-theoretic argument" to "a specific, local, composition-legal
+edge choice, made globally consistent by patchwork". It is not finished, and I
+am not claiming it will close — but it is now a concrete construction with a
+named tool, rather than a hope.
