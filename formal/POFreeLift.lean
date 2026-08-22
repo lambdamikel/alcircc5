@@ -19969,6 +19969,85 @@ theorem short_chain (hI : RCC5Interp I) {C0 : Concept} :
       obtain ⟨ms, hms, hlt, hht⟩ := serveChain_cut hI pre u v w t hu hch hw hty
       obtain ⟨ms', hms', hshort', hht'⟩ := ih u ms (by omega) hu hms
       exact ⟨ms', hms', hshort', hht'.trans hht⟩
+
+/-! #### The dichotomy: a short chain, or a kernel (§44.18)
+
+`short_chain` gives EXISTENCE of a bounded chain; `mixNodes` is a CONSTRUCTION
+using arbitrary (`Classical.choose`) witnesses.  Those are not the same thing,
+and the seam between them is where the fuel can run out.
+
+The seam is closed by a dichotomy, not by making the construction clever:
+
+* if some node reachable by `∃PP` steps has NO `∃PP` demand, the chain
+  TERMINATES, and `short_chain` bounds it;
+* otherwise every reachable node has one, and iterating produces an INFINITE
+  ascending chain — which is a KERNEL, and the campaign already handles those
+  (`recurrent_tail`, `rr_segment_from`, `rr_covers`).
+
+`ascend` is the second branch's generator. -/
+
+/-- Iterating a step that stays inside a class: the generator for the kernel
+    branch. -/
+noncomputable def ascend (P : α → Prop)
+    (hstep : ∀ x, P x → ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp)
+    (u : α) (hu : P u) : Nat → {x : α // P x}
+  | 0 => ⟨u, hu⟩
+  | n + 1 =>
+      let p := ascend P hstep u hu n
+      ⟨Classical.choose (hstep p.val p.property),
+        (Classical.choose_spec (hstep p.val p.property)).1⟩
+
+theorem ascend_zero (P : α → Prop)
+    (hstep : ∀ x, P x → ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp)
+    (u : α) (hu : P u) : (ascend P hstep u hu 0).val = u := rfl
+
+theorem ascend_dom (P : α → Prop)
+    (hstep : ∀ x, P x → ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp)
+    (u : α) (hu : I.dom u) (hPu : P u) (n : Nat) :
+    I.dom (ascend P hstep u hPu n).val := by
+  cases n with
+  | zero => exact hu
+  | succ m =>
+    exact (Classical.choose_spec
+      (hstep (ascend P hstep u hPu m).val (ascend P hstep u hPu m).property)).2.1
+
+/-- **THE KERNEL BRANCH.**  The iterate really is an ascending chain: every step
+    is a proper-part step, which is exactly `hstep` of the certificate's kernel
+    (`cdir true = pp`). -/
+theorem ascend_step (P : α → Prop)
+    (hstep : ∀ x, P x → ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp)
+    (u : α) (hPu : P u) (n : Nat) :
+    I.rho (ascend P hstep u hPu n).val (ascend P hstep u hPu (n + 1)).val = pp :=
+  (Classical.choose_spec
+    (hstep (ascend P hstep u hPu n).val (ascend P hstep u hPu n).property)).2.2
+
+/-- **THE DICHOTOMY.**  For any class `P` closed under the `∃PP`-witness step,
+    either some member has no `∃PP` demand at all, or `P` carries an infinite
+    ascending chain from every member. -/
+theorem pp_dichotomy (C0 : Concept) (P : α → Prop)
+    (hcl : ∀ x, P x → ∀ D, Concept.ex pp D ∈ mty C0 I x →
+      ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp ∧ D ∈ mty C0 I y)
+    (u : α) (hu : I.dom u) (hPu : P u) :
+    (∃ x, P x ∧ ∀ D, Concept.ex pp D ∉ mty C0 I x) ∨
+    (∃ c : Nat → α, c 0 = u ∧ (∀ n, I.dom (c n)) ∧
+      ∀ n, I.rho (c n) (c (n + 1)) = pp) := by
+  by_cases hall : ∀ x, P x → ∃ D, Concept.ex pp D ∈ mty C0 I x
+  · refine Or.inr ?_
+    have hstep : ∀ x, P x → ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp := by
+      intro x hx
+      obtain ⟨D, hD⟩ := hall x hx
+      obtain ⟨y, hy, hyd, hr, _⟩ := hcl x hx D hD
+      exact ⟨y, hy, hyd, hr⟩
+    exact ⟨fun n => (ascend P hstep u hPu n).val, rfl,
+      fun n => ascend_dom P hstep u hu hPu n, fun n => ascend_step P hstep u hPu n⟩
+  · refine Or.inl ?_
+    rcases Classical.em (∃ x, P x ∧ ∀ D, Concept.ex pp D ∉ mty C0 I x) with h | h
+    · exact h
+    · exfalso
+      refine hall (fun x hx => ?_)
+      rcases Classical.em (∃ D, Concept.ex pp D ∈ mty C0 I x) with h2 | h2
+      · exact h2
+      · exact absurd ⟨x, hx, fun D hD => h2 ⟨D, hD⟩⟩ h
 end ODExtraction
 
 
@@ -23538,6 +23617,8 @@ end VerticalWitness
 #print axioms serveChain_cut_head
 #print axioms serveChain_cut
 #print axioms short_chain
+#print axioms ascend_step
+#print axioms pp_dichotomy
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
