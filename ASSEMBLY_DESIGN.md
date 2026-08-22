@@ -4756,3 +4756,35 @@ and the kernel–kernel case is exactly `hq_pp_of_bases`. Both **axiom-free**.
 
 Every item is now "produce a model fact from machinery that exists", with no
 composition reasoning left in any of them.
+
+### 44.25 Items 1 and 4 done (2026-08-22)
+
+**Item 1 — the base attachment facts.** The bank output already IS the
+attachment fact, in the orientation the obligations want; `conv ppi = pp` and
+`conv pp = ppi` do the rest.
+
+| | from | reading |
+|---|---|---|
+| `hupP_of_bank` | `exists_bank_ppi` (EARLY picking, uniform anchor) | an UP-kernel's external is inside every phase from the anchor on |
+| `hdnP_of_bank` | `exists_bank`, `PP` branch (LATE picking, backward forcing) | a DOWN-kernel's external contains every phase in the window |
+| `hdrP_of_bank` | `exists_bank`, `DR` branch | `conv dr = dr`, orientation free |
+
+All three `Classical.choice`-free.
+
+**Item 4 — the kernels.** `kernel_of_chain`: model types along an ascending
+chain are drawn from `typeEnum C₀`, so `segment_exists` (already in the file)
+returns a recurrent segment past any bound — a base and a POSITIVE period with
+equal model types. That is `hty` and `hp`; `ascend_step` is `hstep`. So
+`pp_dichotomy`'s infinite branch produces a kernel with **no new mathematics**:
+the pigeonhole is the same one the fuel uses.
+
+**Remaining: items 2 and 3.**
+
+2. **The budget assignment.** Set `bk k := bud e` for the external whose `∃PP`
+   the kernel serves, and bank members at `bk k - 1`. Then for any attached `e''`
+   (budget constant along `elt`) `bud e'' = bk k`, and for a bank member `w`,
+   `bud w = bk k - 1` — both satisfy `bud ≤ bk + 1 ∧ bk ≤ bud + 1`. This is a
+   choice to make inside the extraction, not a fact to discover.
+3. **The coverage witness lists.** Routing done (`odSeed_he_ex`/`odSeed_hk_ex`);
+   what remains is producing the witnesses from `mtkNodesH_covers`, the banks and
+   `rr_covers`.
