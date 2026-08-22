@@ -11469,6 +11469,37 @@ theorem repeatfree_len_le {α : Type} (C0 : Concept) (I : Interp α) (ns : List 
   rw [List.length_map] at h1
   exact h1
 
+
+/-- **THE ORDERED DUPLICATE.**  A list whose images under `f` are not pairwise
+    distinct splits as `pre ++ v :: t` with some LATER `w ∈ t` sharing `v`'s
+    image.  The order matters: the cut needs the survivor to come AFTER the
+    node it replaces, since `serveChain_rho` only reaches upward. -/
+theorem exists_ordered_dup_map {A B : Type} [DecidableEq B] (f : A → B) :
+    ∀ l : List A, ¬ (l.map f).Nodup →
+      ∃ pre v t, l = pre ++ v :: t ∧ ∃ w ∈ t, f v = f w := by
+  intro l
+  induction l with
+  | nil => intro h; exact absurd List.nodup_nil h
+  | cons v t ih =>
+    intro h
+    by_cases hv : f v ∈ t.map f
+    · obtain ⟨w, hw, hfw⟩ := List.mem_map.mp hv
+      exact ⟨[], v, t, rfl, w, hw, hfw.symm⟩
+    · have hnd : ¬ (t.map f).Nodup := by
+        intro hgood
+        exact h (by rw [List.map_cons]; exact List.nodup_cons.mpr ⟨hv, hgood⟩)
+      obtain ⟨pre, v', t', heq, w, hw, hfw⟩ := ih hnd
+      exact ⟨v :: pre, v', t', by rw [heq]; rfl, w, hw, hfw⟩
+
+/-- **A LONG CHAIN HAS A DROPPABLE SEGMENT.**  Contrapositive of the pigeonhole:
+    past `|typeEnum C₀|` nodes some type recurs, and by `chain_cut` the segment
+    between the two occurrences can be dropped. -/
+theorem chain_long_has_dup {α : Type} (C0 : Concept) (I : Interp α)
+    (ns : List α) (hlong : (typeEnum C0).length < ns.length) :
+    ∃ pre v t, ns = pre ++ v :: t ∧ ∃ w ∈ t, mty C0 I v = mty C0 I w := by
+  refine exists_ordered_dup_map _ ns ?_
+  intro hnd
+  exact absurd (repeatfree_len_le C0 I ns hnd) (by omega)
 /-- **`K(C₀)` FOR THE MIXED FRAGMENT**, with the fuel now pinned by the
     pigeonhole rather than by a crude power of two. -/
 def mixKT (C0 : Concept) : Nat :=
@@ -23345,6 +23376,7 @@ end VerticalWitness
 #print axioms ppNodes_bud
 #print axioms mixNodes_length_le
 #print axioms repeatfree_len_le
+#print axioms chain_long_has_dup
 #print axioms mixNodes_length_le_KT
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
