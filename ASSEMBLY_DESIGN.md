@@ -4820,3 +4820,43 @@ time a parameter had to be kept abstract rather than pinned to the first
 plausible instance (`elt` §44.8, `seed` §44.21, `step` here). The pattern is the
 same each time: **pin a parameter and the obligations written against it stop
 being provable; keep it abstract and carry only the property actually used.**
+
+### 44.27 The persistent / one-shot split — where the two halves meet (2026-08-22)
+
+`rr_covers`, the certified round-robin coverage that discharges `kDIR`, consumes
+`persistAll I C0 Ds x`: every demand in `Ds` carries BOTH `∃PP.D` and its guard
+`∀PP.(∃PP.D)`. The bridge that was missing is simply *which* demands those are.
+
+`persistDs C0 I x` is the answer, and `persistAll_persistDs` says multi-persistence
+holds for it **by construction**. So at any node the `∃PP` demands split cleanly
+and decidably (`persistDs_split`):
+
+| demand | served by | machinery |
+|---|---|---|
+| **persistent** (guard holds) | a round-robin KERNEL | `rrPt` + `rr_segment_from` + `rr_covers` — all already certified |
+| **one-shot** (guard fails) | an `elt` edge to an EXTERNAL | §44's whole point; terminates by `short_chain` |
+
+**This is where the two halves of the campaign meet.** §33 found one-shot `∃PP`
+unhandled; §44 built the external order to handle it; the vertical quadrant was
+certified years-of-rounds ago for persistent demands. `persistDs` is the line
+between them, and it is a filter of `cl C₀` — decidable, and computable from the
+node's type.
+
+The split also explains why the campaign kept finding one-shot `∃PP` awkward:
+the certified vertical machinery is *correct* and *complete for its half*; the
+missing half was never a defect in it, only in the assumption that it covered
+everything.
+
+### 44.28 State
+
+| | |
+|---|---|
+| frame (`extFrame`), certificate, all relation halves | done |
+| the cut, adequacy (`short_chain`), the dichotomy | done |
+| node bound (`mixNodes_length_le`, `mixKT`) | done |
+| bank → attachment (`h*P_of_bank`), kernels (`kernel_of_chain`) | done |
+| horizontal witnesses (`rDR`/`rPO`/`rPP`/`rPPI`) | done |
+| persistent/one-shot split (`persistDs`) | done |
+| kernel witnesses `kDR`/`kPO`/`kUP`/`kDN` | open |
+| the budget assignment | open — a choice, not a discovery |
+| reindex / bounds / `hcompl` | open, templated |
