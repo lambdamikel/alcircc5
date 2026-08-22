@@ -20324,32 +20324,40 @@ theorem drSeed_sym {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
 noncomputable def extFrame {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
     (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
     (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
     (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
     (hup0 : ∀ k e, side k = true → att k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
     (hdn0 : ∀ k e, side k = false → att k e = true →
       I.rho (ck k (ik k)) (g e) = pp) : ODStruct (β ⊕ κ) :=
-  odSeed (tcl step) side att (drSeed I (nodeOf g ck ik))
+  odSeed (tcl step) side att seed
     (tcl_irrefl hI g hgdom step hstep)
     (fun _ _ _ => tcl_trans step)
-    (drSeed_sym hI _ (nodeOf_dom g ck ik hgdom hkdom))
+    hsym
     (hsep_of_model hI g ck ik side att hgdom hkdom hup0 hdn0
-      (tcl step) (tcl_sub_pp hI g hgdom step hstep)
-      (drSeed I (nodeOf g ck ik)) (fun _ _ h => h))
+      (tcl step) (tcl_sub_pp hI g hgdom step hstep) seed hseed)
 
 /-- Its order is `mixLt` over the demand-step closure — the shape the debt
     lemmas consume (`hlt`). -/
 theorem extFrame_lt {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
     (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
     (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
     (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
     (hup0 : ∀ k e, side k = true → att k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
     (hdn0 : ∀ k e, side k = false → att k e = true →
       I.rho (ck k (ik k)) (g e) = pp) (x y : β ⊕ κ) :
-    (extFrame hI g ck ik side att step hgdom hkdom hstep hup0 hdn0).lt x y
+    (extFrame hI g ck ik side att step seed hgdom hkdom hstep hsym hseed hup0
+        hdn0).lt x y
       ↔ mixLt (tcl step) side att x y := Iff.rfl
 
 /-- Its disjointness is the model's `DR` — so `odLt_hEreal`'s `hdr` and
@@ -20358,13 +20366,18 @@ theorem extFrame_lt {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
 theorem extFrame_disj_dr {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
     (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
     (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
     (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
     (hup0 : ∀ k e, side k = true → att k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
     (hdn0 : ∀ k e, side k = false → att k e = true →
       I.rho (ck k (ik k)) (g e) = pp) {x y : β ⊕ κ}
-    (h : (extFrame hI g ck ik side att step hgdom hkdom hstep hup0 hdn0).disj x y) :
+    (h : (extFrame hI g ck ik side att step seed hgdom hkdom hstep hsym hseed
+        hup0 hdn0).disj x y) :
     I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr := by
   obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
   have hlt := mixLt_rho hI g ck ik side att hgdom hkdom hup0 hdn0
@@ -20372,9 +20385,9 @@ theorem extFrame_disj_dr {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
   have hdomN := nodeOf_dom g ck ik hgdom hkdom
   have h1 : I.rho (nodeOf g ck ik x) (nodeOf g ck ik y₀) = dr := by
     rcases hx with rfl | hx'
-    · exact hs
-    · exact rho_forced hI (hdomN x) (hdomN y₀) (hdomN x₀) (hlt x x₀ hx') hs
-        (by decide)
+    · exact hseed _ _ hs
+    · exact rho_forced hI (hdomN x) (hdomN y₀) (hdomN x₀) (hlt x x₀ hx')
+        (hseed _ _ hs) (by decide)
   rcases hy with rfl | hy'
   · exact h1
   · have hyy : I.rho (nodeOf g ck ik y₀) (nodeOf g ck ik y) = ppi := by
