@@ -5093,3 +5093,42 @@ one-shot finding, one level up. The honest options are now:
    therefore a substantial redesign.
 
 Option 1 is the one to attempt; option 2 is the honest fallback.
+
+### 45.7 The lead for route 1: only ACCIDENTAL demands can be one-shot (2026-08-22)
+
+Certified this round (`persistDs_of_guard_below`, `oneshot_no_guard_below`):
+
+> If the guard `∀PP.(∃PP.D)` holds ANYWHERE BELOW `y`, then at `y` both the
+> demand and its own guard hold — so `D` is persistent at `y`.
+
+Contrapositive: **a one-shot demand at a chain node has no guard anywhere
+strictly below it.**
+
+So a chain node's `∃PP` demands come in exactly two kinds:
+
+| origin | persistence |
+|---|---|
+| INHERITED — some node below carries `∀PP.(∃PP.D)` | **automatically persistent** |
+| ACCIDENTAL — the model satisfies `∃PP.D` there with no guard beneath | may be one-shot |
+
+§45.6 showed the gap needs TWO simultaneously-live one-shot demands at one
+phase. §45.7 now says both of them must be ACCIDENTAL.
+
+**Why that is the right target.** Completeness lets us CHOOSE the model. An
+accidental demand is, by definition, not forced by the concept — so the natural
+attack is a model-normalization: *every satisfiable ∀PO-free concept has a model
+in which chain nodes carry no accidental `∃PP` demands*, or at most one. That is
+a statement about models rather than about the certificate, and it does not touch
+any certified result.
+
+Note this is NOT §33.3's "persistify", which tried to turn one-shot demands INTO
+persistent ones and failed on forced leaves. The direction here is the opposite —
+REMOVE accidental demands rather than strengthen them — and forced leaves are
+precisely the case it does not have to handle, because a forced leaf's demand is
+inherited, hence already persistent.
+
+**Next step:** formulate the normalization precisely and test whether the
+certificate's own soundness direction already produces such a model — the
+model built by `multiTier_sound` from a certificate satisfies exactly the
+labels, so it has no accidental demands by construction. If that closes the
+circle, route 1 succeeds.
