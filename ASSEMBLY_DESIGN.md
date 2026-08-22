@@ -4923,3 +4923,61 @@ already certified.
 
 Artifact: 24,493 lines, 0 sorries, 0 warnings, 0 `sorryAx`; 435 axiom checks, of
 which 25 results depend on **no axioms at all**.
+
+## 45. FLAGGED: a kernel phase with a NON-persistent `∃PP` demand (2026-08-22)
+
+Working toward the assembly, one question has to be settled before the pieces
+can be bundled, and I do not think it is settled.
+
+### 45.1 The question
+
+§44.27's split routes a node's `∃PP` demands two ways: **persistent** ⟹ a
+round-robin kernel, **one-shot** ⟹ an `elt` edge to an external. That split is
+stated for EXTERNALS, where both routes exist.
+
+A kernel PHASE has only one route. `odSeed_hk_ex`'s branches for `r = pp` at an
+ASCENDING kernel are:
+
+* the `cdir` branch — rung-to-rung, discharged by `rr_covers`, which needs
+  `persistAll`;
+* the external branch — needs `K k f = pp`, i.e. `mixLt (inr k) (inl f)`, i.e.
+  **`side k = false`**. An ascending kernel has `side = true` (§43.10).
+
+So **a phase carrying a non-persistent `∃PP` demand has nowhere to send it.**
+
+### 45.2 Why the obvious escapes do not work
+
+* *"Take the recurrent sub-chain."* Type recurrence does give a clean window: the
+  last phase's chosen demand wraps to phase 0 because `mty (c n₁) = mty (c n₀)`.
+  But that only covers the demand the chain was BUILT to serve. A phase with
+  several `∃PP` demands needs all of them carried inside the period, which is
+  exactly what round-robin provides and what `persistAll` is required for.
+* *"Let the kernel be below some externals and above others."* That is `side`
+  becoming per-external rather than per-kernel, which breaks the height-two
+  order and `mixLt_no_below` — the lemma that makes `djDown` terminate.
+* *"Make `att` do it."* `att` is already per-external; the obstruction is `side`
+  in `mixLt`'s `inr/inl` clause, not the attachment.
+
+### 45.3 Status
+
+This is not a defect in anything certified. Every §44 result stands; the split
+in §44.27 is correct as stated, **for externals**. What is not established is
+that the split is EXHAUSTIVE once kernels are in play.
+
+Three ways it could resolve, in the order I would try them:
+
+1. **The case is unreachable** — a phase of a kernel extracted from a ∀PO-free
+   model always has persistent `∃PP` demands. Plausible (the phase sits on an
+   infinite ascending chain, which is close to what the guard asserts) but NOT
+   proved, and "close to" is exactly the wording that has been wrong four times
+   this session.
+2. **Route it to a kernel-kernel edge** — `k_ex`'s fourth branch, unused so far
+   (§43.11 deliberately kept it empty to avoid the `hrectQ` staircase). Using it
+   reopens that question.
+3. **Widen the order** — allow a kernel above some externals and below others,
+   at the cost of re-proving `mixLt`'s transitivity and `djDown` over a taller
+   structure.
+
+Route 1 is the cheap one to test, and it is a crisp question a probe can attack:
+*can a ∀PO-free concept force an infinite ascending chain on which some `∃PP`
+demand is never persistent?*
