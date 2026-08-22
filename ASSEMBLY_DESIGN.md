@@ -4449,3 +4449,44 @@ the fuel has to be instantiated from the cut (i.e. the number of types realized
 by `C₀`, which is at most `2^|cl C₀|`). Neither is written yet; both are now
 pattern-matched to certified code (`mtkNodes_length_le` for the outer shape,
 `path_cut` for the fuel).
+
+### 44.13 The node bound, and exactly what it does not yet give (2026-08-22)
+
+Built:
+
+| | |
+|---|---|
+| `mixBound` / `mixNodes` | the full node set: `ppNodes` closures (constant budget, fuel-measured) nested inside horizontal steps (budget-dropping) |
+| `mixNodes_length_le` | bounded by `mixBound C₀ fuel b`, computable from `C₀`, fuel and horizontal depth alone |
+| `typeEnum` / `mty_mem_typeEnum` | the enumeration of possible model types — every `mty` is a filter of `cl C₀` |
+| `repeatfree_len_le` | **the pigeonhole**: pairwise-distinct types ⟹ no longer than the enumeration |
+| `mixKT` | `K(C₀)` for the mixed fragment, fuel pinned by the pigeonhole |
+
+The horizontal depth is carried as its own recursion parameter rather than read
+off `n.k`, because a `ppNodes` member's budget equals `n.k` only by the THEOREM
+`ppNodes_bud`, which the equation compiler cannot see.
+
+**What this does NOT give, stated before it can be mistaken for more.**
+`mixNodes_length_le` is a bound for ANY fuel. Pinning the fuel to
+`|typeEnum C₀|` does not prove the fuel SUFFICES. Adequacy is a separate claim:
+
+> `ppNodes` follows `ppWitness`, i.e. the model's arbitrary `Classical.choose`
+> witness, which need not give a repeat-free path. The CUT is what makes the
+> choice repeat-free.
+
+`path_cut` (the cut is legitimate) and `repeatfree_len_le` (repeat-free paths
+are short) are both certified. **Joining them to the construction — a witness
+selection that avoids already-seen types — is what remains**, and it is the last
+piece with real content.
+
+### 44.14 Remaining, in order
+
+1. **Adequacy** — a repeat-avoiding `ppWitness`, so that `|typeEnum C₀|` fuel
+   suffices. Ingredients certified (`path_cut`, `repeatfree_len_le`); the
+   construction is not written.
+2. **Witness lists** — instantiate `rDR`/`rPO`/`rPP`/`rPPI` and
+   `kDIR`/`kDR`/`kPO`/`kUP`/`kDN` from `mtkNodesH_covers`, the banks, `rr_covers`.
+3. **Reindex** onto `Fin nE`/`Fin nK`, feed `encodeMT_mem_codesM` with `mixKT`,
+   then `hcompl` + `decidableSat_of_codes`.
+
+3 is templated. 2 is construction over certified parts. 1 is the one to watch.
