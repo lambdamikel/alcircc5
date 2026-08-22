@@ -20926,6 +20926,42 @@ theorem disj_dr_ph {I : Interp α} (hI : RCC5Interp I) (g : β → α)
         hlt y y₀ hy']
       rfl
     exact rho_forced hI (hdomN x) (hdomN y) (hdomN y₀) h1 hyy (by decide)
+
+/-- **`kPO`'s three frame conditions, from ONE model fact.**  A `PO`-witness of a
+    phase is neither above nor below the kernel — the order is inside the model's
+    `PP` (`mixLt_rho_ph`) — nor disjoint from it — `disj` is inside the model's
+    `DR` (`disj_dr_ph`).  So the branch needs no frame reasoning from the
+    extraction at all. -/
+theorem kPO_frame {I : Interp α} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik ph : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
+    (hupP : ∀ k e a, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp)
+    (hdnP : ∀ k e a, side k = false → att k e = true →
+      I.rho (ck k (ik k + a)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = dr)
+    (k : κ) (f : β)
+    (hpo : I.rho (ck k (ik k + ph k)) (g f) = po) :
+    ¬ mixLt elt side att (Sum.inr k) (Sum.inl f) ∧
+    ¬ mixLt elt side att (Sum.inl f) (Sum.inr k) ∧
+    ¬ (∃ x₀ y₀, mixLe elt side att (Sum.inr k) x₀ ∧
+        mixLe elt side att (Sum.inl f) y₀ ∧ seed x₀ y₀) := by
+  have hlt := mixLt_rho_ph hI g ck ik ph side att hgdom hckdom hupP hdnP elt helt
+  have hfpo : I.rho (g f) (ck k (ik k + ph k)) = po := by
+    rw [hI.conv_ (ck k (ik k + ph k)) (g f) (hckdom k _) (hgdom f), hpo]
+    rfl
+  refine ⟨?_, ?_, ?_⟩
+  · intro h
+    exact absurd ((hlt _ _ h).symm.trans hpo) (by decide)
+  · intro h
+    exact absurd ((hlt _ _ h).symm.trans hfpo) (by decide)
+  · intro h
+    have hdr := disj_dr_ph hI g ck ik ph side att hgdom hckdom hupP hdnP elt helt
+      seed hseed h
+    exact absurd (hdr.symm.trans hpo) (by decide)
 end KernelReach
 
 section ODDebt
@@ -24376,6 +24412,7 @@ end VerticalWitness
 #print axioms hq_ppi_of_bases
 #print axioms mixLt_rho_ph
 #print axioms disj_dr_ph
+#print axioms kPO_frame
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
