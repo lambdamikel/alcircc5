@@ -20245,6 +20245,98 @@ theorem hsep_of_model {I : Interp α} (hI : RCC5Interp I) (g : β → α)
         rho_forced hI (hdomN x) (hdomN z) (hdomN y) (hlt x y hxy) hyz (by decide)
       rw [hlt x z hxz] at hxzdr; exact absurd hxzdr (by decide)
 
+
+/-! #### The extraction's frame, packaged (§44.20)
+
+Every hypothesis `odSeed` asks for is now discharged from model data:
+`elt := tcl step` (§44.8: the extraction's own `PP`-demand steps, closed
+transitively), `seed := drSeed` (the model's own `DR`).  `hseed` and `hdr`
+become DEFINITIONAL, and `hsep` is `hsep_of_model`. -/
+
+/-- The seed: the model's own `DR` between the elements the nodes stand for. -/
+def drSeed (I : Interp α) {β κ : Type} (nd : β ⊕ κ → α) :
+    β ⊕ κ → β ⊕ κ → Prop := fun x y => I.rho (nd x) (nd y) = dr
+
+theorem nodeOf_dom {β κ : Type} {I : Interp α} (g : β → α) (ck : κ → Nat → α)
+    (ik : κ → Nat) (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k))) :
+    ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+  rintro (e | k)
+  · exact hgdom e
+  · exact hkdom k
+
+theorem drSeed_sym {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (nd : β ⊕ κ → α) (hdom : ∀ v, I.dom (nd v)) :
+    ∀ x y, drSeed I nd x y → drSeed I nd y x := by
+  intro x y h
+  show I.rho (nd y) (nd x) = dr
+  rw [hI.conv_ (nd x) (nd y) (hdom x) (hdom y)]
+  show conv (I.rho (nd x) (nd y)) = dr
+  rw [h]; rfl
+
+/-- **THE EXTRACTION'S FRAME.**  Built from model data alone: the node map, a
+    `PP`-step relation, and the kernels' sides and attachments. -/
+noncomputable def extFrame {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
+    (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
+    (hup0 : ∀ k e, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, side k = false → att k e = true →
+      I.rho (ck k (ik k)) (g e) = pp) : ODStruct (β ⊕ κ) :=
+  odSeed (tcl step) side att (drSeed I (nodeOf g ck ik))
+    (tcl_irrefl hI g hgdom step hstep)
+    (fun _ _ _ => tcl_trans step)
+    (drSeed_sym hI _ (nodeOf_dom g ck ik hgdom hkdom))
+    (hsep_of_model hI g ck ik side att hgdom hkdom hup0 hdn0
+      (tcl step) (tcl_sub_pp hI g hgdom step hstep)
+      (drSeed I (nodeOf g ck ik)) (fun _ _ h => h))
+
+/-- Its order is `mixLt` over the demand-step closure — the shape the debt
+    lemmas consume (`hlt`). -/
+theorem extFrame_lt {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
+    (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
+    (hup0 : ∀ k e, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, side k = false → att k e = true →
+      I.rho (ck k (ik k)) (g e) = pp) (x y : β ⊕ κ) :
+    (extFrame hI g ck ik side att step hgdom hkdom hstep hup0 hdn0).lt x y
+      ↔ mixLt (tcl step) side att x y := Iff.rfl
+
+/-- Its disjointness is the model's `DR` — so `odLt_hEreal`'s `hdr` and
+    `odLt_hKreal`'s/`odLt_hQreal`'s `hdrk`/`hqdr` premises are about a REAL
+    relation, not a declared one. -/
+theorem extFrame_disj_dr {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
+    (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
+    (hup0 : ∀ k e, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, side k = false → att k e = true →
+      I.rho (ck k (ik k)) (g e) = pp) {x y : β ⊕ κ}
+    (h : (extFrame hI g ck ik side att step hgdom hkdom hstep hup0 hdn0).disj x y) :
+    I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hlt := mixLt_rho hI g ck ik side att hgdom hkdom hup0 hdn0
+    (tcl step) (tcl_sub_pp hI g hgdom step hstep)
+  have hdomN := nodeOf_dom g ck ik hgdom hkdom
+  have h1 : I.rho (nodeOf g ck ik x) (nodeOf g ck ik y₀) = dr := by
+    rcases hx with rfl | hx'
+    · exact hs
+    · exact rho_forced hI (hdomN x) (hdomN y₀) (hdomN x₀) (hlt x x₀ hx') hs
+        (by decide)
+  rcases hy with rfl | hy'
+  · exact h1
+  · have hyy : I.rho (nodeOf g ck ik y₀) (nodeOf g ck ik y) = ppi := by
+      rw [hI.conv_ (nodeOf g ck ik y) (nodeOf g ck ik y₀) (hdomN y) (hdomN y₀),
+        hlt y y₀ hy']
+      rfl
+    exact rho_forced hI (hdomN x) (hdomN y) (hdomN y₀) h1 hyy (by decide)
+
 end HsepFromModel
 
 section ODDebt
@@ -23676,6 +23768,8 @@ end VerticalWitness
 #print axioms ascend_step
 #print axioms pp_dichotomy
 #print axioms tcl_ok
+#print axioms extFrame
+#print axioms extFrame_disj_dr
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
