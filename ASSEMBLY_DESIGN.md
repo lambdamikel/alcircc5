@@ -4716,3 +4716,43 @@ are the sharpest case — they looked like two more model debts and turned out t
 be consequences of `hup` and `hdn`. What the model genuinely has to supply is
 much smaller than the interface suggests: the base attachments, the `DR` bank
 windows, and the kernels' periodicity.
+
+### 44.24 Every RELATION half is now done (2026-08-22)
+
+`mtkKernelsOD_of_debts`'s obligations each split into a RELATION half (what the
+model relation must be) and, for the kernel ones, a BUDGET half. All the relation
+halves are now theorems:
+
+| obligation | relation half | by |
+|---|---|---|
+| `hppE` | ✔ | `ppStep_hppE` (budget halves too — an equality) |
+| `hdr` | ✔ | `extFrame_disj_dr` |
+| `hb` | ✔ (whole) | `seedMix_hb` |
+| `hup` | ✔ | `hup_reach` |
+| `hdn` | ✔ | `hdn_reach` |
+| `hqpp` | ✔ | `hq_pp_of_bases` — not a model debt |
+| `hqppi` | ✔ | `hq_ppi_of_bases` |
+| `hdrk` | ✔ | `disj_dr_ph` |
+| `hqdr` | ✔ | `disj_dr_ph` |
+
+`mixLt_rho_ph` / `disj_dr_ph` are the generalization that did it: reading each
+kernel at an arbitrary phase `ph k` rather than at its base costs one parameter,
+and the kernel–kernel case is exactly `hq_pp_of_bases`. Both **axiom-free**.
+
+**What is left is now a short and homogeneous list:**
+
+1. **The base attachment facts at every phase** — `hupP`/`hdnP`, i.e. an
+   attached external is `PP`-inside / `PPI`-outside every phase of its kernel.
+   This is what `exists_bank_ppi` and `exists_bank` deliver, via
+   `bank_window_ge` / `bank_window`.
+2. **The budget halves** — `bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1` and
+   `bk k ≤ bk k' + 1`. The extraction's budget assignment (§43.10: bank members
+   one below their kernel).
+3. **The coverage witness lists** — the routing is done
+   (`odSeed_he_ex`/`odSeed_hk_ex`); what remains is producing the witnesses from
+   `mtkNodesH_covers`, the banks and `rr_covers`.
+4. **The kernels themselves** — `hp`, `hstep`, `hty` from `ascend` +
+   `recurrent_tail`/`rr_segment_from`.
+
+Every item is now "produce a model fact from machinery that exists", with no
+composition reasoning left in any of them.
