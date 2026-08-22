@@ -19701,6 +19701,37 @@ theorem bank_window_ge (hI : RCC5Interp I) (c : Nat → α)
   have hge : A ≤ i + a := by omega
   rw [hI.conv_ (c (i + a)) w (hdom _) hw, hbank (i + a) hge]
 
+
+/-! The bank output IS the attachment fact, in the orientation the obligations
+    want.  `conv ppi = pp` and `conv pp = ppi` do the rest, so these are the
+    whole of §44.24 item 1. -/
+
+/-- **`hup`'s base fact, FROM THE `PPI` BANK.**  `exists_bank_ppi` picks EARLY
+    with a uniform anchor; a member is then a proper PART of every phase from the
+    anchor on, which is exactly "an UP-kernel's external is inside every phase". -/
+theorem hupP_of_bank (hI : RCC5Interp I) (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (w : α) (hw : I.dom w) (A i : Nat) (hA : A ≤ i)
+    (hbank : ∀ b, A ≤ b → I.rho (c b) w = ppi) (a : Nat) :
+    I.rho w (c (i + a)) = pp :=
+  bank_window_ge hI c hdom w hw ppi i A hA hbank a
+
+/-- **`hdn`'s base fact, FROM THE `PP` BRANCH OF `exists_bank`.**  That branch
+    picks LATE, above the range, and backward forcing carries it down through the
+    window; a member is then a proper SUPERpart of every phase in the window,
+    which is "a DOWN-kernel's external contains every phase". -/
+theorem hdnP_of_bank (hI : RCC5Interp I) (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (w : α) (hw : I.dom w) (i p M : Nat) (hM : i + p ≤ M + 1)
+    (hbank : ∀ b, b ≤ M → I.rho (c b) w = pp) (a : Nat) (ha : a < p) :
+    I.rho w (c (i + a)) = ppi :=
+  bank_window hI c hdom w hw pp i p M hM hbank a ha
+
+/-- **`hdrk`'s base fact, FROM THE `DR` BRANCH.**  `conv dr = dr`, so the
+    orientation is free. -/
+theorem hdrP_of_bank (hI : RCC5Interp I) (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (w : α) (hw : I.dom w) (i p M : Nat) (hM : i + p ≤ M + 1)
+    (hbank : ∀ b, b ≤ M → I.rho (c b) w = dr) (a : Nat) (ha : a < p) :
+    I.rho w (c (i + a)) = dr :=
+  bank_window hI c hdom w hw dr i p M hM hbank a ha
 /-! #### The cross-kernel debt is COMPOSITION-FORCED
 
 §36 established that `hrectQ` — cross-kernel rows constant across the windows —
@@ -24142,6 +24173,9 @@ end VerticalWitness
 #print axioms mtkKernelsOD_of_debts
 #print axioms bank_window
 #print axioms bank_window_ge
+#print axioms hupP_of_bank
+#print axioms hdnP_of_bank
+#print axioms hdrP_of_bank
 #print axioms rho_forced
 #print axioms cross_pp_of_shared
 #print axioms cross_dr_of_shared
