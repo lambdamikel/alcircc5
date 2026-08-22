@@ -4576,3 +4576,32 @@ The remaining two items are construction and wiring. No open mathematical step
 is currently identified for this fragment — which is a claim I have made
 prematurely four times this session, so it should be read as "none identified",
 not "none exists".
+
+### 44.19 Testing whether §44.18 holds water — it did not, quite (2026-08-22)
+
+Michael asked to see whether the adequacy claim holds. It exposed a real seam,
+and the seam is now closed.
+
+**The seam.** `short_chain` gives EXISTENCE of a bounded chain. `mixNodes` is a
+CONSTRUCTION using arbitrary (`Classical.choose`) witnesses. Those are not the
+same thing: `ppNodes` serves every `∃PP` demand EXCEPT at its fuel-exhausted
+leaves, and nothing said those leaves carry no demand. `short_chain` does not
+say the GREEDY chain is short — only that a short one exists.
+
+**The closure, and it is a dichotomy rather than a cleverer construction:**
+
+| | |
+|---|---|
+| `ascend` | iterating a step that stays inside a class — the kernel branch's generator |
+| `ascend_step` | the iterate IS an ascending chain; this is literally the certificate's kernel `hstep` (`cdir true = pp`). Depends on `Classical.choice` alone |
+| `pp_dichotomy` | for a class closed under the `∃PP`-witness step: EITHER some member has no `∃PP` demand — the chain terminates, `short_chain` bounds it — OR the class carries an infinite ascending chain from every member, i.e. a KERNEL |
+
+The kernel branch is not new mathematics: `recurrent_tail`, `rr_segment_from`
+and `rr_covers` already turn an infinite ascending chain into a periodic kernel,
+and they are certified.
+
+**Calibration note.** §44.18 said "no open mathematical step currently
+identified", explicitly hedged as *identified* rather than *existing*. The hedge
+earned its keep within one round. The lesson is not "hedge more" but that the
+reliable way to find these is to try to USE the result — the same rule as §43.8,
+now confirmed on a claim I had already flagged as suspect.
