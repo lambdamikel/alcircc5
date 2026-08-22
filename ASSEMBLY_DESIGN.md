@@ -5132,3 +5132,40 @@ certificate's own soundness direction already produces such a model — the
 model built by `multiTier_sound` from a certificate satisfies exactly the
 labels, so it has no accidental demands by construction. If that closes the
 circle, route 1 succeeds.
+
+### 45.8 The cheap route-1 check FAILS, and an honest cost table (2026-08-22)
+
+**The check.** Does `multiTier_sound`'s built model have no accidental demands?
+**No.** It builds the model from `mtLabel T` via `sat_from_hintikka_frame`, and
+the truth lemma runs ONE way: `C ∈ label → sat`. The converse is not available,
+and cannot be — a node of `munf` may satisfy `∃PP.D` because some `PP`-related
+node satisfies `D`, whether or not `D` is in its label. So the circle does not
+close, and route 1's cheap version is dead.
+
+**Two further facts found while checking, both narrowing and both unwelcome:**
+
+* Accidental demands cannot be escaped by raising the kernel base. Along the
+  chain `persistDs` stabilizes (it grows, inside a finite set), and by type
+  recurrence an accidental demand present at a recurrent type recurs
+  **infinitely often**. There is no base above them all.
+* `persistDs` is **not type-determined**: it depends on `sat x (∀PP.(∃PP.D))`,
+  and that formula need not be in `cl C₀`. So two nodes of the same model type
+  can differ in which demands are persistent — which also means the recurrence
+  machinery (`hty`, stated on `mty`) does not control persistence.
+
+**Cost table, honestly.**
+
+| route | what it costs | risk |
+|---|---|---|
+| 1a — model normalization (every satisfiable ∀PO-free `C₀` has a model with ≤1 accidental `∃PP` per chain node) | unknown; a fresh model-theoretic argument | may be FALSE; nothing certified suggests it |
+| 1b — FORCED labels instead of model types (drop accidental demands from the label) | touches `mtkKernelsOD`, `_ok`, all coverage routing, `mixNodes`, the bound, the encoder | multi-session; large parts of §44 reworked |
+| 3 — BRANCHING kernels (a phase with several one-shot demands needs several successors — i.e. a tree) | `MultiTier`'s kernels are `Nat`-indexed; this changes `munf` and the SOUNDNESS core | multi-session; touches certified soundness, the one thing that has never had to move |
+
+**Assessment.** 1b is the most principled — a certificate label *should* be what
+the concept forces, not what a model happens to satisfy, and it is the reading
+under which "accidental demand" stops being a category at all. But it is a
+genuine refactor of the label layer, and the label layer is what everything else
+is stated against.
+
+**This is a decision point, not a step**, and it should be taken deliberately
+rather than drifted into.
