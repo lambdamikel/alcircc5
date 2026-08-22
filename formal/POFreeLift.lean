@@ -10844,25 +10844,6 @@ theorem mixNodes_length_le (fuel : Nat) :
           Nat.mul_le_mul_right _ (ppNodes_length_le n fuel)
       _ = mixBound C0 fuel (b' + 1) := by rw [mixBound]
 
-/-- **`K(C₀)` FOR THE MIXED FRAGMENT.**  The node bound, computable from `C₀`
-    ALONE: the fuel is the number of possible model types — every `mty C0 I x` is
-    a filter of `cl C₀`, so there are at most `2 ^ |cl C₀|` of them — and the
-    horizontal depth is `mdepth C₀`.
-
-    **Scope, stated precisely.**  `mixNodes_length_le` is a bound for ANY fuel;
-    naming this particular fuel does NOT yet prove it SUFFICES.  Adequacy is the
-    coverage question: `ppNodes` follows `ppWitness`, i.e. the model's arbitrary
-    `Classical.choose` witness, which need not give a repeat-free path.  The CUT
-    (§44.7) is what will make the choice repeat-free — `path_cut` is certified,
-    but it is not yet APPLIED to the witness selection.  Until it is, `mixK` is
-    the right bound with an unproved adequacy hypothesis, not a finished K(C₀). -/
-def mixK (C0 : Concept) : Nat :=
-  mixBound C0 (2 ^ (cl C0).length) (mdepth C0)
-
-/-- The node set is bounded by `mixK C₀`. -/
-theorem mixNodes_length_le_K (n : MTKNode I C0) :
-    (mixNodes (2 ^ (cl C0).length) (mdepth C0) n).length ≤ mixK C0 :=
-  mixNodes_length_le _ _ n
 end MtkRecursion
 
 /-! ### The horizontal ∀PO-free fragment (`ASSEMBLY_DESIGN.md §15`)
@@ -11452,6 +11433,51 @@ def allAtoms : List Atom := [Atom.eq, Atom.pp, Atom.ppi, Atom.po, Atom.dr]
 
 theorem mem_allAtoms (a : Atom) : a ∈ allAtoms := by cases a <;> decide
 
+
+/-! #### The type enumeration and the pigeonhole behind the fuel (§44.12)
+
+Every `mty C0 I x` is a filter of `cl C₀`, hence a member of
+`allListsLe (cl C₀) |cl C₀|`.  So the number of possible model types is a
+computable function of `C₀`, and a path whose types are pairwise distinct is no
+longer than it.  That is the pigeonhole the CUT (§44.7) turns into a fuel:
+a `PP`-path can be CHOSEN repeat-free, and a repeat-free path fits in this
+many steps. -/
+
+/-- The enumeration of possible model types. -/
+def typeEnum (C0 : Concept) : List (List Concept) :=
+  allListsLe (cl C0) (cl C0).length
+
+theorem mty_mem_typeEnum {α : Type} (C0 : Concept) (I : Interp α) (x : α) :
+    mty C0 I x ∈ typeEnum C0 := by
+  refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+  · rw [mty]; exact List.length_filter_le _ _
+  · intro y hy
+    rw [mty] at hy
+    exact (List.mem_filter.mp hy).1
+
+/-- **THE PIGEONHOLE.**  A list of points whose model types are pairwise
+    distinct is no longer than the type enumeration. -/
+theorem repeatfree_len_le {α : Type} (C0 : Concept) (I : Interp α) (ns : List α)
+    (hnd : (ns.map (fun x => mty C0 I x)).Nodup) :
+    ns.length ≤ (typeEnum C0).length := by
+  have h1 : (ns.map (fun x => mty C0 I x)).length ≤ (typeEnum C0).length := by
+    refine nodup_len_le _ _ ?_ hnd
+    intro t ht
+    obtain ⟨x, _, hx⟩ := List.mem_map.mp ht
+    rw [← hx]
+    exact mty_mem_typeEnum C0 I x
+  rw [List.length_map] at h1
+  exact h1
+
+/-- **`K(C₀)` FOR THE MIXED FRAGMENT**, with the fuel now pinned by the
+    pigeonhole rather than by a crude power of two. -/
+def mixKT (C0 : Concept) : Nat :=
+  mixBound C0 (typeEnum C0).length (mdepth C0)
+
+theorem mixNodes_length_le_KT {α : Type} {I : Interp α} {C0 : Concept}
+    (n : MTKNode I C0) :
+    (mixNodes (typeEnum C0).length (mdepth C0) n).length ≤ mixKT C0 :=
+  mixNodes_length_le _ _ n
 open Classical in
 theorem length_cdedup_le {A : Type} (l : List A) : (cdedup l).length ≤ l.length := by
   induction l with
@@ -23259,7 +23285,8 @@ end VerticalWitness
 #print axioms ppNodes_length_le
 #print axioms ppNodes_bud
 #print axioms mixNodes_length_le
-#print axioms mixNodes_length_le_K
+#print axioms repeatfree_len_le
+#print axioms mixNodes_length_le_KT
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
 #print axioms encodeMT_mtOk
