@@ -4529,3 +4529,50 @@ written.
 | adequacy — splice + descent | **open** |
 | witness lists | open |
 | reindex / bounds / `hcompl` | open, templated |
+
+### 44.17 ADEQUACY, DONE (2026-08-22)
+
+`short_chain`: **every serving chain has a companion of length ≤ `|typeEnum C₀|`
+with the SAME HEAD TYPE.** That is §44's adequacy — a demand served by the
+original head is served by the new one precisely because the type is the same,
+so the fuel `|typeEnum C₀|` suffices.
+
+The pieces:
+
+| | |
+|---|---|
+| `mem_split` | a member splits its list (core has no `append_of_mem` here) |
+| `serveChain_suffix` | a chain restricted to a suffix is a chain from the split |
+| `serveChain_cut_head` | the HEAD cut — restart at the later same-type member; `serveChain_rho` supplies the re-linked edge |
+| `htype` | the head type: the invariant the cut preserves |
+| `serveChain_cut` | the cut ANYWHERE, by induction on the prefix |
+| `short_chain` | the descent, by induction on a length bound |
+
+**A near-miss worth recording as process.** The first insertion of `mem_split` /
+`serveChain_suffix` / `serveChain_cut_head` landed INSIDE `chain_cut`'s
+docstring, silently commenting all three out. **The build stayed green** — a
+split docstring is a perfectly valid comment — and only a downstream "unknown
+identifier" exposed it. So:
+
+> A clean build is not evidence that what you wrote was compiled.
+
+Two checks now run alongside each other: `#print axioms` (catches `sorryAx`
+smuggled in by a recovered error) and an explicit declared-count grep (catches
+text that never became a declaration at all). Both have now caught a real
+problem this session.
+
+### 44.18 State
+
+| | |
+|---|---|
+| frame, certificate, debts, composition-forcing | done |
+| the cut, `hsep`, coverage routing | done |
+| node bound `mixNodes_length_le` / `mixKT` | done |
+| **adequacy (`short_chain`)** | **done** |
+| witness lists | open — construction over certified parts |
+| reindex / bounds / `hcompl` | open, templated |
+
+The remaining two items are construction and wiring. No open mathematical step
+is currently identified for this fragment — which is a claim I have made
+prematurely four times this session, so it should be read as "none identified",
+not "none exists".
