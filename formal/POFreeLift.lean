@@ -20104,6 +20104,52 @@ theorem tcl_ok {β : Type} (hI : RCC5Interp I) (f : β → α)
     (∀ a b, tcl step a b → I.rho (f a) (f b) = pp) :=
   ⟨tcl_irrefl hI f hfdom step hstep, fun _ _ _ => tcl_trans step,
     tcl_sub_pp hI f hfdom step hstep⟩
+
+/-! #### The extraction's `PP`-step, and the external debt discharged (§44.20)
+
+`elt` is `tcl ppStep`: `f` is one of `e`'s chosen `∃PP`-demand witnesses.  Two
+facts follow immediately and between them they close the external debt.
+
+* `ppStep_rho` — a step IS a model `PP` edge (`ppWitness_rho`), which is `tcl`'s
+  and `mixLt_rho`'s hypothesis;
+* `tcl_ppStep_bud` — the budget is CONSTANT along the closure
+  (`ppWitness_bud`), which is §44.3's discipline turned into a theorem.
+
+So `hppE`'s budget conjuncts are not inequalities to arrange but consequences of
+an EQUALITY. -/
+
+/-- The extraction's `PP`-step: `f` is the chosen witness of an `∃PP` demand
+    of `e`. -/
+def ppStep {C0 : Concept} (e f : MTKNode I C0) : Prop :=
+  ∃ (c : Concept) (hF : Concept.ex pp c ∈ mtk C0 I e.x e.k), ppWitness e hF = f
+
+theorem ppStep_rho {C0 : Concept} (e f : MTKNode I C0) (h : ppStep e f) :
+    I.rho e.x f.x = pp := by
+  obtain ⟨_, hF, hw⟩ := h
+  rw [← hw]; exact ppWitness_rho e hF
+
+theorem ppStep_bud {C0 : Concept} (e f : MTKNode I C0) (h : ppStep e f) :
+    f.k = e.k := by
+  obtain ⟨_, hF, hw⟩ := h
+  rw [← hw]; exact ppWitness_bud e hF
+
+/-- **THE BUDGET IS CONSTANT ALONG THE ORDER.**  §44.3's discipline, now a
+    theorem about the relation the certificate actually declares. -/
+theorem tcl_ppStep_bud {C0 : Concept} (e f : MTKNode I C0)
+    (h : tcl ppStep e f) : f.k = e.k := by
+  induction h with
+  | base hs => exact ppStep_bud _ _ hs
+  | tail _ hs ih => rw [ppStep_bud _ _ hs]; exact ih
+
+/-- **`mtkKernelsOD_of_debts`'s EXTERNAL DEBT `hppE`, DISCHARGED** for the
+    extraction's own order — the relation half from `ppStep_rho`, the budget
+    halves from the constancy. -/
+theorem ppStep_hppE {C0 : Concept} (hI : RCC5Interp I) (e f : MTKNode I C0)
+    (h : tcl ppStep e f) :
+    I.rho e.x f.x = pp ∧ e.k ≤ f.k + 1 ∧ f.k ≤ e.k + 1 := by
+  refine ⟨tcl_sub_pp hI (fun n : MTKNode I C0 => n.x) (fun n => n.hx) ppStep
+    (fun a b hs => ppStep_rho a b hs) e f h, ?_, ?_⟩ <;>
+    rw [tcl_ppStep_bud e f h] <;> omega
 end ODExtraction
 
 
@@ -23770,6 +23816,8 @@ end VerticalWitness
 #print axioms tcl_ok
 #print axioms extFrame
 #print axioms extFrame_disj_dr
+#print axioms tcl_ppStep_bud
+#print axioms ppStep_hppE
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
