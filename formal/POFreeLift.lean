@@ -6919,6 +6919,36 @@ theorem persistDs_of_guard_below (hI : RCC5Interp I) {C0 : Concept} {x y : α}
   refine mem_persistDs.mpr ⟨cl_ex hcl, ?_, sat_all_pp_up hI hx hy hr hguard⟩
   exact mem_mty.mpr ⟨hcl, hguard y hy hr⟩
 
+
+/-! #### Why `∀PP` is the ONLY unavoidable upward guard (§45.9)
+
+A guard `∀r.X` held at `z` reaches a node `w` only if `z` is `r`-related to `w`.
+Going UP from `y` to a superpart `w`, the relation `z`-to-`w` lies in
+`comp (z-to-y) pp`.  So the guard reaches `w` unavoidably exactly when that cell
+FORCES the guard's relation — and the table answers it:
+
+* `comp PP PP = {PP}` — **forced**.  A `∀PP` guard at `z` reaches every
+  superpart of every node it reaches.  This is `sat_all_pp_up`, and it is why
+  `∀PP`-inherited demands are persistent (`persistDs_of_guard_below`).
+* `comp DR PP`, `comp PPI PP`, `comp PO PP` all CONTAIN `PO` — so a model is
+  free to place `z PO w` instead, and a `∀DR`, `∀PPI` or `∀PO` guard at `z`
+  need NOT reach `w`.
+
+That is the mechanism behind route 1a: the demands that a chain node cannot
+avoid are exactly the `∀PP`-inherited ones, and those are persistent.  Any
+`∃PP` demand delivered by a NON-`PP` guard can be dodged upward by a model that
+chooses `PO` where the table permits. -/
+
+theorem dodge_cells :
+    po ∈ comp dr pp ∧ po ∈ comp ppi pp ∧ po ∈ comp po pp ∧
+    comp pp pp = [pp] := by decide
+
+/-- The dual fact, for completeness of the picture: `DR` propagates DOWNWARD
+    without escape (`comp DR PPI = {DR}`), which is the certified normal form's
+    downward-closed disjointness.  So the asymmetry is real: `PP` is forced
+    upward, `DR` downward, and nothing else is forced either way. -/
+theorem forced_cells : comp pp pp = [pp] ∧ comp dr ppi = [dr] ∧
+    comp ppi ppi = [ppi] ∧ comp pp dr = [dr] := by decide
 /-- The contrapositive, in the form §45 needs: a ONE-SHOT demand at `y` has no
     guard anywhere strictly below it. -/
 theorem oneshot_no_guard_below (hI : RCC5Interp I) {C0 : Concept} {x y : α}
@@ -24512,6 +24542,8 @@ end VerticalWitness
 #print axioms persistDs_split
 #print axioms persistDs_up
 #print axioms persistDs_of_guard_below
+#print axioms dodge_cells
+#print axioms forced_cells
 #print axioms ascKernel_of_node
 #print axioms seedMix_dr
 #print axioms seedMix_bud
