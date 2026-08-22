@@ -4891,3 +4891,35 @@ for it.
 | `kDR`/`kUP`/`kDN` witnesses | packaging — the bank member IS the witness, with `leE` reflexive |
 | the budget assignment | a choice inside the extraction (§43.10) |
 | reindex → bounds → `hcompl` → `decidableSat_of_codes` | templated on the certified horizontal path |
+
+### 44.31 Coverage ledger CLOSED — all nine branches (2026-08-22)
+
+`k_vert_witness` and `k_dr_witness` finish it. Both hand over the bank member
+directly: `kUP`/`kDN` ask for a pair `f, e'` with `e'` attached and `f`
+`leE`-comparable, and `leE` is REFLEXIVE, so `f = e' = w` serves both
+orientations; `kDR`'s seed block is precisely "this external is a `DR`-bank
+member of this kernel".
+
+| routing | branches | all supplied from |
+|---|---|---|
+| `odSeed_he_ex` | `rDR`, `rPO`, `rPP`, `rPPI` | `mtkWitness` / `ppWitness` / `ppiWitness` + `po_not_elt`/`po_not_disj` |
+| `odSeed_hk_ex` | `kDIR`, `kDR`, `kPO`, `kUP`, `kDN` | `rr_covers` (via `ascKernel_of_node`), the banks, `kPO_frame` |
+
+**Nine for nine, and not one of them needed a new model fact** — every branch is
+either the model's own witness function, a bank member, or a composition
+already certified.
+
+### 44.32 What is left, precisely
+
+1. **The budget assignment.** `bk k := bud e` for the external whose `∃PP` the
+   kernel serves; bank members at `bk k - 1`. A choice, with the arithmetic
+   already checked (`mixLe_inl_bud`, `seedMix_bud`, `tcl_stepAll_bud`).
+2. **The assembly** — bundle β (from `mixNodes`), κ (from `persistDs`-nonempty
+   nodes, kernels by `ascKernel_of_node`), the frame (`extFrame`), and apply
+   `mtkKernelsOD_of_debts`.
+3. **The tail** — `reindexMT`/`reindexMT_ok` onto `Fin nE`/`Fin nK`, then
+   `encodeMT` → `encodeMT_mem_codesM` → `hcompl` → `decidableSat_of_codes`. The
+   template is `hfrag_hcompl`, which is eleven lines.
+
+Artifact: 24,493 lines, 0 sorries, 0 warnings, 0 `sorryAx`; 435 axiom checks, of
+which 25 results depend on **no axioms at all**.
