@@ -20999,6 +20999,25 @@ theorem kPO_frame {I : Interp α} (hI : RCC5Interp I) (g : β → α)
     have hdr := disj_dr_ph hI g ck ik ph side att hgdom hckdom hupP hdnP elt helt
       seed hseed h
     exact absurd (hdr.symm.trans hpo) (by decide)
+
+/-- **`kUP`/`kDN`'s witness IS the bank member.**  Both branches ask for a pair
+    `f, e'` with `e'` attached and `f` `leE`-comparable to it; `leE` is
+    reflexive, so `f = e' = w` serves BOTH orientations.  No order reasoning is
+    needed on the kernel side either — the bank member is simply handed over
+    twice. -/
+theorem k_vert_witness {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
+    (att : κ → β → Bool) (P : β → Prop) {k : κ} {w : β} {b : Bool}
+    (hs : side k = b) (haw : att k w = true) (hD : P w) :
+    (∃ f e', side k = b ∧ att k e' = true ∧ leE elt e' f ∧ P f) ∧
+    (∃ f e', side k = b ∧ att k e' = true ∧ leE elt f e' ∧ P f) :=
+  ⟨⟨w, w, hs, haw, Or.inl rfl, hD⟩, ⟨w, w, hs, haw, Or.inl rfl, hD⟩⟩
+
+/-- **`kDR`'s witness IS the seed pair.**  The seed's kernel block is precisely
+    "this external is a `DR`-bank member of this kernel", so the branch is
+    discharged by exhibiting it. -/
+theorem k_dr_witness {β κ : Type} (seed : β ⊕ κ → β ⊕ κ → Prop) (P : β → Prop)
+    {k : κ} {w : β} (hsd : seed (Sum.inr k) (Sum.inl w)) (hD : P w) :
+    ∃ f, seed (Sum.inr k) (Sum.inl f) ∧ P f := ⟨w, hsd, hD⟩
 end KernelReach
 
 section ODDebt
