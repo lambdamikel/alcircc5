@@ -4629,3 +4629,39 @@ and both it and its two read-off lemmas are **axiom-free**.
    With `extFrame_disj_dr` these are now model facts, not frame facts.
 3. **Reindex** onto `Fin nE`/`Fin nK`, feed `encodeMT_mem_codesM` with `mixKT`,
    then `hcompl` + `decidableSat_of_codes`.
+
+### 44.21 The seed must be abstract too, and the external debt closes (2026-08-22)
+
+**The catch.** Writing `hb` (`disj` ⟹ budgets within one) exposed that
+`seed := drSeed` — the model's FULL `DR` on the chosen nodes — is too generous.
+This is exactly §44.8's mistake for `elt := eltOf`, now on the disjointness side.
+The model relates many pairs by `DR`, including externals whose budgets are far
+apart (`N` and `N-3`), and `ee_all` fires on every declared `DR` edge.
+
+**The fix.** `seed` abstract — any symmetric sub-relation of the model's `DR`.
+The extraction then declares only its own `DR`-demand steps, and
+
+```
+bud x = bud x₀        (x ≤ x₀ along tcl ppStep — budget CONSTANT)
+      ≤ bud y₀ + 1    (a DR-demand step drops the budget by exactly one)
+      = bud y + 1
+```
+
+`hseed` (⟹ model `DR`) is all `hsep_of_model` and `extFrame_disj_dr` ever needed,
+and a sub-relation satisfies it just as well. `drSeed`/`drSeed_sym` are kept as
+the record of the MAXIMAL choice, the way `eltOf_sub` records it for the order.
+
+**The external debt is now closed**, both halves:
+
+| | |
+|---|---|
+| `ppStep_rho` | a step IS a model `PP` edge |
+| `tcl_ppStep_bud` | **the budget is CONSTANT along the order** — §44.3's discipline, now a theorem about the relation the certificate declares, not a convention about how the node set is walked |
+| `ppStep_hppE` | `hppE` discharged: the budget conjuncts are consequences of an EQUALITY |
+| `extFrame_disj_dr` | `hdr` |
+| the display above | `hb` |
+
+**Method.** Fourth time the same rule has paid: *write the consumer before
+believing the definition*. §43.8 (`elt`), §44.19 (the existence/construction
+seam), and now the seed. In every case the definition looked right in isolation
+and failed the moment an obligation was written against it.
