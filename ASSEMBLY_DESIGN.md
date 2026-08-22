@@ -5043,3 +5043,53 @@ phases strictly inside a period, never to the recurrent type itself.
 a probe, because the remaining case is small and structural. If it resists, route
 3 (widen the order) is preferable to route 2, since route 2 reopens `hrectQ`,
 which §43.11 closed by construction and would be a regression.
+
+### 45.6 Route 1 analysed: the gap is TWO simultaneous one-shot demands (2026-08-22)
+
+*Analysis, not yet Lean. Recorded because it sharpens §45 to a specific
+configuration and changes which route to take.*
+
+**Route 1 is false as stated.** The configuration is constructible: let the chain
+be driven by a persistent `∃PP.B`, and put `c(1) ⊂ w ⊂ c(2)` with `A` at `w` and
+no superpart of `c(2)` carrying `A`. Then `∃PP.A` holds at `c(1)` and fails at
+`c(2)`, so `A` is non-persistent at the phase `c(1)`. Nothing forbids this.
+
+**But the extraction chooses the chain**, and that changes the picture. If a
+phase's demand is unserved, INSERT its witness as the next chain node. `w` is a
+superpart of `c(1)`, so the chain `… ⊂ c(1) ⊂ w ⊂ …` is legitimate, and the
+persistent demands survive the insertion by `persistDs_up`. So **one** one-shot
+demand per phase costs one extra step and is served.
+
+The wrap-around also works: if every phase's demand is served at the NEXT phase,
+then `kDIR` holds with `b = a+1` for `a < p-1`, and for the last phase `b = 0` —
+because `mty (c i) = mty (c (i+p))` makes the argument carried at phase 0 exactly
+when it is carried at phase `p`.
+
+**Where it actually breaks: TWO simultaneously-live one-shot demands at one
+phase.** A linear chain has ONE successor. Serving `D₁` at `c(a+1)` is fine, but
+`D₂`'s witness is a superpart of `c(a)` and need not be comparable with `c(a+1)`
+— and `∃PP.D₂` need not survive to `c(a+1)`, precisely because `D₂` is not
+persistent. Persistence is exactly what makes round-robin work
+(`persistAll_productive`); without it there is nothing to cycle.
+
+So §45's sharp form is:
+
+> **can a satisfiable ∀PO-free concept force a kernel phase to carry two
+> simultaneously-live NON-persistent `∃PP` demands?**
+
+**Consequence for the route choice.** This is not a "widen the order" problem
+(route 3 does not help: the phase still has one successor), and not a
+cross-kernel problem (route 2 does not help either). It is a question about
+whether the FRAGMENT can force that configuration — the same species as §33's
+one-shot finding, one level up. The honest options are now:
+
+1. **prove it unforceable** — plausible, since forcing two one-shot demands to be
+   simultaneously live at a node that must also sit on an infinite chain is a
+   strong requirement;
+2. **restrict the certified claim** to concepts where it does not arise, which
+   would be a real narrowing of the fragment and must be labelled as such;
+3. **branch the kernel** — replace the linear chain by a tree, which is a
+   different certificate shape (`MultiTier`'s kernels are `Nat`-indexed) and
+   therefore a substantial redesign.
+
+Option 1 is the one to attempt; option 2 is the honest fallback.
