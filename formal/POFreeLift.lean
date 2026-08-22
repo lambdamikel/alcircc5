@@ -20048,6 +20048,62 @@ theorem pp_dichotomy (C0 : Concept) (P : α → Prop)
       rcases Classical.em (∃ D, Concept.ex pp D ∈ mty C0 I x) with h2 | h2
       · exact h2
       · exact absurd ⟨x, hx, fun D hD => h2 ⟨D, hD⟩⟩ h
+
+/-! #### The external order as a demand-step closure (§44.8)
+
+§44.8 established that `elt` must NOT be all of the model's `PP` on the chosen
+externals — that declares an edge between every model-`PP`-related pair, and two
+externals reached by different routes can have budgets far apart, breaking
+`ee_all`'s `bud e ≤ bud f + 1`.  It must be the transitive closure of the
+extraction's OWN `PP`-demand steps, along which the budget is constant.
+
+`tcl` is that closure, with the two facts `odSeed` needs (transitive,
+irreflexive) and the one `mixLt_rho`/`hsep_of_model` need (contained in the
+model's `PP`). -/
+
+/-- Transitive closure of a step relation. -/
+inductive tcl {β : Type} (step : β → β → Prop) : β → β → Prop
+  | base {a b} : step a b → tcl step a b
+  | tail {a b c} : tcl step a b → step b c → tcl step a c
+
+theorem tcl_trans {β : Type} (step : β → β → Prop) {a b c : β}
+    (h1 : tcl step a b) (h2 : tcl step b c) : tcl step a c := by
+  induction h2 with
+  | base h => exact tcl.tail h1 h
+  | tail _ hs ih => exact tcl.tail ih hs
+
+/-- The closure of `PP`-steps stays inside the model's `PP` — `comp(PP,PP) = {PP}`
+    once more.  This is `mixLt_rho`'s and `hsep_of_model`'s `helt`. -/
+theorem tcl_sub_pp {β : Type} (hI : RCC5Interp I) (f : β → α)
+    (hfdom : ∀ e, I.dom (f e)) (step : β → β → Prop)
+    (hstep : ∀ a b, step a b → I.rho (f a) (f b) = pp) :
+    ∀ a b, tcl step a b → I.rho (f a) (f b) = pp := by
+  intro a b h
+  induction h with
+  | base hs => exact hstep _ _ hs
+  | tail _ hs ih =>
+    exact rho_forced hI (hfdom _) (hfdom _) (hfdom _) ih (hstep _ _ hs) (by decide)
+
+/-- Irreflexive, because the model's `PP` is. -/
+theorem tcl_irrefl {β : Type} (hI : RCC5Interp I) (f : β → α)
+    (hfdom : ∀ e, I.dom (f e)) (step : β → β → Prop)
+    (hstep : ∀ a b, step a b → I.rho (f a) (f b) = pp) (a : β) :
+    ¬ tcl step a a := by
+  intro h
+  have hr := tcl_sub_pp hI f hfdom step hstep a a h
+  rw [hI.refl_eq (f a) (hfdom a)] at hr
+  exact absurd hr (by decide)
+
+/-- **THE EXTERNAL ORDER, READY FOR `odSeed`.**  Every hypothesis `odSeed` asks
+    of `elt` is discharged by the step relation being a `PP`-step relation. -/
+theorem tcl_ok {β : Type} (hI : RCC5Interp I) (f : β → α)
+    (hfdom : ∀ e, I.dom (f e)) (step : β → β → Prop)
+    (hstep : ∀ a b, step a b → I.rho (f a) (f b) = pp) :
+    (∀ a, ¬ tcl step a a) ∧
+    (∀ a b c, tcl step a b → tcl step b c → tcl step a c) ∧
+    (∀ a b, tcl step a b → I.rho (f a) (f b) = pp) :=
+  ⟨tcl_irrefl hI f hfdom step hstep, fun _ _ _ => tcl_trans step,
+    tcl_sub_pp hI f hfdom step hstep⟩
 end ODExtraction
 
 
@@ -23619,6 +23675,7 @@ end VerticalWitness
 #print axioms short_chain
 #print axioms ascend_step
 #print axioms pp_dichotomy
+#print axioms tcl_ok
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
