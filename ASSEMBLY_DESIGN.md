@@ -5009,3 +5009,37 @@ it.**
 Answering §45 needs either infinite models (intervals over ℚ, or a
 finitely-presented infinite structure) or a proof. §45.3's routes 2 and 3 remain
 available and are unaffected.
+
+### 45.5 Persistence CLIMBS — §45 narrows to acquired demands (2026-08-22)
+
+Rather than push route 1 speculatively after `wp100` failed, one fact settles
+cheaply and narrows the target a long way.
+
+**`persistDs_up`**: the guard `∀PP.(∃PP.D)` propagates upward (`sat_all_pp_up`,
+via `comp(PP,PP) = {PP}`) and also DELIVERS `∃PP.D` at everything above its
+holder. So
+
+```
+x PP y   ⟹   persistDs x ⊆ persistDs y
+```
+
+— the persistent set only GROWS along an ascending chain.
+
+Two consequences:
+
+* a demand persistent at a kernel's BASE stays persistent at every phase, so the
+  `Ds` chosen at the base **never degrades** — not previously established;
+* contrapositively (`persistDs_gap_is_acquired`), a demand non-persistent at a
+  phase was already non-persistent at the base.
+
+**So §45's open case is now:** the problematic demand must be one the phase
+**ACQUIRED** — present at the phase, absent (or non-persistent) at the base, and
+non-persistent at the phase. That is a far narrower target than "some phase has
+a non-persistent demand", and it suggests where to look: a phase can only
+acquire a demand if its type differs from the base's, so the case is confined to
+phases strictly inside a period, never to the recurrent type itself.
+
+**Judgment on how to proceed.** Route 1 is now worth a real attempt rather than
+a probe, because the remaining case is small and structural. If it resists, route
+3 (widen the order) is preferable to route 2, since route 2 reopens `hrectQ`,
+which §43.11 closed by construction and would be a regression.
