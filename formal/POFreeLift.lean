@@ -10757,6 +10757,112 @@ theorem ppNodes_length_le (n : MTKNode I C0) (fuel : Nat) :
       _ ≤ (cl C0).length * mtkBound C0 f + 1 :=
           Nat.add_le_add_right (Nat.mul_le_mul_right _ hlen) 1
       _ = mtkBound C0 (f + 1) := by rw [mtkBound]; omega
+
+/-! #### The full node set and its bound (§44.11 item 2)
+
+The lexicographic measure of §44.3, assembled.  `ppNodes` is the inner half —
+a `PP`-path closure at CONSTANT budget, measured by fuel.  `mixNodes` is the
+outer half: horizontal steps that DROP the budget, each of whose nodes carries a
+whole `ppNodes` closure.
+
+The horizontal depth is carried as its own recursion parameter rather than read
+off `n.k`, because a `ppNodes` member's budget equals `n.k` only by the THEOREM
+`ppNodes_bud`, which the equation compiler cannot see.  Callers pass
+`mdepth C₀`. -/
+
+/-- The node-count bound: `mtkBound` for each `PP`-path closure, times the
+    horizontal branching, per level of horizontal depth. -/
+def mixBound (C0 : Concept) (fuel : Nat) : Nat → Nat
+  | 0 => mtkBound C0 fuel
+  | b + 1 => mtkBound C0 fuel * (1 + (cl C0).length * mixBound C0 fuel b)
+
+/-- **THE FULL NODE SET.**  Each `PP`-path closure, and recursively the
+    horizontal children of each of its members at one less horizontal depth.
+    `∃PP`/`∃PPI` demands are NOT followed here — those are the `PP`-path
+    closure's job (`ppNodes`) and the kernels'. -/
+noncomputable def mixNodes (fuel : Nat) : Nat → MTKNode I C0 → List (MTKNode I C0)
+  | 0, n => ppNodes n fuel
+  | b + 1, n => (ppNodes n fuel).flatMap (fun m =>
+      m :: (mtk C0 I m.x m.k).attach.flatMap (fun p => match p with
+        | ⟨.ex r _, hF⟩ =>
+            if r = pp ∨ r = ppi then [] else mixNodes fuel b (mtkWitness m hF)
+        | _ => []))
+
+theorem self_mem_mixNodes (fuel b : Nat) (n : MTKNode I C0) :
+    n ∈ mixNodes fuel b n := by
+  cases b with
+  | zero => rw [mixNodes]; exact self_mem_ppNodes n fuel
+  | succ b' =>
+    rw [mixNodes]
+    exact List.mem_flatMap.mpr ⟨n, self_mem_ppNodes n fuel, List.mem_cons_self⟩
+
+/-- **THE FULL NODE SET IS SIZE-BOUNDED** by `mixBound C0 fuel b`, which is
+    computable from `C₀`, the fuel and the horizontal depth alone. -/
+theorem mixNodes_length_le (fuel : Nat) :
+    ∀ (b : Nat) (n : MTKNode I C0), (mixNodes fuel b n).length ≤ mixBound C0 fuel b := by
+  intro b
+  induction b with
+  | zero => intro n; rw [mixNodes, mixBound]; exact ppNodes_length_le n fuel
+  | succ b' ih =>
+    intro n
+    rw [mixNodes, List.length_flatMap]
+    have hinner : ∀ m : MTKNode I C0,
+        (m :: (mtk C0 I m.x m.k).attach.flatMap (fun p => match p with
+          | ⟨.ex r _, hF⟩ =>
+              if r = pp ∨ r = ppi then [] else mixNodes fuel b' (mtkWitness m hF)
+          | _ => [])).length
+        ≤ 1 + (cl C0).length * mixBound C0 fuel b' := by
+      intro m
+      rw [List.length_cons, List.length_flatMap]
+      have hlen : (mtk C0 I m.x m.k).attach.length ≤ (cl C0).length := by
+        rw [List.length_attach, mtk]
+        exact Nat.le_trans (List.length_filter_le _ _) (List.length_filter_le _ _)
+      have hsum : ((mtk C0 I m.x m.k).attach.map (fun p => (match p with
+            | ⟨.ex r _, hF⟩ =>
+                if r = pp ∨ r = ppi then [] else mixNodes fuel b' (mtkWitness m hF)
+            | _ => []).length)).sum
+          ≤ (mtk C0 I m.x m.k).attach.length * mixBound C0 fuel b' := by
+        refine sum_map_le _ _ _ ?_
+        rintro ⟨F, hF⟩ _
+        cases F with
+        | ex r c =>
+          dsimp only
+          split
+          · exact Nat.zero_le _
+          · exact ih (mtkWitness m hF)
+        | _ => exact Nat.zero_le _
+      have := Nat.le_trans hsum (Nat.mul_le_mul_right _ hlen)
+      omega
+    calc ((ppNodes n fuel).map (fun m =>
+            (m :: (mtk C0 I m.x m.k).attach.flatMap (fun p => match p with
+              | ⟨.ex r _, hF⟩ =>
+                  if r = pp ∨ r = ppi then [] else mixNodes fuel b' (mtkWitness m hF)
+              | _ => [])).length)).sum
+        ≤ (ppNodes n fuel).length * (1 + (cl C0).length * mixBound C0 fuel b') :=
+          sum_map_le _ _ _ (fun m _ => hinner m)
+      _ ≤ mtkBound C0 fuel * (1 + (cl C0).length * mixBound C0 fuel b') :=
+          Nat.mul_le_mul_right _ (ppNodes_length_le n fuel)
+      _ = mixBound C0 fuel (b' + 1) := by rw [mixBound]
+
+/-- **`K(C₀)` FOR THE MIXED FRAGMENT.**  The node bound, computable from `C₀`
+    ALONE: the fuel is the number of possible model types — every `mty C0 I x` is
+    a filter of `cl C₀`, so there are at most `2 ^ |cl C₀|` of them — and the
+    horizontal depth is `mdepth C₀`.
+
+    **Scope, stated precisely.**  `mixNodes_length_le` is a bound for ANY fuel;
+    naming this particular fuel does NOT yet prove it SUFFICES.  Adequacy is the
+    coverage question: `ppNodes` follows `ppWitness`, i.e. the model's arbitrary
+    `Classical.choose` witness, which need not give a repeat-free path.  The CUT
+    (§44.7) is what will make the choice repeat-free — `path_cut` is certified,
+    but it is not yet APPLIED to the witness selection.  Until it is, `mixK` is
+    the right bound with an unproved adequacy hypothesis, not a finished K(C₀). -/
+def mixK (C0 : Concept) : Nat :=
+  mixBound C0 (2 ^ (cl C0).length) (mdepth C0)
+
+/-- The node set is bounded by `mixK C₀`. -/
+theorem mixNodes_length_le_K (n : MTKNode I C0) :
+    (mixNodes (2 ^ (cl C0).length) (mdepth C0) n).length ≤ mixK C0 :=
+  mixNodes_length_le _ _ n
 end MtkRecursion
 
 /-! ### The horizontal ∀PO-free fragment (`ASSEMBLY_DESIGN.md §15`)
@@ -23152,6 +23258,8 @@ end VerticalWitness
 #print axioms mtkNodes_length_le
 #print axioms ppNodes_length_le
 #print axioms ppNodes_bud
+#print axioms mixNodes_length_le
+#print axioms mixNodes_length_le_K
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
 #print axioms encodeMT_mtOk
