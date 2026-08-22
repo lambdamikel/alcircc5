@@ -14845,6 +14845,43 @@ theorem rr_segment_from (hI : RCC5Interp I) (C0 : Concept)
   · exact Nat.mul_le_mul (by omega) (Nat.le_refl _)
   · rw [harith]; exact heq
 
+
+/-- **AN ASCENDING KERNEL FROM A NODE'S PERSISTENT DEMANDS** (§44.27).
+    Everything `mtkKernelsOD_of_debts` asks of a kernel, supplied at once from
+    one node:
+
+    * the chain and `hdom`      — `rrPt` / `rrPt_dom`;
+    * `hstep` (`cdir true = pp`) — `rrPt_step`;
+    * the base `ik`, period `pk`, `hp` and `hty` — `rr_segment_from`, and the
+      base can be pushed past ANY bound `L0`, which is what `hinj` needs to keep
+      the kernel base off the finite external list;
+    * `kDIR`, i.e. every persistent demand carried inside the period —
+      `rr_covers`.
+
+    So a kernel is not something the extraction must construct; it is something a
+    node with a nonempty `persistDs` already has. -/
+theorem ascKernel_of_node (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat) :
+    ∃ (c : Nat → α) (i p : Nat),
+      (∀ n, I.dom (c n)) ∧
+      (∀ n, I.rho (c n) (c (n + 1)) = cdir true) ∧
+      L0 ≤ i ∧ 0 < p ∧
+      mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ D ∈ persistDs C0 I x, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) := by
+  have h0 : persistAll I C0 (persistDs C0 I x) x := persistAll_persistDs hx
+  obtain ⟨i, p, hL0, hi, hp, hdvd, _, hty⟩ :=
+    rr_segment_from hI C0 (persistDs C0 I x) hL x h0 L0
+  refine ⟨rrPt hI C0 (persistDs C0 I x) hL x h0, i, p,
+    rrPt_dom hI C0 (persistDs C0 I x) hL x h0,
+    rrPt_step hI C0 (persistDs C0 I x) hL x h0, hL0, hp, hty, ?_⟩
+  intro D hD
+  obtain ⟨n, hn⟩ := List.get_of_mem hD
+  obtain ⟨b, hb, hcarry⟩ :=
+    rr_covers hI C0 (persistDs C0 I x) hL x h0 i p hi hp hdvd n.val n.isLt
+  refine ⟨b, hb, ?_⟩
+  have : (⟨n.val, n.isLt⟩ : Fin (persistDs C0 I x).length) = n := Fin.ext rfl
+  rw [this, hn] at hcarry
+  exact hcarry
 /-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
     needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
     while the base `i` and period `p` are available at ARBITRARILY LATE `L0`,
@@ -24403,6 +24440,7 @@ end VerticalWitness
 #print axioms rPPI_witness
 #print axioms persistAll_persistDs
 #print axioms persistDs_split
+#print axioms ascKernel_of_node
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
