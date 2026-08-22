@@ -20562,6 +20562,47 @@ theorem hdn_reach (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α)
     rw [hI.conv_ (ck k (ik k + a)) (g e) (hckdom k _) (hgdom e), h2]
     rfl
 
+
+/-! §43's `cross_*_of_shared` forced the cross-kernel relation when two kernels
+share an external.  With `elt` non-empty they need only be `elt`-comparably
+attached, and the same composition still forces it — one extra `PP` step. -/
+
+/-- **`hqpp`'s relation half.**  A DOWN-kernel below `e`, an UP-kernel above
+    `e'`, and `e ≤ e'`: the chain `phase ⊂ e ⊆ e' ⊂ phase'` is all `PP`. -/
+theorem hq_pp_of_bases (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α)
+    (ik : κ → Nat) (elt : β → β → Prop)
+    (helt : ∀ a b, elt a b → I.rho (g a) (g b) = pp)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
+    (k k' : κ) (a b : Nat) (e e' : β)
+    (hdn : I.rho (g e) (ck k (ik k + a)) = ppi)
+    (hup : I.rho (g e') (ck k' (ik k' + b)) = pp)
+    (hle : leE elt e e') :
+    I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp := by
+  have h1 : I.rho (ck k (ik k + a)) (g e) = pp := by
+    rw [hI.conv_ (g e) (ck k (ik k + a)) (hgdom e) (hckdom k _), hdn]; rfl
+  have h3 : I.rho (ck k (ik k + a)) (g e') = pp := by
+    rcases hle with rfl | hlt
+    · exact h1
+    · exact rho_forced hI (hckdom k _) (hgdom e') (hgdom e) h1 (helt _ _ hlt)
+        (by decide)
+  exact rho_forced hI (hckdom k _) (hckdom k' _) (hgdom e') h3 hup (by decide)
+
+/-- **`hqppi`'s relation half** — the mirror: `phase' ⊂ e ⊆ e' ⊂ phase`, read in
+    the other orientation. -/
+theorem hq_ppi_of_bases (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α)
+    (ik : κ → Nat) (elt : β → β → Prop)
+    (helt : ∀ a b, elt a b → I.rho (g a) (g b) = pp)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
+    (k k' : κ) (a b : Nat) (e e' : β)
+    (hdn : I.rho (g e) (ck k' (ik k' + b)) = ppi)
+    (hup : I.rho (g e') (ck k (ik k + a)) = pp)
+    (hle : leE elt e e') :
+    I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi := by
+  have hpp : I.rho (ck k' (ik k' + b)) (ck k (ik k + a)) = pp :=
+    hq_pp_of_bases hI g ck ik elt helt hgdom hckdom k' k b a e e' hdn hup hle
+  rw [hI.conv_ (ck k' (ik k' + b)) (ck k (ik k + a)) (hckdom k' _) (hckdom k _),
+    hpp]
+  rfl
 end KernelReach
 
 section ODDebt
@@ -24002,6 +24043,8 @@ end VerticalWitness
 #print axioms seedMix_hb
 #print axioms hup_reach
 #print axioms hdn_reach
+#print axioms hq_pp_of_bases
+#print axioms hq_ppi_of_bases
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
