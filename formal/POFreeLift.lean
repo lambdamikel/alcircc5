@@ -20603,6 +20603,92 @@ theorem hq_ppi_of_bases (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat →
   rw [hI.conv_ (ck k' (ik k' + b)) (ck k (ik k + a)) (hckdom k' _) (hckdom k _),
     hpp]
   rfl
+
+/-! #### The frame's soundness AT ARBITRARY PHASES (§44.23)
+
+`mixLt_rho` and `extFrame_disj_dr` read each kernel at its BASE `ik k`.  `hdrk`
+and `hqdr` need the same facts at an arbitrary phase of each kernel, since the
+obligations quantify over the phase window.
+
+Generalizing costs one parameter — a phase choice `ph : κ → Nat` — and the
+kernel-kernel case is exactly `hq_pp_of_bases`, already certified.  Everything
+else is the same composition. -/
+
+/-- The model element a node stands for, reading each kernel at phase `ph k`. -/
+def nodeP (g : β → α) (ck : κ → Nat → α) (ik ph : κ → Nat) : β ⊕ κ → α :=
+  Sum.elim g (fun k => ck k (ik k + ph k))
+
+theorem nodeP_dom {I : Interp α} (g : β → α) (ck : κ → Nat → α) (ik ph : κ → Nat)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n)) :
+    ∀ v : β ⊕ κ, I.dom (nodeP g ck ik ph v) := by
+  rintro (e | k)
+  · exact hgdom e
+  · exact hckdom k _
+
+/-- **THE ORDER IS SOUND FOR THE MODEL'S `PP` AT ANY PHASES.** -/
+theorem mixLt_rho_ph {I : Interp α} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik ph : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
+    (hupP : ∀ k e a, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp)
+    (hdnP : ∀ k e a, side k = false → att k e = true →
+      I.rho (ck k (ik k + a)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (x y : β ⊕ κ) (h : mixLt elt side att x y) :
+    I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = pp := by
+  rcases x with e | k <;> rcases y with f | k'
+  · exact helt _ _ h
+  · obtain ⟨hs, e', hae, hle⟩ := h
+    exact hup_reach hI g ck ik side att elt helt hgdom hckdom
+      (fun k e a hs' hae' => hupP k e a hs' hae') k' e (ph k') hs ⟨e', hae, hle⟩
+  · obtain ⟨hs, e', hae, hle⟩ := h
+    have := hdn_reach hI g ck ik side att elt helt hgdom hckdom
+      (fun k e a hs' hae' => by
+        rw [hI.conv_ (ck k (ik k + a)) (g e) (hckdom k _) (hgdom e),
+          hdnP k e a hs' hae']; rfl)
+      k f (ph k) hs ⟨e', hae, hle⟩
+    show I.rho (ck k (ik k + ph k)) (g f) = pp
+    rw [hI.conv_ (g f) (ck k (ik k + ph k)) (hgdom f) (hckdom k _), this]
+    rfl
+  · obtain ⟨hs, hs', e, e', hae, hae', hle⟩ := h
+    refine hq_pp_of_bases hI g ck ik elt helt hgdom hckdom k k' (ph k) (ph k') e e'
+      ?_ (hupP k' e' (ph k') hs' hae') hle
+    rw [hI.conv_ (ck k (ik k + ph k)) (g e) (hckdom k _) (hgdom e),
+      hdnP k e (ph k) hs hae]
+    rfl
+
+/-- **DISJOINTNESS IS THE MODEL'S `DR` AT ANY PHASES** — so `hdrk` and `hqdr`
+    are, like `hdr`, premises about a REAL relation. -/
+theorem disj_dr_ph {I : Interp α} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik ph : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
+    (hupP : ∀ k e a, side k = true → att k e = true →
+      I.rho (g e) (ck k (ik k + a)) = pp)
+    (hdnP : ∀ k e a, side k = false → att k e = true →
+      I.rho (ck k (ik k + a)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = dr)
+    {x y : β ⊕ κ}
+    (h : ∃ x₀ y₀, mixLe elt side att x x₀ ∧ mixLe elt side att y y₀ ∧
+      seed x₀ y₀) :
+    I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hlt := mixLt_rho_ph hI g ck ik ph side att hgdom hckdom hupP hdnP elt helt
+  have hdomN := nodeP_dom g ck ik ph hgdom hckdom
+  have h1 : I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y₀) = dr := by
+    rcases hx with rfl | hx'
+    · exact hseed _ _ hs
+    · exact rho_forced hI (hdomN x) (hdomN y₀) (hdomN x₀) (hlt x x₀ hx')
+        (hseed _ _ hs) (by decide)
+  rcases hy with rfl | hy'
+  · exact h1
+  · have hyy : I.rho (nodeP g ck ik ph y₀) (nodeP g ck ik ph y) = ppi := by
+      rw [hI.conv_ (nodeP g ck ik ph y) (nodeP g ck ik ph y₀) (hdomN y) (hdomN y₀),
+        hlt y y₀ hy']
+      rfl
+    exact rho_forced hI (hdomN x) (hdomN y) (hdomN y₀) h1 hyy (by decide)
 end KernelReach
 
 section ODDebt
@@ -24045,6 +24131,8 @@ end VerticalWitness
 #print axioms hdn_reach
 #print axioms hq_pp_of_bases
 #print axioms hq_ppi_of_bases
+#print axioms mixLt_rho_ph
+#print axioms disj_dr_ph
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
