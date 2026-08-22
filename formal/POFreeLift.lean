@@ -19859,6 +19859,47 @@ theorem serveChain_rho (hI : RCC5Interp I) :
     · exact rho_forced hI hu (serveChain_dom t v hv hrest w hw') hv huv
         (ih v hv hrest w hw') (by decide)
 
+/-- A member splits its list.  (Core has no `List.append_of_mem` here.) -/
+theorem mem_split {A : Type} : ∀ (l : List A) (a : A), a ∈ l →
+    ∃ mid post, l = mid ++ a :: post := by
+  intro l
+  induction l with
+  | nil => intro a ha; exact absurd ha List.not_mem_nil
+  | cons z t ih =>
+    intro a ha
+    rcases List.mem_cons.mp ha with rfl | ha'
+    · exact ⟨[], t, rfl⟩
+    · obtain ⟨mid, post, heq⟩ := ih a ha'
+      exact ⟨z :: mid, post, by rw [heq]; rfl⟩
+
+/-- A chain restricted to a suffix is still a chain, started at the split
+    point. -/
+theorem serveChain_suffix : ∀ (mid : List α) (u w : α) (post : List α),
+    ServeChain I u (mid ++ w :: post) → ServeChain I w post := by
+  intro mid
+  induction mid with
+  | nil => intro u w post h; exact h.2.2
+  | cons z mid' ih => intro u w post h; exact ih z w post h.2.2
+
+/-- **THE HEAD CUT.**  If a chain's head shares a type with a LATER member, the
+    chain can be restarted at that member: strictly shorter, same head type, and
+    still a chain from `u` — `serveChain_rho` supplies the re-linked edge. -/
+theorem serveChain_cut_head (hI : RCC5Interp I) {C0 : Concept}
+    (u v w : α) (t : List α) (hu : I.dom u) (hch : ServeChain I u (v :: t))
+    (hw : w ∈ t) (hty : mty C0 I v = mty C0 I w) :
+    ∃ post, ServeChain I u (w :: post) ∧
+      (w :: post).length < (v :: t).length ∧
+      mty C0 I w = mty C0 I v := by
+  obtain ⟨hv, huv, hrest⟩ := hch
+  obtain ⟨mid, post, heq⟩ := mem_split t w hw
+  refine ⟨post, ⟨serveChain_dom t v hv hrest w hw, ?_, ?_⟩, ?_, hty.symm⟩
+  · exact rho_forced hI hu (serveChain_dom t v hv hrest w hw) hv huv
+      (serveChain_rho hI t v hv hrest w hw) (by decide)
+  · rw [heq] at hrest; exact serveChain_suffix mid v w post hrest
+  · rw [heq, List.length_cons, List.length_cons, List.length_append,
+      List.length_cons]
+    omega
+
 /-- **THE CUT ON A CHAIN.**  A demand at `u` served by `v` is equally served by
     any LATER chain member of the same type — so the segment between them can be
     dropped.  Both of `path_cut`'s obligations come out of `serveChain_rho`. -/
@@ -19870,6 +19911,64 @@ theorem chain_cut (hI : RCC5Interp I) {C0 : Concept} {u v : α} {t : List α}
   have hvw : I.rho v w = pp := serveChain_rho hI t v hv hch w hw
   have hwd : I.dom w := serveChain_dom t v hv hch w hw
   exact path_cut hI hu hv hwd huv hvw hty hD
+
+/-- The head type of a chain — the invariant the cut preserves, and the only
+    thing the caller needs (a demand served by the old head is served by the new
+    one precisely because the TYPE is the same). -/
+noncomputable def htype (C0 : Concept) (I : Interp α) :
+    List α → Option (List Concept)
+  | [] => none
+  | x :: _ => some (mty C0 I x)
+
+/-- **THE CUT ANYWHERE.**  A repeated type anywhere in the chain yields a
+    strictly shorter chain with the same head type.  Induction on the prefix:
+    the head case is `serveChain_cut_head`, and a step just carries its own
+    node along. -/
+theorem serveChain_cut (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (pre : List α) (u v w : α) (t : List α),
+      I.dom u → ServeChain I u (pre ++ v :: t) → w ∈ t →
+      mty C0 I v = mty C0 I w →
+      ∃ ms, ServeChain I u ms ∧ ms.length < (pre ++ v :: t).length ∧
+        htype C0 I ms = htype C0 I (pre ++ v :: t) := by
+  intro pre
+  induction pre with
+  | nil =>
+    intro u v w t hu hch hw hty
+    obtain ⟨post, hms, hlt, hhead⟩ := serveChain_cut_head hI u v w t hu hch hw hty
+    exact ⟨w :: post, hms, hlt, by show some _ = some _; rw [hhead]⟩
+  | cons z pre' ih =>
+    intro u v w t hu hch hw hty
+    obtain ⟨hz, huz, hrest⟩ := hch
+    obtain ⟨ms, hms, hlt, hht⟩ := ih z v w t hz hrest hw hty
+    refine ⟨z :: ms, ⟨hz, huz, hms⟩, ?_, rfl⟩
+    show ms.length + 1 < (pre' ++ v :: t).length + 1
+    omega
+
+/-- **THE SHORT CHAIN.**  Iterating the cut: every chain has a companion of
+    length ≤ `|typeEnum C₀|` with the SAME HEAD TYPE — so a demand served by the
+    original head is served by the new one.  This is §44's adequacy. -/
+theorem short_chain (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (n : Nat) (u : α) (ns : List α), ns.length ≤ n → I.dom u →
+      ServeChain I u ns →
+      ∃ ms, ServeChain I u ms ∧ ms.length ≤ (typeEnum C0).length ∧
+        htype C0 I ms = htype C0 I ns := by
+  intro n
+  induction n with
+  | zero =>
+    intro u ns hlen hu hch
+    cases ns with
+    | nil => exact ⟨[], hch, Nat.zero_le _, rfl⟩
+    | cons a t => exact absurd hlen (by simp)
+  | succ m ih =>
+    intro u ns hlen hu hch
+    by_cases hshort : ns.length ≤ (typeEnum C0).length
+    · exact ⟨ns, hch, hshort, rfl⟩
+    · obtain ⟨pre, v, t, heq, w, hw, hty⟩ :=
+        chain_long_has_dup C0 I ns (by omega)
+      subst heq
+      obtain ⟨ms, hms, hlt, hht⟩ := serveChain_cut hI pre u v w t hu hch hw hty
+      obtain ⟨ms', hms', hshort', hht'⟩ := ih u ms (by omega) hu hms
+      exact ⟨ms', hms', hshort', hht'.trans hht⟩
 end ODExtraction
 
 
@@ -23436,6 +23535,9 @@ end VerticalWitness
 #print axioms path_cut_mtk
 #print axioms serveChain_rho
 #print axioms chain_cut
+#print axioms serveChain_cut_head
+#print axioms serveChain_cut
+#print axioms short_chain
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
