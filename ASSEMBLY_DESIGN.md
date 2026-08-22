@@ -4788,3 +4788,35 @@ the pigeonhole is the same one the fuel uses.
 3. **The coverage witness lists.** Routing done (`odSeed_he_ex`/`odSeed_hk_ex`);
    what remains is producing the witnesses from `mtkNodesH_covers`, the banks and
    `rr_covers`.
+
+### 44.26 The coverage witnesses, and a third parameter that had to stay abstract
+
+**All four horizontal/vertical witness branches of `odSeed_he_ex` are now
+supplied**, each from the model's own `mtkWitness`/`ppWitness`/`ppiWitness`:
+
+| branch | witness | frame condition |
+|---|---|---|
+| `rDR` | `mtkWitness` | `sAdjK`-adjacent BY DEFINITION — the seed's external block |
+| `rPO` | `mtkWitness` | `PO` is neither `PP` nor `DR`, so no `elt` edge and no `disj` (`po_not_elt`, `po_not_disj`) |
+| `rPP` | `ppWitness` | one step — an `elt`-SUCCESSOR |
+| `rPPI` | `ppiWitness` | one step — an `elt`-PREDECESSOR |
+
+**The catch, found by writing `rPPI` against the routing lemma.** `ppStep` alone
+does NOT cover `rPPI`: an `∃PPI` witness is a proper PART of the demanding node,
+so it is an `elt`-predecessor, and no `∃PP` demand need point at it. The step
+relation must be
+
+```
+stepAll e f := ppStep e f ∨ ppiStep f e
+```
+
+— an `∃PPI` demand contributes its step in the OTHER direction. Both still point
+up the model's `PP`, so every `tcl` fact survives and the budget stays constant
+(`tcl_stepAll_bud`).
+
+**And the knock-on.** `mixLe_inl_bud` and `seedMix_hb` hard-coded `tcl ppStep`.
+They now take the step abstractly with a budget-constancy hypothesis — the third
+time a parameter had to be kept abstract rather than pinned to the first
+plausible instance (`elt` §44.8, `seed` §44.21, `step` here). The pattern is the
+same each time: **pin a parameter and the obligations written against it stop
+being provable; keep it abstract and carry only the property actually used.**
