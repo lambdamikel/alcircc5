@@ -19780,6 +19780,65 @@ theorem path_cut_below (hI : RCC5Interp I) {t u v : α}
     (h1 : I.rho t u = pp) (h2 : I.rho u v = pp) : I.rho t v = pp :=
   rho_forced hI ht hv hu h1 h2 (by decide)
 
+
+/-! #### Serving chains, and why a shortest one is repeat-free (§44.14 item 1)
+
+The `β` closure adds, for each node and each `∃PP` demand, one model witness.
+The witnesses form a CHAIN, and its length is what the fuel has to cover.
+
+`serveChain_rho` is the fact that makes the cut usable on such a chain: every
+member is a proper part of the START, not merely of its predecessor —
+`comp(PP,PP) = {PP}` again. So for a demand at `u` served by `v`, and any LATER
+`w` on the chain with `mty v = mty w`, both of the cut's obligations hold
+(`I.rho u w = pp` and `D ∈ mty w`), and the segment `v … w` can be dropped.
+
+A chain with no droppable segment therefore has pairwise-distinct types, and
+`repeatfree_len_le` bounds it by `|typeEnum C₀|`. -/
+
+/-- A chain of proper-part steps starting above `u`. -/
+def ServeChain (I : Interp α) : α → List α → Prop
+  | _, [] => True
+  | u, v :: t => I.dom v ∧ I.rho u v = pp ∧ ServeChain I v t
+
+/-- Every member of a chain is in the domain. -/
+theorem serveChain_dom :
+    ∀ (ns : List α) (u : α), I.dom u → ServeChain I u ns → ∀ w ∈ ns, I.dom w := by
+  intro ns
+  induction ns with
+  | nil => intro u _ _ w hw; exact absurd hw List.not_mem_nil
+  | cons v t ih =>
+    intro u _ hch w hw
+    obtain ⟨hv, _, hrest⟩ := hch
+    rcases List.mem_cons.mp hw with rfl | hw'
+    · exact hv
+    · exact ih v hv hrest w hw'
+
+/-- **EVERY MEMBER IS ABOVE THE START**, not merely above its predecessor. -/
+theorem serveChain_rho (hI : RCC5Interp I) :
+    ∀ (ns : List α) (u : α), I.dom u → ServeChain I u ns →
+      ∀ w ∈ ns, I.rho u w = pp := by
+  intro ns
+  induction ns with
+  | nil => intro u _ _ w hw; exact absurd hw List.not_mem_nil
+  | cons v t ih =>
+    intro u hu hch w hw
+    obtain ⟨hv, huv, hrest⟩ := hch
+    rcases List.mem_cons.mp hw with rfl | hw'
+    · exact huv
+    · exact rho_forced hI hu (serveChain_dom t v hv hrest w hw') hv huv
+        (ih v hv hrest w hw') (by decide)
+
+/-- **THE CUT ON A CHAIN.**  A demand at `u` served by `v` is equally served by
+    any LATER chain member of the same type — so the segment between them can be
+    dropped.  Both of `path_cut`'s obligations come out of `serveChain_rho`. -/
+theorem chain_cut (hI : RCC5Interp I) {C0 : Concept} {u v : α} {t : List α}
+    (hu : I.dom u) (hv : I.dom v) (huv : I.rho u v = pp)
+    (hch : ServeChain I v t) {w : α} (hw : w ∈ t)
+    (hty : mty C0 I v = mty C0 I w) {D : Concept} (hD : D ∈ mty C0 I v) :
+    I.rho u w = pp ∧ D ∈ mty C0 I w := by
+  have hvw : I.rho v w = pp := serveChain_rho hI t v hv hch w hw
+  have hwd : I.dom w := serveChain_dom t v hv hch w hw
+  exact path_cut hI hu hv hwd huv hvw hty hD
 end ODExtraction
 
 
@@ -23343,6 +23402,8 @@ end VerticalWitness
 #print axioms odSeed_E_pp
 #print axioms path_cut
 #print axioms path_cut_mtk
+#print axioms serveChain_rho
+#print axioms chain_cut
 #print axioms mixLt_rho
 #print axioms hsep_of_model
 #print axioms odSeed_he_ex
