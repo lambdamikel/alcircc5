@@ -5203,3 +5203,66 @@ from "unknown model-theoretic argument" to "a specific, local, composition-legal
 edge choice, made globally consistent by patchwork". It is not finished, and I
 am not claiming it will close — but it is now a concrete construction with a
 named tool, rather than a hope.
+
+## 46. CORRECTION: route 3 DOES work, and here is what it costs (2026-08-22)
+
+### 46.1 The correction
+
+§45.6 dismissed route 3 with "the phase still has one successor". **That is
+wrong.** The accidental demand does not need a chain successor — it needs an
+EXTERNAL. `k_ex`'s external branch serves `r = pp` via `K k f = pp`, i.e.
+`mixLt (inr k) (inl f)`, i.e. the kernel BELOW `f`. So an accidental `∃PP.D` at a
+phase is served by an external `f` ABOVE the kernel carrying `D`.
+
+The only thing blocking that is `side` being **per-kernel**: `mixLt`'s `inr/inl`
+clause reads `side k = false`, so a kernel that is above its `∃PP`-served
+externals (`side = true`) can never be below anything.
+
+### 46.2 The fix, precisely
+
+Replace the per-kernel `side` by two per-external predicates, `up k e` and
+`dn k e`. Then
+
+```
+inl e < inr k   iff  ∃ e', up k e' ∧ e ≤ e'
+inr k < inl e   iff  ∃ e', dn k e' ∧ e' ≤ e
+inr k < inr k'  iff  ∃ e e', dn k e ∧ up k' e' ∧ e ≤ e'
+```
+
+Transitivity goes through with **one** coherence condition —
+
+> `up k x ∧ dn k y  ⟹  elt x y`
+
+— which is semantically forced anyway (`x ⊂ kernel ⊂ y`). All eight cases check;
+irreflexivity uses the same condition. `mixLt_no_below` becomes false but is NOT
+used by `odSeed` (its `djDown` is free by downward closure — that was `odMix`'s
+lemma).
+
+**This closes §45**: accidental demands route to externals above the kernel, and
+no phase needs two successors.
+
+### 46.3 What it costs — the honest number
+
+The order is what everything in §§43–44 is stated against. Changing it touches,
+at minimum:
+
+`mixLt`, `mixLt_trans`, `mixLe_trans`, `odSeed`, `odSeed_K_up`/`_K_dn`/
+`_Q_forced`, `mixLt_rho`, `mixLt_rho_ph`, `hsep_of_model`, `disj_dr_ph`,
+`odLt_E_cases`, `odLt_hEreal`, `odLt_hKreal`, `odLt_hQreal`,
+`mtkKernelsOD_of_debts`, `hup_reach`, `hdn_reach`, `hq_pp_of_bases`,
+`hq_ppi_of_bases`, `mixLe_inl_bud`, `seedMix_hb`, `kPO_frame`, `extFrame`,
+`extFrame_lt`, `extFrame_disj_dr`, `odSeed_he_ex`, `odSeed_hk_ex`.
+
+**Twenty-six declarations.** Every one is a mechanical re-statement — no new
+mathematics, and the proofs are the same compositions — but it is the whole
+frame layer, and it is a multi-session refactor by any honest count.
+
+### 46.4 The choice
+
+* **Do it.** §45 closes, the fragment stays fully general, and nothing in the
+  soundness core moves. Cost: the refactor above.
+* **Park §45.** Everything certified stands; the gap is precisely documented and
+  the fix is specified, so a later session can execute it cold.
+
+I do not think this is mine to decide unilaterally: it is a scope commitment, and
+it is exactly the multi-session refactor that was flagged as unwelcome.
