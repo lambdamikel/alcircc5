@@ -4665,3 +4665,31 @@ the record of the MAXIMAL choice, the way `eltOf_sub` records it for the order.
 believing the definition*. §43.8 (`elt`), §44.19 (the existence/construction
 seam), and now the seed. In every case the definition looked right in isolation
 and failed the moment an obligation was written against it.
+
+### 44.22 The external side of the extraction is COMPLETE (2026-08-22)
+
+`mtkKernelsOD_of_debts` asks three things of the externals. All three are now
+theorems about the extraction's own data:
+
+| obligation | discharged by | content |
+|---|---|---|
+| `hppE` | `ppStep_hppE` | relation half from `ppStep_rho`; budget halves are consequences of an EQUALITY (`tcl_ppStep_bud`) |
+| `hdr` | `extFrame_disj_dr` | `disj` IS the model's `DR`, by composition down both sides |
+| `hb` | `seedMix_hb` | `sAdjK_bud` for the external seed block; one new input `hkb` for the kernel block |
+
+with the two structural pieces underneath:
+
+* **`elt := tcl ppStep`** — the extraction's own `∃PP`-demand steps, closed
+  transitively. `tcl_ok` gives `odSeed` everything it asks; `tcl_ppStep_bud`
+  makes §44.3's constant-budget discipline a theorem about the DECLARED relation.
+* **`seed := seedMix`** — `sAdjK` (already in the campaign) on externals, a bank
+  block for kernels, and NO kernel-kernel block: cross-kernel `DR` comes from
+  `djDown` for free, and declaring it would be the `hrectQ` staircase again.
+
+`hkb` is not a new unknown: §43.10 already fixes bank members one budget below
+their kernel.
+
+**Remaining:** the kernel side (`hup0`/`hdn0`, then `hup`/`hdn`/`hdrk` and
+`hqpp`/`hqppi`/`hqdr` — the last three composition-forced by §43's
+`cross_*_of_shared`), the coverage witness lists, and reindex / bounds /
+`hcompl`.
