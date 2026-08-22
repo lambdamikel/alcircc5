@@ -6833,6 +6833,55 @@ theorem persistAll_productive (hI : RCC5Interp I) {C0 : Concept}
   exact ⟨mem_mty.mpr ⟨mty_sub _ hex', hall' y hdy hr⟩,
     sat_all_pp_up hI hdx hdy hr hall'⟩
 
+
+/-! #### Which demands are persistent (§44.26 item, the kernel side)
+
+`rr_covers` — the round-robin coverage that discharges `kDIR` — consumes
+`persistAll I C0 Ds x`: every demand in `Ds` carries BOTH `∃PP.D` and its guard
+`∀PP.(∃PP.D)`.  The missing bridge was simply *which* demands those are.
+
+`persistDs` is the answer, and multi-persistence for it holds BY CONSTRUCTION.
+So at any node the `∃PP` demands split cleanly:
+
+* **persistent** — in `persistDs`, hence served by a round-robin KERNEL
+  (`rrPt` + `rr_segment_from` + `rr_covers`, all certified);
+* **one-shot** — not in `persistDs`, hence served by an `elt` edge to an
+  external, which is §44's whole point and terminates by `short_chain`.
+
+That split is what makes the two halves of the campaign fit together. -/
+
+open Classical in
+/-- The persistent `∃PP` demands at `x`: those whose guard also holds. -/
+noncomputable def persistDs (C0 : Concept) (I : Interp α) (x : α) : List Concept :=
+  (cl C0).filter (fun D => decide (Concept.ex pp D ∈ mty C0 I x ∧
+    sat I x (Concept.all pp (Concept.ex pp D))))
+
+open Classical in
+theorem mem_persistDs {C0 : Concept} {x : α} {D : Concept} :
+    D ∈ persistDs C0 I x ↔ D ∈ cl C0 ∧ Concept.ex pp D ∈ mty C0 I x ∧
+      sat I x (Concept.all pp (Concept.ex pp D)) := by
+  unfold persistDs
+  rw [List.mem_filter]
+  constructor
+  · intro ⟨h1, h2⟩; exact ⟨h1, of_decide_eq_true h2⟩
+  · intro ⟨h1, h2⟩; exact ⟨h1, decide_eq_true h2⟩
+
+/-- **MULTI-PERSISTENCE HOLDS FOR `persistDs` BY CONSTRUCTION** — so every node
+    is the base of a round-robin kernel for its own persistent demands. -/
+theorem persistAll_persistDs {C0 : Concept} {x : α} (hx : I.dom x) :
+    persistAll I C0 (persistDs C0 I x) x := by
+  refine ⟨hx, ?_⟩
+  intro D hD
+  exact (mem_persistDs.mp hD).2
+
+/-- A `∃PP` demand at `x` is persistent exactly when its guard holds — so the
+    split into kernel-served and one-shot demands is decidable and exhaustive. -/
+theorem persistDs_split {C0 : Concept} {x : α} {D : Concept}
+    (hD : Concept.ex pp D ∈ mty C0 I x) :
+    D ∈ persistDs C0 I x ∨ ¬ sat I x (Concept.all pp (Concept.ex pp D)) := by
+  by_cases hg : sat I x (Concept.all pp (Concept.ex pp D))
+  · exact Or.inl (mem_persistDs.mpr ⟨cl_ex (mty_sub _ hD), hD, hg⟩)
+  · exact Or.inr hg
 /-- DESCENDING multi-persistence (mirror of `persistAll`): every demand in
     `Ds` is persistent as `∃PPI.D` with a sat-based `∀PPI` guard. -/
 def persistAllI (I : Interp α) (C0 : Concept) (Ds : List Concept) (x : α) : Prop :=
@@ -24316,6 +24365,8 @@ end VerticalWitness
 #print axioms stepAll_hppE
 #print axioms rPP_witness
 #print axioms rPPI_witness
+#print axioms persistAll_persistDs
+#print axioms persistDs_split
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
