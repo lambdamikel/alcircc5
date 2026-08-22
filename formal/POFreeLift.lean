@@ -10900,6 +10900,57 @@ theorem po_not_sAdjK (hI : RCC5Interp I) {n n' : MTKNode I C0}
   rw [sAdjK_rho_dr hI hadj] at h
   exact absurd h (by decide)
 
+/-! #### Coverage witnesses for the horizontal demands (§44.25 item 3)
+
+`odSeed_he_ex`'s `rDR` and `rPO` branches, supplied.  Both witnesses are the
+model's own — `mtkWitness` — and the frame conditions each branch asks for are
+consequences of the demanded relation:
+
+* `DR`: the witness is `sAdjK`-adjacent to its parent BY DEFINITION, which is the
+  seed's external block;
+* `PO`: the witness is `PO`-related to its parent, and `PO` is neither `PP` (so
+  no `elt` edge either way) nor `DR` (so no `disj`) — the frame leaves the pair
+  alone, which is exactly what that branch needs. -/
+
+/-- **`rDR`'s witness.** -/
+theorem rDR_witness (e : MTKNode I C0) {D : Concept}
+    (hF : Concept.ex dr D ∈ mtk C0 I e.x e.k) :
+    sAdjK e (mtkWitness e hF) ∧
+      D ∈ mtk C0 I (mtkWitness e hF).x (mtkWitness e hF).k :=
+  ⟨Or.inl ⟨D, hF, rfl⟩, mtkWitness_arg e hF⟩
+
+/-- **`rPO`'s witness**, with the two model facts the branch's frame conditions
+    are read off. -/
+theorem rPO_witness (hI : RCC5Interp I) (e : MTKNode I C0) {D : Concept}
+    (hF : Concept.ex po D ∈ mtk C0 I e.x e.k) :
+    e ≠ mtkWitness e hF ∧
+      I.rho e.x (mtkWitness e hF).x = po ∧
+      I.rho (mtkWitness e hF).x e.x = po ∧
+      D ∈ mtk C0 I (mtkWitness e hF).x (mtkWitness e hF).k := by
+  refine ⟨?_, mtkWitness_rho e hF, ?_, mtkWitness_arg e hF⟩
+  · intro h
+    exact mtkWitness_x_ne hI e hF (by decide) (congrArg (fun n => n.x) h)
+  · rw [hI.conv_ e.x (mtkWitness e hF).x e.hx (mtkWitness e hF).hx,
+      mtkWitness_rho e hF]
+    rfl
+
+/-- A `PO` pair carries no `elt` edge, in either direction — `elt` is inside the
+    model's `PP`. -/
+theorem po_not_elt {β : Type} (g : β → α) (elt : β → β → Prop)
+    (helt : ∀ a b, elt a b → I.rho (g a) (g b) = pp) (e f : β)
+    (h : I.rho (g e) (g f) = po) : ¬ elt e f := by
+  intro he
+  rw [helt _ _ he] at h
+  exact absurd h (by decide)
+
+/-- A `PO` pair is not disjoint — `disj` is inside the model's `DR`. -/
+theorem po_not_disj {β : Type} (nd : β → α) (dj : β → β → Prop)
+    (hdj : ∀ a b, dj a b → I.rho (nd a) (nd b) = dr) (e f : β)
+    (h : I.rho (nd e) (nd f) = po) : ¬ dj e f := by
+  intro hd
+  rw [hdj _ _ hd] at h
+  exact absurd h (by decide)
+
 open Classical in
 noncomputable def dadjBK (_hI : RCC5Interp I) (root : MTKNode I C0)
     (m m' : {n // n ∈ mtkNodes root}) : Bool :=
@@ -24194,6 +24245,8 @@ end VerticalWitness
 #print axioms hupP_of_bank
 #print axioms hdnP_of_bank
 #print axioms hdrP_of_bank
+#print axioms rDR_witness
+#print axioms rPO_witness
 #print axioms rho_forced
 #print axioms cross_pp_of_shared
 #print axioms cross_dr_of_shared
