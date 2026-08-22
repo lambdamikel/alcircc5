@@ -4860,3 +4860,34 @@ everything.
 | kernel witnesses `kDR`/`kPO`/`kUP`/`kDN` | open |
 | the budget assignment | open — a choice, not a discovery |
 | reindex / bounds / `hcompl` | open, templated |
+
+### 44.29 A kernel is something a node already HAS (2026-08-22)
+
+`ascKernel_of_node` supplies, from one node with a nonempty `persistDs`,
+everything `mtkKernelsOD_of_debts` asks of a kernel:
+
+| certificate field | from |
+|---|---|
+| the chain, `hdom` | `rrPt`, `rrPt_dom` |
+| `hstep` (`cdir true = pp`) | `rrPt_step` |
+| base `ik`, period `pk`, `hp`, `hty` | `rr_segment_from` |
+| `kDIR` | `rr_covers` |
+
+with one detail that matters beyond bookkeeping: **`rr_segment_from` places the
+base past ANY bound `L0`**, which is exactly what `hinj` needs to keep the kernel
+base off the finite external list (`exists_index_avoiding`'s job in the earlier
+design, now free).
+
+So a kernel is not something the extraction has to build. Given the
+persistent/one-shot split, it is something a node with persistent demands
+**already has** — and every ingredient predates §44 by many rounds. What §44
+added was not new vertical machinery but the boundary telling you when to reach
+for it.
+
+### 44.30 Remaining
+
+| | |
+|---|---|
+| `kDR`/`kUP`/`kDN` witnesses | packaging — the bank member IS the witness, with `leE` reflexive |
+| the budget assignment | a choice inside the extraction (§43.10) |
+| reindex → bounds → `hcompl` → `decidableSat_of_codes` | templated on the certified horizontal path |
