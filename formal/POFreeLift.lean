@@ -10845,12 +10845,35 @@ theorem ppWitness_arg (n : MTKNode I C0) {c : Concept}
     Nat.le_trans (mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).2
       (Nat.sub_le _ _)⟩
 
+/-- A `∃PPI` demand's witness, at the SAME budget — same argument as
+    `ppWitness`. -/
+noncomputable def ppiWitness (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) : MTKNode I C0 :=
+  ⟨Classical.choose (mtk_ex hF), n.k, (Classical.choose_spec (mtk_ex hF)).1⟩
+
+theorem ppiWitness_rho (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
+    I.rho n.x (ppiWitness n hF).x = ppi :=
+  (Classical.choose_spec (mtk_ex hF)).2.1
+
+theorem ppiWitness_bud (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
+    (ppiWitness n hF).k = n.k := rfl
+
+theorem ppiWitness_arg (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
+    c ∈ mtk C0 I (ppiWitness n hF).x (ppiWitness n hF).k :=
+  mem_mtk.mpr ⟨(mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).1,
+    Nat.le_trans (mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).2
+      (Nat.sub_le _ _)⟩
+
 /-- The `PP`-path closure, bounded by FUEL rather than by the budget. -/
 noncomputable def ppNodes (n : MTKNode I C0) : Nat → List (MTKNode I C0)
   | 0 => [n]
   | fuel + 1 => n :: (mtk C0 I n.x n.k).attach.flatMap
       (fun p => match p with
         | ⟨.ex pp _, hF⟩ => ppNodes (ppWitness n hF) fuel
+        | ⟨.ex ppi _, hF⟩ => ppNodes (ppiWitness n hF) fuel
         | _ => [])
 
 theorem self_mem_ppNodes (n : MTKNode I C0) (fuel : Nat) : n ∈ ppNodes n fuel := by
@@ -10879,6 +10902,7 @@ theorem ppNodes_bud (n : MTKNode I C0) (fuel : Nat) :
       | ex r c =>
         cases r with
         | pp => exact ih (ppWitness n hF) m hmm
+        | ppi => exact ih (ppiWitness n hF) m hmm
         | _ => exact absurd hmm List.not_mem_nil
       | _ => exact absurd hmm List.not_mem_nil
 
@@ -10895,7 +10919,8 @@ theorem ppNodes_length_le (n : MTKNode I C0) (fuel : Nat) :
       exact Nat.le_trans (List.length_filter_le _ _) (List.length_filter_le _ _)
     have hbound : ((mtk C0 I n.x n.k).attach.map
         (fun p => (match p with
-          | ⟨.ex pp c, hF⟩ => ppNodes (ppWitness n hF) f
+          | ⟨.ex pp _, hF⟩ => ppNodes (ppWitness n hF) f
+          | ⟨.ex ppi _, hF⟩ => ppNodes (ppiWitness n hF) f
           | _ => []).length)).sum
         ≤ (mtk C0 I n.x n.k).attach.length * mtkBound C0 f := by
       refine sum_map_le _ _ _ ?_
@@ -10904,6 +10929,7 @@ theorem ppNodes_length_le (n : MTKNode I C0) (fuel : Nat) :
       | ex r c =>
         cases r with
         | pp => exact ih (ppWitness n hF)
+        | ppi => exact ih (ppiWitness n hF)
         | _ => exact Nat.zero_le _
       | _ => exact Nat.zero_le _
     calc _ ≤ (mtk C0 I n.x n.k).attach.length * mtkBound C0 f + 1 :=
@@ -20866,28 +20892,6 @@ So the step relation is `stepAll e f := ppStep e f ∨ ppiStep f e`: a `∃PPI`
 demand contributes its step in the OTHER direction.  Both still point up the
 model's `PP`, so every fact `tcl` needs survives, and the budget is still
 constant. -/
-
-/-- A `∃PPI` demand's witness, at the SAME budget — same argument as
-    `ppWitness`. -/
-noncomputable def ppiWitness (n : MTKNode I C0) {c : Concept}
-    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) : MTKNode I C0 :=
-  ⟨Classical.choose (mtk_ex hF), n.k, (Classical.choose_spec (mtk_ex hF)).1⟩
-
-theorem ppiWitness_rho (n : MTKNode I C0) {c : Concept}
-    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
-    I.rho n.x (ppiWitness n hF).x = ppi :=
-  (Classical.choose_spec (mtk_ex hF)).2.1
-
-theorem ppiWitness_bud (n : MTKNode I C0) {c : Concept}
-    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
-    (ppiWitness n hF).k = n.k := rfl
-
-theorem ppiWitness_arg (n : MTKNode I C0) {c : Concept}
-    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) :
-    c ∈ mtk C0 I (ppiWitness n hF).x (ppiWitness n hF).k :=
-  mem_mtk.mpr ⟨(mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).1,
-    Nat.le_trans (mem_mtk.mp (Classical.choose_spec (mtk_ex hF)).2.2).2
-      (Nat.sub_le _ _)⟩
 
 /-- The `∃PPI` step, oriented as the demand states it. -/
 def ppiStep (e f : MTKNode I C0) : Prop :=
