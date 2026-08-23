@@ -6031,3 +6031,66 @@ is model-independent, and by the 89.2% in-kernel rate, which is not.
 Formalize the dichotomy: `chain_recurs ∨ (∃ w, serves-all-below ∧ residue-above)`.
 Branch 1 is in-kernel serving. Branch 2 is one external plus a cut-bounded
 regress. This replaces §47.5's withdrawn construction.
+
+## 49.4 The probe's own calibration — three artifacts, one robust number
+
+Developing `wp101` caught **three** further artifacts of `wp100`'s family, all
+inside this probe:
+
+1. side regions drawn from a small range can never sit above a **high** bounded
+   segment of the chain — so part E could not *reach* the bounded branch;
+2. the bounded witnesses' reach was drawn to match part D's widest window, so
+   one witness covered every window by construction;
+3. "cofinally recurring" was tested on a `3p` window, which admits demands that
+   simply die above the sides' reach — everything then looks flat vacuously.
+
+**Only the IN-KERNEL rate is stable** across all four model-class variants:
+**89.2 / 90.2 / 83.5 / 91.3%**. Every other rate moved when the class changed.
+Single rates from this probe are weak evidence; the load is on the theorems.
+
+**Method, sharpened:** `probe-before-lean-churn` needs a companion rule —
+*vary the model class and keep only what survives.* A rate that moves is a
+property of the generator, not of the mathematics.
+
+## 49.5 What §49 actually certified — and the residual question
+
+Ten theorems, `formal/POFreeLift.lean`, clean build (25,649 lines, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`):
+
+| theorem | content | axioms |
+|---|---|---|
+| `pp_witness_below` | `comp pp pp = [pp]`: a superpart of `x` is a superpart of everything under `x` | none |
+| `ex_pp_serves_below` | one witness discharges `∃PP` at every node below its anchor | none |
+| `oneshot_one_witness` | the witness at `c N` covers every `c j`, `j ≤ N` | none |
+| `oneshot_in_kernel` | the free branch: chain recurrence serves the demand | none |
+| `above_cofinal_is_above_all` | **no middle case** — above cofinally many *is* above all | none |
+| `witness_bounded_or_all` | every witness serves the whole kernel or a bounded segment | classical |
+| `cofinal_witness_serves_all` | the good branch, named | none |
+| `finite_pool_gives_cofinal_witness` | **finite pool ⟹ one member serves the whole kernel** | classical |
+| `finite_pool_serves_kernel` | the same, stated as serving | classical |
+| `finite_pool_all_or_nothing` | **1 or inadequate — never 2 or 3 partial servers** | classical |
+
+`finite_pool_gives_cofinal_witness` is a **uniformization of exactly the shape
+the campaign has wanted since W2′** — pointwise serving from a finite pool
+upgrades, for free, to one uniform server. Transitivity plus `recurrent_tail` is
+the entire proof.
+
+### The residual question, now single and sharp
+
+For a cofinally recurring one-shot vertical demand at a kernel, exactly one of:
+
+1. **chain recurrence** → served in-kernel, cost 0 (~90% measured);
+2. **one cofinal external** → cost 1;
+3. **neither** → *no finite external set can serve it.*
+
+So the whole mixed quadrant now rests on one question: **can a ∀PO-free concept
+FORCE case 3?** A case-3 *model* is easy to write (`a_i = {0..i}`,
+`w_i = a_i ∪ {big_i}` carrying `D`, `D` nowhere on the chain and not at `ℕ`).
+What is unknown is whether a concept can force *every* model to look like that.
+
+- If **no** → the extraction always lands in case 1 or 2, and the quadrant closes.
+- If **yes** → the certificate architecture is provably incomplete as shaped, and
+  that is a genuine, publishable negative result about this architecture.
+
+Either way it is now a **decidable-shaped, single** question, which is a strictly
+better position than §48's "bound an arbitrary closure" with four refuted routes.

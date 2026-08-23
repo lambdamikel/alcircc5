@@ -1,0 +1,263 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array,longtable,booktabs}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Safe}{\mathsf{Safe}}
+\newcommand{\Comp}{\operatorname{Comp}}
+\newcommand{\sel}{\operatorname{sel}}
+\newcommand{\Hor}{\mathsf{Hor}}
+\newcommand{\U}{\Omega}
+\newcommand{\sev}[1]{\textbf{#1}}
+
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible}
+
+\title{Referee Report on Round 15:\\
+Cluster Quasimodels for $\mathcal{ALCI}_{\mathrm{RCC5}}$}
+\author{Adversarial review, W1--W3 target pass}
+\date{July 13, 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Verdict}
+
+\noindent\sev{Reject / fatal defect found.}  The tenth defect is in
+Lemma 4.3, target W1a.  The proposed canonical completion is pointwise:
+for each old--fresh pair it selects a safe horizontal atom in the pair's
+fold.  Closure, however, is a joint constraint over triangles.  There is
+a closed old network, a closed fresh pattern, and safe type data satisfying
+the pairwise fold condition (Q4), for which the round-15 pointwise choices
+force
+\[
+  \rho(y,b)=\PO,\qquad \rho(z,b)=\DR,\qquad \rho(y,z)=\PP,
+\]
+so the old-detour triangle requires
+\[
+  \rho(y,b)\in \Comp(\PP,\DR)=\{\DR\},
+\]
+which is false.  This is not a missing case-table line; it shows that
+(Q4) is too weak.  The supplied WP26 steering probe does not cover this
+case because it hard-wires the canonical selector into every positive-test
+domain, while (Q4)(b) expressly permits the selector to be unsafe provided
+the other horizontal atom is safe.
+
+The status of the theorem remains ``strongly supported, not certified'';
+after this review, the round-15 decision layer is not sound as stated.
+
+\section{Minimal W1a witness}
+
+Use the following RCC5 cells:
+\[
+  \PP\circ\PPI=\{\EQ,\PP,\PPI,\PO,\DR\}=\U,
+  \qquad
+  \PP\circ\DR=\{\DR\}.
+\]
+Let $\sel(\U)=\DR$, as in the manuscript.
+
+\subsection{Patterns}
+
+The old pattern $O$ has members $y,z,s$ and atomic network
+\[
+  y\PP z,\quad z\PP s,\quad y\PP s.
+\]
+This is closed, since $\PP\circ\PP=\{\PP\}$ and converses are forced.
+The fresh pattern $K$ is glued over the separator member $s$ and has one
+fresh member $b$ with
+\[
+  s\PPI b.
+\]
+This one-edge pattern is closed.  The tree-path folds to the fresh member
+are therefore
+\[
+  F(y,b)=\{\PP\}\circ\{\PPI\}=\U,
+  \qquad
+  F(z,b)=\{\PP\}\circ\{\PPI\}=\U.
+\]
+
+\subsection{Safe-link data}
+
+Take four types $Y,Z,S,B$ with the following safe links.  The accompanying
+script realizes these safe sets by explicit universal formulas using
+Definition 3.1's (L1)--(L2), so this is not an arbitrary table.
+\[
+\begin{array}{c|c}
+\text{type pair} & \text{required safe set / edge}\
+\midrule
+\Safe(Y,Z) & \PP\in\Safe(Y,Z)\\
+\Safe(Z,S) & \PP\in\Safe(Z,S)\\
+\Safe(Y,S) & \PP\in\Safe(Y,S)\\
+\Safe(S,B) & \PPI\in\Safe(S,B)\\
+\Safe(Y,B) & \{\PO\}\\
+\Safe(Z,B) & \{\DR\}
+\end{array}
+\]
+Thus all declared pattern edges are safe.  For the two old--fresh pairs,
+(Q4)(b) is satisfied pointwise:
+\begin{itemize}[leftmargin=2em]
+\item $F(y,b)=\U$ is non-singleton.  The selector $\DR$ is not safe for
+$(Y,B)$, but the other horizontal atom $\PO$ is safe.
+\item $F(z,b)=\U$ is non-singleton.  The selector $\DR$ is safe for
+$(Z,B)$.
+\end{itemize}
+This is exactly the alternative branch allowed by (Q4)(b):
+``$\sel(F)$ is safe or the other horizontal member of $F$ is safe.''
+
+\subsection{Failure of the round-15 assignment}
+
+Lemma 4.3's assignment gives
+\[
+  \rho(y,b)=\PO,\qquad \rho(z,b)=\DR.
+\]
+But the already-realized old edge is $\rho(y,z)=\PP$.  The triangle
+$y,z,b$ requires
+\[
+  \rho(y,b)\in \Comp(\rho(y,z),\rho(z,b))
+  =\Comp(\PP,\DR)=\{\DR\}.
+\]
+The chosen value $\PO$ is not in this cell.  Hence the asserted canonical
+completion is not composition-closed.
+
+Moreover, with the displayed safe sets there is no alternate safe value
+for either of the two cross pairs in this gluing step: $\Safe(Y,B)=\{\PO\}$
+and $\Safe(Z,B)=\{\DR\}$.  The defect is therefore in the certificate
+condition, not merely in the prose choice of a bad representative from a
+larger safe domain.
+
+\section{Machine check shipped with this report}
+
+The file \texttt{w1a\_counterexample.py} re-derives the RCC5 composition
+table from finite set semantics, constructs the old and fresh atomic
+networks, computes the safe sets from explicit universal type data, and
+checks the failed triangle.  Its output ends with:
+\begin{lstlisting}
+F(y,b)=PP o PPI = ['DR', 'EQ', 'PO', 'PP', 'PPI'] selector DR Safe(Y,B)= ['PO']
+F(z,b)=PP o PPI = ['DR', 'EQ', 'PO', 'PP', 'PPI'] selector DR Safe(Z,B)= ['DR']
+
+rho(y,b) = PO
+rho(z,b) = DR
+
+old-detour triangle y --PP--> z --DR--> b requires rho(y,b) in ['DR']
+actual chosen rho(y,b) = PO
+CLOSED? False
+
+RESULT: PASS - this is a W1a counterexample to Lemma 4.3's pointwise canonical completion.
+\end{lstlisting}
+
+\section{Why WP26 did not see it}
+
+WP26 Part B tests a stronger hypothesis than the manuscript's (Q4)(b).
+In the positive steering probe, after computing the feasible set for a
+cross pair, the harness sets
+\begin{lstlisting}
+sel = selector(frozenset(feas))
+dom = {sel}
+\end{lstlisting}
+and only then adds a random subset of the remaining feasible values.  Thus
+every positive test domain contains the canonical selector.  The witness
+above is excluded by construction: for $(y,b)$ the fold is $\U$ and
+$\sel(\U)=\DR$, but $\DR\notin\Safe(Y,B)$; only $\PO$ is safe.  This is
+not an exotic corner case.  It is precisely the branch of (Q4)(b) that the
+text relies on when the selector is unsafe.
+
+The empirical statement ``canonical-selector domains jointly realizable
+250/250'' therefore supports only the stronger condition
+\[
+  \sel(F)\in\Safe(t,s)
+\]
+for every non-singleton fold, not the stated condition
+\[
+  \sel(F)\in\Safe(t,s)\quad\text{or the other horizontal member is safe}.
+\]
+
+\section{Target-by-target findings}
+
+\begin{longtable}{p{0.12\linewidth}p{0.14\linewidth}p{0.66\linewidth}}
+\toprule
+Target & Severity & Finding\\
+\midrule
+W1a & \sev{Fatal} & The old-detour claim is false.  The witness above has a closed old pattern and a closed fresh pattern; the path folds are both $\U$; (Q4)(b) passes pairwise; the pointwise canonical completion violates the old triangle through $z$.\\
+W1b & \sev{Major, same mechanism} & Not needed for the fatal verdict, but the same missing joint-domain constraint affects the two-fresh case.  Once (Q4)(b)'s ``other horizontal'' branch is allowed, independently chosen safe horizontals need not compose through the fresh pattern edge.  The proof's sentence ``the horizontal choice was taken inside $F(y,b)$'' is insufficient: membership in the fold is not membership in the particular composition cell determined by the other chosen horizontal.\\
+W1c & \sev{Open / not exonerated} & I did not need a core-sharing fixed-point attack.  The finite counterexample already falsifies Lemma 4.3 before any core shortcut is used.  Core sharing may still require a separate well-definedness proof in a repaired round.\\
+W2a & \sev{Not reached} & Horizontal normal form remains only outlined, but no independent W2a witness was required after W1a failed.\\
+W2b & \sev{Not reached} & The suspected quantifier swap in extraction remains a live concern.  This review gives no certification of the dichotomy.\\
+W2c & \sev{Secondary formal issue} & The definition of (Q2) is syntactically unstable: it quantifies over ``interior (non-interface)'' members and then allows delegation only when the same member is an interface member of an adjacent pattern.  If read literally, delegated one-step witnesses for interior sources are disallowed; if read intentionally, the statement should quantify over all members or explicitly over shared interface occurrences.  This is dominated by W1a.\\
+W3a & \sev{Not reached} & Width recurrence not stress-tested after the fatal soundness failure.\\
+W3b & \sev{Not reached} & The core uniqueness argument was not needed.  The W1a witness has no core and no unique type.\\
+W3c & \sev{Not reached} & Pattern-copy identity below the type level was not needed.  The failure occurs in a two-pattern gluing with ordinary non-core members.\\
+General attack & \sev{Soundness proof failure} & I did not extract a smallest concept-level oracle counterexample.  The delivered witness is a finite certificate/configuration satisfying the local hypotheses of the Lemma 4.3 gluing step and the pairwise (Q4) discipline, yet it has no safe closed completion for that step.  This is enough to invalidate the manuscript's soundness construction.\\
+\bottomrule
+\end{longtable}
+
+\section{Steps checked and found sound in this pass}
+
+\begin{enumerate}[leftmargin=2em]
+\item The RCC5 composition cells used in the witness were re-derived from
+finite set semantics, not copied from the manuscript.
+\item The old network $y\PP z\PP s$ with $y\PP s$ is closed; the fresh
+network $s\PPI b$ is closed.
+\item The displayed pattern edges are safe under the manuscript's
+Definition 3.1.  The cross safe sets $\Safe(Y,B)=\{\PO\}$ and
+$\Safe(Z,B)=\{\DR\}$ are realized by explicit universal formulas in the
+machine check.
+\item The pure selector algebra is not the problem in this minimal case:
+if both cross domains contained $\sel(\U)=\DR$, the old-detour triangle
+would close.  The defect is exactly the interaction between (Q4)(b)'s
+fallback-to-other-horizontal option and joint triangle closure.
+\item I did not re-attack the inherited RCC5 patchwork theorem, Theorem A,
+strong equality handling, or the round-14 semantic pattern.
+\end{enumerate}
+
+\section{Visible round-16 repair direction}
+
+A local edit to the prose of Lemma 4.3 cannot repair this.  The certificate
+condition must become joint, not pairwise.  A minimal sound-oriented repair
+would replace (Q4) by a finite steering-amalgamation condition: for every
+permitted gluing edge, every relevant old pattern context, every fresh
+pattern, and every fold label supplied by the fixed point, the full domain
+network
+\[
+  D(u,b)=
+  \begin{cases}
+    \{V\}, & F(u,b)\setminus\{\EQ\}=\{V\},\\
+    F(u,b)\cap\Hor\cap\Safe(\operatorname{tp}u,\operatorname{tp}b),
+       & \text{otherwise}
+  \end{cases}
+\]
+combined with the already declared old and fresh atomic networks must have
+an atomic closed completion.  Equivalently, the certificate must store a
+joint row/profile selection, not merely certify that each individual pair
+has some safe horizontal value.
+
+At minimum the following pairwise consequences are necessary:
+\[
+  D(u,b)\cap\bigl(\rho(u,v)\circ D(v,b)\bigr)\ne\varnothing
+\]
+for every old edge $u\rho(u,v)v$, and
+\[
+  D(y,b)\cap\bigl(D(y,b')\circ N(b',b)\bigr)\ne\varnothing
+\]
+for every fresh edge $b'N(b',b)b$.  The W1a witness violates the first
+condition with $u=y$, $v=z$, and $b=b$:
+\[
+  D(y,b)=\{\PO\},\qquad D(z,b)=\{\DR\},\qquad
+  \{\PO\}\cap(\PP\circ\{\DR\})=\varnothing.
+\]
+These arc conditions may still be insufficient for arbitrary finite
+contexts; the robust repair is to require realizability of the whole finite
+RCC5 domain CSP for each catalogue-level gluing profile.  Requiring
+$\sel(F)$ itself to be safe everywhere would block this witness, but it
+would be a completeness-risking restriction rather than a proof of the
+round-15 certificate as stated.
+
+\end{document}

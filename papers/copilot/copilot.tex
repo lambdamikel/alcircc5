@@ -1,0 +1,1141 @@
+% Witness-Generated Regular Split Trees for ALCI RCC5
+% Option 2: Complete formal TeX document with parity/trunk/mosaic/quotient patches
+% May 2026 — corrected macros for role application
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm,enumitem}
+\usepackage{mathtools} % complements amsmath
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+% --- Relation and arrow macros ---
+\newcommand{\PP}{\mathrm{PP}}
+\newcommand{\PPI}{\mathrm{PPI}}
+\newcommand{\EQ}{\mathrm{EQ}}
+\newcommand{\DR}{\mathrm{DR}}
+\newcommand{\PO}{\mathrm{PO}}
+
+\newcommand{\PPgen}{\xrightarrow{\mathrm{PP}_{\mathrm{gen}}}}
+\newcommand{\PPIgen}{\xrightarrow{\mathrm{PPI}_{\mathrm{gen}}}}
+
+% --- Role application macros to avoid adjacent control-sequence parsing issues ---
+\newcommand{\some}[2]{\exists #1.\,#2}   % \some{\PP}{\top}  -> \exists \PP.\top
+\newcommand{\all}[2]{\forall #1.\,#2}   % \all{\PP}{D}      -> \forall \PP.D
+
+% Small helpers
+\newcommand{\Cl}{\mathrm{Cl}}
+\newcommand{\tp}{\mathrm{tp}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{Witness-Generated Regular Split Trees for ALCI RCC5\\
+Option 2: A Self-Contained Decidability Proof}
+\author{May 2026}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We give a self-contained decidability proof for concept satisfiability in
+ALCI\_RCC5 over strong abstract complete atomic RCC5 frames. The proof uses a
+containment-oriented split-tree architecture (Option 2). From any satisfying
+abstract Kripke/RCC5 model we restrict to a witness-generated submodel and
+introduce selected witness-cover edges. The split presentation uses weak-equality
+splitting, typed congruence quotienting, transitive eventuality acceptance via
+parity, and support-closed sibling mosaics. We show: a concept is satisfiable
+iff it has a valid finite witness-generated regular split-tree certificate;
+these certificates are effectively enumerable and checkable.
+\end{abstract}
+
+\tableofcontents
+
+\section{The result}
+\label{sec:result}
+
+\begin{theorem}[Main theorem]
+Concept satisfiability for ALCI\_RCC5 over strong abstract RCC5 frames is
+decidable. More precisely, for every concept $C_0$ in negation normal form,
+
+
+\[
+C_0 \text{ is satisfiable } \iff C_0 \text{ has a valid finite witness-generated regular split-tree certificate.}
+\]
+
+
+\end{theorem}
+
+\section{Abstract RCC5 semantics}
+\label{sec:rcc5}
+
+Let $B=\{\EQ,\DR,\PO,\PP,\PPI\}$ be the RCC5 base relations. The inverse
+operation $\mathrm{inv}$ is defined by $\mathrm{inv}(\EQ)=\EQ$,
+$\mathrm{inv}(\DR)=\DR$, $\mathrm{inv}(\PO)=\PO$, $\mathrm{inv}(\PP)=\PPI$,
+$\mathrm{inv}(\PPI)=\PP$. Composition is given by the standard RCC5 composition
+table (use the usual table in the formal write-up).
+
+\begin{definition}[Strong abstract RCC5 frame]
+A strong abstract RCC5 frame is a pair $(D,p)$ with $D\neq\varnothing$ and
+$p:D\times D\to B$ satisfying:
+\begin{enumerate}[label=(F\arabic*)]
+  \item $p(x,x)=\EQ$ for all $x\in D$;
+  \item $p(y,x)=\mathrm{inv}(p(x,y))$ for all $x,y\in D$;
+  \item $p(x,z)\in\mathrm{comp}(p(x,y),p(y,z))$ for all $x,y,z\in D$.
+\end{enumerate}
+\end{definition}
+
+An interpretation adds unary predicates for concept names and evaluates ALCI
+constructors in the standard way, with role atoms interpreted by the RCC5
+relation predicate $p(\cdot,\cdot)=R$.
+
+\section{Closure and types}
+\label{sec:closure}
+
+Fix an input concept $C_0$ in negation normal form. Let $\Cl(C_0)$ be the
+least finite set containing $C_0,\top,\bot$, closed under subconcepts,
+Boolean decomposition, and modal duals: if $\forall R.D\in\Cl(C_0)$ then
+$\exists R.D\in\Cl(C_0)$ and vice versa.
+
+\begin{definition}[Hintikka type]
+A \emph{type} $T\subseteq\Cl(C_0)$ is a set satisfying:
+\begin{itemize}
+  \item $\top\in T$, $\bot\notin T$;
+  \item for each $D\in\Cl(C_0)$ exactly one of $D,\neg D$ is in $T$;
+  \item conjunctions/disjunctions are respected.
+\end{itemize}
+The finite set of all types is $\mathrm{Type}(C_0)$.
+\end{definition}
+
+For a type $T$ and relation $R$ define
+$\mathrm{Need}_R(T)=\{D\in\Cl(C_0)\mid \forall R.D\in T\}$ (the formulas that
+universals require of $R$-neighbours).
+
+\section{Witness-generated submodels}
+\label{sec:witness}
+
+\begin{definition}[Closure witness choice]
+Let $\mathcal{I}=(D,p,\cdot^\mathcal{I})$ be a strong RCC5 interpretation.
+For each $a\in D$ and each existential closure formula $\exists R.D\in\Cl(C_0)$
+with $a\in(\exists R.D)^\mathcal{I}$ choose one witness $w(a,\exists R.D)\in D$
+such that $p(a,w(a,\exists R.D))=R$ and $w(a,\exists R.D)\in D$.
+\end{definition}
+
+\begin{definition}[Witness-generated subdomain]
+Given $a_0\in D$, define $W_0=\{a_0\}$ and
+$W_{n+1}=W_n\cup\{w(a,\exists R.D)\mid a\in W_n,\ \exists R.D\in\Cl(C_0),\ a\in(\exists R.D)^\mathcal{I}\}$.
+Let $W=\bigcup_{n\ge 0}W_n$ and consider the restricted interpretation
+$\mathcal{I}|_W$.
+\end{definition}
+
+\begin{lemma}[Witness-generated submodel lemma]
+\label{lem:witness-generated}
+For every $a\in W$ and every $D\in\Cl(C_0)$,
+
+
+\[
+a\in D^\mathcal{I} \iff a\in D^{\mathcal{I}|_W}.
+\]
+
+
+In particular, if $a_0\models C_0$ in $\mathcal{I}$ then $a_0\models C_0$ in $\mathcal{I}|_W$.
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of $D$. Atomic and Boolean cases are immediate.
+For $D=\exists R.E$, if $a\in(\exists R.E)^\mathcal{I}$ then the chosen witness
+$w(a,\exists R.E)\in W$ and by induction $w(a,\exists R.E)\in E^{\mathcal{I}|_W}$,
+so $a\in(\exists R.E)^{\mathcal{I}|_W}$. Conversely, any witness in the
+restriction is a witness in the original model. For $D=\forall R.E$, if
+$a\in(\forall R.E)^\mathcal{I}$ then every $R$-neighbour in $W$ is also an
+$R$-neighbour in $\mathcal{I}$ and hence satisfies $E$; conversely, if
+$a\notin(\forall R.E)^\mathcal{I}$ then there is a counter-witness $b$ with
+$p(a,b)=R$ and $b\notin E^\mathcal{I}$; since $\exists R.\neg E\in\Cl(C_0)$
+the witness selection will include a counter-witness in $W$, so the universal
+is false in the restriction as well.
+\end{proof}
+
+\begin{remark}
+The generated witness edges are \emph{immediate} in the generated presentation
+but are not claimed to be immediate semantic Hasse covers of the full RCC5
+proper-part order. This avoids density/Hasse issues.
+\end{remark}
+
+\section{Generated covers and containment orientation}
+\label{sec:generated-covers}
+
+We orient generated containment edges in the containment-oriented way:
+parent (superpart) above, child (proper part) below. A single semantic element
+may have several selected superpart witnesses; the split construction creates
+multiple occurrences (weak-EQ mates) for that element, each with a single
+parent in the occurrence tree.
+
+\begin{definition}[Selected containment demand]
+Given a witness-generated model $J=\mathcal{I}|_W$, a selected containment
+demand is a pair $(y,x)$ with $x\ \PP\ y$ arising from a generated witness
+$y\overset{\mathrm{gen}}{\to} x$ or $x\overset{\mathrm{gen}}{\to} y$.
+\end{definition}
+
+\begin{definition}[Containment occurrence tree]
+A containment occurrence tree is a countable set $T$ with a partial parent map
+$\mathrm{par}:T\rightharpoonup T$ such that the parent graph is acyclic on
+occurrences. If $\mathrm{par}(t)=s$ then the vertical semantic label is
+$\PP$ from the child to the parent (or $\PPI$ conversely).
+Parent chains may be finite, one-sided infinite, or bi-infinite around the
+evaluation occurrence. No ambient top or bottom is assumed.
+\end{definition}
+
+\begin{definition}[Weak split presentation]
+A weak split presentation of $J$ consists of:
+\begin{itemize}
+  \item a containment occurrence tree $T$,
+  \item a projection $\pi:T\to W$,
+  \item an equivalence relation $=$ on occurrences whose classes are contained
+    in projection fibres (weak-EQ mates),
+  \item a complete atomic labelling $\mathrm{PT}:T\times T\to B$.
+\end{itemize}
+It must satisfy:
+\begin{enumerate}[label=(S\arabic*)]
+  \item if $\mathrm{par}(t)=s$ then $\mathrm{PT}(t,s)=\PP$ and conversely;
+  \item every selected containment demand $(y,x)$ is realized by some occurrence
+    $t$ of $x$ and parent occurrence $s$ of $y$; if another occurrence of $x$
+    already exists the new one is marked as a weak-EQ mate;
+  \item $\mathrm{PT}(t,u)=p_J(\pi(t),\pi(u))$ for extracted presentations, or
+    satisfies the same finite RCC5 constraints in abstract certificates.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Split-tree cover lemma]
+\label{lem:split-tree-cover}
+Every witness-generated model $J$ has a weak containment split-tree
+presentation in which each occurrence has only finitely many generated witness
+obligations, bounded by a function of $|\Cl(C_0)|$.
+\end{lemma}
+
+\begin{proof}
+Construct occurrences by fair expansion: start with an occurrence projecting
+to the evaluation element; when an occurrence $t$ projecting to $x$ has a
+selected $\PPI$ witness $x\overset{\mathrm{gen}}{\to} z$ add a child occurrence
+$u$ with $\pi(u)=z$; when $t$ has a selected $\PP$ witness
+$x\overset{\mathrm{gen}}{\leftarrow} y$ create a fresh occurrence $t'$ with
+$\pi(t')=x$, mark $t'=t$, and place $t'$ below an occurrence $s$ with
+$\pi(s)=y$. Repeat for all generated witness requirements. Irreflexivity and
+transitivity of $\PP$ prevent parent cycles. Each occurrence has finitely
+many active witness demands because $\Cl(C_0)$ is finite.
+\end{proof}
+
+\begin{definition}[Typed congruence]
+A weak split presentation has typed congruence if $t=t'$ and $u=u'$ imply
+$\tp(t)=\tp(t')$ and $\mathrm{PT}(t,u)=\mathrm{PT}(t',u')$.
+\end{definition}
+
+\begin{lemma}[Strong quotient]
+\label{lem:strong-quotient}
+A weak split presentation with typed congruence quotients to a strong RCC5
+frame on the quotient domain with pair labelling induced by $\mathrm{PT}$.
+\end{lemma}
+
+\begin{proof}
+Typed congruence makes $\mathrm{PT}$ independent of representatives. Weak-EQ
+occurs only inside $=$-classes, so EQ becomes identity after quotienting.
+Converse and composition are inherited from the weak labelling.
+\end{proof}
+
+\section{Finite profiles and transitive eventualities}
+\label{sec:profiles}
+
+A finite certificate represents the split tree by finitely many profiles and
+one-hole contexts. Profiles record local types, summaries, eventuality monitors,
+equality colours, and sibling status.
+
+\begin{definition}[Profile]
+A profile is a tuple
+
+
+\[
+p=(\tp(p),\ \mathsf{Le}(p),\ \mathsf{Ly}(p),\ \mathsf{M}(p),\ e(p),\ s(p)),
+\]
+
+
+where $\tp(p)\in\mathrm{Type}(C_0)$, $\mathsf{Le},\mathsf{Ly}\subseteq\Cl(C_0)$
+are lower/upper summaries, $\mathsf{M}(p)\subseteq\mathcal{E}$ is the finite
+eventuality monitor set, $e(p)$ is an equality colour, and
+$s(p)\in\{\mathrm{core},\mathrm{front},\mathrm{out}\}$ is sibling status.
+
+\end{definition}
+
+
+\begin{remark}[Inverse role obligations]
+Profiles and summaries explicitly record obligations arising from inverse roles.
+Concretely, if a type contains a formula of the form $\exists R^{-}.D$ or
+$\forall R^{-}.D$ (where $R^{-}$ denotes the inverse of $R$), then the
+profile's $\mathsf{M}(p)$ and the lower/upper summaries include the corresponding
+requirements so that $\mathsf{update\_summary}$ and local mosaics can check
+and propagate inverse obligations along the trunk and into side contexts.
+In practice the $\mathsf{newLower}_C$ and $\mathsf{newUpperSafe}_C$ tables are
+computed using both forward and inverse obligations recorded in contexts,
+so inverse constraints are treated symmetrically in the mosaic closure rules.
+\end{remark}
+
+\subsection{Summary update and eventuality monitor semantics}
+\label{subsec:summary-monitor}
+
+We formalize the finite functions used by the trunk automaton: the summary
+update function $\mathsf{update\_summary}$ and the eventuality monitor update
+$\mathsf{update\_monitor}$. Both are finite table functions computable from
+the certificate alphabet.
+
+\begin{definition}[Lower and upper summaries]
+A lower summary $\mathsf{Le}$ and an upper summary $\mathsf{Ly}$ are elements
+of $\mathcal{P}(\Cl(C_0))$. We write
+$S_{\mathrm{sum}}=\mathcal{P}(\Cl(C_0))\times\mathcal{P}(\Cl(C_0))$ for the
+finite set of summary pairs $(\mathsf{Le},\mathsf{Ly})$.
+\end{definition}
+
+\begin{definition}[Eventuality monitor]
+Let $\mathcal{E}$ be the finite set of transitive eventualities appearing in
+$\Cl(C_0)$. A monitor valuation is a function $m:\mathcal{E}\to\{0,1,2\}$ where
+\begin{itemize}
+  \item $m(\eta)=0$ means ``not pending'',
+  \item $m(\eta)=1$ means ``pending and not yet seen in the current lap'',
+  \item $m(\eta)=2$ means ``pending and seen at least once since last reset''.
+\end{itemize}
+The finite set of valuations is denoted $M_{\mathrm{mon}}=\{0,1,2\}^{\mathcal{E}}$.
+\end{definition}
+
+\begin{definition}[Lower and upper update tables]
+For each one-hole context $C\in\mathrm{Ctx}_Q$ and for each pair of profiles
+$p,p'\in\Sigma$ that $C$ may connect, the certificate records two finite sets
+\(\mathsf{newLower}_C(p,p')\subseteq\Cl(C_0)\) and
+\(\mathsf{newUpperSafe}_C(p,p')\subseteq\Cl(C_0)\). They satisfy:
+\begin{itemize}
+  \item $\mathsf{newLower}_C(p,p')$ contains exactly those closure formulas
+    that the context $C$ guarantees to hold at some strict lower occurrence
+    introduced when $p'$ is plugged under $p$.
+  \item $\mathsf{newUpperSafe}_C(p,p')$ contains exactly those closure formulas
+    that remain true everywhere in the extended lower region after the plug.
+\end{itemize}
+Define
+
+
+\[
+\mathsf{newLower}(p,p')=\bigcup_{C\ \text{compatible}} \mathsf{newLower}_C(p,p'),
+\qquad
+\mathsf{newUpperSafe}(p,p')=\bigcap_{C\ \text{compatible}} \mathsf{newUpperSafe}_C(p,p'),
+\]
+
+
+where the unions/intersections range over the finite set of contexts in the
+certificate that may connect $p$ and $p'$. These unions and intersections are
+finite because the certificate contains finitely many contexts.
+\end{definition}
+
+\begin{lemma}[Summary soundness]
+\label{lem:summary-soundness}
+Let a trunk be built using contexts compatible with the certificate and let
+summaries be updated by $\mathsf{update\_summary}$ using the recorded tables.
+Then for every occurrence in the trunk:
+\begin{enumerate}
+  \item every formula $D\in\mathsf{Le}$ is witnessed in the strict lower region
+    represented below that occurrence; and
+  \item every formula $D\in\mathsf{Ly}$ holds everywhere in the represented
+    lower region.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+By induction on the construction of the trunk. Each context $C$ that plugs a
+profile $p'$ under $p$ contributes exactly the formulas in
+$\mathsf{newLower}_C(p,p')$ as witnessed formulas in the newly represented
+strict lower region; hence the union $\mathsf{newLower}(p,p')$ records all
+such witnesses. Similarly, $\mathsf{newUpperSafe}_C(p,p')$ records formulas
+that no context introduces a counterexample for; the intersection therefore
+records formulas that remain true everywhere. The finite certificate tables
+guarantee the local witness and safety checks used in the induction step.
+\end{proof}
+
+\begin{lemma}[Universals enforced by summaries and local checks]
+\label{lem:universals-enforced}
+Let $\forall R.D\in\Cl(C_0)$ occur in a profile $p$ on a trunk whose transitions
+use the certificate tables. Suppose the trunk is built using contexts and
+mosaics from the certificate and summaries are updated by
+$\mathsf{update\_summary}$. Then:
+\begin{enumerate}
+  \item If every $R$-neighbour shape reachable from $p$ via the certificate's
+    contexts and mosaics records $D$ in its profile or in the appropriate
+    summary, no transition rejects on this universal.
+  \item Conversely, if some finite prefix exhibits an $R$-neighbour that
+    violates $D$, then the corresponding transition is rejecting.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Contexts and mosaics in the certificate enumerate all local $R$-neighbour
+shapes that can appear adjacent to an occurrence with profile $p$. The
+update tables $\mathsf{newLower}_C,\mathsf{newUpperSafe}_C$ and the local
+mosaic checks are constructed precisely to (i) record witnesses for positive
+existentials and (ii) detect counterexamples to universals. Hence if every
+reachable shape records $D$ in its profile or summary, the local checks never
+fire a rejecting transition. Conversely, any finite counterexample appears in
+some finite prefix; the local checks detect it and the transition rejects.
+\end{proof}
+
+
+
+\paragraph{Update rules}
+Define two total functions
+
+
+\[
+\mathsf{update\_summary}: S_{\mathrm{sum}}\times\Sigma\times\Sigma\to S_{\mathrm{sum}},
+\qquad
+\mathsf{update\_monitor}: M_{\mathrm{mon}}\times\Sigma\times\Sigma\to M_{\mathrm{mon}}.
+\]
+
+
+Intuitively, the triple $(s,p,p')$ means: current summaries $s$, current
+profile $p$, next profile $p'$ (the context between them is encoded in the
+certificate and determines the update table).
+
+\textbf{Concrete finite table definition.}
+\begin{enumerate}
+  \item $\mathsf{update\_summary}((\mathsf{Le},\mathsf{Ly}),p,p')$ is computed by:
+    \begin{itemize}
+      \item $\mathsf{Le}'=\mathsf{Le}\cup \mathsf{newLower}(p,p')$, where
+        $\mathsf{newLower}(p,p')\subseteq\Cl(C_0)$ is the finite set of closure
+        formulas that the certificate records as realized in the strict lower
+        region introduced by plugging $p'$ under $p$.
+      \item $\mathsf{Ly}'=\mathsf{Ly}\cap \mathsf{newUpperSafe}(p,p')$, where
+        $\mathsf{newUpperSafe}(p,p')$ is the finite set of formulas that
+        remain true everywhere in the extended lower region after the plug.
+    \end{itemize}
+    Both $\mathsf{newLower}$ and $\mathsf{newUpperSafe}$ are finite certificate
+    tables computed from contexts and mosaics.
+  \item $\mathsf{update\_monitor}(m,p,p')$ is computed by:
+    \begin{itemize}
+      \item For each $\eta\in\mathcal{E}$:
+        \begin{itemize}
+          \item If $\eta\in\mathsf{M}(p)$ then set $m'(\eta):=\max(m(\eta),1)$.
+          \item If $p'\in F_\eta$ then set $m'(\eta):=2$ (seen).
+          \item If a universal safety check at $p$ requires immediate failure
+            (certificate records a violation), then the transition is rejecting.
+	    \item  Otherwise, if $m(\eta)=2$ and the certificate records an explicit reset point (for example, completion of a generator loop or an annotated reset in the context), set $m'(\eta):=0$; otherwise keep $m'(\eta):=m(\eta)$.
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+\begin{lemma}
+\label{lem:update-computable}
+The functions $\mathsf{update\_summary}$ and $\mathsf{update\_monitor}$ are
+computable by finite tables derived from the certificate. Moreover, along an
+upward trunk $\mathsf{Le}$ is monotone nondecreasing and $\mathsf{Ly}$ is
+monotone nonincreasing; symmetric statements hold for downward trunks.
+\end{lemma}
+
+\begin{proof}
+Both functions consult only finite certificate tables (contexts, mosaics, and
+profile components). The monotonicity follows from the definitions of
+$\mathsf{newLower}$ and $\mathsf{newUpperSafe}$: lower summaries only
+accumulate witnessed closure formulas; upper summaries only lose formulas
+when a counterexample appears.
+\end{proof}
+
+
+\section{Parity automaton encoding for transitive eventualities}
+\label{sec:parity-encoding}
+
+This section gives a formal deterministic parity automaton that recognizes
+exactly the legal infinite trunks required by a valid certificate.
+
+\subsection{Alphabet and eventuality sets}
+Fix the finite closure $\Cl(C_0)$ and the finite profile alphabet $\Sigma$
+used in certificates. Each profile $p\in\Sigma$ is a tuple as above.
+
+Let $\mathcal{E}$ be the finite set of transitive eventualities that appear in
+$\Cl(C_0)$, i.e. formulas of the form $\exists^{+}R.D$ (with
+$R\in\{\PP,\PPI\}$) and their duals. For each $\eta\in\mathcal{E}$ define the
+finite acceptance set
+
+
+\[
+F_\eta=\{p\in\Sigma\mid D\in\tp(p)\ \text{or summaries guarantee }D\}.
+\]
+
+
+
+\subsection{Automaton definition}
+Define the deterministic parity automaton $\mathcal{P}=(Q,\Sigma,q_0,\delta,\pi)$.
+
+\paragraph{States}
+Let $S_{\mathrm{sum}}$ be the finite set of possible summary vectors and
+$M_{\mathrm{mon}}=\{0,1,2\}^{\mathcal{E}}$ the monitor valuations. Set
+$Q=\Sigma\times S_{\mathrm{sum}}\times M_{\mathrm{mon}}$. The initial state
+$q_0=(p_0,s_0,m_0)$ is determined by the certificate.
+
+\paragraph{Transition function}
+The transition function $\delta:Q\times\Sigma\to Q$ is deterministic and
+defined by finite table lookups. Given $(p,s,m)\in Q$ and next profile $p'$:
+\begin{enumerate}
+  \item compute $s'=\mathsf{update\_summary}(s,p,p')$;
+  \item compute $m'=\mathsf{update\_monitor}(m,p,p')$; if a universal safety
+    check fails the transition is rejecting;
+  \item set $\delta((p,s,m),p')=(p',s',m')$.
+\end{enumerate}
+
+\paragraph{Parity priorities}
+Partition $\mathcal{E}$ by syntactic nesting depth and translate the family
+$\{F_\eta\}$ into a parity condition by a standard lexicographic encoding.
+This yields a finite priority function $\pi:Q\to\{0,\dots,k\}$.
+
+\begin{lemma}[Parity correctness]
+\label{lem:parity-correct}
+Let $\mathcal{P}=(Q,\Sigma,q_0,\delta,\pi)$ be the deterministic parity
+automaton constructed above with priority function $\pi$ obtained by the
+lexicographic encoding of the family of Büchi sets $\{F_\eta\}_{\eta\in\mathcal{E}}$.
+An infinite run of $\mathcal{P}$ satisfies the parity acceptance condition
+iff for every eventuality $\eta\in\mathcal{E}$ that is pending infinitely
+often along the run, the set $F_\eta$ is visited infinitely often.
+\end{lemma}
+
+\begin{proof}
+The construction of $\pi$ groups eventualities by syntactic nesting depth and
+encodes the finite monitor vector into parity ranks in lexicographic order.
+Concretely, for each nesting level the monitor bits for eventualities at that
+level are encoded into a finite integer rank; the parity index is the
+concatenation (sum) of these ranks with offsets so that higher nesting levels
+dominate lower ones.
+
+If the run visits some eventuality $\eta$'s pending state infinitely often but
+visits $F_\eta$ only finitely often, then the monitor bit for $\eta$ remains
+pending on the tail and the corresponding parity component attains an odd
+value infinitely often; hence the minimum priority seen infinitely often is
+odd and the parity condition fails.
+
+Conversely, if every eventuality pending infinitely often is also satisfied
+(i.e., its $F_\eta$ is visited infinitely often), then for each nesting level
+the encoded monitor vector stabilizes to values that ensure the minimum
+priority seen infinitely often is even. Therefore the parity condition holds.
+
+This is the standard lexicographic Büchi→parity correctness argument: the
+parity indices are chosen so that the parity acceptance is equivalent to the
+conjunction of the Büchi conditions for all $\eta\in\mathcal{E}$.
+\end{proof}
+
+
+\subsection{Acceptance semantics}
+A run $q_0,q_1,\dots$ is accepting iff the minimum priority occurring
+infinitely often is even. This enforces that no transitive eventuality remains
+perpetually pending.
+
+\section{Correctness of the automaton encoding}
+\label{sec:parity-correctness}
+
+\begin{lemma}[Soundness]
+If a trunk satisfies the certificate safety and eventuality conditions, then
+$\mathcal{P}$ has an accepting run on that trunk.
+\end{lemma}
+
+\begin{proof}
+Safety conditions are local checks; the transition function rejects only when
+a safety condition fails. Since the trunk satisfies safety, no rejecting
+transition occurs. For each transitive eventuality $\eta$ required at some
+occurrence, the trunk contains a later occurrence in the required direction
+whose profile lies in $F_\eta$. The monitor marks $\eta$ pending and clears it
+when $F_\eta$ is seen. The parity priorities are chosen to be equivalent to
+the Büchi family, so the run satisfies parity acceptance.
+\end{proof}
+
+\begin{lemma}[Completeness]
+If $\mathcal{P}$ accepts an infinite trunk, then the trunk satisfies the
+certificate safety and eventuality conditions.
+\end{lemma}
+
+\begin{proof}
+Acceptance implies no rejecting transition occurred, hence safety holds. The
+parity acceptance implies that every eventuality monitor bit that is set
+infinitely often is also cleared infinitely often, so every pending eventuality
+is discharged. Therefore the trunk meets the certificate eventuality
+requirements.
+\end{proof}
+
+\section{Lasso lemma and ultimately periodic trunks}
+\label{sec:lasso}
+
+\begin{lemma}[Lasso lemma]
+If there exists an infinite trunk accepted by $\mathcal{P}$, then there exists
+an ultimately periodic trunk accepted by $\mathcal{P}$.
+\end{lemma}
+
+\begin{proof}
+$\mathcal{P}$ is deterministic with finite state set $Q$. Consider an accepting
+run $q_0,q_1,\dots$. The run eventually enters a strongly connected component
+$C\subseteq Q$ and remains there. Because the run is accepting, the parity
+condition is satisfied on the tail inside $C$. Choose a cycle in $C$ that
+visits all states required by the parity acceptance sets; such a cycle exists
+because $C$ is strongly connected and intersects the acceptance sets as
+required. Let the prefix up to the first visit of $C$ be the stem and the
+chosen cycle be the loop. Repeating the loop yields an ultimately periodic
+trunk whose run follows the same state cycle and therefore satisfies the
+parity condition. Safety and summary updates are preserved because transitions
+are deterministic table lookups.
+\end{proof}
+
+\section{Triple support lemma for mosaics}
+\label{sec:triple-support}
+
+\begin{definition}[Support-closed mosaic set]
+\label{def:support-closed}
+Let $\mathcal{M}$ be a finite set of atomic mosaics (finite RCC5 networks over profile endpoints).
+We say $\mathcal{M}$ is \emph{support-closed} if it satisfies the following closure conditions:
+\begin{enumerate}[label=(SC\arabic*)]
+  \item \textbf{Submosaic closure:} every submosaic (obtained by deleting endpoints and restricting labels consistently) of a mosaic in $\mathcal{M}$ is in $\mathcal{M}$.
+  \item \textbf{Pairwise support closure:} whenever $\mathcal{M}$ contains two mosaics that share an endpoint and their pairwise edge labels are compatible, then any two‑endpoint mosaic induced on the shared endpoints is in $\mathcal{M}$.
+  \item \textbf{Triple support closure:} whenever $\mathcal{M}$ contains pairwise mosaics realizing relations $R_{12},R_{13}$ on endpoints $1$--$2$ and $1$--$3$, and $R_{23}\in\mathrm{comp}(R_{12},R_{13})$, then $\mathcal{M}$ contains a three‑endpoint mosaic realizing $R_{12},R_{13},R_{23}$ (when relation‑safety and typed‑EQ consistency permit).
+\end{enumerate}
+\end{definition}
+
+
+\begin{lemma}[Triple support]
+Let $\mathcal{M}$ be a support-closed mosaic set. Suppose profiles $p_1,p_2,p_3$
+occur in the certificate alphabet and that pairwise relations $R_{12},R_{13}$
+are permitted by $\mathcal{M}$. Then $\mathcal{M}$ contains a three-endpoint
+mosaic realizing simultaneously $R_{12},R_{13}$ and some
+$R_{23}\in\mathrm{comp}(R_{12},R_{13})$.
+\end{lemma}
+
+\begin{proof}
+By the triple support closure rule in the construction of $\mathcal{M}$ the
+closure algorithm explicitly adds such a three-endpoint mosaic whenever the
+pairwise mosaics exist and composition permits a compatible third relation.
+\end{proof}
+
+
+\begin{lemma}[Finite closure of mosaic set]
+\label{lem:closure-finite}
+Let $\Sigma$ be the finite profile alphabet determined by $\Cl(C_0)$. The iterative closure procedure that adds submosaics, pairwise supports, and triple‑support mosaics to an initial finite seed of mosaics terminates after finitely many steps and yields a finite support‑closed mosaic set $\mathcal{M}$.
+\end{lemma}
+
+\begin{proof}
+All mosaics are finite RCC5 networks over the finite set of profile endpoints and labels drawn from a finite set. Each closure step only produces mosaics whose labels and endpoints are drawn from these finite sets. Hence the universe of possible mosaics is finite, so the closure process must stabilise after finitely many additions.
+\end{proof}
+
+
+\paragraph{Case analysis for RCC5 composition}
+To make the triple‑support closure fully explicit we list the nontrivial
+composition cases used in the construction. Let $R_{12},R_{13}\in B$ be the
+pairwise relations realized by two mosaics sharing endpoint $1$. The possible
+$R_{23}\in\mathrm{comp}(R_{12},R_{13})$ are given by the standard RCC5
+composition table. The certificate closure rule adds a three‑endpoint mosaic
+for each $R_{23}$ in the composition set.
+
+For reference, the relevant composition outcomes (representative cases) are:
+
+
+\[
+\begin{array}{c|c}
+(R_{12},R_{13}) & \mathrm{comp}(R_{12},R_{13}) \\
+\hline
+(\PP,\PP) & \{\PP,\mathrm{PO},\mathrm{DR}\} \\
+(\PP,\PPI) & \{\mathrm{PO},\mathrm{DR},\EQ\} \\
+(\PO,\PO) & \{\PO,\mathrm{DR}\} \\
+(\DR,\DR) & \{\DR\} \\
+(\PP,\PO) & \{\PO,\mathrm{DR}\}
+\end{array}
+\]
+
+
+(Full table is standard; the certificate only needs the finite subset that
+actually arises from the profile alphabet.)
+
+\paragraph{Construction remark}
+For each listed $R_{23}$ the triple‑support closure constructs a three‑vertex
+mosaic by merging the two pairwise mosaics along the shared endpoint and
+filling the third edge with $R_{23}$. Relation‑safety and typed‑EQ
+consistency are checked locally; if a conflict arises the composition case is
+discarded. Because the universe of atomic mosaics is finite, this process is
+effective and exhaustive for the certificate alphabet.
+
+\section{Typed congruence and quotient correctness}
+\label{sec:typed-congruence}
+
+\subsection{Computing typed congruence}
+\label{subsec:typed-congruence-algo}
+
+We give a finite algorithm that computes the equivalence relation $\sim$
+used for quotienting and prove it is a typed congruence.
+
+\paragraph{Algorithm}
+Compute $\sim$ on the finite set of occurrences as the least equivalence
+relation satisfying closure rules. Start with base relation:
+
+
+\[
+t\sim_0 u \iff e(t)=e(u)\ \text{and}\ \tp(t)=\tp(u).
+\]
+
+
+Iterate: if $t\sim_n t'$ and $u\sim_n u'$ and for every third occurrence $v$
+there exists $v'$ with $v\sim_n v'$ and $PT(t,v)=PT(t',v')$, then add
+$t\sim_{n+1} t'$. Close under reflexivity, symmetry, transitivity. Terminate
+when stable; finiteness ensures termination.
+
+\begin{lemma}[Typed congruence algorithm correctness]
+\label{lem:typed-congruence-algo}
+The relation $\sim$ computed above is an equivalence relation and satisfies:
+if $t\sim t'$ and $u\sim u'$ then $PT(t,u)=PT(t',u')$. Hence $\sim$ is a typed
+congruence suitable for quotienting.
+\end{lemma}
+
+\begin{proof}
+Termination and equivalence follow from finiteness and closure. For the
+congruence property, by construction for every third occurrence $v$ there is a
+matching $v'$ with $v\sim v'$ and identical recorded pair labels; typed-EQ
+synchronization and support-closure guarantee joint witnesses when needed.
+Thus pairwise labels are representative-independent.
+\end{proof}
+
+\begin{lemma}[Finite prefix realization]
+\label{lem:finite-prefix-realization}
+Let $T$ be the unfolding of a certificate and let $S$ be any finite set of occurrences
+in $T$ together with the pairwise recorded labels between them. Then there exists a finite
+connected prefix $P\subseteq T$ that contains $S$ and all intermediate occurrences and
+contexts needed to witness the recorded pair labels among elements of $S$. Consequently,
+any finite set of occurrences and the contexts connecting them appear in some finite
+prefix of the unfolding.
+\end{lemma}
+
+
+\begin{proof}
+By construction the unfolding records pair labels only when they are witnessed by finite contexts/mosaics. For each recorded pair between occurrences in $S$ collect the finite sets of occurrences and contexts used to record that pair; the union of these finite sets is a finite connected prefix $P$ containing $S$ and the required witnesses.
+\end{proof}
+
+
+\begin{lemma}[Global composition lifting]
+\label{lem:global-composition}
+Let $[t],[u],[v]$ be three quotient classes in the quotient constructed from
+a valid certificate. Then there exist representatives $t',u',v'$ occurring in
+some finite prefix of the unfolding such that $\mathrm{PT}(t',u')$,
+$\mathrm{PT}(u',v')$, and $\mathrm{PT}(t',v')$ are recorded and satisfy the
+RCC5 composition constraints. Consequently composition holds for the classes.
+\end{lemma}
+
+\begin{proof}
+Let $[t],[u],[v]$ be quotient classes and pick representatives $t_0\in[t]$,
+$u_0\in[u]$, $v_0\in[v]$ from the unfolding. By construction of the unfolding
+and by support‑closure of the mosaic set, there exist finite contexts and
+mosaics that connect these occurrences: specifically, there is a finite
+connected subgraph (a finite prefix) of the unfolding that contains $t_0,u_0,v_0$
+and all intermediate occurrences and contexts used to record the pair labels
+$PT(t_0,u_0)$ and $PT(u_0,v_0)$. By Lemma~\ref{lem:finite-prefix-realization} we can
+realize this finite subgraph using mosaics from the support‑closed set
+$\mathcal{M}$.
+
+Within this finite prefix the RCC5 composition constraint is enforced by the
+local mosaic checks: the mosaic (or combination of mosaics) that witnesses
+the two pairwise relations yields a recorded label for the third pair
+$(t',v')$ consistent with $\mathrm{comp}(PT(t',u'),PT(u',v'))$. Because the
+prefix is finite, the required three‑endpoint mosaic (or its induced label)
+appears explicitly in the prefix or in the support closure of the mosaics
+used. Finally, typed congruence (Lemma~\ref{lem:typed-congruence-algo}) ensures
+that the recorded labels lift to the quotient classes $[t],[u],[v]$ and are
+independent of the chosen representatives. Hence composition holds for the
+classes.
+\end{proof}
+
+
+\begin{theorem}[Quotient correctness]
+\label{thm:quotient-correct}
+Let $T$ be the unfolding of a valid certificate with typed congruence $\sim$.
+Quotienting occurrences by $\sim$ yields a strong RCC5 interpretation
+$\mathcal{I}$ in which every closure formula in $\Cl(C_0)$ has the same truth
+value at the image of the initial occurrence as in the unfolding.
+\end{theorem}
+
+\begin{proof}
+Define domain $D=\{[t]_\sim:t\in T\}$. Define $p([t]_\sim,[u]_\sim)=PT(t,u)$
+(well-defined by Lemma~\ref{lem:typed-congruence-algo}). Contexts and mosaics
+ensure local composition and converse; Lemma~\ref{lem:finite-prefix-realization} lifts
+local checks to arbitrary finite prefixes. Existential witnesses are provided
+by contexts/mosaics, lower/upper summaries, or parity-accepted trunk positions;
+universals are preserved because all $R$-neighbours of a representative are
+represented by occurrences whose images are the $R$-neighbours of the quotient
+element. Induction on closure formulas yields the preservation of truth.
+\end{proof}
+
+\section{Finite certificates}
+\label{sec:certificates}
+
+\begin{definition}[Regular split-tree certificate]
+A certificate for $C_0$ is a finite tuple
+
+
+\[
+Q=(\mathrm{Prof}_Q,\mathrm{Ctx}_Q,\mathrm{Mos}_Q,G_Q,p_*,\Pi_Q)
+\]
+
+
+where $\mathrm{Prof}_Q$ is a finite profile set, $\mathrm{Ctx}_Q$ a finite set
+of one-hole containment contexts, $\mathrm{Mos}_Q$ a finite support-closed
+mosaic set, $G_Q$ a finite generator graph, $p_*$ an initial profile with
+$C_0\in\tp(p_*)$, and $\Pi_Q$ a parity condition for transitive eventualities.
+Cycles in $G_Q$ are blocking cycles that unfold to fresh occurrences.
+\end{definition}
+
+A certificate is \emph{valid} when the following finite checks pass:
+\begin{itemize}
+  \item all types are Hintikka types;
+  \item all contexts and mosaics are finite RCC5 networks satisfying
+    composition and converse;
+  \item relation-safety holds on all edges;
+  \item lower/upper summaries are coherent with contexts;
+  \item PP/PPI universals propagate as required;
+  \item PP/PPI existentials satisfy parity acceptance via $\Pi_Q$;
+  \item DR/PO existentials have explicit witnesses in contexts/mosaics;
+  \item equality colours define a typed congruence and mosaics are support-closed;
+  \item the finite generator has an accepting unfolding from $p_*$.
+\end{itemize}
+
+\section{Soundness}
+\label{sec:soundness}
+
+\begin{theorem}[Soundness]
+Every valid finite witness-generated regular split-tree certificate unfolds to a
+strong RCC5 model satisfying $C_0$.
+\end{theorem}
+
+\begin{proof}
+Unfold the finite generator, creating fresh occurrences on every traversal of
+a blocking cycle. By Lemma~\ref{lem:finite-prefix-realization} and support-closure the
+unfolding has a complete weak RCC5 labelling satisfying composition,
+relation-safety, and typed congruence. Quotient weak equality using
+Lemma~\ref{lem:strong-quotient}; the result is a strong RCC5 interpretation.
+Induction on closure formulas (as in Theorem~\ref{thm:quotient-correct})
+shows the initial occurrence satisfies $C_0$.
+\end{proof}
+
+\section{Completeness}
+\label{sec:completeness}
+
+\begin{lemma}
+\label{lem:accepted-presentation}
+If $C_0$ is satisfiable then there is an accepted, possibly irregular,
+witness-generated weak split presentation over the finite profile/context/mosaic
+alphabet determined by $C_0$.
+\end{lemma}
+
+\begin{proof}
+Let $\mathcal{I},a_0\models C_0$. By Lemma~\ref{lem:witness-generated} restrict
+to the witness-generated submodel $J=\mathcal{I}|_W$. Give each $a\in W$ its
+closure type $\tp(a)$. The selected existential witnesses give generated cover
+edges and containment demands. By Lemma~\ref{lem:split-tree-cover} these
+demands have a weak containment split-tree presentation. Record the finitely
+many profile-level isomorphism classes of local contexts and sibling mosaics
+that appear, and close this finite set under submosaics, child/context
+extension, typed-EQ replacement, and triple support. Existential PP/PPI
+requirements are accepted because selected witnesses were chosen for every
+true existential closure formula. Hence we obtain an accepted, possibly
+irregular, presentation over a finite alphabet.
+\end{proof}
+
+\begin{lemma}[Regularization]
+If the finite validity rules accept some finitely branching split presentation,
+then they accept a regular one generated by a finite graph.
+\end{lemma}
+
+\begin{proof}
+The validity rules are recognized by the deterministic parity automaton
+$\mathcal{P}$ constructed above: local network conditions and summary updates
+are finite transition checks, and transitive existential eventualities are
+parity conditions. If the automaton accepts some tree, the corresponding
+finite parity game is winning for the existential player. Finite parity games
+have memoryless winning strategies; unfolding such a strategy gives a regular
+accepted tree, hence a finite generator graph.
+\end{proof}
+
+\begin{theorem}[Completeness]
+If $C_0$ is satisfiable then $C_0$ has a valid finite witness-generated
+regular split-tree certificate.
+\end{theorem}
+
+\begin{proof}
+Lemma~\ref{lem:accepted-presentation} gives an accepted presentation over a
+finite alphabet. Regularization yields a regular accepted presentation
+generated by a finite graph. The finite generator, profiles, contexts, mosaics,
+initial profile, and parity condition form a valid finite certificate.
+\end{proof}
+
+\section{Decision procedure}
+\label{sec:decision}
+
+Given $C_0$, compute $\Cl(C_0)$ and $\mathrm{Type}(C_0)$. Enumerate finite
+profile sets, one-hole contexts, atomic sibling mosaics, finite generator
+graphs, and parity conditions up to computable bounds determined by $\Cl(C_0)$.
+For each candidate certificate:
+\begin{enumerate}
+  \item compute the support-closed mosaic closure (Lemma~\ref{lem:closure-finite});
+  \item construct the deterministic parity automaton $\mathcal{P}$ for trunks;
+  \item check parity emptiness on the finite parity game derived from $\mathcal{P}$;
+  \item verify finite local checks on contexts and mosaics and compute typed congruence.
+\end{enumerate}
+
+\paragraph{Effectivity and coarse bounds}
+All certificate components are drawn from finite sets computable from $\Cl(C_0)$.
+Coarse computable bounds are:
+\begin{itemize}
+  \item \textbf{Profiles:} at most $2^{|\Cl(C_0)|}$ possible types and hence
+    at most $2^{|\Cl(C_0)|}$ profiles when summaries and monitor subsets are
+    taken into account.
+  \item \textbf{Contexts:} bounded by the profile set and interface arity $n$
+    (in practice $n\le 3$ suffices); number of contexts is at most
+    $\mathrm{poly}(|\Sigma|,n)$.
+  \item \textbf{Atomic mosaics:} bounded by $|\Sigma|^n$ times the finite set
+    of RCC5 labellings on $n$ vertices.
+  \item \textbf{Generator graphs:} finite directed graphs over the profile set
+    with size bounded by a function of $|\Sigma|$.
+\end{itemize}
+Hence enumeration is effective (computable) though potentially large; each
+candidate certificate is checked in finite time.
+
+\paragraph{Effectivity and coarse bounds}
+All certificate components are drawn from finite sets computable from $\Cl(C_0)$.
+Coarse computable bounds are:
+\begin{itemize}
+  \item \textbf{Profiles:} at most $2^{|\Cl(C_0)|}$ possible types and hence
+    at most $2^{|\Cl(C_0)|}$ profiles when summaries and monitor subsets are
+    taken into account.
+  \item \textbf{Contexts:} bounded by the profile set and interface arity $n$
+    (in practice $n\le 3$ suffices); number of contexts is at most
+    $\mathrm{poly}(|\Sigma|,n)$.
+  \item \textbf{Atomic mosaics:} bounded by $|\Sigma|^n$ times the finite set
+    of RCC5 labellings on $n$ vertices.
+  \item \textbf{Generator graphs:} finite directed graphs over the profile set
+    with size bounded by a function of $|\Sigma|$.
+\end{itemize}
+Hence enumeration is effective (computable) though potentially large; each
+candidate certificate is checked in finite time.
+
+
+Accept iff some valid certificate starts at a profile containing $C_0$. Each
+step is finite and effective; parity emptiness is decidable. Hence
+satisfiability is decidable.
+
+\paragraph{Effectivity and coarse bounds}
+All certificate components are drawn from finite sets computable from $\Cl(C_0)$.
+A coarse bound is: number of profiles $\le 2^{|\Cl(C_0)|}$; number of contexts
+is bounded by the profile set and interface arity $n$ (typically $n\le 3$);
+atomic mosaics are bounded by profiles$^n$; generator graphs are finite
+directed graphs over the profile set. Hence enumeration is effective (though
+potentially large); each candidate is checked in finite time.
+
+\section{Test formulas and worked example}
+\label{sec:examples}
+
+\subsection{Chain formula}
+Consider
+
+
+\[
+C_\uparrow=\some{\PP}{\top}\ \land\ \all{\PP}{\some{\PP}{\top}}.
+\]
+
+
+A valid certificate representing a satisfying model with no semantic ambient
+top uses a single profile $p$ with $\some{\PP}{\top},\all{\PP}{\some{\PP}{\top}}\in\tp(p)$,
+a one-node generator with a self-loop, trivial mosaics, and a parity condition
+requiring the existential to be witnessed along the upward trunk. Unfolding
+the generator yields an infinite upward trunk
+
+
+\[
+u_0 \PPgen u_1 \PPgen u_2 \PPgen \cdots
+\]
+
+
+where each $u_i$ is a fresh occurrence with profile $p$. The parity acceptance
+ensures each universal/existential requirement is discharged. Quotienting by
+typed congruence does not collapse cycle laps; the model satisfies $C_\uparrow$.
+
+\section{Implementation note}
+\label{sec:implementation}
+
+The certificate language above is the formal decision object. An implementation
+may use a practical checker (CT1–CT5) as an operational approximation; to claim
+the implementation is a proved decision procedure one must prove CT1–CT5
+equivalent to the certificate validity conditions. The formal theorem stands
+independently of any particular implementation.
+
+\section{Concluding remarks}
+\label{sec:conclusion}
+
+The Option 2 witness-generated regular split-tree architecture repairs the
+rooted-Hasse assumption and provides a finite certificate language capturing
+infinite PP/PPI behaviour via ultimately periodic trunks and parity acceptance.
+The remaining formal components are constructive and effective; the decision
+procedure is explicit. Complexity may be high in practice, but decidability is
+established.
+
+\medskip
+\noindent\textbf{Acknowledgements.} The document integrates the split-forest
+ideas with witness-generated repairs and parity encoding to produce a
+self-contained certificate-based decidability proof.
+
+
+\appendix
+\section{RCC5 composition table}
+\label{app:rcc5-table}
+
+\noindent\textbf{Notation.} The base relations are
+\(\EQ,\ DR,\ PO,\ PP,\ PPI\). The entry in row \(R_1\), column \(R_2\) is
+\(\mathrm{comp}(R_1,R_2)\) (the set of possible relations from an element in
+relation \(R_1\) to a second and \(R_2\) from the second to a third).
+
+\begin{center}
+\begin{tabular}{l|l}
+\textbf{Pair $(R_1,R_2)$} & \textbf{Composition $\mathrm{comp}(R_1,R_2)$} \\
+\hline
+$(\EQ,\EQ)$ & $\EQ$ \\
+$(\EQ,\DR)$ & $\DR$ \\
+$(\EQ,\PO)$ & $\PO$ \\
+$(\EQ,\PP)$ & $\PP$ \\
+$(\EQ,\PPI)$ & $\PPI$ \\
+\hline
+$(\DR,\EQ)$ & $\DR$ \\
+$(\DR,\DR)$ & $\DR$ \\
+$(\DR,\PO)$ & $\DR$ \\
+$(\DR,\PP)$ & $\DR$ \\
+$(\DR,\PPI)$ & $\DR$ \\
+\hline
+$(\PO,\EQ)$ & $\PO$ \\
+$(\PO,\DR)$ & $\DR$ \\
+$(\PO,\PO)$ & $\PO;\DR$ \\
+$(\PO,\PP)$ & $\PO;\DR$ \\
+$(\PO,\PPI)$ & $\PO;\DR$ \\
+\hline
+$(\PP,\EQ)$ & $\PP$ \\
+$(\PP,\DR)$ & $\DR$ \\
+$(\PP,\PO)$ & $\PO;\DR$ \\
+$(\PP,\PP)$ & $\PP;\PO;\DR$ \\
+$(\PP,\PPI)$ & $\PO;\DR;\EQ$ \\
+\hline
+$(\PPI,\EQ)$ & $\PPI$ \\
+$(\PPI,\DR)$ & $\DR$ \\
+$(\PPI,\PO)$ & $\PO;\DR$ \\
+$(\PPI,\PP)$ & $\PO;\DR;\EQ$ \\
+$(\PPI,\PPI)$ & $\PPI;\PO;\DR$ \\
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Remark.} This table is the standard RCC5 composition table
+presented compactly. Cells list all base relations that may result from
+composition; semicolons separate multiple possibilities. Use this table in
+the triple‑support closure rule: whenever two pairwise mosaics realize
+$R_{12},R_{13}$, the certificate must allow any $R_{23}\in\mathrm{comp}(R_{12},R_{13})$.
+
+\section{Worked certificate examples}
+\label{app:worked-examples}
+
+\subsection{Example 1: Upward chain (already sketched)}
+\label{app:chain}
+
+\paragraph{Concept}
+
+
+\[
+C_\uparrow=\some{\PP}{\top}\ \land\ \all{\PP}{\some{\PP}{\top}}.
+\]
+
+
+
+\paragraph{Certificate (minimal)}
+\begin{itemize}
+  \item \textbf{Profiles} $\Sigma=\{p\}$ with
+    \(\tp(p)\) containing $C_\uparrow$, and
+    \(\mathsf{Le}(p)=\varnothing,\ \mathsf{Ly}(p)=\Cl(C_0)\) (no upper losses),
+    \(\mathsf{M}(p)=\{\exists^{+}\PP.\top\}\) (monitor the transitive PP existential),
+    \(e(p)=\text{colour}_0\), \(s(p)=\mathrm{core}\).
+  \item \textbf{Contexts} $\mathrm{Ctx}_Q$: a single one‑hole context that
+    allows plugging $p$ under $p$ with vertical label $\PP$ (no side branches).
+    The context records $\mathsf{newLower}_C(p,p)=\{\top\}$ and
+    $\mathsf{newUpperSafe}_C(p,p)=\Cl(C_0)$.
+  \item \textbf{Mosaics} $\mathrm{Mos}_Q$: trivial one‑edge mosaics consistent
+    with $\PP$ labelling between occurrences of $p$.
+  \item \textbf{Generator} $G_Q$: single node labelled $p$ with a self‑loop
+    (blocking cycle) that unfolds to fresh occurrences on each traversal.
+  \item \textbf{Parity} $\Pi_Q$: parity condition requiring that the monitor
+    for $\exists^{+}\PP.\top$ is seen infinitely often on the upward trunk;
+    encoded by a simple Büchi set $F_\eta=\{p\}$ and parity indices per
+    Section~\ref{sec:parity-encoding}.
+\end{itemize}
+
+\paragraph{Correctness sketch}
+Unfolding the generator yields an infinite upward trunk
+\(u_0 \PPgen u_1 \PPgen u_2 \cdots\) with each occurrence typed by $p$.
+\(\some{\PP}{\top}\) at each occurrence is witnessed by the child occurrence.
+The universal $\all{\PP}{\some{\PP}{\top}}$ is satisfied because every
+$\PP$‑neighbour (the parent in the upward direction) has a $\PP$‑child by the
+generator loop. The parity condition ensures the transitive eventuality is
+discharged along the trunk. Quotienting by typed congruence yields a strong
+RCC5 model satisfying $C_\uparrow$.
+
+\subsection{Example 2: Sibling triple requiring triple support}
+\label{app:sibling-triple}
+
+\paragraph{Intended semantic pattern}
+Three occurrences \(a,b,c\) arranged so that:
+
+
+\[
+a\ \PP\ b,\qquad a\ \PP\ c,\qquad b\ \mathsf{?}\ c
+\]
+
+
+and composition requires a compatible relation between \(b\) and \(c\)
+(e.g., if both edges are $\PP$ then $b$ and $c$ may be $\PP,\PO,\DR$).
+This pattern tests the triple‑support closure and mosaic construction.
+
+\paragraph{Concepts and profiles}
+Let the closure include a small set of atomic concepts so profiles can
+distinguish endpoints. Define three profiles:
+\begin{itemize}
+  \item $p_a$ with $\tp(p_a)$ containing a concept $A$ and $\mathsf{M}(p_a)=\varnothing$.
+  \item $p_b$ with $\tp(p_b)$ containing $B$.
+  \item $p_c$ with $\tp(p_c)$ containing $C$.
+\end{itemize}
+Summaries are minimal; equality colours are distinct where needed.
+
+\paragraph{Contexts and atomic mosaics}
+Construct atomic pair mosaics that realize the pairwise relations:
+\begin{itemize}
+  \item Mosaic $m_{ab}$ realizing $(p_a,p_b)$ with label $\PP$ on the $a$–$b$ edge.
+  \item Mosaic $m_{ac}$ realizing $(p_a,p_c)$ with label $\PP$ on the $a$–$c$ edge.
+\end{itemize}
+Apply the triple‑support closure: consult the RCC5 composition table
+(Appendix~\ref{app:rcc5-table}) for $\mathrm{comp}(\PP,\PP)=\{\PP,\PO,\DR\}$.
+The closure adds three candidate three‑endpoint mosaics for $(a,b,c)$ with
+third edge labels $\PP$, $\PO$, and $\DR$ respectively, each checked for
+relation‑safety and typed‑EQ consistency.
+
+\paragraph{Generator and acceptance}
+The generator graph $G_Q$ has a root node producing an occurrence of $p_a$
+with two outgoing context plugs that create occurrences of $p_b$ and $p_c$
+as children (containment occurrences). No parity condition is needed for this
+finite pattern.
+
+\paragraph{Correctness sketch}
+Because the triple‑support closure explicitly added a three‑endpoint mosaic
+for each $R_{bc}\in\{\PP,\PO,\DR\}$, the certificate contains a mosaic that
+realizes a consistent label for the $b$–$c$ edge compatible with the two
+$\PP$ edges from $a$. The typed congruence algorithm then ensures labels are
+representative‑independent; quotienting yields a finite strong RCC5 model
+with three elements satisfying the intended relations. This certificate
+therefore witnesses satisfiability of any concept that requires such a
+local sibling triple (for example, a concept that asserts an $A$ with two
+distinct $\PP$‑children of types $B$ and $C$).
+
+
+\bibliographystyle{plain}
+\bibliography{references} % placeholder; include references as needed
+
+\end{document}

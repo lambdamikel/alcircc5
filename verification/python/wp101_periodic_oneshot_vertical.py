@@ -44,6 +44,19 @@ cofinally above i.  So the chain half is closed-form and boundary-free.
 PARTS
   A  validity  -- does the artifact disappear?  (one-shot rate should drop far
                   below wp100's 100%, and persistent demands should appear)
+
+  CALIBRATION, RECORDED HONESTLY.  Three separate artifacts were caught inside
+  THIS probe while developing it, each of the same family as wp100's:
+    1  side regions drawn from a small range can never sit above a HIGH bounded
+       segment of the chain, so part E could not REACH the bounded branch;
+    2  the bounded witnesses' reach was drawn to match part D's widest window,
+       so one witness covered every window by construction;
+    3  "cofinally recurring" was tested on a 3p window, which admits demands
+       that simply die above the sides' reach -- everything then looks flat
+       vacuously.
+  Only the IN-KERNEL rate is stable across all four model-class variants
+  (89.2 / 90.2 / 83.5 / 91.3%).  Treat single rates from this probe as weak
+  evidence; the load is carried by the theorems in POFreeLift.lean sec. 49.
   B  witnesses -- for a cofinally-recurring one-shot demand, how many DISTINCT
                   external witnesses does serving actually need?
   C  structure -- is a single witness above cofinally many chain nodes always
@@ -299,13 +312,26 @@ class PerModel:
     _stab = 0
 
 
-def build_model(rng, natoms=2, nsides=4, p=3):
+def build_model(rng, natoms=2, nsides=6, p=3, stab=11):
+    """Side regions.  CRITICAL: the class must be able to REPRESENT a witness
+    that is above a bounded but HIGH segment of the chain, otherwise part E
+    cannot reach the BOUNDED branch and its rate is an artifact -- the same
+    mistake wp100 made.  `a_M | decoration` is above exactly a_0..a_{M-1}, so
+    the third generator below supplies precisely those."""
     sides = []
-    while len(sides) < nsides:
-        if rng.random() < 0.45:
-            r = Reg(True, rng.sample(range(6), rng.randint(0, 3)))     # cofinite
+    guard = 0
+    while len(sides) < nsides and guard < 400:
+        guard += 1
+        u = rng.random()
+        if u < 0.30:
+            r = Reg(True, rng.sample(range(6), rng.randint(0, 3)))      # cofinite
+        elif u < 0.55:
+            r = Reg(False, rng.sample(range(10), rng.randint(1, 4)))    # finite
         else:
-            r = Reg(False, rng.sample(range(10), rng.randint(1, 4)))   # finite
+            # BOUNDED-SEGMENT witness: above a_0 .. a_{M-1}, not above a_M
+            M = rng.randint(stab + 1, stab + 5 * p)
+            dec = set(rng.sample(range(M + 2, M + 40), rng.randint(1, 3)))
+            r = Reg(False, set(range(M + 1)) | dec)
         if r.nonempty() and r not in sides and r != Reg(False, ()):
             sides.append(r)
     chain_val = {(a, t): rng.random() < 0.5
@@ -314,7 +340,7 @@ def build_model(rng, natoms=2, nsides=4, p=3):
                 for a in range(natoms) for j in range(nsides)}
     m = PerModel(p, chain_val, sides, side_val)
     # above this index every side's relation to the chain has stabilised
-    m._stab = 1 + max([max(s.s) if s.s else 0 for s in sides] + [10])
+    m._stab = stab
     return m
 
 
@@ -488,10 +514,17 @@ def part_d(trials=900, seed=404404):
             if d[0] != "ex" or d[1] != PP:
                 continue
             X = d[2]
-            occ = [i for i in range(m._stab, m._stab + 3 * m.p)
+            # GENUINE cofinality: the demand must still be present in the TOP
+            # quarter of the widest window we will measure over.  Testing it on
+            # a narrow window (as an earlier revision did) admits demands that
+            # simply die above the sides' reach, and then everything looks flat
+            # vacuously -- the same class of artifact as wp100's.
+            WIN = 64 * m.p
+            occ = [i for i in range(m._stab, m._stab + WIN)
                    if m.sat_chain(i, d, hi)
                    and not m.sat_chain(i, ("all", PP, d), hi)]
-            if len(occ) < 2 * m.p:
+            if not occ or len([i for i in occ
+                               if i > m._stab + 3 * WIN // 4]) < m.p:
                 continue
             # does X recur on the CHAIN above?  then serving is free
             chain_hits = [k for k in range(m._stab, m._stab + 8 * m.p)
@@ -502,7 +535,7 @@ def part_d(trials=900, seed=404404):
             extonly += 1
             # EXTERNAL count as the window grows
             row = []
-            for mult in (2, 4, 8, 16):
+            for mult in (2, 4, 8, 16, 32, 64):
                 win = [i for i in range(m._stab, m._stab + mult * m.p)
                        if m.sat_chain(i, d, hi)]
                 need = set(win)
@@ -531,7 +564,7 @@ def part_d(trials=900, seed=404404):
         print(f"    need an EXTERNAL                         : {extonly:5d}"
               f"  ({100*extonly/tot:5.1f}%)")
     if growth:
-        print(f"  external count at windows 2p / 4p / 8p / 16p:")
+        print(f"  external count at windows 2p / 4p / 8p / 16p / 32p / 64p")
         print(f"  {'counts':>22} {'cases':>7}  {'verdict':>10}")
         grew = flat = 0
         for row in sorted(growth, key=lambda r: -growth[r]):
@@ -548,12 +581,91 @@ def part_d(trials=900, seed=404404):
     return False
 
 
+def part_e(trials=1200, seed=505505):
+    """THE CERTIFIED DICHOTOMY, MEASURED.
+
+    formal/POFreeLift.lean sec. 49 certifies (witness_bounded_or_all) that every
+    candidate witness w for a kernel's vertical demand either
+
+        (ALL)      is above EVERY chain node -- one external serves the whole
+                   kernel, cost 1; or
+        (BOUNDED)  is above only a bounded initial segment -- the witnesses must
+                   keep ascending, which is the layer regress.
+
+    There is provably no middle case (above_cofinal_is_above_all: transitivity
+    closes downward, so "above cofinally many" IS "above all").
+
+    This part asks how often each branch is the ONLY one available: is the
+    BOUNDED branch actually reachable, or is it empty in practice?
+    """
+    print("\nPART E -- the certified dichotomy: is the BOUNDED branch reachable?")
+    rng = random.Random(seed)
+    hi = 60
+    all_avail = bounded_only = none_avail = 0
+    for _ in range(trials):
+        c0 = rand_concept(rng, rng.randint(2, 3))
+        m = build_model(rng)
+        for d in closure(c0):
+            if d[0] != "ex" or d[1] != PP:
+                continue
+            X = d[2]
+            WIN = 64 * m.p
+            occ = [i for i in range(m._stab, m._stab + WIN)
+                   if m.sat_chain(i, d, hi)
+                   and not m.sat_chain(i, ("all", PP, d), hi)]
+            if not occ or len([i for i in occ
+                               if i > m._stab + 3 * WIN // 4]) < m.p:
+                continue
+            if len([k for k in range(m._stab, m._stab + 8 * m.p)
+                    if m.sat_chain(k, X, hi)]) >= 3:
+                continue                       # in-kernel branch, not this test
+            # classify every available witness by the certified dichotomy
+            chain_pts = list(range(m._stab, m._stab + 16 * m.p))
+            has_all = has_bounded = False
+            for j in range(len(m.sides)):
+                if not m.sat_side(j, X, hi):
+                    continue
+                above = [i for i in chain_pts if rel(m.a(i), m.sides[j]) == PP]
+                if not above:
+                    continue
+                if len(above) == len(chain_pts):
+                    has_all = True
+                else:
+                    has_bounded = True
+            if has_all:
+                all_avail += 1
+            elif has_bounded:
+                bounded_only += 1
+            else:
+                none_avail += 1
+    tot = all_avail + bounded_only + none_avail
+    print(f"  external-needing cofinal one-shot demands : {tot}")
+    if tot:
+        print(f"    (ALL) a whole-kernel witness exists     : {all_avail:5d}"
+              f"  ({100*all_avail/tot:5.1f}%)  -- cost 1, DONE")
+        print(f"    (BOUNDED) only segment witnesses        : {bounded_only:5d}"
+              f"  ({100*bounded_only/tot:5.1f}%)  -- the layer regress")
+        print(f"    no witness at all in this model class   : {none_avail:5d}")
+    print("  READ THIS RATE CAREFULLY.  0% BOUNDED is NOT evidence that the")
+    print("  bounded branch is impossible -- it is a CONSEQUENCE of the model")
+    print("  class having FINITELY many side regions.  With a finite pool, each")
+    print("  witness above a_i reaches at least i, so genuine cofinality forces")
+    print("  a member of unbounded reach, and transitivity makes it reach ALL.")
+    print("  That is now a THEOREM: finite_pool_gives_cofinal_witness, and its")
+    print("  sharp form finite_pool_all_or_nothing -- a finite pool either has a")
+    print("  whole-kernel server or fails outright; never 2 or 3 partial ones.")
+    print("  Reaching the bounded branch needs INFINITELY many externals, i.e.")
+    print("  witnesses that genuinely ascend.  Whether a forall-PO-free concept")
+    print("  can FORCE that is the campaign's residual question.")
+    return tot > 0
+
+
 def main():
     print("=" * 74)
     print("WP101 -- one-shot vertical demands over infinite periodic models")
     print("=" * 74)
     res = {"A validity": part_a(), "B witness count": part_b(),
-           "C cofinal witness": part_c(), "D scaling": part_d()}
+           "C cofinal witness": part_c(), "D scaling": part_d(), "E dichotomy": part_e()}
     print("\n" + "=" * 74)
     for k, v in res.items():
         print(f"  {k:20s} : {'ran' if v else 'see above'}")

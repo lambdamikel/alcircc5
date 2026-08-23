@@ -25511,11 +25511,139 @@ theorem oneshot_in_kernel {c : Nat → α} {D : Concept}
     sat I (c j) (Concept.ex pp D) :=
   ⟨c k, hdom k, hasc j k hjk, hD⟩
 
+
+/-- **NO MIDDLE CASE: a witness above arbitrarily high chain points is above the
+    WHOLE chain.**  Transitivity closes downward, so "above cofinally many" and
+    "above all" are the same condition.
+
+    This is the structural fact behind `wp101` part D's flat count: a witness
+    cannot serve an unbounded-but-proper part of a kernel. -/
+theorem above_cofinal_is_above_all (hI : RCC5Interp I) {c : Nat → α} {w : α}
+    (hdom : ∀ i, I.dom (c i)) (hw : I.dom w)
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    (hcof : ∀ N, ∃ i, N < i ∧ I.rho (c i) w = pp) :
+    ∀ j, I.rho (c j) w = pp := by
+  intro j
+  obtain ⟨i, hji, hi⟩ := hcof j
+  exact pp_witness_below hI (hdom i) (hdom j) hw (hasc j i hji) hi
+
+/-- **THE WITNESS DICHOTOMY.**  Every candidate witness for a kernel's vertical
+    demand either serves the ENTIRE kernel, or serves only a bounded initial
+    segment of it.  There is nothing in between.
+
+    So a cofinally recurring one-shot demand is served either by ONE external
+    (the first branch) or by witnesses that must keep ascending (the second) —
+    and the ascending case is `pp_dichotomy`'s, which produces a kernel and is
+    bounded layer-wise by the cut (§46.28). -/
+theorem witness_bounded_or_all (hI : RCC5Interp I) {c : Nat → α} {w : α}
+    (hdom : ∀ i, I.dom (c i)) (hw : I.dom w)
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp) :
+    (∀ j, I.rho (c j) w = pp) ∨ (∃ N, ∀ i, N < i → I.rho (c i) w ≠ pp) := by
+  rcases Classical.em (∃ N, ∀ i, N < i → I.rho (c i) w ≠ pp) with h | h
+  · exact Or.inr h
+  · refine Or.inl (above_cofinal_is_above_all hI hdom hw hasc ?_)
+    intro N
+    rcases Classical.em (∃ i, N < i ∧ I.rho (c i) w = pp) with h2 | h2
+    · exact h2
+    · exact absurd ⟨N, fun i hi hr => h2 ⟨i, hi, hr⟩⟩ h
+
+/-- The good branch, named: ONE external above the whole kernel discharges the
+    demand at EVERY kernel node.  This is the `(1,1,1,1)` of `wp101` D. -/
+theorem cofinal_witness_serves_all {c : Nat → α} {D : Concept} {w : α}
+    (hw : I.dom w) (hcof : ∀ i, I.rho (c i) w = pp) (hD : sat I w D) :
+    ∀ i, sat I (c i) (Concept.ex pp D) :=
+  fun i => ⟨w, hw, hcof i, hD⟩
+
+
+/-- **THE FINITE-POOL PIGEONHOLE (§49.4) — the branch-closer.**
+
+    If the witnesses for a kernel's vertical demand are drawn from a FINITE pool
+    `W`, then one member of `W` is above the ENTIRE kernel.
+
+    Proof: `recurrent_tail` says some pool member is chosen cofinally often, and
+    `above_cofinal_is_above_all` upgrades "above cofinally many" to "above all".
+
+    This is the branch `wp101` E could not reach by measurement: with finitely
+    many externals available, genuine cofinality FORCES the good branch. And the
+    certificate's external set is finite BY CONSTRUCTION — so this is not a
+    hypothesis about models, it is a property of the object being built.
+
+    It is also a UNIFORMIZATION of exactly the shape the campaign has wanted
+    since W2′: pointwise serving from a finite pool upgrades, for free, to one
+    uniform server. Transitivity plus pigeonhole is the whole proof. -/
+theorem finite_pool_gives_cofinal_witness (hI : RCC5Interp I) {c : Nat → α}
+    {D : Concept} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    (W : List α) (hW : ∀ w ∈ W, I.dom w)
+    (hpool : ∀ i, ∃ w, w ∈ W ∧ I.rho (c i) w = pp ∧ sat I w D) :
+    ∃ w, w ∈ W ∧ (∀ j, I.rho (c j) w = pp) ∧ sat I w D := by
+  have hfW : ∀ i, Classical.choose (hpool i) ∈ W :=
+    fun i => (Classical.choose_spec (hpool i)).1
+  have hfr : ∀ i, I.rho (c i) (Classical.choose (hpool i)) = pp :=
+    fun i => (Classical.choose_spec (hpool i)).2.1
+  have hfD : ∀ i, sat I (Classical.choose (hpool i)) D :=
+    fun i => (Classical.choose_spec (hpool i)).2.2
+  obtain ⟨M, hM⟩ := recurrent_tail W (fun i => Classical.choose (hpool i)) hfW
+  refine ⟨_, hfW M, ?_, hfD M⟩
+  refine above_cofinal_is_above_all hI hdom (hW _ (hfW M)) hasc ?_
+  intro N
+  obtain ⟨i, hi, heq⟩ := hM M (Nat.le_refl M) (N + 1)
+  refine ⟨i, hi, ?_⟩
+  rw [← heq]
+  exact hfr i
+
+/-- The payoff, stated as serving: a finite pool discharges the demand at EVERY
+    kernel node, with ONE external. -/
+theorem finite_pool_serves_kernel (hI : RCC5Interp I) {c : Nat → α}
+    {D : Concept} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    (W : List α) (hW : ∀ w ∈ W, I.dom w)
+    (hpool : ∀ i, ∃ w, w ∈ W ∧ I.rho (c i) w = pp ∧ sat I w D) :
+    ∃ w, w ∈ W ∧ ∀ i, sat I (c i) (Concept.ex pp D) := by
+  obtain ⟨w, hwW, hall, hD⟩ :=
+    finite_pool_gives_cofinal_witness hI hdom hasc W hW hpool
+  exact ⟨w, hwW, cofinal_witness_serves_all (hW w hwW) hall hD⟩
+
+
+/-- **ALL OR NOTHING (§49.5).**  A FINITE pool either contains a single member
+    that serves the WHOLE kernel, or it fails outright at some kernel node.
+    There is no configuration in which several partial servers between them
+    cover a kernel.
+
+    This is the exact statement behind `wp101` part D's `(1,1,1,1,1,1)`: the
+    external count for a kernel's vertical demand is never 2, 3, … — it is 1 or
+    the pool is inadequate. Together with `oneshot_in_kernel` it leaves a clean
+    TRICHOTOMY for a cofinally recurring one-shot vertical demand:
+
+    1. the demanded concept recurs on the chain — served IN-KERNEL, cost 0;
+    2. one external sits above the whole kernel — cost 1;
+    3. neither — and then NO finite external set can serve it, so the residual
+       question is precisely whether a ∀PO-free concept can force case 3. -/
+theorem finite_pool_all_or_nothing (hI : RCC5Interp I) {c : Nat → α}
+    {D : Concept} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    (W : List α) (hW : ∀ w ∈ W, I.dom w) :
+    (∃ w, w ∈ W ∧ (∀ j, I.rho (c j) w = pp) ∧ sat I w D) ∨
+    (∃ i, ∀ w, w ∈ W → I.rho (c i) w = pp → ¬ sat I w D) := by
+  rcases Classical.em (∀ i, ∃ w, w ∈ W ∧ I.rho (c i) w = pp ∧ sat I w D) with h | h
+  · exact Or.inl (finite_pool_gives_cofinal_witness hI hdom hasc W hW h)
+  · rcases Classical.em (∃ i, ∀ w, w ∈ W → I.rho (c i) w = pp → ¬ sat I w D)
+      with h2 | h2
+    · exact Or.inr h2
+    · exact absurd (fun i => Classical.byContradiction (fun hno =>
+        h2 ⟨i, fun w hwW hr hD => hno ⟨w, hwW, hr, hD⟩⟩)) h
+
 end OneShotDichotomy
 
 #print axioms pp_witness_below
 #print axioms ex_pp_serves_below
 #print axioms oneshot_one_witness
 #print axioms oneshot_in_kernel
+#print axioms above_cofinal_is_above_all
+#print axioms witness_bounded_or_all
+#print axioms cofinal_witness_serves_all
+#print axioms finite_pool_gives_cofinal_witness
+#print axioms finite_pool_serves_kernel
+#print axioms finite_pool_all_or_nothing
 
 end POFreeLift
