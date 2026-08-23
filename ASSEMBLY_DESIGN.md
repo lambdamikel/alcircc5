@@ -5472,3 +5472,33 @@ exception.
 
 **Step 1 remaining:** `dn` from `BankData.ws`, `seed` from `seedMix`, and the
 budget assignment. `up` is done.
+
+### 46.16 The attachment is the model relation (2026-08-23)
+
+`up` and `dn` need not be bookkeeping over the bank's witness list. They can be
+**the model relation itself, held across the window**:
+
+* `upAt k e` — `e` is inside every phase of `k` from its base on;
+* `dnAt k e` — every phase of `k` from its base on is inside `e`.
+
+That turns four obligations into instantiations:
+
+| obligation | now |
+|---|---|
+| `hup0`, `hdn0` | `upAt_base`, `dnAt_base` — the phase fact at `a = 0` |
+| `hupP`, `hdnP` | `upAt_phase`, `dnAt_phase` — `decide` unfolded |
+| `hud`'s model fact | `upAt_dnAt_pp` — `comp(PP,PP) = {PP}` |
+| κ's attachment | `upAt_self` — `kCk_root_pp_phase` in `upAt` form |
+
+**And it narrows the bank's role to what it is actually for.** The bank was
+never needed to *define* the attachment; it is needed to guarantee that a
+suitable external EXISTS for each demand — `hupP_of_bank`, `hdnP_of_bank`,
+`hdrP_of_bank`. Defining `up`/`dn` from the bank conflated the two and would have
+carried list-membership bookkeeping through every obligation.
+
+`upAt_self` is the one that closes the loop on §44.27: κ is defined as the
+`persistDs`-nonempty nodes, and each such index now *provably* has its
+attachment, rather than being given one by fiat.
+
+**Step 1 remaining:** `seed` from `seedMix` with `kdr` in the same
+relation-defined style, and the budget assignment.
