@@ -11757,6 +11757,53 @@ theorem mixNodes_length_le_KT {α : Type} {I : Interp α} {C0 : Concept}
     (n : MTKNode I C0) :
     (mixNodes (typeEnum C0).length (mdepth C0) n).length ≤ mixKT C0 :=
   mixNodes_length_le _ _ n
+
+/-! #### The coverage obligation, pinned (§46.25)
+
+Step 2's one substantive item.  `odSeed_he_ex` reduces `he_ex` to four routing
+conditions; three of them are already discharged for the extraction's data:
+
+* `rDR`/`rPO` — the horizontal witness is `mtkWitness`, which `mixNodes`'
+  recursion contains (`rDR_witness`, `rPO_witness`);
+* the KERNEL disjunct of `rPP`/`rPPI` — a persistent demand is served by the
+  node's own kernel (`kCk_covers`, `kCkI_covers`, `mUp_self_asc`,
+  `mDn_self_desc`).
+
+What is left is exactly the ONE-SHOT disjunct: a non-persistent vertical demand
+must be served by an `elt` edge INSIDE the node set.  `ppNodes` contains the
+witness (`ppWitness`/`ppiWitness`) whenever fuel remains; the obligation is that
+fuel does remain, i.e. that the one-shot chain fits.
+
+`NodeCovered` names it. -/
+
+/-- The node set covers `n`'s ONE-SHOT vertical demands: each has its witness in
+    the set. -/
+def NodeCovered {α : Type} {I : Interp α} {C0 : Concept} (fuel b : Nat)
+    (root : MTKNode I C0) (n : MTKNode I C0) : Prop :=
+  (∀ (D : Concept) (hF : Concept.ex pp D ∈ mtk C0 I n.x n.k),
+      D ∉ persistDs C0 I n.x → ppWitness n hF ∈ mixNodes fuel b root) ∧
+  (∀ (D : Concept) (hF : Concept.ex ppi D ∈ mtk C0 I n.x n.k),
+      D ∉ persistDsI C0 I n.x → ppiWitness n hF ∈ mixNodes fuel b root)
+
+/-- **THE PERSISTENT HALF IS ALREADY SERVED** — by the node's own kernel, which
+    exists precisely because `persistDs` is nonempty there.  So the obligation
+    really is confined to the one-shot demands. -/
+theorem length_pos_of_mem {A : Type} {a : A} :
+    ∀ {l : List A}, a ∈ l → 0 < l.length := by
+  intro l h
+  cases l with
+  | nil => exact absurd h List.not_mem_nil
+  | cons _ _ => exact Nat.succ_pos _
+
+theorem persistent_has_kernel {α : Type} {I : Interp α} {C0 : Concept}
+    {β : Type} (nd : β → MTKNode I C0) (e : β) (D : Concept)
+    (hD : D ∈ persistDs C0 I (nd e).x) :
+    0 < (persistDs C0 I (nd e).x).length := length_pos_of_mem hD
+
+theorem persistentI_has_kernel {α : Type} {I : Interp α} {C0 : Concept}
+    {β : Type} (nd : β → MTKNode I C0) (e : β) (D : Concept)
+    (hD : D ∈ persistDsI C0 I (nd e).x) :
+    0 < (persistDsI C0 I (nd e).x).length := length_pos_of_mem hD
 /-! #### The external index (§46.9 step 1)
 
 `β` is the bounded node closure as an INDEX TYPE, with `Subtype.val` as the
