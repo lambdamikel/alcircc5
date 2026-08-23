@@ -5759,3 +5759,38 @@ is a genuine open sub-problem of the same species the campaign has faced before
 local tools are certified. What is absent is the global measure. I do not have
 one, and I would rather say so than produce a fourth route that fails in a fifth
 way.
+
+### 46.28 CORRECTION: the cut DOES apply between layers (2026-08-23)
+
+§46.27 said the layer regress is unbounded because "layers stack upward and the
+cut only reaches upward too, so it does not obviously apply between layers."
+**That reasoning is backwards.** The cut needs the survivor to be ABOVE the node
+it replaces (§44.15) — and later layers ARE above earlier ones. Reaching upward
+is exactly the condition for applying it, not an obstacle.
+
+Concretely: the layer anchors form an ascending chain `a₀ ⊂ a₁ ⊂ a₂ ⊂ …`, so
+`path_cut` applies verbatim with `u := a_{i-1}`, `v := aᵢ`, `w := aⱼ`:
+
+```
+a_{i-1} PP aᵢ,  aᵢ PP aⱼ,  mty aᵢ = mty aⱼ
+  ⟹  a_{i-1} PP aⱼ  and  aⱼ carries whatever aᵢ did
+```
+
+so layers `i … j-1` can be dropped. **A repeat-free layer sequence has at most
+`|typeEnum C₀|` layers**, and the layer count is bounded by the same pigeonhole
+as everything else.
+
+**What this changes.** §46.27's "the global measure is absent" was too gloomy:
+the measure is the same cut, applied one level up. Both the within-chain bound
+and the between-layer bound come from `path_cut`.
+
+**What it does NOT change.** The cut gives EXISTENCE of a short layer sequence,
+not a construction — so the residual difficulty is exactly the seam §44.19 named
+and §46.26 hit three times, and route B's oscillation problem applies at the
+layer level too. The remaining item is therefore ONE thing, not two:
+
+> obtain a finite closed structure to minimize over; then the cut, applied both
+> within chains and between layers, bounds it by `mixKT C₀`.
+
+That is a better position than §46.27 recorded, and the correction is worth more
+than the pessimism it replaces.
