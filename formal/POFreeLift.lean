@@ -15243,6 +15243,87 @@ theorem kCk_root_pp_phase (hI : RCC5Interp I) (C0 : Concept)
   refine chain_pp_lt hI _ hd hs 0 _ ?_
   have hp : 0 < kIk hI C0 nd L0 k := (kFam hI C0 nd L0 k).ipos
   omega
+
+/-! #### The attachment, defined BY THE MODEL RELATION (§46.16)
+
+`up` and `dn` need not be bookkeeping over the bank's witness list.  They can be
+the model relation itself, held across the whole window:
+
+* `upAt k e` — `e` is inside every phase of `k` from its base on;
+* `dnAt k e` — every phase of `k` from its base on is inside `e`.
+
+That makes `hup0`, `hdn0`, `hupP` and `hdnP` INSTANTIATIONS rather than proofs,
+and the bank's role narrows to what it is actually for: guaranteeing that such
+externals EXIST for each demand (`hupP_of_bank`, `hdnP_of_bank`,
+`hdrP_of_bank`). -/
+
+open Classical in
+/-- `e` is inside every phase of `k`. -/
+noncomputable def upAt (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) : Bool :=
+  decide (∀ b, kIk hI C0 nd L0 k ≤ b →
+    I.rho (nd e).x (kCk hI C0 nd L0 k b) = pp)
+
+open Classical in
+/-- Every phase of `k` is inside `e`. -/
+noncomputable def dnAt (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) : Bool :=
+  decide (∀ b, kIk hI C0 nd L0 k ≤ b →
+    I.rho (kCk hI C0 nd L0 k b) (nd e).x = pp)
+
+open Classical in
+theorem upAt_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) (h : upAt hI C0 nd L0 k e = true)
+    (a : Nat) :
+    I.rho (nd e).x (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + a)) = pp :=
+  of_decide_eq_true h _ (Nat.le_add_right _ _)
+
+open Classical in
+theorem dnAt_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) (h : dnAt hI C0 nd L0 k e = true)
+    (a : Nat) :
+    I.rho (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + a)) (nd e).x = pp :=
+  of_decide_eq_true h _ (Nat.le_add_right _ _)
+
+/-- `hup0` and `hdn0` are the phase facts at `a = 0`. -/
+theorem upAt_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β)
+    (h : upAt hI C0 nd L0 k e = true) :
+    I.rho (nd e).x (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k)) = pp := by
+  have := upAt_phase hI C0 nd L0 k e h 0
+  rwa [Nat.add_zero] at this
+
+theorem dnAt_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β)
+    (h : dnAt hI C0 nd L0 k e = true) :
+    I.rho (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k)) (nd e).x = pp := by
+  have := dnAt_phase hI C0 nd L0 k e h 0
+  rwa [Nat.add_zero] at this
+
+open Classical in
+/-- **A KERNEL IS ATTACHED ABOVE ITS OWN NODE** — `kCk_root_pp_phase`, in the
+    `upAt` form.  So `κ`'s defining property really does give each index its
+    attachment. -/
+theorem upAt_self (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) : upAt hI C0 nd L0 k k.val = true := by
+  refine decide_eq_true ?_
+  intro b hb
+  have hbe : b = kIk hI C0 nd L0 k + (b - kIk hI C0 nd L0 k) := by omega
+  rw [hbe]
+  exact kCk_root_pp_phase hI C0 nd L0 k _
+
+/-- **`hud`'s MODEL FACT.**  `x` inside every phase and every phase inside `y`
+    gives `x PP y` — `comp(PP,PP) = {PP}`.  This is what `mixStep_rho`'s up/dn
+    branch consumes. -/
+theorem upAt_dnAt_pp (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (x y : β)
+    (hx : upAt hI C0 nd L0 k x = true) (hy : dnAt hI C0 nd L0 k y = true) :
+    I.rho (nd x).x (nd y).x = pp := by
+  have hm := hI.comp_ (nd x).x (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k)) (nd y).x
+    (nd x).hx (kCk_dom hI C0 nd L0 k _) (nd y).hx
+  rw [upAt_base hI C0 nd L0 k x hx, dnAt_base hI C0 nd L0 k y hy,
+    show comp pp pp = [pp] from rfl] at hm
+  exact List.mem_singleton.mp hm
 /-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
     needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
     while the base `i` and period `p` are available at ARBITRARILY LATE `L0`,
@@ -25004,6 +25085,8 @@ end VerticalWitness
 #print axioms kCk_step
 #print axioms kCk_covers
 #print axioms kCk_root_pp_phase
+#print axioms upAt_self
+#print axioms upAt_dnAt_pp
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
