@@ -5454,3 +5454,21 @@ Only the wiring of the pieces that now all exist:
 | budgets | `bk k := bud (k.val)`, bank members one below (§43.10, §46.7) |
 
 then step 2 — one application of `mtkKernelsOD_of_debts` — and step 3, the tail.
+
+### 46.15 The kernel records its root, and `hup0` follows (2026-08-23)
+
+`rrChain`'s base case is literally the node, so `c 0 = x` is `rfl`. Both kernel
+theorems now record it along with `0 < i`, and `KernelData` carries them
+(`croot`, `ipos`) with the node as a parameter.
+
+| | |
+|---|---|
+| `kCk_root_pp` | the node is a proper part of its own kernel's BASE — `chain_pp_lt` from `croot` and `ipos` |
+| `kCk_root_pp_phase` | and of every PHASE, the form `hupP` wants since the obligations quantify over the window |
+
+With `up k e := (e = k.val)` that is exactly `hup0`. `chain_pp_lt` was already in
+the file — checked before building, which is now the default rather than the
+exception.
+
+**Step 1 remaining:** `dn` from `BankData.ws`, `seed` from `seedMix`, and the
+budget assignment. `up` is done.
