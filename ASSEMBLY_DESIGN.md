@@ -5673,3 +5673,49 @@ that choice is the short one. That is the same existence/construction seam
 **Assessment.** This is one obligation, precisely stated, with both ingredients
 certified and the gap between them named. It is not a new mathematical problem;
 it is the last place where an existence result has to be turned into a choice.
+
+### 46.26 Why the one-shot fuel obligation resists a direct construction (2026-08-23)
+
+Working the obligation directly, three routes were tried and each fails in an
+instructive way. Recording them so the next attempt does not repeat them.
+
+**Route A — make `ppWitness` pick the short chain's head.** `short_chain` needs a
+FINITE input chain, so feed it the greedy chain of length `|typeEnum C₀| + 1`.
+It returns a chain of length ≤ `|typeEnum C₀|` whose head has the SAME TYPE,
+hence still carries `D`. Good so far. **But the short chain's LAST node need not
+be demand-free**, so the set is not closed — the obligation reappears one level
+down.
+
+**Route B — extend-and-cut to a fixed point.** Maintain a repeat-free serving
+chain; to serve the last node's demand, extend by its witness; if the extension
+repeats a type, cut. Length is non-increasing after the first `|typeEnum|` steps
+(a cut drops `end - i ≥ 1` and the extension adds 1). **But nothing forbids
+oscillation** — extend, cut, extend, cut — so there is no termination measure and
+no fixed point is produced.
+
+**Route C — quotient by type.** Reuse an existing set member of the same type
+instead of adding a node. Bounded immediately. **But reuse needs the existing
+member to be `elt`-ABOVE the current node**, and `wp96` D already measured this:
+type-quotienting loses coverage on 8.4% of instances. It is the W2′
+uniformization failure, and it is not repairable by being cleverer about which
+representative to keep.
+
+**What the three failures have in common.** Each tries to CONSTRUCT the bounded
+set. The certified results in this area — `short_chain`, `pp_dichotomy` — are
+EXISTENCE results, and §44.19 already showed that turning one into the other is
+where this campaign's seams live.
+
+**So the shape of the remaining argument is:**
+
+> take a closed serving set of MINIMAL size; the cut shows it is repeat-free
+> along `PP`-chains; hence it is bounded by `mixKT C₀`.
+
+with the one wrinkle that minimality needs a starting finite set, which the
+dichotomy supplies: where the closure is infinite, a chain is infinite, and that
+branch yields a KERNEL rather than externals. So the induction is simultaneous
+over the two branches rather than sequential.
+
+**Honest status.** This is a well-defined argument of a shape the campaign has
+executed before (`short_chain` is exactly this, one level down), but it is NOT a
+mechanical step and it is NOT written. It is the last item, and it deserves to be
+attacked as its own piece of work rather than as the tail of an assembly.
