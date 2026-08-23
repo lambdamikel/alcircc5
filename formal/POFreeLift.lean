@@ -15242,6 +15242,69 @@ theorem kIk_ge (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) : L0 k.val ≤ kIk hI C0 nd L0 k :=
   (kFam hI C0 nd L0 k).base_ge
 
+
+/-- The DESCENDING kernel index: nodes with a persistent `∃PPI` demand. -/
+def KIdxI {β : Type} (C0 : Concept) (I : Interp α) (nd : β → MTKNode I C0) :
+    Type := {e : β // 0 < (persistDsI C0 I (nd e).x).length}
+
+/-- The descending family. -/
+noncomputable def kFamI (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdxI C0 I nd) :
+    KernelData I C0 (persistDsI C0 I (nd k.val).x) (L0 k.val) false
+      (nd k.val).x :=
+  kernelDataI hI C0 (nd k.val).x (nd k.val).hx k.property (L0 k.val)
+
+noncomputable def kCkI (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdxI C0 I nd) : Nat → α :=
+  (kFamI hI C0 nd L0 k).c
+
+noncomputable def kIkI (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdxI C0 I nd) : Nat :=
+  (kFamI hI C0 nd L0 k).i
+
+noncomputable def kPkI (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdxI C0 I nd) : Nat :=
+  (kFamI hI C0 nd L0 k).p
+
+theorem kCkI_dom (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxI C0 I nd) (n : Nat) :
+    I.dom (kCkI hI C0 nd L0 k n) := (kFamI hI C0 nd L0 k).cdom n
+
+theorem kCkI_step (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxI C0 I nd) (n : Nat) :
+    I.rho (kCkI hI C0 nd L0 k n) (kCkI hI C0 nd L0 k (n + 1)) = cdir false :=
+  (kFamI hI C0 nd L0 k).cstep n
+
+theorem kPkI_pos (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxI C0 I nd) : 0 < kPkI hI C0 nd L0 k :=
+  (kFamI hI C0 nd L0 k).ppos
+
+theorem kCkI_ty (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxI C0 I nd) :
+    mty C0 I (kCkI hI C0 nd L0 k (kIkI hI C0 nd L0 k)) =
+      mty C0 I (kCkI hI C0 nd L0 k (kIkI hI C0 nd L0 k + kPkI hI C0 nd L0 k)) :=
+  (kFamI hI C0 nd L0 k).cty
+
+theorem kCkI_covers (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxI C0 I nd) (D : Concept)
+    (hD : D ∈ persistDsI C0 I (nd k.val).x) :
+    ∃ b, b < kPkI hI C0 nd L0 k ∧
+      D ∈ mty C0 I (kCkI hI C0 nd L0 k (kIkI hI C0 nd L0 k + b)) :=
+  (kFamI hI C0 nd L0 k).ccovers D hD
+
+/-- **A DESCENDING KERNEL IS BELOW ITS OWN NODE**: the chain starts AT the node
+    and descends, so every phase is a proper PART of it — the `dnAt` side of
+    `upAt_self`. -/
+theorem kCkI_root_ppi_phase (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdxI C0 I nd) (a : Nat) :
+    I.rho (kCkI hI C0 nd L0 k (kIkI hI C0 nd L0 k + a)) (nd k.val).x = pp := by
+  have hd := kCkI_dom hI C0 nd L0 k
+  have hs : ∀ n, I.rho (kCkI hI C0 nd L0 k n) (kCkI hI C0 nd L0 k (n + 1)) = ppi :=
+    fun n => kCkI_step hI C0 nd L0 k n
+  have hr : kCkI hI C0 nd L0 k 0 = (nd k.val).x := (kFamI hI C0 nd L0 k).croot
+  rw [← hr]
+  have hpos : 0 < kIkI hI C0 nd L0 k := (kFamI hI C0 nd L0 k).ipos
+  exact dchain_model_pp hI hd hs 0 _ (by omega)
 /-- **`hup0` FOR THE EXTRACTION'S ASCENDING KERNELS.**  The kernel starts AT its
     own node (`croot`) and its base sits past 0 (`ipos`), so the node is a proper
     part of the base by `chain_pp_lt`.  With `up k e := (e = k.val)` this is
@@ -25135,6 +25198,8 @@ end VerticalWitness
 #print axioms kCk_step
 #print axioms kCk_covers
 #print axioms kCk_root_pp_phase
+#print axioms kCkI_covers
+#print axioms kCkI_root_ppi_phase
 #print axioms upAt_self
 #print axioms upAt_dnAt_pp
 #print axioms upAt_dnAt_bud
