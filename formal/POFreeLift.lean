@@ -15305,6 +15305,7 @@ theorem kCkI_root_ppi_phase (hI : RCC5Interp I) (C0 : Concept)
   rw [← hr]
   have hpos : 0 < kIkI hI C0 nd L0 k := (kFamI hI C0 nd L0 k).ipos
   exact dchain_model_pp hI hd hs 0 _ (by omega)
+
 /-- **`hup0` FOR THE EXTRACTION'S ASCENDING KERNELS.**  The kernel starts AT its
     own node (`croot`) and its base sits past 0 (`ipos`), so the node is a proper
     part of the base by `chain_pp_lt`.  With `up k e := (e = k.val)` this is
@@ -15400,6 +15401,136 @@ theorem upAt_self (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
   have hbe : b = kIk hI C0 nd L0 k + (b - kIk hI C0 nd L0 k) := by omega
   rw [hbe]
   exact kCk_root_pp_phase hI C0 nd L0 k _
+
+/-! #### The combined kernel index (§46.23)
+
+`κ` for the assembly is `KIdx ⊕ KIdxI` — ascending and descending together, with
+`dir` reading the tag.  Every certificate field dispatches on the tag, and the
+ATTACHMENT stays relation-defined (§46.16), so it needs no dispatch at all: the
+same formula works for both directions. -/
+
+/-- The extraction's kernel index: both directions. -/
+def KIdxM {β : Type} (C0 : Concept) (I : Interp α) (nd : β → MTKNode I C0) :
+    Type := KIdx C0 I nd ⊕ KIdxI C0 I nd
+
+/-- The node a kernel is anchored at. -/
+def kNode {β : Type} {C0 : Concept} {I : Interp α} {nd : β → MTKNode I C0} :
+    KIdxM C0 I nd → β := Sum.elim Subtype.val Subtype.val
+
+noncomputable def mCk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) : KIdxM C0 I nd → Nat → α :=
+  Sum.elim (kCk hI C0 nd L0) (kCkI hI C0 nd L0)
+
+noncomputable def mIk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) : KIdxM C0 I nd → Nat :=
+  Sum.elim (kIk hI C0 nd L0) (kIkI hI C0 nd L0)
+
+noncomputable def mPk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) : KIdxM C0 I nd → Nat :=
+  Sum.elim (kPk hI C0 nd L0) (kPkI hI C0 nd L0)
+
+/-- The direction reads the tag. -/
+def mDir {β : Type} {C0 : Concept} {I : Interp α} {nd : β → MTKNode I C0} :
+    KIdxM C0 I nd → Bool := Sum.elim (fun _ => true) (fun _ => false)
+
+/-- A kernel's budget is its anchoring node's. -/
+def mBk {β : Type} {C0 : Concept} {I : Interp α} (nd : β → MTKNode I C0) :
+    KIdxM C0 I nd → Nat := fun k => (nd (kNode k)).k
+
+/-- **THE FOUR KERNEL-SIDE CERTIFICATE FIELDS, OVER BOTH DIRECTIONS.** -/
+theorem mCk_dom (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (n : Nat) :
+    I.dom (mCk hI C0 nd L0 k n) := by
+  rcases k with a | d
+  · exact kCk_dom hI C0 nd L0 a n
+  · exact kCkI_dom hI C0 nd L0 d n
+
+theorem mCk_step (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (n : Nat) :
+    I.rho (mCk hI C0 nd L0 k n) (mCk hI C0 nd L0 k (n + 1)) = cdir (mDir k) := by
+  rcases k with a | d
+  · exact kCk_step hI C0 nd L0 a n
+  · exact kCkI_step hI C0 nd L0 d n
+
+theorem mPk_pos (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) : 0 < mPk hI C0 nd L0 k := by
+  rcases k with a | d
+  · exact kPk_pos hI C0 nd L0 a
+  · exact kPkI_pos hI C0 nd L0 d
+
+theorem mCk_ty (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) :
+    mty C0 I (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k)) =
+      mty C0 I (mCk hI C0 nd L0 k
+        (mIk hI C0 nd L0 k + mPk hI C0 nd L0 k)) := by
+  rcases k with a | d
+  · exact kCk_ty hI C0 nd L0 a
+  · exact kCkI_ty hI C0 nd L0 d
+
+open Classical in
+/-- The attachment, over the combined index — the SAME relation-defined formula
+    as §46.16, needing no dispatch on direction. -/
+noncomputable def mUp (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) : Bool :=
+  decide ((nd e).k = mBk nd k ∧ ∀ b, mIk hI C0 nd L0 k ≤ b →
+    I.rho (nd e).x (mCk hI C0 nd L0 k b) = pp)
+
+open Classical in
+noncomputable def mDn (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) : Bool :=
+  decide ((nd e).k = mBk nd k ∧ ∀ b, mIk hI C0 nd L0 k ≤ b →
+    I.rho (mCk hI C0 nd L0 k b) (nd e).x = pp)
+
+open Classical in
+theorem mUp_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β)
+    (h : mUp hI C0 nd L0 k e = true) (a : Nat) :
+    I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) = pp :=
+  (of_decide_eq_true h).2 _ (Nat.le_add_right _ _)
+
+open Classical in
+theorem mDn_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β)
+    (h : mDn hI C0 nd L0 k e = true) (a : Nat) :
+    I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x = pp :=
+  (of_decide_eq_true h).2 _ (Nat.le_add_right _ _)
+
+open Classical in
+theorem mUp_bud (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β)
+    (h : mUp hI C0 nd L0 k e = true) : (nd e).k = mBk nd k :=
+  (of_decide_eq_true h).1
+
+open Classical in
+theorem mDn_bud (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β)
+    (h : mDn hI C0 nd L0 k e = true) : (nd e).k = mBk nd k :=
+  (of_decide_eq_true h).1
+
+open Classical in
+/-- **EACH KERNEL IS ATTACHED AT ITS OWN NODE, IN THE RIGHT DIRECTION** —
+    ascending kernels above, descending ones below.  So the combined index
+    really does carry its own attachment, in both directions. -/
+theorem mUp_self_asc (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (a : KIdx C0 I nd) :
+    mUp hI C0 nd L0 (Sum.inl a) a.val = true := by
+  refine decide_eq_true ⟨rfl, ?_⟩
+  intro b hb
+  have hb' : kIk hI C0 nd L0 a ≤ b := hb
+  have hbe : b = kIk hI C0 nd L0 a + (b - kIk hI C0 nd L0 a) := by omega
+  rw [hbe]
+  exact kCk_root_pp_phase hI C0 nd L0 a _
+
+open Classical in
+theorem mDn_self_desc (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (d : KIdxI C0 I nd) :
+    mDn hI C0 nd L0 (Sum.inr d) d.val = true := by
+  refine decide_eq_true ⟨rfl, ?_⟩
+  intro b hb
+  have hb' : kIkI hI C0 nd L0 d ≤ b := hb
+  have hbe : b = kIkI hI C0 nd L0 d + (b - kIkI hI C0 nd L0 d) := by omega
+  rw [hbe]
+  exact kCkI_root_ppi_phase hI C0 nd L0 d _
 
 /-- **`hud`'s MODEL FACT.**  `x` inside every phase and every phase inside `y`
     gives `x PP y` — `comp(PP,PP) = {PP}`.  This is what `mixStep_rho`'s up/dn
@@ -25200,6 +25331,9 @@ end VerticalWitness
 #print axioms kCk_root_pp_phase
 #print axioms kCkI_covers
 #print axioms kCkI_root_ppi_phase
+#print axioms mCk_step
+#print axioms mUp_self_asc
+#print axioms mDn_self_desc
 #print axioms upAt_self
 #print axioms upAt_dnAt_pp
 #print axioms upAt_dnAt_bud
