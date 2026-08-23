@@ -11731,6 +11731,41 @@ theorem mixNodes_length_le_KT {α : Type} {I : Interp α} {C0 : Concept}
     (n : MTKNode I C0) :
     (mixNodes (typeEnum C0).length (mdepth C0) n).length ≤ mixKT C0 :=
   mixNodes_length_le _ _ n
+/-! #### The external index (§46.9 step 1)
+
+`β` is the bounded node closure as an INDEX TYPE, with `Subtype.val` as the
+projection `mixStep` and the frame read through.  Its listing is `List.attach`,
+which is what the encoder consumes and what `mixNodes_length_le_KT` bounds. -/
+
+/-- The extraction's external index. -/
+def EIdx {α : Type} {I : Interp α} {C0 : Concept} (fuel b : Nat)
+    (root : MTKNode I C0) : Type := {n // n ∈ mixNodes fuel b root}
+
+/-- Its projection to coverage nodes. -/
+def eNd {α : Type} {I : Interp α} {C0 : Concept} {fuel b : Nat}
+    {root : MTKNode I C0} : EIdx fuel b root → MTKNode I C0 := Subtype.val
+
+/-- The listing — the encoder's `β` enumeration. -/
+noncomputable def eList {α : Type} {I : Interp α} {C0 : Concept} (fuel b : Nat)
+    (root : MTKNode I C0) : List (EIdx fuel b root) :=
+  (mixNodes fuel b root).attach
+
+theorem eList_complete {α : Type} {I : Interp α} {C0 : Concept} {fuel b : Nat}
+    {root : MTKNode I C0} (e : EIdx fuel b root) : e ∈ eList fuel b root :=
+  List.mem_attach _ _
+
+theorem eList_length {α : Type} {I : Interp α} {C0 : Concept} (fuel b : Nat)
+    (root : MTKNode I C0) :
+    (eList fuel b root).length = (mixNodes fuel b root).length :=
+  List.length_attach
+
+/-- **THE EXTERNAL INDEX IS BOUNDED BY `K(C₀)`** — at the pigeonhole fuel and
+    the concept's modal depth, which is what the encoder needs for `nE`. -/
+theorem eList_length_le_KT {α : Type} {I : Interp α} {C0 : Concept}
+    (root : MTKNode I C0) :
+    (eList (typeEnum C0).length (mdepth C0) root).length ≤ mixKT C0 := by
+  rw [eList_length]
+  exact mixNodes_length_le_KT root
 open Classical in
 theorem length_cdedup_le {A : Type} (l : List A) : (cdedup l).length ≤ l.length := by
   induction l with
@@ -24813,6 +24848,7 @@ end VerticalWitness
 #print axioms chain_long_has_dup
 #print axioms kernel_of_chain
 #print axioms mixNodes_length_le_KT
+#print axioms eList_length_le_KT
 #print axioms decidableSat_hfrag
 #print axioms hfrag_hcompl
 #print axioms encodeMT_mtOk
