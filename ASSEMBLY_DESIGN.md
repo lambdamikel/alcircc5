@@ -5794,3 +5794,57 @@ layer level too. The remaining item is therefore ONE thing, not two:
 
 That is a better position than §46.27 recorded, and the correction is worth more
 than the pessimism it replaces.
+
+## 47. THE ROUTE: local-above reuse, licensed by the cut (2026-08-23)
+
+### 47.1 Why neither a probe nor a research round
+
+**A probe cannot reach this.** The question is whether a closure is finite —
+about INFINITE structure. Finite set models cannot exhibit an infinite chain, so
+a finite-model probe measures nothing, exactly as `wp100` demonstrated (§45.4).
+The probe habit has a domain and this is outside it.
+
+**A research round is not needed either**, because the standard tool is already
+known not to apply: the fragment has NO finite model property (a persistent
+`∃PP` tower forces an infinite chain), so filtration is unavailable — which is
+why kernels exist at all. The object being bounded is a finite CERTIFICATE, not
+a finite model.
+
+### 47.2 The construction
+
+§46.26's route C failed because it reused a GLOBAL type representative, and
+`wp96` D measured that losing coverage on 8.4%. But the cut does not license
+global reuse — it licenses reuse of a node that is ABOVE the one it replaces.
+Localizing accordingly:
+
+> At node `n` with a one-shot demand whose witness `w` has type `T`: if some node
+> `u` ALREADY IN THE STRUCTURE AND ABOVE `n` has type `T`, reuse `u`; otherwise
+> add `w`.
+
+Both of `path_cut`'s obligations hold for the reuse:
+
+* `n PP u` — because `u` is above `n` by construction;
+* `D ∈ mty u` — because `mty u = T = mty w` and `D ∈ mty w`.
+
+Both are exactly what `path_cut` (certified, §44.15) requires.
+
+### 47.3 The termination measure
+
+**The set of types realized ABOVE the current node.** Adding a node consumes a
+fresh one; reuse consumes none. Types are drawn from `typeEnum C₀`, so at most
+`|typeEnum C₀|` nodes are added along any upward path. Branching is bounded by
+`|cl C₀|` demands per node and the horizontal depth by `mdepth C₀` — which is
+`mixKT C₀`'s shape exactly.
+
+### 47.4 Why this is better than the three failed routes
+
+It is a CONSTRUCTION with a measure, not an existence argument — so it does not
+hit the §44.19 seam. Route B's oscillation cannot occur, because reuse never
+adds a node and addition strictly consumes a type.
+
+**Honest risk.** The correctness condition is certified (`path_cut`), and the
+measure is elementary. What is untested is whether "above" is tracked correctly
+across the horizontal recursion, where a node added above `n` must also count as
+above `n`'s predecessors. That is transitivity of the model's `PP`, so it should
+hold — but "should hold" is the phrasing that has been wrong before, and it will
+be checked by building rather than asserted.
