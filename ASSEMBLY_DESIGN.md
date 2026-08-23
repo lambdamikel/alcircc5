@@ -5365,3 +5365,26 @@ and every other input to the frame is now determined.
    `decidableSat_of_codes`.
 
 Step 1 is the last one with choices in it; 2 and 3 are application.
+
+### 46.10 The κ side of the data, built (2026-08-22)
+
+`κ` is the set of nodes carrying at least one PERSISTENT `∃PP` demand — the
+`persistDs`-nonempty ones (§44.27). Each such node HAS its kernel
+(`ascKernel_of_node`), so the family is a projection:
+
+| | |
+|---|---|
+| `KernelData` / `kernelData` | a kernel's chain, base, period and five properties as a BUNDLE, not an existential |
+| `KIdx` | the index type |
+| `kFam`, `kCk`, `kIk`, `kPk` | the family, and the data as FUNCTIONS — the shape the certificate wants |
+| `kCk_dom`, `kCk_step`, `kPk_pos`, `kCk_ty` | `hdom`, `hstep`, `hp`, `hty` — all four by projection |
+| `kCk_covers` | `kDIR`'s content: every persistent demand of the kernel's own node is carried inside the period |
+| `kIk_ge` | the base is past the caller's bound — what `hinj` consumes |
+
+Direction is `true` throughout (ascending). **The descending mirror is the same
+construction over `rrPtI` / `rr_coversI`**, which the campaign already certifies;
+it is not built here, and the fragment needs it, so it is on the list.
+
+**What step 1 still owes:** `β` from `mixNodes` with its projection, `up`/`dn`
+from the attachment, `seed` from `seedMix`, the budget assignment, and the
+descending mirror. Then step 2 is one application.
