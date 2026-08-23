@@ -5562,3 +5562,31 @@ index type:
 | frame = `extFrameM` | nothing structural left to choose |
 
 Step 2 is the application; step 3 is the tail.
+
+### 46.20 The predicted contact issue, confirmed and fixed (2026-08-23)
+
+§46.19 predicted that step 2's contact between the nine witness lemmas and the
+ACTUAL node set would surface something. It did, immediately.
+
+**The defect.** `mixNodes` excludes `∃PP` and `∃PPI` from its horizontal
+recursion and delegates both to `ppNodes` — but `ppNodes` followed only `∃PP`.
+So a ONE-SHOT `∃PPI` witness was in **no node set at all**, and `rPPI_witness`
+— which produces an `elt`-PREDECESSOR — had nothing to point at.
+
+The order is `stepAll`, which carries both directions (§44.26). The node set has
+to match it, and it did not.
+
+**The fix.** `ppiWitness` and its three lemmas moved up next to `ppWitness`;
+`ppNodes` now follows `∃PPI` as well.
+
+**The bound is unaffected** — and that is the interesting part. `ppNodes_length_le`
+bounds each `attach` element's contribution by `mtkBound C0 fuel`, per ELEMENT,
+not per direction. So following both directions costs nothing in the counting.
+`ppNodes_bud` likewise survives, because `ppiWitness_bud` keeps the budget just as
+`ppWitness_bud` does.
+
+**Why this one was findable in advance.** §44.26 already recorded that the order
+needs both directions, and the node set is what realizes the order. Two objects
+that must agree, changed at different times. The lesson is not new — it is
+§43.8's rule again — but it is the first time the prediction was made BEFORE the
+contact rather than after.
