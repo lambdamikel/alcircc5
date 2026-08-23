@@ -6969,6 +6969,30 @@ def persistAllI (I : Interp α) (C0 : Concept) (Ds : List Concept) (x : α) : Pr
   I.dom x ∧ ∀ D ∈ Ds, Concept.ex ppi D ∈ mty C0 I x ∧
     sat I x (Concept.all ppi (Concept.ex ppi D))
 
+
+open Classical in
+/-- The persistent `∃PPI` demands at `x` — the descending mirror of
+    `persistDs`.  `persistAllI` holds for it by construction, so every node is
+    the base of a DESCENDING round-robin kernel for its own persistent
+    `∃PPI` demands. -/
+noncomputable def persistDsI (C0 : Concept) (I : Interp α) (x : α) :
+    List Concept :=
+  (cl C0).filter (fun D => decide (Concept.ex ppi D ∈ mty C0 I x ∧
+    sat I x (Concept.all ppi (Concept.ex ppi D))))
+
+open Classical in
+theorem mem_persistDsI {C0 : Concept} {x : α} {D : Concept} :
+    D ∈ persistDsI C0 I x ↔ D ∈ cl C0 ∧ Concept.ex ppi D ∈ mty C0 I x ∧
+      sat I x (Concept.all ppi (Concept.ex ppi D)) := by
+  unfold persistDsI
+  rw [List.mem_filter]
+  constructor
+  · intro ⟨h1, h2⟩; exact ⟨h1, of_decide_eq_true h2⟩
+  · intro ⟨h1, h2⟩; exact ⟨h1, decide_eq_true h2⟩
+
+theorem persistAllI_persistDsI {C0 : Concept} {x : α} (hx : I.dom x) :
+    persistAllI I C0 (persistDsI C0 I x) x :=
+  ⟨hx, fun _ hD => (mem_persistDsI.mp hD).2⟩
 /-- Descending round-robin productivity: serving any `D ∈ Ds` gives a
     `PPI`-successor carrying `D` that stays multi-persistent (the `∀PPI`
     guards descend via `sat_all_ppi_down`). -/
@@ -14927,6 +14951,60 @@ theorem rr_segment_from (hI : RCC5Interp I) (C0 : Concept)
   · rw [harith]; exact heq
 
 
+/-- The DESCENDING recurrence past any bound — mirror of `rr_segment_from`. -/
+theorem rr_segment_fromI (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAllI I C0 Ds x0) (L0 : Nat) :
+    ∃ i p, L0 ≤ i ∧ 0 < i ∧ 0 < p ∧ Ds.length ∣ p ∧
+      p ≤ (allListsLe (cl C0) (cl C0).length).length * Ds.length ∧
+      mty C0 I (rrPtI hI C0 Ds hL x0 h0 i) =
+      mty C0 I (rrPtI hI C0 Ds hL x0 h0 (i + p)) := by
+  have hmem : ∀ m, mty C0 I (rrPtI hI C0 Ds hL x0 h0 (m * Ds.length)) ∈
+      allListsLe (cl C0) (cl C0).length := by
+    intro m
+    rw [mem_allListsLe]
+    exact ⟨by rw [mty]; exact List.length_filter_le _ _,
+      fun x hx => by rw [mty] at hx; exact (List.mem_filter.mp hx).1⟩
+  obtain ⟨a, b, hLa, hab, hjB, heq⟩ :=
+    segment_exists_bounded (allListsLe (cl C0) (cl C0).length)
+      (fun m => mty C0 I (rrPtI hI C0 Ds hL x0 h0 (m * Ds.length))) hmem (L0 + 1)
+  have harith : a * Ds.length + (b - a) * Ds.length = b * Ds.length := by
+    rw [← Nat.add_mul, show a + (b - a) = b from by omega]
+  have hL1 : 1 ≤ Ds.length := hL
+  have hge : a ≤ a * Ds.length := by
+    have h := Nat.mul_le_mul (Nat.le_refl a) hL1
+    rwa [Nat.mul_one] at h
+  refine ⟨a * Ds.length, (b - a) * Ds.length, by omega, Nat.mul_pos (by omega) hL,
+    Nat.mul_pos (by omega) hL, ⟨b - a, Nat.mul_comm (b - a) Ds.length⟩, ?_, ?_⟩
+  · exact Nat.mul_le_mul (by omega) (Nat.le_refl _)
+  · rw [harith]; exact heq
+
+/-- **A DESCENDING KERNEL FROM A NODE'S PERSISTENT `∃PPI` DEMANDS** — the exact
+    mirror of `ascKernel_of_node`, over `rrPtI` / `rr_coversI`, with
+    `cdir false = ppi`. -/
+theorem descKernel_of_node (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDsI C0 I x).length) (L0 : Nat) :
+    ∃ (c : Nat → α) (i p : Nat),
+      (∀ n, I.dom (c n)) ∧
+      (∀ n, I.rho (c n) (c (n + 1)) = cdir false) ∧
+      L0 ≤ i ∧ 0 < p ∧
+      mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ D ∈ persistDsI C0 I x, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) := by
+  have h0 : persistAllI I C0 (persistDsI C0 I x) x := persistAllI_persistDsI hx
+  obtain ⟨i, p, hL0, hi, hp, hdvd, _, hty⟩ :=
+    rr_segment_fromI hI C0 (persistDsI C0 I x) hL x h0 L0
+  refine ⟨rrPtI hI C0 (persistDsI C0 I x) hL x h0, i, p,
+    rrPtI_dom hI C0 (persistDsI C0 I x) hL x h0,
+    rrPtI_step hI C0 (persistDsI C0 I x) hL x h0, hL0, hp, hty, ?_⟩
+  intro D hD
+  obtain ⟨n, hn⟩ := List.get_of_mem hD
+  obtain ⟨b, hb, hcarry⟩ :=
+    rr_coversI hI C0 (persistDsI C0 I x) hL x h0 i p hi hp hdvd n.val n.isLt
+  refine ⟨b, hb, ?_⟩
+  have hfe : (⟨n.val, n.isLt⟩ : Fin (persistDsI C0 I x).length) = n := Fin.ext rfl
+  rw [hfe, hn] at hcarry
+  exact hcarry
+
 /-- **AN ASCENDING KERNEL FROM A NODE'S PERSISTENT DEMANDS** (§44.27).
     Everything `mtkKernelsOD_of_debts` asks of a kernel, supplied at once from
     one node:
@@ -14977,12 +15055,12 @@ list (`hinj`). -/
 
 /-- A kernel's data and its certificate properties. -/
 structure KernelData {α : Type} (I : Interp α) (C0 : Concept)
-    (Ds : List Concept) (L0 : Nat) where
+    (Ds : List Concept) (L0 : Nat) (d : Bool) where
   c : Nat → α
   i : Nat
   p : Nat
   cdom : ∀ n, I.dom (c n)
-  cstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir true
+  cstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d
   base_ge : L0 ≤ i
   ppos : 0 < p
   cty : mty C0 I (c i) = mty C0 I (c (i + p))
@@ -14992,8 +15070,28 @@ open Classical in
 /-- **A NODE WITH PERSISTENT DEMANDS YIELDS ITS KERNEL'S DATA.** -/
 noncomputable def kernelData (hI : RCC5Interp I) (C0 : Concept) (x : α)
     (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat) :
-    KernelData I C0 (persistDs C0 I x) L0 :=
+    KernelData I C0 (persistDs C0 I x) L0 true :=
   let h1 := ascKernel_of_node hI C0 x hx hL L0
+  let c := Classical.choose h1
+  let h2 := Classical.choose_spec h1
+  let i := Classical.choose h2
+  let h3 := Classical.choose_spec h2
+  let p := Classical.choose h3
+  let h4 := Classical.choose_spec h3
+  { c := c, i := i, p := p
+    cdom := h4.1
+    cstep := h4.2.1
+    base_ge := h4.2.2.1
+    ppos := h4.2.2.2.1
+    cty := h4.2.2.2.2.1
+    ccovers := h4.2.2.2.2.2 }
+
+open Classical in
+/-- **THE DESCENDING PRODUCER** — same shape, `cdir false`. -/
+noncomputable def kernelDataI (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDsI C0 I x).length) (L0 : Nat) :
+    KernelData I C0 (persistDsI C0 I x) L0 false :=
+  let h1 := descKernel_of_node hI C0 x hx hL L0
   let c := Classical.choose h1
   let h2 := Classical.choose_spec h1
   let i := Classical.choose h2
@@ -15027,7 +15125,7 @@ variable {β : Type}
 /-- The family of kernels, one per index. -/
 noncomputable def kFam (hI : RCC5Interp I) (C0 : Concept)
     (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdx C0 I nd) :
-    KernelData I C0 (persistDs C0 I (nd k.val).x) (L0 k.val) :=
+    KernelData I C0 (persistDs C0 I (nd k.val).x) (L0 k.val) true :=
   kernelData hI C0 (nd k.val).x (nd k.val).hx k.property (L0 k.val)
 
 noncomputable def kCk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
@@ -24798,6 +24896,8 @@ end VerticalWitness
 #print axioms forced_cells
 #print axioms ascKernel_of_node
 #print axioms kernelData
+#print axioms descKernel_of_node
+#print axioms kernelDataI
 #print axioms kCk_step
 #print axioms kCk_covers
 #print axioms seedMix_dr
