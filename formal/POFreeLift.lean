@@ -20502,6 +20502,74 @@ theorem rPPI_witness (e : MTKNode I C0) {D : Concept}
     tcl stepAll (ppiWitness e hF) e ∧
       D ∈ mtk C0 I (ppiWitness e hF).x (ppiWitness e hF).k :=
   ⟨tcl.base (Or.inr ⟨D, hF, rfl⟩), ppiWitness_arg e hF⟩
+
+/-! #### The full step relation, and `hud` (§46.6)
+
+`odSeed`'s new coherence condition asks for `elt x y` whenever a kernel is ABOVE
+`x` and BELOW `y`.  Semantically that is forced — `x ⊂ kernel ⊂ y` — but `elt`
+is `tcl step`, a closure of DEMAND steps, and `x` and `y` need not be connected
+by demands at all.  So the edge is not derivable: it must be ADDED.
+
+`mixStep` adds it.  `hud` is then `tcl.base`, the model fact is composition
+through the kernel base, and the only genuinely new obligation is the BUDGET
+one — which the extraction discharges by putting a kernel's up- and
+down-externals at the same budget (§43.10 already puts bank members one below
+their kernel, so this is the same choice). -/
+
+/-- The extraction's full step relation: vertical demand steps, plus the
+    up/dn pairs a kernel forces. -/
+def mixStep {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
+    (e f : MTKNode I C0) : Prop :=
+  stepAll e f ∨ ∃ k, up k e = true ∧ dn k f = true
+
+/-- **`hud`, DISCHARGED** — by construction, in one constructor. -/
+theorem mixStep_hud {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
+    (k : κ) (x y : MTKNode I C0) (hx : up k x = true) (hy : dn k y = true) :
+    tcl (mixStep up dn) x y := tcl.base (Or.inr ⟨k, hx, hy⟩)
+
+/-- A `mixStep` is a real model `PP` edge: the vertical half is `stepAll_rho`,
+    the up/dn half is composition through the kernel base. -/
+theorem mixStep_rho {κ : Type} (hI : RCC5Interp I) (ck : κ → Nat → α)
+    (ik : κ → Nat) (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (up dn : κ → MTKNode I C0 → Bool)
+    (hup0 : ∀ k e, up k e = true → I.rho e.x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) e.x = pp)
+    (e f : MTKNode I C0) (h : mixStep up dn e f) : I.rho e.x f.x = pp := by
+  rcases h with h | ⟨k, hx, hy⟩
+  · exact stepAll_rho hI e f h
+  · exact rho_forced hI e.hx f.hx (hckdom k) (hup0 k e hx) (hdn0 k f hy)
+      (by decide)
+
+/-- The budget is still constant along the closure, given the one new input:
+    a kernel's up- and down-externals sit at the SAME budget. -/
+theorem mixStep_bud {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
+    (hudbud : ∀ k x y, up k x = true → dn k y = true → y.k = x.k)
+    (e f : MTKNode I C0) (h : mixStep up dn e f) : f.k = e.k := by
+  rcases h with h | ⟨k, hx, hy⟩
+  · exact stepAll_bud e f h
+  · exact hudbud k e f hx hy
+
+theorem tcl_mixStep_bud {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
+    (hudbud : ∀ k x y, up k x = true → dn k y = true → y.k = x.k)
+    (e f : MTKNode I C0) (h : tcl (mixStep up dn) e f) : f.k = e.k := by
+  induction h with
+  | base hs => exact mixStep_bud up dn hudbud _ _ hs
+  | tail _ hs ih => rw [mixStep_bud up dn hudbud _ _ hs]; exact ih
+
+/-- **`hppE` for the full step relation.** -/
+theorem mixStep_hppE {κ : Type} (hI : RCC5Interp I) (ck : κ → Nat → α)
+    (ik : κ → Nat) (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (up dn : κ → MTKNode I C0 → Bool)
+    (hup0 : ∀ k e, up k e = true → I.rho e.x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) e.x = pp)
+    (hudbud : ∀ k x y, up k x = true → dn k y = true → y.k = x.k)
+    (e f : MTKNode I C0) (h : tcl (mixStep up dn) e f) :
+    I.rho e.x f.x = pp ∧ e.k ≤ f.k + 1 ∧ f.k ≤ e.k + 1 := by
+  refine ⟨tcl_sub_pp hI (fun n : MTKNode I C0 => n.x) (fun n => n.hx)
+    (mixStep up dn)
+    (fun a b hs => mixStep_rho hI ck ik hckdom up dn hup0 hdn0 a b hs) e f h,
+    ?_, ?_⟩ <;>
+    rw [tcl_mixStep_bud up dn hudbud e f h] <;> omega
 end ODExtraction
 
 
@@ -24536,6 +24604,8 @@ end VerticalWitness
 #print axioms stepAll_hppE
 #print axioms rPP_witness
 #print axioms rPPI_witness
+#print axioms mixStep_hud
+#print axioms mixStep_hppE
 #print axioms persistAll_persistDs
 #print axioms persistDs_split
 #print axioms persistDs_up
