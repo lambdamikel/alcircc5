@@ -5331,3 +5331,37 @@ relation and one budget equation** — and the budget equation is the same choic
 Worth noting as a check on the refactor: this is the only obligation §46 added,
 and it was found by writing the assembly against the new order rather than by
 inspecting it — the same rule, once more.
+
+### 46.8 `extFrameM` — nothing structural left to choose (2026-08-22)
+
+Two steps, both small:
+
+* **`mixStep` generalized** to an abstract index type via a node projection `nd`.
+  So `β` can be the FINITE node subtype the encoding needs, rather than
+  `MTKNode I C0` itself. (`MultiTierOk` never needed `β` finite; the encoder
+  does.)
+* **`extFrameM`** fixes every structural parameter `extFrame` still took: the
+  step is `mixStep`, its `PP`-soundness is `mixStep_rho`, and `hud` is
+  `mixStep_hud`.
+
+| | |
+|---|---|
+| `extFrameM` | the frame; nothing structural left to choose |
+| `extFrameM_lt` | its order IS `mixLt` over the full step closure — the debt lemmas' `hlt`, by `Iff.rfl` |
+| `extFrameM_disj_dr` | its disjointness IS the model's `DR` |
+
+**What remains as hypotheses is exactly the model-side list**: the attachment
+relations `hup0`/`hdn0`, and the seed's `hsym`/`hseed`. Four facts about a model,
+and every other input to the frame is now determined.
+
+### 46.9 Remaining
+
+1. **Choose the data** — `β` from `mixNodes`, `κ` from the `persistDs`-nonempty
+   nodes with kernels by `ascKernel_of_node`, `up`/`dn` from the attachment,
+   `seed` from `seedMix`, budgets by §46.7's rule.
+2. **Apply** `mtkKernelsOD_of_debts` with `O := extFrameM`, discharging the
+   coverage branches from the nine witness lemmas.
+3. **The tail** — `reindexMT` → `encodeMT` → `encodeMT_mem_codesM` → `hcompl` →
+   `decidableSat_of_codes`.
+
+Step 1 is the last one with choices in it; 2 and 3 are application.
