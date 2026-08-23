@@ -20516,60 +20516,65 @@ one — which the extraction discharges by putting a kernel's up- and
 down-externals at the same budget (§43.10 already puts bank members one below
 their kernel, so this is the same choice). -/
 
-/-- The extraction's full step relation: vertical demand steps, plus the
-    up/dn pairs a kernel forces. -/
-def mixStep {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
-    (e f : MTKNode I C0) : Prop :=
-  stepAll e f ∨ ∃ k, up k e = true ∧ dn k f = true
+/-- The extraction's full step relation over a node INDEX type `β`, read into
+    the coverage nodes by `nd` (for the extraction, `Subtype.val` off the finite
+    node list): vertical demand steps, plus the up/dn pairs a kernel forces. -/
+def mixStep {β κ : Type} (nd : β → MTKNode I C0) (up dn : κ → β → Bool)
+    (e f : β) : Prop :=
+  stepAll (nd e) (nd f) ∨ ∃ k, up k e = true ∧ dn k f = true
 
 /-- **`hud`, DISCHARGED** — by construction, in one constructor. -/
-theorem mixStep_hud {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
-    (k : κ) (x y : MTKNode I C0) (hx : up k x = true) (hy : dn k y = true) :
-    tcl (mixStep up dn) x y := tcl.base (Or.inr ⟨k, hx, hy⟩)
+theorem mixStep_hud {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool) (k : κ) (x y : β) (hx : up k x = true)
+    (hy : dn k y = true) : tcl (mixStep nd up dn) x y :=
+  tcl.base (Or.inr ⟨k, hx, hy⟩)
 
 /-- A `mixStep` is a real model `PP` edge: the vertical half is `stepAll_rho`,
     the up/dn half is composition through the kernel base. -/
-theorem mixStep_rho {κ : Type} (hI : RCC5Interp I) (ck : κ → Nat → α)
-    (ik : κ → Nat) (hckdom : ∀ k, I.dom (ck k (ik k)))
-    (up dn : κ → MTKNode I C0 → Bool)
-    (hup0 : ∀ k e, up k e = true → I.rho e.x (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) e.x = pp)
-    (e f : MTKNode I C0) (h : mixStep up dn e f) : I.rho e.x f.x = pp := by
+theorem mixStep_rho {β κ : Type} (hI : RCC5Interp I) (nd : β → MTKNode I C0)
+    (ck : κ → Nat → α) (ik : κ → Nat) (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (up dn : κ → β → Bool)
+    (hup0 : ∀ k e, up k e = true → I.rho (nd e).x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (nd e).x = pp)
+    (e f : β) (h : mixStep nd up dn e f) : I.rho (nd e).x (nd f).x = pp := by
   rcases h with h | ⟨k, hx, hy⟩
-  · exact stepAll_rho hI e f h
-  · exact rho_forced hI e.hx f.hx (hckdom k) (hup0 k e hx) (hdn0 k f hy)
-      (by decide)
+  · exact stepAll_rho hI _ _ h
+  · exact rho_forced hI (nd e).hx (nd f).hx (hckdom k) (hup0 k e hx)
+      (hdn0 k f hy) (by decide)
 
 /-- The budget is still constant along the closure, given the one new input:
     a kernel's up- and down-externals sit at the SAME budget. -/
-theorem mixStep_bud {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
-    (hudbud : ∀ k x y, up k x = true → dn k y = true → y.k = x.k)
-    (e f : MTKNode I C0) (h : mixStep up dn e f) : f.k = e.k := by
+theorem mixStep_bud {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool)
+    (hudbud : ∀ k x y, up k x = true → dn k y = true → (nd y).k = (nd x).k)
+    (e f : β) (h : mixStep nd up dn e f) : (nd f).k = (nd e).k := by
   rcases h with h | ⟨k, hx, hy⟩
-  · exact stepAll_bud e f h
+  · exact stepAll_bud _ _ h
   · exact hudbud k e f hx hy
 
-theorem tcl_mixStep_bud {κ : Type} (up dn : κ → MTKNode I C0 → Bool)
-    (hudbud : ∀ k x y, up k x = true → dn k y = true → y.k = x.k)
-    (e f : MTKNode I C0) (h : tcl (mixStep up dn) e f) : f.k = e.k := by
+theorem tcl_mixStep_bud {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool)
+    (hudbud : ∀ k x y, up k x = true → dn k y = true → (nd y).k = (nd x).k)
+    (e f : β) (h : tcl (mixStep nd up dn) e f) : (nd f).k = (nd e).k := by
   induction h with
-  | base hs => exact mixStep_bud up dn hudbud _ _ hs
-  | tail _ hs ih => rw [mixStep_bud up dn hudbud _ _ hs]; exact ih
+  | base hs => exact mixStep_bud nd up dn hudbud _ _ hs
+  | tail _ hs ih => rw [mixStep_bud nd up dn hudbud _ _ hs]; exact ih
 
 /-- **`hppE` for the full step relation.** -/
-theorem mixStep_hppE {κ : Type} (hI : RCC5Interp I) (ck : κ → Nat → α)
-    (ik : κ → Nat) (hckdom : ∀ k, I.dom (ck k (ik k)))
-    (up dn : κ → MTKNode I C0 → Bool)
-    (hup0 : ∀ k e, up k e = true → I.rho e.x (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) e.x = pp)
-    (hudbud : ∀ k x y, up k x = true → dn k y = true → y.k = x.k)
-    (e f : MTKNode I C0) (h : tcl (mixStep up dn) e f) :
-    I.rho e.x f.x = pp ∧ e.k ≤ f.k + 1 ∧ f.k ≤ e.k + 1 := by
-  refine ⟨tcl_sub_pp hI (fun n : MTKNode I C0 => n.x) (fun n => n.hx)
-    (mixStep up dn)
-    (fun a b hs => mixStep_rho hI ck ik hckdom up dn hup0 hdn0 a b hs) e f h,
+theorem mixStep_hppE {β κ : Type} (hI : RCC5Interp I) (nd : β → MTKNode I C0)
+    (ck : κ → Nat → α) (ik : κ → Nat) (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (up dn : κ → β → Bool)
+    (hup0 : ∀ k e, up k e = true → I.rho (nd e).x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (nd e).x = pp)
+    (hudbud : ∀ k x y, up k x = true → dn k y = true → (nd y).k = (nd x).k)
+    (e f : β) (h : tcl (mixStep nd up dn) e f) :
+    I.rho (nd e).x (nd f).x = pp ∧
+      (nd e).k ≤ (nd f).k + 1 ∧ (nd f).k ≤ (nd e).k + 1 := by
+  refine ⟨tcl_sub_pp hI (fun b : β => (nd b).x) (fun b => (nd b).hx)
+    (mixStep nd up dn)
+    (fun a b hs => mixStep_rho hI nd ck ik hckdom up dn hup0 hdn0 a b hs) e f h,
     ?_, ?_⟩ <;>
-    rw [tcl_mixStep_bud up dn hudbud e f h] <;> omega
+    rw [tcl_mixStep_bud nd up dn hudbud e f h] <;> omega
 end ODExtraction
 
 
@@ -20823,6 +20828,71 @@ theorem extFrame_disj_dr {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
       rfl
     exact rho_forced hI (hdomN x) (hdomN y) (hdomN y₀) h1 hyy (by decide)
 
+
+/-! #### The extraction's frame, every structural choice made (§46.8)
+
+`extFrame` still takes the step relation and its facts as parameters.  For the
+extraction they are all determined: the step is `mixStep`, its `PP`-soundness is
+`mixStep_rho`, and `hud` is `mixStep_hud`.  `extFrameM` fixes them, leaving only
+MODEL facts — the attachment relations and the seed. -/
+
+/-- **THE EXTRACTION'S FRAME.**  Nothing structural is left to choose. -/
+noncomputable def extFrameM {β κ : Type} {I : Interp α} {C0 : Concept}
+    (hI : RCC5Interp I) (nd : β → MTKNode I C0) (ck : κ → Nat → α)
+    (ik : κ → Nat) (up dn : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf (fun e => (nd e).x) ck ik x)
+        (nodeOf (fun e => (nd e).x) ck ik y) = dr)
+    (hup0 : ∀ k e, up k e = true → I.rho (nd e).x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (nd e).x = pp) :
+    ODStruct (β ⊕ κ) :=
+  extFrame hI (fun e => (nd e).x) ck ik up dn (mixStep nd up dn) seed
+    (fun e => (nd e).hx) hckdom
+    (fun a b hs => mixStep_rho hI nd ck ik hckdom up dn hup0 hdn0 a b hs)
+    hsym hseed hup0 hdn0 (mixStep_hud nd up dn)
+
+/-- Its order is `mixLt` over the full step closure — the debt lemmas' `hlt`,
+    by `Iff.rfl`. -/
+theorem extFrameM_lt {β κ : Type} {I : Interp α} {C0 : Concept}
+    (hI : RCC5Interp I) (nd : β → MTKNode I C0) (ck : κ → Nat → α)
+    (ik : κ → Nat) (up dn : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf (fun e => (nd e).x) ck ik x)
+        (nodeOf (fun e => (nd e).x) ck ik y) = dr)
+    (hup0 : ∀ k e, up k e = true → I.rho (nd e).x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (nd e).x = pp)
+    (x y : β ⊕ κ) :
+    (extFrameM hI nd ck ik up dn seed hckdom hsym hseed hup0 hdn0).lt x y
+      ↔ mixLt (tcl (mixStep nd up dn)) up dn x y := Iff.rfl
+
+/-- Its disjointness is the model's `DR` — `hdr`, `hdrk` and `hqdr` are premises
+    about a REAL relation. -/
+theorem extFrameM_disj_dr {β κ : Type} {I : Interp α} {C0 : Concept}
+    (hI : RCC5Interp I) (nd : β → MTKNode I C0) (ck : κ → Nat → α)
+    (ik : κ → Nat) (up dn : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf (fun e => (nd e).x) ck ik x)
+        (nodeOf (fun e => (nd e).x) ck ik y) = dr)
+    (hup0 : ∀ k e, up k e = true → I.rho (nd e).x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (nd e).x = pp)
+    {x y : β ⊕ κ}
+    (h : (extFrameM hI nd ck ik up dn seed hckdom hsym hseed hup0 hdn0).disj
+      x y) :
+    I.rho (nodeOf (fun e => (nd e).x) ck ik x)
+      (nodeOf (fun e => (nd e).x) ck ik y) = dr :=
+  extFrame_disj_dr hI (fun e => (nd e).x) ck ik up dn (mixStep nd up dn) seed
+    (fun e => (nd e).hx) hckdom
+    (fun a b hs => mixStep_rho hI nd ck ik hckdom up dn hup0 hdn0 a b hs)
+    hsym hseed hup0 hdn0 (mixStep_hud nd up dn) h
 end HsepFromModel
 
 section ExtSeed
@@ -24599,6 +24669,8 @@ end VerticalWitness
 #print axioms tcl_ok
 #print axioms extFrame
 #print axioms extFrame_disj_dr
+#print axioms extFrameM
+#print axioms extFrameM_disj_dr
 #print axioms tcl_ppStep_bud
 #print axioms ppStep_hppE
 #print axioms stepAll_hppE
