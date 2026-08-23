@@ -5976,3 +5976,58 @@ Corrected order:
    and the project's ledger (a defect in 15 of 17) says that is overdue.
 4. **Worklist fixpoint** (§47.5's survivor) — reuse consulting the whole current
    set rather than a path accumulator. Needs a termination measure.
+
+## 49. WP101 — the blocker is 89% VACUOUS, and the residue has a shape
+
+`wp101` (periodic ascending models over finite/cofinite subsets of ℕ — a
+genuinely infinite chain with NO maximal element, satisfaction in closed form
+because every residue recurs cofinally above any `i`).
+
+**A — validity.** 54.2% of chain-node `∃PP` demands are PERSISTENT, 45.8%
+one-shot. `wp100`'s 100%-one-shot reading is confirmed as a pure boundary
+artifact of finite models. The probe class is sound.
+
+**D — the decisive measurement.** Of cofinally recurring one-shot vertical
+demands:
+
+| | |
+|---|---|
+| served IN-KERNEL (`X` recurs on the chain) | **89.2%** — FREE |
+| need an EXTERNAL | 10.8% |
+| external count at windows 2p / 4p / 8p / 16p | **(1, 1, 1, 1) in every case — FLAT** |
+| cases needing an unbounded/growing set | **0** |
+
+### 49.1 Why — and this half is a THEOREM, not a measurement
+
+For an ascending kernel `c(0) PP c(1) PP …` with `∃PP.D` present cofinally:
+
+**Case (a) — `D` recurs on the chain.** Served in-kernel; zero externals. 89.2%.
+
+**Case (b) — `D` fails on the chain above some `N`.** Every witness is off-chain.
+Now the transitivity fact does the work: if `c(i) PP w` then `c(j) PP c(i) PP w`
+for every `j ≤ i`, so **one witness above a high occurrence serves EVERY
+occurrence below it**. So case (b) costs **ONE external**, and what remains is
+the occurrences above `w` — the same question one layer up, which §46.28 bounds
+by the cut.
+
+That is a bound in `C₀` alone: **one external per (layer, demand)**, layers
+cut-bounded, demands `≤ |cl C₀|`.
+
+### 49.2 What this changes
+
+`NodeCovered` was being attacked as *"bound an arbitrary construction"*. It is
+really a **dichotomy** — chain-recurrence or one-witness-plus-push-up — and the
+campaign already owns both branches' machinery (`rr_covers`-style in-kernel
+serving; `path_cut`/§46.28 for the push-up). The four refuted routes (§48.1) all
+failed because they tried to bound a *generic* closure. This does not.
+
+**Scope, honestly:** the model class carries finitely many side regions, so the
+flat `1` has a low ceiling by construction — the *measurement* cannot exhibit
+unboundedness. The load is carried by the transitivity argument in 49.1, which
+is model-independent, and by the 89.2% in-kernel rate, which is not.
+
+### 49.3 Next
+
+Formalize the dichotomy: `chain_recurs ∨ (∃ w, serves-all-below ∧ residue-above)`.
+Branch 1 is in-kernel serving. Branch 2 is one external plus a cut-bounded
+regress. This replaces §47.5's withdrawn construction.
