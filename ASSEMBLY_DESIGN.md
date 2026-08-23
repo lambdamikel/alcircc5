@@ -5266,3 +5266,44 @@ frame layer, and it is a multi-session refactor by any honest count.
 
 I do not think this is mine to decide unilaterally: it is a scope commitment, and
 it is exactly the multi-session refactor that was flagged as unwelcome.
+
+### 46.5 DONE — §45 is closed (2026-08-22)
+
+The refactor is executed. `mixLt` now reads
+
+```
+inl e < inr k   iff  ∃ e', up k e' ∧ e ≤ e'
+inr k < inl e   iff  ∃ e', dn k e' ∧ e' ≤ e
+inr k < inr k'  iff  ∃ e e', dn k e ∧ up k' e' ∧ e ≤ e'
+```
+
+with the single coherence condition `hud : up k x → dn k y → elt x y`, which is
+semantically forced (`x ⊂ kernel ⊂ y`). All eight transitivity cases go through;
+irreflexivity uses the same condition. `mixLt_no_below` is dropped — false now,
+and never used by `odSeed`, whose `djDown` is free by downward closure.
+
+**§45 closes**: a phase's accidental `∃PP` demand is served by an external ABOVE
+the kernel, through `k_ex`'s external branch (`K k f = pp`, i.e.
+`odSeed_K_dn`). No phase needs two successors, and the persistent/one-shot split
+is now exhaustive for phases as well as externals.
+
+**Twenty-six declarations restated, exactly as costed in §46.3, with no new
+mathematics** — every proof is the same composition, and the SOUNDNESS CORE was
+not touched. Final state: 24,576 lines, 0 errors, 0 warnings, 0 sorries,
+0 `sorryAx`; 439 axiom checks, 26 results depending on no axioms.
+
+**What the refactor cost in practice.** Five build cycles, driven entirely by
+destructuring arity: every `⟨hs, e', hae, hle⟩` became `⟨e', hae, hle⟩` because
+the `side` conjunct is gone. No proof needed a new idea. That is the signature
+of a well-chosen refactor, and it is worth recording against the fear that it
+would be open-ended.
+
+### 46.6 Remaining
+
+1. **The budget assignment** — `bk k := bud e`, bank members at `bk k - 1`.
+2. **The assembly** — bundle β (`mixNodes`), κ (`persistDs`-nonempty nodes,
+   kernels by `ascKernel_of_node`), the frame (`extFrame`), apply
+   `mtkKernelsOD_of_debts`. The new `hud` obligation joins the list, and is the
+   forced fact `x ⊂ kernel ⊂ y`.
+3. **The tail** — `reindexMT` → `encodeMT` → `encodeMT_mem_codesM` → `hcompl` →
+   `decidableSat_of_codes`, on the `hfrag_hcompl` template.
