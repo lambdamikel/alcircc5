@@ -5924,21 +5924,55 @@ instance of its oldest open problem.
 The gap is ONE precisely-stated finiteness premise, with every ingredient
 certified and the obstruction understood.
 
-### 48.3 What to investigate next, in order
+### 48.3 The blocker's EXACT shape (sharpened)
 
-1. **Build step 3 (the tail).** Mechanical: `reindexMT` → `encodeMT` →
-   `encodeMT_mem_codesM` → `hcompl` → `decidableSat_of_codes`. Value: the
-   artifact then states *"decidability of the ∀PO-free fragment reduces to ONE
-   named finiteness premise, everything else machine-checked"* — a clean, honest,
-   citable position and a clean handoff. **2–3 rounds.**
-2. **KÖNIG.** Not yet tried, and genuinely different: the one-shot closure is a
-   FINITELY BRANCHING tree (≤ `|cl C₀|` demands per node). If every branch is
-   finite, the tree is finite. Branches are one-shot chains, and the dichotomy
-   says a chain is finite or yields a kernel. The regress worry (§46.27) is about
-   kernel LAYERS, not about branches of one tree — so König may bound each layer
-   outright, leaving only the layer count, which §46.28 bounds by the cut.
-3. **Worklist fixpoint** (§47.5's survivor): consult the whole current set, not a
-   path accumulator, so cross-branch reuse is available. Needs a measure.
+Everything carrying a **budget** is already finite: `mtk` truncation drops the
+budget at every serving step, so the external closure is bounded by
+`|cl C0|^mdepth(C0)` — measured in `wp94` part B, and certified as `mixKT`.
 
-Route 2 is the one I would attack next on the mathematics, and it is the first
-tool in this area the campaign has not already spent.
+**Kernels cannot carry a budget.** A kernel is periodic, and periodicity needs
+the node labels to be the FULL model type `mty` — a truncated label would differ
+between periods. So a demand at a kernel node has **no fuel**, and the externals
+it spawns are the unbounded part. That is §43's budget/frame tension, and
+`NodeCovered` is precisely its residue.
+
+Within that, the demand classes split cleanly:
+
+- **persistent** vertical demands at kernel nodes → `rr_covers` (certified);
+- **one-shot** vertical demands at kernel nodes → need an external ABOVE, and a
+  witness above position `i` serves every occurrence below it (transitivity), so
+  one witness covers a whole down-set — but a demand recurring cofinally needs
+  witnesses cofinally, those witnesses ascend, `pp_dichotomy` turns them into a
+  kernel, and that kernel's own one-shot demands repeat the question.
+
+§46.28 bounds the LAYER count by the cut. What is unbounded is the external set
+WITHIN a layer.
+
+### 48.4 What to investigate next — corrected ranking
+
+**KÖNIG IS NOT THE ANSWER** (§48.3 above corrects my first ranking). König
+converts "every branch finite" into "tree finite", but obtaining "every branch
+finite" IS the problem, so it is packaging, not an input. Adding a type-repeat
+stop rule makes branches finite by pigeonhole, but then the stopped leaf must
+reuse its same-type ancestor — and §47.5 already refuted that: the ancestor is
+above in the TREE, while `path_cut` licenses reuse only of a node above in the
+ORDER. König lands back on the refuted route.
+
+Corrected order:
+
+1. **A PERIODIC-MODEL PROBE — is the obligation even non-vacuous?**
+   `wp100` asked exactly the right question (are one-shot vertical demands at
+   kernel nodes possible?) and was INVALID because over FINITE models the guard
+   always fails at a maximal element, so everything reads as one-shot. The fix is
+   to probe over **explicitly periodic ascending models** (a repeating set-family
+   with no maximal element), where the guard is meaningful. Cheap, well-defined,
+   and it either kills the obligation (every kernel demand persistent ⟹ done) or
+   hands back a concrete witness to design against. **This is the first thing to do.**
+2. **Build step 3 (the tail).** Mechanical: `reindexMT` → `encodeMT` →
+   `encodeMT_mem_codesM` → `hcompl` → `decidableSat_of_codes`. The artifact then
+   states *"decidability of the ∀PO-free fragment reduces to ONE named premise,
+   everything else machine-checked"* — citable, and a clean handoff. 2–3 rounds.
+3. **Cold review of §43–§47.** The campaign has never had this material reviewed,
+   and the project's ledger (a defect in 15 of 17) says that is overdue.
+4. **Worklist fixpoint** (§47.5's survivor) — reuse consulting the whole current
+   set rather than a path accumulator. Needs a termination measure.
