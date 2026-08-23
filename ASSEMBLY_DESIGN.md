@@ -5646,3 +5646,30 @@ The κ side of step 1 is now complete for both directions.
    a kernel. 3–5 rounds.
 2. **Step 3 tail** — reindex onto `Fin` (needs a list↔`Fin` bijection), encode,
    `hcompl`. 2–3 rounds.
+
+### 46.25 Step 2: the coverage obligation, pinned (2026-08-23)
+
+`odSeed_he_ex` reduces `he_ex` to four routing conditions. **Three are already
+discharged for the extraction's data:**
+
+| condition | discharged by |
+|---|---|
+| `rDR`, `rPO` | `rDR_witness` / `rPO_witness` — the horizontal witness is `mtkWitness`, which `mixNodes`' recursion contains |
+| the KERNEL disjunct of `rPP`/`rPPI` | `kCk_covers`, `kCkI_covers`, `mUp_self_asc`, `mDn_self_desc`, and `persistent_has_kernel` — a node with a persistent demand really does index a kernel |
+
+**What is left is exactly the ONE-SHOT disjunct.** A non-persistent vertical
+demand must be served by an `elt` edge INSIDE the node set. `ppNodes` contains
+the witness (`ppWitness`/`ppiWitness`) whenever fuel remains, so the obligation
+reduces to: **the one-shot chain fits in the fuel.** `NodeCovered` names it.
+
+**What is known about it.** `short_chain` (§44.17) says any serving chain has a
+companion of length ≤ `|typeEnum C₀|` with the same head type; `pp_dichotomy`
+(§44.19) says a demand path either terminates or yields a kernel. Both are
+certified. What is NOT yet done is applying them to `ppNodes`' own greedy chain
+— `ppWitness` picks an arbitrary `Classical.choose` witness, and nothing yet says
+that choice is the short one. That is the same existence/construction seam
+§44.19 identified, now at its last occurrence.
+
+**Assessment.** This is one obligation, precisely stated, with both ingredients
+certified and the gap between them named. It is not a new mathematical problem;
+it is the last place where an existence result has to be turned into a choice.
