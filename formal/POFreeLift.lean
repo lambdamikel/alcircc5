@@ -19529,89 +19529,90 @@ theorem leE_lt {β : Type} {elt : β → β → Prop}
   · exact h2
   · exact htr _ _ _ h1 h2
 
-/-- The order (§44.3): the EXTERNAL order `elt` (read off the model, so
-    transitive and irreflexive for free), with each kernel entirely above
-    (`side = true`) or entirely below (`side = false`) its attached externals —
-    and, by transitivity, above/below everything `elt`-comparable to them.
+/-- The order (§46): the EXTERNAL order `elt`, with each kernel ABOVE the
+    externals `up` marks and BELOW those `dn` marks.
 
-    §43's version had `elt` empty, which `wp98` showed cannot serve the fragment:
-    88.8% of `∃PP` demands are one-shot, and a one-shot `∃PP` needs a genuine
-    `PP` EDGE between externals. -/
-def mixLt {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool) : β ⊕ κ → β ⊕ κ → Prop
+    §44's `side` was PER-KERNEL, so a kernel above its `∃PP`-served externals
+    could never be below anything — and a phase's ACCIDENTAL `∃PP` demand then
+    had nowhere to go (§45).  Making the two directions per-external fixes that:
+    the demand is served by an external ABOVE the kernel. -/
+def mixLt {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool) :
+    β ⊕ κ → β ⊕ κ → Prop
   | .inl e, .inl f => elt e f
-  | .inl e, .inr k => side k = true ∧ ∃ e', att k e' = true ∧ leE elt e e'
-  | .inr k, .inl e => side k = false ∧ ∃ e', att k e' = true ∧ leE elt e' e
-  | .inr k, .inr k' => side k = false ∧ side k' = true ∧
-      ∃ e e', att k e = true ∧ att k' e' = true ∧ leE elt e e'
+  | .inl e, .inr k => ∃ e', up k e' = true ∧ leE elt e e'
+  | .inr k, .inl e => ∃ e', dn k e' = true ∧ leE elt e' e
+  | .inr k, .inr k' => ∃ e e', dn k e = true ∧ up k' e' = true ∧ leE elt e e'
 
-/-- Nothing lies strictly below a DOWN-kernel: they are still the order's
-    minima, which is what makes `djDown`'s case analysis terminate. -/
-theorem mixLt_no_below {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool) {k : κ} (hk : side k = false) (x : β ⊕ κ) :
-    ¬ mixLt elt side att x (Sum.inr k) := by
-  rcases x with e | k''
-  · exact fun h => bool_clash hk h.1
-  · exact fun h => bool_clash hk h.2.1
-
-/-- `mixLt` is TRANSITIVE.  Up-kernels are maximal and down-kernels minimal, so
-    of the eight cases four are vacuous by a `side` clash; the rest are `elt`
-    transitivity pushed through `leE`. -/
-theorem mixLt_trans {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool) (htr : ∀ a b c, elt a b → elt b c → elt a c) :
-    ∀ x y z : β ⊕ κ, mixLt elt side att x y → mixLt elt side att y z →
-      mixLt elt side att x z := by
+/-- `mixLt` is TRANSITIVE.  The one new ingredient is the coherence condition
+    `hud`: everything a kernel is ABOVE lies below everything it is BELOW.  That
+    is semantically forced (`x ⊂ kernel ⊂ y`), and it is what replaces the old
+    height-two argument. -/
+theorem mixLt_trans {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y) :
+    ∀ x y z : β ⊕ κ, mixLt elt up dn x y → mixLt elt up dn y z →
+      mixLt elt up dn x z := by
   rintro (a | k) (b | k') (c | k'') h1 h2
   · exact htr _ _ _ h1 h2
-  · obtain ⟨hs, e', hae, hle⟩ := h2
-    exact ⟨hs, e', hae, Or.inr (lt_leE htr h1 hle)⟩
-  · exact (bool_clash h2.1 h1.1).elim
-  · exact (bool_clash h2.1 h1.1).elim
-  · obtain ⟨hs, e', hae, hle⟩ := h1
-    exact ⟨hs, e', hae, Or.inr (leE_lt htr hle h2)⟩
-  · obtain ⟨hs, e1, hae1, hle1⟩ := h1
-    obtain ⟨hs', e2, hae2, hle2⟩ := h2
-    exact ⟨hs, hs', e1, e2, hae1, hae2, leE_trans htr hle1 hle2⟩
-  · exact (bool_clash h2.1 h1.2.1).elim
-  · exact (bool_clash h2.1 h1.2.1).elim
+  · obtain ⟨e', hae, hle⟩ := h2
+    exact ⟨e', hae, Or.inr (lt_leE htr h1 hle)⟩
+  · obtain ⟨e', hae, hle⟩ := h1
+    obtain ⟨e'', hbe, hle2⟩ := h2
+    exact leE_lt htr hle (lt_leE htr (hud k' e' e'' hae hbe) hle2)
+  · obtain ⟨e', hae, hle⟩ := h1
+    obtain ⟨f, f', hdf, huf, hlef⟩ := h2
+    exact ⟨f', huf, leE_trans htr hle
+      (leE_trans htr (Or.inr (hud k' e' f hae hdf)) hlef)⟩
+  · obtain ⟨e', hde, hle⟩ := h1
+    exact ⟨e', hde, leE_lt htr hle h2 |> Or.inr⟩
+  · obtain ⟨e', hde, hle⟩ := h1
+    obtain ⟨f, huf, hlf⟩ := h2
+    exact ⟨e', f, hde, huf, leE_trans htr hle hlf⟩
+  · obtain ⟨e, f, hde, huf, hlef⟩ := h1
+    obtain ⟨g, hdg, hlg⟩ := h2
+    exact ⟨e, hde, leE_trans htr hlef
+      (leE_trans htr (Or.inr (hud k' f g huf hdg)) hlg)⟩
+  · obtain ⟨e, f, hde, huf, hlef⟩ := h1
+    obtain ⟨g, g', hdg, hug, hlg⟩ := h2
+    exact ⟨e, g', hde, hug, leE_trans htr hlef
+      (leE_trans htr (Or.inr (hud k' f g huf hdg)) hlg)⟩
 
 /-- `≤` for the mixed order — the shape `djDown` already speaks in. -/
-def mixLe {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool) (x y : β ⊕ κ) : Prop := x = y ∨ mixLt elt side att x y
+def mixLe {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (x y : β ⊕ κ) : Prop := x = y ∨ mixLt elt up dn x y
 
-theorem mixLe_trans {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool) (htr : ∀ a b c, elt a b → elt b c → elt a c)
-    {x y z : β ⊕ κ} (h1 : mixLe elt side att x y) (h2 : mixLe elt side att y z) :
-    mixLe elt side att x z := by
+theorem mixLe_trans {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    {x y z : β ⊕ κ} (h1 : mixLe elt up dn x y) (h2 : mixLe elt up dn y z) :
+    mixLe elt up dn x z := by
   rcases h1 with rfl | h1
   · exact h2
   · rcases h2 with rfl | h2
     · exact Or.inr h1
-    · exact Or.inr (mixLt_trans elt side att htr _ _ _ h1 h2)
+    · exact Or.inr (mixLt_trans elt up dn htr hud _ _ _ h1 h2)
 
-/-- **THE EXTRACTION'S ORDERED-DISJOINT STRUCTURE.**  The order is `mixLt`;
-    disjointness is the DOWNWARD CLOSURE of an arbitrary symmetric `seed`.
-
-    Closing downward by construction is what makes this general and cheap:
-    `djDown` becomes transitivity of `≤`, and `djIrr` and `ltNotDj` BOTH reduce
-    to the single condition `hsep` — *no node lies below two seed-related
-    nodes*.  (For `ltNotDj`: if `x < y` then `x` is below both `x₀ ≥ x` and
-    `y₀ ≥ y`.) -/
-def odSeed {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool) (seed : β ⊕ κ → β ⊕ κ → Prop)
+/-- **THE EXTRACTION'S ORDERED-DISJOINT STRUCTURE.**  Order `mixLt`;
+    disjointness the DOWNWARD CLOSURE of a symmetric `seed`, so `djDown` is
+    transitivity of `≤` and `djIrr` and `ltNotDj` both collapse into `hsep`. -/
+def odSeed {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
     (hsym : ∀ x y, seed x y → seed y x)
-    (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
-      ¬ seed y z) :
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z) :
     ODStruct (β ⊕ κ) where
-  lt := mixLt elt side att
-  disj x y := ∃ x₀ y₀, mixLe elt side att x x₀ ∧ mixLe elt side att y y₀ ∧
-    seed x₀ y₀
+  lt := mixLt elt up dn
+  disj x y := ∃ x₀ y₀, mixLe elt up dn x x₀ ∧ mixLe elt up dn y y₀ ∧ seed x₀ y₀
   ltIrr := by
     rintro (e | k)
     · exact hirrE e
-    · exact fun h => bool_clash h.1 h.2.1
-  ltTr := mixLt_trans elt side att htr
+    · rintro ⟨e, e', hde, hue, hle⟩
+      have hfe : elt e' e := hud k e' e hue hde
+      rcases hle with rfl | hlt
+      · exact hirrE e hfe
+      · exact hirrE e (htr _ _ _ hlt hfe)
+  ltTr := mixLt_trans elt up dn htr hud
   djSym := by
     rintro x y ⟨x₀, y₀, hx, hy, hs⟩
     exact ⟨y₀, x₀, hy, hx, hsym _ _ hs⟩
@@ -19620,59 +19621,58 @@ def odSeed {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
     exact hsep x x₀ y₀ hx hy hs
   ltNotDj := by
     rintro x y hxy ⟨x₀, y₀, hx, hy, hs⟩
-    exact hsep x x₀ y₀ hx (mixLe_trans elt side att htr (Or.inr hxy) hy) hs
+    exact hsep x x₀ y₀ hx (mixLe_trans elt up dn htr hud (Or.inr hxy) hy) hs
   djDown := by
     rintro x y x' y' ⟨x₀, y₀, hx, hy, hs⟩ hx' hy'
-    exact ⟨x₀, y₀, mixLe_trans elt side att htr hx' hx,
-      mixLe_trans elt side att htr hy' hy, hs⟩
+    exact ⟨x₀, y₀, mixLe_trans elt up dn htr hud hx' hx,
+      mixLe_trans elt up dn htr hud hy' hy, hs⟩
 
 section OdSeedReadOff
 
-variable {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-  (att : κ → β → Bool) (seed : β ⊕ κ → β ⊕ κ → Prop)
+variable {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+  (seed : β ⊕ κ → β ⊕ κ → Prop)
   (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+  (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
   (hsym : ∀ x y, seed x y → seed y x)
-  (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z → ¬ seed y z)
+  (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z)
 
 theorem odSeed_lt (x y : β ⊕ κ) :
-    (odSeed elt side att seed hirrE htr hsym hsep).lt x y
-      ↔ mixLt elt side att x y := Iff.rfl
+    (odSeed elt up dn seed hirrE htr hud hsym hsep).lt x y
+      ↔ mixLt elt up dn x y := Iff.rfl
 
-/-- **THE ONE-SHOT `∃PP` EDGE** (§44).  An `elt`-edge between externals IS a
-    `PP` edge of the frame, so a one-shot `∃PP.D` — 88.8% of `∃PP` demands, per
-    `wp98` A — is served WITHOUT a kernel. -/
+/-- **THE ONE-SHOT `∃PP` EDGE** (§44): an `elt` edge IS a `PP` edge. -/
 theorem odSeed_E_pp {e f : β} (h : elt e f) :
-    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+    odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
       (Sum.inl e) (Sum.inl f) = pp := odNet_lt _ h
 
-/-- A kernel ABOVE its external: `K k e = PPI`, so `conv (K k e) = PP` serves the
-    external's `∃PP`. -/
-theorem odSeed_K_up {k : κ} {e : β} (hk : side k = true) (ha : att k e = true) :
-    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+/-- A kernel ABOVE `e`: `K k e = PPI`, so `conv (K k e) = PP` serves `e`'s
+    `∃PP`. -/
+theorem odSeed_K_up {k : κ} {e : β} (ha : up k e = true) :
+    odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
       (Sum.inr k) (Sum.inl e) = ppi :=
-  odNet_gt _ (show mixLt elt side att (Sum.inl e) (Sum.inr k) from
-    ⟨hk, e, ha, Or.inl rfl⟩)
+  odNet_gt _ (show mixLt elt up dn (Sum.inl e) (Sum.inr k) from
+    ⟨e, ha, Or.inl rfl⟩)
 
-/-- A kernel BELOW its external: `K k e = PP`, so `conv (K k e) = PPI` serves the
-    external's `∃PPI`. -/
-theorem odSeed_K_dn {k : κ} {e : β} (hk : side k = false) (ha : att k e = true) :
-    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+/-- A kernel BELOW `e`: `K k e = PP`.  Read one way this serves `e`'s `∃PPI`;
+    read the other (`k_ex`'s external branch) it serves a PHASE's `∃PP` — which
+    is what §45 needed and §44's per-kernel `side` forbade. -/
+theorem odSeed_K_dn {k : κ} {e : β} (ha : dn k e = true) :
+    odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
       (Sum.inr k) (Sum.inl e) = pp :=
-  odNet_lt _ (show mixLt elt side att (Sum.inr k) (Sum.inl e) from
-    ⟨hk, e, ha, Or.inl rfl⟩)
+  odNet_lt _ (show mixLt elt up dn (Sum.inr k) (Sum.inl e) from
+    ⟨e, ha, Or.inl rfl⟩)
 
-/-- **THE `wp96`-C FORCING, DISCHARGED.**  A down-kernel and an up-kernel sharing
-    an external are `PP`-related — exactly what `comp(PP,PP) = {PP}` demands. -/
-theorem odSeed_Q_forced {k k' : κ} {e : β} (hk : side k = false)
-    (hk' : side k' = true) (ha : att k e = true) (ha' : att k' e = true) :
-    odNet (odSeed elt side att seed hirrE htr hsym hsep)
+/-- **THE `wp96`-C FORCING, DISCHARGED.** -/
+theorem odSeed_Q_forced {k k' : κ} {e : β} (ha : dn k e = true)
+    (ha' : up k' e = true) :
+    odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
       (Sum.inr k) (Sum.inr k') = pp :=
-  odNet_lt _ (show mixLt elt side att (Sum.inr k) (Sum.inr k') from
-    ⟨hk, hk', e, e, ha, ha', Or.inl rfl⟩)
+  odNet_lt _ (show mixLt elt up dn (Sum.inr k) (Sum.inr k') from
+    ⟨e, e, ha, ha', Or.inl rfl⟩)
 
 /-- Any SEED pair is `DR`. -/
 theorem odSeed_dr {x y : β ⊕ κ} (h : seed x y) :
-    odNet (odSeed elt side att seed hirrE htr hsym hsep) x y = dr :=
+    odNet (odSeed elt up dn seed hirrE htr hud hsym hsep) x y = dr :=
   odNet_dj _ ⟨x, y, Or.inl rfl, Or.inl rfl, h⟩
 
 end OdSeedReadOff
@@ -19700,11 +19700,12 @@ The five branches and their sources:
 variable {α : Type}
 
 theorem odSeed_he_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
-    {β κ : Type} (elt : β → β → Prop) (side : κ → Bool) (att : κ → β → Bool)
+    {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
     (hsym : ∀ x y, seed x y → seed y x)
-    (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
       ¬ seed y z)
     (g : β → α) (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat) (bk : κ → Nat)
     (ck : κ → Nat → α) (ik pk : κ → Nat)
@@ -19713,20 +19714,20 @@ theorem odSeed_he_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
       ∃ f, seed (Sum.inl e) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
     (rPO : ∀ e D, Concept.ex po D ∈ mtk C0 I (g e) (bud e) →
       ∃ f, e ≠ f ∧ ¬ elt e f ∧ ¬ elt f e ∧
-        ¬ (odSeed elt side att seed hirrE htr hsym hsep).disj
+        ¬ (odSeed elt up dn seed hirrE htr hud hsym hsep).disj
             (Sum.inl e) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
     (rPP : ∀ e D, Concept.ex pp D ∈ mtk C0 I (g e) (bud e) →
       (∃ f, elt e f ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
-      (∃ k, side k = true ∧ att k e = true ∧
+      (∃ k, up k e = true ∧
         ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
     (rPPI : ∀ e D, Concept.ex ppi D ∈ mtk C0 I (g e) (bud e) →
       (∃ f, elt f e ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
-      (∃ k, side k = false ∧ att k e = true ∧
+      (∃ k, dn k e = true ∧
         ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k))) :
     ∀ e r D, Concept.ex r D ∈ mtk C0 I (g e) (bud e) →
-      (∃ f, odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (∃ f, odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
           (Sum.inl e) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
-      (∃ k, conv (odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (∃ k, conv (odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
           (Sum.inr k) (Sum.inl e)) = r ∧
         ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) := by
   intro e r D hdem
@@ -19735,22 +19736,22 @@ theorem odSeed_he_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
     exact Or.inl ⟨e, odNet_self _ _, mtk_ex_eq hI hdem (hgdom e)⟩
   | dr =>
     obtain ⟨f, hsd, hD⟩ := rDR e D hdem
-    exact Or.inl ⟨f, odSeed_dr elt side att seed hirrE htr hsym hsep hsd, hD⟩
+    exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
   | po =>
     obtain ⟨f, hne, h1, h2, h3, hD⟩ := rPO e D hdem
     refine Or.inl ⟨f, ?_, hD⟩
     exact odNet_po _ (fun h => hne (Sum.inl.inj h)) h1 h2 h3
   | pp =>
-    rcases rPP e D hdem with ⟨f, he, hD⟩ | ⟨k, hs, ha, a, haw, hD⟩
-    · exact Or.inl ⟨f, odSeed_E_pp elt side att seed hirrE htr hsym hsep he, hD⟩
+    rcases rPP e D hdem with ⟨f, he, hD⟩ | ⟨k, ha, a, haw, hD⟩
+    · exact Or.inl ⟨f, odSeed_E_pp elt up dn seed hirrE htr hud hsym hsep he, hD⟩
     · refine Or.inr ⟨k, ?_, a, haw, hD⟩
-      rw [odSeed_K_up elt side att seed hirrE htr hsym hsep hs ha]; rfl
+      rw [odSeed_K_up elt up dn seed hirrE htr hud hsym hsep ha]; rfl
   | ppi =>
-    rcases rPPI e D hdem with ⟨f, he, hD⟩ | ⟨k, hs, ha, a, haw, hD⟩
-    · exact Or.inl ⟨f, odNet_gt _ (show mixLt elt side att (Sum.inl f)
+    rcases rPPI e D hdem with ⟨f, he, hD⟩ | ⟨k, ha, a, haw, hD⟩
+    · exact Or.inl ⟨f, odNet_gt _ (show mixLt elt up dn (Sum.inl f)
         (Sum.inl e) from he), hD⟩
     · refine Or.inr ⟨k, ?_, a, haw, hD⟩
-      rw [odSeed_K_dn elt side att seed hirrE htr hsym hsep hs ha]; rfl
+      rw [odSeed_K_dn elt up dn seed hirrE htr hud hsym hsep ha]; rfl
 
 
 /-! The kernel side.  The routing uses the §43.10 structural fact `side = dir`:
@@ -19760,11 +19761,12 @@ mirror.  So the vertical-to-external branches land exactly where the attachment
 already puts them, and the cross-kernel branch is never used — which is what
 keeps §36's `hrectQ` staircase out of the picture (§43.11). -/
 theorem odSeed_hk_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
-    {β κ : Type} (elt : β → β → Prop) (side : κ → Bool) (att : κ → β → Bool)
+    {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
     (hsym : ∀ x y, seed x y → seed y x)
-    (hsep : ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
       ¬ seed y z)
     (g : β → α) (bud : β → Nat) (bk : κ → Nat) (dir : κ → Bool)
     (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n)) (ik pk : κ → Nat)
@@ -19774,25 +19776,25 @@ theorem odSeed_hk_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
     (kDR : ∀ k a D, Concept.ex dr D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
       ∃ f, seed (Sum.inr k) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
     (kPO : ∀ k a D, Concept.ex po D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
-      ∃ f, ¬ mixLt elt side att (Sum.inr k) (Sum.inl f) ∧
-        ¬ mixLt elt side att (Sum.inl f) (Sum.inr k) ∧
-        ¬ (odSeed elt side att seed hirrE htr hsym hsep).disj
+      ∃ f, ¬ mixLt elt up dn (Sum.inr k) (Sum.inl f) ∧
+        ¬ mixLt elt up dn (Sum.inl f) (Sum.inr k) ∧
+        ¬ (odSeed elt up dn seed hirrE htr hud hsym hsep).disj
             (Sum.inr k) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
     (kUP : ∀ k a D, dir k = false →
         Concept.ex pp D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
-      ∃ f e', side k = false ∧ att k e' = true ∧ leE elt e' f ∧
+      ∃ f e', dn k e' = true ∧ leE elt e' f ∧
         D ∈ mtk C0 I (g f) (bud f))
     (kDN : ∀ k a D, dir k = true →
         Concept.ex ppi D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
-      ∃ f e', side k = true ∧ att k e' = true ∧ leE elt f e' ∧
+      ∃ f e', up k e' = true ∧ leE elt f e' ∧
         D ∈ mtk C0 I (g f) (bud f)) :
     ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
-      (∃ f, odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (∃ f, odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
           (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
       (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
         D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
       (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) ∨
-      (∃ k', k ≠ k' ∧ odNet (odSeed elt side att seed hirrE htr hsym hsep)
+      (∃ k', k ≠ k' ∧ odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
           (Sum.inr k) (Sum.inr k') = r ∧
         ∃ b, b < pk k' ∧ D ∈ mtk C0 I (ck k' (ik k' + b)) (bk k')) := by
   intro k a r D hdem
@@ -19806,15 +19808,15 @@ theorem odSeed_hk_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
       obtain ⟨b, hb, hD⟩ := kDIR k a D this
       exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
     | ppi =>
-      obtain ⟨f, e', hs, hae, hle, hD⟩ := kDN k a D hd hdem
-      exact Or.inl ⟨f, odNet_gt _ (show mixLt elt side att (Sum.inl f)
-        (Sum.inr k) from ⟨hs, e', hae, hle⟩), hD⟩
+      obtain ⟨f, e', hae, hle, hD⟩ := kDN k a D hd hdem
+      exact Or.inl ⟨f, odNet_gt _ (show mixLt elt up dn (Sum.inl f)
+        (Sum.inr k) from ⟨e', hae, hle⟩), hD⟩
     | po =>
       obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D hdem
       exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
     | dr =>
       obtain ⟨f, hsd, hD⟩ := kDR k a D hdem
-      exact Or.inl ⟨f, odSeed_dr elt side att seed hirrE htr hsym hsep hsd, hD⟩
+      exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
   | false =>
     cases r with
     | eq => exact Or.inr (Or.inr (Or.inl ⟨rfl, mtk_ex_eq hI hdem (hdom k _)⟩))
@@ -19824,15 +19826,15 @@ theorem odSeed_hk_ex {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
       obtain ⟨b, hb, hD⟩ := kDIR k a D this
       exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
     | pp =>
-      obtain ⟨f, e', hs, hae, hle, hD⟩ := kUP k a D hd hdem
-      exact Or.inl ⟨f, odNet_lt _ (show mixLt elt side att (Sum.inr k)
-        (Sum.inl f) from ⟨hs, e', hae, hle⟩), hD⟩
+      obtain ⟨f, e', hae, hle, hD⟩ := kUP k a D hd hdem
+      exact Or.inl ⟨f, odNet_lt _ (show mixLt elt up dn (Sum.inr k)
+        (Sum.inl f) from ⟨e', hae, hle⟩), hD⟩
     | po =>
       obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D hdem
       exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
     | dr =>
       obtain ⟨f, hsd, hD⟩ := kDR k a D hdem
-      exact Or.inl ⟨f, odSeed_dr elt side att seed hirrE htr hsym hsep hsd, hD⟩
+      exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
 end OdSeedCoverage
 
 end ODKernels
@@ -20572,53 +20574,53 @@ def nodeOf (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) : β ⊕ �
     real proper-part edge — the external part by definition of `eltOf`, the
     kernel parts by the attachment facts pushed through `comp(PP,PP) = {PP}`. -/
 theorem mixLt_rho {I : Interp α} (hI : RCC5Interp I) (g : β → α)
-    (ck : κ → Nat → α) (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
-    (hup0 : ∀ k e, side k = true → att k e = true →
+    (hup0 : ∀ k e, up k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, side k = false → att k e = true →
+    (hdn0 : ∀ k e, dn k e = true →
       I.rho (ck k (ik k)) (g e) = pp)
     (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
-    (x y : β ⊕ κ) (h : mixLt elt side att x y) :
+    (x y : β ⊕ κ) (h : mixLt elt up dn x y) :
     I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = pp := by
   rcases x with e | k <;> rcases y with f | k'
   · exact helt _ _ h
-  · obtain ⟨hs, e', hae, hle⟩ := h
+  · obtain ⟨e', hae, hle⟩ := h
     rcases hle with rfl | hlt
-    · exact hup0 k' e hs hae
+    · exact hup0 k' _ hae
     · exact rho_forced hI (hgdom e) (hkdom k') (hgdom e') (helt _ _ hlt)
-        (hup0 k' e' hs hae) (by decide)
-  · obtain ⟨hs, e', hae, hle⟩ := h
+        (hup0 k' e' hae) (by decide)
+  · obtain ⟨e', hae, hle⟩ := h
     rcases hle with rfl | hlt
-    · exact hdn0 k e' hs hae
+    · exact hdn0 k _ hae
     · exact rho_forced hI (hkdom k) (hgdom f) (hgdom e')
-        (hdn0 k e' hs hae) (helt _ _ hlt) (by decide)
-  · obtain ⟨hs, hs', e, e', hae, hae', hle⟩ := h
+        (hdn0 k e' hae) (helt _ _ hlt) (by decide)
+  · obtain ⟨e, e', hae, hae', hle⟩ := h
     have step1 : I.rho (ck k (ik k)) (g e') = pp := by
       rcases hle with rfl | hlt
-      · exact hdn0 k e hs hae
+      · exact hdn0 k _ hae
       · exact rho_forced hI (hkdom k) (hgdom e') (hgdom e)
-          (hdn0 k e hs hae) (helt _ _ hlt) (by decide)
+          (hdn0 k e hae) (helt _ _ hlt) (by decide)
     exact rho_forced hI (hkdom k) (hkdom k') (hgdom e') step1
-      (hup0 k' e' hs' hae') (by decide)
+      (hup0 k' e' hae') (by decide)
 
 /-- **`hsep` IS AUTOMATIC.**  A node below two `DR`-related nodes would be a part
     of both — `comp(PP,DR) = {DR}` makes it `DR` from the second while the order
     makes it `PP`, and `PP ≠ DR`. -/
 theorem hsep_of_model {I : Interp α} (hI : RCC5Interp I) (g : β → α)
-    (ck : κ → Nat → α) (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
-    (hup0 : ∀ k e, side k = true → att k e = true →
+    (hup0 : ∀ k e, up k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, side k = false → att k e = true →
+    (hdn0 : ∀ k e, dn k e = true →
       I.rho (ck k (ik k)) (g e) = pp)
     (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hseed : ∀ x y, seed x y →
       I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr) :
-    ∀ x y z, mixLe elt side att x y → mixLe elt side att x z →
+    ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
       ¬ seed y z := by
-  have hlt := mixLt_rho hI g ck ik side att hgdom hkdom hup0 hdn0 elt helt
+  have hlt := mixLt_rho hI g ck ik up dn hgdom hkdom hup0 hdn0 elt helt
   have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
     rintro (e | k)
     · exact hgdom e
@@ -20673,64 +20675,71 @@ theorem drSeed_sym {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
     `PP`-step relation, and the kernels' sides and attachments. -/
 noncomputable def extFrame {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
     (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
-    (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (up dn : κ → β → Bool) (step : β → β → Prop)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
     (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
     (hsym : ∀ x y, seed x y → seed y x)
     (hseed : ∀ x y, seed x y →
       I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
-    (hup0 : ∀ k e, side k = true → att k e = true →
+    (hup0 : ∀ k e, up k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, side k = false → att k e = true →
-      I.rho (ck k (ik k)) (g e) = pp) : ODStruct (β ⊕ κ) :=
-  odSeed (tcl step) side att seed
+    (hdn0 : ∀ k e, dn k e = true →
+      I.rho (ck k (ik k)) (g e) = pp)
+    (hud : ∀ k x y, up k x = true → dn k y = true → tcl step x y) :
+    ODStruct (β ⊕ κ) :=
+  odSeed (tcl step) up dn seed
     (tcl_irrefl hI g hgdom step hstep)
     (fun _ _ _ => tcl_trans step)
+    hud
     hsym
-    (hsep_of_model hI g ck ik side att hgdom hkdom hup0 hdn0
+    (hsep_of_model hI g ck ik up dn hgdom hkdom hup0 hdn0
       (tcl step) (tcl_sub_pp hI g hgdom step hstep) seed hseed)
 
 /-- Its order is `mixLt` over the demand-step closure — the shape the debt
     lemmas consume (`hlt`). -/
 theorem extFrame_lt {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
     (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
-    (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (up dn : κ → β → Bool) (step : β → β → Prop)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
     (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
     (hsym : ∀ x y, seed x y → seed y x)
     (hseed : ∀ x y, seed x y →
       I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
-    (hup0 : ∀ k e, side k = true → att k e = true →
+    (hup0 : ∀ k e, up k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, side k = false → att k e = true →
-      I.rho (ck k (ik k)) (g e) = pp) (x y : β ⊕ κ) :
-    (extFrame hI g ck ik side att step seed hgdom hkdom hstep hsym hseed hup0
-        hdn0).lt x y
-      ↔ mixLt (tcl step) side att x y := Iff.rfl
+    (hdn0 : ∀ k e, dn k e = true →
+      I.rho (ck k (ik k)) (g e) = pp)
+    (hud : ∀ k x y, up k x = true → dn k y = true → tcl step x y)
+    (x y : β ⊕ κ) :
+    (extFrame hI g ck ik up dn step seed hgdom hkdom hstep hsym hseed hup0
+        hdn0 hud).lt x y
+      ↔ mixLt (tcl step) up dn x y := Iff.rfl
 
 /-- Its disjointness is the model's `DR` — so `odLt_hEreal`'s `hdr` and
     `odLt_hKreal`'s/`odLt_hQreal`'s `hdrk`/`hqdr` premises are about a REAL
     relation, not a declared one. -/
 theorem extFrame_disj_dr {β κ : Type} {I : Interp α} (hI : RCC5Interp I)
     (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
-    (side : κ → Bool) (att : κ → β → Bool) (step : β → β → Prop)
+    (up dn : κ → β → Bool) (step : β → β → Prop)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
     (hstep : ∀ a b, step a b → I.rho (g a) (g b) = pp)
     (hsym : ∀ x y, seed x y → seed y x)
     (hseed : ∀ x y, seed x y →
       I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
-    (hup0 : ∀ k e, side k = true → att k e = true →
+    (hup0 : ∀ k e, up k e = true →
       I.rho (g e) (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, side k = false → att k e = true →
-      I.rho (ck k (ik k)) (g e) = pp) {x y : β ⊕ κ}
-    (h : (extFrame hI g ck ik side att step seed hgdom hkdom hstep hsym hseed
-        hup0 hdn0).disj x y) :
+    (hdn0 : ∀ k e, dn k e = true →
+      I.rho (ck k (ik k)) (g e) = pp)
+    (hud : ∀ k x y, up k x = true → dn k y = true → tcl step x y)
+    {x y : β ⊕ κ}
+    (h : (extFrame hI g ck ik up dn step seed hgdom hkdom hstep hsym hseed
+        hup0 hdn0 hud).disj x y) :
     I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr := by
   obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
-  have hlt := mixLt_rho hI g ck ik side att hgdom hkdom hup0 hdn0
+  have hlt := mixLt_rho hI g ck ik up dn hgdom hkdom hup0 hdn0
     (tcl step) (tcl_sub_pp hI g hgdom step hstep)
   have hdomN := nodeOf_dom g ck ik hgdom hkdom
   have h1 : I.rho (nodeOf g ck ik x) (nodeOf g ck ik y₀) = dr := by
@@ -20817,18 +20826,17 @@ a condition on how the extraction budgets its bank members. -/
 /-- Descending from an external lands either on an external of the SAME budget,
     or on a kernel whose attached external has the same budget. -/
 theorem mixLe_inl_bud {κ : Type} (step : MTKNode I C0 → MTKNode I C0 → Prop)
-    (hbud : ∀ a b, tcl step a b → b.k = a.k) (side : κ → Bool)
-    (att : κ → MTKNode I C0 → Bool) (e : MTKNode I C0) :
-    ∀ x₀, mixLe (tcl step) side att (Sum.inl e) x₀ →
+    (hbud : ∀ a b, tcl step a b → b.k = a.k) (up dn : κ → MTKNode I C0 → Bool) (e : MTKNode I C0) :
+    ∀ x₀, mixLe (tcl step) up dn (Sum.inl e) x₀ →
       (∃ e₀, x₀ = Sum.inl e₀ ∧ e₀.k = e.k) ∨
-      (∃ k e', x₀ = Sum.inr k ∧ att k e' = true ∧ e'.k = e.k) := by
+      (∃ k e', x₀ = Sum.inr k ∧ up k e' = true ∧ e'.k = e.k) := by
   rintro (e₀ | k) h
   · rcases h with h | h
     · exact Or.inl ⟨e₀, rfl, by rw [Sum.inl.inj h]⟩
     · exact Or.inl ⟨e₀, rfl, hbud e e₀ h⟩
   · rcases h with h | h
     · exact absurd h (Ne.symm (inr_ne_inl k e))
-    · obtain ⟨_, e', hae, hle⟩ := h
+    · obtain ⟨e', hae, hle⟩ := h
       refine Or.inr ⟨k, e', rfl, hae, ?_⟩
       rcases hle with rfl | hlt
       · rfl
@@ -20838,23 +20846,23 @@ theorem mixLe_inl_bud {κ : Type} (step : MTKNode I C0 → MTKNode I C0 → Prop
     a kernel's attached external against the budget of its `DR`-bank member. -/
 theorem seedMix_hb {κ : Type} (step : MTKNode I C0 → MTKNode I C0 → Prop)
     (hbud : ∀ a b, tcl step a b → b.k = a.k) (kdr : κ → MTKNode I C0 → Prop)
-    (side : κ → Bool) (att : κ → MTKNode I C0 → Bool)
-    (hkb : ∀ k e' f₀, att k e' = true → kdr k f₀ → e'.k ≤ f₀.k + 1)
-    (hkb2 : ∀ k f' e₀, att k f' = true → kdr k e₀ → e₀.k ≤ f'.k + 1)
+    (up dn : κ → MTKNode I C0 → Bool)
+    (hkb : ∀ k e' f₀, up k e' = true → kdr k f₀ → e'.k ≤ f₀.k + 1)
+    (hkb2 : ∀ k f' e₀, up k f' = true → kdr k e₀ → e₀.k ≤ f'.k + 1)
     (e f : MTKNode I C0)
-    (h : ∃ x₀ y₀, mixLe (tcl step) side att (Sum.inl e) x₀ ∧
-      mixLe (tcl step) side att (Sum.inl f) y₀ ∧ seedMix kdr x₀ y₀) :
+    (h : ∃ x₀ y₀, mixLe (tcl step) up dn (Sum.inl e) x₀ ∧
+      mixLe (tcl step) up dn (Sum.inl f) y₀ ∧ seedMix kdr x₀ y₀) :
     e.k ≤ f.k + 1 := by
   obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
-  rcases mixLe_inl_bud step hbud side att e x₀ hx with
+  rcases mixLe_inl_bud step hbud up dn e x₀ hx with
     ⟨e₀, rfl, hek⟩ | ⟨k, e', rfl, hae, hek⟩
-  · rcases mixLe_inl_bud step hbud side att f y₀ hy with
+  · rcases mixLe_inl_bud step hbud up dn f y₀ hy with
       ⟨f₀, rfl, hfk⟩ | ⟨k', f', rfl, haf, hfk⟩
     · have := sAdjK_bud (show sAdjK e₀ f₀ from hs)
       omega
     · have := hkb2 k' f' e₀ haf (show kdr k' e₀ from hs)
       omega
-  · rcases mixLe_inl_bud step hbud side att f y₀ hy with
+  · rcases mixLe_inl_bud step hbud up dn f y₀ hy with
       ⟨f₀, rfl, hfk⟩ | ⟨k', f', rfl, haf, hfk⟩
     · have := hkb k e' f₀ hae (show kdr k f₀ from hs)
       omega
@@ -20879,38 +20887,38 @@ variable {α β : Type} {I : Interp α} {κ : Type}
 /-- **`hup`'s relation half, from the base fact.**  If the kernel is above its
     attached external `e'`, it is above everything below `e'`. -/
 theorem hup_reach (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α)
-    (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (ik : κ → Nat) (up _dn : κ → β → Bool)
     (elt : β → β → Prop) (helt : ∀ a b, elt a b → I.rho (g a) (g b) = pp)
     (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
-    (hbase : ∀ k e a, side k = true → att k e = true →
+    (hbase : ∀ k e a, up k e = true →
       I.rho (g e) (ck k (ik k + a)) = pp)
-    (k : κ) (e : β) (a : Nat) (hs : side k = true)
-    (hex : ∃ e', att k e' = true ∧ leE elt e e') :
+    (k : κ) (e : β) (a : Nat)
+    (hex : ∃ e', up k e' = true ∧ leE elt e e') :
     I.rho (g e) (ck k (ik k + a)) = pp := by
   obtain ⟨e', hae, hle⟩ := hex
   rcases hle with rfl | hlt
-  · exact hbase k e a hs hae
+  · exact hbase k e a hae
   · exact rho_forced hI (hgdom e) (hckdom k _) (hgdom e') (helt _ _ hlt)
-      (hbase k e' a hs hae) (by decide)
+      (hbase k e' a hae) (by decide)
 
 /-- **`hdn`'s relation half, from the base fact.**  If the kernel is below its
     attached external `e'`, it is below everything above `e'`. -/
 theorem hdn_reach (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α)
-    (ik : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (ik : κ → Nat) (_up dn : κ → β → Bool)
     (elt : β → β → Prop) (helt : ∀ a b, elt a b → I.rho (g a) (g b) = pp)
     (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
-    (hbase : ∀ k e a, side k = false → att k e = true →
+    (hbase : ∀ k e a, dn k e = true →
       I.rho (g e) (ck k (ik k + a)) = ppi)
-    (k : κ) (e : β) (a : Nat) (hs : side k = false)
-    (hex : ∃ e', att k e' = true ∧ leE elt e' e) :
+    (k : κ) (e : β) (a : Nat)
+    (hex : ∃ e', dn k e' = true ∧ leE elt e' e) :
     I.rho (g e) (ck k (ik k + a)) = ppi := by
   obtain ⟨e', hae, hle⟩ := hex
   rcases hle with rfl | hlt
-  · exact hbase k _ a hs hae
+  · exact hbase k _ a hae
   · -- phase PP e' PP e, so phase PP e, and the converse is what is asked
     have h1 : I.rho (ck k (ik k + a)) (g e') = pp := by
       rw [hI.conv_ (g e') (ck k (ik k + a)) (hgdom e') (hckdom k _),
-        hbase k e' a hs hae]
+        hbase k e' a hae]
       rfl
     have h2 : I.rho (ck k (ik k + a)) (g e) = pp :=
       rho_forced hI (hckdom k _) (hgdom e) (hgdom e') h1 (helt _ _ hlt) (by decide)
@@ -20982,55 +20990,55 @@ theorem nodeP_dom {I : Interp α} (g : β → α) (ck : κ → Nat → α) (ik p
 
 /-- **THE ORDER IS SOUND FOR THE MODEL'S `PP` AT ANY PHASES.** -/
 theorem mixLt_rho_ph {I : Interp α} (hI : RCC5Interp I) (g : β → α)
-    (ck : κ → Nat → α) (ik ph : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (ck : κ → Nat → α) (ik ph : κ → Nat) (up dn : κ → β → Bool)
     (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
-    (hupP : ∀ k e a, side k = true → att k e = true →
+    (hupP : ∀ k e a, up k e = true →
       I.rho (g e) (ck k (ik k + a)) = pp)
-    (hdnP : ∀ k e a, side k = false → att k e = true →
+    (hdnP : ∀ k e a, dn k e = true →
       I.rho (ck k (ik k + a)) (g e) = pp)
     (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
-    (x y : β ⊕ κ) (h : mixLt elt side att x y) :
+    (x y : β ⊕ κ) (h : mixLt elt up dn x y) :
     I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = pp := by
   rcases x with e | k <;> rcases y with f | k'
   · exact helt _ _ h
-  · obtain ⟨hs, e', hae, hle⟩ := h
-    exact hup_reach hI g ck ik side att elt helt hgdom hckdom
-      (fun k e a hs' hae' => hupP k e a hs' hae') k' e (ph k') hs ⟨e', hae, hle⟩
-  · obtain ⟨hs, e', hae, hle⟩ := h
-    have := hdn_reach hI g ck ik side att elt helt hgdom hckdom
-      (fun k e a hs' hae' => by
+  · obtain ⟨e', hae, hle⟩ := h
+    exact hup_reach hI g ck ik up dn elt helt hgdom hckdom
+      (fun k e a hae' => hupP k e a hae') k' e (ph k') ⟨e', hae, hle⟩
+  · obtain ⟨e', hae, hle⟩ := h
+    have := hdn_reach hI g ck ik up dn elt helt hgdom hckdom
+      (fun k e a hae' => by
         rw [hI.conv_ (ck k (ik k + a)) (g e) (hckdom k _) (hgdom e),
-          hdnP k e a hs' hae']; rfl)
-      k f (ph k) hs ⟨e', hae, hle⟩
+          hdnP k e a hae']; rfl)
+      k f (ph k) ⟨e', hae, hle⟩
     show I.rho (ck k (ik k + ph k)) (g f) = pp
     rw [hI.conv_ (g f) (ck k (ik k + ph k)) (hgdom f) (hckdom k _), this]
     rfl
-  · obtain ⟨hs, hs', e, e', hae, hae', hle⟩ := h
+  · obtain ⟨e, e', hae, hae', hle⟩ := h
     refine hq_pp_of_bases hI g ck ik elt helt hgdom hckdom k k' (ph k) (ph k') e e'
-      ?_ (hupP k' e' (ph k') hs' hae') hle
+      ?_ (hupP k' e' (ph k') hae') hle
     rw [hI.conv_ (ck k (ik k + ph k)) (g e) (hckdom k _) (hgdom e),
-      hdnP k e (ph k) hs hae]
+      hdnP k e (ph k) hae]
     rfl
 
 /-- **DISJOINTNESS IS THE MODEL'S `DR` AT ANY PHASES** — so `hdrk` and `hqdr`
     are, like `hdr`, premises about a REAL relation. -/
 theorem disj_dr_ph {I : Interp α} (hI : RCC5Interp I) (g : β → α)
-    (ck : κ → Nat → α) (ik ph : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (ck : κ → Nat → α) (ik ph : κ → Nat) (up dn : κ → β → Bool)
     (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
-    (hupP : ∀ k e a, side k = true → att k e = true →
+    (hupP : ∀ k e a, up k e = true →
       I.rho (g e) (ck k (ik k + a)) = pp)
-    (hdnP : ∀ k e a, side k = false → att k e = true →
+    (hdnP : ∀ k e a, dn k e = true →
       I.rho (ck k (ik k + a)) (g e) = pp)
     (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
     (hseed : ∀ x y, seed x y →
       I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = dr)
     {x y : β ⊕ κ}
-    (h : ∃ x₀ y₀, mixLe elt side att x x₀ ∧ mixLe elt side att y y₀ ∧
+    (h : ∃ x₀ y₀, mixLe elt up dn x x₀ ∧ mixLe elt up dn y y₀ ∧
       seed x₀ y₀) :
     I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = dr := by
   obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
-  have hlt := mixLt_rho_ph hI g ck ik ph side att hgdom hckdom hupP hdnP elt helt
+  have hlt := mixLt_rho_ph hI g ck ik ph up dn hgdom hckdom hupP hdnP elt helt
   have hdomN := nodeP_dom g ck ik ph hgdom hckdom
   have h1 : I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y₀) = dr := by
     rcases hx with rfl | hx'
@@ -21051,11 +21059,11 @@ theorem disj_dr_ph {I : Interp α} (hI : RCC5Interp I) (g : β → α)
     `DR` (`disj_dr_ph`).  So the branch needs no frame reasoning from the
     extraction at all. -/
 theorem kPO_frame {I : Interp α} (hI : RCC5Interp I) (g : β → α)
-    (ck : κ → Nat → α) (ik ph : κ → Nat) (side : κ → Bool) (att : κ → β → Bool)
+    (ck : κ → Nat → α) (ik ph : κ → Nat) (up dn : κ → β → Bool)
     (hgdom : ∀ e, I.dom (g e)) (hckdom : ∀ k n, I.dom (ck k n))
-    (hupP : ∀ k e a, side k = true → att k e = true →
+    (hupP : ∀ k e a, up k e = true →
       I.rho (g e) (ck k (ik k + a)) = pp)
-    (hdnP : ∀ k e a, side k = false → att k e = true →
+    (hdnP : ∀ k e a, dn k e = true →
       I.rho (ck k (ik k + a)) (g e) = pp)
     (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
@@ -21063,11 +21071,11 @@ theorem kPO_frame {I : Interp α} (hI : RCC5Interp I) (g : β → α)
       I.rho (nodeP g ck ik ph x) (nodeP g ck ik ph y) = dr)
     (k : κ) (f : β)
     (hpo : I.rho (ck k (ik k + ph k)) (g f) = po) :
-    ¬ mixLt elt side att (Sum.inr k) (Sum.inl f) ∧
-    ¬ mixLt elt side att (Sum.inl f) (Sum.inr k) ∧
-    ¬ (∃ x₀ y₀, mixLe elt side att (Sum.inr k) x₀ ∧
-        mixLe elt side att (Sum.inl f) y₀ ∧ seed x₀ y₀) := by
-  have hlt := mixLt_rho_ph hI g ck ik ph side att hgdom hckdom hupP hdnP elt helt
+    ¬ mixLt elt up dn (Sum.inr k) (Sum.inl f) ∧
+    ¬ mixLt elt up dn (Sum.inl f) (Sum.inr k) ∧
+    ¬ (∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+        mixLe elt up dn (Sum.inl f) y₀ ∧ seed x₀ y₀) := by
+  have hlt := mixLt_rho_ph hI g ck ik ph up dn hgdom hckdom hupP hdnP elt helt
   have hfpo : I.rho (g f) (ck k (ik k + ph k)) = po := by
     rw [hI.conv_ (ck k (ik k + ph k)) (g f) (hckdom k _) (hgdom f), hpo]
     rfl
@@ -21077,7 +21085,7 @@ theorem kPO_frame {I : Interp α} (hI : RCC5Interp I) (g : β → α)
   · intro h
     exact absurd ((hlt _ _ h).symm.trans hfpo) (by decide)
   · intro h
-    have hdr := disj_dr_ph hI g ck ik ph side att hgdom hckdom hupP hdnP elt helt
+    have hdr := disj_dr_ph hI g ck ik ph up dn hgdom hckdom hupP hdnP elt helt
       seed hseed h
     exact absurd (hdr.symm.trans hpo) (by decide)
 
@@ -21086,12 +21094,11 @@ theorem kPO_frame {I : Interp α} (hI : RCC5Interp I) (g : β → α)
     reflexive, so `f = e' = w` serves BOTH orientations.  No order reasoning is
     needed on the kernel side either — the bank member is simply handed over
     twice. -/
-theorem k_vert_witness {β κ : Type} (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool) (P : β → Prop) {k : κ} {w : β} {b : Bool}
-    (hs : side k = b) (haw : att k w = true) (hD : P w) :
-    (∃ f e', side k = b ∧ att k e' = true ∧ leE elt e' f ∧ P f) ∧
-    (∃ f e', side k = b ∧ att k e' = true ∧ leE elt f e' ∧ P f) :=
-  ⟨⟨w, w, hs, haw, Or.inl rfl, hD⟩, ⟨w, w, hs, haw, Or.inl rfl, hD⟩⟩
+theorem k_vert_witness {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool) (P : β → Prop) {k : κ} {w : β}
+    (hup : up k w = true) (hdn : dn k w = true) (hD : P w) :
+    (∃ f e', dn k e' = true ∧ leE elt e' f ∧ P f) ∧
+    (∃ f e', up k e' = true ∧ leE elt f e' ∧ P f) :=
+  ⟨⟨w, w, hdn, Or.inl rfl, hD⟩, ⟨w, w, hup, Or.inl rfl, hD⟩⟩
 
 /-- **`kDR`'s witness IS the seed pair.**  The seed's kernel block is precisely
     "this external is a `DR`-bank member of this kernel", so the branch is
@@ -21109,8 +21116,8 @@ variable {β κ : Type}
     off-diagonal non-`PO` external pair is `PP` (an `elt` edge — the one-shot
     `∃PP` case), `PPI` (the reverse), or `DR` (a seed pair). -/
 theorem odLt_E_cases (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
-    (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    (up dn : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt up dn x y)
     {e f : β} (hef : e ≠ f) (hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po) :
     (odNet O (Sum.inl e) (Sum.inl f) = pp ∧ elt e f) ∨
     (odNet O (Sum.inl e) (Sum.inl f) = ppi ∧ elt f e) ∨
@@ -21127,8 +21134,8 @@ theorem odLt_E_cases (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
     (§44.3: the budget is held CONSTANT along `PP`-paths, so this is free), and a
     declared `DR` edge is a real `DR` edge with budgets within one. -/
 theorem odLt_hEreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
-    (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    (up dn : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt up dn x y)
     {α : Type} {I : Interp α} (hI : RCC5Interp I) (g : β → α)
     (hgdom : ∀ e, I.dom (g e)) (bud : β → Nat)
     (hppE : ∀ e f, elt e f →
@@ -21137,7 +21144,7 @@ theorem odLt_hEreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
     (hb : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → bud e ≤ bud f + 1)
     (e f : β) (hef : e ≠ f) (hne : odNet O (Sum.inl e) (Sum.inl f) ≠ po) :
     I.rho (g e) (g f) = odNet O (Sum.inl e) (Sum.inl f) ∧ bud e ≤ bud f + 1 := by
-  rcases odLt_E_cases O elt side att hlt hef hne with
+  rcases odLt_E_cases O elt up dn hlt hef hne with
     ⟨hv, he⟩ | ⟨hv, he⟩ | ⟨hv, hd⟩
   · obtain ⟨hr, hb1, _⟩ := hppE e f he
     exact ⟨hr.trans hv.symm, hb1⟩
@@ -21152,15 +21159,13 @@ theorem odLt_hEreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
     with `leE`.  That extra reach is itself composition-forced
     (`cross_pp_of_shared`), so it costs nothing at extraction time. -/
 theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
-    (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    (up dn : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt up dn x y)
     {α : Type} (I : Interp α) (g : β → α) (bud : β → Nat)
     (bk : κ → Nat) (ck : κ → Nat → α) (ik pk : κ → Nat)
-    (hup : ∀ k e a, a < pk k → side k = true →
-      (∃ e', att k e' = true ∧ leE elt e e') →
+    (hup : ∀ k e a, a < pk k → (∃ e', up k e' = true ∧ leE elt e e') →
       I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hdn : ∀ k e a, a < pk k → side k = false →
-      (∃ e', att k e' = true ∧ leE elt e' e) →
+    (hdn : ∀ k e a, a < pk k → (∃ e', dn k e' = true ∧ leE elt e' e) →
       I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     (hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
       I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
@@ -21172,11 +21177,9 @@ theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
   · have hcon : (Sum.inr k : β ⊕ κ) = Sum.inl e := odNet_eq_inv O h
     have hbb : false = true := congrArg Sum.isLeft hcon
     exact absurd hbb (by decide)
-  · obtain ⟨hs, hat⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
-    obtain ⟨hr, hb1, hb2⟩ := hdn k e a ha hs hat
+  · obtain ⟨hr, hb1, hb2⟩ := hdn k e a ha ((hlt _ _).mp (odNet_pp_inv _ h))
     rw [h]; exact ⟨hr, hb1, hb2⟩
-  · obtain ⟨hs, hat⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
-    obtain ⟨hr, hb1, hb2⟩ := hup k e a ha hs hat
+  · obtain ⟨hr, hb1, hb2⟩ := hup k e a ha ((hlt _ _).mp (odNet_ppi_inv _ h))
     rw [h]; exact ⟨hr, hb1, hb2⟩
   · obtain ⟨hr, hb1, hb2⟩ := hdrk k e a ha (odNet_dr_inv _ h)
     rw [h]; exact ⟨hr, hb1, hb2⟩
@@ -21186,14 +21189,14 @@ theorem odLt_hKreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
     the `wp96`-C forcing (now through an `elt`-path rather than a shared external
     only); the third is the `djDown` inheritance. -/
 theorem odLt_hQreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
-    (side : κ → Bool) (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    (up dn : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt up dn x y)
     {α : Type} (I : Interp α) (bk : κ → Nat) (ck : κ → Nat → α) (ik pk : κ → Nat)
-    (hqpp : ∀ k k' a b, a < pk k → b < pk k' → side k = false → side k' = true →
-      (∃ e e', att k e = true ∧ att k' e' = true ∧ leE elt e e') →
+    (hqpp : ∀ k k' a b, a < pk k → b < pk k' →
+      (∃ e e', dn k e = true ∧ up k' e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp ∧ bk k ≤ bk k' + 1)
-    (hqppi : ∀ k k' a b, a < pk k → b < pk k' → side k' = false → side k = true →
-      (∃ e e', att k' e = true ∧ att k e' = true ∧ leE elt e e') →
+    (hqppi : ∀ k k' a b, a < pk k → b < pk k' →
+      (∃ e e', dn k' e = true ∧ up k e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
     (hqdr : ∀ k k' a b, a < pk k → b < pk k' → O.disj (Sum.inr k) (Sum.inr k') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
@@ -21203,11 +21206,9 @@ theorem odLt_hQreal (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop)
         = odNet O (Sum.inr k) (Sum.inr k') ∧ bk k ≤ bk k' + 1 := by
   rcases odNet_cases O (Sum.inr k) (Sum.inr k') with h | h | h | h | h
   · exact absurd (Sum.inr.inj (odNet_eq_inv _ h)) hkk
-  · obtain ⟨hs, hs', hex⟩ := (hlt _ _).mp (odNet_pp_inv _ h)
-    obtain ⟨hr, hbq⟩ := hqpp k k' a b ha hbw hs hs' hex
+  · obtain ⟨hr, hbq⟩ := hqpp k k' a b ha hbw ((hlt _ _).mp (odNet_pp_inv _ h))
     rw [h]; exact ⟨hr, hbq⟩
-  · obtain ⟨hs, hs', hex⟩ := (hlt _ _).mp (odNet_ppi_inv _ h)
-    obtain ⟨hr, hbq⟩ := hqppi k k' a b ha hbw hs hs' hex
+  · obtain ⟨hr, hbq⟩ := hqppi k k' a b ha hbw ((hlt _ _).mp (odNet_ppi_inv _ h))
     rw [h]; exact ⟨hr, hbq⟩
   · obtain ⟨hr, hbq⟩ := hqdr k k' a b ha hbw (odNet_dr_inv _ h)
     rw [h]; exact ⟨hr, hbq⟩
@@ -21250,9 +21251,8 @@ variable {α : Type}
 -/
 theorem mtkKernelsOD_of_debts {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
     (hpofree : POFree C0) {β κ : Type} [DecidableEq κ]
-    (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop) (side : κ → Bool)
-    (att : κ → β → Bool)
-    (hlt : ∀ x y, O.lt x y ↔ mixLt elt side att x y)
+    (O : ODStruct (β ⊕ κ)) (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (hlt : ∀ x y, O.lt x y ↔ mixLt elt up dn x y)
     (g : β → α) (hgdom : ∀ e, I.dom (g e))
     (bud : β → Nat) (bk : κ → Nat) (dir : κ → Bool)
     (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n))
@@ -21265,20 +21265,18 @@ theorem mtkKernelsOD_of_debts {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
     (hdr : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → I.rho (g e) (g f) = dr)
     (hb : ∀ e f, O.disj (Sum.inl e) (Sum.inl f) → bud e ≤ bud f + 1)
     -- kernel–external
-    (hup : ∀ k e a, a < pk k → side k = true →
-      (∃ e', att k e' = true ∧ leE elt e e') →
+    (hup : ∀ k e a, a < pk k → (∃ e', up k e' = true ∧ leE elt e e') →
       I.rho (g e) (ck k (ik k + a)) = pp ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
-    (hdn : ∀ k e a, a < pk k → side k = false →
-      (∃ e', att k e' = true ∧ leE elt e' e) →
+    (hdn : ∀ k e a, a < pk k → (∃ e', dn k e' = true ∧ leE elt e' e) →
       I.rho (g e) (ck k (ik k + a)) = ppi ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     (hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
       I.rho (g e) (ck k (ik k + a)) = dr ∧ bud e ≤ bk k + 1 ∧ bk k ≤ bud e + 1)
     -- kernel–kernel
-    (hqpp : ∀ k k' a b, a < pk k → b < pk k' → side k = false → side k' = true →
-      (∃ e e', att k e = true ∧ att k' e' = true ∧ leE elt e e') →
+    (hqpp : ∀ k k' a b, a < pk k → b < pk k' →
+      (∃ e e', dn k e = true ∧ up k' e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp ∧ bk k ≤ bk k' + 1)
-    (hqppi : ∀ k k' a b, a < pk k → b < pk k' → side k' = false → side k = true →
-      (∃ e e', att k' e = true ∧ att k e' = true ∧ leE elt e e') →
+    (hqppi : ∀ k k' a b, a < pk k → b < pk k' →
+      (∃ e e', dn k' e = true ∧ up k e' = true ∧ leE elt e e') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi ∧ bk k ≤ bk k' + 1)
     (hqdr : ∀ k k' a b, a < pk k → b < pk k' → O.disj (Sum.inr k) (Sum.inr k') →
       I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr ∧ bk k ≤ bk k' + 1)
@@ -21297,11 +21295,11 @@ theorem mtkKernelsOD_of_debts {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
     MultiTierOk (mtkKernelsOD I C0 O g bud bk dir ck ik pk) :=
   mtkKernelsOD_ok hI hpofree O g hgdom bud bk dir ck hdom ik pk hp hstep hty
     (fun e f hef hne =>
-      odLt_hEreal O elt side att hlt hI g hgdom bud hppE hdr hb e f hef hne)
+      odLt_hEreal O elt up dn hlt hI g hgdom bud hppE hdr hb e f hef hne)
     (fun k e a ha hne =>
-      odLt_hKreal O elt side att hlt I g bud bk ck ik pk hup hdn hdrk k e a ha hne)
+      odLt_hKreal O elt up dn hlt I g bud bk ck ik pk hup hdn hdrk k e a ha hne)
     (fun k k' a b hkk ha hbw hne =>
-      odLt_hQreal O elt side att hlt I bk ck ik pk hqpp hqppi hqdr k k' a b hkk
+      odLt_hQreal O elt up dn hlt I bk ck ik pk hqpp hqppi hqdr k k' a b hkk
         ha hbw hne)
     he_ex hk_ex
 
