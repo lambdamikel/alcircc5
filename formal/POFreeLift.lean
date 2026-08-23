@@ -21347,20 +21347,20 @@ NO kernel-kernel seed: cross-kernel `DR` arises only by `djDown` inheritance,
 which `odSeed` produces for free (§43.11), and declaring it directly would be
 the `hrectQ` staircase all over again. -/
 
-variable {α : Type} {I : Interp α} {C0 : Concept} {κ : Type}
+variable {α : Type} {I : Interp α} {C0 : Concept} {β κ : Type}
 
 /-- The extraction's seed. -/
-def seedMix (kdr : κ → MTKNode I C0 → Prop) :
-    MTKNode I C0 ⊕ κ → MTKNode I C0 ⊕ κ → Prop
-  | .inl e, .inl f => sAdjK e f
+def seedMix (nd : β → MTKNode I C0) (kdr : κ → β → Prop) :
+    β ⊕ κ → β ⊕ κ → Prop
+  | .inl e, .inl f => sAdjK (nd e) (nd f)
   | .inr k, .inl f => kdr k f
   | .inl f, .inr k => kdr k f
   | .inr _, .inr _ => False
 
-theorem seedMix_sym (kdr : κ → MTKNode I C0 → Prop) :
-    ∀ x y, seedMix kdr x y → seedMix kdr y x := by
+theorem seedMix_sym (nd : β → MTKNode I C0) (kdr : κ → β → Prop) :
+    ∀ x y, seedMix nd kdr x y → seedMix nd kdr y x := by
   rintro (e | k) (f | k') h
-  · exact (sAdjK_symm e f).mp h
+  · exact (sAdjK_symm (nd e) (nd f)).mp h
   · exact h
   · exact h
   · exact h.elim
@@ -21368,24 +21368,25 @@ theorem seedMix_sym (kdr : κ → MTKNode I C0 → Prop) :
 /-- **`hseed`, DISCHARGED.**  Both blocks are real model `DR`: the external one
     by `sAdjK_rho_dr`, the kernel one by the bank, and the flipped orientation
     by `conv dr = dr`. -/
-theorem seedMix_dr (hI : RCC5Interp I) (kdr : κ → MTKNode I C0 → Prop)
+theorem seedMix_dr (hI : RCC5Interp I) (nd : β → MTKNode I C0)
+    (kdr : κ → β → Prop)
     (ck : κ → Nat → α) (ik : κ → Nat) (hkdom : ∀ k, I.dom (ck k (ik k)))
-    (hkdr : ∀ k f, kdr k f → I.rho (ck k (ik k)) f.x = dr) :
-    ∀ x y, seedMix kdr x y →
-      I.rho (nodeOf (fun n : MTKNode I C0 => n.x) ck ik x)
-        (nodeOf (fun n : MTKNode I C0 => n.x) ck ik y) = dr := by
+    (hkdr : ∀ k f, kdr k f → I.rho (ck k (ik k)) (nd f).x = dr) :
+    ∀ x y, seedMix nd kdr x y →
+      I.rho (nodeOf (fun e => (nd e).x) ck ik x)
+        (nodeOf (fun e => (nd e).x) ck ik y) = dr := by
   rintro (e | k) (f | k') h
   · exact sAdjK_rho_dr hI h
-  · show I.rho e.x (ck k' (ik k')) = dr
-    rw [hI.conv_ (ck k' (ik k')) e.x (hkdom k') e.hx, hkdr k' e h]
+  · show I.rho (nd e).x (ck k' (ik k')) = dr
+    rw [hI.conv_ (ck k' (ik k')) (nd e).x (hkdom k') (nd e).hx, hkdr k' e h]
     rfl
   · exact hkdr k f h
   · exact h.elim
 
 /-- The external block's budgets are within one — `sAdjK_bud`, i.e. the
     `DR`-demand step drops the budget by exactly one. -/
-theorem seedMix_bud (kdr : κ → MTKNode I C0 → Prop) (e f : MTKNode I C0)
-    (h : seedMix kdr (Sum.inl e) (Sum.inl f)) : e.k ≤ f.k + 1 :=
+theorem seedMix_bud (nd : β → MTKNode I C0) (kdr : κ → β → Prop) (e f : β)
+    (h : seedMix nd kdr (Sum.inl e) (Sum.inl f)) : (nd e).k ≤ (nd f).k + 1 :=
   sAdjK_bud h
 
 
@@ -21400,11 +21401,12 @@ a condition on how the extraction budgets its bank members. -/
 
 /-- Descending from an external lands either on an external of the SAME budget,
     or on a kernel whose attached external has the same budget. -/
-theorem mixLe_inl_bud {κ : Type} (step : MTKNode I C0 → MTKNode I C0 → Prop)
-    (hbud : ∀ a b, tcl step a b → b.k = a.k) (up dn : κ → MTKNode I C0 → Bool) (e : MTKNode I C0) :
+theorem mixLe_inl_bud {β κ : Type} (nd : β → MTKNode I C0)
+    (step : β → β → Prop) (hbud : ∀ a b, tcl step a b → (nd b).k = (nd a).k)
+    (up dn : κ → β → Bool) (e : β) :
     ∀ x₀, mixLe (tcl step) up dn (Sum.inl e) x₀ →
-      (∃ e₀, x₀ = Sum.inl e₀ ∧ e₀.k = e.k) ∨
-      (∃ k e', x₀ = Sum.inr k ∧ up k e' = true ∧ e'.k = e.k) := by
+      (∃ e₀, x₀ = Sum.inl e₀ ∧ (nd e₀).k = (nd e).k) ∨
+      (∃ k e', x₀ = Sum.inr k ∧ up k e' = true ∧ (nd e').k = (nd e).k) := by
   rintro (e₀ | k) h
   · rcases h with h | h
     · exact Or.inl ⟨e₀, rfl, by rw [Sum.inl.inj h]⟩
@@ -21419,25 +21421,25 @@ theorem mixLe_inl_bud {κ : Type} (step : MTKNode I C0 → MTKNode I C0 → Prop
 
 /-- **`hb`, DISCHARGED.**  The only genuinely new input is `hkb`: the budget of
     a kernel's attached external against the budget of its `DR`-bank member. -/
-theorem seedMix_hb {κ : Type} (step : MTKNode I C0 → MTKNode I C0 → Prop)
-    (hbud : ∀ a b, tcl step a b → b.k = a.k) (kdr : κ → MTKNode I C0 → Prop)
-    (up dn : κ → MTKNode I C0 → Bool)
-    (hkb : ∀ k e' f₀, up k e' = true → kdr k f₀ → e'.k ≤ f₀.k + 1)
-    (hkb2 : ∀ k f' e₀, up k f' = true → kdr k e₀ → e₀.k ≤ f'.k + 1)
-    (e f : MTKNode I C0)
+theorem seedMix_hb {β κ : Type} (nd : β → MTKNode I C0) (step : β → β → Prop)
+    (hbud : ∀ a b, tcl step a b → (nd b).k = (nd a).k) (kdr : κ → β → Prop)
+    (up dn : κ → β → Bool)
+    (hkb : ∀ k e' f₀, up k e' = true → kdr k f₀ → (nd e').k ≤ (nd f₀).k + 1)
+    (hkb2 : ∀ k f' e₀, up k f' = true → kdr k e₀ → (nd e₀).k ≤ (nd f').k + 1)
+    (e f : β)
     (h : ∃ x₀ y₀, mixLe (tcl step) up dn (Sum.inl e) x₀ ∧
-      mixLe (tcl step) up dn (Sum.inl f) y₀ ∧ seedMix kdr x₀ y₀) :
-    e.k ≤ f.k + 1 := by
+      mixLe (tcl step) up dn (Sum.inl f) y₀ ∧ seedMix nd kdr x₀ y₀) :
+    (nd e).k ≤ (nd f).k + 1 := by
   obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
-  rcases mixLe_inl_bud step hbud up dn e x₀ hx with
+  rcases mixLe_inl_bud nd step hbud up dn e x₀ hx with
     ⟨e₀, rfl, hek⟩ | ⟨k, e', rfl, hae, hek⟩
-  · rcases mixLe_inl_bud step hbud up dn f y₀ hy with
+  · rcases mixLe_inl_bud nd step hbud up dn f y₀ hy with
       ⟨f₀, rfl, hfk⟩ | ⟨k', f', rfl, haf, hfk⟩
-    · have := sAdjK_bud (show sAdjK e₀ f₀ from hs)
+    · have := sAdjK_bud (show sAdjK (nd e₀) (nd f₀) from hs)
       omega
     · have := hkb2 k' f' e₀ haf (show kdr k' e₀ from hs)
       omega
-  · rcases mixLe_inl_bud step hbud up dn f y₀ hy with
+  · rcases mixLe_inl_bud nd step hbud up dn f y₀ hy with
       ⟨f₀, rfl, hfk⟩ | ⟨k', f', rfl, haf, hfk⟩
     · have := hkb k e' f₀ hae (show kdr k f₀ from hs)
       omega
