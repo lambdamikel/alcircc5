@@ -15007,6 +15007,74 @@ noncomputable def kernelData (hI : RCC5Interp I) (C0 : Concept) (x : α)
     ppos := h4.2.2.2.1
     cty := h4.2.2.2.2.1
     ccovers := h4.2.2.2.2.2 }
+
+/-! #### The kernel index and family (§46.9 step 1)
+
+`κ` is the set of nodes carrying at least one PERSISTENT `∃PP` demand — the
+`persistDs`-nonempty ones (§44.27).  Each such node HAS its kernel
+(`ascKernel_of_node`), so the family is a projection, and every kernel-side
+certificate field is a field of `KernelData`.
+
+The base bound `L0` is a parameter: `rr_segment_from` places the base past ANY
+bound, which is what `hinj` consumes. -/
+
+/-- The kernel index: nodes with a persistent `∃PP` demand. -/
+def KIdx {β : Type} (C0 : Concept) (I : Interp α) (nd : β → MTKNode I C0) :
+    Type := {e : β // 0 < (persistDs C0 I (nd e).x).length}
+
+variable {β : Type}
+
+/-- The family of kernels, one per index. -/
+noncomputable def kFam (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdx C0 I nd) :
+    KernelData I C0 (persistDs C0 I (nd k.val).x) (L0 k.val) :=
+  kernelData hI C0 (nd k.val).x (nd k.val).hx k.property (L0 k.val)
+
+noncomputable def kCk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) : Nat → α := (kFam hI C0 nd L0 k).c
+
+noncomputable def kIk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) : Nat := (kFam hI C0 nd L0 k).i
+
+noncomputable def kPk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) : Nat := (kFam hI C0 nd L0 k).p
+
+/-- **THE KERNEL-SIDE CERTIFICATE FIELDS, ALL FOUR.**  `hdom`, `hstep`, `hp` and
+    `hty` are projections of `KernelData`; the direction is `true` throughout
+    (ascending).  The DESCENDING mirror is the same construction over `rrPtI` /
+    `rr_coversI`, which the campaign already certifies. -/
+theorem kCk_dom (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (n : Nat) :
+    I.dom (kCk hI C0 nd L0 k n) := (kFam hI C0 nd L0 k).cdom n
+
+theorem kCk_step (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (n : Nat) :
+    I.rho (kCk hI C0 nd L0 k n) (kCk hI C0 nd L0 k (n + 1)) = cdir true :=
+  (kFam hI C0 nd L0 k).cstep n
+
+theorem kPk_pos (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) : 0 < kPk hI C0 nd L0 k :=
+  (kFam hI C0 nd L0 k).ppos
+
+theorem kCk_ty (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) :
+    mty C0 I (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k)) =
+      mty C0 I (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + kPk hI C0 nd L0 k)) :=
+  (kFam hI C0 nd L0 k).cty
+
+/-- **`kDIR`'s content**: every persistent demand of the kernel's own node is
+    carried inside the period. -/
+theorem kCk_covers (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (D : Concept)
+    (hD : D ∈ persistDs C0 I (nd k.val).x) :
+    ∃ b, b < kPk hI C0 nd L0 k ∧
+      D ∈ mty C0 I (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + b)) :=
+  (kFam hI C0 nd L0 k).ccovers D hD
+
+/-- The base is past the caller's bound — what `hinj` consumes. -/
+theorem kIk_ge (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) : L0 k.val ≤ kIk hI C0 nd L0 k :=
+  (kFam hI C0 nd L0 k).base_ge
 /-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
     needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
     while the base `i` and period `p` are available at ARBITRARILY LATE `L0`,
@@ -24730,6 +24798,8 @@ end VerticalWitness
 #print axioms forced_cells
 #print axioms ascKernel_of_node
 #print axioms kernelData
+#print axioms kCk_step
+#print axioms kCk_covers
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
