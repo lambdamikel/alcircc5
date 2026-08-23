@@ -15022,7 +15022,7 @@ theorem descKernel_of_node (hI : RCC5Interp I) (C0 : Concept) (x : α)
     ∃ (c : Nat → α) (i p : Nat),
       (∀ n, I.dom (c n)) ∧
       (∀ n, I.rho (c n) (c (n + 1)) = cdir false) ∧
-      L0 ≤ i ∧ 0 < p ∧
+      L0 ≤ i ∧ 0 < i ∧ c 0 = x ∧ 0 < p ∧
       mty C0 I (c i) = mty C0 I (c (i + p)) ∧
       (∀ D ∈ persistDsI C0 I x, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) := by
   have h0 : persistAllI I C0 (persistDsI C0 I x) x := persistAllI_persistDsI hx
@@ -15030,7 +15030,7 @@ theorem descKernel_of_node (hI : RCC5Interp I) (C0 : Concept) (x : α)
     rr_segment_fromI hI C0 (persistDsI C0 I x) hL x h0 L0
   refine ⟨rrPtI hI C0 (persistDsI C0 I x) hL x h0, i, p,
     rrPtI_dom hI C0 (persistDsI C0 I x) hL x h0,
-    rrPtI_step hI C0 (persistDsI C0 I x) hL x h0, hL0, hp, hty, ?_⟩
+    rrPtI_step hI C0 (persistDsI C0 I x) hL x h0, hL0, hi, rfl, hp, hty, ?_⟩
   intro D hD
   obtain ⟨n, hn⟩ := List.get_of_mem hD
   obtain ⟨b, hb, hcarry⟩ :=
@@ -15059,7 +15059,7 @@ theorem ascKernel_of_node (hI : RCC5Interp I) (C0 : Concept) (x : α)
     ∃ (c : Nat → α) (i p : Nat),
       (∀ n, I.dom (c n)) ∧
       (∀ n, I.rho (c n) (c (n + 1)) = cdir true) ∧
-      L0 ≤ i ∧ 0 < p ∧
+      L0 ≤ i ∧ 0 < i ∧ c 0 = x ∧ 0 < p ∧
       mty C0 I (c i) = mty C0 I (c (i + p)) ∧
       (∀ D ∈ persistDs C0 I x, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) := by
   have h0 : persistAll I C0 (persistDs C0 I x) x := persistAll_persistDs hx
@@ -15067,7 +15067,7 @@ theorem ascKernel_of_node (hI : RCC5Interp I) (C0 : Concept) (x : α)
     rr_segment_from hI C0 (persistDs C0 I x) hL x h0 L0
   refine ⟨rrPt hI C0 (persistDs C0 I x) hL x h0, i, p,
     rrPt_dom hI C0 (persistDs C0 I x) hL x h0,
-    rrPt_step hI C0 (persistDs C0 I x) hL x h0, hL0, hp, hty, ?_⟩
+    rrPt_step hI C0 (persistDs C0 I x) hL x h0, hL0, hi, rfl, hp, hty, ?_⟩
   intro D hD
   obtain ⟨n, hn⟩ := List.get_of_mem hD
   obtain ⟨b, hb, hcarry⟩ :=
@@ -15090,13 +15090,15 @@ list (`hinj`). -/
 
 /-- A kernel's data and its certificate properties. -/
 structure KernelData {α : Type} (I : Interp α) (C0 : Concept)
-    (Ds : List Concept) (L0 : Nat) (d : Bool) where
+    (Ds : List Concept) (L0 : Nat) (d : Bool) (x : α) where
   c : Nat → α
   i : Nat
   p : Nat
   cdom : ∀ n, I.dom (c n)
   cstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d
   base_ge : L0 ≤ i
+  ipos : 0 < i
+  croot : c 0 = x
   ppos : 0 < p
   cty : mty C0 I (c i) = mty C0 I (c (i + p))
   ccovers : ∀ D ∈ Ds, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))
@@ -15105,7 +15107,7 @@ open Classical in
 /-- **A NODE WITH PERSISTENT DEMANDS YIELDS ITS KERNEL'S DATA.** -/
 noncomputable def kernelData (hI : RCC5Interp I) (C0 : Concept) (x : α)
     (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat) :
-    KernelData I C0 (persistDs C0 I x) L0 true :=
+    KernelData I C0 (persistDs C0 I x) L0 true x :=
   let h1 := ascKernel_of_node hI C0 x hx hL L0
   let c := Classical.choose h1
   let h2 := Classical.choose_spec h1
@@ -15117,15 +15119,17 @@ noncomputable def kernelData (hI : RCC5Interp I) (C0 : Concept) (x : α)
     cdom := h4.1
     cstep := h4.2.1
     base_ge := h4.2.2.1
-    ppos := h4.2.2.2.1
-    cty := h4.2.2.2.2.1
-    ccovers := h4.2.2.2.2.2 }
+    ipos := h4.2.2.2.1
+    croot := h4.2.2.2.2.1
+    ppos := h4.2.2.2.2.2.1
+    cty := h4.2.2.2.2.2.2.1
+    ccovers := h4.2.2.2.2.2.2.2 }
 
 open Classical in
 /-- **THE DESCENDING PRODUCER** — same shape, `cdir false`. -/
 noncomputable def kernelDataI (hI : RCC5Interp I) (C0 : Concept) (x : α)
     (hx : I.dom x) (hL : 0 < (persistDsI C0 I x).length) (L0 : Nat) :
-    KernelData I C0 (persistDsI C0 I x) L0 false :=
+    KernelData I C0 (persistDsI C0 I x) L0 false x :=
   let h1 := descKernel_of_node hI C0 x hx hL L0
   let c := Classical.choose h1
   let h2 := Classical.choose_spec h1
@@ -15137,9 +15141,11 @@ noncomputable def kernelDataI (hI : RCC5Interp I) (C0 : Concept) (x : α)
     cdom := h4.1
     cstep := h4.2.1
     base_ge := h4.2.2.1
-    ppos := h4.2.2.2.1
-    cty := h4.2.2.2.2.1
-    ccovers := h4.2.2.2.2.2 }
+    ipos := h4.2.2.2.1
+    croot := h4.2.2.2.2.1
+    ppos := h4.2.2.2.2.2.1
+    cty := h4.2.2.2.2.2.2.1
+    ccovers := h4.2.2.2.2.2.2.2 }
 
 /-! #### The kernel index and family (§46.9 step 1)
 
@@ -15160,7 +15166,8 @@ variable {β : Type}
 /-- The family of kernels, one per index. -/
 noncomputable def kFam (hI : RCC5Interp I) (C0 : Concept)
     (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdx C0 I nd) :
-    KernelData I C0 (persistDs C0 I (nd k.val).x) (L0 k.val) true :=
+    KernelData I C0 (persistDs C0 I (nd k.val).x) (L0 k.val) true
+      (nd k.val).x :=
   kernelData hI C0 (nd k.val).x (nd k.val).hx k.property (L0 k.val)
 
 noncomputable def kCk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
@@ -15208,6 +15215,34 @@ theorem kCk_covers (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
 theorem kIk_ge (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) : L0 k.val ≤ kIk hI C0 nd L0 k :=
   (kFam hI C0 nd L0 k).base_ge
+
+/-- **`hup0` FOR THE EXTRACTION'S ASCENDING KERNELS.**  The kernel starts AT its
+    own node (`croot`) and its base sits past 0 (`ipos`), so the node is a proper
+    part of the base by `chain_pp_lt`.  With `up k e := (e = k.val)` this is
+    exactly `mtkKernelsOD_of_debts`'s `hup0`. -/
+theorem kCk_root_pp (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) :
+    I.rho (nd k.val).x (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k)) = pp := by
+  have hd := kCk_dom hI C0 nd L0 k
+  have hs : ∀ n, I.rho (kCk hI C0 nd L0 k n) (kCk hI C0 nd L0 k (n + 1)) = pp :=
+    fun n => kCk_step hI C0 nd L0 k n
+  have hr : kCk hI C0 nd L0 k 0 = (nd k.val).x := (kFam hI C0 nd L0 k).croot
+  rw [← hr]
+  exact chain_pp_lt hI _ hd hs 0 _ (kFam hI C0 nd L0 k).ipos
+
+/-- Every phase is likewise above the node — the form `hupP` wants, since the
+    obligations quantify over the phase window. -/
+theorem kCk_root_pp_phase (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdx C0 I nd) (a : Nat) :
+    I.rho (nd k.val).x (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + a)) = pp := by
+  have hd := kCk_dom hI C0 nd L0 k
+  have hs : ∀ n, I.rho (kCk hI C0 nd L0 k n) (kCk hI C0 nd L0 k (n + 1)) = pp :=
+    fun n => kCk_step hI C0 nd L0 k n
+  have hr : kCk hI C0 nd L0 k 0 = (nd k.val).x := (kFam hI C0 nd L0 k).croot
+  rw [← hr]
+  refine chain_pp_lt hI _ hd hs 0 _ ?_
+  have hp : 0 < kIk hI C0 nd L0 k := (kFam hI C0 nd L0 k).ipos
+  omega
 /-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
     needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
     while the base `i` and period `p` are available at ARBITRARILY LATE `L0`,
@@ -24968,6 +25003,7 @@ end VerticalWitness
 #print axioms kernelDataI
 #print axioms kCk_step
 #print axioms kCk_covers
+#print axioms kCk_root_pp_phase
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
