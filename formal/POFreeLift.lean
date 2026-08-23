@@ -3160,6 +3160,31 @@ theorem nodup_len_le {A : Type} [DecidableEq A] :
     show t.length + 1 ≤ univ.length
     omega
 
+
+/-- **SATURATION** (§47.3).  A `Nodup` list inside `univ` that is at least as
+    long as `univ` contains EVERYTHING in `univ`.  This is what makes the fuel
+    `|typeEnum C₀|` adequate: once that many distinct types have been realized
+    above a node, every further witness's type is ALREADY there, so the
+    construction reuses instead of adding and cannot run out.
+
+    Note `univ` need not itself be `Nodup` — the contradiction comes from
+    `nodup_len_le` applied to `y :: l`. -/
+theorem mem_of_saturated {A : Type} [DecidableEq A] (l univ : List A)
+    (hsub : ∀ x ∈ l, x ∈ univ) (hnd : l.Nodup) (hlen : univ.length ≤ l.length) :
+    ∀ y ∈ univ, y ∈ l := by
+  intro y hy
+  by_cases h : y ∈ l
+  · exact h
+  · exfalso
+    have hnd' : (y :: l).Nodup := List.nodup_cons.mpr ⟨h, hnd⟩
+    have hsub' : ∀ x ∈ (y :: l), x ∈ univ := by
+      intro x hx
+      rcases List.mem_cons.mp hx with rfl | hx'
+      · exact hy
+      · exact hsub x hx'
+    have hle := nodup_len_le _ _ hsub' hnd'
+    rw [List.length_cons] at hle
+    omega
 /-- **BOUNDED PIGEONHOLE**: past any `L`, two of the first `|univ|+1`
     values coincide — so the recurrence period is `≤ |univ|`. -/
 theorem segment_exists_bounded {β : Type} [DecidableEq β] (univ : List β)

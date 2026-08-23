@@ -5848,3 +5848,39 @@ across the horizontal recursion, where a node added above `n` must also count as
 above `n`'s predecessors. That is transitivity of the model's `PP`, so it should
 hold — but "should hold" is the phrasing that has been wrong before, and it will
 be checked by building rather than asserted.
+
+### 47.5 Building it exposes a flaw in §47.2 (2026-08-23)
+
+§47.4 said the risk was whether "above" tracks correctly across the recursion,
+and that it would be checked by building rather than asserted. Building it
+checked it, and the answer is worse than a tracking bug.
+
+**The accumulator points the wrong way.** The natural construction carries a
+`seen` list of types along the upward path and reuses when a witness's type is
+already in it. But `seen` accumulates the types of nodes on the path from the
+START to `n` — and those are **below** `n`, not above. The cut licenses reuse of
+a node **above** the one it replaces. So reuse against `seen` is reuse in the
+wrong direction, and is not licensed.
+
+Restating the cut makes the problem visible: `path_cut` replaces `v` by a LATER
+`w`. Using it during an upward construction would mean serving a demand with a
+node that has **not yet been built**. The cut is inherently a POST-HOC
+shortening, not a construction rule — which is the existence/construction seam
+again, and §47.2 did not escape it after all.
+
+**What survives.** Cross-branch reuse is genuinely available and genuinely
+licensed: if `n` has demands `D₁, D₂` and `w₁`'s subtree is built first, every
+node in it is above `w₁`, hence above `n`, so serving `D₂` from that subtree
+satisfies both of `path_cut`'s obligations. So reuse is real — it is the
+tree-recursion-with-accumulator SHAPE that is wrong, not the idea of reuse.
+
+**What that suggests, without claiming it works.** A worklist fixpoint that
+consults the whole current set (testing the `above` relation) rather than a path
+accumulator. Termination would have to come from each node's above-set being
+type-bounded, and I have not checked that the measure closes — the total set
+grows as later additions land above earlier nodes.
+
+**Status.** §47.2's construction is withdrawn. `mem_of_saturated` (§47.3) stands
+and is certified — it is the right saturation lemma whatever the construction
+turns out to be. The remaining item is unchanged in substance and now has one
+more refuted route attached to it.
