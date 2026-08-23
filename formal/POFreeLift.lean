@@ -14963,6 +14963,50 @@ theorem ascKernel_of_node (hI : RCC5Interp I) (C0 : Concept) (x : α)
   have : (⟨n.val, n.isLt⟩ : Fin (persistDs C0 I x).length) = n := Fin.ext rfl
   rw [this, hn] at hcarry
   exact hcarry
+
+/-! #### A kernel's data, bundled (§46.9 step 1)
+
+`ascKernel_of_node` is an EXISTENCE statement; the certificate needs the data as
+FUNCTIONS (`ck`, `ik`, `pk`).  `KernelData` is that bundle and `kernelData`
+produces it, so the assembly can name a kernel's chain, base and period rather
+than destructure an existential at every use.
+
+`base_ge` is kept because it is load-bearing, not decoration: the base can be
+pushed past ANY bound, which is what keeps a kernel base off the finite external
+list (`hinj`). -/
+
+/-- A kernel's data and its certificate properties. -/
+structure KernelData {α : Type} (I : Interp α) (C0 : Concept)
+    (Ds : List Concept) (L0 : Nat) where
+  c : Nat → α
+  i : Nat
+  p : Nat
+  cdom : ∀ n, I.dom (c n)
+  cstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir true
+  base_ge : L0 ≤ i
+  ppos : 0 < p
+  cty : mty C0 I (c i) = mty C0 I (c (i + p))
+  ccovers : ∀ D ∈ Ds, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))
+
+open Classical in
+/-- **A NODE WITH PERSISTENT DEMANDS YIELDS ITS KERNEL'S DATA.** -/
+noncomputable def kernelData (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat) :
+    KernelData I C0 (persistDs C0 I x) L0 :=
+  let h1 := ascKernel_of_node hI C0 x hx hL L0
+  let c := Classical.choose h1
+  let h2 := Classical.choose_spec h1
+  let i := Classical.choose h2
+  let h3 := Classical.choose_spec h2
+  let p := Classical.choose h3
+  let h4 := Classical.choose_spec h3
+  { c := c, i := i, p := p
+    cdom := h4.1
+    cstep := h4.2.1
+    base_ge := h4.2.2.1
+    ppos := h4.2.2.2.1
+    cty := h4.2.2.2.2.1
+    ccovers := h4.2.2.2.2.2 }
 /-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
     needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
     while the base `i` and period `p` are available at ARBITRARILY LATE `L0`,
@@ -24685,6 +24729,7 @@ end VerticalWitness
 #print axioms dodge_cells
 #print axioms forced_cells
 #print axioms ascKernel_of_node
+#print axioms kernelData
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
