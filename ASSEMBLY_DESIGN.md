@@ -5719,3 +5719,43 @@ over the two branches rather than sequential.
 executed before (`short_chain` is exactly this, one level down), but it is NOT a
 mechanical step and it is NOT written. It is the last item, and it deserves to be
 attacked as its own piece of work rather than as the tail of an assembly.
+
+### 46.27 How far the analysis actually gets (2026-08-23)
+
+Pushing past §46.26's three failures produces two real facts and one obstruction.
+
+**Fact 1 — demands can BECOME persistent going up, and `persistDs` stabilizes.**
+`persistDs_up` (§45.5) says the persistent set only grows along an ascending
+chain. It is a filter of `cl C₀`, so its length is monotone and bounded by
+`|cl C₀|` — hence along an infinite chain it STABILIZES. Past the stabilization
+point, a one-shot demand stays one-shot forever: if it became persistent, the set
+would grow.
+
+So the problem is confined to the tail past stabilization, where the one-shot
+demands are genuinely permanent.
+
+**Fact 2 — an infinite one-shot chain IS a kernel, after §46.** Types recur by
+pigeonhole, giving `hty`; and §46's per-external `up`/`dn` means a phase's
+unserved one-shot demand goes to an external ABOVE the kernel (`dnAt`), which is
+exactly the case §45 could not handle and §46 fixed. So the infinite branch is
+not blocked.
+
+**The obstruction — the regress is upward, and the budget does not fall.**
+Those externals above the kernel are new nodes; §46.17 puts them at the kernel's
+OWN budget, so nothing decreases. Their own demands recurse, going further up,
+and can produce another infinite chain, another kernel, another bank. The bank
+bounds each layer (`|ws| ≤ 2·|cl C₀|`) but nothing yet bounds the NUMBER of
+layers.
+
+**So the missing ingredient is precisely a bound on the layer depth**, and the
+natural candidate is the same one that bounds everything else here: types are
+finite, so layers whose types repeat should be identifiable — but the layers are
+stacked upward, and the cut only ever reaches upward too, so it does not
+obviously apply between layers.
+
+**Assessment, honestly.** This is no longer "wiring with a hard step in it". It
+is a genuine open sub-problem of the same species the campaign has faced before
+(a finiteness bound on an upward recursion), it is precisely stated, and all the
+local tools are certified. What is absent is the global measure. I do not have
+one, and I would rather say so than produce a fourth route that fails in a fifth
+way.
