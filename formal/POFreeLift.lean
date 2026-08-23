@@ -25441,4 +25441,81 @@ end VerticalWitness
 #print axioms dadjOD_rho
 #print axioms sAdjK_bud
 
+/-! ### §49 — THE ONE-SHOT DICHOTOMY (from `wp101`)
+
+`wp101` re-measured the one-shot vertical obligation over GENUINELY INFINITE
+periodic models (`wp100` had measured it over finite ones, where the maximal
+element has no `PP`-successor, so 100% of demands read as one-shot — a pure
+boundary artifact).  The corrected measurement: of cofinally recurring one-shot
+vertical demands, **89.2% are served IN-KERNEL** (the demanded concept recurs on
+the chain itself, costing nothing), and the remaining 10.8% need **exactly ONE
+external — flat across windows 2p / 4p / 8p / 16p, zero growing cases**.
+
+The reason is a theorem rather than a measurement, and this section is it.
+`comp pp pp = [pp]`, so a superpart of `x` is a superpart of everything under
+`x`; hence a witness taken at the TOP of a window discharges the demand at EVERY
+node of that window.  A demand recurring cofinally therefore does NOT need
+cofinally many witnesses — it needs one per layer, and §46.28 bounds the layers
+by the cut.
+
+This is why the four routes of §48.1 all failed: they tried to bound a GENERIC
+closure, when the obligation is a dichotomy whose two branches the campaign
+already owns. -/
+
+section OneShotDichotomy
+
+variable {α : Type} {I : Interp α}
+
+/-- **A `PP`-witness serves everything below.**  Forced by `comp pp pp = [pp]`. -/
+theorem pp_witness_below (hI : RCC5Interp I) {x y w : α}
+    (hx : I.dom x) (hy : I.dom y) (hw : I.dom w)
+    (hyx : I.rho y x = pp) (hxw : I.rho x w = pp) : I.rho y w = pp :=
+  rho_forced hI hy hw hx hyx hxw (by decide)
+
+/-- Hence ONE witness discharges an `∃PP` demand at every node below its anchor. -/
+theorem ex_pp_serves_below (hI : RCC5Interp I) {x y w : α} {D : Concept}
+    (hx : I.dom x) (hy : I.dom y) (hw : I.dom w)
+    (hyx : I.rho y x = pp) (hxw : I.rho x w = pp) (hD : sat I w D) :
+    sat I y (Concept.ex pp D) :=
+  ⟨w, hw, pp_witness_below hI hx hy hw hyx hxw, hD⟩
+
+/-- **THE §49.1 THEOREM — one witness covers a whole window.**  Along an
+    ascending chain, the witness supplied by the demand at `c N` discharges that
+    same demand at EVERY `c j` with `j ≤ N`.
+
+    This is exactly why `wp101` part D measures the external count as FLAT: a
+    cofinally recurring one-shot demand does not need one witness per
+    occurrence, it needs one per LAYER. -/
+theorem oneshot_one_witness (hI : RCC5Interp I) {c : Nat → α} {D : Concept}
+    (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp) {N : Nat}
+    (hex : sat I (c N) (Concept.ex pp D)) :
+    ∃ w, I.dom w ∧ sat I w D ∧ I.rho (c N) w = pp ∧
+      ∀ j, j ≤ N → sat I (c j) (Concept.ex pp D) := by
+  obtain ⟨w, hw, hr, hD⟩ := hex
+  refine ⟨w, hw, hD, hr, ?_⟩
+  intro j hj
+  rcases Nat.lt_or_ge j N with h | h
+  · exact ex_pp_serves_below hI (hdom N) (hdom j) hw (hasc j N h) hr hD
+  · have hjN : j = N := Nat.le_antisymm hj h
+    subst hjN
+    exact ⟨w, hw, hr, hD⟩
+
+/-- The dichotomy's FREE branch, made explicit: if the demanded concept itself
+    recurs on the chain above `j`, the kernel serves the demand with NO external
+    at all.  `wp101` D measures this branch at **89.2%**. -/
+theorem oneshot_in_kernel {c : Nat → α} {D : Concept}
+    (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp) {j k : Nat}
+    (hjk : j < k) (hD : sat I (c k) D) :
+    sat I (c j) (Concept.ex pp D) :=
+  ⟨c k, hdom k, hasc j k hjk, hD⟩
+
+end OneShotDichotomy
+
+#print axioms pp_witness_below
+#print axioms ex_pp_serves_below
+#print axioms oneshot_one_witness
+#print axioms oneshot_in_kernel
+
 end POFreeLift
