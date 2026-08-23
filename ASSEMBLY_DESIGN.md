@@ -5502,3 +5502,41 @@ attachment, rather than being given one by fiat.
 
 **Step 1 remaining:** `seed` from `seedMix` with `kdr` in the same
 relation-defined style, and the budget assignment.
+
+### 46.17 The budget lives in the attachment (2026-08-23)
+
+The budget assignment turned out **not to be a separate step**. An attached
+external sits at the kernel's OWN budget, and that condition belongs INSIDE
+`upAt`/`dnAt` rather than alongside them:
+
+| obligation | now |
+|---|---|
+| `hup`/`hdn` budget halves | `upAt_bud`, `dnAt_bud` — projections |
+| `mixStep`'s `hudbud` | `upAt_dnAt_bud` — both ends at the kernel's budget, hence EQUAL |
+| `hkdr` | `kdrAt_base` |
+| `hdrk`'s relation | `kdrAt_phase` |
+
+Constant budgets along `elt` are §44.3's design, and termination comes from the
+lexicographic measure `(budget, path length)` rather than from a budget drop —
+so requiring EQUALITY (not "within one") costs nothing and buys `hudbud` outright.
+
+That also retires §43.10's "bank members one below their kernel": it was the
+right instinct under the old budget-decreasing reading, and the wrong constant
+under §44.3's. Recording the correction rather than leaving two rules in the
+design.
+
+### 46.18 Step 1 is DONE
+
+| datum | definition |
+|---|---|
+| `β` | `EIdx` — the bounded closure as an index type; `nd := Subtype.val` |
+| `κ` | `KIdx` — the `persistDs`-nonempty nodes |
+| kernels | `kFam` / `kCk` / `kIk` / `kPk`, from `ascKernel_of_node` (and `kernelDataI` for the descending mirror) |
+| `up`/`dn` | `upAt` / `dnAt` — the model relation across the window, budget folded in |
+| `seed` | `seedMix` with `kdr := kdrAt` |
+| `step` | `mixStep nd up dn` |
+| frame | `extFrameM` |
+| budgets | a conjunct of the attachment |
+
+**Step 2** — one application of `mtkKernelsOD_of_debts` — and **step 3**, the
+tail, remain.
