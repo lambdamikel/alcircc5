@@ -5618,3 +5618,31 @@ recent findings has changed: the last several were "two objects that must agree
 and don't", each caught in one build cycle, rather than architectural. Step 2's
 coverage is the one place with genuine content left, because that is where the
 dichotomy gets APPLIED rather than stated.
+
+### 46.23 The combined kernel index (2026-08-23)
+
+`κ` for the assembly is `KIdx ⊕ KIdxI`, with `dir` reading the tag.
+
+| | |
+|---|---|
+| `KIdxM`, `kNode` | the index and its anchoring node |
+| `mCk`, `mIk`, `mPk`, `mDir`, `mBk` | the data, dispatching on the tag |
+| `mCk_dom`, `mCk_step`, `mPk_pos`, `mCk_ty` | the four certificate fields, over BOTH directions |
+| `mUp`, `mDn` + phase/bud lemmas | the attachment |
+| `mUp_self_asc`, `mDn_self_desc` | each kernel attached at its own node in the RIGHT direction |
+
+**The attachment needs no dispatch at all** — the same relation-defined formula
+(§46.16) covers a kernel sitting above its externals and one sitting below.
+That is the payoff from defining `up`/`dn` by the model relation rather than by
+bookkeeping over a witness list: had they been list-membership, the sum would
+have required a case split in every downstream obligation.
+
+The κ side of step 1 is now complete for both directions.
+
+### 46.24 Remaining
+
+1. **Step 2 coverage** — the one item with real content. At a fuel-exhausted
+   leaf, apply `pp_dichotomy`: either the node has no vertical demand, or it has
+   a kernel. 3–5 rounds.
+2. **Step 3 tail** — reindex onto `Fin` (needs a list↔`Fin` bijection), encode,
+   `hcompl`. 2–3 rounds.
