@@ -16824,6 +16824,38 @@ theorem exists_bank (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
     · exact List.mem_cons.mpr (Or.inl rfl)
     · exact List.mem_cons.mpr (Or.inr (List.mem_cons.mpr (Or.inl rfl)))
 
+
+/-! #### The bank as data (§46.12)
+
+`exists_bank` is an EXISTENCE statement; the extraction needs the witness list
+as DATA, because `dn` — which externals a kernel is BELOW — is defined from it.
+`BankData` is the bundle, `bankData` the producer.
+
+This is what makes §45's fix operational: a phase's accidental `∃PP` demand is
+served by a bank member ABOVE the kernel, and `dn k e` says exactly that `e` is
+such a member. -/
+
+/-- A kernel's bank and its serving property. -/
+structure BankData {α : Type} (I : Interp α) (C0 : Concept) (c : Nat → α)
+    (T M : Nat) where
+  ws : List α
+  wdom : ∀ w ∈ ws, I.dom w
+  wlen : ws.length ≤ 2 * (cl C0).length
+  wserves : ∀ a, T ≤ a → ∀ r D, (r = dr ∨ r = pp) →
+    Concept.ex r D ∈ mty C0 I (c a) →
+    ∃ w ∈ ws, D ∈ mty C0 I w ∧ ∀ b, b ≤ M → I.rho (c b) w = r
+
+open Classical in
+/-- **THE BANK, AS DATA.** -/
+noncomputable def bankData (hI : RCC5Interp I) (C0 : Concept) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (T M : Nat)
+    (hrecall : ∀ a, T ≤ a → ∀ N, ∃ m, N ≤ m ∧ mty C0 I (c m) = mty C0 I (c a)) :
+    BankData I C0 c T M :=
+  let h1 := exists_bank hI C0 c hdom hstep T M hrecall
+  let ws := Classical.choose h1
+  let h2 := Classical.choose_spec h1
+  { ws := ws, wdom := h2.1, wlen := h2.2.1, wserves := h2.2.2 }
 open Classical in
 /-- **THE `PPI` BANK** (§39.8) — the third external case of `hk_ex`.
 
@@ -24958,6 +24990,7 @@ end VerticalWitness
 #print axioms hupP_of_bank
 #print axioms hdnP_of_bank
 #print axioms hdrP_of_bank
+#print axioms bankData
 #print axioms rDR_witness
 #print axioms rPO_witness
 #print axioms rho_forced
