@@ -5590,3 +5590,31 @@ needs both directions, and the node set is what realizes the order. Two objects
 that must agree, changed at different times. The lesson is not new — it is
 §43.8's rule again — but it is the first time the prediction was made BEFORE the
 contact rather than after.
+
+### 46.21 The descending family (2026-08-23)
+
+`KIdxI` (nodes with a persistent `∃PPI` demand), `kFamI`, `kCkI`/`kIkI`/`kPkI`,
+and the five certificate fields by projection — the exact mirror of the
+ascending family, over `kernelDataI`.
+
+**`kCkI_root_ppi_phase`** is the one with content: a descending kernel is BELOW
+its own node, because the chain starts AT the node and descends, so every phase
+is a proper part of it. That is the `dnAt` side of `upAt_self`. It uses
+`dchain_model_pp`, which was already in the file.
+
+So both directions now have their index type, their family, and their attachment
+fact. `κ` for the assembly is `KIdx ⊕ KIdxI`, with `dir := Sum.elim (fun _ => true) (fun _ => false)`.
+
+### 46.22 Effort remaining, honestly
+
+| remaining | character | rounds |
+|---|---|---|
+| combine κ into the sum, `dir`, and the per-side dispatch | mechanical | 1–2 |
+| **step 2 coverage** | **real content** — at a fuel-exhausted leaf, apply `pp_dichotomy`: no demand, or a kernel | 3–5 |
+| step 3 tail | reindex onto `Fin`, encode, `hcompl`; templated, needs a list↔`Fin` bijection | 2–3 |
+
+**Roughly 6–10 focused rounds** if nothing new surfaces. The character of the
+recent findings has changed: the last several were "two objects that must agree
+and don't", each caught in one build cycle, rather than architectural. Step 2's
+coverage is the one place with genuine content left, because that is where the
+dichotomy gets APPLIED rather than stated.
