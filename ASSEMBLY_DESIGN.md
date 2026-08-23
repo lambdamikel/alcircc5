@@ -5307,3 +5307,27 @@ would be open-ended.
    forced fact `x ⊂ kernel ⊂ y`.
 3. **The tail** — `reindexMT` → `encodeMT` → `encodeMT_mem_codesM` → `hcompl` →
    `decidableSat_of_codes`, on the `hfrag_hcompl` template.
+
+### 46.7 `hud` costs one edge and one budget equation (2026-08-22)
+
+The refactor's new coherence condition asks for `elt x y` whenever a kernel is
+ABOVE `x` and BELOW `y`. Semantically forced (`x ⊂ kernel ⊂ y`) — but `elt` is
+`tcl step`, a closure of DEMAND steps, and `x` and `y` need not be connected by
+demands at all. **The edge is not derivable; it has to be added.**
+
+`mixStep e f := stepAll e f ∨ ∃ k, up k e ∧ dn k f` adds it, and then:
+
+| | |
+|---|---|
+| `mixStep_hud` | `hud` discharged, in ONE constructor |
+| `mixStep_rho` | still a real model `PP` edge — vertical half `stepAll_rho`, up/dn half composition through the kernel base |
+| `tcl_mixStep_bud` | budget still constant, given ONE new input: a kernel's up- and down-externals sit at the SAME budget |
+| `mixStep_hppE` | `hppE` for the full relation |
+
+So the whole price of §46's generalisation is **one extra edge in the step
+relation and one budget equation** — and the budget equation is the same choice
+§43.10 already makes by putting bank members one below their kernel.
+
+Worth noting as a check on the refactor: this is the only obligation §46 added,
+and it was found by writing the assembly against the new order rather than by
+inspecting it — the same rule, once more.
