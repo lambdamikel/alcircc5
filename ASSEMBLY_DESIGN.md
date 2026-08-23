@@ -5388,3 +5388,36 @@ it is not built here, and the fragment needs it, so it is on the list.
 **What step 1 still owes:** `β` from `mixNodes` with its projection, `up`/`dn`
 from the attachment, `seed` from `seedMix`, the budget assignment, and the
 descending mirror. Then step 2 is one application.
+
+### 46.11 The descending mirror and the external index (2026-08-23)
+
+**The descending mirror, flagged in §46.10, is closed.** Every piece mirrors the
+ascending side; only ONE lemma was genuinely new.
+
+| | |
+|---|---|
+| `persistDsI` / `mem_persistDsI` / `persistAllI_persistDsI` | the persistent `∃PPI` demands; `persistAllI` by construction |
+| **`rr_segment_fromI`** | the descending recurrence PAST ANY BOUND — `rr_segmentI` existed but without the `L0` part, which `hinj` needs. The one new lemma. |
+| `descKernel_of_node` | a descending kernel, over `rrPtI` / `rr_coversI`, `cdir false = ppi` |
+| `kernelDataI` | the descending producer |
+
+`KernelData` now carries the DIRECTION as a parameter, so both producers land in
+one bundle and the assembly can hold ascending and descending kernels in a
+single family.
+
+**The external index** is built: `EIdx` (the bounded closure as an index type),
+`eNd` (`Subtype.val`, the projection `mixStep` reads through), `eList`
+(`List.attach`, the encoder's enumeration), and `eList_length_le_KT` — the
+encoder's `nE`, bounded by `K(C₀)`.
+
+**Three insertion hazards, all caught by checking rather than by the build.**
+Two docstring splits (§44.17, §46.11) and now an `open Classical in` stranded
+from the declaration it modified. The build reported a *downstream* instance
+failure, not the real cause. The standing checks — `#print axioms` for `sorryAx`
+and a declared-count grep — have each caught a real problem, and neither is
+replaceable by reading the error message.
+
+### 46.12 Step 1 remaining
+
+`up` / `dn` from the attachment, `seed` from `seedMix`, and the budget
+assignment. Then step 2 is one application of `mtkKernelsOD_of_debts`.
