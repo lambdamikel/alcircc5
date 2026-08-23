@@ -5884,3 +5884,61 @@ grows as later additions land above earlier nodes.
 and is certified — it is the right saturation lemma whatever the construction
 turns out to be. The remaining item is unchanged in substance and now has one
 more refuted route attached to it.
+
+## 48. WHERE THE CAMPAIGN STANDS (2026-08-23)
+
+### 48.1 What the blocker actually is
+
+The remaining obligation is: **for a satisfiable ∀PO-free `C₀`, produce a FINITE
+closed node set.** Four routes are refuted, with one common cause:
+
+| route | fails because |
+|---|---|
+| A — short-chain head | the short chain's last node need not be demand-free |
+| B — extend-and-cut | oscillation; no termination measure |
+| C — global type quotient | `wp96` D measured 8.4% coverage loss (W2′) |
+| §47.2 — path accumulator | `seen` holds nodes BELOW; the cut licenses only ABOVE |
+
+**Common cause:** `path_cut` is a POST-HOC shortening. Every construction needs a
+forward choice, and the cut cannot supply one.
+
+**This is the fragment's own version of F6.** §44.13 said so when the node bound
+was first built, and four refuted routes later that reading is confirmed: the
+campaign has arrived, by a long and productive route, at a fragment-level
+instance of its oldest open problem.
+
+### 48.2 But the position is far better than F6 in the full logic
+
+| | |
+|---|---|
+| local RCC5 algebra | certified (normal form, amalgamation, cross-policies) |
+| the frame | `extFrameM`, axiom-free |
+| the certificate | `mtkKernelsOD` + `_ok` |
+| every relation half of every obligation | certified, most composition-forced |
+| coverage routing | all nine branches |
+| three of four routing conditions | discharged for the extraction's data |
+| the cut, the dichotomy, saturation | `path_cut`, `short_chain`, `pp_dichotomy`, `mem_of_saturated` |
+| both kernel directions | `KIdx ⊕ KIdxI`, data and attachment |
+| step 1 of the assembly | complete |
+
+The gap is ONE precisely-stated finiteness premise, with every ingredient
+certified and the obstruction understood.
+
+### 48.3 What to investigate next, in order
+
+1. **Build step 3 (the tail).** Mechanical: `reindexMT` → `encodeMT` →
+   `encodeMT_mem_codesM` → `hcompl` → `decidableSat_of_codes`. Value: the
+   artifact then states *"decidability of the ∀PO-free fragment reduces to ONE
+   named finiteness premise, everything else machine-checked"* — a clean, honest,
+   citable position and a clean handoff. **2–3 rounds.**
+2. **KÖNIG.** Not yet tried, and genuinely different: the one-shot closure is a
+   FINITELY BRANCHING tree (≤ `|cl C₀|` demands per node). If every branch is
+   finite, the tree is finite. Branches are one-shot chains, and the dichotomy
+   says a chain is finite or yields a kernel. The regress worry (§46.27) is about
+   kernel LAYERS, not about branches of one tree — so König may bound each layer
+   outright, leaving only the layer count, which §46.28 bounds by the cut.
+3. **Worklist fixpoint** (§47.5's survivor): consult the whole current set, not a
+   path accumulator, so cross-branch reuse is available. Needs a measure.
+
+Route 2 is the one I would attack next on the mathematics, and it is the first
+tool in this area the campaign has not already spent.
