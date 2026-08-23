@@ -5421,3 +5421,36 @@ replaceable by reading the error message.
 
 `up` / `dn` from the attachment, `seed` from `seedMix`, and the budget
 assignment. Then step 2 is one application of `mtkKernelsOD_of_debts`.
+
+### 46.13 The bank as data (2026-08-23)
+
+`exists_bank` is an existence statement; the extraction needs the witness list as
+DATA, because **`dn` — which externals a kernel is BELOW — is defined from it**.
+
+`BankData` bundles the witness list, its domain facts, its structural size bound
+(`≤ 2·|cl C₀|`, independent of the model) and its serving property; `bankData`
+produces it.
+
+**This is what makes §45's fix operational.** The chain from §45 to here:
+
+1. §45 — a phase's accidental `∃PP` demand has nowhere to go under per-kernel
+   `side`;
+2. §46 — per-external `up`/`dn` lets it go to an external ABOVE the kernel;
+3. §46.7 — that costs one edge (`mixStep`) and one budget equation;
+4. §46.13 — and the externals in question are exactly the `PP`-bank members,
+   which are now nameable.
+
+So `dn k e := e ∈ (bank of k).ws` is a definition that can now be written.
+
+### 46.14 Step 1 remaining
+
+Only the wiring of the pieces that now all exist:
+
+| | from |
+|---|---|
+| `up` | `decide (e = k.val)` — a kernel is above its own node |
+| `dn` | membership in `(bankData …).ws` |
+| `seed` | `seedMix` with `kdr` the `DR`-bank members |
+| budgets | `bk k := bud (k.val)`, bank members one below (§43.10, §46.7) |
+
+then step 2 — one application of `mtkKernelsOD_of_debts` — and step 3, the tail.
