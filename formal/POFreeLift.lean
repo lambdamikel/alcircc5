@@ -15261,14 +15261,14 @@ open Classical in
 /-- `e` is inside every phase of `k`. -/
 noncomputable def upAt (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) : Bool :=
-  decide (∀ b, kIk hI C0 nd L0 k ≤ b →
+  decide ((nd e).k = (nd k.val).k ∧ ∀ b, kIk hI C0 nd L0 k ≤ b →
     I.rho (nd e).x (kCk hI C0 nd L0 k b) = pp)
 
 open Classical in
 /-- Every phase of `k` is inside `e`. -/
 noncomputable def dnAt (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) : Bool :=
-  decide (∀ b, kIk hI C0 nd L0 k ≤ b →
+  decide ((nd e).k = (nd k.val).k ∧ ∀ b, kIk hI C0 nd L0 k ≤ b →
     I.rho (kCk hI C0 nd L0 k b) (nd e).x = pp)
 
 open Classical in
@@ -15276,14 +15276,14 @@ theorem upAt_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) (h : upAt hI C0 nd L0 k e = true)
     (a : Nat) :
     I.rho (nd e).x (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + a)) = pp :=
-  of_decide_eq_true h _ (Nat.le_add_right _ _)
+  (of_decide_eq_true h).2 _ (Nat.le_add_right _ _)
 
 open Classical in
 theorem dnAt_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) (h : dnAt hI C0 nd L0 k e = true)
     (a : Nat) :
     I.rho (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + a)) (nd e).x = pp :=
-  of_decide_eq_true h _ (Nat.le_add_right _ _)
+  (of_decide_eq_true h).2 _ (Nat.le_add_right _ _)
 
 /-- `hup0` and `hdn0` are the phase facts at `a = 0`. -/
 theorem upAt_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
@@ -15306,7 +15306,7 @@ open Classical in
     attachment. -/
 theorem upAt_self (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) : upAt hI C0 nd L0 k k.val = true := by
-  refine decide_eq_true ?_
+  refine decide_eq_true ⟨rfl, ?_⟩
   intro b hb
   have hbe : b = kIk hI C0 nd L0 k + (b - kIk hI C0 nd L0 k) := by omega
   rw [hbe]
@@ -15324,6 +15324,50 @@ theorem upAt_dnAt_pp (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C
   rw [upAt_base hI C0 nd L0 k x hx, dnAt_base hI C0 nd L0 k y hy,
     show comp pp pp = [pp] from rfl] at hm
   exact List.mem_singleton.mp hm
+
+open Classical in
+/-- An attached external sits at the kernel's OWN budget — the budget half of
+    `hup`/`hdn`, and (as an equality) `mixStep`'s `hudbud`. -/
+theorem upAt_bud (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β)
+    (h : upAt hI C0 nd L0 k e = true) : (nd e).k = (nd k.val).k :=
+  (of_decide_eq_true h).1
+
+open Classical in
+theorem dnAt_bud (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β)
+    (h : dnAt hI C0 nd L0 k e = true) : (nd e).k = (nd k.val).k :=
+  (of_decide_eq_true h).1
+
+/-- **`mixStep`'s `hudbud`, DISCHARGED**: both ends of an up/dn pair sit at the
+    kernel's budget, so they are EQUAL — which is what keeps the budget constant
+    along the order. -/
+theorem upAt_dnAt_bud (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (x y : β)
+    (hx : upAt hI C0 nd L0 k x = true) (hy : dnAt hI C0 nd L0 k y = true) :
+    (nd y).k = (nd x).k := by
+  rw [dnAt_bud hI C0 nd L0 k y hy, upAt_bud hI C0 nd L0 k x hx]
+
+open Classical in
+/-- The seed's KERNEL block, in the same relation-defined style: every phase of
+    `k` is disjoint from `e`. -/
+noncomputable def kdrAt (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdx C0 I nd) (e : β) : Prop :=
+  ∀ b, kIk hI C0 nd L0 k ≤ b → I.rho (kCk hI C0 nd L0 k b) (nd e).x = dr
+
+/-- **`seedMix_dr`'s `hkdr`, DISCHARGED** — an instantiation at the base. -/
+theorem kdrAt_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β)
+    (h : kdrAt hI C0 nd L0 k e) :
+    I.rho (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k)) (nd e).x = dr :=
+  h _ (Nat.le_refl _)
+
+/-- And at every phase — the form `hdrk` wants. -/
+theorem kdrAt_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdx C0 I nd) (e : β)
+    (h : kdrAt hI C0 nd L0 k e) (a : Nat) :
+    I.rho (kCk hI C0 nd L0 k (kIk hI C0 nd L0 k + a)) (nd e).x = dr :=
+  h _ (Nat.le_add_right _ _)
 /-- **THE CLASS TOWER** (§38) — `class_kernel` split at the seam the assembly
     needs: the CHAIN `c` is fixed once (it is what `classify_cross` classifies),
     while the base `i` and period `p` are available at ARBITRARILY LATE `L0`,
@@ -25087,6 +25131,8 @@ end VerticalWitness
 #print axioms kCk_root_pp_phase
 #print axioms upAt_self
 #print axioms upAt_dnAt_pp
+#print axioms upAt_dnAt_bud
+#print axioms kdrAt_phase
 #print axioms seedMix_dr
 #print axioms seedMix_bud
 #print axioms seedMix_hb
