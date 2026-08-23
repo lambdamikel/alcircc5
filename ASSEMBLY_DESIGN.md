@@ -5540,3 +5540,25 @@ design.
 
 **Step 2** — one application of `mtkKernelsOD_of_debts` — and **step 3**, the
 tail, remain.
+
+### 46.19 The last shape mismatch (2026-08-23)
+
+`seedMix`'s external block read `sAdjK` on `MTKNode` directly. With `β` an index
+type it needs the same node projection `mixStep` took, so `seedMix`,
+`seedMix_sym`, `seedMix_dr`, `seedMix_bud`, `mixLe_inl_bud` and `seedMix_hb` now
+all read their nodes through `nd`.
+
+**That was the last shape mismatch between step 1's data and step 2's
+interfaces.** `β`, the order, the seed and the frame now all speak the same
+index type:
+
+| | |
+|---|---|
+| `β = EIdx`, `nd = Subtype.val` | the bounded closure, bounded by `K(C₀)` |
+| `κ = KIdx` | the `persistDs`-nonempty nodes |
+| `elt = tcl (mixStep nd up dn)` | vertical demand steps + the up/dn edges |
+| `up`/`dn` = `upAt`/`dnAt` | the model relation across the window, budget folded in |
+| `seed = seedMix nd kdrAt` | `sAdjK` externally, the kernel block by relation |
+| frame = `extFrameM` | nothing structural left to choose |
+
+Step 2 is the application; step 3 is the tail.
