@@ -25790,6 +25790,54 @@ theorem odTop_frame (S : ODStruct N) (U : N → Prop)
     (hdown : ∀ x y, S.lt x y → U y → U x) :
     Frame (odNet (odTop S U hdown)) := odNet_frame _
 
+
+/-- **THE OBLIGATION OF §50.3 IS EXACTLY `∀PPI`, AND NOTHING ELSE.**
+
+    Every edge OUT of the new top is `PPI` (into the closure) or `PO` (outside
+    it). So of the universals a label can carry, only `∀PPI` and `∀PO` can fire
+    from the top — and `∀PO` is absent by hypothesis in this fragment. `∀PP`
+    fires vacuously (nothing is above the top) and `∀DR` fires vacuously (the
+    top is disjoint from nothing, by `odTop`'s construction).
+
+    This bounds §50.3's remaining work to a single universal. -/
+theorem odTop_out (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) (x : N) :
+    odNet (odTop S U hdown) none (some x) = ppi ∨
+    odNet (odTop S U hdown) none (some x) = po := by
+  by_cases h : U x
+  · exact Or.inl (odNet_gt _ (show (odTop S U hdown).lt (some x) none from h))
+  · refine Or.inr (odNet_po _ (fun hh => (none_ne_some' hh).elim)
+      (fun hh => hh) h (fun hh => hh))
+
+/-- The top is disjoint from nothing — so `∀DR` at the top fires vacuously. -/
+theorem odTop_no_dr (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) (x : Option N) :
+    ¬ (odTop S U hdown).disj none x := fun h => h
+
+/-- Nothing is above the top — so `∀PP` at the top fires vacuously. -/
+theorem odTop_nothing_above (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) (x : Option N) :
+    ¬ (odTop S U hdown).lt none x := fun h => h
+
+
+/-- **§50.3 DISSOLVES ON THE MODEL-EXTENSION ROUTE.**
+
+    §50.3 flagged an obligation: the top's label may carry `∀PPI.Y`, which then
+    fires downward on the whole closure. That is a real obligation if the label
+    is COPIED from the witness `w` — `w` guarantees `Y` only below itself.
+
+    It disappears if the top's label is its own model type in the EXTENDED
+    model, because `∀PPI.Y ∈ mty T` then says exactly that `Y` holds at
+    everything below `T`. The clause and the obligation are the same statement.
+
+    So the residue of §50 is not the universal at all; it is that the extension
+    must place a region satisfying `D` together with the `∀PP` consequents —
+    which `witness_realizes_requirement` shows is a type the model already
+    realizes. -/
+theorem top_all_ppi_automatic {T : α} {Y : Concept}
+    (h : sat I T (Concept.all ppi Y)) {z : α} (hz : I.dom z)
+    (hr : I.rho T z = ppi) : sat I z Y := h z hz hr
+
 end TopServer
 
 end OneShotDichotomy
@@ -25809,5 +25857,9 @@ end OneShotDichotomy
 #print axioms odTop_above
 #print axioms odTop_po
 #print axioms odTop_frame
+#print axioms odTop_out
+#print axioms odTop_no_dr
+#print axioms odTop_nothing_above
+#print axioms top_all_ppi_automatic
 
 end POFreeLift

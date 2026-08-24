@@ -6147,9 +6147,40 @@ Three ways out, in order of promise:
 3. **Make the top a kernel** whose descending obligations are served by the
    closure itself — `persistDsI`/`rr_coversI`, the certified descending half.
 
-### 50.4 Status
+### 50.4 §50.3 pinned, then dissolved
 
-The mixed quadrant's obstruction has moved from *"an unknown case 3"* to *"a
-construction from certified pieces, with one stated obligation (50.3)"*. That is
-real progress and it is **not closure** — 50.3 is a genuine open step, and the
-project's ledger says to presume it hides something.
+`odTop_out` / `odTop_no_dr` / `odTop_nothing_above` bound the obligation to a
+SINGLE universal: every edge out of the new top is `PPI` (into the closure) or
+`PO` (outside it); `∀PP` and `∀DR` fire vacuously by construction and `∀PO` is
+absent by hypothesis. So only `∀PPI` could bite.
+
+And pinning it showed it **dissolves on the right route** (`top_all_ppi_automatic`).
+The obligation is real if the top's label is COPIED from the witness `w` — `w`
+guarantees `Y` only below itself. If instead the label is the top's own model
+type in the EXTENDED model, then `∀PPI.Y ∈ mty T` says *exactly* that `Y` holds
+at everything below `T`. The Hintikka clause and the obligation are the same
+statement.
+
+### 50.5 What actually remains
+
+Not the universal. The residue is the **extension step itself**: place a region
+above the closure that satisfies `D` together with the stable `∀PP` consequents.
+`witness_realizes_requirement` shows that type is already realized in the model
+(by `w`); what is unproved is that it can be realized *in that position*.
+
+Tools pointing at it, all already in the project:
+
+- `wp48` — free amalgamation of ordered-disjoint structures (certified by probe);
+- `wp71` — the exact one-point connector-extension criterion;
+- `odTop` + `odTop_frame` — the structural half, now certified: the placement
+  keeps the frame RCC5-closed with no composition check.
+
+So the mixed quadrant reduces to a **one-point extension lemma at the concept
+level**, with the structural half done and the RCC5-local half already probed.
+
+### 50.6 Status, honestly
+
+The obstruction has moved from *"an unknown case 3"* to *"a one-point concept-level
+extension, with the structure certified and the universal obligation dissolved"*.
+That is real progress and it is **not closure**. The ledger says to presume the
+extension lemma hides something; it has not been attacked yet.
