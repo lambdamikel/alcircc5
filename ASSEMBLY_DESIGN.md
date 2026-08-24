@@ -6094,3 +6094,62 @@ What is unknown is whether a concept can force *every* model to look like that.
 
 Either way it is now a **decidable-shaped, single** question, which is a strictly
 better position than §48's "bound an arbitrary closure" with four refuted routes.
+
+## 50. THE TOP-SERVER EXTENSION — case 3 is a placement problem
+
+§49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
+case 3? The answer developed here is that **case 3 is never a consistency
+failure, only a positioning one.**
+
+### 50.1 The required type always exists
+
+`witness_realizes_requirement` (axiom-free): the type a cofinal server needs —
+every `∀PP` consequent holding at the demanding node, plus the demanded concept
+— is realized by **the demand's own witness**. If `∀PP.X` holds at `c i` and
+`c i PP w`, then `X` holds at `w` by the meaning of `all`; and `w` carries `D`
+by choice of witness.
+
+So nothing has to be invented. An early revision of `wp102` "measured" this at
+100% over 21 samples with mean consequent-set size **0.05** — i.e. it was
+confirming a tautology on empty requirements. Working out why produced the
+theorem instead.
+
+### 50.2 The server can be placed
+
+`odTop`: adjoin a new top above a **downward-closed** set, disjoint from
+nothing. The result is still an `ODStruct`, so `odNet_frame` returns composition
+closure **for free** — no composition obligation is discharged by hand.
+
+Downward-closedness is not a convenience. `wp102` Q1 measured the naive rule
+(above the chain only) breaking on exactly one cell, `comp(PO,PP) = {PO,PP}`,
+whenever an off-chain node sits BELOW a chain node. Closing downward repairs it:
+**3121 of 3121** random ordered-disjoint structures accepted the placement.
+
+`odTop_po`: the new top is `PO` to everything outside the closure — and
+**∀PO-freeness is exactly what makes that free**, since a `PO` edge carries no
+universal obligation. This is the fragment paying for itself again.
+
+### 50.3 The one new obligation this creates — stated, not glossed
+
+The top's label is `w`'s model type, which may contain `∀PPI.Y`. The top sits
+above the whole closure, so such a universal fires DOWNWARD on every node of the
+closure — including nodes not below `w` in the original model, where `Y` need
+not hold.
+
+Three ways out, in order of promise:
+
+1. **Truncate the label.** The certificate only needs the top to carry the
+   demanded `D` and the `∀PP` consequents. `mtk`-style truncation that drops
+   `∀PPI` conjuncts would need a soundness argument, since labels must be
+   genuine types.
+2. **Choose `w` low.** Pick the witness minimising its `∀PPI` content; the
+   monotonicity direction is `sat_all_ppi_down` (already certified).
+3. **Make the top a kernel** whose descending obligations are served by the
+   closure itself — `persistDsI`/`rr_coversI`, the certified descending half.
+
+### 50.4 Status
+
+The mixed quadrant's obstruction has moved from *"an unknown case 3"* to *"a
+construction from certified pieces, with one stated obligation (50.3)"*. That is
+real progress and it is **not closure** — 50.3 is a genuine open step, and the
+project's ledger says to presume it hides something.

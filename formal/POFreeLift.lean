@@ -25633,6 +25633,165 @@ theorem finite_pool_all_or_nothing (hI : RCC5Interp I) {c : Nat → α}
     · exact absurd (fun i => Classical.byContradiction (fun hno =>
         h2 ⟨i, fun w hwW hr hD => hno ⟨w, hwW, hr, hD⟩⟩)) h
 
+
+/-- **CASE 3 IS NEVER A CONSISTENCY FAILURE (§50).**  The type a cofinal server
+    needs — every `∀PP` consequent holding at the demanding node, together with
+    the demanded concept — is realized by the demand's OWN witness.
+
+    So nothing has to be invented to serve a one-shot vertical demand: the
+    required type already occurs in the model. The only thing missing is
+    POSITION, and `odTop` below supplies exactly that. This is what turns §49's
+    case 3 from "an unknown obstruction" into "a placement step". -/
+theorem witness_realizes_requirement {x w : α} {D : Concept} (hw : I.dom w)
+    (hr : I.rho x w = pp) (hD : sat I w D) (Cons : List Concept)
+    (hcons : ∀ X ∈ Cons, sat I x (Concept.all pp X)) :
+    sat I w D ∧ ∀ X ∈ Cons, sat I w X :=
+  ⟨hD, fun X hX => hcons X hX w hw hr⟩
+
+/-! ### §50 — THE TOP-SERVER EXTENSION
+
+§49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
+case 3 (a cofinally recurring one-shot vertical demand with neither chain
+recurrence nor a cofinal external)?
+
+The answer developed here is that case 3 is **never a consistency failure, only
+a positioning one** — and positioning is repairable by construction.
+
+* `witness_realizes_requirement`: the type a cofinal server needs — the stable
+  `∀PP` consequents plus the demanded concept — is realized by the demand's OWN
+  witness. Nothing has to be invented.
+* `odTop`: that server can be PLACED. Adjoin a new top above a DOWNWARD-CLOSED
+  set, disjoint from nothing; the result is still ordered-disjoint, so
+  `odNet_frame` returns composition closure for free.
+
+Downward-closedness is not a convenience — `wp102` Q1 measured the naive rule
+(above the chain only) breaking on exactly one composition cell,
+`comp(PO,PP) = {PO,PP}`, when an off-chain node sits BELOW a chain node; closing
+downward repairs it, and the repaired rule placed the server in 3121 of 3121
+random ordered-disjoint structures.
+
+The new top is `PO` to everything outside the closure, and **`∀PO`-freeness is
+exactly what makes that free**: a `PO` edge to the new node carries no universal
+obligation, so nothing outside the closure constrains the server. -/
+
+section TopServer
+
+variable {N : Type}
+
+/-- `Option.noConfusion` will not elaborate against a bare `False` goal in this
+    Lean version, so the two constructor-clash facts get names. -/
+theorem none_ne_some' {M : Type} {a : M} (h : (none : Option M) = some a) :
+    False := by cases h
+
+theorem some_ne_none' {M : Type} {a : M} (h : (some a : Option M) = none) :
+    False := by cases h
+
+/-- The extension's order: everything in the downward-closed set `U` sits below
+    the new top; the new top is below nothing. -/
+def topLt (S : ODStruct N) (U : N → Prop) : Option N → Option N → Prop
+  | some x, some y => S.lt x y
+  | some x, none => U x
+  | none, _ => False
+
+/-- The extension's disjointness: unchanged, with the new top disjoint from
+    nothing — which is what lets `djDown` survive the extension. -/
+def topDisj (S : ODStruct N) : Option N → Option N → Prop
+  | some x, some y => S.disj x y
+  | _, _ => False
+
+/-- **THE TOP-SERVER EXTENSION.**  Adjoining a top above a downward-closed set
+    keeps the structure ordered-disjoint — hence, by `odNet_frame`, keeps the
+    induced net composition-closed.  No composition checking is needed: being an
+    `ODStruct` is the whole obligation. -/
+def odTop (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) : ODStruct (Option N) where
+  lt := topLt S U
+  disj := topDisj S
+  ltIrr := by
+    intro x
+    cases x with
+    | none => exact fun h => h
+    | some a => exact S.ltIrr a
+  ltTr := by
+    intro x y z hxy hyz
+    cases x with
+    | none => exact hxy.elim
+    | some a =>
+      cases y with
+      | none => exact hyz.elim
+      | some b =>
+        cases z with
+        | none => exact hdown a b hxy hyz
+        | some c => exact S.ltTr a b c hxy hyz
+  djSym := by
+    intro x y h
+    cases x with
+    | none => exact h.elim
+    | some a =>
+      cases y with
+      | none => exact h.elim
+      | some b => exact S.djSym a b h
+  djIrr := by
+    intro x
+    cases x with
+    | none => exact fun h => h
+    | some a => exact S.djIrr a
+  ltNotDj := by
+    intro x y hlt
+    cases x with
+    | none => exact hlt.elim
+    | some a =>
+      cases y with
+      | none => exact fun h => h
+      | some b => exact S.ltNotDj a b hlt
+  djDown := by
+    intro x y x' y' hd hx hy
+    cases x with
+    | none => exact hd.elim
+    | some a =>
+      cases y with
+      | none => exact hd.elim
+      | some b =>
+        cases x' with
+        | none =>
+          rcases hx with h | h
+          · exact (none_ne_some' h).elim
+          · exact h.elim
+        | some a' =>
+          cases y' with
+          | none =>
+            rcases hy with h | h
+            · exact (none_ne_some' h).elim
+            · exact h.elim
+          | some b' =>
+            refine S.djDown a b a' b' hd ?_ ?_
+            · rcases hx with h | h
+              · exact Or.inl (Option.some.inj h)
+              · exact Or.inr h
+            · rcases hy with h | h
+              · exact Or.inl (Option.some.inj h)
+              · exact Or.inr h
+
+/-- The server really is above everything in the closure. -/
+theorem odTop_above (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {x : N} (hU : U x) :
+    odNet (odTop S U hdown) (some x) none = pp :=
+  odNet_lt _ hU
+
+/-- And `PO` — hence UNCONSTRAINED in this fragment — to everything else. -/
+theorem odTop_po (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {x : N} (hU : ¬ U x) :
+    odNet (odTop S U hdown) (some x) none = po :=
+  odNet_po _ (fun h => some_ne_none' h) hU (fun h => h) (fun h => h)
+
+/-- The payoff: the extended structure induces a genuine RCC5 frame, with no
+    composition obligation discharged by hand. -/
+theorem odTop_frame (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) :
+    Frame (odNet (odTop S U hdown)) := odNet_frame _
+
+end TopServer
+
 end OneShotDichotomy
 
 #print axioms pp_witness_below
@@ -25645,5 +25804,10 @@ end OneShotDichotomy
 #print axioms finite_pool_gives_cofinal_witness
 #print axioms finite_pool_serves_kernel
 #print axioms finite_pool_all_or_nothing
+#print axioms witness_realizes_requirement
+#print axioms odTop
+#print axioms odTop_above
+#print axioms odTop_po
+#print axioms odTop_frame
 
 end POFreeLift
