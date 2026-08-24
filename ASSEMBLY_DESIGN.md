@@ -6232,3 +6232,42 @@ demands are served — `∃PP` upward inside the cap, `∃PPI` into the closure,
 
 That is a labelling problem over a certified structure, which is a better
 position than §50 left it in, and still not closure.
+
+### 51.4 The cap's universals are sound — a theorem, not a rate
+
+`wp103` measured the copied-label obligation as sound at 100%. But only **2 of
+44** labels carried a `∀PPI` at all, so that rate rested on two tests. Asking
+what an adversarial instance would need produced the proof instead:
+
+**The demand is present at EVERY chain node.** So every `c j` has its own witness
+`w j` carrying `∀PPI.Y`; a closure node `u` lies below *some* `c j`, hence below
+`w j` by transitivity, hence receives `Y`. The witnesses' universals **blanket
+the closure**.
+
+Certified axiom-free as `cap_all_ppi_sound` and `cap_all_ppi_sound_chain`. So the
+cap may copy a witness's label — **no model extension is needed for this
+obligation**, which is what §50.5 had listed as the residue.
+
+### 51.5 The fan cap — conflicting demands need no order
+
+§51 introduced the tower for two reasons: (a) a cap node's own `∃PP` needs
+something above it, and (b) several *conflicting* demands need several servers.
+
+**(b) dissolves.** `odFan` (= `odAmalg` at the EMPTY order): two cap nodes with
+no order between them are `PO`, and **`∀PO` is absent from this fragment**, so
+neither constrains the other. Conflicting demands are served by an ANTICHAIN —
+no ordering decision, no propagation between servers, no round-robin needed for
+this reason.
+
+This is the third distinct place ∀PO-freeness has paid: the `PO` residual to
+nodes outside the closure (§50.2), the cap's mutual independence (here), and the
+original absence of `mty_no_all_po` obligations.
+
+### 51.6 What is left
+
+Only reason (a): a cap node's own `∃PP` demand. That is the recursion — a cap
+above the cap — and it is bounded layer-wise by the cut (§46.28). Everything
+else about the cap is now certified: the structure (`odAmalg`/`odFan`/`odTower`
++ their frames), the placement rule (downward closure), the `∀PPI` obligation
+(§51.4), the `∃DR` route (`cofinal_dr_all`), and the mutual independence of
+servers (§51.5).

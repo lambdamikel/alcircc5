@@ -25648,6 +25648,51 @@ theorem witness_realizes_requirement {x w : α} {D : Concept} (hw : I.dom w)
     sat I w D ∧ ∀ X ∈ Cons, sat I w X :=
   ⟨hD, fun X hX => hcons X hX w hw hr⟩
 
+/-! ### §51.4 — THE CAP'S UNIVERSALS ARE SOUND, AND IT IS A THEOREM
+
+§51.3 left the cap's LABELS open, and the danger was pinned by §50.4 to a single
+universal: a label copied from the demand's witness `w` may carry `∀PPI.Y`,
+which then fires downward on the WHOLE closure, while `w` guarantees `Y` only
+below itself.
+
+`wp103` measured this as sound at 100% — but on only **2 of 44** labels that
+carried a `∀PPI` at all, so the rate was nearly vacuous and worth nothing.
+Working out what an adversarial instance would need produced the proof instead.
+
+**The demand is present at EVERY chain node** (that is what "cofinally
+recurring" plus downward closure of the order gives). So every `c j` has its own
+witness `w j`, and every one of those witnesses carries `∀PPI.Y`. A closure node
+`u` lies below SOME `c j`; transitivity puts it below `w j`; and `w j`'s
+universal delivers `Y`.
+
+So the witnesses' universals BLANKET the closure. The cap may copy a witness's
+label after all — no model extension needed for this obligation. -/
+
+/-- **THE CAP'S `∀PPI` OBLIGATION HOLDS.**  See §51.4: every closure node is
+    below some chain node, hence below that node's own witness, hence covered by
+    the witness's universal. -/
+theorem cap_all_ppi_sound (hI : RCC5Interp I) {c : Nat → α} {Y : Concept}
+    (hdom : ∀ i, I.dom (c i))
+    (hw : ∀ j, ∃ w, I.dom w ∧ I.rho (c j) w = pp ∧
+      sat I w (Concept.all ppi Y))
+    {u : α} (hu : I.dom u) {j : Nat} (hru : I.rho u (c j) = pp) :
+    sat I u Y := by
+  obtain ⟨w, hwd, hrw, hall⟩ := hw j
+  have huw : I.rho u w = pp := pp_witness_below hI (hdom j) hu hwd hru hrw
+  have hwu : I.rho w u = ppi := by rw [hI.conv_ u w hu hwd, huw]; rfl
+  exact hall u hu hwu
+
+/-- The same for the chain nodes themselves — the other half of the closure. -/
+theorem cap_all_ppi_sound_chain (hI : RCC5Interp I) {c : Nat → α} {Y : Concept}
+    (hdom : ∀ i, I.dom (c i))
+    (hw : ∀ j, ∃ w, I.dom w ∧ I.rho (c j) w = pp ∧
+      sat I w (Concept.all ppi Y)) (j : Nat) :
+    sat I (c j) Y := by
+  obtain ⟨w, hwd, hrw, hall⟩ := hw j
+  have hwu : I.rho w (c j) = ppi := by
+    rw [hI.conv_ (c j) w (hdom j) hwd, hrw]; rfl
+  exact hall (c j) (hdom j) hwu
+
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
 §49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
@@ -25981,6 +26026,39 @@ theorem odAmalg_po (S : ODStruct N) (U : N → Prop)
     odNet (odAmalg S U hdown P hPirr hPtr) (.inl x) (.inr a) = po :=
   odNet_po _ (fun h => (inr_ne_inl _ _ h.symm).elim) hU (fun h => h) (fun h => h)
 
+/-- **THE FAN CAP — an ANTICHAIN of servers.**  `odAmalg` at the EMPTY order.
+
+    §51 introduced the tower for two reasons: (a) the cap's own `∃PP` demands
+    need something above them, and (b) several CONFLICTING demands need several
+    servers. Reason (b) dissolves here: two cap nodes with no order between them
+    are `PO`, and **`∀PO` is absent from this fragment**, so neither constrains
+    the other at all. Conflicting demands can simply be served by an antichain —
+    no ordering decision, no propagation between servers.
+
+    Only reason (a) still calls for the tower. -/
+def odFan (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) (M : Type) : ODStruct (N ⊕ M) :=
+  odAmalg S U hdown (fun (_ _ : M) => False) (fun _ h => h)
+    (fun _ _ _ h _ => h.elim)
+
+/-- Distinct servers in a fan are `PO` — hence mutually unconstrained. -/
+theorem odFan_po (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) (M : Type) {a b : M} (hab : a ≠ b) :
+    odNet (odFan S U hdown M) (.inr a) (.inr b) = po :=
+  odNet_po _ (fun h => hab (Sum.inr.inj h)) (fun h => h) (fun h => h)
+    (fun h => h)
+
+/-- Every server of a fan sits above the whole closure. -/
+theorem odFan_above (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) (M : Type) {x : N} (hU : U x) (a : M) :
+    odNet (odFan S U hdown M) (.inl x) (.inr a) = pp :=
+  odNet_lt _ hU
+
+/-- And the fan induces a genuine RCC5 frame. -/
+theorem odFan_frame (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) (M : Type) :
+    Frame (odNet (odFan S U hdown M)) := odNet_frame _
+
 /-- The ascending-tower cap: `odAmalg` at `(Nat, <)`. -/
 def odTower (S : ODStruct N) (U : N → Prop)
     (hdown : ∀ x y, S.lt x y → U y → U x) : ODStruct (N ⊕ Nat) :=
@@ -26026,6 +26104,8 @@ end OneShotDichotomy
 #print axioms finite_pool_serves_kernel
 #print axioms finite_pool_all_or_nothing
 #print axioms witness_realizes_requirement
+#print axioms cap_all_ppi_sound
+#print axioms cap_all_ppi_sound_chain
 #print axioms odTop
 #print axioms odTop_above
 #print axioms odTop_po
@@ -26038,6 +26118,10 @@ end OneShotDichotomy
 #print axioms odAmalg_frame
 #print axioms odAmalg_above
 #print axioms odAmalg_po
+#print axioms odFan
+#print axioms odFan_po
+#print axioms odFan_above
+#print axioms odFan_frame
 #print axioms odTower
 #print axioms odTower_asc
 #print axioms odTower_above
