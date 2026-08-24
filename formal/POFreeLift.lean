@@ -25838,6 +25838,179 @@ theorem top_all_ppi_automatic {T : α} {Y : Concept}
     (h : sat I T (Concept.all ppi Y)) {z : α} (hz : I.dom z)
     (hr : I.rho T z = ppi) : sat I z Y := h z hz hr
 
+
+/-! ### §51 — CAPPING WITH A TOWER
+
+`odTop` adjoins ONE node above the closure. That is not enough in general: the
+new node's own label may contain `∃PP.Z` (the demanded `D` can itself be an
+`∃PP`), and nothing sits above a single top, so such a demand could never be
+served. The cap must therefore be an ASCENDING TOWER, which is also what lets a
+single cap serve several CONFLICTING demands round-robin — the certified
+`rr_covers` pattern from the vertical quadrant.
+
+`odTower` is `odTop` with `Nat` many tops instead of one. The proof obligations
+are the same shape; the only new case is transitivity inside the tower, which is
+`Nat.lt_trans`. -/
+
+/-- **WHY THE CAP CARRIES NO DISJOINTNESS — forced, not chosen.**  Two cap
+    nodes both sit above the whole closure `U`, so `djDown` would push their
+    disjointness down onto `U`'s elements and make them disjoint from
+    themselves. So a cap is always a POSET-shaped structure: `PP`/`PPI`/`PO`/`EQ`
+    only. A cap node's `∃DR` demand must therefore be served from the BASE, by a
+    node disjoint from the entire closure — and `cofinal_dr_all` (already
+    certified) supplies exactly that: a cofinally-`DR` external is `DR` to the
+    whole chain, with no middle case, the mirror of
+    `above_cofinal_is_above_all`. -/
+def amLt (S : ODStruct N) (U : N → Prop) {M : Type} (P : M → M → Prop) :
+    N ⊕ M → N ⊕ M → Prop
+  | .inl x, .inl y => S.lt x y
+  | .inl x, .inr _ => U x
+  | .inr a, .inr b => P a b
+  | .inr _, .inl _ => False
+
+/-- Disjointness is untouched, and the cap is disjoint from nothing. -/
+def amDisj (S : ODStruct N) {M : Type} : N ⊕ M → N ⊕ M → Prop
+  | .inl x, .inl y => S.disj x y
+  | _, _ => False
+
+/-- **THE CAP AMALGAMATION (§51).**  Adjoin ANY strict order `P` above a
+    downward-closed set. The result is ordered-disjoint, so `odNet_frame`
+    supplies composition closure with nothing checked by hand.
+
+    `odTop` (one node) and `odTower` (an ascending chain) are both instances. -/
+def odAmalg (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c) :
+    ODStruct (N ⊕ M) where
+  lt := amLt S U P
+  disj := amDisj S
+  ltIrr := by
+    intro x
+    cases x with
+    | inl a => exact S.ltIrr a
+    | inr a => exact hPirr a
+  ltTr := by
+    intro x y z hxy hyz
+    cases x with
+    | inr k =>
+      cases y with
+      | inl _ => exact hxy.elim
+      | inr j =>
+        cases z with
+        | inl _ => exact hyz.elim
+        | inr m => exact hPtr k j m hxy hyz
+    | inl a =>
+      cases y with
+      | inl b =>
+        cases z with
+        | inl c => exact S.ltTr a b c hxy hyz
+        | inr _ => exact hdown a b hxy hyz
+      | inr j =>
+        cases z with
+        | inl _ => exact hyz.elim
+        | inr _ => exact hxy
+  djSym := by
+    intro x y h
+    cases x with
+    | inr _ => exact h.elim
+    | inl a =>
+      cases y with
+      | inr _ => exact h.elim
+      | inl b => exact S.djSym a b h
+  djIrr := by
+    intro x
+    cases x with
+    | inr _ => exact fun h => h
+    | inl a => exact S.djIrr a
+  ltNotDj := by
+    intro x y hlt
+    cases x with
+    | inr _ => exact fun h => h
+    | inl a =>
+      cases y with
+      | inr _ => exact fun h => h
+      | inl b => exact S.ltNotDj a b hlt
+  djDown := by
+    intro x y x' y' hd hx hy
+    cases x with
+    | inr _ => exact hd.elim
+    | inl a =>
+      cases y with
+      | inr _ => exact hd.elim
+      | inl b =>
+        cases x' with
+        | inr _ =>
+          rcases hx with h | h
+          · exact (inr_ne_inl _ _ h).elim
+          · exact h.elim
+        | inl a' =>
+          cases y' with
+          | inr _ =>
+            rcases hy with h | h
+            · exact (inr_ne_inl _ _ h).elim
+            · exact h.elim
+          | inl b' =>
+            refine S.djDown a b a' b' hd ?_ ?_
+            · rcases hx with h | h
+              · exact Or.inl (Sum.inl.inj h)
+              · exact Or.inr h
+            · rcases hy with h | h
+              · exact Or.inl (Sum.inl.inj h)
+              · exact Or.inr h
+
+/-- The general payoff: any cap amalgamated above a downward-closed set induces
+    a genuine RCC5 frame. -/
+theorem odAmalg_frame (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c) :
+    Frame (odNet (odAmalg S U hdown P hPirr hPtr)) := odNet_frame _
+
+/-- The cap sits above the whole closure, at every one of its nodes. -/
+theorem odAmalg_above (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    {x : N} (hU : U x) (a : M) :
+    odNet (odAmalg S U hdown P hPirr hPtr) (.inl x) (.inr a) = pp :=
+  odNet_lt _ hU
+
+/-- And is `PO` — unconstrained in this fragment — to everything outside it. -/
+theorem odAmalg_po (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    {x : N} (hU : ¬ U x) (a : M) :
+    odNet (odAmalg S U hdown P hPirr hPtr) (.inl x) (.inr a) = po :=
+  odNet_po _ (fun h => (inr_ne_inl _ _ h.symm).elim) hU (fun h => h) (fun h => h)
+
+/-- The ascending-tower cap: `odAmalg` at `(Nat, <)`. -/
+def odTower (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) : ODStruct (N ⊕ Nat) :=
+  odAmalg S U hdown (fun k j => k < j) Nat.lt_irrefl
+    (fun _ _ _ h1 h2 => Nat.lt_trans h1 h2)
+
+/-- The cap really ascends: every level is `PP`-below every higher one, so the
+    tower can serve its own `∃PP` demands — the thing a single top cannot do. -/
+theorem odTower_asc (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {k j : Nat} (h : k < j) :
+    odNet (odTower S U hdown) (.inr k) (.inr j) = pp :=
+  odNet_lt _ h
+
+/-- And it sits above the whole closure. -/
+theorem odTower_above (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {x : N} (hU : U x) (k : Nat) :
+    odNet (odTower S U hdown) (.inl x) (.inr k) = pp :=
+  odNet_lt _ hU
+
+/-- `PO` — hence unconstrained in this fragment — to everything outside. -/
+theorem odTower_po (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {x : N} (hU : ¬ U x) (k : Nat) :
+    odNet (odTower S U hdown) (.inl x) (.inr k) = po :=
+  odNet_po _ (fun h => (inr_ne_inl _ _ h.symm).elim) hU (fun h => h) (fun h => h)
+
+/-- The payoff, again with no composition discharged by hand. -/
+theorem odTower_frame (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) :
+    Frame (odNet (odTower S U hdown)) := odNet_frame _
+
 end TopServer
 
 end OneShotDichotomy
@@ -25861,5 +26034,14 @@ end OneShotDichotomy
 #print axioms odTop_no_dr
 #print axioms odTop_nothing_above
 #print axioms top_all_ppi_automatic
+#print axioms odAmalg
+#print axioms odAmalg_frame
+#print axioms odAmalg_above
+#print axioms odAmalg_po
+#print axioms odTower
+#print axioms odTower_asc
+#print axioms odTower_above
+#print axioms odTower_po
+#print axioms odTower_frame
 
 end POFreeLift

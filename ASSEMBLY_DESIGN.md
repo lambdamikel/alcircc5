@@ -6184,3 +6184,51 @@ The obstruction has moved from *"an unknown case 3"* to *"a one-point concept-le
 extension, with the structure certified and the universal obligation dissolved"*.
 That is real progress and it is **not closure**. The ledger says to presume the
 extension lemma hides something; it has not been attacked yet.
+
+## 51. THE CAP AMALGAMATION — and why the cap carries no disjointness
+
+`odTop` adjoins ONE node above the closure. That is not enough: the new node's
+label may contain `∃PP.Z` (the demanded `D` can itself be an `∃PP`), and nothing
+sits above a single top. The cap must be a structure, not a point.
+
+**`odAmalg`** (certified, `propext` only): adjoin ANY strict order above a
+downward-closed set. Ordered-disjoint again, so `odAmalg_frame` supplies
+composition closure with nothing checked by hand. `odTop` and **`odTower`** (the
+ascending cap, now literally `odAmalg` at `(Nat, <)`) are instances — the
+duplicated 70-line proof was deleted rather than kept in parallel.
+
+### 51.1 The cap has NO internal disjointness — forced, not chosen
+
+Two cap nodes both sit above the whole closure `U`, so `djDown` would push their
+disjointness down onto `U`'s elements and make them disjoint from *themselves*.
+So `amDisj` is not a simplification: **a cap is always poset-shaped**
+(`PP`/`PPI`/`PO`/`EQ` only). This is the ordered-disjoint normal form telling us
+what a cap can be.
+
+Consequence: a cap node's `∃DR.Z` demand cannot be served inside the cap. It
+must be served from the BASE, by a node disjoint from the **entire** closure.
+
+### 51.2 That consequence is already certified
+
+`cofinal_dr_all` (line ~2848, in the file since the vertical quadrant): a
+cofinally-`DR` external is `DR` to the *whole* chain. This is the exact mirror of
+§49's `above_cofinal_is_above_all` — **no middle case on the DR side either**, by
+downward closure of disjointness instead of transitivity of the order.
+
+So both halves of the cap's interface have their "no middle case" lemma:
+
+| side | lemma | mechanism |
+|---|---|---|
+| above | `above_cofinal_is_above_all` | `comp(PP,PP) = {PP}` closes downward |
+| disjoint | `cofinal_dr_all` | `djDown` closes downward |
+
+### 51.3 What remains
+
+The **labels**. The cap's structure is certified; what is unproved is that its
+levels can be labelled so that each satisfies the stable `∀PP` consequents, the
+levels round-robin the (possibly conflicting) demands, and each level's own
+demands are served — `∃PP` upward inside the cap, `∃PPI` into the closure,
+`∃PO` free (no `∀PO` to fire), `∃DR` from a cofinally-DR base node.
+
+That is a labelling problem over a certified structure, which is a better
+position than §50 left it in, and still not closure.
