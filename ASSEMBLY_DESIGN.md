@@ -8239,3 +8239,42 @@ fuel `|typeEnum C0|` is a fixpoint".
 
 Build: 29,184 lines, 1,475 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 92. THE JOIN — and the subtlety it exposes
+
+`skipPath_len_le'` (the bounded form) is in. Attempting the join — membership in
+`skipNodes` means reachability by that many non-kernel-served steps — exposed
+something the earlier sections had not.
+
+### 92.1 The closure's path is not monotone
+
+`skipNodes` follows **both** vertical demand kinds, and they point in **opposite
+directions**:
+
+* an `∃PP` step goes to `ppWitness`, which is **above**;
+* an `∃PPI` step goes to `ppiWitness`, which is **below**.
+
+But `skipPath_no_repeat` and `skipPath_len_le'` were proved for an **ascending**
+path — `path_repeat_carries` reasons about the segment `[i, j)` of a chain, and a
+chain is what an ascending path is. A mixed path is a walk, not a chain.
+
+### 92.2 Three ways out
+
+| route | idea | cost |
+|---|---|---|
+| 1. orient | `stepAll` already orients both kinds upward, at the cost of reversing `∃PPI` edges — the path becomes a WALK in the order | the repeat argument redone for walks |
+| **2. split** | bound the `∃PP`-only and `∃PPI`-only sub-closures separately, each ascending in its own direction, and compose | **transcription — the descending mirror (`rr_coversI`, `persistDsI`, `kCkI`) exists throughout** |
+| 3. interleaving | show a mixed path cannot alternate more than boundedly often | closest to §52's layer argument |
+
+**Route 2 looks cheapest**, because the descending machinery has been a certified
+mirror of the ascending one at every stage of this campaign, so the dual of §91
+should be transcription rather than new mathematics.
+
+### 92.3 Housekeeping
+
+The `skipNodes_path` draft that exposed this was **removed, not patched** — a
+half-working reachability lemma in the artifact would be worse than its absence,
+and the finding is recorded here instead.
+
+Build: 29,232 lines, 1,476 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

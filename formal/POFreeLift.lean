@@ -28402,6 +28402,53 @@ theorem skipPath_len_le (C0 : Concept) (I : Interp α) (path : Nat → α)
   have := ascPath_len_le C0 I ((List.range k).map path) hnd
   rwa [List.length_map, List.length_range] at this
 
+/-- The bounded form: only the first `k` nodes need distinct types.  This is the
+    one the join uses, since a path is only constrained on its actual steps. -/
+theorem skipPath_len_le' (C0 : Concept) (I : Interp α) (path : Nat → α) (k : Nat)
+    (hdist : ∀ i j, i < j → j < k → mty C0 I (path i) ≠ mty C0 I (path j)) :
+    k ≤ (typeEnum C0).length := by
+  have hnd : (((List.range k).map path).map (fun x => mty C0 I x)).Nodup := by
+    rw [List.map_map]
+    exact nodup_map_range _ k hdist
+  have := ascPath_len_le C0 I ((List.range k).map path) hnd
+  rwa [List.length_map, List.length_range] at this
+
+/-! ##### §92 — the join, and the subtlety it exposes
+
+The join wants: membership in `skipNodes kser n f` means reachability by at most
+`f` non-kernel-served steps, so that `skipPath_len_le'` caps `f` at
+`|typeEnum C0|` and `skipNodes_covers_of_fixed`'s hypothesis follows.
+
+⚠ **Attempting it exposes a subtlety the earlier sections did not.** `skipNodes`
+follows BOTH vertical demand kinds, and they point in OPPOSITE directions:
+
+* an `∃PP` step goes to `ppWitness`, which is ABOVE;
+* an `∃PPI` step goes to `ppiWitness`, which is BELOW.
+
+So the closure's path is **not monotone**, while `skipPath_no_repeat` and
+`skipPath_len_le'` were proved for an ASCENDING path — `path_repeat_carries`
+uses the segment `[i, j)` of a chain, and a chain is what an ascending path is.
+
+Three ways out, none yet taken:
+
+1. **Orient the path.** `stepAll e f := ppStep e f ∨ ppiStep f e` already orients
+   both kinds upward, at the cost of reversing the `∃PPI` edges — so the path
+   becomes a walk in the order, not a chain. The repeat argument would have to
+   be redone for walks.
+2. **Split the closure.** Bound the `∃PP`-only and `∃PPI`-only sub-closures
+   separately (each ascending in its own direction, by the dual of §91) and
+   compose. The dual of `path_repeat_carries` for `∃PPI` is the mirror already
+   available in spirit — `rr_coversI`, `persistDsI`, `kCkI` all exist.
+3. **Bound the interleaving.** Show a mixed path cannot alternate more than
+   boundedly often, which is closest to §52's layer argument.
+
+Route 2 looks cheapest: the descending machinery is a certified mirror
+throughout this file, so the dual of §91 should be a transcription rather than
+new mathematics.
+
+No broken attempt is left in the artifact — the `skipNodes_path` draft that
+exposed this was removed rather than patched. -/
+
 end SkipClosure
 
 end KernelService
@@ -29068,6 +29115,7 @@ end OneShotDichotomy
 #print axioms skipPath_no_repeat
 #print axioms nodup_map_range
 #print axioms skipPath_len_le
+#print axioms skipPath_len_le'
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup
