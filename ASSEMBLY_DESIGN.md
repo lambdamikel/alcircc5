@@ -7559,3 +7559,42 @@ it — and dropped `Classical.choice` from both theorems' axiom profiles.
 
 Build: 28,008 lines, 1,431 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 77. CLOSING THE DEBTS — three more discharged
+
+§76's remaining arrow is `mtkKernelsOD_of_debts`'s debt list. Progress this
+round:
+
+* **`mUp_hup`** — `hup`. The debt quantifies over a node at-or-BELOW an attached
+  external, while `mUp_phase` speaks of the attached external itself; the gap is
+  one `comp(PP,PP) = {PP}` and one budget equality.
+* **`mDn_hdn`** — `hdn`, the mirror, at-or-ABOVE.
+* **`hdr_of_model`** (**axiom-free**) — `hdr`. The declared disjointness is the
+  DOWNWARD CLOSURE of the seed, and model `DR` descends: `comp(PP,DR) = {DR}` on
+  the left, `comp(DR,PPI) = {DR}` on the right.
+
+### 77.1 The debt list
+
+| debt | status |
+|---|---|
+| `hppE` | ✓ `merged_hppE` (§73) |
+| `hdr` | ✓ **`hdr_of_model`** — axiom-free |
+| `hb` | ✓ `seedMix_hb` (pre-existing) |
+| `hup` | ✓ **`mUp_hup`** |
+| `hdn` | ✓ **`mDn_hdn`** |
+| `hdrk` | base fact `hdrP_of_bank`; needs the closure version, like `hdr` |
+| `hqpp`/`hqppi`/`hqdr` | `cross_pp_of_shared` / `cross_ppi_of_shared` / `cross_dr_of_shared` — need wiring |
+| `he_ex`/`hk_ex` | ✓ reduced to the five routing conditions, all discharged (§§63–72) |
+
+Five of nine done, three have their base facts, one is wiring.
+
+### 77.2 Lean note
+
+`nodeOf g ck ik (Sum.inl f)` and `g f` are definitionally equal but NOT
+syntactically, and `rw` needs the latter. Type-ascribing a hypothesis does not
+change its syntactic form — the fix is to state the `conv_` instance with an
+explicit type and rewrite the GOAL, not the hypothesis. Cost this round: four
+failed iterations on one rewrite.
+
+Build: 28,112 lines, 1,434 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

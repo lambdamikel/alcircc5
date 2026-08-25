@@ -27269,6 +27269,107 @@ theorem mergedExtraction_of_ok {α : Type} {I : Interp α} {C0 : Concept}
 
 end FinIndex
 
+/-! ### §77 — closing the debts: `hup` and `hdn`
+
+The remaining arrow of §76.1 is `mtkKernelsOD_of_debts`'s debt list. `hppE` went
+in §73; this section does the kernel–external pair.
+
+Both have the same shape: the debt quantifies over a node at-or-below (resp.
+at-or-above) an ATTACHED external, while `mUp_phase`/`mDn_phase` speak about the
+attached external itself. The gap is one composition — `comp(PP,PP) = {PP}` —
+and one budget equality. -/
+
+section KernelDebts
+
+variable {α : Type} {I : Interp α} {β : Type}
+
+/-- **`hup`, DISCHARGED.**  A node at-or-below an external attached ABOVE the
+    kernel is inside every phase of the window, with the budgets equal. -/
+theorem mUp_hup (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (elt : β → β → Prop)
+    (helt_rho : ∀ x y, elt x y → I.rho (nd x).x (nd y).x = pp)
+    (helt_bud : ∀ x y, elt x y → (nd y).k = (nd x).k)
+    (k : KIdxM C0 I nd) (e : β) (a : Nat)
+    (h : ∃ e', mUp hI C0 nd L0 k e' = true ∧ leE elt e e') :
+    I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) = pp ∧
+      (nd e).k ≤ mBk nd k + 1 ∧ mBk nd k ≤ (nd e).k + 1 := by
+  obtain ⟨e', hu, hle⟩ := h
+  have hph := mUp_phase hI C0 nd L0 k e' hu a
+  have hbd := mUp_bud hI C0 nd L0 k e' hu
+  rcases hle with rfl | hlt
+  · exact ⟨hph, by omega, by omega⟩
+  · have hr := helt_rho e e' hlt
+    have hb := helt_bud e e' hlt
+    refine ⟨rho_forced hI (nd e).hx (mCk_dom hI C0 nd L0 k _) (nd e').hx hr hph
+      (by decide), ?_, ?_⟩ <;> omega
+
+/-- **`hdn`, DISCHARGED.**  The mirror: a node at-or-above an external attached
+    BELOW the kernel contains every phase of the window. -/
+theorem mDn_hdn (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (elt : β → β → Prop)
+    (helt_rho : ∀ x y, elt x y → I.rho (nd x).x (nd y).x = pp)
+    (helt_bud : ∀ x y, elt x y → (nd y).k = (nd x).k)
+    (k : KIdxM C0 I nd) (e : β) (a : Nat)
+    (h : ∃ e', mDn hI C0 nd L0 k e' = true ∧ leE elt e' e) :
+    I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) = ppi ∧
+      (nd e).k ≤ mBk nd k + 1 ∧ mBk nd k ≤ (nd e).k + 1 := by
+  obtain ⟨e', hd, hle⟩ := h
+  have hph := mDn_phase hI C0 nd L0 k e' hd a
+  have hbd := mDn_bud hI C0 nd L0 k e' hd
+  have hkdom := mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + a)
+  have hpp : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x = pp := by
+    rcases hle with rfl | hlt
+    · exact hph
+    · exact rho_forced hI hkdom (nd e).hx (nd e').hx hph (helt_rho e' e hlt)
+        (by decide)
+  have hbud : (nd e).k = mBk nd k := by
+    rcases hle with rfl | hlt
+    · exact hbd
+    · rw [helt_bud e' e hlt]; exact hbd
+  refine ⟨?_, by omega, by omega⟩
+  rw [hI.conv_ (mCk hI C0 nd L0 k _) (nd e).x hkdom (nd e).hx, hpp]; rfl
+
+/-- **`hdr`, DISCHARGED.**  The declared disjointness is the DOWNWARD CLOSURE of
+    the seed, and model `DR` descends: `comp(PP,DR) = {DR}` on the left,
+    `comp(DR,PPI) = {DR}` on the right. So a closure-disjoint pair really is
+    `DR` in the model. -/
+theorem hdr_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (e f : β)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inl e) x₀ ∧
+      mixLe elt up dn (Sum.inl f) y₀ ∧ seed x₀ y₀) :
+    I.rho (g e) (g f) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hlt := mixLt_rho hI g ck ik up dn hgdom hkdom hup0 hdn0 elt helt
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (a | b)
+    · exact hgdom a
+    · exact hkdom b
+  have hxy : I.rho (nodeOf g ck ik x₀) (nodeOf g ck ik y₀) = dr := hseed x₀ y₀ hs
+  have h1 : I.rho (g e) (nodeOf g ck ik y₀) = dr := by
+    rcases hx with rfl | hx
+    · exact hxy
+    · exact rho_forced hI (hgdom e) (hdomN y₀) (hdomN x₀)
+        (hlt _ _ hx) hxy (by decide)
+  rcases hy with rfl | hy
+  · exact h1
+  · have h2 : I.rho (nodeOf g ck ik y₀) (g f) = ppi := by
+      have hy' : I.rho (g f) (nodeOf g ck ik y₀) = pp := hlt (Sum.inl f) y₀ hy
+      have hc : I.rho (nodeOf g ck ik y₀) (g f)
+          = conv (I.rho (g f) (nodeOf g ck ik y₀)) :=
+        hI.conv_ (g f) (nodeOf g ck ik y₀) (hgdom f) (hdomN y₀)
+      rw [hc, hy']; rfl
+    exact rho_forced hI (hgdom e) (hgdom f) (hdomN y₀) h1 h2 (by decide)
+
+end KernelDebts
+
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
 §49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
@@ -27899,6 +28000,9 @@ end OneShotDichotomy
 #print axioms witness_realizes_requirement
 #print axioms cap_all_ppi_sound
 #print axioms decidableSat_pofree
+#print axioms mUp_hup
+#print axioms mDn_hdn
+#print axioms hdr_of_model
 #print axioms subOfFin_inj
 #print axioms subOfFin_surj
 #print axioms reindexMT_toFin
