@@ -7857,3 +7857,59 @@ Next per the plan: a probe for A+C, then A+C.
 
 Build: 28,700 lines, 1,455 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 84. THE A+C PROBE — `wp106`
+
+Run before committing sessions to the node-set construction, per the standing
+rule. It answered both questions and, more usefully, corrected the construction.
+
+### 84.1 The finding that matters
+
+**The first run showed the closure NOT closing — a plateau at ~93% that more
+fuel did not fix.** Inspecting actual failures showed they were all the same
+shape: a chain node `a_k` with a ONE-SHOT `∃PP` demand whose witnesses are
+`a_{k+2}, a_{k+3}, …` — further up the SAME chain, forever.
+
+The probe was modelling kernel service as **persistent demands only**. §49 gives
+**two** branches, and the second — `oneshot_in_kernel`: a one-shot demand whose
+demanded concept RECURS ON THE CHAIN is served by the chain, which IS the kernel
+— was missing.
+
+**That is a requirement on the assembly, not on the probe.** The construction
+must route such demands to the kernel. Without it every ascending chain looks
+like an unbounded closure; with it:
+
+| fuel | cases | CLOSED | unserved |
+|---|---|---|---|
+| 1 | 222 | 216 | 7 |
+| 2 | 222 | 220 | 2 |
+| 3 | 222 | 221 | 1 |
+| **4** | 222 | **222** | **0** |
+| 6, 8 | 222 | 222 | 0 |
+
+**A: closed at fuel 4.** **C: 0 of 220 exceed `(|cl C0|+1)^mdepth`**, worst
+`|S| = 3` against bound 3 — and `mixKT C0` is far larger than that.
+
+### 84.2 Two artifacts caught inside this probe
+
+* **Truncation.** The chains are infinite and the domain truncated them at
+  `na=8, ns=6`. Of 28 apparently unserved demands, **26 had their witness just
+  outside the truncation**. Widened to 30/25 and made the check a permanent part
+  (part T), which now reports 0 of each.
+* **The construction-model error** above, which is the finding.
+
+### 84.3 Honest scope
+
+One model class (`wp105`'s, audited by part R each run), concepts of depth 2–3,
+and mean `|S| = 1.3` — the closures are SMALL, so the counting result is weak
+evidence and the closure result is the strong one. What should be relied on is
+the STRUCTURAL fact: **branch 1 is required, and with it the closure terminates
+at low fuel**.
+
+### 84.4 What this de-risks
+
+§82 rated A "highest risk — F6's descendant" and C "high — `mixKT` may need
+enlarging". On this evidence C looks comfortable and A has a definite shape: the
+construction is `mixNodes` with BOTH kernel-service branches, and the fuel needed
+is small. That is not a proof — but it is the first evidence that the node set
+closes at all.
