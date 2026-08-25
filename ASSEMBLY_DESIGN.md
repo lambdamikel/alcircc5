@@ -7150,3 +7150,67 @@ headline was 100% artifact, a false structural argument with a machine-checked
 counter-witness, and a stale status table — in a development whose author had
 already recorded four self-corrections and believed the remaining risk was
 elsewhere.
+
+## 69. ROUTE B EXECUTED — case 3 IS reachable, and the artifact family is diagnosed
+
+### 69.1 The general diagnosis behind all six probe artifacts
+
+`wp100`, `wp101` and `wp104`'s first cut all reported ~100% one-shot. They share
+one cause, and stating it generally is the main result of this round:
+
+> **A finite set of regions above the chain always contains a MAXIMAL element; a
+> maximal element satisfies no `∃PP.X`; so every chain node beneath one fails
+> `∀PP.∃PP.D` VACUOUSLY.**
+
+* `wp100` — finite model: the model's top is maximal.
+* `wp101` — `Reg(True, ∅)` = ℕ drawn as a side (cold review F1): ℕ is maximal.
+* `wp104` — refusing the top is **not enough**: measured **98.8%** of top-free
+  models still have a *maximal side above the chain*.
+
+The infinite chain escapes the problem; a finite side set cannot. This is why
+three successive classes could not measure persistence at all.
+
+### 69.2 What a class must satisfy to reach the case-3 question
+
+Arrived at by three failures, and now checked per-model in `wp105` part R:
+
+| condition | without it |
+|---|---|
+| no maximal element above the chain | 100% one-shot; persistence unmeasurable |
+| a cofinal server family | branch 2 unrepresentable |
+| bounded-reach regions **above** the chain | **branch 3 unrepresentable** |
+
+`wp105` supplies all three: an ascending kernel chain `a_i`, an ascending server
+chain `s_j` above all of it, a bounded-reach family `b_M` (above `a_i` exactly
+for `i ≤ M`, and below every server so never maximal), and low sides never above
+the chain. Regions are eventually-periodic subsets of ℕ — `(T, X)` with
+`n ∈ R ⟺ (n mod P ∈ T) XOR (n ∈ X)`.
+
+A fourth artifact was caught during construction: truncating the server chain at
+the evaluation window `hi` recreates a maximal element (`s_{hi-1}`), so both
+chains' `∃PP`/`∀PP` had to be closed by PERIODICITY rather than by a bounded
+search.
+
+### 69.3 The answer
+
+With all three conditions holding (audit passes, 400/400 on each):
+
+| | |
+|---|---|
+| persistent / one-shot | **77.5% / 22.5%** — the first meaningful split any class here has produced |
+| branch 1, in-kernel | 89.7% |
+| branch 2, cofinal server | 0.0% — *test-ordering, not structural*: branch 1 is tested first, so a demand served both on-chain and by a server counts as branch 1 |
+| **branch 3, neither** | **10.3%** |
+
+**Case 3 is reachable.** So the cap machinery of §§50–68 is NEEDED, not
+optional — the question route B was run to settle. The alternative outcome
+(branch 3 empty, mixed quadrant closing on branches 1–2) is refuted for this
+class.
+
+### 69.4 Honest scope
+
+These are rates over one generator, and this project's record on generator-borne
+rates is six artifacts in six attempts. What should be relied on is the
+**structural** part: §69.1's diagnosis, §69.2's three conditions, and the
+**existence** of branch-3 instances — the last of which is a witness question,
+not a rate question, and 19 witnesses is 19 more than zero.
