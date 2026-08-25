@@ -27072,6 +27072,38 @@ theorem updn_to_elt {β κ : Type} (nd : β → MTKNode I C0)
     (hup : up k u = true) (hdn : dn k w = true) :
     tcl (mixStep nd up dn) u w := tcl.base (Or.inr ⟨k, hup, hdn⟩)
 
+/-! #### §73 — the merge restores the ORIGINAL consumer
+
+§55 found that `mtkKernelsOD_of_debts` could not serve a cap, because its debts
+run through `odLt_hEreal` — "the model relation EQUALS the declared relation" —
+and a cap had no model realization. That drove §56's rebuild at the label level.
+
+**With caps in `β` that obstruction is gone**: a cap IS a model node, `g` gives
+it, and `hppE` — the debt §55 could not supply — is discharged below from
+machinery that predates the whole cap discussion. So §55's correction, like
+§58.2's gap, was an artifact of the separate index. -/
+
+/-- **`hppE` FOR THE MERGED PATH.**  Every `elt` edge is a real model `PP` edge
+    with the budgets within one — the relation half by `tcl_sub_pp` over
+    `mixStep_rho`, the budget half by `tcl_mixStep_bud`, which gives EQUALITY
+    (the budget is constant along `PP`-paths, §44.3).
+
+    This is the debt §55 reported as unsuppliable for a cap. -/
+theorem merged_hppE (hI : RCC5Interp I) {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool) (ck : κ → Nat → α) (ik : κ → Nat)
+    (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (hup0 : ∀ k e, up k e = true → I.rho (nd e).x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (nd e).x = pp)
+    (hudbud : ∀ k x y, up k x = true → dn k y = true → (nd y).k = (nd x).k)
+    (e f : β) (h : tcl (mixStep nd up dn) e f) :
+    I.rho (nd e).x (nd f).x = pp ∧
+      (nd e).k ≤ (nd f).k + 1 ∧ (nd f).k ≤ (nd e).k + 1 := by
+  have hbud := tcl_mixStep_bud nd up dn hudbud e f h
+  refine ⟨tcl_sub_pp hI (fun b => (nd b).x) (fun b => (nd b).hx)
+    (mixStep nd up dn)
+    (fun a b hs => mixStep_rho hI nd ck ik hckdom up dn hup0 hdn0 a b hs)
+    e f h, ?_, ?_⟩ <;> omega
+
 end CapRouting
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -27728,6 +27760,7 @@ end OneShotDichotomy
 #print axioms cap_rDR_edge
 #print axioms stepAll_to_elt
 #print axioms updn_to_elt
+#print axioms merged_hppE
 #print axioms capP_rho
 #print axioms capcap_ee_all_pp
 #print axioms capcap_ee_all_ppi

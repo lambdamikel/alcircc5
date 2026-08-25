@@ -7376,3 +7376,56 @@ A reader tracing the construction should skip §53–§66 and go to §63.
 | reindex → encode → `MixedCompleteness` | not started, templated |
 
 Build: 27,804 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 73. THE MERGE RESTORES THE ORIGINAL CONSUMER
+
+§55 reported that `mtkKernelsOD_of_debts` could not serve a cap: its debts run
+through `odLt_hEreal` — *"the model relation EQUALS the declared relation"* — and
+a cap had no model realization. That finding drove §56's rebuild at the label
+level, and §54's estimate was revised upward because of it.
+
+**With caps in `β` the obstruction is gone.** A cap IS a model node; `g` gives
+it; and `hppE` — the specific debt §55 could not supply — is discharged by
+`merged_hppE` from machinery that predates the entire cap discussion:
+
+* relation half — `tcl_sub_pp` over `mixStep_rho`;
+* budget half — `tcl_mixStep_bud`, which gives EQUALITY, since the budget is
+  constant along `PP`-paths (§44.3).
+
+### 73.1 Tally of what the separate index cost
+
+Three findings, each recorded at the time as a discovery about the mathematics,
+were artifacts of the separate-index design:
+
+| finding | what it really was |
+|---|---|
+| §55 — the consumer cannot serve a cap | a cap wasn't in `β`, so had no `g` |
+| §58.2 — `∃DR` at a cap is unservable | `capSeed`'s catch-all, which §51.1 wrongly called forced |
+| §71.2 — `rDR` circles back on itself | the seed pair needed a base index the cap didn't have |
+
+All three dissolve on the merge. The label-level route (§56) remains correct and
+is a genuine alternative, but it was not necessary.
+
+### 73.2 Overlap found while checking
+
+`stepAll_hppE`, `rPP_witness` and `rPPI_witness` already existed. My `cap_rPP` /
+`cap_rPPI` partially duplicate the latter two — mine add the closure-MEMBERSHIP
+half (`capNodes`), which the originals do not have, so they are not redundant,
+but the witness half was already there. `merged_hppE` is genuinely new:
+`stepAll_hppE` covers `tcl stepAll` only, not the full `tcl (mixStep …)` with
+the `up`/`dn` clause.
+
+### 73.3 State
+
+| | |
+|---|---|
+| the five routing conditions | done |
+| `hppE` for the merged path | **done** (`merged_hppE`) |
+| the remaining `mtkKernelsOD_of_debts` debts | `hdr`, `hb`, `hup`, `hdn`, `hdrk`, `hq*` — all pre-existing obligations of the uncapped extraction, unchanged by the merge |
+| instantiation and the tail | not started |
+
+The merged certificate uses the ORIGINAL consumer, so what remains for the mixed
+quadrant is what remained for the extraction before caps were ever introduced,
+plus the node set now including caps.
+
+Build: 27,846 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
