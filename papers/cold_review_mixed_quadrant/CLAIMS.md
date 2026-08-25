@@ -46,11 +46,22 @@ nothing else in the pipeline is open. **Not claimed:** that
    `M`/`U`/`P`/`capOver`, and the reindex/encode tail.
 3. Therefore `MixedCompleteness` itself.
 
+## SCOPE (added after the cold review, F4)
+
+`Satisfiable` quantifies over `Interp` with `RCC5Interp` = reflexive-EQ,
+strong-EQ, converse coherence and composition closure — the **abstract
+composition-table semantics**. Nothing in the artifact bridges to regions or to a
+topological/spatial semantics. So "the ∀PO-free fragment's decision pipeline is
+machine-checked end to end" means *for that semantics*, and is **not** a
+decidability claim for RCC5 over spatial models.
+
 ## Self-corrections already made (check they are complete)
 
 - §46.27 → §46.28: an "unbounded regress" claim withdrawn.
 - §47.5: a construction withdrawn — its accumulator pointed the wrong way.
 - §55: "apply the nine lemma-ready rows" withdrawn — the extraction consumer
   requires model-realized nodes, which a cap has not.
-- §49.4 / §51.4: four probe measurements found to be artifacts.
+- §49.4 / §51.4: four probe measurements found to be artifacts — **now SIX; see
+  §67.1. `wp101`'s in-kernel rate is RETRACTED: its population was 100% models
+  containing the maximal region ℕ, i.e. `wp100`'s artifact reintroduced.**
 - §54 → §55: the effort estimate revised from 2–4 sessions to 4–8.
