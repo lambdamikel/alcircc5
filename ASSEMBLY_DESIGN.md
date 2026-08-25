@@ -7214,3 +7214,47 @@ rates is six artifacts in six attempts. What should be relied on is the
 **structural** part: §69.1's diagnosis, §69.2's three conditions, and the
 **existence** of branch-3 instances — the last of which is a witness question,
 not a rate question, and 19 witnesses is 19 more than zero.
+
+## 70. ROUTE C — `odAmalgDR` adopted
+
+The cold reviewer's counter-witness to §51.1 (F2) is now part of the artifact,
+attributed, adopted verbatim apart from a header. `odAmalgDR` depends on **no
+axioms**.
+
+### 70.1 What it gives
+
+`odAmalg` generalised with a cap↔base disjointness `B : M → N → Prop`, still an
+`ODStruct` — so `odAmalgDR_frame` gets composition closure free, exactly as
+before. `odAmalgDR_dr` is the cap's `DR` edge; `odAmalgDR_pp` its `PP` edge to
+the closure. `B = fun _ _ => False` recovers `odAmalg`, so nothing is lost.
+
+Its four side conditions isolate what §61 discovered piecemeal:
+
+| | |
+|---|---|
+| `hBnotU` | a cap is not disjoint from anything it is above |
+| `hBdown` | `B` downward closed in the base |
+| `hBP` | `B` downward closed along the cap order `P` |
+| `hBU` | the partner is base-disjoint from the WHOLE closure — **literally §58.2's `hdbase`** |
+
+`hBP` is the one §61 did not have, and it is needed precisely because §58.1 gave
+the cap an internal order — the same interaction F3 found in the `∀` rows.
+
+### 70.2 Relation to §61's `capSeed`/`dseed`
+
+They are complementary, not redundant. `odAmalgDR` is the ABSTRACT cap structure
+and is cleaner: disjointness lives in the `ODStruct` rather than in a seed that
+must then be closed downward. `odSeedCap` is the WIRED one — it is the structure
+whose order and seed are the extraction's `elt`/`up`/`dn`/`seed`.
+
+Rebuilding `odSeedCap` on `odAmalgDR`'s `B` instead of `capSeed`'s `dseed` would
+simplify §§61–66, but it is optional work and is recorded here as such rather
+than done.
+
+### 70.3 Routes B and C are complete
+
+* **B** (§69) — case 3 is reachable, so the cap machinery is needed.
+* **C** (§70) — the reviewer's structural half adopted.
+* **A** — the assembly, now justified rather than assumed, is next.
+
+Build: 27,660 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

@@ -27312,6 +27312,214 @@ theorem odFan_frame (S : ODStruct N) (U : N → Prop)
     (hdown : ∀ x y, S.lt x y → U y → U x) (M : Type) :
     Frame (odNet (odFan S U hdown M)) := odNet_frame _
 
+/-! #### §70 — `odAmalgDR`: the cap MAY carry base disjointness
+
+**Contributed by the cold reviewer** (`papers/cold_review_mixed_quadrant/`,
+finding F2) and adopted verbatim apart from this header. It refutes §51.1's
+claim that a cap must be poset-shaped: the `djDown` argument forces only
+NO CAP↔CAP `DR`, and cap↔base disjointness is perfectly consistent.
+
+`B = fun _ _ => False` recovers `odAmalg` exactly, so this is a strict
+generalisation. Its side condition `hBU` — a cap's `DR` partner is base-disjoint
+from the WHOLE closure — is literally §58.2's `hdbase`, with `cofinal_dr_all`
+supplying it on the model side.
+
+This is the structural half of the cap's `∃DR` route, and it is cleaner than the
+`capSeed`/`dseed` path of §61: the disjointness lives in the `ODStruct` rather
+than in a seed that then has to be closed downward. -/
+
+/-- The order: `odAmalg`'s `amLt`, restated locally so this appendix is
+    self-contained. -/
+def amLtR (S : ODStruct N) (U : N → Prop) {M : Type} (P : M → M → Prop) :
+    N ⊕ M → N ⊕ M → Prop
+  | .inl x, .inl y => S.lt x y
+  | .inl x, .inr _ => U x
+  | .inr a, .inr b => P a b
+  | .inr _, .inl _ => False
+
+/-- Disjointness: the base's, PLUS declared cap↔base pairs `B`.  Cap↔cap stays
+    empty — THAT part §51.1 really does force. -/
+def amDisjR (S : ODStruct N) {M : Type} (B : M → N → Prop) :
+    N ⊕ M → N ⊕ M → Prop
+  | .inl x, .inl y => S.disj x y
+  | .inl x, .inr m => B m x
+  | .inr m, .inl x => B m x
+  | .inr _, .inr _ => False
+
+/-- **THE CAP MAY CARRY BASE DISJOINTNESS.**  `odAmalg` with a cap↔base
+    disjointness relation `B`, still ordered-disjoint.
+
+    Side conditions, all of them §51.2's own statement of what a cap's `DR`
+    partner must be:
+
+    * `hBnotU` — a cap is not disjoint from anything it is above;
+    * `hBdown` / `hBP` — `B` is downward closed in the base and along `P`;
+    * `hBU`   — a cap's `DR` partner is base-disjoint from the WHOLE closure.
+      This is §58.2's `hdbase`, and `cofinal_dr_all` supplies it on the model
+      side.
+
+    `B = fun _ _ => False` recovers `odAmalg` exactly, so this is a strict
+    generalisation, not a replacement. -/
+def odAmalgDR (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    (B : M → N → Prop)
+    (hBnotU : ∀ m x, B m x → ¬ U x)
+    (hBdown : ∀ m x x', B m x → S.lt x' x → B m x')
+    (hBP : ∀ m m' x, B m x → P m' m → B m' x)
+    (hBU : ∀ m x u, B m x → U u → S.disj x u) :
+    ODStruct (N ⊕ M) where
+  lt := amLtR S U P
+  disj := amDisjR S B
+  ltIrr := by
+    rintro (a | a)
+    · exact S.ltIrr a
+    · exact hPirr a
+  ltTr := by
+    rintro (a | a) (b | b) (c | c) h1 h2
+    · exact S.ltTr a b c h1 h2
+    · exact hdown a b h1 h2
+    · exact h2.elim
+    · exact h1
+    · exact h1.elim
+    · exact h1.elim
+    · exact h2.elim
+    · exact hPtr a b c h1 h2
+  djSym := by
+    rintro (x | m) (y | m') h
+    · exact S.djSym x y h
+    · exact h
+    · exact h
+    · exact h
+  djIrr := by
+    rintro (x | m) h
+    · exact S.djIrr x h
+    · exact h
+  ltNotDj := by
+    rintro (x | m) (y | m') hlt hdj
+    · exact S.ltNotDj x y hlt hdj
+    · exact hBnotU m' x hdj hlt
+    · exact hlt.elim
+    · exact hdj
+  djDown := by
+    rintro (x | m) (y | m') (x' | n) (y' | n') hdj hx hy
+    -- 1  base,base,base,base
+    · refine S.djDown x y x' y' hdj ?_ ?_
+      · rcases hx with h | h
+        · exact Or.inl (Sum.inl.inj h)
+        · exact Or.inr h
+      · rcases hy with h | h
+        · exact Or.inl (Sum.inl.inj h)
+        · exact Or.inr h
+    -- 2  y' a cap under a base y : impossible
+    · rcases hy with h | h
+      · exact absurd h (inr_ne_inl _ _)
+      · exact h.elim
+    -- 3, 4  x' a cap under a base x : impossible
+    · rcases hx with h | h
+      · exact absurd h (inr_ne_inl _ _)
+      · exact h.elim
+    · rcases hx with h | h
+      · exact absurd h (inr_ne_inl _ _)
+      · exact h.elim
+    -- 5  hdj : B m' x ; x' base, y' base with U y'
+    · have hx' : B m' x' := by
+        rcases hx with h | h
+        · rw [Sum.inl.inj h]; exact hdj
+        · exact hBdown m' x x' hdj h
+      have hUy' : U y' := by
+        rcases hy with h | h
+        · exact absurd h.symm (inr_ne_inl _ _)
+        · exact h
+      exact hBU m' x' y' hx' hUy'
+    -- 6  x' base, y' a cap at or under m'
+    · have hx' : B m' x' := by
+        rcases hx with h | h
+        · rw [Sum.inl.inj h]; exact hdj
+        · exact hBdown m' x x' hdj h
+      rcases hy with h | h
+      · rw [← Sum.inr.inj h] at hx'; exact hx'
+      · exact hBP m' n' x' hx' h
+    -- 7, 8  x' a cap under a base x : impossible
+    · rcases hx with h | h
+      · exact absurd h (inr_ne_inl _ _)
+      · exact h.elim
+    · rcases hx with h | h
+      · exact absurd h (inr_ne_inl _ _)
+      · exact h.elim
+    -- 9  hdj : B m y ; x' base with U x', y' base under y
+    · have hy' : B m y' := by
+        rcases hy with h | h
+        · rw [Sum.inl.inj h]; exact hdj
+        · exact hBdown m y y' hdj h
+      have hUx' : U x' := by
+        rcases hx with h | h
+        · exact absurd h.symm (inr_ne_inl _ _)
+        · exact h
+      exact S.djSym _ _ (hBU m y' x' hy' hUx')
+    -- 10  y' a cap under a base y : impossible
+    · rcases hy with h | h
+      · exact absurd h (inr_ne_inl _ _)
+      · exact h.elim
+    -- 11  x' a cap at or under m, y' base under y
+    · have hy' : B m y' := by
+        rcases hy with h | h
+        · rw [Sum.inl.inj h]; exact hdj
+        · exact hBdown m y y' hdj h
+      rcases hx with h | h
+      · rw [← Sum.inr.inj h] at hy'; exact hy'
+      · exact hBP m n y' hy' h
+    -- 12  y' a cap under a base y : impossible
+    · rcases hy with h | h
+      · exact absurd h (inr_ne_inl _ _)
+      · exact h.elim
+    -- 13-16  cap,cap : hdj is False
+    · exact hdj.elim
+    · exact hdj.elim
+    · exact hdj.elim
+    · exact hdj.elim
+
+/-- `odNet_frame` applies unchanged: composition closure for free, exactly as
+    for `odAmalg`. -/
+theorem odAmalgDR_frame (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    (B : M → N → Prop)
+    (hBnotU : ∀ m x, B m x → ¬ U x)
+    (hBdown : ∀ m x x', B m x → S.lt x' x → B m x')
+    (hBP : ∀ m m' x, B m x → P m' m → B m' x)
+    (hBU : ∀ m x u, B m x → U u → S.disj x u) :
+    Frame (odNet (odAmalgDR S U hdown P hPirr hPtr B hBnotU hBdown hBP hBU)) :=
+  odNet_frame _
+
+/-- The cap really does get a `DR` edge. -/
+theorem odAmalgDR_dr (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    (B : M → N → Prop)
+    (hBnotU : ∀ m x, B m x → ¬ U x)
+    (hBdown : ∀ m x x', B m x → S.lt x' x → B m x')
+    (hBP : ∀ m m' x, B m x → P m' m → B m' x)
+    (hBU : ∀ m x u, B m x → U u → S.disj x u)
+    {m : M} {f : N} (h : B m f) :
+    odNet (odAmalgDR S U hdown P hPirr hPtr B hBnotU hBdown hBP hBU)
+      (Sum.inr m) (Sum.inl f) = dr :=
+  odNet_dj _ h
+
+/-- And it is still above the closure. -/
+theorem odAmalgDR_pp (S : ODStruct N) (U : N → Prop)
+    (hdown : ∀ x y, S.lt x y → U y → U x) {M : Type} (P : M → M → Prop)
+    (hPirr : ∀ a, ¬ P a a) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    (B : M → N → Prop)
+    (hBnotU : ∀ m x, B m x → ¬ U x)
+    (hBdown : ∀ m x x', B m x → S.lt x' x → B m x')
+    (hBP : ∀ m m' x, B m x → P m' m → B m' x)
+    (hBU : ∀ m x u, B m x → U u → S.disj x u)
+    {m : M} {e : N} (h : U e) :
+    odNet (odAmalgDR S U hdown P hPirr hPtr B hBnotU hBdown hBP hBU)
+      (Sum.inl e) (Sum.inr m) = pp :=
+  odNet_lt _ h
+
 /-- The ascending-tower cap: `odAmalg` at `(Nat, <)`. -/
 def odTower (S : ODStruct N) (U : N → Prop)
     (hdown : ∀ x y, S.lt x y → U y → U x) : ODStruct (N ⊕ Nat) :=
@@ -27435,6 +27643,10 @@ end OneShotDichotomy
 #print axioms odAmalg_frame
 #print axioms odAmalg_above
 #print axioms odAmalg_po
+#print axioms odAmalgDR
+#print axioms odAmalgDR_frame
+#print axioms odAmalgDR_dr
+#print axioms odAmalgDR_pp
 #print axioms odFan
 #print axioms odFan_po
 #print axioms odFan_above
