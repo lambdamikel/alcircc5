@@ -28663,6 +28663,310 @@ theorem skipNodesU_fixed (kser : MTKNode I C0 → Concept → Bool)
     have := skipPath_len_le' C0 I (fun i => (path i).x) k hdist
     omega
 
+/-! ##### §95 — route 2: the DOWN-ONLY closure
+
+The downward half. `path_repeat_carries`, `skipPath_no_repeat` and
+`skipPath_len_le'` never mention the ORDER — they are index arithmetic plus a
+pigeonhole — so they apply to a DESCENDING path unchanged. Only the closure's
+definition differs, and this block is the upward one transcribed. -/
+
+/-- The `∃PPI`-only skipping closure. -/
+noncomputable def skipNodesD (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) : Nat → List (MTKNode I C0)
+  | 0 => [n]
+  | fuel + 1 => n :: (mtk C0 I n.x n.k).attach.flatMap
+      (fun p => match p with
+        | ⟨.ex ppi c, hF⟩ =>
+            if kser n c then [] else skipNodesD kser (ppiWitness n hF) fuel
+        | _ => [])
+
+theorem self_mem_skipNodesD (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) (fuel : Nat) : n ∈ skipNodesD kser n fuel := by
+  cases fuel with
+  | zero => rw [skipNodesD]; exact List.mem_cons_self
+  | succ f => rw [skipNodesD]; exact List.mem_cons_self
+
+/-- **THE PATH CHARACTERISATION, DOWNWARD.**  Membership at fuel `f` means
+    reachability by at most `f` non-kernel-served `∃PP` steps — and every such
+    step goes to `ppiWitness`, so the path DESCENDS —
+    which the repeat argument does not care about. -/
+theorem skipNodesD_path (kser : MTKNode I C0 → Concept → Bool) :
+    ∀ (f : Nat) (n m : MTKNode I C0), m ∈ skipNodesD kser n f →
+      ∃ (k : Nat) (path : Nat → MTKNode I C0), k ≤ f ∧ path 0 = n ∧ path k = m ∧
+        ∀ i, i < k → ∃ (c : Concept)
+          (hF : Concept.ex ppi c ∈ mtk C0 I (path i).x (path i).k),
+          kser (path i) c = false ∧ path (i + 1) = ppiWitness (path i) hF := by
+  intro f
+  induction f with
+  | zero =>
+    intro n m hm
+    rw [skipNodesD] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact ⟨0, fun _ => m, Nat.le_refl 0, rfl, rfl,
+        fun i hi => absurd hi (Nat.not_lt_zero i)⟩
+    · exact absurd h List.not_mem_nil
+  | succ f' ih =>
+    intro n m hm
+    rw [skipNodesD] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact ⟨0, fun _ => m, Nat.zero_le _, rfl, rfl,
+        fun i hi => absurd hi (Nat.not_lt_zero i)⟩
+    · obtain ⟨p, _, hmp⟩ := List.mem_flatMap.mp hm'
+      obtain ⟨F, hF⟩ := p
+      cases F with
+      | ex r c =>
+        cases r with
+        | ppi =>
+          by_cases hk : kser n c = true
+          · exfalso
+            revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodesD kser (ppiWitness n hF) f') → False
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · have hmp' : m ∈ skipNodesD kser (ppiWitness n hF) f' := by
+              revert hmp
+              show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                        else skipNodesD kser (ppiWitness n hF) f') → _
+              rw [if_neg hk]; exact id
+            obtain ⟨k, path, hk1, hp0, hpk, hsteps⟩ := ih (ppiWitness n hF) m hmp'
+            refine ⟨k + 1, fun i => if i = 0 then n else path (i - 1),
+              by omega, by simp, by simp [hpk], ?_⟩
+            intro i hi
+            rcases Nat.eq_zero_or_pos i with rfl | hpos
+            · refine ⟨c, hF, ?_, ?_⟩
+              · show kser n c = false
+                cases h : kser n c with
+                | false => rfl
+                | true => exact absurd h hk
+              · simp [hp0]
+            · obtain ⟨c', hF', hns, hstep⟩ := hsteps (i - 1) (by omega)
+              have hne : i ≠ 0 := Nat.pos_iff_ne_zero.mp hpos
+              have hne1 : i + 1 ≠ 0 := by omega
+              have harith : i + 1 - 1 = (i - 1) + 1 := by omega
+              refine ⟨c', ?_, ?_, ?_⟩
+              · simp only [if_neg hne]; exact hF'
+              · simp only [if_neg hne]; exact hns
+              · simp only [if_neg hne, if_neg hne1, harith]; exact hstep
+        | pp => exact absurd hmp List.not_mem_nil
+        | dr => exact absurd hmp List.not_mem_nil
+        | po => exact absurd hmp List.not_mem_nil
+        | eq => exact absurd hmp List.not_mem_nil
+      | top => exact absurd hmp List.not_mem_nil
+      | bot => exact absurd hmp List.not_mem_nil
+      | atom _ => exact absurd hmp List.not_mem_nil
+      | natom _ => exact absurd hmp List.not_mem_nil
+      | and _ _ => exact absurd hmp List.not_mem_nil
+      | or _ _ => exact absurd hmp List.not_mem_nil
+      | all _ _ => exact absurd hmp List.not_mem_nil
+
+/-- Monotone in the fuel, downward version. -/
+theorem skipNodesD_mono (kser : MTKNode I C0 → Concept → Bool) :
+    ∀ (fuel : Nat) (n : MTKNode I C0),
+      ∀ m ∈ skipNodesD kser n fuel, m ∈ skipNodesD kser n (fuel + 1) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro n m hm
+    rw [skipNodesD] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact self_mem_skipNodesD kser _ _
+    · exact absurd h List.not_mem_nil
+  | succ f ih =>
+    intro n m hm
+    rw [skipNodesD] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact self_mem_skipNodesD kser _ _
+    · rw [skipNodesD]
+      refine List.mem_cons_of_mem _ (flatMap_mono _ _ _ ?_ m hm')
+      rintro ⟨F, hF⟩ _ b hb
+      cases F with
+      | ex r c =>
+        cases r with
+        | ppi =>
+          show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                    else skipNodesD kser (ppiWitness n hF) (f + 1))
+          by_cases hk : kser n c = true
+          · rw [if_pos hk]
+            revert hb
+            show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodesD kser (ppiWitness n hF) f) → _
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · rw [if_neg hk]
+            revert hb
+            show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodesD kser (ppiWitness n hF) f) → _
+            rw [if_neg hk]; exact fun h => ih _ b h
+        | pp => exact absurd hb List.not_mem_nil
+        | dr => exact absurd hb List.not_mem_nil
+        | po => exact absurd hb List.not_mem_nil
+        | eq => exact absurd hb List.not_mem_nil
+      | top => exact absurd hb List.not_mem_nil
+      | bot => exact absurd hb List.not_mem_nil
+      | atom _ => exact absurd hb List.not_mem_nil
+      | natom _ => exact absurd hb List.not_mem_nil
+      | and _ _ => exact absurd hb List.not_mem_nil
+      | or _ _ => exact absurd hb List.not_mem_nil
+      | all _ _ => exact absurd hb List.not_mem_nil
+
+/-- The fuel-order version. -/
+theorem skipNodesD_mono_le (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) : ∀ {f g : Nat}, f ≤ g →
+      ∀ m ∈ skipNodesD kser n f, m ∈ skipNodesD kser n g := by
+  intro f g hfg
+  induction g with
+  | zero =>
+    have : f = 0 := Nat.le_zero.mp hfg
+    subst this; exact fun m hm => hm
+  | succ g' ih =>
+    rcases Nat.lt_or_ge f (g' + 1) with h | h
+    · exact fun m hm => skipNodesD_mono kser g' n m (ih (by omega) m hm)
+    · have : f = g' + 1 := Nat.le_antisymm hfg h
+      subst this; exact fun m hm => hm
+
+/-- **THE CONVERSE.**  A path of `k` non-kernel-served `∃PP` steps puts its
+    endpoint in the closure at fuel `k`. -/
+theorem skipNodesD_of_path (kser : MTKNode I C0 → Concept → Bool) :
+    ∀ (k : Nat) (path : Nat → MTKNode I C0),
+      (∀ i, i < k → ∃ (c : Concept)
+        (hF : Concept.ex ppi c ∈ mtk C0 I (path i).x (path i).k),
+        kser (path i) c = false ∧ path (i + 1) = ppiWitness (path i) hF) →
+      path k ∈ skipNodesD kser (path 0) k := by
+  intro k
+  induction k with
+  | zero => intro path _; rw [skipNodesD]; exact List.mem_cons_self
+  | succ k' ih =>
+    intro path hsteps
+    obtain ⟨c, hF, hns, hstep⟩ := hsteps 0 (by omega)
+    have hIH := ih (fun i => path (i + 1)) (fun i hi => hsteps (i + 1) (by omega))
+    rw [skipNodesD]
+    refine List.mem_cons_of_mem _ (List.mem_flatMap.mpr
+      ⟨⟨Concept.ex ppi c, hF⟩, List.mem_attach _ _, ?_⟩)
+    show path (k' + 1) ∈ (if kser (path 0) c then ([] : List (MTKNode I C0))
+      else skipNodesD kser (ppiWitness (path 0) hF) k')
+    rw [if_neg (by rw [hns]; exact Bool.false_ne_true), ← hstep]
+    exact hIH
+
+/-- **THE FIXPOINT, DOWNWARD.**  At fuel `|typeEnum C0|` the upward closure stops
+    growing — the downward mirror of §94.
+
+    `hext` is the condition on `kser` §91 isolated: the demand taken at a step is
+    not carried inside any segment starting there. It is what
+    `kernelServes`'s chain branch says, and it is what makes the extending path's
+    types distinct. -/
+theorem skipNodesD_fixed (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0)
+    (hext : ∀ (path : Nat → MTKNode I C0) (k : Nat),
+      (∀ i, i < k → ∃ (c : Concept)
+        (hF : Concept.ex ppi c ∈ mtk C0 I (path i).x (path i).k),
+        kser (path i) c = false ∧ path (i + 1) = ppiWitness (path i) hF) →
+      ∀ i j, i < j → j < k → mty C0 I (path i).x ≠ mty C0 I (path j).x) :
+    ∀ m ∈ skipNodesD kser n ((typeEnum C0).length + 1),
+      m ∈ skipNodesD kser n (typeEnum C0).length := by
+  intro m hm
+  obtain ⟨k, path, hk, hp0, hpk, hsteps⟩ :=
+    skipNodesD_path kser _ n m hm
+  by_cases hkle : k ≤ (typeEnum C0).length
+  · have := skipNodesD_of_path kser k path hsteps
+    rw [hp0, hpk] at this
+    exact skipNodesD_mono_le kser n hkle m this
+  · exfalso
+    have hklt : (typeEnum C0).length < k := by omega
+    have hdist : ∀ i j, i < j → j < k →
+        mty C0 I (path i).x ≠ mty C0 I (path j).x := hext path k hsteps
+    have := skipPath_len_le' C0 I (fun i => (path i).x) k hdist
+    omega
+
+/-! ##### §96 — the MIXED closure, directly
+
+⚠ **§92's diagnosis was too pessimistic, and §95 exposed it.** The downward half
+transcribed with no change to the repeat argument — because
+`path_repeat_carries` and `skipPath_no_repeat` take an ARBITRARY `path : Nat → α`
+and never mention the order. They are index arithmetic plus a pigeonhole.
+
+So the obstacle was never that the mixed path is a walk. It was only that the
+draft path-characterisation recorded `∃PP` steps alone. Recording both kinds
+handles the mixed closure directly, and the split of §§93–95 — while correct and
+harmless — turns out not to have been necessary. -/
+
+/-- **THE PATH CHARACTERISATION, MIXED.**  Membership in `skipNodes` at fuel `f`
+    means reachability by at most `f` non-kernel-served vertical steps, of EITHER
+    kind. -/
+theorem skipNodes_path (kser : MTKNode I C0 → Concept → Bool) :
+    ∀ (f : Nat) (n m : MTKNode I C0), m ∈ skipNodes kser n f →
+      ∃ (k : Nat) (path : Nat → MTKNode I C0) (D : Nat → Concept),
+        k ≤ f ∧ path 0 = n ∧ path k = m ∧
+        ∀ i, i < k → D i ∈ mty C0 I (path (i + 1)).x := by
+  intro f
+  induction f with
+  | zero =>
+    intro n m hm
+    rw [skipNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact ⟨0, fun _ => m, fun _ => Concept.top, Nat.le_refl 0, rfl, rfl,
+        fun i hi => absurd hi (Nat.not_lt_zero i)⟩
+    · exact absurd h List.not_mem_nil
+  | succ f' ih =>
+    intro n m hm
+    rw [skipNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact ⟨0, fun _ => m, fun _ => Concept.top, Nat.zero_le _, rfl, rfl,
+        fun i hi => absurd hi (Nat.not_lt_zero i)⟩
+    · obtain ⟨p, _, hmp⟩ := List.mem_flatMap.mp hm'
+      obtain ⟨F, hF⟩ := p
+      have key : ∀ (w : MTKNode I C0) (c : Concept),
+          c ∈ mty C0 I w.x → m ∈ skipNodes kser w f' →
+          ∃ (k : Nat) (path : Nat → MTKNode I C0) (D : Nat → Concept),
+            k ≤ f' + 1 ∧ path 0 = n ∧ path k = m ∧
+            ∀ i, i < k → D i ∈ mty C0 I (path (i + 1)).x := by
+        intro w c hc hmw
+        obtain ⟨k, path, Dm, hk1, hp0, hpk, hst⟩ := ih w m hmw
+        refine ⟨k + 1, fun i => if i = 0 then n else path (i - 1),
+          fun i => if i = 0 then c else Dm (i - 1), by omega, by simp,
+          by simp [hpk], ?_⟩
+        intro i hi
+        rcases Nat.eq_zero_or_pos i with rfl | hpos
+        · simpa [hp0] using hc
+        · have hne : i ≠ 0 := Nat.pos_iff_ne_zero.mp hpos
+          have hne1 : i + 1 ≠ 0 := by omega
+          have harith : i + 1 - 1 = (i - 1) + 1 := by omega
+          simp only [if_neg hne, if_neg hne1, harith]
+          exact hst (i - 1) (by omega)
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          by_cases hk : kser n c = true
+          · exfalso; revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppWitness n hF) f') → False
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · refine key (ppWitness n hF) c (mem_mtk.mp (ppWitness_arg n hF)).1 ?_
+            revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppWitness n hF) f') → _
+            rw [if_neg hk]; exact id
+        | ppi =>
+          by_cases hk : kser n c = true
+          · exfalso; revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppiWitness n hF) f') → False
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · refine key (ppiWitness n hF) c (mem_mtk.mp (ppiWitness_arg n hF)).1 ?_
+            revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppiWitness n hF) f') → _
+            rw [if_neg hk]; exact id
+        | dr => exact absurd hmp List.not_mem_nil
+        | po => exact absurd hmp List.not_mem_nil
+        | eq => exact absurd hmp List.not_mem_nil
+      | top => exact absurd hmp List.not_mem_nil
+      | bot => exact absurd hmp List.not_mem_nil
+      | atom _ => exact absurd hmp List.not_mem_nil
+      | natom _ => exact absurd hmp List.not_mem_nil
+      | and _ _ => exact absurd hmp List.not_mem_nil
+      | or _ _ => exact absurd hmp List.not_mem_nil
+      | all _ _ => exact absurd hmp List.not_mem_nil
+
 end SkipClosure
 
 end KernelService
@@ -29335,6 +29639,10 @@ end OneShotDichotomy
 #print axioms skipNodesU_mono_le
 #print axioms skipNodesU_of_path
 #print axioms skipNodesU_fixed
+#print axioms skipNodesD_path
+#print axioms skipNodesD_of_path
+#print axioms skipNodesD_fixed
+#print axioms skipNodes_path
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup

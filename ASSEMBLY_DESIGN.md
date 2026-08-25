@@ -8357,3 +8357,46 @@ The bound `|typeEnum C0|` is computed from `C₀` alone, as `mixKT` requires.
 
 Build: 29,419 lines, 1,482 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 95–96. THE DOWNWARD HALF, AND A CORRECTION TO §92
+
+### 95 — the downward half
+
+`skipNodesD` and its five lemmas — `self_mem`, `_path`, `_of_path`, `_mono`,
+`_mono_le`, `_fixed` — transcribed from the upward block. **It compiled on the
+first attempt**, which is what "certified mirror" was supposed to mean and this
+time did.
+
+### 96 — §92's diagnosis was too pessimistic
+
+§92 concluded that the mixed closure's path is a walk, not a chain, so §91's
+repeat argument would not apply — and proposed three routes around it.
+
+**That was wrong, and the transcription exposed it.** `path_repeat_carries` and
+`skipPath_no_repeat` take an **arbitrary** `path : Nat → α` and never mention the
+order: they are index arithmetic plus a pigeonhole. Nothing in them needs ascent.
+
+The real obstacle was much smaller: the draft path-characterisation recorded
+`∃PP` steps alone. Recording **both** kinds handles the mixed closure directly —
+`skipNodes_path` now does, and it compiled.
+
+So the §§93–95 split is correct and harmless, but was **not necessary**. Cost:
+two sections of transcription. The lesson is the same one §90 taught in the other
+direction — check what a lemma actually assumes before designing around it.
+
+### 96.1 State of item A
+
+| | |
+|---|---|
+| upward: definition, bound, coverage, paths both ways, **fixpoint** | ✓ (§§93–94) |
+| downward: the same six | ✓ (§95) |
+| mixed: path characterisation (both step kinds) | ✓ (§96) |
+| mixed: the converse (path ⟹ membership) | outstanding |
+| mixed: the fixpoint | follows from the converse, as §94 did |
+
+The mixed path gives `k ≤ |typeEnum C0|` already, via `hext` and
+`skipPath_len_le'`. What is missing is only the converse direction, which for the
+upward half was `skipNodesU_of_path`.
+
+Build: 29,676 lines, 1,489 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
