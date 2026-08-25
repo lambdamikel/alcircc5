@@ -29145,6 +29145,51 @@ theorem skipNodes_covers_at_typeEnum (kser : MTKNode I C0 → Concept → Bool)
   skipNodes_covers_of_fixed kser n (typeEnum C0).length
     (skipNodes_fixed kser n hext)
 
+/-! ##### §98 — `hext` from the kernel-service test
+
+§97 left `hext` as a hypothesis. It follows from a single property of `kser`,
+and that property is exactly what §85's `kernelServes` says: **the kernel serves
+whatever recurs inside a segment**. -/
+
+/-- The property the extraction's kernel-service test must have. -/
+def KserSegment (kser : MTKNode I C0 → Concept → Bool) : Prop :=
+  ∀ (path : Nat → MTKNode I C0) (i j : Nat), i < j →
+    mty C0 I (path i).x = mty C0 I (path j).x →
+    ∀ c, (∃ b, b < j - i ∧ c ∈ mty C0 I (path (i + b)).x) →
+      kser (path i) c = true
+
+/-- **`hext`, DISCHARGED FROM `KserSegment`.**  A type repeat on a path of
+    `SkipStep`s carries the demand inside the segment (`path_repeat_carries`),
+    so `KserSegment` marks it kernel-served — contradicting the step, which was
+    taken only because it was NOT. -/
+theorem hext_of_KserSegment (kser : MTKNode I C0 → Concept → Bool)
+    (hk : KserSegment kser) :
+    ∀ (path : Nat → MTKNode I C0) (k : Nat),
+      (∀ i, i < k → SkipStep kser (path i) (path (i + 1))) →
+      ∀ i j, i < j → j < k → mty C0 I (path i).x ≠ mty C0 I (path j).x := by
+  intro path k hsteps i j hij hjk hty
+  obtain ⟨c, hc⟩ := hsteps i (by omega)
+  have hcarry : c ∈ mty C0 I (path (i + 1)).x := by
+    rcases hc with ⟨hF, _, hstep⟩ | ⟨hF, _, hstep⟩
+    · rw [hstep]; exact (mem_mtk.mp (ppWitness_arg _ hF)).1
+    · rw [hstep]; exact (mem_mtk.mp (ppiWitness_arg _ hF)).1
+  have hns : kser (path i) c = false := by
+    rcases hc with ⟨_, h, _⟩ | ⟨_, h, _⟩ <;> exact h
+  have hseg := path_repeat_carries C0 I (fun n => (path n).x) hij hty hcarry
+  have hyes := hk path i j hij hty c hseg
+  rw [hns] at hyes
+  exact Bool.false_ne_true hyes
+
+/-- **ITEM A, WITHOUT `hext`.**  The closure at fuel `|typeEnum C0|` is closed,
+    for any kernel-service test with the segment property. -/
+theorem skipNodes_covers_of_KserSegment (kser : MTKNode I C0 → Concept → Bool)
+    (hk : KserSegment kser) (n : MTKNode I C0) :
+    ∀ m ∈ skipNodes kser n (typeEnum C0).length, ∀ (c : Concept)
+      (hF : Concept.ex pp c ∈ mtk C0 I m.x m.k),
+      kser m c = true ∨
+        ppWitness m hF ∈ skipNodes kser n (typeEnum C0).length :=
+  skipNodes_covers_at_typeEnum kser n (hext_of_KserSegment kser hk)
+
 end SkipClosure
 
 end KernelService
@@ -29826,6 +29871,8 @@ end OneShotDichotomy
 #print axioms skipNodes_path'
 #print axioms skipNodes_fixed
 #print axioms skipNodes_covers_at_typeEnum
+#print axioms hext_of_KserSegment
+#print axioms skipNodes_covers_of_KserSegment
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup

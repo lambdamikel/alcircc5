@@ -8449,3 +8449,47 @@ property of the kernel-service test rather than a gap in the argument.
 
 Build: 29,942 lines, 1,497 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 98. `hext` DISCHARGED — item A closed on a named property of `kser`
+
+```
+KserSegment kser :=
+  ∀ path i j, i < j → mty (path i).x = mty (path j).x →
+    ∀ c, (∃ b, b < j - i ∧ c ∈ mty (path (i+b)).x) → kser (path i) c = true
+```
+
+* **`hext_of_KserSegment`** — a type repeat carries the demand inside the segment
+  (`path_repeat_carries`), so `KserSegment` marks it kernel-served, contradicting
+  the step, which was taken only because it was NOT.
+* **`skipNodes_covers_of_KserSegment`** — item A, with `hext` gone: the closure at
+  fuel `|typeEnum C0|` is closed for any kernel-service test with the segment
+  property.
+
+### 98.1 The remaining question, well-posed
+
+`kser` must satisfy **two** conditions pulling in opposite directions:
+
+| condition | wants `kser` to be | supplied by |
+|---|---|---|
+| `KserSegment` (§98) | **more true** — anything carried in a segment | the definition |
+| soundness for `e_ex` | **less true** — only what a kernel really serves | `kernelServes_no_external` (§85) |
+
+They meet exactly where §85 put them: `kernelServes` on the CYCLED segment. "`c`
+carried in the segment" is "`∃ j > i, sat (chain j) c`" for the chain that cycles
+it, which is `kernelServes`'s second branch — and `kernelServes_recur` is its
+soundness.
+
+So what remains for A is to EXHIBIT a `kser : MTKNode → Concept → Bool` meeting
+both. The ingredients are certified (`kernel_of_chain` builds the cycled kernel;
+`kernelServes_recur` shows it serves; `path_repeat_carries` is the bridge); what
+is unwritten is the definition and its two proofs.
+
+### 98.2 Why "too true" is safe for A but not for soundness
+
+A more permissive `kser` only SHRINKS the closure — more demands skipped, fewer
+nodes. So `KserSegment` is monotone in `kser` and cannot be violated by
+over-approximation. Soundness is the binding constraint, and it is the one
+`kernelServes` was designed for.
+
+Build: 30,010 lines, 1,500 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
