@@ -6848,3 +6848,51 @@ certificate are literally the same object.
 
 Build: 27,180 lines, 1,382 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 63. SUPPLYING THE ROUTING CONDITIONS — the structural finding
+
+### 63.1 A cap needs no new closure construction
+
+`mixNodes` already follows EVERY demand — `ppNodes` takes the `∃PP`/`∃PPI`
+witnesses, the horizontal recursion takes the rest. So a cap's own node set is
+`mixNodes` rooted at the cap's witness, with:
+
+* the same size bound — `capNodes_length_le` is `mixNodes_length_le`;
+* the same coverage — `capNodes_H_covers` is `mtkNodesH_covers`;
+* the same index shape — `CapIdx` is `EIdx` at a different root, so the encoder
+  and the `mixKT` bound consume it unchanged.
+
+This is worth stating because §§50–62 kept treating the cap as a new kind of
+object. Structurally it is not: **a cap is an external whose root happens to sit
+above a kernel.** All the machinery built for `β` applies to it verbatim.
+
+### 63.2 `rEQ` is free
+
+`cap_rEQ`: strong `EQ` is identity, so a cap's `∃EQ` demand is served by the cap
+itself — `mtk_ex_eq`, exactly as for base externals. One of five conditions
+discharged outright.
+
+### 63.3 What the remaining four actually need
+
+The model-side half is already certified: `capNodes_H_covers` gives a witness
+INSIDE the closure carrying the demanded concept, with the MODEL relation, for
+every horizontal demand; `ppNodes` does the same vertically.
+
+What is not free is matching that to the **DECLARED** relation:
+
+| condition | model side | declared side, still to supply |
+|---|---|---|
+| `rDR` | `capNodes_H_covers` at `dr` | `dseed m f` for the witness, with `hdbase` |
+| `rPO` | `capNodes_H_covers` at `po` | `¬ U f` and non-disjointness |
+| `rPP` | `ppNodes` at `pp` | `P m m'` — the layer order on the cap index |
+| `rPPI` | `ppNodes` at `ppi` | `U e`, or a covered kernel phase |
+
+This is §43's read-off-versus-declared tension in its final form. The campaign's
+standing answer — keep `elt`/`seed` abstract, because reading off breaks the
+budgets (`wp96` A: 4.1%) — applies here too: `P`, `U` and `dseed` must be
+DECLARED and the conditions proved, not read off the model.
+
+That is the remaining work for the mixed quadrant, and it is now four named
+implications rather than an open construction.
+
+Build: 27,238 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

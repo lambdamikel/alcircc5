@@ -26694,6 +26694,60 @@ theorem mixedCompleteness_of_code (C0 : Concept)
 theorem mixedCompleteness_of_unsat (C0 : Concept) (h : ¬ Satisfiable C0) :
     MixedCompleteness C0 := fun hs => absurd hs h
 
+/-! ### §63 — SUPPLYING THE ROUTING CONDITIONS
+
+§62 pinned the interface: five routing conditions per cap node. This section
+starts supplying them from the extraction's data.
+
+The key structural observation is that **a cap needs no new closure
+construction**. `mixNodes` already follows every demand — `ppNodes` takes the
+`∃PP`/`∃PPI` witnesses and the horizontal recursion takes the rest — so the cap's
+own node set is `mixNodes` rooted at the cap's witness, with the SAME size bound
+(`mixNodes_length_le`) and the SAME coverage lemmas (`mtkNodesH_covers`).
+
+So the cap index is literally `EIdx` at a different root. What is NOT free is
+matching the DECLARED relations (`P`, `U`, `dseed`) to the model ones — that is
+§43's read-off-versus-declared tension, and it is where the remaining work is. -/
+
+section CapRouting
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- **`rEQ` IS FREE.**  Strong `EQ` is identity, so a cap's `∃EQ` demand is
+    served by the cap itself — exactly as for base externals. -/
+theorem cap_rEQ (hI : RCC5Interp I) (wm : α) (hwd : I.dom wm) (cb : Nat)
+    (D : Concept) (h : Concept.ex eq D ∈ mtk C0 I wm cb) :
+    D ∈ mtk C0 I wm cb := mtk_ex_eq hI h hwd
+
+/-- The cap's own node set: `mixNodes` at the cap's root. No new construction,
+    so the size bound and the coverage lemmas apply unchanged. -/
+noncomputable def capNodes (fuel b : Nat) (capRoot : MTKNode I C0) :
+    List (MTKNode I C0) := mixNodes fuel b capRoot
+
+theorem capNodes_length_le (fuel b : Nat) (capRoot : MTKNode I C0) :
+    (capNodes fuel b capRoot).length ≤ mixBound C0 fuel b :=
+  mixNodes_length_le fuel b capRoot
+
+theorem capRoot_mem (fuel b : Nat) (capRoot : MTKNode I C0) :
+    capRoot ∈ capNodes fuel b capRoot := self_mem_mixNodes fuel b capRoot
+
+/-- The cap index — `EIdx` at the cap's root, so the encoder and the bound
+    consume it exactly as they do the base index. -/
+def CapIdx (fuel b : Nat) (capRoot : MTKNode I C0) : Type :=
+  {n // n ∈ capNodes fuel b capRoot}
+
+/-- **THE CAP'S HORIZONTAL DEMANDS ARE COVERED INSIDE ITS OWN CLOSURE** — the
+    `∃DR`/`∃PO`/`∃EQ` half of the routing conditions, with the MODEL relation.
+    What remains for `rDR`/`rPO` is matching this to the DECLARED relation. -/
+theorem capNodes_H_covers (capRoot : MTKNode I C0) :
+    ∀ m ∈ mtkNodesH capRoot, ∀ (r : Atom) (c : Concept),
+      Concept.ex r c ∈ mtk C0 I m.x m.k → ¬ (r = pp ∨ r = ppi) →
+      ∃ m' ∈ mtkNodesH capRoot,
+        I.rho m.x m'.x = r ∧ c ∈ mtk C0 I m'.x m'.k :=
+  mtkNodesH_covers capRoot
+
+end CapRouting
+
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
 §49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
@@ -27121,6 +27175,10 @@ end OneShotDichotomy
 #print axioms cap_reaches
 #print axioms cap_ee_all_ppi
 #print axioms cap_stab_exists
+#print axioms cap_rEQ
+#print axioms capNodes_length_le
+#print axioms capRoot_mem
+#print axioms capNodes_H_covers
 #print axioms gCap_eq
 #print axioms budCap_eq
 #print axioms capped_tauE_base
