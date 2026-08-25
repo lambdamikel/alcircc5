@@ -7317,3 +7317,62 @@ are statements about `capNodes` and `capP`, both of which survive the merge.
 
 Build: 27,720 lines, 1,413 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 72. THE MERGE — caps live in `β`, and all five routing conditions close
+
+§71.2's finding, executed.
+
+### 72.1 `rDR` needed nothing new
+
+```lean
+theorem cap_rDR_merged … (hup : up k u = true) (hdn : dn k w = true)
+    (hs : sAdjK (nd w) (nd f)) :
+    ∃ x₀ y₀, mixLe … (Sum.inl u) x₀ ∧ mixLe … (Sum.inl f) y₀ ∧ seedMix nd kdr x₀ y₀ :=
+  ⟨Sum.inl w, Sum.inl f, Or.inr (tcl.base (Or.inr ⟨k, hup, hdn⟩)), Or.inl rfl, hs⟩
+```
+
+One term. Three existing pieces do the work:
+
+* **`mixStep`'s own `up`/`dn` clause** — `up k u ∧ dn k w → mixStep u w`, so
+  everything below the kernel is below the cap, in one `tcl.base`;
+* **`sAdjK`** — now applies to the cap, because the cap is a base node;
+* **`odSeed`'s downward closure** — carries that ONE seed pair to every node
+  below the cap.
+
+`cap_rDR_edge` puts it in the frame's terms. The condition that circled back on
+itself in §71.2 is discharged.
+
+**All five routing conditions are now done:** `cap_rEQ`, `cap_rPP`, `cap_rPPI`,
+`cap_rPO`, `cap_rDR_merged`.
+
+### 72.2 §§63–71 survive the restructure
+
+`stepAll_to_elt` and `updn_to_elt`: the cap order used by §§64–71
+(`capP = tcl stepAll`, on nodes) maps into the extraction's own `elt`
+(`tcl (mixStep …)`, on indices), because a `stepAll` step IS a `mixStep` step by
+its first disjunct. So every condition proved against `capP` transfers unchanged.
+
+### 72.3 What the merge retires
+
+§§53–66's separate-index layer — `odSeedCap`, `capElt`/`capUp`/`capDn`/`capSeed`,
+the reflection and transfer lemmas, the `CapEdges` block — is **not on the
+assembly's path**. It is marked SUPERSEDED in place rather than deleted:
+
+* it is correct (the cold reviewer read `odSeedCap_old` line by line);
+* `odAmalgDR` (§70) refutes §51.1 independently of whether it is used;
+* and deleting certified work to make a diff smaller is not a trade this project
+  makes.
+
+A reader tracing the construction should skip §53–§66 and go to §63.
+
+### 72.4 Where the mixed quadrant stands
+
+| | |
+|---|---|
+| the five routing conditions | **done** |
+| every `MultiTierOk` row's lemma | **exists** |
+| assembling `MultiTierOk` for the merged certificate | not started |
+| instantiation — the node set incl. caps, `up`/`dn` declaring cap position | not started |
+| reindex → encode → `MixedCompleteness` | not started, templated |
+
+Build: 27,804 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

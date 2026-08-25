@@ -25743,7 +25743,21 @@ theorem layer_stack_bounded {C0 : Concept} (Ts : List α)
     Ts.length ≤ (typeEnum C0).length :=
   repeatfree_len_le C0 I Ts hnd
 
-/-! ### §53 — WIRING THE CAP IN
+/-! ### §53 — WIRING THE CAP IN  ⚠ SUPERSEDED BY §72
+
+**Read §72 first.**  Everything from here to the end of `CapEdges` builds the cap
+as a SEPARATE INDEX `M`, giving `β ⊕ M` its own order, kernel attachment and
+seed.  §72 shows the assembly does not need it: a cap is an external whose root
+sits above a kernel, so it belongs in `β`, and once it is there the extraction's
+existing `mixStep`/`sAdjK`/`odSeed` supply every edge this layer was built to
+provide — `rDR` included, in a single term (`cap_rDR_merged`).
+
+This layer is CORRECT and stays for the record (the cold reviewer read
+`odSeedCap_old` line by line and confirmed it, and `odAmalgDR` in §70 refutes
+§51.1 independently of any of it).  It is simply not on the assembly's path.
+A reader tracing the construction should skip to §63.
+
+§53 — WIRING THE CAP IN (superseded)
 
 §52.1's audit left two rows open, and they are one task: make the cap **just
 another external**. `odSeed` already takes the order, the kernel attachment and
@@ -26992,6 +27006,72 @@ theorem cap_rPO (hI : RCC5Interp I) (m : MTKNode I C0) {D : Concept}
     rw [h2] at h1
     exact Atom.noConfusion h1
 
+/-! #### §72 — THE MERGE: caps live in `β`, and `rDR` needs nothing new
+
+§71.2's finding, executed. A cap is an external whose root sits above a kernel,
+so it belongs in `β` — and once it is there, the extraction's EXISTING data
+already supplies what §§53–66 built a separate index to provide:
+
+* the cap sits above everything below its kernel — by `mixStep`'s own `up`/`dn`
+  clause, `up k u ∧ dn k w → mixStep u w`, hence `elt u w` in one `tcl.base`;
+* the cap's `∃DR` witness is `sAdjK`-adjacent to it, because both are now base
+  nodes and `sAdjK` is exactly the `∃DR`-witness relation;
+* and `odSeed`'s disjointness, being the DOWNWARD CLOSURE of the seed, carries
+  that one pair to every node below the cap.
+
+So `rDR` — the condition that circled back on itself in §71.2 — is discharged by
+a single term. -/
+
+/-- **`rDR`, MERGED.**  With caps in `β`, a cap's `∃DR` witness is disjoint from
+    every node below the cap, using only `mixStep`'s `up`/`dn` clause and the
+    downward closure. Nothing is declared that the extraction did not already
+    have — which is what §71.2 predicted and what makes the separate cap index
+    unnecessary for the assembly. -/
+theorem cap_rDR_merged {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool) (kdr : κ → β → Prop) {k : κ} {u w f : β}
+    (hup : up k u = true) (hdn : dn k w = true)
+    (hs : sAdjK (nd w) (nd f)) :
+    ∃ x₀ y₀, mixLe (tcl (mixStep nd up dn)) up dn (Sum.inl u) x₀ ∧
+      mixLe (tcl (mixStep nd up dn)) up dn (Sum.inl f) y₀ ∧
+      seedMix nd kdr x₀ y₀ :=
+  ⟨Sum.inl w, Sum.inl f, Or.inr (tcl.base (Or.inr ⟨k, hup, hdn⟩)),
+   Or.inl rfl, hs⟩
+
+/-- The same, in the form the frame consumes: the declared relation between a
+    node below the cap and the cap's `∃DR` witness really is `DR`. -/
+theorem cap_rDR_edge {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool) (kdr : κ → β → Prop)
+    (hirrE : ∀ e, ¬ tcl (mixStep nd up dn) e e)
+    (htr : ∀ a b c, tcl (mixStep nd up dn) a b → tcl (mixStep nd up dn) b c →
+      tcl (mixStep nd up dn) a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true →
+      tcl (mixStep nd up dn) x y)
+    (hsym : ∀ x y, seedMix nd kdr x y → seedMix nd kdr y x)
+    (hsep : ∀ x y z, mixLe (tcl (mixStep nd up dn)) up dn x y →
+      mixLe (tcl (mixStep nd up dn)) up dn x z → ¬ seedMix nd kdr y z)
+    {k : κ} {u w f : β} (hup : up k u = true) (hdn : dn k w = true)
+    (hs : sAdjK (nd w) (nd f)) :
+    odNet (odSeed (tcl (mixStep nd up dn)) up dn (seedMix nd kdr)
+      hirrE htr hud hsym hsep) (Sum.inl u) (Sum.inl f) = dr :=
+  odNet_dj _ (cap_rDR_merged nd up dn kdr hup hdn hs)
+
+/-- **THE BRIDGE.**  The cap order used by §§64–71 (`capP = tcl stepAll`, on
+    nodes) maps into the extraction's own `elt` (`tcl (mixStep …)`, on indices):
+    a `stepAll` step IS a `mixStep` step, by its first disjunct.
+
+    So every routing condition proved against `capP` transfers to the merged
+    frame unchanged, and §§63–71's work survives the restructure intact. -/
+theorem stepAll_to_elt {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool) {e f : β} (h : stepAll (nd e) (nd f)) :
+    tcl (mixStep nd up dn) e f := tcl.base (Or.inl h)
+
+/-- And the kernel-mediated edge, likewise — this is the one that makes a cap a
+    cap: everything below the kernel is below the cap. -/
+theorem updn_to_elt {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool) {k : κ} {u w : β}
+    (hup : up k u = true) (hdn : dn k w = true) :
+    tcl (mixStep nd up dn) u w := tcl.base (Or.inr ⟨k, hup, hdn⟩)
+
 end CapRouting
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -27644,6 +27724,10 @@ end OneShotDichotomy
 #print axioms mtkWitness_mem_mix
 #print axioms cap_rPPI
 #print axioms cap_rPO
+#print axioms cap_rDR_merged
+#print axioms cap_rDR_edge
+#print axioms stepAll_to_elt
+#print axioms updn_to_elt
 #print axioms capP_rho
 #print axioms capcap_ee_all_pp
 #print axioms capcap_ee_all_ppi
