@@ -5992,7 +5992,7 @@ demands:
 
 | | |
 |---|---|
-| served IN-KERNEL (`X` recurs on the chain) | **89.2%** — FREE |
+| served IN-KERNEL (`X` recurs on the chain) | ~~89.2%~~ **RETRACTED, F1** — see §67 |
 | need an EXTERNAL | 10.8% |
 | external count at windows 2p / 4p / 8p / 16p | **(1, 1, 1, 1) in every case — FLAT** |
 | cases needing an unbounded/growing set | **0** |
@@ -6001,7 +6001,8 @@ demands:
 
 For an ascending kernel `c(0) PP c(1) PP …` with `∃PP.D` present cofinally:
 
-**Case (a) — `D` recurs on the chain.** Served in-kernel; zero externals. 89.2%.
+**Case (a) — `D` recurs on the chain.** Served in-kernel; zero externals.
+(The rate formerly quoted here is RETRACTED — F1, §67.)
 
 **Case (b) — `D` fails on the chain above some `N`.** Every witness is off-chain.
 Now the transitivity fact does the work: if `c(i) PP w` then `c(j) PP c(i) PP w`
@@ -6024,7 +6025,8 @@ failed because they tried to bound a *generic* closure. This does not.
 **Scope, honestly:** the model class carries finitely many side regions, so the
 flat `1` has a low ceiling by construction — the *measurement* cannot exhibit
 unboundedness. The load is carried by the transitivity argument in 49.1, which
-is model-independent, and by the 89.2% in-kernel rate, which is not.
+is model-independent. (The in-kernel rate formerly cited here is RETRACTED —
+F1, §67: it measured persistence, on a population that was 100% artifact.)
 
 ### 49.3 Next
 
@@ -6044,8 +6046,11 @@ inside this probe:
 3. "cofinally recurring" was tested on a `3p` window, which admits demands that
    simply die above the sides' reach — everything then looks flat vacuously.
 
-**Only the IN-KERNEL rate is stable** across all four model-class variants:
-**89.2 / 90.2 / 83.5 / 91.3%**. Every other rate moved when the class changed.
+~~**Only the IN-KERNEL rate is stable** across all four model-class variants:
+**89.2 / 90.2 / 83.5 / 91.3%**.~~ **RETRACTED — F1, §67.** The stability was
+evidence of a SHARED artifact, not of robustness: none of the four variants
+touched the cofinite branch of the generator, so all four carried the same
+maximum region ℕ at the same ~38% frequency.
 Single rates from this probe are weak evidence; the load is on the theorems.
 
 **Method, sharpened:** `probe-before-lean-churn` needs a companion rule —
@@ -6079,7 +6084,8 @@ the entire proof.
 
 For a cofinally recurring one-shot vertical demand at a kernel, exactly one of:
 
-1. **chain recurrence** → served in-kernel, cost 0 (~90% measured);
+1. **chain recurrence** → served in-kernel, cost 0 (~~~90% measured~~ —
+   RETRACTED, F1, §67; there is no measurement behind this branch);
 2. **one cofinal external** → cost 1;
 3. **neither** → *no finite external set can serve it.*
 
@@ -6562,7 +6568,7 @@ compiled.
 | Hintikka fields (`e_clash/nobot/and/or`) | label is a real `mtk` — existing lemmas |
 | `ee_all` base→cap (`∀PP`) | **`cap_ee_all_pp` + `cap_stab_exists`** |
 | `ee_all` cap→base (`∀PPI`) | **`cap_ee_all_ppi` + `cap_reaches` + `cap_stab_up`** |
-| `ee_all` cap↔cap (`PO`) | `cap_po_cap` + `mty_no_all_po` |
+| `ee_all` cap↔cap | **CORRECTED (F3)**: `PO` only when `P`-incomparable (`cap_po_cap`); when `P`-related the `pp`/`ppi` rows apply — `capcap_ee_all_pp` / `_ppi`, §68 |
 | `ee_all` cap→outside (`PO`) | `cap_po_outside` + `mty_no_all_po` |
 | `∀DR` at a cap | **`cap_no_dr_edge` / `cap_no_dr_edge'`** — no `DR` edge touches a cap |
 | `ek_all` / `ke_all` kernel↔cap | same two lemmas, phases inside the window |
@@ -6570,6 +6576,11 @@ compiled.
 | **`e_ex` for cap nodes** | **the one open row** |
 
 ### 57.3 So the mixed quadrant is down to one row
+
+⚠ **CORRECTED (cold review, F3).** As written this was an overclaim: §58.1 later
+introduced the cap-internal order `P`, creating cap↔cap `pp`/`ppi` obligations
+that no lemma discharged. §68 supplies them (`capcap_ee_all_pp` / `_ppi`, using
+§64's `capP_rho`). With those, the sentence below now holds.
 
 Every `∀`-propagation obligation the cap creates is now certified, in both
 directions, plus the frame and the vacuities. What remains is `e_ex`: the cap's
@@ -6650,7 +6661,7 @@ artifact stays green (26,888 lines, 0 errors / 0 warnings / 0 sorries /
 | | |
 |---|---|
 | horizontal / ascending / descending quadrants | **general, done** |
-| mixed: frame, transfer, both `∀` directions, `e_ex` at `eq`/`pp`/`ppi`/`po` | **done** |
+| mixed: frame, transfer, both `∀` directions (incl. cap↔cap, §68 — F3), `e_ex` at `eq`/`pp`/`ppi`/`po` | **done** |
 | mixed: `e_ex` at `dr` | open, §58.2, fully specified |
 | mixed: assemble `MultiTierOk`, instantiate, tail | not started |
 
@@ -7042,3 +7053,100 @@ conditions to find wrong STRENGTHS.**
 
 Build: 27,385 lines, 1,400 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 67. THE COLD REVIEW OF §§43–61 — findings and corrections
+
+The packet went out at §61; the report is
+`papers/cold_review_mixed_quadrant/referee_report.zip`. The referee rebuilt the
+artifact independently (clean, 537 `#print axioms` lines, no `sorryAx`), verified
+`decidableSat_pofree`'s axiom profile, and re-derived the RCC5 composition and
+converse tables from finite-set semantics (0/25 mismatches). **Three findings.
+All three are accepted. None touches soundness.**
+
+### 67.1 F1 — `wp101`'s in-kernel rate is retracted
+
+`build_model`'s cofinite branch draws `Reg(True, rng.sample(range(6), rng.randint(0,3)))`,
+and `randint(0,3) = 0` with probability ¼ yields `Reg(True, ∅)` = **ℕ, the whole
+universe** — a region above every chain node with nothing above it. That is
+`wp100`'s maximal element, reintroduced into the class built to escape it.
+
+Reproduced locally (`rev2`, `rev3`):
+
+| | |
+|---|---|
+| P(ℕ among the sides) | 37.8% |
+| part D population drawn from ℕ-models | **173 / 173 = 100%** |
+| part D population with ℕ-models refused | **0** |
+| of the 173, still one-shot once ℕ is deleted | **0** |
+
+So every case part D counted was one-shot *only* because ℕ sat on top; delete ℕ
+and all 173 are persistent — which is exactly why "`X` recurs on the chain" and
+why they scored in-kernel. **The 91.3% measured persistence.**
+
+And the reasoning I built on it was backwards: §49.4 argued that stability across
+four model-class variants was evidence of robustness. **None of the four variants
+touched the cofinite branch**, so all four carried the same maximum at the same
+frequency. Stability across variants was evidence of a SHARED ARTIFACT — stable
+for the same reason `wp100`'s 100% was stable.
+
+Also confirmed: `_stab = 11` is wrong for the class, since the bounded-segment
+generator draws `M ∈ [stab+1, stab+5p]` by design. **295/300** models have a
+side/chain relation still changing above index 11, highest observed 65 — so the
+"exact, boundary-free" closed form is evaluated inside the unstable zone.
+
+**Corrections made:** every quoted rate struck in place (§49.1, §49.2, §49.4,
+§49.5). The self-correction count goes from four artifacts to **six**.
+
+### 67.2 F2 — §51.1's "forced, not chosen" was false
+
+The `djDown` argument establishes **no cap↔cap `DR`**, and nothing more. §51.1
+generalised it to every edge at a cap, and `amDisj`/`capSeed` implemented the
+general version via a catch-all — which is what made `∃DR` at a cap unservable.
+So §58.2's gap was **self-inflicted**.
+
+The referee's `odAmalgDR` (verified locally: compiles, **no axioms**) generalises
+`odAmalg` with a cap↔base disjointness and stays an `ODStruct`; `witnessStruct`
+is a concrete three-element instance where a cap is `PP`-above a downward-closed
+`U` **and** `DR` to a base node, with `witness_frame : Frame (odNet …)`. Its side
+condition `hBU` is literally §58.2's `hdbase`.
+
+**Corrections made:** the `amLt` docstring rewritten to claim only cap↔cap and to
+record that the generalisation is false; `amDisj` acknowledged as a
+simplification; `cap_no_dr_edge` noted as a theorem about `odSeedCap`, not caps.
+
+### 67.3 F3 — §58.1's fix opened a row §57.2 still called vacuous
+
+Giving `capElt` the order `P` created `ee_all` obligations at `pp` and `ppi`
+between caps. No lemma discharged them, and §57.2's table still recorded that row
+as the `PO` case — correct for §51.5's antichain, stale for `P ≠ ∅`. §57.3 and
+§59.1's "both `∀` directions done" were overclaims as written.
+
+The referee also named the missing side condition
+(`hPmodel : P m m' → I.rho (w m) (w m') = pp`) and gave a falsifier without it.
+**§64's `capP_rho` is exactly that condition** — it postdates the reviewed
+snapshot. Given it, §68 closes both rows in one line each.
+
+### 67.4 F4/F5/F6 — accepted, smaller
+
+* `mixedCompleteness_of_code` is `id`; its docstring restated as documentation.
+* `finite_pool_gives_cofinal_witness`'s gloss ("not a hypothesis about models")
+  was a category slip — trimmed.
+* `odSeedCap_old`'s "every obligation carries over" → "every obligation on
+  old×old edges".
+* Status tables corrected (§57.2, §57.3, §59.1).
+
+### 67.5 What the referee confirmed
+
+Soundness unconditional; `MixedCompleteness` the right premise and **not**
+oracle-inhabitable; `codesM`/`mixKT` genuinely `C₀`-computed (corroborated by
+`decidableSat_pofree` excluding `Classical.choice`); the composition table
+correct; **`odSeedCap_old` correct, read line by line**; and §49's ten theorems
+correct — *"after F1, they are the only part carrying it."*
+
+### 67.6 Ledger
+
+Eighteen reviews, a defect or overclaim in sixteen. This one found a probe whose
+headline was 100% artifact, a false structural argument with a machine-checked
+counter-witness, and a stale status table — in a development whose author had
+already recorded four self-corrections and believed the remaining risk was
+elsewhere.

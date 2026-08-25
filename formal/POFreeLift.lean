@@ -25563,10 +25563,13 @@ theorem cofinal_witness_serves_all {c : Nat → α} {D : Concept} {w : α}
     Proof: `recurrent_tail` says some pool member is chosen cofinally often, and
     `above_cofinal_is_above_all` upgrades "above cofinally many" to "above all".
 
-    This is the branch `wp101` E could not reach by measurement: with finitely
-    many externals available, genuine cofinality FORCES the good branch. And the
-    certificate's external set is finite BY CONSTRUCTION — so this is not a
-    hypothesis about models, it is a property of the object being built.
+    ⚠ **Gloss trimmed after cold review (F5).**  An earlier version added that
+    "the certificate's external set is finite BY CONSTRUCTION, so this is not a
+    hypothesis about models".  That is a category slip: `hpool` quantifies over
+    witnesses in the MODEL, and at extraction time there is no finite external
+    set yet — producing one is the goal.  The lemma is about a FIXED finite pool
+    of model elements; it does not say a model's witnesses come from one, and
+    §49.5's case 3 is exactly where they need not.
 
     It is also a UNIFORMIZATION of exactly the shape the campaign has wanted
     since W2′: pointwise serving from a finite pool upgrades, for free, to one
@@ -26154,7 +26157,10 @@ def odSeedCap (elt : β → β → Prop) (up dn : κ → β → Bool)
 /-- **THE TRANSFER THEOREM — adding a cap changes NOTHING below it.**
 
     On old nodes the capped net is the uncapped net, edge for edge. So every
-    obligation already certified for the extraction's structure carries over.
+    obligation ON OLD×OLD EDGES carries over. (Cold review, F5: the earlier
+    "every obligation … carries over unchanged" overreached — a `∀`-obligation is
+    not an edge-local object in general, and the new base↔cap edges are exactly
+    where the work is.)
 
     With cap↔base `DR` pairs present (§58.2) this needs `hdbase`: **anything old
     that lies below the cap must ALREADY be seed-disjoint from the cap's `DR`
@@ -26775,9 +26781,12 @@ def decidableSat_pofree (C0 : Concept) (h : MixedCompleteness C0) :
     Decidable (Satisfiable C0) :=
   decidableSat_of_codes C0 _ h
 
-/-- Exhibiting one accepted code discharges the premise — so the premise is a
-    statement about EXISTENCE of a certificate, never oracle-inhabitable by a
-    `Satisfiable` proof. -/
+/-- Documentation, not content (cold review, F4): `MixedCompleteness C0` is
+    DEFINITIONALLY its own hypothesis, so this is `id`.  It records the intended
+    reading — the premise is discharged by EXHIBITING an accepting code — but the
+    non-oracle-inhabitability it alludes to is established by the SHAPE of
+    `MixedCompleteness` (a decidable bounded existential over a computed list),
+    not by this theorem. -/
 theorem mixedCompleteness_of_code (C0 : Concept)
     (h : Satisfiable C0 → ∃ p ∈ codesM C0 (mixKT C0) (mixKT C0) (mixKT C0),
       (p.1).mtAcceptB p.2 C0 = true) : MixedCompleteness C0 := h
@@ -26884,6 +26893,47 @@ theorem capP_rho (hI : RCC5Interp I) (m m' : MTKNode I C0) (h : capP m m') :
     I.rho m.x m'.x = pp :=
   tcl_sub_pp hI (fun n : MTKNode I C0 => n.x) (fun n => n.hx) stepAll
     (fun a b hs => stepAll_rho hI a b hs) m m' h
+
+/-! #### §68 — the cap↔cap `∀` rows (cold review, F3)
+
+§58.1 gave `capElt` a cap-internal order `P` so a cap's own `∃PP` could be
+served. The referee observed that this created two `MultiTierOk` obligations
+which no lemma discharged — `ee_all` at `pp` from a cap to a higher cap, and at
+`ppi` back — while §57.2's table still recorded that row as the `PO` case, stale
+since `P ≠ ∅`.
+
+The referee also identified the missing side condition:
+`hPmodel : P m m' → I.rho (w m) (w m') = pp`, without which `P` is abstract and a
+falsifier exists (`w` constant, `P` nonempty). **`capP_rho` (§64) is exactly that
+condition** for the extraction's declared order — it postdates the reviewed
+snapshot. Given it, both rows are one line each. -/
+
+/-- `ee_all` at `pp` between caps: a `∀PP` obligation at a cap reaches every
+    higher cap, because `capP` steps are real model `PP` edges. -/
+theorem capcap_ee_all_pp (hI : RCC5Interp I) {m m' : MTKNode I C0}
+    (hP : capP m m') {X : Concept}
+    (hX : Concept.all pp X ∈ mty C0 I m.x) : sat I m'.x X :=
+  (mem_mty.mp hX).2 m'.x m'.hx (capP_rho hI m m' hP)
+
+/-- `ee_all` at `ppi` between caps: the reverse direction, by converse. -/
+theorem capcap_ee_all_ppi (hI : RCC5Interp I) {m m' : MTKNode I C0}
+    (hP : capP m m') {Y : Concept}
+    (hY : Concept.all ppi Y ∈ mty C0 I m'.x) : sat I m.x Y := by
+  have hr : I.rho m'.x m.x = ppi := by
+    rw [hI.conv_ m.x m'.x m.hx m'.hx, capP_rho hI m m' hP]; rfl
+  exact (mem_mty.mp hY).2 m.x m.hx hr
+
+/-- Membership form of `capcap_ee_all_pp` — what the assembly consumes. -/
+theorem capcap_pp_in_mty (hI : RCC5Interp I) {m m' : MTKNode I C0}
+    (hP : capP m m') {X : Concept}
+    (hX : Concept.all pp X ∈ mty C0 I m.x) : X ∈ mty C0 I m'.x :=
+  mem_mty.mpr ⟨cl_all (mem_mty.mp hX).1, capcap_ee_all_pp hI hP hX⟩
+
+/-- Membership form of `capcap_ee_all_ppi`. -/
+theorem capcap_ppi_in_mty (hI : RCC5Interp I) {m m' : MTKNode I C0}
+    (hP : capP m m') {Y : Concept}
+    (hY : Concept.all ppi Y ∈ mty C0 I m'.x) : Y ∈ mty C0 I m.x :=
+  mem_mty.mpr ⟨cl_all (mem_mty.mp hY).1, capcap_ee_all_ppi hI hP hY⟩
 
 end CapRouting
 
@@ -27091,15 +27141,24 @@ single cap serve several CONFLICTING demands round-robin — the certified
 are the same shape; the only new case is transitivity inside the tower, which is
 `Nat.lt_trans`. -/
 
-/-- **WHY THE CAP CARRIES NO DISJOINTNESS — forced, not chosen.**  Two cap
-    nodes both sit above the whole closure `U`, so `djDown` would push their
-    disjointness down onto `U`'s elements and make them disjoint from
-    themselves. So a cap is always a POSET-shaped structure: `PP`/`PPI`/`PO`/`EQ`
-    only. A cap node's `∃DR` demand must therefore be served from the BASE, by a
-    node disjoint from the entire closure — and `cofinal_dr_all` (already
-    certified) supplies exactly that: a cofinally-`DR` external is `DR` to the
-    whole chain, with no middle case, the mirror of
-    `above_cofinal_is_above_all`. -/
+/-- **NO CAP↔CAP DISJOINTNESS — forced.**  Two cap nodes both sit above the
+    whole closure `U`, so `djDown` would push their disjointness down onto `U`'s
+    elements and make them disjoint from themselves (for nonempty `U`).
+
+    ⚠ **CORRECTED after cold review (F2).**  An earlier version of this docstring
+    concluded from that argument that a cap is always POSET-shaped —
+    `PP`/`PPI`/`PO`/`EQ` only — and hence that `amDisj`'s catch-all is forced.
+    **That generalisation is FALSE.**  The argument covers cap↔cap and nothing
+    else; cap↔BASE disjointness is consistent, and the referee's `odAmalgDR`
+    exhibits an `ODStruct` carrying it, with a concrete three-element instance in
+    which a cap is `PP`-above a downward-closed `U` AND `DR` to a base node.
+
+    So `amDisj` IS a simplification, and `cap_no_dr_edge` is a theorem about
+    `odSeedCap`, not about caps. §58.2's gap was self-inflicted, and §61 repairs
+    it by giving `capSeed` its `dseed` block — which is what a cap's `∃DR` needs,
+    served from the BASE by a node disjoint from the whole closure
+    (`cofinal_dr_all`: a cofinally-`DR` external is `DR` to the whole chain, no
+    middle case, the mirror of `above_cofinal_is_above_all`). -/
 def amLt (S : ODStruct N) (U : N → Prop) {M : Type} (P : M → M → Prop) :
     N ⊕ M → N ⊕ M → Prop
   | .inl x, .inl y => S.lt x y
@@ -27318,6 +27377,10 @@ end OneShotDichotomy
 #print axioms ppWitness_mem
 #print axioms cap_rPP
 #print axioms capP_rho
+#print axioms capcap_ee_all_pp
+#print axioms capcap_ee_all_ppi
+#print axioms capcap_pp_in_mty
+#print axioms capcap_ppi_in_mty
 #print axioms capNodes_length_le
 #print axioms capRoot_mem
 #print axioms capNodes_H_covers
