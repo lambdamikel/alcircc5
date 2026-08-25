@@ -27106,6 +27106,49 @@ theorem merged_hppE (hI : RCC5Interp I) {β κ : Type} (nd : β → MTKNode I C0
 
 end CapRouting
 
+/-! ### §74 — `MergedExtraction`: the mixed quadrant as ONE certificate statement
+
+§60 named `MixedCompleteness` — the pipeline's single premise — but it mentions
+`codesM` and `mtAcceptB`, i.e. the ENCODING. That is machinery, not mathematics,
+and it is certified (`encodeMT_accepts`, `encodeMT_mem_codesM`).
+
+This section factors it out. `MergedExtraction` says only that a satisfiable
+∀PO-free concept admits a VALID `Fin`-indexed certificate within the `mixKT`
+bounds — no encoder, no checker, no enumeration. `mixedCompleteness_of_merged`
+then discharges `MixedCompleteness` from it.
+
+So the mixed quadrant reduces to `MergedExtraction`, and everything between a
+certificate and `Decidable (Satisfiable C0)` is now machine-checked. -/
+
+/-- **THE MIXED QUADRANT'S REMAINING TARGET.**  Every satisfiable concept admits
+    a valid certificate on `Fin` indices, inside the `mixKT` bounds, with labels
+    drawn from `cl C0`. -/
+def MergedExtraction (C0 : Concept) : Prop :=
+  Satisfiable C0 →
+    ∃ (nE nK : Nat) (T : MultiTier (Fin nE) (Fin nK)) (e : Fin nE),
+      MultiTierOk T ∧ C0 ∈ T.tauE e ∧
+      nE ≤ mixKT C0 ∧ nK ≤ mixKT C0 ∧ (∀ k, T.p k ≤ mixKT C0) ∧
+      (∀ f, T.tauE f ∈ allListsLe (cl C0) (cl C0).length) ∧
+      (∀ k a, T.phase k a ∈ allListsLe (cl C0) (cl C0).length)
+
+/-- **THE ENCODING STEP IS CERTIFIED.**  A valid bounded certificate encodes to
+    an accepted code inside the fixed enumeration — so `MergedExtraction` is all
+    that stands between the fragment and `Decidable (Satisfiable C0)`. -/
+theorem mixedCompleteness_of_merged (C0 : Concept) (h : MergedExtraction C0) :
+    MixedCompleteness C0 := by
+  intro hsat
+  obtain ⟨nE, nK, T, e, hok, hC0, hnE, hnK, hP, htau, hph⟩ := h hsat
+  refine ⟨(encodeMT T, e.val), ?_, encodeMT_accepts T hok C0 e hC0⟩
+  exact encodeMT_mem_codesM C0 (mixKT C0) (mixKT C0) (mixKT C0) T hnE hnK hP
+    htau hph e.val (Nat.le_trans (Nat.le_of_lt e.isLt) hnE)
+
+/-- **THE FRAGMENT, MODULO ONE CERTIFICATE-EXISTENCE STATEMENT.**  Composing
+    §60's pipeline with §74's encoding step: a valid bounded certificate for
+    every satisfiable concept gives a genuine decision procedure. -/
+def decidableSat_pofree_merged (C0 : Concept) (h : MergedExtraction C0) :
+    Decidable (Satisfiable C0) :=
+  decidableSat_pofree C0 (mixedCompleteness_of_merged C0 h)
+
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
 §49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
@@ -27736,6 +27779,8 @@ end OneShotDichotomy
 #print axioms witness_realizes_requirement
 #print axioms cap_all_ppi_sound
 #print axioms decidableSat_pofree
+#print axioms mixedCompleteness_of_merged
+#print axioms decidableSat_pofree_merged
 #print axioms mixedCompleteness_of_code
 #print axioms mixedCompleteness_of_unsat
 #print axioms cap_required_in_mty

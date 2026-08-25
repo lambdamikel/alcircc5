@@ -7429,3 +7429,56 @@ quadrant is what remained for the extraction before caps were ever introduced,
 plus the node set now including caps.
 
 Build: 27,846 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 74. `MergedExtraction` — the mixed quadrant as ONE certificate statement
+
+§60's `MixedCompleteness` names the pipeline's premise, but it mentions `codesM`
+and `mtAcceptB` — the ENCODING. That is machinery, and it is certified. §74
+factors it out.
+
+```
+MergedExtraction C0 :=
+  Satisfiable C0 →
+    ∃ nE nK (T : MultiTier (Fin nE) (Fin nK)) (e : Fin nE),
+      MultiTierOk T ∧ C0 ∈ T.tauE e ∧
+      nE ≤ mixKT C0 ∧ nK ≤ mixKT C0 ∧ (∀ k, T.p k ≤ mixKT C0) ∧
+      labels drawn from cl C0
+```
+
+No encoder, no checker, no enumeration: just *a valid certificate exists, within
+bounds computed from `C₀`*.
+
+* `mixedCompleteness_of_merged` — the encoding step, certified
+  (`encodeMT_accepts` + `encodeMT_mem_codesM`);
+* `decidableSat_pofree_merged (C0) (h : MergedExtraction C0) :
+  Decidable (Satisfiable C0)` — the composition.
+
+### 74.1 What this settles
+
+**Everything between a certificate and a decision procedure is now
+machine-checked.** Soundness (unconditional), the fixed enumeration, the
+encoder, the checker, the reduction. The fragment's remaining mathematics is
+exactly one sentence: *a satisfiable ∀PO-free concept admits a valid bounded
+certificate.*
+
+The chain of named premises has been shrinking in the right direction:
+
+| | premise | mentions |
+|---|---|---|
+| §60 | `MixedCompleteness` | codes, checker, enumeration |
+| §74 | **`MergedExtraction`** | certificates and bounds only |
+
+### 74.2 What remains, concretely
+
+To discharge `MergedExtraction` for the merged construction:
+
+1. the extraction's data — node set (with caps), kernels, `up`/`dn`, `kdr`;
+2. the debts of `mtkKernelsOD_of_debts` — `hppE` done (§73), the rest
+   (`hdr`, `hb`, `hup`, `hdn`, `hdrk`, `hq*`) all have their base facts
+   (`seedMix_dr`, `seedMix_hb`, the banks, `cross_*_of_shared`);
+3. `he_ex`/`hk_ex` — reduced to the five routing conditions, all discharged
+   (§§63–72);
+4. reindex onto `Fin` (`reindexMT`, `reindexMT_ok`) and the counting against
+   `mixKT`.
+
+Build: 27,884 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
