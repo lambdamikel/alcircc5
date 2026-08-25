@@ -8041,3 +8041,51 @@ is now large enough that identical passages are common.
 
 Build: 28,925 lines, 1,466 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 88. THE COVERAGE INDUCTION — conditional, with the residue isolated
+
+Item A's coverage lemma, built on three new pieces:
+
+* **`skipNodes_mono`** — more fuel never removes a node;
+* **`skipNodes_mono_le`** — the same in the fuel ORDER;
+* **`skipNodes_step_sub`** — a member's own one-step closure lies inside the
+  whole closure at one more fuel.
+
+Then:
+
+> **`skipNodes_covers_of_fixed`** — if one more fuel adds nothing (the closure
+> has reached a FIXPOINT), the closure is CLOSED: every vertical demand at every
+> member is either kernel-served or has its witness inside.
+
+### 88.1 What this buys
+
+The coverage induction is now **done modulo one hypothesis**, and that hypothesis
+is exactly §86's half 2: *fuel `|typeEnum C0|` reaches a fixpoint*.
+
+So item A has become a single, sharply stated question — the same shape the rest
+of the campaign took when it went well:
+
+| | |
+|---|---|
+| definition | `skipNodes` ✓ |
+| bound | `skipNodes_length_le` ✓ |
+| coverage step | `skipNodes_ppWitness_mem` ✓ |
+| monotonicity | `skipNodes_mono`, `_mono_le` ✓ |
+| transitivity | `skipNodes_step_sub` ✓ |
+| coverage | `skipNodes_covers_of_fixed` ✓ **modulo the fixpoint** |
+| **the fixpoint at `|typeEnum C0|`** | **outstanding — all that is left of A** |
+
+### 88.2 Why the fixpoint is plausible and not yet proved
+
+`wp106` measured the closure reaching a fixpoint at fuel 4 in every one of 222
+cases. The theory says it must: the closure is bounded (`skipNodes_length_le`)
+and monotone (`skipNodes_mono`), so the SIZES are non-decreasing and bounded,
+hence eventually constant — but constant size does not give list equality
+without `Nodup`, and `skipNodes` as defined can repeat nodes.
+
+So the honest next step is either to dedup the closure (making size-stabilisation
+give the fixpoint) or to bound the fuel directly by the layer argument. The first
+is mechanical; the second is §86's half 2 proper.
+
+Build: 29,062 lines, 1,471 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

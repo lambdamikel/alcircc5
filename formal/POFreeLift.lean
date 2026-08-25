@@ -28151,6 +28151,180 @@ theorem skipNodes_length_le (kser : MTKNode I C0 → Concept → Bool)
     | or _ _ => exact Nat.zero_le _
     | all _ _ => exact Nat.zero_le _
 
+/-- `flatMap` is monotone in its function, pointwise. -/
+theorem flatMap_mono {A B : Type} (l : List A) (f g : A → List B)
+    (h : ∀ a ∈ l, ∀ b ∈ f a, b ∈ g a) :
+    ∀ b ∈ l.flatMap f, b ∈ l.flatMap g := by
+  intro b hb
+  obtain ⟨a, ha, hbf⟩ := List.mem_flatMap.mp hb
+  exact List.mem_flatMap.mpr ⟨a, ha, h a ha b hbf⟩
+
+/-- **MONOTONE IN THE FUEL.**  More fuel never removes a node. -/
+theorem skipNodes_mono (kser : MTKNode I C0 → Concept → Bool) :
+    ∀ (fuel : Nat) (n : MTKNode I C0),
+      ∀ m ∈ skipNodes kser n fuel, m ∈ skipNodes kser n (fuel + 1) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro n m hm
+    rw [skipNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact self_mem_skipNodes kser _ _
+    · exact absurd h List.not_mem_nil
+  | succ f ih =>
+    intro n m hm
+    rw [skipNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact self_mem_skipNodes kser _ _
+    · rw [skipNodes]
+      refine List.mem_cons_of_mem _ (flatMap_mono _ _ _ ?_ m hm')
+      rintro ⟨F, hF⟩ _ b hb
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                    else skipNodes kser (ppWitness n hF) (f + 1))
+          by_cases hk : kser n c = true
+          · rw [if_pos hk]
+            revert hb
+            show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppWitness n hF) f) → _
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · rw [if_neg hk]
+            revert hb
+            show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppWitness n hF) f) → _
+            rw [if_neg hk]; exact fun h => ih _ b h
+        | ppi =>
+          show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                    else skipNodes kser (ppiWitness n hF) (f + 1))
+          by_cases hk : kser n c = true
+          · rw [if_pos hk]
+            revert hb
+            show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppiWitness n hF) f) → _
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · rw [if_neg hk]
+            revert hb
+            show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppiWitness n hF) f) → _
+            rw [if_neg hk]; exact fun h => ih _ b h
+        | dr => exact absurd hb List.not_mem_nil
+        | po => exact absurd hb List.not_mem_nil
+        | eq => exact absurd hb List.not_mem_nil
+      | top => exact absurd hb List.not_mem_nil
+      | bot => exact absurd hb List.not_mem_nil
+      | atom _ => exact absurd hb List.not_mem_nil
+      | natom _ => exact absurd hb List.not_mem_nil
+      | and _ _ => exact absurd hb List.not_mem_nil
+      | or _ _ => exact absurd hb List.not_mem_nil
+      | all _ _ => exact absurd hb List.not_mem_nil
+
+/-- Monotone in the fuel ORDER, by iterating `skipNodes_mono`. -/
+theorem skipNodes_mono_le (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) : ∀ {f g : Nat}, f ≤ g →
+      ∀ m ∈ skipNodes kser n f, m ∈ skipNodes kser n g := by
+  intro f g hfg
+  induction g with
+  | zero =>
+    have : f = 0 := Nat.le_zero.mp hfg
+    subst this; exact fun m hm => hm
+  | succ g' ih =>
+    rcases Nat.lt_or_ge f (g' + 1) with h | h
+    · exact fun m hm => skipNodes_mono kser g' n m (ih (by omega) m hm)
+    · have : f = g' + 1 := Nat.le_antisymm hfg h
+      subst this; exact fun m hm => hm
+
+/-- **ONE-STEP TRANSITIVITY.**  A member's own one-step closure lies inside the
+    whole closure at one more fuel. -/
+theorem skipNodes_step_sub (kser : MTKNode I C0 → Concept → Bool) :
+    ∀ (f : Nat) (n m : MTKNode I C0), m ∈ skipNodes kser n f →
+      ∀ b ∈ skipNodes kser m 1, b ∈ skipNodes kser n (f + 1) := by
+  intro f
+  induction f with
+  | zero =>
+    intro n m hm b hb
+    rw [skipNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact hb
+    · exact absurd h List.not_mem_nil
+  | succ f' ih =>
+    intro n m hm b hb
+    rw [skipNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | hm'
+    · exact skipNodes_mono_le kser m (by omega) b hb
+    · obtain ⟨p, hp, hmp⟩ := List.mem_flatMap.mp hm'
+      rw [skipNodes]
+      refine List.mem_cons_of_mem _ (List.mem_flatMap.mpr ⟨p, hp, ?_⟩)
+      obtain ⟨F, hF⟩ := p
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                    else skipNodes kser (ppWitness n hF) (f' + 1))
+          by_cases hk : kser n c = true
+          · exfalso
+            revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppWitness n hF) f') → False
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · rw [if_neg hk]
+            revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppWitness n hF) f') → _
+            rw [if_neg hk]
+            exact fun h => ih (ppWitness n hF) m h b hb
+        | ppi =>
+          show b ∈ (if kser n c then ([] : List (MTKNode I C0))
+                    else skipNodes kser (ppiWitness n hF) (f' + 1))
+          by_cases hk : kser n c = true
+          · exfalso
+            revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppiWitness n hF) f') → False
+            rw [if_pos hk]; exact fun h => absurd h List.not_mem_nil
+          · rw [if_neg hk]
+            revert hmp
+            show m ∈ (if kser n c then ([] : List (MTKNode I C0))
+                      else skipNodes kser (ppiWitness n hF) f') → _
+            rw [if_neg hk]
+            exact fun h => ih (ppiWitness n hF) m h b hb
+        | dr => exact absurd hmp List.not_mem_nil
+        | po => exact absurd hmp List.not_mem_nil
+        | eq => exact absurd hmp List.not_mem_nil
+      | top => exact absurd hmp List.not_mem_nil
+      | bot => exact absurd hmp List.not_mem_nil
+      | atom _ => exact absurd hmp List.not_mem_nil
+      | natom _ => exact absurd hmp List.not_mem_nil
+      | and _ _ => exact absurd hmp List.not_mem_nil
+      | or _ _ => exact absurd hmp List.not_mem_nil
+      | all _ _ => exact absurd hmp List.not_mem_nil
+
+/-- **THE COVERAGE INDUCTION, CONDITIONALLY.**  If one more fuel adds nothing —
+    the closure has reached a FIXPOINT — then it is CLOSED: every vertical
+    demand at every member is either kernel-served or has its witness inside.
+
+    This is item A's coverage lemma, with the residue isolated to the fixpoint
+    hypothesis. §86's half 2 is exactly the claim that fuel `|typeEnum C0|`
+    reaches one. -/
+theorem skipNodes_covers_of_fixed (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) (fuel : Nat)
+    (hfix : ∀ b ∈ skipNodes kser n (fuel + 1), b ∈ skipNodes kser n fuel) :
+    ∀ m ∈ skipNodes kser n fuel, ∀ (c : Concept)
+      (hF : Concept.ex pp c ∈ mtk C0 I m.x m.k),
+      kser m c = true ∨ ppWitness m hF ∈ skipNodes kser n fuel := by
+  intro m hm c hF
+  by_cases hk : kser m c = true
+  · exact Or.inl hk
+  · refine Or.inr (hfix _ ?_)
+    exact skipNodes_step_sub kser fuel n m hm _
+      (skipNodes_ppWitness_mem kser m hF (by
+        cases h : kser m c with
+        | false => rfl
+        | true => exact absurd h hk) 0)
+
 end SkipClosure
 
 end KernelService
@@ -28809,6 +28983,10 @@ end OneShotDichotomy
 #print axioms skipNodes_ppWitness_mem
 #print axioms skipNodes_ppiWitness_mem
 #print axioms skipNodes_length_le
+#print axioms skipNodes_mono
+#print axioms skipNodes_mono_le
+#print axioms skipNodes_step_sub
+#print axioms skipNodes_covers_of_fixed
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup
