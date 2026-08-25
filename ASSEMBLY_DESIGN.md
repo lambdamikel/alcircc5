@@ -8089,3 +8089,51 @@ is mechanical; the second is §86's half 2 proper.
 
 Build: 29,062 lines, 1,471 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 89. THE DEDUP ROUTE FAILS — and why
+
+§88.2 offered two ways to the fixpoint: dedup the closure so size-stabilisation
+gives list equality, or bound the fuel by the layer argument (§86's half 2). The
+dedup route was the cheaper-looking one. **It does not work.**
+
+### 89.1 The argument, and where it breaks
+
+The intended chain was:
+
+1. dedup, so the closure is `Nodup`;
+2. `S ⊆ step S` and both `Nodup`, so if `|step S| ≤ |S|` then `step S ⊆ S` —
+   which is exactly **`mem_of_saturated`** (§47, built for this);
+3. sizes are non-decreasing and BOUNDED, so some stage does not grow, giving (2)
+   and hence the fixpoint.
+
+**Step 3 is false here.** The only bound available is
+`skipNodes_length_le : |skipNodes kser n f| ≤ mtkBound C0 f`, and
+
+```
+mtkBound C0 (k+1) = 1 + |cl C0| · mtkBound C0 k
+```
+
+**grows with the fuel** — exponentially. So the sizes are bounded at each stage
+by a bound that outruns the stage count: running `K` stages permits size `K`
+only if `K > mtkBound C0 K`, which never holds. The pigeonhole has nothing to
+bite on.
+
+### 89.2 What would fix it, and why it is half 2
+
+`mem_of_saturated` needs a bound UNIFORM in the fuel. The only candidate is a
+bound on the number of DISTINCT nodes the skipping closure can reach — and that
+is precisely what §86's half 2 supplies via the layer argument.
+
+Deduping by LABEL rather than by node would give a uniform bound
+(`|typeEnum C0| · (mdepth C0 + 1)`), but it changes the object: two nodes with
+the same label can have different relations to the rest, and the certificate
+reads relations as well as labels. So that is not a shortcut either.
+
+**Conclusion: half 2 is not avoidable by bookkeeping.** It is the remaining
+mathematics of item A, and of the fragment.
+
+### 89.3 State
+
+Everything in §88's table stands; only the route to the fixpoint is narrowed.
+`skipNodes_covers_of_fixed` remains the coverage lemma, and its hypothesis
+remains the target.
