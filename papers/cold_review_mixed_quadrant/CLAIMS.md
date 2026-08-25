@@ -39,9 +39,9 @@ nothing else in the pipeline is open. **Not claimed:** that
 
 ## Known open, stated by the author
 
-1. **`e_ex` at `r = dr` for cap nodes** (§58.2). No `DR` edge touches a cap, so
-   an `∃DR` in a cap's label is unservable. Fix specified (`dseed` + `hdbase`),
-   not implemented.
+1. **`e_ex` ROUTING for cap nodes.** All five relation cases now have their edge
+   (§61.2); what is missing is showing the extraction's data supplies a TARGET
+   for each demand. (§58.2's `dseed` gap is now implemented — see §61.)
 2. **Assembling `MultiTierOk`** for the capped certificate, instantiating
    `M`/`U`/`P`/`capOver`, and the reindex/encode tail.
 3. Therefore `MixedCompleteness` itself.

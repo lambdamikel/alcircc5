@@ -25787,12 +25787,14 @@ def embC : β ⊕ κ → (β ⊕ M) ⊕ κ
 
 /-- The seed is untouched, and cap nodes are in no seed pair — so the cap is
     disjoint from nothing, as §51.1 showed a cap must be. -/
-def capSeed (seed : β ⊕ κ → β ⊕ κ → Prop) :
+def capSeed (seed : β ⊕ κ → β ⊕ κ → Prop) (dseed : M → β → Prop) :
     (β ⊕ M) ⊕ κ → (β ⊕ M) ⊕ κ → Prop
   | .inl (.inl e), .inl (.inl f) => seed (.inl e) (.inl f)
   | .inl (.inl e), .inr k => seed (.inl e) (.inr k)
   | .inr k, .inl (.inl e) => seed (.inr k) (.inl e)
   | .inr k, .inr k' => seed (.inr k) (.inr k')
+  | .inl (.inr m), .inl (.inl f) => dseed m f
+  | .inl (.inl e), .inl (.inr m) => dseed m e
   | _, _ => False
 
 /-- **REFLECTION: on old nodes the extended order IS the old order.**  Adding the
@@ -25986,15 +25988,18 @@ theorem capElt_ud (elt : β → β → Prop) (up dn : κ → β → Bool)
   · exact absurd h1 (by simp [capUp])
 
 /-- `hsym` for the extended seed. -/
-theorem capSeed_sym (seed : β ⊕ κ → β ⊕ κ → Prop)
+theorem capSeed_sym (seed : β ⊕ κ → β ⊕ κ → Prop) (dseed : M → β → Prop)
     (hsym : ∀ x y, seed x y → seed y x) :
-    ∀ x y : (β ⊕ M) ⊕ κ, capSeed seed x y → capSeed seed y x := by
+    ∀ x y : (β ⊕ M) ⊕ κ, capSeed seed dseed x y → capSeed seed dseed y x := by
   rintro (a | k) (b | k') h
   · cases a with
-    | inr _ => exact h.elim
-    | inl e =>
+    | inr _ =>
       cases b with
       | inr _ => exact h.elim
+      | inl _ => exact h
+    | inl e =>
+      cases b with
+      | inr _ => exact h
       | inl f => exact hsym _ _ h
   · cases a with
     | inr _ => exact h.elim
@@ -26010,12 +26015,17 @@ theorem capSeed_sym (seed : β ⊕ κ → β ⊕ κ → Prop)
     hypotheses and the OLD `hsep` finishes it. -/
 theorem capSeed_sep (elt : β → β → Prop) (up dn : κ → β → Bool)
     (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
-    (seed : β ⊕ κ → β ⊕ κ → Prop)
-    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z) :
+    (seed : β ⊕ κ → β ⊕ κ → Prop) (dseed : M → β → Prop)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z)
+    (hdsep : ∀ m f, dseed m f → ∀ x : (β ⊕ M) ⊕ κ,
+      mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inr m)) →
+      ¬ mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inl f))) :
     ∀ x y z : (β ⊕ M) ⊕ κ,
       mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x y →
       mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x z →
-      ¬ capSeed seed y z := by
+      ¬ capSeed seed dseed y z := by
   intro x y z h1 h2 hs
   have key : ∀ (y₀ z₀ : β ⊕ κ),
       mixLe (capElt (M := M) elt U P) (capUp up) (capDn dn capOver) x (embC y₀) →
@@ -26036,14 +26046,21 @@ theorem capSeed_sep (elt : β → β → Prop) (up dn : κ → β → Bool)
       | inr _ => exact hs
   | inl a =>
     cases a with
-    | inr _ => exact hs
+    | inr m =>
+      cases z with
+      | inr _ => exact hs
+      | inl b =>
+        cases b with
+        | inr _ => exact hs
+        | inl f => exact hdsep m f hs x h1 h2
     | inl e =>
       cases z with
       | inr k' => exact key (.inl e) (.inr k') h1 h2 hs
       | inl b =>
         cases b with
         | inl f => exact key (.inl e) (.inl f) h1 h2 hs
-        | inr _ => exact hs
+        | inr m =>
+          exact hdsep m e hs x h2 h1
 
 /-- The reverse of `capMixLe_old_old`: old order embeds. -/
 theorem capMixLe_of_old (elt : β → β → Prop) (up dn : κ → β → Bool)
@@ -26055,57 +26072,67 @@ theorem capMixLe_of_old (elt : β → β → Prop) (up dn : κ → β → Bool)
   · exact Or.inl rfl
   · exact Or.inr ((capMixLt_old elt up dn U P capOver x y).mpr hlt)
 
-/-- A seed pair in the extended structure is a seed pair of old nodes. -/
-theorem capSeed_old (seed : β ⊕ κ → β ⊕ κ → Prop)
-    {x y : (β ⊕ M) ⊕ κ} (h : capSeed seed x y) :
-    ∃ x₀ y₀ : β ⊕ κ, x = embC x₀ ∧ y = embC y₀ ∧ seed x₀ y₀ := by
+/-- **ANYTHING ABOVE A CAP NODE IS A CAP NODE.**  Cap nodes are below no base
+    node and below no kernel, so the only things above them are other caps. -/
+theorem cap_above_is_cap (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool) (m : M)
+    {x : (β ⊕ M) ⊕ κ}
+    (h : mixLe (capElt elt U P) (capUp up) (capDn dn capOver)
+      (Sum.inl (Sum.inr m)) x) : ∃ m', x = Sum.inl (Sum.inr m') := by
+  rcases h with rfl | hlt
+  · exact ⟨m, rfl⟩
+  · cases x with
+    | inl a =>
+      cases a with
+      | inr m' => exact ⟨m', rfl⟩
+      | inl _ => exact hlt.elim
+    | inr k =>
+      obtain ⟨e', hup, hle⟩ := hlt
+      cases e' with
+      | inr _ => exact absurd hup (by simp [capUp])
+      | inl f' =>
+        rcases hle with hh | hh
+        · exact (inr_ne_inl _ _ hh).elim
+        · exact hh.elim
+
+/-- A seed pair in the extended structure is either a pair of OLD nodes, or one
+    of the new cap↔base `DR` pairs. -/
+theorem capSeed_old (seed : β ⊕ κ → β ⊕ κ → Prop) (dseed : M → β → Prop)
+    {x y : (β ⊕ M) ⊕ κ} (h : capSeed seed dseed x y) :
+    (∃ x₀ y₀ : β ⊕ κ, x = embC x₀ ∧ y = embC y₀ ∧ seed x₀ y₀) ∨
+    (∃ m f, (x = Sum.inl (Sum.inr m) ∧ y = Sum.inl (Sum.inl f) ∨
+             x = Sum.inl (Sum.inl f) ∧ y = Sum.inl (Sum.inr m)) ∧ dseed m f) := by
   cases x with
   | inr k =>
     cases y with
-    | inr k' => exact ⟨.inr k, .inr k', rfl, rfl, h⟩
+    | inr k' => exact Or.inl ⟨.inr k, .inr k', rfl, rfl, h⟩
     | inl b =>
       cases b with
-      | inl f => exact ⟨.inr k, .inl f, rfl, rfl, h⟩
+      | inl f => exact Or.inl ⟨.inr k, .inl f, rfl, rfl, h⟩
       | inr _ => exact h.elim
   | inl a =>
     cases a with
-    | inr _ => exact h.elim
-    | inl e =>
+    | inr m =>
       cases y with
-      | inr k' => exact ⟨.inl e, .inr k', rfl, rfl, h⟩
+      | inr _ => exact h.elim
       | inl b =>
         cases b with
-        | inl f => exact ⟨.inl e, .inl f, rfl, rfl, h⟩
         | inr _ => exact h.elim
+        | inl f => exact Or.inr ⟨m, f, Or.inl ⟨rfl, rfl⟩, h⟩
+    | inl e =>
+      cases y with
+      | inr k' => exact Or.inl ⟨.inl e, .inr k', rfl, rfl, h⟩
+      | inl b =>
+        cases b with
+        | inl f => exact Or.inl ⟨.inl e, .inl f, rfl, rfl, h⟩
+        | inr m => exact Or.inr ⟨m, e, Or.inr ⟨rfl, rfl⟩, h⟩
 
 /-- **THE CAPPED FRAME.**  Assembling the five hypotheses: the extraction's
     structure EXTENDED BY A CAP is still ordered-disjoint, so `odNet_frame`
     supplies its RCC5 frame — the cap is now literally just another external. -/
 def odSeedCap (elt : β → β → Prop) (up dn : κ → β → Bool)
     (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
-    (seed : β ⊕ κ → β ⊕ κ → Prop)
-    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
-    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
-    (hsym : ∀ x y, seed x y → seed y x)
-    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z)
-    (hUdown : ∀ e f, elt e f → U f → U e)
-    (hcov : ∀ k e, up k e = true → capOver k = true → U e)
-    (hPirr : ∀ m, ¬ P m m) (hPtr : ∀ a b c, P a b → P b c → P a c) :
-    ODStruct ((β ⊕ M) ⊕ κ) :=
-  odSeed (capElt elt U P) (capUp up) (capDn dn capOver) (capSeed seed)
-    (capElt_irr elt U P hirrE hPirr) (capElt_trans elt U P htr hUdown hPtr)
-    (capElt_ud elt up dn U P capOver hud hcov) (capSeed_sym seed hsym)
-    (capSeed_sep elt up dn U P capOver seed hsep)
-
-/-- **THE TRANSFER THEOREM — adding a cap changes NOTHING below it.**
-
-    On old nodes the capped net is the uncapped net, edge for edge. So every
-    obligation already certified for the extraction's structure carries over to
-    the capped one unchanged, and only the genuinely NEW edges (base↔cap,
-    kernel↔cap, cap↔cap) need anything proved. -/
-theorem odSeedCap_old (elt : β → β → Prop) (up dn : κ → β → Bool)
-    (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
-    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (seed : β ⊕ κ → β ⊕ κ → Prop) (dseed : M → β → Prop)
     (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
     (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
     (hsym : ∀ x y, seed x y → seed y x)
@@ -26113,25 +26140,72 @@ theorem odSeedCap_old (elt : β → β → Prop) (up dn : κ → β → Bool)
     (hUdown : ∀ e f, elt e f → U f → U e)
     (hcov : ∀ k e, up k e = true → capOver k = true → U e)
     (hPirr : ∀ m, ¬ P m m) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    (hdsep : ∀ m f, dseed m f → ∀ x : (β ⊕ M) ⊕ κ,
+      mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inr m)) →
+      ¬ mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inl f))) :
+    ODStruct ((β ⊕ M) ⊕ κ) :=
+  odSeed (capElt elt U P) (capUp up) (capDn dn capOver) (capSeed seed dseed)
+    (capElt_irr elt U P hirrE hPirr) (capElt_trans elt U P htr hUdown hPtr)
+    (capElt_ud elt up dn U P capOver hud hcov) (capSeed_sym seed dseed hsym)
+    (capSeed_sep elt up dn U P capOver seed dseed hsep hdsep)
+
+/-- **THE TRANSFER THEOREM — adding a cap changes NOTHING below it.**
+
+    On old nodes the capped net is the uncapped net, edge for edge. So every
+    obligation already certified for the extraction's structure carries over.
+
+    With cap↔base `DR` pairs present (§58.2) this needs `hdbase`: **anything old
+    that lies below the cap must ALREADY be seed-disjoint from the cap's `DR`
+    partner.** That is not a technicality — `djDown` forces it semantically, and
+    `cofinal_dr_all` supplies it on the model side. Without it the cap really
+    would create new base-level disjointness, and the theorem would be false. -/
+theorem odSeedCap_old (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop) (dseed : M → β → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z)
+    (hUdown : ∀ e f, elt e f → U f → U e)
+    (hcov : ∀ k e, up k e = true → capOver k = true → U e)
+    (hPirr : ∀ m, ¬ P m m) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    (hdsep : ∀ m f, dseed m f → ∀ x : (β ⊕ M) ⊕ κ,
+      mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inr m)) →
+      ¬ mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inl f)))
+    (hdbase : ∀ m f, dseed m f → ∀ z : β ⊕ κ,
+      mixLe (capElt elt U P) (capUp up) (capDn dn capOver) (embC z)
+        (Sum.inl (Sum.inr m)) → seed z (Sum.inl f))
     (x y : β ⊕ κ) :
-    odNet (odSeedCap (M := M) elt up dn U P capOver seed
-        hirrE htr hud hsym hsep hUdown hcov hPirr hPtr) (embC x) (embC y)
+    odNet (odSeedCap (M := M) elt up dn U P capOver seed dseed
+        hirrE htr hud hsym hsep hUdown hcov hPirr hPtr hdsep) (embC x) (embC y)
       = odNet (odSeed elt up dn seed hirrE htr hud hsym hsep) x y := by
   have hlt : ∀ a b : β ⊕ κ,
-      (odSeedCap (M := M) elt up dn U P capOver seed
-        hirrE htr hud hsym hsep hUdown hcov hPirr hPtr).lt (embC a) (embC b)
+      (odSeedCap (M := M) elt up dn U P capOver seed dseed
+        hirrE htr hud hsym hsep hUdown hcov hPirr hPtr hdsep).lt (embC a) (embC b)
         ↔ (odSeed elt up dn seed hirrE htr hud hsym hsep).lt a b :=
     fun a b => capMixLt_old elt up dn U P capOver a b
   have hdj : ∀ a b : β ⊕ κ,
-      (odSeedCap (M := M) elt up dn U P capOver seed
-        hirrE htr hud hsym hsep hUdown hcov hPirr hPtr).disj (embC a) (embC b)
+      (odSeedCap (M := M) elt up dn U P capOver seed dseed
+        hirrE htr hud hsym hsep hUdown hcov hPirr hPtr hdsep).disj
+          (embC a) (embC b)
         ↔ (odSeed elt up dn seed hirrE htr hud hsym hsep).disj a b := by
     intro a b
     constructor
     · rintro ⟨x₀, y₀, hx, hy, hs⟩
-      obtain ⟨x₁, y₁, rfl, rfl, hs'⟩ := capSeed_old seed hs
-      exact ⟨x₁, y₁, capMixLe_old_old elt up dn U P capOver _ _ hx,
-        capMixLe_old_old elt up dn U P capOver _ _ hy, hs'⟩
+      rcases capSeed_old seed dseed hs with
+        ⟨x₁, y₁, rfl, rfl, hs'⟩ | ⟨m, f, hshape, hd⟩
+      · exact ⟨x₁, y₁, capMixLe_old_old elt up dn U P capOver _ _ hx,
+          capMixLe_old_old elt up dn U P capOver _ _ hy, hs'⟩
+      · rcases hshape with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+        · exact ⟨a, .inl f, Or.inl rfl,
+            capMixLe_old_old elt up dn U P capOver _ _ hy, hdbase m f hd a hx⟩
+        · exact ⟨.inl f, b,
+            capMixLe_old_old elt up dn U P capOver _ _ hx, Or.inl rfl,
+            hsym _ _ (hdbase m f hd b hy)⟩
     · rintro ⟨x₀, y₀, hx, hy, hs⟩
       exact ⟨embC x₀, embC y₀, capMixLe_of_old elt up dn U P capOver _ _ hx,
         capMixLe_of_old elt up dn U P capOver _ _ hy, by
@@ -26157,16 +26231,21 @@ theorem odSeedCap_old (elt : β → β → Prop) (up dn : κ → β → Bool)
 
 theorem odSeedCap_frame (elt : β → β → Prop) (up dn : κ → β → Bool)
     (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
-    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (seed : β ⊕ κ → β ⊕ κ → Prop) (dseed : M → β → Prop)
     (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
     (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
     (hsym : ∀ x y, seed x y → seed y x)
     (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z)
     (hUdown : ∀ e f, elt e f → U f → U e)
     (hcov : ∀ k e, up k e = true → capOver k = true → U e)
-    (hPirr : ∀ m, ¬ P m m) (hPtr : ∀ a b c, P a b → P b c → P a c) :
-    Frame (odNet (odSeedCap (M := M) elt up dn U P capOver seed
-      hirrE htr hud hsym hsep hUdown hcov hPirr hPtr)) := odNet_frame _
+    (hPirr : ∀ m, ¬ P m m) (hPtr : ∀ a b c, P a b → P b c → P a c)
+    (hdsep : ∀ m f, dseed m f → ∀ x : (β ⊕ M) ⊕ κ,
+      mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inr m)) →
+      ¬ mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+        (Sum.inl (Sum.inl f))) :
+    Frame (odNet (odSeedCap (M := M) elt up dn U P capOver seed dseed
+      hirrE htr hud hsym hsep hUdown hcov hPirr hPtr hdsep)) := odNet_frame _
 
 end CapWiring
 
@@ -26174,7 +26253,7 @@ section CapEdges
 
 variable {β κ M : Type} {elt : β → β → Prop} {up dn : κ → β → Bool}
   {U : β → Prop} {P : M → M → Prop} {capOver : κ → Bool}
-  {seed : β ⊕ κ → β ⊕ κ → Prop}
+  {seed : β ⊕ κ → β ⊕ κ → Prop} {dseed : M → β → Prop}
   {hirrE : ∀ e, ¬ elt e e} {htr : ∀ a b c, elt a b → elt b c → elt a c}
   {hud : ∀ k x y, up k x = true → dn k y = true → elt x y}
   {hsym : ∀ x y, seed x y → seed y x}
@@ -26182,71 +26261,63 @@ variable {β κ M : Type} {elt : β → β → Prop} {up dn : κ → β → Bool
   {hUdown : ∀ e f, elt e f → U f → U e}
   {hcov : ∀ k e, up k e = true → capOver k = true → U e}
   {hPirr : ∀ m, ¬ P m m} {hPtr : ∀ a b c, P a b → P b c → P a c}
+  {hdsep : ∀ m f, dseed m f → ∀ x : (β ⊕ M) ⊕ κ,
+    mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+      (Sum.inl (Sum.inr m)) →
+    ¬ mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+      (Sum.inl (Sum.inl f))}
 
-local notation "OC" => odSeedCap (M := M) elt up dn U P capOver seed
-  hirrE htr hud hsym hsep hUdown hcov hPirr hPtr
+local notation "OC" => odSeedCap (M := M) elt up dn U P capOver seed dseed
+  hirrE htr hud hsym hsep hUdown hcov hPirr hPtr hdsep
 
-/-- **THE CAP IS DISJOINT FROM NOTHING** — as §51.1 showed a cap must be. -/
-theorem cap_not_disj (m : M) (x : (β ⊕ M) ⊕ κ) :
-    ¬ (OC).disj x (Sum.inl (Sum.inr m)) := by
-  rintro ⟨x₀, y₀, _, hy, hs⟩
-  obtain ⟨x₁, y₁, rfl, rfl, _⟩ := capSeed_old seed hs
-  obtain ⟨z, hz, _⟩ := capMixLe_to_old elt up dn U P capOver hy
-  cases z with
-  | inl e =>
-    have := hz
-    simp only [embC] at this
-    exact inr_ne_inl _ _ (Sum.inl.inj this)
-  | inr k => exact inr_ne_inl _ _ hz.symm
+/-- **TWO CAP NODES ARE NEVER DISJOINT** — §51.1's forced fact, now a theorem
+    about the wired structure: anything above a cap is a cap, and the seed
+    relates no two caps. -/
+theorem cap_disj_cap_false (m m' : M) :
+    ¬ (OC).disj (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inr m')) := by
+  rintro ⟨x₀, y₀, hx, hy, hs⟩
+  obtain ⟨a, rfl⟩ := cap_above_is_cap elt up dn U P capOver m hx
+  obtain ⟨b, rfl⟩ := cap_above_is_cap elt up dn U P capOver m' hy
+  exact hs
 
 /-- An external inside the closure is `PP`-below every cap node. -/
 theorem cap_above_U {e : β} (hU : U e) (m : M) :
     odNet (OC) (Sum.inl (Sum.inl e)) (Sum.inl (Sum.inr m)) = pp :=
   odNet_lt _ hU
 
-/-- An external outside the closure is `PO` to every cap node — and `∀PO` is
-    absent, so it constrains nothing. -/
-theorem cap_po_outside {e : β} (hU : ¬ U e) (m : M) :
-    odNet (OC) (Sum.inl (Sum.inl e)) (Sum.inl (Sum.inr m)) = po :=
-  odNet_po _ (fun h => inr_ne_inl _ _ (Sum.inl.inj h).symm) hU (fun h => h)
-    (cap_not_disj m _)
-
 /-- A covered kernel is `PP`-below every cap node. -/
 theorem cap_above_kernel {k : κ} (hk : capOver k = true) (m : M) :
     odNet (OC) (Sum.inr k) (Sum.inl (Sum.inr m)) = pp :=
   odNet_lt _ ⟨Sum.inr m, hk, Or.inl rfl⟩
 
-/-- **THE LAYER EDGE.**  A cap node below another in the cap-internal order is
-    `PP`-below it — which is what lets a cap node's OWN `∃PP` demand be served,
-    by the next layer of §52's stack. This is the edge §53's first wiring
-    lacked, found by writing `e_ex`. -/
+/-- **THE LAYER EDGE.**  A cap below another in the cap order is `PP`-below it —
+    what lets a cap's own `∃PP` be served by the next layer of §52's stack. -/
 theorem cap_pp_cap {m m' : M} (hP : P m m') :
     odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inr m')) = pp :=
   odNet_lt _ hP
 
-/-- Cap nodes INCOMPARABLE in the cap order are `PO` — the §51.5 fan.  Taking
-    `P` empty recovers a pure antichain, in which conflicting demands never
-    constrain one another. -/
+/-- Cap nodes incomparable in the cap order are `PO` — §51.5's fan.  Taking `P`
+    empty recovers a pure antichain. -/
 theorem cap_po_cap {m m' : M} (hmm : m ≠ m')
     (h1 : ¬ P m m') (h2 : ¬ P m' m) :
     odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inr m')) = po :=
   odNet_po _ (fun h => hmm (Sum.inr.inj (Sum.inl.inj h))) h1 h2
-    (cap_not_disj m' _)
+    (cap_disj_cap_false m m')
 
+/-- **THE CAP'S `DR` EDGE (§58.2).**  A declared cap↔base `DR` pair really is a
+    `DR` edge — which is what lets a cap node's `∃DR` demand be served, from the
+    BASE, exactly as §51.2 said it must be. -/
+theorem cap_dr_edge {m : M} {f : β} (hd : dseed m f) :
+    odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inl f)) = dr :=
+  odNet_dj _ ⟨Sum.inl (Sum.inr m), Sum.inl (Sum.inl f), Or.inl rfl, Or.inl rfl,
+    hd⟩
 
-/-- **NO `DR` EDGE TOUCHES A CAP NODE** — so `∀DR` at a cap node fires
-    vacuously, and no `∃DR` demand can be served BY a cap node either (it must
-    be served from the base, §51.2). -/
-theorem cap_no_dr_edge (m : M) (x : (β ⊕ M) ⊕ κ) :
-    odNet (OC) (Sum.inl (Sum.inr m)) x ≠ dr := by
-  intro h
-  exact cap_not_disj m x ((OC).djSym _ _ (odNet_dr_inv _ h))
-
-/-- The mirror: no `DR` edge INTO a cap node either. -/
-theorem cap_no_dr_edge' (m : M) (x : (β ⊕ M) ⊕ κ) :
-    odNet (OC) x (Sum.inl (Sum.inr m)) ≠ dr := by
-  intro h
-  exact cap_not_disj m x (odNet_dr_inv _ h)
+/-- An external outside the closure and not disjoint from the cap is `PO` to it —
+    and `∀PO` is absent, so it constrains nothing. -/
+theorem cap_po_outside {e : β} (hU : ¬ U e) (m : M)
+    (hnd : ¬ (OC).disj (Sum.inl (Sum.inl e)) (Sum.inl (Sum.inr m))) :
+    odNet (OC) (Sum.inl (Sum.inl e)) (Sum.inl (Sum.inr m)) = po :=
+  odNet_po _ (fun h => inr_ne_inl _ _ (Sum.inl.inj h).symm) hU (fun h => h) hnd
 
 end CapEdges
 
@@ -26989,18 +27060,18 @@ end OneShotDichotomy
 #print axioms capMixLe_old_old
 #print axioms capSeed_sep
 #print axioms capMixLe_of_old
+#print axioms cap_above_is_cap
 #print axioms capSeed_old
 #print axioms odSeedCap
 #print axioms odSeedCap_old
 #print axioms odSeedCap_frame
-#print axioms cap_not_disj
+#print axioms cap_disj_cap_false
+#print axioms cap_dr_edge
 #print axioms cap_above_U
 #print axioms cap_po_outside
 #print axioms cap_above_kernel
 #print axioms cap_pp_cap
 #print axioms cap_po_cap
-#print axioms cap_no_dr_edge
-#print axioms cap_no_dr_edge'
 #print axioms layer_cut
 #print axioms layer_recursion_terminates
 #print axioms layer_stack_bounded

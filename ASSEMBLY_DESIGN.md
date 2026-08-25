@@ -6746,3 +6746,52 @@ and the gap's shape is typechecked rather than asserted in prose. That is what
 work, assembling `MultiTierOk`, instantiating, reindexing, encoding. Route 3 (a
 cold review of §§43–60) is now worth more than before, because there is a
 complete statement to attack.
+
+## 61. §58.2 IMPLEMENTED — the cap's `DR` edge
+
+`capSeed` now carries `dseed : M → β → Prop`, the cap↔base `DR` pairs, with two
+side conditions that fall out of the proofs:
+
+| condition | needed by | meaning |
+|---|---|---|
+| `hdsep` | `capSeed_sep` | nothing lies below both a cap and its `DR` partner |
+| `hdbase` | `odSeedCap_old` | anything old below the cap is ALREADY seed-disjoint from the partner |
+
+`hdbase` is not a technicality. Without it the cap would create base-level
+disjointness the uncapped structure never declared, and the transfer theorem
+would be **false** — `djDown` forces it semantically, and `cofinal_dr_all`
+supplies it on the model side. §51.2 predicted exactly this condition.
+
+### 61.1 What changed
+
+* **`cap_dr_edge`** — a declared cap↔base pair really is a `DR` edge. This is the
+  point: `∃DR` at a cap is now servable, from the base, as §51.2 said it must be.
+* **`cap_above_is_cap`** (new, `propext` only) — anything above a cap node is a
+  cap node. Cap nodes are below no base and no kernel.
+* **`cap_disj_cap_false`** — §51.1's forced fact is now a theorem about the wired
+  structure: two caps are never disjoint, because anything above a cap is a cap
+  and the seed relates no two caps.
+* **`capSeed_old`** restated as a disjunction (old pair, or a `dseed` pair).
+* **`cap_not_disj` and `cap_no_dr_edge` are RETIRED** — both are now false, by
+  design. A cap IS disjoint from its `DR` partner.
+* **`cap_po_outside` weakened honestly**: with partners in play, "outside the
+  closure" no longer implies `PO`, so the lemma takes the non-disjointness as a
+  hypothesis. Taking `dseed` empty recovers the old statement.
+
+### 61.2 §58.3's table, updated
+
+| `e_ex` case at a cap | status |
+|---|---|
+| `r = eq` | `mtk_ex_eq` + `odNet_self` |
+| `r = pp` | `cap_pp_cap` — the layer edge |
+| `r = ppi` | `cap_reaches` |
+| `r = po` | `cap_po_outside` / `cap_po_cap` |
+| `r = dr` | **closed at the frame level** — `cap_dr_edge` |
+
+All five relation cases now have their edge. What remains for `e_ex` is not a
+missing edge but the **routing**: showing the extraction's data supplies a target
+for each demand. That is the assembly, and it is where §55's lesson applies —
+these edges are an interface, and it has not yet been consumed.
+
+Build: 27,101 lines, 1,377 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
