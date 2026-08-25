@@ -6994,3 +6994,51 @@ catches missing OPTIONS only when you try to supply it.
 | `rDR` | **the substantive one** — needs the BASE's `seed` to already declare disjointness from everything below the cap. That is a condition on `seedMix` (§44), not on the cap. |
 
 Build: 27,365 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 66. `capDseed` WEAKENED TO THE DOWNWARD CLOSURE — found by supplying `rDR`
+
+### 66.1 What supplying `rDR` showed
+
+The base's seed is `seedMix nd kdr`, whose external block is **`sAdjK`**: one
+node is the other's `∃DR` witness. That is a narrow STEP relation — as it must
+be, since declaring more is the read-off problem §43 refuted.
+
+§65's `capDseed` demanded `seed z (Sum.inl f)` for **every** old `z` below the
+cap. Against a step relation that is unachievable: `sAdjK` relates direct witness
+pairs, not everything below a cap.
+
+### 66.2 The fix was already in the architecture
+
+`odSeed`'s disjointness is the **downward closure** of the seed:
+
+```
+disj x y := ∃ x₀ y₀, mixLe x x₀ ∧ mixLe y y₀ ∧ seed x₀ y₀
+```
+
+So `capDseed` should demand `disj z (Sum.inl f)`, not `seed z (Sum.inl f)` —
+strictly weaker, and it is what the base's disjointness actually means. §43's
+`odSeed` design (disjointness as a downward closure, which made `djDown` free)
+pays a second time here.
+
+Both side conditions survive the weakening:
+
+* `capDseed_hdbase` — still **axiom-free**, still the definition;
+* `capDseed_hdsep` — now via `djIrr` / `ltNotDj` (which `odSeed` derives from
+  `hsep`) instead of `hsep` directly.
+
+And `odSeedCap_old` still goes through: from `disj a (Sum.inl f)` and
+`mixLe b (Sum.inl f)`, `mixLe_trans` gives `disj a b`.
+
+### 66.3 Method note
+
+This is the second thing found by SUPPLYING rather than writing a consumer
+(§65.3 was the first). Both were mis-specifications on my side that a consumer
+typechecks around: §62's `cap_he_ex` accepted an `rPPI` that was too narrow, and
+§65's `capDseed` stated a condition too strong to hold. Neither is caught by
+writing the consumer — only by trying to discharge it.
+
+**Sharpened rule: write the consumer to find missing EDGES; supply the
+conditions to find wrong STRENGTHS.**
+
+Build: 27,385 lines, 1,400 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

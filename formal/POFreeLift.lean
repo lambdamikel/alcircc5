@@ -26178,7 +26178,8 @@ theorem odSeedCap_old (elt : β → β → Prop) (up dn : κ → β → Bool)
         (Sum.inl (Sum.inl f)))
     (hdbase : ∀ m f, dseed m f → ∀ z : β ⊕ κ,
       mixLe (capElt elt U P) (capUp up) (capDn dn capOver) (embC z)
-        (Sum.inl (Sum.inr m)) → seed z (Sum.inl f))
+        (Sum.inl (Sum.inr m)) →
+      (odSeed elt up dn seed hirrE htr hud hsym hsep).disj z (Sum.inl f))
     (x y : β ⊕ κ) :
     odNet (odSeedCap (M := M) elt up dn U P capOver seed dseed
         hirrE htr hud hsym hsep hUdown hcov hPirr hPtr hdsep) (embC x) (embC y)
@@ -26201,11 +26202,13 @@ theorem odSeedCap_old (elt : β → β → Prop) (up dn : κ → β → Bool)
       · exact ⟨x₁, y₁, capMixLe_old_old elt up dn U P capOver _ _ hx,
           capMixLe_old_old elt up dn U P capOver _ _ hy, hs'⟩
       · rcases hshape with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
-        · exact ⟨a, .inl f, Or.inl rfl,
-            capMixLe_old_old elt up dn U P capOver _ _ hy, hdbase m f hd a hx⟩
-        · exact ⟨.inl f, b,
-            capMixLe_old_old elt up dn U P capOver _ _ hx, Or.inl rfl,
-            hsym _ _ (hdbase m f hd b hy)⟩
+        · obtain ⟨x₁, y₁, hxa, hyf, hs'⟩ := hdbase m f hd a hx
+          exact ⟨x₁, y₁, hxa, mixLe_trans elt up dn htr hud
+            (capMixLe_old_old elt up dn U P capOver b (Sum.inl f) hy) hyf, hs'⟩
+        · obtain ⟨x₁, y₁, hxb, hyf, hs'⟩ := hdbase m f hd b hy
+          exact ⟨y₁, x₁, mixLe_trans elt up dn htr hud
+            (capMixLe_old_old elt up dn U P capOver a (Sum.inl f) hx) hyf, hxb,
+            hsym _ _ hs'⟩
     · rintro ⟨x₀, y₀, hx, hy, hs⟩
       exact ⟨embC x₀, embC y₀, capMixLe_of_old elt up dn U P capOver _ _ hx,
         capMixLe_of_old elt up dn U P capOver _ _ hy, by
@@ -26281,17 +26284,28 @@ theorem capU_cov (elt : β → β → Prop) (up : κ → β → Bool)
     of the base's own `hsep`. -/
 def capDseed (elt : β → β → Prop) (up dn : κ → β → Bool) (U : β → Prop)
     (P : M → M → Prop) (capOver : κ → Bool) (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z)
     (m : M) (f : β) : Prop :=
   ∀ z : β ⊕ κ, mixLe (capElt (M := M) elt U P) (capUp up) (capDn dn capOver)
-    (embC z) (Sum.inl (Sum.inr m)) → seed z (Sum.inl f)
+    (embC z) (Sum.inl (Sum.inr m)) →
+    (odSeed elt up dn seed hirrE htr hud hsym hsep).disj z (Sum.inl f)
 
 /-- `hdbase` for `capDseed` — free, it IS the definition. -/
 theorem capDseed_hdbase (elt : β → β → Prop) (up dn : κ → β → Bool)
     (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
-    (seed : β ⊕ κ → β ⊕ κ → Prop) :
-    ∀ m f, capDseed elt up dn U P capOver seed m f → ∀ z : β ⊕ κ,
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z) :
+    ∀ m f, capDseed elt up dn U P capOver seed hirrE htr hud hsym hsep m f →
+      ∀ z : β ⊕ κ,
       mixLe (capElt (M := M) elt U P) (capUp up) (capDn dn capOver) (embC z)
-        (Sum.inl (Sum.inr m)) → seed z (Sum.inl f) :=
+        (Sum.inl (Sum.inr m)) →
+      (odSeed elt up dn seed hirrE htr hud hsym hsep).disj z (Sum.inl f) :=
   fun _ _ hd z hz => hd z hz
 
 /-- **`hdsep` for `capDseed`** — a consequence of the base's own `hsep`.  If
@@ -26300,8 +26314,11 @@ theorem capDseed_hdbase (elt : β → β → Prop) (up dn : κ → β → Bool)
 theorem capDseed_hdsep (elt : β → β → Prop) (up dn : κ → β → Bool)
     (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
     (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    (hsym : ∀ x y, seed x y → seed y x)
     (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z) :
-    ∀ m f, capDseed elt up dn U P capOver seed m f →
+    ∀ m f, capDseed elt up dn U P capOver seed hirrE htr hud hsym hsep m f →
       ∀ x : (β ⊕ M) ⊕ κ,
         mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
           (Sum.inl (Sum.inr m)) →
@@ -26310,7 +26327,10 @@ theorem capDseed_hdsep (elt : β → β → Prop) (up dn : κ → β → Bool)
   intro m f hd x h1 h2
   obtain ⟨x₀, rfl, hold⟩ := capMixLe_to_old elt up dn U P capOver
     (y := Sum.inl f) h2
-  exact hsep x₀ x₀ (Sum.inl f) (Or.inl rfl) hold (hd x₀ h1)
+  have hdj := hd x₀ h1
+  rcases hold with rfl | hlt
+  · exact (odSeed elt up dn seed hirrE htr hud hsym hsep).djIrr _ hdj
+  · exact (odSeed elt up dn seed hirrE htr hud hsym hsep).ltNotDj _ _ hlt hdj
 
 end CapWiring
 
