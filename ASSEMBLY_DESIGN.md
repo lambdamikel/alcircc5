@@ -6381,3 +6381,53 @@ left is narrower and now precisely nameable:
 
 Nothing here is open mathematics. The ledger's presumption still applies: this
 is *"no open step identified"*, not *"none exists"*.
+
+## 54. CONVERGENCE CHECK (2026-08-24)
+
+### 54.1 What is DONE — general, no side condition beyond the fragment
+
+| quadrant | theorem | status |
+|---|---|---|
+| horizontal (∃DR/PO/EQ, ∀ non-PO) | `decidableSat_hfrag` | **general** |
+| ascending vertical | `decidableSat_vtower` / `…G` / `…RR` | **general** |
+| descending vertical | `decidableSat_vtowerRRI` | **general** |
+| mixed (∃PO + ∃PP) | `decidableSat_Cmix` | **witness only** |
+
+The **tail is not a risk**: `reindexMT`, `reindexMT_ok`, `codesM`,
+`encodeMT_mem_codesM`, `encodeMT_accepts` all exist, and the whole pipeline runs
+end-to-end on the witness (`mixCert_ok` → `mixTower_accepted` →
+`decidableSat_Cmix`). The template is demonstrated; only the general instance is
+missing.
+
+### 54.2 What is LEFT
+
+| # | item | size | risk |
+|---|---|---|---|
+| A | cap LABELS: apply the 9 "lemma ready" rows of §52.1 to cap-indexed data | large | **highest** |
+| B | `e_ex` for cap nodes, with §52's layer stack as actual nodes | medium | high |
+| C | instantiate `M`, `U`, `capOver`; discharge `hUdown`/`hcov` concretely | medium | medium |
+| D | reindex → encode → `mix_hcompl` → `decidableSat_mix` | small | low (templated) |
+| E | the fragment theorem `∀ C0, POFree C0 → Decidable (Satisfiable C0)`; check the mixed extraction subsumes the other three | small–medium | medium |
+
+### 54.3 Are we converging? — the honest reading
+
+**For.** The obligation narrowed strictly every round this session: *generic
+closure bound* → *trichotomy* → *placement* → *labelling* → *wiring* → three
+named items. **No step this session needed new mathematics** — every one reused
+a piece already in the file (`recurrent_tail`, `cofinal_dr_all`, `path_cut`,
+`odNet_frame`, `sat_all_pp_up`). And twice an interface was satisfied by exactly
+what the construction already guaranteed (`odSeed`'s five hypotheses; the cap's
+two side conditions), which is what a fitting architecture looks like.
+
+**Against.** Items A and B are the moment obligations are first *applied* — and
+this campaign's own recorded method lesson is *"write the consumer before
+believing the interface; four interfaces and three parameters failed exactly
+when something first used them."* The highest-risk step is still ahead. This
+session also refuted its own headline reading four times, and §§43–53 are
+entirely **unreviewed** while the ledger stands at a defect in 15 of 17 reviews.
+
+**Estimate.** 2–4 sessions of this session's size (~1,000 lines, ~67
+declarations) if nothing breaks; realistically **3–6** with one or two genuine
+setbacks. "Fully certified" would mean one Lean theorem,
+`∀ C0, POFree C0 → Decidable (Satisfiable C0)`, 0 sorries, no premise — and
+still **unreviewed**, which on this project has never yet meant correct.
