@@ -8677,3 +8677,50 @@ and everything upstream took the new definitions unchanged.
 
 Build: 30,231 lines, 1,515 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 103. COMPOSING THE HALVES — the remaining quantity is the RUN COUNT
+
+Composing §102's two fixpoints into a mixed statement does **not** go through the
+obvious route, and working out why localises what is actually left.
+
+### 103.1 Why a combined `kser` does not work
+
+Take `kserM m c := kserU m c || kserD m c`. Soundness is fine — both disjuncts
+are sound. But the mixed `hext` still fails, for §99's reason: a type repeat on a
+MIXED path gives a segment that is neither a `PP`-chain nor a `PPI`-chain, so
+neither `kserU` nor `kserD` fires, and nothing marks the demand served.
+
+### 103.2 Why the union of the two closures is not the node set
+
+A node of the upward closure has `∃PPI` demands, whose witnesses lie in the
+DOWNWARD closure **of that node** — not of the root. So the node set must be
+closed under both step kinds, which is the mixed closure again.
+
+### 103.3 The decomposition that does work
+
+A mixed path is a sequence of maximal **runs**, each of one direction. Each run
+is a chain, so §102's argument applies to it: **within a run the types are
+distinct, so every run has length at most `|typeEnum C0|`.**
+
+Hence
+
+```
+mixed path length  ≤  (number of runs) × |typeEnum C0|
+```
+
+and **the only open quantity is the number of runs** — the number of direction
+switches along a path the closure extends.
+
+### 103.4 What that localises
+
+This is §92's route 3 ("bound the interleaving"), now the *only* remaining piece
+of item A rather than one of three alternatives. Everything else is certified:
+each run's bound (§102), the coverage given a fixpoint (§88), the counting
+(§87), and both directions' machinery.
+
+A switch point is a node carrying a non-kernel-served demand of one direction
+having been reached by a step of the other. Nothing yet forces such points to be
+few, and nothing yet forbids it — this is the honest open item.
+
+Build: 30,231 lines, 1,515 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
