@@ -28052,6 +28052,107 @@ definition and its coverage lemma.
 
 No `def` is offered here: a malformed placeholder would be worse than prose. -/
 
+/-! ##### §86.3 — the skipping closure
+
+Item A's composition. `skipNodes` is `ppNodes` with the kernel-served demands
+DROPPED — which per `wp106` is what makes it terminate. The kernel-service test
+is a PARAMETER `kser`, so this fixes no particular kernel family; the extraction
+supplies it and §85's `kernelServes_no_external` is its soundness. -/
+
+section SkipClosure
+
+variable {α : Type} {I : Interp α} {C0 : Concept}
+
+/-- **THE SKIPPING CLOSURE.**  Follow a vertical demand only when the node's own
+    kernel does NOT serve it. -/
+noncomputable def skipNodes (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) : Nat → List (MTKNode I C0)
+  | 0 => [n]
+  | fuel + 1 => n :: (mtk C0 I n.x n.k).attach.flatMap
+      (fun p => match p with
+        | ⟨.ex pp c, hF⟩ =>
+            if kser n c then [] else skipNodes kser (ppWitness n hF) fuel
+        | ⟨.ex ppi c, hF⟩ =>
+            if kser n c then [] else skipNodes kser (ppiWitness n hF) fuel
+        | _ => [])
+
+theorem self_mem_skipNodes (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) (fuel : Nat) : n ∈ skipNodes kser n fuel := by
+  cases fuel with
+  | zero => rw [skipNodes]; exact List.mem_cons_self
+  | succ f => rw [skipNodes]; exact List.mem_cons_self
+
+/-- **THE COVERAGE STEP.**  A vertical demand the kernel does NOT serve has its
+    witness in the closure at one more fuel. -/
+theorem skipNodes_ppWitness_mem (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) (hns : kser n c = false)
+    (fuel : Nat) : ppWitness n hF ∈ skipNodes kser n (fuel + 1) := by
+  rw [skipNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex pp c, hF⟩, List.mem_attach _ _, ?_⟩)
+  show ppWitness n hF ∈
+    (if kser n c then [] else skipNodes kser (ppWitness n hF) fuel)
+  rw [if_neg (by rw [hns]; exact Bool.false_ne_true)]
+  exact self_mem_skipNodes kser _ fuel
+
+/-- The `∃PPI` mirror. -/
+theorem skipNodes_ppiWitness_mem (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) (hns : kser n c = false)
+    (fuel : Nat) : ppiWitness n hF ∈ skipNodes kser n (fuel + 1) := by
+  rw [skipNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex ppi c, hF⟩, List.mem_attach _ _, ?_⟩)
+  show ppiWitness n hF ∈
+    (if kser n c then [] else skipNodes kser (ppiWitness n hF) fuel)
+  rw [if_neg (by rw [hns]; exact Bool.false_ne_true)]
+  exact self_mem_skipNodes kser _ fuel
+
+/-- **AND IT IS BOUNDED** by the same `mtkBound` as `ppNodes` — skipping only
+    removes branches, so the count cannot grow. -/
+theorem skipNodes_length_le (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) (fuel : Nat) :
+    (skipNodes kser n fuel).length ≤ mtkBound C0 fuel := by
+  induction fuel generalizing n with
+  | zero => rw [skipNodes]; exact Nat.le_refl 1
+  | succ f ih =>
+    have hlen : (mtk C0 I n.x n.k).attach.length ≤ (cl C0).length := by
+      rw [List.length_attach, mtk]
+      exact Nat.le_trans (List.length_filter_le _ _) (List.length_filter_le _ _)
+    rw [skipNodes, List.length_cons, List.length_flatMap, mtkBound]
+    refine Nat.le_trans (Nat.add_le_add_right
+      (Nat.le_trans (sum_map_le _ _ (mtkBound C0 f) ?_)
+        (Nat.mul_le_mul_right _ hlen)) 1) (by omega)
+    rintro ⟨F, hF⟩ _
+    cases F with
+    | ex r c =>
+      cases r with
+      | pp =>
+        show (if kser n c then ([] : List (MTKNode I C0))
+              else skipNodes kser (ppWitness n hF) f).length ≤ mtkBound C0 f
+        by_cases hk : kser n c = true
+        · rw [if_pos hk]; exact Nat.zero_le _
+        · rw [if_neg hk]; exact ih (ppWitness n hF)
+      | ppi =>
+        show (if kser n c then ([] : List (MTKNode I C0))
+              else skipNodes kser (ppiWitness n hF) f).length ≤ mtkBound C0 f
+        by_cases hk : kser n c = true
+        · rw [if_pos hk]; exact Nat.zero_le _
+        · rw [if_neg hk]; exact ih (ppiWitness n hF)
+      | dr => exact Nat.zero_le _
+      | po => exact Nat.zero_le _
+      | eq => exact Nat.zero_le _
+    | top => exact Nat.zero_le _
+    | bot => exact Nat.zero_le _
+    | atom _ => exact Nat.zero_le _
+    | natom _ => exact Nat.zero_le _
+    | and _ _ => exact Nat.zero_le _
+    | or _ _ => exact Nat.zero_le _
+    | all _ _ => exact Nat.zero_le _
+
+end SkipClosure
+
 end KernelService
 
 end KernelDebts
@@ -28704,6 +28805,10 @@ end OneShotDichotomy
 #print axioms kernelServes_no_external
 #print axioms ascPath_len_le
 #print axioms ascPath_repeats
+#print axioms self_mem_skipNodes
+#print axioms skipNodes_ppWitness_mem
+#print axioms skipNodes_ppiWitness_mem
+#print axioms skipNodes_length_le
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup

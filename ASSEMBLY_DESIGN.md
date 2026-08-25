@@ -7999,3 +7999,45 @@ worse than prose, and I wrote one before deleting it.
 
 Build: 28,820 lines, 1,461 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 87. THE SKIPPING CLOSURE — item A's composition, built
+
+`skipNodes` is `ppNodes` with the kernel-served demands DROPPED, which per
+`wp106` is what makes it terminate. The kernel-service test is a PARAMETER
+`kser`, so the definition fixes no particular kernel family; the extraction
+supplies it and §85's `kernelServes_no_external` is its soundness.
+
+| | |
+|---|---|
+| `skipNodes` | the closure |
+| `self_mem_skipNodes` | the root is in it |
+| `skipNodes_ppWitness_mem` / `_ppiWitness_mem` | **coverage step** — a demand the kernel does NOT serve has its witness in the closure at one more fuel |
+| `skipNodes_length_le` | **bounded by `mtkBound C0 fuel`** — the same bound as `ppNodes`, since skipping only removes branches |
+
+So at fuel `|typeEnum C0|` the closure is bounded by `mtkBound C0 (typeEnum C0).length`,
+which is `mixKT`'s inner factor — item C's arithmetic, on the certified side.
+
+### 87.1 What item A still needs
+
+The two membership lemmas give coverage **one step at a time**. What is not yet
+written is the induction that turns them into *"every demand at every member is
+kernel-served or served inside the set"* — i.e. that the fuel `|typeEnum C0|`
+suffices, which is §86's half 2 (the layer bound).
+
+So A is now: definition ✓, bound ✓, coverage step ✓, **coverage induction
+outstanding**.
+
+### 87.2 A process note worth recording
+
+Building this, a `python` string-index edit matched an identical passage in
+`ppNodes_length_le` — the two proofs have the same shape — and replaced from
+there, damaging ~1,500 lines. Caught immediately by the build (errors at line
+10945, far from the edit site), restored with `git checkout`, redone with a
+uniqueness assertion.
+
+**Rule: assert `s.count(anchor) == 1` before every string-replace edit in this
+file.** Two proofs of the same shape make bare `index` unsafe, and the artifact
+is now large enough that identical passages are common.
+
+Build: 28,925 lines, 1,466 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
