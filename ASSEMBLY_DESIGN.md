@@ -8632,3 +8632,48 @@ recorded rather than made, so the artifact stays green at a clean point.
 
 Build: 30,136 lines, 1,509 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 102. UNCONDITIONAL FIXPOINTS, BOTH DIRECTIONS
+
+The §101.1 adjustment made (finite chain segments, both directions), then `hext`
+discharged per direction:
+
+* `chain_pp_lt_bdd` / `chain_ppi_lt_bdd` — a chain on a PREFIX orders that
+  prefix;
+* `kserU` / `kserD` restated over finite segments, with `_segment` and `_sound`
+  re-proved;
+* `hextU_of_KserSegmentU` / `hextD_of_KserSegmentD` — a `skipNodesU` path's steps
+  go to `ppWitness`, so `ppWitness_rho` makes it a chain on its prefix, which is
+  exactly `KserSegmentU`'s hypothesis;
+* **`skipNodesU_fixed_kserU`** and **`skipNodesD_fixed_kserD`** — §94's and
+  §95's fixpoints **with their hypotheses discharged**.
+
+```
+skipNodesU_fixed_kserU (C0) (n) :
+  ∀ m ∈ skipNodesU (kserU C0 I) n (|typeEnum C0| + 1),
+    m ∈ skipNodesU (kserU C0 I) n |typeEnum C0|
+```
+
+**No hypothesis on `kser`.** The test is concrete, its soundness is
+`kserU_sound`, and the closure provably stops growing at a fuel computed from
+`C₀` alone.
+
+### 102.1 The adjustment cost nothing
+
+§101.1 predicted "a definitional adjustment to four declarations per direction,
+not a change of argument". That is what it was: `kserU`/`kserD` and their two
+properties each, plus two bounded-chain lemmas. **No earlier result needed
+revisiting** — `skipNodesU_fixed`, `skipNodesD_fixed`, `skipNodes_covers_of_fixed`
+and everything upstream took the new definitions unchanged.
+
+### 102.2 Item A
+
+| | |
+|---|---|
+| `kserU`/`kserD`, concrete, with segment property AND soundness | ✓ |
+| upward fixpoint, unconditional | ✓ |
+| downward fixpoint, unconditional | ✓ |
+| composing the two halves' coverage into the mixed statement | the remainder |
+
+Build: 30,231 lines, 1,515 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

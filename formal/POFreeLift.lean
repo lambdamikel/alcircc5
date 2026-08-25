@@ -29190,41 +29190,77 @@ theorem skipNodes_covers_of_KserSegment (kser : MTKNode I C0 → Concept → Boo
         ppWitness m hF ∈ skipNodes kser n (typeEnum C0).length :=
   skipNodes_covers_at_typeEnum kser n (hext_of_KserSegment kser hk)
 
+/-- A chain on a PREFIX orders that prefix — the bounded form of
+    `chain_pp_lt`, which the finite-segment `kser` of §101.1 needs. -/
+theorem chain_pp_lt_bdd (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (j : Nat)
+    (hstep : ∀ t, t + 1 ≤ j → I.rho (c t) (c (t + 1)) = pp) :
+    ∀ u v, u < v → v ≤ j → I.rho (c u) (c v) = pp := by
+  intro u v
+  induction v with
+  | zero => intro h; exact absurd h (Nat.not_lt_zero u)
+  | succ v' ih =>
+    intro huv hvj
+    rcases Nat.lt_or_ge u v' with hu | hu
+    · exact rho_forced hI (hdom u) (hdom (v' + 1)) (hdom v')
+        (ih hu (by omega)) (hstep v' hvj) (by decide)
+    · have : u = v' := by omega
+      subst this
+      exact hstep u hvj
+
+/-- The descending mirror. -/
+theorem chain_ppi_lt_bdd (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (j : Nat)
+    (hstep : ∀ t, t + 1 ≤ j → I.rho (c (t + 1)) (c t) = pp) :
+    ∀ u v, u < v → v ≤ j → I.rho (c v) (c u) = pp := by
+  intro u v
+  induction v with
+  | zero => intro h; exact absurd h (Nat.not_lt_zero u)
+  | succ v' ih =>
+    intro huv hvj
+    rcases Nat.lt_or_ge u v' with hu | hu
+    · exact rho_forced hI (hdom (v' + 1)) (hdom u) (hdom v')
+        (hstep v' hvj) (ih hu (by omega)) (by decide)
+    · have : u = v' := by omega
+      subst this
+      exact hstep u hvj
+
 /-! ##### §100 — `kser` for the upward direction
 
 §99: the segment must be a CHAIN for a type repeat to yield a kernel, so `kser`
 is defined per direction. Here is the upward one, with both properties it must
 have — the segment property (§98) and soundness (§85). -/
 
-/-- The segment property, restricted to CHAINS — which is what §99 showed is the
-    justified form. -/
+/-- The segment property, on a chain PREFIX — §101.1's form, which is what a
+    `skipNodesU` path actually gives (its steps exist below the fuel, not
+    beyond). -/
 def KserSegmentU (kser : MTKNode I C0 → Concept → Bool) : Prop :=
-  ∀ (path : Nat → MTKNode I C0),
-    (∀ t, I.rho (path t).x (path (t + 1)).x = pp) →
-    ∀ i j, i < j → mty C0 I (path i).x = mty C0 I (path j).x →
+  ∀ (path : Nat → MTKNode I C0) (k : Nat),
+    (∀ t, t + 1 < k → I.rho (path t).x (path (t + 1)).x = pp) →
+    ∀ i j, i < j → j < k → mty C0 I (path i).x = mty C0 I (path j).x →
     ∀ c, (∃ b, b < j - i ∧ c ∈ mty C0 I (path (i + b)).x) →
       kser (path i) c = true
 
 open Classical in
-/-- **THE UPWARD KERNEL-SERVICE TEST.**  `m` has an ascending chain through it
-    whose types repeat, with the demanded concept carried inside the segment. -/
+/-- **THE UPWARD KERNEL-SERVICE TEST.**  `m` starts a FINITE ascending chain
+    whose types repeat, with the demanded concept carried inside. -/
 noncomputable def kserU (C0 : Concept) (I : Interp α) (m : MTKNode I C0)
     (c : Concept) : Bool :=
-  decide (∃ (path : Nat → MTKNode I C0),
-    (∀ t, I.rho (path t).x (path (t + 1)).x = pp) ∧ path 0 = m ∧
-    ∃ j, 0 < j ∧ mty C0 I (path 0).x = mty C0 I (path j).x ∧
-      ∃ b, b < j ∧ c ∈ mty C0 I (path b).x)
+  decide (∃ (path : Nat → MTKNode I C0) (j : Nat), 0 < j ∧
+    (∀ t, t + 1 ≤ j → I.rho (path t).x (path (t + 1)).x = pp) ∧ path 0 = m ∧
+    mty C0 I (path 0).x = mty C0 I (path j).x ∧
+    ∃ b, b < j ∧ c ∈ mty C0 I (path b).x)
 
 open Classical in
 /-- **PROPERTY 1 — the segment property.**  Shift the chain to start at `i`. -/
 theorem kserU_segment (C0 : Concept) (I : Interp α) :
     KserSegmentU (kserU C0 I) := by
-  intro path hchain i j hij hty c ⟨b, hb, hc⟩
-  refine decide_eq_true ⟨fun t => path (i + t), fun t => ?_, rfl,
-    j - i, by omega, ?_, b, hb, ?_⟩
+  intro path k hchain i j hij hjk hty c ⟨b, hb, hc⟩
+  refine decide_eq_true ⟨fun t => path (i + t), j - i, by omega, fun t ht => ?_,
+    rfl, ?_, b, hb, ?_⟩
   · show I.rho (path (i + t)).x (path (i + (t + 1))).x = pp
     have h : i + (t + 1) = (i + t) + 1 := by omega
-    rw [h]; exact hchain (i + t)
+    rw [h]; exact hchain (i + t) (by omega)
   · show mty C0 I (path (i + 0)).x = mty C0 I (path (i + (j - i))).x
     have h1 : i + 0 = i := by omega
     have h2 : i + (j - i) = j := by omega
@@ -29232,25 +29268,25 @@ theorem kserU_segment (C0 : Concept) (I : Interp α) :
   · exact hc
 
 open Classical in
-/-- **PROPERTY 2 — soundness.**  If the test fires, the demand really is served,
-    by a node of the chain itself: the repeat puts the concept at or above the
-    start, and `oneshot_in_kernel` reads it off. -/
+/-- **PROPERTY 2 — soundness.**  The prefix chain orders itself
+    (`chain_pp_lt_bdd`), the repeat puts the concept at or above the start, and
+    `oneshot_in_kernel` reads it off. -/
 theorem kserU_sound (hI : RCC5Interp I) (C0 : Concept) (m : MTKNode I C0)
     (c : Concept) (h : kserU C0 I m c = true) :
     sat I m.x (Concept.ex pp c) := by
-  obtain ⟨path, hchain, hp0, j, hj, hty, b, hb, hc⟩ := of_decide_eq_true h
-  have hasc := chain_pp_lt hI (fun t => (path t).x) (fun t => (path t).hx) hchain
-  have hup : ∃ t, 0 < t ∧ sat I (path t).x c := by
+  obtain ⟨path, j, hj, hchain, hp0, hty, b, hb, hc⟩ := of_decide_eq_true h
+  have hord := chain_pp_lt_bdd hI (fun t => (path t).x) (fun t => (path t).hx)
+    j hchain
+  have hup : ∃ t, 0 < t ∧ t ≤ j ∧ sat I (path t).x c := by
     rcases Nat.eq_zero_or_pos b with rfl | hbpos
-    · refine ⟨j, hj, ?_⟩
-      have : c ∈ mty C0 I (path j).x := by rw [← hty]; exact hc
-      exact (mem_mty.mp this).2
-    · exact ⟨b, hbpos, (mem_mty.mp hc).2⟩
-  obtain ⟨t, ht, hsat⟩ := hup
-  have hres := oneshot_in_kernel (I := I) (c := fun n => (path n).x)
-    (fun n => (path n).hx) hasc (show (0 : Nat) < t from ht) hsat
-  rw [hp0] at hres
-  exact hres
+    · refine ⟨j, hj, Nat.le_refl j, ?_⟩
+      have hcj : c ∈ mty C0 I (path j).x := by rw [← hty]; exact hc
+      exact (mem_mty.mp hcj).2
+    · exact ⟨b, hbpos, by omega, (mem_mty.mp hc).2⟩
+  obtain ⟨t, ht, htj, hsat⟩ := hup
+  refine ⟨(path t).x, (path t).hx, ?_, hsat⟩
+  rw [← hp0]
+  exact hord 0 t ht htj
 
 /-! ##### §101 — `kserD`, the downward test
 
@@ -29268,11 +29304,11 @@ theorem oneshot_in_kernelI (hI : RCC5Interp I) {c : Nat → α} {D : Concept}
     hI.conv_ (c k) (c j) (hdom k) (hdom j)
   rw [hc, hdesc j k hjk]; rfl
 
-/-- The segment property, downward. -/
+/-- The segment property, downward, on a chain PREFIX. -/
 def KserSegmentD (kser : MTKNode I C0 → Concept → Bool) : Prop :=
-  ∀ (path : Nat → MTKNode I C0),
-    (∀ t, I.rho (path (t + 1)).x (path t).x = pp) →
-    ∀ i j, i < j → mty C0 I (path i).x = mty C0 I (path j).x →
+  ∀ (path : Nat → MTKNode I C0) (k : Nat),
+    (∀ t, t + 1 < k → I.rho (path (t + 1)).x (path t).x = pp) →
+    ∀ i j, i < j → j < k → mty C0 I (path i).x = mty C0 I (path j).x →
     ∀ c, (∃ b, b < j - i ∧ c ∈ mty C0 I (path (i + b)).x) →
       kser (path i) c = true
 
@@ -29280,20 +29316,20 @@ open Classical in
 /-- **THE DOWNWARD KERNEL-SERVICE TEST.** -/
 noncomputable def kserD (C0 : Concept) (I : Interp α) (m : MTKNode I C0)
     (c : Concept) : Bool :=
-  decide (∃ (path : Nat → MTKNode I C0),
-    (∀ t, I.rho (path (t + 1)).x (path t).x = pp) ∧ path 0 = m ∧
-    ∃ j, 0 < j ∧ mty C0 I (path 0).x = mty C0 I (path j).x ∧
-      ∃ b, b < j ∧ c ∈ mty C0 I (path b).x)
+  decide (∃ (path : Nat → MTKNode I C0) (j : Nat), 0 < j ∧
+    (∀ t, t + 1 ≤ j → I.rho (path (t + 1)).x (path t).x = pp) ∧ path 0 = m ∧
+    mty C0 I (path 0).x = mty C0 I (path j).x ∧
+    ∃ b, b < j ∧ c ∈ mty C0 I (path b).x)
 
 open Classical in
 theorem kserD_segment (C0 : Concept) (I : Interp α) :
     KserSegmentD (kserD C0 I) := by
-  intro path hchain i j hij hty c ⟨b, hb, hc⟩
-  refine decide_eq_true ⟨fun t => path (i + t), fun t => ?_, rfl,
-    j - i, by omega, ?_, b, hb, ?_⟩
+  intro path k hchain i j hij hjk hty c ⟨b, hb, hc⟩
+  refine decide_eq_true ⟨fun t => path (i + t), j - i, by omega, fun t ht => ?_,
+    rfl, ?_, b, hb, ?_⟩
   · show I.rho (path (i + (t + 1))).x (path (i + t)).x = pp
     have h : i + (t + 1) = (i + t) + 1 := by omega
-    rw [h]; exact hchain (i + t)
+    rw [h]; exact hchain (i + t) (by omega)
   · show mty C0 I (path (i + 0)).x = mty C0 I (path (i + (j - i))).x
     have h1 : i + 0 = i := by omega
     have h2 : i + (j - i) = j := by omega
@@ -29301,36 +29337,93 @@ theorem kserD_segment (C0 : Concept) (I : Interp α) :
   · exact hc
 
 open Classical in
-/-- **SOUNDNESS, DOWNWARD.**  The mirror of `kserU_sound`: the descending chain's
-    order comes from `hchain` by the same `comp(PP,PP) = {PP}` induction that
-    `chain_pp_lt` runs upward. -/
+/-- **SOUNDNESS, DOWNWARD.** -/
 theorem kserD_sound (hI : RCC5Interp I) (C0 : Concept) (m : MTKNode I C0)
     (c : Concept) (h : kserD C0 I m c = true) :
     sat I m.x (Concept.ex ppi c) := by
-  obtain ⟨path, hchain, hp0, j, hj, hty, b, hb, hc⟩ := of_decide_eq_true h
-  have hdesc : ∀ u v : Nat, u < v → I.rho (path v).x (path u).x = pp := by
-    intro u v
-    induction v with
-    | zero => intro hlt; exact absurd hlt (Nat.not_lt_zero u)
-    | succ v' ih =>
-      intro hlt
-      rcases Nat.lt_or_ge u v' with hu | hu
-      · exact rho_forced hI (path (v' + 1)).hx (path u).hx (path v').hx
-          (hchain v') (ih hu) (by decide)
-      · have huv : u = v' := by omega
-        subst huv
-        exact hchain u
-  have hup : ∃ t, 0 < t ∧ sat I (path t).x c := by
+  obtain ⟨path, j, hj, hchain, hp0, hty, b, hb, hc⟩ := of_decide_eq_true h
+  have hord := chain_ppi_lt_bdd hI (fun t => (path t).x) (fun t => (path t).hx)
+    j hchain
+  have hup : ∃ t, 0 < t ∧ t ≤ j ∧ sat I (path t).x c := by
     rcases Nat.eq_zero_or_pos b with rfl | hbpos
-    · refine ⟨j, hj, ?_⟩
+    · refine ⟨j, hj, Nat.le_refl j, ?_⟩
       have hcj : c ∈ mty C0 I (path j).x := by rw [← hty]; exact hc
       exact (mem_mty.mp hcj).2
-    · exact ⟨b, hbpos, (mem_mty.mp hc).2⟩
-  obtain ⟨t, ht, hsat⟩ := hup
-  have hres := oneshot_in_kernelI hI (c := fun n => (path n).x)
-    (fun n => (path n).hx) hdesc (show (0 : Nat) < t from ht) hsat
-  rw [hp0] at hres
-  exact hres
+    · exact ⟨b, hbpos, by omega, (mem_mty.mp hc).2⟩
+  obtain ⟨t, ht, htj, hsat⟩ := hup
+  refine ⟨(path t).x, (path t).hx, ?_, hsat⟩
+  have hpp : I.rho (path t).x (path 0).x = pp := hord 0 t ht htj
+  have hc2 : I.rho (path 0).x (path t).x = conv (I.rho (path t).x (path 0).x) :=
+    hI.conv_ (path t).x (path 0).x (path t).hx (path 0).hx
+  rw [← hp0, hc2, hpp]; rfl
+
+/-! ##### §102 — `hext` per direction, and UNCONDITIONAL fixpoints
+
+A `skipNodesU` path's steps go to `ppWitness`, so `ppWitness_rho` makes it a
+chain on its prefix — exactly `KserSegmentU`'s hypothesis. -/
+
+/-- `hext` for the upward closure, from the chain-restricted segment property. -/
+theorem hextU_of_KserSegmentU (kser : MTKNode I C0 → Concept → Bool)
+    (hk : KserSegmentU kser) :
+    ∀ (path : Nat → MTKNode I C0) (k : Nat),
+      (∀ i, i < k → ∃ (c : Concept)
+        (hF : Concept.ex pp c ∈ mtk C0 I (path i).x (path i).k),
+        kser (path i) c = false ∧ path (i + 1) = ppWitness (path i) hF) →
+      ∀ i j, i < j → j < k → mty C0 I (path i).x ≠ mty C0 I (path j).x := by
+  intro path k hsteps i j hij hjk hty
+  obtain ⟨c, hF, hns, hstep⟩ := hsteps i (by omega)
+  have hcarry : c ∈ mty C0 I (path (i + 1)).x := by
+    rw [hstep]; exact (mem_mtk.mp (ppWitness_arg _ hF)).1
+  have hchain : ∀ t, t + 1 < k → I.rho (path t).x (path (t + 1)).x = pp := by
+    intro t ht
+    obtain ⟨c', hF', _, hstep'⟩ := hsteps t (by omega)
+    rw [hstep']; exact ppWitness_rho _ hF'
+  have hseg := path_repeat_carries C0 I (fun n => (path n).x) hij hty hcarry
+  have hyes := hk path k hchain i j hij hjk hty c hseg
+  rw [hns] at hyes
+  exact Bool.false_ne_true hyes
+
+/-- **THE UPWARD FIXPOINT, UNCONDITIONALLY**, for the concrete `kserU`.  §94's
+    theorem with its hypothesis discharged by §§100–102. -/
+theorem skipNodesU_fixed_kserU (C0 : Concept) (n : MTKNode I C0) :
+    ∀ m ∈ skipNodesU (kserU C0 I) n ((typeEnum C0).length + 1),
+      m ∈ skipNodesU (kserU C0 I) n (typeEnum C0).length :=
+  skipNodesU_fixed (kserU C0 I) n
+    (hextU_of_KserSegmentU (kserU C0 I) (kserU_segment C0 I))
+
+/-- `hext` for the downward closure. -/
+theorem hextD_of_KserSegmentD (kser : MTKNode I C0 → Concept → Bool)
+    (hI : RCC5Interp I) (hk : KserSegmentD kser) :
+    ∀ (path : Nat → MTKNode I C0) (k : Nat),
+      (∀ i, i < k → ∃ (c : Concept)
+        (hF : Concept.ex ppi c ∈ mtk C0 I (path i).x (path i).k),
+        kser (path i) c = false ∧ path (i + 1) = ppiWitness (path i) hF) →
+      ∀ i j, i < j → j < k → mty C0 I (path i).x ≠ mty C0 I (path j).x := by
+  intro path k hsteps i j hij hjk hty
+  obtain ⟨c, hF, hns, hstep⟩ := hsteps i (by omega)
+  have hcarry : c ∈ mty C0 I (path (i + 1)).x := by
+    rw [hstep]; exact (mem_mtk.mp (ppiWitness_arg _ hF)).1
+  have hchain : ∀ t, t + 1 < k → I.rho (path (t + 1)).x (path t).x = pp := by
+    intro t ht
+    obtain ⟨c', hF', _, hstep'⟩ := hsteps t (by omega)
+    have hr : I.rho (path t).x (path (t + 1)).x = ppi := by
+      rw [hstep']; exact ppiWitness_rho _ hF'
+    have hc2 : I.rho (path (t + 1)).x (path t).x
+        = conv (I.rho (path t).x (path (t + 1)).x) :=
+      hI.conv_ (path t).x (path (t + 1)).x (path t).hx (path (t + 1)).hx
+    rw [hc2, hr]; rfl
+  have hseg := path_repeat_carries C0 I (fun n => (path n).x) hij hty hcarry
+  have hyes := hk path k hchain i j hij hjk hty c hseg
+  rw [hns] at hyes
+  exact Bool.false_ne_true hyes
+
+/-- **THE DOWNWARD FIXPOINT, UNCONDITIONALLY.** -/
+theorem skipNodesD_fixed_kserD (hI : RCC5Interp I) (C0 : Concept)
+    (n : MTKNode I C0) :
+    ∀ m ∈ skipNodesD (kserD C0 I) n ((typeEnum C0).length + 1),
+      m ∈ skipNodesD (kserD C0 I) n (typeEnum C0).length :=
+  skipNodesD_fixed (kserD C0 I) n
+    (hextD_of_KserSegmentD (kserD C0 I) hI (kserD_segment C0 I))
 
 end SkipClosure
 
@@ -30020,6 +30113,8 @@ end OneShotDichotomy
 #print axioms oneshot_in_kernelI
 #print axioms kserD_segment
 #print axioms kserD_sound
+#print axioms skipNodesU_fixed_kserU
+#print axioms skipNodesD_fixed_kserD
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup
