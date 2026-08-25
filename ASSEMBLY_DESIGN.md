@@ -7258,3 +7258,62 @@ than done.
 * **A** — the assembly, now justified rather than assumed, is next.
 
 Build: 27,660 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 71. ROUTE A — four of five routing conditions, and what `rDR` reveals
+
+### 71.1 `rPPI` and `rPO` discharged
+
+Both go the way `rPP` did, from the declared order `capP = tcl stepAll`:
+
+* **`cap_rPPI`** — the `∃PPI` witness lies in the cap's closure
+  (`ppiWitness_mem`) and is `capP`-BELOW it by construction: `stepAll f m` holds
+  via its `ppiStep` disjunct, so one `tcl.base` step gives `capP f m`.
+* **`cap_rPO`** — the `∃PO` witness lies in the closure (`mtkWitness_mem_mix`,
+  new) and is `capP`-INCOMPARABLE to the cap, because every `capP` step is a
+  model `PP` edge (`capP_rho`) while this one is `PO`. So the declared relation
+  is `PO`, which in this fragment carries no obligation at all.
+
+| condition | status |
+|---|---|
+| `rEQ` | ✓ `cap_rEQ` |
+| `rPP` | ✓ `cap_rPP` |
+| `rPPI` | ✓ `cap_rPPI` |
+| `rPO` | ✓ `cap_rPO` |
+| `rDR` | see below |
+
+### 71.2 `rDR` says the cap should not be a separate index at all
+
+Supplying `rDR` runs into this. Declaring `B m x := ∀ u, U u → S.disj x u` makes
+**all four** of `odAmalgDR`'s side conditions free (`hBnotU` from `djIrr`,
+`hBdown` from `djDown`, `hBP` because `B` ignores `m`, `hBU` by definition) — the
+same trick that worked for `capU` and `capDseed`.
+
+What is then required is base-level disjointness between the cap's `DR` witness
+and every closure element. In the base, `disj` is the downward closure of
+`seedMix`, so it would follow from **one** seed pair: `sAdjK (w m) (witness)` —
+the cap's own `∃DR` witness edge — carried down to every `u ≤ w m`.
+
+**But `w m` is not a base index, so `sAdjK` does not apply to it.** The seed pair
+would have to be the cap↔base block we are trying to establish. Circular.
+
+The way out is §63's finding, taken further than §63 took it: *a cap is an
+external whose root happens to sit above a kernel.* If the cap's closure nodes
+simply JOIN `β`, then `w m` and its witness are base nodes, `sAdjK` applies, and
+`disj u witness` follows from the downward closure with nothing new declared.
+What distinguishes a cap is then only its POSITION, which `up`/`dn` already
+express.
+
+### 71.3 Consequence, recorded not acted on
+
+If that is right, the separate cap index — and with it `odSeedCap`, `capElt`,
+`capUp`, `capDn`, `capSeed`, `odAmalgDR` as *applied to the extraction* — is
+machinery the assembly does not need. `odAmalgDR` remains valuable as the
+abstract statement that a cap MAY carry base disjointness (§70, and it refutes
+§51.1), but the wired construction may be far smaller than §§53–66 assumed.
+
+This is a restructure, not an increment, so it is recorded here rather than
+started. The four discharged conditions (§71.1) are unaffected either way — they
+are statements about `capNodes` and `capP`, both of which survive the merge.
+
+Build: 27,720 lines, 1,413 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

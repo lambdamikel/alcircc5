@@ -26935,6 +26935,63 @@ theorem capcap_ppi_in_mty (hI : RCC5Interp I) {m m' : MTKNode I C0}
     (hY : Concept.all ppi Y ∈ mty C0 I m'.x) : Y ∈ mty C0 I m.x :=
   mem_mty.mpr ⟨cl_all (mem_mty.mp hY).1, capcap_ee_all_ppi hI hP hY⟩
 
+/-- The horizontal witness lies in the cap's closure at one more horizontal
+    depth. -/
+theorem mtkWitness_mem_mix (n : MTKNode I C0) {r : Atom} {c : Concept}
+    (hF : Concept.ex r c ∈ mtk C0 I n.x n.k) (hv : ¬ (r = pp ∨ r = ppi))
+    (fuel b : Nat) : mtkWitness n hF ∈ capNodes fuel (b + 1) n := by
+  rw [capNodes, mixNodes]
+  refine List.mem_flatMap.mpr ⟨n, self_mem_ppNodes n fuel,
+    List.mem_cons_of_mem _ (List.mem_flatMap.mpr
+      ⟨⟨Concept.ex r c, hF⟩, List.mem_attach _ _, ?_⟩)⟩
+  show mtkWitness n hF ∈
+    (if r = pp ∨ r = ppi then [] else mixNodes fuel b (mtkWitness n hF))
+  rw [if_neg hv]
+  exact self_mem_mixNodes fuel b _
+
+/-- **`rPPI` DISCHARGED.**  A cap's `∃PPI` demand is served by its own witness,
+    which lies in the cap's closure and is `capP`-BELOW it by construction —
+    `stepAll f m` holds via its `ppiStep` disjunct, so one `tcl.base` step gives
+    `capP f m`. The mirror of `cap_rPP`. -/
+theorem cap_rPPI (m : MTKNode I C0) {D : Concept}
+    (hF : Concept.ex ppi D ∈ mtk C0 I m.x m.k) (fuel b : Nat) :
+    ∃ m', m' ∈ capNodes (fuel + 1) b m ∧ capP m' m ∧
+      D ∈ mtk C0 I m'.x m'.k := by
+  refine ⟨ppiWitness m hF, ?_, tcl.base (Or.inr ⟨D, hF, rfl⟩),
+    ppiWitness_arg m hF⟩
+  cases b with
+  | zero => exact ppiWitness_mem m hF fuel
+  | succ b' =>
+    rw [capNodes, mixNodes]
+    exact List.mem_flatMap.mpr ⟨ppiWitness m hF, ppiWitness_mem m hF fuel,
+      List.mem_cons_self⟩
+
+/-- **`rPO` DISCHARGED.**  A cap's `∃PO` demand is served by its own witness,
+    which lies in the cap's closure and is `capP`-INCOMPARABLE to it — because
+    every `capP` step is a model `PP` edge (`capP_rho`) while this one is `PO`.
+
+    So the declared relation between them is `PO` (`cap_po_cap`), which in this
+    fragment carries no obligation at all. -/
+theorem cap_rPO (hI : RCC5Interp I) (m : MTKNode I C0) {D : Concept}
+    (hF : Concept.ex po D ∈ mtk C0 I m.x m.k) (fuel b : Nat) :
+    ∃ m', m' ∈ capNodes fuel (b + 1) m ∧ ¬ capP m m' ∧ ¬ capP m' m ∧
+      D ∈ mtk C0 I m'.x m'.k := by
+  have hv : ¬ (po = pp ∨ po = ppi) := by
+    intro h; rcases h with h | h <;> exact Atom.noConfusion h
+  refine ⟨mtkWitness m hF, mtkWitness_mem_mix m hF hv fuel b, ?_, ?_,
+    mtkWitness_arg m hF⟩
+  · intro hcp
+    have h1 := capP_rho hI m (mtkWitness m hF) hcp
+    rw [mtkWitness_rho m hF] at h1
+    exact Atom.noConfusion h1
+  · intro hcp
+    have h1 := capP_rho hI (mtkWitness m hF) m hcp
+    have h2 : I.rho (mtkWitness m hF).x m.x = po := by
+      rw [hI.conv_ m.x (mtkWitness m hF).x m.hx (mtkWitness m hF).hx,
+        mtkWitness_rho m hF]; rfl
+    rw [h2] at h1
+    exact Atom.noConfusion h1
+
 end CapRouting
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -27584,6 +27641,9 @@ end OneShotDichotomy
 #print axioms cap_rEQ
 #print axioms ppWitness_mem
 #print axioms cap_rPP
+#print axioms mtkWitness_mem_mix
+#print axioms cap_rPPI
+#print axioms cap_rPO
 #print axioms capP_rho
 #print axioms capcap_ee_all_pp
 #print axioms capcap_ee_all_ppi
