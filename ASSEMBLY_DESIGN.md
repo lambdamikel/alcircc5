@@ -8278,3 +8278,41 @@ and the finding is recorded here instead.
 
 Build: 29,232 lines, 1,476 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 93. ROUTE 2 — the upward half works
+
+§92's obstacle was that `skipNodes` mixes upward (`ppWitness`) and downward
+(`ppiWitness`) steps, so its path is a walk and §91's chain argument does not
+apply. Route 2 splits by direction. The upward half is now built:
+
+* **`skipNodesU`** — the `∃PP`-only skipping closure;
+* **`self_mem_skipNodesU`**;
+* **`skipNodesU_path`** — membership at fuel `f` means reachability by at most
+  `f` non-kernel-served `∃PP` steps, each recorded with the demand that produced
+  it.
+
+**`skipNodesU_path` is exactly the lemma §92 could not state for the mixed
+closure**, and it holds here because every step goes to `ppWitness` — so the path
+ASCENDS, and §91's `skipPath_no_repeat` / `skipPath_len_le'` apply to it.
+
+### 93.1 What remains of the upward half
+
+The converse direction — a path of length `k` gives membership at fuel `k` —
+and then the composition:
+
+> `m ∈ skipNodesU kser n (F+1)` gives a path of length `≤ F+1`; if `kser`
+> satisfies §91's `hext`, the path's types are distinct, so `skipPath_len_le'`
+> caps it at `F = |typeEnum C0|`; hence the path has length `≤ F`, hence
+> `m ∈ skipNodesU kser n F`. **That is the fixpoint.**
+
+### 93.2 And the downward half
+
+The dual (`skipNodesD` following `∃PPI`, descending) should be a transcription:
+`ppiWitness`, `persistDsI`, `rr_coversI` and `kCkI` are certified mirrors of the
+ascending machinery throughout this file, and §91's repeat argument dualises by
+reversing the order.
+
+Then the mixed closure is bounded by composing the two — §92's route 2 in full.
+
+Build: 29,321 lines, 1,478 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
