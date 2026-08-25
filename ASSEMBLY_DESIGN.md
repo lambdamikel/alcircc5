@@ -7640,3 +7640,53 @@ has closed one or two debts, which is the rate that estimate assumes.
 
 Build: 28,146 lines, 1,437 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 79. ALL NINE DEBTS DISCHARGED
+
+`mtkKernelsOD_of_debts`'s debt list is complete.
+
+| debt | discharged by | axioms |
+|---|---|---|
+| `hppE` | `merged_hppE` (§73) | classical |
+| `hdr` | `hdr_of_model` (§77) | **none** |
+| `hb` | `seedMix_hb` (pre-existing) | — |
+| `hup` | `mUp_hup` (§77) | classical |
+| `hdn` | `mDn_hdn` (§77) | classical |
+| `hdrk` | **`hdrk_of_model`** (§79) | **none** |
+| `hqpp` | **`hqpp_of_model`** | **none** |
+| `hqppi` | **`hqppi_of_model`** | **none** |
+| `hqdr` | **`hqdr_of_model`** | **none** |
+| `he_ex`/`hk_ex` | the five routing conditions (§§63–72) | — |
+
+Six of them depend on no axioms at all.
+
+### 79.1 What the last three needed
+
+* **`mixLt_inr_phase`** (axiom-free) — the missing brick: a phase is below
+  anything its kernel is below, because both of `mixLt`'s kernel-source clauses
+  route through a `dn` external that contains every phase.
+* **`hqpp`/`hqppi`** — two applications of `comp(PP,PP) = {PP}` through the
+  shared external chain; `hqppi` is `hqpp` transposed by `conv pp = ppi`.
+* **`hqdr`** — a four-case split on which endpoints are the kernels themselves.
+  The both-endpoints case is **vacuous**, because `seedMix` sends kernel↔kernel
+  to `False`.
+
+### 79.2 A design fact the proof forced out
+
+`hdrk` cannot be derived from a base-level `DR` fact. For an ASCENDING kernel the
+base sits BELOW its phases, and `comp(PPI,DR) = {DR,PO,PPI}` — **`DR` does not
+travel upward**. So the seed's kernel block must itself be the COFINAL statement.
+
+That is exactly how `kdrAt` was defined back in §46, and now there is a reason on
+the record rather than a convention. `mKdr` (§78) is its both-directions form.
+
+### 79.3 What is left
+
+Only the top-level assembly and the counting:
+
+1. instantiate `β := EIdx`, `κ := KIdxM`, `kdr := mKdr`, feed the nine;
+2. the counting — `mixNodes`' bound over the node set including caps (§78.2's
+   flagged item, F6's descendant).
+
+Build: 28,342 lines, 1,442 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

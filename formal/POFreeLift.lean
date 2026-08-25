@@ -27400,6 +27400,197 @@ theorem mKdr_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
       (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).hx
   rw [hc, hd]; rfl
 
+/-- **A PHASE IS BELOW ANYTHING ITS KERNEL IS BELOW.**  The missing brick for
+    `hdrk`: `mixLt`'s two kernel-source clauses both route through a `dn`
+    external, which contains every phase, so the phase inherits the order.
+
+    With it, `hdrk` descends exactly as `hdr` did in `hdr_of_model`. -/
+theorem mixLt_inr_phase {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (k : κ) (x : β ⊕ κ) (h : mixLt elt up dn (Sum.inr k) x) (a : Nat) :
+    I.rho (ck k (ik k + a)) (nodeOf g ck ik x) = pp := by
+  cases x with
+  | inl e =>
+    obtain ⟨e', hdne, hle⟩ := h
+    have h1 := hdnphase k e' a hdne
+    rcases hle with rfl | hlt
+    · exact h1
+    · exact rho_forced hI (hkdom k _) (hgdom e) (hgdom e') h1 (helt _ _ hlt)
+        (by decide)
+  | inr k' =>
+    obtain ⟨e, e', hdne, hupe, hle⟩ := h
+    have h1 := hdnphase k e a hdne
+    have h2 : I.rho (g e) (ck k' (ik k')) = pp := by
+      rcases hle with rfl | hlt
+      · exact hup0 k' e hupe
+      · exact rho_forced hI (hgdom e) (hkdom k' _) (hgdom e')
+          (helt _ _ hlt) (hup0 k' e' hupe) (by decide)
+    exact rho_forced hI (hkdom k _) (hkdom k' _) (hgdom e) h1 h2 (by decide)
+
+/-- **`hdrk`, DISCHARGED.**
+
+    One subtlety forced the shape of this statement. If the seed pair's left
+    endpoint IS the kernel, a base-level `DR` fact is NOT enough: for an
+    ASCENDING kernel the base sits BELOW the phases, and
+    `comp(PPI,DR) = {DR,PO,PPI}` — `DR` does not travel upward. So the seed's
+    kernel block must itself be the COFINAL statement, which is exactly what
+    `mKdr` is and why `kdrAt` was defined that way in §46.
+
+    Given that (`hseedPhase`), the rest descends as in `hdr_of_model`: the phase
+    falls into the seed pair's left endpoint by `mixLt_inr_phase`, and `DR`
+    descends on the right by `comp(DR,PPI) = {DR}`. -/
+theorem hdrk_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (hseedPhase : ∀ k y, seed (Sum.inr k) y →
+      ∀ a, I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
+    (k : κ) (e : β) (a : Nat)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+      mixLe elt up dn (Sum.inl e) y₀ ∧ seed x₀ y₀) :
+    I.rho (ck k (ik k + a)) (g e) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hlt := mixLt_rho hI g ck ik up dn hgdom (fun k => hkdom k _) hup0 hdn0
+    elt helt
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (b | c)
+    · exact hgdom b
+    · exact hkdom c _
+  have h1 : I.rho (ck k (ik k + a)) (nodeOf g ck ik y₀) = dr := by
+    rcases hx with rfl | hx
+    · exact hseedPhase k y₀ hs a
+    · exact rho_forced hI (hkdom k _) (hdomN y₀) (hdomN x₀)
+        (mixLt_inr_phase hI g ck ik up dn hgdom hkdom hup0 elt helt hdnphase
+          k x₀ hx a) (hseed x₀ y₀ hs) (by decide)
+  rcases hy with rfl | hy
+  · exact h1
+  · have hy' : I.rho (g e) (nodeOf g ck ik y₀) = pp := hlt (Sum.inl e) y₀ hy
+    have h2 : I.rho (nodeOf g ck ik y₀) (g e) = ppi := by
+      have hc : I.rho (nodeOf g ck ik y₀) (g e)
+          = conv (I.rho (g e) (nodeOf g ck ik y₀)) :=
+        hI.conv_ (g e) (nodeOf g ck ik y₀) (hgdom e) (hdomN y₀)
+      rw [hc, hy']; rfl
+    exact rho_forced hI (hkdom k _) (hgdom e) (hdomN y₀) h1 h2 (by decide)
+
+/-- **`hqpp`, DISCHARGED.**  A down-kernel and an up-kernel joined through a
+    shared external chain are nested: every phase of `k` sits inside the external
+    `e`, which sits at-or-inside `e'`, which sits inside every phase of `k'`.
+    Two applications of `comp(PP,PP) = {PP}`. -/
+theorem hqpp_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (hupphase : ∀ k e a, up k e = true → I.rho (g e) (ck k (ik k + a)) = pp)
+    (k k' : κ) (a b : Nat)
+    (h : ∃ e e', dn k e = true ∧ up k' e' = true ∧ leE elt e e') :
+    I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = pp := by
+  obtain ⟨e, e', hdne, hupe, hle⟩ := h
+  have h1 := hdnphase k e a hdne
+  have h2 := hupphase k' e' b hupe
+  have hmid : I.rho (ck k (ik k + a)) (g e') = pp := by
+    rcases hle with rfl | hlt
+    · exact h1
+    · exact rho_forced hI (hkdom k _) (hgdom e') (hgdom e) h1 (helt _ _ hlt)
+        (by decide)
+  exact rho_forced hI (hkdom k _) (hkdom k' _) (hgdom e') hmid h2 (by decide)
+
+/-- **`hqppi`, DISCHARGED** — the mirror, by `conv pp = ppi`. -/
+theorem hqppi_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (hupphase : ∀ k e a, up k e = true → I.rho (g e) (ck k (ik k + a)) = pp)
+    (k k' : κ) (a b : Nat)
+    (h : ∃ e e', dn k' e = true ∧ up k e' = true ∧ leE elt e e') :
+    I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = ppi := by
+  have hpp := hqpp_of_model hI g ck ik up dn hgdom hkdom elt helt hdnphase
+    hupphase k' k b a h
+  have hc : I.rho (ck k (ik k + a)) (ck k' (ik k' + b))
+      = conv (I.rho (ck k' (ik k' + b)) (ck k (ik k + a))) :=
+    hI.conv_ (ck k' (ik k' + b)) (ck k (ik k + a)) (hkdom k' _) (hkdom k _)
+  rw [hc, hpp]; rfl
+
+/-- **`hqdr`, DISCHARGED** — the last of the nine.  Both endpoints are kernels,
+    so `mixLt_inr_phase` descends the phases into the seed pair on each side and
+    `DR` propagates: `comp(PP,DR) = {DR}` then `comp(DR,PPI) = {DR}`.
+
+    The both-endpoints-are-the-kernels case is VACUOUS: `seedMix` sends
+    kernel↔kernel to `False`, which is `hqq`. The one-endpoint cases need the
+    seed's kernel block to be cofinal, for the reason recorded on
+    `hdrk_of_model`. -/
+theorem hqdr_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hqq : ∀ k k', ¬ seed (Sum.inr k) (Sum.inr k'))
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (hseedPhase : ∀ k y, seed (Sum.inr k) y →
+      ∀ a, I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
+    (k k' : κ) (a b : Nat)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+      mixLe elt up dn (Sum.inr k') y₀ ∧ seed x₀ y₀) :
+    I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (c | d)
+    · exact hgdom c
+    · exact hkdom d _
+  have hdesc : ∀ (m : κ) (z : β ⊕ κ), mixLt elt up dn (Sum.inr m) z →
+      ∀ n, I.rho (ck m (ik m + n)) (nodeOf g ck ik z) = pp :=
+    fun m z hz n => mixLt_inr_phase hI g ck ik up dn hgdom hkdom hup0 elt helt
+      hdnphase m z hz n
+  have hflip : ∀ (u v : α), I.dom u → I.dom v → I.rho u v = dr →
+      I.rho v u = dr := by
+    intro u v hu hv huv
+    have hc : I.rho v u = conv (I.rho u v) := hI.conv_ u v hu hv
+    rw [hc, huv]; rfl
+  rcases hx with rfl | hx
+  · rcases hy with rfl | hy
+    · exact absurd hs (hqq k k')
+    · have h2 : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b)) = ppi := by
+        have hc : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b))
+            = conv (I.rho (ck k' (ik k' + b)) (nodeOf g ck ik y₀)) :=
+          hI.conv_ (ck k' (ik k' + b)) (nodeOf g ck ik y₀) (hkdom k' _)
+            (hdomN y₀)
+        rw [hc, hdesc k' y₀ hy b]; rfl
+      exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN y₀)
+        (hseedPhase k y₀ hs a) h2 (by decide)
+  · rcases hy with rfl | hy
+    · -- y₀ IS k' : use the seed's cofinal fact on the RIGHT, flipped
+      have hR : I.rho (ck k' (ik k' + b)) (nodeOf g ck ik x₀) = dr :=
+        hseedPhase k' x₀ (hsym _ _ hs) b
+      have hL : I.rho (ck k (ik k + a)) (nodeOf g ck ik x₀) = pp :=
+        hdesc k x₀ hx a
+      exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN x₀) hL
+        (hflip _ _ (hkdom k' _) (hdomN x₀) hR) (by decide)
+    · have h1 : I.rho (ck k (ik k + a)) (nodeOf g ck ik y₀) = dr :=
+        rho_forced hI (hkdom k _) (hdomN y₀) (hdomN x₀) (hdesc k x₀ hx a)
+          (hseed x₀ y₀ hs) (by decide)
+      have h2 : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b)) = ppi := by
+        have hc : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b))
+            = conv (I.rho (ck k' (ik k' + b)) (nodeOf g ck ik y₀)) :=
+          hI.conv_ (ck k' (ik k' + b)) (nodeOf g ck ik y₀) (hkdom k' _)
+            (hdomN y₀)
+        rw [hc, hdesc k' y₀ hy b]; rfl
+      exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN y₀) h1 h2 (by decide)
+
 end KernelDebts
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -28037,6 +28228,11 @@ end OneShotDichotomy
 #print axioms hdr_of_model
 #print axioms mKdr_base
 #print axioms mKdr_phase
+#print axioms mixLt_inr_phase
+#print axioms hdrk_of_model
+#print axioms hqpp_of_model
+#print axioms hqppi_of_model
+#print axioms hqdr_of_model
 #print axioms subOfFin_inj
 #print axioms subOfFin_surj
 #print axioms reindexMT_toFin
