@@ -26319,6 +26319,69 @@ theorem cap_po_outside {e : β} (hU : ¬ U e) (m : M)
     odNet (OC) (Sum.inl (Sum.inl e)) (Sum.inl (Sum.inr m)) = po :=
   odNet_po _ (fun h => inr_ne_inl _ _ (Sum.inl.inj h).symm) hU (fun h => h) hnd
 
+
+/-- The cap's downward `PPI` edge into the closure (the reverse of
+    `cap_above_U`). -/
+theorem cap_ppi_U {e : β} (hU : U e) (m : M) :
+    odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inl e)) = ppi :=
+  odNet_gt _ hU
+
+/-- The cap's `PO` edge outward (the reverse of `cap_po_outside`). -/
+theorem cap_po_out' {e : β} (hU : ¬ U e) (m : M)
+    (hnd : ¬ (OC).disj (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inl e))) :
+    odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inl e)) = po :=
+  odNet_po _ (fun h => inr_ne_inl _ _ (Sum.inl.inj h)) (fun h => h) hU hnd
+
+/-- **`e_ex` FOR CAP NODES — the routing consumer (§62).**
+
+    Five routing conditions, one per relation, each saying the model witness for
+    a cap's demand is matched by a certificate node carrying the demanded
+    concept. Given them, the `e_ex` disjunction follows from the edge lemmas.
+
+    Written BEFORE the extraction supplies the conditions, per the campaign's
+    method rule: this is what pins the interface. -/
+theorem cap_he_ex {α : Type} {I : Interp α} {C0 : Concept}
+    (g : β → α) (w : M → α) (bud : β → Nat) (cbud : M → Nat)
+    (bk : κ → Nat) (ck : κ → Nat → α) (ik pk : κ → Nat) (m : M)
+    (rEQ : ∀ D, Concept.ex eq D ∈ mtk C0 I (w m) (cbud m) →
+      D ∈ mtk C0 I (w m) (cbud m))
+    (rDR : ∀ D, Concept.ex dr D ∈ mtk C0 I (w m) (cbud m) →
+      ∃ f, dseed m f ∧ D ∈ mtk C0 I (g f) (bud f))
+    (rPP : ∀ D, Concept.ex pp D ∈ mtk C0 I (w m) (cbud m) →
+      ∃ m', P m m' ∧ D ∈ mtk C0 I (w m') (cbud m'))
+    (rPPI : ∀ D, Concept.ex ppi D ∈ mtk C0 I (w m) (cbud m) →
+      (∃ e, U e ∧ D ∈ mtk C0 I (g e) (bud e)) ∨
+      (∃ k, capOver k = true ∧ ∃ a, a < pk k ∧
+        D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
+    (rPO : ∀ D, Concept.ex po D ∈ mtk C0 I (w m) (cbud m) →
+      (∃ m', m ≠ m' ∧ ¬ P m m' ∧ ¬ P m' m ∧
+        D ∈ mtk C0 I (w m') (cbud m')) ∨
+      (∃ f, ¬ U f ∧
+        ¬ (OC).disj (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inl f)) ∧
+        D ∈ mtk C0 I (g f) (bud f))) :
+    ∀ r D, Concept.ex r D ∈ mtk C0 I (w m) (cbud m) →
+      (∃ f : β ⊕ M, odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl f) = r ∧
+        D ∈ mtk C0 I (Sum.elim g w f) (Sum.elim bud cbud f)) ∨
+      (∃ k, conv (odNet (OC) (Sum.inr k) (Sum.inl (Sum.inr m))) = r ∧
+        ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) := by
+  intro r D hdem
+  cases r with
+  | eq => exact Or.inl ⟨Sum.inr m, odNet_self _ _, rEQ D hdem⟩
+  | dr =>
+    obtain ⟨f, hd, hD⟩ := rDR D hdem
+    exact Or.inl ⟨Sum.inl f, cap_dr_edge hd, hD⟩
+  | pp =>
+    obtain ⟨m', hP, hD⟩ := rPP D hdem
+    exact Or.inl ⟨Sum.inr m', cap_pp_cap hP, hD⟩
+  | ppi =>
+    rcases rPPI D hdem with ⟨e, hU, hD⟩ | ⟨k, hk, a, ha, hD⟩
+    · exact Or.inl ⟨Sum.inl e, cap_ppi_U hU m, hD⟩
+    · exact Or.inr ⟨k, by rw [cap_above_kernel hk m]; rfl, a, ha, hD⟩
+  | po =>
+    rcases rPO D hdem with ⟨m', hne, h1, h2, hD⟩ | ⟨f, hU, hnd, hD⟩
+    · exact Or.inl ⟨Sum.inr m', cap_po_cap hne h1 h2, hD⟩
+    · exact Or.inl ⟨Sum.inl f, cap_po_out' hU m hnd, hD⟩
+
 end CapEdges
 
 
@@ -26535,6 +26598,17 @@ theorem cap_ppi_required_in_mty {α : Type} {I : Interp α} (hI : RCC5Interp I)
     Y ∈ mty C0 I z :=
   mem_mty.mpr ⟨cl_all (mem_mty.mp hY).1,
     cap_ee_all_ppi hI hdom hasc hwd hrw hzd ha hz hY⟩
+
+/-- `gCap`/`budCap` are `Sum.elim` — recorded so the §62 routing consumer (which
+    states its conclusion with `Sum.elim`, being earlier in the file) and the
+    §56 certificate (which uses `gCap`) are literally the same object. -/
+theorem gCap_eq {α : Type} (g : β → α) (w : M → α) :
+    gCap g w = Sum.elim g w := by
+  funext x; cases x <;> rfl
+
+theorem budCap_eq (bud : β → Nat) (cbud : M → Nat) :
+    budCap bud cbud = Sum.elim bud cbud := by
+  funext x; cases x <;> rfl
 
 section CappedCert
 
@@ -27047,6 +27121,8 @@ end OneShotDichotomy
 #print axioms cap_reaches
 #print axioms cap_ee_all_ppi
 #print axioms cap_stab_exists
+#print axioms gCap_eq
+#print axioms budCap_eq
 #print axioms capped_tauE_base
 #print axioms capped_tauE_cap
 #print axioms capped_phase
@@ -27067,6 +27143,9 @@ end OneShotDichotomy
 #print axioms odSeedCap_frame
 #print axioms cap_disj_cap_false
 #print axioms cap_dr_edge
+#print axioms cap_ppi_U
+#print axioms cap_po_out'
+#print axioms cap_he_ex
 #print axioms cap_above_U
 #print axioms cap_po_outside
 #print axioms cap_above_kernel

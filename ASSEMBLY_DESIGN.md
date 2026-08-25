@@ -6795,3 +6795,56 @@ these edges are an interface, and it has not yet been consumed.
 
 Build: 27,101 lines, 1,377 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 62. `e_ex` FOR CAP NODES — the routing consumer, and it HELD
+
+`cap_he_ex`: five routing conditions, one per relation, each saying the model
+witness for a cap's demand is matched by a certificate node carrying the demanded
+concept. Given them, the `e_ex` disjunction follows from the edge lemmas:
+
+| relation | routed by |
+|---|---|
+| `eq` | `odNet_self` — the cap serves itself |
+| `dr` | `cap_dr_edge` — §61's new edge |
+| `pp` | `cap_pp_cap` — §58.1's layer edge |
+| `ppi` | `cap_ppi_U` (into the closure) or `cap_above_kernel` (the kernel branch) |
+| `po` | `cap_po_cap` (a sibling) or `cap_po_out'` (outside the closure) |
+
+Written **before** the extraction supplies the conditions, per the method rule.
+
+### 62.1 The fourth interface-consumption, and the first that held
+
+Three of the last three such moments found a gap:
+
+| moment | outcome |
+|---|---|
+| §55 — feed the cap to `mtkKernelsOD_of_debts` | **failed** — demands model-realized nodes |
+| §58 — write `e_ex`, gap 1 | **failed** — no cap-internal order |
+| §58 — write `e_ex`, gap 2 | **failed** — no `DR` edge at a cap |
+| §62 — write the routing consumer | **held** — all five cases routed cleanly |
+
+That is worth recording as evidence, not as reassurance: the three failures were
+all about MISSING EDGES, and §§58–61 added exactly those edges. The consumer
+holding is what a repaired interface should look like. It is not evidence about
+the conditions themselves, which the extraction has still to supply.
+
+Two small edges were added while writing it — `cap_ppi_U` and `cap_po_out'`, the
+reverse orientations of `cap_above_U` and `cap_po_outside`. Both one-liners.
+
+Also `gCap_eq` / `budCap_eq`: the §56 certificate's maps ARE `Sum.elim`, so the
+routing consumer (stated with `Sum.elim`, being earlier in the file) and the
+certificate are literally the same object.
+
+### 62.2 What is left for the mixed quadrant
+
+1. **Supply the five routing conditions** from the extraction's data — the model
+   witness for each cap demand, matched to a certificate node. This is where
+   §49's trichotomy and §§56–57's `∀` machinery get consumed.
+2. Assemble `MultiTierOk` for the capped certificate (every row now has its
+   lemma; `e_ex` at caps has `cap_he_ex`).
+3. Instantiate `M`, `U`, `P`, `capOver`, `dseed`, `w`, `cbud`; discharge
+   `hUdown`, `hcov`, `hPirr`, `hPtr`, `hdsep`, `hdbase`.
+4. Reindex → encode → discharge `MixedCompleteness`.
+
+Build: 27,180 lines, 1,382 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
