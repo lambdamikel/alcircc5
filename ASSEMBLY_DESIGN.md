@@ -7955,3 +7955,47 @@ So skipping is not an optimisation. It is what makes the node set finite.
 
 Build: 28,762 lines, 1,459 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 86. §85.3 — the termination argument, and a correction
+
+**Half 1, certified.** `ascPath_len_le` / `ascPath_repeats`: a repeat-free
+ascending path is at most `|typeEnum C0|` long, and a longer one must repeat a
+type.
+
+**Half 2, corrected.** I first stated it as *a type repeat makes the demand
+`kernelServes`*. **That is false.** Checking it against `kernel_of_chain` showed
+why: a repeat yields a recurrent SEGMENT — the kernel's `hty` and `hp` — not a
+guarantee about the original chain. A demand can stay one-shot with an off-chain
+witness while the chain's types repeat perfectly well.
+
+What a repeat gives is a **kernel at that point**, and then §49's trichotomy
+applies: chain-recurrence (skip), one cofinal external (extend by one), or
+neither. **So the closure's bound is the LAYER count of §52, not a property of
+any single chain.**
+
+### 86.1 Item A's remaining target, precisely
+
+> the skipping closure's non-kernel-served steps form layers; within a layer a
+> node contributes at most `|cl C0|` steps; and the layer count is bounded by
+> `layer_recursion_terminates` (§52).
+
+Every ingredient is certified — `kernelServes` (§85), the trichotomy (§49),
+`layer_recursion_terminates` (§52), `ascPath_len_le` (§85.3),
+`mixNodes_length_le_KT`. What is unwritten is their composition into a closure
+definition and its coverage lemma.
+
+No placeholder `def` is left in the artifact for this: a malformed Prop would be
+worse than prose, and I wrote one before deleting it.
+
+### 86.2 State
+
+| item | status |
+|---|---|
+| A | shape fixed, half 1 certified, half 2 stated; **the composition is the build** |
+| B | follows from A |
+| C | probe says comfortable; `mixNodes_length_le_KT` bounds it |
+| D, F, G, H | done / resolved |
+| E | outstanding |
+
+Build: 28,820 lines, 1,461 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

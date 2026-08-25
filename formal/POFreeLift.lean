@@ -27996,6 +27996,62 @@ theorem kernelServes_no_external {c : Nat → α}
   · exact Or.inl (fun j hij => kernelServes_guard hdom hasc hg hij)
   · exact Or.inr (kernelServes_recur hdom hasc hr)
 
+/-! ##### §85.3 — why a skipping closure terminates
+
+The argument, in two halves:
+
+1. **A repeat-free ascending path is short** — at most `|typeEnum C0|`, by
+   pigeonhole (`repeatfree_len_le`). Certified below.
+2. **A path with a REPEATED type is kernel-served** — a type-equal segment
+   cycles into a kernel (the `seg_*` machinery of round D2b), and then the
+   demands along it satisfy `kernelServes` and the closure skips them.
+
+Together they bound the skipping closure. Half 1 is here; half 2 is the
+remaining target of item A. -/
+
+/-- **HALF 1.**  A list of nodes with pairwise distinct model types is no longer
+    than the type enumeration — so a repeat-free ascending path in the closure
+    has length at most `|typeEnum C0|`. -/
+theorem ascPath_len_le (C0 : Concept) (I : Interp α) (ns : List α)
+    (hnd : (ns.map (fun x => mty C0 I x)).Nodup) :
+    ns.length ≤ (typeEnum C0).length :=
+  repeatfree_len_le C0 I ns hnd
+
+/-- The contrapositive, in the form the construction consumes: a path LONGER
+    than the type enumeration must repeat a type — which is half 2's trigger. -/
+theorem ascPath_repeats (C0 : Concept) (I : Interp α) (ns : List α)
+    (hlen : (typeEnum C0).length < ns.length) :
+    ¬ (ns.map (fun x => mty C0 I x)).Nodup := by
+  intro hnd
+  exact absurd (ascPath_len_le C0 I ns hnd) (by omega)
+
+/-! ##### HALF 2, CORRECTED
+
+⚠ A first version of this section stated half 2 as: *a type repeat on an
+ascending path makes the demand `kernelServes`*. **That is FALSE**, and checking
+it against `kernel_of_chain` is what showed it. A repeat yields a recurrent
+SEGMENT — the kernel's `hty` and `hp` — not a guarantee about the ORIGINAL
+chain. The demand can stay one-shot with an off-chain witness while the chain's
+types repeat perfectly well.
+
+What a repeat actually gives is a KERNEL at that point, and then §49's trichotomy
+applies to the demand: chain-recurrence (`kernelServes`, so the closure skips),
+one cofinal external (extend by one), or neither. **So the closure's bound is the
+LAYER count of §52, not a property of any single chain.**
+
+Item A's remaining target, stated precisely:
+
+> the skipping closure's non-kernel-served steps form layers; within a layer a
+> node contributes at most `|cl C0|` steps; and the layer count is bounded by
+> `layer_recursion_terminates` (§52).
+
+Every ingredient is certified — `kernelServes` (§85), the trichotomy (§49),
+`layer_recursion_terminates` (§52), `ascPath_len_le` (§85.3), and
+`mixNodes_length_le_KT`. What is unwritten is their composition into a closure
+definition and its coverage lemma.
+
+No `def` is offered here: a malformed placeholder would be worse than prose. -/
+
 end KernelService
 
 end KernelDebts
@@ -28646,6 +28702,8 @@ end OneShotDichotomy
 #print axioms kernelServes_recur
 #print axioms kernelServes_guard
 #print axioms kernelServes_no_external
+#print axioms ascPath_len_le
+#print axioms ascPath_repeats
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup
