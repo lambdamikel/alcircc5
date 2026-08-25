@@ -8546,3 +8546,43 @@ certified; the definition and its two proofs are unwritten.
 
 Build: 29,989 lines, 1,500 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 100. `kserU` — the upward kernel-service test, with both properties
+
+§99 established that the segment must be a CHAIN, so `kser` is defined per
+direction. The upward one:
+
+```
+kserU C0 I m c := decide (∃ path, (∀ t, ρ (path t) (path (t+1)) = PP) ∧ path 0 = m ∧
+                            ∃ j, 0 < j ∧ mty (path 0) = mty (path j) ∧
+                              ∃ b, b < j ∧ c ∈ mty (path b))
+```
+
+*`m` has an ascending chain through it whose types repeat, with the demanded
+concept carried inside the segment.*
+
+Both required properties are certified:
+
+* **`kserU_segment` : `KserSegmentU (kserU C0 I)`** — §98's property, restricted
+  to chains as §99 requires. Proof: shift the chain to start at `i`.
+* **`kserU_sound`** — if the test fires, the demand really IS served, by a node
+  of the chain itself. The repeat puts the concept at or above the start (the
+  `b = 0` case uses `mty (path 0) = mty (path j)`), and `oneshot_in_kernel`
+  reads it off.
+
+### 100.1 Where this leaves item A
+
+`skipNodes_covers_of_KserSegment` (§98) needs the mixed `KserSegment`; `kserU`
+supplies the chain-restricted `KserSegmentU`. Joining them is the composition
+§99.2 described: run the coverage argument on `skipNodesU` with `kserU`, on
+`skipNodesD` with the dual `kserD`, and combine.
+
+`skipNodesU_fixed` and `skipNodesD_fixed` are already proved, so what remains is:
+
+1. `kserD` and its two properties — the dual of §100, transcription;
+2. the `KserSegmentU`-to-`hext` step for the upward closure specifically
+   (`hext_of_KserSegment`'s chain-restricted analogue);
+3. composing the two halves' coverage into the mixed statement.
+
+Build: 30,053 lines, 1,504 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

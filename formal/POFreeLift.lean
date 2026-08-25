@@ -29190,6 +29190,68 @@ theorem skipNodes_covers_of_KserSegment (kser : MTKNode I C0 → Concept → Boo
         ppWitness m hF ∈ skipNodes kser n (typeEnum C0).length :=
   skipNodes_covers_at_typeEnum kser n (hext_of_KserSegment kser hk)
 
+/-! ##### §100 — `kser` for the upward direction
+
+§99: the segment must be a CHAIN for a type repeat to yield a kernel, so `kser`
+is defined per direction. Here is the upward one, with both properties it must
+have — the segment property (§98) and soundness (§85). -/
+
+/-- The segment property, restricted to CHAINS — which is what §99 showed is the
+    justified form. -/
+def KserSegmentU (kser : MTKNode I C0 → Concept → Bool) : Prop :=
+  ∀ (path : Nat → MTKNode I C0),
+    (∀ t, I.rho (path t).x (path (t + 1)).x = pp) →
+    ∀ i j, i < j → mty C0 I (path i).x = mty C0 I (path j).x →
+    ∀ c, (∃ b, b < j - i ∧ c ∈ mty C0 I (path (i + b)).x) →
+      kser (path i) c = true
+
+open Classical in
+/-- **THE UPWARD KERNEL-SERVICE TEST.**  `m` has an ascending chain through it
+    whose types repeat, with the demanded concept carried inside the segment. -/
+noncomputable def kserU (C0 : Concept) (I : Interp α) (m : MTKNode I C0)
+    (c : Concept) : Bool :=
+  decide (∃ (path : Nat → MTKNode I C0),
+    (∀ t, I.rho (path t).x (path (t + 1)).x = pp) ∧ path 0 = m ∧
+    ∃ j, 0 < j ∧ mty C0 I (path 0).x = mty C0 I (path j).x ∧
+      ∃ b, b < j ∧ c ∈ mty C0 I (path b).x)
+
+open Classical in
+/-- **PROPERTY 1 — the segment property.**  Shift the chain to start at `i`. -/
+theorem kserU_segment (C0 : Concept) (I : Interp α) :
+    KserSegmentU (kserU C0 I) := by
+  intro path hchain i j hij hty c ⟨b, hb, hc⟩
+  refine decide_eq_true ⟨fun t => path (i + t), fun t => ?_, rfl,
+    j - i, by omega, ?_, b, hb, ?_⟩
+  · show I.rho (path (i + t)).x (path (i + (t + 1))).x = pp
+    have h : i + (t + 1) = (i + t) + 1 := by omega
+    rw [h]; exact hchain (i + t)
+  · show mty C0 I (path (i + 0)).x = mty C0 I (path (i + (j - i))).x
+    have h1 : i + 0 = i := by omega
+    have h2 : i + (j - i) = j := by omega
+    rw [h1, h2]; exact hty
+  · exact hc
+
+open Classical in
+/-- **PROPERTY 2 — soundness.**  If the test fires, the demand really is served,
+    by a node of the chain itself: the repeat puts the concept at or above the
+    start, and `oneshot_in_kernel` reads it off. -/
+theorem kserU_sound (hI : RCC5Interp I) (C0 : Concept) (m : MTKNode I C0)
+    (c : Concept) (h : kserU C0 I m c = true) :
+    sat I m.x (Concept.ex pp c) := by
+  obtain ⟨path, hchain, hp0, j, hj, hty, b, hb, hc⟩ := of_decide_eq_true h
+  have hasc := chain_pp_lt hI (fun t => (path t).x) (fun t => (path t).hx) hchain
+  have hup : ∃ t, 0 < t ∧ sat I (path t).x c := by
+    rcases Nat.eq_zero_or_pos b with rfl | hbpos
+    · refine ⟨j, hj, ?_⟩
+      have : c ∈ mty C0 I (path j).x := by rw [← hty]; exact hc
+      exact (mem_mty.mp this).2
+    · exact ⟨b, hbpos, (mem_mty.mp hc).2⟩
+  obtain ⟨t, ht, hsat⟩ := hup
+  have hres := oneshot_in_kernel (I := I) (c := fun n => (path n).x)
+    (fun n => (path n).hx) hasc (show (0 : Nat) < t from ht) hsat
+  rw [hp0] at hres
+  exact hres
+
 end SkipClosure
 
 end KernelService
@@ -29873,6 +29935,8 @@ end OneShotDichotomy
 #print axioms skipNodes_covers_at_typeEnum
 #print axioms hext_of_KserSegment
 #print axioms skipNodes_covers_of_KserSegment
+#print axioms kserU_segment
+#print axioms kserU_sound
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup
