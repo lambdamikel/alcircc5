@@ -8316,3 +8316,44 @@ Then the mixed closure is bounded by composing the two — §92's route 2 in ful
 
 Build: 29,321 lines, 1,478 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 94. THE UPWARD FIXPOINT — proven
+
+```
+skipNodesU_fixed :
+  ∀ m ∈ skipNodesU kser n (|typeEnum C0| + 1), m ∈ skipNodesU kser n |typeEnum C0|
+```
+
+**That is `skipNodes_covers_of_fixed`'s hypothesis, for the upward half.**
+
+The argument, now certified end to end:
+
+1. `skipNodesU_path` — membership at fuel `F+1` gives an ASCENDING path of at
+   most `F+1` non-kernel-served `∃PP` steps;
+2. `hext` (§91's condition on `kser`) — that path's types are pairwise distinct;
+3. `skipPath_len_le'` — so it is at most `F = |typeEnum C0|` long;
+4. `skipNodesU_of_path` — a path that short puts its endpoint in the closure at
+   its own length;
+5. `skipNodesU_mono_le` — hence at fuel `F`.
+
+Supporting this round: `skipNodesU_mono`, `skipNodesU_mono_le`,
+`skipNodesU_of_path`.
+
+### 94.1 What this closes
+
+Item A's upward half is **complete**: definition, bound, coverage step,
+monotonicity, transitivity, path characterisation both ways, and the fixpoint.
+The bound `|typeEnum C0|` is computed from `C₀` alone, as `mixKT` requires.
+
+### 94.2 What remains
+
+* **the downward half** — `skipNodesD` following `∃PPI`. Transcription: every
+  lemma above has a mirror to write, and the descending machinery
+  (`ppiWitness`, `persistDsI`, `rr_coversI`, `kCkI`) is certified throughout;
+* **the composition** — bound the mixed closure by the two halves (§92's route 2
+  in full);
+* then item A feeds `skipNodes_covers_of_fixed`, and B/C/E follow as §82 laid
+  out.
+
+Build: 29,419 lines, 1,482 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
