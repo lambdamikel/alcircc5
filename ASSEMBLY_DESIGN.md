@@ -6494,3 +6494,46 @@ honest figure is **4–8 sessions**, and the confidence that no further wall
 appears should be lower than §54 implied — this is the second time in two
 sessions that an interface failed at first contact, exactly as the method note
 predicts.
+
+## 56. THE CAPPED CERTIFICATE AT THE LABEL LEVEL
+
+§55's correction says the cap must be assembled directly against `MultiTierOk`,
+which is stated entirely in terms of labels — `∀` propagation between `tauE`s,
+`∃` coverage by some node's `tauE`. `multiTier_sound` builds a model FROM the
+certificate and never asks where the labels came from.
+
+### 56.1 The certificate needs no new constructor
+
+`capped_tauE_base`, `capped_tauE_cap`, `capped_phase` are all `rfl`: the capped
+certificate is literally `mtkKernelsOD` at `β ⊕ M` with the combined maps `gCap`
+and `budCap`. What changes is only which consumer validates it.
+
+### 56.2 The base→cap obligation, discharged
+
+`cap_ee_all_pp`: a cap node's label absorbs every `∀PP` obligation of the
+closure, provided the cap's witness sits above a chain node whose `∀PP` content
+is MAXIMAL. A closure element `e` lies at or below some `c j`; its `∀PP.X` rises
+to `c j` by `sat_all_pp_up`; maximality moves it to `c i₀`; and `c i₀ PP w`
+delivers `X` at `w`.
+
+`cap_stab_exists`: **that chain node always exists.** `recurrent_tail` gives a
+point past which every occurring type recurs cofinally; pushing any `∀PP.X` up
+to a recurrence shows the type there contains every `∀PP` conjunct appearing
+anywhere on the chain. So the hypothesis of `cap_ee_all_pp` is never an
+assumption about the model — it is a theorem about it.
+
+That is §55.3's plan, executed: the obligation §55 identified as needing the
+label level is discharged at the label level.
+
+### 56.3 Next: the cap→base `∀PPI` obligation
+
+The mirror direction needs `Y ∈ mtk (g e)` for every closure element whenever
+`∀PPI.Y ∈ mtk (w m)`. The argument is identified and uses the kernel's
+PERIODICITY, not the blanket over witnesses:
+
+`Y` holds at everything below `w m`, which includes `c 0 … c i₀`. If `i₀` spans
+a full period, that is every PHASE of the kernel — and periodicity then extends
+`Y` to `c j` for ALL `j`, hence to the whole closure.
+
+So both directions rest on the same two facts the vertical quadrant already
+owns: monotone `∀PP` content with a stabilisation point, and periodic phases.

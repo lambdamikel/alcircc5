@@ -26202,6 +26202,123 @@ theorem cap_po_cap {m m' : M} (hmm : m ≠ m') :
 end CapEdges
 
 
+/-! ### §56 — THE CAPPED CERTIFICATE, BUILT AT THE LABEL LEVEL
+
+§55 found that `mtkKernelsOD_of_debts` cannot serve a cap: its debts run through
+`odLt_hEreal`, which produces **"the model relation EQUALS the declared
+relation"**, and a cap node has no model realization above the whole closure.
+
+But `MultiTierOk` itself is stated entirely at the **label** level — `∀`
+propagation between `tauE`s, `∃` coverage by some node's `tauE`. Soundness
+(`multiTier_sound`) builds a model FROM the certificate and never asks where the
+labels came from. So a capped certificate can be built directly against
+`MultiTierOk`, using model types only as CONSISTENT SETS.
+
+The certificate itself needs no new constructor: it is `mtkKernelsOD` at
+`β ⊕ M`, with the base and cap maps combined. -/
+
+/-- The combined witness map: base externals keep their model node, cap nodes
+    carry the model node whose TYPE serves as their label. -/
+def gCap {β M : Type} {α : Type} (g : β → α) (w : M → α) : β ⊕ M → α
+  | .inl b => g b
+  | .inr m => w m
+
+/-- The combined budget map. -/
+def budCap {β M : Type} (bud : β → Nat) (cbud : M → Nat) : β ⊕ M → Nat
+  | .inl b => bud b
+  | .inr m => cbud m
+
+/-- **`ee_all` ON THE BASE→CAP EDGE — the §55.3 stabilisation argument.**
+
+    A cap node's label must absorb every `∀PP` obligation of the closure. It
+    does, provided the cap's witness sits above a chain node whose `∀PP` content
+    is MAXIMAL — which exists because that content is monotone up the chain
+    (`sat_all_pp_up`) and lives inside the finite `cl C0`.
+
+    Then: a closure element `e` lies at or below some `c j`; its `∀PP.X` rises to
+    `c j`; maximality moves it to `c i₀`; and `c i₀ PP w` delivers `X` at `w`.
+
+    This is the obligation §55 identified as the one that must be discharged at
+    the LABEL level rather than through `odLt_hEreal`. -/
+theorem cap_ee_all_pp {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    {i₀ : Nat} {wm : α} (hwd : I.dom wm) (hrw : I.rho (c i₀) wm = pp)
+    (hstab : ∀ (X : Concept) (j : Nat), Concept.all pp X ∈ mty C0 I (c j) →
+      Concept.all pp X ∈ mty C0 I (c i₀))
+    {e : α} (hed : I.dom e) {j : Nat} (hej : I.rho e (c j) = pp ∨ e = c j)
+    {X : Concept} (hX : Concept.all pp X ∈ mty C0 I e) :
+    sat I wm X := by
+  have h1 : Concept.all pp X ∈ mty C0 I (c j) := by
+    rcases hej with hr | rfl
+    · exact mem_mty.mpr ⟨(mem_mty.mp hX).1,
+        sat_all_pp_up hI hed (hdom j) hr (mem_mty.mp hX).2⟩
+    · exact hX
+  exact (mem_mty.mp (hstab X j h1)).2 wm hwd hrw
+
+/-- A chain node past the maximum of the `∀PP` content EXISTS: the content is
+    monotone going up and lives in the finite `cl C0`, so it stabilises. -/
+theorem cap_stab_exists {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    (C0 : Concept) {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp) :
+    ∃ i₀, ∀ (X : Concept) (j : Nat), Concept.all pp X ∈ mty C0 I (c j) →
+      Concept.all pp X ∈ mty C0 I (c i₀) := by
+  obtain ⟨M, hM⟩ := recurrent_tail (typeEnum C0) (fun i => mty C0 I (c i))
+    (fun i => mty_mem_typeEnum C0 I (c i))
+  refine ⟨M, fun X j hXj => ?_⟩
+  rcases Nat.lt_or_ge j M with h | h
+  · -- j below M: push X up to a recurrence of M's type above j
+    obtain ⟨i, hi, heq⟩ := hM M (Nat.le_refl M) (j + 1)
+    have hup : Concept.all pp X ∈ mty C0 I (c i) :=
+      mem_mty.mpr ⟨(mem_mty.mp hXj).1, sat_all_pp_up hI (hdom j) (hdom i)
+        (hasc j i (Nat.lt_of_lt_of_le (Nat.lt_succ_self j) hi))
+        (mem_mty.mp hXj).2⟩
+    rw [← heq]; exact hup
+  · rcases Nat.eq_or_lt_of_le h with heq | hlt
+    · rw [heq]; exact hXj
+    · -- j above M: M's type recurs above j, and X rises to there
+      obtain ⟨i, hi, heq⟩ := hM M (Nat.le_refl M) (j + 1)
+      have hup : Concept.all pp X ∈ mty C0 I (c i) :=
+        mem_mty.mpr ⟨(mem_mty.mp hXj).1, sat_all_pp_up hI (hdom j) (hdom i)
+          (hasc j i (Nat.lt_of_lt_of_le (Nat.lt_succ_self j) hi))
+          (mem_mty.mp hXj).2⟩
+      rw [← heq]; exact hup
+
+section CappedCert
+
+variable {α : Type} {I : Interp α} {C0 : Concept} {β κ M : Type}
+
+/-- **THE CAPPED CERTIFICATE AGREES WITH THE UNCAPPED ONE ON BASE NODES.**
+
+    Labels are definitionally equal, and the three relation blocks agree by the
+    §53 transfer theorem. So every `MultiTierOk` field that mentions only base
+    indices is inherited, and only the cap rows need new proofs. -/
+theorem capped_tauE_base (O : ODStruct ((β ⊕ M) ⊕ κ))
+    (g : β → α) (w : M → α) (bud : β → Nat) (cbud : M → Nat)
+    (bk : κ → Nat) (dir : κ → Bool) (ck : κ → Nat → α) (ik pk : κ → Nat)
+    (b : β) :
+    (mtkKernelsOD I C0 O (gCap g w) (budCap bud cbud) bk dir ck ik pk).tauE
+        (Sum.inl b)
+      = mtk C0 I (g b) (bud b) := rfl
+
+/-- The cap nodes' labels, by definition. -/
+theorem capped_tauE_cap (O : ODStruct ((β ⊕ M) ⊕ κ))
+    (g : β → α) (w : M → α) (bud : β → Nat) (cbud : M → Nat)
+    (bk : κ → Nat) (dir : κ → Bool) (ck : κ → Nat → α) (ik pk : κ → Nat)
+    (m : M) :
+    (mtkKernelsOD I C0 O (gCap g w) (budCap bud cbud) bk dir ck ik pk).tauE
+        (Sum.inr m)
+      = mtk C0 I (w m) (cbud m) := rfl
+
+/-- The kernel phases are untouched by capping. -/
+theorem capped_phase (O : ODStruct ((β ⊕ M) ⊕ κ))
+    (g : β → α) (w : M → α) (bud : β → Nat) (cbud : M → Nat)
+    (bk : κ → Nat) (dir : κ → Bool) (ck : κ → Nat → α) (ik pk : κ → Nat)
+    (k : κ) (a : Nat) :
+    (mtkKernelsOD I C0 O (gCap g w) (budCap bud cbud) bk dir ck ik pk).phase k a
+      = mtk C0 I (ck k (ik k + a)) (bk k) := rfl
+
+end CappedCert
+
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
 §49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
@@ -26614,6 +26731,11 @@ end OneShotDichotomy
 #print axioms finite_pool_all_or_nothing
 #print axioms witness_realizes_requirement
 #print axioms cap_all_ppi_sound
+#print axioms cap_ee_all_pp
+#print axioms cap_stab_exists
+#print axioms capped_tauE_base
+#print axioms capped_tauE_cap
+#print axioms capped_phase
 #print axioms capMixLt_old
 #print axioms capMixLe_to_old
 #print axioms capElt_irr
