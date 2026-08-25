@@ -27948,6 +27948,56 @@ theorem subtypeList_nodup (P : B → Prop) :
 
 end SubtypeEnum
 
+/-! #### §85 — kernel service, both branches (the `wp106` correction)
+
+`wp106` found the construction requirement the assembly had been missing: a
+vertical demand is served by the node's own kernel in **two** ways, and modelling
+only the first makes every ascending chain look like an unbounded closure.
+
+Naming the disjunction makes the requirement checkable rather than remembered. -/
+
+section KernelService
+
+variable {α : Type} {I : Interp α}
+
+/-- **A DEMAND THE NODE'S OWN KERNEL SERVES.**  Either the `∀PP` guard holds —
+    the round-robin case, `rr_covers` — or the demanded concept RECURS further
+    along the kernel's chain, in which case the chain itself is the witness. -/
+def kernelServes (I : Interp α) (c : Nat → α) (i : Nat)
+    (D : Concept) : Prop :=
+  sat I (c i) (Concept.all pp (Concept.ex pp D)) ∨ ∃ j, i < j ∧ sat I (c j) D
+
+/-- **THE SECOND BRANCH REALLY SERVES**, with no external at all: the higher
+    chain node IS the witness (`oneshot_in_kernel`). -/
+theorem kernelServes_recur {c : Nat → α} (hdom : ∀ n, I.dom (c n))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp) {i : Nat} {D : Concept}
+    (h : ∃ j, i < j ∧ sat I (c j) D) : sat I (c i) (Concept.ex pp D) := by
+  obtain ⟨j, hij, hD⟩ := h
+  exact oneshot_in_kernel hdom hasc hij hD
+
+/-- Under the FIRST branch the demand is served at every chain node above the
+    guard's holder, since `∀PP` propagates up (`sat_all_pp_up`). -/
+theorem kernelServes_guard {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    {i : Nat} {D : Concept}
+    (h : sat I (c i) (Concept.all pp (Concept.ex pp D))) {j : Nat} (hij : i < j) :
+    sat I (c j) (Concept.ex pp D) :=
+  h (c j) (hdom j) (hasc i j hij)
+
+/-- **THE POINT.**  A kernel-served demand needs NO NEW EXTERNAL — the node
+    closure may skip it. `wp106`: skipping is what makes the closure terminate
+    (222/222 closed at fuel 4; without it, no fuel suffices). -/
+theorem kernelServes_no_external {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    {i : Nat} {D : Concept} (h : kernelServes I c i D) :
+    (∀ j, i < j → sat I (c j) (Concept.ex pp D)) ∨
+    sat I (c i) (Concept.ex pp D) := by
+  rcases h with hg | hr
+  · exact Or.inl (fun j hij => kernelServes_guard hdom hasc hg hij)
+  · exact Or.inr (kernelServes_recur hdom hasc hr)
+
+end KernelService
+
 end KernelDebts
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -28593,6 +28643,9 @@ end OneShotDichotomy
 #print axioms elt_irrefl
 #print axioms mergedMT_ok
 #print axioms mSep
+#print axioms kernelServes_recur
+#print axioms kernelServes_guard
+#print axioms kernelServes_no_external
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup

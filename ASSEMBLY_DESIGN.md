@@ -7913,3 +7913,45 @@ enlarging". On this evidence C looks comfortable and A has a definite shape: the
 construction is `mixNodes` with BOTH kernel-service branches, and the fuel needed
 is small. That is not a proof — but it is the first evidence that the node set
 closes at all.
+
+## 85. KERNEL SERVICE, BOTH BRANCHES — the `wp106` correction, certified
+
+`wp106` found the requirement the assembly had been missing. §85 names it so it
+is checkable rather than remembered:
+
+```
+kernelServes I c i D :=
+  sat I (c i) (∀PP.∃PP.D)              -- round-robin, rr_covers
+  ∨ ∃ j, i < j ∧ sat I (c j) D          -- the concept recurs on the chain
+```
+
+* `kernelServes_recur` — the second branch really serves, with **no external at
+  all**: the higher chain node IS the witness (`oneshot_in_kernel`);
+* `kernelServes_guard` — under the first, the demand is served at every chain
+  node above the guard's holder (`sat_all_pp_up`);
+* `kernelServes_no_external` — **the point**: a kernel-served demand needs no new
+  external, so the node closure may SKIP it.
+
+All three **axiom-free**.
+
+### 85.1 Why this is the difference between terminating and not
+
+`wp106` measured it directly. Modelling kernel service as the FIRST branch only:
+the closure plateaus and **no fuel suffices** — every ascending chain walks
+forever, because each node's one-shot `∃PP` is served two nodes further up the
+same chain. With both branches: **222/222 closed at fuel 4**.
+
+So skipping is not an optimisation. It is what makes the node set finite.
+
+### 85.2 §82's list
+
+| item | status |
+|---|---|
+| A — the node set | shape now fixed: `mixNodes` skipping kernel-served demands; **the closure lemma is the remaining build** |
+| B — coverage | follows from A's closure plus the routing conditions |
+| C — the counting | probe says comfortable; `mixNodes_length_le` bounds it |
+| D, F, G, H | done / resolved |
+| E — budget hypotheses | outstanding |
+
+Build: 28,762 lines, 1,459 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
