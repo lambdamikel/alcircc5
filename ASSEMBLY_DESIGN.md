@@ -7727,3 +7727,43 @@ descendant, and the last piece that is not obviously routine.
 
 Build: 28,400 lines, 1,447 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 81. THE ASSEMBLY GOES THROUGH — `mergedMT_ok`
+
+`mtkKernelsOD_of_debts` fed with the extraction's own data
+(`nd`, `mUp`, `mDn`, `mCk`, `mIk`, `mPk`, `mBk`, `mDir`, `mKdr`). It compiles.
+
+```
+mergedMT_ok … : MultiTierOk (mtkKernelsOD I C0 (odSeed …)
+    (fun e => (nd e).x) (fun e => (nd e).k) (mBk nd) mDir
+    (mCk …) (mIk …) (mPk …))
+```
+
+All nine debts discharged in place, from the §77–§80 lemmas. The five structural
+inputs likewise (`mElt_irrefl`, `tcl_trans`, `mixStep_hud`, `seedMix_sym`, and
+`hsepS`).
+
+### 81.1 What remains as a hypothesis, and why
+
+| hypothesis | why it is not discharged here |
+|---|---|
+| `he_ex` / `hk_ex` | coverage — `odSeed_he_ex`/`_hk_ex` plus the five routing conditions, which depend on the NODE SET |
+| `hsepS` | `hsep_of_model` supplies it; it is left as a parameter so the theorem does not fix the seed's shape |
+| `hbS`, `hbK`, `hbQ` | the BUDGET halves of the disjointness debts — `seedMix_hb` is the external one; the kernel ones are the counting's neighbours |
+
+So the assembly is done and the residue is exactly the two things §80.2
+predicted: **coverage and counting**, both of which are the node set.
+
+### 81.2 Honest reading
+
+This is the first time the top-level certificate has been assembled from the
+extraction's data with every debt discharged rather than assumed. It is a real
+milestone.
+
+It is NOT the fragment. `mergedMT_ok`'s hypotheses still include coverage and the
+budget bounds, and those are where F6's descendant lives. The chain from here is
+short and certified (§§74–76), but its first link still needs a node set that is
+finite, closed, and counted.
+
+Build: 28,590 lines, 1,449 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

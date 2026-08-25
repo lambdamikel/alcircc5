@@ -27658,6 +27658,181 @@ theorem mElt_rho (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
       (fun k e h => mUp_base hI C0 nd L0 k e h)
       (fun k e h => mDn_base hI C0 nd L0 k e h) a b hs) e f h
 
+/-! #### §81 — THE ASSEMBLY
+
+Feeding `mtkKernelsOD_of_debts` with the extraction's own data. Coverage
+(`he_ex`/`hk_ex`) stays a hypothesis here: it is `odSeed_he_ex`/`odSeed_hk_ex`
+plus the five routing conditions, and those depend on the NODE SET, which is the
+counting question (§78.2). Everything else is now supplied. -/
+
+open Classical in
+/-- **THE MERGED CERTIFICATE IS VALID**, modulo coverage.  Every structural
+    input and all nine debts are discharged from the extraction's own data. -/
+theorem mergedMT_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
+    {β : Type} (nd : β → MTKNode I C0) (L0 : β → Nat)
+    (hsepS : ∀ x y z,
+      mixLe (tcl (mixStep nd (mUp hI C0 nd L0) (mDn hI C0 nd L0)))
+        (mUp hI C0 nd L0) (mDn hI C0 nd L0) x y →
+      mixLe (tcl (mixStep nd (mUp hI C0 nd L0) (mDn hI C0 nd L0)))
+        (mUp hI C0 nd L0) (mDn hI C0 nd L0) x z →
+      ¬ seedMix nd (mKdr hI C0 nd L0) y z)
+    (hbS : ∀ e f, (odSeed (tcl (mixStep nd (mUp hI C0 nd L0) (mDn hI C0 nd L0)))
+        (mUp hI C0 nd L0) (mDn hI C0 nd L0) (seedMix nd (mKdr hI C0 nd L0))
+        (mElt_irrefl hI C0 nd L0) (fun _ _ _ => tcl_trans _)
+        (mixStep_hud nd (mUp hI C0 nd L0) (mDn hI C0 nd L0))
+        (seedMix_sym nd (mKdr hI C0 nd L0)) hsepS).disj (Sum.inl e) (Sum.inl f) →
+      (nd e).k ≤ (nd f).k + 1)
+    (hbK : ∀ (k : KIdxM C0 I nd) (e : β),
+      (nd e).k ≤ mBk nd k + 1 ∧ mBk nd k ≤ (nd e).k + 1)
+    (hbQ : ∀ k k' : KIdxM C0 I nd, mBk nd k ≤ mBk nd k' + 1)
+    (he_ex : ∀ e r D, Concept.ex r D ∈ mtk C0 I (nd e).x (nd e).k →
+      (∃ f, odNet (odSeed _ _ _ _ (mElt_irrefl hI C0 nd L0)
+          (fun _ _ _ => tcl_trans _)
+          (mixStep_hud nd (mUp hI C0 nd L0) (mDn hI C0 nd L0))
+          (seedMix_sym nd (mKdr hI C0 nd L0)) hsepS)
+          (Sum.inl e) (Sum.inl f) = r ∧ D ∈ mtk C0 I (nd f).x (nd f).k) ∨
+      (∃ k, conv (odNet (odSeed _ _ _ _ (mElt_irrefl hI C0 nd L0)
+          (fun _ _ _ => tcl_trans _)
+          (mixStep_hud nd (mUp hI C0 nd L0) (mDn hI C0 nd L0))
+          (seedMix_sym nd (mKdr hI C0 nd L0)) hsepS)
+          (Sum.inr k) (Sum.inl e)) = r ∧
+        ∃ a, a < mPk hI C0 nd L0 k ∧
+          D ∈ mtk C0 I (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (mBk nd k)))
+    (hk_ex : ∀ k a r D,
+      Concept.ex r D ∈ mtk C0 I (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+        (mBk nd k) →
+      (∃ f, odNet (odSeed _ _ _ _ (mElt_irrefl hI C0 nd L0)
+          (fun _ _ _ => tcl_trans _)
+          (mixStep_hud nd (mUp hI C0 nd L0) (mDn hI C0 nd L0))
+          (seedMix_sym nd (mKdr hI C0 nd L0)) hsepS)
+          (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (nd f).x (nd f).k) ∨
+      (r = cdir (mDir k) ∧ ∃ b, b < mPk hI C0 nd L0 k ∧
+        D ∈ mtk C0 I (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b)) (mBk nd k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+        (mBk nd k)) ∨
+      (∃ k', k ≠ k' ∧ odNet (odSeed _ _ _ _ (mElt_irrefl hI C0 nd L0)
+          (fun _ _ _ => tcl_trans _)
+          (mixStep_hud nd (mUp hI C0 nd L0) (mDn hI C0 nd L0))
+          (seedMix_sym nd (mKdr hI C0 nd L0)) hsepS)
+          (Sum.inr k) (Sum.inr k') = r ∧
+        ∃ b, b < mPk hI C0 nd L0 k' ∧
+          D ∈ mtk C0 I (mCk hI C0 nd L0 k' (mIk hI C0 nd L0 k' + b))
+            (mBk nd k'))) :
+    MultiTierOk (mtkKernelsOD I C0
+      (odSeed _ _ _ _ (mElt_irrefl hI C0 nd L0) (fun _ _ _ => tcl_trans _)
+        (mixStep_hud nd (mUp hI C0 nd L0) (mDn hI C0 nd L0))
+        (seedMix_sym nd (mKdr hI C0 nd L0)) hsepS)
+      (fun e => (nd e).x) (fun e => (nd e).k) (mBk nd) mDir
+      (mCk hI C0 nd L0) (mIk hI C0 nd L0) (mPk hI C0 nd L0)) := by
+  refine mtkKernelsOD_of_debts hI hpofree _ _ _ _ (fun _ _ => Iff.rfl)
+    (fun e => (nd e).x) (fun e => (nd e).hx) (fun e => (nd e).k) (mBk nd) mDir
+    (mCk hI C0 nd L0) (fun k n => mCk_dom hI C0 nd L0 k n)
+    (mIk hI C0 nd L0) (mPk hI C0 nd L0) (fun k => mPk_pos hI C0 nd L0 k)
+    (fun k n => mCk_step hI C0 nd L0 k n) (fun k => mCk_ty hI C0 nd L0 k)
+    ?hppE ?hdr hbS ?hup ?hdn ?hdrk ?hqpp ?hqppi ?hqdr he_ex hk_ex
+  case hppE =>
+    exact fun e f h => merged_hppE hI nd _ _ (fun k => mCk hI C0 nd L0 k)
+      (mIk hI C0 nd L0) (fun k => mCk_dom hI C0 nd L0 k _)
+      (fun k e h => mUp_base hI C0 nd L0 k e h)
+      (fun k e h => mDn_base hI C0 nd L0 k e h)
+      (fun k x y hx hy => mUpDn_bud hI C0 nd L0 k x y hx hy) e f h
+  case hdr =>
+    exact fun e f h => hdr_of_model hI (fun e => (nd e).x)
+      (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0) _ _
+      (fun e => (nd e).hx) (fun k => mCk_dom hI C0 nd L0 k _)
+      (fun k e h => mUp_base hI C0 nd L0 k e h)
+      (fun k e h => mDn_base hI C0 nd L0 k e h) _
+      (fun e f h => mElt_rho hI C0 nd L0 e f h) _
+      (fun x y h => seedMix_dr hI nd (mKdr hI C0 nd L0)
+        (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0)
+        (fun k => mCk_dom hI C0 nd L0 k _)
+        (fun k f hf => mKdr_base hI C0 nd L0 k f hf) x y h) e f h
+  case hup =>
+    exact fun k e a _ h => mUp_hup hI C0 nd L0 _
+      (fun x y hxy => mElt_rho hI C0 nd L0 x y hxy)
+      (fun x y hxy => tcl_mixStep_bud nd _ _
+        (fun k x y hx hy => mUpDn_bud hI C0 nd L0 k x y hx hy) x y hxy)
+      k e a h
+  case hdn =>
+    exact fun k e a _ h => mDn_hdn hI C0 nd L0 _
+      (fun x y hxy => mElt_rho hI C0 nd L0 x y hxy)
+      (fun x y hxy => tcl_mixStep_bud nd _ _
+        (fun k x y hx hy => mUpDn_bud hI C0 nd L0 k x y hx hy) x y hxy)
+      k e a h
+  case hdrk =>
+    intro k e a _ hdj
+    refine ⟨?_, (hbK k e).1, (hbK k e).2⟩
+    have hd := hdrk_of_model hI (fun e => (nd e).x) (fun k => mCk hI C0 nd L0 k)
+      (mIk hI C0 nd L0) _ _ (fun e => (nd e).hx)
+      (fun k n => mCk_dom hI C0 nd L0 k n)
+      (fun k e h => mUp_base hI C0 nd L0 k e h)
+      (fun k e h => mDn_base hI C0 nd L0 k e h) _
+      (fun e f h => mElt_rho hI C0 nd L0 e f h)
+      (fun k e a h => mDn_phase hI C0 nd L0 k e h a) _
+      (fun x y h => seedMix_dr hI nd (mKdr hI C0 nd L0)
+        (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0)
+        (fun k => mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k))
+        (fun k f hf => mKdr_base hI C0 nd L0 k f hf) x y h)
+      (fun k y hy b => by
+        cases y with
+        | inl f =>
+            have h := mKdr_phase hI C0 nd L0 k f hy b
+            show I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
+              (nd f).x = dr
+            have hc : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
+                (nd f).x = conv (I.rho (nd f).x
+                  (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))) :=
+              hI.conv_ (nd f).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
+                (nd f).hx (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
+            rw [hc, h]; rfl
+        | inr k' => exact hy.elim)
+      k e a hdj
+    have hc : I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+        = conv (I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x) :=
+      hI.conv_ (mCk hI C0 nd L0 k _) (nd e).x (mCk_dom hI C0 nd L0 k _) (nd e).hx
+    rw [hc, hd]; rfl
+  case hqpp =>
+    exact fun k k' a b _ _ h => ⟨hqpp_of_model hI (fun e => (nd e).x)
+      (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0) _ _
+      (fun e => (nd e).hx) (fun k n => mCk_dom hI C0 nd L0 k n) _
+      (fun e f h => mElt_rho hI C0 nd L0 e f h)
+      (fun k e a h => mDn_phase hI C0 nd L0 k e h a)
+      (fun k e a h => mUp_phase hI C0 nd L0 k e h a) k k' a b h, hbQ k k'⟩
+  case hqppi =>
+    exact fun k k' a b _ _ h => ⟨hqppi_of_model hI (fun e => (nd e).x)
+      (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0) _ _
+      (fun e => (nd e).hx) (fun k n => mCk_dom hI C0 nd L0 k n) _
+      (fun e f h => mElt_rho hI C0 nd L0 e f h)
+      (fun k e a h => mDn_phase hI C0 nd L0 k e h a)
+      (fun k e a h => mUp_phase hI C0 nd L0 k e h a) k k' a b h, hbQ k k'⟩
+  case hqdr =>
+    exact fun k k' a b _ _ hdj => ⟨hqdr_of_model hI (fun e => (nd e).x)
+      (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0) _ _
+      (fun e => (nd e).hx) (fun k n => mCk_dom hI C0 nd L0 k n)
+      (fun k e h => mUp_base hI C0 nd L0 k e h) _
+      (fun e f h => mElt_rho hI C0 nd L0 e f h)
+      (fun k e a h => mDn_phase hI C0 nd L0 k e h a) _
+      (seedMix_sym nd (mKdr hI C0 nd L0))
+      (fun k k' h => h)
+      (fun x y h => seedMix_dr hI nd (mKdr hI C0 nd L0)
+        (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0)
+        (fun k => mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k))
+        (fun k f hf => mKdr_base hI C0 nd L0 k f hf) x y h)
+      (fun k y hy c => by
+        cases y with
+        | inl f =>
+            have h := mKdr_phase hI C0 nd L0 k f hy c
+            show I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
+              (nd f).x = dr
+            have hc : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
+                (nd f).x = conv (I.rho (nd f).x
+                  (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))) :=
+              hI.conv_ (nd f).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
+                (nd f).hx (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
+            rw [hc, h]; rfl
+        | inr k' => exact hy.elim)
+      k k' a b hdj, hbQ k k'⟩
+
 end KernelDebts
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -28301,6 +28476,7 @@ end OneShotDichotomy
 #print axioms hqppi_of_model
 #print axioms hqdr_of_model
 #print axioms elt_irrefl
+#print axioms mergedMT_ok
 #print axioms mUp_base
 #print axioms mUpDn_bud
 #print axioms mElt_irrefl
