@@ -6431,3 +6431,66 @@ declarations) if nothing breaks; realistically **3–6** with one or two genuine
 setbacks. "Fully certified" would mean one Lean theorem,
 `∀ C0, POFree C0 → Decidable (Satisfiable C0)`, 0 sorries, no premise — and
 still **unreviewed**, which on this project has never yet meant correct.
+
+## 55. CORRECTION — the cap cannot go through the existing extraction consumer
+
+Writing the consumer before believing the interface (the campaign's own method
+rule) found this immediately, and it corrects §54's estimate.
+
+### 55.1 What the consumer demands
+
+`mtkKernelsOD` attaches labels as **model types of positioned nodes**:
+
+```
+tauE e := mtk C0 I (g e) (bud e)          g : β → α
+```
+
+and `mtkKernelsOD_of_debts` therefore carries
+
+```
+hppE : ∀ e f, elt e f → I.rho (g e) (g f) = pp ∧ …
+```
+
+For the capped data `elt := capElt elt U`, and `capElt (inl e) (inr m) = U e`.
+So `hppE` demands, **for every `e` in the closure**, a model node `g' (inr m)`
+with `I.rho (g e) (g' (inr m)) = pp` — a model node `PP`-above the *entire*
+closure.
+
+**That is exactly what case 3 says does not exist.** So the capped structure
+cannot be fed to this consumer, and §54's item A is not "apply nine lemmas".
+
+### 55.2 What survives, and what this actually costs
+
+Nothing in §§49–53 is wrong; the frame algebra is sound and will be needed. What
+changes is the assembly route.
+
+| result | status after this correction |
+|---|---|
+| §49 trichotomy, `finite_pool_*` | **stands** — statements about the model |
+| `witness_realizes_requirement`, `cap_all_ppi_sound` | **stands**, and become more central |
+| `odAmalg`/`odFan`/`odTower`/`odSeedCap` + transfer | **stands** as frame algebra |
+| §54 item A ("apply the lemma-ready rows") | **withdrawn as stated** |
+
+A capped certificate must be assembled **directly against `MultiTierOk`**, with
+labels as *sets* (a `mty w` used as a consistent set, not as the type of a
+positioned node). That is a NEW assembly path, not a use of the existing one.
+
+### 55.3 Is that path open, or just work?
+
+Encouraging: the label-side obligations look dischargeable by the same blanket
+arguments already certified. In particular `ee_all` on the base→cap `PP` edge
+needs `X ∈ mty w` whenever `∀PP.X ∈ mtk (g e)` for `e` in the closure — and
+`sat_all_pp_up` plus the chain's `∀PP`-stabilisation gives it, PROVIDED `w` is
+chosen above a chain node past the stabilisation point. That is
+`witness_realizes_requirement` sharpened by a choice of `w`, not new mathematics.
+
+Still genuinely open: `e_ex` for the cap (§54 item B), where the recursion lives.
+
+### 55.4 Revised estimate
+
+§54 said 2–4 sessions, realistically 3–6, with items A–E as assembly. With item A
+reopened as a new assembly path and item B still carrying the recursion, the
+honest figure is **4–8 sessions**, and the confidence that no further wall
+appears should be lower than §54 implied — this is the second time in two
+sessions that an interface failed at first contact, exactly as the method note
+predicts.
