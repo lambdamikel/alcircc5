@@ -7598,3 +7598,45 @@ failed iterations on one rewrite.
 
 Build: 28,112 lines, 1,434 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 78. THE SEED'S KERNEL BLOCK, BOTH DIRECTIONS — and an honest assessment
+
+`kdrAt` (§46) covers the ascending index only. `mCk`/`mIk` are already
+`Sum.elim`s over `KIdxM`, so the combined version is uniform in the direction:
+
+* **`mKdr`** — every phase of `k` from its base onward is disjoint from `e`;
+* **`mKdr_base`** — `seedMix_dr`'s `hkdr`;
+* **`mKdr_phase`** — the orientation `hdrk` asks for, via `conv dr = dr`.
+
+### 78.1 Can the gap be closed? — no roadblock, but not in one session
+
+Asked directly, the honest answer:
+
+**No roadblock has been identified.** Every remaining item has a route, and each
+round of work has closed items at roughly the predicted cost. What remains:
+
+| item | shape | risk |
+|---|---|---|
+| `hdrk` | the closure version, as `hdr_of_model` was, with the kernel side | moderate — the seed pair may be kernel↔external, needing the bank |
+| `hqpp`/`hqppi`/`hqdr` | wiring `cross_*_of_shared` into `mixLt`'s kernel–kernel clause | moderate, mechanical |
+| top-level assembly | instantiate `β := EIdx`, `κ := KIdxM`, `kdr := mKdr`, discharge all debts | large but routine |
+| **the counting** | `mixNodes`' bound must cover the node set INCLUDING caps | **the one I would flag** |
+
+### 78.2 Why the counting is the item to watch
+
+It is F6's descendant. The node set is `mixNodes fuel b root`, finite by
+construction — but its FUEL FRONTIER may carry unserved demands, and serving
+them is what §49's trichotomy and §52's cut are for. Folding the cap layers into
+the bound will likely require enlarging `mixKT`, which is a parameter change
+that propagates to `codesM`'s arguments.
+
+That is not a wall — §52 bounds the layer count by `|typeEnum C0|`, so the
+enlarged bound is still computed from `C₀` alone. But it is the step where this
+campaign has historically found what it did not expect, and I would not call it
+mechanical.
+
+**Estimate, unchanged from §77: 2–4 sessions.** Each of the last several rounds
+has closed one or two debts, which is the rate that estimate assumes.
+
+Build: 28,146 lines, 1,437 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

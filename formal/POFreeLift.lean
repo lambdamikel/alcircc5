@@ -27368,6 +27368,38 @@ theorem hdr_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I) (g : β →
       rw [hc, hy']; rfl
     exact rho_forced hI (hgdom e) (hgdom f) (hdomN y₀) h1 h2 (by decide)
 
+/-! #### The seed's kernel block over BOTH directions
+
+`kdrAt` (§46) is the ascending index only. `mCk`/`mIk` are already `Sum.elim`s
+over `KIdxM`, so the combined version is uniform in the direction — the same
+definition serves ascending and descending kernels alike. -/
+
+open Classical in
+/-- The seed's kernel block on the COMBINED index: every phase of `k` from its
+    base onward is disjoint from `e`. -/
+noncomputable def mKdr (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) : Prop :=
+  ∀ b, mIk hI C0 nd L0 k ≤ b → I.rho (mCk hI C0 nd L0 k b) (nd e).x = dr
+
+/-- `seedMix_dr`'s `hkdr`, at the base. -/
+theorem mKdr_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) (h : mKdr hI C0 nd L0 k e) :
+    I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k)) (nd e).x = dr :=
+  h _ (Nat.le_refl _)
+
+/-- And at every phase — the orientation `hdrk` asks for, via `conv dr = dr`. -/
+theorem mKdr_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) (h : mKdr hI C0 nd L0 k e)
+    (a : Nat) :
+    I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) = dr := by
+  have hd : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x = dr :=
+    h (mIk hI C0 nd L0 k + a) (Nat.le_add_right _ _)
+  have hc : I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+      = conv (I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x) :=
+    hI.conv_ (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x
+      (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).hx
+  rw [hc, hd]; rfl
+
 end KernelDebts
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -28003,6 +28035,8 @@ end OneShotDichotomy
 #print axioms mUp_hup
 #print axioms mDn_hdn
 #print axioms hdr_of_model
+#print axioms mKdr_base
+#print axioms mKdr_phase
 #print axioms subOfFin_inj
 #print axioms subOfFin_surj
 #print axioms reindexMT_toFin
