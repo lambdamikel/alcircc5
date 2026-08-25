@@ -6896,3 +6896,43 @@ That is the remaining work for the mixed quadrant, and it is now four named
 implications rather than an open construction.
 
 Build: 27,238 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 64. `rPP` DISCHARGED — two of five routing conditions supplied
+
+### 64.1 The cap's layer order, declared not read off
+
+`capP m m' := tcl stepAll m m'` — the transitive closure of the extraction's OWN
+vertical step, which is exactly the declaration the base uses for `elt`, and for
+the same reason: reading the model's `PP` off directly breaks the budgets (§43,
+`wp96` A at 4.1%).
+
+`capP_rho`: every `capP` step is a real model `PP` edge (`tcl_sub_pp`), so the
+layer stack genuinely ascends and §52's cut applies to it.
+
+### 64.2 `rPP` discharged
+
+`cap_rPP`: a cap's `∃PP` demand is served by its own witness, which
+
+* lies in the cap's closure — `ppWitness_mem` (new: the `∃PP` witness is in
+  `ppNodes` at one more fuel), lifted through `mixNodes`;
+* is `capP`-above it **by construction** — a single `tcl.base` step.
+
+So §52's layer edge is now supplied, not just declared possible. Two small
+lemmas were needed and did not exist: `ppWitness_mem` and `ppiWitness_mem`.
+
+### 64.3 Routing conditions: 2 of 5
+
+| condition | status |
+|---|---|
+| `rEQ` | **`cap_rEQ`** — free, strong `EQ` is identity |
+| `rPP` | **`cap_rPP`** — §64.2 |
+| `rPPI` | open — needs `U e`, or a covered kernel phase |
+| `rDR` | open — needs `dseed m f` with `hdbase` |
+| `rPO` | open — needs `¬ U f` and non-disjointness |
+
+The three remaining all turn on the same thing: **`U` and `dseed` are the frame
+data still to be declared.** `P` is now declared (`capP`); `U` and `dseed` are
+not. Once they are, the three conditions are membership facts about the cap's
+closure — the model half of which `capNodes_H_covers` and `ppNodes` already give.
+
+Build: 27,287 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

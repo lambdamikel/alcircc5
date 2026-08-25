@@ -26746,6 +26746,52 @@ theorem capNodes_H_covers (capRoot : MTKNode I C0) :
         I.rho m.x m'.x = r ∧ c ∈ mtk C0 I m'.x m'.k :=
   mtkNodesH_covers capRoot
 
+/-- The `∃PP` witness lies in the vertical closure at one more fuel. -/
+theorem ppWitness_mem (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) (fuel : Nat) :
+    ppWitness n hF ∈ ppNodes n (fuel + 1) := by
+  rw [ppNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex pp c, hF⟩, List.mem_attach _ _, ?_⟩)
+  exact self_mem_ppNodes _ fuel
+
+/-- The `∃PPI` witness, likewise. -/
+theorem ppiWitness_mem (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) (fuel : Nat) :
+    ppiWitness n hF ∈ ppNodes n (fuel + 1) := by
+  rw [ppNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex ppi c, hF⟩, List.mem_attach _ _, ?_⟩)
+  exact self_mem_ppNodes _ fuel
+
+/-- **THE CAP'S LAYER ORDER, DECLARED.**  `P` is the transitive closure of the
+    extraction's OWN vertical step — the same declaration the base uses for
+    `elt`, and for the same reason: reading the model's `PP` off directly breaks
+    the budgets (§43, `wp96` A). -/
+def capP (m m' : MTKNode I C0) : Prop := tcl stepAll m m'
+
+/-- **`rPP` DISCHARGED.**  A cap's `∃PP` demand is served by its own witness,
+    which lies in the cap's closure and is `capP`-above it BY CONSTRUCTION —
+    one `tcl.base` step. This is §52's layer edge, supplied. -/
+theorem cap_rPP (m : MTKNode I C0) {D : Concept}
+    (hF : Concept.ex pp D ∈ mtk C0 I m.x m.k) (fuel b : Nat) :
+    ∃ m', m' ∈ capNodes (fuel + 1) b m ∧ capP m m' ∧
+      D ∈ mtk C0 I m'.x m'.k := by
+  refine ⟨ppWitness m hF, ?_, tcl.base (Or.inl ⟨D, hF, rfl⟩), ppWitness_arg m hF⟩
+  cases b with
+  | zero => exact ppWitness_mem m hF fuel
+  | succ b' =>
+    rw [capNodes, mixNodes]
+    exact List.mem_flatMap.mpr ⟨ppWitness m hF, ppWitness_mem m hF fuel,
+      List.mem_cons_self⟩
+
+/-- `capP` really is a strict order on the model side: every `capP` step is a
+    model `PP` edge, so the layer stack ascends. -/
+theorem capP_rho (hI : RCC5Interp I) (m m' : MTKNode I C0) (h : capP m m') :
+    I.rho m.x m'.x = pp :=
+  tcl_sub_pp hI (fun n : MTKNode I C0 => n.x) (fun n => n.hx) stepAll
+    (fun a b hs => stepAll_rho hI a b hs) m m' h
+
 end CapRouting
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -27176,6 +27222,9 @@ end OneShotDichotomy
 #print axioms cap_ee_all_ppi
 #print axioms cap_stab_exists
 #print axioms cap_rEQ
+#print axioms ppWitness_mem
+#print axioms cap_rPP
+#print axioms capP_rho
 #print axioms capNodes_length_le
 #print axioms capRoot_mem
 #print axioms capNodes_H_covers
