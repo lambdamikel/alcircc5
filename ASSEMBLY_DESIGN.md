@@ -7482,3 +7482,36 @@ To discharge `MergedExtraction` for the merged construction:
    `mixKT`.
 
 Build: 27,884 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 75. ITEM 4 — indexing a node list by `Fin`
+
+`reindexMT_ok` wants a BIJECTION onto `Fin`, and the extraction produces its
+externals as a membership subtype `{n // n ∈ l}` of a `Nodup` node list. The
+horizontal path (`encodeHF_mtOk`) does this inline with `getD`; the mixed path
+needs it as a reusable brick, so §75 builds it once:
+
+* `subOfFin` — position `i` ↦ the element there, with its membership;
+* `subOfFin_inj` — injective on a `Nodup` list, via `List.getD_inj` and the
+  `get`/`getD` bridge;
+* `subOfFin_surj` — **axiom-free**, from `List.get_of_mem`;
+* **`reindexMT_toFin`** — a valid certificate on two membership subtypes
+  reindexes to a valid certificate on `Fin` of their lengths.
+
+That is exactly the index shape `MergedExtraction` and `encodeMT` both want, so
+the extraction may build over the node LISTS it naturally produces and convert.
+
+### 75.1 §74.2's list, updated
+
+| item | status |
+|---|---|
+| 1. the extraction's data (node set incl. caps, kernels, `up`/`dn`, `kdr`) | not started — **the construction proper** |
+| 2. `mtkKernelsOD_of_debts`'s debts | `hppE` done (§73); the rest have their base facts |
+| 3. `he_ex`/`hk_ex` | reduced to the five routing conditions, all discharged |
+| 4. reindex onto `Fin` | **done** (`reindexMT_toFin`); the counting against `mixKT` remains, and `mixNodes_length_le_KT` bounds it |
+
+So three of the four are done or reduced to assembly against existing lemmas.
+Item 1 — producing the actual data from a model — is the construction, and it is
+what `MergedExtraction` names.
+
+Build: 27,942 lines, 1,426 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

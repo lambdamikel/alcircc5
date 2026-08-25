@@ -27149,6 +27149,63 @@ def decidableSat_pofree_merged (C0 : Concept) (h : MergedExtraction C0) :
     Decidable (Satisfiable C0) :=
   decidableSat_pofree C0 (mixedCompleteness_of_merged C0 h)
 
+/-! ### §75 — indexing a node list by `Fin`
+
+Item 4 of §74.2: `reindexMT_ok` wants a BIJECTION onto `Fin`, and the extraction
+produces its externals as a membership subtype `{n // n ∈ l}` of a `Nodup` node
+list. The horizontal path (`encodeHF_mtOk`) does this inline with `getD`; the
+mixed path needs it as a reusable brick, so here it is once. -/
+
+section FinIndex
+
+variable {A : Type}
+
+/-- The indexing map: position `i` ↦ the element there, with its membership. -/
+def subOfFin (l : List A) (i : Fin l.length) : {n // n ∈ l} :=
+  ⟨l.get i, List.get_mem l i⟩
+
+/-- `get` is `getD` in range — the bridge to `List.getD_inj`. -/
+theorem get_eq_getD (l : List A) (d : A) (i : Fin l.length) :
+    l.get i = l.getD i.val d := by
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem i.isLt]; rfl
+
+/-- **INJECTIVE** on a `Nodup` list. -/
+theorem subOfFin_inj (l : List A) (hnd : l.Nodup) :
+    ∀ i j, subOfFin l i = subOfFin l j → i = j := by
+  intro i j h
+  have hv : l.get i = l.get j := congrArg Subtype.val h
+  cases l with
+  | nil => exact absurd i.isLt (by simp)
+  | cons a t =>
+    rw [get_eq_getD _ a i, get_eq_getD _ a j] at hv
+    exact Fin.ext ((List.getD_inj i.isLt j.isLt hnd).mp hv)
+
+/-- **SURJECTIVE**, always. -/
+theorem subOfFin_surj (l : List A) :
+    ∀ b : {n // n ∈ l}, ∃ i, subOfFin l i = b := by
+  rintro ⟨b, hb⟩
+  obtain ⟨i, hi⟩ := List.get_of_mem hb
+  exact ⟨i, Subtype.ext hi⟩
+
+open Classical in
+/-- **THE REINDEX, ASSEMBLED (item 4 of §74.2).**  A valid certificate indexed by
+    the membership subtypes of two `Nodup` lists reindexes to a valid certificate
+    on `Fin` of their lengths — which is the index shape `MergedExtraction` and
+    `encodeMT` both want.
+
+    So the extraction may build its certificate over the node LISTS it naturally
+    produces, and this converts it. What remains of item 4 is only the counting:
+    those lengths against `mixKT C0`, which `mixNodes_length_le_KT` bounds. -/
+theorem reindexMT_toFin {A B : Type} (lE : List A) (lK : List B)
+    (hE : lE.Nodup) (hK : lK.Nodup)
+    (T : MultiTier {n // n ∈ lE} {n // n ∈ lK}) (hok : MultiTierOk T) :
+    MultiTierOk (reindexMT (subOfFin lE) (subOfFin lK) T) :=
+  reindexMT_ok (subOfFin lE) (subOfFin lK) T hok
+    (subOfFin_inj lE hE) (subOfFin_surj lE)
+    (subOfFin_inj lK hK) (subOfFin_surj lK)
+
+end FinIndex
+
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
 §49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
@@ -27779,6 +27836,9 @@ end OneShotDichotomy
 #print axioms witness_realizes_requirement
 #print axioms cap_all_ppi_sound
 #print axioms decidableSat_pofree
+#print axioms subOfFin_inj
+#print axioms subOfFin_surj
+#print axioms reindexMT_toFin
 #print axioms mixedCompleteness_of_merged
 #print axioms decidableSat_pofree_merged
 #print axioms mixedCompleteness_of_code
