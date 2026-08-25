@@ -27833,6 +27833,121 @@ theorem mergedMT_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
         | inr k' => exact hy.elim)
       k k' a b hdj, hbQ k k'⟩
 
+/-! #### §83 — items F and G of §82
+
+The two small ones: `hsepS` is a direct instantiation of `hsep_of_model` at the
+extraction's data, and the label condition follows from `mtk` being a double
+filter of `cl C0`. -/
+
+open Classical in
+/-- **ITEM F — `hsepS` FOR THE EXTRACTION.**  `hsep_of_model` at
+    `g := (nd ·).x`, `up := mUp`, `dn := mDn`, `elt := tcl (mixStep …)`,
+    `seed := seedMix nd mKdr`. -/
+theorem mSep (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) :
+    ∀ x y z,
+      mixLe (tcl (mixStep nd (mUp hI C0 nd L0) (mDn hI C0 nd L0)))
+        (mUp hI C0 nd L0) (mDn hI C0 nd L0) x y →
+      mixLe (tcl (mixStep nd (mUp hI C0 nd L0) (mDn hI C0 nd L0)))
+        (mUp hI C0 nd L0) (mDn hI C0 nd L0) x z →
+      ¬ seedMix nd (mKdr hI C0 nd L0) y z :=
+  hsep_of_model hI (fun e => (nd e).x) (fun k => mCk hI C0 nd L0 k)
+    (mIk hI C0 nd L0) _ _ (fun e => (nd e).hx)
+    (fun k => mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k))
+    (fun k e h => mUp_base hI C0 nd L0 k e h)
+    (fun k e h => mDn_base hI C0 nd L0 k e h) _
+    (fun e f h => mElt_rho hI C0 nd L0 e f h) _
+    (fun x y h => seedMix_dr hI nd (mKdr hI C0 nd L0)
+      (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0)
+      (fun k => mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k))
+      (fun k f hf => mKdr_base hI C0 nd L0 k f hf) x y h)
+
+/-- **ITEM G — the label condition.**  `mtk` is a filter of `mty`, itself a
+    filter of `cl C0`, so every label is a sublist-length-bounded list over
+    `cl C0` — which is what `encodeMT_mem_codesM` asks of `tauE` and `phase`. -/
+theorem mtk_mem_allListsLe (C0 : Concept) (I : Interp α) (x : α) (k : Nat) :
+    mtk C0 I x k ∈ allListsLe (cl C0) (cl C0).length := by
+  refine (mem_allListsLe _ _ _).mpr ⟨?_, fun y hy => mtk_sub_cl y hy⟩
+  calc (mtk C0 I x k).length
+      ≤ (mty C0 I x).length := by
+        rw [mtk]; exact List.length_filter_le _ _
+    _ ≤ (cl C0).length := by
+        rw [mty]; exact List.length_filter_le _ _
+
+/-! #### §84 — item D: κ finiteness
+
+`KIdxM = KIdx ⊕ KIdxI`, and each of those is a SUBTYPE of the external index by
+a `persistDs`-nonemptiness predicate. So if the externals are enumerated by a
+`Nodup` list, the kernels are too — but no machinery existed for that, which is
+why §82 listed D as a missing BRICK rather than wiring. Here it is, general. -/
+
+section SubtypeEnum
+
+variable {B : Type}
+
+open Classical in
+/-- The enumeration of a subtype, from an enumeration of the base.  Defined by
+    structural recursion rather than `filterMap`, because this Lean's core has
+    neither `List.Nodup.filterMap` nor `List.Nodup.map` and the `Nodup` proof is
+    the point. -/
+noncomputable def subtypeList (P : B → Prop) : List B → List {e : B // P e}
+  | [] => []
+  | b :: t => if h : P b then ⟨b, h⟩ :: subtypeList P t else subtypeList P t
+
+/-- Its members come from the base list. -/
+theorem subtypeList_val_mem (P : B → Prop) :
+    ∀ (lB : List B) (x : {e : B // P e}), x ∈ subtypeList P lB → x.val ∈ lB := by
+  intro lB
+  induction lB with
+  | nil => intro x hx; rw [subtypeList] at hx; exact absurd hx List.not_mem_nil
+  | cons b t ih =>
+    intro x hx
+    rw [subtypeList] at hx
+    by_cases h : P b
+    · rw [dif_pos h] at hx
+      rcases List.mem_cons.mp hx with rfl | hx'
+      · exact List.mem_cons_self
+      · exact List.mem_cons_of_mem _ (ih x hx')
+    · rw [dif_neg h] at hx
+      exact List.mem_cons_of_mem _ (ih x hx)
+
+/-- It COVERS: every element of the subtype is listed. -/
+theorem mem_subtypeList (P : B → Prop) :
+    ∀ (lB : List B) (x : {e : B // P e}), x.val ∈ lB → x ∈ subtypeList P lB := by
+  intro lB
+  induction lB with
+  | nil => intro x hx; exact absurd hx List.not_mem_nil
+  | cons b t ih =>
+    intro x hx
+    rw [subtypeList]
+    rcases List.mem_cons.mp hx with heq | hx'
+    · have hPb : P b := heq ▸ x.property
+      rw [dif_pos hPb]
+      exact List.mem_cons.mpr (Or.inl (Subtype.ext heq))
+    · by_cases h : P b
+      · rw [dif_pos h]; exact List.mem_cons_of_mem _ (ih x hx')
+      · rw [dif_neg h]; exact ih x hx'
+
+/-- And it is `Nodup`, from the base's. -/
+theorem subtypeList_nodup (P : B → Prop) :
+    ∀ (lB : List B), lB.Nodup → (subtypeList P lB).Nodup := by
+  intro lB
+  induction lB with
+  | nil => intro _; rw [subtypeList]; exact List.nodup_nil
+  | cons b t ih =>
+    intro hnd
+    have hbt : b ∉ t := (List.nodup_cons.mp hnd).1
+    have hndt : t.Nodup := (List.nodup_cons.mp hnd).2
+    rw [subtypeList]
+    by_cases h : P b
+    · rw [dif_pos h]
+      refine List.nodup_cons.mpr ⟨?_, ih hndt⟩
+      intro hmem
+      exact hbt (subtypeList_val_mem P t ⟨b, h⟩ hmem)
+    · rw [dif_neg h]; exact ih hndt
+
+end SubtypeEnum
+
 end KernelDebts
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -28477,6 +28592,10 @@ end OneShotDichotomy
 #print axioms hqdr_of_model
 #print axioms elt_irrefl
 #print axioms mergedMT_ok
+#print axioms mSep
+#print axioms mtk_mem_allListsLe
+#print axioms mem_subtypeList
+#print axioms subtypeList_nodup
 #print axioms mUp_base
 #print axioms mUpDn_bud
 #print axioms mElt_irrefl

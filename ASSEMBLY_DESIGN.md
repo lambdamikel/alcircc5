@@ -7806,3 +7806,54 @@ Three of the four quadrants have general decidability theorems already
 (`decidableSat_hfrag`, `decidableSat_vtower*`, `decidableSat_vtowerRRI`); the
 mixed one is what A–H would complete, and item H would then ask whether it
 subsumes the other three.
+
+## 83. ITEMS F, G, D DONE — and H resolved on inspection
+
+Working §82's list from the low-risk end, so that nothing A depends on is left
+unverified.
+
+**F — `mSep`.** `hsep_of_model` instantiated at the extraction's data. Direct.
+
+**G — `mtk_mem_allListsLe`.** `mtk` is a filter of `mty`, itself a filter of
+`cl C0`, so every label is length-bounded over `cl C0` — exactly what
+`encodeMT_mem_codesM` asks of `tauE` and `phase`.
+
+**D — `subtypeList`.** The missing brick. `KIdxM = KIdx ⊕ KIdxI`, each a SUBTYPE
+of the external index by a `persistDs`-nonemptiness predicate, so an enumeration
+of the externals yields one of the kernels. Built with `subtypeList_val_mem`,
+`mem_subtypeList` (covers) and `subtypeList_nodup`.
+
+Defined by **structural recursion, not `filterMap`** — this Lean's core has
+neither `List.Nodup.filterMap` nor `List.Nodup.map` nor `List.Nodup.pmap`
+(probed; only `List.Nodup.sublist` exists), and the `Nodup` proof is the point of
+the brick.
+
+### 83.1 H — subsumption, resolved without new work
+
+`POFree` is structural (no `∀PO` subconcept anywhere). `HFrag`'s `hall` says no
+`∀PO` in `cl C0`, and `cl` is the subconcept closure — so **`HFrag → POFree`**,
+and `HFrag` is strictly stronger, since it also forbids vertical existentials
+(`hex`).
+
+Therefore a decidability theorem for all `POFree C0` **subsumes**
+`decidableSat_hfrag`, and the same argument covers the vertical quadrants. H is
+a corollary of the target, not separate work — the fragment would collapse to
+one theorem.
+
+### 83.2 §82's list, updated
+
+| item | status |
+|---|---|
+| A — the node set | **outstanding — the remaining mathematics** |
+| B — coverage at that node set | outstanding, wiring |
+| C — the counting | outstanding, with A |
+| D — κ finiteness | **done** (`subtypeList`) |
+| E — budget hypotheses | outstanding |
+| F — `hsepS` | **done** (`mSep`) |
+| G — label conditions | **done** (`mtk_mem_allListsLe`) |
+| H — subsumption | **resolved** — a corollary, no work |
+
+Next per the plan: a probe for A+C, then A+C.
+
+Build: 28,700 lines, 1,455 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
