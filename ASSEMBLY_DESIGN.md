@@ -6693,3 +6693,56 @@ strictly *better* than reading types off positioned nodes.
 **Recommendation: 4, then 2, then 3.** Minimal labels are cheap and shrink the
 work; the tail then locks in a citable position regardless; and a cold review is
 worth most once there is a complete statement to attack.
+
+## 60. ROUTES 4 AND 2, DONE
+
+### 60.1 Route 4 — sub-labels (§59.2 made precise)
+
+`SubLabel C0 I x L` = a decomposition-closed subset of a model type. Certified:
+
+* `subLabel_mty` / `subLabel_mtk` — the existing labels are instances, so the
+  notion is never vacuous and `mty` is the MAXIMAL choice;
+* `subLabel_clash` / `subLabel_nobot` — consistency is **inherited**, nothing to
+  check per label;
+* `subLabel_sat` — everything in a sub-label is satisfied at the node, so the
+  `∀`-propagation lemmas of §§56–57 fire on sub-labels unchanged.
+
+And the interval theorem: `cap_required_in_mty` / `cap_ppi_required_in_mty` —
+**everything a cap's label is required to contain already lies inside its
+witness's model type**. So a valid cap label always exists, and minimality is a
+CHOICE INSIDE A KNOWN INTERVAL rather than a construction problem.
+
+What route 4 does *not* deliver: the minimal label itself. That is deliberate —
+it is a choice, and deferring it costs nothing while the interval is certified.
+
+### 60.2 Route 2 — the fragment's decision pipeline
+
+**`decidableSat_pofree (C0) (h : MixedCompleteness C0) : Decidable (Satisfiable C0)`**
+— axioms `propext`, `Quot.sound` only, **no `Classical.choice`**: a genuinely
+computable decision procedure modulo one named premise.
+
+```
+MixedCompleteness C0 :=
+  Satisfiable C0 → ∃ p ∈ codesM C0 (mixKT C0) (mixKT C0) (mixKT C0),
+    (p.1).mtAcceptB p.2 C0 = true
+```
+
+* soundness (`mtAcceptB_sound`) is **unconditional**;
+* the enumeration is fixed and computed from `C₀` alone;
+* `mixedCompleteness_of_code` — exhibiting ONE accepted code discharges it, so
+  the premise demands a certificate and is **not oracle-inhabitable** by a bare
+  `Satisfiable` proof (the failure mode the 15th review found in round 26);
+* `mixedCompleteness_of_unsat` — vacuous for unsatisfiable inputs, a check that
+  the definition is not malformed.
+
+**The position is now citable:** *the ∀PO-free fragment's decision pipeline is
+machine-checked end to end, with completeness reduced to one named statement* —
+and the gap's shape is typechecked rather than asserted in prose. That is what
+§48 recommended and what §54–§55's estimate was really about.
+
+### 60.3 Remaining, unchanged
+
+`MixedCompleteness` is discharged by the general mixed extraction: §58.2's `dseed`
+work, assembling `MultiTierOk`, instantiating, reindexing, encoding. Route 3 (a
+cold review of §§43–60) is now worth more than before, because there is a
+complete statement to attack.

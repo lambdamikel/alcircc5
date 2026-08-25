@@ -26381,6 +26381,90 @@ theorem cap_ee_all_ppi {α : Type} {I : Interp α} (hI : RCC5Interp I)
   have hwz : I.rho wm z = ppi := by rw [hI.conv_ z wm hzd hwd, hzw]; rfl
   exact (mem_mty.mp hY).2 z hzd hwz
 
+/-! #### §59.2 — cap labels may be SUB-labels
+
+Every `MultiTierOk` obligation has the form *"if `X ∈ tauE e` then …"*, so a
+SMALLER label carries FEWER obligations: `e_ex` fires on fewer existentials and
+`ee_all` on fewer universals. Consistency is inherited (any subset of a model
+type is clash- and bot-free) and the decomposition fields hold as long as the
+label is closed under `∧`/`∨`.
+
+The one thing minimality does NOT buy: a label must still absorb everything
+propagated INTO it. For a cap that means `D`, the stable `∀PP` consequents from
+below, and the `∀PPI` consequents of any higher cap — but crucially NOT the
+witness's own `∃DR` demands unless something forces them. That is what makes
+§58.2's gap non-generic. -/
+
+/-- A usable label: any decomposition-closed subset of a model type. -/
+structure SubLabel {α : Type} (C0 : Concept) (I : Interp α) (x : α)
+    (L : List Concept) : Prop where
+  sub : ∀ c ∈ L, c ∈ mty C0 I x
+  and_cl : ∀ c d, Concept.and c d ∈ L → c ∈ L ∧ d ∈ L
+  or_cl : ∀ c d, Concept.or c d ∈ L → c ∈ L ∨ d ∈ L
+
+section SubLabelFacts
+variable {α : Type} {C0 : Concept} {I : Interp α} {x : α} {L : List Concept}
+
+/-- The full model type is a `SubLabel`, so the notion is never vacuous and the
+    existing construction is the maximal instance. -/
+theorem subLabel_mty : SubLabel C0 I x (mty C0 I x) where
+  sub := fun _ h => h
+  and_cl := fun _ _ h => mty_and h
+  or_cl := fun _ _ h => mty_or h
+
+/-- Truncation is a `SubLabel` too — so `mtk` labels are covered. -/
+theorem subLabel_mtk (k : Nat) : SubLabel C0 I x (mtk C0 I x k) where
+  sub := fun _ h => (mem_mtk.mp h).1
+  and_cl := fun _ _ h => mtk_and h
+  or_cl := fun _ _ h => mtk_or h
+
+/-- Clash-freeness is INHERITED — nothing to check per label. -/
+theorem subLabel_clash (h : SubLabel C0 I x L) (a : Nat)
+    (ha : Concept.atom a ∈ L) : Concept.natom a ∉ L :=
+  fun h2 => mty_clash (h.sub _ ha) (h.sub _ h2)
+
+/-- As is bot-freeness. -/
+theorem subLabel_nobot (h : SubLabel C0 I x L) : Concept.bot ∉ L :=
+  fun hb => mty_nobot (h.sub _ hb)
+
+/-- Everything in a `SubLabel` is SATISFIED at the node — which is what lets the
+    `∀`-propagation lemmas of §§56–57 fire on sub-labels unchanged. -/
+theorem subLabel_sat (h : SubLabel C0 I x L) {c : Concept} (hc : c ∈ L) :
+    sat I x c := (mem_mty.mp (h.sub c hc)).2
+
+end SubLabelFacts
+
+/-- **THE CAP LABEL SPEC (membership form).**  Everything a cap's label is
+    REQUIRED to contain already lies inside its witness's model type.
+
+    So a valid cap label exists — `mty (w m)` is one — and any
+    decomposition-closed set between the required content and that type is
+    equally valid, by §59.2. This is what turns "choose a minimal label" from a
+    construction problem into a CHOICE inside a known interval. -/
+theorem cap_required_in_mty {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    {i₀ : Nat} {wm : α} (hwd : I.dom wm) (hrw : I.rho (c i₀) wm = pp)
+    (hstab : ∀ (X : Concept) (j : Nat), Concept.all pp X ∈ mty C0 I (c j) →
+      Concept.all pp X ∈ mty C0 I (c i₀))
+    {e : α} (hed : I.dom e) {j : Nat} (hej : I.rho e (c j) = pp ∨ e = c j)
+    {X : Concept} (hX : Concept.all pp X ∈ mty C0 I e) :
+    X ∈ mty C0 I wm :=
+  mem_mty.mpr ⟨cl_all (mem_mty.mp hX).1,
+    cap_ee_all_pp hI hdom hwd hrw hstab hed hej hX⟩
+
+/-- The mirror: a higher cap's `∀PPI` consequents also land inside the type of
+    anything the cap reaches. -/
+theorem cap_ppi_required_in_mty {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    {i₀ : Nat} {wm : α} (hwd : I.dom wm) (hrw : I.rho (c i₀) wm = pp)
+    {z : α} (hzd : I.dom z) {a : Nat} (ha : a ≤ i₀)
+    (hz : I.rho z (c a) = pp ∨ z = c a)
+    {Y : Concept} (hY : Concept.all ppi Y ∈ mty C0 I wm) :
+    Y ∈ mty C0 I z :=
+  mem_mty.mpr ⟨cl_all (mem_mty.mp hY).1,
+    cap_ee_all_ppi hI hdom hasc hwd hrw hzd ha hz hY⟩
+
 section CappedCert
 
 variable {α : Type} {I : Interp α} {C0 : Concept} {β κ M : Type}
@@ -26416,6 +26500,54 @@ theorem capped_phase (O : ODStruct ((β ⊕ M) ⊕ κ))
       = mtk C0 I (ck k (ik k + a)) (bk k) := rfl
 
 end CappedCert
+
+/-! ### §60 — THE FRAGMENT'S DECISION PIPELINE, MODULO ONE NAMED PREMISE
+
+Route 2 of §59.3. The decision pipeline for the ∀PO-free fragment is complete
+except for one statement, and it is worth having that statement NAMED in the
+artifact rather than described in prose:
+
+* **soundness is unconditional** — `mtAcceptB_sound`: anything the checker
+  accepts really is satisfiable, no premise, no hypothesis;
+* **the search is finite and fixed** — `codesM C0 …` is an enumeration computed
+  from `C₀` alone;
+* **the premise** is that a satisfiable ∀PO-free concept has an accepted code in
+  that enumeration. That is exactly the general mixed extraction of §§49–59:
+  build the capped certificate, reindex onto `Fin`, encode.
+
+Naming it makes the gap machine-checked in shape rather than asserted in prose:
+`decidableSat_pofree` typechecks, so nothing else stands between the premise and
+a genuine `Decidable (Satisfiable C0)`. -/
+
+/-- **THE ONE REMAINING PREMISE OF THE ∀PO-FREE FRAGMENT.**  Every satisfiable
+    concept has an accepted code inside the mixed enumeration at the `mixKT`
+    bounds. -/
+def MixedCompleteness (C0 : Concept) : Prop :=
+  Satisfiable C0 →
+    ∃ p ∈ codesM C0 (mixKT C0) (mixKT C0) (mixKT C0),
+      (p.1).mtAcceptB p.2 C0 = true
+
+/-- **THE ∀PO-FREE FRAGMENT IS DECIDABLE MODULO `MixedCompleteness`.**
+
+    Soundness comes from `mtAcceptB_sound` and is unconditional; the enumeration
+    is fixed and computed from `C₀`. So `MixedCompleteness` is the ONLY open
+    item in the pipeline — and it is a statement about the fragment, not about
+    this architecture: ANY accepted code in the enumeration discharges it. -/
+def decidableSat_pofree (C0 : Concept) (h : MixedCompleteness C0) :
+    Decidable (Satisfiable C0) :=
+  decidableSat_of_codes C0 _ h
+
+/-- Exhibiting one accepted code discharges the premise — so the premise is a
+    statement about EXISTENCE of a certificate, never oracle-inhabitable by a
+    `Satisfiable` proof. -/
+theorem mixedCompleteness_of_code (C0 : Concept)
+    (h : Satisfiable C0 → ∃ p ∈ codesM C0 (mixKT C0) (mixKT C0) (mixKT C0),
+      (p.1).mtAcceptB p.2 C0 = true) : MixedCompleteness C0 := h
+
+/-- An unsatisfiable concept discharges it vacuously — a sanity check that the
+    definition is not malformed. -/
+theorem mixedCompleteness_of_unsat (C0 : Concept) (h : ¬ Satisfiable C0) :
+    MixedCompleteness C0 := fun hs => absurd hs h
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
@@ -26829,6 +26961,16 @@ end OneShotDichotomy
 #print axioms finite_pool_all_or_nothing
 #print axioms witness_realizes_requirement
 #print axioms cap_all_ppi_sound
+#print axioms decidableSat_pofree
+#print axioms mixedCompleteness_of_code
+#print axioms mixedCompleteness_of_unsat
+#print axioms cap_required_in_mty
+#print axioms cap_ppi_required_in_mty
+#print axioms subLabel_mty
+#print axioms subLabel_mtk
+#print axioms subLabel_clash
+#print axioms subLabel_nobot
+#print axioms subLabel_sat
 #print axioms cap_ee_all_pp
 #print axioms cap_stab_up
 #print axioms cap_reaches
