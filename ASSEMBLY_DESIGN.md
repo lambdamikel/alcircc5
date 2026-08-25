@@ -7515,3 +7515,47 @@ what `MergedExtraction` names.
 
 Build: 27,942 lines, 1,426 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 76. THE CHAIN IS COMPLETE EXCEPT FOR ITS FIRST ARROW
+
+`mergedExtraction_of_ok` (axioms `propext`, `Quot.sound` — no `Classical.choice`)
+is the last link. A valid certificate over a `Nodup` node list, within the
+`mixKT` bounds and with labels from `cl C0`, gives `MergedExtraction`'s body: it
+reindexes by `reindexMT_toFinE` and the bounds transfer, because reindexing
+changes only the indexing, not the labels (`reindexMT_tauE` / `_phase` / `_p`,
+all `rfl`).
+
+### 76.1 The chain
+
+```
+   extraction data + debts
+        │  mtkKernelsOD_of_debts          ← the one remaining arrow
+        ▼
+   MultiTierOk T           (T over the extraction's own node list)
+        │  mergedExtraction_of_ok         ← §76, certified
+        ▼
+   MergedExtraction C0
+        │  mixedCompleteness_of_merged    ← §74, certified
+        ▼
+   MixedCompleteness C0
+        │  decidableSat_pofree            ← §60, certified
+        ▼
+   Decidable (Satisfiable C0)
+```
+
+**Everything below the top arrow is machine-checked.** The remaining task of the
+mixed quadrant is exactly: produce the extraction's data from a model, and
+discharge `mtkKernelsOD_of_debts`'s debts — of which `hppE` is done (§73), the
+coverage pair `he_ex`/`hk_ex` is reduced to the five routing conditions (all
+discharged, §§63–72), and the rest (`hdr`, `hb`, `hup`, `hdn`, `hdrk`, `hq*`)
+have their base facts already certified.
+
+### 76.2 A Lean note worth keeping
+
+`open Classical in` on `reindexMT_toFinE` made it conjure
+`Classical.propDecidable` for `DecidableEq κ`, which then refused to unify with
+`instDecidableEqFin` at the call site. Taking the instance as an argument fixed
+it — and dropped `Classical.choice` from both theorems' axiom profiles.
+
+Build: 28,008 lines, 1,431 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

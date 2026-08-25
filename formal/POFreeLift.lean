@@ -27204,6 +27204,69 @@ theorem reindexMT_toFin {A B : Type} (lE : List A) (lK : List B)
     (subOfFin_inj lE hE) (subOfFin_surj lE)
     (subOfFin_inj lK hK) (subOfFin_surj lK)
 
+/-- The external-side-only reindex: kernels are usually already `Fin`-indexed by
+    the extraction, so only `β` needs converting.  The `DecidableEq κ` instance
+    is taken as an argument rather than conjured by `open Classical`, so that a
+    caller with `κ = Fin n` gets `instDecidableEqFin` and not
+    `Classical.propDecidable`. -/
+theorem reindexMT_toFinE {A : Type} {κ : Type} [DecidableEq κ]
+    (lE : List A) (hE : lE.Nodup)
+    (T : MultiTier {n // n ∈ lE} κ) (hok : MultiTierOk T) :
+    MultiTierOk (reindexMT (subOfFin lE) (id : κ → κ) T) :=
+  reindexMT_ok (subOfFin lE) id T hok (subOfFin_inj lE hE) (subOfFin_surj lE)
+    (fun _ _ h => h) (fun k => ⟨k, rfl⟩)
+
+/-- Reindexing does not change the labels, only their indexing — so the
+    `cl C0`-membership conditions `MergedExtraction` asks for transfer. -/
+theorem reindexMT_tauE {β κ β' κ' : Type} (fβ : β' → β) (fκ : κ' → κ)
+    (T : MultiTier β κ) (e : β') :
+    (reindexMT fβ fκ T).tauE e = T.tauE (fβ e) := rfl
+
+theorem reindexMT_phase {β κ β' κ' : Type} (fβ : β' → β) (fκ : κ' → κ)
+    (T : MultiTier β κ) (k : κ') (a : Nat) :
+    (reindexMT fβ fκ T).phase k a = T.phase (fκ k) a := rfl
+
+theorem reindexMT_p {β κ β' κ' : Type} (fβ : β' → β) (fκ : κ' → κ)
+    (T : MultiTier β κ) (k : κ') :
+    (reindexMT fβ fκ T).p k = T.p (fκ k) := rfl
+
+/-! #### §76 — from a list-indexed certificate to `MergedExtraction`
+
+The last link. `mtkKernelsOD_of_debts` produces `MultiTierOk` for a certificate
+indexed by the extraction's own node LIST; `MergedExtraction` wants `Fin`
+indices inside the `mixKT` bounds. §76 converts, so the chain
+
+  data + debts → `MultiTierOk` → `MergedExtraction` → `MixedCompleteness`
+              → `Decidable (Satisfiable C0)`
+
+is complete except for its first arrow. -/
+
+/-- **THE LAST LINK.**  A valid certificate over a `Nodup` node list, within the
+    `mixKT` bounds and with labels from `cl C0`, gives `MergedExtraction`'s body.
+
+    So the ENTIRE remaining task of the mixed quadrant is to produce the data and
+    discharge `mtkKernelsOD_of_debts`'s debts; everything downstream of that is
+    now certified. -/
+theorem mergedExtraction_of_ok {α : Type} {I : Interp α} {C0 : Concept}
+    (lE : List (MTKNode I C0)) (hE : lE.Nodup) {nK : Nat}
+    (T : MultiTier {n // n ∈ lE} (Fin nK)) (hok : MultiTierOk T)
+    (e0 : {n // n ∈ lE}) (hC0 : C0 ∈ T.tauE e0)
+    (hnE : lE.length ≤ mixKT C0) (hnK : nK ≤ mixKT C0)
+    (hP : ∀ k, T.p k ≤ mixKT C0)
+    (htau : ∀ f, T.tauE f ∈ allListsLe (cl C0) (cl C0).length)
+    (hph : ∀ k a, T.phase k a ∈ allListsLe (cl C0) (cl C0).length) :
+    ∃ (nE nK' : Nat) (T' : MultiTier (Fin nE) (Fin nK')) (e : Fin nE),
+      MultiTierOk T' ∧ C0 ∈ T'.tauE e ∧
+      nE ≤ mixKT C0 ∧ nK' ≤ mixKT C0 ∧ (∀ k, T'.p k ≤ mixKT C0) ∧
+      (∀ f, T'.tauE f ∈ allListsLe (cl C0) (cl C0).length) ∧
+      (∀ k a, T'.phase k a ∈ allListsLe (cl C0) (cl C0).length) := by
+  obtain ⟨i, hi⟩ := subOfFin_surj lE e0
+  refine ⟨lE.length, nK, reindexMT (subOfFin lE) (id : Fin nK → Fin nK) T, i,
+    reindexMT_toFinE lE hE T hok, ?_, hnE, hnK, fun k => hP k,
+    fun f => htau _, fun k a => hph _ _⟩
+  show C0 ∈ T.tauE (subOfFin lE i)
+  rw [hi]; exact hC0
+
 end FinIndex
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -27839,6 +27902,9 @@ end OneShotDichotomy
 #print axioms subOfFin_inj
 #print axioms subOfFin_surj
 #print axioms reindexMT_toFin
+#print axioms reindexMT_toFinE
+#print axioms reindexMT_tauE
+#print axioms mergedExtraction_of_ok
 #print axioms mixedCompleteness_of_merged
 #print axioms decidableSat_pofree_merged
 #print axioms mixedCompleteness_of_code
