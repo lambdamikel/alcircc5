@@ -26199,6 +26199,21 @@ theorem cap_po_cap {m m' : M} (hmm : m ≠ m') :
   odNet_po _ (fun h => hmm (Sum.inr.inj (Sum.inl.inj h))) (fun h => h)
     (fun h => h) (cap_not_disj m' _)
 
+
+/-- **NO `DR` EDGE TOUCHES A CAP NODE** — so `∀DR` at a cap node fires
+    vacuously, and no `∃DR` demand can be served BY a cap node either (it must
+    be served from the base, §51.2). -/
+theorem cap_no_dr_edge (m : M) (x : (β ⊕ M) ⊕ κ) :
+    odNet (OC) (Sum.inl (Sum.inr m)) x ≠ dr := by
+  intro h
+  exact cap_not_disj m x ((OC).djSym _ _ (odNet_dr_inv _ h))
+
+/-- The mirror: no `DR` edge INTO a cap node either. -/
+theorem cap_no_dr_edge' (m : M) (x : (β ⊕ M) ⊕ κ) :
+    odNet (OC) x (Sum.inl (Sum.inr m)) ≠ dr := by
+  intro h
+  exact cap_not_disj m x (odNet_dr_inv _ h)
+
 end CapEdges
 
 
@@ -26282,6 +26297,55 @@ theorem cap_stab_exists {α : Type} {I : Interp α} (hI : RCC5Interp I)
           (hasc j i (Nat.lt_of_lt_of_le (Nat.lt_succ_self j) hi))
           (mem_mty.mp hXj).2⟩
       rw [← heq]; exact hup
+
+/-- Maximal `∀PP` content is preserved going UP the chain, so the stabilisation
+    point of `cap_stab_exists` can always be raised — in particular past a
+    kernel's phase window. -/
+theorem cap_stab_up {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp) {i₀ : Nat}
+    (hstab : ∀ (X : Concept) (j : Nat), Concept.all pp X ∈ mty C0 I (c j) →
+      Concept.all pp X ∈ mty C0 I (c i₀))
+    {i₁ : Nat} (h : i₀ < i₁) :
+    ∀ (X : Concept) (j : Nat), Concept.all pp X ∈ mty C0 I (c j) →
+      Concept.all pp X ∈ mty C0 I (c i₁) := by
+  intro X j hXj
+  have h0 := hstab X j hXj
+  exact mem_mty.mpr ⟨(mem_mty.mp h0).1, sat_all_pp_up hI (hdom i₀) (hdom i₁)
+    (hasc i₀ i₁ h) (mem_mty.mp h0).2⟩
+
+/-- Everything at or below `c i₀` is `PP`-below a witness placed above `c i₀`. -/
+theorem cap_reaches {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    {i₀ : Nat} {wm : α} (hwd : I.dom wm) (hrw : I.rho (c i₀) wm = pp)
+    {z : α} (hzd : I.dom z) {a : Nat} (ha : a ≤ i₀)
+    (hz : I.rho z (c a) = pp ∨ z = c a) : I.rho z wm = pp := by
+  have hcw : I.rho (c a) wm = pp := by
+    rcases Nat.eq_or_lt_of_le ha with rfl | hlt
+    · exact hrw
+    · exact pp_witness_below hI (hdom i₀) (hdom a) hwd (hasc a i₀ hlt) hrw
+  rcases hz with hr | rfl
+  · exact pp_witness_below hI (hdom a) hzd hwd hr hcw
+  · exact hcw
+
+/-- **`ee_all` / `ek_all` ON THE CAP→BASE EDGE.**  A cap node's `∀PPI` fires
+    downward on the closure — and it is satisfied there, because the closure
+    below `c i₀` is entirely `PP`-below the cap's witness.
+
+    A kernel's PHASE WINDOW is finite, so raising `i₀` past it (`cap_stab_up`)
+    puts every phase below the witness too. That is why this needs no
+    periodicity argument: the phases are a bounded window, not a limit. -/
+theorem cap_ee_all_ppi {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    {C0 : Concept} {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hasc : ∀ i j, i < j → I.rho (c i) (c j) = pp)
+    {i₀ : Nat} {wm : α} (hwd : I.dom wm) (hrw : I.rho (c i₀) wm = pp)
+    {z : α} (hzd : I.dom z) {a : Nat} (ha : a ≤ i₀)
+    (hz : I.rho z (c a) = pp ∨ z = c a)
+    {Y : Concept} (hY : Concept.all ppi Y ∈ mty C0 I wm) : sat I z Y := by
+  have hzw : I.rho z wm = pp := cap_reaches hI hdom hasc hwd hrw hzd ha hz
+  have hwz : I.rho wm z = ppi := by rw [hI.conv_ z wm hzd hwd, hzw]; rfl
+  exact (mem_mty.mp hY).2 z hzd hwz
 
 section CappedCert
 
@@ -26732,6 +26796,9 @@ end OneShotDichotomy
 #print axioms witness_realizes_requirement
 #print axioms cap_all_ppi_sound
 #print axioms cap_ee_all_pp
+#print axioms cap_stab_up
+#print axioms cap_reaches
+#print axioms cap_ee_all_ppi
 #print axioms cap_stab_exists
 #print axioms capped_tauE_base
 #print axioms capped_tauE_cap
@@ -26755,6 +26822,8 @@ end OneShotDichotomy
 #print axioms cap_po_outside
 #print axioms cap_above_kernel
 #print axioms cap_po_cap
+#print axioms cap_no_dr_edge
+#print axioms cap_no_dr_edge'
 #print axioms layer_cut
 #print axioms layer_recursion_terminates
 #print axioms layer_stack_bounded

@@ -6537,3 +6537,44 @@ a full period, that is every PHASE of the kernel — and periodicity then extend
 
 So both directions rest on the same two facts the vertical quadrant already
 owns: monotone `∀PP` content with a stabilisation point, and periodic phases.
+
+## 57. BOTH `∀` DIRECTIONS FOR THE CAP, CERTIFIED
+
+### 57.1 cap→base needs no periodicity
+
+`cap_ee_all_ppi`: a cap node's `∀PPI` fires downward on the closure and is
+satisfied there, because everything at or below `c i₀` is `PP`-below the cap's
+witness (`cap_reaches`).
+
+§56.3 predicted this would need the kernel's periodicity. It does not — **a
+kernel's phase window is FINITE**, so raising `i₀` past it puts every phase below
+the witness too. `cap_stab_up` supplies the raise: maximal `∀PP` content is
+preserved going up the chain, so the stabilisation point of `cap_stab_exists`
+can always be moved past a phase window.
+
+That is a simpler argument than the one §56.3 recorded, and it is the one that
+compiled.
+
+### 57.2 The cap's `MultiTierOk` rows, current state
+
+| row | status |
+|---|---|
+| Hintikka fields (`e_clash/nobot/and/or`) | label is a real `mtk` — existing lemmas |
+| `ee_all` base→cap (`∀PP`) | **`cap_ee_all_pp` + `cap_stab_exists`** |
+| `ee_all` cap→base (`∀PPI`) | **`cap_ee_all_ppi` + `cap_reaches` + `cap_stab_up`** |
+| `ee_all` cap↔cap (`PO`) | `cap_po_cap` + `mty_no_all_po` |
+| `ee_all` cap→outside (`PO`) | `cap_po_outside` + `mty_no_all_po` |
+| `∀DR` at a cap | **`cap_no_dr_edge` / `cap_no_dr_edge'`** — no `DR` edge touches a cap |
+| `ek_all` / `ke_all` kernel↔cap | same two lemmas, phases inside the window |
+| frame | `odSeedCap_frame` |
+| **`e_ex` for cap nodes** | **the one open row** |
+
+### 57.3 So the mixed quadrant is down to one row
+
+Every `∀`-propagation obligation the cap creates is now certified, in both
+directions, plus the frame and the vacuities. What remains is `e_ex`: the cap's
+own existential demands, served by the layer stack whose termination §52 already
+proved.
+
+Standing caveat unchanged. Two interfaces failed at first contact in the last
+three sessions; `e_ex` is where a third would show up.
