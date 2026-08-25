@@ -7767,3 +7767,42 @@ finite, closed, and counted.
 
 Build: 28,590 lines, 1,449 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 82. WHAT IS MISSING TOWARD THE FULL ∀PO-FREE FRAGMENT
+
+Everything downstream of a valid, counted certificate is certified (§§74–76,
+§81). This is the complete list of what is not.
+
+| # | item | size | risk |
+|---|---|---|---|
+| **A** | **the node set** — a concrete `lE : List (MTKNode I C0)`, `Nodup`, serving as `β`, containing everything coverage needs | large | **highest — F6's descendant** |
+| **B** | coverage: `he_ex`/`hk_ex` via `odSeed_he_ex`/`_hk_ex` and the five routing conditions, instantiated at `lE` | medium | medium — the conditions are discharged (§§63–72) but stated for `capNodes`/`capP` |
+| **C** | the counting: `lE.length ≤ mixKT C0`, `nK ≤ mixKT C0`, `∀ k, T.p k ≤ mixKT C0` | medium | **high — `mixKT` may need enlarging** |
+| **D** | **κ finiteness** — `KIdxM` as an explicit `Nodup` list for `reindexMT_toFinE`. No machinery exists | medium | medium — a missing brick, not a gap |
+| **E** | the budget hypotheses `hbS`, `hbK`, `hbQ` | medium | low–medium (`seedMix_hb` covers the external one) |
+| **F** | `hsepS` — wiring `hsep_of_model` | small | low |
+| **G** | label conditions: `mtk` labels lie in `allListsLe (cl C0) …`, from `mtk_sub_cl` plus a length bound | small | low |
+| **H** | the top-level theorem `∀ C0, POFree C0 → Decidable (Satisfiable C0)`, and whether the mixed extraction SUBSUMES the other three quadrants | small–medium | medium — subsumption is plausible but unchecked |
+
+### 82.1 The shape of what is left
+
+**A and C are one problem wearing two hats.** The node set must be finite (so it
+can be counted) AND closed (so coverage holds at its frontier), and those pull
+against each other — closing under demands grows the set, bounding it truncates.
+§49's trichotomy and §52's cut exist precisely to resolve that tension, and
+applying them to the concrete `mixNodes` bound is the remaining mathematics.
+
+Everything else (B, D, E, F, G, H) is construction and wiring against lemmas
+that exist.
+
+### 82.2 Honest status line
+
+*The ∀PO-free fragment's decision pipeline is machine-checked from a valid
+counted certificate onward, and the certificate is now assembled from the
+extraction's own data with every debt discharged. What remains is the node set:
+finite, closed, counted.*
+
+Three of the four quadrants have general decidability theorems already
+(`decidableSat_hfrag`, `decidableSat_vtower*`, `decidableSat_vtowerRRI`); the
+mixed one is what A–H would complete, and item H would then ask whether it
+subsumes the other three.
