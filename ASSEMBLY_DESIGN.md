@@ -6322,3 +6322,62 @@ reading four times (`wp100`'s 100%, `wp101` D's flatness twice, `wp102` Q1's
 tautology, `wp103`'s 2-of-44). The ledger's standing presumption applies: read
 this audit as *"no open step identified beyond rows 11–12"*, not as *"none
 exists"*.
+
+## 53. WIRING THE CAP IN — the frame level is done
+
+§52.1's two open rows are one task: make the cap **just another external**.
+`odSeed` takes the order, the kernel attachment and the disjointness seed
+abstractly, so no new frame theory is needed — the job is to extend
+`(elt, up, dn, seed)` from `β` to `β ⊕ M` and re-discharge its five hypotheses.
+
+### 53.1 The extended data and its two side conditions
+
+`capElt` / `capUp` / `capDn` / `capSeed`: everything in `U` sits below every cap
+node; cap nodes are below nothing, lie above exactly the kernels flagged by
+`capOver`, and are in no seed pair (as §51.1 showed a cap must be).
+
+Exactly two side conditions fall out of the hypothesis proofs, and both are what
+§§50–51 established:
+
+| condition | where it is needed | supplied by |
+|---|---|---|
+| `hUdown` — `U` downward closed under `elt` | `capElt_trans` | the placement rule, §50.2 |
+| `hcov` — anything below a covered kernel is in `U` | `capElt_ud` | the cap is above the kernel's whole closure, §51 |
+
+That the *only* two conditions to appear are the two the construction already
+guarantees is the interface behaving.
+
+### 53.2 The transfer theorem
+
+**`odSeedCap_old`**: on old nodes the capped net is the uncapped net, **edge for
+edge**. Adding a cap changes nothing below it.
+
+So every obligation already certified for the extraction's structure carries
+over unchanged, and only genuinely new edges need anything proved. Those are
+four, all now certified:
+
+| edge | value | theorem |
+|---|---|---|
+| external in `U` → cap | `PP` | `cap_above_U` |
+| external outside `U` → cap | `PO` (unconstrained) | `cap_po_outside` |
+| covered kernel → cap | `PP` | `cap_above_kernel` |
+| cap → cap | `PO` (the §51.5 fan) | `cap_po_cap` |
+| cap disjoint from anything | never | `cap_not_disj` |
+
+`odSeedCap_frame` then gives the RCC5 frame with nothing checked by hand.
+
+### 53.3 Audit update
+
+Of §52.1's two open rows, the **frame level of the wiring is now done**. What is
+left is narrower and now precisely nameable:
+
+1. **Cap LABELS.** Attach `mty w` to each cap node and check the label-side
+   obligations against the four new edges. Every needed lemma exists
+   (`witness_realizes_requirement`, `cap_all_ppi_sound`,
+   `cap_all_ppi_sound_chain`, `mty_no_all_po`); none is applied yet.
+2. **`e_ex` for cap nodes**, with the layer stack of §52 as actual nodes.
+3. **Instantiation**: choose `M`, `U`, `capOver` from the extraction's data and
+   discharge `hUdown`/`hcov` concretely.
+
+Nothing here is open mathematics. The ledger's presumption still applies: this
+is *"no open step identified"*, not *"none exists"*.
