@@ -8493,3 +8493,56 @@ over-approximation. Soundness is the binding constraint, and it is the one
 
 Build: 30,010 lines, 1,500 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 99. §96 CORRECTED — the split IS necessary, for SOUNDNESS
+
+Working out `kser`'s definition exposes that §96's "the split was not necessary"
+was right about one half of the problem and wrong about the other.
+
+### 99.1 What §96 got right, and what it missed
+
+§96 observed that `path_repeat_carries` and `skipPath_len_le'` never mention the
+order, so the **counting** works for a mixed path. That is correct.
+
+But `kser` must also be **sound**: `kser m c = true` has to mean a kernel really
+serves the demand. And a kernel is not a type repeat — `KernelData` requires
+
+```
+cstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d
+```
+
+**a UNIFORM direction.** `kernel_of_chain` supplies only the type repeat; the
+step structure has to come from the path itself. A mixed path does not have it,
+so a type repeat on a mixed path yields **no kernel**, and `KserSegment` has
+nothing to justify it.
+
+### 99.2 So the split is vindicated
+
+`skipNodesU` and `skipNodesD` (§§93–95) have paths that ARE chains — uniformly
+ascending and uniformly descending — so a type repeat on one of them cycles into
+a genuine kernel, and `kernelServes_recur` gives the soundness.
+
+Both already have their fixpoints (`skipNodesU_fixed`, `skipNodesD_fixed`). The
+route forward is to run §98's argument on each half separately, where
+`KserSegment` is justified, and compose at the coverage level.
+
+### 99.3 The corrected picture
+
+| | |
+|---|---|
+| counting | direction-agnostic — §96 was right |
+| **soundness of `kser`** | **needs a chain — §96 missed this** |
+| consequence | the §§93–95 split is NECESSARY after all, and already built |
+
+Two corrections now stand against each other: §92 said the split was needed for
+counting (wrong), §96 said it was not needed at all (also wrong). It is needed,
+for the reason neither identified.
+
+### 99.4 What remains
+
+Define `kser` per direction, prove `KserSegment` on chains and soundness from
+`kernelServes_recur`, then compose the two halves' coverage. Every ingredient is
+certified; the definition and its two proofs are unwritten.
+
+Build: 29,989 lines, 1,500 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
