@@ -8137,3 +8137,57 @@ mathematics of item A, and of the fragment.
 Everything in §88's table stands; only the route to the fixpoint is narrowed.
 `skipNodes_covers_of_fixed` remains the coverage lemma, and its hypothesis
 remains the target.
+
+## 90. HALF 2 — a second wrong formulation, and what it pins down
+
+Attacking half 2 (a uniform bound on the skipping closure) produced a candidate
+argument that **trivialises**, and the way it trivialises is informative.
+
+### 90.1 The tempting argument
+
+Take an ascending path `m₀ → m₁ → …` built by non-kernel-served `∃PP` steps.
+Suppose two path nodes share a type. The segment then cycles into a kernel, the
+demanded concept recurs along it, so the demand is kernel-served — contradiction.
+Hence the types are pairwise distinct and the path is at most `|typeEnum C0|`
+long, by `ascPath_len_le`.
+
+### 90.2 Why it trivialises
+
+Read `kernelServes` relative to **the path itself**:
+
+```
+kernelServes I c i D := sat (c i) (∀PP.∃PP.D) ∨ ∃ j, i < j ∧ sat (c j) D
+```
+
+The step at `mᵢ` uses a demand `D` whose witness is `mᵢ₊₁` — and `mᵢ₊₁` **carries
+`D` by construction** and is above `mᵢ`. So the second disjunct holds at every
+step, with `j = i+1`. **Every step would be kernel-served, and the closure would
+never step at all.**
+
+That is not what `wp106` measured, because there `kser` was read relative to the
+node's OWN KERNEL CHAIN (the `rrPt` chain it lies on), not relative to the
+closure's path.
+
+### 90.3 What this pins
+
+**`kernelServes`'s chain argument is load-bearing and must be the node's kernel
+chain.** Relative to the path it is vacuous; relative to an arbitrary chain
+(§86's first attempt) it is false. The only reading that both bites and holds is:
+
+> `kser m D` = *`D` recurs above `m` along the kernel chain `m` lies on* — and a
+> node on no kernel chain has `kser m D = false`.
+
+So half 2 must relate the closure's PATH to the KERNEL CHAINS its nodes lie on.
+That relationship is what neither §86's nor §90.1's formulation captured, and it
+is the actual content of the remaining item.
+
+### 90.4 Two wrong formulations now on record
+
+| attempt | claim | why it fails |
+|---|---|---|
+| §86 | a type repeat on ANY ascending chain makes the demand kernel-served | a repeat gives a recurrent SEGMENT, not a guarantee about the chain; the witness can be off-chain |
+| §90.1 | the closure's own path has distinct types | reading `kernelServes` on the path makes EVERY step kernel-served — vacuous |
+
+Both were caught by checking the statement against what it would have to mean,
+before any proof was attempted. The remaining item is unchanged in size but
+better understood: **relate the skipping closure's path to the kernel chains.**
