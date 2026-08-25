@@ -28325,6 +28325,83 @@ theorem skipNodes_covers_of_fixed (kser : MTKNode I C0 → Concept → Bool)
         | false => rfl
         | true => exact absurd h hk) 0)
 
+/-! ##### §91 — HALF 2, CORRECTLY STATED
+
+§86 read the recurrence on an ARBITRARY chain (false); §90 read it on the
+closure's own PATH (vacuous — the witness always carries the demand one step up).
+The reading that both bites and holds is the one `kernelServes` was written for:
+the demand must recur **within a kernel's PHASES**, and a kernel exists exactly
+where the path REPEATS A TYPE (`kernel_of_chain`).
+
+That makes the statement non-trivial: it is conditional on a repeat, and a repeat
+is what `ascPath_len_le` denies to a short path. -/
+
+/-- **HALF 2's CORE.**  If an ascending path repeats a type at `i < j`, the
+    demand taken at step `i` is carried INSIDE the segment `[i, j)` — i.e. by one
+    of the phases of the kernel obtained by cycling that segment.
+
+    The two cases are `b = 1` (the witness is itself inside the segment) and
+    `b = 0` (the segment has length one, so the repeat identifies the witness's
+    type with the start's). -/
+theorem path_repeat_carries (C0 : Concept) (I : Interp α) (path : Nat → α)
+    {i j : Nat} (hij : i < j) (hty : mty C0 I (path i) = mty C0 I (path j))
+    {D : Concept} (hD : D ∈ mty C0 I (path (i + 1))) :
+    ∃ b, b < j - i ∧ D ∈ mty C0 I (path (i + b)) := by
+  rcases Nat.lt_or_ge (i + 1) j with h | h
+  · exact ⟨1, by omega, hD⟩
+  · have hj : i + 1 = j := by omega
+    refine ⟨0, by omega, ?_⟩
+    rw [Nat.add_zero, hty, ← hj]
+    exact hD
+
+/-- **THE CONSEQUENCE.**  A path the skipping closure EXTENDS has pairwise
+    distinct types.
+
+    `hext` is exactly what "the closure extended rather than skipped at step `i`"
+    means: the demand taken there is NOT carried inside any segment starting at
+    `i`. Given that, `path_repeat_carries` turns a type repeat into a
+    contradiction. -/
+theorem skipPath_no_repeat (C0 : Concept) (I : Interp α) (path : Nat → α)
+    (D : Nat → Concept) (hwit : ∀ i, D i ∈ mty C0 I (path (i + 1)))
+    (hext : ∀ i j, i < j → ¬ ∃ b, b < j - i ∧ D i ∈ mty C0 I (path (i + b))) :
+    ∀ i j, i < j → mty C0 I (path i) ≠ mty C0 I (path j) := by
+  intro i j hij hty
+  exact hext i j hij (path_repeat_carries C0 I path hij hty (hwit i))
+
+/-- A map over `range k` is `Nodup` when the map separates smaller from larger
+    indices.  (This Lean's core has no `List.Nodup.map`, so it is by induction on
+    `k` through `List.range_succ`.) -/
+theorem nodup_map_range {A : Type} (f : Nat → A) :
+    ∀ (k : Nat), (∀ i j, i < j → j < k → f i ≠ f j) →
+      ((List.range k).map f).Nodup := by
+  intro k
+  induction k with
+  | zero => intro _; simp
+  | succ k' ih =>
+    intro hsep
+    rw [List.range_succ, List.map_append]
+    refine List.nodup_append.mpr ⟨ih (fun i j hij hjk => hsep i j hij (by omega)),
+      by simp, ?_⟩
+    intro a ha b hb
+    simp only [List.map_cons, List.map_nil, List.mem_singleton] at hb
+    subst hb
+    obtain ⟨i, hi, hfi⟩ := List.mem_map.mp ha
+    rw [List.mem_range] at hi
+    intro heq
+    exact hsep i k' hi (by omega) (hfi.trans heq)
+
+/-- **THE UNIFORM BOUND.**  A path with pairwise distinct types is shorter than
+    the type enumeration — the bound §89 showed bookkeeping could not give, now
+    obtained from §91's repeat argument. -/
+theorem skipPath_len_le (C0 : Concept) (I : Interp α) (path : Nat → α)
+    (hdist : ∀ i j, i < j → mty C0 I (path i) ≠ mty C0 I (path j)) (k : Nat) :
+    k ≤ (typeEnum C0).length := by
+  have hnd : (((List.range k).map path).map (fun x => mty C0 I x)).Nodup := by
+    rw [List.map_map]
+    exact nodup_map_range _ k (fun i j hij _ => hdist i j hij)
+  have := ascPath_len_le C0 I ((List.range k).map path) hnd
+  rwa [List.length_map, List.length_range] at this
+
 end SkipClosure
 
 end KernelService
@@ -28987,6 +29064,10 @@ end OneShotDichotomy
 #print axioms skipNodes_mono_le
 #print axioms skipNodes_step_sub
 #print axioms skipNodes_covers_of_fixed
+#print axioms path_repeat_carries
+#print axioms skipPath_no_repeat
+#print axioms nodup_map_range
+#print axioms skipPath_len_le
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup

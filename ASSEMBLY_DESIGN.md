@@ -8191,3 +8191,51 @@ is the actual content of the remaining item.
 Both were caught by checking the statement against what it would have to mean,
 before any proof was attempted. The remaining item is unchanged in size but
 better understood: **relate the skipping closure's path to the kernel chains.**
+
+## 91. HALF 2, FIXED
+
+The reading §90.3 identified, made into theorems.
+
+### 91.1 The core
+
+**`path_repeat_carries`** — if an ascending path repeats a type at `i < j`, the
+demand taken at step `i` is carried INSIDE the segment `[i, j)`, i.e. by one of
+the phases of the kernel obtained by cycling that segment (`kernel_of_chain`).
+Two cases: `b = 1` when the witness is itself inside the segment, `b = 0` when
+the segment has length one and the repeat identifies the witness's type with the
+start's.
+
+This is non-trivial where §90's version was vacuous, because the recurrence is
+demanded **within a segment** — and a segment exists only where the path repeats
+a type.
+
+### 91.2 The consequence
+
+**`skipPath_no_repeat`** — a path the closure EXTENDS has pairwise distinct
+types. Its hypothesis `hext` is exactly what "extended rather than skipped at
+step `i`" means: the demand there is not carried inside any segment starting at
+`i`.
+
+**`skipPath_len_le`** — such a path is at most `|typeEnum C0|` long. **This is
+the uniform bound §89 showed bookkeeping could not supply.**
+
+Supporting: `nodup_map_range` (this Lean has no `List.Nodup.map`, so by induction
+through `List.range_succ`).
+
+### 91.3 Item A
+
+| | |
+|---|---|
+| definition, bound, coverage step | ✓ (§87) |
+| monotonicity, transitivity | ✓ (§88) |
+| coverage modulo a fixpoint | ✓ (§88) |
+| **the uniform bound on extending paths** | ✓ **(§91)** |
+| tying the bound to the fixpoint hypothesis | the remaining join |
+
+The two ends now exist: `skipNodes_covers_of_fixed` wants a fixpoint, and
+`skipPath_len_le` bounds how far the closure can extend. What is unwritten is
+the step from "no extending path exceeds `|typeEnum C0|`" to "`skipNodes` at
+fuel `|typeEnum C0|` is a fixpoint".
+
+Build: 29,184 lines, 1,475 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
