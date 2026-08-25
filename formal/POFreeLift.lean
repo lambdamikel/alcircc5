@@ -27591,6 +27591,73 @@ theorem hqdr_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I)
         rw [hc, hdesc k' y₀ hy b]; rfl
       exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN y₀) h1 h2 (by decide)
 
+/-- **`hirrE`, DISCHARGED.**  The extraction's order has no cycle, because every
+    `elt` edge is a model `PP` edge and `PP` is irreflexive (`refl_eq` gives
+    `EQ`). The last structural hypothesis of `odSeed`. -/
+theorem elt_irrefl {κ : Type} {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
+    (nd : β → MTKNode I C0) (up dn : κ → β → Bool) (ck : κ → Nat → α)
+    (ik : κ → Nat) (hckdom : ∀ k, I.dom (ck k (ik k)))
+    (hup0 : ∀ k e, up k e = true → I.rho (nd e).x (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (nd e).x = pp)
+    (e : β) : ¬ tcl (mixStep nd up dn) e e := by
+  intro h
+  have hpp := tcl_sub_pp hI (fun b => (nd b).x) (fun b => (nd b).hx)
+    (mixStep nd up dn)
+    (fun a b hs => mixStep_rho hI nd ck ik hckdom up dn hup0 hdn0 a b hs) e e h
+  rw [hI.refl_eq (nd e).x (nd e).hx] at hpp
+  exact Atom.noConfusion hpp
+
+/-! #### §80 — the extraction's derived inputs
+
+Before the assembly, the handful of inputs that are DERIVED rather than
+hypothesised: the base-level attachment facts and the shared budget. -/
+
+open Classical in
+theorem mUp_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β)
+    (h : mUp hI C0 nd L0 k e = true) :
+    I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k)) = pp := by
+  have := mUp_phase hI C0 nd L0 k e h 0
+  rwa [Nat.add_zero] at this
+
+open Classical in
+theorem mDn_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β)
+    (h : mDn hI C0 nd L0 k e = true) :
+    I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k)) (nd e).x = pp := by
+  have := mDn_phase hI C0 nd L0 k e h 0
+  rwa [Nat.add_zero] at this
+
+open Classical in
+/-- `hud`'s budget half: a kernel's up- and down-externals share its budget. -/
+theorem mUpDn_bud (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (k : KIdxM C0 I nd) (x y : β)
+    (hx : mUp hI C0 nd L0 k x = true) (hy : mDn hI C0 nd L0 k y = true) :
+    (nd y).k = (nd x).k := by
+  rw [mDn_bud hI C0 nd L0 k y hy, mUp_bud hI C0 nd L0 k x hx]
+
+open Classical in
+/-- The extraction's order is irreflexive, for its own data. -/
+theorem mElt_irrefl (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (e : β) :
+    ¬ tcl (mixStep nd (mUp hI C0 nd L0) (mDn hI C0 nd L0)) e e :=
+  elt_irrefl hI nd _ _ (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0)
+    (fun k => mCk_dom hI C0 nd L0 k _)
+    (fun k e h => mUp_base hI C0 nd L0 k e h)
+    (fun k e h => mDn_base hI C0 nd L0 k e h) e
+
+open Classical in
+/-- And every `elt` edge is a model `PP` edge, for its own data. -/
+theorem mElt_rho (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) (e f : β)
+    (h : tcl (mixStep nd (mUp hI C0 nd L0) (mDn hI C0 nd L0)) e f) :
+    I.rho (nd e).x (nd f).x = pp :=
+  tcl_sub_pp hI (fun b => (nd b).x) (fun b => (nd b).hx) _
+    (fun a b hs => mixStep_rho hI nd (fun k => mCk hI C0 nd L0 k)
+      (mIk hI C0 nd L0) (fun k => mCk_dom hI C0 nd L0 k _) _ _
+      (fun k e h => mUp_base hI C0 nd L0 k e h)
+      (fun k e h => mDn_base hI C0 nd L0 k e h) a b hs) e f h
+
 end KernelDebts
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -28233,6 +28300,11 @@ end OneShotDichotomy
 #print axioms hqpp_of_model
 #print axioms hqppi_of_model
 #print axioms hqdr_of_model
+#print axioms elt_irrefl
+#print axioms mUp_base
+#print axioms mUpDn_bud
+#print axioms mElt_irrefl
+#print axioms mElt_rho
 #print axioms subOfFin_inj
 #print axioms subOfFin_surj
 #print axioms reindexMT_toFin

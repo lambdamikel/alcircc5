@@ -7690,3 +7690,40 @@ Only the top-level assembly and the counting:
 
 Build: 28,342 lines, 1,442 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 80. EVERY INPUT IS NOW A LEMMA ABOUT THE EXTRACTION'S OWN DATA
+
+§79 closed the nine debts as ABSTRACT lemmas — parameterised over `elt`, `seed`,
+`up`, `dn`. §80 supplies the remaining inputs for the extraction's CONCRETE data
+(`nd`, `mUp`, `mDn`, `mCk`, `mIk`, `mPk`, `mBk`, `mKdr`):
+
+| input | lemma |
+|---|---|
+| `hup0` / `hdn0` — base-level attachment | **`mUp_base`** / **`mDn_base`** (`mUp_phase` at `a = 0`) |
+| `hud`'s budget half | **`mUpDn_bud`** — both externals carry the kernel's budget |
+| `hirrE` | **`mElt_irrefl`**, via **`elt_irrefl`**: every `elt` edge is a model `PP` edge and `PP` is irreflexive (`refl_eq` gives `EQ`) |
+| `helt` | **`mElt_rho`** |
+| `hp`, `hstep`, `hty`, `hdom` | `mPk_pos`, `mCk_step`, `mCk_ty`, `mCk_dom` (§46) |
+| `hsym`, `hsep`, `hud` | `seedMix_sym`, `hsep_of_model`, `mixStep_hud` (pre-existing) |
+| `hdnphase` / `hupphase` | `mDn_phase` / `mUp_phase` |
+| `hseedPhase` | **`mKdr_phase`** (§78) |
+| `hqq` | `seedMix`'s kernel↔kernel block is `False` |
+
+### 80.1 Where that leaves the assembly
+
+Nothing in `mtkKernelsOD_of_debts`'s signature now lacks a discharging lemma for
+the extraction's data. The assembly is the instantiation itself — feeding ~25
+arguments — plus the counting.
+
+That is the first time in this campaign the remaining work has been purely
+mechanical at the top level. Given the record, that claim deserves the standing
+caveat: it means *no gap identified*, and the instantiation is exactly the kind
+of step where §55, §58 and §71 each found one.
+
+### 80.2 The counting, still outstanding
+
+`mixNodes`' bound over the node set including caps — §78.2's flagged item, F6's
+descendant, and the last piece that is not obviously routine.
+
+Build: 28,400 lines, 1,447 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
