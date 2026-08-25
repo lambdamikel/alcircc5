@@ -26247,6 +26247,71 @@ theorem odSeedCap_frame (elt : β → β → Prop) (up dn : κ → β → Bool)
     Frame (odNet (odSeedCap (M := M) elt up dn U P capOver seed dseed
       hirrE htr hud hsym hsep hUdown hcov hPirr hPtr hdsep)) := odNet_frame _
 
+
+/-! #### §65 — `U` and `dseed`, DECLARED
+
+The last two pieces of frame data. Both are declared so that their side
+conditions come out FREE — which is the test of a right declaration. -/
+
+/-- **`U`, DECLARED**: the downward closure (under `elt`) of the externals lying
+    below a covered kernel. Taking the closure explicitly is what makes
+    `hUdown` free; `hcov` is then immediate by reflexivity. -/
+def capU (elt : β → β → Prop) (up : κ → β → Bool) (capOver : κ → Bool)
+    (e : β) : Prop :=
+  ∃ f, leE elt e f ∧ ∃ k, capOver k = true ∧ up k f = true
+
+/-- `hUdown` for `capU` — free. -/
+theorem capU_down (elt : β → β → Prop) (up : κ → β → Bool)
+    (capOver : κ → Bool) (htr : ∀ a b c, elt a b → elt b c → elt a c) :
+    ∀ e f, elt e f → capU elt up capOver f → capU elt up capOver e := by
+  rintro e f hef ⟨f', hle, k, hk, hup⟩
+  exact ⟨f', Or.inr (lt_leE htr hef hle), k, hk, hup⟩
+
+/-- `hcov` for `capU` — free. -/
+theorem capU_cov (elt : β → β → Prop) (up : κ → β → Bool)
+    (capOver : κ → Bool) :
+    ∀ k e, up k e = true → capOver k = true → capU elt up capOver e :=
+  fun k e hup hk => ⟨e, Or.inl rfl, k, hk, hup⟩
+
+/-- **`dseed`, DECLARED**: `f` is a `DR` partner of cap `m` exactly when `f` is
+    already seed-disjoint from everything old that lies below the cap.
+
+    This is §51.2's condition turned into the DEFINITION rather than an
+    obligation — which makes `hdbase` free, and `hdsep` a two-line consequence
+    of the base's own `hsep`. -/
+def capDseed (elt : β → β → Prop) (up dn : κ → β → Bool) (U : β → Prop)
+    (P : M → M → Prop) (capOver : κ → Bool) (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (m : M) (f : β) : Prop :=
+  ∀ z : β ⊕ κ, mixLe (capElt (M := M) elt U P) (capUp up) (capDn dn capOver)
+    (embC z) (Sum.inl (Sum.inr m)) → seed z (Sum.inl f)
+
+/-- `hdbase` for `capDseed` — free, it IS the definition. -/
+theorem capDseed_hdbase (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop) :
+    ∀ m f, capDseed elt up dn U P capOver seed m f → ∀ z : β ⊕ κ,
+      mixLe (capElt (M := M) elt U P) (capUp up) (capDn dn capOver) (embC z)
+        (Sum.inl (Sum.inr m)) → seed z (Sum.inl f) :=
+  fun _ _ hd z hz => hd z hz
+
+/-- **`hdsep` for `capDseed`** — a consequence of the base's own `hsep`.  If
+    something lay below both the cap and its partner `f`, it would be an OLD
+    node seed-disjoint from `f` while also `≤ f`, which `hsep` forbids. -/
+theorem capDseed_hdsep (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (U : β → Prop) (P : M → M → Prop) (capOver : κ → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z) :
+    ∀ m f, capDseed elt up dn U P capOver seed m f →
+      ∀ x : (β ⊕ M) ⊕ κ,
+        mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+          (Sum.inl (Sum.inr m)) →
+        ¬ mixLe (capElt elt U P) (capUp up) (capDn dn capOver) x
+          (Sum.inl (Sum.inl f)) := by
+  intro m f hd x h1 h2
+  obtain ⟨x₀, rfl, hold⟩ := capMixLe_to_old elt up dn U P capOver
+    (y := Sum.inl f) h2
+  exact hsep x₀ x₀ (Sum.inl f) (Or.inl rfl) hold (hd x₀ h1)
+
 end CapWiring
 
 section CapEdges
@@ -26326,6 +26391,12 @@ theorem cap_ppi_U {e : β} (hU : U e) (m : M) :
     odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inl e)) = ppi :=
   odNet_gt _ hU
 
+/-- A cap is `PPI` to any LOWER cap — the option `cap_he_ex`'s `rPPI` was
+    missing.  Found by trying to supply the condition (§65). -/
+theorem cap_ppi_cap {m m' : M} (hP : P m' m) :
+    odNet (OC) (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inr m')) = ppi :=
+  odNet_gt _ hP
+
 /-- The cap's `PO` edge outward (the reverse of `cap_po_outside`). -/
 theorem cap_po_out' {e : β} (hU : ¬ U e) (m : M)
     (hnd : ¬ (OC).disj (Sum.inl (Sum.inr m)) (Sum.inl (Sum.inl e))) :
@@ -26351,6 +26422,7 @@ theorem cap_he_ex {α : Type} {I : Interp α} {C0 : Concept}
       ∃ m', P m m' ∧ D ∈ mtk C0 I (w m') (cbud m'))
     (rPPI : ∀ D, Concept.ex ppi D ∈ mtk C0 I (w m) (cbud m) →
       (∃ e, U e ∧ D ∈ mtk C0 I (g e) (bud e)) ∨
+      (∃ m', P m' m ∧ D ∈ mtk C0 I (w m') (cbud m')) ∨
       (∃ k, capOver k = true ∧ ∃ a, a < pk k ∧
         D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
     (rPO : ∀ D, Concept.ex po D ∈ mtk C0 I (w m) (cbud m) →
@@ -26374,8 +26446,9 @@ theorem cap_he_ex {α : Type} {I : Interp α} {C0 : Concept}
     obtain ⟨m', hP, hD⟩ := rPP D hdem
     exact Or.inl ⟨Sum.inr m', cap_pp_cap hP, hD⟩
   | ppi =>
-    rcases rPPI D hdem with ⟨e, hU, hD⟩ | ⟨k, hk, a, ha, hD⟩
+    rcases rPPI D hdem with ⟨e, hU, hD⟩ | ⟨m', hP, hD⟩ | ⟨k, hk, a, ha, hD⟩
     · exact Or.inl ⟨Sum.inl e, cap_ppi_U hU m, hD⟩
+    · exact Or.inl ⟨Sum.inr m', cap_ppi_cap hP, hD⟩
     · exact Or.inr ⟨k, by rw [cap_above_kernel hk m]; rfl, a, ha, hD⟩
   | po =>
     rcases rPO D hdem with ⟨m', hne, h1, h2, hD⟩ | ⟨f, hU, hnd, hD⟩
@@ -27243,6 +27316,10 @@ end OneShotDichotomy
 #print axioms capMixLe_old_old
 #print axioms capSeed_sep
 #print axioms capMixLe_of_old
+#print axioms capU_down
+#print axioms capU_cov
+#print axioms capDseed_hdbase
+#print axioms capDseed_hdsep
 #print axioms cap_above_is_cap
 #print axioms capSeed_old
 #print axioms odSeedCap
@@ -27251,6 +27328,7 @@ end OneShotDichotomy
 #print axioms cap_disj_cap_false
 #print axioms cap_dr_edge
 #print axioms cap_ppi_U
+#print axioms cap_ppi_cap
 #print axioms cap_po_out'
 #print axioms cap_he_ex
 #print axioms cap_above_U

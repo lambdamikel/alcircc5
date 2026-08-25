@@ -6936,3 +6936,61 @@ not. Once they are, the three conditions are membership facts about the cap's
 closure — the model half of which `capNodes_H_covers` and `ppNodes` already give.
 
 Build: 27,287 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 65. `U` AND `dseed`, DECLARED — and the side conditions come out FREE
+
+The last two pieces of frame data, declared so that their side conditions fall
+out. That they DO fall out is the test of a right declaration.
+
+### 65.1 `U`
+
+```
+capU elt up capOver e := ∃ f, leE elt e f ∧ ∃ k, capOver k = true ∧ up k f = true
+```
+
+— the downward closure (under `elt`) of the externals below a covered kernel.
+Taking the closure EXPLICITLY is what makes it work:
+
+* `capU_down` (`hUdown`) — **axiom-free**, one `lt_leE`;
+* `capU_cov` (`hcov`) — **axiom-free**, reflexivity.
+
+### 65.2 `dseed`
+
+```
+capDseed … m f := ∀ z : β ⊕ κ, mixLe … (embC z) (cap m) → seed z (Sum.inl f)
+```
+
+— `f` is a `DR` partner of cap `m` exactly when it is ALREADY seed-disjoint from
+everything old below the cap. This turns §51.2's *condition* into the
+*definition*:
+
+* `capDseed_hdbase` — **axiom-free**, it IS the definition;
+* `capDseed_hdsep` — two lines from the base's own `hsep`: anything below both
+  the cap and `f` would be an old node seed-disjoint from `f` while also `≤ f`.
+
+All four of `odSeedCap`'s cap-side hypotheses are now discharged by
+construction. Three are axiom-free.
+
+### 65.3 An interface gap found by supplying, not by writing
+
+`cap_he_ex`'s `rPPI` offered two options — a closure external, or a kernel phase.
+Trying to supply it showed a third is available and sometimes necessary: **a
+LOWER CAP**. A cap is `PPI` to any cap beneath it in the layer order
+(`cap_ppi_cap`, `odNet_gt` on `P m' m`).
+
+Widening a hypothesis is a strict improvement — the consumer now demands less —
+but it is worth recording that §62's consumer, which "held", was still missing an
+option. The method rule catches missing EDGES when you write the consumer; it
+catches missing OPTIONS only when you try to supply it.
+
+### 65.4 Routing conditions: 2 of 5, with the third now nearly free
+
+| condition | status |
+|---|---|
+| `rEQ` | ✓ `cap_rEQ` |
+| `rPP` | ✓ `cap_rPP` |
+| `rPPI` | model half certified; three declared options now available |
+| `rPO` | needs `¬ capU f` and non-disjointness |
+| `rDR` | **the substantive one** — needs the BASE's `seed` to already declare disjointness from everything below the cap. That is a condition on `seedMix` (§44), not on the cap. |
+
+Build: 27,365 lines, exit 0, 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
