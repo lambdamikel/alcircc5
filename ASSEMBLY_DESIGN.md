@@ -8586,3 +8586,49 @@ supplies the chain-restricted `KserSegmentU`. Joining them is the composition
 
 Build: 30,053 lines, 1,504 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 101. `kserD` — the downward test, and an adjustment the join needs
+
+`kserD` with both properties, transcribed from §100:
+
+* **`oneshot_in_kernelI`** (**axiom-free**) — the `∃PPI` mirror: a lower chain
+  node carrying `D` serves an `∃PPI` demand above it;
+* **`kserD_segment` : `KserSegmentD (kserD C0 I)`**;
+* **`kserD_sound`** — the descending chain's order comes from `hchain` by the
+  same `comp(PP,PP) = {PP}` induction `chain_pp_lt` runs upward.
+
+### 101.1 The adjustment
+
+Joining `KserSegmentU` to the upward closure's `hext` exposes a mismatch:
+
+* `KserSegmentU` (§100) requires a **total** chain — `∀ t, ρ (path t) (path (t+1)) = PP`;
+* a `skipNodesU` path is a chain only on its **prefix** — the steps exist for
+  `i < k` and the path is unconstrained beyond.
+
+So `kserU` should be stated over a **finite** chain segment rather than a total
+one:
+
+```
+kserU m c := decide (∃ path j, 0 < j ∧ (∀ t, t + 1 ≤ j → ρ (path t) (path (t+1)) = PP)
+                       ∧ path 0 = m ∧ mty (path 0) = mty (path j)
+                       ∧ ∃ b, b < j ∧ c ∈ mty (path b))
+```
+
+Soundness survives: from a prefix chain `0..j` with a type repeat, the same
+bounded `chain_pp_lt` induction gives `ρ (path 0) (path t) = PP` for the `t`
+carrying the concept, and `oneshot_in_kernel` reads it off.
+
+This is a definitional adjustment to four declarations per direction
+(`kserU`/`kserD` and their two properties each), not a change of argument. It is
+recorded rather than made, so the artifact stays green at a clean point.
+
+### 101.2 Item A's remaining list
+
+| | |
+|---|---|
+| `kserU`, `kserD` with both properties | ✓ (§§100–101) — **pending the finite-chain adjustment** |
+| `hext` per direction from `KserSegmentU`/`D` | needs the adjustment first |
+| composing the two halves' coverage | after that |
+
+Build: 30,136 lines, 1,509 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

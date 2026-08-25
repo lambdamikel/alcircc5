@@ -29252,6 +29252,86 @@ theorem kserU_sound (hI : RCC5Interp I) (C0 : Concept) (m : MTKNode I C0)
   rw [hp0] at hres
   exact hres
 
+/-! ##### §101 — `kserD`, the downward test
+
+The dual of §100. A DESCENDING chain — each next node BELOW the last — and the
+demand is `∃PPI`. -/
+
+/-- The `∃PPI` mirror of `oneshot_in_kernel`: a lower chain node carrying `D`
+    serves an `∃PPI` demand above it. -/
+theorem oneshot_in_kernelI (hI : RCC5Interp I) {c : Nat → α} {D : Concept}
+    (hdom : ∀ i, I.dom (c i))
+    (hdesc : ∀ i j, i < j → I.rho (c j) (c i) = pp) {j k : Nat}
+    (hjk : j < k) (hD : sat I (c k) D) : sat I (c j) (Concept.ex ppi D) := by
+  refine ⟨c k, hdom k, ?_, hD⟩
+  have hc : I.rho (c j) (c k) = conv (I.rho (c k) (c j)) :=
+    hI.conv_ (c k) (c j) (hdom k) (hdom j)
+  rw [hc, hdesc j k hjk]; rfl
+
+/-- The segment property, downward. -/
+def KserSegmentD (kser : MTKNode I C0 → Concept → Bool) : Prop :=
+  ∀ (path : Nat → MTKNode I C0),
+    (∀ t, I.rho (path (t + 1)).x (path t).x = pp) →
+    ∀ i j, i < j → mty C0 I (path i).x = mty C0 I (path j).x →
+    ∀ c, (∃ b, b < j - i ∧ c ∈ mty C0 I (path (i + b)).x) →
+      kser (path i) c = true
+
+open Classical in
+/-- **THE DOWNWARD KERNEL-SERVICE TEST.** -/
+noncomputable def kserD (C0 : Concept) (I : Interp α) (m : MTKNode I C0)
+    (c : Concept) : Bool :=
+  decide (∃ (path : Nat → MTKNode I C0),
+    (∀ t, I.rho (path (t + 1)).x (path t).x = pp) ∧ path 0 = m ∧
+    ∃ j, 0 < j ∧ mty C0 I (path 0).x = mty C0 I (path j).x ∧
+      ∃ b, b < j ∧ c ∈ mty C0 I (path b).x)
+
+open Classical in
+theorem kserD_segment (C0 : Concept) (I : Interp α) :
+    KserSegmentD (kserD C0 I) := by
+  intro path hchain i j hij hty c ⟨b, hb, hc⟩
+  refine decide_eq_true ⟨fun t => path (i + t), fun t => ?_, rfl,
+    j - i, by omega, ?_, b, hb, ?_⟩
+  · show I.rho (path (i + (t + 1))).x (path (i + t)).x = pp
+    have h : i + (t + 1) = (i + t) + 1 := by omega
+    rw [h]; exact hchain (i + t)
+  · show mty C0 I (path (i + 0)).x = mty C0 I (path (i + (j - i))).x
+    have h1 : i + 0 = i := by omega
+    have h2 : i + (j - i) = j := by omega
+    rw [h1, h2]; exact hty
+  · exact hc
+
+open Classical in
+/-- **SOUNDNESS, DOWNWARD.**  The mirror of `kserU_sound`: the descending chain's
+    order comes from `hchain` by the same `comp(PP,PP) = {PP}` induction that
+    `chain_pp_lt` runs upward. -/
+theorem kserD_sound (hI : RCC5Interp I) (C0 : Concept) (m : MTKNode I C0)
+    (c : Concept) (h : kserD C0 I m c = true) :
+    sat I m.x (Concept.ex ppi c) := by
+  obtain ⟨path, hchain, hp0, j, hj, hty, b, hb, hc⟩ := of_decide_eq_true h
+  have hdesc : ∀ u v : Nat, u < v → I.rho (path v).x (path u).x = pp := by
+    intro u v
+    induction v with
+    | zero => intro hlt; exact absurd hlt (Nat.not_lt_zero u)
+    | succ v' ih =>
+      intro hlt
+      rcases Nat.lt_or_ge u v' with hu | hu
+      · exact rho_forced hI (path (v' + 1)).hx (path u).hx (path v').hx
+          (hchain v') (ih hu) (by decide)
+      · have huv : u = v' := by omega
+        subst huv
+        exact hchain u
+  have hup : ∃ t, 0 < t ∧ sat I (path t).x c := by
+    rcases Nat.eq_zero_or_pos b with rfl | hbpos
+    · refine ⟨j, hj, ?_⟩
+      have hcj : c ∈ mty C0 I (path j).x := by rw [← hty]; exact hc
+      exact (mem_mty.mp hcj).2
+    · exact ⟨b, hbpos, (mem_mty.mp hc).2⟩
+  obtain ⟨t, ht, hsat⟩ := hup
+  have hres := oneshot_in_kernelI hI (c := fun n => (path n).x)
+    (fun n => (path n).hx) hdesc (show (0 : Nat) < t from ht) hsat
+  rw [hp0] at hres
+  exact hres
+
 end SkipClosure
 
 end KernelService
@@ -29937,6 +30017,9 @@ end OneShotDichotomy
 #print axioms skipNodes_covers_of_KserSegment
 #print axioms kserU_segment
 #print axioms kserU_sound
+#print axioms oneshot_in_kernelI
+#print axioms kserD_segment
+#print axioms kserD_sound
 #print axioms mtk_mem_allListsLe
 #print axioms mem_subtypeList
 #print axioms subtypeList_nodup
