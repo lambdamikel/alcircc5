@@ -6642,3 +6642,54 @@ artifact stays green (26,888 lines, 0 errors / 0 warnings / 0 sorries /
 | `r = ppi` | into the closure; `cap_reaches` gives the edge |
 | `r = po` | the residual; `cap_po_outside` / `cap_po_cap` |
 | `r = dr` | **open** — §58.2, specified above |
+
+## 59. WHERE WE ARE, AND THE ROUTES FORWARD
+
+### 59.1 Position
+
+| | |
+|---|---|
+| horizontal / ascending / descending quadrants | **general, done** |
+| mixed: frame, transfer, both `∀` directions, `e_ex` at `eq`/`pp`/`ppi`/`po` | **done** |
+| mixed: `e_ex` at `dr` | open, §58.2, fully specified |
+| mixed: assemble `MultiTierOk`, instantiate, tail | not started |
+
+### 59.2 A design insight that shrinks the remaining work
+
+**Cap labels do not have to be full model types.** `MultiTierOk`'s obligations
+are all of the form *"if `X ∈ tauE e` then …"*. A SMALLER label carries FEWER
+obligations — `e_ex` fires on fewer existentials, `ee_all` on fewer universals —
+while `e_clash`/`e_nobot` stay free (any subset of a consistent type is
+consistent) and `e_and`/`e_or` hold as long as the label is closed under
+decomposition.
+
+So a cap node should carry not `mtk (w m)` but the **smallest
+decomposition-closed subset of `mtk (w m)` containing `D` and the stable `∀PP`
+consequents**. Consistency is inherited; Hintikka closure is by construction.
+
+Consequence for §58.2: `∃DR` at a cap arises **only when the demanded concept or
+a `∀PP` consequent actually forces it**, not merely because the witness happened
+to have a disjoint neighbour. The gap does not disappear — it stops being
+generic.
+
+This also revisits §55: the label-level route is not just *available*, it is
+strictly *better* than reading types off positioned nodes.
+
+### 59.3 Routes
+
+1. **Push through.** §58.2 (`dseed`/`hdbase`, mechanical) → assemble
+   `MultiTierOk` → instantiate → tail → fragment theorem. Estimate 4–8 sessions;
+   steps 3–4 are where interfaces get applied, and three of three such steps have
+   found a gap.
+2. **Land the tail first, gap as a named premise.** Do the tail now so the
+   artifact states *"the ∀PO-free fragment is decidable modulo ONE named
+   premise"* — citable, honest, a clean handoff, and it holds whatever happens to
+   the remaining gaps. 1–2 sessions. Recommended at §48 and still not done.
+3. **Cold review of §§43–59.** Never reviewed; the ledger stands at a defect in
+   15 of 17. Reviewing before more building could save sessions or reshape them.
+4. **Adopt §59.2 first**, then 1. Minimal labels reduce every remaining
+   obligation, so the assembly gets easier rather than harder.
+
+**Recommendation: 4, then 2, then 3.** Minimal labels are cheap and shrink the
+work; the tail then locks in a citable position regardless; and a cold review is
+worth most once there is a complete statement to attack.
