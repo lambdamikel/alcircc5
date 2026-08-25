@@ -6578,3 +6578,67 @@ proved.
 
 Standing caveat unchanged. Two interfaces failed at first contact in the last
 three sessions; `e_ex` is where a third would show up.
+
+## 58. `e_ex` FOR CAP NODES — two gaps, one closed
+
+Writing `e_ex` found two gaps in §53's wiring at once. This is the third
+interface to fail at first contact in three sessions, and §57.3 named this row
+as where a third would appear.
+
+### 58.1 Gap 1 — no cap-internal order. CLOSED
+
+`e_ex` at `r = pp` needs `E (inr m) (inr m') = pp`, i.e. a cap node below
+another. §53 defined `capElt (inr _) _ = False`: cap nodes were below nothing, so
+a cap's OWN `∃PP` demand — which §52's layer stack is supposed to serve — had no
+edge to be served along.
+
+**Fixed.** `capElt` now carries a cap-internal order `P`, threaded through
+`odSeedCap` and its companions with `hPirr`/`hPtr`. New:
+
+* `cap_pp_cap` — `P m m'` gives a `PP` edge, the layer edge §52 needs;
+* `cap_po_cap` — restated: cap nodes **incomparable in `P`** are `PO`. Taking `P`
+  empty recovers §51.5's antichain exactly, so the fan is the `P = ∅` instance
+  of one construction rather than a separate one.
+
+The reflection and transfer lemmas were unaffected: cap–cap pairs never appear
+in reasoning about old nodes.
+
+### 58.2 Gap 2 — no `DR` edge at a cap. OPEN, and precisely specified
+
+`cap_no_dr_edge` proves no `DR` edge touches a cap, so an `∃DR.D` in a cap's
+label cannot be served — not by an external (no seed pair) and not by the kernel
+branch (same reason).
+
+The fix is to let `capSeed` carry cap↔base pairs `dseed : M → β → Prop`. Doing so
+**breaks the transfer theorem**, and correctly: if `e ∈ U` and `dseed m f`, then
+`e` is below the cap and the cap is disjoint from `f`, so `djDown` makes `e`
+disjoint from `f` — a base-level `DR` edge the uncapped structure never declared.
+
+So the extension needs a side condition, and it is exactly §51.2's:
+
+```
+hdbase : ∀ m f, dseed m f → ∀ e, U e → seed (Sum.inl e) (Sum.inl f)
+```
+
+— **the cap's `DR` partner must already be seed-disjoint from the entire
+closure**, which is what `cofinal_dr_all` supplies on the model side. With
+`hdbase` the transfer theorem survives, because the cap declares no base
+disjointness that was not already there.
+
+Work required: `capSeed` + `dseed`, reworked `capSeed_sym` / `capSeed_sep` /
+`capSeed_old`, and `odSeedCap_old`'s disjointness direction routed through
+`hdbase`. All mechanical; none of it is open mathematics.
+
+**Not attempted in this session** — the half-applied refactor was reverted so the
+artifact stays green (26,888 lines, 0 errors / 0 warnings / 0 sorries /
+0 `sorryAx`) rather than left mid-surgery.
+
+### 58.3 State of the open row
+
+| `e_ex` case at a cap | status |
+|---|---|
+| `r = eq` | `mtk_ex_eq` + `odNet_self` — as for base nodes |
+| `r = pp` | **closed** — `cap_pp_cap` (§58.1) |
+| `r = ppi` | into the closure; `cap_reaches` gives the edge |
+| `r = po` | the residual; `cap_po_outside` / `cap_po_cap` |
+| `r = dr` | **open** — §58.2, specified above |
