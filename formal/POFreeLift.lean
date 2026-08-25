@@ -25693,6 +25693,53 @@ theorem cap_all_ppi_sound_chain (hI : RCC5Interp I) {c : Nat → α} {Y : Concep
     rw [hI.conv_ (c j) w (hdom j) hwd, hrw]; rfl
   exact hall (c j) (hdom j) hwu
 
+/-! ### §52 — THE LAYER RECURSION TERMINATES
+
+§51.6 left exactly one item: a cap node's OWN `∃PP` demand, needing a cap above
+the cap. That recursion is bounded, and for a reason that is worth stating
+precisely because it is what §47.5's refuted construction could NOT arrange.
+
+`path_cut` licenses reusing a node that is above in the ORDER. §47.2 tried to
+reuse a node above in the TREE — a path accumulator — and the two are different,
+which is why it was withdrawn. **Caps are stacked in the order.** So the cut
+applies to them directly, with nothing to arrange.
+
+Stack the caps `T 0 PP T 1 PP …`. Their model types are drawn from
+`typeEnum C0`, so past any point two layers repeat. At a repeat `i < j` with
+equal types, every demand of `T i` is a demand of `T j`, and `T j`'s server lies
+above `T i` as well — so no layer beyond `j` is needed. -/
+
+/-- **THE LAYER CUT.**  At a repeat, the higher layer's server also serves the
+    lower layer, so the stack truncates there. -/
+theorem layer_cut (hI : RCC5Interp I) {Ti Tj w : α}
+    (hi : I.dom Ti) (hj : I.dom Tj) (hw : I.dom w)
+    (hij : I.rho Ti Tj = pp) (hjw : I.rho Tj w = pp)
+    {D : Concept} (hD : sat I w D) :
+    sat I Ti (Concept.ex pp D) ∧ sat I Tj (Concept.ex pp D) :=
+  ⟨ex_pp_serves_below hI hj hi hw hij hjw hD, ⟨w, hw, hjw, hD⟩⟩
+
+/-- **THE RECURSION TERMINATES.**  Past ANY point the cap stack repeats a type,
+    and at the repeat the higher layer's servers cover the lower one. So the
+    layer count is bounded by `C₀` alone, via `typeEnum`. -/
+theorem layer_recursion_terminates (hI : RCC5Interp I) {C0 : Concept}
+    (T : Nat → α) (hdom : ∀ i, I.dom (T i))
+    (hasc : ∀ i j, i < j → I.rho (T i) (T j) = pp) (L : Nat) :
+    ∃ i j, L ≤ i ∧ i < j ∧ mty C0 I (T i) = mty C0 I (T j) ∧
+      ∀ D w, I.dom w → I.rho (T j) w = pp → sat I w D →
+        sat I (T i) (Concept.ex pp D) := by
+  obtain ⟨i, j, hLi, hij, hty⟩ :=
+    segment_exists (typeEnum C0) (fun k => mty C0 I (T k))
+      (fun k => mty_mem_typeEnum C0 I (T k)) L
+  exact ⟨i, j, hLi, hij, hty, fun D w hw hr hD =>
+    ex_pp_serves_below hI (hdom j) (hdom i) hw (hasc i j hij) hr hD⟩
+
+/-- The counting form: a cap stack with pairwise distinct types is no longer than
+    the type enumeration. -/
+theorem layer_stack_bounded {C0 : Concept} (Ts : List α)
+    (hnd : (Ts.map (fun x => mty C0 I x)).Nodup) :
+    Ts.length ≤ (typeEnum C0).length :=
+  repeatfree_len_le C0 I Ts hnd
+
 /-! ### §50 — THE TOP-SERVER EXTENSION
 
 §49 reduced the mixed quadrant to one question: can a ∀PO-free concept force
@@ -26105,6 +26152,9 @@ end OneShotDichotomy
 #print axioms finite_pool_all_or_nothing
 #print axioms witness_realizes_requirement
 #print axioms cap_all_ppi_sound
+#print axioms layer_cut
+#print axioms layer_recursion_terminates
+#print axioms layer_stack_bounded
 #print axioms cap_all_ppi_sound_chain
 #print axioms odTop
 #print axioms odTop_above

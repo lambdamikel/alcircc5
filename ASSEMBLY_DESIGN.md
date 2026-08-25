@@ -6271,3 +6271,54 @@ else about the cap is now certified: the structure (`odAmalg`/`odFan`/`odTower`
 + their frames), the placement rule (downward closure), the `∀PPI` obligation
 (§51.4), the `∃DR` route (`cofinal_dr_all`), and the mutual independence of
 servers (§51.5).
+
+## 52. THE LAYER RECURSION TERMINATES — and an honest audit
+
+`layer_recursion_terminates`: stack the caps `T 0 PP T 1 PP …`; their model types
+come from `typeEnum C0`, so past any point two layers repeat, and at a repeat the
+higher layer's server covers the lower one (`layer_cut`). The layer count is
+bounded by `C₀` alone.
+
+Why this works where §47.2 failed, stated precisely: `path_cut` licenses reusing
+a node above in the **ORDER**. §47.2's accumulator offered a node above in the
+**TREE**. **Caps are stacked in the order**, so the cut applies with nothing to
+arrange.
+
+### 52.1 AUDIT — what the cap actually discharges, and what it does not
+
+Marking "lemma ready" (the supporting theorem is certified but **not yet applied
+to cap-indexed data**) separately from "done".
+
+| `MultiTierOk` field | edge involved | status | lemma |
+|---|---|---|---|
+| `frame_q` | — | **lemma ready** | `odFan_frame` / `odAmalg_frame` |
+| `e_clash/nobot/and/or` | — | **lemma ready** | label is a genuine `mty` |
+| `ee_all` base→cap | `PP` | **lemma ready** | `witness_realizes_requirement` |
+| `ee_all` cap→base | `PPI` | **lemma ready** | `cap_all_ppi_sound` |
+| `ee_all` cap↔cap | `PO` | **lemma ready** | `odFan_po` + `mty_no_all_po` |
+| `ee_all` cap→outside | `PO` | **lemma ready** | `odAmalg_po` + `mty_no_all_po` |
+| `ee_all` cap `∀DR` | — | **lemma ready** | vacuous: `amDisj` |
+| `ek_all` / `ke_all` kernel↔cap | `PP`/`PPI` | **lemma ready** | `cap_all_ppi_sound_chain` |
+| `k_ex` persistent | — | **DONE** | `rr_covers` |
+| `k_ex` one-shot | — | **lemma ready** | §49 trichotomy + the cap |
+| `e_ex` for the CAP's own demands | all | **OPEN** | §52 gives termination, not a construction |
+| the wiring | — | **OPEN** | `β`, `elt`, `mixNodes`, the bound |
+
+### 52.2 So what is genuinely left
+
+Two things, and neither is the mathematics that blocked §48:
+
+1. **`e_ex` for cap nodes.** §52 proves the layer stack terminates; it does not
+   yet *build* the stack as certificate nodes with their routing conditions.
+   This is the same shape as the base case, one level up.
+2. **Wiring.** Extend the external index `β` with the cap, extend `elt` with the
+   cap edges, extend `mixNodes` and its bound.
+
+Everything in the "lemma ready" rows is a certified theorem waiting to be applied
+to cap-indexed data — real work, but not open mathematics.
+
+**Calibration.** The session that produced §§49–52 refuted its own headline
+reading four times (`wp100`'s 100%, `wp101` D's flatness twice, `wp102` Q1's
+tautology, `wp103`'s 2-of-44). The ledger's standing presumption applies: read
+this audit as *"no open step identified beyond rows 11–12"*, not as *"none
+exists"*.
