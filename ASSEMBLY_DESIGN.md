@@ -8400,3 +8400,52 @@ upward half was `skipNodesU_of_path`.
 
 Build: 29,676 lines, 1,489 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 97. ITEM A, ASSEMBLED
+
+```
+skipNodes_covers_at_typeEnum :
+  ∀ m ∈ skipNodes kser n |typeEnum C0|, ∀ c hF,
+    kser m c = true ∨ ppWitness m hF ∈ skipNodes kser n |typeEnum C0|
+```
+
+**The skipping closure at fuel `|typeEnum C0|` is CLOSED** — every vertical
+demand at every member is either kernel-served or has its witness inside — **and
+bounded** by `mtkBound C0 |typeEnum C0|` (`skipNodes_length_le`).
+
+This is what §48 first hit as a blocker, thirteen sections and five refuted
+routes ago.
+
+### 97.1 The chain
+
+| | |
+|---|---|
+| `SkipStep` | one non-kernel-served vertical step, either kind |
+| `skipNodes_path'` | membership ⟹ a path of at most that many `SkipStep`s |
+| `skipNodes_of_path` | a path of `k` steps ⟹ membership at fuel `k` |
+| `skipPath_len_le'` | a path with distinct types is at most `|typeEnum C0|` long |
+| `skipNodes_fixed` | hence fuel `|typeEnum C0|` is a FIXPOINT |
+| `skipNodes_covers_of_fixed` | hence the closure is CLOSED |
+
+### 97.2 The one hypothesis
+
+`hext`: along a path of `SkipStep`s the types are pairwise distinct. §91 proved
+this is what a type repeat contradicts (`path_repeat_carries`), and §85's
+`kernelServes` is the predicate that should supply it — **but the connection
+from `kernelServes` to `hext` is not yet written.**
+
+So item A is: **assembled modulo `hext`**, with `hext` an explicitly stated
+property of the kernel-service test rather than a gap in the argument.
+
+### 97.3 §82's list
+
+| item | status |
+|---|---|
+| A — the node set | **assembled, modulo `hext`** |
+| B — coverage | follows from A |
+| C — the counting | `skipNodes_length_le` at `|typeEnum C0|` |
+| D, F, G, H | done / resolved |
+| E — budget hypotheses | outstanding |
+
+Build: 29,942 lines, 1,497 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
