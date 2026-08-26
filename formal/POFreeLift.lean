@@ -32272,6 +32272,81 @@ That is a smaller gap than §149.2(b) described, because "propagation might deep
 a label and restart the generation bound" is now ruled out rather than merely
 unobserved. -/
 
+/-! #### §151 — WHERE THE COMBINED INDUCTION CLOSES
+
+§150.4 left one gap: that generation and propagation, interleaved, STOP.
+
+The two halves are each bounded and cannot escalate each other's measure. What is
+not bounded in general is the NODE COUNT, because a propagated body can itself be
+an existential — a new demand, hence a new child, hence a taller tree.
+
+This section proves the case where that cannot happen, which is decided by the
+SYNTAX of `C₀` and is checkable. It is a genuine sub-fragment, not a hypothesis:
+`ShallowAll C0` says no universal in `cl C₀` has an existential body, so
+propagation adds no demand and §148's bound stands unchanged. -/
+
+/-- No universal in `cl C₀` has an existential body. -/
+def ShallowAll (C0 : Concept) : Prop :=
+  ∀ (r r' : Atom) (E D : Concept),
+    Concept.all r E ∈ cl C0 → E ≠ Concept.ex r' D
+
+/-- **UNDER `ShallowAll`, PROPAGATION ADDS NO DEMAND.**  A propagated body is a
+    universal's body, and none of those is an existential — so the label grows
+    but the node set does not. -/
+theorem shallowAll_no_new_demand {C0 : Concept} (h : ShallowAll C0)
+    {r r' : Atom} {E D : Concept} (hE : Concept.all r E ∈ cl C0) :
+    E ≠ Concept.ex r' D := h r r' E D hE
+
+/-- So a support label's propagated additions never carry a demand. -/
+theorem shallowAll_extend_no_demand {C0 : Concept} (hSA : ShallowAll C0)
+    {x : α} {L : List Concept} (hL : SupportOk I C0 x L)
+    {r r' : Atom} {E D : Concept} (hE : Concept.all r E ∈ L) :
+    E ≠ Concept.ex r' D :=
+  shallowAll_no_new_demand hSA (hL.sub _ hE)
+
+/-- **THE SUB-FRAGMENT CLOSES.**  With `ShallowAll`, the node set produced from a
+    root label is exactly §148's — propagation cannot add to it — so it is
+    bounded by `genBound |cl C₀| (maxDepth root)` and closed under both vertical
+    directions.
+
+    Stated as the conjunction the extraction needs, so it can be consumed
+    directly. -/
+theorem shallowAll_closure (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) (d : Nat) (hdep : maxDepth n.lab ≤ d)
+    (hlen : n.lab.length ≤ (cl C0).length) :
+    (sNodes hI d n).length ≤ genBound (cl C0).length d ∧
+    (∀ m ∈ sNodes hI d n, ∀ (D : Concept) (hD : Concept.ex pp D ∈ m.lab),
+        sChildN hI m hD ∈ sNodes hI d n) ∧
+    (∀ m ∈ sNodes hI d n, ∀ (D : Concept) (hD : Concept.ex ppi D ∈ m.lab),
+        sChildN hI m hD ∈ sNodes hI d n) :=
+  ⟨sNodes_length_le hI d n hlen,
+   sNodes_covers_pp hI d n hdep,
+   sNodes_covers_ppi hI d n hdep⟩
+
+/-! ##### §151.1 — honest scope
+
+`shallowAll_closure` is NOT conditional on `ShallowAll` — §148's theorems never
+were. What `ShallowAll` buys is the guarantee that the `ee_all` fixpoint of §150
+adds no demand, so the closure computed once is already the final node set and
+the interleaving question does not arise.
+
+Outside `ShallowAll` the closure is still bounded and still closed for the
+demands it has; what is not established is that propagation adds no MORE.
+
+So the vertical half is:
+
+| | |
+|---|---|
+| bounded, closed, both directions | **certified, unconditionally** |
+| propagation sound and depth-bounded | **certified, unconditionally** (§150) |
+| propagation adds no demand | **certified under `ShallowAll`** |
+| propagation adds no demand, general | **open** |
+
+`ShallowAll` is decidable from `C₀` and excludes concepts like
+`∀PP.(∃PP.A)` — which is exactly the tower-building shape, so the sub-fragment is
+real but not the interesting half. Recording it as a partial result rather than
+dressing it up. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33151,4 +33226,6 @@ end POFreeLift
 #print axioms POFreeLift.support_extend
 #print axioms POFreeLift.support_extend_depth
 #print axioms POFreeLift.depth_invariant
+#print axioms POFreeLift.shallowAll_extend_no_demand
+#print axioms POFreeLift.shallowAll_closure
 #print axioms POFreeLift.kernel_of_no_terminal

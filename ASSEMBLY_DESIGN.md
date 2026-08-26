@@ -11154,3 +11154,50 @@ unobserved.
 
 Build: 33,154 lines, 1,671 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 151. WHERE THE COMBINED INDUCTION CLOSES — and where it does not
+
+§150.4 left one gap: that generation and propagation, interleaved, STOP. Both
+halves are bounded and §150.3 rules out escalation. What is not bounded in
+general is the NODE COUNT, because **a propagated body can itself be an
+existential** — a new demand, hence a new child, hence a taller tree.
+
+### 151.1 The case that closes
+
+`ShallowAll C0` — no universal in `cl C₀` has an existential body. Decidable from
+`C₀`.
+
+| | |
+|---|---|
+| `shallowAll_no_new_demand` / `_extend_no_demand` | propagation adds no demand |
+| **`shallowAll_closure`** | bounded, and closed in BOTH vertical directions |
+
+Under `ShallowAll`, the closure computed once is already the final node set and
+the interleaving question does not arise.
+
+### 151.2 Honest scope, stated plainly
+
+`shallowAll_closure` is **not** conditional on `ShallowAll` — §148's theorems
+never were. What `ShallowAll` buys is only that the §150 fixpoint adds no demand.
+
+**And `ShallowAll` excludes `∀PP.(∃PP.A)` — which is exactly the tower-building
+shape.** So the sub-fragment is real but is not the interesting half. It is
+recorded as a partial result, not dressed up as more.
+
+### 151.3 The vertical half
+
+| | |
+|---|---|
+| bounded, closed, both directions | **certified, unconditionally** |
+| propagation sound | **certified** (§150) |
+| propagation depth-bounded | **certified** (§150) |
+| propagation adds no demand | **certified under `ShallowAll`** |
+| propagation adds no demand, GENERAL | **open** |
+
+The last row is the whole of §149.2(b) that remains, and it is now one sentence
+rather than a region: *can propagation introduce unboundedly many demands?*
+`wp124` says no on 1,019 models — external counts 3–5, constant while the control
+grows 5 → 41 — but that is measurement.
+
+Build: 33,222 lines, 1,676 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
