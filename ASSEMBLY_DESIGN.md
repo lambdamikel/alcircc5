@@ -10992,5 +10992,5 @@ A construction step now has, certified:
 Those are exactly `genNodes_le_C0`'s two inputs. **The step is done; what remains
 is the iteration that repeats it and the between-node obligations.**
 
-Build: 32,819 lines, 1,652 declarations, exit 0, 0 errors / 0 warnings /
+Build: 32,856 lines, 1,656 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
