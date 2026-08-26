@@ -11297,3 +11297,45 @@ kernel.
 
 Build: 33,404 lines, 1,680 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 154. THE SPLIT CLOSURE — the vertical extraction
+
+§153 showed every demand that breaks the depth measure is persistent. `pNodes`
+acts on that: follow a vertical demand only when it is NOT kernel-served —
+exactly §44.27's split, now over SUPPORT labels where the measure works.
+
+| | |
+|---|---|
+| `pNodes` | the split closure |
+| `self_mem_pNodes` | |
+| **`pNodes_length_le`** | size ≤ `genBound \|cl C₀\| d` — skipping only removes branches |
+| `pNodes_child_mem_pp` / `_ppi` | a NON-persistent demand's child is present |
+| `pNodes_sub_of_child_pp` / `_ppi` | a child's closure sits inside the parent's |
+| **`pNodes_covers_pp`** | **closed on the non-persistent half, at fuel from the root label's depth** |
+
+### 154.1 The vertical half, assembled
+
+| | |
+|---|---|
+| the split closure, size-bounded | **certified** |
+| closed on the non-persistent half | **certified** |
+| every label is a support label | **by construction** — `SNode`'s fourth field |
+| the depth measure holds on what it follows | **certified** (§153) |
+| transitive inheritance for `ee_all` | **certified** (§152) |
+| persistent demands go to a kernel | **§149.2(c), no Lean at all** |
+
+**This is the vertical extraction §§130–133 twice failed to get.** Both earlier
+attempts died on termination; this one terminates because the measure survives —
+and the measure survives because support labels carry only what is owed, and
+because the demands it cannot handle are exactly the ones the split removes.
+
+### 154.2 What is not done
+
+* the `∃PPI` mirror of `pNodes_covers_pp` — mechanical, unwritten;
+* the KERNEL side — six `MultiTierOk` fields, no Lean;
+* the between-node `ee_all` fixpoint — §150 proved it sound and depth-bounded,
+  §152 supplied inheritance, but the iteration is not written;
+* the horizontal half's budget hypotheses — untouched since 2026-08-22.
+
+Build: 33,543 lines, 1,688 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

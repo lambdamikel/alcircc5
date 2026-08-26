@@ -32509,6 +32509,207 @@ Note what is NOT claimed: that persistent demands are SERVED. They are
 kernel-served, and the kernel side is §149.2(c) — six `MultiTierOk` fields, still
 untouched in Lean. -/
 
+/-! #### §154 — THE SPLIT CLOSURE
+
+§153 showed every demand that breaks the depth measure is persistent. This is the
+closure that acts on that: follow a vertical demand only when it is NOT
+kernel-served, exactly §44.27's split, now over SUPPORT labels where the measure
+works.
+
+Skipping only removes branches, so §148's size bound survives verbatim; the
+coverage theorem is §148's with the persistence side-condition added. -/
+
+open Classical in
+/-- **THE SPLIT CLOSURE.**  Persistent demands go to a kernel and are not
+    followed; the rest are. -/
+noncomputable def pNodes (hI : RCC5Interp I) {C0 : Concept} :
+    Nat → SNode I C0 → List (SNode I C0)
+  | 0, n => [n]
+  | d + 1, n => n :: n.lab.attach.flatMap (fun p => match p with
+      | ⟨.ex pp D, hD⟩ =>
+          if D ∈ persistDs C0 I n.x then [] else pNodes hI d (sChildN hI n hD)
+      | ⟨.ex ppi D, hD⟩ =>
+          if D ∈ persistDsI C0 I n.x then [] else pNodes hI d (sChildN hI n hD)
+      | _ => [])
+
+theorem self_mem_pNodes (hI : RCC5Interp I) {C0 : Concept} (d : Nat)
+    (n : SNode I C0) : n ∈ pNodes hI d n := by
+  cases d with
+  | zero => rw [pNodes]; exact List.mem_cons_self
+  | succ d' => rw [pNodes]; exact List.mem_cons_self
+
+/-- **THE SIZE BOUND SURVIVES.**  Skipping removes branches, so the same
+    `genBound |cl C₀| d` bounds it. -/
+theorem pNodes_length_le (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), n.lab.length ≤ (cl C0).length →
+      (pNodes hI d n).length ≤ genBound (cl C0).length d := by
+  intro d
+  induction d with
+  | zero => intro n _; rw [pNodes, genBound]; exact Nat.le_refl 1
+  | succ d' ih =>
+    intro n hlen
+    rw [pNodes, genBound, List.length_cons, List.length_flatMap]
+    have hb : ((n.lab.attach).map (fun p => (match p with
+        | ⟨.ex pp D, hD⟩ =>
+            if D ∈ persistDs C0 I n.x then [] else pNodes hI d' (sChildN hI n hD)
+        | ⟨.ex ppi D, hD⟩ =>
+            if D ∈ persistDsI C0 I n.x then [] else pNodes hI d' (sChildN hI n hD)
+        | _ => []).length)).sum
+        ≤ (n.lab.attach).length * genBound (cl C0).length d' := by
+      refine sum_map_le _ _ _ ?_
+      rintro ⟨F, hF⟩ _
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          show (if c ∈ persistDs C0 I n.x then ([] : List (SNode I C0))
+                else pNodes hI d' (sChildN hI n hF)).length
+                ≤ genBound (cl C0).length d'
+          by_cases hp : c ∈ persistDs C0 I n.x
+          · rw [if_pos hp]; exact Nat.zero_le _
+          · rw [if_neg hp]; exact ih _ (sChildN_len hI n hF)
+        | ppi =>
+          show (if c ∈ persistDsI C0 I n.x then ([] : List (SNode I C0))
+                else pNodes hI d' (sChildN hI n hF)).length
+                ≤ genBound (cl C0).length d'
+          by_cases hp : c ∈ persistDsI C0 I n.x
+          · rw [if_pos hp]; exact Nat.zero_le _
+          · rw [if_neg hp]; exact ih _ (sChildN_len hI n hF)
+        | _ => exact Nat.zero_le _
+      | _ => exact Nat.zero_le _
+    rw [List.length_attach] at hb
+    calc _ ≤ n.lab.length * genBound (cl C0).length d' + 1 :=
+          Nat.add_le_add_right hb 1
+      _ ≤ (cl C0).length * genBound (cl C0).length d' + 1 :=
+          Nat.add_le_add_right (Nat.mul_le_mul_right _ hlen) 1
+      _ = 1 + (cl C0).length * genBound (cl C0).length d' := Nat.add_comm _ _
+
+open Classical in
+/-- A NON-persistent demand's child is in the closure. -/
+theorem pNodes_child_mem_pp (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {D : Concept} (hD : Concept.ex pp D ∈ n.lab)
+    (hnp : D ∉ persistDs C0 I n.x) (d : Nat) :
+    sChildN hI n hD ∈ pNodes hI (d + 1) n := by
+  rw [pNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex pp D, hD⟩, List.mem_attach _ _, ?_⟩)
+  show sChildN hI n hD ∈
+    (if D ∈ persistDs C0 I n.x then [] else pNodes hI d (sChildN hI n hD))
+  rw [if_neg hnp]
+  exact self_mem_pNodes hI d _
+
+open Classical in
+theorem pNodes_child_mem_ppi (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {D : Concept} (hD : Concept.ex ppi D ∈ n.lab)
+    (hnp : D ∉ persistDsI C0 I n.x) (d : Nat) :
+    sChildN hI n hD ∈ pNodes hI (d + 1) n := by
+  rw [pNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex ppi D, hD⟩, List.mem_attach _ _, ?_⟩)
+  show sChildN hI n hD ∈
+    (if D ∈ persistDsI C0 I n.x then [] else pNodes hI d (sChildN hI n hD))
+  rw [if_neg hnp]
+  exact self_mem_pNodes hI d _
+
+open Classical in
+theorem pNodes_sub_of_child_pp (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) {D : Concept} (hD : Concept.ex pp D ∈ n.lab)
+    (hnp : D ∉ persistDs C0 I n.x) (d : Nat)
+    {m : SNode I C0} (hm : m ∈ pNodes hI d (sChildN hI n hD)) :
+    m ∈ pNodes hI (d + 1) n := by
+  rw [pNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex pp D, hD⟩, List.mem_attach _ _, ?_⟩)
+  show m ∈ (if D ∈ persistDs C0 I n.x then [] else pNodes hI d (sChildN hI n hD))
+  rw [if_neg hnp]; exact hm
+
+open Classical in
+theorem pNodes_sub_of_child_ppi (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) {D : Concept} (hD : Concept.ex ppi D ∈ n.lab)
+    (hnp : D ∉ persistDsI C0 I n.x) (d : Nat)
+    {m : SNode I C0} (hm : m ∈ pNodes hI d (sChildN hI n hD)) :
+    m ∈ pNodes hI (d + 1) n := by
+  rw [pNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex ppi D, hD⟩, List.mem_attach _ _, ?_⟩)
+  show m ∈ (if D ∈ persistDsI C0 I n.x then [] else pNodes hI d (sChildN hI n hD))
+  rw [if_neg hnp]; exact hm
+
+open Classical in
+/-- **THE SPLIT CLOSURE IS CLOSED ON ITS OWN HALF.**  Every NON-persistent
+    vertical demand of every member has its child in the set, at fuel taken from
+    the root label's depth.
+
+    §148's theorem with the split's side condition — which is what §153 makes
+    legitimate, since the demands excluded here are exactly the ones the depth
+    measure could not handle. -/
+theorem pNodes_covers_pp (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), maxDepth n.lab ≤ d →
+      ∀ m ∈ pNodes hI d n, ∀ (D : Concept) (hD : Concept.ex pp D ∈ m.lab),
+        D ∉ persistDs C0 I m.x → sChildN hI m hD ∈ pNodes hI d n := by
+  intro d
+  induction d with
+  | zero =>
+    intro n hdep m hm D hD _
+    rw [pNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact absurd hD (no_demand_of_depth_zero (Nat.le_antisymm hdep (Nat.zero_le _)))
+    · exact absurd h List.not_mem_nil
+  | succ d' ih =>
+    intro n hdep m hm D hD hnp
+    rw [pNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact pNodes_child_mem_pp hI m hD hnp d'
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp h
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          revert hmm
+          show m ∈ (if c ∈ persistDs C0 I n.x then ([] : List (SNode I C0))
+                    else pNodes hI d' (sChildN hI n hF)) → _
+          by_cases hp : c ∈ persistDs C0 I n.x
+          · rw [if_pos hp]; intro hx; exact absurd hx List.not_mem_nil
+          · rw [if_neg hp]
+            intro hx
+            have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+              have := sChildN_depth hI n hF
+              omega
+            exact pNodes_sub_of_child_pp hI n hF hp d'
+              (ih (sChildN hI n hF) hchild m hx D hD hnp)
+        | ppi =>
+          revert hmm
+          show m ∈ (if c ∈ persistDsI C0 I n.x then ([] : List (SNode I C0))
+                    else pNodes hI d' (sChildN hI n hF)) → _
+          by_cases hp : c ∈ persistDsI C0 I n.x
+          · rw [if_pos hp]; intro hx; exact absurd hx List.not_mem_nil
+          · rw [if_neg hp]
+            intro hx
+            have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+              have := sChildN_depth hI n hF
+              omega
+            exact pNodes_sub_of_child_ppi hI n hF hp d'
+              (ih (sChildN hI n hF) hchild m hx D hD hnp)
+        | _ => exact absurd hmm List.not_mem_nil
+      | _ => exact absurd hmm List.not_mem_nil
+
+/-! ##### §154.1 — the vertical half, assembled
+
+| | |
+|---|---|
+| the split closure | `pNodes` |
+| size ≤ `genBound \|cl C₀\| d` | `pNodes_length_le` |
+| **closed on the non-persistent half** | **`pNodes_covers_pp`** |
+| every label is a support label | `SNode`'s fourth field, by construction |
+| the depth measure holds on what it follows | §153 |
+| persistent demands go to a kernel | §149.2(c), NOT built |
+
+This is the vertical extraction §§130–133 twice failed to get. Its remaining
+dependency is the KERNEL side, which is a different six obligations and has no
+Lean at all.
+
+The `∃PPI` mirror of `pNodes_covers_pp` is mechanical and not written. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33395,4 +33596,7 @@ end POFreeLift
 #print axioms POFreeLift.inherited_body_persistent
 #print axioms POFreeLift.inherited_body_persistentI
 #print axioms POFreeLift.inherited_body_persistent_lab
+#print axioms POFreeLift.pNodes_length_le
+#print axioms POFreeLift.pNodes_child_mem_pp
+#print axioms POFreeLift.pNodes_covers_pp
 #print axioms POFreeLift.kernel_of_no_terminal
