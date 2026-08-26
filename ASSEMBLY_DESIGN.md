@@ -9420,3 +9420,60 @@ Until then the honest statement is:
 No Lean was written against C. That is deliberate — §113's lesson was that four
 misdiagnoses in one session all came from reasoning where checking was available,
 and the check here is not yet valid.
+
+## 117. `wp111` FAILED ITS OWN SANITY CHECK — numbers withheld
+
+§116.3 called for re-measuring lap continuation over a class that can carry
+infinite towers. `wp111` built one — an eventually periodic tower on its finite
+quotient, aperiodic prefix `P_0 < … < P_{L-1}` below a periodic tail
+`R_0 … R_{p-1}` — and declared in advance that the TAIL rate should read
+near-100%, since residues recur cofinally by construction.
+
+**It read 20.7% / 7.0% / 43.9%.**
+
+### 117.1 The bug
+
+The quotient orders residues by index: `R_s PP R_t` iff `s < t`. So from `R_s`
+one can only reach residues of higher index and **can never return to residue
+`s`** — which is precisely the cofinal recurrence the tail was supposed to
+model. In the actual infinite tail every residue occurs above every residue; a
+strict order on one copy per residue cannot express that.
+
+So `wp111` is invalid for the same *kind* of reason as `wp100` and `wp110`: the
+model class cannot represent the phenomenon being measured. Its prefix numbers
+are not reported, because an instrument that fails its control does not get to
+report its treatment.
+
+### 117.2 Three instruments, three representational failures
+
+| probe | class | why it could not measure lap continuation |
+|---|---|---|
+| `wp100` | finite set models | maximal element ⟹ no PP-successor |
+| `wp110` | finite set models | a continuing lap needs an infinite tower |
+| `wp111` | eventually periodic quotient | residues ordered by index ⟹ no return |
+
+The question is genuinely hard to instrument. Each attempt failed differently,
+and each failure was invisible until something forced it into the open.
+
+### 117.3 What saved it this time
+
+The expected tail rate was **written down before the run**. Had `wp111` reported
+only a pooled figure — 38–44% prefix, which looks like a finding — nothing would
+have flagged it.
+
+Recorded as a probe-design rule: **state the control's expected value in advance,
+and withhold the treatment when the control misses.** This is the companion to
+the existing rule about varying the model class; varying the class does not help
+when every class in the sweep shares the same blind spot.
+
+### 117.4 Status of the question
+
+Lap continuation is **unmeasured**. Nothing in §§110–111 bears on whether
+blocking-to-kernel rescues the cut-leaf residue.
+
+A correct instrument needs the tail's internal quantifiers computed in closed
+form — `∃PP.X` at a tail node means *some residue satisfies X*, with no
+representative order among residues — which is what `wp101` does for its chain
+and what `wp111` discarded by imposing an index order.
+
+No Lean has been written against any of these numbers.
