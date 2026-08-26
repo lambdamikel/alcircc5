@@ -11482,3 +11482,67 @@ rather than from the file is exactly the failure it warns about.
 
 Build unchanged: 33,767 lines, 1,694 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 158. THE INVENTORY, RE-DERIVED FROM THE FILE
+
+§157's correction demanded this: an audit read off the file rather than from
+memory. It changes the picture substantially.
+
+### 158.1 What is actually certified for the kernel side
+
+| | |
+|---|---|
+| `one_kernel_block` / `done_kernel_block` | a complete `BlockOk`, both directions |
+| `multiBlock_of_site` / `_of_chain` and duals | multi-kernel blocks |
+| **`block_of_persistent`** | **a persistent `∃PP` demand PRODUCES a block** — `persistPP` in, `BlockOk` out |
+| `block_of_persistent_desc` | the descending mirror |
+| `glue_ok`, `glueFam_ok`, `glueMTOk` | gluing blocks into a `MultiTierOk` |
+| `seg_pp` / `seg_ppi` / `seg_eq` | the segment coherence they run on |
+
+All axiom-checked (`propext`/`Classical.choice`/`Quot.sound`); `glueMTOk` is
+`propext` only.
+
+**`block_of_persistent` is the theorem §149.2(c) said did not exist.** Its
+hypotheses are `POFree C0`, a context list, and `hpoolcl` — that every `∃PO`
+demand in `cl C₀` is served by some other block in the pool.
+
+### 158.2 So the shortest path is not what §149 described
+
+`MergedExtraction` needs a `MultiTierOk` within `mixKT` bounds. Two routes
+exist and both are substantially built:
+
+* **blocks + gluing** — `block_of_persistent` → `glueMTOk`. Kernel side done;
+  what it needs is the POOL discipline (`hpoolcl`) and the bounds.
+* **`mergedMT_ok`** — one certificate, six undischarged hypotheses: `hsepS`
+  (separation), `hbS`/`hbK`/`hbQ` (budgets), `he_ex`/`hk_ex` (existential
+  coverage).
+
+`pNodes_covers_pp`/`_ppi` (§§154–155) are exactly `he_ex`-shaped for the
+vertical part. That is where the session's work connects.
+
+### 158.3 The corrected statement of what is left
+
+Not "the kernel side is unexplored". Rather:
+
+| | |
+|---|---|
+| kernel blocks, both directions, from persistence | **certified** |
+| gluing blocks into a certificate | **certified** |
+| the vertical support-label closure, bounded and closed | **certified** (§§154–155) |
+| `mergedMT_ok`'s `he_ex` / `hk_ex` | the vertical work connects here |
+| `mergedMT_ok`'s `hbS` / `hbK` / `hbQ` / `hsepS` | budgets and separation — untouched |
+| `hpoolcl` on the blocks route | untouched |
+| support labels through the kernel constructions | untouched |
+
+### 158.4 Method note, recorded because it cost a section
+
+§149's inventory was written from memory and was wrong in the direction that
+mattered — it made the remaining work look larger and differently shaped than it
+is. §157 caught it; this section replaces it.
+
+**Any future status claim in this file should be produced by grepping, not by
+recall.** That is now three separate occasions (§113, §157, §158) on which the
+file knew more than the summary of it.
+
+Build unchanged: 33,767 lines, 1,694 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
