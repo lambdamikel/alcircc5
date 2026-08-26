@@ -11381,3 +11381,47 @@ construction that gives externals their labels gives phases theirs, and the fact
 
 Build: 33,700 lines, 1,691 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 156. THE `kk_*` OBLIGATIONS, AT MODEL LEVEL
+
+| | |
+|---|---|
+| **`kk_pp_model`** | a `∀PP` universal at a chain point holds of every LATER point — **`propext` only** |
+| **`kk_ppi_model`** | the mirror, via the converse — **`propext` only** |
+| `kk_pp_next_lap` | the form the unfolding uses: every phase is reached one lap on |
+
+These are the whole ORDER-THEORETIC content of the two obligations, and they are
+unconditional: an ascending chain puts every point above every earlier one, so a
+vertical universal reaches the whole chain in its direction. `chain_pp_lt` does
+the work.
+
+### 156.1 What they do NOT give — stated because it is the interesting part
+
+`MultiTierOk`'s `kk_pp` is about the LABEL `phase k b`, not about satisfaction at
+a chain point. Getting from one to the other needs the phase labels to be
+**periodic**: `phase k b` must describe `c (i + b + m·p)` for EVERY lap `m`, not
+one.
+
+`KernelData.cty` supplies a single equation — `mty (c i) = mty (c (i + p))` — not
+periodicity of the intermediate points. So the label statement needs either
+
+* a periodicity lemma for `rrPt`'s chain, which is built cyclically and so may
+  already have one; or
+* phase labels defined as the INTERSECTION over laps — periodic by fiat, and
+  still a support label by `phase_supportOk`.
+
+Neither is attempted. **The model half is done; the label half is named.**
+
+### 156.2 The kernel side, updated
+
+| | |
+|---|---|
+| a kernel exists when demands are persistent | **certified** |
+| a phase carries a support label | **certified** (§155) |
+| the guard survives along the chain | **certified** (§155) |
+| `kk_pp` / `kk_ppi`, model level | **certified** (§156) |
+| `kk_pp` / `kk_ppi`, LABEL level | open — needs phase periodicity |
+| `ek_all`, `ke_all`, `kq_all`, `k_ex` | open |
+
+Build: 33,801 lines, 1,694 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

@@ -32803,6 +32803,72 @@ theorem guard_along_chain (hI : RCC5Interp I) {c : Nat → α}
     have := all_pp_inherits hI (hdom (i + k)) (hdom (i + k + 1)) (hstep (i + k)) ih
     exact this
 
+/-! #### §156 — THE `kk_*` OBLIGATIONS, AT MODEL LEVEL
+
+`kk_pp` asks that a `∀PP` universal in one phase's label put its body in EVERY
+phase's. The model fact behind it is simple and is proved here; what it does not
+yet give is the LABEL statement, and §156.2 says exactly why.
+
+The chain is ascending, so `chain_pp_lt` puts every later point above every
+earlier one — a `∀PP` universal at one point therefore reaches all of them. -/
+
+/-- **`kk_pp`, AT MODEL LEVEL.**  A `∀PP` universal at a chain point holds of
+    every LATER point. -/
+theorem kk_pp_model (hI : RCC5Interp I) (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp) {X : Concept} {i : Nat}
+    (h : sat I (c i) (Concept.all pp X)) : ∀ j, i < j → sat I (c j) X :=
+  fun j hij => h (c j) (hdom j) (chain_pp_lt hI c hdom hstep i j hij)
+
+/-- **`kk_ppi`, AT MODEL LEVEL** — the same with the order reversed, via the
+    converse. -/
+theorem kk_ppi_model (hI : RCC5Interp I) (c : Nat → α) (hdom : ∀ n, I.dom (c n))
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp) {X : Concept} {i : Nat}
+    (h : sat I (c i) (Concept.all ppi X)) : ∀ j, j < i → sat I (c j) X := by
+  intro j hji
+  refine h (c j) (hdom j) ?_
+  rw [hI.conv_ (c j) (c i) (hdom j) (hdom i),
+    chain_pp_lt hI c hdom hstep j i hji]
+  rfl
+
+/-- **EVERY PHASE IS REACHED.**  Given a period `p > 0`, a `∀PP` universal at
+    phase `a` reaches phase `b` AT THE NEXT LAP — which is the occurrence
+    `kk_pp` is about, since the unfolding contains every phase above every
+    phase. -/
+theorem kk_pp_next_lap (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {X : Concept} (i p : Nat) {a : Nat}
+    (h : sat I (c (i + a)) (Concept.all pp X)) :
+    ∀ b, a < p + b → sat I (c (i + p + b)) X := by
+  intro b _
+  exact kk_pp_model hI c hdom hstep h (i + p + b) (by omega)
+
+/-! ##### §156.1 — what these give
+
+`kk_pp_model` and `kk_ppi_model` are the whole ORDER-THEORETIC content of the two
+obligations, and they are unconditional: an ascending chain puts every point
+above every earlier one, so a vertical universal reaches the whole chain in its
+direction.
+
+`kk_pp_next_lap` is the form the unfolding uses — every phase occurs above every
+phase, one lap later.
+
+##### §156.2 — what they do NOT give, and why
+
+`MultiTierOk`'s `kk_pp` is about the LABEL `phase k b`, not about satisfaction at
+a chain point. Getting from one to the other needs the phase labels to be
+PERIODIC — `phase k b` must describe `c (i + b + m·p)` for every lap `m`, not
+just one.
+
+`KernelData.cty` supplies a single equation, `mty (c i) = mty (c (i + p))`, not
+full periodicity of the intermediate points. So the label statement needs either
+
+* a periodicity lemma for `rrPt`'s chain (which IS built cyclically, so this may
+  be available by construction), or
+* phase labels defined as the INTERSECTION over laps, which is periodic by fiat
+  and still a support label by `phase_supportOk`.
+
+Neither is attempted here. The model half is done; the label half is named. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33695,4 +33761,7 @@ end POFreeLift
 #print axioms POFreeLift.pNodes_covers_ppi
 #print axioms POFreeLift.phase_supportOk
 #print axioms POFreeLift.guard_along_chain
+#print axioms POFreeLift.kk_pp_model
+#print axioms POFreeLift.kk_ppi_model
+#print axioms POFreeLift.kk_pp_next_lap
 #print axioms POFreeLift.kernel_of_no_terminal
