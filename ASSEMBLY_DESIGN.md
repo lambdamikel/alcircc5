@@ -11199,5 +11199,5 @@ rather than a region: *can propagation introduce unboundedly many demands?*
 `wp124` says no on 1,019 models — external counts 3–5, constant while the control
 grows 5 → 41 — but that is measurement.
 
-Build: 33,222 lines, 1,676 declarations, exit 0, 0 errors / 0 warnings /
+Build: 33,231 lines, 1,675 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
