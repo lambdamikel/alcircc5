@@ -9996,3 +9996,60 @@ campaign's defects have always lived.
 
 Build: 31,783 lines, 1,592 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 129. SESSION CLOSE — §§102–128 consolidated
+
+### 129.1 The arc
+
+| | |
+|---|---|
+| §§102–104 | the two directional halves COMPOSED, via a length bound rather than type-distinctness |
+| §§105–107 | `SwitchBounded` probed; the consumer written, finding coverage existed for `∃PP` only |
+| §108 | **`kserU_sound` is vacuous** — a real defect, now a theorem so it cannot drift back |
+| §§109–110 | witness selection made a parameter; the debt named as `BoundedSel` |
+| §§111–112 | `cutNodes` — termination with NO hypothesis, any selector |
+| **§113** | **three certified theorems, zero consumers** — the diagnosis that reframed everything |
+| §§114–120 | `chain_or_kernel` assembled; `short_chain` understood; the residue narrowed |
+| §§121–122 | the orientation split — proved, covers 0% of the residue, and thereby merges the two open rows |
+| §§123–124 | the declared edge; it broke `ltNotDj`, found only by full testing |
+| §§125–126 | read-off as a regime distinction; **full acceptance pass, 6,786 certificates** |
+| §§127–128 | `odOfModel` axiom-free; the certificate reduces to ONE question |
+
+### 129.2 What is certified
+
+Everything structural the acceptance test uses: termination, witness presence,
+the read-off `ODStruct` and its frame, the declared edge's label obligations, the
+dichotomy, and — under read-off — every `ee_all` case and both vertical `e_ex`
+cases.
+
+### 129.3 What is open
+
+**Which nodes are in the set.** One constructive question, answered
+affirmatively by `wp115` on 6,786 instances and not by a proof.
+
+Also unchanged: the horizontal half's budget assignment (`hbS`/`hbK`/`hbQ`), the
+encoding pipeline, and the descending mirror of `chain_or_kernel`.
+
+### 129.4 Four corrections this session, all found by checking rather than reasoning
+
+1. `mdepth C₀` as the switch bound — refuted by `wp107`.
+2. "bridgeable cheaply" (§107.3) — wrong; the finite-segment cycle fails.
+3. "W2′-shaped" (§§108/110/111) — wrong; the parts were merely unassembled.
+4. Re-deriving blocking without consulting the project's own experience.
+
+Plus three probe instruments that could not represent what they measured, and
+two probe bugs that read exactly like residue.
+
+**The pattern:** every correction came from grepping the file or re-running a
+probe. None came from thinking harder about the mathematics.
+
+### 129.5 Honest label
+
+Unchanged. The ∀PO-free fragment is **not certified decidable**. Three quadrants
+are; the mixed quadrant's vertical half now reduces to one constructive question
+with an acceptance pass behind it, and its horizontal half and encoding remain as
+before.
+
+Build: 31,783 lines, 1,592 declarations, 676 `#print axioms` lines, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`. `RCC5NormalForm.lean` and
+`ForcingReduction.lean` still build.
