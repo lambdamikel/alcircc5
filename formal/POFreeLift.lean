@@ -31007,6 +31007,92 @@ theorem extremal_drops_ppi (hI : RCC5Interp I) {D : Concept} {x y : α}
     rw [hI.conv_ y z hy hz, hr]; rfl
   exact hmax z hz (path_cut_below hI hz hy hx hzy hxy) hD hzy
 
+/-! #### §140 — SUPPORT LABELS
+
+`wp120`/`wp122`/`wp124` (§§135–139) turn on one observation: **`MultiTierOk`
+never requires `tauE e = mty …`.** It requires the Hintikka closure conditions,
+and a label carrying only what is NEEDED satisfies them while a complete model
+type carries junk — existentials from disjuncts that were never selected, whose
+demands drive the growth `wp116` measured.
+
+`SupportOk` is that label, defined locally. Its fields are exactly the
+propositional obligations plus two soundness conditions.
+
+The compatibility theorem is the point of this section: **`mty` is itself a
+support label**, so nothing already built is lost — the existing construction is
+the special case where the label happens to be everything true. -/
+
+/-- **A SUPPORT LABEL.**  Concepts drawn from `cl C₀`, all true at `x`, closed
+    under conjunction, under a choice of disjunct, and under `∀EQ` (which is
+    reflexive, so its body is owed HERE — `MultiTierOk`'s `kk_eq`). -/
+structure SupportOk {α : Type} (I : Interp α) (C0 : Concept) (x : α)
+    (L : List Concept) : Prop where
+  sub : ∀ c ∈ L, c ∈ cl C0
+  sat_ : ∀ c ∈ L, sat I x c
+  and_ : ∀ c d, Concept.and c d ∈ L → c ∈ L ∧ d ∈ L
+  or_ : ∀ c d, Concept.or c d ∈ L → c ∈ L ∨ d ∈ L
+  eq_ : ∀ c, Concept.all eq c ∈ L → c ∈ L
+
+/-- **A SUPPORT LABEL IS CLASH-FREE**, from soundness alone: a literal and its
+    negation cannot both hold at `x`. -/
+theorem supportOk_clash {C0 : Concept} {x : α} {L : List Concept}
+    (h : SupportOk I C0 x L) {a : Nat} (ha : Concept.atom a ∈ L) :
+    Concept.natom a ∉ L := by
+  intro hna
+  exact (h.sat_ _ hna) (h.sat_ _ ha)
+
+/-- **AND BOT-FREE**, likewise. -/
+theorem supportOk_nobot {C0 : Concept} {x : α} {L : List Concept}
+    (h : SupportOk I C0 x L) : Concept.bot ∉ L :=
+  fun hb => h.sat_ _ hb
+
+/-- **THE BRIDGE.**  A support label sits inside the model type, so every fact
+    already proved from `mty`-membership — satisfaction, and through it the truth
+    lemma — transfers unchanged. -/
+theorem supportOk_sub_mty {C0 : Concept} {x : α} {L : List Concept}
+    (h : SupportOk I C0 x L) : ∀ c ∈ L, c ∈ mty C0 I x :=
+  fun c hc => mem_mty.mpr ⟨h.sub c hc, h.sat_ c hc⟩
+
+/-- **COMPATIBILITY: `mty` IS A SUPPORT LABEL.**  So §§127–128's construction is
+    the special case where the label is everything true, and support labels
+    generalise it rather than replacing it.
+
+    The `∀EQ` clause is the only one needing an argument: `rho x x = eq` for an
+    in-domain point, so `mty_all` fires on the node itself. -/
+theorem mty_supportOk (hI : RCC5Interp I) (C0 : Concept) {x : α} (hx : I.dom x) :
+    SupportOk I C0 x (mty C0 I x) where
+  sub := fun _ hc => mty_sub _ hc
+  sat_ := fun _ hc => (mem_mty.mp hc).2
+  and_ := fun _ _ h => mty_and h
+  or_ := fun _ _ h => mty_or h
+  eq_ := fun _ h => mty_all h hx (hI.refl_eq x hx)
+
+/-- And the truncation is one too — `mtk` is `mty` filtered, and every clause
+    survives the filter because `mdepth` only decreases into subformulas. -/
+theorem mtk_supportOk (hI : RCC5Interp I) (C0 : Concept) {x : α} (hx : I.dom x)
+    (k : Nat) : SupportOk I C0 x (mtk C0 I x k) where
+  sub := fun _ hc => mtk_sub_cl _ hc
+  sat_ := fun _ hc => (mem_mty.mp (mem_mtk.mp hc).1).2
+  and_ := fun _ _ h => mtk_and h
+  or_ := fun _ _ h => mtk_or h
+  eq_ := fun c h => by
+    obtain ⟨hmty, hd⟩ := mem_mtk.mp h
+    refine mem_mtk.mpr ⟨mty_all hmty hx (hI.refl_eq x hx), ?_⟩
+    show mdepth c ≤ k
+    have hstep : mdepth (Concept.all eq c) = mdepth c + 1 := rfl
+    omega
+
+/-! ##### §140.1 — what this does and does not give
+
+Given: the propositional `MultiTierOk` fields (`e_clash`, `e_nobot`, `e_and`,
+`e_or`, and the `k_` mirrors) hold for ANY support label, from its own closure —
+no model-type reasoning, no hypothesis.
+
+NOT given: `ee_all`, `ek_all`, `ke_all`, `e_ex`, `k_ex`. Those are conditions
+BETWEEN nodes, and for support labels they are exactly what §137's joint fixpoint
+computes. Whether that fixpoint terminates is the open theorem — unchanged by
+this section, which only makes the labels definable. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31847,4 +31933,8 @@ end POFreeLift
 #print axioms POFreeLift.spectrum_mono
 #print axioms POFreeLift.extremal_strict
 #print axioms POFreeLift.extremal_drops_ppi
+#print axioms POFreeLift.supportOk_clash
+#print axioms POFreeLift.supportOk_sub_mty
+#print axioms POFreeLift.mty_supportOk
+#print axioms POFreeLift.mtk_supportOk
 #print axioms POFreeLift.kernel_of_no_terminal

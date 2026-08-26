@@ -10666,3 +10666,51 @@ every model.
 Lean. Define support labels, prove the Hintikka closure, restate the frame
 results, and attack the joint fixpoint's termination with `extremal_strict` as
 the same-direction measure.
+
+## 140. SUPPORT LABELS, IN LEAN
+
+The observation §§135–139 turn on: **`MultiTierOk` never requires
+`tauE e = mty …`** — only the Hintikka closure conditions. `SupportOk` is that
+label, defined locally:
+
+```
+SupportOk I C0 x L
+  sub  : ∀ c ∈ L, c ∈ cl C0
+  sat_ : ∀ c ∈ L, sat I x c
+  and_ : and c d ∈ L → c ∈ L ∧ d ∈ L
+  or_  : or  c d ∈ L → c ∈ L ∨ d ∈ L
+  eq_  : all eq c ∈ L → c ∈ L
+```
+
+| | |
+|---|---|
+| `supportOk_clash` | clash-freedom from SOUNDNESS alone — a literal and its negation cannot both hold. **`propext` only.** |
+| `supportOk_nobot` | likewise |
+| `supportOk_sub_mty` | a support label sits INSIDE the model type |
+| **`mty_supportOk`** | **`mty` IS a support label** |
+| **`mtk_supportOk`** | so is the truncation |
+
+### 140.1 The compatibility theorem is the point
+
+`mty_supportOk` / `mtk_supportOk` say the existing construction is the SPECIAL
+CASE where the label happens to be everything true. Support labels **generalise**
+§§127–128 rather than replacing them, so nothing already built is at risk.
+
+The `∀EQ` clause is the only one needing an argument: `rho x x = eq` at an
+in-domain point, so `mty_all` fires on the node itself. That is `MultiTierOk`'s
+`kk_eq`, and it is the clause `wp122` was missing — ~55 spurious failures per
+shape until it was added (§137.2).
+
+### 140.2 What this gives and does not
+
+**Gives:** the propositional obligations (`e_clash`, `e_nobot`, `e_and`, `e_or`
+and the `k_` mirrors) for ANY support label, from its own closure. No model-type
+reasoning, no hypothesis.
+
+**Does not give:** `ee_all`, `ek_all`, `ke_all`, `e_ex`, `k_ex`. Those are
+conditions BETWEEN nodes, and for support labels they are exactly what §137's
+joint fixpoint computes. Whether it terminates is the open theorem — untouched
+here. This section only makes the labels definable.
+
+Build: 31,939 lines, 1,603 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
