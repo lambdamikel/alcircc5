@@ -10942,5 +10942,5 @@ the frame; the kernel-side ones are what `wp124` exercises.
 Every LOCAL ingredient is now certified. What remains is the assembly and the
 kernel obligations.
 
-Build: 32,569 lines, 1,640 declarations, exit 0, 0 errors / 0 warnings /
+Build: 32,657 lines, 1,638 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
