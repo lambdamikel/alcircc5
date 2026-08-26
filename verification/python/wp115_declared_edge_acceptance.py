@@ -128,6 +128,9 @@ def persistent(model, val, c0, x, D, d):
 
 # ------------------------------------------- build the closure with its steps
 
+CAPHIT = [0]
+
+
 def build(model, val, c0, root, cap=400):
     """Returns (nodes, up_steps, cut_leaves) where up_steps is the extraction's
     own order-generating relation, ALWAYS oriented upward."""
@@ -139,6 +142,7 @@ def build(model, val, c0, root, cap=400):
     cuts = []
     stack = [(root, frozenset({mty(model, val, c0, root)}), (root,))]
     steps = 0
+    CAPHIT[0] = CAPHIT[0]
     while stack and steps < cap:
         steps += 1
         x, seen, path = stack.pop()
@@ -160,6 +164,8 @@ def build(model, val, c0, root, cap=400):
                     else:
                         stack.append((y, seen | {ty}, path + (y,)))
                     break
+    if stack:
+        CAPHIT[0] += 1
     return nodes, ups, cuts, lab
 
 
@@ -243,6 +249,36 @@ def odnet(x, y, lt, dj):
     if (x, y) in dj:
         return DR
     return PO
+
+
+DIAG = []
+
+
+def diagnose(model, val, c0, nodes, lt, dj, lab, cuts):
+    """For each unserved vertical demand, why is it unserved?"""
+    cutset = {v for (v, _b, _p) in cuts}
+    blkof = {v: b for (v, b, _p) in cuts}
+    out = []
+    for x in sorted(nodes, key=lambda t: (len(t), sorted(t))):
+        for d in lab(x):
+            if d[0] != "ex" or d[1] not in (PP, PPI):
+                continue
+            D = d[2]
+            if any(odnet(x, y, lt, dj) == d[1] and D in lab(y) for y in nodes):
+                continue
+            inset = [y for y in nodes if rel(x, y) == d[1] and D in lab(y)]
+            inmodel = [y for y in model
+                       if rel(x, y) == d[1] and sat(model, val, y, D)]
+            if not inmodel:
+                reason = "no model witness (impossible)"
+            elif not inset:
+                reason = "witness exists in MODEL but not in NODE SET"
+            else:
+                y = inset[0]
+                reason = (f"witness IS in set but odnet says "
+                          f"{odnet(x, y, lt, dj)} not {d[1]}")
+            out.append((x in cutset, blkof.get(x) is not None, reason))
+    return out
 
 
 def check(nodes, lt, dj, lab, budget):
@@ -333,12 +369,6 @@ def main(trials=9000, seed=606060, usize=5, use_edges=True, readoff=False):
         if root is None:
             continue
         nodes, ups, cuts, lab = build(m, val, c0, root)
-        if readoff:
-            # lt = the MODEL's PP restricted to the node set, not just the
-            # extraction's own steps.  A strict order for free, and it cannot
-            # violate ltNotDj since real PP pairs are never DR.
-            ups = ups | {(x, y) for x in nodes for y in nodes
-                         if x != y and rel(x, y) == PP}
         lt = tcl(ups, nodes)
         new = declared_edges(m, val, c0, nodes, cuts, lab, lt) if use_edges else set()
         if new is None:
@@ -354,13 +384,30 @@ def main(trials=9000, seed=606060, usize=5, use_edges=True, readoff=False):
                          and isinstance(e[1], frozenset)}, nodes2)
         if extra:
             withedges += 1
+        for t in list(pts):
+            if t in nodes:
+                continue
+            n3, u3, c3, _ = build(m, val, c0, t)
+            nodes2 |= n3
+            lt2 = tcl(lt2 | u3, nodes2)
+            cuts = cuts + c3
+        if readoff:
+            # lt = the MODEL's PP restricted to the FINAL node set (targets
+            # included).  A strict order for free, and it cannot violate
+            # ltNotDj since real PP pairs are never DR.
+            lt2 = tcl(lt2 | {(x, y) for x in nodes2 for y in nodes2
+                             if x != y and rel(x, y) == PP}, nodes2)
         dj2 = od_from(nodes2, lt2, m)
         tested += 1
         for k, v in check(nodes2, lt2, dj2, lab, mdepth(c0) + 1).items():
             fails[k] = fails.get(k, 0) + v
+        if readoff:
+            DIAG.extend(diagnose(m, val, c0, nodes2, lt2, dj2, lab, cuts))
     print(f"  certificates built and fully checked : {tested}")
     print(f"  of which carry a DECLARED EDGE       : {withedges}")
     print(f"  abandoned (no cycle-free choice)     : {nochoice}")
+    print(f"  closures that hit the step cap       : {CAPHIT[0]}"
+          f"   <- must be 0 or the pass is empty")
     print()
     if not fails:
         print("  ALL OBLIGATIONS HOLD:")
@@ -372,6 +419,17 @@ def main(trials=9000, seed=606060, usize=5, use_edges=True, readoff=False):
         print("  FAILURES (obligation -> count):")
         for k in sorted(fails):
             print(f"    {k:16s} {fails[k]}")
+    if readoff and DIAG:
+        print()
+        print("  DIAGNOSIS of the surviving unserved vertical demands:")
+        agg = {}
+        for (iscut, hasblk, reason) in DIAG:
+            key = (reason, iscut, hasblk)
+            agg[key] = agg.get(key, 0) + 1
+        for (reason, iscut, hasblk), n in sorted(agg.items(),
+                                                 key=lambda kv: -kv[1]):
+            print(f"    {n:3d}  {reason}")
+            print(f"         node is a cut leaf: {iscut}, has blocker: {hasblk}")
     print("\n" + "=" * 72)
     print("  A failure names the obligation the declared edge breaks.  Note the")
     print("  DECLARED EDGE count: if it is small the run says little about the")

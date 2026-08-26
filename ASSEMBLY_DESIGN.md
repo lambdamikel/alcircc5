@@ -9831,3 +9831,70 @@ measuring rather than reasoning out.
 
 Lean unchanged: 31,627 lines, 1,582 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 126. THE VERTICAL EXTRACTION PASSES A FULL ACCEPTANCE TEST
+
+```
+certificates built and fully checked : 6786
+of which carry a DECLARED EDGE       : 34
+abandoned (no cycle-free choice)     : 0
+closures that hit the step cap       : 0
+
+ALL OBLIGATIONS HOLD:
+  ODStruct axioms (ltIrr/ltTr/djSym/djIrr/ltNotDj/djDown)
+  composition closure of odNet
+  ee_all for EVERY relation
+  e_ex for EVERY node
+```
+
+From 48 unserved demands in the control to **0**.
+
+### 126.1 The three fixes it took, none of them reasoned out
+
+Each surviving failure was diagnosed, not deduced, and each diagnosis named a
+construction bug rather than a mathematical obstruction:
+
+1. **`ltNotDj` (§124.2)** — the blocker's witness can be `DR` from the leaf.
+   Fix: the selection condition gains "not disjoint from the leaf".
+2. **read-off computed over the wrong node set** — declared-edge targets were
+   added after the order was read off, so their relations were missing.
+   Fix: read off over the FINAL node set.
+3. **declared-edge targets never expanded** — a target is a node of the
+   certificate and owes its own demands. Fix: run the closure from each target.
+
+Bugs 2 and 3 were *my probe's*, not the design's; but both produced failures
+that read exactly like residue, and §125 reported five of them as an open
+question. They were not.
+
+### 126.2 The cap check
+
+`closures that hit the step cap: 0`. A silently-hit cap would have made the pass
+empty — the closure would simply have stopped before generating the demands it
+failed to serve. Worth stating because a passing acceptance test with a hidden
+truncation is the most flattering possible artifact.
+
+### 126.3 Scope — what this does NOT show
+
+* **Vertical only.** The horizontal, budget-dropping recursion is not modelled.
+  §125.2's boundary stands: nothing here licenses read-off horizontally.
+* **34 edges.** The declared edge itself is lightly exercised. The pass is
+  mostly evidence about the closure + read-off order, and only weakly about the
+  blocking lap.
+* **Finite set models.** Kernels — the infinite half — are not exercised at all;
+  that half is certified separately (`rr_covers`, `chain_or_kernel`).
+* **Not a proof.** It is the `wp16`/`wp94` acceptance pattern: build by the
+  intended recipe, then check every obligation.
+
+### 126.4 What it does show
+
+On 6,786 instances the hybrid of §125 — read-off vertical order at constant
+budget, blocking laps as declared edges under the two-clause condition, cut
+closure for termination — produces certificates satisfying **every** obligation
+`mtkKernelsOD` states, with no violation of the ordered-disjoint axioms and no
+unserved demand.
+
+That is the first end-to-end acceptance pass for the mixed quadrant's vertical
+half.
+
+Lean unchanged: 31,627 lines, 1,582 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
