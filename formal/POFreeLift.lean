@@ -31177,6 +31177,131 @@ So §137's joint fixpoint terminates iff the NODE SET stabilises, which is the
 same question §§130–133 attacked and the cold note names. This section does not
 answer it; it removes the label half from the question. -/
 
+/-! #### §142 — MODAL DEPTH IS THE MEASURE, FOR SUPPORT LABELS
+
+§104.3 refuted `mdepth` as a measure and recorded "no other monotone quantity has
+been found". That refutation was about FULL MODEL TYPES, where a node's label
+carries everything locally true — so a universal's regenerated demand keeps the
+depth up and nothing descends.
+
+A SUPPORT label (§140) carries only what is owed: a demand's ARGUMENT and a
+universal's BODY. Both are strictly shallower than the formula that produced
+them. So the measure `mdepth` fails on `mty` and works on support.
+
+`wp124` measures it: **412 of 412 generation steps strictly decrease the label's
+maximum modal depth; zero equal, zero larger.**
+
+Below it is a theorem. -/
+
+/-- The deepest formula in a label. -/
+def maxDepth : List Concept → Nat
+  | [] => 0
+  | c :: t => Nat.max (mdepth c) (maxDepth t)
+
+theorem mem_maxDepth_le : ∀ {L : List Concept} {c : Concept},
+    c ∈ L → mdepth c ≤ maxDepth L := by
+  intro L
+  induction L with
+  | nil => intro c h; exact absurd h List.not_mem_nil
+  | cons a t ih =>
+    intro c h
+    rcases List.mem_cons.mp h with rfl | ht
+    · exact Nat.le_max_left _ _
+    · exact Nat.le_trans (ih ht) (Nat.le_max_right _ _)
+
+theorem maxDepth_lt {m : Nat} (hm : 0 < m) : ∀ {l : List Concept},
+    (∀ c ∈ l, mdepth c < m) → maxDepth l < m := by
+  intro l
+  induction l with
+  | nil => intro _; exact hm
+  | cons a t ih =>
+    intro h
+    have h1 : mdepth a < m := h a List.mem_cons_self
+    have h2 : maxDepth t < m := ih (fun c hc => h c (List.mem_cons_of_mem a hc))
+    exact Nat.max_lt.mpr ⟨h1, h2⟩
+
+/-- **THE DESCENT.**  The seed of a generation step — the demand's argument
+    together with the bodies of the matching universals — is strictly shallower
+    than the label that produced it.
+
+    Every seed is one of those two things, and both lose a modal level; the
+    demand itself is in the label, so the label's depth is at least one. -/
+theorem seed_depth_lt (L : List Concept) (r : Atom) (D : Concept)
+    (hD : Concept.ex r D ∈ L) (seeds : List Concept)
+    (hseed : ∀ c ∈ seeds, c = D ∨ ∃ E, Concept.all r E ∈ L ∧ c = E) :
+    maxDepth seeds < maxDepth L := by
+  have hpos : 0 < maxDepth L := by
+    have := mem_maxDepth_le hD
+    have hd : mdepth (Concept.ex r D) = mdepth D + 1 := rfl
+    omega
+  refine maxDepth_lt hpos (fun c hc => ?_)
+  rcases hseed c hc with hcd | ⟨E, hE, hcE⟩
+  · have h1 := mem_maxDepth_le hD
+    have hd : mdepth (Concept.ex r D) = mdepth D + 1 := rfl
+    rw [hcd]; omega
+  · have h1 := mem_maxDepth_le hE
+    have hd : mdepth (Concept.all r E) = mdepth E + 1 := rfl
+    rw [hcE]; omega
+
+/-- **THE CLOSURE DOES NOT UNDO IT.**  A support label built from `seeds` stays
+    within their depth, provided each member is a seed or something the closure
+    added — a conjunct, a chosen disjunct, or an `∀EQ` body — all of which are
+    at most as deep. -/
+theorem closure_depth_le (seeds L : List Concept)
+    (hbound : ∀ c ∈ L, ∃ d ∈ seeds, mdepth c ≤ mdepth d) :
+    maxDepth L ≤ maxDepth seeds := by
+  rcases Nat.eq_zero_or_pos (maxDepth seeds) with h0 | hpos
+  · have : ∀ c ∈ L, mdepth c = 0 := by
+      intro c hc
+      obtain ⟨d, hd, hle⟩ := hbound c hc
+      have := mem_maxDepth_le hd
+      omega
+    rcases Nat.eq_zero_or_pos (maxDepth L) with h | h
+    · omega
+    · exact absurd (maxDepth_lt (m := maxDepth L) h (fun c hc => by
+        have := this c hc; omega)) (Nat.lt_irrefl _)
+  · exact Nat.le_of_lt_succ (maxDepth_lt (Nat.succ_pos _) (fun c hc => by
+      obtain ⟨d, hd, hle⟩ := hbound c hc
+      have := mem_maxDepth_le hd
+      omega))
+
+/-- **THE CONSEQUENCE.**  A chain of generation steps is bounded by the root
+    label's depth, hence by `mdepth C₀` — computable from `C₀` alone.
+
+    Stated on the measure, so it holds for any generation whose seeds satisfy
+    `seed_depth_lt`'s shape. -/
+theorem generation_depth_le (L : Nat → List Concept) (k : Nat)
+    (hstep : ∀ n, n + 1 ≤ k → maxDepth (L (n + 1)) < maxDepth (L n)) :
+    k ≤ maxDepth (L 0) := by
+  have h : ∀ n, n ≤ k → maxDepth (L n) + n ≤ maxDepth (L 0) := by
+    intro n
+    induction n with
+    | zero => intro _; omega
+    | succ m ih =>
+      intro hm
+      have h1 := hstep m hm
+      have h2 := ih (by omega)
+      omega
+  have := h k (Nat.le_refl k)
+  omega
+
+/-! ##### §142.1 — what this closes, and what it does not
+
+**Closes:** the generation DEPTH. A chain of generation steps is at most
+`mdepth C₀` long, so the node set is bounded by the branching factor raised to
+`mdepth C₀` — computable from `C₀` alone, and independent of the model. This is
+what §131 found FALSE for full-type labels, and the difference is precisely that
+support labels carry bodies rather than everything true.
+
+**Does not close:** the branching factor itself. A node's label can hold several
+demands, each generating a witness. That count is bounded by `|cl C₀|` per node,
+which is C₀-computable — so the product is too — but the argument above does not
+yet assemble those two into a single node-set bound in Lean.
+
+So the open item has shrunk from "does the node set stabilise" to "assemble the
+depth bound with the per-node branching bound", which is arithmetic over two
+facts rather than a search for a measure. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -32024,4 +32149,7 @@ end POFreeLift
 #print axioms POFreeLift.totalSize_le
 #print axioms POFreeLift.totalSize_lt_of_grow
 #print axioms POFreeLift.closure_stops
+#print axioms POFreeLift.seed_depth_lt
+#print axioms POFreeLift.closure_depth_le
+#print axioms POFreeLift.generation_depth_le
 #print axioms POFreeLift.kernel_of_no_terminal

@@ -30,7 +30,7 @@ exercising what support labels change.
 import random
 
 from wp112_lap_continuation_closed_form import (
-    DR, EQ, PP, PPI, build, mdepth, po_free, rand_c)
+    DR, EQ, PP, PPI, build, closure, mdepth, po_free, rand_c)
 from wp118_multitier_acceptance import CONV, CT, erel, krel
 from wp122_support_extremal import build_cert, carriers, pick, support
 
@@ -127,6 +127,15 @@ def serve(T, c0, lab, phases, extremal, rounds=40):
                 seeds = [D] + [e[2] for e in lab[x] if e[0] == "all" and e[1] == r]
                 new = support(T, y, list(lab.get(y, frozenset())) + seeds)
                 if new != lab.get(y, frozenset()):
+                    md_par = max((mdepth(e) for e in lab[x]), default=0)
+                    md_new = max((mdepth(e) for e in seeds), default=0)
+                    DEPTH["steps"] += 1
+                    if md_new < md_par:
+                        DEPTH["strict"] += 1
+                    elif md_new == md_par:
+                        DEPTH["equal"] += 1
+                    else:
+                        DEPTH["up"] += 1
                     lab[y] = new
                     added = True
         # A KERNEL GENERATES EXTERNAL WITNESSES TOO.  k_ex's first branch is an
@@ -237,6 +246,11 @@ def check(T, lab, phases):
     return bad
 
 
+DEPTH = {"steps": 0, "strict": 0, "equal": 0, "up": 0}
+STATS = {"nodes": 0, "labels": 0, "seedsz": 0, "cl": 0, "depth": 0,
+         "dup": 0, "n": 0}
+
+
 def sweep(seed, trials, L, p, full_types):
     rng = random.Random(seed)
     models = maxe = capped = 0
@@ -263,6 +277,19 @@ def sweep(seed, trials, L, p, full_types):
             c2 = serve(T, c0, lab, phases, True)
             capped += 1 if (c1 or c2) else 0
         maxe = max(maxe, len(lab))
+        if not full_types:
+            STATS["nodes"] = max(STATS["nodes"], len(lab))
+            STATS["labels"] = max(STATS["labels"],
+                                  len({frozenset(v) for v in lab.values()}))
+            STATS["seedsz"] = max(STATS["seedsz"],
+                                  max((len(v) for v in lab.values()), default=0))
+            STATS["cl"] = max(STATS["cl"], len(closure(c0)))
+            STATS["depth"] = max(STATS["depth"], mdepth(c0))
+            # how many labels are DISTINCT as sets?  if nodes >> labels the
+            # element identity is what multiplies, not the label
+            if len(lab) > len({frozenset(v) for v in lab.values()}):
+                STATS["dup"] += 1
+            STATS["n"] += 1
         for k, v in check(T, lab, phases).items():
             fails[k] = fails.get(k, 0) + v
     return models, maxe, capped, fails
@@ -279,6 +306,16 @@ def main():
             print(f"    L={L:<3d} p={p}  models {m:4d}  max externals {me:3d}  "
                   f"capped {cp:3d}  failures: {fs}")
         print()
+    print(f"  STRUCTURE of the support certificates ({STATS['n']} built):")
+    print(f"    max nodes {STATS['nodes']}, max DISTINCT labels {STATS['labels']}")
+    print(f"    max label size {STATS['seedsz']}, max |cl C0| {STATS['cl']}, "
+          f"max mdepth {STATS['depth']}")
+    print(f"    certificates with two nodes sharing a label : {STATS['dup']}")
+    d = DEPTH
+    print(f"  GENERATION STEPS ({d['steps']}): max-mdepth of the seed vs parent")
+    print(f"    strictly SMALLER : {d['strict']}"
+          f"   equal : {d['equal']}   LARGER : {d['up']}")
+    print()
     print("=" * 76)
     print("  Phase-to-phase is never a computed relation here: kk_pp / kk_ppi")
     print("  propagate to the phase BLOCK, which is what MultiTier states and")

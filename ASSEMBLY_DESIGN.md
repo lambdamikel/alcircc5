@@ -10751,3 +10751,53 @@ the route.
 
 Build: 32,013 lines, 1,606 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 142. MODAL DEPTH IS THE MEASURE — for support labels
+
+§104.3 refuted `mdepth` as a measure and recorded *"no other monotone quantity
+has been found"*. That refutation was about **full model types**: a full type
+carries everything locally true, so a universal's regenerated demand keeps the
+depth up and nothing descends.
+
+A **support** label carries only what is owed — a demand's ARGUMENT and a
+universal's BODY — and both are strictly shallower than the formula that produced
+them.
+
+`wp124` measures it: **412 of 412 generation steps strictly decrease the label's
+maximum modal depth. Zero equal, zero larger.**
+
+Now a theorem, all `propext`/`Quot.sound` only:
+
+| | |
+|---|---|
+| `maxDepth`, `mem_maxDepth_le`, `maxDepth_lt` | the measure and its two facts |
+| **`seed_depth_lt`** | **a generation seed is strictly shallower than the label that produced it** |
+| `closure_depth_le` | the Hintikka closure does not undo it |
+| **`generation_depth_le`** | **a chain of generation steps is at most `maxDepth` of the root label** |
+
+### 142.1 Why the same measure fails on `mty` and works here
+
+The difference is exactly one thing: `mty` contains `∃r.D` whenever it is TRUE,
+so a universal that re-establishes a demand at the witness restores the depth. A
+support label contains `∃r.D` only when something OWES it, and the only way to
+owe it is as a body or an argument — which cost a modal level.
+
+That is why §104.3's refutation and this theorem are both correct.
+
+### 142.2 What is closed and what is not
+
+**Closed:** the generation DEPTH — at most `mdepth C₀`, computable from `C₀`
+alone and **independent of the model**. This is what §131 found false for
+full-type labels.
+
+**Not closed:** the branching factor. A node's label can hold several demands,
+each generating a witness; that count is bounded by `|cl C₀|` per node, so the
+product is C₀-computable too — but the two facts are not yet assembled into a
+single node-set bound in Lean.
+
+So the open item has shrunk from *"does the node set stabilise"* to *"assemble
+the depth bound with the per-node branching bound"* — arithmetic over two facts
+rather than a search for a measure.
+
+Build: 32,155 lines, 1,612 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
