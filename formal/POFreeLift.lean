@@ -30550,6 +30550,62 @@ served?** A cut leaf is kept but not expanded, so its witnesses are absent. Its
 type equals an expanded ancestor's, which is what blocking exploits — and per
 `wp8`'s round-7 lesson the lap must be `PP`-labelled, never `EQ`. -/
 
+/-! #### §119 — THE DESIGN'S OWN DICHOTOMY, ASSEMBLED
+
+§44.18 states it in prose, immediately above `ascend`:
+
+> * if some node reachable by `∃PP` steps has NO `∃PP` demand, the chain
+>   TERMINATES, and `short_chain` bounds it;
+> * otherwise every reachable node has one, and iterating produces an INFINITE
+>   ascending chain — which is a KERNEL.
+
+Both halves have been certified for some time and neither was ever connected
+(§113). `chain_or_kernel` is the connection.
+
+Note what this does NOT do: it does not cut at a type repeat. §§112–118's
+`cutNodes` is blocking, which the project has had since round 7 and which turns
+out to cover only part of the residue (`wp112`: side leaves never continue,
+0/44, structurally). The dichotomy below is the design's own mechanism and does
+not have that gap — its second branch produces a kernel whenever the chain fails
+to terminate, with no appeal to a type repeating. -/
+
+/-- **THE DICHOTOMY.**  Along `∃PP` steps inside a class `P`, either some
+    reachable node has no `∃PP` demand at all — the chain terminates, and
+    `short_chain` bounds it — or a kernel exists at the start.
+
+    `pp_dichotomy` supplies the split and `kernelData_of_chain` (§114) turns its
+    infinite branch into the kernel. Both were certified and unconsumed. -/
+theorem chain_or_kernel (C0 : Concept) (L0 : Nat) (P : α → Prop)
+    (hcl : ∀ x, P x → ∀ D, Concept.ex pp D ∈ mty C0 I x →
+      ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp ∧ D ∈ mty C0 I y)
+    (u : α) (hu : I.dom u) (hPu : P u) :
+    (∃ x, P x ∧ ∀ D, Concept.ex pp D ∉ mty C0 I x) ∨
+      Nonempty (KernelData I C0 [] L0 true u) := by
+  rcases pp_dichotomy C0 P hcl u hu hPu with hterm | ⟨c, hc0, hdom, hstep⟩
+  · exact Or.inl hterm
+  · refine Or.inr ⟨?_⟩
+    have K := kernelData_of_chain C0 c hdom hstep L0
+    rwa [hc0] at K
+
+/-- The form a caller wants when it already knows every reachable node carries a
+    demand: then the terminating branch is impossible and the kernel is
+    unconditional. -/
+theorem kernel_of_no_terminal (C0 : Concept) (L0 : Nat) (P : α → Prop)
+    (hcl : ∀ x, P x → ∀ D, Concept.ex pp D ∈ mty C0 I x →
+      ∃ y, P y ∧ I.dom y ∧ I.rho x y = pp ∧ D ∈ mty C0 I y)
+    (hno : ∀ x, P x → ∃ D, Concept.ex pp D ∈ mty C0 I x)
+    (u : α) (hu : I.dom u) (hPu : P u) :
+    Nonempty (KernelData I C0 [] L0 true u) := by
+  rcases chain_or_kernel C0 L0 P hcl u hu hPu with ⟨x, hx, hnone⟩ | h
+  · obtain ⟨D, hD⟩ := hno x hx
+    exact absurd hD (hnone D)
+  · exact h
+
+/-- The descending mirror is `persistDsI`/`kernelDataI` territory and is NOT
+    derived here: `pp_dichotomy` is stated for `pp` only, and its `ascend`
+    generator climbs. Recorded rather than silently assumed. -/
+theorem chain_or_kernel_note : True := trivial
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31373,3 +31429,5 @@ end POFreeLift
 #print axioms POFreeLift.cutNodes_stable_typeEnum
 #print axioms POFreeLift.cutNodes_up_mem
 #print axioms POFreeLift.kernelData_of_chain
+#print axioms POFreeLift.chain_or_kernel
+#print axioms POFreeLift.kernel_of_no_terminal

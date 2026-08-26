@@ -9539,3 +9539,64 @@ The cut-leaf residue splits again:
 Neither branch is closed, but both are now the right shape, and neither is
 "assume a hypothesis". The genuinely uncovered case is a cut leaf whose lap does
 not continue AND which the set does not already serve.
+
+## 119. THE DESIGN'S OWN DICHOTOMY, ASSEMBLED
+
+§44.18 states it in prose, immediately above `ascend`:
+
+> * if some node reachable by `∃PP` steps has NO `∃PP` demand, the chain
+>   TERMINATES, and `short_chain` bounds it;
+> * otherwise every reachable node has one, and iterating produces an INFINITE
+>   ascending chain — which is a KERNEL.
+
+Both halves were certified and neither was connected (§113).
+
+```
+chain_or_kernel (C0) (L0) (P) (hcl) (u) (hu) (hPu) :
+  (∃ x, P x ∧ ∀ D, Concept.ex pp D ∉ mty C0 I x) ∨
+    Nonempty (KernelData I C0 [] L0 true u)
+```
+
+plus `kernel_of_no_terminal` for callers that already know no reachable node is
+demand-free. `pp_dichotomy` supplies the split; §114's `kernelData_of_chain`
+turns its infinite branch into the kernel.
+
+The descending mirror is **not** derived — `pp_dichotomy` is stated for `pp`
+only and its `ascend` generator climbs. Recorded rather than silently assumed.
+
+## 120. WHAT `short_chain` ACTUALLY SAYS — and why §112 was on-design
+
+Reading `serveChain_cut` / `serveChain_cut_head` settles a question §§112–118
+left open: the cut preserves only the chain's **head type**. Its docstring is
+precise — "a demand served by the original head is served by the new one" — the
+head is `u`'s SERVER, and shortening keeps a server of the same type.
+
+So `short_chain`'s content is: **a chain with no droppable segment has pairwise
+distinct types, hence length ≤ `|typeEnum C0|`.** That is an EXISTENCE statement
+about chains.
+
+`cutNodes` (§112) is the CONSTRUCTIVE version of the same content — it enforces
+type-distinctness along every path instead of asserting a short path exists. So
+§112 was not off-design after all; it is `short_chain` made into a construction,
+which is exactly the gap §44.18 identifies ("`short_chain` gives EXISTENCE …
+`mixNodes` is a CONSTRUCTION … the seam between them is where the fuel can run
+out").
+
+### 120.1 The consolidated picture
+
+| step | status |
+|---|---|
+| closure terminates | **certified** — `cutNodes_stable_typeEnum`, any selector, no hypothesis |
+| every demand's witness is in the closure | **certified** — `cutNodes_up_mem`/`_dn_mem` |
+| cut leaves arise with unserved demands | measured, 3–13% (`wp110`) |
+| 87–97% of those already served by a set member | measured (`wp110`) |
+| lap continues ⟹ kernel | **certified** — `chain_or_kernel` (§119) |
+| lap continues? | measured: tail 94–99%, prefix 33–56%, side 0% (`wp112`) |
+| `ccovers` for a one-shot demand at a kernel | **open** |
+| cut leaf, lap does not continue, set does not serve | **open** |
+
+The two open rows are the whole remainder of this half. Both are narrow, both
+are stated over certified surroundings, and neither is a hypothesis to assume.
+
+Build: 31,433 lines, 1,575 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
