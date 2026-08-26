@@ -10555,3 +10555,55 @@ is the same pattern as §§126 and 133.
    the frame results, and attack the joint fixpoint's termination with
    `extremal_strict` as the same-direction measure.
 3. The alternation bound remains the theorem both the note and §103 point at.
+
+## 138. `wp123` — the growth result replicates; the kernel side needs a different instrument
+
+wp118's full field list, fed wp122's construction.
+
+| | L=4 | L=8 | L=18 | L=40 |
+|---|---|---|---|---|
+| **CONTROL, full-type** — max externals | 5 | 10 | 19 | 42 |
+| **support** — max externals | **4** | **5** | **4** | **4** |
+| CONTROL failures | `ek_all` 60 | 55 | 94 | **185** |
+| support failures, after phase seeding | `k_ex`/`kk_PPI` | ″ | ″ | ″ |
+
+### 138.1 What replicated
+
+**Support labels remove the growth under the full field list too.** Externals
+constant at 4–5 against a control growing 5 → 42, and the control's `ek_all`
+failures grow 60 → 185 while support's do not. That is `wp122`'s result
+reproduced by an independent checker.
+
+### 138.2 One real fix
+
+`ek_all` failed at a steady rate until diagnosed: **every kernel phase is part of
+the certificate and owes a label**, but `build_cert` only labels residues that
+happen to become witnesses, so an unvisited phase came out EMPTY. Seeding all
+phases and re-closing removes `ek_all` entirely.
+
+### 138.3 Where the instrument runs out
+
+The residue is `k_ex_PPI` and `kk_PPI`, and it is **not trustworthy**:
+
+`kk_PPI` requires a `∀PPI` in one phase to reach all phases. My propagation uses
+`erel`, which returns the FIRST relation found and checks `PP` first — so for two
+tail residues it always answers `PP` and a `∀PPI` never propagates among them.
+
+That is §117's failure exactly: **the tail is a quotient where a residue is both
+above and below every residue, and `erel` is a function.** The quotient cannot
+represent it.
+
+`k_ex_PPI` is partly real — an ascending kernel's DESCENDING demands must be
+served by an external below it — and partly contaminated by the same defect.
+
+### 138.4 Standing, honestly
+
+* **Replicated and solid:** support labels remove the growth, under two
+  independent checkers, with controls that grow.
+* **Fixed:** phase labelling (`ek_all`).
+* **Not measurable here:** the kernel's internal `PPI` obligations. A faithful
+  test needs phases related by `cdir` and `Q` as `MultiTier` actually defines
+  them, not by a quotient `erel`.
+
+Per §117's rule I am not reporting the `PPI` numbers as findings. Building the
+faithful kernel instrument is the next step; patching `erel` again is not.
