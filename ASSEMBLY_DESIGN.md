@@ -8895,3 +8895,66 @@ Secondary win: node counts drop by 20–35%, which feeds `mixKT` directly.
 
 Finite set models, deterministic creation order, randomized search. "Constant
 under growth" is three universe sizes, not a theorem.
+
+## 107. THE CONSUMER — what it found
+
+CLAUDE.md's method note, earned four times: **write the consumer before
+believing the interface.** `skipNodesM_covers` was an interface; nothing had
+used it. §107 makes the node set concrete (`MixCarrier` — the closure's own
+members as a subtype) and derives the shape `mergedMT_ok`'s `he_ex` asks for.
+
+### 107.1 It found a missing half immediately
+
+`skipNodes` follows BOTH vertical directions — its match has a `.ex pp` arm and
+a `.ex ppi` arm — but only the `∃PP` half had ever been read back out.
+`skipNodes_covers_of_fixed` had no mirror. Added: **`skipNodes_covers_of_fixedI`**
+and **`skipNodesM_coversI`**.
+
+Six sections of machinery were built on a coverage lemma covering half the
+demands. Nothing downstream was wrong, because nothing downstream existed.
+
+### 107.2 The external disjunct comes out clean
+
+```
+mixCarrier_ex_pp  :  kserM e D = true  ∨  ∃ f, stepAll e f ∧ D ∈ mtk f
+mixCarrier_ex_ppi :  kserM e D = true  ∨  ∃ f, stepAll f e ∧ D ∈ mtk f
+```
+
+with `mixStep_of_stepAll` putting the pair in the declared order, so `odNet`
+reads `pp` with **no composition discharged by hand** — the same dividend
+`odSeed` has paid throughout. The `∃PPI` case records the step in the other
+orientation because `elt` always points up; `stepAll` already had both arms
+(`ppStep e f ∨ ppiStep f e`), so this cost nothing.
+
+### 107.3 The kernel disjunct does NOT come out — and why
+
+`he_ex`'s other disjunct wants a KERNEL. `kserM` firing does not supply one:
+
+* `KernelData` demands an **infinite** chain with `cstep : ∀ n, rho (c n) (c (n+1)) = cdir d`;
+* `kserU` supplies a **finite** chain with a type repeat;
+* cycling the finite chain fails at the wrap — `path 0` and `path j` have the
+  same TYPE, not the same element, so `rho (path (j-1)) (path 0) = pp` is not
+  available. This is exactly CLAUDE.md's standing note that `kernel_of_chain`
+  gives a type repeat, NOT step structure.
+
+**But the gap is bridgeable, and by an argument the type repeat makes cheap.**
+If `∃PP.D ∈ mty(path 0)` and `mty(path 0) = mty(path j)`, then `∃PP.D ∈ mty(path j)`
+too — so a D-witness exists above `path j`, and the segment can be re-run from
+its own far endpoint. Iterating gives an infinite ascending chain meeting a
+D-witness in **every** period, which is `ccovers`.
+
+Note what this does NOT need: the guard `∀PP.(∃PP.D)`. The type repeat
+substitutes for it. That is the whole point of the persistent/one-shot split
+(§44.27) — persistent demands get their kernel from the guard, one-shot ones
+from a repeat.
+
+### 107.4 Next
+
+**Segment iteration**: from a node whose type repeats along an ascending chain
+carrying `D`, build `KernelData`. The ingredients are certified
+(`rr_segment_from`, `rr_covers`, `seg_pp` and the descending mirrors); what is
+new is the recursion that chains segments end-to-end, choosing each one
+classically.
+
+Build: 30,489 lines, 1,536 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

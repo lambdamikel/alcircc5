@@ -28325,6 +28325,26 @@ theorem skipNodes_covers_of_fixed (kser : MTKNode I C0 → Concept → Bool)
         | false => rfl
         | true => exact absurd h hk) 0)
 
+/-- **THE `∃PPI` HALF OF COVERAGE.**  The mirror of
+    `skipNodes_covers_of_fixed`, which the §107 consumer found missing: the
+    closure follows BOTH vertical directions (`skipNodes` matches `.ex pp` and
+    `.ex ppi` alike), but only the `∃PP` half had been read back out. -/
+theorem skipNodes_covers_of_fixedI (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) (fuel : Nat)
+    (hfix : ∀ b ∈ skipNodes kser n (fuel + 1), b ∈ skipNodes kser n fuel) :
+    ∀ m ∈ skipNodes kser n fuel, ∀ (c : Concept)
+      (hF : Concept.ex ppi c ∈ mtk C0 I m.x m.k),
+      kser m c = true ∨ ppiWitness m hF ∈ skipNodes kser n fuel := by
+  intro m hm c hF
+  by_cases hk : kser m c = true
+  · exact Or.inl hk
+  · refine Or.inr (hfix _ ?_)
+    exact skipNodes_step_sub kser fuel n m hm _
+      (skipNodes_ppiWitness_mem kser m hF (by
+        cases h : kser m c with
+        | false => rfl
+        | true => exact absurd h hk) 0)
+
 /-! ##### §91 — HALF 2, CORRECTLY STATED
 
 §86 read the recurrence on an ARBITRARY chain (false); §90 read it on the
@@ -29628,6 +29648,71 @@ theorem skipNodesM_covers (hI : RCC5Interp I) (C0 : Concept) (S : Nat)
   skipNodes_covers_of_fixed (kserM C0 I) n (mixFuel C0 S)
     (skipNodesM_fixed hI C0 S hs n)
 
+/-- The `∃PPI` half of the mixed coverage. -/
+theorem skipNodesM_coversI (hI : RCC5Interp I) (C0 : Concept) (S : Nat)
+    (hs : SwitchBounded C0 I S) (n : MTKNode I C0) :
+    ∀ m ∈ skipNodes (kserM C0 I) n (mixFuel C0 S), ∀ (c : Concept)
+      (hF : Concept.ex ppi c ∈ mtk C0 I m.x m.k),
+      kserM C0 I m c = true ∨
+        ppiWitness m hF ∈ skipNodes (kserM C0 I) n (mixFuel C0 S) :=
+  skipNodes_covers_of_fixedI (kserM C0 I) n (mixFuel C0 S)
+    (skipNodesM_fixed hI C0 S hs n)
+
+/-! #### §107 — THE CONSUMER
+
+CLAUDE.md's method note, earned four times: **write the consumer before
+believing the interface.** `skipNodesM_covers` is an interface; nothing has used
+it. This section makes the node set concrete (the closure's own members, as a
+subtype) and derives the shape `mergedMT_ok`'s `he_ex` actually asks for.
+
+What comes out cleanly is the EXTERNAL disjunct: a served demand's witness is a
+member, and the step that produced it is a `stepAll`, which is a `mixStep`,
+which puts the pair in the declared order — so `odNet` reads `pp` with nothing
+discharged by hand.
+
+What does NOT come out is the kernel disjunct, and §107.3 records why. -/
+
+/-- The node set as a type: the closure's own members. -/
+abbrev MixCarrier {α : Type} {I : Interp α} (C0 : Concept) (S : Nat)
+    (root : MTKNode I C0) : Type :=
+  {m : MTKNode I C0 // m ∈ skipNodes (kserM C0 I) root (mixFuel C0 S)}
+
+/-- **THE EXTERNAL DISJUNCT.**  Every `∃PP` demand at a member is served
+    (`kserM`) or its witness is a member REACHED BY A `stepAll` — which is what
+    the declared order is built from. -/
+theorem mixCarrier_ex_pp (hI : RCC5Interp I) (C0 : Concept) (S : Nat)
+    (hs : SwitchBounded C0 I S) (root : MTKNode I C0)
+    (e : MixCarrier C0 S root) (D : Concept)
+    (hF : Concept.ex pp D ∈ mtk C0 I e.val.x e.val.k) :
+    kserM C0 I e.val D = true ∨
+      ∃ f : MixCarrier C0 S root,
+        stepAll e.val f.val ∧ D ∈ mtk C0 I f.val.x f.val.k := by
+  rcases skipNodesM_covers hI C0 S hs root e.val e.2 D hF with hk | hmem
+  · exact Or.inl hk
+  · exact Or.inr ⟨⟨ppWitness e.val hF, hmem⟩,
+      Or.inl ⟨D, hF, rfl⟩, ppWitness_arg e.val hF⟩
+
+/-- The same for `∃PPI`, with the step recorded in the other orientation —
+    `stepAll f e`, since `elt` always points UP. -/
+theorem mixCarrier_ex_ppi (hI : RCC5Interp I) (C0 : Concept) (S : Nat)
+    (hs : SwitchBounded C0 I S) (root : MTKNode I C0)
+    (e : MixCarrier C0 S root) (D : Concept)
+    (hF : Concept.ex ppi D ∈ mtk C0 I e.val.x e.val.k) :
+    kserM C0 I e.val D = true ∨
+      ∃ f : MixCarrier C0 S root,
+        stepAll f.val e.val ∧ D ∈ mtk C0 I f.val.x f.val.k := by
+  rcases skipNodesM_coversI hI C0 S hs root e.val e.2 D hF with hk | hmem
+  · exact Or.inl hk
+  · exact Or.inr ⟨⟨ppiWitness e.val hF, hmem⟩,
+      Or.inr ⟨D, hF, rfl⟩, ppiWitness_arg e.val hF⟩
+
+/-- **`odNet` READS `pp` OFF THE STEP** — the declared order contains every
+    closure step, so the external disjunct lands in the shape `he_ex` wants
+    with no composition discharged by hand. -/
+theorem mixStep_of_stepAll {β κ : Type} (nd : β → MTKNode I C0)
+    (up dn : κ → β → Bool) {e f : β} (h : stepAll (nd e) (nd f)) :
+    tcl (mixStep nd up dn) e f := tcl.base (Or.inl h)
+
 end KernelService
 
 end KernelDebts
@@ -30438,3 +30523,6 @@ end POFreeLift
 #print axioms POFreeLift.kserM_sound
 #print axioms POFreeLift.skipNodesM_fixed
 #print axioms POFreeLift.skipNodesM_covers
+#print axioms POFreeLift.skipNodesM_coversI
+#print axioms POFreeLift.mixCarrier_ex_pp
+#print axioms POFreeLift.mixCarrier_ex_ppi
