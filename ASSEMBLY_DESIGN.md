@@ -9366,3 +9366,57 @@ and `wp8`'s round-7 lesson governs it — the lap is `PP`-labelled, never `EQ`.
 
 Build: 31,375 lines, 1,571 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 116. CUT LEAVES, MEASURED — `wp110`
+
+§115.2 named cut leaves as the narrow open item. Measured before building.
+
+| | universe 5 | universe 6 | uniform rels |
+|---|---|---|---|
+| cut leaves arising | 379 | 288 | 159 |
+| **A.** with UNSERVED demands | 12 (3.2%) | 13 (4.5%) | 20 (12.6%) |
+| **B.** already served in-set | 367 (96.8%) | 275 (95.5%) | 139 (87.4%) |
+| **C.** blocked lap CONTINUES | 1 (0.3%) | 2 (0.7%) | 1 (0.6%) |
+
+### 116.1 A and B are actionable
+
+Cut leaves with genuinely unserved demands **do arise** — 3–13%, not zero, so
+§115's hope that the closure simply closes is wrong. But in 87–97% of cases the
+set already contains a server with the right relation, so for those the repair
+is a lookup, not a new node.
+
+The residue is the remaining few percent.
+
+### 116.2 C IS NOT TRUSTWORTHY, and the reason is in the memory file
+
+C measures whether a blocked lap continues — i.e. whether from the cut leaf the
+same demand path reaches another node of its own type. That is exactly what
+turns a blocked lap into a kernel.
+
+It reads ~0.5% and is stable across all three generators. **Stability across
+generators is not evidence here, because all three are finite set models, and a
+lap that continues indefinitely is precisely what a finite model cannot
+represent.**
+
+This is the `wp100` failure pattern recorded in memory verbatim: *a rate that
+moves when the generator changes is a property of the generator — and before
+believing any probe rate, ask what the model class CANNOT represent.* Finite set
+models cannot represent the continuing lap. So C measures the model class, not
+the logic, and **the conclusion "blocking-to-kernel fails" is NOT supported.**
+
+### 116.3 The next step, precisely
+
+Re-measure C over a model class that can carry infinite towers — the `wp101`
+construction exists for exactly this reason and was built after `wp100` made the
+same mistake.
+
+Until then the honest statement is:
+
+* cut leaves with unserved demands are real and rare (A);
+* the set usually already serves them (B);
+* whether the residue is rescued by blocking-to-kernel is **unmeasured**, and
+  the number currently in hand does not bear on it.
+
+No Lean was written against C. That is deliberate — §113's lesson was that four
+misdiagnoses in one session all came from reasoning where checking was available,
+and the check here is not yet valid.
