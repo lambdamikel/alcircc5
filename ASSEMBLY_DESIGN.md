@@ -8785,5 +8785,61 @@ pairs are not disjoint. `ee_all` does: it fires on every pair of the declared
 would owe a universal body deeper than its budget. This is why `ppNodes_bud`
 keeps budgets constant, and it is a real obstruction, not an oversight.
 
-Build: 30,331 lines, 1,527 declarations, exit 0, 0 errors / 0 warnings /
+Build: 30,440 lines, 1,529 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 105. `SwitchBounded` PROBED TWO WAYS — bounded, and the bad case is real
+
+`wp108` attacks §104.2's one number directly, since random sampling (`wp107`)
+cannot force the adversarial case.
+
+### 105.1 The alternation engine, built on purpose
+
+§104.3 identified the mechanism, so the probe builds it:
+
+```
+A ⊓ ∀PP.(∃PPI.B) ⊓ ∀PPI.(∃PP.A) ⊓ ∃PP.⊤
+```
+
+Each cross-direction universal regenerates an opposite-direction demand whose
+own guard can fail — regenerated *and* one-shot, so neither modal depth nor a
+kernel touches it.
+
+| universe | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|
+| max switches | 4 | 5 | 4 | 4 |
+| max path | 7 | 8 | 8 | 6 |
+
+**No growth.** A hill-climbed champion (`mdepth 3`, `|cl C0| = 8`) reached 6
+switches at universe 4 and then 5, 5 at universes 5 and 6 — also no growth.
+
+### 105.2 But the bad case is NOT vacuous
+
+**27.6%** of sampled concepts (1,079 of 3,912) exhibit a MIXED type repeat on a
+reachable path — §103.1's configuration, where neither `kserU` nor `kserD`
+fires. So the mixed closure genuinely walks past type repeats; it simply does
+not do so unboundedly often.
+
+### 105.3 Reading it
+
+Evidence for `SwitchBounded`, not proof: finite set models, randomized search.
+What it does establish is that the two obvious ways to refute it — grow the
+model under a fixed concept, and build the engine that defeats the depth
+measure — both fail.
+
+Two routes remain, and the probe says the first is not doomed:
+
+1. **Prove the bound.** `|cl C0|` was never violated across `wp107`+`wp108`
+   (champion: 6 switches at `|cl C0| = 8`). No proof mechanism identified —
+   modal depth is refuted (§104.3) and no other monotone quantity has been
+   found.
+2. **Fold.** Serve a mixed repeat from the existing same-type node. `ee_all` is
+   free (equal types have equal labels), and the frame is declared rather than
+   read off, so the relation is free too. The cost is re-proving acyclicity of
+   the declared order — which is §39's mixing ordering cycle, the one the
+   campaign has already paid for once.
+
+A third, cheaper option worth noting: the extraction CHOOSES witnesses
+(`Classical.choose`). Preferring a witness already in the closure would avoid
+switches outright — the "late picking" discipline of `pp_witness_all_below`.
+Untested.
