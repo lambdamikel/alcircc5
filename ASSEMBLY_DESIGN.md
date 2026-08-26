@@ -11043,5 +11043,5 @@ tried and failed to get for `mty` labels, twice.
 * the kernel obligations (`ek_all`, `ke_all`, `kk_*`, `k_ex`), which `wp124`
   exercises but nothing proves.
 
-Build: 33,004 lines, 1,665 declarations, exit 0, 0 errors / 0 warnings /
+Build: 33,011 lines, 1,665 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
