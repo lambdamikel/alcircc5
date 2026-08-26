@@ -10846,5 +10846,5 @@ models. **The gap between that and a theorem is the extraction, not the bound.**
 That is a materially different position from §134, where the gap was a measure
 nobody could find.
 
-Build: 32,222 lines, 1,617 declarations, exit 0, 0 errors / 0 warnings /
+Build: 32,236 lines, 1,617 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
