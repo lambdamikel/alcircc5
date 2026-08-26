@@ -312,9 +312,10 @@ def rand_c(rng, depth):
     return ("all", rng.choice([PP, PPI, PP, PPI, DR]), rand_c(rng, depth - 1))
 
 
-def main(trials=9000, seed=606060, usize=5, use_edges=True):
-    print(f"WP115 -- acceptance test, declared edges "
-          f"{'ON' if use_edges else 'OFF (CONTROL)'}\n")
+def main(trials=9000, seed=606060, usize=5, use_edges=True, readoff=False):
+    mode = ("READ-OFF order" if readoff else
+            ("declared edges ON" if use_edges else "edges OFF (CONTROL)"))
+    print(f"WP115 -- acceptance test, {mode}\n")
     rng = random.Random(seed)
     regs = subsets(set(range(usize)))
     tested = withedges = nochoice = 0
@@ -332,6 +333,12 @@ def main(trials=9000, seed=606060, usize=5, use_edges=True):
         if root is None:
             continue
         nodes, ups, cuts, lab = build(m, val, c0, root)
+        if readoff:
+            # lt = the MODEL's PP restricted to the node set, not just the
+            # extraction's own steps.  A strict order for free, and it cannot
+            # violate ltNotDj since real PP pairs are never DR.
+            ups = ups | {(x, y) for x in nodes for y in nodes
+                         if x != y and rel(x, y) == PP}
         lt = tcl(ups, nodes)
         new = declared_edges(m, val, c0, nodes, cuts, lab, lt) if use_edges else set()
         if new is None:
@@ -376,4 +383,6 @@ def main(trials=9000, seed=606060, usize=5, use_edges=True):
 if __name__ == "__main__":
     main(use_edges=False)
     print()
-    raise SystemExit(main(use_edges=True))
+    main(use_edges=True)
+    print()
+    raise SystemExit(main(use_edges=True, readoff=True))

@@ -9775,3 +9775,59 @@ condition costs nothing measured.
 
 Lean unchanged: 31,627 lines, 1,582 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 125. READ-OFF FOR THE VERTICAL ORDER — a regime distinction, not a reversal
+
+The 15 demands still unserved in §124 turned out not to be residue at all: they
+are demands the MODEL serves but the DECLARED frame does not, because the frame's
+`lt` is the transitive closure of the extraction's own STEPS, so two nodes
+related by real `PP` but never connected by a step come out `PO`.
+
+Testing the obvious alternative — `lt` = the model's `PP` restricted to the node
+set — over the same 6,786 certificates:
+
+| mode | unserved `∃PP` | unserved `∃PPI` | other failures |
+|---|---|---|---|
+| control, no edges | 24 | 24 | none |
+| declared edges (§124) | 9 | 6 | none |
+| **read-off order + edges** | **3** | **2** | **none** |
+
+48 → 15 → **5**. No ODStruct violation, no composition failure, no `ee_all`
+failure in any mode.
+
+### 125.1 Reconciling with `wp96` A
+
+The design ledger rejects read-off (§42's route) on `wp96` A: 4.1% break. Its
+stated reason is exact:
+
+> Read-off is EXPRESSIVE (§42 was right about that) but forces UNIFORM budgets,
+> and uniform budgets forfeit the budget-decreasing finiteness the whole `codes`
+> pipeline consumes.
+
+So the break is an interaction with **budget-dropping**, not with read-off as
+such. And vertical steps **already** hold the budget constant — that is
+`ppNodes_bud`, certified, and the reason §44.3 gives for keeping it.
+
+So this is a **regime distinction**: read-off is safe exactly where the budget is
+already uniform, which is the vertical closure, and the budget-dropping
+horizontal recursion is untouched. The architecture that follows is a hybrid:
+
+* **vertical order** — read off the model, at constant budget;
+* **blocking laps** — declared edges, under §124.2's two-clause condition;
+* **horizontal** — unchanged, budget-dropping, not read off.
+
+### 125.2 Scope, stated plainly
+
+`wp115` models only the constant-budget vertical part. Its "no `ee_all`
+failures" is therefore a statement about that regime and **does not overturn
+`wp96` A**, which measured the other one. Nothing here licenses read-off for the
+horizontal closure.
+
+### 125.3 What remains
+
+**5 unserved vertical demands across 6,786 certificates**, down from 48. Not yet
+characterised — and on this session's record, the characterisation is worth
+measuring rather than reasoning out.
+
+Lean unchanged: 31,627 lines, 1,582 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
