@@ -10894,3 +10894,53 @@ descent, its `cl C₀`-membership, its satisfaction — is now certified.
 
 Build: 32,315 lines, 1,626 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 145. THE HINTIKKA CLOSURE, AND THE WITNESS LABEL
+
+§144 gives the seed; this section closes it into an actual support label.
+
+`hclose` is structural recursion on the concept — keep it, decompose a
+conjunction, follow a TRUE disjunct, take an `∀EQ` body. **No fuel:** every
+recursive call is on a proper subformula.
+
+| | |
+|---|---|
+| `self_mem_hclose` | a concept is in its own closure |
+| `hclose_sat` | everything in the closure is TRUE at `x` |
+| `hclose_sub` | and stays inside `cl C₀` |
+| `hclose_and` / `hclose_or` / `hclose_eqbody` | the three closure properties |
+| `hclose_supportOk` | **closing a true, in-`cl` concept gives a SUPPORT LABEL** |
+| `hcloseL` / `hcloseL_supportOk` | the same for a seed list |
+| **`witnessLabel_supportOk`** | **serving `∃r.D` at a node labelled `L` gives the witness a genuine support label** |
+
+`hclose_eqbody` is `MultiTierOk`'s `kk_eq` — the clause `wp122` was missing, and
+which cost ~55 spurious failures per shape until §137.2 found it. It is now
+proved rather than remembered.
+
+### 145.1 What `witnessLabel_supportOk` composes
+
+```
+witnessLabel_supportOk : SupportOk I C0 y (hcloseL I y (seedOf r D L))
+```
+
+Its hypotheses are exactly what a construction step has in hand: the demand is in
+the parent's label, the parent's label is in `cl C₀` and true at the parent, the
+relation holds, and the witness carries the argument. `seedOf_sub` and
+`seedOf_sat` (§144) supply the rest.
+
+So a construction step **provably produces a well-formed label** — and by §144's
+`seedOf_depth_lt` that label is strictly shallower, and by §143 the node set it
+generates is bounded by `genBound |cl C₀| (mdepth C₀)`.
+
+### 145.2 What is left
+
+The iteration itself: a Lean definition that repeats this step, plus the proof
+that its output satisfies the BETWEEN-node obligations (`ee_all`, `ek_all`,
+`ke_all`, `e_ex`, `k_ex`). §128 discharges the first and the vertical `e_ex` from
+the frame; the kernel-side ones are what `wp124` exercises.
+
+Every LOCAL ingredient is now certified. What remains is the assembly and the
+kernel obligations.
+
+Build: 32,569 lines, 1,640 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

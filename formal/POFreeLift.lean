@@ -31457,6 +31457,340 @@ theorem seedOf_sat {x y : α} (hy : I.dom y)
   · have hall : Concept.all r c ∈ L := mem_allBodies h
     exact hLsat _ hall y hy hr
 
+/-! #### §145 — THE HINTIKKA CLOSURE
+
+§144 gives the seed; this section closes it into an actual support label.
+
+`hclose` is structural recursion on the concept: keep it, decompose a
+conjunction, follow a TRUE disjunct, and take an `∀EQ` body (which is owed here,
+`MultiTierOk`'s `kk_eq`). Everything else is a leaf. No fuel is needed — every
+recursive call is on a proper subformula. -/
+
+open Classical in
+/-- Close one concept into what it owes at `x`. -/
+noncomputable def hclose (I : Interp α) (x : α) : Concept → List Concept
+  | .and c d => Concept.and c d :: (hclose I x c ++ hclose I x d)
+  | .or c d =>
+      Concept.or c d :: (if sat I x c then hclose I x c else hclose I x d)
+  | .all r c => if r = eq then Concept.all r c :: hclose I x c else [Concept.all r c]
+  | c => [c]
+
+theorem self_mem_hclose (I : Interp α) (x : α) (c : Concept) :
+    c ∈ hclose I x c := by
+  cases c with
+  | and _ _ => rw [hclose]; exact List.mem_cons_self
+  | or _ _ => rw [hclose]; exact List.mem_cons_self
+  | all r d =>
+    rw [hclose]
+    by_cases hr : r = eq
+    · rw [if_pos hr]; exact List.mem_cons_self
+    · rw [if_neg hr]; exact List.mem_cons_self
+  | _ => exact List.mem_cons_self
+
+/-- **EVERYTHING IN THE CLOSURE IS TRUE AT `x`.**  Conjunction gives both
+    conjuncts, the disjunct chosen is the true one, and `∀EQ` fires on `x`
+    itself. -/
+theorem hclose_sat (hI : RCC5Interp I) {x : α} (hx : I.dom x) :
+    ∀ (c : Concept), sat I x c → ∀ e ∈ hclose I x c, sat I x e := by
+  intro c
+  induction c with
+  | and a b iha ihb =>
+    intro hs e he
+    rw [hclose] at he
+    rcases List.mem_cons.mp he with rfl | h
+    · exact hs
+    · rcases List.mem_append.mp h with h1 | h1
+      · exact iha hs.1 e h1
+      · exact ihb hs.2 e h1
+  | or a b iha ihb =>
+    intro hs e he
+    rw [hclose] at he
+    rcases List.mem_cons.mp he with rfl | h
+    · exact hs
+    · by_cases hc : sat I x a
+      · rw [if_pos hc] at h; exact iha hc e h
+      · rw [if_neg hc] at h
+        rcases hs with h2 | h2
+        · exact absurd h2 hc
+        · exact ihb h2 e h
+  | all r a ih =>
+    intro hs e he
+    rw [hclose] at he
+    by_cases hr : r = eq
+    · rw [if_pos hr] at he
+      rcases List.mem_cons.mp he with rfl | h
+      · exact hs
+      · subst hr
+        exact ih (hs x hx (hI.refl_eq x hx)) e h
+    · rw [if_neg hr] at he
+      rcases List.mem_cons.mp he with rfl | h
+      · exact hs
+      · exact absurd h List.not_mem_nil
+  | _ => intro hs e he; rcases List.mem_cons.mp he with rfl | h
+         · exact hs
+         · exact absurd h List.not_mem_nil
+
+/-- **AND STAYS INSIDE `cl C₀`.** -/
+theorem hclose_sub {C0 : Concept} (I : Interp α) (x : α) :
+    ∀ (c : Concept), c ∈ cl C0 → ∀ e ∈ hclose I x c, e ∈ cl C0 := by
+  intro c
+  induction c with
+  | and a b iha ihb =>
+    intro hc e he
+    rw [hclose] at he
+    rcases List.mem_cons.mp he with rfl | h
+    · exact hc
+    · rcases List.mem_append.mp h with h1 | h1
+      · exact iha (cl_and_left hc) e h1
+      · exact ihb (cl_and_right hc) e h1
+  | or a b iha ihb =>
+    intro hc e he
+    rw [hclose] at he
+    rcases List.mem_cons.mp he with rfl | h
+    · exact hc
+    · by_cases hs : sat I x a
+      · rw [if_pos hs] at h; exact iha (cl_or_left hc) e h
+      · rw [if_neg hs] at h; exact ihb (cl_or_right hc) e h
+  | all r a ih =>
+    intro hc e he
+    rw [hclose] at he
+    by_cases hr : r = eq
+    · rw [if_pos hr] at he
+      rcases List.mem_cons.mp he with rfl | h
+      · exact hc
+      · exact ih (cl_all hc) e h
+    · rw [if_neg hr] at he
+      rcases List.mem_cons.mp he with rfl | h
+      · exact hc
+      · exact absurd h List.not_mem_nil
+  | _ => intro hc e he; rcases List.mem_cons.mp he with rfl | h
+         · exact hc
+         · exact absurd h List.not_mem_nil
+
+/-- **THE CLOSURE IS `∧`-CLOSED.**  A conjunction in the output is either the
+    concept itself — whose conjuncts the recursion added — or lies in a
+    recursive part, where the induction hypothesis applies. -/
+theorem hclose_and (I : Interp α) (x : α) {c d : Concept} :
+    ∀ (e : Concept), Concept.and c d ∈ hclose I x e →
+      c ∈ hclose I x e ∧ d ∈ hclose I x e := by
+  intro e
+  induction e with
+  | and a b iha ihb =>
+    intro he
+    rw [hclose] at he ⊢
+    rcases List.mem_cons.mp he with heq | h
+    · injection heq with h1 h2
+      subst h1; subst h2
+      exact ⟨List.mem_cons_of_mem _ (List.mem_append_left _ (self_mem_hclose I x c)),
+             List.mem_cons_of_mem _ (List.mem_append_right _ (self_mem_hclose I x d))⟩
+    · rcases List.mem_append.mp h with h1 | h1
+      · obtain ⟨p, q⟩ := iha h1
+        exact ⟨List.mem_cons_of_mem _ (List.mem_append_left _ p),
+               List.mem_cons_of_mem _ (List.mem_append_left _ q)⟩
+      · obtain ⟨p, q⟩ := ihb h1
+        exact ⟨List.mem_cons_of_mem _ (List.mem_append_right _ p),
+               List.mem_cons_of_mem _ (List.mem_append_right _ q)⟩
+  | or a b iha ihb =>
+    intro he
+    rw [hclose] at he ⊢
+    rcases List.mem_cons.mp he with heq | h
+    · exact absurd heq (by simp)
+    · by_cases hs : sat I x a
+      · rw [if_pos hs] at h ⊢
+        obtain ⟨p, q⟩ := iha h
+        exact ⟨List.mem_cons_of_mem _ p, List.mem_cons_of_mem _ q⟩
+      · rw [if_neg hs] at h ⊢
+        obtain ⟨p, q⟩ := ihb h
+        exact ⟨List.mem_cons_of_mem _ p, List.mem_cons_of_mem _ q⟩
+  | all r a ih =>
+    intro he
+    rw [hclose] at he ⊢
+    by_cases hr : r = eq
+    · rw [if_pos hr] at he ⊢
+      rcases List.mem_cons.mp he with heq | h
+      · exact absurd heq (by simp)
+      · obtain ⟨p, q⟩ := ih h
+        exact ⟨List.mem_cons_of_mem _ p, List.mem_cons_of_mem _ q⟩
+    · rw [if_neg hr] at he ⊢
+      rcases List.mem_cons.mp he with heq | h
+      · exact absurd heq (by simp)
+      · exact absurd h List.not_mem_nil
+  | _ => intro he
+         rcases List.mem_cons.mp he with heq | h
+         · exact absurd heq (by simp)
+         · exact absurd h List.not_mem_nil
+
+/-- **`∨`-CLOSED**, with the chosen disjunct present. -/
+theorem hclose_or (I : Interp α) (x : α) {c d : Concept} :
+    ∀ (e : Concept), Concept.or c d ∈ hclose I x e →
+      c ∈ hclose I x e ∨ d ∈ hclose I x e := by
+  intro e
+  induction e with
+  | and a b iha ihb =>
+    intro he
+    rw [hclose] at he ⊢
+    rcases List.mem_cons.mp he with heq | h
+    · exact absurd heq (by simp)
+    · rcases List.mem_append.mp h with h1 | h1
+      · rcases iha h1 with p | p
+        · exact Or.inl (List.mem_cons_of_mem _ (List.mem_append_left _ p))
+        · exact Or.inr (List.mem_cons_of_mem _ (List.mem_append_left _ p))
+      · rcases ihb h1 with p | p
+        · exact Or.inl (List.mem_cons_of_mem _ (List.mem_append_right _ p))
+        · exact Or.inr (List.mem_cons_of_mem _ (List.mem_append_right _ p))
+  | or a b iha ihb =>
+    intro he
+    rw [hclose] at he ⊢
+    rcases List.mem_cons.mp he with heq | h
+    · injection heq with h1 h2
+      subst h1; subst h2
+      by_cases hs : sat I x c
+      · rw [if_pos hs]
+        exact Or.inl (List.mem_cons_of_mem _ (self_mem_hclose I x c))
+      · rw [if_neg hs]
+        exact Or.inr (List.mem_cons_of_mem _ (self_mem_hclose I x d))
+    · by_cases hs : sat I x a
+      · rw [if_pos hs] at h ⊢
+        rcases iha h with p | p
+        · exact Or.inl (List.mem_cons_of_mem _ p)
+        · exact Or.inr (List.mem_cons_of_mem _ p)
+      · rw [if_neg hs] at h ⊢
+        rcases ihb h with p | p
+        · exact Or.inl (List.mem_cons_of_mem _ p)
+        · exact Or.inr (List.mem_cons_of_mem _ p)
+  | all r a ih =>
+    intro he
+    rw [hclose] at he ⊢
+    by_cases hr : r = eq
+    · rw [if_pos hr] at he ⊢
+      rcases List.mem_cons.mp he with heq | h
+      · exact absurd heq (by simp)
+      · rcases ih h with p | p
+        · exact Or.inl (List.mem_cons_of_mem _ p)
+        · exact Or.inr (List.mem_cons_of_mem _ p)
+    · rw [if_neg hr] at he ⊢
+      rcases List.mem_cons.mp he with heq | h
+      · exact absurd heq (by simp)
+      · exact absurd h List.not_mem_nil
+  | _ => intro he
+         rcases List.mem_cons.mp he with heq | h
+         · exact absurd heq (by simp)
+         · exact absurd h List.not_mem_nil
+
+/-- **`∀EQ`-CLOSED** — the body is owed HERE, which is `MultiTierOk`'s `kk_eq`
+    and the clause `wp122` was missing (§137.2). -/
+theorem hclose_eqbody (I : Interp α) (x : α) {c : Concept} :
+    ∀ (e : Concept), Concept.all eq c ∈ hclose I x e → c ∈ hclose I x e := by
+  intro e
+  induction e with
+  | and a b iha ihb =>
+    intro he
+    rw [hclose] at he ⊢
+    rcases List.mem_cons.mp he with heq | h
+    · exact absurd heq (by simp)
+    · rcases List.mem_append.mp h with h1 | h1
+      · exact List.mem_cons_of_mem _ (List.mem_append_left _ (iha h1))
+      · exact List.mem_cons_of_mem _ (List.mem_append_right _ (ihb h1))
+  | or a b iha ihb =>
+    intro he
+    rw [hclose] at he ⊢
+    rcases List.mem_cons.mp he with heq | h
+    · exact absurd heq (by simp)
+    · by_cases hs : sat I x a
+      · rw [if_pos hs] at h ⊢; exact List.mem_cons_of_mem _ (iha h)
+      · rw [if_neg hs] at h ⊢; exact List.mem_cons_of_mem _ (ihb h)
+  | all r a ih =>
+    intro he
+    rw [hclose] at he ⊢
+    by_cases hr : r = eq
+    · rw [if_pos hr] at he ⊢
+      rcases List.mem_cons.mp he with heq | h
+      · injection heq with h1 h2
+        subst h2
+        exact List.mem_cons_of_mem _ (self_mem_hclose I x c)
+      · exact List.mem_cons_of_mem _ (ih h)
+    · rw [if_neg hr] at he ⊢
+      rcases List.mem_cons.mp he with heq | h
+      · injection heq with h1 h2
+        exact absurd h1.symm hr
+      · exact absurd h List.not_mem_nil
+  | _ => intro he
+         rcases List.mem_cons.mp he with heq | h
+         · exact absurd heq (by simp)
+         · exact absurd h List.not_mem_nil
+
+/-- **THE PAYOFF, ONE CONCEPT.**  Closing a true, in-`cl C₀` concept produces a
+    SUPPORT LABEL — every `SupportOk` field, from §145's four lemmas. -/
+theorem hclose_supportOk (hI : RCC5Interp I) {C0 : Concept} {x : α}
+    (hx : I.dom x) (c : Concept) (hcl : c ∈ cl C0) (hs : sat I x c) :
+    SupportOk I C0 x (hclose I x c) where
+  sub := hclose_sub I x c hcl
+  sat_ := hclose_sat hI hx c hs
+  and_ := fun _ _ h => hclose_and I x c h
+  or_ := fun _ _ h => hclose_or I x c h
+  eq_ := fun _ h => hclose_eqbody I x c h
+
+/-- Closing a whole seed list. -/
+noncomputable def hcloseL (I : Interp α) (x : α) (L : List Concept) :
+    List Concept := L.flatMap (hclose I x)
+
+theorem mem_hcloseL {I : Interp α} {x : α} {L : List Concept} {e : Concept} :
+    e ∈ hcloseL I x L ↔ ∃ c ∈ L, e ∈ hclose I x c := by
+  unfold hcloseL
+  constructor
+  · intro h
+    obtain ⟨c, hc, he⟩ := List.mem_flatMap.mp h
+    exact ⟨c, hc, he⟩
+  · intro ⟨c, hc, he⟩
+    exact List.mem_flatMap.mpr ⟨c, hc, he⟩
+
+/-- **THE PAYOFF, A SEED LIST.**  Every seed lands in its own closure, and each
+    closure property holds within it, so the union inherits all of them.
+
+    This is the label the construction attaches to a witness: `hcloseL` of
+    `seedOf`, and §144 already showed that seed is true, in `cl C₀`, and
+    strictly shallower than the parent's label. -/
+theorem hcloseL_supportOk (hI : RCC5Interp I) {C0 : Concept} {x : α}
+    (hx : I.dom x) (L : List Concept)
+    (hcl : ∀ c ∈ L, c ∈ cl C0) (hs : ∀ c ∈ L, sat I x c) :
+    SupportOk I C0 x (hcloseL I x L) where
+  sub := by
+    intro e he
+    obtain ⟨c, hc, hec⟩ := mem_hcloseL.mp he
+    exact hclose_sub I x c (hcl c hc) e hec
+  sat_ := by
+    intro e he
+    obtain ⟨c, hc, hec⟩ := mem_hcloseL.mp he
+    exact hclose_sat hI hx c (hs c hc) e hec
+  and_ := by
+    intro a b h
+    obtain ⟨c, hc, hac⟩ := mem_hcloseL.mp h
+    obtain ⟨p, q⟩ := hclose_and I x c hac
+    exact ⟨mem_hcloseL.mpr ⟨c, hc, p⟩, mem_hcloseL.mpr ⟨c, hc, q⟩⟩
+  or_ := by
+    intro a b h
+    obtain ⟨c, hc, hac⟩ := mem_hcloseL.mp h
+    rcases hclose_or I x c hac with p | p
+    · exact Or.inl (mem_hcloseL.mpr ⟨c, hc, p⟩)
+    · exact Or.inr (mem_hcloseL.mpr ⟨c, hc, p⟩)
+  eq_ := by
+    intro a h
+    obtain ⟨c, hc, hac⟩ := mem_hcloseL.mp h
+    exact mem_hcloseL.mpr ⟨c, hc, hclose_eqbody I x c hac⟩
+
+/-- **THE WITNESS LABEL.**  Everything composed: serving `∃r.D` at a node
+    labelled `L` gives the witness a genuine support label.
+
+    `seedOf_sub` and `seedOf_sat` supply the two hypotheses, so this needs
+    nothing the construction does not already have. -/
+theorem witnessLabel_supportOk (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hy : I.dom y) {r : Atom} {D : Concept} {L : List Concept}
+    (hD : Concept.ex r D ∈ L) (hLcl : ∀ c ∈ L, c ∈ cl C0)
+    (hr : I.rho x y = r) (hLsat : ∀ c ∈ L, sat I x c) (hDy : sat I y D) :
+    SupportOk I C0 y (hcloseL I y (seedOf r D L)) :=
+  hcloseL_supportOk hI hy _ (seedOf_sub r D L hD hLcl)
+    (seedOf_sat hy hr hLsat hDy)
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -32312,4 +32646,12 @@ end POFreeLift
 #print axioms POFreeLift.seedOf_depth_lt
 #print axioms POFreeLift.seedOf_sub
 #print axioms POFreeLift.seedOf_sat
+#print axioms POFreeLift.hclose_sat
+#print axioms POFreeLift.hclose_sub
+#print axioms POFreeLift.hclose_and
+#print axioms POFreeLift.hclose_or
+#print axioms POFreeLift.hclose_eqbody
+#print axioms POFreeLift.hclose_supportOk
+#print axioms POFreeLift.hcloseL_supportOk
+#print axioms POFreeLift.witnessLabel_supportOk
 #print axioms POFreeLift.kernel_of_no_terminal
