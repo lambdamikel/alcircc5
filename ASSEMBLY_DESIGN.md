@@ -9477,3 +9477,65 @@ representative order among residues — which is what `wp101` does for its chain
 and what `wp111` discarded by imposing an index order.
 
 No Lean has been written against any of these numbers.
+
+## 118. LAP CONTINUATION, MEASURED AT LAST — `wp112`
+
+Fourth instrument on one question. The first three failed on representation
+(§117.2). This one's control held.
+
+### 118.1 The control, and why the third attempt's was wrong
+
+`wp112`'s first run also missed its control (89/98/75% where 100% was declared).
+Diagnosing it showed the CONTROL was wrong, not the instrument: a node with no
+ascending demand cannot continue by following demands however the tail is
+represented — and such a node is not a problematic cut leaf either, since it has
+nothing unserved.
+
+So the two were separated:
+
+* **control (representation)** — every tail residue has a `PP`-successor of its
+  own type, namely itself at a higher lap. Pure structural check.
+* **measurement** — among cut leaves that HAVE an unserved ascending demand,
+  does the demand path reach a node of the leaf's own type? All witnesses
+  explored; taking the first is a selector artifact.
+
+**Control: 0 failures across all three shapes.** The closed-form tail is right.
+
+### 118.2 The result
+
+| shape | tail | prefix | side |
+|---|---|---|---|
+| L=4 p=3 | 98.1% | 55.6% | 0% |
+| L=6 p=2 | 99.4% | 33.2% | 0% |
+| L=2 p=5 | 94.0% | 52.4% | 0% |
+
+### 118.3 What is and is not a finding
+
+The prefix rate **moves with the model shape** (33–56%), so per the standing
+rule it is a property of the generator and no single number should be quoted.
+The pooled 67.9% is not a rate to cite.
+
+What IS stable across all three shapes, and is the answer to §116.3:
+
+> **Blocking-to-kernel is neither always available nor never available.** Tail
+> leaves almost always continue (94–99%); prefix leaves often do not; side
+> leaves never do (0/44).
+
+So §114's `kernelData_of_chain` covers a large part of the cut-leaf residue and
+**provably cannot cover all of it**. A cut leaf whose lap does not continue has
+no infinite ascending chain through it, so there is no kernel to build — this is
+structural, not a measurement artifact, and the side column (0%, three shapes,
+44 leaves) shows it cleanly: a side node is not on the chain at all.
+
+### 118.4 Consequence for the architecture
+
+The cut-leaf residue splits again:
+
+* **lap continues** ⟹ infinite chain ⟹ `kernelData_of_chain` (§114) ⟹ kernel.
+  Needs `ccovers` for the named demand, which is `rr_covers` territory.
+* **lap does not continue** ⟹ no kernel exists ⟹ must be served by an `elt`
+  edge to a set member. `wp110` measured that 87–97% already are.
+
+Neither branch is closed, but both are now the right shape, and neither is
+"assume a hypothesis". The genuinely uncovered case is a cut leaf whose lap does
+not continue AND which the set does not already serve.
