@@ -11610,3 +11610,47 @@ first thing to check when building it.
 
 Build unchanged: 33,767 lines, 1,694 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 160. THE POOL HYPOTHESIS, WEAKENED
+
+§159.3 flagged `hpoolcl` as conservative in a way that may be unsatisfiable: it
+quantifies over `cl C₀`, while `glueFam_ok`'s `hreal` can only realise pool
+entries that some node actually carries.
+
+Reading further settled it — **the strengthening is in the wrapper, not the
+mathematics.** `multiBlock_of_site` already takes the occurrence-restricted form;
+`multiBlock_of_chain` merely converts with `mty_sub`.
+
+| | |
+|---|---|
+| **`multiBlock_of_chain'`** | the chain block with the pool hypothesis over what the MODEL carries |
+| **`block_of_persistent'`** | the persistent block, likewise — the form the assembly can supply |
+| `block_of_persistent_of_cl` | the old form as the special case, so nothing that used it is disturbed |
+
+A `D` that no model element carries is never demanded, so it never needs a pool
+entry. The weakened hypothesis is exactly what `hreal` can meet.
+
+### 160.1 Why this was worth doing before the assembly
+
+The friction was found by READING the interface rather than by building on it and
+failing. On this project's record — two plans killed after being committed, one
+result reported confidently that its own follow-up destroyed — that ordering is
+worth the section it costs.
+
+Had the assembly been built against `hpoolcl`, the failure would have surfaced at
+`hreal` with the construction already committed, and would have looked like the
+assembly being wrong rather than one hypothesis being over-stated.
+
+### 160.2 What is left
+
+| | |
+|---|---|
+| kernel blocks from persistence, both directions | **certified** |
+| pool hypothesis in a realisable form | **certified** (§160) |
+| gluing with PO between blocks | **certified**, `propext` only |
+| `MTNoPo` from `POFree` | **certified** |
+| build the FAMILY and the POOL from a model | **open — the assembly** |
+| support labels through the kernel constructions | **open** |
+
+Build: 33,834 lines, 1,697 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

@@ -32869,6 +32869,76 @@ full periodicity of the intermediate points. So the label statement needs either
 
 Neither is attempted here. The model half is done; the label half is named. -/
 
+/-! #### §160 — THE POOL HYPOTHESIS, WEAKENED
+
+§159.3 flagged `block_of_persistent`'s `hpoolcl` as conservative in a way that
+may be unsatisfiable: it quantifies over `cl C₀`, while `glueFam_ok`'s `hreal`
+can only realise pool entries that some node actually carries.
+
+Reading further settles it. `multiBlock_of_site` already takes the
+OCCURRENCE-restricted form, and `multiBlock_of_chain` merely converts:
+
+```
+(fun a _ D hD => hpoolcl D (mty_sub _ hD))
+```
+
+So the strengthening happens in the WRAPPER, not the mathematics. These variants
+take the model-restricted hypothesis instead, which `hreal` can meet: a `D` that
+no model element carries is never demanded, so it never needs a pool entry. -/
+
+/-- **THE OCCURRENCE-RESTRICTED CHAIN BLOCK.**  `multiBlock_of_chain` with the
+    pool hypothesis over what the MODEL carries rather than over `cl C₀`. -/
+theorem multiBlock_of_chain' (hI : RCC5Interp I)
+    {c : Nat → α} (hdom : ∀ i, I.dom (c i))
+    (hstep : ∀ i, I.rho (c i) (c (i + 1)) = pp)
+    (C0 : Concept) (hpo : POFree C0) (myTag : Nat)
+    (P : List (Nat × List Concept)) (ctx : List α)
+    (hctxdom : ∀ e ∈ ctx, I.dom e) (L : Nat)
+    (hpoolocc : ∀ (w : α), I.dom w → ∀ D, Concept.ex po D ∈ mty C0 I w →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧ T.p () = p ∧
+        (∀ a, T.phase () a = mty C0 I (c (i + a))) ∧
+        (POFree C0 → MTNoPo T) := by
+  obtain ⟨i, p, hLi, hp, hty, hctx, _, hserve⟩ :=
+    kernel_site hI hdom hstep C0 ctx hctxdom L
+  exact ⟨i, p, hLi, hp, multiBlock_of_site hI hdom hstep C0 hpo myTag P
+    ctx hctxdom hp hty hctx hserve
+    (fun a _ D hD => hpoolocc (c (i + a)) (hdom (i + a)) D hD)⟩
+
+/-- **AND THE PERSISTENT BLOCK, WEAKENED.**  `block_of_persistent` over what the
+    model carries — the form the assembly can actually supply, since a pool
+    entry must be realised by a real node. -/
+theorem block_of_persistent' (hI : RCC5Interp I) {C0 G : Concept}
+    (hpo : POFree C0) (myTag : Nat) (P : List (Nat × List Concept))
+    (ctx : List α) (hctxdom : ∀ e ∈ ctx, I.dom e)
+    (hpoolocc : ∀ (w : α), I.dom w → ∀ D, Concept.ex po D ∈ mty C0 I w →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2)
+    (x0 : α) (h0 : persistPP I C0 G x0) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧ T.p () = p ∧
+        (POFree C0 → MTNoPo T) := by
+  obtain ⟨c, _, hdom, hstep, _⟩ := persistPP_chain hI x0 h0
+  obtain ⟨i, p, hLi, hp, β, T, hBlock, hpT, _, hnopo⟩ :=
+    multiBlock_of_chain' hI hdom hstep C0 hpo myTag P ctx hctxdom L hpoolocc
+  exact ⟨i, p, hLi, hp, β, T, hBlock, hpT, hnopo⟩
+
+/-- The old form is the special case, so nothing that used it is disturbed. -/
+theorem block_of_persistent_of_cl (hI : RCC5Interp I) {C0 G : Concept}
+    (hpo : POFree C0) (myTag : Nat) (P : List (Nat × List Concept))
+    (ctx : List α) (hctxdom : ∀ e ∈ ctx, I.dom e)
+    (hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 →
+      ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2)
+    (x0 : α) (h0 : persistPP I C0 G x0) (L : Nat) :
+    ∃ i p, L ≤ i ∧ 0 < p ∧
+      ∃ (β : Type) (T : MultiTier β Unit),
+        BlockOk T myTag P ∧ T.p () = p ∧
+        (POFree C0 → MTNoPo T) :=
+  block_of_persistent' hI hpo myTag P ctx hctxdom
+    (fun _ _ D hD => hpoolcl D (mty_sub _ hD)) x0 h0 L
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33764,4 +33834,7 @@ end POFreeLift
 #print axioms POFreeLift.kk_pp_model
 #print axioms POFreeLift.kk_ppi_model
 #print axioms POFreeLift.kk_pp_next_lap
+#print axioms POFreeLift.multiBlock_of_chain'
+#print axioms POFreeLift.block_of_persistent'
+#print axioms POFreeLift.block_of_persistent_of_cl
 #print axioms POFreeLift.kernel_of_no_terminal
