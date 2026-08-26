@@ -29427,6 +29427,207 @@ theorem skipNodesD_fixed_kserD (hI : RCC5Interp I) (C0 : Concept)
 
 end SkipClosure
 
+/-! #### §104 — THE RUN DECOMPOSITION, CERTIFIED
+
+§103 established by hand that composing the two directional fixpoints reduces
+to ONE quantity.  This section makes that reduction a **theorem**.
+
+A mixed vertical path decomposes into maximal same-direction **runs**.  §102
+bounds each run: within a run the path is a chain, a type repeat would make
+`kserU`/`kserD` fire, so the types are distinct and `skipPath_len_le'` caps the
+run at `|typeEnum C0|`.  Therefore
+
+```
+mixed path length  ≤  (number of runs) × |typeEnum C0|
+```
+
+and the run count is the only quantity not computed from `C₀`.  Below,
+`blocks_len_le` is the arithmetic, `RunDecomp` names the decomposition as DATA
+(block boundaries, each block same-direction), and `mixedPath_len_le` is the
+product bound.
+
+Making it a theorem matters because it fixes what a future argument has to
+supply: not "handle the mixed case" but a single natural number. -/
+
+/-- **The arithmetic.**  `S` blocks, each advancing the boundary by at most `N`,
+    reach at most `S * N`.  Induction on the block count; no content beyond
+    that. -/
+theorem blocks_len_le (N : Nat) :
+    ∀ (S : Nat) (bnds : Nat → Nat), bnds 0 = 0 →
+      (∀ i, i < S → bnds (i + 1) ≤ bnds i + N) → bnds S ≤ S * N := by
+  intro S
+  induction S with
+  | zero => intro bnds h0 _; rw [h0]; exact Nat.zero_le _
+  | succ S ih =>
+    intro bnds h0 hb
+    have h2 : bnds S ≤ S * N :=
+      ih bnds h0 (fun i hi => hb i (Nat.lt_trans hi (Nat.lt_succ_self S)))
+    calc bnds (S + 1) ≤ bnds S + N := hb S (Nat.lt_succ_self S)
+      _ ≤ S * N + N := Nat.add_le_add_right h2 N
+      _ = (S + 1) * N := by rw [Nat.succ_mul]
+
+/-- **A run decomposition, as DATA.**  `bnds` marks the block boundaries; each
+    block carries a single direction (every step inside a block has the same
+    `rho` as the block's first step).  `k ≤ bnds S` says the decomposition
+    covers the prefix under consideration.
+
+    Stating it as data rather than as an existential is deliberate: the
+    extraction that eventually supplies it will produce the boundaries, and a
+    consumer should not have to re-derive them. -/
+def RunDecomp {α : Type} (I : Interp α) (path : Nat → α) (k S : Nat)
+    (bnds : Nat → Nat) : Prop :=
+  bnds 0 = 0 ∧ k ≤ bnds S ∧
+  (∀ i, i < S → ∀ t, bnds i + t + 1 < bnds (i + 1) →
+    I.rho (path (bnds i + t)) (path (bnds i + t + 1)) =
+      I.rho (path (bnds i)) (path (bnds i + 1)))
+
+/-- **THE PRODUCT BOUND.**  A path whose every run is type-repeat-free is capped
+    by `(run count) × |typeEnum C0|`.
+
+    The run hypothesis is exactly what §102 delivers per direction: inside a run
+    the path is a chain, so a repeat would fire `kserU`/`kserD` and the step
+    would not have been taken. -/
+theorem mixedPath_len_le (C0 : Concept) (I : Interp α) (path : Nat → α)
+    (S : Nat) (bnds : Nat → Nat) (h0 : bnds 0 = 0)
+    (hrun : ∀ i, i < S → ∀ a b, a < b → b < bnds (i + 1) - bnds i →
+      mty C0 I (path (bnds i + a)) ≠ mty C0 I (path (bnds i + b))) :
+    bnds S ≤ S * (typeEnum C0).length := by
+  refine blocks_len_le _ S bnds h0 (fun i hi => ?_)
+  have hb : bnds (i + 1) - bnds i ≤ (typeEnum C0).length :=
+    skipPath_len_le' C0 I (fun t => path (bnds i + t)) (bnds (i + 1) - bnds i)
+      (hrun i hi)
+  omega
+
+/-- The same bound stated on the prefix a `RunDecomp` covers. -/
+theorem mixedPath_prefix_le (C0 : Concept) (I : Interp α) (path : Nat → α)
+    (k S : Nat) (bnds : Nat → Nat) (hd : RunDecomp I path k S bnds)
+    (hrun : ∀ i, i < S → ∀ a b, a < b → b < bnds (i + 1) - bnds i →
+      mty C0 I (path (bnds i + a)) ≠ mty C0 I (path (bnds i + b))) :
+    k ≤ S * (typeEnum C0).length :=
+  Nat.le_trans hd.2.1 (mixedPath_len_le C0 I path S bnds hd.1 hrun)
+
+/-- **THE FUEL.**  Given a run bound `S`, the mixed closure's fuel is
+    `S * |typeEnum C0|` — computable from `C₀` and `S` alone.  This is the
+    number §103 isolated, now the ONLY input the composition still needs. -/
+def mixFuel (C0 : Concept) (S : Nat) : Nat := S * (typeEnum C0).length
+
+/-- **The blocks of a mixed skip path are UNIFORM.**  Each block's steps are all
+    non-served `∃PP` witnesses, or all non-served `∃PPI` witnesses — which is
+    what "maximal same-direction run" means, spelled out on the actual step
+    relation the closure uses. -/
+def UniformBlocks {α : Type} {I : Interp α} {C0 : Concept}
+    (ksU ksD : MTKNode I C0 → Concept → Bool)
+    (path : Nat → MTKNode I C0) (S : Nat) (bnds : Nat → Nat) : Prop :=
+  ∀ i, i < S →
+    (∀ t, t < bnds (i + 1) - bnds i → ∃ (c : Concept)
+        (hF : Concept.ex pp c ∈
+          mtk C0 I (path (bnds i + t)).x (path (bnds i + t)).k),
+        ksU (path (bnds i + t)) c = false ∧
+        path (bnds i + t + 1) = ppWitness (path (bnds i + t)) hF) ∨
+    (∀ t, t < bnds (i + 1) - bnds i → ∃ (c : Concept)
+        (hF : Concept.ex ppi c ∈
+          mtk C0 I (path (bnds i + t)).x (path (bnds i + t)).k),
+        ksD (path (bnds i + t)) c = false ∧
+        path (bnds i + t + 1) = ppiWitness (path (bnds i + t)) hF)
+
+/-- **THE COMPOSITION.**  A mixed skip path whose blocks are uniform is bounded
+    by `S * |typeEnum C0|`, with NO hypothesis beyond the block decomposition:
+    each block is handed to §102's directional distinctness lemma, which is
+    unconditional for the concrete `kserU`/`kserD`.
+
+    This is what §103's hand argument claimed, now kernel-checked. -/
+theorem mixedSkipPath_len_le (hI : RCC5Interp I) (C0 : Concept)
+    (path : Nat → MTKNode I C0) (S : Nat) (bnds : Nat → Nat) (h0 : bnds 0 = 0)
+    (hU : UniformBlocks (kserU C0 I) (kserD C0 I) path S bnds) :
+    bnds S ≤ S * (typeEnum C0).length := by
+  refine mixedPath_len_le C0 I (fun n => (path n).x) S bnds h0 (fun i hi a b hab hb => ?_)
+  rcases hU i hi with hup | hdn
+  · refine hextU_of_KserSegmentU (kserU C0 I) (kserU_segment C0 I)
+      (fun t => path (bnds i + t)) (bnds (i + 1) - bnds i) (fun t ht => ?_) a b hab hb
+    obtain ⟨c, hF, hns, hst⟩ := hup t ht
+    refine ⟨c, hF, hns, ?_⟩
+    show path (bnds i + (t + 1)) = ppWitness (path (bnds i + t)) hF
+    rw [← Nat.add_assoc]; exact hst
+  · refine hextD_of_KserSegmentD (kserD C0 I) hI (kserD_segment C0 I)
+      (fun t => path (bnds i + t)) (bnds (i + 1) - bnds i) (fun t ht => ?_) a b hab hb
+    obtain ⟨c, hF, hns, hst⟩ := hdn t ht
+    refine ⟨c, hF, hns, ?_⟩
+    show path (bnds i + (t + 1)) = ppiWitness (path (bnds i + t)) hF
+    rw [← Nat.add_assoc]; exact hst
+
+/-- The prefix form: whatever length the decomposition covers is bounded. -/
+theorem mixedSkipPath_prefix_le (hI : RCC5Interp I) (C0 : Concept)
+    (path : Nat → MTKNode I C0) (k S : Nat) (bnds : Nat → Nat)
+    (hd : RunDecomp I (fun n => (path n).x) k S bnds)
+    (hU : UniformBlocks (kserU C0 I) (kserD C0 I) path S bnds) :
+    k ≤ mixFuel C0 S :=
+  Nat.le_trans hd.2.1 (mixedSkipPath_len_le hI C0 path S bnds hd.1 hU)
+
+/-- The fixpoint from a LENGTH BOUND rather than from distinctness — the form
+    the mixed case needs, since mixed paths are not type-repeat-free (§103.1)
+    but are still bounded (§104). -/
+theorem skipNodes_fixed_of_len (kser : MTKNode I C0 → Concept → Bool)
+    (n : MTKNode I C0) (N : Nat)
+    (hlen : ∀ (path : Nat → MTKNode I C0) (k : Nat),
+      (∀ i, i < k → SkipStep kser (path i) (path (i + 1))) → k ≤ N) :
+    ∀ m ∈ skipNodes kser n (N + 1), m ∈ skipNodes kser n N := by
+  intro m hm
+  obtain ⟨k, path, _, hp0, hpk, hsteps⟩ := skipNodes_path' kser _ n m hm
+  have hmem := skipNodes_of_path kser k path hsteps
+  rw [hp0, hpk] at hmem
+  exact skipNodes_mono_le kser n (hlen path k hsteps) m hmem
+
+/-- **The mixed test**: served upward or served downward. -/
+noncomputable def kserM (C0 : Concept) (I : Interp α) (m : MTKNode I C0)
+    (c : Concept) : Bool :=
+  kserU C0 I m c || kserD C0 I m c
+
+/-- Sound, from either half. -/
+theorem kserM_sound (hI : RCC5Interp I) (C0 : Concept) (m : MTKNode I C0)
+    (c : Concept) (h : kserM C0 I m c = true) :
+    sat I m.x (Concept.ex pp c) ∨ sat I m.x (Concept.ex ppi c) := by
+  rcases Bool.or_eq_true_iff.mp h with hu | hd
+  · exact Or.inl (kserU_sound hI C0 m c hu)
+  · exact Or.inr (kserD_sound hI C0 m c hd)
+
+/-- **THE ONE REMAINING NUMBER.**  Every mixed skip path admits a decomposition
+    into at most `S` same-direction runs.
+
+    The decomposition itself is free — cut at every direction change.  What is
+    NOT free is that `S` be a function of `C₀`: §103.4 records that nothing yet
+    forces direction switches to be few, and nothing forbids it.  Probe `wp107`
+    measures the quantity (bounded, small, but exceeding `mdepth C₀`).
+
+    Everything else in the mixed quadrant's vertical closure is discharged. -/
+def SwitchBounded {α : Type} (C0 : Concept) (I : Interp α) (S : Nat) : Prop :=
+  ∀ (path : Nat → MTKNode I C0) (k : Nat),
+    (∀ i, i < k → SkipStep (kserM C0 I) (path i) (path (i + 1))) →
+    ∃ bnds : Nat → Nat, RunDecomp I (fun n => (path n).x) k S bnds ∧
+      UniformBlocks (kserU C0 I) (kserD C0 I) path S bnds
+
+/-- **THE MIXED FIXPOINT.**  With the run count bounded, the mixed closure stops
+    growing at `mixFuel C0 S = S * |typeEnum C0|` — computable from `C₀` and
+    `S`.  This is §102's two directional fixpoints COMPOSED. -/
+theorem skipNodesM_fixed (hI : RCC5Interp I) (C0 : Concept) (S : Nat)
+    (hs : SwitchBounded C0 I S) (n : MTKNode I C0) :
+    ∀ m ∈ skipNodes (kserM C0 I) n (mixFuel C0 S + 1),
+      m ∈ skipNodes (kserM C0 I) n (mixFuel C0 S) := by
+  refine skipNodes_fixed_of_len _ n _ (fun path k hsteps => ?_)
+  obtain ⟨bnds, hd, hU⟩ := hs path k hsteps
+  exact mixedSkipPath_prefix_le hI C0 path k S bnds hd hU
+
+/-- **THE MIXED COVERAGE.**  Every `∃PP` demand at every member of the mixed
+    closure is either served (by an up- or down-kernel) or has its witness
+    inside the closure — the mixed analogue of `skipNodes_covers_at_typeEnum`. -/
+theorem skipNodesM_covers (hI : RCC5Interp I) (C0 : Concept) (S : Nat)
+    (hs : SwitchBounded C0 I S) (n : MTKNode I C0) :
+    ∀ m ∈ skipNodes (kserM C0 I) n (mixFuel C0 S), ∀ (c : Concept)
+      (hF : Concept.ex pp c ∈ mtk C0 I m.x m.k),
+      kserM C0 I m c = true ∨
+        ppWitness m hF ∈ skipNodes (kserM C0 I) n (mixFuel C0 S) :=
+  skipNodes_covers_of_fixed (kserM C0 I) n (mixFuel C0 S)
+    (skipNodesM_fixed hI C0 S hs n)
+
 end KernelService
 
 end KernelDebts
@@ -30229,3 +30430,11 @@ end OneShotDichotomy
 #print axioms odTower_frame
 
 end POFreeLift
+#print axioms POFreeLift.blocks_len_le
+#print axioms POFreeLift.mixedPath_len_le
+#print axioms POFreeLift.mixedPath_prefix_le
+#print axioms POFreeLift.mixedSkipPath_len_le
+#print axioms POFreeLift.mixedSkipPath_prefix_le
+#print axioms POFreeLift.kserM_sound
+#print axioms POFreeLift.skipNodesM_fixed
+#print axioms POFreeLift.skipNodesM_covers

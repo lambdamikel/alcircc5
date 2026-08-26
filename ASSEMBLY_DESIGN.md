@@ -8724,3 +8724,66 @@ few, and nothing yet forbids it — this is the honest open item.
 
 Build: 30,231 lines, 1,515 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 104. THE COMPOSITION, CERTIFIED — down to one number
+
+§103's hand argument is now a theorem, and the two halves are composed.
+
+### 104.1 What was built
+
+| | |
+|---|---|
+| `blocks_len_le` | `S` blocks each advancing by `≤ N` reach `≤ S·N`. **Axiom-free.** |
+| `RunDecomp` | the decomposition as DATA: boundaries + each block same-direction |
+| `mixedPath_len_le` | run-repeat-free path ⟹ `bnds S ≤ S · |typeEnum C0|` |
+| `UniformBlocks` | each block's steps all `∃PP`-witnesses or all `∃PPI`-witnesses |
+| **`mixedSkipPath_len_le`** | **the composition** — each block handed to §102's directional lemma, which is unconditional |
+| `skipNodes_fixed_of_len` | fixpoint from a LENGTH BOUND, not from distinctness |
+| `kserM` / `kserM_sound` | the mixed test: served up or served down |
+| **`skipNodesM_fixed`** | **the mixed fixpoint** at `mixFuel C0 S = S · |typeEnum C0|` |
+| **`skipNodesM_covers`** | **the mixed coverage** |
+
+`skipNodes_fixed_of_len` is the piece that made the composition possible: §102's
+fixpoints route through type-distinctness, which mixed paths do NOT have
+(§103.1). Routing through a length bound instead accepts exactly what §104 can
+prove.
+
+### 104.2 The one remaining number
+
+```
+SwitchBounded C0 I S :=
+  every mixed skip path decomposes into at most S same-direction runs
+```
+
+The decomposition is free — cut at each direction change. What is not free is
+that `S` be a function of `C₀`.
+
+### 104.3 What `wp107` measured
+
+The probe runs the mixed closure with the Lean `persistDs`/`persistDsI` test
+verbatim and counts direction switches.
+
+* **Model size does not drive it.** Max switches 3 / 5 / 4 at universe sizes
+  3 / 4 / 5 — noise, not growth.
+* **`mdepth C₀` is REFUTED as the bound** — 55 violations in 11,469 samples,
+  worst 4 switches at modal depth 1. This killed the hypothesis part D was
+  built to support.
+* `|vert-ex in cl C0|` violated 9 times; **`|cl C0|` never violated**, max
+  switches 5, max path length 7.
+
+The mechanism part D missed: a **cross-direction universal** (`∀PP.(∃PPI.E)`)
+regenerates a demand of the OPPOSITE direction, whose own guard
+(`∀PPI.∃PPI.E`) can fail — so the demand is regenerated AND one-shot. That is
+the alternation engine, and it is why depth is not a measure.
+
+### 104.4 The budget route is closed
+
+Dropping the budget at a switch would bound the run count for free.
+`hbS` does not forbid it — it constrains only DISJOINT pairs, and vertical
+pairs are not disjoint. `ee_all` does: it fires on every pair of the declared
+`odNet`, including transitively-related ones, so a node many switches down
+would owe a universal body deeper than its budget. This is why `ppNodes_bud`
+keeps budgets constant, and it is a real obstruction, not an oversight.
+
+Build: 30,331 lines, 1,527 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
