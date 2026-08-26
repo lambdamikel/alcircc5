@@ -32134,6 +32134,144 @@ theorem sNodes_covers_pp (hI : RCC5Interp I) {C0 : Concept} :
         | _ => exact absurd hmm List.not_mem_nil
       | _ => exact absurd hmm List.not_mem_nil
 
+/-! #### §150 — THE DESCENDING MIRROR, AND THE `ee_all` BRIDGE
+
+§149.2(a): mechanical items first.
+
+`sNodes_covers_ppi` is the mirror of §148's coverage — the same induction, the
+same engine (`sChildN_depth`), the other direction.
+
+Then the bridge to §149.2(b): what CAN be said about `ee_all` for support labels
+without the fixpoint. A support label sits inside the model type
+(`supportOk_sub_mty`), so a universal in it is TRUE at the source, hence its body
+is TRUE at every `r`-target. So the body may always be ADDED to the target's
+label without breaking `SupportOk` — which is exactly what the fixpoint does, and
+why it is sound. What is missing is that it TERMINATES, not that it is legal. -/
+
+open Classical in
+/-- **COVERAGE, DESCENDING.**  §148's theorem, mirrored. -/
+theorem sNodes_covers_ppi (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), maxDepth n.lab ≤ d →
+      ∀ m ∈ sNodes hI d n, ∀ (D : Concept) (hD : Concept.ex ppi D ∈ m.lab),
+        sChildN hI m hD ∈ sNodes hI d n := by
+  intro d
+  induction d with
+  | zero =>
+    intro n hdep m hm D hD
+    rw [sNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact absurd hD (no_demand_of_depth_zero (Nat.le_antisymm hdep (Nat.zero_le _)))
+    · exact absurd h List.not_mem_nil
+  | succ d' ih =>
+    intro n hdep m hm D hD
+    rw [sNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact sNodes_child_mem_ppi hI m hD d'
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp h
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+            have := sChildN_depth hI n hF
+            omega
+          exact sNodes_sub_of_child_pp hI n hF d'
+            (ih (sChildN hI n hF) hchild m hmm D hD)
+        | ppi =>
+          have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+            have := sChildN_depth hI n hF
+            omega
+          exact sNodes_sub_of_child_ppi hI n hF d'
+            (ih (sChildN hI n hF) hchild m hmm D hD)
+        | _ => exact absurd hmm List.not_mem_nil
+      | _ => exact absurd hmm List.not_mem_nil
+
+/-- **THE `ee_all` BODY IS TRUE AT THE TARGET.**  A support label is inside the
+    model type, so a universal in it holds at the source and its body holds at
+    every `r`-target — for ANY relation, read off or declared, since the fact is
+    `mty_all` and nothing about the frame. -/
+theorem support_all_sat {C0 : Concept} {x y : α} (hy : I.dom y)
+    {L : List Concept} (h : SupportOk I C0 x L)
+    {r : Atom} {E : Concept} (hE : Concept.all r E ∈ L) (hr : I.rho x y = r) :
+    sat I y E := by
+  have hmty : Concept.all r E ∈ mty C0 I x := supportOk_sub_mty h _ hE
+  exact (mem_mty.mp (mty_all hmty hy hr)).2
+
+/-- **AND IN `cl C₀`.**  So the body is a legal addition on both counts. -/
+theorem support_all_cl {C0 : Concept} {x : α} {L : List Concept}
+    (h : SupportOk I C0 x L) {r : Atom} {E : Concept}
+    (hE : Concept.all r E ∈ L) : E ∈ cl C0 :=
+  cl_all (h.sub _ hE)
+
+/-- **THE FIXPOINT STEP IS SOUND.**  Adding a universal's body to the target's
+    label keeps it a support label — closing the extended seed list with
+    `hcloseL`, whose `SupportOk` §145 already proved.
+
+    So §149.2(b) is a TERMINATION question, not a soundness one: every step the
+    fixpoint takes is legal, and `wp122`/`wp124` observe it settling. -/
+theorem support_extend (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hy : I.dom y) {L M : List Concept}
+    (hL : SupportOk I C0 x L) (hM : SupportOk I C0 y M)
+    {r : Atom} {E : Concept} (hE : Concept.all r E ∈ L) (hr : I.rho x y = r) :
+    SupportOk I C0 y (hcloseL I y (E :: M)) := by
+  refine hcloseL_supportOk hI hy _ ?_ ?_
+  · intro c hc
+    rcases List.mem_cons.mp hc with rfl | h
+    · exact support_all_cl hL hE
+    · exact hM.sub c h
+  · intro c hc
+    rcases List.mem_cons.mp hc with rfl | h
+    · exact support_all_sat hy hL hE hr
+    · exact hM.sat_ c h
+
+/-- **THE FIXPOINT NEVER DEEPENS.**  A propagated body is strictly shallower
+    than its source label, so extending a target cannot push the GLOBAL maximum
+    depth above where it already was.
+
+    This is the invariant §149.2(b)'s termination argument needs: every label in
+    the construction stays within `maxDepth` of the root, hence within
+    `mdepth C₀`. -/
+theorem support_extend_depth (I : Interp α) (y : α) {L M : List Concept}
+    {r : Atom} {E : Concept} (hE : Concept.all r E ∈ L) :
+    maxDepth (hcloseL I y (E :: M)) ≤ Nat.max (maxDepth L) (maxDepth M) := by
+  refine Nat.le_trans (hcloseL_depth_le I y (E :: M)) ?_
+  show Nat.max (mdepth E) (maxDepth M) ≤ Nat.max (maxDepth L) (maxDepth M)
+  have h1 : mdepth E ≤ maxDepth L := by
+    have := mem_maxDepth_le hE
+    have hd : mdepth (Concept.all r E) = mdepth E + 1 := rfl
+    omega
+  exact Nat.max_le.mpr ⟨Nat.le_trans h1 (Nat.le_max_left _ _), Nat.le_max_right _ _⟩
+
+/-- **AND SO THE WHOLE CONSTRUCTION IS DEPTH-BOUNDED.**  If every label starts
+    within `M`, every label stays within `M` — under generation
+    (`sChildN_depth`, which strictly decreases) and under propagation
+    (`support_extend_depth`, which cannot exceed the source).
+
+    Stated as the invariant rather than as a construction, so it applies to any
+    interleaving of the two. -/
+theorem depth_invariant (I : Interp α) (M : Nat) (y : α)
+    {L N : List Concept} {r : Atom} {E : Concept}
+    (hE : Concept.all r E ∈ L) (hL : maxDepth L ≤ M) (hN : maxDepth N ≤ M) :
+    maxDepth (hcloseL I y (E :: N)) ≤ M :=
+  Nat.le_trans (support_extend_depth I y hE) (Nat.max_le.mpr ⟨hL, hN⟩)
+
+/-! ##### §150.1 — where §149.2(b) now stands
+
+**Sound:** `support_extend` — every propagation step keeps a support label.
+
+**Depth-bounded:** `support_extend_depth` / `depth_invariant` — propagation
+cannot deepen the construction past its starting depth, so with a root label of
+depth `≤ mdepth C₀` every label stays there.
+
+**Still open:** that the interleaved iteration STOPS. §141 bounds the label half
+on a fixed node set; §148 bounds the node half for a fixed label scheme; the
+depth invariant now shows the two cannot escalate each other's measure. What is
+missing is the combined induction.
+
+That is a smaller gap than §149.2(b) described, because "propagation might deepen
+a label and restart the generation bound" is now ruled out rather than merely
+unobserved. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33008,4 +33146,9 @@ end POFreeLift
 #print axioms POFreeLift.sNodes_child_mem_pp
 #print axioms POFreeLift.no_demand_of_depth_zero
 #print axioms POFreeLift.sNodes_covers_pp
+#print axioms POFreeLift.sNodes_covers_ppi
+#print axioms POFreeLift.support_all_sat
+#print axioms POFreeLift.support_extend
+#print axioms POFreeLift.support_extend_depth
+#print axioms POFreeLift.depth_invariant
 #print axioms POFreeLift.kernel_of_no_terminal

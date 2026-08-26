@@ -11105,3 +11105,52 @@ genuinely unexplored in Lean. (d) has been outstanding since 2026-08-22 and
 nothing this session touched it.
 
 I will not put a session count on (b), (c) or (d).
+
+## 150. THE DESCENDING MIRROR, AND `ee_all` REDUCED TO TERMINATION
+
+§149.2(a) first, then a real reduction of (b).
+
+### 150.1 Mechanical, done
+
+`sNodes_covers_ppi` — §148's coverage theorem mirrored. Same induction, same
+engine (`sChildN_depth`), other direction.
+
+### 150.2 `ee_all` is a TERMINATION question, not a soundness one
+
+| | |
+|---|---|
+| `support_all_sat` | a universal in a support label holds at the source, so its body holds at every `r`-target — `mty_all`, nothing about the frame |
+| `support_all_cl` | and the body is in `cl C₀` |
+| **`support_extend`** | **so adding it to the target's label KEEPS a support label** |
+
+Every step the §137 fixpoint takes is **legal**. What was never in doubt is now
+proved; what remains is that it stops.
+
+### 150.3 And propagation cannot escalate the generation measure
+
+The obvious way termination could fail: propagation deepens a target's label,
+which restarts §148's depth-bounded generation.
+
+| | |
+|---|---|
+| **`support_extend_depth`** | a propagated body is strictly shallower than its SOURCE label, so extending cannot push the global maximum depth up |
+| `depth_invariant` | so if every label starts within `M`, every label stays within `M` |
+
+Stated as an invariant rather than a construction, so it holds for **any**
+interleaving of generation and propagation.
+
+### 150.4 Position on (b)
+
+* **sound** — every propagation step keeps a support label;
+* **depth-bounded** — propagation cannot deepen past the start, so with a root
+  label of depth `≤ mdepth C₀` every label stays there;
+* **open** — that the interleaved iteration STOPS.
+
+§141 bounds the label half on a fixed node set. §148 bounds the node half for a
+fixed label scheme. §150.3 now rules out the two escalating each other's measure.
+**What is missing is the combined induction** — a smaller gap than §149.2(b)
+described, because the escalation failure mode is excluded rather than merely
+unobserved.
+
+Build: 33,154 lines, 1,671 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
