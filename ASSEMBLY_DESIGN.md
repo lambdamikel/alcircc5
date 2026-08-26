@@ -9020,5 +9020,5 @@ instantiating at it.
 
 The risk is proportionate to 65 mechanical edits, not to 65 proofs.
 
-Build: 30,555 lines, 1,539 declarations, exit 0, 0 errors / 0 warnings /
+Build: 30,556 lines, 1,539 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
