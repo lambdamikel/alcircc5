@@ -349,7 +349,8 @@ def rand_c(rng, depth):
 
 
 def main(trials=9000, seed=606060, usize=5, use_edges=True, readoff=False):
-    mode = ("READ-OFF order" if readoff else
+    mode = (("READ-OFF, edges " + ("ON" if use_edges else "OFF"))
+            if readoff else
             ("declared edges ON" if use_edges else "edges OFF (CONTROL)"))
     print(f"WP115 -- acceptance test, {mode}\n")
     rng = random.Random(seed)
@@ -439,8 +440,8 @@ def main(trials=9000, seed=606060, usize=5, use_edges=True, readoff=False):
 
 
 if __name__ == "__main__":
-    main(use_edges=False)
-    print()
-    main(use_edges=True)
+    # The question: once the order is READ OFF, is the declared-edge apparatus
+    # still needed at all?
+    main(use_edges=False, readoff=True)
     print()
     raise SystemExit(main(use_edges=True, readoff=True))

@@ -10053,3 +10053,53 @@ before.
 Build: 31,783 lines, 1,592 declarations, 676 `#print axioms` lines, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`. `RCC5NormalForm.lean` and
 `ForcingReduction.lean` still build.
+
+## 130. THE WAY FORWARD — a five-step plan with the risk named
+
+`wp115` run four ways settles which pieces are load-bearing:
+
+| | unserved | diagnosis |
+|---|---|---|
+| declared order, no edges | 48 | mixed |
+| declared order + edges | 15 | mostly "model relates them, frame says PO" |
+| **read-off, no edges** | **37** | **ALL: cut leaf, witness in MODEL not in SET** |
+| **read-off + edges + target expansion** | **0** | — |
+
+So the two fixes are orthogonal and both required:
+
+* **read-off** cures the RELATION problem — nodes the model relates that no
+  extraction step connects;
+* **declared edge + target expansion** cures the MEMBERSHIP problem — cut
+  leaves whose witness was never added.
+
+And the residual failure mode is now singular: *a cut leaf whose demand's
+witness is not in the set.* Nothing else fails, in any configuration.
+
+### 130.1 The plan
+
+1. **`cutNodesR`** — `cutNodes` extended so that at each cut leaf, the blocker's
+   witness is added AND expanded, chosen under §124.2's two-clause condition
+   (neither an ancestor of the leaf nor disjoint from it).
+2. **Termination of `cutNodesR`.** Each target's own expansion terminates by
+   `cutNodes_stable_typeEnum`. What needs a measure is the NUMBER OF ROUNDS —
+   targets generated at cut leaves of targets. **This is the risk.**
+3. **`cutNodesR_covers`** — every member's vertical demand has a witness in the
+   set: `cutNodes_up_mem` for expanded nodes, the target for cut leaves.
+4. **Assemble `MultiTierOk`** from `odOfModel_frame` + `readoff_ee_all_*` +
+   `readoff_e_ex_*` + (3). §128 already reduced every obligation but (3) to the
+   frame.
+5. **Run the existing pipeline**: `mergedExtraction_of_ok` →
+   `mixedCompleteness_of_merged` → `decidableSat_pofree`.
+
+Steps 1, 3, 4, 5 are assembly over certified parts. **Step 2 is the open
+mathematics**, and it is the same shape as every previous open item in this
+campaign: a termination measure for a construction that empirically terminates
+(`wp115`: 0 cap hits on 6,786 instances).
+
+### 130.2 What would falsify the plan
+
+A concept forcing unbounded target rounds — cut leaves whose targets are
+themselves cut leaves, indefinitely. `wp112`'s closed-form tower class is the
+right instrument to look for one, since that is where laps genuinely continue.
+
+Per §117.3, any such probe must state its control before the run.
