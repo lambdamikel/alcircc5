@@ -11045,3 +11045,63 @@ tried and failed to get for `mty` labels, twice.
 
 Build: 33,011 lines, 1,665 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 149. WHAT IS LEFT — a field-by-field count
+
+`mixedCompleteness_of_merged` is certified, so **`MergedExtraction` is the only
+thing between the fragment and `Decidable (Satisfiable C0)`**. That means:
+produce a `MultiTierOk` from a satisfiable `C₀`, within the `mixKT` bounds.
+
+### 149.1 The 19 `MultiTierOk` fields, against support labels
+
+| field | status |
+|---|---|
+| `hp` | trivial |
+| `e_clash`, `e_nobot` | **certified** — `supportOk_clash`/`_nobot` |
+| `e_and`, `e_or` | **certified** — `SupportOk` fields |
+| `k_clash`, `k_nobot`, `k_and`, `k_or` | **certified** — same lemmas, once phases carry support labels |
+| `kk_eq` | **certified** — `SupportOk.eq_` / `hclose_eqbody` |
+| `frame_q` | **certified** — `odOfModel_frame`, modulo wiring the kernel into `qnet` |
+| `e_ex`, vertical | **certified for the closure** — `sNodes_covers_pp`; needs the `∃PPI` mirror and restating §128 for support labels |
+| `ee_all` | **OPEN** — the substantive one |
+| `ek_all`, `ke_all`, `kk_pp`, `kk_ppi`, `kq_all`, `k_ex` | **OPEN** — the kernel side |
+
+Ten fields have their support-label proof. One (`ee_all`) is the substantive
+vertical gap. Six are kernel-side.
+
+### 149.2 The three remaining pieces, by kind
+
+**(a) Mechanical.** The `∃PPI` mirror of `sNodes_covers_pp`; restating §128's
+frame results (`readoff_ee_all_*`, `readoff_e_ex_*`) for support labels; and the
+`Fin`-indexed assembly into `MergedExtraction`'s exact shape. Each is a
+transcription of something already proved.
+
+**(b) `ee_all` for support labels — the substantive vertical item.** Under
+read-off relations `E e f` fires on many pairs, and a support label seeded from
+its own parent need not carry another node's universal. `wp122`/`wp124` fix this
+with a joint label/witness fixpoint that SETTLES in 1,709 and 1,019 models.
+§141 bounds the label half and §148 the node half; **the interleaving is not
+formalised**, and that is the work.
+
+**(c) The kernel side.** Six fields. `chain_or_kernel` (§119) produces kernels
+and `rr_covers` serves persistent demands, but neither is connected to support
+labels, and `wp124`'s two missing construction steps (§139.1) have no Lean
+counterpart at all.
+
+**(d) The horizontal half.** `mergedMT_ok`'s `hbS`/`hbK`/`hbQ` budget
+hypotheses — CLAUDE.md calls them "a choice inside the extraction, not a fact to
+discover". Untouched this session.
+
+### 149.3 Calibration, which matters more than the count
+
+This session produced four self-refutations, three retired instruments, two
+plans killed after being committed, and one result reported confidently that its
+own follow-up test destroyed. **Every estimate of remaining work I have made on
+this problem has been wrong in the optimistic direction.**
+
+So: (a) is small and I would say so. (b) has a measured construction and two
+bounded halves, which is the best position any open item has had. (c) is
+genuinely unexplored in Lean. (d) has been outstanding since 2026-08-22 and
+nothing this session touched it.
+
+I will not put a session count on (b), (c) or (d).
