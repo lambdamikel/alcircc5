@@ -10225,3 +10225,31 @@ Re-run `wp115` — different model class, full obligation checking — with targ
 expansion replaced by phases-or-edge. If that also passes, step 3 is worth
 formalising; if it does not, the disagreement between the two classes is itself
 the finding.
+
+### 132.5 "Nothing is added" — verified, not assumed
+
+§132.2 claimed the redesign adds no node. That was worth doubting: `wp117`'s
+`served_by_edge` searches the BLOCKER's witnesses, and nothing in it requires
+the witness to be a set member. If the edge pulled in new nodes they would owe
+their own demands, and §131's round problem would return by another door.
+
+Measured over the same five shapes:
+
+```
+Of the demands the EDGE served (phases did not):
+  witness ALREADY in the node set : 305
+  witness is a NEW node           : 0
+```
+
+**305 of 305 in-set. Zero new nodes.**
+
+And the reason is instructive rather than lucky: the witness `w` is an
+`r`-successor of the BLOCKER, not of the leaf, so `w` sits in the closure
+already — it was added when the blocker was expanded. What the demand lacks is
+not a node but a RELATION, and that is precisely what the declared edge supplies.
+
+So the redesign is better than §132.2 stated: the "declared edge" is not a new
+node under a declared relation, it is an EXISTING set member under a declared
+relation. `cutNodes_up_mem` already puts it there.
+
+§131's refutation cannot recur, because there is nothing to expand.

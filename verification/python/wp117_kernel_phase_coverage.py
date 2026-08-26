@@ -45,6 +45,21 @@ def blocker_of(T, c0, v, cuts_paths):
     return cuts_paths.get(v)
 
 
+def edge_witness(T, c0, v, blk, r, D):
+    """The blocker witness the declared edge would use, or None."""
+    if blk is None:
+        return None
+    for w in T.succs(blk, r):
+        if not T.sat(w, D):
+            continue
+        if v in T.succs(w, r):
+            continue
+        if w in T.succs(v, "DR") or v in T.succs(w, "DR"):
+            continue
+        return w
+    return None
+
+
 def served_by_edge(T, c0, v, blk, r, D, nodes):
     """sec.123's declared edge under sec.124.2's two-clause condition:
     the blocker's witness, neither an ancestor of v nor disjoint from it."""
@@ -61,6 +76,10 @@ def served_by_edge(T, c0, v, blk, r, D, nodes):
             continue                       # disjoint -> would break ltNotDj
         return True
     return False
+
+
+INSET = [0]
+NEW = [0]
 
 
 def sweep(seed, trials, L, p):
@@ -86,9 +105,16 @@ def sweep(seed, trials, L, p):
         for v in cuts:
             for (r, D) in unserved(T, c0, nodes, v):
                 st[v[0]][0] += 1
-                if (served_by_phase(T, c0, v, r, D)
-                        or served_by_edge(T, c0, v, blkmap[v], r, D, nodes)):
+                if served_by_phase(T, c0, v, r, D):
                     st[v[0]][1] += 1
+                    continue
+                w = edge_witness(T, c0, v, blkmap[v], r, D)
+                if w is not None:
+                    st[v[0]][1] += 1
+                    if w in nodes:
+                        INSET[0] += 1
+                    else:
+                        NEW[0] += 1
     return models, st
 
 
@@ -135,6 +161,11 @@ def main():
         if n:
             print(f"    {lbl} : {y}/{n} = {100.0*y/n:5.1f}%")
     print(f"    pooled : {py}/{pn} = {100.0*py/max(pn,1):.1f}%")
+    print()
+    print(f"  Of the demands the EDGE served (phases did not):")
+    print(f"    witness ALREADY in the node set : {INSET[0]}")
+    print(f"    witness is a NEW node           : {NEW[0]}"
+          f"   <- these owe their own demands")
     print()
     if rates and min(rates) > 99.9:
         print("  100% everywhere -> the two together cover the residue with no")
