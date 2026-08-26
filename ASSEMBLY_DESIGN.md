@@ -8958,3 +8958,67 @@ classically.
 
 Build: 30,528 lines, 1,537 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 108. `kserU_sound` IS VACUOUS — §107.3 CORRECTED
+
+§107.3 called the kernel gap "bridgeable cheaply". **That was wrong**, and
+pursuing it exposed something worse than a missing lemma.
+
+### 108.1 The finding
+
+`kserU_sound : kserU C0 I m c = true → sat I m.x (∃PP.c)`.
+
+But `∃PP.c ∈ mtk C0 I m.x m.k` **already** gives `sat I m.x (∃PP.c)`, by
+`mem_mty`. `kserU_sound_is_vacuous` (now in the file, so the claim cannot drift
+back into the record) proves exactly that conclusion with no mention of `kserU`.
+
+**§102's fixpoint is real; its soundness is empty.** `kserU`/`kserD` TERMINATE
+the closure but do not SERVE the demands they skip.
+
+### 108.2 Why §107.3's bridge fails
+
+The proposed bridge: `mty(path 0) = mty(path j)` so `∃PP.D ∈ mty(path j)` too,
+hence re-run the segment from its far endpoint and iterate.
+
+Equal types give the *first* step again — not the *segment*. The chain from
+`path 0` followed demands `D_0, D_1, …`; at `path j` only `D_0` is guaranteed,
+because the witness reached from `path j` need not have `mty(path 1)`. So the
+segment is not repeatable and there is no period. This is uniformization (W2′)
+in its original form, not a bookkeeping gap.
+
+### 108.3 The tension, named
+
+| test | serves the demand | terminates the closure |
+|---|---|---|
+| `persistDs` (the guard) | **yes** — certified kernel via `rrPt`/`rr_covers` | no |
+| `kserU`/`kserD` (a repeat) | **no** (§108.1) | yes (§102) |
+
+Neither test does both, and §§100–107 were built on the second.
+
+### 108.4 Three independent lines now point the same way
+
+1. **Late picking** (§106): switch drift disappears when the extraction chooses
+   witnesses already in the set.
+2. **This vacuity** (§108.1): the closure needs a test that both serves and
+   terminates; `persistDs` serves, and termination would come from choosing
+   short chains.
+3. **`short_chain`** (already certified): any `ServeChain` can be replaced by
+   one of length `≤ |typeEnum C0|` with the same `htype` — a "choose a better
+   chain" theorem, useless while witnesses come from `Classical.choose`.
+
+All three say: **witness selection must be a parameter of the construction, not
+`Classical.choose`.**
+
+### 108.5 What that refactor actually costs
+
+65 declarations mention `ppWitness`/`ppiWitness`. But downstream uses **only
+three properties** — `_rho`, `_bud`, `_arg` — plus the definition itself. So a
+`WitSel` structure carrying those three fields, with the closures parameterized
+by it, is a mechanical substitution rather than a re-proof: the existing
+`ppWitness` becomes one instance, and every current result survives by
+instantiating at it.
+
+The risk is proportionate to 65 mechanical edits, not to 65 proofs.
+
+Build: 30,555 lines, 1,539 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

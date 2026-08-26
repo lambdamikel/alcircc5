@@ -29713,6 +29713,33 @@ theorem mixStep_of_stepAll {β κ : Type} (nd : β → MTKNode I C0)
     (up dn : κ → β → Bool) {e f : β} (h : stepAll (nd e) (nd f)) :
     tcl (mixStep nd up dn) e f := tcl.base (Or.inl h)
 
+/-! #### §108 — `kserU_sound` IS VACUOUS
+
+§107's consumer needed `kserM` firing to produce a SERVER. It does not, and the
+reason is worse than a missing lemma: **`kserU_sound`'s conclusion follows from
+the demand alone.**
+
+`kserU_sound : kserU C0 I m c = true → sat I m.x (∃PP.c)`. But
+`∃PP.c ∈ mtk C0 I m.x m.k` already gives `sat I m.x (∃PP.c)`, by `mem_mty`.
+The theorem below proves exactly that, with no mention of `kserU`.
+
+So §102's fixpoint is real and its "soundness" is empty: `kserU`/`kserD`
+TERMINATE the closure but do not SERVE the demands they skip. -/
+
+/-- **THE VACUITY, AS A THEOREM.**  `kserU_sound`'s conclusion, derived from the
+    demand's membership alone.  Kept in the file so the claim cannot drift back
+    into the record as a soundness result. -/
+theorem kserU_sound_is_vacuous (m : MTKNode I C0) (c : Concept)
+    (hF : Concept.ex pp c ∈ mtk C0 I m.x m.k) :
+    sat I m.x (Concept.ex pp c) :=
+  (mem_mty.mp (mem_mtk.mp hF).1).2
+
+/-- The same on the descending side. -/
+theorem kserD_sound_is_vacuous (m : MTKNode I C0) (c : Concept)
+    (hF : Concept.ex ppi c ∈ mtk C0 I m.x m.k) :
+    sat I m.x (Concept.ex ppi c) :=
+  (mem_mty.mp (mem_mtk.mp hF).1).2
+
 end KernelService
 
 end KernelDebts
@@ -30526,3 +30553,4 @@ end POFreeLift
 #print axioms POFreeLift.skipNodesM_coversI
 #print axioms POFreeLift.mixCarrier_ex_pp
 #print axioms POFreeLift.mixCarrier_ex_ppi
+#print axioms POFreeLift.kserU_sound_is_vacuous
