@@ -11546,3 +11546,67 @@ file knew more than the summary of it.
 
 Build unchanged: 33,767 lines, 1,694 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 159. THE ASSEMBLY INTERFACE — read off the file
+
+`glueFam` and `glueFam_ok` are the assembly, and reading them settles what the
+mixed quadrant actually needs.
+
+### 159.1 `glueFam` puts PO between blocks
+
+```
+E e f = if e.1 = f.1 then (F e.1).E e.2 f.2 else po
+```
+
+Cross-block relations are **`PO`** — and `∀PO` does not exist in the fragment,
+so `ee_all` across blocks is vacuous by `MTNoPo`. **That is the ∀PO-free
+fragment's defining freedom, used structurally.**
+
+### 159.2 What `glueFam_ok` requires
+
+| | |
+|---|---|
+| `hpool` | each block is `MTOkPool (F b) b.val P` — valid with PENDING `∃PO` demands against a pool |
+| `hnopo` | each block has no `∀PO` — free from `POFree C0` |
+| `hreal` | every pool entry is REALISED: some block with that tag has a node whose label contains the entry's concepts |
+
+So the assembly is: **a block per kernel, a block per `∃PO` demand, glued with PO
+between them.** `block_of_persistent` supplies the kernel blocks;
+`one_kernel_block` and the horizontal extractions supply the rest.
+
+### 159.3 A friction point, found by reading
+
+`block_of_persistent` takes
+
+```
+hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 → ∃ q ∈ P, q.1 ≠ myTag ∧ D ∈ q.2
+```
+
+— over **`cl C₀`**, not over the labels that actually occur. But `hreal`
+requires every pool entry to be realised by a real node.
+
+If some `∃PO.D ∈ cl C₀` has `D` unsatisfiable, `hpoolcl` demands a pool entry
+that `hreal` cannot realise. The obligation never fires (`∃PO.D` is in no model
+type), but the hypothesis as stated does not know that.
+
+So `hpoolcl` is **conservative in a way that may be unsatisfiable**, and the
+assembly likely needs it restricted to demands that actually occur — a
+weakening of an existing hypothesis, not new mathematics.
+
+### 159.4 What is left, from the file
+
+| | |
+|---|---|
+| kernel blocks from persistence, both directions | **certified** |
+| gluing with PO between blocks | **certified**, `propext` only |
+| `MTNoPo` from `POFree` | **certified** |
+| build the FAMILY and the POOL from a model | **open — the assembly** |
+| `hpoolcl` restricted to occurring demands | **open — a hypothesis weakening** |
+| support labels through the kernel constructions | **open** |
+
+The assembly is the remaining substance, and it is construction over certified
+parts rather than new mathematics — with the `hpoolcl` caveat, which is the
+first thing to check when building it.
+
+Build unchanged: 33,767 lines, 1,694 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
