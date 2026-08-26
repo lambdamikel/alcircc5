@@ -30454,6 +30454,102 @@ theorem cutNodes_stable_typeEnum (W : WitSel I C0) (n : MTKNode I C0) :
   cutNodes_stable W (typeEnum C0).length [] List.nodup_nil
     (fun _ ht => absurd ht List.not_mem_nil) (by simp) n
 
+/-! #### §114 — WIRING THE UNCONSUMED THEOREMS
+
+§113 found three certified theorems with zero consumers. Two can be connected
+now.
+
+`cutNodes_up_mem` / `cutNodes_dn_mem` — every demand's witness is IN the closure,
+whether the step recursed or was cut, because §113's fix makes a cut keep the
+witness. No hypothesis, any selector.
+
+`kernelData_of_chain` — `pp_dichotomy`'s infinite branch feeds `kernel_of_chain`
+and out comes a `KernelData`. This is the construction §108.2 said was
+impossible; §108.2 was cycling a FINITE segment, which does fail, while
+`pp_dichotomy` hands over a genuinely infinite chain of real elements. -/
+
+/-- **THE `∃PP` WITNESS IS ALWAYS PRESENT.**  Recursed into, or kept by the
+    cut — either way it is in the list. -/
+theorem cutNodes_up_mem (W : WitSel I C0) (seen : List (List Concept))
+    (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex pp c ∈ mtk C0 I n.x n.k) (fuel : Nat) :
+    W.up n hF ∈ cutNodes W seen n (fuel + 1) := by
+  rw [cutNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex pp c, hF⟩, List.mem_attach _ _, ?_⟩)
+  show W.up n hF ∈
+    (if mty C0 I (W.up n hF).x ∈ seen then [W.up n hF]
+     else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) fuel)
+  by_cases hc : mty C0 I (W.up n hF).x ∈ seen
+  · rw [if_pos hc]; exact List.mem_cons_self
+  · rw [if_neg hc]; exact self_mem_cutNodes W _ _ fuel
+
+/-- The `∃PPI` mirror. -/
+theorem cutNodes_dn_mem (W : WitSel I C0) (seen : List (List Concept))
+    (n : MTKNode I C0) {c : Concept}
+    (hF : Concept.ex ppi c ∈ mtk C0 I n.x n.k) (fuel : Nat) :
+    W.dn n hF ∈ cutNodes W seen n (fuel + 1) := by
+  rw [cutNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex ppi c, hF⟩, List.mem_attach _ _, ?_⟩)
+  show W.dn n hF ∈
+    (if mty C0 I (W.dn n hF).x ∈ seen then [W.dn n hF]
+     else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) fuel)
+  by_cases hc : mty C0 I (W.dn n hF).x ∈ seen
+  · rw [if_pos hc]; exact List.mem_cons_self
+  · rw [if_neg hc]; exact self_mem_cutNodes W _ _ fuel
+
+/-- **A KERNEL FROM AN INFINITE CHAIN.**  `pp_dichotomy`'s second branch is
+    exactly `KernelData`'s `cdom`/`cstep`/`croot`; `kernel_of_chain` supplies
+    `cty` past any threshold, which is `base_ge`.
+
+    `Ds = []` — this produces the kernel OBJECT, not yet its coverage of a
+    named demand. Coverage is `ccovers`, and that is what `rr_covers` does for
+    the persistent case; the one-shot case is §114.1. -/
+noncomputable def kernelData_of_chain (C0 : Concept) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (L0 : Nat) : KernelData I C0 [] L0 true (c 0) :=
+  let h := kernel_of_chain C0 c (L0 + 1)
+  { c := c
+    i := Classical.choose h
+    p := Classical.choose (Classical.choose_spec h)
+    cdom := hdom
+    cstep := hstep
+    base_ge := by
+      have := (Classical.choose_spec (Classical.choose_spec h)).1
+      omega
+    ipos := by
+      have := (Classical.choose_spec (Classical.choose_spec h)).1
+      omega
+    croot := rfl
+    ppos := (Classical.choose_spec (Classical.choose_spec h)).2.1
+    cty := (Classical.choose_spec (Classical.choose_spec h)).2.2
+    ccovers := fun D hD => absurd hD List.not_mem_nil }
+
+/-! ##### §114.1 — what `ccovers` still needs
+
+`kernelData_of_chain` produces a kernel at `Ds = []`. The certificate's
+`he_ex` wants a kernel whose PERIOD carries the demanded `D`.
+
+For PERSISTENT demands that is `rr_covers`, and it works because the guard
+`∀PP.(∃PP.D)` keeps `D` available at every height, so the round-robin can serve
+each demand in turn.
+
+For ONE-SHOT demands the guard fails by definition, so `D` need not recur, and
+`pp_dichotomy`'s chain — which picks an arbitrary demand at each step — has no
+reason to meet a `D`-carrier inside its period.
+
+**Which is why the design does not ask it to.** §44.27 serves one-shot demands
+by an `elt` EDGE to a node in the set, not by a kernel — and
+`cutNodes_up_mem`/`_dn_mem` above put exactly that node in the set. The kernel
+is for the persistent half only.
+
+So the remaining question is not "how does a kernel cover a one-shot demand"
+(it does not, and should not) but: **do the CUT LEAVES' own demands get
+served?** A cut leaf is kept but not expanded, so its witnesses are absent. Its
+type equals an expanded ancestor's, which is what blocking exploits — and per
+`wp8`'s round-7 lesson the lap must be `PP`-labelled, never `EQ`. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31275,3 +31371,5 @@ end POFreeLift
 #print axioms POFreeLift.seen_full
 #print axioms POFreeLift.cutNodes_stable
 #print axioms POFreeLift.cutNodes_stable_typeEnum
+#print axioms POFreeLift.cutNodes_up_mem
+#print axioms POFreeLift.kernelData_of_chain
