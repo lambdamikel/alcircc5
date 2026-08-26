@@ -9714,3 +9714,64 @@ parameter precisely so it could be decided.
 
 Build: 31,633 lines, 1,582 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 124. THE DECLARED EDGE, FULLY TESTED — it did break something
+
+Michael's caution (*"i hope the blocking thing goes through, given our bad luck
+with blocking attempts earlier"*) was warranted, and acting on it found a real
+break that §123's partial check missed.
+
+§123 verified ONE obligation (`∀PP` propagation) and ONE obstruction
+(acyclicity). `wp115` builds the whole certificate, adds the declared edges,
+recomputes the ordered-disjoint closure and checks **every** obligation —
+ODStruct axioms, composition closure, `ee_all` for every relation, `e_ex`.
+
+### 124.1 The controlled result
+
+Same 6,786 certificates, same seeds, edges off vs on:
+
+| | unserved `∃PP` | unserved `∃PPI` | axiom violations |
+|---|---|---|---|
+| **control** (no edges) | 24 | 24 | 0 |
+| **edges, as §123 stated** | 9 | 6 | **`ltNotDj` 1** |
+| **edges + §124.2's condition** | 9 | 6 | **0** |
+
+The edge fixes **33 of 48** unserved vertical demands (69%) across 34 uses.
+
+### 124.2 What broke, and the repair
+
+**`ltNotDj`** — comparable pairs must not be disjoint. The blocker's witness `s`
+can be `DR` from the leaf `v` in the model; declaring `v < s` then makes a
+comparable pair disjoint and the frame is no longer ordered-disjoint.
+
+`declared_edge_package` does not see this, because it reasons from **labels**
+and disjointness is not a label fact.
+
+The repair is one more clause in the selection condition:
+
+> choose a blocker-witness that is **neither an ancestor of the leaf nor
+> disjoint from it**.
+
+With it: `ltNotDj` 0, edge count unchanged at 34, coverage unchanged. The
+condition costs nothing measured.
+
+### 124.3 Two lessons, both already in the ledger
+
+* **Partial checks pass.** §123 checked the obligation the route was designed
+  around and the obstruction it anticipated. The break was in neither. This is
+  the project's recurring shape — round 6's blocking passed its local checks too.
+* **The control is what made it readable.** Edges-off gives 48 unserved and 0
+  violations; without that column, "15 unserved, 1 violation" could have been
+  read as the edge causing 15 failures rather than fixing 33.
+
+### 124.4 Standing after this
+
+* the declared edge is **not free** — it needs a two-clause selection condition,
+  one of which was found only by full testing;
+* with the condition it introduces **no measured violation** and removes 69% of
+  the unserved residue;
+* **15 unserved vertical demands remain** across 6,786 certificates — residue
+  the edge does not reach.
+
+Lean unchanged: 31,627 lines, 1,582 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
