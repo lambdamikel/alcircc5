@@ -9957,3 +9957,42 @@ proved side condition, and the assembly of these into a `MultiTierOk`.
 
 Build: 31,703 lines, 1,587 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 128. WITH READ-OFF, THE CERTIFICATE REDUCES TO ONE QUESTION
+
+The architectural payoff of §127, and what `wp115`'s 48 → 5 improvement
+measured.
+
+Under a DECLARED order (transitive closure of the extraction's steps), serving
+`∃r.D` at `v` needs a node in the set AND a declared `v –r→ w` edge. Two nodes
+the model relates but no step connects come out `PO`, so the demand goes
+unserved even though the model serves it.
+
+Under `odOfModel` the relation IS the model's, so the edge is automatic:
+
+| obligation | now |
+|---|---|
+| `e_ex` ascending | `readoff_e_ex_pp` — reduced to MEMBERSHIP |
+| `e_ex` descending | `readoff_e_ex_ppi` — likewise |
+| `ee_all` `PP` | `readoff_ee_all_pp` — `mty_all` through `odNet_pp_inv` |
+| `ee_all` `PPI` | `readoff_ee_all_ppi` |
+| `ee_all` `DR` | `readoff_ee_all_dr` |
+| `ee_all` `PO` | **absent** — `mty_no_all_po`, the fragment's defining property |
+
+So every `ee_all` case and both vertical `e_ex` cases are consequences of the
+FRAME rather than obligations to discharge.
+
+### 128.1 What is left
+
+> **which nodes are in the set?**
+
+That is `cutNodes` plus the residue handling of §§123–126, and `wp115` answers
+it affirmatively on 6,786 instances with every obligation checked.
+
+It is also the one thing above that is **not** a theorem. The reduction is real
+— the certificate no longer has five open obligations, it has one open question
+— but the question is the constructive one, and constructive is where this
+campaign's defects have always lived.
+
+Build: 31,783 lines, 1,592 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

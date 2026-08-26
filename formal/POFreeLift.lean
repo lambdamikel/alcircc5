@@ -30867,6 +30867,83 @@ theorem odOfModel_dr (hI : RCC5Interp I) {x y : {v : α // I.dom v}}
     (h : I.rho x.val y.val = dr) : odNet (odOfModel hI) x y = dr :=
   odNet_dj _ h
 
+/-! #### §128 — WITH READ-OFF, `e_ex` IS A MEMBERSHIP QUESTION
+
+This is the architectural payoff of §127, and it is what `wp115`'s 48 → 5
+improvement measured.
+
+Under a DECLARED order (the transitive closure of the extraction's own steps),
+serving `∃r.D` at `v` needs a node `w` in the set AND a declared `v –r→ w` edge;
+two nodes that the model relates but no step connects come out `PO`, and the
+demand goes unserved even though the model serves it.
+
+Under `odOfModel` the relation is the model's, so the edge is automatic. Serving
+reduces to: **is some model witness IN the node set?** -/
+
+/-- **`e_ex`, ASCENDING, REDUCED TO MEMBERSHIP.** -/
+theorem readoff_e_ex_pp (hI : RCC5Interp I) (C0 : Concept)
+    {v : α} (hv : I.dom v) (S : α → Prop) {D : Concept}
+    (hS : ∃ w, S w ∧ ∃ _hw : I.dom w, I.rho v w = pp ∧ D ∈ mty C0 I w) :
+    ∃ (w : α) (hw : I.dom w), S w ∧
+      odNet (odOfModel hI) ⟨v, hv⟩ ⟨w, hw⟩ = pp ∧ D ∈ mty C0 I w := by
+  obtain ⟨w, hSw, hw, hr, hD⟩ := hS
+  exact ⟨w, hw, hSw, odOfModel_pp hI hr, hD⟩
+
+/-- **`e_ex`, DESCENDING.** -/
+theorem readoff_e_ex_ppi (hI : RCC5Interp I) (C0 : Concept)
+    {v : α} (hv : I.dom v) (S : α → Prop) {D : Concept}
+    (hS : ∃ w, S w ∧ ∃ _hw : I.dom w, I.rho v w = ppi ∧ D ∈ mty C0 I w) :
+    ∃ (w : α) (hw : I.dom w), S w ∧
+      odNet (odOfModel hI) ⟨v, hv⟩ ⟨w, hw⟩ = ppi ∧ D ∈ mty C0 I w := by
+  obtain ⟨w, hSw, hw, hr, hD⟩ := hS
+  exact ⟨w, hw, hSw, odOfModel_ppi hI hr, hD⟩
+
+/-- **AND `ee_all` IS AUTOMATIC TOO.**  A universal propagates along a read-off
+    edge because the edge IS the model's relation — `mty_all`, with the `odNet`
+    value inverted back to `I.rho` by `odNet_pp_inv`.
+
+    So under read-off the two obligations that dominate the certificate are
+    discharged by the frame itself, and what remains is entirely about WHICH
+    NODES ARE IN THE SET. -/
+theorem readoff_ee_all_pp (hI : RCC5Interp I) (C0 : Concept)
+    {v w : α} (hv : I.dom v) (hw : I.dom w)
+    (h : odNet (odOfModel hI) ⟨v, hv⟩ ⟨w, hw⟩ = pp)
+    {E : Concept} (hE : Concept.all pp E ∈ mty C0 I v) :
+    E ∈ mty C0 I w :=
+  mty_all hE hw (odNet_pp_inv _ h)
+
+/-- The descending mirror. -/
+theorem readoff_ee_all_ppi (hI : RCC5Interp I) (C0 : Concept)
+    {v w : α} (hv : I.dom v) (hw : I.dom w)
+    (h : odNet (odOfModel hI) ⟨v, hv⟩ ⟨w, hw⟩ = ppi)
+    {E : Concept} (hE : Concept.all ppi E ∈ mty C0 I v) :
+    E ∈ mty C0 I w := by
+  refine mty_all hE hw ?_
+  have hwv : I.rho w v = pp := odNet_ppi_inv _ h
+  rw [hI.conv_ w v hw hv, hwv]; rfl
+
+/-- And for `DR`, the remaining non-`PO` case. -/
+theorem readoff_ee_all_dr (hI : RCC5Interp I) (C0 : Concept)
+    {v w : α} (hv : I.dom v) (hw : I.dom w)
+    (h : odNet (odOfModel hI) ⟨v, hv⟩ ⟨w, hw⟩ = dr)
+    {E : Concept} (hE : Concept.all dr E ∈ mty C0 I v) :
+    E ∈ mty C0 I w :=
+  mty_all hE hw (odNet_dr_inv _ h)
+
+/-! ##### §128.1 — what this leaves
+
+`ee_all` for every non-`PO` relation, and `e_ex` for both vertical directions,
+are now consequences of the frame rather than obligations to discharge. `∀PO` is
+absent by `mty_no_all_po` — the fragment's defining property.
+
+So the whole certificate reduces to ONE question:
+
+> which nodes are in the set?
+
+which is `cutNodes` plus the residue handling of §§123–126, and which `wp115`
+answers affirmatively on 6,786 instances. It is also, unlike the obligations
+above, not yet a theorem. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31700,4 +31777,7 @@ end POFreeLift
 #print axioms POFreeLift.odOfModel
 #print axioms POFreeLift.odOfModel_frame
 #print axioms POFreeLift.odOfModel_pp
+#print axioms POFreeLift.readoff_e_ex_pp
+#print axioms POFreeLift.readoff_ee_all_pp
+#print axioms POFreeLift.readoff_ee_all_dr
 #print axioms POFreeLift.kernel_of_no_terminal
