@@ -30301,6 +30301,154 @@ def boundedSel_of_no_vertical (W : WitSel I C0)
       · exact (hnov c).1 (mtk_sub_cl _ hF)
       · exact (hnov c).2 (mtk_sub_cl _ hF)
 
+/-! #### §112 — THE CLOSURE THAT CUTS: a bound with NO hypothesis
+
+§110 named the debt as `BoundedSel`. This section removes it for the closure's
+TERMINATION half, by building the closure the design (§44.14) actually called
+for: one that carries the types it has already seen and STOPS at a repeat.
+
+Why that is legitimate rather than a dodge: `chain_cut` (certified) says a demand
+served by `v` is equally served by any LATER chain member with `v`'s type. So
+stopping at a repeat loses nothing — the earlier member serves. And once the
+closure never repeats a type along a path, `repeatfree_len_le` (certified) bounds
+it by `|typeEnum C0|` with no hypothesis at all.
+
+The three ingredients — `chain_cut`, `serveChain_rho`, `repeatfree_len_le` — are
+theorems, not hypotheses. What was missing was a closure that carries the path so
+the cut can fire; `skipNodes` is node-indexed and cannot. -/
+
+/-- Core has no `List.flatMap_congr`. -/
+theorem flatMap_congr {A B : Type} (l : List A) (f g : A → List B)
+    (h : ∀ a ∈ l, f a = g a) : l.flatMap f = l.flatMap g := by
+  induction l with
+  | nil => rfl
+  | cons a t ih =>
+    rw [List.flatMap_cons, List.flatMap_cons, h a List.mem_cons_self,
+      ih (fun b hb => h b (List.mem_cons_of_mem _ hb))]
+
+/-- **THE CUTTING CLOSURE.**  Carries the types already seen on this path and
+    stops when a step would repeat one.  Works for ANY selector. -/
+noncomputable def cutNodes (W : WitSel I C0) (seen : List (List Concept))
+    (n : MTKNode I C0) : Nat → List (MTKNode I C0)
+  | 0 => [n]
+  | fuel + 1 => n :: (mtk C0 I n.x n.k).attach.flatMap (fun p => match p with
+      | ⟨.ex pp _, hF⟩ =>
+          if mty C0 I (W.up n hF).x ∈ seen then []
+          else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) fuel
+      | ⟨.ex ppi _, hF⟩ =>
+          if mty C0 I (W.dn n hF).x ∈ seen then []
+          else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) fuel
+      | _ => [])
+
+theorem self_mem_cutNodes (W : WitSel I C0) (seen : List (List Concept))
+    (n : MTKNode I C0) (fuel : Nat) : n ∈ cutNodes W seen n fuel := by
+  cases fuel with
+  | zero => rw [cutNodes]; exact List.mem_cons_self
+  | succ f => rw [cutNodes]; exact List.mem_cons_self
+
+/-- **A FULL `seen` ADMITS NO NEW TYPE.**  If `seen` is repeat-free, drawn from
+    the type enumeration, and already as long as it, then every model type is
+    already in it — by `nodup_len_le` applied to the extended list, with no
+    pigeonhole of its own. -/
+theorem seen_full (seen : List (List Concept)) (hnd : seen.Nodup)
+    (hsub : ∀ t ∈ seen, t ∈ typeEnum C0)
+    (hlen : (typeEnum C0).length ≤ seen.length) (y : α) :
+    mty C0 I y ∈ seen := by
+  by_cases h : mty C0 I y ∈ seen
+  · exact h
+  · exfalso
+    have hnd' : (mty C0 I y :: seen).Nodup := List.nodup_cons.mpr ⟨h, hnd⟩
+    have hsub' : ∀ t ∈ (mty C0 I y :: seen), t ∈ typeEnum C0 := by
+      intro t ht
+      rcases List.mem_cons.mp ht with rfl | ht'
+      · exact mty_mem_typeEnum C0 I y
+      · exact hsub t ht'
+    have := nodup_len_le _ _ hsub' hnd'
+    rw [List.length_cons] at this
+    omega
+
+/-- **THE FIXPOINT, UNCONDITIONALLY.**  Once the fuel plus what is already seen
+    covers the type enumeration, more fuel changes nothing — for EVERY selector,
+    with no hypothesis on it and no kernel-service test.
+
+    This is what §110's `BoundedSel.bound` was assuming. It is a theorem. -/
+theorem cutNodes_stable (W : WitSel I C0) :
+    ∀ (fuel : Nat) (seen : List (List Concept)), seen.Nodup →
+      (∀ t ∈ seen, t ∈ typeEnum C0) →
+      (typeEnum C0).length ≤ seen.length + fuel →
+      ∀ n : MTKNode I C0, cutNodes W seen n (fuel + 1) = cutNodes W seen n fuel := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro seen hnd hsub hlen n
+    rw [cutNodes, cutNodes]
+    congr 1
+    have hall : ∀ (p : {x // x ∈ mtk C0 I n.x n.k}),
+        (match p with
+          | ⟨.ex pp _, hF⟩ =>
+              if mty C0 I (W.up n hF).x ∈ seen then []
+              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) 0
+          | ⟨.ex ppi _, hF⟩ =>
+              if mty C0 I (W.dn n hF).x ∈ seen then []
+              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) 0
+          | _ => []) = ([] : List (MTKNode I C0)) := by
+      rintro ⟨F, hF⟩
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp => exact if_pos (seen_full seen hnd hsub (by omega) _)
+        | ppi => exact if_pos (seen_full seen hnd hsub (by omega) _)
+        | _ => rfl
+      | _ => rfl
+    exact List.flatMap_eq_nil_iff.mpr (fun p _ => hall p)
+  | succ f ih =>
+    intro seen hnd hsub hlen n
+    rw [cutNodes, cutNodes]
+    congr 1
+    refine flatMap_congr _ _ _ (fun p _ => ?_)
+    rcases p with ⟨F, hF⟩
+    cases F with
+    | ex r c =>
+      cases r with
+      | pp =>
+        show (if mty C0 I (W.up n hF).x ∈ seen then []
+              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) (f + 1))
+            = (if mty C0 I (W.up n hF).x ∈ seen then []
+              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) f)
+        by_cases hc : mty C0 I (W.up n hF).x ∈ seen
+        · rw [if_pos hc, if_pos hc]
+        · rw [if_neg hc, if_neg hc]
+          exact ih _ (List.nodup_cons.mpr ⟨hc, hnd⟩)
+            (fun t ht => by
+              rcases List.mem_cons.mp ht with rfl | ht'
+              · exact mty_mem_typeEnum C0 I _
+              · exact hsub t ht')
+            (by rw [List.length_cons]; omega) _
+      | ppi =>
+        show (if mty C0 I (W.dn n hF).x ∈ seen then []
+              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) (f + 1))
+            = (if mty C0 I (W.dn n hF).x ∈ seen then []
+              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) f)
+        by_cases hc : mty C0 I (W.dn n hF).x ∈ seen
+        · rw [if_pos hc, if_pos hc]
+        · rw [if_neg hc, if_neg hc]
+          exact ih _ (List.nodup_cons.mpr ⟨hc, hnd⟩)
+            (fun t ht => by
+              rcases List.mem_cons.mp ht with rfl | ht'
+              · exact mty_mem_typeEnum C0 I _
+              · exact hsub t ht')
+            (by rw [List.length_cons]; omega) _
+      | _ => rfl
+    | _ => rfl
+
+/-- **THE HEADLINE.**  From an empty `seen`, the closure is stable at fuel
+    `|typeEnum C0|` — computable from `C₀` alone, for every selector, with NO
+    hypothesis. -/
+theorem cutNodes_stable_typeEnum (W : WitSel I C0) (n : MTKNode I C0) :
+    cutNodes W [] n ((typeEnum C0).length + 1) = cutNodes W [] n (typeEnum C0).length :=
+  cutNodes_stable W (typeEnum C0).length [] List.nodup_nil
+    (fun _ ht => absurd ht List.not_mem_nil) (by simp) n
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31119,3 +31267,6 @@ end POFreeLift
 #print axioms POFreeLift.skipNodesW_covers_of_fixed
 #print axioms POFreeLift.boundedSel_covers
 #print axioms POFreeLift.boundedSel_of_no_vertical
+#print axioms POFreeLift.seen_full
+#print axioms POFreeLift.cutNodes_stable
+#print axioms POFreeLift.cutNodes_stable_typeEnum

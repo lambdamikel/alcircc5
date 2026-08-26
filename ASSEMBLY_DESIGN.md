@@ -9188,3 +9188,51 @@ this session alone refuted two of its own hypotheses (`mdepth` as the switch
 bound, §104.3; "bridgeable cheaply", §108). "Not blocked" means no obstruction
 has been identified — which on this project's record is a weaker statement than
 it sounds.
+
+## 112. THE CLOSURE THAT CUTS — termination with NO hypothesis
+
+§110 named the debt as `BoundedSel.bound`. This section **proves it** for the
+termination half.
+
+### 112.1 The result
+
+```
+cutNodes_stable_typeEnum (W) (n) :
+  cutNodes W [] n (|typeEnum C0| + 1) = cutNodes W [] n |typeEnum C0|
+```
+
+**For every selector `W`. No hypothesis. No kernel-service test.** The fuel is
+computed from `C₀` alone.
+
+### 112.2 Why it works where `skipNodes` could not
+
+`skipNodes` is **node-indexed**: at a node it can only ask a test `kser n c`, so
+"have I seen this type before on this path?" is unaskable — which is why §102
+had to invent `kserU`, and why §108 found that invention vacuous.
+
+`cutNodes` carries `seen`, the types already met on the current path, and stops
+at a repeat. Then:
+
+* `seen_full` — a repeat-free `seen` drawn from `typeEnum C0` and already as long
+  as it admits no new type, by `nodup_len_le` on the extended list;
+* the induction — each non-cutting step grows `seen` by one, so fuel plus `seen`
+  covers the enumeration throughout.
+
+No pigeonhole beyond `nodup_len_le`, which was already in the file.
+
+### 112.3 What this does and does not settle
+
+**Settles:** termination. §110's `bound` field is a theorem for the cutting
+closure, so a `BoundedSel` no longer has to be assumed into existence.
+
+**Does not settle:** that cutting loses nothing. `chain_cut` (certified) says a
+demand served by `v` is equally served by any later chain member of `v`'s type —
+which is exactly the coverage the cut needs — but it is not yet wired to
+`cutNodes`. Until it is, the closure provably stops and is not yet proved to
+stop *with everything served*.
+
+That is the honest split: the half that was a hypothesis is now a theorem; the
+other half is a wiring job against a certified lemma, not a new assumption.
+
+Build: 31,262 lines, 1,570 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
