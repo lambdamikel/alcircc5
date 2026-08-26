@@ -31791,6 +31791,198 @@ theorem witnessLabel_supportOk (hI : RCC5Interp I) {C0 : Concept} {x y : α}
   hcloseL_supportOk hI hy _ (seedOf_sub r D L hD hLcl)
     (seedOf_sat hy hr hLsat hDy)
 
+/-! #### §146 — THE CONSTRUCTION STEP
+
+A node carries its element, its label, and the proof the label is a support
+label. `sChild` is one step: serve a demand, and the child is well-formed BY
+CONSTRUCTION — §145's `witnessLabel_supportOk` is its fourth field.
+
+The three properties after it are what the iteration needs: the relation holds,
+the argument is carried, and the label is strictly shallower. -/
+
+/-- The closure never deepens a formula. -/
+theorem hclose_depth_le (I : Interp α) (x : α) :
+    ∀ (c : Concept), ∀ e ∈ hclose I x c, mdepth e ≤ mdepth c := by
+  intro c
+  induction c with
+  | and a b iha ihb =>
+    intro e he
+    rw [hclose] at he
+    rcases List.mem_cons.mp he with rfl | h
+    · exact Nat.le_refl _
+    · rcases List.mem_append.mp h with h1 | h1
+      · exact Nat.le_trans (iha e h1) (Nat.le_max_left _ _)
+      · exact Nat.le_trans (ihb e h1) (Nat.le_max_right _ _)
+  | or a b iha ihb =>
+    intro e he
+    rw [hclose] at he
+    rcases List.mem_cons.mp he with rfl | h
+    · exact Nat.le_refl _
+    · by_cases hs : sat I x a
+      · rw [if_pos hs] at h
+        exact Nat.le_trans (iha e h) (Nat.le_max_left _ _)
+      · rw [if_neg hs] at h
+        exact Nat.le_trans (ihb e h) (Nat.le_max_right _ _)
+  | all r a ih =>
+    intro e he
+    rw [hclose] at he
+    by_cases hr : r = eq
+    · rw [if_pos hr] at he
+      rcases List.mem_cons.mp he with rfl | h
+      · exact Nat.le_refl _
+      · have := ih e h
+        have hd : mdepth (Concept.all r a) = mdepth a + 1 := rfl
+        omega
+    · rw [if_neg hr] at he
+      rcases List.mem_cons.mp he with rfl | h
+      · exact Nat.le_refl _
+      · exact absurd h List.not_mem_nil
+  | _ => intro e he
+         rcases List.mem_cons.mp he with rfl | h
+         · exact Nat.le_refl _
+         · exact absurd h List.not_mem_nil
+
+/-- So closing a seed list keeps within the seeds' depth. -/
+theorem hcloseL_depth_le (I : Interp α) (x : α) (L : List Concept) :
+    maxDepth (hcloseL I x L) ≤ maxDepth L := by
+  refine closure_depth_le L _ (fun e he => ?_)
+  obtain ⟨c, hc, hec⟩ := mem_hcloseL.mp he
+  exact ⟨c, hc, hclose_depth_le I x c e hec⟩
+
+/-- **A NODE**: element, label, and the proof the label is a support label. -/
+structure SNode {α : Type} (I : Interp α) (C0 : Concept) where
+  x : α
+  hx : I.dom x
+  lab : List Concept
+  ok : SupportOk I C0 x lab
+
+open Classical in
+/-- **THE STEP.**  Serve a demand of the node's label; the child is well-formed
+    by construction. -/
+noncomputable def sChild (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) : SNode I C0 :=
+  ⟨Classical.choose (n.ok.sat_ _ h),
+   (Classical.choose_spec (n.ok.sat_ _ h)).1,
+   hcloseL I (Classical.choose (n.ok.sat_ _ h)) (seedOf r D n.lab),
+   witnessLabel_supportOk hI (Classical.choose_spec (n.ok.sat_ _ h)).1 h
+     n.ok.sub (Classical.choose_spec (n.ok.sat_ _ h)).2.1 n.ok.sat_
+     (Classical.choose_spec (n.ok.sat_ _ h)).2.2⟩
+
+open Classical in
+/-- The step really is an `r`-edge. -/
+theorem sChild_rho (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
+    I.rho n.x (sChild hI n h).x = r :=
+  (Classical.choose_spec (n.ok.sat_ _ h)).2.1
+
+open Classical in
+/-- And the child carries the demand's argument. -/
+theorem sChild_arg (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
+    D ∈ (sChild hI n h).lab :=
+  mem_hcloseL.mpr ⟨D, List.mem_cons_self, self_mem_hclose _ _ D⟩
+
+open Classical in
+/-- **AND THE LABEL IS STRICTLY SHALLOWER** — §142's measure, on the real step.
+    This is what bounds the construction's depth by `mdepth C₀`. -/
+theorem sChild_depth (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
+    maxDepth (sChild hI n h).lab < maxDepth n.lab :=
+  Nat.lt_of_le_of_lt
+    (hcloseL_depth_le I _ (seedOf r D n.lab))
+    (seedOf_depth_lt n.lab r D h)
+
+/-! #### §147 — NORMALISED LABELS, AND THE BRANCHING BOUND
+
+`hcloseL` can repeat a formula, so a label's LENGTH is not bounded by `|cl C₀|`
+outright — and the branching factor §143 needs is the label's length.
+
+`normL` fixes it without changing what the label MEANS: keep the members of
+`cl C₀` that the label contains. The result has the same membership (a support
+label is inside `cl C₀` anyway) and is a filter of `cl C₀`, so its length is
+bounded with no `Nodup` hypothesis at all. -/
+
+/-- A label re-presented as a sublist of `cl C₀`. -/
+def normL (C0 : Concept) (L : List Concept) : List Concept :=
+  (cl C0).filter (fun c => decide (c ∈ L))
+
+theorem mem_normL {C0 : Concept} {L : List Concept} {c : Concept} :
+    c ∈ normL C0 L ↔ c ∈ cl C0 ∧ c ∈ L := by
+  unfold normL
+  constructor
+  · intro h
+    obtain ⟨h1, h2⟩ := List.mem_filter.mp h
+    exact ⟨h1, of_decide_eq_true h2⟩
+  · intro ⟨h1, h2⟩
+    exact List.mem_filter.mpr ⟨h1, decide_eq_true h2⟩
+
+/-- **THE BRANCHING BOUND**, with no `Nodup` hypothesis: a filter of `cl C₀`
+    cannot be longer than `cl C₀`. -/
+theorem normL_len (C0 : Concept) (L : List Concept) :
+    (normL C0 L).length ≤ (cl C0).length := List.length_filter_le _ _
+
+/-- Normalising changes nothing a support label says. -/
+theorem normL_supportOk {C0 : Concept} {x : α} {L : List Concept}
+    (h : SupportOk I C0 x L) : SupportOk I C0 x (normL C0 L) where
+  sub := fun _ hc => (mem_normL.mp hc).1
+  sat_ := fun _ hc => h.sat_ _ (mem_normL.mp hc).2
+  and_ := fun c d hcd => by
+    obtain ⟨p, q⟩ := h.and_ c d (mem_normL.mp hcd).2
+    exact ⟨mem_normL.mpr ⟨h.sub _ p, p⟩, mem_normL.mpr ⟨h.sub _ q, q⟩⟩
+  or_ := fun c d hcd => by
+    rcases h.or_ c d (mem_normL.mp hcd).2 with p | p
+    · exact Or.inl (mem_normL.mpr ⟨h.sub _ p, p⟩)
+    · exact Or.inr (mem_normL.mpr ⟨h.sub _ p, p⟩)
+  eq_ := fun c hc => by
+    have p := h.eq_ c (mem_normL.mp hc).2
+    exact mem_normL.mpr ⟨h.sub _ p, p⟩
+
+/-- Depth is monotone under inclusion, so normalising cannot deepen. -/
+theorem maxDepth_le_of_sub {l1 l2 : List Concept} (h : ∀ c ∈ l1, c ∈ l2) :
+    maxDepth l1 ≤ maxDepth l2 := by
+  induction l1 with
+  | nil => exact Nat.zero_le _
+  | cons a t ih =>
+    have h1 : mdepth a ≤ maxDepth l2 := mem_maxDepth_le (h a List.mem_cons_self)
+    have h2 : maxDepth t ≤ maxDepth l2 :=
+      ih (fun c hc => h c (List.mem_cons_of_mem a hc))
+    exact Nat.max_le.mpr ⟨h1, h2⟩
+
+theorem normL_depth_le (C0 : Concept) (L : List Concept) :
+    maxDepth (normL C0 L) ≤ maxDepth L :=
+  maxDepth_le_of_sub (fun _ hc => (mem_normL.mp hc).2)
+
+/-! ##### §147.1 — the step, normalised
+
+Re-stating §146's step with `normL` applied gives all three properties AND the
+length bound, so §143's counting instantiates with `b = |cl C₀|`. -/
+
+open Classical in
+/-- The step, with a normalised label. -/
+noncomputable def sChildN (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) : SNode I C0 :=
+  ⟨(sChild hI n h).x, (sChild hI n h).hx, normL C0 (sChild hI n h).lab,
+    normL_supportOk (sChild hI n h).ok⟩
+
+theorem sChildN_rho (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
+    I.rho n.x (sChildN hI n h).x = r := sChild_rho hI n h
+
+theorem sChildN_arg (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
+    D ∈ (sChildN hI n h).lab :=
+  mem_normL.mpr ⟨cl_ex (n.ok.sub _ h), sChild_arg hI n h⟩
+
+theorem sChildN_depth (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
+    maxDepth (sChildN hI n h).lab < maxDepth n.lab :=
+  Nat.lt_of_le_of_lt (normL_depth_le C0 _) (sChild_depth hI n h)
+
+/-- **THE LENGTH BOUND**, which is §143's branching factor. -/
+theorem sChildN_len (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
+    (sChildN hI n h).lab.length ≤ (cl C0).length := normL_len C0 _
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -32654,4 +32846,11 @@ end POFreeLift
 #print axioms POFreeLift.hclose_supportOk
 #print axioms POFreeLift.hcloseL_supportOk
 #print axioms POFreeLift.witnessLabel_supportOk
+#print axioms POFreeLift.sChild_rho
+#print axioms POFreeLift.sChild_arg
+#print axioms POFreeLift.sChild_depth
+#print axioms POFreeLift.normL_len
+#print axioms POFreeLift.normL_supportOk
+#print axioms POFreeLift.sChildN_depth
+#print axioms POFreeLift.sChildN_len
 #print axioms POFreeLift.kernel_of_no_terminal

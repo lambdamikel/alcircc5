@@ -10944,3 +10944,53 @@ kernel obligations.
 
 Build: 32,657 lines, 1,638 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 146–147. THE CONSTRUCTION STEP, CERTIFIED
+
+### 146. The step
+
+`SNode` carries an element, its label, and the proof the label is a support
+label. `sChild` serves one demand, and the child is **well-formed by
+construction** — §145's `witnessLabel_supportOk` is literally its fourth field.
+
+| | |
+|---|---|
+| `hclose_depth_le` / `hcloseL_depth_le` | the closure never deepens a formula |
+| `sChild_rho` | the step is a real `r`-edge |
+| `sChild_arg` | the child carries the demand's argument |
+| **`sChild_depth`** | **the child's label is strictly shallower** — §142's measure, on the real step |
+
+### 147. Normalised labels
+
+`hcloseL` can repeat a formula, so a label's LENGTH is not bounded by `|cl C₀|`
+outright — and the length IS §143's branching factor.
+
+`normL C0 L = (cl C0).filter (· ∈ L)` fixes it without changing what the label
+means: a support label is inside `cl C₀` anyway, so membership is unchanged, and
+the result is a filter of `cl C₀`.
+
+| | |
+|---|---|
+| `normL_len` | **length ≤ `\|cl C₀\|`, with NO `Nodup` hypothesis** — `propext` only |
+| `normL_supportOk` | normalising changes nothing a support label says |
+| `maxDepth_le_of_sub` / `normL_depth_le` | and cannot deepen |
+| `sChildN_rho` / `_arg` / `_depth` / **`_len`** | the step with all four properties |
+
+Avoiding `Nodup` matters: `hcloseL` gives no such guarantee, and proving one
+would have meant a dedup with its own equality reasoning. Filtering `cl C₀`
+sidesteps it — the bound comes from the filter, not from the label.
+
+### 147.2 Position
+
+A construction step now has, certified:
+
+* the child is a well-formed support label;
+* the edge is real and carries the argument;
+* the label is **strictly shallower** (bounds depth by `mdepth C₀`, §142);
+* the label is **at most `|cl C₀|` long** (bounds branching, §143).
+
+Those are exactly `genNodes_le_C0`'s two inputs. **The step is done; what remains
+is the iteration that repeats it and the between-node obligations.**
+
+Build: 32,819 lines, 1,652 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
