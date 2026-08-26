@@ -31381,6 +31381,82 @@ that, from a model of `C₀`, emits support labels and witnesses satisfying
 `wp124` runs exactly that construction and finds every obligation holds on 1,019
 models. The gap between that and a theorem is the extraction, not the bound. -/
 
+/-! #### §144 — THE SEED FUNCTION
+
+§142's `seed_depth_lt` is stated over an abstract seed satisfying a shape. This
+section supplies the concrete seed the construction uses and discharges that
+shape, so the depth measure applies to the real thing rather than to a
+hypothesis.
+
+The seed for serving `∃r.D` at a node labelled `L` is what the witness OWES:
+the demand's argument, and the body of every `∀r` the parent carries. Nothing
+else — that is the whole content of "support" as against "everything true". -/
+
+/-- The bodies of the `∀r` universals in a label. -/
+def bodyOf (r : Atom) : Concept → Option Concept
+  | .all r' E => if r' = r then some E else none
+  | _ => none
+
+theorem bodyOf_some {r : Atom} {c E : Concept} (h : bodyOf r c = some E) :
+    c = Concept.all r E := by
+  cases c <;> simp [bodyOf] at h
+  rename_i r' E'
+  obtain ⟨hr, hE⟩ := h
+  subst hr; subst hE; rfl
+
+def allBodies (r : Atom) (L : List Concept) : List Concept :=
+  L.filterMap (bodyOf r)
+
+theorem mem_allBodies {r : Atom} {L : List Concept} {E : Concept}
+    (h : E ∈ allBodies r L) : Concept.all r E ∈ L := by
+  obtain ⟨c, hc, hf⟩ := List.mem_filterMap.mp h
+  rw [← bodyOf_some hf]; exact hc
+
+/-- **THE SEED.**  What a witness owes: the demand's argument, and the bodies of
+    the parent's matching universals. -/
+def seedOf (r : Atom) (D : Concept) (L : List Concept) : List Concept :=
+  D :: allBodies r L
+
+/-- **THE SEED HAS `seed_depth_lt`'s SHAPE**, by construction. -/
+theorem seedOf_shape (r : Atom) (D : Concept) (L : List Concept) :
+    ∀ c ∈ seedOf r D L, c = D ∨ ∃ E, Concept.all r E ∈ L ∧ c = E := by
+  intro c hc
+  rcases List.mem_cons.mp hc with h | h
+  · exact Or.inl h
+  · exact Or.inr ⟨c, mem_allBodies h, rfl⟩
+
+/-- **SO THE MEASURE APPLIES TO THE REAL SEED.**  §142's descent, instantiated:
+    the concrete seed of a real demand is strictly shallower than the label that
+    produced it. -/
+theorem seedOf_depth_lt (L : List Concept) (r : Atom) (D : Concept)
+    (hD : Concept.ex r D ∈ L) :
+    maxDepth (seedOf r D L) < maxDepth L :=
+  seed_depth_lt L r D hD _ (seedOf_shape r D L)
+
+/-- The seed is drawn from `cl C₀` whenever the label is — the argument and the
+    bodies are subformulas. -/
+theorem seedOf_sub {C0 : Concept} (r : Atom) (D : Concept) (L : List Concept)
+    (hD : Concept.ex r D ∈ L) (hL : ∀ c ∈ L, c ∈ cl C0) :
+    ∀ c ∈ seedOf r D L, c ∈ cl C0 := by
+  intro c hc
+  rcases List.mem_cons.mp hc with rfl | h
+  · exact cl_ex (hL _ hD)
+  · exact cl_all (hL _ (mem_allBodies h))
+
+/-- Every seed member is TRUE at the witness, given the witness carries the
+    argument and the parent's universals propagate — which is `mty_all`, the same
+    fact `readoff_ee_all_pp` uses. So a support label can actually be BUILT on
+    the seed. -/
+theorem seedOf_sat {x y : α} (hy : I.dom y)
+    {r : Atom} {D : Concept} {L : List Concept}
+    (hr : I.rho x y = r) (hLsat : ∀ c ∈ L, sat I x c) (hD : sat I y D) :
+    ∀ c ∈ seedOf r D L, sat I y c := by
+  intro c hc
+  rcases List.mem_cons.mp hc with rfl | h
+  · exact hD
+  · have hall : Concept.all r c ∈ L := mem_allBodies h
+    exact hLsat _ hall y hy hr
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -32233,4 +32309,7 @@ end POFreeLift
 #print axioms POFreeLift.generation_depth_le
 #print axioms POFreeLift.genNodes_length_le
 #print axioms POFreeLift.genNodes_le_C0
+#print axioms POFreeLift.seedOf_depth_lt
+#print axioms POFreeLift.seedOf_sub
+#print axioms POFreeLift.seedOf_sat
 #print axioms POFreeLift.kernel_of_no_terminal

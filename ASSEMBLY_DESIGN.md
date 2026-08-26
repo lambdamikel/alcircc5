@@ -10848,3 +10848,49 @@ nobody could find.
 
 Build: 32,236 lines, 1,617 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 144. THE SEED FUNCTION — the measure now applies to the real thing
+
+§142's `seed_depth_lt` is stated over an abstract seed satisfying a shape. This
+section supplies the concrete seed and discharges that shape, so the depth
+measure applies to the construction rather than to a hypothesis.
+
+```
+seedOf r D L  =  D :: allBodies r L
+```
+
+What a witness OWES: the demand's argument, and the body of every `∀r` the parent
+carries. Nothing else — that is the whole content of "support" as against
+"everything true".
+
+| | |
+|---|---|
+| `bodyOf` / `bodyOf_some` / `mem_allBodies` | the universal-body extractor |
+| `seedOf_shape` | the seed has `seed_depth_lt`'s shape, by construction |
+| **`seedOf_depth_lt`** | **so the concrete seed is strictly shallower than its parent label** |
+| `seedOf_sub` | the seed stays in `cl C₀` |
+| `seedOf_sat` | every seed member is TRUE at the witness — via `mty_all`, the same fact `readoff_ee_all_pp` uses |
+
+All `propext`/`Quot.sound` only.
+
+`seedOf_sat` is the one that matters for the construction being possible at all:
+it says a support label can actually be BUILT on the seed, because the parent's
+universals really do propagate to the witness.
+
+### 144.1 Position
+
+The depth measure is no longer conditional on an unspecified seed. It applies to
+`seedOf`, which is what `wp122`/`wp124` implement:
+
+```python
+seeds = [D] + [e[2] for e in lab[x] if e[0] == "all" and e[1] == r]
+```
+
+That is `seedOf r D (lab x)`, line for line.
+
+Still open: the closure that iterates it, and the proof that its output is a
+`MultiTierOk`. But every ingredient the iteration consumes — the seed, its depth
+descent, its `cl C₀`-membership, its satisfaction — is now certified.
+
+Build: 32,315 lines, 1,626 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
