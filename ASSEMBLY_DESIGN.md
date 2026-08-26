@@ -10319,3 +10319,58 @@ serving a cut leaf needs a node that is not already there, and adding it spawns
 rounds that track the model rather than `C₀`.
 
 The open question is unchanged and now has two dead answers recorded against it.
+
+## 134. REVISED PLAN — after two refutations
+
+### 134.1 The methodological change, first
+
+Both dead plans failed the same way: I found a coverage mechanism, measured
+**coverage only**, and it collapsed when the full obligation set was checked.
+
+* §130 → §131: coverage fine, TERMINATION grew with the model.
+* §132 → §133: coverage 100%, but the witnesses were the leaves themselves, and
+  `frame_q` caught it.
+
+**Rule going forward: every candidate is measured with `wp118` — the full
+`MultiTierOk` checker over the kernel-bearing class — not with a coverage
+probe.** Coverage probes have now produced two false positives in two turns.
+`wp117` should be treated as retired.
+
+### 134.2 The one untested lever
+
+`wp109` measured late picking's effect on DEPTH and SWITCHES. It never measured
+the thing that matters here: **does a late-picking selector produce cut leaves
+whose demands are already served?**
+
+That is exactly what §109's `WitSel` parameterisation was built for, and the
+infrastructure is certified:
+
+* `WitSel` — the selector as a parameter, with `defaultSel` recovering current
+  behaviour and `skipNodesW_default` proving nothing was invalidated;
+* `cutNodes` takes any selector and terminates for all of them
+  (`cutNodes_stable_typeEnum`).
+
+So the selector can be changed without touching a single downstream proof. That
+is the cheapest remaining move and it has never been tried on this question.
+
+### 134.3 The plan
+
+1. **Build a late-picking selector in the probe** — when serving a demand,
+   prefer a witness already in the partial node set — and run **`wp118`**, not a
+   coverage probe.
+2. If cut leaves stop carrying unserved demands: define `lateSel : WitSel` in
+   Lean and prove the coverage theorem. Everything downstream (§§127–128) already
+   holds for any selector.
+3. If they do not: the remaining degree of freedom is one this campaign has not
+   used — **completeness lets the extraction choose its model.** It must produce
+   SOME certificate for a satisfiable `C₀`, not one for every model of `C₀`. That
+   would need a model-normalisation theorem (pass to a sub-model with bounded
+   prefix), which is genuinely new mathematics, not assembly.
+
+### 134.4 Calibration
+
+Two plans refuted in two turns, both of which I reported with more confidence
+than they deserved. Step 1 is worth doing because it is cheap and the
+infrastructure is already certified — not because I expect it to work. Step 3 is
+named so that a failure at step 2 has somewhere to go, not because it is
+sketched.
