@@ -30726,6 +30726,74 @@ reachable from `v` has no `∃PP` demand, or a kernel exists at `v`. The second
 branch lands on §120.1's FIRST open row — `ccovers` for a one-shot demand — so
 the two open rows are now known to be the same question reached two ways. -/
 
+/-! #### §123 — THE DECLARED EDGE: serving the residue by label equality
+
+§122.1 reduced everything to one shape: a cut leaf `v`, blocked by `a` with
+`mty v = mty a`, carrying a demand that points AWAY from `a`.
+
+The route the certificate architecture makes available, and which no earlier
+section used: **the frame is DECLARED, not read off the model, and `ee_all`
+reads only LABELS.** Since `mty v = mty a`, the leaf and its blocker carry the
+SAME label — so a universal at `v` imposes exactly the obligation it imposes at
+`a`, and `a` really does have its witness `s` above it in the model.
+
+So DECLARING `v < s` discharges `ee_all` even though the model may not relate
+`v` and `s` at all. That is round 7's blocking lesson in its proper form: the
+lap is a `PP`-labelled edge between DISTINCT occurrences, never an identification
+(`wp8`).
+
+Two lemmas below: the universal obligation, and the demand it serves.
+
+**The obstruction, and its measurement.** The declared order is the transitive
+closure of the extraction's steps and must stay a strict order (`mElt_irrefl`).
+Adding `v < s` cycles exactly when `s` is already an ANCESTOR of `v`. `wp114`
+measures how often the blocker has a `D`-witness that is not an ancestor:
+**100% / 100% / 95%** across three generators, with the built-in control
+("blocker has no witness at all", impossible when `mty v = mty a`) reading
+**0%** as predicted. The residual 5% is the cycle case. -/
+
+/-- **`ee_all` FOR A DECLARED EDGE.**  A universal at the leaf is a universal at
+    its blocker, and the blocker's real successor satisfies its body. No model
+    relation between `v` and `s` is used. -/
+theorem declared_edge_all (C0 : Concept) {v a s : α}
+    (hs : I.dom s) (hty : mty C0 I v = mty C0 I a) (has : I.rho a s = pp)
+    {E : Concept} (hE : Concept.all pp E ∈ mty C0 I v) :
+    E ∈ mty C0 I s := by
+  rw [hty] at hE
+  exact mty_all hE hs has
+
+/-- The descending form, for a demand pointing down. -/
+theorem declared_edge_all_ppi (C0 : Concept) {v a s : α}
+    (hs : I.dom s) (hty : mty C0 I v = mty C0 I a) (has : I.rho a s = ppi)
+    {E : Concept} (hE : Concept.all ppi E ∈ mty C0 I v) :
+    E ∈ mty C0 I s := by
+  rw [hty] at hE
+  exact mty_all hE hs has
+
+/-- **THE DEMAND IS SERVED.**  The blocker's own witness carries the leaf's
+    demand, because the demand is literally the blocker's demand. -/
+theorem declared_edge_serves (C0 : Concept) {v a : α}
+    (hty : mty C0 I v = mty C0 I a) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ mty C0 I v) :
+    ∃ s, I.dom s ∧ I.rho a s = r ∧ D ∈ mty C0 I s := by
+  rw [hty] at hD
+  exact mty_ex hD
+
+/-- **THE PACKAGE.**  Everything the declared edge `v < s` needs, from
+    `mty v = mty a` alone: a witness of the blocker carrying the demand, and
+    every universal at the leaf satisfied there.
+
+    What it does NOT supply is acyclicity — that `s` is not already an ancestor
+    of `v` — which is a property of the extraction's step graph, not of the
+    labels, and is the 5% `wp114` measures. -/
+theorem declared_edge_package (C0 : Concept) {v a : α}
+    (hty : mty C0 I v = mty C0 I a) {D : Concept}
+    (hD : Concept.ex pp D ∈ mty C0 I v) :
+    ∃ s, I.dom s ∧ I.rho a s = pp ∧ D ∈ mty C0 I s ∧
+      ∀ E, Concept.all pp E ∈ mty C0 I v → E ∈ mty C0 I s := by
+  obtain ⟨s, hs, has, hDs⟩ := declared_edge_serves C0 hty hD
+  exact ⟨s, hs, has, hDs, fun E hE => declared_edge_all C0 hs hty has hE⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31554,4 +31622,6 @@ end POFreeLift
 #print axioms POFreeLift.blocked_above_inherits_ppi
 #print axioms POFreeLift.blocked_below_served_in_set
 #print axioms POFreeLift.blocked_above_served_in_set
+#print axioms POFreeLift.declared_edge_all
+#print axioms POFreeLift.declared_edge_package
 #print axioms POFreeLift.kernel_of_no_terminal

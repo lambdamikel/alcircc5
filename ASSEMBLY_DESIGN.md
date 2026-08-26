@@ -9653,3 +9653,64 @@ is one.
 
 Build: 31,557 lines, 1,578 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 123. THE DECLARED EDGE — serving the residue by label equality
+
+§122.1 reduced everything to one shape: a cut leaf `v`, blocked by `a` with
+`mty v = mty a`, carrying a demand pointing AWAY from `a`.
+
+### 123.1 The route no earlier section used
+
+**The frame is DECLARED, not read off the model, and `ee_all` reads only
+LABELS.** Since `mty v = mty a`, leaf and blocker carry the SAME label — so a
+universal at `v` imposes exactly the obligation it imposes at `a`, and `a` really
+does have its witness `s` above it.
+
+So declaring `v < s` discharges `ee_all` **even though the model may not relate
+`v` and `s` at all**. That is round 7's blocking lesson in its proper form: the
+lap is a `PP`-labelled edge between distinct occurrences, never an identification
+(`wp8`).
+
+Certified:
+
+| | |
+|---|---|
+| `declared_edge_all` / `_ppi` | a universal at the leaf is satisfied at the blocker's witness |
+| `declared_edge_serves` | the blocker's witness carries the leaf's demand |
+| **`declared_edge_package`** | both, from `mty v = mty a` alone |
+
+### 123.2 The obstruction, and `wp114`
+
+The declared order is the transitive closure of the extraction's steps and must
+stay a strict order (`mElt_irrefl`). Adding `v < s` cycles exactly when `s` is
+already an ANCESTOR of `v`.
+
+| | universe 5 | universe 6 | uniform rels |
+|---|---|---|---|
+| residue demands | 12 | 15 | 20 |
+| declared edge AVAILABLE | **100%** | **100%** | **95%** |
+| blocker has no witness (control) | 0% | 0% | 0% |
+| only ancestors ⟹ cycle | 0% | 0% | 5% |
+
+The control — "blocker has no `D`-witness at all", impossible when
+`mty v = mty a` — read 0% as predicted. After §117's three failed instruments,
+a probe whose control passed.
+
+### 123.3 Where this leaves the vertical half
+
+`declared_edge_package` supplies everything the edge needs **from label equality
+alone**. What it does not supply is acyclicity, which is a property of the
+extraction's step graph rather than of labels — the 5%.
+
+So the single open question is no longer "how is a one-shot demand at a kernel
+covered". It is:
+
+> **can the extraction always choose a blocker-witness that is not an ancestor of
+> the leaf?**
+
+That is a statement about the step graph, it is measured at 95–100%, and it is
+the kind of thing a witness-selection discipline decides — which §109 made a
+parameter precisely so it could be decided.
+
+Build: 31,633 lines, 1,582 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
