@@ -8843,3 +8843,55 @@ A third, cheaper option worth noting: the extraction CHOOSES witnesses
 (`Classical.choose`). Preferring a witness already in the closure would avoid
 switches outright — the "late picking" discipline of `pp_witness_all_below`.
 Untested.
+
+## 106. LATE PICKING — a strengthener, not a finisher
+
+`wp109` tests §105.3's route 3: when serving a one-shot demand, prefer a
+witness ALREADY in the node set. Sound by construction — the preferred witness
+is a genuine model witness with the real relation and the real label, just a
+different choice than `Classical.choose` makes.
+
+### 106.1 It helps everywhere, and never hurts
+
+| | greedy depth | late depth | greedy switches | late switches | greedy nodes | late nodes |
+|---|---|---|---|---|---|---|
+| random (7,122) | 6 | **4** | 4 | **2** | 8 | **6** |
+| engine, u=4 | 4 | 3 | 2 | 2 | 7 | 6 |
+| engine, u=5 | 5 | 4 | 3 | **2** | 7 | **5** |
+| engine, u=6 | 6 | **3** | 4 | **2** | 7 | **6** |
+| champion, u=4 | 5 | 3 | 2 | **1** | 6 | 4 |
+| champion, u=5 | 5 | 3 | 3 | **1** | 6 | 4 |
+| champion, u=6 | 4 | 3 | 3 | **1** | 5 | 4 |
+
+Demands served from the existing set: 26.9% (random), ~59% (engine), ~45%
+(champion).
+
+### 106.2 The finding that matters
+
+**Under late picking the switch count is CONSTANT as the model grows; under
+greedy it drifts up.** The engine goes 2 → 3 → 4 greedily across universes
+4/5/6 and stays flat at 2 late; the champion goes 2 → 3 → 3 greedily and stays
+flat at 1 late.
+
+That drift is exactly the signal that would refute `SwitchBounded`. Late
+picking removes it.
+
+### 106.3 But it does not finish the job
+
+Switches do not reach 0 — they settle at 1–2. So `SwitchBounded` is still a
+hypothesis, not a triviality, and route 3 alone does not close the mixed
+quadrant.
+
+What it changes is the odds on route 1. `SwitchBounded` need only hold **for
+the extraction we actually build**, not for arbitrary witness choice — and the
+extraction is free to pick late. Proving a small constant bound for the
+late-picking extraction is a strictly easier target than bounding switches over
+all choices, and the only measurement that looked like growth was an artifact of
+the choice discipline.
+
+Secondary win: node counts drop by 20–35%, which feeds `mixKT` directly.
+
+### 106.4 Scope
+
+Finite set models, deterministic creation order, randomized search. "Constant
+under growth" is three universe sizes, not a theorem.
