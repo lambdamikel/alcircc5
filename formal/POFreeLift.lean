@@ -30606,6 +30606,126 @@ theorem kernel_of_no_terminal (C0 : Concept) (L0 : Nat) (P : α → Prop)
     generator climbs. Recorded rather than silently assumed. -/
 theorem chain_or_kernel_note : True := trivial
 
+/-! #### §121 — A CUT LEAF BELOW ITS BLOCKER IS SERVED FOR FREE
+
+§120.1's second open row is the cut leaf whose lap does not continue and which
+the set does not already serve. It splits by ORIENTATION, and one side is free.
+
+If the leaf `v` sits BELOW its blocker `a` — `v ⊂ a`, which is what a descending
+step produces — then `a`'s own server for a demand serves `v` too, by
+`comp(PP,PP) = {PP}`: `v ⊂ a ⊂ s` gives `v ⊂ s`, and the demand is the same
+demand because `mty v = mty a` is what made `v` a leaf.
+
+So no new node, no kernel, and no appeal to the lap continuing. `path_cut_below`
+(certified, previously used only inside `chain_cut`) is the whole proof.
+
+The ASCENDING case — `v ⊃ a` — does not follow this way, and should not be
+expected to: `comp(PPI,PP)` is `{PPI,PO,PP,EQ}`, so nothing is forced. That case
+is the actual residue. -/
+
+/-- **THE BLOCKER'S WITNESS SERVES THE LEAF.**  A leaf below its blocker
+    inherits the blocker's servers, by `PP`-transitivity. -/
+theorem blocked_below_inherits (hI : RCC5Interp I) (C0 : Concept)
+    {v a : α} (hv : I.dom v) (ha : I.dom a)
+    (hva : I.rho v a = pp) (hty : mty C0 I v = mty C0 I a)
+    {D : Concept} (hD : Concept.ex pp D ∈ mty C0 I v) :
+    ∃ s, I.dom s ∧ I.rho v s = pp ∧ D ∈ mty C0 I s := by
+  have hDa : Concept.ex pp D ∈ mty C0 I a := by rw [← hty]; exact hD
+  obtain ⟨s, hs, has, hDs⟩ := mty_ex hDa
+  exact ⟨s, hs, path_cut_below hI hv ha hs hva has, hDs⟩
+
+/-- The `∃PPI` demand at a leaf ABOVE its blocker is the dual free case:
+    `v ⊃ a ⊃ s` gives `v ⊃ s`, so a descending demand at an ascending leaf is
+    served by the blocker's descending witness. -/
+theorem blocked_above_inherits_ppi (hI : RCC5Interp I) (C0 : Concept)
+    {v a : α} (hv : I.dom v) (ha : I.dom a)
+    (hav : I.rho a v = pp) (hty : mty C0 I v = mty C0 I a)
+    {D : Concept} (hD : Concept.ex ppi D ∈ mty C0 I v) :
+    ∃ s, I.dom s ∧ I.rho s v = pp ∧ D ∈ mty C0 I s := by
+  have hDa : Concept.ex ppi D ∈ mty C0 I a := by rw [← hty]; exact hD
+  obtain ⟨s, hs, has, hDs⟩ := mty_ex hDa
+  have hsa : I.rho s a = pp := by
+    rw [hI.conv_ a s ha hs, has]; rfl
+  exact ⟨s, hs, path_cut_below hI hs ha hv hsa hav, hDs⟩
+
+/-! ##### §121.1 — what is left after this
+
+The four leaf/demand combinations:
+
+| leaf sits | demand | served by |
+|---|---|---|
+| below blocker (`v ⊂ a`) | `∃PP` | **`blocked_below_inherits`** — free |
+| above blocker (`v ⊃ a`) | `∃PPI` | **`blocked_above_inherits_ppi`** — free |
+| above blocker (`v ⊃ a`) | `∃PP` | the residue |
+| below blocker (`v ⊂ a`) | `∃PPI` | the residue (dual) |
+
+Two of four are discharged with no hypothesis, no new node and no kernel. The
+other two are the cases where the leaf's demand points AWAY from its blocker, so
+transitivity has nothing to work with — and `comp(PPI,PP) = {PPI,PO,PP,EQ}`
+confirms nothing is forced there.
+
+That is the sharpened statement of §120.1's second open row. -/
+
+/-! #### §122 — WHAT §121 ACTUALLY BUYS (measured: not what was hoped)
+
+`wp113` classified every unserved demand at a cut leaf by orientation. §121's
+two free cases covered **0 of them, in all three sweeps.**
+
+The reason is not that §121 is wrong — it is that §121's cases were never in the
+residue. If `v ⊂ a` and `v` demands `∃PP.D`, then `a`'s own witness already
+serves `v`, and `a` was EXPANDED (that is what made `v` a leaf rather than `a`),
+so that witness is in the set by `cutNodes_up_mem`. Such a demand is served
+before anything has to be repaired.
+
+So §121 explains the measured "already served in-set" column (87–97%, `wp110`)
+rather than shrinking what is left. The theorem below states that properly.
+
+And the residue is now sharply characterised: **every unserved demand at a cut
+leaf points AWAY from its blocker** — 100% across three sweeps. That is a
+structural statement, not a rate. -/
+
+/-- **THE FREE CASE, IN THE SET.**  A leaf below its blocker is served by a node
+    the closure has already added: the blocker's own witness. Combines §121's
+    transitivity with §114's presence lemma, so the conclusion is membership,
+    not mere existence. -/
+theorem blocked_below_served_in_set (hI : RCC5Interp I) (C0 : Concept)
+    (W : WitSel I C0) (seen : List (List Concept))
+    (a v : MTKNode I C0) (hva : I.rho v.x a.x = pp)
+    {D : Concept} (hF : Concept.ex pp D ∈ mtk C0 I a.x a.k) (fuel : Nat) :
+    ∃ s ∈ cutNodes W seen a (fuel + 1),
+      I.rho v.x s.x = pp ∧ D ∈ mtk C0 I s.x s.k :=
+  ⟨W.up a hF, cutNodes_up_mem W seen a hF fuel,
+    path_cut_below hI v.hx a.hx (W.up a hF).hx hva (W.up_rho a hF),
+    W.up_arg a hF⟩
+
+/-- The dual: a leaf above its blocker, demanding downward. -/
+theorem blocked_above_served_in_set (hI : RCC5Interp I) (C0 : Concept)
+    (W : WitSel I C0) (seen : List (List Concept))
+    (a v : MTKNode I C0) (hav : I.rho a.x v.x = pp)
+    {D : Concept} (hF : Concept.ex ppi D ∈ mtk C0 I a.x a.k) (fuel : Nat) :
+    ∃ s ∈ cutNodes W seen a (fuel + 1),
+      I.rho s.x v.x = pp ∧ D ∈ mtk C0 I s.x s.k := by
+  refine ⟨W.dn a hF, cutNodes_dn_mem W seen a hF fuel, ?_, W.dn_arg a hF⟩
+  have hsa : I.rho (W.dn a hF).x a.x = pp := by
+    rw [hI.conv_ a.x (W.dn a hF).x a.hx (W.dn a hF).hx, W.dn_rho a hF]; rfl
+  exact path_cut_below hI (W.dn a hF).hx a.hx v.hx hsa hav
+
+/-! ##### §122.1 — the residue, stated exactly
+
+After §§121–122 the open case is ONE shape, not four:
+
+> a cut leaf `v`, blocked by `a` with `mty v = mty a`, carrying a demand whose
+> direction points AWAY from `a` — `v ⊃ a` with `∃PP.D`, or `v ⊂ a` with
+> `∃PPI.D`.
+
+`comp(PPI,PP) = {PPI,PO,PP,EQ}` forces nothing there, which is why transitivity
+does not reach it, and `wp113` finds it is 100% of what remains.
+
+For that shape `chain_or_kernel` (§119) applies at `v`: either some node
+reachable from `v` has no `∃PP` demand, or a kernel exists at `v`. The second
+branch lands on §120.1's FIRST open row — `ccovers` for a one-shot demand — so
+the two open rows are now known to be the same question reached two ways. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31430,4 +31550,8 @@ end POFreeLift
 #print axioms POFreeLift.cutNodes_up_mem
 #print axioms POFreeLift.kernelData_of_chain
 #print axioms POFreeLift.chain_or_kernel
+#print axioms POFreeLift.blocked_below_inherits
+#print axioms POFreeLift.blocked_above_inherits_ppi
+#print axioms POFreeLift.blocked_below_served_in_set
+#print axioms POFreeLift.blocked_above_served_in_set
 #print axioms POFreeLift.kernel_of_no_terminal

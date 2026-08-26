@@ -9600,3 +9600,56 @@ are stated over certified surroundings, and neither is a hypothesis to assume.
 
 Build: 31,433 lines, 1,574 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 121–122. THE ORIENTATION SPLIT — proved, and measured to cover 0% of the residue
+
+### 121. Two of four combinations are free
+
+A cut leaf `v` blocked by `a` with `mty v = mty a`. Four leaf/demand
+combinations; two follow from `comp(PP,PP) = {PP}`:
+
+| leaf sits | demand | |
+|---|---|---|
+| below blocker (`v ⊂ a`) | `∃PP` | **`blocked_below_inherits`** |
+| above blocker (`v ⊃ a`) | `∃PPI` | **`blocked_above_inherits_ppi`** |
+| above blocker | `∃PP` | residue |
+| below blocker | `∃PPI` | residue |
+
+`path_cut_below` — certified, previously used only inside `chain_cut` — is the
+whole proof of both.
+
+### 122. But `wp113` says they cover NONE of the residue
+
+Classifying every unserved demand at a cut leaf by orientation:
+
+**FREE: 0 (0.0%). RESIDUE: 100%.** All three sweeps.
+
+The reason is not that §121 is wrong. Its cases were never IN the residue: if
+`v ⊂ a` and `v` demands `∃PP.D`, then `a`'s own witness serves `v`, and `a` was
+EXPANDED (that is what made `v` a leaf rather than `a`), so that witness is in
+the set by `cutNodes_up_mem`. Such a demand is served before anything needs
+repair.
+
+So §121 explains the measured **"already served in-set" column (87–97%)** rather
+than shrinking what is left. `blocked_below_served_in_set` /
+`blocked_above_served_in_set` state that properly — conclusion is MEMBERSHIP in
+the closure, not mere existence in the model.
+
+### 122.1 The payoff: the residue is one shape, and the two open rows are one row
+
+> a cut leaf `v`, blocked by `a`, carrying a demand pointing AWAY from `a` —
+> `v ⊃ a` with `∃PP.D`, or `v ⊂ a` with `∃PPI.D`.
+
+100% of what remains, structurally (not a rate). `comp(PPI,PP) = {PPI,PO,PP,EQ}`
+forces nothing there, which is exactly why transitivity cannot reach it.
+
+And for that shape `chain_or_kernel` (§119) applies at `v`: either some node
+reachable from `v` is demand-free, or a kernel exists at `v` — landing on
+§120.1's FIRST open row. **So the two open rows are the same question reached
+two ways: `ccovers` for a one-shot demand at a kernel.**
+
+That is a real consolidation. §120.1 listed two independent-looking gaps; there
+is one.
+
+Build: 31,505 lines, 1,578 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
