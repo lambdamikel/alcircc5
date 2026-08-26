@@ -9300,3 +9300,69 @@ from checking the file rather than reasoning about it.
 
 Build: 31,272 lines, 1,568 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 114. TWO OF THE THREE, WIRED
+
+* `cutNodes_up_mem` / `cutNodes_dn_mem` — **every demand's witness is in the
+  closure**, whether the step recursed or was cut (§113's fix makes a cut keep
+  the witness). No hypothesis, any selector.
+* `kernelData_of_chain` — `pp_dichotomy`'s infinite branch feeds
+  `kernel_of_chain`, and out comes a `KernelData`. **This is the construction
+  §108.2 called impossible.** §108.2 was cycling a finite segment, which does
+  fail; `pp_dichotomy` hands over a genuinely infinite chain of real elements.
+
+`short_chain` remains unconsumed.
+
+## 115. WHAT `wp106` ALREADY SAID
+
+Before building further, re-ran the probe that measures exactly this.
+
+```
+PART A -- is the closure CLOSED, and at what fuel?
+   fuel   cases   CLOSED  unserved  mean |S|
+      1     222      216         7       1.2
+      2     222      220         2       1.3
+      3     222      221         1       1.3
+      4     222      222         0       1.3
+```
+
+**At fuel 4 the closure is closed in 222/222 cases** — every one-shot and
+horizontal demand at every member has its witness inside the set — with
+persistent vertical demands excluded because §49 serves those from the node's
+own kernel. Worst `|S|` was 3 against a bound of 3.
+
+Its own truncation audit reports 0 unserved-because-unreached and 0
+unserved-because-outside, so the closure figure is not a truncation artifact.
+
+### 115.1 What that does and does not license
+
+It says the closure's one-shot half behaves: it closes, fast, small. It is
+evidence the architecture is right, on finite set models.
+
+It does not supply the Lean argument, and the reason is now sharp. In a finite
+model the closure terminates because elements run out. In general the terminating
+argument has to be `pp_dichotomy`: either some reachable node has no `∃PP`
+demand, or there is an infinite chain — and the infinite chain is now a kernel
+(§114).
+
+### 115.2 The one item left in this half
+
+`ccovers` for a NAMED demand. `kernelData_of_chain` builds the kernel at
+`Ds = []`; the certificate wants `D` inside the period.
+
+* **Persistent `D`:** `rr_covers` does it, because the guard keeps `D` available
+  at every height so the round-robin can take each demand in turn. Certified and
+  consumed.
+* **One-shot `D`:** the guard fails by definition, so `D` need not recur, and a
+  chain that picks an arbitrary demand per step has no reason to meet a
+  `D`-carrier in its period. **The design does not ask a kernel to cover it** —
+  §44.27 serves one-shot demands by an `elt` edge to a set member, and §114's
+  `cutNodes_up_mem` puts that member in the set.
+
+So the split is clean and the remaining question is narrow: **cut leaves.** A cut
+leaf is kept but not expanded, so its own demands' witnesses are absent, and its
+type equals an expanded ancestor's. That is precisely the blocking configuration,
+and `wp8`'s round-7 lesson governs it — the lap is `PP`-labelled, never `EQ`.
+
+Build: 31,375 lines, 1,571 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
