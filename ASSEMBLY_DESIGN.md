@@ -10253,3 +10253,69 @@ node under a declared relation, it is an EXISTING set member under a declared
 relation. `cutNodes_up_mem` already puts it there.
 
 §131's refutation cannot recur, because there is nothing to expand.
+
+## 133. §132.5 WAS WRONG — self-witnessing, and the redesign's "no rounds" is dead
+
+Running the full `MultiTierOk` acceptance test (`wp118`) over the kernel-bearing
+class exposed a defect in `wp117`, and it invalidates §132.5.
+
+### 133.1 The defect
+
+`wp118` reported `frame_q_conv` failures. Diagnosis, rather than guessing:
+
+```
+frame_q_conv (x, y, E[x,y], E[y,x], decl_xy, decl_yx):
+  (('P', 1), ('P', 1), 'PPI', 'PPI', True, True)
+```
+
+**`x == y`.** The declared edge was picking the leaf ITSELF as its own witness.
+`served_by_edge` searched the blocker's `r`-successors for a node carrying `D`,
+and the leaf can be one — it is an `r`-successor of its own blocker.
+
+That is round 6's lap collapse in miniature: a node identified with itself. The
+project has had that defect on record since 2026-07, and my selection condition
+permitted it.
+
+### 133.2 What it invalidates
+
+With `w ≠ v` forbidden, `wp117` re-run:
+
+| | before | after |
+|---|---|---|
+| coverage, phases OR edge | 100% | **100%** |
+| edge witness already in the set | 305 | **0** |
+| edge witness is a NEW node | 0 | **305** |
+
+**§132.5's "305 of 305 in-set, zero new nodes" was ENTIRELY self-witnessing.**
+Every one of those 305 was `w = v`.
+
+So **§132.2's "nothing is added, so there are no rounds" is FALSE.** All 305
+edge-served demands require a new node, that node owes its own demands, and
+§131's round problem returns exactly as before.
+
+### 133.3 What survives
+
+* **Phases alone, 87–97%** — unaffected. `served_by_phase` searches the TAIL,
+  and a prefix leaf is never a tail residue, so self-witnessing was impossible
+  there.
+* **Coverage is real.** The residue IS coverable by phase-or-edge; what is dead
+  is covering it *without adding nodes*.
+* Everything in §§127–128 — the frame-level reduction — is untouched.
+
+### 133.4 The control that caught it
+
+`wp118` declared in advance: *if disabling the declared edges changes nothing,
+the treatment is doing no work and a pass says nothing.* After the `w ≠ v` fix,
+control and treatment became **identical** (37/42/336 both ways). The control
+failed, and that failure is what sent me back to `wp117`.
+
+Without that control the run would have read as five clean obligations and one
+explicable DR artifact.
+
+### 133.5 Standing
+
+§130's plan and §132's redesign are **both refuted**, by the same mechanism:
+serving a cut leaf needs a node that is not already there, and adding it spawns
+rounds that track the model rather than `C₀`.
+
+The open question is unchanged and now has two dead answers recorded against it.

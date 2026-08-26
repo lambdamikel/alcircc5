@@ -52,6 +52,8 @@ def edge_witness(T, c0, v, blk, r, D):
     for w in T.succs(blk, r):
         if not T.sat(w, D):
             continue
+        if w == v:
+            continue          # a node is never its own witness (wp118)
         if v in T.succs(w, r):
             continue
         if w in T.succs(v, "DR") or v in T.succs(w, "DR"):
