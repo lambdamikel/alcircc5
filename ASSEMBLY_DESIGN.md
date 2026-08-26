@@ -9132,3 +9132,59 @@ check on the diagnosis rather than new bad news.
 
 Build: 31,121 lines, 1,562 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 111. IS THE ROUTE BLOCKED? — no, and here is the check
+
+A direct question deserves a checked answer rather than a characterization.
+
+### 111.1 `short_chain` has never had a consumer
+
+```
+grep short_chain POFreeLift.lean
+  6874  prose:  "...terminates by short_chain"
+ 20947  the theorem
+ 20972  prose
+ 20979  prose
+ 25376  #print axioms
+ 29752  §109 docstring
+ 30207  §110 docstring
+```
+
+**Every reference is prose or the statement itself.** `rr_covers`, by contrast,
+is consumed — the persistent half genuinely works.
+
+So the design (§44.27, and CLAUDE.md's summary of it) says one-shot demands
+terminate by `short_chain`; `short_chain` was proved; and nothing ever used it.
+§108 explains why — the witness was hard-wired, so "choose a shorter chain" had
+nothing to act on. §109 removed that.
+
+### 111.2 What is and is not blocked
+
+**Not blocked.** W2′ for the PERSISTENT half is solved and used: `rr_covers` is
+the campaign's real achievement, and it is a theorem precisely because dropping
+∀PO lets the cross-relations coordinate.
+
+**Open, and never claimed otherwise.** The ONE-SHOT half. Its intended
+discharge is an `elt` edge inside a finite node set, bounded by `short_chain` —
+not a kernel. §108's finding is that the implementation had drifted from that
+design, substituting `kserU` for a serving test and getting a vacuous one.
+
+So the diagnosis is "the design was not implemented", not "the design fails".
+
+### 111.3 The real risk, named
+
+`WitSel` is **per-demand and memoryless**; `short_chain` is **chain-valued**.
+A selector that picks the head of a short chain does not remember to continue
+along it. If threading `short_chain` through requires a chain-valued selector,
+`WitSel` is the wrong shape and §109 needs a second pass.
+
+That is cheap to find out and is the next step. It is a design question about
+an interface, not a question about the logic.
+
+### 111.4 Calibration
+
+This project's ledger is seventeen reviews with a defect in all but two, and
+this session alone refuted two of its own hypotheses (`mdepth` as the switch
+bound, §104.3; "bridgeable cheaply", §108). "Not blocked" means no obstruction
+has been identified — which on this project's record is a weaker statement than
+it sounds.
