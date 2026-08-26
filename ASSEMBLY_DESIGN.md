@@ -10103,3 +10103,64 @@ themselves cut leaves, indefinitely. `wp112`'s closed-form tower class is the
 right instrument to look for one, since that is where laps genuinely continue.
 
 Per §117.3, any such probe must state its control before the run.
+
+## 131. STEP 2 IS REFUTED — `wp116`
+
+§130 named step 2 as the risk and said to probe it before formalising. Done, and
+it fails.
+
+Over `wp112`'s closed-form eventually periodic tower, holding the period fixed at
+`p = 3` and growing the aperiodic prefix `L`:
+
+| prefix `L` | 4 | 8 | 12 | 18 | 26 | 40 |
+|---|---|---|---|---|---|---|
+| max rounds to close | 3 | 5 | 6 | 9 | 12 | **15+** |
+
+Control held throughout (86–188 models per shape carried an unserved cut leaf in
+round 0, so there was always something to expand). At `L = 40` **19 models hit
+the round ceiling**, so 15 is a lower bound, not the maximum.
+
+**The round count grows roughly linearly in the prefix length.** It does not
+saturate.
+
+### 131.1 What that kills
+
+`cutNodesR` as specified in §130.1 — "at each cut leaf, add and expand the
+blocker's witness" — does **not** terminate in a number of rounds computable from
+`C₀`. The count is a property of the MODEL.
+
+Note what it is NOT: it is not a type-count effect. The prefix's types are drawn
+from three atoms, so at `L = 40` they repeat many times over, and the rounds grow
+anyway. Each round's targets sit deeper in the prefix than the last, so the
+construction tracks the model's depth.
+
+### 131.2 What survives
+
+Everything in §§127–128. The reduction of `ee_all` and vertical `e_ex` to the
+frame is untouched — that was about `odOfModel`, not about the closure. So the
+open question is still exactly "which nodes are in the set", and what is refuted
+is one proposed answer.
+
+§118's split predicted this: **tail** leaves' laps continue ~100%, **prefix**
+leaves' 33–56%. Rounds grow with the PREFIX, which is where the laps do not
+continue. The measurement is consistent with the structure already recorded.
+
+### 131.3 Cost, and the reason to say so
+
+One probe. §130 flagged step 2 as the risk and said to test it first; doing that
+cost minutes instead of a session of Lean built on a false premise.
+
+This is the third time in this campaign that probe-first has paid, and the first
+time it has killed a plan I had already written down and committed.
+
+### 131.4 Where to look next
+
+Not another closure variant. The problematic leaves are exactly the prefix ones —
+laps that do not continue — so the treatment has to come from the other two
+branches already measured:
+
+* **kernel** (`chain_or_kernel`), which covers leaves whose lap continues;
+* **an existing set member**, which `wp110` measured at 87–97%.
+
+The redesign question is whether those two together cover the prefix leaves
+without spawning rounds. That is measurable before it is formalised.
