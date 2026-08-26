@@ -32347,6 +32347,96 @@ So the vertical half is:
 real but not the interesting half. Recording it as a partial result rather than
 dressing it up. -/
 
+/-! #### §152 — WHY `ee_all` NEEDS TRANSITIVE INHERITANCE, AND WHAT THAT COSTS
+
+Chasing §151's one sentence — *can propagation introduce unboundedly many
+demands?* — turns it into something sharper.
+
+`seedOf` already gives a witness the bodies of its PARENT's matching universals.
+So propagation from the parent is done at creation, and what `ee_all` still needs
+is propagation from NON-parents: a node `x` with `rho x y = r` that is not `y`'s
+parent.
+
+Under read-off relations those exist in quantity, and the commonest case is an
+ANCESTOR-OF-ANCESTOR: `PP` is transitive, so a grandparent is `PP`-related to a
+grandchild. Its universal must reach there — but `seedOf` passed the parent only
+the BODY `E`, not `∀PP.E`, so the parent has nothing to pass on.
+
+The fix is forced and sound: **a `∀PP` universal is inherited by `PP`-successors**,
+because `comp(PP,PP) = {PP}`. Proved below.
+
+The cost is equally forced, and is the point of this section. -/
+
+/-- **`∀PP` IS INHERITED.**  If `∀PP.E` holds at `x` and `x PP y`, it holds at
+    `y` too — anything above `y` is above `x`, by `comp(PP,PP) = {PP}`. -/
+theorem all_pp_inherits (hI : RCC5Interp I) {x y : α} (hx : I.dom x)
+    (hy : I.dom y) (hxy : I.rho x y = pp) {E : Concept}
+    (h : sat I x (Concept.all pp E)) : sat I y (Concept.all pp E) := by
+  intro z hz hyz
+  exact h z hz (path_cut_below hI hx hy hz hxy hyz)
+
+/-- The descending mirror, by the same cell transposed. -/
+theorem all_ppi_inherits (hI : RCC5Interp I) {x y : α} (hx : I.dom x)
+    (hy : I.dom y) (hxy : I.rho x y = ppi) {E : Concept}
+    (h : sat I x (Concept.all ppi E)) : sat I y (Concept.all ppi E) := by
+  intro z hz hyz
+  have hyx : I.rho y x = pp := by
+    rw [hI.conv_ x y hx hy, hxy]; rfl
+  have hzy : I.rho z y = pp := by
+    rw [hI.conv_ y z hy hz, hyz]; rfl
+  refine h z hz ?_
+  rw [hI.conv_ z x hz hx, path_cut_below hI hz hy hx hzy hyx]; rfl
+
+/-! ##### §152.1 — the tension, stated exactly
+
+Inheritance says a witness's seed should carry `∀PP.E` ITSELF, not merely its
+body. That is sound (above) and it discharges `ee_all` for every transitive
+ancestor by construction rather than by a fixpoint.
+
+But `mdepth (∀PP.E) = mdepth E + 1`, the same depth it had in the parent. So an
+inherited universal does NOT lose a modal level, and **`seedOf_depth_lt` — §142's
+measure, the engine of every bound since §148 — fails for it.**
+
+Two observations that keep this from being a dead end:
+
+* an inherited `∀PP.E` contributes NO demand: `hclose (all pp E) = [all pp E]`,
+  since the closure takes a universal's body only for `∀EQ`. So inheritance
+  enlarges labels without enlarging the demand set;
+* universals are drawn from `cl C₀`, so along any chain the inherited set
+  saturates after at most `|cl C₀|` steps.
+
+That suggests the measure wanted is lexicographic — (universals not yet
+inherited, demand depth) — rather than plain `maxDepth`. **Not attempted here.**
+The naive candidate "depth of the demands only" does not work either: a parent
+carrying `∀PP.(∃PP.A)` at depth 2 and a demand `∃PP.B` at depth 1 passes down a
+body of depth 1, which is not strictly below 1.
+
+##### §152.2 — and the failure is the ARCHITECTURE, not a defect
+
+Working the candidate measure through settles it. Take `x` carrying
+`∀PP.(∃PP.A)` and a demand `∃PP.B`. The witness `y` inherits the universal and
+receives its body `∃PP.A`, so `y` has a demand at the same depth as `x`'s. No
+measure decreases.
+
+**But that is the TOWER**, and a tower is not supposed to terminate: `∀PP.(∃PP.A)`
+is exactly the guard of `persistDs`, and §44.27's persistent/one-shot split sends
+such a demand to a KERNEL, not to a chain of externals.
+
+So the measure fails precisely where the kernel takes over. That is the design
+working, not the measure being wrong.
+
+**The synthesis, and the next step:** the closure must SKIP kernel-served
+demands — `persistDs` membership, decidable and already certified — and the depth
+measure then applies to the one-shot remainder. That is what `cutNodes` and
+`skipNodes` were built to do (§§112, 86.3); what is new is that with SUPPORT
+labels the measure actually works on the remainder, where for `mty` labels
+(§§131, 142.1) it did not.
+
+So §151's sentence resolves into: **restrict `sNodes` to non-persistent demands,
+and the depth measure survives inheritance on what is left.** That is a
+construction, and its ingredients — `persistDs`, `mem_persistDs`,
+`all_pp_inherits`, `seedOf_depth_lt` — are all certified. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33228,4 +33318,6 @@ end POFreeLift
 #print axioms POFreeLift.depth_invariant
 #print axioms POFreeLift.shallowAll_extend_no_demand
 #print axioms POFreeLift.shallowAll_closure
+#print axioms POFreeLift.all_pp_inherits
+#print axioms POFreeLift.all_ppi_inherits
 #print axioms POFreeLift.kernel_of_no_terminal

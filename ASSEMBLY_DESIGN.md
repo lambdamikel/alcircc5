@@ -11201,3 +11201,58 @@ grows 5 → 41 — but that is measurement.
 
 Build: 33,231 lines, 1,675 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 152. WHY `ee_all` NEEDS TRANSITIVE INHERITANCE — and why the measure fails where it should
+
+Chasing §151's one sentence turned it into something sharper, then resolved it.
+
+### 152.1 What `ee_all` actually still needs
+
+`seedOf` already gives a witness the bodies of its PARENT's matching universals,
+so propagation from the parent is done at creation. What remains is propagation
+from NON-parents — and under read-off relations the commonest is an
+ANCESTOR-OF-ANCESTOR, since `PP` is transitive.
+
+The grandparent's universal must reach the grandchild, but `seedOf` gave the
+parent only the BODY `E`, not `∀PP.E`, so the parent has nothing to pass on.
+
+The fix is forced and sound, and now certified **axiom-free**:
+
+| | |
+|---|---|
+| `all_pp_inherits` | `∀PP.E` at `x` and `x PP y` ⟹ `∀PP.E` at `y` — `comp(PP,PP) = {PP}` |
+| `all_ppi_inherits` | the mirror |
+
+### 152.2 The cost, and why it is not a defect
+
+`mdepth (∀PP.E) = mdepth E + 1` — the same depth it had in the parent. So an
+inherited universal does NOT lose a modal level and **`seedOf_depth_lt` fails for
+it.** That is the engine of every bound since §148.
+
+Working the candidate measure through settles what that means. Take `x` carrying
+`∀PP.(∃PP.A)` and a demand `∃PP.B`: the witness inherits the universal, receives
+its body `∃PP.A`, and so has a demand at the SAME depth. No measure decreases.
+
+**But that is the tower.** `∀PP.(∃PP.A)` is exactly the guard of `persistDs`, and
+§44.27's persistent/one-shot split sends such a demand to a **kernel**, not to a
+chain of externals. The measure fails precisely where the kernel takes over —
+the design working, not the measure being wrong.
+
+### 152.3 The synthesis
+
+**Restrict the closure to non-persistent demands, and the depth measure survives
+inheritance on what is left.**
+
+That is what `cutNodes`/`skipNodes` were built to do (§§86.3, 112). What is new is
+that with SUPPORT labels the measure actually works on the remainder — for `mty`
+labels it did not (§§131, 142.1), which is why those closures needed `kserU` and
+why `kserU_sound` turned out vacuous (§108).
+
+Ingredients, all certified: `persistDs` and `mem_persistDs`, `all_pp_inherits`,
+`seedOf_depth_lt`, `sNodes_covers_pp`/`_ppi`.
+
+Two independent lines — the campaign's own persistent/one-shot split, and the
+cold note's support labels — meet here.
+
+Build: 33,300 lines, 1,677 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
