@@ -32437,6 +32437,78 @@ and the depth measure survives inheritance on what is left.** That is a
 construction, and its ingredients — `persistDs`, `mem_persistDs`,
 `all_pp_inherits`, `seedOf_depth_lt` — are all certified. -/
 
+/-! #### §153 — AN INHERITED BODY IS PERSISTENT
+
+§152.3 said: restrict the closure to non-persistent demands and the depth measure
+survives inheritance. This is why it does, and it is a one-line consequence of
+`all_pp_inherits` that had not been noticed.
+
+The demand that breaks the measure is a universal's body — `∀PP.(∃PP.D)` gives
+the witness `∃PP.D`, at the same depth as the parent's own demands. But the
+witness ALSO inherits `∀PP.(∃PP.D)` itself, and **that is exactly the guard
+`persistDs` tests.**
+
+So every demand that could break the measure is persistent, hence kernel-served,
+hence skipped — and what the closure actually follows comes from the demand's
+ARGUMENT, which is strictly shallower. -/
+
+/-- **THE INHERITED BODY CARRIES ITS OWN GUARD.**  A witness of a `PP`-step whose
+    parent carries `∀PP.(∃PP.D)` receives the demand `∃PP.D` AND the universal
+    that makes it persistent. -/
+theorem inherited_body_persistent (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hxy : I.rho x y = pp) {D : Concept}
+    (hmem : Concept.all pp (Concept.ex pp D) ∈ mty C0 I x) :
+    D ∈ persistDs C0 I y := by
+  have hguard : sat I y (Concept.all pp (Concept.ex pp D)) :=
+    all_pp_inherits hI hx hy hxy (mem_mty.mp hmem).2
+  have hcl : Concept.ex pp D ∈ cl C0 := cl_all (mty_sub _ hmem)
+  have hex : Concept.ex pp D ∈ mty C0 I y := mty_all hmem hy hxy
+  exact mem_persistDs.mpr ⟨cl_ex hcl, hex, hguard⟩
+
+/-- The descending mirror. -/
+theorem inherited_body_persistentI (hI : RCC5Interp I) {C0 : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hxy : I.rho x y = ppi) {D : Concept}
+    (hmem : Concept.all ppi (Concept.ex ppi D) ∈ mty C0 I x) :
+    D ∈ persistDsI C0 I y := by
+  have hguard : sat I y (Concept.all ppi (Concept.ex ppi D)) :=
+    all_ppi_inherits hI hx hy hxy (mem_mty.mp hmem).2
+  have hcl : Concept.ex ppi D ∈ cl C0 := cl_all (mty_sub _ hmem)
+  have hex : Concept.ex ppi D ∈ mty C0 I y := mty_all hmem hy hxy
+  exact mem_persistDsI.mpr ⟨cl_ex hcl, hex, hguard⟩
+
+/-- **AND A SUPPORT LABEL SEES IT TOO** — the universal is in the label, so the
+    conclusion applies to the construction, not just to the model. -/
+theorem inherited_body_persistent_lab (hI : RCC5Interp I) {C0 : Concept}
+    {x y : α} (hx : I.dom x) (hy : I.dom y) (hxy : I.rho x y = pp)
+    {L : List Concept} (hL : SupportOk I C0 x L) {D : Concept}
+    (hmem : Concept.all pp (Concept.ex pp D) ∈ L) :
+    D ∈ persistDs C0 I y :=
+  inherited_body_persistent hI hx hy hxy (supportOk_sub_mty hL _ hmem)
+
+/-! ##### §153.1 — what this settles
+
+The measure's counterexample (§152.2) was: a parent carrying `∀PP.(∃PP.A)` passes
+down a demand at the same depth. It is now not a counterexample, because that
+demand is **persistent at the witness** and a closure obeying §44.27's split does
+not follow it.
+
+So the tension §152.1 named is resolved in the split's favour:
+
+| | |
+|---|---|
+| transitive inheritance is needed for `ee_all` | §152, certified |
+| inheritance breaks the depth measure | §152.2 |
+| **the demands it breaks it on are persistent** | **§153, certified** |
+| so the measure holds on what the closure follows | the construction to build |
+
+The last row is a `sNodes` variant that skips `persistDs` members. Every
+ingredient is certified; what is missing is the definition and its coverage
+theorem, in the shape of §148's.
+
+Note what is NOT claimed: that persistent demands are SERVED. They are
+kernel-served, and the kernel side is §149.2(c) — six `MultiTierOk` fields, still
+untouched in Lean. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33320,4 +33392,7 @@ end POFreeLift
 #print axioms POFreeLift.shallowAll_closure
 #print axioms POFreeLift.all_pp_inherits
 #print axioms POFreeLift.all_ppi_inherits
+#print axioms POFreeLift.inherited_body_persistent
+#print axioms POFreeLift.inherited_body_persistentI
+#print axioms POFreeLift.inherited_body_persistent_lab
 #print axioms POFreeLift.kernel_of_no_terminal

@@ -11256,3 +11256,44 @@ cold note's support labels — meet here.
 
 Build: 33,300 lines, 1,677 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 153. AN INHERITED BODY IS PERSISTENT — the tension resolves
+
+§152.2's counterexample to the depth measure: a parent carrying `∀PP.(∃PP.A)`
+passes the witness a demand at the SAME depth, so nothing decreases.
+
+It is not a counterexample. The witness also inherits `∀PP.(∃PP.A)` **itself**
+(§152, `all_pp_inherits`), and that is exactly the guard `persistDs` tests.
+
+| | |
+|---|---|
+| **`inherited_body_persistent`** | a `PP`-witness of a parent carrying `∀PP.(∃PP.D)` has `D ∈ persistDs` |
+| `inherited_body_persistentI` | the descending mirror |
+| `inherited_body_persistent_lab` | and a support LABEL sees it, so it applies to the construction |
+
+**Every demand that could break the measure is persistent, hence kernel-served,
+hence skipped by a closure obeying §44.27's split.** What the closure actually
+follows comes from the demand's ARGUMENT, which is strictly shallower.
+
+### 153.1 The tension, resolved in the split's favour
+
+| | |
+|---|---|
+| transitive inheritance is needed for `ee_all` | §152, certified |
+| inheritance breaks the depth measure | §152.2 |
+| **the demands it breaks it on are persistent** | **§153, certified** |
+| so the measure holds on what the closure follows | the construction to build |
+
+The last row is a `sNodes` variant skipping `persistDs` members, plus its
+coverage theorem in §148's shape. Every ingredient is certified.
+
+### 153.2 What is NOT claimed
+
+That persistent demands are **served**. They are kernel-served, and the kernel
+side is §149.2(c) — six `MultiTierOk` fields, still untouched in Lean.
+
+This section removes an obstruction to the vertical measure. It does not build a
+kernel.
+
+Build: 33,404 lines, 1,680 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
