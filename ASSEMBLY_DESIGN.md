@@ -11719,3 +11719,45 @@ sub-goals, and this session shows I do not apply it unprompted.
 
 Build unchanged: 33,840 lines, 1,697 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 162. THE BUDGET ASSIGNMENT — discharged
+
+§161.2 identified `hbS`/`hbK`/`hbQ` as the thin hypotheses. The choice is
+**uniform budgets**, and since `mBk nd k = (nd (kNode k)).k`, all three become
+`B ≤ B + 1`.
+
+| | |
+|---|---|
+| `hbS_of_uniform` | disjoint externals within one |
+| `hbK_of_uniform` | external and kernel base within one |
+| `hbQ_of_uniform` | two kernel bases within one |
+| **`budgets_of_uniform`** | **all three, in `mergedMT_ok`'s shape** |
+| `uniform_of_ppNodes` | and the construction supplies it — `ppNodes_bud` |
+
+### 162.1 Why uniform budgets are affordable now
+
+`wp96` A rejected them: uniform budgets forfeit the budget-decreasing finiteness
+the node bound needed.
+
+**§143 removes that need.** `genNodes_le_C0` bounds the node set by DEPTH ×
+BRANCHING, with no budget decrease anywhere — depth from `seedOf_depth_lt`,
+branching from `normL_len`. So the objection is **answered, not evaded**: the
+node bound no longer rests on budgets.
+
+That is the second time the support-label machinery has paid for itself against a
+previously-recorded obstruction (the first being §142 vs §104.3's "no monotone
+quantity").
+
+### 162.2 `mergedMT_ok`'s six hypotheses
+
+| | |
+|---|---|
+| `hbS` / `hbK` / `hbQ` | **discharged** (§162) |
+| `hsepS` | 9 mentions of machinery |
+| `he_ex` / `hk_ex` | 47 / 45 mentions, incl. `kDR`/`kUP`/`kDN` |
+
+Three of six done. The remaining three are the ones with substantial existing
+support.
+
+Build: 33,900 lines, 1,702 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

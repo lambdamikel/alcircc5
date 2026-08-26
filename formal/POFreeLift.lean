@@ -32939,6 +32939,70 @@ theorem block_of_persistent_of_cl (hI : RCC5Interp I) {C0 G : Concept}
   block_of_persistent' hI hpo myTag P ctx hctxdom
     (fun _ _ D hD => hpoolcl D (mty_sub _ hD)) x0 h0 L
 
+/-! #### §162 — THE BUDGET ASSIGNMENT
+
+§161.2: `hbS`/`hbK`/`hbQ` are the thin hypotheses — 2/2/4 mentions, essentially
+only their statements. CLAUDE.md called the budget assignment "a choice inside
+the extraction, not a fact to discover".
+
+The choice is UNIFORM budgets, and `mBk nd k = (nd (kNode k)).k` makes all three
+immediate: every inequality is `B ≤ B + 1`.
+
+What makes uniform budgets AFFORDABLE is §143. `wp96` A rejected them because
+they forfeit the budget-decreasing finiteness the node bound used to need — but
+`genNodes_le_C0` bounds the node set by DEPTH × BRANCHING, with no budget
+decrease anywhere. So the objection does not apply to the support-label
+construction. -/
+
+/-- **`hbS`, UNIFORM.**  Disjoint externals are within one — trivially, since
+    they are equal. -/
+theorem hbS_of_uniform {β : Type} {C0 : Concept} {I : Interp α}
+    (nd : β → MTKNode I C0) (B : Nat) (huni : ∀ e, (nd e).k = B)
+    (e f : β) : (nd e).k ≤ (nd f).k + 1 := by
+  rw [huni e, huni f]; omega
+
+/-- **`hbK`, UNIFORM** — an external and a kernel base are within one. -/
+theorem hbK_of_uniform {β : Type} {C0 : Concept} {I : Interp α}
+    (nd : β → MTKNode I C0) (B : Nat) (huni : ∀ e, (nd e).k = B)
+    (k : KIdxM C0 I nd) (e : β) :
+    (nd e).k ≤ mBk nd k + 1 ∧ mBk nd k ≤ (nd e).k + 1 := by
+  show (nd e).k ≤ (nd (kNode k)).k + 1 ∧ (nd (kNode k)).k ≤ (nd e).k + 1
+  rw [huni e, huni (kNode k)]
+  omega
+
+/-- **`hbQ`, UNIFORM** — two kernel bases are within one. -/
+theorem hbQ_of_uniform {β : Type} {C0 : Concept} {I : Interp α}
+    (nd : β → MTKNode I C0) (B : Nat) (huni : ∀ e, (nd e).k = B)
+    (k k' : KIdxM C0 I nd) : mBk nd k ≤ mBk nd k' + 1 := by
+  show (nd (kNode k)).k ≤ (nd (kNode k')).k + 1
+  rw [huni (kNode k), huni (kNode k')]
+  omega
+
+/-- **ALL THREE AT ONCE**, in the shape `mergedMT_ok` consumes. -/
+theorem budgets_of_uniform {β : Type} {C0 : Concept} {I : Interp α}
+    (nd : β → MTKNode I C0) (B : Nat) (huni : ∀ e, (nd e).k = B) :
+    (∀ e f : β, (nd e).k ≤ (nd f).k + 1) ∧
+    (∀ (k : KIdxM C0 I nd) (e : β),
+      (nd e).k ≤ mBk nd k + 1 ∧ mBk nd k ≤ (nd e).k + 1) ∧
+    (∀ k k' : KIdxM C0 I nd, mBk nd k ≤ mBk nd k' + 1) :=
+  ⟨hbS_of_uniform nd B huni, hbK_of_uniform nd B huni, hbQ_of_uniform nd B huni⟩
+
+/-- **AND THE CONSTRUCTION SUPPLIES IT.**  A `ppNodes` closure holds the budget
+    constant (`ppNodes_bud`), so every node it produces has the root's — which is
+    the uniformity `budgets_of_uniform` wants, already proved. -/
+theorem uniform_of_ppNodes {C0 : Concept} {I : Interp α} (n : MTKNode I C0)
+    (fuel : Nat) : ∀ m ∈ ppNodes n fuel, m.k = n.k := ppNodes_bud n fuel
+
+/-! ##### §162.1 — position
+
+`hbS`/`hbK`/`hbQ` are discharged for any uniform-budget node map, and
+`ppNodes_bud` says the vertical closure IS uniform. So of `mergedMT_ok`'s six
+hypotheses, three are done and the remaining three are `hsepS`, `he_ex`, `hk_ex`
+— the ones with 9, 47 and 45 mentions of supporting machinery.
+
+`wp96` A's objection to uniform budgets is answered by §143, not evaded: the node
+bound no longer comes from budget decrease. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33837,4 +33901,6 @@ end POFreeLift
 #print axioms POFreeLift.multiBlock_of_chain'
 #print axioms POFreeLift.block_of_persistent'
 #print axioms POFreeLift.block_of_persistent_of_cl
+#print axioms POFreeLift.budgets_of_uniform
+#print axioms POFreeLift.uniform_of_ppNodes
 #print axioms POFreeLift.kernel_of_no_terminal
