@@ -8956,5 +8956,5 @@ carrying `D`, build `KernelData`. The ingredients are certified
 new is the recursion that chains segments end-to-end, choosing each one
 classically.
 
-Build: 30,489 lines, 1,536 declarations, exit 0, 0 errors / 0 warnings /
+Build: 30,528 lines, 1,537 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
