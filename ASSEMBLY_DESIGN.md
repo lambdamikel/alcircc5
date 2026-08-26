@@ -9955,5 +9955,5 @@ The Lean now carries every structural ingredient the §126 acceptance test uses:
 What is not yet in Lean: the two-clause SELECTION condition of §124.2 as a
 proved side condition, and the assembly of these into a `MultiTierOk`.
 
-Build: 31,700 lines, 1,589 declarations, exit 0, 0 errors / 0 warnings /
+Build: 31,703 lines, 1,587 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
