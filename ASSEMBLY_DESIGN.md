@@ -10607,3 +10607,62 @@ served by an external below it — and partly contaminated by the same defect.
 
 Per §117's rule I am not reporting the `PPI` numbers as findings. Building the
 faithful kernel instrument is the next step; patching `erel` again is not.
+
+## 139. `wp124` — the faithful kernel instrument, and it closes
+
+`MultiTier` never asks for a phase-to-phase ATOM. It states the obligations
+directly, and they are exactly what a non-functional quotient relation needs:
+`kk_pp`/`kk_ppi` propagate to the phase **block**, `ek_all` to every phase,
+`ke_all` back to externals. So the fix for §138 was not to patch `erel` but to
+stop computing a phase-to-phase relation at all.
+
+| | L=4 | L=8 | L=18 | L=40 |
+|---|---|---|---|---|
+| **CONTROL, full-type** — max externals | 5 | 10 | 19 | **41** |
+| CONTROL failures | `k_ex_PPI` 15 | 33 | 36 | 21 |
+| **support + extremal + joint fixpoint** — max externals | **4** | **5** | **4** | **3** |
+| **failures** | **none** | **none** | **none** | **none** |
+| fixpoint failed to settle | 0 | 0 | 0 | 0 |
+
+1,019 models, every `MultiTierOk` field the model can express, faithful kernel.
+
+### 139.1 Two construction steps that were simply missing
+
+Both were found by diagnosing residues, and neither is a label question:
+
+1. **A kernel generates EXTERNAL witnesses.** `k_ex`'s first branch is an
+   external `f` with `K k f = r`; for an ascending kernel a DESCENDING demand
+   can only be served that way, and the construction never produced one. This
+   failed in the CONTROL too (`k_ex_PPI` 15–36), so it was never a support-label
+   defect.
+2. **A demand can require a PHASE to carry its argument.** When an external's
+   carrier lies in the tail, `e_ex`'s second branch wants some phase to carry
+   `D` — so extend that phase's label rather than trying to make a residue into
+   an external. Same for a kernel's own ascending demand via the `cdir(up)`
+   branch.
+
+With both, every failure disappears while the control keeps failing and growing.
+
+### 139.2 What this now supports
+
+The §135 route — support-generated labels, extremal selection, joint
+support/witness fixpoint — produces certificates satisfying **every expressible
+`MultiTierOk` obligation** on a kernel-bearing class, with the external count
+CONSTANT (3–5) against a control growing 5 → 41, and the fixpoint settling in
+every model.
+
+### 139.3 Scope, unchanged and stated again
+
+* One model class (the closed-form tower), randomised concepts.
+* Settling in 1,019 models is **not** termination — that remains the theorem the
+  cold note and §103 both point at.
+* No Lean. §§127–128's frame results are stated about `mty` and need restating
+  for support labels.
+* This is the `wp16`/`wp94` acceptance pattern. Four earlier acceptance passes in
+  this session looked conclusive and three of them had a defect found later.
+
+### 139.4 Next
+
+Lean. Define support labels, prove the Hintikka closure, restate the frame
+results, and attack the joint fixpoint's termination with `extremal_strict` as
+the same-direction measure.
