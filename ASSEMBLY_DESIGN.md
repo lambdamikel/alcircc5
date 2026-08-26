@@ -11654,3 +11654,68 @@ assembly being wrong rather than one hypothesis being over-stated.
 
 Build: 33,834 lines, 1,697 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 161. THE DEFINITIVE ASSEMBLY AUDIT — and a stop signal
+
+§§159–160 re-derived machinery that was already in the file, for the FOURTH time
+this session (§113, §157, §158, §161). That is a signal to stop building and
+finish auditing, so this section does that and nothing else.
+
+### 161.1 The chain to `Decidable`, traced
+
+```
+Satisfiable C0  →  MergedExtraction C0  →  MixedCompleteness C0  →  Decidable
+                        ↑                        ↑                      ↑
+                    THE GAP            mixedCompleteness_of_merged   decidableSat_pofree
+                                            CERTIFIED                  CERTIFIED
+```
+
+Nothing produces `MergedExtraction`. Every reference to it is its definition, the
+two theorems consuming it, or prose. **That is the single gap, and it has been
+the single gap since §149 — correctly, that part of §149 was right.**
+
+### 161.2 What is available to close it
+
+`mergedMT_ok` produces the `MultiTierOk` that `mergedExtraction_of_ok` turns into
+`MergedExtraction`. Its six hypotheses:
+
+| | |
+|---|---|
+| `he_ex` / `hk_ex` | 47 / 45 mentions — extensive machinery, including the kernel witness branches `kDR` / `kUP` / `kDN` (line 20505ff) |
+| `hsepS` | 9 mentions |
+| `hbS` / `hbK` / `hbQ` | **2 / 2 / 4 mentions** — essentially only the statement |
+
+The budget hypotheses are the thin ones. CLAUDE.md's 2026-08-22 status already
+said so: *"the budget assignment (a choice inside the extraction, not a fact to
+discover)"*.
+
+### 161.3 Also available, and not yet connected
+
+| | |
+|---|---|
+| `external_stabilizes` | an external's relation to a chain STABILIZES — the model-side fact `hstab` wants |
+| the `hstab` dichotomy (§39.3) | "stay low" and "push past" branches, with machinery at lines 2796–2860, 4391 |
+| `mixKernels_pool_ok` | the mixed block with `∃PO` demands PENDING |
+| `pool_two_copies` / `pool_realized` | `glueFam_ok`'s `hreal`, **already discharged** for the two-copies layout |
+| `glueFam_ok` / `glueMTOk` | the glue |
+
+**The pool bookkeeping I set out to build in §159 is done.**
+
+### 161.4 The honest remaining statement
+
+Build the family and the budget assignment, and instantiate `mergedMT_ok`. Every
+other ingredient — kernel blocks, pool covering, pool realisation, gluing,
+stabilization, encoding, decision — is certified and in the file.
+
+### 161.5 The stop signal, recorded
+
+Four times in one session I have described as missing something the file already
+had. The pattern is always the same: I reason about the architecture from the
+design notes rather than grepping for the theorem.
+
+**For the next session: before proposing ANY construction, grep for its
+conclusion.** §113 recorded this rule for gaps; it applies equally to
+sub-goals, and this session shows I do not apply it unprompted.
+
+Build unchanged: 33,840 lines, 1,697 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
