@@ -30794,6 +30794,79 @@ theorem declared_edge_package (C0 : Concept) {v a : α}
   obtain ⟨s, hs, has, hDs⟩ := declared_edge_serves C0 hty hD
   exact ⟨s, hs, has, hDs, fun E hE => declared_edge_all C0 hs hty has hE⟩
 
+/-! #### §127 — THE READ-OFF `ODStruct`, CERTIFIED
+
+`wp115`'s acceptance pass (§126) runs on a hybrid whose vertical order is READ
+OFF the model rather than accumulated from the extraction's steps. `odOfModel`
+is that structure, and every `ODStruct` axiom comes straight from composition —
+no hypothesis, no choice of seed.
+
+`ltNotDj` is free because `I.rho` is a FUNCTION: a pair cannot be both `pp` and
+`dr`. `djDown` is the one with content, and it is two applications of
+`rho_forced` on the cells `comp(PP,DR) = {DR}` and `comp(DR,PPI) = {DR}` — the
+same two cells `RCC5NormalForm.lean` uses for `dr_downward_closed`.
+
+§125.1's boundary is unaffected: this is the order at CONSTANT budget, which is
+where `wp96` A's objection does not apply. -/
+
+/-- **THE MODEL'S OWN ORDER, AS AN `ODStruct`.**  Carrier is the in-domain
+    elements; `lt` and `disj` are read directly off `I.rho`. -/
+noncomputable def odOfModel (hI : RCC5Interp I) : ODStruct {x : α // I.dom x} where
+  lt := fun x y => I.rho x.val y.val = pp
+  disj := fun x y => I.rho x.val y.val = dr
+  ltIrr := by
+    intro x h
+    rw [hI.refl_eq x.val x.2] at h
+    exact absurd h (by decide)
+  ltTr := by
+    intro x y z h1 h2
+    exact rho_forced hI x.2 z.2 y.2 h1 h2 (by decide)
+  djSym := by
+    intro x y h
+    rw [hI.conv_ x.val y.val x.2 y.2, h]; rfl
+  djIrr := by
+    intro x h
+    rw [hI.refl_eq x.val x.2] at h
+    exact absurd h (by decide)
+  ltNotDj := by
+    intro x y h1 h2
+    rw [h1] at h2
+    exact absurd h2 (by decide)
+  djDown := by
+    intro x y x' y' hxy hx' hy'
+    -- first push the LEFT endpoint down: comp(PP,DR) = {DR}
+    have hx'y : I.rho x'.val y.val = dr := by
+      rcases hx' with rfl | hlt
+      · exact hxy
+      · exact rho_forced hI x'.2 y.2 x.2 hlt hxy (by decide)
+    -- then the RIGHT one: comp(DR,PPI) = {DR}
+    rcases hy' with rfl | hlt
+    · exact hx'y
+    · have hyy' : I.rho y.val y'.val = ppi := by
+        rw [hI.conv_ y'.val y.val y'.2 y.2, hlt]; rfl
+      exact rho_forced hI x'.2 y'.2 y.2 hx'y hyy' (by decide)
+
+/-- The frame is then free — `odNet_frame` with nothing discharged by hand. -/
+theorem odOfModel_frame (hI : RCC5Interp I) :
+    Frame (odNet (odOfModel hI)) := odNet_frame _
+
+/-- **AND IT AGREES WITH THE MODEL** on every pair it decides.  So a demand the
+    model serves is served in the read-off frame, which is exactly what §125's
+    48 → 5 improvement was. -/
+theorem odOfModel_pp (hI : RCC5Interp I) {x y : {v : α // I.dom v}}
+    (h : I.rho x.val y.val = pp) : odNet (odOfModel hI) x y = pp :=
+  odNet_lt _ h
+
+theorem odOfModel_ppi (hI : RCC5Interp I) {x y : {v : α // I.dom v}}
+    (h : I.rho x.val y.val = ppi) : odNet (odOfModel hI) x y = ppi := by
+  refine odNet_gt _ ?_
+  show I.rho y.val x.val = pp
+  rw [hI.conv_ x.val y.val x.2 y.2, h]; rfl
+
+theorem odOfModel_dr (hI : RCC5Interp I) {x y : {v : α // I.dom v}}
+    (h : I.rho x.val y.val = dr) : odNet (odOfModel hI) x y = dr :=
+  odNet_dj _ h
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31624,4 +31697,7 @@ end POFreeLift
 #print axioms POFreeLift.blocked_above_served_in_set
 #print axioms POFreeLift.declared_edge_all
 #print axioms POFreeLift.declared_edge_package
+#print axioms POFreeLift.odOfModel
+#print axioms POFreeLift.odOfModel_frame
+#print axioms POFreeLift.odOfModel_pp
 #print axioms POFreeLift.kernel_of_no_terminal

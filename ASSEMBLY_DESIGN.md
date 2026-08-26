@@ -9898,3 +9898,62 @@ half.
 
 Lean unchanged: 31,627 lines, 1,582 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 127. THE READ-OFF `ODStruct`, CERTIFIED
+
+`wp115`'s acceptance pass runs on a hybrid whose vertical order is READ OFF the
+model. `odOfModel` is that structure in Lean, and **it depends on no axioms at
+all**:
+
+```
+odOfModel (hI : RCC5Interp I) : ODStruct {x : α // I.dom x}
+  lt   x y := I.rho x y = pp
+  disj x y := I.rho x y = dr
+```
+
+Every `ODStruct` axiom comes straight from composition:
+
+| axiom | source |
+|---|---|
+| `ltIrr` / `djIrr` | `refl_eq` — a point is `eq` to itself, and `eq ≠ pp`, `eq ≠ dr` |
+| `ltTr` | `comp(PP,PP) = {PP}` |
+| `djSym` | `conv_`, and `conv dr = dr` |
+| `ltNotDj` | **free** — `I.rho` is a FUNCTION, so a pair cannot be both `pp` and `dr` |
+| `djDown` | two applications of `rho_forced`: `comp(PP,DR) = {DR}` then `comp(DR,PPI) = {DR}` |
+
+`djDown` is the only one with content, and it uses exactly the two cells
+`RCC5NormalForm.lean` uses for `dr_downward_closed` — the certified local algebra
+harvested from the regular-cover pivot, now consumed here.
+
+`odOfModel_frame` then gives composition closure of the whole net with nothing
+discharged by hand, and `odOfModel_pp` / `_ppi` / `_dr` state the agreement with
+the model that §125's 48 → 5 improvement was.
+
+### 127.1 Why this does not reopen `wp96` A
+
+This is the order at CONSTANT budget — the regime §125.1 identified, where
+`wp96` A's objection (read-off forces uniform budgets, uniform budgets forfeit
+budget-decreasing finiteness) does not bite, because `ppNodes_bud` already holds
+the budget constant along vertical steps.
+
+The horizontal, budget-dropping recursion neither uses `odOfModel` nor is
+licensed to.
+
+### 127.2 Standing
+
+The Lean now carries every structural ingredient the §126 acceptance test uses:
+
+| ingredient | Lean |
+|---|---|
+| closure terminates | `cutNodes_stable_typeEnum` |
+| witness always present | `cutNodes_up_mem` / `_dn_mem` |
+| read-off vertical order is an `ODStruct` | **`odOfModel`** (axiom-free) |
+| its net is a frame | **`odOfModel_frame`** |
+| declared edge's label obligations | `declared_edge_package` |
+| lap continues ⟹ kernel | `chain_or_kernel` |
+
+What is not yet in Lean: the two-clause SELECTION condition of §124.2 as a
+proved side condition, and the assembly of these into a `MultiTierOk`.
+
+Build: 31,700 lines, 1,589 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
