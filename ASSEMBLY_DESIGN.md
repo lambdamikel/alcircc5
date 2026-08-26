@@ -9598,5 +9598,5 @@ out").
 The two open rows are the whole remainder of this half. Both are narrow, both
 are stated over certified surroundings, and neither is a hypothesis to assume.
 
-Build: 31,433 lines, 1,575 declarations, exit 0, 0 errors / 0 warnings /
+Build: 31,433 lines, 1,574 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
