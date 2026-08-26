@@ -9022,3 +9022,57 @@ The risk is proportionate to 65 mechanical edits, not to 65 proofs.
 
 Build: 30,556 lines, 1,539 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 109. WITNESS SELECTION IS NOW A PARAMETER
+
+§108.4's conclusion, executed. `WitSel I C0` carries exactly the three
+properties every downstream proof uses — `_rho`, `_bud`, `_arg`, in both
+directions — and the closure is parameterized by it.
+
+### 109.1 What landed
+
+| | |
+|---|---|
+| `WitSel` | the selector: a real model witness, same budget, carrying the argument |
+| `defaultSel` | the current behaviour as ONE instance |
+| `skipNodesW` + 10 lemmas | the closure layer, parameterized |
+| `SkipStepW` | the step relation, parameterized |
+| `skipNodesW_covers_of_fixed` / `…I` | coverage, both directions |
+| `skipNodesW_fixed_of_len` | §104's length-bound fixpoint, parameterized |
+| **`skipNodesW_default`** | `skipNodesW (defaultSel I C0) = skipNodes` |
+| **`SkipStepW_default`** | `SkipStepW (defaultSel I C0) = SkipStep` — by `rfl` |
+
+The last two are the point: **every §§85–108 result is the `defaultSel` case of
+what is now there.** Nothing was invalidated, nothing re-proved.
+
+### 109.2 The cost claim, discharged by construction
+
+§108.5 predicted "65 mechanical edits, not 65 proofs". The parameterized layer
+was produced by textual substitution — `ppWitness` → `W.up`, `ppiWitness` →
+`W.dn` — and every proof went through unchanged. The four fixes needed were all
+syntactic:
+
+* a lambda against an implicit binder must bind it (`fun n {_c} hF`);
+* `rw [skipNodes]` unfolds by NAME, so it stays `rw [skipNodesW]`, not
+  `rw [skipNodesW W]`;
+* renamed lemmas take `W` first at their call sites;
+* one grabbed line range ended inside the next declaration's docstring.
+
+No mathematical content moved.
+
+### 109.3 What this buys
+
+`skipNodesW_fixed_of_len` now has a selector to quantify over. The two
+selectors §108.4 identified can be built and their length bounds proved against
+the same closure:
+
+* **short** — witnesses on a chain of length `≤ |typeEnum C0|`, which is what
+  `short_chain` already delivers for `ServeChain`;
+* **late** — witnesses already in the set, which `wp109` measured as removing
+  the switch drift entirely.
+
+Neither is built yet. What changed is that building either is now possible: with
+`Classical.choose` fixed, `short_chain` was certified and unusable.
+
+Build: 31,055 lines, 1,558 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
