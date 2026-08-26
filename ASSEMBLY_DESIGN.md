@@ -11761,3 +11761,56 @@ support.
 
 Build: 33,900 lines, 1,702 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 163. `hsepS` WAS ALREADY DONE — and the precise remaining list
+
+Grepping before writing caught a FIFTH re-derivation: **`mSep` (§83, "ITEM F")
+discharges `hsepS` completely**, as `hsep_of_model` instantiated at the
+extraction's data, with no hypotheses beyond what the extraction has.
+
+### 163.1 `mergedMT_ok`'s six
+
+| | |
+|---|---|
+| `hsepS` | **done** — `mSep` |
+| `hbS` / `hbK` / `hbQ` | **done** — §162 |
+| `he_ex` / `hk_ex` | remaining |
+
+**Four of six.** And the two remaining reduce further.
+
+### 163.2 `he_ex` / `hk_ex` reduce to ROUTING CONDITIONS
+
+`odSeed_he_ex` derives `he_ex` from `rDR`/`rPO`/`rPP`/`rPPI`;
+`odSeed_hk_ex` derives `hk_ex` from `kDIR`/`kDR`/`kPO`/`kUP`/`kDN`.
+
+| condition | discharge |
+|---|---|
+| `rDR` | `rDR_witness` (11121) |
+| `rPO` | `rPO_witness` (11129) |
+| `rPP` | `rPP_witness` (21199) |
+| `rPPI` | `rPPI_witness` (21207) |
+| `kPO` | `kPO_frame` (21908) |
+| **`kDIR`** | **none found** |
+| **`kDR`** | **none found** |
+| **`kUP`** | **none found** |
+| **`kDN`** | **none found** |
+
+So the EXTERNAL side's routing is done, and four KERNEL-side routing conditions
+are not. CLAUDE.md's 2026-08-22 status named exactly three of them —
+*"the kernel witness branches `kDR`/`kUP`/`kDN`"* — and `kDIR` joins them.
+
+### 163.3 The remaining work, as precisely as the file supports
+
+**Four routing conditions:** `kDIR` (a kernel's own-direction demand is served
+within its period), `kDR` (a kernel's `∃DR` demand is served by a seed-adjacent
+external), `kUP`/`kDN` (a kernel's opposite-direction demand is served by an
+external above/below it).
+
+`kDIR` is `rr_covers` territory — round-robin coverage, certified. `kDR`/`kUP`/
+`kDN` are the ones §139.1 found `wp124` needed as CONSTRUCTION steps: *a kernel
+generates external witnesses*, measured there and unbuilt in Lean.
+
+That is the whole remaining gap between the file and `MergedExtraction`.
+
+Build unchanged: 33,906 lines, 1,702 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
