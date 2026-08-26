@@ -114,6 +114,12 @@ def build_cert(T, c0, root, full_types=False, extremal=True, cap=250):
                 work.append((y, ylab))
     if full_types:
         return nodes, (steps >= cap)
+    # SUPPORT CLOSURE FIXPOINT, INTERLEAVED WITH WITNESS GENERATION.
+    # The closure adds universal BODIES to labels, and a body can itself be an
+    # EXISTENTIAL -- a demand that arrives after the worklist has drained and so
+    # never gets a witness.  The two must be run to a JOINT fixpoint; whether
+    # that terminates is the cold note's stated open item.
+    # (The uninterleaved version is kept below for the control.)
     # SUPPORT CLOSURE FIXPOINT.  A universal at x must land in the label of every
     # r-related node -- and a support label seeded from ITS OWN parent need not
     # carry it.  Close under that, re-running the Hintikka closure each time, and
@@ -138,6 +144,46 @@ def build_cert(T, c0, root, full_types=False, extremal=True, cap=250):
             break
     else:
         return {(x, lab[x]) for x in lab}, True     # fixpoint did not settle
+        # witness regeneration for demands the closure introduced
+    for _ in range(40):
+        added = False
+        for x in list(lab):
+            for d in list(lab[x]):
+                if d[0] != "ex" or d[1] not in (PP, PPI):
+                    continue
+                r, D = d[1], d[2]
+                if any(erel(T, x, y) == r and D in lab[y] for y in lab):
+                    continue
+                y = pick(T, x, r, D, extremal)
+                if y is None:
+                    continue
+                seeds = [D] + [e[2] for e in lab[x]
+                               if e[0] == "all" and e[1] == r]
+                ny = support(T, y, list(lab.get(y, frozenset())) + seeds)
+                if y not in lab or ny != lab[y]:
+                    lab[y] = ny
+                    added = True
+        if not added:
+            break
+        for _ in range(60):                       # re-close support
+            grew = False
+            for x in list(lab):
+                for d in list(lab[x]):
+                    if d[0] != "all":
+                        continue
+                    for y in list(lab):
+                        if erel(T, x, y) != d[1] or d[2] in lab[y]:
+                            continue
+                        if not T.sat(y, d[2]):
+                            continue
+                        lab[y] = support(T, y, list(lab[y]) + [d[2]])
+                        grew = True
+            if not grew:
+                break
+        else:
+            return {(x, lab[x]) for x in lab}, True
+    else:
+        return {(x, lab[x]) for x in lab}, True   # joint fixpoint did not settle
     return {(x, lab[x]) for x in lab}, (steps >= cap)
 
 
@@ -148,6 +194,9 @@ def erel(T, x, y):
         if y in T.succs(x, r):
             return r
     return "PO"
+
+
+EXDIAG = []
 
 
 def check(T, c0, nodes):
@@ -168,9 +217,29 @@ def check(T, c0, nodes):
                     if erel(T, x, y) == d[1] and d[2] not in ly:
                         note("ee_all_" + d[1])
             if d[0] == "ex" and d[1] in (PP, PPI):
+                if x[0] == "R":
+                    continue      # a tail residue is a KERNEL PHASE, not an
+                                  # external: its demands are MultiTierOk's
+                                  # k_ex (served from within the kernel, or by
+                                  # K k f), which this externals-only checker
+                                  # does not model.  wp118 models it properly.
                 if not any(erel(T, x, y) == d[1] and d[2] in ly
                            for (y, ly) in ns):
                     note("e_ex_" + d[1])
+                    if len(EXDIAG) < 12:
+                        inset = [(y, d[2] in ly) for (y, ly) in ns
+                                 if erel(T, x, y) == d[1]]
+                        model_w = [y for y in T.succs(x, d[1])
+                                   if y != x and T.sat(y, d[2])]
+                        EXDIAG.append({
+                            "kind": x[0],
+                            "r": d[1],
+                            "carriers_in_model": len(model_w),
+                            "carrier_kinds": sorted({w[0] for w in model_w}),
+                            "r_related_in_cert": len(inset),
+                            "any_r_related_has_D": any(v for _, v in inset),
+                            "demand_in_support_only": True,
+                        })
     return bad
 
 
@@ -212,6 +281,19 @@ def main():
         print(f"  --- {tag} ---")
         for (L, p) in shapes:
             line(f"L={L:<3d} p={p}", sweep(20260826 + L, 500, L, p, ft, ex))
+        print()
+    if EXDIAG:
+        print("  e_ex failure diagnosis:")
+        agg = {}
+        for e in EXDIAG:
+            k = (e["kind"], e["r"], e["carriers_in_model"] > 0,
+                 tuple(e["carrier_kinds"]), e["r_related_in_cert"],
+                 e["any_r_related_has_D"])
+            agg[k] = agg.get(k, 0) + 1
+        for k, n in sorted(agg.items(), key=lambda kv: -kv[1]):
+            print(f"    {n:3d}  node kind {k[0]}, demand {k[1]}, "
+                  f"model carriers exist {k[2]} (kinds {list(k[3])}), "
+                  f"r-related cert nodes {k[4]}, one carries D {k[5]}")
         print()
     print("=" * 76)
     print("  CONTROL 1 (full-type) must show node counts GROWING with L,")
