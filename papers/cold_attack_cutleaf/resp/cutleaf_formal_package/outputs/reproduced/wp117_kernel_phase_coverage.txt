@@ -1,0 +1,45 @@
+WP117 -- UNION coverage: kernel phases OR the declared edge
+
+  L=4   p=3: models 1011
+    tail   (CONTROL, must be 100%)       2 unserved, phase-served     2 (100.0%)
+    prefix (MEASUREMENT)               181 unserved, phase-served   181 (100.0%)
+    side                                 0 unserved
+
+  L=8   p=3: models 1026
+    tail   (CONTROL, must be 100%)       2 unserved, phase-served     2 (100.0%)
+    prefix (MEASUREMENT)               439 unserved, phase-served   439 (100.0%)
+    side                                 0 unserved
+
+  L=18  p=3: models 1006
+    tail   (CONTROL, must be 100%)      21 unserved, phase-served    21 (100.0%)
+    prefix (MEASUREMENT)               865 unserved, phase-served   865 (100.0%)
+    side                                 0 unserved
+
+  L=8   p=6: models 1011
+    tail   (CONTROL, must be 100%)       1 unserved, phase-served     1 (100.0%)
+    prefix (MEASUREMENT)               411 unserved, phase-served   411 (100.0%)
+    side                                 0 unserved
+
+  L=26  p=2: models 1014
+    tail   (CONTROL, must be 100%)       0 unserved
+    prefix (MEASUREMENT)              1322 unserved, phase-served  1322 (100.0%)
+    side                                 0 unserved
+
+========================================================================
+  CONTROL HELD (tail 100%).  Prefix coverage, phases OR edge:
+    L=4   p=3 : 181/181 = 100.0%
+    L=8   p=3 : 439/439 = 100.0%
+    L=18  p=3 : 865/865 = 100.0%
+    L=8   p=6 : 411/411 = 100.0%
+    L=26  p=2 : 1322/1322 = 100.0%
+    pooled : 3218/3218 = 100.0%
+
+  Of the demands the EDGE served (phases did not):
+    witness ALREADY in the node set : 0
+    witness is a NEW node           : 305   <- these owe their own demands
+
+  100% everywhere -> the two together cover the residue with no
+  new node and no round: sec.131.4's redesign has its answer.
+========================================================================
+
+[TIME] elapsed=1.85 s exit=0

@@ -1,0 +1,20 @@
+WP121 -- thin-support MultiTierOk acceptance on the fence
+
+    L    negative control                  treatment
+    1    e_ex=1 (as expected)             PASS
+    2    e_ex=1 (as expected)             PASS
+    4    e_ex=1 (as expected)             PASS
+    8    e_ex=1 (as expected)             PASS
+   12    e_ex=1 (as expected)             PASS
+   18    e_ex=1 (as expected)             PASS
+   26    e_ex=1 (as expected)             PASS
+   40    e_ex=1 (as expected)             PASS
+
+============================================================================
+  CONTROLS HELD.  The two-external, zero-kernel support certificate
+  satisfies every non-vacuous MultiTierOk field checked here.
+  This validates the fixed fence family only; it does not establish
+  termination of support generation for arbitrary C0.
+============================================================================
+
+[TIME] elapsed=0.71 s exit=0

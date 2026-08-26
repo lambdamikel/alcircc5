@@ -10374,3 +10374,68 @@ than they deserved. Step 1 is worth doing because it is cheap and the
 infrastructure is already certified — not because I expect it to work. Step 3 is
 named so that a failure at step 2 has somewhere to go, not because it is
 sketched.
+
+## 135. THE COLD RESPONSE — two real contributions, both checked
+
+`papers/cold_attack_cutleaf/` came back with a 14-page note and three new probes
+(`wp119`–`wp121`). All three reproduce locally. The note explicitly claims no
+decidability proof.
+
+### 135.1 Contribution 1 — my §131 refutation was of the wrong construction
+
+`wp120`, fixed `C₀ = ∃PP.B0 ⊓ (R ∨ junk)`, growing fence length `L`:
+
+| `L` | 4 | 8 | 12 | 18 | 26 | 40 |
+|---|---|---|---|---|---|---|
+| model nodes | 9 | 17 | 25 | 37 | 53 | 81 |
+| target rounds | 2 | 4 | 5 | 8 | 11 | 16 |
+| full-`mty` nodes | 9 | 17 | 25 | 37 | 53 | 81 |
+| **support nodes** | **2** | **2** | **2** | **2** | **2** | **2** |
+
+The growth §131 measured is caused by **full-type overlabelling**, not by `C₀`.
+`mty` puts every locally-true subformula in the label — including existentials
+from disjuncts that were never selected — and those junk demands spawn the
+rounds.
+
+`MultiTierOk` never requires `tauE e = mty …`; it requires the Hintikka closure
+conditions. So **support-generated labels are permitted by the literal
+obligations**, and `wp121` checks every non-vacuous field for a two-external,
+zero-kernel support certificate on the fence family, with a negative control
+(remove the witness ⟹ exactly one `e_ex` failure).
+
+§131 stands as stated — expanding under `mty` labels does grow — but its
+conclusion, that expansion is hopeless, does not.
+
+### 135.2 Contribution 2 — the measure §104.3 said did not exist
+
+Certified here rather than taken on trust, all **axiom-free**:
+
+| | |
+|---|---|
+| `extremal_drops` | a `D`-MAXIMAL carrier does not itself carry `∃PP.D` — a carrier above it would be a carrier above `x` |
+| `spectrum_mono` | going up cannot create an ascending demand |
+| `extremal_strict` | so the ascending spectrum strictly decreases at an extremal step |
+| `extremal_drops_ppi` | the descending mirror, stated because §119 recorded the mirror must not be assumed |
+
+Consequence: a run of extremal ascending services is bounded by
+`|{D : ∃PP.D ∈ cl C₀}|` — **computable from `C₀` alone**. §104.3 recorded, after
+`mdepth` was refuted, that "no other monotone quantity has been found". This is
+one, and choosing the witness EXTREMALLY is what makes it work — a selector
+discipline, which §109's `WitSel` already parameterises.
+
+### 135.3 What is unchanged
+
+The note's own warning: a `PP` step may enlarge the DOWNWARD spectrum and a
+later `PPI` step the upward one, so **mixed alternation evades a lexicographic
+combination**. That is §103's switch count, unmoved.
+
+And `wp121` validates one fixed fence family, not a general construction.
+
+### 135.4 Net
+
+Two of my own conclusions are corrected — §131's scope, and §104.3's "no
+monotone quantity" — by an outside look that cost one packet. The deep item is
+where it was.
+
+Build: 31,850 lines, 1,597 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

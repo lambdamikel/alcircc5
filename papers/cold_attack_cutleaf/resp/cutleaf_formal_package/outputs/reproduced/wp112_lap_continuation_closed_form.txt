@@ -1,0 +1,30 @@
+WP112 -- lap continuation, tail in CLOSED FORM
+
+  L=4 p=3: models 3337, cut leaves with an unserved ascending demand 2295
+    CONTROL  models where a tail residue lacks a same-type PP-successor: 0
+    tail      1188 leaves, lap continues  1166 ( 98.1%)
+    prefix    1093 leaves, lap continues   608 ( 55.6%)
+    side        14 leaves, lap continues     0 (  0.0%)
+
+  L=6 p=2: models 3307, cut leaves with an unserved ascending demand 3988
+    CONTROL  models where a tail residue lacks a same-type PP-successor: 0
+    tail      1241 leaves, lap continues  1233 ( 99.4%)
+    prefix    2725 leaves, lap continues   904 ( 33.2%)
+    side        22 leaves, lap continues     0 (  0.0%)
+
+  L=2 p=5: models 3358, cut leaves with an unserved ascending demand 2096
+    CONTROL  models where a tail residue lacks a same-type PP-successor: 0
+    tail      1653 leaves, lap continues  1554 ( 94.0%)
+    prefix     435 leaves, lap continues   228 ( 52.4%)
+    side         8 leaves, lap continues     0 (  0.0%)
+
+========================================================================
+  CONTROL HELD.  The measurement is reportable:
+    prefix cut leaves 8379, lap continues 5693 (67.9%)
+
+  High  -> blocking-to-kernel is generally available; the cut leaf
+           has a kernel and kernelData_of_chain applies.
+  Low   -> the residue needs treatment other than a kernel.
+========================================================================
+
+[TIME] elapsed=2.97 s exit=0

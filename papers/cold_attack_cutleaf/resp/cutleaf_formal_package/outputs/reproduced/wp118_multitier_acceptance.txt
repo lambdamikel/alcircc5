@@ -1,0 +1,21 @@
+WP118 -- full MultiTierOk acceptance over a kernel-bearing class
+
+  --- CONTROL: declared edges OFF ---
+    certificates checked : 2342
+      e_ex_PP          37
+      k_ex_PP          42
+      k_ex_PPI         336
+
+  --- declared edges ON ---
+    certificates checked : 2342
+      e_ex_PP          37
+      k_ex_PP          42
+      k_ex_PPI         336
+
+========================================================================
+  The CONTROL must show e_ex failures: if disabling the declared
+  edges changes nothing, the treatment is doing no work and a pass
+  says nothing about it.
+========================================================================
+
+[TIME] elapsed=2.43 s exit=0

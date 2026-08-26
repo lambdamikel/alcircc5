@@ -30944,6 +30944,69 @@ which is `cutNodes` plus the residue handling of §§123–126, and which `wp115
 answers affirmatively on 6,786 instances. It is also, unlike the obligations
 above, not yet a theorem. -/
 
+/-! #### §135 — THE EXTREMAL-CARRIER MEASURE (cold response, verified)
+
+The cold attack packet (`papers/cold_attack_cutleaf/`) returned an
+order-theoretic measure this campaign had looked for and failed to find: §104.3
+recorded "no other monotone quantity has been found" after `mdepth` was refuted.
+
+The idea is to choose a MAXIMAL carrier rather than an arbitrary one. Two
+lemmas, both small, both verified here rather than taken on trust.
+
+`extremal_drops` — a maximal carrier does not itself carry the demand, because a
+carrier above it would be a carrier above `x` too (`comp(PP,PP) = {PP}`).
+
+`spectrum_mono` — the ascending demand spectrum shrinks as one goes up. Together
+these make the spectrum STRICTLY decrease at every extremal step, so a run of
+extremal ascending services is bounded by the number of `∃PP` arguments in
+`cl C₀` — computable from `C₀` alone.
+
+**Scope, from the note itself:** this bounds ONE DIRECTION. A `PP` step may
+enlarge the DOWNWARD spectrum and vice versa, so mixed alternation still evades a
+lexicographic combination — which is §103's switch count, unchanged. -/
+
+/-- **A MAXIMAL CARRIER DROPS THE DEMAND.**  If `y` is above `x` and no
+    `D`-carrier above `x` lies above `y`, then `∃PP.D` fails at `y` — otherwise
+    its witness would be a `D`-carrier above `x` and above `y`. -/
+theorem extremal_drops (hI : RCC5Interp I) {D : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hxy : I.rho x y = pp)
+    (hmax : ∀ z, I.dom z → I.rho x z = pp → sat I z D → ¬ I.rho y z = pp) :
+    ¬ sat I y (Concept.ex pp D) := by
+  intro h
+  obtain ⟨z, hz, hr, hD⟩ := h
+  exact hmax z hz (path_cut_below hI hx hy hz hxy hr) hD hr
+
+/-- **THE SPECTRUM IS MONOTONE.**  Going up cannot create an ascending demand:
+    a witness above `y` is a witness above `x`. -/
+theorem spectrum_mono (hI : RCC5Interp I) {E : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hxy : I.rho x y = pp)
+    (h : sat I y (Concept.ex pp E)) : sat I x (Concept.ex pp E) := by
+  obtain ⟨z, hz, hr, hE⟩ := h
+  exact ⟨z, hz, path_cut_below hI hx hy hz hxy hr, hE⟩
+
+/-- **STRICT DESCENT AT AN EXTREMAL STEP.**  The two together: the spectrum at
+    the extremal target is contained in the source's and misses `D`. This is the
+    measure — `Arg_PP(C₀)` is finite and computable from `C₀`. -/
+theorem extremal_strict (hI : RCC5Interp I) {D : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hxy : I.rho x y = pp)
+    (hmax : ∀ z, I.dom z → I.rho x z = pp → sat I z D → ¬ I.rho y z = pp)
+    (hD : sat I x (Concept.ex pp D)) :
+    (∀ E, sat I y (Concept.ex pp E) → sat I x (Concept.ex pp E)) ∧
+      sat I x (Concept.ex pp D) ∧ ¬ sat I y (Concept.ex pp D) :=
+  ⟨fun _ h => spectrum_mono hI hx hy hxy h, hD, extremal_drops hI hx hy hxy hmax⟩
+
+/-- The DESCENDING mirror, stated because §119 recorded that `pp_dichotomy` is
+    `pp`-only and the mirror must not be assumed silently. -/
+theorem extremal_drops_ppi (hI : RCC5Interp I) {D : Concept} {x y : α}
+    (hx : I.dom x) (hy : I.dom y) (hxy : I.rho y x = pp)
+    (hmax : ∀ z, I.dom z → I.rho z x = pp → sat I z D → ¬ I.rho z y = pp) :
+    ¬ sat I y (Concept.ex ppi D) := by
+  intro h
+  obtain ⟨z, hz, hr, hD⟩ := h
+  have hzy : I.rho z y = pp := by
+    rw [hI.conv_ y z hy hz, hr]; rfl
+  exact hmax z hz (path_cut_below hI hz hy hx hzy hxy) hD hzy
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31780,4 +31843,8 @@ end POFreeLift
 #print axioms POFreeLift.readoff_e_ex_pp
 #print axioms POFreeLift.readoff_ee_all_pp
 #print axioms POFreeLift.readoff_ee_all_dr
+#print axioms POFreeLift.extremal_drops
+#print axioms POFreeLift.spectrum_mono
+#print axioms POFreeLift.extremal_strict
+#print axioms POFreeLift.extremal_drops_ppi
 #print axioms POFreeLift.kernel_of_no_terminal

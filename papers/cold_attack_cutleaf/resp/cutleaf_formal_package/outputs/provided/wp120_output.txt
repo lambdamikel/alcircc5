@@ -1,0 +1,19 @@
+WP120 candidate -- support labels on an alternating fence
+
+  fixed C0 = exists-PP.B0 AND (R OR junk)
+  R is true at the root; junk is not selected, but its existential
+  subformulas still enter every FULL model type when locally true.
+
+    L    model nodes    target rounds    full-mty nodes    support nodes
+    4         9               2                9               2
+    8        17               4               17               2
+   12        25               5               25               2
+   18        37               8               37               2
+   26        53              11               53               2
+   40        81              16               81               2
+
+============================================================================
+  The growth is caused by full-type overlabelling, not by C0.
+  A thin witness remains a real, distinct external and serves its parent,
+  but it owes only formulas in its supported Hintikka label.
+============================================================================

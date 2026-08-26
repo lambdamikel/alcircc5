@@ -1,0 +1,45 @@
+WP115 -- acceptance test, READ-OFF, edges OFF
+
+  certificates built and fully checked : 6786
+  of which carry a DECLARED EDGE       : 0
+  abandoned (no cycle-free choice)     : 0
+  closures that hit the step cap       : 0   <- must be 0 or the pass is empty
+
+  FAILURES (obligation -> count):
+    e_ex_PP          17
+    e_ex_PPI         20
+
+  DIAGNOSIS of the surviving unserved vertical demands:
+     37  witness exists in MODEL but not in NODE SET
+         node is a cut leaf: True, has blocker: True
+
+========================================================================
+  A failure names the obligation the declared edge breaks.  Note the
+  DECLARED EDGE count: if it is small the run says little about the
+  edge itself, whatever the failure column shows.
+========================================================================
+
+WP115 -- acceptance test, READ-OFF, edges ON
+
+  certificates built and fully checked : 6786
+  of which carry a DECLARED EDGE       : 34
+  abandoned (no cycle-free choice)     : 0
+  closures that hit the step cap       : 0   <- must be 0 or the pass is empty
+
+  ALL OBLIGATIONS HOLD:
+    ODStruct axioms (ltIrr/ltTr/djSym/djIrr/ltNotDj/djDown)
+    composition closure of odNet
+    ee_all for EVERY relation
+    e_ex for EVERY node
+
+  DIAGNOSIS of the surviving unserved vertical demands:
+     37  witness exists in MODEL but not in NODE SET
+         node is a cut leaf: True, has blocker: True
+
+========================================================================
+  A failure names the obligation the declared edge breaks.  Note the
+  DECLARED EDGE count: if it is small the run says little about the
+  edge itself, whatever the failure column shows.
+========================================================================
+
+[TIME] elapsed=3.67 s exit=0

@@ -1,0 +1,35 @@
+WP119 candidate -- extremal carrier or D-carrying kernel
+
+  FIXED C0 FAMILY: C0 = exists-PP.A
+    L    nearest rounds    extremal nodes    extremal depth    kernels
+    4          2                      2                 1          0
+    8          4                      2                 1          0
+   12          6                      2                 1          0
+   18          9                      2                 1          0
+   26         13                      2                 1          0
+   40         20                      2                 1          0
+
+  WP117 PHASE-UNCOVERED RESIDUE:
+    residual demands                         : 305
+    with an r-extremal D-carrier             : 305
+    extremal carrier already in node set     : 0
+    extremal carrier is new                  : 305
+    target still carries the SAME defect     : 0
+    no extremal carrier                      : 0
+
+  RANDOM TOWER SWEEP (same shapes/seeds as wp116):
+    L=4   p=3 : models 1011, max nodes  4, max depth  3, max kernels  3, control failures 0
+    L=8   p=3 : models 1026, max nodes  4, max depth  3, max kernels  4, control failures 0
+    L=12  p=3 : models 1005, max nodes  4, max depth  3, max kernels  4, control failures 0
+    L=18  p=3 : models 1001, max nodes  4, max depth  3, max kernels  4, control failures 0
+    L=26  p=3 : models 1023, max nodes  4, max depth  3, max kernels  3, control failures 0
+    L=40  p=3 : models 1008, max nodes  5, max depth  2, max kernels  3, control failures 0
+
+============================================================================
+  CONTROLS HELD.  This rejects only the inference
+      'wp116's growing first-witness rounds imply every extraction grows'.
+  It is not yet a MultiTierOk acceptance result; kernel obligations and
+  mixed PP/PPI alternation still require a proof or a stronger probe.
+============================================================================
+
+[TIME] elapsed=2.61 s exit=0
