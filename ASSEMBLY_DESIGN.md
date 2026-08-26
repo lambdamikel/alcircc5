@@ -10164,3 +10164,64 @@ branches already measured:
 
 The redesign question is whether those two together cover the prefix leaves
 without spawning rounds. That is measurable before it is formalised.
+
+## 132. THE REDESIGN — `wp117`: phases OR edge, and the rounds disappear
+
+§131 killed target expansion because its round count grows with the model.
+§131.4 said the treatment must come from branches that add nothing. `wp117`
+measures exactly that.
+
+### 132.1 Two treatments, neither of which adds a node
+
+* **kernel phase** — a kernel contributes its PHASES to the certificate, so a
+  leaf may be served by someone else's kernel. In the tower class the phases are
+  the tail residues, and every tail residue is above every prefix node.
+* **declared edge** — §123's, under §124.2's two-clause condition.
+
+Measured separately and together, over `wp112`'s closed-form tower:
+
+| | L=4 p=3 | L=8 p=3 | L=18 p=3 | L=8 p=6 | L=26 p=2 |
+|---|---|---|---|---|---|
+| phases alone | 96.7% | 91.6% | 91.1% | 95.9% | 87.3% |
+| **phases OR edge** | **100%** | **100%** | **100%** | **100%** | **100%** |
+
+Pooled: **3,218 / 3,218**. Control held throughout (tail leaves 100%, as
+declared before the run).
+
+The phases-alone column MOVES with shape (87–97%), so on its own it is a
+generator property. The union does not move: it is 100% at every shape, which is
+the strongest form this method produces.
+
+### 132.2 The revised plan
+
+1. `cutNodes` — certified terminating, any selector, no hypothesis
+   (`cutNodes_stable_typeEnum`).
+2. Cut leaves served by **kernel phase OR declared edge**. **Nothing is added,
+   so there are no rounds** — §131's refutation does not apply.
+3. Coverage theorem: every member's vertical demand is served by a set member, a
+   kernel phase, or a declared edge.
+4. Assemble `MultiTierOk` — §128 already reduced every other obligation to the
+   frame.
+5. `mergedExtraction_of_ok` → `mixedCompleteness_of_merged` →
+   `decidableSat_pofree`.
+
+The termination problem that killed §130 is **gone by construction**: the failing
+step was "expand", and the redesign never expands.
+
+### 132.3 What is still evidence rather than proof
+
+Step 3. The 100% is an acceptance measurement over one model class with
+randomized concepts, and the declared edge's two-clause condition is realised
+approximately in the tower (ancestor via successor sets, disjointness via `DR`).
+
+Two things make it stronger than the numbers §§105–118 produced: the control was
+declared in advance and held, and the figure does not move across five shapes.
+Two things keep it from being proof: it is one model class, and `wp115`'s
+finite-set-model construction has not been re-run against the union.
+
+### 132.4 Next
+
+Re-run `wp115` — different model class, full obligation checking — with target
+expansion replaced by phases-or-edge. If that also passes, step 3 is worth
+formalising; if it does not, the disagreement between the two classes is itself
+the finding.
