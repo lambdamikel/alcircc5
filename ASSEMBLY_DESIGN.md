@@ -10437,5 +10437,5 @@ Two of my own conclusions are corrected — §131's scope, and §104.3's "no
 monotone quantity" — by an outside look that cost one packet. The deep item is
 where it was.
 
-Build: 31,850 lines, 1,597 declarations, exit 0, 0 errors / 0 warnings /
+Build: 31,850 lines, 1,596 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
