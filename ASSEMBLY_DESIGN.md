@@ -10994,3 +10994,54 @@ is the iteration that repeats it and the between-node obligations.**
 
 Build: 32,856 lines, 1,656 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 148. THE ITERATION, AND THE COVERAGE THEOREM
+
+| | |
+|---|---|
+| `sNodes` | the support-label closure: a node, then its vertical demands' children at one less depth |
+| `self_mem_sNodes` | |
+| **`sNodes_length_le`** | **size ≤ `genBound \|cl C₀\| d`** — branching from `sChildN_len` |
+| `sNodes_child_mem_pp` / `_ppi` | a served demand's child is in the closure |
+| `no_demand_of_depth_zero` | a label of depth 0 has no demand — `∃r.D` has depth ≥ 1 |
+| `sNodes_sub_of_child_pp` / `_ppi` | a child's closure sits inside the parent's |
+| **`sNodes_covers_pp`** | **THE CLOSURE IS CLOSED, at fuel `maxDepth n.lab`** |
+
+```
+sNodes_covers_pp :
+  ∀ d n, maxDepth n.lab ≤ d →
+    ∀ m ∈ sNodes hI d n, ∀ D (hD : Concept.ex pp D ∈ m.lab),
+      sChildN hI m hD ∈ sNodes hI d n
+```
+
+**The fuel comes from the root label's depth** — not guessed, not a hypothesis,
+not a parameter to be discharged later. `maxDepth` of the root label is bounded
+by `mdepth C₀` whenever the root label is (which `hclose` of `C₀` is).
+
+### 148.1 Why the induction goes through
+
+At depth zero there are no demands (`no_demand_of_depth_zero`). At `d+1`, a
+member is the node itself — whose child is present by `sNodes_child_mem_pp` — or
+lies in a child's closure, where `sChildN_depth` gives
+`maxDepth child ≤ d` and the induction hypothesis applies.
+
+**`sChildN_depth` is the whole engine**, and it is the measure §104.3 recorded as
+not existing — correctly, for complete model types (§142.1).
+
+### 148.2 What this is, and is not
+
+**Is:** a terminating, size-bounded, PROVABLY CLOSED vertical closure over
+support labels, with every bound computable from `C₀`. That is what §§130–133
+tried and failed to get for `mty` labels, twice.
+
+**Is not:** a `MultiTierOk`. Still outstanding —
+
+* the `∃PPI` mirror of `sNodes_covers_pp` (symmetric, not yet written);
+* the BETWEEN-node obligations — `ee_all` and vertical `e_ex` come from the
+  frame (§128), but that is stated about `mty` and needs restating for support
+  labels;
+* the kernel obligations (`ek_all`, `ke_all`, `kk_*`, `k_ex`), which `wp124`
+  exercises but nothing proves.
+
+Build: 33,004 lines, 1,665 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

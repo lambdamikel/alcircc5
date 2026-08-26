@@ -31983,6 +31983,157 @@ theorem sChildN_len (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
     {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) :
     (sChildN hI n h).lab.length ≤ (cl C0).length := normL_len C0 _
 
+/-! #### §148 — THE ITERATION
+
+§§146–147 certified one step. This is the closure that repeats it, and its size
+bound — `genNodes_le_C0`'s two inputs are `sChildN_depth` and `sChildN_len`, both
+already proved, so the counting goes through unchanged. -/
+
+open Classical in
+/-- The support-label closure: a node, then the children of its vertical demands
+    at one less depth. -/
+noncomputable def sNodes (hI : RCC5Interp I) {C0 : Concept} :
+    Nat → SNode I C0 → List (SNode I C0)
+  | 0, n => [n]
+  | d + 1, n => n :: n.lab.attach.flatMap (fun p => match p with
+      | ⟨.ex pp _, hD⟩ => sNodes hI d (sChildN hI n hD)
+      | ⟨.ex ppi _, hD⟩ => sNodes hI d (sChildN hI n hD)
+      | _ => [])
+
+theorem self_mem_sNodes (hI : RCC5Interp I) {C0 : Concept} (d : Nat)
+    (n : SNode I C0) : n ∈ sNodes hI d n := by
+  cases d with
+  | zero => rw [sNodes]; exact List.mem_cons_self
+  | succ d' => rw [sNodes]; exact List.mem_cons_self
+
+/-- **THE SIZE BOUND.**  Depth `d`, branching `≤ |cl C₀|` by `sChildN_len`, so
+    the closure is bounded by `genBound |cl C₀| d` — computable from `C₀` and `d`
+    alone, with no reference to the model. -/
+theorem sNodes_length_le (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), n.lab.length ≤ (cl C0).length →
+      (sNodes hI d n).length ≤ genBound (cl C0).length d := by
+  intro d
+  induction d with
+  | zero => intro n _; rw [sNodes, genBound]; exact Nat.le_refl 1
+  | succ d' ih =>
+    intro n hlen
+    rw [sNodes, genBound, List.length_cons, List.length_flatMap]
+    have hb : ((n.lab.attach).map (fun p => (match p with
+        | ⟨.ex pp _, hD⟩ => sNodes hI d' (sChildN hI n hD)
+        | ⟨.ex ppi _, hD⟩ => sNodes hI d' (sChildN hI n hD)
+        | _ => []).length)).sum
+        ≤ (n.lab.attach).length * genBound (cl C0).length d' := by
+      refine sum_map_le _ _ _ ?_
+      rintro ⟨F, hF⟩ _
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp => exact ih _ (sChildN_len hI n hF)
+        | ppi => exact ih _ (sChildN_len hI n hF)
+        | _ => exact Nat.zero_le _
+      | _ => exact Nat.zero_le _
+    rw [List.length_attach] at hb
+    calc _ ≤ n.lab.length * genBound (cl C0).length d' + 1 :=
+          Nat.add_le_add_right hb 1
+      _ ≤ (cl C0).length * genBound (cl C0).length d' + 1 :=
+          Nat.add_le_add_right (Nat.mul_le_mul_right _ hlen) 1
+      _ = 1 + (cl C0).length * genBound (cl C0).length d' := Nat.add_comm _ _
+
+open Classical in
+/-- A served demand's child is in the closure. -/
+theorem sNodes_child_mem_pp (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {D : Concept} (hD : Concept.ex pp D ∈ n.lab) (d : Nat) :
+    sChildN hI n hD ∈ sNodes hI (d + 1) n := by
+  rw [sNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex pp D, hD⟩, List.mem_attach _ _, ?_⟩)
+  show sChildN hI n hD ∈ sNodes hI d (sChildN hI n hD)
+  exact self_mem_sNodes hI d _
+
+open Classical in
+/-- The descending mirror. -/
+theorem sNodes_child_mem_ppi (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {D : Concept} (hD : Concept.ex ppi D ∈ n.lab) (d : Nat) :
+    sChildN hI n hD ∈ sNodes hI (d + 1) n := by
+  rw [sNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex ppi D, hD⟩, List.mem_attach _ _, ?_⟩)
+  show sChildN hI n hD ∈ sNodes hI d (sChildN hI n hD)
+  exact self_mem_sNodes hI d _
+
+/-- **A LABEL OF DEPTH ZERO HAS NO DEMAND.**  `∃r.D` has modal depth at least
+    one, so at `maxDepth = 0` the closure has nothing left to serve — which is
+    why `maxDepth n.lab` is the right fuel. -/
+theorem no_demand_of_depth_zero {L : List Concept} (h : maxDepth L = 0)
+    {r : Atom} {D : Concept} : Concept.ex r D ∉ L := by
+  intro hmem
+  have h1 := mem_maxDepth_le hmem
+  have h2 : mdepth (Concept.ex r D) = mdepth D + 1 := rfl
+  omega
+
+open Classical in
+/-- Anything in a child's closure is in the parent's, one level up. -/
+theorem sNodes_sub_of_child_pp (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) {D : Concept} (hD : Concept.ex pp D ∈ n.lab) (d : Nat)
+    {m : SNode I C0} (hm : m ∈ sNodes hI d (sChildN hI n hD)) :
+    m ∈ sNodes hI (d + 1) n := by
+  rw [sNodes]
+  exact List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex pp D, hD⟩, List.mem_attach _ _, hm⟩)
+
+open Classical in
+theorem sNodes_sub_of_child_ppi (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) {D : Concept} (hD : Concept.ex ppi D ∈ n.lab) (d : Nat)
+    {m : SNode I C0} (hm : m ∈ sNodes hI d (sChildN hI n hD)) :
+    m ∈ sNodes hI (d + 1) n := by
+  rw [sNodes]
+  exact List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex ppi D, hD⟩, List.mem_attach _ _, hm⟩)
+
+open Classical in
+/-- **THE CLOSURE IS CLOSED, AT FUEL `maxDepth`.**  Every `∃PP` demand of every
+    member has its child in the set — with the fuel taken from the ROOT LABEL's
+    depth, not guessed and not a hypothesis.
+
+    This is the coverage §143 counted and `wp124` measured; the depth measure
+    (§142) is what makes the induction go through, and it is the measure that
+    fails for complete model types. -/
+theorem sNodes_covers_pp (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), maxDepth n.lab ≤ d →
+      ∀ m ∈ sNodes hI d n, ∀ (D : Concept) (hD : Concept.ex pp D ∈ m.lab),
+        sChildN hI m hD ∈ sNodes hI d n := by
+  intro d
+  induction d with
+  | zero =>
+    intro n hdep m hm D hD
+    rw [sNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact absurd hD (no_demand_of_depth_zero (Nat.le_antisymm hdep (Nat.zero_le _)))
+    · exact absurd h List.not_mem_nil
+  | succ d' ih =>
+    intro n hdep m hm D hD
+    rw [sNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact sNodes_child_mem_pp hI m hD d'
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp h
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+            have := sChildN_depth hI n hF
+            omega
+          exact sNodes_sub_of_child_pp hI n hF d'
+            (ih (sChildN hI n hF) hchild m hmm D hD)
+        | ppi =>
+          have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+            have := sChildN_depth hI n hF
+            omega
+          exact sNodes_sub_of_child_ppi hI n hF d'
+            (ih (sChildN hI n hF) hchild m hmm D hD)
+        | _ => exact absurd hmm List.not_mem_nil
+      | _ => exact absurd hmm List.not_mem_nil
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -32853,4 +33004,8 @@ end POFreeLift
 #print axioms POFreeLift.normL_supportOk
 #print axioms POFreeLift.sChildN_depth
 #print axioms POFreeLift.sChildN_len
+#print axioms POFreeLift.sNodes_length_le
+#print axioms POFreeLift.sNodes_child_mem_pp
+#print axioms POFreeLift.no_demand_of_depth_zero
+#print axioms POFreeLift.sNodes_covers_pp
 #print axioms POFreeLift.kernel_of_no_terminal
