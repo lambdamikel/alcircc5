@@ -9076,3 +9076,59 @@ Neither is built yet. What changed is that building either is now possible: with
 
 Build: 31,055 lines, 1,558 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 110. THE DEBT, NAMED WHERE IT CAN BE DISCHARGED
+
+`BoundedSel I C0 kser N` — a selector TOGETHER WITH the length bound its
+choices earn:
+
+```
+sel   : WitSel I C0
+bound : every path of non-served steps has length ≤ N
+```
+
+with `boundedSel_covers` / `boundedSel_coversI` deriving the closed closure at
+fuel `N`, both directions.
+
+### 110.1 Why the restatement is worth something
+
+`SwitchBounded` (§104.2) quantified over ALL paths in a model — a claim about
+the logic. `BoundedSel` is a claim about a **choice**, and `wp109` measured that
+the choice changes the answer: switch drift vanishes under late picking.
+
+**A hypothesis about a choice is discharged by making the choice. A hypothesis
+about the logic is not.** That is the whole difference §109's parameterization
+bought.
+
+What is NOT claimed: that `defaultSel` extends to a `BoundedSel`. §108 is the
+reason to doubt it.
+
+### 110.2 Non-vacuity, honestly labelled
+
+`boundedSel_of_no_vertical` — when `cl C0` has no vertical existential there are
+no steps, so any selector is bounded at `N = 0`. **Axiom-free.**
+
+This is a degenerate witness and is documented as one in the file. It certifies
+that `BoundedSel` is inhabitable and that `bound` is a real obligation rather
+than a contradiction. It does not suggest the interesting selectors are close.
+
+### 110.3 Where the mixed quadrant now stands
+
+| | |
+|---|---|
+| both directional fixpoints (§102) | certified |
+| run decomposition + composition (§104) | certified |
+| mixed fixpoint + coverage, given a bound (§104, §110) | certified |
+| the consumer, external disjunct (§107) | certified |
+| `∃PPI` coverage (§107.1, was missing) | certified |
+| selector parameterization (§109) | certified, default case preserved |
+| **a selector with a bound** | **open — `BoundedSel`, W2′-shaped** |
+| the kernel disjunct (§108) | **open — same shape** |
+
+The two open items are one item: both are the question of whether a choice can
+be made uniformly enough. The campaign has known since 2026-07-15 that W2′ folds
+into F6; §108 rediscovered it in the mixed setting, which is a consistency
+check on the diagnosis rather than new bad news.
+
+Build: 31,121 lines, 1,562 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

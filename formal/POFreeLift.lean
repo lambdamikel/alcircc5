@@ -30237,6 +30237,70 @@ theorem SkipStepW_default (kser : MTKNode I C0 → Concept → Bool)
     (a b : MTKNode I C0) :
     SkipStepW (defaultSel I C0) kser a b = SkipStep kser a b := rfl
 
+/-! #### §110 — THE DEBT, NAMED WHERE IT CAN BE DISCHARGED
+
+§108 showed `defaultSel` cannot terminate the closure soundly, and §109 made the
+selector a parameter. `BoundedSel` is the pair the construction actually wants:
+a selector TOGETHER WITH the length bound its choices earn.
+
+Stating it here rather than as a floating hypothesis has a point. `SwitchBounded`
+(§104.2) quantified over ALL paths in a model, so it was a claim about the logic.
+`BoundedSel` is a claim about a CHOICE — and `wp109` measured that the choice
+changes the answer (switch drift vanishes under late picking). A hypothesis about
+a choice is discharged by making the choice; a hypothesis about the logic is not.
+
+What is NOT claimed: that `defaultSel` extends to a `BoundedSel`. §108 is the
+reason to doubt it. -/
+
+/-- **A SELECTOR WITH ITS BOUND.**  `N` caps every path of non-served steps. -/
+structure BoundedSel (I : Interp α) (C0 : Concept)
+    (kser : MTKNode I C0 → Concept → Bool) (N : Nat) where
+  sel : WitSel I C0
+  bound : ∀ (path : Nat → MTKNode I C0) (k : Nat),
+    (∀ i, i < k → SkipStepW sel kser (path i) (path (i + 1))) → k ≤ N
+
+/-- **THE PAYOFF.**  A bounded selector closes the closure: at fuel `N` every
+    `∃PP` demand is served or its witness is present. -/
+theorem boundedSel_covers {kser : MTKNode I C0 → Concept → Bool} {N : Nat}
+    (B : BoundedSel I C0 kser N) (n : MTKNode I C0) :
+    ∀ m ∈ skipNodesW B.sel kser n N, ∀ (c : Concept)
+      (hF : Concept.ex pp c ∈ mtk C0 I m.x m.k),
+      kser m c = true ∨ B.sel.up m hF ∈ skipNodesW B.sel kser n N :=
+  skipNodesW_covers_of_fixed B.sel kser n N
+    (skipNodesW_fixed_of_len B.sel kser n N B.bound)
+
+/-- And the `∃PPI` half. -/
+theorem boundedSel_coversI {kser : MTKNode I C0 → Concept → Bool} {N : Nat}
+    (B : BoundedSel I C0 kser N) (n : MTKNode I C0) :
+    ∀ m ∈ skipNodesW B.sel kser n N, ∀ (c : Concept)
+      (hF : Concept.ex ppi c ∈ mtk C0 I m.x m.k),
+      kser m c = true ∨ B.sel.dn m hF ∈ skipNodesW B.sel kser n N :=
+  skipNodesW_covers_of_fixedI B.sel kser n N
+    (skipNodesW_fixed_of_len B.sel kser n N B.bound)
+
+/-- **NON-VACUITY.**  When `C₀` has no vertical existential in its closure there
+    are no steps to take, so ANY selector is bounded at `N = 0`.
+
+    A degenerate witness, deliberately: it certifies that `BoundedSel` is
+    inhabitable and that its `bound` field is a real obligation rather than a
+    contradiction, which is the most a witness can do before the interesting
+    selectors are built. -/
+def boundedSel_of_no_vertical (W : WitSel I C0)
+    (kser : MTKNode I C0 → Concept → Bool)
+    (hnov : ∀ c, Concept.ex pp c ∉ cl C0 ∧ Concept.ex ppi c ∉ cl C0) :
+    BoundedSel I C0 kser 0 where
+  sel := W
+  bound := by
+    intro path k hsteps
+    cases k with
+    | zero => exact Nat.le_refl 0
+    | succ k' =>
+      exfalso
+      obtain ⟨c, hc⟩ := hsteps 0 (Nat.succ_pos k')
+      rcases hc with ⟨hF, _⟩ | ⟨hF, _⟩
+      · exact (hnov c).1 (mtk_sub_cl _ hF)
+      · exact (hnov c).2 (mtk_sub_cl _ hF)
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31053,3 +31117,5 @@ end POFreeLift
 #print axioms POFreeLift.SkipStepW_default
 #print axioms POFreeLift.skipNodesW_fixed_of_len
 #print axioms POFreeLift.skipNodesW_covers_of_fixed
+#print axioms POFreeLift.boundedSel_covers
+#print axioms POFreeLift.boundedSel_of_no_vertical
