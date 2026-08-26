@@ -9651,5 +9651,5 @@ two ways: `ccovers` for a one-shot demand at a kernel.**
 That is a real consolidation. §120.1 listed two independent-looking gaps; there
 is one.
 
-Build: 31,505 lines, 1,578 declarations, exit 0, 0 errors / 0 warnings /
+Build: 31,557 lines, 1,578 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
