@@ -31302,6 +31302,85 @@ So the open item has shrunk from "does the node set stabilise" to "assemble the
 depth bound with the per-node branching bound", which is arithmetic over two
 facts rather than a search for a measure. -/
 
+/-! #### §143 — THE NODE-SET BOUND, ASSEMBLED
+
+§142 bounds the generation DEPTH by `mdepth C₀`. A node's label holds at most
+`|cl C₀|` demands, so the BRANCHING is bounded too. This section multiplies them.
+
+Nothing here is specific to support labels — it is the same counting
+`ppNodes_length_le` does, stated once over an abstract child function so the
+instantiation is a one-liner. -/
+
+/-- Size of a tree of depth `d` and branching `b`. -/
+def genBound (b : Nat) : Nat → Nat
+  | 0 => 1
+  | d + 1 => 1 + b * genBound b d
+
+/-- The generation closure: a node, then its children to one less depth. -/
+def genNodes {β : Type} (children : β → List β) : Nat → β → List β
+  | 0, n => [n]
+  | d + 1, n => n :: (children n).flatMap (fun m => genNodes children d m)
+
+theorem self_mem_genNodes {β : Type} (children : β → List β) (d : Nat) (n : β) :
+    n ∈ genNodes children d n := by
+  cases d with
+  | zero => rw [genNodes]; exact List.mem_cons_self
+  | succ d' => rw [genNodes]; exact List.mem_cons_self
+
+/-- **THE BOUND.**  Depth `d`, branching `b`, size at most `genBound b d`. -/
+theorem genNodes_length_le {β : Type} (children : β → List β) (b : Nat)
+    (hb : ∀ n, (children n).length ≤ b) :
+    ∀ (d : Nat) (n : β), (genNodes children d n).length ≤ genBound b d := by
+  intro d
+  induction d with
+  | zero => intro n; rw [genNodes, genBound]; exact Nat.le_refl 1
+  | succ d' ih =>
+    intro n
+    rw [genNodes, genBound, List.length_cons, List.length_flatMap]
+    have hsum : ((children n).map
+        (fun m => (genNodes children d' m).length)).sum
+        ≤ (children n).length * genBound b d' :=
+      sum_map_le _ _ _ (fun m _ => ih m)
+    calc ((children n).map (fun m => (genNodes children d' m).length)).sum + 1
+        ≤ (children n).length * genBound b d' + 1 := Nat.add_le_add_right hsum 1
+      _ ≤ b * genBound b d' + 1 :=
+          Nat.add_le_add_right (Nat.mul_le_mul_right _ (hb n)) 1
+      _ = 1 + b * genBound b d' := Nat.add_comm _ _
+
+/-- **THE INSTANTIATION.**  With children the witnesses of a label's demands —
+    at most `|cl C₀|` of them, since a label is a repeat-free subset of `cl C₀` —
+    and depth `mdepth C₀` by §142, the node set is bounded by
+    `genBound |cl C₀| (mdepth C₀)`.
+
+    Computable from `C₀` alone, and independent of the model. -/
+theorem genNodes_le_C0 {β : Type} (C0 : Concept) (children : β → List β)
+    (lbl : β → List Concept)
+    (hsub : ∀ n, ∀ c ∈ lbl n, c ∈ cl C0) (hnd : ∀ n, (lbl n).Nodup)
+    (hbr : ∀ n, (children n).length ≤ (lbl n).length) (n : β) :
+    (genNodes children (mdepth C0) n).length
+      ≤ genBound (cl C0).length (mdepth C0) :=
+  genNodes_length_le children (cl C0).length
+    (fun m => Nat.le_trans (hbr m) (nodup_len_le (lbl m) (cl C0) (hsub m) (hnd m)))
+    (mdepth C0) n
+
+/-! ##### §143.1 — the vertical half, as it now stands
+
+| step | status |
+|---|---|
+| label closure terminates on a fixed node set | **certified** (§141) |
+| a generation step strictly decreases modal depth | **certified** (§142) |
+| generation depth ≤ `mdepth C₀` | **certified** (§142) |
+| branching ≤ `\|cl C₀\|` per node | **certified** (§143) |
+| node set ≤ `genBound \|cl C₀\| (mdepth C₀)` | **certified** (§143) |
+| the support-label EXTRACTION producing them | **open** |
+
+The counting is done. What is NOT done is the construction: a Lean definition
+that, from a model of `C₀`, emits support labels and witnesses satisfying
+`seed_depth_lt`'s shape, and a proof that the result is a `MultiTierOk`.
+
+`wp124` runs exactly that construction and finds every obligation holds on 1,019
+models. The gap between that and a theorem is the extraction, not the bound. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -32152,4 +32231,6 @@ end POFreeLift
 #print axioms POFreeLift.seed_depth_lt
 #print axioms POFreeLift.closure_depth_le
 #print axioms POFreeLift.generation_depth_le
+#print axioms POFreeLift.genNodes_length_le
+#print axioms POFreeLift.genNodes_le_C0
 #print axioms POFreeLift.kernel_of_no_terminal

@@ -10801,3 +10801,50 @@ rather than a search for a measure.
 
 Build: 32,155 lines, 1,612 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 143. THE NODE-SET BOUND, ASSEMBLED
+
+§142 bounds the generation DEPTH by `mdepth C₀`; a node's label holds at most
+`|cl C₀|` demands, so BRANCHING is bounded too. This section multiplies them.
+
+| | |
+|---|---|
+| `genBound b d` | size of a tree of depth `d`, branching `b` |
+| `genNodes` | the generation closure, over an abstract child function |
+| `genNodes_length_le` | depth `d`, branching `b` ⟹ size ≤ `genBound b d` |
+| **`genNodes_le_C0`** | **node set ≤ `genBound \|cl C₀\| (mdepth C₀)`** |
+
+Both `propext`/`Quot.sound` only. Nothing is specific to support labels — it is
+the counting `ppNodes_length_le` already does, stated once over an abstract child
+function so the instantiation is a one-liner.
+
+**The bound is computable from `C₀` alone and independent of the model** — which
+is exactly what §131 showed FAILS for full-type labels.
+
+### 143.1 The vertical half, as it now stands
+
+| step | status |
+|---|---|
+| label closure terminates on a fixed node set | **certified** (§141) |
+| a generation step strictly decreases modal depth | **certified** (§142) |
+| generation depth ≤ `mdepth C₀` | **certified** (§142) |
+| branching ≤ `\|cl C₀\|` per node | **certified** (§143) |
+| node set ≤ `genBound \|cl C₀\| (mdepth C₀)` | **certified** (§143) |
+| support labels are definable, `mty` is one | **certified** (§140) |
+| every `ee_all` / vertical `e_ex` from the frame | **certified** (§128) |
+| the read-off `ODStruct` and its frame | **certified** (§127) |
+| **the support-label EXTRACTION** | **open** |
+
+**The counting is done.** What is not done is the construction: a Lean
+definition that, from a model of `C₀`, emits support labels and witnesses
+satisfying `seed_depth_lt`'s shape, plus a proof that the result is a
+`MultiTierOk`.
+
+`wp124` runs exactly that construction and finds every obligation holds on 1,019
+models. **The gap between that and a theorem is the extraction, not the bound.**
+
+That is a materially different position from §134, where the gap was a measure
+nobody could find.
+
+Build: 32,222 lines, 1,617 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
