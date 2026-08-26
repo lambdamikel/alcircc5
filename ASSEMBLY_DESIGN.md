@@ -11425,3 +11425,60 @@ Neither is attempted. **The model half is done; the label half is named.**
 
 Build: 33,801 lines, 1,694 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 157. CORRECTION — the kernel side is NOT unexplored
+
+§149.2(c) said the kernel side is "genuinely unexplored in Lean". **That is
+wrong**, and grepping before writing it would have shown so.
+
+### 157.1 What is actually there
+
+`one_kernel_block` (and its mirror `done_kernel_block`) build a complete
+`BlockOk` — the `MultiTierOk` field list for a single kernel block — with `mty`
+labels and every kernel field discharged:
+
+```
+kk_pp  := segment_kk_pp  …
+kk_ppi := segment_kk_ppi …
+kk_eq  := seg_eq …
+ek_all := …   ke_all := …   kq_all := …   k_ex := …
+```
+
+It is consumed (line 5547) and axiom-checked. `seg_pp`/`seg_ppi`/`seg_eq` — the
+round-D2b segment-coherence lemmas — are its engine, and they do the job §156
+was reaching for **better than §156 does**: the universal climbs to the top
+endpoint and RE-ENTERS through the type-equal bottom, so `KernelData.cty`'s
+single equation suffices and no phase periodicity is needed at all.
+
+### 157.2 So §156 was partly redundant
+
+`kk_pp_model`/`kk_ppi_model` are true and axiom-light, but `seg_pp`/`seg_ppi`
+already covered the label-level statement I said was open. §156.2's
+"needs phase periodicity" is **withdrawn** — the endpoint re-entry is why it
+does not.
+
+### 157.3 The kernel side, corrected
+
+| | |
+|---|---|
+| a complete kernel block, `mty` labels | **certified** — `one_kernel_block` |
+| all six kernel fields | **certified** there |
+| segment coherence | **certified** — `seg_pp`/`seg_ppi`/`seg_eq` |
+| the same for SUPPORT labels | **open** |
+| `one_kernel_block`'s `hserve` / `hctx` hypotheses | the real obligations |
+
+`hserve` asks that every phase demand have a witness uniformly related to ALL
+phases; `hctx` that context elements relate uniformly to the whole chain. Those
+are the substance, not the `kk_*` fields.
+
+### 157.4 The pattern, third occurrence
+
+§113 found `short_chain`, `pp_dichotomy` and `kernel_of_chain` certified and
+unconsumed. §157 finds a whole kernel construction I described as absent.
+
+**The rule recorded in §113 — when a gap resists, grep for what is already proved
+— was not applied to my own status claim.** Writing §149's inventory from memory
+rather than from the file is exactly the failure it warns about.
+
+Build unchanged: 33,767 lines, 1,694 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
