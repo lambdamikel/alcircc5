@@ -30333,10 +30333,10 @@ noncomputable def cutNodes (W : WitSel I C0) (seen : List (List Concept))
   | 0 => [n]
   | fuel + 1 => n :: (mtk C0 I n.x n.k).attach.flatMap (fun p => match p with
       | ⟨.ex pp _, hF⟩ =>
-          if mty C0 I (W.up n hF).x ∈ seen then []
+          if mty C0 I (W.up n hF).x ∈ seen then [W.up n hF]
           else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) fuel
       | ⟨.ex ppi _, hF⟩ =>
-          if mty C0 I (W.dn n hF).x ∈ seen then []
+          if mty C0 I (W.dn n hF).x ∈ seen then [W.dn n hF]
           else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) fuel
       | _ => [])
 
@@ -30376,31 +30376,35 @@ theorem cutNodes_stable (W : WitSel I C0) :
     ∀ (fuel : Nat) (seen : List (List Concept)), seen.Nodup →
       (∀ t ∈ seen, t ∈ typeEnum C0) →
       (typeEnum C0).length ≤ seen.length + fuel →
-      ∀ n : MTKNode I C0, cutNodes W seen n (fuel + 1) = cutNodes W seen n fuel := by
+      ∀ n : MTKNode I C0,
+        cutNodes W seen n (fuel + 2) = cutNodes W seen n (fuel + 1) := by
   intro fuel
   induction fuel with
   | zero =>
     intro seen hnd hsub hlen n
     rw [cutNodes, cutNodes]
     congr 1
-    have hall : ∀ (p : {x // x ∈ mtk C0 I n.x n.k}),
-        (match p with
-          | ⟨.ex pp _, hF⟩ =>
-              if mty C0 I (W.up n hF).x ∈ seen then []
-              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) 0
-          | ⟨.ex ppi _, hF⟩ =>
-              if mty C0 I (W.dn n hF).x ∈ seen then []
-              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) 0
-          | _ => []) = ([] : List (MTKNode I C0)) := by
-      rintro ⟨F, hF⟩
-      cases F with
-      | ex r c =>
-        cases r with
-        | pp => exact if_pos (seen_full seen hnd hsub (by omega) _)
-        | ppi => exact if_pos (seen_full seen hnd hsub (by omega) _)
-        | _ => rfl
+    refine flatMap_congr _ _ _ (fun p _ => ?_)
+    rcases p with ⟨F, hF⟩
+    cases F with
+    | ex r c =>
+      cases r with
+      | pp =>
+        show (if mty C0 I (W.up n hF).x ∈ seen then [W.up n hF]
+              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) 1)
+            = (if mty C0 I (W.up n hF).x ∈ seen then [W.up n hF]
+              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) 0)
+        rw [if_pos (seen_full seen hnd hsub (by omega) _),
+            if_pos (seen_full seen hnd hsub (by omega) _)]
+      | ppi =>
+        show (if mty C0 I (W.dn n hF).x ∈ seen then [W.dn n hF]
+              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) 1)
+            = (if mty C0 I (W.dn n hF).x ∈ seen then [W.dn n hF]
+              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) 0)
+        rw [if_pos (seen_full seen hnd hsub (by omega) _),
+            if_pos (seen_full seen hnd hsub (by omega) _)]
       | _ => rfl
-    exact List.flatMap_eq_nil_iff.mpr (fun p _ => hall p)
+    | _ => rfl
   | succ f ih =>
     intro seen hnd hsub hlen n
     rw [cutNodes, cutNodes]
@@ -30411,10 +30415,10 @@ theorem cutNodes_stable (W : WitSel I C0) :
     | ex r c =>
       cases r with
       | pp =>
-        show (if mty C0 I (W.up n hF).x ∈ seen then []
+        show (if mty C0 I (W.up n hF).x ∈ seen then [W.up n hF]
+              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) (f + 2))
+            = (if mty C0 I (W.up n hF).x ∈ seen then [W.up n hF]
               else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) (f + 1))
-            = (if mty C0 I (W.up n hF).x ∈ seen then []
-              else cutNodes W (mty C0 I (W.up n hF).x :: seen) (W.up n hF) f)
         by_cases hc : mty C0 I (W.up n hF).x ∈ seen
         · rw [if_pos hc, if_pos hc]
         · rw [if_neg hc, if_neg hc]
@@ -30425,10 +30429,10 @@ theorem cutNodes_stable (W : WitSel I C0) :
               · exact hsub t ht')
             (by rw [List.length_cons]; omega) _
       | ppi =>
-        show (if mty C0 I (W.dn n hF).x ∈ seen then []
+        show (if mty C0 I (W.dn n hF).x ∈ seen then [W.dn n hF]
+              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) (f + 2))
+            = (if mty C0 I (W.dn n hF).x ∈ seen then [W.dn n hF]
               else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) (f + 1))
-            = (if mty C0 I (W.dn n hF).x ∈ seen then []
-              else cutNodes W (mty C0 I (W.dn n hF).x :: seen) (W.dn n hF) f)
         by_cases hc : mty C0 I (W.dn n hF).x ∈ seen
         · rw [if_pos hc, if_pos hc]
         · rw [if_neg hc, if_neg hc]
@@ -30445,7 +30449,8 @@ theorem cutNodes_stable (W : WitSel I C0) :
     `|typeEnum C0|` — computable from `C₀` alone, for every selector, with NO
     hypothesis. -/
 theorem cutNodes_stable_typeEnum (W : WitSel I C0) (n : MTKNode I C0) :
-    cutNodes W [] n ((typeEnum C0).length + 1) = cutNodes W [] n (typeEnum C0).length :=
+    cutNodes W [] n ((typeEnum C0).length + 2)
+      = cutNodes W [] n ((typeEnum C0).length + 1) :=
   cutNodes_stable W (typeEnum C0).length [] List.nodup_nil
     (fun _ ht => absurd ht List.not_mem_nil) (by simp) n
 

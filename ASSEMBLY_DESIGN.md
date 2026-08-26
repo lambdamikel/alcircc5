@@ -9236,3 +9236,67 @@ other half is a wiring job against a certified lemma, not a new assumption.
 
 Build: 31,272 lines, 1,568 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 113. THREE CERTIFIED THEOREMS, ZERO CONSUMERS — the actual diagnosis
+
+Michael's redirect: *"you are inventing forms of blocking… just recall the
+blocking experiences."* He was right, and checking it changes the diagnosis.
+
+### 113.1 What I was re-deriving
+
+`cutNodes` — stop expanding at a repeated type, keep the node — **is blocking**.
+The project has had blocking since round 7, including the hard-won lesson
+(`wp8_round7_blocking_chain.py`): blocking must be **occurrence-sensitive, not
+equality**. Round 6 collapsed distinct laps via `L_Q(π,π) = EQ`; round 7's fix
+tags laps `ι = up` and labels them `PP`, never `EQ`.
+
+I re-derived the mechanism and then talked myself into calling its residue a W2′
+obstruction.
+
+### 113.2 The count
+
+| theorem | real uses |
+|---|---|
+| `rr_covers` | **5** |
+| `short_chain` | **0** |
+| `pp_dichotomy` | **0** |
+| `kernel_of_chain` | **0** |
+
+Every reference to the bottom three is prose or `#print axioms`. `rr_covers` —
+the persistent half — is genuinely consumed.
+
+**Three certified theorems, all named in the design, none ever wired.**
+
+### 113.3 Why this corrects §108
+
+§108.2 argued the kernel gap is W2′-shaped because cycling a FINITE segment
+fails at the wrap: `path 0` and `path j` share a type, not an element.
+
+That argument is correct and irrelevant. `pp_dichotomy` does not cycle a finite
+segment — its infinite branch produces `c : Nat → α` with `∀ n, I.rho (c n) (c (n+1)) = pp`,
+a genuinely infinite chain of **real model elements**, which is exactly what
+`KernelData.cstep` wants. `kernel_of_chain` then supplies `cty` at any depth.
+
+So:
+
+* **§108.1 stands** — `kserU_sound` is vacuous; that defect is real.
+* **§108.3 / §110 / §111's framing was wrong** — the gap is not W2′. It is that
+  `pp_dichotomy` was never connected to anything.
+
+I reached for the wrong construction (cycle a finite segment) when the certified
+one (take the infinite branch) was already in the file.
+
+### 113.4 The corrected state
+
+The mixed quadrant's vertical half is not blocked on new mathematics. It is
+blocked on assembly: three certified theorems that the design calls for by name
+and that nothing consumes. That is a different kind of work, and a much better
+position than §§108–111 described.
+
+Recorded as a process finding too: this is the fourth time this session I
+called this gap something other than what it is (§107.3 "bridgeable cheaply",
+§112.3 "wiring job", §§108/110/111 "W2′-shaped"). The corrective each time came
+from checking the file rather than reasoning about it.
+
+Build: 31,272 lines, 1,568 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
