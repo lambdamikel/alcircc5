@@ -10714,3 +10714,40 @@ here. This section only makes the labels definable.
 
 Build: 31,939 lines, 1,603 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 141. THE LABEL CLOSURE TERMINATES ON A FIXED NODE SET
+
+§137's joint fixpoint has two halves that re-trigger each other: LABEL CLOSURE
+and WITNESS GENERATION. This section proves the first outright, which isolates
+the second.
+
+| | |
+|---|---|
+| `totalSize` | total label size over a node list |
+| `totalSize_le` | repeat-free labels inside `cl C₀` total at most `\|nodes\| · \|cl C₀\|` |
+| `totalSize_lt_of_grow` | a step growing one label strictly increases the total |
+| **`closure_stops`** | **an iteration whose every step grows the total cannot run past `\|nodes\| · \|cl C₀\|`** |
+
+All three: **`propext` / `Quot.sound` only — no `Classical.choice`.**
+
+The argument is a size bound, not an induction on the construction, so it is
+independent of WHAT the closure propagates: universals, or anything else drawn
+from `cl C₀`.
+
+### 141.1 What is now isolated
+
+**Proved:** on a fixed finite node set, label closure terminates in at most
+`|nodes| · |cl C₀|` steps — computable from `C₀` and the node count.
+
+**Open, and now the only open half:** node generation. Each closure round can
+introduce an existential — a universal's body — whose witness is a new node,
+enlarging `nodes` and restarting the count.
+
+So §137's joint fixpoint terminates **iff the node set stabilises**. That is the
+same question §§130–133 attacked and that the cold note names. This section does
+not answer it. It removes the label half from it, which is worth doing because
+until now the two were entangled and a failure in either looked like a failure of
+the route.
+
+Build: 32,013 lines, 1,606 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

@@ -31093,6 +31093,90 @@ BETWEEN nodes, and for support labels they are exactly what §137's joint fixpoi
 computes. Whether that fixpoint terminates is the open theorem — unchanged by
 this section, which only makes the labels definable. -/
 
+/-! #### §141 — THE LABEL CLOSURE TERMINATES ON A FIXED NODE SET
+
+§137's joint fixpoint has two halves that re-trigger each other: LABEL CLOSURE
+(propagate universals) and WITNESS GENERATION (serve the demands the closure
+introduced). Its termination is the open theorem.
+
+This section proves the first half outright and thereby isolates the second.
+
+The argument is a size bound, not an induction on the construction: every label
+is repeat-free and drawn from `cl C₀`, so the TOTAL label size over a finite node
+set is at most `|nodes| · |cl C₀|`. A closure step that adds a formula strictly
+increases that total, so only finitely many can. -/
+
+/-- Total label size over a node list. -/
+def totalSize {β : Type} (nodes : List β) (L : β → List Concept) : Nat :=
+  (nodes.map (fun e => (L e).length)).sum
+
+/-- **THE BOUND.**  Repeat-free labels inside `cl C₀` cannot exceed
+    `|nodes| · |cl C₀|` in total. -/
+theorem totalSize_le {β : Type} (C0 : Concept) (nodes : List β)
+    (L : β → List Concept) (hsub : ∀ e, ∀ c ∈ L e, c ∈ cl C0)
+    (hnd : ∀ e, (L e).Nodup) :
+    totalSize nodes L ≤ nodes.length * (cl C0).length :=
+  sum_map_le nodes _ _ (fun e _ => nodup_len_le (L e) (cl C0) (hsub e) (hnd e))
+
+/-- A step that grows one label, keeping the others, strictly increases the
+    total — the measure the termination argument runs on. -/
+theorem totalSize_lt_of_grow {β : Type} [DecidableEq β] (nodes : List β)
+    (L L' : β → List Concept) (e : β) (he : e ∈ nodes) (hnd : nodes.Nodup)
+    (hgrow : (L e).length < (L' e).length)
+    (hrest : ∀ f ∈ nodes, f ≠ e → L' f = L f) :
+    totalSize nodes L < totalSize nodes L' := by
+  unfold totalSize
+  induction nodes with
+  | nil => exact absurd he List.not_mem_nil
+  | cons a t ih =>
+    rw [List.map_cons, List.sum_cons, List.map_cons, List.sum_cons]
+    rcases List.mem_cons.mp he with hea | het
+    · subst hea
+      have hts : (t.map (fun f => (L' f).length)).sum
+          = (t.map (fun f => (L f).length)).sum := by
+        refine congrArg List.sum (List.map_congr_left (fun f hf => ?_))
+        rw [hrest f (List.mem_cons_of_mem _ hf)
+          (fun hfe => (List.nodup_cons.mp hnd).1 (hfe ▸ hf))]
+      omega
+    · have haa : L' a = L a :=
+        hrest a List.mem_cons_self (fun hae => (List.nodup_cons.mp hnd).1 (hae ▸ het))
+      have := ih het (List.nodup_cons.mp hnd).2
+        (fun f hf hfe => hrest f (List.mem_cons_of_mem a hf) hfe)
+      rw [haa]
+      omega
+
+/-- **THE CLOSURE STOPS.**  An iteration whose every step grows the total cannot
+    run past the bound: at step `|nodes| · |cl C₀|` it must already have stopped.
+
+    Stated on the measure so it is independent of WHAT the closure propagates —
+    universals, or anything else drawn from `cl C₀`. -/
+theorem closure_stops {β : Type} (C0 : Concept) (nodes : List β)
+    (L : Nat → β → List Concept)
+    (hsub : ∀ n e, ∀ c ∈ L n e, c ∈ cl C0) (hnd : ∀ n e, (L n e).Nodup)
+    (hstep : ∀ n, totalSize nodes (L n) < totalSize nodes (L (n + 1))) :
+    ∀ n, n ≤ nodes.length * (cl C0).length := by
+  intro n
+  have hmono : ∀ m, m ≤ totalSize nodes (L m) := by
+    intro m
+    induction m with
+    | zero => exact Nat.zero_le _
+    | succ k ih => exact Nat.lt_of_le_of_lt ih (hstep k)
+  exact Nat.le_trans (hmono n)
+    (totalSize_le C0 nodes (L n) (hsub n) (hnd n))
+
+/-! ##### §141.1 — what is now isolated
+
+**Proved:** on a FIXED finite node set, label closure terminates, in at most
+`|nodes| · |cl C₀|` steps — a bound computable from `C₀` and the node count.
+
+**Open, and now the only thing open in the fixpoint:** node generation. Each
+closure round can introduce an existential (a universal's body), whose witness is
+a new node, which enlarges `nodes` and restarts the count.
+
+So §137's joint fixpoint terminates iff the NODE SET stabilises, which is the
+same question §§130–133 attacked and the cold note names. This section does not
+answer it; it removes the label half from the question. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -31937,4 +32021,7 @@ end POFreeLift
 #print axioms POFreeLift.supportOk_sub_mty
 #print axioms POFreeLift.mty_supportOk
 #print axioms POFreeLift.mtk_supportOk
+#print axioms POFreeLift.totalSize_le
+#print axioms POFreeLift.totalSize_lt_of_grow
+#print axioms POFreeLift.closure_stops
 #print axioms POFreeLift.kernel_of_no_terminal
