@@ -9234,5 +9234,5 @@ stop *with everything served*.
 That is the honest split: the half that was a hypothesis is now a theorem; the
 other half is a wiring job against a certified lemma, not a new assumption.
 
-Build: 31,262 lines, 1,570 declarations, exit 0, 0 errors / 0 warnings /
+Build: 31,272 lines, 1,568 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
