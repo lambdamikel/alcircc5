@@ -11339,3 +11339,45 @@ because the demands it cannot handle are exactly the ones the split removes.
 
 Build: 33,543 lines, 1,688 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 155. THE MIRROR, AND THE FIRST KERNEL BRICKS
+
+### 155.1 Mechanical, done
+
+`pNodes_covers_ppi` — §154.2's mechanical item. The vertical extraction is now
+closed in **both** directions on the non-persistent half.
+
+### 155.2 Towards the kernel side
+
+What already exists: `kernelData` (a node whose `persistDs` is nonempty HAS a
+kernel — certified since the vertical campaign, via `rrPt`/`rr_segment_from`/
+`rr_covers`), `chain_or_kernel` (§119), `persistent_has_kernel`.
+
+What is missing is the **labels**. `MultiTierOk`'s six kernel fields are all
+about `phase k a : List Concept`, and with support labels the phases need support
+labels too — nothing yet says what seeds them.
+
+| | |
+|---|---|
+| `phase_supportOk` | a phase is a model point, so `hcloseL` of anything true there is a support label — **the same construction as for externals**, no kernel-specific reasoning |
+| `guard_along_chain` | `∀PP.(∃PP.D)` at one phase holds at EVERY later one — **axiom-free** |
+
+`guard_along_chain` matters for `kk_pp`: the guard that made a demand persistent
+does not lapse along the kernel, so the phase labels can carry it uniformly, which
+is what phase-block propagation (§139's modelling insight) requires.
+
+### 155.3 Where the kernel side stands
+
+| | |
+|---|---|
+| a kernel exists when demands are persistent | **certified**, long-standing |
+| a phase carries a support label | **certified** (§155) |
+| the guard survives along the chain | **certified** (§155) |
+| `ek_all`, `ke_all`, `kk_pp`, `kk_ppi`, `kq_all`, `k_ex` | **open** |
+
+The six fields remain. What changed is that phases are no longer unlabelled: the
+construction that gives externals their labels gives phases theirs, and the fact
+`kk_pp` will lean on is proved.
+
+Build: 33,700 lines, 1,691 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

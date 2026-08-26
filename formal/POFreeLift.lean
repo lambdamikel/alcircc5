@@ -32710,6 +32710,99 @@ Lean at all.
 
 The `∃PPI` mirror of `pNodes_covers_pp` is mechanical and not written. -/
 
+open Classical in
+/-- **THE DESCENDING MIRROR** of `pNodes_covers_pp` — §154.2's mechanical item. -/
+theorem pNodes_covers_ppi (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), maxDepth n.lab ≤ d →
+      ∀ m ∈ pNodes hI d n, ∀ (D : Concept) (hD : Concept.ex ppi D ∈ m.lab),
+        D ∉ persistDsI C0 I m.x → sChildN hI m hD ∈ pNodes hI d n := by
+  intro d
+  induction d with
+  | zero =>
+    intro n hdep m hm D hD _
+    rw [pNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact absurd hD (no_demand_of_depth_zero (Nat.le_antisymm hdep (Nat.zero_le _)))
+    · exact absurd h List.not_mem_nil
+  | succ d' ih =>
+    intro n hdep m hm D hD hnp
+    rw [pNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact pNodes_child_mem_ppi hI m hD hnp d'
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp h
+      cases F with
+      | ex r c =>
+        cases r with
+        | pp =>
+          revert hmm
+          show m ∈ (if c ∈ persistDs C0 I n.x then ([] : List (SNode I C0))
+                    else pNodes hI d' (sChildN hI n hF)) → _
+          by_cases hp : c ∈ persistDs C0 I n.x
+          · rw [if_pos hp]; intro hx; exact absurd hx List.not_mem_nil
+          · rw [if_neg hp]
+            intro hx
+            have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+              have := sChildN_depth hI n hF
+              omega
+            exact pNodes_sub_of_child_pp hI n hF hp d'
+              (ih (sChildN hI n hF) hchild m hx D hD hnp)
+        | ppi =>
+          revert hmm
+          show m ∈ (if c ∈ persistDsI C0 I n.x then ([] : List (SNode I C0))
+                    else pNodes hI d' (sChildN hI n hF)) → _
+          by_cases hp : c ∈ persistDsI C0 I n.x
+          · rw [if_pos hp]; intro hx; exact absurd hx List.not_mem_nil
+          · rw [if_neg hp]
+            intro hx
+            have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+              have := sChildN_depth hI n hF
+              omega
+            exact pNodes_sub_of_child_ppi hI n hF hp d'
+              (ih (sChildN hI n hF) hchild m hx D hD hnp)
+        | _ => exact absurd hmm List.not_mem_nil
+      | _ => exact absurd hmm List.not_mem_nil
+
+/-! #### §155 — TOWARDS THE KERNEL SIDE
+
+§154.2's remaining items are the kernel's six `MultiTierOk` fields. The pieces
+that already exist:
+
+* `kernelData` — a node whose `persistDs` is nonempty HAS a kernel, certified
+  since the vertical campaign (`rrPt`/`rr_segment_from`/`rr_covers`);
+* `chain_or_kernel` (§119) — the dichotomy;
+* `persistent_has_kernel` — the trigger.
+
+What is missing is the LABELS. A kernel's phases carry `phase k a : List Concept`
+and the six obligations are about those; with support labels the phases need
+support labels too, and nothing yet says what seeds them.
+
+This section supplies the first brick: a phase's label is a support label when
+seeded from the model, exactly as an external's is. -/
+
+/-- **A KERNEL PHASE CARRIES A SUPPORT LABEL.**  The phase is a model point, so
+    `hcloseL` of anything true there is a support label — the same construction
+    as for externals, with no kernel-specific reasoning. -/
+theorem phase_supportOk (hI : RCC5Interp I) {C0 : Concept} {z : α}
+    (hz : I.dom z) (S : List Concept)
+    (hcl : ∀ c ∈ S, c ∈ cl C0) (hs : ∀ c ∈ S, sat I z c) :
+    SupportOk I C0 z (hcloseL I z S) :=
+  hcloseL_supportOk hI hz S hcl hs
+
+/-- **AND A PERSISTENT DEMAND'S GUARD TRAVELS ALONG THE KERNEL.**  `∀PP.(∃PP.D)`
+    at one phase holds at every later one, by `all_pp_inherits` along the chain —
+    so the guard that made the demand persistent does not lapse, which is what
+    `kk_pp` will need. -/
+theorem guard_along_chain (hI : RCC5Interp I) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {D : Concept} {i : Nat} (h : sat I (c i) (Concept.all pp (Concept.ex pp D))) :
+    ∀ j, sat I (c (i + j)) (Concept.all pp (Concept.ex pp D)) := by
+  intro j
+  induction j with
+  | zero => exact h
+  | succ k ih =>
+    have := all_pp_inherits hI (hdom (i + k)) (hdom (i + k + 1)) (hstep (i + k)) ih
+    exact this
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33599,4 +33692,7 @@ end POFreeLift
 #print axioms POFreeLift.pNodes_length_le
 #print axioms POFreeLift.pNodes_child_mem_pp
 #print axioms POFreeLift.pNodes_covers_pp
+#print axioms POFreeLift.pNodes_covers_ppi
+#print axioms POFreeLift.phase_supportOk
+#print axioms POFreeLift.guard_along_chain
 #print axioms POFreeLift.kernel_of_no_terminal
