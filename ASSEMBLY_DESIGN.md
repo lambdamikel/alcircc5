@@ -14867,3 +14867,42 @@ task — and one where the round-6 trap is already avoided by construction.
 
 Build: 39,506 lines, 1,993 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 241. BLOCKING ON THE MODEL TYPE, NOT THE LABEL
+
+Transferring `cutNodes`' bound turns on a detail of what it blocks **on**:
+
+    if mty C0 I (W.up n hF).x in seen then ...
+
+— the **model type at the point**, not the node's label. That matters twice.
+
+**First**, the model type is determined by the point, so it is invariant under
+saturation. §239's label-based blocking would have been unstable in a *second*
+way, independent of round 6's: saturation grows labels, so a repeat could stop
+being a repeat and a blocked node could **un-block**. Types cannot do that.
+
+**Second**, the counting is `typeEnum C0` — exactly the enumeration
+`cutNodes_stable_typeEnum` already uses — so the transfer needs no new bound.
+
+`type_branch_len_le` is §239's counting at model types, where it survives
+saturation; `stage_types_in_enum` supplies its hypothesis for free.
+
+*(No lemma is stated for "the type does not depend on the label": `mty` takes no
+label argument, so that is a fact about the signature. Writing it as a theorem
+would produce `mty x = mty x`, which asserts nothing — the same trap as a `True`
+stub.)*
+
+### 241.1 What the transfer still needs
+
+The counting is done and the stability is free. What remains is to put the gate
+into the stage's child step — block `ptChild` when the child's model type has
+already been seen on the branch, **keeping** the node — and to carry the `seen`
+list through the iteration, which `cutNodes` does with its own recursion.
+
+**Note the shape of the fix.** §239 proposed new blocking *and* new counting;
+§§240–241 replace both with the existing mechanism and its existing enumeration.
+The only genuinely new work is threading `seen` through a stage whose recursion
+is the alternation rather than `cutNodes`' own.
+
+Build: 39,555 lines, 1,995 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

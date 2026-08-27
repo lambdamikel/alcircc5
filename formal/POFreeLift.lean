@@ -38476,6 +38476,54 @@ No theorem is added here: the content is that `cutNodes_stable_typeEnum` IS the
 bound §239 was reaching for, and the work is to transfer it to the support-label
 stage — not to build a second blocking. -/
 
+/-! #### §241 — BLOCKING ON THE MODEL TYPE, NOT THE LABEL
+
+Transferring `cutNodes`' bound to the support-label stage turns on a detail of
+what `cutNodes` blocks ON:
+
+    if mty C0 I (W.up n hF).x ∈ seen then …
+
+— the **model type at the point**, not the node's label. That matters twice over.
+
+**First**, the model type is determined by the point, so it is INVARIANT under
+saturation. §239's label-based blocking would have been unstable in a second way,
+independent of round 6's: saturation grows labels, so a repeat could stop being a
+repeat and a blocked node could un-block. Types cannot do that.
+
+**Second**, the counting is `typeEnum C₀`, which is exactly the enumeration
+`cutNodes_stable_typeEnum` already uses — so the transfer needs no new bound. -/
+
+/-- **A REPEAT-FREE TYPE BRANCH IS BOUNDED BY `C₀`.**  §239's counting, at model
+    types instead of labels — where it survives saturation. -/
+theorem type_branch_len_le (C0 : Concept)
+    (br : List (List Concept)) (hsub : ∀ t ∈ br, t ∈ typeEnum C0)
+    (hnd : br.Nodup) : br.length ≤ (typeEnum C0).length :=
+  nodup_len_le br _ hsub hnd
+
+/-- And every point's type is in the enumeration, so the hypothesis is free. -/
+theorem stage_types_in_enum (C0 : Concept) (I : Interp α) (x : α) :
+    mty C0 I x ∈ typeEnum C0 := mty_mem_typeEnum C0 I x
+
+-- (No lemma is stated for "the model type does not depend on the label": `mty`
+-- takes no label argument, so it is a fact about the SIGNATURE, not a theorem.
+-- Writing it as one would produce `mty x = mty x`, which asserts nothing.)
+
+/-! ##### §241.1 — what the transfer now needs
+
+The counting is done and the stability is free. What remains is to put the gate
+into the stage's child step — block `ptChild` when the child's model type has
+already been seen on the branch, keeping the node — and to carry the `seen` list
+through the iteration, which is what `cutNodes` does with its own recursion.
+
+Two properties then follow by the same arguments `cutNodes` uses: branches are
+repeat-free by construction, and `type_branch_len_le` bounds them by
+`|typeEnum C₀|`.
+
+**Note the shape of the fix.** §239 proposed new blocking and a new counting;
+§§240–241 replace both with the existing mechanism and its existing enumeration.
+The only genuinely new work is threading `seen` through a stage whose recursion
+is the alternation rather than `cutNodes`' own. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39503,4 +39551,5 @@ end POFreeLift
 #print axioms POFreeLift.ptRound_ok
 #print axioms POFreeLift.ptRound_mono
 #print axioms POFreeLift.branch_len_le
+#print axioms POFreeLift.type_branch_len_le
 #print axioms POFreeLift.kernel_of_no_terminal
