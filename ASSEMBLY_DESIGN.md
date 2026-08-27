@@ -14117,3 +14117,43 @@ the eight routing conditions now stated model-free by §§215–216, `hp`, and t
 
 Build: 38,026 lines, 1,906 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 220. WHAT A STATIONARY STAGE BUYS
+
+§219 says the alternation reaches a stage where neither phase moves. §220 names
+it and reads the certificate's obligations off it, so the interleaving and the
+certificate meet at a **stated interface** rather than in prose.
+
+`Stationary I C₀ nodes pt rel L` — labels are support labels (`ok`, `sub`),
+saturated (`fixed`: phase 2 adds nothing), and the node set serves every demand
+they carry (`covered`: phase 1 adds nothing). From it:
+
+| | |
+|---|---|
+| `stationary_propagates` | all four propagation obligations, one theorem |
+| `stationary_exeq` | `e_ex`'s `EQ` case |
+| `stationary_route` | the routing conditions |
+
+### 220.1 The consumer, written before believing the interface
+
+Feeding `Stationary` to `e_ex` turns out **not to need §§215–216's routing
+reductions at all**. Take `rel` to be the declared relation itself; then
+`Stationary.covered` already says *a demand at a node is served by a node at the
+declared relation* — which is `e_ex`'s first disjunct verbatim
+(`stationary_e_ex`), and `ee_all` likewise (`stationary_ee_all`).
+
+The reductions remain the general statement: they also cover a demand served by a
+**kernel** rather than an external, which the external-only `covered` cannot
+express. But for the external branch they are not needed — and noticing that is
+what writing the consumer bought, which is the campaign's standing rule
+(*write the consumer before believing the interface*) paying off again.
+
+### 220.2 Position
+
+`Stationary` is what §219's alternation produces and what §207's `swCert_ok`
+consumes; everything between them is now theorems. **The remaining work is one
+construction and one bookkeeping step**: exhibit a `Stationary` stage from a
+model, and reindex onto `Fin`.
+
+Build: 38,129 lines, 1,912 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

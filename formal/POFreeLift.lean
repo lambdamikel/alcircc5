@@ -37031,6 +37031,105 @@ That is exactly a **blocked, fully expanded** structure in Michael's sense: no
 rule applies, and the kernels are the blocks. §217's gap was that one pass of
 each phase need not reach it; §§218–219 say the alternation does. -/
 
+/-! #### §220 — WHAT A STATIONARY STAGE BUYS
+
+§219 says the alternation reaches a stage where neither phase moves. §220 names
+that stage and reads the certificate's obligations off it, so the interleaving
+and the certificate meet at a stated interface rather than in prose. -/
+
+/-- **A BLOCKED, FULLY EXPANDED STAGE.**  Labels are support labels, saturated;
+    the node set serves every demand they carry. -/
+structure Stationary {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L : β → List Concept) : Prop where
+  ok : ∀ e, SupportOk I C0 (pt e) (L e)
+  sub : ∀ e, ∀ c ∈ L e, c ∈ cl C0
+  /-- phase 2 adds nothing. -/
+  fixed : ∀ f, ∀ c ∈ satRound I C0 nodes pt rel L f, c ∈ L f
+  /-- phase 1 adds nothing: every demand is served inside the node set. -/
+  covered : ∀ e ∈ nodes, ∀ r D, Concept.ex r D ∈ L e →
+    ∃ f, f ∈ nodes ∧ rel e f = r ∧ D ∈ L f
+
+/-- **THE PROPAGATION OBLIGATIONS**, for every edge class at once. -/
+theorem stationary_propagates {β : Type} {I : Interp α} {C0 : Concept}
+    {nodes : List β} {pt : β → α} {rel : β → β → Atom} {L : β → List Concept}
+    (h : Stationary I C0 nodes pt rel L)
+    (e f : β) (he : e ∈ nodes) (r : Atom) (c : Concept)
+    (hall : Concept.all r c ∈ L e) (hr : rel e f = r) : c ∈ L f :=
+  satRound_fixed_propagates I C0 nodes pt rel L h.sub h.fixed e f he r c hall hr
+
+/-- **`e_ex`'s `EQ` CASE.** -/
+theorem stationary_exeq {β : Type} {I : Interp α} {C0 : Concept}
+    {nodes : List β} {pt : β → α} {rel : β → β → Atom} {L : β → List Concept}
+    (h : Stationary I C0 nodes pt rel L) (f : β) (c : Concept)
+    (hc : Concept.ex eq c ∈ L f) : c ∈ L f :=
+  satRound_fixed_exeq I C0 nodes pt rel L h.sub h.fixed f c hc
+
+/-- **AND THE ROUTING CONDITIONS**, in the shape §§215–216's model-free
+    reductions consume: a demand at a node of the set is served by a node of the
+    set, at the declared relation. -/
+theorem stationary_route {β : Type} {I : Interp α} {C0 : Concept}
+    {nodes : List β} {pt : β → α} {rel : β → β → Atom} {L : β → List Concept}
+    (h : Stationary I C0 nodes pt rel L)
+    (e : β) (he : e ∈ nodes) (r : Atom) (D : Concept)
+    (hd : Concept.ex r D ∈ L e) :
+    ∃ f, f ∈ nodes ∧ rel e f = r ∧ D ∈ L f := h.covered e he r D hd
+
+/-! ##### §220.1 — the interface, stated
+
+`Stationary` is what §219's alternation produces and what §207's `swCert_ok`
+consumes. Everything between them is now theorems:
+
+| `swCert_ok` field | from |
+|---|---|
+| nine propositional | `Stationary.ok` (§207) |
+| `ee_all` `ek_all` `ke_all` `kq_all` | `stationary_propagates` |
+| `kk_pp` `kk_ppi` | `kk_pp_sat` (§212) |
+| `e_ex` `k_ex` | §§215–216 reductions, fed by `stationary_route` + `stationary_exeq` |
+| `frame_q` | free |
+| `hp` | `kernelData.ppos` |
+
+**So the remaining work is one construction and one bookkeeping step**: exhibit a
+`Stationary` stage from a model (the alternation, whose termination §219
+certifies), and reindex onto `Fin`. -/
+
+/-! ##### §220.2 — the consumer, written before believing the interface
+
+Feeding `Stationary` to `swCert_ok`'s `e_ex` turns out NOT to need §§215–216's
+four routing conditions at all. Take `rel` to be the declared relation itself:
+then `Stationary.covered` already says *a demand at a node is served by a node at
+the declared relation*, which is `e_ex`'s first disjunct verbatim.
+
+The routing reductions remain the general statement — they cover the case where a
+demand is served by a KERNEL rather than an external, which the external-only
+`covered` cannot express. But for the external branch the reduction is not
+needed, and noticing that is what writing the consumer bought. -/
+
+/-- **`e_ex`'s EXTERNAL BRANCH, DIRECTLY FROM `Stationary`.** -/
+theorem stationary_e_ex {β κ : Type} {I : Interp α} {C0 : Concept}
+    {nodes : List β} {pt : β → α} {L : β → List Concept}
+    (O : ODStruct (β ⊕ κ)) (plab : κ → Nat → List Concept) (pk : κ → Nat)
+    (h : Stationary I C0 nodes pt
+      (fun e f => odNet O (Sum.inl e) (Sum.inl f)) L)
+    (e : β) (he : e ∈ nodes) (r : Atom) (c : Concept)
+    (hd : Concept.ex r c ∈ L e) :
+    (∃ f, odNet O (Sum.inl e) (Sum.inl f) = r ∧ c ∈ L f) ∨
+    (∃ k, conv (odNet O (Sum.inr k) (Sum.inl e)) = r ∧
+      ∃ a, a < pk k ∧ c ∈ plab k a) := by
+  obtain ⟨f, _, hr, hc⟩ := h.covered e he r c hd
+  exact Or.inl ⟨f, hr, hc⟩
+
+/-- **AND THE PROPAGATION OBLIGATION `ee_all` LIKEWISE**, at the same `rel`. -/
+theorem stationary_ee_all {β κ : Type} {I : Interp α} {C0 : Concept}
+    {nodes : List β} {pt : β → α} {L : β → List Concept}
+    (O : ODStruct (β ⊕ κ))
+    (h : Stationary I C0 nodes pt
+      (fun e f => odNet O (Sum.inl e) (Sum.inl f)) L)
+    (e f : β) (he : e ∈ nodes) (r : Atom) (c : Concept)
+    (hall : Concept.all r c ∈ L e)
+    (hE : odNet O (Sum.inl e) (Sum.inl f) = r) : c ∈ L f :=
+  stationary_propagates h e f he r c hall hE
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38023,4 +38122,8 @@ end POFreeLift
 #print axioms POFreeLift.interMeasure_lt_nodes
 #print axioms POFreeLift.interleave_stops
 #print axioms POFreeLift.interleave_no_endless_rounds
+#print axioms POFreeLift.stationary_propagates
+#print axioms POFreeLift.stationary_route
+#print axioms POFreeLift.stationary_e_ex
+#print axioms POFreeLift.stationary_ee_all
 #print axioms POFreeLift.kernel_of_no_terminal
