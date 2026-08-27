@@ -37196,6 +37196,99 @@ Recorded rather than glossed, because this session's two failures (§196.1,
 §217) were both at seams like this one, and both looked like bookkeeping
 beforehand. -/
 
+/-! #### §222 — THE SEAM, BRIDGED
+
+§221.1 named the seam: `extendStage` carries labels inside its nodes,
+`satRound` keeps them beside. The bridge is to run `satRound` at
+`β := SNode I C₀` with `pt := SNode.x` and `L := SNode.lab`, and rebuild the
+list — which keeps its length, so the two phases move different parts of §218's
+measure. -/
+
+open Classical in
+/-- **ONE PHASE-2 STEP, ON THE STAGE REPRESENTATION.**  Same points, saturated
+    labels; the `SupportOk` component comes from `satRound_supportOk_gen`. -/
+noncomputable def satStage (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c) :
+    List (SNode I C0) :=
+  ns.map (fun n =>
+    ⟨n.x, n.hx,
+     satRound I C0 ns SNode.x rel (fun m => m.lab) n,
+     satRound_supportOk_gen hI ns SNode.x rel (fun m => m.hx)
+       (fun m => m.lab) (fun m => m.ok) hsound n⟩)
+
+/-- **IT KEEPS THE LENGTH** — so phase 2 moves only the label term of §218's
+    measure, and phase 1 only the node term. -/
+theorem satStage_length (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c) :
+    (satStage hI rel ns hsound).length = ns.length := List.length_map _
+
+/-- **AND IT KEEPS THE POINTS.** -/
+theorem satStage_points (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c) :
+    (satStage hI rel ns hsound).map SNode.x = ns.map SNode.x := by
+  rw [satStage, List.map_map]
+  rfl
+
+/-- The stage measure: §218's, at `β := SNode I C₀`. -/
+def stageSize {C0 : Concept} (ns : List (SNode I C0)) : Nat :=
+  totalSize ns SNode.lab
+
+/-- **PHASE 2 GROWS THE LABEL TERM.**  Every label is `satRound`'s output, so
+    §209's per-node comparison applies verbatim. -/
+theorem satStage_label (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c)
+    (n : SNode I C0) (hn : n ∈ ns) :
+    ∃ m ∈ satStage hI rel ns hsound,
+      m.lab = satRound I C0 ns SNode.x rel (fun m => m.lab) n :=
+  ⟨_, List.mem_map_of_mem hn, rfl⟩
+
+/-- **THE SATURATION RELATION CAN BE THE MODEL'S.**  `hsound` is a property of
+    `rel`, not of the stage, so taking `rel` to be `I.rho` makes it immediate —
+    and saturating along the model covers every DECLARED obligation, since
+    §211 says non-`PO` declared edges ARE model edges and `PO` edges carry
+    nothing. Saturating more than the frame demands is sound and still
+    terminates. -/
+theorem modelRel_hsound (_hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (e f : SNode I C0) (c : Concept),
+      Concept.all (I.rho e.x f.x) c ∈ e.lab → sat I f.x c :=
+  fun e f _ h => support_all_sat f.hx e.ok h rfl
+
+open Classical in
+/-- **THE ALTERNATION.**  Saturate, then extend; §219 bounds the rounds. -/
+noncomputable def stageIter (hI : RCC5Interp I) {C0 : Concept} :
+    Nat → List (SNode I C0) → List (SNode I C0)
+  | 0, ns => ns
+  | n + 1, ns =>
+      extendStage hI (satStage hI (fun e f => I.rho e.x f.x)
+        (stageIter hI n ns) (modelRel_hsound hI))
+
+/-- The stage list only grows. -/
+theorem stageIter_len (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (n : Nat) (ns : List (SNode I C0)),
+      (stageIter hI n ns).length ≤ (stageIter hI (n + 1) ns).length := by
+  intro n ns
+  rw [stageIter]
+  refine Nat.le_trans (Nat.le_of_eq ?_) (extendStage_len hI _)
+  exact (satStage_length hI _ _ _).symm
+
+/-! ##### §222.1 — where this leaves the construction
+
+Both phase operators now live on `List (SNode I C₀)`, and `stageIter`
+alternates them. `satStage_length` keeps the node term fixed while phase 2 runs
+and `extendStage_len` grows it when phase 1 does, which is exactly the split
+§218's measure needs.
+
+What is NOT yet proved is that the alternation reaches a `Stationary` stage: §219
+bounds how many rounds can MOVE the measure, and §§220–221 say what a stationary
+stage buys, but connecting them needs the round-by-round measure step —
+that a non-stationary stage moves it. Both halves of that are available
+(`satIter_step_lt` for labels, `extendStage_len` for nodes); assembling them at
+`β := SNode I C₀` is the next brick. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38193,4 +38286,8 @@ end POFreeLift
 #print axioms POFreeLift.stationary_e_ex
 #print axioms POFreeLift.stationary_ee_all
 #print axioms POFreeLift.extendStage_covers
+#print axioms POFreeLift.satStage_points
+#print axioms POFreeLift.satStage_label
+#print axioms POFreeLift.modelRel_hsound
+#print axioms POFreeLift.stageIter_len
 #print axioms POFreeLift.kernel_of_no_terminal

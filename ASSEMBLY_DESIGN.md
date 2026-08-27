@@ -14188,3 +14188,40 @@ this one, and both looked like bookkeeping beforehand.
 
 Build: 38,196 lines, 1,918 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 222. THE SEAM, BRIDGED — AND THE ALTERNATION DEFINED
+
+§221.1 named the seam: `extendStage` carries labels inside its nodes,
+`satRound` keeps them beside. The bridge is to run `satRound` at
+`β := SNode I C₀` with `pt := SNode.x`, `L := SNode.lab`, and rebuild the list.
+
+`satStage` does that, with `satStage_length` (**same length**) and
+`satStage_points` (**same points**) — so phase 2 moves only the label term of
+§218's measure and phase 1 only the node term, which is exactly the split the
+measure needs.
+
+### 222.1 The saturation relation can be the model's
+
+`hsound` is a property of `rel`, not of the stage. Taking `rel := I.rho` makes it
+immediate (`modelRel_hsound` — and it does not even need `RCC5Interp`), and
+saturating along the model **covers every declared obligation**: §211 says
+non-`PO` declared edges *are* model edges, and `PO` edges carry nothing. So
+saturating more than the frame demands is sound and still terminates.
+
+That removes what looked like a circularity — the frame is needed to know what to
+saturate, and saturation is needed to build the frame's labels. It is not
+circular because the saturation may safely over-approximate.
+
+`stageIter` then alternates the two, with `stageIter_len` for monotonicity.
+
+### 222.2 What is not yet proved
+
+That the alternation **reaches** a `Stationary` stage. §219 bounds how many
+rounds can move the measure and §§220–221 say what a stationary stage buys, but
+connecting them needs the round-by-round step — *a non-stationary stage moves the
+measure*. Both halves are available (`satIter_step_lt` for labels,
+`extendStage_len` for nodes); assembling them at `β := SNode I C₀` is the next
+brick.
+
+Build: 38,293 lines, 1,926 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
