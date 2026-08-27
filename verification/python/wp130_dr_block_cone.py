@@ -457,6 +457,80 @@ def part_f(cls, trials, seed):
     return tot, root_ok, full_ok
 
 
+_PREF_STATS = [0, 0, 0]     # steps, steps with a DR-preserving option, steps changed
+
+
+def block_nodes_pref(model, val, w, c0, budget, chain):
+    """Same closure as block_nodes, but at every step PREFER a witness that is
+    DR from the whole chain -- the non-root analogue of kernel_site's late
+    picking.  Falls back to any witness when no DR-preserving one exists."""
+    seen = {w}
+    frontier = [(w, budget)]
+    while frontier:
+        x, b = frontier.pop()
+        if b <= 0:
+            continue
+        for d in closure(c0):
+            if d[0] != "ex" or mdepth(d) >= b or not sat(model, val, x, d):
+                continue
+            cands = [y for y in model
+                     if rel(x, y) == d[1] and sat(model, val, y, d[2])]
+            if not cands:
+                continue
+            good = [y for y in cands if all(rel(cp, y) == DR for cp in chain)]
+            _PREF_STATS[0] += 1
+            if good:
+                _PREF_STATS[1] += 1
+                if good[0] != cands[0]:
+                    _PREF_STATS[2] += 1
+            y = good[0] if good else cands[0]
+            if y not in seen:
+                seen.add(y)
+                frontier.append((y, b - 1))
+    return seen
+
+
+def part_g(cls, trials, seed):
+    """Does the selection discipline that fixed the ROOT (part F) also work one
+    level down?  Same setup as F, but block witnesses are chosen DR-preserving
+    where possible.  Reported against F's own number on the same instances, so
+    the comparison is paired rather than across samples."""
+    rng = random.Random(seed)
+    tot = plain = pref = 0
+    for _ in range(trials):
+        c0 = rand_concept(rng, rng.randint(2, 3))
+        model, val, chain = gen_model(rng, cls)
+        cand = [(j, d) for j in range(len(chain)) for d in closure(c0)
+                if d[0] == "ex" and d[1] == DR and sat(model, val, chain[j], d)]
+        if not cand:
+            continue
+        j, dem = rng.choice(cand)
+        wit = [y for y in model if sat(model, val, y, dem[2])
+               and all(rel(cp, y) == DR for cp in chain)]
+        if not wit:
+            continue
+        w = rng.choice(wit)
+        cbodies = [d[2] for d in closure(c0) if d[0] == "all" and d[1] == DR
+                   and any(sat(model, val, cp, d) for cp in chain)]
+
+        def score(blk):
+            bb = [d[2] for d in closure(c0) if d[0] == "all" and d[1] == DR
+                  and any(sat(model, val, y, d) for y in blk)]
+            if len(cbodies) + len(bb) == 0:
+                return None
+            return (all(sat(model, val, y, X) for X in cbodies for y in blk)
+                    and all(sat(model, val, cp, X) for X in bb for cp in chain))
+
+        b1 = score(list(block_nodes(model, val, w, c0, mdepth(c0)).keys()))
+        b2 = score(list(block_nodes_pref(model, val, w, c0, mdepth(c0), chain)))
+        if b1 is None and b2 is None:
+            continue
+        tot += 1
+        plain += 1 if b1 else 0
+        pref += 1 if b2 else 0
+    return tot, plain, pref
+
+
 def main():
     print("WP130 -- the free DR cone, measured")
     print(__doc__.split("Self-contained")[0].strip().splitlines()[-1])
@@ -557,6 +631,24 @@ def main():
     else:
         print("    prediction holds: late picking makes the root free, exactly as")
         print("    drCompat_root_of_phasewise says.")
+    print("\nPART G -- does the same discipline work one level DOWN (non-root nodes)?")
+    for cls, seed in (("G1", 20260838), ("G2", 20260839)):
+        tot, pl, pr = part_g(cls, 20000, seed)
+        if tot:
+            print(f"    {cls}: {tot} paired non-vacuous instances")
+            print(f"      block witnesses chosen ARBITRARILY  : {100.0*pl/tot:5.1f}%")
+            print(f"      chosen DR-PRESERVING where possible : {100.0*pr/tot:5.1f}%")
+            st, av, ch = _PREF_STATS
+            print(f"      -- steps taken {st}; a DR-preserving option existed at "
+                  f"{av} ({100.0*av/max(st,1):.1f}%); the choice actually CHANGED "
+                  f"at {ch}")
+            if ch * 20 < st:
+                print("      => INCONCLUSIVE: the choice changed at under 5% of")
+                print("         steps, so the equal rates are NOT evidence that the")
+                print("         discipline fails -- these models rarely offer an")
+                print("         alternative.  Deciding it needs a model class with")
+                print("         room for one, which this generator does not supply.")
+            _PREF_STATS[0] = _PREF_STATS[1] = _PREF_STATS[2] = 0
     print()
     print("  READ, in the order the parts establish it:")
     print("   A  the free cone IS free -- 100% in both model classes, matching")
@@ -580,6 +672,10 @@ def main():
     print("      below by dr_witness_below, so its own universals are already")
     print("      forced there; non-root nodes are outside the free cone.")
     print()
+    print("   G  the same discipline one level down is UNDECIDED: the rates are")
+    print("      identical, but the choice changed at only 2-3% of steps, so the")
+    print("      probe never actually exercised it.  Reported as inconclusive")
+    print("      rather than negative.")
     print("   F  and imposing the discipline `kernel_site` ALREADY implements --")
     print("      pick the witness LATE, so it is DR from every point of the")
     print("      segment rather than only from the demand's own -- makes the")

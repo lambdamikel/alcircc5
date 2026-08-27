@@ -12731,3 +12731,40 @@ it; what part F establishes is direction of travel, not a value.
 Build: 34,833 lines, 1,746 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`. `drCompat_of_phases` axiom-free;
 `kernel_label_occurs_low` propext only.
+
+## 183. THE NON-ROOT NODES — probed, and the probe came back inconclusive
+
+§182.4 left the non-root block nodes as the whole residue. Part F's lever at the
+root was a **selection discipline**, so the obvious question is whether the same
+lever works one level down: when building the block, prefer witnesses that stay
+`DR` from the chain.
+
+`wp130` part G measures it paired — same instances, block built both ways:
+
+| | G1 | G2 |
+|---|---|---|
+| block witnesses arbitrary | 80.6% | 84.1% |
+| chosen `DR`-preserving where possible | **80.6%** | **84.1%** |
+
+Identical. The tempting read is "the discipline does not work below the root".
+The instrumentation says otherwise: a `DR`-preserving option existed at ~19% of
+steps and **the choice actually changed at 5/250 and 10/292 steps** — 2% and
+3.4%. The probe never exercised the lever it was built to test.
+
+**So part G is INCONCLUSIVE, not negative**, and the file records it that way.
+Deciding it needs a model class with room for genuine alternatives; the current
+generator (chains of length 3 over an 8-element universe) does not supply one.
+
+This is the same discipline as §181.3's catch, applied to a null result instead
+of a positive one: **an effect size of zero is only evidence when the treatment
+was actually administered.** Both failures were caught by asking what the probe's
+sample could not represent — §181.3 counted the non-vacuous instances, §183
+counted the steps where the choice differed.
+
+**Recorded for the next attempt:** the parameters that would make part G decisive
+are a larger universe and longer chains, so that a demand typically has several
+witnesses of which only some preserve `DR`. That is a generator change, not a new
+question.
+
+Build unchanged: 34,833 lines, 1,746 declarations, 0 errors / 0 warnings /
+0 `sorryAx`.
