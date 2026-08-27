@@ -36321,6 +36321,150 @@ theorem totalSize_normL_le {β : Type} (C0 : Concept) (nodes : List β)
   rw [hX, normL]
   exact List.length_filter_le _ _
 
+/-! #### §210 — THE FIXPOINT EXISTS
+
+§209 supplied the counting; §210 runs it. `satIter` iterates `satRound`, and
+either some round adds nothing — a fixpoint, which by
+`satRound_fixed_propagates` discharges all four propagation obligations — or
+`totalSize` grows every round and overruns the bound. -/
+
+theorem normL_len_le (C0 : Concept) {X Y : List Concept}
+    (h : ∀ c, c ∈ normL C0 X → c ∈ normL C0 Y) :
+    (normL C0 X).length ≤ (normL C0 Y).length := by
+  refine filter_len_le _ _ _ (fun a ha hp => ?_)
+  have hx : a ∈ normL C0 X := mem_normL.mpr ⟨ha, of_decide_eq_true hp⟩
+  exact decide_eq_true (mem_normL.mp (h a hx)).2
+
+theorem normL_len_lt (C0 : Concept) {X Y : List Concept}
+    (h : ∀ c, c ∈ normL C0 X → c ∈ normL C0 Y)
+    {c0 : Concept} (hc0 : c0 ∈ normL C0 Y) (hnot : c0 ∉ normL C0 X) :
+    (normL C0 X).length < (normL C0 Y).length := by
+  refine filter_len_lt _ _ _ (fun a ha hp => ?_) c0 (mem_normL.mp hc0).1 ?_ ?_
+  · have hx : a ∈ normL C0 X := mem_normL.mpr ⟨ha, of_decide_eq_true hp⟩
+    exact decide_eq_true (mem_normL.mp (h a hx)).2
+  · refine decide_eq_false (fun hmem => hnot ?_)
+    exact mem_normL.mpr ⟨(mem_normL.mp hc0).1, hmem⟩
+  · exact decide_eq_true (mem_normL.mp hc0).2
+
+/-- Pointwise-`≤` sums. -/
+theorem sum_map_le_pw {A : Type} (l : List A) (g h : A → Nat)
+    (hle : ∀ a ∈ l, g a ≤ h a) : (l.map g).sum ≤ (l.map h).sum := by
+  induction l with
+  | nil => exact Nat.le_refl 0
+  | cons a t ih =>
+    simp only [List.map_cons, List.sum_cons]
+    exact Nat.add_le_add (hle a List.mem_cons_self)
+      (ih (fun x hx => hle x (List.mem_cons_of_mem a hx)))
+
+/-- Sums over a list: weakly larger everywhere, strictly somewhere. -/
+theorem sum_map_lt {A : Type} (l : List A) (g h : A → Nat)
+    (hle : ∀ a ∈ l, g a ≤ h a) (a0 : A) (ha0 : a0 ∈ l) (hlt : g a0 < h a0) :
+    (l.map g).sum < (l.map h).sum := by
+  induction l with
+  | nil => exact absurd ha0 List.not_mem_nil
+  | cons a t ih =>
+    simp only [List.map_cons, List.sum_cons]
+    have hlet : ∀ x ∈ t, g x ≤ h x :=
+      fun x hx => hle x (List.mem_cons_of_mem a hx)
+    have hsum : (t.map g).sum ≤ (t.map h).sum := sum_map_le_pw t g h hlet
+    rcases List.mem_cons.mp ha0 with rfl | hat
+    · omega
+    · have hi := ih hlet hat
+      have hga : g a ≤ h a := hle a List.mem_cons_self
+      omega
+
+/-- **`totalSize` GROWS** when every label grows weakly and one grows strictly. -/
+theorem totalSize_lt_of_pw {β : Type} (nodes : List β) (L L' : β → List Concept)
+    (hle : ∀ e ∈ nodes, (L e).length ≤ (L' e).length)
+    (e0 : β) (he0 : e0 ∈ nodes) (hlt : (L e0).length < (L' e0).length) :
+    totalSize nodes L < totalSize nodes L' :=
+  sum_map_lt nodes _ _ hle e0 he0 hlt
+
+open Classical in
+/-- **THE SATURATION ITERATE.** -/
+noncomputable def satIter {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L0 : β → List Concept) : Nat → (β → List Concept)
+  | 0 => fun f => normL C0 (L0 f)
+  | n + 1 => satRound I C0 nodes pt rel (satIter I C0 nodes pt rel L0 n)
+
+/-- Every stage is a normalised label — which is what §209's counting needs. -/
+theorem satIter_normL {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L0 : β → List Concept) :
+    ∀ n f, ∃ X, satIter I C0 nodes pt rel L0 n f = normL C0 X := by
+  intro n f
+  cases n with
+  | zero => exact ⟨L0 f, rfl⟩
+  | succ m => exact ⟨_, rfl⟩
+
+theorem satIter_sub {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L0 : β → List Concept) :
+    ∀ n f, ∀ c ∈ satIter I C0 nodes pt rel L0 n f, c ∈ cl C0 := by
+  intro n f c hc
+  obtain ⟨X, hX⟩ := satIter_normL I C0 nodes pt rel L0 n f
+  rw [hX] at hc
+  exact (mem_normL.mp hc).1
+
+theorem satIter_mono {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L0 : β → List Concept) :
+    ∀ n f, ∀ c ∈ satIter I C0 nodes pt rel L0 n f,
+      c ∈ satIter I C0 nodes pt rel L0 (n + 1) f := by
+  intro n f
+  exact satRound_mono I C0 nodes pt rel _ (satIter_sub I C0 nodes pt rel L0 n) f
+
+/-- **GROWTH AT ONE NODE MOVES `totalSize`.** -/
+theorem satIter_step_lt {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L0 : β → List Concept) (n : Nat) {f0 : β} (hf0 : f0 ∈ nodes)
+    {c0 : Concept} (hc0 : c0 ∈ satIter I C0 nodes pt rel L0 (n + 1) f0)
+    (hnc : c0 ∉ satIter I C0 nodes pt rel L0 n f0) :
+    totalSize nodes (satIter I C0 nodes pt rel L0 n)
+      < totalSize nodes (satIter I C0 nodes pt rel L0 (n + 1)) := by
+  refine totalSize_lt_of_pw nodes _ _ (fun e _ => ?_) f0 hf0 ?_
+  · obtain ⟨X, hX⟩ := satIter_normL I C0 nodes pt rel L0 n e
+    obtain ⟨Y, hY⟩ := satIter_normL I C0 nodes pt rel L0 (n + 1) e
+    rw [hX, hY]
+    refine normL_len_le C0 (fun c hc => ?_)
+    rw [← hY]; exact satIter_mono I C0 nodes pt rel L0 n e c (by rw [hX]; exact hc)
+  · obtain ⟨X, hX⟩ := satIter_normL I C0 nodes pt rel L0 n f0
+    obtain ⟨Y, hY⟩ := satIter_normL I C0 nodes pt rel L0 (n + 1) f0
+    rw [hX, hY]
+    refine normL_len_lt C0 (fun c hc => ?_) (by rw [← hY]; exact hc0)
+      (by rw [← hX]; exact hnc)
+    rw [← hY]
+    exact satIter_mono I C0 nodes pt rel L0 n f0 c (by rw [hX]; exact hc)
+
+/-- **THE FIXPOINT EXISTS.**  If every round up to the bound added something, the
+    total size would overrun a bound it provably respects. Stated as the
+    refutation, which is the mathematical content; the classical step from here
+    to `∃ n, …` is standard. -/
+theorem satIter_no_endless_growth {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L0 : β → List Concept)
+    (hgrow : ∀ n, n ≤ nodes.length * (cl C0).length →
+      ∃ f0 ∈ nodes, ∃ c0 ∈ satIter I C0 nodes pt rel L0 (n + 1) f0,
+        c0 ∉ satIter I C0 nodes pt rel L0 n f0) : False := by
+  have hbound : ∀ n, totalSize nodes (satIter I C0 nodes pt rel L0 n)
+      ≤ nodes.length * (cl C0).length := fun n =>
+    totalSize_normL_le C0 nodes _ (satIter_normL I C0 nodes pt rel L0 n)
+  have key : ∀ n, n ≤ nodes.length * (cl C0).length + 1 →
+      n ≤ totalSize nodes (satIter I C0 nodes pt rel L0 n) := by
+    intro n
+    induction n with
+    | zero => intro _; exact Nat.zero_le _
+    | succ m ih =>
+      intro hmB
+      obtain ⟨f0, hf0, c0, hc0, hnc⟩ := hgrow m (by omega)
+      have hlt := satIter_step_lt I C0 nodes pt rel L0 m hf0 hc0 hnc
+      have := ih (by omega)
+      omega
+  have h1 := key (nodes.length * (cl C0).length + 1) (Nat.le_refl _)
+  have h2 := hbound (nodes.length * (cl C0).length + 1)
+  omega
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37296,4 +37440,6 @@ end POFreeLift
 #print axioms POFreeLift.satRound_fixed_propagates
 #print axioms POFreeLift.filter_len_lt
 #print axioms POFreeLift.closure_stops_le
+#print axioms POFreeLift.satIter_step_lt
+#print axioms POFreeLift.satIter_no_endless_growth
 #print axioms POFreeLift.kernel_of_no_terminal

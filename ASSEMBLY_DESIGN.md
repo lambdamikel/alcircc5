@@ -13760,3 +13760,37 @@ argument: no fixpoint below the bound would force `totalSize` past it.
 
 Build: 37,299 lines, 1,872 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 210. THE FIXPOINT EXISTS
+
+§209 supplied the counting; §210 runs it.
+
+`satIter` iterates `satRound`. Every stage is a normalised label
+(`satIter_normL`), so §209's bound applies; `satIter_mono` gives weak growth
+everywhere; and `satIter_step_lt` turns one newly-admitted concept at one node
+into a strict `totalSize` increase, via `normL_len_lt` and `sum_map_lt`.
+
+**`satIter_no_endless_growth`**: if every round up to `|nodes| · |cl C₀|` added
+something, then `totalSize` would exceed a bound it provably respects. Stated as
+the refutation, which is the mathematical content — the classical step from there
+to `∃ n, fixpoint` is standard and adds nothing.
+
+Composed with `satRound_fixed_propagates` (§208.1), that is **all four
+propagation obligations**: `ee_all`, `ek_all`, `ke_all`, `kq_all`.
+
+### 210.1 Where phase 2 stands
+
+| | |
+|---|---|
+| soundness of a round | `satRound_supportOk` — given the declared relation is the model's |
+| monotonicity | `satRound_mono`, `satIter_mono` |
+| termination | `satIter_no_endless_growth` (§209's counting) |
+| what a fixpoint buys | `satRound_fixed_propagates` — all four obligations |
+
+So phase 2 is complete as a construction. What it needs from phase 1 is the
+premise `hrel : rel e f = I.rho (pt e) (pt f)` — the declared frame agreeing with
+the model — which is what `mixLt_rho` and `seedM_dr` (§205) supply for the
+`odNet` frame, edge class by edge class.
+
+Build: 37,445 lines, 1,883 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
