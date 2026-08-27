@@ -35131,6 +35131,216 @@ theorem kPhaseNode_body_mem (hI : RCC5Interp I) (C0 : Concept) (pt : α)
     mem_phaseSeed.mpr ⟨List.mem_append.mpr (Or.inr hE),
       mem_mty.mpr ⟨hcl, hsat⟩⟩, self_mem_hclose I pt E⟩⟩
 
+/-! #### §196 — THE FIXPOINT, ASSEMBLED
+
+§195.2 said what remained was assembling §194's demand step and §195's kernel
+step into one recursion. `kwNodes` is that recursion: at each node it follows
+every demand of the node's own label AND, if the node is a kernel anchor, every
+phase of its kernel.
+
+Both branches descend on `maxDepth` (`sChildN_depth`, `kPhaseNode_depth_lt`), so
+the fuel is a real bound rather than a truncation — that is §195.2's point cashed
+in. -/
+
+open Classical in
+/-- **THE EXTERNAL/KERNEL CLOSURE.**  `wNodes` plus the kernel branch. -/
+noncomputable def kwNodes (hI : RCC5Interp I) {C0 : Concept} :
+    Nat → SNode I C0 → List (SNode I C0)
+  | 0, n => [n]
+  | d + 1, n =>
+      n :: (n.lab.attach.flatMap (fun q => match q with
+              | ⟨.ex _ _, hD⟩ => kwNodes hI d (sChildN hI n hD)
+              | _ => [])
+            ++ (if h : 0 < (persistDs C0 I n.x).length then
+                  (if 0 < (allArgs pp n.lab).length then
+                    (List.range ((kernelData hI C0 n.x n.hx h 0).p + 1)).flatMap
+                      (fun a => kwNodes hI d
+                        (kPhaseNode hI C0
+                          ((kernelData hI C0 n.x n.hx h 0).c
+                            ((kernelData hI C0 n.x n.hx h 0).i + a))
+                          ((kernelData hI C0 n.x n.hx h 0).cdom _) n.lab))
+                   else [])
+                else []))
+
+theorem self_mem_kwNodes (hI : RCC5Interp I) {C0 : Concept} (d : Nat)
+    (n : SNode I C0) : n ∈ kwNodes hI d n := by
+  cases d with
+  | zero => rw [kwNodes]; exact List.mem_cons_self
+  | succ d' => rw [kwNodes]; exact List.mem_cons_self
+
+open Classical in
+/-- **THE DEMAND BRANCH IS THERE.** -/
+theorem kwNodes_child_mem (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) (d : Nat) :
+    sChildN hI n hD ∈ kwNodes hI (d + 1) n := by
+  rw [kwNodes]
+  refine List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl ?_))
+  exact List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _,
+    self_mem_kwNodes hI d _⟩
+
+open Classical in
+/-- **AND SO IS THE KERNEL BRANCH.**  Every phase of an anchor's kernel, up to
+    and including the period, is a node of the closure. -/
+theorem kwNodes_phase_mem (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    (h : 0 < (persistDs C0 I n.x).length)
+    (hg : 0 < (allArgs pp n.lab).length) (d a : Nat)
+    (ha : a ≤ (kernelData hI C0 n.x n.hx h 0).p) :
+    kPhaseNode hI C0
+        ((kernelData hI C0 n.x n.hx h 0).c
+          ((kernelData hI C0 n.x n.hx h 0).i + a))
+        ((kernelData hI C0 n.x n.hx h 0).cdom _) n.lab
+      ∈ kwNodes hI (d + 1) n := by
+  rw [kwNodes]
+  refine List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr ?_))
+  rw [dif_pos h, if_pos hg]
+  exact List.mem_flatMap.mpr ⟨a, List.mem_range.mpr (by omega),
+    self_mem_kwNodes hI d _⟩
+
+/-- `kSeed` never deepens a label, demand or no demand. -/
+theorem kSeed_depth_le (L : List Concept) : maxDepth (kSeed L) ≤ maxDepth L := by
+  have h : maxDepth (kSeed L) < maxDepth L + 1 := by
+    refine maxDepth_lt (Nat.succ_pos _) (fun c hc => ?_)
+    rcases kSeed_shape L c hc with ⟨r, hr⟩ | ⟨r, hr⟩
+    · have h1 := mem_maxDepth_le hr
+      have hd : mdepth (Concept.ex r c) = mdepth c + 1 := rfl
+      omega
+    · have h1 := mem_maxDepth_le hr
+      have hd : mdepth (Concept.all r c) = mdepth c + 1 := rfl
+      omega
+  omega
+
+theorem kPhaseNode_depth_le (hI : RCC5Interp I) (C0 : Concept) (pt : α)
+    (hpt : I.dom pt) (L : List Concept) :
+    maxDepth (kPhaseNode hI C0 pt hpt L).lab ≤ maxDepth L :=
+  Nat.le_trans (normL_depth_le C0 _)
+    (Nat.le_trans (hcloseL_depth_le I pt _)
+      (Nat.le_trans (maxDepth_mono (fun _ h => (mem_phaseSeed.mp h).1))
+        (kSeed_depth_le L)))
+
+/-- **THE STEP THE RECURSION NEEDS.**  A phase node's label fits in one less
+    fuel than its anchor's — strictly, when the anchor has any modal depth left,
+    and trivially when it has none. -/
+theorem kPhaseNode_depth_step (hI : RCC5Interp I) (C0 : Concept) (pt : α)
+    (hpt : I.dom pt) (L : List Concept) {d : Nat} (hd : maxDepth L ≤ d + 1) :
+    maxDepth (kPhaseNode hI C0 pt hpt L).lab ≤ d := by
+  rcases Nat.eq_zero_or_pos (maxDepth L) with h0 | hpos
+  · have := kPhaseNode_depth_le hI C0 pt hpt L; omega
+  · have hlt : maxDepth (kPhaseNode hI C0 pt hpt L).lab < maxDepth L :=
+      Nat.lt_of_le_of_lt (normL_depth_le C0 _)
+        (Nat.lt_of_le_of_lt (hcloseL_depth_le I pt _)
+          (Nat.lt_of_le_of_lt (maxDepth_mono (fun _ h => (mem_phaseSeed.mp h).1))
+            (seed_depth_lt' L hpos _ (kSeed_shape L))))
+    omega
+
+open Classical in
+/-- A child's closure sits inside the parent's — demand branch. -/
+theorem kwNodes_sub_of_child (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (hF : Concept.ex r D ∈ n.lab) (d : Nat)
+    {m : SNode I C0} (h : m ∈ kwNodes hI d (sChildN hI n hF)) :
+    m ∈ kwNodes hI (d + 1) n := by
+  rw [kwNodes]
+  exact List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inl
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hF⟩, List.mem_attach _ _, h⟩)))
+
+open Classical in
+/-- ... and kernel branch. -/
+theorem kwNodes_sub_of_phase (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    (hk : 0 < (persistDs C0 I n.x).length)
+    (hg : 0 < (allArgs pp n.lab).length) (d a : Nat)
+    (ha : a ≤ (kernelData hI C0 n.x n.hx hk 0).p)
+    {m : SNode I C0}
+    (h : m ∈ kwNodes hI d (kPhaseNode hI C0
+      ((kernelData hI C0 n.x n.hx hk 0).c
+        ((kernelData hI C0 n.x n.hx hk 0).i + a))
+      ((kernelData hI C0 n.x n.hx hk 0).cdom _) n.lab)) :
+    m ∈ kwNodes hI (d + 1) n := by
+  rw [kwNodes]
+  refine List.mem_cons_of_mem _ (List.mem_append.mpr (Or.inr ?_))
+  rw [dif_pos hk, if_pos hg]
+  exact List.mem_flatMap.mpr ⟨a, List.mem_range.mpr (by omega), h⟩
+
+/-- A label with an `∃PP` argument has modal depth. -/
+theorem allArgs_depth_pos {L : List Concept} (h : 0 < (allArgs pp L).length) :
+    0 < maxDepth L := by
+  rcases List.exists_mem_of_length_pos h with ⟨D, hD⟩
+  have h1 := mem_maxDepth_le (mem_allArgs hD)
+  have hd : mdepth (Concept.ex pp D) = mdepth D + 1 := rfl
+  omega
+
+open Classical in
+/-- **THE FIXPOINT IS CLOSED — BOTH BRANCHES.**  With fuel at least the label's
+    depth, every node of the closure has its demand children AND, when its label
+    gives its kernel something to serve, all that kernel's phases, inside the
+    same list.
+
+    This is `WitnessClosed`'s content at the support-label level. The gate is the
+    thing the first attempt got wrong: kernel-anchor-hood is a property of the
+    MODEL POINT (`persistDs`), so it does not shrink with the label, and an
+    ungated kernel branch never bottoms out. Gating on the LABEL is not a dodge —
+    a kernel whose anchor's label demands nothing of it has nothing to serve. -/
+theorem kwNodes_covers (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), maxDepth n.lab ≤ d →
+      ∀ m ∈ kwNodes hI d n,
+        (∀ (r : Atom) (D : Concept) (hD : Concept.ex r D ∈ m.lab),
+          sChildN hI m hD ∈ kwNodes hI d n) ∧
+        (∀ (hk : 0 < (persistDs C0 I m.x).length)
+          (_hg : 0 < (allArgs pp m.lab).length) (a : Nat),
+          a ≤ (kernelData hI C0 m.x m.hx hk 0).p →
+          kPhaseNode hI C0
+              ((kernelData hI C0 m.x m.hx hk 0).c
+                ((kernelData hI C0 m.x m.hx hk 0).i + a))
+              ((kernelData hI C0 m.x m.hx hk 0).cdom _) m.lab
+            ∈ kwNodes hI d n) := by
+  intro d
+  induction d with
+  | zero =>
+    intro n hdep m hm
+    rw [kwNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · have h0 : maxDepth m.lab = 0 := Nat.le_antisymm hdep (Nat.zero_le _)
+      refine ⟨fun r D hD => absurd hD (no_demand_of_depth_zero h0), ?_⟩
+      intro _ hg _ _
+      have := allArgs_depth_pos hg
+      omega
+    · exact absurd h List.not_mem_nil
+  | succ d' ih =>
+    intro n hdep m hm
+    rw [kwNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact ⟨fun r D hD => kwNodes_child_mem hI m hD d',
+        fun hk hg a ha => kwNodes_phase_mem hI m hk hg d' a ha⟩
+    · rcases List.mem_append.mp h with h1 | h2
+      · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp h1
+        cases F with
+        | ex r' c =>
+          have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+            have := sChildN_depth hI n hF
+            omega
+          obtain ⟨p1, p2⟩ := ih (sChildN hI n hF) hchild m hmm
+          exact ⟨fun r D hD => kwNodes_sub_of_child hI n hF d' (p1 r D hD),
+            fun hk hg a ha => kwNodes_sub_of_child hI n hF d' (p2 hk hg a ha)⟩
+        | _ => exact absurd hmm List.not_mem_nil
+      · by_cases hk : 0 < (persistDs C0 I n.x).length
+        · rw [dif_pos hk] at h2
+          by_cases hg : 0 < (allArgs pp n.lab).length
+          · rw [if_pos hg] at h2
+            obtain ⟨a, hain, hmm⟩ := List.mem_flatMap.mp h2
+            have ha : a ≤ (kernelData hI C0 n.x n.hx hk 0).p := by
+              have := List.mem_range.mp hain; omega
+            have hchild : maxDepth (kPhaseNode hI C0
+                ((kernelData hI C0 n.x n.hx hk 0).c
+                  ((kernelData hI C0 n.x n.hx hk 0).i + a))
+                ((kernelData hI C0 n.x n.hx hk 0).cdom _) n.lab).lab ≤ d' :=
+              kPhaseNode_depth_step hI C0 _ _ n.lab hdep
+            obtain ⟨p1, p2⟩ := ih _ hchild m hmm
+            exact ⟨fun r D hD =>
+                kwNodes_sub_of_phase hI n hk hg d' a ha (p1 r D hD),
+              fun hk' hg' a' ha' =>
+                kwNodes_sub_of_phase hI n hk hg d' a ha (p2 hk' hg' a' ha')⟩
+          · rw [if_neg hg] at h2; exact absurd h2 List.not_mem_nil
+        · rw [dif_neg hk] at h2
+          exact absurd h2 List.not_mem_nil
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36078,4 +36288,6 @@ end POFreeLift
 #print axioms POFreeLift.seed_depth_lt'
 #print axioms POFreeLift.kSeed_depth_lt
 #print axioms POFreeLift.kPhaseNode_depth_lt
+#print axioms POFreeLift.kwNodes_phase_mem
+#print axioms POFreeLift.kwNodes_covers
 #print axioms POFreeLift.kernel_of_no_terminal

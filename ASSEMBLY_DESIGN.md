@@ -13240,3 +13240,63 @@ than a question about the logic.
 
 Build: 36,081 lines, 1,798 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 196. THE FIXPOINT, ASSEMBLED — and the one thing the first attempt got wrong
+
+§195.2 said what remained was assembling §194's demand step and §195's kernel
+step into one recursion. `kwNodes` is it: at each node it follows every demand of
+the node's own label **and**, if the node is a kernel anchor, every phase of its
+kernel. Both branches descend on `maxDepth`, so the fuel is a real bound.
+
+`self_mem_kwNodes`, `kwNodes_child_mem` and `kwNodes_phase_mem` land immediately.
+**The closure property did not**, and the reason is worth keeping.
+
+### 196.1 The failure, and the fix
+
+The first `kwNodes_covers` attempt was **false at fuel 0**, and not by a
+bookkeeping slip:
+
+> Kernel-anchor-hood is a property of the MODEL POINT — `persistDs C0 I n.x` —
+> so it does **not** shrink with the label. A phase node whose label has bottomed
+> out to `[]` can still be a kernel anchor, so an ungated kernel branch never
+> bottoms out, no matter what measure the demand branch descends on.
+
+The measure was never going to control that branch, because the branch is not
+guarded by anything the measure sees.
+
+**The fix is to gate the kernel branch on the LABEL**: fire it only when
+`0 < (allArgs pp n.lab).length`, i.e. when the anchor's label actually carries an
+`∃PP` demand for the kernel to serve. That is not a dodge — a kernel whose
+anchor's label demands nothing of it has nothing to serve, and the certificate's
+obligations are all stated about labels. With the gate, `allArgs_depth_pos` makes
+the branch vacuous exactly where the measure bottoms out, and the induction goes
+through.
+
+`kwNodes_covers` is now certified: with fuel at least the label's depth, every
+node of the closure has its demand children and — when its label gives its kernel
+something to serve — all that kernel's phases, **inside the same list**. That is
+`WitnessClosed`'s content at the support-label level.
+
+### 196.2 What is now certified, and what is not
+
+**Certified:** the external/kernel fixpoint exists, terminates, and is closed
+under both steps. Everything a kernel of the family needs is a node of the
+family.
+
+**Not certified, and not attempted here:**
+
+* **the length bound.** `wNodes_length_le` bounds the demand branch by
+  `genBound |cl C₀| d`; the kernel branch adds `p + 1` children, and `p` is
+  bounded by `rr_segment_from`'s `(allListsLe …).length * Ds.length` — a bound
+  that exists but is **not carried in `KernelData`**, so it is not available at
+  the recursion. Exposing it is the next mechanical step.
+* **the bridge to `WitnessClosed`.** That is stated for `MTKNode` families
+  (model point + budget); `kwNodes` produces `SNode`s (model point + support
+  label). Crossing between them is the `mty`→`mtk` budget assignment of §162,
+  still open.
+
+So the fixpoint question §194.1 raised is answered; the two items above are what
+stand between it and `kDR`/`kUP`/`kDN` being theorems rather than hypotheses.
+
+Build: 36,293 lines, 1,809 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
