@@ -14290,3 +14290,38 @@ case split with both branches proved — and then the `Fin` reindex.
 
 Build: 38,391 lines, 1,933 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 225. THE PACKAGED STEP — a non-stationary stage's round moves the measure
+
+§224 proved the two cases; §225 chains them across a round
+(`ns → satStage ns → extendStage (satStage ns)`), which needed two pieces:
+
+* `satStage_eq_of_fixed` — **a saturated stage is a literal fixpoint** of the
+  saturation step. Labels are `List`s, so "adds nothing" has to become equality;
+  the other `SNode` fields are a point and two proofs, so the label settles it.
+  Without this, a stationary stage would still *look* like it moved.
+* `interMeasure_le_append` — the measure cannot fall across the extend step, so
+  a gain in the saturate step survives it.
+
+`stage_round_lt` is the result: if some label gains a concept, or (labels being
+saturated) some owed child is missing, the round strictly increases the measure.
+
+### 225.1 The termination argument, complete
+
+```
+non-stationary  ⟹  round increases the measure   §225 (via §224)
+increases       ⟹  boundedly often              §219 (via §218)
+stationary      ⟹  all certificate obligations   §220
+```
+
+Every line is now a theorem. What remains between here and `MergedExtractionAt`
+is: run the alternation from `rootNode` and extract the stationary stage it
+reaches, supply `hp` and the kernel side of `k_ex`, and reindex onto `Fin`.
+
+**Note on the two corrections.** §223's filter and §225's fixpoint lemma are the
+same issue from opposite ends — a step that always changes something can never be
+stationary, and a step that is stationary must be *provably* unchanged. Neither
+was visible while the operators were only being proved sound.
+
+Build: 38,528 lines, 1,940 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

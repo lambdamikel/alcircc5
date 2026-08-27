@@ -36373,6 +36373,23 @@ theorem sum_map_le_pw {A : Type} (l : List A) (g h : A → Nat)
     exact Nat.add_le_add (hle a List.mem_cons_self)
       (ih (fun x hx => hle x (List.mem_cons_of_mem a hx)))
 
+/-- `normL_len_le` for lists known to be normalised, compared by membership. -/
+theorem normL_len_le' (C0 : Concept) (A B : List Concept)
+    (hA : ∃ X, A = normL C0 X) (hB : ∃ Y, B = normL C0 Y)
+    (h : ∀ c ∈ A, c ∈ B) : A.length ≤ B.length := by
+  obtain ⟨X, rfl⟩ := hA
+  obtain ⟨Y, rfl⟩ := hB
+  exact normL_len_le C0 h
+
+/-- ... and the strict version. -/
+theorem normL_len_lt' (C0 : Concept) (A B : List Concept)
+    (hA : ∃ X, A = normL C0 X) (hB : ∃ Y, B = normL C0 Y)
+    (h : ∀ c ∈ A, c ∈ B) {c0 : Concept} (hc0 : c0 ∈ B) (hnot : c0 ∉ A) :
+    A.length < B.length := by
+  obtain ⟨X, rfl⟩ := hA
+  obtain ⟨Y, rfl⟩ := hB
+  exact normL_len_lt C0 h hc0 hnot
+
 /-- Sums over a list: weakly larger everywhere, strictly somewhere. -/
 theorem sum_map_lt {A : Type} (l : List A) (g h : A → Nat)
     (hle : ∀ a ∈ l, g a ≤ h a) (a0 : A) (ha0 : a0 ∈ l) (hlt : g a0 < h a0) :
@@ -37385,6 +37402,124 @@ Either way §218's measure strictly increases, and §219 bounds how often that c
 happen. What remains is to package the two cases as one statement about
 `stageIter` — a case split, with both branches proved. -/
 
+/-! #### §225 — PACKAGING: A NON-STATIONARY STAGE MOVES
+
+§224 proved the two cases; §225 states them as one fact about a round. The only
+missing piece is the converse of case 2: when the labels ARE saturated, the
+saturation step must leave the stage ALONE, or a stationary stage would still
+look like it moved. -/
+
+/-- **A SATURATED STAGE IS A FIXPOINT OF `satStage`.**  Labels are `List`s, so
+    "adds nothing" has to become literal equality; the `SNode` fields other than
+    the label are the point and two proofs, so the label settles it. -/
+theorem satStage_eq_of_fixed (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c)
+    (h : ∀ n ∈ ns, satRound I C0 ns SNode.x rel (fun m => m.lab) n = n.lab) :
+    satStage hI rel ns hsound = ns := by
+  rw [satStage]
+  have : ∀ n ∈ ns, (⟨n.x, n.hx,
+      satRound I C0 ns SNode.x rel (fun m => m.lab) n,
+      satRound_supportOk_gen hI ns SNode.x rel (fun m => m.hx)
+        (fun m => m.lab) (fun m => m.ok) hsound n⟩ : SNode I C0) = n := by
+    intro n hn
+    have hl := h n hn
+    cases n
+    simp only [SNode.mk.injEq] at hl ⊢
+    simp [hl]
+  rw [List.map_congr_left this]
+  simp
+
+/-! ##### §225.1 — what the packaging still needs
+
+`satStage_eq_of_fixed` is the piece that was missing, and it lands: a saturated
+stage really is a fixpoint of the saturation step, so a stationary stage does not
+look like it moved.
+
+What is NOT yet proved is the packaged step — *a non-stationary stage's round
+increases the measure*. Its two branches are §224's lemmas, but chaining them
+needs the measure to be monotone ACROSS the two sub-steps
+(`ns → satStage ns → extendStage (satStage ns)`), one more transitivity argument
+than either case alone.
+
+Writing the statement out is what surfaced that the CHAINING, not the cases, is
+the remaining content — so it is recorded here rather than left as a vacuous
+theorem in the file. -/
+
+/-- Appending never decreases the measure — the monotonicity the chaining needs
+    across the two sub-steps of a round. -/
+theorem interMeasure_le_append {β : Type} (C0 : Concept) (l l' : List β)
+    (L : β → List Concept) :
+    interMeasure C0 l L ≤ interMeasure C0 (l ++ l') L := by
+  have h1 : l.length * ((cl C0).length + 1)
+      ≤ (l ++ l').length * ((cl C0).length + 1) := by
+    rw [List.length_append]
+    exact Nat.mul_le_mul_right _ (by omega)
+  have h2 := totalSize_append_le l l' L
+  unfold interMeasure
+  omega
+
+open Classical in
+/-- `totalSize` after a saturation step, as a sum over the ORIGINAL list. -/
+theorem totalSize_satStage (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c) :
+    totalSize (satStage hI rel ns hsound) SNode.lab
+      = (ns.map (fun n =>
+          (satRound I C0 ns SNode.x rel (fun m => m.lab) n).length)).sum := by
+  rw [satStage, totalSize, List.map_map]
+  rfl
+
+open Classical in
+/-- **THE PACKAGED STEP.**  A stage that is not stationary — some label gains a
+    concept, or some owed child is missing — has a round that strictly increases
+    the measure.
+
+    The two branches are §224's lemmas; what §225 adds is the chaining across
+    `ns → satStage ns → extendStage (satStage ns)`, which is where
+    `interMeasure_le_append` and `satStage_eq_of_fixed` are spent. -/
+theorem stage_round_lt (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0))
+    (hnorm : ∀ n ∈ ns, ∃ X, n.lab = normL C0 X)
+    (hns :
+      (∃ n, n ∈ ns ∧ ∃ c, c ∈ satRound I C0 ns SNode.x
+              (fun e f => I.rho e.x f.x) (fun m => m.lab) n ∧ c ∉ n.lab) ∨
+      ((∀ n ∈ ns, satRound I C0 ns SNode.x (fun e f => I.rho e.x f.x)
+          (fun m => m.lab) n = n.lab) ∧
+        ∃ m, m ∈ stageKids hI ns ∧ m ∉ ns)) :
+    interMeasure C0 ns SNode.lab
+      < interMeasure C0 (extendStage hI
+          (satStage hI (fun e f => I.rho e.x f.x) ns (modelRel_hsound hI)))
+          SNode.lab := by
+  have hmono : ∀ e, ∀ c ∈ e.lab,
+      c ∈ satRound I C0 ns SNode.x (fun e f => I.rho e.x f.x)
+        (fun m => m.lab) e :=
+    satRound_mono I C0 ns SNode.x (fun e f => I.rho e.x f.x) (fun m => m.lab)
+      (fun m => m.ok.sub)
+  rcases hns with ⟨n, hn, c, hc, hnc⟩ | ⟨hsat, m, hm, hnm⟩
+  · have hgrow : totalSize ns SNode.lab
+        < totalSize (satStage hI (fun e f => I.rho e.x f.x) ns
+            (modelRel_hsound hI)) SNode.lab := by
+      rw [totalSize_satStage]
+      refine sum_map_lt ns _ _ (fun e he => ?_) n hn ?_
+      · exact normL_len_le' C0 _ _ (hnorm e he) ⟨_, rfl⟩ (hmono e)
+      · exact normL_len_lt' C0 _ _ (hnorm n hn) ⟨_, rfl⟩ (hmono n) hc hnc
+    have h1 : interMeasure C0 ns SNode.lab
+        < interMeasure C0 (satStage hI (fun e f => I.rho e.x f.x) ns
+            (modelRel_hsound hI)) SNode.lab :=
+      stage_lt_of_unsaturated ns _
+        (satStage_length hI _ ns _).symm hgrow
+    have h2 := interMeasure_le_append C0
+      (satStage hI (fun e f => I.rho e.x f.x) ns (modelRel_hsound hI))
+      ((stageKids hI (satStage hI (fun e f => I.rho e.x f.x) ns
+        (modelRel_hsound hI))).filter
+        (fun m => decide (m ∉ satStage hI (fun e f => I.rho e.x f.x) ns
+          (modelRel_hsound hI)))) SNode.lab
+    rw [← extendStage] at h2
+    omega
+  · rw [satStage_eq_of_fixed hI _ ns _ hsat]
+    exact stage_lt_of_unserved hI ns hm hnm
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38388,4 +38523,6 @@ end POFreeLift
 #print axioms POFreeLift.stageIter_len
 #print axioms POFreeLift.stage_lt_of_unserved
 #print axioms POFreeLift.stage_lt_of_unsaturated
+#print axioms POFreeLift.satStage_eq_of_fixed
+#print axioms POFreeLift.stage_round_lt
 #print axioms POFreeLift.kernel_of_no_terminal
