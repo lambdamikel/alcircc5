@@ -14367,3 +14367,35 @@ Both are invariants of the iteration rather than new mathematics.
 
 Build: 38,566 lines, 1,941 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 227. THE NORMALISATION INVARIANT
+
+§226.2's second invariant — every stage label is a `normL` — is an induction over
+rounds with one lemma per operator, since all three label-producing constructions
+normalise: `stageKids_normL` (`sChildN`), `satStage_normL` (`satRound`),
+`rootNode_normL`, composed by `extendStage_normL` into `stageIter_normL`.
+
+## 228. THE PROCESS BOTTOMS OUT
+
+§226.2's first invariant is the stage-length bound. Its shape is §197's counting
+— generations bounded by `mdepth C₀`, branching by `|cl C₀|` — and the fact that
+makes generations bound *at all* is that a shallow label owes nothing.
+
+* `stageKids_nil_of_depth_zero` — a depth-zero stage owes no children, so the
+  generation chain terminates.
+* `extendStage_eq_of_depth_zero` — and then the node side is already stationary.
+
+### 228.1 What is left of the bound
+
+Above the base, `sChildN_depth` makes each generation strictly shallower and
+`satRound_depth_le` stops saturation undoing that — so generations number at most
+`mdepth C₀` and each node has at most `|cl C₀|` children.
+
+That is §197's argument for `kwNodes`; running it for `stageIter`, whose
+recursion is the alternation rather than a fuel parameter, is the remaining work.
+**Recorded as the one open invariant rather than assumed** — the two other times
+this session a bound looked transferable (§218's measure, §226's hypothesis) it
+needed correcting first.
+
+Build: 38,675 lines, 1,948 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

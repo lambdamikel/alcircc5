@@ -37557,6 +37557,112 @@ theorem stageIter_no_endless (hI : RCC5Interp I) {C0 : Concept}
     (BN * ((cl C0).length + 1) + BN * (cl C0).length + 1)
   omega
 
+/-! #### §227 — THE NORMALISATION INVARIANT
+
+§226.2 named two invariants the alternation must supply. The second — every
+stage label is a `normL` — is an induction over rounds, with one lemma per
+operator. It holds because all three label-producing constructions normalise:
+`sChildN`, `satRound`, and `rootNode`. -/
+
+open Classical in
+theorem stageKids_normL (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) :
+    ∀ m ∈ stageKids hI ns, ∃ X, m.lab = normL C0 X := by
+  intro m hm
+  obtain ⟨n, _, hm'⟩ := List.mem_flatMap.mp hm
+  obtain ⟨⟨F, hF⟩, _, hm''⟩ := List.mem_flatMap.mp hm'
+  cases F with
+  | ex r c =>
+      rw [List.mem_singleton] at hm''
+      subst hm''
+      exact ⟨_, rfl⟩
+  | _ => exact absurd hm'' List.not_mem_nil
+
+open Classical in
+theorem extendStage_normL (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (h : ∀ m ∈ ns, ∃ X, m.lab = normL C0 X) :
+    ∀ m ∈ extendStage hI ns, ∃ X, m.lab = normL C0 X := by
+  intro m hm
+  rw [extendStage] at hm
+  rcases List.mem_append.mp hm with h1 | h1
+  · exact h m h1
+  · exact stageKids_normL hI ns m (List.mem_filter.mp h1).1
+
+theorem satStage_normL (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c) :
+    ∀ m ∈ satStage hI rel ns hsound, ∃ X, m.lab = normL C0 X := by
+  intro m hm
+  rw [satStage] at hm
+  obtain ⟨n, _, rfl⟩ := List.mem_map.mp hm
+  exact ⟨_, rfl⟩
+
+open Classical in
+/-- **THE INVARIANT, THROUGH THE ALTERNATION.** -/
+theorem stageIter_normL (hI : RCC5Interp I) {C0 : Concept}
+    (ns0 : List (SNode I C0)) (h0 : ∀ m ∈ ns0, ∃ X, m.lab = normL C0 X) :
+    ∀ n, ∀ m ∈ stageIter hI n ns0, ∃ X, m.lab = normL C0 X := by
+  intro n
+  induction n with
+  | zero => rw [stageIter]; exact h0
+  | succ k ih =>
+      rw [stageIter]
+      exact extendStage_normL hI _
+        (satStage_normL hI (fun e f => I.rho e.x f.x) _ (modelRel_hsound hI))
+
+/-- The root stage satisfies it, so the invariant starts. -/
+theorem rootNode_normL (hI : RCC5Interp I) (C0 : Concept) {x : α}
+    (hx : I.dom x) (hsat : sat I x C0) :
+    ∀ m ∈ [rootNode hI C0 hx hsat], ∃ X, m.lab = normL C0 X := by
+  intro m hm
+  rw [List.mem_singleton] at hm
+  subst hm
+  exact ⟨_, rfl⟩
+
+/-! #### §228 — THE PROCESS BOTTOMS OUT
+
+§226.2's other invariant is the stage-length bound. Its shape is §197's counting
+— generations bounded by `mdepth C₀`, branching by `|cl C₀|` — and the fact that
+makes generations bound at all is that a shallow label owes nothing.
+
+That fact is certified here; transferring the full count from `kwNodes` to
+`stageIter` is what remains of the bound. -/
+
+open Classical in
+/-- **A DEPTH-ZERO STAGE OWES NO CHILDREN.**  So the generations really do stop,
+    which is what bounds their number by `mdepth C₀`. -/
+theorem stageKids_nil_of_depth_zero (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (h : ∀ n ∈ ns, maxDepth n.lab = 0) :
+    stageKids hI ns = [] := by
+  refine List.eq_nil_iff_forall_not_mem.mpr (fun m hm => ?_)
+  obtain ⟨n, hn, hm'⟩ := List.mem_flatMap.mp hm
+  obtain ⟨⟨F, hF⟩, _, hm''⟩ := List.mem_flatMap.mp hm'
+  cases F with
+  | ex r c =>
+      exact absurd hF (no_demand_of_depth_zero (h n.val n.property))
+  | _ => exact absurd hm'' List.not_mem_nil
+
+/-- **AND THEN THE STAGE IS STATIONARY ON THE NODE SIDE** — `extendStage` adds
+    nothing once the labels are shallow. -/
+theorem extendStage_eq_of_depth_zero (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (h : ∀ n ∈ ns, maxDepth n.lab = 0) :
+    extendStage hI ns = ns := by
+  refine extendStage_eq_of_covered hI ns (fun m hm => ?_)
+  rw [stageKids_nil_of_depth_zero hI ns h] at hm
+  exact absurd hm List.not_mem_nil
+
+/-! ##### §228.1 — what is left of the bound
+
+`stageKids_nil_of_depth_zero` is the base of the counting: a stage whose labels
+have no modal depth owes nothing, so the generation chain terminates. Above it,
+`sChildN_depth` makes each generation strictly shallower and `satRound_depth_le`
+stops saturation from undoing that — so the number of generations is at most
+`mdepth C₀` and each node has at most `|cl C₀|` children.
+
+That is exactly §197's argument for `kwNodes`, and the remaining work is to run
+it for `stageIter`, whose recursion is the alternation rather than a fuel
+parameter. Recorded as the one open invariant rather than assumed. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38563,4 +38669,7 @@ end POFreeLift
 #print axioms POFreeLift.satStage_eq_of_fixed
 #print axioms POFreeLift.stage_round_lt
 #print axioms POFreeLift.stageIter_no_endless
+#print axioms POFreeLift.stageIter_normL
+#print axioms POFreeLift.stageKids_nil_of_depth_zero
+#print axioms POFreeLift.extendStage_eq_of_depth_zero
 #print axioms POFreeLift.kernel_of_no_terminal
