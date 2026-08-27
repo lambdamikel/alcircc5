@@ -38053,6 +38053,71 @@ theorem stageIdx_sat_ok (hI : RCC5Interp I) {C0 : Concept}
   satRound_supportOk_gen hI nodes (stagePt hI) _ (stagePt_dom hI) L hL
     (fun e g _ h => support_all_sat (stagePt_dom hI g) (hL e) h rfl) f
 
+/-! #### §235 — §233's INDEX IS STILL LABEL-DEPENDENT
+
+Checking §233's fix against its own purpose: `StageIdx` is
+`SNode I C₀ ⊕ ({n : SNode I C₀ // …} × Nat)`, and an `SNode` **carries its
+label**. So an index changes whenever a label does — which is precisely what
+§233 set out to prevent.
+
+The design is incoherent as it stands: it took the STORED-LABEL shape
+(`(nodes, L)`) but kept the VALUE-CARRYING node type. Two coherent designs
+exist, and this is neither:
+
+| | node identity | labels | index stable? |
+|---|---|---|---|
+| **A** value-carrying | the `SNode` itself | in the node | **no** — §233's problem |
+| **B** stored | label-free | in `L` | yes |
+
+Under B the child step also has to change: `sChild` reads its demand from
+`n.lab`, the node's OWN label, but B's current label is `L v`. A label-parametric
+child constructor is needed, which `sChild` is not.
+
+**The natural label-free identity is the model POINT.** Two externals at the same
+point then merge, which is sound — `SupportOk` is closed under union, since each
+clause is inherited from whichever side contributed the compound — and is the
+pattern `extMax` already uses ("one node per model element"), where it is what
+makes `readoff_qnet_frame`'s distinct representatives available.
+
+So the index should be `{x : α // I.dom x} ⊕ (anchor-point × Nat)`: label-free on
+both sorts, stable under saturation, and matching a construction the file already
+has. -/
+
+open Classical in
+/-- **THE POINT-INDEXED STAGE.**  Label-free on both sorts. -/
+def PtIdx (I : Interp α) (C0 : Concept) : Type :=
+  {x : α // I.dom x} ⊕
+    ({x : α // I.dom x ∧ 0 < (persistDs C0 I x).length} × Nat)
+
+open Classical in
+noncomputable def ptIdxPoint (hI : RCC5Interp I) {C0 : Concept} :
+    PtIdx I C0 → α
+  | .inl x => x.val
+  | .inr (⟨x, hx⟩, a) =>
+      (kernelData hI C0 x hx.1 hx.2 0).c ((kernelData hI C0 x hx.1 hx.2 0).i + a)
+
+open Classical in
+theorem ptIdxPoint_dom (hI : RCC5Interp I) {C0 : Concept} (v : PtIdx I C0) :
+    I.dom (ptIdxPoint hI v) := by
+  cases v with
+  | inl x => exact x.property
+  | inr p =>
+      obtain ⟨⟨x, hx⟩, a⟩ := p
+      exact (kernelData hI C0 x hx.1 hx.2 0).cdom _
+
+/-! ##### §235.1 — position
+
+`PtIdx` is the index the stored-label design needs, and it is label-free by
+construction, so the stability §233 wanted actually holds. What it costs is the
+child step: with node identity separated from labels, forming a child needs
+(point, current label, demand) rather than an `SNode`, and `sChild` must be
+re-expressed that way.
+
+That is the outstanding item for the stage, and it is a definition to write
+rather than a fact to discover — but §§232–235 are three consecutive corrections
+to the same design decision, so it is recorded as outstanding rather than
+assumed. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39071,4 +39136,5 @@ end POFreeLift
 #print axioms POFreeLift.stageLab0_ok
 #print axioms POFreeLift.stageLab0_depth_le
 #print axioms POFreeLift.stageIdx_sat_ok
+#print axioms POFreeLift.ptIdxPoint_dom
 #print axioms POFreeLift.kernel_of_no_terminal

@@ -14624,3 +14624,49 @@ in between.
 
 Build: 39,074 lines, 1,968 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 235. §233's INDEX IS STILL LABEL-DEPENDENT
+
+Checking §233's fix against its own purpose: `StageIdx` is
+`SNode I C0 + ({n : SNode I C0 // ...} x Nat)`, and an `SNode` **carries its
+label**. So an index changes whenever a label does — precisely what §233 set out
+to prevent.
+
+The design took the **stored-label shape** `(nodes, L)` but kept the
+**value-carrying node type**. Two coherent designs exist and this was neither:
+
+| | node identity | labels | index stable? |
+|---|---|---|---|
+| **A** value-carrying | the `SNode` itself | in the node | **no** — §233's problem |
+| **B** stored | label-free | in `L` | yes |
+
+Under B the child step also changes: `sChild` reads its demand from `n.lab`, the
+node's *own* label, while B's current label is `L v`. A label-parametric child
+constructor is needed, which `sChild` is not.
+
+### 235.1 The natural label-free identity is the point
+
+Two externals at the same model point then **merge**, which is sound —
+`SupportOk` is closed under union, each clause being inherited from whichever
+side contributed the compound — and it is the pattern `extMax` already uses
+("one node per model element"), where it is exactly what makes
+`readoff_qnet_frame`'s distinct representatives available.
+
+`PtIdx` is that index — `{x // I.dom x} + (anchor-point x Nat)` — with
+`ptIdxPoint` and `ptIdxPoint_dom`. Label-free on both sorts, so §233's intended
+stability actually holds.
+
+### 235.2 Position, stated plainly
+
+§§232–235 are **three consecutive corrections to the same design decision**: the
+stage's relation to the certificate's two sorts. §232 found phases had to be in
+the stage, §233 found their list would not nest, §235 found the index fixing that
+was itself label-dependent.
+
+Each correction was found the same way — by checking the new thing against an
+obligation it had to serve — and each was real. What remains is the child step at
+`PtIdx`, which is a definition to write rather than a fact to discover; but after
+three corrections in a row it is recorded as outstanding, not assumed.
+
+Build: 39,140 lines, 1,971 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
