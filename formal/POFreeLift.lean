@@ -36913,6 +36913,74 @@ theorem saturation_can_add_demand (X : Concept) :
     Concept.ex dr X ∈ allBodies pp [Concept.all pp (Concept.ex dr X)] :=
   mem_allBodies_of (List.mem_singleton_self _)
 
+/-! #### §218 — THE INTERLEAVING'S MEASURE
+
+§217 left the two phases not composing in one pass. The repair is to alternate
+them, and alternation needs a measure that neither phase can undo.
+
+Both phases are MONOTONE — phase 1 only adds nodes, phase 2 only adds label
+entries — and both are BOUNDED: the node set by `kwNodes_length_le` (a number in
+`C₀` and the fuel, and `satRound_depth_le` keeps the fuel fixed), each label by
+`|cl C₀|`. So one combined measure works:
+
+    interMeasure nodes L = |nodes| · (|cl C₀| + 1) + totalSize nodes L
+
+A new node adds at least `|cl C₀| + 1` and at most `|cl C₀|` of label, so the
+first term dominates; a new label entry adds one to the second. Neither phase can
+decrease it, and it cannot exceed a bound computed from `C₀`. -/
+
+/-- **A STRICTLY INCREASING BOUNDED SEQUENCE HAS A BOUNDED INDEX.**
+    `closure_stops_le` with `totalSize` replaced by any measure. -/
+theorem measure_stops (m : Nat → Nat) (B : Nat)
+    (hbound : ∀ n, m n ≤ B) (hstep : ∀ n, m n < m (n + 1)) : ∀ n, n ≤ B := by
+  intro n
+  have hmono : ∀ k, k ≤ m k := by
+    intro k
+    induction k with
+    | zero => exact Nat.zero_le _
+    | succ j ih => exact Nat.lt_of_le_of_lt ih (hstep j)
+  exact Nat.le_trans (hmono n) (hbound n)
+
+/-- The combined measure. -/
+def interMeasure {β : Type} (C0 : Concept) (nodes : List β)
+    (L : β → List Concept) : Nat :=
+  nodes.length * ((cl C0).length + 1) + totalSize nodes L
+
+/-- **IT IS BOUNDED**, by a number computed from `C₀` and the node bound. -/
+theorem interMeasure_le {β : Type} (C0 : Concept) (nodes : List β)
+    (L : β → List Concept) (BN : Nat) (hn : nodes.length ≤ BN)
+    (hL : ∀ e, ∃ X, L e = normL C0 X) :
+    interMeasure C0 nodes L ≤ BN * ((cl C0).length + 1) + BN * (cl C0).length := by
+  have h1 : nodes.length * ((cl C0).length + 1) ≤ BN * ((cl C0).length + 1) :=
+    Nat.mul_le_mul_right _ hn
+  have h2 : totalSize nodes L ≤ nodes.length * (cl C0).length :=
+    totalSize_normL_le C0 nodes L hL
+  have h3 : nodes.length * (cl C0).length ≤ BN * (cl C0).length :=
+    Nat.mul_le_mul_right _ hn
+  unfold interMeasure
+  omega
+
+/-- **PHASE 2 MOVES IT** — labels grow, node set fixed. -/
+theorem interMeasure_lt_labels {β : Type} (C0 : Concept) (nodes : List β)
+    (L L' : β → List Concept)
+    (h : totalSize nodes L < totalSize nodes L') :
+    interMeasure C0 nodes L < interMeasure C0 nodes L' := by
+  unfold interMeasure; omega
+
+/-- **AND PHASE 1 MOVES IT** — a longer node list, whatever the labels do, since
+    one node contributes at most `|cl C₀|` to `totalSize` and exactly
+    `|cl C₀| + 1` to the first term. -/
+theorem interMeasure_lt_nodes {β : Type} (C0 : Concept)
+    (nodes nodes' : List β) (L L' : β → List Concept)
+    (hlen : nodes.length < nodes'.length)
+    (hmono : totalSize nodes L ≤ totalSize nodes' L') :
+    interMeasure C0 nodes L < interMeasure C0 nodes' L' := by
+  have h1 : nodes.length * ((cl C0).length + 1)
+      < nodes'.length * ((cl C0).length + 1) :=
+    Nat.mul_lt_mul_of_lt_of_le hlen (Nat.le_refl _) (Nat.succ_pos _)
+  unfold interMeasure
+  omega
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37901,4 +37969,6 @@ end POFreeLift
 #print axioms POFreeLift.odSeed_hk_ex_lab
 #print axioms POFreeLift.satRound_depth_le
 #print axioms POFreeLift.saturation_can_add_demand
+#print axioms POFreeLift.measure_stops
+#print axioms POFreeLift.interMeasure_lt_nodes
 #print axioms POFreeLift.kernel_of_no_terminal

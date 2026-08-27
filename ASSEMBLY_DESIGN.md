@@ -14044,3 +14044,39 @@ stated against whatever labels and node set the interleaving produces.
 
 Build: 37,904 lines, 1,899 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 218. THE INTERLEAVING'S MEASURE
+
+§217 left the two phases not composing in one pass; the repair is to alternate
+them, and alternation needs a measure neither phase can undo.
+
+Both phases are **monotone** — phase 1 only adds nodes, phase 2 only adds label
+entries — and both are **bounded**: the node set by `kwNodes_length_le` (and
+`satRound_depth_le` keeps the fuel fixed, so the same bound applies after every
+saturation), each label by `|cl C₀|`. So:
+
+    interMeasure C₀ nodes L = |nodes| · (|cl C₀| + 1) + totalSize nodes L
+
+with `measure_stops` (**axiom-free**, `closure_stops_le` generalised to any
+measure), `interMeasure_le` for the bound, and the two step lemmas.
+
+### 218.1 The first version was false
+
+`interMeasure_lt_nodes` was first stated with label monotonicity *derived*
+rather than assumed, and the arithmetic does not hold:
+
+    n·(k+1) + n·k < (n+1)·(k+1)   fails at n = 2, k = 1  (6 < 6)
+
+A new node adds `k+1` to the first term, but the label mass it displaces is not
+bounded by that. `omega` refused it, which is how it was caught.
+
+The fix is not a bigger weight but the right hypothesis: **the node sets are
+nested and the labels monotone**, so `totalSize` cannot fall, and the first term
+alone settles it. The construction supplies that directly; only the lemma had
+tried to do without it.
+
+Worth recording because the measure looked obviously adequate — the kind of step
+that gets waved through in prose, and did not survive contact with `omega`.
+
+Build: 37,974 lines, 1,904 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
