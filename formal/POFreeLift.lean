@@ -38246,6 +38246,140 @@ filter, at `PtIdx`.
 **That is the whole remaining construction**, and it is smaller than §§232–235
 suggested, because the extension half was already inside the saturation. -/
 
+/-! #### §238 — THE ROUND AT `PtIdx`
+
+§237.1 reduced the round to `satRound` plus one clause: the demand's argument at
+its own witness. §238 writes that clause and its soundness. -/
+
+open Classical in
+/-- The demand's argument is true at its witness — `ptChild`'s remaining spec. -/
+theorem ptChild_sat {C0 : Concept} {x : α} {Lx : List Concept}
+    (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) : sat I (ptChild hok hD) D :=
+  (Classical.choose_spec (hok.sat_ _ hD)).2.2
+
+open Classical in
+/-- **THE EXTRA CLAUSE.**  Every demand argument whose witness is this point. -/
+noncomputable def argsAt (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (v : PtIdx I C0) : List Concept :=
+  vs.attach.flatMap (fun u =>
+    (L u.val).attach.flatMap (fun q => match q with
+      | ⟨.ex _ D, hD⟩ =>
+          if ptChild (hok u.val) hD = ptIdxPoint hI v then [D] else []
+      | _ => []))
+
+open Classical in
+/-- **AND IT IS TRUE AT THE POINT.**  Soundness of the extension half, from
+    `ptChild_sat` and nothing else. -/
+theorem argsAt_sat (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
+    ∀ c ∈ argsAt hI vs L hok v, sat I (ptIdxPoint hI v) c := by
+  intro c hc
+  obtain ⟨u, _, hc'⟩ := List.mem_flatMap.mp hc
+  obtain ⟨⟨F, hF⟩, _, hc''⟩ := List.mem_flatMap.mp hc'
+  cases F with
+  | ex r D =>
+      by_cases he : ptChild (hok u.val) hF = ptIdxPoint hI v
+      · have h2 : c ∈ ([D] : List Concept) := by
+          have : c ∈ (if ptChild (hok u.val) hF = ptIdxPoint hI v
+              then [D] else ([] : List Concept)) := hc''
+          rwa [if_pos he] at this
+        rw [List.mem_singleton] at h2
+        subst h2
+        rw [← he]
+        exact ptChild_sat (hok u.val) hF
+      · have : c ∈ (if ptChild (hok u.val) hF = ptIdxPoint hI v
+            then [D] else ([] : List Concept)) := hc''
+        rw [if_neg he] at this
+        exact absurd this List.not_mem_nil
+  | _ => exact absurd hc'' List.not_mem_nil
+
+open Classical in
+/-- And drawn from `cl C₀`, since a demand's argument is a subformula. -/
+theorem argsAt_cl (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
+    ∀ c ∈ argsAt hI vs L hok v, c ∈ cl C0 := by
+  intro c hc
+  obtain ⟨u, _, hc'⟩ := List.mem_flatMap.mp hc
+  obtain ⟨⟨F, hF⟩, _, hc''⟩ := List.mem_flatMap.mp hc'
+  cases F with
+  | ex r D =>
+      by_cases he : ptChild (hok u.val) hF = ptIdxPoint hI v
+      · have h2 : c ∈ ([D] : List Concept) := by
+          have : c ∈ (if ptChild (hok u.val) hF = ptIdxPoint hI v
+              then [D] else ([] : List Concept)) := hc''
+          rwa [if_pos he] at this
+        rw [List.mem_singleton] at h2
+        subst h2
+        exact cl_ex ((hok u.val).sub _ hF)
+      · have : c ∈ (if ptChild (hok u.val) hF = ptIdxPoint hI v
+            then [D] else ([] : List Concept)) := hc''
+        rw [if_neg he] at this
+        exact absurd this List.not_mem_nil
+  | _ => exact absurd hc'' List.not_mem_nil
+
+open Classical in
+/-- The saturation at `PtIdx`, sound by §234.1's argument at the new index. -/
+theorem ptSat_ok (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
+    SupportOk I C0 (ptIdxPoint hI v)
+      (satRound I C0 vs (ptIdxPoint hI)
+        (fun u w => I.rho (ptIdxPoint hI u) (ptIdxPoint hI w)) L v) :=
+  satRound_supportOk_gen hI vs (ptIdxPoint hI) _ (ptIdxPoint_dom hI) L hok
+    (fun e g _ h => support_all_sat (ptIdxPoint_dom hI g) (hok e) h rfl) v
+
+open Classical in
+/-- **THE ROUND.**  Saturation, plus the demand arguments landing here, closed
+    and normalised — §237.1's operator. -/
+noncomputable def ptRound (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (v : PtIdx I C0) : List Concept :=
+  normL C0 (hcloseL I (ptIdxPoint hI v)
+    (satRound I C0 vs (ptIdxPoint hI)
+      (fun u w => I.rho (ptIdxPoint hI u) (ptIdxPoint hI w)) L v
+     ++ argsAt hI vs L hok v))
+
+open Classical in
+/-- **AND IT IS SOUND.**  Both contributions are true at the point and drawn from
+    `cl C₀`: the saturation by §213's argument, the arguments by `ptChild`'s. -/
+theorem ptRound_ok (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
+    SupportOk I C0 (ptIdxPoint hI v) (ptRound hI vs L hok v) := by
+  refine normL_supportOk (hcloseL_supportOk hI (ptIdxPoint_dom hI v) _ ?_ ?_)
+  · intro c hc
+    rcases List.mem_append.mp hc with h | h
+    · exact (ptSat_ok hI vs L hok v).sub c h
+    · exact argsAt_cl hI vs L hok v c h
+  · intro c hc
+    rcases List.mem_append.mp hc with h | h
+    · exact (ptSat_ok hI vs L hok v).sat_ c h
+    · exact argsAt_sat hI vs L hok v c h
+
+open Classical in
+/-- The round only grows a label. -/
+theorem ptRound_mono (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
+    ∀ c ∈ L v, c ∈ ptRound hI vs L hok v := by
+  intro c hc
+  refine mem_normL.mpr ⟨(hok v).sub c hc, mem_hcloseL.mpr ⟨c, ?_,
+    self_mem_hclose I (ptIdxPoint hI v) c⟩⟩
+  exact List.mem_append.mpr (Or.inl
+    (satRound_mono I C0 vs (ptIdxPoint hI) _ L (fun m => (hok m).sub) v c hc))
+
+/-- Normalised, so §209's counting applies at `PtIdx` too. -/
+theorem ptRound_normL (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
+    ∃ X, ptRound hI vs L hok v = normL C0 X := ⟨_, rfl⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39268,4 +39402,8 @@ end POFreeLift
 #print axioms POFreeLift.ptChildLab_ok
 #print axioms POFreeLift.ptChildLab_depth
 #print axioms POFreeLift.satRound_has_bodies
+#print axioms POFreeLift.argsAt_sat
+#print axioms POFreeLift.argsAt_cl
+#print axioms POFreeLift.ptRound_ok
+#print axioms POFreeLift.ptRound_mono
 #print axioms POFreeLift.kernel_of_no_terminal

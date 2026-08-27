@@ -14742,3 +14742,35 @@ require generalising them, only using them at the sorts they already admitted.
 
 Build: 39,271 lines, 1,982 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 238. THE ROUND AT `PtIdx`
+
+§237.1 reduced the round to `satRound` plus one clause; §238 writes it.
+
+* `ptChild_sat` — a demand's argument is true at its witness (`ptChild`'s
+  remaining spec).
+* `argsAt` — the extra clause: every demand argument whose witness is this
+  point, with `argsAt_sat` and `argsAt_cl` for the two side conditions.
+* `ptSat_ok` — the saturation at `PtIdx`, by §234.1's argument at the new index.
+* **`ptRound`** — saturation plus arguments, closed and normalised — with
+  `ptRound_ok` (sound), `ptRound_mono` (only grows), `ptRound_normL`.
+
+The soundness proof is two cases over an append, one per contribution: the
+saturation half by §213's argument, the argument half by `ptChild`'s. No new
+soundness source was needed — which is what §213's "ask for the conclusion, not
+the argument" bought, three sections later than it was written.
+
+### 238.1 Position
+
+The stage's operator is now complete at the certificate's own sorts: labels are
+support labels at every index (`ptRound_ok`), grow monotonically
+(`ptRound_mono`), stay normalised (`ptRound_normL`), and both the propagation
+and the extension are one mechanism.
+
+What remains is the iteration — the node list growing by new child points
+(§223's filter at `PtIdx`), the invariants re-established by the same proofs
+(§236.1), and the measure applied at `beta := PtIdx I C0` — and then the
+certificate's kernel-side obligations flagged in §231.1.
+
+Build: 39,409 lines, 1,991 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
