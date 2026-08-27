@@ -13032,3 +13032,61 @@ budget** (`mdepth D < bud f`, §162's uniform assignment).
 
 Build: 35,484 lines, 1,763 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 192. THE WITNESSES, CARRIED THROUGH TO THE KERNELS THE EXTRACTION BUILDS
+
+§191 certified `ascKernel_serves` in the abstract. The certificate does not use
+it directly — it uses `kFam`, which is `kernelData`, which was
+`Classical.choose` of `ascKernel_of_node`. So the serving clause had to reach
+that far or it was decoration.
+
+**It reaches it with no new structure.** `kernelData` now chooses from
+`ascKernel_serves` instead, so the *same* `Classical.choose` that fixes a
+kernel's chain, base and period also fixes its off-direction witnesses;
+`kernelData_serves` is another projection of that one choice. No field was added
+to `KernelData` — deliberately, because there is a third construction site
+(`kernelData_of_chain`, §114) built from an arbitrary chain, and a mandatory
+field would have obliged it to supply something it has no source for.
+
+`descKernel_serves` + `rr_coversI_le` mirror the ascending side exactly
+(`ddrpp_witness_bank` for `DR`/`PP`, `dppi_witness_all_below` for the direction's
+own `PPI`, as in `dkernel_site`), and `mKernel_serves` lifts both to `KIdxM` —
+the shape the obligations consume.
+
+### 192.1 Position
+
+**Existence is settled for `kDR`, `kUP`, `kDN` on the kernels the extraction
+actually builds**, not merely on an abstract kernel. What remains is what §190.1
+named:
+
+* the **index routing** — the witness is a model element, the certificate wants
+  an external `f` with `g f = w` plus `seed`/`up`/`dn` placement.
+  `one_kernel_block` implements exactly this for a single kernel, via a subtype
+  `W` = context ∪ chosen witnesses, and its `hserve` premise is *literally*
+  `mKernel_serves`'s conclusion. Lifting `W` to the merged family is the next
+  brick.
+* the **`mty`→`mtk` budget** — `mdepth D < bud f`, §162's uniform assignment.
+
+### 192.2 On route churn, measured
+
+Asked whether this work re-does abandoned routes. It does not, and the file says
+so: of 1,758 declarations, 331 are never referenced elsewhere — but those are
+overwhelmingly non-vacuity witnesses and capstones, and **only ~10 belong to the
+abandoned frames** (`mixKernelsK`, `mtkKernelsDir`). Today's ingredients date
+from 2026-07-23 (`kernel_site`, `one_kernel_block`), 08-05 (`rr_covers`) and
+08-21/22 (`mtkKernelsOD_ok`, `ascKernel_of_node`) — `kernel_site` was built for
+the original two-tier route and is consumed unchanged today, two frame pivots
+later.
+
+**The pivots changed the certificate FRAME, not the model-side analysis.** The
+segment selectors, witness banks and round-robin machinery survived all of them.
+
+What *is* a real cost is different and worth naming: the over-strong statements
+§§188–191 keep weakening were written before their consumers existed. That is
+rework, not backtracking — nothing was deleted, and the originals remain
+instances (`hdrk_of_model_at_generalizes`, `rr_covers_le_generalizes`) — but it
+is the 2026-08-22 lesson *write the consumer before believing the interface*
+recurring for the sixth time.
+
+Build: 35,633 lines, 1,768 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
