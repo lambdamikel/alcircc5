@@ -14774,3 +14774,48 @@ certificate's kernel-side obligations flagged in §231.1.
 
 Build: 39,409 lines, 1,991 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 239. WHY `hbn` STILL FAILS, AND WHAT WOULD FIX IT
+
+Back to termination. §231's persistence gate makes `hbn` *plausible* but not
+true, and the reason is worth pinning down before more is built on it.
+
+Take `C0 = exists DR.A and forall DR.(exists DR.A)` with a model of infinitely
+many pairwise-disjoint `A`-regions. The root has `exists DR.A`; its witness
+receives the body `exists DR.A` from the root **by saturation**, so it spawns
+another; that one is `DR` from the root too, so it receives the body as well.
+**The persistence gate never fires** — the demand is horizontal, not a persistent
+vertical one — so the walk runs forever and no `BN` exists.
+
+Depth does not save it. A child is strictly shallower than its parent *before*
+saturation, but a body of a `forall r` universal at any node has depth one less
+than that universal, so any node related to a deep node is lifted back. §229's
+`stageIter_depth_le` bounds depth **globally**; it does not make it **decrease
+along a branch**.
+
+**What fixes it is the blocking tableaux actually use: stop when a label
+repeats.** Labels are drawn from `cl C0`, so a repeat-free branch is bounded by
+the number of distinct labels — a number in `C0` alone (`branch_len_le`,
+with `stage_labels_in_universe` supplying its hypothesis). §231's persistence
+gate is the *kernel-specific case* of the same idea; the general one is missing.
+
+### 239.1 The honest status of termination
+
+| | |
+|---|---|
+| rounds bounded **given** a node bound | §219, certified |
+| a non-stationary round moves the measure | §§224–225, certified |
+| **the node bound itself** | **open, and false as constructed** |
+
+§230 left it open; §231 found it false without blocking and added the persistence
+gate; §239 finds that gate insufficient and identifies the missing one. That is
+progress — the obstacle is now a named, standard mechanism rather than an
+unexplained gap — but **it is not the bound**, and the bound is what termination
+needs.
+
+Adding repetition-blocking is the next step, and it is a change to the
+**construction**, not to the counting: `branch_len_le` is already the argument
+once branches are repeat-free.
+
+Build: 39,467 lines, 1,993 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

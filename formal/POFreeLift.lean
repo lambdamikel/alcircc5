@@ -38380,6 +38380,63 @@ theorem ptRound_normL (hI : RCC5Interp I) {C0 : Concept}
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
     ∃ X, ptRound hI vs L hok v = normL C0 X := ⟨_, rfl⟩
 
+/-! #### §239 — WHY `hbn` STILL FAILS, AND WHAT WOULD FIX IT
+
+Returning to termination. §231's persistence gate makes `hbn` PLAUSIBLE but not
+true, and the reason is worth pinning down before more is built on it.
+
+Take `C₀ = ∃DR.A ⊓ ∀DR.(∃DR.A)` and a model with infinitely many pairwise
+disjoint `A`-regions. The root has `∃DR.A`; its witness `x₁` receives the body
+`∃DR.A` from the root by saturation, so `x₁` spawns `x₂`; `x₂` is `DR` from the
+root too, so it receives `∃DR.A` as well, and so on. **The persistence gate never
+fires** — the demand is horizontal, not a persistent `∃PP`/`∃PPI` — so the walk
+runs forever and no `BN` exists.
+
+Depth does not save it either. A child is strictly shallower than its parent
+BEFORE saturation, but saturation can raise it again: a body of a `∀r` universal
+at ANY node has depth one less than that universal, so any node related to a deep
+node is lifted back. §229's `stageIter_depth_le` bounds the depth globally; it
+does not make it decrease along a branch.
+
+**What fixes it is the blocking tableaux actually use: stop when a label
+REPEATS.** Labels are drawn from `cl C₀`, so a repeat-free branch is bounded by
+the number of distinct labels — which is a number in `C₀` alone. §231's
+persistence gate is the kernel-specific case of the same idea; what is missing is
+the general one. -/
+
+/-- **A REPEAT-FREE BRANCH IS BOUNDED BY `C₀`.**  The counting that
+    repetition-blocking buys: labels live in a finite universe, so a branch with
+    no repeated label cannot be longer than that universe. -/
+theorem branch_len_le (C0 : Concept) (br : List (List Concept))
+    (hsub : ∀ l ∈ br, l ∈ allListsLe (cl C0) (cl C0).length)
+    (hnd : br.Nodup) :
+    br.length ≤ (allListsLe (cl C0) (cl C0).length).length :=
+  nodup_len_le br _ hsub hnd
+
+/-- And every stage label lives in that universe, so the hypothesis is available
+    — it is only the repeat-freeness that the construction does not yet
+    enforce. -/
+theorem stage_labels_in_universe (C0 : Concept) (X : List Concept) :
+    normL C0 X ∈ allListsLe (cl C0) (cl C0).length := normL_mem_allListsLe C0 X
+
+/-! ##### §239.1 — the honest status of termination
+
+| | |
+|---|---|
+| rounds are bounded GIVEN a node bound | §219, certified |
+| a non-stationary round moves the measure | §§224–225, certified |
+| the node bound itself | **open, and false as constructed** |
+
+§230 left the node bound open; §231 found it false without blocking and added the
+persistence gate; §239 finds the gate insufficient and identifies the missing
+one. That is progress on termination — the obstacle is now a named, standard
+mechanism rather than an unexplained gap — but it is not the bound, and the
+bound is what termination needs.
+
+**Adding repetition-blocking is the next step**, and it is a change to the
+construction, not to the counting: `branch_len_le` is already the argument once
+branches are repeat-free. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39406,4 +39463,5 @@ end POFreeLift
 #print axioms POFreeLift.argsAt_cl
 #print axioms POFreeLift.ptRound_ok
 #print axioms POFreeLift.ptRound_mono
+#print axioms POFreeLift.branch_len_le
 #print axioms POFreeLift.kernel_of_no_terminal
