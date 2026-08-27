@@ -13832,3 +13832,40 @@ made the PO-default frame's `ee_all` vacuous, and here it is what lets a frame b
 
 Build: 37,495 lines, 1,885 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 212. THE KERNEL-INTERNAL PROPAGATION IS SOUND, BUT NOT BY THE FRAME
+
+`swCert_ok`'s `kk_pp` asks for the **body** of a `∀PP` universal at *every*
+phase — including phases below the one carrying it, where the model relation is
+`PPI`, not `PP`. §211's agreement argument does not reach it: `satRound`'s
+soundness runs on "the declared relation is the model's", and the kernel's lap
+relation deliberately is not.
+
+It is still sound, and `mtk_kk_pp_dir` already says why — the type repeat makes
+every phase's type recur, so the universal can be moved to an occurrence **below**
+the target and fired there. That is `seg_pp`'s argument: a fact about
+**recurrence**, not about any edge.
+
+`kk_pp_sat` / `kk_ppi_sat` extract it at the **model level**, which is the form a
+support label needs — not "the body is in some truncated type" but "the body is
+TRUE here" — with `kk_pp_cl` for the `cl C₀` side condition.
+
+### 212.1 The saturation has two soundness sources, not one
+
+| addition justified by | argument |
+|---|---|
+| the declared relation being the model's | §211, `odNet_rho_of_ne_po` |
+| **recurrence** | §212, `kk_pp_sat` — mentions no edge at all |
+
+Both land on the same pair of facts — `sat I (pt f) c` and `c ∈ cl C₀`, which is
+exactly what `hcloseL_supportOk` wants — so they can feed one saturation. But
+they are **different arguments**, and the obvious design ("one relation, one
+soundness lemma") does not fit: the kernel's lap is a declared structure with no
+single model edge behind it.
+
+Pretending otherwise is precisely what §211's first version did on the other
+side, and it produced an unsatisfiable premise. The same mistake was available
+here and the shape of §211 is what made it visible.
+
+Build: 37,560 lines, 1,888 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

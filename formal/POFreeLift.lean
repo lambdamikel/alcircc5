@@ -36514,6 +36514,69 @@ theorem satRound_hrel {N : Type} (hI : RCC5Interp I) (O : ODStruct N)
     ∀ x y, odNet O x y ≠ po → odNet O x y = I.rho (node x) (node y) :=
   fun x y h => odNet_rho_of_ne_po hI O node hdom hlt hdj x y h
 
+/-! #### §212 — THE KERNEL-INTERNAL PROPAGATION IS SOUND, BUT NOT BY THE FRAME
+
+`swCert_ok`'s `kk_pp` asks for the BODY of a `∀PP` universal at **every** phase,
+including phases below the one carrying it — where the model relation is `PPI`,
+not `PP`. So §211's agreement argument does not reach it: `satRound`'s soundness
+runs on "the declared relation is the model's", and here the declared lap
+relation deliberately is not.
+
+It is still sound, and `mtk_kk_pp_dir` already says why: the type repeat makes
+every phase's type recur, so the universal can be moved to an occurrence BELOW
+the target and fired there. That is `seg_pp`'s argument, and it is a fact about
+recurrence rather than about any single edge.
+
+§212 extracts it at the model level, which is the form a support label needs —
+not "the body is in some truncated type" but "the body is TRUE here". -/
+
+/-- **THE `∀PP` BODY IS TRUE AT EVERY PHASE.**  `mtk_kk_pp_dir` at a budget
+    chosen to make the truncation transparent. -/
+theorem kk_pp_sat (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (d : Bool)
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) {cc : Concept}
+    (hmem : Concept.all pp cc ∈ mty C0 I (c (i + a)))
+    {b : Nat} (hb : b < p) : sat I (c (i + b)) cc := by
+  have hin : Concept.all pp cc ∈ mtk C0 I (c (i + a)) (mdepth cc + 1) :=
+    mem_mtk.mpr ⟨hmem, Nat.le_refl _⟩
+  have hout := mtk_kk_pp_dir hI c hdom d hstep hty ha (mdepth cc + 1) hin hb
+  exact (mem_mty.mp (mem_mtk.mp hout).1).2
+
+/-- The `∀PPI` mirror. -/
+theorem kk_ppi_sat (hI : RCC5Interp I) {C0 : Concept} (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (d : Bool)
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    {a : Nat} (ha : a < p) {cc : Concept}
+    (hmem : Concept.all ppi cc ∈ mty C0 I (c (i + a)))
+    {b : Nat} (hb : b < p) : sat I (c (i + b)) cc := by
+  have hin : Concept.all ppi cc ∈ mtk C0 I (c (i + a)) (mdepth cc + 1) :=
+    mem_mtk.mpr ⟨hmem, Nat.le_refl _⟩
+  have hout := mtk_kk_ppi_dir hI c hdom d hstep hty ha (mdepth cc + 1) hin hb
+  exact (mem_mty.mp (mem_mtk.mp hout).1).2
+
+/-- **AND IT IS IN `cl C₀`**, so adding it to a support label is legal on both
+    counts — which is exactly `support_extend`'s pair of side conditions, met
+    without any edge. -/
+theorem kk_pp_cl {C0 : Concept} {cc : Concept} {r : Atom} {x : α}
+    (h : Concept.all r cc ∈ mty C0 I x) : cc ∈ cl C0 :=
+  cl_all (mem_mty.mp h).1
+
+/-! ##### §212.1 — so the saturation has two soundness sources, not one
+
+`satRound_supportOk` justifies an addition by the declared relation being the
+model's (§211). The kernel-internal additions are justified by RECURRENCE
+instead. Both end at the same place — `sat I (pt f) c` and `c ∈ cl C₀`, the two
+things `hcloseL_supportOk` wants — so they can feed the same saturation, but they
+are different arguments and the second one does not mention an edge at all.
+
+That is worth stating because the obvious design ("one relation, one soundness
+lemma") does not fit: the kernel's lap is a declared structure with no single
+model edge behind it, and pretending otherwise is what §211's first version did
+on the other side. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37492,4 +37555,6 @@ end POFreeLift
 #print axioms POFreeLift.satIter_step_lt
 #print axioms POFreeLift.satIter_no_endless_growth
 #print axioms POFreeLift.odNet_rho_of_ne_po
+#print axioms POFreeLift.kk_pp_sat
+#print axioms POFreeLift.kk_ppi_sat
 #print axioms POFreeLift.kernel_of_no_terminal
