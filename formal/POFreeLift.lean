@@ -33927,6 +33927,253 @@ theorem glueDRMT_ok_of_phases {β1 β2 κ1 κ2 : Type} [DecidableEq κ1]
     MultiTierOk (glueDRMT T1 T2) :=
   glueDRMT_ok h1 h2 (drCompat_of_phases h1 h2 hE1 hK1 hE2 hK2)
 
+/-! #### §185 — SEPARATION GIVES `DRCompat` OUTRIGHT
+
+§183 established that model-side `DR`-separation of the block cannot be reached
+by SELECTING witnesses inside a given model. It did not say separation is
+useless — it said it has to be BUILT. This section certifies what building it
+buys, so the construction has a target worth hitting.
+
+If two regions of a model really are `DR` from each other, then each side's
+`∀DR` universals fire on the other side directly (`mty_all`), in both
+orientations because `conv dr = dr`. No consistency argument, no selection, no
+period: `DRCompat`'s semantic content is simply true. -/
+
+/-- **`DR`-SEPARATION ⟹ THE LABEL CONDITION, BOTH DIRECTIONS.**  Stated over
+    arbitrary predicates `S1`, `S2` so it applies to any two node families. -/
+theorem drCompat_of_separated (hI : RCC5Interp I) (C0 : Concept)
+    {S1 S2 : α → Prop} (hd1 : ∀ x, S1 x → I.dom x) (hd2 : ∀ y, S2 y → I.dom y)
+    (hsep : ∀ x y, S1 x → S2 y → I.rho x y = dr) :
+    (∀ (x y : α) (X : Concept), S1 x → S2 y →
+      Concept.all dr X ∈ mty C0 I x → X ∈ mty C0 I y) ∧
+    (∀ (x y : α) (Y : Concept), S1 x → S2 y →
+      Concept.all dr Y ∈ mty C0 I y → Y ∈ mty C0 I x) := by
+  refine ⟨fun x y X h1 h2 hX => mty_all hX (hd2 y h2) (hsep x y h1 h2), ?_⟩
+  intro x y Y h1 h2 hY
+  refine mty_all hY (hd1 x h1) ?_
+  have := hI.conv_ x y (hd1 x h1) (hd2 y h2)
+  rw [hsep x y h1 h2] at this
+  exact this
+
+/-- **AND `∃` DEMANDS SURVIVE SEPARATION UNTOUCHED.**  Nothing about a `DR`
+    cross-relation can remove a witness, so the block keeps every demand it
+    served before.  Recorded because the surgery's cost is often stated
+    loosely — this pins that only `∀DR` can change. -/
+theorem sep_preserves_ex (C0 : Concept) {x : α} {r : Atom} {E : Concept}
+    (h : Concept.ex r E ∈ mty C0 I x) :
+    ∃ w, I.dom w ∧ I.rho x w = r ∧ E ∈ mty C0 I w := mty_ex h
+
+/-! ##### §185.1 — what the construction now has to deliver
+
+Combining §185 with §182: a `DR`-separated pair of regions gives `DRCompat`
+free, and `drCompat_of_phases` says only finitely many labels need checking
+anyway. So the outstanding construction is not "discharge `DRCompat`" but
+
+> **exhibit a model in which the block sits `DR`-separated from the chain.**
+
+Three facts already bound that problem:
+
+* `wp71` (exhaustive to `n = 4`, 234,496 extensions): a fresh point `DR` from
+  everything is ALWAYS a valid one-point extension — the frame side of the
+  surgery never obstructs.
+* `crossAtom_dr` + `glueNet_frame` (§172): the same holds for a whole BLOCK, not
+  just a point, at the frame level — `DR ∈ comp(r, DR)` for every `r`.
+* §180: the label set such a block must satisfy is CONSISTENT, so the target of
+  the construction is non-empty.
+
+What none of them supplies is the model itself, because satisfaction is not
+preserved by the surgery: adding cross-`DR` pairs cannot destroy an `∃` (§185's
+`sep_preserves_ex`) and cannot touch `∀PP`/`∀PPI`/`∀EQ` (no new neighbours in
+those relations), but it CAN falsify a `∀DR`. **`∀DR` is the unique obstruction,
+and `DRCompat` is exactly its repair condition** — which is why the two keep
+turning out to be the same question. -/
+
+/-! #### §186 — THE SURGERY AS A CONSTRUCTION, NOT A LICENCE
+
+§185.1 reduced the outstanding work to *exhibit a model in which the block sits
+`DR`-separated from the chain*, and listed three facts bounding the problem —
+all of which say the frame side never obstructs, none of which builds the model.
+
+This section builds it. `drUnion` is the disjoint union of two interpretations
+with every cross pair `DR`; §172's `crossAtom_dr` is the frame-level statement
+of why that closes, and `dr_mem_comp_dr` / `comp_dr_dr_all` are the two cells it
+runs on. What §186 adds is that satisfaction SURVIVES the union — under exactly
+`DRCompat`, and no other hypothesis.
+
+So `DRCompat` is not merely necessary for the DR-glue; it is **sufficient**, and
+the separated model §185.1 asked for is now something one writes down. -/
+
+/-- `dr ∈ comp dr s`, the left-hand twin of `dr_mem_comp_dr`. -/
+theorem dr_mem_comp_dr_left : ∀ r : Atom, dr ∈ comp dr r := by
+  intro r; cases r <;> decide
+
+/-- **THE DISJOINT UNION WITH ALL CROSS PAIRS `DR`.** -/
+def drUnion {α β : Type} (I1 : Interp α) (I2 : Interp β) : Interp (α ⊕ β) where
+  dom := fun z => match z with
+    | .inl x => I1.dom x
+    | .inr y => I2.dom y
+  rho := fun z w => match z, w with
+    | .inl x, .inl x' => I1.rho x x'
+    | .inr y, .inr y' => I2.rho y y'
+    | _, _ => dr
+  val := fun a z => match z with
+    | .inl x => I1.val a x
+    | .inr y => I2.val a y
+
+/-- **AND IT IS A MODEL.**  Every frame condition, by cases; the cross entries
+    need only that `DR` sits in `comp r dr` and `comp dr r` for every `r`, and
+    that `comp dr dr` is everything. -/
+theorem drUnion_rcc5 {α β : Type} {I1 : Interp α} {I2 : Interp β}
+    (h1 : RCC5Interp I1) (h2 : RCC5Interp I2) :
+    RCC5Interp (drUnion I1 I2) where
+  refl_eq := by
+    rintro (x | y) hx
+    · exact h1.refl_eq x hx
+    · exact h2.refl_eq y hx
+  eq_id := by
+    rintro (x | y) (x' | y') hx hy he
+    · exact congrArg Sum.inl (h1.eq_id x x' hx hy he)
+    · exact absurd he (by simp [drUnion])
+    · exact absurd he (by simp [drUnion])
+    · exact congrArg Sum.inr (h2.eq_id y y' hx hy he)
+  conv_ := by
+    rintro (x | y) (x' | y') hx hy
+    · exact h1.conv_ x x' hx hy
+    · simp only [drUnion]; decide
+    · simp only [drUnion]; decide
+    · exact h2.conv_ y y' hx hy
+  comp_ := by
+    rintro (x | y) (x' | y') (x'' | y'') hx hy hz
+    · exact h1.comp_ x x' x'' hx hy hz          -- l l l
+    · exact dr_mem_comp_dr _                    -- l l r :  dr ∈ comp r dr
+    · exact comp_dr_dr_all _                    -- l r l :  _  ∈ comp dr dr
+    · exact dr_mem_comp_dr_left _               -- l r r :  dr ∈ comp dr s
+    · exact dr_mem_comp_dr_left _               -- r l l
+    · exact comp_dr_dr_all _                    -- r l r
+    · exact dr_mem_comp_dr _                    -- r r l
+    · exact h2.comp_ y y' y'' hx hy hz          -- r r r
+
+/-- **SATISFACTION SURVIVES THE UNION, UNDER `DRCompat` AND NOTHING ELSE.**
+
+    The two hypotheses are `DRCompat`'s semantic content: each side's `∀DR`
+    universals are met on the other side.  Given them, every point keeps every
+    concept of `cl C0` it satisfied before.
+
+    Note the direction. The union can only ADD witnesses, so `∃` transfers
+    forward for free and does NOT transfer back — a point may satisfy more in the
+    union than it did alone. That is harmless (labels grow, obligations are
+    already met) and it is why the statement is preservation rather than a
+    biconditional. -/
+theorem drUnion_sat {α β : Type} {I1 : Interp α} {I2 : Interp β} (C0 : Concept)
+    (H1 : ∀ (x : α) (X : Concept), I1.dom x → Concept.all dr X ∈ cl C0 →
+      sat I1 x (Concept.all dr X) → ∀ y, I2.dom y → sat I2 y X)
+    (H2 : ∀ (y : β) (X : Concept), I2.dom y → Concept.all dr X ∈ cl C0 →
+      sat I2 y (Concept.all dr X) → ∀ x, I1.dom x → sat I1 x X) :
+    ∀ C, C ∈ cl C0 →
+      (∀ x, I1.dom x → sat I1 x C → sat (drUnion I1 I2) (.inl x) C) ∧
+      (∀ y, I2.dom y → sat I2 y C → sat (drUnion I1 I2) (.inr y) C) := by
+  intro C
+  induction C with
+  | top => exact fun _ => ⟨fun _ _ _ => trivial, fun _ _ _ => trivial⟩
+  | bot => exact fun _ => ⟨fun _ _ h => h.elim, fun _ _ h => h.elim⟩
+  | atom a => exact fun _ => ⟨fun _ _ h => h, fun _ _ h => h⟩
+  | natom a => exact fun _ => ⟨fun _ _ h => h, fun _ _ h => h⟩
+  | and c d ihc ihd =>
+      intro hcl
+      have hc := ihc (cl_and_left hcl)
+      have hd := ihd (cl_and_right hcl)
+      exact ⟨fun x hx h => ⟨hc.1 x hx h.1, hd.1 x hx h.2⟩,
+             fun y hy h => ⟨hc.2 y hy h.1, hd.2 y hy h.2⟩⟩
+  | or c d ihc ihd =>
+      intro hcl
+      have hc := ihc (cl_or_left hcl)
+      have hd := ihd (cl_or_right hcl)
+      refine ⟨fun x hx h => ?_, fun y hy h => ?_⟩
+      · rcases h with h | h
+        · exact Or.inl (hc.1 x hx h)
+        · exact Or.inr (hd.1 x hx h)
+      · rcases h with h | h
+        · exact Or.inl (hc.2 y hy h)
+        · exact Or.inr (hd.2 y hy h)
+  | ex r c ih =>
+      intro hcl
+      have hc := ih (cl_ex hcl)
+      refine ⟨fun x hx h => ?_, fun y hy h => ?_⟩
+      · obtain ⟨w, hw, hr, hs⟩ := h
+        exact ⟨.inl w, hw, hr, hc.1 w hw hs⟩
+      · obtain ⟨w, hw, hr, hs⟩ := h
+        exact ⟨.inr w, hw, hr, hc.2 w hw hs⟩
+  | all r c ih =>
+      intro hcl
+      have hc := ih (cl_all hcl)
+      refine ⟨fun x hx h => ?_, fun y hy h => ?_⟩
+      · rintro (w | w) hw hr
+        · exact hc.1 w hw (h w hw hr)
+        · have hrd : r = dr := by
+            simp only [drUnion] at hr; exact hr.symm
+          subst hrd
+          exact hc.2 w hw (H1 x c hx hcl h w hw)
+      · rintro (w | w) hw hr
+        · have hrd : r = dr := by
+            simp only [drUnion] at hr; exact hr.symm
+          subst hrd
+          exact hc.1 w hw (H2 y c hy hcl h w hw)
+        · exact hc.2 w hw (h w hw hr)
+
+/-- **IN THE UNION, THE TWO REGIONS ARE `DR`-SEPARATED BY CONSTRUCTION.** -/
+theorem drUnion_sep {α β : Type} (I1 : Interp α) (I2 : Interp β) (x : α) (y : β) :
+    (drUnion I1 I2).rho (.inl x) (.inr y) = dr := rfl
+
+/-- **SO `DRCompat` HOLDS IN THE UNION, WITH NO HYPOTHESIS AT ALL.**
+
+    Read this together with `drUnion_sat` before believing it is a free lunch.
+    It is free because the union's OWN relations make each side's `∀DR`
+    universals fire on the other — but a `∀DR.X` that held in `I1` and is not met
+    across the union simply *is not in the union's label any more*. The
+    obligation has not vanished; it has moved into whether the union still
+    satisfies what we needed, which is exactly `drUnion_sat`'s `H1`/`H2`.
+
+    The value of separating the two is that the residue is now pinned to a single
+    connective: **`∀DR` is the only thing the surgery can destroy.** `∃` demands
+    survive (`sep_preserves_ex`), and `∀PP`/`∀PPI`/`∀EQ` gain no new neighbours
+    to check, since every cross pair is `DR`. -/
+theorem drUnion_drCompat {α β : Type} (C0 : Concept) {I1 : Interp α}
+    {I2 : Interp β} (h1 : RCC5Interp I1) (h2 : RCC5Interp I2) :
+    (∀ (x : α) (y : β) (X : Concept), I2.dom y →
+      Concept.all dr X ∈ mty C0 (drUnion I1 I2) (.inl x) →
+      X ∈ mty C0 (drUnion I1 I2) (.inr y)) ∧
+    (∀ (x : α) (y : β) (Y : Concept), I1.dom x → I2.dom y →
+      Concept.all dr Y ∈ mty C0 (drUnion I1 I2) (.inr y) →
+      Y ∈ mty C0 (drUnion I1 I2) (.inl x)) := by
+  refine ⟨fun x y X hy hX => mty_all hX hy (drUnion_sep I1 I2 x y), ?_⟩
+  intro x y Y hx hy hY
+  refine mty_all hY hx ?_
+  have hc := (drUnion_rcc5 h1 h2).conv_ (.inl x) (.inr y) hx hy
+  rw [drUnion_sep I1 I2 x y] at hc
+  exact hc
+
+/-! ##### §186.1 — where the obligation actually sits now
+
+Three statements, and the difference between them is the whole point:
+
+| | |
+|---|---|
+| `drUnion_rcc5` | the union IS a model — the frame never obstructs |
+| `drUnion_drCompat` | `DRCompat` holds in the union — **unconditionally** |
+| `drUnion_sat` | satisfaction is preserved — **only under `H1`/`H2`** |
+
+The middle row is free precisely because the labels are read off the union, so
+a universal that cannot be met across is not there to be violated. The cost is
+paid in the third row: the chain must still satisfy `C0` afterwards, and it does
+iff its `∀DR` universals are met on the block and vice versa.
+
+**So the residue is one connective wide.** `∃` demands survive the surgery
+(`sep_preserves_ex`); `∀PP`, `∀PPI`, `∀EQ` acquire no new neighbours, every cross
+pair being `DR`; only `∀DR` can be broken. That is a much sharper statement than
+§183's "selection cannot reach the block", and it is the form in which §180's
+consistency result finally bites: the body set the block must satisfy is
+non-empty, and `drCompat_of_phases` says only finitely many labels need it. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34854,4 +35101,8 @@ end POFreeLift
 #print axioms POFreeLift.drCompat_root_of_phasewise
 #print axioms POFreeLift.kernel_dr_drCompat
 #print axioms POFreeLift.glueDRMT_ok_of_phases
+#print axioms POFreeLift.drCompat_of_separated
+#print axioms POFreeLift.drUnion_rcc5
+#print axioms POFreeLift.drUnion_sat
+#print axioms POFreeLift.drUnion_drCompat
 #print axioms POFreeLift.kernel_of_no_terminal

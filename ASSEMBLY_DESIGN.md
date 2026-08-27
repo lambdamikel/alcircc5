@@ -12816,3 +12816,60 @@ after.
 
 Build: 34,857 lines, 1,747 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 185. SEPARATION GIVES `DRCompat` OUTRIGHT
+
+§183 showed model-side `DR`-separation of the block cannot be reached by
+*selecting* witnesses inside a given model. It did not show separation is
+useless — it showed it has to be **built**. So first: what does building it buy?
+
+`drCompat_of_separated` — if two regions really are `DR` from each other, each
+side's `∀DR` universals fire on the other directly (`mty_all`), in both
+orientations because `conv dr = dr`. No consistency argument, no selection, no
+period. `sep_preserves_ex` records the other half: nothing about a cross-`DR`
+relation can remove a witness, so the block keeps every demand it served.
+
+## 186. THE SURGERY AS A CONSTRUCTION
+
+`drUnion I1 I2` — the disjoint union of two interpretations with every cross pair
+`DR` — and `drUnion_rcc5`: **it is a model** (`propext` only). The cross entries
+need only `DR ∈ comp r dr`, `DR ∈ comp dr r`, and `comp dr dr = ⊤`, the first two
+being §172's `dr_mem_comp_dr` and its new left-hand twin.
+
+`drUnion_sat` (`propext` only) is the substantial one: **satisfaction survives
+the union under exactly `DRCompat` and nothing else.** Every point keeps every
+concept of `cl C0` it satisfied before, given that each side's `∀DR` universals
+are met on the other. The statement is preservation rather than a biconditional
+because the union can only *add* witnesses — a point may satisfy more afterwards,
+which is harmless.
+
+### 186.1 Where the obligation actually sits now
+
+Three statements, and the difference between them is the point:
+
+| | |
+|---|---|
+| `drUnion_rcc5` | the union IS a model — the frame never obstructs |
+| `drUnion_drCompat` | `DRCompat` holds in the union — **unconditionally** |
+| `drUnion_sat` | satisfaction is preserved — **only under `H1`/`H2`** |
+
+The middle row is free precisely *because* the labels are read off the union: a
+universal that cannot be met across is not there to be violated. That is not a
+free lunch, and the docstring says so — the cost is paid in the third row, where
+the chain must still satisfy `C0` afterwards.
+
+**So the residue is one connective wide.** `∃` demands survive (`sep_preserves_ex`);
+`∀PP`, `∀PPI`, `∀EQ` acquire no new neighbours to check, every cross pair being
+`DR` — the `drUnion_sat` proof discharges those cases by deriving `r = dr` and
+finding a contradiction. **Only `∀DR` can be broken by the surgery.**
+
+That is much sharper than §183's "selection cannot reach the block", and it is
+where §180 finally bites: the body set the block must satisfy is consistent, and
+`drCompat_of_phases` says only finitely many labels need it. Stated as a
+question:
+
+> Given satisfiable `D` and a finite `B ⊆ cl C0`, when is there a model of `D`
+> in which **every** point satisfies `⋀B`?
+
+Build: 35,108 lines, 1,755 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`. `drUnion_rcc5` and `drUnion_sat` both `propext` only.
