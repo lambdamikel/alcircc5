@@ -33381,6 +33381,150 @@ theorem glueDRMT_frame {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq �
   · rw [qnet_glueDR, qnet_glueDR]; exact hb.conv_ z w
   · rw [qnet_glueDR, qnet_glueDR, qnet_glueDR]; exact hb.comp_ z w v
 
+/-! #### §177 — THE DR-GLUE'S `MultiTierOk`
+
+The 18 remaining fields. Eight propositional ones transfer through
+`gdr_label_1`/`_2` by `rfl`; the `kk_*` family is block-internal; the four
+universal-propagation fields split by side into a delegation and a `DRCompat`
+use; and `e_ex`/`k_ex` are monotone — a demand served inside its block is served
+in the glue. -/
+
+open Classical in
+/-- **THE DR-GLUE IS VALID**, given `DRCompat`. -/
+theorem glueDRMT_ok {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    {T1 : MultiTier β1 κ1} {T2 : MultiTier β2 κ2}
+    (h1 : MultiTierOk T1) (h2 : MultiTierOk T2) (hc : DRCompat T1 T2) :
+    MultiTierOk (glueDRMT T1 T2) where
+  hp := by
+    rintro (k | k)
+    · exact h1.hp k
+    · exact h2.hp k
+  frame_q := glueDRMT_frame T1 T2 h1.frame_q h2.frame_q
+  e_clash := by
+    rintro (e | e) a h
+    · exact h1.e_clash e a h
+    · exact h2.e_clash e a h
+  e_nobot := by
+    rintro (e | e)
+    · exact h1.e_nobot e
+    · exact h2.e_nobot e
+  e_and := by
+    rintro (e | e) c d h
+    · exact h1.e_and e c d h
+    · exact h2.e_and e c d h
+  e_or := by
+    rintro (e | e) c d h
+    · exact h1.e_or e c d h
+    · exact h2.e_or e c d h
+  k_clash := by
+    rintro (k | k) a ha n h
+    · exact h1.k_clash k a ha n h
+    · exact h2.k_clash k a ha n h
+  k_nobot := by
+    rintro (k | k) a ha
+    · exact h1.k_nobot k a ha
+    · exact h2.k_nobot k a ha
+  k_and := by
+    rintro (k | k) a ha c d h
+    · exact h1.k_and k a ha c d h
+    · exact h2.k_and k a ha c d h
+  k_or := by
+    rintro (k | k) a ha c d h
+    · exact h1.k_or k a ha c d h
+    · exact h2.k_or k a ha c d h
+  ee_all := by
+    rintro (e | e) (f | f) r c hall hr
+    · exact h1.ee_all e f r c hall hr
+    · cases hr
+      exact hc.1 (.inl e) c hall (.inl f)
+    · cases hr
+      exact hc.2 (.inl e) c hall (.inl f)
+    · exact h2.ee_all e f r c hall hr
+  ek_all := by
+    rintro (e | e) r c hall (k | k) hK a ha
+    · exact h1.ek_all e r c hall k hK a ha
+    · cases hK
+      have ha' : a < T2.p k := ha
+      have hx : c ∈ T2.phase k (a % T2.p k) := hc.1 (.inl e) c hall (.inr (k, a))
+      show c ∈ T2.phase k a
+      rwa [Nat.mod_eq_of_lt ha'] at hx
+    · cases hK
+      have ha' : a < T1.p k := ha
+      have hx : c ∈ T1.phase k (a % T1.p k) := hc.2 (.inl e) c hall (.inr (k, a))
+      show c ∈ T1.phase k a
+      rwa [Nat.mod_eq_of_lt ha'] at hx
+    · exact h2.ek_all e r c hall k hK a ha
+  ke_all := by
+    rintro (k | k) a ha r c hall (f | f) hK
+    · exact h1.ke_all k a ha r c hall f hK
+    · cases hK
+      have ha' : a < T1.p k := ha
+      exact hc.1 (.inr (k, a)) c
+        (by show Concept.all dr c ∈ T1.phase k (a % T1.p k)
+            rw [Nat.mod_eq_of_lt ha']; exact hall) (.inl f)
+    · cases hK
+      have ha' : a < T2.p k := ha
+      exact hc.2 (.inr (k, a)) c
+        (by show Concept.all dr c ∈ T2.phase k (a % T2.p k)
+            rw [Nat.mod_eq_of_lt ha']; exact hall) (.inl f)
+    · exact h2.ke_all k a ha r c hall f hK
+  kk_pp := by
+    rintro (k | k) a ha c h b hb
+    · exact h1.kk_pp k a ha c h b hb
+    · exact h2.kk_pp k a ha c h b hb
+  kk_ppi := by
+    rintro (k | k) a ha c h b hb
+    · exact h1.kk_ppi k a ha c h b hb
+    · exact h2.kk_ppi k a ha c h b hb
+  kk_eq := by
+    rintro (k | k) a ha c h
+    · exact h1.kk_eq k a ha c h
+    · exact h2.kk_eq k a ha c h
+  kq_all := by
+    rintro (k | k) (k' | k') hne a ha r c hall hQ b hb
+    · exact h1.kq_all k k' (fun h => hne (congrArg Sum.inl h)) a ha r c hall hQ b hb
+    · cases hQ
+      have ha' : a < T1.p k := ha
+      have hb' : b < T2.p k' := hb
+      have hx : c ∈ T2.phase k' (b % T2.p k') := hc.1 (.inr (k, a)) c
+        (by show Concept.all dr c ∈ T1.phase k (a % T1.p k)
+            rw [Nat.mod_eq_of_lt ha']; exact hall) (.inr (k', b))
+      show c ∈ T2.phase k' b
+      rwa [Nat.mod_eq_of_lt hb'] at hx
+    · cases hQ
+      have ha' : a < T2.p k := ha
+      have hb' : b < T1.p k' := hb
+      have hx : c ∈ T1.phase k' (b % T1.p k') := hc.2 (.inr (k, a)) c
+        (by show Concept.all dr c ∈ T2.phase k (a % T2.p k)
+            rw [Nat.mod_eq_of_lt ha']; exact hall) (.inr (k', b))
+      show c ∈ T1.phase k' b
+      rwa [Nat.mod_eq_of_lt hb'] at hx
+    · exact h2.kq_all k k' (fun h => hne (congrArg Sum.inr h)) a ha r c hall hQ b hb
+  e_ex := by
+    rintro (e | e) r c hex
+    · rcases h1.e_ex e r c hex with ⟨f, hE, hD⟩ | ⟨k, hK, a, ha, hD⟩
+      · exact Or.inl ⟨.inl f, hE, hD⟩
+      · exact Or.inr ⟨.inl k, hK, a, ha, hD⟩
+    · rcases h2.e_ex e r c hex with ⟨f, hE, hD⟩ | ⟨k, hK, a, ha, hD⟩
+      · exact Or.inl ⟨.inr f, hE, hD⟩
+      · exact Or.inr ⟨.inr k, hK, a, ha, hD⟩
+  k_ex := by
+    rintro (k | k) a ha r c hex
+    · rcases h1.k_ex k a ha r c hex with ⟨f, hK, hD⟩ | ⟨hd, b, hb, hD⟩ |
+        ⟨he, hD⟩ | ⟨k', hne, hQ, b, hb, hD⟩
+      · exact Or.inl ⟨.inl f, hK, hD⟩
+      · exact Or.inr (Or.inl ⟨hd, b, hb, hD⟩)
+      · exact Or.inr (Or.inr (Or.inl ⟨he, hD⟩))
+      · exact Or.inr (Or.inr (Or.inr
+          ⟨.inl k', fun h => hne (Sum.inl.inj h), hQ, b, hb, hD⟩))
+    · rcases h2.k_ex k a ha r c hex with ⟨f, hK, hD⟩ | ⟨hd, b, hb, hD⟩ |
+        ⟨he, hD⟩ | ⟨k', hne, hQ, b, hb, hD⟩
+      · exact Or.inl ⟨.inr f, hK, hD⟩
+      · exact Or.inr (Or.inl ⟨hd, b, hb, hD⟩)
+      · exact Or.inr (Or.inr (Or.inl ⟨he, hD⟩))
+      · exact Or.inr (Or.inr (Or.inr
+          ⟨.inr k', fun h => hne (Sum.inr.inj h), hQ, b, hb, hD⟩))
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34292,4 +34436,5 @@ end POFreeLift
 #print axioms POFreeLift.drCompat_cross
 #print axioms POFreeLift.qnet_glueDR
 #print axioms POFreeLift.glueDRMT_frame
+#print axioms POFreeLift.glueDRMT_ok
 #print axioms POFreeLift.kernel_of_no_terminal

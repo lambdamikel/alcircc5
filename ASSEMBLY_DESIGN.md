@@ -12412,3 +12412,49 @@ Of those 18: 8 propositional transfer by `rfl`; `kk_*` are block-internal;
 
 Build: 34,295 lines, 1,725 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 177. THE DR-GLUE IS COMPLETE
+
+```
+glueDRMT_ok (h1 : MultiTierOk T1) (h2 : MultiTierOk T2) (hc : DRCompat T1 T2) :
+    MultiTierOk (glueDRMT T1 T2)
+```
+
+**`propext` only.** All 19 fields.
+
+| how each field went | |
+|---|---|
+| 8 propositional | delegate by side — labels are the blocks' own |
+| `frame_q` | §176 |
+| `kk_pp` / `kk_ppi` / `kk_eq` | block-internal, delegate |
+| `ee_all` / `ek_all` / `ke_all` / `kq_all` | same-side delegate, cross-side `DRCompat` |
+| `e_ex` / `k_ex` | monotone — a demand served in its block is served in the glue |
+
+### 177.1 What it cost that the PO-glue does not
+
+Exactly the four cross-side cases, and each is one `DRCompat` application. `∀PO`
+being absent makes those vacuous for `glueFam`; `∀DR` being present makes them
+real here. **That is the entire difference between the two glues**, and it is
+four lines.
+
+Three Lean-caught details worth recording: `exacts` is not in core (bullets
+instead); a `by` block's tactic must start on its own line for following bullets
+to attach; and `mtLabel T (.inr (k,a))` needs retyping to `T.phase k (a % T.p k)`
+by an ascribed `have` before `Nat.mod_eq_of_lt` will fire.
+
+### 177.2 The DR-glue, done
+
+| | |
+|---|---|
+| definition, `DRCompat` | §171 |
+| cross-atom conditions, `glueNet_frame` | §172 |
+| embeddings, labels, `gdr_rep` | §175 |
+| `frame_q` | §176 |
+| **the full `MultiTierOk`** | **§177** |
+
+So §170's model surgery has its transplant tool: two certificates can be glued
+disjoint, given `DRCompat` — which `wp129` measured as consistent 99.8% of the
+time and §173 argues is automatic for recurrent kernel chains.
+
+Build: 34,404 lines, 1,726 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
