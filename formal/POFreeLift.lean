@@ -36026,6 +36026,57 @@ theorem seedM_sep {β κ : Type} (hI : RCC5Interp I) (nd : β → MTKNode I C0)
   sep_of_dr hI (fun e => (nd e).x) ck ik up dn (fun e => (nd e).hx) hkdom
     elt hlt _ (seedM_dr hI nd kdr ck ik (fun k => hkdom k _) hkdr)
 
+/-! #### §206 — WHAT `hbK` ACTUALLY FORCES
+
+§198.1 concluded "budgets must be uniform". That was reached from
+`hbS`/`hbK`/`hbQ` together and is too coarse. Pinning down which condition does
+the work changes the picture, because the three are very different:
+
+* `hbS` constrains only DISJOINT pairs — a parent and its `DR`-witness, whose
+  budgets differ by exactly one under `mtkNodes`' decrement. **Satisfied by
+  decrementing budgets.**
+* `hbQ` constrains kernels against kernels.
+* `hbK` constrains **every external against every kernel**. That is the strong
+  one, and it is what forces near-uniformity — not `hbS`.
+
+So the real statement is not "uniform" but "within two of each other, once any
+kernel exists". -/
+
+/-- **`hbK` FORCES ALL EXTERNALS WITHIN TWO OF EACH OTHER.**  As soon as the
+    family has ONE kernel, no two externals' budgets can differ by more than 2 —
+    so a closure whose budgets decrement over depth greater than 2 cannot carry a
+    kernel. -/
+theorem hbK_forces_near_uniform {β : Type} {C0 : Concept} {nd : β → MTKNode I C0}
+    (k : KIdxM C0 I nd)
+    (h : ∀ e : β, (nd e).k ≤ mBk nd k + 1 ∧ mBk nd k ≤ (nd e).k + 1)
+    (e f : β) : (nd e).k ≤ (nd f).k + 2 := by
+  have h1 := (h e).1
+  have h2 := (h f).2
+  omega
+
+/-! ##### §206.1 — the fork, stated
+
+Two designs, each satisfying one branch of the closure and breaking the other:
+
+| | demand branch | kernel branch |
+|---|---|---|
+| **decrementing budgets** (`mtkNodes`) | budget drops by 1 per step, so `sAdjK` and `hbS` both hold | kernel witnesses sit at the kernel's budget, so there is no descent — §194's finding |
+| **uniform budgets** (`kwNd`) | `sAdjK` unsatisfiable (§203) — repaired by `seedM` (§205) | `hbK` trivial, closure terminates on `maxDepth` |
+
+§§203–205 already repaired the uniform branch's only casualty, so the uniform
+design survives both columns. What §206 adds is that it was never a free choice:
+`hbK` alone rules out decrementing budgets over any closure deeper than two,
+**as soon as the family contains a kernel** — and a mixed-quadrant family always
+does.
+
+**So the uniform design is forced, not preferred.** That also explains why
+`mtkKernelsOD`'s `mtk` labels are the remaining friction: `mtk` at a uniform
+budget carries every true concept of depth `≤ K`, so `he_ex` would demand service
+for concepts the support-label closure never took on. The label discipline and
+the budget discipline have to agree, and only one combination is left —
+support labels with uniform budgets. That is the certificate the extraction has
+to build, and building it is where §199.1's items 1–3 now sit. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36995,4 +37046,5 @@ end POFreeLift
 #print axioms POFreeLift.sep_of_dr
 #print axioms POFreeLift.seedM_dr
 #print axioms POFreeLift.seedM_sep
+#print axioms POFreeLift.hbK_forces_near_uniform
 #print axioms POFreeLift.kernel_of_no_terminal

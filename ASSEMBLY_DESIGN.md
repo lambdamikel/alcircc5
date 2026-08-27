@@ -13609,3 +13609,46 @@ the kernel *field* would have caught this at the same time.
 
 Build: 36,998 lines, 1,860 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 206. WHAT `hbK` ACTUALLY FORCES — the uniform design is not a choice
+
+§198.1 concluded "budgets must be uniform" from `hbS`/`hbK`/`hbQ` together. That
+is too coarse; the three are very different:
+
+* `hbS` constrains only **disjoint** pairs — a parent and its `DR`-witness, whose
+  budgets differ by exactly one under `mtkNodes`' decrement. **Decrementing
+  budgets satisfy it.**
+* `hbQ` constrains kernels against kernels.
+* `hbK` constrains **every external against every kernel** — and that is what
+  forces near-uniformity.
+
+`hbK_forces_near_uniform`: as soon as the family has one kernel, no two externals'
+budgets differ by more than 2. So a closure whose budgets decrement over depth
+greater than two **cannot carry a kernel** — and a mixed-quadrant family always
+has one.
+
+### 206.1 The fork, and why it is already decided
+
+| | demand branch | kernel branch |
+|---|---|---|
+| **decrementing** (`mtkNodes`) | budget drops by 1/step, so `sAdjK` and `hbS` hold | kernel witnesses sit at the kernel's budget — **no descent** (§194) |
+| **uniform** (`kwNd`) | `sAdjK` unsatisfiable (§203) — **repaired** by `seedM` (§205) | `hbK` trivial, closure terminates on `maxDepth` |
+
+§§203–205 repaired the uniform branch's only casualty, so uniform survives both
+columns and decrementing does not. **The uniform design is forced, not preferred**
+— which retro-justifies §198.1's conclusion while correcting its reason.
+
+### 206.2 The consequence for labels
+
+This also explains the remaining friction. `mtkKernelsOD` labels nodes with
+`mtk C₀ I (g e) (bud e)`, and at a *uniform* budget that carries every true
+concept of depth `≤ K` — so `he_ex` would demand service for concepts the
+support-label closure never took on.
+
+**The label discipline and the budget discipline have to agree**, and one
+combination is left: **support labels with uniform budgets**. That is the
+certificate the extraction has to build, and §199.1's items 1–3 (`hsepS`,
+`he_ex`, `hk_ex`) now sit inside building it.
+
+Build: 37,050 lines, 1,861 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
