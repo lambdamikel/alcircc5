@@ -14557,3 +14557,40 @@ was real. The estimate was right; what it could not say was how big.
 
 Build: 38,934 lines, 1,960 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 233. THE PHASE LIST IS NON-MONOTONE, AND THE FIX IS AN INDEX
+
+§232.1 flagged the interaction; it is real. `kPhaseNode`'s label is built from
+the **anchor's** label, so when saturation grows an anchor, `stagePhases` yields
+a *different node* at the same chain point. As a list of node **values** the
+phase part does not nest across rounds — and §218's measure needs nesting.
+
+The fix is not to accumulate stale phase nodes but to **stop identifying a phase
+with its label**. Index a phase by *(anchor, phase number)* — stable across
+rounds — and store its label like any other node's. That is exactly `satRound`'s
+own shape, `(nodes : List b, L : b -> List Concept)`, so it is an instantiation
+rather than a restructure.
+
+`StageIdx` is that index (an external, or an anchor-with-proof paired with a
+phase number), with `stagePt` and `stagePt_dom`.
+
+### 233.1 Why this is the right shape, not a workaround
+
+The certificate is **two-sorted** — `beta` externals, `kappa x Nat` phases — and
+every obligation is stated per sort. The stage had been **one-sorted**. That
+single mismatch is why `ek_all` had nowhere to put a body (§232) *and* why the
+phase list would not nest (§233): one cause, two symptoms, found a day apart in
+different places.
+
+With `StageIdx` the stage matches the certificate: the index list is stable, the
+label function is what saturation updates, and `satRound` / `satIter` / §218's
+measure apply unchanged at `beta := StageIdx I C0`.
+
+### 233.2 What remains for the stage
+
+Redefine the round on this index — `extendStage` adding externals, phases
+appearing when an anchor does, labels saturated over both — and re-establish the
+invariants, which are the same proofs at a different `beta`.
+
+Build: 38,990 lines, 1,963 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

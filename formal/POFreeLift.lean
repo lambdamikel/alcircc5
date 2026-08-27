@@ -37917,6 +37917,61 @@ theorem stagePhases_depth_le (hI : RCC5Interp I) {C0 : Concept}
   exact Nat.le_trans (kPhaseNode_depth_le hI C0 _ _ n.val.lab)
     (h n.val (stageAnchors_sub ns n.val n.property))
 
+/-! #### §233 — THE PHASE LIST IS NON-MONOTONE, AND THE FIX IS AN INDEX
+
+§232.1 flagged the interaction; it is real. `kPhaseNode`'s label is built from the
+ANCHOR's label, so when saturation grows an anchor, `stagePhases` yields a
+DIFFERENT node at the same chain point. As a list of node VALUES the phase part
+is not nested across rounds, and §218's measure needs nesting.
+
+The fix is not to accumulate stale phase nodes but to stop identifying a phase
+with its label. Index a phase by **(anchor, phase number)** — stable across
+rounds — and store its label like any other node's. That is exactly `satRound`'s
+own shape, `(nodes : List β, L : β → List Concept)`, so it is an instantiation
+rather than a restructure.
+
+`StageIdx` is that index: an external, or an anchor-with-proof paired with a
+phase number. -/
+
+/-- **THE STAGE'S INDEX TYPE.**  Externals and phases, the certificate's own
+    two-sortedness made explicit. -/
+def StageIdx (I : Interp α) (C0 : Concept) : Type :=
+  SNode I C0 ⊕ ({n : SNode I C0 // 0 < (persistDs C0 I n.x).length} × Nat)
+
+open Classical in
+/-- The model point an index denotes. -/
+noncomputable def stagePt (hI : RCC5Interp I) {C0 : Concept} :
+    StageIdx I C0 → α
+  | .inl n => n.x
+  | .inr (⟨n, hn⟩, a) =>
+      (kernelData hI C0 n.x n.hx hn 0).c
+        ((kernelData hI C0 n.x n.hx hn 0).i + a)
+
+open Classical in
+theorem stagePt_dom (hI : RCC5Interp I) {C0 : Concept} (v : StageIdx I C0) :
+    I.dom (stagePt hI v) := by
+  cases v with
+  | inl n => exact n.hx
+  | inr p =>
+      obtain ⟨⟨n, hn⟩, a⟩ := p
+      exact (kernelData hI C0 n.x n.hx hn 0).cdom _
+
+/-! ##### §233.1 — why this is the right shape and not a workaround
+
+The certificate is two-sorted (`β` externals, `κ × Nat` phases) and every
+obligation is stated per sort. The stage had been one-sorted, which is why
+`ek_all` had nowhere to put a body (§232) and why the phase list would not nest
+(§233). Both are the same mismatch.
+
+With `StageIdx` the stage matches the certificate: the index list is stable, the
+label function is what saturation updates, and `satRound`/`satIter`/§218's
+measure apply unchanged at `β := StageIdx I C₀`.
+
+**What remains for the stage is to redefine the round on this index** —
+`extendStage` adding externals, phases appearing when an anchor does, labels
+saturated over both — and to re-establish the invariants, which are the same
+proofs at a different `β`. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38931,4 +38986,5 @@ end POFreeLift
 #print axioms POFreeLift.stageKids_gate_pp
 #print axioms POFreeLift.stagePhases_normL
 #print axioms POFreeLift.stagePhases_depth_le
+#print axioms POFreeLift.stagePt_dom
 #print axioms POFreeLift.kernel_of_no_terminal
