@@ -36981,6 +36981,56 @@ theorem interMeasure_lt_nodes {β : Type} (C0 : Concept)
   unfold interMeasure
   omega
 
+/-! #### §219 — THE INTERLEAVING STABILISES
+
+With §218's measure the alternation's termination is one application of
+`measure_stops`. A stage is a node list together with its labels; a round either
+extends the node list (phase 1) or grows a label (phase 2), and §218's two step
+lemmas say both move the measure.
+
+So an alternation that never stabilised would need more rounds than the measure
+admits. -/
+
+/-- **THE ALTERNATION CANNOT RUN FOREVER.**  Any sequence of stages whose measure
+    strictly increases has boundedly many terms — with the bound computed from
+    `C₀` and the node bound alone. -/
+theorem interleave_stops (C0 : Concept) (BN : Nat)
+    (nodes : Nat → List α) (L : Nat → α → List Concept)
+    (hbn : ∀ n, (nodes n).length ≤ BN)
+    (hnorm : ∀ n e, ∃ X, L n e = normL C0 X)
+    (hstep : ∀ n, interMeasure C0 (nodes n) (L n)
+      < interMeasure C0 (nodes (n + 1)) (L (n + 1))) :
+    ∀ n, n ≤ BN * ((cl C0).length + 1) + BN * (cl C0).length :=
+  measure_stops _ _
+    (fun n => interMeasure_le C0 (nodes n) (L n) BN (hbn n) (hnorm n)) hstep
+
+/-- **SO SOME STAGE IS STATIONARY** — stated as the refutation, matching §210's
+    form: if every round moved, the count would exceed its own bound. -/
+theorem interleave_no_endless_rounds (C0 : Concept) (BN : Nat)
+    (nodes : Nat → List α) (L : Nat → α → List Concept)
+    (hbn : ∀ n, (nodes n).length ≤ BN)
+    (hnorm : ∀ n e, ∃ X, L n e = normL C0 X)
+    (hstep : ∀ n, interMeasure C0 (nodes n) (L n)
+      < interMeasure C0 (nodes (n + 1)) (L (n + 1))) : False := by
+  have h := interleave_stops C0 BN nodes L hbn hnorm hstep
+    (BN * ((cl C0).length + 1) + BN * (cl C0).length + 1)
+  omega
+
+/-! ##### §219.1 — what a stationary stage is
+
+A stage that moves neither way is one where
+
+* phase 1 adds no node — every demand of every current label is already served
+  inside the node set (`kwNodes_covers`' conclusion, now for the SATURATED
+  labels), and
+* phase 2 adds no entry — the labels are a `satRound` fixpoint, so
+  `satRound_fixed_propagates` gives all four propagation obligations and
+  `satRound_fixed_exeq` gives `e_ex`'s `EQ` case.
+
+That is exactly a **blocked, fully expanded** structure in Michael's sense: no
+rule applies, and the kernels are the blocks. §217's gap was that one pass of
+each phase need not reach it; §§218–219 say the alternation does. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37971,4 +38021,6 @@ end POFreeLift
 #print axioms POFreeLift.saturation_can_add_demand
 #print axioms POFreeLift.measure_stops
 #print axioms POFreeLift.interMeasure_lt_nodes
+#print axioms POFreeLift.interleave_stops
+#print axioms POFreeLift.interleave_no_endless_rounds
 #print axioms POFreeLift.kernel_of_no_terminal

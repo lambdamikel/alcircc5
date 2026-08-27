@@ -14080,3 +14080,40 @@ that gets waved through in prose, and did not survive contact with `omega`.
 
 Build: 37,974 lines, 1,904 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 219. THE INTERLEAVING STABILISES
+
+With §218's measure, termination is one application of `measure_stops`. A stage
+is a node list with its labels; a round either extends the list (phase 1) or
+grows a label (phase 2), and §218's step lemmas say both move the measure.
+
+`interleave_stops` — any sequence of stages whose measure strictly increases has
+boundedly many terms, the bound computed from `C₀` and the node bound alone.
+`interleave_no_endless_rounds` states it as the refutation, matching §210's form.
+Both `propext` + `Quot.sound` only.
+
+### 219.1 What a stationary stage is
+
+A stage that moves neither way is one where
+
+* **phase 1 adds no node** — every demand of every current label is already
+  served inside the node set (`kwNodes_covers`' conclusion, now for the
+  *saturated* labels), and
+* **phase 2 adds no entry** — the labels are a `satRound` fixpoint, so
+  `satRound_fixed_propagates` gives all four propagation obligations and
+  `satRound_fixed_exeq` gives `e_ex`'s `EQ` case.
+
+That is exactly a **blocked, fully expanded** structure in the tableau sense: no
+rule applies, and the kernels are the blocks. §217's gap was that one pass of
+each phase need not reach it; §§218–219 say the alternation does.
+
+### 219.2 Position
+
+The structural obstacle §217 found is answered. What remains is instantiation —
+defining the concrete round operator on `(kwNodes, satIter)` and checking it
+meets `interleave_stops`' hypotheses — together with §199.1's residue (`hsepS`,
+the eight routing conditions now stated model-free by §§215–216, `hp`, and the
+`Fin` reindex).
+
+Build: 38,026 lines, 1,906 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
