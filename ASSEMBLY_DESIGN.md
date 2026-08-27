@@ -12347,3 +12347,34 @@ failure case is known, and my two rescues are on the side it helps.
 
 Build unchanged: 34,172 lines, 1,713 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 175. THE DR-GLUE'S EMBEDDINGS AND LABELS
+
+| | |
+|---|---|
+| `gdr1` / `gdr2` | the two side embeddings |
+| `gdr_label_1` / `_2` | labels are literally the blocks' own — by `rfl` |
+| `gdr_rep` | every node is on one side — **axiom-free** |
+| `drCompat_cross` / `_cross'` | `DRCompat` restated over the glue's own nodes |
+
+Because the labels transfer by `rfl`, **every propositional obligation** —
+`e_clash`, `e_nobot`, `e_and`, `e_or` and the four `k_` mirrors — transfers
+without argument. Only the RELATIONAL obligations see the cross value, and for
+those `drCompat_cross` is the tool.
+
+### 175.1 Position
+
+The DR-glue now has its frame (§172) and its plumbing (§175). What remains is the
+19-field `MultiTierOk` itself, where:
+
+* 8 propositional fields transfer by `rfl` through the label lemmas;
+* `kk_pp`/`kk_ppi`/`kk_eq` are block-internal — the glue does not relate phases
+  of different kernels except by the cross value;
+* `ee_all`/`ek_all`/`ke_all`/`kq_all` split by `gdr_rep` into block-internal
+  (delegate) and cross (`drCompat_cross`);
+* `e_ex`/`k_ex` are monotone — a demand served inside its block stays served.
+
+Nothing there needs a new idea. It needs writing.
+
+Build: 34,247 lines, 1,719 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

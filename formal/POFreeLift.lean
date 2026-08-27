@@ -33263,6 +33263,70 @@ and `∀DR` is not.
 applies to `qnet` of either glue once the projections are supplied — those are
 the remaining wiring. -/
 
+/-! #### §175 — THE DR-GLUE'S EMBEDDINGS AND LABELS
+
+Mirrors `gembM1`/`gembM2`/`glue_label_1`/`glue_label_2` for `glueDRMT`. The
+labels are literally the blocks' own, so every propositional obligation
+transfers by `rfl`; only the RELATIONAL obligations see the cross value. -/
+
+/-- Side-1 embedding into the DR-glue's node type. -/
+def gdr1 {β1 β2 κ1 κ2 : Type} : β1 ⊕ κ1 × Nat →
+    (β1 ⊕ β2) ⊕ (κ1 ⊕ κ2) × Nat
+  | .inl e => .inl (.inl e)
+  | .inr (k, i) => .inr (.inl k, i)
+
+/-- Side-2 embedding. -/
+def gdr2 {β1 β2 κ1 κ2 : Type} : β2 ⊕ κ2 × Nat →
+    (β1 ⊕ β2) ⊕ (κ1 ⊕ κ2) × Nat
+  | .inl e => .inl (.inr e)
+  | .inr (k, i) => .inr (.inr k, i)
+
+theorem gdr_label_1 {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    (T1 : MultiTier β1 κ1) (T2 : MultiTier β2 κ2) (x : β1 ⊕ κ1 × Nat) :
+    mtLabel (glueDRMT T1 T2) (gdr1 x) = mtLabel T1 x := by
+  rcases x with e | ⟨k, i⟩
+  · rfl
+  · rfl
+
+theorem gdr_label_2 {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    (T1 : MultiTier β1 κ1) (T2 : MultiTier β2 κ2) (x : β2 ⊕ κ2 × Nat) :
+    mtLabel (glueDRMT T1 T2) (gdr2 x) = mtLabel T2 x := by
+  rcases x with e | ⟨k, i⟩
+  · rfl
+  · rfl
+
+/-- **EVERY NODE IS ON ONE SIDE.**  The case split every cross-block obligation
+    runs on. -/
+theorem gdr_rep {β1 β2 κ1 κ2 : Type} (z : (β1 ⊕ β2) ⊕ (κ1 ⊕ κ2) × Nat) :
+    (∃ x, z = gdr1 x) ∨ (∃ y, z = gdr2 y) := by
+  rcases z with (e | e) | ⟨k | k, i⟩
+  · exact Or.inl ⟨.inl e, rfl⟩
+  · exact Or.inr ⟨.inl e, rfl⟩
+  · exact Or.inl ⟨.inr (k, i), rfl⟩
+  · exact Or.inr ⟨.inr (k, i), rfl⟩
+
+/-- **`DRCompat` IN USABLE FORM.**  A `∀DR` universal anywhere in one block has
+    its body in EVERY label of the other — restated over the glue's own nodes, so
+    the obligation proofs can consume it directly. -/
+theorem drCompat_cross {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    {T1 : MultiTier β1 κ1} {T2 : MultiTier β2 κ2} (h : DRCompat T1 T2)
+    (x : β1 ⊕ κ1 × Nat) (y : β2 ⊕ κ2 × Nat) (c : Concept)
+    (hc : Concept.all dr c ∈ mtLabel (glueDRMT T1 T2) (gdr1 x)) :
+    c ∈ mtLabel (glueDRMT T1 T2) (gdr2 y) := by
+  rw [gdr_label_1] at hc
+  rw [gdr_label_2]
+  exact h.1 x c hc y
+
+/-- The mirror. -/
+theorem drCompat_cross' {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    {T1 : MultiTier β1 κ1} {T2 : MultiTier β2 κ2} (h : DRCompat T1 T2)
+    (y : β2 ⊕ κ2 × Nat) (x : β1 ⊕ κ1 × Nat) (c : Concept)
+    (hc : Concept.all dr c ∈ mtLabel (glueDRMT T1 T2) (gdr2 y)) :
+    c ∈ mtLabel (glueDRMT T1 T2) (gdr1 x) := by
+  rw [gdr_label_2] at hc
+  rw [gdr_label_1]
+  exact h.2 y c hc x
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34169,4 +34233,7 @@ end POFreeLift
 #print axioms POFreeLift.comp_dr_dr_all
 #print axioms POFreeLift.crossAtom_dr
 #print axioms POFreeLift.glueNet_frame
+#print axioms POFreeLift.gdr_label_1
+#print axioms POFreeLift.gdr_rep
+#print axioms POFreeLift.drCompat_cross
 #print axioms POFreeLift.kernel_of_no_terminal
