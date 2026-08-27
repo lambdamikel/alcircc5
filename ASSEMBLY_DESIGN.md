@@ -11844,3 +11844,37 @@ yet.
 
 Build: 33,957 lines, 1,704 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 165. `kDR` FROM COFINAL DISJOINTNESS — and the shape of what is left
+
+`mKdr_of_cofinal` — an external `DR` from the chain COFINALLY is `DR` from it
+everywhere, hence seed-adjacent to the kernel, which is what `kDR` needs.
+
+### 165.1 Why cofinality is the condition
+
+A `∃DR.D` demand at phase `a` gives a witness disjoint AT THAT PHASE.
+Disjointness propagates DOWNWARD — `comp(PP,DR) = {DR}`, the cell `odOfModel`'s
+`djDown` runs on. **Upward there is no law:** `comp(PPI,DR) = {PPI,PO,DR}`, and
+`external_stabilizes` only says the relation settles somewhere, not at `DR`.
+
+So `kDR` is a **selection condition**: choose the `∃DR` witness so its relation
+to the chain stabilizes at `DR`. Same kind as §109's `WitSel`, and what §39's
+`hstab` material is about.
+
+### 165.2 The remaining four, reduced to two shapes
+
+| | |
+|---|---|
+| `kDIR` | build the kernel from the demands its phases carry (§164) |
+| `kDR` / `kUP` / `kDN` | choose witnesses whose relation to the chain is STABLE in the required direction |
+
+Both are **selection disciplines on the extraction**, not facts about the logic —
+the same character as the budgets (§162), which went through once the right
+choice was made.
+
+That is a reason for cautious optimism and **not more**: the analogous claim has
+been wrong twice this session (§§131, 133), and both times the failure was in a
+construction that looked like bookkeeping.
+
+Build: 34,006 lines, 1,704 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

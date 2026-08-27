@@ -33049,6 +33049,56 @@ constructs it.
 
 That leaves §163.3's list at `kDIR` (reduced to `hin`), `kDR`, `kUP`, `kDN`. -/
 
+/-! #### §165 — `kDR` FROM COFINAL DISJOINTNESS
+
+`kDR` asks a kernel's `∃DR.D` demand to be served by an external that is
+SEED-adjacent to the kernel — `mKdr`, i.e. `DR` from the chain at EVERY point
+past the base.
+
+`cofinal_dr_all` supplies exactly that from cofinal disjointness, so the
+reduction is immediate. What it does NOT supply is the cofinality, and §165.1
+says why that is the real condition. -/
+
+/-- **`mKdr` FROM COFINAL `DR`.**  An external that is `DR` from the chain
+    cofinally is `DR` from it everywhere — so it is seed-adjacent to the kernel,
+    which is what `kDR` needs of its witness. -/
+theorem mKdr_of_cofinal (hI : RCC5Interp I) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {w : α} (hwdom : I.dom w)
+    (hcof : ∀ N, ∃ j, N ≤ j ∧ I.rho (c j) w = dr) :
+    ∀ b, I.rho (c b) w = dr :=
+  fun b => cofinal_dr_all hI hdom hstep hwdom hcof b
+
+/-! ##### §165.1 — why cofinality is the condition, not a formality
+
+A `∃DR.D` demand at phase `a` gives a witness `w` with `rho (c (i+a)) w = dr`.
+Disjointness propagates DOWNWARD along the chain — `comp(PP,DR) = {DR}`, the
+cell `odOfModel`'s `djDown` runs on — so `w` is `DR` from every EARLIER point.
+
+Upward there is no law: `comp(PPI,DR) = {PPI,PO,DR}`. So a witness disjoint at
+one phase may cease to be, and `external_stabilizes` only says the relation
+settles SOMEWHERE, not at `DR`.
+
+So `kDR` is: **choose the `∃DR` witness so that its relation to the chain
+stabilizes at `DR`.** That is a selection condition on the extraction, of the
+same kind as §109's `WitSel`, and it is what §39's `hstab` material is about.
+
+`kUP`/`kDN` are the analogous conditions in the vertical directions, and
+`wp124`'s missing construction step (§139.1) is exactly their content: **a kernel
+generates external witnesses.**
+
+So §163.3's four reduce to two shapes:
+
+| | |
+|---|---|
+| `kDIR` | build the kernel from the demands its phases carry (§164) |
+| `kDR` / `kUP` / `kDN` | choose witnesses whose relation to the chain is STABLE in the required direction |
+
+Both are selection disciplines on the extraction, not facts about the logic —
+which is the same character as the budgets (§162), and the budgets went through
+once the right choice was made. That is a reason for cautious optimism and not
+more; the analogous claim has been wrong twice this session. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33950,4 +34000,5 @@ end POFreeLift
 #print axioms POFreeLift.budgets_of_uniform
 #print axioms POFreeLift.uniform_of_ppNodes
 #print axioms POFreeLift.kDIR_of_rr
+#print axioms POFreeLift.mKdr_of_cofinal
 #print axioms POFreeLift.kernel_of_no_terminal
