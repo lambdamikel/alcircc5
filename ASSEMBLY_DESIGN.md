@@ -13188,3 +13188,55 @@ descends on the same measure — is the next brick, and the last one before
 
 Build: 35,909 lines, 1,779 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 195. THE KERNEL STEP'S DESCENT
+
+§194.1 left one ingredient: a kernel's phase demands live at `mCk k (ik k + a)`,
+not in the anchor's label, so the fixpoint's kernel step is not a `sChildN` step
+and needs its own descent argument. **It has one, and it is the same measure.**
+
+A kernel built at anchor `n` exists to serve `n`'s persistent `∃PP` demands, and
+the universals that travel with them are `n`'s `∀PP` bodies. Both are
+subformulas of `n.lab`, so the seed a phase carries is strictly shallower than
+the anchor's label — `seedOf`'s situation with several demands instead of one.
+
+`seed_depth_lt` allows only a single demand, so §195 generalises it:
+
+> `seed_depth_lt'` — any seed whose every element is an `∃`-argument or a
+> `∀`-body of the label is shallower than the label, **regardless of relation or
+> multiplicity**. (`propext` + `Quot.sound` only.)
+
+with `argOf`/`allArgs` mirroring `bodyOf`/`allBodies`, and
+`kSeed L = allArgs pp L ++ allBodies pp L` giving `kSeed_depth_lt`.
+
+### 195.1 The phase node
+
+A phase's seed must be **filtered by what is true there**, and the reason is
+`rr_covers`: a `∀PP` body holds at every phase, but an `∃PP` argument holds only
+at the phase the round robin serves it at. An unfiltered seed would not be
+satisfiable, so `phaseSeed` restricts `kSeed` to the phase's model type. Filtering
+only shrinks, so the descent survives (`maxDepth_mono`).
+
+`kPhaseNode` then packages it exactly as `sChildN` does — `phase_supportOk` for
+the label, `normL` for the branching bound — giving
+
+| | |
+|---|---|
+| `kPhaseNode_depth_lt` | **drops `maxDepth`**, as `sChildN_depth` does for a demand step |
+| `kPhaseNode_len` | `≤ \|cl C₀\|` — same branching factor |
+| `kPhaseNode_body_mem` | nothing the kernel must propagate is lost by filtering |
+
+### 195.2 Position
+
+Both steps of the external/kernel fixpoint now provably descend on one measure:
+`wNodes` at a demand step (§194), `kPhaseNode` at a kernel step (§195). That was
+the obstacle §194.1 named, and it is the reason the fixpoint can be *defined* at
+all — an `mtk`-budget recursion has no descent here, since kernel witnesses sit
+at the kernel's budget rather than below it.
+
+What remains is assembling the two into a single recursion and reading
+`WitnessClosed` off it. That is now bookkeeping over certified descents rather
+than a question about the logic.
+
+Build: 36,081 lines, 1,798 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

@@ -34962,6 +34962,175 @@ theorem wNodes_covers (hI : RCC5Interp I) {C0 : Concept} :
           (ih (sChildN hI n hF) hchild m hmm r D hD)
       | _ => exact absurd hmm List.not_mem_nil
 
+/-! #### §195 — THE KERNEL STEP'S DESCENT
+
+§194.1 left one ingredient: a kernel's phase demands live at `mCk k (ik k + a)`,
+not in the anchor's label, so the fixpoint's kernel step is not a `sChildN` step
+and needs its own descent argument.
+
+It has one, and it is the same measure. A kernel built at an anchor `n` exists to
+serve `n`'s PERSISTENT `∃PP` demands, and the universals that must travel with
+them are `n`'s `∀PP` bodies. Both are subformulas of `n.lab`, so the seed a phase
+carries is strictly shallower than the anchor's label — exactly `seedOf`'s
+situation with several demands instead of one.
+
+`seed_depth_lt` allows only a single demand, so §195 generalises it: any seed
+whose every element is an `∃`-argument or a `∀`-body of the label is shallower
+than the label, regardless of relation or multiplicity. -/
+
+/-- The `∃`-argument extractor — the mirror of `bodyOf`. -/
+def argOf (r : Atom) : Concept → Option Concept
+  | .ex r' D => if r' = r then some D else none
+  | _ => none
+
+theorem argOf_some {r : Atom} {c D : Concept} (h : argOf r c = some D) :
+    c = Concept.ex r D := by
+  cases c <;> simp [argOf] at h
+  rename_i r' D'
+  obtain ⟨hr, hD⟩ := h
+  subst hr; subst hD; rfl
+
+def allArgs (r : Atom) (L : List Concept) : List Concept :=
+  L.filterMap (argOf r)
+
+theorem mem_allArgs {r : Atom} {L : List Concept} {D : Concept}
+    (h : D ∈ allArgs r L) : Concept.ex r D ∈ L := by
+  obtain ⟨c, hc, hf⟩ := List.mem_filterMap.mp h
+  rw [← argOf_some hf]; exact hc
+
+/-- **THE DESCENT, GENERALISED.**  `seed_depth_lt` with the single demand
+    replaced by "anything that is an `∃`-argument or a `∀`-body of the label".
+    No relation is fixed and no multiplicity is assumed. -/
+theorem seed_depth_lt' (L : List Concept) (hpos : 0 < maxDepth L)
+    (seeds : List Concept)
+    (hseed : ∀ c ∈ seeds, (∃ r, Concept.ex r c ∈ L) ∨ (∃ r, Concept.all r c ∈ L)) :
+    maxDepth seeds < maxDepth L := by
+  refine maxDepth_lt hpos (fun c hc => ?_)
+  rcases hseed c hc with ⟨r, hr⟩ | ⟨r, hr⟩
+  · have h1 := mem_maxDepth_le hr
+    have hd : mdepth (Concept.ex r c) = mdepth c + 1 := rfl
+    omega
+  · have h1 := mem_maxDepth_le hr
+    have hd : mdepth (Concept.all r c) = mdepth c + 1 := rfl
+    omega
+
+/-- **THE KERNEL SEED.**  What a kernel's phases owe: the arguments of the
+    anchor's `∃PP` demands — the ones a round-robin kernel exists to serve — and
+    the bodies of its `∀PP` universals, which travel up the chain with them
+    (`guard_along_chain`, `all_pp_inherits`). -/
+def kSeed (L : List Concept) : List Concept :=
+  allArgs pp L ++ allBodies pp L
+
+theorem kSeed_shape (L : List Concept) :
+    ∀ c ∈ kSeed L, (∃ r, Concept.ex r c ∈ L) ∨ (∃ r, Concept.all r c ∈ L) := by
+  intro c hc
+  rcases List.mem_append.mp hc with h | h
+  · exact Or.inl ⟨pp, mem_allArgs h⟩
+  · exact Or.inr ⟨pp, mem_allBodies h⟩
+
+/-- **SO THE KERNEL STEP DESCENDS ON THE SAME MEASURE AS A DEMAND STEP.**
+    This is what makes the external/kernel fixpoint terminate: `wNodes` drops
+    `maxDepth` at a demand step (`sChildN_depth`), and a kernel step drops it
+    too. -/
+theorem kSeed_depth_lt (L : List Concept) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ L) : maxDepth (kSeed L) < maxDepth L := by
+  have hpos : 0 < maxDepth L := by
+    have := mem_maxDepth_le hD
+    have hd : mdepth (Concept.ex r D) = mdepth D + 1 := rfl
+    omega
+  exact seed_depth_lt' L hpos _ (kSeed_shape L)
+
+/-- The kernel seed lives in `cl C₀` whenever the label does. -/
+theorem kSeed_sub {C0 : Concept} (L : List Concept)
+    (hL : ∀ c ∈ L, c ∈ cl C0) : ∀ c ∈ kSeed L, c ∈ cl C0 := by
+  intro c hc
+  rcases List.mem_append.mp hc with h | h
+  · exact cl_ex (hL _ (mem_allArgs h))
+  · exact cl_all (hL _ (mem_allBodies h))
+
+/-- `maxDepth` is monotone under inclusion. -/
+theorem maxDepth_mono : ∀ {S T : List Concept}, (∀ c ∈ S, c ∈ T) →
+    maxDepth S ≤ maxDepth T := by
+  intro S
+  induction S with
+  | nil => intro T _; exact Nat.zero_le _
+  | cons a t ih =>
+    intro T h
+    have h1 : mdepth a ≤ maxDepth T := mem_maxDepth_le (h a List.mem_cons_self)
+    have h2 : maxDepth t ≤ maxDepth T :=
+      ih (fun c hc => h c (List.mem_cons_of_mem a hc))
+    rw [maxDepth]; exact Nat.max_le.mpr ⟨h1, h2⟩
+
+open Classical in
+/-- **WHAT A PHASE OWES.**  The kernel seed, restricted to what is actually TRUE
+    at that phase.  The restriction is necessary: a `∀PP` body holds at every
+    phase, but an `∃PP` argument holds only at the phase the round robin serves
+    it at (`rr_covers`), so an unfiltered seed would not be satisfiable. -/
+noncomputable def phaseSeed (C0 : Concept) (I : Interp α) (pt : α)
+    (L : List Concept) : List Concept :=
+  (kSeed L).filter (fun c => decide (c ∈ mty C0 I pt))
+
+theorem mem_phaseSeed {C0 : Concept} {I : Interp α} {pt : α} {L : List Concept}
+    {c : Concept} : c ∈ phaseSeed C0 I pt L ↔ c ∈ kSeed L ∧ c ∈ mty C0 I pt := by
+  unfold phaseSeed
+  constructor
+  · intro h
+    obtain ⟨h1, h2⟩ := List.mem_filter.mp h
+    exact ⟨h1, of_decide_eq_true h2⟩
+  · intro ⟨h1, h2⟩
+    exact List.mem_filter.mpr ⟨h1, decide_eq_true h2⟩
+
+theorem phaseSeed_sat {C0 : Concept} {I : Interp α} {pt : α} {L : List Concept} :
+    ∀ c ∈ phaseSeed C0 I pt L, sat I pt c :=
+  fun _ h => (mem_mty.mp (mem_phaseSeed.mp h).2).2
+
+theorem phaseSeed_sub {C0 : Concept} {I : Interp α} {pt : α} {L : List Concept} :
+    ∀ c ∈ phaseSeed C0 I pt L, c ∈ cl C0 :=
+  fun _ h => (mem_mty.mp (mem_phaseSeed.mp h).2).1
+
+/-- **AND IT DESCENDS.**  Filtering only shrinks, so §195's `kSeed_depth_lt`
+    carries over: a phase's seed is strictly shallower than the anchor's label. -/
+theorem phaseSeed_depth_lt {C0 : Concept} {I : Interp α} {pt : α}
+    {L : List Concept} {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ L) :
+    maxDepth (phaseSeed C0 I pt L) < maxDepth L :=
+  Nat.lt_of_le_of_lt
+    (maxDepth_mono (fun _ h => (mem_phaseSeed.mp h).1)) (kSeed_depth_lt L hD)
+
+open Classical in
+/-- **A KERNEL PHASE AS A NODE.**  `phase_supportOk` gives the label; the
+    normalisation is `sChildN`'s, so the branching bound is the same. -/
+noncomputable def kPhaseNode (hI : RCC5Interp I) (C0 : Concept) (pt : α)
+    (hpt : I.dom pt) (L : List Concept) : SNode I C0 :=
+  ⟨pt, hpt, normL C0 (hcloseL I pt (phaseSeed C0 I pt L)),
+    normL_supportOk (phase_supportOk hI hpt (phaseSeed C0 I pt L)
+      phaseSeed_sub phaseSeed_sat)⟩
+
+/-- **THE KERNEL STEP DROPS THE MEASURE**, exactly as `sChildN_depth` does for a
+    demand step.  This is the fact the external/kernel fixpoint terminates on. -/
+theorem kPhaseNode_depth_lt (hI : RCC5Interp I) (C0 : Concept) (pt : α)
+    (hpt : I.dom pt) (L : List Concept) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ L) :
+    maxDepth (kPhaseNode hI C0 pt hpt L).lab < maxDepth L :=
+  Nat.lt_of_le_of_lt (normL_depth_le C0 _)
+    (Nat.lt_of_le_of_lt (hcloseL_depth_le I pt _) (phaseSeed_depth_lt hD))
+
+/-- And the same branching bound. -/
+theorem kPhaseNode_len (hI : RCC5Interp I) (C0 : Concept) (pt : α)
+    (hpt : I.dom pt) (L : List Concept) :
+    (kPhaseNode hI C0 pt hpt L).lab.length ≤ (cl C0).length := normL_len C0 _
+
+/-- **AND THE PHASE STILL CARRIES ITS `∀PP` OBLIGATIONS.**  A body of a `∀PP`
+    universal of the anchor's label is in the phase's label whenever it is true
+    there — which `all_pp_inherits` guarantees along the chain.  So nothing the
+    kernel must propagate is lost by filtering. -/
+theorem kPhaseNode_body_mem (hI : RCC5Interp I) (C0 : Concept) (pt : α)
+    (hpt : I.dom pt) (L : List Concept) {E : Concept}
+    (hE : E ∈ allBodies pp L) (hsat : sat I pt E) (hcl : E ∈ cl C0) :
+    E ∈ (kPhaseNode hI C0 pt hpt L).lab :=
+  mem_normL.mpr ⟨hcl, mem_hcloseL.mpr ⟨E,
+    mem_phaseSeed.mpr ⟨List.mem_append.mpr (Or.inr hE),
+      mem_mty.mpr ⟨hcl, hsat⟩⟩, self_mem_hclose I pt E⟩⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -35906,4 +36075,7 @@ end POFreeLift
 #print axioms POFreeLift.wNodes_length_le
 #print axioms POFreeLift.wNodes_child_mem
 #print axioms POFreeLift.wNodes_covers
+#print axioms POFreeLift.seed_depth_lt'
+#print axioms POFreeLift.kSeed_depth_lt
+#print axioms POFreeLift.kPhaseNode_depth_lt
 #print axioms POFreeLift.kernel_of_no_terminal
