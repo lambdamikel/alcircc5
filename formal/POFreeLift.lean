@@ -35569,6 +35569,59 @@ theorem lab_sub_mtk_uniform (hI : RCC5Interp I) {C0 : Concept} (d : Nat)
   fun c hc => mem_mtk.mpr ⟨supportOk_sub_mty n.ok c hc,
     Nat.le_trans (mem_maxDepth_le hc) (kwNodes_depth_le hI d root n hn)⟩
 
+/-! #### §199 — THE FAMILY
+
+Every ingredient §198.2 listed is certified; this section builds the object they
+are ingredients OF. `kwFam` is the closure as an index type and `kwNd` reads each
+node as a budgeted node at the UNIFORM budget §198.1 identified.
+
+The three budget obligations `mergedMT_ok` asks for then hold by `rfl` — which is
+the point of choosing uniform, and the reason §198.1's tension had to be resolved
+before this section could exist. -/
+
+/-- The closure as an index type. -/
+def kwFam {C0 : Concept} (hI : RCC5Interp I) (d : Nat) (root : SNode I C0) :
+    Type := {n : SNode I C0 // n ∈ kwNodes hI d root}
+
+/-- ... read as budgeted nodes, all at the same budget. -/
+def kwNd {C0 : Concept} (hI : RCC5Interp I) (d : Nat) (root : SNode I C0) :
+    kwFam hI d root → MTKNode I C0 :=
+  fun n => ⟨n.val.x, maxDepth root.lab, n.val.hx⟩
+
+theorem kwNd_bud {C0 : Concept} (hI : RCC5Interp I) (d : Nat)
+    (root : SNode I C0) (n : kwFam hI d root) :
+    (kwNd hI d root n).k = maxDepth root.lab := rfl
+
+/-- **THE LABELS SURVIVE.**  §198's bridge at the family level. -/
+theorem kwNd_lab_sub {C0 : Concept} (hI : RCC5Interp I) (d : Nat)
+    (root : SNode I C0) (n : kwFam hI d root) :
+    ∀ c ∈ n.val.lab, c ∈ mtk C0 I (kwNd hI d root n).x (kwNd hI d root n).k :=
+  fun c hc => lab_sub_mtk_uniform hI d root n.val n.property c hc
+
+/-- **`hbS`, `hbK`, `hbQ` — ALL THREE, BY `rfl`.**  Uniform budgets make the
+    within-one conditions trivial, which is exactly what §198.1 traded the
+    per-node budget for. -/
+theorem kwNd_hbS {C0 : Concept} (hI : RCC5Interp I) (d : Nat)
+    (root : SNode I C0) (e f : kwFam hI d root) :
+    (kwNd hI d root e).k ≤ (kwNd hI d root f).k + 1 := Nat.le_succ _
+
+theorem kwNd_hbK {C0 : Concept} (hI : RCC5Interp I) (d : Nat)
+    (root : SNode I C0) (k : KIdxM C0 I (kwNd hI d root))
+    (e : kwFam hI d root) :
+    (kwNd hI d root e).k ≤ mBk (kwNd hI d root) k + 1 ∧
+      mBk (kwNd hI d root) k ≤ (kwNd hI d root e).k + 1 :=
+  ⟨Nat.le_succ _, Nat.le_succ _⟩
+
+theorem kwNd_hbQ {C0 : Concept} (hI : RCC5Interp I) (d : Nat)
+    (root : SNode I C0) (k k' : KIdxM C0 I (kwNd hI d root)) :
+    mBk (kwNd hI d root) k ≤ mBk (kwNd hI d root) k' + 1 := Nat.le_succ _
+
+/-- **AND THE FAMILY IS FINITE**, with the count §197 supplies. -/
+theorem kwFam_card {C0 : Concept} (hI : RCC5Interp I) (d : Nat)
+    (root : SNode I C0) (hlen : root.lab.length ≤ (cl C0).length) :
+    (kwNodes hI d root).length ≤ genBound (kwBranch C0) d :=
+  kwNodes_length_le hI d root hlen
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36524,4 +36577,6 @@ end POFreeLift
 #print axioms POFreeLift.lab_sub_mtk
 #print axioms POFreeLift.kwNodes_depth_le
 #print axioms POFreeLift.lab_sub_mtk_uniform
+#print axioms POFreeLift.kwNd_lab_sub
+#print axioms POFreeLift.kwNd_hbK
 #print axioms POFreeLift.kernel_of_no_terminal

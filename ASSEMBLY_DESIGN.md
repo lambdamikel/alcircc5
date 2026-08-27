@@ -13361,3 +13361,55 @@ found that the last step is where the surprise lives (§155 vs §157, §195.2 vs
 
 Build: 36,527 lines, 1,822 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 199. THE FAMILY
+
+Every ingredient §198.2 listed is certified; §199 builds the object they are
+ingredients of. `kwFam` is the closure as an index type, `kwNd` reads each node
+as a budgeted node at the **uniform** budget §198.1 identified.
+
+| obligation of `mergedMT_ok` | status |
+|---|---|
+| `hbS` | `kwNd_hbS` — **`Nat.le_succ`** |
+| `hbK` | `kwNd_hbK` — **`Nat.le_succ`** |
+| `hbQ` | `kwNd_hbQ` — **`Nat.le_succ`** |
+| `hsepS` | `hsep_of_model` exists (§83); instantiation not written |
+| `he_ex` | ingredients: `kwNodes_covers` demand branch + `kwNd_lab_sub` |
+| `hk_ex` | ingredients: `odSeed_hk_ex_lt`, `kDIR` (`ccovers`), `kDR`/`kUP`/`kDN` (`*_of_witnessClosed` + `kwNodes_covers` kernel branch), `kPO` (`kPO_frame`) |
+
+The three budget conditions falling to `Nat.le_succ` is the whole point of
+§198.1's trade: a per-node budget breaks them, a uniform one makes them trivial,
+and `kwNd_lab_sub` shows the trade costs nothing.
+
+### 199.1 What stands between here and `Decidable (Satisfiable C0)`
+
+Everything downstream of a certificate is machine-checked already
+(`mixedCompleteness_of_merged`, `decidableSat_pofree_merged`), so the *entire*
+remaining target is `MergedExtraction C0`. Enumerated:
+
+1. `hsepS` — instantiate `hsep_of_model`.
+2. `he_ex` — external demand coverage, from `kwNodes_covers`.
+3. `hk_ex` — kernel routing, from `odSeed_hk_ex_lt` and the four `k*` premises.
+4. Root label contains `C0` — seed the root's support label with `[C0]`.
+5. **Bound reconciliation.** `kwNodes_length_le` gives `genBound (kwBranch C₀) d`;
+   `MergedExtraction` asks for `≤ mixKT C₀ = mixBound C₀ |typeEnum C₀| (mdepth C₀)`.
+   **These are different expressions** and neither dominates the other by
+   inspection. Either prove an inequality or relax `MergedExtraction` to *some*
+   computable bound — which is all decidability needs, and is the cheaper move.
+6. Reindex onto `Fin` — `reindexMT_ok` exists.
+7. Labels ∈ `allListsLe` — from `normL`.
+
+**Estimate, with the session's own track record attached.** Seven items, all with
+certified ingredients; none is open mathematics. That is a materially different
+position from the campaign's earlier states, where the remaining item was a
+question about the logic. But this session refuted its own "the rest is
+bookkeeping" claim **twice** — §155→§157, and §195.2→§196.1 within the hour — and
+in both cases the surprise was in the last step. Item 5 in particular is a
+mismatch, not a gap, and mismatches are where §196.1-style problems hide.
+
+So: **enumerable, not estimable.** The honest statement is that the remaining
+work is a list of seven wiring tasks rather than a research question, and that
+any of the seven could turn out to need a repair like §196.1's gate.
+
+Build: 36,582 lines, 1,830 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
