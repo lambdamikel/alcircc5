@@ -12304,3 +12304,46 @@ Recurrence has now rescued two arguments in this session (§153, §173). That is
 pattern worth suspecting rather than trusting: both times the rescue was found
 AFTER the obstruction, and I have not looked for a case where recurrence makes
 things worse.
+
+## 174. WHERE RECURRENCE MAKES THINGS WORSE — checked, and already handled
+
+§173.4 flagged that recurrence had rescued two arguments and that I had not
+looked for a case where it hurts. Looking:
+
+### 174.1 It hurts `∃PO`
+
+Recurrence puts every phase type above every phase type. `po_up` (certified) says
+a `PO` external stays `PO`-or-`PPI` at every LATER chain position, because
+`comp(PPI,PO) = {PO,PPI}` — and downward there is no law at all,
+`comp(PP,PO) = {DR,PO,PP}`.
+
+So a witness that is `PO` from one phase may be `PPI` from that phase's next
+occurrence. The certificate has ONE `K k f` per (kernel, external) pair and
+cannot express a relation that varies by lap.
+
+**So recurrence genuinely makes `∃PO` at a kernel phase unservable by an
+external.** That is the case §173.4 asked for, and it exists.
+
+### 174.2 It is already handled
+
+The file says so at line 17788, and names the probe:
+
+> an `∃PO` demand at a kernel phase provably cannot be served by a β-external (a
+> witness can be `PO` at a single level only), so it must leave the block
+
+`mixKernels_pool_ok` is the interface: `∃PO` demands **pend** to the pool and are
+realised in another block, the cross edge being `PO` by construction. That is
+what `glueFam`'s PO-across is FOR.
+
+### 174.3 What the check establishes
+
+Recurrence helps `∃DR` (§173) and hurts `∃PO` (§174.1), and the campaign already
+found the second and built around it. So the pattern §173.4 warned about is real
+but not unexamined — the asymmetry between `DR` and `PO` under recurrence is
+exactly why the fragment removes `∀PO` and why the glue is PO-across.
+
+The caveat stands in a weaker form: recurrence is not uniformly benign, its
+failure case is known, and my two rescues are on the side it helps.
+
+Build unchanged: 34,172 lines, 1,713 declarations, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
