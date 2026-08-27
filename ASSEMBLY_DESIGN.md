@@ -14011,3 +14011,36 @@ real.
 
 Build: 37,846 lines, 1,897 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 217. SATURATION CREATES DEMANDS — a gap, witnessed
+
+Michael's framing of completeness (*build a blocked, fully expanded tableau from
+a model*) makes the two phases legible: phase 1 is expansion with blocking, phase
+2 is the rest of the expansion. It also exposes where they fail to compose.
+
+**A body added by the saturation can itself be an existential.** If
+`∀PP.(∃DR.X) ∈ L e` and the frame declares `e PP f`, then `∃DR.X` joins `L f` —
+a demand `f` did not have when phase 1 ran, whose witness need not be in the node
+set. `saturation_can_add_demand` records it as a theorem so the claim cannot
+drift back into "probably fine".
+
+So `kwNodes_covers` guarantees coverage for the labels *as they were*, and phase
+2 can invalidate it. **One pass of each phase does not reach a fully expanded
+state** — the same shape as §196.1: two separately-correct pieces that do not
+compose on the first try.
+
+### 217.1 What makes a repair plausible
+
+The added concepts are **strictly shallower** than what produced them: a body of
+`∀r.c` has `mdepth c < mdepth (∀r.c)`. `satRound_depth_le` certifies the
+consequence — **saturation cannot deepen a label**, so the fuel that sufficed for
+phase 1 still suffices after it.
+
+That is the fact an interleaving argument runs on: alternate the phases, with
+phase 1's fuel fixed once and for all by `mdepth C₀`, and neither phase can
+undo the other's measure. Making that a theorem is the outstanding work, and it
+is the last structural item — everything downstream (§§207–216) is already
+stated against whatever labels and node set the interleaving produces.
+
+Build: 37,904 lines, 1,899 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

@@ -36857,6 +36857,62 @@ theorem odSeed_hk_ex_lab
 
 
 
+/-! #### §217 — SATURATION CREATES DEMANDS, AND THAT IS A GAP
+
+Phase 1 builds the node set from the demands the labels carry; phase 2 grows the
+labels. Those interact, and not benignly: a body added by \S208's saturation can
+itself be an existential. If `∀PP.(∃DR.X) ∈ L e` and the frame declares `e PP f`,
+then `∃DR.X` joins `L f` — **a demand `f` did not have when phase 1 ran**, whose
+witness need not be in the node set.
+
+So `kwNodes_covers` guarantees coverage for the labels as they were, and phase 2
+can invalidate it. One pass of each phase does not reach a fully expanded state.
+
+That is the same shape as §196.1: an assembly of two separately-correct pieces
+that does not compose on the first try.
+
+### What makes a repair plausible
+
+The added concepts are **strictly shallower** than what produced them — a body of
+`∀r.c` has `mdepth c < mdepth (∀r.c)`. So saturation cannot deepen a label, and
+the fuel that sufficed for phase 1 still suffices after it. That is the fact an
+interleaving argument would run on, and it is certified below. -/
+
+/-- **SATURATION DOES NOT DEEPEN A LABEL.**  Every concept it adds is an
+    `∃`-argument or a `∀`-body of something already present, hence strictly
+    shallower than its source; and `hcloseL`/`normL` only shrink further. -/
+theorem satRound_depth_le {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L : β → List Concept) (M : Nat) (hM : ∀ e, maxDepth (L e) ≤ M) (f : β) :
+    maxDepth (satRound I C0 nodes pt rel L f) ≤ M := by
+  refine Nat.le_trans (normL_depth_le C0 _)
+    (Nat.le_trans (hcloseL_depth_le I (pt f) _) ?_)
+  have hlt : maxDepth (L f ++ (allArgs eq (L f) ++
+      nodes.flatMap (fun e => allBodies (rel e f) (L e)))) < M + 1 := by
+    refine maxDepth_lt (Nat.succ_pos M) (fun c hc => ?_)
+    rcases List.mem_append.mp hc with h | h
+    · have h1 := mem_maxDepth_le h
+      have h2 := hM f
+      omega
+    · rcases List.mem_append.mp h with h' | h'
+      · have h1 := mem_maxDepth_le (mem_allArgs h')
+        have h2 := hM f
+        have hd : mdepth (Concept.ex eq c) = mdepth c + 1 := rfl
+        omega
+      · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h'
+        have h1 := mem_maxDepth_le (mem_allBodies hb)
+        have h2 := hM e
+        have hd : mdepth (Concept.all (rel e f) c) = mdepth c + 1 := rfl
+        omega
+  omega
+
+/-- **THE GAP, WITNESSED.**  A `∀PP` body can be an existential, so saturation
+    really does hand a node a demand it did not have. Recorded as a theorem so
+    the claim cannot drift back into "probably fine". -/
+theorem saturation_can_add_demand (X : Concept) :
+    Concept.ex dr X ∈ allBodies pp [Concept.all pp (Concept.ex dr X)] :=
+  mem_allBodies_of (List.mem_singleton_self _)
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37843,4 +37899,6 @@ end POFreeLift
 #print axioms POFreeLift.satRound_fixed_exeq
 #print axioms POFreeLift.odSeed_he_ex_lab
 #print axioms POFreeLift.odSeed_hk_ex_lab
+#print axioms POFreeLift.satRound_depth_le
+#print axioms POFreeLift.saturation_can_add_demand
 #print axioms POFreeLift.kernel_of_no_terminal
