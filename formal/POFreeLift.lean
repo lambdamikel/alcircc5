@@ -37322,6 +37322,69 @@ that a non-stationary stage moves it. Both halves of that are available
 (`satIter_step_lt` for labels, `extendStage_len` for nodes); assembling them at
 `β := SNode I C₀` is the next brick. -/
 
+/-! #### §224 — THE ROUND MOVES THE MEASURE
+
+§223 made stationarity possible; §224 shows non-stationarity is detected. A round
+is `extendStage ∘ satStage`, and a stage that is not stationary fails one of the
+two conditions — an unserved demand, or an unsaturated label — and each moves a
+different term of §218's measure. -/
+
+/-- Appending never shrinks the total. -/
+theorem totalSize_append_le {β : Type} (l1 l2 : List β) (L : β → List Concept) :
+    totalSize l1 L ≤ totalSize (l1 ++ l2) L := by
+  unfold totalSize
+  rw [List.map_append, List.sum_append]
+  omega
+
+open Classical in
+/-- **A NEW CHILD LENGTHENS THE STAGE.**  The filtered append is non-empty
+    exactly when some owed child is missing. -/
+theorem extendStage_len_lt (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) {m : SNode I C0}
+    (hm : m ∈ stageKids hI ns) (hnm : m ∉ ns) :
+    ns.length < (extendStage hI ns).length := by
+  have hmem : m ∈ (stageKids hI ns).filter (fun m => decide (m ∉ ns)) :=
+    List.mem_filter.mpr ⟨hm, decide_eq_true hnm⟩
+  have hpos : 0 < ((stageKids hI ns).filter (fun m => decide (m ∉ ns))).length :=
+    List.length_pos_of_mem hmem
+  rw [extendStage, List.length_append]
+  omega
+
+open Classical in
+/-- **CASE 1 — AN UNSERVED DEMAND MOVES THE MEASURE.**  The node term grows and
+    the label term cannot fall, so §218 applies. -/
+theorem stage_lt_of_unserved (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) {m : SNode I C0}
+    (hm : m ∈ stageKids hI ns) (hnm : m ∉ ns) :
+    interMeasure C0 ns SNode.lab
+      < interMeasure C0 (extendStage hI ns) SNode.lab := by
+  refine interMeasure_lt_nodes C0 ns (extendStage hI ns) SNode.lab SNode.lab
+    (extendStage_len_lt hI ns hm hnm) ?_
+  rw [extendStage]
+  exact totalSize_append_le ns _ SNode.lab
+
+/-- **CASE 2 — AN UNSATURATED LABEL MOVES THE MEASURE.**  `satStage` keeps the
+    node list's length, so only the label term changes, and §209's per-node
+    comparison gives the strict step. -/
+theorem stage_lt_of_unsaturated {C0 : Concept}
+    (ns ns' : List (SNode I C0))
+    (hlen : ns.length = ns'.length)
+    (hgrow : totalSize ns SNode.lab < totalSize ns' SNode.lab) :
+    interMeasure C0 ns SNode.lab < interMeasure C0 ns' SNode.lab := by
+  unfold interMeasure
+  rw [hlen]
+  omega
+
+/-! ##### §224.1 — so the alternation detects non-stationarity
+
+A stage that is not stationary has an unserved demand or an unsaturated label.
+The first is `stage_lt_of_unserved`; the second is `stage_lt_of_unsaturated`, fed
+by `satStage_length` (the list keeps its length) and §209's `normL_len_lt`.
+
+Either way §218's measure strictly increases, and §219 bounds how often that can
+happen. What remains is to package the two cases as one statement about
+`stageIter` — a case split, with both branches proved. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38323,4 +38386,6 @@ end POFreeLift
 #print axioms POFreeLift.satStage_label
 #print axioms POFreeLift.modelRel_hsound
 #print axioms POFreeLift.stageIter_len
+#print axioms POFreeLift.stage_lt_of_unserved
+#print axioms POFreeLift.stage_lt_of_unsaturated
 #print axioms POFreeLift.kernel_of_no_terminal

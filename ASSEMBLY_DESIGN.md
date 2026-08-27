@@ -14258,3 +14258,35 @@ three the broken component satisfied every property that had been asked of it.
 
 Build: 38,326 lines, 1,929 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 224. THE ROUND MOVES THE MEASURE
+
+§223 made stationarity *possible*; §224 shows non-stationarity is *detected*. A
+round is `extendStage ∘ satStage`, and a stage that is not stationary fails one
+of the two conditions — an unserved demand, or an unsaturated label — and each
+moves a different term of §218's measure.
+
+| case | lemma | which term |
+|---|---|---|
+| unserved demand | `stage_lt_of_unserved` | the **node** term grows; `totalSize_append_le` keeps the label term from falling |
+| unsaturated label | `stage_lt_of_unsaturated` | the **label** term grows; `satStage_length` pins the node term |
+
+with `extendStage_len_lt` supplying the strict length increase — the filtered
+append is non-empty exactly when some owed child is missing, which is the
+property §223's correction bought.
+
+### 224.1 Position
+
+The alternation's termination argument is now complete in its parts:
+
+```
+non-stationary  ⟹  measure strictly increases   (§224, both cases)
+measure strictly increases  ⟹  boundedly often  (§219)
+stationary  ⟹  all certificate obligations      (§220)
+```
+
+What remains is packaging the first line as one statement about `stageIter` — a
+case split with both branches proved — and then the `Fin` reindex.
+
+Build: 38,391 lines, 1,933 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
