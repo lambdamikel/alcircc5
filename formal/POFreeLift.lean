@@ -36577,6 +36577,85 @@ lemma") does not fit: the kernel's lap is a declared structure with no single
 model edge behind it, and pretending otherwise is what §211's first version did
 on the other side. -/
 
+/-! #### §213 — THE SATURATION, AGNOSTIC ABOUT WHY
+
+§212.1 observed that additions have two different justifications and both end at
+the same two facts. So the saturation should not ask for an argument — it should
+ask for the conclusion.
+
+`satRound_supportOk_gen` takes exactly that: *every body transferred is true at
+its target.* §211's frame agreement and §212's recurrence both discharge it, and
+neither has to be phrased in the other's terms. The original edge-based form is
+recovered as a corollary, so nothing is lost. -/
+
+/-- **THE SATURATION IS SOUND GIVEN ONLY THAT ITS TRANSFERS ARE TRUE.** -/
+theorem satRound_supportOk_gen {β : Type} (hI : RCC5Interp I) {C0 : Concept}
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (hdom : ∀ e, I.dom (pt e))
+    (L : β → List Concept) (hL : ∀ e, SupportOk I C0 (pt e) (L e))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ L e → sat I (pt f) c) (f : β) :
+    SupportOk I C0 (pt f) (satRound I C0 nodes pt rel L f) := by
+  refine normL_supportOk (hcloseL_supportOk hI (hdom f) _ ?_ ?_)
+  · intro c hc
+    rcases List.mem_append.mp hc with h | h
+    · exact (hL f).sub c h
+    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
+      exact support_all_cl (hL e) (mem_allBodies hb)
+  · intro c hc
+    rcases List.mem_append.mp hc with h | h
+    · exact (hL f).sat_ c h
+    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
+      exact hsound e f c (mem_allBodies hb)
+
+/-- **SOURCE 1 — the frame.**  §211's agreement discharges `hsound` for a
+    declared frame, `PO` edges carrying nothing by `pofree_cl_all`. -/
+theorem satRound_hsound_of_frame {β : Type} {C0 : Concept}
+    (pt : β → α) (rel : β → β → Atom) (hpofree : POFree C0)
+    (hdom : ∀ e, I.dom (pt e))
+    (hrel : ∀ e f, rel e f ≠ po → rel e f = I.rho (pt e) (pt f))
+    (L : β → List Concept) (hL : ∀ e, SupportOk I C0 (pt e) (L e)) :
+    ∀ e f c, Concept.all (rel e f) c ∈ L e → sat I (pt f) c := by
+  intro e f c hall
+  have hne : rel e f ≠ po :=
+    pofree_cl_all C0 hpofree (rel e f) c ((hL e).sub _ hall)
+  exact support_all_sat (hdom f) (hL e) hall (hrel e f hne).symm
+
+/-! ##### §213.1 — and source 2 needs no restatement
+
+§212's `kk_pp_sat`/`kk_ppi_sat` already conclude `sat I (c (i + b)) cc` from
+`Concept.all pp cc ∈ mty C0 I (c (i + a))`. Since a support label sits inside the
+model type (`supportOk_sub_mty`), that is `hsound`'s conclusion for the
+kernel-internal `rel`, with no bridging lemma at all.
+
+**That is the payoff of asking for the conclusion instead of the argument.** The
+two sources were never going to share a phrasing — one is about an edge, the
+other about a repeat — and forcing them to would have meant weakening one until
+it fit the other. -/
+
+/-- **SOURCE 2 — recurrence, in `hsound`'s own form.**  §213.1 claimed this needs
+    no bridging lemma; here it is, checked. A support label sits inside the model
+    type, so §212's fact applies to it directly. -/
+theorem satRound_hsound_of_recurrence (hI : RCC5Interp I) {C0 : Concept}
+    (c : Nat → α) (hdom : ∀ n, I.dom (c n)) (d : Bool)
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (L : Nat → List Concept)
+    (hL : ∀ a, SupportOk I C0 (c (i + a)) (L a))
+    {a b : Nat} (ha : a < p) (hb : b < p) (cc : Concept)
+    (hall : Concept.all pp cc ∈ L a) : sat I (c (i + b)) cc :=
+  kk_pp_sat hI c hdom d hstep hty ha (supportOk_sub_mty (hL a) _ hall) hb
+
+/-- The `∀PPI` mirror. -/
+theorem satRound_hsound_of_recurrence_ppi (hI : RCC5Interp I) {C0 : Concept}
+    (c : Nat → α) (hdom : ∀ n, I.dom (c n)) (d : Bool)
+    (hstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir d)
+    {i p : Nat} (hty : mty C0 I (c i) = mty C0 I (c (i + p)))
+    (L : Nat → List Concept)
+    (hL : ∀ a, SupportOk I C0 (c (i + a)) (L a))
+    {a b : Nat} (ha : a < p) (hb : b < p) (cc : Concept)
+    (hall : Concept.all ppi cc ∈ L a) : sat I (c (i + b)) cc :=
+  kk_ppi_sat hI c hdom d hstep hty ha (supportOk_sub_mty (hL a) _ hall) hb
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37557,4 +37636,7 @@ end POFreeLift
 #print axioms POFreeLift.odNet_rho_of_ne_po
 #print axioms POFreeLift.kk_pp_sat
 #print axioms POFreeLift.kk_ppi_sat
+#print axioms POFreeLift.satRound_supportOk_gen
+#print axioms POFreeLift.satRound_hsound_of_frame
+#print axioms POFreeLift.satRound_hsound_of_recurrence
 #print axioms POFreeLift.kernel_of_no_terminal

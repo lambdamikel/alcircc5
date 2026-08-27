@@ -13869,3 +13869,42 @@ here and the shape of §211 is what made it visible.
 
 Build: 37,560 lines, 1,888 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 213. THE SATURATION, AGNOSTIC ABOUT WHY
+
+§212.1 observed that additions have two different justifications and that both
+end at the same two facts. So the saturation should not ask for an *argument* —
+it should ask for the *conclusion*.
+
+`satRound_supportOk_gen` takes exactly that: **every body transferred is true at
+its target.** Then:
+
+| source | discharged by | shape |
+|---|---|---|
+| the frame | `satRound_hsound_of_frame` (§211) | about an **edge** |
+| recurrence | `satRound_hsound_of_recurrence` (§212) | about a **repeat** |
+
+and neither has to be phrased in the other's terms. §213.1 claimed source 2 would
+need no bridging lemma; `satRound_hsound_of_recurrence` is that claim checked —
+a support label sits inside the model type (`supportOk_sub_mty`), so `kk_pp_sat`
+applies to it directly, in one line.
+
+**That is the payoff of asking for the conclusion.** The two sources were never
+going to share a phrasing — one is about an edge, the other about a repeat — and
+forcing them to would have meant weakening one until it fit the other. Which is
+what §211's first version did in the other direction, and it produced an
+unsatisfiable premise.
+
+### 213.1 Phase 2, final shape
+
+```
+satRound_supportOk_gen   sound, given transfers are true
+  ├── satRound_hsound_of_frame        (edges, §211)
+  └── satRound_hsound_of_recurrence   (kernel lap, §212)
+satRound_mono / satIter_mono          monotone
+satIter_no_endless_growth             terminates (§§209-210)
+satRound_fixed_propagates             a fixpoint gives all four obligations
+```
+
+Build: 37,642 lines, 1,892 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
