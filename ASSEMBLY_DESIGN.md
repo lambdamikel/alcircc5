@@ -13794,3 +13794,41 @@ the model — which is what `mixLt_rho` and `seedM_dr` (§205) supply for the
 
 Build: 37,445 lines, 1,883 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 211. THE DECLARED FRAME AGREES WITH THE MODEL, OFF `PO`
+
+§210.1 said phase 2 needs `hrel` — the declared relation equalling the model's.
+Stated that way it is **exactly what `wp96` A showed breaks finiteness**: a
+read-off frame makes `ee_all` fire on every pair while the node set drops the
+budget. So `hrel` as first written had an unsatisfiable premise, which would
+have been a §108-style vacuity had it stayed.
+
+It does not have to ask for full agreement. A body only travels along an edge
+carrying a `∀`, and `pofree_cl_all` says the fragment has **no `∀PO`** — so
+`PO` edges, precisely the ones a declared frame does *not* read off the model,
+carry nothing. `satRound_supportOk` now takes agreement **only off `PO`**.
+
+`odNet_rho_of_ne_po`: every non-`PO` entry of a declared `odNet` **is** the
+model's relation —
+
+| entry | why |
+|---|---|
+| `EQ` | reflexivity |
+| `PP` / `PPI` | the order is model-`PP` (`mixLt_rho`), converse for `PPI` |
+| `DR` | disjointness is model-`DR` (`extFrame_disj_dr`) |
+| `PO` | excluded by hypothesis — and by `pofree_cl_all`, carries nothing |
+
+`satRound_hrel` packages it: phase 2's premise is discharged for any declared
+frame whose order is model-`PP` and whose disjointness is model-`DR`, which is
+what `odSeed` frames are built to be.
+
+### 211.1 Why the fragment restriction earns its keep here
+
+This is the third place `∀PO`-freeness does structural work rather than
+bookkeeping: it made `mty_no_all_po` dissolve the PO cross-obligations (§25), it
+made the PO-default frame's `ee_all` vacuous, and here it is what lets a frame be
+**declared rather than read off** without losing soundness. The fragment is not
+"the logic minus a case" — it is the logic in which declared frames are sound.
+
+Build: 37,495 lines, 1,885 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

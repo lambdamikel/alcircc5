@@ -36200,8 +36200,8 @@ noncomputable def satRound {β : Type} (I : Interp α) (C0 : Concept)
     This is `support_extend` at family scale. -/
 theorem satRound_supportOk {β : Type} (hI : RCC5Interp I) {C0 : Concept}
     (nodes : List β) (pt : β → α) (rel : β → β → Atom)
-    (hdom : ∀ e, I.dom (pt e))
-    (hrel : ∀ e f, rel e f = I.rho (pt e) (pt f))
+    (hpofree : POFree C0) (hdom : ∀ e, I.dom (pt e))
+    (hrel : ∀ e f, rel e f ≠ po → rel e f = I.rho (pt e) (pt f))
     (L : β → List Concept) (hL : ∀ e, SupportOk I C0 (pt e) (L e)) (f : β) :
     SupportOk I C0 (pt f) (satRound I C0 nodes pt rel L f) := by
   refine normL_supportOk (hcloseL_supportOk hI (hdom f) _ ?_ ?_)
@@ -36214,7 +36214,10 @@ theorem satRound_supportOk {β : Type} (hI : RCC5Interp I) {C0 : Concept}
     rcases List.mem_append.mp hc with h | h
     · exact (hL f).sat_ c h
     · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
-      exact support_all_sat (hdom f) (hL e) (mem_allBodies hb) (hrel e f).symm
+      have hall := mem_allBodies hb
+      have hne : rel e f ≠ po :=
+        pofree_cl_all C0 hpofree (rel e f) c ((hL e).sub _ hall)
+      exact support_all_sat (hdom f) (hL e) hall (hrel e f hne).symm
 
 /-- **AND IT ONLY GROWS.** -/
 theorem satRound_mono {β : Type} (I : Interp α) (C0 : Concept)
@@ -36464,6 +36467,52 @@ theorem satIter_no_endless_growth {β : Type} (I : Interp α) (C0 : Concept)
   have h1 := key (nodes.length * (cl C0).length + 1) (Nat.le_refl _)
   have h2 := hbound (nodes.length * (cl C0).length + 1)
   omega
+
+/-! #### §211 — THE DECLARED FRAME AGREES WITH THE MODEL, OFF `PO`
+
+§210.1 said phase 2 needs `hrel`. §211 supplies it, and the form matters: full
+agreement between frame and model is exactly what `wp96` A showed **breaks**
+finiteness, so `hrel` must not ask for it.
+
+It does not have to. A body only ever travels along an edge carrying a `∀`, and
+`pofree_cl_all` says the fragment has no `∀PO` — so the `PO` edges, which are
+precisely the ones a declared frame does not read off the model, carry nothing.
+`satRound_supportOk` now takes agreement **only off `PO`**, which is what a
+declared frame gives. -/
+
+/-- **AGREEMENT OFF `PO`.**  Every non-`PO` entry of a declared `odNet` is the
+    model's relation: `EQ` by reflexivity, `PP`/`PPI` because the order is
+    model-`PP` (`mixLt_rho`), `DR` because disjointness is model-`DR`
+    (`extFrame_disj_dr`). -/
+theorem odNet_rho_of_ne_po {N : Type} (hI : RCC5Interp I) (O : ODStruct N)
+    (node : N → α) (hdom : ∀ v, I.dom (node v))
+    (hlt : ∀ x y, O.lt x y → I.rho (node x) (node y) = pp)
+    (hdj : ∀ x y, O.disj x y → I.rho (node x) (node y) = dr)
+    (x y : N) (hne : odNet O x y ≠ po) :
+    odNet O x y = I.rho (node x) (node y) := by
+  by_cases h1 : x = y
+  · subst h1
+    rw [odNet_self O x, hI.refl_eq (node x) (hdom x)]
+  · by_cases h2 : O.lt x y
+    · rw [odNet_lt O h2, hlt x y h2]
+    · by_cases h3 : O.lt y x
+      · rw [odNet_gt O h3]
+        have hc := hI.conv_ (node y) (node x) (hdom y) (hdom x)
+        rw [hlt y x h3] at hc
+        rw [hc]; rfl
+      · by_cases h4 : O.disj x y
+        · rw [odNet_dj O h4, hdj x y h4]
+        · exact absurd (odNet_po O h1 h2 h3 h4) hne
+
+/-- **SO PHASE 2'S PREMISE IS DISCHARGED** for a declared frame, given only that
+    its order is model-`PP` and its disjointness model-`DR` — the two facts
+    `mixLt_rho` and `extFrame_disj_dr` establish for `odSeed` frames. -/
+theorem satRound_hrel {N : Type} (hI : RCC5Interp I) (O : ODStruct N)
+    (node : N → α) (hdom : ∀ v, I.dom (node v))
+    (hlt : ∀ x y, O.lt x y → I.rho (node x) (node y) = pp)
+    (hdj : ∀ x y, O.disj x y → I.rho (node x) (node y) = dr) :
+    ∀ x y, odNet O x y ≠ po → odNet O x y = I.rho (node x) (node y) :=
+  fun x y h => odNet_rho_of_ne_po hI O node hdom hlt hdj x y h
 
 end WitSelector
 
@@ -37442,4 +37491,5 @@ end POFreeLift
 #print axioms POFreeLift.closure_stops_le
 #print axioms POFreeLift.satIter_step_lt
 #print axioms POFreeLift.satIter_no_endless_growth
+#print axioms POFreeLift.odNet_rho_of_ne_po
 #print axioms POFreeLift.kernel_of_no_terminal
