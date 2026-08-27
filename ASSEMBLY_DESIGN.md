@@ -12168,3 +12168,44 @@ obligations.
 the frame half of that question outright and the label half at 99.8%. The
 remaining piece is back to construction — the fresh point's own demands — which
 is where the session's vertical machinery (§§140–155) applies.
+
+## 171. THE DR-GLUE
+
+§170's surgery needs a sub-model transplanted **disjoint** from the original.
+Both existing glues put **PO** across — free for the fragment, since `∀PO` does
+not exist — but **PO does not serve an `∃DR` demand**, which is the whole point
+of the transplant.
+
+So a DR-glue is genuinely new. Grepped first: neither `glueMT` nor `glueFam` has
+a DR variant.
+
+| | |
+|---|---|
+| `DRCompat` | each block's labels satisfy the other's `∀DR` bodies |
+| `glueDRMT` | two certificates side by side, every cross pair `DR` |
+| `dr_mem_comp_dr` | `DR ∈ comp(r, DR)` for every atom — `propext` only |
+| `comp_dr_dr_all` | `comp(DR,DR)` is everything — `propext` only |
+
+### 171.1 The frame is free; the obligations are not
+
+`dr_mem_comp_dr` covers a triangle with two vertices in one block and one in the
+other. `comp_dr_dr_all` covers the mirror. Between them that is the entire frame
+content of the glue, and neither fact was in the file.
+
+**The obligations are where the DR-glue differs from the PO-glue.** `∀PO` does
+not exist in the fragment, so `glueFam`'s cross-block `ee_all` is vacuous by
+`MTNoPo`. **`∀DR` is a real universal here**, so a `∀DR.c` on one side must reach
+every label on the other — which is `DRCompat`, and which `wp129` measured as
+consistent in **99.8%** of chains.
+
+So the DR-glue costs a hypothesis where the PO-glue costs nothing, and that
+hypothesis is measured to be usually satisfiable.
+
+### 171.2 Left
+
+`glueDRMT`'s `MultiTierOk`, whose cross-block clauses are exactly `DRCompat`.
+The frame facts it needs are now proved; the clause-by-clause discharge is not
+written.
+
+Build: 34,079 lines, 1,708 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

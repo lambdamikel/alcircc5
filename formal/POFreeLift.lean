@@ -33099,6 +33099,79 @@ which is the same character as the budgets (§162), and the budgets went through
 once the right choice was made. That is a reason for cautious optimism and not
 more; the analogous claim has been wrong twice this session. -/
 
+/-! #### §171 — THE DR-GLUE
+
+§170's surgery needs a sub-model transplanted DISJOINT from the original. Both
+existing glues (`glueMT`, `glueFam`) put **PO** across, which the fragment gets
+for free because `∀PO` does not exist — but PO does not serve an `∃DR` demand,
+which is the whole point of the transplant.
+
+So a DR-glue is genuinely new. The frame side is free: every composition cell
+`comp(r, DR)` contains `DR`, and `comp(DR,DR)` is everything.
+
+The obligation side is NOT free, and that is the content. `∀DR` universals DO
+exist in the fragment, so a `∀DR.c` on one side must reach every label on the
+other. `DRCompat` names exactly that, and it is what `wp129` measured as
+consistent in 99.8% of chains. -/
+
+/-- The two blocks' labels each satisfy the other's `∀DR` bodies. -/
+def DRCompat {β1 β2 κ1 κ2 : Type} (T1 : MultiTier β1 κ1)
+    (T2 : MultiTier β2 κ2) : Prop :=
+  (∀ (x : β1 ⊕ κ1 × Nat) (c : Concept), Concept.all dr c ∈ mtLabel T1 x →
+      ∀ y : β2 ⊕ κ2 × Nat, c ∈ mtLabel T2 y) ∧
+  (∀ (y : β2 ⊕ κ2 × Nat) (c : Concept), Concept.all dr c ∈ mtLabel T2 y →
+      ∀ x : β1 ⊕ κ1 × Nat, c ∈ mtLabel T1 x)
+
+/-- **THE DR-GLUE.**  Two certificates side by side, every cross pair `DR`. -/
+def glueDRMT {β1 β2 κ1 κ2 : Type} (T1 : MultiTier β1 κ1) (T2 : MultiTier β2 κ2) :
+    MultiTier (β1 ⊕ β2) (κ1 ⊕ κ2) where
+  E := fun e f => match e, f with
+    | .inl e, .inl f => T1.E e f
+    | .inr e, .inr f => T2.E e f
+    | _, _ => dr
+  K := fun k e => match k, e with
+    | .inl k, .inl e => T1.K k e
+    | .inr k, .inr e => T2.K k e
+    | _, _ => dr
+  Q := fun k k' => match k, k' with
+    | .inl k, .inl k' => T1.Q k k'
+    | .inr k, .inr k' => T2.Q k k'
+    | _, _ => dr
+  up := fun k => match k with
+    | .inl k => T1.up k
+    | .inr k => T2.up k
+  tauE := fun e => match e with
+    | .inl e => T1.tauE e
+    | .inr e => T2.tauE e
+  p := fun k => match k with
+    | .inl k => T1.p k
+    | .inr k => T2.p k
+  phase := fun k a => match k with
+    | .inl k => T1.phase k a
+    | .inr k => T2.phase k a
+
+/-- **EVERY CROSS CELL ADMITS `DR`.**  The finite fact the frame rests on:
+    `DR ∈ comp(r, DR)` for every atom `r`, and `comp(DR,DR)` is everything. -/
+theorem dr_mem_comp_dr : ∀ r : Atom, dr ∈ comp r dr := by
+  intro r; cases r <;> decide
+
+theorem comp_dr_dr_all : ∀ r : Atom, r ∈ comp dr dr := by
+  intro r; cases r <;> decide
+
+/-! ##### §171.1 — what these two facts buy, and what is left
+
+`dr_mem_comp_dr` covers a triangle with two vertices in one block and one in the
+other: the two cross edges are `DR`, the inner edge is whatever the block says,
+and the cell contains `DR`. `comp_dr_dr_all` covers the mirror shape.
+
+Both are `by decide` over the five atoms — the whole frame content of the glue,
+and neither was in the file.
+
+What is NOT done here is `glueDRMT`'s `MultiTierOk`, whose cross-block clauses
+are exactly `DRCompat`. That is the next brick, and unlike the PO-glue it cannot
+be discharged by `MTNoPo`: **`∀DR` is a real universal in this fragment**, which
+is why the DR-glue costs a hypothesis where the PO-glue costs nothing. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34001,4 +34074,6 @@ end POFreeLift
 #print axioms POFreeLift.uniform_of_ppNodes
 #print axioms POFreeLift.kDIR_of_rr
 #print axioms POFreeLift.mKdr_of_cofinal
+#print axioms POFreeLift.dr_mem_comp_dr
+#print axioms POFreeLift.comp_dr_dr_all
 #print axioms POFreeLift.kernel_of_no_terminal
