@@ -35622,6 +35622,111 @@ theorem kwFam_card {C0 : Concept} (hI : RCC5Interp I) (d : Nat)
     (kwNodes hI d root).length ≤ genBound (kwBranch C0) d :=
   kwNodes_length_le hI d root hlen
 
+/-! #### §200 — THE BOUND WAS NEVER FIXED
+
+§199.1 item 5 flagged a mismatch: `kwNodes_length_le` gives
+`genBound (kwBranch C₀) d`, while `MergedExtraction` asks for `≤ mixKT C₀`, and
+neither expression dominates the other by inspection. It was the item most
+likely to hide a §196.1-style problem.
+
+It hides nothing, because **the bound was never fixed**. `decidableSat_of_codes`
+takes an ARBITRARY list of codes, and `encodeMT_mem_codesM` is already
+parametric in `NE`/`NK`/`P`. `mixKT` was a choice, not a constraint.
+
+So the fix is not to reconcile two expressions but to stop naming one: the
+extraction may report whatever bound it achieves, and decidability follows for
+that bound. -/
+
+/-- **THE EXTRACTION TARGET, AT AN ARBITRARY BOUND.**  `MergedExtraction` with
+    `mixKT C₀` replaced by a parameter. -/
+def MergedExtractionAt (C0 : Concept) (B : Nat) : Prop :=
+  Satisfiable C0 →
+    ∃ (nE nK : Nat) (T : MultiTier (Fin nE) (Fin nK)) (e : Fin nE),
+      MultiTierOk T ∧ C0 ∈ T.tauE e ∧
+      nE ≤ B ∧ nK ≤ B ∧ (∀ k, T.p k ≤ B) ∧
+      (∀ f, T.tauE f ∈ allListsLe (cl C0) (cl C0).length) ∧
+      (∀ k a, T.phase k a ∈ allListsLe (cl C0) (cl C0).length)
+
+/-- The encoding step, at that bound. -/
+theorem mixedCompleteness_at (C0 : Concept) (B : Nat)
+    (h : MergedExtractionAt C0 B) :
+    Satisfiable C0 →
+      ∃ p ∈ codesM C0 B B B, (p.1).mtAcceptB p.2 C0 = true := by
+  intro hsat
+  obtain ⟨nE, nK, T, e, hok, hC0, hnE, hnK, hP, htau, hph⟩ := h hsat
+  refine ⟨(encodeMT T, e.val), ?_, encodeMT_accepts T hok C0 e hC0⟩
+  exact encodeMT_mem_codesM C0 B B B T hnE hnK hP htau hph e.val
+    (Nat.le_trans (Nat.le_of_lt e.isLt) hnE)
+
+/-- **AND DECIDABILITY, AT THAT BOUND.**  So an extraction achieving ANY
+    computable bound settles the fragment — `mixKT` need not be the number. -/
+def decidableSat_pofree_at (C0 : Concept) (B : Nat)
+    (h : MergedExtractionAt C0 B) : Decidable (Satisfiable C0) :=
+  decidableSat_of_codes C0 (codesM C0 B B B) (mixedCompleteness_at C0 B h)
+
+/-- `MergedExtraction` is the instance at `mixKT`, so nothing is lost. -/
+theorem mergedExtractionAt_of_merged (C0 : Concept) (h : MergedExtraction C0) :
+    MergedExtractionAt C0 (mixKT C0) := h
+
+/-- **THE BOUND THE `kwNodes` EXTRACTION ACHIEVES.**  Computable from `C₀`
+    alone, which is all decidability asks. -/
+def kwKT (C0 : Concept) : Nat :=
+  Nat.max (genBound (kwBranch C0) (mdepth C0)) (periodBound C0)
+
+/-! #### §201 — THE ROOT
+
+§199.1 item 4. The closure has to start somewhere, and the start has to carry
+`C₀` — that is what `MergedExtraction`'s `C0 ∈ T.tauE e` asks.
+
+The root's support label is seeded with `[C₀]` and closed. Its depth is then
+`≤ mdepth C₀`, which is what makes `mdepth C₀` the right fuel for `kwNodes`. -/
+
+open Classical in
+/-- **THE ROOT NODE.**  A model point satisfying `C₀`, labelled by what `C₀`
+    alone owes. -/
+noncomputable def rootNode (hI : RCC5Interp I) (C0 : Concept) {x : α}
+    (hx : I.dom x) (hsat : sat I x C0) : SNode I C0 :=
+  ⟨x, hx, normL C0 (hcloseL I x [C0]),
+    normL_supportOk (hcloseL_supportOk hI hx [C0]
+      (fun c hc => by rw [List.mem_singleton.mp hc]; exact cl_self C0)
+      (fun c hc => by rw [List.mem_singleton.mp hc]; exact hsat))⟩
+
+/-- **AND IT CARRIES `C₀`** — `MergedExtraction`'s root condition. -/
+theorem rootNode_mem (hI : RCC5Interp I) (C0 : Concept) {x : α}
+    (hx : I.dom x) (hsat : sat I x C0) :
+    C0 ∈ (rootNode hI C0 hx hsat).lab :=
+  mem_normL.mpr ⟨cl_self C0,
+    mem_hcloseL.mpr ⟨C0, List.mem_singleton_self C0, self_mem_hclose I x C0⟩⟩
+
+theorem rootNode_len (hI : RCC5Interp I) (C0 : Concept) {x : α}
+    (hx : I.dom x) (hsat : sat I x C0) :
+    (rootNode hI C0 hx hsat).lab.length ≤ (cl C0).length := normL_len C0 _
+
+/-- **THE FUEL.**  The root's label is no deeper than `C₀`, so `mdepth C₀` is
+    enough fuel for `kwNodes` to be closed (`kwNodes_covers`). -/
+theorem rootNode_depth (hI : RCC5Interp I) (C0 : Concept) {x : α}
+    (hx : I.dom x) (hsat : sat I x C0) :
+    maxDepth (rootNode hI C0 hx hsat).lab ≤ mdepth C0 := by
+  refine Nat.le_trans (normL_depth_le C0 _)
+    (Nat.le_trans (hcloseL_depth_le I x [C0]) ?_)
+  simp [maxDepth]
+
+/-- **§199.1 item 7.**  A normalised label is one of the enumerated lists — which
+    is what `MergedExtraction`'s two `allListsLe` conditions ask of every
+    external and every phase. -/
+theorem normL_mem_allListsLe (C0 : Concept) (L : List Concept) :
+    normL C0 L ∈ allListsLe (cl C0) (cl C0).length := by
+  rw [mem_allListsLe]
+  exact ⟨List.length_filter_le _ _, fun c hc => (mem_normL.mp hc).1⟩
+
+/-- Every node of the closure has such a label: `sChildN` and `kPhaseNode` both
+    normalise, and `rootNode` does too. -/
+theorem sNode_lab_mem_allListsLe (C0 : Concept) {I : Interp α}
+    (n : SNode I C0) (L : List Concept)
+    (h : n.lab = normL C0 L) :
+    n.lab ∈ allListsLe (cl C0) (cl C0).length := by
+  rw [h]; exact normL_mem_allListsLe C0 L
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36579,4 +36684,8 @@ end POFreeLift
 #print axioms POFreeLift.lab_sub_mtk_uniform
 #print axioms POFreeLift.kwNd_lab_sub
 #print axioms POFreeLift.kwNd_hbK
+#print axioms POFreeLift.mixedCompleteness_at
+#print axioms POFreeLift.rootNode_mem
+#print axioms POFreeLift.rootNode_depth
+#print axioms POFreeLift.normL_mem_allListsLe
 #print axioms POFreeLift.kernel_of_no_terminal

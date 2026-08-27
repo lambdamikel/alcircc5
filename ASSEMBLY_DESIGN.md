@@ -13413,3 +13413,57 @@ any of the seven could turn out to need a repair like §196.1's gate.
 
 Build: 36,582 lines, 1,830 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 200. THE BOUND WAS NEVER FIXED
+
+§199.1 item 5 was the one flagged as most likely to hide a §196.1-style problem:
+`kwNodes_length_le` gives `genBound (kwBranch C₀) d`, `MergedExtraction` asks for
+`≤ mixKT C₀`, and neither dominates the other by inspection.
+
+**It hides nothing.** `decidableSat_of_codes` takes an *arbitrary* list of codes,
+and `encodeMT_mem_codesM` is already parametric in `NE`/`NK`/`P`. `mixKT` was a
+choice, not a constraint — so the fix is not to reconcile two expressions but to
+stop naming one:
+
+* `MergedExtractionAt C₀ B` — the target at an arbitrary bound;
+* `mixedCompleteness_at`, `decidableSat_pofree_at` — the pipeline at that bound;
+* `mergedExtractionAt_of_merged` — the old statement is the instance at `mixKT`,
+  so nothing is lost;
+* `kwKT C₀` — the bound the `kwNodes` extraction actually achieves.
+
+**An extraction achieving ANY computable bound settles the fragment.** The
+riskiest of the seven items turned out not to be an item.
+
+## 201. THE ROOT, AND THE LABEL ENUMERATION
+
+Items 4 and 7, both small once the machinery is in place.
+
+`rootNode` seeds a support label with `[C₀]` and closes it; `rootNode_mem` gives
+`MergedExtraction`'s root condition, and `rootNode_depth` bounds the root's label
+by `mdepth C₀` — which is what makes **`mdepth C₀` the right fuel** for `kwNodes`
+to be closed by `kwNodes_covers`.
+
+`normL_mem_allListsLe`: a normalised label is one of the enumerated lists, which
+is what the two `allListsLe` conditions ask. Both `sChildN` and `kPhaseNode`
+normalise, and so does `rootNode`, so every node of the closure qualifies.
+
+### 201.1 The seven, re-scored
+
+| # | item | status |
+|---|---|---|
+| 1 | `hsepS` | open — `hsep_of_model` exists, instantiation not written |
+| 2 | `he_ex` | open — ingredients: `kwNodes_covers` + `kwNd_lab_sub` |
+| 3 | `hk_ex` | open — ingredients: `odSeed_hk_ex_lt` + the four `k*` |
+| 4 | root carries `C₀` | **done** (`rootNode_mem`) |
+| 5 | bound reconciliation | **dissolved** (`MergedExtractionAt`) |
+| 6 | reindex onto `Fin` | `reindexMT_ok` exists, not wired |
+| 7 | labels ∈ `allListsLe` | **done** (`normL_mem_allListsLe`) |
+
+Plus, from §199: `hbS`/`hbK`/`hbQ` already discharge by `Nat.le_succ`.
+
+So three of the six `mergedMT_ok` obligations and three of the seven assembly
+items are closed. **What is left is `hsepS`, `he_ex`, `hk_ex` and the `Fin`
+reindex** — and of those, only `hk_ex` is more than wiring.
+
+Build: 36,691 lines, 1,841 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
