@@ -36160,6 +36160,86 @@ theorem swCert_ok {β κ : Type} [DecidableEq κ] {C0 : Concept}
   e_ex := hex
   k_ex := hkex
 
+/-! #### §208 — TWO PHASES, TWO TERMINATION ARGUMENTS
+
+§207.1 left the four propagation obligations. Attacking `ee_all` directly runs
+into a familiar tension: for a `PP` edge that is a TRANSITIVE chain of demand
+steps, the parent's `∀PP` body reaches the child, but reaching the grandchild
+needs the UNIVERSAL to travel, not just its body — and carrying `∀PP.E` forward
+keeps `maxDepth` constant, so the §194 measure stops working.
+
+The resolution is that the file has a SECOND termination argument, built in §141
+and unused since: `closure_stops` — on a FIXED finite node set, labels that grow
+strictly cannot grow more than `|nodes| · |cl C₀|` times.
+
+So the extraction is two phases, each with its own measure:
+
+| | what it builds | terminates by |
+|---|---|---|
+| **1** | the node set (`kwNodes`) | `maxDepth` drops (§§194–195) |
+| **2** | the labels, on that fixed set | `totalSize` grows (§141) |
+
+Neither measure works for both phases, which is why one of them was sitting
+unused. -/
+
+theorem mem_allBodies_of {r : Atom} {L : List Concept} {E : Concept}
+    (h : Concept.all r E ∈ L) : E ∈ allBodies r L := by
+  refine List.mem_filterMap.mpr ⟨Concept.all r E, h, ?_⟩
+  simp [bodyOf]
+
+open Classical in
+/-- **ONE ROUND OF LABEL SATURATION.**  Every node takes on the bodies every
+    other node owes it along the declared relation, then closes. -/
+noncomputable def satRound {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L : β → List Concept) (f : β) : List Concept :=
+  normL C0 (hcloseL I (pt f)
+    (L f ++ nodes.flatMap (fun e => allBodies (rel e f) (L e))))
+
+/-- **IT PRESERVES `SupportOk`**, provided the declared relation is the model's.
+    This is `support_extend` at family scale. -/
+theorem satRound_supportOk {β : Type} (hI : RCC5Interp I) {C0 : Concept}
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (hdom : ∀ e, I.dom (pt e))
+    (hrel : ∀ e f, rel e f = I.rho (pt e) (pt f))
+    (L : β → List Concept) (hL : ∀ e, SupportOk I C0 (pt e) (L e)) (f : β) :
+    SupportOk I C0 (pt f) (satRound I C0 nodes pt rel L f) := by
+  refine normL_supportOk (hcloseL_supportOk hI (hdom f) _ ?_ ?_)
+  · intro c hc
+    rcases List.mem_append.mp hc with h | h
+    · exact (hL f).sub c h
+    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
+      exact support_all_cl (hL e) (mem_allBodies hb)
+  · intro c hc
+    rcases List.mem_append.mp hc with h | h
+    · exact (hL f).sat_ c h
+    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
+      exact support_all_sat (hdom f) (hL e) (mem_allBodies hb) (hrel e f).symm
+
+/-- **AND IT ONLY GROWS.** -/
+theorem satRound_mono {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L : β → List Concept) (hsub : ∀ e, ∀ c ∈ L e, c ∈ cl C0) (f : β) :
+    ∀ c ∈ L f, c ∈ satRound I C0 nodes pt rel L f := by
+  intro c hc
+  exact mem_normL.mpr ⟨hsub f c hc,
+    mem_hcloseL.mpr ⟨c, List.mem_append.mpr (Or.inl hc), self_mem_hclose I _ c⟩⟩
+
+/-- **A FIXPOINT OF `satRound` SATISFIES THE PROPAGATION OBLIGATION.**  This is
+    `ee_all` — and, with the appropriate `rel`, `ek_all`, `ke_all` and `kq_all`
+    too, since all four say the same thing about different edge classes. -/
+theorem satRound_fixed_propagates {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L : β → List Concept)
+    (hsub : ∀ e, ∀ c ∈ L e, c ∈ cl C0)
+    (hfix : ∀ f, ∀ c ∈ satRound I C0 nodes pt rel L f, c ∈ L f)
+    (e f : β) (he : e ∈ nodes) (r : Atom) (c : Concept)
+    (hall : Concept.all r c ∈ L e) (hr : rel e f = r) : c ∈ L f := by
+  refine hfix f c (mem_normL.mpr ⟨cl_all (hsub e _ hall), mem_hcloseL.mpr ⟨c, ?_, ?_⟩⟩)
+  · refine List.mem_append.mpr (Or.inr (List.mem_flatMap.mpr ⟨e, he, ?_⟩))
+    rw [hr]; exact mem_allBodies_of hall
+  · exact self_mem_hclose I _ c
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37131,4 +37211,6 @@ end POFreeLift
 #print axioms POFreeLift.seedM_sep
 #print axioms POFreeLift.hbK_forces_near_uniform
 #print axioms POFreeLift.swCert_ok
+#print axioms POFreeLift.satRound_supportOk
+#print axioms POFreeLift.satRound_fixed_propagates
 #print axioms POFreeLift.kernel_of_no_terminal

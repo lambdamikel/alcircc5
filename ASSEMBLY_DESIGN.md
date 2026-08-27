@@ -13695,3 +13695,44 @@ it buys, and §§181–186 already mapped that terrain from the `DR` side.
 
 Build: 37,134 lines, 1,863 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 208. TWO PHASES, TWO TERMINATION ARGUMENTS
+
+§207.1 left the four propagation obligations. Attacking `ee_all` directly runs
+into a familiar tension: for a `PP` edge that is a **transitive chain** of demand
+steps, the parent's `∀PP` body reaches the child, but reaching the grandchild
+needs the **universal** to travel, not just its body — and carrying `∀PP.E`
+forward keeps `maxDepth` constant, so §194's measure stops working.
+
+The resolution is that the file has a **second** termination argument, built in
+§141 and unused since: `closure_stops` — on a *fixed* finite node set, labels
+that grow strictly cannot grow more than `|nodes| · |cl C₀|` times.
+
+| phase | what it builds | terminates by |
+|---|---|---|
+| **1** | the node set (`kwNodes`) | `maxDepth` **drops** (§§194–195) |
+| **2** | the labels, on that fixed set | `totalSize` **grows** (§141) |
+
+Neither measure works for both phases — which is exactly why one of them had been
+sitting unused since it was proved.
+
+### 208.1 The saturation
+
+`satRound`: every node takes on the bodies every other node owes it along the
+declared relation, then closes. Three facts, all certified:
+
+* `satRound_supportOk` — it preserves `SupportOk`, **provided the declared
+  relation is the model's** (`hrel`). This is `support_extend` at family scale,
+  and the proviso is exactly what the declared-frame discipline already
+  guarantees (`mixLt_rho`, `seedM_dr`).
+* `satRound_mono` — it only grows.
+* `satRound_fixed_propagates` — **a fixpoint satisfies the propagation
+  obligation**. And it satisfies all four at once: `ee_all`, `ek_all`, `ke_all`
+  and `kq_all` say the same thing about different edge classes, so one `rel`
+  covering the classes discharges them together.
+
+So phase 2's remaining piece is the fixpoint's *existence*, which is
+`closure_stops` applied to `satRound`'s iterate.
+
+Build: 37,216 lines, 1,868 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
