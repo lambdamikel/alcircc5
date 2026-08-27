@@ -14157,3 +14157,34 @@ model, and reindex onto `Fin`.
 
 Build: 38,129 lines, 1,912 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 221. PHASE 1'S OPERATOR, AS A STAGE STEP
+
+§220 left one construction: exhibit a `Stationary` stage. Its two halves are the
+phase operators, iterated. §210 built phase 2's (`satIter`); §221 builds phase
+1's in the same shape — a single **flat** step on a node list, since recursion is
+what the alternation supplies and flatness is what lets §218's measure see it.
+
+`extendStage` appends every demand-child of every node, with
+`extendStage_sub`/`_len` (it only grows), `extendStage_covers` (every demand of
+every node gets its child), and `_child_rho`/`_child_arg` — the two facts
+`Stationary.covered` needs of a child.
+
+### 221.1 The representation seam
+
+`extendStage` works on `List (SNode I C₀)`, where a node **carries** its label.
+`satRound` works on `nodes : List β` with a separate `L : β → List Concept`,
+because saturation changes labels while keeping points fixed.
+
+Both are the right shape for their own phase and **they do not share one**.
+Bridging them — a stage as points-plus-labels, with `extendStage` re-expressed on
+it — is the remaining construction step. Every fact either operator needs is
+already proved on its own representation, so this is bookkeeping rather than
+mathematics.
+
+**Recorded rather than glossed**, because this session's two failures (§196.1's
+ungated kernel branch, §217's demand-creating saturation) were both at seams like
+this one, and both looked like bookkeeping beforehand.
+
+Build: 38,196 lines, 1,918 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

@@ -37130,6 +37130,72 @@ theorem stationary_ee_all {β κ : Type} {I : Interp α} {C0 : Concept}
     (hE : odNet O (Sum.inl e) (Sum.inl f) = r) : c ∈ L f :=
   stationary_propagates h e f he r c hall hE
 
+/-! #### §221 — PHASE 1'S OPERATOR, AS A STAGE STEP
+
+§220 left one construction: exhibit a `Stationary` stage. Its two halves are the
+two phase operators, iterated. §210 built phase 2's (`satIter`); §221 builds
+phase 1's in the same shape — a single step on a node LIST, so the alternation
+can apply them in turn.
+
+`extendStage` appends every demand-child of every node. Unlike `kwNodes` it does
+not recurse: recursion is what the alternation supplies, and keeping the step
+flat is what lets §218's measure see it. -/
+
+open Classical in
+/-- **ONE PHASE-1 STEP.**  Every demand of every node gets its child appended. -/
+noncomputable def extendStage (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) : List (SNode I C0) :=
+  ns ++ ns.attach.flatMap (fun n =>
+    n.val.lab.attach.flatMap (fun q => match q with
+      | ⟨.ex _ _, hD⟩ => [sChildN hI n.val hD]
+      | _ => []))
+
+/-- **IT ONLY GROWS.** -/
+theorem extendStage_sub (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) : ∀ n ∈ ns, n ∈ extendStage hI ns :=
+  fun _ hn => List.mem_append.mpr (Or.inl hn)
+
+theorem extendStage_len (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) : ns.length ≤ (extendStage hI ns).length := by
+  rw [extendStage, List.length_append]
+  omega
+
+open Classical in
+/-- **AND IT SERVES EVERY DEMAND** — phase 1's job, in one step. -/
+theorem extendStage_covers (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (n : SNode I C0) (hn : n ∈ ns)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) :
+    sChildN hI n hD ∈ extendStage hI ns := by
+  refine List.mem_append.mpr (Or.inr ?_)
+  refine List.mem_flatMap.mpr ⟨⟨n, hn⟩, List.mem_attach _ _, ?_⟩
+  exact List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _,
+    List.mem_singleton_self _⟩
+
+/-- The child is at the declared-model relation, and carries the demand's
+    argument — the two facts `Stationary.covered` needs of it. -/
+theorem extendStage_child_rho (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) :
+    I.rho n.x (sChildN hI n hD).x = r := sChildN_rho hI n hD
+
+theorem extendStage_child_arg (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) :
+    D ∈ (sChildN hI n hD).lab := sChildN_arg hI n hD
+
+/-! ##### §221.1 — the representation seam, stated
+
+`extendStage` works on `List (SNode I C0)`, where a node CARRIES its label;
+`satRound` works on `nodes : List β` with a separate `L : β → List Concept`,
+because saturation changes labels while keeping points fixed.
+
+Both are the right shape for their own phase and they do not share one. Bridging
+them — a stage as points-plus-labels, with `extendStage` re-expressed on it — is
+the remaining construction step, and it is bookkeeping rather than mathematics:
+every fact either operator needs is already proved on its own representation.
+
+Recorded rather than glossed, because this session's two failures (§196.1,
+§217) were both at seams like this one, and both looked like bookkeeping
+beforehand. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38126,4 +38192,5 @@ end POFreeLift
 #print axioms POFreeLift.stationary_route
 #print axioms POFreeLift.stationary_e_ex
 #print axioms POFreeLift.stationary_ee_all
+#print axioms POFreeLift.extendStage_covers
 #print axioms POFreeLift.kernel_of_no_terminal
