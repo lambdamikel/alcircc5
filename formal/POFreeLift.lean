@@ -37142,13 +37142,24 @@ not recurse: recursion is what the alternation supplies, and keeping the step
 flat is what lets §218's measure see it. -/
 
 open Classical in
-/-- **ONE PHASE-1 STEP.**  Every demand of every node gets its child appended. -/
-noncomputable def extendStage (hI : RCC5Interp I) {C0 : Concept}
+/-- The children a stage owes: one per demand per node. -/
+noncomputable def stageKids (hI : RCC5Interp I) {C0 : Concept}
     (ns : List (SNode I C0)) : List (SNode I C0) :=
-  ns ++ ns.attach.flatMap (fun n =>
+  ns.attach.flatMap (fun n =>
     n.val.lab.attach.flatMap (fun q => match q with
       | ⟨.ex _ _, hD⟩ => [sChildN hI n.val hD]
       | _ => []))
+
+open Classical in
+/-- **ONE PHASE-1 STEP.**  Append the owed children that are not already there.
+
+    The filter is not an optimisation. Appending unconditionally makes the list
+    grow every round, so the stage could never be stationary and §218's measure
+    would never stop — the first version of this definition had exactly that
+    defect. -/
+noncomputable def extendStage (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) : List (SNode I C0) :=
+  ns ++ (stageKids hI ns).filter (fun m => decide (m ∉ ns))
 
 /-- **IT ONLY GROWS.** -/
 theorem extendStage_sub (hI : RCC5Interp I) {C0 : Concept}
@@ -37161,15 +37172,37 @@ theorem extendStage_len (hI : RCC5Interp I) {C0 : Concept}
   omega
 
 open Classical in
+/-- Every owed child is in `stageKids`. -/
+theorem mem_stageKids (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (n : SNode I C0) (hn : n ∈ ns)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) :
+    sChildN hI n hD ∈ stageKids hI ns := by
+  refine List.mem_flatMap.mpr ⟨⟨n, hn⟩, List.mem_attach _ _, ?_⟩
+  exact List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _,
+    List.mem_singleton_self _⟩
+
+open Classical in
 /-- **AND IT SERVES EVERY DEMAND** — phase 1's job, in one step. -/
 theorem extendStage_covers (hI : RCC5Interp I) {C0 : Concept}
     (ns : List (SNode I C0)) (n : SNode I C0) (hn : n ∈ ns)
     {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) :
     sChildN hI n hD ∈ extendStage hI ns := by
-  refine List.mem_append.mpr (Or.inr ?_)
-  refine List.mem_flatMap.mpr ⟨⟨n, hn⟩, List.mem_attach _ _, ?_⟩
-  exact List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _,
-    List.mem_singleton_self _⟩
+  by_cases hmem : sChildN hI n hD ∈ ns
+  · exact List.mem_append.mpr (Or.inl hmem)
+  · refine List.mem_append.mpr (Or.inr ?_)
+    exact List.mem_filter.mpr ⟨mem_stageKids hI ns n hn hD,
+      decide_eq_true hmem⟩
+
+open Classical in
+/-- **AND IT IS STATIONARY WHEN EVERY CHILD IS ALREADY THERE** — the fact the
+    measure argument needs, and the one the unfiltered version could not give. -/
+theorem extendStage_eq_of_covered (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (h : ∀ m ∈ stageKids hI ns, m ∈ ns) :
+    extendStage hI ns = ns := by
+  rw [extendStage, List.filter_eq_nil_iff.mpr, List.append_nil]
+  intro m hm
+  simp only [decide_eq_true_eq, Decidable.not_not]
+  exact h m hm
 
 /-- The child is at the declared-model relation, and carries the demand's
     argument — the two facts `Stationary.covered` needs of it. -/

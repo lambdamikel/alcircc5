@@ -14225,3 +14225,36 @@ brick.
 
 Build: 38,293 lines, 1,926 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 223. CORRECTION — §221's `extendStage` COULD NEVER BE STATIONARY
+
+Trying to prove the round-by-round measure step exposed a defect in §221.
+
+`extendStage` appended every owed child **unconditionally**. So any stage with a
+demand grows every round, forever: the list never stabilises, no stage is ever
+stationary, and §218's measure — which is supposed to *stop* — would be forced up
+without bound. The definition and the termination argument contradicted each
+other.
+
+The fix is to append only the children **not already present**:
+
+    extendStage ns = ns ++ (stageKids ns).filter (· ∉ ns)
+
+`extendStage_covers` survives (the child is either already in `ns` or passes the
+filter), and the new `extendStage_eq_of_covered` gives what the measure argument
+needs and the old version could not: **when every owed child is present, the step
+changes nothing.**
+
+### 223.1 Note
+
+The filter looks like an optimisation and is not — it is the difference between a
+process that terminates and one that cannot. It was invisible while
+`extendStage` was only being proved *sound* (§221's three lemmas are all true of
+the broken version); it appeared the moment something tried to prove it *stops*.
+
+Third instance this session of a seam defect surfacing only under use: §196.1's
+ungated kernel branch, §217's demand-creating saturation, and now this. In all
+three the broken component satisfied every property that had been asked of it.
+
+Build: 38,326 lines, 1,929 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
