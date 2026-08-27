@@ -14701,3 +14701,44 @@ disjunct.
 
 Build: 39,223 lines, 1,980 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 237. EXTENSION AND SATURATION ALMOST COINCIDE
+
+Assembling the round at `PtIdx` turns on a comparison worth making before
+writing it: **what does a child need that the saturation does not already give?**
+
+A child of `u` at demand `exists r.D` is seeded with `seedOf r D (L u)`, which is
+by definition `D :: allBodies r (L u)`. And `satRound` already transfers
+`allBodies (rel u v) (L u)` to every `v` — so along the witness edge, where
+`rel u v = r`, the saturation already contributes **every part of the child's
+seed except `D` itself** (`satRound_has_bodies`).
+
+So the two operators are not two mechanisms. **Extension is saturation plus the
+demand's own argument at its own witness.** That is also why §214's `exists EQ`
+clause fitted so cheaply: it is the same "argument at its witness" transfer, for
+the one relation whose witness is the node itself.
+
+### 237.1 The round, and what is left of it
+
+The round at `PtIdx` is `satRound` with a third contribution — for each node `u`
+and each unblocked demand `exists r.D in L u`, the argument `D` at the point
+`ptChild`. Its soundness is `ptChild`'s own spec (`D` is true at its witness),
+the same shape as §213's two sources, needing no new argument. The node list then
+grows by exactly the child points that are new — §223's filter, at `PtIdx`.
+
+**That is the whole remaining construction**, and it is smaller than §§232–235
+suggested, because the extension half was already inside the saturation.
+
+### 237.2 A pattern in the three redesigns
+
+§§232–235 corrected the same decision three times, each correction making the
+stage look *more* like the certificate. §§236–237 then found the work smaller
+than feared twice running — the child step was a rephrasing, and extension turns
+out to be saturation plus one clause.
+
+Both observations have the same cause: the pieces built for the one-sorted stage
+were already more general than the stage was. Making the stage two-sorted did not
+require generalising them, only using them at the sorts they already admitted.
+
+Build: 39,271 lines, 1,982 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

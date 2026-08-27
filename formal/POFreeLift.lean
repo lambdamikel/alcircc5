@@ -38199,6 +38199,53 @@ mirror the `sChild`/`sChildN` family one for one, at a label supplied rather tha
 carried. So the invariants §§227–229 established transfer to the point-indexed
 stage by the same proofs, and §235's outstanding item is discharged. -/
 
+/-! #### §237 — EXTENSION AND SATURATION ALMOST COINCIDE
+
+Assembling the round at `PtIdx` turns on a comparison worth making before writing
+it: what does a CHILD need that the SATURATION does not already give?
+
+A child of `u` at demand `∃r.D` is seeded with `seedOf r D (L u)`, which is by
+definition `D :: allBodies r (L u)`. And `satRound` already transfers
+`allBodies (rel u v) (L u)` to every `v` — so along the witness edge, where
+`rel u v = r`, **the saturation already contributes every part of the child's
+seed except `D` itself**.
+
+So the two operators are not two mechanisms. Extension is saturation plus the
+demand's own argument at its own witness — which is also why §214's `∃EQ` clause
+fitted into the saturation so cheaply: it is the same "argument at its witness"
+transfer, for the one relation where the witness is the node itself. -/
+
+/-- The child's seed, split. -/
+theorem seedOf_eq_arg_cons_bodies (r : Atom) (D : Concept) (L : List Concept) :
+    seedOf r D L = D :: allBodies r L := rfl
+
+open Classical in
+/-- **THE SATURATION ALREADY CARRIES THE BODY HALF.**  Every body a child would
+    receive from its parent is in the saturation's output at the child, provided
+    the parent is in the node list and the relation matches. -/
+theorem satRound_has_bodies {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom)
+    (L : β → List Concept) (u v : β) (hu : u ∈ nodes) (c : Concept)
+    (hc : c ∈ allBodies (rel u v) (L u)) (hcl : c ∈ cl C0) :
+    c ∈ satRound I C0 nodes pt rel L v :=
+  mem_normL.mpr ⟨hcl, mem_hcloseL.mpr ⟨c,
+    List.mem_append.mpr (Or.inr (List.mem_append.mpr (Or.inr
+      (List.mem_flatMap.mpr ⟨u, hu, hc⟩)))),
+    self_mem_hclose I (pt v) c⟩⟩
+
+/-! ##### §237.1 — so the round is one operator with one extra clause
+
+The round at `PtIdx` is `satRound` with a third contribution: for each node `u`
+and each unblocked demand `∃r.D ∈ L u`, the argument `D` at the point
+`ptChild`. Its soundness is `ptChild`'s own spec (`D` is true at its witness),
+which is the same shape as §213's two sources and needs no new argument.
+
+The node list then grows by exactly the child points that are new — §223's
+filter, at `PtIdx`.
+
+**That is the whole remaining construction**, and it is smaller than §§232–235
+suggested, because the extension half was already inside the saturation. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39220,4 +39267,5 @@ end POFreeLift
 #print axioms POFreeLift.ptIdxPoint_dom
 #print axioms POFreeLift.ptChildLab_ok
 #print axioms POFreeLift.ptChildLab_depth
+#print axioms POFreeLift.satRound_has_bodies
 #print axioms POFreeLift.kernel_of_no_terminal
