@@ -11931,3 +11931,50 @@ and building one is the same instrument problem §117 hit three times.
 
 Two of the three headline numbers withheld is the correct outcome here, not a
 failed run.
+
+## 167. `wp127` — `kDR` MAY NOT BE A SELECTION DISCIPLINE AFTER ALL
+
+Control held (W = 0 gives 100%).
+
+| window W | 0 | 1 | 2 | 4 | 8 | 16 |
+|---|---|---|---|---|---|---|
+| an ARBITRARY `DR` witness survives | 100% | 82.9% | 70.3% | 52.8% | 32.6% | 13.8% |
+| SOME stable carrier EXISTS | 100% | 92.9% | 85.9% | 72.7% | 50.9% | **24.7%** |
+
+### 167.1 What the second row means
+
+§165.2 called `kDR` a **selection discipline** — stable witnesses are there, they
+just have to be chosen. If that were right, row 2 would stay flat while row 1
+decayed.
+
+**Both decay.** Some demands have no stable carrier at all, so `kDR` is a genuine
+obligation that can FAIL, not merely a choice made badly.
+
+### 167.2 The structural reason, and the caveat that limits it
+
+An ascending chain `a_i = {0..i}` EXHAUSTS its universe. A region disjoint from
+every `a_i` would have to be disjoint from their union, so in that model none
+exists — and `base_ge` does not help, since pushing the kernel base UP removes
+only low constraints and keeps every high one.
+
+**So `kDR` is unsatisfiable whenever the kernel's chain exhausts the space.**
+
+The caveat: finite set models exhaust by construction. A model with room outside
+the chain's union — regions over `ℕ × ℕ` with the chain in one column — has
+cofinally-disjoint externals throughout. **Whether models of satisfiable
+∀PO-free concepts must have such room is not established**, and the decay
+measured here is partly an artifact of a class that cannot provide it.
+
+### 167.3 Net
+
+`kDR` is not shown unsatisfiable. What is shown is that §165.2's optimistic
+reading — a selection discipline like the budgets — **is not supported**, because
+existence itself degrades in this class.
+
+The next question is sharp: **must a kernel chain in a model of a satisfiable
+∀PO-free concept leave room for a disjoint external?** That is a question about
+the logic, not about the extraction, and it is the first such question this
+session has produced.
+
+§165.2 said "cautious optimism and not more", and flagged that the analogous
+claim had been wrong twice. It was wrong a third time.
