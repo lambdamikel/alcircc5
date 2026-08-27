@@ -15254,7 +15254,9 @@ theorem ascKernel_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
       (∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
         Concept.ex r D ∈ mty C0 I (c (i + a)) →
         ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
-          ∀ b, b ≤ p → I.rho (c (i + b)) w = r) := by
+          ∀ b, b ≤ p → I.rho (c (i + b)) w = r) ∧
+      p ≤ (allListsLe (cl C0) (cl C0).length).length
+            * (persistDs C0 I x).length := by
   classical
   have h0 : persistAll I C0 (persistDs C0 I x) x := persistAll_persistDs hx
   have hdom : ∀ n, I.dom (rrPt hI C0 (persistDs C0 I x) hL x h0 n) :=
@@ -15266,7 +15268,7 @@ theorem ascKernel_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
     (fun m => mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 m))
     (fun m => mty_mem_sublists _)
   obtain ⟨A, hA⟩ := ppi_witness_bank hI hdom hstep C0
-  obtain ⟨i, p, hL0, hi, hp, hdvd, _, hty⟩ :=
+  obtain ⟨i, p, hL0, hi, hp, hdvd, hpb, hty⟩ :=
     rr_segment_from hI C0 (persistDs C0 I x) hL x h0 (max (max L0 M) A)
   have hMi : M ≤ i := Nat.le_trans (Nat.le_trans (Nat.le_max_right L0 M)
     (Nat.le_max_left (max L0 M) A)) hL0
@@ -15274,7 +15276,7 @@ theorem ascKernel_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
   refine ⟨rrPt hI C0 (persistDs C0 I x) hL x h0, i, p, hdom, hstep,
     Nat.le_trans (Nat.le_trans (Nat.le_max_left L0 M)
       (Nat.le_max_left (max L0 M) A)) hL0,
-    hi, rfl, hp, hty, ?_, ?_⟩
+    hi, rfl, hp, hty, ?_, ?_, hpb⟩
   · intro D hD
     obtain ⟨n, hn⟩ := List.get_of_mem hD
     obtain ⟨b, hb, hcarry⟩ :=
@@ -15330,7 +15332,9 @@ theorem descKernel_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
       (∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
         Concept.ex r D ∈ mty C0 I (c (i + a)) →
         ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
-          ∀ b, b ≤ p → I.rho (c (i + b)) w = r) := by
+          ∀ b, b ≤ p → I.rho (c (i + b)) w = r) ∧
+      p ≤ (allListsLe (cl C0) (cl C0).length).length
+            * (persistDsI C0 I x).length := by
   classical
   have h0 : persistAllI I C0 (persistDsI C0 I x) x := persistAllI_persistDsI hx
   have hdom : ∀ n, I.dom (rrPtI hI C0 (persistDsI C0 I x) hL x h0 n) :=
@@ -15342,7 +15346,7 @@ theorem descKernel_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
     (fun m => mty C0 I (rrPtI hI C0 (persistDsI C0 I x) hL x h0 m))
     (fun m => mty_mem_sublists _)
   obtain ⟨A, hA⟩ := ddrpp_witness_bank hI hdom hstep C0
-  obtain ⟨i, p, hL0, hi, hp, hdvd, _, hty⟩ :=
+  obtain ⟨i, p, hL0, hi, hp, hdvd, hpb, hty⟩ :=
     rr_segment_fromI hI C0 (persistDsI C0 I x) hL x h0 (max (max L0 M) A)
   have hMi : M ≤ i := Nat.le_trans (Nat.le_trans (Nat.le_max_right L0 M)
     (Nat.le_max_left (max L0 M) A)) hL0
@@ -15350,7 +15354,7 @@ theorem descKernel_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
   refine ⟨rrPtI hI C0 (persistDsI C0 I x) hL x h0, i, p, hdom, hstep,
     Nat.le_trans (Nat.le_trans (Nat.le_max_left L0 M)
       (Nat.le_max_left (max L0 M) A)) hL0,
-    hi, rfl, hp, hty, ?_, ?_⟩
+    hi, rfl, hp, hty, ?_, ?_, hpb⟩
   · intro D hD
     obtain ⟨n, hn⟩ := List.get_of_mem hD
     obtain ⟨b, hb, hcarry⟩ :=
@@ -15484,7 +15488,7 @@ theorem kernelData_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
           I.rho ((kernelData hI C0 x hx hL L0).c
             ((kernelData hI C0 x hx hL L0).i + b)) w = r :=
   (Classical.choose_spec (Classical.choose_spec
-    (Classical.choose_spec (ascKernel_serves hI C0 x hx hL L0)))).2.2.2.2.2.2.2.2
+    (Classical.choose_spec (ascKernel_serves hI C0 x hx hL L0)))).2.2.2.2.2.2.2.2.1
 
 /-- The descending mirror. -/
 theorem kernelDataI_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
@@ -15499,7 +15503,7 @@ theorem kernelDataI_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
           I.rho ((kernelDataI hI C0 x hx hL L0).c
             ((kernelDataI hI C0 x hx hL L0).i + b)) w = r :=
   (Classical.choose_spec (Classical.choose_spec
-    (Classical.choose_spec (descKernel_serves hI C0 x hx hL L0)))).2.2.2.2.2.2.2.2
+    (Classical.choose_spec (descKernel_serves hI C0 x hx hL L0)))).2.2.2.2.2.2.2.2.1
 
 noncomputable def kCk (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdx C0 I nd) : Nat → α := (kFam hI C0 nd L0 k).c
@@ -35341,6 +35345,230 @@ theorem kwNodes_covers (hI : RCC5Interp I) {C0 : Concept} :
         · rw [dif_neg hk] at h2
           exact absurd h2 List.not_mem_nil
 
+/-! #### §197 — THE PERIOD BOUND, EXPOSED
+
+§196.2 named the missing piece for `kwNodes`'s length bound: the kernel branch
+adds `p + 1` children, and `p`'s bound lives inside `rr_segment_from` but was
+discarded by `ascKernel_of_node` and never carried into `KernelData`.
+
+It is now carried — the same way §192 carried the serving clause, as another
+projection of the one `Classical.choose` rather than a new structure field, so
+`kernelData_of_chain` (§114) stays untouched. -/
+
+/-- **A KERNEL'S PERIOD IS BOUNDED BY `C₀`.** -/
+theorem kernelData_pbound (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat) :
+    (kernelData hI C0 x hx hL L0).p
+      ≤ (allListsLe (cl C0) (cl C0).length).length * (persistDs C0 I x).length :=
+  (Classical.choose_spec (Classical.choose_spec (Classical.choose_spec
+    (ascKernel_serves hI C0 x hx hL L0)))).2.2.2.2.2.2.2.2.2
+
+/-- The descending mirror. -/
+theorem kernelDataI_pbound (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDsI C0 I x).length) (L0 : Nat) :
+    (kernelDataI hI C0 x hx hL L0).p
+      ≤ (allListsLe (cl C0) (cl C0).length).length
+          * (persistDsI C0 I x).length :=
+  (Classical.choose_spec (Classical.choose_spec (Classical.choose_spec
+    (descKernel_serves hI C0 x hx hL L0)))).2.2.2.2.2.2.2.2.2
+
+/-- The demand list is a sublist of the closure, so its length is bounded. -/
+theorem persistDs_len_le (C0 : Concept) (I : Interp α) (x : α) :
+    (persistDs C0 I x).length ≤ (cl C0).length :=
+  List.length_filter_le _ _
+
+/-- **THE UNIFORM PERIOD BOUND** — a number computed from `C₀` alone, which is
+    what a branching factor has to be. -/
+def periodBound (C0 : Concept) : Nat :=
+  (allListsLe (cl C0) (cl C0).length).length * (cl C0).length
+
+theorem kernelData_periodBound (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat) :
+    (kernelData hI C0 x hx hL L0).p ≤ periodBound C0 :=
+  Nat.le_trans (kernelData_pbound hI C0 x hx hL L0)
+    (Nat.mul_le_mul_left _ (persistDs_len_le C0 I x))
+
+/-- **SO `kwNodes`'s BRANCHING FACTOR IS COMPUTABLE FROM `C₀`.**  A node has at
+    most `|cl C₀|` demand children and at most `periodBound C₀ + 1` phase
+    children — the count §196.2 said was missing. -/
+def kwBranch (C0 : Concept) : Nat := (cl C0).length + (periodBound C0 + 1)
+
+theorem kwBranch_bounds (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    (hlen : n.lab.length ≤ (cl C0).length)
+    (hk : 0 < (persistDs C0 I n.x).length) :
+    n.lab.length + ((kernelData hI C0 n.x n.hx hk 0).p + 1) ≤ kwBranch C0 :=
+  Nat.add_le_add hlen
+    (Nat.add_le_add_right (kernelData_periodBound hI C0 n.x n.hx hk 0) 1)
+
+open Classical in
+/-- **THE FIXPOINT IS FINITE.**  §196.2's missing count, supplied: a node has at
+    most `|cl C₀|` demand children and at most `periodBound C₀ + 1` phase
+    children, so the whole closure is bounded by `genBound (kwBranch C₀) d` — a
+    number computed from `C₀` and the fuel alone. -/
+theorem kwNodes_length_le (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), n.lab.length ≤ (cl C0).length →
+      (kwNodes hI d n).length ≤ genBound (kwBranch C0) d := by
+  intro d
+  induction d with
+  | zero => intro n _; rw [kwNodes, genBound]; exact Nat.le_refl 1
+  | succ d' ih =>
+    intro n hlen
+    rw [kwNodes, genBound, List.length_cons, List.length_append]
+    have hb1 : (n.lab.attach.flatMap (fun q => match q with
+        | ⟨.ex _ _, hD⟩ => kwNodes hI d' (sChildN hI n hD)
+        | _ => [])).length
+        ≤ (cl C0).length * genBound (kwBranch C0) d' := by
+      rw [List.length_flatMap]
+      have hb : ((n.lab.attach).map (fun q => (match q with
+          | ⟨.ex _ _, hD⟩ => kwNodes hI d' (sChildN hI n hD)
+          | _ => []).length)).sum
+          ≤ (n.lab.attach).length * genBound (kwBranch C0) d' := by
+        refine sum_map_le _ _ _ ?_
+        rintro ⟨F, hF⟩ _
+        cases F with
+        | ex r c => exact ih _ (sChildN_len hI n hF)
+        | _ => exact Nat.zero_le _
+      rw [List.length_attach] at hb
+      exact Nat.le_trans hb (Nat.mul_le_mul_right _ hlen)
+    have hb2 : (if h : 0 < (persistDs C0 I n.x).length then
+          (if 0 < (allArgs pp n.lab).length then
+            (List.range ((kernelData hI C0 n.x n.hx h 0).p + 1)).flatMap
+              (fun a => kwNodes hI d' (kPhaseNode hI C0
+                ((kernelData hI C0 n.x n.hx h 0).c
+                  ((kernelData hI C0 n.x n.hx h 0).i + a))
+                ((kernelData hI C0 n.x n.hx h 0).cdom _) n.lab))
+           else [])
+        else []).length
+        ≤ (periodBound C0 + 1) * genBound (kwBranch C0) d' := by
+      by_cases hk : 0 < (persistDs C0 I n.x).length
+      · rw [dif_pos hk]
+        by_cases hg : 0 < (allArgs pp n.lab).length
+        · rw [if_pos hg, List.length_flatMap]
+          have hb : ((List.range ((kernelData hI C0 n.x n.hx hk 0).p + 1)).map
+              (fun a => (kwNodes hI d' (kPhaseNode hI C0
+                ((kernelData hI C0 n.x n.hx hk 0).c
+                  ((kernelData hI C0 n.x n.hx hk 0).i + a))
+                ((kernelData hI C0 n.x n.hx hk 0).cdom _) n.lab)).length)).sum
+              ≤ (List.range ((kernelData hI C0 n.x n.hx hk 0).p + 1)).length
+                  * genBound (kwBranch C0) d' := by
+            refine sum_map_le _ _ _ ?_
+            intro a _
+            exact ih _ (kPhaseNode_len hI C0 _ _ n.lab)
+          rw [List.length_range] at hb
+          exact Nat.le_trans hb (Nat.mul_le_mul_right _
+            (Nat.add_le_add_right
+              (kernelData_periodBound hI C0 n.x n.hx hk 0) 1))
+        · rw [if_neg hg]; exact Nat.zero_le _
+      · rw [dif_neg hk]; exact Nat.zero_le _
+    have hsum : (cl C0).length * genBound (kwBranch C0) d'
+        + (periodBound C0 + 1) * genBound (kwBranch C0) d'
+        = kwBranch C0 * genBound (kwBranch C0) d' := by
+      simp only [kwBranch, Nat.add_mul]
+    omega
+
+/-! #### §198 — THE `SNode` → `MTKNode` BRIDGE, AND WHAT IT DOES NOT SETTLE
+
+§196.2's second outstanding item: `WitnessClosed` is stated for `MTKNode`
+families (model point + BUDGET) while `kwNodes` produces `SNode`s (model point +
+SUPPORT LABEL). Crossing needs a budget for each node.
+
+There is an obvious candidate — the label's own depth — and it works for the half
+that matters here: the label is recoverable from the truncated model type. -/
+
+/-- **THE BRIDGE.**  A support-label node read as a budgeted node, at the budget
+    its own label needs. -/
+def toMTK {C0 : Concept} (n : SNode I C0) : MTKNode I C0 :=
+  ⟨n.x, maxDepth n.lab, n.hx⟩
+
+/-- **AND THE LABEL SURVIVES THE CROSSING.**  Everything the support label owes
+    is present in the truncated model type at that budget — `SupportOk` puts it
+    in `mty`, and `maxDepth` is exactly the truncation that keeps it. -/
+theorem lab_sub_mtk {C0 : Concept} (n : SNode I C0) :
+    ∀ c ∈ n.lab, c ∈ mtk C0 I (toMTK n).x (toMTK n).k :=
+  fun c hc => mem_mtk.mpr ⟨supportOk_sub_mty n.ok c hc, mem_maxDepth_le hc⟩
+
+/-- A demand of the label is a demand of the budgeted node. -/
+theorem demand_sub_mtk {C0 : Concept} (n : SNode I C0) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ n.lab) :
+    Concept.ex r D ∈ mtk C0 I (toMTK n).x (toMTK n).k := lab_sub_mtk n _ hD
+
+/-! ##### §198.1 — what is still open, precisely
+
+`toMTK` settles LABEL RECOVERY: nothing a support label owes is lost by reading
+the node as budgeted. It does NOT settle the budget CONDITIONS.
+
+`mergedMT_ok` additionally demands, of any family it accepts:
+
+    hbS : declared-disjoint externals are within one budget
+    hbK : every external is within one of every kernel's budget
+    hbQ : kernels are within one of each other
+
+Under `toMTK` a node's budget is `maxDepth n.lab`, and §194/§195 make that DROP
+along both branches of the closure — so nodes at different depths differ by more
+than one, and the three conditions FAIL. The measure that makes the fixpoint
+terminate is exactly the thing that breaks the budget conditions.
+
+That is not a contradiction, and it is not new: §162 already answered it for the
+vertical case with a UNIFORM assignment (`uniform_of_ppNodes`, `budgets_of_uniform`)
+— give every node the same budget, and all three conditions hold trivially. The
+open question is whether a uniform budget still recovers every label, i.e.
+whether one `k` works for the whole closure. `maxDepth` of the ROOT label bounds
+every label in the closure (both steps only shrink it), so the candidate is
+
+    k := maxDepth root.lab
+
+and `lab_sub_mtk`'s argument goes through for every node at that single budget —
+which is what `kwNodes_depth_le` and `lab_sub_mtk_uniform` below establish. So a
+uniform budget costs no label recovery, and §162's assignment (which makes
+`hbS`/`hbK`/`hbQ` trivial) is compatible with the closure after all. -/
+
+open Classical in
+/-- **THE CLOSURE NEVER DEEPENS A LABEL.**  Both steps only shrink
+    (`sChildN_depth` strictly, `kPhaseNode_depth_le` weakly), so every node of
+    the closure has a label no deeper than the root's. -/
+theorem kwNodes_depth_le (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), ∀ m ∈ kwNodes hI d n,
+      maxDepth m.lab ≤ maxDepth n.lab := by
+  intro d
+  induction d with
+  | zero =>
+    intro n m hm
+    rw [kwNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact Nat.le_refl _
+    · exact absurd h List.not_mem_nil
+  | succ d' ih =>
+    intro n m hm
+    rw [kwNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact Nat.le_refl _
+    · rcases List.mem_append.mp h with h1 | h2
+      · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp h1
+        cases F with
+        | ex r' c =>
+            exact Nat.le_trans (ih _ m hmm)
+              (Nat.le_of_lt (sChildN_depth hI n hF))
+        | _ => exact absurd hmm List.not_mem_nil
+      · by_cases hk : 0 < (persistDs C0 I n.x).length
+        · rw [dif_pos hk] at h2
+          by_cases hg : 0 < (allArgs pp n.lab).length
+          · rw [if_pos hg] at h2
+            obtain ⟨a, _, hmm⟩ := List.mem_flatMap.mp h2
+            exact Nat.le_trans (ih _ m hmm)
+              (kPhaseNode_depth_le hI C0 _ _ n.lab)
+          · rw [if_neg hg] at h2; exact absurd h2 List.not_mem_nil
+        · rw [dif_neg hk] at h2; exact absurd h2 List.not_mem_nil
+
+/-- **SO ONE BUDGET SERVES THE WHOLE CLOSURE.**  §198.1's remaining item: with
+    the UNIFORM budget `maxDepth root.lab`, every node's label is recovered from
+    the truncated model type — so §162's uniform assignment, which makes
+    `hbS`/`hbK`/`hbQ` trivial, does not cost label recovery. -/
+theorem lab_sub_mtk_uniform (hI : RCC5Interp I) {C0 : Concept} (d : Nat)
+    (root n : SNode I C0) (hn : n ∈ kwNodes hI d root) :
+    ∀ c ∈ n.lab, c ∈ mtk C0 I n.x (maxDepth root.lab) :=
+  fun c hc => mem_mtk.mpr ⟨supportOk_sub_mty n.ok c hc,
+    Nat.le_trans (mem_maxDepth_le hc) (kwNodes_depth_le hI d root n hn)⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36290,4 +36518,10 @@ end POFreeLift
 #print axioms POFreeLift.kPhaseNode_depth_lt
 #print axioms POFreeLift.kwNodes_phase_mem
 #print axioms POFreeLift.kwNodes_covers
+#print axioms POFreeLift.kernelData_periodBound
+#print axioms POFreeLift.kwBranch_bounds
+#print axioms POFreeLift.kwNodes_length_le
+#print axioms POFreeLift.lab_sub_mtk
+#print axioms POFreeLift.kwNodes_depth_le
+#print axioms POFreeLift.lab_sub_mtk_uniform
 #print axioms POFreeLift.kernel_of_no_terminal

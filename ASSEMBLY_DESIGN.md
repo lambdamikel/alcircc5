@@ -13300,3 +13300,64 @@ stand between it and `kDR`/`kUP`/`kDN` being theorems rather than hypotheses.
 
 Build: 36,293 lines, 1,809 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 197. THE PERIOD BOUND, EXPOSED — and the fixpoint is finite
+
+§196.2's first outstanding item: `kwNodes`'s kernel branch adds `p + 1` children,
+and `p`'s bound lives inside `rr_segment_from` but was discarded by
+`ascKernel_of_node` and never carried into `KernelData`.
+
+It is now carried, the same way §192 carried the serving clause — as another
+projection of the one `Classical.choose`, not a new structure field, so
+`kernelData_of_chain` (§114) stays untouched. `kernelData_pbound` /
+`kernelDataI_pbound`, then `kernelData_periodBound` in terms of
+
+    periodBound C₀ = |allListsLe (cl C₀) |cl C₀||| · |cl C₀|
+
+which is computed from `C₀` alone (`persistDs_len_le` absorbs the demand list).
+
+**`kwNodes_length_le`**: with `kwBranch C₀ = |cl C₀| + (periodBound C₀ + 1)` —
+demand children plus phase children — the whole closure is bounded by
+`genBound (kwBranch C₀) d`. The fixpoint is finite, and finite by a number
+computable from `C₀` and the fuel alone.
+
+## 198. THE `SNode` → `MTKNode` BRIDGE
+
+§196.2's second item: `WitnessClosed` is stated for `MTKNode` families (point +
+budget), `kwNodes` produces `SNode`s (point + support label).
+
+`toMTK n = ⟨n.x, maxDepth n.lab, n.hx⟩`, and `lab_sub_mtk` shows the crossing
+loses nothing: `SupportOk` puts the label in `mty`, and `maxDepth` is exactly the
+truncation that keeps it.
+
+### 198.1 The budget conditions, and why uniform works
+
+`toMTK`'s per-node budget settles label recovery but **breaks the budget
+conditions** `mergedMT_ok` demands (`hbS`/`hbK`/`hbQ`: everything within one).
+§194/§195 make `maxDepth` *drop* along both branches, so nodes at different
+depths differ by more than one. **The measure that makes the fixpoint terminate
+is the thing that breaks the budget conditions.**
+
+That is not a contradiction, and §162 already answered it for the vertical case:
+a **uniform** assignment makes all three trivial. The question was whether one
+budget still recovers every label. It does:
+
+* `kwNodes_depth_le` — the closure never deepens a label (both steps only shrink);
+* `lab_sub_mtk_uniform` — so at the single budget `maxDepth root.lab`, **every**
+  node's label is recovered.
+
+So a uniform budget costs no label recovery, and §162's assignment is compatible
+with the closure after all.
+
+### 198.2 Position
+
+Both items §196.2 listed are now closed. What remains between here and
+`kDR`/`kUP`/`kDN` as theorems is assembling these into the actual family — an
+`nd : β → MTKNode I C0` indexed by `kwNodes`' output with `toMTK`, and reading
+`WitnessClosed` off `kwNodes_covers`. Every ingredient that assembly needs is
+now certified; the assembly itself is not written, and this session has twice
+found that the last step is where the surprise lives (§155 vs §157, §195.2 vs
+§196.1), so that is a statement about ingredients, not a prediction.
+
+Build: 36,527 lines, 1,822 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
