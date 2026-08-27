@@ -36763,6 +36763,100 @@ theorem odSeed_he_ex_lab
 
 
 
+/-! #### §216 — THE KERNEL ROUTING IS STRUCTURAL TOO
+
+§215 found `e_ex`'s reduction to be model-free once the labels are abstract. The
+kernel side is the same: `odSeed_hk_ex_lt`'s only model-dependent step is the
+`EQ` case, and §214 covers it.
+
+If both reductions are structural, then ALL of the model-dependence in
+`swCert_ok` sits in exactly two places — the saturation's soundness (§§211–213)
+and phase 1's construction — and none of it in the routing. -/
+
+theorem odSeed_hk_ex_lab
+    {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
+      ¬ seed y z)
+    (dir : κ → Bool) (pk : κ → Nat)
+    (lab : β → List Concept) (plab : κ → Nat → List Concept)
+    (hexeq : ∀ k a c, Concept.ex eq c ∈ plab k a → c ∈ plab k a)
+    (kDIR : ∀ k a D, a < pk k → Concept.ex (cdir (dir k)) D ∈
+        plab k a →
+      ∃ b, b < pk k ∧ D ∈ plab k b)
+    (kDR : ∀ k a D, a < pk k →
+        Concept.ex dr D ∈ plab k a →
+      ∃ f, seed (Sum.inr k) (Sum.inl f) ∧ D ∈ lab f)
+    (kPO : ∀ k a D, a < pk k →
+        Concept.ex po D ∈ plab k a →
+      ∃ f, ¬ mixLt elt up dn (Sum.inr k) (Sum.inl f) ∧
+        ¬ mixLt elt up dn (Sum.inl f) (Sum.inr k) ∧
+        ¬ (odSeed elt up dn seed hirrE htr hud hsym hsep).disj
+            (Sum.inr k) (Sum.inl f) ∧ D ∈ lab f)
+    (kUP : ∀ k a D, a < pk k → dir k = false →
+        Concept.ex pp D ∈ plab k a →
+      ∃ f e', dn k e' = true ∧ leE elt e' f ∧
+        D ∈ lab f)
+    (kDN : ∀ k a D, a < pk k → dir k = true →
+        Concept.ex ppi D ∈ plab k a →
+      ∃ f e', up k e' = true ∧ leE elt f e' ∧
+        D ∈ lab f) :
+    ∀ k a r D, a < pk k →
+      Concept.ex r D ∈ plab k a →
+      (∃ f, odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
+          (Sum.inr k) (Sum.inl f) = r ∧ D ∈ lab f) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
+        D ∈ plab k b) ∨
+      (r = eq ∧ D ∈ plab k a) ∨
+      (∃ k', k ≠ k' ∧ odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
+          (Sum.inr k) (Sum.inr k') = r ∧
+        ∃ b, b < pk k' ∧ D ∈ plab k' b) := by
+  intro k a r D ha hdem
+  cases hd : dir k with
+  | true =>
+    cases r with
+    | eq => exact Or.inr (Or.inr (Or.inl ⟨rfl, hexeq k a D hdem⟩))
+    | pp =>
+      have : Concept.ex (cdir (dir k)) D ∈ plab k a := by
+        rw [hd]; exact hdem
+      obtain ⟨b, hb, hD⟩ := kDIR k a D ha this
+      exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
+    | ppi =>
+      obtain ⟨f, e', hae, hle, hD⟩ := kDN k a D ha hd hdem
+      exact Or.inl ⟨f, odNet_gt _ (show mixLt elt up dn (Sum.inl f)
+        (Sum.inr k) from ⟨e', hae, hle⟩), hD⟩
+    | po =>
+      obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D ha hdem
+      exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
+    | dr =>
+      obtain ⟨f, hsd, hD⟩ := kDR k a D ha hdem
+      exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
+  | false =>
+    cases r with
+    | eq => exact Or.inr (Or.inr (Or.inl ⟨rfl, hexeq k a D hdem⟩))
+    | ppi =>
+      have : Concept.ex (cdir (dir k)) D ∈ plab k a := by
+        rw [hd]; exact hdem
+      obtain ⟨b, hb, hD⟩ := kDIR k a D ha this
+      exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
+    | pp =>
+      obtain ⟨f, e', hae, hle, hD⟩ := kUP k a D ha hd hdem
+      exact Or.inl ⟨f, odNet_lt _ (show mixLt elt up dn (Sum.inr k)
+        (Sum.inl f) from ⟨e', hae, hle⟩), hD⟩
+    | po =>
+      obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D ha hdem
+      exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
+    | dr =>
+      obtain ⟨f, hsd, hD⟩ := kDR k a D ha hdem
+      exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
+
+
+
+
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37748,4 +37842,5 @@ end POFreeLift
 #print axioms POFreeLift.satRound_hsound_of_recurrence
 #print axioms POFreeLift.satRound_fixed_exeq
 #print axioms POFreeLift.odSeed_he_ex_lab
+#print axioms POFreeLift.odSeed_hk_ex_lab
 #print axioms POFreeLift.kernel_of_no_terminal

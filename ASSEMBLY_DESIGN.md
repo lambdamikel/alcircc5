@@ -13969,3 +13969,45 @@ got entangled.
 
 Build: 37,751 lines, 1,896 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 216. THE KERNEL ROUTING IS STRUCTURAL TOO — where the model actually enters
+
+§215 found `e_ex`'s reduction model-free once the labels are abstract. The kernel
+side is the same: `odSeed_hk_ex_lt`'s only model-dependent step is the `EQ` case,
+which §214 covers. `odSeed_hk_ex_lab` drops `hI`, `C₀`, `g`, `bud`, `bk`, `ck`,
+`ik` and `hdom` — **eight parameters** — and still stands.
+
+So both routing reductions are facts about a declared frame and abstract labels.
+That localises the model-dependence of `swCert_ok` exactly:
+
+| obligation | source | model? |
+|---|---|---|
+| nine propositional fields | `SupportOk` (§207) | in the labels only |
+| `frame_q` | `frame_q_of_odNet` | **no** |
+| `ee_all` `ek_all` `ke_all` `kq_all` | saturation fixpoint (§§208–213) | in the **soundness** of a round |
+| `kk_pp` `kk_ppi` | `kk_pp_sat` (§212) | via **recurrence** |
+| `e_ex` `k_ex` | §§215–216 reductions | **no** — reduced to eight routing conditions about labels and frame |
+| `hp` | `kernelData.ppos` | phase 1 |
+
+**The model enters in three places and none of them is the routing**: building
+the node set and its initial labels, the saturation's soundness, and the
+kernel-internal recurrence.
+
+### 216.1 The pattern across §§211–216
+
+Five times now, a component got simpler when it stopped being asked to justify
+itself in the model's terms:
+
+* §211 — `hrel` weakened from full agreement (unsatisfiable) to agreement off `PO`;
+* §212 — the kernel lap justified by recurrence, not by an edge;
+* §213 — the saturation asking for the *conclusion*, so both sources keep full strength;
+* §214 — `∃EQ` paid for in the saturation rather than the closure;
+* §§215–216 — the routing reductions losing the interpretation entirely.
+
+The common cause: `mtk` labels are *defined* from a model, so everything built on
+them inherited a model parameter whether it used one or not. Support labels made
+the dependence visible, and most of it turned out to be inherited rather than
+real.
+
+Build: 37,846 lines, 1,897 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
