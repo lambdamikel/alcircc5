@@ -12665,3 +12665,69 @@ worse than "free".
 
 Build: 34,703 lines, 1,742 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`. `dr_desc_step` axiom-free; `dr_cone_free` propext only.
+
+## 182. `DRCompat` IS FINITE — and the residue was in the presentation, not the logic
+
+§181.2 part E localized `DRCompat`'s failures to chain points **above the
+demand's height**, 91–97% of them, and §181.4 filed that as the remaining work.
+Looking at where the measurement was taken changed the reading.
+
+### 182.1 A certificate has no high kernel nodes
+
+`mtLabel T (.inr (k,i)) = T.phase k (i % T.p k)`. A kernel node's label is one of
+only `T.p k` many, and the node at index 1000 carries **literally the same label**
+as the node at index `1000 % p`. `kernel_label_occurs_low` states it.
+
+So "above the demand" is a property of the *model presentation*, where a chain
+point at height 1000 carries whatever it carries — not of the certificate, where
+there is no such node. `drCompat_of_phases` (**axiom-free**) makes the
+consequence precise: `DRCompat`, whose statement quantifies over all of
+`β ⊕ κ × Nat`, follows from its restriction to externals and to phases below the
+period. Finitely many conditions whenever `β` and `κ` are finite.
+
+### 182.2 The model-side discipline, and it is already implemented
+
+The corresponding model-side requirement is that the `∃DR` witness be `DR` from
+*every* phase, not merely from the demand's own point. That is exactly what
+`kernel_site`'s last clause does — it picks **late**, via
+`dr_witness_all_below … (i + p)`, yielding
+
+    ∀ b, b ≤ p → I.rho (c (i + b)) w = dr
+
+`drCompat_root_of_phasewise` turns that single fact into both directions of the
+label condition: the chain's `∀DR` universals fire on `w` because `w` is `DR`
+from every phase, and `w`'s own fire on every phase by the same fact in converse
+orientation (`conv dr = dr`). `kernel_dr_drCompat` composes it against
+`kernel_site`'s exact output shape, so the connection is **checked, not
+asserted**.
+
+### 182.3 `wp130` part F — the discipline, measured
+
+The docstring first said `wp130` "took each demand at its first occurrence".
+Checking the probe: it picks a *random* height and accepts any witness `DR` from
+that one point. The accurate statement is that it never imposed the
+**every-phase** requirement. So part F imposes it, with the prediction stated in
+advance — root-level `DRCompat` must read 100%, since that is now a theorem.
+
+| | G1 | G2 |
+|---|---|---|
+| root-level `DRCompat` (predicted 100%) | **100%** | **100%** |
+| full `DRCompat` (whole block) | 90.9% | 74.2% |
+
+Against part B's ~36% for an arbitrary witness. **The lever is the selection
+discipline, and the file already has it.**
+
+### 182.4 Position, corrected
+
+§181.4 said the residue was the "above the demand" shape plus non-root nodes.
+§182 removes the first half: it was an artifact of measuring in models rather
+than certificates, and the discipline that removes it was already written.
+
+What is left is **only the non-root block nodes** §181.1 pins as outside the free
+cone — part F's 9–26%. That rate is generator-sensitive (16.7 points between the
+two classes, on samples of 44 and 31), so no single number should be quoted for
+it; what part F establishes is direction of travel, not a value.
+
+Build: 34,833 lines, 1,746 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`. `drCompat_of_phases` axiom-free;
+`kernel_label_occurs_low` propext only.

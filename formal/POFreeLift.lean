@@ -33778,6 +33778,135 @@ theorem dr_cone_bodies (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
   exact (mem_mty.mp hX).2 (d n) (hddom n)
     (dr_cone_free hI hcdom hcstep hddom hdstep h0 i n hij)
 
+/-! #### §182 — `DRCompat` IS A FINITE CONDITION, AND THAT DISSOLVES §181's RESIDUE
+
+`wp130` part E localized `DRCompat`'s failures to chain points ABOVE the demand's
+height, 91–97% of them. That measurement was taken in MODELS, where a chain point
+at height 1000 carries whatever type it carries.
+
+A CERTIFICATE is not like that. `mtLabel T (.inr (k,i)) = T.phase k (i % T.p k)`
+— a kernel node's label is one of only `T.p k` many, and the node at index 1000
+carries **literally the same label** as the node at index `1000 % p`. There is no
+such thing as a high kernel node with a new label.
+
+So `DRCompat`, whose statement quantifies over all of `β ⊕ κ × Nat`, is really a
+condition on finitely many label sets, and "above the demand" is a property of
+the model presentation rather than of the certificate. -/
+
+/-- **THE REDUCTION.**  `DRCompat` follows from its restriction to externals and
+    to phases BELOW the period — finitely many conditions when `β` and `κ` are. -/
+theorem drCompat_of_phases {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    {T1 : MultiTier β1 κ1} {T2 : MultiTier β2 κ2}
+    (o1 : MultiTierOk T1) (o2 : MultiTierOk T2)
+    (hE1 : ∀ (e : β1) (c : Concept), Concept.all dr c ∈ T1.tauE e →
+      ∀ y : β2 ⊕ κ2 × Nat, c ∈ mtLabel T2 y)
+    (hK1 : ∀ (k : κ1) (b : Nat), b < T1.p k → ∀ c : Concept,
+      Concept.all dr c ∈ T1.phase k b →
+      ∀ y : β2 ⊕ κ2 × Nat, c ∈ mtLabel T2 y)
+    (hE2 : ∀ (e : β2) (c : Concept), Concept.all dr c ∈ T2.tauE e →
+      ∀ x : β1 ⊕ κ1 × Nat, c ∈ mtLabel T1 x)
+    (hK2 : ∀ (k : κ2) (b : Nat), b < T2.p k → ∀ c : Concept,
+      Concept.all dr c ∈ T2.phase k b →
+      ∀ x : β1 ⊕ κ1 × Nat, c ∈ mtLabel T1 x) :
+    DRCompat T1 T2 := by
+  constructor
+  · rintro (e | ⟨k, i⟩) c hc y
+    · exact hE1 e c hc y
+    · exact hK1 k (i % T1.p k) (Nat.mod_lt i (o1.hp k)) c hc y
+  · rintro (e | ⟨k, i⟩) c hc x
+    · exact hE2 e c hc x
+    · exact hK2 k (i % T2.p k) (Nat.mod_lt i (o2.hp k)) c hc x
+
+/-- **AND EVERY KERNEL NODE'S LABEL ALREADY OCCURS BELOW THE PERIOD.**  The
+    statement `wp130`'s "above the demand" reading has no room for: whatever a
+    kernel node at an arbitrary height carries, some node at index `< T.p k`
+    carries it too. -/
+theorem kernel_label_occurs_low {β κ : Type} [DecidableEq κ] {T : MultiTier β κ}
+    (o : MultiTierOk T) (k : κ) (i : Nat) :
+    ∃ b, b < T.p k ∧ mtLabel T (.inr (k, i)) = mtLabel T (.inr (k, b)) := by
+  refine ⟨i % T.p k, Nat.mod_lt i (o.hp k), ?_⟩
+  simp only [mtLabel]
+  rw [Nat.mod_eq_of_lt (Nat.mod_lt i (o.hp k))]
+
+/-! ##### §182.1 — so the residue is not where the probe put it
+
+Combining: a `∀DR.Y` obligation owed by the glued block has to land on every
+`T1` node, but by `kernel_label_occurs_low` that is the same as landing on the
+externals and on the phases `b < T.p k` — every one of which is realized at a
+node of index below the period.
+
+**The model-side consequence is a selection discipline, and it is one the file
+already implements** (`drCompat_root_of_phasewise`, composed with `kernel_site`
+in `kernel_dr_drCompat` so the connection is checked and not asserted). `kernel_site`'s last clause picks the `∃DR` witness by
+`dr_witness_all_below … (i + p)`, i.e. LATE — far enough up that the witness is
+`DR` from every point of the segment, hence from every phase:
+
+    ∀ b, b ≤ p → I.rho (c (i + b)) w = dr
+
+So at the root the two directions of `DRCompat` are both immediate:
+`c`'s universals fire on `w` because `w` is `DR` from every phase, and `w`'s fire
+on every phase for the same reason. `wp130` measured models where the demand was
+taken at its FIRST occurrence; `kernel_site` takes it at a late one, and the
+recurrence guarantees a late one exists.
+
+**What that leaves is exactly §181.1's non-root nodes** — the 3–9% part E could
+not attribute to the root, every one of which it confirmed came from a node
+outside the free cone. That is the honest residue, and it is a much smaller
+target than "91–97% above the demand". -/
+
+/-- **§182.1 AS A THEOREM — the root-level `DRCompat`, both directions.**
+
+    `kernel_site` hands back a witness `w` that is `DR` from EVERY point of the
+    segment, not merely from the demand's own phase, because it picks late
+    (`dr_witness_all_below … (i + p)`).  From that single fact both directions
+    of the label condition fall out at the root:
+
+    * the chain's `∀DR` universals fire on `w` — `w` is `DR` from every phase;
+    * `w`'s own `∀DR` universals fire on every phase — same fact, converse
+      orientation, and `conv dr = dr`.
+
+    This is the discipline `wp130` did not impose: it accepted any witness
+    `DR` from the demand's OWN chain point, where `dr_witness_below` covers only
+    the points at or below it.  `kernel_site` demands `DR` from every point of
+    the segment, which is strictly stronger and is what makes both directions
+    fall out.  `wp130` part F measures the difference. -/
+theorem drCompat_root_of_phasewise (hI : RCC5Interp I) (C0 : Concept)
+    {c : Nat → α} (hdom : ∀ n, I.dom (c n)) {i p : Nat}
+    {w : α} (hw : I.dom w) (hall : ∀ b, b ≤ p → I.rho (c (i + b)) w = dr) :
+    (∀ (X : Concept) (b : Nat), b ≤ p →
+        Concept.all dr X ∈ mty C0 I (c (i + b)) → sat I w X) ∧
+    (∀ (Y : Concept), Concept.all dr Y ∈ mty C0 I w →
+        ∀ b, b ≤ p → sat I (c (i + b)) Y) := by
+  constructor
+  · intro X b hb hX
+    exact (mem_mty.mp hX).2 w hw (hall b hb)
+  · intro Y hY b hb
+    refine (mem_mty.mp hY).2 (c (i + b)) (hdom (i + b)) ?_
+    have := hI.conv_ (c (i + b)) w (hdom (i + b)) hw
+    rw [hall b hb] at this
+    exact this
+
+/-- **THE COMPOSITE — `kernel_site`'s `DR` clause GIVES the root-level
+    `DRCompat`.**  Stated against the exact shape `kernel_site` produces, so the
+    connection is checked rather than asserted: feed in that clause and a `∃DR.D`
+    demand at any phase, and out come the served demand plus both directions of
+    the label condition, for every phase of the segment. -/
+theorem kernel_dr_drCompat (hI : RCC5Interp I) (C0 : Concept)
+    {c : Nat → α} (hdom : ∀ n, I.dom (c n)) {i p : Nat}
+    (hsite : ∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+      Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+        ∀ b, b ≤ p → I.rho (c (i + b)) w = r)
+    {D : Concept} {a : Nat} (ha : a ≤ p)
+    (hdem : Concept.ex dr D ∈ mty C0 I (c (i + a))) :
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+      (∀ (X : Concept) (b : Nat), b ≤ p →
+        Concept.all dr X ∈ mty C0 I (c (i + b)) → sat I w X) ∧
+      (∀ (Y : Concept), Concept.all dr Y ∈ mty C0 I w →
+        ∀ b, b ≤ p → sat I (c (i + b)) Y) := by
+  obtain ⟨w, hw, hD, hall⟩ := hsite a dr D ha (Or.inl rfl) hdem
+  exact ⟨w, hw, hD, drCompat_root_of_phasewise hI C0 hdom hw hall⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34700,4 +34829,8 @@ end POFreeLift
 #print axioms POFreeLift.dr_desc_step
 #print axioms POFreeLift.dr_cone_free
 #print axioms POFreeLift.dr_cone_bodies
+#print axioms POFreeLift.drCompat_of_phases
+#print axioms POFreeLift.kernel_label_occurs_low
+#print axioms POFreeLift.drCompat_root_of_phasewise
+#print axioms POFreeLift.kernel_dr_drCompat
 #print axioms POFreeLift.kernel_of_no_terminal

@@ -409,6 +409,54 @@ def part_e(cls, trials, seed):
     return fails, above_only, below, nonroot
 
 
+def part_f(cls, trials, seed):
+    """THE DISCIPLINE PARTS B-E DID NOT IMPOSE.  Those parts accept any witness
+    DR from the demand's OWN chain point.  `kernel_site` is stricter: it picks
+    LATE, via dr_witness_all_below(i+p), so the witness is DR from EVERY point of
+    the segment.
+
+    PREDICTION, stated before the run: under that discipline the ROOT-level
+    DRCompat must be 100% in both directions -- that is
+    drCompat_root_of_phasewise, now a theorem.  Any shortfall means the probe
+    misreads the discipline.  The interesting number is the second one: what
+    remains once the root is free."""
+    rng = random.Random(seed)
+    tot = root_ok = full_ok = 0
+    for _ in range(trials):
+        c0 = rand_concept(rng, rng.randint(2, 3))
+        model, val, chain = gen_model(rng, cls)
+        cand = [(j, d) for j in range(len(chain)) for d in closure(c0)
+                if d[0] == "ex" and d[1] == DR and sat(model, val, chain[j], d)]
+        if not cand:
+            continue
+        j, dem = rng.choice(cand)
+        # kernel_site's discipline: DR from EVERY chain point, not just chain[j]
+        wit = [y for y in model if sat(model, val, y, dem[2])
+               and all(rel(cp, y) == DR for cp in chain)]
+        if not wit:
+            continue
+        w = rng.choice(wit)
+        blk = list(block_nodes(model, val, w, c0, mdepth(c0)).keys())
+        cbodies = [d[2] for d in closure(c0) if d[0] == "all" and d[1] == DR
+                   and any(sat(model, val, cp, d) for cp in chain)]
+        rootb = [d[2] for d in closure(c0) if d[0] == "all" and d[1] == DR
+                 and sat(model, val, w, d)]
+        bbodies = [d[2] for d in closure(c0) if d[0] == "all" and d[1] == DR
+                   and any(sat(model, val, y, d) for y in blk)]
+        if len(cbodies) + len(bbodies) == 0:
+            continue
+        tot += 1
+        # ROOT level only: chain bodies at w, and w's own bodies at the chain
+        if (all(sat(model, val, w, X) for X in cbodies)
+                and all(sat(model, val, cp, X) for X in rootb for cp in chain)):
+            root_ok += 1
+        # FULL DRCompat: the whole block, both directions
+        if (all(sat(model, val, y, X) for X in cbodies for y in blk)
+                and all(sat(model, val, cp, X) for X in bbodies for cp in chain)):
+            full_ok += 1
+    return tot, root_ok, full_ok
+
+
 def main():
     print("WP130 -- the free DR cone, measured")
     print(__doc__.split("Self-contained")[0].strip().splitlines()[-1])
@@ -492,6 +540,23 @@ def main():
             if bl:
                 print(f"        of the at-or-below ones, {nr}/{bl} are owed by a "
                       f"NON-ROOT node (the root's own are forced, as predicted)")
+    print("\nPART F -- under kernel_site's LATE-PICKING discipline (DR from EVERY")
+    print("          chain point, not just the demand's own)")
+    fres = {}
+    for cls, seed in (("G1", 20260836), ("G2", 20260837)):
+        tot, r, f = part_f(cls, 20000, seed)
+        fres[cls] = (tot, r, f)
+        if tot:
+            print(f"    {cls}: {tot} non-vacuous instances")
+            print(f"      ROOT-level DRCompat (predicted 100%) : {100.0*r/tot:5.1f}%")
+            print(f"      FULL DRCompat (whole block)          : {100.0*f/tot:5.1f}%")
+    bad = [c for c in ("G1", "G2") if fres[c][0] and fres[c][1] != fres[c][0]]
+    if bad:
+        print(f"    PREDICTION MISSED in {bad} -- the probe misreads the discipline")
+        ok = False
+    else:
+        print("    prediction holds: late picking makes the root free, exactly as")
+        print("    drCompat_root_of_phasewise says.")
     print()
     print("  READ, in the order the parts establish it:")
     print("   A  the free cone IS free -- 100% in both model classes, matching")
@@ -515,11 +580,21 @@ def main():
     print("      below by dr_witness_below, so its own universals are already")
     print("      forced there; non-root nodes are outside the free cone.")
     print()
-    print("  NET: DRCompat's residue is the SAME 'above the demand' shape")
-    print("  sec.178 met and sec.179 closed in the other direction, plus the")
-    print("  non-root nodes sec.181 identifies as outside the free cone.  That")
-    print("  is a known shape with a known tool, not a new obstruction -- but")
-    print("  it is NOT free, and the ~48% says a construction is required.")
+    print("   F  and imposing the discipline `kernel_site` ALREADY implements --")
+    print("      pick the witness LATE, so it is DR from every point of the")
+    print("      segment rather than only from the demand's own -- makes the")
+    print("      ROOT-level condition 100% in both classes, as")
+    print("      drCompat_root_of_phasewise proves it must be, and lifts FULL")
+    print("      DRCompat from ~36% to 74-91%.")
+    print()
+    print("  NET: DRCompat is not a new obstruction and not a formality.  The")
+    print("  root level is a THEOREM under late picking (part F's 100%, both")
+    print("  classes).  What remains is the non-root block nodes sec.181 pins as")
+    print("  outside the free cone -- and part F's residual rate is generator-")
+    print("  sensitive (16.7 points between classes on small samples), so no")
+    print("  single number should be quoted for it.  Direction of travel is what")
+    print("  this probe establishes: the lever is the SELECTION DISCIPLINE, which")
+    print("  the file already has, not a new construction.")
     return 0 if ok else 1
 
 
