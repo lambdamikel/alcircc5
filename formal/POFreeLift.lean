@@ -36077,6 +36077,89 @@ the budget discipline have to agree, and only one combination is left —
 support labels with uniform budgets. That is the certificate the extraction has
 to build, and building it is where §199.1's items 1–3 now sit. -/
 
+/-! #### §207 — THE SUPPORT-LABEL CERTIFICATE
+
+§206.2 left one combination standing: support labels with uniform budgets. This
+section builds the certificate for it.
+
+`swCert` is `mtkKernelsOD` with the labels abstracted — the frame is the same
+declared `odNet`, only the labels change, so `frame_q` stays free. And nine of
+`MultiTierOk`'s nineteen fields come straight from `SupportOk`, because
+`SupportOk` IS the propositional-coherence part of a Hintikka labelling:
+
+    e_clash e_nobot e_and e_or  k_clash k_nobot k_and k_or  kk_eq
+
+The remaining nine are the ones that talk about EDGES, and those are the real
+content — the same distinction §140 drew when support labels were introduced. -/
+
+/-- **THE CERTIFICATE WITH ABSTRACT LABELS.** -/
+noncomputable def swCert {β κ : Type} (O : ODStruct (β ⊕ κ))
+    (lab : β → List Concept) (dir : κ → Bool)
+    (plab : κ → Nat → List Concept) (pk : κ → Nat) : MultiTier β κ where
+  E e f := odNet O (Sum.inl e) (Sum.inl f)
+  K k e := odNet O (Sum.inr k) (Sum.inl e)
+  Q k k' := odNet O (Sum.inr k) (Sum.inr k')
+  up := dir
+  tauE := lab
+  p := pk
+  phase := plab
+
+/-- **NINE FIELDS FROM `SupportOk`, ONE FROM THE FRAME.**  Everything that does
+    not mention an edge is discharged by the labels being support labels; the
+    nine edge conditions remain as hypotheses, which is exactly the split §140
+    predicted. -/
+theorem swCert_ok {β κ : Type} [DecidableEq κ] {C0 : Concept}
+    (O : ODStruct (β ⊕ κ)) (lab : β → List Concept) (dir : κ → Bool)
+    (plab : κ → Nat → List Concept) (pk : κ → Nat)
+    (pt : β → α) (ppt : κ → Nat → α)
+    (hlab : ∀ e, SupportOk I C0 (pt e) (lab e))
+    (hplab : ∀ k a, SupportOk I C0 (ppt k a) (plab k a))
+    (hp : ∀ k, 0 < pk k)
+    (hee : ∀ e f r c, Concept.all r c ∈ lab e →
+      odNet O (Sum.inl e) (Sum.inl f) = r → c ∈ lab f)
+    (hek : ∀ e r c, Concept.all r c ∈ lab e →
+      ∀ k, conv (odNet O (Sum.inr k) (Sum.inl e)) = r →
+      ∀ a, a < pk k → c ∈ plab k a)
+    (hke : ∀ k a, a < pk k → ∀ r c, Concept.all r c ∈ plab k a →
+      ∀ f, odNet O (Sum.inr k) (Sum.inl f) = r → c ∈ lab f)
+    (hkpp : ∀ k a, a < pk k → ∀ c, Concept.all pp c ∈ plab k a →
+      ∀ b, b < pk k → c ∈ plab k b)
+    (hkppi : ∀ k a, a < pk k → ∀ c, Concept.all ppi c ∈ plab k a →
+      ∀ b, b < pk k → c ∈ plab k b)
+    (hkq : ∀ k k', k ≠ k' → ∀ a, a < pk k → ∀ r c,
+      Concept.all r c ∈ plab k a → odNet O (Sum.inr k) (Sum.inr k') = r →
+      ∀ b, b < pk k' → c ∈ plab k' b)
+    (hex : ∀ e r c, Concept.ex r c ∈ lab e →
+      (∃ f, odNet O (Sum.inl e) (Sum.inl f) = r ∧ c ∈ lab f) ∨
+      (∃ k, conv (odNet O (Sum.inr k) (Sum.inl e)) = r ∧
+        ∃ a, a < pk k ∧ c ∈ plab k a))
+    (hkex : ∀ k a, a < pk k → ∀ r c, Concept.ex r c ∈ plab k a →
+      (∃ f, odNet O (Sum.inr k) (Sum.inl f) = r ∧ c ∈ lab f) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧ c ∈ plab k b) ∨
+      (r = eq ∧ c ∈ plab k a) ∨
+      (∃ k', k ≠ k' ∧ odNet O (Sum.inr k) (Sum.inr k') = r ∧
+        ∃ b, b < pk k' ∧ c ∈ plab k' b)) :
+    MultiTierOk (swCert O lab dir plab pk) where
+  hp := hp
+  frame_q := frame_q_of_odNet O
+  e_clash := fun e _a h => supportOk_clash (hlab e) h
+  e_nobot := fun e => supportOk_nobot (hlab e)
+  e_and := fun e c d h => (hlab e).and_ c d h
+  e_or := fun e c d h => (hlab e).or_ c d h
+  k_clash := fun k a _ _n h => supportOk_clash (hplab k a) h
+  k_nobot := fun k a _ => supportOk_nobot (hplab k a)
+  k_and := fun k a _ c d h => (hplab k a).and_ c d h
+  k_or := fun k a _ c d h => (hplab k a).or_ c d h
+  ee_all := hee
+  ek_all := hek
+  ke_all := hke
+  kk_pp := hkpp
+  kk_ppi := hkppi
+  kk_eq := fun k a _ c h => (hplab k a).eq_ c h
+  kq_all := hkq
+  e_ex := hex
+  k_ex := hkex
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37047,4 +37130,5 @@ end POFreeLift
 #print axioms POFreeLift.seedM_dr
 #print axioms POFreeLift.seedM_sep
 #print axioms POFreeLift.hbK_forces_near_uniform
+#print axioms POFreeLift.swCert_ok
 #print axioms POFreeLift.kernel_of_no_terminal

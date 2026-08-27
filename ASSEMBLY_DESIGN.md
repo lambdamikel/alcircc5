@@ -13652,3 +13652,46 @@ certificate the extraction has to build, and §199.1's items 1–3 (`hsepS`,
 
 Build: 37,050 lines, 1,861 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 207. THE SUPPORT-LABEL CERTIFICATE
+
+§206.2 left one combination standing — support labels with uniform budgets — and
+§207 builds the certificate for it.
+
+`swCert` is `mtkKernelsOD` with the labels **abstracted**: the frame is the same
+declared `odNet`, so `frame_q` stays free, and only the labels change.
+
+`swCert_ok` then discharges **nine of `MultiTierOk`'s nineteen fields straight
+from `SupportOk`**, because `SupportOk` *is* the propositional-coherence half of
+a Hintikka labelling:
+
+    e_clash  e_nobot  e_and  e_or
+    k_clash  k_nobot  k_and  k_or
+    kk_eq
+
+plus `frame_q` free from the frame. The remaining nine — `ee_all`, `ek_all`,
+`ke_all`, `kk_pp`, `kk_ppi`, `kq_all`, `e_ex`, `k_ex`, and `hp` — are exactly the
+ones that mention an **edge**, which is the split §140 predicted when support
+labels were introduced: they carry what is *owed*, and what is owed is a fact
+about neighbours.
+
+### 207.1 Where the nine stand
+
+* `hp` — from `kernelData`'s `ppos`.
+* `e_ex` — `odSeed_he_ex`'s four routing conditions, now with `seedM` (§205) as a
+  seed the uniform family can satisfy; `kwNodes_covers`' demand branch supplies
+  the witnesses.
+* `k_ex` — `odSeed_hk_ex_lt` (§189) with `kDIR` from `ccovers` and `kDR`/`kUP`/
+  `kDN` from §193's `*_of_witnessClosed`.
+* `kk_pp`/`kk_ppi` — the segment lemmas (`seg_pp`, `seg_ppi`) at the phase labels.
+* `ee_all`/`ek_all`/`ke_all`/`kq_all` — the propagation obligations. For `mtk`
+  labels these were semantically free (§96); for support labels they are **not**,
+  and they are the same question §§181–186 met as `DRCompat`: a body owed by one
+  node must be present in the label of every node the frame declares related.
+
+**That last line is the honest shape of what is left.** The propagation
+obligations are where the support-label discipline has to pay for the termination
+it buys, and §§181–186 already mapped that terrain from the `DR` side.
+
+Build: 37,134 lines, 1,863 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
