@@ -13939,3 +13939,33 @@ structural.
 
 Build: 37,678 lines, 1,895 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 215. THE ROUTING REDUCTION, AT SUPPORT LABELS — AND THE MODEL DROPS OUT
+
+`odSeed_he_ex` reduces `e_ex` to four routing conditions, stated for `mtk`
+labels throughout. Its proof never inspects what a label *is* except in the `EQ`
+case, where `mtk_ex_eq` reads the model — and §214 supplies exactly that fact
+for support labels.
+
+So the reduction transposes with the labels as parameters: same case analysis,
+same `odNet` facts, with the one model-dependent step becoming a hypothesis that
+`satRound_fixed_exeq` discharges.
+
+**And once it does, the interpretation drops out entirely.** `odSeed_he_ex_lab`
+mentions no `I`, no `RCC5Interp`, **not even `C₀`** — it is a fact about a
+declared frame and abstract labels, nothing more. Lean flagged `hI`, `C0`,
+`hgdom` and `g` as unreferenced, and dropping all four left the theorem standing.
+
+That the `mtk` version appeared to need a model was an artifact of its labels
+being *defined* from one. The routing was always structural.
+
+### 215.1 Why this matters beyond tidiness
+
+The four routing conditions are where §199.1's item 2 lives, and they are now
+stated in a vocabulary with no model in it. So discharging them is a question
+about the **node set and its labels** — which phase 1 and phase 2 build — rather
+than a question about the model, which is where every previous attempt at `e_ex`
+got entangled.
+
+Build: 37,751 lines, 1,896 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

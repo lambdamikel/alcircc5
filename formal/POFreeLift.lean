@@ -36691,6 +36691,78 @@ theorem satRound_fixed_exeq {β : Type} (I : Interp α) (C0 : Concept)
   exact List.mem_append.mpr (Or.inr (List.mem_append.mpr
     (Or.inl (mem_allArgs_of h))))
 
+/-! #### §215 — THE ROUTING REDUCTION, AT SUPPORT LABELS
+
+`odSeed_he_ex` reduces `e_ex` to four routing conditions, but is stated for
+`mtk` labels throughout. Its proof never inspects what a label IS except in the
+`EQ` case, where `mtk_ex_eq` reads the model — and §214 supplies exactly that
+fact for support labels.
+
+So the reduction transposes with the labels as parameters. Same case analysis,
+same `odNet` facts; the one model-dependent step becomes a hypothesis that
+§214's `satRound_fixed_exeq` discharges.
+
+**And once it does, the interpretation drops out entirely.** `odSeed_he_ex_lab`
+mentions no `I`, no `RCC5Interp`, not even `C₀` — it is a fact about a declared
+frame and abstract labels. That the `mtk` version appeared to need a model was an
+artifact of its labels being defined from one. -/
+
+theorem odSeed_he_ex_lab
+    {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
+      ¬ seed y z)
+    (lab : β → List Concept) (plab : κ → Nat → List Concept) (pk : κ → Nat)
+    (hexeq : ∀ e c, Concept.ex eq c ∈ lab e → c ∈ lab e)
+    -- the four routing conditions, in extraction terms
+    (rDR : ∀ e D, Concept.ex dr D ∈ lab e →
+      ∃ f, seed (Sum.inl e) (Sum.inl f) ∧ D ∈ lab f)
+    (rPO : ∀ e D, Concept.ex po D ∈ lab e →
+      ∃ f, e ≠ f ∧ ¬ elt e f ∧ ¬ elt f e ∧
+        ¬ (odSeed elt up dn seed hirrE htr hud hsym hsep).disj
+            (Sum.inl e) (Sum.inl f) ∧ D ∈ lab f)
+    (rPP : ∀ e D, Concept.ex pp D ∈ lab e →
+      (∃ f, elt e f ∧ D ∈ lab f) ∨
+      (∃ k, up k e = true ∧
+        ∃ a, a < pk k ∧ D ∈ plab k a))
+    (rPPI : ∀ e D, Concept.ex ppi D ∈ lab e →
+      (∃ f, elt f e ∧ D ∈ lab f) ∨
+      (∃ k, dn k e = true ∧
+        ∃ a, a < pk k ∧ D ∈ plab k a)) :
+    ∀ e r D, Concept.ex r D ∈ lab e →
+      (∃ f, odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
+          (Sum.inl e) (Sum.inl f) = r ∧ D ∈ lab f) ∨
+      (∃ k, conv (odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
+          (Sum.inr k) (Sum.inl e)) = r ∧
+        ∃ a, a < pk k ∧ D ∈ plab k a) := by
+  intro e r D hdem
+  cases r with
+  | eq =>
+    exact Or.inl ⟨e, odNet_self _ _, hexeq e D hdem⟩
+  | dr =>
+    obtain ⟨f, hsd, hD⟩ := rDR e D hdem
+    exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
+  | po =>
+    obtain ⟨f, hne, h1, h2, h3, hD⟩ := rPO e D hdem
+    refine Or.inl ⟨f, ?_, hD⟩
+    exact odNet_po _ (fun h => hne (Sum.inl.inj h)) h1 h2 h3
+  | pp =>
+    rcases rPP e D hdem with ⟨f, he, hD⟩ | ⟨k, ha, a, haw, hD⟩
+    · exact Or.inl ⟨f, odSeed_E_pp elt up dn seed hirrE htr hud hsym hsep he, hD⟩
+    · refine Or.inr ⟨k, ?_, a, haw, hD⟩
+      rw [odSeed_K_up elt up dn seed hirrE htr hud hsym hsep ha]; rfl
+  | ppi =>
+    rcases rPPI e D hdem with ⟨f, he, hD⟩ | ⟨k, ha, a, haw, hD⟩
+    · exact Or.inl ⟨f, odNet_gt _ (show mixLt elt up dn (Sum.inl f)
+        (Sum.inl e) from he), hD⟩
+    · refine Or.inr ⟨k, ?_, a, haw, hD⟩
+      rw [odSeed_K_dn elt up dn seed hirrE htr hud hsym hsep ha]; rfl
+
+
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37675,4 +37747,5 @@ end POFreeLift
 #print axioms POFreeLift.satRound_hsound_of_frame
 #print axioms POFreeLift.satRound_hsound_of_recurrence
 #print axioms POFreeLift.satRound_fixed_exeq
+#print axioms POFreeLift.odSeed_he_ex_lab
 #print axioms POFreeLift.kernel_of_no_terminal
