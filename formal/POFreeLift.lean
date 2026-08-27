@@ -33327,6 +33327,60 @@ theorem drCompat_cross' {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq 
   rw [gdr_label_1]
   exact h.2 y c hc x
 
+/-! #### §176 — THE DR-GLUE'S `frame_q`
+
+`qnet` of the DR-glue is `glueNet dr` of the two blocks' `qnet`s, up to the
+obvious regrouping `(β₁⊕β₂) ⊕ (κ₁⊕κ₂) ≃ (β₁⊕κ₁) ⊕ (β₂⊕κ₂)`. So §172's
+`glueNet_frame` does the work and no case analysis on triangles is needed here. -/
+
+/-- A frame pulls back along an injection. -/
+theorem frame_of_inj {V W : Type} (N : W → W → Atom) (f : V → W)
+    (hf : ∀ x y, f x = f y → x = y) (h : Frame N) :
+    Frame (fun x y => N (f x) (f y)) where
+  refl_eq := fun x => h.refl_eq (f x)
+  eq_id := fun x y hxy => hf x y (h.eq_id _ _ hxy)
+  conv_ := fun x y => h.conv_ (f x) (f y)
+  comp_ := fun x y z => h.comp_ (f x) (f y) (f z)
+
+/-- The regrouping: externals-then-kernels to side-1-then-side-2. -/
+def gdrSwap {β1 β2 κ1 κ2 : Type} :
+    (β1 ⊕ β2) ⊕ (κ1 ⊕ κ2) → (β1 ⊕ κ1) ⊕ (β2 ⊕ κ2)
+  | .inl (.inl e) => .inl (.inl e)
+  | .inl (.inr e) => .inr (.inl e)
+  | .inr (.inl k) => .inl (.inr k)
+  | .inr (.inr k) => .inr (.inr k)
+
+theorem gdrSwap_inj {β1 β2 κ1 κ2 : Type} :
+    ∀ x y : (β1 ⊕ β2) ⊕ (κ1 ⊕ κ2), gdrSwap x = gdrSwap y → x = y := by
+  rintro ((a | a) | (a | a)) ((b | b) | (b | b)) h <;> simp_all [gdrSwap]
+
+/-- **`qnet` OF THE GLUE IS `glueNet dr` OF THE PARTS.**  Every case is either a
+    block's own `qnet` entry or the cross value; the kernel diagonal is `eq`
+    inside a block and `dr` across, since indices from different sides are never
+    equal. -/
+theorem qnet_glueDR {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    (T1 : MultiTier β1 κ1) (T2 : MultiTier β2 κ2)
+    (z w : (β1 ⊕ β2) ⊕ (κ1 ⊕ κ2)) :
+    qnet (glueDRMT T1 T2).E (glueDRMT T1 T2).K (glueDRMT T1 T2).Q z w
+      = glueNet dr (qnet T1.E T1.K T1.Q) (qnet T2.E T2.K T2.Q)
+          (gdrSwap z) (gdrSwap w) := by
+  rcases z with (a | a) | (a | a) <;> rcases w with (b | b) | (b | b) <;>
+    simp [glueDRMT, gdrSwap, qnet, glueNet, conv]
+
+/-- **THE DR-GLUE IS A FRAME.**  §172's lemma, pulled back along the regrouping. -/
+theorem glueDRMT_frame {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
+    (T1 : MultiTier β1 κ1) (T2 : MultiTier β2 κ2)
+    (h1 : Frame (qnet T1.E T1.K T1.Q)) (h2 : Frame (qnet T2.E T2.K T2.Q)) :
+    Frame (qnet (glueDRMT T1 T2).E (glueDRMT T1 T2).K (glueDRMT T1 T2).Q) := by
+  have hb : Frame (fun z w => glueNet dr (qnet T1.E T1.K T1.Q)
+      (qnet T2.E T2.K T2.Q) (gdrSwap z) (gdrSwap w)) :=
+    frame_of_inj _ gdrSwap gdrSwap_inj (glueNet_frame crossAtom_dr h1 h2)
+  refine ⟨fun z => ?_, fun z w h => ?_, fun z w => ?_, fun z w v => ?_⟩
+  · rw [qnet_glueDR]; exact hb.refl_eq z
+  · rw [qnet_glueDR] at h; exact hb.eq_id z w h
+  · rw [qnet_glueDR, qnet_glueDR]; exact hb.conv_ z w
+  · rw [qnet_glueDR, qnet_glueDR, qnet_glueDR]; exact hb.comp_ z w v
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34236,4 +34290,6 @@ end POFreeLift
 #print axioms POFreeLift.gdr_label_1
 #print axioms POFreeLift.gdr_rep
 #print axioms POFreeLift.drCompat_cross
+#print axioms POFreeLift.qnet_glueDR
+#print axioms POFreeLift.glueDRMT_frame
 #print axioms POFreeLift.kernel_of_no_terminal

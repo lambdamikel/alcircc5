@@ -12378,3 +12378,37 @@ Nothing there needs a new idea. It needs writing.
 
 Build: 34,247 lines, 1,719 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 176. THE DR-GLUE IS A FRAME
+
+`qnet` of the DR-glue is `glueNet dr` of the two blocks' `qnet`s, up to the
+regrouping `(β₁⊕β₂) ⊕ (κ₁⊕κ₂) ≃ (β₁⊕κ₁) ⊕ (β₂⊕κ₂)`. So §172's lemma does the
+work and no triangle analysis is needed.
+
+| | |
+|---|---|
+| `frame_of_inj` | a frame pulls back along an injection |
+| `gdrSwap` / `gdrSwap_inj` | the regrouping and its injectivity |
+| `qnet_glueDR` | `qnet` of the glue IS `glueNet dr` of the parts |
+| **`glueDRMT_frame`** | **the DR-glue is a frame** — `propext` only |
+
+Two details Lean caught: the kernel diagonal is `if k = k' then eq else Q k k'`,
+and the sum's `DecidableEq` instance makes the same-side case non-definitional —
+`simp` handles it. And `conv dr = dr` had to be given explicitly.
+
+### 176.1 The DR-glue, so far
+
+| | |
+|---|---|
+| definition, `DRCompat` | §171 |
+| cross-atom conditions, `glueNet_frame` | §172 |
+| embeddings, labels, `gdr_rep` | §175 |
+| **`frame_q`** | **§176** |
+| the other 18 `MultiTierOk` fields | remaining |
+
+Of those 18: 8 propositional transfer by `rfl`; `kk_*` are block-internal;
+`ee_all`/`ek_all`/`ke_all`/`kq_all` split by `gdr_rep` into delegate and
+`drCompat_cross`; `e_ex`/`k_ex` are monotone.
+
+Build: 34,295 lines, 1,725 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
