@@ -38118,6 +38118,87 @@ rather than a fact to discover — but §§232–235 are three consecutive corre
 to the same design decision, so it is recorded as outstanding rather than
 assumed. -/
 
+/-! #### §236 — THE CHILD STEP AT A STORED LABEL
+
+§235 left the child step: with node identity separated from labels, forming a
+child needs (point, current label, demand) rather than an `SNode`.
+
+That turns out to be a rephrasing rather than new mathematics, because
+`witnessLabel_supportOk` was **already** label-parametric — it takes `L` and the
+demand, not a node. `sChild` merely fed it `n.lab`; §236 feeds it a stored
+label. -/
+
+open Classical in
+/-- **THE CHILD'S POINT**, from a stored label. -/
+noncomputable def ptChild {C0 : Concept} {x : α} {Lx : List Concept}
+    (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) : α :=
+  Classical.choose (hok.sat_ _ hD)
+
+theorem ptChild_dom {C0 : Concept} {x : α} {Lx : List Concept}
+    (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) : I.dom (ptChild hok hD) :=
+  (Classical.choose_spec (hok.sat_ _ hD)).1
+
+theorem ptChild_rho {C0 : Concept} {x : α} {Lx : List Concept}
+    (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) : I.rho x (ptChild hok hD) = r :=
+  (Classical.choose_spec (hok.sat_ _ hD)).2.1
+
+open Classical in
+/-- **THE CHILD'S LABEL** — the seed of the demand against the stored label,
+    closed and normalised. -/
+noncomputable def ptChildLab (_hI : RCC5Interp I) {C0 : Concept} {x : α}
+    {Lx : List Concept} (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) : List Concept :=
+  normL C0 (hcloseL I (ptChild hok hD) (seedOf r D Lx))
+
+open Classical in
+theorem ptChildLab_ok (hI : RCC5Interp I) {C0 : Concept} {x : α}
+    {Lx : List Concept} (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) :
+    SupportOk I C0 (ptChild hok hD) (ptChildLab hI hok hD) :=
+  normL_supportOk (witnessLabel_supportOk hI (ptChild_dom hok hD) hD hok.sub
+    (ptChild_rho hok hD) hok.sat_
+    (Classical.choose_spec (hok.sat_ _ hD)).2.2)
+
+open Classical in
+/-- The demand's argument is in the child's label — what `covered` needs. -/
+theorem ptChildLab_arg (hI : RCC5Interp I) {C0 : Concept} {x : α}
+    {Lx : List Concept} (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) : D ∈ ptChildLab hI hok hD :=
+  mem_normL.mpr ⟨cl_ex (hok.sub _ hD),
+    mem_hcloseL.mpr ⟨D, List.mem_cons_self,
+      self_mem_hclose I (ptChild hok hD) D⟩⟩
+
+open Classical in
+/-- **AND IT IS STRICTLY SHALLOWER** — `sChildN_depth` at a stored label, which
+    is what the generation bound runs on. -/
+theorem ptChildLab_depth (hI : RCC5Interp I) {C0 : Concept} {x : α}
+    {Lx : List Concept} (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) :
+    maxDepth (ptChildLab hI hok hD) < maxDepth Lx :=
+  Nat.lt_of_le_of_lt (normL_depth_le C0 _)
+    (Nat.lt_of_le_of_lt (hcloseL_depth_le I (ptChild hok hD) _)
+      (seedOf_depth_lt Lx r D hD))
+
+theorem ptChildLab_len (_hI : RCC5Interp I) {C0 : Concept} {x : α}
+    {Lx : List Concept} (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) :
+    (ptChildLab hI hok hD).length ≤ (cl C0).length := normL_len C0 _
+
+theorem ptChildLab_normL (hI : RCC5Interp I) {C0 : Concept} {x : α}
+    {Lx : List Concept} (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
+    (hD : Concept.ex r D ∈ Lx) : ∃ X, ptChildLab hI hok hD = normL C0 X :=
+  ⟨_, rfl⟩
+
+/-! ##### §236.1 — every `sChild*` fact now has a stored-label twin
+
+`ptChild_dom` / `_rho`, `ptChildLab_ok` / `_arg` / `_depth` / `_len` / `_normL`
+mirror the `sChild`/`sChildN` family one for one, at a label supplied rather than
+carried. So the invariants §§227–229 established transfer to the point-indexed
+stage by the same proofs, and §235's outstanding item is discharged. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39137,4 +39218,6 @@ end POFreeLift
 #print axioms POFreeLift.stageLab0_depth_le
 #print axioms POFreeLift.stageIdx_sat_ok
 #print axioms POFreeLift.ptIdxPoint_dom
+#print axioms POFreeLift.ptChildLab_ok
+#print axioms POFreeLift.ptChildLab_depth
 #print axioms POFreeLift.kernel_of_no_terminal

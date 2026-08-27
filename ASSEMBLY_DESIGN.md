@@ -14670,3 +14670,34 @@ three corrections in a row it is recorded as outstanding, not assumed.
 
 Build: 39,140 lines, 1,971 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 236. THE CHILD STEP AT A STORED LABEL
+
+§235 left the child step: with node identity separated from labels, forming a
+child needs (point, current label, demand) rather than an `SNode`.
+
+It turned out to be a **rephrasing, not new mathematics** — `witnessLabel_supportOk`
+was already label-parametric, taking `L` and the demand rather than a node.
+`sChild` merely fed it `n.lab`; §236 feeds it a stored label.
+
+`ptChild` / `ptChild_dom` / `_rho`, and `ptChildLab` with `_ok` / `_arg` /
+`_depth` / `_len` / `_normL` — the `sChild`/`sChildN` family, one for one, at a
+label supplied rather than carried.
+
+Notably `ptChildLab` needs no `RCC5Interp` at all: like §§215–216's routing
+reductions, the model parameter was inherited from the node type rather than
+used.
+
+### 236.1 Position
+
+Every invariant §§227–229 established transfers to the point-indexed stage by the
+same proofs, since each rests on a `sChild*` fact that now has a stored-label
+twin. §235's outstanding item is discharged.
+
+What remains for the stage is assembling these into the round at `PtIdx` — the
+index list, the extend step, and the iteration — and then the certificate's
+kernel-side obligations, which §231.1 flagged as needing `covered`'s kernel
+disjunct.
+
+Build: 39,223 lines, 1,980 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
