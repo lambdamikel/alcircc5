@@ -14906,3 +14906,46 @@ is the alternation rather than `cutNodes`' own.
 
 Build: 39,555 lines, 1,995 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 242. THE BOUND, WITHOUT BRANCH STRUCTURE
+
+§241.1 left the gate needing a `seen` list threaded through the alternation.
+`cutNodes` threads it down its own recursion, but the stage's recursion is the
+alternation and a node can be reached by several routes — there is no branch to
+thread along.
+
+**There does not need to be.** Block a child whose model type already occurs in
+the stage, and keep it (round-7 form, §240). The stage is a **list**, so "already
+occurs" means "occurs earlier", and the blocking relation is well-founded by
+construction.
+
+Then the counting needs no branches: **unblocked nodes have pairwise distinct
+types**, each having been fresh when added. So there are at most
+`|typeEnum C0|` of them, each spawning at most `|cl C0|` children, and the whole
+stage is bounded by `|typeEnum C0| * (|cl C0| + 1)`.
+
+* `distinct_types_len_le` — distinct types bound a node list.
+* `stage_bound_of_unblocked` — and the whole stage follows.
+
+### 242.1 The representation supplies two obligations
+
+* **Well-foundedness.** Blocking against "anywhere in the stage" is unsound in
+  general — two nodes can block each other and neither expands. Blocking against
+  an *earlier list position* cannot cycle, and a list has that order already.
+* **Branch structure.** The count wanted branches because §239 was counting path
+  *lengths*. Counting **unblocked nodes** instead needs only that their types
+  differ, which the gate enforces directly.
+
+So the node bound is `|typeEnum C0| * (|cl C0| + 1)`, computable from `C0` — and
+§200 already established that any computable bound suffices.
+
+### 242.2 Where this leaves `hbn`
+
+`hbn` has been the open item since §230, false as constructed at §231 and §239.
+The bound now exists and is certified; what remains is putting the gate into the
+child step so its hypothesis — unblocked nodes have distinct types — holds of the
+construction. That is a definition plus an invariant, both at the point where
+§§240–241 established the mechanism is the existing one.
+
+Build: 39,614 lines, 1,997 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

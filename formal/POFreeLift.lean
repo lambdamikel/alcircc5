@@ -38524,6 +38524,63 @@ repeat-free by construction, and `type_branch_len_le` bounds them by
 The only genuinely new work is threading `seen` through a stage whose recursion
 is the alternation rather than `cutNodes`' own. -/
 
+/-! #### §242 — THE BOUND, WITHOUT BRANCH STRUCTURE
+
+§241.1 left the gate needing a `seen` list threaded through the alternation.
+`cutNodes` threads it down its own recursion, but the stage's recursion is the
+alternation, and a node can be reached by several routes — so there is no branch
+to thread along.
+
+There does not need to be. **Block a child whose model type already occurs in the
+stage**, and keep it (round-7 form, §240). The stage is a LIST, so "already
+occurs" means "occurs earlier", and the blocking relation is well-founded by
+construction — the standard requirement, met by the data structure rather than by
+an argument.
+
+Then the counting needs no branches at all: **unblocked nodes have pairwise
+distinct types**, because each was fresh when it was added. So there are at most
+`|typeEnum C₀|` of them, each spawning at most `|cl C₀|` children, and the whole
+stage is bounded by `|typeEnum C₀| · |cl C₀| + |typeEnum C₀|`. -/
+
+/-- **DISTINCT TYPES BOUND A NODE LIST.**  The counting the gate buys, with no
+    branch structure in sight. -/
+theorem distinct_types_len_le (C0 : Concept) (I : Interp α) (us : List α)
+    (hnd : (us.map (mty C0 I)).Nodup) : us.length ≤ (typeEnum C0).length := by
+  have h1 : (us.map (mty C0 I)).length ≤ (typeEnum C0).length :=
+    nodup_len_le _ _ (fun t ht => by
+      obtain ⟨x, _, rfl⟩ := List.mem_map.mp ht
+      exact mty_mem_typeEnum C0 I x) hnd
+  rwa [List.length_map] at h1
+
+/-- **AND THE WHOLE STAGE IS BOUNDED BY `C₀`.**  Unblocked nodes are bounded by
+    the type enumeration; every other node is a child of one, and a node has at
+    most `|cl C₀|` demands. -/
+theorem stage_bound_of_unblocked (C0 : Concept) (I : Interp α)
+    (us : List α) (hnd : (us.map (mty C0 I)).Nodup)
+    (kids : Nat) (hk : kids ≤ us.length * (cl C0).length) :
+    us.length + kids ≤ (typeEnum C0).length
+      + (typeEnum C0).length * (cl C0).length := by
+  have h1 := distinct_types_len_le C0 I us hnd
+  have h2 : us.length * (cl C0).length
+      ≤ (typeEnum C0).length * (cl C0).length :=
+    Nat.mul_le_mul_right _ h1
+  omega
+
+/-! ##### §242.1 — why the list does the work
+
+Two things that looked like obligations are supplied by the representation:
+
+* **well-foundedness** — blocking against "anywhere in the stage" is unsound in
+  general, because two nodes can block each other and neither expands. Blocking
+  against an EARLIER list position cannot cycle, and a list has that order
+  already;
+* **the branch structure** — the count wanted branches because \S239 was counting
+  path lengths. Counting UNBLOCKED NODES instead needs only that their types
+  differ, which the gate enforces directly.
+
+So the node bound is `|typeEnum C₀| · (|cl C₀| + 1)`, computable from `C₀`, and
+§200 already showed any computable bound suffices. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39552,4 +39609,6 @@ end POFreeLift
 #print axioms POFreeLift.ptRound_mono
 #print axioms POFreeLift.branch_len_le
 #print axioms POFreeLift.type_branch_len_le
+#print axioms POFreeLift.distinct_types_len_le
+#print axioms POFreeLift.stage_bound_of_unblocked
 #print axioms POFreeLift.kernel_of_no_terminal
