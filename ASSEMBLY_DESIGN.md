@@ -11978,3 +11978,70 @@ session has produced.
 
 §165.2 said "cautious optimism and not more", and flagged that the analogous
 claim had been wrong twice. It was wrong a third time.
+
+## 168. WHERE THIS LEAVES IT
+
+### 168.1 What the session built
+
+* **The vertical extraction** (§§140–155): support labels, the depth measure that
+  works on them, the split closure `pNodes`, bounded and closed in both
+  directions. This is what §§130–133 twice failed to get.
+* **`mergedMT_ok`'s budgets** (§162), by choosing them uniform — affordable
+  because §143's node bound no longer rests on budget decrease.
+* **Reductions**: `kDIR` to `rr_covers` plus a construction discipline (§164);
+  `kDR` to cofinal disjointness (§165).
+* **Corrections**: three of my own claims withdrawn (§§157, 158, 167), each
+  found by grepping or measuring rather than reasoning.
+
+### 168.2 The pipeline
+
+```
+Satisfiable C0 → MergedExtraction → MixedCompleteness → Decidable
+                       ↑                CERTIFIED         CERTIFIED
+```
+
+`MergedExtraction` needs `mergedMT_ok`, whose six hypotheses are:
+
+| | |
+|---|---|
+| `hsepS` | **done** — `mSep`, found already present |
+| `hbS`/`hbK`/`hbQ` | **done** — §162 |
+| `he_ex` | reduces to `rDR`/`rPO`/`rPP`/`rPPI` — **all four done** |
+| `hk_ex` | reduces to `kDIR`/`kDR`/`kPO`/`kUP`/`kDN` — `kPO` done, `kDIR` reduced, **`kDR`/`kUP`/`kDN` open** |
+
+### 168.3 The new problem, and why it is different in kind
+
+Everything open until §167 was a CONSTRUCTION: build the family, choose the
+witnesses, wire the labels. `wp127` found something else.
+
+`mKdr` asks for a **single** external disjoint from the kernel's **entire** chain.
+If the chain exhausts its space, no such external exists — and each phase's
+`∃DR` demand may have its own witness with no common one. The certificate cannot
+express that: `K k f` is one relation per (kernel, external) pair and cannot vary
+by phase.
+
+**So this is a question about the architecture and the logic, not about the
+extraction:**
+
+> must a kernel chain in a model of a satisfiable ∀PO-free concept leave room for
+> an external disjoint from all of it?
+
+If yes, `kDR` is dischargeable and the remaining work is construction. If no,
+`mKdr` is too strong and the kernel-DR route needs redesign.
+
+It is also close to territory the campaign has been in: `wp96` C and §44's design
+notes are about kernels under `DR` externals inheriting disjointness by `djDown`.
+
+### 168.4 Honest position
+
+The ∀PO-free fragment is **not certified decidable**, and this session did not
+change that. What changed:
+
+* three quadrants remain certified, unaffected;
+* the mixed quadrant's VERTICAL half now has a terminating, bounded, closed
+  extraction where it previously had two dead routes;
+* the remaining gap is four routing conditions, of which one has just turned out
+  to hide a possible architectural problem rather than a construction task.
+
+Build: 34,004 lines, 1,704 declarations, 0 errors / 0 warnings / 0 sorries /
+0 `sorryAx`. Probes `wp107`–`wp127`.
