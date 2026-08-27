@@ -37972,6 +37972,87 @@ measure apply unchanged at `β := StageIdx I C₀`.
 saturated over both — and to re-establish the invariants, which are the same
 proofs at a different `β`. -/
 
+/-! #### §234 — THE STAGE'S LABELS AT THE NEW INDEX
+
+§233 fixed the index; §234 gives it labels. The initial label of an external is
+its own, and of a phase is `kPhaseNode`'s — so the two sorts start from the two
+constructions that already produce `SupportOk` labels, and the saturation can run
+at `β := StageIdx I C₀` with no new soundness work. -/
+
+open Classical in
+/-- **THE INITIAL LABELLING.** -/
+noncomputable def stageLab0 (hI : RCC5Interp I) {C0 : Concept} :
+    StageIdx I C0 → List Concept
+  | .inl n => n.lab
+  | .inr (⟨n, hn⟩, a) =>
+      (kPhaseNode hI C0
+        ((kernelData hI C0 n.x n.hx hn 0).c
+          ((kernelData hI C0 n.x n.hx hn 0).i + a))
+        ((kernelData hI C0 n.x n.hx hn 0).cdom _) n.lab).lab
+
+open Classical in
+/-- **AND IT IS A SUPPORT LABELLING AT EVERY INDEX** — externals by their own
+    `ok`, phases by `kPhaseNode`'s. -/
+theorem stageLab0_ok (hI : RCC5Interp I) {C0 : Concept} (v : StageIdx I C0) :
+    SupportOk I C0 (stagePt hI v) (stageLab0 hI v) := by
+  cases v with
+  | inl n => exact n.ok
+  | inr p =>
+      obtain ⟨⟨n, hn⟩, a⟩ := p
+      exact (kPhaseNode hI C0
+        ((kernelData hI C0 n.x n.hx hn 0).c
+          ((kernelData hI C0 n.x n.hx hn 0).i + a))
+        ((kernelData hI C0 n.x n.hx hn 0).cdom _) n.lab).ok
+
+open Classical in
+/-- Normalised at every index, so §209's counting applies. -/
+theorem stageLab0_normL (hI : RCC5Interp I) {C0 : Concept}
+    (v : StageIdx I C0) (hext : ∀ n : SNode I C0, v = .inl n →
+      ∃ X, n.lab = normL C0 X) :
+    ∃ X, stageLab0 hI v = normL C0 X := by
+  cases v with
+  | inl n => exact hext n rfl
+  | inr p => obtain ⟨⟨n, hn⟩, a⟩ := p; exact ⟨_, rfl⟩
+
+open Classical in
+/-- And no deeper than the external it came from. -/
+theorem stageLab0_depth_le (hI : RCC5Interp I) {C0 : Concept} (M : Nat)
+    (v : StageIdx I C0)
+    (hext : ∀ n : SNode I C0,
+      (v = .inl n ∨ ∃ hn a, v = .inr (⟨n, hn⟩, a)) → maxDepth n.lab ≤ M) :
+    maxDepth (stageLab0 hI v) ≤ M := by
+  cases v with
+  | inl n => exact hext n (Or.inl rfl)
+  | inr p =>
+      obtain ⟨⟨n, hn⟩, a⟩ := p
+      exact Nat.le_trans (kPhaseNode_depth_le hI C0 _ _ n.lab)
+        (hext n (Or.inr ⟨hn, a, rfl⟩))
+
+/-! ##### §234.1 — the saturation now runs at the certificate's own sorts
+
+With `stagePt`, `stageLab0` and `stageLab0_ok`, every hypothesis
+`satRound_supportOk_gen` asks for is available at `β := StageIdx I C₀`:
+`hdom` is `stagePt_dom`, `hL` is `stageLab0_ok`, and `hsound` is
+`modelRel_hsound`'s argument at `rel := fun u v => I.rho (stagePt u) (stagePt v)`.
+
+So a body owed by an external to a phase — §232's gap — is now transferred by the
+same saturation that handles external-to-external, with no separate machinery. -/
+
+open Classical in
+/-- **THE CONSUMER TEST.**  §234.1 claimed the saturation runs at the new index
+    with no new soundness work; here it is, checked. `rel` is the model relation
+    between the indexed points, so `hsound` is one application of
+    `support_all_sat` — the same argument `modelRel_hsound` makes for externals,
+    now covering external-to-PHASE transfers as well. -/
+theorem stageIdx_sat_ok (hI : RCC5Interp I) {C0 : Concept}
+    (nodes : List (StageIdx I C0)) (L : StageIdx I C0 → List Concept)
+    (hL : ∀ v, SupportOk I C0 (stagePt hI v) (L v)) (f : StageIdx I C0) :
+    SupportOk I C0 (stagePt hI f)
+      (satRound I C0 nodes (stagePt hI)
+        (fun u v => I.rho (stagePt hI u) (stagePt hI v)) L f) :=
+  satRound_supportOk_gen hI nodes (stagePt hI) _ (stagePt_dom hI) L hL
+    (fun e g _ h => support_all_sat (stagePt_dom hI g) (hL e) h rfl) f
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38987,4 +39068,7 @@ end POFreeLift
 #print axioms POFreeLift.stagePhases_normL
 #print axioms POFreeLift.stagePhases_depth_le
 #print axioms POFreeLift.stagePt_dom
+#print axioms POFreeLift.stageLab0_ok
+#print axioms POFreeLift.stageLab0_depth_le
+#print axioms POFreeLift.stageIdx_sat_ok
 #print axioms POFreeLift.kernel_of_no_terminal

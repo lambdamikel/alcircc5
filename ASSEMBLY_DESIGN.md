@@ -14594,3 +14594,33 @@ invariants, which are the same proofs at a different `beta`.
 
 Build: 38,990 lines, 1,963 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 234. THE STAGE'S LABELS AT THE NEW INDEX
+
+§233 fixed the index; §234 gives it labels. The initial label of an external is
+its own and of a phase is `kPhaseNode`'s — so the two sorts start from the two
+constructions that already produce `SupportOk` labels:
+
+* `stageLab0` — the initial labelling;
+* `stageLab0_ok` — **it is a support labelling at every index**, externals by
+  their own `ok`, phases by `kPhaseNode`'s;
+* `stageLab0_normL`, `stageLab0_depth_le` — §§227/229's invariants, carried to
+  the new sort.
+
+### 234.1 The consumer test
+
+`stageIdx_sat_ok` checks the claim rather than asserting it: every hypothesis
+`satRound_supportOk_gen` asks for is available at `beta := StageIdx I C0` —
+`hdom` is `stagePt_dom`, `hL` is `stageLab0_ok`, and `hsound` is one application
+of `support_all_sat` at `rel u v := I.rho (stagePt u) (stagePt v)`.
+
+**So §232's gap closes with no new machinery.** A body owed by an external to a
+phase is transferred by the same saturation that handles external-to-external —
+it was only ever missing because the phase had no index to receive it at.
+
+That is what §233.1 predicted from the one-sorted/two-sorted diagnosis, and it is
+the first time this session a predicted consequence landed without a correction
+in between.
+
+Build: 39,074 lines, 1,968 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
