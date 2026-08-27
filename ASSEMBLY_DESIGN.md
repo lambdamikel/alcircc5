@@ -13908,3 +13908,34 @@ satRound_fixed_propagates             a fixpoint gives all four obligations
 
 Build: 37,642 lines, 1,892 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 214. `∃EQ` — A GAP IN THE CLOSURE, CLOSED IN THE SATURATION
+
+Working toward `e_ex` turned up a small but real gap. `odSeed_he_ex` discharges
+the `EQ` case with `mtk_ex_eq`: an `∃EQ.D` demand is served by the node itself,
+strong `EQ` being identity. For support labels the analogue needs `D ∈ lab e` —
+and `hclose` closes under `and`, `or` and `∀EQ`, **but not `∃EQ`**.
+
+Two ways to fix it. Editing `hclose` means touching eight proofs whose catch-all
+branch would have to grow an `ex` case. Handling it in the **saturation** costs
+three lines and touches nothing else, so that is what §214 does: `satRound` now
+also takes on `allArgs eq (L f)` — the arguments of a node's own `∃EQ` demands.
+
+* `sat_of_ex_eq` — the soundness, one line from `eq_id`.
+* `satRound_fixed_exeq` — at a fixpoint, `∃EQ.D ∈ L f → D ∈ L f`, which is
+  `e_ex`'s `EQ` case.
+
+### 214.1 Note
+
+The gap was invisible while labels were `mtk`, because `mtk_ex_eq` reads the
+model directly and a model type is closed under everything true. Support labels
+carry only what is owed, so **every closure property has to be either proved or
+paid for** — this is the third such (after `and`/`or` and `∀EQ`, both already in
+`hclose`), and the first one the design missed.
+
+Cheap to fix here; the reason it was cheap is that the saturation was already
+agnostic about *why* an addition is sound (§213), so a third source cost nothing
+structural.
+
+Build: 37,678 lines, 1,895 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

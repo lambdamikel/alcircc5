@@ -36187,6 +36187,14 @@ theorem mem_allBodies_of {r : Atom} {L : List Concept} {E : Concept}
   refine List.mem_filterMap.mpr ⟨Concept.all r E, h, ?_⟩
   simp [bodyOf]
 
+/-- **STRONG `EQ` READS AN `∃EQ` DEMAND AS A LOCAL FACT.**  `hclose` closes
+    under `∀EQ` but not `∃EQ`, so the saturation carries it: an `∃EQ.D` demand at
+    a node is served by the node itself, `EQ` being identity. -/
+theorem sat_of_ex_eq (hI : RCC5Interp I) {x : α} (hx : I.dom x) {c : Concept}
+    (h : sat I x (Concept.ex eq c)) : sat I x c := by
+  obtain ⟨y, hy, hr, hc⟩ := h
+  rwa [hI.eq_id x y hx hy hr]
+
 open Classical in
 /-- **ONE ROUND OF LABEL SATURATION.**  Every node takes on the bodies every
     other node owes it along the declared relation, then closes. -/
@@ -36194,7 +36202,8 @@ noncomputable def satRound {β : Type} (I : Interp α) (C0 : Concept)
     (nodes : List β) (pt : β → α) (rel : β → β → Atom)
     (L : β → List Concept) (f : β) : List Concept :=
   normL C0 (hcloseL I (pt f)
-    (L f ++ nodes.flatMap (fun e => allBodies (rel e f) (L e))))
+    (L f ++ (allArgs eq (L f) ++
+      nodes.flatMap (fun e => allBodies (rel e f) (L e)))))
 
 /-- **IT PRESERVES `SupportOk`**, provided the declared relation is the model's.
     This is `support_extend` at family scale. -/
@@ -36208,16 +36217,20 @@ theorem satRound_supportOk {β : Type} (hI : RCC5Interp I) {C0 : Concept}
   · intro c hc
     rcases List.mem_append.mp hc with h | h
     · exact (hL f).sub c h
-    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
-      exact support_all_cl (hL e) (mem_allBodies hb)
+    · rcases List.mem_append.mp h with h' | h'
+      · exact cl_ex ((hL f).sub _ (mem_allArgs h'))
+      · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h'
+        exact support_all_cl (hL e) (mem_allBodies hb)
   · intro c hc
     rcases List.mem_append.mp hc with h | h
     · exact (hL f).sat_ c h
-    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
-      have hall := mem_allBodies hb
-      have hne : rel e f ≠ po :=
-        pofree_cl_all C0 hpofree (rel e f) c ((hL e).sub _ hall)
-      exact support_all_sat (hdom f) (hL e) hall (hrel e f hne).symm
+    · rcases List.mem_append.mp h with h' | h'
+      · exact sat_of_ex_eq hI (hdom f) ((hL f).sat_ _ (mem_allArgs h'))
+      · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h'
+        have hall := mem_allBodies hb
+        have hne : rel e f ≠ po :=
+          pofree_cl_all C0 hpofree (rel e f) c ((hL e).sub _ hall)
+        exact support_all_sat (hdom f) (hL e) hall (hrel e f hne).symm
 
 /-- **AND IT ONLY GROWS.** -/
 theorem satRound_mono {β : Type} (I : Interp α) (C0 : Concept)
@@ -36239,7 +36252,8 @@ theorem satRound_fixed_propagates {β : Type} (I : Interp α) (C0 : Concept)
     (e f : β) (he : e ∈ nodes) (r : Atom) (c : Concept)
     (hall : Concept.all r c ∈ L e) (hr : rel e f = r) : c ∈ L f := by
   refine hfix f c (mem_normL.mpr ⟨cl_all (hsub e _ hall), mem_hcloseL.mpr ⟨c, ?_, ?_⟩⟩)
-  · refine List.mem_append.mpr (Or.inr (List.mem_flatMap.mpr ⟨e, he, ?_⟩))
+  · refine List.mem_append.mpr (Or.inr (List.mem_append.mpr
+      (Or.inr (List.mem_flatMap.mpr ⟨e, he, ?_⟩))))
     rw [hr]; exact mem_allBodies_of hall
   · exact self_mem_hclose I _ c
 
@@ -36599,13 +36613,17 @@ theorem satRound_supportOk_gen {β : Type} (hI : RCC5Interp I) {C0 : Concept}
   · intro c hc
     rcases List.mem_append.mp hc with h | h
     · exact (hL f).sub c h
-    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
-      exact support_all_cl (hL e) (mem_allBodies hb)
+    · rcases List.mem_append.mp h with h' | h'
+      · exact cl_ex ((hL f).sub _ (mem_allArgs h'))
+      · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h'
+        exact support_all_cl (hL e) (mem_allBodies hb)
   · intro c hc
     rcases List.mem_append.mp hc with h | h
     · exact (hL f).sat_ c h
-    · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h
-      exact hsound e f c (mem_allBodies hb)
+    · rcases List.mem_append.mp h with h' | h'
+      · exact sat_of_ex_eq hI (hdom f) ((hL f).sat_ _ (mem_allArgs h'))
+      · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h'
+        exact hsound e f c (mem_allBodies hb)
 
 /-- **SOURCE 1 — the frame.**  §211's agreement discharges `hsound` for a
     declared frame, `PO` edges carrying nothing by `pofree_cl_all`. -/
@@ -36655,6 +36673,23 @@ theorem satRound_hsound_of_recurrence_ppi (hI : RCC5Interp I) {C0 : Concept}
     {a b : Nat} (ha : a < p) (hb : b < p) (cc : Concept)
     (hall : Concept.all ppi cc ∈ L a) : sat I (c (i + b)) cc :=
   kk_ppi_sat hI c hdom d hstep hty ha (supportOk_sub_mty (hL a) _ hall) hb
+
+theorem mem_allArgs_of {r : Atom} {L : List Concept} {D : Concept}
+    (h : Concept.ex r D ∈ L) : D ∈ allArgs r L := by
+  refine List.mem_filterMap.mpr ⟨Concept.ex r D, h, ?_⟩
+  simp [argOf]
+
+/-- **`e_ex`'s `EQ` CASE, AT A FIXPOINT.**  An `∃EQ.D` demand is served by the
+    node itself, and after saturation `D` is in its label. -/
+theorem satRound_fixed_exeq {β : Type} (I : Interp α) (C0 : Concept)
+    (nodes : List β) (pt : β → α) (rel : β → β → Atom) (L : β → List Concept)
+    (hsub : ∀ e, ∀ c ∈ L e, c ∈ cl C0)
+    (hfix : ∀ f, ∀ c ∈ satRound I C0 nodes pt rel L f, c ∈ L f)
+    (f : β) (c : Concept) (h : Concept.ex eq c ∈ L f) : c ∈ L f := by
+  refine hfix f c (mem_normL.mpr ⟨cl_ex (hsub f _ h),
+    mem_hcloseL.mpr ⟨c, ?_, self_mem_hclose I _ c⟩⟩)
+  exact List.mem_append.mpr (Or.inr (List.mem_append.mpr
+    (Or.inl (mem_allArgs_of h))))
 
 end WitSelector
 
@@ -37639,4 +37674,5 @@ end POFreeLift
 #print axioms POFreeLift.satRound_supportOk_gen
 #print axioms POFreeLift.satRound_hsound_of_frame
 #print axioms POFreeLift.satRound_hsound_of_recurrence
+#print axioms POFreeLift.satRound_fixed_exeq
 #print axioms POFreeLift.kernel_of_no_terminal
