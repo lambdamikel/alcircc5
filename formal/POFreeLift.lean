@@ -34174,6 +34174,165 @@ pair being `DR`; only `∀DR` can be broken. That is a much sharper statement th
 consistency result finally bites: the body set the block must satisfy is
 non-empty, and `drCompat_of_phases` says only finitely many labels need it. -/
 
+/-! #### §187 — `hdrk` IS BOUNDED BY THE PERIOD, AND `kernel_site` MEETS IT
+
+§165.1 read `kDR` as needing an external `DR` from the WHOLE infinite chain,
+which is what `mKdr` (`∀ b ≥ ik k`) demands, and concluded it was a genuine
+selection condition that `external_stabilizes` cannot supply at `DR`.
+
+Checking the certificate's own obligation rather than the internal helper:
+
+    hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧ …
+
+**`a < pk k`.** The obligation only ever inspects phases below the period —
+which is exactly the range `kernel_site`'s `DR` clause covers, and it covers it
+by construction (`dr_witness_all_below … (i + p)`, the late picking of §182).
+
+So the relation half of `hdrk` needs no infinite-chain stability at all. -/
+
+/-- **`kernel_site`'s `DR` CLAUSE DISCHARGES `hdrk`'s RELATION HALF.**  Note the
+    orientation: `hdrk` reads external-to-chain, `kernel_site` chain-to-external,
+    and `conv dr = dr` bridges them. -/
+theorem hdrk_rel_of_site (hI : RCC5Interp I) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) {i p : Nat} {w : α} (hw : I.dom w)
+    (hall : ∀ b, b ≤ p → I.rho (c (i + b)) w = dr) :
+    ∀ a, a < p → I.rho w (c (i + a)) = dr := by
+  intro a ha
+  have hc := hI.conv_ (c (i + a)) w (hdom (i + a)) hw
+  rw [hall a (Nat.le_of_lt ha)] at hc
+  exact hc
+
+/-! ##### §187.1 — what this does and does not settle
+
+**Settles:** the relation half of `hdrk`, for every phase the obligation
+inspects, from a tool the file already had. §165.1's framing — "choose the `∃DR`
+witness so that its relation to the chain stabilizes at `DR`" — was reading
+`mKdr`'s unbounded quantifier as if it were the obligation. It is not; the
+obligation is bounded.
+
+**Does not settle:** `mKdr` itself. It is the internal helper that feeds
+`seedMix` and hence `odSeed`'s disjointness, and it is stated unbounded. Whether
+that strength is load-bearing for the FRAME, or merely how the helper happened to
+be written, is a separate question this section does not answer — and the honest
+reading of §157's five re-derivations is that the way to answer it is to look at
+the consumers, not to reason about it.
+
+**Also outstanding:** `hdrk`'s two BUDGET conjuncts (`bud e ≤ bk k + 1` and
+`bk k ≤ bud e + 1`), which §162's uniform assignment addresses separately. -/
+
+/-! #### §188 — WEAKENING THE PREMISES TO WHERE THEY ARE USED
+
+§187.1 left open whether `mKdr`'s unbounded quantifier is load-bearing, and said
+the way to answer it is to look at the consumers. Doing that:
+
+`hdrk_of_model` concludes `I.rho (ck k (ik k + a)) (g e) = dr` for an
+UNBOUNDED `a`, and asks for `hseedPhase` and (via `mixLt_inr_phase`) `hdnphase`
+at every index. Reading the two proof bodies: **both use their premises at
+exactly the index `a` in the conclusion, and nowhere else.**
+
+So the unbounded quantifiers are not load-bearing — they are how the helpers were
+written. The variants below take the premises AT `a`, which is strictly more
+general and lets a supplier that only covers one period (`kernel_site`, via
+§187's `hdrk_rel_of_site`) discharge the obligation. The originals are left in
+place and unchanged; these are additions, not a refactor. -/
+
+/-- `mixLt_inr_phase` with its `hdnphase` premise taken at the single index it
+    is used at. -/
+theorem mixLt_inr_phase_at {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (a : Nat)
+    (hdnA : ∀ k e, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (k : κ) (x : β ⊕ κ) (h : mixLt elt up dn (Sum.inr k) x) :
+    I.rho (ck k (ik k + a)) (nodeOf g ck ik x) = pp := by
+  cases x with
+  | inl e =>
+    obtain ⟨e', hdne, hle⟩ := h
+    have h1 := hdnA k e' hdne
+    rcases hle with rfl | hlt
+    · exact h1
+    · exact rho_forced hI (hkdom k _) (hgdom e) (hgdom e') h1 (helt _ _ hlt)
+        (by decide)
+  | inr k' =>
+    obtain ⟨e, e', hdne, hupe, hle⟩ := h
+    have h1 := hdnA k e hdne
+    have h2 : I.rho (g e) (ck k' (ik k')) = pp := by
+      rcases hle with rfl | hlt
+      · exact hup0 k' e hupe
+      · exact rho_forced hI (hgdom e) (hkdom k' _) (hgdom e')
+          (helt _ _ hlt) (hup0 k' e' hupe) (by decide)
+    exact rho_forced hI (hkdom k _) (hkdom k' _) (hgdom e) h1 h2 (by decide)
+
+/-- **`hdrk`, DISCHARGED FROM ONE PHASE'S WORTH OF MODEL FACTS.**  Same proof as
+    `hdrk_of_model`; the only change is that `hseedPhase` and `hdnphase` are
+    supplied at the index `a` rather than at every index. -/
+theorem hdrk_of_model_at {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (a : Nat)
+    (hdnA : ∀ k e, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (hseedA : ∀ k y, seed (Sum.inr k) y →
+      I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
+    (k : κ) (e : β)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+      mixLe elt up dn (Sum.inl e) y₀ ∧ seed x₀ y₀) :
+    I.rho (ck k (ik k + a)) (g e) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hlt := mixLt_rho hI g ck ik up dn hgdom (fun k => hkdom k _) hup0 hdn0
+    elt helt
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (b | c)
+    · exact hgdom b
+    · exact hkdom c _
+  have h1 : I.rho (ck k (ik k + a)) (nodeOf g ck ik y₀) = dr := by
+    rcases hx with rfl | hx
+    · exact hseedA k y₀ hs
+    · exact rho_forced hI (hkdom k _) (hdomN y₀) (hdomN x₀)
+        (mixLt_inr_phase_at hI g ck ik up dn hgdom hkdom hup0 elt helt a hdnA
+          k x₀ hx) (hseed x₀ y₀ hs) (by decide)
+  rcases hy with rfl | hy
+  · exact h1
+  · have hy' : I.rho (g e) (nodeOf g ck ik y₀) = pp := hlt (Sum.inl e) y₀ hy
+    have h2 : I.rho (nodeOf g ck ik y₀) (g e) = ppi := by
+      have hc : I.rho (nodeOf g ck ik y₀) (g e)
+          = conv (I.rho (g e) (nodeOf g ck ik y₀)) :=
+        hI.conv_ (g e) (nodeOf g ck ik y₀) (hgdom e) (hdomN y₀)
+      rw [hc, hy']; rfl
+    exact rho_forced hI (hkdom k _) (hgdom e) (hdomN y₀) h1 h2 (by decide)
+
+/-- **AND THE ORIGINAL IS THE INSTANCE.**  Checked rather than claimed: the
+    unbounded form is `hdrk_of_model_at` fed unbounded premises, so nothing was
+    lost in the weakening. -/
+theorem hdrk_of_model_at_generalizes {κ : Type} {I : Interp α}
+    (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
+    (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (hseedPhase : ∀ k y, seed (Sum.inr k) y →
+      ∀ a, I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
+    (k : κ) (e : β) (a : Nat)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+      mixLe elt up dn (Sum.inl e) y₀ ∧ seed x₀ y₀) :
+    I.rho (ck k (ik k + a)) (g e) = dr :=
+  hdrk_of_model_at hI g ck ik up dn hgdom hkdom hup0 hdn0 elt helt a
+    (fun k e hd => hdnphase k e a hd) seed hseed
+    (fun k y hsy => hseedPhase k y hsy a) k e h
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -35105,4 +35264,7 @@ end POFreeLift
 #print axioms POFreeLift.drUnion_rcc5
 #print axioms POFreeLift.drUnion_sat
 #print axioms POFreeLift.drUnion_drCompat
+#print axioms POFreeLift.hdrk_rel_of_site
+#print axioms POFreeLift.hdrk_of_model_at
+#print axioms POFreeLift.hdrk_of_model_at_generalizes
 #print axioms POFreeLift.kernel_of_no_terminal

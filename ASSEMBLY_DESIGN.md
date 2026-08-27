@@ -12873,3 +12873,48 @@ question:
 
 Build: 35,108 lines, 1,755 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`. `drUnion_rcc5` and `drUnion_sat` both `propext` only.
+
+## 187. `hdrk` IS BOUNDED BY THE PERIOD
+
+§165.1 read `kDR` as needing an external `DR` from the whole infinite chain —
+that is what `mKdr` (`∀ b ≥ ik k`) demands — and concluded it was a genuine
+selection condition `external_stabilizes` cannot supply at `DR`.
+
+Reading the certificate's own obligation instead of the internal helper:
+
+    hdrk : ∀ k e a, a < pk k → O.disj (Sum.inr k) (Sum.inl e) →
+      I.rho (g e) (ck k (ik k + a)) = dr ∧ …
+
+**`a < pk k`.** It only ever inspects phases below the period — exactly the range
+`kernel_site`'s `DR` clause covers, and covers by construction (late picking,
+§182). `hdrk_rel_of_site` (**axiom-free**) is the bridge; the orientation flips
+through `conv dr = dr`.
+
+## 188. THE UNBOUNDED QUANTIFIERS WERE NOT LOAD-BEARING
+
+§187.1 left open whether `mKdr`'s unbounded form is needed, and said the way to
+find out is to look at the consumers. Doing that:
+
+`hdrk_of_model` concludes at an unbounded `a` and asks for `hseedPhase` and
+(through `mixLt_inr_phase`) `hdnphase` at every index. Both proof bodies use
+their premises **at exactly the index `a` in the conclusion, and nowhere else.**
+
+So `mixLt_inr_phase_at` and `hdrk_of_model_at` take the premises at `a`. Both
+**axiom-free**, and `hdrk_of_model_at_generalizes` checks — rather than claims —
+that the original is the instance, so nothing was lost. The originals are
+untouched: these are additions, not a refactor.
+
+**Consequence.** A supplier covering one period discharges `hdrk`. §165.1's
+framing ("choose the `∃DR` witness so its relation to the chain stabilizes at
+`DR`") was reading an artifact of how a helper had been written as if it were a
+demand of the logic — the third time this session that a residue turned out to
+live in the presentation rather than the mathematics (§182 was the first, §187
+the second).
+
+**Still open on this line:** `hdrk`'s two budget conjuncts (`bud e ≤ bk k + 1`,
+`bk k ≤ bud e + 1`), which §162's uniform assignment addresses separately; and
+`mKdr` itself, which feeds `seedMix`/`odSeed`'s disjointness and is a different
+consumer from `hdrk` — §188 does not touch it.
+
+Build: 35,270 lines, 1,759 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
