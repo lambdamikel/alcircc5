@@ -12532,3 +12532,57 @@ Build: 34,581 lines, 1,736 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`. `all_dr_up` axiom-free; `seg_dr` /
 `need_consistent_seg` / `need_consistent_below` = propext + Classical.choice +
 Quot.sound.
+
+## 180. ONE WITNESS FOR ALL THE BODIES — and what "closed" does and does not mean
+
+§179 claimed the 0.2% closed. Checking that claim against what `DRCompat`
+literally demands found the statement one notch too weak, and the scope one notch
+too broad. Both are recorded here rather than quietly fixed.
+
+### 180.1 The quantifier order was wrong
+
+`need_consistent_seg` reads `∀ X, ∃ w` — every `∀DR` body is *separately*
+satisfiable. That matches §173.1's characterization, which talks about a single
+`∀DR.X` with `X` unsatisfiable. But `wp129` measured the consistency of the whole
+body **set**, which is `∃ w, ∀ X`.
+
+The proof already delivered the stronger form — the witness never depended on
+`X`; it is the demand's own witness — so pulling the `obtain` outside the `intro`
+was the whole fix. `need_set_consistent_seg` and `need_set_consistent_below` are
+the corrected statements, and they also return `D ∈ mty C0 I w` rather than
+`sat I w D`, since label membership is what the assembly consumes.
+
+**One point satisfies every `∀DR` body contributed anywhere in a type-repeating
+segment.** That is `wp129`'s 99.8% measurement as a theorem, at 100%.
+
+### 180.2 What is still not `DRCompat`
+
+`DRCompat T1 T2` demands `∀DR.c ∈ mtLabel T1 x → c ∈ mtLabel T2 y` for **every**
+node `y` of `T2` — not just at the fresh witness. §180.1 gives it at the witness.
+
+The rest is not another instance of the same difficulty: if `T2`'s nodes are
+genuinely `DR` from `T1`'s in the model — which is exactly the read-off condition
+that makes the DR-glue a faithful abstraction in the first place — then `T1`'s
+`∀DR.c` fires on every `T2` node directly, with no argument at all. So the
+remaining step is *establishing DR-separation of the two node sets*, not
+re-litigating consistency.
+
+That is a construction obligation on the extraction, and it belongs with the
+other outstanding extraction items (the `kDR`/`kUP`/`kDN` routing, the family and
+pool), not with the 0.2%.
+
+### 180.3 Corrected scope of §179's claim
+
+**Certified:** the body set the fresh DR-point must satisfy is consistent —
+unconditionally, at one point, for both positions of the universal relative to
+the demand, given a type repeat. The `∃DR`-demand-and-DR-isolated-phase
+incompatibility §173.2 argued informally is now `need_set_consistent_seg`.
+
+**Not certified:** `DRCompat` itself, which additionally needs the two blocks
+DR-separated in the model.
+
+§179's "the 0.2% is closed" is accurate for the 0.2% — the inconsistency `wp129`
+measured — and was too broad if read as "the DR-glue's hypothesis is discharged".
+
+Build: 34,626 lines, 1,738 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

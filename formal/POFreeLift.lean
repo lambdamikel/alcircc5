@@ -33661,6 +33661,49 @@ theorem need_consistent_seg (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
   obtain ⟨w, hw, hdr, _⟩ := mty_ex hdem
   exact ⟨w, hw, dr_bodies_satisfied hI C0 hdom hstep hw hdr hib hbot⟩
 
+/-! #### §180 — ONE WITNESS FOR ALL THE BODIES
+
+§179's `need_consistent_seg` has its quantifiers in the weaker order: `∀ X, ∃ w`.
+That says every `∀DR` body is SEPARATELY satisfiable, which is what §173.1's
+characterization mentions — but `wp129` measured the consistency of the whole
+body SET, which needs `∃ w, ∀ X`.
+
+The proof already delivers the stronger form: the witness never depended on `X`,
+it is the demand's own witness. Pulling the `obtain` outside the `intro` is the
+entire difference, and the statement below is the one the assembly actually
+consumes. -/
+
+/-- **THE BODY SET IS CONSISTENT.**  One point — the `∃DR` demand's own witness —
+    satisfies EVERY `∀DR` body contributed anywhere in a type-repeating segment.
+
+    This is the form `DRCompat` needs, and the form `wp129` measured. -/
+theorem need_set_consistent_seg (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i j : Nat} (hij : i < j) (hty : mty C0 I (c i) = mty C0 I (c j))
+    {D : Concept} {b : Nat} (hib : i ≤ b) (_hbj : b < j)
+    (hdem : Concept.ex dr D ∈ mty C0 I (c b)) :
+    ∃ w, I.dom w ∧ I.rho (c b) w = dr ∧ D ∈ mty C0 I w ∧
+      ∀ (X : Concept) (a : Nat), i ≤ a → a < j →
+        Concept.all dr X ∈ mty C0 I (c a) → sat I w X := by
+  obtain ⟨w, hw, hdr, hD⟩ := mty_ex hdem
+  refine ⟨w, hw, hdr, hD, ?_⟩
+  intro X a hia haj hX
+  have hbot : Concept.all dr X ∈ mty C0 I (c i) :=
+    seg_dr hI C0 hdom hstep hij hty hia haj hX i (Nat.le_refl i) hij
+  exact dr_bodies_satisfied hI C0 hdom hstep hw hdr hib hbot
+
+/-- **AND BELOW THE DEMAND, WITHOUT ANY REPEAT.**  The `∀ X, ∃ w` / `∃ w, ∀ X`
+    distinction applies to §178 too; here is that half in set form. -/
+theorem need_set_consistent_below (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {D : Concept} {j : Nat} (hdem : Concept.ex dr D ∈ mty C0 I (c j)) :
+    ∃ w, I.dom w ∧ I.rho (c j) w = dr ∧ D ∈ mty C0 I w ∧
+      ∀ (X : Concept) (i : Nat), i ≤ j →
+        Concept.all dr X ∈ mty C0 I (c i) → sat I w X := by
+  obtain ⟨w, hw, hdr, hD⟩ := mty_ex hdem
+  exact ⟨w, hw, hdr, hD, fun X i hij hX =>
+    dr_bodies_satisfied hI C0 hdom hstep hw hdr hij hX⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34578,4 +34621,6 @@ end POFreeLift
 #print axioms POFreeLift.all_dr_up
 #print axioms POFreeLift.seg_dr
 #print axioms POFreeLift.need_consistent_seg
+#print axioms POFreeLift.need_set_consistent_seg
+#print axioms POFreeLift.need_set_consistent_below
 #print axioms POFreeLift.kernel_of_no_terminal
