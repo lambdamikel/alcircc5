@@ -90,6 +90,8 @@ def bodies_at(dom, val, c0, x):
 
 CONS = [0]
 TOPW = [0]
+RAISED = [0]
+HARD = [0]
 
 
 def main(trials=1500, U=7, seed=606):
@@ -137,6 +139,22 @@ def main(trials=1500, U=7, seed=606):
         #     ADDED as a fresh all-DR point (wp71: criterion=True always).
         if any(all(sat(dom, val, w, X) for X in need) for w in dom):
             CONS[0] += 1
+        else:
+            # THE 0.2%.  mKdr only asks for DR from b >= ik, and base_ge lets
+            # ik be pushed past ANY bound -- so try dropping a PREFIX of the
+            # chain and see whether the residual body set becomes consistent.
+            fixed = False
+            for cut in range(1, len(chain)):
+                nd2 = frozenset()
+                for x in chain[cut:]:
+                    nd2 = nd2 | bodies_at(dom, val, c0, x)
+                if any(all(sat(dom, val, w, X) for X in nd2) for w in dom):
+                    fixed = True
+                    break
+            if fixed:
+                RAISED[0] += 1
+            else:
+                HARD[0] += 1
         # (c) and does the TOP chain witness already do it, as the
         #     downward-closure argument predicts?
         top = chain[-1]
@@ -158,6 +176,12 @@ def main(trials=1500, U=7, seed=606):
           f"  ({100.0*CONS[0]/max(chains,1):.1f}%)")
     print(f"  the TOP chain witness already meets it   : {TOPW[0]}"
           f"  ({100.0*TOPW[0]/max(chains,1):.1f}%)")
+    print()
+    print(f"  OF THE INCONSISTENT CASES ({CONS[0] and chains - CONS[0]}):")
+    print(f"    fixed by RAISING THE KERNEL BASE       : {RAISED[0]}"
+          f"   <- base_ge allows this")
+    print(f"    still inconsistent at every base       : {HARD[0]}"
+          f"   <- genuinely blocked")
     print()
     print("=" * 72)
     print("  NOTE: a LOW rate in the FIRST row is EXPECTED and is not a refutation -- the")

@@ -12250,3 +12250,57 @@ glue once the projections are supplied.
 
 Build: 34,158 lines, 1,713 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 173. THE 0.2% — and why recurrence rules it out
+
+`wp129` refined: of the 2 inconsistent cases in 1182, **0 are fixed by raising
+the kernel base** (which `base_ge` permits) and **2 are blocked at every base**.
+
+So they are real for the chains the probe uses. The question is whether they are
+real for KERNELS.
+
+### 173.1 What a blocked case is
+
+`need` is inconsistent exactly when some chain point carries `∀DR.X` with `X`
+unsatisfiable — i.e. the point is **DR-isolated**, its universal vacuously true.
+A fresh point DR from the whole chain would make it non-vacuous and require `X`,
+which nothing satisfies.
+
+### 173.2 Why a kernel cannot be in that position
+
+A kernel chain is **recurrent**: `mty (c i) = mty (c (i+p))`, so every phase type
+occurs at arbitrarily high AND low positions in the unfolding.
+
+Suppose phase `a` is DR-isolated (`∀DR.X`, `X` unsatisfiable) and phase `b`
+carries `∃DR.D`, with witness `w`.
+
+* `w` is `DR` from `b`.
+* `a`'s type recurs BELOW `b` — take that occurrence `a'`.
+* Disjointness is downward-closed (`comp(PP,DR) = {DR}`), so `w DR b` and
+  `a' PP b` give **`w DR a'`**.
+* `a'` has `a`'s type, hence `∀DR.X`, so `X` holds at `w`.
+* So `X` is satisfiable — contradicting the assumption.
+
+**On a recurrent chain, a DR-isolated phase and an `∃DR` demand at any phase are
+incompatible.** So if a kernel has any `∃DR` demand — which is the only case
+where `kDR` fires — no phase is DR-isolated, and `need` is consistent.
+
+### 173.3 Status of the argument
+
+The probe's 2 cases use ARBITRARY maximal chains in finite models, which are not
+recurrent, so the counterexample does not transfer. That is an argument, not a
+proof: it is three composition steps and a use of recurrence, all of which have
+certified counterparts (`path_cut_below` for downward closure, `cty` for
+recurrence), but it is not written in Lean.
+
+**What it does settle: the 0.2% is not evidence against the surgery.** It is
+evidence that arbitrary chains can be blocked and that kernel chains, being
+recurrent, cannot be — which is the same shape as §153, where recurrence also
+turned an apparent counterexample into a non-case.
+
+### 173.4 Honest caveat
+
+Recurrence has now rescued two arguments in this session (§153, §173). That is a
+pattern worth suspecting rather than trusting: both times the rescue was found
+AFTER the obstruction, and I have not looked for a case where recurrence makes
+things worse.
