@@ -14819,3 +14819,51 @@ once branches are repeat-free.
 
 Build: 39,467 lines, 1,993 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 240. CORRECTION — §239's BLOCKING IS UNDERSPECIFIED IN THE WAY ROUND 6 FAILED
+
+Michael asked whether blocking will do, and whether the failed attempts had been
+studied. Checking: **§239 says "stop when a label repeats" and does not say what
+happens to the repeated node.** That is exactly the fork round 6 got wrong.
+
+**Round 6** set `lab(u,v) := L_Q(q(u), q(v))` with `L_Q(pi,pi) = EQ` — labels
+indexed by TYPE, so a repeated node is **identified** with its blocker. That
+collapses distinct laps of a blocking cycle into semantic equality and breaks
+`exists PP.T and forall PP.(exists PP.T)`. The seventh review called it intrinsic
+to position-symbol indexing and not locally patchable.
+
+**Round 7** fixed it by making blocking **occurrence-sensitive**: laps carry an
+incidence tag `iota = up` and are labelled `PP`, never `EQ`. The blocked node
+stays a distinct occurrence; only its **expansion** stops.
+
+So: blocking will do, **in the round-7 form only**, and §239 as written does not
+distinguish them.
+
+### 240.1 And the machinery already exists
+
+`cutNodes` (§112) *is* round-7 blocking — its `∃PP` branch reads
+
+    if mty C0 I (W.up n hF).x ∈ seen then [W.up n hF] else <recurse>
+
+— **the blocked node is kept, only unexpanded**. `cutNodes_stable_typeEnum`
+bounds it: the closure stabilises at `(typeEnum C0).length + 1`. And
+`declared_edge_package` (§123) serves the blocked node's demand by a declared
+`PP`-labelled edge between **distinct occurrences**, never an identification.
+
+That is the bound §239 was reaching for, certified, and it has been in the file
+since §112.
+
+### 240.2 Second time
+
+**This is the second time this session I re-derived blocking rather than
+consulting the record.** §113 recorded the first, after the same redirect from
+Michael. The lesson did not stick because §239 arrived at blocking from the
+**termination** side rather than the **serving** side and did not recognise it as
+the same mechanism.
+
+The concrete correction to the plan: do not add blocking to the stage. Transfer
+`cutNodes`' bound to the support-label stage, which is a different and smaller
+task — and one where the round-6 trap is already avoided by construction.
+
+Build: 39,506 lines, 1,993 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

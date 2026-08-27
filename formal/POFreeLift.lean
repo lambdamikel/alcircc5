@@ -38437,6 +38437,45 @@ bound is what termination needs.
 construction, not to the counting: `branch_len_le` is already the argument once
 branches are repeat-free. -/
 
+/-! #### §240 — CORRECTION: §239's BLOCKING IS UNDERSPECIFIED IN THE WAY ROUND 6 FAILED
+
+Michael asked whether blocking will do, and whether the failed attempts had been
+studied. Checking: §239 says "stop when a label repeats" and does not say what
+happens to the repeated node. That is exactly the fork round 6 got wrong.
+
+**Round 6** set `lab(u,v) := L_Q(q(u), q(v))` with `L_Q(π,π) = EQ` — indexing
+labels by TYPE, so a repeated node is IDENTIFIED with its blocker. That collapses
+distinct laps of a blocking cycle into semantic equality and breaks
+`∃PP.⊤ ⊓ ∀PP.(∃PP.⊤)`. The seventh review called it intrinsic to position-symbol
+indexing and not locally patchable.
+
+**Round 7** fixed it by making blocking OCCURRENCE-SENSITIVE: laps carry an
+incidence tag `ι = up` and are labelled `PP`, never `EQ`. The blocked node stays a
+distinct occurrence; only its EXPANSION stops.
+
+So the answer is: blocking will do, **in the round-7 form only**, and §239 as
+written does not distinguish them.
+
+### §240.1 And the machinery already exists
+
+`cutNodes` (§112) is precisely round-7 blocking — *stop expanding at a repeated
+type, keep the node* — with `cutNodes_stable` and `cutNodes_stable_typeEnum`
+bounding it by `(typeEnum C₀).length`. `declared_edge_package` (§123) serves the
+blocked node's demand by a **declared `PP`-labelled edge between distinct
+occurrences**, never an identification.
+
+That is the bound §239 wanted, certified, at exactly the counting `branch_len_le`
+gestures at — and it has been in the file since §112.
+
+**This is the second time this session I have re-derived blocking rather than
+consulting the record.** §113 recorded the first, after the same redirect. The
+lesson did not stick because §239 reached blocking from the termination side
+rather than the serving side, and did not recognise it as the same mechanism.
+
+No theorem is added here: the content is that `cutNodes_stable_typeEnum` IS the
+bound §239 was reaching for, and the work is to transfer it to the support-label
+stage — not to build a second blocking. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
