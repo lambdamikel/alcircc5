@@ -35727,6 +35727,70 @@ theorem sNode_lab_mem_allListsLe (C0 : Concept) {I : Interp α}
     n.lab ∈ allListsLe (cl C0) (cl C0).length := by
   rw [h]; exact normL_mem_allListsLe C0 L
 
+/-! #### §202 — `mUp` IS NOT OVER-STRONG; `mDn` IS
+
+Tracing `he_ex` (§199.1 item 2) through `odSeed_he_ex`'s four routing conditions
+reaches `mUp`/`mDn`, and both are stated over the WHOLE chain:
+
+    mUp … k e = ((nd e).k = mBk nd k ∧ ∀ b, mIk … k ≤ b →
+                   I.rho (nd e).x (mCk … k b) = pp)
+
+That is the shape §192.3 had to weaken for `mKdr`, so the reflex is to weaken it
+again. **The reflex is wrong here**, and the difference is worth stating.
+
+For an ASCENDING kernel the unbounded condition is a CONSEQUENCE of the base one:
+`e PP c i` plus `c i PP c b` gives `e PP c b` by `comp(PP,PP) = {PP}`. Nothing
+needs weakening — the strength is free.
+
+For `mDn` it is not. `c b PP e` for all `b` says the external contains every
+point of a GROWING chain, and `c i PP e` gives no purchase on `c b` for `b > i`
+(the two are both inside `e`'s side of nothing in particular). That is a genuine
+condition on the model, of the same character as `mKdr`'s cofinal `DR` — and
+unlike `mKdr`'s, it cannot be dodged by bounding, because the frame really does
+claim the external sits above the whole kernel. -/
+
+/-- **`PP` TO A CHAIN POINT PROPAGATES UP THE CHAIN.**  `comp(PP,PP) = {PP}`,
+    which is why `mUp`'s unbounded conjunct costs nothing for an ascending
+    kernel. -/
+theorem pp_to_chain_of_base (hI : RCC5Interp I) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {e : α} (he : I.dom e) {i : Nat} (h0 : I.rho e (c i) = pp) :
+    ∀ b, i ≤ b → I.rho e (c b) = pp := by
+  intro b hib
+  obtain ⟨m, rfl⟩ : ∃ m, b = i + m := ⟨b - i, by omega⟩
+  induction m with
+  | zero => exact h0
+  | succ m' ih =>
+      have hchain : I.rho (c (i + m')) (c (i + m' + 1)) = pp := hstep (i + m')
+      exact rho_forced hI he (hdom (i + m' + 1)) (hdom (i + m'))
+        (ih (by omega)) hchain (by decide)
+
+/-- The same fact in the descending direction: `PPI` to a chain point propagates
+    down a descending chain. -/
+theorem ppi_to_chain_of_base (hI : RCC5Interp I) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = ppi)
+    {e : α} (he : I.dom e) {i : Nat} (h0 : I.rho e (c i) = ppi) :
+    ∀ b, i ≤ b → I.rho e (c b) = ppi := by
+  intro b hib
+  obtain ⟨m, rfl⟩ : ∃ m, b = i + m := ⟨b - i, by omega⟩
+  induction m with
+  | zero => exact h0
+  | succ m' ih =>
+      have hchain : I.rho (c (i + m')) (c (i + m' + 1)) = ppi := hstep (i + m')
+      exact rho_forced hI he (hdom (i + m' + 1)) (hdom (i + m'))
+        (ih (by omega)) hchain (by decide)
+
+/-! ##### §202.1 — the consequence for the extraction
+
+So of the four structural conditions `he_ex` reduces to, the `PP` half's kernel
+branch (`up k e`) asks for nothing beyond a base fact, for ascending kernels; the
+`PPI` half's (`dn k e`) does, for the same kernels.
+
+That asymmetry is not an artifact of the encoding — it is `comp(PP,PP) = {PP}`
+against `comp(PPI,PP)` being wide, the same asymmetry §178/§179 met from the
+`∀DR` side and §165.1 met from the `∃DR` side. **Three different obligations,
+one composition fact.** -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36688,4 +36752,5 @@ end POFreeLift
 #print axioms POFreeLift.rootNode_mem
 #print axioms POFreeLift.rootNode_depth
 #print axioms POFreeLift.normL_mem_allListsLe
+#print axioms POFreeLift.pp_to_chain_of_base
 #print axioms POFreeLift.kernel_of_no_terminal

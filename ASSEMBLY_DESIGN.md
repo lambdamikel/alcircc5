@@ -13467,3 +13467,50 @@ reindex** — and of those, only `hk_ex` is more than wiring.
 
 Build: 36,691 lines, 1,841 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 202. `mUp` IS NOT OVER-STRONG; `mDn` IS
+
+Tracing `he_ex` (item 2) through `odSeed_he_ex`'s four routing conditions
+(`rDR`/`rPO`/`rPP`/`rPPI`) reaches `mUp`/`mDn`, both stated over the whole chain:
+
+    mUp … k e = ((nd e).k = mBk nd k ∧ ∀ b, mIk … k ≤ b →
+                   I.rho (nd e).x (mCk … k b) = pp)
+
+That is exactly the shape §192.3 had to weaken for `mKdr`, so the reflex — after
+eight instances — is to weaken it again. **The reflex is wrong here.**
+
+For an **ascending** kernel the unbounded conjunct is a *consequence* of the base
+one: `e PP c i` plus `c i PP c b` gives `e PP c b` by `comp(PP,PP) = {PP}`
+(`pp_to_chain_of_base`, `propext` + `Quot.sound` only; `ppi_to_chain_of_base` is
+the descending twin). The strength is free.
+
+For `mDn` it is not. `c b PP e` for all `b` says the external contains every
+point of a **growing** chain, and `c i PP e` gives no purchase on `c b` for
+`b > i`. That is a genuine condition on the model, of the same character as
+`mKdr`'s cofinal `DR` — and unlike `mKdr`'s it **cannot be dodged by bounding**,
+because the frame really does claim the external sits above the whole kernel.
+
+### 202.1 One composition fact, three obligations
+
+The asymmetry is not an encoding artifact. It is `comp(PP,PP) = {PP}` against
+`comp(PPI,PP)` being wide — the same asymmetry
+
+* §178/§179 met from the `∀DR` side (the universal climbs, the witness does not),
+* §165.1 met from the `∃DR` side (disjointness reads down, not up),
+* and §202 meets from the `∃PP`/`∃PPI` side (`up` is free, `dn` is not).
+
+**Three different obligations, one composition fact.** That is worth recording
+because it predicts where the remaining difficulty sits: not in `rPP`, and not in
+the ascending half of anything.
+
+### 202.2 Method note
+
+The eight-instance pattern ("the obstruction is in how it was written down")
+became a reflex, and the reflex was wrong on the ninth look. The check that
+caught it was the same one that established the pattern in the first place —
+read what the proof of the consequence would actually need — but applied to
+*confirm* over-strength rather than assume it. **A pattern that has held eight
+times is still a hypothesis on the ninth.**
+
+Build: 36,756 lines, 1,843 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
