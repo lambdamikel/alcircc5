@@ -37165,7 +37165,13 @@ noncomputable def stageKids (hI : RCC5Interp I) {C0 : Concept}
     (ns : List (SNode I C0)) : List (SNode I C0) :=
   ns.attach.flatMap (fun n =>
     n.val.lab.attach.flatMap (fun q => match q with
-      | ⟨.ex _ _, hD⟩ => [sChildN hI n.val hD]
+      | ⟨.ex pp D, hD⟩ =>
+          if D ∈ persistDs C0 I n.val.x then [] else [sChildN hI n.val hD]
+      | ⟨.ex ppi D, hD⟩ =>
+          if D ∈ persistDsI C0 I n.val.x then [] else [sChildN hI n.val hD]
+      | ⟨.ex dr _, hD⟩ => [sChildN hI n.val hD]
+      | ⟨.ex po _, hD⟩ => [sChildN hI n.val hD]
+      | ⟨.ex eq _, hD⟩ => [sChildN hI n.val hD]
       | _ => []))
 
 open Classical in
@@ -37190,25 +37196,43 @@ theorem extendStage_len (hI : RCC5Interp I) {C0 : Concept}
   omega
 
 open Classical in
-/-- Every owed child is in `stageKids`. -/
+/-- Every owed child that is NOT blocked is in `stageKids`.  The two blocked
+    cases are the persistent vertical demands, which a kernel serves. -/
 theorem mem_stageKids (hI : RCC5Interp I) {C0 : Concept}
     (ns : List (SNode I C0)) (n : SNode I C0) (hn : n ∈ ns)
-    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) :
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab)
+    (hpp : r = pp → D ∉ persistDs C0 I n.x)
+    (hppi : r = ppi → D ∉ persistDsI C0 I n.x) :
     sChildN hI n hD ∈ stageKids hI ns := by
   refine List.mem_flatMap.mpr ⟨⟨n, hn⟩, List.mem_attach _ _, ?_⟩
-  exact List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _,
-    List.mem_singleton_self _⟩
+  refine List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _, ?_⟩
+  cases r with
+  | pp =>
+      show sChildN hI n hD ∈
+        (if D ∈ persistDs C0 I n.x then ([] : List (SNode I C0))
+         else [sChildN hI n hD])
+      rw [if_neg (hpp rfl)]; exact List.mem_singleton_self _
+  | ppi =>
+      show sChildN hI n hD ∈
+        (if D ∈ persistDsI C0 I n.x then ([] : List (SNode I C0))
+         else [sChildN hI n hD])
+      rw [if_neg (hppi rfl)]; exact List.mem_singleton_self _
+  | dr => exact List.mem_singleton_self _
+  | po => exact List.mem_singleton_self _
+  | eq => exact List.mem_singleton_self _
 
 open Classical in
 /-- **AND IT SERVES EVERY DEMAND** — phase 1's job, in one step. -/
 theorem extendStage_covers (hI : RCC5Interp I) {C0 : Concept}
     (ns : List (SNode I C0)) (n : SNode I C0) (hn : n ∈ ns)
-    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) :
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab)
+    (hpp : r = pp → D ∉ persistDs C0 I n.x)
+    (hppi : r = ppi → D ∉ persistDsI C0 I n.x) :
     sChildN hI n hD ∈ extendStage hI ns := by
   by_cases hmem : sChildN hI n hD ∈ ns
   · exact List.mem_append.mpr (Or.inl hmem)
   · refine List.mem_append.mpr (Or.inr ?_)
-    exact List.mem_filter.mpr ⟨mem_stageKids hI ns n hn hD,
+    exact List.mem_filter.mpr ⟨mem_stageKids hI ns n hn hD hpp hppi,
       decide_eq_true hmem⟩
 
 open Classical in
@@ -37574,9 +37598,22 @@ theorem stageKids_normL (hI : RCC5Interp I) {C0 : Concept}
   obtain ⟨⟨F, hF⟩, _, hm''⟩ := List.mem_flatMap.mp hm'
   cases F with
   | ex r c =>
-      rw [List.mem_singleton] at hm''
-      subst hm''
-      exact ⟨_, rfl⟩
+      cases r with
+      | pp =>
+          have h2 : m ∈ (if c ∈ persistDs C0 I n.val.x
+              then ([] : List (SNode I C0)) else [sChildN hI n.val hF]) := hm''
+          by_cases hb : c ∈ persistDs C0 I n.val.x
+          · rw [if_pos hb] at h2; exact absurd h2 List.not_mem_nil
+          · rw [if_neg hb, List.mem_singleton] at h2; subst h2; exact ⟨_, rfl⟩
+      | ppi =>
+          have h2 : m ∈ (if c ∈ persistDsI C0 I n.val.x
+              then ([] : List (SNode I C0)) else [sChildN hI n.val hF]) := hm''
+          by_cases hb : c ∈ persistDsI C0 I n.val.x
+          · rw [if_pos hb] at h2; exact absurd h2 List.not_mem_nil
+          · rw [if_neg hb, List.mem_singleton] at h2; subst h2; exact ⟨_, rfl⟩
+      | dr => rw [List.mem_singleton] at hm''; subst hm''; exact ⟨_, rfl⟩
+      | po => rw [List.mem_singleton] at hm''; subst hm''; exact ⟨_, rfl⟩
+      | eq => rw [List.mem_singleton] at hm''; subst hm''; exact ⟨_, rfl⟩
   | _ => exact absurd hm'' List.not_mem_nil
 
 open Classical in
@@ -37685,11 +37722,29 @@ theorem stageKids_depth_le (hI : RCC5Interp I) {C0 : Concept}
   obtain ⟨⟨F, hF⟩, _, hm''⟩ := List.mem_flatMap.mp hm'
   cases F with
   | ex r c =>
-      rw [List.mem_singleton] at hm''
-      subst hm''
-      have hlt := sChildN_depth hI n.val hF
-      have hn := h n.val n.property
-      omega
+      have hfin : ∀ (z : SNode I C0), z = sChildN hI n.val hF →
+          maxDepth z.lab ≤ M := by
+        intro z hz
+        subst hz
+        have hlt := sChildN_depth hI n.val hF
+        have hn := h n.val n.property
+        omega
+      cases r with
+      | pp =>
+          have h2 : m ∈ (if c ∈ persistDs C0 I n.val.x
+              then ([] : List (SNode I C0)) else [sChildN hI n.val hF]) := hm''
+          by_cases hb : c ∈ persistDs C0 I n.val.x
+          · rw [if_pos hb] at h2; exact absurd h2 List.not_mem_nil
+          · rw [if_neg hb, List.mem_singleton] at h2; exact hfin m h2
+      | ppi =>
+          have h2 : m ∈ (if c ∈ persistDsI C0 I n.val.x
+              then ([] : List (SNode I C0)) else [sChildN hI n.val hF]) := hm''
+          by_cases hb : c ∈ persistDsI C0 I n.val.x
+          · rw [if_pos hb] at h2; exact absurd h2 List.not_mem_nil
+          · rw [if_neg hb, List.mem_singleton] at h2; exact hfin m h2
+      | dr => rw [List.mem_singleton] at hm''; exact hfin m hm''
+      | po => rw [List.mem_singleton] at hm''; exact hfin m hm''
+      | eq => rw [List.mem_singleton] at hm''; exact hfin m hm''
   | _ => exact absurd hm'' List.not_mem_nil
 
 open Classical in
@@ -37763,6 +37818,39 @@ Formalising it needs the generation structure as an explicit induction, which
 can add points at several generations at once. **That mismatch, not the counting,
 is what is left.** Recorded rather than estimated: the analogous transfer looked
 routine twice this session (§218, §226) and was not. -/
+
+/-! #### §231 — THE STAGE HAD NO BLOCKING
+
+§230.1 said the missing piece was the generation structure. Pushing on it found
+something worse and more useful: **`hbn` is false as things stand**, so the
+alternation's termination was resting on a hypothesis that cannot be supplied.
+
+`pNodes` (§154) gates its recursion on persistence —
+
+    | ⟨.ex pp D, hD⟩ => if D ∈ persistDs C0 I n.x then [] else …
+
+— because a persistent `∃PP` demand is served by a KERNEL, not by a fresh
+external. That gate is blocking, and it is what makes the vertical node set
+finite.
+
+`stageKids` has no such gate. It follows every demand, so on a concept like
+`∃PP.⊤ ⊓ ∀PP.(∃PP.⊤)` it walks an infinite `PP`-chain of witnesses and the point
+set is unbounded. No `BN` exists, and §226's `stageIter_no_endless` — which takes
+`hbn` as a hypothesis — was therefore never going to be dischargeable.
+
+In Michael's framing: **the tableau was being expanded without blocking.** That
+is exactly the thing blocking exists to prevent, and the campaign has known it
+since round 7. -/
+
+open Classical in
+/-- **THE GATE FIRES.**  A persistent `∃PP` demand contributes nothing to the
+    stage — the blocking `pNodes` has and §231 found missing here. The `∃PPI`
+    mirror is `if_pos` on `persistDsI`. -/
+theorem stageKids_gate_pp (hI : RCC5Interp I) {C0 : Concept}
+    (n : SNode I C0) {D : Concept} (hD : Concept.ex pp D ∈ n.lab)
+    (hp : D ∈ persistDs C0 I n.x) :
+    (if D ∈ persistDs C0 I n.x then ([] : List (SNode I C0))
+     else [sChildN hI n hD]) = [] := if_pos hp
 
 end WitSelector
 
@@ -38775,4 +38863,5 @@ end POFreeLift
 #print axioms POFreeLift.extendStage_eq_of_depth_zero
 #print axioms POFreeLift.stageIter_depth_le
 #print axioms POFreeLift.stageIter_lab_mem
+#print axioms POFreeLift.stageKids_gate_pp
 #print axioms POFreeLift.kernel_of_no_terminal

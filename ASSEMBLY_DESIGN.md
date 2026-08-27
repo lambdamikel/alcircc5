@@ -14466,3 +14466,52 @@ session (§218's measure, §226's hypothesis) and was wrong both times.
 
 Build: 38,778 lines, 1,953 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 231. THE STAGE HAD NO BLOCKING
+
+§230.1 said the missing piece was the generation structure. Pushing on it found
+something worse and more useful: **`hbn` was false**, so the alternation's
+termination rested on a hypothesis that could never be supplied.
+
+`pNodes` (§154) gates its recursion on persistence —
+
+    | <.ex pp D, hD> => if D in persistDs C0 I n.x then [] else ...
+
+— because a persistent `exists PP` demand is served by a **kernel**, not by a
+fresh external. That gate *is* blocking, and it is what makes the vertical node
+set finite.
+
+`stageKids` had no such gate. It followed every demand, so on a concept like
+`exists PP.T and forall PP.(exists PP.T)` it walks an infinite PP-chain of
+witnesses: the point set is unbounded, no `BN` exists, and §226's
+`stageIter_no_endless` was never going to be dischargeable.
+
+In Michael's framing: **the tableau was being expanded without blocking** — the
+precise thing blocking exists to prevent, and something this campaign has known
+since round 7.
+
+### 231.1 The fix, and what it costs
+
+`stageKids` now mirrors `pNodes`: persistent `exists PP` / `exists PPI` demands
+contribute nothing (`stageKids_gate_pp`). Three dependent lemmas needed the gate
+threaded through — `mem_stageKids` and `extendStage_covers` now carry the two
+non-persistence hypotheses, and `stageKids_normL` / `stageKids_depth_le` case on
+the relation.
+
+**The cost is that `Stationary.covered` is now too strong.** A blocked demand is
+not served by a node of the stage; it is served by the anchor's kernel. So
+`covered` needs a kernel disjunct — exactly the second branch of
+`odSeed_he_ex_lab`'s conclusion, which §220.1 noted the external-only version
+could not express. That branch stopped being optional the moment blocking came
+back.
+
+### 231.2 Note
+
+I recorded the defect as a theorem (`stageKids_follows_persistent`) before fixing
+it, and the fix made that theorem false — so it was replaced by
+`stageKids_gate_pp`, which states the opposite. That is the intended lifecycle:
+the witness exists to stop the claim drifting while the repair is designed, not
+to survive it.
+
+Build: 38,867 lines, 1,954 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
