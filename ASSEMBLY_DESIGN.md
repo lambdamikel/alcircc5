@@ -14325,3 +14325,45 @@ was visible while the operators were only being proved sound.
 
 Build: 38,528 lines, 1,940 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 226. THE ALTERNATION REACHES A STATIONARY STAGE
+
+§225 closed the last line of the termination argument; §226 runs it.
+`stageIter_no_endless`: if every stage of the alternation were non-stationary,
+its measure would increase at every round, and §219's bound forbids that.
+
+Stated as the refutation, matching §210 and §219 — the classical step to
+"∃ n, stationary" adds nothing.
+
+### 226.1 A hypothesis that had to be weakened
+
+`interMeasure_le` and `totalSize_normL_le` originally asked for the normalised-
+label property at **every** `e : β`, but `totalSize` only sums over `nodes`. That
+is unsatisfiable for a node type larger than the stage — which `SNode I C₀`
+certainly is — so §226 could not have applied them.
+
+Weakened to `∀ e ∈ nodes`, which is what the proofs actually use
+(`sum_map_le` already supplies the membership) and what the construction can
+supply. One call site needed `fun e _ => …`.
+
+The same shape as §211's `hrel`: a hypothesis stated over more than the proof
+consumes, unsatisfiable in the intended instance, and invisible until something
+tried to instantiate it.
+
+### 226.2 What the alternation still needs
+
+`stageIter_no_endless` takes two hypotheses the construction must supply:
+
+* `hbn` — the stage length is bounded. True because every `sChildN` step drops
+  `maxDepth` (`sChildN_depth`) and saturation never raises it
+  (`satRound_depth_le`), so nesting is bounded by `mdepth C₀` and branching by
+  `|cl C₀|` — the `genBound` argument of §197, but for `stageIter` rather than
+  `kwNodes`, and not yet transferred.
+* `hnorm` — every stage label is a `normL`. True by construction
+  (`sChildN`, `satRound` and `rootNode` all normalise) and needs an induction
+  over rounds.
+
+Both are invariants of the iteration rather than new mathematics.
+
+Build: 38,566 lines, 1,941 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

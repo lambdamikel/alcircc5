@@ -36331,10 +36331,10 @@ theorem closure_stops_le {β : Type} (nodes : List β)
 
 /-- Support labels are always inside the bound, `Nodup` or not. -/
 theorem totalSize_normL_le {β : Type} (C0 : Concept) (nodes : List β)
-    (L : β → List Concept) (h : ∀ e, ∃ X, L e = normL C0 X) :
+    (L : β → List Concept) (h : ∀ e ∈ nodes, ∃ X, L e = normL C0 X) :
     totalSize nodes L ≤ nodes.length * (cl C0).length := by
-  refine sum_map_le nodes _ _ (fun e _ => ?_)
-  obtain ⟨X, hX⟩ := h e
+  refine sum_map_le nodes _ _ (fun e he => ?_)
+  obtain ⟨X, hX⟩ := h e he
   rw [hX, normL]
   exact List.length_filter_le _ _
 
@@ -36483,7 +36483,7 @@ theorem satIter_no_endless_growth {β : Type} (I : Interp α) (C0 : Concept)
         c0 ∉ satIter I C0 nodes pt rel L0 n f0) : False := by
   have hbound : ∀ n, totalSize nodes (satIter I C0 nodes pt rel L0 n)
       ≤ nodes.length * (cl C0).length := fun n =>
-    totalSize_normL_le C0 nodes _ (satIter_normL I C0 nodes pt rel L0 n)
+    totalSize_normL_le C0 nodes _ (fun e _ => satIter_normL I C0 nodes pt rel L0 n e)
   have key : ∀ n, n ≤ nodes.length * (cl C0).length + 1 →
       n ≤ totalSize nodes (satIter I C0 nodes pt rel L0 n) := by
     intro n
@@ -36966,7 +36966,7 @@ def interMeasure {β : Type} (C0 : Concept) (nodes : List β)
 /-- **IT IS BOUNDED**, by a number computed from `C₀` and the node bound. -/
 theorem interMeasure_le {β : Type} (C0 : Concept) (nodes : List β)
     (L : β → List Concept) (BN : Nat) (hn : nodes.length ≤ BN)
-    (hL : ∀ e, ∃ X, L e = normL C0 X) :
+    (hL : ∀ e ∈ nodes, ∃ X, L e = normL C0 X) :
     interMeasure C0 nodes L ≤ BN * ((cl C0).length + 1) + BN * (cl C0).length := by
   have h1 : nodes.length * ((cl C0).length + 1) ≤ BN * ((cl C0).length + 1) :=
     Nat.mul_le_mul_right _ hn
@@ -37014,7 +37014,7 @@ admits. -/
 theorem interleave_stops (C0 : Concept) (BN : Nat)
     (nodes : Nat → List α) (L : Nat → α → List Concept)
     (hbn : ∀ n, (nodes n).length ≤ BN)
-    (hnorm : ∀ n e, ∃ X, L n e = normL C0 X)
+    (hnorm : ∀ n, ∀ e ∈ nodes n, ∃ X, L n e = normL C0 X)
     (hstep : ∀ n, interMeasure C0 (nodes n) (L n)
       < interMeasure C0 (nodes (n + 1)) (L (n + 1))) :
     ∀ n, n ≤ BN * ((cl C0).length + 1) + BN * (cl C0).length :=
@@ -37026,7 +37026,7 @@ theorem interleave_stops (C0 : Concept) (BN : Nat)
 theorem interleave_no_endless_rounds (C0 : Concept) (BN : Nat)
     (nodes : Nat → List α) (L : Nat → α → List Concept)
     (hbn : ∀ n, (nodes n).length ≤ BN)
-    (hnorm : ∀ n e, ∃ X, L n e = normL C0 X)
+    (hnorm : ∀ n, ∀ e ∈ nodes n, ∃ X, L n e = normL C0 X)
     (hstep : ∀ n, interMeasure C0 (nodes n) (L n)
       < interMeasure C0 (nodes (n + 1)) (L (n + 1))) : False := by
   have h := interleave_stops C0 BN nodes L hbn hnorm hstep
@@ -37519,6 +37519,43 @@ theorem stage_round_lt (hI : RCC5Interp I) {C0 : Concept}
     omega
   · rw [satStage_eq_of_fixed hI _ ns _ hsat]
     exact stage_lt_of_unserved hI ns hm hnm
+
+/-! #### §226 — THE ALTERNATION REACHES A STATIONARY STAGE
+
+§225 closed the last line of the termination argument. §226 runs it: if every
+stage of `stageIter` were non-stationary, its measure would increase at every
+round, and §219's bound forbids that. -/
+
+open Classical in
+/-- **NO ENDLESS ALTERNATION.**  Stated as the refutation, matching §210 and
+    §219: an alternation in which every stage moves is impossible. -/
+theorem stageIter_no_endless (hI : RCC5Interp I) {C0 : Concept}
+    (ns0 : List (SNode I C0)) (BN : Nat)
+    (hbn : ∀ n, (stageIter hI n ns0).length ≤ BN)
+    (hnorm : ∀ n, ∀ m ∈ stageIter hI n ns0, ∃ X, m.lab = normL C0 X)
+    (hmove : ∀ n,
+      (∃ m, m ∈ stageIter hI n ns0 ∧ ∃ c,
+          c ∈ satRound I C0 (stageIter hI n ns0) SNode.x
+            (fun e f => I.rho e.x f.x) (fun m => m.lab) m ∧ c ∉ m.lab) ∨
+      ((∀ m ∈ stageIter hI n ns0,
+          satRound I C0 (stageIter hI n ns0) SNode.x
+            (fun e f => I.rho e.x f.x) (fun m => m.lab) m = m.lab) ∧
+        ∃ m, m ∈ stageKids hI (stageIter hI n ns0) ∧
+          m ∉ stageIter hI n ns0)) : False := by
+  have hstep : ∀ n,
+      interMeasure C0 (stageIter hI n ns0) SNode.lab
+        < interMeasure C0 (stageIter hI (n + 1) ns0) SNode.lab := by
+    intro n
+    have h := stage_round_lt hI (stageIter hI n ns0) (hnorm n) (hmove n)
+    rw [stageIter]
+    exact h
+  have hb : ∀ n, interMeasure C0 (stageIter hI n ns0) SNode.lab
+      ≤ BN * ((cl C0).length + 1) + BN * (cl C0).length := fun n =>
+    interMeasure_le C0 (stageIter hI n ns0) SNode.lab BN (hbn n)
+      (hnorm n)
+  have := measure_stops _ _ hb hstep
+    (BN * ((cl C0).length + 1) + BN * (cl C0).length + 1)
+  omega
 
 end WitSelector
 
@@ -38525,4 +38562,5 @@ end POFreeLift
 #print axioms POFreeLift.stage_lt_of_unsaturated
 #print axioms POFreeLift.satStage_eq_of_fixed
 #print axioms POFreeLift.stage_round_lt
+#print axioms POFreeLift.stageIter_no_endless
 #print axioms POFreeLift.kernel_of_no_terminal
