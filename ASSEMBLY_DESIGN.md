@@ -12586,3 +12586,82 @@ measured — and was too broad if read as "the DR-glue's hypothesis is discharge
 
 Build: 34,626 lines, 1,738 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 181. THE FREE DR CONE — and what `wp130` says it costs
+
+§180.2 filed "DR-separation of the glued node sets" with the extraction
+obligations. This section asks how much of it is free, certifies that part, and
+measures the rest.
+
+### 181.1 Which directions preserve `DR`, certified
+
+Starting from a witness `w` with `c DR w`:
+
+| step from `w` | cell | forced? |
+|---|---|---|
+| descend (`w PPI y`) | `comp(DR,PPI) = {DR}` | **yes** |
+| ascend (`w PP y`) | `comp(DR,PP)` wide | no |
+| across (`w DR y` / `w PO y`) | wide | no |
+
+`dr_desc_step` (axiom-free) and `dr_desc_chain` certify the first row; it is
+§178's downward closure applied in the SECOND argument instead of the first.
+`dr_cone_free` composes it with `dr_witness_below` — everything below the witness
+is `DR` from every chain point at or below the demand — and `dr_cone_bodies`
+lands the universals there in one statement.
+
+### 181.2 `wp130`, and what it changed
+
+Four measurements, two model classes each (`G1` a shared universe, `G2` with a
+region the chain never enters — the generator artifact `wp127` was exposed to):
+
+| | |
+|---|---|
+| A free cone, as proved | **100%**, both classes |
+| A ascent/across nodes that happen to be `DR` | **~2%**, both classes |
+| B `DRCompat` on an ARBITRARY block | ~36% |
+| C ... choosing the witness inside the model | ~25–30%, i.e. **no better** |
+| D ... letting the block come from a DIFFERENT model | **~48%** |
+| E block-side failures ONLY above the demand's height | **91–97%** |
+
+Three of these changed the picture:
+
+**The free cone is free but small.** At ~2%, `DRCompat` is *not* inherited from
+the model. The glue must declare the `DR` and discharge the label condition on
+its own — which is what `glueDRMT` is for, so this is a confirmation of the
+architecture rather than a problem with it.
+
+**Selection is not the lever; provenance is.** C is the negative result:
+searching the model's own witnesses does not help. D is the positive one: the
+block may be a certificate of a *different* model, which §180 licenses (the body
+set is consistent, so a model of `D ⊓ ⋀bodies` exists), and restoring that
+freedom roughly doubles the rate.
+
+**The residue is localized, and to a familiar place.** E confirms a prediction
+stated before the run: the root is `DR` from everything at or below the demand
+(`dr_witness_below`), so its own universals are already forced there — failures
+must sit above. They do, 91–97%, and **every single at-or-below failure came from
+a non-root node**, i.e. from outside §181.1's free cone. The diagnostic is fully
+explained with nothing left over.
+
+### 181.3 A methodological catch worth recording
+
+Part B's first run reported **94%** — on a sample whose mean was **0.1** `∀DR`
+bodies. It was measuring emptiness. Conditioning on non-vacuous instances and
+weighting the generator toward `∀DR` dropped it to 36%.
+
+That is the [[probe-before-lean-churn]] companion rule firing on a new axis:
+`wp100`/`wp110`/`wp111` were blind spots in the model class; this was a blind
+spot in the *instance filter*. **A high pass-rate on a mostly-vacuous sample is
+indistinguishable from a finding until you count the non-vacuous instances.**
+
+### 181.4 Position
+
+`DRCompat` is a real obligation, not a formality: ~48% with full freedom. But its
+failure mode is the **same "above the demand" shape §178 met and §179 closed for
+the chain's own universals**, plus the non-root nodes §181.1 pins as outside the
+free cone. Known shape, known tool, and a construction still to write — which is
+a materially better position than "an unquantified hypothesis", and materially
+worse than "free".
+
+Build: 34,703 lines, 1,742 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`. `dr_desc_step` axiom-free; `dr_cone_free` propext only.

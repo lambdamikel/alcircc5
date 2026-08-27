@@ -33704,6 +33704,80 @@ theorem need_set_consistent_below (hI : RCC5Interp I) (C0 : Concept) {c : Nat �
   exact ⟨w, hw, hdr, hD, fun X i hij hX =>
     dr_bodies_satisfied hI C0 hdom hstep hw hdr hij hX⟩
 
+/-! #### §181 — HOW MUCH OF A DR-WITNESS'S BLOCK STAYS DR, FOR FREE
+
+`kDR` wants an external `DR` from the WHOLE kernel chain, and §170.3 left the
+fresh point's OWN demands as the unclosed recursion. §171–§177's `glueDRMT`
+answers that by gluing a whole certificate rather than moving a point, at the
+price of `DRCompat` — and `DRCompat` is easy exactly to the extent that the
+glued block's nodes are ALREADY `DR` from the chain, since then the chain's
+`∀DR` universals fire on them directly.
+
+So the question is: starting from a witness `w` with `c DR w`, which of the
+block-generating directions PRESERVE `DR` from `c`?
+
+| step from `w` | cell | forced? |
+|---|---|---|
+| descend (`w PPI y`, i.e. `y` below `w`) | `comp(DR,PPI) = {DR}` | **yes** |
+| ascend (`w PP y`) | `comp(DR,PP) = {DR,PO,PPI,…}` | no |
+| across (`w DR y` / `w PO y`) | `comp(DR,DR)` / `comp(DR,PO)` | no |
+
+**The descending half is free**, and it is free for the same reason §178's half
+was: disjointness is downward-closed, here in the SECOND argument rather than the
+first. The ascending and horizontal halves are not, and that is where the DR-glue
+genuinely earns its `DRCompat` hypothesis. -/
+
+/-- **ONE DESCENDING STEP KEEPS `DR`.**  `comp(DR,PPI) = {DR}` — the second-
+    argument twin of `dr_witness_below`'s `comp(PP,DR) = {DR}`.  Axiom-free. -/
+theorem dr_desc_step (hI : RCC5Interp I) {x w y : α}
+    (hx : I.dom x) (hw : I.dom w) (hy : I.dom y)
+    (hxw : I.rho x w = dr) (hwy : I.rho w y = ppi) : I.rho x y = dr :=
+  rho_forced hI hx hy hw hxw hwy (by decide)
+
+/-- **AND SO DOES ANY DESCENT.**  Everything below a `DR`-witness is `DR` from
+    the same point — the whole downward cone comes for free. -/
+theorem dr_desc_chain (hI : RCC5Interp I) {x : α} (hx : I.dom x)
+    {d : Nat → α} (hdom : ∀ n, I.dom (d n))
+    (hstep : ∀ n, I.rho (d n) (d (n + 1)) = ppi)
+    (h0 : I.rho x (d 0) = dr) : ∀ n, I.rho x (d n) = dr := by
+  intro n
+  induction n with
+  | zero => exact h0
+  | succ m ih =>
+      exact dr_desc_step hI hx (hdom m) (hdom (m + 1)) ih (hstep m)
+
+/-- **THE COMBINED CONE.**  Below the demand's height on the chain, and below the
+    witness in the model: every point of that region is `DR` from every chain
+    point at or below the demand — so the chain's `∀DR` universals fire on all of
+    it with no hypothesis at all.
+
+    This is §178 and §181 composed, and it is the part of `DRCompat` that is a
+    theorem rather than a condition. -/
+theorem dr_cone_free (hI : RCC5Interp I) {c : Nat → α}
+    (hcdom : ∀ n, I.dom (c n)) (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {d : Nat → α} (hddom : ∀ n, I.dom (d n))
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = ppi)
+    {j : Nat} (h0 : I.rho (c j) (d 0) = dr) :
+    ∀ i n, i ≤ j → I.rho (c i) (d n) = dr := by
+  intro i n hij
+  exact dr_desc_chain hI (hcdom i) hddom hdstep
+    (dr_witness_below hI hcdom hcstep (hddom 0) h0 i hij) n
+
+/-- **AND THE UNIVERSALS LAND.**  Every `∀DR` body owed anywhere at or below the
+    demand's height is satisfied at EVERY point of the cone — one statement, no
+    per-node argument.  This is `DRCompat`'s label condition, discharged on the
+    region where it is free. -/
+theorem dr_cone_bodies (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
+    (hcdom : ∀ n, I.dom (c n)) (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {d : Nat → α} (hddom : ∀ n, I.dom (d n))
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = ppi)
+    {j : Nat} (h0 : I.rho (c j) (d 0) = dr) :
+    ∀ (X : Concept) (i n : Nat), i ≤ j →
+      Concept.all dr X ∈ mty C0 I (c i) → sat I (d n) X := by
+  intro X i n hij hX
+  exact (mem_mty.mp hX).2 (d n) (hddom n)
+    (dr_cone_free hI hcdom hcstep hddom hdstep h0 i n hij)
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34623,4 +34697,7 @@ end POFreeLift
 #print axioms POFreeLift.need_consistent_seg
 #print axioms POFreeLift.need_set_consistent_seg
 #print axioms POFreeLift.need_set_consistent_below
+#print axioms POFreeLift.dr_desc_step
+#print axioms POFreeLift.dr_cone_free
+#print axioms POFreeLift.dr_cone_bodies
 #print axioms POFreeLift.kernel_of_no_terminal
