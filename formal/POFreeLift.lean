@@ -34427,6 +34427,123 @@ theorem odSeed_hk_ex_lt {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
       obtain ⟨f, hsd, hD⟩ := kDR k a D ha hdem
       exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
 
+/-! #### §191 — `rr_covers` NEEDS ONLY `Ds.length ≤ p`, AND THAT COMBINES THE TWO
+     SEGMENT SELECTORS
+
+§190.1 said what remains for `kDR`/`kUP`/`kDN` is routing, not existence. Tracing
+where the witnesses would come from ran into a real-looking obstacle: the kernel's
+segment is chosen by `rr_segment_from` (so `rr_covers` can supply `kDIR`), while
+the witnesses come from `kernel_site`, which chooses its segment by
+`segment_select`. Two different selectors, one kernel.
+
+Reading `rr_covers`'s proof rather than its statement: `hdvd : Ds.length ∣ p` is
+consumed **once**, as `Nat.le_of_dvd hp hdvd`, purely to get `Ds.length ≤ p`.
+Divisibility is not used. That is the §188 pattern for the sixth time.
+
+With the weaker hypothesis the two selectors compose, because `hrec` — the
+cofinal recurrence `kernel_site`'s witness branches run on — comes from
+`recurrent_tail`, which is a property of a **TAIL, not of a segment**. So one may
+take `rr_segment_from`'s segment (divisible period, hence long enough) and still
+have recurrence at every phase, provided the base is past `recurrent_tail`'s
+threshold — which `rr_segment_from`'s `L0` parameter arranges. -/
+
+/-- **`rr_covers`, ON THE HYPOTHESIS IT ACTUALLY USES.**  Same proof; `hdvd`
+    replaced by the inequality it was only ever used to produce. -/
+theorem rr_covers_le {α : Type} {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAll I C0 Ds x0) (i p : Nat) (hi : 0 < i) (_hp : 0 < p)
+    (hle : Ds.length ≤ p) (k : Nat) (hk : k < Ds.length) :
+    ∃ b, b < p ∧ Ds.get ⟨k, hk⟩ ∈ mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + b)) := by
+  obtain ⟨b, hbL, hbmod⟩ := mod_shift_cover (i - 1) k Ds.length hL hk
+  refine ⟨b, by omega, ?_⟩
+  have hs := rrPt_serves hI C0 Ds hL x0 h0 (i - 1 + b)
+  rw [show i - 1 + b + 1 = i + b from by omega] at hs
+  rw [show (⟨(i - 1 + b) % Ds.length, Nat.mod_lt _ hL⟩ : Fin Ds.length) = ⟨k, hk⟩
+    from Fin.ext hbmod] at hs
+  exact hs
+
+/-- **AND THE ORIGINAL IS THE INSTANCE** — checked, not claimed. -/
+theorem rr_covers_le_generalizes {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    (C0 : Concept) (Ds : List Concept) (hL : 0 < Ds.length) (x0 : α)
+    (h0 : persistAll I C0 Ds x0) (i p : Nat) (hi : 0 < i) (hp : 0 < p)
+    (hdvd : Ds.length ∣ p) (k : Nat) (hk : k < Ds.length) :
+    ∃ b, b < p ∧ Ds.get ⟨k, hk⟩ ∈ mty C0 I (rrPt hI C0 Ds hL x0 h0 (i + b)) :=
+  rr_covers_le hI C0 Ds hL x0 h0 i p hi hp (Nat.le_of_dvd hp hdvd) k hk
+
+/-- **THE COMBINED KERNEL: `kDIR` AND ITS OFF-DIRECTION WITNESSES, ONE SEGMENT.**
+
+    `ascKernel_of_node` gives a kernel with `kDIR`; `kernel_site` gives the
+    `DR`/`PP`/`PPI` witnesses. They chose different segments, which looked like
+    an obstacle. It is not, for two reasons found by reading proofs:
+
+    * `rr_covers` needs only `Ds.length ≤ p` (`rr_covers_le`), which
+      `rr_segment_from`'s divisible period supplies;
+    * the cofinal recurrence the witness branches run on comes from
+      `recurrent_tail` — a TAIL property, so it survives any later segment
+      choice, and `rr_segment_from`'s `L0` parameter pushes the base past its
+      threshold.
+
+    So one segment carries both, and the off-direction witnesses are `DR`/`PP`/
+    `PPI` from EVERY phase — exactly `hdrk`'s bounded range (§187). -/
+theorem ascKernel_serves (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat) :
+    ∃ (c : Nat → α) (i p : Nat),
+      (∀ n, I.dom (c n)) ∧
+      (∀ n, I.rho (c n) (c (n + 1)) = cdir true) ∧
+      L0 ≤ i ∧ 0 < i ∧ c 0 = x ∧ 0 < p ∧
+      mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ D ∈ persistDs C0 I x, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) ∧
+      (∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+        Concept.ex r D ∈ mty C0 I (c (i + a)) →
+        ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+          ∀ b, b ≤ p → I.rho (c (i + b)) w = r) := by
+  classical
+  have h0 : persistAll I C0 (persistDs C0 I x) x := persistAll_persistDs hx
+  have hdom : ∀ n, I.dom (rrPt hI C0 (persistDs C0 I x) hL x h0 n) :=
+    rrPt_dom hI C0 (persistDs C0 I x) hL x h0
+  have hstep : ∀ n, I.rho (rrPt hI C0 (persistDs C0 I x) hL x h0 n)
+      (rrPt hI C0 (persistDs C0 I x) hL x h0 (n + 1)) = pp :=
+    rrPt_step hI C0 (persistDs C0 I x) hL x h0
+  obtain ⟨M, hM⟩ := recurrent_tail (sublists (cl C0))
+    (fun m => mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 m))
+    (fun m => mty_mem_sublists _)
+  obtain ⟨A, hA⟩ := ppi_witness_bank hI hdom hstep C0
+  obtain ⟨i, p, hL0, hi, hp, hdvd, _, hty⟩ :=
+    rr_segment_from hI C0 (persistDs C0 I x) hL x h0 (max (max L0 M) A)
+  have hMi : M ≤ i := Nat.le_trans (Nat.le_trans (Nat.le_max_right L0 M)
+    (Nat.le_max_left (max L0 M) A)) hL0
+  have hAi : A ≤ i := Nat.le_trans (Nat.le_max_right (max L0 M) A) hL0
+  refine ⟨rrPt hI C0 (persistDs C0 I x) hL x h0, i, p, hdom, hstep,
+    Nat.le_trans (Nat.le_trans (Nat.le_max_left L0 M)
+      (Nat.le_max_left (max L0 M) A)) hL0,
+    hi, rfl, hp, hty, ?_, ?_⟩
+  · intro D hD
+    obtain ⟨n, hn⟩ := List.get_of_mem hD
+    obtain ⟨b, hb, hcarry⟩ :=
+      rr_covers_le hI C0 (persistDs C0 I x) hL x h0 i p hi hp
+        (Nat.le_of_dvd hp hdvd) n.val n.isLt
+    refine ⟨b, hb, ?_⟩
+    have hfe : (⟨n.val, n.isLt⟩ : Fin (persistDs C0 I x).length) = n :=
+      Fin.ext rfl
+    rw [hfe, hn] at hcarry
+    exact hcarry
+  · intro a r D _ha hr hD
+    have hrecA : ∀ N, ∃ m, N ≤ m ∧
+        mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 m)
+          = mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 (i + a)) :=
+      hM (i + a) (by omega)
+    rcases hr with rfl | rfl | rfl
+    · obtain ⟨w, hw, hDw, hall⟩ :=
+        dr_witness_all_below hI hdom hstep hrecA hD (i + p)
+      exact ⟨w, hw, hDw, fun b hb => hall (i + b) (by omega)⟩
+    · obtain ⟨w, hw, hDw, hall⟩ :=
+        pp_witness_all_below hI hdom hstep hrecA hD (i + p)
+      exact ⟨w, hw, hDw, fun b hb => hall (i + b) (by omega)⟩
+    · obtain ⟨w, hw, hDw, hall⟩ :=
+        hA (mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 (i + a)))
+          (mty_mem_sublists _) hrecA D hD
+      exact ⟨w, hw, hDw, fun b _ => hall (i + b) (by omega)⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -35362,4 +35479,6 @@ end POFreeLift
 #print axioms POFreeLift.hdrk_of_model_at
 #print axioms POFreeLift.hdrk_of_model_at_generalizes
 #print axioms POFreeLift.odSeed_hk_ex_lt
+#print axioms POFreeLift.rr_covers_le
+#print axioms POFreeLift.ascKernel_serves
 #print axioms POFreeLift.kernel_of_no_terminal

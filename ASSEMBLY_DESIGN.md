@@ -12985,3 +12985,50 @@ touches — rather than reasoning about the helper's statement.
 
 Build: 35,365 lines, 1,760 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 191. ONE SEGMENT CARRYING BOTH — `ascKernel_serves`
+
+§190.1 said what remains for `kDR`/`kUP`/`kDN` is routing, not existence. Tracing
+where the witnesses would actually come from ran into a real-looking obstacle:
+
+* the kernel's segment is chosen by `rr_segment_from`, so that `rr_covers` can
+  supply `kDIR`;
+* the witnesses come from `kernel_site`, which chooses its segment by
+  `segment_select`.
+
+**Two selectors, one kernel.** Reading the proofs rather than the statements
+dissolved it, twice over:
+
+1. `rr_covers`'s `hdvd : Ds.length ∣ p` is consumed **once**, as
+   `Nat.le_of_dvd hp hdvd`, purely to get `Ds.length ≤ p`. Divisibility is never
+   used. `rr_covers_le` takes the inequality instead, and
+   `rr_covers_le_generalizes` checks the original is the instance. That is the
+   §188 pattern for the **sixth** time.
+2. The cofinal recurrence the witness branches run on comes from
+   `recurrent_tail`, which is a property of a **TAIL, not of a segment** — so it
+   survives any later segment choice, and `rr_segment_from`'s `L0` parameter
+   pushes the base past its threshold.
+
+So one segment carries both. `ascKernel_serves` returns, from a single node with
+nonempty `persistDs`: the chain, base, period, `hty`, **`kDIR`** (every
+persistent demand inside the period) **and** for every phase `a ≤ p` and every
+`DR`/`PP`/`PPI` demand there, a witness `w` with `D ∈ mty w` and
+`∀ b ≤ p, I.rho (c (i+b)) w = r`.
+
+That last clause is `hdrk`'s bounded range exactly (§187), and by §§189–190 the
+bounded range is all the obligation asks for.
+
+### 191.1 Position
+
+**Existence is now settled for all four kernel-existential premises.** `kDIR` was
+already `ascKernel_of_node`'s; `kDR`, `kUP`, `kDN` now come from the same
+construction on the same segment.
+
+What remains for them is what §190.1 named and this section does not touch:
+the **index routing** (a model element `w` must become an external index `f` with
+`g f = w`, plus `seed`/`up`/`dn` placement — the shape `one_kernel_block` already
+implements for a single kernel via its subtype `W`), and the **`mty`-to-`mtk`
+budget** (`mdepth D < bud f`, §162's uniform assignment).
+
+Build: 35,484 lines, 1,763 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
