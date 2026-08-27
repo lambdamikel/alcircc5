@@ -37852,6 +37852,71 @@ theorem stageKids_gate_pp (hI : RCC5Interp I) {C0 : Concept}
     (if D ∈ persistDs C0 I n.x then ([] : List (SNode I C0))
      else [sChildN hI n hD]) = [] := if_pos hp
 
+/-! #### §232 — THE PHASES MUST BE IN THE STAGE
+
+§231.1 said blocking makes `Stationary.covered` need a kernel disjunct. Checking
+what else blocking changes found a larger one.
+
+`ek_all` requires a body of a `∀r` universal at an EXTERNAL to reach **every
+phase** of a kernel. But `phaseSeed` (§195.1) draws only from the ANCHOR's label,
+and the saturation runs over the stage — which contains externals only. So a
+body owed by an external to a phase is never transferred, and `ek_all` fails.
+
+**The phases have to be nodes of the stage.** They already can be: `kPhaseNode`
+produces an `SNode`. What is missing is their inclusion, which §232 supplies. -/
+
+open Classical in
+/-- The stage's kernel anchors: nodes with a persistent demand, which §231's
+    gate refuses to expand and a kernel therefore serves. -/
+noncomputable def stageAnchors {C0 : Concept} (ns : List (SNode I C0)) :
+    List (SNode I C0) :=
+  ns.filter (fun n => decide (0 < (persistDs C0 I n.x).length))
+
+theorem stageAnchors_pos {C0 : Concept} (ns : List (SNode I C0))
+    (n : SNode I C0) (hn : n ∈ stageAnchors ns) :
+    0 < (persistDs C0 I n.x).length :=
+  of_decide_eq_true (List.mem_filter.mp hn).2
+
+theorem stageAnchors_sub {C0 : Concept} (ns : List (SNode I C0))
+    (n : SNode I C0) (hn : n ∈ stageAnchors ns) : n ∈ ns :=
+  (List.mem_filter.mp hn).1
+
+open Classical in
+/-- **THE STAGE'S PHASE NODES.**  One per phase of each anchor's kernel, labelled
+    by §195's `kPhaseNode`. -/
+noncomputable def stagePhases (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) : List (SNode I C0) :=
+  (stageAnchors ns).attach.flatMap (fun n =>
+    (List.range ((kernelData hI C0 n.val.x n.val.hx
+        (stageAnchors_pos ns n.val n.property) 0).p + 1)).map
+      (fun a => kPhaseNode hI C0
+        ((kernelData hI C0 n.val.x n.val.hx
+            (stageAnchors_pos ns n.val n.property) 0).c
+          ((kernelData hI C0 n.val.x n.val.hx
+              (stageAnchors_pos ns n.val n.property) 0).i + a))
+        ((kernelData hI C0 n.val.x n.val.hx
+            (stageAnchors_pos ns n.val n.property) 0).cdom _)
+        n.val.lab))
+
+/-- Phase nodes are normalised, like every other stage node. -/
+theorem stagePhases_normL (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) :
+    ∀ m ∈ stagePhases hI ns, ∃ X, m.lab = normL C0 X := by
+  intro m hm
+  obtain ⟨n, _, hm'⟩ := List.mem_flatMap.mp hm
+  obtain ⟨a, _, rfl⟩ := List.mem_map.mp hm'
+  exact ⟨_, rfl⟩
+
+/-- And no deeper than their anchor — `kPhaseNode_depth_le` at stage scale. -/
+theorem stagePhases_depth_le (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (M : Nat) (h : ∀ n ∈ ns, maxDepth n.lab ≤ M) :
+    ∀ m ∈ stagePhases hI ns, maxDepth m.lab ≤ M := by
+  intro m hm
+  obtain ⟨n, _, hm'⟩ := List.mem_flatMap.mp hm
+  obtain ⟨a, _, rfl⟩ := List.mem_map.mp hm'
+  exact Nat.le_trans (kPhaseNode_depth_le hI C0 _ _ n.val.lab)
+    (h n.val (stageAnchors_sub ns n.val n.property))
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38864,4 +38929,6 @@ end POFreeLift
 #print axioms POFreeLift.stageIter_depth_le
 #print axioms POFreeLift.stageIter_lab_mem
 #print axioms POFreeLift.stageKids_gate_pp
+#print axioms POFreeLift.stagePhases_normL
+#print axioms POFreeLift.stagePhases_depth_le
 #print axioms POFreeLift.kernel_of_no_terminal

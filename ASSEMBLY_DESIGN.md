@@ -14515,3 +14515,45 @@ to survive it.
 
 Build: 38,867 lines, 1,954 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 232. THE PHASES MUST BE IN THE STAGE
+
+§231.1 said blocking makes `Stationary.covered` need a kernel disjunct. Checking
+what else blocking changes found a larger gap.
+
+`ek_all` requires a body of a `forall r` universal at an **external** to reach
+**every phase** of a kernel. But `phaseSeed` (§195.1) draws only from the
+**anchor's** label, and the saturation runs over the stage — which contained
+externals only. So a body owed by an external to a phase was never transferred,
+and `ek_all` could not hold.
+
+**The phases have to be nodes of the stage.** They already can be: `kPhaseNode`
+produces an `SNode`. What was missing is their inclusion.
+
+* `stageAnchors` — the stage nodes with a persistent demand, i.e. exactly those
+  §231's gate refuses to expand and a kernel therefore serves. Same predicate as
+  `KIdxM`.
+* `stagePhases` — one node per phase of each anchor's kernel, labelled by
+  `kPhaseNode`.
+* `stagePhases_normL`, `stagePhases_depth_le` — the two invariants §§227/229
+  need, so phases can join the stage without weakening either.
+
+### 232.1 What this changes
+
+The round operator must saturate over `ns ++ stagePhases ns` rather than `ns`.
+That is a change to `satStage`'s node list, and it interacts with the measure:
+phases are recomputed each round (anchors change), so the phase part of the list
+is not monotone the way the external part is.
+
+**That interaction is the next thing to check, and it is exactly the shape that
+has bitten three times** (§196.1, §217, §231): two separately-correct pieces whose
+composition has a property neither has alone.
+
+### 232.2 Note on the inventory
+
+This was listed as item 1 an hour ago with the caveat that it "has not been
+attacked at all, and is where I would expect the next §231". It was, and the gap
+was real. The estimate was right; what it could not say was how big.
+
+Build: 38,934 lines, 1,960 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
