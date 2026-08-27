@@ -11878,3 +11878,56 @@ construction that looked like bookkeeping.
 
 Build: 34,006 lines, 1,704 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 166. `wp126` — stable witnesses, measured, with two numbers withheld
+
+Control held (0 phase demands without a witness) across all four shapes.
+
+| | L=4 p=3 | L=8 p=3 | L=8 p=6 | L=18 p=3 |
+|---|---|---|---|---|
+| `∃DR` uniform | 100% | 100% | 100% | 100% |
+| `∃PPI` uniform | 95.0% | 100% | 99.5% | 100% |
+| `∃PP` uniform | 35.6% | 42.1% | 48.8% | 45.8% |
+
+### 166.1 The `∃DR` 100% is an ARTIFACT of the class
+
+`wp112`'s tower gives `dr`-sides that are disjoint from the WHOLE chain by
+construction. So a uniform `DR` witness exists whenever any does — **the class
+cannot exhibit §165.1's failure mode**, which is precisely a witness disjoint at
+one phase and not at another.
+
+Reported as a class property, not as evidence for `kDR`. §117's rule.
+
+### 166.2 The `∃PP` 35–49% is measuring the WRONG obligation
+
+The tower's kernel is ASCENDING, so `∃PP` at a phase is its OWN-direction demand
+— served by `kDIR` **within the period**, not by an external. `kUP` is the
+`dir k = false` case, which this class has no instance of.
+
+So that column says nothing about `kUP`. It is withheld.
+
+### 166.3 What the run does support
+
+**`∃PPI` at an ascending kernel — the `kDN` obligation — has a uniform external
+witness 95–100% of the time**, and the class CAN represent failure here (a
+witness below one phase need not be below another). The residue is small but
+nonzero: 5% at `L=4 p=3`, 0.5% at `L=8 p=6`.
+
+So `kDN` is nearly a lookup and not quite one, which is §165.1's prediction
+holding at a low rate.
+
+### 166.4 Net
+
+| | |
+|---|---|
+| `kDR` | untested — the class cannot exhibit the failure |
+| `kDN` | 95–100%, real residue, class can exhibit failure |
+| `kUP` | untested — no descending kernel in the class |
+| `kDIR` | not this probe's subject (§164) |
+
+**One of four conditions got a meaningful measurement.** A probe that can carry
+a descending kernel and non-uniform `dr`-sides would be needed for the rest —
+and building one is the same instrument problem §117 hit three times.
+
+Two of the three headline numbers withheld is the correct outcome here, not a
+failed run.
