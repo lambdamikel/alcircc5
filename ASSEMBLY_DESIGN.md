@@ -12957,9 +12957,19 @@ the period**. That is exactly what `kernel_site` has supplied since round E2b:
 
 So `kDR`, `kUP`, `kDN` — three of §163.3's four, and the ones §165.1 called
 selection disciplines requiring stability along an infinite chain — are now
-range-matched to a tool the file already had. **What remains for them is the
-routing** (which disjunct of `hk_ex` each witness lands in, and the `up`/`dn`/
-`seed` bookkeeping), not the existence of witnesses.
+range-matched to a tool the file already had.
+
+**Two gaps remain between the two statements, and neither is the range.**
+
+* `kernel_site` produces a model ELEMENT `w`; `kDR` wants an external INDEX `f`
+  with `g f = w`, plus the `seed`/`up`/`dn` bookkeeping placing it correctly.
+  That is the routing, and it is real work.
+* `kernel_site` gives `D ∈ mty C0 I w`; `kDR` wants `D ∈ mtk C0 I (g f) (bud f)`
+  — TRUNCATED membership, so a budget must be assigned with
+  `mdepth D < bud f`. That is §162's uniform-assignment question, not a new one.
+
+**What is settled is the existence of the witnesses**, which is what §165.1 said
+was the obstruction.
 
 ### 190.2 The pattern, fourth and fifth instances
 
