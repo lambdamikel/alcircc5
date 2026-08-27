@@ -12800,3 +12800,19 @@ consistency result saying the target is non-empty.
 
 Build unchanged: 34,833 lines, 1,746 declarations, 0 errors / 0 warnings /
 0 `sorryAx`.
+
+## 184. THE GLUE ON THE FINITE HYPOTHESIS
+
+`glueDRMT_ok` asks for `DRCompat`, which quantifies over all of `β ⊕ κ × Nat`.
+No assembly ever has that directly — it has the labels, and §182 says those are
+the externals plus the phases below the period.
+
+`glueDRMT_ok_of_phases` is the callable form: four finite conditions in, a valid
+`MultiTierOk (glueDRMT T1 T2)` out, `propext` only. It is `glueDRMT_ok` composed
+with `drCompat_of_phases`, so nothing new is proved — the point is that the
+interface now matches what the extraction can supply, which is the §33 lesson
+("ingredients certified ≠ assembly proven") applied before the fact rather than
+after.
+
+Build: 34,857 lines, 1,747 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

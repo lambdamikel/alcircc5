@@ -33907,6 +33907,26 @@ theorem kernel_dr_drCompat (hI : RCC5Interp I) (C0 : Concept)
   obtain ⟨w, hw, hD, hall⟩ := hsite a dr D ha (Or.inl rfl) hdem
   exact ⟨w, hw, hD, drCompat_root_of_phasewise hI C0 hdom hw hall⟩
 
+/-- **THE DR-GLUE ON THE FINITE HYPOTHESIS.**  `glueDRMT_ok` asks for `DRCompat`,
+    which quantifies over all of `β ⊕ κ × Nat`.  An assembly never has that
+    directly — it has the labels, and by §182 those are the externals plus the
+    phases below the period.  This is the form the assembly can actually call. -/
+theorem glueDRMT_ok_of_phases {β1 β2 κ1 κ2 : Type} [DecidableEq κ1]
+    [DecidableEq κ2] {T1 : MultiTier β1 κ1} {T2 : MultiTier β2 κ2}
+    (h1 : MultiTierOk T1) (h2 : MultiTierOk T2)
+    (hE1 : ∀ (e : β1) (c : Concept), Concept.all dr c ∈ T1.tauE e →
+      ∀ y : β2 ⊕ κ2 × Nat, c ∈ mtLabel T2 y)
+    (hK1 : ∀ (k : κ1) (b : Nat), b < T1.p k → ∀ c : Concept,
+      Concept.all dr c ∈ T1.phase k b →
+      ∀ y : β2 ⊕ κ2 × Nat, c ∈ mtLabel T2 y)
+    (hE2 : ∀ (e : β2) (c : Concept), Concept.all dr c ∈ T2.tauE e →
+      ∀ x : β1 ⊕ κ1 × Nat, c ∈ mtLabel T1 x)
+    (hK2 : ∀ (k : κ2) (b : Nat), b < T2.p k → ∀ c : Concept,
+      Concept.all dr c ∈ T2.phase k b →
+      ∀ x : β1 ⊕ κ1 × Nat, c ∈ mtLabel T1 x) :
+    MultiTierOk (glueDRMT T1 T2) :=
+  glueDRMT_ok h1 h2 (drCompat_of_phases h1 h2 hE1 hK1 hE2 hK2)
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34833,4 +34853,5 @@ end POFreeLift
 #print axioms POFreeLift.kernel_label_occurs_low
 #print axioms POFreeLift.drCompat_root_of_phasewise
 #print axioms POFreeLift.kernel_dr_drCompat
+#print axioms POFreeLift.glueDRMT_ok_of_phases
 #print axioms POFreeLift.kernel_of_no_terminal
