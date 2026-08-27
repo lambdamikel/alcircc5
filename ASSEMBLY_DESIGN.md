@@ -12107,3 +12107,64 @@ model class could not represent its subject.
 `mKdr` being model-dependent is a genuine finding and is bad news for the direct
 route. Whether it is bad news for the fragment depends entirely on §169.3's
 question, which is open.
+
+## 170. MODEL SURGERY — the fresh all-DR point
+
+§169.3 asked whether the extraction can move to a model where kernel chains leave
+room. The tools were already in the repository.
+
+### 170.1 On the record about one-point extensions
+
+Michael's recollection was that one-point extensions had failed. Checking: what
+failed was a claimed **obstruction** — the 16th review found the overview paper's
+one-point-extension example was FALSE, the extension actually succeeds
+(`comp(DR,PO) ∩ comp(PPI,PO) = {PO}`, real set model exists). So the record is
+the opposite of an impossibility.
+
+`wp71` gives an EXACT criterion, exhaustive to `n = 4`, **234,496 extensions, 0
+mismatches**. Its sample line settles the case that matters:
+
+```
+e relations ('DR','DR'): criterion=True  brute_closed=True
+```
+
+**A fresh point DR from everything is always a valid one-point extension.** Its
+`U` and `L` are empty and `D` is everything, so every clause of the criterion is
+vacuous or trivial.
+
+### 170.2 The label half, measured (`wp129`)
+
+The fresh point must satisfy the demand `D` and every `X` with `∀DR.X` true at
+ANY chain point.
+
+| | |
+|---|---|
+| CONTROL — bodies accumulate monotonically up the chain | **0 failures / 1182** |
+| the accumulated body set is CONSISTENT (some point satisfies it) | **99.8%** |
+| a point DR from the WHOLE chain already present | 19.7% |
+
+The control confirms the downward-closure argument: disjointness is
+downward-closed, so a witness disjoint from `c_j` is disjoint from every `c_i`
+with `i ≤ j` and already meets their bodies. Bodies therefore accumulate, the
+union is drawn from finite `cl C₀`, and it is reached at a finite height.
+
+The 19.7% is exactly the §167 problem — models usually do NOT already contain the
+point. **The 99.8% is the answer: the point they need is consistent, so it can
+be added.**
+
+### 170.3 What is not yet handled
+
+A fresh point is a copy of a satisfying element MOVED to be DR from everything.
+Its own demands must then be served from the new position — the recursion this
+route does not yet close. And 2 of 1182 body sets were inconsistent.
+
+So the surgery is **viable at the frame level** (`wp71`, exhaustive) and **near
+viable at the label level** (99.8%), with the residue being the fresh point's own
+obligations.
+
+### 170.4 Position
+
+§169 moved the gap from construction to a question about the logic. §170 answers
+the frame half of that question outright and the label half at 99.8%. The
+remaining piece is back to construction — the fresh point's own demands — which
+is where the session's vertical machinery (§§140–155) applies.
