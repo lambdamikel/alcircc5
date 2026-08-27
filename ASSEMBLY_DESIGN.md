@@ -14434,3 +14434,35 @@ still computable from `C₀`, which §200 showed is all decidability needs.
 
 Build: 38,741 lines, 1,952 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 230. THE LABEL SIDE OF THE COUNT
+
+§229.2 left the stage-length count. It factors: a stage element is a **point** and
+a **label**, so the count is bounded by (#points reachable) × (#labels possible).
+
+The label side is immediate — `stageIter_lab_mem`: every stage label is a
+`normL`, hence one of `allListsLe (cl C₀) |cl C₀|`.
+
+### 230.1 The point side, and the real obstacle
+
+A useful fact makes the point side tractable in principle: `sChild`'s point is
+`Classical.choose` applied to `n.ok.sat_ _ h`, a proposition determined by
+`(n.x, r, D)` **alone** — not by the rest of `n.lab`. So a node's point depends
+only on its parent's *point* and the demand, even though its label depends on the
+parent's whole label.
+
+That decouples the two factors: points at generation `g+1` are witnesses of
+`(point at generation ≤ g, demand in cl C₀)`, so each generation multiplies the
+point set by at most `|cl C₀|`, and §§228–229 bound the generations by
+`mdepth C₀`.
+
+**What is actually missing is not the counting but the generation structure.**
+`stageIter` recurses on *rounds*, and one round can add points at several
+generations at once, so the induction the count wants is not the induction the
+definition offers.
+
+Recorded rather than estimated: the analogous transfer looked routine twice this
+session (§218's measure, §226's hypothesis) and was wrong both times.
+
+Build: 38,778 lines, 1,953 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

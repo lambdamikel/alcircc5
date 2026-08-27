@@ -37728,6 +37728,42 @@ theorem stageIter_depth_le (hI : RCC5Interp I) {C0 : Concept}
         (satStage_depth_le hI (fun e f => I.rho e.x f.x) _
           (modelRel_hsound hI) M ih)
 
+/-! #### §230 — THE LABEL SIDE OF THE COUNT
+
+§229.2 left the stage-length count. It factors: a stage element is a POINT and a
+LABEL, so the count is bounded by (#points reachable) × (#labels possible). The
+label side is immediate — every stage label is a `normL`, hence one of the
+enumerated lists. -/
+
+open Classical in
+/-- **EVERY STAGE LABEL IS ONE OF FINITELY MANY.** -/
+theorem stageIter_lab_mem (hI : RCC5Interp I) {C0 : Concept}
+    (ns0 : List (SNode I C0)) (h0 : ∀ m ∈ ns0, ∃ X, m.lab = normL C0 X) :
+    ∀ n, ∀ m ∈ stageIter hI n ns0,
+      m.lab ∈ allListsLe (cl C0) (cl C0).length := by
+  intro n m hm
+  obtain ⟨X, hX⟩ := stageIter_normL hI ns0 h0 n m hm
+  rw [hX]
+  exact normL_mem_allListsLe C0 X
+
+/-! ##### §230.1 — and what the point side needs
+
+The point of `sChild` is `Classical.choose` applied to `n.ok.sat_ _ h`, a
+proposition determined by `(n.x, r, D)` alone — **not** by the rest of `n.lab`.
+So a node's point depends only on its parent's POINT and the demand, even though
+its label depends on the parent's whole label.
+
+That is what makes the point count bounded independently of the label growth:
+points at generation `g+1` are witnesses of `(point at generation ≤ g, demand in
+cl C₀)`, so each generation multiplies the point set by at most `|cl C₀|`, and
+§228–§229 bound the generations by `mdepth C₀`.
+
+Formalising it needs the generation structure as an explicit induction, which
+`stageIter` does not currently expose — its recursion is on rounds, and one round
+can add points at several generations at once. **That mismatch, not the counting,
+is what is left.** Recorded rather than estimated: the analogous transfer looked
+routine twice this session (§218, §226) and was not. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -38738,4 +38774,5 @@ end POFreeLift
 #print axioms POFreeLift.stageKids_nil_of_depth_zero
 #print axioms POFreeLift.extendStage_eq_of_depth_zero
 #print axioms POFreeLift.stageIter_depth_le
+#print axioms POFreeLift.stageIter_lab_mem
 #print axioms POFreeLift.kernel_of_no_terminal
