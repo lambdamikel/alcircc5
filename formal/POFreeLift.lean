@@ -36240,6 +36240,87 @@ theorem satRound_fixed_propagates {β : Type} (I : Interp α) (C0 : Concept)
     rw [hr]; exact mem_allBodies_of hall
   · exact self_mem_hclose I _ c
 
+/-! #### §209 — COUNTING WITHOUT `Nodup`
+
+`closure_stops` (§141) asks for `Nodup` labels, and support labels are `normL`s —
+filters of `cl C₀`, which is **not** deduplicated (`cl (and c c)` repeats `cl c`).
+So the §141 bound cannot be applied as stated.
+
+It does not need to be. The bound `|nodes| · |cl C₀|` follows from
+`List.length_filter_le` per node, with no `Nodup` anywhere; and growth is
+measured between two filters of the SAME base list, where monotone-plus-one-new
+gives a strict length increase directly. -/
+
+/-- Filters of a common list, ordered by their predicates. -/
+theorem filter_len_le {A : Type} (base : List A) (p q : A → Bool)
+    (h : ∀ a ∈ base, p a = true → q a = true) :
+    (base.filter p).length ≤ (base.filter q).length := by
+  induction base with
+  | nil => exact Nat.le_refl 0
+  | cons a t ih =>
+    have iht := ih (fun x hx => h x (List.mem_cons_of_mem a hx))
+    by_cases hpa : p a = true
+    · have hqa : q a = true := h a List.mem_cons_self hpa
+      rw [List.filter_cons_of_pos hpa, List.filter_cons_of_pos hqa]
+      simpa using iht
+    · rw [List.filter_cons_of_neg (by simpa using hpa)]
+      by_cases hqa : q a = true
+      · rw [List.filter_cons_of_pos hqa, List.length_cons]
+        omega
+      · rw [List.filter_cons_of_neg (by simpa using hqa)]
+        exact iht
+
+/-- ... and strictly, when one element is newly admitted. -/
+theorem filter_len_lt {A : Type} (base : List A) (p q : A → Bool)
+    (h : ∀ a ∈ base, p a = true → q a = true)
+    (a0 : A) (ha0 : a0 ∈ base) (hp : p a0 = false) (hq : q a0 = true) :
+    (base.filter p).length < (base.filter q).length := by
+  induction base with
+  | nil => exact absurd ha0 List.not_mem_nil
+  | cons a t ih =>
+    have hmono : ∀ x ∈ t, p x = true → q x = true :=
+      fun x hx => h x (List.mem_cons_of_mem a hx)
+    rcases List.mem_cons.mp ha0 with rfl | hat
+    · rw [List.filter_cons_of_neg (by simpa using hp),
+        List.filter_cons_of_pos hq, List.length_cons]
+      have := filter_len_le t p q hmono
+      omega
+    · have iht := ih hmono hat
+      by_cases hpa : p a = true
+      · have hqa : q a = true := h a List.mem_cons_self hpa
+        rw [List.filter_cons_of_pos hpa, List.filter_cons_of_pos hqa]
+        simpa using iht
+      · rw [List.filter_cons_of_neg (by simpa using hpa)]
+        by_cases hqa : q a = true
+        · rw [List.filter_cons_of_pos hqa, List.length_cons]
+          omega
+        · rw [List.filter_cons_of_neg (by simpa using hqa)]
+          exact iht
+
+/-- **`closure_stops` WITHOUT `Nodup`.**  The bound is supplied directly rather
+    than derived from repeat-freeness, which is what support labels can offer. -/
+theorem closure_stops_le {β : Type} (nodes : List β)
+    (L : Nat → β → List Concept) (B : Nat)
+    (hbound : ∀ n, totalSize nodes (L n) ≤ B)
+    (hstep : ∀ n, totalSize nodes (L n) < totalSize nodes (L (n + 1))) :
+    ∀ n, n ≤ B := by
+  intro n
+  have hmono : ∀ m, m ≤ totalSize nodes (L m) := by
+    intro m
+    induction m with
+    | zero => exact Nat.zero_le _
+    | succ k ih => exact Nat.lt_of_le_of_lt ih (hstep k)
+  exact Nat.le_trans (hmono n) (hbound n)
+
+/-- Support labels are always inside the bound, `Nodup` or not. -/
+theorem totalSize_normL_le {β : Type} (C0 : Concept) (nodes : List β)
+    (L : β → List Concept) (h : ∀ e, ∃ X, L e = normL C0 X) :
+    totalSize nodes L ≤ nodes.length * (cl C0).length := by
+  refine sum_map_le nodes _ _ (fun e _ => ?_)
+  obtain ⟨X, hX⟩ := h e
+  rw [hX, normL]
+  exact List.length_filter_le _ _
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -37213,4 +37294,6 @@ end POFreeLift
 #print axioms POFreeLift.swCert_ok
 #print axioms POFreeLift.satRound_supportOk
 #print axioms POFreeLift.satRound_fixed_propagates
+#print axioms POFreeLift.filter_len_lt
+#print axioms POFreeLift.closure_stops_le
 #print axioms POFreeLift.kernel_of_no_terminal

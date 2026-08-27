@@ -13736,3 +13736,27 @@ So phase 2's remaining piece is the fixpoint's *existence*, which is
 
 Build: 37,216 lines, 1,868 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 209. COUNTING WITHOUT `Nodup`
+
+§141's `closure_stops` asks for **repeat-free** labels, and support labels are
+`normL`s — filters of `cl C₀`, which is *not* deduplicated (`cl (and c c)`
+repeats `cl c`). So phase 2's termination argument could not be applied as
+stated. Found by trying to apply it.
+
+It does not need `Nodup`:
+
+* `totalSize_normL_le` — the bound `|nodes| · |cl C₀|` follows from
+  `List.length_filter_le` per node, repeats and all.
+* `filter_len_le` / `filter_len_lt` — growth is measured between two filters of
+  the **same base list**, where monotone-plus-one-newly-admitted gives a strict
+  length increase directly.
+* `closure_stops_le` — §141's theorem with the bound supplied rather than derived
+  from repeat-freeness. **Axiom-free.**
+
+So phase 2's termination now rests on what support labels can actually offer.
+What remains for the fixpoint is the iterate `satRound^n` and the contradiction
+argument: no fixpoint below the bound would force `totalSize` past it.
+
+Build: 37,299 lines, 1,872 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
