@@ -33172,6 +33172,97 @@ are exactly `DRCompat`. That is the next brick, and unlike the PO-glue it cannot
 be discharged by `MTNoPo`: **`∀DR` is a real universal in this fragment**, which
 is why the DR-glue costs a hypothesis where the PO-glue costs nothing. -/
 
+/-! #### §172 — THE GLUE, PARAMETERIZED BY ITS CROSS ATOM
+
+`glueMT` and `glueDRMT` differ in ONE value: `po` versus `dr`. Rather than
+duplicate `glue_frame`'s proof, this section parameterizes the glue by its cross
+atom and proves the frame from four conditions the atom must meet.
+
+`glueMT` is untouched — nothing that consumes it is disturbed. -/
+
+/-- What a cross atom must satisfy for the two-block glue to be a frame. -/
+structure CrossAtom (x : Atom) : Prop where
+  ne_eq : x ≠ eq
+  conv_self : conv x = x
+  in_comp_right : ∀ r : Atom, x ∈ comp r x
+  in_comp_left : ∀ r : Atom, x ∈ comp x r
+  all_in_comp : ∀ r : Atom, r ∈ comp x x
+
+/-- `DR` qualifies — §171's two facts, plus the trivial ones. -/
+theorem crossAtom_dr : CrossAtom dr where
+  ne_eq := by decide
+  conv_self := rfl
+  in_comp_right := dr_mem_comp_dr
+  in_comp_left := by intro r; cases r <;> decide
+  all_in_comp := comp_dr_dr_all
+
+/-- So does `PO`, which is what the existing glue uses — recorded to show the
+    parameterization is faithful to both. -/
+theorem crossAtom_po : CrossAtom po where
+  ne_eq := by decide
+  conv_self := rfl
+  in_comp_right := by intro r; cases r <;> decide
+  in_comp_left := by intro r; cases r <;> decide
+  all_in_comp := by intro r; cases r <;> decide
+
+/-- **THE PARAMETERIZED GLUE.**  Two networks side by side, every cross pair `x`. -/
+def glueNet {V1 V2 : Type} (x : Atom) (N1 : V1 → V1 → Atom)
+    (N2 : V2 → V2 → Atom) : (V1 ⊕ V2) → (V1 ⊕ V2) → Atom
+  | .inl a, .inl b => N1 a b
+  | .inr a, .inr b => N2 a b
+  | _, _ => x
+
+/-- **AND ITS FRAME**, from `CrossAtom` alone.  Every case is either a block's
+    own frame law or one of the four conditions. -/
+theorem glueNet_frame {V1 V2 : Type} {x : Atom} (hx : CrossAtom x)
+    {N1 : V1 → V1 → Atom} {N2 : V2 → V2 → Atom}
+    (h1 : Frame N1) (h2 : Frame N2) : Frame (glueNet x N1 N2) where
+  refl_eq := by
+    rintro (a | a)
+    · exact h1.refl_eq a
+    · exact h2.refl_eq a
+  eq_id := by
+    rintro (a | a) (b | b) h
+    · exact congrArg Sum.inl (h1.eq_id a b h)
+    · exact absurd h hx.ne_eq
+    · exact absurd h hx.ne_eq
+    · exact congrArg Sum.inr (h2.eq_id a b h)
+  conv_ := by
+    rintro (a | a) (b | b)
+    · exact h1.conv_ a b
+    · exact hx.conv_self.symm
+    · exact hx.conv_self.symm
+    · exact h2.conv_ a b
+  comp_ := by
+    rintro (a | a) (b | b) (c | c)
+    · exact h1.comp_ a b c
+    · exact hx.in_comp_right _
+    · exact hx.all_in_comp _
+    · exact hx.in_comp_left _
+    · exact hx.in_comp_left _
+    · exact hx.all_in_comp _
+    · exact hx.in_comp_right _
+    · exact h2.comp_ a b c
+
+/-! ##### §172.1 — what this settles
+
+The DR-glue's FRAME is now proved, and so is the PO-glue's, from one lemma. The
+four `CrossAtom` conditions are the whole content:
+
+* `ne_eq` — the cross value is not identity, so `eq_id` cannot merge blocks;
+* `conv_self` — symmetric, so `conv_` holds across;
+* `in_comp_right` / `in_comp_left` — a triangle with two vertices in one block,
+  entered from either side;
+* `all_in_comp` — a triangle with one vertex in each.
+
+Both `dr` and `po` meet all four, which is why both glues exist. What still
+separates them is the OBLIGATION side (§171.1): `∀PO` is vacuous in the fragment
+and `∀DR` is not.
+
+`glueNet_frame` is stated on bare networks rather than on `MultiTier`, so it
+applies to `qnet` of either glue once the projections are supplied — those are
+the remaining wiring. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34076,4 +34167,6 @@ end POFreeLift
 #print axioms POFreeLift.mKdr_of_cofinal
 #print axioms POFreeLift.dr_mem_comp_dr
 #print axioms POFreeLift.comp_dr_dr_all
+#print axioms POFreeLift.crossAtom_dr
+#print axioms POFreeLift.glueNet_frame
 #print axioms POFreeLift.kernel_of_no_terminal

@@ -12209,3 +12209,44 @@ written.
 
 Build: 34,079 lines, 1,708 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 172. THE GLUE, PARAMETERIZED BY ITS CROSS ATOM
+
+`glueMT` and `glueDRMT` differ in ONE value: `po` versus `dr`. Rather than
+duplicate `glue_frame`, this parameterizes the glue and proves the frame from
+conditions on the atom. **`glueMT` is untouched.**
+
+| | |
+|---|---|
+| `CrossAtom x` | five conditions: `ne_eq`, `conv_self`, `in_comp_right`, `in_comp_left`, `all_in_comp` |
+| `crossAtom_dr` | `DR` qualifies — `propext` only |
+| `crossAtom_po` | so does `PO`, recorded to show the parameterization is faithful to both |
+| `glueNet` | two networks side by side, every cross pair `x` |
+| **`glueNet_frame`** | **the frame, from `CrossAtom` alone** — `propext` only |
+
+### 172.1 The five conditions are the whole content
+
+* `ne_eq` — the cross value is not identity, so `eq_id` cannot merge blocks;
+* `conv_self` — symmetric, so `conv_` holds across;
+* `in_comp_right` / `in_comp_left` — a triangle with two vertices in one block,
+  entered from either side;
+* `all_in_comp` — a triangle with one vertex in each.
+
+`in_comp_left` was missing from my first attempt and Lean caught it: the case
+`(inl a, inr b, inr c)` needs `x ∈ comp x (N₂ b c)`, which the right-hand
+condition does not give. Four conditions looked sufficient and were not.
+
+### 172.2 Position
+
+**The DR-glue's frame is proved**, and the PO-glue's falls out of the same lemma.
+Both `dr` and `po` meet all five conditions, which is why both glues exist.
+
+What still separates them is the OBLIGATION side (§171.1): `∀PO` is vacuous in
+the fragment, `∀DR` is not. So the DR-glue's `MultiTierOk` needs `DRCompat`
+where the PO-glue needs nothing — and that remains the open brick.
+
+`glueNet_frame` is stated on bare networks, so it applies to `qnet` of either
+glue once the projections are supplied.
+
+Build: 34,158 lines, 1,713 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
