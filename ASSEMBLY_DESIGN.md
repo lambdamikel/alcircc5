@@ -13145,3 +13145,46 @@ depth measure of §§140–155, which is what that machinery was built for.
 
 Build: 35,795 lines, 1,773 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 194. THE ALL-RELATION CLOSURE
+
+§193 reduced the routing to building a **witness-closed** family. `sNodes` and
+`pNodes` already give a terminating, bounded, closed node set — but only over the
+VERTICAL demands (`∃PP`, `∃PPI`), because that is the half §§140–155 needed.
+
+Witness-closedness needs every relation: a kernel's off-direction demands are
+`∃DR`/`∃PP`/`∃PPI`, and externals also carry `∃PO`. `wNodes` is `sNodes` with the
+relation wildcard, and all three properties survive:
+
+| | |
+|---|---|
+| `self_mem_wNodes` | the root is in its own closure |
+| `wNodes_length_le` | `≤ genBound |cl C₀| d` — bounded by `C₀` alone |
+| `wNodes_child_mem` / `wNodes_covers` | every demand of every node is served **inside** the list, for every relation |
+
+**Why this terminates where an `mtk`-budget closure would not.** Kernel witnesses
+sit at the kernel's budget, not below it (`hbK` puts them within one), so a
+budget-decreasing recursion has no descent to run on. `wNodes` measures
+`maxDepth` of the SUPPORT label instead, and `sChildN_depth` drops it at every
+step (`seedOf_depth_lt`). That is precisely what §§140–155 built support labels
+for, now consumed on the horizontal side too.
+
+### 194.1 What `wNodes` does and does not give
+
+**Gives:** the *external* side of witness-closedness — a family closed under
+following the demands a node's own label carries.
+
+**Does not give:** the *kernel* side. A kernel's phase demands live at
+`mCk k (ik k + a)`, not in the anchor's label, so `sChildN` does not reach them.
+Closing under those is the step that makes the family a fixpoint — a witness with
+nonempty `persistDs` becomes a new kernel anchor, since `KIdxM` is a subtype of
+`β`.
+
+`phase_supportOk` is the missing ingredient's other half: it puts a support label
+on any model point, so a kernel phase can carry one and `seedOf_depth_lt` then
+applies to its demands as well. Wiring that into the recursion — so the fixpoint
+descends on the same measure — is the next brick, and the last one before
+`WitnessClosed` is a theorem rather than a hypothesis.
+
+Build: 35,909 lines, 1,779 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.

@@ -34851,6 +34851,117 @@ theorem kDN_witness_of_witnessClosed (hI : RCC5Interp I) (C0 : Concept)
   obtain ⟨f, hf⟩ := hwc k ppi D w hw hDw hall
   exact ⟨f, by rw [hf]; exact hall, by rw [hf]; exact hDw⟩
 
+/-! #### §194 — THE ALL-RELATION CLOSURE
+
+§193 reduced the routing to building a WITNESS-CLOSED family. `sNodes` and
+`pNodes` already give a terminating, bounded, closed node set — but only over the
+VERTICAL demands (`∃PP`, `∃PPI`), because that is the half §§140–155 needed.
+
+Witness-closedness needs every relation: a kernel's off-direction demands are
+`∃DR`, `∃PP`, `∃PPI`, and the externals also carry `∃PO`. `wNodes` is the
+all-relation closure, with the same fuel, the same bound and the same measure —
+`maxDepth` drops at every step by `seedOf_depth_lt`, which is why this terminates
+where an `mtk`-budget closure would not (kernel witnesses sit at the kernel's
+budget, not below it). -/
+
+open Classical in
+/-- **THE ALL-RELATION DEMAND CLOSURE.**  `sNodes` with the relation wildcard. -/
+noncomputable def wNodes (hI : RCC5Interp I) {C0 : Concept} :
+    Nat → SNode I C0 → List (SNode I C0)
+  | 0, n => [n]
+  | d + 1, n => n :: n.lab.attach.flatMap (fun p => match p with
+      | ⟨.ex _ _, hD⟩ => wNodes hI d (sChildN hI n hD)
+      | _ => [])
+
+theorem self_mem_wNodes (hI : RCC5Interp I) {C0 : Concept} (d : Nat)
+    (n : SNode I C0) : n ∈ wNodes hI d n := by
+  cases d with
+  | zero => rw [wNodes]; exact List.mem_cons_self
+  | succ d' => rw [wNodes]; exact List.mem_cons_self
+
+/-- **AND IT IS STILL BOUNDED BY `C₀` ALONE.**  Same count as `sNodes`: every
+    label is a sublist of `cl C₀`, so each node has at most `|cl C₀|` children. -/
+theorem wNodes_length_le (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), n.lab.length ≤ (cl C0).length →
+      (wNodes hI d n).length ≤ genBound (cl C0).length d := by
+  intro d
+  induction d with
+  | zero => intro n _; rw [wNodes, genBound]; exact Nat.le_refl 1
+  | succ d' ih =>
+    intro n hlen
+    rw [wNodes, genBound, List.length_cons, List.length_flatMap]
+    have hb : ((n.lab.attach).map (fun p => (match p with
+        | ⟨.ex _ _, hD⟩ => wNodes hI d' (sChildN hI n hD)
+        | _ => []).length)).sum
+        ≤ (n.lab.attach).length * genBound (cl C0).length d' := by
+      refine sum_map_le _ _ _ ?_
+      rintro ⟨F, hF⟩ _
+      cases F with
+      | ex r c => exact ih _ (sChildN_len hI n hF)
+      | _ => exact Nat.zero_le _
+    rw [List.length_attach] at hb
+    calc _ ≤ n.lab.length * genBound (cl C0).length d' + 1 :=
+          Nat.add_le_add_right hb 1
+      _ ≤ (cl C0).length * genBound (cl C0).length d' + 1 :=
+          Nat.add_le_add_right (Nat.mul_le_mul_right _ hlen) 1
+      _ = 1 + (cl C0).length * genBound (cl C0).length d' := Nat.add_comm _ _
+
+open Classical in
+/-- A served demand's child is in the closure — for EVERY relation. -/
+theorem wNodes_child_mem (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ n.lab) (d : Nat) :
+    sChildN hI n hD ∈ wNodes hI (d + 1) n := by
+  rw [wNodes]
+  refine List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _, ?_⟩)
+  show sChildN hI n hD ∈ wNodes hI d (sChildN hI n hD)
+  exact self_mem_wNodes hI d _
+
+open Classical in
+/-- A child's closure sits inside the parent's. -/
+theorem wNodes_sub_of_child (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
+    {r : Atom} {D : Concept} (hF : Concept.ex r D ∈ n.lab) (d : Nat)
+    {m : SNode I C0} (h : m ∈ wNodes hI d (sChildN hI n hF)) :
+    m ∈ wNodes hI (d + 1) n := by
+  rw [wNodes]
+  exact List.mem_cons_of_mem _
+    (List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hF⟩, List.mem_attach _ _, h⟩)
+
+open Classical in
+/-- **THE CLOSURE IS CLOSED, FOR EVERY RELATION.**  With fuel at least the
+    label's depth, every demand of every node in the list is served inside the
+    list.  This is `sNodes_covers_pp` with the relation quantified — the external
+    side of witness-closedness, and it terminates for the same reason:
+    `sChildN_depth` drops `maxDepth` at every step. -/
+theorem wNodes_covers (hI : RCC5Interp I) {C0 : Concept} :
+    ∀ (d : Nat) (n : SNode I C0), maxDepth n.lab ≤ d →
+      ∀ m ∈ wNodes hI d n, ∀ (r : Atom) (D : Concept)
+        (hD : Concept.ex r D ∈ m.lab),
+        sChildN hI m hD ∈ wNodes hI d n := by
+  intro d
+  induction d with
+  | zero =>
+    intro n hdep m hm r D hD
+    rw [wNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact absurd hD
+        (no_demand_of_depth_zero (Nat.le_antisymm hdep (Nat.zero_le _)))
+    · exact absurd h List.not_mem_nil
+  | succ d' ih =>
+    intro n hdep m hm r D hD
+    rw [wNodes] at hm
+    rcases List.mem_cons.mp hm with rfl | h
+    · exact wNodes_child_mem hI m hD d'
+    · obtain ⟨⟨F, hF⟩, _, hmm⟩ := List.mem_flatMap.mp h
+      cases F with
+      | ex r' c =>
+        have hchild : maxDepth (sChildN hI n hF).lab ≤ d' := by
+          have := sChildN_depth hI n hF
+          omega
+        exact wNodes_sub_of_child hI n hF d'
+          (ih (sChildN hI n hF) hchild m hmm r D hD)
+      | _ => exact absurd hmm List.not_mem_nil
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -35792,4 +35903,7 @@ end POFreeLift
 #print axioms POFreeLift.kernelData_serves
 #print axioms POFreeLift.mKernel_serves
 #print axioms POFreeLift.kDR_of_witnessClosed
+#print axioms POFreeLift.wNodes_length_le
+#print axioms POFreeLift.wNodes_child_mem
+#print axioms POFreeLift.wNodes_covers
 #print axioms POFreeLift.kernel_of_no_terminal
