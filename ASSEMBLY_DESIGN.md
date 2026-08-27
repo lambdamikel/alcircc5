@@ -12458,3 +12458,77 @@ time and §173 argues is automatic for recurrent kernel chains.
 
 Build: 34,404 lines, 1,726 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 178. THE 0.2%, BELOW THE DEMAND — certified without any recurrence
+
+§173 argued the residual inconsistent cases away by appealing to recurrence.
+Before building recurrence machinery, this section asks how much of the argument
+needs it. **Half of it does not.**
+
+`DRCompat` needs: every `∀DR.X` obligation in the chain's labels is satisfied by
+the fresh DR-point. The fresh point is the witness of some `∃DR.D` demand sitting
+at chain height `j`. For a universal at height `i ≤ j` the argument is two moves,
+both already certified:
+
+* `dr_witness_below` — if `c j DR w` and `i ≤ j`, then `c i DR w`. This is
+  disjointness read downward: `c i PP c j` and `c j DR w` force
+  `comp(PP,DR) = {DR}`. Axiom-free.
+* `dr_bodies_satisfied` / `need_consistent_below` — so `c i`'s own `∀DR.X` fires
+  on `w` directly, and `X` holds there.
+
+That is `wp129`'s control turned into a theorem: the body set contributed at or
+below the demand's own height is *always* consistent, for every model, with no
+periodicity assumption and no recurrence.
+
+**What it left open.** A `∀DR.X` at a point *above* the demand. There
+`comp(PPI,DR) = {PPI,PO,DR}` gives nothing — the witness need not be disjoint
+from a higher chain point at all. §173's argument for that case wanted the type
+to recur below an arbitrary height, which `KernelData.cty`'s single equation does
+not directly supply.
+
+The note flagged the shape as the same periodicity §156.2 wanted and §157 found
+`seg_pp` already avoiding, and recorded: *check whether `seg_pp`'s
+endpoint-re-entry trick applies here before building anything.* §179 checked.
+
+## 179. IT DOES — `∀DR` CLIMBS, AND THAT CLOSES THE OTHER HALF
+
+The trick applies, and the reason is one lemma that had not been noticed:
+
+> **`all_dr_up` (axiom-free).** If `∀DR.X` holds at `x` and `x PP y`, then
+> `∀DR.X` holds at `y`.
+
+Anything `DR` from `y` is `DR` from `x` by downward closure, so `X` holds there
+already. **The universal climbs even though its witnesses do not** — which is
+exactly the asymmetry §178 ran into from the other side. `comp(PPI,DR)` being
+wide is what makes the *witness* fail to transfer up; it is irrelevant to whether
+the *obligation* transfers up, and the obligation does.
+
+That is the `sat_all_pp_up` analogue `seg_pp` is built on, so the segment lemma
+transposes directly:
+
+* `seg_dr` — with a type repeat `mty(c i) = mty(c j)`, a `∀DR.X` anywhere in the
+  segment holds at **every** point of it. Climb to the top endpoint, cross the
+  repeat to the bottom, descend by `all_dr_up` again. (Two of `seg_pp`'s
+  hypotheses turn out unnecessary here and are kept only for symmetry.)
+* `need_consistent_seg` — so every `∀DR` body contributed anywhere in the segment
+  is also contributed at the bottom, where §178's downward argument satisfies it
+  from the demand's own witness.
+
+**Net: the 0.2% is closed.** Under a type repeat — which is what a kernel *is*,
+and what `seg_pp`/`seg_ppi` already assume everywhere else — the position of a
+`∀DR` universal relative to the `∃DR` demand no longer matters, so `DRCompat`'s
+obligation set is consistent unconditionally. No recurrence machinery was built;
+the periodicity already present in the kernel was enough once the right
+propagation direction was noticed.
+
+**Method note, the fifth of its kind.** §157's rule ("grep before building") has
+a sibling that fired here: *before building a new argument, check whether an
+existing one transposes.* §178.1 wrote that instruction down for itself and §179
+followed it — cost was one lemma and one segment lemma instead of a recurrence
+theory. The check that made it work was asking which *direction* of propagation
+the wide composition cell actually blocks.
+
+Build: 34,581 lines, 1,736 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`. `all_dr_up` axiom-free; `seg_dr` /
+`need_consistent_seg` / `need_consistent_below` = propext + Classical.choice +
+Quot.sound.

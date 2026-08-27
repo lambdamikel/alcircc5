@@ -33525,6 +33525,142 @@ theorem glueDRMT_ok {β1 β2 κ1 κ2 : Type} [DecidableEq κ1] [DecidableEq κ2]
       · exact Or.inr (Or.inr (Or.inr
           ⟨.inr k', fun h => hne (Sum.inr.inj h), hQ, b, hb, hD⟩))
 
+/-! #### §178 — THE 0.2%, PARTLY CERTIFIED
+
+§173 argued the inconsistent cases cannot arise for kernels, using recurrence.
+That was an argument, not a proof. This section proves the half that needs no
+recurrence, and states exactly what the other half still rests on.
+
+The clean half is downward closure: a witness disjoint from a HIGH chain point is
+disjoint from every LOWER one, so it satisfies all their `∀DR` bodies. That is
+`wp129`'s control — bodies accumulate — now a theorem. -/
+
+/-- **A DR WITNESS OF A HIGH POINT IS A DR WITNESS OF EVERY LOWER ONE.**
+    `comp(PP,DR) = {DR}`, the cell `odOfModel`'s `djDown` runs on. -/
+theorem dr_witness_below (hI : RCC5Interp I) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {w : α} (hw : I.dom w) {j : Nat} (hdr : I.rho (c j) w = dr) :
+    ∀ i, i ≤ j → I.rho (c i) w = dr := by
+  intro i hij
+  rcases Nat.lt_or_ge i j with hlt | hge
+  · exact rho_forced hI (hdom i) hw (hdom j)
+      (chain_pp_lt hI c hdom hstep i j hlt) hdr (by decide)
+  · have : i = j := Nat.le_antisymm hij hge
+    rw [this]; exact hdr
+
+/-- **SO ITS `∀DR` BODIES ARE ALL SATISFIED.**  `wp129`'s control, as a theorem:
+    the bodies a fresh disjoint point must carry ACCUMULATE downward, and one
+    witness high enough already carries every one of them. -/
+theorem dr_bodies_satisfied (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {w : α} (hw : I.dom w) {j : Nat} (hdr : I.rho (c j) w = dr)
+    {X : Concept} {i : Nat} (hij : i ≤ j)
+    (hX : Concept.all dr X ∈ mty C0 I (c i)) : sat I w X :=
+  (mem_mty.mp (mty_all hX hw (dr_witness_below hI hdom hstep hw hdr i hij))).2
+
+/-- **AND THE BLOCKING CASE CANNOT ARISE BELOW THE DEMAND.**  If some chain point
+    at or below `j` carries `∀DR.X`, and `c j` has a `DR` witness at all, then
+    `X` is SATISFIABLE — so `need` is consistent for every body contributed at or
+    below the demand's height. -/
+theorem need_consistent_below (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {D : Concept} {j : Nat} (hdem : Concept.ex dr D ∈ mty C0 I (c j)) :
+    ∀ (X : Concept) (i : Nat), i ≤ j → Concept.all dr X ∈ mty C0 I (c i) →
+      ∃ w, I.dom w ∧ sat I w X := by
+  intro X i hij hX
+  obtain ⟨w, hw, hdr, _⟩ := mty_ex hdem
+  exact ⟨w, hw, dr_bodies_satisfied hI C0 hdom hstep hw hdr hij hX⟩
+
+/-! ##### §178.1 — what is certified and what is not
+
+**Certified:** every `∀DR` body contributed by a chain point AT OR BELOW the
+demand's height is satisfiable, so the accumulated `need` is consistent up to
+that height. `wp129`'s control is now a theorem and no longer an observation.
+
+**Not certified:** a `∀DR.X` at a point ABOVE the demand. There, downward
+closure gives nothing — `comp(PPI,DR) = {PPI,PO,DR}` — and §173's argument uses
+RECURRENCE to find a lower occurrence of that point's type.
+
+Formalising that needs the type to recur BELOW an arbitrary height, which
+`KernelData.cty`'s single equation `mty (c i) = mty (c (i+p))` does not directly
+give: it relates two specific points, not every intermediate one to a lower
+occurrence.
+
+So the 0.2% is covered below the demand and open above it. The gap is exactly
+the periodicity §156.2 also wanted and §157 found `seg_pp` avoiding — worth
+checking whether `seg_pp`'s endpoint-re-entry trick applies here too before
+building anything. -/
+
+/-! #### §179 — `∀DR` CLIMBS, SO `seg_pp`'s TRICK CLOSES THE OTHER HALF
+
+§178.1 left the case of a `∀DR.X` ABOVE the demand, and suggested checking
+whether `seg_pp`'s endpoint-re-entry applies before building anything. It does,
+and the reason is one line: **`∀DR` propagates UP the chain.**
+
+If `∀DR.X` holds at `x` and `x PP y`, then anything `DR` from `y` is `DR` from
+`x` (downward closure), so `X` holds there — i.e. `∀DR.X` holds at `y`. The
+universal climbs even though its witnesses do not.
+
+That is the `sat_all_pp_up` analogue `seg_pp` runs on, so the same argument
+applies: climb to the top endpoint, transfer across the type repeat, fire down. -/
+
+/-- **`∀DR` CLIMBS.**  Downward closure of disjointness, read as a statement
+    about the universal rather than about its witnesses. -/
+theorem all_dr_up (hI : RCC5Interp I) {x y : α} (hx : I.dom x) (hy : I.dom y)
+    (hxy : I.rho x y = pp) {X : Concept} (h : sat I x (Concept.all dr X)) :
+    sat I y (Concept.all dr X) := by
+  intro z hz hyz
+  exact h z hz (rho_forced hI hx hz hy hxy hyz (by decide))
+
+/-- **THE SEGMENT VERSION.**  With a type repeat at the endpoints, a `∀DR`
+    universal anywhere in the segment holds at EVERY point of it — including
+    below itself, by re-entry through the bottom endpoint.
+
+    Exactly `seg_pp`'s shape, with `all_dr_up` in place of `sat_all_pp_up`.
+    Two of `seg_pp`'s hypotheses (`i < j`, `i ≤ a`) turn out to be unnecessary
+    here and are kept only so the two segment lemmas read alike: climbing needs
+    `a < j`, and the descent needs only the type equation. -/
+theorem seg_dr (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i j : Nat} (_hij : i < j) (hty : mty C0 I (c i) = mty C0 I (c j))
+    {a : Nat} (_hia : i ≤ a) (haj : a < j) {X : Concept}
+    (hX : Concept.all dr X ∈ mty C0 I (c a)) :
+    ∀ b, i ≤ b → b < j → Concept.all dr X ∈ mty C0 I (c b) := by
+  have htop : Concept.all dr X ∈ mty C0 I (c j) := by
+    obtain ⟨hcl, hsat⟩ := mem_mty.mp hX
+    refine mem_mty.mpr ⟨hcl, ?_⟩
+    rcases Nat.lt_or_ge a j with hlt | hge
+    · exact all_dr_up hI (hdom a) (hdom j)
+        (chain_pp_lt hI c hdom hstep a j hlt) hsat
+    · omega
+  have hbot : Concept.all dr X ∈ mty C0 I (c i) := by rw [hty]; exact htop
+  intro b hib _
+  rcases Nat.lt_or_ge i b with hlt | hge
+  · obtain ⟨hcl, hsat⟩ := mem_mty.mp hbot
+    exact mem_mty.mpr ⟨hcl, all_dr_up hI (hdom i) (hdom b)
+      (chain_pp_lt hI c hdom hstep i b hlt) hsat⟩
+  · have hbi : b = i := by omega
+    rw [hbi]; exact hbot
+
+/-- **SO `need` IS CONSISTENT, FULL STOP.**  With a type repeat, every `∀DR`
+    body contributed anywhere in the segment is also contributed at the BOTTOM —
+    and §178's downward argument then satisfies it from the demand's own witness.
+
+    This closes §178.1's open half: the position of the universal relative to the
+    demand no longer matters. -/
+theorem need_consistent_seg (hI : RCC5Interp I) (C0 : Concept) {c : Nat → α}
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    {i j : Nat} (hij : i < j) (hty : mty C0 I (c i) = mty C0 I (c j))
+    {D : Concept} {b : Nat} (hib : i ≤ b) (_hbj : b < j)
+    (hdem : Concept.ex dr D ∈ mty C0 I (c b)) :
+    ∀ (X : Concept) (a : Nat), i ≤ a → a < j →
+      Concept.all dr X ∈ mty C0 I (c a) → ∃ w, I.dom w ∧ sat I w X := by
+  intro X a hia haj hX
+  have hbot : Concept.all dr X ∈ mty C0 I (c i) :=
+    seg_dr hI C0 hdom hstep hij hty hia haj hX i (Nat.le_refl i) hij
+  obtain ⟨w, hw, hdr, _⟩ := mty_ex hdem
+  exact ⟨w, hw, dr_bodies_satisfied hI C0 hdom hstep hw hdr hib hbot⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -34437,4 +34573,9 @@ end POFreeLift
 #print axioms POFreeLift.qnet_glueDR
 #print axioms POFreeLift.glueDRMT_frame
 #print axioms POFreeLift.glueDRMT_ok
+#print axioms POFreeLift.dr_witness_below
+#print axioms POFreeLift.need_consistent_below
+#print axioms POFreeLift.all_dr_up
+#print axioms POFreeLift.seg_dr
+#print axioms POFreeLift.need_consistent_seg
 #print axioms POFreeLift.kernel_of_no_terminal
