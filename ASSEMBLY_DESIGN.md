@@ -12761,10 +12761,42 @@ was actually administered.** Both failures were caught by asking what the probe'
 sample could not represent — §181.3 counted the non-vacuous instances, §183
 counted the steps where the choice differed.
 
-**Recorded for the next attempt:** the parameters that would make part G decisive
-are a larger universe and longer chains, so that a demand typically has several
-witnesses of which only some preserve `DR`. That is a generator change, not a new
-question.
+### 183.1 So the generator was changed, and now it decides
+
+Rather than file it, `wp130` gained a third model class **G3** — wider universe
+(11 elements), longer chains (4), more elements sampled — chosen so a demand
+typically has several witnesses of which only some preserve `DR`.
+
+| | G1 | G2 | **G3** |
+|---|---|---|---|
+| steps where the choice changed | 2.0% | 3.4% | **7.1%** |
+| instances where the two blocks DIFFER | 2 | 1 | **10 of 67** |
+| **verdict flips** | **0** | **0** | **0** |
+
+The lever is now genuinely pulled and still flips nothing, in any class. On 13
+differing instances the discipline never once fixed a failure — weak evidence in
+isolation, but it comes with a mechanism.
+
+### 183.2 The mechanism, which is the actual result
+
+A `DR`-preserving witness exists at only **~20% of steps** in every class. So the
+block **cannot be kept fully inside the free cone**, and *partial* preservation
+is worthless: the chain's `∀DR.X` fires only on nodes that really are `DR`, so a
+block that is 80% preserved discharges none of the obligation at the other 20%.
+
+**That is a structural statement, not a rate.** It says `DRCompat` cannot be
+obtained from model-side `DR`-separation of the block at all — which is precisely
+why `glueDRMT` DECLARES the relation rather than reading it off. The declared
+edge is doing real work here, and the label condition needs an argument of its
+own rather than a selection discipline.
+
+### 183.3 What that leaves
+
+The root is a theorem (§182.2). The block interior is not reachable by selection.
+So the remaining obligation is: **build `T2` so that the chain's finitely many
+`∀DR` bodies hold at every one of its labels** — a construction on the block,
+with `drCompat_of_phases` saying how few conditions that actually is, and §180's
+consistency result saying the target is non-empty.
 
 Build unchanged: 34,833 lines, 1,746 declarations, 0 errors / 0 warnings /
 0 `sorryAx`.

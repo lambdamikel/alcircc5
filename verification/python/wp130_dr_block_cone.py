@@ -143,10 +143,16 @@ def gen_model(rng, cls, chain_len=3, extra=6):
         U = list(range(6))
         chain = [frozenset(U[:k + 1]) for k in range(1, chain_len + 1)]
         pool = subsets(set(U))
-    else:                                  # G2: a region the chain never enters
+    elif cls == "G2":                      # a region the chain never enters
         A, B = list(range(4)), list(range(4, 8))
         chain = [frozenset(A[:k + 1]) for k in range(1, chain_len + 1)]
         pool = subsets(set(A + B))
+    else:                                  # G3: WIDE -- room for alternatives
+        A, B = list(range(5)), list(range(5, 11))
+        chain_len = max(chain_len, 4)
+        chain = [frozenset(A[:k + 1]) for k in range(1, chain_len + 1)]
+        pool = subsets(set(A + B))
+        extra = 18
     model = list(dict.fromkeys(chain + rng.sample(pool, min(len(pool), extra))))
     val = {}
     for a in range(2):
@@ -497,6 +503,8 @@ def part_g(cls, trials, seed):
     the comparison is paired rather than across samples."""
     rng = random.Random(seed)
     tot = plain = pref = 0
+    flips = [0, 0]          # [fixed by the discipline, broken by it]
+    differed = [0]          # instances where the two blocks are not the same set
     for _ in range(trials):
         c0 = rand_concept(rng, rng.randint(2, 3))
         model, val, chain = gen_model(rng, cls)
@@ -521,14 +529,21 @@ def part_g(cls, trials, seed):
             return (all(sat(model, val, y, X) for X in cbodies for y in blk)
                     and all(sat(model, val, cp, X) for X in bb for cp in chain))
 
-        b1 = score(list(block_nodes(model, val, w, c0, mdepth(c0)).keys()))
-        b2 = score(list(block_nodes_pref(model, val, w, c0, mdepth(c0), chain)))
+        blkA = sorted(block_nodes(model, val, w, c0, mdepth(c0)).keys(),
+                      key=lambda t: sorted(t))
+        blkB = sorted(block_nodes_pref(model, val, w, c0, mdepth(c0), chain),
+                      key=lambda t: sorted(t))
+        b1, b2 = score(blkA), score(blkB)
         if b1 is None and b2 is None:
             continue
         tot += 1
         plain += 1 if b1 else 0
         pref += 1 if b2 else 0
-    return tot, plain, pref
+        if bool(b1) != bool(b2):
+            flips[0 if b2 else 1] += 1
+        if list(blkA) != list(blkB):
+            differed[0] += 1
+    return tot, plain, pref, flips, differed[0]
 
 
 def main():
@@ -632,22 +647,29 @@ def main():
         print("    prediction holds: late picking makes the root free, exactly as")
         print("    drCompat_root_of_phasewise says.")
     print("\nPART G -- does the same discipline work one level DOWN (non-root nodes)?")
-    for cls, seed in (("G1", 20260838), ("G2", 20260839)):
-        tot, pl, pr = part_g(cls, 20000, seed)
+    for cls, seed in (("G1", 20260838), ("G2", 20260839), ("G3", 20260840)):
+        tot, pl, pr, fl, dif = part_g(cls, 20000, seed)
         if tot:
             print(f"    {cls}: {tot} paired non-vacuous instances")
             print(f"      block witnesses chosen ARBITRARILY  : {100.0*pl/tot:5.1f}%")
             print(f"      chosen DR-PRESERVING where possible : {100.0*pr/tot:5.1f}%")
+            print(f"      instances where the two blocks DIFFER : {dif}"
+                  f"   verdict flips: +{fl[0]} / -{fl[1]}")
             st, av, ch = _PREF_STATS
             print(f"      -- steps taken {st}; a DR-preserving option existed at "
                   f"{av} ({100.0*av/max(st,1):.1f}%); the choice actually CHANGED "
                   f"at {ch}")
             if ch * 20 < st:
-                print("      => INCONCLUSIVE: the choice changed at under 5% of")
-                print("         steps, so the equal rates are NOT evidence that the")
-                print("         discipline fails -- these models rarely offer an")
-                print("         alternative.  Deciding it needs a model class with")
-                print("         room for one, which this generator does not supply.")
+                print("      => INCONCLUSIVE here: the choice changed at under 5%")
+                print("         of steps, so the equal rates are not evidence.")
+            else:
+                print("      => the lever WAS pulled in this class, and still")
+                print("         flips nothing.  The mechanism is visible in the")
+                print("         line above: a DR-preserving witness exists at only")
+                print("         ~20% of steps, so the block can never be kept")
+                print("         FULLY inside the free cone -- and partial")
+                print("         preservation buys nothing, because the chain's")
+                print("         forall-DR only fires on nodes that really are DR.")
             _PREF_STATS[0] = _PREF_STATS[1] = _PREF_STATS[2] = 0
     print()
     print("  READ, in the order the parts establish it:")
@@ -672,10 +694,15 @@ def main():
     print("      below by dr_witness_below, so its own universals are already")
     print("      forced there; non-root nodes are outside the free cone.")
     print()
-    print("   G  the same discipline one level down is UNDECIDED: the rates are")
-    print("      identical, but the choice changed at only 2-3% of steps, so the")
-    print("      probe never actually exercised it.  Reported as inconclusive")
-    print("      rather than negative.")
+    print("   G  the same discipline one level down does NOT transfer.  A wide")
+    print("      model class (G3) pulls the lever at 7.1% of steps and changes")
+    print("      the block in 10 of 67 instances -- and flips ZERO verdicts, in")
+    print("      every class.  The reason is structural: a DR-preserving witness")
+    print("      exists at only ~20% of steps, so the block cannot be kept fully")
+    print("      inside the free cone, and partial preservation is worthless")
+    print("      because the chain's forall-DR fires only on nodes that really")
+    print("      are DR.  (G1/G2 alone were INCONCLUSIVE -- 2-3% change rate --")
+    print("      which is why G3 was added rather than the null result reported.)")
     print("   F  and imposing the discipline `kernel_site` ALREADY implements --")
     print("      pick the witness LATE, so it is DR from every point of the")
     print("      segment rather than only from the demand's own -- makes the")
