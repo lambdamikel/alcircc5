@@ -35791,6 +35791,153 @@ against `comp(PPI,PP)` being wide, the same asymmetry §178/§179 met from the
 `∀DR` side and §165.1 met from the `∃DR` side. **Three different obligations,
 one composition fact.** -/
 
+/-! #### §203 — `sAdjK` AND UNIFORM BUDGETS ARE INCOMPATIBLE
+
+Attacking `he_ex`'s `rDR` (§199.1 item 2) hits a genuine conflict between two
+things this session established separately.
+
+`mergedMT_ok` instantiates the abstract `seed` as `seedMix nd (mKdr …)`, whose
+external–external case is `sAdjK`, and `sAdjK n n'` says `n'` IS `n`'s chosen
+`DR`-witness — a node whose budget is `n.k - 1` BY CONSTRUCTION (`mtkWitness`).
+
+§198.1 concluded the opposite: budgets must be UNIFORM, or `hbS`/`hbK`/`hbQ`
+fail. Both conclusions are right, and together they say `seedMix` cannot be the
+seed for a uniform family. That is recorded below as a theorem rather than a
+remark, so the claim cannot drift. -/
+
+/-- **`sAdjK` FORCES A BUDGET DROP.** -/
+theorem sAdjK_budget_drop {C0 : Concept} {n n' : MTKNode I C0}
+    (h : sAdjK n n') : n'.k = n.k - 1 ∨ n.k = n'.k - 1 := by
+  rcases h with ⟨c, hF, hchild⟩ | ⟨c, hF, hchild⟩
+  · exact Or.inl (by rw [← hchild]; rfl)
+  · exact Or.inr (by rw [← hchild]; rfl)
+
+/-- **SO IT IS UNSATISFIABLE ON A UNIFORM FAMILY.**  With equal, positive
+    budgets `sAdjK` cannot hold — which is exactly the situation §199's `kwNd`
+    creates, and the reason `seedMix` is not the seed the extraction can use. -/
+theorem sAdjK_uniform_impossible {C0 : Concept} {n n' : MTKNode I C0}
+    (hk : n.k = n'.k) (hpos : 0 < n.k) : ¬ sAdjK n n' := by
+  intro h
+  rcases sAdjK_budget_drop h with h1 | h1 <;> omega
+
+/-! #### §204 — THE SEED THE UNIFORM FAMILY CAN USE
+
+`seed` is a PARAMETER of `odSeed_he_ex`, `odSeed_hk_ex_lt` and
+`mtkKernelsOD_of_debts` — only `mergedMT_ok` pins it to `seedMix`. So §203 is a
+constraint on that one instantiation, not on the architecture.
+
+The natural replacement reads the relation off the model instead of off the
+witness-choice: `seedU` is simply "these two nodes are `DR`". Its two obligations
+then come out cleaner than `seedMix`'s, not messier. -/
+
+/-- **THE READ-OFF SEED.**  Disjointness as the model states it. -/
+def seedU {β κ : Type} (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
+    (I : Interp α) (x y : β ⊕ κ) : Prop :=
+  I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr
+
+theorem seedU_sym {β κ : Type} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n)) :
+    ∀ x y, seedU g ck ik I x y → seedU g ck ik I y x := by
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (b | c)
+    · exact hgdom b
+    · exact hkdom c _
+  intro x y h
+  have hc := hI.conv_ (nodeOf g ck ik x) (nodeOf g ck ik y) (hdomN x) (hdomN y)
+  rw [h] at hc
+  exact hc
+
+/-- **`hdr`, FOR FREE.**  `seedMix` needed `sAdjK_rho_dr` to get from the
+    witness-choice to the model relation; `seedU` IS the model relation. -/
+theorem seedU_dr {β κ : Type} (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) :
+    ∀ x y, seedU g ck ik I x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr := fun _ _ h => h
+
+/-- **`hsep`, FROM ONE COMPOSITION CELL.**  Two nodes above a common node are
+    never disjoint: `comp(PPI,PP)` does not contain `DR`, because both contain
+    the node below them. -/
+theorem seedU_sep {β κ : Type} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (elt : β → β → Prop)
+    (hlt : ∀ x y, mixLt elt up dn x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = pp) :
+    ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
+      ¬ seedU g ck ik I y z := by
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (b | c)
+    · exact hgdom b
+    · exact hkdom c _
+  intro x y z hxy hxz hs
+  simp only [seedU] at hs
+  rcases hxy with rfl | hxy
+  · rcases hxz with rfl | hxz
+    · rw [hI.refl_eq _ (hdomN x)] at hs; exact absurd hs (by decide)
+    · rw [hlt x z hxz] at hs; exact absurd hs (by decide)
+  · rcases hxz with rfl | hxz
+    · have hc := hI.conv_ (nodeOf g ck ik x) (nodeOf g ck ik y)
+        (hdomN x) (hdomN y)
+      rw [hlt x y hxy] at hc
+      rw [hc] at hs; exact absurd hs (by decide)
+    · have hyx : I.rho (nodeOf g ck ik y) (nodeOf g ck ik x) = ppi := by
+        have hc := hI.conv_ (nodeOf g ck ik x) (nodeOf g ck ik y)
+          (hdomN x) (hdomN y)
+        rw [hlt x y hxy] at hc; exact hc
+      have hm := hI.comp_ (nodeOf g ck ik y) (nodeOf g ck ik x)
+        (nodeOf g ck ik z) (hdomN y) (hdomN x) (hdomN z)
+      rw [hyx, hlt x z hxz, hs] at hm
+      exact absurd hm (by decide)
+
+/-! ##### §204.1 — and it must keep `seedMix`'s one negative fact
+
+`seedMix` sets the kernel–kernel case to `False`, and `hqdr_of_model_at` consumes
+that as `hqq`. `seedU` as defined does not: two kernels whose bases happen to be
+`DR` would seed each other. So the usable seed is `seedU` cut down on that one
+case — which costs nothing, since cross-kernel `DR` arises by `djDown`
+inheritance rather than by seeding (§44's note). -/
+
+/-- **THE EXTRACTION'S SEED.**  Read-off `DR`, except never between two
+    kernels. -/
+def seedUE {β κ : Type} (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
+    (I : Interp α) : β ⊕ κ → β ⊕ κ → Prop
+  | .inr _, .inr _ => False
+  | x, y => seedU g ck ik I x y
+
+theorem seedUE_qq {β κ : Type} (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) :
+    ∀ k k' : κ, ¬ seedUE g ck ik I (Sum.inr k) (Sum.inr k') := fun _ _ h => h
+
+theorem seedUE_dr {β κ : Type} (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) :
+    ∀ x y, seedUE g ck ik I x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr := by
+  rintro (e | k) (f | k') h
+  · exact h
+  · exact h
+  · exact h
+  · exact h.elim
+
+theorem seedUE_sym {β κ : Type} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n)) :
+    ∀ x y, seedUE g ck ik I x y → seedUE g ck ik I y x := by
+  rintro (e | k) (f | k') h
+  · exact seedU_sym hI g ck ik hgdom hkdom _ _ h
+  · exact seedU_sym hI g ck ik hgdom hkdom _ _ h
+  · exact seedU_sym hI g ck ik hgdom hkdom _ _ h
+  · exact h.elim
+
+theorem seedUE_sep {β κ : Type} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (elt : β → β → Prop)
+    (hlt : ∀ x y, mixLt elt up dn x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = pp) :
+    ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
+      ¬ seedUE g ck ik I y z := by
+  intro x y z hxy hxz hs
+  exact seedU_sep hI g ck ik up dn hgdom hkdom elt hlt x y z hxy hxz
+    (seedUE_dr g ck ik y z hs)
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36753,4 +36900,8 @@ end POFreeLift
 #print axioms POFreeLift.rootNode_depth
 #print axioms POFreeLift.normL_mem_allListsLe
 #print axioms POFreeLift.pp_to_chain_of_base
+#print axioms POFreeLift.sAdjK_uniform_impossible
+#print axioms POFreeLift.seedU_sep
+#print axioms POFreeLift.seedUE_sep
+#print axioms POFreeLift.seedUE_qq
 #print axioms POFreeLift.kernel_of_no_terminal

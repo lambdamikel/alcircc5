@@ -13514,3 +13514,57 @@ times is still a hypothesis on the ninth.**
 
 Build: 36,756 lines, 1,843 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 203. `sAdjK` AND UNIFORM BUDGETS ARE INCOMPATIBLE
+
+Attacking `he_ex`'s `rDR` hits a genuine conflict between two things this session
+established **separately**, each correctly.
+
+`mergedMT_ok` instantiates the abstract `seed` as `seedMix nd (mKdr …)`, whose
+external–external case is `sAdjK`, and `sAdjK n n'` says `n'` **is** `n`'s chosen
+`DR`-witness — a node whose budget is `n.k - 1` by construction (`mtkWitness`;
+`sAdjK_bud` reasons about exactly that).
+
+§198.1 concluded the opposite: budgets must be **uniform**, or `hbS`/`hbK`/`hbQ`
+fail. Both are right, and together they say **`seedMix` cannot be the seed for a
+uniform family.** Recorded as theorems, not remarks:
+
+* `sAdjK_budget_drop` — `sAdjK n n'` forces `n'.k = n.k - 1` or the converse;
+* `sAdjK_uniform_impossible` — so with equal positive budgets it cannot hold.
+
+This is the §196.1-class finding for this stage: two locally sound decisions that
+do not compose.
+
+## 204. THE SEED THE UNIFORM FAMILY CAN USE
+
+`seed` is a **parameter** of `odSeed_he_ex`, `odSeed_hk_ex_lt` and
+`mtkKernelsOD_of_debts`; only `mergedMT_ok` pins it. So §203 constrains one
+instantiation, not the architecture.
+
+The replacement reads the relation off the model rather than off the
+witness-choice — `seedU x y := I.rho (node x) (node y) = dr` — and its
+obligations come out *cleaner* than `seedMix`'s:
+
+| | `seedMix` | `seedU` |
+|---|---|---|
+| `hdr` | via `sAdjK_rho_dr` | **`fun _ _ h => h`** |
+| `hsym` | `seedMix_sym` | `seedU_sym` (converse coherence) |
+| `hsep` | assumed | `seedU_sep` — **one composition cell** |
+
+`seedU_sep` is the content: two nodes above a common node are never disjoint,
+because `comp(PPI,PP)` does not contain `DR`. `propext` only.
+
+### 204.1 One negative fact had to be kept
+
+`seedMix` sets the kernel–kernel case to `False`, and `hqdr_of_model_at` consumes
+that as `hqq`. `seedU` does not — two kernels with `DR` bases would seed each
+other. So the usable seed is `seedUE`: `seedU` cut down on that one case, which
+costs nothing since cross-kernel `DR` arises by `djDown` inheritance rather than
+by seeding (§44). `seedUE_qq`/`_dr`/`_sym`/`_sep` carry all four conditions.
+
+**Finding this required looking at what `seedMix` said `False` about** — a
+negative clause is easy to miss when replacing a definition by a "more natural"
+one, and dropping it would have broken `hqdr` silently.
+
+Build: 36,907 lines, 1,854 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
