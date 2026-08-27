@@ -20119,7 +20119,8 @@ theorem mtkKernelsOD_ok {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
       (∃ f, odNet O (Sum.inl e) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
       (∃ k, conv (odNet O (Sum.inr k) (Sum.inl e)) = r ∧
         ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
-    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+    (hk_ex : ∀ k a r D, a < pk k →
+      Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
       (∃ f, odNet O (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
       (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
         D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
@@ -20158,7 +20159,7 @@ theorem mtkKernelsOD_ok {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
           (hdom k (ik k + a))
       kq_all := ?_
       e_ex := he_ex
-      k_ex := fun k a _ r D hmem => hk_ex k a r D hmem }
+      k_ex := fun k a ha r D hmem => hk_ex k a r D ha hmem }
   · -- ee_all
     intro e f r cc hall hE
     have hE' : odNet O (Sum.inl e) (Sum.inl f) = r := hE
@@ -22132,7 +22133,8 @@ theorem mtkKernelsOD_of_debts {I : Interp α} (hI : RCC5Interp I) {C0 : Concept}
       (∃ f, odNet O (Sum.inl e) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
       (∃ k, conv (odNet O (Sum.inr k) (Sum.inl e)) = r ∧
         ∃ a, a < pk k ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)))
-    (hk_ex : ∀ k a r D, Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+    (hk_ex : ∀ k a r D, a < pk k →
+      Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
       (∃ f, odNet O (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
       (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
         D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
@@ -27698,7 +27700,7 @@ theorem mergedMT_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
           (Sum.inr k) (Sum.inl e)) = r ∧
         ∃ a, a < mPk hI C0 nd L0 k ∧
           D ∈ mtk C0 I (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (mBk nd k)))
-    (hk_ex : ∀ k a r D,
+    (hk_ex : ∀ k a r D, a < mPk hI C0 nd L0 k →
       Concept.ex r D ∈ mtk C0 I (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
         (mBk nd k) →
       (∃ f, odNet (odSeed _ _ _ _ (mElt_irrefl hI C0 nd L0)
@@ -34333,6 +34335,98 @@ theorem hdrk_of_model_at_generalizes {κ : Type} {I : Interp α}
     (fun k e hd => hdnphase k e a hd) seed hseed
     (fun k y hsy => hseedPhase k y hsy a) k e h
 
+/-! #### §189 — THE SAME WEAKENING, FOR THE FOUR REMAINING KERNEL PREMISES
+
+§188 weakened `hdrk`'s premises to the index they are used at. `odSeed_hk_ex`
+has the identical shape: it quantifies `kDIR`, `kDR`, `kPO`, `kUP`, `kDN` over
+ALL phase indices `a`, and its proof hands each of them the single `a` from the
+conclusion and nothing else.
+
+And the consumer does not want all `a` either — a certificate's `k_ex` obligation
+reads `∀ k a, a < T.p k → …`. So the unbounded form is over-strong at both ends.
+
+`odSeed_hk_ex_lt` bounds all five premises and the conclusion by `a < pk k`,
+which is exactly the range `kernel_site` covers. Same proof, `ha` threaded. -/
+
+theorem odSeed_hk_ex_lt {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
+    {β κ : Type} (elt : β → β → Prop) (up dn : κ → β → Bool)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hirrE : ∀ e, ¬ elt e e) (htr : ∀ a b c, elt a b → elt b c → elt a c)
+    (hud : ∀ k x y, up k x = true → dn k y = true → elt x y)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hsep : ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
+      ¬ seed y z)
+    (g : β → α) (bud : β → Nat) (bk : κ → Nat) (dir : κ → Bool)
+    (ck : κ → Nat → α) (hdom : ∀ k n, I.dom (ck k n)) (ik pk : κ → Nat)
+    (kDIR : ∀ k a D, a < pk k → Concept.ex (cdir (dir k)) D ∈
+        mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ b, b < pk k ∧ D ∈ mtk C0 I (ck k (ik k + b)) (bk k))
+    (kDR : ∀ k a D, a < pk k →
+        Concept.ex dr D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f, seed (Sum.inr k) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
+    (kPO : ∀ k a D, a < pk k →
+        Concept.ex po D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f, ¬ mixLt elt up dn (Sum.inr k) (Sum.inl f) ∧
+        ¬ mixLt elt up dn (Sum.inl f) (Sum.inr k) ∧
+        ¬ (odSeed elt up dn seed hirrE htr hud hsym hsep).disj
+            (Sum.inr k) (Sum.inl f) ∧ D ∈ mtk C0 I (g f) (bud f))
+    (kUP : ∀ k a D, a < pk k → dir k = false →
+        Concept.ex pp D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f e', dn k e' = true ∧ leE elt e' f ∧
+        D ∈ mtk C0 I (g f) (bud f))
+    (kDN : ∀ k a D, a < pk k → dir k = true →
+        Concept.ex ppi D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      ∃ f e', up k e' = true ∧ leE elt f e' ∧
+        D ∈ mtk C0 I (g f) (bud f)) :
+    ∀ k a r D, a < pk k →
+      Concept.ex r D ∈ mtk C0 I (ck k (ik k + a)) (bk k) →
+      (∃ f, odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
+          (Sum.inr k) (Sum.inl f) = r ∧ D ∈ mtk C0 I (g f) (bud f)) ∨
+      (r = cdir (dir k) ∧ ∃ b, b < pk k ∧
+        D ∈ mtk C0 I (ck k (ik k + b)) (bk k)) ∨
+      (r = eq ∧ D ∈ mtk C0 I (ck k (ik k + a)) (bk k)) ∨
+      (∃ k', k ≠ k' ∧ odNet (odSeed elt up dn seed hirrE htr hud hsym hsep)
+          (Sum.inr k) (Sum.inr k') = r ∧
+        ∃ b, b < pk k' ∧ D ∈ mtk C0 I (ck k' (ik k' + b)) (bk k')) := by
+  intro k a r D ha hdem
+  cases hd : dir k with
+  | true =>
+    cases r with
+    | eq => exact Or.inr (Or.inr (Or.inl ⟨rfl, mtk_ex_eq hI hdem (hdom k _)⟩))
+    | pp =>
+      have : Concept.ex (cdir (dir k)) D ∈ mtk C0 I (ck k (ik k + a)) (bk k) := by
+        rw [hd]; exact hdem
+      obtain ⟨b, hb, hD⟩ := kDIR k a D ha this
+      exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
+    | ppi =>
+      obtain ⟨f, e', hae, hle, hD⟩ := kDN k a D ha hd hdem
+      exact Or.inl ⟨f, odNet_gt _ (show mixLt elt up dn (Sum.inl f)
+        (Sum.inr k) from ⟨e', hae, hle⟩), hD⟩
+    | po =>
+      obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D ha hdem
+      exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
+    | dr =>
+      obtain ⟨f, hsd, hD⟩ := kDR k a D ha hdem
+      exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
+  | false =>
+    cases r with
+    | eq => exact Or.inr (Or.inr (Or.inl ⟨rfl, mtk_ex_eq hI hdem (hdom k _)⟩))
+    | ppi =>
+      have : Concept.ex (cdir (dir k)) D ∈ mtk C0 I (ck k (ik k + a)) (bk k) := by
+        rw [hd]; exact hdem
+      obtain ⟨b, hb, hD⟩ := kDIR k a D ha this
+      exact Or.inr (Or.inl ⟨rfl, b, hb, hD⟩)
+    | pp =>
+      obtain ⟨f, e', hae, hle, hD⟩ := kUP k a D ha hd hdem
+      exact Or.inl ⟨f, odNet_lt _ (show mixLt elt up dn (Sum.inr k)
+        (Sum.inl f) from ⟨e', hae, hle⟩), hD⟩
+    | po =>
+      obtain ⟨f, h1, h2, h3, hD⟩ := kPO k a D ha hdem
+      exact Or.inl ⟨f, odNet_po _ (inr_ne_inl k f) h1 h2 h3, hD⟩
+    | dr =>
+      obtain ⟨f, hsd, hD⟩ := kDR k a D ha hdem
+      exact Or.inl ⟨f, odSeed_dr elt up dn seed hirrE htr hud hsym hsep hsd, hD⟩
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -35267,4 +35361,5 @@ end POFreeLift
 #print axioms POFreeLift.hdrk_rel_of_site
 #print axioms POFreeLift.hdrk_of_model_at
 #print axioms POFreeLift.hdrk_of_model_at_generalizes
+#print axioms POFreeLift.odSeed_hk_ex_lt
 #print axioms POFreeLift.kernel_of_no_terminal

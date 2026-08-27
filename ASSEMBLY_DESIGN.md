@@ -12918,3 +12918,60 @@ consumer from `hdrk` — §188 does not touch it.
 
 Build: 35,270 lines, 1,759 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 189. THE SAME WEAKENING, FOR THE FOUR REMAINING KERNEL PREMISES
+
+`odSeed_hk_ex` has `hdrk_of_model`'s exact shape: it quantifies `kDIR`, `kDR`,
+`kPO`, `kUP`, `kDN` over **all** phase indices, and its proof hands each of them
+the single `a` from the conclusion and nothing else.
+
+`odSeed_hk_ex_lt` bounds all five premises and the conclusion by `a < pk k` —
+the range `kernel_site` covers. Same proof, `ha` threaded through.
+
+## 190. AND THE OBLIGATION CHAIN ABOVE IT, WEAKENED IN PLACE
+
+§189 is only useful if the consumer accepts the bounded form. Following the
+chain — `mergedMT_ok` → `mtkKernelsOD_of_debts` → `mtkKernelsOD_ok` → the
+certificate's `k_ex` field — the last step reads
+
+    k_ex := fun k a _ r D hmem => hk_ex k a r D hmem
+
+**The bound `a < T.p k` is available at every level and simply discarded.** So
+this was not a limitation; it was an unused hypothesis.
+
+Each of the three theorems has exactly **one** real call site (and `mergedMT_ok`
+is the capstone, with none), so the weakening was done in place rather than by
+duplication: `hk_ex` now reads `∀ k a r D, a < pk k → …` in all three, and the
+forwarding names the bound instead of dropping it. **No call site needed
+changing** — the pass-throughs matched automatically, which is itself evidence
+the strength was never used.
+
+### 190.1 What this unblocks
+
+The kernel-existential obligation now needs model facts **only at phases below
+the period**. That is exactly what `kernel_site` has supplied since round E2b:
+
+    ∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+      Concept.ex r D ∈ mty C0 I (c (i + a)) →
+      ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧ ∀ b, b ≤ p → I.rho (c (i + b)) w = r
+
+So `kDR`, `kUP`, `kDN` — three of §163.3's four, and the ones §165.1 called
+selection disciplines requiring stability along an infinite chain — are now
+range-matched to a tool the file already had. **What remains for them is the
+routing** (which disjunct of `hk_ex` each witness lands in, and the `up`/`dn`/
+`seed` bookkeeping), not the existence of witnesses.
+
+### 190.2 The pattern, fourth and fifth instances
+
+§182 found "above the demand" was a property of models, not certificates. §187
+found `hdrk` bounded. §188 found `hdrk_of_model`'s quantifiers unused. §189 and
+§190 are the same again, at the other four premises and then at the three
+signatures above them.
+
+**Five times in two sessions the obstruction was in how something was written
+down, not in the mathematics.** The move that finds it is always the same: read
+the obligation the consumer actually states, and check which hypotheses its proof
+touches — rather than reasoning about the helper's statement.
+
+Build: 35,365 lines, 1,760 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
