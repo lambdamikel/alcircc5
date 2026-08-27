@@ -12045,3 +12045,65 @@ change that. What changed:
 
 Build: 34,004 lines, 1,704 declarations, 0 errors / 0 warnings / 0 sorries /
 0 `sorryAx`. Probes `wp107`–`wp127`.
+
+## 169. THE ANSWER — no, and the probe could not show it
+
+`wp128` failed its control: `C0` holds at neither model's root. Both failures are
+finite-truncation artifacts — `∀PP.(∃PP.⊤)` fails at the TOP chain element, and a
+truncated "exhausting" chain does not exhaust. Fourth instrument to fail this way
+(`wp100`, `wp110`, `wp111`, `wp128`), same cause each time.
+
+The argument does not need one.
+
+### 169.1 The counterexample, by hand
+
+Regions = **nonempty** subsets of `ℕ`. Chain `a_i = {0..i}`, all `i ∈ ℕ`.
+
+```
+C0 = ∃PP.⊤ ⊓ ∀PP.(∃PP.⊤ ⊓ ∃DR.A)      A on singletons
+```
+
+* `∀PO`-free by inspection.
+* `∃PP.⊤` at every `a_i`: witness `a_{i+1}`. The chain is genuinely infinite,
+  no top element — so the guard `∀PP.(∃PP.⊤)` holds and the demand is
+  **persistent**, i.e. a kernel.
+* `∃DR.A` at every `a_i`: witness `{i+1}`, disjoint from `{0..i}`.
+* So `C0` is satisfiable, with a kernel whose every phase carries `∃DR.A`.
+* **No region is disjoint from every `a_i`**: it would have to be disjoint from
+  `⋃ a_i = ℕ`, hence empty, and regions are nonempty.
+
+**So `mKdr` is unsatisfiable in this model.** The answer to §168.3 is **no** — a
+kernel chain need not leave room.
+
+### 169.2 But the same concept has a roomy model
+
+Regions over `ℕ × {0,1}`; the chain in column 0; `A` on `{(0,1)}`. That witness
+is disjoint from the entire chain, so `mKdr` holds.
+
+### 169.3 What this means for the architecture
+
+`mKdr` is **not** a consequence of satisfiability. It is a property of the MODEL
+the extraction is handed.
+
+Since `MergedExtraction : Satisfiable C0 → ∃ … MultiTierOk …` only needs SOME
+certificate, the extraction may build it from a different model than the one it
+is given — the freedom named in §134.3 step 3 and never used.
+
+So the gap moves once more, and to a statement about the logic:
+
+> **does every satisfiable ∀PO-free concept have a model in which every kernel
+> chain leaves room for a disjoint external?**
+
+§169.2 shows it for one concept, by adding a spare dimension. Whether that
+generalises is the question, and it is model-surgery — amalgamation territory,
+where the campaign's `wp6`/patchwork material lives.
+
+### 169.4 Calibration
+
+This is the second time this session that a gap has moved from "construction" to
+"a statement about the logic" (§167, §169). It is also the fourth probe whose
+model class could not represent its subject.
+
+`mKdr` being model-dependent is a genuine finding and is bad news for the direct
+route. Whether it is bad news for the fragment depends entirely on §169.3's
+question, which is open.
