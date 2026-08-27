@@ -33003,6 +33003,52 @@ hypotheses, three are done and the remaining three are `hsepS`, `he_ex`, `hk_ex`
 `wp96` A's objection to uniform budgets is answered by §143, not evaded: the node
 bound no longer comes from budget decrease. -/
 
+/-! #### §164 — `kDIR` FROM `rr_covers`
+
+§163.3's four remaining routing conditions. `kDIR` — a kernel's OWN-direction
+demand is served within its period — is `rr_covers` plus two side conditions,
+and this section makes that connection explicit.
+
+`rr_covers` covers the demand list `Ds` the kernel was BUILT from. `kDIR` asks
+about whatever demand a phase's label carries. So the connection needs the
+phases' own-direction demands to lie in `Ds` — which is the condition, named
+below rather than assumed away. -/
+
+/-- **`kDIR`, GIVEN THE DEMANDS LIE IN `Ds`.**  `rr_covers` supplies a phase
+    carrying the argument; the depth bound lifts it from `mty` to `mtk`. -/
+theorem kDIR_of_rr (hI : RCC5Interp I) (C0 : Concept) (Ds : List Concept)
+    (hL : 0 < Ds.length) (x0 : α) (h0 : persistAll I C0 Ds x0)
+    (i p : Nat) (hi : 0 < i) (hp : 0 < p) (hdvd : Ds.length ∣ p) (bk : Nat)
+    (hin : ∀ a D, Concept.ex pp D ∈ mtk C0 I (rrPt hI C0 Ds hL x0 h0 (i + a)) bk →
+      D ∈ Ds)
+    (hdep : ∀ D ∈ Ds, mdepth D ≤ bk) :
+    ∀ a D, Concept.ex pp D ∈ mtk C0 I (rrPt hI C0 Ds hL x0 h0 (i + a)) bk →
+      ∃ b, b < p ∧ D ∈ mtk C0 I (rrPt hI C0 Ds hL x0 h0 (i + b)) bk := by
+  intro a D hD
+  obtain ⟨n, hn⟩ := List.get_of_mem (hin a D hD)
+  obtain ⟨b, hbp, hcov⟩ := rr_covers hI C0 Ds hL x0 h0 i p hi hp hdvd n.val n.isLt
+  refine ⟨b, hbp, ?_⟩
+  have hfix : (⟨n.val, n.isLt⟩ : Fin Ds.length) = n := Fin.ext rfl
+  rw [hfix, hn] at hcov
+  exact mem_mtk.mpr ⟨hcov, hdep D (hin a D hD)⟩
+
+/-! ##### §164.1 — the two side conditions, and what they cost
+
+`hdep` is free in practice: `Ds ⊆ cl C₀` and the budget is uniform at
+`mdepth C₀` (§162), and every member of `cl C₀` has modal depth at most
+`mdepth C₀`.
+
+`hin` is the real condition — every own-direction demand a phase carries must be
+one the kernel was built from. It is NOT automatic: §153 shows demands INHERITED
+from a universal are persistent, but a demand in a phase's own type need not be.
+
+So `kDIR` is `rr_covers` plus a construction discipline: **build the kernel from
+the union of the own-direction demands its phases carry.** Since phase labels are
+drawn from `cl C₀`, that union is finite and computable — but nothing yet
+constructs it.
+
+That leaves §163.3's list at `kDIR` (reduced to `hin`), `kDR`, `kUP`, `kDN`. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -33903,4 +33949,5 @@ end POFreeLift
 #print axioms POFreeLift.block_of_persistent_of_cl
 #print axioms POFreeLift.budgets_of_uniform
 #print axioms POFreeLift.uniform_of_ppNodes
+#print axioms POFreeLift.kDIR_of_rr
 #print axioms POFreeLift.kernel_of_no_terminal

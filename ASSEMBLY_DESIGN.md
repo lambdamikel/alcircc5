@@ -11814,3 +11814,33 @@ That is the whole remaining gap between the file and `MergedExtraction`.
 
 Build unchanged: 33,906 lines, 1,702 declarations, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 164. `kDIR` FROM `rr_covers`
+
+`kDIR_of_rr` — a kernel's own-direction demand is served within its period, given
+two side conditions.
+
+| condition | cost |
+|---|---|
+| `hdep` | free — `Ds ⊆ cl C₀`, budget uniform at `mdepth C₀` (§162), and every member of `cl C₀` has depth at most that |
+| `hin` | **the real one** — every own-direction demand a phase carries must be one the kernel was built from |
+
+`hin` is not automatic: §153 shows demands INHERITED from a universal are
+persistent, but a demand in a phase's own type need not be.
+
+So `kDIR` is `rr_covers` plus a construction discipline — **build the kernel from
+the union of the own-direction demands its phases carry**. That union is finite
+and computable (phase labels are drawn from `cl C₀`), but nothing constructs it
+yet.
+
+### 164.1 Remaining, updated
+
+| | |
+|---|---|
+| `hsepS`, `hbS`, `hbK`, `hbQ` | **done** |
+| `rDR`, `rPO`, `rPP`, `rPPI`, `kPO` | **done** |
+| `kDIR` | **reduced to `hin`** — a construction discipline |
+| `kDR`, `kUP`, `kDN` | open — §139.1's "a kernel generates external witnesses" |
+
+Build: 33,957 lines, 1,704 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
