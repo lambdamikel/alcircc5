@@ -36900,7 +36900,8 @@ interleaving argument would run on, and it is certified below. -/
     shallower than its source; and `hcloseL`/`normL` only shrink further. -/
 theorem satRound_depth_le {β : Type} (I : Interp α) (C0 : Concept)
     (nodes : List β) (pt : β → α) (rel : β → β → Atom)
-    (L : β → List Concept) (M : Nat) (hM : ∀ e, maxDepth (L e) ≤ M) (f : β) :
+    (L : β → List Concept) (M : Nat)
+    (hM : ∀ e ∈ nodes, maxDepth (L e) ≤ M) {f : β} (hf : f ∈ nodes) :
     maxDepth (satRound I C0 nodes pt rel L f) ≤ M := by
   refine Nat.le_trans (normL_depth_le C0 _)
     (Nat.le_trans (hcloseL_depth_le I (pt f) _) ?_)
@@ -36909,16 +36910,16 @@ theorem satRound_depth_le {β : Type} (I : Interp α) (C0 : Concept)
     refine maxDepth_lt (Nat.succ_pos M) (fun c hc => ?_)
     rcases List.mem_append.mp hc with h | h
     · have h1 := mem_maxDepth_le h
-      have h2 := hM f
+      have h2 := hM f hf
       omega
     · rcases List.mem_append.mp h with h' | h'
       · have h1 := mem_maxDepth_le (mem_allArgs h')
-        have h2 := hM f
+        have h2 := hM f hf
         have hd : mdepth (Concept.ex eq c) = mdepth c + 1 := rfl
         omega
-      · obtain ⟨e, _, hb⟩ := List.mem_flatMap.mp h'
+      · obtain ⟨e, he, hb⟩ := List.mem_flatMap.mp h'
         have h1 := mem_maxDepth_le (mem_allBodies hb)
-        have h2 := hM e
+        have h2 := hM e he
         have hd : mdepth (Concept.all (rel e f) c) = mdepth c + 1 := rfl
         omega
   omega
@@ -37662,6 +37663,70 @@ stops saturation from undoing that — so the number of generations is at most
 That is exactly §197's argument for `kwNodes`, and the remaining work is to run
 it for `stageIter`, whose recursion is the alternation rather than a fuel
 parameter. Recorded as the one open invariant rather than assumed. -/
+
+/-! #### §229 — THE DEPTH INVARIANT THROUGH THE ALTERNATION
+
+§228.1 said the stage-length bound rests on generations being bounded by
+`mdepth C₀`. That in turn rests on no stage label ever getting deeper than the
+root's — saturation cannot deepen (§217) and children are strictly shallower
+(`sChildN_depth`), so the bound holds through the alternation.
+
+`satRound_depth_le`'s hypothesis had to be weakened first: it asked for the depth
+bound at every `e : β` while its proof only ever uses it inside `nodes`. That is
+the fifth hypothesis this session stated over more than its proof consumes — and
+like the others, unsatisfiable in the intended instance, since `SNode I C₀`
+contains labels of every depth. -/
+
+theorem stageKids_depth_le (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (M : Nat) (h : ∀ n ∈ ns, maxDepth n.lab ≤ M) :
+    ∀ m ∈ stageKids hI ns, maxDepth m.lab ≤ M := by
+  intro m hm
+  obtain ⟨n, _, hm'⟩ := List.mem_flatMap.mp hm
+  obtain ⟨⟨F, hF⟩, _, hm''⟩ := List.mem_flatMap.mp hm'
+  cases F with
+  | ex r c =>
+      rw [List.mem_singleton] at hm''
+      subst hm''
+      have hlt := sChildN_depth hI n.val hF
+      have hn := h n.val n.property
+      omega
+  | _ => exact absurd hm'' List.not_mem_nil
+
+open Classical in
+theorem extendStage_depth_le (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) (M : Nat) (h : ∀ n ∈ ns, maxDepth n.lab ≤ M) :
+    ∀ m ∈ extendStage hI ns, maxDepth m.lab ≤ M := by
+  intro m hm
+  rw [extendStage] at hm
+  rcases List.mem_append.mp hm with h1 | h1
+  · exact h m h1
+  · exact stageKids_depth_le hI ns M h m (List.mem_filter.mp h1).1
+
+theorem satStage_depth_le (hI : RCC5Interp I) {C0 : Concept}
+    (rel : SNode I C0 → SNode I C0 → Atom) (ns : List (SNode I C0))
+    (hsound : ∀ e f c, Concept.all (rel e f) c ∈ e.lab → sat I f.x c)
+    (M : Nat) (h : ∀ n ∈ ns, maxDepth n.lab ≤ M) :
+    ∀ m ∈ satStage hI rel ns hsound, maxDepth m.lab ≤ M := by
+  intro m hm
+  rw [satStage] at hm
+  obtain ⟨n, hn, rfl⟩ := List.mem_map.mp hm
+  exact satRound_depth_le I C0 ns SNode.x rel (fun m => m.lab) M h hn
+
+open Classical in
+/-- **THE DEPTH INVARIANT.**  No stage of the alternation is deeper than its
+    start — which is what bounds the number of generations, and hence (with the
+    branching bound) the stage length. -/
+theorem stageIter_depth_le (hI : RCC5Interp I) {C0 : Concept}
+    (ns0 : List (SNode I C0)) (M : Nat) (h0 : ∀ m ∈ ns0, maxDepth m.lab ≤ M) :
+    ∀ n, ∀ m ∈ stageIter hI n ns0, maxDepth m.lab ≤ M := by
+  intro n
+  induction n with
+  | zero => rw [stageIter]; exact h0
+  | succ k ih =>
+      rw [stageIter]
+      exact extendStage_depth_le hI _ M
+        (satStage_depth_le hI (fun e f => I.rho e.x f.x) _
+          (modelRel_hsound hI) M ih)
 
 end WitSelector
 
@@ -38672,4 +38737,5 @@ end POFreeLift
 #print axioms POFreeLift.stageIter_normL
 #print axioms POFreeLift.stageKids_nil_of_depth_zero
 #print axioms POFreeLift.extendStage_eq_of_depth_zero
+#print axioms POFreeLift.stageIter_depth_le
 #print axioms POFreeLift.kernel_of_no_terminal

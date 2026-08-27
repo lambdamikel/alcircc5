@@ -14399,3 +14399,38 @@ needed correcting first.
 
 Build: 38,675 lines, 1,948 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 229. THE DEPTH INVARIANT THROUGH THE ALTERNATION
+
+§228.1 said the stage-length bound rests on generations being bounded by
+`mdepth C₀`, which rests on no stage label ever getting deeper than the root's.
+Saturation cannot deepen (§217's `satRound_depth_le`) and children are strictly
+shallower (`sChildN_depth`), so the bound survives the alternation:
+`stageKids_depth_le`, `extendStage_depth_le`, `satStage_depth_le`, composed into
+**`stageIter_depth_le`**.
+
+### 229.1 The fifth over-strong hypothesis
+
+`satRound_depth_le` asked for the depth bound at **every** `e : β` while its
+proof only uses it inside `nodes`. Unsatisfiable in the intended instance —
+`SNode I C₀` contains labels of every depth — so §229 could not have applied it.
+Weakened to `∀ e ∈ nodes` plus `f ∈ nodes`, both of which the proof already had
+in hand.
+
+That is the fifth this session, after §211's `hrel`, §226's `interMeasure_le`,
+and two others. The pattern is consistent enough to name: **a hypothesis
+quantified over a type rather than over the structure the proof walks is almost
+always unsatisfiable when the type is bigger than the structure** — and it is
+never caught by proving the lemma, only by using it.
+
+### 229.2 What remains of the bound
+
+Generations are now bounded (depth invariant + strict decrease + shallow labels
+owe nothing, §228). What is not yet formalised is the **count**: each generation
+multiplies by at most `|cl C₀|` children per node, and — unlike `kwNodes` — a
+node's label can grow between rounds, so the same point may reappear with a
+different label. The bound is therefore larger than `kwNodes`' `genBound`, but
+still computable from `C₀`, which §200 showed is all decidability needs.
+
+Build: 38,741 lines, 1,952 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
