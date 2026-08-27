@@ -35938,6 +35938,94 @@ theorem seedUE_sep {β κ : Type} (hI : RCC5Interp I) (g : β → α)
   exact seedU_sep hI g ck ik up dn hgdom hkdom elt hlt x y z hxy hxz
     (seedUE_dr g ck ik y z hs)
 
+/-! #### §205 — CORRECTION: `seedUE`'s KERNEL CASE IS TOO WEAK
+
+`nodeOf g ck ik (Sum.inr k) = ck k (ik k)` — the kernel's BASE. So
+`seedUE (Sum.inr k) (Sum.inl f)` says only "`DR` at the base", while `hdrk` and
+`hqdr` need `DR` at every PHASE (that is what `mKdr_phase` supplied for
+`seedMix`). §204's replacement is therefore correct on the external–external case
+and **too weak on the kernel case**.
+
+The right seed keeps `seedMix`'s SHAPE — a separate kernel field, instantiated by
+the bounded `mKdr` of §192.3 — and replaces only `sAdjK`, which is the one part
+§203 showed incompatible with uniform budgets.
+
+The generalisation that survives from §204 is the useful one: `hsep` holds for
+**any** seed that implies the model's `DR`, so it never has to be re-proved. -/
+
+/-- **`hsep`, FOR ANY READ-OFF-SOUND SEED.**  §204's `seedU_sep` with the seed
+    abstracted: two nodes above a common node are never disjoint, so any seed
+    entailing model `DR` separates. -/
+theorem sep_of_dr {β κ : Type} (hI : RCC5Interp I) (g : β → α)
+    (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (elt : β → β → Prop)
+    (hlt : ∀ x y, mixLt elt up dn x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hdr : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr) :
+    ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z → ¬ seed y z := by
+  intro x y z hxy hxz hs
+  exact seedU_sep hI g ck ik up dn hgdom hkdom elt hlt x y z hxy hxz
+    (hdr y z hs)
+
+/-- **THE EXTRACTION'S SEED, CORRECTED.**  `seedMix`'s shape with the
+    external–external case read off the model instead of from `sAdjK`. -/
+def seedM {β κ : Type} (nd : β → MTKNode I C0) (I : Interp α)
+    (kdr : κ → β → Prop) : β ⊕ κ → β ⊕ κ → Prop
+  | .inl e, .inl f => I.rho (nd e).x (nd f).x = dr
+  | .inr k, .inl f => kdr k f
+  | .inl f, .inr k => kdr k f
+  | .inr _, .inr _ => False
+
+theorem seedM_qq {β κ : Type} (nd : β → MTKNode I C0) (kdr : κ → β → Prop) :
+    ∀ k k' : κ, ¬ seedM nd I kdr (Sum.inr k) (Sum.inr k') := fun _ _ h => h
+
+theorem seedM_sym {β κ : Type} (hI : RCC5Interp I) (nd : β → MTKNode I C0)
+    (kdr : κ → β → Prop) :
+    ∀ x y, seedM nd I kdr x y → seedM nd I kdr y x := by
+  rintro (e | k) (f | k') h
+  · have hc := hI.conv_ (nd e).x (nd f).x (nd e).hx (nd f).hx
+    rw [h] at hc; exact hc
+  · exact h
+  · exact h
+  · exact h.elim
+
+/-- **`hdr` FOR `seedM`.**  External pairs are free (the seed IS the relation);
+    kernel pairs come from the kernel field's base fact, exactly as
+    `seedMix_dr` had it. -/
+theorem seedM_dr {β κ : Type} (hI : RCC5Interp I) (nd : β → MTKNode I C0)
+    (kdr : κ → β → Prop) (ck : κ → Nat → α) (ik : κ → Nat)
+    (hkdom : ∀ k, I.dom (ck k (ik k)))
+    (hkdr : ∀ k f, kdr k f → I.rho (ck k (ik k)) (nd f).x = dr) :
+    ∀ x y, seedM nd I kdr x y →
+      I.rho (nodeOf (fun e => (nd e).x) ck ik x)
+        (nodeOf (fun e => (nd e).x) ck ik y) = dr := by
+  rintro (e | k) (f | k') h
+  · exact h
+  · show I.rho (nd e).x (ck k' (ik k')) = dr
+    have hb := hkdr k' e h
+    have hc := hI.conv_ (ck k' (ik k')) (nd e).x (hkdom k') (nd e).hx
+    rw [hb] at hc; exact hc
+  · exact hkdr k f h
+  · exact h.elim
+
+/-- And `hsep`, via §205's generalisation. -/
+theorem seedM_sep {β κ : Type} (hI : RCC5Interp I) (nd : β → MTKNode I C0)
+    (kdr : κ → β → Prop) (ck : κ → Nat → α) (ik : κ → Nat)
+    (up dn : κ → β → Bool)
+    (hkdom : ∀ k n, I.dom (ck k n))
+    (hkdr : ∀ k f, kdr k f → I.rho (ck k (ik k)) (nd f).x = dr)
+    (elt : β → β → Prop)
+    (hlt : ∀ x y, mixLt elt up dn x y →
+      I.rho (nodeOf (fun e => (nd e).x) ck ik x)
+        (nodeOf (fun e => (nd e).x) ck ik y) = pp) :
+    ∀ x y z, mixLe elt up dn x y → mixLe elt up dn x z →
+      ¬ seedM nd I kdr y z :=
+  sep_of_dr hI (fun e => (nd e).x) ck ik up dn (fun e => (nd e).hx) hkdom
+    elt hlt _ (seedM_dr hI nd kdr ck ik (fun k => hkdom k _) hkdr)
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -36904,4 +36992,7 @@ end POFreeLift
 #print axioms POFreeLift.seedU_sep
 #print axioms POFreeLift.seedUE_sep
 #print axioms POFreeLift.seedUE_qq
+#print axioms POFreeLift.sep_of_dr
+#print axioms POFreeLift.seedM_dr
+#print axioms POFreeLift.seedM_sep
 #print axioms POFreeLift.kernel_of_no_terminal

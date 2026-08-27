@@ -13568,3 +13568,44 @@ one, and dropping it would have broken `hqdr` silently.
 
 Build: 36,907 lines, 1,854 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 205. CORRECTION — §204's SEED WAS TOO WEAK ON THE KERNEL CASE
+
+`nodeOf g ck ik (Sum.inr k) = ck k (ik k)` — the kernel's **base**. So
+`seedUE (Sum.inr k) (Sum.inl f)` says only "`DR` at the base", while `hdrk` and
+`hqdr` need `DR` at every **phase** (which is what `mKdr_phase` supplied for
+`seedMix`). §204's replacement is right on the external–external case and **wrong
+on the kernel case**.
+
+The correct seed keeps `seedMix`'s *shape* — a separate kernel field, instantiated
+by §192.3's bounded `mKdr` — and replaces only `sAdjK`, the one part §203 showed
+incompatible with uniform budgets. That is `seedM`, with all four conditions:
+
+| | |
+|---|---|
+| `seedM_qq` | no kernel–kernel seed (kept from `seedMix`, §204.1) |
+| `seedM_sym` | converse coherence |
+| `seedM_dr` | **axiom-free** — externals free, kernels from the base fact |
+| `seedM_sep` | via `sep_of_dr` |
+
+### 205.1 What survived from §204, generalised
+
+The useful half of §204 was `seedU_sep`, and it generalises: **`hsep` holds for
+any seed that entails the model's `DR`** (`sep_of_dr`). Two nodes above a common
+node are never disjoint — `comp(PPI,PP)` omits `DR` — and that argument never
+looks at which seed. So `hsep` need not be re-proved when the seed changes, which
+is what made this correction cheap.
+
+### 205.2 Method
+
+The error was found by asking what `nodeOf` does on a kernel index — a definition
+I had read earlier in the session and not re-read when reusing it. The same class
+as §157's five re-derivations, one level down: **not "is this already proved?"
+but "does this mean what I remember it meaning?"**
+
+It also shows why §204.1's instinct was right for the wrong reason. Checking what
+`seedMix` said `False` about caught the `hqq` clause; checking what it said about
+the kernel *field* would have caught this at the same time.
+
+Build: 36,998 lines, 1,860 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
