@@ -27641,21 +27641,23 @@ open Classical in
     base onward is disjoint from `e`. -/
 noncomputable def mKdr (hI : RCC5Interp I) (C0 : Concept)
     (nd : β → MTKNode I C0) (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) : Prop :=
-  ∀ b, mIk hI C0 nd L0 k ≤ b → I.rho (mCk hI C0 nd L0 k b) (nd e).x = dr
+  ∀ b, b ≤ mPk hI C0 nd L0 k →
+    I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b)) (nd e).x = dr
 
 /-- `seedMix_dr`'s `hkdr`, at the base. -/
 theorem mKdr_base (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) (h : mKdr hI C0 nd L0 k e) :
-    I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k)) (nd e).x = dr :=
-  h _ (Nat.le_refl _)
+    I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k)) (nd e).x = dr := by
+  have h0 := h 0 (Nat.zero_le _)
+  rwa [Nat.add_zero] at h0
 
 /-- And at every phase — the orientation `hdrk` asks for, via `conv dr = dr`. -/
 theorem mKdr_phase (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
     (L0 : β → Nat) (k : KIdxM C0 I nd) (e : β) (h : mKdr hI C0 nd L0 k e)
-    (a : Nat) :
+    (a : Nat) (ha : a ≤ mPk hI C0 nd L0 k) :
     I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) = dr := by
   have hd : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x = dr :=
-    h (mIk hI C0 nd L0 k + a) (Nat.le_add_right _ _)
+    h a ha
   have hc : I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
       = conv (I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x) :=
     hI.conv_ (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x
@@ -27853,6 +27855,180 @@ theorem hqdr_of_model {κ : Type} {I : Interp α} (hI : RCC5Interp I)
         rw [hc, hdesc k' y₀ hy b]; rfl
       exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN y₀) h1 h2 (by decide)
 
+/-! #### §188 — WEAKENING THE PREMISES TO WHERE THEY ARE USED
+
+§187.1 left open whether `mKdr`'s unbounded quantifier is load-bearing, and said
+the way to answer it is to look at the consumers. Doing that:
+
+`hdrk_of_model` concludes `I.rho (ck k (ik k + a)) (g e) = dr` for an
+UNBOUNDED `a`, and asks for `hseedPhase` and (via `mixLt_inr_phase`) `hdnphase`
+at every index. Reading the two proof bodies: **both use their premises at
+exactly the index `a` in the conclusion, and nowhere else.**
+
+So the unbounded quantifiers are not load-bearing — they are how the helpers were
+written. The variants below take the premises AT `a`, which is strictly more
+general and lets a supplier that only covers one period (`kernel_site`, via
+§187's `hdrk_rel_of_site`) discharge the obligation. The originals are left in
+place and unchanged; these are additions, not a refactor. -/
+
+/-- `mixLt_inr_phase` with its `hdnphase` premise taken at the single index it
+    is used at. -/
+theorem mixLt_inr_phase_at {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (k : κ) (a : Nat)
+    (hdnA : ∀ e, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (x : β ⊕ κ) (h : mixLt elt up dn (Sum.inr k) x) :
+    I.rho (ck k (ik k + a)) (nodeOf g ck ik x) = pp := by
+  cases x with
+  | inl e =>
+    obtain ⟨e', hdne, hle⟩ := h
+    have h1 := hdnA e' hdne
+    rcases hle with rfl | hlt
+    · exact h1
+    · exact rho_forced hI (hkdom k _) (hgdom e) (hgdom e') h1 (helt _ _ hlt)
+        (by decide)
+  | inr k' =>
+    obtain ⟨e, e', hdne, hupe, hle⟩ := h
+    have h1 := hdnA e hdne
+    have h2 : I.rho (g e) (ck k' (ik k')) = pp := by
+      rcases hle with rfl | hlt
+      · exact hup0 k' e hupe
+      · exact rho_forced hI (hgdom e) (hkdom k' _) (hgdom e')
+          (helt _ _ hlt) (hup0 k' e' hupe) (by decide)
+    exact rho_forced hI (hkdom k _) (hkdom k' _) (hgdom e) h1 h2 (by decide)
+
+/-- **`hdrk`, DISCHARGED FROM ONE PHASE'S WORTH OF MODEL FACTS.**  Same proof as
+    `hdrk_of_model`; the only change is that `hseedPhase` and `hdnphase` are
+    supplied at the index `a` rather than at every index. -/
+theorem hdrk_of_model_at {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (k : κ) (e : β) (a : Nat)
+    (hdnA : ∀ e, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (hseedA : ∀ y, seed (Sum.inr k) y →
+      I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+      mixLe elt up dn (Sum.inl e) y₀ ∧ seed x₀ y₀) :
+    I.rho (ck k (ik k + a)) (g e) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hlt := mixLt_rho hI g ck ik up dn hgdom (fun k => hkdom k _) hup0 hdn0
+    elt helt
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (b | c)
+    · exact hgdom b
+    · exact hkdom c _
+  have h1 : I.rho (ck k (ik k + a)) (nodeOf g ck ik y₀) = dr := by
+    rcases hx with rfl | hx
+    · exact hseedA y₀ hs
+    · exact rho_forced hI (hkdom k _) (hdomN y₀) (hdomN x₀)
+        (mixLt_inr_phase_at hI g ck ik up dn hgdom hkdom hup0 elt helt k a hdnA
+          x₀ hx) (hseed x₀ y₀ hs) (by decide)
+  rcases hy with rfl | hy
+  · exact h1
+  · have hy' : I.rho (g e) (nodeOf g ck ik y₀) = pp := hlt (Sum.inl e) y₀ hy
+    have h2 : I.rho (nodeOf g ck ik y₀) (g e) = ppi := by
+      have hc : I.rho (nodeOf g ck ik y₀) (g e)
+          = conv (I.rho (g e) (nodeOf g ck ik y₀)) :=
+        hI.conv_ (g e) (nodeOf g ck ik y₀) (hgdom e) (hdomN y₀)
+      rw [hc, hy']; rfl
+    exact rho_forced hI (hkdom k _) (hgdom e) (hdomN y₀) h1 h2 (by decide)
+
+/-- **AND THE ORIGINAL IS THE INSTANCE.**  Checked rather than claimed: the
+    unbounded form is `hdrk_of_model_at` fed unbounded premises, so nothing was
+    lost in the weakening. -/
+theorem hdrk_of_model_at_generalizes {κ : Type} {I : Interp α}
+    (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
+    (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
+    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
+    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
+    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (hseedPhase : ∀ k y, seed (Sum.inr k) y →
+      ∀ a, I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
+    (k : κ) (e : β) (a : Nat)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+      mixLe elt up dn (Sum.inl e) y₀ ∧ seed x₀ y₀) :
+    I.rho (ck k (ik k + a)) (g e) = dr :=
+  hdrk_of_model_at hI g ck ik up dn hgdom hkdom hup0 hdn0 elt helt seed hseed
+    k e a (fun e hd => hdnphase k e a hd) (fun y hsy => hseedPhase k y hsy a) h
+
+/-- **`hqdr`, FROM ONE PHASE OF EACH KERNEL.**  The §188 weakening applied to the
+    kernel–kernel case: `hqdr_of_model` asks for its descent and seed facts at
+    every index, and uses them at exactly `(k,a)` and `(k',b)`.  Taking those
+    four directly lets a bounded `seed` supply them. -/
+theorem hqdr_of_model_at {κ : Type} {I : Interp α} (hI : RCC5Interp I)
+    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
+    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
+    (elt : β → β → Prop)
+    (seed : β ⊕ κ → β ⊕ κ → Prop)
+    (hsym : ∀ x y, seed x y → seed y x)
+    (hqq : ∀ k k', ¬ seed (Sum.inr k) (Sum.inr k'))
+    (hseed : ∀ x y, seed x y →
+      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
+    (k k' : κ) (a b : Nat)
+    (hdescA : ∀ z, mixLt elt up dn (Sum.inr k) z →
+      I.rho (ck k (ik k + a)) (nodeOf g ck ik z) = pp)
+    (hdescB : ∀ z, mixLt elt up dn (Sum.inr k') z →
+      I.rho (ck k' (ik k' + b)) (nodeOf g ck ik z) = pp)
+    (hseedA : ∀ y, seed (Sum.inr k) y →
+      I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
+    (hseedB : ∀ y, seed (Sum.inr k') y →
+      I.rho (ck k' (ik k' + b)) (nodeOf g ck ik y) = dr)
+    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
+      mixLe elt up dn (Sum.inr k') y₀ ∧ seed x₀ y₀) :
+    I.rho (ck k (ik k + a)) (ck k' (ik k' + b)) = dr := by
+  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
+  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
+    rintro (c | d)
+    · exact hgdom c
+    · exact hkdom d _
+  have hflip : ∀ (u v : α), I.dom u → I.dom v → I.rho u v = dr →
+      I.rho v u = dr := by
+    intro u v hu hv huv
+    have hc : I.rho v u = conv (I.rho u v) := hI.conv_ u v hu hv
+    rw [hc, huv]; rfl
+  rcases hx with rfl | hx
+  · rcases hy with rfl | hy
+    · exact absurd hs (hqq k k')
+    · have h2 : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b)) = ppi := by
+        have hc : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b))
+            = conv (I.rho (ck k' (ik k' + b)) (nodeOf g ck ik y₀)) :=
+          hI.conv_ (ck k' (ik k' + b)) (nodeOf g ck ik y₀) (hkdom k' _)
+            (hdomN y₀)
+        rw [hc, hdescB y₀ hy]; rfl
+      exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN y₀)
+        (hseedA y₀ hs) h2 (by decide)
+  · rcases hy with rfl | hy
+    · have hR : I.rho (ck k' (ik k' + b)) (nodeOf g ck ik x₀) = dr :=
+        hseedB x₀ (hsym _ _ hs)
+      have hLp : I.rho (ck k (ik k + a)) (nodeOf g ck ik x₀) = pp :=
+        hdescA x₀ hx
+      exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN x₀) hLp
+        (hflip _ _ (hkdom k' _) (hdomN x₀) hR) (by decide)
+    · have h1 : I.rho (ck k (ik k + a)) (nodeOf g ck ik y₀) = dr :=
+        rho_forced hI (hkdom k _) (hdomN y₀) (hdomN x₀) (hdescA x₀ hx)
+          (hseed x₀ y₀ hs) (by decide)
+      have h2 : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b)) = ppi := by
+        have hc : I.rho (nodeOf g ck ik y₀) (ck k' (ik k' + b))
+            = conv (I.rho (ck k' (ik k' + b)) (nodeOf g ck ik y₀)) :=
+          hI.conv_ (ck k' (ik k' + b)) (nodeOf g ck ik y₀) (hkdom k' _)
+            (hdomN y₀)
+        rw [hc, hdescB y₀ hy]; rfl
+      exact rho_forced hI (hkdom k _) (hkdom k' _) (hdomN y₀) h1 h2 (by decide)
+
 /-- **`hirrE`, DISCHARGED.**  The extraction's order has no cycle, because every
     `elt` edge is a model `PP` edge and `PP` is irreflexive (`refl_eq` gives
     `EQ`). The last structural hypothesis of `odSeed`. -/
@@ -28022,33 +28198,35 @@ theorem mergedMT_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
         (fun k x y hx hy => mUpDn_bud hI C0 nd L0 k x y hx hy) x y hxy)
       k e a h
   case hdrk =>
-    intro k e a _ hdj
+    intro k e a ha hdj
     refine ⟨?_, (hbK k e).1, (hbK k e).2⟩
-    have hd := hdrk_of_model hI (fun e => (nd e).x) (fun k => mCk hI C0 nd L0 k)
+    have hd := hdrk_of_model_at hI (fun e => (nd e).x)
+      (fun k => mCk hI C0 nd L0 k)
       (mIk hI C0 nd L0) _ _ (fun e => (nd e).hx)
       (fun k n => mCk_dom hI C0 nd L0 k n)
       (fun k e h => mUp_base hI C0 nd L0 k e h)
       (fun k e h => mDn_base hI C0 nd L0 k e h) _
-      (fun e f h => mElt_rho hI C0 nd L0 e f h)
-      (fun k e a h => mDn_phase hI C0 nd L0 k e h a) _
+      (fun e f h => mElt_rho hI C0 nd L0 e f h) _
       (fun x y h => seedMix_dr hI nd (mKdr hI C0 nd L0)
         (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0)
         (fun k => mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k))
         (fun k f hf => mKdr_base hI C0 nd L0 k f hf) x y h)
-      (fun k y hy b => by
+      k e a
+      (fun e h => mDn_phase hI C0 nd L0 k e h a)
+      (fun y hy => by
         cases y with
         | inl f =>
-            have h := mKdr_phase hI C0 nd L0 k f hy b
-            show I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
+            have h := mKdr_phase hI C0 nd L0 k f hy a (by omega)
+            show I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
               (nd f).x = dr
-            have hc : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
+            have hc : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
                 (nd f).x = conv (I.rho (nd f).x
-                  (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))) :=
-              hI.conv_ (nd f).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
-                (nd f).hx (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + b))
+                  (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))) :=
+              hI.conv_ (nd f).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+                (nd f).hx (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
             rw [hc, h]; rfl
-        | inr k' => exact hy.elim)
-      k e a hdj
+        | inr k'' => exact hy.elim)
+      hdj
     have hc : I.rho (nd e).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
         = conv (I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a)) (nd e).x) :=
       hI.conv_ (mCk hI C0 nd L0 k _) (nd e).x (mCk_dom hI C0 nd L0 k _) (nd e).hx
@@ -28068,32 +28246,59 @@ theorem mergedMT_ok (hI : RCC5Interp I) {C0 : Concept} (hpofree : POFree C0)
       (fun k e a h => mDn_phase hI C0 nd L0 k e h a)
       (fun k e a h => mUp_phase hI C0 nd L0 k e h a) k k' a b h, hbQ k k'⟩
   case hqdr =>
-    exact fun k k' a b _ _ hdj => ⟨hqdr_of_model hI (fun e => (nd e).x)
+    intro k k' a b ha hb hdj
+    refine ⟨hqdr_of_model_at hI (fun e => (nd e).x)
       (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0) _ _
-      (fun e => (nd e).hx) (fun k n => mCk_dom hI C0 nd L0 k n)
-      (fun k e h => mUp_base hI C0 nd L0 k e h) _
-      (fun e f h => mElt_rho hI C0 nd L0 e f h)
-      (fun k e a h => mDn_phase hI C0 nd L0 k e h a) _
+      (fun e => (nd e).hx) (fun k n => mCk_dom hI C0 nd L0 k n) _ _
       (seedMix_sym nd (mKdr hI C0 nd L0))
       (fun k k' h => h)
       (fun x y h => seedMix_dr hI nd (mKdr hI C0 nd L0)
         (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0)
         (fun k => mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k))
         (fun k f hf => mKdr_base hI C0 nd L0 k f hf) x y h)
-      (fun k y hy c => by
-        cases y with
-        | inl f =>
-            have h := mKdr_phase hI C0 nd L0 k f hy c
-            show I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
-              (nd f).x = dr
-            have hc : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
-                (nd f).x = conv (I.rho (nd f).x
-                  (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))) :=
-              hI.conv_ (nd f).x (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
-                (nd f).hx (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + c))
-            rw [hc, h]; rfl
-        | inr k' => exact hy.elim)
-      k k' a b hdj, hbQ k k'⟩
+      k k' a b ?_ ?_ ?_ ?_ hdj, hbQ k k'⟩
+    · exact fun z hz => mixLt_inr_phase_at hI (fun e => (nd e).x)
+        (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0) _ _
+        (fun e => (nd e).hx) (fun k n => mCk_dom hI C0 nd L0 k n)
+        (fun k e h => mUp_base hI C0 nd L0 k e h) _
+        (fun e f h => mElt_rho hI C0 nd L0 e f h)
+        k a (fun e h => mDn_phase hI C0 nd L0 k e h a) z hz
+    · exact fun z hz => mixLt_inr_phase_at hI (fun e => (nd e).x)
+        (fun k => mCk hI C0 nd L0 k) (mIk hI C0 nd L0) _ _
+        (fun e => (nd e).hx) (fun k n => mCk_dom hI C0 nd L0 k n)
+        (fun k e h => mUp_base hI C0 nd L0 k e h) _
+        (fun e f h => mElt_rho hI C0 nd L0 e f h)
+        k' b (fun e h => mDn_phase hI C0 nd L0 k' e h b) z hz
+    · intro y hy
+      cases y with
+      | inl f =>
+          have h := mKdr_phase hI C0 nd L0 k f hy a (by omega)
+          show I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+            (nd f).x = dr
+          have hc : I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+              (nd f).x = conv (I.rho (nd f).x
+                (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))) :=
+            hI.conv_ (nd f).x
+              (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+              (nd f).hx
+              (mCk_dom hI C0 nd L0 k (mIk hI C0 nd L0 k + a))
+          rw [hc, h]; rfl
+      | inr k'' => exact hy.elim
+    · intro y hy
+      cases y with
+      | inl f =>
+          have h := mKdr_phase hI C0 nd L0 k' f hy b (by omega)
+          show I.rho (mCk hI C0 nd L0 k' (mIk hI C0 nd L0 k' + b))
+            (nd f).x = dr
+          have hc : I.rho (mCk hI C0 nd L0 k' (mIk hI C0 nd L0 k' + b))
+              (nd f).x = conv (I.rho (nd f).x
+                (mCk hI C0 nd L0 k' (mIk hI C0 nd L0 k' + b))) :=
+            hI.conv_ (nd f).x
+              (mCk hI C0 nd L0 k' (mIk hI C0 nd L0 k' + b))
+              (nd f).hx
+              (mCk_dom hI C0 nd L0 k' (mIk hI C0 nd L0 k' + b))
+          rw [hc, h]; rfl
+      | inr k'' => exact hy.elim
 
 /-! #### §83 — items F and G of §82
 
@@ -34483,118 +34688,6 @@ the consumers, not to reason about it.
 **Also outstanding:** `hdrk`'s two BUDGET conjuncts (`bud e ≤ bk k + 1` and
 `bk k ≤ bud e + 1`), which §162's uniform assignment addresses separately. -/
 
-/-! #### §188 — WEAKENING THE PREMISES TO WHERE THEY ARE USED
-
-§187.1 left open whether `mKdr`'s unbounded quantifier is load-bearing, and said
-the way to answer it is to look at the consumers. Doing that:
-
-`hdrk_of_model` concludes `I.rho (ck k (ik k + a)) (g e) = dr` for an
-UNBOUNDED `a`, and asks for `hseedPhase` and (via `mixLt_inr_phase`) `hdnphase`
-at every index. Reading the two proof bodies: **both use their premises at
-exactly the index `a` in the conclusion, and nowhere else.**
-
-So the unbounded quantifiers are not load-bearing — they are how the helpers were
-written. The variants below take the premises AT `a`, which is strictly more
-general and lets a supplier that only covers one period (`kernel_site`, via
-§187's `hdrk_rel_of_site`) discharge the obligation. The originals are left in
-place and unchanged; these are additions, not a refactor. -/
-
-/-- `mixLt_inr_phase` with its `hdnphase` premise taken at the single index it
-    is used at. -/
-theorem mixLt_inr_phase_at {κ : Type} {I : Interp α} (hI : RCC5Interp I)
-    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
-    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
-    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
-    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
-    (a : Nat)
-    (hdnA : ∀ k e, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
-    (k : κ) (x : β ⊕ κ) (h : mixLt elt up dn (Sum.inr k) x) :
-    I.rho (ck k (ik k + a)) (nodeOf g ck ik x) = pp := by
-  cases x with
-  | inl e =>
-    obtain ⟨e', hdne, hle⟩ := h
-    have h1 := hdnA k e' hdne
-    rcases hle with rfl | hlt
-    · exact h1
-    · exact rho_forced hI (hkdom k _) (hgdom e) (hgdom e') h1 (helt _ _ hlt)
-        (by decide)
-  | inr k' =>
-    obtain ⟨e, e', hdne, hupe, hle⟩ := h
-    have h1 := hdnA k e hdne
-    have h2 : I.rho (g e) (ck k' (ik k')) = pp := by
-      rcases hle with rfl | hlt
-      · exact hup0 k' e hupe
-      · exact rho_forced hI (hgdom e) (hkdom k' _) (hgdom e')
-          (helt _ _ hlt) (hup0 k' e' hupe) (by decide)
-    exact rho_forced hI (hkdom k _) (hkdom k' _) (hgdom e) h1 h2 (by decide)
-
-/-- **`hdrk`, DISCHARGED FROM ONE PHASE'S WORTH OF MODEL FACTS.**  Same proof as
-    `hdrk_of_model`; the only change is that `hseedPhase` and `hdnphase` are
-    supplied at the index `a` rather than at every index. -/
-theorem hdrk_of_model_at {κ : Type} {I : Interp α} (hI : RCC5Interp I)
-    (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat) (up dn : κ → β → Bool)
-    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
-    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
-    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
-    (a : Nat)
-    (hdnA : ∀ k e, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
-    (seed : β ⊕ κ → β ⊕ κ → Prop)
-    (hseed : ∀ x y, seed x y →
-      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
-    (hseedA : ∀ k y, seed (Sum.inr k) y →
-      I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
-    (k : κ) (e : β)
-    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
-      mixLe elt up dn (Sum.inl e) y₀ ∧ seed x₀ y₀) :
-    I.rho (ck k (ik k + a)) (g e) = dr := by
-  obtain ⟨x₀, y₀, hx, hy, hs⟩ := h
-  have hlt := mixLt_rho hI g ck ik up dn hgdom (fun k => hkdom k _) hup0 hdn0
-    elt helt
-  have hdomN : ∀ v : β ⊕ κ, I.dom (nodeOf g ck ik v) := by
-    rintro (b | c)
-    · exact hgdom b
-    · exact hkdom c _
-  have h1 : I.rho (ck k (ik k + a)) (nodeOf g ck ik y₀) = dr := by
-    rcases hx with rfl | hx
-    · exact hseedA k y₀ hs
-    · exact rho_forced hI (hkdom k _) (hdomN y₀) (hdomN x₀)
-        (mixLt_inr_phase_at hI g ck ik up dn hgdom hkdom hup0 elt helt a hdnA
-          k x₀ hx) (hseed x₀ y₀ hs) (by decide)
-  rcases hy with rfl | hy
-  · exact h1
-  · have hy' : I.rho (g e) (nodeOf g ck ik y₀) = pp := hlt (Sum.inl e) y₀ hy
-    have h2 : I.rho (nodeOf g ck ik y₀) (g e) = ppi := by
-      have hc : I.rho (nodeOf g ck ik y₀) (g e)
-          = conv (I.rho (g e) (nodeOf g ck ik y₀)) :=
-        hI.conv_ (g e) (nodeOf g ck ik y₀) (hgdom e) (hdomN y₀)
-      rw [hc, hy']; rfl
-    exact rho_forced hI (hkdom k _) (hgdom e) (hdomN y₀) h1 h2 (by decide)
-
-/-- **AND THE ORIGINAL IS THE INSTANCE.**  Checked rather than claimed: the
-    unbounded form is `hdrk_of_model_at` fed unbounded premises, so nothing was
-    lost in the weakening. -/
-theorem hdrk_of_model_at_generalizes {κ : Type} {I : Interp α}
-    (hI : RCC5Interp I) (g : β → α) (ck : κ → Nat → α) (ik : κ → Nat)
-    (up dn : κ → β → Bool)
-    (hgdom : ∀ e, I.dom (g e)) (hkdom : ∀ k n, I.dom (ck k n))
-    (hup0 : ∀ k e, up k e = true → I.rho (g e) (ck k (ik k)) = pp)
-    (hdn0 : ∀ k e, dn k e = true → I.rho (ck k (ik k)) (g e) = pp)
-    (elt : β → β → Prop) (helt : ∀ e f, elt e f → I.rho (g e) (g f) = pp)
-    (hdnphase : ∀ k e a, dn k e = true → I.rho (ck k (ik k + a)) (g e) = pp)
-    (seed : β ⊕ κ → β ⊕ κ → Prop)
-    (hseed : ∀ x y, seed x y →
-      I.rho (nodeOf g ck ik x) (nodeOf g ck ik y) = dr)
-    (hseedPhase : ∀ k y, seed (Sum.inr k) y →
-      ∀ a, I.rho (ck k (ik k + a)) (nodeOf g ck ik y) = dr)
-    (k : κ) (e : β) (a : Nat)
-    (h : ∃ x₀ y₀, mixLe elt up dn (Sum.inr k) x₀ ∧
-      mixLe elt up dn (Sum.inl e) y₀ ∧ seed x₀ y₀) :
-    I.rho (ck k (ik k + a)) (g e) = dr :=
-  hdrk_of_model_at hI g ck ik up dn hgdom hkdom hup0 hdn0 elt helt a
-    (fun k e hd => hdnphase k e a hd) seed hseed
-    (fun k y hsy => hseedPhase k y hsy a) k e h
-
 /-! #### §189 — THE SAME WEAKENING, FOR THE FOUR REMAINING KERNEL PREMISES
 
 §188 weakened `hdrk`'s premises to the index they are used at. `odSeed_hk_ex`
@@ -34689,6 +34782,74 @@ theorem odSeed_hk_ex_lt {I : Interp α} (hI : RCC5Interp I) (C0 : Concept)
 
 
 
+
+/-! #### §193 — THE INDEX ROUTING, ISOLATED
+
+With `mKdr` bounded (§192.3) the seed relation a kernel needs to an external is
+exactly what `mKernel_serves` produces: `DR` from every phase of the segment. So
+the only thing still standing between the certified witnesses and `kDR` is that
+the witness be IN the family — a model element `w` must be some `(nd f).x`.
+
+This section states that as a hypothesis and derives `kDR` from it, so the
+remaining construction has a precise specification rather than a description.
+`WitnessClosed` is what a family must satisfy; `kDR_of_witnessClosed` is what it
+then gives. -/
+
+/-- **WHAT THE FAMILY MUST CONTAIN.**  Every off-direction witness a kernel of
+    the family needs is itself indexed by the family. -/
+def WitnessClosed (hI : RCC5Interp I) (C0 : Concept) (nd : β → MTKNode I C0)
+    (L0 : β → Nat) : Prop :=
+  ∀ (k : KIdxM C0 I nd) (r : Atom) (D : Concept) (w : α), I.dom w →
+    D ∈ mty C0 I w →
+    (∀ b, b ≤ mPk hI C0 nd L0 k →
+      I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b)) w = r) →
+    ∃ f : β, (nd f).x = w
+
+/-- **`kDR`'s SEED AND LABEL, FROM WITNESS-CLOSEDNESS.**  A `∃DR.D` demand at any
+    phase of a kernel is served by an external of the family that is `seed`-
+    adjacent to the kernel — which is `mKdr`, now bounded, now exactly what
+    `mKernel_serves` delivers. -/
+theorem kDR_of_witnessClosed (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat)
+    (hwc : WitnessClosed hI C0 nd L0) (k : KIdxM C0 I nd) (a : Nat)
+    (ha : a ≤ mPk hI C0 nd L0 k) (D : Concept)
+    (hdem : Concept.ex dr D ∈ mty C0 I
+      (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))) :
+    ∃ f : β, mKdr hI C0 nd L0 k f ∧ D ∈ mty C0 I (nd f).x := by
+  obtain ⟨w, hw, hDw, hall⟩ :=
+    mKernel_serves hI C0 nd L0 k a dr D ha (Or.inl rfl) hdem
+  obtain ⟨f, hf⟩ := hwc k dr D w hw hDw hall
+  exact ⟨f, by rw [mKdr, hf]; exact hall, by rw [hf]; exact hDw⟩
+
+/-- The `∃PP` version — `kUP`'s witness half. -/
+theorem kUP_witness_of_witnessClosed (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat)
+    (hwc : WitnessClosed hI C0 nd L0) (k : KIdxM C0 I nd) (a : Nat)
+    (ha : a ≤ mPk hI C0 nd L0 k) (D : Concept)
+    (hdem : Concept.ex pp D ∈ mty C0 I
+      (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))) :
+    ∃ f : β, (∀ b, b ≤ mPk hI C0 nd L0 k →
+        I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b)) (nd f).x = pp) ∧
+      D ∈ mty C0 I (nd f).x := by
+  obtain ⟨w, hw, hDw, hall⟩ :=
+    mKernel_serves hI C0 nd L0 k a pp D ha (Or.inr (Or.inl rfl)) hdem
+  obtain ⟨f, hf⟩ := hwc k pp D w hw hDw hall
+  exact ⟨f, by rw [hf]; exact hall, by rw [hf]; exact hDw⟩
+
+/-- The `∃PPI` version — `kDN`'s witness half. -/
+theorem kDN_witness_of_witnessClosed (hI : RCC5Interp I) (C0 : Concept)
+    (nd : β → MTKNode I C0) (L0 : β → Nat)
+    (hwc : WitnessClosed hI C0 nd L0) (k : KIdxM C0 I nd) (a : Nat)
+    (ha : a ≤ mPk hI C0 nd L0 k) (D : Concept)
+    (hdem : Concept.ex ppi D ∈ mty C0 I
+      (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + a))) :
+    ∃ f : β, (∀ b, b ≤ mPk hI C0 nd L0 k →
+        I.rho (mCk hI C0 nd L0 k (mIk hI C0 nd L0 k + b)) (nd f).x = ppi) ∧
+      D ∈ mty C0 I (nd f).x := by
+  obtain ⟨w, hw, hDw, hall⟩ :=
+    mKernel_serves hI C0 nd L0 k a ppi D ha (Or.inr (Or.inr rfl)) hdem
+  obtain ⟨f, hf⟩ := hwc k ppi D w hw hDw hall
+  exact ⟨f, by rw [hf]; exact hall, by rw [hf]; exact hDw⟩
 
 end WitSelector
 
@@ -35630,4 +35791,5 @@ end POFreeLift
 #print axioms POFreeLift.descKernel_serves
 #print axioms POFreeLift.kernelData_serves
 #print axioms POFreeLift.mKernel_serves
+#print axioms POFreeLift.kDR_of_witnessClosed
 #print axioms POFreeLift.kernel_of_no_terminal

@@ -13090,3 +13090,58 @@ recurring for the sixth time.
 
 Build: 35,633 lines, 1,768 declarations, exit 0, 0 errors / 0 warnings /
 0 sorries / 0 `sorryAx`.
+
+## 192.3 `mKdr` BOUNDED — the step the routing actually needed
+
+The routing needs `seed (Sum.inr k) (Sum.inl f)`, and in `mergedMT_ok` that is
+`mKdr`: `DR` from the chain at **every** `b ≥ ik k`. `mKernel_serves` gives `DR`
+at `b ≤ p`. §165.1 was right that the unbounded form cannot be supplied from
+below — a witness `DR` from an entire infinite chain needs cofinal `DR`, which
+nothing produces. **So bounding `mKdr` was not an optimisation; it was
+necessary.**
+
+`seedMix` is parameterised by `kdr`, so `mKdr` is only an instantiation. It is
+now
+
+    ∀ b, b ≤ mPk … k → I.rho (mCk … k (mIk … k + b)) (nd e).x = dr
+
+Everything downstream followed the §188 pattern once more. Two model-side
+theorems asked for their premises at every index and used them at one:
+
+* `hdrk_of_model` → `hdrk_of_model_at` (§188, already in place), with
+  `mixLt_inr_phase_at` specialised to its own kernel;
+* `hqdr_of_model` → `hqdr_of_model_at`, which uses its descent and seed facts at
+  exactly `(k,a)` and `(k',b)` and now takes those four directly.
+
+Both `mergedMT_ok` call sites had the bound available and discarded
+(`intro k e a _ hdj`, `fun k k' a b _ _ hdj`) — the seventh and eighth instances.
+
+## 193. THE INDEX ROUTING, ISOLATED
+
+With `mKdr` bounded, the seed a kernel needs to an external is *exactly*
+`mKernel_serves`'s output. The one thing still standing between the certified
+witnesses and `kDR` is that the witness be **in** the family: a model element `w`
+must be some `(nd f).x`.
+
+`WitnessClosed hI C0 nd L0` says precisely that — every off-direction witness a
+kernel of the family needs is itself indexed by the family. And then:
+
+| | |
+|---|---|
+| `kDR_of_witnessClosed` | `∃f`, `mKdr k f` ∧ `D ∈ mty (nd f).x` |
+| `kUP_witness_of_witnessClosed` | the `∃PP` half |
+| `kDN_witness_of_witnessClosed` | the `∃PPI` half |
+
+So the remaining construction has a **specification**, not a description: build a
+family that is witness-closed. `one_kernel_block` does it for a single kernel via
+its subtype `W` = context ∪ chosen witnesses; the merged case is a fixpoint,
+because a witness with nonempty `persistDs` becomes a new kernel anchor
+(`KIdxM` is a subtype of `β`) whose own witnesses must then be added.
+
+**That fixpoint is the honest remaining item**, and it does not terminate by
+budget decrease — kernel witnesses sit at the kernel's budget, not below it
+(`hbK` puts them within one). Termination has to come from the support-label
+depth measure of §§140–155, which is what that machinery was built for.
+
+Build: 35,795 lines, 1,773 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
