@@ -15635,3 +15635,44 @@ that it has been wrong about that distinction before.
 
 Build: 41,806 lines, 2,109 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §258 — Target B complete: finite fusion, and `kq_all` discharged
+
+**§258.1 — the fusion.** `finite_fusion` places a whole finite family of towers at
+once: every pair of distinct towers sees ONE atom across the rectangle of their
+selected segments, and every segment starts beyond any prescribed bound.
+
+**The ordering is the only subtle point, and it forced a design choice.** The
+rectangle theorem fixes a finite segment of the FIRST tower and pushes the SECOND
+one out. So each unordered pair must be handled in index order — earlier tower
+placed, later tower pushed past it — and the reverse direction comes from `conv`,
+never from a second application. Trying both directions from the rectangle fails
+concretely: for a pair `(n, l)` with `l < n` it would demand pushing `l` out, but
+`l` is already placed. Hence `Q` is defined by a case split on index order.
+
+**§258.2/§258.3 — equal-type endpoints, and why the period cannot be an input.**
+`KernelData.cty` needs `mty (c s) = mty (c (s+p))`. The period cannot be supplied
+up front: the rectangle's threshold for a pair depends on the earlier tower's
+segment LENGTH, while the equal-type requirement is what determines that length.
+So `finite_fusion_recurrent` chooses the period DURING the induction, at the
+moment a tower is placed — sound because recurrence is available arbitrarily late
+(`late_recurrence`, from the certified pigeonhole) and later towers only ever move
+further out.
+
+**§258.4 — `kq_all`, discharged.** `fused_kq_all`: for a finite family of towers
+of arbitrary directions there are segments and a relation matrix such that the
+certificate's cross-kernel universal obligation HOLDS for the model-type
+labelling, with equal-type endpoints preserved. **This is the obligation open
+since E2b.**
+
+**What remains is packaging, not mathematics:** turning the fused segments back
+into `KernelData` (which needs `ccovers` at the chosen period) and fixing index
+types. Recorded with the campaign's standing caveat that it has misjudged that
+line before.
+
+**Target B scoreboard.** Step 1 (transition ranks, abstracted): DONE. Step 2 (row
+limits, rank argument applied twice): DONE. Step 3 (finite fusion): DONE, with
+equal-type endpoints. `kq_all`: DISCHARGED for the model-type labelling.
+
+Build: 42,085 lines, 2,113 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

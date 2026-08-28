@@ -40768,6 +40768,259 @@ theorem kernel_pair_rectangle (hI : RCC5Interp I) {C0 : Concept}
   refine ⟨max I₀ L, max J L, r, Nat.le_max_right _ _, Nat.le_max_right _ _, ?_⟩
   intro a ha b _
   exact hJ a ha _ (Nat.le_trans (Nat.le_max_left J L) (Nat.le_add_right _ _))
+/-! #### §258 — TARGET B, STEP 3: FINITE FUSION
+
+`kernel_pair_rectangle` handles a PAIR.  Fusion places a whole finite family at
+once.  The ordering matters and is the only subtle point: the rectangle theorem
+fixes a finite segment of the FIRST tower and then pushes the SECOND one out, so
+each unordered pair must be handled in index order — earlier tower's segment
+already placed, later tower's segment chosen far enough — and the reverse
+direction is obtained by `conv`, never by a second application.
+
+Attempting both directions from the rectangle theorem does NOT work: for a pair
+`(n, l)` with `l < n` it would demand that `l`'s segment be pushed out, but `l`
+was already placed.  That is why `Q` is defined by a case split on the index
+order. -/
+
+open Classical in
+/-- **§258.1 — SIMULTANEOUS CONSTANT RECTANGLES FOR A FINITE FAMILY.**  Every
+    pair of distinct towers in the family sees ONE atom across the whole
+    rectangle of their selected segments, and every segment starts beyond any
+    prescribed bound `L` — which is what leaves room to land on the equal-type
+    endpoints `KernelData.cty` needs. -/
+theorem finite_fusion (hI : RCC5Interp I) (ck : Nat → Nat → α) (dd : Nat → Bool)
+    (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dd k))
+    (p : Nat → Nat) (m L : Nat) :
+    ∃ (s : Nat → Nat) (Q : Nat → Nat → Atom),
+      (∀ k, k < m → L ≤ s k) ∧
+      ∀ k l, k < m → l < m → k ≠ l → ∀ a, a < p k → ∀ b, b < p l →
+        I.rho (ck k (s k + a)) (ck l (s l + b)) = Q k l := by
+  -- the per-pair rectangle, Skolemised over ordered pairs
+  have hpair : ∀ kl : Nat × Nat, ∃ Iq : Nat × Atom,
+      ∀ s, Iq.1 ≤ s → ∀ q, ∃ J, ∀ a, a < q → ∀ j, J ≤ j →
+        I.rho (ck kl.1 (s + a)) (ck kl.2 j) = Iq.2 := by
+    intro kl
+    obtain ⟨I₀, q, hq⟩ := two_tower_rectangle_gen hI (dd kl.1) (hdom kl.1)
+      (hstep kl.1) (hdom kl.2)
+      (fun i => row_stabilizes_any hI (dd kl.2) (hdom kl.2) (hstep kl.2)
+        (hdom kl.1 i))
+    exact ⟨(I₀, q), hq⟩
+  obtain ⟨G, hG⟩ := Classical.skolem.mp hpair
+  -- a single lower bound dominating every pair's threshold
+  have hrow : ∀ k, ∃ B, ∀ l, l < m → (G (k, l)).1 ≤ B :=
+    fun k => exists_uniform_threshold (fun l => (G (k, l)).1) m
+  obtain ⟨Bf, hBf⟩ := Classical.skolem.mp hrow
+  obtain ⟨B, hB⟩ := exists_uniform_threshold Bf m
+  -- place the towers in index order
+  have main : ∀ n, n ≤ m → ∃ s : Nat → Nat,
+      (∀ k, k < n → max L B ≤ s k) ∧
+      ∀ k l, k < n → l < n → k < l → ∀ a, a < p k → ∀ b, b < p l →
+        I.rho (ck k (s k + a)) (ck l (s l + b)) = (G (k, l)).2 := by
+    intro n
+    induction n with
+    | zero =>
+        intro _
+        exact ⟨fun _ => max L B, fun k hk => absurd hk (Nat.not_lt_zero k),
+          fun k _ hk => absurd hk (Nat.not_lt_zero k)⟩
+    | succ n ih =>
+        intro hnm
+        obtain ⟨s, hsL, hs⟩ := ih (Nat.le_of_succ_le hnm)
+        -- thresholds pushing the new tower past every earlier one
+        have hJ : ∀ k, ∃ J, k < n → ∀ a, a < p k → ∀ j, J ≤ j →
+            I.rho (ck k (s k + a)) (ck n j) = (G (k, n)).2 := by
+          intro k
+          by_cases hk : k < n
+          · have hthr : (G (k, n)).1 ≤ s k := by
+              have h1 : (G (k, n)).1 ≤ Bf k := hBf k n (by omega)
+              have h2 : Bf k ≤ B := hB k (by omega)
+              have h3 := hsL k hk
+              have h4 : B ≤ max L B := Nat.le_max_right _ _
+              omega
+            obtain ⟨J, hJ'⟩ := hG (k, n) (s k) hthr (p k)
+            exact ⟨J, fun _ => hJ'⟩
+          · exact ⟨0, fun hc => absurd hc hk⟩
+        obtain ⟨Jf, hJf⟩ := Classical.skolem.mp hJ
+        obtain ⟨JB, hJB⟩ := exists_uniform_threshold Jf n
+        refine ⟨fun t => if t = n then max (max L B) JB else s t, ?_, ?_⟩
+        · intro k hk
+          by_cases he : k = n
+          · subst he
+            simp only
+            exact Nat.le_max_left _ _
+          · simp only [if_neg he]
+            exact hsL k (by omega)
+        · intro k l hk hl hkl a ha b hb
+          by_cases hln : l = n
+          · subst hln
+            have hkn : k ≠ l := by omega
+            simp only [if_neg hkn]
+            refine hJf k hkl a ha (max (max L B) JB + b) ?_
+            exact Nat.le_trans (Nat.le_trans (hJB k hkl) (Nat.le_max_right _ _))
+              (Nat.le_add_right _ _)
+          · have hkn : k ≠ n := by omega
+            simp only [if_neg hkn, if_neg hln]
+            exact hs k l (by omega) (by omega) hkl a ha b hb
+  obtain ⟨s, hsL, hs⟩ := main m (Nat.le_refl m)
+  refine ⟨s, fun k l => if k < l then (G (k, l)).2 else conv ((G (l, k)).2),
+    fun k hk => Nat.le_trans (Nat.le_max_left L B) (hsL k hk), ?_⟩
+  intro k l hk hl hne a ha b hb
+  rcases Nat.lt_or_ge k l with hkl | hge
+  · simp only [if_pos hkl]
+    exact hs k l hk hl hkl a ha b hb
+  · have hlk : l < k := by omega
+    simp only [if_neg (by omega : ¬ k < l)]
+    have hback := hs l k hl hk hlk b hb a ha
+    have hconv := hI.conv_ (ck l (s l + b)) (ck k (s k + a))
+      (hdom l _) (hdom k _)
+    rw [hback] at hconv
+    exact hconv
+open Classical in
+/-- **§258.2 — RECURRENCE IS AVAILABLE ARBITRARILY LATE.**  The premise §258.3
+    needs, discharged from the certified pigeonhole: past any bound a tower has
+    two positions of equal model type. -/
+theorem late_recurrence (C0 : Concept) (c : Nat → α) (L : Nat) :
+    ∃ s q, L ≤ s ∧ 0 < q ∧ mty C0 I (c s) = mty C0 I (c (s + q)) := by
+  obtain ⟨i, j, hLi, hij, heq⟩ := segment_exists (sublists (cl C0))
+    (fun n => mty C0 I (c n)) (fun n => mty_mem_sublists (c n)) L
+  refine ⟨i, j - i, hLi, by omega, ?_⟩
+  rw [show i + (j - i) = j from by omega]
+  exact heq
+
+open Classical in
+/-- **§258.3 — FUSION WITH EQUAL-TYPE ENDPOINTS: TARGET B, COMPLETE.**  Every
+    tower of a finite family gets a segment that (i) starts beyond any prescribed
+    bound, (ii) has a positive period whose endpoints carry the SAME model type —
+    so `KernelData.cty` survives — and (iii) sees ONE atom across its whole
+    rectangle with every other tower's segment.
+
+    The period cannot be an input: the rectangle's threshold for a pair depends on
+    the earlier tower's segment LENGTH, while equal-type endpoints determine that
+    length.  So the period is chosen DURING the induction, at the moment the tower
+    is placed — which works because recurrence is available arbitrarily late
+    (§258.2), and later towers only ever move further out. -/
+theorem finite_fusion_recurrent (hI : RCC5Interp I) (C0 : Concept)
+    (ck : Nat → Nat → α) (dd : Nat → Bool)
+    (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dd k))
+    (m L : Nat) :
+    ∃ (s p : Nat → Nat) (Q : Nat → Nat → Atom),
+      (∀ k, k < m → L ≤ s k ∧ 0 < p k ∧
+        mty C0 I (ck k (s k)) = mty C0 I (ck k (s k + p k))) ∧
+      (∀ k l, k < m → l < m → k ≠ l → ∀ a, a < p k → ∀ b, b < p l →
+        I.rho (ck k (s k + a)) (ck l (s l + b)) = Q k l) := by
+  have hpair : ∀ kl : Nat × Nat, ∃ Iq : Nat × Atom,
+      ∀ s, Iq.1 ≤ s → ∀ q, ∃ J, ∀ a, a < q → ∀ j, J ≤ j →
+        I.rho (ck kl.1 (s + a)) (ck kl.2 j) = Iq.2 := by
+    intro kl
+    obtain ⟨I₀, q, hq⟩ := two_tower_rectangle_gen hI (dd kl.1) (hdom kl.1)
+      (hstep kl.1) (hdom kl.2)
+      (fun i => row_stabilizes_any hI (dd kl.2) (hdom kl.2) (hstep kl.2)
+        (hdom kl.1 i))
+    exact ⟨(I₀, q), hq⟩
+  obtain ⟨G, hG⟩ := Classical.skolem.mp hpair
+  have hrow : ∀ k, ∃ B, ∀ l, l < m → (G (k, l)).1 ≤ B :=
+    fun k => exists_uniform_threshold (fun l => (G (k, l)).1) m
+  obtain ⟨Bf, hBf⟩ := Classical.skolem.mp hrow
+  obtain ⟨B, hB⟩ := exists_uniform_threshold Bf m
+  have main : ∀ n, n ≤ m → ∃ s p : Nat → Nat,
+      (∀ k, k < n → max L B ≤ s k ∧ 0 < p k ∧
+        mty C0 I (ck k (s k)) = mty C0 I (ck k (s k + p k))) ∧
+      (∀ k l, k < n → l < n → k < l → ∀ a, a < p k → ∀ b, b < p l →
+        I.rho (ck k (s k + a)) (ck l (s l + b)) = (G (k, l)).2) := by
+    intro n
+    induction n with
+    | zero =>
+        intro _
+        exact ⟨fun _ => max L B, fun _ => 1,
+          fun k hk => absurd hk (Nat.not_lt_zero k),
+          fun k _ hk => absurd hk (Nat.not_lt_zero k)⟩
+    | succ n ih =>
+        intro hnm
+        obtain ⟨s, pp', hsL, hs⟩ := ih (Nat.le_of_succ_le hnm)
+        have hJ : ∀ k, ∃ J, k < n → ∀ a, a < pp' k → ∀ j, J ≤ j →
+            I.rho (ck k (s k + a)) (ck n j) = (G (k, n)).2 := by
+          intro k
+          by_cases hk : k < n
+          · have hthr : (G (k, n)).1 ≤ s k := by
+              have h1 : (G (k, n)).1 ≤ Bf k := hBf k n (by omega)
+              have h2 : Bf k ≤ B := hB k (by omega)
+              have h3 := (hsL k hk).1
+              have h4 : B ≤ max L B := Nat.le_max_right _ _
+              omega
+            obtain ⟨J, hJ'⟩ := hG (k, n) (s k) hthr (pp' k)
+            exact ⟨J, fun _ => hJ'⟩
+          · exact ⟨0, fun hc => absurd hc hk⟩
+        obtain ⟨Jf, hJf⟩ := Classical.skolem.mp hJ
+        obtain ⟨JB, hJB⟩ := exists_uniform_threshold Jf n
+        -- the period is chosen HERE, together with the start
+        obtain ⟨sn, qn, hsn, hqn, htyn⟩ :=
+          late_recurrence C0 (ck n) (max (max L B) JB)
+        refine ⟨fun t => if t = n then sn else s t,
+                fun t => if t = n then qn else pp' t, ?_, ?_⟩
+        · intro k hk
+          by_cases he : k = n
+          · subst he
+            simp only
+            exact ⟨Nat.le_trans (Nat.le_max_left _ _) hsn, hqn, htyn⟩
+          · simp only [if_neg he]
+            exact hsL k (by omega)
+        · intro k l hk hl hkl a ha b hb
+          by_cases hln : l = n
+          · subst hln
+            have hkn : k ≠ l := by omega
+            simp only [if_neg hkn] at ha ⊢
+            simp only at hb
+            refine hJf k hkl a ha (sn + b) ?_
+            exact Nat.le_trans (Nat.le_trans (hJB k hkl)
+              (Nat.le_trans (Nat.le_max_right _ _) hsn)) (Nat.le_add_right _ _)
+          · have hkn : k ≠ n := by omega
+            simp only [if_neg hkn, if_neg hln] at ha hb ⊢
+            exact hs k l (by omega) (by omega) hkl a ha b hb
+  obtain ⟨s, pf, hsL, hs⟩ := main m (Nat.le_refl m)
+  refine ⟨s, pf, fun k l => if k < l then (G (k, l)).2 else conv ((G (l, k)).2),
+    fun k hk => ⟨Nat.le_trans (Nat.le_max_left L B) (hsL k hk).1,
+      (hsL k hk).2.1, (hsL k hk).2.2⟩, ?_⟩
+  intro k l hk hl hne a ha b hb
+  rcases Nat.lt_or_ge k l with hkl | hge
+  · simp only [if_pos hkl]
+    exact hs k l hk hl hkl a ha b hb
+  · have hlk : l < k := by omega
+    simp only [if_neg (by omega : ¬ k < l)]
+    have hback := hs l k hl hk hlk b hb a ha
+    have hconv := hI.conv_ (ck l (s l + b)) (ck k (s k + a))
+      (hdom l _) (hdom k _)
+    rw [hback] at hconv
+    exact hconv
+open Classical in
+/-- **§258.4 — `kq_all`, DISCHARGED.**  The payoff of Targets B: for a finite
+    family of towers of arbitrary directions there are segments and a relation
+    matrix such that the certificate's cross-kernel universal obligation HOLDS
+    for the model-type labelling, and each segment still has the equal-type
+    endpoints `cty` requires.
+
+    This is the obligation that had been open since E2b.  What remains between
+    here and `swCert_ok` is packaging: turning the fused segments back into
+    `KernelData` (which needs `ccovers` for the chosen period) and fixing the
+    index types — not the cross-kernel mathematics. -/
+theorem fused_kq_all (hI : RCC5Interp I) (C0 : Concept)
+    (ck : Nat → Nat → α) (dd : Nat → Bool)
+    (hdom : ∀ k n, I.dom (ck k n))
+    (hstep : ∀ k n, I.rho (ck k n) (ck k (n + 1)) = cdir (dd k))
+    (m L : Nat) :
+    ∃ (s p : Nat → Nat) (Q : Nat → Nat → Atom),
+      (∀ k, k < m → L ≤ s k ∧ 0 < p k ∧
+        mty C0 I (ck k (s k)) = mty C0 I (ck k (s k + p k))) ∧
+      (∀ k l, k < m → l < m → k ≠ l → ∀ a, a < p k → ∀ r c,
+        Concept.all r c ∈ normL C0 (mty C0 I (ck k (s k + a))) → Q k l = r →
+        ∀ b, b < p l → c ∈ normL C0 (mty C0 I (ck l (s l + b)))) := by
+  obtain ⟨s, p, Q, hseg, hrect⟩ :=
+    finite_fusion_recurrent hI C0 ck dd hdom hstep m L
+  refine ⟨s, p, Q, hseg, ?_⟩
+  intro k l hk hl hne a ha r c hc hQ b hb
+  refine ee_all_of_row (fun t : Bool => if t then ck k (s k + a)
+      else ck l (s l + b)) true false (hdom l _) r c hc ?_
+  simpa using (hQ ▸ hrect k l hk hl hne a ha b hb)
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
