@@ -38581,6 +38581,77 @@ Two things that looked like obligations are supplied by the representation:
 So the node bound is `|typeEnum C₀| · (|cl C₀| + 1)`, computable from `C₀`, and
 §200 already showed any computable bound suffices. -/
 
+/-! #### §243 — THE GATE, AND ITS INVARIANT
+
+§242.2 left one thing: put the gate into the construction so
+`distinct_types_len_le`'s hypothesis actually holds. `firstOfType` is the gate —
+walk the stage in order and keep a node only if its model type has not been seen
+earlier — and `firstOfType_types_nodup` is the invariant.
+
+This is the round-7 discipline (§240) at list scale: nothing is identified and no
+node is deleted from the stage; only the EXPANSION is restricted to the
+type-fresh nodes. -/
+
+open Classical in
+/-- **THE GATE.**  The nodes whose model type first occurs at their position. -/
+noncomputable def firstOfType (C0 : Concept) (I : Interp α) :
+    List (List Concept) → List α → List α
+  | _, [] => []
+  | seen, x :: t =>
+      if mty C0 I x ∈ seen then firstOfType C0 I seen t
+      else x :: firstOfType C0 I (mty C0 I x :: seen) t
+
+open Classical in
+/-- **THE INVARIANT.**  The gated nodes have pairwise distinct types, and none of
+    them was already seen — the two facts an induction over the stage needs. -/
+theorem firstOfType_types_nodup (C0 : Concept) (I : Interp α) :
+    ∀ (vs : List α) (seen : List (List Concept)),
+      ((firstOfType C0 I seen vs).map (mty C0 I)).Nodup ∧
+      ∀ t ∈ (firstOfType C0 I seen vs).map (mty C0 I), t ∉ seen := by
+  intro vs
+  induction vs with
+  | nil => intro seen; exact ⟨by simp [firstOfType], by simp [firstOfType]⟩
+  | cons x t ih =>
+      intro seen
+      by_cases hx : mty C0 I x ∈ seen
+      · rw [firstOfType, if_pos hx]; exact ih seen
+      · rw [firstOfType, if_neg hx]
+        obtain ⟨hnd, hfresh⟩ := ih (mty C0 I x :: seen)
+        refine ⟨?_, ?_⟩
+        · rw [List.map_cons, List.nodup_cons]
+          refine ⟨fun hmem => ?_, hnd⟩
+          exact (hfresh _ hmem) List.mem_cons_self
+        · intro u hu
+          rcases List.mem_cons.mp hu with rfl | hu'
+          · exact hx
+          · exact fun hs => hfresh u hu' (List.mem_cons_of_mem _ hs)
+
+open Classical in
+/-- **SO THE GATED NODES ARE BOUNDED BY `C₀`** — §242's counting, with its
+    hypothesis now discharged by the construction rather than assumed. -/
+theorem firstOfType_len_le (C0 : Concept) (I : Interp α) (vs : List α) :
+    (firstOfType C0 I [] vs).length ≤ (typeEnum C0).length :=
+  distinct_types_len_le C0 I _ (firstOfType_types_nodup C0 I vs []).1
+
+open Classical in
+/-- And the gate keeps nodes rather than identifying them: every gated node is a
+    node of the stage. -/
+theorem firstOfType_sub (C0 : Concept) (I : Interp α) :
+    ∀ (vs : List α) (seen : List (List Concept)) (x : α),
+      x ∈ firstOfType C0 I seen vs → x ∈ vs := by
+  intro vs
+  induction vs with
+  | nil => intro seen x hx; simp [firstOfType] at hx
+  | cons y t ih =>
+      intro seen x hx
+      by_cases hy : mty C0 I y ∈ seen
+      · rw [firstOfType, if_pos hy] at hx
+        exact List.mem_cons_of_mem _ (ih seen x hx)
+      · rw [firstOfType, if_neg hy] at hx
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact List.mem_cons_self
+        · exact List.mem_cons_of_mem _ (ih _ x hx')
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39611,4 +39682,6 @@ end POFreeLift
 #print axioms POFreeLift.type_branch_len_le
 #print axioms POFreeLift.distinct_types_len_le
 #print axioms POFreeLift.stage_bound_of_unblocked
+#print axioms POFreeLift.firstOfType_types_nodup
+#print axioms POFreeLift.firstOfType_len_le
 #print axioms POFreeLift.kernel_of_no_terminal

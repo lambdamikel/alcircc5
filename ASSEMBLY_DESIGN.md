@@ -14949,3 +14949,24 @@ construction. That is a definition plus an invariant, both at the point where
 
 Build: 39,614 lines, 1,997 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 243. THE GATE, AND ITS INVARIANT
+
+§242.2 left one thing: put the gate into the construction so
+`distinct_types_len_le`'s hypothesis actually holds.
+
+`firstOfType` is the gate — walk the stage in order, keep a node only if its
+model type has not been seen earlier — and `firstOfType_types_nodup` is the
+invariant: **the gated nodes have pairwise distinct types, and none was already
+seen**. Those are the two facts the induction needs, and the second is what makes
+the first survive the cons step.
+
+`firstOfType_len_le` then discharges §242's hypothesis from the construction
+rather than assuming it: the gated nodes number at most `|typeEnum C0|`.
+
+`firstOfType_sub` records the round-7 discipline explicitly: **the gate keeps
+nodes rather than identifying them** — every gated node is a node of the stage,
+nothing is merged, nothing is deleted. Only the *expansion* is restricted.
+
+Build: 39,687 lines, 2,001 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
