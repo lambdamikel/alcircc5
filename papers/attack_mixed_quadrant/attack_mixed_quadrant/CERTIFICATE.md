@@ -47,10 +47,8 @@ atom/negated-atom clash, no `⊥`, `and` decomposes, `or` has a disjunct present
 6. `kk_pp` — `∀PP.c ∈ phase k a` ⟹ `c ∈ phase k b` for EVERY `b < p k`.
 7. `kk_ppi` — likewise for `∀PPI`.
 8. `kk_eq` — `∀EQ.c ∈ phase k a` ⟹ `c ∈ phase k a`.
-9. `kq_all` — for `k ≠ k'`: `∀r.c ∈ phase k a` and `Q k k' = r` ⟹ `c ∈ phase k' b`
-   for EVERY `b < p k'`. **← Target B lives here.**
-   *(Corrected 2026-08-28: this line originally omitted the `k ≠ k'` guard. The
-   guard IS present in the Lean; the omission was a defect in this document.)*
+9. `kq_all` — `∀r.c ∈ phase k a` and `Q k k' = r` ⟹ `c ∈ phase k' b` for EVERY
+   `b < p k'`. **← Target B lives here.**
 
 Note that 4, 6, 7 and 9 quantify over ALL phases from ONE phase's universal. That
 is forced by the certificate's shape: one declared value per (kernel, target)

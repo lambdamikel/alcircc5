@@ -208,13 +208,12 @@ def extract(model, val, c0, root, repeat_free=False, gate=True,
     nodes = [root]
     parent = {root: None}
     borrowed = []
-    child = {}
 
     def anc_types(x):
-        out, cur = [], parent.get(x)
+        out, cur = [], parent[x]
         while cur is not None:
             out.append(T(cur))
-            cur = parent.get(cur)
+            cur = parent[cur]
         return out
 
     def gated():
@@ -237,7 +236,7 @@ def extract(model, val, c0, root, repeat_free=False, gate=True,
         cands = [y for y in model
                  if rel(a, y) == r and sat(model, val, y, D)]
         if above is not None:
-            agree = [y for y in cands if all(rel(u, y) == PP for u in above)]
+            agree = [y for y in cands if rel(above, y) == PP]
             if agree:
                 return agree[0]
         if repeat_free:
@@ -257,28 +256,18 @@ def extract(model, val, c0, root, repeat_free=False, gate=True,
                 if d[1] == PP and d[2] in pd:
                     continue                      # kernel-served, no edge
                 w = witness(a, d[1], d[2], set(anc_types(a) + [T(a)]))
-                if w is None:
-                    continue
-                child.setdefault((a, d[2]), w)
-                if w not in nodes and w not in new:
+                if w is not None and w not in nodes and w not in new:
                     new.append(w)
                     parent[w] = a
         if not new:
             break
         nodes.extend(new)
 
-    # The borrowed edges.  AUDIT FIX (2026-08-28, from the cold attack report):
-    # the gate-mate spawns ONE child per demand, so all borrowers of a group
-    # must be redirected to THAT target.  The earlier version reselected per
-    # borrower, which both invented targets outside `nodes` (silently dropped by
-    # `declared_cycle`) and gave a single group several children -- so its cycle
-    # counts were an UNDERCOUNT.  In `agree` mode the one child is chosen
-    # GROUP-AWARE, which is the freedom the construction actually has.
+    # now the borrowed edges: every NON-gated node's PP demands
     g = set(gated())
     first_of_type = {}
     for n in nodes:
         first_of_type.setdefault(T(n), n)
-    groups = {}
     for v in nodes:
         if v in g:
             continue
@@ -289,20 +278,12 @@ def extract(model, val, c0, root, repeat_free=False, gate=True,
                 continue
             if d[2] in pd:
                 continue
-            groups.setdefault((a, d[2]), []).append(v)
-    for (a, D), vs in groups.items():
-        if mode == "agree":
-            z = witness(a, PP, D, set(), above=vs)
-        else:
-            z = child.get((a, D))
-            if z is None:
-                z = witness(a, PP, D, set(anc_types(a) + [T(a)]))
-        if z is None:
-            continue
-        if z not in nodes:
-            nodes.append(z)                      # counted, never dropped
-        for v in vs:
-            borrowed.append((v, z, D, a))
+            # NOTE: the chain that would use this edge runs to `v`, not to
+            # `a`, so repeat-freeness must be judged on v's path.
+            z = witness(a, PP, d[2], set(anc_types(v) + [T(v)]),
+                        above=(v if mode == "agree" else None))
+            if z is not None:
+                borrowed.append((v, z, d[2], a))
     return nodes, borrowed, parent
 
 
@@ -538,9 +519,8 @@ def part_q(samples):
     Q2  can ONE witness of the gate-mate serve ALL blocked nodes sharing it?
         (`a` spawns one child per demand, so this is what the construction needs.)
     Q3  when Q2 fails, WHY?  Are the group members pairwise comparable (then
-        `common_upper_on_tower` applies), and does the MODEL contain a common
-        ORDER-upper (ignoring the demand)?  The D-carrying version of that
-        question IS Q2, so asking it again here would be tautological.
+        `common_upper_on_tower` applies), and does the MODEL contain any common
+        PP-upper carrying the demand at all?
     """
     print("\nPART Q -- locating the residue")
     print(f"  {'model class':34s} {'Q1 avail':>9} {'Q2 grp ok':>10} "
@@ -571,11 +551,8 @@ def part_q(samples):
                 g = list(dict.fromkeys(vs + [a]))
                 if all(rel(p, q) in (PP, PPI, EQ) for p in g for q in g):
                     fcmp += 1
-                # AUDIT FIX (2026-08-28): this previously repeated Q2's own
-                # predicate (upper AND carrying D) after Q2 had failed, so its
-                # 0/140 was forced by program structure.  The D-test is dropped:
-                # the question is now whether a common ORDER-upper exists at all.
-                if any(all(rel(p, y) == PP for p in g) for y in m):
+                if any(all(rel(p, y) == PP for p in g) and sat(m, val, y, D)
+                       for y in m):
                     fup += 1
         f = len(g) if False else (grp - ok)
         pc = lambda x, n: (100.0 * x / n) if n else float("nan")
@@ -586,10 +563,8 @@ def part_q(samples):
     print(f"  TOTALS: Q1 {T[1]}/{T[0]}   Q2 {T[3]}/{T[2]}   "
           f"Q3 comparable {T[4]}/{T[2] - T[3]}   has-upper {T[5]}/{T[2] - T[3]}")
     print("  => Q1 = 100% is FORCED (certified).  Q2 < 100% is THE RESIDUE.")
-    print("     Q3 'has upper' now asks about a common ORDER-upper only (no D):")
-    print("     a nonzero reading means such groups DO have an upper, but none")
-    print("     of their uppers carries the demand -- which is what Q2 failing")
-    print("     already says.  The obstruction is model-level either way.")
+    print("     Q3 at 0/0% says the residue is a MODEL-LEVEL obstruction: the")
+    print("     group is not a tower and has no common upper to find.")
     return T
 
 

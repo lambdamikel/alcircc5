@@ -1,0 +1,712 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=27mm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,tabularx,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\definecolor{navy}{HTML}{17365D}
+\definecolor{bluegray}{HTML}{506784}
+\definecolor{lightblue}{HTML}{EAF1F8}
+\definecolor{lightgreen}{HTML}{EAF5EE}
+\definecolor{lightred}{HTML}{FBEDEE}
+\definecolor{lightamber}{HTML}{FFF5DC}
+\definecolor{darkgreen}{HTML}{21633B}
+\definecolor{darkred}{HTML}{8A2633}
+\definecolor{darkamber}{HTML}{77550B}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=navy,
+  urlcolor=bluegray,
+  pdftitle={Cold Attack on the Mixed Quadrant of the forall-PO-Free Fragment of ALCI-RCC5},
+  pdfsubject={Finite cross-kernel stabilization, a class-top counterexample, and a revised extraction program}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{bluegray}Mixed quadrant of the $\forall PO$-free fragment}
+\fancyhead[R]{\small\color{bluegray}Technical attack report}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries\color{navy}}{\thesection}{0.65em}{}
+\titleformat{\subsection}{\large\bfseries\color{navy}}{\thesubsection}{0.65em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{bluegray}}{\thesubsubsection}{0.65em}{}
+\setlist[itemize]{leftmargin=1.6em,itemsep=0.25em,topsep=0.35em}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=0.25em,topsep=0.35em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\allowdisplaybreaks
+
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\mty}{\operatorname{mty}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\Atom}{\mathsf{Atom}}
+\newcommand{\statusbox}[2]{%
+  \begin{center}
+  \fcolorbox{#1}{#1!8}{\begin{minipage}{0.91\linewidth}\textbf{#2}\end{minipage}}
+  \end{center}}
+
+\begin{document}
+
+\pagenumbering{gobble}
+\begin{titlepage}
+\thispagestyle{empty}
+\vspace*{1.6cm}
+{\color{navy}\rule{\linewidth}{1.2pt}}\\[1.1cm]
+{\huge\bfseries\color{navy}Cold Attack on the Mixed Quadrant\\[0.25cm]
+of the $\forall PO$-Free Fragment of $\mathcal{ALCI}_{\mathrm{RCC5}}$\par}
+\vspace{0.8cm}
+{\Large\color{bluegray}Finite cross-kernel stabilization, a class-top counterexample,\\
+and a revised extraction program\par}
+\vspace{1.4cm}
+
+\begin{center}
+\begin{tabular}{rl}
+\textbf{Status:} & Independent technical attack, not a referee report \\
+\textbf{Input packet:} & \texttt{attack\_mixed\_quadrant.zip}, dated 2026-08-27 \\
+\textbf{Report date:} & 2026-08-28 \\
+\textbf{Formal status:} & Paper proofs and executable finite checks; not yet Lean-certified
+\end{tabular}
+\end{center}
+
+\vfill
+\noindent\fcolorbox{navy}{lightblue}{%
+\begin{minipage}{0.94\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+\textbf{Principal result.}
+For every fixed finite family of ascending or descending model towers, arbitrarily late
+finite recurrence segments can be selected so that every cross-kernel phase rectangle is
+constant. This is precisely the property needed by the cross-kernel universal obligation
+\texttt{kq\_all}. The stronger assertion that entire cofinal tails can be made constant is
+false and is not required.
+\end{minipage}}\par
+\vspace{1cm}
+{\color{navy}\rule{\linewidth}{1.2pt}}
+\end{titlepage}
+
+\pagenumbering{roman}
+\begin{abstract}
+The supplied attack packet isolates three open extraction problems for the mixed
+$\exists\PO$/$\exists\PP$ quadrant of the $\forall\PO$-free fragment of
+$\mathcal{ALCI}_{\mathrm{RCC5}}$. This report makes progress on all three. First, it gives a
+finite simultaneous-rectangle theorem for finitely many interacting $\PP/\PPI$ towers.
+Under the segment hypotheses stated in the packet, this proves the mathematical core
+of Target B at paper level. Second, it proves that the proposed Target A label is always satisfiable but
+constructs an eight-point ordered-disjoint countermodel showing that a common fresh
+class-top need not be insertable. Blocking by model type alone is therefore insufficient;
+a finite lower-context spectrum is a plausible replacement. Third, it refutes the natural
+tail-stabilize/add-witness fixed point for Target C and factors the remaining problem into
+postselection of uniform anchors followed by an ordered-disjoint PO-completion. The report
+also records several defects in the supplied Python probes. All conclusions are scoped to
+the abstract RCC5 composition-table semantics and the stated $\forall\PO$-free fragment.
+No complete mixed-quadrant extraction or decidability theorem is claimed.
+\end{abstract}
+
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Scope, assumptions, and result map}
+
+We retain the packet's standing assumptions without alteration:
+
+\begin{itemize}
+  \item Models are total, converse-closed, composition-closed atomic RCC5 networks under
+        abstract composition-table semantics; they need not be concrete region models.
+  \item Strong equality is used: $\EQ$ is identity and occurs only on the diagonal.
+  \item $x\,\PP\,y$ means that $x$ is a proper part of $y$; $\PPI$ is its converse.
+  \item No formula $\forall\PO.C$ occurs in the closure. Thus a declared $\PO$ edge carries
+        no universal obligation.
+  \item The singleton cells used repeatedly are
+        \begin{align*}
+          \comp(\PP,\PP)&=\{\PP\}, &
+          \comp(\PP,\DR)&=\{\DR\},\\
+          \comp(\DR,\PPI)&=\{\DR\}, &
+          \comp(\PPI,\PPI)&=\{\PPI\}.
+        \end{align*}
+  \item Ordered-disjoint frames are used as the RCC5 normal form: a strict partial order,
+        a symmetric irreflexive downward-closed disjointness relation, and $\PO$ as the
+        residual relation.
+\end{itemize}
+
+The conclusions are as follows.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.28}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.16\linewidth}X>{\raggedright\arraybackslash}p{0.23\linewidth}}
+\toprule
+Target & Finding & Defensible status \\
+\midrule
+A: group problem & The proposed root label is trivially satisfiable, but one common
+fresh class-top per $(T,D)$ is refuted by an eight-point counterexample. A finite
+down-spectrum refinement gives a local gluing lemma. & Proposed repair refuted;
+bounded refinement open globally. \\
+B: cross-kernel rectangle & Finite recurrence segments admit simultaneous constant
+cross-kernel rectangles by a two-level stabilization and finite fusion argument. &
+Paper-level proof, pending Lean formalization and a diagonal guard check. \\
+C: selection order & Tail stabilization followed by witness addition has no finite fixed
+point in general. Uniform witnesses can instead be postselected and PO-completed. &
+Geometric circularity separated; row-conservative demand closure remains. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Evidence levels used in this report}
+
+To avoid conflating proof, certification, and measurement, conclusions are labelled by
+their actual evidence level:
+
+\begin{itemize}
+  \item \textbf{Paper-level theorem or counterexample:} a general mathematical argument is
+        supplied here, but it has not yet been translated into Lean.
+  \item \textbf{Finite executable check:} a dependency-free Python artifact checks a
+        concrete frame, composition-table calculation, or bounded family. It is not a
+        proof of the corresponding unbounded statement.
+  \item \textbf{Reported certified background:} the input packet says a result is
+        Lean-certified. The Lean development itself was not included in this package and
+        was not independently recompiled for this report.
+  \item \textbf{Candidate reduction:} a bounded construction or invariant has a local
+        argument but still lacks one or more global certificate obligations.
+\end{itemize}
+
+\section{Target B: finite simultaneous cross-kernel rectangles}
+
+\statusbox{darkgreen}{Result: under the packet's fixed-family and recurrence hypotheses,
+the finite off-diagonal phase rectangles needed by the certificate have a paper-level
+proof. Infinite tail-by-tail stabilization is false and unnecessary.}
+
+\subsection{The finite rectangle theorem}
+
+Let $K=\{0,\ldots,m-1\}$ be finite. For each $k\in K$, let
+\[
+  c_k:\mathbb{N}\longrightarrow M
+\]
+be a strict tower in one atomic RCC5 model. Its direction $d_k$ is either $\PP$ or $\PPI$:
+\[
+  R(c_k(n),c_k(n+1))=d_k.
+\]
+Assume, as in the packet's periodic extraction, that every tail contains two positions of
+the same full model type.
+
+\textbf{Theorem 2.1 (finite simultaneous rectangles).}
+There are indices $s_k<t_k$ and atoms $q_{k\ell}$ for $k\neq\ell$ such that
+\[
+  \mty(c_k(s_k))=\mty(c_k(t_k))
+\]
+and
+\[
+  R(c_k(s_k+a),c_\ell(s_\ell+b))=q_{k\ell}
+\]
+for every $a<t_k-s_k$, every $b<t_\ell-s_\ell$, and every $k\neq\ell$.
+The intervals may be chosen beyond any prescribed finite collection of lower bounds.
+
+Thus contiguous recurrence segments suffice; no arbitrary subsequence selection is used.
+
+\subsection{The transition ranks}
+
+Fix a point $y$ and move $x_n$ along a strict tower. If
+$R(x_n,x_{n+1})=d$, composition requires
+\[
+  R(x_n,y)\in\comp(d,R(x_{n+1},y)).
+\]
+For $d=\PP$, the allowed transition graph has the rank partition
+\[
+  \{\DR,\PP\}\;<\;\{\PO,\EQ\}\;<\;\{\PPI\};
+\]
+for $d=\PPI$, it has
+\[
+  \{\PPI\}\;<\;\{\PO,\EQ\}\;<\;\{\DR,\PP\}.
+\]
+Direct inspection of the RCC5 table shows that every allowed non-loop transition strictly
+increases the displayed rank. There are no transitions between distinct atoms at the same
+rank. Hence every relation sequence against a fixed point eventually stabilizes, with at
+most two genuine atom changes. The analogous target-coordinate statement follows by
+converse, or by using the corresponding right-composition transition relation.
+
+\subsection{Two towers: stabilization of the row limits}
+
+For two towers $c$ and $d$, set
+\[
+  R_{ij}=R(c(i),d(j)).
+\]
+One-sided stabilization gives, for each $i$, an eventual row value
+\[
+  \lambda(i)=\lim_{j\to\infty}R_{ij}.
+\]
+Choose a target index beyond the stabilization thresholds for both rows $i$ and $i+1$.
+Applying composition to the triple $c(i),c(i+1),d(j)$ shows that
+$\lambda(i),\lambda(i+1)$ obey the same transition graph as a relation to a fixed point.
+The rank argument therefore yields
+\[
+  \exists I,q\;\forall i\geq I:\quad \lambda(i)=q.
+\]
+
+Choose any finite recurrence segment of $c$ beyond $I$. Each of its finitely many rows has
+eventual value $q$, so moving $d$ beyond the maximum of their individual thresholds makes
+the entire rectangle constant. A same-type recurrence interval for $d$ can then be chosen
+inside that tail.
+
+\subsection{Finite fusion}
+
+Order the finitely many towers. When selecting tower $k$, place its complete recurrence
+segment beyond:
+
+\begin{enumerate}
+  \item all outer row-limit stabilization bounds against towers not yet selected;
+  \item all row thresholds imposed by the finitely many phases already selected;
+  \item all stabilization thresholds imposed by the finite external set already fixed.
+\end{enumerate}
+
+Finite type recurrence supplies equal-type endpoints after this maximum. Later towers are
+only restricted to farther tails, so previously obtained rectangles cannot be destroyed.
+Induction over the finite tower list proves Theorem 2.1.
+
+\subsection{Discharging the certificate obligations}
+
+Define
+\[
+  \operatorname{phase}(k,a)=\mty(c_k(s_k+a)),\qquad
+  Q(k,\ell)=q_{k\ell}.
+\]
+If $\forall r.C$ belongs to a source phase and $Q(k,\ell)=r$, rectangular constancy gives
+relation $r$ from that source point to every target phase point. Model semantics therefore
+places $C$ in every target phase, exactly as required by \texttt{kq\_all}.
+
+Choose one representative from each selected segment. Because every macro relation is the
+actual relation between representatives, the finite macro-network is an induced subnet of
+the source model. Converse and composition closure, and hence the cross-kernel part of
+\texttt{frame\_q}, follow immediately.
+
+For distinct kernels the common rectangle atom cannot be $\EQ$ if recurrence gaps are
+chosen at least two: each segment then contains two distinct points of a strict tower, while
+a constant $\EQ$ rectangle would identify every point in both segments. Such recurrence
+gaps are available because some model type occurs infinitely often in every tail. This
+preserves strong equality at the macro level; coincident kernel traces may alternatively be
+merged before defining $Q$.
+
+Rectangular constancy is sufficient, not logically necessary. Labels may satisfy
+\texttt{kq\_all} accidentally, and $Q(k,\ell)=\PO$ makes the implication vacuous in this
+fragment.
+
+\subsection{Why infinite rectangular stabilization is false}
+
+Let
+\[
+  M=\mathbb{Z}\times\{0,1\},\qquad
+  (n,u)<(m,v)\Longleftrightarrow n<m,
+\]
+with empty disjointness. The ordered-disjoint network has
+\[
+R((i,0),(j,1))=
+\begin{cases}
+\PP,&i<j,\\
+\PO,&i=j,\\
+\PPI,&i>j.
+\end{cases}
+\]
+Both coordinate sequences are ascending towers. Each individual row and column stabilizes,
+but every product of two infinite cofinal subsequences contains both $\PP$ and $\PPI$.
+Finite constant rectangles occur arbitrarily late: select one finite segment completely
+above or below the other. This separates the true finite theorem from an invalid tail
+theorem.
+
+\subsection{Diagonal qualification}
+
+The displayed definition of \texttt{kq\_all} in the packet lacks an explicit $k\neq k'$
+guard. If this is literal, \texttt{frame\_q} gives $Q(k,k)=\EQ$, and \texttt{kq\_all} would
+propagate the body of every $\forall\EQ.C$ from one phase to every phase. That is stronger
+than equality semantics and stronger than the separately listed \texttt{kk\_eq}
+obligation. The Lean definition should therefore be checked before the finite rectangle
+theorem is installed: either the guard is present, or the diagonal obligation must be
+changed explicitly.
+
+\section{Target A: the class-top proposal fails}
+
+\statusbox{darkred}{Result: the advertised class-top label is always satisfiable, but this
+does not permit one fresh top to serve all same-type occurrences. A finite
+ordered-disjoint counterexample refutes that inference.}
+
+\subsection{The local satisfiability lemma}
+
+Let $T=\mty_M(a)$, let $\exists\PP.D\in T$, and define
+\[
+  L_T=D\sqcap\bigwedge\{E:\forall\PP.E\in T\}.
+\]
+Choose any $w$ with $a\,\PP\,w$ and $M,w\models D$. Every
+$\forall\PP.E\in T$ is true at $a$, so $M,w\models E$. Consequently
+\[
+  M,w\models L_T.
+\]
+This argument is valid in arbitrary relational semantics; the RCC5 table and the
+$\forall\PO$-free restriction are not needed. The proposed ``is the label satisfiable?''
+question is therefore settled positively but is too weak to solve the group problem.
+
+\subsection{An eight-point counterexample}
+
+Use concept names $P,Q,R,S$ and define
+\[
+  U_P=\forall\DR.P,\qquad U_Q=\forall\DR.Q,
+\]
+\[
+  A=U_P\sqcup U_Q,\qquad D=\exists\DR.A.
+\]
+Let $C_0$ be the conjunction of
+\[
+  \exists\PP.D,\quad
+  \exists\PO.R,\quad
+  \exists\PO.S,\quad
+  \exists\PPI.\top,\quad
+  P\sqcup\neg P,\quad
+  Q\sqcup\neg Q.
+\]
+This concept is in the mixed quadrant and contains no $\forall\PO$ formula.
+
+Take the eight points
+\[
+  x_1,v_1,y_1,z_1,x_2,v_2,y_2,z_2.
+\]
+The strict order is exactly the two chains $x_i<v_i<y_i$, including their transitive
+edges. Disjointness holds exactly between $z_i$ and the three points
+$x_i,v_i,y_i$. Every other distinct incomparable, non-disjoint pair is $\PO$.
+This is an ordered-disjoint frame and therefore induces a composition-closed RCC5
+network.
+
+Use the following valuation.
+
+\begin{center}
+\begin{tabular}{ll@{\qquad}ll}
+\toprule
+Point & True atoms & Point & True atoms \\
+\midrule
+$x_1$ & $P$       & $x_2$ & $Q,S$ \\
+$v_1$ & $P,Q,R$   & $v_2$ & $P,Q,R$ \\
+$y_1$ & $P,Q$     & $y_2$ & $P,Q$ \\
+$z_1$ & $S$       & $z_2$ & none \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The $\DR$-neighbours of $z_1$ are exactly $x_1,v_1,y_1$, all of which satisfy $P$;
+thus $z_1\models U_P$. Since $x_1\not\models Q$, $z_1\not\models U_Q$. Symmetrically,
+$z_2\models U_Q$ and $z_2\not\models U_P$. Hence $y_i\models D$, witnessed by $z_i$,
+and $v_i\models\exists\PP.D$, witnessed by $y_i$.
+
+A direct evaluation of all 22 syntactic subformulas of $C_0$ gives
+\[
+  \mty(v_1)=\mty(v_2)=T.
+\]
+The modal conjuncts at root $v_1$ also force the relevant lower contexts into the demand
+closure:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Demand at $v_1$ & Unique witness \\
+\midrule
+$\exists\PP.D$ & $y_1$ \\
+$\exists\PO.R$ & $v_2$ \\
+$\exists\PO.S$ & $x_2$ \\
+$\exists\PPI.\top$ & $x_1$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Thus $v_2$ is a genuine blocked same-type occurrence, and $x_1,x_2$ are not irrelevant
+ambient points. There is no positive $\forall\PP$ formula in $T$, so $L_T=D$, already
+realized separately at $y_1$ and $y_2$.
+
+\subsection{No common fresh top}
+
+Assume that an extension contains a fresh $t$ with
+\[
+  v_1\,\PP\,t,\qquad v_2\,\PP\,t,\qquad t\models D.
+\]
+Choose $z$ such that $z\,\DR\,t$ and $z\models A$. Since $x_i\,\PP\,v_i\,\PP\,t$,
+transitivity gives $t\,\PPI\,x_i$. The singleton cell
+\[
+  \comp(\DR,\PPI)=\{\DR\}
+\]
+therefore forces $z\,\DR\,x_1$ and $z\,\DR\,x_2$.
+
+Boolean coherence at $z$ chooses one disjunct of $A$:
+
+\begin{itemize}
+  \item If $z\models\forall\DR.P$, then $P(x_2)$ is forced, contradicting
+        $x_2\models\neg P$.
+  \item If $z\models\forall\DR.Q$, then $Q(x_1)$ is forced, contradicting
+        $x_1\models\neg Q$.
+\end{itemize}
+
+No common $D$-top exists in any label-preserving model or certificate extension. The same
+argument applies if the $\DR$ witness for $t$ is represented by a kernel phase. Choosing
+the full type of one existing witness does not help: the obstruction is exposed while
+serving the nested demand $D$.
+
+\subsection{A bounded context refinement}
+
+For a source point $v$, define its strict lower type spectrum
+\[
+  \Delta_{<}(v)=\{\mty(x):x\,\PP\,v\}
+\]
+and block by
+\[
+  q(v)=(\mty(v),\Delta_{<}(v)).
+\]
+If $N$ is the number of full model types, at most $N2^N$ such contexts exist. With at most
+$m\leq|\cl(C_0)|$ demands per context, the gate-child budget is at most $mN2^N$,
+independent of occurrence count and model depth.
+
+Equality of lower spectra gives a local gluing lemma. Let a group have common context
+$(T,\Delta)$, choose a representative PP witness, and take a disjoint copy of a
+witness-closed source gadget rooted there. Attach the copied upper cone above every group
+down-cone, propagate copied disjointness through the forced $\PP\circ\DR$ cell, and assign
+$\PO$ to all residual cross pairs. Every lower point has a type already present below the
+representative, so all forced $\PP$ and $\DR$ universal-compatibility rectangles already
+hold in the source model. Residual $\PO$ pairs carry no universal obligations.
+
+This proves local frame preservation, cross-interface universal propagation, and internal
+existential fulfilment when the copied gadget is witness-closed. It does not yet give a
+finite certificate: the copied gadget may be infinite, and recursive context transitions
+can cycle. A plausible next step is to compile acyclic context states as externals and
+strict-PP strongly connected components as periodic kernels. The remaining proof must
+establish uniform $\PPI/\DR$ witness rows and the cross-kernel obligations. Target A should
+therefore be recorded as a bounded reduction, not as solved.
+
+\section{Target C: the selection circularity is distinct}
+
+\statusbox{darkamber}{Result: the natural tail-stabilize/add-witness iteration can diverge
+even with one kernel. The certificate only needs constancy on selected phases, permitting
+postselection of uniform witnesses and an anchored PO-completion.}
+
+\subsection{A counterexample to the finite fixed point}
+
+Use the concrete set-induced model
+\[
+  A_n=\{0,\ldots,n\},\qquad B_m=\{m+1\},\qquad n,m\in\mathbb{N}.
+\]
+Then $A_n\,\PP\,A_{n+1}$ and
+\[
+R(A_n,B_m)=
+\begin{cases}
+\DR,&n\leq m,\\
+\PPI,&n\geq m+1.
+\end{cases}
+\]
+Let
+\[
+  H=(\exists\PP.\top)\sqcap(\exists\DR.\top),\qquad
+  C_0=H\sqcap\forall\PP.H.
+\]
+Every $A_n$ satisfies $C_0$. A $\DR$ witness for $A_n$ is a $B_m$ with $m\geq n$.
+For fixed $B_m$, however, its row along the tower stabilizes only at $m+1$, after changing
+from $\DR$ to $\PPI$. Hence no $n,m$ satisfy both
+\[
+  n\geq m+1\qquad\text{and}\qquad m\geq n.
+\]
+
+The iteration ``select beyond current external thresholds, add the selected segment's
+witnesses, and reselect'' therefore chases
+\[
+  n<m<n'<m'<\cdots
+\]
+and has no finite fixed point. This is not a counterexample to finite certificates. A
+postselected $B_m$ can be constant on a one-phase segment and can be assigned a constant
+abstract row in the unfolding. The counterexample only refutes the unnecessarily strong
+eventual-tail extraction discipline.
+
+\subsection{Postselection and anchored PO-completion}
+
+Suppose a kernel segment $p_0,\ldots,p_{q-1}$ has already been selected. If a certified
+uniform witness $w$ satisfies
+\[
+  R(p_a,w)=r\quad\text{for every }a<q,
+\]
+then $w$ may be inserted after segment selection: this finite equality is exactly what the
+certificate function $K$ requires. No stabilization against the unused tail is needed.
+
+The following anchored PO-completion is a candidate local reduction. Partition uniform
+anchors by their required kernel relation into $U_0$ ($\PP$), $L_0$ ($\PPI$), and $D_0$
+($\DR$). In the external frame put
+\[
+  U=\uparrow U_0,\qquad L=\downarrow L_0,
+\]
+\[
+  D=\downarrow D_0\;\cup\;\{x:\exists u\in U,\;x\,\DR\,u\}.
+\]
+Assign the macro-kernel relation $\PP$ on $U$, $\PPI$ on $L$, $\DR$ on $D$, and $\PO$ on
+the residual points. Joint realization by any selected phase makes these sets compatible.
+The four singleton cells
+\[
+  \PP\circ\PP,\quad \PPI\circ\PPI,\quad
+  \PP\circ\DR,\quad \DR\circ\PPI
+\]
+show that every forced non-$\PO$ assignment agrees with the source model across all phases,
+provided the anchors and their closure remain row-conservative. Full model-type labels then discharge the corresponding \texttt{ke\_all} and
+\texttt{ek\_all} implications; residual $\PO$ rows are universally inert.
+
+The unresolved issue is demand closure of the new anchors. If that closure remains
+model-agreeing, the anchored completion applies recursively. Borrowed, non-model-agreeing
+edges from Target A may violate the row-conservative invariant. The residue of C is thus a
+finite closure problem closely related to A, rather than another simultaneous tower
+stabilization theorem.
+
+\subsection{Dependence on Target B}
+
+Target B does not imply Target C: the preceding counterexample has one kernel, so the
+cross-kernel rectangle problem is vacuous. Conversely, postselection of external witnesses
+says nothing about $Q$ or \texttt{kq\_all}. A clean extraction order is therefore:
+\begin{align*}
+  &\boxed{\text{select a finite kernel macro-frame using Target B}}\\[-0.15em]
+  &\hspace{0.48\linewidth}{+}\\[-0.15em]
+  &\boxed{\text{postselect uniform anchors and PO-complete using Target C}}.
+\end{align*}
+The remaining common dependency is a bounded, row-conservative demand closure.
+
+\section{Audit of the supplied probes}
+
+The fixed-seed outputs were reproduced with Python 3. The empirical Q2 total in
+\texttt{wp131} is
+\[
+  1562/1702=91.77\%,
+\]
+leaving 140 failing groups. The negative group phenomenon is robust, but several reported
+diagnostics or verdicts are incorrect.
+
+\subsection{The Q3 upper diagnostic is tautological}
+
+Q2 asks whether some source-model point $y$ is above the gate and every blocked member and
+also satisfies $D$. Q3's ``has upper'' predicate repeats the same condition after Q2 has
+failed. Its reported $0/140$ is therefore forced by program structure. If the $D(y)$ test is
+removed, 44 of the 140 failures have a common order-upper and 96 do not. The README's
+unqualified statement that none has ``any common upper at all'' is false.
+
+Only 12 of the 140 failures have a nonempty set of positive $\forall\PP$ bodies, whereas
+102 have a modal filler $D$. The sample primarily stresses completion of the new top's own
+demands, not aggregation of immediate $\PP$-universal bodies.
+
+\subsection{The witness-selection cycle counts are unsound}
+
+Parts C and F of \texttt{wp131} reselect a target separately for each blocked borrower
+after gate expansion. Some selected targets are not members of \texttt{nodes};
+\texttt{declared\_cycle} silently ignores those edges. Some $(a,D)$ groups also receive
+multiple targets even though the construction has one actual gate child. Redirecting all
+borrowers to that actual child yields eight cyclic instances under both repeat-free and
+``agree'' selection, rather than five and zero. The five originally reported repeat-free
+survivors themselves are genuine; the claim that the agree rule removes all cycles is not.
+
+\subsection{The \texttt{wp94} acceptance verdict is invalid}
+
+The checker suppresses \texttt{ee\_all} failures when a target filler is omitted by its
+budget truncation. Removing this exemption produces 33 violations in 29 of 3833 accepted
+instances. Moreover, nodes are pairs \texttt{(region,budget)} while the relation function
+ignores the budget. Distinct occurrences of the same region therefore receive off-diagonal
+$\EQ$ in 493 of 3833 instances, including occurrences with different labels. This violates
+strong equality. The result is consistent with the packet's later acknowledgement that the
+budget-truncated route was refuted, but \texttt{run\_probes.sh} still prints a misleading
+``ALL PASS'' verdict.
+
+\subsection{The \texttt{wp93} proof-plan check is too weak}
+
+Part C returns success merely when its set of used cells is nonempty. Nine non-singleton
+composition cells are restricted rather than universal and still require arguments. Part B
+exhausts ordered-disjoint structures only through four points; it is useful finite evidence,
+not by itself a universal proof. The general result should rest on the existing formal
+ordered-disjoint normal-form proof, not on this finite enumeration.
+
+\section{Revised work program}
+
+The following order maximizes the chance of turning the present findings into a certified
+extraction theorem.
+
+\begin{enumerate}
+  \item \textbf{Formalize the Target B transition ranks.} Prove that every non-loop
+        left- and right-composition transition along $\PP/\PPI$ strictly increases a
+        three-valued rank.
+  \item \textbf{Formalize row-limit stabilization.} Apply one-sided stabilization twice:
+        first to each row, then to the sequence of eventual row values.
+  \item \textbf{Formalize finite fusion.} Select equal-type recurrence segments in a finite
+        kernel order and derive constant cross-phase rectangles, \texttt{kq\_all}, and the
+        induced macro-frame.
+  \item \textbf{Install the Target A counterexample as a regression.} It should reject any
+        theorem claiming that type-only class tops always admit witness closure.
+  \item \textbf{Replace type-only blocking by strict down-spectrum contexts.} Prove the
+        local gluing and compatibility-rectangle lemmas, then analyze the finite context
+        transition graph.
+  \item \textbf{Compile context SCCs into kernels.} The outstanding obligations are uniform
+        $\PPI/\DR$ witnesses, \texttt{k\_ex}, and interaction with the Target B macro-frame.
+  \item \textbf{State C as row-conservative postselection.} Avoid the refuted tail-fixed-point
+        formulation; prove anchored PO-completion for a demand-closed uniform witness set.
+  \item \textbf{Repair the probes.} Separate source upper existence from $D$-carrying upper
+        existence, retain actual gate children in cycle checks, enforce strong equality, and
+        remove budget exemptions from obligation checks.
+\end{enumerate}
+
+\section{Conclusion}
+
+The packet's recommended Target A lead is not the solution: its local satisfiability claim
+is immediate, and the inference to a shareable class-top is false. The counterexample shows
+exactly what a type-only key forgets: modal demands of the new top can inspect the union of
+the lower contexts through forced $\DR$ rectangles.
+
+Target B, by contrast, has a short structural paper proof once the requested property is
+matched to the finite certificate. RCC5's finite transition ranks support a second
+stabilization over row limits, and a triangular finite fusion selects constant phase
+rectangles for all kernels simultaneously. Subject to the stated segment assumptions and
+the diagonal guard check, this removes the mathematical obstruction behind
+\texttt{kq\_all}.
+
+Target C is not another instance of B. Eventual stabilization against newly generated
+witnesses can diverge, but the certificate does not require it. Postselection of already
+uniform finite anchors, followed by ordered-disjoint PO-completion, isolates the remaining
+problem as row-conservative finite demand closure. That residue aligns naturally with the
+down-spectrum refinement suggested by Target A.
+
+Accordingly, the overall mixed-quadrant extraction and the associated fragment
+decidability result remain open. The present report closes one finite combinatorial
+subproblem, refutes two proposed extraction disciplines, and narrows the remaining work.
+
+\appendix
+\section{Executable artifacts in the accompanying package}
+
+The ZIP package contains three new dependency-free Python checks.
+
+\textbf{\texttt{target\_a\_class\_top\_counterexample.py}.}
+  Re-derives the RCC5 table from finite set semantics; checks the eight-point
+  ordered-disjoint frame, closure-type equality, demand witnesses, and the forced-cell
+  contradiction.
+
+\textbf{\texttt{target\_b\_finite\_rectangle\_lemma.py}.}
+  Checks the RCC5 transition ranks used in the proof and instantiates the interleaved-tower
+  counterexample to infinite tail rectangles together with a valid finite rectangle.
+
+\textbf{\texttt{target\_c\_selection\_circularity.py}.}
+  Checks the $A_n/B_m$ relation law and the incompatible inequalities behind the failed
+  tail-stabilize/add-witness fixed point.
+The original attack packet is included unmodified for context. The package README records
+commands, expected verdicts, file hashes, and the distinction between paper proofs,
+finite executable checks, and the supplied Lean-certified background.
+
+\section{Source basis and formal-status note}
+
+This report is a response to the supplied files \texttt{ATTACK\_PROMPT.md},
+\texttt{CERTIFICATE.md}, and the probes in \texttt{attack\_mixed\_quadrant.zip}. It does not
+claim to have inspected or recompiled the approximately 41,400-line Lean development.
+Statements described as ``certified'' are inherited from the packet's report; new findings
+in this document are paper-level arguments supported, where indicated, by finite executable
+checks. The finite checks do not substitute for Lean proofs of the general theorems.
+
+\end{document}

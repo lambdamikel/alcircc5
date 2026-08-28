@@ -40222,8 +40222,8 @@ open Classical in
     the same demands.
 
     ⚠ THE REPEAT-FREE ROUTE THIS PARAGRAPH ONCE PROPOSED IS **REFUTED** by
-    `wp131`: repeat-free selection leaves cycles (5 survivors in 1,040
-    instances), and in every survivor there were ZERO repeat-free candidates to
+    `wp131`: repeat-free selection leaves cycles (17 surviving instances in
+    1,040), and in every survivor there were ZERO repeat-free candidates to
     choose from, so the discipline could not even apply.  The replacement is
     §255 — prefer a witness the model already places PP-above the blocked node.
     This lemma stands as stated (a repeat IS removable); what it does not do is
@@ -40262,8 +40262,14 @@ theorem borrowed_edge_safe (hI : RCC5Interp I) (C0 : Concept) (v a : PtIdx I C0)
 §254.6 proposed repeat-free chain selection as the discipline that would keep the
 declared order acyclic.  `wp131` tested it and **refuted it**: on a sample
 conditioned to actually contain borrowed edges (mean 1.1–2.5 per instance, over
-1,040 instances in four model classes), greedy selection cycles in 6.2 / 6.9 /
-89.6 / 95.4 % of instances, and repeat-free selection leaves 5 survivors.
+1,040 instances in four model classes), greedy selection cycles in 8.8 / 6.9 /
+89.6 / 95.4 % of instances, and repeat-free selection leaves 17 survivors.
+
+⚠ THESE NUMBERS WERE CORRECTED on 2026-08-28 by a cold attack report, which
+found the probe reselected a borrowed target per BORROWER while the construction
+spawns ONE child per (gate-mate, demand); targets outside the node list were then
+silently dropped from the cycle check.  The original reading of 5 survivors was
+an UNDERCOUNT.  The qualitative conclusion is unchanged and in fact strengthened.
 
 Inspecting the survivors was the useful part.  FOUR OF FIVE have `z = v` — the
 gate-mate's witness IS the blocked node — and the fifth has `z` strictly below
@@ -40273,11 +40279,22 @@ discipline could not even be applied.
 The replacement the probe identified: **prefer a witness the model already places
 PP-ABOVE the blocked node.**  Then the declared edge AGREES with the model, and
 the acyclicity question does not arise at all — §255.2.  Under that rule
-`wp131` finds 0 cycles in all four classes.
+`wp131` finds 0 cycles in all four classes.  (The attack report reads this
+differently, at 8: it redirects every borrower to the child that GREEDY selection
+produced.  The rule stated here lets the single child per (gate-mate, demand) be
+chosen group-aware, which is a freedom the construction has; under that reading
+the corrected probe still reads 0.)
 
 HONEST RESIDUE, measured rather than assumed: agreement is not always available
 (76.1 / 79.1 / 99.4 / 99.8 % of edges), so a fallback is still needed.  132 of the
-1,040 instances genuinely used it and none cycled — evidence, not a theorem. -/
+1,040 instances genuinely used it and none cycled — evidence, not a theorem.
+
+⚠ AND THE WHOLE DISCIPLINE IS SUPERSEDED (2026-08-28).  An eight-point
+ordered-disjoint counterexample (reproduced independently) shows that when two
+same-type nodes are given a COMMON declared top, that top's own nested demand
+`∃DR.A` is forced by `comp(DR,PPI) = {DR}` into BOTH lower cones at once, which
+can disagree.  Agreement keeps the ORDER acyclic but does not make the shared top
+serviceable.  See §256. -/
 
 open Classical in
 /-- **§255.1 — AN AGREEING EDGE IS NOT A BORROWED EDGE AT ALL.**  When the
@@ -40320,7 +40337,7 @@ open Classical in
     {PP}` makes `w` a witness of `a` as well.  So an AGREEING candidate exists
     precisely in the configuration where the greedy one fails.
 
-    `wp131` Q1 measures this at 1005/1005 = 100%, as it must. -/
+    `wp131` Q1 measures this at 1014/1014 = 100%, as it must. -/
 theorem agreeing_witness_exists (hI : RCC5Interp I) (C0 : Concept)
     {a v : α} (ha : I.dom a) (hv : I.dom v) (hav : I.rho a v = pp)
     {D : Concept} (hD : Concept.ex pp D ∈ mty C0 I v) :
@@ -40340,8 +40357,10 @@ open Classical in
     WHAT REMAINS is not per-edge but per-GROUP: `a` spawns ONE child per demand,
     and several blocked nodes of `a`'s type may need DIFFERENT agreeing witnesses.
     `wp131` Q2 measures a single witness serving a whole group at 91.8%
-    (77.5 / 76.0 / 99.4 / 99.8 % by class), so this is a real 8.2% residue and
-    the next thing to attack. -/
+    (77.5 / 76.0 / 99.4 / 99.8 % by class), so this is a real 8.2% residue.
+
+    §256 records what a cold attack found about that residue: it is not merely a
+    covering question, and no bounded choice of top resolves it. -/
 theorem borrowed_edge_choosable (hI : RCC5Interp I) (C0 : Concept)
     {a v : α} (ha : I.dom a) (hv : I.dom v)
     {D : Concept} (hDa : Concept.ex pp D ∈ mty C0 I a)
@@ -40358,6 +40377,60 @@ theorem borrowed_edge_choosable (hI : RCC5Interp I) (C0 : Concept)
     obtain ⟨w, hw, haw, hDw⟩ := hsat
     refine ⟨w, hw, haw, mem_mty.mpr ⟨cl_ex hcl, hDw⟩, fun hwv => ?_⟩
     exact hav (rho_forced hI ha hv hw haw hwv (by decide))
+/-! #### §256 — WHY A SHARED TOP FAILS (cold attack, 2026-08-28)
+
+§255 fixed the ORDER: a model-agreeing edge cannot create a cycle.  It did not
+make a shared top SERVICEABLE, and an eight-point ordered-disjoint counterexample
+— reproduced here independently from its prose — shows the difference matters.
+
+The shape.  Two same-type occurrences `v₁, v₂`, each with a lower cone `xᵢ PP vᵢ`,
+and a demand `∃PP.D` where `D = ∃DR.(∀DR.P ⊔ ∀DR.Q)`.  Give them a COMMON top `t`.
+Then `xᵢ PP vᵢ PP t` forces `xᵢ PP t`, so `t PPI xᵢ`; and `t`'s own `DR`-witness `z`
+is dragged onto BOTH cones by `comp(DR,PPI) = {DR}`.  Whichever disjunct `z`
+takes, it now constrains a cone that was never meant to see it: `∀DR.P` forces
+`P(x₂)` and `∀DR.Q` forces `Q(x₁)`, and the two cones disagree.
+
+**So the obstruction is not the edge but what the shared top must then serve**,
+and it is `DR`'s downward closure doing it — the same force as `dr_downward_closed`
+and the `ltNotDj` repair of §107.  No choice of top helps: the argument only uses
+that the top is above both.  In particular the "witness of a maximal member"
+variant is refuted too.
+
+What survives: blocking by model type alone is TOO COARSE.  The attack's proposed
+replacement is to block by `(mty v, {mty x : x PP v})` — type plus strict lower
+type spectrum — bounding contexts by `N·2^N` for `N` types.  That is a bounded
+reduction, not a solution. -/
+
+/-- **§256.1 — A SHARED TOP DRAGS ITS `DR`-WITNESS ONTO EVERY LOWER CONE.**  The
+    reusable content of the counterexample, with no reference to the eight-point
+    model: two applications of `comp(PP,PP) = {PP}` and `comp(DR,PPI) = {DR}`. -/
+theorem shared_top_reaches_cone (hI : RCC5Interp I) {x v t z : α}
+    (hx : I.dom x) (hv : I.dom v) (ht : I.dom t) (hz : I.dom z)
+    (hxv : I.rho x v = pp) (hvt : I.rho v t = pp) (htz : I.rho t z = dr) :
+    I.rho z x = dr := by
+  have hxt : I.rho x t = pp := rho_forced hI hx ht hv hxv hvt (by decide)
+  have htx : I.rho t x = ppi := by
+    have h2 := hI.conv_ x t hx ht
+    rw [hxt] at h2; rw [h2]; rfl
+  have hzt : I.rho z t = dr := by
+    have h2 := hI.conv_ t z ht hz
+    rw [htz] at h2; rw [h2]; rfl
+  exact rho_forced hI hz hx ht hzt htx (by decide)
+
+open Classical in
+/-- **§256.2 — SO A UNIVERSAL AT THAT WITNESS REACHES BOTH CONES.**  This is the
+    contradiction: `z` satisfies one `∀DR` body, and that body is then forced on
+    the lower cone of EVERY node under the shared top — including cones that were
+    never in the same type class as each other. -/
+theorem shared_top_forces_both_cones (hI : RCC5Interp I) {x₁ v₁ x₂ v₂ t z : α}
+    (hx₁ : I.dom x₁) (hv₁ : I.dom v₁) (hx₂ : I.dom x₂) (hv₂ : I.dom v₂)
+    (ht : I.dom t) (hz : I.dom z)
+    (h₁ : I.rho x₁ v₁ = pp) (h₂ : I.rho v₁ t = pp)
+    (h₃ : I.rho x₂ v₂ = pp) (h₄ : I.rho v₂ t = pp)
+    (htz : I.rho t z = dr) {E : Concept} (hE : sat I z (Concept.all dr E)) :
+    sat I x₁ E ∧ sat I x₂ E :=
+  ⟨hE _ hx₁ (shared_top_reaches_cone hI hx₁ hv₁ ht hz h₁ h₂ htz),
+   hE _ hx₂ (shared_top_reaches_cone hI hx₂ hv₂ ht hz h₃ h₄ htz)⟩
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

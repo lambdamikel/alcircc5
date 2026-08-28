@@ -15460,3 +15460,83 @@ the node bound), or show the group can be split by type refinement.
 
 Build: 41,441 lines, 2,097 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §256 — the cold attack on the mixed quadrant (2026-08-28)
+
+The attack packet of §255 was answered. Report and probes:
+`papers/attack_mixed_quadrant/mixed_quadrant_attack_report_package/`. Everything
+below was reproduced independently before being accepted — their probes were run,
+and the two load-bearing arguments rebuilt from the report's prose rather than
+from their code.
+
+**TARGET A — the class-top lead is REFUTED, and so is the variant I had derived.**
+An eight-point ordered-disjoint model with `D = ∃DR.(∀DR.P ⊔ ∀DR.Q)`, two
+same-type occurrences `v₁, v₂` and lower cones `xᵢ PP vᵢ`. Verified independently:
+the frame is composition-closed, `mty(v₁) = mty(v₂)`, and `T` contains no positive
+`∀PP` formula — so the "is the class-top label satisfiable?" question I posed is
+trivially YES (any witness realizes it) and *too weak to be the question*.
+
+The real obstruction: give the group a COMMON top `t`; then `xᵢ PP vᵢ PP t` forces
+`xᵢ PP t`, so `t PPI xᵢ`, and `t`'s own `DR`-witness is dragged onto BOTH cones by
+`comp(DR,PPI) = {DR}`. Whichever disjunct of `A` it takes contradicts one cone.
+**Not the edge — what the shared top must then serve.** Certified as §256.1/§256.2
+(both AXIOM-FREE), which is the reusable content minus the eight points.
+
+This also kills the "witness of a maximal member" variant I had derived and was
+about to formalize: the argument uses only that the top is above both, and
+declaring the edge makes the witness a common top *in the declared frame*.
+Testing before formalizing saved a session.
+
+Their replacement: block by `(mty v, {mty x : x PP v})` — type plus strict lower
+type spectrum, `N·2^N` contexts. Recorded as a bounded reduction, not a solution.
+Note this is the same shape as `wp39`'s recorded lesson (coarse W2′ is false,
+repairable by a bounded live-neighbourhood refinement).
+
+**TARGET B — SOLVED at paper level, and my framing was the obstacle.** The packet
+asked for TAIL × TAIL constancy of cross-kernel rows. That is FALSE, and they give
+a clean counterexample (`ℤ × {0,1}`, `(n,u) < (m,v)` iff `n < m`, empty
+disjointness — verified composition-closed here; every product of cofinal tails
+contains both PP and PPI). But the certificate only reads FINITE segments, and
+finite constant rectangles exist arbitrarily late. Their proof: the RCC5
+transition ranks (`{DR,PP} < {PO,EQ} < {PPI}` for PP-towers — verified, and the
+same ranks already certified in this file as `external_stabilizes`), applied
+TWICE — once per row, then to the sequence of eventual row values — then a
+triangular fusion over the finite tower list. **This removes the mathematical
+obstruction behind `kq_all`, open since E2b.**
+
+**TARGET C** — the tail-stabilize/add-witness iteration genuinely diverges (their
+one-kernel counterexample: `Aₙ = {0..n}`, `Bₘ = {m+1}`; a DR-witness needs `n ≤ m`
+while stability needs `n ≥ m+1`). Their fix — postselect uniform anchors, then
+anchored PO-completion — leaves a residue they identify as row-conservative demand
+closure, aligned with A rather than with B.
+
+**AUDIT OF OUR OWN PROBES — three findings, two of them ours to own.**
+
+1. **`wp131`'s Q3 was tautological.** Its "has upper" predicate repeated Q2's own
+   condition after Q2 had failed, so the `0/140` was forced by program structure.
+   The README's "no common upper at all" was VACUOUS. Corrected (D-test dropped):
+   **44/140** failing groups do have a common order-upper — none carrying the
+   demand, which is what Q2 already said. The conclusion survives; the headline
+   number did not.
+2. **`wp131`'s cycle counts were an undercount.** It reselected a target per
+   BORROWER while the construction spawns one child per (gate-mate, demand), and
+   targets outside the node list were silently dropped. Corrected: repeat-free
+   leaves **17** surviving instances, not 5. Their claim that the agree rule also
+   fails at 8 does NOT reproduce: they redirect every borrower to the child
+   *greedy* selection produced, whereas the rule as stated chooses the single
+   child group-aware. Under that reading the corrected probe still reads **0**.
+3. **`wp94` and `wp93` are weak** (budget-exempted `ee_all` failures; off-diagonal
+   EQ between distinct occurrences of one region; a part-C success test that is
+   `len(used) > 0`). Both predate this work and were shipped in the packet with an
+   "ALL PASS" banner. Accepted.
+
+Also accepted: `CERTIFICATE.md` omitted `kq_all`'s `k ≠ k'` guard. The guard IS in
+the Lean; the packet document was wrong. Fixed.
+
+**NET.** One open problem closed at paper level (B), two extraction disciplines
+refuted (the class top; repeat-free selection), and the residue narrowed to a
+bounded context refinement plus row-conservative demand closure. The mixed
+quadrant, and with it the fragment, remains OPEN.
+
+Build: 41,498 lines, 2,099 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
