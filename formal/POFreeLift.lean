@@ -41598,6 +41598,92 @@ theorem borrowed_dr_ok (hI : RCC5Interp I) (C0 : Concept) {a v z x y : α}
     E ∈ mty C0 I y :=
   borrowed_dr_cone hI C0 ha hz hx hy haz hyz hxv
     (hspec_of_dkey C0 I hkey) hall
+/-! #### §265 — ROUND 2 OF THE COLD ATTACK: D1 AND D2 ARE BOTH FALSE
+
+Both were refuted with exact finite countermodels, reproduced independently here.
+
+**D2 (a safe existing witness need not exist).**  Five points: `a = {0,1}`,
+`v = {2,3}`, `za = {0,1,4}`, `zv = {2,3,5}`, `p = {0,2}`, with
+`C₀ = ∃DR.Q ⊓ ∃PP.P ⊓ ∃PO.R`.  Then `mty a = mty v`, and BOTH CONES ARE EMPTY, so
+the down-spectrum key still merges them.  `v`'s demand `∃PP.P` has exactly one
+gate-mate witness, `za` — and `ρ(v,za) = DR`, so the declared `v < za` violates
+`ltNotDj`.  **The obstruction is HORIZONTAL, and the key only looks downward.**
+
+**D1 (per-edge safety does not compose).**  Fourteen principal ideals; two blocked
+groups whose fallbacks are both `PO` — so `ltNotDj` is satisfied and each edge is
+individually safe — yet
+`v₁ <(declared) z₁ <(model) v₂ <(declared) z₂ <(model) v₁`.
+Per-edge safety removes self-loops and says nothing about longer cycles.
+
+**CONSEQUENCE FOR §§255 AND 264.**  Nothing proved there is wrong, but its SCOPE
+was optimistic.  `borrowed_edge_choosable` is per-edge and D1 shows per-edge does
+not compose; `borrowed_dr_ok` assumes the declared `DR` edge is legal, and D2 shows
+the witness may leave no legal choice.  Neither theorem changes; the construction
+built on them does.
+
+**THE SYNTHESIS, which is the report's real contribution.**  Refine the key by
+witness incidence against a POOL `W` fixed in advance.  Then sharing a key forces
+the borrowed edge to agree with the model outright — §265.1 — and D1 and D2 both
+dissolve, because the declared order embeds in the model's `PP` (§255.2).  The
+cost is `N·2^N·2^|W|`; the catch is circularity, since demand-closing `W` can add
+witnesses and change the key.  **So D1, D2 and Target E collapse into ONE
+question: does a finite demand-closed witness pool exist?**
+
+This is the project's recurring shape for the fifth time: a POINTWISE discipline
+refuted, with the JOINT version as the candidate repair. -/
+
+open Classical in
+/-- **§265.1 — THE WITNESS-INCIDENCE KEY.**  `dkey` plus which members of a fixed
+    pool the node is `PP`-below. -/
+noncomputable def wkey (C0 : Concept) (I : Interp α) (W : List α) (x : α) :
+    (List Concept × List (List Concept)) × List α :=
+  (dkey C0 I x, W.filter (fun w => decide (I.rho x w = pp)))
+
+open Classical in
+/-- **§265.2 — SHARING IT FORCES AGREEMENT.**  If the gate-mate's witness lies in
+    the pool, the blocked node is `PP`-below it in the MODEL — so the borrowed
+    edge is not borrowed at all, and both D1 and D2 evaporate. -/
+theorem wkey_agrees (C0 : Concept) (I : Interp α) (W : List α) {a v z : α}
+    (h : wkey C0 I W a = wkey C0 I W v) (hz : z ∈ W) (haz : I.rho a z = pp) :
+    I.rho v z = pp := by
+  have hf : W.filter (fun w => decide (I.rho a w = pp))
+      = W.filter (fun w => decide (I.rho v w = pp)) := congrArg Prod.snd h
+  have hmem : z ∈ W.filter (fun w => decide (I.rho a w = pp)) :=
+    List.mem_filter.mpr ⟨hz, decide_eq_true haz⟩
+  rw [hf] at hmem
+  exact of_decide_eq_true (List.mem_filter.mp hmem).2
+
+open Classical in
+/-- **§265.3 — D2, UNDER THE POOL KEY.**  The declared edge cannot be `DR`, so
+    `ltNotDj` is safe: `I.rho` is a function and `pp ≠ dr`. -/
+theorem wkey_not_dr (C0 : Concept) (I : Interp α) (W : List α) {a v z : α}
+    (h : wkey C0 I W a = wkey C0 I W v) (hz : z ∈ W) (haz : I.rho a z = pp) :
+    I.rho v z ≠ dr := by
+  rw [wkey_agrees C0 I W h hz haz]; decide
+
+open Classical in
+/-- **§265.4 — D1, UNDER THE POOL KEY.**  Every declared edge lies inside the
+    model's `PP`, so the whole declared order does, and irreflexivity is free by
+    §255.2 — no dependency-graph argument needed. -/
+theorem wkey_declared_sub_model (C0 : Concept) (I : Interp α) (W : List α)
+    (R : α → α → Prop)
+    (hR : ∀ v z, R v z → ∃ a, wkey C0 I W a = wkey C0 I W v ∧ z ∈ W ∧
+      I.rho a z = pp) :
+    ∀ v z, R v z → I.rho v z = pp := by
+  intro v z hvz
+  obtain ⟨a, hk, hz, haz⟩ := hR v z hvz
+  exact wkey_agrees C0 I W hk hz haz
+
+open Classical in
+/-- And hence acyclicity, with no further hypothesis: a relation contained in the
+    model's `PP` is irreflexive. -/
+theorem wkey_acyclic (hI : RCC5Interp I) (C0 : Concept) (W : List α)
+    (R : α → α → Prop) (hdom : ∀ v z, R v z → I.dom v)
+    (hR : ∀ v z, R v z → ∃ a, wkey C0 I W a = wkey C0 I W v ∧ z ∈ W ∧
+      I.rho a z = pp) :
+    ∀ x, ¬ R x x :=
+  model_contained_irrefl hI R
+    (fun x y hxy => ⟨hdom x y hxy, wkey_declared_sub_model C0 I W R hR x y hxy⟩)
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

@@ -15825,3 +15825,56 @@ reindex, `encodeMT`/`hcompl`, final `MergedExtractionAt`).
 
 Build: 42,672 lines, 2,153 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §265 — cold attack round 2: D1 and D2 are both FALSE
+
+Both refuted with exact finite countermodels, reproduced independently here from
+the report's printed data rather than from its code.
+
+**D2.** Five points, `C₀ = ∃DR.Q ⊓ ∃PP.P ⊓ ∃PO.R`. `mty a = mty v` and **both
+cones are empty**, so the down-spectrum key still merges them; `v`'s demand
+`∃PP.P` has exactly one gate-mate witness, and it is `DR` from `v`, so the
+declared edge violates `ltNotDj`. **The obstruction is horizontal and the key only
+looks downward.** The report's accompanying point is decisive: the candidate set is
+a SINGLETON, so no better existing-witness selector can repair it.
+
+**D1.** Fourteen principal ideals; two blocked groups whose fallbacks are both
+`PO` — so `ltNotDj` holds and each edge is individually safe — yet
+`v₁ <(declared) z₁ <(model) v₂ <(declared) z₂ <(model) v₁`. Per-edge safety
+removes self-loops and says nothing about longer cycles.
+
+**What this does to §§255 and 264.** Nothing proved there is wrong; its SCOPE was
+optimistic. `borrowed_edge_choosable` is per-edge, and D1 shows per-edge does not
+compose. `borrowed_dr_ok` assumes the declared `DR` edge is legal, and D2 shows the
+witness may leave no legal choice. The theorems stand; the construction built on
+them does not. `wp131`'s docstring now carries this scope, since that probe checks
+acyclicity and never checked `ltNotDj` at all — a defect their audit found.
+
+**§265.1–4 — the synthesis, certified.** The report's real contribution is that
+the three open problems are one. Refine the key by witness incidence against a POOL
+`W` fixed in advance: `wkey`. Then sharing a key forces the borrowed edge to agree
+with the model outright (`wkey_agrees`), so it cannot be `DR` (`wkey_not_dr`, D2
+gone) and the declared order embeds in the model's `PP`, making irreflexivity free
+(`wkey_acyclic`, D1 gone — no dependency-graph argument needed). Cost
+`N·2^N·2^|W|`.
+
+**So the whole remaining question is: does a finite demand-closed witness pool
+exist?** That is Target E, and D1 and D2 now reduce to it.
+
+**Pattern note.** This is the project's recurring shape for the FIFTH time: a
+POINTWISE discipline refuted, with the JOINT version as the candidate repair
+(cf. the 10th review's `(Q4)`→`(Q4′)` joint steering, whose ledger entry already
+called it "the project's single recurring shape, 4th incarnation").
+
+**Their audit of our probes, accepted:** `wp131` never checks `ltNotDj`;
+`wp132`'s `fresh_sat` returned `True` for every non-`DR` universal, which is wrong
+for `∀EQ` under strong EQ (permissive — could mask a failure) and treated even
+trivially satisfiable `∃EQ` as unmet; and `run_probes.sh` masked non-zero exits.
+All three fixed. `wp132`'s headline is unaffected (its generator emits only `∀DR`),
+and it still reads control 810 / treatment 0.
+
+**Their one caveat about us is fair:** we shipped no Lean sources, so they could
+not rebuild our certification claims. A future packet should include the file.
+
+Build: 42,751 lines, 2,158 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

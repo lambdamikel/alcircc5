@@ -1,0 +1,790 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=27mm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,tabularx,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\definecolor{navy}{HTML}{17365D}
+\definecolor{bluegray}{HTML}{506784}
+\definecolor{lightblue}{HTML}{EAF1F8}
+\definecolor{lightgreen}{HTML}{EAF5EE}
+\definecolor{lightred}{HTML}{FBEDEE}
+\definecolor{lightamber}{HTML}{FFF5DC}
+\definecolor{darkgreen}{HTML}{21633B}
+\definecolor{darkred}{HTML}{8A2633}
+\definecolor{darkamber}{HTML}{77550B}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=navy,
+  urlcolor=bluegray,
+  pdftitle={Cold Attack, Round 2: Borrowed-Edge Countermodels and the Anchor Residue},
+  pdfsubject={Round-2 attack on the mixed quadrant of the forall-PO-free ALCI-RCC5 fragment}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{bluegray}Mixed quadrant, round 2}
+\fancyhead[R]{\small\color{bluegray}Independent technical attack}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries\color{navy}}{\thesection}{0.65em}{}
+\titleformat{\subsection}{\large\bfseries\color{navy}}{\thesubsection}{0.65em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{bluegray}}{\thesubsubsection}{0.65em}{}
+\setlist[itemize]{leftmargin=1.6em,itemsep=0.25em,topsep=0.35em}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=0.25em,topsep=0.35em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\allowdisplaybreaks
+
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\mty}{\operatorname{mty}}
+\newcommand{\comp}{\operatorname{comp}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\dkey}{\operatorname{dkey}}
+\newcommand{\statusbox}[2]{%
+  \begin{center}
+  \fcolorbox{#1}{#1!8}{\begin{minipage}{0.91\linewidth}\textbf{#2}\end{minipage}}
+  \end{center}}
+\newcommand{\evP}{\textbf{[P]}}
+\newcommand{\evX}{\textbf{[X]}}
+\newcommand{\evS}{\textbf{[S]}}
+\newcommand{\evR}{\textbf{[R]}}
+\newcommand{\evO}{\textbf{[O]}}
+
+\begin{document}
+
+\pagenumbering{gobble}
+\begin{titlepage}
+\thispagestyle{empty}
+\vspace*{1.35cm}
+{\color{navy}\rule{\linewidth}{1.2pt}}\\[1.0cm]
+{\huge\bfseries\color{navy}Cold Attack, Round 2\\[0.24cm]
+Borrowed-Edge Countermodels\\[0.12cm]
+and the Anchor Residue\par}
+\vspace{0.65cm}
+{\Large\color{bluegray}The mixed quadrant of the $\forall PO$-free fragment of
+$\mathcal{ALCI}_{\mathrm{RCC5}}$\par}
+\vspace{1.15cm}
+
+\begin{center}
+\begin{tabular}{rl}
+\textbf{Status:} & Independent technical attack, not a referee report \\
+\textbf{Input packet:} & \texttt{attack\_mixed\_quadrant\_r2.zip} \\
+\textbf{Report date:} & 2026-08-28 \\
+\textbf{Evidence:} & Exact finite models, symbolic arguments, and executable checks
+\end{tabular}
+\end{center}
+
+\vfill
+\noindent\fcolorbox{darkred}{lightred}{%
+\begin{minipage}{0.94\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+\textbf{Principal result.}
+Both open halves of Target D are false for the current borrowed-edge discipline.
+There is a refined-key blocked node whose gate-mate has no witness avoiding
+disjointness (D2), and there is a separate exact-key construction in which every
+fallback pair is $\PO$ but two groups form a directed cycle (D1). Target E splits:
+finite keyed node generation terminates, but the current gate-mate borrowing rule is
+not anchor-compatible and need not extend to a valid kernel frame.
+\end{minipage}}
+\par
+\vspace{0.85cm}
+{\color{navy}\rule{\linewidth}{1.2pt}}
+\end{titlepage}
+
+\pagenumbering{roman}
+\begin{abstract}
+The round-2 packet reports substantial progress since the first attack: finite
+cross-kernel fusion is now Lean-formalized, and the down-spectrum gate proposed in
+round 1 has been integrated. The remaining construction borrows a gate-mate's
+witness for a blocked node. This report refutes both safety claims needed by that
+discipline. First, a seven-point mixed set model gives an actual refined-key blocked
+node for which the gate-mate's unique $\PP$ witness is $\DR$ from the borrower; the
+declared order stays acyclic but violates \texttt{ltNotDj}. Second, a 14-point set
+model gives two exact-key fallback groups whose borrowed pairs are all $\PO$ and
+individually safe, yet model-$\PP$ return paths make the declared order cyclic.
+
+For Target E, the combinatorial node closure does terminate after at most one
+addition per key-demand pair. That finite external fixed point is not enough: a
+symmetric two-component model shows that gate-mate borrowing can declare two anchors
+disjoint although a selected kernel point lies below both, so no compatible kernel
+placement exists. The report also audits the supplied probes. In particular,
+\texttt{wp131} still uses the old type-only gate, aliases children across roles, and
+confounds agreement with repeat-free selection; \texttt{wp132}'s fresh-point
+evaluator is not a sound satisfiability test. Candidate repairs are isolated, but no
+complete extraction or decidability theorem is claimed.
+\end{abstract}
+
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Executive verdict and evidence ledger}
+
+The input packet distinguishes two borrowed-edge obligations and one anchor-closure
+question. The cold attack gives the following answers.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.20\linewidth}X>{\raggedright\arraybackslash}p{0.23\linewidth}}
+\toprule
+Question & Finding & Status \\
+\midrule
+D1: global acyclicity & False for the local agreement-first/fallback discipline.
+Two individually safe $\PO$ fallback groups can alternate into a cycle. & Exact finite
+set-model counterexample \evX; a globally coordinated assignment remains possible. \\
+D2: safe existing witness & False. At the exact down-spectrum key, the gate-mate's
+only relevant witness can be $\DR$ from the blocked node. & Exact mixed
+counterexample \evX; independent exhaustive core search. \\
+E: finite closure & Pure keyed node generation terminates with the advertised finite
+bound. & Combinatorial lemma \evP/\evX, essentially the packet's abstract gate theorem. \\
+E: valid placement & The current gate-mate borrowing policy can produce a finite
+external frame that has no compatible kernel extension. & Exact finite counterexample
+\evX; general anchor-compatible completion remains open \evO. \\
+Probe evidence & Several headline measurements do not test the stated construction,
+and one wrapper masks failures. & Deterministic audit \evX; randomized counts remain
+measurements only \evR. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Evidence levels}
+
+The tags used throughout are deliberately strict.
+
+\begin{itemize}
+  \item \evP{} is a theorem reported by the packet as Lean-certified. The archive does
+        not contain the Lean source, theorem statements, build manifest, or compiler
+        output, so it was not independently rebuilt here.
+  \item \evX{} is an exact finite model or finite combinatorial argument accompanied by
+        a deterministic executable checker. It is mathematical evidence, but not a Lean
+        proof.
+  \item \evS{} is a symbolic infinite family, with bounded executable regression checks.
+  \item \evR{} is a randomized finite sweep. It can find counterexamples but cannot prove
+        a universal statement.
+  \item \evO{} is an open construction or candidate reduction.
+\end{itemize}
+
+The packet reports a roughly 42,700-line Lean development with no sorries or warnings
+and axioms \texttt{propext}, \texttt{Quot.sound}, and
+\texttt{Classical.choice}. Those claims are treated as premises, not as independently
+reviewed results.
+
+\subsection{Continuity with round 1}
+
+Round 1's finite-rectangle result is reported formalized end to end as
+\texttt{atom\_seq\_stabilizes}, \texttt{two\_tower\_rectangle\_gen},
+\texttt{finite\_fusion\_recurrent}, and \texttt{fused\_kq\_all}. The packet also
+reports that the type-only common-top counterexample was accepted and that the
+down-spectrum key and local cone-transfer lemmas were certified. This report does not
+re-derive those results. It attacks the new claims that are logically downstream from
+them.
+
+\section{Exact setting and the quantifiers at issue}
+
+Let $\rho$ be an atomic RCC5 model on a finite node set $V$. Strong equality is used:
+$\rho(x,y)=\EQ$ exactly when $x=y$. The convention is
+
+\[
+  \rho(x,y)=\PP \quad\Longleftrightarrow\quad x\text{ is a proper part of }y.
+\]
+
+The refined gate key is
+\[
+  q(v)=\left(\mty(v),\;\{\mty(x):\rho(x,v)=\PP\}\right).
+\]
+The gate retains the first node of each key. If $v$ is blocked and $a$ is its retained
+gate-mate, then $q(a)=q(v)$. For a nonpersistent demand
+$\delta=\exists\PP.D\in\mty(v)$, the current construction chooses one gate-mate
+witness $z$ with
+\[
+  \rho(a,z)=\PP,\qquad z\models D,
+\]
+and declares a borrowed order edge $v<z$.
+
+The declared order seed is
+\[
+  L=\{(x,y)\in V^2:\rho(x,y)=\PP\}\cup B,
+\]
+where $B$ is the set of borrowed edges. The frame must be ordered-disjoint:
+
+\begin{itemize}
+  \item the transitive closure $L^+$ is irreflexive;
+  \item \texttt{disj} is symmetric, irreflexive, and downward closed in both
+        coordinates;
+  \item $x<y$ implies $\neg\operatorname{disj}(x,y)$.
+\end{itemize}
+
+The packet's certified dichotomy concerns one edge: if a chosen $z$ lies below $v$,
+then $a$ lies below $v$, where an agreeing witness exists. This yields a local choice
+with $\rho(z,v)\neq\PP$. It does not settle either of the following:
+
+\begin{description}
+  \item[D1.] Do several locally safe borrowed edges keep $L^+$ irreflexive?
+  \item[D2.] In the non-agreeing case, can $z$ always be chosen with
+        $\rho(v,z)\neq\DR$ as well?
+\end{description}
+
+These are independent. D2 is a pairwise compatibility condition. D1 is a global graph
+condition, even if every borrowed pair is $\PO$ and hence already satisfies D2.
+
+\section{Target D2: the safe existing witness need not exist}
+
+\statusbox{darkred}{Result \evX: D2 is false at the exact refined key. The failure
+uses a genuinely mixed, $\forall PO$-free input, an actual blocking run, a
+nonpersistent demand, a unique gate-mate witness, and equal nonempty lower spectra.}
+
+\subsection{The seven-point mixed model}
+
+Use ordinary nonempty-set RCC5 semantics on the following points. Atomic propositions
+not displayed are false.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabular}{ccl}
+\toprule
+Point & Region & True atoms \\
+\midrule
+$a_0$ & $\{0\}$ & --- \\
+$a$   & $\{0,1\}$ & $Q$ \\
+$z$   & $\{0,1,2\}$ & $P$ \\
+$v_0$ & $\{3\}$ & --- \\
+$v$   & $\{3,4\}$ & $Q$ \\
+$w$   & $\{3,4,5\}$ & $P$ \\
+$p$   & $\{1,4\}$ & $R$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Let
+\[
+  C_0=(\exists\DR.Q)\sqcap(\exists\PP.P)\sqcap(\exists\PO.R).
+\]
+It contains no universal $\PO$ formula and lies in the mixed existential quadrant.
+Both $a$ and $v$ satisfy $C_0$:
+
+\begin{itemize}
+  \item they are each other's unique $\DR.Q$ witnesses;
+  \item $z$ is the unique $\PP.P$ witness of $a$, and $w$ is the unique
+        $\PP.P$ witness of $v$;
+  \item $p$ is a $\PO.R$ witness of both.
+\end{itemize}
+
+The component swap
+\[
+  a_0\leftrightarrow v_0,\qquad a\leftrightarrow v,\qquad z\leftrightarrow w,
+  \qquad p\leftrightarrow p
+\]
+is a valuation-preserving automorphism. Therefore
+$\mty(a)=\mty(v)$ over $\cl(C_0)$. Moreover, the strict lower cones of $a$ and $v$
+are $\{a_0\}$ and $\{v_0\}$, and $a_0,v_0$ have the same closure type. Hence
+\[
+  q(a)=q(v),
+\]
+with equal lower spectra of cardinality one. The example does not rely on an empty
+spectrum.
+
+\subsection{The actual gate run}
+
+Start with the duplicate-free singleton seed $[a]$. Its three existential demands have
+unique witnesses, so the first extension adds
+\[
+  v\quad(\DR.Q),\qquad z\quad(\PP.P),\qquad p\quad(\PO.R).
+\]
+The refined gate scans $[a,v,z,p]$, keeps $a$ first, and blocks $v$ because
+$q(a)=q(v)$. The $\PP.P$ demand is not kernel-routed: its persistence guard
+\[
+  \forall\PP.(\exists\PP.P)
+\]
+is false at $a$ because the maximal point $z$ has no $\PP.P$ successor.
+
+The complete gate-mate candidate set is the singleton
+\[
+  \{y:\rho(a,y)=\PP\text{ and }y\models P\}=\{z\}.
+\]
+But the two components are disjoint, so
+\[
+  \rho(v,z)=\rho(z,v)=\DR.
+\]
+Consequently
+\[
+  \{y:\rho(a,y)=\PP,\ y\models P,\ \rho(y,v)\neq\PP,
+        \ \rho(v,y)\neq\DR\}=\varnothing.
+\]
+
+Declaring $v<z$ remains acyclic in this small model, which isolates D2 from D1.
+However, inherited disjointness contains $v\mathrel{\operatorname{disj}}z$, so the
+frame clause $v<z\Rightarrow\neg\operatorname{disj}(v,z)$ fails immediately.
+
+\subsection{What the counterexample rules out}
+
+The witness set is a singleton. Greedy, maximal, group-aware, and any other selection
+rule restricted to the gate-mate's existing witnesses make the same choice. Reversing
+which twin occurs first fails symmetrically. Thus the counterexample refutes the
+universal D2 existence claim, not merely one implementation of selection.
+
+It does \emph{not} refute expanding $v$ and using its own witness $w$, adding a fresh
+class gadget, refining the key with additional incidence information, or changing the
+global blocking discipline. Those alternatives need new bounds and certificate proofs.
+The packaged exhaustive probe also finds a four-point network-level core and checks that
+no smaller domain occurs within universes of size at most three; this bounded minimality
+claim is executable evidence, not an unbounded theorem.
+
+\section{Target D1: locally safe fallback edges can cycle globally}
+
+\statusbox{darkred}{Result \evX: D1 is false as a local-to-global implication.
+There is an exact down-spectrum-gated phase-1 run with two fallback groups, no common
+model-agreeing witness in either group, and every fallback pair $\PO$, yet the declared
+order contains a directed cycle.}
+
+\subsection{A 14-point principal-ideal set model}
+
+Let
+\[
+  \tau=(P\sqcup\neg P)\sqcap(Q\sqcup\neg Q),\qquad
+  D=\exists\PP.\tau,\qquad C_0=D\sqcap\tau.
+\]
+There are no universal modalities. The formula is therefore $\forall PO$-free.
+
+Use four minimal points $b_{00},b_{01},b_{10},b_{11}$ below both $a_1,a_2$, and the
+non-transitive generating order
+\[
+  a_1<z_1<v_2<t_2,\qquad
+  a_2<z_2<v_1<t_1,\qquad
+  a_2<z_2<v_{1b}<t_{1b}.
+\]
+Every named point is interpreted as its principal ideal, giving the following explicit
+regions and no unintended inclusions.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.13}
+\begin{tabularx}{\linewidth}{>{\bfseries}c X >{\bfseries}c X}
+\toprule
+Point & Region & Point & Region \\
+\midrule
+$b_{00}$ & $\{0\}$ & $b_{01}$ & $\{1\}$ \\
+$b_{10}$ & $\{2\}$ & $b_{11}$ & $\{3\}$ \\
+$a_1$ & $\{0,1,2,3,4\}$ & $a_2$ & $\{0,1,2,3,5\}$ \\
+$z_1$ & $\{0,1,2,3,4,6\}$ & $z_2$ & $\{0,1,2,3,5,7\}$ \\
+$v_2$ & $\{0,1,2,3,4,6,8\}$ & $v_1$ & $\{0,1,2,3,5,7,9\}$ \\
+$v_{1b}$ & $\{0,1,2,3,5,7,12\}$ & $t_2$ & $\{0,1,2,3,4,6,8,10\}$ \\
+$t_1$ & $\{0,1,2,3,5,7,9,11\}$ & $t_{1b}$ & $\{0,1,2,3,5,7,12,13\}$ \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The two exposed atoms assign four colors to nonmaximal points:
+\[
+\begin{array}{c|l}
+(0,0) & b_{00},a_1,v_1,v_{1b}\\
+(0,1) & b_{01},a_2,v_2\\
+(1,0) & b_{10},z_1\\
+(1,1) & b_{11},z_2.
+\end{array}
+\]
+The maximal $t$ points have the displayed corresponding colors but lack $D$, since they
+have no strict upper point. All nonmaximal points satisfy $D$.
+
+Each of $a_1,a_2,v_1,v_{1b},v_2$ has all four nonmaximal closure types somewhere in its
+strict lower cone. Therefore the exact refined keys satisfy
+\[
+  q(a_1)=q(v_1)=q(v_{1b}),\qquad q(a_2)=q(v_2).
+\]
+
+\subsection{Phase-1 generation and the cycle}
+
+Start with the duplicate-free seed
+\[
+  [b_{00},b_{01},b_{10},b_{11},a_1,a_2].
+\]
+First-witness expansion adds $z_1,z_2$, then adds $v_2,v_1$. The latter two repeat the
+exact keys of $a_2,a_1$ and are blocked; the run closes at the ten-node external set
+\[
+  V_0=\{b_{00},b_{01},b_{10},b_{11},a_1,a_2,z_1,z_2,v_1,v_2\}.
+\]
+The persistence guard $\forall\PP.D$ fails at both gate-mates, so the demand is
+edge-served.
+
+No source-model point lies above both $a_1$ and $v_1$, and none lies above both $a_2$
+and $v_2$. Thus group-aware agreement is unavailable. The deterministic fallback uses
+the gate children $z_1,z_2$ and declares
+\[
+  v_1\to z_1,\qquad v_2\to z_2.
+\]
+Both borrowed pairs are $\PO$ in the source model. They satisfy the full D2 pairwise
+condition: the target is neither below nor disjoint from its borrower. Nevertheless,
+model inclusion contains $z_1\PP v_2$ and $z_2\PP v_1$, giving
+\[
+  v_1\xrightarrow{B}z_1\xrightarrow{\PP}v_2
+     \xrightarrow{B}z_2\xrightarrow{\PP}v_1.
+\]
+Hence $L^+$ is reflexive on $v_1,z_1,v_2,z_2$.
+
+Adding $v_{1b}$ gives two borrowers sharing $z_1$ and a second cycle through the same
+target. One target per group therefore does not remove cross-group cycles.
+
+\subsection{The exact global residue}
+
+Associate one vertex with each borrowed-target group. Draw a dependency
+\[
+  i\longrightarrow j
+\]
+when target $z_i$ is model-$\PP$-below, or equal to, some borrower in group $j$. A
+declared cycle induces a cycle in this finite dependency graph; conversely, a dependency
+cycle expands to a cycle alternating borrowed edges and model-$\PP$ paths. Pairwise
+safety removes only self-loops. It says nothing about cycles of length at least two.
+
+This counterexample refutes the current deterministic fallback and the inference from
+per-edge safety to global irreflexivity. It does not prove that every globally coordinated
+witness assignment cycles: later alternative witnesses exist in this model. A global
+rank, acyclic dependency selection, feedback-edge treatment, or finite CSP remains a
+possible repair.
+
+\section{Target E: finite closure and anchor placement}
+
+\statusbox{darkamber}{Result: E has two answers. Pure down-spectrum-gated node closure
+terminates with a finite bound. The current gate-mate borrowing policy nevertheless can
+produce a locally valid external fixed point that has no compatible kernel placement.
+General anchor-compatible completion remains open.}
+
+\subsection{Positive combinatorial lemma: node closure terminates}
+
+Let $Q$ be the finite key enumeration and $\Delta$ the relevant existential
+subformulas. If the gate consumes each pair $(q,\delta)\in Q\times\Delta$ at most once,
+then from any finite postselected anchor seed $S_0$ it adds at most one child for each
+such pair. Therefore
+\[
+  |E^*|\le |S_0|+|Q|\,|\Delta|
+       \le |S_0|+N2^N\,|\cl(C_0)|.
+\]
+The same product bounds the number of productive rounds. Once $E^*$ is fixed, closing
+the order and disjointness relations on that finite carrier is noniterative with respect
+to point generation.
+
+This is a set-theoretic termination statement. It is essentially the packet's reported
+abstract gate theorem. It does not say that the chosen edges and kernel incidences form a
+valid \texttt{MultiTier}.
+
+\subsection{Counterexample to the current anchor borrowing policy}
+
+Take two symmetric components $i\in\{0,1\}$ with
+\[
+  p_{i0}<p_{i1}<p_{i2}<v_i,\qquad p_{i2}<u_i,
+  \qquad v_i\mathrel{\PO}u_i,
+\]
+and declare every cross-component pair $\DR$. Let $X$ hold exactly at $v_0,v_1$,
+$Y$ exactly at $u_0,u_1$, and $Z$ at all six $p$ points. Put
+\begin{align*}
+  T &= \exists\PP.Z\sqcap\exists\PP.(X\sqcap\exists\DR.Y)
+       \sqcap\exists\PP.Y,\\
+  C_0 &= T\sqcap\exists\DR.T.
+\end{align*}
+There are no universal modalities. The first two $p$ points in each component satisfy
+$C_0$ and have equal full model type. Thus $p_{i0}<p_{i1}$ is an explicit recurrence
+segment, and the demand $\exists\PP.Z$ is served along the same-type $p$ chain rather
+than being incidental. A component-swap automorphism gives
+\[
+  q(v_0)=q(v_1).
+\]
+
+The $\DR.Y$ witnesses are uniquely crossed:
+\[
+  v_0\xrightarrow{\DR}u_1,\qquad v_1\xrightarrow{\DR}u_0.
+\]
+Kernel $i$ needs both $v_i$ and $u_i$ as $\PP$ anchors above its selected phase. If
+$v_0$ is the gate representative, blocked $v_1$ borrows $v_0$'s witness $u_1$, so the
+external construction declares $v_1\DR u_1$. That declaration is locally harmless on
+the anchor-only carrier, where there are no order edges. It cannot coexist with
+$p_{11}<v_1$ and $p_{11}<u_1$, because
+\[
+  \DR\notin\comp(\PPI,\PP).
+\]
+Equivalently, downward closure of disjointness would make a point below both disjoint
+from one of its strict uppers. If $v_1$ is retained first, the symmetric failure occurs
+in component 0.
+
+Thus finite key enumeration bounds how many expansion tokens are consumed, but the key
+does not encode which kernel cone an anchor belongs to. The current policy can reach a
+finite external frame and still fail \texttt{hkex} placement.
+
+The example does not refute all bounded completions. An existing-witness-first policy
+would choose $u_0$ for $v_1$ in this small model and avoid the clash, but no global bound
+or preservation theorem is known for that policy.
+
+\subsection{Why the old A--B family still matters}
+
+Let
+\[
+  A_n=\{0,\ldots,n\},\qquad B_m=\{m+1\}.
+\]
+For
+\[
+  H=(\exists\PP.\top)\sqcap(\exists\DR.\top),\qquad
+  C_0=H\sqcap\forall\PP.H,
+\]
+all $B_m$ have the same closure type and empty down-spectrum. Yet
+\[
+  \rho(A_n,B_m)=
+  \begin{cases}
+    \DR,&n\le m,\\
+    \PPI,&n\ge m+1.
+  \end{cases}
+\]
+For any fixed finite source-model anchor set, choose $n$ beyond every index used in it;
+then every anchor is a strict part of $A_n$, and none serves $\exists\DR.\top$. Thus a
+finite key space does not bound stabilization thresholds or produce a finite basis of
+source-model anchors \evS.
+
+This family does not by itself refute a fresh abstract anchor completion. Such a
+completion intentionally departs from source rows and must instead prove the
+anchor-compatibility lemma exposed above.
+
+\section{Audit of the supplied probes}
+
+\statusbox{darkred}{The supplied probes are useful exploratory artifacts, but several
+headline readings are not measurements of the stated R2 construction. The original
+files are preserved unchanged in the package; corrected and independent checks are kept
+separately.}
+
+\subsection{\texttt{wp131}: four material defects}
+
+\begin{enumerate}
+  \item \textbf{Wrong gate.} The target uses $q=(\mty,\text{lower spectrum})$, but
+        \texttt{gated()} and gate-mate lookup in the supplied script use $\mty$ alone.
+        The published 1,040-instance, 132-fallback result is therefore a type-only
+        measurement, not a Target-D measurement.
+
+  \item \textbf{The child cache omits the role.} It is keyed by $(a,\text{body})$ rather
+        than $(a,\text{role},\text{body})$. If the same body occurs under two modalities,
+        a $\PP$ borrower can be redirected to another role's child. In the deterministic
+        supplied sweep, 18 of 1,772 borrowed targets were not $\PP$ witnesses of the
+        blocker. Their relations from blocker to target were
+        \[
+          \DR:8,\qquad\PO:3,\qquad\EQ:6,\qquad\PPI:1.
+        \]
+        Adding the role changes the type-only headline counts: greedy cyclic instances
+        fall from 522 to 515, and repeat-free survivors from 17 to 8.
+
+  \item \textbf{Part G tests individuals, not groups.} The group-aware rule requires one
+        witness above all borrowers in a group. Part G instead asks whether some borrower
+        lacks an individual agreeing witness. The supplied predicate reports 132 fallback
+        instances; the group predicate gives 135. With the actual refined key and
+        relation-sensitive child cache, the corresponding counts are 164 and 167.
+
+  \item \textbf{Part F confounds two interventions.} Its ``agree'' column calls
+        \texttt{repeat\_free=True} together with \texttt{mode="agree"}. Pure group-aware
+        agreement has one cycle in the supplied type-only sweep; only the combination has
+        zero. The corrected refined-key finite sweep happens to have zero for both, but
+        that remains randomized evidence and cannot imply D1, which the exact model in
+        Section 4 refutes.
+\end{enumerate}
+
+The non-vacuity pass is also forced: sampling is conditioned on at least one borrowed
+edge, then Part N accepts a class averaging at least 0.5 borrowed edges. Every retained
+class averages at least one. The reported retention rates remain informative.
+
+\subsection{\texttt{wp132}: a regression, not a placement test}
+
+The function \texttt{fresh\_sat} returns true for every non-$\DR$ universal and false
+for every existential. It therefore accepts
+\[
+  \forall\EQ.(P\sqcap\neg P)
+\]
+and rejects $\exists\EQ.P$ even when the fresh assignment makes $P$ true. It is neither
+sound nor complete as a satisfiability evaluator.
+
+The existing-point route checks only that a point is $\DR$ from a lower-cone union and
+satisfies the body in the old model. It does not construct the shared top or check truth
+and composition after extension. The fresh route likewise performs no RCC5 extension
+check. Of the 7,525 reported refined-key group-demand evaluations, 6,038 (80.2 percent)
+are accepted only by this fresh abstraction and 1,487 use an existing point. These are
+correlated evaluations from 5,771 accepted generated models.
+
+Fairly interpreted, the generated bodies are restricted to disjunctions of
+$\forall\DR$ atoms, so the displayed $\EQ$ and existential errors do not directly
+invalidate that narrow sweep. The probe is a purpose-built regression of local
+lower-cone agreement on its generated family. It is not evidence for a realizable copied
+gadget, full serviceability, or Target E.
+
+\subsection{The wrapper masks failures}
+
+The supplied \texttt{run\_probes.sh} executes
+\begin{center}
+\texttt{python3 "\$f" || echo "(non-zero exit ...)"}.
+\end{center}
+This converts exceptions and nonzero verdicts into shell success, defeating
+\texttt{set -e}. A zero wrapper exit status is not a correctness verdict.
+
+\section{Bounded repair directions and their exact obligations}
+
+\subsection{No stronger existing-witness selector repairs D2}
+
+Section 3's candidate set is a singleton. Any repair confined to choosing another
+gate-mate witness is impossible. At least one of the following must change: whether $v$
+is blocked, which points are available, the key/grouping discipline, or the use of the
+source witness as the borrowed target.
+
+Refusing to block $\DR$-related same-key nodes is not automatically bounded. There can
+be arbitrarily many automorphic, pairwise-$\DR$ leaves with private $P$ tops. A unary
+type/down-spectrum refinement does not see their multiplicity or pairwise incidence.
+
+\subsection{A global dependency discipline for D1}
+
+For a fixed finite external set, build the borrowed-target dependency graph from
+Section 4. A globally coordinated selector can reject assignments with cyclic dependency
+graphs, introduce a well-founded rank, or compute a feedback-edge set. Acyclic components
+need no new D1 proof; cyclic strongly connected components are exactly where fresh
+gadgets, unrolling, or kernelization are required.
+
+This characterization is finite and checkable, but existence of an acyclic assignment
+with the required labels and all frame obligations remains open.
+
+\subsection{Fresh class-demand gadgets}
+
+A plausible repair replaces an unsafe model witness by a fresh top
+$t_{q,\delta}$ for each refined key $q$ and active $\PP$ demand $\delta$, placing every
+borrower in that class below the fresh top. The packet's reported
+\texttt{dkey\_union\_serves} lemma is exactly the local tool that the refuted type-only
+common top lacked. If $K=N2^N$ and there are $p\le |\cl(C_0)|$ active $\PP$ demands,
+the first layer uses at most $Kp$ fresh roots.
+
+This is a bounded program, not a completed construction. Each fresh gadget has its own
+demands; recursive closure can regenerate the same problem. It must also preserve
+already stabilized kernel rows and package genuine recurrent suffixes as
+\texttt{KernelData}. Private clones without this accounting do not prove termination.
+
+\subsection{Conditional witness-incidence and kernel-profile keys}
+
+If a finite witness pool $W$ is fixed in advance, refine the key to
+\[
+  q_W(v)=\left(q(v),\{w\in W:\rho(v,w)=\PP\}\right).
+\]
+Then $q_W(a)=q_W(v)$ and $\rho(a,z)=\PP$ for $z\in W$ imply
+$\rho(v,z)=\PP$ literally. Every borrowed order edge agrees with the source model, so
+D1 and D2 disappear. The number of keys is at most
+\[
+  N2^N\,2^{|W|}.
+\]
+The condition is circular: demand-closing $W$ can add witnesses, change the key, and
+create new representatives. Target E is precisely the missing finite-pool theorem.
+
+After kernel segments are selected, an alternative is to add each anchor's finite
+kernel-incidence profile. Recording one RCC5 atom per kernel costs at most a
+$5^{|\kappa|}$ factor and separates the Target-E counterexample. All abstract gate,
+borrowed-edge, and frame lemmas would need to be reproved for that profile.
+
+Weakening \texttt{ltNotDj}, simply deleting conflicting $\DR$ seeds, sending arbitrary
+nonrecurrent demands to kernels, or adding unclosed private clones does not address the
+actual obligations.
+
+\section{Integrated status and recommended next steps}
+
+The round-2 packet made real progress: the finite cross-kernel fusion theorem and the
+down-spectrum cone-transfer mechanism are reported formalized. The present attack shows
+that the next local selection step is not sound and that finite key enumeration does not
+by itself solve semantic anchor placement.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.28\linewidth}X}
+\toprule
+Item & Defensible status after this attack \\
+\midrule
+Target B / \texttt{kq\_all} & Reported Lean-certified by R2; not rebuilt from this
+archive. \\
+Down-spectrum local cone transfer & Reported Lean-certified and not refuted here. \\
+Target D1 & Current local fallback proof route refuted by a $\PO$-only alternating
+cycle. \\
+Target D2 & Universal existing-witness selection refuted by a unique-witness mixed
+counterexample. \\
+Target E node termination & Finite combinatorial bound available. \\
+Target E placement / \texttt{hkex} & Current borrowing policy refuted; general
+anchor-compatible completion open. \\
+Final packaging and extraction & Still open; the packet itself warns that several
+``bookkeeping'' steps remain. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The most efficient research order is now:
+
+\begin{enumerate}
+  \item formalize the D1 and D2 finite countermodels as regression theorems;
+  \item repair \texttt{wp131}, separate selection interventions, and make the wrapper
+        propagate failures;
+  \item state an anchor-compatible gate theorem with explicit kernel-incidence data;
+  \item choose between a globally acyclic witness assignment, fresh class-demand
+        gadgets, or a fixed-pool/profile construction, and prove its finite closure;
+  \item only then rebuild \texttt{KernelData}, reindex, and assemble the final
+        \texttt{MergedExtractionAt} object.
+\end{enumerate}
+
+No complete extraction theorem for the mixed quadrant, and no decidability theorem for
+full $\mathcal{ALCI}_{\mathrm{RCC5}}$, is claimed.
+
+\appendix
+\begingroup
+\small
+\setlist[itemize]{leftmargin=1.6em,itemsep=0.1em,topsep=0.2em}
+\section{Artifacts, reproducibility, and scope}
+
+The accompanying ZIP preserves the supplied R2 packet unchanged and adds independent
+checks:
+
+\begin{itemize}
+  \item \texttt{target\_d1\_multigroup\_cycle.py}: exact 14-point D1 model, phase-1
+        seed expansion, refined keys, group-aware fallback, and alternating cycles;
+  \item \texttt{target\_d2\_mixed\_counterexample.py}: direct mixed D2 model and
+        fixed-point gate run;
+  \item {\footnotesize\texttt{target\_d2\_exhaustive\_countermodel.py}}: bounded core search plus
+        formula-realized and nonempty-spectrum strengthenings;
+  \item \texttt{target\_e\_anchor\_compatibility.py}: symmetric kernel-anchor clash;
+  \item \texttt{target\_e\_finite\_key\_anchor\_counterexample.py}: symbolic
+        $A_n/B_m$ finite-anchor calculation;
+  \item \texttt{wp131\_refined\_key\_audit.py}: the packet sweep with the refined key,
+        relation-sensitive child cache, and group-level fallback count;
+  \item \texttt{probe\_audit\_r2.py}: deterministic reproduction of the omitted
+        predicates and \texttt{wp132} evaluator checks.
+\end{itemize}
+
+From the package root, run
+\begin{center}
+\texttt{./run\_new\_probes.sh}.
+\end{center}
+Every packaged file except the manifest itself is covered by
+\texttt{MANIFEST.sha256}. The exact finite countermodels are independent of the
+randomized seed used by the exploratory sweeps.
+
+\subsection{Scope of the countermodels}
+
+All exact countermodels use ordinary nonempty finite sets, so RCC5 converse and weak
+composition closure follow from concrete semantics and are also checked exhaustively on
+the displayed finite domains. The probes separately verify strong equality, the source
+ordered-disjoint axioms, formula satisfaction, closure-type equality, exact lower
+spectra, persistence guards, gate order, complete candidate sets, and the claimed final
+failure.
+
+The D1 model refutes the displayed deterministic fallback and the universal implication
+from local pair safety to global acyclicity. It intentionally does not claim that every
+possible simultaneous witness assignment fails. The D2 model is stronger with respect
+to selection: the relevant candidate set is a singleton, so no selection among existing
+gate-mate witnesses can satisfy D2. The Target-E model refutes the present borrowing
+policy, while leaving open a different bounded anchor-compatible construction.
+
+\endgroup
+\end{document}

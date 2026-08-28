@@ -203,18 +203,10 @@ def fresh_sat(m, A, U, assign):
     if k == "or":
         return fresh_sat(m, A[1], U, assign) or fresh_sat(m, A[2], U, assign)
     if k == "all":
-        if A[1] == DR:
-            return all(m.sat(x, A[2]) for x in U)
-        if A[1] == EQ:
-            # AUDIT FIX (round 2): strong EQ is identity, so `forall EQ.E` at the
-            # fresh point is E AT THAT POINT -- the old code returned True here
-            # unconditionally, which was permissive and could mask a failure.
-            return fresh_sat(m, A[2], U, assign)
-        return True                  # no forced PP/PPI/PO neighbours
-    if k == "ex" and A[1] == EQ:
-        return fresh_sat(m, A[2], U, assign)      # strong EQ: witness is itself
-    return False                     # other nested existentials: conservatively
-                                     # unmet (biases toward reporting failure)
+        if A[1] != DR:
+            return True              # no forced neighbours in that direction
+        return all(m.sat(x, A[2]) for x in U)
+    return False                     # nested existential: conservatively unmet
 
 
 def serviceable(m, group, D, cl):

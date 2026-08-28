@@ -1,19 +1,10 @@
 #!/usr/bin/env python3
-"""WP131 -- does the BORROWED EDGE keep the declared order acyclic?
+"""WP131-R2 audit -- borrowed-edge acyclicity at the REFINED gate key.
 
-⚠ SCOPE, ADDED 2026-08-28 AFTER A SECOND COLD ATTACK.  This probe checks ONLY
-acyclicity.  It never checks the frame's `ltNotDj` clause (a declared `lt` pair
-must not also be disjoint), so its "0 cycles under agreement" says nothing about
-whether the declared edge is LEGAL.  A five-point countermodel (report round 2,
-Target D2) has a blocked node whose only gate-mate witness is `DR` from it: legal
-per this probe, illegal in the frame.  And a fourteen-point countermodel (Target
-D1) shows per-edge safety does not compose -- two individually safe `PO` fallbacks
-form a four-cycle alternating declared and model-`PP` edges, which THIS PROBE'S
-`declared_cycle` would catch only if both edges were generated together, which its
-generator does not arrange.  Read its numbers as necessary conditions only.
-
-ASSEMBLY_DESIGN sec. 254.  The extraction blocks by model type: a node `v` whose
-type already occurs earlier in the stage is not expanded; instead the certificate
+The supplied R2 script still blocks by model type alone even though Target D uses
+the refined key `(mty(v), {mty(x): x PP v})`.  This copy changes only the gate
+and gate-mate lookup to that refined key.  A node `v` whose key already occurs
+earlier in the stage is not expanded; instead the certificate
 DECLARES a PP-edge from `v` to the witness `z` of its gate-mate `a`
 (`mty a = mty v`).  Propagation is certified (`borrowed_ee_all`).  What is NOT
 certified is ACYCLICITY -- that `z` does not already lie below `v`.
@@ -228,13 +219,16 @@ def extract(model, val, c0, root, repeat_free=False, gate=True,
             cur = parent.get(cur)
         return out
 
+    def K(x):
+        return (T(x), frozenset(T(y) for y in model if rel(y, x) == PP))
+
     def gated():
         if not gate:
             return list(nodes)
         seen, out = set(), []
         for n in nodes:
-            if T(n) not in seen:
-                seen.add(T(n))
+            if K(n) not in seen:
+                seen.add(K(n))
                 out.append(n)
         return out
 
@@ -270,7 +264,10 @@ def extract(model, val, c0, root, repeat_free=False, gate=True,
                 w = witness(a, d[1], d[2], set(anc_types(a) + [T(a)]))
                 if w is None:
                     continue
-                child.setdefault((a, d[2]), w)
+                # A demand is relation-sensitive.  Keying only by its body
+                # aliases, for example, exists DR.D and exists PP.D and can
+                # redirect a PP borrower to a non-PP child.
+                child.setdefault((a, d[1], d[2]), w)
                 if w not in nodes and w not in new:
                     new.append(w)
                     parent[w] = a
@@ -286,26 +283,26 @@ def extract(model, val, c0, root, repeat_free=False, gate=True,
     # counts were an UNDERCOUNT.  In `agree` mode the one child is chosen
     # GROUP-AWARE, which is the freedom the construction actually has.
     g = set(gated())
-    first_of_type = {}
+    first_of_key = {}
     for n in nodes:
-        first_of_type.setdefault(T(n), n)
+        first_of_key.setdefault(K(n), n)
     groups = {}
     for v in nodes:
         if v in g:
             continue
-        a = first_of_type[T(v)]
+        a = first_of_key[K(v)]
         pd = persist_ds(model, val, a, cl)
         for d in T(v):
             if d[0] != "ex" or d[1] != PP:
                 continue
             if d[2] in pd:
                 continue
-            groups.setdefault((a, d[2]), []).append(v)
-    for (a, D), vs in groups.items():
+            groups.setdefault((a, PP, d[2]), []).append(v)
+    for (a, r, D), vs in groups.items():
         if mode == "agree":
             z = witness(a, PP, D, set(), above=vs)
         else:
-            z = child.get((a, D))
+            z = child.get((a, r, D))
             if z is None:
                 z = witness(a, PP, D, set(anc_types(a) + [T(a)]))
         if z is None:
@@ -605,8 +602,13 @@ def part_q(samples):
 
 
 def part_g(samples):
-    """The honest residue: `agree` cannot always apply.  Count the instances
-    where it FAILS on at least one edge, and check those specifically."""
+    """The honest residue: group-aware `agree` cannot always apply.
+
+    Count an instance when one gate-mate/demand group has no SINGLE witness
+    above every borrower.  The supplied R2 probe checked each borrower
+    separately here, which can miss a group whose members have different
+    individual agreeing witnesses but no common one.
+    """
     print("\nPART G -- the residue: instances where AGREEMENT IS UNAVAILABLE")
     print(f"  {'model class':34s} {'inst':>5} {'fallback':>9} {'cycled':>8}")
     tot_fb = tot_cy = 0
@@ -616,12 +618,16 @@ def part_g(samples):
         fb = cy = 0
         for c0, (m, val, root) in data:
             nodes, borrowed, _ = extract(m, val, c0, root)
-            used = False
-            for (v, z, D, a) in borrowed:
-                if not any(rel(a, y) == PP and rel(v, y) == PP
-                           and sat(m, val, y, D) for y in m):
-                    used = True
-                    break
+            groups = {}
+            for (v, _z, D, a) in borrowed:
+                groups.setdefault((a, D), []).append(v)
+            used = any(
+                not any(rel(a, y) == PP
+                        and sat(m, val, y, D)
+                        and all(rel(v, y) == PP for v in vs)
+                        for y in m)
+                for (a, D), vs in groups.items()
+            )
             if not used:
                 continue
             fb += 1
@@ -640,6 +646,7 @@ def part_g(samples):
 
 
 def main(seed=20260827):
+    print("AUDIT MODE: refined key = (mty, strict-lower mty spectrum)")
     rng = random.Random(seed)
     samples, retention = [], {}
     for (name, mk, kw, v) in CLASSES:

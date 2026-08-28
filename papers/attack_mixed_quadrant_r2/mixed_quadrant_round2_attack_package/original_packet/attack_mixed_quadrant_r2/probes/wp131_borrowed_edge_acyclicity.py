@@ -1,17 +1,6 @@
 #!/usr/bin/env python3
 """WP131 -- does the BORROWED EDGE keep the declared order acyclic?
 
-⚠ SCOPE, ADDED 2026-08-28 AFTER A SECOND COLD ATTACK.  This probe checks ONLY
-acyclicity.  It never checks the frame's `ltNotDj` clause (a declared `lt` pair
-must not also be disjoint), so its "0 cycles under agreement" says nothing about
-whether the declared edge is LEGAL.  A five-point countermodel (report round 2,
-Target D2) has a blocked node whose only gate-mate witness is `DR` from it: legal
-per this probe, illegal in the frame.  And a fourteen-point countermodel (Target
-D1) shows per-edge safety does not compose -- two individually safe `PO` fallbacks
-form a four-cycle alternating declared and model-`PP` edges, which THIS PROBE'S
-`declared_cycle` would catch only if both edges were generated together, which its
-generator does not arrange.  Read its numbers as necessary conditions only.
-
 ASSEMBLY_DESIGN sec. 254.  The extraction blocks by model type: a node `v` whose
 type already occurs earlier in the stage is not expanded; instead the certificate
 DECLARES a PP-edge from `v` to the witness `z` of its gate-mate `a`
