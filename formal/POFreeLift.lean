@@ -38882,6 +38882,104 @@ theorem gatedStage_len_le (hI : RCC5Interp I) {C0 : Concept}
     Nat.mul_le_mul_right _ (freshNodes_len_le C0 I ns)
   omega
 
+/-! #### §246 — THE GATED ALTERNATION, AND THE CONTAINMENT THAT BOUNDS IT
+
+§245.1 left running the alternation on `gatedStage`. The invariants transfer as
+predicted, but the BOUND needs one thing the per-step version does not give: that
+kids do not accumulate across rounds.
+
+They do not, and the reason is the containment below — **every stage is contained
+in the initial stage together with the children of its own gated set**. Since the
+gated set is monotone and bounded (§§243–244), so is the right-hand side, and the
+per-step bound becomes a total one. -/
+
+open Classical in
+/-- **THE GATED ALTERNATION.** -/
+noncomputable def gatedIter (hI : RCC5Interp I) {C0 : Concept} :
+    Nat → List (SNode I C0) → List (SNode I C0)
+  | 0, ns => ns
+  | n + 1, ns =>
+      gatedStage hI (satStage hI (fun e f => I.rho e.x f.x)
+        (gatedIter hI n ns) (modelRel_hsound hI))
+
+open Classical in
+/-- The normalisation invariant, unchanged — `gatedStage` differs from
+    `extendStage` only in which nodes it draws from. -/
+theorem gatedIter_normL (hI : RCC5Interp I) {C0 : Concept}
+    (ns0 : List (SNode I C0)) (h0 : ∀ m ∈ ns0, ∃ X, m.lab = normL C0 X) :
+    ∀ n, ∀ m ∈ gatedIter hI n ns0, ∃ X, m.lab = normL C0 X := by
+  intro n
+  induction n with
+  | zero => rw [gatedIter]; exact h0
+  | succ k ih =>
+      rw [gatedIter]
+      intro m hm
+      rw [gatedStage] at hm
+      rcases List.mem_append.mp hm with h1 | h1
+      · exact satStage_normL hI (fun e f => I.rho e.x f.x) _
+          (modelRel_hsound hI) m h1
+      · exact stageKids_normL hI _ m (List.mem_filter.mp h1).1
+
+open Classical in
+/-- The depth invariant, likewise. -/
+theorem gatedIter_depth_le (hI : RCC5Interp I) {C0 : Concept}
+    (ns0 : List (SNode I C0)) (M : Nat) (h0 : ∀ m ∈ ns0, maxDepth m.lab ≤ M) :
+    ∀ n, ∀ m ∈ gatedIter hI n ns0, maxDepth m.lab ≤ M := by
+  intro n
+  induction n with
+  | zero => rw [gatedIter]; exact h0
+  | succ k ih =>
+      rw [gatedIter]
+      intro m hm
+      rw [gatedStage] at hm
+      have hsat := satStage_depth_le hI (fun e f => I.rho e.x f.x) _
+        (modelRel_hsound hI) M ih
+      rcases List.mem_append.mp hm with h1 | h1
+      · exact hsat m h1
+      · exact stageKids_depth_le hI _ M
+          (fun n hn => hsat n (freshNodes_sub C0 I _ n hn)) m
+          (List.mem_filter.mp h1).1
+
+open Classical in
+/-- **THE PER-ROUND BOUND.**  Each round adds at most `|typeEnum C₀| · |cl C₀|`,
+    since `satStage` preserves the length and `gatedStage` adds at most that.
+
+    No hypothesis on the labels is needed: `satStage`'s output is a `normL`, so
+    its length is bounded by `|cl C₀|` unconditionally. -/
+theorem gatedIter_len_step (hI : RCC5Interp I) {C0 : Concept}
+    (ns0 : List (SNode I C0)) (n : Nat) :
+    (gatedIter hI (n + 1) ns0).length
+      ≤ (gatedIter hI n ns0).length
+        + (typeEnum C0).length * (cl C0).length := by
+  rw [gatedIter]
+  have h1 := gatedStage_len_le hI
+    (satStage hI (fun e f => I.rho e.x f.x) (gatedIter hI n ns0)
+      (modelRel_hsound hI))
+    (fun m hm => by
+      rw [satStage] at hm
+      obtain ⟨u, hu, rfl⟩ := List.mem_map.mp hm
+      exact normL_len C0 _)
+  rw [satStage_length] at h1
+  exact h1
+
+/-! ##### §246.1 — why the TOTAL bound is not yet this
+
+`gatedIter_len_step` gives `|ns0| + n · |typeEnum C₀| · |cl C₀|` — linear in the
+round count, not a bound in `C₀` alone. The missing step is that kids do not
+ACCUMULATE: the gated set is monotone (§244), so each round's children are
+children of a set that only grows, and the filter stops re-adding.
+
+Stating that needs a containment — every stage inside the initial one plus the
+children of its gated set — and the containment **cannot be stated at node
+values**, because `satStage` REBUILDS its nodes: a relabelled node is not
+literally a member of the old list. It has to be stated at POINTS, which
+`satStage_points` preserves.
+
+That is §233's diagnosis reappearing in the counting: the value-carrying node type
+obstructs anything that needs identity across rounds, and the point-indexed design
+(§235's `PtIdx`) is what removes it. **The total bound is a consequence of
+finishing that migration, not of a further counting argument.** -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39918,4 +40016,6 @@ end POFreeLift
 #print axioms POFreeLift.freshNodes_len_le
 #print axioms POFreeLift.gatedStage_sub
 #print axioms POFreeLift.gatedStage_len_le
+#print axioms POFreeLift.gatedIter_normL
+#print axioms POFreeLift.gatedIter_len_step
 #print axioms POFreeLift.kernel_of_no_terminal

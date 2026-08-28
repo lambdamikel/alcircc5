@@ -15053,3 +15053,39 @@ What remains is to run the alternation on `gatedStage` in place of
 
 Build: 39,921 lines, 2,013 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 246. THE GATED ALTERNATION — AND WHY THE TOTAL BOUND WAITS ON §235
+
+`gatedIter` runs the alternation on `gatedStage`. The invariants transfer as
+predicted — `gatedIter_normL` and `gatedIter_depth_le` are §§227/229's proofs
+with the gated step substituted, since `gatedStage` differs only in which nodes
+it draws from.
+
+`gatedIter_len_step`: each round adds at most `|typeEnum C0| * |cl C0|`. (No
+hypothesis on labels is needed — `satStage`'s output is a `normL`, so its length
+is bounded unconditionally. The hypothesis I first wrote was unused.)
+
+### 246.1 Why that is not yet the total bound
+
+`gatedIter_len_step` gives `|ns0| + n * |typeEnum C0| * |cl C0|` — **linear in
+the round count**, not a bound in `C0` alone. The missing step is that kids do
+not *accumulate*: the gated set is monotone (§244), so each round's children are
+children of a set that only grows, and the filter stops re-adding.
+
+Stating that needs a containment — every stage inside the initial one plus the
+children of its gated set — and **the containment cannot be stated at node
+values**, because `satStage` *rebuilds* its nodes: a relabelled node is not
+literally a member of the old list. It has to be stated at **points**, which
+`satStage_points` preserves.
+
+So this is §233's diagnosis reappearing in the counting: **the value-carrying node
+type obstructs anything needing identity across rounds**, and `PtIdx` (§235) is
+what removes it. The total bound is a consequence of finishing that migration, not
+of a further counting argument.
+
+That is worth recording as a prediction to check rather than a plan to trust — the
+last three times the stage's representation was implicated (§§232, 233, 235) the
+diagnosis was right but the fix was one step larger than stated.
+
+Build: 40,021 lines, 2,017 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
