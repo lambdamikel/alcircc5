@@ -41045,6 +41045,225 @@ theorem union_cone_body (hI : RCC5Interp I) (C0 : Concept) {v₁ v₂ w z : α}
   refine cone_agreement_of_spectrum C0 hspec hE ?_
   intro x hx hxv
   exact hall x hx (shared_top_reaches_cone hI hx hv₁ hw hz hxv hv₁w hwz)
+/-! #### §260 — THE GATE AT AN ARBITRARY KEY
+
+§256 refuted blocking by model type alone.  The replacement keys on
+`(mty v, {mty x : x PP v})`.  Everything §§248–250 built is keyed to `mty` and
+typed at `List Concept`, so the first job is to make the gate generic in its key;
+the second is to supply the down-spectrum key and its enumeration.
+
+Nothing here is new mathematics — it is the re-parameterisation the pivot costs.
+The BOUND is what moves: from `|typeEnum C₀|` to `|typeEnum C₀| · 2^|typeEnum C₀|`. -/
+
+/-- **§260.1 — THE GATE, GENERIC.**  `firstFresh` at an arbitrary decidable key. -/
+def firstFreshK {β κ : Type} [DecidableEq κ] (key : β → κ) :
+    List κ → List β → List β
+  | _, [] => []
+  | seen, x :: t =>
+      if key x ∈ seen then firstFreshK key seen t
+      else x :: firstFreshK key (key x :: seen) t
+
+theorem firstFreshK_keys_nodup {β κ : Type} [DecidableEq κ] (key : β → κ) :
+    ∀ (vs : List β) (seen : List κ),
+      ((firstFreshK key seen vs).map key).Nodup ∧
+      ∀ x ∈ firstFreshK key seen vs, key x ∉ seen := by
+  intro vs
+  induction vs with
+  | nil => intro seen; exact ⟨List.nodup_nil, fun x hx => absurd hx List.not_mem_nil⟩
+  | cons y t ih =>
+      intro seen
+      by_cases hy : key y ∈ seen
+      · rw [firstFreshK, if_pos hy]; exact ih seen
+      · rw [firstFreshK, if_neg hy]
+        obtain ⟨h1, h2⟩ := ih (key y :: seen)
+        constructor
+        · refine List.nodup_cons.mpr ⟨?_, h1⟩
+          intro hc
+          obtain ⟨z, hz, hkz⟩ := List.mem_map.mp hc
+          exact (h2 z hz) (by rw [hkz]; exact List.mem_cons_self)
+        · intro x hx
+          rcases List.mem_cons.mp hx with rfl | hx'
+          · exact hy
+          · exact fun hc => h2 x hx' (List.mem_cons_of_mem _ hc)
+
+theorem firstFreshK_sub {β κ : Type} [DecidableEq κ] (key : β → κ) :
+    ∀ (vs : List β) (seen : List κ) (x : β),
+      x ∈ firstFreshK key seen vs → x ∈ vs := by
+  intro vs
+  induction vs with
+  | nil => intro seen x hx; simp [firstFreshK] at hx
+  | cons y t ih =>
+      intro seen x hx
+      by_cases hy : key y ∈ seen
+      · rw [firstFreshK, if_pos hy] at hx
+        exact List.mem_cons_of_mem _ (ih seen x hx)
+      · rw [firstFreshK, if_neg hy] at hx
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact List.mem_cons_self
+        · exact List.mem_cons_of_mem _ (ih _ x hx')
+
+theorem firstFreshK_append_sub {β κ : Type} [DecidableEq κ] (key : β → κ) :
+    ∀ (vs : List β) (seen : List κ) (ws : List β) (x : β),
+      x ∈ firstFreshK key seen vs → x ∈ firstFreshK key seen (vs ++ ws) := by
+  intro vs
+  induction vs with
+  | nil => intro seen ws x hx; simp [firstFreshK] at hx
+  | cons y t ih =>
+      intro seen ws x hx
+      by_cases hy : key y ∈ seen
+      · rw [firstFreshK, if_pos hy] at hx
+        rw [List.cons_append, firstFreshK, if_pos hy]
+        exact ih seen ws x hx
+      · rw [firstFreshK, if_neg hy] at hx
+        rw [List.cons_append, firstFreshK, if_neg hy]
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact List.mem_cons_self
+        · exact List.mem_cons_of_mem _ (ih _ ws x hx')
+
+/-- **§260.2 — THE GATE COVERS EVERY KEY**, at an arbitrary key. -/
+theorem firstFreshK_covers {β κ : Type} [DecidableEq κ] (key : β → κ) :
+    ∀ (vs : List β) (seen : List κ) (x : β), x ∈ vs →
+      key x ∈ seen ∨ ∃ a ∈ firstFreshK key seen vs, key a = key x := by
+  intro vs
+  induction vs with
+  | nil => intro _ x hx; exact absurd hx List.not_mem_nil
+  | cons y t ih =>
+      intro seen x hx
+      by_cases hy : key y ∈ seen
+      · rw [firstFreshK, if_pos hy]
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact Or.inl hy
+        · exact ih seen x hx'
+      · rw [firstFreshK, if_neg hy]
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact Or.inr ⟨x, List.mem_cons_self, rfl⟩
+        · rcases ih (key y :: seen) x hx' with hs | ⟨a, ha, hka⟩
+          · rcases List.mem_cons.mp hs with he | hs'
+            · exact Or.inr ⟨y, List.mem_cons_self, he.symm⟩
+            · exact Or.inl hs'
+          · exact Or.inr ⟨a, List.mem_cons_of_mem _ ha, hka⟩
+
+/-- **§260.3 — AND IT IS BOUNDED BY ANY ENUMERATION OF THE KEYS.** -/
+theorem firstFreshK_len_le {β κ : Type} [DecidableEq κ] (key : β → κ)
+    (E : List κ) (hE : ∀ v : β, key v ∈ E) (vs : List β) :
+    (firstFreshK key [] vs).length ≤ E.length := by
+  have h1 : ((firstFreshK key [] vs).map key).length ≤ E.length :=
+    nodup_len_le _ _ (fun t ht => by
+      obtain ⟨v, _, rfl⟩ := List.mem_map.mp ht
+      exact hE v) (firstFreshK_keys_nodup key vs []).1
+  rwa [List.length_map] at h1
+/-! #### §261 — THE DOWN-SPECTRUM KEY
+
+`q(v) = (mty v, {mty x : x PP v})`.  The spectrum is stored canonically as a
+FILTER of `typeEnum C₀`, which makes it a sublist by construction — so the key
+enumeration is `typeEnum × sublists typeEnum`, of size `N · 2^N`, and the gate's
+bound follows from §260.3 with no new counting. -/
+
+open Classical in
+/-- The strict lower type spectrum, canonical as a sublist of `typeEnum C₀`. -/
+noncomputable def dspec (C0 : Concept) (I : Interp α) (x : α) :
+    List (List Concept) :=
+  (typeEnum C0).filter
+    (fun t => decide (∃ y, I.dom y ∧ I.rho y x = pp ∧ mty C0 I y = t))
+
+open Classical in
+theorem mem_dspec {C0 : Concept} {I : Interp α} {x : α} {t : List Concept} :
+    t ∈ dspec C0 I x ↔ t ∈ typeEnum C0 ∧
+      ∃ y, I.dom y ∧ I.rho y x = pp ∧ mty C0 I y = t := by
+  unfold dspec
+  rw [List.mem_filter]
+  constructor
+  · intro ⟨h1, h2⟩; exact ⟨h1, of_decide_eq_true h2⟩
+  · intro ⟨h1, h2⟩; exact ⟨h1, decide_eq_true h2⟩
+
+open Classical in
+/-- **THE KEY.** -/
+noncomputable def dkey (C0 : Concept) (I : Interp α) (x : α) :
+    List Concept × List (List Concept) := (mty C0 I x, dspec C0 I x)
+
+/-- **THE KEY ENUMERATION**, of size `|typeEnum C₀| · 2^|typeEnum C₀|`. -/
+def keyEnum (C0 : Concept) : List (List Concept × List (List Concept)) :=
+  (typeEnum C0).flatMap
+    (fun t => (sublists (typeEnum C0)).map (fun s => (t, s)))
+
+open Classical in
+theorem dkey_mem_keyEnum (C0 : Concept) (I : Interp α) (x : α) :
+    dkey C0 I x ∈ keyEnum C0 := by
+  rw [keyEnum, List.mem_flatMap]
+  refine ⟨mty C0 I x, mty_mem_typeEnum C0 I x, ?_⟩
+  rw [List.mem_map]
+  exact ⟨dspec C0 I x, filter_mem_sublists _ _, rfl⟩
+
+open Classical in
+/-- **§261.1 — THE DOWN-SPECTRUM GATE**, and its bound. -/
+noncomputable def dGated (C0 : Concept) (I : Interp α) (vs : List α) : List α :=
+  firstFreshK (dkey C0 I) [] vs
+
+open Classical in
+theorem dGated_len_le (C0 : Concept) (I : Interp α) (vs : List α) :
+    (dGated C0 I vs).length ≤ (keyEnum C0).length :=
+  firstFreshK_len_le _ _ (dkey_mem_keyEnum C0 I) vs
+
+open Classical in
+theorem dGated_sub (C0 : Concept) (I : Interp α) (vs : List α) :
+    ∀ x ∈ dGated C0 I vs, x ∈ vs := fun x hx => firstFreshK_sub _ vs [] x hx
+
+open Classical in
+theorem dGated_append_sub (C0 : Concept) (I : Interp α) (vs ws : List α) :
+    ∀ x ∈ dGated C0 I vs, x ∈ dGated C0 I (vs ++ ws) :=
+  fun x hx => firstFreshK_append_sub _ vs [] ws x hx
+
+open Classical in
+/-- Every node has a gate-mate of the same key. -/
+theorem dGated_covers (C0 : Concept) (I : Interp α) (vs : List α) (v : α)
+    (hv : v ∈ vs) :
+    ∃ a ∈ dGated C0 I vs, dkey C0 I a = dkey C0 I v := by
+  rcases firstFreshK_covers (dkey C0 I) vs [] v hv with h | h
+  · exact absurd h List.not_mem_nil
+  · exact h
+
+open Classical in
+/-- **§261.2 — THE PAYOFF: SHARING THE KEY SUPPLIES §259's PREMISE.**  This is
+    where the refinement earns its cost.  Equal keys give equal spectra, so every
+    lower type of one member already occurs below the other — which is exactly the
+    hypothesis `cone_agreement_of_spectrum` and `union_cone_body` consume.
+
+    So under this gate, a blocked node's borrowed witness carries every `∀DR` body
+    the shared position demands, and §256's counterexample cannot recur inside a
+    key class. -/
+theorem hspec_of_dkey (C0 : Concept) (I : Interp α) {v₁ v₂ : α}
+    (h : dkey C0 I v₁ = dkey C0 I v₂) :
+    ∀ x, I.dom x → I.rho x v₂ = pp →
+      ∃ y, I.dom y ∧ I.rho y v₁ = pp ∧ mty C0 I y = mty C0 I x := by
+  intro x hx hxv
+  have h2 : mty C0 I x ∈ dspec C0 I v₂ :=
+    mem_dspec.mpr ⟨mty_mem_typeEnum C0 I x, ⟨x, hx, hxv, rfl⟩⟩
+  have hsp : dspec C0 I v₁ = dspec C0 I v₂ := congrArg Prod.snd h
+  rw [← hsp] at h2
+  exact (mem_dspec.mp h2).2
+
+open Classical in
+/-- And the same key still gives the same model type, which §254's propagation
+    needs — so nothing built on `mty a = mty v` is lost by refining. -/
+theorem mty_of_dkey (C0 : Concept) (I : Interp α) {v₁ v₂ : α}
+    (h : dkey C0 I v₁ = dkey C0 I v₂) : mty C0 I v₁ = mty C0 I v₂ :=
+  congrArg Prod.fst h
+open Classical in
+/-- **§261.3 — THE CAPSTONE: `wp132`'s TREATMENT, AS A THEOREM.**  Under the
+    down-spectrum gate, one member's `DR`-witness carries its `∀DR` bodies across
+    EVERY member's cone — so a shared position is serviceable, and §256's
+    counterexample cannot recur within a key class.
+
+    This is the statement `wp132` measured at 0 failures on 7,525 non-vacuous
+    groups; it is now proved, so the measurement is a regression rather than the
+    evidence. -/
+theorem dkey_union_serves (hI : RCC5Interp I) (C0 : Concept) {v₁ v₂ w z : α}
+    (hv₁ : I.dom v₁) (hw : I.dom w) (hz : I.dom z)
+    (hv₁w : I.rho v₁ w = pp) (hwz : I.rho w z = dr)
+    (hkey : dkey C0 I v₁ = dkey C0 I v₂)
+    {E : Concept} (hE : E ∈ cl C0) (hall : sat I z (Concept.all dr E)) :
+    ∀ x, I.dom x → I.rho x v₂ = pp → sat I x E :=
+  union_cone_body hI C0 hv₁ hw hz hv₁w hwz (hspec_of_dkey C0 I hkey) hE hall
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

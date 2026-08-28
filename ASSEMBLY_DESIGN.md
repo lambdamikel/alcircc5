@@ -15716,3 +15716,42 @@ mean kernels are not exercised.
 
 Build: 42,113 lines, 2,114 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §§260–261 — the gate at the down-spectrum key
+
+The pivot's cost, paid. §§248–250 keyed the gate to `mty` and typed it at
+`List Concept`; §260 makes it generic (`firstFreshK` over any decidable key, with
+`_keys_nodup` / `_sub` / `_append_sub` / `_covers` / `_len_le` — the last bounding
+the gate by ANY enumeration of the keys), and §261 supplies the key.
+
+**The key, and why the enumeration is free.** `dspec` stores the strict lower type
+spectrum as a FILTER of `typeEnum C₀`, so it is a sublist by construction; hence
+`dkey x ∈ keyEnum C₀ := typeEnum ×ˢ sublists typeEnum` needs only
+`mty_mem_typeEnum` and `filter_mem_sublists`, and the gate's bound follows from
+§260.3 with no new counting. Size `N · 2^N` — the doubly-exponential price
+recorded in §256.3, now concrete.
+
+**§261.2/§261.3 — where the refinement earns its cost.** `hspec_of_dkey`: equal
+keys give equal spectra, so every lower type of one member already occurs below
+the other — precisely the hypothesis `cone_agreement_of_spectrum` and
+`union_cone_body` consume. `dkey_union_serves` then closes the loop: under this
+gate one member's `DR`-witness carries its `∀DR` bodies across EVERY member's
+cone, so a shared position is serviceable and §256's counterexample cannot recur
+inside a key class.
+
+**That is `wp132`'s treatment, now proved.** The probe's 0 failures on 7,525
+non-vacuous groups becomes a regression rather than the evidence.
+
+`mty_of_dkey` records that the refined key still determines the model type, so
+nothing built on `mty a = mty v` — §254's propagation, §255's per-edge
+agreement — is lost by refining.
+
+**WHAT IS PORTED AND WHAT IS NOT.** Ported: the gate layer (definition, covers,
+bound, append-monotonicity) and the serviceability payoff. NOT ported: `ptKids`,
+`ptExtend`, `ptIter`, the containment, the stabilization and the coverage theorem
+(§§248–250) are all still written against `ptGated`, i.e. against `mty`. Their
+proofs consume only `firstFresh_append_sub` and `firstFresh_covers`, both of which
+now have `K` analogues, so the port is mechanical — with the standing caveat.
+
+Build: 42,331 lines, 2,133 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
