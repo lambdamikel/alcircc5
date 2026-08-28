@@ -15203,5 +15203,50 @@ edge above, and `Stationary.covered`'s kernel disjunct, §231.1); the kernel-sid
 `swCert_ok` obligations `hplab`, `hp`, `hkpp`, `hkppi`, `hkq`, `hkex`; the `Fin`
 reindex; and the final `MergedExtractionAt` assembly.
 
-Build: 40,539 lines, 2,052 declarations, exit 0,
+
+### §250 — coverage at the closed node set
+
+§249 gave the transfer PREMISE. This spends it.
+
+**§250.1 — `ptKids_serves`.** For every stage node `v` and every `∃r.D` it owes,
+there is a gated `a` with `mty a = mty v` such that either the demand is
+persistent at `a` (kernel), or a node of the batch carries `D`.
+
+**The kernel disjunct is read at `a`, not at `v`, and that is forced.**
+`persistDs C0 I x` filters `cl C₀` by `∃PP.D ∈ mty x ∧ sat x (∀PP.(∃PP.D))`. The
+second conjunct is a SYNTHETIC guard — `∀PP.(∃PP.D)` need not lie in `cl C₀` —
+so it is not recorded in the model type, and `mty a = mty v` does NOT transfer
+persistence. Writing the disjunct at `v` would have been an overclaim; it took
+reading `persistDs`'s definition to see it, which is the same lesson as the
+campaign's standing method note.
+
+**§250.2/§250.3 — the batch is inside the stage.** `appendNew_eq_self`: a
+stalled `appendNew` absorbed everything (if some candidate were fresh, the
+prefix would be strictly longer — a length contradiction). So at §248's fixed
+point, `ptKids (ptIter N) ⊆ ptIter N`.
+
+**§250.4/§250.5 — `ptIter_phase1`.** From `ns0.Nodup` alone: the node set closes
+within `|ns₀| + |typeEnum C₀|·|cl C₀|` rounds, at a set no larger than that, and
+at that set every existential of every node is discharged by a kernel or by
+another node OF THE SET. No hypothesis about the labelling — it is `mtyLab`, the
+extraction's own.
+
+**SCOPE — what phase 1 does not give.** Coverage here means *a serving node
+exists in the set*. The certificate's `e_ex` demands an EDGE from `v` to it. For
+`∃PP` that edge is `declared_edge_package`'s declared PP-edge, licensed by
+`mty v = mty a` (round-7 blocking: a PP-labelled edge between distinct
+occurrences, never an identification). For the horizontal cases it is open. Also
+open: `declared_edge_package`'s own acyclicity caveat (that the borrowed witness
+is not already an ancestor), which is a property of the step graph rather than of
+labels, and is the residue `wp114` measured.
+
+**Status of the two phases.** Phase 1 (node set): finite, bounded, reached, and
+covered — closed. Phase 2 (label saturation): §§208–219 give the measure and
+termination; `Stationary` (§220) is the interface. Remaining for the
+certificate: the `∃PP` edge wiring above, `Stationary.covered`'s kernel disjunct
+(§231.1), the kernel-side `swCert_ok` obligations (`hplab`, `hp`, `hkpp`,
+`hkppi`, `hkq`, `hkex`), the `Fin` reindex, and the final `MergedExtractionAt`
+assembly.
+
+Build: 40,705 lines, 2,059 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

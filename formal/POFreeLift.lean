@@ -39073,6 +39073,28 @@ theorem appendNew_mem {β : Type} [DecidableEq β] :
           · rw [List.mem_singleton] at h'; exact Or.inr (h' ▸ List.mem_cons_self)
         · exact Or.inr (List.mem_cons_of_mem _ h)
 
+/-- **§250.2 — A STALLED APPEND ABSORBED EVERYTHING.**  If `appendNew` returns
+    its accumulator unchanged then every candidate was already present.  This is
+    what turns the length fixed point into a CLOSURE statement. -/
+theorem appendNew_eq_self {β : Type} [DecidableEq β] :
+    ∀ (l acc : List β), appendNew acc l = acc → ∀ x ∈ l, x ∈ acc := by
+  intro l
+  induction l with
+  | nil => intro _ _ x hx; exact absurd hx List.not_mem_nil
+  | cons y t ih =>
+      intro acc h x hx
+      by_cases hy : y ∈ acc
+      · rw [appendNew, if_pos hy] at h
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact hy
+        · exact ih acc h x hx'
+      · exfalso
+        rw [appendNew, if_neg hy] at h
+        obtain ⟨ws, hws⟩ := appendNew_prefix t (acc ++ [y])
+        rw [hws] at h
+        have := congrArg List.length h
+        simp [List.length_append] at this
+
 /-- **CONTAINMENT BECOMES A LENGTH BOUND**, for a duplicate-free list. -/
 theorem stage_len_of_contained {β : Type} [DecidableEq β]
     (vs ns0 kids : List β) (hnd : vs.Nodup)
@@ -39480,6 +39502,142 @@ theorem ptKidsAt_mem_ptKids (hI : RCC5Interp I) (C0 : Concept)
   intro z hz
   rw [ptKids, List.mem_flatMap]
   exact ⟨v, hv, hz⟩
+
+open Classical in
+/-- **§250 — THE CHILD IS IN ITS OWN BATCH.**  An unblocked demand's witness is
+    literally an element of `ptKidsAt`. -/
+theorem ptChild_mem_ptKidsAt (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ w, SupportOk I C0 (ptIdxPoint hI w) (L w)) (a : PtIdx I C0)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ L a)
+    (hnb : r = pp → D ∉ persistDs C0 I (ptIdxPoint hI a))
+    (hnbI : r = ppi → D ∉ persistDsI C0 I (ptIdxPoint hI a)) :
+    (Sum.inl ⟨ptChild (hok a) hD, ptChild_dom (hok a) hD⟩ : PtIdx I C0)
+      ∈ ptKidsAt hI L hok a := by
+  refine List.mem_flatMap.mpr ⟨⟨Concept.ex r D, hD⟩, List.mem_attach _ _, ?_⟩
+  cases r with
+  | pp => simp only [if_neg (hnb rfl)]; exact List.mem_cons_self
+  | ppi => simp only [if_neg (hnbI rfl)]; exact List.mem_cons_self
+  | dr => exact List.mem_cons_self
+  | po => exact List.mem_cons_self
+  | eq => exact List.mem_cons_self
+
+open Classical in
+/-- And it carries the demand's argument. -/
+theorem ptChild_lab (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ w, SupportOk I C0 (ptIdxPoint hI w) (L w)) (a : PtIdx I C0)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ L a) :
+    D ∈ mtyLab hI C0
+      (Sum.inl ⟨ptChild (hok a) hD, ptChild_dom (hok a) hD⟩ : PtIdx I C0) := by
+  have hcl : D ∈ cl C0 := cl_ex ((hok a).sub _ hD)
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, ptChild_sat (hok a) hD⟩⟩
+
+open Classical in
+/-- **§250.1 — COVERAGE, INCLUDING AT BLOCKED NODES.**  Every existential a
+    stage node owes is discharged in one of exactly two ways: by the gate-mate's
+    KERNEL (the demand is persistent there), or by a node of the batch carrying
+    the argument.
+
+    The kernel disjunct is read at the GATE-MATE `a`, not at `v`, and that is
+    forced: `persistDs` is not a function of `mty`, because its guard
+    `∀PP.(∃PP.D)` need not lie in `cl C₀`, so `mty a = mty v` does NOT transfer
+    persistence.  What `mty a = mty v` does give is `declared_edge_package` —
+    the PP-labelled declared edge letting `v` borrow `a`'s witness without any
+    identification of the two (round-7 blocking, not round-6 collapse). -/
+theorem ptKids_serves (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ vs)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ mtyLab hI C0 v) :
+    ∃ a ∈ ptGated hI C0 vs,
+      mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v) ∧
+      ((r = pp ∧ D ∈ persistDs C0 I (ptIdxPoint hI a)) ∨
+       (r = ppi ∧ D ∈ persistDsI C0 I (ptIdxPoint hI a)) ∨
+       ∃ z ∈ ptKids hI vs (mtyLab hI C0) (mtyLab_ok hI C0),
+         D ∈ mtyLab hI C0 z) := by
+  obtain ⟨a, ha, hty⟩ := ptGated_covers hI C0 vs v hv
+  refine ⟨a, ha, hty, ?_⟩
+  have hDa : Concept.ex r D ∈ mtyLab hI C0 a := by
+    rw [mtyLab, hty]; exact hD
+  by_cases hp : r = pp ∧ D ∈ persistDs C0 I (ptIdxPoint hI a)
+  · exact Or.inl hp
+  by_cases hpi : r = ppi ∧ D ∈ persistDsI C0 I (ptIdxPoint hI a)
+  · exact Or.inr (Or.inl hpi)
+  refine Or.inr (Or.inr ⟨_, ?_, ptChild_lab hI (mtyLab hI C0) (mtyLab_ok hI C0) a hDa⟩)
+  exact ptKidsAt_mem_ptKids hI C0 vs a ha (mtyLab hI C0) (mtyLab_ok hI C0) _
+    (ptChild_mem_ptKidsAt hI (mtyLab hI C0) (mtyLab_ok hI C0) a hDa
+      (fun hr => fun hc => hp ⟨hr, hc⟩) (fun hr => fun hc => hpi ⟨hr, hc⟩))
+
+open Classical in
+/-- **§250.3 — AT THE FIXED POINT, THE BATCH IS INSIDE THE STAGE.** -/
+theorem ptIter_closed (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) (N : Nat)
+    (hfix : ptIter hI L hok ns0 (N + 1) = ptIter hI L hok ns0 N) :
+    ∀ z ∈ ptKids hI (ptIter hI L hok ns0 N) L hok, z ∈ ptIter hI L hok ns0 N :=
+  appendNew_eq_self _ _ hfix
+
+open Classical in
+/-- **§250.4 — COVERAGE AT THE CLOSED NODE SET.**  The statement the certificate
+    needs: once phase 1 has stalled, every existential owed by any node of the
+    node set is discharged either by the node's gate-mate's KERNEL or by another
+    node OF THE SET carrying the argument.  Nothing escapes to a node that was
+    never built.
+
+    Combines §248 (the stall exists and is reached) with §249 (every node has a
+    gate-mate) and §250.1 (the gate-mate's child serves).  Still OPEN, and not
+    claimed here: the certificate's `e_ex` needs an EDGE from `v` to that node —
+    supplied by `declared_edge_package` for the `∃PP` case, unproved for the
+    others. -/
+theorem ptIter_serves (hI : RCC5Interp I) (C0 : Concept)
+    (ns0 : List (PtIdx I C0)) (N : Nat)
+    (hfix : ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 (N + 1)
+          = ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N)
+    (v : PtIdx I C0) (hv : v ∈ ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ mtyLab hI C0 v) :
+    ∃ a ∈ ptGated hI C0 (ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N),
+      mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v) ∧
+      ((r = pp ∧ D ∈ persistDs C0 I (ptIdxPoint hI a)) ∨
+       (r = ppi ∧ D ∈ persistDsI C0 I (ptIdxPoint hI a)) ∨
+       ∃ z ∈ ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N,
+         D ∈ mtyLab hI C0 z) := by
+  obtain ⟨a, ha, hty, hcase⟩ := ptKids_serves hI C0 _ v hv hD
+  refine ⟨a, ha, hty, ?_⟩
+  rcases hcase with h | h | ⟨z, hz, hDz⟩
+  · exact Or.inl h
+  · exact Or.inr (Or.inl h)
+  · exact Or.inr (Or.inr ⟨z, ptIter_closed hI _ _ ns0 N hfix z hz, hDz⟩)
+
+open Classical in
+/-- **§250.5 — PHASE 1, END TO END.**  From a duplicate-free seed alone: the
+    node set closes within `|ns₀| + |typeEnum C₀|·|cl C₀|` rounds, at a set no
+    larger than that, and at that set every existential of every node is
+    discharged by a kernel or inside the set.
+
+    No hypothesis beyond `ns0.Nodup` — the labelling is `mtyLab`, the extraction's
+    own.  What this does NOT give is the certificate: `e_ex` demands an EDGE to
+    the serving node, which for `∃PP` is `declared_edge_package`'s declared
+    PP-edge and for the horizontal cases is still open. -/
+theorem ptIter_phase1 (hI : RCC5Interp I) (C0 : Concept)
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) :
+    ∃ N, N ≤ ns0.length + (typeEnum C0).length * (cl C0).length ∧
+      (ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N).length
+        ≤ ns0.length + (typeEnum C0).length * (cl C0).length ∧
+      (∀ k, ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 (N + k)
+          = ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N) ∧
+      ∀ v ∈ ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N,
+        ∀ (r : Atom) (D : Concept), Concept.ex r D ∈ mtyLab hI C0 v →
+          ∃ a ∈ ptGated hI C0 (ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N),
+            mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v) ∧
+            ((r = pp ∧ D ∈ persistDs C0 I (ptIdxPoint hI a)) ∨
+             (r = ppi ∧ D ∈ persistDsI C0 I (ptIdxPoint hI a)) ∨
+             ∃ z ∈ ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N,
+               D ∈ mtyLab hI C0 z) := by
+  obtain ⟨N, hNB, hstab⟩ := ptIter_stabilizes_mty hI C0 ns0 hnd
+  exact ⟨N, hNB,
+    ptIter_len_le hI _ _ (mtyLab_len hI C0) ns0 hnd N,
+    hstab,
+    fun v hv r D hD => ptIter_serves hI C0 ns0 N (hstab 1) v hv hD⟩
 
 /-! ##### §247.1 — what the total bound still needs
 
