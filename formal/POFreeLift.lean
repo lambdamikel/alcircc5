@@ -38703,6 +38703,185 @@ The remaining step is definitional: make the extension draw its children from
 above are the bound. §242's `stage_bound_of_unblocked` is already stated in that
 shape. -/
 
+/-! #### §245 — THE GATE, GENERICALLY, AND THE GATED EXTENSION
+
+§244.1 left one definition: draw children from the gated nodes. The gate was
+stated on points (`firstOfType`), while `extendStage` works on `SNode`s — so
+rather than duplicate it, §245 states it over an arbitrary "type of" function and
+recovers both instances.
+
+The three facts §§243–244 proved are re-proved once, generically. -/
+
+/-- **THE GATE, GENERICALLY.**  Keep an element only if its type is fresh. -/
+def firstFresh {β : Type} (ty : β → List Concept) :
+    List (List Concept) → List β → List β
+  | _, [] => []
+  | seen, x :: t =>
+      if ty x ∈ seen then firstFresh ty seen t
+      else x :: firstFresh ty (ty x :: seen) t
+
+theorem firstFresh_nodup {β : Type} (ty : β → List Concept) :
+    ∀ (vs : List β) (seen : List (List Concept)),
+      ((firstFresh ty seen vs).map ty).Nodup ∧
+      ∀ t ∈ (firstFresh ty seen vs).map ty, t ∉ seen := by
+  intro vs
+  induction vs with
+  | nil => intro seen; exact ⟨by simp [firstFresh], by simp [firstFresh]⟩
+  | cons x t ih =>
+      intro seen
+      by_cases hx : ty x ∈ seen
+      · rw [firstFresh, if_pos hx]; exact ih seen
+      · rw [firstFresh, if_neg hx]
+        obtain ⟨hnd, hfresh⟩ := ih (ty x :: seen)
+        refine ⟨?_, ?_⟩
+        · rw [List.map_cons, List.nodup_cons]
+          exact ⟨fun hmem => (hfresh _ hmem) List.mem_cons_self, hnd⟩
+        · intro u hu
+          rcases List.mem_cons.mp hu with rfl | hu'
+          · exact hx
+          · exact fun hs => hfresh u hu' (List.mem_cons_of_mem _ hs)
+
+theorem firstFresh_sub {β : Type} (ty : β → List Concept) :
+    ∀ (vs : List β) (seen : List (List Concept)) (x : β),
+      x ∈ firstFresh ty seen vs → x ∈ vs := by
+  intro vs
+  induction vs with
+  | nil => intro seen x hx; simp [firstFresh] at hx
+  | cons y t ih =>
+      intro seen x hx
+      by_cases hy : ty y ∈ seen
+      · rw [firstFresh, if_pos hy] at hx
+        exact List.mem_cons_of_mem _ (ih seen x hx)
+      · rw [firstFresh, if_neg hy] at hx
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact List.mem_cons_self
+        · exact List.mem_cons_of_mem _ (ih _ x hx')
+
+theorem firstFresh_append_sub {β : Type} (ty : β → List Concept) :
+    ∀ (vs : List β) (seen : List (List Concept)) (ws : List β) (x : β),
+      x ∈ firstFresh ty seen vs → x ∈ firstFresh ty seen (vs ++ ws) := by
+  intro vs
+  induction vs with
+  | nil => intro seen ws x hx; simp [firstFresh] at hx
+  | cons y t ih =>
+      intro seen ws x hx
+      by_cases hy : ty y ∈ seen
+      · rw [firstFresh, if_pos hy] at hx
+        rw [List.cons_append, firstFresh, if_pos hy]
+        exact ih seen ws x hx
+      · rw [firstFresh, if_neg hy] at hx
+        rw [List.cons_append, firstFresh, if_neg hy]
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact List.mem_cons_self
+        · exact List.mem_cons_of_mem _ (ih _ ws x hx')
+
+open Classical in
+/-- **THE GATE ON STAGE NODES**, the instance `extendStage` needs. -/
+noncomputable def freshNodes (C0 : Concept) (I : Interp α)
+    (vs : List (SNode I C0)) : List (SNode I C0) :=
+  firstFresh (fun n => mty C0 I n.x) [] vs
+
+open Classical in
+/-- **AND IT IS BOUNDED BY `C₀`.** -/
+theorem freshNodes_len_le (C0 : Concept) (I : Interp α)
+    (vs : List (SNode I C0)) :
+    (freshNodes C0 I vs).length ≤ (typeEnum C0).length := by
+  have h1 : ((freshNodes C0 I vs).map (fun n => mty C0 I n.x)).length
+      ≤ (typeEnum C0).length :=
+    nodup_len_le _ _ (fun t ht => by
+      obtain ⟨n, _, rfl⟩ := List.mem_map.mp ht
+      exact mty_mem_typeEnum C0 I n.x)
+      (firstFresh_nodup (fun n => mty C0 I n.x) vs []).1
+  rwa [List.length_map] at h1
+
+open Classical in
+/-- Gated nodes are stage nodes — the round-7 discipline at this instance. -/
+theorem freshNodes_sub (C0 : Concept) (I : Interp α)
+    (vs : List (SNode I C0)) (n : SNode I C0) (hn : n ∈ freshNodes C0 I vs) :
+    n ∈ vs := by
+  rw [freshNodes] at hn
+  exact firstFresh_sub (fun (m : SNode I C0) => mty C0 I m.x) vs [] n hn
+
+open Classical in
+/-- **THE GATED EXTENSION.**  §223's step, drawing children only from the
+    type-fresh nodes — round-7 blocking, at the stage. -/
+noncomputable def gatedStage (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) : List (SNode I C0) :=
+  ns ++ (stageKids hI (freshNodes C0 I ns)).filter (fun m => decide (m ∉ ns))
+
+open Classical in
+/-- It still only grows, and blocked nodes are kept — nothing is identified. -/
+theorem gatedStage_sub (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0)) : ∀ n ∈ ns, n ∈ gatedStage hI ns :=
+  fun _ hn => List.mem_append.mpr (Or.inl hn)
+
+open Classical in
+/-- **A NODE OWES AT MOST ONE CHILD PER DEMAND**, so a stage owes at most
+    `|nodes| · |cl C₀|`. -/
+theorem stageKids_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (SNode I C0))
+    (hlen : ∀ n ∈ vs, n.lab.length ≤ (cl C0).length) :
+    (stageKids hI vs).length ≤ vs.length * (cl C0).length := by
+  rw [stageKids, List.length_flatMap]
+  have hb : ((vs.attach).map (fun n =>
+      (n.val.lab.attach.flatMap (fun q => match q with
+        | ⟨.ex pp D, hD⟩ =>
+            if D ∈ persistDs C0 I n.val.x then [] else [sChildN hI n.val hD]
+        | ⟨.ex ppi D, hD⟩ =>
+            if D ∈ persistDsI C0 I n.val.x then [] else [sChildN hI n.val hD]
+        | ⟨.ex dr _, hD⟩ => [sChildN hI n.val hD]
+        | ⟨.ex po _, hD⟩ => [sChildN hI n.val hD]
+        | ⟨.ex eq _, hD⟩ => [sChildN hI n.val hD]
+        | _ => [])).length)).sum
+      ≤ (vs.attach).length * (cl C0).length := by
+    refine sum_map_le _ _ _ (fun n _ => ?_)
+    rw [List.length_flatMap]
+    refine Nat.le_trans (sum_map_le _ _ 1 (fun q _ => ?_)) ?_
+    · obtain ⟨F, hF⟩ := q
+      cases F with
+      | ex r c =>
+          cases r with
+          | pp =>
+              show (if c ∈ persistDs C0 I n.val.x then ([] : List (SNode I C0))
+                    else [sChildN hI n.val hF]).length ≤ 1
+              by_cases hb : c ∈ persistDs C0 I n.val.x
+              · rw [if_pos hb]; exact Nat.zero_le _
+              · rw [if_neg hb]; exact Nat.le_refl _
+          | ppi =>
+              show (if c ∈ persistDsI C0 I n.val.x then ([] : List (SNode I C0))
+                    else [sChildN hI n.val hF]).length ≤ 1
+              by_cases hb : c ∈ persistDsI C0 I n.val.x
+              · rw [if_pos hb]; exact Nat.zero_le _
+              · rw [if_neg hb]; exact Nat.le_refl _
+          | dr => exact Nat.le_refl _
+          | po => exact Nat.le_refl _
+          | eq => exact Nat.le_refl _
+      | _ => exact Nat.zero_le _
+    · rw [List.length_attach, Nat.mul_one]
+      exact hlen n.val n.property
+  rwa [List.length_attach] at hb
+
+open Classical in
+/-- **THE GATED STAGE'S BOUND.**  §244.1's three facts, composed: children come
+    only from the type-fresh nodes, of which there are at most `|typeEnum C₀|`,
+    and each owes at most `|cl C₀|`. -/
+theorem gatedStage_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (ns : List (SNode I C0))
+    (hlen : ∀ n ∈ ns, n.lab.length ≤ (cl C0).length) :
+    (gatedStage hI ns).length
+      ≤ ns.length + (typeEnum C0).length * (cl C0).length := by
+  rw [gatedStage, List.length_append]
+  have h1 : ((stageKids hI (freshNodes C0 I ns)).filter
+      (fun m => decide (m ∉ ns))).length ≤ (stageKids hI (freshNodes C0 I ns)).length :=
+    List.length_filter_le _ _
+  have h2 : (stageKids hI (freshNodes C0 I ns)).length
+      ≤ (freshNodes C0 I ns).length * (cl C0).length :=
+    stageKids_len_le hI _ (fun n hn => hlen n (freshNodes_sub C0 I ns n hn))
+  have h3 : (freshNodes C0 I ns).length * (cl C0).length
+      ≤ (typeEnum C0).length * (cl C0).length :=
+    Nat.mul_le_mul_right _ (freshNodes_len_le C0 I ns)
+  omega
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39736,4 +39915,7 @@ end POFreeLift
 #print axioms POFreeLift.firstOfType_types_nodup
 #print axioms POFreeLift.firstOfType_len_le
 #print axioms POFreeLift.firstOfType_append_sub
+#print axioms POFreeLift.freshNodes_len_le
+#print axioms POFreeLift.gatedStage_sub
+#print axioms POFreeLift.gatedStage_len_le
 #print axioms POFreeLift.kernel_of_no_terminal

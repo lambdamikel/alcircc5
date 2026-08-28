@@ -15012,3 +15012,44 @@ What is left is one definition, not an argument.
 
 Build: 39,739 lines, 2,002 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 245. THE GATED EXTENSION, AND THE BOUND IT CARRIES
+
+§244.1 left one definition. §245 states the gate over an arbitrary "type of"
+function rather than duplicating it — `firstFresh`, with `firstFresh_nodup`,
+`firstFresh_sub`, `firstFresh_append_sub` proved once — and instantiates it at
+stage nodes (`freshNodes`, `freshNodes_len_le`, `freshNodes_sub`).
+
+`gatedStage` is then §223's step with children drawn only from the type-fresh
+nodes: **round-7 blocking at the stage**, keeping blocked nodes and restricting
+only their expansion (`gatedStage_sub`).
+
+And the bound composes:
+
+* `stageKids_len_le` — a node owes at most one child per demand, so a stage owes
+  at most `|nodes| * |cl C0|`;
+* `freshNodes_len_le` — at most `|typeEnum C0|` nodes are gated;
+* **`gatedStage_len_le`** — so one step adds at most
+  `|typeEnum C0| * |cl C0|`, whatever the stage.
+
+With `firstFresh_append_sub` (§244) making the gated set monotone across rounds,
+that per-step bound is also the total: **the node count is bounded by
+`|typeEnum C0| * |cl C0|` above the initial stage, in `C0` alone.**
+
+### 245.1 `hbn` — the arc
+
+| | |
+|---|---|
+| §230 | open |
+| §231 | **false**; persistence gate added |
+| §239 | still false — persistence is the vertical case only |
+| §§240–241 | the mechanism is `cutNodes`', on model **types** |
+| §§242–244 | the counting, its invariant, its monotonicity |
+| §245 | **the gated step, and its bound** |
+
+What remains is to run the alternation on `gatedStage` in place of
+`extendStage` and re-check the invariants — the same proofs, since
+`gatedStage` differs only by which nodes it draws from.
+
+Build: 39,921 lines, 2,013 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
