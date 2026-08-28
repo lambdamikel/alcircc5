@@ -15584,3 +15584,54 @@ withdrawn under the campaign's own rule. The Lean lemma above replaces it.
 
 Build: 41,522 lines, 2,100 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §257 — Target B, formalized: the cross-kernel rectangle
+
+The cold attack's Target B argument is now Lean-certified up to the finite fusion
+bookkeeping. Its shape was the whole insight, and it is preserved exactly.
+
+**§257.1 — the abstract rank lemma.** `stabRank`/`_mono`/`_fix`/`_le_two` were
+already facts about `Atom`, but the sequence lemma they add up to was proved
+inline inside `external_stabilizes` for one particular sequence. `atom_seq_stabilizes`
+extracts it: **any** atom sequence with `f (n+1) ∈ comp ppi (f n)` is eventually
+constant. `atom_seq_stabilizes_dn` (§257.5) is the descending dual on `dstabRank`.
+This is what lets the rank argument be used a SECOND time, on objects that are not
+relations-to-a-point.
+
+**§257.2 — the two-tower rectangle.** For two towers there is a threshold `I₀` and
+ONE atom `q` such that every finite segment of `c` at or above `I₀` sees `q`
+uniformly, once `d` is taken far enough. The rank argument runs twice: per row via
+`external_stabilizes`, then on the row LIMITS via §257.1 — the limits obey the
+same transition because `comp` applies to `c(i+1), c(i), d(j)`.
+
+**The shape is the point.** The statement is *finite segment of `c`* against a
+*tail of `d`*. The tail-by-tail version — one `J` serving all of `c` — is FALSE,
+and the packet asked for it; that framing was the obstacle, not the mathematics.
+`two_tower_rectangle` does not imply it: `q` is fixed but `J` depends on the
+segment, exactly as in the `ℤ × {0,1}` counterexample where every row limit is
+`PP` while the tail contains `PP`, `PO` and `PPI`.
+
+**§257.3/§257.4 — segment × segment, and not `EQ`.** Both sides finite, both
+placeable beyond any bound (which is what makes fusion work and leaves room to
+land on equal-type endpoints); and a length-2 segment forces `q ≠ eq`
+(AXIOM-FREE), preserving strong equality at the macro level.
+
+**§§257.6–257.8 — direction-generic, and at `KernelData`.** `hkq` relates kernels
+of arbitrary direction, so the rectangle must not assume both ascend. The two
+halves separate cleanly: which theorem stabilizes the ROWS depends on `d`'s
+direction (`row_stabilizes_any` dispatches on the `Bool`); which rank argument
+stabilizes the row LIMITS depends only on `c`'s, because the limits' transition
+comes from `c`'s own step. `kernel_pair_rectangle` is the result in the form
+`swCert_ok` consumes: two `KernelData` of arbitrary directions admit finite phase
+segments, placeable beyond any bound, whose whole rectangle carries one atom —
+which is what `Q k k'` is set to.
+
+**WHAT REMAINS OF TARGET B.** The finite FUSION over a family: `kernel_pair_rectangle`
+supplies every pair with an arbitrary lower bound, which is exactly the induction's
+step, but the bookkeeping over a finite family of kernels (and landing each segment
+on equal-type endpoints, so `cty` still holds) is not done. That is indexing work
+over the certified core, not new mathematics — with this campaign's standing caveat
+that it has been wrong about that distinction before.
+
+Build: 41,806 lines, 2,109 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

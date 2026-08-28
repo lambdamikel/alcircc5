@@ -40459,6 +40459,315 @@ theorem cone_agreement_of_spectrum (C0 : Concept) {v₁ v₂ : α}
   have : E ∈ mty C0 I y := mem_mty.mpr ⟨hE, h1 y hy hyv⟩
   rw [hty] at this
   exact (mem_mty.mp this).2
+/-! #### §257 — TARGET B, STEP 1–2: THE ABSTRACT RANK ARGUMENT, AND ROW LIMITS
+
+The cold attack's Target B proof applies the RCC5 transition ranks TWICE: once to
+each row of a two-tower rectangle, and then to the SEQUENCE OF EVENTUAL ROW
+VALUES.  The second application is not about points at all, so the first job is to
+separate the rank argument from the model.
+
+`stabRank`/`stabRank_mono`/`stabRank_fix`/`stabRank_le_two` are already abstract
+(they are facts about `Atom`).  What was missing is the sequence lemma they add up
+to, which `external_stabilizes` proves inline for one particular sequence. -/
+
+/-- **§257.1 — ANY ATOM SEQUENCE OBEYING THE `PPI`-TRANSITION IS EVENTUALLY
+    CONSTANT.**  The abstract core of `external_stabilizes`: rank is nondecreasing
+    along the transition and bounded by 2, and a rank-preserving step preserves
+    the value.  Applied to a row of a rectangle it recovers the old statement;
+    applied to the row LIMITS it gives the two-tower theorem. -/
+theorem atom_seq_stabilizes (f : Nat → Atom)
+    (hstep : ∀ n, f (n + 1) ∈ comp ppi (f n)) :
+    ∃ N w, ∀ j, N ≤ j → f j = w := by
+  have hmono : ∀ i j, i ≤ j → stabRank (f i) ≤ stabRank (f j) := by
+    have aux : ∀ i d, stabRank (f i) ≤ stabRank (f (i + d)) := by
+      intro i d
+      induction d with
+      | zero => exact Nat.le_refl _
+      | succ d ih => exact Nat.le_trans ih (stabRank_mono _ _ (hstep (i + d)))
+    intro i j hij
+    have hj : j = i + (j - i) := by omega
+    rw [hj]; exact aux i (j - i)
+  -- the rank is eventually constant, by cases on which ranks are attained
+  have hrank : ∃ N, ∀ j, N ≤ j → stabRank (f j) = stabRank (f N) := by
+    by_cases h2 : ∃ i, stabRank (f i) = 2
+    · obtain ⟨i, hi⟩ := h2
+      exact ⟨i, fun j hj => by
+        have := hmono i j hj
+        have := stabRank_le_two (f j)
+        omega⟩
+    · by_cases h1 : ∃ i, stabRank (f i) = 1
+      · obtain ⟨i, hi⟩ := h1
+        refine ⟨i, fun j hj => ?_⟩
+        have hle := hmono i j hj
+        have : stabRank (f j) ≠ 2 := fun hc => h2 ⟨j, hc⟩
+        have := stabRank_le_two (f j)
+        omega
+      · refine ⟨0, fun j _ => ?_⟩
+        have hj1 : stabRank (f j) ≠ 1 := fun hc => h1 ⟨j, hc⟩
+        have hj2 : stabRank (f j) ≠ 2 := fun hc => h2 ⟨j, hc⟩
+        have h01 : stabRank (f 0) ≠ 1 := fun hc => h1 ⟨0, hc⟩
+        have h02 : stabRank (f 0) ≠ 2 := fun hc => h2 ⟨0, hc⟩
+        have := stabRank_le_two (f j)
+        have := stabRank_le_two (f 0)
+        omega
+  obtain ⟨N, hN⟩ := hrank
+  refine ⟨N, f N, ?_⟩
+  intro j hj
+  -- once the rank is fixed, every step preserves the value
+  have key : ∀ d, f (N + d) = f N := by
+    intro d
+    induction d with
+    | zero => rfl
+    | succ d ih =>
+        have hr : stabRank (f (N + d)) = stabRank (f (N + d + 1)) := by
+          rw [hN (N + d) (Nat.le_add_right _ _),
+              hN (N + d + 1) (by omega)]
+        have := stabRank_fix _ _ (hstep (N + d)) hr
+        rw [show N + (d + 1) = N + d + 1 from rfl, this, ih]
+  have hjd : j = N + (j - N) := by omega
+  rw [hjd]; exact key _
+/-- A uniform threshold over a finite initial range. -/
+theorem exists_uniform_threshold (f : Nat → Nat) :
+    ∀ p, ∃ J, ∀ a, a < p → f a ≤ J := by
+  intro p
+  induction p with
+  | zero => exact ⟨0, fun a ha => absurd ha (Nat.not_lt_zero a)⟩
+  | succ q ih =>
+      obtain ⟨J, hJ⟩ := ih
+      refine ⟨max J (f q), fun a ha => ?_⟩
+      rcases Nat.lt_or_ge a q with h | h
+      · exact Nat.le_trans (hJ a h) (Nat.le_max_left _ _)
+      · have : a = q := by omega
+        subst this
+        exact Nat.le_max_right _ _
+
+open Classical in
+/-- **§257.2 — THE TWO-TOWER FINITE RECTANGLE.**  For two ascending towers in one
+    model there is a threshold `I₀` and a single atom `q` such that EVERY finite
+    segment of `c` starting at or above `I₀` sees `q` uniformly, once `d` is taken
+    far enough out.
+
+    This is the cold attack's Target B for two towers, and its shape is the whole
+    point: the statement is about a FINITE segment of `c` against a TAIL of `d`.
+    The tail-by-tail version — one `J` serving all of `c` at once — is FALSE
+    (`ℤ × {0,1}` ordered by first coordinate), and the certificate never needs it,
+    because `phase k a` ranges over `a < p k`.
+
+    The rank argument is used TWICE: once per row, via `external_stabilizes`, and
+    then on the sequence of eventual row values, via `atom_seq_stabilizes`. -/
+theorem two_tower_rectangle (hI : RCC5Interp I) {c d : Nat → α}
+    (hcdom : ∀ n, I.dom (c n)) (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hddom : ∀ n, I.dom (d n)) (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp) :
+    ∃ I₀ q, ∀ s, I₀ ≤ s → ∀ p, ∃ J, ∀ a, a < p → ∀ j, J ≤ j →
+      I.rho (c (s + a)) (d j) = q := by
+  -- each ROW stabilizes: `external_stabilizes` on `d` against the point `c i`
+  have hrow : ∀ i, ∃ nw : Nat × Atom,
+      ∀ j, nw.1 ≤ j → I.rho (c i) (d j) = nw.2 := by
+    intro i
+    obtain ⟨N, wv, hw⟩ := external_stabilizes hI hddom hdstep (hcdom i)
+    refine ⟨(N, conv wv), ?_⟩
+    intro j hj
+    have h2 := hI.conv_ (d j) (c i) (hddom j) (hcdom i)
+    rw [h2, hw j hj]
+  obtain ⟨F, hF⟩ := Classical.skolem.mp hrow
+  -- the ROW LIMITS obey the same transition, so they stabilize too
+  have hstep2 : ∀ i, (F (i + 1)).2 ∈ comp ppi (F i).2 := by
+    intro i
+    have e1 : I.rho (c i) (d (max (F i).1 (F (i + 1)).1)) = (F i).2 :=
+      hF i _ (Nat.le_max_left _ _)
+    have e2 : I.rho (c (i + 1)) (d (max (F i).1 (F (i + 1)).1))
+        = (F (i + 1)).2 := hF (i + 1) _ (Nat.le_max_right _ _)
+    have hcc : I.rho (c (i + 1)) (c i) = ppi := by
+      have h2 := hI.conv_ (c i) (c (i + 1)) (hcdom i) (hcdom (i + 1))
+      rw [hcstep i] at h2; rw [h2]; rfl
+    have hcomp := hI.comp_ (c (i + 1)) (c i)
+      (d (max (F i).1 (F (i + 1)).1)) (hcdom (i + 1)) (hcdom i) (hddom _)
+    rw [hcc, e1, e2] at hcomp
+    exact hcomp
+  obtain ⟨I₀, q, hq⟩ := atom_seq_stabilizes (fun i => (F i).2) hstep2
+  refine ⟨I₀, q, ?_⟩
+  intro s hs p
+  -- one threshold for the whole finite segment
+  obtain ⟨J, hJ⟩ := exists_uniform_threshold (fun a => (F (s + a)).1) p
+  refine ⟨J, fun a ha j hj => ?_⟩
+  have h1 : I.rho (c (s + a)) (d j) = (F (s + a)).2 :=
+    hF (s + a) j (Nat.le_trans (hJ a ha) hj)
+  rw [h1]
+  exact hq (s + a) (Nat.le_trans hs (Nat.le_add_right _ _))
+open Classical in
+/-- **§257.3 — SEGMENT × SEGMENT, ARBITRARILY LATE.**  The form `kq_all` consumes:
+    both kernels contribute a FINITE phase segment, one atom serves the whole
+    rectangle, and both segments can be pushed beyond any prescribed bound — which
+    is what lets the finite fusion place later towers without disturbing earlier
+    ones, and what leaves room to land on equal-type endpoints. -/
+theorem two_tower_segments (hI : RCC5Interp I) {c d : Nat → α}
+    (hcdom : ∀ n, I.dom (c n)) (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hddom : ∀ n, I.dom (d n)) (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = pp)
+    (L p q : Nat) :
+    ∃ s t r, L ≤ s ∧ L ≤ t ∧
+      ∀ a, a < p → ∀ b, b < q → I.rho (c (s + a)) (d (t + b)) = r := by
+  obtain ⟨I₀, r, hr⟩ := two_tower_rectangle hI hcdom hcstep hddom hdstep
+  obtain ⟨J, hJ⟩ := hr (max I₀ L) (Nat.le_max_left _ _) p
+  refine ⟨max I₀ L, max J L, r, Nat.le_max_right _ _, Nat.le_max_right _ _, ?_⟩
+  intro a ha b _
+  exact hJ a ha _ (Nat.le_trans (Nat.le_max_left J L) (Nat.le_add_right _ _))
+
+open Classical in
+/-- **§257.4 — AND THE RECTANGLE IS NOT `EQ`.**  Distinct kernels must not be
+    declared `EQ`: strong EQ is identity, so a constant `EQ` rectangle would
+    identify every point of both segments, while a segment of length ≥ 2 of a
+    strict tower contains two distinct points.  (The attack's observation; it is
+    what keeps `frame_q`'s strong-equality convention intact at the macro level.) -/
+theorem two_tower_segment_ne_eq (hI : RCC5Interp I) {c d : Nat → α}
+    (hcdom : ∀ n, I.dom (c n)) (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = pp)
+    (hddom : ∀ n, I.dom (d n)) {s t : Nat} {q : Atom}
+    (hrect : ∀ a, a < 2 → ∀ b, b < 2 →
+      I.rho (c (s + a)) (d (t + b)) = q) : q ≠ eq := by
+  intro hq
+  -- `EQ` at both `a = 0` and `a = 1` would identify two distinct chain points
+  have h0 : I.rho (c (s + 0)) (d (t + 0)) = eq := by
+    rw [hrect 0 (by decide) 0 (by decide), hq]
+  have h1 : I.rho (c (s + 1)) (d (t + 0)) = eq := by
+    rw [hrect 1 (by decide) 0 (by decide), hq]
+  have e0 := hI.eq_id _ _ (hcdom (s + 0)) (hddom (t + 0)) h0
+  have e1 := hI.eq_id _ _ (hcdom (s + 1)) (hddom (t + 0)) h1
+  have hsame : c (s + 0) = c (s + 1) := by rw [e0, e1]
+  have hstep := hcstep (s + 0)
+  rw [show s + 0 + 1 = s + 1 from rfl, ← hsame] at hstep
+  rw [hI.refl_eq _ (hcdom (s + 0))] at hstep
+  exact absurd hstep (by decide)
+/-- **§257.5 — THE DESCENDING DUAL OF §257.1.**  Same argument on `dstabRank`,
+    whose transition is `comp pp` rather than `comp ppi`. -/
+theorem atom_seq_stabilizes_dn (f : Nat → Atom)
+    (hstep : ∀ n, f (n + 1) ∈ comp pp (f n)) :
+    ∃ N w, ∀ j, N ≤ j → f j = w := by
+  have hmono : ∀ i j, i ≤ j → dstabRank (f i) ≤ dstabRank (f j) := by
+    have aux : ∀ i e, dstabRank (f i) ≤ dstabRank (f (i + e)) := by
+      intro i e
+      induction e with
+      | zero => exact Nat.le_refl _
+      | succ e ih => exact Nat.le_trans ih (dstabRank_mono _ _ (hstep (i + e)))
+    intro i j hij
+    have hj : j = i + (j - i) := by omega
+    rw [hj]; exact aux i (j - i)
+  have hrank : ∃ N, ∀ j, N ≤ j → dstabRank (f j) = dstabRank (f N) := by
+    by_cases h2 : ∃ i, dstabRank (f i) = 2
+    · obtain ⟨i, hi⟩ := h2
+      exact ⟨i, fun j hj => by
+        have := hmono i j hj
+        have := dstabRank_le_two (f j)
+        omega⟩
+    · by_cases h1 : ∃ i, dstabRank (f i) = 1
+      · obtain ⟨i, hi⟩ := h1
+        refine ⟨i, fun j hj => ?_⟩
+        have hle := hmono i j hj
+        have : dstabRank (f j) ≠ 2 := fun hc => h2 ⟨j, hc⟩
+        have := dstabRank_le_two (f j)
+        omega
+      · refine ⟨0, fun j _ => ?_⟩
+        have hj1 : dstabRank (f j) ≠ 1 := fun hc => h1 ⟨j, hc⟩
+        have hj2 : dstabRank (f j) ≠ 2 := fun hc => h2 ⟨j, hc⟩
+        have h01 : dstabRank (f 0) ≠ 1 := fun hc => h1 ⟨0, hc⟩
+        have h02 : dstabRank (f 0) ≠ 2 := fun hc => h2 ⟨0, hc⟩
+        have := dstabRank_le_two (f j)
+        have := dstabRank_le_two (f 0)
+        omega
+  obtain ⟨N, hN⟩ := hrank
+  refine ⟨N, f N, ?_⟩
+  intro j hj
+  have key : ∀ e, f (N + e) = f N := by
+    intro e
+    induction e with
+    | zero => rfl
+    | succ e ih =>
+        have hr : dstabRank (f (N + e)) = dstabRank (f (N + e + 1)) := by
+          rw [hN (N + e) (Nat.le_add_right _ _), hN (N + e + 1) (by omega)]
+        have := dstabRank_fix _ _ (hstep (N + e)) hr
+        rw [show N + (e + 1) = N + e + 1 from rfl, this, ih]
+  have hjd : j = N + (j - N) := by omega
+  rw [hjd]; exact key _
+
+open Classical in
+/-- **§257.6 — THE RECTANGLE, DIRECTION-GENERIC.**  `hkq` relates kernels of
+    ARBITRARY directions, so the rectangle must not assume both towers ascend.
+
+    The two halves separate cleanly: which stabilization proves the ROWS depends
+    on `d`'s direction and enters as the hypothesis `hrow`; which rank argument
+    stabilizes the ROW LIMITS depends only on `c`'s direction, because the limits'
+    transition comes from `c`'s own step. -/
+theorem two_tower_rectangle_gen (hI : RCC5Interp I) {c d : Nat → α} (dc : Bool)
+    (hcdom : ∀ n, I.dom (c n))
+    (hcstep : ∀ n, I.rho (c n) (c (n + 1)) = cdir dc)
+    (hddom : ∀ n, I.dom (d n))
+    (hrow : ∀ i, ∃ N w, ∀ j, N ≤ j → I.rho (d j) (c i) = w) :
+    ∃ I₀ q, ∀ s, I₀ ≤ s → ∀ p, ∃ J, ∀ a, a < p → ∀ j, J ≤ j →
+      I.rho (c (s + a)) (d j) = q := by
+  have hrow' : ∀ i, ∃ nw : Nat × Atom,
+      ∀ j, nw.1 ≤ j → I.rho (c i) (d j) = nw.2 := by
+    intro i
+    obtain ⟨N, wv, hw⟩ := hrow i
+    refine ⟨(N, conv wv), ?_⟩
+    intro j hj
+    have h2 := hI.conv_ (d j) (c i) (hddom j) (hcdom i)
+    rw [h2, hw j hj]
+  obtain ⟨F, hF⟩ := Classical.skolem.mp hrow'
+  have hcc : ∀ i, I.rho (c (i + 1)) (c i) = conv (cdir dc) := by
+    intro i
+    have h2 := hI.conv_ (c i) (c (i + 1)) (hcdom i) (hcdom (i + 1))
+    rw [hcstep i] at h2; exact h2
+  have hstep2 : ∀ i, (F (i + 1)).2 ∈ comp (conv (cdir dc)) (F i).2 := by
+    intro i
+    have e1 : I.rho (c i) (d (max (F i).1 (F (i + 1)).1)) = (F i).2 :=
+      hF i _ (Nat.le_max_left _ _)
+    have e2 : I.rho (c (i + 1)) (d (max (F i).1 (F (i + 1)).1))
+        = (F (i + 1)).2 := hF (i + 1) _ (Nat.le_max_right _ _)
+    have hcomp := hI.comp_ (c (i + 1)) (c i)
+      (d (max (F i).1 (F (i + 1)).1)) (hcdom (i + 1)) (hcdom i) (hddom _)
+    rw [hcc i, e1, e2] at hcomp
+    exact hcomp
+  have hlim : ∃ N w, ∀ j, N ≤ j → (F j).2 = w := by
+    cases dc with
+    | true => exact atom_seq_stabilizes (fun i => (F i).2) hstep2
+    | false => exact atom_seq_stabilizes_dn (fun i => (F i).2) hstep2
+  obtain ⟨I₀, q, hq⟩ := hlim
+  refine ⟨I₀, q, ?_⟩
+  intro s hs p
+  obtain ⟨J, hJ⟩ := exists_uniform_threshold (fun a => (F (s + a)).1) p
+  refine ⟨J, fun a ha j hj => ?_⟩
+  rw [hF (s + a) j (Nat.le_trans (hJ a ha) hj)]
+  exact hq (s + a) (Nat.le_trans hs (Nat.le_add_right _ _))
+open Classical in
+/-- **§257.7 — ROW STABILIZATION FOR A TOWER OF EITHER DIRECTION.**  The `hrow`
+    premise of §257.6, supplied by whichever of the two certified stabilization
+    theorems matches the tower's direction. -/
+theorem row_stabilizes_any (hI : RCC5Interp I) {d : Nat → α} (dd : Bool)
+    (hddom : ∀ n, I.dom (d n))
+    (hdstep : ∀ n, I.rho (d n) (d (n + 1)) = cdir dd)
+    {e : α} (hedom : I.dom e) :
+    ∃ N w, ∀ j, N ≤ j → I.rho (d j) e = w := by
+  cases dd with
+  | true => exact external_stabilizes hI hddom hdstep hedom
+  | false => exact dexternal_stabilizes hI hddom hdstep hedom
+
+open Classical in
+/-- **§257.8 — TARGET B FOR A PAIR OF KERNELS.**  Two `KernelData` of ARBITRARY
+    directions admit finite phase segments, placeable beyond any bound, whose
+    whole rectangle carries ONE atom.  That atom is what `swCert`'s `Q k k'` may
+    be set to, and `kq_all` then follows from model semantics.
+
+    This is the cold attack's Target B, in the form `swCert_ok` consumes it. -/
+theorem kernel_pair_rectangle (hI : RCC5Interp I) {C0 : Concept}
+    {Ds Ds' : List Concept} {L0 L0' : Nat} {dk dk' : Bool} {x x' : α}
+    (K : KernelData I C0 Ds L0 dk x) (K' : KernelData I C0 Ds' L0' dk' x')
+    (L p q : Nat) :
+    ∃ s t r, L ≤ s ∧ L ≤ t ∧
+      ∀ a, a < p → ∀ b, b < q → I.rho (K.c (s + a)) (K'.c (t + b)) = r := by
+  obtain ⟨I₀, r, hr⟩ := two_tower_rectangle_gen hI dk K.cdom K.cstep K'.cdom
+    (fun i => row_stabilizes_any hI dk' K'.cdom K'.cstep (K.cdom i))
+  obtain ⟨J, hJ⟩ := hr (max I₀ L) (Nat.le_max_left _ _) p
+  refine ⟨max I₀ L, max J L, r, Nat.le_max_right _ _, Nat.le_max_right _ _, ?_⟩
+  intro a ha b _
+  exact hJ a ha _ (Nat.le_trans (Nat.le_max_left J L) (Nat.le_add_right _ _))
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
