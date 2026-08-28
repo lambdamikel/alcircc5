@@ -64,7 +64,7 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-08-28): three of the fragment's four quadrants are certified; the mixed one and the full logic stay open
+## Status (2026-08-28): the ∀PO-free fragment rests on a paper proof (one gap found, and repaired); its Lean certification is three quadrants of four; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
 repair rounds and 17 adversarial reviews the *full-logic* certificate
@@ -76,21 +76,47 @@ future attack needs is recorded in the paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
 
 **What has moved since is the fragment.** Dropping `∀PO` makes the keystone
-*constructive*. Three of the fragment's four quadrants are **certified
-decidable in general**; the **mixed** quadrant (`∃PO` *and* `∃PP` together) is
-**open**, and its general extraction has since consumed two rounds of cold
-attack. The full-logic question and the fragment results are independent: F6 is
-forced by `∀PO`, which the fragment removes.
+*constructive*. Two things must be kept apart here, and the 2026-08-28 box
+below separates them:
 
-> **★ Update (2026-08-28): one obstruction closed, one architecture refuted, and
-> a pivot.**
-> - **Closed.** `fused_kq_all` discharges `kq_all` — the cross-kernel
->   obligation open since July. The blocker was a *framing* error of ours: we
->   asked whether cross-kernel relations stabilize tail-by-tail, which is
->   **false**; the certificate only ever reads *finite segments*, where the
->   property holds and can be placed arbitrarily late.
-> - **Refuted.** The extraction architecture — reuse a finite node set by
->   *blocking* and *borrowing* witnesses — is dead. Four successive disciplines
+- **The theorem** rests on the **two-tier quotient proof**
+  ([`papers/two_tier_quotient_ALCIRCC5.tex`](papers/two_tier_quotient_ALCIRCC5.tex)),
+  which decides the *PO-coherent* fragment — and ∀PO-free concepts are
+  automatically PO-coherent (Remark, clause (c): no phase carries a `∀PO`
+  restriction at all). That proof is a complete argument with an explicit
+  decision procedure, and it is **independent of the Lean certificate route**.
+- **The Lean certification** of that theorem is separate, and is complete for
+  three of four quadrants.
+
+The full-logic question and the fragment results are independent: F6 is forced
+by `∀PO`, which the fragment removes.
+
+> **★ Update (2026-08-28): a gap found in the fragment's proof — and repaired;
+> one certification architecture refuted; a pivot.**
+>
+> - **A gap in the paper proof, found by re-reading and now repaired.** The
+>   two-tier completeness argument (Step 2 of *Constructive quotient
+>   extraction*) defines the kernel-to-kernel relation as the double limit
+>   `lim_{i,j→∞} ρ(dᵢ, dⱼ)` and justifies it by "Lemma *External relation
+>   stabilization* applied twice". That lemma is **one-sided** — it fixes an
+>   element and varies the chain — and applying it twice does **not** give a
+>   double limit. The double limit genuinely need not exist: in `ℤ × {0,1}`
+>   ordered by first coordinate, every row and every column stabilizes, yet
+>   every tail contains `PP`, `PO` *and* `PPI`. This is the proof's only use of
+>   a double limit.
+>   **The repair is done**: `fused_kq_all` establishes the correct
+>   *finite-segment* form — for a finite family of towers of arbitrary
+>   directions, segments can be chosen (with the equal-type endpoints the
+>   descriptors need) so that every pairwise rectangle carries one relation,
+>   placeable arbitrarily late. That is exactly what Step 2 needs, and it is
+>   machine-checked.
+> - **The same repair closes the certificate's `kq_all`**, open since July. The
+>   blocker there was the same framing error: we, like the paper, asked whether
+>   cross-kernel relations stabilize tail-by-tail.
+> - **Refuted — the *certification* route, not the theorem.** The Lean
+>   certificate's extraction architecture — reuse a finite node set by
+>   *blocking* and *borrowing* witnesses — is dead. This is Route 2's
+>   engineering; it leaves the two-tier proof above untouched. Four successive disciplines
 >   fell to exact finite countermodels in three days, two of them found by cold
 >   attack (`papers/attack_mixed_quadrant/`,
 >   `papers/attack_mixed_quadrant_r2/`), all reproduced independently here.
@@ -102,9 +128,16 @@ forced by `∀PO`, which the fragment removes.
 >   regressions in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/);
 >   navigation in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §267.
 >
-> **Correction to the box below.** It calls the general mixed extraction
-> "(scoped, **not** open)". That was wrong, and is withdrawn. It was open, it
-> is open, and it is where the work now is.
+> **Correction to the box below.** It calls the general mixed *extraction*
+> "(scoped, **not** open)". That was wrong as a statement about the
+> formalization, and is withdrawn: it consumed two rounds of cold attack and a
+> refuted architecture. It was never a claim about the *theorem*, which rests on
+> the two-tier proof.
+>
+> **Honest caveat on that proof.** It is unreviewed at this level of detail —
+> the Step-2 gap above was found by reading it in August 2026, years after it
+> was written, prompted by asking whether the certificate's troubles touched the
+> theorem. They did not; a different defect did.
 
 > **★ Update (2026-08-06) — SUPERSEDED, see the 2026-08-28 box above; its
 > headline overclaims and its "(scoped, not open)" line is withdrawn.**

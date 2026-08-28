@@ -16026,3 +16026,50 @@ Remaining in G1: `prepared_nnf_po_free`, `support_type_reflection`,
 
 Build: 42,876 lines, 2,165 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §269 — a gap in the two-tier proof, found by re-reading, and repaired
+
+Prompted by Michael's question — *the fragment's decidability was backed by the
+PROOF, not the certificate; is it affected?* — the two-tier quotient paper was
+re-read. The answer has two parts and both matter.
+
+**1. The refutations do not touch the theorem.** `two_tier_quotient_ALCIRCC5.tex`
+decides the PO-COHERENT fragment by enumerating bounded two-tier quotients, and
+∀PO-free concepts are automatically PO-coherent — its Remark's clause (c), "no
+phase contains any `∀PO` restriction at all". That proof is independent of the
+Lean certificate's extraction; §§248–265's collapse is Route 2's engineering.
+Conflating the two in the README was an error, now corrected.
+
+**2. But the proof has its own gap, at exactly the place we have been working.**
+Step 2 of *Constructive quotient extraction* defines the kernel-to-kernel
+relation as
+
+  `ρ(k_α, k_β) = lim_{i,j→∞} ρ(dᵢ^α, dⱼ^β)`,   "well-defined by Lemma
+  [External relation stabilization] applied twice."
+
+`lem:external` is ONE-SIDED — it fixes an element and varies the chain. Applying
+it twice gives a stabilized row and a stabilized column, NOT a double limit, and
+the double limit genuinely need not exist: `ℤ × {0,1}` ordered by first
+coordinate has every row and every column stabilizing while every tail contains
+`PP`, `PO` and `PPI` (verified here 2026-08-28; it is the round-1 attack's
+counterexample, arriving from the other direction). Grep confirms this is the
+paper's ONLY double-limit use.
+
+**3. And the repair is already done.** `fused_kq_all` (§258.4) is exactly Step 2
+in the form that is true: for a finite family of towers of ARBITRARY directions,
+finite segments can be chosen — with the equal-type endpoints the descriptors
+need — so that every pairwise rectangle carries one relation, placeable
+arbitrarily late. We derived it to discharge the certificate's `kq_all` without
+noticing it also repairs the paper.
+
+**What this says about the last three weeks.** The borrowing work is dead, but
+the Target-B work is not merely certificate plumbing: it repairs a load-bearing
+step of the fragment's actual proof. The framing error — asking for tail-by-tail
+stabilization where only finite segments are needed — was made independently in
+the paper (years ago) and in our packet (this month), which is some evidence it
+is the natural mistake here rather than a careless one.
+
+**Standing caution.** The two-tier proof is UNREVIEWED at this level of detail.
+One re-read found one gap; the ledger's presumption (a defect in all but two of
+seventeen reviews) applies to it in full, and its Steps 3–6 were read once,
+today, by an interested party.
