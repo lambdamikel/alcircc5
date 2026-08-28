@@ -16228,3 +16228,46 @@ that the resulting set of signatures survives its own elimination — which
 
 Build: 43,187 lines, 2,189 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §273 — G4's core, and where the difficulty actually went
+
+`coneScheme_complete`: **if `C₀` is satisfiable then some signature surviving
+every round of elimination carries `C₀`.** That is the decision procedure's "no
+false negatives" half, and gate G4 — the one §267 nominated as the place every
+previous architecture failed.
+
+The chain is short: `modelSigs` are the signatures a model realizes;
+`modelSigs_survives` shows each still has a compatible target inside that same
+set, because the MODEL supplies the witness (`mty_ex` + `dkey_compat`);
+`gfp_greatest` promotes that to membership in the fixed point at every round.
+
+**It went through in one attempt, and that should be read correctly.** G4 was not
+beaten; **the architecture moved the difficulty**. Under the borrowing route,
+completeness meant extracting a FINITE structure that could be unfolded back —
+which is why it consumed blocking, borrowing, gates and four refuted disciplines.
+Here the finite object is the SIGNATURE SET, which is finite by construction, and
+the model contributes only which signatures it realizes. Nothing is extracted.
+
+**So the risk has moved to soundness, and the balance point is now the whole
+game.** `prune` must be:
+
+* **weak enough to be monotone** — or `gfp_greatest` fails and completeness dies.
+  This is how the RETRACTED route died (`(Q3)` anti-monotone, §267).
+* **strong enough that survivors are realizable** — or the fresh-occurrence
+  unfolding of a surviving signature set is not a model, and soundness dies.
+
+Those pull in opposite directions and both failure modes are in this project's
+record. `prune` as it stands asks only for the EXISTENCE of a compatible target;
+whether that suffices for soundness is gate G2/G3 and is untested.
+
+**IMMEDIATE NEXT STEP, and it should precede more Lean.** Run the control layer
+alone on the standing UNSAT diagnostics — `C_force = ∃PP.(∃DR.A) ⊓ ∀DR.¬A`,
+`C_split`, `C_2hop`, `C_3hop` — and check the fixed point REJECTS them. That is a
+cheap, decisive test of whether `prune` is strong enough, it needs none of G2/G3,
+and by the campaign's own standing rule it should be done before building on the
+assumption. If `prune` accepts an UNSAT diagnostic, it is too weak and the
+condition needs strengthening — at which point `pruneSig_mono` must be re-proved,
+which is the tripwire §270 put in place for exactly this moment.
+
+Build: 43,309 lines, 2,197 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

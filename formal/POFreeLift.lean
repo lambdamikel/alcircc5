@@ -42165,6 +42165,83 @@ theorem dkey_compat (hI : RCC5Interp I) (C0 : Concept) {x y : α}
       rw [Bool.and_eq_true]
       exact ⟨subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hv huv),
              subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hu hvu)⟩
+theorem mem_sigDemands {q : Sig} {r : Atom} {D : Concept}
+    (h : (r, D) ∈ sigDemands q) : Concept.ex r D ∈ q.1 := by
+  rw [sigDemands, List.mem_filterMap] at h
+  obtain ⟨c, hc, hcd⟩ := h
+  cases c with
+  | ex r' D' =>
+      cases r' with
+      | eq => simp at hcd
+      | pp => simp only [Option.some.injEq, Prod.mk.injEq] at hcd
+              obtain ⟨rfl, rfl⟩ := hcd; exact hc
+      | ppi => simp only [Option.some.injEq, Prod.mk.injEq] at hcd
+               obtain ⟨rfl, rfl⟩ := hcd; exact hc
+      | po => simp only [Option.some.injEq, Prod.mk.injEq] at hcd
+              obtain ⟨rfl, rfl⟩ := hcd; exact hc
+      | dr => simp only [Option.some.injEq, Prod.mk.injEq] at hcd
+              obtain ⟨rfl, rfl⟩ := hcd; exact hc
+  | _ => simp at hcd
+
+/-! #### §273 — G4's CORE: A MODEL'S SIGNATURES SURVIVE THEIR OWN ELIMINATION
+
+The completeness direction, and the place §267 recorded that every previous
+architecture failed.  It is short now, because §§271–272 did the work: every
+point occupies an admissible signature, every edge is an admissible transition,
+and a model supplies a witness for each of its own demands. -/
+
+open Classical in
+/-- The signatures a model actually realizes. -/
+noncomputable def modelSigs (C0 : Concept) (I : Interp α) : List Sig :=
+  (sigStatic C0).filter (fun q => decide (∃ x, I.dom x ∧ dkey C0 I x = q))
+
+open Classical in
+theorem modelSigs_sub (C0 : Concept) (I : Interp α) :
+    ∀ q ∈ modelSigs C0 I, q ∈ sigStatic C0 :=
+  fun _ h => (List.mem_filter.mp h).1
+
+open Classical in
+theorem mem_modelSigs (hI : RCC5Interp I) (C0 : Concept) {x : α} (hx : I.dom x) :
+    dkey C0 I x ∈ modelSigs C0 I := by
+  refine List.mem_filter.mpr ⟨?_, decide_eq_true ⟨x, hx, rfl⟩⟩
+  exact mem_sigStatic C0 _ (dkey_mem_keyEnum C0 I x) (dkey_sigOk hI C0 hx)
+
+open Classical in
+/-- **§273.1 — THE SURVIVAL PROPERTY.**  Every signature a model realizes still
+    has, inside that same set, a compatible target for each of its non-`EQ`
+    demands — because the model itself supplies the witness. -/
+theorem modelSigs_survives (hI : RCC5Interp I) (C0 : Concept) :
+    ∀ q ∈ modelSigs C0 I, q ∈ pruneSig (modelSigs C0 I) := by
+  intro q hq
+  obtain ⟨hqS, hex⟩ := List.mem_filter.mp hq
+  obtain ⟨x, hx, rfl⟩ := of_decide_eq_true hex
+  refine List.mem_filter.mpr ⟨hq, ?_⟩
+  refine List.all_eq_true.mpr (fun rd hrd => ?_)
+  obtain ⟨r, D⟩ := rd
+  have hdem : Concept.ex r D ∈ mty C0 I x := mem_sigDemands hrd
+  obtain ⟨y, hy, hxy, hD⟩ := mty_ex hdem
+  refine List.any_eq_true.mpr ⟨dkey C0 I y, mem_modelSigs hI C0 hy, ?_⟩
+  exact dkey_compat hI C0 hx hy hxy hD
+
+open Classical in
+/-- **§273.2 — SO A MODEL'S SIGNATURES ARE ALL IN THE FIXED POINT.**  Gate G4's
+    conclusion, via `gfp_greatest`: the greatest fixed point of the elimination
+    contains the signature of every point of every model. -/
+theorem modelSigs_in_gfp (hI : RCC5Interp I) (C0 : Concept) (n : Nat) :
+    ∀ q ∈ modelSigs C0 I, q ∈ gfpIter pruneSig (sigStatic C0) n :=
+  gfp_greatest pruneSig pruneSig_mono (sigStatic C0) (modelSigs C0 I)
+    (modelSigs_sub C0 I) (modelSigs_survives hI C0) n
+
+open Classical in
+/-- **§273.3 — COMPLETENESS OF THE SCHEME.**  If `C₀` is satisfiable then some
+    signature surviving every round of elimination carries `C₀`.  This is the
+    "no false negatives" half of the decision procedure, and it holds at EVERY
+    round, so in particular at the fixed point. -/
+theorem coneScheme_complete (hI : RCC5Interp I) (C0 : Concept) {x : α}
+    (hx : I.dom x) (hC0 : sat I x C0) (n : Nat) :
+    ∃ q ∈ gfpIter pruneSig (sigStatic C0) n, C0 ∈ q.1 :=
+  ⟨dkey C0 I x, modelSigs_in_gfp hI C0 n _ (mem_modelSigs hI C0 hx),
+   mem_mty.mpr ⟨cl_self C0, hC0⟩⟩
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
