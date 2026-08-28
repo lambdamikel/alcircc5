@@ -14970,3 +14970,45 @@ nothing is merged, nothing is deleted. Only the *expansion* is restricted.
 
 Build: 39,687 lines, 2,001 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 244. THE GATE IS MONOTONE, SO THE BOUND IS TOTAL AND NOT PER-ROUND
+
+§243 bounds the gated nodes **within one stage**. For the alternation that is not
+enough: if the gate could shift as the stage grows, each round might gate a
+different `|typeEnum C0|` nodes and the totals would multiply by the round count.
+
+**It cannot shift.** The stage only ever *appends*, and `firstOfType` walks in
+order — so a node gated once stays gated, because appending later cannot insert
+an earlier occurrence of its type. `firstOfType_append_sub` certifies it.
+
+### 244.1 The stage bound is total
+
+Three facts compose:
+
+* `firstOfType_len_le` — at most `|typeEnum C0|` nodes are gated in any stage;
+* `firstOfType_append_sub` — gating survives the stage's growth, so the gated
+  set is one monotone object across the alternation;
+* a gated node has at most `|cl C0|` demands, its label lying in `cl C0`.
+
+So the nodes ever produced are the initial stage plus at most
+`|typeEnum C0| * |cl C0|` children — **a bound in `C0` alone, independent of the
+round count**, which is exactly what `hbn` asks for.
+
+The remaining step is definitional: make the extension draw its children from
+`firstOfType C0 I [] vs` rather than from `vs`. §242's
+`stage_bound_of_unblocked` is already stated in that shape.
+
+### 244.2 Where `hbn` stands
+
+| | |
+|---|---|
+| §230 | open |
+| §231 | **false** without blocking; persistence gate added |
+| §239 | still false — persistence is only the vertical case |
+| §240–241 | the right mechanism is `cutNodes`', on model **types** |
+| §242–244 | the bound, its invariant, and its monotonicity — **certified** |
+
+What is left is one definition, not an argument.
+
+Build: 39,739 lines, 2,002 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

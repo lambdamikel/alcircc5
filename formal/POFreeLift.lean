@@ -38652,6 +38652,57 @@ theorem firstOfType_sub (C0 : Concept) (I : Interp α) :
         · exact List.mem_cons_self
         · exact List.mem_cons_of_mem _ (ih _ x hx')
 
+/-! #### §244 — THE GATE IS MONOTONE, SO THE BOUND IS TOTAL AND NOT PER-ROUND
+
+§243 bounds the gated nodes **within one stage**. For the alternation that is not
+yet enough: if the gate could shift as the stage grows, each round might gate a
+different `|typeEnum C₀|` nodes and the totals would multiply by the round count.
+
+It cannot shift. The stage only ever **appends**, and `firstOfType` walks in
+order — so a node gated once (its type fresh among its predecessors) stays gated,
+because appending later cannot insert an earlier occurrence. The gated set is
+therefore monotone, and `|typeEnum C₀|` bounds it **across all rounds**, not per
+round. -/
+
+open Classical in
+/-- **THE GATE SURVIVES APPENDING.**  Everything gated in a stage is still gated
+    in any extension of it. -/
+theorem firstOfType_append_sub (C0 : Concept) (I : Interp α) :
+    ∀ (vs : List α) (seen : List (List Concept)) (ws : List α) (x : α),
+      x ∈ firstOfType C0 I seen vs → x ∈ firstOfType C0 I seen (vs ++ ws) := by
+  intro vs
+  induction vs with
+  | nil => intro seen ws x hx; simp [firstOfType] at hx
+  | cons y t ih =>
+      intro seen ws x hx
+      by_cases hy : mty C0 I y ∈ seen
+      · rw [firstOfType, if_pos hy] at hx
+        rw [List.cons_append, firstOfType, if_pos hy]
+        exact ih seen ws x hx
+      · rw [firstOfType, if_neg hy] at hx
+        rw [List.cons_append, firstOfType, if_neg hy]
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact List.mem_cons_self
+        · exact List.mem_cons_of_mem _ (ih _ ws x hx')
+
+/-! ##### §244.1 — so the stage bound is total
+
+Three facts now compose:
+
+* `firstOfType_len_le` — at most `|typeEnum C₀|` nodes are gated in any stage;
+* `firstOfType_append_sub` — gating survives the stage's growth, so the gated
+  set is the same monotone object across the alternation;
+* a gated node has at most `|cl C₀|` demands, since its label lies in `cl C₀`.
+
+So the nodes ever produced are the initial stage plus at most
+`|typeEnum C₀| · |cl C₀|` children — **a bound in `C₀` alone, independent of the
+number of rounds**, which is what `hbn` asks for.
+
+The remaining step is definitional: make the extension draw its children from
+`firstOfType C0 I [] vs` rather than from `vs`, at which point the three facts
+above are the bound. §242's `stage_bound_of_unblocked` is already stated in that
+shape. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -39684,4 +39735,5 @@ end POFreeLift
 #print axioms POFreeLift.stage_bound_of_unblocked
 #print axioms POFreeLift.firstOfType_types_nodup
 #print axioms POFreeLift.firstOfType_len_le
+#print axioms POFreeLift.firstOfType_append_sub
 #print axioms POFreeLift.kernel_of_no_terminal
