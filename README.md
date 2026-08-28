@@ -64,7 +64,7 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-08-06): the ∀PO-free fragment is decidable; the full logic stays open
+## Status (2026-08-28): three of the fragment's four quadrants are certified; the mixed one and the full logic stay open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
 repair rounds and 17 adversarial reviews the *full-logic* certificate
@@ -76,10 +76,35 @@ future attack needs is recorded in the paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
 
 **What has moved since is the fragment.** Dropping `∀PO` makes the keystone
-*constructive*, and the ∀PO-free fragment is now **certified decidable** —
-three quadrants generally, the mixed case's pipeline proven — as the box
-below records. The full-logic question and the fragment result are
-independent: F6 is forced by `∀PO`, which the fragment removes.
+*constructive*. Three of the fragment's four quadrants are **certified
+decidable in general**; the **mixed** quadrant (`∃PO` *and* `∃PP` together) is
+**open**, and its general extraction has since consumed two rounds of cold
+attack. The full-logic question and the fragment results are independent: F6 is
+forced by `∀PO`, which the fragment removes.
+
+> **★ Update (2026-08-28): one obstruction closed, one architecture refuted, and
+> a pivot.**
+> - **Closed.** `fused_kq_all` discharges `kq_all` — the cross-kernel
+>   obligation open since July. The blocker was a *framing* error of ours: we
+>   asked whether cross-kernel relations stabilize tail-by-tail, which is
+>   **false**; the certificate only ever reads *finite segments*, where the
+>   property holds and can be placed arbitrarily late.
+> - **Refuted.** The extraction architecture — reuse a finite node set by
+>   *blocking* and *borrowing* witnesses — is dead. Four successive disciplines
+>   fell to exact finite countermodels in three days, two of them found by cold
+>   attack (`papers/attack_mixed_quadrant/`,
+>   `papers/attack_mixed_quadrant_r2/`), all reproduced independently here.
+>   The diagnosis is a *pattern*, not four separate mistakes: this is the
+>   project's recurring pointwise-vs-joint shape for the fifth time.
+> - **Pivot.** Witness borrowing is retired in favour of a **ConeScheme**: a
+>   finite control graph plus a *fresh-occurrence* unfolding, in which nothing
+>   is ever reused, so there is nothing to borrow. Plan, obligations and
+>   regressions in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/);
+>   navigation in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §267.
+>
+> **Correction to the box below.** It calls the general mixed extraction
+> "(scoped, **not** open)". That was wrong, and is withdrawn. It was open, it
+> is open, and it is where the work now is.
 
 > **★ Update (2026-08-06): the ∀PO-free fragment is now DECIDABLE (three
 > quadrants certified, the fourth's pipeline proven).** The full-logic
@@ -97,7 +122,8 @@ independent: F6 is forced by `∀PO`, which the fragment removes.
 >   (`mixCert_ok`, the first `MultiTierOk` with both externals *and* a
 >   kernel), its encoding, and a complete decision certified on the witness
 >   `Cmix` (`decidableSat_Cmix`); the *general* mixed extraction is the one
->   remaining (scoped, **not** open) formalization.
+>   remaining formalization — **open**, see the 2026-08-28 box above (this
+>   line originally read "scoped, not open", which was an overclaim).
 >
 > The keystone is a **constructive uniformization** (`rr_covers`): the
 > vertical fragment's "W2′" is a kernel-checked theorem, not an oracle,
