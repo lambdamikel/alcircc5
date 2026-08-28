@@ -15540,3 +15540,47 @@ quadrant, and with it the fragment, remains OPEN.
 
 Build: 41,498 lines, 2,099 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §256.3 — is the pivot real? what changes, and what is still unshown
+
+**Yes, there is a pivot, and it is one function.** The blocking key changes from
+`mty v` to `(mty v, {mty x : x PP v})`. Everything else in the architecture
+stands.
+
+*Unchanged:* the certificate (`MultiTier`/`swCert`, ordered-disjoint frame), the
+entire kernel side (§251 phase obligations, §§252–253 declared edges and
+`KernelRows`), §254's borrowed-edge propagation (it needs `mty a = mty v`, which
+the finer key still supplies), and §§255.3–255.4's per-edge agreement.
+
+*Reworked:* the gate. `ptGated`/`firstFresh` are keyed to `mty` and typed at
+`List Concept`; the counting chain (`firstFresh_covers`, `distinct_types_len_le`,
+`ptKids_len_le`, `ptIter_len_le`) must be re-parameterised over an arbitrary
+decidable key. That is mechanical, but the BOUND moves from `N·|cl C₀|` to
+`N·2^N·|cl C₀|` for `N = |typeEnum C₀|` — `N` is already exponential in `|cl C₀|`,
+so this is a doubly-exponential node bound. Decidability is unaffected (no
+complexity claim is made); it is worth recording that the price is real.
+
+**Why the pivot is well-motivated — a theorem, not a measurement.**
+`cone_agreement_of_spectrum` (§256.3): a body's truth at a point is determined by
+that point's model type, so if every lower type of `v₂` occurs below `v₁`, any
+body holding across `v₁`'s cone holds across `v₂`'s. That is precisely §256's
+conflict — `x₁ ⊨ P, ¬Q` against `x₂ ⊨ Q, ¬P` below two same-type nodes — made
+unreachable within a key class.
+
+**What is NOT shown.** Removing §256's conflict is not the same as making a
+shared top serviceable. The attack's construction copies a witness-closed gadget,
+which may be infinite, and its context transitions may cycle; it says so itself
+and records Target A as a bounded reduction.
+
+**A withdrawn measurement, recorded because the discipline requires it.** Two
+probes were run to test the pivot directly. The first asked whether one EXISTING
+model witness serves a whole key class — 74.4% under the refined key, versus
+91.8% under the old one. That is measuring the wrong discipline: the pivot copies
+a fresh gadget rather than sharing an existing witness, and the group count falls
+1702 → 433, so the residue is a harder remainder rather than a worse rate. The
+second asked directly whether §256's conflict survives the refinement and read
+0.0% — **on 2 non-vacuous instances**, so it carries no information and is
+withdrawn under the campaign's own rule. The Lean lemma above replaces it.
+
+Build: 41,522 lines, 2,100 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

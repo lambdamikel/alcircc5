@@ -40431,6 +40431,34 @@ theorem shared_top_forces_both_cones (hI : RCC5Interp I) {x₁ v₁ x₂ v₂ t 
     sat I x₁ E ∧ sat I x₂ E :=
   ⟨hE _ hx₁ (shared_top_reaches_cone hI hx₁ hv₁ ht hz h₁ h₂ htz),
    hE _ hx₂ (shared_top_reaches_cone hI hx₂ hv₂ ht hz h₃ h₄ htz)⟩
+open Classical in
+/-- **§256.3 — WHY THE DOWN-SPECTRUM KEY DEFEATS §256's CONFLICT.**  A body's
+    truth at a point is determined by that point's model type, so if every lower
+    type of `v₂` already occurs below `v₁`, then any body holding across `v₁`'s
+    whole cone holds across `v₂`'s.
+
+    That is exactly the conflict §256 exploits: there, `x₁ ⊨ P, ¬Q` and
+    `x₂ ⊨ Q, ¬P` sit below two nodes of the SAME type, and the shared top's
+    `DR`-witness cannot satisfy a `∀DR` body agreeing with both.  Keying on
+    `(mty v, {mty x : x PP v})` — the cold attack's proposal — makes that
+    configuration unreachable *within a key class*.
+
+    SCOPE.  This removes §256's conflict; it does NOT show a shared top is
+    serviceable.  The attack's own construction copies a witness-closed gadget,
+    which may be infinite, and its context transitions may cycle.  An attempt to
+    MEASURE this on `wp131`'s sample was withdrawn: only 2 instances were
+    non-vacuous, so the reading carried no information. -/
+theorem cone_agreement_of_spectrum (C0 : Concept) {v₁ v₂ : α}
+    (hspec : ∀ x, I.dom x → I.rho x v₂ = pp →
+      ∃ y, I.dom y ∧ I.rho y v₁ = pp ∧ mty C0 I y = mty C0 I x)
+    {E : Concept} (hE : E ∈ cl C0)
+    (h1 : ∀ x, I.dom x → I.rho x v₁ = pp → sat I x E) :
+    ∀ x, I.dom x → I.rho x v₂ = pp → sat I x E := by
+  intro x hx hxv
+  obtain ⟨y, hy, hyv, hty⟩ := hspec x hx hxv
+  have : E ∈ mty C0 I y := mem_mty.mpr ⟨hE, h1 y hy hyv⟩
+  rw [hty] at this
+  exact (mem_mty.mp this).2
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
