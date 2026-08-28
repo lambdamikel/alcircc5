@@ -5,6 +5,33 @@ $\mathcal{ALCI}_{\mathrm{RCC5}}$ decidability project. It is the detailed
 counterpart to the high-level summaries in `README.md` and the overview
 paper; those abstract the Lean work and point here.
 
+> ### ⚠ Read this first (2026-08-28)
+>
+> **The narrative below is a chronological log that ends 2026-07-24.** It is
+> kept as the record of how the artifact was built; it is *not* a description of
+> the current state, and several of its figures are stale (it reports
+> `POFreeLift.lean` at ~9,290 lines; it is now ~42,900, with 2,165 declarations,
+> 0 sorries / 0 warnings / 0 `sorryAx`).
+>
+> **Current position, in four lines.**
+> 1. Three of the ∀PO-free fragment's four quadrants are certified decidable in
+>    general; the **mixed** quadrant is not.
+> 2. `kq_all` — the cross-kernel obligation — is now **discharged**
+>    (`fused_kq_all`), and the same result repairs a genuine gap in the two-tier
+>    paper's proof (see `ASSEMBLY_DESIGN.md` §269).
+> 3. The extraction architecture the log below builds toward — a finite node set
+>    reused by **blocking and borrowing witnesses** — has been **refuted** by
+>    exact finite countermodels across two rounds of cold attack. §§248–265 of
+>    `ASSEMBLY_DESIGN.md` are retired: the theorems are true, the architecture
+>    is not viable.
+> 4. Work has **pivoted** to a *ConeScheme*: a finite control graph plus a
+>    fresh-occurrence unfolding, in which no node is ever reused. Plan and
+>    obligations in `papers/cone_scheme_plan/`; navigation in
+>    `ASSEMBLY_DESIGN.md` §267.
+>
+> **For the current state, read `ASSEMBLY_DESIGN.md` §§266–269** and the head
+> status paragraph of `CLAUDE.md`, not this file.
+
 **One-line status:** the *soundness* half of the decidability argument
 and the *faithfulness* of the finite Hintikka abstraction are
 kernel-checked (zero `sorry`); a *decision-grade, non-oracular* reduction
