@@ -38775,6 +38775,32 @@ theorem firstFresh_append_sub {β : Type} (ty : β → List Concept) :
         · exact List.mem_cons_self
         · exact List.mem_cons_of_mem _ (ih _ ws x hx')
 
+/-- **§249 — THE GATE COVERS EVERY TYPE.**  A node the gate drops is dropped
+    only because an earlier node of the SAME type was kept.  This is the
+    transfer premise: a blocked node's demands are exactly its gate-mate's,
+    because a model type determines them. -/
+theorem firstFresh_covers {β : Type} (ty : β → List Concept) :
+    ∀ (vs : List β) (seen : List (List Concept)) (x : β), x ∈ vs →
+      ty x ∈ seen ∨ ∃ a ∈ firstFresh ty seen vs, ty a = ty x := by
+  intro vs
+  induction vs with
+  | nil => intro _ x hx; exact absurd hx (List.not_mem_nil)
+  | cons y t ih =>
+      intro seen x hx
+      by_cases hy : ty y ∈ seen
+      · rw [firstFresh, if_pos hy]
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact Or.inl hy
+        · exact ih seen x hx'
+      · rw [firstFresh, if_neg hy]
+        rcases List.mem_cons.mp hx with rfl | hx'
+        · exact Or.inr ⟨x, List.mem_cons_self, rfl⟩
+        · rcases ih (ty y :: seen) x hx' with hs | ⟨a, ha, hta⟩
+          · rcases List.mem_cons.mp hs with he | hs'
+            · exact Or.inr ⟨y, List.mem_cons_self, he.symm⟩
+            · exact Or.inl hs'
+          · exact Or.inr ⟨a, List.mem_cons_of_mem _ ha, hta⟩
+
 open Classical in
 /-- **THE GATE ON STAGE NODES**, the instance `extendStage` needs. -/
 noncomputable def freshNodes (C0 : Concept) (I : Interp α)
@@ -38980,6 +39006,82 @@ obstructs anything that needs identity across rounds, and the point-indexed desi
 (§235's `PtIdx`) is what removes it. **The total bound is a consequence of
 finishing that migration, not of a further counting argument.** -/
 
+/-! #### §248 — THE MISSING BOUNDS
+
+§247.1 left two: the batch may repeat an index, and membership must become
+length. Both are supplied here.
+
+`appendNew` appends only what is not already present, element by element — so it
+keeps the list duplicate-free AND keeps the prefix property `ptExtend_prefix`
+depends on. `stage_len_of_contained` then converts containment into a length
+bound, which is what a `Nodup` list buys. -/
+
+/-- **DUPLICATE-FREE APPEND.**  Adds only genuinely new elements. -/
+def appendNew {β : Type} [DecidableEq β] : List β → List β → List β
+  | acc, [] => acc
+  | acc, x :: t => if x ∈ acc then appendNew acc t else appendNew (acc ++ [x]) t
+
+/-- **IT KEEPS THE PREFIX PROPERTY.** -/
+theorem appendNew_prefix {β : Type} [DecidableEq β] :
+    ∀ (l acc : List β), ∃ ws, appendNew acc l = acc ++ ws := by
+  intro l
+  induction l with
+  | nil => intro acc; exact ⟨[], by simp [appendNew]⟩
+  | cons x t ih =>
+      intro acc
+      by_cases hx : x ∈ acc
+      · rw [appendNew, if_pos hx]; exact ih acc
+      · rw [appendNew, if_neg hx]
+        obtain ⟨ws, hws⟩ := ih (acc ++ [x])
+        exact ⟨x :: ws, by rw [hws]; simp⟩
+
+/-- **AND IT KEEPS THE LIST DUPLICATE-FREE.** -/
+theorem appendNew_nodup {β : Type} [DecidableEq β] :
+    ∀ (l acc : List β), acc.Nodup → (appendNew acc l).Nodup := by
+  intro l
+  induction l with
+  | nil => intro acc h; rw [appendNew]; exact h
+  | cons x t ih =>
+      intro acc h
+      by_cases hx : x ∈ acc
+      · rw [appendNew, if_pos hx]; exact ih acc h
+      · rw [appendNew, if_neg hx]
+        refine ih (acc ++ [x]) ?_
+        rw [List.nodup_append]
+        exact ⟨h, by simp, by
+          intro a ha b hb hab
+          rw [List.mem_singleton] at hb
+          subst hb; subst hab; exact hx ha⟩
+
+/-- Everything in the result was in one of the two lists. -/
+theorem appendNew_mem {β : Type} [DecidableEq β] :
+    ∀ (l acc : List β) (y : β), y ∈ appendNew acc l → y ∈ acc ∨ y ∈ l := by
+  intro l
+  induction l with
+  | nil => intro acc y hy; rw [appendNew] at hy; exact Or.inl hy
+  | cons x t ih =>
+      intro acc y hy
+      by_cases hx : x ∈ acc
+      · rw [appendNew, if_pos hx] at hy
+        rcases ih acc y hy with h | h
+        · exact Or.inl h
+        · exact Or.inr (List.mem_cons_of_mem _ h)
+      · rw [appendNew, if_neg hx] at hy
+        rcases ih (acc ++ [x]) y hy with h | h
+        · rcases List.mem_append.mp h with h' | h'
+          · exact Or.inl h'
+          · rw [List.mem_singleton] at h'; exact Or.inr (h' ▸ List.mem_cons_self)
+        · exact Or.inr (List.mem_cons_of_mem _ h)
+
+/-- **CONTAINMENT BECOMES A LENGTH BOUND**, for a duplicate-free list. -/
+theorem stage_len_of_contained {β : Type} [DecidableEq β]
+    (vs ns0 kids : List β) (hnd : vs.Nodup)
+    (hsub : ∀ v ∈ vs, v ∈ ns0 ++ kids) (B : Nat) (hk : kids.length ≤ B) :
+    vs.length ≤ ns0.length + B := by
+  have h1 : vs.length ≤ (ns0 ++ kids).length := nodup_len_le vs _ hsub hnd
+  rw [List.length_append] at h1
+  omega
+
 /-! #### §247 — THE GATE AND THE EXTENSION AT `PtIdx`
 
 §246.1 predicted the total bound falls out of finishing §235's migration. §247
@@ -39019,50 +39121,112 @@ theorem ptGated_len_le (hI : RCC5Interp I) (C0 : Concept)
   rwa [List.length_map] at h1
 
 open Classical in
-/-- **THE CHILDREN OF THE GATED NODES**, as indices. -/
+/-- **THE CHILDREN ONE INDEX OWES** — the demand's witness for each unblocked
+    existential in its label.  Split out of `ptKids` so that the node list
+    enters only through the gate: the body depends on `v` alone, never on a
+    membership proof, which is what makes §248.1's monotonicity provable. -/
+noncomputable def ptKidsAt (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (v : PtIdx I C0) : List (PtIdx I C0) :=
+  (L v).attach.flatMap (fun q => match q with
+    | ⟨.ex pp D, hD⟩ =>
+        if D ∈ persistDs C0 I (ptIdxPoint hI v) then []
+        else [Sum.inl ⟨ptChild (hok v) hD, ptChild_dom (hok v) hD⟩]
+    | ⟨.ex ppi D, hD⟩ =>
+        if D ∈ persistDsI C0 I (ptIdxPoint hI v) then []
+        else [Sum.inl ⟨ptChild (hok v) hD, ptChild_dom (hok v) hD⟩]
+    | ⟨.ex dr _, hD⟩ => [Sum.inl ⟨ptChild (hok v) hD, ptChild_dom (hok v) hD⟩]
+    | ⟨.ex po _, hD⟩ => [Sum.inl ⟨ptChild (hok v) hD, ptChild_dom (hok v) hD⟩]
+    | ⟨.ex eq _, hD⟩ => [Sum.inl ⟨ptChild (hok v) hD, ptChild_dom (hok v) hD⟩]
+    | _ => [])
+
+open Classical in
+/-- One index owes at most its label. -/
+theorem ptKidsAt_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
+    (ptKidsAt hI L hok v).length ≤ (L v).length := by
+  rw [ptKidsAt, List.length_flatMap]
+  refine Nat.le_trans (sum_map_le _ _ 1 ?_) ?_
+  · rintro ⟨F, hF⟩ _
+    cases F with
+    | ex r c =>
+        cases r with
+        | pp =>
+            by_cases hb : c ∈ persistDs C0 I (ptIdxPoint hI v)
+            · simp [hb]
+            · simp only [hb, if_false]; exact Nat.le_refl _
+        | ppi =>
+            by_cases hb : c ∈ persistDsI C0 I (ptIdxPoint hI v)
+            · simp [hb]
+            · simp only [hb, if_false]; exact Nat.le_refl _
+        | dr => exact Nat.le_refl _
+        | po => exact Nat.le_refl _
+        | eq => exact Nat.le_refl _
+    | top => exact Nat.zero_le _
+    | bot => exact Nat.zero_le _
+    | atom _ => exact Nat.zero_le _
+    | natom _ => exact Nat.zero_le _
+    | and _ _ => exact Nat.zero_le _
+    | or _ _ => exact Nat.zero_le _
+    | all _ _ => exact Nat.zero_le _
+  · simp [List.length_attach]
+
+open Classical in
+/-- **THE CHILD BATCH AT `PtIdx`.**  Only the gated nodes spawn. -/
 noncomputable def ptKids (hI : RCC5Interp I) {C0 : Concept}
     (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) : List (PtIdx I C0) :=
-  (ptGated hI C0 vs).attach.flatMap (fun v =>
-    (L v.val).attach.flatMap (fun q => match q with
-      | ⟨.ex pp D, hD⟩ =>
-          if D ∈ persistDs C0 I (ptIdxPoint hI v.val) then []
-          else [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
-      | ⟨.ex ppi D, hD⟩ =>
-          if D ∈ persistDsI C0 I (ptIdxPoint hI v.val) then []
-          else [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
-      | ⟨.ex dr _, hD⟩ =>
-          [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
-      | ⟨.ex po _, hD⟩ =>
-          [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
-      | ⟨.ex eq _, hD⟩ =>
-          [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
-      | _ => []))
+  (ptGated hI C0 vs).flatMap (ptKidsAt hI L hok)
 
 open Classical in
-/-- **THE EXTENSION.**  A literal append — the index list is never rebuilt. -/
+/-- **THE EXTENSION.**  A duplicate-free append — the index list is never
+    rebuilt, and never gains a repeat. -/
 noncomputable def ptExtend (hI : RCC5Interp I) {C0 : Concept}
     (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) : List (PtIdx I C0) :=
-  vs ++ (ptKids hI vs L hok).filter (fun w => decide (w ∉ vs))
+  appendNew vs (ptKids hI vs L hok)
 
 open Classical in
-/-- **AND THE STAGE IS A LITERAL PREFIX OF ITS EXTENSION** — the fact §246.1
-    said the value-carrying stage could not provide. -/
+/-- **THE STAGE IS A LITERAL PREFIX OF ITS EXTENSION** — the fact §246.1 said
+    the value-carrying stage could not provide, preserved by `appendNew`. -/
 theorem ptExtend_prefix (hI : RCC5Interp I) {C0 : Concept}
     (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) :
-    ∃ ws, ptExtend hI vs L hok = vs ++ ws := ⟨_, rfl⟩
+    ∃ ws, ptExtend hI vs L hok = vs ++ ws :=
+  appendNew_prefix _ vs
 
 open Classical in
 theorem ptExtend_sub (hI : RCC5Interp I) {C0 : Concept}
     (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) :
-    ∀ v ∈ vs, v ∈ ptExtend hI vs L hok :=
-  fun _ hv => List.mem_append.mpr (Or.inl hv)
+    ∀ v ∈ vs, v ∈ ptExtend hI vs L hok := by
+  intro v hv
+  obtain ⟨ws, hws⟩ := ptExtend_prefix hI vs L hok
+  rw [hws]
+  exact List.mem_append.mpr (Or.inl hv)
 
 open Classical in
-/-- **THE PER-STEP BOUND AT `PtIdx`.**  §245's count, at the stable index. -/
+/-- **AND IT STAYS DUPLICATE-FREE** — which is what turns containment into a
+    length bound (§248). -/
+theorem ptExtend_nodup (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (hnd : vs.Nodup) :
+    (ptExtend hI vs L hok).Nodup := appendNew_nodup _ vs hnd
+
+open Classical in
+/-- Every node of an extension came from the stage or from its children. -/
+theorem ptExtend_mem (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0)
+    (hv : v ∈ ptExtend hI vs L hok) : v ∈ vs ∨ v ∈ ptKids hI vs L hok :=
+  appendNew_mem _ vs v hv
+
+open Classical in
+/-- **THE PER-STEP BOUND AT `PtIdx`.**  §245's count, at the stable index:
+    the gate admits at most one node per model type, and each owes at most its
+    label — so a batch is bounded by `C₀` alone, whatever the stage's size. -/
 theorem ptKids_len_le (hI : RCC5Interp I) {C0 : Concept}
     (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
@@ -39071,29 +39235,251 @@ theorem ptKids_len_le (hI : RCC5Interp I) {C0 : Concept}
   rw [ptKids, List.length_flatMap]
   refine Nat.le_trans (sum_map_le _ _ (cl C0).length ?_) ?_
   · intro v _
-    rw [List.length_flatMap]
-    refine Nat.le_trans (sum_map_le _ _ 1 ?_) ?_
-    · rintro ⟨F, hF⟩ _
-      cases F with
-      | ex r c =>
-          cases r with
-          | pp =>
-              by_cases hb2 : c ∈ persistDs C0 I (ptIdxPoint hI v.val)
-              · simp [hb2]
-              · simp only [hb2, if_false]
-                exact Nat.le_refl _
-          | ppi =>
-              by_cases hb2 : c ∈ persistDsI C0 I (ptIdxPoint hI v.val)
-              · simp [hb2]
-              · simp only [hb2, if_false]
-                exact Nat.le_refl _
-          | dr => exact Nat.le_refl _
-          | po => exact Nat.le_refl _
-          | eq => exact Nat.le_refl _
-      | _ => exact Nat.zero_le _
-    · rw [List.length_attach, Nat.mul_one]; exact hlen v.val
-  · rw [List.length_attach]
-    exact Nat.mul_le_mul_right _ (ptGated_len_le hI C0 vs)
+    exact Nat.le_trans (ptKidsAt_len_le hI L hok v) (hlen v)
+  · exact Nat.mul_le_mul_right _ (ptGated_len_le hI C0 vs)
+
+open Classical in
+/-- **§248.1 — THE BATCH ONLY GROWS.**  A stage that is extended by an append
+    spawns a superset of children: the gate `firstFresh` keeps the first
+    occurrence of each type, and appending cannot displace one.  This is what
+    makes the containment below an induction rather than a fixed point. -/
+theorem ptKids_append_sub (hI : RCC5Interp I) {C0 : Concept}
+    (vs ws : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) :
+    ∀ z ∈ ptKids hI vs L hok, z ∈ ptKids hI (vs ++ ws) L hok := by
+  intro z hz
+  rw [ptKids, List.mem_flatMap] at hz ⊢
+  obtain ⟨v, hv, hzv⟩ := hz
+  exact ⟨v, firstFresh_append_sub _ vs [] ws v hv, hzv⟩
+
+open Classical in
+/-- **THE TOTAL BOUND.**  A duplicate-free stage contained in the initial one
+    plus the children of its gated set is bounded by `C₀` alone — the statement
+    §§246–247 were working toward. -/
+theorem ptStage_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (vs ns0 : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (hlen : ∀ v, (L v).length ≤ (cl C0).length)
+    (hnd : vs.Nodup)
+    (hcont : ∀ v ∈ vs, v ∈ ns0 ++ ptKids hI vs L hok) :
+    vs.length ≤ ns0.length + (typeEnum C0).length * (cl C0).length :=
+  stage_len_of_contained vs ns0 _ hnd hcont _ (ptKids_len_le hI vs L hok hlen)
+
+open Classical in
+/-- **§248.2 — THE ITERATION.**  Extend from a starting list, forever. -/
+noncomputable def ptIter (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) : Nat → List (PtIdx I C0)
+  | 0 => ns0
+  | n + 1 => ptExtend hI (ptIter hI L hok ns0 n) L hok
+
+open Classical in
+/-- Every stage is a literal prefix of the next. -/
+theorem ptIter_prefix (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) (n : Nat) :
+    ∃ ws, ptIter hI L hok ns0 (n + 1) = ptIter hI L hok ns0 n ++ ws :=
+  ptExtend_prefix hI _ L hok
+
+open Classical in
+/-- And every stage stays duplicate-free. -/
+theorem ptIter_nodup (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) :
+    ∀ n, (ptIter hI L hok ns0 n).Nodup := by
+  intro n
+  induction n with
+  | zero => exact hnd
+  | succ k ih => exact ptExtend_nodup hI _ L hok ih
+
+open Classical in
+/-- **§248.3 — THE CONTAINMENT.**  Every node of every stage is either an
+    initial node or a child of the CURRENT stage's gated set.  The induction
+    works because extension is an append (`ptIter_prefix`) and the batch only
+    grows under appends (`ptKids_append_sub`) — the two facts §§246–248 were
+    built to supply. -/
+theorem ptIter_contained (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) :
+    ∀ n, ∀ v ∈ ptIter hI L hok ns0 n,
+      v ∈ ns0 ++ ptKids hI (ptIter hI L hok ns0 n) L hok := by
+  intro n
+  induction n with
+  | zero => intro v hv; exact List.mem_append.mpr (Or.inl hv)
+  | succ k ih =>
+      intro v hv
+      obtain ⟨ws, hws⟩ := ptIter_prefix hI L hok ns0 k
+      have hgrow : ∀ z ∈ ptKids hI (ptIter hI L hok ns0 k) L hok,
+          z ∈ ptKids hI (ptIter hI L hok ns0 (k + 1)) L hok := by
+        intro z hz; rw [hws]; exact ptKids_append_sub hI _ ws L hok z hz
+      have hv' : v ∈ ptIter hI L hok ns0 k ∨
+          v ∈ ptKids hI (ptIter hI L hok ns0 k) L hok := by
+        have : v ∈ ptExtend hI (ptIter hI L hok ns0 k) L hok := hv
+        exact ptExtend_mem hI _ L hok v this
+      rcases hv' with hin | hkid
+      · rcases List.mem_append.mp (ih v hin) with h0 | hk
+        · exact List.mem_append.mpr (Or.inl h0)
+        · exact List.mem_append.mpr (Or.inr (hgrow v hk))
+      · exact List.mem_append.mpr (Or.inr (hgrow v hkid))
+
+open Classical in
+/-- **§248.4 — THE NODE BOUND, TOTAL AND NON-ACCUMULATING.**  No matter how
+    many rounds run, the stage never exceeds the starting list plus one batch —
+    a quantity computable from `C₀` alone.  This is `hbn`'s content: the
+    extraction's node set is finite, and finite by a syntactic bound. -/
+theorem ptIter_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (hlen : ∀ v, (L v).length ≤ (cl C0).length)
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) (n : Nat) :
+    (ptIter hI L hok ns0 n).length
+      ≤ ns0.length + (typeEnum C0).length * (cl C0).length :=
+  ptStage_len_le hI _ ns0 L hok hlen (ptIter_nodup hI L hok ns0 hnd n)
+    (ptIter_contained hI L hok ns0 n)
+
+/-- **§248.5 — A MONOTONE BOUNDED MEASURE STALLS**, and stalls early: within
+    the bound itself.  The positive form of `measure_stops`, which only ruled
+    out endless growth. -/
+theorem mono_bounded_stalls (m : Nat → Nat) (B : Nat)
+    (hmono : ∀ n, m n ≤ m (n + 1)) (hbound : ∀ n, m n ≤ B) :
+    ∃ N, N ≤ B ∧ m (N + 1) = m N := by
+  refine Classical.byContradiction (fun h => ?_)
+  have hno : ∀ N, N ≤ B → m N < m (N + 1) := by
+    intro N hNB
+    exact Nat.lt_of_le_of_ne (hmono N) (fun he => h ⟨N, hNB, he.symm⟩)
+  have key : ∀ k, k ≤ B + 1 → k ≤ m k := by
+    intro k
+    induction k with
+    | zero => intro _; exact Nat.zero_le _
+    | succ j ih =>
+        intro hj
+        have hjB : j ≤ B := Nat.le_of_succ_le_succ hj
+        exact Nat.lt_of_le_of_lt (ih (Nat.le_trans (Nat.le_succ j) hj)) (hno j hjB)
+  exact Nat.not_succ_le_self B (Nat.le_trans (key (B + 1) (Nat.le_refl _))
+    (hbound (B + 1)))
+
+open Classical in
+/-- The stage's length never decreases (it is a prefix of its successor). -/
+theorem ptIter_len_mono (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) (n : Nat) :
+    (ptIter hI L hok ns0 n).length ≤ (ptIter hI L hok ns0 (n + 1)).length := by
+  obtain ⟨ws, hws⟩ := ptIter_prefix hI L hok ns0 n
+  rw [hws, List.length_append]
+  exact Nat.le_add_right _ _
+
+open Classical in
+/-- **§248.6 — THE NODE SET CLOSES.**  The stage reaches a fixed point at some
+    round bounded by `C₀` (and the seed) — and once fixed it stays fixed.  This
+    is the phase-1 termination statement: the extraction's node set is not just
+    finite but *reached*, in a computable number of rounds. -/
+theorem ptIter_stabilizes (hI : RCC5Interp I) {C0 : Concept}
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (hlen : ∀ v, (L v).length ≤ (cl C0).length)
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) :
+    ∃ N, N ≤ ns0.length + (typeEnum C0).length * (cl C0).length ∧
+      ∀ k, ptIter hI L hok ns0 (N + k) = ptIter hI L hok ns0 N := by
+  obtain ⟨N, hNB, hN⟩ := mono_bounded_stalls
+    (fun n => (ptIter hI L hok ns0 n).length) _
+    (ptIter_len_mono hI L hok ns0)
+    (fun n => ptIter_len_le hI L hok hlen ns0 hnd n)
+  refine ⟨N, hNB, ?_⟩
+  have hfix : ptIter hI L hok ns0 (N + 1) = ptIter hI L hok ns0 N := by
+    obtain ⟨ws, hws⟩ := ptIter_prefix hI L hok ns0 N
+    have : ws = [] := by
+      have hl : (ptIter hI L hok ns0 N).length + ws.length
+          = (ptIter hI L hok ns0 N).length := by
+        rw [← List.length_append, ← hws]; exact hN
+      exact List.eq_nil_of_length_eq_zero (by omega)
+    rw [hws, this, List.append_nil]
+  intro k
+  induction k with
+  | zero => rfl
+  | succ j ih =>
+      have : N + (j + 1) = (N + j) + 1 := by omega
+      rw [this, ptIter, ih, ← ptIter, hfix]
+
+open Classical in
+/-- **§248.7 — THE LABELLING THE EXTRACTION ACTUALLY USES.**  The full model
+    type, normalised: total, `SupportOk` everywhere, and inside the branching
+    bound.  Its existence is what keeps §248.6 from being a statement about
+    degenerate labellings only. -/
+noncomputable def mtyLab (hI : RCC5Interp I) (C0 : Concept)
+    (v : PtIdx I C0) : List Concept :=
+  normL C0 (mty C0 I (ptIdxPoint hI v))
+
+open Classical in
+theorem mtyLab_ok (hI : RCC5Interp I) (C0 : Concept) :
+    ∀ v : PtIdx I C0, SupportOk I C0 (ptIdxPoint hI v) (mtyLab hI C0 v) :=
+  fun v => normL_supportOk (mty_supportOk hI C0 (ptIdxPoint_dom hI v))
+
+open Classical in
+theorem mtyLab_len (hI : RCC5Interp I) (C0 : Concept) :
+    ∀ v : PtIdx I C0, (mtyLab hI C0 v).length ≤ (cl C0).length :=
+  fun _ => normL_len C0 _
+
+open Classical in
+/-- **§248.8 — PHASE 1 TERMINATES, AT THE REAL LABELLING.**  Non-vacuous
+    instance of §248.6: the node set of the model-type extraction closes within
+    `|ns₀| + |typeEnum C₀|·|cl C₀|` rounds and is fixed thereafter. -/
+theorem ptIter_stabilizes_mty (hI : RCC5Interp I) (C0 : Concept)
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) :
+    ∃ N, N ≤ ns0.length + (typeEnum C0).length * (cl C0).length ∧
+      ∀ k, ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 (N + k)
+          = ptIter hI (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N :=
+  ptIter_stabilizes hI _ _ (mtyLab_len hI C0) ns0 hnd
+
+open Classical in
+/-- **§249.1 — EVERY STAGE NODE HAS A GATE-MATE.**  `firstFresh_covers` at the
+    node gate: the gate drops `v` only in favour of an `a` it kept with the same
+    model type. -/
+theorem ptGated_covers (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ vs) :
+    ∃ a ∈ ptGated hI C0 vs,
+      mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v) := by
+  rcases firstFresh_covers (fun w => mty C0 I (ptIdxPoint hI w)) vs [] v hv with
+    h | h
+  · exact absurd h List.not_mem_nil
+  · exact h
+
+open Classical in
+/-- **§249.2 — AND IT OWES EXACTLY THE SAME DEMANDS.**  The support label is a
+    function of the model type, so the gate-mate's children discharge the
+    blocked node's obligations — the transfer round-7 blocking licenses, stated
+    on labels rather than on identifications. -/
+theorem ptGated_covers_lab (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ vs) :
+    ∃ a ∈ ptGated hI C0 vs, mtyLab hI C0 a = mtyLab hI C0 v := by
+  obtain ⟨a, ha, hty⟩ := ptGated_covers hI C0 vs v hv
+  exact ⟨a, ha, by rw [mtyLab, mtyLab, hty]⟩
+
+open Classical in
+/-- **§249.3 — A GATED NODE'S CHILDREN ARE ALL IN THE BATCH.**  Routine
+    (`mem_flatMap`), recorded because the coverage argument consumes it.
+
+    NOTE ON SCOPE — this is *not* the blocked-node transfer.  For blocked `v`
+    with gate-mate `a`, §249.2 gives `mtyLab a = mtyLab v`, so `v` and `a` owe
+    the SAME demands; but `ptKidsAt … v` and `ptKidsAt … a` are different index
+    lists, because `ptChild` picks a witness at `ptIdxPoint hI v` and at
+    `ptIdxPoint hI a` respectively — equal model TYPES, distinct model POINTS.
+    Serving `v`'s demand therefore needs an EDGE from `v` to `a`'s child (the
+    declared PP-labelled edge of round-7 blocking, §112's
+    `declared_edge_package`), never an identification of the two.  That step is
+    OPEN; §§249.1–249.2 supply its premise only. -/
+theorem ptKidsAt_mem_ptKids (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ ptGated hI C0 vs)
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ w, SupportOk I C0 (ptIdxPoint hI w) (L w)) :
+    ∀ z ∈ ptKidsAt hI L hok v, z ∈ ptKids hI vs L hok := by
+  intro z hz
+  rw [ptKids, List.mem_flatMap]
+  exact ⟨v, hv, hz⟩
 
 /-! ##### §247.1 — what the total bound still needs
 
@@ -40156,4 +40542,6 @@ end POFreeLift
 #print axioms POFreeLift.ptGated_len_le
 #print axioms POFreeLift.ptExtend_prefix
 #print axioms POFreeLift.ptKids_len_le
+#print axioms POFreeLift.appendNew_nodup
+#print axioms POFreeLift.stage_len_of_contained
 #print axioms POFreeLift.kernel_of_no_terminal

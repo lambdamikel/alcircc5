@@ -15124,3 +15124,84 @@ previous two changed the statement rather than the proof.
 
 Build: 40,159 lines, 2,025 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §248 — the node bound, total and non-accumulating
+
+§247 left the stage as a literal prefix of its extension but with only a
+PER-STEP bound: each batch is at most `|typeEnum C₀|·|cl C₀|`, which alone
+permits the total to grow without limit across rounds. The gap §247.1 named was
+that `ptKids` can list the same index twice, when two demands of one node share
+a witness, so the plain filter `(· ∉ vs)` does not keep the stage `Nodup`.
+
+`appendNew` closes it: a duplicate-free append, defined by recursion on the
+batch, skipping anything already accumulated. Three facts —
+
+- `appendNew_prefix` : `appendNew acc l = acc ++ ws` for some `ws` (so §247's
+  prefix property survives verbatim),
+- `appendNew_nodup`  : it preserves `Nodup`,
+- `appendNew_mem`    : nothing is invented.
+
+`ptExtend` is now `appendNew vs (ptKids …)`, and `ptExtend_prefix` /
+`ptExtend_nodup` / `ptExtend_mem` follow directly.
+
+**The counting argument** is `stage_len_of_contained`: a `Nodup` list contained
+in `ns0 ++ kids` with `|kids| ≤ B` has length `≤ |ns0| + B`. Trivial in itself;
+the work is establishing the containment.
+
+**§248.1 — the batch only grows.** `ptKids` had to be refactored first: its
+outer `.attach` over the gated list bundled a membership proof into the body,
+which blocked any monotonicity statement. The attach was superfluous — `hok` is
+total, so the body depends on `v` alone. Split out as `ptKidsAt`, leaving
+`ptKids = (ptGated …).flatMap (ptKidsAt …)`. Monotonicity is then one line from
+the already-certified `firstFresh_append_sub`: appending to a stage cannot
+displace the first occurrence of a type, so the gate grows and so does the
+batch.
+
+**§248.3 — the containment**, by induction on the round. A node of stage `n+1`
+is (by `appendNew_mem`) in stage `n` or in stage `n`'s batch; the first case
+uses the IH and the second is direct, and both then transport forward along
+`ptIter_prefix` by §248.1. This is where the two properties §§246–248 were built
+to supply — *extension is an append* and *the batch is monotone* — are actually
+consumed.
+
+**§248.4/§248.6 — the payoff.** `ptIter_len_le`: the stage NEVER exceeds
+`|ns₀| + |typeEnum C₀|·|cl C₀|`, at any round. Length is monotone (prefix) and
+bounded, so by `mono_bounded_stalls` (the positive form of `measure_stops`,
+which had only ruled out endless growth) it stalls at some `N` within that same
+bound; equal length plus prefix forces the appended tail to be `[]`, hence
+`ptIter (N+1) = ptIter N`, hence fixed forever (`ptIter_stabilizes`).
+
+So phase 1 does not merely fail to diverge — it CLOSES, in a computable number
+of rounds, at a set of computable size.
+
+**§248.7/§248.8 — non-vacuity.** All of the above is hypothetical in `L`, and a
+trivial `L` would make it hollow. `mtyLab hI C0 v := normL C0 (mty C0 I
+(ptIdxPoint hI v))` — the full model type, normalised — is total, `SupportOk`
+everywhere (`normL_supportOk ∘ mty_supportOk`), and inside the branching bound
+(`normL_len`), so `ptIter_stabilizes_mty` applies §248.6 to the labelling the
+extraction actually uses.
+
+### §249 — the gate covers every type (the transfer PREMISE, not the transfer)
+
+`firstFresh_covers`: the gate drops a node only in favour of an earlier one with
+the same type. At the node gate (`ptGated_covers`) and then on labels
+(`ptGated_covers_lab`, since `mtyLab` is a function of `mty`): **every stage
+node has a gate-mate owing exactly its own demands.**
+
+**SCOPE, stated because the docstring first got this wrong.** This is the
+premise of the blocked-node transfer, not the transfer. For blocked `v` with
+gate-mate `a`, `ptKidsAt … v` and `ptKidsAt … a` are DIFFERENT index lists:
+`ptChild` picks a witness at `ptIdxPoint hI v` and at `ptIdxPoint hI a`
+respectively — equal model TYPES, distinct model POINTS. Serving `v`'s demand
+needs an EDGE from `v` to `a`'s child — the declared PP-labelled edge of round-7
+blocking (§112, `declared_edge_package`) — and never an identification of `v`
+with `a`, which is precisely round 6's `L_Q(π,π)=EQ` failure. That step is OPEN.
+
+**What is now closed on the termination side:** phase 1 (node set) — finite,
+bounded, and reached. **What is open:** coverage at blocked nodes (the declared
+edge above, and `Stationary.covered`'s kernel disjunct, §231.1); the kernel-side
+`swCert_ok` obligations `hplab`, `hp`, `hkpp`, `hkppi`, `hkq`, `hkex`; the `Fin`
+reindex; and the final `MergedExtractionAt` assembly.
+
+Build: 40,539 lines, 2,052 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
