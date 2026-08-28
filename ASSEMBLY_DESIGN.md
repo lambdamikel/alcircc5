@@ -15089,3 +15089,38 @@ diagnosis was right but the fix was one step larger than stated.
 
 Build: 40,021 lines, 2,017 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+## 247. THE GATE AND EXTENSION AT `PtIdx`
+
+§246.1 predicted the total bound falls out of finishing §235's migration. §247
+takes the step that matters: **at `PtIdx` the index list is not rebuilt by
+saturation** — labels live in `L` — so an extension literally appends.
+
+* `ptGated` / `ptGated_sub` / `ptGated_len_le` — the gate at the stable index,
+  bounded by `|typeEnum C0|`;
+* `ptKids` — the children of gated nodes, as indices;
+* `ptExtend` — the extension, and **`ptExtend_prefix`**: the stage is a literal
+  prefix of its extension, so `vs_n` is contained in `vs_m` on the nose;
+* `ptKids_len_le` — one step adds at most `|typeEnum C0| * |cl C0|`.
+
+`ptExtend_prefix` is exactly the fact §246.1 said the value-carrying stage could
+not provide, and it is `rfl`.
+
+### 247.1 What the total bound still needs
+
+With the prefix, the containment reads: every node ever added is a child of a
+gated node of some stage, hence of the nested bounded union — so **membership** is
+bounded by `|typeEnum C0| * |cl C0|`.
+
+Turning that into a **length** bound needs one more thing: `ptKids` can list the
+same index twice, when two demands of a node share a witness. The filter removes
+only what is already in `vs`, not duplicates within a batch. So the remaining step
+is to dedup the batch — which preserves `ptExtend_prefix`, since `vs ++ dedup ws`
+is still an append.
+
+Recorded rather than assumed: this is the third counting wrinkle in the arc
+(§218's measure, §242's branch structure, now batch duplicates), and each of the
+previous two changed the statement rather than the proof.
+
+Build: 40,159 lines, 2,025 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

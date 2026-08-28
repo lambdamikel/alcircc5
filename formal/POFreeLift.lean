@@ -38980,6 +38980,141 @@ obstructs anything that needs identity across rounds, and the point-indexed desi
 (§235's `PtIdx`) is what removes it. **The total bound is a consequence of
 finishing that migration, not of a further counting argument.** -/
 
+/-! #### §247 — THE GATE AND THE EXTENSION AT `PtIdx`
+
+§246.1 predicted the total bound falls out of finishing §235's migration. §247
+takes the step that matters: at `PtIdx` the index list is **not rebuilt** by
+saturation — labels live in `L` — so an extension literally APPENDS, and
+`vs ⊆ vs'` holds on the nose.
+
+That is exactly what the containment needed and what the value-carrying stage
+could not give. -/
+
+open Classical in
+/-- **THE GATE AT `PtIdx`**, on the model type of the indexed point. -/
+noncomputable def ptGated (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) : List (PtIdx I C0) :=
+  firstFresh (fun v => mty C0 I (ptIdxPoint hI v)) [] vs
+
+open Classical in
+theorem ptGated_sub (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ ptGated hI C0 vs) :
+    v ∈ vs := by
+  rw [ptGated] at hv
+  exact firstFresh_sub (fun w : PtIdx I C0 => mty C0 I (ptIdxPoint hI w))
+    vs [] v hv
+
+open Classical in
+/-- **AND ITS BOUND**, by §242's counting at the indexed points. -/
+theorem ptGated_len_le (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) :
+    (ptGated hI C0 vs).length ≤ (typeEnum C0).length := by
+  have h1 : ((ptGated hI C0 vs).map
+      (fun v => mty C0 I (ptIdxPoint hI v))).length ≤ (typeEnum C0).length :=
+    nodup_len_le _ _ (fun t ht => by
+      obtain ⟨v, _, rfl⟩ := List.mem_map.mp ht
+      exact mty_mem_typeEnum C0 I (ptIdxPoint hI v))
+      (firstFresh_nodup (fun w : PtIdx I C0 => mty C0 I (ptIdxPoint hI w))
+        vs []).1
+  rwa [List.length_map] at h1
+
+open Classical in
+/-- **THE CHILDREN OF THE GATED NODES**, as indices. -/
+noncomputable def ptKids (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) : List (PtIdx I C0) :=
+  (ptGated hI C0 vs).attach.flatMap (fun v =>
+    (L v.val).attach.flatMap (fun q => match q with
+      | ⟨.ex pp D, hD⟩ =>
+          if D ∈ persistDs C0 I (ptIdxPoint hI v.val) then []
+          else [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
+      | ⟨.ex ppi D, hD⟩ =>
+          if D ∈ persistDsI C0 I (ptIdxPoint hI v.val) then []
+          else [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
+      | ⟨.ex dr _, hD⟩ =>
+          [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
+      | ⟨.ex po _, hD⟩ =>
+          [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
+      | ⟨.ex eq _, hD⟩ =>
+          [Sum.inl ⟨ptChild (hok v.val) hD, ptChild_dom (hok v.val) hD⟩]
+      | _ => []))
+
+open Classical in
+/-- **THE EXTENSION.**  A literal append — the index list is never rebuilt. -/
+noncomputable def ptExtend (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) : List (PtIdx I C0) :=
+  vs ++ (ptKids hI vs L hok).filter (fun w => decide (w ∉ vs))
+
+open Classical in
+/-- **AND THE STAGE IS A LITERAL PREFIX OF ITS EXTENSION** — the fact §246.1
+    said the value-carrying stage could not provide. -/
+theorem ptExtend_prefix (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) :
+    ∃ ws, ptExtend hI vs L hok = vs ++ ws := ⟨_, rfl⟩
+
+open Classical in
+theorem ptExtend_sub (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) :
+    ∀ v ∈ vs, v ∈ ptExtend hI vs L hok :=
+  fun _ hv => List.mem_append.mpr (Or.inl hv)
+
+open Classical in
+/-- **THE PER-STEP BOUND AT `PtIdx`.**  §245's count, at the stable index. -/
+theorem ptKids_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (hlen : ∀ v, (L v).length ≤ (cl C0).length) :
+    (ptKids hI vs L hok).length ≤ (typeEnum C0).length * (cl C0).length := by
+  rw [ptKids, List.length_flatMap]
+  refine Nat.le_trans (sum_map_le _ _ (cl C0).length ?_) ?_
+  · intro v _
+    rw [List.length_flatMap]
+    refine Nat.le_trans (sum_map_le _ _ 1 ?_) ?_
+    · rintro ⟨F, hF⟩ _
+      cases F with
+      | ex r c =>
+          cases r with
+          | pp =>
+              by_cases hb2 : c ∈ persistDs C0 I (ptIdxPoint hI v.val)
+              · simp [hb2]
+              · simp only [hb2, if_false]
+                exact Nat.le_refl _
+          | ppi =>
+              by_cases hb2 : c ∈ persistDsI C0 I (ptIdxPoint hI v.val)
+              · simp [hb2]
+              · simp only [hb2, if_false]
+                exact Nat.le_refl _
+          | dr => exact Nat.le_refl _
+          | po => exact Nat.le_refl _
+          | eq => exact Nat.le_refl _
+      | _ => exact Nat.zero_le _
+    · rw [List.length_attach, Nat.mul_one]; exact hlen v.val
+  · rw [List.length_attach]
+    exact Nat.mul_le_mul_right _ (ptGated_len_le hI C0 vs)
+
+/-! ##### §247.1 — what the total bound still needs
+
+`ptExtend_prefix` supplies the prerequisite §246.1 named: the stage is a literal
+prefix of its extension, so `vs_n ⊆ vs_m` holds on the nose and the gated sets
+are nested by `firstFresh_append_sub`.
+
+The containment argument then reads: every node ever added is a child of a gated
+node of some stage, hence of the (nested, bounded) union — so MEMBERSHIP is
+bounded by `|typeEnum C₀| · |cl C₀|`.
+
+Turning that into a LENGTH bound needs one more thing: `ptKids` can list the same
+index twice, when two demands of a node share a witness. The filter removes only
+what is already in `vs`, not duplicates within a batch. So the remaining step is
+to dedup the batch — which preserves `ptExtend_prefix`, since `vs ++ dedup ws` is
+still an append.
+
+Recorded rather than assumed: this is the third counting wrinkle in the arc
+(§218's measure, §242's branch structure, and now batch duplicates), and each of
+the previous two changed the statement rather than the proof. -/
+
 end WitSelector
 
 /-! ### §50 — THE TOP-SERVER EXTENSION
@@ -40018,4 +40153,7 @@ end POFreeLift
 #print axioms POFreeLift.gatedStage_len_le
 #print axioms POFreeLift.gatedIter_normL
 #print axioms POFreeLift.gatedIter_len_step
+#print axioms POFreeLift.ptGated_len_le
+#print axioms POFreeLift.ptExtend_prefix
+#print axioms POFreeLift.ptKids_len_le
 #print axioms POFreeLift.kernel_of_no_terminal
