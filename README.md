@@ -64,7 +64,7 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-08-28): the ∀PO-free fragment rests on a paper proof (one gap found, and repaired); its Lean certification is three quadrants of four; the full logic stays open
+## Status (2026-08-28): the ∀PO-free fragment rests on two independent proof routes (a gap found in one, and repaired; the other untouched); its Lean certification is three quadrants of four; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
 repair rounds and 17 adversarial reviews the *full-logic* certificate
@@ -79,12 +79,16 @@ future attack needs is recorded in the paper's concluding section and in
 *constructive*. Two things must be kept apart here, and the 2026-08-28 box
 below separates them:
 
-- **The theorem** rests on the **two-tier quotient proof**
-  ([`papers/two_tier_quotient_ALCIRCC5.tex`](papers/two_tier_quotient_ALCIRCC5.tex)),
-  which decides the *PO-coherent* fragment — and ∀PO-free concepts are
-  automatically PO-coherent (Remark, clause (c): no phase carries a `∀PO`
-  restriction at all). That proof is a complete argument with an explicit
-  decision procedure, and it is **independent of the Lean certificate route**.
+- **The theorem** rests on **two independent proof routes and three arrivals**
+  (ledger in
+  [`papers/why_po_free_decidable.pdf`](papers/why_po_free_decidable.pdf), §"So —
+  was it proved twice, or three times?"): *Route 1*, the **two-tier quotient**
+  (chain-and-phase), which decides the *PO-coherent* fragment — and ∀PO-free
+  concepts are automatically PO-coherent; and *Route 2*, the **ordered-disjoint
+  normal form** (structural — no chains, no phases, no stabilization), a
+  genuinely different shape reached independently. Both are complete arguments
+  with decision procedures, and both are **independent of the Lean certificate
+  route**.
 - **The Lean certification** of that theorem is separate, and is complete for
   three of four quadrants.
 
@@ -104,6 +108,9 @@ by `∀PO`, which the fragment removes.
 >   ordered by first coordinate, every row and every column stabilizes, yet
 >   every tail contains `PP`, `PO` *and* `PPI`. This is the proof's only use of
 >   a double limit.
+>   **Scope: this touches Route 1 only.** Route 2 has no chains, phases or
+>   stabilization, so the defect cannot even be stated there — the theorem never
+>   rested on the broken step, which is what two proof shapes are for.
 >   **The repair is done**: `fused_kq_all` establishes the correct
 >   *finite-segment* form — for a finite family of towers of arbitrary
 >   directions, segments can be chosen (with the equal-type endpoints the

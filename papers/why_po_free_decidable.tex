@@ -825,6 +825,34 @@ shapes} and \textbf{three arrivals}, plus one certification pass.
   blind spot needs a $\forall\PO$ and so cannot arise in the fragment.
 \end{enumerate}
 
+\paragraph{A gap in Route~1, found 2026-08-28 --- and what it does not
+touch.} Re-reading the two-tier paper turned up a genuine defect in its
+completeness argument: Step~2 defined the relation between two kernels as a
+double limit $\lim_{i,j\to\infty}\rho(d_i,d_j)$, justified by external-relation
+stabilization ``applied twice''. That lemma is \emph{one-sided}---it fixes an
+element and varies the chain---and the double limit need not exist
+($\mathbb{Z}\times\{0,1\}$ ordered by first coordinate: every row and every
+column stabilizes, yet every tail carries $\PP$, $\PO$ and $\PPI$). It is
+repaired by a \emph{simultaneous finite rectangle} in place of the limit, which
+is all the quotient needs since it reads only finitely many phases; the repair is
+machine-checked (\code{fused\_kq\_all}).
+
+Which arrivals this touches is worth stating precisely, because it is the
+argument for keeping two routes:
+\begin{itemize}
+\item \textbf{Arrival~1 (Route~1)} stated the false step. Repaired.
+\item \textbf{Arrival~2} re-derives Route~1 and uses external-relation
+  stabilization \emph{one-sidedly}, as the lemma allows; it never states the
+  double limit. It builds a two-tier quotient, so it depends on the repaired
+  lemma for its kernel-to-kernel edges, but it did not assert the invalid
+  inference.
+\item \textbf{Arrival~3 (Route~2)} is \emph{untouched}. It has no chains, no
+  phases and no stabilization at all---the defect cannot be stated in its
+  vocabulary, let alone used.
+\end{itemize}
+So the theorem never rested on the defective step: an independent route to it
+never had the defect. This is exactly the redundancy two proof shapes are for.
+
 So: ``2 (or 3?)'' resolves to \textbf{two independent proof routes,
 three independent arrivals at the theorem} --- and the fact that a cold
 attacker, pointed at the open problem with no steer, walked to this

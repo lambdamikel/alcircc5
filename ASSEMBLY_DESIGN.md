@@ -16111,3 +16111,28 @@ canonical, ask whether it exists.**
 
 The other papers are clean — `grep` finds no double-limit inference outside this
 file and the review that discussed it.
+
+### §269.2 — the gap's blast radius: Route 1 only
+
+Michael's follow-up — *weren't there one or two more proofs, independent of the
+two-tier route?* — is answered in the project's own ledger
+(`why_po_free_decidable.tex`, §"So — was it proved twice, or three times?"):
+**two independent proof routes, three arrivals.**
+
+| arrival | shape | touched by the Step-2 gap? |
+|---|---|---|
+| 1. two-tier quotient (Apr 2026, Claude, reviewed 4× by GPT-5.4) | Route 1, chain-and-phase | **YES** — it stated the false step. Repaired. |
+| 2. cold F6/W2′ attack (Jul 2026, GPT-5.5), `po_free_fragment_ALCIRCC5.tex` | a re-derivation of Route 1 | **No, as written.** It uses external-relation stabilization ONE-SIDEDLY, as the lemma allows, and never states the double limit. It builds a two-tier quotient, so it depends on the repaired lemma for kernel-to-kernel edges — but it did not assert the invalid inference. |
+| 3. regular-cover pivot (Jul 2026, GPT-5.5) | **Route 2**, ordered-disjoint normal form | **NO.** Verified by grep: no chains, no phases, no stabilization anywhere in its section. The defect cannot be stated in its vocabulary. |
+
+**So the theorem never rested on the defective step.** An independent route to it
+never had the defect — which is precisely what maintaining two proof shapes is
+for, and an argument against ever collapsing them into one.
+
+**And an observation worth acting on.** Route 2 — the untouched one — is
+*structurally the same idea as the ConeScheme pivot*: an ordered-disjoint frame,
+no phases, no stabilization, no reuse. The pivot is therefore not only a retreat
+from the refuted borrowing architecture; it moves the Lean certification onto the
+route that was already the more robust of the two. That is a reason to expect the
+G2/G3 gates to go smoothly (they are Route 2's content, and much of it is already
+certified) and to concentrate the risk where §267 already put it: G4.
