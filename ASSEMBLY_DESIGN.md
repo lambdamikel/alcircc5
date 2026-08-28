@@ -15755,3 +15755,37 @@ now have `K` analogues, so the port is mechanical — with the standing caveat.
 
 Build: 42,331 lines, 2,133 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §§262–263 — the extraction ported: phase 1 at the surviving gate
+
+§§248–250 were written against the `mty` gate that §256 refuted. Rather than
+duplicate the chain, §262 abstracts the gate: everything the development actually
+used of it is FOUR properties — it selects from the list (`sub`), it is monotone
+under append (`append_sub`), it is bounded (`len_le`), and it covers every node
+with a same-key representative (`covers`). `ptKidsG` / `ptExtendG` / `ptIterG`
+and the containment, bound, stabilization, closure and coverage theorems are all
+restated over an abstract gate, and every proof went through unchanged — which is
+the evidence that the abstraction is the right one, not a guess.
+
+**§263 — the instance.** `ptDGate` is `firstFreshK` at the down-spectrum key.
+Its four properties come straight from §§260–261, and `ptIterD_phase1` is §250.5's
+statement at the gate that survives §256:
+
+> from a duplicate-free seed, the node set closes within
+> `|ns₀| + |keyEnum C₀|·|cl C₀|` rounds, at a set no larger than that, and every
+> existential of every node is served by a kernel or inside the set.
+
+**The bound is the pivot's price, now explicit.** `|keyEnum C₀|` is
+`|typeEnum C₀| · 2^|typeEnum C₀|` where the refuted gate had `|typeEnum C₀|`.
+Decidability is untouched — no complexity claim is made anywhere — but the node
+bound is now doubly exponential in `|cl C₀|`.
+
+**Status of Target A.** The refutation cost a change of instance, not a rewrite.
+What §256 broke — coverage at a shared position — is repaired by `dkey_union_serves`
+(§261.3), and phase 1 is back, at the new gate, with the same four guarantees.
+What remains OPEN is unchanged and was never claimed: the `e_ex` EDGE at blocked
+nodes still needs `declared_edge_package` for `∃PP` and is open horizontally, and
+`hkex` placement (Target C) is untouched.
+
+Build: 42,612 lines, 2,150 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

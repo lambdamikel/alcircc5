@@ -41264,6 +41264,287 @@ theorem dkey_union_serves (hI : RCC5Interp I) (C0 : Concept) {v₁ v₂ w z : α
     {E : Concept} (hE : E ∈ cl C0) (hall : sat I z (Concept.all dr E)) :
     ∀ x, I.dom x → I.rho x v₂ = pp → sat I x E :=
   union_cone_body hI C0 hv₁ hw hz hv₁w hwz (hspec_of_dkey C0 I hkey) hE hall
+/-! #### §262 — THE EXTRACTION, PARAMETERISED BY ITS GATE
+
+§§248–250 were written against `ptGated`, i.e. against blocking by model type,
+which §256 refuted.  Rather than duplicate the chain for the new key, this
+section abstracts the gate: everything the development actually used of it is
+four properties — it selects from the list, it is monotone under append, it is
+bounded, and it covers every node with a same-key representative.
+
+The `mty` gate and the down-spectrum gate are then both instances, and §256's
+refutation costs a change of instance rather than a rewrite. -/
+
+open Classical in
+/-- **§262.1 — THE BATCH, AT AN ABSTRACT GATE.** -/
+noncomputable def ptKidsG (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) : List (PtIdx I C0) :=
+  (gate vs).flatMap (ptKidsAt hI L hok)
+
+open Classical in
+theorem ptKidsG_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0)) (B : Nat)
+    (hglen : ∀ vs, (gate vs).length ≤ B)
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (hlen : ∀ v, (L v).length ≤ (cl C0).length) :
+    (ptKidsG hI gate vs L hok).length ≤ B * (cl C0).length := by
+  rw [ptKidsG, List.length_flatMap]
+  refine Nat.le_trans (sum_map_le _ _ (cl C0).length ?_) ?_
+  · intro v _
+    exact Nat.le_trans (ptKidsAt_len_le hI L hok v) (hlen v)
+  · exact Nat.mul_le_mul_right _ (hglen vs)
+
+open Classical in
+theorem ptKidsG_append_sub (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (hgmono : ∀ vs ws v, v ∈ gate vs → v ∈ gate (vs ++ ws))
+    (vs ws : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) :
+    ∀ z ∈ ptKidsG hI gate vs L hok, z ∈ ptKidsG hI gate (vs ++ ws) L hok := by
+  intro z hz
+  rw [ptKidsG, List.mem_flatMap] at hz ⊢
+  obtain ⟨v, hv, hzv⟩ := hz
+  exact ⟨v, hgmono vs ws v hv, hzv⟩
+
+open Classical in
+/-- **§262.2 — EXTENSION AND ITERATION.** -/
+noncomputable def ptExtendG (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) : List (PtIdx I C0) :=
+  appendNew vs (ptKidsG hI gate vs L hok)
+
+open Classical in
+noncomputable def ptIterG (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) : Nat → List (PtIdx I C0)
+  | 0 => ns0
+  | n + 1 => ptExtendG hI gate (ptIterG hI gate L hok ns0 n) L hok
+
+open Classical in
+theorem ptIterG_prefix (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) (n : Nat) :
+    ∃ ws, ptIterG hI gate L hok ns0 (n + 1) = ptIterG hI gate L hok ns0 n ++ ws :=
+  appendNew_prefix _ _
+
+open Classical in
+theorem ptIterG_nodup (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) :
+    ∀ n, (ptIterG hI gate L hok ns0 n).Nodup := by
+  intro n
+  induction n with
+  | zero => exact hnd
+  | succ k ih => exact appendNew_nodup _ _ ih
+
+open Classical in
+/-- **§262.3 — CONTAINMENT, THE BOUND, AND THE FIXED POINT.**  §248's argument
+    verbatim; it consumed only the prefix property and the batch's monotonicity. -/
+theorem ptIterG_contained (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (hgmono : ∀ vs ws v, v ∈ gate vs → v ∈ gate (vs ++ ws))
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) :
+    ∀ n, ∀ v ∈ ptIterG hI gate L hok ns0 n,
+      v ∈ ns0 ++ ptKidsG hI gate (ptIterG hI gate L hok ns0 n) L hok := by
+  intro n
+  induction n with
+  | zero => intro v hv; exact List.mem_append.mpr (Or.inl hv)
+  | succ k ih =>
+      intro v hv
+      obtain ⟨ws, hws⟩ := ptIterG_prefix hI gate L hok ns0 k
+      have hgrow : ∀ z ∈ ptKidsG hI gate (ptIterG hI gate L hok ns0 k) L hok,
+          z ∈ ptKidsG hI gate (ptIterG hI gate L hok ns0 (k + 1)) L hok := by
+        intro z hz
+        rw [hws]
+        exact ptKidsG_append_sub hI gate hgmono _ ws L hok z hz
+      have hv' : v ∈ ptIterG hI gate L hok ns0 k ∨
+          v ∈ ptKidsG hI gate (ptIterG hI gate L hok ns0 k) L hok :=
+        appendNew_mem _ _ v hv
+      rcases hv' with hin | hkid
+      · rcases List.mem_append.mp (ih v hin) with h0 | hk
+        · exact List.mem_append.mpr (Or.inl h0)
+        · exact List.mem_append.mpr (Or.inr (hgrow v hk))
+      · exact List.mem_append.mpr (Or.inr (hgrow v hkid))
+
+open Classical in
+theorem ptIterG_len_le (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0)) (B : Nat)
+    (hglen : ∀ vs, (gate vs).length ≤ B)
+    (hgmono : ∀ vs ws v, v ∈ gate vs → v ∈ gate (vs ++ ws))
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (hlen : ∀ v, (L v).length ≤ (cl C0).length)
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) (n : Nat) :
+    (ptIterG hI gate L hok ns0 n).length ≤ ns0.length + B * (cl C0).length :=
+  stage_len_of_contained _ ns0 _ (ptIterG_nodup hI gate L hok ns0 hnd n)
+    (ptIterG_contained hI gate hgmono L hok ns0 n) _
+    (ptKidsG_len_le hI gate B hglen _ L hok hlen)
+
+open Classical in
+theorem ptIterG_stabilizes (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0)) (B : Nat)
+    (hglen : ∀ vs, (gate vs).length ≤ B)
+    (hgmono : ∀ vs ws v, v ∈ gate vs → v ∈ gate (vs ++ ws))
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (hlen : ∀ v, (L v).length ≤ (cl C0).length)
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) :
+    ∃ N, N ≤ ns0.length + B * (cl C0).length ∧
+      ∀ k, ptIterG hI gate L hok ns0 (N + k) = ptIterG hI gate L hok ns0 N := by
+  obtain ⟨N, hNB, hN⟩ := mono_bounded_stalls
+    (fun n => (ptIterG hI gate L hok ns0 n).length) _
+    (fun n => by
+      obtain ⟨ws, hws⟩ := ptIterG_prefix hI gate L hok ns0 n
+      rw [hws, List.length_append]; exact Nat.le_add_right _ _)
+    (fun n => ptIterG_len_le hI gate B hglen hgmono L hok hlen ns0 hnd n)
+  refine ⟨N, hNB, ?_⟩
+  have hfix : ptIterG hI gate L hok ns0 (N + 1) = ptIterG hI gate L hok ns0 N := by
+    obtain ⟨ws, hws⟩ := ptIterG_prefix hI gate L hok ns0 N
+    have hnil : ws = [] := by
+      have hl : (ptIterG hI gate L hok ns0 N).length + ws.length
+          = (ptIterG hI gate L hok ns0 N).length := by
+        rw [← List.length_append, ← hws]; exact hN
+      exact List.eq_nil_of_length_eq_zero (by omega)
+    rw [hws, hnil, List.append_nil]
+  intro k
+  induction k with
+  | zero => rfl
+  | succ j ih =>
+      have he : N + (j + 1) = (N + j) + 1 := by omega
+      rw [he, ptIterG, ih, ← ptIterG, hfix]
+
+open Classical in
+/-- **§262.4 — AND THE BATCH IS INSIDE THE STAGE AT THE FIXED POINT.** -/
+theorem ptIterG_closed (hI : RCC5Interp I) {C0 : Concept}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0))
+    (L : PtIdx I C0 → List Concept)
+    (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
+    (ns0 : List (PtIdx I C0)) (N : Nat)
+    (hfix : ptIterG hI gate L hok ns0 (N + 1) = ptIterG hI gate L hok ns0 N) :
+    ∀ z ∈ ptKidsG hI gate (ptIterG hI gate L hok ns0 N) L hok,
+      z ∈ ptIterG hI gate L hok ns0 N :=
+  appendNew_eq_self _ _ hfix
+open Classical in
+/-- **§262.5 — COVERAGE AT AN ABSTRACT GATE.**  §250.1, with the gate's covering
+    property and the fact that the key determines the model type as hypotheses. -/
+theorem ptKidsG_serves (hI : RCC5Interp I) (C0 : Concept) {κ : Type}
+    (gate : List (PtIdx I C0) → List (PtIdx I C0)) (key : PtIdx I C0 → κ)
+    (hgcov : ∀ vs v, v ∈ vs → ∃ a ∈ gate vs, key a = key v)
+    (hkeymty : ∀ u v, key u = key v →
+      mty C0 I (ptIdxPoint hI u) = mty C0 I (ptIdxPoint hI v))
+    (vs : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ vs)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ mtyLab hI C0 v) :
+    ∃ a ∈ gate vs,
+      mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v) ∧
+      ((r = pp ∧ D ∈ persistDs C0 I (ptIdxPoint hI a)) ∨
+       (r = ppi ∧ D ∈ persistDsI C0 I (ptIdxPoint hI a)) ∨
+       ∃ z ∈ ptKidsG hI gate vs (mtyLab hI C0) (mtyLab_ok hI C0),
+         D ∈ mtyLab hI C0 z) := by
+  obtain ⟨a, ha, hka⟩ := hgcov vs v hv
+  have hty : mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v) :=
+    hkeymty a v hka
+  refine ⟨a, ha, hty, ?_⟩
+  have hDa : Concept.ex r D ∈ mtyLab hI C0 a := by rw [mtyLab, hty]; exact hD
+  by_cases hp : r = pp ∧ D ∈ persistDs C0 I (ptIdxPoint hI a)
+  · exact Or.inl hp
+  by_cases hpi : r = ppi ∧ D ∈ persistDsI C0 I (ptIdxPoint hI a)
+  · exact Or.inr (Or.inl hpi)
+  refine Or.inr (Or.inr ⟨_, ?_,
+    ptChild_lab hI (mtyLab hI C0) (mtyLab_ok hI C0) a hDa⟩)
+  exact List.mem_flatMap.mpr ⟨a, ha,
+    ptChild_mem_ptKidsAt hI (mtyLab hI C0) (mtyLab_ok hI C0) a hDa
+      (fun hr hc => hp ⟨hr, hc⟩) (fun hr hc => hpi ⟨hr, hc⟩)⟩
+
+/-! #### §263 — THE DOWN-SPECTRUM EXTRACTION
+
+The instance.  §256 refuted the `mty` gate; this is the same development at the
+gate that survives it, obtained by supplying §261's four properties to §262. -/
+
+open Classical in
+/-- The down-spectrum gate, at the certificate's index type. -/
+noncomputable def ptDGate (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) : List (PtIdx I C0) :=
+  firstFreshK (fun v => dkey C0 I (ptIdxPoint hI v)) [] vs
+
+open Classical in
+theorem ptDGate_len_le (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) :
+    (ptDGate hI C0 vs).length ≤ (keyEnum C0).length :=
+  firstFreshK_len_le _ _ (fun v => dkey_mem_keyEnum C0 I (ptIdxPoint hI v)) vs
+
+open Classical in
+theorem ptDGate_append_sub (hI : RCC5Interp I) (C0 : Concept)
+    (vs ws : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ ptDGate hI C0 vs) :
+    v ∈ ptDGate hI C0 (vs ++ ws) :=
+  firstFreshK_append_sub _ vs [] ws v hv
+
+open Classical in
+theorem ptDGate_covers (hI : RCC5Interp I) (C0 : Concept)
+    (vs : List (PtIdx I C0)) (v : PtIdx I C0) (hv : v ∈ vs) :
+    ∃ a ∈ ptDGate hI C0 vs,
+      dkey C0 I (ptIdxPoint hI a) = dkey C0 I (ptIdxPoint hI v) := by
+  rcases firstFreshK_covers (fun u => dkey C0 I (ptIdxPoint hI u)) vs [] v hv
+    with h | h
+  · exact absurd h List.not_mem_nil
+  · exact h
+
+open Classical in
+/-- **§263.1 — PHASE 1 AT THE DOWN-SPECTRUM GATE.**  §250.5's statement, at the
+    gate that survives §256: from a duplicate-free seed the node set closes within
+    `|ns₀| + |keyEnum C₀|·|cl C₀|` rounds, at a set no larger, and every
+    existential of every node is served by a kernel or inside the set.
+
+    The bound is the pivot's price made explicit: `|keyEnum C₀|` is
+    `|typeEnum C₀| · 2^|typeEnum C₀|` where the refuted gate had `|typeEnum C₀|`. -/
+theorem ptIterD_phase1 (hI : RCC5Interp I) (C0 : Concept)
+    (ns0 : List (PtIdx I C0)) (hnd : ns0.Nodup) :
+    ∃ N, N ≤ ns0.length + (keyEnum C0).length * (cl C0).length ∧
+      (ptIterG hI (ptDGate hI C0) (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N).length
+        ≤ ns0.length + (keyEnum C0).length * (cl C0).length ∧
+      (∀ k, ptIterG hI (ptDGate hI C0) (mtyLab hI C0) (mtyLab_ok hI C0) ns0 (N + k)
+          = ptIterG hI (ptDGate hI C0) (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N) ∧
+      ∀ v ∈ ptIterG hI (ptDGate hI C0) (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N,
+        ∀ (r : Atom) (D : Concept), Concept.ex r D ∈ mtyLab hI C0 v →
+          ∃ a ∈ ptDGate hI C0
+              (ptIterG hI (ptDGate hI C0) (mtyLab hI C0) (mtyLab_ok hI C0) ns0 N),
+            mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v) ∧
+            ((r = pp ∧ D ∈ persistDs C0 I (ptIdxPoint hI a)) ∨
+             (r = ppi ∧ D ∈ persistDsI C0 I (ptIdxPoint hI a)) ∨
+             ∃ z ∈ ptIterG hI (ptDGate hI C0) (mtyLab hI C0)
+                 (mtyLab_ok hI C0) ns0 N,
+               D ∈ mtyLab hI C0 z) := by
+  have hglen : ∀ vs, (ptDGate hI C0 vs).length ≤ (keyEnum C0).length :=
+    ptDGate_len_le hI C0
+  have hgmono : ∀ vs ws v, v ∈ ptDGate hI C0 vs → v ∈ ptDGate hI C0 (vs ++ ws) :=
+    fun vs ws v hv => ptDGate_append_sub hI C0 vs ws v hv
+  obtain ⟨N, hNB, hstab⟩ := ptIterG_stabilizes hI (ptDGate hI C0)
+    (keyEnum C0).length hglen hgmono (mtyLab hI C0) (mtyLab_ok hI C0)
+    (mtyLab_len hI C0) ns0 hnd
+  refine ⟨N, hNB, ptIterG_len_le hI (ptDGate hI C0) _ hglen hgmono _ _
+    (mtyLab_len hI C0) ns0 hnd N, hstab, ?_⟩
+  intro v hv r D hD
+  obtain ⟨a, ha, hty, hcase⟩ := ptKidsG_serves hI C0 (ptDGate hI C0)
+    (fun u => dkey C0 I (ptIdxPoint hI u))
+    (fun vs u hu => ptDGate_covers hI C0 vs u hu)
+    (fun u w hk => mty_of_dkey C0 I hk) _ v hv hD
+  refine ⟨a, ha, hty, ?_⟩
+  rcases hcase with h | h | ⟨z, hz, hDz⟩
+  · exact Or.inl h
+  · exact Or.inr (Or.inl h)
+  · exact Or.inr (Or.inr
+      ⟨z, ptIterG_closed hI (ptDGate hI C0) _ _ ns0 N (hstab 1) z hz, hDz⟩)
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
