@@ -15432,3 +15432,31 @@ route to a construction. The docstring now says so.
 
 Build: 41,376 lines, 2,095 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §255.3–4 — the per-edge question is CLOSED; the residue is per-GROUP
+
+The empirical half of §255 was only half a story. The other half is a theorem.
+
+**`agreeing_witness_exists`.** Suppose the greedy borrowed edge would cycle. By
+`borrowed_edge_dichotomy` that forces `a < v`. But `v` carries the same demand
+(equal types), so `v` has its OWN witness `w` above it — and `comp(PP,PP) = {PP}`
+makes `w` a witness of `a` too. **An agreeing candidate exists precisely in the
+configuration where the greedy one fails.** `wp131` Q1 measures 1005/1005 = 100%,
+as it must.
+
+**`borrowed_edge_choosable`.** So for a single blocked node the borrowed edge can
+ALWAYS be chosen to agree: either the greedy witness already fails to lie below
+`v`, or `a < v` and §255.3 supplies one. Per-edge acyclicity is closed.
+
+**THE RESIDUE IS NOW PRECISE, AND IT IS NOT THE ONE §254 NAMED.** `a` spawns ONE
+child per demand, but several blocked nodes of `a`'s type may need DIFFERENT
+agreeing witnesses. `wp131` Q2 measures one witness serving a whole group at
+**91.8%** (77.5 / 76.0 / 99.4 / 99.8% by class) — a real 8.2% residue.
+
+This is a better-shaped problem than the one it replaces: it is a covering
+question about a finite group of same-type nodes, not a global chain-selection
+discipline. Options not yet tested: spawn more than one child per demand (costs
+the node bound), or show the group can be split by type refinement.
+
+Build: 41,441 lines, 2,097 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

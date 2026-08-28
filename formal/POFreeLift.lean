@@ -40309,6 +40309,55 @@ theorem model_contained_trans (hI : RCC5Interp I) (R : α → α → Prop)
   obtain ⟨hdx, hdy, r1⟩ := hsub x y h1
   obtain ⟨_, hdz, r2⟩ := hsub y z h2
   exact rho_forced hI hdx hdz hdy r1 r2 (by decide)
+open Classical in
+/-- **§255.3 — AGREEMENT IS AVAILABLE EXACTLY WHERE IT IS NEEDED.**  The
+    empirical part of §255 is only half a story; this is the other half, and it
+    is a theorem.
+
+    Suppose the greedy borrowed edge would cycle.  By `borrowed_edge_dichotomy`
+    that forces `a < v` in the model.  But `v` carries the same demand (its type
+    equals `a`'s), so `v` has its OWN witness `w` above it — and `comp(PP,PP) =
+    {PP}` makes `w` a witness of `a` as well.  So an AGREEING candidate exists
+    precisely in the configuration where the greedy one fails.
+
+    `wp131` Q1 measures this at 1005/1005 = 100%, as it must. -/
+theorem agreeing_witness_exists (hI : RCC5Interp I) (C0 : Concept)
+    {a v : α} (ha : I.dom a) (hv : I.dom v) (hav : I.rho a v = pp)
+    {D : Concept} (hD : Concept.ex pp D ∈ mty C0 I v) :
+    ∃ w, I.dom w ∧ I.rho a w = pp ∧ I.rho v w = pp ∧ D ∈ mty C0 I w := by
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp hD
+  obtain ⟨w, hw, hvw, hDw⟩ := hsat
+  exact ⟨w, hw, rho_forced hI ha hw hv hav hvw (by decide), hvw,
+    mem_mty.mpr ⟨cl_ex hcl, hDw⟩⟩
+
+open Classical in
+/-- **§255.4 — SO THE PER-EDGE ACYCLICITY QUESTION IS CLOSED.**  For a single
+    blocked node, the borrowed edge can ALWAYS be chosen to agree with the model:
+    either the greedy witness already fails to lie below `v` (and §254.7 applies),
+    or `a < v` and §255.3 supplies an agreeing one.  Either way there is a
+    witness of `a` carrying `D` that `v` does not sit above.
+
+    WHAT REMAINS is not per-edge but per-GROUP: `a` spawns ONE child per demand,
+    and several blocked nodes of `a`'s type may need DIFFERENT agreeing witnesses.
+    `wp131` Q2 measures a single witness serving a whole group at 91.8%
+    (77.5 / 76.0 / 99.4 / 99.8 % by class), so this is a real 8.2% residue and
+    the next thing to attack. -/
+theorem borrowed_edge_choosable (hI : RCC5Interp I) (C0 : Concept)
+    {a v : α} (ha : I.dom a) (hv : I.dom v)
+    {D : Concept} (hDa : Concept.ex pp D ∈ mty C0 I a)
+    (hty : mty C0 I a = mty C0 I v) :
+    ∃ w, I.dom w ∧ I.rho a w = pp ∧ D ∈ mty C0 I w ∧ I.rho w v ≠ pp := by
+  by_cases hav : I.rho a v = pp
+  · obtain ⟨w, hw, haw, hvw, hDw⟩ :=
+      agreeing_witness_exists hI C0 ha hv hav (hty ▸ hDa)
+    refine ⟨w, hw, haw, hDw, fun hwv => ?_⟩
+    have : I.rho v v = pp := rho_forced hI hv hv hw hvw hwv (by decide)
+    rw [hI.refl_eq v hv] at this
+    exact absurd this (by decide)
+  · obtain ⟨hcl, hsat⟩ := mem_mty.mp hDa
+    obtain ⟨w, hw, haw, hDw⟩ := hsat
+    refine ⟨w, hw, haw, mem_mty.mpr ⟨cl_ex hcl, hDw⟩, fun hwv => ?_⟩
+    exact hav (rho_forced hI ha hv hw haw hwv (by decide))
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
