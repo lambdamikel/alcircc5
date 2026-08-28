@@ -15931,3 +15931,68 @@ place every previous architecture has failed.
 
 Build: 42,751 lines, 2,158 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+---
+
+## §267 — THE PIVOT, AND HOW TO NAVIGATE WHAT CAME BEFORE
+
+**Read this before building on anything above.**
+
+### What is RETIRED
+
+§§248–265 in full: the gate (`ptGated`, `ptDGate`, `firstFresh*`), the borrowed
+edge (`borrowed_ee_all`, `borrowed_dr_ok`, `borrowed_edge_choosable`), the
+down-spectrum key (`dkey`, `hspec_of_dkey`, `dkey_union_serves`), and the pool
+key (`wkey`). **None of it is wrong** — every theorem there is true and still
+compiles. What is dead is the ARCHITECTURE they serve: reusing a finite node set
+by blocking and borrowing. Four disciplines were refuted in three days, each by an
+exact countermodel, and the fifth incarnation of the pointwise-vs-joint pattern is
+the signal to stop patching rather than to patch again.
+
+Keep them as record. Do not extend them.
+
+### What SURVIVES, and is directly reusable
+
+| ours | the plan's gate |
+|---|---|
+| `RCC5NormalForm`, `ODStruct`, `odNet_frame` | G2 `ordered_disjoint_to_network` |
+| `SupportOk`, `normL`, `mty`, `typeEnum`, `sublists` | G1 support types + enumeration |
+| `truth_lemma`, `Hintikka`, `sat_from_hintikka` | G3 `truth_lemma` |
+| `mty_all`, `mty_ex`, `cl_all`, `cl_ex`, `rho_forced` | G4 extraction |
+| the whole kernel side, incl. `fused_kq_all` | reusable for regular suffixes |
+| `mono_bounded_stalls`, `nodup_len_le`, `exists_uniform_threshold` | G1 fixpoint stabilization |
+
+### The new architecture in one paragraph
+
+A signature is `q = (T, S)`: a support type plus an upper bound on the types of
+strict PP-predecessors. Locally admissible signatures form a finite set `Static`
+of size `≤ N·2^N`. A **monotone, reductive** `prune` removes signatures with an
+unserved non-EQ demand; iterate to the greatest fixed point; accept iff a survivor
+carries the root type. The model is then the FRESH-OCCURRENCE unfolding of the
+surviving control graph: every non-EQ demand births a distinct occurrence, `lt` is
+the transitive closure of PP/PPI births, `disj` the downward closure of DR births,
+everything else PO.
+
+### Why the refutations do not transfer
+
+Every countermodel — §256's shared top, D1's cycle, D2's DR-only witness —
+attacked node REUSE. With fresh occurrences there is nothing to borrow. `hirrE` is
+free because `lt` is a tree closure; `ltNotDj` is free because a DR birth opens a
+new vertical component and `lt` never leaves one.
+
+### Why this is not the route the project retracted
+
+The retracted `papers/decidability_ALCIRCC5.tex` died because `(Q3)` was
+**anti-monotone**: a larger type set made it MORE restrictive, so elimination
+starting from all types cascaded to zero. `prune` requires only that each demand
+HAVE a target in `X` — monotone in `X`, reductive, hence a well-founded descent to
+a greatest fixed point. **Check this again if anyone proposes strengthening
+`prune` with a closure or coherence condition**, because that is precisely how the
+first attempt died.
+
+### Order of work
+
+G1 first: it is self-contained, it holds the new mathematics, and it depends on
+nothing else in the ledger. Then G2 (mostly ours already), G3 (ours), and G4 last
+— `source_signatures_survive` is the completeness direction and the place every
+previous architecture has failed. Expect the defect there, not elsewhere.
