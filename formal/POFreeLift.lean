@@ -39917,6 +39917,209 @@ theorem kernel_side_ok (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
   ⟨K.ppos, kLab_ok hI K,
    fun a ha _c hc b hb => kd_kk_pp_any hI K a ha hc b hb,
    fun a ha _c hc b hb => kd_kk_ppi_any hI K a ha hc b hb⟩
+/-! #### §252 — THE DECLARED EDGES, GIVEN THE ROW
+
+The three kernel obligations §251.8 left open (`hek`, `hke`, `hkq`) and the
+external one (`hee`) are not facts about `KernelData` — each concerns a DECLARED
+edge to something outside. What they have in common is that each becomes
+immediate the moment the declared value equals the MODEL's relation on the
+corresponding points, and — for the kernel cases — that relation is CONSTANT
+across the phases the certificate reads.
+
+That constancy is exactly what `kernel_site`/`dkernel_site` (E2b) were built to
+supply: externals picked after the segment stabilises have a constant row to the
+whole kernel. So the theorems below turn four open obligations into ONE stated
+extraction requirement, rather than four separate pieces of mathematics.
+
+WHAT THIS DOES NOT COVER: the BORROWED edges of §250 — the declared PP-edge from
+a blocked node to its gate-mate's witness, which by construction does NOT agree
+with the model. Those are `declared_edge_package`'s business, and remain the
+residue. -/
+
+open Classical in
+/-- **§252.1 — EXTERNAL → EXTERNAL.** -/
+theorem ee_all_of_row {C0 : Concept} {γ : Type} (pt : γ → α)
+    (e f : γ) (hf : I.dom (pt f)) (r : Atom) (c : Concept)
+    (hc : Concept.all r c ∈ normL C0 (mty C0 I (pt e)))
+    (hrow : I.rho (pt e) (pt f) = r) :
+    c ∈ normL C0 (mty C0 I (pt f)) := by
+  have hcl : c ∈ cl C0 := cl_all (mem_normL.mp hc).1
+  have hs : sat I (pt e) (Concept.all r c) := (mem_mty.mp (mem_normL.mp hc).2).2
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, hs _ hf hrow⟩⟩
+
+open Classical in
+/-- **§252.2 — KERNEL → EXTERNAL** (`hke`).  Needs the row only at the one phase
+    the universal sits at. -/
+theorem ke_all_of_row {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x)
+    {γ : Type} (pt : γ → α) (f : γ) (hf : I.dom (pt f))
+    (a : Nat) (r : Atom) (c : Concept) (hc : Concept.all r c ∈ kLab K a)
+    (hrow : I.rho (K.c (K.i + a)) (pt f) = r) :
+    c ∈ normL C0 (mty C0 I (pt f)) := by
+  have hcl : c ∈ cl C0 := cl_all (mem_normL.mp hc).1
+  have hs : sat I (K.c (K.i + a)) (Concept.all r c) :=
+    (mem_mty.mp (mem_normL.mp hc).2).2
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, hs _ hf hrow⟩⟩
+
+open Classical in
+/-- **§252.3 — EXTERNAL → KERNEL** (`hek`).  The declared value is the CONVERSE
+    of the row, so the model relation runs from the external into the phase. -/
+theorem ek_all_of_row (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x)
+    {γ : Type} (pt : γ → α) (e : γ) (he : I.dom (pt e))
+    (a : Nat) (row r : Atom) (c : Concept)
+    (hc : Concept.all r c ∈ normL C0 (mty C0 I (pt e)))
+    (hrow : I.rho (K.c (K.i + a)) (pt e) = row) (hconv : conv row = r) :
+    c ∈ kLab K a := by
+  have hcl : c ∈ cl C0 := cl_all (mem_normL.mp hc).1
+  have hs : sat I (pt e) (Concept.all r c) := (mem_mty.mp (mem_normL.mp hc).2).2
+  have hback : I.rho (pt e) (K.c (K.i + a)) = r := by
+    have h2 := hI.conv_ (K.c (K.i + a)) (pt e) (K.cdom _) he
+    rw [hrow] at h2
+    rw [h2, hconv]
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, hs _ (K.cdom _) hback⟩⟩
+
+open Classical in
+/-- **§252.4 — KERNEL → KERNEL** (`hkq`).  Here the row must be constant over the
+    TARGET's phases, since one declared value must serve them all. -/
+theorem kq_all_of_row {C0 : Concept} {Ds Ds' : List Concept}
+    {L0 L0' : Nat} {d d' : Bool} {x x' : α}
+    (K : KernelData I C0 Ds L0 d x) (K' : KernelData I C0 Ds' L0' d' x')
+    (a : Nat) (r : Atom) (c : Concept) (hc : Concept.all r c ∈ kLab K a)
+    (b : Nat) (hrow : I.rho (K.c (K.i + a)) (K'.c (K'.i + b)) = r) :
+    c ∈ kLab K' b :=
+  ee_all_of_row (fun (t : Bool) => if t then K.c (K.i + a) else K'.c (K'.i + b))
+    true false (K'.cdom _) r c hc hrow
+
+/-! #### §253 — THE KERNEL'S EXTERNAL ROWS, PRODUCED
+
+§252 turns four obligations into one requirement: the declared edge must equal a
+model row, CONSTANT across the phases the certificate reads.  `ascKernel_serves`
+does not deliver that — it selects its segment through `rr_segment_from`, which
+knows nothing about externals.  `externals_stabilize` (D2a) does: on any
+ascending chain, a FINITE list of externals has a uniform index beyond which
+every row is constant.  Folding it into the same `max` that already absorbs the
+recurrence horizon and the `∀PPI` bank costs nothing and delivers the clause.
+
+THE ORDERING CONSTRAINT this makes explicit: the external list must be fixed
+BEFORE the segment is chosen.  That is the selection-order discipline
+`kernel_site` established for a single kernel; a witness that only exists
+because of a later kernel is still outside it (the cross-kernel rectangle). -/
+
+open Classical in
+theorem ascKernel_serves_ctx (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat)
+    (exts : List α) (hexts : ∀ e ∈ exts, I.dom e) :
+    ∃ (c : Nat → α) (i p : Nat),
+      (∀ n, I.dom (c n)) ∧
+      (∀ n, I.rho (c n) (c (n + 1)) = cdir true) ∧
+      L0 ≤ i ∧ 0 < i ∧ c 0 = x ∧ 0 < p ∧
+      mty C0 I (c i) = mty C0 I (c (i + p)) ∧
+      (∀ D ∈ persistDs C0 I x, ∃ b, b < p ∧ D ∈ mty C0 I (c (i + b))) ∧
+      (∀ a r D, a ≤ p → (r = dr ∨ r = pp ∨ r = ppi) →
+        Concept.ex r D ∈ mty C0 I (c (i + a)) →
+        ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+          ∀ b, b ≤ p → I.rho (c (i + b)) w = r) ∧
+      p ≤ (allListsLe (cl C0) (cl C0).length).length
+            * (persistDs C0 I x).length ∧
+      (∀ e ∈ exts, ∀ m n, i ≤ m → i ≤ n → I.rho (c m) e = I.rho (c n) e) := by
+  classical
+  have h0 : persistAll I C0 (persistDs C0 I x) x := persistAll_persistDs hx
+  have hdom : ∀ n, I.dom (rrPt hI C0 (persistDs C0 I x) hL x h0 n) :=
+    rrPt_dom hI C0 (persistDs C0 I x) hL x h0
+  have hstep : ∀ n, I.rho (rrPt hI C0 (persistDs C0 I x) hL x h0 n)
+      (rrPt hI C0 (persistDs C0 I x) hL x h0 (n + 1)) = pp :=
+    rrPt_step hI C0 (persistDs C0 I x) hL x h0
+  obtain ⟨M, hM⟩ := recurrent_tail (sublists (cl C0))
+    (fun m => mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 m))
+    (fun m => mty_mem_sublists _)
+  obtain ⟨A, hA⟩ := ppi_witness_bank hI hdom hstep C0
+  obtain ⟨Ns, hNs⟩ := externals_stabilize hI hdom hstep exts hexts
+  obtain ⟨i, p, hL0, hi, hp, hdvd, hpb, hty⟩ :=
+    rr_segment_from hI C0 (persistDs C0 I x) hL x h0 (max (max (max L0 M) A) Ns)
+  have hMi : M ≤ i := Nat.le_trans (Nat.le_trans (Nat.le_trans
+    (Nat.le_max_right L0 M) (Nat.le_max_left (max L0 M) A))
+    (Nat.le_max_left (max (max L0 M) A) Ns)) hL0
+  have hAi : A ≤ i := Nat.le_trans (Nat.le_trans (Nat.le_max_right (max L0 M) A)
+    (Nat.le_max_left (max (max L0 M) A) Ns)) hL0
+  have hNi : Ns ≤ i :=
+    Nat.le_trans (Nat.le_max_right (max (max L0 M) A) Ns) hL0
+  refine ⟨rrPt hI C0 (persistDs C0 I x) hL x h0, i, p, hdom, hstep,
+    Nat.le_trans (Nat.le_trans (Nat.le_trans (Nat.le_max_left L0 M)
+      (Nat.le_max_left (max L0 M) A))
+      (Nat.le_max_left (max (max L0 M) A) Ns)) hL0,
+    hi, rfl, hp, hty, ?_, ?_, hpb, ?_⟩
+  · intro D hD
+    obtain ⟨n, hn⟩ := List.get_of_mem hD
+    obtain ⟨b, hb, hcarry⟩ :=
+      rr_covers_le hI C0 (persistDs C0 I x) hL x h0 i p hi hp
+        (Nat.le_of_dvd hp hdvd) n.val n.isLt
+    refine ⟨b, hb, ?_⟩
+    have hfe : (⟨n.val, n.isLt⟩ : Fin (persistDs C0 I x).length) = n :=
+      Fin.ext rfl
+    rw [hfe, hn] at hcarry
+    exact hcarry
+  · intro a r D _ha hr hD
+    have hrecA : ∀ N, ∃ m, N ≤ m ∧
+        mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 m)
+          = mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 (i + a)) :=
+      hM (i + a) (by omega)
+    rcases hr with rfl | rfl | rfl
+    · obtain ⟨w, hw, hDw, hall⟩ :=
+        dr_witness_all_below hI hdom hstep hrecA hD (i + p)
+      exact ⟨w, hw, hDw, fun b hb => hall (i + b) (by omega)⟩
+    · obtain ⟨w, hw, hDw, hall⟩ :=
+        pp_witness_all_below hI hdom hstep hrecA hD (i + p)
+      exact ⟨w, hw, hDw, fun b hb => hall (i + b) (by omega)⟩
+    · obtain ⟨w, hw, hDw, hall⟩ :=
+        hA (mty C0 I (rrPt hI C0 (persistDs C0 I x) hL x h0 (i + a)))
+          (mty_mem_sublists _) hrecA D hD
+      exact ⟨w, hw, hDw, fun b _ => hall (i + b) (by omega)⟩
+  · intro e he m n hm hn
+    exact hNs e he m n (Nat.le_trans hNi hm) (Nat.le_trans hNi hn)
+open Classical in
+/-- **§253.1 — THE ROW PROPERTY**, as a predicate on a `KernelData`: every
+    external in the list sees the SAME relation from every phase. -/
+structure KernelRows {C0 : Concept} {Ds : List Concept} {L0 : Nat} {d : Bool}
+    {x : α} (K : KernelData I C0 Ds L0 d x) (exts : List α) : Prop where
+  ctx : ∀ e ∈ exts, ∀ m n, K.i ≤ m → K.i ≤ n → I.rho (K.c m) e = I.rho (K.c n) e
+
+open Classical in
+/-- **§253.2 — AND IT IS ACHIEVABLE**, for any list fixed in advance. -/
+theorem exists_kernelData_rows (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat)
+    (exts : List α) (hexts : ∀ e ∈ exts, I.dom e) :
+    ∃ K : KernelData I C0 (persistDs C0 I x) L0 true x, KernelRows K exts := by
+  obtain ⟨c, i, p, hdom, hstep, hbase, hipos, hroot, hppos, hty, hcov, hserve,
+    _hpb, hctx⟩ := ascKernel_serves_ctx hI C0 x hx hL L0 exts hexts
+  exact ⟨{ c := c, i := i, p := p, cdom := hdom, cstep := hstep,
+           base_ge := hbase, ipos := hipos, croot := hroot, ppos := hppos,
+           cty := hty, ccovers := hcov }, ⟨hctx⟩⟩
+
+open Classical in
+/-- **§253.3 — `hke`, DISCHARGED FROM THE ROW PROPERTY.**  The declared edge
+    carries the row read at the base phase; `KernelRows` transports it to the
+    phase the universal actually sits at. -/
+theorem ke_all_of_site {C0 : Concept} {Ds : List Concept} {L0 : Nat} {d : Bool}
+    {x : α} (K : KernelData I C0 Ds L0 d x) {exts : List α}
+    (hrows : KernelRows K exts) (f : α) (hf : f ∈ exts) (hfd : I.dom f)
+    (a : Nat) (r : Atom) (c : Concept) (hc : Concept.all r c ∈ kLab K a)
+    (hrow : I.rho (K.c K.i) f = r) : c ∈ normL C0 (mty C0 I f) := by
+  refine ke_all_of_row K (fun (y : α) => y) f hfd a r c hc ?_
+  rw [hrows.ctx f hf (K.i + a) K.i (Nat.le_add_right _ _) (Nat.le_refl _)]
+  exact hrow
+
+open Classical in
+/-- **§253.4 — AND `hek`.**  Same row, read in the converse direction. -/
+theorem ek_all_of_site (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x)
+    {exts : List α} (hrows : KernelRows K exts) (e : α) (he : e ∈ exts)
+    (hed : I.dom e) (a : Nat) (row r : Atom) (c : Concept)
+    (hc : Concept.all r c ∈ normL C0 (mty C0 I e))
+    (hrow : I.rho (K.c K.i) e = row) (hconv : conv row = r) : c ∈ kLab K a := by
+  refine ek_all_of_row hI K (fun (y : α) => y) e hed a row r c hc ?_ hconv
+  rw [hrows.ctx e he (K.i + a) K.i (Nat.le_add_right _ _) (Nat.le_refl _)]
+  exact hrow
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

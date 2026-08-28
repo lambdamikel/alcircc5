@@ -15296,3 +15296,46 @@ and `hke` (kernel↔external) — OPEN, and none of them is a fact about
 
 Build: 40,984 lines, 2,076 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §§252–253 — the declared edges, and where the rows come from
+
+§251.8 left `hek`, `hke`, `hkq` open, plus the external `hee`. None is a fact
+about `KernelData`: each concerns a DECLARED edge to something outside. What
+they share is that each becomes immediate once the declared value equals the
+MODEL's relation on the corresponding points.
+
+**§252 — the four, given the row.** `ee_all_of_row`, `ke_all_of_row`,
+`ek_all_of_row` (converse direction), `kq_all_of_row`. Each is three lines. Their
+value is not difficulty but bookkeeping: they replace four open obligations with
+ONE stated requirement.
+
+**§253 — and the requirement is met.** `ascKernel_serves` selects its segment
+through `rr_segment_from`, which knows nothing about externals, so it cannot
+deliver constancy. `externals_stabilize` (D2a) can: on any ascending chain a
+FINITE external list has a uniform index past which every row is constant.
+Folding it into the same `max` that already absorbs the recurrence horizon and
+the `∀PPI` bank costs nothing — `ascKernel_serves_ctx`. `KernelRows` names the
+resulting property, `exists_kernelData_rows` produces it, and `ke_all_of_site` /
+`ek_all_of_site` discharge `hke` / `hek` at EVERY phase from the row read at the
+base.
+
+**THE ORDERING CONSTRAINT, now explicit.** The external list must be fixed
+BEFORE the segment is chosen. That is `kernel_site`'s selection-order discipline
+for a single kernel. A witness that exists only because of a LATER kernel is
+outside it.
+
+**So `hkq` is reduced, not discharged.** `kq_all_of_row` needs the row constant
+over the TARGET kernel's phases; those points are determined only once the second
+kernel is built, and its construction may depend on the first. That is the
+cross-kernel rectangle E2b left open, and nothing here moves it.
+
+**Obligation scoreboard.** Kernel side: `hp`, `hplab`, `hkpp`, `hkppi` DONE
+(§251); `hke`, `hek` DONE given `KernelRows`, which is achievable (§253); `hkex`
+reduced to placement (§§251.5–251.6); `hkq` reduced to the cross-kernel
+rectangle. External side: `hee` holds on model-agreeing edges (§252.1) and needs
+`declared_edge_package` on the BORROWED edges of §250 — which by construction do
+not agree with the model, and remain the residue, together with their acyclicity
+side condition.
+
+Build: 41,187 lines, 2,085 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
