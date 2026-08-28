@@ -1,0 +1,1170 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=25mm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,tabularx,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit}
+
+\definecolor{navy}{HTML}{15395B}
+\definecolor{steel}{HTML}{4A6682}
+\definecolor{pale}{HTML}{ECF3F8}
+\definecolor{green}{HTML}{25633E}
+\definecolor{greenpale}{HTML}{EAF5EE}
+\definecolor{amber}{HTML}{7A5600}
+\definecolor{amberpale}{HTML}{FFF4D6}
+\definecolor{red}{HTML}{8D2B35}
+\definecolor{redpale}{HTML}{FBECEE}
+\definecolor{ink}{HTML}{202C38}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=navy,
+  urlcolor=steel,
+  citecolor=navy,
+  pdftitle={Finishing the forall-PO-Free Fragment of ALCI-RCC5},
+  pdfsubject={Fresh-occurrence cone-scheme decision procedure and Lean certification blueprint}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{steel}$\forall\PO$-free $\mathcal{ALCI}_{\mathrm{RCC5}}$}
+\fancyhead[R]{\small\color{steel}Certification plan}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries\color{navy}}{\thesection}{0.65em}{}
+\titleformat{\subsection}{\large\bfseries\color{navy}}{\thesubsection}{0.65em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{steel}}{\thesubsubsection}{0.65em}{}
+\setlist[itemize]{leftmargin=1.6em,itemsep=0.25em,topsep=0.35em}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=0.25em,topsep=0.35em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\allowdisplaybreaks
+
+\lstdefinelanguage{Lean}{
+  morekeywords={theorem,def,structure,inductive,where,by,let,have,show,from,
+    if,then,else,match,with,fun,forall,exists,namespace,end,import,open,
+    instance,deriving,Decidable,Finite,Fintype,Prop,Type},
+  sensitive=true,
+  morecomment=[l]{--},
+  morestring=[b]"
+}
+\lstset{
+  language=Lean,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{navy}\bfseries,
+  commentstyle=\color{steel},
+  stringstyle=\color{green},
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{steel!40},
+  backgroundcolor=\color{pale!55},
+  xleftmargin=0.4em,
+  xrightmargin=0.4em,
+  literate={∈}{{$\in$}}1
+}
+
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\Ty}{\mathsf{Ty}}
+\newcommand{\Cl}{\mathsf{Cl}^{+}}
+\newcommand{\cone}{\operatorname{cone}}
+\newcommand{\At}{\mathsf{At}}
+\newcommand{\Sat}{\mathsf{Sat}}
+\newcommand{\Phiop}{\Phi}
+\newcommand{\statusbox}[3]{%
+  \begin{center}
+  \fcolorbox{#1}{#2}{\begin{minipage}{0.91\linewidth}\textbf{#3}\end{minipage}}
+  \end{center}}
+
+\begin{document}
+
+\pagenumbering{gobble}
+\begin{titlepage}
+\thispagestyle{empty}
+\vspace*{1.5cm}
+{\color{navy}\rule{\linewidth}{1.2pt}}\\[1.1cm]
+{\huge\bfseries\color{navy}Finishing the $\forall\PO$-Free Fragment\\[0.22cm]
+of $\mathcal{ALCI}_{\mathrm{RCC5}}$\par}
+\vspace{0.7cm}
+{\Large\color{steel}A fresh-occurrence cone-scheme proof strategy\\
+and Lean certification blueprint\par}
+\vspace{1.35cm}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{0.91\linewidth}{>{\bfseries}rX}
+Purpose: & detailed replacement plan for a complete decision proof \\
+Input reviewed: & round-two cold-attack package, 2026-08-28 \\
+Report date: & 2026-08-28 \\
+Formal status: & proof architecture and machine-checkable blueprint; Lean proof pending
+\end{tabularx}
+\end{center}
+
+\vfill
+\noindent\fcolorbox{navy}{pale}{%
+\begin{minipage}{0.93\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+\textbf{Recommendation.}
+Retire the finite-kernel and borrowed-edge extraction target. Decide the fragment by a
+finite greatest-fixed-point computation over \emph{cone signatures}, then unfold a
+surviving finite strategy into an infinite fresh-occurrence forest. Proper-part edges are
+created only at birth; disconnection is the downward closure of designated horizontal
+birth cuts; overlap is residual and protected at its birth cut. This removes the three
+known obstructions by construction and yields a direct soundness/completeness theorem.
+\end{minipage}}\par
+\vspace{0.95cm}
+{\color{navy}\rule{\linewidth}{1.2pt}}
+\end{titlepage}
+
+\pagenumbering{roman}
+\begin{abstract}
+This report gives a concrete route to a full Lean certification of decidability for the
+fragment of $\mathcal{ALCI}_{\mathrm{RCC5}}$ in negation normal form whose closure contains
+no universal $\PO$ restriction. The route deliberately abandons finite quotient models,
+shared witness pools, and borrowed edges. Its finite object is instead a regular
+\emph{strategy}: a cone signature consists of a local support type and a finite spectrum
+of possible strict-lower types. A monotone elimination operator retains precisely those
+signatures whose existential demands have compatible target signatures. The survivor set
+is finite and computable.
+
+Soundness unfolds the strategy into fresh occurrences. Vertical birth edges generate a
+ranked strict order; $\DR$ births generate separated vertical components; $\PO$ births
+are protected as residual non-order, non-disjoint bridges. A one-way truth lemma realizes
+every selected type. Completeness maps any source model to its realized cone signatures:
+RCC5 singleton composition cells force the required $\PP$, $\PPI$, and $\DR$ transfer
+conditions, while the syntactic exclusion of $\forall\PO$ removes every $\PO$ transfer
+obligation. Realized signatures form a post-fixed point and hence survive elimination.
+
+The result is a finite decision procedure with a conservative double-exponential upper
+bound. The package accompanying this report contains the state rules, a Lean module map,
+a proof-obligation ledger, and executable structural checks. It is a formal certification
+plan, not a claim that the final Lean theorem already compiles.
+\end{abstract}
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Executive answer}
+
+\statusbox{green}{greenpale}{No counterexample was found to the replacement architecture.
+It is a complete candidate soundness/completeness route: the finite state space and
+acceptance test are explicit, and every difficult obligation has a named Lean theorem.
+Occurrence geometry and the truth lemma remain genuine go/no-go research lemmas until
+they compile.}
+
+The final public theorem should state:
+\[
+  \forall C,\quad \mathsf{ForallPOFree}(C)\longrightarrow
+  \mathsf{Decidable}\bigl(\exists M,x,\;M,x\models C\bigr).
+\]
+It should be proved through a Boolean core
+\[
+  \mathsf{coneSatCoreB}(C)=\mathsf{true}
+  \quad\Longleftrightarrow\quad
+  \exists M,x,\;M,x\models C.
+\]
+under the displayed fragment hypothesis. A separate three-valued wrapper should report
+\texttt{outOfScope}, rather than \texttt{unsat}, when that hypothesis is absent.
+
+The decisive change is to separate \emph{finite control} from \emph{model domain}.
+There need not be a finite model. A finite control state may recur indefinitely, but every
+existential use creates a fresh domain occurrence. Therefore a $\PP$ self-transition in
+the finite control graph denotes an infinite ascending chain, never a reflexive
+proper-part edge.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.24\linewidth}XX}
+\toprule
+Issue in the previous route & Replacement invariant & Why it closes the issue \\
+\midrule
+D1: cycles from borrowed order edges &
+Only fresh parent--child vertical birth edges; a height map increases on every base edge. &
+The transitive closure is irreflexive by an integer-rank argument. \\
+D2: blocked source and target need incompatible order directions &
+A demand is realized by a new occurrence even when its target control state repeats. &
+Control-state equality never identifies domain points or reverses an old edge. \\
+E: anchors create crossed $\PO/\PP/\DR$ constraints &
+No finite external anchors or globally shared witnesses exist. &
+Each recursive demand unfolds below its own occurrence; horizontal cuts are local. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Scope and exact semantic target}
+
+\subsection{Syntax}
+
+The public wrapper accepts a raw concept and first proves semantic normalization:
+\[
+  M,x\models C\quad\Longleftrightarrow\quad M,x\models\mathsf{nnf}(C).
+\]
+Inverse-role syntax is normalized at the same boundary by replacing $r^{-}$ with the
+RCC5 converse atom. Define $\mathsf{ForallPOFree}(C)$ by inspecting the positive closure
+of $\mathsf{nnf}(C)$, not the surface syntax.
+
+Let $\Cl$ be the positive subformula closure of $\mathsf{nnf}(C)$, including every modal
+body needed by structural induction. It is deliberately not completed with Boolean duals.
+Dual-complete types would force preservation of negative $\PO$ information such as
+$\neg\exists\PO.D=\forall\PO.\neg D$, which the residual-$\PO$ construction does not
+support. Write
+\[
+  m=|\Cl|.
+\]
+
+The role alphabet is
+\[
+  \At=\{\EQ,\PP,\PPI,\DR,\PO\}.
+\]
+The input condition is
+\[
+  \forall D,\quad \forall\PO.D\notin\Cl.
+\]
+All other existential and universal role restrictions are permitted. Converse is already
+represented by $\PP/\PPI$; $\EQ$ is strong identity.
+
+The theorem concerns \emph{concept satisfiability only}: no TBoxes, ABoxes, nominals,
+counting restrictions, role conjunction, or identity-bearing assertions are included.
+The only roles after normalization are the five RCC5 atoms above.
+
+\subsection{Frames and models}
+
+The primary semantic interface is an abstract atomic RCC5 network: exactly one atom holds
+on each ordered pair, $\EQ$ is equality, converse is respected, and every triangle obeys
+the RCC5 composition table. The intended normal form is an ordered-disjoint frame:
+
+\begin{itemize}
+  \item a strict partial order $<$ representing $\PP$;
+  \item a symmetric, irreflexive disjointness relation $\perp$;
+  \item downward closure:
+    $x'\leq x$, $y'\leq y$, $x\perp y$ imply $x'\perp y'$;
+  \item $\PPI$ as converse, $\EQ$ as identity, and $\PO$ as the residual case.
+\end{itemize}
+
+The existing or separately proved normal-form theorem then supplies the entire RCC5
+composition table. For a self-contained semantic endpoint, Section~\ref{sec:tokens}
+gives an exact representation by arbitrary nonempty sets. It does not establish
+regular-closed or topological region representability.
+
+\subsection{What this report does and does not certify}
+
+The report specifies the definitions, intermediate lemmas, theorem dependency order,
+finite bounds, regression obligations, and release gates needed for a final Lean
+certificate. The included scripts validate consistency of the blueprint and replay the
+known finite adversarial instances. They do not replace the missing Lean sources. No
+\texttt{sorry}-free theorem is claimed until the module graph in
+Section~\ref{sec:lean} compiles and the audit gates in Section~\ref{sec:audit} pass.
+
+\section{Why the target must be a regular strategy}
+
+\subsection{The fragment lacks the finite model property}
+
+Let
+\[
+  H=\exists\PP.\top,\qquad
+  C_{\infty}=H\wedge\forall\PP.H.
+\]
+This concept is $\forall\PO$-free. It is satisfiable on the strict chain of finite initial
+segments
+\[
+  \{0\}\;\PP\;\{0,1\}\;\PP\;\{0,1,2\}\;\PP\;\cdots.
+\]
+But no finite strict transitive model can satisfy it. From a root satisfying $H$ choose a
+proper superpart; the universal conjunct ensures that each proper superpart again has a
+proper superpart. Finiteness would force repetition, contradicting irreflexivity.
+
+Therefore no proof based on a bounded finite quotient domain can be complete. The finite
+certificate must represent an infinite regular model, exactly as a finite automaton
+represents infinitely many runs.
+
+\subsection{Control recurrence is not point identification}
+
+Suppose a finite state $q$ has a $\PP$ transition to itself. The unfolding has occurrences
+\[
+  \epsilon,\quad d,\quad dd,\quad ddd,\ldots
+\]
+all labelled by $q$, with strictly increasing height. This is sound. Identifying them
+would instead assert $x\PP x$, which is impossible. The Lean development must enforce
+this distinction at the type level: occurrences are finite demand paths, while control
+states are labels attached to paths.
+
+\subsection{Why no parity condition is needed}
+
+ALCI has no least or greatest fixpoint operators. Every existential demand is fulfilled
+at the next generation, and universal restrictions are safety invariants checked along
+the generated relations. Infinite recurrence therefore carries no fairness or eventuality
+obligation. The elimination procedure is a one-priority safety game, not a parity game.
+
+\section{Finite cone signatures}
+
+\subsection{Support types}
+
+A support type $T\subseteq\Cl$ is locally Hintikka-consistent:
+
+\begin{itemize}
+  \item $\bot\notin T$, and $\top\in T$ whenever $\top\in\Cl$;
+  \item complementary concept literals do not both occur;
+  \item $D\wedge E\in T$ implies $D,E\in T$;
+  \item $D\vee E\in T$ implies $D\in T$ or $E\in T$;
+\end{itemize}
+
+Types are support sets, not maximal or Boolean-complete theories. The semantic induction
+proves only membership-to-truth; no converse truth lemma is needed.
+
+Let $\Ty$ be the finite set of support types and let
+\[
+  N=|\Ty|\leq 2^m.
+\]
+For $r\in\At$ define the universal body set
+\[
+  A_r(T)=\{D\in\Cl\mid \forall r.D\in T\}.
+\]
+
+\subsection{State definition}
+
+A cone signature is a pair
+\[
+  q=(T,S),\qquad T\in\Ty,\quad S\subseteq\Ty.
+\]
+Its inclusive cone is
+\[
+  \cone(q)=S\cup\{T\}.
+\]
+The intended invariant is that every strict lower occurrence of a point labelled by $q$
+has a support type in $S$. The spectrum is an upper bound, not an exact list; this
+monotonicity is important in soundness.
+
+The number of raw signatures is
+\[
+  K=N\,2^N\leq 2^{m+2^m}.
+\]
+
+\subsection{Static local admissibility}
+
+A state $q=(T,S)$ is statically admissible when:
+
+\begin{enumerate}
+  \item $T$ is a support type;
+  \item $\forall\EQ.D\in T$ implies $D\in T$;
+  \item $\exists\EQ.D\in T$ implies $D\in T$;
+  \item for every $U\in S$,
+  \[
+    A_{\PP}(U)\subseteq T
+    \qquad\text{and}\qquad
+    A_{\PPI}(T)\subseteq U.
+  \]
+\end{enumerate}
+
+The fourth condition is the entire vertical universal check. If a point of type $U$ is a
+proper part of a point of type $T$, then $\forall\PP$ bodies at the lower point and
+$\forall\PPI$ bodies at the upper point must hold at the other endpoint.
+
+\subsection{Transition compatibility}
+
+Let $\delta=\exists r.D\in T_q$ be a demand at state $q$, and let $q'$ be a proposed target.
+First require $D\in T_{q'}$. The role-specific conditions are:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.11\linewidth}X}
+\toprule
+Role & Additional compatibility condition \\
+\midrule
+$\EQ$ & No child is created; require $D\in T_q$. \\
+$\PP$ & $\cone(q)\subseteq S_{q'}$. \\
+$\PPI$ & $\cone(q')\subseteq S_q$. \\
+$\DR$ & For all $U\in\cone(q)$ and $V\in\cone(q')$,
+$A_{\DR}(U)\subseteq V$ and $A_{\DR}(V)\subseteq U$. \\
+$\PO$ & No additional transfer condition. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The $\PO$ row is not a shortcut. There is no formula $\forall\PO.E$ in the closure, so a
+$\PO$ edge carries no universal body. The unfolding must still guarantee that the
+designated endpoints are exactly $\PO$; that is a geometric theorem, not a type-transfer
+condition.
+
+\section{The finite greatest-fixed-point decider}
+
+Let $\mathsf{Static}$ be the finite set of statically admissible signatures. For
+$X\subseteq\mathsf{Static}$ define
+\[
+ \Phiop(X)=
+ \left\{q\in X\ \middle|\ 
+ \begin{array}{l}
+ \text{for every non-$\EQ$ existential demand $\delta$ in $T_q$,}\\
+ \text{there exists $q'\in X$ compatible with $(q,\delta)$, and}\\
+ \text{every $\EQ$ demand is locally satisfied}
+ \end{array}
+ \right\}.
+\]
+This operator is monotone and reductive. Compute
+\[
+  X_0=\mathsf{Static},
+  \qquad X_{i+1}=\Phiop(X_i).
+\]
+The sequence descends and stabilizes in at most $|\mathsf{Static}|\leq K$ strict
+iterations. Let $X_\infty$ be the stable set.
+
+\textbf{Acceptance criterion.}
+The raw input $C_0$ is accepted iff some $q\in X_\infty$ contains the prepared closure
+index of $\mathsf{nnf}(C_0)$.
+
+\textbf{Finite certificate.}
+For every survivor $q$ and every non-$\EQ$ demand in $T_q$, choose one compatible target
+in $X_\infty$. The resulting strategy has at most $K$ states and at most $mK$
+chosen transitions. The abstract scheme uses a proof-independent total target function
+from state and full role-aware demand code to state; membership and correctness are
+separate fields.
+
+\begin{lstlisting}
+def coneSatCoreB (C : Concept) : Bool :=
+  let cl      := positiveClosure (nnf C)
+  let states  := enumerateStaticStates cl
+  let survive := iterateAtMost states.card (eliminate cl) states
+  survive.any fun q => q.ty.contains (nnf C)
+
+theorem coneSatCoreB_correct (hfree : ForallPOFree C) :
+    coneSatCoreB C = true <-> Satisfiable C
+
+def coneCheck (C : Concept) : CheckResult :=
+  if forallPOFreeB C then
+    if coneSatCoreB C then .sat else .unsat
+  else .outOfScope
+
+theorem coneCheck_sat_iff :
+    coneCheck C = .sat <->
+      ForallPOFree C /\ Satisfiable C
+theorem coneCheck_unsat_iff :
+    coneCheck C = .unsat <->
+      ForallPOFree C /\ Not (Satisfiable C)
+theorem coneCheck_outOfScope_iff :
+    coneCheck C = .outOfScope <-> Not (ForallPOFree C)
+\end{lstlisting}
+
+The proof of \texttt{coneSatCoreB\_correct} is split into the soundness and completeness
+constructions below. The executable procedure must use reflected Boolean predicates with
+correctness theorems, rather than classical existence tests hidden behind opaque
+decidability.
+
+\section{Fresh-occurrence unfolding}
+
+\subsection{Occurrence domain}
+
+Fix a chosen transition function for the survivors. An occurrence is a finite valid word
+of demand choices. The root is the empty word. If occurrence $x$ has control state $q$
+and $\delta$ is a non-$\EQ$ demand in $T_q$, then $x\mathbin{\raisebox{0.2ex}{\(\smallfrown\)}}\delta$
+is a distinct child labelled by the selected target state.
+
+Two occurrences with the same control state remain different domain elements. Each
+non-$\EQ$ demand at each occurrence receives its own fresh child. A transition pointer is
+therefore only a control pointer; it is never a semantic backpointer.
+
+\subsection{Vertical birth order and rank}
+
+Orient base order edges according to the demand role:
+
+\begin{itemize}
+  \item a $\PP$ child lies above its parent: $x<_{0}x\delta$;
+  \item a $\PPI$ child lies below its parent: $x\delta<_{0}x$;
+  \item $\DR$ and $\PO$ children start new vertical components;
+  \item $\EQ$ creates no child.
+\end{itemize}
+
+Let $<$ be the transitive closure of $<_{0}$. Define a height
+$h:\mathsf{Occurrence}\to\mathbb{Z}$ by adding $1$ at a $\PP$ birth, subtracting $1$ at a
+$\PPI$ birth, and resetting the relative origin at a horizontal birth. Every oriented
+base edge satisfies
+\[
+  x<_{0}y\Longrightarrow h(x)+1=h(y).
+\]
+Thus every nonempty $<_{0}$ path strictly raises height, and $<$ is irreflexive.
+Transitivity holds by definition. Parent uniqueness of words gives the induction scheme
+needed for this rank proof.
+
+\subsection{Vertical components}
+
+Give each occurrence a component tag equal to the sequence of uniquely identified
+horizontal birth edges ($\DR$ or $\PO$, including the child occurrence) on its ancestry.
+Vertical births preserve the tag; horizontal births append a fresh edge identifier.
+Order edges never cross component tags. Removing horizontal births yields vertical
+components, and contracting each such component yields a tree whose edges are the unique
+horizontal birth bridges.
+
+This component tree is the geometric skeleton. It replaces every global anchor, witness
+pool, and kernel-incidence construction.
+
+\subsection{Disjointness closure}
+
+For each $\DR$ birth bridge $(x,y)$, declare the two inclusive vertical cones at that
+bridge disjoint. Equivalently, take the symmetric downward closure of the seed bridges:
+\[
+  u\perp v
+  \quad\Longleftrightarrow\quad
+  \exists(x,y)\in\mathsf{DRSeed},\
+  (u\leq x\wedge v\leq y)\ \vee\
+  (u\leq y\wedge v\leq x).
+\]
+Here $\leq$ is the reflexive closure of $<$.
+
+The central separator lemma states that the two sides of a $\DR$ birth cut have no common
+lower occurrence. It follows by unique component ancestry: any common lower would have
+to cross the unique horizontal bridge, but order never crosses component tags. Hence
+$\perp$ is irreflexive. Symmetry and downward closure are immediate, and
+\[
+  x<y\Longrightarrow \neg(x\perp y).
+\]
+
+\subsection{Protected overlap}
+
+Define RCC5 atoms from the order and disjointness normal form:
+\[
+  R(x,y)=
+  \begin{cases}
+  \EQ & x=y,\\
+  \PP & x<y,\\
+  \PPI & y<x,\\
+  \DR & x\perp y,\\
+  \PO & \text{otherwise.}
+  \end{cases}
+\]
+
+At a $\PO$ birth bridge, the endpoint occurrences differ, lie in different vertical
+components, and are not seeded disjoint. Unique-bridge separation prevents any later
+vertical path between them; downward $\DR$ closure cannot cross a non-$\DR$ bridge.
+Therefore the birth endpoints remain neither ordered nor disjoint and hence are exactly
+$\PO$. This is the \emph{protected-PO theorem}.
+
+It is important to prove this theorem from component ancestry before defining $\PO$ as
+residual. An incremental default-$\PO$ labelling algorithm would be unsound because later
+order or disjointness closure could overwrite an early guess.
+
+\subsection{Exact set representation}\label{sec:tokens}
+
+If the public semantics require literal nonempty sets, represent the ordered-disjoint
+frame without quotient types. Let
+\[
+  \mathsf{Tok}=\{(a,b)\mid \neg(a\perp b)\}
+\]
+and define
+\[
+  \mathcal{R}_x
+  =\{(a,b)\in\mathsf{Tok}\mid a\leq x\ \vee\ b\leq x\}.
+\]
+Then:
+\[
+  \mathcal{R}_x\subseteq\mathcal{R}_y\Longleftrightarrow x\leq y,
+  \qquad
+  \mathcal{R}_x\cap\mathcal{R}_y=\varnothing\Longleftrightarrow x\perp y.
+\]
+The self token $(x,x)$ makes $\mathcal{R}_x$ nonempty and distinguishes incomparable
+points. Ordered pairs are a useful proof-engineering choice: they avoid quotient
+soundness obligations and retain both sides of a non-disjoint witness. These equivalences
+transfer the ordered-disjoint atom exactly to standard RCC5 relations on nonempty sets.
+
+\section{Soundness: a survivor yields a model}
+
+\subsection{Spectrum invariant}
+
+Let $\sigma(x)$ be the control state at occurrence $x$. Prove simultaneously with the
+unfolding that
+\[
+  y<x \Longrightarrow T_{\sigma(y)}\in S_{\sigma(x)}.
+\]
+For one vertical birth this is exactly the $\PP$ or $\PPI$ transition rule. For a
+transitive path, the inclusive-cone subset propagates the earlier endpoint type into the
+later spectrum. This is why the transition rules use $\cone(q)$ rather than only $S_q$.
+
+\subsection{Universal restrictions}
+
+Assume $D\in T_{\sigma(x)}$ is a universal body obligation.
+
+\begin{itemize}
+  \item If $\forall\PP.D\in T_{\sigma(x)}$ and $x<y$, the spectrum invariant and static
+        local admissibility put $D$ in $T_{\sigma(y)}$.
+  \item If $\forall\PPI.D\in T_{\sigma(x)}$ and $y<x$, use the converse half of the same
+        local rule.
+  \item If $\forall\DR.D\in T_{\sigma(x)}$ and $x\perp y$, choose the originating $\DR$
+        birth cut. Both endpoint types lie in the inclusive cones of its control states.
+        The cross-cone $\DR$ compatibility condition puts $D$ in $T_{\sigma(y)}$.
+  \item $\EQ$ is local.
+  \item The $\PO$ case is impossible by the fragment predicate.
+\end{itemize}
+
+\subsection{Existential restrictions}
+
+For every non-$\EQ$ demand $\exists r.D$ at $x$, the chosen strategy creates a child $y$
+whose type contains $D$. The geometry proves that $R(x,y)=r$: this is immediate for
+$\PP$ and $\PPI$, the seed definition for $\DR$, and protected overlap for $\PO$.
+An $\EQ$ demand is realized by $x$ itself.
+
+\subsection{One-way truth lemma}
+
+Interpret each concept name $P$ by
+\[
+  P^{M}=\{x\mid P\in T_{\sigma(x)}\}.
+\]
+Induction on $D\in\Cl$ proves
+\[
+  D\in T_{\sigma(x)}\Longrightarrow M,x\models D.
+\]
+Only this direction is required. Boolean cases follow from Hintikka consistency;
+existential and universal cases use the preceding lemmas. If the accepted root signature
+contains the prepared index of $\mathsf{nnf}(C_0)$, the root satisfies the normalized
+concept; \texttt{sat\_nnf\_iff} transfers this back to $C_0$.
+
+\textbf{Soundness theorem.}
+\[
+  \mathsf{ForallPOFree}(C_0)\wedge
+  \mathsf{coneSatCoreB}(C_0)=\mathsf{true}
+  \Longrightarrow \exists M,x,\;M,x\models C_0.
+\]
+
+\section{Completeness: every model yields surviving signatures}
+
+Let $M$ be any model and $x$ a point. Define its realized support type and lower spectrum:
+\[
+  T_x=\{D\in\Cl\mid M,x\models D\},
+  \qquad
+  S_x=\{T_y\mid y\PP x\}.
+\]
+Since $\Ty$ is finite, $S_x$ is a finite subset of $\Ty$ even when the model has infinitely
+many points. Put $q_x=(T_x,S_x)$.
+
+\subsection{Static admissibility}
+
+The truth definition gives local Hintikka consistency and the $\EQ$ conditions. If
+$U=T_y\in S_x$, then $y\PP x$. Every $\forall\PP$ obligation at $y$ holds at $x$, and
+every $\forall\PPI$ obligation at $x$ holds at $y$. Thus $q_x$ is statically admissible.
+
+\subsection{Source transitions}
+
+Suppose $y$ witnesses an existential demand at $x$.
+
+\begin{itemize}
+  \item If $x\PP y$, then every $z\leq x$ is a strict lower point of $y$, including $x$.
+        Therefore $\cone(q_x)\subseteq S_y$.
+  \item If $x\PPI y$, the dual inclusion $\cone(q_y)\subseteq S_x$ holds.
+  \item If $x\DR y$, then every $z\leq x$ and $w\leq y$ is disjoint. This follows from
+        the RCC5 singleton cells
+        \[
+          \operatorname{comp}(\PP,\DR)=\{\DR\},
+          \qquad
+          \operatorname{comp}(\DR,\PPI)=\{\DR\}.
+        \]
+        Hence every $\DR$ universal body transfers across all pairs in
+        $\cone(q_x)\times\cone(q_y)$.
+  \item If $x\PO y$, the target body holds at $y$ and no universal $\PO$ transfer exists.
+  \item If $x\EQ y$, then $x=y$ and the demand is local.
+\end{itemize}
+
+Thus every source witness induces a compatible transition between realized signatures.
+
+\subsection{Post-fixed-point argument}
+
+Let
+\[
+  R_M=\{q_x\mid x\in M\}\subseteq\mathsf{Static}.
+\]
+In Lean, $R_M$ is a proof-level \texttt{Set ConeState}, defined by an existential source
+point; it is not a computable \texttt{Finset} over an arbitrary domain.
+Every existential demand at every state in $R_M$ has a target again in $R_M$, so
+\[
+  R_M\subseteq\Phiop(R_M).
+\]
+For a monotone operator on a finite powerset, every post-fixed set lies below the greatest
+fixed point. Therefore $R_M\subseteq X_\infty$. If $M,x_0\models C_0$, semantic NNF
+correctness gives $\mathsf{nnf}(C_0)\in T_{x_0}$, so an accepting survivor exists.
+
+\textbf{Completeness theorem.}
+\[
+  \mathsf{ForallPOFree}(C_0)\wedge
+  \bigl(\exists M,x,\;M,x\models C_0\bigr)
+  \Longrightarrow \mathsf{coneSatCoreB}(C_0)=\mathsf{true}.
+\]
+
+This proof uses neither a finite model property nor a patchwork theorem. It compresses
+only the \emph{local source signature}, not the source domain or its witnesses.
+
+\section{Algorithm and conservative bound}
+
+With $N\leq 2^m$ and $K=N2^N$, enumerate all $K$ raw signatures, filter static
+admissibility, precompute compatible transition triples, and iterate elimination for at
+most $K$ rounds.
+
+A deliberately conservative implementation bound is:
+\[
+  O(K^2N^2m)\quad\text{for compatibility precomputation,}
+\]
+\[
+  O(K^3m)\quad\text{for naive elimination.}
+\]
+Since $K\leq 2^{m+2^m}$, this gives a deterministic
+\[
+  2^{2^{O(m)}}
+\]
+time upper bound. This is an upper bound for the proposed implementation, not a claimed
+tight complexity classification. The release theorem should state only decidability
+until a Lean cost model and a separately reviewed complexity proof are available.
+
+Several engineering improvements are safe but should follow correctness: bit-vector
+types, indexed demand buckets, reverse dependency lists, and work-list elimination.
+
+\section{Lean architecture and theorem graph}\label{sec:lean}
+
+\subsection{Modules}
+
+\begin{longtable}{>{\ttfamily\small}p{0.42\linewidth}p{0.52\linewidth}}
+\toprule
+\textnormal{\textbf{Module}} & \textbf{Responsibility} \\
+\midrule
+\endfirsthead
+\toprule
+\textnormal{\textbf{Module}} & \textbf{Responsibility} \\
+\midrule
+\endhead
+RCC5/Atom.lean & atoms, converse, finite enumeration \\
+RCC5/CompTable.lean & composition table and singleton-cell lemmas \\
+RCC5/Network.lean & abstract strong RCC5 networks \\
+RCC5/OrderedDisjoint.lean & normal form and composition closure \\
+RCC5/TokenRepresentation.lean & exact region-set representation \\
+Logic/Syntax.lean & raw concepts and role restrictions \\
+Logic/NNF.lean & semantic NNF correctness and inverse-role normalization \\
+Logic/Prepared.lean & normalized root code and positive closure package \\
+Logic/PositiveClosure.lean & positive subformula closure and finiteness \\
+Logic/POFree.lean & syntactic predicate and reflection \\
+Logic/Semantics.lean & abstract and concrete model satisfaction \\
+Logic/SupportType.lean & Hintikka types, enumeration, reflection \\
+Logic/Demand.lean & finite existential demands \\
+ConeScheme/State.lean & signatures, spectra, inclusive cones \\
+ConeScheme/StateEnum.lean & exhaustive finite enumeration \\
+ConeScheme/LocalRules.lean & static admissibility and Boolean checker \\
+ConeScheme/Transition.lean & five role-specific compatibility rules \\
+ConeScheme/Scheme.lean & abstract valid scheme with proof-independent targets \\
+ConeScheme/Occurrence.lean & fresh demand-word domain \\
+ConeScheme/VerticalComponent.lean & component tags and bridge uniqueness \\
+ConeScheme/BaseOrder.lean & height, transitive closure, strict order \\
+ConeScheme/DisjointClosure.lean & $\DR$ cuts and downward closure \\
+ConeScheme/ProtectedPO.lean & exact residual overlap at $\PO$ births \\
+ConeScheme/Frame.lean & ordered-disjoint and RCC5 frames \\
+ConeScheme/Model.lean & valuation from support labels \\
+ConeScheme/SpectrumInvariant.lean & actual lower types lie in spectra \\
+ConeScheme/TruthLemma.lean & one-way semantic induction \\
+ConeScheme/SchemeSoundness.lean & every valid abstract scheme has a model \\
+ConeScheme/FiniteGfp.lean & generic reductive finite fixed-point facts \\
+ConeScheme/Elimination.lean & reflected viability and survivor computation \\
+ConeScheme/StrategyExtraction.lean & accepting survivors yield an abstract scheme \\
+ConeScheme/SourceSignature.lean & signatures extracted from arbitrary models \\
+ConeScheme/SourceTransitions.lean & source witness compatibility \\
+ConeScheme/Soundness.lean & accepted strategy unfolds to a model \\
+ConeScheme/Completeness.lean & realized signatures survive \\
+ConeScheme/Decision.lean & public Boolean correctness and decidability \\
+Regression/*.lean & adversarial instances and mutation guards \\
+Audit/PublicTheorems.lean & only supported public exports \\
+Audit/AxiomReport.lean & axiom checks for exported theorems \\
+Audit/ExecutableDeps.lean & executable import and code-generation checks \\
+\bottomrule
+\end{longtable}
+
+The former multi-tier extraction should move below \texttt{Legacy/MultiTier/}. The public
+decision theorem must not import anything from \texttt{Legacy}.
+
+\subsection{Core declarations}
+
+\begin{lstlisting}
+structure Prepared (C : Concept) where
+  nnfC     : NNFConcept
+  closure  : Finset NNFConcept
+  rootIx   : ClosureIx closure
+  nnf_eq   : nnfC = nnf C
+  cl_eq    : closure = positiveClosure nnfC
+  root_eq  : decode rootIx = nnfC
+
+abbrev TypeCode (p : Prepared C) := Finset (ClosureIx p.closure)
+
+structure ConeState (p : Prepared C) where
+  ty       : TypeCode p
+  lower    : Finset (TypeCode p)
+
+def ConeState.cone (q : ConeState p) : Finset (TypeCode p) :=
+  insert q.ty q.lower
+
+abbrev DemandCode (p : Prepared C) := ClosureIx p.closure
+def LocalOK (q : ConeState p) : Prop := ...
+def StepOK (q : ConeState p) (d : DemandCode p)
+    (q' : ConeState p) : Prop := ...
+
+structure ConeScheme (p : Prepared C) where
+  live     : Finset (ConeState p)
+  root     : ConeState p
+  root_mem : root ∈ live
+  root_has : p.rootIx ∈ root.ty
+  next     : ConeState p -> DemandCode p -> ConeState p
+  next_mem : ...
+  next_ok  : ...
+
+def prune (X : Finset (ConeState p)) :=
+  X.filter fun q => viableInB p X q
+def survivors (p : Prepared C) : Finset (ConeState p) := ...
+
+theorem regular_forest_model_iff
+    (p : Prepared C) (hfree : ForallPOFree C) :
+    (exists q, q ∈ survivors p /\ p.rootIx ∈ q.ty) <->
+      Satisfiable C
+
+theorem satisfiableDecidable (hfree : ForallPOFree C) :
+    Decidable (Satisfiable C) :=
+  if h : coneSatCoreB C = true then
+    isTrue ((coneSatCoreB_correct hfree).mp h)
+  else
+    isFalse (fun hs => h ((coneSatCoreB_correct hfree).mpr hs))
+\end{lstlisting}
+
+\subsection{Named proof obligations}
+
+The critical theorem spine is:
+
+\begin{enumerate}
+  \item \texttt{sat\_nnf\_iff},
+        \texttt{inverseRole\_nnf\_conv}, and normalized-root preparation;
+  \item Boolean reflection:
+        \begin{itemize}
+          \item \texttt{forallPOFreeB\_reflect};
+          \item \texttt{supportTypeOKB\_reflect};
+          \item \texttt{stateLocalOKB\_reflect};
+          \item \texttt{demandsB\_complete};
+          \item \texttt{transitionOKB\_reflect};
+          \item \texttt{hasTargetB\_reflect};
+          \item \texttt{viableInB\_reflect};
+          \item \texttt{prune\_mem\_iff};
+          \item \texttt{acceptingB\_reflect}.
+        \end{itemize}
+  \item \texttt{survivors\_fixed},
+        \texttt{postfixed\_subset\_survivors}, and
+        \texttt{survivors\_to\_scheme};
+  \item \texttt{child\_unique\_parent}, \texttt{baseOrder\_raises\_height}, and
+        \texttt{unfold\_lt\_rank};
+  \item Geometry and representation:
+        \begin{itemize}
+          \item \texttt{dr\_cut\_separates};
+          \item \texttt{occurrence\_orderedDisjoint};
+          \item \texttt{orderedDisjoint\_rcc5};
+          \item \texttt{tokenRepresentation\_exact}.
+        \end{itemize}
+  \item \texttt{protectedPO\_residual};
+  \item \texttt{actualLower\_mem\_spectrum};
+  \item \texttt{truth\_lemma} and \texttt{scheme\_sound}, both carrying the
+        normalized-closure fragment hypothesis;
+  \item \texttt{sourceSig\_localOK}, the five
+        \texttt{source\_role\_step\_ok} lemmas, and
+        \texttt{sourceSig\_survives};
+  \item \texttt{regular\_forest\_model\_iff},
+        \texttt{coneSatCoreB\_correct}, and \texttt{satisfiableDecidable}.
+\end{enumerate}
+
+The bundled JSON ledger records each obligation with dependencies, evidence status, and
+its release gate. CI should reject a theorem marked complete when a dependency is not
+complete.
+
+\section{Regression suite}
+
+The proof should be developed against semantic regressions, not only positive examples.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.23\linewidth}XX}
+\toprule
+Regression & Required behavior & Mutation caught \\
+\midrule
+No finite model & Accept $C_\infty$ via recurrent control and fresh occurrences. &
+Identifying recurrent states with points. \\
+Mixed vertical cycle & Accept recurrent mixed control patterns while proving the unfolded
+occurrence order acyclic. &
+Identifying control states or reversing $\PPI$ orientation. \\
+Protected PO & A $\PO$ demand is exactly residual at its birth bridge. &
+Labelling $\PO$ before closure. \\
+DR downward & Every pair below opposite $\DR$ sides remains $\DR$. &
+Checking only seed endpoints. \\
+Role-aware demand & Identical target concepts under different roles remain distinct. &
+Indexing witnesses only by concept body. \\
+D1 multi-group cycle & Replays the known borrowed-edge cycle attack. &
+Reintroducing shared borrowed vertical edges. \\
+D2 seven-point & Replays the incompatible blocked-source/target instance. &
+Identifying target occurrences with old points. \\
+E anchor compatibility & Replays the crossed-anchor incompatibility. &
+Adding global anchors or shared horizontal witnesses. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+For every successful theorem, add at least one mutation test that deletes or weakens its
+decisive hypothesis. In particular, the $\DR$ completeness proof must fail if either
+singleton composition cell is removed, and protected overlap must fail if component
+bridge uniqueness is removed.
+
+\section{Milestones and go/no-go gates}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.10\linewidth}p{0.18\linewidth}Xp{0.13\linewidth}}
+\toprule
+Gate & Focus & Exit criterion & Estimate \\
+\midrule
+G0 & Source recovery & Existing syntax, semantics, RCC5 table, and theorem names compile. &
+1--2 weeks \\
+G1 & Finite control & Enumeration, reflected checks, GFP, and certificate extraction compile. &
+2--3 weeks \\
+G2 & Occurrence geometry & Strict order, $\DR$ separator, protected $\PO$, and normal form compile. &
+3--5 weeks \\
+G3 & Soundness & Spectrum invariant and truth lemma compile with no admitted facts. &
+3--4 weeks \\
+G4 & Completeness & Source signatures are a post-fixed point for every model. &
+2--4 weeks \\
+G5 & Public theorem & Boolean correctness and \texttt{Decidable} instance compile. &
+2--3 weeks \\
+G6 & Audit and release & Dual clean builds, regressions, axiom report, and package manifest pass. &
+2--3 weeks \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+A realistic estimate is four to six focused months after source recovery. G2 is the first
+hard go/no-go gate. Do not invest in optimized enumeration or complexity certification
+until \texttt{protectedPO\_residual} and \texttt{occurrence\_orderedDisjoint} compile.
+If G2 fails, geometry is the first suspected fault. A counterexample may nevertheless
+show that the finite signature or transition predicate is too weak and require a redesign
+of G1.
+
+\section{Certification and release gates}\label{sec:audit}
+
+\subsection{Logical hygiene}
+
+The release build must:
+
+\begin{itemize}
+  \item contain no \texttt{sorry}, \texttt{admit}, \texttt{sorryAx}, or new axioms;
+  \item contain no unsafe declaration in the proof dependency cone;
+  \item compare \texttt{\#print axioms} for every public theorem against an exact
+        allowlist, and separately scan all declarations for unused custom axioms;
+  \item keep classical choice explicit and outside the Boolean decider;
+  \item use kernel \texttt{by decide} for release regressions, or explicitly account for
+        any extra trust introduced by \texttt{native\_decide};
+  \item use warnings as errors;
+  \item prove Boolean reflection for all finite predicates used by the executable.
+\end{itemize}
+
+\subsection{Dependency hygiene}
+
+Build the project twice: once with the full tree and once from a minimal public import
+that excludes \texttt{Legacy}. Generate the transitive import graph and fail CI if the
+executable finite-control modules reach \texttt{SourceSignature}, \texttt{Completeness},
+or \texttt{Legacy}. Run a generated-code evaluation test for \texttt{coneCheck}. Pin the
+Lean toolchain and all Lake dependencies in the package manifest.
+
+\subsection{Reproducibility}
+
+The release archive should include:
+
+\begin{itemize}
+  \item exact Lean and Lake versions;
+  \item a clean-build script;
+  \item the theorem/axiom report;
+  \item all regression files;
+  \item a SHA-256 manifest;
+  \item this report and the machine-readable obligation ledger.
+\end{itemize}
+
+Run the clean build on two independent runners. Extract the archive into a new directory
+before the final build, so no untracked local file can mask a missing dependency.
+
+\section{Risk register}
+
+\begin{longtable}{>{\bfseries}p{0.24\linewidth}p{0.47\linewidth}p{0.20\linewidth}}
+\toprule
+Risk & Mitigation & Decision point \\
+\midrule
+Positive closure omits a needed body &
+Prove structural closure lemmas before defining support types; add a theorem that every
+semantic induction child belongs to $\Cl$. & G1 \\
+Spectrum transitivity is under-specified &
+State the invariant with inclusive cones and prove one-edge propagation before
+transitive closure. & G3 \\
+$\PPI$ height orientation is reversed &
+Centralize role orientation in one definition and test mixed $\PP/\PPI$ words. & G2 \\
+$\DR$ closure becomes reflexive &
+Prove the cut separator before defining the ordered-disjoint instance. & G2 \\
+$\PO$ birth is later ordered or disjoint &
+Use component tags and unique bridges; prove protected overlap as a standalone theorem. &
+G2 \\
+Abstract and concrete semantics diverge &
+Complete the ordered-token representation and prove atom-by-atom equivalence. & G2/G3 \\
+Classical proof is mistaken for executable code &
+Require reflected Booleans and inspect generated evaluator dependencies. & G1/G5 \\
+Complexity claim outruns certification &
+Publish decidability first; keep the double-exponential estimate explicitly conservative. &
+G6 \\
+\bottomrule
+\end{longtable}
+
+\section{Relation to the literature}
+
+The plan uses standard ideas but the central combination is bespoke. RCC5 and its
+composition calculus originate with Randell, Cui, and Cohn~\cite{RCC92}; formal model and
+composition-table issues are analyzed by Li and Ying~\cite{LiYing2003}, while tractable
+RCC5 sublanguages were classified by Jonsson and Drakengren~\cite{JD1997}. Type
+elimination and tableau methods for description logics motivate the finite control layer,
+including Donini and Massacci~\cite{DM2000} and the treatment of inverse and transitive
+roles by Horrocks and Sattler~\cite{HS1999}. Regular grammar logics with converse provide
+nearby automata and tableau methodology~\cite{DN2005,Nguyen2007}; Fischer--Ladner closure
+and automata-theoretic modal decision procedures are further background
+~\cite{FL1979,VW1986}. Lean 4 is described by de Moura and Ullrich~\cite{Lean4}.
+
+None of these sources proves the theorem targeted here. In particular, the
+fresh-occurrence cone scheme, the spectrum transition conditions, and the protected-$\PO$
+regular-forest theorem require an original proof. The literature supports the surrounding
+methods and RCC5 semantics, not the transfer step.
+
+\section{Final recommendation}
+
+Proceed with the cone-scheme architecture and freeze the previous multi-tier development
+as legacy evidence. Implement G1 and G2 first. Their interfaces are narrow enough that
+two proof engineers can work independently: one on finite reflected control, one on
+fresh-occurrence geometry. Join them only at the spectrum invariant.
+
+The project should be declared complete only when:
+
+\begin{enumerate}
+  \item the regular-forest model equivalence is proved with the exact fragment predicate;
+  \item the executable Boolean decider is connected to that equivalence;
+  \item the public theorem has an acceptable axiom report;
+  \item every adversarial regression passes in a clean extracted archive.
+\end{enumerate}
+
+This is a materially different proof, not a patch to the blocked extraction. Its main
+advantage is conceptual: the finite object records \emph{how to generate} a model, while
+the infinite unfolding supplies the fresh geometry that RCC5 proper-part chains require.
+
+\appendix
+
+\section{Proof-obligation dependency summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.18\linewidth}XX}
+\toprule
+Layer & Inputs & Output theorem \\
+\midrule
+Reflection & syntax, finite sets & exact Boolean predicates \\
+Finite GFP & reflected local and transition checks & survivor fixed point \\
+Geometry & chosen survivor strategy & ordered-disjoint occurrence frame \\
+Soundness & geometry, spectrum invariant & accepted implies satisfiable \\
+Source map & arbitrary model, singleton RCC5 cells & realized signatures post-fixed \\
+Completeness & source map, greatest fixed point & satisfiable implies accepted \\
+Decision & finite enumeration, equivalence & full decidability \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The machine-readable file \texttt{blueprint/PROOF\_OBLIGATIONS.json} is authoritative for
+individual names and dependencies. Status values in that file deliberately distinguish
+paper argument, executable check, inherited result, and pending Lean proof.
+
+\section{Package map}
+
+\begin{itemize}
+  \item \texttt{report/}: this source report and compiled PDF;
+  \item \texttt{blueprint/DECISION\_PROCEDURE.md}: concise mathematical specification;
+  \item \texttt{blueprint/LEAN\_MODULE\_MAP.md}: module ownership and import order;
+  \item \texttt{blueprint/PROOF\_OBLIGATIONS.json}: theorem dependency ledger;
+  \item \texttt{blueprint/check\_blueprint.py}: structural ledger validation;
+  \item \texttt{regressions/}: finite adversarial probes from the round-two attack;
+  \item \texttt{run\_checks.sh}: one-command blueprint and regression replay.
+\end{itemize}
+
+\section{Bibliography}
+
+\begin{thebibliography}{10}
+
+\bibitem{RCC92}
+D. A. Randell, Z. Cui, and A. G. Cohn.
+\newblock A spatial logic based on regions and connection.
+\newblock In \emph{Principles of Knowledge Representation and Reasoning: KR'92},
+pages 165--176, 1992.
+\newblock \url{https://cdn.aaai.org/KR/1992/KR92-017.pdf}.
+
+\bibitem{JD1997}
+P. Jonsson and T. Drakengren.
+\newblock A complete classification of tractability in RCC-5.
+\newblock \emph{Journal of Artificial Intelligence Research}, 6:211--221, 1997.
+\newblock \url{https://doi.org/10.1613/jair.385}.
+
+\bibitem{LiYing2003}
+S. Li and M. Ying.
+\newblock Region Connection Calculus: its models and composition table.
+\newblock \emph{Artificial Intelligence}, 145:121--146, 2003.
+\newblock \url{https://doi.org/10.1016/S0004-3702(02)00372-7}.
+
+\bibitem{DM2000}
+F. M. Donini and F. Massacci.
+\newblock EXPTIME tableaux for ALC.
+\newblock \emph{Artificial Intelligence}, 124:87--138, 2000.
+\newblock \url{https://doi.org/10.1016/S0004-3702(00)00070-9}.
+
+\bibitem{HS1999}
+I. Horrocks and U. Sattler.
+\newblock A description logic with transitive and inverse roles and role hierarchies.
+\newblock \emph{Journal of Logic and Computation}, 9(3):385--410, 1999.
+\newblock \url{https://doi.org/10.1093/logcom/9.3.385}.
+
+\bibitem{DN2005}
+S. Demri and H. de Nivelle.
+\newblock Deciding regular grammar logics with converse through first-order logic.
+\newblock \emph{Journal of Logic, Language and Information}, 14:289--329, 2005.
+\newblock \url{https://arxiv.org/abs/cs/0306117}.
+
+\bibitem{Nguyen2007}
+L. A. Nguyen.
+\newblock A tableau calculus for regular grammar logics with converse.
+\newblock In \emph{TABLEAUX 2007}, LNCS 4548, pages 421--436.
+\newblock \url{https://doi.org/10.1007/978-3-540-73099-6_29}.
+
+\bibitem{FL1979}
+M. J. Fischer and R. E. Ladner.
+\newblock Propositional dynamic logic of regular programs.
+\newblock \emph{Journal of Computer and System Sciences}, 18:194--211, 1979.
+\newblock \url{https://doi.org/10.1016/0022-0000(79)90046-1}.
+
+\bibitem{VW1986}
+M. Y. Vardi and P. Wolper.
+\newblock Automata-theoretic techniques for modal logics of programs.
+\newblock \emph{Journal of Computer and System Sciences}, 32:183--221, 1986.
+\newblock \url{https://doi.org/10.1016/0022-0000(86)90026-7}.
+
+\bibitem{Lean4}
+L. de Moura and S. Ullrich.
+\newblock The Lean 4 theorem prover and programming language.
+\newblock In \emph{CADE 28}, 2021.
+\newblock \url{https://leanprover.github.io/papers/lean4.pdf}.
+
+\end{thebibliography}
+
+\end{document}

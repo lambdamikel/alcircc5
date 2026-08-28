@@ -1,0 +1,31 @@
+{
+  "title": "ConeScheme certification dependency ledger",
+  "scope": "forall-PO-free ALCI_RCC5 concept satisfiability",
+  "status": "blueprint",
+  "obligations": [
+    {"id":"O00","gate":"G0","name":"source_baseline","deps":[],"exit":"Obtain, hash, pin, and clean-build the reported Lean sources; inventory declarations and public axioms.","claim":"planned"},
+    {"id":"O01","gate":"G1","name":"prepared_nnf_po_free","deps":["O00"],"exit":"Prepared input carries normalized root and closure; sat_nnf_iff, inverse-role normalization, fragment definition, and Bool reflection are proved.","claim":"planned"},
+    {"id":"O02","gate":"G1","name":"support_type_reflection","deps":["O01"],"exit":"Raw bitset support types have exact one-way Hintikka rules, complete enumeration, DecidableEq, and Bool reflection.","claim":"planned"},
+    {"id":"O03","gate":"G1","name":"state_demand_enum_bound","deps":["O02"],"exit":"Raw cone states and role-aware demand codes are exhaustively enumerated with K <= N*2^N <= 2^(m+2^m).","claim":"planned"},
+    {"id":"O04","gate":"G1","name":"transition_reflection","deps":["O02","O03"],"exit":"PP, PPI, DR, PO, and EQ transition checkers reflect their Prop specifications.","claim":"planned"},
+    {"id":"O05","gate":"G1","name":"abstract_scheme","deps":["O03","O04"],"exit":"ConeScheme has a proof-independent total target function and conditional local correctness fields.","claim":"planned"},
+    {"id":"O06","gate":"G1","name":"finite_gfp","deps":["O03","O04"],"exit":"Reductive pruning is monotone, stabilizes, is greatest post-fixed, and its full Bool reflection spine is proved.","claim":"planned"},
+    {"id":"O07","gate":"G1","name":"strategy_extraction","deps":["O05","O06"],"exit":"Every accepting survivor yields a deterministic abstract ConeScheme without proof-dependent target data.","claim":"planned"},
+    {"id":"O08","gate":"G2","name":"occurrence_freshness","deps":["O05"],"exit":"Indexed occurrences give every non-EQ demand a unique-parent fresh child; EQ remains local.","claim":"planned"},
+    {"id":"O09","gate":"G2","name":"strict_order","deps":["O08"],"exit":"Integer-height proof that the transitive PP/PPI occurrence order is irreflexive with advertised birth orientations.","claim":"planned"},
+    {"id":"O10","gate":"G2","name":"disjoint_geometry","deps":["O08","O09"],"exit":"DR closure is symmetric, irreflexive, downward closed, and incomparable by unique component cuts.","claim":"planned"},
+    {"id":"O11","gate":"G2","name":"protected_po","deps":["O08","O10"],"exit":"Every PO birth pair remains distinct, incomparable, and nondisjoint.","claim":"planned"},
+    {"id":"O12","gate":"G2","name":"ordered_disjoint_to_network","deps":["O09","O10"],"exit":"The residual relation is a strong total converse/composition-closed abstract RCC5 network.","claim":"planned"},
+    {"id":"O13","gate":"G2","name":"token_representation_exact","deps":["O12"],"exit":"Ordered tokens give nonempty sets with inclusion iff order and empty intersection iff disjointness; no topological claim is made.","claim":"planned"},
+    {"id":"O14","gate":"G3","name":"spectrum_invariant","deps":["O04","O05","O09"],"exit":"Every actual strict-lower occurrence type belongs to the declared spectrum.","claim":"planned"},
+    {"id":"O15","gate":"G3","name":"truth_lemma","deps":["O01","O02","O04","O11","O12","O14"],"exit":"Under ForallPOFree, membership in an unfolded support type implies semantic truth.","claim":"planned"},
+    {"id":"O16","gate":"G3","name":"scheme_soundness","deps":["O05","O15"],"exit":"Every accepting abstract scheme satisfies the normalized root and hence the raw concept.","claim":"planned"},
+    {"id":"O17","gate":"G4","name":"source_signature_static","deps":["O01","O02","O04"],"exit":"In a noncomputable proof section, every arbitrary-model point yields a locally admissible cone signature.","claim":"planned"},
+    {"id":"O18","gate":"G4","name":"source_transitions","deps":["O01","O17"],"exit":"Every source existential yields a compatible target signature for all five roles under the fragment hypothesis.","claim":"planned"},
+    {"id":"O19","gate":"G4","name":"source_signatures_survive","deps":["O06","O18"],"exit":"A predicate/Set of realized signatures is transition-closed and lies in survivors; no source-carrier Finset is formed.","claim":"planned"},
+    {"id":"O20","gate":"G5","name":"regular_model_iff","deps":["O07","O16","O19"],"exit":"Satisfiable iff the prepared normalized root occurs in an accepting survivor signature.","claim":"planned"},
+    {"id":"O21","gate":"G5","name":"boolean_decider","deps":["O01","O03","O04","O06","O20"],"exit":"coneSatCoreB is correct under the fragment proof; all sat, unsat, and outOfScope characterizations of coneCheck are proved.","claim":"planned"},
+    {"id":"O22","gate":"G6","name":"regression_suite","deps":["O11","O12","O21"],"exit":"No-FMP, mixed-control, PO, DR, role-cache, D1, D2, and E regressions pass with kernel-accounted decision methods.","claim":"planned"},
+    {"id":"O23","gate":"G6","name":"release_audit","deps":["O00","O13","O21","O22"],"exit":"Pinned dual clean build; exact axiom allowlist and declaration scan; executable import/codegen checks; theorem and checksum manifests published.","claim":"planned"}
+  ]
+}

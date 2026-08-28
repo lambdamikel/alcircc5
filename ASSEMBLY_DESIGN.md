@@ -15878,3 +15878,56 @@ not rebuild our certification claims. A future packet should include the file.
 
 Build: 42,751 lines, 2,158 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §266 — the ConeScheme plan: assessment
+
+`papers/forall_po_free_decidability_certification_plan_package.zip` proposes a
+REPLACEMENT completeness architecture. Its central move: **retire finite-node
+witness borrowing entirely.** A finite `ConeScheme` is a CONTROL graph only; every
+non-EQ existential unfolds to a FRESH occurrence; `lt` is the transitive closure of
+PP/PPI births, `disj` the downward closure of DR births, residual pairs PO.
+Repeated signatures generate regular INFINITE models without identifying points.
+
+**Why this is not the retracted route.** The project's first approach —
+`papers/decidability_ALCIRCC5.tex`, retracted — was quasimodel + type elimination,
+and it died because condition (Q3) was **anti-monotone**: an algebraic-closure
+condition where a LARGER type set is MORE restrictive, so starting from all types
+cascaded to zero. The plan's operator is
+`prune(X) = {q ∈ X | every non-EQ demand at q has a compatible target in X}`,
+which is **monotone** (`X ⊆ Y ⟹ prune X ⊆ prune Y`, since a target in `X` is a
+target in `Y`) and reductive. That is the standard sound elimination, not the
+retracted one. This check was worth making: re-proposing a retracted route is
+exactly the trap this project's ledger exists to catch.
+
+**Why it dissolves the refutations rather than patching them.** D1, D2 and §256
+all attacked node REUSE — borrowing, sharing a top, identifying occurrences. With
+fresh occurrences there is nothing to borrow: `hirrE` is free because `lt` is a
+tree closure, and `ltNotDj` is free because a DR birth opens a NEW VERTICAL
+COMPONENT while `lt` never leaves one. That is the project's own split-forest
+normal form — vertical tree edges, horizontal bridges — which is the one half that
+has survived every review since round 7.
+
+**`wp133`, and what it does and does not show.** The frame side checks out: across
+~280 unfoldings at depths 2–3, **0 frame violations** — composition closure,
+converse, strict order, symmetric downward-closed disjointness, and `ltNotDj`.
+The truth-lemma side is NOT validated: the probe's residual failures were traced,
+one at a time, to conditions the PLAN STATES and the probe did not implement —
+first frontier truncation, then EQ-locality (`∀EQ.E ∈ T ⟹ E ∈ T`), then keeping
+vertical/DR universals live down the chain (19 → 5 as each went in). The last 5
+need the DR cone condition, which requires the control-graph layer. So `wp133`
+validates gate G2's geometry and leaves G1/G3/G4 untested.
+
+**What survives from our work.** Everything except the borrowing layer:
+`RCC5NormalForm`/`ODStruct`/`odNet_frame` (the plan's G2 target), `SupportOk`/
+`mty`/`typeEnum` and the truth-lemma machinery (G3), the whole kernel side and
+`fused_kq_all` (Target B), and the RCC5 algebra. What is RETIRED is §§248–265 —
+the gate, the borrowed edge, and the pool key — i.e. exactly the layer that has
+now been refuted three times.
+
+**Honest risk.** The plan is a blueprint, not a proof: 24 obligations over gates
+G0–G6, and its own README says so. The load-bearing one is G4 (`source_signatures_survive`)
+— the completeness direction, the analogue of "the extraction works", and the
+place every previous architecture has failed.
+
+Build: 42,751 lines, 2,158 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
