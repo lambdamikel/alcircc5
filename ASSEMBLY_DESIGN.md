@@ -15996,3 +15996,33 @@ G1 first: it is self-contained, it holds the new mathematics, and it depends on
 nothing else in the ledger. Then G2 (mostly ours already), G3 (ours), and G4 last
 — `source_signatures_survive` is the completeness direction and the place every
 previous architecture has failed. Expect the defect there, not elsewhere.
+
+### §268 — G1 begun: the greatest fixed point
+
+The first gate of the new route, and the one piece of genuinely new machinery.
+`gfpIter` iterates an abstract elimination operator; `gfpIter_stabilizes` shows it
+reaches a fixed point within `|Static|` rounds; `gfp_greatest` (**AXIOM-FREE**)
+shows the limit contains every set that survives its own elimination.
+
+Kept abstract in `σ`, because the fixpoint argument needs nothing about
+signatures — their admissibility and transitions are later G1 obligations.
+
+**The two hypotheses are exactly what separates this from the retracted route.**
+`hred` (reductive) and `hmono` (monotone) are stated as section variables and
+`gfp_greatest` consumes only `hmono`. The retracted `(Q3)` was ANTI-monotone, so
+`gfp_greatest` would have been unprovable for it — elimination from the full set
+cascaded to zero precisely because a larger set was more restrictive. **If `prune`
+is ever strengthened with a closure or coherence condition, re-check `hmono`
+first**: that is the failure, in one line.
+
+Supporting: `anti_mono_stalls` (a non-increasing `f : ℕ → ℕ` stalls, and within
+`f 0`) and `nodup_len_lt_of_missing` (the strict-descent half of the pigeonhole,
+propext + `Quot.sound` only).
+
+Remaining in G1: `prepared_nnf_po_free`, `support_type_reflection`,
+`state_demand_enum_bound`, `transition_reflection`, `abstract_scheme`,
+`strategy_extraction`. Most have direct analogues in the surviving material
+(`SupportOk`, `typeEnum`, `sublists`, `nodup_len_le`).
+
+Build: 42,876 lines, 2,165 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

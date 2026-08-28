@@ -41684,6 +41684,132 @@ theorem wkey_acyclic (hI : RCC5Interp I) (C0 : Concept) (W : List α)
     ∀ x, ¬ R x x :=
   model_contained_irrefl hI R
     (fun x y hxy => ⟨hdom x y hxy, wkey_declared_sub_model C0 I W R hR x y hxy⟩)
+/-! #### §268 — G1: THE GREATEST FIXED POINT
+
+The first gate of the ConeScheme plan (ASSEMBLY_DESIGN §267), and the one piece of
+genuinely new machinery: a REDUCTIVE, MONOTONE elimination operator on a finite
+signature set descends to a greatest fixed point in at most `|Static|` rounds.
+
+The two hypotheses are exactly what separates this from the route this project
+RETRACTED.  That one's `(Q3)` was ANTI-monotone — a larger type set was more
+restrictive, so elimination from the full set cascaded to zero.  Here `prune`
+only asks that each demand HAVE a target in `X`, which is monotone; `hmono` below
+is the formal statement of that, and nothing in this section survives without it.
+
+Kept abstract in `σ`: the signature type, its admissibility, and its transition
+relation belong to G1's later obligations, and the fixpoint argument needs none
+of them. -/
+
+/-- A `Nodup` sublist that misses a member of the ambient list is strictly
+    shorter — the strict-descent half of the pigeonhole. -/
+theorem nodup_len_lt_of_missing {A : Type} [DecidableEq A] (l univ : List A)
+    (hsub : ∀ x ∈ l, x ∈ univ) (hnd : l.Nodup) {q : A} (hq : q ∈ univ)
+    (hql : q ∉ l) : l.length < univ.length := by
+  have h1 : ∀ x ∈ (q :: l), x ∈ univ := by
+    intro x hx
+    rcases List.mem_cons.mp hx with rfl | hx'
+    · exact hq
+    · exact hsub x hx'
+  have h2 : (q :: l).Nodup := List.nodup_cons.mpr ⟨hql, hnd⟩
+  have h3 := nodup_len_le (q :: l) univ h1 h2
+  simp only [List.length_cons] at h3
+  omega
+
+/-- Iterated elimination from a starting set. -/
+def gfpIter {σ : Type} (prune : List σ → List σ) (S : List σ) : Nat → List σ
+  | 0 => S
+  | n + 1 => prune (gfpIter prune S n)
+
+section GFP
+variable {σ : Type} [DecidableEq σ] (prune : List σ → List σ)
+  (hred : ∀ X q, q ∈ prune X → q ∈ X)
+  (hmono : ∀ X Y, (∀ q, q ∈ X → q ∈ Y) → ∀ q, q ∈ prune X → q ∈ prune Y)
+
+omit [DecidableEq σ] in
+include hred in
+/-- Elimination only ever removes. -/
+theorem gfpIter_step_sub (S : List σ) (n : Nat) :
+    ∀ q ∈ gfpIter prune S (n + 1), q ∈ gfpIter prune S n :=
+  fun q hq => hred _ q hq
+
+omit [DecidableEq σ] in
+include hred in
+theorem gfpIter_antitone (S : List σ) :
+    ∀ n m, n ≤ m → ∀ q ∈ gfpIter prune S m, q ∈ gfpIter prune S n := by
+  intro n m hnm
+  induction m with
+  | zero =>
+      have : n = 0 := Nat.le_zero.mp hnm
+      subst this; exact fun q hq => hq
+  | succ m ih =>
+      rcases Nat.lt_or_ge n (m + 1) with h | h
+      · intro q hq
+        exact ih (by omega) q (gfpIter_step_sub prune hred S m q hq)
+      · have : n = m + 1 := by omega
+        subst this; exact fun q hq => hq
+
+/-- A non-increasing sequence of naturals stalls, and stalls early. -/
+theorem anti_mono_stalls (f : Nat → Nat) (hanti : ∀ n, f (n + 1) ≤ f n) :
+    ∃ N, N ≤ f 0 ∧ f (N + 1) = f N := by
+  refine Classical.byContradiction (fun h => ?_)
+  have hdrop : ∀ N, N ≤ f 0 → f (N + 1) < f N := by
+    intro N hN
+    exact Nat.lt_of_le_of_ne (hanti N) (fun he => h ⟨N, hN, he⟩)
+  have key : ∀ k, k ≤ f 0 + 1 → f k + k ≤ f 0 := by
+    intro k
+    induction k with
+    | zero => intro _; omega
+    | succ j ih =>
+        intro hj
+        have hjb : j ≤ f 0 := by omega
+        have h1 := ih (by omega)
+        have h2 := hdrop j hjb
+        omega
+  have := key (f 0 + 1) (Nat.le_refl _)
+  omega
+
+include hred in
+/-- **§268.1 — THE FIXED POINT IS REACHED, WITHIN `|Static|` ROUNDS.**  The
+    measure is the list's length, which elimination never increases. -/
+theorem gfpIter_stabilizes (S : List σ) (hnd : ∀ X, X.Nodup → (prune X).Nodup)
+    (hSnd : S.Nodup) :
+    ∃ N, N ≤ S.length ∧
+      (∀ q ∈ gfpIter prune S N, q ∈ gfpIter prune S (N + 1)) := by
+  have hnodup : ∀ n, (gfpIter prune S n).Nodup := by
+    intro n
+    induction n with
+    | zero => exact hSnd
+    | succ k ih => exact hnd _ ih
+  obtain ⟨N, hNle, hN⟩ := anti_mono_stalls
+    (fun n => (gfpIter prune S n).length)
+    (fun n => nodup_len_le _ _ (gfpIter_step_sub prune hred S n) (hnodup (n + 1)))
+  refine ⟨N, hNle, ?_⟩
+  -- equal length plus containment, with `Nodup`, forces equality of membership
+  intro q hq
+  refine Classical.byContradiction (fun hcon => ?_)
+  have hsub : ∀ x ∈ gfpIter prune S (N + 1), x ∈ gfpIter prune S N :=
+    gfpIter_step_sub prune hred S N
+  have hlt : (gfpIter prune S (N + 1)).length < (gfpIter prune S N).length :=
+    nodup_len_lt_of_missing _ _ hsub (hnodup (N + 1)) hq hcon
+  omega
+
+omit [DecidableEq σ] in
+include hmono in
+/-- **§268.2 — AND IT IS THE GREATEST POST-FIXED POINT.**  Any `Z` inside the
+    static set that survives its own elimination survives every round, hence lands
+    inside the limit.  This is the completeness half of the decision procedure:
+    a set of signatures realized by a model is such a `Z`. -/
+theorem gfp_greatest (S : List σ) (Z : List σ)
+    (hZS : ∀ q ∈ Z, q ∈ S) (hZ : ∀ q ∈ Z, q ∈ prune Z) :
+    ∀ n, ∀ q ∈ Z, q ∈ gfpIter prune S n := by
+  intro n
+  induction n with
+  | zero => exact hZS
+  | succ k ih =>
+      intro q hq
+      exact hmono Z (gfpIter prune S k) ih q (hZ q hq)
+
+end GFP
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
