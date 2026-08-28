@@ -15676,3 +15676,43 @@ equal-type endpoints. `kq_all`: DISCHARGED for the model-type labelling.
 
 Build: 42,085 lines, 2,113 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §259 — wp132: the down-spectrum key tested, and the result proved
+
+`wp132` (`verification/python/wp132_down_spectrum_blocking.py`) tests whether the
+cold attack's replacement key `q(v) = (mty v, {mty x : x PP v})` makes a shared
+top serviceable. Design: the eight-point counterexample is packaged as a
+REGRESSION, and the sample is a randomized FAMILY around its shape — branches
+partitioned into x-classes, so members of one key class have agreeing cones and
+members of different classes do not.
+
+**Two runs, and the first was withdrawn.** The first generator (random shaped
+models) failed its stated control: 0 failures at the type-only key, on as few as
+1 non-vacuous group per class — it did not reach the phenomenon. Treatment
+withheld, exactly as `wp131`'s first run was. A second run then reported failures
+SURVIVING the refined key — also wrong, and this one was my own bug: the
+serviceability test searched only EXISTING model points and had a `pass` stub
+where the FRESH witness case belonged. The fresh witness is the pivot's entire
+mechanism. Fixed (`fresh_sat`, with nested existentials treated conservatively as
+unmet, which biases toward reporting failure).
+
+**The result, on the corrected harness.** Regression PASSES. Control fires: 810
+unserviceable groups at the type-only key (30.7% and 13.7% in the two classes
+whose parameters admit more than one x-class). Treatment: **0 failures on 7,525
+non-vacuous groups.**
+
+**And it is a theorem, not a measurement.** `union_cone_body` (§259): let `w` be
+one member's own `PP`-witness and `z` a `DR`-witness of `w`. Then `z` is already
+`DR` from all of `v₁`'s cone (§256.1), so every `∀DR` body it carries holds there;
+and if every lower type of `v₂` occurs below `v₁` — exactly what sharing a key
+gives — that body holds across `v₂`'s cone too (§256.3). One witness serves the
+union.
+
+**SCOPE.** This settles the §256 obstruction SHAPE, and nothing else. Target A's
+open parts are untouched: the copied gadget may be infinite, context transitions
+may cycle, and the SCC-to-kernel compilation is unproved. The probe is a targeted
+family around a known counterexample, not a broad sweep, and finite set models
+mean kernels are not exercised.
+
+Build: 42,113 lines, 2,114 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

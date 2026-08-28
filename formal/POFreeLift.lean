@@ -41021,6 +41021,30 @@ theorem fused_kq_all (hI : RCC5Interp I) (C0 : Concept)
   refine ee_all_of_row (fun t : Bool => if t then ck k (s k + a)
       else ck l (s l + b)) true false (hdom l _) r c hc ?_
   simpa using (hQ ▸ hrect k l hk hl hne a ha b hb)
+open Classical in
+/-- **§259 — WHY `wp132`'s TREATMENT READS ZERO.**  The probe measures whether a
+    shared top's forced `DR`-witness can serve the UNION of a key class's lower
+    cones.  Under the down-spectrum key that is not a measurement but a theorem.
+
+    Let `w` be one member's own `PP`-witness and `z` a `DR`-witness of `w`.  Then
+    `z` is already `DR` from all of `v₁`'s cone (§256.1), so every `∀DR` body it
+    carries holds there; and if every lower type of `v₂` occurs below `v₁` —
+    which is exactly what sharing a key gives — that body holds across `v₂`'s cone
+    too (§256.3).  So one witness serves the whole union.
+
+    SCOPE, unchanged: this settles the §256 obstruction shape.  It says nothing
+    about the copied gadget's finiteness or about cycling context transitions,
+    which remain the open parts of Target A. -/
+theorem union_cone_body (hI : RCC5Interp I) (C0 : Concept) {v₁ v₂ w z : α}
+    (hv₁ : I.dom v₁) (hw : I.dom w) (hz : I.dom z)
+    (hv₁w : I.rho v₁ w = pp) (hwz : I.rho w z = dr)
+    (hspec : ∀ x, I.dom x → I.rho x v₂ = pp →
+      ∃ y, I.dom y ∧ I.rho y v₁ = pp ∧ mty C0 I y = mty C0 I x)
+    {E : Concept} (hE : E ∈ cl C0) (hall : sat I z (Concept.all dr E)) :
+    ∀ x, I.dom x → I.rho x v₂ = pp → sat I x E := by
+  refine cone_agreement_of_spectrum C0 hspec hE ?_
+  intro x hx hxv
+  exact hall x hx (shared_top_reaches_cone hI hx hv₁ hw hz hxv hv₁w hwz)
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
