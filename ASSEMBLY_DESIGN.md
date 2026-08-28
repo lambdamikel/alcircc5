@@ -16271,3 +16271,46 @@ which is the tripwire §270 put in place for exactly this moment.
 
 Build: 43,309 lines, 2,197 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §274 — wp134: `prune` is not too weak
+
+§273 named the balance point: `prune` must stay monotone (proved) and be strong
+enough that survivors are realizable (untested). `wp134` tests the second, using
+none of G2/G3.
+
+**All seven stated predictions held.**
+
+| case | want | signatures | survive | verdict |
+|---|---|---|---|---|
+| `∃PP.(∃DR.A) ⊓ ∀DR.¬A` | UNSAT | 930 | 237 | REJECT |
+| `∃PP.∃PP.(∃DR.A) ⊓ ∀DR.¬A` | UNSAT | 3660 | 465 | REJECT |
+| `∃DR.(∃PPI.A) ⊓ ∀DR.¬A` | UNSAT | 930 | 273 | REJECT |
+| `∃DR.(A ⊓ ∃DR.B)` | SAT | 420 | 420 | ACCEPT |
+| `∃PP.⊤ ⊓ ∀PP.∃PP.⊤` | SAT | 86 | 28 | ACCEPT |
+| `∃PO.A ⊓ ∀DR.B` | SAT | 420 | 420 | ACCEPT |
+| `∃PPI.A ⊓ ∃DR.B` | SAT | 420 | 288 | ACCEPT |
+
+Elimination genuinely bites (930 → 237, 86 → 28), so the run is not vacuous.
+
+**The asymmetry in what the numbers are worth, which the probe now states.** The
+ACCEPTs are conclusive at ANY cap, because `prune` is monotone: a larger
+signature space can only keep more. The REJECTs at cap 1 are NOT — a truncated
+space makes `prune` remove more, so a rejection there could be an artifact.
+What carries the rejections is `dr_wall`: the `DR` transition condition forces
+`A_DR(U) ⊆ V` across the two cones, so a cone member carrying `∀DR.¬A` forces
+`¬A` into every target-cone member, and a target type carrying `A` is killed by
+`supportB`'s clash clause. That check quantifies over TYPES only — never over
+`S` — so it holds at every cap. **180 blocked, 0 breaches.**
+
+That is also the hand-trace written into the predictions before the run, so the
+probe rejects for the predicted reason rather than by accident.
+
+**What this does not show.** That survivors are REALIZABLE — the unfolding is
+gate G2/G3 and does not exist yet. `prune` is not too weak on the standing
+diagnostics; that is all.
+
+**Process note.** Three edits to this probe failed silently against stale source
+strings before I checked the file (`CAPS` was still `[1,2]`, which was the
+timeout; one patch landed inside `prune` instead of `main`). Same trap as the
+docstring insertion earlier in the campaign. Every edit here now carries an
+`assert`.
