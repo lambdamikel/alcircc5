@@ -15430,5 +15430,5 @@ are not exercised.
 removable); what is withdrawn is the claim that repeat-free selection is the
 route to a construction. The docstring now says so.
 
-Build: 41,383 lines, 2,095 declarations, exit 0,
+Build: 41,376 lines, 2,095 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
