@@ -39094,6 +39094,31 @@ theorem appendNew_eq_self {β : Type} [DecidableEq β] :
         rw [hws] at h
         have := congrArg List.length h
         simp [List.length_append] at this
+theorem appendNew_acc_sub {β : Type} [DecidableEq β] (l acc : List β) :
+    ∀ y ∈ acc, y ∈ appendNew acc l := by
+  obtain ⟨ws, hws⟩ := appendNew_prefix l acc
+  intro y hy
+  rw [hws]
+  exact List.mem_append.mpr (Or.inl hy)
+
+/-- `appendNew` loses nothing: it is a deduplication. -/
+theorem appendNew_covers {β : Type} [DecidableEq β] :
+    ∀ (l acc : List β) (y : β), y ∈ l → y ∈ appendNew acc l := by
+  intro l
+  induction l with
+  | nil => intro _ y hy; exact absurd hy List.not_mem_nil
+  | cons x t ih =>
+      intro acc y hy
+      by_cases hx : x ∈ acc
+      · rw [appendNew, if_pos hx]
+        rcases List.mem_cons.mp hy with rfl | hy'
+        · exact appendNew_acc_sub t acc y hx
+        · exact ih acc y hy'
+      · rw [appendNew, if_neg hx]
+        rcases List.mem_cons.mp hy with rfl | hy'
+        · exact appendNew_acc_sub t (acc ++ [y])
+            y (List.mem_append.mpr (Or.inr List.mem_cons_self))
+        · exact ih _ y hy'
 
 /-- **CONTAINMENT BECOMES A LENGTH BOUND**, for a duplicate-free list. -/
 theorem stage_len_of_contained {β : Type} [DecidableEq β]
@@ -41860,10 +41885,22 @@ def sigOkB (q : Sig) : Bool :=
 /-- The finite static set: locally admissible signatures drawn from the
     enumeration. -/
 def sigStatic (C0 : Concept) : List Sig :=
-  (keyEnum C0).filter sigOkB
+  (appendNew [] (keyEnum C0)).filter sigOkB
 
-theorem sigStatic_sub (C0 : Concept) : ∀ q ∈ sigStatic C0, q ∈ keyEnum C0 :=
-  fun _ h => (List.mem_filter.mp h).1
+/-- Deduplicated by construction, so the fixpoint's length measure applies with
+    no hypothesis.  (`appendNew` is §248's, from the retired borrowing layer —
+    reused rather than reproved.) -/
+theorem sigStatic_nodup (C0 : Concept) : (sigStatic C0).Nodup :=
+  List.Sublist.nodup List.filter_sublist
+    (appendNew_nodup (keyEnum C0) [] List.nodup_nil)
+
+/-- And nothing admissible is lost by the deduplication. -/
+theorem mem_sigStatic (C0 : Concept) (q : Sig)
+    (hq : q ∈ keyEnum C0) (hok : sigOkB q = true) : q ∈ sigStatic C0 :=
+  List.mem_filter.mpr ⟨appendNew_covers (keyEnum C0) [] q hq, hok⟩
+
+theorem sigStatic_ok (C0 : Concept) : ∀ q ∈ sigStatic C0, sigOkB q = true :=
+  fun _ h => (List.mem_filter.mp h).2
 
 /-- Transition compatibility for a demand `∃r.D` from `q` to `q'`. -/
 def compatB (r : Atom) (D : Concept) (q q' : Sig) : Bool :=
@@ -41922,14 +41959,93 @@ open Classical in
     point within `|sigStatic C₀|` rounds, and that fixed point contains every set
     of signatures that survives its own elimination — which is what a model will
     be shown to supply (gate G4). -/
-theorem coneScheme_gfp (C0 : Concept) (hnd : (sigStatic C0).Nodup) :
+theorem coneScheme_gfp (C0 : Concept) :
     (∃ N, N ≤ (sigStatic C0).length ∧
       ∀ q ∈ gfpIter pruneSig (sigStatic C0) N,
         q ∈ gfpIter pruneSig (sigStatic C0) (N + 1)) ∧
     (∀ Z : List Sig, (∀ q ∈ Z, q ∈ sigStatic C0) → (∀ q ∈ Z, q ∈ pruneSig Z) →
       ∀ n, ∀ q ∈ Z, q ∈ gfpIter pruneSig (sigStatic C0) n) :=
-  ⟨gfpIter_stabilizes pruneSig pruneSig_red (sigStatic C0) pruneSig_nodup hnd,
+  ⟨gfpIter_stabilizes pruneSig pruneSig_red (sigStatic C0) pruneSig_nodup
+     (sigStatic_nodup C0),
    fun Z hZS hZ => gfp_greatest pruneSig pruneSig_mono (sigStatic C0) Z hZS hZ⟩
+/-! #### §271 — G1: THE SEMANTIC BRIDGES
+
+`supportB` and friends are Boolean, so that the decision procedure carries no
+proof data.  What the correctness proofs need is the bridge in each direction:
+soundness reads the clauses off a passing test (gate G3), completeness shows a
+real model type passes it (gate G4). -/
+
+/-- **§271.1 — SOUNDNESS DIRECTION.**  A passing support test yields its clauses. -/
+theorem supportB_sound {T : List Concept} (h : supportB T = true) :
+    Concept.bot ∉ T ∧
+    (∀ a, Concept.atom a ∈ T → Concept.natom a ∉ T) ∧
+    (∀ c d, Concept.and c d ∈ T → c ∈ T ∧ d ∈ T) ∧
+    (∀ c d, Concept.or c d ∈ T → c ∈ T ∨ d ∈ T) ∧
+    (∀ D, Concept.all eq D ∈ T → D ∈ T) ∧
+    (∀ D, Concept.ex eq D ∈ T → D ∈ T) := by
+  rw [supportB, List.all_eq_true] at h
+  refine ⟨fun hb => by simpa using h _ hb, ?_, ?_, ?_, ?_, ?_⟩
+  · intro a ha hna
+    have := h _ ha
+    simp only [Bool.not_eq_true'] at this
+    exact absurd (List.elem_eq_true_of_mem hna) (by simpa using this)
+  · intro c d hcd
+    have := h _ hcd
+    simp only [Bool.and_eq_true] at this
+    exact ⟨List.mem_of_elem_eq_true this.1, List.mem_of_elem_eq_true this.2⟩
+  · intro c d hcd
+    have := h _ hcd
+    simp only [Bool.or_eq_true] at this
+    rcases this with h1 | h1
+    · exact Or.inl (List.mem_of_elem_eq_true h1)
+    · exact Or.inr (List.mem_of_elem_eq_true h1)
+  · intro D hD
+    exact List.mem_of_elem_eq_true (by simpa using h _ hD)
+  · intro D hD
+    exact List.mem_of_elem_eq_true (by simpa using h _ hD)
+
+open Classical in
+/-- **§271.2 — COMPLETENESS DIRECTION: A MODEL TYPE IS A SUPPORT TYPE.**  Every
+    clause is a property `sat` already has; the two `EQ` clauses are where strong
+    equality does the work, since a point is its own `EQ`-neighbour. -/
+theorem supportB_mty (hI : RCC5Interp I) (C0 : Concept) {x : α} (hx : I.dom x) :
+    supportB (mty C0 I x) = true := by
+  rw [supportB, List.all_eq_true]
+  intro c hc
+  obtain ⟨hcl, hsat⟩ := mem_mty.mp hc
+  cases c with
+  | bot => exact absurd hsat (by simp [sat])
+  | atom a =>
+      have hno : Concept.natom a ∉ mty C0 I x := by
+        intro hna
+        exact absurd (mem_mty.mp hna).2 (by simpa [sat] using hsat)
+      simpa using hno
+  | and c₁ c₂ =>
+      obtain ⟨h1, h2⟩ := hsat
+      simp only [Bool.and_eq_true]
+      exact ⟨List.elem_eq_true_of_mem (mem_mty.mpr ⟨cl_and_left hcl, h1⟩),
+             List.elem_eq_true_of_mem (mem_mty.mpr ⟨cl_and_right hcl, h2⟩)⟩
+  | or c₁ c₂ =>
+      simp only [Bool.or_eq_true]
+      rcases hsat with h1 | h1
+      · exact Or.inl (List.elem_eq_true_of_mem
+          (mem_mty.mpr ⟨cl_or_left hcl, h1⟩))
+      · exact Or.inr (List.elem_eq_true_of_mem
+          (mem_mty.mpr ⟨cl_or_right hcl, h1⟩))
+  | all r D =>
+      cases r with
+      | eq =>
+          refine List.elem_eq_true_of_mem (mem_mty.mpr ⟨cl_all hcl, ?_⟩)
+          exact hsat x hx (hI.refl_eq x hx)
+      | _ => rfl
+  | ex r D =>
+      cases r with
+      | eq =>
+          refine List.elem_eq_true_of_mem (mem_mty.mpr ⟨cl_ex hcl, ?_⟩)
+          exact sat_of_ex_eq hI hx hsat
+      | _ => rfl
+  | top => rfl
+  | natom a => rfl
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

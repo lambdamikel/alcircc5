@@ -16175,3 +16175,26 @@ semantic bridges — each an "accepts ⟺ the real condition" lemma of the kind
 
 Build: 42,997 lines, 2,180 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §271 — G1's semantic bridges, and an unconditional fixed point
+
+**Both directions of the support-type test.** `supportB_sound` reads the clauses
+off a passing test (what gate G3 consumes); `supportB_mty` shows a real model
+type passes it (what gate G4 must supply). The two `EQ` clauses are where strong
+equality does the work: a point is its own `EQ`-neighbour, so `∀EQ.D` gives `D`
+at the point itself and `∃EQ.D` likewise. That is the plan's locality condition,
+now certified rather than merely implemented.
+
+**The fixed point is now unconditional.** `sigStatic` deduplicates its
+enumeration with `appendNew`, so `sigStatic_nodup` is free and `coneScheme_gfp`
+sheds its `Nodup` hypothesis. `mem_sigStatic` confirms nothing admissible is lost.
+`appendNew` is §248's, written for the retired borrowing layer and reused here
+without change — the second instance of §267's claim in as many sections, after
+`keyEnum` in §270.
+
+**G1 remaining.** `transition_reflection` (O04) — the bridge for `compatB`, of
+the same shape as these two — and `abstract_scheme`/`strategy_extraction`
+(O05/O07), which package the survivors as a control graph.
+
+Build: 43,081 lines, 2,185 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
