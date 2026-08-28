@@ -15250,3 +15250,49 @@ assembly.
 
 Build: 40,705 lines, 2,059 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §251 — the kernel's phase labels
+
+`swCert_ok` asks every kernel for `hkpp` AND `hkppi` — both vertical universals
+must reach every phase, whatever the kernel's own direction. Labelling a kernel
+phase by `kLab K a := normL C₀ (mty C₀ I (K.c (K.i + a)))` (the same recipe as
+`mtyLab`) makes `hplab` free from `normL_supportOk ∘ mty_supportOk`, and `hp`
+free from `K.ppos`. The two universals are the content.
+
+**Half of each is the chain order; the other half is where `KernelData.cty`
+earns its keep.** For an ascending kernel:
+
+- `∀PP.c` at phase `a` climbs to `c (i+p)`; `cty` carries it back to `c i`; from
+  there it reaches every phase — including phase `0`, via the round trip up to
+  `c (i+p)` and back through `cty`.
+- `∀PPI.c` at phase `a` descends to `c i`; `cty` carries it to `c (i+p)`; from
+  there it reaches every phase, all of which lie below.
+
+Each direction uses `cty` exactly once, in opposite directions, and the descending
+kernel swaps the two routes (`kd_kk_pp_dn` / `kd_kk_ppi_dn`, on the new
+`chain_ppi_lt`). `kd_kk_pp_any` / `kd_kk_ppi_any` dispatch on the `Bool`, which is
+the form the wiring sees.
+
+**What this deliberately does NOT assume.** Only `a < p` and `b < p` — the
+certificate's own phase range — and nothing about type-periodicity at other
+offsets. `KernelData.cty` gives `mty (c i) = mty (c (i+p))` and nothing more; a
+proof wanting per-offset periodicity would be assuming a cycled chain that the
+data does not provide.
+
+**The existentials.** `kLab_ex_eq` discharges `swCert_ok`'s `r = eq` disjunct
+(strong EQ is identity). `kLab_serves_ext` reads `kernelData_serves` at `kLab`:
+every DR/PP/PPI phase demand has ONE witness serving it from every phase at
+once, which is exactly what a per-kernel frame edge can express — so `hkex`'s
+external disjunct is discharged as soon as that witness is placed in the node
+set and the edge declared. `∃PO` is deliberately outside `kernelData_serves` and
+does not need to be inside it: a PO edge carries no universal obligation in this
+fragment (`mty_no_all_po` empties both `ke_all` and `ek_all` on it), so a PO
+demand takes a fresh external with a declared PO edge and no coordination.
+
+**Kernel-side scoreboard.** `hp`, `hplab`, `hkpp`, `hkppi` — DONE
+(`kernel_side_ok`). `hkex` — reduced to placement. `hkq` (cross-kernel), `hek`
+and `hke` (kernel↔external) — OPEN, and none of them is a fact about
+`KernelData`: all three concern declared edges to objects outside the kernel.
+
+Build: 40,984 lines, 2,076 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

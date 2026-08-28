@@ -39639,7 +39639,286 @@ theorem ptIter_phase1 (hI : RCC5Interp I) (C0 : Concept)
     hstab,
     fun v hv r D hD => ptIter_serves hI C0 ns0 N (hstab 1) v hv hD⟩
 
-/-! ##### §247.1 — what the total bound still needs
+/-! #### §251 — THE KERNEL'S PHASE LABELS
+
+`swCert_ok` asks a kernel for `hkpp` and `hkppi` — BOTH universals must reach
+EVERY phase, whatever the kernel's direction.  Half of each is free from the
+chain order; the other half is the one place `KernelData.cty` earns its keep.
+
+For an ASCENDING kernel, labelled by the full model type at `c (i + a)`:
+
+* `∀PP.c` at phase `a` climbs to `c (i + p)`, `cty` carries it back to `c i`,
+  and from there it reaches every phase — including phase `0`, by the round trip
+  UP to `c (i + p)` and back through `cty`.
+* `∀PPI.c` at phase `a` descends to `c i`, `cty` carries it to `c (i + p)`, and
+  from there it reaches every phase, all of which lie below.
+
+Each direction uses `cty` exactly once, and in opposite directions.  Note this
+needs `a < p` and `b < p` — the certificate's own phase range — and nothing
+about type-periodicity at other offsets, which `KernelData` does not provide. -/
+
+open Classical in
+/-- **THE KERNEL'S PHASE LABELLING** — the full model type at the phase point,
+    normalised.  `SupportOk` for free, exactly as `mtyLab`. -/
+noncomputable def kLab {C0 : Concept} {Ds : List Concept} {L0 : Nat} {d : Bool}
+    {x : α} (K : KernelData I C0 Ds L0 d x) (a : Nat) : List Concept :=
+  normL C0 (mty C0 I (K.c (K.i + a)))
+
+open Classical in
+theorem kLab_ok (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x) (a : Nat) :
+    SupportOk I C0 (K.c (K.i + a)) (kLab K a) :=
+  normL_supportOk (mty_supportOk hI C0 (K.cdom _))
+
+open Classical in
+theorem kLab_len {C0 : Concept} {Ds : List Concept} {L0 : Nat} {d : Bool}
+    {x : α} (K : KernelData I C0 Ds L0 d x) (a : Nat) :
+    (kLab K a).length ≤ (cl C0).length := normL_len C0 _
+
+/-- The ascending kernel's chain order, from `cstep`. -/
+theorem kd_pp_lt (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {x : α} (K : KernelData I C0 Ds L0 true x) :
+    ∀ m n, m < n → I.rho (K.c m) (K.c n) = pp :=
+  chain_pp_lt hI K.c K.cdom (fun n => K.cstep n)
+
+open Classical in
+/-- **§251.1 — `∀PP` REACHES EVERY PHASE OF AN ASCENDING KERNEL.** -/
+theorem kd_kk_pp (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {x : α} (K : KernelData I C0 Ds L0 true x)
+    (a : Nat) (ha : a < K.p) {c : Concept} (hc : Concept.all pp c ∈ kLab K a)
+    (b : Nat) (hb : b < K.p) : c ∈ kLab K b := by
+  have hclA : Concept.all pp c ∈ cl C0 := (mem_normL.mp hc).1
+  have hcl : c ∈ cl C0 := cl_all hclA
+  have hsa : sat I (K.c (K.i + a)) (Concept.all pp c) :=
+    (mem_mty.mp (mem_normL.mp hc).2).2
+  -- climb to `c (i + p)`
+  have hap : I.rho (K.c (K.i + a)) (K.c (K.i + K.p)) = pp :=
+    kd_pp_lt hI K _ _ (by omega)
+  have hsp : sat I (K.c (K.i + K.p)) (Concept.all pp c) :=
+    sat_all_pp_up hI (K.cdom _) (K.cdom _) hap hsa
+  -- `cty` carries it back to `c i`
+  have hsi : sat I (K.c K.i) (Concept.all pp c) := by
+    have : Concept.all pp c ∈ mty C0 I (K.c (K.i + K.p)) :=
+      mem_mty.mpr ⟨hclA, hsp⟩
+    rw [← K.cty] at this
+    exact (mem_mty.mp this).2
+  -- and from `c i` it reaches every phase
+  have hci : sat I (K.c (K.i + b)) c := by
+    rcases Nat.eq_zero_or_pos b with rfl | hbpos
+    · -- phase 0: go up to `c (i + p)` and return through `cty`
+      have hip : I.rho (K.c K.i) (K.c (K.i + K.p)) = pp :=
+        kd_pp_lt hI K _ _ (by omega)
+      have : sat I (K.c (K.i + K.p)) c := hsi _ (K.cdom _) hip
+      have h2 : c ∈ mty C0 I (K.c (K.i + K.p)) := mem_mty.mpr ⟨hcl, this⟩
+      rw [← K.cty] at h2
+      have := (mem_mty.mp h2).2
+      simpa using this
+    · have hib : I.rho (K.c K.i) (K.c (K.i + b)) = pp :=
+        kd_pp_lt hI K _ _ (by omega)
+      exact hsi _ (K.cdom _) hib
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, hci⟩⟩
+
+open Classical in
+/-- **§251.2 — AND SO DOES `∀PPI`**, by the mirror route: down to `c i`, across
+    by `cty`, then down again from `c (i + p)`. -/
+theorem kd_kk_ppi (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {x : α} (K : KernelData I C0 Ds L0 true x)
+    (a : Nat) (ha : a < K.p) {c : Concept} (hc : Concept.all ppi c ∈ kLab K a)
+    (b : Nat) (hb : b < K.p) : c ∈ kLab K b := by
+  have hclA : Concept.all ppi c ∈ cl C0 := (mem_normL.mp hc).1
+  have hcl : c ∈ cl C0 := cl_all hclA
+  have hsa : sat I (K.c (K.i + a)) (Concept.all ppi c) :=
+    (mem_mty.mp (mem_normL.mp hc).2).2
+  -- descend to `c i`
+  have hsi : sat I (K.c K.i) (Concept.all ppi c) := by
+    rcases Nat.eq_zero_or_pos a with rfl | hapos
+    · simpa using hsa
+    · have hia : I.rho (K.c K.i) (K.c (K.i + a)) = pp :=
+        kd_pp_lt hI K _ _ (by omega)
+      exact sat_all_ppi_down hI (K.cdom _) (K.cdom _) hia hsa
+  -- `cty` carries it to `c (i + p)`
+  have hsp : sat I (K.c (K.i + K.p)) (Concept.all ppi c) := by
+    have : Concept.all ppi c ∈ mty C0 I (K.c K.i) := mem_mty.mpr ⟨hclA, hsi⟩
+    rw [K.cty] at this
+    exact (mem_mty.mp this).2
+  -- every phase lies below `c (i + p)`
+  have hbp : I.rho (K.c (K.i + b)) (K.c (K.i + K.p)) = pp :=
+    kd_pp_lt hI K _ _ (by omega)
+  have hppi : I.rho (K.c (K.i + K.p)) (K.c (K.i + b)) = ppi := by
+    have h2 := hI.conv_ (K.c (K.i + b)) (K.c (K.i + K.p)) (K.cdom _) (K.cdom _)
+    rw [hbp] at h2; rw [h2]; rfl
+  have hci : sat I (K.c (K.i + b)) c := hsp _ (K.cdom _) hppi
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, hci⟩⟩
+/-- The descending chain's order, the `chain_pp_lt` mirror. -/
+theorem chain_ppi_lt (hI : RCC5Interp I) (c : Nat → α)
+    (hdom : ∀ n, I.dom (c n)) (hstep : ∀ n, I.rho (c n) (c (n + 1)) = ppi) :
+    ∀ i j, i < j → I.rho (c i) (c j) = ppi := by
+  intro i j
+  induction j with
+  | zero => intro h; exact absurd h (Nat.not_lt_zero i)
+  | succ j ih =>
+      intro h
+      rcases Nat.lt_or_ge i j with hlt | hge
+      · exact rho_forced hI (hdom i) (hdom (j + 1)) (hdom j) (ih hlt) (hstep j)
+          (by decide)
+      · have hij : i = j := by omega
+        subst hij
+        exact hstep i
+
+theorem kd_ppi_lt (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {x : α} (K : KernelData I C0 Ds L0 false x) :
+    ∀ m n, m < n → I.rho (K.c m) (K.c n) = ppi :=
+  chain_ppi_lt hI K.c K.cdom (fun n => K.cstep n)
+
+/-- A descending kernel's later phases lie BELOW its earlier ones. -/
+theorem kd_pp_gt (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {x : α} (K : KernelData I C0 Ds L0 false x)
+    (m n : Nat) (h : m < n) : I.rho (K.c n) (K.c m) = pp := by
+  have h2 := hI.conv_ (K.c m) (K.c n) (K.cdom _) (K.cdom _)
+  rw [kd_ppi_lt hI K m n h] at h2
+  rw [h2]; rfl
+
+open Classical in
+/-- **§251.3 — `∀PP` REACHES EVERY PHASE OF A DESCENDING KERNEL**, by the route
+    `kd_kk_ppi` uses on the ascending side: up to `c i`, across by `cty`, then up
+    again from `c (i + p)`. -/
+theorem kd_kk_pp_dn (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {x : α} (K : KernelData I C0 Ds L0 false x)
+    (a : Nat) (ha : a < K.p) {c : Concept} (hc : Concept.all pp c ∈ kLab K a)
+    (b : Nat) (hb : b < K.p) : c ∈ kLab K b := by
+  have hclA : Concept.all pp c ∈ cl C0 := (mem_normL.mp hc).1
+  have hcl : c ∈ cl C0 := cl_all hclA
+  have hsa : sat I (K.c (K.i + a)) (Concept.all pp c) :=
+    (mem_mty.mp (mem_normL.mp hc).2).2
+  have hsi : sat I (K.c K.i) (Concept.all pp c) := by
+    rcases Nat.eq_zero_or_pos a with rfl | hapos
+    · simpa using hsa
+    · exact sat_all_pp_up hI (K.cdom _) (K.cdom _)
+        (kd_pp_gt hI K K.i (K.i + a) (by omega)) hsa
+  have hsp : sat I (K.c (K.i + K.p)) (Concept.all pp c) := by
+    have hm : Concept.all pp c ∈ mty C0 I (K.c K.i) := mem_mty.mpr ⟨hclA, hsi⟩
+    rw [K.cty] at hm
+    exact (mem_mty.mp hm).2
+  have hci : sat I (K.c (K.i + b)) c :=
+    hsp _ (K.cdom _) (kd_pp_gt hI K (K.i + b) (K.i + K.p) (by omega))
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, hci⟩⟩
+
+open Classical in
+/-- **§251.4 — AND SO DOES `∀PPI`**, mirroring `kd_kk_pp`. -/
+theorem kd_kk_ppi_dn (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {x : α} (K : KernelData I C0 Ds L0 false x)
+    (a : Nat) (ha : a < K.p) {c : Concept} (hc : Concept.all ppi c ∈ kLab K a)
+    (b : Nat) (hb : b < K.p) : c ∈ kLab K b := by
+  have hclA : Concept.all ppi c ∈ cl C0 := (mem_normL.mp hc).1
+  have hcl : c ∈ cl C0 := cl_all hclA
+  have hsa : sat I (K.c (K.i + a)) (Concept.all ppi c) :=
+    (mem_mty.mp (mem_normL.mp hc).2).2
+  have hsp : sat I (K.c (K.i + K.p)) (Concept.all ppi c) :=
+    sat_all_ppi_down hI (K.cdom _) (K.cdom _)
+      (kd_pp_gt hI K (K.i + a) (K.i + K.p) (by omega)) hsa
+  have hsi : sat I (K.c K.i) (Concept.all ppi c) := by
+    have hm : Concept.all ppi c ∈ mty C0 I (K.c (K.i + K.p)) :=
+      mem_mty.mpr ⟨hclA, hsp⟩
+    rw [← K.cty] at hm
+    exact (mem_mty.mp hm).2
+  have hci : sat I (K.c (K.i + b)) c := by
+    rcases Nat.eq_zero_or_pos b with rfl | hbpos
+    · have h1 : sat I (K.c (K.i + K.p)) c :=
+        hsi _ (K.cdom _) (kd_ppi_lt hI K K.i (K.i + K.p) (by omega))
+      have h2 : c ∈ mty C0 I (K.c (K.i + K.p)) := mem_mty.mpr ⟨hcl, h1⟩
+      rw [← K.cty] at h2
+      simpa using (mem_mty.mp h2).2
+    · exact hsi _ (K.cdom _) (kd_ppi_lt hI K K.i (K.i + b) (by omega))
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl, hci⟩⟩
+open Classical in
+/-- **§251.5 — THE `∃EQ` PHASE DEMAND IS ALREADY IN THE LABEL.**  Strong EQ is
+    identity, so `swCert_ok`'s `r = eq` disjunct is immediate. -/
+theorem kLab_ex_eq (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x) (a : Nat)
+    {c : Concept} (hc : Concept.ex eq c ∈ kLab K a) : c ∈ kLab K a := by
+  have hcl : c ∈ cl C0 := cl_ex (mem_normL.mp hc).1
+  exact mem_normL.mpr ⟨hcl, mem_mty.mpr ⟨hcl,
+    sat_of_ex_eq hI (K.cdom _) (mem_mty.mp (mem_normL.mp hc).2).2⟩⟩
+
+open Classical in
+/-- **§251.6 — AND EVERY DR/PP/PPI PHASE DEMAND HAS A UNIFORM EXTERNAL WITNESS.**
+    `kernelData_serves`, read at `kLab`: one witness `w` serving the demand from
+    EVERY phase at once, which is what a per-kernel frame edge can express.  The
+    `hkex` obligation's first disjunct is therefore discharged as soon as `w` is
+    placed in the external node set and the edge declared — extraction work, not
+    new mathematics.
+
+    `∃PO` is deliberately absent: `kernelData_serves` does not cover it, and it
+    does not need to.  A PO edge carries no universal obligation in this fragment
+    (`mty_no_all_po` kills both `ke_all` and `ek_all` on it), so a PO demand is
+    served by a fresh external with a declared PO edge and no coordination. -/
+theorem kLab_serves_ext (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDs C0 I x).length) (L0 : Nat)
+    (a : Nat) (ha : a ≤ (kernelData hI C0 x hx hL L0).p)
+    (r : Atom) (hr : r = dr ∨ r = pp ∨ r = ppi) (D : Concept)
+    (hD : Concept.ex r D ∈ kLab (kernelData hI C0 x hx hL L0) a) :
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, b ≤ (kernelData hI C0 x hx hL L0).p →
+        I.rho ((kernelData hI C0 x hx hL L0).c
+          ((kernelData hI C0 x hx hL L0).i + b)) w = r :=
+  kernelData_serves hI C0 x hx hL L0 a r D ha hr (mem_normL.mp hD).2
+
+open Classical in
+/-- The descending mirror of §251.6. -/
+theorem kLabI_serves_ext (hI : RCC5Interp I) (C0 : Concept) (x : α)
+    (hx : I.dom x) (hL : 0 < (persistDsI C0 I x).length) (L0 : Nat)
+    (a : Nat) (ha : a ≤ (kernelDataI hI C0 x hx hL L0).p)
+    (r : Atom) (hr : r = dr ∨ r = pp ∨ r = ppi) (D : Concept)
+    (hD : Concept.ex r D ∈ kLab (kernelDataI hI C0 x hx hL L0) a) :
+    ∃ w, I.dom w ∧ D ∈ mty C0 I w ∧
+      ∀ b, b ≤ (kernelDataI hI C0 x hx hL L0).p →
+        I.rho ((kernelDataI hI C0 x hx hL L0).c
+          ((kernelDataI hI C0 x hx hL L0).i + b)) w = r :=
+  kernelDataI_serves hI C0 x hx hL L0 a r D ha hr (mem_normL.mp hD).2
+open Classical in
+/-- **§251.7 — DIRECTION-GENERIC.**  `swCert_ok`'s `hkpp` sees only a `Bool`, so
+    this is the form the wiring consumes. -/
+theorem kd_kk_pp_any (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x)
+    (a : Nat) (ha : a < K.p) {c : Concept} (hc : Concept.all pp c ∈ kLab K a)
+    (b : Nat) (hb : b < K.p) : c ∈ kLab K b := by
+  cases d with
+  | true => exact kd_kk_pp hI K a ha hc b hb
+  | false => exact kd_kk_pp_dn hI K a ha hc b hb
+
+open Classical in
+/-- And `hkppi`. -/
+theorem kd_kk_ppi_any (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x)
+    (a : Nat) (ha : a < K.p) {c : Concept} (hc : Concept.all ppi c ∈ kLab K a)
+    (b : Nat) (hb : b < K.p) : c ∈ kLab K b := by
+  cases d with
+  | true => exact kd_kk_ppi hI K a ha hc b hb
+  | false => exact kd_kk_ppi_dn hI K a ha hc b hb
+
+open Classical in
+/-- **§251.8 — THE KERNEL SIDE, AS FAR AS IT GOES.**  Four of `swCert_ok`'s six
+    kernel obligations, in one statement, for a kernel of either direction
+    labelled by `kLab`: the period is positive, the labels are `SupportOk`, and
+    both vertical universals reach every phase.
+
+    NOT included, and still open: `hkq` (cross-kernel universals) and the two
+    kernel/external universals `hek`/`hke` — all three concern DECLARED edges to
+    objects outside the kernel, so none of them is a fact about `KernelData`.
+    `hkex` is reduced but not discharged (§§251.5–251.6). -/
+theorem kernel_side_ok (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
+    {L0 : Nat} {d : Bool} {x : α} (K : KernelData I C0 Ds L0 d x) :
+    0 < K.p ∧
+    (∀ a, SupportOk I C0 (K.c (K.i + a)) (kLab K a)) ∧
+    (∀ a, a < K.p → ∀ c, Concept.all pp c ∈ kLab K a →
+      ∀ b, b < K.p → c ∈ kLab K b) ∧
+    (∀ a, a < K.p → ∀ c, Concept.all ppi c ∈ kLab K a →
+      ∀ b, b < K.p → c ∈ kLab K b) :=
+  ⟨K.ppos, kLab_ok hI K,
+   fun a ha _c hc b hb => kd_kk_pp_any hI K a ha hc b hb,
+   fun a ha _c hc b hb => kd_kk_ppi_any hI K a ha hc b hb⟩
+
+/-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
 `ptExtend_prefix` supplies the prerequisite §246.1 named: the stage is a literal
 prefix of its extension, so `vs_n ⊆ vs_m` holds on the nose and the gated sets
