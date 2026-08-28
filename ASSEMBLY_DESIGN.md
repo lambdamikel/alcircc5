@@ -16314,3 +16314,37 @@ strings before I checked the file (`CAPS` was still `[1,2]`, which was the
 timeout; one patch landed inside `prune` instead of `main`). Same trap as the
 docstring insertion earlier in the campaign. Every edit here now carries an
 `assert`.
+
+### §275 — G2 begun: the unfolding is a strict order
+
+Occurrences are DEMAND WORDS — the root is `[]`, a child prefixes its birth step.
+Distinct words are distinct occurrences, which is obligation O08 (freshness) by
+construction: nothing is ever reused, so nothing can be borrowed. That single
+design choice is what makes §256's counterexample, and round 2's D1 and D2,
+inexpressible here.
+
+**`tcl_irrefl` could not be reused, and the reason is worth recording.** It
+derives irreflexivity FROM a model (`tcl_sub_pp`: steps map to the model's `PP`,
+which is irreflexive). The whole point of this gate is to BUILD a model, so that
+is circular here. `tcl_irrefl_measure` replaces it with a purely syntactic
+argument: any step relation with a strictly increasing `Int` measure has an
+irreflexive transitive closure. This is the fourth piece of retired-layer
+material examined and the FIRST that did not transfer — the pattern from
+§§270–272 is real but not universal.
+
+The measure is the plan's own first soundness obligation — *every base order edge
+raises an integer occurrence height by one*. `ohgt` counts `+1` per `PP` birth
+and `−1` per `PPI` birth; `DR`/`PO` births contribute nothing, which is correct
+because they open a fresh vertical component and generate no order edge at all.
+`ostep_hgt` then gives `unfLt_irrefl` and `unfLt_hgt`, with `unfLt_trans` free
+from `tcl_trans`.
+
+**O09 (strict order) is done.** Remaining in G2: O10 (disjoint geometry — `disj`
+as the symmetric downward closure of `DR` births), O11 (protected PO), and then
+O12, which is already ours (`odNet_frame`): an `ODStruct` is a composition-closed
+RCC5 network. The interesting one is `ltNotDj`, the clause round 2's D2 exploited
+— here it should hold structurally, because a `DR` birth opens a new component
+and `unfLt` never leaves one.
+
+Build: 43,381 lines, 2,205 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

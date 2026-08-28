@@ -42242,6 +42242,78 @@ theorem coneScheme_complete (hI : RCC5Interp I) (C0 : Concept) {x : α}
     ∃ q ∈ gfpIter pruneSig (sigStatic C0) n, C0 ∈ q.1 :=
   ⟨dkey C0 I x, modelSigs_in_gfp hI C0 n _ (mem_modelSigs hI C0 hx),
    mem_mty.mpr ⟨cl_self C0, hC0⟩⟩
+/-! #### §275 — G2: THE FRESH-OCCURRENCE UNFOLDING IS A STRICT ORDER
+
+The model side of the ConeScheme.  Occurrences are DEMAND WORDS: the root is
+`[]` and a child prefixes its birth step, so nothing is ever reused and the
+underlying graph is a tree.
+
+`tcl_irrefl` (§?) cannot serve here: it derives irreflexivity FROM a model, and
+the whole point of this gate is to BUILD one.  The syntactic replacement is a
+height, which is the plan's own soundness obligation 1 — *every base order edge
+raises an integer occurrence height by one*. -/
+
+theorem tcl_mono_measure {β : Type} (step : β → β → Prop) (h : β → Int)
+    (hstep : ∀ a b, step a b → h a < h b) :
+    ∀ a b, tcl step a b → h a < h b := by
+  intro a b hab
+  induction hab with
+  | base hs => exact hstep _ _ hs
+  | tail _ hs ih =>
+      have hs' := hstep _ _ hs
+      omega
+
+/-- **§275.1 — IRREFLEXIVITY FROM A MEASURE**, with no model in sight. -/
+theorem tcl_irrefl_measure {β : Type} (step : β → β → Prop) (h : β → Int)
+    (hstep : ∀ a b, step a b → h a < h b) (a : β) : ¬ tcl step a a := by
+  intro hc
+  have := tcl_mono_measure step h hstep a a hc
+  omega
+
+/-- An occurrence: the word of demands taken from the root, most recent first.
+    Distinct words are distinct occurrences — this is the freshness (O08) that
+    the retired architecture kept trying to avoid. -/
+abbrev Occ := List (Atom × Nat)
+
+/-- The base order edges: a `PP` birth orients parent below child, a `PPI` birth
+    orients child below parent.  `DR` and `PO` births start a fresh vertical
+    component and contribute no order edge. -/
+inductive ostep : Occ → Occ → Prop
+  | up (i : Nat) (w : Occ) : ostep w ((pp, i) :: w)
+  | dn (i : Nat) (w : Occ) : ostep ((ppi, i) :: w) w
+
+/-- The occurrence height. -/
+def ohgt : Occ → Int
+  | [] => 0
+  | (r, _) :: w => (if r = pp then 1 else if r = ppi then -1 else 0) + ohgt w
+
+theorem ohgt_pp (i : Nat) (w : Occ) : ohgt ((pp, i) :: w) = 1 + ohgt w := rfl
+
+theorem ohgt_ppi (i : Nat) (w : Occ) : ohgt ((ppi, i) :: w) = -1 + ohgt w := rfl
+
+theorem ostep_hgt {a b : Occ} (h : ostep a b) : ohgt a < ohgt b := by
+  cases h with
+  | up i w =>
+      rw [ohgt_pp]
+      omega
+  | dn i w =>
+      rw [ohgt_ppi]
+      omega
+
+/-- **§275.2 — THE UNFOLDING'S ORDER.** -/
+def unfLt : Occ → Occ → Prop := tcl ostep
+
+theorem unfLt_irrefl (w : Occ) : ¬ unfLt w w :=
+  tcl_irrefl_measure ostep ohgt (fun _ _ => ostep_hgt) w
+
+theorem unfLt_trans {u v w : Occ} (h1 : unfLt u v) (h2 : unfLt v w) :
+    unfLt u w := tcl_trans ostep h1 h2
+
+/-- **§275.3 — AND IT RAISES THE HEIGHT**, which is what makes the order a
+    genuine strict order rather than merely an acyclic-looking relation: the
+    obligation the plan states first, discharged first. -/
+theorem unfLt_hgt {u v : Occ} (h : unfLt u v) : ohgt u < ohgt v :=
+  tcl_mono_measure ostep ohgt (fun _ _ => ostep_hgt) u v h
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
