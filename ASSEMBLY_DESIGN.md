@@ -15339,3 +15339,47 @@ side condition.
 
 Build: 41,187 lines, 2,085 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §254 — the borrowed edge
+
+§250 leaves the blocked node `v` with a serving node in the set — the gate-mate
+`a`'s witness `z` — but no EDGE to it. The certificate declares one: `v < z`,
+PP-labelled, between two DISTINCT occurrences. Two things must hold.
+
+**Propagation — unconditional, and it applies to the actual witness.**
+`declared_edge_all` is parameterised by any `s` with `rho a s = pp`, which
+`ptChild_rho` supplies, so it applies to `ptChild` itself rather than to some
+abstract witness. `borrowed_ee_all` (and its `∀PPI` mirror) therefore needs
+nothing but `mty a = mty v`: `v` and `a` need not be identified, or even related
+in the model. `borrowed_e_ex` is the other half — the witness carries the
+demand's argument — and `borrowed_edge_ok` packages both.
+
+**Acyclicity — the dichotomy, and where it stops.** `borrowed_edge_dichotomy`
+(AXIOM-FREE) says declaring `v < z` is unsafe exactly when `z` already lies below
+`v`, and that in that case `comp(PP,PP) = {PP}` forces `a < v` in the model. So
+the bad case is not arbitrary: it is **a type repeat on an ascending PP-chain**,
+since `mty a = mty v` by construction.
+
+`borrowed_cycle_cuts` then reads `path_cut` at exactly that configuration:
+anything below `a` reaches `v` directly and finds everything `a` carried. So a
+chain that enters the bad case was not repeat-free, and the shorter chain serves
+the same demands.
+
+**What is still missing, stated precisely.** That is not yet a proof that the bad
+case never arises. It needs the extraction to CHOOSE repeat-free chains, and that
+needs the step graph — `ptIter` records a node LIST, not the parent relation.
+Recording the step graph is the concrete next brick; `short_chain` (repeat-free
+chains are bounded by `|typeEnum C₀|`) is the bound already waiting for it.
+
+`borrowed_edge_safe` is the form a frame construction consumes: GIVEN that the
+witness is not already below the blocked node, the declared edge serves,
+propagates, and admits no reverse edge.
+
+**What is NOT at risk here.** Failure of acyclicity means `odSeed`'s `hirrE` has
+no proof — the declared order is not a strict order. It does not mean
+unsoundness through identification: `v` and `z` stay distinct occurrences, which
+is the whole content of round-7 blocking versus round 6's `L_Q(π,π) = EQ`
+collapse.
+
+Build: 41,322 lines, 2,092 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

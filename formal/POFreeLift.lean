@@ -40120,6 +40120,141 @@ theorem ek_all_of_site (hI : RCC5Interp I) {C0 : Concept} {Ds : List Concept}
   refine ek_all_of_row hI K (fun (y : α) => y) e hed a row r c hc ?_ hconv
   rw [hrows.ctx e he (K.i + a) K.i (Nat.le_add_right _ _) (Nat.le_refl _)]
   exact hrow
+/-! #### §254 — THE BORROWED EDGE
+
+§250 leaves the blocked node `v` with a serving node in the set — the gate-mate
+`a`'s witness — but no EDGE to it.  The certificate declares one: `v < z`,
+PP-labelled, between two DISTINCT occurrences.  Two things must then hold.
+
+* **Propagation.** Every `∀PP.E` in `v`'s label must reach `z`.  This is
+  `declared_edge_all`, and it applies to the ACTUAL `ptChild` rather than to some
+  abstract witness, because it is parameterised by any `s` with `rho a s = pp` —
+  which `ptChild_rho` supplies.  So §254.1 below is unconditional.
+
+* **Acyclicity.** `z` must not already lie above `v`.  That is a property of the
+  step graph, not of labels, and it is NOT proved here — it is
+  `declared_edge_package`'s standing caveat and `wp114`'s residue.
+
+The distinction matters: what fails without acyclicity is that the declared
+order is not a strict order, so `odSeed`'s `hirrE` has no proof.  What does NOT
+happen is unsoundness through identification — `v` and `z` stay distinct
+occurrences, which is the whole content of round-7 blocking versus round 6's
+`L_Q(π,π) = EQ` collapse. -/
+
+open Classical in
+/-- **§254.1 — THE BORROWED PP-EDGE PROPAGATES `∀PP`.**  Unconditional: the
+    gate-mate's witness satisfies every `∀PP` body the blocked node owes. -/
+theorem borrowed_ee_all (hI : RCC5Interp I) (C0 : Concept) (v a : PtIdx I C0)
+    (hty : mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v))
+    {D : Concept} (hD : Concept.ex pp D ∈ mtyLab hI C0 a)
+    (E : Concept) (hE : Concept.all pp E ∈ mtyLab hI C0 v) :
+    E ∈ mtyLab hI C0
+      (Sum.inl ⟨ptChild (mtyLab_ok hI C0 a) hD,
+        ptChild_dom (mtyLab_ok hI C0 a) hD⟩ : PtIdx I C0) := by
+  have hcl : E ∈ cl C0 := cl_all (mem_normL.mp hE).1
+  refine mem_normL.mpr ⟨hcl, ?_⟩
+  exact declared_edge_all C0 (ptChild_dom (mtyLab_ok hI C0 a) hD) hty.symm
+    (ptChild_rho (mtyLab_ok hI C0 a) hD) (mem_normL.mp hE).2
+
+open Classical in
+/-- **§254.2 — AND THE DESCENDING MIRROR.** -/
+theorem borrowed_ee_all_ppi (hI : RCC5Interp I) (C0 : Concept)
+    (v a : PtIdx I C0)
+    (hty : mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v))
+    {D : Concept} (hD : Concept.ex ppi D ∈ mtyLab hI C0 a)
+    (E : Concept) (hE : Concept.all ppi E ∈ mtyLab hI C0 v) :
+    E ∈ mtyLab hI C0
+      (Sum.inl ⟨ptChild (mtyLab_ok hI C0 a) hD,
+        ptChild_dom (mtyLab_ok hI C0 a) hD⟩ : PtIdx I C0) := by
+  have hcl : E ∈ cl C0 := cl_all (mem_normL.mp hE).1
+  refine mem_normL.mpr ⟨hcl, ?_⟩
+  exact declared_edge_all_ppi C0 (ptChild_dom (mtyLab_ok hI C0 a) hD) hty.symm
+    (ptChild_rho (mtyLab_ok hI C0 a) hD) (mem_normL.mp hE).2
+
+open Classical in
+/-- **§254.3 — THE BORROWED EDGE SERVES ITS DEMAND.**  The other half of `e_ex`:
+    the witness carries the demand's argument.  (`ptChild_lab` at `mtyLab`.) -/
+theorem borrowed_e_ex (hI : RCC5Interp I) (C0 : Concept) (a : PtIdx I C0)
+    {r : Atom} {D : Concept} (hD : Concept.ex r D ∈ mtyLab hI C0 a) :
+    D ∈ mtyLab hI C0
+      (Sum.inl ⟨ptChild (mtyLab_ok hI C0 a) hD,
+        ptChild_dom (mtyLab_ok hI C0 a) hD⟩ : PtIdx I C0) :=
+  ptChild_lab hI (mtyLab hI C0) (mtyLab_ok hI C0) a hD
+
+open Classical in
+/-- **§254.4 — THE BORROWED EDGE, PACKAGED.**  For a blocked node `v` and its
+    gate-mate `a`, the declared PP-edge to `a`'s witness discharges BOTH halves
+    of what the certificate asks of it: the demand is served, and every `∀PP`
+    body of `v` holds at the target.  Nothing here needs `v` and `a` to be
+    identified, or even related in the model — only `mty a = mty v`.
+
+    The one thing it does not give is acyclicity; see the section note. -/
+theorem borrowed_edge_ok (hI : RCC5Interp I) (C0 : Concept) (v a : PtIdx I C0)
+    (hty : mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v))
+    {D : Concept} (hD : Concept.ex pp D ∈ mtyLab hI C0 a) :
+    ∃ z : PtIdx I C0,
+      I.rho (ptIdxPoint hI a) (ptIdxPoint hI z) = pp ∧
+      D ∈ mtyLab hI C0 z ∧
+      ∀ E, Concept.all pp E ∈ mtyLab hI C0 v → E ∈ mtyLab hI C0 z :=
+  ⟨Sum.inl ⟨ptChild (mtyLab_ok hI C0 a) hD,
+      ptChild_dom (mtyLab_ok hI C0 a) hD⟩,
+   ptChild_rho (mtyLab_ok hI C0 a) hD,
+   borrowed_e_ex hI C0 a hD,
+   fun E hE => borrowed_ee_all hI C0 v a hty hD E hE⟩
+open Classical in
+/-- **§254.5 — THE ACYCLICITY DICHOTOMY.**  Declaring `v < z` is unsafe exactly
+    when `z` already lies below `v`; and in that case the model itself contains
+    `a < v` with `a` and `v` of the SAME type.  So the bad case is not arbitrary
+    — it is a type repeat on an ascending `PP`-chain. -/
+theorem borrowed_edge_dichotomy (hI : RCC5Interp I)
+    {v a z : α} (ha : I.dom a) (hv : I.dom v) (hz : I.dom z)
+    (haz : I.rho a z = pp) :
+    I.rho z v ≠ pp ∨ I.rho a v = pp := by
+  by_cases h : I.rho z v = pp
+  · exact Or.inr (rho_forced hI ha hv hz haz h (by decide))
+  · exact Or.inl h
+
+open Classical in
+/-- **§254.6 — AND THE BAD CASE IS REMOVABLE.**  `path_cut`, read at exactly the
+    configuration §254.5 produces: with `a < v` and `mty a = mty v`, anything
+    below `a` reaches `v` directly and finds everything `a` carried.  So a chain
+    that enters the bad case was not repeat-free, and the shorter chain serves
+    the same demands.
+
+    THIS IS NOT YET A PROOF THAT THE BAD CASE NEVER ARISES.  That needs the
+    extraction to CHOOSE repeat-free chains, which needs the step graph — and
+    `ptIter` records a node LIST, not the parent relation.  Recording the step
+    graph is the concrete next brick; `short_chain` (repeat-free chains are
+    bounded by `|typeEnum C₀|`) is the bound waiting for it. -/
+theorem borrowed_cycle_cuts (hI : RCC5Interp I) (C0 : Concept)
+    {u a v : α} (hu : I.dom u) (ha : I.dom a) (hv : I.dom v)
+    (hua : I.rho u a = pp) (hav : I.rho a v = pp)
+    (hty : mty C0 I a = mty C0 I v) {D : Concept} (hD : D ∈ mty C0 I a) :
+    I.rho u v = pp ∧ D ∈ mty C0 I v :=
+  path_cut hI hu ha hv hua hav hty hD
+
+open Classical in
+/-- **§254.7 — THE BORROWED EDGE, WITH ITS SIDE CONDITION.**  Everything §254
+    establishes, in the form a frame construction consumes: given that the
+    gate-mate's witness is not already below the blocked node, the declared
+    PP-edge serves the demand, propagates every `∀PP`, and is consistent with
+    the model's own order in the sense that no reverse edge exists. -/
+theorem borrowed_edge_safe (hI : RCC5Interp I) (C0 : Concept) (v a : PtIdx I C0)
+    (hty : mty C0 I (ptIdxPoint hI a) = mty C0 I (ptIdxPoint hI v))
+    {D : Concept} (hD : Concept.ex pp D ∈ mtyLab hI C0 a)
+    (hacyc : I.rho (ptIdxPoint hI a) (ptIdxPoint hI v) ≠ pp) :
+    ∃ z : PtIdx I C0,
+      I.rho (ptIdxPoint hI a) (ptIdxPoint hI z) = pp ∧
+      I.rho (ptIdxPoint hI z) (ptIdxPoint hI v) ≠ pp ∧
+      D ∈ mtyLab hI C0 z ∧
+      ∀ E, Concept.all pp E ∈ mtyLab hI C0 v → E ∈ mtyLab hI C0 z := by
+  obtain ⟨z, hrz, hDz, hall⟩ := borrowed_edge_ok hI C0 v a hty hD
+  refine ⟨z, hrz, ?_, hDz, hall⟩
+  rcases borrowed_edge_dichotomy hI (v := ptIdxPoint hI v)
+    (ptIdxPoint_dom hI a) (ptIdxPoint_dom hI v) (ptIdxPoint_dom hI z) hrz with
+    h | h
+  · exact h
+  · exact absurd h hacyc
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
