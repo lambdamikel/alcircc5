@@ -344,6 +344,24 @@ The non-return properties (once leaving $\DR$, $\PO$, or $\PP$,
 the sequence cannot return) ensure eventual constancy.
 \end{proof}
 
+\begin{remark}[The lemma is one-sided]\label{rem:one-sided}
+Lemma~\ref{lem:external} fixes $e$ and varies the chain.  It does
+\emph{not} follow, by applying it twice, that a relation between two
+chains has a double limit
+$\lim_{i,j\to\infty} \rho(d_i, d_j)$: stabilizing every row and
+every column is strictly weaker.  Let
+$M = \mathbb{Z}\times\{0,1\}$ with $(n,u) < (m,v)$ iff $n<m$ and
+no disjointness, so that
+$\rho((i,0),(j,1)) = \PP$ for $i<j$, $\PO$ for $i=j$ and $\PPI$
+for $i>j$.  Both coordinate sequences are $\PP$-chains, every row and
+every column stabilizes, yet every tail
+$\{(i,j) : i,j \ge N\}$ contains all three values.  This structure is
+ordered-disjoint, hence a composition-closed RCC5 network.
+
+An earlier version of Step~2 of Theorem~\ref{thm:completeness} used
+exactly that inference; see Remark~\ref{rem:step2-repair}.
+\end{remark}
+
 \begin{definition}[Recurrent types, $T_\infty$]\label{def:tinf}
 For a $\PP$-chain $(d_i)_{i \ge 0}$, define
 $T_\infty = \{\tau \in \Tp(C_0) : \tau = \tp(d_i) \text{ for
@@ -570,10 +588,52 @@ $D \le 2^{|\Tp(C_0)|} \le 2^{2^{|\cl(C_0)|}}$ is a computable
 bound on the number of distinct descriptors.
 
 \medskip\noindent\textit{Step 2: Kernel-to-kernel relations.}\;
-For each pair of representative chains $\alpha, \beta$: the doubly
-stabilized relation $\rho(k_\alpha, k_\beta)$ is
-$\lim_{i,j \to \infty} \rho(d_i^{(\alpha)}, d_j^{(\beta)})$.
-This is well-defined by Lemma~\ref{lem:external} applied twice.
+The quotient needs one relation per ordered pair of kernels, and it
+reads only the finitely many \emph{phases} of each.  We therefore do
+not need---and by Remark~\ref{rem:one-sided} cannot have---a double
+limit over the two chains.  What is needed, and what holds, is a
+constant finite \emph{rectangle}:
+
+\begin{lemma}[Simultaneous finite rectangles]\label{lem:rectangle}
+Let $(c_k)_{k<m}$ be finitely many strict chains in one model, each
+ascending or descending.  For every bound $L$ there are indices
+$s_k \ge L$, periods $p_k > 0$ and atoms $q_{k\ell}$ such that
+$\tp(c_k(s_k)) = \tp(c_k(s_k+p_k))$ and
+\[
+  \rho\bigl(c_k(s_k+a),\, c_\ell(s_\ell+b)\bigr) = q_{k\ell}
+  \qquad\text{for all } k \ne \ell,\ a<p_k,\ b<p_\ell .
+\]
+\end{lemma}
+
+\noindent The proof applies the transition-rank argument behind
+Lemma~\ref{lem:external} \emph{twice in the legitimate order}: once
+to each row, and then to the sequence of eventual row values, which
+obeys the same transition relation because composition relates
+$c_k(i)$, $c_k(i{+}1)$ and the other chain.  That yields, for one pair,
+a constant relation on any finite segment of the first chain against a
+sufficiently late tail of the second.  A triangular fusion over the
+finite family---placing each chain's segment beyond every threshold
+imposed by those already placed, and taking the reverse direction by
+converse rather than by a second application---gives all pairs at once,
+and finite type recurrence supplies the equal-type endpoints after each
+maximum.  Set $\rho(k_\alpha,k_\beta) := q_{\alpha\beta}$.
+
+\begin{remark}[Repair of an earlier gap]\label{rem:step2-repair}
+Earlier versions of this step defined
+$\rho(k_\alpha,k_\beta) = \lim_{i,j\to\infty}\rho(d_i,d_j)$ and
+justified it by ``Lemma~\ref{lem:external} applied twice''.  That
+inference is invalid (Remark~\ref{rem:one-sided}), and the limit need
+not exist.  Lemma~\ref{lem:rectangle} is the correct statement, and it
+suffices because the quotient reads only finitely many phases.  It is
+machine-checked in Lean~4 as \texttt{fused\_kq\_all} (with
+\texttt{two\_tower\_rectangle\_gen} and
+\texttt{finite\_fusion\_recurrent}) in
+\texttt{formal/POFreeLift.lean}; the counterexample of
+Remark~\ref{rem:one-sided} is likewise verified there.  For distinct
+kernels $q_{\alpha\beta} \ne \EQ$, since a segment of length at least
+two of a strict chain contains distinct points while a constant $\EQ$
+rectangle would identify them.
+\end{remark}
 
 By Lemma~\ref{lem:phase-uniform},
 $\rho(k_\alpha, k_\beta) \in \Safe(\tau, \Core(\Desc_\beta))$ for

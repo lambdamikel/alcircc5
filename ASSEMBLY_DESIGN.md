@@ -16073,3 +16073,41 @@ is the natural mistake here rather than a careless one.
 One re-read found one gap; the ledger's presumption (a defect in all but two of
 seventeen reviews) applies to it in full, and its Steps 3–6 were read once,
 today, by an interested party.
+
+### §269.1 — the paper is fixed, and the provenance of the defect
+
+`two_tier_quotient_ALCIRCC5.tex` is repaired and recompiles clean (13pp, 0
+errors, 0 undefined refs):
+
+* **Remark [The lemma is one-sided]**, placed at `lem:external` itself, states
+  that stabilizing every row and column is strictly weaker than a double limit,
+  and gives the `ℤ × {0,1}` counterexample.
+* **Step 2 rewritten.** The double limit is replaced by **Lemma [Simultaneous
+  finite rectangles]** — finitely many chains admit segments, beyond any bound,
+  with equal-type endpoints and a constant relation on every pairwise rectangle
+  — with the proof sketch naming the two legitimate applications of the rank
+  argument (per row, then to the row limits) and the triangular fusion, plus the
+  converse trick for the reverse direction.
+* **Remark [Repair of an earlier gap]** records what the old step said, why it
+  was invalid, that the quotient only reads finitely many phases so the finite
+  form suffices, and cites the Lean theorems (`fused_kq_all`,
+  `two_tower_rectangle_gen`, `finite_fusion_recurrent`) plus the `≠ EQ` argument.
+
+**Provenance, since it was asked.** Claude wrote the paper; **GPT-5.4 Pro
+reviewed it four times** (CONVERSATION.md Parts 24, 26–28). So the defect is
+ours and it survived four adversarial rounds.
+
+**And the review came within one step of it.** `review2` §"A descriptor alone
+does not yet determine stabilized external behavior" quotes the very sentence:
+*"the paper defines `ρ(k_α,k_β)` as the doubly stabilized relation between two
+represented chains. This presupposes that a descriptor determines the stabilized
+external interface."* The objection is about whether the value is a FUNCTION OF
+THE DESCRIPTOR — it takes for granted that the value EXISTS. Both of us looked
+straight at the double limit and asked the harder-sounding question instead of
+the prior one.
+
+Worth keeping as a review heuristic: **before asking whether a limit is
+canonical, ask whether it exists.**
+
+The other papers are clean — `grep` finds no double-limit inference outside this
+file and the review that discussed it.
