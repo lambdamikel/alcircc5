@@ -106,7 +106,9 @@ forced by `∀PO`, which the fragment removes.
 > "(scoped, **not** open)". That was wrong, and is withdrawn. It was open, it
 > is open, and it is where the work now is.
 
-> **★ Update (2026-08-06): the ∀PO-free fragment is now DECIDABLE (three
+> **★ Update (2026-08-06) — SUPERSEDED, see the 2026-08-28 box above; its
+> headline overclaims and its "(scoped, not open)" line is withdrawn.**
+> *(as written then:)* **the ∀PO-free fragment is now DECIDABLE (three
 > quadrants certified, the fourth's pipeline proven).** The full-logic
 > question stays open (F6), but the campaign below is now **complete** for
 > most of the fragment. [`formal/POFreeLift.lean`](formal/POFreeLift.lean)
