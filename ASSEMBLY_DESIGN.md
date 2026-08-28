@@ -16136,3 +16136,42 @@ from the refuted borrowing architecture; it moves the Lean certification onto th
 route that was already the more robust of the two. That is a reason to expect the
 G2/G3 gates to go smoothly (they are Route 2's content, and much of it is already
 certified) and to concentrate the risk where §267 already put it: G4.
+
+### §270 — G1's control layer: signatures, transitions, elimination
+
+The ConeScheme's control graph, and the instantiation of §268.
+
+* `Sig = List Concept × List (List Concept)` — a support type plus an upper
+  bound on its strict `PP`-predecessors' types.
+* `supportB` — the Boolean support-type test, INCLUDING the plan's locality
+  clause (`∀EQ.D ∈ T ⟹ D ∈ T`, and likewise `∃EQ`), which is the condition
+  `wp133` was missing and mis-reporting as a failure of the plan.
+* `sigOkB` / `sigStatic` — local admissibility, filtered out of `keyEnum C₀`.
+  **The enumeration survives the pivot unchanged**: `keyEnum` was built in §261
+  for the retired down-spectrum key and is reused verbatim here, which is §267's
+  claim in miniature — the refutation cost an architecture, not the material.
+* `compatB` — transition compatibility per relation: `PP` pushes the cone into
+  the successor's predecessor set, `PPI` the converse, `DR` requires the two
+  cones' `∀DR` bodies to cross, `PO` and `EQ` impose nothing.
+* `pruneSig` — keep a signature exactly when every non-`EQ` demand still has a
+  compatible target in the current set.
+
+**`pruneSig_mono` is the tripwire, and it is in place** (propext + `Quot.sound`,
+no choice). `pruneSig` asks only that a target EXIST in `X`, so a larger `X`
+can only help. Any future strengthening — a closure condition, a coherence
+condition, anything quantifying universally over `X` — must re-prove it, and
+that is precisely where the retracted `(Q3)` failed. The docstring on `pruneSig`
+says so at the definition site, where it will be read.
+
+`coneScheme_gfp` assembles it: elimination reaches a fixed point within
+`|sigStatic C₀|` rounds, and that fixed point contains every set of signatures
+surviving its own elimination — the property gate G4 must supply from a model.
+
+**G1 status.** `finite_gfp` (O06) and the operator layer done;
+`support_type_reflection` (O02), `state_demand_enum_bound` (O03) and
+`transition_reflection` (O04) are stated Boolean-side and now need their
+semantic bridges — each an "accepts ⟺ the real condition" lemma of the kind
+`mem_normL`/`mem_dspec` already exemplify.
+
+Build: 42,997 lines, 2,180 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

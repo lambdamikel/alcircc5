@@ -41810,6 +41810,126 @@ theorem gfp_greatest (S : List σ) (Z : List σ)
       exact hmono Z (gfpIter prune S k) ih q (hZ q hq)
 
 end GFP
+/-! #### §270 — G1: SIGNATURES, TRANSITIONS, AND THE ELIMINATION OPERATOR
+
+The control layer of the ConeScheme route.  A signature `q = (T, S)` is a
+support type together with an upper bound on the types of its strict
+`PP`-predecessors — the same shape as the retired `dkey`, but now indexing a
+CONTROL STATE rather than a reused node, which is the whole point of the pivot.
+
+The enumeration is `keyEnum C₀` — `typeEnum × sublists typeEnum` — which survives
+from §261 unchanged, an instance of §267's claim that the refutation cost an
+architecture and not the supporting material. -/
+
+/-- `A ⊆ B`, as a Boolean. -/
+def subB (A B : List Concept) : Bool := A.all (fun c => B.contains c)
+
+theorem subB_iff {A B : List Concept} :
+    subB A B = true ↔ ∀ c ∈ A, c ∈ B := by
+  rw [subB, List.all_eq_true]
+  constructor
+  · intro h c hc; exact List.mem_of_elem_eq_true (h c hc)
+  · intro h c hc; exact List.elem_eq_true_of_mem (h c hc)
+
+/-- A signature: a support type plus an upper bound on the strict
+    `PP`-predecessors' types. -/
+abbrev Sig := List Concept × List (List Concept)
+
+/-- `cone(q) = S ∪ {T}`. -/
+def sigCone (q : Sig) : List (List Concept) := q.1 :: q.2
+
+/-- The Boolean support-type test: no `⊥`, no literal clash, `∧`/`∨` closed, and
+    `EQ` universals and existentials LOCAL (strong `EQ` is identity). -/
+def supportB (T : List Concept) : Bool :=
+  T.all (fun c => match c with
+    | Concept.bot => false
+    | Concept.atom a => !(T.contains (Concept.natom a))
+    | Concept.and c₁ c₂ => T.contains c₁ && T.contains c₂
+    | Concept.or c₁ c₂ => T.contains c₁ || T.contains c₂
+    | Concept.all Atom.eq D => T.contains D
+    | Concept.ex Atom.eq D => T.contains D
+    | _ => true)
+
+/-- Local admissibility of a signature: its type and every predecessor type are
+    support types, and the vertical universals relate the two tiers correctly. -/
+def sigOkB (q : Sig) : Bool :=
+  supportB q.1 &&
+  q.2.all supportB &&
+  q.2.all (fun U => subB (allBodies pp U) q.1 && subB (allBodies ppi q.1) U)
+
+/-- The finite static set: locally admissible signatures drawn from the
+    enumeration. -/
+def sigStatic (C0 : Concept) : List Sig :=
+  (keyEnum C0).filter sigOkB
+
+theorem sigStatic_sub (C0 : Concept) : ∀ q ∈ sigStatic C0, q ∈ keyEnum C0 :=
+  fun _ h => (List.mem_filter.mp h).1
+
+/-- Transition compatibility for a demand `∃r.D` from `q` to `q'`. -/
+def compatB (r : Atom) (D : Concept) (q q' : Sig) : Bool :=
+  q'.1.contains D &&
+  (match r with
+   | Atom.pp => (sigCone q).all (fun U => q'.2.contains U)
+   | Atom.ppi => (sigCone q').all (fun U => q.2.contains U)
+   | Atom.dr => (sigCone q).all (fun U =>
+       (sigCone q').all (fun V => subB (allBodies dr U) V && subB (allBodies dr V) U))
+   | Atom.po => true
+   | Atom.eq => true)
+
+/-- The non-`EQ` existential demands of a signature. -/
+def sigDemands (q : Sig) : List (Atom × Concept) :=
+  q.1.filterMap (fun c => match c with
+    | Concept.ex Atom.eq _ => none
+    | Concept.ex r D => some (r, D)
+    | _ => none)
+
+/-- **§270.1 — THE ELIMINATION OPERATOR.**  Keep a signature exactly when every
+    non-`EQ` demand still has a compatible target in the current set.
+
+    ⚠ This is the operator whose MONOTONICITY separates the route from the one
+    this project retracted (§267).  It asks only that a target EXIST in `X`.  Any
+    future strengthening — a closure condition, a coherence condition, anything
+    quantifying universally over `X` — must re-establish §270.3, and that is
+    exactly where the retracted `(Q3)` failed. -/
+def pruneSig (X : List Sig) : List Sig :=
+  X.filter (fun q => (sigDemands q).all
+    (fun rd => X.any (fun q' => compatB rd.1 rd.2 q q')))
+
+/-- **§270.2 — REDUCTIVE.** -/
+theorem pruneSig_red (X : List Sig) : ∀ q ∈ pruneSig X, q ∈ X :=
+  fun _ h => (List.mem_filter.mp h).1
+
+/-- **§270.3 — MONOTONE.**  The tripwire lemma: a larger set can only make more
+    targets available, never fewer. -/
+theorem pruneSig_mono (X Y : List Sig) (hXY : ∀ q, q ∈ X → q ∈ Y) :
+    ∀ q, q ∈ pruneSig X → q ∈ pruneSig Y := by
+  intro q hq
+  obtain ⟨hqX, hall⟩ := List.mem_filter.mp hq
+  refine List.mem_filter.mpr ⟨hXY q hqX, ?_⟩
+  rw [List.all_eq_true] at hall ⊢
+  intro rd hrd
+  have h1 := hall rd hrd
+  rw [List.any_eq_true] at h1 ⊢
+  obtain ⟨q', hq'X, hcomp⟩ := h1
+  exact ⟨q', hXY q' hq'X, hcomp⟩
+
+/-- Elimination preserves `Nodup`. -/
+theorem pruneSig_nodup (X : List Sig) (h : X.Nodup) : (pruneSig X).Nodup :=
+  List.Sublist.nodup List.filter_sublist h
+
+open Classical in
+/-- **§270.4 — THE CONTROL LAYER, ASSEMBLED.**  The elimination reaches a fixed
+    point within `|sigStatic C₀|` rounds, and that fixed point contains every set
+    of signatures that survives its own elimination — which is what a model will
+    be shown to supply (gate G4). -/
+theorem coneScheme_gfp (C0 : Concept) (hnd : (sigStatic C0).Nodup) :
+    (∃ N, N ≤ (sigStatic C0).length ∧
+      ∀ q ∈ gfpIter pruneSig (sigStatic C0) N,
+        q ∈ gfpIter pruneSig (sigStatic C0) (N + 1)) ∧
+    (∀ Z : List Sig, (∀ q ∈ Z, q ∈ sigStatic C0) → (∀ q ∈ Z, q ∈ pruneSig Z) →
+      ∀ n, ∀ q ∈ Z, q ∈ gfpIter pruneSig (sigStatic C0) n) :=
+  ⟨gfpIter_stabilizes pruneSig pruneSig_red (sigStatic C0) pruneSig_nodup hnd,
+   fun Z hZS hZ => gfp_greatest pruneSig pruneSig_mono (sigStatic C0) Z hZS hZ⟩
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
