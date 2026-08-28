@@ -41545,6 +41545,59 @@ theorem ptIterD_phase1 (hI : RCC5Interp I) (C0 : Concept)
   · exact Or.inr (Or.inl h)
   · exact Or.inr (Or.inr
       ⟨z, ptIterG_closed hI (ptDGate hI C0) _ _ ns0 N (hstab 1) z hz, hDz⟩)
+/-! #### §264 — THE HORIZONTAL BORROWED EDGE
+
+§254 handled the borrowed `∃PP` edge.  The horizontal cases (`∃DR`, `∃PO`) were
+left open, and they are NOT the same problem, for a reason visible in `odSeed`:
+disjointness there is the DOWNWARD CLOSURE of a seed, so declaring `v DR z`
+declares `x DR y` for every `x ≤ v` and `y ≤ z`.  The edge therefore carries
+obligations on the two CONES, not just on its endpoints.
+
+Those obligations turn out to yield to the same argument as §259.  In the model
+`a DR z`, so `a`'s cone is `DR` from `z`'s cone outright — two forced cells,
+`comp(PP,DR) = {DR}` and `comp(DR,PPI) = {DR}`.  Under the down-spectrum key `v`'s
+cone has `a`'s types, so every `∀DR` body it carries transfers. -/
+
+/-- **§264.1 — PROPAGATION ALONG A BORROWED EDGE, ANY RELATION.**  `mty_all` is
+    generic in the relation, so `declared_edge_all` never needed `pp`. -/
+theorem declared_edge_all_any (C0 : Concept) {v a s : α} (hs : I.dom s)
+    (hty : mty C0 I v = mty C0 I a) {r : Atom} (has : I.rho a s = r)
+    {E : Concept} (hE : Concept.all r E ∈ mty C0 I v) : E ∈ mty C0 I s := by
+  rw [hty] at hE
+  exact mty_all hE hs has
+
+/-- **§264.2 — AND THE CONE OBLIGATION IS MET.**  For `x` below the blocked node
+    and `y` below the borrowed witness, the declared `DR` between them propagates
+    every `∀DR` body — because the down-spectrum key puts a same-typed `x'` below
+    the gate-mate, and `x'` is `DR` from `y` in the MODEL. -/
+theorem borrowed_dr_cone (hI : RCC5Interp I) (C0 : Concept) {a v z x y : α}
+    (ha : I.dom a) (hz : I.dom z) (hx : I.dom x) (hy : I.dom y)
+    (haz : I.rho a z = dr) (hyz : I.rho y z = pp) (hxv : I.rho x v = pp)
+    (hspec : ∀ u, I.dom u → I.rho u v = pp →
+      ∃ u', I.dom u' ∧ I.rho u' a = pp ∧ mty C0 I u' = mty C0 I u)
+    {E : Concept} (hall : Concept.all dr E ∈ mty C0 I x) :
+    E ∈ mty C0 I y := by
+  obtain ⟨x', hx', hx'a, hty⟩ := hspec x hx hxv
+  have hall' : Concept.all dr E ∈ mty C0 I x' := by rw [hty]; exact hall
+  have hx'z : I.rho x' z = dr := rho_forced hI hx' hz ha hx'a haz (by decide)
+  have hzy : I.rho z y = ppi := by
+    have h2 := hI.conv_ y z hy hz
+    rw [hyz] at h2; rw [h2]; rfl
+  exact mty_all hall' hy (rho_forced hI hx' hy hz hx'z hzy (by decide))
+
+open Classical in
+/-- **§264.3 — AT THE DOWN-SPECTRUM KEY.**  The premise of §264.2 is exactly what
+    sharing a key supplies, so a horizontal borrowed edge is as safe as the
+    vertical one: propagation at the endpoints by §264.1, and on the cones the
+    declared disjointness forces by §264.2. -/
+theorem borrowed_dr_ok (hI : RCC5Interp I) (C0 : Concept) {a v z x y : α}
+    (ha : I.dom a) (hz : I.dom z) (hx : I.dom x) (hy : I.dom y)
+    (hkey : dkey C0 I a = dkey C0 I v)
+    (haz : I.rho a z = dr) (hyz : I.rho y z = pp) (hxv : I.rho x v = pp)
+    {E : Concept} (hall : Concept.all dr E ∈ mty C0 I x) :
+    E ∈ mty C0 I y :=
+  borrowed_dr_cone hI C0 ha hz hx hy haz hyz hxv
+    (hspec_of_dkey C0 I hkey) hall
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

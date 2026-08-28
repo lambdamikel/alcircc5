@@ -15789,3 +15789,39 @@ nodes still needs `declared_edge_package` for `∃PP` and is open horizontally, 
 
 Build: 42,612 lines, 2,150 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §264 — the horizontal borrowed edge
+
+§254 handled the borrowed `∃PP` edge and left `∃DR`/`∃PO` open. They are not the
+same problem, for a reason visible in `odSeed`: disjointness there is the
+DOWNWARD CLOSURE of a seed, so declaring `v DR z` also declares `x DR y` for every
+`x ≤ v`, `y ≤ z`. The edge carries obligations on the two CONES, not just its
+endpoints.
+
+They yield to the same argument as §259. `declared_edge_all_any` first: `mty_all`
+is generic in the relation, so `declared_edge_all` never needed `pp` — endpoint
+propagation is immediate for every relation. Then `borrowed_dr_cone`: in the model
+`a DR z`, so `a`'s cone is `DR` from `z`'s cone outright, by the two forced cells
+`comp(PP,DR) = {DR}` and `comp(DR,PPI) = {DR}`; and under the down-spectrum key
+`v`'s cone carries `a`'s types, so every `∀DR` body transfers. `borrowed_dr_ok` is
+the instance at `dkey`.
+
+`∃PO` needs nothing further: a PO edge carries no universal obligation in this
+fragment (`mty_no_all_po`), and in `odNet` PO is the residual, so declaring it is
+just declining to put the pair in `lt` or `disj`. `∃EQ` is `sat_of_ex_eq`.
+
+**So every `e_ex` case now has its edge.** What is NOT closed is GLOBAL acyclicity:
+§255.4 chooses each borrowed edge safely one at a time, and when an AGREEING
+witness exists the declared order embeds in the model's `PP`, making irreflexivity
+free (§255.2). But `borrowed_edge_choosable`'s fallback only guarantees the
+witness is not BELOW the blocked node, not that it is above it — so in the
+fallback the declared edge need not agree with the model, and `odSeed`'s `hirrE`
+has no proof. That is exactly the residue `wp131` part G measured: 132 of 1,040
+instances used the fallback, none cycled.
+
+**Remaining, in full:** global acyclicity in the fallback case; `hkex` placement
+(Target C); and the packaging (rebuild `KernelData` from the fused segments, `Fin`
+reindex, `encodeMT`/`hcompl`, final `MergedExtractionAt`).
+
+Build: 42,672 lines, 2,153 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
