@@ -1465,6 +1465,22 @@ $A$'' ($\exists\PO.A$), ``all disjoint things are $B$''
 ($\forall\DR.B$), and impose arbitrary part-of nesting---so this is the
 project's strongest unconditional $\ALCIRCC{5}$ result.
 
+\begin{remark}[A gap in the proof of Theorem~\ref{thm:pofree}, found and
+repaired 2026-08-28]\label{rem:pofree-gap}
+The two-tier completeness argument defined the relation between two kernels as a
+double limit $\lim_{i,j\to\infty}\rho(d_i,d_j)$, justified by its external
+stabilization lemma ``applied twice''. That lemma is one-sided---it fixes an
+element and varies the chain---and stabilizing every row and every column is
+strictly weaker than a double limit, which need not exist: in
+$\mathbb{Z}\times\{0,1\}$ ordered by first coordinate, every row and column
+stabilizes while every tail carries $\PP$, $\PO$ and $\PPI$. The step is
+repaired by replacing the limit with a \emph{simultaneous finite rectangle}
+(finitely many chains admit segments, beyond any bound, with equal-type endpoints
+and one constant relation per pair), which is what the quotient needs since it
+reads only finitely many phases. The repair is machine-checked
+(\code{fused\_kq\_all}). The theorem and its bound are unaffected.
+\end{remark}
+
 \paragraph{Re-examined, and its soundness core certified (2026-07-18).} A
 cold review (\S\ref{sec:agentic}) rightly flagged that the rationale above
 leans on the ``horizontal freedom'' intuition that
@@ -1596,8 +1612,18 @@ device above cashes in. Scope, stated exactly: the three \emph{pure} quadrants
 are certified \emph{generally}, each with a non-vacuous satisfiable witness
 (\code{Cvert}, \code{Ccar}, \code{Calt}, \code{Clin}, \code{Cdesc}); the
 \emph{mixed} quadrant's certificate, encoding, and decision are certified on a
-witness, with the \emph{general} mixed extraction---an \code{mtk}-with-kernels
-construction---the one remaining formalization (scoped, not open). And, as with
+witness, with the \emph{general} mixed extraction the one remaining
+formalization.
+
+\emph{Correction (2026-08-28).} An earlier version of this sentence called that
+extraction ``scoped, not open''. That was an overclaim and is withdrawn: two
+rounds of cold attack have since refuted the extraction architecture it referred
+to---a finite node set reused by blocking and borrowing witnesses---by exact
+finite countermodels, and the formalization has been restarted on a different
+architecture (a finite control graph with a fresh-occurrence unfolding, in which
+no node is reused). This concerns the \emph{certification} of
+Theorem~\ref{thm:pofree}, not the theorem, whose proof is the two-tier quotient
+and is independent of that route; see Remark~\ref{rem:pofree-gap}. And, as with
 every result in this project that a cold reviewer has not yet seen, these
 fragment theorems are \emph{unreviewed}: the standing ledger presumption
 (\S\ref{sec:agentic}) applies to them in full.
