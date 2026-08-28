@@ -16198,3 +16198,33 @@ the same shape as these two — and `abstract_scheme`/`strategy_extraction`
 
 Build: 43,081 lines, 2,185 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §272 — G1: the model's signatures, and the transition bridge
+
+**A third reuse from the retired layer, and the sharpest.** `dkey C₀ I x =
+(mty x, dspec x)` was built in §261 as a BLOCKING KEY — an answer to "may these
+two nodes be identified?", which §256 and round 2's D2 refuted with
+countermodels. It is exactly the right DATA for a control signature, where the
+question is instead "what control state does this point occupy?". **Right data,
+wrong use.** Worth remembering the next time a construction is refuted: check
+whether its data survives its architecture.
+
+* `dkey_sigOk` — a model point's signature is locally admissible. The two
+  vertical clauses are `mty_all` read in each direction along a lower neighbour.
+* `cone_dr` — cone members are realized at or below their point, and those
+  realizations inherit `DR`, by `comp(PP,DR)` and `comp(DR,PPI)`. Same arithmetic
+  as §264's `borrowed_dr_cone`, which is retired; the LEMMA transfers, the
+  construction it served does not.
+* `dkey_compat` — **O04's completeness half**: a real model edge is a compatible
+  transition. `PP` pushes `x`'s cone below `y` by `comp(PP,PP) = {PP}`, `PPI` is
+  that transposed, `DR` carries disjointness down both cones, and `PO`/`EQ`
+  impose nothing.
+
+Together with `supportB_mty` (§271.2) this is most of what gate G4 needs on the
+signature side: **every point of a model occupies an admissible signature, and
+every edge of a model is an admissible transition.** What G4 still has to show is
+that the resulting set of signatures survives its own elimination — which
+`gfp_greatest` then converts into "they are all in the fixed point".
+
+Build: 43,187 lines, 2,189 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

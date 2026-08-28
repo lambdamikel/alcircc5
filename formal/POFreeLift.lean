@@ -42046,6 +42046,125 @@ theorem supportB_mty (hI : RCC5Interp I) (C0 : Concept) {x : α} (hx : I.dom x) 
       | _ => rfl
   | top => rfl
   | natom a => rfl
+/-! #### §272 — G1: THE MODEL'S SIGNATURES
+
+A third reuse from the retired layer, and the sharpest one. `dkey C₀ I x =
+(mty x, dspec x)` was built in §261 as a BLOCKING KEY — an answer to "may these
+two nodes be identified?", which §256 and round 2's D2 refuted. It is exactly the
+right DATA for a control signature, where the question is instead "what control
+state does this point occupy?". Right data, wrong use. -/
+
+open Classical in
+/-- **§272.1 — A MODEL POINT'S SIGNATURE IS LOCALLY ADMISSIBLE.**  The two
+    vertical conditions are `mty_all` read in each direction along a lower
+    neighbour. -/
+theorem dkey_sigOk (hI : RCC5Interp I) (C0 : Concept) {x : α} (hx : I.dom x) :
+    sigOkB (dkey C0 I x) = true := by
+  have hsup : ∀ U ∈ dspec C0 I x, supportB U = true := by
+    intro U hU
+    obtain ⟨_, y, hy, _, rfl⟩ := mem_dspec.mp hU
+    exact supportB_mty hI C0 hy
+  rw [sigOkB, Bool.and_eq_true, Bool.and_eq_true]
+  refine ⟨⟨supportB_mty hI C0 hx, List.all_eq_true.mpr hsup⟩, ?_⟩
+  refine List.all_eq_true.mpr ?_
+  intro U hU
+  obtain ⟨_, y, hy, hyx, rfl⟩ := mem_dspec.mp hU
+  have hxy : I.rho x y = ppi := by
+    have h2 := hI.conv_ y x hy hx
+    rw [hyx] at h2; rw [h2]; rfl
+  rw [Bool.and_eq_true]
+  constructor
+  · refine subB_iff.mpr (fun E hE => ?_)
+    exact mty_all (mem_allBodies hE) hx hyx
+  · refine subB_iff.mpr (fun E hE => ?_)
+    exact mty_all (mem_allBodies hE) hy hxy
+
+open Classical in
+/-- Membership in a signature's cone means: a type occurring at or below the
+    point. -/
+theorem mem_sigCone_dkey (C0 : Concept) (I : Interp α) {x : α} {U : List Concept}
+    (h : U ∈ sigCone (dkey C0 I x)) :
+    U = mty C0 I x ∨ ∃ y, I.dom y ∧ I.rho y x = pp ∧ mty C0 I y = U := by
+  rcases List.mem_cons.mp h with rfl | h'
+  · exact Or.inl rfl
+  · obtain ⟨_, y, hy, hyx, hU⟩ := mem_dspec.mp h'
+    exact Or.inr ⟨y, hy, hyx, hU⟩
+
+open Classical in
+/-- A cone member is realized at or below the point, and that realization is
+    `DR` from any realization of the other point's cone when the points are. -/
+theorem cone_dr (hI : RCC5Interp I) {x y u v : α}
+    (hx : I.dom x) (hy : I.dom y) (hu : I.dom u) (hv : I.dom v)
+    (hux : u = x ∨ I.rho u x = pp) (hvy : v = y ∨ I.rho v y = pp)
+    (hxy : I.rho x y = dr) : I.rho u v = dr := by
+  have huy : I.rho u y = dr := by
+    rcases hux with rfl | h
+    · exact hxy
+    · exact rho_forced hI hu hy hx h hxy (by decide)
+  rcases hvy with rfl | h
+  · exact huy
+  · have hyv : I.rho y v = ppi := by
+      have h2 := hI.conv_ v y hv hy
+      rw [h] at h2; rw [h2]; rfl
+    exact rho_forced hI hu hv hy huy hyv (by decide)
+open Classical in
+/-- **§272.2 — A REAL MODEL EDGE IS A COMPATIBLE TRANSITION.**  The completeness
+    half of `transition_reflection` (O04), and the fact gate G4 will consume: if
+    the model relates `x` to `y` by `r` and `y` carries the demand's body, the
+    two points' signatures are `compatB`-compatible.
+
+    Each relation's clause is the composition arithmetic it names: `PP` by
+    `comp(PP,PP) = {PP}` pushing `x`'s cone below `y`, `PPI` the same transposed,
+    and `DR` by `comp(PP,DR)` and `comp(DR,PPI)` carrying disjointness down both
+    cones (`cone_dr`).  `PO` and `EQ` impose nothing. -/
+theorem dkey_compat (hI : RCC5Interp I) (C0 : Concept) {x y : α}
+    (hx : I.dom x) (hy : I.dom y) {r : Atom} {D : Concept}
+    (hr : I.rho x y = r) (hD : D ∈ mty C0 I y) :
+    compatB r D (dkey C0 I x) (dkey C0 I y) = true := by
+  rw [compatB.eq_def, Bool.and_eq_true]
+  refine ⟨List.elem_eq_true_of_mem hD, ?_⟩
+  cases r with
+  | po => rfl
+  | eq => rfl
+  | pp =>
+      refine List.all_eq_true.mpr (fun U hU => ?_)
+      refine List.elem_eq_true_of_mem ?_
+      rcases mem_sigCone_dkey C0 I hU with rfl | ⟨z, hz, hzx, rfl⟩
+      · exact mem_dspec.mpr ⟨mty_mem_typeEnum C0 I x, ⟨x, hx, hr, rfl⟩⟩
+      · exact mem_dspec.mpr ⟨mty_mem_typeEnum C0 I z,
+          ⟨z, hz, rho_forced hI hz hy hx hzx hr (by decide), rfl⟩⟩
+  | ppi =>
+      have hyx : I.rho y x = pp := by
+        have h2 := hI.conv_ x y hx hy
+        rw [hr] at h2
+        rw [h2]; rfl
+      refine List.all_eq_true.mpr (fun U hU => ?_)
+      refine List.elem_eq_true_of_mem ?_
+      rcases mem_sigCone_dkey C0 I hU with rfl | ⟨z, hz, hzy, rfl⟩
+      · exact mem_dspec.mpr ⟨mty_mem_typeEnum C0 I y, ⟨y, hy, hyx, rfl⟩⟩
+      · exact mem_dspec.mpr ⟨mty_mem_typeEnum C0 I z,
+          ⟨z, hz, rho_forced hI hz hx hy hzy hyx (by decide), rfl⟩⟩
+  | dr =>
+      refine List.all_eq_true.mpr (fun U hU => ?_)
+      refine List.all_eq_true.mpr (fun V hV => ?_)
+      -- realize both cone members, and relate the realizations by `DR`
+      obtain ⟨u, hu, hux, rfl⟩ : ∃ u, I.dom u ∧ (u = x ∨ I.rho u x = pp) ∧
+          mty C0 I u = U := by
+        rcases mem_sigCone_dkey C0 I hU with rfl | ⟨z, hz, hzx, hzU⟩
+        · exact ⟨x, hx, Or.inl rfl, rfl⟩
+        · exact ⟨z, hz, Or.inr hzx, hzU⟩
+      obtain ⟨v, hv, hvy, rfl⟩ : ∃ v, I.dom v ∧ (v = y ∨ I.rho v y = pp) ∧
+          mty C0 I v = V := by
+        rcases mem_sigCone_dkey C0 I hV with rfl | ⟨z, hz, hzy, hzV⟩
+        · exact ⟨y, hy, Or.inl rfl, rfl⟩
+        · exact ⟨z, hz, Or.inr hzy, hzV⟩
+      have huv : I.rho u v = dr := cone_dr hI hx hy hu hv hux hvy hr
+      have hvu : I.rho v u = dr := by
+        have h2 := hI.conv_ u v hu hv
+        rw [huv] at h2; rw [h2]; rfl
+      rw [Bool.and_eq_true]
+      exact ⟨subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hv huv),
+             subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hu hvu)⟩
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
