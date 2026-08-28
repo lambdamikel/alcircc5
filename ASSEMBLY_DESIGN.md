@@ -15383,3 +15383,52 @@ collapse.
 
 Build: 41,322 lines, 2,092 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §255 — wp131: repeat-freeness REFUTED, agreement identified
+
+§254.6 proposed repeat-free chain selection as the discipline keeping the
+declared order acyclic. It was tested (`verification/python/wp131_borrowed_edge_acyclicity.py`)
+rather than assumed, and **refuted**.
+
+**The probe's own controls came first**, per the campaign's standing rules. The
+first run failed its non-vacuity gate — mean 0.47 borrowed edges per instance,
+mean 1.8 nodes — so its numbers were withheld and the generator reweighted
+(demand-bearing concepts, sampling conditioned on producing at least one borrowed
+edge; retention 3.4–65.8%, reported). Part B re-derives the certified dichotomy
+as a transcription regression: 100%, 1,772 edges. Part D's control (no gating,
+declared order = model order) reads 0 cycles as predicted.
+
+**The finding.** On 1,040 non-vacuous instances across four model classes:
+
+| selection rule | random \|U\|=4 | random \|U\|=5 | chain \|U\|=6 | chain \|U\|=8 |
+|---|---|---|---|---|
+| greedy | 16 (6.2%) | 18 (6.9%) | 233 (89.6%) | 248 (95.4%) |
+| repeat-free | 0 | 0 | **4** | **1** |
+| model-agreeing | 0 | 0 | 0 | 0 |
+
+Cycles are real and common. Repeat-freeness removes 98.3–100% — but not all.
+
+**Why the survivors mattered more than the rate.** Four of the five have
+`z = v`: the gate-mate's witness IS the blocked node, so the declared edge is a
+self-loop. The fifth has `z` strictly below `v`. And in EVERY survivor the number
+of repeat-free candidates was **zero** — the discipline could not be applied at
+all, so no amount of enforcement machinery would have helped.
+
+**The replacement.** Prefer a witness the model already places PP-ABOVE the
+blocked node. Then the declared edge AGREES with the model, `ee_all` comes from
+§252.1 rather than `declared_edge_all`, and acyclicity is free (§255.2: a
+model-contained relation is irreflexive because `rho x x = eq`, and transitive by
+`comp(PP,PP) = {PP}`). Nothing is being borrowed in that case at all — §255.1.
+
+**Honest residue, measured not assumed.** Agreement is not always available:
+76.1 / 79.1 / 99.4 / 99.8% of edges. 132 of the 1,040 instances genuinely needed
+the fallback, and none cycled. That is evidence, not a theorem — the fallback is
+unanalysed and this is a finite randomized sweep on finite set models, so kernels
+are not exercised.
+
+**Consequence for §254.** `borrowed_cycle_cuts` stands as a lemma (a repeat IS
+removable); what is withdrawn is the claim that repeat-free selection is the
+route to a construction. The docstring now says so.
+
+Build: 41,383 lines, 2,095 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

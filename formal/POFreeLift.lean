@@ -40221,11 +40221,13 @@ open Classical in
     that enters the bad case was not repeat-free, and the shorter chain serves
     the same demands.
 
-    THIS IS NOT YET A PROOF THAT THE BAD CASE NEVER ARISES.  That needs the
-    extraction to CHOOSE repeat-free chains, which needs the step graph — and
-    `ptIter` records a node LIST, not the parent relation.  Recording the step
-    graph is the concrete next brick; `short_chain` (repeat-free chains are
-    bounded by `|typeEnum C₀|`) is the bound waiting for it. -/
+    ⚠ THE REPEAT-FREE ROUTE THIS PARAGRAPH ONCE PROPOSED IS **REFUTED** by
+    `wp131`: repeat-free selection leaves cycles (5 survivors in 1,040
+    instances), and in every survivor there were ZERO repeat-free candidates to
+    choose from, so the discipline could not even apply.  The replacement is
+    §255 — prefer a witness the model already places PP-above the blocked node.
+    This lemma stands as stated (a repeat IS removable); what it does not do is
+    yield a construction. -/
 theorem borrowed_cycle_cuts (hI : RCC5Interp I) (C0 : Concept)
     {u a v : α} (hu : I.dom u) (ha : I.dom a) (hv : I.dom v)
     (hua : I.rho u a = pp) (hav : I.rho a v = pp)
@@ -40255,6 +40257,58 @@ theorem borrowed_edge_safe (hI : RCC5Interp I) (C0 : Concept) (v a : PtIdx I C0)
     h | h
   · exact h
   · exact absurd h hacyc
+/-! #### §255 — WHAT `wp131` FOUND: AGREEMENT, NOT REPEAT-FREENESS
+
+§254.6 proposed repeat-free chain selection as the discipline that would keep the
+declared order acyclic.  `wp131` tested it and **refuted it**: on a sample
+conditioned to actually contain borrowed edges (mean 1.1–2.5 per instance, over
+1,040 instances in four model classes), greedy selection cycles in 6.2 / 6.9 /
+89.6 / 95.4 % of instances, and repeat-free selection leaves 5 survivors.
+
+Inspecting the survivors was the useful part.  FOUR OF FIVE have `z = v` — the
+gate-mate's witness IS the blocked node — and the fifth has `z` strictly below
+`v`.  In every survivor the number of repeat-free candidates was ZERO, so the
+discipline could not even be applied.
+
+The replacement the probe identified: **prefer a witness the model already places
+PP-ABOVE the blocked node.**  Then the declared edge AGREES with the model, and
+the acyclicity question does not arise at all — §255.2.  Under that rule
+`wp131` finds 0 cycles in all four classes.
+
+HONEST RESIDUE, measured rather than assumed: agreement is not always available
+(76.1 / 79.1 / 99.4 / 99.8 % of edges), so a fallback is still needed.  132 of the
+1,040 instances genuinely used it and none cycled — evidence, not a theorem. -/
+
+open Classical in
+/-- **§255.1 — AN AGREEING EDGE IS NOT A BORROWED EDGE AT ALL.**  When the
+    gate-mate's witness already lies PP-above the blocked node, the declared edge
+    coincides with the model's own relation: `e_ex` is the label, `ee_all` is
+    §252.1, and nothing is being borrowed. -/
+theorem agreeing_edge_ok (hI : RCC5Interp I) (C0 : Concept) (v z : PtIdx I C0)
+    (hvz : I.rho (ptIdxPoint hI v) (ptIdxPoint hI z) = pp)
+    {D : Concept} (hDz : D ∈ mtyLab hI C0 z) :
+    D ∈ mtyLab hI C0 z ∧
+    ∀ E, Concept.all pp E ∈ mtyLab hI C0 v → E ∈ mtyLab hI C0 z :=
+  ⟨hDz, fun E hE =>
+    ee_all_of_row (ptIdxPoint hI) v z (ptIdxPoint_dom hI z) pp E hE hvz⟩
+
+/-- **§255.2 — AND A MODEL-CONTAINED DECLARED ORDER IS ACYCLIC FOR FREE.**
+    Irreflexivity: `rho x x = eq`, never `pp`.  This is why agreement dissolves
+    the question that repeat-freeness only postponed. -/
+theorem model_contained_irrefl (hI : RCC5Interp I) (R : α → α → Prop)
+    (hsub : ∀ x y, R x y → I.dom x ∧ I.rho x y = pp) : ∀ x, ¬ R x x := by
+  intro x hx
+  obtain ⟨hdx, hr⟩ := hsub x x hx
+  rw [hI.refl_eq x hdx] at hr
+  exact absurd hr (by decide)
+
+/-- Transitivity, so the containment survives the closure the frame takes. -/
+theorem model_contained_trans (hI : RCC5Interp I) (R : α → α → Prop)
+    (hsub : ∀ x y, R x y → I.dom x ∧ I.dom y ∧ I.rho x y = pp)
+    {x y z : α} (h1 : R x y) (h2 : R y z) : I.rho x z = pp := by
+  obtain ⟨hdx, hdy, r1⟩ := hsub x y h1
+  obtain ⟨_, hdz, r2⟩ := hsub y z h2
+  exact rho_forced hI hdx hdz hdy r1 r2 (by decide)
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
