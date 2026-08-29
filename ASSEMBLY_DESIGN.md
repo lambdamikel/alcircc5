@@ -16423,3 +16423,43 @@ into a helper proved by `induction` is the reliable pattern here.
 
 Build: 43,608 lines, 2,236 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §§279–280 — G3: the labelled unfolding, and why `∀PP` travels
+
+**§279 — the labelling.** `osig` maps an occurrence to the signature the strategy
+reaches by following its demand word; `olab` is its type. `osig` is total (a
+malformed step stays put) and `Gen` picks out the words the strategy actually
+generates. `osig_mem`: generated occurrences carry SURVIVING signatures.
+`gen_step_compat`: a generated edge is a compatible transition AND its target
+carries the demand's body — the two facts every G3 argument consumes.
+
+**§280 — and here is why the design works.** The `∀PP` obligation has to reach
+every occurrence ABOVE its holder, not merely the child that discharged some
+demand. It does, and the mechanism is a pairing of two conditions written
+independently in the plan:
+
+* the PP/PPI TRANSITION puts the source's cone into the target's predecessor set
+  (`compatB_pp_cone`, `compatB_ppi_cone`);
+* LOCAL ADMISSIBILITY says a predecessor's `∀PP` bodies lie in the type
+  (`sigOkB_pp`).
+
+Composed, they say `∀PP` bodies travel along an order edge — and crucially in
+**both** of `ostep`'s directions (`allPP_up` across a `PP` birth, `allPP_dn`
+across a `PPI` birth, where the child is BELOW the parent and the edge runs child
+→ parent). That two-sidedness is what will let the induction run along `unfLt`,
+whose chains mix both step kinds.
+
+Worth noting against the campaign's history: this is the obligation whose
+BORROWING analogue (`ee_all` on a declared edge) took §§252–255, four refuted
+disciplines and two cold attacks. Here it is two extractor lemmas and a
+composition, because the unfolding never reuses a node and so never has to
+justify an edge the model does not contain.
+
+**Remaining in G3:** lift the step-level propagation to `unfLt` by induction
+(needs `Gen`-inversion at each step, and `cases` on inductive `Prop`s has been
+unreliable in this file — expect the helper-lemma pattern of §278); the `∀PPI`,
+`∀DR` and `∀EQ` cases; `∃`-fulfilment (largely `gen_step_compat` plus §278's edge
+lemmas); and then the truth lemma itself.
+
+Build: 43,720 lines, 2,247 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

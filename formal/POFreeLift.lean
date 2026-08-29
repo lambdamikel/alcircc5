@@ -42572,6 +42572,140 @@ theorem unf_edge_po (i : Nat) (w : Occ) :
   intro hc
   have := congrArg List.length hc
   simp at this
+/-! #### §279 — G3: THE LABELLED UNFOLDING
+
+Each occurrence carries the signature the strategy reaches by following its
+demand word.  `osig` is total (a malformed step stays put), and `Gen` picks out
+the words the strategy actually generates. -/
+
+/-- The signature at an occurrence. -/
+def osig (X : List Sig) (q0 : Sig) : Occ → Sig
+  | [] => q0
+  | (r, i) :: w =>
+      let q := osig X q0 w
+      match (sigDemands q)[i]? with
+      | some (r', D) => if r' = r then (pickTarget X q r D).getD q else q
+      | none => q
+
+/-- The label at an occurrence. -/
+def olab (X : List Sig) (q0 : Sig) (w : Occ) : List Concept := (osig X q0 w).1
+
+/-- The demand words the strategy generates. -/
+inductive Gen (X : List Sig) (q0 : Sig) : Occ → Prop
+  | root : Gen X q0 []
+  | step {w : Occ} {r : Atom} {i : Nat} {D : Concept} {q' : Sig} :
+      Gen X q0 w →
+      (sigDemands (osig X q0 w))[i]? = some (r, D) →
+      pickTarget X (osig X q0 w) r D = some q' →
+      Gen X q0 ((r, i) :: w)
+
+/-- On a generated step the signature is the strategy's choice. -/
+theorem osig_step {X : List Sig} {q0 : Sig} {w : Occ} {r : Atom} {i : Nat}
+    {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 w))[i]? = some (r, D))
+    (hp : pickTarget X (osig X q0 w) r D = some q') :
+    osig X q0 ((r, i) :: w) = q' := by
+  show (match (sigDemands (osig X q0 w))[i]? with
+        | some (r', D) => if r' = r then
+            (pickTarget X (osig X q0 w) r D).getD (osig X q0 w)
+          else osig X q0 w
+        | none => osig X q0 w) = q'
+  rw [hd]
+  simp [hp]
+
+/-- **§279.1 — GENERATED OCCURRENCES CARRY SURVIVING SIGNATURES.** -/
+theorem osig_mem {X : List Sig} {q0 : Sig} (hq0 : q0 ∈ X)
+    {w : Occ} (h : Gen X q0 w) : osig X q0 w ∈ X := by
+  induction h with
+  | root => exact hq0
+  | step _ hd hp ih =>
+      rename_i w r i D q' _
+      rw [osig_step hd hp]
+      obtain ⟨q'', hf, hmem, _⟩ :=
+        find?_some_of_any _ X (by
+          rw [pickTarget] at hp
+          exact List.any_eq_true.mpr ⟨q', List.mem_of_find?_eq_some hp,
+            List.find?_some hp⟩)
+      have : q'' = q' := by rw [pickTarget] at hp; rw [hf] at hp; exact
+        (Option.some.injEq _ _ ▸ hp).symm ▸ rfl
+      exact this ▸ hmem
+
+/-- **§279.2 — AND THE STEP IS A COMPATIBLE TRANSITION.**  Everything G3's
+    `∀`-propagation and `∃`-fulfilment arguments need about a generated edge. -/
+theorem gen_step_compat {X : List Sig} {q0 : Sig} {w : Occ} {r : Atom}
+    {i : Nat} {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 w))[i]? = some (r, D))
+    (hp : pickTarget X (osig X q0 w) r D = some q') :
+    compatB r D (osig X q0 w) (osig X q0 ((r, i) :: w)) = true ∧
+    D ∈ olab X q0 ((r, i) :: w) := by
+  have hq : osig X q0 ((r, i) :: w) = q' := osig_step hd hp
+  have hc : compatB r D (osig X q0 w) q' = true := by
+    rw [pickTarget] at hp
+    exact List.find?_some hp
+  refine ⟨by rw [hq]; exact hc, ?_⟩
+  rw [olab, hq]
+  rw [compatB.eq_def, Bool.and_eq_true] at hc
+  exact List.mem_of_elem_eq_true hc.1
+/-! #### §280 — G3: `∀`-PROPAGATION ALONG THE ORDER
+
+The `∀PP` obligation must reach every occurrence ABOVE its holder, not just the
+child that discharged a demand.  It does, and the reason is the pairing of two
+conditions that were written independently: the PP/PPI TRANSITION puts the
+source's cone into the target's predecessor set, and LOCAL ADMISSIBILITY
+(`sigOkB`) says a predecessor's `∀PP` bodies sit in the type.  Composed, they
+say exactly that `∀PP` bodies travel along an order edge — in BOTH of `ostep`'s
+directions, which is what lets the induction run along `unfLt`. -/
+
+theorem sigOkB_pp {q : Sig} (h : sigOkB q = true) {U : List Concept}
+    (hU : U ∈ q.2) {E : Concept} (hE : Concept.all pp E ∈ U) : E ∈ q.1 := by
+  rw [sigOkB, Bool.and_eq_true, Bool.and_eq_true] at h
+  have := List.all_eq_true.mp h.2 U hU
+  rw [Bool.and_eq_true] at this
+  exact subB_iff.mp this.1 E (mem_allBodies_of hE)
+
+theorem sigOkB_ppi {q : Sig} (h : sigOkB q = true) {U : List Concept}
+    (hU : U ∈ q.2) {E : Concept} (hE : Concept.all ppi E ∈ q.1) : E ∈ U := by
+  rw [sigOkB, Bool.and_eq_true, Bool.and_eq_true] at h
+  have := List.all_eq_true.mp h.2 U hU
+  rw [Bool.and_eq_true] at this
+  exact subB_iff.mp this.2 E (mem_allBodies_of hE)
+
+/-- A `PP` transition puts the source's type into the target's predecessor set. -/
+theorem compatB_pp_cone {D : Concept} {q q' : Sig}
+    (h : compatB pp D q q' = true) : q.1 ∈ q'.2 := by
+  rw [compatB.eq_def, Bool.and_eq_true] at h
+  have := List.all_eq_true.mp h.2 q.1 (List.mem_cons_self)
+  exact List.mem_of_elem_eq_true this
+
+/-- A `PPI` transition puts the target's type into the source's. -/
+theorem compatB_ppi_cone {D : Concept} {q q' : Sig}
+    (h : compatB ppi D q q' = true) : q'.1 ∈ q.2 := by
+  rw [compatB.eq_def, Bool.and_eq_true] at h
+  have := List.all_eq_true.mp h.2 q'.1 (List.mem_cons_self)
+  exact List.mem_of_elem_eq_true this
+
+/-- **§280.1 — `∀PP` CLIMBS A `PP` BIRTH.** -/
+theorem allPP_up {X : List Sig} {q0 : Sig} {w : Occ} {i : Nat} {D : Concept}
+    {q' : Sig}
+    (hd : (sigDemands (osig X q0 w))[i]? = some (pp, D))
+    (hp : pickTarget X (osig X q0 w) pp D = some q')
+    (hok : sigOkB (osig X q0 ((pp, i) :: w)) = true)
+    {E : Concept} (hE : Concept.all pp E ∈ olab X q0 w) :
+    E ∈ olab X q0 ((pp, i) :: w) :=
+  sigOkB_pp hok (compatB_pp_cone (gen_step_compat hd hp).1) hE
+
+/-- **§280.2 — AND ACROSS A `PPI` BIRTH, IN THE OTHER DIRECTION.**  Here the
+    child is BELOW the parent, so `ostep` runs child → parent and the obligation
+    travels the same way: the transition put the child's type into the parent's
+    predecessor set, and admissibility at the parent does the rest. -/
+theorem allPP_dn {X : List Sig} {q0 : Sig} {w : Occ} {i : Nat} {D : Concept}
+    {q' : Sig}
+    (hd : (sigDemands (osig X q0 w))[i]? = some (ppi, D))
+    (hp : pickTarget X (osig X q0 w) ppi D = some q')
+    (hok : sigOkB (osig X q0 w) = true)
+    {E : Concept} (hE : Concept.all pp E ∈ olab X q0 ((ppi, i) :: w)) :
+    E ∈ olab X q0 w :=
+  sigOkB_pp hok (compatB_ppi_cone (gen_step_compat hd hp).1) hE
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
