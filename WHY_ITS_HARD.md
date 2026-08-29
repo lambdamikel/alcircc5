@@ -338,7 +338,7 @@ question stays open.
 
 ---
 
-## 10. The second open piece: uniformization (W2')
+## 10. The sibling that turned out not to be independent: uniformization (W2')
 
 There's a smaller sibling problem worth a sentence. When you compress a
 real arrangement into a finite blueprint, you label each region with a
@@ -352,6 +352,15 @@ summary. Crucially, getting this wrong can only ever make the procedure
 make it accept something false. So W2' threatens completeness, never
 correctness, and it comes with a known repair menu. It's the manageable
 one.
+
+**Update (July 2026): it stopped being a separate problem.** A cold attack
+built the exact 5-point arrangement where the coarse summary fails — two
+regions with identical summaries that no single completion can serve, split
+by their relation to a *third* region outside the summary's view. So the
+coarse form of W2' is simply **false**. But the same probe showed the repair
+is a bounded refinement of the summary, and the bound it needs is F6's. **W2'
+folds into F6.** There is one open problem, not two, and §12's "one fact, two
+faces" is the right count.
 
 ---
 
@@ -377,16 +386,35 @@ stating plainly.
   parts it covers: the pipeline from "finite blueprint" to "actual
   arrangement of regions satisfying the description" is now verified by
   machine, end to end, including the fact that the blueprint's arrangement
-  is a genuine RCC5 world and that it models the logic. What the machine
-  does **not** yet contain is the one hard theorem — F6, bounded width —
-  which is *stated* precisely but deliberately left unproven, because
-  proving it is the open mathematics, and faking it with an assumption
-  would defeat the point.
+  is a genuine RCC5 world and that it models the logic. For the fragment
+  above the machine now contains the *whole* result — a decision procedure,
+  not just a sound half — and it has been attacked three times by independent
+  cold reviewers without a counterexample. What it does **not** contain, for
+  the full problem, is the one hard theorem — F6, bounded width — which is
+  *stated* precisely but deliberately left unproven, because proving it is
+  the open mathematics, and faking it with an assumption would defeat the
+  point.
+
+- **A decided fragment, which locates the difficulty exactly.** As of
+  August 2026, drop one construct — the ability to say "*everything I
+  partially overlap satisfies D*" — and the problem is **decidable**, with a
+  machine-checked decision procedure whose only hypothesis is membership in
+  that fragment. That is not a side result; it is the sharpest statement
+  available of what makes the full problem hard, and the reason is worth one
+  sentence. Whenever the composition rules leave a pair's relation open, you
+  can always settle it as "partially overlapping" — *unless some formula can
+  object to a partial overlap*, and the only formula that can is exactly the
+  one the fragment removes. So in the fragment the lazy arrangement, which
+  declares only what is forced and defaults everything else to overlap, is
+  **always** a valid world; nothing ever has to be coordinated. Put that
+  construct back and the default dies, and with it the freedom that made
+  everything else fall out. The hard part of this problem is not nesting,
+  not disjointness, and not size — it is that one universal.
 
 - **A precise map of the frontier.** Perhaps the most durable output: we
   now know *exactly* where the difficulty is. It is not spread across the
   whole problem — it is concentrated into one crisp statement (horizontal
-  width stays bounded) plus its small sibling (uniformization). Everything
+  width stays bounded). Everything
   else is either settled or mechanically checked. A future solver — human
   or machine — doesn't have to understand the whole edifice; they have to
   crack one well-posed lemma about horizontal crowds.
@@ -427,6 +455,12 @@ problem — one fact, two faces — is the achievement.
 ---
 
 *This document is a companion to the technical write-ups in `papers/` and
-the machine-checked development in `formal/Round19Transport.lean`. It is
-deliberately informal; where it and the formal artifacts disagree, the
-formal artifacts win.*
+the machine-checked developments in `formal/` — `POFreeLift.lean` (the
+decided fragment, and the normative artifact), `Round19Transport.lean` (the
+full-logic soundness pipeline), and `RCC5NormalForm.lean`. It is deliberately
+informal; where it and the formal artifacts disagree, the formal artifacts
+win.*
+
+*Last revised 2026-08-29. The full problem is still open; §§1–9 are unchanged
+by the fragment result, because F6 is forced by exactly the construct the
+fragment removes.*

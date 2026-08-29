@@ -2,7 +2,8 @@
 %% talk_ALCIRCC5.tex -- work presentation (~35 slides, 16:9, metropolis)
 %%
 %% "Can Agentic AI Settle a 20-Year-Old Open Problem?"
-%% Based on papers/overview_arxiv.tex (the frozen arXiv candidate).
+%% Based on papers/overview_arxiv.tex.  Revised 2026-08-29 for the
+%% forall-PO-free fragment's certification and the three cold reviews.
 %% Build:  pdflatex talk_ALCIRCC5.tex  (twice, for the progress bar)
 %% ====================================================================
 \documentclass[aspectratio=169,11pt]{beamer}
@@ -60,8 +61,9 @@
 \title{Can Agentic AI Settle a\\ 20-Year-Old Open Problem?}
 \subtitle{The decidability of $\ALCIRCC{5}$ --- a machine-checked campaign}
 \author{Michael Wessel\\[2pt]
-  {\small with AI assistants: Claude (Anthropic) and GPT-5.4/5.5/5.6~Pro (OpenAI)}}
-\date{July 2026}
+  {\small with AI assistants: Claude Opus~4.6--4.8, Fable~5, Opus~5 (Anthropic);\\
+  GPT-5.4, 5.4~Pro, 5.5, 5.6~Pro, 5.6~Sol (OpenAI)}}
+\date{August 2026}
 
 \begin{document}
 
@@ -73,19 +75,20 @@
 \begin{itemize}
   \item In 2002/2003 I defined a family of \alert{spatial description logics}
         and left their central decidability question \alert{open}. It still is.
-  \item In 2026 I directed a \alert{four-month AI campaign} on it:
-        two frontier models, adversarial review, machine verification.
-  \item The question is \alert{not settled}. But it is now \emph{reduced} ---
-        honestly and partly kernel-checked --- to \alert{one well-posed lemma},
-        with a decidable fragment, a certified normal form, a working reasoner,
-        and an exact arithmetical address ($\Pi^0_1$) along the way.
+  \item In 2026 I directed a \alert{five-month AI campaign} on it:
+        frontier models, adversarial review, machine verification.
+  \item The \alert{full} question is \alert{not settled} --- but it is
+        \emph{reduced} to \alert{one well-posed lemma}, with an exact
+        arithmetical address ($\Pi^0_1$) on the way.
+  \item A \alert{sub-question is settled}: drop $\forall\PO$ and the logic is
+        \alert{decidable}, by a procedure the \alert{Lean kernel checks}.
 \end{itemize}
 \vfill
 \begin{block}{How to read everything in this talk}
-  The mathematics was produced by AI assistants and is
-  \emph{unverified by human experts}. Standing label: \statuslabel{}\,---\,%
-  except the parts checked by the \alert{Lean~4 kernel}, which are
-  machine-verified (but still human-unreviewed).
+  The mathematics is AI-produced and \emph{unverified by human experts}.
+  Standing label for the \alert{full logic}: \statuslabel{}\,---\,%
+  but the $\forall\PO$-free fragment is
+  \textcolor{good}{\textbf{machine-certified}}, reviewed three times.
 \end{block}
 \end{frame}
 
@@ -573,6 +576,13 @@ Result & Meaning & File\\
 \textcolor{good}{\textbf{Dovetail schema}} &
   qualitative F6 $\Rightarrow$ decidable &
   \texttt{SemiDecidability}\\
+\midrule
+\textcolor{good}{\textbf{$\forall\PO$-free decided}} \tiny(2026-08-29) &
+  \normalsize a \emph{decision procedure}, raw input &
+  \texttt{POFreeLift}\\
+\textcolor{good}{\textbf{Abstract $=$ concrete}} &
+  composition table $\Leftrightarrow$ real sets &
+  \texttt{POFreeLift}\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -602,21 +612,44 @@ boundary between what is proved and what is conjectured.
 \end{frame}
 
 %% ==================================================================== 24
-\begin{frame}{Unconditional win \#1: a decidable fragment}
-\begin{block}{Theorem ($\forall\PO$-free fragment)}
-  Concepts with \alert{no $\forall\PO$ subformula} are decidable, with
-  live width $\leq (1+m)^2\, 2^{2^m}$, \; $m = |\cl(C_0)|$.
+\begin{frame}{Unconditional win \#1: a decidable fragment --- now \emph{certified}}
+\begin{block}{Theorem ($\forall\PO$-free fragment), machine-checked 2026-08-29}
+  Concepts with \alert{no $\forall\PO$ subformula} are \alert{decidable}.
+  In Lean, with fragment membership the \emph{only} hypothesis:
+  \smallskip
+  {\scriptsize\texttt{decidableFSat} (raw input) \quad
+   \texttt{decidableSat\_cone} (NNF) \quad
+   \texttt{decidableSetSat} (real sets)}
 \end{block}
 \vfill
 \begin{itemize}
-  \item Still allowed: $\exists\PO$ (``overlaps some\dots''),
-        $\forall\DR$, $\exists\DR$, and \alert{all} part-of modalities ---
-        a genuinely expressive spatial fragment.
-  \item Why it works: $\PO$ is the \emph{only} relation whose recurrence
-        along a chain needs an ``all-phase'' safety condition; drop
-        $\forall\PO$ and the condition is vacuous.
-  \item Found twice, independently, by two different routes --- a good sign
-        the fragment is natural, not an artifact.
+  \item Still allowed: $\exists\PO$, $\forall\DR$, $\exists\DR$ and
+        \alert{all} part-of modalities --- an expressive spatial fragment.
+  \item On \alert{raw} input the condition is \emph{polarity-sensitive}: no
+        $\forall\PO$ positively, no $\exists\PO$ \emph{negatively}.
+  \item Reached \alert{three} times by three routes; the third
+        (GPT-5.6~Sol's \emph{cone scheme}) is the one that certified.
+  \item \alert{Decidable $\neq$ runnable} --- doubly exponential.
+\end{itemize}
+\end{frame}
+
+%% ==================================================================== 24b
+\begin{frame}{Why \emph{that} fragment --- the one-sentence reason}
+\begin{block}{The residual default}
+  When composition leaves a pair's relation open, you can always settle it
+  as \alert{$\PO$} --- \emph{unless some formula can object to a $\PO$
+  edge}. The only formula that can is $\forall\PO.D$.
+\end{block}
+\vfill
+\begin{itemize}
+  \item So in the fragment the \alert{lazy arrangement} --- declare only what
+        a birth forces, default every remaining pair to $\PO$ --- is
+        \alert{always} a model.
+  \item Hence \alert{nothing ever has to be coordinated}: every relation
+        between two different children is the residual, and the residual is
+        free. That is why the construction needs no joint realisability.
+  \item Put $\forall\PO$ back and you do not lose one case of one induction
+        --- you lose \alert{the default itself}. That is the whole boundary.
 \end{itemize}
 \end{frame}
 
@@ -882,12 +915,16 @@ easiest way to misread the project.}
 \begin{itemize}
   \item 20+ years of difficulty, compressed into one lemma --- with certified
         machinery waiting on \alert{both} sides of the answer.
-  \item Everything is frozen, tagged, reproducible: paper (42pp), 4 Lean
-        files, 88 probes, 2 reasoners, full conversation log.
+  \item And one \alert{sub-problem removed from the pile}: drop $\forall\PO$
+        and it is decided, in the kernel, on raw input, under real set
+        semantics --- three cold reviews, no counterexample.
+  \item Everything reproducible: papers, 4 Lean files ($>$45k lines,
+        zero \texttt{sorry}), 100+ probes, 2 reasoners, full audit log.
 \end{itemize}
 \vfill
 \begin{center}
-  \alert{\textbf{Open since 2003. Smaller than ever. Still standing.}}\\[4pt]
+  \alert{\textbf{Open since 2003. Smaller than ever. Still standing ---}}\\
+  \alert{\textbf{but one wall of it has come down.}}\\[4pt]
   \small\texttt{github.com/lambdamikel/alcircc5} \quad---\quad thank you!
 \end{center}
 \end{frame}
