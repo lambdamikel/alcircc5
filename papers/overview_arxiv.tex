@@ -155,10 +155,10 @@ and---since 2026-08-29---the decision procedure for the $\forall\PO$-free
 fragment), which are machine-verified. We are deliberate about this labelling
 throughout, and it is not uniform: the standing one-line status for the
 \emph{full logic} is \emph{strongly supported, not certified}, whereas the
-$\forall\PO$-free fragment is \emph{machine-certified}, its formalisation's
+$\forall\PO$-free fragment is \emph{machine-certified}, its formalization's
 adequacy having been examined by three independent cold reviews
 (Remark~\ref{rem:conescheme}). What remains at risk there is what remains at
-risk in any formalisation---that a definition misrepresents the intended
+risk in any formalization---that a definition misrepresents the intended
 object---which is why those reviews targeted the definitions, and why the
 concrete-semantics question was converted into a theorem rather than left to
 reviewer confidence. We regard the AI systems as
@@ -426,7 +426,7 @@ results & a proof in a named work package, often with finite probes\\
 \addlinespace
 \emph{Lean-certified (2026-08-29), cold-reviewed three times} & a decision
 procedure for the \emph{whole} $\forall\PO$-free fragment, mixed quadrant
-included, on \emph{raw} (not pre-normalised) input and under \emph{concrete set}
+included, on \emph{raw} (not pre-normalized) input and under \emph{concrete set}
 semantics (\code{decidableFSat}, \code{decidableSat\_cone},
 \code{decidableSetSat}), with fragment membership its only hypothesis; and a
 one-sided \textsc{unsat} test for the \emph{full} logic
@@ -1672,7 +1672,7 @@ always be discharged by putting the pair at $\PO$ --- unless some formula can
 object to a $\PO$ edge, and the only formula that can is $\forall\PO.D$. So on
 this fragment the maximally-$\PO$ unfolding, which declares only what a birth
 forces and defaults every remaining pair to $\PO$, is \emph{always} a model;
-no joint realisability across a signature's several demands is ever required,
+no joint realizability across a signature's several demands is ever required,
 because every cross-relation between distinct children is the residual and the
 residual costs nothing. What is lost when $\forall\PO$ returns is therefore not
 one case of one induction but the residual default itself --- which is the same
@@ -1696,8 +1696,8 @@ from disjunctive entailments are out of its reach.
 
 Two scope limits recorded in earlier versions of this remark have since been
 closed. The artifact now carries a \emph{raw} syntax with negation, a
-normalisation, and a preservation theorem in both polarities, so no
-pre-normalised input is assumed (\code{decidableFSat}); the polarity flag also
+normalization, and a preservation theorem in both polarities, so no
+pre-normalized input is assumed (\code{decidableFSat}); the polarity flag also
 exposes that the fragment condition on raw input is \emph{no $\forall\PO$
 positively and no $\exists\PO$ negatively}, since an $\exists\PO$ under a
 negation becomes a $\forall\PO$. And satisfiability over the abstract
@@ -1728,10 +1728,10 @@ project's own probes and prose. All are corrected.
 The honest label, and it differs from this paper's standing one: the
 $\forall\PO$-free fragment is \emph{machine-certified} --- the Lean kernel
 checks the decision procedure with fragment membership as its only hypothesis
---- and its formalisation's adequacy has been examined by three independent
+--- and its formalization's adequacy has been examined by three independent
 cold reviews without a counterexample. The project's blanket \emph{strongly
 supported, not certified} applies to the \emph{full logic}, and to the two
-unformalised arguments of \S\ref{ssec:approach-finite}; it does not apply to
+unformalized arguments of \S\ref{ssec:approach-finite}; it does not apply to
 this result, and earlier drafts of this remark were wrong to carry it over.
 \end{remark}
 
@@ -1747,7 +1747,7 @@ and is independent of that route; see Remark~\ref{rem:pofree-gap}. The certified
 no longer unreviewed: three independent cold reviews (2026-08-29) attacked its
 trusted base, its completeness direction and its soundness direction, and none
 found a counterexample or a defect in the fragment result. The two
-\emph{arguments} of Theorem~\ref{thm:pofree} remain unformalised, and the
+\emph{arguments} of Theorem~\ref{thm:pofree} remain unformalized, and the
 standing ledger presumption (\S\ref{sec:agentic}) continues to apply to them,
 and to every full-logic claim in this paper.
 
@@ -2707,7 +2707,7 @@ named file at tag \texttt{certified-fragment-2026-08-29}; filenames are
 relative to the repository root. Note the split in the last two rows: the
 fragment \emph{theorem} is certified, by a route that uses neither the
 $K(C_0)$ bound nor the extraction argument, while those two \emph{arguments}
-remain unformalised.}
+remain unformalized.}
 \label{tab:artifacts}
 \end{table}
 

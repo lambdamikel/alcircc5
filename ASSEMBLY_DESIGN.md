@@ -10106,7 +10106,7 @@ Per §117.3, any such probe must state its control before the run.
 
 ## 131. STEP 2 IS REFUTED — `wp116`
 
-§130 named step 2 as the risk and said to probe it before formalising. Done, and
+§130 named step 2 as the risk and said to probe it before formalizing. Done, and
 it fails.
 
 Over `wp112`'s closed-form eventually periodic tower, holding the period fixed at
@@ -10163,7 +10163,7 @@ branches already measured:
 * **an existing set member**, which `wp110` measured at 87–97%.
 
 The redesign question is whether those two together cover the prefix leaves
-without spawning rounds. That is measurable before it is formalised.
+without spawning rounds. That is measurable before it is formalized.
 
 ## 132. THE REDESIGN — `wp117`: phases OR edge, and the rounds disappear
 
@@ -10211,7 +10211,7 @@ step was "expand", and the redesign never expands.
 ### 132.3 What is still evidence rather than proof
 
 Step 3. The 100% is an acceptance measurement over one model class with
-randomized concepts, and the declared edge's two-clause condition is realised
+randomized concepts, and the declared edge's two-clause condition is realized
 approximately in the tower (ancestor via successor sets, disjointness via `DR`).
 
 Two things make it stronger than the numbers §§105–118 produced: the control was
@@ -10223,7 +10223,7 @@ finite-set-model construction has not been re-run against the union.
 
 Re-run `wp115` — different model class, full obligation checking — with target
 expansion replaced by phases-or-edge. If that also passes, step 3 is worth
-formalising; if it does not, the disagreement between the two classes is itself
+formalizing; if it does not, the disagreement between the two classes is itself
 the finding.
 
 ### 132.5 "Nothing is added" — verified, not assumed
@@ -10364,7 +10364,7 @@ is the cheapest remaining move and it has never been tried on this question.
 3. If they do not: the remaining degree of freedom is one this campaign has not
    used — **completeness lets the extraction choose its model.** It must produce
    SOME certificate for a satisfiable `C₀`, not one for every model of `C₀`. That
-   would need a model-normalisation theorem (pass to a sub-model with bounded
+   would need a model-normalization theorem (pass to a sub-model with bounded
    prefix), which is genuinely new mathematics, not assembly.
 
 ### 134.4 Calibration
@@ -10960,7 +10960,7 @@ construction** — §145's `witnessLabel_supportOk` is literally its fourth fiel
 | `sChild_arg` | the child carries the demand's argument |
 | **`sChild_depth`** | **the child's label is strictly shallower** — §142's measure, on the real step |
 
-### 147. Normalised labels
+### 147. Normalized labels
 
 `hcloseL` can repeat a formula, so a label's LENGTH is not bounded by `|cl C₀|`
 outright — and the length IS §143's branching factor.
@@ -10972,7 +10972,7 @@ the result is a filter of `cl C₀`.
 | | |
 |---|---|
 | `normL_len` | **length ≤ `\|cl C₀\|`, with NO `Nodup` hypothesis** — `propext` only |
-| `normL_supportOk` | normalising changes nothing a support label says |
+| `normL_supportOk` | normalizing changes nothing a support label says |
 | `maxDepth_le_of_sub` / `normL_depth_le` | and cannot deepen |
 | `sChildN_rho` / `_arg` / `_depth` / **`_len`** | the step with all four properties |
 
@@ -11081,7 +11081,7 @@ read-off relations `E e f` fires on many pairs, and a support label seeded from
 its own parent need not carry another node's universal. `wp122`/`wp124` fix this
 with a joint label/witness fixpoint that SETTLES in 1,709 and 1,019 models.
 §141 bounds the label half and §148 the node half; **the interleaving is not
-formalised**, and that is the work.
+formalized**, and that is the work.
 
 **(c) The kernel side.** Six fields. `chain_or_kernel` (§119) produces kernels
 and `rr_covers` serves persistent demands, but neither is connected to support
@@ -11583,10 +11583,10 @@ hpoolcl : ∀ D, Concept.ex po D ∈ cl C0 → ∃ q ∈ P, q.1 ≠ myTag ∧ D 
 ```
 
 — over **`cl C₀`**, not over the labels that actually occur. But `hreal`
-requires every pool entry to be realised by a real node.
+requires every pool entry to be realized by a real node.
 
 If some `∃PO.D ∈ cl C₀` has `D` unsatisfiable, `hpoolcl` demands a pool entry
-that `hreal` cannot realise. The obligation never fires (`∃PO.D` is in no model
+that `hreal` cannot realize. The obligation never fires (`∃PO.D` is in no model
 type), but the hypothesis as stated does not know that.
 
 So `hpoolcl` is **conservative in a way that may be unsatisfiable**, and the
@@ -11614,7 +11614,7 @@ Build unchanged: 33,767 lines, 1,694 declarations, 0 errors / 0 warnings /
 ## 160. THE POOL HYPOTHESIS, WEAKENED
 
 §159.3 flagged `hpoolcl` as conservative in a way that may be unsatisfiable: it
-quantifies over `cl C₀`, while `glueFam_ok`'s `hreal` can only realise pool
+quantifies over `cl C₀`, while `glueFam_ok`'s `hreal` can only realize pool
 entries that some node actually carries.
 
 Reading further settled it — **the strengthening is in the wrapper, not the
@@ -11646,7 +11646,7 @@ assembly being wrong rather than one hypothesis being over-stated.
 | | |
 |---|---|
 | kernel blocks from persistence, both directions | **certified** |
-| pool hypothesis in a realisable form | **certified** (§160) |
+| pool hypothesis in a realizable form | **certified** (§160) |
 | gluing with PO between blocks | **certified**, `propext` only |
 | `MTNoPo` from `POFree` | **certified** |
 | build the FAMILY and the POOL from a model | **open — the assembly** |
@@ -11704,7 +11704,7 @@ discover)"*.
 ### 161.4 The honest remaining statement
 
 Build the family and the budget assignment, and instantiate `mergedMT_ok`. Every
-other ingredient — kernel blocks, pool covering, pool realisation, gluing,
+other ingredient — kernel blocks, pool covering, pool realization, gluing,
 stabilization, encoding, decision — is certified and in the file.
 
 ### 161.5 The stop signal, recorded
@@ -12332,7 +12332,7 @@ The file says so at line 17788, and names the probe:
 > witness can be `PO` at a single level only), so it must leave the block
 
 `mixKernels_pool_ok` is the interface: `∃PO` demands **pend** to the pool and are
-realised in another block, the cross edge being `PO` by construction. That is
+realized in another block, the cross edge being `PO` by construction. That is
 what `glueFam`'s PO-across is FOR.
 
 ### 174.3 What the check establishes
@@ -13443,9 +13443,9 @@ Items 4 and 7, both small once the machinery is in place.
 by `mdepth C₀` — which is what makes **`mdepth C₀` the right fuel** for `kwNodes`
 to be closed by `kwNodes_covers`.
 
-`normL_mem_allListsLe`: a normalised label is one of the enumerated lists, which
+`normL_mem_allListsLe`: a normalized label is one of the enumerated lists, which
 is what the two `allListsLe` conditions ask. Both `sChildN` and `kPhaseNode`
-normalise, and so does `rootNode`, so every node of the closure qualifies.
+normalize, and so does `rootNode`, so every node of the closure qualifies.
 
 ### 201.1 The seven, re-scored
 
@@ -13765,7 +13765,7 @@ Build: 37,299 lines, 1,872 declarations, exit 0,
 
 §209 supplied the counting; §210 runs it.
 
-`satIter` iterates `satRound`. Every stage is a normalised label
+`satIter` iterates `satRound`. Every stage is a normalized label
 (`satIter_normL`), so §209's bound applies; `satIter_mono` gives weak growth
 everywhere; and `satIter_step_lt` turns one newly-admitted concept at one node
 into a strict `totalSize` increase, via `normL_len_lt` and `sum_map_lt`.
@@ -14337,7 +14337,7 @@ Stated as the refutation, matching §210 and §219 — the classical step to
 
 ### 226.1 A hypothesis that had to be weakened
 
-`interMeasure_le` and `totalSize_normL_le` originally asked for the normalised-
+`interMeasure_le` and `totalSize_normL_le` originally asked for the normalized-
 label property at **every** `e : β`, but `totalSize` only sums over `nodes`. That
 is unsatisfiable for a node type larger than the stage — which `SNode I C₀`
 certainly is — so §226 could not have applied them.
@@ -14360,7 +14360,7 @@ tried to instantiate it.
   `|cl C₀|` — the `genBound` argument of §197, but for `stageIter` rather than
   `kwNodes`, and not yet transferred.
 * `hnorm` — every stage label is a `normL`. True by construction
-  (`sChildN`, `satRound` and `rootNode` all normalise) and needs an induction
+  (`sChildN`, `satRound` and `rootNode` all normalize) and needs an induction
   over rounds.
 
 Both are invariants of the iteration rather than new mathematics.
@@ -14372,7 +14372,7 @@ Build: 38,566 lines, 1,941 declarations, exit 0,
 
 §226.2's second invariant — every stage label is a `normL` — is an induction over
 rounds with one lemma per operator, since all three label-producing constructions
-normalise: `stageKids_normL` (`sChildN`), `satStage_normL` (`satRound`),
+normalize: `stageKids_normL` (`sChildN`), `satStage_normL` (`satRound`),
 `rootNode_normL`, composed by `extendStage_normL` into `stageIter_normL`.
 
 ## 228. THE PROCESS BOTTOMS OUT
@@ -14426,7 +14426,7 @@ never caught by proving the lemma, only by using it.
 ### 229.2 What remains of the bound
 
 Generations are now bounded (depth invariant + strict decrease + shallow labels
-owe nothing, §228). What is not yet formalised is the **count**: each generation
+owe nothing, §228). What is not yet formalized is the **count**: each generation
 multiplies by at most `|cl C₀|` children per node, and — unlike `kwNodes` — a
 node's label can grow between rounds, so the same point may reappear with a
 different label. The bound is therefore larger than `kwNodes`' `genBound`, but
@@ -14752,7 +14752,7 @@ Build: 39,271 lines, 1,982 declarations, exit 0,
 * `argsAt` — the extra clause: every demand argument whose witness is this
   point, with `argsAt_sat` and `argsAt_cl` for the two side conditions.
 * `ptSat_ok` — the saturation at `PtIdx`, by §234.1's argument at the new index.
-* **`ptRound`** — saturation plus arguments, closed and normalised — with
+* **`ptRound`** — saturation plus arguments, closed and normalized — with
   `ptRound_ok` (sound), `ptRound_mono` (only grows), `ptRound_normL`.
 
 The soundness proof is two cases over an append, one per contribution: the
@@ -14764,7 +14764,7 @@ the argument" bought, three sections later than it was written.
 
 The stage's operator is now complete at the certificate's own sorts: labels are
 support labels at every index (`ptRound_ok`), grow monotonically
-(`ptRound_mono`), stay normalised (`ptRound_normL`), and both the propagation
+(`ptRound_mono`), stay normalized (`ptRound_normL`), and both the propagation
 and the extension are one mechanism.
 
 What remains is the iteration — the node list growing by new child points
@@ -15176,7 +15176,7 @@ of rounds, at a set of computable size.
 
 **§248.7/§248.8 — non-vacuity.** All of the above is hypothetical in `L`, and a
 trivial `L` would make it hollow. `mtyLab hI C0 v := normL C0 (mty C0 I
-(ptIdxPoint hI v))` — the full model type, normalised — is total, `SupportOk`
+(ptIdxPoint hI v))` — the full model type, normalized — is total, `SupportOk`
 everywhere (`normL_supportOk ∘ mty_supportOk`), and inside the branching bound
 (`normL_len`), so `ptIter_stabilizes_mty` applies §248.6 to the labelling the
 extraction actually uses.
@@ -16804,9 +16804,9 @@ about the theorem.
 **FINDING 4.3 — a gap that is SMALLER than we recorded.** The "abstract
 composition-table semantics" caveat is already closable for soundness by material
 in this repository that nobody wired up: every model `coneScheme_sound` builds is
-`odNet` of an `ODStruct`, and `RCC5NormalForm.lean`'s `eta` realises any
+`odNet` of an `ODStruct`, and `RCC5NormalForm.lean`'s `eta` realizes any
 ordered-disjoint structure as actual non-empty SETS under literal set-RCC5, with
-no finiteness assumption. So the models are genuinely set-realisable and the
+no finiteness assumption. So the models are genuinely set-realizable and the
 characterisation transfers. `RCC5NormalForm.lean` is currently imported nowhere.
 Also fixed: the `cinf_satisfiable` comment called it "the no-finite-model witness"
 when the theorem proves only `Satisfiable Cinf`.
@@ -16989,11 +16989,11 @@ provably vacuous under `POFree` (`allBodies_po_nil_of_pofree`). Recording this
 because the forward-facing documents have been hedging the fragment result with
 full-logic caveats that do not apply to it.
 
-### §294 — NNF: the input-normalisation gap is closed
+### §294 — NNF: the input-normalization gap is closed
 
 §288 recorded that `Concept` has no negation constructor, so `decidableSat_cone`
 decides concepts *already in NNF*, and that raw input additionally needs a
-normalisation function plus a preservation theorem — the plan's O01. Both are
+normalization function plus a preservation theorem — the plan's O01. Both are
 now in the artifact.
 
 `Formula` is the raw syntax with negation; `fsat` its semantics over the same
@@ -17039,7 +17039,7 @@ The standing caveat was that `Satisfiable` is the ABSTRACT composition-table
 semantics: `RCC5Interp` constrains `rho` by the table, but nothing said the
 elements were regions or that `rho` was the actual set relation. The worry was
 one-directional and specific — a SAT verdict might rest on an abstract frame that
-no family of real sets realises.
+no family of real sets realizes.
 
 **What is now proved.** `setRel` is the naive relation on a family of sets —
 equal / proper subset / proper superset / empty intersection / otherwise overlap
@@ -17068,7 +17068,7 @@ Both directions turned out to be cheap, for opposite reasons.
 * **Abstract ⟹ concrete** needed the right regions. `odOfModel` reads any
   `RCC5Interp` as an `ODStruct` on its domain; `odNet_odOfModel` (new) shows the
   read-off IS the model's own relation on every pair; `sat_subtype` (new)
-  relativises satisfaction to the subtype carrier. The realisation itself is
+  relativizes satisfaction to the subtype carrier. The realization itself is
   `eta`, ported from `RCC5NormalForm`.
 
 **The one thing worth understanding here.** `eta x` is **not** the down-set of
@@ -17081,7 +17081,7 @@ construction once mid-session — reasoning about down-sets and concluding the
 bridge was unclosable — before reading what `RCC5NormalForm.eta` actually said.
 **Read the definition before deciding the theorem is false.**
 
-Non-vacuity is hand-built, not derived: `setSat_dr_witness` realises `∃DR.⊤` with
+Non-vacuity is hand-built, not derived: `setSat_dr_witness` realizes `∃DR.⊤` with
 two singleton subsets of `Bool`. A witness obtained through §295.5 would only
 show the theorem applies; this shows `SetSatisfiable` is inhabited by data a
 reader can see.
@@ -17165,7 +17165,7 @@ vacuous" undersells it. A composition cell containing `po` can always be
 discharged by putting the pair at `PO` — unless some formula can object to a `PO`
 edge, and the only formula that can is `∀PO.D`. So on this fragment every cell
 containing `po` is escapable and the maximally-`PO` unfolding is *always* a model.
-That is why the construction needs no joint realisability across a signature's
+That is why the construction needs no joint realizability across a signature's
 demands: every cross-relation between different children is the residual, and the
 residual costs nothing. It also locates the boundary — what is lost when `∀PO`
 returns is not one proof case but the residual default itself. Now in the

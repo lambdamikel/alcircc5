@@ -48,7 +48,7 @@ fragment membership the **only** hypothesis in each:
 - `decidableSetSat` — under **concrete set** semantics.
 
 Two things the earlier status listed as gaps are closed. Input no longer has to
-be pre-normalised (`nnfP_correct` proves the translation preserves meaning in
+be pre-normalized (`nnfP_correct` proves the translation preserves meaning in
 both polarities) — and the polarity flag exposed that the fragment condition on
 *raw* input is **no ∀PO positively and no ∃PO negatively**, since an ∃PO under a
 negation *becomes* a ∀PO. And satisfiability over the abstract composition-table
@@ -60,7 +60,7 @@ This was reached by a **third** route, distinct from the two this note argues:
 a finite control graph of signatures, a monotone elimination to a greatest fixed
 point, and a fresh-occurrence unfolding in which no node is ever reused. It does
 not use the `K(C₀)` bound, so the two arguments here remain independent — and
-remain *unformalised*. The earlier per-quadrant route (`rr_covers`,
+remain *unformalized*. The earlier per-quadrant route (`rr_covers`,
 `decidableSat_hfrag` and friends) is still in the artifact and still true, but it
 is **not** what certifies the theorem; its general mixed extraction was never
 completed, and cold attack refuted the architecture it needed.

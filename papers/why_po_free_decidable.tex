@@ -83,7 +83,7 @@ restriction, but the correct condition on \emph{raw} concepts is
 polarity-sensitive and is easy to get wrong: pushing a negation through
 $\exists\PO.D$ produces $\forall\PO$, so the condition is \textbf{no
 $\forall\PO$ in positive position and no $\exists\PO$ in negative
-position}. The certified route carries the normalisation and the
+position}. The certified route carries the normalization and the
 preservation theorem, so this is a theorem rather than a convention
 (\code{nnfP\_correct}, \code{decidableFSat}).
 
@@ -861,9 +861,9 @@ certification pass itself.
   $\PO$ can always be discharged by putting the pair at $\PO$ unless some
   formula can object to a $\PO$ edge, and the only formula that can is
   $\forall\PO.D$; so here the maximally-$\PO$ unfolding is \emph{always} a
-  model, and no joint realisability across a signature's several demands is
+  model, and no joint realizability across a signature's several demands is
   ever needed. This route does \emph{not} use the $K(C_0)$ bound, so
-  items~1--3 above remain independent, unformalised arguments for the same
+  items~1--3 above remain independent, unformalized arguments for the same
   theorem. Capstones: \code{decidableFSat}, \code{decidableSat\_cone},
   \code{decidableSetSat}. The design document is
   \code{papers/cone\_scheme\_plan/}; the Lean development and its
@@ -1013,7 +1013,7 @@ coherence (cycling a type-equal chain segment into a kernel is
 legitimate), witness selection (late picking), and the syntactic
 $\forall\PO$-vacuity (\code{pofree\_cl\_all}: no $\forall\PO$ ever
 appears in the fragment's closure --- the escape valve,
-kernel-checked). Not formalised on \emph{this} route: the assembly construction gluing these
+kernel-checked). Not formalized on \emph{this} route: the assembly construction gluing these
 into an accepted code, and the $K(C_0)$ counting/enumeration.
 
 That is no longer the last word on the theorem, though it remains the last
@@ -1023,7 +1023,7 @@ decision procedure in August 2026 by a third route (ledger
 since been through three independent cold reviews without a counterexample.
 So the honest labels differ: the \textbf{theorem} is
 \textbf{machine-certified}; the \textbf{two arguments in this explainer}
-remain \textbf{strongly supported, not formalised end-to-end}; and the
+remain \textbf{strongly supported, not formalized end-to-end}; and the
 \textbf{full logic} remains open.
 
 \section{The one-paragraph version}\label{sec:summary}

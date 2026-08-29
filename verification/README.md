@@ -51,7 +51,7 @@ Brute-force enumeration of complete RCC5 Kripke labelings over domain sizes $n \
 
 For each labeling and each atomic assignment, the oracle checks concept satisfaction at the declared root. Cross-corroborates WP2:
 
-- $C_{AB}$ is realised at $n = 3$ — consistent with WP2 accepting its certificate.
+- $C_{AB}$ is realized at $n = 3$ — consistent with WP2 accepting its certificate.
 - Infinite-model-only concepts (e.g., $\exists \mathrm{PP}.\top \sqcap \forall \mathrm{PP}.\exists \mathrm{PP}.\top$) correctly report *no finite model up to $n = 4$* — consistent with SAT in an infinite frame and with WP2 accepting the certificate (a parent self-loop on the rank-$d$ quotient unfolds to fresh occurrences).
 - Genuine UNSAT concepts (e.g., $\exists \mathrm{PP}.A \sqcap \forall \mathrm{PP}.\neg A$) yield *no model up to $n = 4$* **and** the WP2 fuzzer rejects the corresponding certificate.
 

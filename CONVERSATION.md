@@ -3559,10 +3559,10 @@ Michael picked direction 3. This is the sharpest single attack point because pat
 
 Wrote `papers/patchwork_augmentation_ALCIRCC5.tex` / `.pdf` (10 pages). The paper:
 
-- Formalises typed patchwork at three progressively stronger levels: atomic (Renz-Nebel, proven), locally-coherent (typed edges, path-consistent), and arc-consistent with disjunctive domains and Need-filtering. The decidability proof actually needs arc-consistent typed patchwork; Renz-Nebel alone is not enough.
+- Formalizes typed patchwork at three progressively stronger levels: atomic (Renz-Nebel, proven), locally-coherent (typed edges, path-consistent), and arc-consistent with disjunctive domains and Need-filtering. The decidability proof actually needs arc-consistent typed patchwork; Renz-Nebel alone is not enough.
 - Attempts three structurally diverse counterexample probes:
   - **Probe 1, forced coincidence**: two PP-children of a common parent, typed with concepts B and C that are pairwise incompatible on every non-EQ relation via universals, plus B ⊑ ¬C to block the EQ collapse. Collapses to arc-inconsistency (AC-3 empties the filtered domain between the two children).
-  - **Probe 2, inverse-role cycle**: a four-node cycle with PP, PO, PPI edges and a universal reflecting back from the endpoint. Arc-consistent and realisable; no obstruction.
+  - **Probe 2, inverse-role cycle**: a four-node cycle with PP, PO, PPI edges and a universal reflecting back from the endpoint. Arc-consistent and realizable; no obstruction.
   - **Probe 3, yardstick**: iterated existentials with accumulating universals. Collapses to type-level unsatisfiability, caught before any network is constructed.
 - Explains structurally why every probe reduces to either local arc-inconsistency or type-unsatisfiability: **ALCI has no mechanism to express genuinely k-ary constraints for k ≥ 4**. Unary (types), binary (type-safety), and ternary (composition) constraints are all captured by arc-consistency; a failure of typed patchwork would require a k ≥ 4 constraint that arc-consistency misses, and no such construction is visible via inverse-role chaining in the ALCI fragment.
 - Conjectures but does not prove Proposition 7.1: typed patchwork holds for every ALCI\_RCC5 TBox. A full proof would amount to a simpler alternative to the split-forest construction.
@@ -3589,7 +3589,7 @@ Two complementary directions, in priority order:
 1. **Prove Proposition 7.1 rigorously.** The conjecture that typed patchwork holds is a real theorem with real technical content. If it goes through, it yields an alternative decidability proof cleaner than the split-forest construction — grounded in constraint satisfaction rather than tree semantics. The hard step is the Henkin-style witness-addition argument maintaining arc-consistency through unbounded extension.
 2. **Push the Bodirsky-Bodor CSP dichotomy angle.** Every first-order expansion of RCC5 has a CSP that is P or NP-complete, never undecidable. If ALCI\_RCC5 satisfiability can be framed as (or reduced to) a CSP of a fixed template over a first-order expansion of RCC5, the dichotomy does the heavy lifting and decidability follows as a corollary. This would be a very short paper if the framing works, and structurally adjacent to the "arity ≤ 3 CSP" theorem sketched in the patchwork paper's closing.
 
-A third, more adversarial direction: write a small combinatorial search that enumerates typed networks on 4–6 nodes with small TBoxes and checks arc-consistency vs. realisability, looking for a counterexample to Proposition 7.1 that pencil-and-paper probes missed. This would be computational evidence rather than a proof, but could either reinforce the conjecture or surface a surprise.
+A third, more adversarial direction: write a small combinatorial search that enumerates typed networks on 4–6 nodes with small TBoxes and checks arc-consistency vs. realizability, looking for a counterexample to Proposition 7.1 that pencil-and-paper probes missed. This would be computational evidence rather than a proof, but could either reinforce the conjecture or surface a surprise.
 
 
 ## April 19, 2026 (late evening) — Cascade: refuting the simplified patchwork propagations
@@ -3628,7 +3628,7 @@ D1 ⊑ ¬D2
 
 with V = {x}, x : A. Strong arc-consistency passes vacuously: V {x} is empty, so clause (iii) is satisfied for both existentials. But no model exists: any y₁ : D₁ and y₂ : D₂ must be related by *some* RCC5 relation, and D₁'s universals rule out every one.
 
-The one-node failure is the sharpest form of the gap. It shows that existential propagation that checks each existential *independently* against V cannot catch an obstruction that lives *between two pending witnesses*. The paper defines **stronger arc-consistency** (Def 5.1) with an additional inter-witness clause: for every pair of existentials (∃R₁.C₁, ∃R₂.C₂) on the same node, there must exist a pair (R₁', R₂') of relations with R_i' ∈ atoms(R_i), a third relation S, and types realising C₁, C₂ such that the triangle (R₁', R₂', S) is composition-consistent and S is relation-safe between the two witness types.
+The one-node failure is the sharpest form of the gap. It shows that existential propagation that checks each existential *independently* against V cannot catch an obstruction that lives *between two pending witnesses*. The paper defines **stronger arc-consistency** (Def 5.1) with an additional inter-witness clause: for every pair of existentials (∃R₁.C₁, ∃R₂.C₂) on the same node, there must exist a pair (R₁', R₂') of relations with R_i' ∈ atoms(R_i), a third relation S, and types realizing C₁, C₂ such that the triangle (R₁', R₂', S) is composition-consistent and S is relation-safe between the two witness types.
 
 The paper conjectures Proposition 6.1: stronger arc-consistency is equivalent to split-forest rank-d validity. In other words, the cascade terminates here — any further strengthening is just split-forest validity under a different name.
 
@@ -3999,7 +3999,7 @@ identified **two structural defects**:
 
 2. **Witness conflation in the C5 triple-coherence proof.** The v1
    argument for the triple-coherence axiom C5 assumed that the three
-   witness elements realising the three pair-relations
+   witness elements realizing the three pair-relations
    (p₁{,}p₂),(p₂{,}p₃),(p₁{,}p₃) could all be drawn from the
    same model element. Different state-pairs in general have different
    witness elements; the proof needs to compose witnesses across pairs,
@@ -4921,7 +4921,7 @@ from 23 to 31 pages.
   sub-clauses: (a) EQ-closure of strata, (b) PP/PPI containment
   labels both vertical, (c) cross-stratum labels in {DR, PO},
   (d) sibling-frontier labels in {DR, PO, EQ}.  A new Lemma 7.1
-  (*Vertical realisation of PP/PPI pairs*) lifts (M6) from
+  (*Vertical realization of PP/PPI pairs*) lifts (M6) from
   mosaics to U(Q), with case analysis covering subcases ii.a--ii.e.
 - **G2 (commit `f171456`) Port-level equality clusters.**
   State-level Mate_Q(s) was replaced by context- and port-indexed
@@ -4972,7 +4972,7 @@ across two pdflatex passes.
 
 Every gap from the fourth review is closed by explicit
 construction and verifiable lemma in the main proof.  The Lean
-formalisation stack L1--L7 remains the only open verification
+formalization stack L1--L7 remains the only open verification
 work.
 
 ---
@@ -5238,7 +5238,7 @@ Recursive (M6'.a--d):
 - (M6'.d) Residual sibling frontier restricted to DR/PO.
 
 Round-4 (M6) is the depth-1 case.  Lemma 7.1 of the round-4 paper
-(Vertical realisation of PP/PPI pairs) carries over with the case
+(Vertical realization of PP/PPI pairs) carries over with the case
 analysis restricted to one stratum at a time; Subcase (ii.e) of the
 round-4 proof goes through verbatim inside each stratum.
 
@@ -8320,7 +8320,7 @@ input, NNF, and concrete set semantics, fragment membership the only hypothesis
 — with three independent cold reviews and no open correctness items. The one
 caveat is complexity, not correctness: decidable, not runnable. Full
 `ALCI_RCC5` decidability remains **open**, and the two arguments this project
-made for the fragment theorem remain unformalised; the certified route is a
+made for the fragment theorem remain unformalized; the certified route is a
 third and uses neither.
 
 Outstanding and non-technical: the `LambdaMikel@Home` affiliation placeholder,

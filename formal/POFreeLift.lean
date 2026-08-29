@@ -32423,7 +32423,7 @@ theorem mem_normL {C0 : Concept} {L : List Concept} {c : Concept} :
 theorem normL_len (C0 : Concept) (L : List Concept) :
     (normL C0 L).length ≤ (cl C0).length := List.length_filter_le _ _
 
-/-- Normalising changes nothing a support label says. -/
+/-- Normalizing changes nothing a support label says. -/
 theorem normL_supportOk {C0 : Concept} {x : α} {L : List Concept}
     (h : SupportOk I C0 x L) : SupportOk I C0 x (normL C0 L) where
   sub := fun _ hc => (mem_normL.mp hc).1
@@ -32439,7 +32439,7 @@ theorem normL_supportOk {C0 : Concept} {x : α} {L : List Concept}
     have p := h.eq_ c (mem_normL.mp hc).2
     exact mem_normL.mpr ⟨h.sub _ p, p⟩
 
-/-- Depth is monotone under inclusion, so normalising cannot deepen. -/
+/-- Depth is monotone under inclusion, so normalizing cannot deepen. -/
 theorem maxDepth_le_of_sub {l1 l2 : List Concept} (h : ∀ c ∈ l1, c ∈ l2) :
     maxDepth l1 ≤ maxDepth l2 := by
   induction l1 with
@@ -32454,13 +32454,13 @@ theorem normL_depth_le (C0 : Concept) (L : List Concept) :
     maxDepth (normL C0 L) ≤ maxDepth L :=
   maxDepth_le_of_sub (fun _ hc => (mem_normL.mp hc).2)
 
-/-! ##### §147.1 — the step, normalised
+/-! ##### §147.1 — the step, normalized
 
 Re-stating §146's step with `normL` applied gives all three properties AND the
 length bound, so §143's counting instantiates with `b = |cl C₀|`. -/
 
 open Classical in
-/-- The step, with a normalised label. -/
+/-- The step, with a normalized label. -/
 noncomputable def sChildN (hI : RCC5Interp I) {C0 : Concept} (n : SNode I C0)
     {r : Atom} {D : Concept} (h : Concept.ex r D ∈ n.lab) : SNode I C0 :=
   ⟨(sChild hI n h).x, (sChild hI n h).hx, normL C0 (sChild hI n h).lab,
@@ -33375,7 +33375,7 @@ Neither is attempted here. The model half is done; the label half is named. -/
 
 §159.3 flagged `block_of_persistent`'s `hpoolcl` as conservative in a way that
 may be unsatisfiable: it quantifies over `cl C₀`, while `glueFam_ok`'s `hreal`
-can only realise pool entries that some node actually carries.
+can only realize pool entries that some node actually carries.
 
 Reading further settles it. `multiBlock_of_site` already takes the
 OCCURRENCE-restricted form, and `multiBlock_of_chain` merely converts:
@@ -33411,7 +33411,7 @@ theorem multiBlock_of_chain' (hI : RCC5Interp I)
 
 /-- **AND THE PERSISTENT BLOCK, WEAKENED.**  `block_of_persistent` over what the
     model carries — the form the assembly can actually supply, since a pool
-    entry must be realised by a real node. -/
+    entry must be realized by a real node. -/
 theorem block_of_persistent' (hI : RCC5Interp I) {C0 G : Concept}
     (hpo : POFree C0) (myTag : Nat) (P : List (Nat × List Concept))
     (ctx : List α) (hctxdom : ∀ e ∈ ctx, I.dom e)
@@ -34083,7 +34083,7 @@ that height. `wp129`'s control is now a theorem and no longer an observation.
 closure gives nothing — `comp(PPI,DR) = {PPI,PO,DR}` — and §173's argument uses
 RECURRENCE to find a lower occurrence of that point's type.
 
-Formalising that needs the type to recur BELOW an arbitrary height, which
+Formalizing that needs the type to recur BELOW an arbitrary height, which
 `KernelData.cty`'s single equation `mty (c i) = mty (c (i+p))` does not directly
 give: it relates two specific points, not every intermediate one to a lower
 occurrence.
@@ -35133,7 +35133,7 @@ theorem phaseSeed_depth_lt {C0 : Concept} {I : Interp α} {pt : α}
 
 open Classical in
 /-- **A KERNEL PHASE AS A NODE.**  `phase_supportOk` gives the label; the
-    normalisation is `sChildN`'s, so the branching bound is the same. -/
+    normalization is `sChildN`'s, so the branching bound is the same. -/
 noncomputable def kPhaseNode (hI : RCC5Interp I) (C0 : Concept) (pt : α)
     (hpt : I.dom pt) (L : List Concept) : SNode I C0 :=
   ⟨pt, hpt, normL C0 (hcloseL I pt (phaseSeed C0 I pt L)),
@@ -35742,7 +35742,7 @@ theorem rootNode_depth (hI : RCC5Interp I) (C0 : Concept) {x : α}
     (Nat.le_trans (hcloseL_depth_le I x [C0]) ?_)
   simp [maxDepth]
 
-/-- **§199.1 item 7.**  A normalised label is one of the enumerated lists — which
+/-- **§199.1 item 7.**  A normalized label is one of the enumerated lists — which
     is what `MergedExtraction`'s two `allListsLe` conditions ask of every
     external and every phase. -/
 theorem normL_mem_allListsLe (C0 : Concept) (L : List Concept) :
@@ -35751,7 +35751,7 @@ theorem normL_mem_allListsLe (C0 : Concept) (L : List Concept) :
   exact ⟨List.length_filter_le _ _, fun c hc => (mem_normL.mp hc).1⟩
 
 /-- Every node of the closure has such a label: `sChildN` and `kPhaseNode` both
-    normalise, and `rootNode` does too. -/
+    normalize, and `rootNode` does too. -/
 theorem sNode_lab_mem_allListsLe (C0 : Concept) {I : Interp α}
     (n : SNode I C0) (L : List Concept)
     (h : n.lab = normL C0 L) :
@@ -36404,7 +36404,7 @@ theorem sum_map_le_pw {A : Type} (l : List A) (g h : A → Nat)
     exact Nat.add_le_add (hle a List.mem_cons_self)
       (ih (fun x hx => hle x (List.mem_cons_of_mem a hx)))
 
-/-- `normL_len_le` for lists known to be normalised, compared by membership. -/
+/-- `normL_len_le` for lists known to be normalized, compared by membership. -/
 theorem normL_len_le' (C0 : Concept) (A B : List Concept)
     (hA : ∃ X, A = normL C0 X) (hB : ∃ Y, B = normL C0 Y)
     (h : ∀ c ∈ A, c ∈ B) : A.length ≤ B.length := by
@@ -36453,7 +36453,7 @@ noncomputable def satIter {β : Type} (I : Interp α) (C0 : Concept)
   | 0 => fun f => normL C0 (L0 f)
   | n + 1 => satRound I C0 nodes pt rel (satIter I C0 nodes pt rel L0 n)
 
-/-- Every stage is a normalised label — which is what §209's counting needs. -/
+/-- Every stage is a normalized label — which is what §209's counting needs. -/
 theorem satIter_normL {β : Type} (I : Interp α) (C0 : Concept)
     (nodes : List β) (pt : β → α) (rel : β → β → Atom)
     (L0 : β → List Concept) :
@@ -37617,7 +37617,7 @@ theorem stageIter_no_endless (hI : RCC5Interp I) {C0 : Concept}
 
 §226.2 named two invariants the alternation must supply. The second — every
 stage label is a `normL` — is an induction over rounds, with one lemma per
-operator. It holds because all three label-producing constructions normalise:
+operator. It holds because all three label-producing constructions normalize:
 `sChildN`, `satRound`, and `rootNode`. -/
 
 open Classical in
@@ -37844,7 +37844,7 @@ points at generation `g+1` are witnesses of `(point at generation ≤ g, demand 
 cl C₀)`, so each generation multiplies the point set by at most `|cl C₀|`, and
 §228–§229 bound the generations by `mdepth C₀`.
 
-Formalising it needs the generation structure as an explicit induction, which
+Formalizing it needs the generation structure as an explicit induction, which
 `stageIter` does not currently expose — its recursion is on rounds, and one round
 can add points at several generations at once. **That mismatch, not the counting,
 is what is left.** Recorded rather than estimated: the analogous transfer looked
@@ -37929,7 +37929,7 @@ noncomputable def stagePhases (hI : RCC5Interp I) {C0 : Concept}
             (stageAnchors_pos ns n.val n.property) 0).cdom _)
         n.val.lab))
 
-/-- Phase nodes are normalised, like every other stage node. -/
+/-- Phase nodes are normalized, like every other stage node. -/
 theorem stagePhases_normL (hI : RCC5Interp I) {C0 : Concept}
     (ns : List (SNode I C0)) :
     ∀ m ∈ stagePhases hI ns, ∃ X, m.lab = normL C0 X := by
@@ -38036,7 +38036,7 @@ theorem stageLab0_ok (hI : RCC5Interp I) {C0 : Concept} (v : StageIdx I C0) :
         ((kernelData hI C0 n.x n.hx hn 0).cdom _) n.lab).ok
 
 open Classical in
-/-- Normalised at every index, so §209's counting applies. -/
+/-- Normalized at every index, so §209's counting applies. -/
 theorem stageLab0_normL (hI : RCC5Interp I) {C0 : Concept}
     (v : StageIdx I C0) (hext : ∀ n : SNode I C0, v = .inl n →
       ∃ X, n.lab = normL C0 X) :
@@ -38178,7 +38178,7 @@ theorem ptChild_rho {C0 : Concept} {x : α} {Lx : List Concept}
 
 open Classical in
 /-- **THE CHILD'S LABEL** — the seed of the demand against the stored label,
-    closed and normalised. -/
+    closed and normalized. -/
 noncomputable def ptChildLab (_hI : RCC5Interp I) {C0 : Concept} {x : α}
     {Lx : List Concept} (hok : SupportOk I C0 x Lx) {r : Atom} {D : Concept}
     (hD : Concept.ex r D ∈ Lx) : List Concept :=
@@ -38366,7 +38366,7 @@ theorem ptSat_ok (hI : RCC5Interp I) {C0 : Concept}
 
 open Classical in
 /-- **THE ROUND.**  Saturation, plus the demand arguments landing here, closed
-    and normalised — §237.1's operator. -/
+    and normalized — §237.1's operator. -/
 noncomputable def ptRound (hI : RCC5Interp I) {C0 : Concept}
     (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v))
@@ -38405,7 +38405,7 @@ theorem ptRound_mono (hI : RCC5Interp I) {C0 : Concept}
   exact List.mem_append.mpr (Or.inl
     (satRound_mono I C0 vs (ptIdxPoint hI) _ L (fun m => (hok m).sub) v c hc))
 
-/-- Normalised, so §209's counting applies at `PtIdx` too. -/
+/-- Normalized, so §209's counting applies at `PtIdx` too. -/
 theorem ptRound_normL (hI : RCC5Interp I) {C0 : Concept}
     (vs : List (PtIdx I C0)) (L : PtIdx I C0 → List Concept)
     (hok : ∀ v, SupportOk I C0 (ptIdxPoint hI v) (L v)) (v : PtIdx I C0) :
@@ -38960,7 +38960,7 @@ noncomputable def gatedIter (hI : RCC5Interp I) {C0 : Concept} :
         (gatedIter hI n ns) (modelRel_hsound hI))
 
 open Classical in
-/-- The normalisation invariant, unchanged — `gatedStage` differs from
+/-- The normalization invariant, unchanged — `gatedStage` differs from
     `extendStage` only in which nodes it draws from. -/
 theorem gatedIter_normL (hI : RCC5Interp I) {C0 : Concept}
     (ns0 : List (SNode I C0)) (h0 : ∀ m ∈ ns0, ∃ X, m.lab = normL C0 X) :
@@ -39485,7 +39485,7 @@ theorem ptIter_stabilizes (hI : RCC5Interp I) {C0 : Concept}
 
 open Classical in
 /-- **§248.7 — THE LABELLING THE EXTRACTION ACTUALLY USES.**  The full model
-    type, normalised: total, `SupportOk` everywhere, and inside the branching
+    type, normalized: total, `SupportOk` everywhere, and inside the branching
     bound.  Its existence is what keeps §248.6 from being a statement about
     degenerate labellings only. -/
 noncomputable def mtyLab (hI : RCC5Interp I) (C0 : Concept)
@@ -39715,7 +39715,7 @@ about type-periodicity at other offsets, which `KernelData` does not provide. -/
 
 open Classical in
 /-- **THE KERNEL'S PHASE LABELLING** — the full model type at the phase point,
-    normalised.  `SupportOk` for free, exactly as `mtyLab`. -/
+    normalized.  `SupportOk` for free, exactly as `mtyLab`. -/
 noncomputable def kLab {C0 : Concept} {Ds : List Concept} {L0 : Nat} {d : Bool}
     {x : α} (K : KernelData I C0 Ds L0 d x) (a : Nat) : List Concept :=
   normL C0 (mty C0 I (K.c (K.i + a)))
@@ -43993,7 +43993,7 @@ theorem olab_sub_cl {X : List Sig} {q0 : Sig} {C0 : Concept}
       everything else to `PO` — is ALWAYS a model.
 
     That is why the proof has the shape it has: the fresh-occurrence unfolding
-    needs no joint realisability across a signature's several demands, because
+    needs no joint realizability across a signature's several demands, because
     every cross-relation between different children comes out as the residual,
     and the residual costs nothing.  It also locates the boundary exactly — the
     first thing lost when `∀PO` is re-admitted is not one proof case, it is the
@@ -44321,7 +44321,7 @@ theorem erase_cpo_satisfiable :
 `decidableSat_cone` are statements about concepts ALREADY IN NEGATION NORMAL
 FORM.
 
-Deciding a RAW `ALCI_RCC5` concept additionally needs a normalisation function
+Deciding a RAW `ALCI_RCC5` concept additionally needs a normalization function
 and the preservation theorem `Satisfiable (nnf C) ↔ Satisfiable C`.  That is the
 certification plan's obligation O01 (`prepared_nnf_po_free`) and it is NOT
 proved here.  The step is standard for `ALCI` and the project's papers state it,
@@ -44331,7 +44331,7 @@ Flagged by the 2026-08-29 audit; recorded here rather than in a commit message s
 that it travels with the theorem.
 
 ⚠ **CLOSED 2026-08-29 by §294**, which adds the raw syntax `Formula`, its
-semantics `fsat`, the normalisation `nnfC`, the preservation theorem
+semantics `fsat`, the normalization `nnfC`, the preservation theorem
 `nnfP_correct`, and `decidableFSat` — a decision procedure for RAW input.  This
 paragraph is kept because it states what was missing and why it mattered. -/
 
@@ -44365,11 +44365,11 @@ Still unrunnable; one exponential less unrunnable.
 This is a statement about the DECISION PROCEDURE's usability, not about the
 decidability theorem, which is unaffected. -/
 
-/-! #### §294 — RAW SYNTAX AND NNF: closing the input-normalisation gap (O01)
+/-! #### §294 — RAW SYNTAX AND NNF: closing the input-normalization gap (O01)
 
 §288 recorded that `Concept` has no negation constructor, so `decidableSat_cone`
 decides concepts ALREADY IN NNF, and that deciding a RAW `ALCI_RCC5` concept
-additionally needs a normalisation function plus a preservation theorem. This
+additionally needs a normalization function plus a preservation theorem. This
 section supplies both.
 
 `Formula` is the raw syntax WITH negation; `fsat` its semantics over the same
@@ -44425,7 +44425,7 @@ def nnfP : Bool → Formula → Concept
   | true,  .all r F => .all r (nnfP true F)
   | false, .all r F => .ex r (nnfP false F)
 
-/-- The normalisation. -/
+/-- The normalization. -/
 def nnfC (F : Formula) : Concept := nnfP true F
 
 /-! ##### The two classical steps, isolated -/
@@ -44598,7 +44598,7 @@ consumer written against the interface rather than the interface believed: a
 `Decidable` that could not be reduced would still typecheck.
 
 Only tiny inputs are reachable, for the reason §289 records: the signature space
-is doubly exponential and the procedure runs at `|cl C₀| ≤ 2`.  `¬⊤` normalises
+is doubly exponential and the procedure runs at `|cl C₀| ≤ 2`.  `¬⊤` normalizes
 to `⊥` and `atom 0` to itself, which is inside that. -/
 
 /-- A raw formula with a NEGATION at the root, decided UNSAT by the procedure. -/
@@ -44617,7 +44617,7 @@ The standing caveat was that `Satisfiable` is the ABSTRACT composition-table
 semantics: `RCC5Interp` constrains `rho` by the table, but nothing says the
 elements are regions or that `rho` is the actual set relation.  The worry is
 one-directional and specific — the procedure might report SAT on the strength of
-an abstract model that no family of real sets realises.
+an abstract model that no family of real sets realizes.
 
 This section removes it.  `setRel` is the NAIVE relation on a family of sets
 (equal / proper subset / proper superset / empty intersection / otherwise
@@ -44628,7 +44628,7 @@ Then:
 * `setRel_odNet` — the naive relation on any such family is `odNet` of an
   ordered-disjoint structure, so `setSat_sound` gives `SetSatisfiable → Satisfiable`
   for free from `odNet_frame`;
-* `odEta` — every `ODStruct` is realised by actual sets, using the
+* `odEta` — every `ODStruct` is realized by actual sets, using the
   NON-DISJOINT-PAIR regions of `RCC5NormalForm` rather than naive down-sets.
   Down-sets do NOT work: two `PO` elements with nothing below both would get
   disjoint down-sets, and `PO` would be lost.  A pair `(x,y)` with `x PO y` is
@@ -44790,7 +44790,7 @@ theorem setSat_sound {C0 : Concept} (h : SetSatisfiable C0) : Satisfiable C0 := 
         = ⟨fun _ => True, odNet (setOD reg hne), val⟩ by rw [hEq]]
   exact frame_rcc5 _ (odNet_frame _) val
 
-/-- **§295.3 — EVERY `odNet` MODEL IS ALREADY CONCRETE.**  `eta` realises the
+/-- **§295.3 — EVERY `odNet` MODEL IS ALREADY CONCRETE.**  `eta` realizes the
     structure by actual sets and `setRel` of those sets is the same relation, so
     the interpretation is unchanged — no transport, no induction. -/
 theorem odNet_setSat {C0 : Concept} (O : ODStruct N) (val : Nat → N → Prop)
@@ -44849,7 +44849,7 @@ theorem coneScheme_sound_concrete {X : List Sig} {q0 : Sig} {C0 : Concept}
 §295.5 needed `POFree` only because its `→` routed through the procedure.  It
 does not have to: `odOfModel` turns ANY `RCC5Interp` into an `ODStruct` on its
 domain, and `odNet` of that read-off is the model's own relation, so §295.3
-applies to arbitrary models.  The only work is relativising `sat` from a
+applies to arbitrary models.  The only work is relativizing `sat` from a
 domain-restricted interpretation to the total one on the subtype. -/
 
 /-- The read-off frame IS the model's relation — on every pair, not only the
@@ -44924,7 +44924,7 @@ theorem sat_subtype {α : Type} (I : Interp α) (c : Concept) :
 /-- **§295.5 — ABSTRACT ⟹ CONCRETE, FOR ARBITRARY MODELS.**  No fragment
     hypothesis: `odOfModel` reads any `RCC5Interp` as an `ODStruct` on its
     domain, `odNet_odOfModel` says the read-off IS the model's own relation, and
-    §295.3 realises it by sets.  The only labour is relativising `sat` to the
+    §295.3 realizes it by sets.  The only labour is relativizing `sat` to the
     subtype carrier (`sat_subtype`). -/
 theorem satisfiable_setSat {C0 : Concept} (h : Satisfiable C0) :
     SetSatisfiable C0 := by
@@ -44954,7 +44954,7 @@ Derived witnesses (via §295.5) only show the theorem applies.  This one shows
 `SetSatisfiable` is inhabited by data a reader can see: two singleton subsets of
 `Bool`, and the `DR` between them computed from the naive definition. -/
 
-/-- Two disjoint singleton regions in `Bool`, realising `∃DR.⊤`. -/
+/-- Two disjoint singleton regions in `Bool`, realizing `∃DR.⊤`. -/
 theorem setSat_dr_witness : SetSatisfiable (Concept.ex dr Concept.top) := by
   classical
   refine ⟨Bool, Bool, fun x p => p = x, fun _ _ => True, false,

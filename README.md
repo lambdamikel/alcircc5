@@ -118,7 +118,7 @@ by `∀PO`, which the fragment removes.
 > Three things are worth separating, because earlier versions of this box ran them
 > together:
 >
-> - **Raw input.** `Formula` carries negation, `nnfP` normalises it, and
+> - **Raw input.** `Formula` carries negation, `nnfP` normalizes it, and
 >   `nnfP_correct` proves preservation in *both* polarities. The fragment
 >   condition on raw input turns out to be polarity-sensitive — **no `∀PO`
 >   positively and no `∃PO` negatively**, because an `∃PO` under a negation
@@ -157,15 +157,15 @@ by `∀PO`, which the fragment removes.
 > **Honest label, and it is not this project's blanket one.** The fragment
 > result is **machine-certified**: the Lean kernel checks the decision procedure
 > with fragment membership as its only hypothesis, no `sorry`, standard axioms.
-> Its formalisation's *adequacy* — do the definitions mean ALCI_RCC5? — has been
+> Its formalization's *adequacy* — do the definitions mean ALCI_RCC5? — has been
 > examined by three independent cold reviews without a counterexample, and the
 > largest adequacy question, abstract versus concrete semantics, is now a
 > **theorem** rather than a matter of reviewer confidence. What remains at risk
-> is what remains at risk in any formalisation: that a definition misrepresents
+> is what remains at risk in any formalization: that a definition misrepresents
 > the intended object in a way nobody has noticed.
 >
 > The project's standing **strongly supported, not certified** applies to the
-> **full logic** and to the two unformalised *arguments* for this theorem — and
+> **full logic** and to the two unformalized *arguments* for this theorem — and
 > so does the ledger presumption below (a defect or overclaim in all but two of
 > twenty reviews). Earlier versions of this box applied both to the fragment
 > result as well. That was wrong: the ledger is overwhelmingly a record of the
