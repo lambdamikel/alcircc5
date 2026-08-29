@@ -16386,3 +16386,40 @@ the constructor's arguments here where `induction h with | mk i w` succeeded.
 
 Build: 43,511 lines, 2,225 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §§277–278 — the strategy, and every birth carries its own relation
+
+**§277 (O07) — the strategy.** A fixed point guarantees a target EXISTS for every
+demand of every survivor; G3's recursion needs one CHOSEN. `pickTarget` is
+`List.find?` over the surviving set, so the strategy is computable — no choice.
+`pickTarget_some` says a survivor's every demand gets a target; `pickTarget_closed`
+says that at a genuine fixed point the target is again a survivor, so the
+unfolding never leaves the control graph.
+
+**§278 (O11) — the birth edges.** The unfolding is only useful if a birth by `r`
+really is an `r`-edge of the frame. Three are immediate: `unf_edge_pp` and
+`unf_edge_ppi` from the order edges, `unf_edge_dr` from the seed. The fourth is
+the plan's O11 — *a PO birth remains residual PO after all closures* — and
+"residual" means being caught by none of the earlier clauses, so it needs real
+work: `unf_po_not_lt` (order preserves the vertical base, a `PO` birth changes
+it) and `unf_po_not_disj`, which is a length argument in the orientation the head
+atoms do not settle.
+
+`drBirth_vbase_shape` factors that orientation analysis out: a `DR` birth's
+target base is `DR`-headed and its source base is no longer than the target's
+tail. Both orientations of the disjointness seed then close, one on head atoms
+and one on lengths.
+
+**All of G2's frame obligations are now discharged** (O08 freshness by
+construction, O09 order, O10 disjointness, O11 residual PO, O12 free from
+`odNet_frame`), and every birth carries its relation. What G3 needs next is the
+LABELLING: attach each occurrence's signature via the strategy, and prove the
+Hintikka conditions — `∃`-fulfilment is the child occurrence, and the four edge
+lemmas above are what make that a fact about the frame rather than a hope.
+
+A second tactic note: `rcases hs with ⟨j, u⟩ | ⟨j, u⟩` again failed to bind an
+inductive `Prop`'s arguments, as `cases` did in §276. Factoring the destructuring
+into a helper proved by `induction` is the reliable pattern here.
+
+Build: 43,608 lines, 2,236 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

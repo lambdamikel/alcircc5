@@ -42444,6 +42444,134 @@ def unfOD : ODStruct Occ where
     no extraction, no reuse.  Every countermodel that killed the borrowing route
     attacked reuse; there is none here to attack. -/
 theorem unf_frame : Frame (odNet unfOD) := odNet_frame unfOD
+/-! #### §277 — G1/O07: THE STRATEGY
+
+A fixed point guarantees that every surviving signature's demands HAVE targets.
+G3 needs them CHOSEN — a function, so that the unfolding is defined by recursion
+rather than by repeated appeal to an existential. `List.find?` supplies it
+without choice, which keeps the strategy computable. -/
+
+theorem find?_some_of_any {β : Type} (p : β → Bool) :
+    ∀ l : List β, l.any p = true →
+      ∃ b, l.find? p = some b ∧ b ∈ l ∧ p b = true := by
+  intro l
+  induction l with
+  | nil => intro h; simp at h
+  | cons a t ih =>
+      intro h
+      by_cases ha : p a = true
+      · exact ⟨a, by simp [List.find?, ha], List.mem_cons_self, ha⟩
+      · have ha' : p a = false := by
+          cases hpa : p a with
+          | true => exact absurd hpa ha
+          | false => rfl
+        rw [List.any_cons, ha', Bool.false_or] at h
+        obtain ⟨b, hf, hb, hpb⟩ := ih h
+        refine ⟨b, ?_, List.mem_cons_of_mem _ hb, hpb⟩
+        simp [List.find?, ha', hf]
+
+/-- The strategy: the first compatible target in the surviving set. -/
+def pickTarget (X : List Sig) (q : Sig) (r : Atom) (D : Concept) : Option Sig :=
+  X.find? (fun q' => compatB r D q q')
+
+/-- **§277.1 — A SURVIVOR'S EVERY DEMAND HAS A CHOSEN TARGET.**  This is what
+    turns the fixed point into a control graph: `pruneSig` says a target exists,
+    `pickTarget` names one, and it is again a survivor's neighbour in `X`. -/
+theorem pickTarget_some {X : List Sig} {q : Sig} (hq : q ∈ pruneSig X)
+    {r : Atom} {D : Concept} (h : (r, D) ∈ sigDemands q) :
+    ∃ q', pickTarget X q r D = some q' ∧ q' ∈ X ∧ compatB r D q q' = true := by
+  obtain ⟨_, hall⟩ := List.mem_filter.mp hq
+  rw [List.all_eq_true] at hall
+  have hany := hall (r, D) h
+  obtain ⟨q', hf, hmem, hp⟩ := find?_some_of_any _ X hany
+  exact ⟨q', hf, hmem, hp⟩
+
+/-- **§277.2 — AND THE CHOSEN TARGET STAYS IN THE FIXED POINT.**  At a genuine
+    fixed point `X = pruneSig X`, the strategy maps survivors to survivors, so
+    the unfolding never leaves the control graph — the property G3's recursion
+    needs. -/
+theorem pickTarget_closed {X : List Sig} (hfix : ∀ q ∈ X, q ∈ pruneSig X)
+    {q : Sig} (hq : q ∈ X) {r : Atom} {D : Concept}
+    (h : (r, D) ∈ sigDemands q) :
+    ∃ q', pickTarget X q r D = some q' ∧ q' ∈ X ∧ compatB r D q q' = true :=
+  pickTarget_some (hfix q hq) h
+/-! #### §278 — G2/O11: EVERY BIRTH CARRIES ITS OWN RELATION
+
+The unfolding is only useful if a birth by `r` really is an `r`-edge in the
+frame.  Three cases are immediate from §§275–276; the fourth, `PO`, is the plan's
+obligation O11 (*a PO birth remains residual PO after all closures*) and needs
+the length argument, since "residual" means being caught by none of the earlier
+clauses. -/
+
+theorem vbase_head_dr {i : Nat} {w : Occ} : vbase ((dr, i) :: w) = (dr, i) :: w :=
+  rfl
+
+theorem vbase_head_po {i : Nat} {w : Occ} : vbase ((po, i) :: w) = (po, i) :: w :=
+  rfl
+
+theorem unf_edge_pp (i : Nat) (w : Occ) :
+    odNet unfOD w ((pp, i) :: w) = pp :=
+  odNet_lt unfOD (tcl.base (ostep.up i w))
+
+theorem unf_edge_ppi (i : Nat) (w : Occ) :
+    odNet unfOD w ((ppi, i) :: w) = ppi :=
+  odNet_gt unfOD (tcl.base (ostep.dn i w))
+
+theorem unf_edge_dr (i : Nat) (w : Occ) :
+    odNet unfOD w ((dr, i) :: w) = dr :=
+  odNet_dj unfOD ⟨w, (dr, i) :: w, Or.inl (drBirth.mk i w), Or.inl rfl,
+    Or.inl rfl⟩
+
+/-- **§278.1 — O11: A `PO` BIRTH IS RESIDUAL.**  Neither endpoint is below the
+    other (an order edge preserves the vertical base, a `PO` birth changes it),
+    and they are not disjoint either: disjointness would force one base to be a
+    `DR`-headed word, and the length count rules out the one orientation that the
+    head atoms do not. -/
+theorem unf_po_not_lt (i : Nat) (w : Occ) :
+    ¬ unfLt w ((po, i) :: w) ∧ ¬ unfLt ((po, i) :: w) w := by
+  have hne : vbase w ≠ vbase ((po, i) :: w) := by
+    rw [vbase_head_po]
+    intro hc
+    have h1 := vbase_len w
+    have := congrArg List.length hc
+    simp only [List.length_cons] at this
+    omega
+  exact ⟨fun h => hne (unfLt_vbase h), fun h => hne (unfLt_vbase h).symm⟩
+
+/-- The shape of a `DR` birth's two bases: the target's is `DR`-headed, and the
+    source's is no longer than the target's tail. -/
+theorem drBirth_vbase_shape {a b : Occ} (h : drBirth a b) :
+    ∃ j u, vbase b = (dr, j) :: u ∧ (vbase a).length ≤ u.length := by
+  induction h with
+  | mk j u => exact ⟨j, u, rfl, vbase_len u⟩
+
+theorem unf_po_not_disj (i : Nat) (w : Occ) : ¬ unfDisj w ((po, i) :: w) := by
+  intro h
+  obtain ⟨a, b, hs, hwa, hpb⟩ := h
+  have hva := unfLe_vbase hwa
+  have hvb := unfLe_vbase hpb
+  rw [vbase_head_po] at hvb
+  cases hs with
+  | inl hab =>
+      obtain ⟨j, u, hb, _⟩ := drBirth_vbase_shape hab
+      rw [hb] at hvb
+      exact absurd hvb (by simp)
+  | inr hba =>
+      obtain ⟨j, u, ha, hle⟩ := drBirth_vbase_shape hba
+      rw [ha] at hva
+      have h2 : (vbase w).length ≤ w.length := vbase_len w
+      have e1 := congrArg List.length hva
+      have e2 := congrArg List.length hvb
+      simp only [List.length_cons] at e1 e2
+      omega
+
+theorem unf_edge_po (i : Nat) (w : Occ) :
+    odNet unfOD w ((po, i) :: w) = po := by
+  refine odNet_po unfOD ?_ (unf_po_not_lt i w).1 (unf_po_not_lt i w).2
+    (unf_po_not_disj i w)
+  intro hc
+  have := congrArg List.length hc
+  simp at this
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
