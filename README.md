@@ -64,7 +64,7 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-08-29): the ∀PO-free fragment now has a machine-checked decision procedure with no unproved premise — cold-reviewed twice, with scope limits; the full logic stays open
+## Status (2026-08-29): the ∀PO-free fragment is decided in Lean — raw input, concrete semantics, three cold reviews, no counterexample; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
 repair rounds and 17 adversarial reviews the *full-logic* certificate
@@ -76,8 +76,8 @@ future attack needs is recorded in the paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
 
 **What has moved since is the fragment.** Dropping `∀PO` makes the keystone
-*constructive*. Two things must be kept apart here, and the 2026-08-28 box
-below separates them:
+*constructive*. Two things must be kept apart here, and the boxes below
+separate them:
 
 - **The theorem** rests on **two independent proof routes and three arrivals**
   (ledger in
@@ -96,70 +96,66 @@ below separates them:
 The full-logic question and the fragment results are independent: F6 is forced
 by `∀PO`, which the fragment removes.
 
-> **★ Update (2026-08-29): a decision procedure for the whole fragment, in Lean.**
+> **★ Update (2026-08-29): the ∀PO-free fragment is decided, in Lean, on raw
+> input, under concrete set semantics.**
 >
 > ```lean
+> def decidableFSat   (F : Formula) (h : FPOFree true F) : Decidable (FSatisfiable F)
 > def decidableSat_cone (C0 : Concept) (hpo : POFree C0) : Decidable (Satisfiable C0)
+> def decidableSetSat  (C0 : Concept) (hpo : POFree C0) : Decidable (SetSatisfiable C0)
 > ```
 >
-> `POFree C0` is the **only** hypothesis — no unproved premise, no oracle. The
-> route replaces the previous certificate architecture entirely: a finite control
-> graph of *signatures*, a monotone elimination to a greatest fixed point, and a
-> **fresh-occurrence unfolding** in which no node is ever reused. It covers all
-> four quadrants, **including the mixed one** (`∃PO` and `∃PP` together), which
-> had been open and which two rounds of cold attack had been aimed at.
+> Membership in the fragment is the **only** hypothesis — no unproved premise, no
+> oracle, no `sorry`, axioms `propext`/`Classical.choice`/`Quot.sound`. The route
+> is a finite control graph of *signatures*, a monotone elimination to a greatest
+> fixed point, and a **fresh-occurrence unfolding** in which no node is ever
+> reused. It covers all four quadrants, **including the mixed one** (`∃PO` and
+> `∃PP` together), which had been open and which two rounds of cold attack had
+> been aimed at.
 >
-> A bonus, found by review: the *completeness* direction needs no `POFree` at
-> all, so an empty survivor set certifies unsatisfiability for the **full logic**
-> (`coneScheme_unsat_full`) — one-sided, but full-language. **The first version of
-> that bonus was empty**; see the second review below.
+> Three things are worth separating, because earlier versions of this box ran them
+> together:
 >
-> **Cold review (2026-08-29).** An independent reviewer built the artifact on two
-> Lean versions, re-derived the RCC5 composition table from set semantics at three
-> domain sizes (exact match), ran 4,000 random concepts against exhaustive
-> finite-model search, wrote independent hand proofs, and evaluated the procedure
-> at the kernel. **No counterexample.** It found one documentation defect (two
-> comments had the fragment hypothesis on the wrong side — fixed) and two
-> mis-stated scope limits (below).
+> - **Raw input.** `Formula` carries negation, `nnfP` normalises it, and
+>   `nnfP_correct` proves preservation in *both* polarities. The fragment
+>   condition on raw input turns out to be polarity-sensitive — **no `∀PO`
+>   positively and no `∃PO` negatively**, because an `∃PO` under a negation
+>   *becomes* a `∀PO` — which the NNF-only statement had hidden.
+> - **Concrete semantics.** `setRel` is the naive relation on a family of sets
+>   (equal / proper subset / proper superset / disjoint / otherwise overlap),
+>   written with no reference to the composition table, and
+>   `satisfiable_iff_set` proves abstract and concrete satisfiability are the
+>   **same property** — with no fragment hypothesis, so it covers the whole logic.
+>   The composition table is a *theorem about sets* here, not an assumption.
+> - **A bonus for the full logic.** The completeness direction needs no fragment
+>   hypothesis, so an empty survivor set refutes for the **full** language
+>   (`coneScheme_unsat_full`) — one-sided, and weak (see review 2).
 >
-> **Scope, stated plainly.**
-> - The input must already be in **negation normal form**; `Concept` has no
->   negation constructor and no `nnf`-preservation theorem is proved here.
-> - The procedure is **not runnable**. `|typeEnum C₀| = 2^|cl C₀|` and
->   `|sigStatic C₀| = 2^n·2^(2^n)`; measured, it works at `|cl C₀| ≤ 2` and cannot
->   be started at `≥ 3`. It cannot be evaluated on any concept this project's
->   papers discuss. *Decidable* and *runnable* are different claims.
-> - The semantics is the abstract composition-table one. (The review notes this
->   gap is closable from material already in the repo, and unwired.)
+> **Three independent cold reviews, all "sound, no counterexample".** Each found
+> something; none found a defect in the fragment result itself.
 >
-> **Second cold review (2026-08-29).** A second reviewer attacked the
-> *completeness* half specifically — the direction that had gone through in a
-> single attempt — and **ran the certificate**, which the first could not: 6,268
-> concepts through the real fixpoint against exhaustive model search (**0
-> satisfiable concepts rejected**) and 3,849 model-side obligations over abstract
-> RCC5 frames rather than set models (**0 failures**). Again no counterexample,
-> and one real defect plus one overclaim of ours:
+> | | target | what it did | what it found |
+> |---|---|---|---|
+> | **1** | trusted base + execution | built on two Lean versions, re-derived the composition table from set semantics at three domain sizes, 4,000 concepts vs exhaustive model search, evaluated the procedure at the kernel | two inverted comments; a complexity bound understated by an exponential (fix applied) |
+> | **2** | completeness | ran the elimination itself — 6,268 concepts vs exhaustive search, **0 satisfiable concepts rejected** | a **real defect**: the transition relation's `PO` case was `true`, dropping a constraint valid at every model edge (`PO` is its own converse). Fixed. Vacuous on the fragment, so `decidableSat_cone` was untouched — it made the *full-logic bonus* empty, and we had overclaimed it |
+> | **3** | soundness | ran the unfolding on labels from the **actual greatest fixed point**, which neither prior round had — 6,464 unfoldings, 10,066 occurrences, **0 frame and 0 truth violations** | nothing in the kernel. Five defects in **our own probes and documentation**, including one probe bug that was the same failure its docstring claimed to have fixed |
 >
-> - **Defect, fixed.** The transition relation's `PO` case was `true`, dropping a
->   constraint valid at every model edge — `PO` is its own converse, so `∀PO`
->   bodies cross a `PO` edge in *both* directions. It is now in the shipped
->   definition. Nothing else changed: on the `∀PO`-free fragment the new clause is
->   vacuous, so `decidableSat_cone` is untouched.
-> - **Overclaim, withdrawn.** We had called the full-logic test "a concrete
->   refutation certificate" for the project's Π⁰₁ observation. A decidable
->   *sufficient* condition for unsatisfiability is an under-approximation, not a
->   witness of r.e.-ness — and as shipped the test refuted **nothing** the
->   fragment procedure did not already refute: its verdict was invariant under
->   erasing every `∀PO` (3,000/3,000 measured by the reviewer, 106/106 on our
->   independent rerun), and that erasure is always `∀PO`-free. With the clause
->   restored, the artifact now contains a kernel-checked concept that the test
->   refutes and whose erasure is satisfiable.
-> - **A second `∀PO` gap remains, and it is architectural.** Obligations that
->   arise from *non-singleton* compositions are unreachable by any local clause of
->   this shape. Not a missing line; a limit of the scheme.
+> **The one remaining caveat is complexity, not correctness.** The procedure is
+> **decidable but not runnable**: `|sigStatic C₀| = 2^n · 2^(2^n)` for
+> `n = |cl C₀|`. Measured, it evaluates at `|cl C₀| ≤ 2`; generating the signature
+> space directly rather than filtering moves that to about 4–5. It cannot be run
+> on any concept this project's papers discuss. *Decidable* and *runnable* are
+> different claims, and only the first is made.
 >
-> **Honest label: machine-checked and cold-reviewed twice; NOT certified.** The
-> ledger below records a defect or overclaim in all but two of nineteen reviews.
+> **What is still open is the full logic, not the fragment.** Two items, both
+> full-logic: a second `∀PO` gap in the UNSAT test that is *architectural* —
+> obligations arising from non-singleton compositions are unreachable by any local
+> clause of this shape — and F6, untouched.
+>
+> **Honest label: machine-checked, and cold-reviewed three times without a
+> counterexample; not certified.** The ledger below records a defect or overclaim
+> in all but two of twenty reviews, and the standing presumption is that a
+> twenty-first would find something too.
 >
 > **★ Update (2026-08-28): a gap found in the fragment's proof — and repaired;
 > one certification architecture refuted; a pivot.**

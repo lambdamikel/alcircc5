@@ -409,9 +409,11 @@ fragment's specific $K(C_0)$ closed-form bound; the identity-selector
 characterization; the W2$'$ refinement; the local extension / cross-policy
 results & a proof in a named work package, often with finite probes\\
 \addlinespace
-\emph{Lean-certified (2026-08-29), cold-reviewed twice} & a decision procedure
-for the \emph{whole} $\forall\PO$-free fragment, mixed quadrant included
-(\code{decidableSat\_cone}), with $\code{POFree}$ its only hypothesis; and a
+\emph{Lean-certified (2026-08-29), cold-reviewed three times} & a decision
+procedure for the \emph{whole} $\forall\PO$-free fragment, mixed quadrant
+included, on \emph{raw} (not pre-normalised) input and under \emph{concrete set}
+semantics (\code{decidableFSat}, \code{decidableSat\_cone},
+\code{decidableSetSat}), with fragment membership its only hypothesis; and a
 one-sided \textsc{unsat} test for the \emph{full} logic
 (\code{coneScheme\_unsat\_full}) & see Remark~\ref{rem:conescheme}\\
 \addlinespace
@@ -1648,20 +1650,38 @@ is satisfiable. A second $\forall\PO$ gap remains and is architectural: the
 scheme exploits only compositions forced to a singleton, so obligations arising
 from disjunctive entailments are out of its reach.
 
-Scope, and it matters: the input must already be in negation normal form; the
-semantics is the abstract composition-table one; and the procedure is
-\emph{decidable but not runnable} --- the signature space is doubly
-exponential, and it cannot be evaluated on any concept discussed in this paper.
-Two cold reviews (both 2026-08-29) built the artifact, re-derived the
-composition table independently, and found no counterexample. The first
+Two scope limits recorded in earlier versions of this remark have since been
+closed. The artifact now carries a \emph{raw} syntax with negation, a
+normalisation, and a preservation theorem in both polarities, so no
+pre-normalised input is assumed (\code{decidableFSat}); the polarity flag also
+exposes that the fragment condition on raw input is \emph{no $\forall\PO$
+positively and no $\exists\PO$ negatively}, since an $\exists\PO$ under a
+negation becomes a $\forall\PO$. And satisfiability over the abstract
+composition-table semantics is proved \emph{equivalent} to satisfiability over
+families of non-empty sets under the naive relation --- equal, proper subset,
+proper superset, disjoint, otherwise overlap --- with no fragment hypothesis, so
+the equivalence covers the whole logic (\code{satisfiable\_iff\_set}); on that
+side the composition table is a theorem about sets rather than an assumption.
+Regions there are arbitrary non-empty sets, not regular closed sets in a
+topological space.
+
+What remains is a limit of complexity, not of correctness: the procedure is
+\emph{decidable but not runnable}. The signature space is doubly exponential,
+and the procedure cannot be evaluated on any concept discussed in this paper.
+
+Three cold reviews (all 2026-08-29) built the artifact, re-derived the
+composition table independently, and none found a counterexample. The first
 cross-checked $4{,}000$ random concepts against exhaustive finite-model search
-and found one inverted comment and two understated scope limits. The second
-attacked the completeness direction specifically and \emph{ran} the certificate
---- $6{,}268$ concepts through the elimination against exhaustive model search,
-with no satisfiable concept rejected --- and found the dropped $\PO$ clause
-above together with an overclaim about what the full-logic test certifies. All
-are corrected. The honest label is \emph{machine-checked and cold-reviewed
-twice, not certified}.
+and found two inverted comments and a complexity bound understated by an
+exponential. The second attacked completeness and \emph{ran} the elimination
+--- $6{,}268$ concepts against exhaustive model search, no satisfiable concept
+rejected --- and found the dropped $\PO$ clause above, together with an
+overclaim about what the full-logic test certifies. The third attacked
+soundness, ran the unfolding on labels drawn from the actual greatest fixed
+point, and found no defect in the development: its five findings were all in the
+project's own probes and prose. All are corrected. The honest label is
+\emph{machine-checked, cold-reviewed three times without a counterexample, not
+certified}.
 \end{remark}
 
 \emph{Correction (2026-08-28).} An earlier version of this sentence called that

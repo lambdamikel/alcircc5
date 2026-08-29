@@ -899,9 +899,20 @@ Lift-lemma stress-test incl.\ multi-path $\PO$ forcing; fragment
 boundary & Machine-checked empirically (\code{wp86})\\[0.3em]
 Two independent reasoners agree on the fragment (244 concepts) &
 Machine-checked empirically (\code{wp87})\\[0.3em]
-The full fragment theorem ($K(C_0)$ bound, extraction, assembly) &
-\textbf{Theorem-level} --- argued, twice, independently; \emph{not}
-end-to-end formalized\\
+\textbf{Fragment decidability itself}, by a \emph{third} route (a finite
+control graph of signatures, a monotone elimination to a greatest fixed
+point, and a fresh-occurrence unfolding) --- on raw input and under
+concrete set semantics & \textbf{Certified} (2026-08-29,
+\code{POFreeLift.lean}: \code{decidableFSat}, \code{decidableSat\_cone},
+\code{decidableSetSat}; fragment membership the only hypothesis, zero
+sorries). Cold-reviewed three times without a counterexample; \emph{not}
+certified in this project's stricter sense --- see the ledger. Decidable,
+\emph{not} runnable: the signature space is doubly exponential\\[0.3em]
+The two \emph{arguments} of this paper ($K(C_0)$ bound, extraction,
+assembly --- Routes 1 and 2) & \textbf{Theorem-level} --- argued, twice,
+independently; \emph{not} end-to-end formalized. The certified route above
+is a \emph{different} proof of the same theorem and does not use
+$K(C_0)$\\
 \bottomrule
 \end{tabular}
 \end{center}
