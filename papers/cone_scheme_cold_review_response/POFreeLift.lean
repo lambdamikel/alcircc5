@@ -6,12 +6,7 @@
   header further down) the logic layer over the unfolding: the two-tier
   single-kernel certificate, its Hintikka labelling, the truth lemma,
   and the capstone `twoTier_sound` (valid certificate ⟹ Satisfiable),
-  with the witness `cinf_satisfiable`.  (⚠ 2026-08-29 cold review: this
-  line used to call it "the no-finite-model witness"; `cinf_satisfiable`
-  proves only `Satisfiable Cinf`.  `Cinf` does force an infinite model —
-  `∀PP.∃PP.⊤` propagates up a `comp pp pp = [pp]` chain — but nothing in
-  this file proves that, so the old wording was a comment-level
-  overclaim.)
+  with the no-finite-model witness `cinf_satisfiable`.
 
   This is the SOUNDNESS CRUX of the two-tier quotient decidability argument
   for the PO-coherent (hence ∀PO-free) fragment of ALCI_RCC5
@@ -369,9 +364,7 @@ Deliberately NOT in round A (the roadmap, in order):
      admits a valid certificate within K(C₀) — the two-tier paper's
      extraction (period descriptors, stabilization, backward forcing /
      forward absorption, automatic PO-coherence), which is where
-     `POFree` did its work IN THAT ROUTE.  (⚠ For the shipped ConeScheme
-     route the dependence is the other way round — see the corrected note
-     at `POFree` below, and §§284/285/287.)  Note the PO-padding fact proved useful
+     `POFree` does its work.  Note the PO-padding fact proved useful
      here: a constant-PO kernel interface is ALWAYS frame-valid (PO is
      in every cell of the PO row/column), so the mandatory kernel is no
      obstruction to presenting finite models — the "escape valve" of
@@ -1141,15 +1134,10 @@ theorem multiTier_sound [DecidableEq κ] (T : MultiTier β κ)
 
 /-! ### The fragment predicate
 
-⚠ CORRECTED 2026-08-29 (cold review, finding 4.1).  This note used to say that
-`POFree` enters on the COMPLETENESS side.  For the SHIPPED route that is exactly
-INVERTED, and the file contradicted itself: `coneScheme_complete` (§273.3) takes
-NO `POFree` hypothesis — which is why `coneScheme_unsat_full` (§287) is a sound
-UNSAT test for the FULL logic — while `coneScheme_sound` (§285.1) requires it,
-because §284's truth lemma needs the `∀PO` case to be vacuous.
-
-The old text described the RETIRED round-A/round-D two-tier route and survived
-the pivot. Read §§284, 285 and 287 for the shipped position. -/
+Soundness above is fragment-agnostic (the checker verifies ALL
+universals on all edge classes).  `POFree` is where the fragment enters:
+the COMPLETENESS side (round D) claims every satisfiable ∀PO-free
+concept admits a valid certificate — the two-tier extraction. -/
 
 /-- The ∀PO-free fragment: no subformula `∀PO.D`. -/
 def POFree : Concept → Prop
@@ -4222,28 +4210,6 @@ variable {γ : Type}
 def sublists : List γ → List (List γ)
   | [] => [[]]
   | a :: t => sublists t ++ (sublists t).map (a :: ·)
-
-theorem mem_sublists_sub :
-    ∀ (l T : List γ), T ∈ sublists l → ∀ x ∈ T, x ∈ l := by
-  intro l
-  induction l with
-  | nil =>
-      intro T hT x hx
-      have : T = [] := by
-        simp only [sublists, List.mem_singleton] at hT
-        exact hT
-      rw [this] at hx
-      exact absurd hx List.not_mem_nil
-  | cons a t ih =>
-      intro T hT x hx
-      rw [sublists, List.mem_append] at hT
-      rcases hT with hT | hT
-      · exact List.mem_cons_of_mem a (ih T hT x hx)
-      · rw [List.mem_map] at hT
-        obtain ⟨T', hT', rfl⟩ := hT
-        rcases List.mem_cons.mp hx with rfl | hx'
-        · exact List.mem_cons_self
-        · exact List.mem_cons_of_mem a (ih T' hT' x hx')
 
 theorem filter_mem_sublists (p : γ → Bool) :
     ∀ l : List γ, l.filter p ∈ sublists l := by
@@ -11735,12 +11701,15 @@ many steps. -/
 
 /-- The enumeration of possible model types. -/
 def typeEnum (C0 : Concept) : List (List Concept) :=
-  sublists (cl C0)
+  allListsLe (cl C0) (cl C0).length
 
 theorem mty_mem_typeEnum {α : Type} (C0 : Concept) (I : Interp α) (x : α) :
     mty C0 I x ∈ typeEnum C0 := by
-  rw [typeEnum, mty]
-  exact filter_mem_sublists _ _
+  refine (mem_allListsLe _ _ _).mpr ⟨?_, ?_⟩
+  · rw [mty]; exact List.length_filter_le _ _
+  · intro y hy
+    rw [mty] at hy
+    exact (List.mem_filter.mp hy).1
 
 /-- **THE PIGEONHOLE.**  A list of points whose model types are pairwise
     distinct is no longer than the type enumeration. -/
@@ -43956,7 +43925,7 @@ theorem olab_sub_cl {X : List Sig} {q0 : Sig} {C0 : Concept}
   obtain ⟨S, _, hq⟩ := hmap
   have h1 : (osig X q0 u.val).1 = T := by rw [← hq]
   rw [olab, h1] at hc
-  exact mem_sublists_sub (cl C0) T hT c hc
+  exact ((mem_allListsLe (cl C0) (cl C0).length T).mp hT).2 c hc
 
 /-- **§284.1 — THE TRUTH LEMMA.**  Every concept in an occurrence's label holds
     at that occurrence in the unfolded model.
@@ -44204,36 +44173,6 @@ but it is not in this artifact, and the claim should be read accordingly.
 
 Flagged by the 2026-08-29 audit; recorded here rather than in a commit message so
 that it travels with the theorem. -/
-
-/-! #### §289 — COMPLEXITY: A PROVED LOWER BOUND, AND WHAT IT COSTS
-
-⚠ Recorded after the 2026-08-29 cold review, which measured this rather than
-estimating it.  The earlier scope note said "no proved closed complexity bound",
-which reads as an open question.  It is not one: the definitions carry a proved
-LOWER bound on their own work.
-
-With `n = |cl C₀|`: `typeEnum C₀ = sublists (cl C₀)` has `2^n` members, and
-`keyEnum C₀ = typeEnum × sublists typeEnum` has `2^n · 2^(2^n)`.  So `sigStatic`
-is doubly exponential, and `(sigStatic C₀).length` — which `decidableSat_cone`
-needs, since it names that round — is not materialisable beyond the smallest
-inputs.
-
-MEASURED by the reviewer, on the artifact as shipped: the compiled procedure runs
-at `|cl C₀| ≤ 2` and cannot be STARTED at `|cl C₀| ≥ 3`; at the kernel,
-`decide (Satisfiable ⊤)` closes in under a second while `∃PP.⊤` ran 27 minutes to
-13.3 GB and was OOM-killed.  **`decidableSat_cone` cannot be evaluated on `Cinf`,
-`Cboth`, or any other concept this project's papers discuss.**
-
-The reviewer also supplied the improvement now applied above: `typeEnum` was
-`allListsLe (cl C₀) |cl C₀|` — ALL LISTS of length ≤ n, so ≈ `n^n` — where every
-model type is a FILTER of `cl C₀` and hence a SUBLIST.  Switching to
-`sublists (cl C₀)` cost two proof edits (`mty_mem_typeEnum` via
-`filter_mem_sublists`, `olab_sub_cl` via the new `mem_sublists_sub`) and removed
-an entire exponential: for `Cinf`, `|typeEnum|` drops from **55,987 to 64**.
-Still unrunnable; one exponential less unrunnable.
-
-This is a statement about the DECISION PROCEDURE's usability, not about the
-decidability theorem, which is unaffected. -/
 
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le

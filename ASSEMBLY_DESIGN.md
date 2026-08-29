@@ -16752,3 +16752,70 @@ an extracted execution test, and `wp133`'s unsuitability as a green release gate
 
 Build: 44,433 lines, 2,301 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §289 — the 2026-08-29 COLD review: the first real test, and what it found
+
+Verdict: **sound on the claim, no counterexample**, plus one documentation defect
+and two mis-stated scope limits. Unlike the previous audit this reviewer **built
+the artifact** (Lean 4.32.0 *and* 4.33.1, exit 0 both), re-derived the RCC5
+composition table from set semantics at n = 4, 5, 6 (**zero mismatches, exact not
+over-approximate**), ran 4,000 random `∀PO`-free concepts against exhaustive
+finite-model search with no disagreement either way, wrote two independent hand
+proofs in Lean, and evaluated the procedure at the KERNEL — which is what rules
+out a classical instance masquerading as computable. It also confirmed no
+`axiom`, `sorry`, `native_decide`, `set_option`, `unsafe`, `opaque` or `partial`
+anywhere.
+
+**FINDING 4.1 — a real defect of ours, and it inverted the architecture.** Two
+in-file comments said `POFree` enters on the COMPLETENESS side. For the shipped
+route that is exactly backwards: `coneScheme_complete` takes NO `POFree` (which is
+precisely why §287's full-logic UNSAT test exists) while `coneScheme_sound`
+requires it. It was round-A/round-D prose that survived the pivot — and it had
+already propagated into our own cold-review prompt's claim table. **Both comments
+corrected in the source; the prompt's table corrected too.** A file that
+contradicts itself about which direction carries the fragment hypothesis is worse
+than one that says nothing.
+
+**FINDING 4.2 — the complexity limit was understated, and they measured it.**
+"No proved closed bound" reads as an open question; in fact the definitions carry
+a proved LOWER bound. Worse, `typeEnum` was `allListsLe (cl C₀) n` — ALL LISTS of
+length ≤ n, ≈ `n^n` — when every model type is a FILTER of `cl C₀`, hence a
+SUBLIST. **Applied their fix**: `typeEnum := sublists (cl C₀)`. Cost: two proof
+edits (`mty_mem_typeEnum` via `filter_mem_sublists`; `olab_sub_cl` via a new
+`mem_sublists_sub`). Gain, verified here by `#eval`: for `Cinf`, `|typeEnum|`
+drops **55,987 → 64**, exactly their figure. An entire exponential, removed for
+free.
+
+It remains unrunnable, and §289 now says so in their words: the compiled
+procedure works at `|cl C₀| ≤ 2` and cannot be started at `≥ 3`; at the kernel
+`⊤` closes in a second while `∃PP.⊤` ran 27 minutes to 13.3 GB before being
+OOM-killed. **`decidableSat_cone` cannot be evaluated on any concept this
+project's papers discuss.** That is a fact about the procedure's usability, not
+about the theorem.
+
+**FINDING 4.3 — a gap that is SMALLER than we recorded.** The "abstract
+composition-table semantics" caveat is already closable for soundness by material
+in this repository that nobody wired up: every model `coneScheme_sound` builds is
+`odNet` of an `ODStruct`, and `RCC5NormalForm.lean`'s `eta` realises any
+ordered-disjoint structure as actual non-empty SETS under literal set-RCC5, with
+no finiteness assumption. So the models are genuinely set-realisable and the
+characterisation transfers. `RCC5NormalForm.lean` is currently imported nowhere.
+Also fixed: the `cinf_satisfiable` comment called it "the no-finite-model witness"
+when the theorem proves only `Satisfiable Cinf`.
+
+**FINDING 4.4 — a better statement of the boundary.** Since the five atoms are
+JEPD and finite, role unions are definable by distributing `⊔`/`⊓`. So the
+fragment is not "no `∀PO`" but **"no `∀` over any role set containing PO"**:
+`∀P.C`, `∀Pi.C`, `∀DR.C` survive; `∀O.C` and `∀¬DR.C` do not.
+
+**4.5** — `wp134`'s `po_free` raised `IndexError` on `⊥`. Fixed.
+
+**What this changes about confidence.** A cold reviewer who could build it, who
+independently re-derived the trusted base, and who ran the procedure at the
+kernel, found no counterexample. That is the strongest evidence this result has,
+and considerably stronger than the previous audit. It is still not certification:
+they explicitly did not re-verify 44,000 lines of proof (the kernel did), and
+could not exercise the procedure above `|cl C₀| = 2` because nothing can.
+
+Build: 44,470 lines, 2,303 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

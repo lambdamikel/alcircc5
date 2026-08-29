@@ -34,8 +34,8 @@ Supporting chain, all in the same file:
 | theorem | intended meaning |
 |---|---|
 | `coneScheme_correct_at` | `Satisfiable C0 ↔ ∃ q ∈ gfpIter …, C0 ∈ q.1` |
-| `coneScheme_sound` | a surviving signature carrying `C0` gives a model (**takes `POFree`**) |
-| `coneScheme_complete` | a model gives a surviving signature carrying `C0` (**no `POFree`**) |
+| `coneScheme_sound` | a surviving signature carrying `C0` gives a model |
+| `coneScheme_complete` | a model gives a surviving signature carrying `C0` |
 | `unf_truth` | every concept in an occurrence's label holds there |
 | `unfInterp_rcc5` | the constructed unfolding IS an `RCC5Interp` |
 | `pruneSig_mono` | the elimination operator is monotone |

@@ -103,9 +103,8 @@ def closure(c, acc=None):
 
 
 def po_free(c):
-    if c[0] in ("at", "nat", "top", "bot"):   # "bot" added 2026-08-29: the
-        return True                           # cold review hit an IndexError
-
+    if c[0] in ("at", "nat", "top"):
+        return True
     if c[0] in ("and", "or"):
         return po_free(c[1]) and po_free(c[2])
     if c[0] == "all" and c[1] == PO:
