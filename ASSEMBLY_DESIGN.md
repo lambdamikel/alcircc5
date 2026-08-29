@@ -16819,3 +16819,45 @@ could not exercise the procedure above `|cl C₀| = 2` because nothing can.
 
 Build: 44,470 lines, 2,303 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §290 — the SECOND cold review packet, and what `wp135` measured first
+
+Round 1 audited the *trusted base* and *execution*; it did not attack the
+completeness proof, and `coneScheme_unsat_full` did not exist when it ran. So
+round 2 (`papers/cone_scheme_cold_review_2/`) targets the completeness half and
+the full-logic claim it carries.
+
+Before shipping it, `wp135_cone_completeness_attack.py` tested the proof's own
+model-side content — `dkey_sigOk`, `dkey_mem_keyEnum`, `modelSigs_survives`,
+`dkey_compat` — rather than its statement, because the statement is not runnable
+(`sigStatic` has size `2^|cl C₀| · 2^(2^|cl C₀|)`). On 2,415 satisfiable
+`∀PO`-free and 2,431 satisfiable full-logic instances, all four obligations hold.
+
+Two things about the probe are worth keeping.
+
+**The first control was worthless and the fourth companion rule caught it.**
+Part C originally *weakened* `compatB` one clause at a time and asked whether
+the elimination changed. Two clauses read `NO EFFECT`, which looks like a
+finding. It is not: a weakening cannot break an obligation that already holds,
+and the decoy signatures I built were served by the same real witnesses with or
+without the clause. The control that means something is a **strengthening** —
+if a stricter `compatB` never breaks `modelSigs_survives`, then that obligation
+is too weak to detect an over-strong condition and parts A/B pass vacuously.
+Rebuilt that way, all four strengthenings break completeness on 49–68% of
+instances, so A/B are non-vacuous.
+
+**Part D characterizes the bonus theorem, and the honest reading is unflattering.**
+Of the signatures that carry a demanded body, the relational clause still
+rejects: PP 44.9%, PPI 40.5%, DR 1.9%, **PO 0.0%**. That last number is forced
+by the definition — `compatB` has `| Atom.po => true` — so a PO demand is served
+by any signature carrying the body. `coneScheme_unsat_full` is therefore **sound
+but blind to `∀PO`**: it refutes only through PP/PPI/DR structure and
+`supportB`. A full-logic UNSAT test that cannot see the connective the whole
+problem turns on is honest and weak, and the packet asks the reviewer to confirm
+or refute exactly that reading rather than to be impressed by the theorem.
+
+DR at 1.9% is the other number to watch: the `DR` clause quantifies over both
+cones and is the most intricate of the three, yet it almost never fires on these
+models. Either DR-conflicts are genuinely rare at this size, or the generator
+does not produce them — an instance-filter question of the kind that has
+produced false pass-rates here before.
