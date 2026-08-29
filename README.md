@@ -9,9 +9,9 @@ problem stated there, alongside the earlier
 repository documents a sustained, adversarially-reviewed attack on it,
 conducted by AI assistants under human direction. The full question is
 **still open**, and the attack on it is machine-checked only in part — the
-soundness pipeline is kernel-checked in Lean 4, the keystone (F6) is not. One
-**sub**-question is settled outright: for the ∀PO-free fragment there is now a
-decision procedure the Lean kernel checks end to end.
+soundness pipeline is kernel-checked in Lean 4, the keystone (F6) is not. **One
+_sub_-question is settled outright: for the ∀PO-free fragment there is now a
+decision procedure the Lean kernel checks end to end.**
 
 <p align="center">
   <img src="papers/report7_figure10_grid.png" width="760" alt="An RCC8 network isomorphic to a 3x3 grid (Wessel 2002/2003, report7 Figure 10)">
