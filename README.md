@@ -6,9 +6,12 @@ semantics) decidable? The question has been open since Wessel's 2002/2003
 work ([report7.pdf](papers/report7.pdf); the family is defined and the open
 problem stated there, alongside the earlier
 [report4](papers/report4.pdf)–[report6](papers/report6.pdf)). This
-repository documents a sustained, adversarially-reviewed, partly
-machine-checked attack on it, conducted by AI assistants under human
-direction.
+repository documents a sustained, adversarially-reviewed attack on it,
+conducted by AI assistants under human direction. The full question is
+**still open**, and the attack on it is machine-checked only in part — the
+soundness pipeline is kernel-checked in Lean 4, the keystone (F6) is not. One
+**sub**-question is settled outright: for the ∀PO-free fragment there is now a
+decision procedure the Lean kernel checks end to end.
 
 <p align="center">
   <img src="papers/report7_figure10_grid.png" width="760" alt="An RCC8 network isomorphic to a 3x3 grid (Wessel 2002/2003, report7 Figure 10)">
