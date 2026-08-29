@@ -42314,6 +42314,136 @@ theorem unfLt_trans {u v w : Occ} (h1 : unfLt u v) (h2 : unfLt v w) :
     obligation the plan states first, discharged first. -/
 theorem unfLt_hgt {u v : Occ} (h : unfLt u v) : ohgt u < ohgt v :=
   tcl_mono_measure ostep ohgt (fun _ _ => ostep_hgt) u v h
+/-! #### §276 — G2: DISJOINTNESS, AND WHY `ltNotDj` IS STRUCTURAL
+
+`disj` is the symmetric downward closure of `DR` births.  The clause that killed
+the borrowing route — `lt x y → ¬ disj x y` — is here a consequence of the
+geometry rather than a condition to be arranged, and the invariant that makes it
+so is the VERTICAL BASE: strip the `PP`/`PPI` births off an occurrence and what
+remains identifies its vertical component.  Order edges never change it; a `DR`
+birth always does. -/
+
+/-- The vertical component of an occurrence: strip the vertical births. -/
+def vbase : Occ → Occ
+  | [] => []
+  | (r, i) :: w =>
+      match r with
+      | Atom.pp => vbase w
+      | Atom.ppi => vbase w
+      | _ => (r, i) :: w
+
+theorem vbase_len : ∀ w : Occ, (vbase w).length ≤ w.length := by
+  intro w
+  induction w with
+  | nil => exact Nat.le_refl _
+  | cons s t ih =>
+      obtain ⟨r, i⟩ := s
+      cases r with
+      | pp => exact Nat.le_trans ih (Nat.le_succ _)
+      | ppi => exact Nat.le_trans ih (Nat.le_succ _)
+      | dr => exact Nat.le_refl _
+      | po => exact Nat.le_refl _
+      | eq => exact Nat.le_refl _
+
+/-- **§276.1 — ORDER EDGES STAY INSIDE A COMPONENT.** -/
+theorem ostep_vbase {a b : Occ} (h : ostep a b) : vbase a = vbase b := by
+  cases h with
+  | up i w => rfl
+  | dn i w => rfl
+
+theorem unfLt_vbase {u v : Occ} (h : unfLt u v) : vbase u = vbase v := by
+  induction h with
+  | base hs => exact ostep_vbase hs
+  | tail _ hs ih => exact ih.trans (ostep_vbase hs)
+
+/-- The `DR` births, as seeds. -/
+inductive drBirth : Occ → Occ → Prop
+  | mk (i : Nat) (w : Occ) : drBirth w ((dr, i) :: w)
+
+/-- **§276.2 — AND A `DR` BIRTH ALWAYS CHANGES IT.**  The two ends of a `DR`
+    birth are in different components, on a length count: one base is a suffix of
+    `w`, the other is strictly longer than `w`. -/
+theorem drBirth_vbase_ne {a b : Occ} (h : drBirth a b) : vbase a ≠ vbase b := by
+  induction h with
+  | mk i w =>
+      intro hc
+      have h1 : (vbase w).length ≤ w.length := vbase_len w
+      have h2 : vbase ((dr, i) :: w) = (dr, i) :: w := rfl
+      rw [h2] at hc
+      have := congrArg List.length hc
+      simp only [List.length_cons] at this
+      omega
+
+def unfLe (u v : Occ) : Prop := u = v ∨ unfLt u v
+
+theorem unfLe_vbase {u v : Occ} (h : unfLe u v) : vbase u = vbase v := by
+  rcases h with rfl | h
+  · rfl
+  · exact unfLt_vbase h
+
+/-- **§276.3 — DISJOINTNESS: THE SYMMETRIC DOWNWARD CLOSURE OF `DR` BIRTHS.** -/
+def unfDisj (u v : Occ) : Prop :=
+  ∃ a b, (drBirth a b ∨ drBirth b a) ∧ unfLe u a ∧ unfLe v b
+
+theorem unfDisj_sym {u v : Occ} (h : unfDisj u v) : unfDisj v u := by
+  obtain ⟨a, b, hs, hu, hv⟩ := h
+  exact ⟨b, a, hs.symm, hv, hu⟩
+
+/-- Disjoint occurrences lie in different components. -/
+theorem unfDisj_vbase_ne {u v : Occ} (h : unfDisj u v) : vbase u ≠ vbase v := by
+  obtain ⟨a, b, hs, hu, hv⟩ := h
+  rw [unfLe_vbase hu, unfLe_vbase hv]
+  rcases hs with hs | hs
+  · exact drBirth_vbase_ne hs
+  · exact fun hc => drBirth_vbase_ne hs hc.symm
+
+theorem unfDisj_irr (u : Occ) : ¬ unfDisj u u :=
+  fun h => unfDisj_vbase_ne h rfl
+
+/-- **§276.4 — `ltNotDj`, STRUCTURALLY.**  Round 2's D2 refuted the borrowing
+    route by producing a blocked node whose only witness was `DR` from it, so the
+    declared order edge collided with this clause.  Here the collision cannot
+    occur: an order edge preserves the vertical base, disjointness changes it. -/
+theorem unfLt_not_disj {u v : Occ} (h : unfLt u v) : ¬ unfDisj u v :=
+  fun hd => unfDisj_vbase_ne hd (unfLt_vbase h)
+
+theorem unfDisj_down {x y x' y' : Occ} (h : unfDisj x y)
+    (hx : x' = x ∨ unfLt x' x) (hy : y' = y ∨ unfLt y' y) : unfDisj x' y' := by
+  obtain ⟨a, b, hs, hxa, hyb⟩ := h
+  refine ⟨a, b, hs, ?_, ?_⟩
+  · rcases hx with rfl | hx
+    · exact hxa
+    · rcases hxa with rfl | hxa
+      · exact Or.inr hx
+      · exact Or.inr (unfLt_trans hx hxa)
+  · rcases hy with rfl | hy
+    · exact hyb
+    · rcases hyb with rfl | hyb
+      · exact Or.inr hy
+      · exact Or.inr (unfLt_trans hy hyb)
+
+/-- **§276.5 — THE UNFOLDING IS AN `ODStruct`.**  With O12 (`odNet_frame`)
+    already certified, this is a composition-closed RCC5 network: gate G2's
+    frame, built from demand words alone with no model in sight. -/
+def unfOD : ODStruct Occ where
+  lt := unfLt
+  disj := unfDisj
+  ltIrr := unfLt_irrefl
+  ltTr := fun _ _ _ => unfLt_trans
+  djSym := fun _ _ => unfDisj_sym
+  djIrr := unfDisj_irr
+  ltNotDj := fun _ _ => unfLt_not_disj
+  djDown := fun _ _ _ _ h hx hy => unfDisj_down h hx hy
+
+/-- **§276.6 — O12, FOR FREE.**  `odNet_frame` was certified for the retired
+    route and is unchanged: the unfolding's relation — `EQ` on the diagonal,
+    `PP`/`PPI` along the order, `DR` on disjointness, `PO` residual — is a
+    converse-closed, composition-closed RCC5 frame.
+
+    So gate G2's frame is complete, and built from DEMAND WORDS ALONE: no model,
+    no extraction, no reuse.  Every countermodel that killed the borrowing route
+    attacked reuse; there is none here to attack. -/
+theorem unf_frame : Frame (odNet unfOD) := odNet_frame unfOD
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

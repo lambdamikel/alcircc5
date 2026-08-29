@@ -16348,3 +16348,41 @@ and `unfLt` never leaves one.
 
 Build: 43,381 lines, 2,205 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §276 — G2's frame is complete
+
+`disj` is the symmetric downward closure of `DR` births, and the invariant that
+makes everything work is the **vertical base**: strip the `PP`/`PPI` births off
+an occurrence and what remains names its vertical component. Order edges never
+change it (`ostep_vbase`, by `rfl` in both cases); a `DR` birth always does
+(`drBirth_vbase_ne`, on a length count — one base is a suffix of `w`, the other
+is strictly longer than `w`).
+
+**`ltNotDj` is therefore structural, and that is the point.** Round 2's D2 killed
+the borrowing route by exhibiting a blocked node whose only witness was `DR` from
+it, so the declared order edge collided with exactly this clause. Here the
+collision cannot be written down: an order edge preserves the vertical base and
+disjointness changes it (`unfLt_not_disj`, propext + `Quot.sound`). The same
+invariant gives `djIrr` for free.
+
+`unfOD` assembles the `ODStruct`, and **`unf_frame` gets O12 for free** —
+`odNet_frame` was certified for the retired route and is unchanged, so the
+unfolding's relation (`EQ` diagonal, `PP`/`PPI` along the order, `DR` on
+disjointness, `PO` residual) is a converse- and composition-closed RCC5 frame.
+
+**Gate G2's frame is complete, and built from DEMAND WORDS ALONE** — no model, no
+extraction, no reuse. Every countermodel that killed the borrowing route attacked
+reuse; there is none here to attack.
+
+**Gate scoreboard.** G1: the fixpoint layer, the operator, the enumeration and
+the semantic bridges — done, with O05/O07 (packaging the survivors as a control
+graph) outstanding. G2: O08–O12 done; O13 (token representation) is optional.
+G3: the truth lemma over the unfolding — the labelling has to be attached to
+occurrences, and the frame is now there to attach it to. G4: `coneScheme_complete`
+is done for the signature side.
+
+A note on tactics, since it cost a cycle: `cases h with | mk i w` failed to bind
+the constructor's arguments here where `induction h with | mk i w` succeeded.
+
+Build: 43,511 lines, 2,225 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
