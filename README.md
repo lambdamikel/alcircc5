@@ -20,9 +20,10 @@ direction.
 > (Claude / Anthropic and GPT-5.4 / GPT-5.5 / OpenAI), prompted and directed
 > by Michael Wessel. They have **not** been peer-reviewed or verified by
 > human domain experts, and are offered as a **discussion piece**. Standing
-> label: **strongly supported, not certified** (with four machine-certified
-> exceptions, below — the newest being decidability of the ∀PO-free
-> fragment).
+> label for the **full logic**: **strongly supported, not certified**. The
+> **∀PO-free fragment** is a machine-certified exception — see the status
+> section — as are the RCC5 normal form, the soundness pipeline, and the
+> abstraction's faithfulness.
 
 ## Read this first: the paper
 
@@ -152,10 +153,23 @@ by `∀PO`, which the fragment removes.
 > obligations arising from non-singleton compositions are unreachable by any local
 > clause of this shape — and F6, untouched.
 >
-> **Honest label: machine-checked, and cold-reviewed three times without a
-> counterexample; not certified.** The ledger below records a defect or overclaim
-> in all but two of twenty reviews, and the standing presumption is that a
-> twenty-first would find something too.
+> **Honest label, and it is not this project's blanket one.** The fragment
+> result is **machine-certified**: the Lean kernel checks the decision procedure
+> with fragment membership as its only hypothesis, no `sorry`, standard axioms.
+> Its formalisation's *adequacy* — do the definitions mean ALCI_RCC5? — has been
+> examined by three independent cold reviews without a counterexample, and the
+> largest adequacy question, abstract versus concrete semantics, is now a
+> **theorem** rather than a matter of reviewer confidence. What remains at risk
+> is what remains at risk in any formalisation: that a definition misrepresents
+> the intended object in a way nobody has noticed.
+>
+> The project's standing **strongly supported, not certified** applies to the
+> **full logic** and to the two unformalised *arguments* for this theorem — and
+> so does the ledger presumption below (a defect or overclaim in all but two of
+> twenty reviews). Earlier versions of this box applied both to the fragment
+> result as well. That was wrong: the ledger is overwhelmingly a record of the
+> full-logic architecture, and none of the three reviews of this result found a
+> defect in it.
 >
 > **★ Update (2026-08-28): a gap found in the fragment's proof — and repaired;
 > one certification architecture refuted; a pivot.**

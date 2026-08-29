@@ -14,7 +14,7 @@
 \usepackage{xcolor}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
   pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5, a Decidable Fragment, and a Certified Lean Formalization Reducing It to One Keystone},
-  pdfauthor={Michael Wessel (with AI assistants: Claude/Anthropic and GPT-5.4/GPT-5.5/GPT-5.6 Pro/OpenAI)},
+  pdfauthor={Michael Wessel (with AI assistants: Claude/Anthropic and GPT-5.4/GPT-5.5/GPT-5.6 Pro/GPT-5.6 Sol/OpenAI)},
   pdfsubject={Description logics; qualitative spatial reasoning; decidability of concept satisfiability},
   pdfkeywords={description logics, ALCI, RCC5, region connection calculus, qualitative spatial reasoning, decidability, concept satisfiability, patchwork property, Lean, interactive theorem proving, AI-assisted mathematics}}
 
@@ -73,7 +73,7 @@ and a Certified Lean Formalization Reducing It to One Keystone}
 
 \author{Michael Wessel\\
 \small LambdaMikel@Home \quad\textbullet\quad \texttt{miacwess@gmail.com}\\
-\small (with AI assistants: Claude / Anthropic and GPT-5.4\,/\,GPT-5.5\,/\,GPT-5.6~Pro / OpenAI)}
+\small (with AI assistants: Claude / Anthropic and GPT-5.4\,/\,GPT-5.5\,/\,GPT-5.6~Pro\,/\,GPT-5.6~Sol / OpenAI)}
 \date{July 2026}
 
 \begin{document}
@@ -134,8 +134,8 @@ methodologies $\rightarrow$ Spatial and physical reasoning.
 \label{ssec:ai-disclaimer}
 
 The mathematical content of this paper was produced by AI assistants
-(Anthropic's Claude models and OpenAI's GPT-5.4, GPT-5.5, and GPT-5.6
-Pro), prompted, steered, and
+(Anthropic's Claude models and OpenAI's GPT-5.4, GPT-5.5, GPT-5.6
+Pro, and GPT-5.6 Sol), prompted, steered, and
 reviewed by Wessel, who posed the problem,
 supplied the central intuitions and directions, orchestrated the
 review--repair cycles, and takes responsibility for the framing.
@@ -143,10 +143,18 @@ review--repair cycles, and takes responsibility for the framing.
 read as AI-generated conjectures supported by machine checking and
 computational evidence---not as established theorems}, with the explicit
 exceptions of the parts stated to be kernel-checked in Lean~4 (the
-soundness pipeline, the abstraction's faithfulness, and the RCC5 normal
-form), which are machine-verified but still human-unreviewed. We are
-deliberate about this labelling throughout: the standing one-line status
-is \emph{strongly supported, not certified}. We regard the AI systems as
+soundness pipeline, the abstraction's faithfulness, the RCC5 normal form,
+and---since 2026-08-29---the decision procedure for the $\forall\PO$-free
+fragment), which are machine-verified. We are deliberate about this labelling
+throughout, and it is not uniform: the standing one-line status for the
+\emph{full logic} is \emph{strongly supported, not certified}, whereas the
+$\forall\PO$-free fragment is \emph{machine-certified}, its formalisation's
+adequacy having been examined by three independent cold reviews
+(Remark~\ref{rem:conescheme}). What remains at risk there is what remains at
+risk in any formalisation---that a definition misrepresents the intended
+object---which is why those reviews targeted the definitions, and why the
+concrete-semantics question was converted into a theorem rather than left to
+reviewer confidence. We regard the AI systems as
 having made contributions of a kind that, in a human collaborator, would
 warrant co-authorship, and we discuss this in \S\ref{sec:agentic}.
 
@@ -1515,9 +1523,10 @@ than before, though not yet end-to-end formalized; the following note records
 how the certification was subsequently carried through to the decision
 procedure itself.
 
-\paragraph{Certified as a decision procedure (2026-08-06).} The certification
+\paragraph{Certified as a decision procedure (2026-08-06; superseded
+2026-08-29 --- see Remark~\ref{rem:conescheme}).} The certification
 has since been carried through to the decision itself: in
-\texttt{formal/POFreeLift.lean} (${\sim}13{,}600$ lines, zero \code{sorry};
+\texttt{formal/POFreeLift.lean} (then ${\sim}13{,}600$ lines, zero \code{sorry};
 axioms \texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}, the
 choice confined to erased termination proofs, so the procedure is genuinely
 computable) a \code{Decidable} instance for satisfiability of $C_0$ is now
@@ -1528,9 +1537,10 @@ Section~\ref{ssec:pofree-quadrants} gives the construction: the finite
 certificate, the four quadrants, and the constructive round-robin
 uniformization (\code{rr\_covers}) that turns the full logic's open
 ``W2$'$'' oracle into a kernel-checked theorem once $\forall\PO$ is removed.
-These fragment theorems are as yet \emph{unreviewed}, and none of it bears on
-the full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment
-removes.
+The mixed quadrant was closed, and the whole fragment re-certified by a
+different route, on 2026-08-29 (Remark~\ref{rem:conescheme}); that route has
+since been through three independent cold reviews. None of it bears on the
+full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment removes.
 
 \paragraph{Lesson.} Finiteness is the wrong target: models are
 legitimately infinite (unbounded $\PP$-towers are satisfiable). The right
@@ -1627,12 +1637,26 @@ formalization.
 The general mixed extraction described below was never completed: two rounds of
 cold attack refuted the architecture it needed (a finite node set reused by
 blocking and \emph{borrowing} witnesses), by exact finite countermodels. It was
-replaced. The route now certified is a \emph{cone scheme}: a finite control
-graph whose states are pairs (support type, upper bound on the types of strict
-$\PP$-predecessors); a monotone, reductive elimination to a greatest fixed
-point; and a \emph{fresh-occurrence} unfolding in which no element is ever
-reused, so that the frame conditions which defeated the previous architecture
-hold structurally rather than by construction. The capstone is
+replaced. The route now certified is a \emph{cone scheme}, designed by
+GPT-5.6~Sol~\cite{GPT56Sol}: a finite control graph whose states are pairs
+(support type, upper bound on the types of strict $\PP$-predecessors); a
+monotone, reductive elimination to a greatest fixed point; and a
+\emph{fresh-occurrence} unfolding in which no element is ever reused, so that
+the frame conditions which defeated the previous architecture hold
+structurally rather than by construction.
+
+The design also explains the fragment boundary better than the syntactic
+statement does, and the explanation is worth recording because it says what
+$\forall\PO$-freeness is \emph{for}. A composition cell containing $\PO$ can
+always be discharged by putting the pair at $\PO$ --- unless some formula can
+object to a $\PO$ edge, and the only formula that can is $\forall\PO.D$. So on
+this fragment the maximally-$\PO$ unfolding, which declares only what a birth
+forces and defaults every remaining pair to $\PO$, is \emph{always} a model;
+no joint realisability across a signature's several demands is ever required,
+because every cross-relation between distinct children is the residual and the
+residual costs nothing. What is lost when $\forall\PO$ returns is therefore not
+one case of one induction but the residual default itself --- which is the same
+boundary Remark~\ref{rem:pojoint} locates from the side of joint forcing. The capstone is
 \[
   \code{decidableSat\_cone} : \code{POFree}\ C_0 \to \code{Decidable}
   (\code{Satisfiable}\ C_0),
@@ -1679,9 +1703,16 @@ rejected --- and found the dropped $\PO$ clause above, together with an
 overclaim about what the full-logic test certifies. The third attacked
 soundness, ran the unfolding on labels drawn from the actual greatest fixed
 point, and found no defect in the development: its five findings were all in the
-project's own probes and prose. All are corrected. The honest label is
-\emph{machine-checked, cold-reviewed three times without a counterexample, not
-certified}.
+project's own probes and prose. All are corrected.
+
+The honest label, and it differs from this paper's standing one: the
+$\forall\PO$-free fragment is \emph{machine-certified} --- the Lean kernel
+checks the decision procedure with fragment membership as its only hypothesis
+--- and its formalisation's adequacy has been examined by three independent
+cold reviews without a counterexample. The project's blanket \emph{strongly
+supported, not certified} applies to the \emph{full logic}, and to the two
+unformalised arguments of \S\ref{ssec:approach-finite}; it does not apply to
+this result, and earlier drafts of this remark were wrong to carry it over.
 \end{remark}
 
 \emph{Correction (2026-08-28).} An earlier version of this sentence called that
@@ -1692,10 +1723,13 @@ finite countermodels, and the formalization has been restarted on a different
 architecture (a finite control graph with a fresh-occurrence unfolding, in which
 no node is reused). This concerns the \emph{certification} of
 Theorem~\ref{thm:pofree}, not the theorem, whose proof is the two-tier quotient
-and is independent of that route; see Remark~\ref{rem:pofree-gap}. And, as with
-every result in this project that a cold reviewer has not yet seen, these
-fragment theorems are \emph{unreviewed}: the standing ledger presumption
-(\S\ref{sec:agentic}) applies to them in full.
+and is independent of that route; see Remark~\ref{rem:pofree-gap}. The certified route is
+no longer unreviewed: three independent cold reviews (2026-08-29) attacked its
+trusted base, its completeness direction and its soundness direction, and none
+found a counterexample or a defect in the fragment result. The two
+\emph{arguments} of Theorem~\ref{thm:pofree} remain unformalised, and the
+standing ledger presumption (\S\ref{sec:agentic}) continues to apply to them,
+and to every full-logic claim in this paper.
 
 \subsection{The split-forest idea}
 \label{ssec:approach-splitforest}
@@ -2608,7 +2642,8 @@ doctoral work at the University of Hamburg, under the DFG project
 was additionally supported by a \emph{Grundstipendium} of the University of
 Hamburg from 1999 to 2001. The
 present investigation was carried out by AI assistants---Claude
-(Anthropic) and GPT-5.4~/~GPT-5.5~/~GPT-5.6~Pro (OpenAI)---under the
+(Anthropic) and GPT-5.4~/~GPT-5.5~/~GPT-5.6~Pro~/~GPT-5.6~Sol
+(OpenAI)---under the
 author's direction, across many rounds of proposal, adversarial review, and
 revision; GPT-5.4
 Pro contributed the split-forest semantics and cover-tree tableau
@@ -2616,7 +2651,16 @@ formalization, GPT-5.5 the repaired decidability manuscripts and the
 majority of the formal proofs, and GPT-5.6~Pro the canonical set
 representation certifying the converse of the RCC5 normal form
 (Theorem~\ref{thm:normalform})~\cite{GPT56TechNote} together with the final
-scope-aware review of this overview. The $\forall\PO$-free (PO-coherent) fragment
+scope-aware review of this overview. \textbf{GPT-5.6~Sol contributed the
+\emph{ConeScheme} design}~\cite{GPT56Sol}, which is what carried the
+$\forall\PO$-free fragment to a machine-certified decision procedure: after
+two rounds of cold attack had refuted the previous certification
+architecture---finite node reuse by blocking and witness
+borrowing---GPT-5.6~Sol was asked for an alternative and proposed retiring
+node reuse altogether, keeping the finite scheme only as a control graph and
+unfolding every non-$\EQ$ existential to a fresh occurrence. That single
+change turned the five obligations that had cost four refuted disciplines
+into structural facts. Claude carried out the Lean development. The $\forall\PO$-free (PO-coherent) fragment
 of \S\ref{ssec:approach-finite} has a specific lineage worth recording: the
 human author seeded it with the \emph{PP-kernel} idea (collapse
 same-type occurrences on a $\PP$-chain into a kernel node with a reflexive
@@ -3115,6 +3159,20 @@ OpenAI.
 \newblock GPT-5.4 Pro.
 \newblock Large language model, 2026.
 \newblock \url{https://openai.com}
+
+\bibitem{GPT56Sol}
+GPT-5.6 Sol (OpenAI), prompted by M.\ Wessel.
+\newblock A Lean certification plan for the $\forall\PO$-free fragment of
+  $\ALCIRCC{5}$: retire witness borrowing; use the finite scheme as a control
+  graph and unfold every non-$\EQ$ existential to a fresh occurrence
+  (the \emph{ConeScheme} blueprint).
+\newblock Technical report, August 2026.
+\newblock Directory
+  \texttt{papers/cone\_scheme\_plan/}; the design was carried out in Lean by
+  Claude and is recorded step by step in \texttt{ASSEMBLY\_DESIGN.md}
+  \S\S267--297, with capstones \code{decidableFSat},
+  \code{decidableSat\_cone}, \code{decidableSetSat} in
+  \texttt{formal/POFreeLift.lean}.
 
 \bibitem{GPT56Pro}
 OpenAI.

@@ -41,24 +41,28 @@ facts in front of you that you can honestly say ``yes, I believe
 that.''
 
 \smallskip
-\textbf{Honesty note (updated 2026-08-06):} the fragment is now
-\textbf{certified decidable across three of its four quadrants} --- genuine
-\emph{computable} \code{Decidable (Satisfiable C0)} in Lean~4
-(\code{formal/POFreeLift.lean}, ${\sim}13{,}600$ lines, \textbf{zero
-sorries}) for horizontal ($\exists\DR/\PO/\EQ$), ascending-vertical
-($\exists\PP$), and descending-vertical ($\exists\PPI$) concepts, each
-non-vacuously witnessed. The fourth quadrant (mixing,
-$\exists\PO + \exists\PP$) has its merged certificate, its encoding, and a
-complete decision certified on a concrete witness; the \emph{general}
-mixed extraction is the one remaining formalization. The keystone is a
-\emph{constructive} uniformization (\code{rr\_covers}) --- the vertical
-``W2$'$'' is a kernel-checked theorem, not an oracle, because removing
-$\forall\PO$ lets the cross-relations coordinate for free. These fragment
-theorems are \textbf{unreviewed}, and the \emph{full-logic} decidability
-(F6) stays \textbf{open} --- forced by $\forall\PO$, which the fragment
-removes. This supersedes the 2026-07-22 ``strongly supported, not
-certified'' status for the three general quadrants; see \code{LEAN.md} and
-\code{ASSEMBLY\_DESIGN.md} \S\S24--25.}}
+\textbf{Honesty note (updated 2026-08-29):} the fragment is now
+\textbf{machine-certified decidable across all four quadrants}, including
+the mixing one ($\exists\PO+\exists\PP$) that was open when this explainer
+was first written. The capstones are in Lean~4
+(\code{formal/POFreeLift.lean}, ${\sim}45{,}400$ lines, \textbf{zero
+sorries}, axioms \code{propext}/\code{Classical.choice}/\code{Quot.sound}):
+\code{decidableFSat} on \emph{raw} input with negation,
+\code{decidableSat\_cone} on NNF concepts, and \code{decidableSetSat} under
+\emph{concrete set} semantics --- with fragment membership the only
+hypothesis in each. They were reached by a \emph{third} route, distinct from
+the two argued in this explainer: a finite control graph of signatures, a
+monotone elimination to a greatest fixed point, and a fresh-occurrence
+unfolding in which no node is ever reused. It does not use the $K(C_0)$
+bound, so the two arguments here remain theorem-level and independently
+worth reading. Three independent cold reviews (2026-08-29) attacked the
+trusted base, completeness, and soundness respectively, and \textbf{none
+found a counterexample or a defect in the fragment result}. \emph{Full-logic}
+decidability (F6) stays \textbf{open} --- forced by $\forall\PO$, which the
+fragment removes. One caveat is complexity, not correctness: the procedure
+is decidable but \textbf{not runnable}, the signature space being doubly
+exponential. This supersedes the 2026-08-06 ``three of four quadrants''
+status; see \code{ASSEMBLY\_DESIGN.md} \S\S267--297.}}
 \end{center}
 
 \section{The claim}\label{sec:claim}
@@ -68,6 +72,16 @@ for the $\forall\PO$-free fragment of $\ALCIRCC$ --- concepts in NNF
 containing \textbf{no subformula of the form $\forall\PO.D$} --- is
 decidable, with a computable live-width bound
 $K(C_0)=(1+m)^2\,2^{2^m}$, where $m=|\cl(C_0)|$.
+
+\smallskip
+\emph{On raw input.} Stating the fragment over NNF concepts is not a
+restriction, but the correct condition on \emph{raw} concepts is
+polarity-sensitive and is easy to get wrong: pushing a negation through
+$\exists\PO.D$ produces $\forall\PO$, so the condition is \textbf{no
+$\forall\PO$ in positive position and no $\exists\PO$ in negative
+position}. The certified route carries the normalisation and the
+preservation theorem, so this is a theorem rather than a convention
+(\code{nnfP\_correct}, \code{decidableFSat}).
 
 Read the fine print, because it is generous. The fragment
 \textbf{keeps}:
@@ -785,7 +799,9 @@ undecidability \emph{machinery} cannot even be assembled.
 \section{So --- was it proved twice, or three times?}\label{sec:ledger}
 
 Honest ledger. There are \textbf{two genuinely different argument
-shapes} and \textbf{three arrivals}, plus one certification pass.
+shapes} and \textbf{three arrivals} in this explainer, plus a \textbf{fourth
+shape} that is the one actually certified (item~5 below), and the
+certification pass itself.
 
 \begin{enumerate}
 \item \textbf{April 2026 --- the two-tier quotient} (Claude, reviewed
@@ -823,6 +839,40 @@ shapes} and \textbf{three arrivals}, plus one certification pass.
   $\forall\PO$-free concepts with zero mismatches (\code{wp87}) --- a
   clean cross-validation, because the quasimodel oracle's one known
   blind spot needs a $\forall\PO$ and so cannot arise in the fragment.
+\item \textbf{August 2026 --- the ConeScheme route, and the one that is
+  certified} (design: GPT-5.6~Sol, prompted by Wessel after two rounds of
+  cold attack had refuted the previous certification architecture; Lean
+  development: Claude). A genuinely \emph{third} shape, and the reason the
+  fragment is now machine-certified end to end. The move is to stop reusing
+  nodes: a finite \code{ConeScheme} serves only as a \emph{control graph} of
+  signatures (a support type together with an upper bound on the types of
+  its strict $\PP$-predecessors); a monotone, reductive elimination runs to
+  a greatest fixed point; and every non-$\EQ$ existential unfolds to a
+  \emph{fresh occurrence}, so that nothing is ever identified or borrowed.
+  The frame conditions that had defeated the previous architecture ---
+  irreflexivity of the order, and its disjointness from the disjointness
+  relation --- then hold \emph{structurally} rather than by construction.
+  What makes the route work is specific to this fragment, and is worth
+  stating because it explains the boundary: a composition cell containing
+  $\PO$ can always be discharged by putting the pair at $\PO$ unless some
+  formula can object to a $\PO$ edge, and the only formula that can is
+  $\forall\PO.D$; so here the maximally-$\PO$ unfolding is \emph{always} a
+  model, and no joint realisability across a signature's several demands is
+  ever needed. This route does \emph{not} use the $K(C_0)$ bound, so
+  items~1--3 above remain independent, unformalised arguments for the same
+  theorem. Capstones: \code{decidableFSat}, \code{decidableSat\_cone},
+  \code{decidableSetSat}. The design document is
+  \code{papers/cone\_scheme\_plan/}; the Lean development and its
+  section-by-section provenance are \code{formal/POFreeLift.lean} and
+  \code{ASSEMBLY\_DESIGN.md} \S\S267--297.
+\item \textbf{2026-08-29 --- three cold reviews.} The certified route was
+  attacked three times independently: at its trusted base and execution, at
+  its completeness direction, and at its soundness direction. None found a
+  counterexample. The second found a genuine defect --- a dropped
+  $\forall\PO$ propagation in the transition relation, vacuous on the
+  fragment but not on the full-logic \textsc{unsat} test built from the same
+  machinery --- and the third found no defect in the development at all, its
+  five findings all lying in the project's own probes and prose.
 \end{enumerate}
 
 \paragraph{A gap in Route~1, found 2026-08-28 --- and what it does not
@@ -935,11 +985,18 @@ coherence (cycling a type-equal chain segment into a kernel is
 legitimate), witness selection (late picking), and the syntactic
 $\forall\PO$-vacuity (\code{pofree\_cl\_all}: no $\forall\PO$ ever
 appears in the fragment's closure --- the escape valve,
-kernel-checked). Still open: the assembly construction gluing these
-into an accepted code, and the $K(C_0)$ counting/enumeration (see
-\code{LEAN.md} for the recorded design). Until then, the honest label is the project's
-standing one: \textbf{strongly supported, with the soundness core
-machine-certified --- not certified end-to-end.}
+kernel-checked). Not formalised on \emph{this} route: the assembly construction gluing these
+into an accepted code, and the $K(C_0)$ counting/enumeration.
+
+That is no longer the last word on the theorem, though it remains the last
+word on \emph{this} argument. The fragment was carried to a machine-certified
+decision procedure in August 2026 by a third route (ledger
+\S\ref{sec:ledger}, item~5) which does not use $K(C_0)$ at all, and which has
+since been through three independent cold reviews without a counterexample.
+So the honest labels differ: the \textbf{theorem} is
+\textbf{machine-certified}; the \textbf{two arguments in this explainer}
+remain \textbf{strongly supported, not formalised end-to-end}; and the
+\textbf{full logic} remains open.
 
 \section{The one-paragraph version}\label{sec:summary}
 
