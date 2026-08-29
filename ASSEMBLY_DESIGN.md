@@ -16625,3 +16625,40 @@ between are the `Decidable` wrapper and the enumeration bound.
 
 Build: 44,257 lines, 2,293 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §285 — THE JOIN: satisfiability characterized
+
+**`coneScheme_correct`:** for a `∀PO`-free `C₀`,
+
+> `Satisfiable C₀ ↔ ∃ q ∈ gfpIter pruneSig (sigStatic C₀) N, C₀ ∈ q.1`
+
+at a round `N ≤ |sigStatic C₀|`. `→` is §273.3 (no false negatives); `←` is
+`coneScheme_sound` (no false positives), which builds an actual model — the
+fresh-occurrence unfolding rooted at the surviving signature — and reads
+`unf_truth` at the root occurrence.
+
+**Two things to be precise about.**
+
+*First, the scope is the WHOLE fragment.* Nothing in the construction is
+restricted to a quadrant: `compatB` has clauses for all five relations,
+`sigDemands` takes every non-`EQ` demand, and `gchild_serves` covers all of them.
+The MIXED quadrant — `∃PO` and `∃PP` together, the one open since 2026-08-06 and
+the target of two cold attacks — is handled by the same uniform machinery as the
+rest. `POFree` is used in exactly one place (§284's `∀PO` case).
+
+*Second, this is a CHARACTERIZATION, not a `Decidable` instance.* It says
+satisfiability coincides with a finite condition; it does not yet package that as
+a decision procedure. The pieces for the wrapper are in place — `sigStatic`,
+`keyEnum`, `sigOkB`, `pruneSig` and `gfpIter` are all COMPUTABLE (none is marked
+`noncomputable`; the classical machinery lives only in the completeness proof) —
+so what remains is instantiating the bound and discharging decidability of the
+membership test.
+
+**Honest label, unchanged.** The artifact is unreviewed. This campaign's ledger
+records a defect or overclaim in all but two of seventeen reviews, and the last
+three days alone refuted four disciplines and found a gap in a four-times-reviewed
+paper. The right reading is "machine-checked, not certified" — the same label the
+project has carried throughout, and this result does not change it.
+
+Build: 44,297 lines, 2,295 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

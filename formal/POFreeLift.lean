@@ -44010,6 +44010,48 @@ theorem unf_truth {X : List Sig} {q0 : Sig} {C0 : Concept}
           obtain ⟨v, hlab, hrel⟩ := gchild_serves u hi hp
           exact ⟨v, trivial, hrel, ih v hlab⟩
 
+
+/-! #### §285 — THE JOIN: SOUNDNESS, AND THE CHARACTERIZATION
+
+`unf_truth` turns a fixed point carrying `C₀` into a model of `C₀`;
+`coneScheme_complete` (§273.3) turns a model of `C₀` into a fixed point carrying
+`C₀`.  Composing them characterizes satisfiability by a finite, computable
+condition on the control graph. -/
+
+/-- **§285.1 — SOUNDNESS.**  A surviving signature carrying `C₀` yields a genuine
+    `ALCI_RCC5` model of `C₀`: the fresh-occurrence unfolding of the control
+    graph, rooted at that signature.  No false positives. -/
+theorem coneScheme_sound {X : List Sig} {q0 : Sig} {C0 : Concept}
+    (hXS : ∀ q ∈ X, q ∈ sigStatic C0) (hfix : ∀ q ∈ X, q ∈ pruneSig X)
+    (hpo : POFree C0) (hq0 : q0 ∈ X) (hC0 : C0 ∈ q0.1) : Satisfiable C0 := by
+  refine ⟨GOcc X q0, unfInterp X q0, unfInterp_rcc5 X q0,
+    ⟨([] : Occ), Gen.root⟩, trivial, ?_⟩
+  exact unf_truth hXS hfix hpo hq0 C0 ⟨([] : Occ), Gen.root⟩ hC0
+
+/-- **§285.2 — THE CHARACTERIZATION.**  Satisfiability of a `∀PO`-free concept is
+    EQUIVALENT to a surviving signature carrying it, at a round bounded by the
+    static set — no false negatives (§273.3) and no false positives (§285.1).
+
+    This is the decision procedure's correctness statement. What it is not, yet,
+    is a `Decidable` instance: that needs the surviving set computed rather than
+    quantified over, which is the remaining wrapper. -/
+theorem coneScheme_correct (C0 : Concept) (hpo : POFree C0) :
+    ∃ N, N ≤ (sigStatic C0).length ∧
+      (Satisfiable C0 ↔
+        ∃ q ∈ gfpIter pruneSig (sigStatic C0) N, C0 ∈ q.1) := by
+  obtain ⟨N, hNB, hstab⟩ := (coneScheme_gfp C0).1
+  refine ⟨N, hNB, ?_, ?_⟩
+  · rintro ⟨α, I, hI, x, hx, hsat⟩
+    exact coneScheme_complete hI C0 hx hsat N
+  · rintro ⟨q, hq, hC0⟩
+    have hsub : ∀ p ∈ gfpIter pruneSig (sigStatic C0) N, p ∈ sigStatic C0 :=
+      gfpIter_antitone pruneSig pruneSig_red (sigStatic C0) 0 N (Nat.zero_le N)
+    have hfix : ∀ p ∈ gfpIter pruneSig (sigStatic C0) N,
+        p ∈ pruneSig (gfpIter pruneSig (sigStatic C0) N) := by
+      intro p hp
+      exact hstab p hp
+    exact coneScheme_sound hsub hfix hpo hq hC0
+
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le
 #print axioms POFreeLift.mixedPath_len_le
