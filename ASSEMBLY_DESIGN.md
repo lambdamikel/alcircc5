@@ -16585,3 +16585,43 @@ campaign four refuted disciplines were artefacts of reusing nodes.
 
 Build: 44,133 lines, 2,285 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §284 — G3: the model, and the TRUTH LEMMA
+
+`unfInterp` makes the unfolding an interpretation — carrier the generated
+occurrences, relation the frame's, an atom true where the label says so — and
+`unfInterp_rcc5` is `frame_rcc5` applied to `odNet_frame (gOD X q0)`.
+
+**`unf_truth`: every concept in an occurrence's label holds at that occurrence in
+the unfolded model.** One induction on the concept, each case reading back one of
+§§280–283:
+
+| case | discharged by |
+|---|---|
+| `⊥`, literals, `∧`, `∨` | `supportB_sound` |
+| `∀PP` / `∀PPI` | `allPP_gLt` / `allPPI_gLt` via `odNet_pp_inv` / `_ppi_inv` |
+| `∀DR` | `allDR_gDisj` via `odNet_dr_inv` |
+| `∀EQ` | `allEQ_local`, after `odNet_eq_inv` collapses the two points |
+| `∀PO` | **VACUOUS** |
+| `∃EQ` | the occurrence itself, by `refl_eq` |
+| `∃PP/PPI/DR/PO` | `gchild_serves` — the child occurrence |
+
+**The `∀PO` case is the only place `∀PO`-freeness is used in the entire
+construction.** `pofree_cl_all` says no `∀PO` occurs in the closure, and
+`olab_sub_cl` says labels live there, so nothing ever has to propagate along a
+`PO` edge. Everything else — the frame, the order, disjointness, the cone
+invariant, the strategy, `∃`-fulfilment — is fragment-agnostic. That is a sharper
+statement of where the boundary sits than the campaign has had before: not "PO is
+hard" but "one clause of one induction case".
+
+**Gate status.** G1: fixpoint, operator, enumeration, bridges, strategy — done.
+G2: O08–O12 — done. G3: the truth lemma — **done**. G4: `coneScheme_complete` —
+done on the signature side.
+
+What remains is the join: `unf_truth` gives a MODEL from a fixed point carrying
+`C₀` (soundness), `coneScheme_complete` gives a fixed point carrying `C₀` from a
+MODEL (completeness). Composing them is the decision procedure, and the pieces
+between are the `Decidable` wrapper and the enumeration bound.
+
+Build: 44,257 lines, 2,293 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

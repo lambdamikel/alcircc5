@@ -41899,6 +41899,12 @@ theorem mem_sigStatic (C0 : Concept) (q : Sig)
     (hq : q ∈ keyEnum C0) (hok : sigOkB q = true) : q ∈ sigStatic C0 :=
   List.mem_filter.mpr ⟨appendNew_covers (keyEnum C0) [] q hq, hok⟩
 
+theorem sigStatic_sub (C0 : Concept) : ∀ q ∈ sigStatic C0, q ∈ keyEnum C0 := by
+  intro q hq
+  rcases appendNew_mem (keyEnum C0) [] q (List.mem_filter.mp hq).1 with h | h
+  · exact absurd h List.not_mem_nil
+  · exact h
+
 theorem sigStatic_ok (C0 : Concept) : ∀ q ∈ sigStatic C0, sigOkB q = true :=
   fun _ h => (List.mem_filter.mp h).2
 
@@ -42165,6 +42171,17 @@ theorem dkey_compat (hI : RCC5Interp I) (C0 : Concept) {x y : α}
       rw [Bool.and_eq_true]
       exact ⟨subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hv huv),
              subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hu hvu)⟩
+theorem mem_sigDemands_mk {q : Sig} {r : Atom} {D : Concept} (hr : r ≠ eq)
+    (h : Concept.ex r D ∈ q.1) : (r, D) ∈ sigDemands q := by
+  rw [sigDemands, List.mem_filterMap]
+  refine ⟨Concept.ex r D, h, ?_⟩
+  cases r with
+  | eq => exact absurd rfl hr
+  | pp => rfl
+  | ppi => rfl
+  | po => rfl
+  | dr => rfl
+
 theorem sigDemands_ne_eq {q : Sig} {D : Concept} :
     (eq, D) ∉ sigDemands q := by
   intro h
@@ -42975,7 +42992,6 @@ theorem allDR_gDisj {X : List Sig} {q0 : Sig} {u v : GOcc X q0}
     exact (compatB_dr_cross hc _ (gLe_cone hu) _ (gLe_cone hv)).1 E hE
   · obtain ⟨D, hc⟩ := gDrBirth_compat hba
     exact (compatB_dr_cross hc _ (gLe_cone hv) _ (gLe_cone hu)).2 E hE
-
 /-! #### §282 — G3: `∃`-FULFILMENT
 
 A demand is discharged by its own child occurrence.  `gen_step_compat` already
@@ -43879,6 +43895,120 @@ end OneShotDichotomy
 #print axioms odTower_above
 #print axioms odTower_po
 #print axioms odTower_frame
+
+/-! #### §284 — G3: THE MODEL, AND THE TRUTH LEMMA
+
+The unfolding becomes an interpretation: the carrier is the generated
+occurrences, the relation is the frame's, and an atom holds where the label says
+so.  The truth lemma then reads the five propagation results back as a single
+induction on the concept. -/
+
+/-- The unfolded interpretation. -/
+noncomputable def unfInterp (X : List Sig) (q0 : Sig) :
+    Interp (GOcc X q0) :=
+  ⟨fun _ => True, odNet (gOD X q0), fun a u => Concept.atom a ∈ olab X q0 u.val⟩
+
+theorem unfInterp_rcc5 (X : List Sig) (q0 : Sig) :
+    RCC5Interp (unfInterp X q0) :=
+  frame_rcc5 _ (odNet_frame (gOD X q0)) _
+
+/-- Labels drawn from the static set live inside the closure. -/
+theorem olab_sub_cl {X : List Sig} {q0 : Sig} {C0 : Concept}
+    (hXS : ∀ q ∈ X, q ∈ sigStatic C0) (hq0 : q0 ∈ X) (u : GOcc X q0) :
+    ∀ c ∈ olab X q0 u.val, c ∈ cl C0 := by
+  intro c hc
+  have hmem : osig X q0 u.val ∈ keyEnum C0 :=
+    sigStatic_sub C0 _ (hXS _ (osig_mem hq0 u.property))
+  rw [keyEnum, List.mem_flatMap] at hmem
+  obtain ⟨T, hT, hmap⟩ := hmem
+  rw [List.mem_map] at hmap
+  obtain ⟨S, _, hq⟩ := hmap
+  have h1 : (osig X q0 u.val).1 = T := by rw [← hq]
+  rw [olab, h1] at hc
+  exact ((mem_allListsLe (cl C0) (cl C0).length T).mp hT).2 c hc
+
+/-- **§284.1 — THE TRUTH LEMMA.**  Every concept in an occurrence's label holds
+    at that occurrence in the unfolded model.
+
+    Each case is one of §§280–283, read through the induction hypothesis; the
+    `∀PO` case is where the fragment is used, and it is VACUOUS — no `∀PO` occurs
+    in the closure, so nothing has to propagate along a `PO` edge.  That is the
+    single place the `∀PO`-freeness hypothesis enters the whole construction. -/
+theorem unf_truth {X : List Sig} {q0 : Sig} {C0 : Concept}
+    (hXS : ∀ q ∈ X, q ∈ sigStatic C0) (hfix : ∀ q ∈ X, q ∈ pruneSig X)
+    (hpo : POFree C0) (hq0 : q0 ∈ X) :
+    ∀ (c : Concept) (u : GOcc X q0), c ∈ olab X q0 u.val →
+      sat (unfInterp X q0) u c := by
+  have hokX : ∀ q ∈ X, sigOkB q = true :=
+    fun q hq => sigStatic_ok C0 q (hXS q hq)
+  have hsup : ∀ u : GOcc X q0, supportB (olab X q0 u.val) = true := by
+    intro u
+    have := gen_sigOk hq0 hokX u.property
+    rw [sigOkB, Bool.and_eq_true, Bool.and_eq_true] at this
+    exact this.1.1
+  intro c
+  induction c with
+  | top => intro u _; trivial
+  | bot => intro u h; exact absurd h (supportB_sound (hsup u)).1
+  | atom a => intro u h; exact h
+  | natom a =>
+      intro u h
+      show ¬ (Concept.atom a ∈ olab X q0 u.val)
+      intro hc
+      exact (supportB_sound (hsup u)).2.1 a hc h
+  | and c d ih1 ih2 =>
+      intro u h
+      obtain ⟨h1, h2⟩ := (supportB_sound (hsup u)).2.2.1 c d h
+      exact ⟨ih1 u h1, ih2 u h2⟩
+  | or c d ih1 ih2 =>
+      intro u h
+      rcases (supportB_sound (hsup u)).2.2.2.1 c d h with h1 | h1
+      · exact Or.inl (ih1 u h1)
+      · exact Or.inr (ih2 u h1)
+  | all r c ih =>
+      intro u h v _ hrel
+      refine ih v ?_
+      cases r with
+      | pp => exact allPP_gLt hq0 hokX (odNet_pp_inv _ hrel) h
+      | ppi => exact allPPI_gLt hq0 hokX (odNet_ppi_inv _ hrel) h
+      | dr => exact allDR_gDisj (odNet_dr_inv _ hrel) h
+      | eq =>
+          have : u = v := odNet_eq_inv _ hrel
+          subst this
+          exact allEQ_local hq0 hokX h
+      | po =>
+          exact absurd (olab_sub_cl hXS hq0 u _ h)
+            (fun hc => pofree_cl_all C0 hpo po c hc rfl)
+  | ex r c ih =>
+      intro u h
+      cases r with
+      | eq =>
+          refine ⟨u, trivial, (unfInterp_rcc5 X q0).refl_eq u trivial, ?_⟩
+          exact ih u ((supportB_sound (hsup u)).2.2.2.2.2 c h)
+      | pp =>
+          obtain ⟨i, hi⟩ := List.mem_iff_getElem?.mp
+            (mem_sigDemands_mk (by decide) h)
+          obtain ⟨q', hp, _, _⟩ := pickTarget_some (hfix _ (osig_mem hq0 u.property)) (mem_sigDemands_mk (by decide) h)
+          obtain ⟨v, hlab, hrel⟩ := gchild_serves u hi hp
+          exact ⟨v, trivial, hrel, ih v hlab⟩
+      | ppi =>
+          obtain ⟨i, hi⟩ := List.mem_iff_getElem?.mp
+            (mem_sigDemands_mk (by decide) h)
+          obtain ⟨q', hp, _, _⟩ := pickTarget_some (hfix _ (osig_mem hq0 u.property)) (mem_sigDemands_mk (by decide) h)
+          obtain ⟨v, hlab, hrel⟩ := gchild_serves u hi hp
+          exact ⟨v, trivial, hrel, ih v hlab⟩
+      | dr =>
+          obtain ⟨i, hi⟩ := List.mem_iff_getElem?.mp
+            (mem_sigDemands_mk (by decide) h)
+          obtain ⟨q', hp, _, _⟩ := pickTarget_some (hfix _ (osig_mem hq0 u.property)) (mem_sigDemands_mk (by decide) h)
+          obtain ⟨v, hlab, hrel⟩ := gchild_serves u hi hp
+          exact ⟨v, trivial, hrel, ih v hlab⟩
+      | po =>
+          obtain ⟨i, hi⟩ := List.mem_iff_getElem?.mp
+            (mem_sigDemands_mk (by decide) h)
+          obtain ⟨q', hp, _, _⟩ := pickTarget_some (hfix _ (osig_mem hq0 u.property)) (mem_sigDemands_mk (by decide) h)
+          obtain ⟨v, hlab, hrel⟩ := gchild_serves u hi hp
+          exact ⟨v, trivial, hrel, ih v hlab⟩
 
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le
