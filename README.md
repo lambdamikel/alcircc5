@@ -451,8 +451,10 @@ wp87 ∀PO-free end-to-end cross-check).
   [LEAN.md](LEAN.md).
 - [`verification/python/`](verification/python/) — the WP probe ledger.
 - [`approaches/`](approaches/) — per-technique hubs.
-- [CONVERSATION.md](CONVERSATION.md) — the full, dated audit trail (who
-  contributed what). [OUTDATED.md](OUTDATED.md) — superseded manuscripts and
+- [CONVERSATION.md](CONVERSATION.md) — the dated audit trail (who contributed
+  what). Contemporaneous through 2026-08-06; Part 52 is a short, labelled
+  reconstruction of the three weeks after that, for which
+  [ASSEMBLY_DESIGN.md](ASSEMBLY_DESIGN.md) is the contemporaneous record. [OUTDATED.md](OUTDATED.md) — superseded manuscripts and
   the historical no-automata thread.
 
 ## Author

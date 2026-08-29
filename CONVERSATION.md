@@ -2,7 +2,13 @@
 
 **Between Michael Wessel and Claude (Anthropic)**
 
-This document records the conversation that produced the paper *"On the Decidability of ALCI\_RCC5 and ALCI\_RCC8"* and the accompanying tableau calculus. The conversation took place over multiple Claude Code sessions in March 2026.
+This document records the conversation that produced the paper *"On the Decidability of ALCI\_RCC5 and ALCI\_RCC8"* and the accompanying tableau calculus. The conversation took place over multiple Claude Code sessions from March 2026 onward.
+
+**Scope note.** Parts 1–51 are a contemporaneous log, ending 2026-08-06.
+**Part 52 is a short reconstruction** of the three weeks after that — written
+afterwards from the git history and the design document, not recorded as it
+happened, and labelled as such. For anything after 2026-08-06,
+`ASSEMBLY_DESIGN.md` is the contemporaneous record and takes precedence.
 
 ---
 
@@ -8176,3 +8182,101 @@ certified on `Cmix`; general extraction scoped (not open). Full logic
 something) stands. Design + provenance: `ASSEMBLY_DESIGN.md` §§17–25;
 Lean write-up: `LEAN.md`; campaign log: the auto-memory
 `pofree-certification-campaign.md`.
+
+---
+
+## Part 52: 2026-08-06 → 08-29 — reconstructed, not logged
+
+**This part is different in kind from everything above it.** The verbatim log
+stops at 2026-08-06. The three weeks that follow produced 536 commits and took
+the ∀PO-free fragment from "three quadrants plus a pipeline" to a
+machine-certified decision procedure, and they were not transcribed as they
+happened. What follows is reconstructed from the git history, `ASSEMBLY_DESIGN.md`
+(§§43–297) and the dated status paragraphs in `CLAUDE.md`. It is four items with
+rough date ranges, deliberately short, and it does not attempt to reproduce
+dialogue.
+
+The emphasis is on the **redirects** — the points where Michael's intervention
+changed what happened next — because that is exactly the part the artifacts do
+*not* record. The mathematics is recoverable from the repository forever; who
+said "are you sure?" at which moment is not, and it was often the thing that
+mattered.
+
+### 1. 2026-08-06 … 08-15 — the mixed quadrant: extraction architecture
+
+Building the certificate for the one quadrant still open (`∃PO` and `∃PP`
+together). The result was an architecture, not a theorem: `mtk`-truncated labels
+over a declared ordered-disjoint frame, with the key structural finding being the
+**persistent/one-shot split** — a node's `∃PP` demands divide decidably into
+those served by a round-robin kernel and those served by a single edge.
+
+*Redirect, and it became a standing rule:* **write the consumer before believing
+the interface.** Four interfaces and three parameters in this stretch failed
+exactly when something first tried to use them, never before. A companion
+lesson, learned by accident: a clean build is not evidence that what you wrote
+was compiled — an insertion once landed inside a docstring and silently
+commented out three theorems.
+
+### 2. 2026-08-19 … 08-25 — probes before Lean, and one frame break
+
+Michael's process directive, now standing: **write a computational probe that
+validates a route before committing sessions to formalizing it.** It paid off
+immediately and repeatedly, and the probes themselves then became a source of
+lessons — vary the model class, state the control's expected value *before* the
+run, count the non-vacuous instances before believing a pass rate. Several
+reported numbers were withheld because a control missed.
+
+*The redirect worth recording in detail is not content but a frame break.* Stuck
+on an ordering cycle, Michael offered an analogy — aperiodic (einstein/hat)
+tilings, where the plane tiles and every finite patch extends, yet greedy local
+choice gets stuck. That prompted a measurable question, and the probe found the
+opposite of the analogy: valid choices are *abundant*, which gives a union-bound
+existence proof needing no hierarchy at all. **The analogy was partly wrong and
+still decisive** — its value was in forcing the comparison. The honest
+counterfactual is that the ingredient was already in the design document and had
+been mis-framed twice, so the redirect broke a stuck framing rather than
+supplying mathematics.
+
+### 3. 2026-08-26 … 08-28 — four disciplines refuted, and the pivot
+
+The worst stretch of the campaign and the most useful. Four successive local
+disciplines for reusing finite nodes were each refuted by an exact finite
+countermodel, two of them by cold attackers who reproduced the countermodels
+independently. The pattern was the project's recurring pointwise-vs-joint shape
+for the fifth time.
+
+*Two redirects, both decisive.* First: **"are you sure that blocking will do?
+did you study our failed blocking attempts?"** — caught the assistant
+re-deriving blocking from scratch without consulting a record that already
+contained the refutations. Second, and larger: **"I am a bit worried by now… it
+seems we are not making enough progress in the right direction and keep
+'trashing' and backtracking."** That was correct, and it was the right call at
+the right time: rather than accept another local patch, Michael asked GPT-5.6 Sol
+for an alternative certification route. The answer — retire node reuse entirely,
+keep the finite scheme as a control graph, unfold every existential to a fresh
+occurrence — is what closed the problem. Proposing further local disciplines was
+the error; noticing that from outside the work is what a director is for.
+
+### 4. 2026-08-28 … 08-29 — ConeScheme, three cold reviews, and the scope closed
+
+The pivot landed: `decidableSat_cone`, then raw input (NNF) and concrete set
+semantics, so that by 08-29 the fragment had no open correctness items. Three
+independent cold reviews attacked the trusted base, completeness, and soundness.
+None found a counterexample. The second found a real defect — a dropped `∀PO`
+propagation — and the third found five, all in this project's own probes and
+prose rather than in the development.
+
+*Four redirects in two days, all corrective.* **"I hope it holds water"** — test
+the claim, don't assert it. **"The decidability claim was mostly backed-up by the
+proof, though, not the certificate"** — corrected a rescoping that had conflated
+a formalization gap with a gap in the theorem. **"I remember that we had one (or
+two?) more proofs"** — forced establishing the blast radius of a paper gap, which
+turned out to touch one route and not the other. And, last: **"why is that label
+uniform across all three 'not certified'? I thought the ∀PO-free fragment is
+certified now."** It was, and the assistant had been carrying the project's
+blanket label — and its twenty-review ledger presumption — onto a result the
+ledger was not about. Corrected across all documents.
+
+**Where this leaves the log.** Detail from here lives in `ASSEMBLY_DESIGN.md`,
+which was written as the work happened and is contemporaneous where this part is
+not. Treat that as authoritative and this part as an index to it.
