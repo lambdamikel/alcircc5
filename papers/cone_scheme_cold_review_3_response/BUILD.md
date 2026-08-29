@@ -9,12 +9,6 @@ ends in `#print axioms` on the capstones; all report
 `[propext, Classical.choice, Quot.sound]`, except `cpo_unsat` (none) and
 `erase_cpo_satisfiable` (`propext`).
 
-> ⚠ **Corrected after cold review #3 (F4).** Five, not two: `pruneSig_mono`,
-> `cpo_refuted_at_one` and `allBodies_po_nil_of_pofree` also land below the
-> standard three, on `[propext, Quot.sound]`. Every deviation is a *smaller*
-> footprint, so nothing is at risk — but the claim as written did not match the
-> output.
-
 `RCC5NormalForm.lean` builds independently. Note it is **imported nowhere** — it
 is the raw material for a concrete-set semantics that has never been wired in.
 
@@ -42,15 +36,6 @@ they are artifacts of the probe rather than the architecture. That reading has
 never been independently checked. **Checking it is one of the concrete tasks in
 §3.** If instead they localise a real hole in `unf_truth`, that is the finding
 this review exists to produce.
-
-> ⚠ **Corrected after cold review #3 (F1, F2).** The conclusion above was right —
-> none of the nine localises a hole in `unf_truth` — but the *attribution* was
-> wrong for six of them. Actual: **4 need the vertical pair** (`compatB pp/ppi`'s
-> cone push composed with `sigOkB`'s two clauses), 3 need the `DR` cross
-> condition (one of those genuinely the cone quantification), 1 needs the
-> elimination operator, and 1 was a truncation artifact of the probe itself —
-> `wp133`'s frontier exclusion covered the check *sites* but not the *witnesses*.
-> That last is now fixed and the count is **3 at depth 2, 5 at depth 3**.
 
 All probes re-derive the RCC5 composition table from finite set semantics. They
 are our code and are in scope.

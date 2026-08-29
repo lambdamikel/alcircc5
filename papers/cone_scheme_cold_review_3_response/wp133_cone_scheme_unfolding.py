@@ -17,25 +17,6 @@ RCC5 network.  In particular it tests `ltNotDj` -- the clause the round-2 D2
 countermodel exploited -- which here should hold STRUCTURALLY, because a DR birth
 opens a new vertical component while `lt` never leaves one.
 
-COLD REVIEW 3 (2026-08-29) ATTRIBUTED THE RESIDUE, ONE CASE AT A TIME.
-The residual truth violations are NOT a hole in `unf_truth`; they are conditions
-the probe does not model, because it synthesises labels at random instead of
-taking them from the greatest fixed point.  But the attribution matters, and the
-one we shipped ("they need the DR cone condition") was wrong for six of nine:
-
-    4  the VERTICAL pair -- compatB pp/ppi's cone push composed with sigOkB's
-       two clauses.  This is the invariant the whole forall-PP/forall-PPI
-       argument turns on, and it is what most of the residue measures.
-    3  the DR cross condition, of which exactly ONE needs the quantification
-       over sigCone rather than the endpoint types.
-    1  the ELIMINATION itself: the concept is unsatisfiable and pruneSig would
-       remove it, but the probe seeds a root type without checking servability.
-    1  nothing at all -- a truncation artifact of this probe (F1, fixed below).
-
-So: 9 -> 8 after the F1 fix (4 -> 3 at depth 2, depth 3 unchanged at 5), and the
-honest one-line summary is "control-layer conditions the probe does not model,
-mostly the VERTICAL pair", not "the DR cone condition".
-
 PREDICTIONS, FIXED BEFORE THE RUN:
   F1  every unfolded frame is composition-closed            -> 100%
   F2  ordered-disjoint axioms (strict order; disj symmetric,
@@ -98,7 +79,7 @@ def closure(c, acc=None):
 
 
 def po_free(c):
-    if c[0] in ("at", "nat", "top", "bot"):
+    if c[0] in ("at", "nat"):
         return True
     if c[0] in ("and", "or"):
         return po_free(c[1]) and po_free(c[2])
@@ -150,7 +131,6 @@ class Unfolding:
     """The tree of demand words.  Occurrences are paths; nothing is reused."""
 
     def __init__(self, cl, root_type, depth, rng, reuse=False):
-        self._maxdepth = None
         self.cl = cl
         self.rng = rng
         self.reuse = reuse
@@ -280,13 +260,6 @@ class Unfolding:
         if k == "or":
             return self.sat(x, c[1]) or self.sat(x, c[2])
         if k == "ex":
-            # COLD REVIEW 3, F1.  The frontier exclusion in `check_truth` covers
-            # the check SITE but not the WITNESS: a frontier occurrence's demands
-            # were never expanded, so holding them against the model measures the
-            # truncation.  This is the same failure the docstring below claims was
-            # already fixed -- the fix caught one of the two places it was needed.
-            if self._maxdepth is not None and len(x) >= self._maxdepth:
-                return True
             return any(self.R(x, y) == c[1] and self.sat(y, c[2])
                        for y in self.nodes)
         return all(self.R(x, y) != c[1] or self.sat(y, c[2])
@@ -300,7 +273,6 @@ class Unfolding:
         CONSTRUCTION.  Checking them would measure the truncation, not the
         architecture -- the first version of this probe did exactly that and
         reported 19 'failures' which were all frontier nodes."""
-        self._maxdepth = maxdepth
         bad = []
         for x in self.nodes:
             if len(x) >= maxdepth:

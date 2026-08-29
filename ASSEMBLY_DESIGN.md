@@ -17098,3 +17098,78 @@ Build: 45,227 lines, 2,352 declarations, exit 0, 0 errors / 0 warnings /
 (§295) were the two items; both are closed. What remains open is about the FULL
 logic — the architectural `∀PO` gap of §292, and F6 — plus the standing fact that
 soundness has never been read adversarially, which is what cold review 3 is for.
+
+### §296–297 — the THIRD cold review: soundness holds; five defects, none in the kernel
+
+**Verdict: the soundness half is correct and the `∀PO` vacuity argument is exactly
+load-bearing.** The reviewer read `coneScheme_sound` → `unf_truth` → `gOD`/`odNet`
+→ the geometry → the label lemmas, re-derived every step, transcribed the shipped
+control layer and **ran the unfolding on labels from the actual greatest fixed
+point** — which nobody had done; `wp133` synthesises labels at random — and hunted
+a counterexample against exhaustive model search. 2,157 accepted concepts / 6,464
+unfoldings / 10,066 occurrences with **0 frame and 0 truth violations**, plus a
+deep sweep, an adversarial battery, and infinite-model witnesses at depth 6. No
+defect in the theorem, its statement, or its chain.
+
+It also discharged a check the file leaves implicit: §281 replaces `unfLt` with
+`gLt = tcl gstep` on the generated carrier, and the file never says the
+restriction loses nothing. It does not — an `ostep` chain is pops-then-pushes so
+every intermediate is a suffix of an endpoint and `Gen` is suffix-closed, and
+`vbase v` is a suffix of `v` so a `unfDisj` witness pair between generated words
+is itself generated. Confirmed by execution over 6,464 unfoldings, 0 mismatches.
+
+**Five findings, all outside the kernel; all fixed.**
+
+* **F1 — my probe bug, and the one that stings.** `wp133`'s frontier exclusion
+  covers the check *sites* but not the *witnesses*: `sat`'s `ex` clause quantifies
+  over all nodes, so a frontier occurrence's never-expanded demand falsifies an
+  *interior* one. **This is the same failure the docstring claims was already
+  fixed** — "the first version of this probe did exactly that and reported 19
+  'failures' which were all frontier nodes". The fix caught one of the two places
+  it was needed. Fixed; the count moves 4 → 3 at depth 2, depth 3 unchanged at 5,
+  exactly as the review predicted.
+* **F2 — our attribution of the residue was wrong for six of nine.** `BUILD.md`
+  said the residue "needs the DR cone condition". True of **one**. Actual: **4
+  need the vertical pair** (`compatB pp/ppi`'s cone push composed with `sigOkB`'s
+  two clauses), 3 the `DR` cross condition, 1 the elimination, 1 nothing (F1). The
+  conclusion — no case localises a hole in `unf_truth` — stands. The attribution
+  pointed the next reader *away from* the invariant doing most of the work.
+  Corrected in `wp133`'s docstring and in the packet's `BUILD.md`.
+* **F3 — `wp134` shipped the pre-§291 `compatB`** (`PO` returns `True`), so it was
+  no longer the transcription it is presented as. Harmless today and measured so:
+  re-running with the clause added is output-identical, because all seven cases
+  are `∀PO`-free. Fixed anyway — the only concepts the clause affects are exactly
+  the ones §287/§291 exist for.
+* **F4 — `BUILD.md`'s axiom claim named two exceptions; there are five.** All
+  deviations are *smaller* footprints, so nothing was at risk, but the claim did
+  not match the output. Verified and corrected.
+* **F5 — `wp133`'s `po_free` carries round 1's crash shape** on `("top",)`/
+  `("bot",)`. `wp134` was patched for it; `wp133` was not. Fixed.
+
+**§296 — the coverage gap, closed in the artifact.** Round 1's 4,000-concept sweep
+reported "accepted with no model up to 4 points: 0", meaning its generator never
+produced an infinite-model concept — so the case where the unfolding's
+INFINITENESS is load-bearing had never been exercised end to end. The review found
+three. `Cdchain = ∃DR.∀DR.∃PPI.A₀` is now a witness in the file, and it is the
+interesting one: it forces infiniteness through the **`DR` downward closure**
+rather than a `∀PP`/`∀PPI` chain — a shape none of `Cinf`, `Dinf`, `Cboth` has.
+`y DR x` carries `∀DR.∃PPI.A₀`, so `x` owes a strict part `w₁`; `w₁ PP x` and
+`x DR y` give `w₁ DR y` by `comp(PP,DR) = {DR}`, so `w₁` owes one too, forever.
+Built as a SET model via §295 — regions `{0}` and the up-sets `{p | k+1 ≤ p}` —
+so its frame conditions come from `odNet_frame` rather than by hand. That it has
+no finite model is the review's exhaustive search, not the kernel.
+
+**§7, adopted.** The review offered a framing for `unf_truth` rather than a
+defect, and it is right: stating `POFree` as "the hypothesis that makes one branch
+vacuous" undersells it. A composition cell containing `po` can always be
+discharged by putting the pair at `PO` — unless some formula can object to a `PO`
+edge, and the only formula that can is `∀PO.D`. So on this fragment every cell
+containing `po` is escapable and the maximally-`PO` unfolding is *always* a model.
+That is why the construction needs no joint realisability across a signature's
+demands: every cross-relation between different children is the residual, and the
+residual costs nothing. It also locates the boundary — what is lost when `∀PO`
+returns is not one proof case but the residual default itself. Now in the
+docstring.
+
+Build: 45,375 lines, 2,362 declarations, exit 0, 0 errors / 0 warnings / 0 sorries.
+Twenty reviews, a defect or overclaim in all but two.

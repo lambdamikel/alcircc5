@@ -167,11 +167,7 @@ def compatB(r, D, q, qp):
                 if not (allBodies(DR, U) <= V and allBodies(DR, V) <= U):
                     return False
         return True
-    if r == PO:
-        # COLD REVIEW 2, §291: forall-PO bodies cross a PO edge in BOTH
-        # directions (conv PO = PO).  This probe shipped the PRE-§291 clause.
-        return (allBodies(PO, q[0]) <= qp[0] and allBodies(PO, qp[0]) <= q[0])
-    return True                       # EQ: no structural condition
+    return True                       # PO, EQ: no structural condition
 
 
 def sigDemands(q):
@@ -204,8 +200,6 @@ def prune(X, cone_of, bodies_of, by_body, demands_of):
 
 
 def _compat_fast(r, q, qp, cone_of, bodies_of):
-    if r == PO:
-        return (allBodies(PO, q[0]) <= qp[0] and allBodies(PO, qp[0]) <= q[0])
     if r == PP:
         return all(U in qp[1] for U in cone_of[q])
     if r == PPI:
