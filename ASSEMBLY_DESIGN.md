@@ -16946,3 +16946,45 @@ this one is architectural.
 
 Build after the repair: 44,596 lines, 2,308 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries. `cpo_unsat` depends on no axioms at all.
+
+### §293 — the THIRD cold review packet: soundness, the unread half
+
+Rounds 1 and 2 attacked the trusted base + execution, and completeness. Neither
+read `coneScheme_sound` or `unf_truth`. That is now the last unexamined
+load-bearing part of `decidableSat_cone`, and it is where `POFree` does its work
+— so `papers/cone_scheme_cold_review_3/` aims there.
+
+**Why this is the right target.** `odNet` assigns `PO` as the RESIDUAL: any pair
+that is not equal, not `lt`-comparable and not `disj` becomes `PO`. The unfolded
+model is therefore saturated with undeclared `PO` edges between occurrences that
+have nothing to do with each other. Soundness survives that for exactly one
+reason — no `∀PO` obligation can exist — and the whole fragment restriction is
+spent on one line of `unf_truth`:
+
+```lean
+| po => exact absurd (olab_sub_cl hXS hq0 u _ h)
+          (fun hc => pofree_cl_all C0 hpo po c hc rfl)
+```
+
+So `olab_sub_cl` (labels stay inside `cl C₀`) and `pofree_cl_all` (no `∀PO` in
+`cl C₀`) are the two highest-value targets in the artifact: any leak of a `∀PO`
+into a label is immediately fatal. The packet says so directly rather than making
+the reviewer find it.
+
+**We shipped our own unexplained residue.** `wp133` reports 0 frame violations
+and **4–5 truth violations that we never eliminated**. Our reading is that they
+need the DR cone condition, which lives in the control layer the probe does not
+model — i.e. artifacts of the probe, not the architecture. That reading has never
+been checked by anyone else, so the packet asks for it explicitly. If the
+residue instead localises a hole in `unf_truth`, that is the finding the review
+exists to produce.
+
+**Scope note on the standing question.** Items (4) and (5) of the 2026-08-29
+inventory — the architectural `∀PO` gap in non-singleton compositions, and F6 —
+are about the FULL logic. They do not bear on `decidableSat_cone`. The fragment's
+own residual items are exactly two: NNF (§288) and the abstract-semantics bridge
+(`RCC5NormalForm.eta`, imported nowhere). Neither cold review has found a defect
+IN the fragment result; round 2's defect was in the full-logic bonus and is
+provably vacuous under `POFree` (`allBodies_po_nil_of_pofree`). Recording this
+because the forward-facing documents have been hedging the fragment result with
+full-logic caveats that do not apply to it.
