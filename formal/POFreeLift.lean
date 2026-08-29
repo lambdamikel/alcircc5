@@ -44587,6 +44587,373 @@ theorem raw_sat_witness :
     @decide (FSatisfiable (Formula.atom 0))
       (decidableFSat _ trivial) = true := by decide
 
+/-! #### §295 — CONCRETE SET SEMANTICS: the last scope caveat, closed
+
+The standing caveat was that `Satisfiable` is the ABSTRACT composition-table
+semantics: `RCC5Interp` constrains `rho` by the table, but nothing says the
+elements are regions or that `rho` is the actual set relation.  The worry is
+one-directional and specific — the procedure might report SAT on the strength of
+an abstract model that no family of real sets realises.
+
+This section removes it.  `setRel` is the NAIVE relation on a family of sets
+(equal / proper subset / proper superset / empty intersection / otherwise
+overlap), written with no reference to the composition table.  `SetSatisfiable`
+asks for a family of nonempty, pairwise-distinct sets whose relation IS `setRel`.
+Then:
+
+* `setRel_odNet` — the naive relation on any such family is `odNet` of an
+  ordered-disjoint structure, so `setSat_sound` gives `SetSatisfiable → Satisfiable`
+  for free from `odNet_frame`;
+* `odEta` — every `ODStruct` is realised by actual sets, using the
+  NON-DISJOINT-PAIR regions of `RCC5NormalForm` rather than naive down-sets.
+  Down-sets do NOT work: two `PO` elements with nothing below both would get
+  disjoint down-sets, and `PO` would be lost.  A pair `(x,y)` with `x PO y` is
+  itself non-disjoint and lies in both regions, which is exactly the repair;
+* `coneScheme_sound_concrete` — our own procedure's model is already an `odNet`,
+  so it is CONCRETE with no transport at all;
+* `satisfiable_iff_set` — on the fragment, abstract and concrete satisfiability
+  COINCIDE, so `decidableSat_cone`/`decidableFSat` decide the concrete question.
+-/
+
+/-! ##### `le`, and the pair regions of an `ODStruct` -/
+
+def ODStruct.le (O : ODStruct N) (x y : N) : Prop := x = y ∨ O.lt x y
+
+theorem ODStruct.le_refl (O : ODStruct N) (x : N) : O.le x x := Or.inl rfl
+
+theorem ODStruct.le_trans (O : ODStruct N) {x y z : N}
+    (h1 : O.le x y) (h2 : O.le y z) : O.le x z := by
+  rcases h1 with rfl | h1
+  · exact h2
+  · rcases h2 with rfl | h2
+    · exact Or.inr h1
+    · exact Or.inr (O.ltTr _ _ _ h1 h2)
+
+theorem ODStruct.le_antisymm (O : ODStruct N) {x y : N}
+    (h1 : O.le x y) (h2 : O.le y x) : x = y := by
+  rcases h1 with rfl | h1
+  · rfl
+  · rcases h2 with rfl | h2
+    · rfl
+    · exact absurd (O.ltTr _ _ _ h1 h2) (O.ltIrr x)
+
+/-- **THE REGION OF `x`**: the non-disjoint pairs with a coordinate `≤ x`.
+    Ported from `RCC5NormalForm.OrderedDisjoint.eta`.  Naive down-sets are NOT
+    adequate — they lose `PO`. -/
+def ODStruct.eta (O : ODStruct N) (x : N) : N × N → Prop :=
+  fun p => ¬ O.disj p.1 p.2 ∧ (O.le p.1 x ∨ O.le p.2 x)
+
+theorem ODStruct.eta_self (O : ODStruct N) (x : N) : O.eta x (x, x) :=
+  ⟨O.djIrr x, Or.inl (O.le_refl x)⟩
+
+theorem ODStruct.eta_sub_iff (O : ODStruct N) (x y : N) :
+    (∀ p, O.eta x p → O.eta y p) ↔ O.le x y := by
+  constructor
+  · intro hsub
+    rcases (hsub (x, x) (O.eta_self x)).2 with h | h <;> exact h
+  · intro hle p hp
+    exact ⟨hp.1, hp.2.imp (fun h => O.le_trans h hle) (fun h => O.le_trans h hle)⟩
+
+theorem ODStruct.eta_inj (O : ODStruct N) {x y : N}
+    (h : ∀ p, O.eta x p ↔ O.eta y p) : x = y :=
+  O.le_antisymm ((O.eta_sub_iff x y).mp (fun p hp => (h p).mp hp))
+    ((O.eta_sub_iff y x).mp (fun p hp => (h p).mpr hp))
+
+theorem ODStruct.eta_disj_iff (O : ODStruct N) (x y : N) :
+    O.disj x y ↔ ∀ p, ¬ (O.eta x p ∧ O.eta y p) := by
+  constructor
+  · rintro hxy p ⟨⟨hnd, hx⟩, ⟨-, hy⟩⟩
+    rcases hx with hux | hvx
+    · rcases hy with huy | hvy
+      · exact O.djIrr p.1 (O.djDown x y p.1 p.1 hxy hux huy)
+      · exact hnd (O.djDown x y p.1 p.2 hxy hux hvy)
+    · rcases hy with huy | hvy
+      · exact hnd (O.djSym _ _ (O.djDown x y p.2 p.1 hxy hvx huy))
+      · exact O.djIrr p.2 (O.djDown x y p.2 p.2 hxy hvx hvy)
+  · intro h
+    exact Classical.byContradiction (fun hnd =>
+      h (x, y) ⟨⟨hnd, Or.inl (O.le_refl x)⟩, ⟨hnd, Or.inr (O.le_refl y)⟩⟩)
+
+/-! ##### The naive relation on a family of sets -/
+
+open Classical in
+/-- **THE NAIVE SET RELATION.**  Written with no reference to the composition
+    table: equal, proper subset, proper superset, disjoint, otherwise overlap. -/
+noncomputable def setRel {α P : Type} (reg : α → P → Prop) : α → α → Atom :=
+  fun x y =>
+    if (∀ p, reg x p ↔ reg y p) then eq
+    else if (∀ p, reg x p → reg y p) then pp
+    else if (∀ p, reg y p → reg x p) then ppi
+    else if (∀ p, ¬ (reg x p ∧ reg y p)) then dr
+    else po
+
+/-- The ordered-disjoint structure carried by a family of nonempty sets. -/
+def setOD {α P : Type} (reg : α → P → Prop) (hne : ∀ x, ∃ p, reg x p) :
+    ODStruct α where
+  lt := fun x y => (∀ p, reg x p → reg y p) ∧ ¬ (∀ p, reg y p → reg x p)
+  disj := fun x y => ∀ p, ¬ (reg x p ∧ reg y p)
+  ltIrr := fun _ h => h.2 (fun _ hp => hp)
+  ltTr := fun _ _ _ h1 h2 =>
+    ⟨fun p hp => h2.1 p (h1.1 p hp),
+     fun hzx => h1.2 (fun p hp => hzx p (h2.1 p hp))⟩
+  djSym := fun _ _ h p hp => h p ⟨hp.2, hp.1⟩
+  djIrr := fun x h => by
+    obtain ⟨p, hp⟩ := hne x
+    exact h p ⟨hp, hp⟩
+  ltNotDj := fun x y h hd => by
+    obtain ⟨p, hp⟩ := hne x
+    exact hd p ⟨hp, h.1 p hp⟩
+  djDown := by
+    rintro x y x' y' hxy hx' hy' p ⟨hp1, hp2⟩
+    refine hxy p ⟨?_, ?_⟩
+    · rcases hx' with rfl | h; · exact hp1
+      exact h.1 p hp1
+    · rcases hy' with rfl | h; · exact hp2
+      exact h.1 p hp2
+
+/-- **§295.1 — THE NAIVE RELATION IS AN `odNet`.**  So its frame conditions are
+    the ones already proved, and nothing about the composition table is assumed
+    of a family of sets — it is derived. -/
+theorem setRel_odNet {α P : Type} (reg : α → P → Prop) (hne : ∀ x, ∃ p, reg x p)
+    (hinj : ∀ x y, (∀ p, reg x p ↔ reg y p) → x = y) (x y : α) :
+    setRel reg x y = odNet (setOD reg hne) x y := by
+  classical
+  by_cases hxy : ∀ p, reg x p ↔ reg y p
+  · have hxy' : x = y := hinj x y hxy
+    subst hxy'
+    rw [odNet_self]
+    show (if (∀ p, reg x p ↔ reg x p) then eq else _) = eq
+    rw [if_pos (fun _ => Iff.rfl)]
+  · have hne' : x ≠ y := fun h => hxy (by rw [h]; exact fun _ => Iff.rfl)
+    show (if (∀ p, reg x p ↔ reg y p) then eq else _) = _
+    rw [if_neg hxy]
+    by_cases hs : ∀ p, reg x p → reg y p
+    · have hlt : (setOD reg hne).lt x y :=
+        ⟨hs, fun hr => hxy (fun p => ⟨hs p, hr p⟩)⟩
+      rw [if_pos hs, odNet_lt _ hlt]
+    · rw [if_neg hs]
+      by_cases hr : ∀ p, reg y p → reg x p
+      · have hlt : (setOD reg hne).lt y x :=
+          ⟨hr, fun hs' => hxy (fun p => ⟨hs' p, hr p⟩)⟩
+        rw [if_pos hr, odNet_gt _ hlt]
+      · rw [if_neg hr]
+        by_cases hd : ∀ p, ¬ (reg x p ∧ reg y p)
+        · rw [if_pos hd, odNet_dj _ hd]
+        · rw [if_neg hd]
+          exact (odNet_po (setOD reg hne) hne'
+            (fun h => hs h.1) (fun h => hr h.1) hd).symm
+
+/-! ##### Concrete satisfiability -/
+
+/-- **CONCRETE SATISFIABILITY.**  A family of nonempty, pairwise-distinct SETS,
+    whose relation is the naive set relation, satisfying `C₀`.  No composition
+    table appears in this statement. -/
+def SetSatisfiable (C0 : Concept) : Prop :=
+  ∃ (α P : Type) (reg : α → P → Prop) (val : Nat → α → Prop) (x : α),
+    (∀ y, ∃ p, reg y p) ∧
+    (∀ y z, (∀ p, reg y p ↔ reg z p) → y = z) ∧
+    sat ⟨fun _ => True, setRel reg, val⟩ x C0
+
+/-- **§295.2 — CONCRETE ⟹ ABSTRACT.**  Free: a family of sets IS an RCC5 frame,
+    by `setRel_odNet` and `odNet_frame`.  The composition table is a THEOREM
+    about sets here, not an assumption. -/
+theorem setSat_sound {C0 : Concept} (h : SetSatisfiable C0) : Satisfiable C0 := by
+  obtain ⟨α, P, reg, val, x, hne, hinj, hsat⟩ := h
+  have hEq : setRel reg = odNet (setOD reg hne) :=
+    funext (fun a => funext (fun b => setRel_odNet reg hne hinj a b))
+  refine ⟨α, ⟨fun _ => True, setRel reg, val⟩, ?_, x, trivial, hsat⟩
+  rw [show (⟨fun _ => True, setRel reg, val⟩ : Interp α)
+        = ⟨fun _ => True, odNet (setOD reg hne), val⟩ by rw [hEq]]
+  exact frame_rcc5 _ (odNet_frame _) val
+
+/-- **§295.3 — EVERY `odNet` MODEL IS ALREADY CONCRETE.**  `eta` realises the
+    structure by actual sets and `setRel` of those sets is the same relation, so
+    the interpretation is unchanged — no transport, no induction. -/
+theorem odNet_setSat {C0 : Concept} (O : ODStruct N) (val : Nat → N → Prop)
+    (x : N) (hsat : sat ⟨fun _ => True, odNet O, val⟩ x C0) :
+    SetSatisfiable C0 := by
+  refine ⟨N, N × N, O.eta, val, x, fun y => ⟨(y, y), O.eta_self y⟩,
+    fun y z h => O.eta_inj h, ?_⟩
+  have hEq : setRel O.eta = odNet O := by
+    refine funext (fun a => funext (fun b => ?_))
+    rw [setRel_odNet O.eta (fun y => ⟨(y, y), O.eta_self y⟩)
+      (fun y z h => O.eta_inj h) a b]
+    have hlt : ∀ u v : N, (setOD O.eta (fun y => ⟨(y, y), O.eta_self y⟩)).lt u v
+        ↔ O.lt u v := by
+      intro u v
+      constructor
+      · rintro ⟨h1, h2⟩
+        rcases (O.eta_sub_iff u v).mp h1 with rfl | h
+        · exact absurd (fun p hp => hp) h2
+        · exact h
+      · intro h
+        exact ⟨(O.eta_sub_iff u v).mpr (Or.inr h),
+          fun hr => absurd ((O.eta_sub_iff v u).mp hr) (fun hle =>
+            (O.ltIrr u) (by rcases hle with rfl | h2; · exact h
+                            exact O.ltTr _ _ _ h h2))⟩
+    have hdj : ∀ u v : N, (setOD O.eta (fun y => ⟨(y, y), O.eta_self y⟩)).disj u v
+        ↔ O.disj u v := fun u v => (O.eta_disj_iff u v).symm
+    classical
+    show odNet (setOD O.eta _) a b = odNet O a b
+    unfold odNet
+    by_cases h1 : a = b
+    · rw [if_pos h1, if_pos h1]
+    · rw [if_neg h1, if_neg h1]
+      by_cases h2 : O.lt a b
+      · rw [if_pos ((hlt a b).mpr h2), if_pos h2]
+      · rw [if_neg (fun h => h2 ((hlt a b).mp h)), if_neg h2]
+        by_cases h3 : O.lt b a
+        · rw [if_pos ((hlt b a).mpr h3), if_pos h3]
+        · rw [if_neg (fun h => h3 ((hlt b a).mp h)), if_neg h3]
+          by_cases h4 : O.disj a b
+          · rw [if_pos ((hdj a b).mpr h4), if_pos h4]
+          · rw [if_neg (fun h => h4 ((hdj a b).mp h)), if_neg h4]
+  rw [show (⟨fun _ => True, setRel O.eta, val⟩ : Interp N)
+        = ⟨fun _ => True, odNet O, val⟩ by rw [hEq]]
+  exact hsat
+
+/-- **§295.4 — OUR PROCEDURE'S MODEL IS CONCRETE.**  `coneScheme_sound` builds
+    `unfInterp`, whose relation is literally an `odNet`; §295.3 applies. -/
+theorem coneScheme_sound_concrete {X : List Sig} {q0 : Sig} {C0 : Concept}
+    (hXS : ∀ q ∈ X, q ∈ sigStatic C0) (hfix : ∀ q ∈ X, q ∈ pruneSig X)
+    (hpo : POFree C0) (hq0 : q0 ∈ X) (hC0 : C0 ∈ q0.1) : SetSatisfiable C0 :=
+  odNet_setSat (gOD X q0) _ ⟨([] : Occ), Gen.root⟩
+    (unf_truth hXS hfix hpo hq0 C0 ⟨([] : Occ), Gen.root⟩ hC0)
+
+/-! ##### The general direction: EVERY abstract model is concrete
+
+§295.5 needed `POFree` only because its `→` routed through the procedure.  It
+does not have to: `odOfModel` turns ANY `RCC5Interp` into an `ODStruct` on its
+domain, and `odNet` of that read-off is the model's own relation, so §295.3
+applies to arbitrary models.  The only work is relativising `sat` from a
+domain-restricted interpretation to the total one on the subtype. -/
+
+/-- The read-off frame IS the model's relation — on every pair, not only the
+    ones `odOfModel_pp` covers. -/
+theorem odNet_odOfModel {α : Type} {I : Interp α} (hI : RCC5Interp I)
+    (x y : {v : α // I.dom v}) :
+    odNet (odOfModel hI) x y = I.rho x.val y.val := by
+  classical
+  cases hr : I.rho x.val y.val with
+  | eq =>
+      have hv : x.val = y.val := hI.eq_id _ _ x.2 y.2 hr
+      have hxy : x = y := Subtype.ext hv
+      rw [hxy, odNet_self]
+  | pp => exact odNet_lt (odOfModel hI) hr
+  | ppi =>
+      refine odNet_gt (odOfModel hI) ?_
+      show I.rho y.val x.val = pp
+      rw [hI.conv_ x.val y.val x.2 y.2, hr]; rfl
+  | dr => exact odNet_dj (odOfModel hI) hr
+  | po =>
+      refine odNet_po (odOfModel hI) ?_ ?_ ?_ ?_
+      · intro hxy
+        rw [hxy, hI.refl_eq y.val y.2] at hr
+        exact Atom.noConfusion hr
+      · intro h
+        have h' : I.rho x.val y.val = pp := h
+        rw [hr] at h'; exact Atom.noConfusion h'
+      · intro h
+        have h' : I.rho y.val x.val = pp := h
+        have : I.rho x.val y.val = ppi := by
+          rw [hI.conv_ y.val x.val y.2 x.2, h']; rfl
+        rw [hr] at this; exact Atom.noConfusion this
+      · intro h
+        have h' : I.rho x.val y.val = dr := h
+        rw [hr] at h'; exact Atom.noConfusion h'
+
+/-- Relativisation: satisfaction over the domain equals satisfaction over the
+    subtype carrier, where every element is in the domain by construction. -/
+theorem sat_subtype {α : Type} (I : Interp α) (c : Concept) :
+    ∀ (x : α) (hx : I.dom x),
+      sat I x c ↔
+      sat (⟨fun _ => True, fun a b => I.rho a.val b.val,
+            fun n a => I.val n a.val⟩ : Interp {v : α // I.dom v}) ⟨x, hx⟩ c := by
+  induction c with
+  | top => intro x hx; exact Iff.rfl
+  | bot => intro x hx; exact Iff.rfl
+  | atom a => intro x hx; exact Iff.rfl
+  | natom a => intro x hx; exact Iff.rfl
+  | and c d ihc ihd =>
+      intro x hx
+      exact ⟨fun h => ⟨(ihc x hx).mp h.1, (ihd x hx).mp h.2⟩,
+             fun h => ⟨(ihc x hx).mpr h.1, (ihd x hx).mpr h.2⟩⟩
+  | or c d ihc ihd =>
+      intro x hx
+      exact ⟨fun h => h.imp (ihc x hx).mp (ihd x hx).mp,
+             fun h => h.imp (ihc x hx).mpr (ihd x hx).mpr⟩
+  | ex r c ih =>
+      intro x hx
+      constructor
+      · rintro ⟨y, hy, hr, hs⟩
+        exact ⟨⟨y, hy⟩, trivial, hr, (ih y hy).mp hs⟩
+      · rintro ⟨v, -, hr, hs⟩
+        exact ⟨v.val, v.2, hr, (ih v.val v.2).mpr hs⟩
+  | all r c ih =>
+      intro x hx
+      constructor
+      · intro h v _ hr
+        exact (ih v.val v.2).mp (h v.val v.2 hr)
+      · intro h y hy hr
+        exact (ih y hy).mpr (h ⟨y, hy⟩ trivial hr)
+
+/-- **§295.5 — ABSTRACT ⟹ CONCRETE, FOR ARBITRARY MODELS.**  No fragment
+    hypothesis: `odOfModel` reads any `RCC5Interp` as an `ODStruct` on its
+    domain, `odNet_odOfModel` says the read-off IS the model's own relation, and
+    §295.3 realises it by sets.  The only labour is relativising `sat` to the
+    subtype carrier (`sat_subtype`). -/
+theorem satisfiable_setSat {C0 : Concept} (h : Satisfiable C0) :
+    SetSatisfiable C0 := by
+  obtain ⟨α, I, hI, x, hx, hsat⟩ := h
+  have hEq : (fun (a b : {v : α // I.dom v}) => I.rho a.val b.val)
+      = odNet (odOfModel hI) :=
+    funext (fun a => funext (fun b => (odNet_odOfModel hI a b).symm))
+  refine odNet_setSat (odOfModel hI) (fun n a => I.val n a.val) ⟨x, hx⟩ ?_
+  have hI2 : (⟨fun _ => True, odNet (odOfModel hI), fun n a => I.val n a.val⟩ :
+        Interp {v : α // I.dom v})
+      = ⟨fun _ => True, fun a b => I.rho a.val b.val, fun n a => I.val n a.val⟩ := by
+    rw [hEq]
+  rw [hI2]
+  exact (sat_subtype I C0 x hx).mp hsat
+
+/-- **§295.5′ — THE CAVEAT, DISCHARGED FOR THE WHOLE LOGIC.**  Abstract
+    composition-table satisfiability and concrete satisfiability over families of
+    nonempty sets are THE SAME PROPERTY — for arbitrary `ALCI_RCC5` concepts, not
+    merely the fragment.  So every `Satisfiable`/`FSatisfiable` statement in this
+    artifact can be read concretely, including `coneScheme_unsat_full`. -/
+theorem satisfiable_iff_set (C0 : Concept) : Satisfiable C0 ↔ SetSatisfiable C0 :=
+  ⟨satisfiable_setSat, setSat_sound⟩
+
+/-! ##### Non-vacuity: a model built from ACTUAL SETS, by hand
+
+Derived witnesses (via §295.5) only show the theorem applies.  This one shows
+`SetSatisfiable` is inhabited by data a reader can see: two singleton subsets of
+`Bool`, and the `DR` between them computed from the naive definition. -/
+
+/-- Two disjoint singleton regions in `Bool`, realising `∃DR.⊤`. -/
+theorem setSat_dr_witness : SetSatisfiable (Concept.ex dr Concept.top) := by
+  classical
+  refine ⟨Bool, Bool, fun x p => p = x, fun _ _ => True, false,
+    fun y => ⟨y, rfl⟩, ?_, ?_⟩
+  · intro y z h
+    exact (h y).mp rfl
+  · refine ⟨true, trivial, ?_, trivial⟩
+    have hne : ∀ y : Bool, ∃ p : Bool, p = y := fun y => ⟨y, rfl⟩
+    have hinj : ∀ y z : Bool, (∀ p : Bool, p = y ↔ p = z) → y = z :=
+      fun y z h => (h y).mp rfl
+    show setRel (fun (x : Bool) (p : Bool) => p = x) false true = dr
+    rw [setRel_odNet (fun (x : Bool) (p : Bool) => p = x) hne hinj]
+    refine odNet_dj _ ?_
+    show ∀ p : Bool, ¬ (p = false ∧ p = true)
+    rintro p ⟨rfl, h⟩
+    exact Bool.noConfusion h
+
+/-- **§295.6 — THE DECISION PROCEDURE DECIDES THE CONCRETE QUESTION.** -/
+def decidableSetSat (C0 : Concept) (hpo : POFree C0) :
+    Decidable (SetSatisfiable C0) :=
+  let _ := decidableSat_cone C0 hpo
+  decidable_of_iff _ (satisfiable_iff_set C0)
+
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le
 #print axioms POFreeLift.mixedPath_len_le
@@ -44847,6 +45214,13 @@ end POFreeLift
 #print axioms POFreeLift.decidableFSat
 #print axioms POFreeLift.raw_unsat_witness
 #print axioms POFreeLift.raw_sat_witness
+#print axioms POFreeLift.setRel_odNet
+#print axioms POFreeLift.setSat_sound
+#print axioms POFreeLift.odNet_setSat
+#print axioms POFreeLift.satisfiable_setSat
+#print axioms POFreeLift.satisfiable_iff_set
+#print axioms POFreeLift.decidableSetSat
+#print axioms POFreeLift.setSat_dr_witness
 #print axioms POFreeLift.cpo_unsat
 #print axioms POFreeLift.cpo_refuted_at_one
 #print axioms POFreeLift.erase_cpo_satisfiable

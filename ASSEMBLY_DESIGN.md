@@ -17032,3 +17032,69 @@ Build: 44,853 lines, 2,330 declarations, exit 0, 0 errors / 0 warnings /
 
 **The fragment's residual list is now one item long**: the abstract-semantics
 bridge (`RCC5NormalForm.eta`, imported nowhere).
+
+### §295 — CONCRETE SET SEMANTICS: the last caveat, closed — for the whole logic
+
+The standing caveat was that `Satisfiable` is the ABSTRACT composition-table
+semantics: `RCC5Interp` constrains `rho` by the table, but nothing said the
+elements were regions or that `rho` was the actual set relation. The worry was
+one-directional and specific — a SAT verdict might rest on an abstract frame that
+no family of real sets realises.
+
+**What is now proved.** `setRel` is the naive relation on a family of sets —
+equal / proper subset / proper superset / empty intersection / otherwise overlap
+— written with **no reference to the composition table**. `SetSatisfiable` asks
+for a family of nonempty, pairwise-distinct sets whose relation *is* `setRel`.
+Then
+
+```lean
+theorem satisfiable_iff_set (C0 : Concept) : Satisfiable C0 ↔ SetSatisfiable C0
+```
+
+**with no `POFree` hypothesis.** Abstract and concrete satisfiability are the
+same property, for arbitrary `ALCI_RCC5` concepts. Every `Satisfiable` /
+`FSatisfiable` statement in the artifact can therefore be read concretely,
+including `coneScheme_unsat_full`.
+
+Both directions turned out to be cheap, for opposite reasons.
+
+* **Concrete ⟹ abstract** is free. `setRel_odNet` shows the naive relation on any
+  family of nonempty distinct sets IS `odNet` of an `ODStruct` (proper subset as
+  the order, empty intersection as disjointness — all eight axioms elementary),
+  so `odNet_frame` supplies composition closure. **The composition table is a
+  theorem about sets here, not an assumption** — which is what the project's
+  Python probes have assumed all along when they re-derive it from `frozenset`
+  semantics.
+* **Abstract ⟹ concrete** needed the right regions. `odOfModel` reads any
+  `RCC5Interp` as an `ODStruct` on its domain; `odNet_odOfModel` (new) shows the
+  read-off IS the model's own relation on every pair; `sat_subtype` (new)
+  relativises satisfaction to the subtype carrier. The realisation itself is
+  `eta`, ported from `RCC5NormalForm`.
+
+**The one thing worth understanding here.** `eta x` is **not** the down-set of
+`x`. It is the set of NON-DISJOINT PAIRS with a coordinate `≤ x`. Naive
+down-sets are inadequate and lose `PO` exactly: two `PO` elements with nothing
+below both would receive disjoint down-sets. The pair `(x,y)` with `x PO y` is
+itself non-disjoint, and lies in `eta x` (via `x ≤ x`) and in `eta y` (via
+`y ≤ y`), so the regions genuinely overlap. I had talked myself out of this
+construction once mid-session — reasoning about down-sets and concluding the
+bridge was unclosable — before reading what `RCC5NormalForm.eta` actually said.
+**Read the definition before deciding the theorem is false.**
+
+Non-vacuity is hand-built, not derived: `setSat_dr_witness` realises `∃DR.⊤` with
+two singleton subsets of `Bool`. A witness obtained through §295.5 would only
+show the theorem applies; this shows `SetSatisfiable` is inhabited by data a
+reader can see.
+
+**Honest limit.** Regions are arbitrary nonempty sets. This is the standard set
+semantics for RCC5, and the one every probe in this project uses; it is NOT the
+topological reading in which regions are regular closed sets. That refinement is
+a further step and is not claimed.
+
+Build: 45,227 lines, 2,352 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries / 0 `sorryAx`.
+
+**The fragment's residual list is now empty.** NNF (§294) and abstract semantics
+(§295) were the two items; both are closed. What remains open is about the FULL
+logic — the architectural `∀PO` gap of §292, and F6 — plus the standing fact that
+soundness has never been read adversarially, which is what cold review 3 is for.
