@@ -879,6 +879,27 @@ certification pass itself.
   five findings all lying in the project's own probes and prose.
 \end{enumerate}
 
+\paragraph{What stayed constant across all three routes.} Worth one
+paragraph, because it is the honest answer to ``what was the human's idea worth
+in the end.'' Every route here presents a model the same way: a vertical
+skeleton of ${<}$-edges, one tree per component, with $\DR$ and $\PO$ as
+non-tree edges completed afterwards --- the split-forest discipline of
+\S\ref{ssec:tableau}. The certified route (item~5) is that picture in an
+unusually literal form: its elements are demand \emph{words}, so occurrences of
+the same type stay distinct and are never re-identified; its order is generated
+by exactly two moves, ``prepend a $\PP$ birth'' and ``strip a $\PPI$ head''; and
+stripping the leading vertical births returns each occurrence's component root,
+which order edges provably preserve and $\DR$ births provably change.
+
+What the routes did \emph{not} share is the machinery. The certified one needs
+no patchwork appeal (composition closure comes from the ordered-disjoint
+axioms), no quotient (nothing is re-identified, because no particular model has
+to be recovered), and no width bound. Three successive architectures were each
+refuted at the point where they tried to \emph{build} a finite presentation of
+such a forest and keep it consistent; what finally worked was to stop building
+one and let the syntax's own demand words be the forest. The shape was the
+durable contribution; the machinery was not.
+
 \paragraph{A gap in Route~1, found 2026-08-28 --- and what it does not
 touch.} Re-reading the two-tier paper turned up a genuine defect in its
 completeness argument: Step~2 defined the relation between two kernels as a
