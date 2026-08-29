@@ -16463,3 +16463,35 @@ lemmas); and then the truth lemma itself.
 
 Build: 43,720 lines, 2,247 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §280.3–4 — the invariant that makes `∀PP` travel, and a correction
+
+**The first attempt was wrong, and instructively so.** Lifting `allPP_up`/`_dn`
+along `unfLt` by induction fails: the induction hypothesis delivers the BODY at
+the intermediate point, while continuing the chain needs the UNIVERSAL there.
+That is exactly the obstruction §208 recorded for the old architecture —
+*"reaching the grandchild needs the universal to travel, not just its body"* —
+and it is what forced budget-truncation there and then broke finiteness.
+
+**Here it does not arise, because the transition condition is stronger than the
+step lemma used.** `compatB pp` pushes the source's WHOLE CONE into the target's
+predecessor set, not merely its type. So `coneInto` — *every member of `u`'s cone
+lies in `v`'s predecessor set* — is transitive along the chain
+(`coneInto_trans`, since `T_b :: S_b ⊆ S_c` gives `S_b ⊆ S_c`), and holds across
+each edge in both directions (`coneInto_ostep`). Then `T_u ∈ S_v` directly for
+any chain, and admissibility AT THE FAR END alone yields the body.
+
+So the universal never has to travel: the CONE does, and it is carried by a
+condition already in the plan for a different reason. That is the second time
+this architecture has dissolved an obstruction the borrowing route had to fight
+(the first being `ee_all`, §280).
+
+**One scope item, recorded not assumed.** `allPP_unfLt` requires the chain to
+stay inside the generated occurrences (`hmid`). That is a statement about the
+CARRIER: the intended model's domain IS the generated occurrences, so the frame
+should be taken over `{w // Gen X q0 w}` rather than all of `Occ`, and `hmid`
+then holds by construction. Doing that refactor is the next step, and until it is
+done `allPP_unfLt` is stated with the hypothesis visible.
+
+Build: 43,806 lines, 2,252 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

@@ -42706,6 +42706,79 @@ theorem allPP_dn {X : List Sig} {q0 : Sig} {w : Occ} {i : Nat} {D : Concept}
     {E : Concept} (hE : Concept.all pp E ∈ olab X q0 ((ppi, i) :: w)) :
     E ∈ olab X q0 w :=
   sigOkB_pp hok (compatB_ppi_cone (gen_step_compat hd hp).1) hE
+/-- Inverting a generated step: the parent is generated and the transition data
+    exists. -/
+theorem gen_inv {X : List Sig} {q0 : Sig} {r : Atom} {i : Nat} {w : Occ}
+    (h : Gen X q0 ((r, i) :: w)) :
+    Gen X q0 w ∧ ∃ D q', (sigDemands (osig X q0 w))[i]? = some (r, D) ∧
+      pickTarget X (osig X q0 w) r D = some q' := by
+  cases h with
+  | @step w' r' i' D q' hw hd hp => exact ⟨hw, D, q', hd, hp⟩
+
+/-- Generated occurrences carry admissible signatures, when the surviving set
+    does. -/
+theorem gen_sigOk {X : List Sig} {q0 : Sig} (hq0 : q0 ∈ X)
+    (hokX : ∀ q ∈ X, sigOkB q = true) {w : Occ} (h : Gen X q0 w) :
+    sigOkB (osig X q0 w) = true := hokX _ (osig_mem hq0 h)
+
+/-- The cone condition, extracted: a `PP` transition pushes the source's WHOLE
+    cone into the target's predecessor set. -/
+theorem compatB_pp_coneSub {D : Concept} {q q' : Sig}
+    (h : compatB pp D q q' = true) : ∀ U ∈ sigCone q, U ∈ q'.2 := by
+  rw [compatB.eq_def, Bool.and_eq_true] at h
+  intro U hU
+  exact List.mem_of_elem_eq_true (List.all_eq_true.mp h.2 U hU)
+
+theorem compatB_ppi_coneSub {D : Concept} {q q' : Sig}
+    (h : compatB ppi D q q' = true) : ∀ U ∈ sigCone q', U ∈ q.2 := by
+  rw [compatB.eq_def, Bool.and_eq_true] at h
+  intro U hU
+  exact List.mem_of_elem_eq_true (List.all_eq_true.mp h.2 U hU)
+
+/-- **§280.3 — THE INVARIANT THAT MAKES `∀PP` TRAVEL.**  Not "the universal
+    moves up the chain" — that is what the OLD architecture needed and could not
+    get (§208).  Here the transition pushes the whole CONE, so a source's type
+    lands in every later predecessor set directly, and the body follows from
+    admissibility at the far end alone. -/
+def coneInto (X : List Sig) (q0 : Sig) (u v : Occ) : Prop :=
+  ∀ U ∈ sigCone (osig X q0 u), U ∈ (osig X q0 v).2
+
+theorem coneInto_trans {X : List Sig} {q0 : Sig} {a b c : Occ}
+    (h1 : coneInto X q0 a b) (h2 : coneInto X q0 b c) : coneInto X q0 a c := by
+  intro U hU
+  exact h2 U (List.mem_cons_of_mem _ (h1 U hU))
+
+/-- One order edge pushes the cone, in either direction. -/
+theorem coneInto_ostep {X : List Sig} {q0 : Sig} {a b : Occ}
+    (hga : Gen X q0 a) (hgb : Gen X q0 b) (hs : ostep a b) :
+    coneInto X q0 a b := by
+  cases hs with
+  | up i w =>
+      obtain ⟨_, D, q', hd, hp⟩ := gen_inv hgb
+      exact compatB_pp_coneSub (gen_step_compat hd hp).1
+  | dn i w =>
+      obtain ⟨_, D, q', hd, hp⟩ := gen_inv hga
+      exact compatB_ppi_coneSub (gen_step_compat hd hp).1
+
+/-- **§280.4 — `∀PP` REACHES THE WHOLE ORDER ABOVE ITS HOLDER.**
+
+    SCOPE: the chain is required to stay inside the generated occurrences
+    (`hmid`).  That is a statement about the CARRIER, not about the argument: the
+    intended model's domain is the generated occurrences, so the frame should be
+    taken over `{w // Gen X q0 w}` and `hmid` then discharged by construction.
+    Recorded rather than assumed. -/
+theorem allPP_unfLt {X : List Sig} {q0 : Sig} (hq0 : q0 ∈ X)
+    (hokX : ∀ q ∈ X, sigOkB q = true) {u v : Occ}
+    (hmid : ∀ w, Gen X q0 w) (h : unfLt u v)
+    {E : Concept} (hE : Concept.all pp E ∈ olab X q0 u) :
+    E ∈ olab X q0 v := by
+  have hcone : coneInto X q0 u v := by
+    induction h with
+    | base hs => exact coneInto_ostep (hmid _) (hmid _) hs
+    | tail _ hs ih =>
+        exact coneInto_trans ih (coneInto_ostep (hmid _) (hmid _) hs)
+  exact sigOkB_pp (gen_sigOk hq0 hokX (hmid v))
+    (hcone (osig X q0 u).1 List.mem_cons_self) hE
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 
