@@ -2645,12 +2645,12 @@ full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md};
 and GPT-5.6~Pro's canonical-representation note is
 \texttt{papers/final\_paper\_gpt\_5.6\_review/ALCI\_RCC5\_F6\_technical\_note.pdf}~\cite{GPT56TechNote}.
 The repository is at \url{https://github.com/lambdamikel/alcircc5}. The
-state described in this paper is \emph{not} the July freeze: the tag
-\texttt{arxiv-candidate-2026-07-18} predates the $\forall\PO$-free
+state described in this paper is frozen at the git tag
+\texttt{certified-fragment-2026-08-29}; for reproducibility cite that tag (or
+its commit hash), not the mutable \texttt{master} branch. It supersedes
+\texttt{arxiv-candidate-2026-07-18}, which predates the $\forall\PO$-free
 fragment's certification (Remark~\ref{rem:conescheme}) and the three cold
-reviews of it. For reproducibility cite a commit hash on \texttt{master}
-dated 2026-08-29 or later, not the mutable branch head and not the July
-tag; filenames below are relative to the repository root.
+reviews of it. Filenames below are relative to the repository root.
 Table~\ref{tab:artifacts} maps each principal claim to its verification
 level, its file or Lean theorem, and its probe.
 
@@ -2675,7 +2675,8 @@ Static F6; automatic-cover; full decidability & Open & --- (no proof claimed) & 
 \bottomrule
 \end{tabular}
 \caption{Result-to-artifact map. Statuses are those of
-Table~\ref{tab:status}. Filenames are relative to the repository root.}
+Table~\ref{tab:status}. Filenames are relative to the repository root at
+tag \texttt{certified-fragment-2026-08-29}.}
 \label{tab:artifacts}
 \end{table}
 
