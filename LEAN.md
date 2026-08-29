@@ -5,29 +5,37 @@ $\mathcal{ALCI}_{\mathrm{RCC5}}$ decidability project. It is the detailed
 counterpart to the high-level summaries in `README.md` and the overview
 paper; those abstract the Lean work and point here.
 
-> ### ⚠ Read this first (2026-08-28)
+> ### ⚠ Read this first (2026-08-29)
 >
 > **The narrative below is a chronological log that ends 2026-07-24.** It is
 > kept as the record of how the artifact was built; it is *not* a description of
 > the current state, and several of its figures are stale (it reports
-> `POFreeLift.lean` at ~9,290 lines; it is now ~42,900, with 2,165 declarations,
+> `POFreeLift.lean` at ~9,290 lines; it is now ~45,400, with 2,362 declarations,
 > 0 sorries / 0 warnings / 0 `sorryAx`).
 >
-> **Current position, in four lines.**
-> 1. Three of the ∀PO-free fragment's four quadrants are certified decidable in
->    general; the **mixed** quadrant is not.
-> 2. `kq_all` — the cross-kernel obligation — is now **discharged**
->    (`fused_kq_all`), and the same result repairs a genuine gap in the two-tier
->    paper's proof (see `ASSEMBLY_DESIGN.md` §269).
+> **Current position, in five lines.**
+> 1. The ∀PO-free fragment is **certified decidable across all four quadrants**,
+>    including the mixed one. Capstones: `decidableFSat` (raw input),
+>    `decidableSat_cone` (NNF), `decidableSetSat` (concrete sets) — fragment
+>    membership the only hypothesis in each.
+> 2. That was reached by a **third route**, the *cone scheme* (design:
+>    GPT-5.6 Sol): a finite control graph of signatures, a monotone elimination
+>    to a greatest fixed point, and a fresh-occurrence unfolding in which no node
+>    is ever reused. Plan in `papers/cone_scheme_plan/`; provenance in
+>    `ASSEMBLY_DESIGN.md` §§267–297.
 > 3. The extraction architecture the log below builds toward — a finite node set
->    reused by **blocking and borrowing witnesses** — has been **refuted** by
->    exact finite countermodels across two rounds of cold attack. §§248–265 of
+>    reused by **blocking and borrowing witnesses** — was **refuted** by exact
+>    finite countermodels across two rounds of cold attack. §§248–265 of
 >    `ASSEMBLY_DESIGN.md` are retired: the theorems are true, the architecture
->    is not viable.
-> 4. Work has **pivoted** to a *ConeScheme*: a finite control graph plus a
->    fresh-occurrence unfolding, in which no node is ever reused. Plan and
->    obligations in `papers/cone_scheme_plan/`; navigation in
->    `ASSEMBLY_DESIGN.md` §267.
+>    is not viable. The per-quadrant instances (`decidableSat_hfrag`,
+>    `decidableSat_vtower`, …) and `rr_covers` are likewise still proved, but are
+>    **not** what certifies the theorem.
+> 4. `kq_all` is **discharged** (`fused_kq_all`), and the same result repairs a
+>    genuine gap in the two-tier paper's proof (`ASSEMBLY_DESIGN.md` §269).
+> 5. **Three independent cold reviews** (2026-08-29) attacked the trusted base,
+>    completeness and soundness; none found a counterexample or a defect in the
+>    fragment result. The remaining caveat is complexity, not correctness:
+>    decidable, **not runnable**. Full-logic decidability (F6) stays open.
 >
 > **For the current state, read `ASSEMBLY_DESIGN.md` §§266–269** and the head
 > status paragraph of `CLAUDE.md`, not this file.

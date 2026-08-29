@@ -848,7 +848,7 @@ certification pass itself.
   cold attack had refuted the previous certification architecture; Lean
   development: Claude). A genuinely \emph{third} shape, and the reason the
   fragment is now machine-certified end to end. The move is to stop reusing
-  nodes: a finite \code{ConeScheme} serves only as a \emph{control graph} of
+  nodes: a finite \emph{cone scheme} serves only as a \emph{control graph} of
   signatures (a support type together with an upper bound on the types of
   its strict $\PP$-predecessors); a monotone, reductive elimination runs to
   a greatest fixed point; and every non-$\EQ$ existential unfolds to a
@@ -992,9 +992,12 @@ $K(C_0)$\\
 \end{tabular}
 \end{center}
 
-Remaining for full certification --- the campaign is underway: rounds
-A--D1 (2026-07-22/23) landed the entire \textbf{soundness side plus
-the decision architecture}: a valid two-tier certificate, with any
+\textbf{How far the first route's own certification campaign got.} This
+paragraph is a record of what \emph{that} route certified, not a statement of
+what remains: the theorem was carried by a different route in August 2026
+(ledger \S\ref{sec:ledger}, item~5), and none of the machinery named here is
+used by it. Rounds A--D1 (2026-07-22/23) landed the entire \textbf{soundness
+side plus the decision architecture}: a valid two-tier certificate, with any
 family of ascending or descending kernels, presented as \textbf{pure
 first-order list data}, is accepted by a computable oracle-free
 Boolean checker \textbf{exactly when valid} (\code{mtOkB\_iff}),

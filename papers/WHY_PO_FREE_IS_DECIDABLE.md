@@ -35,25 +35,48 @@ two-tier quotient (chain-and-phase) and the ordered-disjoint normal form
 keystone F6 ("bound the live width") is a *theorem* rather than a conjecture,
 and its boundary is one constructor wide. The PDF develops all of this.
 
-## Current status (2026-08-06)
+## Current status (2026-08-29)
 
-Certified decidable across **three of its four quadrants** (horizontal
-∃DR/PO/EQ, ascending-vertical ∃PP, descending-vertical ∃PPI) — a genuine
-*computable* `Decidable (Satisfiable C₀)` in Lean 4
-([`formal/POFreeLift.lean`](../formal/POFreeLift.lean), ~13,600 lines, **zero
-sorries**), each non-vacuously witnessed. The fourth quadrant (**mixing**,
-∃PO + ∃PP) has its merged certificate, its encoding, and a complete decision
-certified on a concrete witness; the *general* mixed extraction is the one
-remaining formalization. The keystone is a **constructive** uniformization
-(`rr_covers`) — the vertical "W2′" is a kernel-checked theorem, not an oracle,
-because removing `∀PO` lets the cross-relations coordinate for free. These
-fragment theorems are **unreviewed**, and the *full-logic* decidability (F6)
-stays **open** — it is forced by `∀PO`, which the fragment removes.
+**Certified decidable across all four quadrants**, including the mixing one
+(∃PO + ∃PP) that was open when this note was first written. Three capstones in
+Lean 4 ([`formal/POFreeLift.lean`](../formal/POFreeLift.lean), ~45,400 lines,
+**zero sorries**, axioms `propext`/`Classical.choice`/`Quot.sound`), with
+fragment membership the **only** hypothesis in each:
 
-The precise, per-claim breakdown (Lean-certified vs. machine-checked vs.
-argued) is the PDF's "What is certified…" section, mirrored in
-[`LEAN.md`](../LEAN.md) and
-[`ASSEMBLY_DESIGN.md`](../ASSEMBLY_DESIGN.md) §§24–25.
+- `decidableFSat` — **raw** input, with negation;
+- `decidableSat_cone` — NNF concepts;
+- `decidableSetSat` — under **concrete set** semantics.
+
+Two things the earlier status listed as gaps are closed. Input no longer has to
+be pre-normalised (`nnfP_correct` proves the translation preserves meaning in
+both polarities) — and the polarity flag exposed that the fragment condition on
+*raw* input is **no ∀PO positively and no ∃PO negatively**, since an ∃PO under a
+negation *becomes* a ∀PO. And satisfiability over the abstract composition-table
+semantics is proved **equivalent** to satisfiability over families of non-empty
+sets (`satisfiable_iff_set`), with no fragment hypothesis, so that equivalence
+covers the whole logic.
+
+This was reached by a **third** route, distinct from the two this note argues:
+a finite control graph of signatures, a monotone elimination to a greatest fixed
+point, and a fresh-occurrence unfolding in which no node is ever reused. It does
+not use the `K(C₀)` bound, so the two arguments here remain independent — and
+remain *unformalised*. The earlier per-quadrant route (`rr_covers`,
+`decidableSat_hfrag` and friends) is still in the artifact and still true, but it
+is **not** what certifies the theorem; its general mixed extraction was never
+completed, and cold attack refuted the architecture it needed.
+
+**Three independent cold reviews** (2026-08-29) attacked the trusted base, the
+completeness direction and the soundness direction. None found a counterexample
+or a defect in the fragment result. The one remaining caveat is complexity, not
+correctness: the procedure is **decidable but not runnable** — the signature
+space is doubly exponential.
+
+*Full-logic* decidability (F6) stays **open** — it is forced by `∀PO`, which the
+fragment removes.
+
+The precise, per-claim breakdown (Lean-certified vs. machine-checked vs. argued)
+is the PDF's "What is certified…" section; the step-by-step provenance is
+[`ASSEMBLY_DESIGN.md`](../ASSEMBLY_DESIGN.md) §§267–297.
 
 ## What the PDF covers
 
