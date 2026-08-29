@@ -486,8 +486,8 @@ def part_d(trials=1200, seed=777222):
     po_rate = per.get(PO, (0, 1))
     ok = po_rate[0] == 0
     print(f"    => PO discrimination is {'zero, as predicted' if ok else 'NONZERO -- unexpected'}")
-    print("       so the full-logic UNSAT test is SOUND but blind to forall-PO;")
-    print("       it can only reject via PP/PPI/DR structure and support.")
+    print("       so the PRE-FIX full-logic UNSAT test was SOUND but blind to")
+    print("       forall-PO.  §291 restores the clause; it then reads 1.5%.")
     return True
 
 
@@ -497,7 +497,7 @@ def main():
         "B full-logic completeness": part_b(),
         "C mutation control": part_c(),
         "D non-vacuity": part_d(),
-        "E sound strengthening": part_e(),
+        "E the shipped PO clause is sound": part_e(),
         "F erasure invariance": part_f(),
         "G the Cpo witness": part_g(),
     }
@@ -532,7 +532,8 @@ def main():
 
 
 def compat_po(r, D, q, qp, mut=None):
-    """compatB plus the forall-PO propagation it drops."""
+    """The SHIPPED compatB (post-§291).  `compat` above is the PRE-FIX version,
+    kept so parts D-G can measure what the missing clause cost."""
     if not _compat_base(r, D, q, qp, mut):
         return False
     if r == PO:
@@ -547,7 +548,7 @@ def part_e(trials=1500, seed=555111):
     valid at every model edge.  Under Part C's printed label that reads as "test
     is weak"; it is in fact the signature of a missing constraint.
     """
-    print("\nPART E -- the missing control: a SOUND strengthening  [predict 0]")
+    print("\nPART E -- the control Part C lacked: a SOUND strengthening  [predict 0]")
     rng = random.Random(seed)
     inst = []
     for _ in range(trials):
@@ -563,8 +564,9 @@ def part_e(trials=1500, seed=555111):
         broke = sum(1 for (c0, m, v) in inst if check_instance(c0, m, v)[0])
     finally:
         compat = saved
-    print(f"    strengthen PO forall-propagation : {broke:5d} / {len(inst)}"
-          f"   {'SOUND -- a missing constraint' if broke == 0 else 'over-strong'}")
+    print(f"    add PO forall-propagation to the PRE-FIX base : {broke:5d} /"
+          f" {len(inst)}"
+          f"   {'SOUND -- now shipped (§291)' if broke == 0 else 'over-strong'}")
     print("    contrast: Part C's four invalid strengthenings break 49-68%.")
     return broke == 0
 
@@ -674,13 +676,14 @@ def part_f(trials=1200, seed=31415926):
                 same2 += 1
     print(f"    forall-PO-containing concepts run through the real fixpoint: {n}"
           f"   (skipped {skipped} as too large)")
-    print(f"    SHIPPED     verdict(C0) == verdict(erase C0) : {same}/{n}"
+    print(f"    PRE-FIX  verdict(C0) == verdict(erase C0) : {same}/{n}"
           f"  ({100*same/max(n,1):.1f}%)   differing: {diff}")
-    print(f"    STRENGTHENED verdict(C0) == verdict(erase C0): {same2}/{n2}"
+    print(f"    SHIPPED  verdict(C0) == verdict(erase C0) : {same2}/{n2}"
           f"  ({100*same2/max(n2,1):.1f}%)")
-    print("    => the SHIPPED test adds no refutation power over running the")
-    print("       fragment procedure on the forall-PO erasure.")
-    print("    => the STRENGTHENED test is invariant on THIS SAMPLE TOO.  Its gain")
+    print("    => the PRE-FIX test added no refutation power over running the")
+    print("       fragment procedure on the forall-PO erasure.  That is why the")
+    print("       full-logic bonus theorem was withdrawn, then repaired.")
+    print("    => the SHIPPED test is invariant on THIS SAMPLE TOO.  Its gain")
     print("       is real but is not visible here: it shows on the constructed")
     print("       witness (Part G, and cpo_refuted_at_one in the Lean), not on")
     print("       random concepts of this size.  Do not read 100% as 'no gain'.")
@@ -694,10 +697,10 @@ def part_g():
     ship = accepts(cpo, compat)
     strong = accepts(cpo, compat_po)
     print(f"    Cpo is UNSAT (its exists-PO witness is its own forall-PO victim)")
-    print(f"    shipped pruneSig      accepts Cpo : {ship}"
-          f"   {'<-- silent on an UNSAT concept' if ship else ''}")
-    print(f"    strengthened pruneSig accepts Cpo : {strong}"
-          f"   {'<-- refuted' if not strong else ''}")
+    print(f"    PRE-FIX pruneSig accepts Cpo : {ship}"
+          f"   {'<-- was silent on an UNSAT concept' if ship else ''}")
+    print(f"    SHIPPED pruneSig accepts Cpo : {strong}"
+          f"   {'<-- refuted; cf. cpo_refuted_at_one in the Lean' if not strong else ''}")
     return ship is True and strong is False
 
 
