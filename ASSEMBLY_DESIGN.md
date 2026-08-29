@@ -16703,3 +16703,52 @@ certification claims.
 
 Build: 44,375 lines, 2,299 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §§287–288 — the 2026-08-29 audit: two real findings, and a caveat on its weight
+
+**Weight first.** The audit reports no counterexample. Two things bound how much
+that is worth:
+
+* **It had no Lean executable.** By its own summary, "the claimed Lean 4.32.0
+  build and axiom footprint were not independently reproduced". The verdict is a
+  READING of the source, not a rebuild.
+* **The session was not cold.** Michael reports that GPT 5.6 Max Sol sessions
+  share context automatically, so the reviewer was anchored on our framing.
+
+A shared-context reading that finds a defect is still worth everything; one that
+finds none is weak evidence. This one found no counterexample and two real gaps,
+so it should be read as the latter plus the former.
+
+**FINDING 1 (accepted, and it generalises the result).** `coneScheme_complete`
+takes NO `POFree` hypothesis — verified. Its proof needs only that a model's own
+signatures are admissible and survive their own elimination, and neither fact
+mentions `∀PO`. So the completeness direction holds for ARBITRARY concepts, and
+an empty survivor set is a certified proof of unsatisfiability **for the full
+logic** (`coneScheme_unsat_full`, §287). The converse fails without `POFree`
+(§284's truth lemma is where the fragment is used), so it is a one-sided test,
+not a decision procedure. It is worth having anyway: full `ALCI_RCC5`
+decidability is open, the project's Π⁰₁ observation says UNSAT is r.e., and this
+is a concrete kernel-checked refutation certificate for it. **We had not noticed
+this.**
+
+**FINDING 2 (accepted, and it is a scope limit on the headline).** `Concept` has
+no negation constructor, so `decidableSat_cone` decides concepts **already in
+NNF**. A raw-input procedure additionally needs `nnf` and
+`Satisfiable (nnf C) ↔ Satisfiable C` — the plan's O01, which is NOT proved here.
+Standard for `ALCI` and stated in the project's papers, but absent from the
+artifact. Recorded as §288 IN THE SOURCE, so it travels with the theorem rather
+than living in a commit message.
+
+**Also accepted:** no capstone `#print axioms` was in the file (they were run in
+scratch copies). Now added at the end of the artifact — `decidableSat_cone`,
+`coneScheme_correct_at`, `coneScheme_sound`, `coneScheme_complete`, `unf_truth`,
+`unfInterp_rcc5`, `pruneSig_mono`, `coneScheme_unsat_full`. `pruneSig_mono` is
+propext + `Quot.sound`; the rest carry `Classical.choice` through erased proofs.
+
+**Outstanding from their ledger, not yet done:** a pinned toolchain and clean-build
+transcript, a proved closed signature/complexity bound, a public Boolean core with
+an extracted execution test, and `wp133`'s unsuitability as a green release gate
+(it exits nonzero by design).
+
+Build: 44,433 lines, 2,301 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

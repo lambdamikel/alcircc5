@@ -44128,6 +44128,52 @@ def decidableSat_cone (C0 : Concept) (hpo : POFree C0) :
     Decidable (Satisfiable C0) :=
   decidable_of_iff _ (coneScheme_correct_at C0 hpo).symm
 
+
+/-! #### §287 — A SOUND UNSAT TEST FOR THE **FULL** LOGIC
+
+Observed by the 2026-08-29 audit, and correct: `coneScheme_complete` takes NO
+`POFree` hypothesis.  Its proof only needs that a model's own signatures are
+admissible and survive their own elimination, and neither fact mentions `∀PO`.
+
+So the completeness direction generalises beyond the fragment: for an ARBITRARY
+concept, an empty survivor set is a certified proof of unsatisfiability.  The
+converse of course fails without `POFree` — §284's truth lemma is where the
+fragment is used — so this is a one-sided test, not a decision procedure.
+
+This is worth recording precisely because full `ALCI_RCC5` decidability is open:
+the project's Π⁰₁ observation says UNSAT is r.e., and this is a concrete,
+kernel-checked refutation certificate for it. -/
+
+/-- **§287.1 — NO SURVIVOR ⟹ UNSATISFIABLE, FOR ANY CONCEPT.** -/
+theorem coneScheme_unsat_full (C0 : Concept) (n : Nat)
+    (h : ∀ q ∈ gfpIter pruneSig (sigStatic C0) n, C0 ∉ q.1) :
+    ¬ Satisfiable C0 := by
+  rintro ⟨α, I, hI, x, hx, hsat⟩
+  obtain ⟨q, hq, hC0⟩ := coneScheme_complete hI C0 hx hsat n
+  exact h q hq hC0
+
+/-- The same at the named round, so the test is executable. -/
+theorem coneScheme_unsat_full_at (C0 : Concept)
+    (h : ∀ q ∈ gfpIter pruneSig (sigStatic C0) (sigStatic C0).length,
+      C0 ∉ q.1) : ¬ Satisfiable C0 :=
+  coneScheme_unsat_full C0 _ h
+
+/-! #### §288 — SCOPE: THE INPUT IS ALREADY IN NNF
+
+`Concept` has no negation constructor — the constructors are `top`, `bot`,
+`atom`, `natom`, `and`, `or`, `ex`, `all` — so `Satisfiable C₀` and
+`decidableSat_cone` are statements about concepts ALREADY IN NEGATION NORMAL
+FORM.
+
+Deciding a RAW `ALCI_RCC5` concept additionally needs a normalisation function
+and the preservation theorem `Satisfiable (nnf C) ↔ Satisfiable C`.  That is the
+certification plan's obligation O01 (`prepared_nnf_po_free`) and it is NOT
+proved here.  The step is standard for `ALCI` and the project's papers state it,
+but it is not in this artifact, and the claim should be read accordingly.
+
+Flagged by the 2026-08-29 audit; recorded here rather than in a commit message so
+that it travels with the theorem. -/
+
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le
 #print axioms POFreeLift.mixedPath_len_le
@@ -44373,3 +44419,12 @@ end POFreeLift
 #print axioms POFreeLift.appendNew_nodup
 #print axioms POFreeLift.stage_len_of_contained
 #print axioms POFreeLift.kernel_of_no_terminal
+
+#print axioms POFreeLift.decidableSat_cone
+#print axioms POFreeLift.coneScheme_correct_at
+#print axioms POFreeLift.coneScheme_sound
+#print axioms POFreeLift.coneScheme_complete
+#print axioms POFreeLift.unf_truth
+#print axioms POFreeLift.unfInterp_rcc5
+#print axioms POFreeLift.pruneSig_mono
+#print axioms POFreeLift.coneScheme_unsat_full
