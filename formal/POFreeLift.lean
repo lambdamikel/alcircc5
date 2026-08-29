@@ -42825,25 +42825,65 @@ theorem gLt_unfLt {X : List Sig} {q0 : Sig} {u v : GOcc X q0}
   | base hs => exact tcl.base (gstep_ostep hs)
   | tail _ hs ih => exact tcl.tail ih (gstep_ostep hs)
 
+/-- A `DR` birth between generated occurrences. -/
+inductive gDrBirth {X : List Sig} {q0 : Sig} : GOcc X q0 → GOcc X q0 → Prop
+  | mk (i : Nat) (w : GOcc X q0) (h : Gen X q0 ((dr, i) :: w.val)) :
+      gDrBirth w ⟨(dr, i) :: w.val, h⟩
+
+theorem gDrBirth_drBirth {X : List Sig} {q0 : Sig} {u v : GOcc X q0}
+    (h : gDrBirth u v) : drBirth u.val v.val := by
+  induction h with
+  | mk i w h => exact drBirth.mk i w.val
+
+def gLe {X : List Sig} {q0 : Sig} (u v : GOcc X q0) : Prop := u = v ∨ gLt u v
+
+theorem gLe_unfLe {X : List Sig} {q0 : Sig} {u v : GOcc X q0} (h : gLe u v) :
+    unfLe u.val v.val := by
+  rcases h with rfl | h
+  · exact Or.inl rfl
+  · exact Or.inr (gLt_unfLt h)
+
+/-- **§281.0 — DISJOINTNESS ON THE CARRIER.**  The symmetric downward closure of
+    `DR` births, with every `≤` chain inside the generated occurrences — the same
+    correction §281 made to the order, on the other relation. -/
+def gDisj {X : List Sig} {q0 : Sig} (u v : GOcc X q0) : Prop :=
+  ∃ a b : GOcc X q0, (gDrBirth a b ∨ gDrBirth b a) ∧ gLe u a ∧ gLe v b
+
+theorem gDisj_unfDisj {X : List Sig} {q0 : Sig} {u v : GOcc X q0}
+    (h : gDisj u v) : unfDisj u.val v.val := by
+  obtain ⟨a, b, hs, hu, hv⟩ := h
+  refine ⟨a.val, b.val, ?_, gLe_unfLe hu, gLe_unfLe hv⟩
+  rcases hs with hs | hs
+  · exact Or.inl (gDrBirth_drBirth hs)
+  · exact Or.inr (gDrBirth_drBirth hs)
+
 /-- **§281.1 — THE CARRIER'S FRAME.**  Every axiom is the `Occ`-level one read
     through `Subtype.val`; irreflexivity comes from the height, as before. -/
 def gOD (X : List Sig) (q0 : Sig) : ODStruct (GOcc X q0) where
   lt := gLt
-  disj := fun u v => unfDisj u.val v.val
+  disj := gDisj
   ltIrr := fun u h => unfLt_irrefl u.val (gLt_unfLt h)
   ltTr := fun _ _ _ h1 h2 => tcl_trans gstep h1 h2
-  djSym := fun _ _ h => unfDisj_sym h
-  djIrr := fun u h => unfDisj_irr u.val h
-  ltNotDj := fun _ _ h => unfLt_not_disj (gLt_unfLt h)
+  djSym := by
+    intro u v h
+    obtain ⟨a, b, hs, hu, hv⟩ := h
+    exact ⟨b, a, hs.symm, hv, hu⟩
+  djIrr := fun u h => unfDisj_irr u.val (gDisj_unfDisj h)
+  ltNotDj := fun _ _ h hd => unfLt_not_disj (gLt_unfLt h) (gDisj_unfDisj hd)
   djDown := by
     intro x y x' y' h hx hy
-    refine unfDisj_down h ?_ ?_
+    obtain ⟨a, b, hs, hxa, hyb⟩ := h
+    refine ⟨a, b, hs, ?_, ?_⟩
     · rcases hx with rfl | hx
-      · exact Or.inl rfl
-      · exact Or.inr (gLt_unfLt hx)
+      · exact hxa
+      · rcases hxa with rfl | hxa
+        · exact Or.inr hx
+        · exact Or.inr (tcl_trans gstep hx hxa)
     · rcases hy with rfl | hy
-      · exact Or.inl rfl
-      · exact Or.inr (gLt_unfLt hy)
+      · exact hyb
+      · rcases hyb with rfl | hyb
+        · exact Or.inr hy
+        · exact Or.inr (tcl_trans gstep hy hyb)
 
 theorem coneInto_gstep {X : List Sig} {q0 : Sig} {u v : GOcc X q0}
     (h : gstep u v) : coneInto X q0 u.val v.val :=
@@ -42887,6 +42927,54 @@ theorem allEQ_local {X : List Sig} {q0 : Sig} (hq0 : q0 ∈ X)
     rw [sigOkB, Bool.and_eq_true, Bool.and_eq_true] at this
     exact this.1.1
   exact (supportB_sound hs).2.2.2.2.1 E hE
+/-- The `DR` transition's content: across the two cones, each side's `∀DR`
+    bodies land in the other. -/
+theorem compatB_dr_cross {D : Concept} {q q' : Sig}
+    (h : compatB dr D q q' = true) :
+    ∀ U ∈ sigCone q, ∀ V ∈ sigCone q',
+      (∀ E, Concept.all dr E ∈ U → E ∈ V) ∧
+      (∀ E, Concept.all dr E ∈ V → E ∈ U) := by
+  rw [compatB.eq_def, Bool.and_eq_true] at h
+  intro U hU V hV
+  have h1 := List.all_eq_true.mp (List.all_eq_true.mp h.2 U hU) V hV
+  rw [Bool.and_eq_true] at h1
+  exact ⟨fun E hE => subB_iff.mp h1.1 E (mem_allBodies_of hE),
+         fun E hE => subB_iff.mp h1.2 E (mem_allBodies_of hE)⟩
+
+/-- A generated occurrence's type lies in the cone of anything above it. -/
+theorem gLe_cone {X : List Sig} {q0 : Sig} {u a : GOcc X q0} (h : gLe u a) :
+    (osig X q0 u.val).1 ∈ sigCone (osig X q0 a.val) := by
+  rcases h with rfl | h
+  · exact List.mem_cons_self
+  · exact List.mem_cons_of_mem _ (coneInto_gLt h _ List.mem_cons_self)
+
+/-- The transition sitting at a `DR` birth. -/
+theorem gDrBirth_compat {X : List Sig} {q0 : Sig} {a b : GOcc X q0}
+    (h : gDrBirth a b) :
+    ∃ D, compatB dr D (osig X q0 a.val) (osig X q0 b.val) = true := by
+  induction h with
+  | mk i w hgen =>
+      obtain ⟨_, D, q', hd, hp⟩ := gen_inv hgen
+      exact ⟨D, (gen_step_compat hd hp).1⟩
+
+/-- **§283 — `∀DR` REACHES EVERYTHING DISJOINT FROM ITS HOLDER.**  The last of
+    G3's `∀` cases, and it needs both halves of the `DR` transition, because the
+    seed may be oriented either way.
+
+    The shape is the same as the vertical cases: `coneInto` puts each endpoint's
+    type into the cone of the birth it descends from, and the transition
+    condition crosses the two cones. Disjointness's downward closure is what
+    makes "descends from" the right notion, and it is `gLe` — inside the carrier,
+    per §281. -/
+theorem allDR_gDisj {X : List Sig} {q0 : Sig} {u v : GOcc X q0}
+    (h : gDisj u v) {E : Concept}
+    (hE : Concept.all dr E ∈ olab X q0 u.val) : E ∈ olab X q0 v.val := by
+  obtain ⟨a, b, hs, hu, hv⟩ := h
+  rcases hs with hab | hba
+  · obtain ⟨D, hc⟩ := gDrBirth_compat hab
+    exact (compatB_dr_cross hc _ (gLe_cone hu) _ (gLe_cone hv)).1 E hE
+  · obtain ⟨D, hc⟩ := gDrBirth_compat hba
+    exact (compatB_dr_cross hc _ (gLe_cone hv) _ (gLe_cone hu)).2 E hE
 
 /-! #### §282 — G3: `∃`-FULFILMENT
 
@@ -42930,7 +43018,8 @@ theorem gchild_dr_edge {X : List Sig} {q0 : Sig} (u : GOcc X q0) {i : Nat}
     (hd : (sigDemands (osig X q0 u.val))[i]? = some (dr, D))
     (hp : pickTarget X (osig X q0 u.val) dr D = some q') :
     (gOD X q0).disj u (gchild u hd hp) :=
-  ⟨u.val, (dr, i) :: u.val, Or.inl (drBirth.mk i u.val), Or.inl rfl, Or.inl rfl⟩
+  ⟨u, gchild u hd hp, Or.inl (gDrBirth.mk i u (Gen.step u.property hd hp)),
+   Or.inl rfl, Or.inl rfl⟩
 
 /-- **§282.2 — AND A `PO` DEMAND IS SERVED BY A RESIDUAL EDGE.**  Neither order
     nor disjointness relates the two, so `odNet` returns `PO` — O11 read on the
@@ -42944,7 +43033,7 @@ theorem gchild_po_edge {X : List Sig} {q0 : Sig} (u : GOcc X q0) {i : Nat}
     ¬ (gOD X q0).disj u (gchild u hd hp) :=
   ⟨fun h => (unf_po_not_lt i u.val).1 (gLt_unfLt h),
    fun h => (unf_po_not_lt i u.val).2 (gLt_unfLt h),
-   fun h => unf_po_not_disj i u.val h⟩
+   fun h => unf_po_not_disj i u.val (gDisj_unfDisj h)⟩
 
 /-- **§282.3 — `∃`-FULFILMENT, ASSEMBLED.**  Every non-`EQ` demand of a generated
     occurrence is discharged by a child occurrence that carries the body and sits

@@ -16554,3 +16554,34 @@ so this is the §281 refactor again, on the other relation.
 
 Build: 44,015 lines, 2,274 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §283 — `∀DR`, and G3's propagation obligations are complete
+
+Disjointness is now stated on the carrier (`gDisj`: the symmetric downward
+closure of `DR` births between GENERATED occurrences, with `gLe` chains inside
+the carrier) — the same correction §281 made to the order, applied to the other
+relation. `gOD` takes it, and every frame axiom still goes through: `djIrr` and
+`ltNotDj` route through `gDisj_unfDisj` to §276's vertical-base argument.
+
+`allDR_gDisj` then completes G3's `∀` cases. It needs BOTH halves of the `DR`
+transition, because the seed may be oriented either way, and the shape is
+identical to the vertical cases: `coneInto` puts each endpoint's type into the
+cone of the birth it descends from, and the transition condition crosses the two
+cones. Disjointness's downward closure is exactly what makes "descends from" the
+right notion.
+
+**All four `∀` obligations and `∃`-fulfilment are now discharged**: `allPP_gLt`,
+`allPPI_gLt`, `allDR_gDisj`, `allEQ_local`, `gchild_serves`. What remains of G3
+is the truth lemma itself — assembling these into "every concept in an
+occurrence's label is satisfied at that occurrence in the unfolded model", by
+induction on the concept, which is the `Hintikka`/`truth_lemma` pattern the file
+already carries for the old architecture.
+
+**A pattern worth naming, now that all five are in.** Every one of them has the
+same two-line shape: a transition condition supplies a cone containment, and
+local admissibility converts it into a membership. Nothing needed a model, a
+budget, a blocking discipline, or a declared edge. The obligations that cost this
+campaign four refuted disciplines were artefacts of reusing nodes.
+
+Build: 44,133 lines, 2,285 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
