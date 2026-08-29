@@ -64,7 +64,7 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-08-28): the ∀PO-free fragment rests on two independent proof routes (a gap found in one, and repaired; the other untouched); its Lean certification is three quadrants of four; the full logic stays open
+## Status (2026-08-29): the ∀PO-free fragment now has a machine-checked decision procedure with no unproved premise — cold-reviewed once, with scope limits; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
 repair rounds and 17 adversarial reviews the *full-logic* certificate
@@ -89,12 +89,51 @@ below separates them:
   genuinely different shape reached independently. Both are complete arguments
   with decision procedures, and both are **independent of the Lean certificate
   route**.
-- **The Lean certification** of that theorem is separate, and is complete for
-  three of four quadrants.
+- **The Lean certification** is separate, and is now complete for **all four
+  quadrants** by a third route — the ConeScheme decision procedure of the
+  2026-08-29 box below, which supersedes the earlier certificate architecture.
 
 The full-logic question and the fragment results are independent: F6 is forced
 by `∀PO`, which the fragment removes.
 
+> **★ Update (2026-08-29): a decision procedure for the whole fragment, in Lean.**
+>
+> ```lean
+> def decidableSat_cone (C0 : Concept) (hpo : POFree C0) : Decidable (Satisfiable C0)
+> ```
+>
+> `POFree C0` is the **only** hypothesis — no unproved premise, no oracle. The
+> route replaces the previous certificate architecture entirely: a finite control
+> graph of *signatures*, a monotone elimination to a greatest fixed point, and a
+> **fresh-occurrence unfolding** in which no node is ever reused. It covers all
+> four quadrants, **including the mixed one** (`∃PO` and `∃PP` together), which
+> had been open and which two rounds of cold attack had been aimed at.
+>
+> A bonus, found by review: the *completeness* direction needs no `POFree` at
+> all, so an empty survivor set certifies unsatisfiability for the **full logic**
+> (`coneScheme_unsat_full`) — one-sided, but full-language.
+>
+> **Cold review (2026-08-29).** An independent reviewer built the artifact on two
+> Lean versions, re-derived the RCC5 composition table from set semantics at three
+> domain sizes (exact match), ran 4,000 random concepts against exhaustive
+> finite-model search, wrote independent hand proofs, and evaluated the procedure
+> at the kernel. **No counterexample.** It found one documentation defect (two
+> comments had the fragment hypothesis on the wrong side — fixed) and two
+> mis-stated scope limits (below).
+>
+> **Scope, stated plainly.**
+> - The input must already be in **negation normal form**; `Concept` has no
+>   negation constructor and no `nnf`-preservation theorem is proved here.
+> - The procedure is **not runnable**. `|typeEnum C₀| = 2^|cl C₀|` and
+>   `|sigStatic C₀| = 2^n·2^(2^n)`; measured, it works at `|cl C₀| ≤ 2` and cannot
+>   be started at `≥ 3`. It cannot be evaluated on any concept this project's
+>   papers discuss. *Decidable* and *runnable* are different claims.
+> - The semantics is the abstract composition-table one. (The review notes this
+>   gap is closable from material already in the repo, and unwired.)
+>
+> **Honest label: machine-checked and cold-reviewed once; NOT certified.** The
+> ledger below records a defect or overclaim in all but two of eighteen reviews.
+>
 > **★ Update (2026-08-28): a gap found in the fragment's proof — and repaired;
 > one certification architecture refuted; a pivot.**
 >

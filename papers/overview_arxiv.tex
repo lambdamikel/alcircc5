@@ -405,10 +405,15 @@ mixed-case decision on a witness & kernel-checked theorem names with a stated
 axiom footprint\\
 \addlinespace
 \emph{Theorem-level} (not end-to-end certified) & the $\forall\PO$-free
-fragment's specific $K(C_0)$ closed-form bound and its \emph{general}
-mixed-quadrant extraction; the identity-selector characterization; the
-W2$'$ refinement; the local extension / cross-policy results & a proof in a
-named work package, often with finite probes\\
+fragment's specific $K(C_0)$ closed-form bound; the identity-selector
+characterization; the W2$'$ refinement; the local extension / cross-policy
+results & a proof in a named work package, often with finite probes\\
+\addlinespace
+\emph{Lean-certified (2026-08-29), cold-reviewed once} & a decision procedure
+for the \emph{whole} $\forall\PO$-free fragment, mixed quadrant included
+(\code{decidableSat\_cone}), with $\code{POFree}$ its only hypothesis; and a
+one-sided \textsc{unsat} test for the \emph{full} logic
+(\code{coneScheme\_unsat\_full}) & see Remark~\ref{rem:conescheme}\\
 \addlinespace
 \emph{Empirical} & the cover-tree tableau; the cross-validation suites; the
 finite model verifier & test evidence only; not a decision theorem\\
@@ -1614,6 +1619,36 @@ are certified \emph{generally}, each with a non-vacuous satisfiable witness
 \emph{mixed} quadrant's certificate, encoding, and decision are certified on a
 witness, with the \emph{general} mixed extraction the one remaining
 formalization.
+
+\begin{remark}[The mixed quadrant, certified by a third route
+(2026-08-29)]\label{rem:conescheme}
+The general mixed extraction described below was never completed: two rounds of
+cold attack refuted the architecture it needed (a finite node set reused by
+blocking and \emph{borrowing} witnesses), by exact finite countermodels. It was
+replaced. The route now certified is a \emph{cone scheme}: a finite control
+graph whose states are pairs (support type, upper bound on the types of strict
+$\PP$-predecessors); a monotone, reductive elimination to a greatest fixed
+point; and a \emph{fresh-occurrence} unfolding in which no element is ever
+reused, so that the frame conditions which defeated the previous architecture
+hold structurally rather than by construction. The capstone is
+\[
+  \code{decidableSat\_cone} : \code{POFree}\ C_0 \to \code{Decidable}
+  (\code{Satisfiable}\ C_0),
+\]
+with \code{POFree} the only hypothesis, covering all four quadrants. Its
+completeness half needs no fragment hypothesis at all, which yields a sound
+\textsc{unsat} test for the \emph{full} logic.
+
+Scope, and it matters: the input must already be in negation normal form; the
+semantics is the abstract composition-table one; and the procedure is
+\emph{decidable but not runnable} --- the signature space is doubly
+exponential, and it cannot be evaluated on any concept discussed in this paper.
+A cold review (2026-08-29) built the artifact, re-derived the composition table
+independently, cross-checked $4{,}000$ random concepts against exhaustive
+finite-model search, and found no counterexample; it also found one inverted
+comment and two understated scope limits, all since corrected. The honest label
+is \emph{machine-checked and cold-reviewed once, not certified}.
+\end{remark}
 
 \emph{Correction (2026-08-28).} An earlier version of this sentence called that
 extraction ``scoped, not open''. That was an overclaim and is withdrawn: two
