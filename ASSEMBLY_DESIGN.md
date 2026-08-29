@@ -16662,3 +16662,44 @@ project has carried throughout, and this result does not change it.
 
 Build: 44,297 lines, 2,295 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §286 — THE DECISION PROCEDURE
+
+`decidableSat_cone (C0 : Concept) (hpo : POFree C0) : Decidable (Satisfiable C0)`.
+
+`coneScheme_correct` quantified the round existentially, so extracting it would
+have needed choice and produced a NONCOMPUTABLE decision. The fix is to name the
+round: `gfpIter_mem_stable` shows membership never changes past a stall, and
+`gfpIter_bound_fixed` shows iterating exactly `|sigStatic C₀|` times therefore
+always lands on the fixed point. `coneScheme_correct_at` restates correctness
+there, and the instance follows by `decidable_of_iff`.
+
+It is a plain `def`, not `noncomputable`: build the static signature set, iterate
+the elimination `|sigStatic C₀|` times, answer SAT exactly when a survivor
+carries `C₀` — a `List` fold over decidable tests. `Classical.choice` appears in
+the axiom footprint through the CORRECTNESS proof only, which is erased; the
+algorithm itself makes no appeal to a model or an oracle.
+
+**The contrast with the retired route is the whole story.** The old instance was
+
+  `decidableSat_pofree (C0) (h : MixedCompleteness C0) : Decidable (Satisfiable C0)`
+
+— conditional on an unproved premise, whose intended proof was the extraction
+that two cold attacks refuted. The new one takes only `POFree C0`. **The premise
+is gone, not discharged: the architecture that needed it was replaced.**
+
+**Gate scoreboard: G0–G4 complete.** What is NOT done, and should not be
+overlooked: O13 (token representation, optional in the plan), the packaging of
+`sigStatic` bounds into an explicit `K(C₀)`, and — most importantly — any
+independent scrutiny at all.
+
+**This result should now be attacked, not built on.** It arrived in one working
+session after a period in which four disciplines were refuted and a
+four-times-reviewed paper was found to have a gap. The campaign's ledger says a
+defect or overclaim has appeared in all but two of seventeen reviews. The next
+action is a cold packet containing the Lean source itself — which the round-2
+attackers explicitly noted was missing and prevented them from checking our
+certification claims.
+
+Build: 44,375 lines, 2,299 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.

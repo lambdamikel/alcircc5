@@ -44052,6 +44052,82 @@ theorem coneScheme_correct (C0 : Concept) (hpo : POFree C0) :
       exact hstab p hp
     exact coneScheme_sound hsub hfix hpo hq hC0
 
+
+/-! #### §286 — THE DECISION PROCEDURE
+
+`coneScheme_correct` quantifies the round existentially, so extracting it needs
+choice and would give a NONCOMPUTABLE decision.  The fix is to name the round:
+the stall happens within `|sigStatic C₀|` rounds, so iterating exactly that many
+times always lands on the fixed point. -/
+
+/-- Past a stall, membership never changes again. -/
+theorem gfpIter_mem_stable {S : List Sig} {N : Nat}
+    (hstall : ∀ q ∈ gfpIter pruneSig S N, q ∈ gfpIter pruneSig S (N + 1)) :
+    ∀ k q, (q ∈ gfpIter pruneSig S (N + k) ↔ q ∈ gfpIter pruneSig S N) := by
+  intro k
+  induction k with
+  | zero => intro q; exact Iff.rfl
+  | succ j ih =>
+      intro q
+      constructor
+      · intro hq
+        have h1 : q ∈ gfpIter pruneSig S (N + j) := by
+          have : N + (j + 1) = (N + j) + 1 := by omega
+          rw [this] at hq
+          exact pruneSig_red _ q hq
+        exact (ih q).mp h1
+      · intro hq
+        have h1 : q ∈ gfpIter pruneSig S (N + j) := (ih q).mpr hq
+        have h2 : q ∈ gfpIter pruneSig S N := hq
+        have h3 : q ∈ gfpIter pruneSig S (N + 1) := hstall q h2
+        have hmono : ∀ p, p ∈ gfpIter pruneSig S N →
+            p ∈ gfpIter pruneSig S (N + j) := fun p hp => (ih p).mpr hp
+        have : N + (j + 1) = (N + j) + 1 := by omega
+        rw [this]
+        show q ∈ pruneSig (gfpIter pruneSig S (N + j))
+        exact pruneSig_mono (gfpIter pruneSig S N) (gfpIter pruneSig S (N + j))
+          hmono q h3
+
+/-- **§286.1 — ITERATING `|sigStatic C₀|` TIMES LANDS ON THE FIXED POINT.** -/
+theorem gfpIter_bound_fixed (C0 : Concept) :
+    ∀ q ∈ gfpIter pruneSig (sigStatic C0) (sigStatic C0).length,
+      q ∈ pruneSig (gfpIter pruneSig (sigStatic C0) (sigStatic C0).length) := by
+  obtain ⟨N, hNB, hstall⟩ := (coneScheme_gfp C0).1
+  intro q hq
+  have hk : (sigStatic C0).length = N + ((sigStatic C0).length - N) := by omega
+  have hmemN : q ∈ gfpIter pruneSig (sigStatic C0) N := by
+    rw [hk] at hq
+    exact (gfpIter_mem_stable hstall _ q).mp hq
+  have hstep : q ∈ gfpIter pruneSig (sigStatic C0) (N + 1) := hstall q hmemN
+  have hmono : ∀ p, p ∈ gfpIter pruneSig (sigStatic C0) N →
+      p ∈ gfpIter pruneSig (sigStatic C0) (sigStatic C0).length := by
+    intro p hp
+    rw [hk]
+    exact (gfpIter_mem_stable hstall _ p).mpr hp
+  exact pruneSig_mono _ _ hmono q hstep
+
+/-- **§286.2 — CORRECTNESS AT THE NAMED ROUND.** -/
+theorem coneScheme_correct_at (C0 : Concept) (hpo : POFree C0) :
+    Satisfiable C0 ↔
+      ∃ q ∈ gfpIter pruneSig (sigStatic C0) (sigStatic C0).length, C0 ∈ q.1 := by
+  constructor
+  · rintro ⟨α, I, hI, x, hx, hsat⟩
+    exact coneScheme_complete hI C0 hx hsat _
+  · rintro ⟨q, hq, hC0⟩
+    refine coneScheme_sound ?_ (gfpIter_bound_fixed C0) hpo hq hC0
+    exact gfpIter_antitone pruneSig pruneSig_red (sigStatic C0) 0 _
+      (Nat.zero_le _)
+
+/-- **§286.3 — THE DECISION PROCEDURE.**  `Decidable (Satisfiable C₀)` for every
+    `∀PO`-free `C₀`: build the static signature set, iterate the elimination
+    `|sigStatic C₀|` times, and answer SAT exactly when a survivor carries `C₀`.
+
+    The whole computation is a `List` fold over decidable tests — no choice, no
+    oracle, no appeal to the model. -/
+def decidableSat_cone (C0 : Concept) (hpo : POFree C0) :
+    Decidable (Satisfiable C0) :=
+  decidable_of_iff _ (coneScheme_correct_at C0 hpo).symm
+
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le
 #print axioms POFreeLift.mixedPath_len_le
