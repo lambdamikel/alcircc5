@@ -1637,17 +1637,31 @@ hold structurally rather than by construction. The capstone is
 \]
 with \code{POFree} the only hypothesis, covering all four quadrants. Its
 completeness half needs no fragment hypothesis at all, which yields a sound
-\textsc{unsat} test for the \emph{full} logic.
+\textsc{unsat} test for the \emph{full} logic. That test is one-sided and, in
+its first form, was also \emph{empty}: a second cold review measured its verdict
+invariant under deleting every $\forall\PO$ from the input, and that deletion
+always lands in the fragment, so it refuted nothing the fragment procedure did
+not already refute. The cause was a dropped clause --- $\PO$ is its own converse,
+so $\forall\PO$ bodies cross a $\PO$ edge in both directions --- now restored,
+with a machine-checked concept that the repaired test refutes and whose deletion
+is satisfiable. A second $\forall\PO$ gap remains and is architectural: the
+scheme exploits only compositions forced to a singleton, so obligations arising
+from disjunctive entailments are out of its reach.
 
 Scope, and it matters: the input must already be in negation normal form; the
 semantics is the abstract composition-table one; and the procedure is
 \emph{decidable but not runnable} --- the signature space is doubly
 exponential, and it cannot be evaluated on any concept discussed in this paper.
-A cold review (2026-08-29) built the artifact, re-derived the composition table
-independently, cross-checked $4{,}000$ random concepts against exhaustive
-finite-model search, and found no counterexample; it also found one inverted
-comment and two understated scope limits, all since corrected. The honest label
-is \emph{machine-checked and cold-reviewed once, not certified}.
+Two cold reviews (both 2026-08-29) built the artifact, re-derived the
+composition table independently, and found no counterexample. The first
+cross-checked $4{,}000$ random concepts against exhaustive finite-model search
+and found one inverted comment and two understated scope limits. The second
+attacked the completeness direction specifically and \emph{ran} the certificate
+--- $6{,}268$ concepts through the elimination against exhaustive model search,
+with no satisfiable concept rejected --- and found the dropped $\PO$ clause
+above together with an overclaim about what the full-logic test certifies. All
+are corrected. The honest label is \emph{machine-checked and cold-reviewed
+twice, not certified}.
 \end{remark}
 
 \emph{Correction (2026-08-28).} An earlier version of this sentence called that

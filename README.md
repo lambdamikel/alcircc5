@@ -64,7 +64,7 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-08-29): the ∀PO-free fragment now has a machine-checked decision procedure with no unproved premise — cold-reviewed once, with scope limits; the full logic stays open
+## Status (2026-08-29): the ∀PO-free fragment now has a machine-checked decision procedure with no unproved premise — cold-reviewed twice, with scope limits; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
 repair rounds and 17 adversarial reviews the *full-logic* certificate
@@ -111,7 +111,8 @@ by `∀PO`, which the fragment removes.
 >
 > A bonus, found by review: the *completeness* direction needs no `POFree` at
 > all, so an empty survivor set certifies unsatisfiability for the **full logic**
-> (`coneScheme_unsat_full`) — one-sided, but full-language.
+> (`coneScheme_unsat_full`) — one-sided, but full-language. **The first version of
+> that bonus was empty**; see the second review below.
 >
 > **Cold review (2026-08-29).** An independent reviewer built the artifact on two
 > Lean versions, re-derived the RCC5 composition table from set semantics at three
@@ -131,8 +132,34 @@ by `∀PO`, which the fragment removes.
 > - The semantics is the abstract composition-table one. (The review notes this
 >   gap is closable from material already in the repo, and unwired.)
 >
-> **Honest label: machine-checked and cold-reviewed once; NOT certified.** The
-> ledger below records a defect or overclaim in all but two of eighteen reviews.
+> **Second cold review (2026-08-29).** A second reviewer attacked the
+> *completeness* half specifically — the direction that had gone through in a
+> single attempt — and **ran the certificate**, which the first could not: 6,268
+> concepts through the real fixpoint against exhaustive model search (**0
+> satisfiable concepts rejected**) and 3,849 model-side obligations over abstract
+> RCC5 frames rather than set models (**0 failures**). Again no counterexample,
+> and one real defect plus one overclaim of ours:
+>
+> - **Defect, fixed.** The transition relation's `PO` case was `true`, dropping a
+>   constraint valid at every model edge — `PO` is its own converse, so `∀PO`
+>   bodies cross a `PO` edge in *both* directions. It is now in the shipped
+>   definition. Nothing else changed: on the `∀PO`-free fragment the new clause is
+>   vacuous, so `decidableSat_cone` is untouched.
+> - **Overclaim, withdrawn.** We had called the full-logic test "a concrete
+>   refutation certificate" for the project's Π⁰₁ observation. A decidable
+>   *sufficient* condition for unsatisfiability is an under-approximation, not a
+>   witness of r.e.-ness — and as shipped the test refuted **nothing** the
+>   fragment procedure did not already refute: its verdict was invariant under
+>   erasing every `∀PO` (3,000/3,000 measured by the reviewer, 106/106 on our
+>   independent rerun), and that erasure is always `∀PO`-free. With the clause
+>   restored, the artifact now contains a kernel-checked concept that the test
+>   refutes and whose erasure is satisfiable.
+> - **A second `∀PO` gap remains, and it is architectural.** Obligations that
+>   arise from *non-singleton* compositions are unreachable by any local clause of
+>   this shape. Not a missing line; a limit of the scheme.
+>
+> **Honest label: machine-checked and cold-reviewed twice; NOT certified.** The
+> ledger below records a defect or overclaim in all but two of nineteen reviews.
 >
 > **★ Update (2026-08-28): a gap found in the fragment's proof — and repaired;
 > one certification architecture refuted; a pivot.**

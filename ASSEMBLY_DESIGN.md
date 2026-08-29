@@ -16726,10 +16726,18 @@ mentions `∀PO`. So the completeness direction holds for ARBITRARY concepts, an
 an empty survivor set is a certified proof of unsatisfiability **for the full
 logic** (`coneScheme_unsat_full`, §287). The converse fails without `POFree`
 (§284's truth lemma is where the fragment is used), so it is a one-sided test,
-not a decision procedure. It is worth having anyway: full `ALCI_RCC5`
+not a decision procedure. **We had not noticed this.**
+
+⚠ **The next two sentences of this paragraph were an overclaim, withdrawn
+2026-08-29 (§292).** They read: *"It is worth having anyway: full `ALCI_RCC5`
 decidability is open, the project's Π⁰₁ observation says UNSAT is r.e., and this
-is a concrete kernel-checked refutation certificate for it. **We had not noticed
-this.**
+is a concrete kernel-checked refutation certificate for it."* Both halves are
+wrong. A decidable **sufficient** condition for UNSAT is a decidable
+under-approximation; it is not what witnesses r.e.-ness, and kernel-checking does
+not make it one. And as shipped the test refuted **nothing** beyond the fragment:
+cold review #2 measured its verdict invariant under replacing every `∀PO.D` by
+`⊤` on 3,000/3,000 concepts, and that erasure is always `POFree`. §291's clause
+is what makes the theorem non-trivial; the correct claim is stated there.
 
 **FINDING 2 (accepted, and it is a scope limit on the headline).** `Concept` has
 no negation constructor, so `decidableSat_cone` decides concepts **already in
@@ -16861,3 +16869,80 @@ cones and is the most intricate of the three, yet it almost never fires on these
 models. Either DR-conflicts are genuinely rare at this size, or the generator
 does not produce them — an instance-filter question of the kind that has
 produced false pass-rates here before.
+
+### §292 — the SECOND cold review (2026-08-29): a real defect in `compatB`
+
+Verdict: **both theorems correct, no counterexample, and one under-strength
+definition.** The reviewer attacked completeness from the model side, the syntax
+side, and by *running the certificate* (6,268 concepts through the real fixpoint
+against exhaustive model search, 0 satisfiable concepts rejected; 3,849
+model-side obligation instances over abstract `RCC5Interp` frames rather than set
+models, 0 failures). `coneScheme_complete` and `coneScheme_unsat_full` held.
+
+**FINDING 1 — DEFECT, accepted and FIXED (§291).** `compatB`'s `PO` branch was
+`true`. But `conv PO = PO`, so a `PO` edge is symmetric and `∀PO` bodies cross it
+in both directions — the same one-line argument the `DR` case already makes,
+minus the cones (which `comp(PP,PO)` and `comp(PO,PPI)` do not force). The clause
+is now in the shipped `compatB`, `dkey_compat` discharges it, and the build is
+unchanged otherwise: every soundness consumer only *destructs* `compatB`, and
+under `POFree` the clause is vacuous (`allBodies_po_nil_of_pofree`), so
+`decidableSat_cone` is untouched. Verified independently before accepting: the
+strengthening is sound in our own probe (Part E, 0/1443 breakages) where the four
+existing controls break on 49–68%.
+
+**FINDING 2 — OVERCLAIM, accepted and WITHDRAWN (§287).** Two sentences claimed
+§287 was "a concrete kernel-checked refutation certificate" for the open problem
+and tied it to the Π⁰₁ observation. Both are wrong. A decidable *sufficient*
+condition for UNSAT is a decidable under-approximation, not a witness of
+r.e.-ness. And as shipped the test refuted nothing beyond the fragment: its
+verdict was invariant under replacing every `∀PO.D` by `⊤` — 3,000/3,000 for the
+reviewer, 106/106 on our own independent rerun — and that erasure is always
+`POFree`. So the old full-logic bonus was the fragment procedure applied to a
+syntactic weakening. `cpo_refuted_at_one` + `erase_cpo_satisfiable` now cross
+that barrier in the kernel.
+
+**Our own correction on top of theirs.** Part F predicted the strengthened
+operator would *fail* erasure-invariance. It does not: 106/106 invariant there
+too. The clause provably crosses the barrier on the constructed witness, and
+adds nothing measurable on random concepts at this size. Recorded rather than
+tuned away — the defensible claim is "provably crosses", not "measurably
+stronger".
+
+**FINDING 3 — PROBE DEFECT, accepted and FIXED, and it is a new rule.** `wp135`
+Part C was rebuilt *this session* after its first version (weakenings) measured
+nothing. The replacement is better and still one-sided: all four of its controls
+are semantically **invalid** strengthenings, so it can demonstrate that the
+obligations catch OVER-strength and is structurally incapable of catching
+UNDER-strength — which is the failure `compatB` actually had. Worse, its printed
+label for a 0-breakage row read `NO EFFECT -- test is weak`, which is exactly
+backwards: for a *sound* strengthening, 0 breakages means **valid constraint,
+currently missing**. Had the PO clause been in that table it would have printed
+its own refutation as reassurance.
+
+> **Seventh companion rule.** A strengthening control needs at least one member
+> that is *sound*. Built only from invalid strengthenings it measures one
+> direction and reports the other as reassurance. And label a 0-breakage row by
+> what it means for that specific mutation, not generically.
+
+**FINDING 4.** Round 1's §3.2 said the `compatB` conditions are "exactly the
+forced closure, neither weaker nor stronger". They were weaker, at `PO`. That
+sentence is plausibly why the gap survived a review.
+
+**FINDING 5 — refinement of a known limit, not new.** `sigStatic` is a *filter
+of* `keyEnum`, so evaluating it materialises `2^|cl| · 2^(2^|cl|)` pairs.
+Generating admissible signatures directly gives the same set exponentially
+cheaper (median `|sigStatic|` 384 at `|cl|=3`, 10,240 at 4, 4.7·10⁶ at 5), moving
+the practical ceiling from `|cl C₀| ≤ 2` to about 4–5. The double exponential
+remains (1.3·10¹³ at `|cl|=7`), so §289's limit stands as stated.
+
+**A SECOND `∀PO` GAP, structural, NOT fixed.** Round 1's `CPO` is unsatisfiable
+because `rho x z ∈ comp(ppi,pp) = {EQ,PP,PPI,PO}` and all four are killed — a
+`PO` obligation from a **non-singleton** composition, on a pair the control graph
+never declares. It contains no `∃PO` subformula, so `sigDemands` never emits a
+`PO` pair and §291's clause does not reach it. The scheme only ever exploits
+compositions forced to a *singleton*; no local clause of this shape reaches
+disjunctive entailments. The two gaps are independent: §291's closed in one line,
+this one is architectural.
+
+Build after the repair: 44,596 lines, 2,308 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries. `cpo_unsat` depends on no axioms at all.

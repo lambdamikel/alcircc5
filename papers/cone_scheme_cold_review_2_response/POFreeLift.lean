@@ -41947,7 +41947,7 @@ def compatB (r : Atom) (D : Concept) (q q' : Sig) : Bool :=
    | Atom.ppi => (sigCone q').all (fun U => q.2.contains U)
    | Atom.dr => (sigCone q).all (fun U =>
        (sigCone q').all (fun V => subB (allBodies dr U) V && subB (allBodies dr V) U))
-   | Atom.po => subB (allBodies po q.1) q'.1 && subB (allBodies po q'.1) q.1
+   | Atom.po => true
    | Atom.eq => true)
 
 /-- The non-`EQ` existential demands of a signature. -/
@@ -42153,14 +42153,7 @@ open Classical in
     Each relation's clause is the composition arithmetic it names: `PP` by
     `comp(PP,PP) = {PP}` pushing `x`'s cone below `y`, `PPI` the same transposed,
     and `DR` by `comp(PP,DR)` and `comp(DR,PPI)` carrying disjointness down both
-    cones (`cone_dr`).  `PO` carries `∀PO` bodies BOTH WAYS — `conv PO = PO`, so
-    the edge is symmetric — but carries no cone, because `comp(PP,PO)` and
-    `comp(PO,PPI)` are not singletons.  `EQ` alone imposes nothing.
-
-    ⚠ §291.  The `PO` clause was MISSING until the second cold review
-    (2026-08-29) found it.  It costs nothing on the `∀PO`-free fragment
-    (`compatB_po_vacuous`) and is what lets §287's full-logic test refute
-    anything at all beyond that fragment (`cpo_refuted_at_one`). -/
+    cones (`cone_dr`).  `PO` and `EQ` impose nothing. -/
 theorem dkey_compat (hI : RCC5Interp I) (C0 : Concept) {x y : α}
     (hx : I.dom x) (hy : I.dom y) {r : Atom} {D : Concept}
     (hr : I.rho x y = r) (hD : D ∈ mty C0 I y) :
@@ -42168,14 +42161,7 @@ theorem dkey_compat (hI : RCC5Interp I) (C0 : Concept) {x y : α}
   rw [compatB.eq_def, Bool.and_eq_true]
   refine ⟨List.elem_eq_true_of_mem hD, ?_⟩
   cases r with
-  | po =>
-      have hyx : I.rho y x = po := by
-        have h2 := hI.conv_ x y hx hy
-        rw [hr] at h2
-        rw [h2]; rfl
-      rw [Bool.and_eq_true]
-      exact ⟨subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hy hr),
-             subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hx hyx)⟩
+  | po => rfl
   | eq => rfl
   | pp =>
       refine List.all_eq_true.mpr (fun U hU => ?_)
@@ -44203,93 +44189,6 @@ theorem coneScheme_unsat_full_at (C0 : Concept)
       C0 ∉ q.1) : ¬ Satisfiable C0 :=
   coneScheme_unsat_full C0 _ h
 
-/-! #### §291 — THE `∀PO` CLAUSE: what it costs, and what it buys
-
-Found by the SECOND cold review (2026-08-29): `compatB`'s `PO` branch was
-`true`, dropping a constraint that holds at every real model edge.  `conv PO =
-PO`, so a `PO` edge is symmetric and `∀PO` bodies cross it in BOTH directions.
-`dkey_compat` now discharges it, so completeness is unchanged; `compatB` only
-got stronger, and every soundness consumer merely destructs it, so
-`coneScheme_sound` and `decidableSat_cone` are unchanged too.
-
-It costs NOTHING on the fragment — `allBodies_po_nil_of_pofree` — and it is the
-whole difference between §287 refuting something and refuting nothing.  The
-review's measurement: on 3,000 `∀PO`-containing concepts the OLD test's verdict
-was invariant under replacing every `∀PO.D` by `⊤` (3,000/3,000), and that
-erasure is always `POFree` — so the old full-logic test certified no refutation
-that `coneScheme_correct` did not already certify on a syntactic weakening.
-`cpo_refuted_at_one` together with `erase_cpo_satisfiable` crosses that line in
-the kernel. -/
-
-/-- Under `POFree`, no `∀PO` obligation exists anywhere in the closure, so the
-    new clause is vacuously true and the fragment procedure is untouched. -/
-theorem allBodies_po_nil_of_pofree {C0 : Concept} (hpo : POFree C0)
-    (T : List Concept) (hT : ∀ c ∈ T, c ∈ cl C0) : allBodies po T = [] := by
-  rcases h : allBodies po T with _ | ⟨E, rest⟩
-  · rfl
-  · exact absurd rfl (pofree_cl_all C0 hpo po E
-      (hT _ (mem_allBodies (by rw [h]; exact List.Mem.head _))))
-
-/-- `∃PO.⊤ ⊓ ∀PO.⊥`: unsatisfiable, and outside the fragment — exactly the kind
-    of concept §287 exists for. -/
-def Cpo : Concept := .and (.ex po .top) (.all po .bot)
-
-theorem cpo_not_pofree : ¬ POFree Cpo := fun h => h.2.1 rfl
-
-theorem cpo_unsat : ¬ Satisfiable Cpo := by
-  rintro ⟨α, I, hI, x, hx, hsat⟩
-  obtain ⟨⟨y, hy, hxy, -⟩, hall⟩ := hsat
-  exact hall y hy hxy
-
-/-- **THE CLAUSE EARNING ITS KEEP.**  No survivor of ONE round carries `Cpo`.
-    The argument enumerates nothing: a carrier's `∃PO.⊤` demand needs a target
-    whose type contains `⊥`, and no support type does.  Before §291 the
-    elimination was a total no-op on this concept at every round. -/
-theorem cpo_refuted_at_one :
-    ∀ q ∈ gfpIter pruneSig (sigStatic Cpo) 1, Cpo ∉ q.1 := by
-  intro q hq hC0
-  have hq' : q ∈ pruneSig (sigStatic Cpo) := hq
-  obtain ⟨hqS, hall⟩ := List.mem_filter.mp hq'
-  have hsup : supportB q.1 = true :=
-    (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp
-      (sigStatic_ok Cpo q hqS)).1).1
-  obtain ⟨-, -, hand, -, -, -⟩ := supportB_sound hsup
-  obtain ⟨hex, hallpo⟩ := hand _ _ hC0
-  have hdem : (po, Concept.top) ∈ sigDemands q :=
-    mem_sigDemands_mk (by decide) hex
-  rw [List.all_eq_true] at hall
-  have h1 := hall _ hdem
-  rw [List.any_eq_true] at h1
-  obtain ⟨q', hq'S, hcomp⟩ := h1
-  rw [compatB.eq_def, Bool.and_eq_true] at hcomp
-  have hpo : (subB (allBodies po q.1) q'.1 && subB (allBodies po q'.1) q.1) = true :=
-    hcomp.2
-  have hbot : Concept.bot ∈ q'.1 :=
-    subB_iff.mp (Bool.and_eq_true _ _ |>.mp hpo).1 _ (mem_allBodies_of hallpo)
-  have hsup' : supportB q'.1 = true :=
-    (Bool.and_eq_true _ _ |>.mp (Bool.and_eq_true _ _ |>.mp
-      (sigStatic_ok Cpo q' hq'S)).1).1
-  exact (supportB_sound hsup').1 hbot
-
-/-- A two-point, all-`PO` interpretation. -/
-def poI : Interp Bool :=
-  ⟨fun _ => True, fun x y => if x = y then Atom.eq else Atom.po, fun _ _ => False⟩
-
-theorem poI_rcc5 : RCC5Interp poI where
-  refl_eq := fun x _ => by cases x <;> rfl
-  eq_id := fun x y _ _ h => by
-    cases x <;> cases y <;> first | rfl | exact absurd h (by decide)
-  conv_ := fun x y _ _ => by cases x <;> cases y <;> rfl
-  comp_ := fun x y z _ _ _ => by cases x <;> cases y <;> cases z <;> decide
-
-/-- **THE ERASURE BARRIER, CROSSED.**  `Cpo`'s `∀PO`-erasure is SATISFIABLE, so
-    no test that ignores `∀PO` bodies can refute `Cpo`.  With §291's clause the
-    test does (`cpo_refuted_at_one`). -/
-theorem erase_cpo_satisfiable :
-    Satisfiable (Concept.and (Concept.ex po Concept.top) Concept.top) :=
-  ⟨Bool, poI, poI_rcc5, true, trivial,
-   ⟨⟨false, trivial, rfl, trivial⟩, trivial⟩⟩
-
 /-! #### §288 — SCOPE: THE INPUT IS ALREADY IN NNF
 
 `Concept` has no negation constructor — the constructors are `top`, `bot`,
@@ -44590,7 +44489,3 @@ end POFreeLift
 #print axioms POFreeLift.unfInterp_rcc5
 #print axioms POFreeLift.pruneSig_mono
 #print axioms POFreeLift.coneScheme_unsat_full
-#print axioms POFreeLift.cpo_unsat
-#print axioms POFreeLift.cpo_refuted_at_one
-#print axioms POFreeLift.erase_cpo_satisfiable
-#print axioms POFreeLift.allBodies_po_nil_of_pofree

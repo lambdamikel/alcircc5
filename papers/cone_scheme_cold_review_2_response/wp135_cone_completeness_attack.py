@@ -44,15 +44,6 @@ expected value in advance, and withhold the treatment if the control misses):
       Expect the measured PO-demand discrimination to be ~0.  That does not
       threaten soundness of the UNSAT test, but it bounds its usefulness.
 
-ROUND-2 OUTCOME (2026-08-29).  Parts A/B/D held under cold review and were
-reproduced exactly.  Part C did not: all four of its controls are semantically
-INVALID strengthenings, so it could only ever detect over-strength, and the
-real defect was UNDER-strength -- compatB's PO clause was `true` while forall-PO
-bodies do cross a PO edge (conv PO = PO).  Part E is the missing control and
-Parts F/G measure what the omission cost.  Part D's headline is now recorded
-more sharply: not merely "blind to forall-PO" but "verdict invariant under
-erasing every forall-PO" -- see Part F.
-
 Self-contained: RCC5 relations, the composition table, concept syntax and
 satisfaction are all rebuilt here from finite set semantics.
 """
@@ -118,7 +109,7 @@ def cl(c, acc=None):
 
 def po_free(c):
     k = c[0]
-    if k in ("at", "nat", "bot", "top"):
+    if k in ("at", "nat", "bot"):
         return True
     if k in ("and", "or"):
         return po_free(c[1]) and po_free(c[2])
@@ -129,8 +120,6 @@ def po_free(c):
 
 def sat(model, val, x, c):
     k = c[0]
-    if k == "top":
-        return True
     if k == "bot":
         return False
     if k == "at":
@@ -222,9 +211,6 @@ def compat(r, D, q, qp, mut=None):
                     return False
         return True
     return True  # PO, EQ
-
-
-_compat_base = compat
 
 
 def prune(X, mut=None):
@@ -419,14 +405,6 @@ def part_c(trials=1500, seed=555111):
 
     If it does not, obligations (ii)/(iii) are too weak to detect an
     over-strong condition, and Parts A/B pass vacuously.
-
-    ONE-SIDED, and cold review #2 said so (finding 3): all four mutations here
-    are semantically INVALID strengthenings, so this control can only ever
-    demonstrate that the obligations catch OVER-strength.  It is structurally
-    incapable of catching UNDER-strength -- which is the failure compatB
-    actually had.  A 0-breakage row does NOT mean "the test is weak"; for a
-    sound strengthening it means "valid constraint, currently missing".  Part E
-    is the control that was absent, and it is how the PO gap shows up here.
     """
     print("\nPART C -- strengthening control  [predict: every clause breaks]")
     rng = random.Random(seed)
@@ -448,7 +426,7 @@ def part_c(trials=1500, seed=555111):
         n = sum(1 for (c0, m, v) in inst if check_instance(c0, m, v, name)[0])
         broke[name] = n
         print(f"    strengthen {label:22s}: {n:5d} / {len(inst)}"
-              f"   {'over-strong, as intended' if n else 'SOUND -- A MISSING CONSTRAINT'}")
+              f"   {'breaks completeness' if n else 'NO EFFECT -- test is weak'}")
     return base == 0 and all(v > 0 for v in broke.values())
 
 
@@ -497,9 +475,6 @@ def main():
         "B full-logic completeness": part_b(),
         "C mutation control": part_c(),
         "D non-vacuity": part_d(),
-        "E sound strengthening": part_e(),
-        "F erasure invariance": part_f(),
-        "G the Cpo witness": part_g(),
     }
     print("\n" + "=" * 70)
     for k, v in res.items():
@@ -515,190 +490,6 @@ def main():
     print("  also cannot see infinite models, where the same three obligations")
     print("  are what the Lean proof discharges in general.")
     return 0 if ok else 1
-
-
-
-
-# ===================================================================== round 2
-# Cold review #2 found that Part C above is STRUCTURALLY one-sided: all four of
-# its mutations are semantically INVALID strengthenings, so it can demonstrate
-# that the obligations detect OVER-strength and can never detect UNDER-strength.
-# Its "NO EFFECT -- test is weak" label is exactly backwards: for a mutation that
-# happens to be SOUND, 0 breakages means "valid constraint, currently missing".
-#
-# The reviewer's finding: compatB's PO clause is `true`, but forall-PO bodies DO
-# propagate across a PO edge (conv PO = PO, so the edge is symmetric).  Parts E
-# and F check that independently of their Lean.
-
-
-def compat_po(r, D, q, qp, mut=None):
-    """compatB plus the forall-PO propagation it drops."""
-    if not _compat_base(r, D, q, qp, mut):
-        return False
-    if r == PO:
-        return (all_bodies(PO, q[0]) <= qp[0] and all_bodies(PO, qp[0]) <= q[0])
-    return True
-
-
-def part_e(trials=1500, seed=555111):
-    """The control Part C structurally could not contain: a SOUND strengthening.
-
-    PREDICTION (recorded before running): 0 breakages, because the constraint is
-    valid at every model edge.  Under Part C's printed label that reads as "test
-    is weak"; it is in fact the signature of a missing constraint.
-    """
-    print("\nPART E -- the missing control: a SOUND strengthening  [predict 0]")
-    rng = random.Random(seed)
-    inst = []
-    for _ in range(trials):
-        c0 = rand_concept(rng, rng.randint(1, 3), allow_po=True)
-        got = find_model(rng, c0)
-        if got is not None:
-            inst.append((c0, got[0], got[1]))
-    global compat
-    saved = compat
-    broke = 0
-    try:
-        compat = compat_po
-        broke = sum(1 for (c0, m, v) in inst if check_instance(c0, m, v)[0])
-    finally:
-        compat = saved
-    print(f"    strengthen PO forall-propagation : {broke:5d} / {len(inst)}"
-          f"   {'SOUND -- a missing constraint' if broke == 0 else 'over-strong'}")
-    print("    contrast: Part C's four invalid strengthenings break 49-68%.")
-    return broke == 0
-
-
-# ------------------------------------------------ running the real elimination
-
-
-def admissible(c0, cap=60000):
-    """Generate sigStatic directly instead of filtering keyEnum."""
-    clc = cl(c0)
-    tenum = [frozenset(s) for s in _sublists(clc)]
-    tenum = [t for t in tenum if supportB(t)]
-    out = []
-    for T in tenum:
-        adm = [U for U in tenum
-               if all_bodies(PP, U) <= T and all_bodies(PPI, T) <= U]
-        if len(adm) > 13:
-            return None                      # 2^|adm| would explode
-        for S in _sublists(adm):
-            out.append((T, tuple(S)))
-            if len(out) > cap:
-                return None
-    return out
-
-
-def _sublists(l):
-    out = [[]]
-    for a in l:
-        out = out + [[a] + s for s in out]
-    return out
-
-
-def gfp(c0, compat_fn, cap=60000):
-    X = admissible(c0, cap)
-    if X is None:
-        return None
-    while True:
-        Y = [q for q in X
-             if all(any(compat_fn(r, D, q, qp) for qp in X)
-                    for (r, D) in sig_demands(q))]
-        if len(Y) == len(X):
-            return X
-        X = Y
-
-
-def accepts(c0, compat_fn):
-    X = gfp(c0, compat_fn)
-    if X is None:
-        return None
-    c0set = frozenset([c0])
-    return any(c0 in q[0] for q in X)
-
-
-def erase_po(c):
-    """Replace every forall-PO.D by top.  A syntactic weakening: C0 |= erase(C0)."""
-    k = c[0]
-    if k in ("at", "nat", "bot", "top"):
-        return c
-    if k in ("and", "or"):
-        return (k, erase_po(c[1]), erase_po(c[2]))
-    if k == "all" and c[1] == PO:
-        return ("top",)
-    return (k, c[1], erase_po(c[2]))
-
-
-def part_f(trials=1200, seed=31415926):
-    """Does the SHIPPED full-logic test refute anything its forall-PO erasure
-    does not?  The reviewer measured 3000/3000 invariance.  Checked here on
-    concepts small enough to run the real fixpoint.
-
-    PREDICTION (recorded before running): invariance holds for the shipped
-    operator, because no clause ever reads a forall-PO member.
-
-    The prediction that it would FAIL for the strengthened operator was WRONG on
-    this sample -- 106/106 invariant there as well.  The strengthening does cross
-    the barrier (Part G; `cpo_refuted_at_one` + `erase_cpo_satisfiable` in the
-    Lean), but random concepts at this size do not exhibit it.  Recorded rather
-    than tuned away: the honest claim for the clause is "provably crosses the
-    erasure barrier", not "measurably stronger on random input".
-    """
-    print("\nPART F -- erasure invariance of the FULL-LOGIC test  [predict: yes]")
-    rng = random.Random(seed)
-    n = same = diff = 0
-    n2 = same2 = 0
-    skipped = 0
-    for _ in range(trials):
-        c0 = rand_concept(rng, rng.randint(1, 2), allow_po=True)
-        if po_free(c0):
-            continue
-        a = accepts(c0, compat)
-        if a is None:
-            skipped += 1
-            continue
-        b = accepts(erase_po(c0), compat)
-        if b is None:
-            skipped += 1
-            continue
-        n += 1
-        if a == b:
-            same += 1
-        else:
-            diff += 1
-        a2 = accepts(c0, compat_po)
-        if a2 is not None:
-            n2 += 1
-            if a2 == b:
-                same2 += 1
-    print(f"    forall-PO-containing concepts run through the real fixpoint: {n}"
-          f"   (skipped {skipped} as too large)")
-    print(f"    SHIPPED     verdict(C0) == verdict(erase C0) : {same}/{n}"
-          f"  ({100*same/max(n,1):.1f}%)   differing: {diff}")
-    print(f"    STRENGTHENED verdict(C0) == verdict(erase C0): {same2}/{n2}"
-          f"  ({100*same2/max(n2,1):.1f}%)")
-    print("    => the SHIPPED test adds no refutation power over running the")
-    print("       fragment procedure on the forall-PO erasure.")
-    print("    => the STRENGTHENED test is invariant on THIS SAMPLE TOO.  Its gain")
-    print("       is real but is not visible here: it shows on the constructed")
-    print("       witness (Part G, and cpo_refuted_at_one in the Lean), not on")
-    print("       random concepts of this size.  Do not read 100% as 'no gain'.")
-    return diff == 0 and n > 20
-
-
-def part_g():
-    """The reviewer's headline witness, run here: Cpo = exists-PO.top & forall-PO.bot."""
-    print("\nPART G -- the witness  Cpo = (exists PO.top) and (forall PO.bot)")
-    cpo = ("and", ("ex", PO, ("top",)), ("all", PO, ("bot",)))
-    ship = accepts(cpo, compat)
-    strong = accepts(cpo, compat_po)
-    print(f"    Cpo is UNSAT (its exists-PO witness is its own forall-PO victim)")
-    print(f"    shipped pruneSig      accepts Cpo : {ship}"
-          f"   {'<-- silent on an UNSAT concept' if ship else ''}")
-    print(f"    strengthened pruneSig accepts Cpo : {strong}"
-          f"   {'<-- refuted' if not strong else ''}")
-    return ship is True and strong is False
 
 
 if __name__ == "__main__":
