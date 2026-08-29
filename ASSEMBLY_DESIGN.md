@@ -16988,3 +16988,47 @@ IN the fragment result; round 2's defect was in the full-logic bonus and is
 provably vacuous under `POFree` (`allBodies_po_nil_of_pofree`). Recording this
 because the forward-facing documents have been hedging the fragment result with
 full-logic caveats that do not apply to it.
+
+### §294 — NNF: the input-normalisation gap is closed
+
+§288 recorded that `Concept` has no negation constructor, so `decidableSat_cone`
+decides concepts *already in NNF*, and that raw input additionally needs a
+normalisation function plus a preservation theorem — the plan's O01. Both are
+now in the artifact.
+
+`Formula` is the raw syntax with negation; `fsat` its semantics over the same
+`Interp`; `nnfP` pushes negation inward with a **polarity flag**, a single
+structural recursion rather than a mutual block (which Lean core handles badly);
+`nnfP_correct` proves *both* polarities simultaneously — `sat (nnfP true F) ↔
+fsat F` and `sat (nnfP false F) ↔ ¬ fsat F` — pointwise, at every element, not
+only at the root. The two classical steps are isolated as `not_all_iff` and
+`not_ex_iff` so it is visible exactly where excluded middle enters (negating a
+`∀`/`∃` over the domain).
+
+**The polarity flag exposed something the NNF-only statement had hidden.** The
+fragment condition on RAW input is *not* "no `∀PO`". Since
+`nnfP false (∃PO.F) = ∀PO.(nnfP false F)`, an `∃PO` under a negation *becomes* a
+`∀PO`. The correct condition is polarity-sensitive — **no `∀PO` positively and no
+`∃PO` negatively** — and that is `FPOFree`, with `pofree_nnfP` transferring it
+(axiom-free). Anyone reading only `decidableSat_cone` would have guessed the
+wrong syntactic restriction for raw concepts.
+
+Capstone `decidableFSat (F) (h : FPOFree true F) : Decidable (FSatisfiable F)`.
+
+**It is evaluated, not merely typechecked.** `decidableFSat` is a plain `def`,
+not `noncomputable`, and `raw_unsat_witness` / `raw_sat_witness` close by
+`decide` — kernel reduction, no `native_decide`. That check was worth running:
+a `Decidable` that cannot reduce still typechecks, and this project has twice
+shipped an interface nothing had consumed. Only tiny inputs are reachable
+(§289's ceiling is unchanged), so the witnesses are `¬⊤` and `atom 0`.
+
+Two Lean-core frictions, recorded because they will recur: a `def` matching on a
+`Bool` *and* a constructor does not reduce definitionally when the `Bool` is a
+variable — `cases b` first; and `Iff.rfl` closes the positive polarity cases but
+the negative ones need an explicit `show` to force the unfolding.
+
+Build: 44,853 lines, 2,330 declarations, exit 0, 0 errors / 0 warnings /
+0 sorries. `pofree_nnfP` needs no axioms at all.
+
+**The fragment's residual list is now one item long**: the abstract-semantics
+bridge (`RCC5NormalForm.eta`, imported nowhere).

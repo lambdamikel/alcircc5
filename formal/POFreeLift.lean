@@ -44304,7 +44304,12 @@ proved here.  The step is standard for `ALCI` and the project's papers state it,
 but it is not in this artifact, and the claim should be read accordingly.
 
 Flagged by the 2026-08-29 audit; recorded here rather than in a commit message so
-that it travels with the theorem. -/
+that it travels with the theorem.
+
+⚠ **CLOSED 2026-08-29 by §294**, which adds the raw syntax `Formula`, its
+semantics `fsat`, the normalisation `nnfC`, the preservation theorem
+`nnfP_correct`, and `decidableFSat` — a decision procedure for RAW input.  This
+paragraph is kept because it states what was missing and why it mattered. -/
 
 /-! #### §289 — COMPLEXITY: A PROVED LOWER BOUND, AND WHAT IT COSTS
 
@@ -44335,6 +44340,252 @@ Still unrunnable; one exponential less unrunnable.
 
 This is a statement about the DECISION PROCEDURE's usability, not about the
 decidability theorem, which is unaffected. -/
+
+/-! #### §294 — RAW SYNTAX AND NNF: closing the input-normalisation gap (O01)
+
+§288 recorded that `Concept` has no negation constructor, so `decidableSat_cone`
+decides concepts ALREADY IN NNF, and that deciding a RAW `ALCI_RCC5` concept
+additionally needs a normalisation function plus a preservation theorem. This
+section supplies both.
+
+`Formula` is the raw syntax WITH negation; `fsat` its semantics over the same
+`Interp`; `nnfP` pushes negation inward with a polarity flag (a single structural
+recursion, no mutual block); `nnfP_correct` is the preservation theorem in both
+polarities at once.
+
+**What the polarity flag exposes.** The fragment condition on RAW input is NOT
+"no `∀PO`" — `nnfP false (∃PO.F) = ∀PO.(nnfP false F)`, so an `∃PO` under a
+negation BECOMES a `∀PO`. The correct condition is polarity-sensitive: no `∀PO`
+positively and no `∃PO` negatively (`FPOFree`). The NNF-only statement hides
+this, which is a second reason to have written it down. -/
+
+/-- Raw `ALCI_RCC5` concepts, with negation. -/
+inductive Formula
+  | top | bot
+  | atom (a : Nat)
+  | neg (F : Formula)
+  | and (F G : Formula)
+  | or (F G : Formula)
+  | ex (r : Atom) (F : Formula)
+  | all (r : Atom) (F : Formula)
+deriving DecidableEq, Repr
+
+/-- Satisfaction for the raw syntax; agrees with `sat` clause for clause, plus
+    the negation case. -/
+def fsat {α : Type} (I : Interp α) : α → Formula → Prop
+  | _, .top => True
+  | _, .bot => False
+  | x, .atom a => I.val a x
+  | x, .neg F => ¬ fsat I x F
+  | x, .and F G => fsat I x F ∧ fsat I x G
+  | x, .or F G => fsat I x F ∨ fsat I x G
+  | x, .ex r F => ∃ y, I.dom y ∧ I.rho x y = r ∧ fsat I y F
+  | x, .all r F => ∀ y, I.dom y → I.rho x y = r → fsat I y F
+
+/-- Negation normal form, by polarity.  `nnfP true` is the translation;
+    `nnfP false` is the translation of the negation. -/
+def nnfP : Bool → Formula → Concept
+  | true,  .top => .top
+  | false, .top => .bot
+  | true,  .bot => .bot
+  | false, .bot => .top
+  | true,  .atom a => .atom a
+  | false, .atom a => .natom a
+  | b,     .neg F => nnfP (!b) F
+  | true,  .and F G => .and (nnfP true F) (nnfP true G)
+  | false, .and F G => .or (nnfP false F) (nnfP false G)
+  | true,  .or F G => .or (nnfP true F) (nnfP true G)
+  | false, .or F G => .and (nnfP false F) (nnfP false G)
+  | true,  .ex r F => .ex r (nnfP true F)
+  | false, .ex r F => .all r (nnfP false F)
+  | true,  .all r F => .all r (nnfP true F)
+  | false, .all r F => .ex r (nnfP false F)
+
+/-- The normalisation. -/
+def nnfC (F : Formula) : Concept := nnfP true F
+
+/-! ##### The two classical steps, isolated -/
+
+theorem not_all_iff {α : Type} (I : Interp α) (x : α) (r : Atom) (P : α → Prop) :
+    (¬ ∀ y, I.dom y → I.rho x y = r → P y) ↔
+      ∃ y, I.dom y ∧ I.rho x y = r ∧ ¬ P y := by
+  constructor
+  · intro h
+    exact Classical.byContradiction (fun hne => h (fun y hy hr =>
+      Classical.byContradiction (fun hp => hne ⟨y, hy, hr, hp⟩)))
+  · rintro ⟨y, hy, hr, hp⟩ h
+    exact hp (h y hy hr)
+
+theorem not_ex_iff {α : Type} (I : Interp α) (x : α) (r : Atom) (P : α → Prop) :
+    (¬ ∃ y, I.dom y ∧ I.rho x y = r ∧ P y) ↔
+      ∀ y, I.dom y → I.rho x y = r → ¬ P y := by
+  constructor
+  · intro h y hy hr hp; exact h ⟨y, hy, hr, hp⟩
+  · rintro h ⟨y, hy, hr, hp⟩; exact h y hy hr hp
+
+/-- **§294.1 — NNF PRESERVES MEANING, IN BOTH POLARITIES.**  The obligation the
+    plan calls O01, proved pointwise rather than only at the root. -/
+theorem nnfP_correct {α : Type} (I : Interp α) : ∀ (F : Formula) (x : α),
+    (sat I x (nnfP true F) ↔ fsat I x F) ∧
+    (sat I x (nnfP false F) ↔ ¬ fsat I x F) := by
+  intro F
+  induction F with
+  | top =>
+      intro x
+      refine ⟨Iff.rfl, ?_⟩
+      show False ↔ ¬ True
+      exact ⟨fun h => h.elim, fun h => absurd trivial h⟩
+  | bot =>
+      intro x
+      refine ⟨Iff.rfl, ?_⟩
+      show True ↔ ¬ False
+      exact ⟨fun _ h => h, fun _ => trivial⟩
+  | atom a => intro x; exact ⟨Iff.rfl, Iff.rfl⟩
+  | neg F ih =>
+      intro x
+      refine ⟨(ih x).2, ?_⟩
+      show sat I x (nnfP true F) ↔ ¬ ¬ fsat I x F
+      exact ⟨fun h hn => hn ((ih x).1.mp h),
+             fun h => (ih x).1.mpr (Classical.byContradiction h)⟩
+  | and F G ihF ihG =>
+      intro x
+      refine ⟨⟨fun h => ⟨(ihF x).1.mp h.1, (ihG x).1.mp h.2⟩,
+               fun h => ⟨(ihF x).1.mpr h.1, (ihG x).1.mpr h.2⟩⟩, ?_⟩
+      show (sat I x (nnfP false F) ∨ sat I x (nnfP false G)) ↔ ¬ (fsat I x F ∧ fsat I x G)
+      constructor
+      · rintro (h | h) ⟨h1, h2⟩
+        · exact (ihF x).2.mp h h1
+        · exact (ihG x).2.mp h h2
+      · intro h
+        rcases Classical.em (fsat I x F) with hF | hF
+        · exact Or.inr ((ihG x).2.mpr (fun hG => h ⟨hF, hG⟩))
+        · exact Or.inl ((ihF x).2.mpr hF)
+  | or F G ihF ihG =>
+      intro x
+      refine ⟨?_, ?_⟩
+      · show (sat I x (nnfP true F) ∨ sat I x (nnfP true G)) ↔ (fsat I x F ∨ fsat I x G)
+        exact ⟨fun h => h.imp (ihF x).1.mp (ihG x).1.mp,
+               fun h => h.imp (ihF x).1.mpr (ihG x).1.mpr⟩
+      · show (sat I x (nnfP false F) ∧ sat I x (nnfP false G)) ↔ ¬ (fsat I x F ∨ fsat I x G)
+        constructor
+        · rintro ⟨h1, h2⟩ (h | h)
+          · exact (ihF x).2.mp h1 h
+          · exact (ihG x).2.mp h2 h
+        · intro h
+          exact ⟨(ihF x).2.mpr (fun hF => h (Or.inl hF)),
+                 (ihG x).2.mpr (fun hG => h (Or.inr hG))⟩
+  | ex r F ih =>
+      intro x
+      refine ⟨?_, ?_⟩
+      · show (∃ y, I.dom y ∧ I.rho x y = r ∧ sat I y (nnfP true F)) ↔
+            ∃ y, I.dom y ∧ I.rho x y = r ∧ fsat I y F
+        exact ⟨fun ⟨y, hy, hr, h⟩ => ⟨y, hy, hr, (ih y).1.mp h⟩,
+               fun ⟨y, hy, hr, h⟩ => ⟨y, hy, hr, (ih y).1.mpr h⟩⟩
+      · show (∀ y, I.dom y → I.rho x y = r → sat I y (nnfP false F)) ↔
+            ¬ ∃ y, I.dom y ∧ I.rho x y = r ∧ fsat I y F
+        rw [not_ex_iff I x r (fun y => fsat I y F)]
+        exact ⟨fun h y hy hr => (ih y).2.mp (h y hy hr),
+               fun h y hy hr => (ih y).2.mpr (h y hy hr)⟩
+  | all r F ih =>
+      intro x
+      refine ⟨?_, ?_⟩
+      · show (∀ y, I.dom y → I.rho x y = r → sat I y (nnfP true F)) ↔
+            ∀ y, I.dom y → I.rho x y = r → fsat I y F
+        exact ⟨fun h y hy hr => (ih y).1.mp (h y hy hr),
+               fun h y hy hr => (ih y).1.mpr (h y hy hr)⟩
+      · show (∃ y, I.dom y ∧ I.rho x y = r ∧ sat I y (nnfP false F)) ↔
+            ¬ ∀ y, I.dom y → I.rho x y = r → fsat I y F
+        rw [not_all_iff I x r (fun y => fsat I y F)]
+        exact ⟨fun ⟨y, hy, hr, h⟩ => ⟨y, hy, hr, (ih y).2.mp h⟩,
+               fun ⟨y, hy, hr, h⟩ => ⟨y, hy, hr, (ih y).2.mpr h⟩⟩
+
+/-! ##### The fragment condition on RAW input, which is polarity-sensitive -/
+
+/-- No `∀PO` in POSITIVE position and no `∃PO` in NEGATIVE position.  The second
+    clause is not decoration: `nnfP false (∃PO.F)` IS a `∀PO`. -/
+def FPOFree : Bool → Formula → Prop
+  | _,     .top => True
+  | _,     .bot => True
+  | _,     .atom _ => True
+  | b,     .neg F => FPOFree (!b) F
+  | b,     .and F G => FPOFree b F ∧ FPOFree b G
+  | b,     .or F G => FPOFree b F ∧ FPOFree b G
+  | true,  .ex _ F => FPOFree true F
+  | false, .ex r F => r ≠ po ∧ FPOFree false F
+  | true,  .all r F => r ≠ po ∧ FPOFree true F
+  | false, .all _ F => FPOFree false F
+
+/-- **§294.2 — THE FRAGMENT TRANSFERS.** -/
+theorem pofree_nnfP : ∀ (F : Formula) (b : Bool), FPOFree b F → POFree (nnfP b F) := by
+  intro F
+  induction F with
+  | top => intro b _; cases b <;> trivial
+  | bot => intro b _; cases b <;> trivial
+  | atom a => intro b _; cases b <;> trivial
+  | neg F ih =>
+      intro b h
+      cases b
+      · show POFree (nnfP true F)
+        exact ih true h
+      · show POFree (nnfP false F)
+        exact ih false h
+  | and F G ihF ihG =>
+      intro b h; cases b
+      · exact ⟨ihF false h.1, ihG false h.2⟩
+      · exact ⟨ihF true h.1, ihG true h.2⟩
+  | or F G ihF ihG =>
+      intro b h; cases b
+      · exact ⟨ihF false h.1, ihG false h.2⟩
+      · exact ⟨ihF true h.1, ihG true h.2⟩
+  | ex r F ih =>
+      intro b h; cases b
+      · exact ⟨h.1, ih false h.2⟩
+      · exact ih true h
+  | all r F ih =>
+      intro b h; cases b
+      · exact ih false h
+      · exact ⟨h.1, ih true h.2⟩
+
+/-! ##### The capstone for raw input -/
+
+/-- Satisfiability of a RAW concept. -/
+def FSatisfiable (F : Formula) : Prop :=
+  ∃ (α : Type), ∃ I : Interp α, RCC5Interp I ∧ ∃ x, I.dom x ∧ fsat I x F
+
+theorem fsat_iff_nnf (F : Formula) : FSatisfiable F ↔ Satisfiable (nnfC F) := by
+  constructor
+  · rintro ⟨α, I, hI, x, hx, h⟩
+    exact ⟨α, I, hI, x, hx, (nnfP_correct I F x).1.mpr h⟩
+  · rintro ⟨α, I, hI, x, hx, h⟩
+    exact ⟨α, I, hI, x, hx, (nnfP_correct I F x).1.mp h⟩
+
+/-- **§294.3 — THE DECISION PROCEDURE FOR RAW INPUT.**  §288's gap, closed: no
+    NNF precondition, negation available, and the fragment condition stated in
+    its correct polarity-sensitive form. -/
+def decidableFSat (F : Formula) (h : FPOFree true F) : Decidable (FSatisfiable F) :=
+  let _ := decidableSat_cone (nnfC F) (pofree_nnfP F true h)
+  decidable_of_iff _ (fsat_iff_nnf F).symm
+
+/-! ##### Non-vacuity: the raw procedure is EVALUATED, at the kernel
+
+`decidableFSat` is a plain `def`, not `noncomputable`, and both witnesses below
+are closed by `decide` — kernel reduction, no `native_decide`.  This is the
+consumer written against the interface rather than the interface believed: a
+`Decidable` that could not be reduced would still typecheck.
+
+Only tiny inputs are reachable, for the reason §289 records: the signature space
+is doubly exponential and the procedure runs at `|cl C₀| ≤ 2`.  `¬⊤` normalises
+to `⊥` and `atom 0` to itself, which is inside that. -/
+
+/-- A raw formula with a NEGATION at the root, decided UNSAT by the procedure. -/
+theorem raw_unsat_witness :
+    @decide (FSatisfiable (Formula.neg Formula.top))
+      (decidableFSat _ trivial) = false := by decide
+
+/-- And a satisfiable one, decided SAT. -/
+theorem raw_sat_witness :
+    @decide (FSatisfiable (Formula.atom 0))
+      (decidableFSat _ trivial) = true := by decide
 
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le
@@ -44590,6 +44841,12 @@ end POFreeLift
 #print axioms POFreeLift.unfInterp_rcc5
 #print axioms POFreeLift.pruneSig_mono
 #print axioms POFreeLift.coneScheme_unsat_full
+#print axioms POFreeLift.nnfP_correct
+#print axioms POFreeLift.pofree_nnfP
+#print axioms POFreeLift.fsat_iff_nnf
+#print axioms POFreeLift.decidableFSat
+#print axioms POFreeLift.raw_unsat_witness
+#print axioms POFreeLift.raw_sat_witness
 #print axioms POFreeLift.cpo_unsat
 #print axioms POFreeLift.cpo_refuted_at_one
 #print axioms POFreeLift.erase_cpo_satisfiable
