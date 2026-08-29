@@ -1540,8 +1540,8 @@ computable) a \code{Decidable} instance for satisfiability of $C_0$ is now
 machine-checked---\emph{generally} for the fragment's three \emph{pure}
 quadrants (horizontal, ascending-vertical, descending-vertical) and on a
 witness for the \emph{mixed} quadrant.
-Section~\ref{ssec:pofree-quadrants} gives the construction: the finite
-certificate, the four quadrants, and the constructive round-robin
+Section~\ref{ssec:pofree-quadrants} gives \emph{that} construction: the
+finite certificate, the four quadrants, and the constructive round-robin
 uniformization (\code{rr\_covers}) that turns the full logic's open
 ``W2$'$'' oracle into a kernel-checked theorem once $\forall\PO$ is removed.
 The mixed quadrant was closed, and the whole fragment re-certified by a
@@ -1553,16 +1553,27 @@ full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment removes.
 legitimately infinite (unbounded $\PP$-towers are satisfiable). The right
 target is a finite \emph{presentation} of a possibly-infinite model.
 
-\subsection{The $\forall\PO$-free fragment, certified: four quadrants and a
+\subsection{The $\forall\PO$-free fragment, first route: four quadrants and a
 round-robin kernel}
 \label{ssec:pofree-quadrants}
 
-This subsection describes the construction behind
-Theorem~\ref{thm:pofree}'s certified \code{Decidable} instance: what the finite
-certificate is, how each kind of concept is discharged, and the one genuinely
-new device that makes it go through. It is deliberately concrete, because the
-point of the fragment is that here the full logic's open live-width keystone
-F6 is replaced by an explicit construction rather than remaining a conjecture.
+\emph{Read this as the first of two certified routes, not as the current one.}
+Everything described here is in the artifact and every theorem named is still
+proved; what changed is which construction discharges
+Theorem~\ref{thm:pofree}. This route certified a \code{Decidable} instance
+\emph{per quadrant}, generally for the three pure ones and only on a witness
+for the mixed one; its general mixed extraction was never completed, and two
+rounds of cold attack later refuted the architecture it needed. The route that
+now certifies the theorem---uniformly, for all four quadrants at once---is the
+cone scheme of Remark~\ref{rem:conescheme}, and it uses none of the machinery
+below.
+
+The subsection is kept because the material is not superseded as
+\emph{mathematics}: the four-quadrant taxonomy is a real classification of how
+demands interact in the fragment, and the round-robin device answers the
+uniformization question that the full logic leaves open. It is also the
+clearest place to see \emph{why} the fragment is tractable at all, which is
+what the closing paragraphs draw out.
 
 \paragraph{The certificate, and the decision loop.} A certificate is a
 \emph{multi-tier} object (\code{MultiTier}): finitely many \emph{external}
@@ -1611,7 +1622,9 @@ fall into four combinations, each with its own certificate shape:
     certified on a concrete witness (\code{decidableSat\_Cmix}).
 \end{itemize}
 
-\paragraph{The keystone: a constructive uniformization.} One recurrent kernel
+\paragraph{This route's keystone: a constructive uniformization.} (The cone
+scheme does not need it; its own keystone is the residual-$\PO$ default of
+Remark~\ref{rem:conescheme}.) One recurrent kernel
 must often serve \emph{several} distinct $\exists\PP$ demands at once, and on
 the full logic this is exactly the feared uniformization property W2$'$: can a
 single repeating interface discharge every demand without two of them colliding
@@ -1632,16 +1645,16 @@ logic's open live-width keystone---is \emph{forced by} $\forall\PO$: it is a
 $\forall\PO$ obligation that can watch a kernel's emitted horizontal edges and
 so demand a bounded, coordinated interface across phases. Remove that one
 constructor and the coordination F6 abstracts becomes free, which is what every
-device above cashes in. Scope, stated exactly: the three \emph{pure} quadrants
-are certified \emph{generally}, each with a non-vacuous satisfiable witness
-(\code{Cvert}, \code{Ccar}, \code{Calt}, \code{Clin}, \code{Cdesc}); the
-\emph{mixed} quadrant's certificate, encoding, and decision are certified on a
-witness, with the \emph{general} mixed extraction the one remaining
-formalization.
+device above cashes in. Scope of \emph{this route}, stated exactly: the three
+\emph{pure} quadrants are certified \emph{generally}, each with a non-vacuous
+satisfiable witness (\code{Cvert}, \code{Ccar}, \code{Calt}, \code{Clin},
+\code{Cdesc}); the \emph{mixed} quadrant's certificate, encoding, and decision
+are certified only on a witness. Its general extraction was never completed,
+and the next remark says what happened instead.
 
 \begin{remark}[The mixed quadrant, certified by a third route
 (2026-08-29)]\label{rem:conescheme}
-The general mixed extraction described below was never completed: two rounds of
+The general mixed extraction just described was never completed: two rounds of
 cold attack refuted the architecture it needed (a finite node set reused by
 blocking and \emph{borrowing} witnesses), by exact finite countermodels. It was
 replaced. The route now certified is a \emph{cone scheme}, designed by
@@ -2674,15 +2687,27 @@ RCC5 normal form (both directions) & Lean-certified & \texttt{RCC5NormalForm.lea
 $\forall\PO$-free lift core & Lean-certified & \texttt{POFreeLift.lean}: \code{lift\_cc}, \code{unf\_is\_frame} & \texttt{wp86}\\
 F6\,$\Rightarrow$\,decidability (soundness) & Lean-certified & \texttt{Round19Transport.lean}: \code{decidableSat\_of\_finScheme} & ---\\
 $\Pi^0_1$ / dovetailing reduction & Lean-certified & \texttt{SemiDecidability.lean}: \code{decidableSat} & \texttt{wp84}\\
-$\forall\PO$-free decidability (end to end) & Theorem-level & \texttt{papers/po\_free\_fragment\_ALCIRCC5} & \texttt{wp87}\\
+\addlinespace
+$\forall\PO$-free \textbf{decidability}, NNF input & Lean-certified & \texttt{POFreeLift.lean}: \code{decidableSat\_cone} & \texttt{wp133}, \texttt{wp134}\\
+\quad\ldots on \emph{raw} input & Lean-certified & \texttt{POFreeLift.lean}: \code{decidableFSat}, \code{nnfP\_correct} & ---\\
+\quad\ldots under \emph{concrete set} semantics & Lean-certified & \texttt{POFreeLift.lean}: \code{decidableSetSat} & ---\\
+Abstract $=$ concrete satisfiability (\emph{full} logic) & Lean-certified & \texttt{POFreeLift.lean}: \code{satisfiable\_iff\_set} & ---\\
+One-sided \textsc{unsat} test (\emph{full} logic) & Lean-certified & \texttt{POFreeLift.lean}: \code{coneScheme\_unsat\_full} & \texttt{wp134}\\
+Completeness of the cone scheme & Lean-certified & \texttt{POFreeLift.lean}: \code{coneScheme\_complete} & \texttt{wp135}\\
+\addlinespace
+The two \emph{arguments} for the fragment ($K(C_0)$, extraction) & Theorem-level & \texttt{papers/po\_free\_fragment\_ALCIRCC5}; the certified route above is a \emph{third}, and uses neither & \texttt{wp87}\\
 Identity-selector characterization & Theorem-level & \texttt{papers/fable5\_width\_barrier} & \texttt{wp44}\\
 Cover-tree tableau & Empirical & \texttt{src/cover\_tree\_tableau.py} (911-concept cross-validation) & \texttt{wp}\,---\\
 Static F6; automatic-cover; full decidability & Open & --- (no proof claimed) & ---\\
 \bottomrule
 \end{tabular}
 \caption{Result-to-artifact map. Statuses are those of
-Table~\ref{tab:status}. Filenames are relative to the repository root at
-tag \texttt{certified-fragment-2026-08-29}.}
+Table~\ref{tab:status}. Every Lean name listed was checked to resolve in the
+named file at tag \texttt{certified-fragment-2026-08-29}; filenames are
+relative to the repository root. Note the split in the last two rows: the
+fragment \emph{theorem} is certified, by a route that uses neither the
+$K(C_0)$ bound nor the extraction argument, while those two \emph{arguments}
+remain unformalised.}
 \label{tab:artifacts}
 \end{table}
 
