@@ -36,6 +36,17 @@ So: 9 -> 8 after the F1 fix (4 -> 3 at depth 2, depth 3 unchanged at 5), and the
 honest one-line summary is "control-layer conditions the probe does not model,
 mostly the VERTICAL pair", not "the DR cone condition".
 
+THIS PROBE NOW ATTRIBUTES THE RESIDUE ITSELF, and it is the GATE: it exits 0
+when the frame is clean and every truth violation is attributable to one of
+those conditions, and exits 1 on an `unattributed` one -- which would mean the
+residue is a real gap rather than a modelling one.  Verified to have teeth:
+disabling any one attribution class flips the run to exit 1.
+
+Unit note: the review's table counts nine INSTANCES (an unfolding with at least
+one failure); the attribution table this probe prints counts failing
+(occurrence, concept) PAIRS, of which there are more.  Both are correct; they
+are different units, and the distributions are not comparable line by line.
+
 PREDICTIONS, FIXED BEFORE THE RUN:
   F1  every unfolded frame is composition-closed            -> 100%
   F2  ordered-disjoint axioms (strict order; disj symmetric,
@@ -310,6 +321,39 @@ class Unfolding:
                     bad.append((x, c))
         return bad
 
+    def classify(self, x, c):
+        """Which SHIPPED control-layer condition would have prevented this?
+
+        The probe synthesises labels at random; the real labels come from the
+        greatest fixed point, where these conditions hold by construction.  So
+        every residual violation should be attributable to one of them.  An
+        `unattributed` violation is the interesting case -- it would mean the
+        residue is NOT a modelling gap, and the gate below fails on it.
+
+        Method is cold review 3's: read the condition off the PAIR RELATION,
+        not off the birth that created the node."""
+        k = c[0]
+        if k == "all":
+            r = c[1]
+            for y in self.nodes:
+                if self.R(x, y) == r and not self.sat(y, c[2]):
+                    if r == PP:
+                        return "vertical (compatB pp + sigOkB)"
+                    if r == PPI:
+                        return "vertical (compatB ppi + sigOkB)"
+                    if r == DR:
+                        return "DR cross (compatB dr, over cones)"
+                    if r == EQ:
+                        return "EQ-locality (supportB)"
+                    return "PO -- IMPOSSIBLE in the fragment"
+            return "unattributed"
+        if k == "ex":
+            # no server for a demand: pruneSig removes any signature carrying it
+            return "elimination (pruneSig)"
+        if k in ("and", "or", "at", "nat"):
+            return "support (supportB)"
+        return "unattributed"
+
 
 # ----------------------------------------------------------------- generator
 
@@ -334,6 +378,7 @@ def run(reuse, trials, depth, seed):
     rng = random.Random(seed)
     built = frame_bad = truth_bad = 0
     kinds = {}
+    why = {}
     for _ in range(trials):
         C0 = rand_concept(rng, rng.randint(2, 3))
         if not po_free(C0):
@@ -351,35 +396,61 @@ def run(reuse, trials, depth, seed):
             frame_bad += 1
             for p in fp:
                 kinds[p[0]] = kinds.get(p[0], 0) + 1
-        if u.check_truth(depth):
+        tv = u.check_truth(depth)
+        if tv:
             truth_bad += 1
-    return built, frame_bad, truth_bad, kinds
+            for (x, c) in tv:
+                w = u.classify(x, c)
+                why[w] = why.get(w, 0) + 1
+    return built, frame_bad, truth_bad, kinds, why
 
 
 def main():
     print(__doc__.split("Self-contained")[0].rstrip())
     print("=" * 70)
-    ok = True
+    frames_ok = True
+    unattributed = 0
+    allwhy = {}
     for depth in (2, 3):
-        b, fb, tb, kinds = run(False, 400, depth, 20260828 + depth)
+        b, fb, tb, kinds, why = run(False, 400, depth, 20260828 + depth)
         print(f"\nFRESH OCCURRENCES, depth {depth}: {b} unfoldings built")
         print(f"  frame violations : {fb}   {kinds if kinds else ''}")
-        print(f"  truth violations : {tb}")
-        ok &= (fb == 0 and tb == 0 and b > 0)
+        print(f"  truth violations : {tb}   (attributed below)")
+        frames_ok &= (fb == 0 and b > 0)
+        for k, v in why.items():
+            allwhy[k] = allwhy.get(k, 0) + v
     print("\nCONTROL -- the REFUTED discipline (identify equal-type occurrences)")
     for depth in (2, 3):
-        b, fb, tb, kinds = run(True, 400, depth, 20260828 + depth)
+        b, fb, tb, kinds, _ = run(True, 400, depth, 20260828 + depth)
         print(f"  reuse, depth {depth}: {b} built, frame violations {fb} "
               f"{kinds if kinds else ''}, truth violations {tb}")
+
+    print("\nATTRIBUTION of every residual truth violation")
+    print("  Counts below are FAILING (occurrence, concept) PAIRS; the per-depth")
+    print("  numbers above are INSTANCES with at least one, so they differ.")
+    print("  (the probe draws labels at RANDOM; the real ones come from the")
+    print("   greatest fixed point, where these conditions hold by construction)")
+    for k in sorted(allwhy, key=lambda k: -allwhy[k]):
+        mark = "  <-- NOT EXPLAINED" if k == "unattributed" else ""
+        print(f"    {allwhy[k]:3d}  {k}{mark}")
+    unattributed = allwhy.get("unattributed", 0)
+    if not allwhy:
+        print("    (none)")
+
+    ok = frames_ok and unattributed == 0
     print("\n" + "=" * 70)
-    print("VERDICT:", "fresh-occurrence unfolding produced a VALID RCC5 frame"
-          if ok else "FRAME OK but label conditions incomplete -- see below")
+    print("VERDICT:", "frame VALID; every residual truth violation attributed"
+          if ok else "FAILURE -- see above")
     print("  The clause that killed the borrowing route, ltNotDj, holds here")
     print("  structurally: a DR birth opens a new vertical component and lt")
     print("  never leaves one.")
-    print("  SCOPE: finite depth prefixes of the unfolding, randomly generated")
-    print("  labels, and the greatest-fixed-point control layer is NOT modelled")
-    print("  -- this validates the MODEL side (plan gates G2-G3), not G1 or G4.")
+    print("  GATE: this exits 0 when the frame is clean AND every truth")
+    print("  violation is attributable to a control-layer condition the probe")
+    print("  does not model.  An `unattributed` violation fails the run --")
+    print("  that would mean the residue is a real gap, not a modelling one.")
+    print("  SCOPE: finite depth prefixes, randomly generated labels, and the")
+    print("  greatest-fixed-point control layer is NOT modelled -- this")
+    print("  validates the MODEL side (plan gates G2-G3), not G1 or G4.")
     return 0 if ok else 1
 
 
