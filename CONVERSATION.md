@@ -8280,3 +8280,48 @@ ledger was not about. Corrected across all documents.
 **Where this leaves the log.** Detail from here lives in `ASSEMBLY_DESIGN.md`,
 which was written as the work happened and is contemporaneous where this part is
 not. Treat that as authoritative and this part as an index to it.
+
+---
+
+### Closing entry — 2026-08-29: wrapping up on a verified clean state
+
+The session ended with a deliberate consolidation pass rather than more
+mathematics. Everything below was checked at the time of writing, not asserted.
+
+**Artifact.** All five Lean files build with exit 0. `POFreeLift.lean`: 45,375
+lines, 2,362 declarations, 0 errors, 0 warnings, 0 `sorry`, 0 `sorryAx`; axioms
+`propext` / `Classical.choice` / `Quot.sound`. `RCC5NormalForm`,
+`ForcingReduction`, `SemiDecidability` and `Round19Transport` build clean too.
+
+**Probes.** `wp133`, `wp134`, `wp135` all exit 0. `wp133` was rebuilt this
+session from a probe that exited 1 by design into an *attribution gate*: it
+classifies every residual truth violation by the control-layer condition that
+would have prevented it, passes when all are attributed, and fails on an
+unattributed one. Verified to have teeth by disabling an attribution class and
+confirming it flips to exit 1.
+
+**Documents.** Overview 49pp, explainer 16pp, slides 41pp — no undefined
+references, no errors. (The slides log one benign font-shape warning for small
+caps in the theme's sans font.) Repository: nothing uncommitted, nothing
+unpushed, tagged `certified-fragment-2026-08-29`.
+
+**The consolidation itself is worth one line, because it found real defects.**
+Sweeping the forward-facing documents for stale content turned up the same
+failure in four places — the overview's Table 6 and §`ssec:pofree-quadrants`,
+both explainers, and `LEAN.md`. In every case **nothing was dangling and
+nothing was false**: every Lean name resolved, every theorem cited was still
+proved. What was stale was the *framing* — historical accounts of the
+superseded per-quadrant route presented as the current one. That defect passes
+every automated check, which is why it survived until someone asked whether the
+artifact references were still accurate.
+
+**Where it stands.** The ∀PO-free fragment is machine-certified decidable — raw
+input, NNF, and concrete set semantics, fragment membership the only hypothesis
+— with three independent cold reviews and no open correctness items. The one
+caveat is complexity, not correctness: decidable, not runnable. Full
+`ALCI_RCC5` decidability remains **open**, and the two arguments this project
+made for the fragment theorem remain unformalised; the certified route is a
+third and uses neither.
+
+Outstanding and non-technical: the `LambdaMikel@Home` affiliation placeholder,
+which is the last thing between the overview and an arXiv posting.
