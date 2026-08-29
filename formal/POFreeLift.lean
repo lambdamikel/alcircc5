@@ -42165,6 +42165,21 @@ theorem dkey_compat (hI : RCC5Interp I) (C0 : Concept) {x y : α}
       rw [Bool.and_eq_true]
       exact ⟨subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hv huv),
              subB_iff.mpr (fun E hE => mty_all (mem_allBodies hE) hu hvu)⟩
+theorem sigDemands_ne_eq {q : Sig} {D : Concept} :
+    (eq, D) ∉ sigDemands q := by
+  intro h
+  rw [sigDemands, List.mem_filterMap] at h
+  obtain ⟨c, _, hcd⟩ := h
+  cases c with
+  | ex r' D' =>
+      cases r' with
+      | eq => simp at hcd
+      | pp => simp only [Option.some.injEq, Prod.mk.injEq] at hcd; exact absurd hcd.1 (by decide)
+      | ppi => simp only [Option.some.injEq, Prod.mk.injEq] at hcd; exact absurd hcd.1 (by decide)
+      | po => simp only [Option.some.injEq, Prod.mk.injEq] at hcd; exact absurd hcd.1 (by decide)
+      | dr => simp only [Option.some.injEq, Prod.mk.injEq] at hcd; exact absurd hcd.1 (by decide)
+  | _ => simp at hcd
+
 theorem mem_sigDemands {q : Sig} {r : Atom} {D : Concept}
     (h : (r, D) ∈ sigDemands q) : Concept.ex r D ∈ q.1 := by
   rw [sigDemands, List.mem_filterMap] at h
@@ -42850,6 +42865,112 @@ theorem allPP_gLt {X : List Sig} {q0 : Sig} (hq0 : q0 ∈ X)
   have hcone : coneInto X q0 u.val v.val := coneInto_gLt h
   exact sigOkB_pp (gen_sigOk hq0 hokX v.property)
     (hcone (osig X q0 u.val).1 List.mem_cons_self) hE
+/-- **§281.3 — `∀PPI` REACHES THE WHOLE ORDER BELOW ITS HOLDER.**  The dual of
+    §281.2, on the SAME invariant: `coneInto` puts the lower occurrence's type
+    into the upper's predecessor set, and admissibility's other clause
+    (`A_PPI(T) ⊆ U` for each predecessor `U`) sends the body down. -/
+theorem allPPI_gLt {X : List Sig} {q0 : Sig} (hq0 : q0 ∈ X)
+    (hokX : ∀ q ∈ X, sigOkB q = true) {u v : GOcc X q0} (h : gLt v u)
+    {E : Concept} (hE : Concept.all ppi E ∈ olab X q0 u.val) :
+    E ∈ olab X q0 v.val :=
+  sigOkB_ppi (gen_sigOk hq0 hokX u.property)
+    (coneInto_gLt h (osig X q0 v.val).1 List.mem_cons_self) hE
+
+/-- **§281.4 — `∀EQ` IS LOCAL.**  Strong `EQ` is identity, so the obligation is
+    discharged at the occurrence itself — and `supportB` already guarantees it. -/
+theorem allEQ_local {X : List Sig} {q0 : Sig} (hq0 : q0 ∈ X)
+    (hokX : ∀ q ∈ X, sigOkB q = true) {u : GOcc X q0}
+    {E : Concept} (hE : Concept.all eq E ∈ olab X q0 u.val) :
+    E ∈ olab X q0 u.val := by
+  have hs : supportB (osig X q0 u.val).1 = true := by
+    have := gen_sigOk hq0 hokX u.property
+    rw [sigOkB, Bool.and_eq_true, Bool.and_eq_true] at this
+    exact this.1.1
+  exact (supportB_sound hs).2.2.2.2.1 E hE
+
+/-! #### §282 — G3: `∃`-FULFILMENT
+
+A demand is discharged by its own child occurrence.  `gen_step_compat` already
+says the child carries the body; §278's edge lemmas say the birth really is an
+edge of that relation.  Together they are the `e_ex` obligation, with no
+borrowing, no blocking, and no side condition. -/
+
+/-- The child occurrence a demand generates. -/
+def gchild {X : List Sig} {q0 : Sig} (u : GOcc X q0) {r : Atom} {i : Nat}
+    {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 u.val))[i]? = some (r, D))
+    (hp : pickTarget X (osig X q0 u.val) r D = some q') : GOcc X q0 :=
+  ⟨(r, i) :: u.val, Gen.step u.property hd hp⟩
+
+theorem gchild_lab {X : List Sig} {q0 : Sig} (u : GOcc X q0) {r : Atom}
+    {i : Nat} {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 u.val))[i]? = some (r, D))
+    (hp : pickTarget X (osig X q0 u.val) r D = some q') :
+    D ∈ olab X q0 (gchild u hd hp).val := (gen_step_compat hd hp).2
+
+/-- **§282.1 — A `PP` DEMAND IS SERVED BY AN ACTUAL `PP`-EDGE.**  The frame
+    relation to the child is `PP`, not merely declared to be. -/
+theorem gchild_pp_edge {X : List Sig} {q0 : Sig} (u : GOcc X q0) {i : Nat}
+    {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 u.val))[i]? = some (pp, D))
+    (hp : pickTarget X (osig X q0 u.val) pp D = some q') :
+    (gOD X q0).lt u (gchild u hd hp) :=
+  tcl.base (gstep.up i u (Gen.step u.property hd hp))
+
+/-- And a `PPI` demand by an actual `PPI`-edge, oriented the other way. -/
+theorem gchild_ppi_edge {X : List Sig} {q0 : Sig} (u : GOcc X q0) {i : Nat}
+    {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 u.val))[i]? = some (ppi, D))
+    (hp : pickTarget X (osig X q0 u.val) ppi D = some q') :
+    (gOD X q0).lt (gchild u hd hp) u :=
+  tcl.base (gstep.dn i u.val (Gen.step u.property hd hp))
+/-- A `DR` demand is served by an actual disjointness edge. -/
+theorem gchild_dr_edge {X : List Sig} {q0 : Sig} (u : GOcc X q0) {i : Nat}
+    {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 u.val))[i]? = some (dr, D))
+    (hp : pickTarget X (osig X q0 u.val) dr D = some q') :
+    (gOD X q0).disj u (gchild u hd hp) :=
+  ⟨u.val, (dr, i) :: u.val, Or.inl (drBirth.mk i u.val), Or.inl rfl, Or.inl rfl⟩
+
+/-- **§282.2 — AND A `PO` DEMAND IS SERVED BY A RESIDUAL EDGE.**  Neither order
+    nor disjointness relates the two, so `odNet` returns `PO` — O11 read on the
+    carrier. -/
+theorem gchild_po_edge {X : List Sig} {q0 : Sig} (u : GOcc X q0) {i : Nat}
+    {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 u.val))[i]? = some (po, D))
+    (hp : pickTarget X (osig X q0 u.val) po D = some q') :
+    ¬ (gOD X q0).lt u (gchild u hd hp) ∧
+    ¬ (gOD X q0).lt (gchild u hd hp) u ∧
+    ¬ (gOD X q0).disj u (gchild u hd hp) :=
+  ⟨fun h => (unf_po_not_lt i u.val).1 (gLt_unfLt h),
+   fun h => (unf_po_not_lt i u.val).2 (gLt_unfLt h),
+   fun h => unf_po_not_disj i u.val h⟩
+
+/-- **§282.3 — `∃`-FULFILMENT, ASSEMBLED.**  Every non-`EQ` demand of a generated
+    occurrence is discharged by a child occurrence that carries the body and sits
+    at the right relation.  Compare the borrowing route, where this obligation
+    consumed §§248–265 and two rounds of cold attack: there the serving node
+    existed but the EDGE to it had to be justified, and no discipline survived.
+    Here the edge is the birth. -/
+theorem gchild_serves {X : List Sig} {q0 : Sig} (u : GOcc X q0) {r : Atom}
+    {i : Nat} {D : Concept} {q' : Sig}
+    (hd : (sigDemands (osig X q0 u.val))[i]? = some (r, D))
+    (hp : pickTarget X (osig X q0 u.val) r D = some q') :
+    ∃ v : GOcc X q0, D ∈ olab X q0 v.val ∧ odNet (gOD X q0) u v = r := by
+  refine ⟨gchild u hd hp, gchild_lab u hd hp, ?_⟩
+  cases r with
+  | pp => exact odNet_lt _ (gchild_pp_edge u hd hp)
+  | ppi => exact odNet_gt _ (gchild_ppi_edge u hd hp)
+  | dr => exact odNet_dj _ (gchild_dr_edge u hd hp)
+  | po =>
+      obtain ⟨h1, h2, h3⟩ := gchild_po_edge u hd hp
+      refine odNet_po _ ?_ h1 h2 h3
+      intro hc
+      have hv : u.val = (po, i) :: u.val := congrArg Subtype.val hc
+      have := congrArg List.length hv
+      simp at this
+  | eq =>
+      exact absurd (List.mem_of_getElem? hd) sigDemands_ne_eq
 
 /-! ##### §247.1 — what the total bound needed (SUPPLIED in §248)
 

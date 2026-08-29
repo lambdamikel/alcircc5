@@ -16525,3 +16525,32 @@ many variable names" on a `tcl` induction. The reliable pattern in this file is
 
 Build: 43,915 lines, 2,262 declarations, exit 0,
 0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
+
+### §§281.3–282 — the rest of `∀`, and `∃`-fulfilment
+
+`allPPI_gLt` is §281.2's dual on the SAME invariant — `coneInto` puts the lower
+occurrence's type into the upper's predecessor set, and admissibility's other
+clause (`A_PPI(T) ⊆ U`) sends the body down. `allEQ_local` is `supportB`'s
+locality clause read back out.
+
+**§282 — `∃`-fulfilment, and the contrast worth stating.** `gchild_serves`: every
+non-`EQ` demand of a generated occurrence is discharged by a child that carries
+the body AND sits at the right relation — `PP`/`PPI` by an order edge, `DR` by a
+disjointness seed, `PO` residual (O11 on the carrier), and `EQ` excluded because
+`sigDemands` never yields one (`sigDemands_ne_eq`).
+
+Under the borrowing route this same obligation consumed §§248–265, four refuted
+disciplines and two rounds of cold attack. The serving node always existed; what
+could not be justified was the EDGE to it. **Here the edge IS the birth.** That
+is the whole content of the pivot, in one lemma.
+
+**G3's remaining piece is `∀DR`.** It will need disjointness stated on the
+carrier (`gDisj` as the closure of `DR` births between GENERATED occurrences)
+rather than the `Occ`-level `unfDisj` currently used in `gOD`, for the same
+reason §281 restated the order: the `≤` chains inside the closure must stay
+generated. The mathematics is already in place — the `DR` transition condition
+crosses the two cones, and `coneInto` puts each endpoint's type into its cone —
+so this is the §281 refactor again, on the other relation.
+
+Build: 44,015 lines, 2,274 declarations, exit 0,
+0 errors / 0 warnings / 0 sorries / 0 `sorryAx`.
