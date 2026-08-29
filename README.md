@@ -17,8 +17,9 @@ direction.
 <p align="center"><em>Wessel's 2002/2003 construction of an RCC8 network isomorphic to an n×n grid (<a href="papers/report7.pdf">report7</a>, Fig. 10) — found by a Lisp enumerator program and rendered with CLIM (MCL), not drawn by hand. Such grid models <strong>exist</strong> — yet no concept term can <strong>force</strong> one. That gap (the "coincidence obstruction") is exactly why the problem has resisted both a decidability and an undecidability proof for two decades.</em></p>
 
 > **Disclaimer.** The papers and code here were produced by AI assistants
-> (Claude / Anthropic and GPT-5.4 / GPT-5.5 / OpenAI), prompted and directed
-> by Michael Wessel. They have **not** been peer-reviewed or verified by
+> (Claude Opus 4.6/4.7/4.8, Claude Fable 5 and Claude Opus 5 / Anthropic;
+> GPT-5.4, GPT-5.4 Pro, GPT-5.5, GPT-5.6 Pro and GPT-5.6 Sol / OpenAI),
+> prompted and directed by Michael Wessel. They have **not** been peer-reviewed or verified by
 > human domain experts, and are offered as a **discussion piece**. Standing
 > label for the **full logic**: **strongly supported, not certified**. The
 > **∀PO-free fragment** is a machine-certified exception — see the status

@@ -14,7 +14,7 @@
 \usepackage{xcolor}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
   pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5, a Decidable Fragment, and a Certified Lean Formalization Reducing It to One Keystone},
-  pdfauthor={Michael Wessel (with AI assistants: Claude/Anthropic and GPT-5.4/GPT-5.5/GPT-5.6 Pro/GPT-5.6 Sol/OpenAI)},
+  pdfauthor={Michael Wessel (with AI assistants: Claude Opus 4.6-4.8, Claude Fable 5, Claude Opus 5/Anthropic and GPT-5.4, GPT-5.4 Pro, GPT-5.5, GPT-5.6 Pro, GPT-5.6 Sol/OpenAI)},
   pdfsubject={Description logics; qualitative spatial reasoning; decidability of concept satisfiability},
   pdfkeywords={description logics, ALCI, RCC5, region connection calculus, qualitative spatial reasoning, decidability, concept satisfiability, patchwork property, Lean, interactive theorem proving, AI-assisted mathematics}}
 
@@ -73,8 +73,8 @@ and a Certified Lean Formalization Reducing It to One Keystone}
 
 \author{Michael Wessel\\
 \small LambdaMikel@Home \quad\textbullet\quad \texttt{miacwess@gmail.com}\\
-\small (with AI assistants: Claude / Anthropic and GPT-5.4\,/\,GPT-5.5\,/\,GPT-5.6~Pro\,/\,GPT-5.6~Sol / OpenAI)}
-\date{July 2026}
+\small (with AI assistants: Claude Opus~4.6--4.8, Claude Fable~5, Claude Opus~5 / Anthropic; GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol / OpenAI)}
+\date{August 2026}
 
 \begin{document}
 \maketitle
@@ -134,8 +134,9 @@ methodologies $\rightarrow$ Spatial and physical reasoning.
 \label{ssec:ai-disclaimer}
 
 The mathematical content of this paper was produced by AI assistants
-(Anthropic's Claude models and OpenAI's GPT-5.4, GPT-5.5, GPT-5.6
-Pro, and GPT-5.6 Sol), prompted, steered, and
+(Anthropic's Claude Opus~4.6, 4.7 and 4.8, Claude Fable~5 and Claude
+Opus~5; and OpenAI's GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro and
+GPT-5.6~Sol), prompted, steered, and
 reviewed by Wessel, who posed the problem,
 supplied the central intuitions and directions, orchestrated the
 review--repair cycles, and takes responsibility for the framing.
@@ -2601,9 +2602,12 @@ full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md};
 and GPT-5.6~Pro's canonical-representation note is
 \texttt{papers/final\_paper\_gpt\_5.6\_review/ALCI\_RCC5\_F6\_technical\_note.pdf}~\cite{GPT56TechNote}.
 The repository is at \url{https://github.com/lambdamikel/alcircc5}. The
-state described in this paper is frozen at the git tag
-\texttt{arxiv-candidate-2026-07-18}; for reproducibility cite that tag (or
-its commit hash), not the mutable \texttt{master} branch.
+state described in this paper is \emph{not} the July freeze: the tag
+\texttt{arxiv-candidate-2026-07-18} predates the $\forall\PO$-free
+fragment's certification (Remark~\ref{rem:conescheme}) and the three cold
+reviews of it. For reproducibility cite a commit hash on \texttt{master}
+dated 2026-08-29 or later, not the mutable branch head and not the July
+tag; filenames below are relative to the repository root.
 Table~\ref{tab:artifacts} maps each principal claim to its verification
 level, its file or Lean theorem, and its probe.
 
@@ -2628,8 +2632,7 @@ Static F6; automatic-cover; full decidability & Open & --- (no proof claimed) & 
 \bottomrule
 \end{tabular}
 \caption{Result-to-artifact map. Statuses are those of
-Table~\ref{tab:status}. Filenames are relative to the repository root at
-tag \texttt{arxiv-candidate-2026-07-18}.}
+Table~\ref{tab:status}. Filenames are relative to the repository root.}
 \label{tab:artifacts}
 \end{table}
 
@@ -2642,7 +2645,8 @@ doctoral work at the University of Hamburg, under the DFG project
 was additionally supported by a \emph{Grundstipendium} of the University of
 Hamburg from 1999 to 2001. The
 present investigation was carried out by AI assistants---Claude
-(Anthropic) and GPT-5.4~/~GPT-5.5~/~GPT-5.6~Pro~/~GPT-5.6~Sol
+Opus~4.6, 4.7 and 4.8, Claude Fable~5 and Claude Opus~5 (Anthropic), and
+GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro and GPT-5.6~Sol
 (OpenAI)---under the
 author's direction, across many rounds of proposal, adversarial review, and
 revision; GPT-5.4

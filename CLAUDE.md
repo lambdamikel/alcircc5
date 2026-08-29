@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repository Is
 
-This is a **description logic research project** investigating the decidability of concept satisfiability in ALCI_RCC5 and ALCI_RCC8, open problems from Wessel (2002/2003). The repository contains papers (LaTeX), implementations (Python), and documentation. The work was produced by AI assistants (Claude/Anthropic and GPT-5.4/OpenAI), prompted by Michael Wessel (miacwess@gmail.com, GitHub: lambdamikel).
+This is a **description logic research project** investigating the decidability of concept satisfiability in ALCI_RCC5 and ALCI_RCC8, open problems from Wessel (2002/2003). The repository contains papers (LaTeX), implementations (Python), and documentation. The work was produced by AI assistants (Claude Opus 4.6/4.7/4.8, Claude Fable 5, Claude Opus 5 / Anthropic; GPT-5.4, GPT-5.4 Pro, GPT-5.5, GPT-5.6 Pro, GPT-5.6 Sol / OpenAI), prompted by Michael Wessel (miacwess@gmail.com, GitHub: lambdamikel).
 
 The results are **unverified** and published as a discussion piece for the DL community.
 
