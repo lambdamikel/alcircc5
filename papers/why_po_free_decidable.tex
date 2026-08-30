@@ -856,6 +856,23 @@ certification pass itself.
   The frame conditions that had defeated the previous architecture ---
   irreflexivity of the order, and its disjointness from the disjointness
   relation --- then hold \emph{structurally} rather than by construction.
+  The \emph{completeness} half inverts what every earlier route attempted.
+  Those read completeness as \emph{extraction} --- given a model, build a finite
+  certificate out of it --- and that construction is where the $K(C_0)$ budgets
+  live. Here nothing is extracted. The signature space is fixed in advance from
+  $C_0$; a model point's signature is \emph{read off} it (its type, plus the
+  types of its strict $\PP$-predecessors); and the signatures a model realises
+  survive their own elimination, because for each demand the model hands over a
+  witness. That is a \emph{post-fixed point}, and a monotone reductive
+  elimination puts every post-fixed point inside its greatest fixed point.
+  Finiteness is free, the space having been finite before any model appeared.
+  The monotonicity is not a technicality: this project once retracted a
+  type-elimination procedure whose rule was \emph{anti-monotone} --- discarding
+  one type could invalidate the witness justifying another --- so exactly this
+  argument was unavailable to it and its fixpoint over-eliminated. That is why
+  the operator here asks only that each demand \emph{have} a target, and why
+  that was checked before anything was built on it.
+
   What makes the route work is specific to this fragment, and is worth
   stating because it explains the boundary: a composition cell containing
   $\PO$ can always be discharged by putting the pair at $\PO$ unless some

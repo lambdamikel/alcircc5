@@ -1666,6 +1666,30 @@ monotone, reductive elimination to a greatest fixed point; and a
 the frame conditions which defeated the previous architecture hold
 structurally rather than by construction.
 
+The \emph{completeness} direction deserves its own sentence, because it is
+where this route departs furthest from everything before it. Earlier
+architectures read completeness as \emph{extraction}: given a model, build a
+finite certificate out of it. That construction is where the width budgets
+live, and where four successive disciplines were refuted. Here nothing is
+extracted. The signature space is fixed in advance from $C_0$ alone; a model
+point's signature is \emph{read off} it --- its type, together with the types of
+its strict $\PP$-predecessors; and the set of signatures a model happens to
+realise is shown to survive its own elimination, because for each demand the
+model simply hands over a witness. That makes it a \emph{post-fixed point}, and
+since the elimination is monotone and reductive, any post-fixed point inside the
+starting set lies inside the greatest fixed point. Finiteness costs nothing ---
+the signature space was finite before any model was mentioned --- and the
+model's entire contribution is that one lemma.
+
+This is also exactly the trap the retracted quasimodel route fell into
+(\S\ref{ssec:approach-finite}): its elimination was \emph{anti-monotone}, so no
+such argument was available to it and its fixpoint over-eliminated. The
+elimination here asks only that each demand \emph{have} a target in the current
+set, which is monotone --- and that difference is what makes the
+greatest-fixed-point argument possible at all. It was checked before anything
+was built on it, precisely because this project had made the opposite mistake
+once.
+
 The design also explains the fragment boundary better than the syntactic
 statement does, and the explanation is worth recording because it says what
 $\forall\PO$-freeness is \emph{for}. A composition cell containing $\PO$ can
