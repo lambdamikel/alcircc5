@@ -72,7 +72,8 @@ dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 ## Status (2026-08-29): the ∀PO-free fragment is decided in Lean — raw input, concrete semantics, three cold reviews, no counterexample; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
-repair rounds and 17 adversarial reviews the *full-logic* certificate
+repair rounds and 17 adversarial reviews (of twenty to date) the
+*full-logic* certificate
 architecture reached a genuine local optimum: the local algebra is exhausted,
 the soundness side is machine-checked, and the entire remaining difficulty *of
 that certificate architecture* compresses into one well-posed lemma (F6). That
@@ -331,27 +332,20 @@ by `∀PO`, which the fragment removes.
   years.
 - **Unconditional win:** the **∀PO-free fragment** is **decidable** (a
   genuinely expressive spatial fragment — it keeps ∃PO, ∀DR, ∃DR, and all
-  part-of modalities), via the two-tier quotient route (not the split-forest
-  models). As of 2026-08-06 this is machine-certified as an actual **decision
-  procedure** — `Decidable (Satisfiable C₀)` in
-  [`formal/POFreeLift.lean`](formal/POFreeLift.lean) (~13,600 lines, **0
-  sorries**) — for the **horizontal** (∃DR/PO/EQ), **ascending-vertical**
-  (∃PP), and **descending-vertical** (∃PPI) quadrants *generally*, each
-  non-vacuously witnessed; and for the **mixed** (∃PO + ∃PP) case the merged
-  certificate (`mixCert_ok` — the first `MultiTierOk` carrying both externals
-  and a kernel), its encoding, and a complete decision are certified on a
-  witness (`decidableSat_Cmix`), with the *general* mixed extraction the one
-  remaining (scoped, **not** open) formalization. The keystone is a
-  **constructive uniformization** (`rr_covers`): removing ∀PO lets the
-  cross-relations coordinate for free, so the vertical "W2′" becomes a
-  kernel-checked theorem rather than an oracle. The 16th review's "PO is never
-  forced" concern is closed structurally — the construction enforces full
-  composition-consistency, which subsumes multi-path PO forcing; two
-  independent decision procedures also agree on the fragment with **zero
-  mismatches** ([`wp86`](verification/python/wp86_two_tier_lift_check.py),
-  [`wp87`](verification/python/wp87_po_free_end_to_end.py)). These fragment
-  theorems are **unreviewed**, and the result does **not** close the full logic
-  (F6 is forced by ∀PO, which the fragment removes).
+  part-of modalities), and as of **2026-08-29** this is machine-certified as an
+  actual **decision procedure**, for all four quadrants at once:
+  `decidableFSat` (raw input, negation included), `decidableSat_cone` (NNF), and
+  `decidableSetSat` (concrete set semantics) in
+  [`formal/POFreeLift.lean`](formal/POFreeLift.lean) (~45,400 lines, **0
+  sorries**), with fragment membership the **only** hypothesis in each. Three
+  independent cold reviews attacked it — at the definitions, at completeness,
+  at soundness — and none found a counterexample or a defect in the result.
+  The caveat is cost, not correctness: **decidable, not runnable** (the
+  signature space is doubly exponential). This does **not** close the full logic
+  — F6 is *forced by* ∀PO, which the fragment removes. *(The earlier route via
+  the two-tier quotient, with `rr_covers` as its keystone and per-quadrant
+  instances, is still in the artifact and still proved, but is no longer what
+  certifies the theorem; see the 2026-08-29 box above.)*
 
 ## Complexity landscape
 

@@ -7,9 +7,10 @@ paper; those abstract the Lean work and point here.
 
 > ### ⚠ Read this first (2026-08-29)
 >
-> **The narrative below is a chronological log that ends 2026-07-24.** It is
-> kept as the record of how the artifact was built; it is *not* a description of
-> the current state, and several of its figures are stale (it reports
+> **The narrative below is a chronological log. Its main run ends 2026-07-24,
+> with one later section (E4--E6, 2026-08-02 … 08-06) appended.** It is kept as
+> the record of how the artifact was built; it is *not* a description of the
+> current state, and several of its figures are stale (it reports
 > `POFreeLift.lean` at ~9,290 lines; it is now ~45,400, with 2,362 declarations,
 > 0 sorries / 0 warnings / 0 `sorryAx`).
 >
