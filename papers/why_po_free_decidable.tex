@@ -929,6 +929,16 @@ by exactly two moves, ``prepend a $\PP$ birth'' and ``strip a $\PPI$ head''; and
 stripping the leading vertical births returns each occurrence's component root,
 which order edges provably preserve and $\DR$ births provably change.
 
+One clarification, because it is easy to draw the wrong conclusion: the
+certified route does not \emph{assume} split-forest models. Its completeness
+half takes an arbitrary model and reads a signature off it. But the shape is
+still what the soundness half \emph{constructs}, it is the content of the
+normal form that makes composition closure free, and it is what decided that a
+signature should record vertical position. The idea's job changed --- from a
+property to be established of an arbitrary model, which is the extraction
+problem the earlier routes were refuted on, to a shape to be built, which is
+free --- and that change is why it went through.
+
 What the routes did \emph{not} share is the machinery. The certified one needs
 no patchwork appeal (composition closure comes from the ordered-disjoint
 axioms), no quotient (nothing is re-identified, because no particular model has

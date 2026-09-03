@@ -1940,6 +1940,22 @@ now read off any model rather than imposed on it. So the split forest is where
 the certified procedure's models \emph{live}; it is not a condition the
 certification asks of the input.
 
+That is worth spelling out, because ``not a hypothesis'' reads easily as ``not
+used,'' and here it is the opposite. The idea does three jobs in the certified
+development. It is the shape the soundness side \emph{constructs}, and the two
+frame conditions that defeated the previous architecture --- irreflexivity of
+the order, and its disjointness from the disjointness relation --- hold
+structurally only because that shape is a forest of vertical trees: an order
+edge cannot leave a component, and a $\DR$ birth opens a new one. It is the
+content of the normal form (Theorem~\ref{thm:normalform}), which is what
+replaced the patchwork appeal and makes composition closure free. And it fixed
+what a signature records --- vertical position, a type together with the types
+below it --- which is why the transition conditions push cones along $\PP$ and
+$\PPI$ and ask nothing of $\PO$. What changed is the idea's \emph{job}, not its
+importance: the earlier routes needed it as a property to be \emph{established}
+of an arbitrary model, which is the extraction problem they were refuted on,
+whereas here it is a shape to be \emph{built}, which costs nothing.
+
 What did \emph{not} survive is everything built to construct and control such a
 forest. There is no patchwork appeal---composition closure is derived from the
 ordered-disjoint axioms (Theorem~\ref{thm:normalform}), which is a certified
