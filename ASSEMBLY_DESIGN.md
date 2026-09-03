@@ -13,8 +13,9 @@ under-designed (the round-19/20 lesson).*
 > description of the current state.** The ∀PO-free fragment is
 > **machine-certified decidable**: `decidableFSat` (raw input),
 > `decidableSat_cone` (NNF) and `decidableSetSat` (concrete set semantics) in
-> `formal/POFreeLift.lean`, fragment membership the only hypothesis in each,
-> zero `sorry`. Three independent cold reviews found no counterexample.
+> [`formal/POFreeLift.lean`](formal/POFreeLift.lean), fragment membership the
+> only hypothesis in each, zero `sorry`. Three independent cold reviews found
+> no counterexample.
 > Full-logic decidability (F6) remains **open**.
 >
 > **Where to read.** The route that certified it is the **cone scheme**,
@@ -24,10 +25,17 @@ under-designed (the round-19/20 lesson).*
 > sections are kept because the reasoning is the audit trail, not because they
 > describe what is built.
 >
+> **Still-live advice, carried up from the superseded banner:** before designing
+> anything, consult **[`CERTIFIED_INVENTORY.md`](CERTIFIED_INVENTORY.md)** —
+> it exists because certified machinery was treated as absent three times in one
+> session, each time costing real work. ⚠ It was generated 2026-08-20 and
+> predates the cone scheme: its entries all hold, but its *omissions are not
+> absences*. It carries a stale-marker at its head.
+>
 > **The banner below is the one this file carried until the 2026-08-28 pivot.**
-> It is left verbatim, because its argument for why `odNet_frame` is on the
-> critical path survived the pivot and is still the reason composition closure
-> is free. Its headline claim is not current.
+> Its text is unchanged apart from added hyperlinks, because its argument for
+> why `odNet_frame` is on the critical path survived the pivot and is still the
+> reason composition closure is free. Its headline claim is not current.
 >
 > ---
 >
@@ -60,7 +68,8 @@ under-designed (the round-19/20 lesson).*
 > overshot. §42 remains correct that read-off EXPRESSES everything; what it
 > missed is that read-off cannot be USED, for budget reasons.
 >
-> Before designing anything, consult **`CERTIFIED_INVENTORY.md`**. This session
+> Before designing anything, consult
+> **[`CERTIFIED_INVENTORY.md`](CERTIFIED_INVENTORY.md)**. This session
 > re-derived or mis-assessed existing machinery three times (§40's two
 > architectures, §41.8's step-5 pipeline, and the §42 detour); the inventory
 > exists to stop that.
@@ -3684,7 +3693,7 @@ none of this is reviewed.
 
 Twice in one session I treated certified machinery as absent: the two
 certificate architectures (§40) and the entire step-5 encoding pipeline (§41.8).
-Each cost real work. `CERTIFIED_INVENTORY.md` now lists the load-bearing results
+Each cost real work. [`CERTIFIED_INVENTORY.md`](CERTIFIED_INVENTORY.md) now lists the load-bearing results
 by ROLE — decidability results, soundness core, frames, certificate validity,
 finiteness/encoding, extraction, model-side analysis — and is to be consulted
 before designing anything.
