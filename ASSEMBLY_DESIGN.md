@@ -7,7 +7,31 @@ remaining `Decidable (Satisfiable C₀)` theorem, with the hard cases
 located and their resolutions identified. Prose only — no Lean written
 under-designed (the round-19/20 lesson).*
 
-> ## ⚠ CURRENT ROUTE — read this before anything else
+> ## ⚠ READ THIS FIRST — status, 2026-08-29
+>
+> **The campaign is finished, and this file is a contemporaneous log, not a
+> description of the current state.** The ∀PO-free fragment is
+> **machine-certified decidable**: `decidableFSat` (raw input),
+> `decidableSat_cone` (NNF) and `decidableSetSat` (concrete set semantics) in
+> `formal/POFreeLift.lean`, fragment membership the only hypothesis in each,
+> zero `sorry`. Three independent cold reviews found no counterexample.
+> Full-logic decidability (F6) remains **open**.
+>
+> **Where to read.** The route that certified it is the **cone scheme**,
+> §§267–297 — start at §267. Everything before §267 records architectures that
+> were tried and, in the borrowing case, **refuted**; §§248–265 in particular
+> are retired (the theorems are true, the architecture is not viable). The
+> sections are kept because the reasoning is the audit trail, not because they
+> describe what is built.
+>
+> **The banner below is the one this file carried until the 2026-08-28 pivot.**
+> It is left verbatim, because its argument for why `odNet_frame` is on the
+> critical path survived the pivot and is still the reason composition closure
+> is free. Its headline claim is not current.
+>
+> ---
+>
+> ### ⚠ SUPERSEDED banner (pre-2026-08-28)
 >
 > **The live route is the HYBRID certificate `mtkKernelsOD` (§43).**
 > `mtk` labels read off a model, over a DECLARED **ordered-disjoint** frame on
@@ -43,7 +67,11 @@ under-designed (the round-19/20 lesson).*
 
 ---
 
-## 0. The target
+## 0. The target *(as of 2026-07-23; superseded — see §§267–297)*
+
+*The framing below belongs to the `decidableSat_of_codes` route. The certified
+route does not use it: there is no code enumeration, no `K(C₀)`, and the
+finite object is a control graph of signatures.*
 
 The decision reduction is already certified:
 

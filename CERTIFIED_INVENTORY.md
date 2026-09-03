@@ -1,5 +1,22 @@
 # Certified inventory — `formal/POFreeLift.lean`
 
+> ## ⚠ STALE — generated 2026-08-20, before the pivot
+>
+> This inventory predates the cone-scheme route and does **not** list its
+> declarations. Figures below are from 2026-08-20 (1,036 top-level
+> declarations); the file now has **2,362**, still 0 sorries and 0 warnings.
+>
+> **The capstones it is missing**, all in `formal/POFreeLift.lean`:
+> `decidableFSat` (raw input, with `nnfP_correct`), `decidableSat_cone` (NNF),
+> `decidableSetSat` (concrete sets), `satisfiable_iff_set` (abstract $=$
+> concrete, no fragment hypothesis), `coneScheme_sound`, `coneScheme_complete`,
+> `coneScheme_unsat_full`, and the control layer `sigStatic` / `compatB` /
+> `pruneSig` / `gfpIter`. Provenance: `ASSEMBLY_DESIGN.md` §§267–297.
+>
+> Everything listed below still exists and is still proved — the risk this file
+> guards against (re-deriving what exists) is unchanged for those entries. The
+> risk it now *adds* is treating its omissions as absences.
+
 Generated 2026-08-20. **Purpose: stop re-deriving what already exists.** Twice in
 one session I treated certified machinery as absent (the two certificate
 architectures of §40; the whole step-5 encoding pipeline), and each cost real
