@@ -854,6 +854,74 @@ arbitrary complete-graph models with composition-table semantics.
 The problem has been recognized as open by leading researchers
 since 2006.
 
+\paragraph{The route they suggested, and how it differs from the one taken
+here.} Their concluding section asks for ``a decidable and still useful
+variant'' of the logics they study, and canvasses where one might be found.
+Besides $\LRCC{5}(\mathit{RS})$ itself, they write that ``other candidates
+could be obtained by modifying the set of relations, e.g.\ giving up some of
+them,'' and add that ``it has, for example, been argued that dropping
+$\PO$ still results in a useful formalism for applications in geographic
+information systems''~\cite[p.~31]{LutzWolter2006}.
+
+It is worth being exact about what that is and is not, because it is the
+closest thing in the literature to the fragment established here. The
+sentence about dropping $\PO$ discharges the \emph{usefulness} half of their
+two-part desideratum, not the decidability half: it is a claim about
+applications, it carries no citation, and it is accompanied by no proof, no
+proof sketch, and no conjecture that a $\PO$-less language would be
+decidable. The technical progress they point to in the same breath,
+Shapirovsky and Shehtman~\cite{ShapirovskyShehtman2005}, concerns modal
+logics with a \emph{single} modality for an inclusion relation over region
+structures, doubling as relativistic temporal logics --- a substantially
+smaller language than RCC5 without $\PO$, which still carries $\DR$, $\PP$
+and $\PPI$. So far as we can determine, no decidability argument for any
+$\PO$-restricted RCC5 language appears there or since.\footnote{One might be
+tempted to read support into the fact that $\PO$ occurs exactly once in
+their RCC5 undecidability reduction (\S8) --- as the box $[\PO]$ in their
+formula~(8.1), forcing the representing regions to be pairwise disconnected
+--- and never in existential position, so that removing $\forall\PO$ alone
+suffices to break it. That reading would be a mistake, and we record the
+observation only because it makes their choice of $\PO$ look informed rather
+than arbitrary. Breaking one reduction is no evidence of decidability:
+undecidability proofs are not unique, and nothing excludes a different
+argument that never mentions $\PO$. The entailment in fact runs the other
+way and in the uninteresting direction --- the fragment is decidable, hence
+\emph{no} undecidability reduction succeeds on it, theirs included. Their
+reduction moreover fails for $\LRCC{5}(\mathit{RS})$ on independent grounds,
+requiring closure under suprema ($\mathit{RS}^\exists$), which is why they
+list that logic as the open candidate in the first place.}
+
+The fragment established here differs from their suggestion in two ways, and
+both matter. First, it is a strictly \emph{weaker} restriction: $\PO$ is not
+removed from the language. Existential quantification $\exists\PO.C$ ---
+``overlaps something satisfying $C$'' --- is retained in full, and only the
+universal $\forall\PO.C$ is excluded, so the fragment is properly larger than
+the one their remark contemplates. Second, and structurally more important,
+the fragment does \emph{not} obtain decidability by recovering a finite model
+property. The concept $\exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$ is
+$\forall\PO$-free and satisfiable with no finite model (\code{cinf\_pofree},
+\code{cinf\_satisfiable}), so every model of it is infinite; decidability
+comes instead from a finite \emph{presentation} of possibly-infinite models
+(\S\ref{ssec:conescheme}). And the reason the restriction is exactly the
+right one is the residual-$\PO$ default: a composition cell containing $\PO$
+can always be discharged by putting the pair at $\PO$ unless some formula can
+object, and the only formula that can is $\forall\PO.D$. Dropping $\PO$
+wholesale would buy that property too, but at more cost than is necessary.
+
+\paragraph{Prior consideration of restricted fragments, by the present
+author.} Report7~\cite{Wessel2003} contains a section headed ``Restricted
+Decidable Fragments of $\ALCIRCC{5}$ and $\ALCIRCC{8}$?'' (\S5.3), which is
+prior art for the general idea and should be recorded as such. It canvasses
+two restrictions: one derived from $\mathcal{ALCRP}(D)$, rejecting every
+concept whose negation normal form contains a quantifier alternation
+$\exists R.\ldots\forall S.\ldots$ or $\forall R.\ldots\exists S.\ldots$; and
+one admitting only Boolean concepts inside universal value restrictions.
+Both are strictly stronger than $\forall\PO$-freeness --- they constrain
+\emph{every} role, and forbid the nesting the present fragment permits ---
+and both work, as that section says, by restoring the finite model property.
+Neither is the $\forall\PO$-free fragment, and by the witness above neither
+technique could yield it.
+
 \paragraph{On priority and citation.} Two honest caveats, in both
 directions. First, Wessel proved \emph{neither} decidability nor
 undecidability of $\ALCIRCC{5}$ or $\ALCIRCC{8}$: report7 constructs the
@@ -2947,6 +3015,14 @@ M.\ Wessel.
 \newblock On spatial reasoning with description logics --- position paper.
 \newblock In \emph{Proceedings of the 2002 International Workshop on
   Description Logics (DL~2002)}, CEUR Workshop Proceedings, 2002.
+
+\bibitem{ShapirovskyShehtman2005}
+I.\ Shapirovsky and V.\ Shehtman.
+\newblock Modal logics of regions and Minkowski spacetime.
+\newblock \emph{Journal of Logic and Computation}, 15(4):559--574, 2005.
+\newblock Cited by Lutz and Wolter~\cite{LutzWolter2006} as a step toward a
+  decidable variant; its language has a single modality for an inclusion
+  relation, not the RCC5 relation set.
 
 \bibitem{Wessel2003}
 M.\ Wessel.
