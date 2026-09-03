@@ -8325,3 +8325,51 @@ third and uses neither.
 
 Outstanding and non-technical: the `LambdaMikel@Home` affiliation placeholder,
 which is the last thing between the overview and an arXiv posting.
+
+---
+
+### Addendum — 2026-09-02: the documentation pass, and one recurring defect
+
+A follow-up pass over the forward-facing documents, prompted by a series of
+sharp questions rather than by any plan. Recorded because what it found is more
+interesting than the fixes.
+
+**Every defect was of one kind.** Not a single dangling reference, and not one
+false statement — every Lean name in every paper resolved, every theorem cited
+was still proved. What was wrong, in every case, was **framing**: true things
+whose placement or scope implied something false.
+
+- Table 6 listed the fragment as *theorem-level* and omitted six results.
+- A whole subsection opened "This subsection describes the construction behind
+  Theorem 10's certified `Decidable` instance" — it described the *superseded*
+  route. Everything in it was still true.
+- "Partly machine-checked attack" was accurate of the full problem, but never
+  said *of what*, so a reader could not tell one sub-question was checked end
+  to end.
+- `WHY_ITS_HARD.md` said "all but **one** review found a flaw" — stale from
+  when only one review had come back clean, and so *harsher* on the project
+  than the record warranted.
+- A cross-reference that resolved cleanly but pointed at a section which did
+  not contain what the citing sentence claimed.
+
+None of these fails a build, a grep, or a reference check. They survived
+precisely because every automated check passed.
+
+**Restructuring.** The papers presented the superseded per-quadrant route at
+length and the certified cone scheme afterwards in a remark. That is now
+inverted: the cone scheme is a section and comes first, the failed route is a
+remark and comes second.
+
+**Two things were added that had never been written down.** How completeness
+actually works — the model does not *build* a certificate, it certifies that a
+pre-existing finite set is a post-fixed point, and monotonicity does the rest.
+And why the failed route failed: reusing a node imposes a *global* condition,
+every discipline proposed was a *local* test, and standard **blocking** is that
+same story in its most familiar form — type equality cannot see whether a reuse
+closes a cycle or drags a disjointness witness into a cone. The cone scheme
+does not test better; it removes the obligation.
+
+**Method note.** The last two defects were found by *rendering the pages and
+reading them*, after the mechanical sweeps had come back clean. A postmortem
+placed before the thing it dissects, and a "the next remark says…" pointing
+backwards after a move, are both invisible to LaTeX.
