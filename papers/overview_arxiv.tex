@@ -1683,40 +1683,6 @@ the fragment, and the round-robin device answers the uniformization question
 the full logic leaves open. It is also the clearest place to see \emph{why} the
 fragment is tractable at all.
 
-\medskip
-\textbf{Why it failed, and what that generalizes to.} The four disciplines
-tried in succession were not four unrelated mistakes; they were four attempts
-at one impossible thing. Reusing a node imposes a \emph{global} condition on the
-object being built --- the order induced by the reused edges must stay acyclic,
-and the relations those edges force must be \emph{jointly} realizable --- while
-every discipline proposed was a \emph{local} test: per edge, per node, per type.
-A local test cannot see what it is not looking at, and the refutations say so
-one axis at a time. Per-edge safety removes self-loops and nothing longer: the
-countermodel has two individually safe fallbacks forming a four-cycle. A key
-computed from an occurrence's downward cone cannot separate occurrences whose
-obstruction is \emph{horizontal}. A class top defined by type alone drags one
-member's disjointness witness onto another member's cone. This is the same
-pointwise-versus-joint shape that had already broken three earlier
-architectures here, which is why the attempt was abandoned rather than
-repaired: the error was proposing another local discipline, not the particular
-disciplines proposed. Standard \emph{blocking} is this story in its most
-familiar form --- it is precisely the local test, ``two occurrences carry the
-same type, so let one stand for the other'' --- and it fails here for exactly
-the same reason: type equality cannot see whether the reuse closes a cycle in
-the order, or places the blocker's disjointness witness inside the blocked
-node's cone, which is the clause (\code{ltNotDj}) that broke this project's
-last and most careful attempt at it.
-
-What \S\ref{ssec:conescheme} does instead is not a better test --- it removes
-the obligation. Nothing is reused, so the order is a tree closure, irreflexive
-because paths cannot return rather than because a check forbids it; and a $\DR$
-birth opens a new vertical component, so the order and the disjointness relation
-can never meet. The global conditions hold \emph{structurally}. There is no test
-to get right, because there is no way to violate them. That is the general
-lesson worth carrying out of this project: when a construction keeps failing a
-global consistency condition, the productive move is not a sharper local check
-but a shape in which the condition cannot be expressed as a failure.
-
 \textbf{The certificate, and the decision loop.} A certificate is a
 \emph{multi-tier} object (\code{MultiTier}): finitely many \emph{external}
 neighbour-types together with finitely many recurrent \emph{kernels}---chain
@@ -1791,8 +1757,8 @@ device above cashes in. Scope of \emph{this route}, stated exactly: the three
 \emph{pure} quadrants are certified \emph{generally}, each with a non-vacuous
 satisfiable witness (\code{Cvert}, \code{Ccar}, \code{Calt}, \code{Clin},
 \code{Cdesc}); the \emph{mixed} quadrant's certificate, encoding, and decision
-are certified only on a witness. Its general extraction was never completed,
-and the next remark says what happened instead.
+are certified only on a witness. Its general extraction was never completed;
+\S\ref{ssec:conescheme} above is what replaced it.
 
 
 
@@ -1811,6 +1777,41 @@ found a counterexample or a defect in the fragment result. The two
 \emph{arguments} of Theorem~\ref{thm:pofree} remain unformalized, and the
 standing ledger presumption (\S\ref{sec:agentic}) continues to apply to them,
 and to every full-logic claim in this paper.
+
+\medskip
+\textbf{Why it failed, and what that generalizes to.} The four disciplines
+tried in succession were not four unrelated mistakes; they were four attempts
+at one impossible thing. Reusing a node imposes a \emph{global} condition on the
+object being built --- the order induced by the reused edges must stay acyclic,
+and the relations those edges force must be \emph{jointly} realizable --- while
+every discipline proposed was a \emph{local} test: per edge, per node, per type.
+A local test cannot see what it is not looking at, and the refutations say so
+one axis at a time. Per-edge safety removes self-loops and nothing longer: the
+countermodel has two individually safe fallbacks forming a four-cycle. A key
+computed from an occurrence's downward cone cannot separate occurrences whose
+obstruction is \emph{horizontal}. A class top defined by type alone drags one
+member's disjointness witness onto another member's cone. This is the same
+pointwise-versus-joint shape that had already broken three earlier
+architectures here, which is why the attempt was abandoned rather than
+repaired: the error was proposing another local discipline, not the particular
+disciplines proposed. Standard \emph{blocking} is this story in its most
+familiar form --- it is precisely the local test, ``two occurrences carry the
+same type, so let one stand for the other'' --- and it fails here for exactly
+the same reason: type equality cannot see whether the reuse closes a cycle in
+the order, or places the blocker's disjointness witness inside the blocked
+node's cone, which is the clause (\code{ltNotDj}) that broke this project's
+last and most careful attempt at it.
+
+What \S\ref{ssec:conescheme} does instead is not a better test --- it removes
+the obligation. Nothing is reused, so the order is a tree closure, irreflexive
+because paths cannot return rather than because a check forbids it; and a $\DR$
+birth opens a new vertical component, so the order and the disjointness relation
+can never meet. The global conditions hold \emph{structurally}. There is no test
+to get right, because there is no way to violate them. That is the general
+lesson worth carrying out of this project: when a construction keeps failing a
+global consistency condition, the productive move is not a sharper local check
+but a shape in which the condition cannot be expressed as a failure.
+
 \end{remark}
 
 \subsection{The split-forest idea}
