@@ -351,7 +351,13 @@ by `∀PO`, which the fragment removes.
   independent cold reviews attacked it — at the definitions, at completeness,
   at soundness — and none found a counterexample or a defect in the result.
   The caveat is cost, not correctness: **decidable, not runnable** (the
-  signature space is doubly exponential). This does **not** close the full logic
+  signature space is doubly exponential). On prior work: Lutz & Wolter leave
+  this logic explicitly open and float dropping PO as a candidate route
+  without an argument; Wessel's own report7 canvasses restricted fragments,
+  but strictly stronger ones that work by restoring the finite model property,
+  which this fragment provably lacks. So far as we can determine the result is
+  new — stated deliberately weaker than a priority claim; the paper's
+  Lutz–Wolter section gives the full check. This does **not** close the full logic
   — F6 is *forced by* ∀PO, which the fragment removes. *(The earlier route via
   the two-tier quotient, with `rr_covers` as its keystone and per-quadrant
   instances, is still in the artifact and still proved, but is no longer what
