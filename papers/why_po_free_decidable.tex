@@ -853,6 +853,22 @@ certification pass itself.
   its strict $\PP$-predecessors); a monotone, reductive elimination runs to
   a greatest fixed point; and every non-$\EQ$ existential unfolds to a
   \emph{fresh occurrence}, so that nothing is ever identified or borrowed.
+  \emph{Why the previous architecture failed}, since it is the transferable
+  part: reusing a node imposes a \emph{global} condition --- the order the
+  reused edges induce must stay acyclic, and the relations they force must be
+  \emph{jointly} realizable --- while every discipline proposed for enforcing it
+  was a \emph{local} test, per edge or per node or per type. A local test cannot
+  see what it is not looking at, and the four countermodels say so one axis at a
+  time: per-edge safety removes self-loops and nothing longer (two individually
+  safe fallbacks forming a four-cycle); a key read off an occurrence's downward
+  cone cannot separate occurrences whose obstruction is \emph{horizontal}; a
+  class top defined by type alone drags one member's disjointness witness onto
+  another's cone. That is the pointwise-versus-joint shape that had already
+  broken three earlier architectures in this project, so the fault lay in
+  proposing another local discipline, not in the particular ones proposed. The
+  cone scheme does not test better --- it removes the obligation, and the global
+  conditions then hold structurally rather than by enforcement.
+
   The frame conditions that had defeated the previous architecture ---
   irreflexivity of the order, and its disjointness from the disjointness
   relation --- then hold \emph{structurally} rather than by construction.

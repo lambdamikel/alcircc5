@@ -158,7 +158,7 @@ throughout, and it is not uniform: the standing one-line status for the
 \emph{full logic} is \emph{strongly supported, not certified}, whereas the
 $\forall\PO$-free fragment is \emph{machine-certified}, its formalization's
 adequacy having been examined by three independent cold reviews
-(Remark~\ref{rem:conescheme}). What remains at risk there is what remains at
+(\S\ref{ssec:conescheme}). What remains at risk there is what remains at
 risk in any formalization---that a definition misrepresents the intended
 object---which is why those reviews targeted the definitions, and why the
 concrete-semantics question was converted into a theorem rather than left to
@@ -431,7 +431,7 @@ included, on \emph{raw} (not pre-normalized) input and under \emph{concrete set}
 semantics (\code{decidableFSat}, \code{decidableSat\_cone},
 \code{decidableSetSat}), with fragment membership its only hypothesis; and a
 one-sided \textsc{unsat} test for the \emph{full} logic
-(\code{coneScheme\_unsat\_full}) & see Remark~\ref{rem:conescheme}\\
+(\code{coneScheme\_unsat\_full}) & see \S\ref{ssec:conescheme}\\
 \addlinespace
 \emph{Empirical} & the cover-tree tableau; the cross-validation suites; the
 finite model verifier & test evidence only; not a decision theorem\\
@@ -1532,7 +1532,7 @@ how the certification was subsequently carried through to the decision
 procedure itself.
 
 \paragraph{Certified as a decision procedure (2026-08-06; superseded
-2026-08-29 --- see Remark~\ref{rem:conescheme}).} The certification
+2026-08-29 --- see \S\ref{ssec:conescheme}).} The certification
 has since been carried through to the decision itself: in
 \texttt{formal/POFreeLift.lean} (then ${\sim}13{,}600$ lines, zero \code{sorry};
 axioms \texttt{propext}/\texttt{Classical.choice}/\texttt{Quot.sound}, the
@@ -1541,12 +1541,12 @@ computable) a \code{Decidable} instance for satisfiability of $C_0$ is now
 machine-checked---\emph{generally} for the fragment's three \emph{pure}
 quadrants (horizontal, ascending-vertical, descending-vertical) and on a
 witness for the \emph{mixed} quadrant.
-Section~\ref{ssec:pofree-quadrants} gives \emph{that} construction: the
+Remark~\ref{ssec:pofree-quadrants} records \emph{that} construction: the
 finite certificate, the four quadrants, and the constructive round-robin
 uniformization (\code{rr\_covers}) that turns the full logic's open
 ``W2$'$'' oracle into a kernel-checked theorem once $\forall\PO$ is removed.
 The mixed quadrant was closed, and the whole fragment re-certified by a
-different route, on 2026-08-29 (Remark~\ref{rem:conescheme}); that route has
+different route, on 2026-08-29 (\S\ref{ssec:conescheme}); that route has
 since been through three independent cold reviews. None of it bears on the
 full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment removes.
 
@@ -1554,111 +1554,19 @@ full logic---F6 is forced \emph{by} $\forall\PO$, which the fragment removes.
 legitimately infinite (unbounded $\PP$-towers are satisfiable). The right
 target is a finite \emph{presentation} of a possibly-infinite model.
 
-\subsection{The $\forall\PO$-free fragment, first route: four quadrants and a
-round-robin kernel}
-\label{ssec:pofree-quadrants}
+\subsection{The $\forall\PO$-free fragment, certified: the cone scheme
+(2026-08-29)}
+\label{ssec:conescheme}
 
-\emph{Read this as the first of two certified routes, not as the current one.}
-Everything described here is in the artifact and every theorem named is still
-proved; what changed is which construction discharges
-Theorem~\ref{thm:pofree}. This route certified a \code{Decidable} instance
-\emph{per quadrant}, generally for the three pure ones and only on a witness
-for the mixed one; its general mixed extraction was never completed, and two
-rounds of cold attack later refuted the architecture it needed. The route that
-now certifies the theorem---uniformly, for all four quadrants at once---is the
-cone scheme of Remark~\ref{rem:conescheme}, and it uses none of the machinery
-below.
+This is the route that certifies Theorem~\ref{thm:pofree}, and the one to read
+first. An earlier route, recorded in Remark~\ref{ssec:pofree-quadrants} below,
+certified three of the fragment's four quadrants generally and the fourth only
+on a witness; its general mixed extraction was never completed, because two
+rounds of cold attack refuted the architecture it needed (a finite node set
+reused by blocking and \emph{borrowing} witnesses) by exact finite
+countermodels. It was replaced.
 
-The subsection is kept because the material is not superseded as
-\emph{mathematics}: the four-quadrant taxonomy is a real classification of how
-demands interact in the fragment, and the round-robin device answers the
-uniformization question that the full logic leaves open. It is also the
-clearest place to see \emph{why} the fragment is tractable at all, which is
-what the closing paragraphs draw out.
-
-\paragraph{The certificate, and the decision loop.} A certificate is a
-\emph{multi-tier} object (\code{MultiTier}): finitely many \emph{external}
-neighbour-types together with finitely many recurrent \emph{kernels}---chain
-generators, read as ``the pattern continues like this'' and unfolded into
-infinitely many distinct elements, never bent into a finite quotient. Each is
-decorated with Hintikka bookkeeping: which existential demand each node
-discharges, which universal obligations propagate along which edges, and a
-declared RCC5 value for every relevant pair, required composition-closed. A
-total Boolean checker \code{mtAcceptB} accepts a certificate exactly when all
-of this holds, and acceptance is \emph{sound}---a passing certificate unfolds,
-through a Hintikka labelling and truth lemma, to a genuine RCC5 model of $C_0$
-(\code{mtAcceptB\_sound}). Certificates are finite list data with a total
-G\"odel decoder (\code{FinMT}), so the decision procedure is immediate
-(\code{decidableSat\_of\_codes}): enumerate the finitely many codes a concept
-admits, run the checker, answer \textsc{sat} iff one passes. All the
-mathematics is in emitting the right code for a satisfiable concept; the
-algorithm itself is a bounded for-loop.
-
-\paragraph{Four quadrants.} A $\forall\PO$-free concept's existential demands
-fall into four combinations, each with its own certificate shape:
-\begin{itemize}
-  \item \emph{Horizontal} ($\exists\DR$, $\exists\PO$, $\exists\EQ$ only): a
-    node's label is its model type \emph{truncated at the concept's modal
-    depth} (\code{mtk}). The frame is universally closed in both directions
-    (disjointness is self-converse, so a $\forall\DR$ obligation propagates
-    identically each way), and depth-truncation terminates the recursion, so
-    finitely many labels exhaust the demands (\code{decidableSat\_hfrag}). No
-    kernel is needed---the horizontal world is bounded outright.
-  \item \emph{Ascending vertical} ($\exists\PP$): a single recurrent kernel
-    generating one $\PP$-chain. Along any ascending chain the Hintikka type
-    recurs with a \emph{bounded period} (an infinite-pigeonhole segment
-    lemma, \code{mty\_segment\_bounded}); that period \emph{is} the kernel
-    (\code{decidableSat\_vtower}).
-  \item \emph{Descending vertical} ($\exists\PPI$): the exact dual. The
-    certificate carries the chain's direction as a single bit, so the whole
-    encoding and decision side is direction-agnostic and the ascending
-    development transports verbatim (\code{decidableSat\_vtowerRRI}).
-  \item \emph{Mixed} ($\exists\PO$ \emph{and} $\exists\PP$): the merged
-    certificate \code{mixCert\_ok}---the first that carries \emph{both}
-    non-trivial externals \emph{and} a kernel. Each $\exists\PO$ demand is
-    served by a direct external neighbour, each $\exists\PP$ demand by the
-    kernel, and every cross-obligation living on a $\PO$-edge is \emph{vacuous},
-    because no $\forall\PO$ clause occurs anywhere in the fragment's closure
-    (\code{mty\_no\_all\_po}). Its encoding and a complete decision are
-    certified on a concrete witness (\code{decidableSat\_Cmix}).
-\end{itemize}
-
-\paragraph{This route's keystone: a constructive uniformization.} (The cone
-scheme does not need it; its own keystone is the residual-$\PO$ default of
-Remark~\ref{rem:conescheme}.) One recurrent kernel
-must often serve \emph{several} distinct $\exists\PP$ demands at once, and on
-the full logic this is exactly the feared uniformization property W2$'$: can a
-single repeating interface discharge every demand without two of them colliding
-on a horizontal edge? In the fragment the answer is \emph{constructive}. The
-kernel serves the demands in \emph{round-robin} over its recurrent period---at
-period position $n$ it discharges the $n$-th demand, drawing the witness from
-whatever phase carries it---so across one full period \emph{every} demand is
-met (\code{rr\_covers}). This turns W2$'$ from an oracle into a kernel-checked
-theorem, and it works for one precise reason: with $\forall\PO$ absent, the
-horizontal edges the kernel emits at successive steps are \emph{unconstrained},
-so the phases never conflict and the round-robin schedule is always realizable.
-That is the exact sense in which removing $\forall\PO$ lets the cross-relations
-coordinate for free.
-
-\paragraph{Why the boundary is exactly here, and the honest labels.} The
-construction stops precisely at $\forall\PO$-freeness because F6---the full
-logic's open live-width keystone---is \emph{forced by} $\forall\PO$: it is a
-$\forall\PO$ obligation that can watch a kernel's emitted horizontal edges and
-so demand a bounded, coordinated interface across phases. Remove that one
-constructor and the coordination F6 abstracts becomes free, which is what every
-device above cashes in. Scope of \emph{this route}, stated exactly: the three
-\emph{pure} quadrants are certified \emph{generally}, each with a non-vacuous
-satisfiable witness (\code{Cvert}, \code{Ccar}, \code{Calt}, \code{Clin},
-\code{Cdesc}); the \emph{mixed} quadrant's certificate, encoding, and decision
-are certified only on a witness. Its general extraction was never completed,
-and the next remark says what happened instead.
-
-\begin{remark}[The mixed quadrant, certified by a third route
-(2026-08-29)]\label{rem:conescheme}
-The general mixed extraction just described was never completed: two rounds of
-cold attack refuted the architecture it needed (a finite node set reused by
-blocking and \emph{borrowing} witnesses), by exact finite countermodels. It was
-replaced. The route now certified is a \emph{cone scheme}, designed by
+The route now certified is a \emph{cone scheme}, designed by
 GPT-5.6~Sol~\cite{GPT56Sol}: a finite control graph whose states are pairs
 (support type, upper bound on the types of strict $\PP$-predecessors); a
 monotone, reductive elimination to a greatest fixed point; and a
@@ -1757,8 +1665,130 @@ checks the decision procedure with fragment membership as its only hypothesis
 cold reviews without a counterexample. The project's blanket \emph{strongly
 supported, not certified} applies to the \emph{full logic}, and to the two
 unformalized arguments of \S\ref{ssec:approach-finite}; it does not apply to
-this result, and earlier drafts of this remark were wrong to carry it over.
-\end{remark}
+this result, and earlier drafts of this section were wrong to carry it over.
+
+\begin{remark}[The superseded first route: four quadrants and a round-robin
+kernel]\label{ssec:pofree-quadrants}
+Everything here is in the artifact and every theorem named is still proved;
+what changed is which construction discharges Theorem~\ref{thm:pofree}. This
+route certified a \code{Decidable} instance \emph{per quadrant}, generally for
+the three pure ones and only on a witness for the mixed one; its general mixed
+extraction was never completed, and two rounds of cold attack later refuted the
+architecture it needed. The route that certifies the theorem is the cone scheme
+of \S\ref{ssec:conescheme}, which uses none of the machinery below.
+
+It is recorded because the material is not superseded as \emph{mathematics}:
+the four-quadrant taxonomy is a real classification of how demands interact in
+the fragment, and the round-robin device answers the uniformization question
+the full logic leaves open. It is also the clearest place to see \emph{why} the
+fragment is tractable at all.
+
+\medskip
+\textbf{Why it failed, and what that generalizes to.} The four disciplines
+tried in succession were not four unrelated mistakes; they were four attempts
+at one impossible thing. Reusing a node imposes a \emph{global} condition on the
+object being built --- the order induced by the reused edges must stay acyclic,
+and the relations those edges force must be \emph{jointly} realizable --- while
+every discipline proposed was a \emph{local} test: per edge, per node, per type.
+A local test cannot see what it is not looking at, and the refutations say so
+one axis at a time. Per-edge safety removes self-loops and nothing longer: the
+countermodel has two individually safe fallbacks forming a four-cycle. A key
+computed from an occurrence's downward cone cannot separate occurrences whose
+obstruction is \emph{horizontal}. A class top defined by type alone drags one
+member's disjointness witness onto another member's cone. This is the same
+pointwise-versus-joint shape that had already broken three earlier
+architectures here, which is why the attempt was abandoned rather than
+repaired: the error was proposing another local discipline, not the particular
+disciplines proposed.
+
+What \S\ref{ssec:conescheme} does instead is not a better test --- it removes
+the obligation. Nothing is reused, so the order is a tree closure, irreflexive
+because paths cannot return rather than because a check forbids it; and a $\DR$
+birth opens a new vertical component, so the order and the disjointness relation
+can never meet. The global conditions hold \emph{structurally}. There is no test
+to get right, because there is no way to violate them. That is the general
+lesson worth carrying out of this project: when a construction keeps failing a
+global consistency condition, the productive move is not a sharper local check
+but a shape in which the condition cannot be expressed as a failure.
+
+\textbf{The certificate, and the decision loop.} A certificate is a
+\emph{multi-tier} object (\code{MultiTier}): finitely many \emph{external}
+neighbour-types together with finitely many recurrent \emph{kernels}---chain
+generators, read as ``the pattern continues like this'' and unfolded into
+infinitely many distinct elements, never bent into a finite quotient. Each is
+decorated with Hintikka bookkeeping: which existential demand each node
+discharges, which universal obligations propagate along which edges, and a
+declared RCC5 value for every relevant pair, required composition-closed. A
+total Boolean checker \code{mtAcceptB} accepts a certificate exactly when all
+of this holds, and acceptance is \emph{sound}---a passing certificate unfolds,
+through a Hintikka labelling and truth lemma, to a genuine RCC5 model of $C_0$
+(\code{mtAcceptB\_sound}). Certificates are finite list data with a total
+G\"odel decoder (\code{FinMT}), so the decision procedure is immediate
+(\code{decidableSat\_of\_codes}): enumerate the finitely many codes a concept
+admits, run the checker, answer \textsc{sat} iff one passes. All the
+mathematics is in emitting the right code for a satisfiable concept; the
+algorithm itself is a bounded for-loop.
+
+\textbf{Four quadrants.} A $\forall\PO$-free concept's existential demands
+fall into four combinations, each with its own certificate shape:
+\begin{itemize}
+  \item \emph{Horizontal} ($\exists\DR$, $\exists\PO$, $\exists\EQ$ only): a
+    node's label is its model type \emph{truncated at the concept's modal
+    depth} (\code{mtk}). The frame is universally closed in both directions
+    (disjointness is self-converse, so a $\forall\DR$ obligation propagates
+    identically each way), and depth-truncation terminates the recursion, so
+    finitely many labels exhaust the demands (\code{decidableSat\_hfrag}). No
+    kernel is needed---the horizontal world is bounded outright.
+  \item \emph{Ascending vertical} ($\exists\PP$): a single recurrent kernel
+    generating one $\PP$-chain. Along any ascending chain the Hintikka type
+    recurs with a \emph{bounded period} (an infinite-pigeonhole segment
+    lemma, \code{mty\_segment\_bounded}); that period \emph{is} the kernel
+    (\code{decidableSat\_vtower}).
+  \item \emph{Descending vertical} ($\exists\PPI$): the exact dual. The
+    certificate carries the chain's direction as a single bit, so the whole
+    encoding and decision side is direction-agnostic and the ascending
+    development transports verbatim (\code{decidableSat\_vtowerRRI}).
+  \item \emph{Mixed} ($\exists\PO$ \emph{and} $\exists\PP$): the merged
+    certificate \code{mixCert\_ok}---the first that carries \emph{both}
+    non-trivial externals \emph{and} a kernel. Each $\exists\PO$ demand is
+    served by a direct external neighbour, each $\exists\PP$ demand by the
+    kernel, and every cross-obligation living on a $\PO$-edge is \emph{vacuous},
+    because no $\forall\PO$ clause occurs anywhere in the fragment's closure
+    (\code{mty\_no\_all\_po}). Its encoding and a complete decision are
+    certified on a concrete witness (\code{decidableSat\_Cmix}).
+\end{itemize}
+
+\textbf{This route's keystone: a constructive uniformization.} (The cone
+scheme does not need it; its own keystone is the residual-$\PO$ default of
+\S\ref{ssec:conescheme}.) One recurrent kernel
+must often serve \emph{several} distinct $\exists\PP$ demands at once, and on
+the full logic this is exactly the feared uniformization property W2$'$: can a
+single repeating interface discharge every demand without two of them colliding
+on a horizontal edge? In the fragment the answer is \emph{constructive}. The
+kernel serves the demands in \emph{round-robin} over its recurrent period---at
+period position $n$ it discharges the $n$-th demand, drawing the witness from
+whatever phase carries it---so across one full period \emph{every} demand is
+met (\code{rr\_covers}). This turns W2$'$ from an oracle into a kernel-checked
+theorem, and it works for one precise reason: with $\forall\PO$ absent, the
+horizontal edges the kernel emits at successive steps are \emph{unconstrained},
+so the phases never conflict and the round-robin schedule is always realizable.
+That is the exact sense in which removing $\forall\PO$ lets the cross-relations
+coordinate for free.
+
+\textbf{Why the boundary is exactly here, and the honest labels.} The
+construction stops precisely at $\forall\PO$-freeness because F6---the full
+logic's open live-width keystone---is \emph{forced by} $\forall\PO$: it is a
+$\forall\PO$ obligation that can watch a kernel's emitted horizontal edges and
+so demand a bounded, coordinated interface across phases. Remove that one
+constructor and the coordination F6 abstracts becomes free, which is what every
+device above cashes in. Scope of \emph{this route}, stated exactly: the three
+\emph{pure} quadrants are certified \emph{generally}, each with a non-vacuous
+satisfiable witness (\code{Cvert}, \code{Ccar}, \code{Calt}, \code{Clin},
+\code{Cdesc}); the \emph{mixed} quadrant's certificate, encoding, and decision
+are certified only on a witness. Its general extraction was never completed,
+and the next remark says what happened instead.
+
+
 
 \emph{Correction (2026-08-28).} An earlier version of this sentence called that
 extraction ``scoped, not open''. That was an overclaim and is withdrawn: two
@@ -1775,6 +1805,7 @@ found a counterexample or a defect in the fragment result. The two
 \emph{arguments} of Theorem~\ref{thm:pofree} remain unformalized, and the
 standing ledger presumption (\S\ref{sec:agentic}) continues to apply to them,
 and to every full-logic claim in this paper.
+\end{remark}
 
 \subsection{The split-forest idea}
 \label{ssec:approach-splitforest}
@@ -1865,7 +1896,7 @@ concentrates.
 \label{par:splitforest-survived}
 It is worth recording which parts of the whiteboard idea are still standing in
 the one place where a decision procedure was actually certified
-(Remark~\ref{rem:conescheme}), because the answer is unusually clean: \emph{the
+(\S\ref{ssec:conescheme}), because the answer is unusually clean: \emph{the
 shape survived and almost none of the machinery did}.
 
 The certified model is the fresh-occurrence unfolding, and it \emph{is} a split
@@ -1898,7 +1929,7 @@ successive architectures were each refuted at the point where they tried to
 the move that finally worked was to stop building one---to let the syntax's own
 demand words be the forest, and check the labels against it. That move is
 available only once $\forall\PO$ is removed, for the reason
-Remark~\ref{rem:conescheme} gives: only then is the residual default free. For
+\S\ref{ssec:conescheme} gives: only then is the residual default free. For
 the full logic the finite-abstraction problem of the preceding paragraph is
 still there, and F6 is still exactly its residue. What the fragment shows is
 that when the abstraction problem \emph{dissolves}, what is left is the
@@ -2693,7 +2724,7 @@ state described in this paper is frozen at the git tag
 \texttt{certified-fragment-2026-08-29}; for reproducibility cite that tag (or
 its commit hash), not the mutable \texttt{master} branch. It supersedes
 \texttt{arxiv-candidate-2026-07-18}, which predates the $\forall\PO$-free
-fragment's certification (Remark~\ref{rem:conescheme}) and the three cold
+fragment's certification (\S\ref{ssec:conescheme}) and the three cold
 reviews of it. Filenames below are relative to the repository root.
 Table~\ref{tab:artifacts} maps each principal claim to its verification
 level, its file or Lean theorem, and its probe.
