@@ -380,22 +380,6 @@ stating plainly.
   by the construction, missed. That is a general lesson about verifying
   hard arguments, not just about this problem.
 
-- **A machine-checked core.** The most recent phase rebuilt the sound
-  half of the argument inside a **proof assistant** (Lean) — software
-  that mechanically checks every logical step and refuses to accept a gap.
-  The result is a large development with *zero* unproven steps for the
-  parts it covers: the pipeline from "finite blueprint" to "actual
-  arrangement of regions satisfying the description" is now verified by
-  machine, end to end, including the fact that the blueprint's arrangement
-  is a genuine RCC5 world and that it models the logic. For the fragment
-  above the machine now contains the *whole* result — a decision procedure,
-  not just a sound half — and it has been attacked three times by independent
-  cold reviewers without a counterexample. What it does **not** contain, for
-  the full problem, is the one hard theorem — F6, bounded width — which is
-  *stated* precisely but deliberately left unproven, because proving it is
-  the open mathematics, and faking it with an assumption would defeat the
-  point.
-
 - **A decided fragment, which locates the difficulty exactly.** As of
   August 2026, drop one construct — the ability to say "*everything I
   partially overlap satisfies D*" — and the problem is **decidable**, with a
@@ -411,6 +395,22 @@ stating plainly.
   construct back and the default dies, and with it the freedom that made
   everything else fall out. The hard part of this problem is not nesting,
   not disjointness, and not size — it is that one universal.
+
+- **A machine-checked core.** The most recent phase rebuilt the sound
+  half of the argument inside a **proof assistant** (Lean) — software
+  that mechanically checks every logical step and refuses to accept a gap.
+  The result is a large development with *zero* unproven steps for the
+  parts it covers: the pipeline from "finite blueprint" to "actual
+  arrangement of regions satisfying the description" is now verified by
+  machine, end to end, including the fact that the blueprint's arrangement
+  is a genuine RCC5 world and that it models the logic. For the fragment
+  just described the machine now contains the *whole* result — a decision procedure,
+  not just a sound half — and it has been attacked three times by independent
+  cold reviewers without a counterexample. What it does **not** contain, for
+  the full problem, is the one hard theorem — F6, bounded width — which is
+  *stated* precisely but deliberately left unproven, because proving it is
+  the open mathematics, and faking it with an assumption would defeat the
+  point.
 
 - **A precise map of the frontier.** Perhaps the most durable output: we
   now know *exactly* where the difficulty is. It is not spread across the
@@ -449,9 +449,13 @@ looseness that stops anyone proving the problem *undecidable* (you can't
 pin a computation-grid either). The project has machine-verified everything
 *except* that one bounded-crowd fact, stated it precisely, gathered real
 evidence it's true, and shown it to be the single knife's-edge question
-sitting between decidability and undecidability. Whether it falls one way
-or the other is the open problem; that we now know it's the *only* open
-problem — one fact, two faces — is the achievement.
+sitting between decidability and undecidability. One thing *did* fall:
+remove a single construct — the ability to say "everything I partially
+overlap satisfies this" — and the problem becomes decidable, with a
+machine-checked procedure to prove it, which is the sharpest available
+statement of where the difficulty actually lives. Whether the remaining
+question falls one way or the other is the open problem; that we now know
+it's the *only* open problem — one fact, two faces — is the achievement.
 
 ---
 
