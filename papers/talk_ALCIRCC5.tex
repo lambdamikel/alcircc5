@@ -449,9 +449,9 @@ March--July 2026.
   \item $\sim$4 months, $\sim$\alert{30 repair rounds}
   \item \alert{20 adversarial reviews} --- a defect or overclaim found in
         \emph{all but two}
-  \item \alert{88} self-contained verification probes (each re-derives the
+  \item \alert{94} self-contained verification probes (each re-derives the
         algebra from set semantics)
-  \item 4 Lean files, $\sim$\alert{5{,}900 lines}, \alert{zero \texttt{sorry}}
+  \item 5 Lean files, $\sim$\alert{51{,}000 lines}, \alert{zero \texttt{sorry}}
   \item 2 working reasoners, cross-validated on \alert{911 concepts}
 \end{itemize}
 \column{.48\textwidth}
@@ -653,6 +653,31 @@ boundary between what is proved and what is conjectured.
 \end{itemize}
 \end{frame}
 
+%% ==================================================================== 24c
+\begin{frame}{Is the fragment new? What the literature actually says}
+\begin{block}{Lutz \& Wolter 2006 --- the one place anyone gestured at this}
+  They leave $L_{\mathrm{RCC5}}(\mathit{RS})$ --- \emph{exactly} this logic ---
+  explicitly \alert{open}, and ask for ``a decidable and still useful
+  variant''. Among the routes they float: ``giving up some of the
+  relations\dots\ dropping $\PO$ still results in a useful formalism''.
+\end{block}
+\begin{itemize}
+  \item But that sentence defends \alert{usefulness}, not decidability ---
+        no proof, no sketch, no conjecture. The work they cite in support
+        has a \emph{single} inclusion modality.
+  \item Our restriction is \alert{weaker}: $\PO$ stays in the language.
+        $\exists\PO$ is kept; only $\forall\PO$ goes.
+  \item Wessel's own 2003 report did canvass restricted fragments --- but
+        strictly stronger ones, all working by restoring the \alert{finite
+        model property}, which this fragment provably lacks.
+\end{itemize}
+\vfill
+\begin{center}
+New \alert{so far as we can determine} --- deliberately weaker than a
+priority claim.
+\end{center}
+\end{frame}
+
 %% ==================================================================== 25
 \begin{frame}{Unconditional win \#2: the RCC5 normal form}
 \begin{block}{Theorem (both directions kernel-checked, arbitrary domains)}
@@ -806,7 +831,7 @@ not a tree.)}
 \begin{itemize}
   \item months-long rigorous formal development, $\sim$30 rounds
   \item genuinely useful \emph{adversarial} review (with machine-checked witnesses)
-  \item a 5{,}900-line kernel-checked Lean development
+  \item a $\sim$51{,}000-line kernel-checked Lean development
   \item working, validated software
 \end{itemize}
 \column{.48\textwidth}
@@ -823,6 +848,31 @@ Neither model is self-sufficient. \alert{What carried the project was the loop, 
 \end{center}
 \end{frame}
 
+%% ==================================================================== 32b
+\begin{frame}{The failure mode worth naming: productive-looking thrashing}
+\begin{center}
+\alert{Three weeks. Four} successive repairs to one architecture. Each
+locally reasonable, each probed, each refuted by an exact finite
+countermodel --- and it proposed the next one.
+\end{center}
+\begin{itemize}
+  \item It never concluded the \alert{class} was wrong --- though its own
+        design document already recorded this as the \emph{fifth}
+        occurrence of the same shape.
+  \item Not hallucination, not local error: \alert{every step was correct
+        and checked}. The context makes the framing feel settled because
+        it was never questioned there.
+  \item What broke it came from outside: a halt, and a \alert{different
+        model} --- no history in the design --- asked for a different
+        architecture. That answer became the certified route.
+\end{itemize}
+\vfill
+\begin{center}\small
+Cold review, aimed at \emph{design} rather than proof. Knowing \emph{when}
+to call it was the human's --- \alert{we cannot automate that}.
+\end{center}
+\end{frame}
+
 %% ==================================================================== 33
 \begin{frame}{The method that worked (steal this)}
 \begin{enumerate}
@@ -830,7 +880,7 @@ Neither model is self-sufficient. \alert{What carried the project was the loop, 
         memory of the construction found what warm reviewers missed ---
         every time it mattered. Make it a standard step.
   \item \textbf{Don't trust --- verify.} Every load-bearing claim was
-        cross-checked mechanically: 88 probes that re-derive the algebra
+        cross-checked mechanically: 94 probes that re-derive the algebra
         from set semantics, and ultimately the Lean kernel. The machine
         checks are the ground truth, \alert{not the model's confidence}.
   \item \textbf{Label honestly.} \emph{Strongly supported} $\neq$
@@ -867,20 +917,21 @@ adversarial review, honest labels --- matter more than ever.}
 \begin{frame}{The results, by verification level}
 \begin{center}
 \scriptsize
-\renewcommand{\arraystretch}{1.15}
+\renewcommand{\arraystretch}{1.05}
 \begin{tabular}{@{}p{2.3cm}p{6.1cm}p{2.6cm}@{}}
 \toprule
 \textbf{Level} & \textbf{Results} & \textbf{What it means}\\
 \midrule
 \textcolor{good}{\textbf{Lean-certified}} &
-  soundness pipeline; abstraction faithfulness; RCC5 normal form (both
-  directions); $\forall\PO$-free lift core; F6\,$\Rightarrow$\,decidable;
-  $\Pi^0_1$ dovetail &
+  \textbf{$\forall\PO$-free decidability} (raw input, NNF, concrete sets);
+  abstract $=$ concrete sat.; soundness pipeline; abstraction faithfulness;
+  RCC5 normal form (both dir.); F6\,$\Rightarrow$\,decidable; $\Pi^0_1$
+  dovetail &
   kernel-checked, with a stated axiom footprint\\
 \addlinespace
 \textbf{Theorem-level} &
-  $\forall\PO$-free decidability + bound; identity-selector
-  characterization; W2$'$ folds into F6 &
+  the \emph{two arguments} for the fragment ($K(C_0)$ bound, extraction);
+  identity-selector characterization; W2$'$ folds into F6 &
   proof in a work package, often with probes\\
 \addlinespace
 \textbf{Empirical} &
