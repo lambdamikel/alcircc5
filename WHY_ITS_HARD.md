@@ -366,14 +366,15 @@ faces" is the right count.
 
 ## 11. The meta-story: what this project actually is
 
-Zoom out. The technical question — decidable or not — is still open. But
+Zoom out. The technical question for the *full* logic — decidable or not — is
+still open. But
 the *project* has produced something real along the way, and it's worth
 stating plainly.
 
 - **An adversarial method.** Every proposed proof was handed to a fresh,
-  skeptical reviewer whose job was to break it. Across roughly a dozen
-  rounds, all but one review found a genuine flaw — usually a place where
-  an argument *assumed* the hard thing instead of establishing it. A
+  skeptical reviewer whose job was to break it. Across twenty such reviews,
+  all but two found a genuine flaw — usually a place where an argument
+  *assumed* the hard thing instead of establishing it. A
   recurring lesson: a **cold** reviewer (one with no memory of how the
   proof was built) consistently found flaws that a warm reviewer, primed
   by the construction, missed. That is a general lesson about verifying
