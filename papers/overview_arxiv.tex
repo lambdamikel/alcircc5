@@ -2581,9 +2581,40 @@ required. We regard the AI contributions as co-authorship-grade in a
 human collaborator; we also regard the human's role---problem, intuition,
 direction, and the discipline of honest labelling---as indispensable.
 
+\paragraph{A failure mode worth naming: productive-looking thrashing.} The
+sharpest negative finding is not an error but a \emph{pattern} of errors the
+model could not see. Over roughly three weeks the assistant proposed four
+successive local disciplines to repair one architecture --- a finite node set
+reused by blocking and witness borrowing. Each proposal was locally reasonable,
+each was implemented and probed, and each fell to an exact finite countermodel.
+The assistant then proposed the next one. What it did not do was conclude that
+the \emph{class} was wrong, and this was not for want of the relevant fact: its
+own design document already recorded that this was the same
+pointwise-versus-joint shape that had broken three earlier architectures, and
+noted it as the fifth occurrence. The record was there and went unapplied.
+
+We think this is a characteristic hazard of long-context formal work rather
+than an incidental lapse. Each repair is a genuine advance on the last, the
+countermodels feel like information about \emph{this} attempt rather than about
+the family, and the accumulated context makes the surrounding framing feel
+settled precisely because it has never been questioned in that context. It is
+not hallucination and not local error; every step was correct and checked.
+
+What broke it was cheap and came from outside the mathematics: the human
+observed that the loop was thrashing, called a halt, and asked a \emph{different
+model} --- GPT-5.6~Sol, with no history in the architecture --- for an
+alternative certification route rather than another repair. The reply retired
+the assumption the whole architecture rested on (node reuse) and became the
+route that certified the fragment. The instrument is the same one as cold
+review, pointed at \emph{design} instead of verification, and the lesson
+generalizes past this project: when successive fixes to one design keep
+failing, the cheapest useful move is a model that has never seen the design.
+The judgement that the moment had arrived was the human's, and we do not know
+how to automate it.
+
 \paragraph{A worked example: a seed became a fragment.} The clearest single
 piece of evidence for the value of the loop is not the F6 work but the
-$\forall\PO$-free fragment (\S\ref{ssec:approach-finite}), and it is worth
+$\forall\PO$-free fragment (\S\S\ref{ssec:approach-finite}--\ref{ssec:conescheme}), and it is worth
 being precise about the \emph{shape} of that contribution. Wessel
 supplied a seed whose consequences he could not compute in advance: collapse
 same-type occurrences on a $\PP$-chain into a kernel node with a reflexive
@@ -2601,7 +2632,8 @@ the construction had missed. That is the loop of this paper exhibited on a
 concrete result rather than asserted---and it is the honest, bounded form of
 the title question. Not that agentic AI settled the open problem, but that a
 human--model loop turned a vague structural hunch into a decidable fragment
-with a machine-checked soundness core that \emph{none} of the participants,
+with a machine-checked \emph{decision procedure} that \emph{none} of the
+participants,
 human or model, would have produced alone. One caveat we keep in view: this
 is a new result \emph{of the collaboration}; its novelty relative to the
 prior description-logic literature we have not vetted, and a priority claim
@@ -2731,7 +2763,7 @@ piece on a problem open for over two decades.
 \paragraph{If nothing else: a demonstration, addressed to our peers.}
 Whatever the eventual fate of the mathematics, this report is at minimum an
 expressive demonstration of what frontier AI models could do in serious
-formal research at the time of writing (July~2026): sustain a months-long,
+formal research at the time of writing (August~2026): sustain a months-long,
 adversarially-reviewed attack on a twenty-year-old open problem, author and
 repair proofs across some thirty rounds, catch one another's defects with
 machine-checked witnesses, drive the surviving core into a kernel-checked
