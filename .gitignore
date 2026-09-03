@@ -4,3 +4,5 @@ __pycache__/
 *.out
 *.toc
 _backup_2026-07-16/
+*~
+*.bak
