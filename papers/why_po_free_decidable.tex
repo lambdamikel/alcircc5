@@ -1102,11 +1102,16 @@ $\PO$ as the residual non-constraint, so a standard tree tableau
 tracking only order/disjointness obligations (whose propagation
 calculus provably never manufactures a $\forall\PO$ obligation)
 terminates by ordinary blocking, discharging $\exists\PO$ by
-always-safe free amalgamation. Two shapes, three independent arrivals,
-the soundness crux kernel-checked in Lean; the fragment is exactly the
-region where the open keystone F6 --- bound the live width --- is a
-theorem instead of a conjecture, and its boundary, one constructor
-wide, is drawn by the composition table itself.
+always-safe free amalgamation. Two argument shapes and three independent
+arrivals, and then a fourth shape --- a finite control graph of signatures
+with a fresh-occurrence unfolding --- which is the one that carried the
+theorem all the way into the kernel: since 2026-08-29 the fragment has a
+machine-certified \emph{decision procedure}, on raw input and under concrete
+set semantics, with fragment membership its only hypothesis, and three
+independent cold reviews of it found no counterexample. The fragment is
+exactly the region where the open keystone F6 --- bound the live width --- is
+a theorem instead of a conjecture, and its boundary, one constructor wide, is
+drawn by the composition table itself.
 
 \bigskip
 \begin{center}

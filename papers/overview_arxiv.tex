@@ -2617,8 +2617,12 @@ well-posed lemma (F6, bounded live width): the same
 horizontal-coordination obstruction that has blocked every known attempt
 to prove the problem undecidable---a \emph{shared} obstruction, not a
 proof that F6's failure would by itself entail undecidability. The local
-algebra of RCC5 is exhausted and now certified. Adversarial cold review plus
-machine verification is a repeatable methodology for this kind of work.
+algebra of RCC5 is exhausted and now certified. And one \emph{sub}-question
+was settled outright rather than reduced: the $\forall\PO$-free fragment is
+decidable, by a procedure the Lean kernel checks end to end, on raw input and
+under concrete set semantics, with fragment membership its only hypothesis
+(\S\ref{ssec:conescheme}). Adversarial cold review plus machine verification is
+a repeatable methodology for this kind of work.
 
 \paragraph{What would move the needle.} F6 is a \emph{definability}
 question---can a formula \emph{force} unbounded rigid horizontal
@@ -2680,7 +2684,12 @@ the crispest target, qualitative F6, is decidability itself in other clothes.
 
 \paragraph{The wins.} Independent of F6, this project produced:
 (i) an unconditionally \emph{decidable fragment}, the $\forall\PO$-free
-concepts; (ii) a machine-\emph{certified} RCC5 normal form; (iii) a
+concepts---and, since 2026-08-29, a \emph{machine-certified decision
+procedure} for it (\code{decidableFSat}, \code{decidableSat\_cone},
+\code{decidableSetSat}), covering all four quadrants, taking raw input, sound
+and complete for concrete set semantics, and attacked by three independent
+cold reviews without a counterexample; (ii) a machine-\emph{certified} RCC5
+normal form; (iii) a
 machine-checked \emph{conditional decidability theorem}
 ($\text{F6}\Rightarrow$ decidable, soundness certified, resting on the
 F6 oracle); (iv) a \emph{working, empirically validated prototype
@@ -2693,10 +2702,13 @@ oracle or by a hand analysis---\emph{no counterexample was ever found};
 (v) a sharp \emph{map} of the problem with a named toolbox; and
 (vi) a candid \emph{methodology} for adversarial AI-assisted mathematics.
 
-Two of these are the project's flagship artifacts, and they are
-complementary rather than ranked. The Lean development
-(items~ii--iii) is a \emph{certified} surround: the kernel guarantees the
-soundness pipeline and the abstraction's faithfulness contain no gap. The
+Three of these are the project's flagship artifacts, and they are
+complementary rather than ranked. The certified decision procedure for the
+fragment (item~i) is the one result here that is \emph{finished}: a theorem,
+not a reduction, with nothing left conditional. The rest of the Lean
+development (items~ii--iii) is a \emph{certified} surround for the open
+problem: the kernel guarantees the soundness pipeline and the abstraction's
+faithfulness contain no gap, while F6 itself stays outside. The
 reasoner (item~iv) is the \emph{empirical} counterpart: a real,
 terminating implementation, run on thousands of concepts, that agrees with
 an independent implementation everywhere it has been tested and reproduces
@@ -2710,8 +2722,9 @@ true.
 \paragraph{Is this a scientific contribution?} We believe so, with the
 labelling kept honest: not a resolution of the open problem, but its
 reduction---checkably, and with a certified surround---to an irreducible
-core, plus one unconditional fragment, one certified lemma, working tools,
-and an honest account of an AI-assisted attack and its dead ends. That is
+core, plus one fragment settled outright with a kernel-checked decision
+procedure, one certified lemma, working tools, and an honest account of an
+AI-assisted attack and its dead ends. That is
 an accurate and, we think, respectable terminal state for a discussion
 piece on a problem open for over two decades.
 
