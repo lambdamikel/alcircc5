@@ -500,9 +500,10 @@ What may be reused depends on the whole graph. (That is F6 in disguise.)
           split shared parts into $\EQ$-mates, re-orient vertical edges into
           the trees.
     \item All remaining cross-edges are \alert{horizontal}; complete them by
-          the RCC5 \emph{patchwork property} (a citable classical theorem).
+          the RCC5 \emph{patchwork property}.
     \item The one component \alert{every} cold review found sound ---
-          the semantic foundation all later routes consume.
+          though the certified route keeps only its \emph{shape}, not this
+          machinery: no patchwork appeal, no quotient.
   \end{itemize}
 \end{columns}
 \vfill
@@ -957,25 +958,20 @@ easiest way to misread the project.}
   \node[draw, rounded corners=3pt, fill=petrol!12, inner sep=8pt, align=center] (q)
     {\textbf{One well-posed question}\\[2pt]
      can a concept force unbounded\\ \emph{identity-selector} structure?};
-  \node[below=6pt of q, align=center, font=\scriptsize]
-    {NO $\Rightarrow$ decidable (machinery ready, kernel-checked)\qquad
-     YES $\Rightarrow$ the grid/undecidability route opens};
 \end{tikzpicture}
 \end{center}
-\vfill
 \begin{itemize}
-  \item 20+ years of difficulty, compressed into one lemma --- with certified
-        machinery waiting on \alert{both} sides of the answer.
-  \item And one \alert{sub-problem removed from the pile}: drop $\forall\PO$
-        and it is decided, in the kernel, on raw input, under real set
-        semantics --- three cold reviews, no counterexample.
-  \item Everything reproducible: papers, 4 Lean files ($>$45k lines,
-        zero \texttt{sorry}), 100+ probes, 2 reasoners, full audit log.
+  \item NO $\Rightarrow$ decidable, YES $\Rightarrow$ the undecidability
+        route opens --- certified machinery waits on \alert{both} sides.
+  \item One \alert{sub-problem off the pile}: drop $\forall\PO$ and it is
+        decided, in the kernel --- three cold reviews, no counterexample.
+  \item Reproducible: 5 Lean files ($\sim$51k lines, 0 \texttt{sorry}), 94
+        probes, 2 reasoners, full log.
 \end{itemize}
 \vfill
 \begin{center}
-  \alert{\textbf{Open since 2003. Smaller than ever. Still standing ---}}\\
-  \alert{\textbf{but one wall of it has come down.}}\\[4pt]
+  \alert{\textbf{Open since 2003. Still standing --- but one wall has come
+  down.}}\\[3pt]
   \small\texttt{github.com/lambdamikel/alcircc5} \quad---\quad thank you!
 \end{center}
 \end{frame}
