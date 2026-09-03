@@ -1919,6 +1919,27 @@ root, an order edge provably preserves it while a $\DR$ birth provably changes
 it. One tree per connected component of the $\PP$ order, cross-linked
 horizontally: the sketch, unchanged.
 
+\emph{Where in the certification each half of the idea is used}, since the two
+directions use it very differently. On the \textbf{soundness} side the split
+forest is what the procedure \emph{builds}: \code{coneScheme\_sound} hands the
+truth lemma the fresh-occurrence unfolding, and that object is a split forest in
+the literal sense above --- vertical skeleton, one tree per component of the
+$\PP$ order, horizontal relations read off afterwards. Every model the procedure
+ever exhibits is of that shape.
+
+On the \textbf{completeness} side it is \emph{not} a hypothesis at all.
+\code{coneScheme\_complete} takes an arbitrary \code{RCC5Interp} --- any model
+whatsoever, tree-presented or not --- and this matters, because a completeness
+proof that required split-forest models would have to produce one, which is
+exactly the extraction step that four architectures died on. What survives there
+is the idea's \emph{organizing principle} rather than its shape: a point is
+summarized by its own type together with the types lying strictly below it in
+the $\PP$ order (\code{sigCone} $=$ support type, then down-spectrum), which is
+the whiteboard's claim that vertical position is what characterizes a node ---
+now read off any model rather than imposed on it. So the split forest is where
+the certified procedure's models \emph{live}; it is not a condition the
+certification asks of the input.
+
 What did \emph{not} survive is everything built to construct and control such a
 forest. There is no patchwork appeal---composition closure is derived from the
 ordered-disjoint axioms (Theorem~\ref{thm:normalform}), which is a certified
