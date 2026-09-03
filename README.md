@@ -210,11 +210,18 @@ by `∀PO`, which the fragment removes.
 >   `papers/attack_mixed_quadrant_r2/`), all reproduced independently here.
 >   The diagnosis is a *pattern*, not four separate mistakes: this is the
 >   project's recurring pointwise-vs-joint shape for the fifth time.
-> - **Pivot.** Witness borrowing is retired in favour of a **ConeScheme**: a
->   finite control graph plus a *fresh-occurrence* unfolding, in which nothing
->   is ever reused, so there is nothing to borrow. Plan, obligations and
->   regressions in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/);
->   navigation in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §267.
+> - **Pivot — and how it came about.** After three weeks of the assistant
+>   proposing a fifth repair to the same architecture, the *human* called a halt
+>   and asked a **different model** — GPT-5.6 Sol, with no history in the
+>   design — for an alternative certification route rather than another fix.
+>   Its answer retired witness borrowing entirely in favour of a **cone
+>   scheme**: a finite control graph plus a *fresh-occurrence* unfolding, in
+>   which nothing is ever reused, so there is nothing to borrow. That is the
+>   route that went on to certify the fragment. The instrument is the same as
+>   cold review, pointed at *design* rather than verification; the judgement
+>   that the moment had come was the human's. Plan, obligations and regressions
+>   in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/); navigation in
+>   [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §§267–297.
 >
 > **Correction to the box below.** It calls the general mixed *extraction*
 > "(scoped, **not** open)". That was wrong as a statement about the
@@ -308,11 +315,14 @@ by `∀PO`, which the fragment removes.
   (forward: every strong-EQ RCC5 network is an ordered-disjoint structure,
   `propext` only; converse: GPT-5.6 Pro's canonical set representation,
   `sub_iff_le`/`eta_injective` zero-axiom, verified in
-  [`wp88`](verification/python/wp88_canonical_representation.py)).
-- **The positive result** is a *conditional* decidability theorem: **if** the
-  *live* (non-shadow) width of models is bounded by a computable function of
-  the concept — property **F6** — **then** satisfiability is decidable, and
-  the soundness half of that reduction is machine-checked.
+  [`wp88`](verification/python/wp88_canonical_representation.py)); and — since
+  2026-08-29 — a **decision procedure for the ∀PO-free fragment**, end to end
+  (see the last bullet, and the box above).
+- **The positive result *for the full logic*** is a *conditional* decidability
+  theorem: **if** the *live* (non-shadow) width of models is bounded by a
+  computable function of the concept — property **F6** — **then** satisfiability
+  is decidable, and the soundness half of that reduction is machine-checked.
+  (For the ∀PO-free fragment the result is *unconditional*; last bullet.)
 - **Open (the keystone):** F6 itself — equivalently, that every satisfiable
   concept admits a *bounded* finite certificate. This is the standing open
   mathematics.
@@ -404,7 +414,7 @@ canonical locations):
 - [`SplitForest/`](approaches/SplitForest/Overview.md) — the split-forest normal form (the sound semantic foundation).
 - [`NoAutomataCertificate/`](approaches/NoAutomataCertificate/Overview.md) — the rounds-2–10 hand certificate.
 - [`Automata_Parity/`](approaches/Automata_Parity/Overview.md) — the two-way parity tree-automaton route.
-- [`Lean_F6/`](approaches/Lean_F6/Overview.md) — the Lean formalization and the reduction to F6.
+- [`Lean_F6/`](approaches/Lean_F6/Overview.md) — the Lean formalization and the reduction to F6. *(The **cone scheme** — the route that certified the fragment, superseding the per-quadrant one — has no hub of its own: it lives in [`formal/POFreeLift.lean`](formal/POFreeLift.lean), with design in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/) and provenance in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §§267–297.)*
 - [`RegularCovers/`](approaches/RegularCovers/Overview.md) — the regular-cover pivot and the certified RCC5 normal form.
 
 ## Build & run
