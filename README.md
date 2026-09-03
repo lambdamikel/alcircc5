@@ -461,7 +461,10 @@ wp87 ∀PO-free end-to-end cross-check).
 - [CONVERSATION.md](CONVERSATION.md) — the dated audit trail (who contributed
   what). Contemporaneous through 2026-08-06; Part 52 is a short, labelled
   reconstruction of the three weeks after that, for which
-  [ASSEMBLY_DESIGN.md](ASSEMBLY_DESIGN.md) is the contemporaneous record. [OUTDATED.md](OUTDATED.md) — superseded manuscripts and
+  [ASSEMBLY_DESIGN.md](ASSEMBLY_DESIGN.md) is the contemporaneous record;
+  [CERTIFIED_INVENTORY.md](CERTIFIED_INVENTORY.md) indexes the Lean results by
+  role (generated 2026-08-20 and marked stale at its head — its entries hold,
+  but it predates the cone scheme). [OUTDATED.md](OUTDATED.md) — superseded manuscripts and
   the historical no-automata thread.
 
 ## Author
