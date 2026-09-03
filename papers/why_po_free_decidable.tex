@@ -865,7 +865,12 @@ certification pass itself.
   class top defined by type alone drags one member's disjointness witness onto
   another's cone. That is the pointwise-versus-joint shape that had already
   broken three earlier architectures in this project, so the fault lay in
-  proposing another local discipline, not in the particular ones proposed. The
+  proposing another local discipline, not in the particular ones proposed.
+  Standard \emph{blocking} is the same story in its most familiar form --- it
+  is exactly the local test, ``same type, so let one occurrence stand for the
+  other'' --- and it fails here for the same reason, since type equality cannot
+  see whether the reuse closes a cycle in the order or puts the blocker's
+  disjointness witness inside the blocked node's cone. The
   cone scheme does not test better --- it removes the obligation, and the global
   conditions then hold structurally rather than by enforcement.
 

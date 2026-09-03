@@ -1699,7 +1699,13 @@ member's disjointness witness onto another member's cone. This is the same
 pointwise-versus-joint shape that had already broken three earlier
 architectures here, which is why the attempt was abandoned rather than
 repaired: the error was proposing another local discipline, not the particular
-disciplines proposed.
+disciplines proposed. Standard \emph{blocking} is this story in its most
+familiar form --- it is precisely the local test, ``two occurrences carry the
+same type, so let one stand for the other'' --- and it fails here for exactly
+the same reason: type equality cannot see whether the reuse closes a cycle in
+the order, or places the blocker's disjointness witness inside the blocked
+node's cone, which is the clause (\code{ltNotDj}) that broke this project's
+last and most careful attempt at it.
 
 What \S\ref{ssec:conescheme} does instead is not a better test --- it removes
 the obligation. Nothing is reused, so the order is a tree closure, irreflexive
