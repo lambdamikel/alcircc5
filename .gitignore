@@ -6,3 +6,7 @@ __pycache__/
 _backup_2026-07-16/
 *~
 *.bak
+
+# Working notes, deliberately untracked (see commits 0de01a5, 6fc224c)
+PAPER_REWRITE_NOTES.md
+reorganization.txt
