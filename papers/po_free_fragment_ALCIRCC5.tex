@@ -75,7 +75,9 @@ Recall the four determining (singleton) compositions of proper
 relations,
 \[
 \Comp(\DR,\PPI)=\{\DR\},\quad
-\Comp(\PP,\DR)=\{\DR\},\quad
+\Comp(\PP,\DR)=\{\DR\},
+\]
+\[
 \Comp(\PP,\PP)=\{\PP\},\quad
 \Comp(\PPI,\PPI)=\{\PPI\},
 \]
@@ -177,6 +179,25 @@ row-coloured steering or a principal-row-profile refinement, but the
 decidability of the fragment does not.
 \end{remark}
 
+\begin{remark}[Dependence on the two-tier Step~2, repaired 2026-08-28]
+\label{rem:step2dep}
+The quotient above needs one relation per ordered pair of kernels, which the
+two-tier development supplies in Step~2 of its completeness theorem. That step
+originally defined it as a double limit $\lim_{i,j\to\infty}\rho(d_i,d_j)$,
+justified by external-relation stabilization ``applied twice''. The inference is
+invalid --- the stabilization lemma is \emph{one-sided}, fixing an element and
+varying the chain, and the double limit need not exist --- so the step was a
+genuine gap. This paper never states it: it uses stabilization one-sidedly, as
+the lemma allows. But it builds a two-tier quotient, so it inherits the step,
+and the reader should know where the repair is. It is in
+\code{papers/two\_tier\_quotient\_ALCIRCC5.tex} (Remark ``The lemma is
+one-sided'' and Lemma ``Simultaneous finite rectangles''), which replaces the
+limit by a constant finite \emph{rectangle} --- all that a quotient reading
+finitely many phases needs --- and it is machine-checked in Lean as
+\code{fused\_kq\_all}. Theorem~\ref{thm:main} and the bound $K(C)$ are
+unaffected.
+\end{remark}
+
 \section{Provenance and status}
 
 This fragment and its proof were produced by a cold research attack on
@@ -238,6 +259,6 @@ split-forest \emph{presentation with its $K(C)$ bound}, which is this paper's
 theorem and is a proof sketch, unreviewed and not machine-checked; (iii) the
 split-forest \emph{plus patchwork bags and a parity automaton} of the
 full-logic argument (Theorems A/B/C), which is untouched by the Lean work and
-still gated on F6. See \code{PAPER\_REWRITE\_NOTES.md} for the full record.
+still gated on F6.
 
 \end{document}
