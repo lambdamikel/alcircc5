@@ -22,7 +22,8 @@ paper; those abstract the Lean work and point here.
 > 2. That was reached by a **third route**, the *cone scheme* (design:
 >    GPT-5.6 Sol): a finite control graph of signatures, a monotone elimination
 >    to a greatest fixed point, and a fresh-occurrence unfolding in which no node
->    is ever reused. Plan in `papers/cone_scheme_plan/`; provenance in
+>    is ever reused — a split forest, in the sense of the project's split-forest
+>    representation, built directly rather than extracted. Plan in `papers/cone_scheme_plan/`; provenance in
 >    `ASSEMBLY_DESIGN.md` §§267–297.
 > 3. The extraction architecture the log below builds toward — a finite node set
 >    reused by **blocking and borrowing witnesses** — was **refuted** by exact

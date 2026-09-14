@@ -7,7 +7,11 @@ set of types allowed strictly below it — eliminate unsupported signatures by a
 non-EQ existential demand to a **fresh occurrence**. Part-of births generate a
 strict order, disjointness births a downward-closed disjointness relation, and
 every other pair is partial overlap: an ordered-disjoint structure, hence an
-RCC5 frame, by construction.
+RCC5 frame, by construction. The unfolding is a **split forest** — the
+representation of [`../SplitForest/`](../SplitForest/Overview.md), part-of
+trees with the horizontal relations read off — built directly rather than
+extracted from a given model; the fragment paper's §6.1 explains the
+relationship, with a figure.
 
 **Why it works where reuse failed.** Four local disciplines for reusing nodes
 (blocking, witness borrowing) were refuted by exact finite countermodels,

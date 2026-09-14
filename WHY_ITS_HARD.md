@@ -407,7 +407,10 @@ stating plainly.
   object to a partial overlap*, and the only formula that can is exactly the
   one the fragment removes. So in the fragment the lazy arrangement, which
   declares only what is forced and defaults everything else to overlap, is
-  **always** a valid world; nothing ever has to be coordinated. Put that
+  **always** a valid world; nothing ever has to be coordinated. (The world it
+  builds has exactly the shape of §3 — a forest of nested regions with
+  cross-links — now built directly instead of extracted from a given
+  arrangement.) Put that
   construct back and the default dies, and with it the freedom that made
   everything else fall out. Whatever makes the full problem hard, it is not
   nesting, disjointness or size on their own — it needs that one universal.

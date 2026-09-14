@@ -44,8 +44,8 @@ AI-assisted methodology.
 self-contained paper —
 [**`papers/pofree_fragment_arxiv.pdf`**](papers/pofree_fragment_arxiv.pdf) ·
 [source](papers/pofree_fragment_arxiv.tex): the ordered-disjoint normal form, the
-cone scheme, both correctness directions, the Lean formalization, and its
-provenance. The split into two papers follows the recommendation of a cold review
+cone scheme, both correctness directions, the split-forest shape of the models it
+builds, the Lean formalization, and its provenance. The split into two papers follows the recommendation of a cold review
 by GPT-5.6 Sol (September 2026), archived with its own draft of such a paper in
 [`papers/gpt-5.6-latest-overview-paper-review-and-recommendation/`](papers/gpt-5.6-latest-overview-paper-review-and-recommendation/);
 the paper here was written afresh from the Lean artifact.
@@ -109,7 +109,8 @@ first.
   was checked against the text before anything was changed.
 - **Two papers.** The certified result now has its own focused paper,
   [**`papers/pofree_fragment_arxiv.pdf`**](papers/pofree_fragment_arxiv.pdf)
-  (17 pp), written afresh from the Lean sources and crediting GPT-5.6 Sol for
+  (19 pp), written afresh from the Lean sources — with a section and a figure on
+  how the models it builds are split forests — and crediting GPT-5.6 Sol for
   recommending the split. The [overview](papers/overview_arxiv.pdf) (56 pp)
   remains the status report, history and research program.
 - **The overview recalibrated.** It no longer claims to reduce the problem "to
@@ -158,9 +159,11 @@ Membership in the fragment is the **only** hypothesis — no unproved premise, n
 oracle, no `sorry`, axioms `propext`/`Classical.choice`/`Quot.sound`. The route
 is a finite control graph of *signatures*, a monotone elimination to a greatest
 fixed point, and a **fresh-occurrence unfolding** in which no node is ever
-reused. It covers all four quadrants, **including the mixed one** (`∃PO` and
-`∃PP` together), which had been open and which two rounds of cold attack had
-been aimed at.
+reused. That unfolding is a **split forest** — the shape of Wessel's whiteboard
+idea, part-of trees with the horizontal relations read off afterwards — built
+directly rather than extracted from a model. It covers all four quadrants,
+**including the mixed one** (`∃PO` and `∃PP` together), which had been open and
+which two rounds of cold attack had been aimed at.
 
 **Theorem and certification are separate things.** The theorem rests on **two
 independent proof routes and three arrivals** (ledger in

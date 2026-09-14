@@ -5,6 +5,7 @@
 \usepackage{array,booktabs}
 \usepackage[htt]{hyphenat}
 \usepackage{xcolor}
+\usepackage{tikz}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
   pdftitle={Deciding the forall-PO-Free Fragment of ALCI-RCC5: Ordered-Disjoint Models, Cone Schemes, and a Proof Checked in Lean 4},
@@ -87,9 +88,9 @@ and accepts a concept when a surviving signature contains it. That every
 satisfiable concept is accepted holds for the whole logic and is proved by
 reading signatures off an arbitrary model. That every accepted concept of the
 fragment is satisfiable is proved by unfolding the surviving signatures into a
-tree of fresh occurrences, whose part-of births generate a strict order,
-whose disjointness births generate a downward-closed disjointness relation,
-and in which every remaining pair overlaps. The construction rests on an
+split forest of fresh occurrences: its part-of births generate a strict order,
+its disjointness births a downward-closed disjointness relation, and every
+remaining pair overlaps. The construction rests on an
 ordered-disjoint normal form that characterizes RCC5 frames exactly. The whole
 argument---the normal form, both directions, normalization of raw formulas,
 and the equivalence of the abstract semantics with a semantics of plain
@@ -157,6 +158,16 @@ can is $\forall\PO.D$. In the fragment, the maximally overlapping completion
 of whatever the existential demands force is always available, and the proof
 below is organized around that fact.
 
+\paragraph{Where the construction comes from.} The model built in the
+soundness proof has the shape of Wessel's \emph{split-forest} representation:
+the part-of order as a forest of trees, in which no region is shared between
+two demands, with every relation between branches horizontal and completed
+afterwards. Earlier attempts in this project tried to extract such a forest
+from an arbitrary model and to control the horizontal relations that cross
+between its branches. The cone scheme builds the forest directly instead, and
+on the fragment it never has to control those relations at all.
+Section~\ref{ssec:splitforest} explains the idea and the relationship.
+
 \paragraph{Contributions.}
 \begin{enumerate}
   \item An exact normal form for RCC5 frames with strong equality:
@@ -173,8 +184,9 @@ below is organized around that fact.
     (\S\ref{sec:completeness}). It yields, as a corollary, a sound
     refutation test for the whole logic.
   \item A soundness proof by a \emph{fresh-occurrence} unfolding in which no
-    element is reused, so that the frame conditions that defeated reuse-based
-    constructions hold by construction (\S\ref{sec:soundness}).
+    element is reused---a split forest, built rather than extracted---so that
+    the frame conditions that defeated reuse-based constructions hold by
+    construction (\S\ref{sec:soundness}, \S\ref{ssec:splitforest}).
   \item Decidability for normalized concepts, for raw formulas with
     negation, for semantics over plain sets, and---by Lutz and Wolter's
     representation theorem---for substructure semantics over regular closed
@@ -693,6 +705,109 @@ decision is precisely what a reuse-based construction could not make locally
 (\S\ref{sec:reflection}).
 \end{remark}
 
+\subsection{The unfolding as a split forest}
+\label{ssec:splitforest}
+
+The shape of this model is not new to the project: it is Wessel's split-forest
+idea, and both the idea and how much of it the cone scheme keeps deserve
+stating.
+
+\paragraph{The split-forest representation.} A model of $\ALCIRCC{5}$ is a
+complete graph, since every two regions stand in some relation. The idea is
+that it can nevertheless be \emph{presented} as a forest. Take the proper-part
+order as the skeleton and, wherever a region is demanded as a part by several
+unrelated superparts, give each demand its own copy instead of letting them
+share one element; the vertical structure then becomes a forest of trees, one
+per connected component of the order. Every edge that is not a tree edge
+relates regions side by side, and is $\DR$ or $\PO$, and the idea's second
+half is that these horizontal edges can be completed afterwards. In the
+project's earlier routes the completion was justified by the patchwork
+property of RCC5, the copies were re-identified by a quotient, and the hard
+part was to bound the interfaces through which horizontal relations cross
+between branches, so that a finite abstraction of the forest could decide
+satisfiability~\cite{Overview}.
+
+\paragraph{The fresh-occurrence unfolding is a split forest.} Occurrences are
+words, and no two demands ever share a witness: that is the splitting, and it
+is never undone. The only order edges are part-of births, so each connected
+component of the order is a subtree of vertical births---its Hasse diagram is
+exactly that subtree---rooted at the empty word or at a disjointness or
+overlap birth. The vertical base $\vb$ of \S\ref{sec:soundness} is the map
+sending an occurrence to the root of its component. Everything between
+components is horizontal and is read off rather than chosen: $\DR$ for the
+pairs below the two ends of a disjointness birth, and $\PO$ for every other
+pair (Figure~\ref{fig:splitforest}). One tree per component, linked
+horizontally: the split-forest picture, built literally.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  occ/.style={circle, draw, fill=white, inner sep=1.2pt, minimum size=17pt, font=\footnotesize},
+  treeedge/.style={very thick},
+  dr/.style={draw=red!70!black, thick},
+  drinh/.style={draw=red!70!black, thick, dashed},
+  po/.style={draw=black!50, dotted, very thick},
+  comp/.style={draw=black!25, rounded corners=6pt, fill=black!4}]
+  \node[comp, minimum width=1.3cm, minimum height=3.7cm] at (0,0) {};
+  \node[comp, minimum width=1.3cm, minimum height=2.5cm] at (4.2,-0.65) {};
+  \node[comp, minimum width=1.3cm, minimum height=1.2cm] at (-3.4,0) {};
+  \node[occ] (p)  at (0,1.3)    {$p$};
+  \node[occ] (e)  at (0,0)      {$\varepsilon$};
+  \node[occ] (b)  at (0,-1.3)   {$b$};
+  \node[occ] (d)  at (4.2,0)    {$d$};
+  \node[occ] (dd) at (4.2,-1.3) {$d'$};
+  \node[occ] (o)  at (-3.4,0)   {$o$};
+  \draw[treeedge] (b) -- (e) -- (p);
+  \draw[treeedge] (dd) -- (d);
+  \draw[dr] (e) -- node[above, font=\scriptsize] {$\DR$} (d);
+  \draw[drinh] (e) -- (dd);
+  \draw[drinh] (b) -- (d);
+  \draw[drinh] (b) -- (dd);
+  \draw[po] (o) -- node[above, font=\scriptsize] {$\PO$} (e);
+  \draw[po] (p) -- node[above, sloped, font=\scriptsize] {$\PO$} (d);
+\end{tikzpicture}
+\caption{Part of a fresh-occurrence unfolding, drawn as a split forest. The
+root $\varepsilon$ has four demands, served by $p=(\PP,0)$, $b=(\PPI,1)$,
+$d=(\DR,2)$ and $o=(\PO,3)$, and $d$ has a proper part $d'=(\PPI,0)\cdot d$.
+The shaded boxes are the connected components of the order, each a tree of
+part-of births (thick): $b<\varepsilon<p$ and $d'<d$. Between components
+everything is horizontal and read off: $\DR$ at the disjointness birth
+$\{\varepsilon,d\}$ (solid) and, by inheritance, between everything below its
+two ends (dashed); every other pair, such as $(o,\varepsilon)$ and $(p,d)$, is
+$\PO$ (dotted).}
+\label{fig:splitforest}
+\end{figure}
+
+\paragraph{What the cone scheme keeps, and what it drops.} The two directions
+of the proof use the idea differently. The soundness direction \emph{builds} a
+split forest: every model the procedure exhibits has that shape, and the two
+frame conditions that defeated reuse-based constructions---irreflexivity of the
+order, and the order never meeting disjointness---hold because it is a forest
+of vertical trees, in which an order edge cannot leave its component and a
+disjointness birth opens a new one. The completeness direction does not
+\emph{assume} a split forest. It takes an arbitrary model, which need not be
+tree-shaped, and uses only the idea's organizing principle, that a point is
+characterized by its vertical position: a cone signature is a point's type
+together with the types strictly below it. That is also why the transition
+conditions push cones along $\PP$ and $\PPI$ and ask nothing structural of
+$\PO$. What the earlier routes built in order to \emph{obtain} such a forest
+from a given model is gone. There is no appeal to patchwork, because
+composition closure follows from the ordered-disjoint axioms
+(Theorem~\ref{thm:nf}); no quotient, because no particular model has to be
+recovered; and no witness thinning, interface catalogues or width bound,
+because completeness needs only that a model's signatures support one another
+(Theorem~\ref{thm:complete}).
+
+\paragraph{Why this works on the fragment, and where it stops.} The part of the
+split-forest programme that resisted every earlier attempt was control of the
+horizontal relations between branches. In the unfolding those relations are
+never chosen: disjointness is inherited, and everything else defaults to
+overlap. Without $\forall\PO$ no formula can object to that default, so nothing
+that crosses between branches needs controlling. With $\forall\PO$ it does---the
+unsatisfiable concepts $C_{\mathrm{bad}}$ and $C_{\mathrm{joint}}$ of
+\S\ref{ssec:full} are exactly obligations on such cross-branch pairs---and the
+interface problem of the original programme returns.
+
 %% ====================================================================
 \section{Decision theorems}
 \label{sec:main}
@@ -1050,8 +1165,9 @@ specifically.
 
 \begin{itemize}
   \item \textbf{Michael Wessel} posed the problem in 2002/2003, supplied the
-    split-forest picture of vertical nesting plus horizontal completion from
-    which the shape of the unfolding descends, and the kernel idea from which
+    split-forest representation---vertical nesting plus horizontal
+    completion---whose shape the unfolding builds (\S\ref{ssec:splitforest}),
+    and the kernel idea from which
     the fragment was first isolated. He directed the work throughout, stopped
     the repair of the reuse architecture when it began to cycle, asked a fresh
     model for an alternative, and decided on the split into two papers.

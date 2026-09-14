@@ -62,7 +62,8 @@ covers the whole logic.
 
 This was reached by a **third** route, distinct from the two this note argues:
 a finite control graph of signatures, a monotone elimination to a greatest fixed
-point, and a fresh-occurrence unfolding in which no node is ever reused. It does
+point, and a fresh-occurrence unfolding in which no node is ever reused — a
+split forest, built directly rather than extracted from a model. It does
 not use the `K(C₀)` bound, so the two arguments here remain independent — and
 remain *unformalized*. The earlier per-quadrant route (`rr_covers`,
 `decidableSat_hfrag` and friends) is still in the artifact and still true, but it

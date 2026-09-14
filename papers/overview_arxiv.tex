@@ -1739,8 +1739,14 @@ GPT-5.6~Sol~\cite{GPT56Sol}: a finite control graph whose states are pairs
 (support type, upper bound on the types of strict $\PP$-predecessors); a
 monotone, reductive elimination to a greatest fixed point; and a
 \emph{fresh-occurrence} unfolding in which no element is ever reused, so that
-the frame conditions which defeated the previous architecture hold
-structurally rather than by construction.
+the frame conditions which defeated the previous architecture hold by
+construction rather than by checking. That unfolding has exactly the shape of
+Wessel's split-forest representation (\S\ref{ssec:approach-splitforest}): a
+forest of part-of trees in which no region is shared between two demands, with
+the horizontal relations read off afterwards---here built directly rather than
+extracted from a model. What of the idea the certified route keeps, and what
+it drops, is recorded in \S\ref{par:splitforest-survived}; the companion paper
+gives the relationship a section and a figure~\cite{PofreeFragmentPaper}.
 
 The \emph{completeness} direction deserves its own sentence, because it is
 where this route departs furthest from everything before it. Earlier

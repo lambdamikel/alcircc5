@@ -8479,3 +8479,24 @@ from the Lean sources.
 The project is put to rest here, to be taken up again when AI systems are capable
 enough to attack the remaining open problems directly — in Michael's estimate,
 perhaps a year from now.
+
+**Addendum (same day): the split-forest idea, restored to view.** Michael noticed
+that the fragment paper credited his split-forest representation without
+explaining it or its relationship to the cone scheme — GPT-5.6 Sol's draft had a
+subsection on exactly that, and the rewrite had dropped it. The paper now has
+§6.1, "The unfolding as a split forest", with a figure: what the representation
+is (the part-of order presented as a forest of trees, no region shared between
+two demands, horizontal relations completed afterwards); why the
+fresh-occurrence unfolding literally is one (each component of the order is a
+subtree of vertical births, `vb` returns its root, and everything between
+components is read off — `DR` by inheritance, `PO` by default); where each half
+of the proof uses it (soundness *builds* a split forest, completeness reads only
+its organizing principle — a point is characterized by its vertical position —
+off an arbitrary model); what earlier machinery is gone (patchwork appeal,
+quotient, width accounting); and why `∀PO` is exactly where the original
+interface problem returns. Michael's instruction: wherever the idea still
+contributes, even as framing, keep it visible. A check of this session's diffs
+found no split-forest content removed; the link was then added where the cone
+scheme is described without it — the overview's cone-scheme section, the slides
+("Why that fragment"), the README, `LEAN.md`, `WHY_ITS_HARD.md`, the explainer's
+pointer and `approaches/ConeScheme/`.
