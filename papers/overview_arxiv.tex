@@ -13,7 +13,7 @@
 \emergencystretch=3em
 \usepackage{xcolor}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
-  pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5, a Decidable Fragment, and a Certified Lean Formalization Reducing It to One Keystone},
+  pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5: a Machine-Checked Decidable Fragment and a Map of What Remains Open},
   pdfauthor={Michael Wessel (with AI assistants: Claude Opus 4.6-4.8, Claude Fable 5, Claude Opus 5/Anthropic and GPT-5.4, GPT-5.4 Pro, GPT-5.5, GPT-5.6 Pro, GPT-5.6 Sol/OpenAI)},
   pdfsubject={Description logics; qualitative spatial reasoning; decidability of concept satisfiability},
   pdfkeywords={description logics, ALCI, RCC5, region connection calculus, qualitative spatial reasoning, decidability, concept satisfiability, patchwork property, Lean, interactive theorem proving, AI-assisted mathematics}}
@@ -68,15 +68,15 @@
 %% ====================================================================
 
 \title{Can Agentic AI Settle a 20-Year-Old\\ Description Logic Problem?\\[0.35em]
-\large On the Decidability of $\ALCIRCC{5}$, a Decidable Fragment,\\
-and a Certified Lean Formalization Reducing It to One Keystone}
+\large On the Decidability of $\ALCIRCC{5}$: a Machine-Checked\\
+Decidable Fragment and a Map of What Remains Open}
 
 \author{Michael Wessel\\
 \small LambdaMikel@Home \quad\textbullet\quad \texttt{miacwess@gmail.com}\\[0.45em]
 \small with AI assistants:\\
 \small Claude Opus~4.6, Opus~4.7, Opus~4.8, Fable~5, Opus~5 \;(Anthropic)\\
 \small GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol \;(OpenAI)}
-\date{August 2026}
+\date{September 2026}
 
 \begin{document}
 \maketitle
@@ -87,28 +87,32 @@ $\mathcal{ALCI}$ with the RCC5 base relations as roles under
 \emph{abstract composition-table} semantics---is decidable has been open
 since Wessel's 2002/2003 work. This paper reports a
 sustained, adversarially-reviewed attack on the problem, conducted by AI
-assistants under human direction, and machine-checked in part: the soundness
-pipeline is kernel-checked in Lean~4, the keystone is not. We do not settle
-the question. What we establish is: (i) a \emph{conditional
-decidability theorem}---if the ``live width'' of models is bounded by a
-computable function of the concept (property~F6), then satisfiability is
-decidable---whose soundness direction is \emph{machine-checked in Lean~4};
-(ii) that the remaining completeness problem of \emph{this}
-finite-certificate architecture compresses into that single
-property~F6---the \emph{same horizontal-coordination obstruction} that
-appears in the known grid-style attempts to prove the problem
-undecidable; (iii) an RCC5 normal form (now machine-certified in
-\emph{both} directions) and an unconditionally decidable fragment (the
-$\forall\PO$-free concepts), whose decision procedure is itself
-\emph{machine-checked} --- on raw input and under concrete set semantics,
-with fragment membership its only hypothesis --- and has survived three
-independent cold reviews; it is a decidability theorem, not a practical
-procedure, the search space being doubly exponential; (iv) a \emph{working, empirically-validated
-prototype reasoner}---a cover-tree tableau that reproduces, $23$
-years on, the GIS concept taxonomy of the original report, cross-validated
-on $911$ concepts with zero mismatches and never once contradicted by an
-independent oracle or a hand analysis; and (v) an honest map of the routes
-tried, the dead ends, and the missing hard pieces. We also report,
+assistants under human direction and machine-checked in part. We do not
+settle the question. What we establish is: (i) an unconditionally decidable
+fragment---the concepts whose negation normal form contains no universal
+restriction $\forall\PO$---whose decision procedure is \emph{machine-checked
+in Lean~4}, on raw input and under set semantics, with fragment membership
+its only hypothesis; the result concerns concept satisfiability only (the
+fragment is not closed under negation, so it does not by itself decide
+subsumption or reasoning with general TBoxes), it has survived three
+independent cold reviews of its formalization, and it is a decidability
+theorem, not a practical procedure, the search space being doubly
+exponential; (ii) a machine-certified RCC5 normal form---a strict order for
+$\PP$, a downward-hereditary disjointness for $\DR$, $\PO$ residual---whose
+set-representation half re-proves in the kernel a representation theorem of
+Lutz and Wolter; (iii) for the full logic, a machine-checked
+\emph{conditional} reduction (a complete enumeration of certificates for a
+fixed, verified checker would decide satisfiability), together with an
+explicit account of the steps, argued but \emph{not} proved, that lead to
+its premise from a bounded ``live width'' of models (property~F6)---the open
+gap of one certificate architecture, and the same horizontal-coordination
+obstruction that the known grid-style undecidability attempts meet, not a
+proven reduction of the problem to a single lemma; (iv) a \emph{prototype
+reasoner}---a cover-tree tableau that reproduces, $23$ years on, the GIS
+concept taxonomy of the original report and agrees with an independent
+oracle across a $911$-case suite; and (v) an honest map of the routes
+tried, the dead ends, and the missing hard pieces. The fragment result is
+also published on its own, as a focused companion paper. We also report,
 candidly, on
 the methodology---adversarial ``cold review,'' machine verification, and
 a human-in-the-loop workflow---and on what frontier AI could and could
@@ -199,9 +203,11 @@ $c$ with $\textsf{Hamburg}\,\PP\,c$, the path
 $\textsf{Alster}\,\PO\,\textsf{Hamburg}\,\PP\,c$ forces
 $\textsf{Alster}\,R\,c$ with $R\in\comp(\PO,\PP)=\{\PO,\PP\}$
 (\S\ref{sec:prelim}); the Alster overlaps no country, which excludes
-$\PO$, so $\textsf{Alster}\,\PP\,c$; and the Alster's only
-country-superpart is Germany, so $c=\textsf{Germany}$. Hence Hamburg is a
-German city.
+$\PO$, so $\textsf{Alster}\,\PP\,c$; and by its last conjunct every
+country the Alster is a proper part of is a \textsf{Germany}, so $c$ is one.
+Since $c$ was an arbitrary country with $\textsf{Hamburg}\,\PP\,c$, Hamburg
+is a German city. (\textsf{Germany} is a concept, not an individual: the
+inference is about membership, never identity.)
 
 Two things survive into the rest of the paper. First, this is the
 \emph{reasoning service}---classification---and it reduces, as all such
@@ -251,14 +257,17 @@ A finite decision procedure must record, at each interface of a model,
 the genuine branching it cannot reconstruct---the \emph{live width}. Many
 forced edges are \emph{shadows} (implied by composition from edges
 already present) and cost nothing; live width counts only the rest. The
-whole decidability question reduces to one property:
+finite-certificate architecture pursued in most of this work turns on one
+property:
 
 \begin{quote}
 \textbf{(F6)} Is the live width of models bounded by a computable
 function of the input concept?
 \end{quote}
 
-If yes, the certificate space is finite and satisfiability is decidable.
+If yes---and if a further uniformization step, argued but not proved, goes
+through (\S\ref{ssec:approach-lean})---the certificate space is finite and
+satisfiability is decidable.
 And here is the knife's edge: the looseness F6 must tame is the
 \emph{same horizontal-coordination obstruction} that has blocked every
 known attempt to prove the problem \emph{undecidable}. To force
@@ -284,17 +293,20 @@ specifically, an \emph{overview and status map}: it states the results
 and their verification level but leaves the full proofs to the cited work
 packages and formal artifacts. Its contributions are:
 \begin{enumerate}
-  \item A \emph{conditional decidability theorem} (F6 $\Rightarrow$
-    decidable) whose soundness half is machine-checked in Lean~4
-    (\S\ref{ssec:approach-lean}), and the reduction of the whole problem
-    to F6.
+  \item An unconditionally decidable \emph{$\forall\PO$-free} fragment,
+    with a decision procedure machine-checked in Lean~4
+    (\S\ref{ssec:approach-finite}, \S\ref{ssec:conescheme}), and an RCC5
+    \emph{normal form} with both directions machine-certified
+    (\S\ref{ssec:approach-regcov}). The fragment result is also written up
+    on its own, as a focused paper~\cite{PofreeFragmentPaper}.
+  \item For the full logic, a machine-checked \emph{conditional} reduction
+    (a complete enumeration of certificates for a fixed, verified checker
+    $\Rightarrow$ decidable), with the unproved steps from property~F6 to
+    its premise displayed rather than assumed (\S\ref{ssec:approach-lean}).
   \item The identification of F6 as the shared \emph{obstruction} facing
-    both the present certificate route and the known grid-style
-    undecidability attempts (\S\ref{ssec:whyhard},
-    \S\ref{sec:conclusion}).
-  \item An RCC5 \emph{normal form} (both directions machine-certified) and
-    an unconditionally decidable \emph{$\forall\PO$-free} fragment
-    (\S\ref{ssec:approach-finite}, \S\ref{ssec:approach-regcov}).
+    both that certificate route and the known grid-style undecidability
+    attempts (\S\ref{ssec:whyhard}, \S\ref{sec:conclusion})---a shared
+    obstruction, not a proof that either direction reduces to it.
   \item An honest, technique-organized account of every route tried, the
     counterexamples that killed the wrong ideas, and the lessons
     (\S\ref{sec:approaches}), so that others need not repeat them.
@@ -302,9 +314,17 @@ packages and formal artifacts. Its contributions are:
     mathematics (\S\ref{sec:agentic}).
 \end{enumerate}
 
+\paragraph{Two papers.} The most recent cold review of this overview
+(GPT-5.6~Sol, September 2026)~\cite{GPT56SolReview} recommended separating
+the one finished result from the research program around it, and we have
+followed that recommendation. The $\forall\PO$-free fragment, the normal
+form it rests on, and its formalization are presented as a self-contained
+paper~\cite{PofreeFragmentPaper}; this overview remains the status report,
+the history, the map of failed and open routes, and the methodology.
+
 The paper is organized as follows.
 \S\ref{sec:status} states, in largely non-technical terms, where the
-problem stands after twenty-five years.
+problem stands.
 \S\ref{sec:history} gives the history ($\mathcal{ALCI}_{\mathrm{RCC}}$
 from Cohn~1993 through Wessel~2002/2003 and Lutz--Wolter~2006) and
 carefully distinguishes our object from the neighbouring logics that
@@ -326,82 +346,100 @@ the needle, an honest estimate of the chances of closing F6, and the
 project's actual wins.
 
 %% ====================================================================
-\section{Current status: where we stand after twenty-five years}
+\section{Current status: where the problem stands}
 \label{sec:status}
 
 \emph{Decidability of $\ALCIRCC{5}$ concept satisfiability remains open}
 (the closely related $\ALCIRCC{8}$ likewise, but it is not our focus
-here). A current-literature check (July~2026)
-found no published resolution; the closest neighbours are decided in the
-other direction and are discussed in \S\ref{sec:history}. What the
-present work adds is not an answer but a sharp reduction and a
-machine-checked surround.
+here). Literature checks in July and September~2026 found no published
+resolution; the closest neighbours are decided in the other direction and
+are discussed in \S\ref{sec:history}. What the present work adds is not an
+answer but one settled fragment, a machine-checked surround, and a map.
 
-\paragraph{The positive result---conditional decidability.}
-\emph{If} the live width of models is bounded by a computable function of
-the concept (property~F6), \emph{then} concept satisfiability is
-decidable; and the \textbf{soundness half of that reduction is
-machine-checked in Lean~4} (a valid finite certificate provably unfolds
-to a genuine RCC5 model of the concept, and the finite type abstraction
-is faithful). What is open is the antecedent F6 itself---equivalently the
-completeness direction, that every satisfiable concept has a
-\emph{bounded} finite certificate.
+\paragraph{The settled result---a decidable fragment.} Satisfiability of
+$\ALCIRCC{5}$ concepts whose negation normal form contains no universal
+restriction $\forall\PO.D$ is decidable, and the \code{Decidable} instance is
+\textbf{machine-checked in Lean~4} with fragment membership as its only
+hypothesis---on raw input, where the condition reads ``no $\forall\PO$ in
+positive and no $\exists\PO$ in negative position'', and under concrete set
+semantics (\S\ref{ssec:conescheme}). Three independent cold reviews of the
+formalization found no counterexample. Its scope is exactly that: bare
+concept satisfiability. The fragment is not closed under negation, so a
+subsumption $C\sqsubseteq D$ is decided only when $C\sqcap\neg D$ stays in
+the fragment, and internalizing a general TBox introduces $\forall\PO$. The
+procedure is a decidability theorem, not a practical reasoner.
 
 \paragraph{What is certified} (machine-checked, Lean~4, zero
 \code{sorry}):
 \begin{itemize}
-  \item the \emph{soundness} pipeline: a valid finite certificate unfolds
-    to a genuine RCC5 model of the concept;
-  \item the \emph{faithfulness} of the finite-\emph{type} (Hintikka,
-    possibly infinitary) abstraction: satisfiability and
-    abstraction-realizability coincide;
+  \item the decision procedure for the $\forall\PO$-free fragment just
+    described, and a one-sided \textsc{unsat} test for the \emph{full}
+    logic (sound, not complete);
   \item the \emph{RCC5 normal form}, \emph{both directions}: every
     strong-$\EQ$ RCC5 network is an ordered-disjoint structure---a strict
     partial order for $\PP$ with a downward-closed disjointness for
-    $\DR$, $\PO$ residual---and, conversely, every ordered-disjoint
-    structure is realized by sets under set-RCC5 (GPT-5.6 Pro's canonical
-    representation, Theorem~\ref{thm:normalform}).
+    $\DR$, $\PO$ residual---and every ordered-disjoint structure is an
+    RCC5 frame realized by sets (Theorem~\ref{thm:normalform}); that RCC5
+    structures are representable by regions is a theorem of Lutz and
+    Wolter~\cite[Thm.~23]{LutzWolter2006}, and what is new here is the
+    explicit construction and its kernel-checked proof;
+  \item for the full logic, the \emph{soundness} of a finite-certificate
+    pipeline (a valid finite certificate unfolds to a genuine RCC5 model of
+    the concept) and the \emph{faithfulness} of the finite-\emph{type}
+    (Hintikka, possibly infinitary) abstraction;
+  \item a \emph{conditional} reduction: if a fixed, verified finite checker
+    is complete for some computable enumeration of certificate codes, then
+    satisfiability is decidable. A conditional theorem is certified as a
+    conditional; its premise is not.
 \end{itemize}
 
-\paragraph{What is strongly supported but not certified:} F6, the open
-keystone \emph{of the present certificate architecture}---now sharpened to
-a precise combinatorial dichotomy (does some concept force unbounded
-``identity-selector minors''?), with the auxiliary uniformization property
-W2$'$ shown to \emph{fold into} it. (F6 controls \emph{this} route; its
-failure would not by itself close off decidability by some other
-representation---\S\ref{sec:conclusion}.)
+\paragraph{What is argued but not proved.} The certificate architecture of
+the Lean line needs a premise that has not been established, and the route
+to it that this work pursued has two unproved steps:
+\[
+  \text{F6}
+  \;\overset{?}{\Longrightarrow}\;
+  \text{refined W2$'$}
+  \;\overset{?}{\Longrightarrow}\;
+  \text{complete finite candidate lists}
+  \;\overset{\text{Lean}}{\Longrightarrow}\;
+  \text{decision procedure}.
+\]
+F6 (Definition~\ref{def:f6}) is a computable bound on the live width of
+models; the argument that W2$'$, once refined, folds into F6 is prose; and
+the suggestion that unbounded ``identity-selector minors'' are the
+\emph{only} way F6 can fail is a candidate characterization with
+finite-network evidence, not a theorem. F6 is the open gap \emph{of this
+architecture}: its failure would not by itself close off decidability by
+some other representation (\S\ref{sec:conclusion}), and its truth is not
+known to be necessary.
 
-\paragraph{Unconditional by-products (independent of F6):}
-\begin{itemize}
-  \item the $\forall\PO$-free fragment is \emph{decidable}---concepts
-    with no $\forall\PO$ subformula, still retaining $\exists\PO$,
-    $\forall\DR$, $\exists\DR$, and all vertical modalities, so a
-    genuinely expressive spatial fragment (its decision procedure now
-    machine-checked in Lean for the three pure quadrants and the mixed case
-    on a witness; Theorem~\ref{thm:pofree});
-  \item the RCC5 normal form above (both directions certified);
-  \item a working, empirically validated \emph{prototype reasoner} (the
-    cover-tree tableau; no completeness theorem is claimed): cross-validated
-    on $911$ concepts against an
-    independent oracle with zero mismatches, reproducing $23$ years later
-    the full GIS subsumption taxonomy of Wessel's original report, and
-    never once contradicted---no counterexample to its verdicts was found
-    anywhere in the campaign;
-  \item the standard undecidability routes shown blocked, with the
-    coincidence obstruction identified as the shared fact.
-\end{itemize}
+\paragraph{Published results the argument relies on.} Lutz and Wolter
+prove that $\ALCIRCC{5}$---their $\LRCC{5}(\mathit{RS})$---coincides with
+the substructure logic of regular closed regions in $\reals^n$ and is
+recursively enumerable~\cite[Thms.~24, 28]{LutzWolter2006}, so
+satisfiability is $\Pi^0_1$. Earlier versions of this paper presented the
+$\Pi^0_1$ placement as a new observation; it is not
+(\S\ref{ssec:lutzwolter}).
 
-\paragraph{The honest bottom line.} After roughly thirty repair rounds
-and seventeen adversarial reviews the project has reached a genuine
-\emph{local optimum}: the local algebra is exhausted (and now
-certified), the soundness side is machine-checked, and the whole
-remaining difficulty \emph{of the present certificate architecture} is one
-well-posed lemma. We offer the work not as a
-resolution but as a two-decade open problem \emph{reduced, honestly and
-checkably, to its irreducible core.}
+\paragraph{Empirical evidence.} A prototype reasoner (the cover-tree
+tableau; no completeness theorem is claimed) agrees with an independent
+oracle across a $911$-case suite---$99$ labelled regression cases and $812$
+comparison runs---and reproduces, $23$ years later, the GIS subsumption
+taxonomy of Wessel's original report (\S\ref{sec:reasoners}). It is
+evidence, not a decision theorem.
+
+\paragraph{The honest bottom line.} After roughly thirty repair rounds and
+twenty-one adversarial reviews, one fragment is settled with a
+kernel-checked decision procedure; the local RCC5 algebra the proof attempts
+needed is characterized, and its normal form certified; and the remaining
+difficulty of the principal certificate architecture is located precisely,
+with the steps that are still only argued marked as such. We offer the work
+not as a resolution but as a status report and a research handoff on a
+problem open for more than two decades.
 
 \paragraph{The status levels, at a glance.} Throughout this paper we keep
-four verification levels distinct; Table~\ref{tab:status} is the key, and
+five verification levels distinct; Table~\ref{tab:status} is the key, and
 the prose above and below assigns each result to one level. Conflating
 them is the single easiest way to misread the project.
 
@@ -413,34 +451,36 @@ them is the single easiest way to misread the project.
 \toprule
 \textbf{Status} & \textbf{Examples} & \textbf{What the label means}\\
 \midrule
-\emph{Lean-certified} & certificate soundness; finite-\emph{type} Hintikka
-faithfulness; the full (both-direction) ordered--disjoint normal form; the
-$\forall\PO$-free lift core \emph{and its decision procedure} for the three
-pure quadrants ($\exists\DR/\PO/\EQ$, $\exists\PP$, $\exists\PPI$) plus the
-mixed-case decision on a witness & kernel-checked theorem names with a stated
-axiom footprint\\
+\emph{Lean-certified} & the decision procedure for the \emph{whole}
+$\forall\PO$-free fragment, on raw input and under set semantics
+(\code{decidableFSat}, \code{decidableSat\_cone}, \code{decidableSetSat});
+the one-sided full-logic \textsc{unsat} test; the both-direction
+ordered-disjoint normal form; certificate soundness; finite-\emph{type}
+Hintikka faithfulness; the conditional reductions of
+\S\ref{ssec:approach-lean}, \emph{as conditionals} & kernel-checked theorem
+names with a stated axiom footprint; the hypotheses of a conditional are not
+thereby certified\\
 \addlinespace
-\emph{Theorem-level} (not end-to-end certified) & the $\forall\PO$-free
-fragment's specific $K(C_0)$ closed-form bound; the identity-selector
-characterization; the W2$'$ refinement; the local extension / cross-policy
-results & a proof in a named work package, often with finite probes\\
+\emph{Published} & representation of RCC5 structures by regular closed
+regions; recursive enumerability~\cite[Thms.~23, 24, 28]{LutzWolter2006} &
+an external theorem, cited\\
 \addlinespace
-\emph{Lean-certified (2026-08-29), cold-reviewed three times} & a decision
-procedure for the \emph{whole} $\forall\PO$-free fragment, mixed quadrant
-included, on \emph{raw} (not pre-normalized) input and under \emph{concrete set}
-semantics (\code{decidableFSat}, \code{decidableSat\_cone},
-\code{decidableSetSat}), with fragment membership its only hypothesis; and a
-one-sided \textsc{unsat} test for the \emph{full} logic
-(\code{coneScheme\_unsat\_full}) & see \S\ref{ssec:conescheme}\\
+\emph{Theorem-level} (not certified) & the fragment's two unformalized
+\emph{arguments} and their $K(C_0)$ bound; the W2$'$ refinement; the local
+extension and cross-policy results & a proof in a named work package, often
+with finite probes\\
 \addlinespace
 \emph{Empirical} & the cover-tree tableau; the cross-validation suites; the
-finite model verifier & test evidence only; not a decision theorem\\
+finite model verifier; finite RCC5 networks with unbounded identity-selector
+minors (\texttt{wp44}) & test evidence or finite diagnostics only\\
 \addlinespace
-\emph{Open} & static F6; completeness of the chosen certificate scheme; the
-automatic-cover property; full decidability & no proof claimed\\
+\emph{Open} & F6; whether identity-selector minors are its only obstruction;
+completeness of any certificate scheme for the full logic; the
+automatic-cover property; the cone scheme's architectural $\forall\PO$ gap;
+full decidability & no proof claimed\\
 \bottomrule
 \end{tabular}
-\caption{The four verification levels used throughout. The paragraphs of
+\caption{The five verification levels used throughout. The paragraphs of
 \S\ref{sec:status} assign each result to a level; this table is the
 at-a-glance key.}
 \label{tab:status}
@@ -809,7 +849,8 @@ grid (right) and extends to $n\times n$.  Horizontal and vertical
 successors are $\TPP$ edges (the intended roles $R_X$, $R_Y$); $\PO$
 (cyan) and $\NTPP$ (green) are the induced diagonal and long-range
 relations.  Such grid models \emph{exist}---but, as the same report
-already argued, no concept term can \emph{enforce} them.  (The frame was
+already argued, the natural encodings do not \emph{enforce} them, and no
+concept term is known that does.  (The frame was
 \emph{found by a Lisp enumerator} and rendered with CLIM under MCL, not
 drawn by hand.)  The construction
 and the obstruction are Wessel's, two decades before this
@@ -854,6 +895,33 @@ The logic $\ALCIRCC{5}$ is exactly $\LRCC{5}(\mathit{RS})$:
 arbitrary complete-graph models with composition-table semantics.
 The problem has been recognized as open by leading researchers
 since 2006.
+
+\paragraph{What they did prove about it.} Their paper establishes three
+facts about exactly this logic, and they should be credited wherever they
+are used. By their Theorem~23, every general RCC5 structure---a nonempty set
+with a converse- and composition-closed labelling in which $\EQ$ is
+identity---is isomorphic to a structure of regular closed regions of some
+topological space, and every countable one to such a structure in
+$\reals^n$, for each $n>0$. By Theorem~24, $\LRCC{5}(\mathit{RS})$ coincides
+with the logic of substructures of topological region structures, and with
+that of $\reals^n$ and its regular closed sets. And by Theorem~28 these
+logics are recursively enumerable, so $\ALCIRCC{5}$ satisfiability is
+$\Pi^0_1$~\cite{LutzWolter2006}. Three consequences for this paper follow.
+The $\Pi^0_1$ placement of \S\ref{ssec:approach-lean} is theirs: earlier
+versions of this paper presented it as new, which was a failure of our
+literature check, and we keep the derivation only because the dovetailing
+argument uses its explicit form. The equivalence of abstract and set
+semantics certified in \S\ref{ssec:conescheme} is a machine-checked special
+case of their Theorem~23, with an explicit construction. And every
+satisfiability result stated here for the abstract semantics---the
+fragment's decidability in particular---holds verbatim for substructure
+semantics over regular closed regions of $\reals^n$, by their Theorem~24. It
+does not transfer to the \emph{full} structures that contain every regular
+closed region, which form a different logic. (One sentence of their
+conclusion calls the recursive enumerability of $\LRCC{5}(\mathit{RS})$
+open, in apparent conflict with Theorem~28; the remark following Theorem~28
+leaves open only the logics of full structures, and we read the concluding
+sentence in that light.)
 
 \paragraph{The route they suggested, and how it differs from the one taken
 here.} Their concluding section asks for ``a decidable and still useful
@@ -900,8 +968,10 @@ universal $\forall\PO.C$ is excluded, so the fragment is properly larger than
 the one their remark contemplates. Second, and structurally more important,
 the fragment does \emph{not} obtain decidability by recovering a finite model
 property. The concept $\exists\PP.\top \sqcap \forall\PP.\exists\PP.\top$ is
-$\forall\PO$-free and satisfiable with no finite model (\code{cinf\_pofree},
-\code{cinf\_satisfiable}), so every model of it is infinite; decidability
+$\forall\PO$-free and satisfiable (\code{cinf\_pofree},
+\code{cinf\_satisfiable}), and every model of it is infinite, since the universal
+keeps producing strictly larger regions---a one-line argument, not a Lean
+theorem; decidability
 comes instead from a finite \emph{presentation} of possibly-infinite models
 (\S\ref{ssec:conescheme}). And the reason the restriction is exactly the
 right one is the residual-$\PO$ default: a composition cell containing $\PO$
@@ -952,7 +1022,8 @@ individuals rather than serving as roles. The distinction is decisive
 relations \emph{themselves} the roles, and so permits
 \emph{quantification over} them---concepts such as $\forall\PP.C$ (``every
 proper part satisfies $C$'') and $\exists\DR.D$ (``some discrete region
-satisfies $D$'')---which the concrete-domain setting cannot express.
+satisfies $D$'')---which plain concrete-domain logics such as
+$\ALC(\mathcal D)$ cannot express.
 
 \begin{table}[t]
 \centering
@@ -966,11 +1037,28 @@ Concrete domains, e.g.\ $\ALC(\text{RCC8})$ & no & no & no \\
 Composition-based role boxes ($\ALCIRCC5$) & \textbf{yes} & \textbf{yes} & \textbf{yes} \\
 \bottomrule
 \end{tabular}
-\caption{Concrete domains versus composition-based role boxes. Only the
-latter can \emph{quantify over} spatial relations, which is exactly what
-puts $\ALCIRCC5$ outside the reach of the concrete-domain results.}
+\caption{Plain concrete domains versus composition-based role boxes. Of
+the two, only the latter \emph{quantifies over} spatial relations on the
+abstract domain itself, which is what puts $\ALCIRCC5$ outside the reach of
+the concrete-domain results; the role-forming extension
+$\mathcal{ALCRP}(D)$, discussed below, sits in between.}
 \label{tab:concrete}
 \end{table}
+
+The closest concrete-domain relative is $\mathcal{ALCRP}(D)$ of Haarslev,
+Lutz and M\"oller~\cite{HaarslevLutzMoeller1999}, which was motivated by
+spatial applications of exactly this kind. Its role-forming predicate
+operator defines a role from a concrete predicate over feature chains---``the
+objects whose spatial extension is disjoint from mine''---and so it does
+support a form of quantification over spatial relations, which the first row
+of Table~\ref{tab:concrete} does not. It remains two-sorted and
+feature-mediated, however: the predicate relates attribute values, so
+distinct abstract objects may share one extension ($\EQ$ is not identity on
+the objects), and an object without the feature stands in no spatial
+relation at all. Reasoning in it is undecidable in general and decidable
+under syntactic restrictions~\cite{HaarslevLutzMoeller1999}, restrictions
+that Wessel's report later adapted to $\ALCIRCC{}$
+(\S\ref{ssec:lutzwolter}).
 
 The known decidability results all sit on the concrete-domain side. Lutz
 and Mili\v{c}i\'{c}~\cite{LutzMilicic2007} showed $\ALC$ with
@@ -1185,11 +1273,18 @@ $\LRCC{5}(\mathit{RS}^\exists)$ & $S5^3$ via supremum regions & Supremum closure
 \label{tab:blocked}
 \end{table}
 
-Table~\ref{tab:blocked} summarizes the blocked routes.
-The \textbf{patchwork property} of RCC5 (Renz \& Nebel~\cite{RenzNebel1999})---local
-(triple-wise) consistency implies global consistency for atomic
-networks---actively resists grid encoding, since tiling reductions
-require rigid global constraints that go beyond local consistency.
+Table~\ref{tab:blocked} summarizes the blocked routes. Two properties of
+RCC5 are easily run together here and should be kept apart. For atomic
+networks, path consistency implies consistency (for RCC8 this is part of
+Renz and Nebel's analysis~\cite{RenzNebel1999}; for RCC5 it is the content
+of Theorem~\ref{thm:normalform}). The \textbf{patchwork property} is a
+different statement: consistent networks that agree on their overlap
+amalgamate into one consistent network, the form in which it enters
+concept-level reasoning~\cite{LutzMilicic2007}. Neither property by itself
+blocks grid encodings---RCC8 has both, and Lutz and Wolter's RCC8 logics over
+regular closed regions are undecidable~\cite{LutzWolter2006}. What blocks
+the attempts below is the coincidence obstruction of
+\S\ref{sec:wessel-grid}.
 
 \subsection{A concrete domino attempt in $\ALCIRCC{5}$}
 \label{sec:domino-attempt}
@@ -1542,14 +1637,16 @@ bounded by a computable function of the concept.
 
 \begin{theorem}[Decidable fragment]\label{thm:pofree}
 Concept satisfiability for the $\forall\PO$-free fragment of $\ALCIRCC{5}$
----concepts with no $\forall\PO$ subformula, but retaining $\exists\PO$,
-$\forall\DR$, $\exists\DR$, and all vertical modalities---is decidable,
-with a computable live-width bound $K(C_0)=(1+m)^2\,2^{2^{m}}$,
-$m=|\cl(C_0)|$.
-\textup{(\texttt{two\_tier\_quotient\_ALCIRCC5}; the closed-form bound is
-theorem-level, but the underlying \code{Decidable} instance is machine-checked
-in \texttt{formal/POFreeLift.lean} for the three pure quadrants and the mixed
-case on a witness---see the 2026-08-06 note below.)}
+---concepts whose negation normal form has no $\forall\PO$ subformula, but
+which retain $\exists\PO$, $\forall\DR$, $\exists\DR$, and all vertical
+modalities---is decidable.
+\textup{(Machine-checked for the whole fragment: \code{decidableSat\_cone}
+in \texttt{formal/POFreeLift.lean}, and on raw input and under set semantics
+\code{decidableFSat} and \code{decidableSetSat}; \S\ref{ssec:conescheme}.
+The two-tier argument of \texttt{two\_tier\_quotient\_ALCIRCC5} also yields a
+live-width bound $K(C_0)=(1+m)^2\,2^{2^{m}}$, $m=|\cl(C_0)|$, which is
+theorem-level and not formalized. The statement concerns concept
+satisfiability; the fragment is not closed under negation.)}
 \end{theorem}
 
 The fragment is genuinely expressive---one may still say ``overlaps some
@@ -1696,6 +1793,28 @@ is satisfiable. A second $\forall\PO$ gap remains and is architectural: the
 scheme exploits only compositions forced to a singleton, so obligations arising
 from disjunctive entailments are out of its reach.
 
+Our first cold review of the cone scheme had already exhibited the gap, and
+the most recent one~\cite{GPT56SolReview} added a second witness and a guard
+for anyone who tries to close it. In
+$C_{\mathrm{bad}}=\exists\PPI.(\exists\PP.A)\sqcap\forall\PP.\neg A\sqcap
+\forall\PPI.\neg A\sqcap\neg A\sqcap\forall\PO.\neg A$ the root and the
+$A$-point share a part, so their relation lies in
+$\comp(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}$, and the root's four constraints
+exclude every option (this is the first review's example). In $C_{\mathrm{joint}}=\exists\PP.(\forall\PPI.A\sqcap
+\forall\PO.A)\sqcap\exists\PO.\neg A$ the two witnesses stand in a relation
+from $\comp(\PPI,\PO)=\{\PPI,\PO\}$, and either value forces $A$ onto the
+$\neg A$-witness. Both concepts are unsatisfiable and both are accepted by
+the full-logic test; we confirmed this on a transcription of the control
+layer, by exhibiting three-signature families the elimination cannot remove.
+By contrast $\forall\PO.A\sqcap\exists\PO.\neg A$ is refuted in the first
+round, by the restored clause. And the obvious repair---require independently
+generated witnesses to be pairwise compatible across $\PO$---is ruled out by
+the satisfiable $C_{\mathrm{sat}}=\exists\PP.(A\sqcap\forall\PO.A)\sqcap
+\exists\PP.\neg A$, whose two witnesses must be nested rather than
+overlapping. A construction for the full logic has to reason about the
+relations among contemporaneous witnesses, not only along the edges that
+created them.
+
 Two scope limits recorded in earlier versions of this remark have since been
 closed. The artifact now carries a \emph{raw} syntax with negation, a
 normalization, and a preservation theorem in both polarities, so no
@@ -1708,8 +1827,20 @@ families of non-empty sets under the naive relation --- equal, proper subset,
 proper superset, disjoint, otherwise overlap --- with no fragment hypothesis, so
 the equivalence covers the whole logic (\code{satisfiable\_iff\_set}); on that
 side the composition table is a theorem about sets rather than an assumption.
-Regions there are arbitrary non-empty sets, not regular closed sets in a
-topological space.
+Regions there are arbitrary non-empty sets. By Lutz and Wolter's
+Theorem~24 (\S\ref{ssec:lutzwolter}) the same satisfiability problem is also
+that of substructures of regular closed regions in $\reals^n$, so the result
+holds verbatim in that topological reading, though not for full structures
+containing every regular closed region; and the set equivalence itself is a
+machine-checked special case of their Theorem~23.
+
+What the result is \emph{about} should be stated as exactly: satisfiability of
+a single concept. The fragment is not closed under negation---$\neg\exists\PO.D$
+normalizes to $\forall\PO.\neg D$---so a subsumption $C\sqsubseteq D$ is decided
+only when $C\sqcap\neg D$ stays in the fragment, that is, when $C$ has no
+positive $\forall\PO$ and no negative $\exists\PO$, and $D$ no positive
+$\exists\PO$ and no negative $\forall\PO$. Internalizing a general TBox
+introduces $\forall\PO$, so TBox reasoning is outside the result.
 
 What remains is a limit of complexity, not of correctness: the procedure is
 \emph{decidable but not runnable}. The signature space is doubly exponential,
@@ -1725,7 +1856,11 @@ rejected --- and found the dropped $\PO$ clause above, together with an
 overclaim about what the full-logic test certifies. The third attacked
 soundness, ran the unfolding on labels drawn from the actual greatest fixed
 point, and found no defect in the development: its five findings were all in the
-project's own probes and prose. All are corrected.
+project's own probes and prose. All are corrected. A fourth review
+(GPT-5.6~Sol, 2026-09-09)~\cite{GPT56SolReview}, of the Lean sources and this
+overview together rather than of a build, located every capstone of the
+decision chain in the source and found no defect in it; its findings concerned
+how this paper stated its claims, and are corrected in this version.
 
 The honest label, and it differs from this paper's standing one: the
 $\forall\PO$-free fragment is \emph{machine-certified} --- the Lean kernel
@@ -1818,7 +1953,8 @@ coordinate for free.
 
 \textbf{Why the boundary is exactly here, and the honest labels.} The
 construction stops precisely at $\forall\PO$-freeness because F6---the full
-logic's open live-width keystone---is \emph{forced by} $\forall\PO$: it is a
+logic's open live-width property in the principal certificate
+architecture---is \emph{forced by} $\forall\PO$: it is a
 $\forall\PO$ obligation that can watch a kernel's emitted horizontal edges and
 so demand a bounded, coordinated interface across phases. Remove that one
 constructor and the coordination F6 abstracts becomes free, which is what every
@@ -2214,7 +2350,7 @@ present in the catalogue, so there are no promissory obligations and hence
 no parity/eventuality condition of the kind the tree automaton needed.
 
 It was on this construction, finally explicit and free of hidden choices,
-that the entire remaining difficulty localized to two named properties:
+that the remaining difficulty of this architecture localized to two named properties:
 \textbf{F6} (Definition~\ref{def:f6}, a computable live-width bound) and a
 uniformization property \textbf{W2$'$}.
 
@@ -2241,18 +2377,38 @@ model of $C_0$. So is the \emph{faithfulness} of the finite (Hintikka)
 abstraction: satisfiability and abstraction-realizability coincide. On top
 of these sits a fixed, non-oracular Boolean checker of first-order finite
 certificate data, proved sound, from which decidability follows by finite
-search---modulo exactly one premise, F6\,$\wedge$\,W2$'$.
+search---modulo one premise, that this checker be complete for some
+computable assignment of finite candidate lists. F6 together with a refined
+W2$'$ is the argued route to that premise; the argument is not formalized.
 
 \begin{theorem}[Conditional decidability]\label{thm:conditional}
-If F6 holds---the live width of models of every satisfiable $C_0$ is
-bounded by a computable function of $C_0$---then concept satisfiability
-for $\ALCIRCC{5}$ is decidable. The \emph{soundness} half of this
-reduction (a valid finite certificate provably unfolds to a genuine RCC5
-model of $C_0$) and the faithfulness of the Hintikka abstraction are
-\emph{machine-checked in Lean~4} (zero \texttt{sorry}). \textup{(The
-uniformization W2$'$ folds into F6---see below---so the sole open premise
-is F6.)}
+Suppose a computable function assigns to every concept $C_0$ a finite list
+of certificate codes that contains a code accepted by the fixed checker
+\code{finAcceptB} whenever $C_0$ is satisfiable. Then concept satisfiability
+for $\ALCIRCC{5}$ is decidable. This implication, the soundness of the
+checker (an accepted code unfolds to a genuine RCC5 model of $C_0$), and the
+faithfulness of the Hintikka abstraction are \emph{machine-checked in
+Lean~4} (\code{decidableSat\_of\_finScheme}, \code{finAccept\_sound},
+\code{satisfiable\_iff\_hintikkaP}; zero \texttt{sorry}). The supposition is
+open.
 \end{theorem}
+
+\noindent The route to the supposition that this line pursued starts from
+property~F6, and two of its steps are argued, not proved:
+\[
+  \text{F6}
+  \;\overset{?}{\Longrightarrow}\;
+  \text{refined W2$'$}
+  \;\overset{?}{\Longrightarrow}\;
+  \text{complete finite candidate lists}
+  \;\overset{\text{Lean}}{\Longrightarrow}\;
+  \text{decision procedure}.
+\]
+Earlier versions of this paper stated the theorem as ``F6 implies
+decidability'', with only its soundness half certified, and called F6 the
+sole open premise. That folded two unformalized implications into the
+statement. The most recent cold review~\cite{GPT56SolReview} separated them,
+and we have adopted its decomposition.
 
 \paragraph{The keystone, sharpened.} Two cold attacks on F6 turned the
 vague ``bounded width'' into a precise dichotomy. The naive ways to force
@@ -2266,20 +2422,28 @@ of unbounded hitting number. In plain terms: $n$ separate
 ``this-region-not-that-one'' witnesses, no two of which may be merged
 because each is the \emph{unique} reason some specific pair stays apart---so
 a finite catalogue, which can only hold boundedly many such witnesses, is
-overrun exactly when a concept forces $n$ of them for every $n$. F6 fails
-iff some concept \emph{forces} such minors; F6 holds iff none does. And
-W2$'$ (Definition~\ref{def:w2prime}), which looked like a second obstacle,
-was shown false in its coarse form but repairable by a state refinement
-whose size is bounded \emph{by F6}---so it \emph{folds into} F6, leaving a
-single open question
+overrun exactly when a concept forces $n$ of them for every $n$. The
+conjecture that came out of these attacks is that this is the \emph{only}
+obstruction---that F6 fails exactly when some concept forces such minors.
+That is a candidate characterization, not a theorem: no argument shows that
+minors are the only way width can grow, and the finite networks that exhibit
+them are not known to be forced by any concept. And W2$'$
+(Definition~\ref{def:w2prime}), which looked like a second obstacle, was
+shown false in its coarse form but, by an argument that is not formalized,
+repairable by a state refinement whose size is bounded \emph{by F6}---so that
+it \emph{folds into} F6, leaving, on that argument, a single open question
 (\texttt{fable5\_width\_barrier/}, \texttt{cold\_review\_f6\_w2prime/};
 probes \texttt{wp35}--\texttt{wp44}, incl.\ \texttt{wp44}: arbitrary RCC5
 glue steps \emph{can} have unbounded separator cover, so any F6 proof must
 use $\ALCIRCC{5}$-forceability, not RCC5-consistency alone).
 
 \paragraph{The problem is $\Pi^0_1$, and F6 weakens to its qualitative
-core.} One further observation---new to this project---sharpens what F6 must
-deliver. As \S\ref{sec:fofragments} sets up, the semantics is finitely
+core.} One further observation sharpens what F6 must deliver. It is not
+new: Lutz and Wolter prove that $\LRCC{5}(\mathit{RS})$, which is
+$\ALCIRCC{5}$, is recursively enumerable~\cite[Thm.~28]{LutzWolter2006}.
+Earlier versions of this paper presented it as new
+(\S\ref{ssec:lutzwolter}); we re-derive it here because the dovetailing
+argument below consumes its explicit form. As \S\ref{sec:fofragments} sets up, the semantics is finitely
 \emph{first-order} axiomatizable (the theory $T_{\mathrm{RCC5}}$ plus the
 standard translation of $C_0$), over \emph{arbitrary} carriers---exactly what
 the carrier-polymorphic satisfiability of the Lean development means.
@@ -2328,8 +2492,11 @@ $C_0$---the target behind most of the width-accounting defects the reviews
 found) to the \emph{qualitative} core just isolated, and the computable bound
 then returns for free \emph{a posteriori}.
 
-The dovetailing reduction is itself machine-checked
-(\code{formal/SemiDecidability.lean}, zero \code{sorry}), and the FO
+The generic dovetailing combinator is machine-checked
+(\code{formal/SemiDecidability.lean}, zero \code{sorry}), with its four
+hypotheses---checker soundness, refutation soundness, certificate
+completeness, and first-order completeness---carried as fields rather than
+instantiated: the Lean contains no formal first-order proof system. The FO
 transcription it rests on---that the axioms above carve out exactly the
 Lean frame conditions, and that the standard translation matches the
 certified satisfaction relation---is cross-checked in \code{wp84}
@@ -2354,8 +2521,8 @@ represent exactly the patterns that fool a width bound---identity
 selectors ($i=j$ via address equality), half-graphs ($i<j$ via an order
 test)---finitely.
 
-\paragraph{What it produced.} A complete \emph{local} algebra of
-strong-$\EQ$ RCC5 networks, one piece of which is machine-\emph{certified}:
+\paragraph{What it produced.} A \emph{local} algebra of strong-$\EQ$
+RCC5 networks, one piece of which is machine-\emph{certified}:
 
 \begin{theorem}[RCC5 normal form]\label{thm:normalform}
 A strong-$\EQ$ atomic RCC5 network is composition-closed if and only if it
@@ -2375,20 +2542,40 @@ non-disjoint pairs with a coordinate ${\le}x$---and its core is machine-checked
 for arbitrary domains (\code{OrderedDisjoint.sub\_iff\_le},
 \code{eta\_injective}: \emph{zero} axioms; \code{disj\_iff\_eta\_disjoint}:
 $+\,$\texttt{Classical.choice} for the one non-constructive direction),
-independently cross-checked past size four in \texttt{wp88}. So the
-biconditional holds on arbitrary domains.
+independently cross-checked past size four in \texttt{wp88}. The frame
+half of the converse (an ordered-disjoint structure is composition-closed,
+\code{odNet\_frame}) and the model-level bridges (\code{odNet\_odOfModel},
+\code{setRel\_odNet}, \code{satisfiable\_iff\_set}) are in
+\texttt{formal/POFreeLift.lean}. So the biconditional holds on arbitrary
+domains.
 \end{theorem}
+
+Two pieces of prior work should be read alongside it. That RCC5 structures
+are representable at all---by regular closed regions, not merely by
+sets---is Theorem~23 of Lutz and Wolter~\cite{LutzWolter2006}; what the
+theorem above adds is the explicit order-and-disjointness form, an explicit
+construction, and kernel-checked proofs. And the ordered-disjoint shape is an
+old one in another field: a partial order with an irreflexive, symmetric
+conflict relation inherited along it is the order skeleton of a prime event
+structure~\cite{NielsenPlotkinWinskel1981}. The order is reversed---causality
+runs from a region to its parts, because disjointness is inherited
+downward---with $\DR$ as conflict and $\PO$ as concurrency, and without the
+finite-causes axiom, which region structures need not satisfy. The most
+recent cold review pointed out the correspondence~\cite{GPT56SolReview}; we
+have not yet used it, but the theory of event-structure unfoldings and their
+finite presentations is a natural place to look for tools.
 
 With it come free amalgamation of ordered-disjoint structures, an exact
 one-point extension criterion, and exact uniform/non-uniform cross-policy
-characterizations---together \emph{exhausting} the local algebra
+characterizations---theorem-level results with finite probes, which
+between them cover the local algebra the route needed
 (\texttt{rcc5\_local\_amalgamation\_theory},
 \texttt{regular\_cover\_route\_pivot/}, probes \texttt{wp45}--\texttt{wp83}).
 The route independently re-derives Theorem~\ref{thm:pofree}.
 
 \paragraph{Why it is a better map, not a shorter path.} Its own keystone
 (a bounded coherent regular-cover property) is F6 relabelled, and the
-route concedes, after exhausting the local algebra, that the remainder
+route concedes, after working through the local algebra, that the remainder
 ``cannot be a purely local RCC5 composition problem.'' Because RCC5
 relations are total, every model's Gaifman graph is complete, so a
 one-dimensional $\PP$-chain already has unbounded clique number and
@@ -2406,16 +2593,24 @@ attempts but validated empirically rather than proved.
 \paragraph{The cover-tree tableau.} \texttt{src/cover\_tree\_tableau.py}
 ($\approx 350$ lines) is an operational concept-satisfiability procedure
 with exact-occurrence blocking, resting on the split-forest normal form
-and patchwork completion (\S\ref{ssec:approach-splitforest}). It is
-cross-validated against an independent quasimodel oracle on $911$
-concepts (zero mismatches after the known blind spot is excluded) and
+and patchwork completion (\S\ref{ssec:approach-splitforest}). Its
+regression and cross-validation suite has $911$ cases: $99$ labelled ones
+($50$ known satisfiable, $13$ known unsatisfiable, $36$ adversarial) and
+$812$ comparison runs against an independent quasimodel oracle ($512$
+systematic triples, $300$ random concepts of depth two and three), with zero
+mismatches once the oracle's known blind spot is excluded. It is also checked
 against an independent model verifier
 (\texttt{src/model\_verifier.py}). SAT outputs accompanied by an explicit
 finite model are independently checkable by that verifier; no completeness
 theorem is claimed, and UNSAT outputs and SAT cases requiring infinite
 models remain empirical. Its one known limitation is the strong-$\EQ$
 $\PO$-loop, decided correctly by the tableau but not by the quasimodel
-oracle. It is strong evidence, not a proof.
+oracle. It is strong evidence, not a proof. An April~2026 code review found
+a genuine gap in it: its cross-interaction check handled only singleton
+compositions, so it could accept unsatisfiable concepts whose conflict runs
+through a non-singleton cell. The fix left all $911$ verdicts
+unchanged---which shows that the suite had not exercised the pattern, not
+that the gap was harmless.
 
 \begin{figure}[p]
 \centering
@@ -2500,8 +2695,8 @@ table and test harness, so this is cross-validation with some common-mode
 risk, not two wholly independent oracles; and the model verifier confirms
 explicit \emph{finite} SAT witnesses, not UNSAT verdicts or infinite-model
 SAT. Beyond
-the reasoners, some eighty self-contained verification work packages
-(\texttt{verification/python/}, WP1--WP88) cross-check the finite
+the reasoners, $94$ self-contained verification work packages
+(\texttt{verification/python/}, WP1--WP135) cross-check the finite
 combinatorial content of every proof route against the RCC5 composition
 table \emph{re-derived from finite set semantics}, so the underlying
 algebra cannot be fudged. Representative results: the RCC5 patchwork
@@ -2513,10 +2708,11 @@ cluster-quasimodel decision layer matches the tableau on $11/11$
 diagnostics plus a $200$-concept sweep (WP26); the RCC5 normal form agrees
 with brute-force composition closure on all networks up to size four
 (WP47); and the Lean development builds with zero \texttt{sorry} on every
-run (WP34). Most tellingly, \emph{across all thirty rounds and seventeen
-adversarial reviews, no accepted-but-unsatisfiable concept was ever
-found}: every defect the reviews turned up was a gap in an
-\emph{argument}, never a semantic counterexample to the intended theorem
+run (WP34). The pattern of the reviews is informative too. Concepts accepted
+although unsatisfiable \emph{were} exhibited---against manuscripts as
+literally written, such as $C_{\mathrm{force}}$ against the first automata
+route---but each traced to a missing clause in an \emph{argument}, never to a
+semantic counterexample to the intended theorem
 (the absence of a hybrid $\downarrow$-binder---a way to name the current
 point and reuse that name inside nested modalities---appears to block
 concept-level exploitation of the seams the reviews located; note that
@@ -2604,13 +2800,13 @@ to inspection.
 finding: a \emph{cold} reviewer consistently found defects that a
 \emph{warm} reviewer (primed by the construction) missed---including, on
 this project, unsoundness proofs and scope errors that two hot audits had
-passed over. Across twenty reviews, a defect or overclaim was found in
+passed over. Across twenty-one reviews, a defect or overclaim was found in
 all but two. We recommend cold, cross-lineage adversarial review as a
 default intermediate step in AI-assisted mathematics, not an optional
 one.
 
-\paragraph{Don't trust, verify.} Every load-bearing claim was
-cross-checked against something mechanical: self-contained Python probes
+\paragraph{Don't trust, verify.} We tried to cross-check every
+load-bearing claim against something mechanical: self-contained Python probes
 that re-derive the RCC5 composition table from finite set semantics
 (so the algebra cannot be fudged), and ultimately the Lean kernel.
 Overclaiming was treated as the cardinal sin---and it happened: the
@@ -2637,6 +2833,23 @@ decidability itself (it is sufficient, not equivalent); and a blanket
 satisfiable one-level gadget. All were corrected in the present version,
 and the review's recommendation was to post the overview to arXiv as a
 status report and research handoff---not as a claimed solution.
+
+A twenty-first review (GPT-5.6~Sol, September 2026)~\cite{GPT56SolReview},
+cold and aimed at this overview and the Lean sources together, found no
+defect in the Lean: it located every capstone of the fragment's decision
+chain in the source and confirmed that no hypothesis was hidden in it. What
+it found was a gap between the Lean and this paper's account of the Lean.
+Our status tables marked ``F6 implies decidability'' and the $\Pi^0_1$
+dovetailing as Lean-certified, where the Lean certifies each only as a
+conditional whose premise it does not contain; the title and conclusion
+described a reduction of the whole problem to one lemma, where two steps of
+that reduction were only argued; and the status section still described the
+fragment's certification in its superseded, three-quadrant form. The review
+also recommended the split into two papers that we adopted, and its pointers
+into Lutz and Wolter's paper led us to results we had failed to credit
+(\S\ref{ssec:lutzwolter}). The pattern is the one the ledger keeps
+recording: each defect was a true statement framed so as to imply something
+stronger, and none would have failed a build or a reference check.
 
 \paragraph{What frontier models did well, and did not.} Both models
 sustained long-context, rigorous, multi-round formal development and
@@ -2721,18 +2934,21 @@ contribution is unambiguous either way.
 \section{Summary and conclusion}
 \label{sec:conclusion}
 
-\paragraph{What we learned.} A twenty-five-year-old open problem has been
-\emph{reduced}, honestly and largely machine-checkably, to a single
-well-posed lemma (F6, bounded live width): the same
-horizontal-coordination obstruction that has blocked every known attempt
-to prove the problem undecidable---a \emph{shared} obstruction, not a
-proof that F6's failure would by itself entail undecidability. The local
-algebra of RCC5 is exhausted and now certified. And one \emph{sub}-question
-was settled outright rather than reduced: the $\forall\PO$-free fragment is
+\paragraph{What we learned.} One sub-question of a problem open for more
+than two decades was settled outright: the $\forall\PO$-free fragment is
 decidable, by a procedure the Lean kernel checks end to end, on raw input and
 under concrete set semantics, with fragment membership its only hypothesis
-(\S\ref{ssec:conescheme}). Adversarial cold review plus machine verification is
-a repeatable methodology for this kind of work.
+(\S\ref{ssec:conescheme}). The full problem was \emph{not} reduced to one
+lemma. What was achieved there is a map: for the principal certificate
+architecture the remaining gap sits at a bounded live width (F6) and a refined
+uniformization, with the soundness side and the final step machine-checked and
+the two steps between them only argued. F6 names the same
+horizontal-coordination obstruction that has blocked every known attempt to
+prove the problem undecidable---a \emph{shared} obstruction, not a proof that
+F6's failure would entail undecidability. The local RCC5 algebra those
+attempts needed is characterized, and its normal form certified. Adversarial
+cold review plus machine verification is a repeatable methodology for this
+kind of work.
 
 \paragraph{What would move the needle.} F6 is a \emph{definability}
 question---can a formula \emph{force} unbounded rigid horizontal
@@ -2750,10 +2966,29 @@ other undecidable computation.
 Ordinary locality alone is insufficient because horizontal degree is
 unbounded; this is the ``correct room,'' not a solved problem.
 
+The most recent cold review~\cite{GPT56SolReview} added three leads worth
+recording, and a gate for all of them. First, a finite state that carries a
+complete RCC5 matrix among representatives of simultaneously live demands---a
+pair-matrix mosaic---addresses directly what the cone scheme lacks, namely
+relation choices among contemporaneous witnesses; its completeness is where a
+bound on joint width would return. Second, an ordered-disjoint structure can
+be recast as a single strict partial order on two copies of its domain, with
+disjointness recorded as edges from the left copy to the right. The order's
+transitivity and the downward inheritance of disjointness then both become
+transitivity of that one order, which moves the question near two-variable
+logic with one transitive relation, a decidable
+logic~\cite{SzwastTendera2013}---but the encoding also needs an involution
+that keeps the two copies synchronized, and that theorem does not cover it.
+Third, the event-structure reading of the normal form
+(\S\ref{ssec:approach-regcov}) opens the literature on regular unfoldings. The
+gate is the pair of boundary concepts of \S\ref{ssec:conescheme}: any new local
+rule must reject $C_{\mathrm{bad}}$ and still accept $C_{\mathrm{sat}}$.
+
 \paragraph{The chances of closing F6.} We are frank: they are low, and
 re-treading the ground covered here will not change that. F6 is the crux on
-which this architecture turns---though, strictly, only
-$\mathrm{F6}\Rightarrow$ decidability is established, and a \emph{failure} of
+which this architecture turns---though, strictly, even
+$\mathrm{F6}\Rightarrow$ decidability is only argued, two of its steps being
+unformalized (\S\ref{ssec:approach-lean}), and a \emph{failure} of
 F6 would refute \emph{this} certificate route without by itself proving
 undecidability (the logic could still be decidable by some representation
 this width measure does not control). The two independent cold attacks
@@ -2800,15 +3035,13 @@ procedure} for it (\code{decidableFSat}, \code{decidableSat\_cone},
 and complete for concrete set semantics, and attacked by three independent
 cold reviews without a counterexample; (ii) a machine-\emph{certified} RCC5
 normal form; (iii) a
-machine-checked \emph{conditional decidability theorem}
-($\text{F6}\Rightarrow$ decidable, soundness certified, resting on the
-F6 oracle); (iv) a \emph{working, empirically validated prototype
-reasoner}---the cover-tree tableau (\S\ref{sec:reasoners}),
-cross-validated against an independent quasimodel oracle on $911$ concepts
-with \emph{zero} mismatches, reproducing $23$ years later the full GIS
-subsumption taxonomy of Wessel's original report ($21/21$), and across the
-entire campaign never once producing a decision contradicted by any other
-oracle or by a hand analysis---\emph{no counterexample was ever found};
+machine-checked \emph{conditional} reduction for the full logic (complete
+finite candidate lists for a verified checker $\Rightarrow$ decidable), whose
+premise is open and whose argued route from F6 is displayed step by step;
+(iv) a \emph{working, empirically validated prototype reasoner}---the
+cover-tree tableau (\S\ref{sec:reasoners}), agreeing with an independent
+quasimodel oracle across a $911$-case suite and reproducing $23$ years later
+the full GIS subsumption taxonomy of Wessel's original report ($21/21$);
 (v) a sharp \emph{map} of the problem with a named toolbox; and
 (vi) a candid \emph{methodology} for adversarial AI-assisted mathematics.
 
@@ -2822,19 +3055,20 @@ faithfulness contain no gap, while F6 itself stays outside. The
 reasoner (item~iv) is the \emph{empirical} counterpart: a real,
 terminating implementation, run on thousands of concepts, that agrees with
 an independent implementation everywhere it has been tested and reproduces
-a two-decade-old published taxonomy. Neither proves decidability---but that a
-running procedure and a machine-checked proof both point the same way,
-and that no adversarial search over the whole campaign ever exhibited an
-accepted-but-unsatisfiable (or rejected-but-satisfiable) concept, is the
-strongest \emph{evidence} short of a certificate that the conjecture is
-true.
+a two-decade-old published taxonomy. Neither proves decidability, and we
+do not claim more for the evidence than it supports: the retracted quasimodel
+reasoner did reject a satisfiable concept, manuscripts as written did accept
+unsatisfiable ones, and the tableau itself carried a gap that its suite never
+exercised. What the record shows is that every such failure traced to a
+specific, repairable defect, and none to a counterexample to the conjecture
+that the full logic is decidable.
 
 \paragraph{Is this a scientific contribution?} We believe so, with the
-labelling kept honest: not a resolution of the open problem, but its
-reduction---checkably, and with a certified surround---to an irreducible
-core, plus one fragment settled outright with a kernel-checked decision
-procedure, one certified lemma, working tools, and an honest account of an
-AI-assisted attack and its dead ends. That is
+labelling kept honest: not a resolution of the open problem, but one
+fragment settled outright with a kernel-checked decision procedure, a
+certified normal form, a precise and partly machine-checked map of where one
+certificate architecture's remaining gap lies, working tools, and an honest
+account of an AI-assisted attack and its dead ends. That is
 an accurate and, we think, respectable terminal state for a discussion
 piece on a problem open for over two decades.
 
@@ -2870,33 +3104,39 @@ Lean}. A closed, adversarial loop---propose, formalize, let the kernel
 accept or reject---has a built-in ground-truth oracle, exactly the guard
 the manual cold-review methodology provided. The honest caveat: Lean
 verifies \emph{proofs}, not the \emph{truth of a conjecture}, so such a
-loop can tighten the certified surround but the summit (F6) still needs a
-genuine idea; orchestration alone is unlikely to supply it.
+loop can tighten the certified surround, but the summit---full
+decidability---still needs a genuine idea; orchestration alone is unlikely
+to supply it.
 
 \paragraph{Materials.} The machine-checked development is
 \texttt{formal/Round19Transport.lean}, \texttt{formal/RCC5NormalForm.lean},
 \texttt{formal/ForcingReduction.lean}, \texttt{formal/SemiDecidability.lean},
 and \texttt{formal/POFreeLift.lean} (see \texttt{LEAN.md}); the
 status report and the F6/W2$'$ analysis are in
-\texttt{papers/fable5\_width\_barrier/}; the decidable fragment in
+\texttt{papers/fable5\_width\_barrier/}; the decidable fragment in the focused companion
+paper~\cite{PofreeFragmentPaper}, with its earlier arguments in
 \texttt{papers/two\_tier\_quotient\_ALCIRCC5} and
-\texttt{papers/po\_free\_fragment\_ALCIRCC5}; the certified local theory
+\texttt{papers/po\_free\_fragment\_ALCIRCC5}; the most recent cold review,
+with its draft of that paper, in
+\texttt{papers/gpt-5.6-latest-overview-paper-review-and-recommendation/}~\cite{GPT56SolReview};
+the certified local theory
 in \texttt{papers/rcc5\_local\_amalgamation\_theory}; the reasoners under
 \texttt{src/}; the probes under \texttt{verification/python/}; and the
 full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md};
 and GPT-5.6~Pro's canonical-representation note is
 \texttt{papers/final\_paper\_gpt\_5.6\_review/ALCI\_RCC5\_F6\_technical\_note.pdf}~\cite{GPT56TechNote}.
 The repository is at \url{https://github.com/lambdamikel/alcircc5}. The
-state described in this paper is frozen at the git tag
-\texttt{certified-fragment-2026-08-29}; for reproducibility cite that tag (or
-its commit hash), not the mutable \texttt{master} branch. It supersedes
+Lean artifact described here is the one frozen at the git tag
+\texttt{certified-fragment-2026-08-29}, which differs from the current
+sources only in the spelling of comments; for reproducibility cite that tag
+(or a commit hash), not the mutable \texttt{master} branch. It supersedes
 \texttt{arxiv-candidate-2026-07-18}, which predates the $\forall\PO$-free
-fragment's certification (\S\ref{ssec:conescheme}) and the three cold
-reviews of it. Filenames below are relative to the repository root.
+fragment's certification (\S\ref{ssec:conescheme}) and the cold reviews of
+it. Filenames below are relative to the repository root.
 Table~\ref{tab:artifacts} maps each principal claim to its verification
 level, its file or Lean theorem, and its probe.
 
-\begin{table}[h]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.2}
@@ -2906,35 +3146,37 @@ level, its file or Lean theorem, and its probe.
 \midrule
 Certificate soundness & Lean-certified & \texttt{Round19Transport.lean}: \code{finAccept\_sound} & \texttt{wp34}\\
 Hintikka faithfulness & Lean-certified & \texttt{Round19Transport.lean}: \code{satisfiable\_iff\_hintikkaP} & ---\\
-RCC5 normal form (both directions) & Lean-certified & \texttt{RCC5NormalForm.lean}: \code{toOrderedDisjoint}, \code{sub\_iff\_le}, \code{eta\_injective} & \texttt{wp47}, \texttt{wp88}\\
+RCC5 normal form (both directions) & Lean-certified & \texttt{RCC5NormalForm.lean}: \code{toOrderedDisjoint}, \code{sub\_iff\_le}, \code{eta\_injective}; \texttt{POFreeLift.lean}: \code{odNet\_frame}, \code{odNet\_odOfModel}, \code{setRel\_odNet} & \texttt{wp47}, \texttt{wp88}\\
 $\forall\PO$-free lift core & Lean-certified & \texttt{POFreeLift.lean}: \code{lift\_cc}, \code{unf\_is\_frame} & \texttt{wp86}\\
-F6\,$\Rightarrow$\,decidability (soundness) & Lean-certified & \texttt{Round19Transport.lean}: \code{decidableSat\_of\_finScheme} & ---\\
-$\Pi^0_1$ / dovetailing reduction & Lean-certified & \texttt{SemiDecidability.lean}: \code{decidableSat} & \texttt{wp84}\\
+Complete candidate lists\,$\Rightarrow$\,decidability & Lean-certified, as a conditional (premise open) & \texttt{Round19Transport.lean}: \code{decidableSat\_of\_finScheme} & ---\\
+Generic dovetailing combinator & Lean-certified, as a conditional (hypotheses are fields) & \texttt{SemiDecidability.lean}: \code{decidableSat} & \texttt{wp84}\\
+Recursive enumerability ($\Pi^0_1$) & Published & \cite[Thm.~28]{LutzWolter2006}; re-derived in \S\ref{ssec:approach-lean} & \texttt{wp84}\\
 \addlinespace
 $\forall\PO$-free \textbf{decidability}, NNF input & Lean-certified & \texttt{POFreeLift.lean}: \code{decidableSat\_cone} & \texttt{wp133}, \texttt{wp134}\\
 \quad\ldots on \emph{raw} input & Lean-certified & \texttt{POFreeLift.lean}: \code{decidableFSat}, \code{nnfP\_correct} & ---\\
 \quad\ldots under \emph{concrete set} semantics & Lean-certified & \texttt{POFreeLift.lean}: \code{decidableSetSat} & ---\\
-Abstract $=$ concrete satisfiability (\emph{full} logic) & Lean-certified & \texttt{POFreeLift.lean}: \code{satisfiable\_iff\_set} & ---\\
+Abstract $=$ concrete satisfiability (\emph{full} logic) & Lean-certified (a case of \cite[Thm.~23]{LutzWolter2006}) & \texttt{POFreeLift.lean}: \code{satisfiable\_iff\_set} & ---\\
 One-sided \textsc{unsat} test (\emph{full} logic) & Lean-certified & \texttt{POFreeLift.lean}: \code{coneScheme\_unsat\_full} & \texttt{wp134}\\
 Completeness of the cone scheme & Lean-certified & \texttt{POFreeLift.lean}: \code{coneScheme\_complete} & \texttt{wp135}\\
 \addlinespace
 The two \emph{arguments} for the fragment ($K(C_0)$, extraction) & Theorem-level & \texttt{papers/po\_free\_fragment\_ALCIRCC5}; the certified route above is a \emph{third}, and uses neither & \texttt{wp87}\\
-Identity-selector characterization & Theorem-level & \texttt{papers/fable5\_width\_barrier} & \texttt{wp44}\\
+Identity-selector minors as the F6 obstruction & Open (finite-network evidence) & \texttt{papers/fable5\_width\_barrier} & \texttt{wp44}\\
 Cover-tree tableau & Empirical & \texttt{src/cover\_tree\_tableau.py} (911-concept cross-validation) & \texttt{wp}\,---\\
 Static F6; automatic-cover; full decidability & Open & --- (no proof claimed) & ---\\
 \bottomrule
 \end{tabular}
 \caption{Result-to-artifact map. Statuses are those of
 Table~\ref{tab:status}. Every Lean name listed was checked to resolve in the
-named file at tag \texttt{certified-fragment-2026-08-29}; filenames are
-relative to the repository root. Note the split in the last two rows: the
-fragment \emph{theorem} is certified, by a route that uses neither the
+named file at tag \texttt{certified-fragment-2026-08-29} and in the current
+sources; filenames are
+relative to the repository root. Note the split between the fragment rows:
+the fragment \emph{theorem} is certified, by a route that uses neither the
 $K(C_0)$ bound nor the extraction argument, while those two \emph{arguments}
 remain unformalized.}
 \label{tab:artifacts}
 \end{table}
 
-\newpage
+\clearpage
 \section*{Acknowledgments}
 
 The $\ALCIRCC{}$ family was introduced by Wessel in his
@@ -2962,7 +3204,12 @@ borrowing---GPT-5.6~Sol was asked for an alternative and proposed retiring
 node reuse altogether, keeping the finite scheme only as a control graph and
 unfolding every non-$\EQ$ existential to a fresh occurrence. That single
 change turned the five obligations that had cost four refuted disciplines
-into structural facts. Claude carried out the Lean development. The $\forall\PO$-free (PO-coherent) fragment
+into structural facts. Claude~Opus~5 carried out that Lean development.
+GPT-5.6~Sol also wrote the most recent cold review of this
+overview~\cite{GPT56SolReview}, which recommended splitting the finished
+fragment result into a focused paper and supplied a first draft of one; the
+companion paper~\cite{PofreeFragmentPaper} was then written afresh by
+Claude~Opus~5 from the Lean artifact, following that recommendation. The $\forall\PO$-free (PO-coherent) fragment
 of \S\ref{ssec:approach-finite} has a specific lineage worth recording: the
 human author seeded it with the \emph{PP-kernel} idea (collapse
 same-type occurrences on a $\PP$-chain into a kernel node with a reflexive
@@ -3045,7 +3292,24 @@ M.\ Wessel.
 \bibitem{LutzWolter2006}
 C.\ Lutz and F.\ Wolter.
 \newblock Modal logics of topological relations.
-\newblock \emph{Logical Methods in Computer Science}, 2(2):1--41, 2006.
+\newblock \emph{Logical Methods in Computer Science}, 2(2:5):1--41, 2006.
+\newblock \url{https://doi.org/10.2168/LMCS-2(2:5)2006}
+
+\bibitem{HaarslevLutzMoeller1999}
+V.\ Haarslev, C.\ Lutz, and R.\ M\"oller.
+\newblock A description logic with concrete domains and a role-forming
+  predicate operator.
+\newblock \emph{Journal of Logic and Computation}, 9(3):351--384, 1999.
+
+\bibitem{NielsenPlotkinWinskel1981}
+M.\ Nielsen, G.\ Plotkin, and G.\ Winskel.
+\newblock Petri nets, event structures and domains, part~I.
+\newblock \emph{Theoretical Computer Science}, 13(1):85--108, 1981.
+
+\bibitem{SzwastTendera2013}
+W.\ Szwast and L.\ Tendera.
+\newblock $\mathrm{FO}^2$ with one transitive relation is decidable.
+\newblock In \emph{Proc.\ STACS 2013}, LIPIcs~20, pages 317--328, 2013.
 
 %% --- Concrete-domain approaches (related, expressively incomparable) ---
 
@@ -3484,6 +3748,22 @@ GPT-5.6 Sol (OpenAI), prompted by M.\ Wessel.
   \code{decidableSat\_cone}, \code{decidableSetSat} in
   \texttt{formal/POFreeLift.lean}.
 
+\bibitem{GPT56SolReview}
+GPT-5.6 Sol (OpenAI), prompted by M.\ Wessel.
+\newblock Cold review of the current $\ALCIRCC{5}$ development: overview-paper
+  audit, Lean artifact review, and a renewed attack on full decidability;
+  with a draft focused paper on the $\forall\PO$-free fragment.
+\newblock Review report, 9~September 2026, of commit \texttt{795b270}.
+\newblock Directory
+  \texttt{papers/gpt-5.6-latest-overview-paper-review-and-recommendation/}.
+
+\bibitem{PofreeFragmentPaper}
+M.\ Wessel (with AI assistants).
+\newblock Deciding the $\forall\PO$-free fragment of $\ALCIRCC{5}$:
+  ordered-disjoint models, cone schemes, and a proof checked in Lean~4.
+\newblock Companion paper, September 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/pofree_fragment_arxiv.pdf}
+
 \bibitem{GPT56Pro}
 OpenAI.
 \newblock GPT-5.6 Pro.
@@ -3536,7 +3816,7 @@ research. We contend it was rejected on the wrong basis.
     capabilities), nor the concrete contributions the submission
     \emph{did} present: a working cover-tree tableau reasoner reproducing
     the $2003$ GIS taxonomy, and an unconditionally decidable fragment.
-    (The split-forest normal form, the reduction to a single keystone, and
+    (The split-forest normal form, the F6 analysis, and
     the machine-checked Lean soundness reported in the present paper came
     later, in the months \emph{after} the rejection---so they cannot have
     been the basis for it.)
