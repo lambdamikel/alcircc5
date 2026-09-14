@@ -21,8 +21,8 @@ Approaches, in rough order tried:
    finite-bound / enumerate-and-check; the two-tier quotient; the
    **∀PO-free decidable fragment** (a genuine win).
 3. [**`SplitForest/`**](SplitForest/Overview.md) — the split-forest normal
-   form (Theorem A), the sound semantic foundation everything downstream
-   consumes.
+   form (Theorem A), the sound semantic foundation consumed by every route
+   before the cone scheme, which builds its shape instead.
 4. [**`NoAutomataCertificate/`**](NoAutomataCertificate/Overview.md) — the
    rounds-2–10 hand certificate that converged onto an automaton.
 5. [**`Automata_Parity/`**](Automata_Parity/Overview.md) — the two-way

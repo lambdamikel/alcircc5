@@ -3,8 +3,9 @@
 **Idea (the human author's, on a whiteboard).** A complete-graph RCC5 model
 can be *presented* as a forest of trees by splitting join nodes into
 EQ-mates and completing the missing horizontal edges by **patchwork**. This
-is the sound semantic normal form (**Theorem A**) that every downstream
-route consumes — and the one component no cold review ever broke.
+is the sound semantic normal form (**Theorem A**) that every route before the
+cone scheme consumed — the cone scheme builds its shape instead — and the one
+component no cold review ever broke.
 
 Full treatment: overview paper, §"The split-forest idea" (and the whiteboard
 photograph).
