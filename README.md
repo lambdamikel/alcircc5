@@ -80,349 +80,293 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-09-14): the ∀PO-free fragment is decided in Lean and has its own paper; the full logic stays open
+## Status
 
-Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
-repair rounds and 17 adversarial reviews (of twenty-one to date) the
-*full-logic* certificate
-architecture reached a genuine local optimum: the local algebra it needed is
-characterized, the soundness side is machine-checked, and the remaining
-difficulty *of that certificate architecture* is located at a width property
-(F6) — with two steps between F6 and a decision procedure argued, not proved.
-Two published results bear on all of this and are now credited in the paper:
-Lutz & Wolter (2006) already prove that ALCI_RCC5 is recursively enumerable
-(Thm 28) and representable by regular closed regions (Thms 23–24). That
-line of attack is **paused** (git tag `arxiv-candidate-2026-07-18`); what a
-future attack needs is recorded in the paper's concluding section and in
-[`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
+**Where things stand (2026-09-14).** Decidability of **full** ALCI_RCC5 (and
+ALCI_RCC8) **remains open**. The **∀PO-free fragment is decided**, by a decision
+procedure checked end to end in Lean with fragment membership as its only
+hypothesis, and written up on its own in
+[`papers/pofree_fragment_arxiv.pdf`](papers/pofree_fragment_arxiv.pdf). Also
+machine-checked: the RCC5 normal form in both directions and, for the full logic,
+a *conditional* reduction — if a fixed, verified checker is complete for some
+computable list of candidate certificates, satisfiability is decidable — whose
+premise is open; the route to it through a width property, **F6**, is argued but
+not proved. SAT is Π⁰₁ (Lutz & Wolter 2006, Thm 28), so for that route
+*qualitative* F6 would suffice: some finite certificate for each satisfiable
+concept, with no computable bound. The full-logic line of attack has been paused since July
+2026; what a future attack needs is recorded in the overview's conclusion and in
+[`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/). Cite the
+release **`release-2026-09-14`**. Each major revision is recorded below, newest
+first.
 
-**What has moved since is the fragment.** Dropping `∀PO` makes the keystone
-*constructive*. Two things must be kept apart here, and the boxes below
-separate them:
+### 2026-09-14 — A fourth review, two papers, and a release tag
 
-- **The theorem** rests on **two independent proof routes and three arrivals**
-  (ledger in
-  [`papers/why_po_free_decidable.pdf`](papers/why_po_free_decidable.pdf), §"So —
-  was it proved twice, or three times?"): *Route 1*, the **two-tier quotient**
-  (chain-and-phase), which decides the *PO-coherent* fragment — and ∀PO-free
-  concepts are automatically PO-coherent; and *Route 2*, the **ordered-disjoint
-  normal form** (structural — no chains, no phases, no stabilization), a
-  genuinely different shape reached independently. Both are complete arguments
-  with decision procedures, and both are **independent of the Lean certificate
-  route**.
-- **The Lean certification** is separate, and is now complete for **all four
-  quadrants** by a third route — the ConeScheme decision procedure of the
-  2026-08-29 box below, which supersedes the earlier certificate architecture.
+- **A cold review of the overview and the Lean** (GPT-5.6 Sol, 2026-09-09 —
+  [archived, with our verification notes](papers/gpt-5.6-latest-overview-paper-review-and-recommendation/)).
+  It found **no defect in the Lean**: every capstone it cited is where it said,
+  with no hidden hypothesis, and it called the fragment result "technically
+  real". Its findings were about how the *overview* described the Lean; each
+  was checked against the text before anything was changed.
+- **Two papers.** The certified result now has its own focused paper,
+  [**`papers/pofree_fragment_arxiv.pdf`**](papers/pofree_fragment_arxiv.pdf)
+  (17 pp), written afresh from the Lean sources and crediting GPT-5.6 Sol for
+  recommending the split. The [overview](papers/overview_arxiv.pdf) (56 pp)
+  remains the status report, history and research program.
+- **The overview recalibrated.** It no longer claims to reduce the problem "to
+  one keystone". The full-logic theorem is stated as what the kernel checks — a
+  *conditional* whose premise is open — with the two steps from F6 to that
+  premise marked as argued, not proved. The identity-selector characterization
+  is a conjecture, the status tables no longer describe the fragment in its
+  superseded three-quadrant form, and the patchwork, grid and concrete-domain
+  (ALCRP(D)) statements are corrected.
+- **Prior art we had missed.** Lutz & Wolter (2006) already prove that this
+  logic is recursively enumerable (Thm 28) — the "Π⁰₁ observation" is theirs —
+  and that RCC5 structures are representable by regions (Thm 23), of which our
+  abstract-versus-sets theorem is a machine-checked special case. By their
+  Thm 24 the fragment result holds verbatim for substructures of regular closed
+  regions of ℝⁿ. None of this touches the fragment's decidability.
+- **Novelty, checked (2026-09-02).** Lutz & Wolter leave this logic explicitly
+  open and float dropping PO as a candidate route without an argument; Wessel's
+  own report7 canvasses restricted fragments, but strictly stronger ones that work
+  by restoring the finite model property, which this fragment lacks. So far as we
+  can determine the result is new — stated deliberately weaker than a priority
+  claim; the overview's Lutz–Wolter section gives the full check.
+- **Boundary examples for the full logic**, checked against the shipped
+  procedure: `∀PO.A ⊓ ∃PO.¬A` is refuted in the first round; `C_bad` (our first
+  review's example) and the review's new `C_joint` are unsatisfiable yet accepted
+  by the one-sided full-logic test — the architectural gap recorded below; and
+  `C_sat` rules out the obvious repair.
+- **The reasoner's record, stated precisely:** no verdict of the cover-tree
+  tableau has ever been shown wrong. A campaign-wide claim that *no* procedure
+  had ever been caught out was false for others, and is gone.
+- **Everything synced, then tagged:** the slides, both explainers, `LEAN.md`,
+  `WHY_ITS_HARD.md` and the approach overviews (with a new
+  [`approaches/ConeScheme/`](approaches/ConeScheme/Overview.md)), then tagged
+  `release-2026-09-14`.
+- **Unchanged:** the Lean artifact (comment spelling aside), the fragment's
+  certification, and the open status of the full logic.
 
-The full-logic question and the fragment results are independent: F6 only bites
-where `∀PO` occurs, and the fragment removes it.
+### 2026-08-29 — The ∀PO-free fragment is decided in Lean, on raw input, under concrete set semantics
 
-> **★ Update (2026-09-14): a fourth review, two papers, and a release tag.**
->
-> - **A cold review of the overview and the Lean** (GPT-5.6 Sol, 2026-09-09 —
->   [archived, with our verification notes](papers/gpt-5.6-latest-overview-paper-review-and-recommendation/)).
->   It found **no defect in the Lean**: every capstone it cited is where it said,
->   with no hidden hypothesis, and it called the fragment result "technically
->   real". Its findings were about how the *overview* described the Lean; each
->   was checked against the text before anything was changed.
-> - **Two papers.** The certified result now has its own focused paper,
->   [**`papers/pofree_fragment_arxiv.pdf`**](papers/pofree_fragment_arxiv.pdf)
->   (17 pp), written afresh from the Lean sources and crediting GPT-5.6 Sol for
->   recommending the split. The [overview](papers/overview_arxiv.pdf) (56 pp)
->   remains the status report, history and research program.
-> - **The overview recalibrated.** It no longer claims to reduce the problem "to
->   one keystone". The full-logic theorem is stated as what the kernel checks — a
->   *conditional* whose premise is open — with the two steps from F6 to that
->   premise marked as argued, not proved. The identity-selector characterization
->   is a conjecture, the status tables no longer describe the fragment in its
->   superseded three-quadrant form, and the patchwork, grid and concrete-domain
->   (ALCRP(D)) statements are corrected.
-> - **Prior art we had missed.** Lutz & Wolter (2006) already prove that this
->   logic is recursively enumerable (Thm 28) — the "Π⁰₁ observation" is theirs —
->   and that RCC5 structures are representable by regions (Thm 23), of which our
->   abstract-versus-sets theorem is a machine-checked special case. By their
->   Thm 24 the fragment result holds verbatim for substructures of regular closed
->   regions of ℝⁿ. None of this touches the fragment's decidability.
-> - **Boundary examples for the full logic**, checked against the shipped
->   procedure: `∀PO.A ⊓ ∃PO.¬A` is refuted in the first round; `C_bad` (our first
->   review's example) and the review's new `C_joint` are unsatisfiable yet accepted
->   by the one-sided full-logic test — the architectural gap recorded below; and
->   `C_sat` rules out the obvious repair.
-> - **The reasoner's record, stated precisely:** no verdict of the cover-tree
->   tableau has ever been shown wrong. A campaign-wide claim that *no* procedure
->   had ever been caught out was false for others, and is gone.
-> - **Everything synced, then tagged:** the slides, both explainers, `LEAN.md`,
->   `WHY_ITS_HARD.md` and the approach overviews (with a new
->   [`approaches/ConeScheme/`](approaches/ConeScheme/Overview.md)). Cite
->   **`release-2026-09-14`**, not `master`.
-> - **Unchanged:** the Lean artifact (comment spelling aside), the fragment's
->   certification, and the open status of the full logic.
->
-> **★ Update (2026-08-29): the ∀PO-free fragment is decided, in Lean, on raw
-> input, under concrete set semantics.**
->
-> ```lean
-> def decidableFSat   (F : Formula) (h : FPOFree true F) : Decidable (FSatisfiable F)
-> def decidableSat_cone (C0 : Concept) (hpo : POFree C0) : Decidable (Satisfiable C0)
-> def decidableSetSat  (C0 : Concept) (hpo : POFree C0) : Decidable (SetSatisfiable C0)
-> ```
->
-> Membership in the fragment is the **only** hypothesis — no unproved premise, no
-> oracle, no `sorry`, axioms `propext`/`Classical.choice`/`Quot.sound`. The route
-> is a finite control graph of *signatures*, a monotone elimination to a greatest
-> fixed point, and a **fresh-occurrence unfolding** in which no node is ever
-> reused. It covers all four quadrants, **including the mixed one** (`∃PO` and
-> `∃PP` together), which had been open and which two rounds of cold attack had
-> been aimed at.
->
-> Three things are worth separating, because earlier versions of this box ran them
-> together:
->
-> - **Raw input.** `Formula` carries negation, `nnfP` normalizes it, and
->   `nnfP_correct` proves preservation in *both* polarities. The fragment
->   condition on raw input turns out to be polarity-sensitive — **no `∀PO`
->   positively and no `∃PO` negatively**, because an `∃PO` under a negation
->   *becomes* a `∀PO` — which the NNF-only statement had hidden.
-> - **Concrete semantics.** `setRel` is the naive relation on a family of sets
->   (equal / proper subset / proper superset / disjoint / otherwise overlap),
->   written with no reference to the composition table, and
->   `satisfiable_iff_set` proves abstract and concrete satisfiability are the
->   **same property** — with no fragment hypothesis, so it covers the whole logic.
->   The composition table is a *theorem about sets* here, not an assumption.
-> - **A bonus for the full logic.** The completeness direction needs no fragment
->   hypothesis, so an empty survivor set refutes for the **full** language
->   (`coneScheme_unsat_full`) — one-sided, and weak (see review 2).
->
-> **Three independent cold reviews, all "sound, no counterexample".** Each found
-> something; none found a defect in the fragment result itself.
->
-> | | target | what it did | what it found |
-> |---|---|---|---|
-> | **1** | trusted base + execution | built on two Lean versions, re-derived the composition table from set semantics at three domain sizes, 4,000 concepts vs exhaustive model search, evaluated the procedure at the kernel | two inverted comments; a complexity bound understated by an exponential (fix applied) |
-> | **2** | completeness | ran the elimination itself — 6,268 concepts vs exhaustive search, **0 satisfiable concepts rejected** | a **real defect**: the transition relation's `PO` case was `true`, dropping a constraint valid at every model edge (`PO` is its own converse). Fixed. Vacuous on the fragment, so `decidableSat_cone` was untouched — it made the *full-logic bonus* empty, and we had overclaimed it |
-> | **3** | soundness | ran the unfolding on labels from the **actual greatest fixed point**, which neither prior round had — 6,464 unfoldings, 10,066 occurrences, **0 frame and 0 truth violations** | nothing in the kernel. Five defects in **our own probes and documentation**, including one probe bug that was the same failure its docstring claimed to have fixed |
->
-> **The one remaining caveat is complexity, not correctness.** The procedure is
-> **decidable but not runnable**: `|sigStatic C₀| = 2^n · 2^(2^n)` for
-> `n = |cl C₀|`. Measured, it evaluates at `|cl C₀| ≤ 2`; generating the signature
-> space directly rather than filtering moves that to about 4–5. It cannot be run
-> on any concept this project's papers discuss. *Decidable* and *runnable* are
-> different claims, and only the first is made.
->
-> **What is still open is the full logic, not the fragment.** Two items, both
-> full-logic: a second `∀PO` gap in the UNSAT test that is *architectural* —
-> obligations arising from non-singleton compositions are unreachable by any local
-> clause of this shape — and F6, untouched.
->
-> **Honest label, and it is not this project's blanket one.** The fragment
-> result is **machine-certified**: the Lean kernel checks the decision procedure
-> with fragment membership as its only hypothesis, no `sorry`, standard axioms.
-> Its formalization's *adequacy* — do the definitions mean ALCI_RCC5? — has been
-> examined by three independent cold reviews without a counterexample, and the
-> largest adequacy question, abstract versus concrete semantics, is now a
-> **theorem** rather than a matter of reviewer confidence. What remains at risk
-> is what remains at risk in any formalization: that a definition misrepresents
-> the intended object in a way nobody has noticed.
->
-> The project's standing **strongly supported, not certified** applies to the
-> **full logic** and to the two unformalized *arguments* for this theorem — and
-> so does the ledger presumption below (a defect or overclaim in all but two of
-> twenty-one reviews). Earlier versions of this box applied both to the fragment
-> result as well. That was wrong: the ledger is overwhelmingly a record of the
-> full-logic architecture, and none of the three reviews of this result found a
-> defect in it.
->
-> **★ Update (2026-08-28): a gap found in the fragment's proof — and repaired;
-> one certification architecture refuted; a pivot.**
->
-> - **A gap in the paper proof, found by re-reading and now repaired.** The
->   two-tier completeness argument (Step 2 of *Constructive quotient
->   extraction*) defines the kernel-to-kernel relation as the double limit
->   `lim_{i,j→∞} ρ(dᵢ, dⱼ)` and justifies it by "Lemma *External relation
->   stabilization* applied twice". That lemma is **one-sided** — it fixes an
->   element and varies the chain — and applying it twice does **not** give a
->   double limit. The double limit genuinely need not exist: in `ℤ × {0,1}`
->   ordered by first coordinate, every row and every column stabilizes, yet
->   every tail contains `PP`, `PO` *and* `PPI`. This is the proof's only use of
->   a double limit.
->   **Scope: this touches Route 1 only.** Route 2 has no chains, phases or
->   stabilization, so the defect cannot even be stated there — the theorem never
->   rested on the broken step, which is what two proof shapes are for.
->   **The repair is done**: `fused_kq_all` establishes the correct
->   *finite-segment* form — for a finite family of towers of arbitrary
->   directions, segments can be chosen (with the equal-type endpoints the
->   descriptors need) so that every pairwise rectangle carries one relation,
->   placeable arbitrarily late. That is exactly what Step 2 needs, and it is
->   machine-checked.
-> - **The same repair closes the certificate's `kq_all`**, open since July. The
->   blocker there was the same framing error: we, like the paper, asked whether
->   cross-kernel relations stabilize tail-by-tail.
-> - **Refuted — the *certification* route, not the theorem.** The Lean
->   certificate's extraction architecture — reuse a finite node set by
->   *blocking* and *borrowing* witnesses — is dead. This is Route 2's
->   engineering; it leaves the two-tier proof above untouched. Four successive disciplines
->   fell to exact finite countermodels in three days, two of them found by cold
->   attack (`papers/attack_mixed_quadrant/`,
->   `papers/attack_mixed_quadrant_r2/`), all reproduced independently here.
->   The diagnosis is a *pattern*, not four separate mistakes: this is the
->   project's recurring pointwise-vs-joint shape for the fifth time.
-> - **Pivot — and how it came about.** After three weeks of the assistant
->   proposing a fifth repair to the same architecture, the *human* called a halt
->   and asked a **different model** — GPT-5.6 Sol, with no history in the
->   design — for an alternative certification route rather than another fix.
->   Its answer retired witness borrowing entirely in favour of a **cone
->   scheme**: a finite control graph plus a *fresh-occurrence* unfolding, in
->   which nothing is ever reused, so there is nothing to borrow. That is the
->   route that went on to certify the fragment. The instrument is the same as
->   cold review, pointed at *design* rather than verification; the judgement
->   that the moment had come was the human's. Plan, obligations and regressions
->   in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/); navigation in
->   [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §§267–297.
->
-> **Correction to the box below.** It calls the general mixed *extraction*
-> "(scoped, **not** open)". That was wrong as a statement about the
-> formalization, and is withdrawn: it consumed two rounds of cold attack and a
-> refuted architecture. It was never a claim about the *theorem*, which rests on
-> the two-tier proof.
->
-> **Honest caveat on that proof.** It is unreviewed at this level of detail —
-> the Step-2 gap above was found by reading it in August 2026, years after it
-> was written, prompted by asking whether the certificate's troubles touched the
-> theorem. They did not; a different defect did.
+```lean
+def decidableFSat   (F : Formula) (h : FPOFree true F) : Decidable (FSatisfiable F)
+def decidableSat_cone (C0 : Concept) (hpo : POFree C0) : Decidable (Satisfiable C0)
+def decidableSetSat  (C0 : Concept) (hpo : POFree C0) : Decidable (SetSatisfiable C0)
+```
 
-> **★ Update (2026-08-06) — SUPERSEDED, see the 2026-08-28 box above; its
-> headline overclaims and its "(scoped, not open)" line is withdrawn.**
-> *(as written then:)* **the ∀PO-free fragment is now DECIDABLE (three
-> quadrants certified, the fourth's pipeline proven).** The full-logic
-> question stays open (F6), but the campaign below is now **complete** for
-> most of the fragment. [`formal/POFreeLift.lean`](formal/POFreeLift.lean)
-> (~13,600 lines, **0 sorries**, axioms propext / Classical.choice /
-> Quot.sound) certifies **`Decidable (Satisfiable C₀)`** — a genuine
-> *computable* decision procedure (`Classical.choice` only in erased
-> proofs) — for:
-> - **horizontal** (`∃DR/PO/EQ`), **ascending vertical** (`∃PP`), and
->   **descending vertical** (`∃PPI`) concepts — *general* decidability,
->   each non-vacuously witnessed (`decidableSat_hfrag` / `…_vtower*` /
->   `…_vtowerRRI`);
-> - **mixed** (`∃PO` + `∃PP`) concepts — the merged certificate
->   (`mixCert_ok`, the first `MultiTierOk` with both externals *and* a
->   kernel), its encoding, and a complete decision certified on the witness
->   `Cmix` (`decidableSat_Cmix`); the *general* mixed extraction is the one
->   remaining formalization — **open**, see the 2026-08-28 box above (this
->   line originally read "scoped, not open", which was an overclaim).
->
-> The keystone is a **constructive uniformization** (`rr_covers`): the
-> vertical fragment's "W2′" is a kernel-checked theorem, not an oracle,
-> because removing `∀PO` lets the cross-relations coordinate for free.
-> **This does not close the full logic** — F6 is forced by `∀PO`, which the
-> fragment removes. These fragment theorems are *unreviewed*; details in
-> [LEAN.md](LEAN.md), design in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md)
-> §§24–25.
+Membership in the fragment is the **only** hypothesis — no unproved premise, no
+oracle, no `sorry`, axioms `propext`/`Classical.choice`/`Quot.sound`. The route
+is a finite control graph of *signatures*, a monotone elimination to a greatest
+fixed point, and a **fresh-occurrence unfolding** in which no node is ever
+reused. It covers all four quadrants, **including the mixed one** (`∃PO` and
+`∃PP` together), which had been open and which two rounds of cold attack had
+been aimed at.
 
-> **Update (2026-07-22/23): the ∀PO-free fragment certification
-> campaign.** The full-logic question stays open and paused, but the
-> project's strongest *unconditional* theorem — decidability of the
-> **∀PO-free fragment** — is now being certified end-to-end in
-> [`formal/POFreeLift.lean`](formal/POFreeLift.lean) (~3,160 lines,
-> zero sorries): the certificate-to-model soundness pipeline
-> (multi-kernel, both chain directions), an executable first-order
-> checker that provably accepts *exactly* the valid certificates, the
-> decision reduction, and the extraction's complete model-side toolkit
-> (stabilization, pigeonhole, segment coherence, witness selection,
-> and the kernel-checked "escape valve": no ∀PO obligation exists
-> anywhere in the fragment's closure). Remaining: the assembly
-> construction and the K(C₀) counting — staged with a recorded design
-> in [LEAN.md](LEAN.md). See the explainer
-> [`papers/why_po_free_decidable.pdf`](papers/why_po_free_decidable.pdf).
+**Theorem and certification are separate things.** The theorem rests on **two
+independent proof routes and three arrivals** (ledger in
+[`papers/why_po_free_decidable.pdf`](papers/why_po_free_decidable.pdf), §"So —
+was it proved twice, or three times?"): *Route 1*, the **two-tier quotient**
+(chain-and-phase), which decides the *PO-coherent* fragment — ∀PO-free concepts
+are automatically PO-coherent — and *Route 2*, the **ordered-disjoint normal
+form** (structural: no chains, no phases, no stabilization), reached
+independently. Both are complete arguments, and both are independent of the Lean
+route above, which is a third and the one that is machine-checked.
 
-> **16th review (2026-07-18):** a cold review of the overview paper
-> ([`papers/final_gpt_review_overview_paper/`](papers/final_gpt_review_overview_paper/))
-> found a **definite error** — a broken one-point-extension example, rooted
-> in an overstated "PO is never forced" intuition (in truth, no *single*
-> composition step forces PO, but the *intersection* of several can). The
-> certified Lean core was unaffected. The error and the overstatements have
-> been corrected, and many claims qualified (Π⁰₁ = membership not hardness;
-> "prototype reasoner" not "decision procedure"; forward-direction-certified
-> normal form). The reviewer's larger call — full self-contained proofs and a
-> narrower theorem paper — is the standing open work, exactly what the
-> "not certified" label denotes.
+Three things are worth separating, because earlier versions of this entry ran them
+together:
 
-> **17th review (2026-07-20):** a **cold, scope-aware** review of the
-> overview paper by GPT-5.6 Pro
-> ([`papers/really_final_gpt_5.6_review/`](papers/really_final_gpt_5.6_review/)),
-> told explicitly that this is an *overview*. Verdict: **accept as an
-> overview after a focused calibration pass**, and a companion
-> recommendation to **post to arXiv** as a status report and research
-> handoff (not a claimed solution). It found **no new counterexample** to
-> the normal form, the conditional soundness theorem, or the ∀PO-free
-> result. The calibration fixes — all now applied — separate static F6
-> (which controls *this* certificate route) from an undecidability theorem
-> and from decidability by *some* other presentation; sync the normal-form
-> status to **both directions**; add GPT-5.6 Pro to the attribution; keep
-> "prototype reasoner" (not "decision procedure"); add a four-level status
-> table and a result-to-artifact map; and drop "new" from the title
-> (novelty vs. the prior literature is unvetted). The certified Lean core
-> was unaffected (prose/calibration only). Paper now 42pp.
+- **Raw input.** `Formula` carries negation, `nnfP` normalizes it, and
+  `nnfP_correct` proves preservation in *both* polarities. The fragment
+  condition on raw input turns out to be polarity-sensitive — **no `∀PO`
+  positively and no `∃PO` negatively**, because an `∃PO` under a negation
+  *becomes* a `∀PO` — which the NNF-only statement had hidden.
+- **Concrete semantics.** `setRel` is the naive relation on a family of sets
+  (equal / proper subset / proper superset / disjoint / otherwise overlap),
+  written with no reference to the composition table, and
+  `satisfiable_iff_set` proves abstract and concrete satisfiability are the
+  **same property** — with no fragment hypothesis, so it covers the whole logic.
+  The composition table is a *theorem about sets* here, not an assumption.
+- **A bonus for the full logic.** The completeness direction needs no fragment
+  hypothesis, so an empty survivor set refutes for the **full** language
+  (`coneScheme_unsat_full`) — one-sided, and weak (see review 2).
 
-- **Certified** (Lean 4, zero `sorry`; see [LEAN.md](LEAN.md)): the
-  **soundness** pipeline (a valid finite certificate unfolds to a genuine
-  RCC5 model); the **faithfulness** of the Hintikka abstraction; the
-  **RCC5 normal form** — now **both directions** on arbitrary domains
-  (forward: every strong-EQ RCC5 network is an ordered-disjoint structure,
-  `propext` only; converse: GPT-5.6 Pro's canonical set representation,
-  `sub_iff_le`/`eta_injective` zero-axiom, verified in
-  [`wp88`](verification/python/wp88_canonical_representation.py)); and — since
-  2026-08-29 — a **decision procedure for the ∀PO-free fragment**, end to end
-  (see the last bullet, and the box above).
-- **The positive result *for the full logic*** is a *conditional* reduction:
-  **if** a verified finite checker is complete for some computable list of
-  candidate certificates per concept, **then** satisfiability is decidable — that
-  implication and the checker's soundness are machine-checked. The route to the
-  premise runs through property **F6** (a computable bound on the *live*,
-  non-shadow width of models) and a refined uniformization, and those two steps
-  are argued, not proved.
-  (For the ∀PO-free fragment the result is *unconditional*; last bullet.)
-- **Open (the keystone of this architecture):** F6 itself, and the steps from it
-  to a complete certificate enumeration. Its failure would refute this route,
-  not decidability.
-- **The problem is Π⁰₁** — which is Lutz & Wolter's Theorem 28 (2006), not a new
-  observation, though the project first presented it as one. Satisfiability is
-  finitely first-order axiomatizable, so by Gödel completeness its complement is
-  recursively enumerable and SAT sits at **Π⁰₁** — the domino problem's own
-  level. Decidability therefore needs only *qualitative* F6 (every satisfiable
-  concept has *some* finite certificate — **no computable bound**): dovetail a
-  certificate enumeration against an FO-refutation enumeration. The generic
-  dovetailing combinator is machine-checked with its hypotheses as fields
-  ([`formal/SemiDecidability.lean`](formal/SemiDecidability.lean)),
-  and the bound returns for free a posteriori. This *reshapes* the keystone —
-  retiring the width-accounting burden — but does **not** settle it: qualitative
-  F6 is untouched.
-- **The knife's edge:** F6 is the *same* looseness that blocks a proof of
-  *undecidability*. Bound it ⇒ decidability; circumvent it to force a grid ⇒
-  undecidability. Two sides of one question — why neither has moved in 20+
-  years.
-- **Unconditional win:** the **∀PO-free fragment** is **decidable** (a
-  genuinely expressive spatial fragment — it keeps ∃PO, ∀DR, ∃DR, and all
-  part-of modalities), and as of **2026-08-29** this is machine-certified as an
-  actual **decision procedure**, for all four quadrants at once:
-  `decidableFSat` (raw input, negation included), `decidableSat_cone` (NNF), and
-  `decidableSetSat` (concrete set semantics) in
-  [`formal/POFreeLift.lean`](formal/POFreeLift.lean) (~45,400 lines, **0
-  sorries**), with fragment membership the **only** hypothesis in each. Three
-  independent cold reviews attacked it — at the definitions, at completeness,
-  at soundness — and none found a counterexample or a defect in the result.
-  The caveat is cost, not correctness: **decidable, not runnable** (the
-  signature space is doubly exponential). On prior work: Lutz & Wolter leave
-  this logic explicitly open and float dropping PO as a candidate route
-  without an argument; Wessel's own report7 canvasses restricted fragments,
-  but strictly stronger ones that work by restoring the finite model property,
-  which this fragment provably lacks. So far as we can determine the result is
-  new — stated deliberately weaker than a priority claim; the paper's
-  Lutz–Wolter section gives the full check. This does **not** close the full logic
-  — F6 is *forced by* ∀PO, which the fragment removes. *(The earlier route via
-  the two-tier quotient, with `rr_covers` as its keystone and per-quadrant
-  instances, is still in the artifact and still proved, but is no longer what
-  certifies the theorem; see the 2026-08-29 box above.)*
+**Three independent cold reviews, all "sound, no counterexample".** Each found
+something; none found a defect in the fragment result itself.
+
+| | target | what it did | what it found |
+|---|---|---|---|
+| **1** | trusted base + execution | built on two Lean versions, re-derived the composition table from set semantics at three domain sizes, 4,000 concepts vs exhaustive model search, evaluated the procedure at the kernel | two inverted comments; a complexity bound understated by an exponential (fix applied) |
+| **2** | completeness | ran the elimination itself — 6,268 concepts vs exhaustive search, **0 satisfiable concepts rejected** | a **real defect**: the transition relation's `PO` case was `true`, dropping a constraint valid at every model edge (`PO` is its own converse). Fixed. Vacuous on the fragment, so `decidableSat_cone` was untouched — it made the *full-logic bonus* empty, and we had overclaimed it |
+| **3** | soundness | ran the unfolding on labels from the **actual greatest fixed point**, which neither prior round had — 6,464 unfoldings, 10,066 occurrences, **0 frame and 0 truth violations** | nothing in the kernel. Five defects in **our own probes and documentation**, including one probe bug that was the same failure its docstring claimed to have fixed |
+
+**The one remaining caveat is complexity, not correctness.** The procedure is
+**decidable but not runnable**: `|sigStatic C₀| = 2^n · 2^(2^n)` for
+`n = |cl C₀|`. Measured, it evaluates at `|cl C₀| ≤ 2`; generating the signature
+space directly rather than filtering moves that to about 4–5. It cannot be run
+on any concept this project's papers discuss. *Decidable* and *runnable* are
+different claims, and only the first is made.
+
+**What is still open is the full logic, not the fragment.** Two items, both
+full-logic: a second `∀PO` gap in the UNSAT test that is *architectural* —
+obligations arising from non-singleton compositions are unreachable by any local
+clause of this shape — and F6, untouched.
+
+**Honest label, and it is not this project's blanket one.** The fragment
+result is **machine-certified**: the Lean kernel checks the decision procedure
+with fragment membership as its only hypothesis, no `sorry`, standard axioms.
+Its formalization's *adequacy* — do the definitions mean ALCI_RCC5? — has been
+examined by three independent cold reviews without a counterexample, and the
+largest adequacy question, abstract versus concrete semantics, is now a
+**theorem** rather than a matter of reviewer confidence. What remains at risk
+is what remains at risk in any formalization: that a definition misrepresents
+the intended object in a way nobody has noticed.
+
+The project's standing **strongly supported, not certified** applies to the
+**full logic** and to the two unformalized *arguments* for this theorem — and
+so does the project's ledger presumption (a defect or overclaim in all but two of
+twenty-one reviews). Earlier versions of this entry applied both to the fragment
+result as well. That was wrong: the ledger is overwhelmingly a record of the
+full-logic architecture, and none of the three reviews of this result found a
+defect in it.
+
+### 2026-08-28 — A gap in the fragment's proof, repaired; one certification architecture refuted; a pivot
+
+- **A gap in the paper proof, found by re-reading and now repaired.** The
+  two-tier completeness argument (Step 2 of *Constructive quotient
+  extraction*) defines the kernel-to-kernel relation as the double limit
+  `lim_{i,j→∞} ρ(dᵢ, dⱼ)` and justifies it by "Lemma *External relation
+  stabilization* applied twice". That lemma is **one-sided** — it fixes an
+  element and varies the chain — and applying it twice does **not** give a
+  double limit. The double limit genuinely need not exist: in `ℤ × {0,1}`
+  ordered by first coordinate, every row and every column stabilizes, yet
+  every tail contains `PP`, `PO` *and* `PPI`. This is the proof's only use of
+  a double limit.
+  **Scope: this touches Route 1 only.** Route 2 has no chains, phases or
+  stabilization, so the defect cannot even be stated there — the theorem never
+  rested on the broken step, which is what two proof shapes are for.
+  **The repair is done**: `fused_kq_all` establishes the correct
+  *finite-segment* form — for a finite family of towers of arbitrary
+  directions, segments can be chosen (with the equal-type endpoints the
+  descriptors need) so that every pairwise rectangle carries one relation,
+  placeable arbitrarily late. That is exactly what Step 2 needs, and it is
+  machine-checked.
+- **The same repair closes the certificate's `kq_all`**, open since July. The
+  blocker there was the same framing error: we, like the paper, asked whether
+  cross-kernel relations stabilize tail-by-tail.
+- **Refuted — the *certification* route, not the theorem.** The Lean
+  certificate's extraction architecture — reuse a finite node set by
+  *blocking* and *borrowing* witnesses — is dead. This is Route 2's
+  engineering; it leaves the two-tier proof above untouched. Four successive disciplines
+  fell to exact finite countermodels in three days, two of them found by cold
+  attack (`papers/attack_mixed_quadrant/`,
+  `papers/attack_mixed_quadrant_r2/`), all reproduced independently here.
+  The diagnosis is a *pattern*, not four separate mistakes: this is the
+  project's recurring pointwise-vs-joint shape for the fifth time.
+- **Pivot — and how it came about.** After three weeks of the assistant
+  proposing a fifth repair to the same architecture, the *human* called a halt
+  and asked a **different model** — GPT-5.6 Sol, with no history in the
+  design — for an alternative certification route rather than another fix.
+  Its answer retired witness borrowing entirely in favour of a **cone
+  scheme**: a finite control graph plus a *fresh-occurrence* unfolding, in
+  which nothing is ever reused, so there is nothing to borrow. That is the
+  route that went on to certify the fragment. The instrument is the same as
+  cold review, pointed at *design* rather than verification; the judgement
+  that the moment had come was the human's. Plan, obligations and regressions
+  in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/); navigation in
+  [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §§267–297.
+
+**Correction to the 2026-08-06 entry.** It calls the general mixed *extraction*
+"(scoped, **not** open)". That was wrong as a statement about the
+formalization, and is withdrawn: it consumed two rounds of cold attack and a
+refuted architecture. It was never a claim about the *theorem*, which rests on
+the two-tier proof.
+
+**Honest caveat on that proof.** It is unreviewed at this level of detail —
+the Step-2 gap above was found by reading it in August 2026, years after it
+was written, prompted by asking whether the certificate's troubles touched the
+theorem. They did not; a different defect did.
+
+### 2026-08-06 — Three quadrants certified (superseded)
+
+*Superseded by the 2026-08-28 entry: its headline overclaims, and its "(scoped,
+not open)" line is withdrawn.*
+
+*(as written then:)* **the ∀PO-free fragment is now DECIDABLE (three
+quadrants certified, the fourth's pipeline proven).** The full-logic
+question stays open (F6), but the campaign below is now **complete** for
+most of the fragment. [`formal/POFreeLift.lean`](formal/POFreeLift.lean)
+(~13,600 lines, **0 sorries**, axioms propext / Classical.choice /
+Quot.sound) certifies **`Decidable (Satisfiable C₀)`** — a genuine
+*computable* decision procedure (`Classical.choice` only in erased
+proofs) — for:
+- **horizontal** (`∃DR/PO/EQ`), **ascending vertical** (`∃PP`), and
+  **descending vertical** (`∃PPI`) concepts — *general* decidability,
+  each non-vacuously witnessed (`decidableSat_hfrag` / `…_vtower*` /
+  `…_vtowerRRI`);
+- **mixed** (`∃PO` + `∃PP`) concepts — the merged certificate
+  (`mixCert_ok`, the first `MultiTierOk` with both externals *and* a
+  kernel), its encoding, and a complete decision certified on the witness
+  `Cmix` (`decidableSat_Cmix`); the *general* mixed extraction is the one
+  remaining formalization — **open**, see the 2026-08-28 entry (this
+  line originally read "scoped, not open", which was an overclaim).
+
+The keystone is a **constructive uniformization** (`rr_covers`): the
+vertical fragment's "W2′" is a kernel-checked theorem, not an oracle,
+because removing `∀PO` lets the cross-relations coordinate for free.
+**This does not close the full logic** — F6 is forced by `∀PO`, which the
+fragment removes. These fragment theorems are *unreviewed*; details in
+[LEAN.md](LEAN.md), design in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md)
+§§24–25.
+
+### 2026-07-22/23 — The ∀PO-free fragment certification campaign
+
+The full-logic question stays open and paused, but the
+project's strongest *unconditional* theorem — decidability of the
+**∀PO-free fragment** — is now being certified end-to-end in
+[`formal/POFreeLift.lean`](formal/POFreeLift.lean) (~3,160 lines,
+zero sorries): the certificate-to-model soundness pipeline
+(multi-kernel, both chain directions), an executable first-order
+checker that provably accepts *exactly* the valid certificates, the
+decision reduction, and the extraction's complete model-side toolkit
+(stabilization, pigeonhole, segment coherence, witness selection,
+and the kernel-checked "escape valve": no ∀PO obligation exists
+anywhere in the fragment's closure). Remaining: the assembly
+construction and the K(C₀) counting — staged with a recorded design
+in [LEAN.md](LEAN.md). See the explainer
+[`papers/why_po_free_decidable.pdf`](papers/why_po_free_decidable.pdf).
+
+### 2026-07-20 — The 17th review: accept as an overview, post to arXiv
+
+A **cold, scope-aware** review of the
+overview paper by GPT-5.6 Pro
+([`papers/really_final_gpt_5.6_review/`](papers/really_final_gpt_5.6_review/)),
+told explicitly that this is an *overview*. Verdict: **accept as an
+overview after a focused calibration pass**, and a companion
+recommendation to **post to arXiv** as a status report and research
+handoff (not a claimed solution). It found **no new counterexample** to
+the normal form, the conditional soundness theorem, or the ∀PO-free
+result. The calibration fixes — all now applied — separate static F6
+(which controls *this* certificate route) from an undecidability theorem
+and from decidability by *some* other presentation; sync the normal-form
+status to **both directions**; add GPT-5.6 Pro to the attribution; keep
+"prototype reasoner" (not "decision procedure"); add a four-level status
+table and a result-to-artifact map; and drop "new" from the title
+(novelty vs. the prior literature is unvetted). The certified Lean core
+was unaffected (prose/calibration only). Paper now 42pp.
+
+### 2026-07-18 — The 16th review: a definite error, corrected
+
+A cold review of the overview paper
+([`papers/final_gpt_review_overview_paper/`](papers/final_gpt_review_overview_paper/))
+found a **definite error** — a broken one-point-extension example, rooted
+in an overstated "PO is never forced" intuition (in truth, no *single*
+composition step forces PO, but the *intersection* of several can). The
+certified Lean core was unaffected. The error and the overstatements have
+been corrected, and many claims qualified (Π⁰₁ = membership not hardness;
+"prototype reasoner" not "decision procedure"; forward-direction-certified
+normal form). The reviewer's larger call — full self-contained proofs and a
+narrower theorem paper — is the standing open work, exactly what the
+"not certified" label denotes.
 
 ## Complexity landscape
 
