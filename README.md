@@ -80,7 +80,7 @@ the detailed narrative lives in **one** place — the paper — with the full
 dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 [LEAN.md](LEAN.md), and the superseded threads in [OUTDATED.md](OUTDATED.md).
 
-## Status (2026-08-29): the ∀PO-free fragment is decided in Lean — raw input, concrete semantics, three cold reviews, no counterexample; the full logic stays open
+## Status (2026-09-14): the ∀PO-free fragment is decided in Lean and has its own paper; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
 repair rounds and 17 adversarial reviews (of twenty-one to date) the
@@ -114,9 +114,50 @@ separate them:
   quadrants** by a third route — the ConeScheme decision procedure of the
   2026-08-29 box below, which supersedes the earlier certificate architecture.
 
-The full-logic question and the fragment results are independent: F6 is forced
-by `∀PO`, which the fragment removes.
+The full-logic question and the fragment results are independent: F6 only bites
+where `∀PO` occurs, and the fragment removes it.
 
+> **★ Update (2026-09-14): a fourth review, two papers, and a release tag.**
+>
+> - **A cold review of the overview and the Lean** (GPT-5.6 Sol, 2026-09-09 —
+>   [archived, with our verification notes](papers/gpt-5.6-latest-overview-paper-review-and-recommendation/)).
+>   It found **no defect in the Lean**: every capstone it cited is where it said,
+>   with no hidden hypothesis, and it called the fragment result "technically
+>   real". Its findings were about how the *overview* described the Lean; each
+>   was checked against the text before anything was changed.
+> - **Two papers.** The certified result now has its own focused paper,
+>   [**`papers/pofree_fragment_arxiv.pdf`**](papers/pofree_fragment_arxiv.pdf)
+>   (17 pp), written afresh from the Lean sources and crediting GPT-5.6 Sol for
+>   recommending the split. The [overview](papers/overview_arxiv.pdf) (56 pp)
+>   remains the status report, history and research program.
+> - **The overview recalibrated.** It no longer claims to reduce the problem "to
+>   one keystone". The full-logic theorem is stated as what the kernel checks — a
+>   *conditional* whose premise is open — with the two steps from F6 to that
+>   premise marked as argued, not proved. The identity-selector characterization
+>   is a conjecture, the status tables no longer describe the fragment in its
+>   superseded three-quadrant form, and the patchwork, grid and concrete-domain
+>   (ALCRP(D)) statements are corrected.
+> - **Prior art we had missed.** Lutz & Wolter (2006) already prove that this
+>   logic is recursively enumerable (Thm 28) — the "Π⁰₁ observation" is theirs —
+>   and that RCC5 structures are representable by regions (Thm 23), of which our
+>   abstract-versus-sets theorem is a machine-checked special case. By their
+>   Thm 24 the fragment result holds verbatim for substructures of regular closed
+>   regions of ℝⁿ. None of this touches the fragment's decidability.
+> - **Boundary examples for the full logic**, checked against the shipped
+>   procedure: `∀PO.A ⊓ ∃PO.¬A` is refuted in the first round; `C_bad` (our first
+>   review's example) and the review's new `C_joint` are unsatisfiable yet accepted
+>   by the one-sided full-logic test — the architectural gap recorded below; and
+>   `C_sat` rules out the obvious repair.
+> - **The reasoner's record, stated precisely:** no verdict of the cover-tree
+>   tableau has ever been shown wrong. A campaign-wide claim that *no* procedure
+>   had ever been caught out was false for others, and is gone.
+> - **Everything synced, then tagged:** the slides, both explainers, `LEAN.md`,
+>   `WHY_ITS_HARD.md` and the approach overviews (with a new
+>   [`approaches/ConeScheme/`](approaches/ConeScheme/Overview.md)). Cite
+>   **`release-2026-09-14`**, not `master`.
+> - **Unchanged:** the Lean artifact (comment spelling aside), the fragment's
+>   certification, and the open status of the full logic.
+>
 > **★ Update (2026-08-29): the ∀PO-free fragment is decided, in Lean, on raw
 > input, under concrete set semantics.**
 >
