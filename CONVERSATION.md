@@ -8500,3 +8500,18 @@ found no split-forest content removed; the link was then added where the cone
 scheme is described without it — the overview's cone-scheme section, the slides
 ("Why that fragment"), the README, `LEAN.md`, `WHY_ITS_HARD.md`, the explainer's
 pointer and `approaches/ConeScheme/`.
+
+**Addendum 2 (same day): how tight the relationship is.** Asked whether the
+split-forest emphasis was pushed or warranted, the answer was: prompted, but
+warranted at the level of shape. The unfolding is a split forest in a sense the
+Lean checks — each order component a tree of part-of births, horizontal relations
+derived, irreflexivity and order/disjointness separation proved from exactly that
+structure — and GPT-5.6 Sol's review called the normal form "the exact semantic
+core of the split-forest picture". The lineage is looser: the cone-scheme plan
+never mentions split forests, the identification was Claude's on 2026-08-28 while
+checking it, and a type together with the types below it is a standard invariant
+for transitive relations. So the overview, the fragment paper and the explainer no
+longer say the idea *determined* what a signature records; they say the signature
+fits the same picture, as a correspondence rather than a documented design step.
+(The addendum above describes that as the idea's "organizing principle"; read it
+in this light.)

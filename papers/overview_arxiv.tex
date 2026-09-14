@@ -2144,27 +2144,30 @@ On the \textbf{completeness} side it is \emph{not} a hypothesis at all.
 \code{coneScheme\_complete} takes an arbitrary \code{RCC5Interp} --- any model
 whatsoever, tree-presented or not --- and this matters, because a completeness
 proof that required split-forest models would have to produce one, which is
-exactly the extraction step that four architectures died on. What survives there
-is the idea's \emph{organizing principle} rather than its shape: a point is
-summarized by its own type together with the types lying strictly below it in
-the $\PP$ order (\code{sigCone} $=$ support type, then down-spectrum), which is
-the whiteboard's claim that vertical position is what characterizes a node ---
-now read off any model rather than imposed on it. So the split forest is where
+exactly the extraction step that four architectures died on. What appears there
+is not the shape but a summary that fits the same picture: a point is summarized
+by its own type together with the types lying strictly below it in the $\PP$
+order (\code{sigCone} $=$ support type, then down-spectrum)---its vertical
+position, read off any model rather than imposed on it. That is a
+correspondence, not a documented design step: the cone-scheme plan does not
+mention split forests, and a type together with the types below it is a
+standard invariant for logics over a transitive relation. So the split forest is where
 the certified procedure's models \emph{live}; it is not a condition the
 certification asks of the input.
 
 That is worth spelling out, because ``not a hypothesis'' reads easily as ``not
-used,'' and here it is the opposite. The idea does three jobs in the certified
-development. It is the shape the soundness side \emph{constructs}, and the two
+used,'' and here it is the opposite. The idea does two jobs in the certified
+development, and matches a third. It is the shape the soundness side \emph{constructs}, and the two
 frame conditions that defeated the previous architecture --- irreflexivity of
 the order, and its disjointness from the disjointness relation --- hold
 structurally only because that shape is a forest of vertical trees: an order
 edge cannot leave a component, and a $\DR$ birth opens a new one. It is the
 content of the normal form (Theorem~\ref{thm:normalform}), which is what
-replaced the patchwork appeal and makes composition closure free. And it fixed
-what a signature records --- vertical position, a type together with the types
-below it --- which is why the transition conditions push cones along $\PP$ and
-$\PPI$ and ask nothing of $\PO$. What changed is the idea's \emph{job}, not its
+replaced the patchwork appeal and makes composition closure free. And what a
+signature records---a type together with the types below it, which is to say
+vertical position---fits the same picture: the transition conditions push cones
+along $\PP$ and $\PPI$ and ask nothing of $\PO$. That third point is the
+correspondence noted above, not a documented lineage. What changed is the idea's \emph{job}, not its
 importance: the earlier routes needed it as a property to be \emph{established}
 of an arbitrary model, which is the extraction problem they were refuted on,
 whereas here it is a shape to be \emph{built}, which costs nothing.
