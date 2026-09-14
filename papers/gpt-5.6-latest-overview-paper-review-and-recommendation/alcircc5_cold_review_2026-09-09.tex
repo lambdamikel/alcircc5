@@ -1,0 +1,1205 @@
+\documentclass[11pt]{article}
+
+\usepackage[letterpaper,margin=0.82in,headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,mathtools,amsthm}
+\usepackage{booktabs,longtable,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[most]{tcolorbox}
+\usepackage{listings}
+\usepackage{lastpage}
+
+\definecolor{navy}{HTML}{17324D}
+\definecolor{teal}{HTML}{087E8B}
+\definecolor{crimson}{HTML}{A3323D}
+\definecolor{amber}{HTML}{B06A00}
+\definecolor{ink}{HTML}{202A33}
+\definecolor{slate}{HTML}{5D6B78}
+\definecolor{mist}{HTML}{F1F5F7}
+\definecolor{palegreen}{HTML}{EAF5F1}
+\definecolor{palered}{HTML}{FAECEE}
+\definecolor{paleyellow}{HTML}{FFF6E5}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=navy,
+  citecolor=teal,
+  urlcolor=teal,
+  pdftitle={Cold Review of the Current ALCI-RCC5 Development},
+  pdfauthor={Independent technical review},
+  pdfsubject={Overview-paper audit, Lean artifact audit, and full-logic decidability analysis},
+  pdfkeywords={ALCI, RCC5, decidability, Lean, description logic, cold review}
+}
+
+\titleformat{\section}{\Large\bfseries\color{navy}}{\thesection}{0.65em}{}
+\titleformat{\subsection}{\large\bfseries\color{navy}}{\thesubsection}{0.55em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{ink}}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{2.0ex plus .4ex minus .2ex}{0.8ex}
+\titlespacing*{\subsection}{0pt}{1.5ex plus .3ex minus .2ex}{0.5ex}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Cold review: ALCI\(_{\mathrm{RCC5}}\)}
+\rhead{9 September 2026}
+\cfoot{\thepage\ / \pageref*{LastPage}}
+\renewcommand{\headrulewidth}{0.35pt}
+
+\setlist[itemize]{leftmargin=1.45em,itemsep=2.3pt,topsep=3pt,parsep=1pt}
+\setlist[enumerate]{leftmargin=1.65em,itemsep=2.3pt,topsep=3pt,parsep=1pt}
+\renewcommand{\arraystretch}{1.16}
+\emergencystretch=2em
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\newtcolorbox{verdictbox}[1][]{
+  enhanced,breakable,colback=palered,colframe=crimson,
+  boxrule=0.8pt,arc=2pt,left=8pt,right=8pt,top=7pt,bottom=7pt,
+  title={#1},fonttitle=\bfseries,before upper=\raggedright
+}
+\newtcolorbox{resultbox}[1][]{
+  enhanced,breakable,colback=palegreen,colframe=teal,
+  boxrule=0.7pt,arc=2pt,left=8pt,right=8pt,top=7pt,bottom=7pt,
+  title={#1},fonttitle=\bfseries,before upper=\raggedright
+}
+\newtcolorbox{cautionbox}[1][]{
+  enhanced,breakable,colback=paleyellow,colframe=amber,
+  boxrule=0.7pt,arc=2pt,left=8pt,right=8pt,top=7pt,bottom=7pt,
+  title={#1},fonttitle=\bfseries,before upper=\raggedright
+}
+
+\lstdefinelanguage{Lean}{
+  morekeywords={theorem,def,structure,where,Prop,Type,forall,exists,by,if,then,else,match,with},
+  morecomment=[l]{--},sensitive=true
+}
+\lstset{
+  language=Lean,basicstyle=\ttfamily\footnotesize,breaklines=true,
+  columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,
+  rulecolor=\color{slate!50},backgroundcolor=\color{mist},
+  xleftmargin=0.4em,xrightmargin=0.4em
+}
+
+\newcommand{\Logic}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\sat}{\mathsf{Sat}}
+\newcommand{\unsat}{\mathsf{Unsat}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\sevmajor}{\textcolor{crimson}{\textbf{Major}}}
+\newcommand{\sevmod}{\textcolor{amber}{\textbf{Moderate}}}
+\newcommand{\sevminor}{\textcolor{slate}{\textbf{Minor}}}
+
+\begin{document}
+\pagenumbering{roman}
+
+\begin{titlepage}
+  \color{ink}
+  \vspace*{0.5in}
+  \noindent{\color{teal}\rule{\linewidth}{2.4pt}}\\[0.35in]
+  {\Huge\bfseries\color{navy} Cold Review of the Current\\[0.12in]
+  \Logic\ Development}\par
+  \vspace{0.22in}
+  {\Large Overview-paper audit, Lean artifact review,\\
+  and a renewed attack on full decidability}\par
+  \vspace{0.34in}
+  {\large Review date: 9 September 2026}\par
+  \vspace{0.5in}
+
+  \begin{tcolorbox}[colback=mist,colframe=navy,boxrule=0.9pt,arc=2pt,
+    before upper=\raggedright]
+  \textbf{Submission reviewed.} Attached archive \code{alcircc5-master.zip},
+  archive comment / commit identifier
+  \code{795b2707b72e927c56b465ef0413b77aeb9a66a6}; overview paper
+  \code{papers/overview\_arxiv.tex} and the five canonical files under
+  \code{formal/}.
+  \end{tcolorbox}
+
+  \vfill
+  {\large Independent adversarial adequacy review}\par
+  \vspace{0.08in}
+  {\small Claims are graded by what the archived sources actually establish,
+  not by filenames, comments, or intended future bridges.}\par
+  \vspace{0.25in}
+  \noindent{\color{teal}\rule{\linewidth}{2.4pt}}
+\end{titlepage}
+\clearpage
+\pagenumbering{arabic}
+
+\begin{abstract}
+This report begins with the 52-page overview paper and then audits the current
+Lean sources, executable probes, and the proposed routes to full
+\Logic{} decidability.  The central verdict is deliberately two-part.  First,
+the archive gives strong source-level evidence for a genuine, executable,
+reportedly kernel-checked decision procedure for \emph{bare concept
+satisfiability} in the
+polarity-correct \(\forall\PO\)-free fragment, including the bridge to arbitrary
+nonempty-set semantics.  Second, it does \emph{not} prove decidability of the
+full logic.
+The current cone construction is complete in the no-false-negative direction
+for the full language, but its model-extraction/soundness argument uses the
+fragment restriction exactly at positive \(\forall\PO\).
+
+The renewed attack did not resolve the problem left open by the primary 2006
+comparator and unresolved in this snapshot.  It did produce a sharper
+diagnosis: explicit unsatisfiable formulas survive the current unary-signature
+architecture because non-singleton RCC5 compositions impose obligations
+between independently generated witnesses.  A converse satisfiable example
+shows that declaring all such cross-pairs to be \PO{} is not a repair.  The
+report also gives (i) a witness-generated countable-model lemma, and (ii) a
+two-layer encoding of ordered-disjoint frames into one strict partial order.
+The latter absorbs RCC5 heredity into transitivity, but introduces a synchronized
+fixed-point-free involution not covered by the standard two-variable/one-
+transitive-relation theorem.  These are useful reductions, not a decision proof.
+
+For publication, the recommendation is major rewrite: extract a focused paper
+on the reported fragment theorem and normal form, and recast the full-logic discussion
+as a research program with every missing implication stated explicitly.
+\end{abstract}
+
+\begingroup
+\setcounter{tocdepth}{1}
+\small
+\tableofcontents
+\endgroup
+\newpage
+
+\section{Scope, materials, and review standard}
+
+\subsection{Snapshot and objects reviewed}
+
+The attached ZIP, rather than an assumed later repository state, is the review
+object.  Its SHA-256 digest is
+\begin{center}
+\small\code{4a0415b3e3202595d1b1290e6cc741068d0423c0c2877e815b9b5fcbe96bd2a8}.
+\end{center}
+The ZIP comment identifies commit
+\code{795b2707b72e927c56b465ef0413b77aeb9a66a6}.  The overview source digest is
+\code{be28d3da\ldots429e}; its included PDF has 52 pages and digest
+\code{e684c506\ldots322a}.  Full hashes of the formal sources appear in
+Appendix~\ref{app:repro}.
+
+I attempted to compare the public GitHub head and to obtain a fresh Lean
+toolchain.  Network access to those endpoints was denied in this execution
+environment, and no \code{lean}, \code{elan}, or \code{lake} executable was
+preinstalled.  Accordingly, this is a cold review of the identified archive,
+not a statement about commits after it, and the Lean judgment below separates
+source audit from independent compilation.
+
+\subsection{Four evidential levels}
+
+I use four labels throughout:
+\begin{enumerate}
+  \item \textbf{Source-audited Lean declaration}: a declaration present in a
+        canonical Lean source, with no project-specific axiom or proof escape
+        visible in the source.  Without a local build this is not itself a
+        kernel-verification claim.
+  \item \textbf{Archived build claim}: a build/axiom result recorded in the
+        submission's transcripts, but not reproduced in this environment.
+  \item \textbf{Executable evidence}: a Python checker or finite exhaustive
+        test reproduced during this review.  This is regression evidence, not
+        a proof of an unbounded theorem.
+  \item \textbf{Mathematical/prose claim}: a paper argument, conjecture, or
+        proposed bridge that is not an instantiated Lean theorem.
+\end{enumerate}
+This discipline matters here: the repository contains excellent source-audited,
+reportedly kernel-checked combinators whose decisive completeness hypotheses
+are still structure fields or theorem parameters.
+
+\section{Executive verdict}
+
+\begin{verdictbox}[Overall verdict]
+\textbf{Full \Logic{} decidability is not proved and was not cracked in this
+review.}  The problem is unresolved in the submitted snapshot and inspected
+corpus.  The
+\(\forall\PO\)-free concept-satisfiability theorem is the strongest completed
+result and appears technically real.  The overview paper, however, currently
+promotes an architecture-specific conjectural route (F6 plus a uniformization
+bridge) into a ``one keystone'' reduction.  As a formal-results paper it
+requires a major rewrite; as two papers---a focused fragment/formalization paper
+and a candid research-program/history paper---the material is much stronger.
+\end{verdictbox}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{L{0.27\textwidth}L{0.18\textwidth}Y}
+\toprule
+Claim & Verdict & Basis / qualification \\
+\midrule
+Full concept satisfiability is decidable & \textcolor{crimson}{\textbf{Unresolved here}} &
+No complete finite-presentation theorem; current cone extraction fails with
+positive \(\forall\PO\). \\
+Full unsatisfiability has a sound cone test & \textcolor{teal}{\textbf{Supported}} &
+\code{coneScheme\_complete} gives full-language no-false-negatives; the
+contrapositive theorem is explicit. \\
+\(\forall\PO\)-free concept satisfiability is decidable &
+\textcolor{teal}{\textbf{Strongly supported}} & End-to-end source chain from
+raw polarity test through arbitrary nonempty-set semantics; clean external rebuild still
+needed. \\
+Normal form / set representation & \textcolor{teal}{\textbf{Supported}} &
+Substantive Lean development, but the overview cites the wrong file for the
+converse assembly. \\
+F6 is the sole remaining theorem & \textcolor{crimson}{\textbf{Not established}} &
+F6 is informal and the F6\(\Rightarrow\)uniformization\(\Rightarrow\)finite-
+checker-completeness bridge is open. \\
+Overview ready as a formal-results paper & \textcolor{crimson}{\textbf{No}} &
+Major claim calibration, status consolidation, scope, citation, and
+reproducibility changes are required. \\
+\bottomrule
+\end{tabularx}
+\caption{Current-state verdict at archive commit \code{795b2707\ldots66a6}.}
+\end{table}
+
+\paragraph{Confidence calibration.}
+I found no evidence that Lean accepted a false theorem.  The problem is almost
+the opposite: several prose claims outrun the hypotheses of sound, honest Lean
+theorems.  The fragment result deserves a high-confidence label subject to a
+fresh pinned build.  Any headline resolution of the full logic deserves a
+low-confidence label until a model-existence/completeness theorem is supplied.
+
+\section{Cold review of the overview paper}
+
+\subsection{What is strong}
+
+The paper has real strengths worth preserving:
+\begin{itemize}
+  \item It records the long sequence of failed proof routes more candidly than
+        most research narratives and often distinguishes abstract relation-
+        algebra semantics from topological semantics correctly.
+  \item The ordered-disjoint normal form is a useful conceptual compression:
+        \PP{} becomes strict order, \DR{} becomes hereditary conflict, and
+        \PO{} is the residual incomparable non-conflict relation.
+  \item The final cone-scheme section points to a substantial Lean theorem
+        reported to build
+        for the whole polarity-correct \(\forall\PO\)-free fragment, not merely
+        the older three ``pure quadrants.''
+  \item The paper exposes counterexamples and retractions instead of deleting
+        them from the historical record.
+  \item The abstract-to-set satisfiability bridge and the explicit theorem-name
+        map are exactly the right reproducibility instincts, even though the
+        map needs correction.
+\end{itemize}
+
+\subsection{Ranked findings}
+
+\small
+\begin{longtable}{L{0.055\textwidth}L{0.115\textwidth}L{0.37\textwidth}L{0.36\textwidth}}
+\toprule
+ID & Severity & Finding & Required correction \\
+\midrule
+\endfirsthead
+\toprule
+ID & Severity & Finding & Required correction \\
+\midrule
+\endhead
+O1 & \sevmajor & ``Reducing it to one keystone'' is not a proved reduction.
+F6 is informal, and the finite-code completeness theorem is not derived from it.
+& Retitle and display every missing arrow; call F6 a candidate sufficient route
+within one architecture. \\
+O2 & \sevmajor & The identity-selector obstruction is described as an iff /
+theorem-level characterization although forceability by concepts is not proved.
+& Reclassify it as a candidate obstruction and finite-network diagnostic. \\
+O3 & \sevmajor & The current-status table contains both the superseded
+``three quadrants plus mixed witness'' state and the later whole-fragment theorem.
+& Keep one current row; move the older result to a chronology. \\
+O4 & \sevmajor & Scope is easy to overread: the result is bare concept
+satisfiability, not general TBoxes or unrestricted subsumption.  The raw fragment
+is not negation-closed. & Put the restriction in the abstract and theorem box;
+state when \(C\sqcap\neg D\) leaves the fragment. \\
+O5 & \sevmajor & ``No false positive or false negative ever occurred'' conflicts
+with the disclosed retracted quasimodel's false rejection and conflates labelled
+regressions with oracle comparisons. & Name the current implementation and corpus;
+separate 99 labelled cases from the remaining comparison runs. \\
+O6 & \sevmajor & The artifact map attributes both normal-form directions to
+\code{RCC5NormalForm.lean}; the final frame and set assembly is in
+\code{POFreeLift.lean}. & Cite \code{odNet\_frame}, arbitrary-set interpretation, and
+\code{satisfiable\_iff\_set} at their actual locations. \\
+O7 & \sevmajor & The \(\Pi^0_1\)/dovetail row says ``Lean-certified,'' but the
+RCC5-specific completeness and formal proof enumeration are assumptions, not an
+instance. & Label only the generic race combinator source-audited and reportedly
+kernel-checked. \\
+O8 & \sevmod & Failure of known grid constructions is sometimes stated as ``no
+concept can enforce a grid.'' & Say ``no known encoding'' unless a genuine
+non-definability theorem is proved. \\
+O9 & \sevmod & Patchwork is glossed as triple/path consistency implying global
+consistency and rhetorically credited with resisting grids. & Separate overlap
+amalgamation from path-consistency completeness and cite the exact theorem used. \\
+O10 & \sevmod & ``Every load-bearing claim mechanically checked'' and ``local
+algebra exhausted'' exceed the evidence. & Enumerate source-audited statements; label
+F6, W2', selector forceability, and automatic-cover completeness conjectural. \\
+O11 & \sevmod & Novelty and prior-art framing need tightening: abstract RCC5 set
+representability predates this development; the plain concrete-domain contrast is
+too categorical. & Credit relation-algebraic representation results and compare
+the role-forming predicate operator separately from plain \(\mathcal{ALC}(D)\). \\
+O12 & \sevminor & Review counts drift (17 versus 20), mutable \code{master} URLs
+are used, the overview repeats superseded material, and the GIS example turns
+membership into equality without a nominal. & Pin a release/commit, add CI/build
+manifest, reconcile counts, shorten the polemical appendix, and correct the example. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{The missing dependency chain}
+
+The overview's central editorial problem is visible in one dependency chain:
+\[
+\begin{aligned}
+\boxed{\text{semantic F6}}
+&\;\mathrel{\mathop{\Longrightarrow}^{?}}\;
+\boxed{\text{live-neighbourhood uniformization}}\\[-1pt]
+&\;\mathrel{\mathop{\Longrightarrow}^{?}}\;
+\boxed{\text{complete finite-code enumeration}}
+\;\Longrightarrow\;
+\boxed{\text{decision procedure}}.
+\end{aligned}
+\]
+The last implication is formalized in conditional form.  The first two are not.
+The theorem \code{decidableSat\_of\_finScheme} in
+\code{Round19Transport.lean} consumes an explicit enumeration and a
+\code{complete} hypothesis.  In
+\code{ForcingReduction.lean}, the RCC5-specific fact is supplied through an
+\code{adequacy} field, while its \code{F6fin} is qualitative existence, not an
+algorithm computing a bound from the input concept.  The width-barrier prose
+itself says that the coarse W2' statement is false and proposes a finer
+uniformization lemma.  Calling only F6 ``the remaining theorem'' therefore
+hides a theorem-level bridge.
+
+There is also a weaker, unbounded dovetail route.  If finite certificates have
+a computably enumerable syntax, their checker is decidable and sound, and every
+satisfiable input has \emph{some} accepted code, then no formula-computable size
+bound is needed: enumerate certificates in parallel with first-order
+refutations.  The snapshot formalizes this abstract race but neither instantiates
+the RCC5 certificate-completeness premise nor formalizes the refutation side.
+Thus ``no computable bound'' is fatal only to the direct finite-search route;
+the deeper gap in both routes is the unproved RCC5 regularization/adequacy
+theorem for one exact effective certificate syntax.
+
+There is a harmless generic sense in which decidability is equivalent to an
+effective complete certificate relation.  It does not follow that this
+particular live-width F6 is necessary, or that failure of this architecture
+would imply undecidability.  The paper should use ``remaining gap in this
+architecture,'' not ``the irreducible core of the problem.''
+
+\subsection{Scope of the reported fragment theorem}
+
+After normalization, the fragment forbids positive \(\forall\PO\).  On raw
+syntax the polarity-correct predicate also forbids a negative
+\(\exists\PO\), because normalization turns it into \(\forall\PO\).  It permits
+arbitrary existential modalities, including \(\exists\PO\), and all other
+universal RCC5 modalities.
+
+This is an expressive concept-satisfiability fragment, but it is not closed
+under negation and is not automatically stable under the usual reduction of
+subsumption to unsatisfiability of \(C\sqcap\neg D\).  General TBox
+internalization can likewise introduce \(\forall\PO\).  These limits do not
+diminish the theorem; stating them prominently makes it a credible submission
+candidate after the build and literature prerequisites in Section~7 are met.
+
+\subsection{Recommended publication split}
+
+\begin{resultbox}[Paper A: focused formal result]
+Lead with the ordered-disjoint normal form, the cone control space, full-
+language completeness, fragment soundness, the raw polarity theorem, and the
+abstract/arbitrary-set-semantics equivalence.  Include a pinned build, axiom footprint,
+complexity bound (or an honest statement that it remains loose), and a compact
+comparison with prior RCC5 representation work.  This appears to be a
+substantial paper after an external clean Lean build and literature sweep.
+\end{resultbox}
+
+\begin{cautionbox}[Paper B: research program and methodology]
+Present F6, selector forceability, mosaics, automatic presentations, and the
+history of failed routes as conjectures and experimental evidence.  This can be
+valuable without claiming that the full decision problem has been reduced to
+one proved keystone.  Move superseded theorem tables and the long AI-methodology
+discussion here.
+\end{cautionbox}
+
+\section{Lean artifact audit}
+
+\subsection{Canonical inventory}
+
+The five canonical files total 51,322 lines.  The archive also contains many
+historical copies, excerpts, and review bundles; those should not be allowed to
+blur which files constitute the release theorem.
+
+\begin{table}[ht]
+\centering\small
+\begin{tabularx}{\textwidth}{L{0.25\textwidth}rL{0.17\textwidth}Y}
+\toprule
+File & Lines & SHA-256 prefix & Actual role \\
+\midrule
+\code{POFreeLift.lean} & 45,375 & \code{5f85ff556d0d} & Current cone scheme,
+fragment decision chain, raw syntax, and final arbitrary-set-semantics bridge. \\
+\code{Round19Transport.lean} & 5,309 & \code{60d08f4c3adc} & Older
+certificate-to-model soundness and conditional finite-scheme decider. \\
+\code{SemiDecidability.lean} & 262 & \code{8a4346385619} & Generic dovetail
+schema; no instantiated RCC5 certificate/refutation system. \\
+\code{RCC5NormalForm.lean} & 231 & \code{438e82778910} & Compact forward
+normal-form and core \(\eta\)-representation lemmas; not the whole converse assembly. \\
+\code{ForcingReduction.lean} & 145 & \code{37f18d9b76f3} & Abstract reduction
+under an RCC5-specific adequacy field; not a proof of adequacy or effective F6. \\
+\bottomrule
+\end{tabularx}
+\caption{Canonical Lean sources in the submitted archive.}
+\end{table}
+
+\subsection{Proof-escape and axiom scan}
+
+Across \code{formal/*.lean}, the static audit found:
+\begin{itemize}
+  \item no actual \code{sorry} or \code{admit};
+  \item no project-specific \code{axiom} declaration (the sole apparent hit is
+        prose inside a block comment);
+  \item no \code{unsafe}, \code{opaque}, \code{partial}, \code{extern}, or
+        \code{implemented\_by};
+  \item 910 \code{\#print axioms} commands in the monolithic fragment file;
+  \item no \code{native\_decide} use in \code{POFreeLift.lean}; 28 occurrences
+        in \code{Round19Transport.lean} are diagnostics/non-vacuity examples,
+        and two in \code{SemiDecidability.lean} are toy examples.
+\end{itemize}
+The archived transcripts report successful Lean 4.32.0/4.33.1 builds and the
+standard footprint \code{propext}, \code{Classical.choice}, and
+\code{Quot.sound} for the fragment capstones.  Since this review could not run
+Lean, that sentence is an archived build claim, not an independently reproduced
+kernel check.  The source scan nevertheless found no hidden problem-specific
+assumption in the canonical cone theorem chain.
+
+\subsection{What the current fragment chain really certifies}
+
+\begin{longtable}{L{0.29\textwidth}L{0.13\textwidth}L{0.49\textwidth}}
+\toprule
+Declaration & Line & Role \\
+\midrule
+\endfirsthead
+\toprule
+Declaration & Line & Role \\
+\midrule
+\endhead
+\code{coneScheme\_complete} & 42317 & From any full-language model/root,
+obtain a surviving cone signature.  No \code{POFree} premise. \\
+\code{unf\_truth} & 44006 & Truth lemma for the fresh-occurrence model;
+\code{POFree} is used precisely in the \(\forall\PO\) branch near 44048. \\
+\code{coneScheme\_sound} & 44093 & A survivor yields a model under the
+fragment restriction. \\
+\code{coneScheme\_correct\_at} & 44179 & Finite acceptance iff satisfiable for
+the fragment. \\
+\code{decidableSat\_cone} & 44196 & Executable NNF decision procedure. \\
+\code{coneScheme\_unsat\_full} & 44217 & Sound full-language rejection only:
+finite elimination implies unsatisfiable. \\
+\code{nnfP\_correct} & 44452 & Raw syntax and negation-normal-form bridge. \\
+\code{FPOFree} & 44530 & Polarity-sensitive fragment predicate on raw formulas. \\
+\code{decidableFSat} & 44589 & Raw-formula fragment decider. \\
+\code{satisfiable\_iff\_set} & 44948 & Abstract RCC5 satisfiability iff
+arbitrary nonempty-set satisfiability. \\
+\code{decidableSetSat} & 44976 & Set-semantics fragment decision instance. \\
+\bottomrule
+\end{longtable}
+
+The clean summary is therefore:
+\[
+\underbrace{\text{full-language completeness}}_{\text{no false rejections}}
+\quad+\quad
+\underbrace{\text{fragment model extraction}}_{\text{no false acceptances}}
+\quad=\quad
+\text{fragment decidability}.
+\]
+For the full language, only the left half is present.
+
+\subsection{What the other full-logic files do not supply}
+
+\paragraph{Conditional finite scheme.}
+\code{Round19Transport.lean} proves a credible certificate-to-model soundness
+pipeline and a fixed finite checker's soundness.  Its final
+\code{decidableSat\_of\_finScheme} theorem takes a \code{complete} argument.
+No term inhabiting the RCC5 completeness premise is supplied.
+
+\paragraph{Dovetailing.}
+\code{SemiDecidability.lean} proves that a generic \code{DovetailScheme} whose
+certificate and refutation sides are both sound and complete can be raced.
+Those four properties are fields.  There is no formal first-order syntax,
+Goedel coding, proof enumeration, completeness theorem, or \Logic{} instance.
+Thus the mathematical co-r.e./\(\Pi^0_1\) placement may be right, while the
+end-to-end certification label is not.
+
+\paragraph{Forcing.}
+\code{ForcingReduction.lean} is correct abstract order theory under the
+\code{adequacy} field.  It does not build an adequacy instance for RCC5
+presentations.  Its formal \code{F6fin} is qualitative, despite an
+``effective'' comment: this is insufficient for the direct bounded-search
+theorem, though it could support dovetailing after an actual enumerable
+certificate language, checker-completeness proof, and refutation enumerator are
+supplied.
+
+\subsection{Reproduced executable evidence}
+
+\begin{table}[ht]
+\centering\small
+\begin{tabularx}{\textwidth}{L{0.18\textwidth}Y L{0.20\textwidth}}
+\toprule
+Probe & Reproduced scope & Result \\
+\midrule
+\code{wp84} & 1,048,576 raw two-point and 1,953,125 functional three-point
+structures; 1,050 standard-translation triples & Zero mismatches \\
+\code{wp88} & 36,000 ordered-disjoint networks through size nine & All five
+relations reproduced by \(\eta\); zero failures \\
+\code{wp133} & 290 fresh-occurrence prefixes & Zero frame violations; reported
+truth residues attributed to omitted controls \\
+\code{wp134} & Seven curated elimination diagnostics & All expected outcomes \\
+\code{wp135} & 2,415 fragment and 2,431 full satisfiable instances plus
+mutations/boundary controls & All tested completeness obligations passed \\
+\code{wp87} & 243 random/curated concepts, including depth five & Two reasoners
+agreed; zero reported disagreements \\
+Cover-tree stress & 911 tests (50 SAT, 13 UNSAT, 36 adversarial, 512 triples,
+300 deeper random tests) & 911/911; zero mismatch \\
+\bottomrule
+\end{tabularx}
+\caption{Finite regression evidence reproduced in this review.}
+\end{table}
+
+These runs materially increase confidence in definitions and regressions.  They
+cannot establish an unbounded model theorem, and some comparisons share the
+same RCC5 table or expected labels.  They should be advertised as reproducible
+testing, not as independent proof.
+
+\section{Renewed attack on full decidability}
+
+\subsection{The ordered-disjoint core}
+
+The normal form may be stated as a structure \((X,<,\mathrel{\#})\) where
+\(<\) is a strict partial order, \(\#\) is symmetric, irreflexive, disjoint
+from comparability, and downward hereditary:
+\[
+x<y\ \wedge\ y\# z\quad\Longrightarrow\quad x\# z,
+\]
+with the symmetric-coordinate version following from symmetry.  Then
+\[
+\begin{aligned}
+\PP(x,y)&\iff x<y, &
+\PPI(x,y)&\iff y<x,\\
+\DR(x,y)&\iff x\#y, &
+\EQ(x,y)&\iff x=y,\\
+\PO(x,y)&\iff x\ne y\wedge x\not<y\wedge y\not<x\wedge\neg(x\#y).
+\end{aligned}
+\]
+Throughout, \(X\ne\varnothing\) and strong \EQ{} means
+\(\EQ(x,y)\leftrightarrow x=y\).  In the submitted set bridge, distinct points
+are represented injectively by nonempty sets, with \PP{} as proper subset,
+\PPI{} as proper superset, \DR{} as empty intersection, and \PO{} as nonempty
+intersection with neither set containing the other.  This is arbitrary
+nonempty-set semantics; it is not by itself a claim about one fixed full class
+of regular-closed regions or boundary-sensitive RCC semantics.
+
+\paragraph{Relation to the original split-forest idea.}
+The ordered-disjoint normal form is best understood as the exact semantic core
+of the split-forest picture, rather than as a competing construction.  Its
+strict order is the vertical \PP/\PPI{} nesting axis; its hereditary conflict
+relation is the horizontal \DR{} relation and precisely formalizes the
+downward ``shadow'' propagation used by the split-forest argument; and \PO{} is
+the remaining horizontal relation once equality, comparability, and conflict
+have been excluded.  The difference is proof-theoretic strength.  An
+ordered-disjoint structure may still have an arbitrary partial order, including
+diamonds and several incomparable superparts.  A split forest additionally
+tries to replace that order by a formula-relative tree cover, splitting join
+points into occurrence copies and controlling their horizontal interfaces by
+finite profiles, patchwork, or a quotient.  Thus the certified normal form
+establishes the algebraic substrate, but it does not establish the bounded-width
+split-cover theorem needed for the original full-logic decision route.  The
+obstruction is especially sharp for \(\forall\PO\): splitting or unravelling can
+create new pairs that are neither comparable nor disjoint and hence become
+residual \PO-neighbours, which universal \PO{} formulas can observe.  In the
+\(\forall\PO\)-free fragment those extra residual edges cannot violate a
+universal \PO{} obligation, explaining why the certified fresh-occurrence
+unfolding retains the split-forest shape without requiring its older quotient
+and bounded-interface machinery.  For the full logic, the missing bridge is a
+formula-relative split-cover theorem for ordered-disjoint structures that
+preserves all \(\forall\PO\) obligations.
+
+The full problem is therefore modal satisfiability over total five-way
+labellings induced by an order with hereditary conflict.  The hard part is not
+choosing one witness; it is coordinating the residual \PO{} relation among
+many witnesses after order and conflict closure.
+
+\subsection{Four boundary formulas}
+
+The following formulas are small enough to become permanent formal regressions.
+They distinguish three inadequate repairs.
+
+\subsubsection{A direct \texorpdfstring{\(\forall\PO\)/\(\exists\PO\)}{forall-PO/exists-PO} clash}
+
+\[
+C_{\mathrm{dir}}=\forall\PO.A\ \sqcap\ \exists\PO.\neg A.
+\]
+This is immediately unsatisfiable: the existential witness is a \PO-neighbour
+and must satisfy both \(A\) and \(\neg A\).  When the current cone control is
+run with its \(\forall\PO\) information erased, the finite control survives and
+accepts.  Thus simply reusing fragment extraction for the full language is
+impossible.
+
+\subsubsection{A cross-branch composition clash}
+
+\[
+C_{\mathrm{joint}}=
+\exists\PP.(\forall\PPI.A\sqcap\forall\PO.A)
+\ \sqcap\ \exists\PO.\neg A.
+\]
+Let \(y\) be the \PP-witness and \(z\) the \PO-witness from the root \(x\).
+Then \(y\PPI x\) and \(x\PO z\), so the RCC5 table forces
+\(\operatorname{rel}(y,z)\in\{\PPI,\PO\}\).  Either universal at \(y\)
+forces \(A(z)\), contradicting \(\neg A(z)\).  Independent witness births miss
+this joint obligation.
+
+\subsubsection{A non-singleton-composition clash with no \texorpdfstring{\(\exists\PO\)}{exists-PO}}
+
+Let
+\[
+\begin{aligned}
+C_0={}&\exists\PPI.(\exists\PP.A)
+\sqcap\forall\PP.\neg A
+\sqcap\forall\PPI.\neg A
+\sqcap\neg A,\\
+C_{\mathrm{bad}}={}&C_0\sqcap\forall\PO.\neg A.
+\end{aligned}
+\]
+If \(y\PP x\) and \(y\PP z\) with \(A(z)\), then
+\[
+\operatorname{rel}(x,z)\in
+\operatorname{comp}(\PPI,\PP)=\{\EQ,\PP,\PPI,\PO\}.
+\]
+Under the submitted strong-\EQ{}, nonempty-region semantics, the composition
+entry excludes \DR{}.  The four root constraints eliminate its four labels, so
+\(C_{\mathrm{bad}}\) is unsatisfiable.  The archived diagnostic reports a
+three-signature post-fixed family for the current unary cone architecture: the
+\(x,z\) pair is constrained by a non-singleton composition entry and is never
+emitted as an explicit \(\exists\PO\) demand.  I did not independently
+reconstruct that exact family in this run, so its survival should be treated as
+a source/prose diagnostic; the semantic unsatisfiability argument itself is
+direct.  In any case, strengthening only explicit \PO-witness transitions does
+not address this kind of hidden composition obligation.
+
+\subsubsection{A satisfiable guard against ``make all cross-pairs \PO''}
+
+\[
+C_{\mathrm{sat}}=
+\exists\PP.(A\sqcap\forall\PO.A)\ \sqcap\ \exists\PP.\neg A.
+\]
+Take a strict chain \(x<z<y\), use \(y\) for the first witness and \(z\) for
+the second, and put \(A\) at \(y\) and \(\neg A\) at \(z\).  The witnesses
+must be distinct.  At \(y\), the \(\forall\PO.A\)
+condition is vacuous for these points because \(z<y\).  Thus
+\(C_{\mathrm{sat}}\) is satisfiable.  Any blanket safety rule requiring
+distinct independently created witnesses to be pairwise \PO-compatible would
+reject it.
+
+\begin{verdictbox}[Consequence for the current cone architecture]
+A successful full construction must somehow account for relation choices and
+triangle obligations among contemporaneous witnesses; an explicit joint matrix
+is the most direct route.  The current endpoint types and per-demand target
+tests do not do so, while a universal ``fresh pairs are PO'' default is ruled
+out by \(C_{\mathrm{sat}}\).  These examples refute the submitted extraction and
+the named naive repairs; they do not prove that every possible unary-state or
+local-compatibility refinement must fail.
+\end{verdictbox}
+
+\subsection{Why ordinary finite types are not enough}
+
+\paragraph{No finite cardinal bound.}
+The concept
+\[
+C_{\infty}=\exists\PP.\top\ \sqcap\
+\forall\PP.\exists\PP.\top
+\]
+forces an infinite ascending strict-\PP{} chain.  Therefore a finite-model
+certificate cannot be the target of a model-certificate route.  Such a route
+must be able to
+represent infinite models finitely; this observation does not exclude a
+fundamentally different decision method.
+
+\paragraph{Filtration collapses strictness.}
+Repeated points on the chain can have the same closure type.  Identifying them
+turns \PP{} into equality or creates a \PP{} self-loop.  Unrolling a quotient
+does not automatically help: new pairs between copies receive residual \PO,
+which can violate positive \(\forall\PO\) obligations.
+
+\paragraph{Spectra do not determine horizontal incidence.}
+Even profiles enriched with lower/upper type spectra fail to record the
+\DR/\PO{} matrix.  For every \(n\), take
+\[
+X_n=\{b\}\cup\{L_i,U_i,A_i:0\le i<n\},
+\]
+order only \(b<U_i\), and let conflict be the symmetric closure of
+\(b\#L_i\) and \(L_i\#A_i\).  Give all members of each named family the same
+unary type.  Every family then has a uniform lower/upper spectrum, while
+\[
+L_i\DR A_j\quad\Longleftrightarrow\quad i=j,
+\qquad
+L_i\PO A_j\quad\Longleftrightarrow\quad i\ne j.
+\]
+A quotient whose conflict choice factors only through profiles must smear the
+diagonal or lose a required edge.  The example does \emph{not} prove
+undecidability: a fixed concept might have a more regular alternative model.
+It motivates one candidate regularization lemma---a formula-bounded
+continuation index for conflict rows, or an equally effective finite
+presentation---without proving that this is the unique possible route.
+
+\newpage
+\subsection{A witness-generation base lemma}
+
+\begin{resultbox}[Witness-generated countable-model property]
+If a pointed full \Logic{} concept is satisfiable, it has a countable induced
+submodel generated by choosing one fixed witness for every true existential
+closure formula at every retained point.  If the closure contains \(k\)
+existential formulas, the chosen witness-generation graph has branching at most
+\(k\).  The semantic RCC5 graph remains total, so this is not a bounded-degree
+model theorem.
+\end{resultbox}
+
+\paragraph{Proof.}
+Fix once and for all a selector \(w(x,E)\) choosing one original-model witness
+for every pair consisting of a point \(x\) and a true existential formula \(E\)
+from the NNF closure at \(x\).  With \(W_0\) the satisfying root, put
+\[
+W_{m+1}=W_m\cup\{w(x,E):x\in W_m,\ E\text{ is true and existential at }x\}.
+\]
+The union over \(\omega\) is countable, and each point has at most \(k\) outgoing
+edges in this chosen generation graph.
+Restrict all predicates and relations to that union.  The RCC5 frame conditions
+are universal, hence inherited by an induced substructure.  Atomic literals are
+unchanged; both conjuncts of a true conjunction and one disjunct of a true
+disjunction remain true; universal
+formulas only become easier after restriction; and each true existential has a
+selected witness.  Induction over NNF formulas preserves truth at retained
+points, in particular at the root. \(\square\)
+
+This lemma is Lean-friendly and should be formalized.  It is only base camp.
+A recursive finitely branching tree may have no computable path, much less an
+automatic one.  Countability, compactness, and finite branching do not supply
+the required regular model.
+
+\subsection{A two-layer partial-order encoding}
+
+The review found a concise way to absorb conflict heredity into ordinary
+transitivity.  Given \((X,<,\#)\), form two copies \(Lx,Rx\) and define a
+binary relation \(Q\) by
+\[
+\begin{array}{rclcrcl}
+Lx\,Q\,Ly &\Longleftrightarrow& x<y,
+&\qquad& Rx\,Q\,Ry &\Longleftrightarrow& y<x,\\
+Lx\,Q\,Ry &\Longleftrightarrow& x\#y,
+&& Rx\,Q\,Ly &\Longleftrightarrow& \bot.
+\end{array}
+\]
+
+\paragraph{Lemma.}
+\(Q\) is a strict partial order.
+
+\paragraph{Proof sketch.}
+Irreflexivity of \(Q\) follows from strictness of \(<\) on each same-sort copy;
+the copies are disjoint, so a cross edge is never a \(Q\)-self-loop.
+The all-left and all-right transitivity cases are order transitivity.  The mixed
+case \(LxQLyQRz\) is exactly
+\(x<y\wedge y\#z\Rightarrow x\#z\); the case
+\(LxQRyQRz\) is the symmetric-coordinate hereditary law.  No relation leaves
+the right copy for the left, so there are no other cases. \(\square\)
+
+Let \(f\) swap \(Lx\) and \(Rx\).  On the left copy one recovers
+\[
+x<y\iff Q(x,y),\qquad x\#y\iff Q(x,f(y)),
+\]
+and hence defines \PO{} as the residual.  The original two-variable standard
+translation now uses one transitive relation \(Q\), unary sort predicates, and
+the matching involution \(f\).
+
+\newpage
+\begin{cautionbox}[Why this is not yet a decidability reduction]
+For an exact two-copy image, the target class must enforce an involution
+\(f^2=\mathrm{id}\) that swaps the left and right sorts, prohibit right-to-left
+\(Q\)-edges, and require, for all left-sort \(x,y\),
+\[
+Q(x,y)\leftrightarrow Q(f(y),f(x)),\qquad
+Q(x,f(y))\leftrightarrow Q(y,f(x)),\qquad
+\neg Q(x,f(x)).
+\]
+The last condition is the image of conflict irreflexivity.  Standard
+decidability of two-variable first-order logic with one transitive
+\emph{relational} symbol does not automatically allow a unary function or an
+FO-definable perfect matching.  Replacing \(f\) by its graph makes functionality
+a three-variable condition in plain FO\(^2\).  Thus the construction gives a
+precise literature target and perhaps a new proof route, but not a theorem that
+can currently be invoked.
+\end{cautionbox}
+
+The encoding is still useful.  It packages the three-variable-looking RCC5
+absorption law into transitivity and isolates synchronization, rather than
+spatial composition, as the remaining issue.  A guarded/two-sorted decision
+procedure specialized to this coherent involutive subclass would settle the
+problem.
+
+\subsection{Most credible positive route: automatic or mosaic covers}
+
+An effective certificate should carry more than unary types.  Two compatible
+formulations are worth pursuing.
+
+\paragraph{Automatic presentation.}
+Use a regular language of point addresses, finite-state unary type map,
+synchronous relations for \PP{} and \DR{}, and regular witness relations for
+each existential demand.  Define \PPI{} by converse, \EQ{} by identity, and
+\PO{} residually.  Given such a finite presentation, automata operations can
+check strictness, transitivity, conflict symmetry/irreflexivity, heredity,
+endpoint modal constraints, and total witness service.  Soundness can then feed
+the reportedly kernel-checked set representation.
+
+\paragraph{Pair-matrix mosaics.}
+A finite state should contain a complete RCC5 matrix among one representative
+for each simultaneously live demand, with interfaces recording continuation
+requirements.  A greatest fixed point must prove both directions:
+\begin{enumerate}
+  \item mosaics realized in a model survive elimination; and
+  \item every surviving compatible mosaic family unfolds to one coherent
+        ordered-disjoint model satisfying all \(\forall\PO\) obligations.
+\end{enumerate}
+The second statement is where bounded joint width or finite continuation index
+reappears.  Calling it ``F6'' does not prove it.
+
+The sharp qualitative open statement is therefore
+\[
+\begin{aligned}
+\mathsf{EnumerableCover}(C):\quad
+C\text{ satisfiable}\quad\Longrightarrow\quad
+&\text{some finite automatic (or mosaic) code}\\[-2pt]
+&\text{passes the fixed effective checker}.
+\end{aligned}
+\]
+Together with a formal enumerable refutation side, this is enough for
+decidability by dovetailing.  A stronger computable bound on code size would
+instead give a direct finite search.  No proof of either cover statement is
+present.  A useful intermediate fragment would
+bound the number of distinct \DR{} rows between equal closure profiles and show
+that the bound is preserved by witness generation.
+
+\section{Literature and novelty audit}
+
+\subsection{What the primary comparator establishes}
+
+Lutz and Wolter's 2006 paper is the closest primary comparator
+\cite{LutzWolter2006}.  The archived PDF confirms the exact citation as
+LMCS 2(2:5), not 2(2:2).  Their representation theorems identify general RCC5
+structures with the relevant substructure semantics; their undecidability
+theorem applies to supremum-closed/full region classes, not to the general
+substructure class matching the submitted target.  They prove recursive
+enumerability of the corresponding validity logic and explicitly leave the
+general RCC5 case open.  Consequently, their result does not supply either
+full decidability or undecidability here.
+
+The co-r.e./\(\Pi^0_1\) satisfiability upper placement used in the overview is
+consistent with this: validity is r.e., so unsatisfiability of a concept can be
+enumerated after the standard translation.  What is missing from Lean is the
+actual formal proof system/encoding and its completeness, not the abstract idea
+of dovetailing two semideciders.
+
+\subsection{Representation and concrete-domain context}
+
+Abstract/general RCC5 set representability is not new as a bare mathematical
+fact.  The relation-algebraic literature of Duentsch, Wang, and McCloskey
+\cite{DuentschWangMcCloskey2001}, Li and Ying's analysis of models and the
+composition table \cite{LiYing2003}, and Lutz--Wolter's representation results
+must be credited.  The potentially novel contribution here is the particular
+ordered-disjoint formulation, its constructive \(\eta\) representation, and
+the reportedly kernel-checked end-to-end use in a description-logic fragment.
+
+The overview should also narrow its claim that concrete-domain formalisms
+cannot form relations.  Plain \(\mathcal{ALC}(D)\) is indeed feature-mediated
+and two-sorted, but Haarslev, Lutz, and Moeller explicitly introduced a
+role-forming predicate operator over feature chains
+\cite{HaarslevLutzMoeller1999}.  That formalism is still not the primitive,
+single-sorted, total RCC5 role partition studied here; it is simply a closer
+comparator than the overview currently admits.
+
+\subsection{Event structures and the doubled-poset target}
+
+The ordered-disjoint frame has the same order/conflict signature and a dual
+heredity law as an event-structure skeleton: event causality corresponds to the
+\emph{reverse} of \(<\,{=}\,\PP\), hereditary \DR{} is conflict, and residual
+\PO{} is concurrency \cite{NielsenPlotkinWinskel1981,Winskel1987}.  An arbitrary
+frame here need not be a prime event structure: classical definitions commonly
+require finite causal past, which is absent from the submitted frame axioms.
+No direct decision theorem for this event-to-event modal
+signature was located in the inspected corpus; standard event-structure logics
+often reason over configurations and enabling transitions instead.  The
+connection nevertheless supplies mature language for unfoldings, regular event
+structures, and finite-state presentations, and deserves a precise comparison.
+
+Szwast and Tendera prove decidability of function-free relational FO\(^2\) with
+one designated transitive relation and auxiliary relational predicates
+\cite{SzwastTendera2013}.  The theorem is a comparator, not a corollary: the
+direct \((<,\#)\) theory needs the three-variable hereditary axiom, while the
+two-layer encoding needs a synchronized unary involution/perfect matching.
+This exact enriched signature is the right literature question.
+
+\subsection{Search limitation}
+
+The supplied archive contains the primary 2006 paper and a substantial related-
+work record.  No inspected primary source in that corpus settles full
+\Logic{} satisfiability.  Live web/database searching was attempted but was not
+available from this run, so this report does \emph{not} certify the stronger
+bibliographic statement ``still open as of September 2026.''  Before a novelty
+or priority claim is published, run and record searches in DBLP, MathSciNet,
+zbMATH, Scopus/Web of Science, Google Scholar, and citation graphs for the 2006
+paper, including terms for RCC5 modal logic, event structures, one transitive
+relation with functions, and regular/automatic models.
+
+\section{Recommendations and research plan}
+
+\subsection{Priority actions}
+
+\begin{longtable}{L{0.10\textwidth}L{0.29\textwidth}L{0.51\textwidth}}
+\toprule
+Priority & Action & Acceptance criterion \\
+\midrule
+\endfirsthead
+\toprule
+Priority & Action & Acceptance criterion \\
+\midrule
+\endhead
+P0 & Freeze a reproducible Lean release & Add \code{lean-toolchain}, a minimal
+Lake project, shared base module, and CI that builds the five canonical targets,
+rejects \code{sorry}/custom axioms, and records expected axiom footprints. \\
+P0 & Correct the overview's theorem status & One current fragment theorem;
+F6/uniformization/checker arrows shown separately; no iff selector claim; bare
+concept/TBox/subsumption scope explicit. \\
+P0 & Add full-boundary regressions & Formalize \(C_{\mathrm{dir}}\),
+\(C_{\mathrm{joint}}\), \(C_{\mathrm{bad}}\), and \(C_{\mathrm{sat}}\), including
+survival/failure statements for candidate controls. \\
+P1 & Extract a trusted shared core & One imported definition of atoms,
+composition, syntax, semantics, and ordered-disjoint representation; eliminate
+large copied tables across canonical files. \\
+P1 & Formalize countable witness generation & A carrier-polymorphic theorem
+constructing the induced countable submodel and proving NNF truth preservation. \\
+P1 & Build certificate soundness first & Define an automatic or pair-mosaic
+certificate in finite syntax; prove its checker decidable and its accepted
+objects yield models, without hiding completeness in a structure field. \\
+P1 & State the hard hypothesis honestly & A named
+\(\mathsf{EnumerableCover}\) theorem for one effective finite-code grammar;
+separately label any stronger formula-computable bound used for direct search. \\
+P2 & Attack bounded-row fragments & Prove completeness when each closure-profile
+pair has at most \(m\) distinct hereditary-conflict rows; determine whether
+\(m\) can be bounded from the formula. \\
+P2 & Develop the doubled-poset route & Formalize the two-copy equivalence and
+survey/derive decidability for FO\(^2\) over one strict order with the required
+coherent involution. \\
+P2 & Run a reproducible literature review & Publish queries, dates, databases,
+inclusion criteria, and a citation graph; have a human domain expert verify the
+priority conclusion. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Go/no-go milestones for full decidability}
+
+\begin{enumerate}
+  \item \textbf{Semantic regression gate.}  Any new local rule must reject
+        \(C_{\mathrm{bad}}\) and accept \(C_{\mathrm{sat}}\).  Failure means the
+        architecture is not ready for a completeness proof.
+  \item \textbf{Finite-code gate.}  Certificates must be inductive finite data
+        with a terminating checker.  Higher-order functions or an unbounded
+        semantic labelling are not decision certificates.
+  \item \textbf{Soundness gate.}  Prove checker acceptance produces an
+        ordered-disjoint model satisfying the formula, with no completeness
+        field in the soundness statement.
+  \item \textbf{Regularization gate.}  Prove that every satisfiable formula has
+        an accepted finite code in that exact effective syntax (or a stronger
+        formula-computable bound if direct finite search is claimed).  This is
+        the decisive theorem for this positive route.  If it fails, report the countermodel
+        pattern rather than shifting the premise to another abstraction.
+  \item \textbf{End-to-end gate.}  Instantiate the executable decision theorem,
+        print its axioms, run it on all boundary formulas, and reproduce it from
+        a clean tagged checkout in CI.
+\end{enumerate}
+
+\subsection{What not to infer}
+
+Three negative conclusions would be premature:
+\begin{itemize}
+  \item Failure of the unary cone scheme does not imply undecidability.
+  \item Selector matrices in arbitrary finite RCC5 frames do not show that one
+        fixed concept forces unbounded selectors.
+  \item A countable finitely branching witness construction does not imply an
+        automatic or computable model.
+\end{itemize}
+Conversely, the absence of a successful grid reduction does not imply
+decidability.  The honest frontier is a regularization theorem or a genuinely
+faithful undecidability encoding.
+
+\section{Final assessment}
+
+\begin{verdictbox}[Final answer]
+The attached work has crossed an important line: the \(\forall\PO\)-free
+fragment is no longer merely an experimental conjecture but is backed by a
+detailed, apparently escape-free Lean theorem chain and substantial regression
+evidence.  That is the result to develop into a focused submission after a
+pinned independent build and current novelty review.
+
+The full \Logic{} decision problem is unresolved in this snapshot.  The
+submitted cone extraction is not repaired merely by erasing or adding the
+endpoint-only \(\forall\PO\) checks considered here; the formulas in
+Section~5.2 show why.  The most credible positive target is an enumerable
+joint-pair/mosaic or automatic-presentation cover theorem (with a computable
+bound if direct finite search is desired).  The two-layer partial-
+order encoding offers a second, sharply stated route, but the required matching
+involution is a nontrivial enrichment not covered by the standard FO\(^2\)
+theorem.
+
+Publication verdict on the overview: \textbf{major rewrite / reject in current
+formal-results form}.  Publication verdict on a separated fragment/formalization
+paper after a pinned independent Lean build: \textbf{promising and likely
+publishable, subject also to a current novelty review}.  Research verdict on the
+full problem: \textbf{unresolved in the reviewed snapshot and corpus; a
+sufficient global regularization theorem for the leading positive route is now
+more precisely stated, but not proved}.
+\end{verdictbox}
+
+\appendix
+
+\section{Artifact hashes and reproduction notes}\label{app:repro}
+
+\small
+\begin{longtable}{L{0.32\textwidth}L{0.61\textwidth}}
+\toprule
+Artifact & SHA-256 \\
+\midrule
+\endfirsthead
+\toprule
+Artifact & SHA-256 \\
+\midrule
+\endhead
+\code{alcircc5-master.zip} & \nolinkurl{4a0415b3e3202595d1b1290e6cc741068d0423c0c2877e815b9b5fcbe96bd2a8} \\
+\code{papers/overview\_arxiv.tex} & \nolinkurl{be28d3dace3a1cf0bacbaaa253872c38e76c32a9995d3e21c70140b8e656942e} \\
+\code{papers/overview\_arxiv.pdf} & \nolinkurl{e684c506ac501219a93cf1b733d52dfcaa3a5c63f983bf6a651199000440322a} \\
+\code{formal/POFreeLift.lean} & \nolinkurl{5f85ff556d0d67205432311f136a90335b4a0540576604ec0f395e4aa3db28ae} \\
+\code{formal/Round19Transport.lean} & \nolinkurl{60d08f4c3adcd44b90820d764911750cc3e19072a7e84e6e87174e4a36c82678} \\
+\code{formal/SemiDecidability.lean} & \nolinkurl{8a43463856193ca6ad053498502c17239fff8c9d33d7aab594e4f5e9d1077347} \\
+\code{formal/RCC5NormalForm.lean} & \nolinkurl{438e8277891054c82050d2d1c83065100881b0630692b72c7c71a5ee80d127ad} \\
+\code{formal/ForcingReduction.lean} & \nolinkurl{37f18d9b76f38461dd310a44adc768216af0070a88bda0dd482ce761269b3351} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+The following classes of checks were run from the extracted archive:
+\begin{itemize}
+  \item exact hash, line-count, and forbidden-token scans over canonical Lean;
+  \item theorem-location/dependency inspection around the cone capstones;
+  \item \code{wp84\_fo\_pi01\_transcription.py} and
+        \code{wp88\_canonical\_representation.py};
+  \item \code{wp133}, \code{wp134}, \code{wp135}, and \code{wp87};
+  \item \code{src/stress\_test\_cover\_tree.py};
+  \item direct execution of the full-logic boundary script showing acceptance
+        of \(C_{\mathrm{dir}}\) and \(C_{\mathrm{joint}}\) when
+        \(\forall\PO\) obligations are erased.
+\end{itemize}
+No fresh Lean compilation was possible for the reasons stated in Section~1.1.
+
+\section{Claim-to-evidence matrix}
+
+\begin{longtable}{L{0.34\textwidth}L{0.24\textwidth}L{0.34\textwidth}}
+\toprule
+Claim & Best evidence in snapshot & What remains \\
+\midrule
+\endfirsthead
+\toprule
+Claim & Best evidence in snapshot & What remains \\
+\midrule
+\endhead
+Ordered-disjoint frames yield RCC5 models & Lean normal-form and set lemmas;
+36,000-network probe & Clean modular rebuild and corrected theorem map \\
+Full models yield surviving cone signatures & \code{coneScheme\_complete} &
+Independent pinned build \\
+Surviving fragment signature yields a model & \code{unf\_truth},
+\code{coneScheme\_sound} & Independent pinned build \\
+Raw \(\forall\PO\)-free SAT is decidable & \code{FPOFree},
+\code{decidableFSat} & Independent pinned build, complexity statement, and
+release engineering \\
+Concrete set SAT matches abstract SAT & \code{satisfiable\_iff\_set} & Credit
+prior representation theorems precisely and reproduce a pinned build \\
+Full SAT is decidable from a fixed complete finite scheme & Conditional Lean
+combinator & Actual bounded scheme and proof of completeness \\
+SAT is in \(\Pi^0_1\) & First-order transcription plus Lutz--Wolter r.e.
+validity argument & Formal encoding/proof calculus instance in Lean \\
+F6 yields complete finite certificates & Prose sketches / abstract adequacy
+field & RCC5 adequacy/uniformization into an enumerable finite-code grammar;
+optional bound for direct search \\
+Full cone soundness & None; boundary formulas expose the submitted gap and
+defeat named naive repairs & Joint pair/mosaic or different model construction \\
+No solution is established in the reviewed snapshot & 2006 primary source plus
+supplied corpus & Fresh reproducible 2026 literature review \\
+\bottomrule
+\end{longtable}
+
+\begin{thebibliography}{99}
+
+\bibitem{LutzWolter2006}
+C. Lutz and F. Wolter.
+\newblock Modal logics of topological relations.
+\newblock \emph{Logical Methods in Computer Science}, 2(2:5):1--41, 2006.
+\newblock \url{https://doi.org/10.2168/LMCS-2(2:5)2006}.
+
+\bibitem{DuentschWangMcCloskey2001}
+I. Duentsch, H. Wang, and S. McCloskey.
+\newblock A relation-algebraic approach to the Region Connection Calculus.
+\newblock \emph{Theoretical Computer Science}, 255(1--2):63--83, 2001.
+\newblock \url{https://doi.org/10.1016/S0304-3975(99)00123-5}.
+
+\bibitem{LiYing2003}
+S. Li and M. Ying.
+\newblock Region Connection Calculus: its models and composition table.
+\newblock \emph{Artificial Intelligence}, 145:121--146, 2003.
+\newblock \url{https://doi.org/10.1016/S0004-3702(02)00372-7}.
+
+\bibitem{HaarslevLutzMoeller1999}
+V. Haarslev, C. Lutz, and R. Moeller.
+\newblock A description logic with concrete domains and a role-forming
+predicate operator.
+\newblock \emph{Journal of Logic and Computation}, 9(3):351--384, 1999.
+\newblock \url{https://doi.org/10.1093/logcom/9.3.351}.
+
+\bibitem{NielsenPlotkinWinskel1981}
+M. Nielsen, G. Plotkin, and G. Winskel.
+\newblock Petri nets, event structures and domains, Part I.
+\newblock \emph{Theoretical Computer Science}, 13(1):85--108, 1981.
+\newblock \url{https://doi.org/10.1016/0304-3975(81)90112-2}.
+
+\bibitem{Winskel1987}
+G. Winskel.
+\newblock Event structures.
+\newblock In \emph{Petri Nets: Applications and Relationships to Other Models
+of Concurrency}, LNCS 255, pages 325--392, 1987.
+\newblock \url{https://doi.org/10.1007/3-540-17906-2_31}.
+
+\bibitem{SzwastTendera2013}
+W. Szwast and L. Tendera.
+\newblock FO\({}^2\) with one transitive relation is decidable.
+\newblock In \emph{STACS 2013}, LIPIcs 20, pages 317--328, 2013.
+\newblock \url{https://doi.org/10.4230/LIPIcs.STACS.2013.317}.
+
+\bibitem{Lean4}
+L. de Moura and S. Ullrich.
+\newblock The Lean 4 theorem prover and programming language.
+\newblock In \emph{CADE 28}, LNCS 12699, pages 625--635, 2021.
+\newblock \url{https://doi.org/10.1007/978-3-030-79876-5_37}.
+
+\bibitem{Archive2026}
+M. Wessel et al.
+\newblock ALCI-RCC5 research repository, archived commit
+\nolinkurl{795b2707b72e927c56b465ef0413b77aeb9a66a6}, 2026.
+\newblock \url{https://github.com/lambdamikel/alcircc5/tree/795b2707b72e927c56b465ef0413b77aeb9a66a6}.
+
+\end{thebibliography}
+
+\end{document}

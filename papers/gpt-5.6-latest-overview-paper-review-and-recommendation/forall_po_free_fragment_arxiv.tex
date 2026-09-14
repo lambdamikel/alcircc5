@@ -1,0 +1,1296 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,margin=27mm]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+\definecolor{linkblue}{RGB}{20,70,125}
+\definecolor{codegray}{RGB}{247,248,250}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=linkblue,
+  citecolor=linkblue,
+  urlcolor=linkblue,
+  pdftitle={A Machine-Checked Decidability Result for the forall-PO-Free Fragment of ALCI-RCC5},
+  pdfauthor={Michael Wessel},
+  pdfsubject={Description logics, RCC5, decidability, Lean 4},
+  pdfkeywords={description logics, ALCI, RCC5, qualitative spatial reasoning, decidability, Lean, ordered-disjoint structures}
+}
+
+\lstdefinelanguage{Lean}{
+  morekeywords={def,theorem,structure,inductive,where,let,if,then,else,match,with,fun,forall,exists,by,open,namespace,end,noncomputable},
+  sensitive=true,
+  morecomment=[l]{--},
+  morecomment=[s]{/-}{-/},
+  morestring=[b]"
+}
+\lstset{
+  language=Lean,
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codegray},
+  frame=single,
+  rulecolor=\color{black!15},
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  showstringspaces=false,
+  aboveskip=.8em,
+  belowskip=.8em
+}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\Logic}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\Rel}{\ensuremath{\mathsf{Rel}}}
+\newcommand{\EQ}{\ensuremath{\mathsf{EQ}}}
+\newcommand{\PP}{\ensuremath{\mathsf{PP}}}
+\newcommand{\PPI}{\ensuremath{\mathsf{PPI}}}
+\newcommand{\PO}{\ensuremath{\mathsf{PO}}}
+\newcommand{\DR}{\ensuremath{\mathsf{DR}}}
+\newcommand{\comp}{\ensuremath{\mathsf{comp}}}
+\newcommand{\cl}{\ensuremath{\mathsf{cl}}}
+\newcommand{\Types}{\ensuremath{\mathsf{Types}}}
+\newcommand{\Sig}{\ensuremath{\mathsf{Sig}}}
+\newcommand{\Prune}{\ensuremath{\mathsf{Prune}}}
+\newcommand{\Sat}{\ensuremath{\mathsf{Sat}}}
+\newcommand{\SetSat}{\ensuremath{\mathsf{SetSat}}}
+\newcommand{\POFree}{\ensuremath{\mathsf{POFree}}}
+\newcommand{\FPOFree}{\ensuremath{\mathsf{FPOFree}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\setlist[itemize]{leftmargin=2em,itemsep=.25em,topsep=.35em}
+\setlist[enumerate]{leftmargin=2em,itemsep=.25em,topsep=.35em}
+\setlength{\emergencystretch}{3em}
+
+%% arXiv metadata suggestion:
+%%   Primary category: cs.LO
+%%   Secondary category: cs.AI
+%%   MSC 2020: 03B70, 68T27, 68V15
+
+\title{\textbf{A Machine-Checked Decidability Result for the\\
+  $\boldsymbol{\forall\PO}$-Free Fragment of $\boldsymbol{\Logic}$}\\[.45em]
+  \large Ordered-Disjoint Models, Finite Cone Schemes,\\
+  and Fresh-Occurrence Unfoldings}
+
+\author{Michael Wessel\\
+  \small LambdaMikel@Home\\
+  \small \texttt{miacwess@gmail.com}}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study concept satisfiability for $\Logic$, the description logic
+$\mathcal{ALCI}$ whose roles are the five jointly exhaustive, pairwise
+disjoint RCC5 relations, under strong equality and the RCC5 converse and
+composition laws.  The full decidability problem remains open.  We prove a
+sharp unconditional result for the fragment in which negation normal form
+contains no universal restriction $\forall\PO.D$.  Existential overlap,
+universal and existential disjointness, and both directions of proper-part
+modalities remain unrestricted; the fragment does not have the finite-model
+property.
+
+The decision procedure is a finite greatest-fixed-point elimination on
+\emph{cone signatures}.  A signature records a closure type and a set of types
+that may occur strictly below it in the proper-part order.  Completeness is
+obtained without a fragment assumption: the signatures realized by any RCC5
+model form a post-fixed point of the elimination.  For soundness, each
+surviving existential demand is unfolded to a fresh occurrence.  Proper-part
+births generate a strict order, disjointness births generate a hereditary
+conflict relation, and every remaining pair is interpreted as partial overlap.
+This is an ordered-disjoint RCC5 frame by construction.  The absence of
+$\forall\PO$ is used exactly where the truth lemma would otherwise have to
+control all residual overlap edges.
+
+The complete construction, including normalization of raw formulas, the
+polarity-sensitive fragment test, abstract-to-set representation, and an
+executable \texttt{Decidable} instance, is formalized in Lean~4 with no
+\texttt{sorry}.  The formal capstones decide both abstract satisfiability and
+satisfiability by arbitrary nonempty sets.  The explicit signature space is
+doubly exponential, so the result is presently a decidability theorem rather
+than a practical reasoner.
+\end{abstract}
+
+\noindent\textbf{Keywords.}
+Description logics; RCC5; qualitative spatial reasoning; modal logic;
+decidability; ordered-disjoint structures; greatest fixed points; Lean~4.
+
+\tableofcontents
+
+\section{Introduction}
+\label{sec:introduction}
+
+The Region Connection Calculus and the closely related Egenhofer relations
+provide a small qualitative vocabulary for spatial configurations.  RCC5
+classifies two nonempty regions as equal, a proper part in one direction or
+the other, partially overlapping, or disjoint.  Since the five relations are
+jointly exhaustive and pairwise disjoint, they form a natural collection of
+modal roles.  Cohn proposed modal spatial logics of this kind
+\cite{Cohn1993}; Wessel subsequently investigated the $\mathcal{ALCI}_{\rm
+RCC}$ family and isolated the RCC5 and RCC8 cases as unresolved
+\cite{Wessel2003}.  Lutz and Wolter later studied the corresponding modal
+logics systematically and again left the general/substructure RCC5 case open
+\cite{LutzWolter2006}.
+
+The difficulty is not merely that $\PP$ is transitive.  Every two domain
+elements must receive exactly one RCC5 atom, and every ordered triple must
+satisfy the composition table.  Thus a witness created for one modal demand
+immediately participates in constraints with all other witnesses.  Moreover,
+concepts can force infinite proper-part chains, so a finite-model search is
+not complete.  Familiar local blocking arguments are hazardous: identifying
+two equally labelled occurrences can create an order cycle or move a
+disjointness witness into a cone where downward heredity makes the network
+inconsistent.
+
+This paper isolates one polarity boundary at which those global problems can
+be controlled.  In negation normal form we forbid only
+\[
+   \forall\PO.D.
+\]
+All existential modalities remain, including $\exists\PO.D$, and all
+universal modalities over $\EQ,\PP,\PPI,$ and $\DR$ remain.  On raw formulas
+the equivalent condition is polarity-sensitive: there is no positive
+$\forall\PO$ and no negative $\exists\PO$.  This is necessary because
+$\neg\exists\PO.D$ normalizes to $\forall\PO.\neg D$.
+
+\subsection{Contributions}
+
+The main contributions are as follows.
+
+\begin{enumerate}
+  \item We give an exact semantic account of strong atomic RCC5 frames as
+  \emph{ordered-disjoint structures}: a strict partial order together with a
+  symmetric, irreflexive, downward-hereditary disjointness relation.  Partial
+  overlap is the residual case.  We also give a canonical representation of
+  every such structure by nonempty sets.
+
+  \item We define a finite cone-signature space and a monotone, reductive
+  elimination operator.  Iterating the operator for the size of the initial
+  space reaches its greatest fixed point.  A concept is accepted when a
+  surviving signature contains it.
+
+  \item We prove completeness for \emph{all} concepts.  Given a model, each
+  point contributes its closure type and the set of closure types realized by
+  its strict proper parts.  The model's realized signatures survive their own
+  elimination and therefore survive every round.
+
+  \item We prove soundness for the $\forall\PO$-free fragment by a
+  fresh-occurrence unfolding.  No two existential demands share a generated
+  element.  Order and disjointness then satisfy the RCC5 frame conditions
+  structurally, while the signature conditions propagate every permitted
+  universal restriction.
+
+  \item We state the result both for NNF concepts and for formulas with
+  unrestricted Boolean negation.  We also prove equivalence between the
+  abstract composition-table semantics and a direct semantics over arbitrary
+  nonempty sets.
+
+  \item We identify the precise remaining obstruction to using the same
+  construction for the full logic: a universal $\PO$ restriction observes
+  not only explicit $\PO$ witnesses but every residual pair created by the
+  ordered-disjoint completion.
+\end{enumerate}
+
+All five steps are represented by named Lean declarations in the accompanying
+artifact.  The purpose of this paper is to expose the mathematical spine of
+that development, not to reproduce a 45,000-line proof script.
+
+\subsection{Scope and non-claims}
+\label{sec:scope}
+
+The result concerns satisfiability of one concept.  It does not cover general
+TBoxes, ABoxes, nominals, number restrictions, role inclusions, role
+composition expressions in the object language, or the full logic with
+$\forall\PO$.  Because the fragment is not closed under negation, decidability
+of its satisfiability problem does not automatically yield a same-fragment
+subsumption procedure via $C\sqcap\neg D$.  Nor do we claim a tight complexity
+classification or an efficient implementation.
+
+\section{Syntax and RCC5 semantics}
+\label{sec:semantics}
+
+\subsection{The RCC5 relation algebra}
+
+Let
+\[
+  \Rel=\{\EQ,\PP,\PPI,\PO,\DR\}.
+\]
+The converse operation fixes $\EQ,\PO,\DR$ and exchanges $\PP$ with $\PPI$.
+Write $\mathcal U=\Rel$.  The composition table used throughout is shown in
+\cref{tab:composition}; an entry gives the possible relation between $x$ and
+$z$ when the row relation holds from $x$ to $y$ and the column relation from
+$y$ to $z$.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.18}
+\begin{tabular}{c*{5}{c}}
+\toprule
+$\comp$ & \EQ & \PP & \PPI & \PO & \DR\\
+\midrule
+\EQ  & $\{\EQ\}$ & $\{\PP\}$ & $\{\PPI\}$ & $\{\PO\}$ & $\{\DR\}$\\
+\PP  & $\{\PP\}$ & $\{\PP\}$ & $\mathcal U$ & $\{\PP,\PO,\DR\}$ & $\{\DR\}$\\
+\PPI & $\{\PPI\}$ & $\{\EQ,\PP,\PPI,\PO\}$ & $\{\PPI\}$ & $\{\PPI,\PO\}$ & $\{\PPI,\PO,\DR\}$\\
+\PO  & $\{\PO\}$ & $\{\PP,\PO\}$ & $\{\PPI,\PO,\DR\}$ & $\mathcal U$ & $\{\PPI,\PO,\DR\}$\\
+\DR  & $\{\DR\}$ & $\{\PP,\PO,\DR\}$ & $\{\DR\}$ & $\{\PP,\PO,\DR\}$ & $\mathcal U$\\
+\bottomrule
+\end{tabular}
+\caption{The atomic RCC5 composition table.}
+\label{tab:composition}
+\end{table}
+
+An \emph{abstract RCC5 frame} is a nonempty set $W$ with a total map
+$\rho:W^2\to\Rel$ such that, for all $x,y,z\in W$:
+\begin{align*}
+  \rho(x,x)&=\EQ,\\
+  \rho(x,y)=\EQ&\Longrightarrow x=y,\\
+  \rho(y,x)&=\rho(x,y)^{\smile},\\
+  \rho(x,z)&\in\comp(\rho(x,y),\rho(y,z)).
+\end{align*}
+Totality of $\rho$ encodes joint exhaustiveness and functionality encodes
+pairwise disjointness of the base relations.  Equality is therefore
+\emph{strong}: $\EQ$ is the identity relation, not an equivalence later to be
+quotiented.
+
+\subsection{Concepts and satisfaction}
+
+We use the standard negation-normal-form grammar~\cite{BaaderEtAl2007}:
+\[
+ C,D ::= \top\mid\bot\mid A\mid\neg A\mid C\sqcap D\mid C\sqcup D
+        \mid\exists r.C\mid\forall r.C,
+ \qquad r\in\Rel.
+\]
+An interpretation adds a valuation $A^{\mathcal I}\subseteq W$ for every
+concept name.  Boolean constructors have their usual meaning and
+\begin{align*}
+ x\models\exists r.C
+   &\quad\Longleftrightarrow\quad
+     \text{some }y\in W\text{ has }\rho(x,y)=r\text{ and }y\models C,\\
+ x\models\forall r.C
+   &\quad\Longleftrightarrow\quad
+     \text{every }y\in W\text{ with }\rho(x,y)=r\text{ satisfies }C.
+\end{align*}
+Concept satisfiability asks whether $x\models C$ for some point of some
+abstract RCC5 interpretation.
+
+The formalization permits a carrier type with an explicit domain predicate;
+all frame laws and modal quantifiers are relativized to that predicate.  This
+is definitionally equivalent to passing to the subtype of in-domain elements,
+and nonemptiness is part of satisfiability.
+
+\subsection{The exact fragment}
+
+\begin{definition}[$\forall\PO$-free NNF]
+The predicate $\POFree(C)$ is defined structurally.  It recurses through all
+Boolean and modal subformulas, permits every existential restriction, and
+permits $\forall r.D$ exactly when $r\neq\PO$ and $\POFree(D)$.
+\end{definition}
+
+Thus ``$\PO$-free'' would be a misleading abbreviation: overlap itself is
+not removed.  The fragment freely contains $\exists\PO.D$ and may mix such
+demands with arbitrary nesting of $\PP,\PPI,$ and $\DR$ modalities.
+
+For raw formulas with general negation, define a polarity $b\in\{+,-\}$ while
+traversing the syntax.  Negation flips $b$; conjunction and disjunction keep
+it.  A positive universal $\PO$ modality and a negative existential $\PO$
+modality are forbidden.  Equivalently,
+\[
+  \FPOFree^+(F) \quad\Longrightarrow\quad
+  \POFree(\operatorname{nnf}(F)).
+\]
+This is the implication used by the decision wrapper.  Notice that
+$\neg\forall\PO.A$ is admitted, since its NNF is $\exists\PO.\neg A$,
+whereas $\neg\exists\PO.A$ is excluded.
+
+\begin{example}[Composition-forced inconsistency]
+Let
+\[
+ C_{\mathrm{force}}=
+   \exists\PP.(\exists\DR.A)\sqcap\forall\DR.\neg A.
+\]
+If $x\PP y$, $y\DR z$, and $z\models A$, then
+$\comp(\PP,\DR)=\{\DR\}$ forces $x\DR z$, contradicting the universal at
+$x$.  Hence $C_{\mathrm{force}}$ is unsatisfiable even though it belongs to
+the fragment.  A correct procedure must therefore reason with more than the
+locally requested edges.
+\end{example}
+
+\begin{example}[Failure of the finite-model property]
+The fragment concept
+\[
+ C_{\infty}=\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top
+\]
+is satisfiable on the natural-number chain, with $m\PP n$ iff $m<n$.
+At every $\PP$-successor the universal restriction creates another strict
+successor.  Transitivity makes these points pairwise distinct, so no finite
+model can satisfy $C_{\infty}$.
+\end{example}
+
+\section{Ordered-disjoint normal form}
+\label{sec:od}
+
+The key simplification is that the composition table has a compact structural
+presentation.
+
+\begin{definition}[Ordered-disjoint structure]
+An ordered-disjoint structure is a triple $(N,<,\#)$ such that:
+\begin{enumerate}
+  \item $<$ is an irreflexive, transitive relation;
+  \item $\#$ is symmetric and irreflexive;
+  \item $x<y$ implies $\neg(x\#y)$; and
+  \item disjointness is downward hereditary in both coordinates:
+  \[
+      x\#y,\quad x'\leq x,\quad y'\leq y
+      \quad\Longrightarrow\quad x'\#y',
+  \]
+  where $\leq$ is the reflexive closure of $<$.
+\end{enumerate}
+\end{definition}
+
+It induces an atomic network by priority:
+\[
+ \rho_{<,\#}(x,y)=
+ \begin{cases}
+   \EQ  & x=y,\\
+   \PP  & x<y,\\
+   \PPI & y<x,\\
+   \DR  & x\#y,\\
+   \PO  & \text{otherwise.}
+ \end{cases}
+\]
+The incompatibility conditions make these cases exclusive.  Partial overlap
+is not separately constructed; it is the residual relation left after
+identity, comparability, and disjointness have been ruled out.
+
+\begin{proposition}[Ordered-disjoint frame theorem]
+\label{prop:odframe}
+Every ordered-disjoint structure induces an abstract RCC5 frame.  Conversely,
+every abstract RCC5 frame yields an ordered-disjoint structure by defining
+$x<y$ iff $\rho(x,y)=\PP$ and $x\#y$ iff $\rho(x,y)=\DR$; the induced network
+then recovers $\rho$.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+For the forward direction, identity and converse are immediate.  The only
+composition cells that force a unique nonidentity output are consequences of
+the two structural closure conditions: $\PP;\PP$ and $\PPI;\PPI$ use
+transitivity, while $\PP;\DR$ and $\DR;\PPI$ use downward heredity.  In all
+other cells the definition of the residual relation and the exclusion axioms
+place the output among the listed alternatives.
+
+For the converse, $\comp(\PP,\PP)=\{\PP\}$ gives transitivity.  Symmetry of
+$\DR$ follows from converse.  Downward heredity is obtained by two singleton
+compositions, first $\PP;\DR=\{\DR\}$ and then
+$\DR;\PPI=\{\DR\}$.  Strong equality and the fact that $\rho$ is a function
+give irreflexivity and the separation of order from disjointness.  A case split
+over the five possible values recovers the original network.
+\end{proof}
+
+This normal form is more than convenient notation.  It allows the soundness
+construction to prove a small family of geometric invariants rather than all
+125 ordered-triple cases directly.
+
+\subsection{Canonical representation by sets}
+\label{sec:setrepresentation}
+
+Ordered-disjoint structures also give a direct representation theorem.  Let
+$\leq$ be the reflexive closure of $<$.  For each $x\in N$, define a set of
+pairs
+\[
+ \eta(x)=\{(u,v)\in N^2 : \neg(u\#v)\ \text{and}\
+                 (u\leq x\ \text{or}\ v\leq x)\}.
+\]
+The pair $(x,x)$ shows that $\eta(x)$ is nonempty.  The defining axioms imply
+\begin{align*}
+ \eta(x)\subseteq\eta(y) &\quad\Longleftrightarrow\quad x\leq y,\\
+ \eta(x)\cap\eta(y)=\varnothing &\quad\Longleftrightarrow\quad x\#y.
+\end{align*}
+Antisymmetry of $\leq$ makes $\eta$ injective.  Consequently equality, proper
+subset, proper superset, disjointness, and the remaining overlap case between
+the sets $\eta(x)$ agree exactly with $\EQ,\PP,\PPI,\DR,$ and $\PO$.
+
+\begin{theorem}[Abstract/set equivalence]
+\label{thm:setequiv}
+For every $\Logic$ concept $C$, with no fragment assumption,
+\begin{align*}
+ &C\text{ is satisfiable in an abstract RCC5 frame}\\
+ &\qquad\Longleftrightarrow
+ C\text{ is satisfiable by a pairwise-distinct family of nonempty sets}
+\end{align*}
+when RCC5 is interpreted by equality, proper inclusion in either direction,
+disjointness, and residual overlap.
+\end{theorem}
+
+The right-to-left direction reads an ordered-disjoint structure off an actual
+set family.  The left-to-right direction reads an ordered-disjoint structure
+off the abstract frame and applies $\eta$.  Both directions, including the
+satisfaction transport to the in-domain subtype, are formalized.
+
+\begin{remark}[Regular-closed regions]
+\label{rem:regularclosed}
+The Lean theorem concerns arbitrary sets; it does not formalize topology.
+Lutz and Wolter's representation theorem states that every countable general
+RCC5 structure has an isomorphic representation by nonempty regular-closed
+sets in $\mathbb R^n$, for every fixed $n>0$ \cite[Theorem~23]{LutzWolter2006}.
+The unfolding constructed below is countable, because its occurrences are
+finite words over $\Rel\times\mathbb N$.  Combining the two results externally
+therefore transfers the fragment theorem to \emph{substructure semantics}
+over arbitrary families of regular-closed regions in $\mathbb R^n$.  This does
+not establish the corresponding claim for a full structure containing every
+regular-closed region: universal modalities are sensitive to adding regions.
+\end{remark}
+
+\subsection{Relationship to split-forest models}
+\label{sec:splitforest}
+
+The ordered-disjoint normal form is conceptually close to the original
+split-forest idea, but the two notions live at different levels.  Both expose
+the same semantic backbone: $\PP$ is an order, $\DR$ is hereditary down that
+order, and $\PO$ fills the pairs left over.  Moreover, the soundness model used
+here really does have a split-forest flavour.  Each non-$\EQ$ existential
+demand creates a fresh occurrence; $\PP$ and $\PPI$ births generate vertical
+order components, while $\DR$ and $\PO$ births begin new components.  The
+result is an occurrence tree whose transitive vertical closure is read as an
+ordered-disjoint model.
+
+The difference is substantial.  An ordered-disjoint structure may have an
+arbitrary partial order and is an exact semantic normal form, whereas a
+split-forest model is a formula-relative presentation obtained by duplicating
+or splitting occurrences so that the relevant part of that order has a
+tree-like cover with bounded interfaces.  The cone-scheme completeness proof
+does not extract such a forest from a given model: it records only a point's
+type and the spectrum of types below it.  Tree shape enters later, solely in
+the soundness unfolding.  Thus the present method validates the semantic core
+of the split-forest intuition while avoiding its hardest full-logic burden,
+namely a finite interface that controls every cross-branch relation.  When
+$\forall\PO$ is restored, splitting or unravelling creates new residual
+$\PO$ pairs that a universal overlap restriction can observe; ordered-
+disjointness alone does not show that their target types are coherent.  This
+is why the normal form is a natural starting point for future split-forest
+work, but is not by itself a full-logic decidability proof.
+
+\section{The finite cone scheme}
+\label{sec:scheme}
+
+Fix an NNF concept $C_0$.  Let $\cl(C_0)$ be its list of subformulas, including
+$C_0$ itself.  The implementation intentionally permits repeated entries; all
+cardinality estimates below are upper bounds in terms of the list length
+$m=|\cl(C_0)|$.
+
+\subsection{Types, cones, and static admissibility}
+
+A \emph{candidate type} is any sublist $T$ of $\cl(C_0)$.  Hence at most
+$2^m$ candidates are enumerated.  These are deliberately partial Hintikka
+types, not maximal consistent sets.  A Boolean support test requires:
+\begin{itemize}
+  \item $\bot\notin T$ and no pair $A,\neg A$ occurs;
+  \item $C\sqcap D\in T$ implies $C,D\in T$;
+  \item $C\sqcup D\in T$ implies $C\in T$ or $D\in T$; and
+  \item $\forall\EQ.D\in T$ or $\exists\EQ.D\in T$ implies $D\in T$.
+\end{itemize}
+The last clause uses strong equality: the only $\EQ$-neighbour of a point is
+the point itself.
+
+A \emph{cone signature} is a pair
+\[
+ q=(T,S),
+\]
+where $T$ is the support type at a point and $S$ is a set of candidate types
+allowed strictly below it in the $\PP$ order.  Write
+\[
+  \operatorname{cone}(q)=\{T\}\cup S.
+\]
+Besides requiring $T$ and all members of $S$ to pass the support test, static
+admissibility requires, for every $U\in S$,
+\begin{align}
+ \{D:\forall\PP.D\in U\} &\subseteq T,
+ \label{eq:sigpp}\\
+ \{D:\forall\PPI.D\in T\} &\subseteq U.
+ \label{eq:sigppi}
+\end{align}
+These clauses are the type-level shadow of universal propagation upward and
+downward through the proper-part order.
+
+The finite set $S_0=\Sig_0(C_0)$ consists of all statically admissible pairs
+drawn from
+\[
+   \Types(C_0)\times\mathcal P(\Types(C_0)).
+\]
+Consequently,
+\begin{equation}
+ |S_0|\leq 2^m\,2^{2^m}=2^{m+2^m}.
+ \label{eq:sigbound}
+\end{equation}
+
+\subsection{Transition compatibility}
+
+For a demand $\exists r.D\in T$, a target signature
+$q'=(T',S')$ must contain $D$ in $T'$.  The additional compatibility
+condition depends on $r$ and is summarized in \cref{tab:compat}.  Put
+$A_r(T)=\{E:\forall r.E\in T\}$.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}cY@{}}
+\toprule
+Demand & Additional condition on $q=(T,S)$ and $q'=(T',S')$\\
+\midrule
+$\exists\PP.D$ & $\operatorname{cone}(q)\subseteq S'$\\
+$\exists\PPI.D$ & $\operatorname{cone}(q')\subseteq S$\\
+$\exists\DR.D$ & for all $U\in\operatorname{cone}(q)$ and
+ $V\in\operatorname{cone}(q')$, $A_{\DR}(U)\subseteq V$ and
+ $A_{\DR}(V)\subseteq U$\\
+$\exists\PO.D$ & $A_{\PO}(T)\subseteq T'$ and
+ $A_{\PO}(T')\subseteq T$\\
+$\exists\EQ.D$ & handled locally; no transition is generated\\
+\bottomrule
+\end{tabularx}
+\caption{The compatibility test.  In every non-$\EQ$ row, $D\in T'$ is also
+required.}
+\label{tab:compat}
+\end{table}
+
+The $\PP$ clause says that everything at or below the source is strictly below
+the target.  Together with \cref{eq:sigpp,eq:sigppi}, this propagates vertical
+universals along arbitrarily long chains.  The $\DR$ clause reflects downward
+heredity in both coordinates.  The $\PO$ clause propagates direct universal
+$\PO$ obligations across an explicit overlap witness in both directions;
+although vacuous on the fragment, it is needed for the full-language
+completeness theorem discussed in \cref{sec:fullunsat}.
+
+\subsection{Elimination and the decision test}
+
+Given a set $X$ of signatures, define
+\[
+ \Prune(X)=\bigl\{q\in X :
+   \text{every non-$\EQ$ existential demand in $q$ has a compatible target
+   in $X$}\bigr\}.
+\]
+This operator is reductive and monotone:
+\[
+  \Prune(X)\subseteq X,
+  \qquad X\subseteq Y\Longrightarrow\Prune(X)\subseteq\Prune(Y).
+\]
+Starting with $S_0$, set $S_{i+1}=\Prune(S_i)$.  Since $S_0$ is finite and
+each strict change deletes at least one signature, $S_{|S_0|}$ is a fixed
+point.  The decision test is
+\begin{equation}
+  \operatorname{Accept}(C_0)
+  \quad\Longleftrightarrow\quad
+  \text{some }(T,S)\in S_{|S_0|}\text{ has }C_0\in T.
+  \label{eq:accept}
+\end{equation}
+
+Equivalently, the executable procedure is:
+\begin{enumerate}
+  \item compute $\cl(C_0)$ and all candidate types;
+  \item enumerate and filter the static cone signatures;
+  \item apply $\Prune$ exactly $|S_0|$ times; and
+  \item answer \textsc{sat} iff a remaining support type contains $C_0$.
+\end{enumerate}
+All tests use finite lists and Boolean equality.  The proof obligations are
+that no genuine model is eliminated and that every accepted fragment concept
+has a model.
+
+\section{Completeness: models form post-fixed points}
+\label{sec:completeness}
+
+The completeness proof is short because the finite state space is fixed before
+a model is considered.  Let $\mathcal I$ be an arbitrary abstract RCC5 model.
+For $x\in W$, define its closure type
+\[
+  \operatorname{tp}(x)=\{C\in\cl(C_0):x\models C\}
+\]
+and its strict down-spectrum
+\[
+  \operatorname{down}(x)=
+  \{\operatorname{tp}(y):y\PP x\}.
+\]
+The model signature of $x$ is
+\[
+  q_x=(\operatorname{tp}(x),\operatorname{down}(x)).
+\]
+
+\begin{lemma}[Static admissibility]
+For every in-domain point $x$, $q_x\in S_0$.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+Truth immediately gives the Boolean support clauses.  If $y\PP x$ and
+$y\models\forall\PP.D$, the actual $\PP$ edge gives $x\models D$.
+Conversely, if $x\models\forall\PPI.D$, the same edge read in the inverse
+direction gives $y\models D$.  These are exactly the two static vertical
+clauses.
+\end{proof}
+
+Let
+\[
+  Z_{\mathcal I}=\{q_x:x\in W\}\cap S_0.
+\]
+This is a finite set even when the model is infinite, because it is a subset
+of the already finite $S_0$.
+
+\begin{lemma}[Model transitions are compatible]
+\label{lem:modelcompat}
+If $x\models\exists r.D$ and $y$ is a witnessing $r$-neighbour satisfying
+$D$, then $q_y$ is compatible with $q_x$ for the demand $(r,D)$.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+Certainly $D\in\operatorname{tp}(y)$.  If $x\PP y$, then every point at or
+strictly below $x$ is strictly below $y$ by transitivity, giving the $\PP$
+cone inclusion.  The $\PPI$ case is dual.  If $x\DR y$, every pair chosen from
+the two down-cones is disjoint by downward heredity, so $\DR$ universals cross
+in both directions.  If $x\PO y$, symmetry of $\PO$ propagates direct
+$\forall\PO$ bodies both ways.  The $\EQ$ case is local because $x=y$.
+\end{proof}
+
+\begin{lemma}[Survival]
+\label{lem:survival}
+$Z_{\mathcal I}\subseteq\Prune(Z_{\mathcal I})$.
+\end{lemma}
+
+\begin{proof}
+Take $q_x\in Z_{\mathcal I}$ and any non-$\EQ$ existential in its support
+type.  The semantics supplies a witness $y$.  By
+\cref{lem:modelcompat}, $q_y\in Z_{\mathcal I}$ is a compatible target.
+Every demand therefore survives.
+\end{proof}
+
+Monotonicity now does all remaining work.  If $Z\subseteq S_0$ and
+$Z\subseteq\Prune(Z)$, then induction gives $Z\subseteq S_i$ for every $i$.
+In particular every model signature survives the named final round.
+
+\begin{theorem}[Cone-scheme completeness]
+\label{thm:complete}
+For every NNF concept $C_0$, with no $\POFree$ hypothesis, if $C_0$ is
+satisfiable then $\operatorname{Accept}(C_0)$ holds.  More strongly, at every
+round $i$ some surviving signature contains $C_0$.
+\end{theorem}
+
+\begin{proof}
+Choose a model point $x$ satisfying $C_0$.  Then $C_0\in\operatorname{tp}(x)$,
+and \cref{lem:survival} plus monotonicity keeps $q_x$ in every $S_i$.
+\end{proof}
+
+No bounded-width extraction, filtration quotient, or finite-model property is
+used here.  The infinite model is consulted only to establish that one finite
+set of its realized signatures is a post-fixed point.
+
+\section{Soundness: the fresh-occurrence unfolding}
+\label{sec:soundness}
+
+Assume that $X\subseteq S_0$ is a fixed point in the one-sided sense
+$X\subseteq\Prune(X)$, and choose $q_0=(T_0,S_0')\in X$ with $C_0\in T_0$.
+For each non-$\EQ$ demand, fix the first compatible target in the finite list
+$X$.  This deterministic choice turns $X$ into a finite control graph.
+
+\subsection{Occurrences and births}
+
+An occurrence is a finite word over $\Rel\times\mathbb N$.  The empty word is
+the root.  If the current signature's $i$th demand is $(r,D)$, prefixing
+$(r,i)$ creates the child that serves it.  Only words generated by this rule
+belong to the carrier.  Different words are different domain elements; in
+particular, repeated visits to the same finite control state do not identify
+occurrences.
+
+This freshness is what allows a finite control graph to describe an infinite
+model such as the one required by $C_{\infty}$.  A cycle in the control graph
+unfolds to infinitely many distinct words rather than to a forbidden
+$\PP$-self-loop.
+
+\subsection{The order}
+
+A $\PP$ birth points upward from a word $w$ to $(\PP,i)::w$; a $\PPI$ birth
+points upward in the opposite direction, from $(\PPI,i)::w$ to $w$.  Let $<$
+be the transitive closure of these base steps.  Define an integer height by
+adding $+1$ for a $\PP$ prefix, $-1$ for a $\PPI$ prefix, and $0$ otherwise.
+Every base order step strictly raises height.  Hence $<$ is irreflexive; its
+definition makes it transitive.
+
+\subsection{Disjointness}
+
+A $\DR$ birth is a seed pair between $w$ and $(\DR,i)::w$.  Define $\#$ as
+the symmetric downward closure of all such seeds with respect to $\leq$.
+It is symmetric and downward hereditary by definition.
+
+To see why $<$ and $\#$ cannot collide, define the \emph{vertical base} of a
+word by stripping all initial $\PP$ and $\PPI$ births.  Order steps preserve
+the vertical base.  A $\DR$ birth changes it, and every pair in $\#$ descends
+from the two different bases of such a birth.  Consequently disjoint points
+have different vertical bases, while comparable points have the same base.
+This proves irreflexivity of $\#$ and $x<y\Rightarrow\neg(x\#y)$.
+
+We have therefore constructed an ordered-disjoint structure on the generated
+occurrences.  By \cref{prop:odframe}, it induces a full RCC5 frame.  Each birth
+has its advertised relation:
+\begin{itemize}
+  \item $\PP$ and $\PPI$ births are base order edges;
+  \item a $\DR$ birth is a disjointness seed; and
+  \item a $\PO$ birth changes vertical base without being a $\DR$ seed, so its
+  endpoints are unequal, incomparable, and nondisjoint; it is residual $\PO$.
+\end{itemize}
+
+\subsection{Labels and modal propagation}
+
+Label an occurrence with the support type of the control signature reached by
+following its word from $q_0$.  Fixed-point membership ensures that every
+generated step has a chosen target in $X$, and compatibility ensures that the
+target label contains the demanded body.
+
+The universal cases follow the geometry of the unfolding:
+\begin{itemize}
+  \item Along each proper-part step, compatibility pushes the entire source
+  cone into the target's down-spectrum.  This invariant composes along the
+  transitive closure.  Static admissibility then propagates $\forall\PP$
+  upward and $\forall\PPI$ downward.
+
+  \item Every disjoint pair descends from a $\DR$ birth.  Each endpoint label
+  lies in the cone of the corresponding birth endpoint, and the $\DR$
+  compatibility clause propagates universal bodies across all such pairs.
+
+  \item $\EQ$ is identity, so its universal and existential bodies are local
+  support conditions.
+
+  \item There is no propagation obligation for $\forall\PO$, because no such
+  subformula occurs in $\cl(C_0)$ when $\POFree(C_0)$ holds.
+\end{itemize}
+
+The last item is the exact point of the fragment restriction.  The generated
+frame contains many $\PO$ edges that are not births: every unequal pair that
+is neither comparable nor disjoint becomes $\PO$.  Direct transition
+compatibility controls explicit $\PO$ witnesses, but it does not control all
+of these residual pairs.  A $\forall\PO$ formula would have to inspect every
+one of them.
+
+\begin{lemma}[Truth lemma]
+\label{lem:truth}
+Let $C_0$ be $\forall\PO$-free.  Every concept in the label of a generated
+occurrence is true at that occurrence in the unfolded interpretation.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+Induct on concepts.  The support test discharges $\bot$, literal clashes,
+conjunction, disjunction, and the local $\EQ$ cases.  A non-$\EQ$ existential
+uses its own fresh child and the exact birth relation.  The $\PP,\PPI,$ and
+$\DR$ universal cases use the propagation facts above.  In the $\PO$
+universal case, membership of $\forall\PO.D$ in a label would imply its
+membership in $\cl(C_0)$, contradicting $\POFree(C_0)$; the case is therefore
+vacuous.
+\end{proof}
+
+\begin{theorem}[Cone-scheme soundness]
+\label{thm:sound}
+If $C_0$ is $\forall\PO$-free and a fixed point $X\subseteq S_0$ contains a
+signature whose support type contains $C_0$, then $C_0$ is satisfiable in an
+abstract RCC5 frame.  The witnessing frame is countable and is induced by an
+ordered-disjoint structure.
+\end{theorem}
+
+\begin{proof}
+Root the fresh-occurrence unfolding at the chosen signature and apply
+\cref{lem:truth} to the empty word.
+\end{proof}
+
+\section{Decision theorems}
+\label{sec:main}
+
+Combining \cref{thm:complete,thm:sound} at the named round gives the central
+characterization.
+
+\begin{theorem}[NNF concept satisfiability]
+\label{thm:main}
+For every NNF concept $C_0$ with $\POFree(C_0)$,
+\[
+ C_0\text{ is satisfiable}
+ \quad\Longleftrightarrow\quad
+ \exists(T,S)\in S_{|S_0|}\; C_0\in T.
+\]
+Consequently, satisfiability of the $\forall\PO$-free fragment of $\Logic$ is
+decidable.
+\end{theorem}
+
+Because the right-hand side is a finite Boolean test, the formal result is a
+Lean \code{Decidable} value, not merely a classical excluded-middle theorem.
+
+\begin{theorem}[Raw formulas]
+\label{thm:raw}
+Let $F$ be a formula with unrestricted Boolean negation.  If $F$ has no
+positive $\forall\PO$ occurrence and no negative $\exists\PO$ occurrence,
+then satisfiability of $F$ is decidable.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The polarity-indexed normalization proves simultaneously that
+$\operatorname{nnf}^{+}(F)$ is equivalent to $F$ and
+$\operatorname{nnf}^{-}(F)$ is equivalent to $\neg F$.  The structural
+polarity condition implies $\POFree(\operatorname{nnf}^{+}(F))$.  Apply
+\cref{thm:main} and transport the resulting decision across semantic
+equivalence.
+\end{proof}
+
+Together with \cref{thm:setequiv}, the same algorithm decides satisfiability
+over pairwise-distinct families of arbitrary nonempty sets.
+
+\begin{corollary}[Concrete set satisfiability]
+For every $\forall\PO$-free concept $C_0$, satisfiability under the direct set
+interpretation of RCC5 is decidable.
+\end{corollary}
+
+\subsection{A one-sided theorem for the full language}
+\label{sec:fullunsat}
+
+Since completeness never used $\POFree$, it yields a useful but limited
+corollary.
+
+\begin{corollary}[Sound full-language refutation]
+\label{cor:fullunsat}
+For any NNF concept $C_0$, if no signature surviving any chosen elimination
+round contains $C_0$, then $C_0$ is unsatisfiable.  In particular this test is
+sound at the named round $|S_0|$.
+\end{corollary}
+
+The converse is not claimed.  A surviving signature outside the fragment need
+not unfold to a model, because residual $\PO$ edges may violate a universal
+$\PO$ restriction.  Thus \cref{cor:fullunsat} is a finite one-sided analyzer,
+not a decision procedure for full $\Logic$.
+
+\section{Formalization and verification boundary}
+\label{sec:formalization}
+
+\subsection{Lean theorem map}
+
+The development uses Lean~4 core and represents all finite control structures
+as lists.  \Cref{tab:theoremmap} maps the mathematical results above to the
+capstone declarations in \path{formal/POFreeLift.lean} \cite{Artifact2026}.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}Yl@{}}
+\toprule
+Mathematical role & Lean declaration\\
+\midrule
+Ordered-disjoint structure induces an RCC5 frame & \code{odNet\_frame}\\
+Every abstract model reads off as ordered-disjoint & \code{odOfModel}, \code{odNet\_odOfModel}\\
+Static signatures and transition test & \code{sigStatic}, \code{compatB}\\
+Reductive, monotone elimination and fixed point & \code{pruneSig\_red}, \code{pruneSig\_mono}, \code{coneScheme\_gfp}\\
+Model signatures form a post-fixed point & \code{modelSigs\_survives}, \code{modelSigs\_in\_gfp}\\
+Full-language completeness & \code{coneScheme\_complete}\\
+Generated ordered-disjoint carrier & \code{gOD}, \code{unfInterp\_rcc5}\\
+Universal propagation / existential service & \code{allPP\_gLt}, \code{allPPI\_gLt}, \code{allDR\_gDisj}, \code{gchild\_serves}\\
+Fragment truth lemma and soundness & \code{unf\_truth}, \code{coneScheme\_sound}\\
+Named-round characterization and NNF decision & \code{coneScheme\_correct\_at}, \code{decidableSat\_cone}\\
+Raw normalization and decision & \code{nnfP\_correct}, \code{pofree\_nnfP}, \code{decidableFSat}\\
+Abstract/set equivalence and set decision & \code{satisfiable\_iff\_set}, \code{decidableSetSat}\\
+One-sided full-language refutation & \code{coneScheme\_unsat\_full}, \code{coneScheme\_unsat\_full\_at}\\
+\bottomrule
+\end{tabularx}
+\caption{Result-to-artifact map for the cone-scheme proof.}
+\label{tab:theoremmap}
+\end{table}
+
+The source contains no \code{sorry}, user-declared axiom, unsafe definition,
+\code{native\_decide}, or implementation override in the audited snapshot.
+The printed axiom footprint of the main capstones is
+\code{propext}, \code{Classical.choice}, and \code{Quot.sound}, the standard
+principles used by Lean's classical reasoning and quotient infrastructure.
+Classical choice is used in model-side existence proofs and in a stabilization
+argument; the finite decision data itself is computed by Boolean list
+operations.  In particular, \code{decidableSat\_cone} and
+\code{decidableFSat} are executable definitions.  The artifact includes small
+kernel-reduced positive and negative examples.
+
+\subsection{Audited snapshot and reproducibility}
+
+This manuscript describes repository commit
+\code{795b2707b72e927c56b465ef0413b77aeb9a66a6}.  The relevant files in that
+snapshot have the following identifiers:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+File & SHA-256\\
+\midrule
+\path{formal/POFreeLift.lean} &
+\code{5f85ff556d0d67205432311f136a903}\allowbreak
+\code{35b4a0540576604ec0f395e4aa3db28ae}\\
+\path{formal/RCC5NormalForm.lean} &
+\code{438e8277891054c82050d2d1c830651}\allowbreak
+\code{00881b0630692b72c7c71a5ee80d127ad}\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The cumulative \path{POFreeLift.lean} file has 45,375 lines; much of it records
+earlier constructions, while the current cone scheme and its capstones occur
+near the end.  Recorded independent audits built the development under Lean
+4.32.0 and 4.33.1 with zero errors, warnings, and sorries.  The minimal build
+command is:
+\begin{lstlisting}
+lean POFreeLift.lean
+\end{lstlisting}
+The snapshot does not contain a \path{lean-toolchain} file or a Lake project.
+Before archival release, the repository should pin the tested Lean version and
+provide a minimal module containing only the theorem's dependency closure.
+This is a reproducibility and reviewability improvement, not a logical premise
+of the theorem.
+
+\subsection{Adversarial testing}
+
+The formal proof is the correctness evidence; testing is supplementary.  The
+repository nevertheless contains independent probes that rederive the RCC5
+table from finite set models, compare the finite control layer with exhaustive
+small-model search, mutate compatibility conditions, and instantiate bounded
+prefixes of the unfolding.  Three staged cold reviews focused respectively on
+the trusted semantic base, completeness, and soundness.  The completeness
+review found that an early $\PO$ transition clause omitted symmetric
+$\forall\PO$ propagation.  The clause was strengthened, and its preservation
+of completeness and fragment soundness was then proved in Lean.  The
+soundness-focused review traced apparent probe failures to hypotheses that the
+probe had abstracted away and led to corresponding probe corrections.  No
+review found a counterexample to the fragment capstone.
+
+These experiments should not be conflated with proof, and their finite-model
+or bounded-depth nature cannot validate the infinite unfolding.  Their value
+is different: they exposed transcription errors, under-strength conditions,
+and misleading prose before release.
+
+\section{Complexity and practical status}
+\label{sec:complexity}
+
+Let $m=|\cl(C_0)|$.  Candidate types number at most $2^m$, and
+\cref{eq:sigbound} gives at most $2^{m+2^m}$ raw signatures before static
+filtering and deduplication.  A direct implementation checks, for every
+surviving signature and every existential demand, whether some target is
+compatible, and performs at most $|S_0|$ rounds.  Polynomially many scans of
+an explicitly represented doubly-exponential state space remain within a
+coarse doubly-exponential time upper bound.
+
+The Lean development proves finiteness and termination but does not formalize
+this asymptotic analysis, nor does it establish a matching lower bound.  More
+importantly, the literal list implementation materializes a power set of the
+type space.  Audit runs report that only very small closures are feasible and
+that a one-modality example can exhaust substantial memory.  The procedure is
+therefore not a competitive reasoner.
+
+There is considerable room for symbolic improvement.  The second component of
+a signature is used through inclusions and universal-body summaries, suggesting
+antichain representations, binary decision diagrams, or SAT/SMT encodings.
+Such changes would require new correctness proofs: quotienting two spectra
+merely because they agree on currently inspected summaries risks reintroducing
+the same joint-coherence problem that freshness was designed to avoid.
+
+\section{Related work}
+\label{sec:related}
+
+\paragraph{RCC and qualitative spatial reasoning.}
+RCC8 was introduced as a region-based spatial logic by Randell, Cui, and Cohn
+\cite{RandellCuiCohn1992}; RCC5 is its coarser five-relation calculus.  Renz
+and Nebel studied tractable relation-algebra fragments for RCC reasoning
+\cite{RenzNebel1999}.  Those constraint-satisfaction results concern finite
+networks of spatial variables.  The present modal satisfiability problem adds
+arbitrary nesting, unary concept predicates, and models that may need to be
+infinite, so finite RCC network consistency is an ingredient rather than a
+decision procedure.
+
+\paragraph{Modal RCC5.}
+Cohn proposed modal and non-modal qualitative spatial languages
+\cite{Cohn1993}.  Wessel developed the $\Logic$ family and documented both
+decidable and undecidable neighbouring systems, leaving the RCC5 case open
+\cite{Wessel2003}.  Lutz and Wolter formalized modal logics over RCC8 and RCC5
+region structures \cite{LutzWolter2006}.  Their general RCC5 structures have
+the same essential conditions used here: JEPD atoms, identity equality,
+converse, and the composition table.  Their Theorem~23 supplies the
+regular-closed representation used in \cref{rem:regularclosed}.  Their RCC5
+undecidability theorem assumes a stronger least-superregion property and
+applies to full classes satisfying it; they explicitly leave other RCC5
+logics, including the general/substructure case, open.  It therefore does not
+subsume the fragment theorem presented here.
+
+The syntactic cut considered here is also different from simply dropping the
+$\PO$ modality.  Existential $\PO$ remains available; only universal access to
+all $\PO$ neighbours is removed after NNF.  We are not aware of an earlier
+published result isolating this one-polarity fragment, but this narrow novelty
+claim should be checked independently in peer review.
+
+\paragraph{Description logics with concrete domains.}
+Concrete-domain extensions connect abstract individuals to concrete values by
+features and predicates.  Tableau and admissibility results for such systems
+include Lutz and Mili\v{c}i\'c \cite{LutzMilicic2007} and later work by Baader
+and Rydval \cite{BaaderRydval2020}.  They do not directly settle the present
+logic: here the region objects themselves are the modal domain and the RCC5
+relations connect every pair of them.
+
+\paragraph{Machine-checked metatheory.}
+Lean~4 combines dependent type theory with an extensible elaborator and proof
+automation \cite{deMouraUllrich2021}.  In this development it serves two
+roles: checking the finite fixed-point argument and checking the infinite
+model construction.  The latter is the more consequential use, since the
+fresh-occurrence carrier, the order/disjointness invariants, and the modal
+truth lemma are all quantified over unbounded objects.
+
+\section{\texorpdfstring{Why full $\Logic$ remains open}{Why full ALCI-RCC5 remains open}}
+\label{sec:full}
+
+The current method draws a clean line between what is already solved and what
+is not.  Completeness works for a full-language input because a real model
+supplies compatible witnesses.  Soundness fails to generalize because a
+control transition sees only an explicit witness edge, whereas the induced
+ordered-disjoint frame assigns $\PO$ to every residual pair.
+
+Consider a source occurrence labelled $\forall\PO.D$.  It is not enough to
+ensure $D$ at the target of each explicit $\exists\PO$ birth.  The source may
+be residual-$\PO$ related to occurrences created several generations away,
+to siblings created for unrelated demands, or to points in other vertical
+components.  Whether such a pair is residual depends jointly on the absence of
+identity, order in either direction, and hereditary disjointness.  A finite
+control state must either predict the types of all those targets or impose a
+model shape in which their obligations can be summarized.
+
+This observation suggests four concrete research directions.
+
+\begin{enumerate}
+  \item \textbf{Symbolic residual neighbourhoods.}  Enrich a signature with a
+  finite summary of which types may be residual-$\PO$ related to its cone, and
+  seek a monotone elimination whose post-fixed-point completeness can still be
+  read directly from models.
+
+  \item \textbf{Formula-relative split forests.}  Start from the
+  ordered-disjoint normal form, split only the occurrences needed to obtain a
+  tree-like cover, and carry bounded interfaces that explicitly propagate
+  $\forall\PO$ obligations across forgotten branches.  The missing theorem is
+  a completeness bound on those interfaces, not the existence of the
+  underlying order/disjointness structure.
+
+  \item \textbf{Disjunctive composition information.}  Cone signatures encode
+  consequences of singleton-forcing cells particularly well.  Full $\PO$
+  control may require finite records of multi-path or disjunctive constraints,
+  together with a proof that the resulting operator remains monotone.
+
+  \item \textbf{A negative boundary result.}  If no finite residual
+  neighbourhood summary can be made complete, that obstruction may guide an
+  undecidability reduction.  Any such reduction must force the coincidence or
+  coordination of independently generated witnesses; merely constructing a
+  grid-shaped RCC5 model is insufficient.
+\end{enumerate}
+
+The ordered-disjoint normal form should precede these attacks.  It identifies
+exactly which parts of RCC5 are positive closure conditions and which part is
+the complement.  The full problem is, in this sense, the logic of a modal
+operator over that complement.
+
+\section{Limitations and release recommendations}
+\label{sec:limitations}
+
+The mathematical result is unconditional within the stated semantics, but a
+responsible release should keep the following boundaries visible.
+
+\begin{itemize}
+  \item The main theorem is concept satisfiability for the specified role and
+  syntax, not ontology reasoning with general axioms.
+
+  \item The direct Lean representation uses arbitrary nonempty sets.  The
+  regular-closed corollary relies on the external representation theorem and
+  concerns substructures, not full topological region structures.
+
+  \item The explicit algorithm is prohibitively expensive.  It should not be
+  advertised as an implemented practical reasoner, and no optimal complexity
+  result is claimed.
+
+  \item The repository is cumulative and contains superseded proof routes.
+  The release should designate the cone-scheme capstones as normative, move
+  obsolete theorem-level narratives out of the main path, and include the
+  exact theorem-to-source map from \cref{tab:theoremmap}.
+
+  \item A pinned Lean toolchain, a minimal build target, archived build output,
+  and a stable commit or DOI should accompany the preprint.
+
+  \item Independent human review by researchers in description logic,
+  qualitative spatial reasoning, and Lean remains desirable.  Machine
+  checking removes proof-script gaps relative to the definitions; it does not
+  by itself establish that the definitions match every convention a reader
+  may associate with the name $\Logic$.
+\end{itemize}
+
+Promising follow-up work within the decided fragment includes a symbolic
+implementation, an exact complexity classification, extension to restricted
+TBoxes, and a Lean formalization of the regular-closed representation bridge.
+
+\section{Conclusion}
+
+Removing universal partial-overlap restrictions after negation normalization
+leaves a substantial logic: existential overlap, full disjointness, both
+proper-part directions, arbitrary Boolean structure, and models with infinite
+chains all remain.  Its satisfiability problem is nevertheless decidable.
+
+The proof separates finiteness from model size.  A finite cone scheme records
+only closure types and their possible strict predecessor types.  Any genuine
+model yields a post-fixed point, which proves completeness without quotienting
+the model.  Conversely, a surviving scheme is unfolded into fresh
+occurrences.  Their vertical births and disjointness births form an
+ordered-disjoint structure, so RCC5 closure holds globally and existential
+demands never need to reuse a node.  The only missing truth-lemma branch is
+$\forall\PO$, exactly the constructor excluded by the fragment.
+
+This establishes a machine-checked positive result while sharpening the open
+full-logic problem.  Ordered-disjoint normal form is the semantic core;
+controlling the residual $\PO$ neighbourhoods is the remaining frontier.
+
+\section*{Artifact availability and authorship transparency}
+
+The formalization, probes, review packets, and historical development are
+available at \url{https://github.com/lambdamikel/alcircc5}; this paper targets
+the commit identified in \cref{sec:formalization}.  The $\Logic$ research
+programme and split-forest idea originate with Michael Wessel.  The 2026
+project used multiple AI systems under his direction for proposing proof
+architectures, producing Lean code, testing, and adversarial review.  In
+particular, GPT-5.6 Sol proposed the finite-control/fresh-occurrence cone-scheme
+architecture, and Claude systems carried out the principal Lean development.
+This manuscript was prepared with OpenAI Codex from the audited repository
+state.  AI systems are acknowledged as tools rather than listed as authors;
+the human author remains responsible for checking the text, claims, and public
+release.
+
+\begin{thebibliography}{99}
+
+\bibitem{BaaderEtAl2007}
+F.~Baader, D.~Calvanese, D.~L. McGuinness, D.~Nardi, and P.~F.
+Patel-Schneider, editors.
+\newblock \emph{The Description Logic Handbook: Theory, Implementation, and
+Applications}, second edition.
+\newblock Cambridge University Press, 2007.
+
+\bibitem{BaaderRydval2020}
+F.~Baader and M.~Rydval.
+\newblock Description logics with concrete domains and general concept
+inclusions revisited.
+\newblock In \emph{Proceedings of IJCAR 2020}, LNCS 12166, pages 413--431.
+Springer, 2020.
+
+\bibitem{Cohn1993}
+A.~G. Cohn.
+\newblock Modal and non-modal qualitative spatial logics.
+\newblock In \emph{Proceedings of the IJCAI Workshop on Spatial and Temporal
+Reasoning}, 1993.
+
+\bibitem{deMouraUllrich2021}
+L.~de Moura and S.~Ullrich.
+\newblock The Lean~4 theorem prover and programming language.
+\newblock In A.~Platzer and G.~Sutcliffe, editors, \emph{Automated Deduction---CADE~28},
+LNCS 12699, pages 625--635. Springer, 2021.
+\newblock \url{https://doi.org/10.1007/978-3-030-79876-5_37}.
+
+\bibitem{LutzMilicic2007}
+C.~Lutz and M.~Mili\v{c}i\'c.
+\newblock A tableau algorithm for description logics with concrete domains and
+general TBoxes.
+\newblock \emph{Journal of Automated Reasoning}, 38:227--259, 2007.
+
+\bibitem{LutzWolter2006}
+C.~Lutz and F.~Wolter.
+\newblock Modal logics of topological relations.
+\newblock \emph{Logical Methods in Computer Science}, 2(2:5):1--41, 2006.
+\newblock \url{https://doi.org/10.2168/LMCS-2(2:5)2006}.
+
+\bibitem{RandellCuiCohn1992}
+D.~A. Randell, Z.~Cui, and A.~G. Cohn.
+\newblock A spatial logic based on regions and connection.
+\newblock In \emph{Proceedings of the Third International Conference on
+Principles of Knowledge Representation and Reasoning (KR'92)}, pages 165--176,
+1992.
+
+\bibitem{RenzNebel1999}
+J.~Renz and B.~Nebel.
+\newblock On the complexity of qualitative spatial reasoning: A maximal
+tractable fragment of the Region Connection Calculus.
+\newblock \emph{Artificial Intelligence}, 108(1--2):69--123, 1999.
+
+\bibitem{Wessel2003}
+M.~Wessel.
+\newblock Qualitative spatial reasoning with the $\mathcal{ALCI}_{\mathrm{RCC}}$
+family---first results and unanswered questions.
+\newblock Technical Report FBI-HH-M-324/03, Department of Computer Science,
+University of Hamburg, May 2002 / October 2003.
+\newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf}.
+
+\bibitem{Artifact2026}
+M.~Wessel.
+\newblock $\Logic$ decidability project: Lean formalization and verification
+artifact.
+\newblock GitHub repository, commit
+\code{795b2707b72e927c56b465ef0413b77aeb9a66a6}, 2026.
+\newblock AI-assisted formalization and review.
+\newblock \url{https://github.com/lambdamikel/alcircc5}.
+
+\end{thebibliography}
+
+\appendix
+
+\section{Formal capstone signatures}
+\label{app:signatures}
+
+For reference, the central Lean interfaces in the audited snapshot are:
+
+\begin{lstlisting}
+def POFree : Concept -> Prop
+
+theorem coneScheme_complete
+  (hI : RCC5Interp I) (C0 : Concept) {x : alpha}
+  (hx : I.dom x) (hC0 : sat I x C0) (n : Nat) :
+  exists q in gfpIter pruneSig (sigStatic C0) n,
+    C0 in q.1
+
+theorem coneScheme_sound
+  (hXS  : forall q in X, q in sigStatic C0)
+  (hfix : forall q in X, q in pruneSig X)
+  (hpo  : POFree C0) (hq0 : q0 in X)
+  (hC0  : C0 in q0.1) :
+  Satisfiable C0
+
+theorem coneScheme_correct_at (C0 : Concept)
+  (hpo : POFree C0) :
+  Satisfiable C0 <->
+    exists q in
+      gfpIter pruneSig (sigStatic C0) (sigStatic C0).length,
+      C0 in q.1
+
+def decidableSat_cone (C0 : Concept)
+  (hpo : POFree C0) : Decidable (Satisfiable C0)
+
+def decidableFSat (F : Formula)
+  (h : FPOFree true F) : Decidable (FSatisfiable F)
+
+theorem satisfiable_iff_set (C0 : Concept) :
+  Satisfiable C0 <-> SetSatisfiable C0
+
+def decidableSetSat (C0 : Concept)
+  (hpo : POFree C0) : Decidable (SetSatisfiable C0)
+\end{lstlisting}
+
+\end{document}
