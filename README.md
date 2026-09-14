@@ -64,7 +64,7 @@ dedicated explainer:
 [TeX](papers/why_po_free_decidable.tex) ·
 [Markdown pointer](papers/WHY_PO_FREE_IS_DECIDABLE.md). It is the technical sibling
 of the non-technical
-[`WHY_ITS_HARD.md`](papers/cold_review_f6_w2prime/WHY_ITS_HARD.md): written
+[`WHY_ITS_HARD.md`](WHY_ITS_HARD.md): written
 for a reader who knows description logics, tableaux, and blocking (but not
 automata or model theory), it explains the finite-certificate architecture,
 the handful of composition-table facts everything rides on (four

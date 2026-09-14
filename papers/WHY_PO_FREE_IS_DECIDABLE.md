@@ -13,7 +13,7 @@
 
 A companion to the ALCI_RCC5 decidability project, pitched one level more
 technical than the non-technical
-[`WHY_ITS_HARD.md`](cold_review_f6_w2prime/WHY_ITS_HARD.md): written for a
+[`WHY_ITS_HARD.md`](../WHY_ITS_HARD.md): written for a
 reader who knows description logics, tableaux, and blocking, but not automata
 theory or model theory. It does not walk you through the proofs — it puts
 enough intuition, and enough hard checkable facts, in front of you that you
@@ -93,7 +93,7 @@ is the PDF's "What is certified…" section; the step-by-step provenance is
 
 ---
 
-*Companions:* [`WHY_ITS_HARD.md`](cold_review_f6_w2prime/WHY_ITS_HARD.md) (the
+*Companions:* [`WHY_ITS_HARD.md`](../WHY_ITS_HARD.md) (the
 full problem, non-technical) ·
 [`two_tier_quotient_ALCIRCC5.tex`](two_tier_quotient_ALCIRCC5.tex) (Route 1 in
 full) · [`overview_arxiv.pdf`](overview_arxiv.pdf) (the overview paper). Where

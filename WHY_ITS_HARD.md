@@ -5,6 +5,12 @@ symbols, no proofs — just the ideas, and an honest account of why the
 central question has stayed open across dozens of rounds. If you have
 never seen a description logic, start here.*
 
+*Revised September 2026. What this guide says about "the one open
+question" applies to the approach this project took, not to every possible
+approach; where it used to say more, it has been corrected. One piece of the
+problem is settled outright (§11), and has its own paper:
+[`papers/pofree_fragment_arxiv.pdf`](papers/pofree_fragment_arxiv.pdf).*
+
 ---
 
 ## 1. The question, in one breath
@@ -162,14 +168,16 @@ relationships, they cost nothing; they're implied.
 So the real measurement of "how big is the blueprint" is not the total
 number of relationships a region has — it's the number of **live**
 (non-shadow, genuinely chosen) relationships. Call that the **width**.
-The whole decidability question comes down to:
+For the approach this project took, the decidability question comes down to:
 
 > **Does the width stay bounded, or can a description force it to grow
 > without limit?**
 
-If width is always bounded, the blueprint is always finite, and the
+If width is always bounded — and two further steps that have been argued
+but not yet proved also hold — the blueprint is always finite, and the
 problem is decidable. If some description forces unbounded width, this
-whole approach fails for that description.
+whole approach fails for that description. That would not by itself make
+the problem undecidable: a different kind of blueprint might still work.
 
 This is the open problem the project calls **F6**.
 
@@ -255,7 +263,7 @@ but "probably" is not "proved," and the missing piece is a genuinely new
 
 ---
 
-## 9. The punchline: the counterexample and the proof are the same question — and so is *un*decidability
+## 9. The punchline: the counterexample and the proof look like the same question — and so does *un*decidability
 
 Recently we chased the missing piece from the other side: instead of
 trying to *prove* the crowd stays small, we tried hard to *build* a
@@ -267,13 +275,14 @@ and it's worth stating plainly.
 is whether a giant side-by-side crowd can *exist* at all. It can, trivially.
 Take any collection of blobs and, for each pair, just declare them either
 overlapping or discrete — any pattern you like. Every such pattern is a
-perfectly legal spatial arrangement (this is guaranteed by the same
-"patchwork" property the whole project leans on). So a crowd of a thousand
+perfectly legal spatial arrangement (when nothing is nested inside
+anything else, no pattern of overlap and disjointness can break the
+composition rules). So a crowd of a thousand
 distinct side-by-side regions is no problem to *draw*. The obstacle is not
 "can such a crowd exist."
 
-**Second surprise: the *language* can't force one — for the same reason
-ladders loop.** Recall the loop trick that tamed the vertical axis: run a
+**Second surprise: asking for more blobs doesn't force one — for the same
+reason ladders loop.** Recall the loop trick that tamed the vertical axis: run a
 nesting-ladder long enough and, with only finitely many things to say, two
 rungs eventually look identical, so you loop instead of continuing forever.
 The exact same pigeonhole applies *sideways*. Try to force an endless
@@ -299,40 +308,45 @@ the argument.
 **What it would take.** To stop the fold, every blob in the crowd would need
 a permanent, *unique address* — a fixed coordinate — so that no two could
 ever be quietly identified. That's rigid coordination: a spatial grid, a
-ruler, a coordinate system. And here is the wall: **the five relations are
+ruler, a coordinate system. And here is the wall: **the five relations look
 too loose to assign addresses.** We checked the entire relationship-composition
-table exhaustively. The *only* combinations that pin a relationship down to a
-single forced answer all run through the *nesting* (vertical) axis — and
-nesting is exactly the axis that produces free "shadows," not live crowd. On
-the side-by-side axis nothing is ever forced to a single value; "overlap" in
-particular is *never* a forced outcome of anything. The language simply has no
-lever to nail a blob to a fixed sideways coordinate.
+table exhaustively. The *only* single steps that pin a relationship down to one
+forced answer all run through the *nesting* (vertical) axis — and nesting is
+exactly the axis that produces free "shadows," not live crowd. On the
+side-by-side axis no single step forces a value. Several constraints
+*together* can: two entries of the table can have only "overlap" in common.
+But such a pin is a one-off arrangement, not a reusable address, and nobody
+has found a way to turn the one into the other. That is the lever the
+language seems to lack.
 
-**So the two questions collapse into one.** "Build a description that forces a
-runaway crowd" and "prove no description can" are not two problems — they are
-the single question: *can this language force rigid, unbounded, side-by-side
-coordinates?* If yes, width is unbounded and this whole approach fails; if no,
-width is bounded and the problem is decidable. One well-posed question, two
-directions.
+**So the two questions look like one.** "Build a description that forces a
+runaway crowd" and "prove no description can" appear to be the single
+question: *can this language force rigid, unbounded, side-by-side
+coordinates?* If yes, width is unbounded and this whole approach fails; if
+no, width is bounded and this approach can go through, once its remaining
+argued steps are proved. That the two really are one question is itself a
+conjecture, not a theorem — but a well-posed one.
 
 **And now the real punchline.** That *same* question is why nobody has managed
 to prove the problem **undecidable** either. To prove a logic undecidable, you
 typically make it encode an unlimited computation — which needs an unlimited,
 rigidly-coordinated grid to write the computation on. Twenty years ago it was
-already noticed that this language *cannot* pin such a grid: the relations are
-too loose to force the "coordinates line up" condition that a grid requires.
+already noticed that nobody could make this language pin such a grid: the
+relations seemed too loose to force the "coordinates line up" condition that a
+grid requires.
 That is the very same looseness we just ran into. So the decades-long failure
 to prove the problem *decidable* and the decades-long failure to prove it
-*undecidable* are **not two separate mysteries — they are one wall seen from
-two sides.** Both come down to a single fact about these five relationships:
-**they are too loose to pin rigid side-by-side structure.** Bound that
-looseness one way and you get decidability; exploit it the other way and you
-get undecidability; and the reason neither has happened is that the looseness
-sits exactly on the knife's edge between them.
+*undecidable* look **not like two separate mysteries but like one wall seen
+from two sides.** Both run into the same fact about these five relationships:
+**they seem too loose to pin rigid side-by-side structure.** Bounding that
+looseness would close this project's route to decidability; exploiting it
+would be a first step towards undecidability, which would still need an
+actual grid. It is a shared obstacle, not a proof that settling one side
+settles the other.
 
 We did not resolve it — nobody has in twenty years. But the attempt turned a
-vague "the horizontal axis is hard" into a crisp, two-sided target that a
-future solver (human or machine) can aim a single argument at. That, again, is
+vague "the horizontal axis is hard" into a crisp target, approachable from
+both sides, for a future solver (human or machine). That, again, is
 the kind of durable clarity this project produces even while the headline
 question stays open.
 
@@ -358,9 +372,9 @@ built the exact 5-point arrangement where the coarse summary fails — two
 regions with identical summaries that no single completion can serve, split
 by their relation to a *third* region outside the summary's view. So the
 coarse form of W2' is simply **false**. But the same probe showed the repair
-is a bounded refinement of the summary, and the bound it needs is F6's. **W2'
-folds into F6.** There is one open problem, not two, and §12's "one fact, two
-faces" is the right count.
+is a bounded refinement of the summary, and the bound it needs is F6's. So,
+by an argument that has not yet been formalized, **W2' folds into F6**: for
+this approach there is one open problem rather than two.
 
 ---
 
@@ -372,7 +386,7 @@ the *project* has produced something real along the way, and it's worth
 stating plainly.
 
 - **An adversarial method.** Every proposed proof was handed to a fresh,
-  skeptical reviewer whose job was to break it. Across twenty such reviews,
+  skeptical reviewer whose job was to break it. Across twenty-one such reviews,
   all but two found a genuine flaw — usually a place where an argument
   *assumed* the hard thing instead of establishing it. A
   recurring lesson: a **cold** reviewer (one with no memory of how the
@@ -384,8 +398,10 @@ stating plainly.
   August 2026, drop one construct — the ability to say "*everything I
   partially overlap satisfies D*" — and the problem is **decidable**, with a
   machine-checked decision procedure whose only hypothesis is membership in
-  that fragment. That is not a side result; it is the sharpest statement
-  available of what makes the full problem hard, and the reason is worth one
+  that fragment (it has its own paper,
+  [`papers/pofree_fragment_arxiv.pdf`](papers/pofree_fragment_arxiv.pdf)).
+  That is not a side result; it is the sharpest statement available of where
+  the difficulty of the full problem lives, and the reason is worth one
   sentence. Whenever the composition rules leave a pair's relation open, you
   can always settle it as "partially overlapping" — *unless some formula can
   object to a partial overlap*, and the only formula that can is exactly the
@@ -393,8 +409,8 @@ stating plainly.
   declares only what is forced and defaults everything else to overlap, is
   **always** a valid world; nothing ever has to be coordinated. Put that
   construct back and the default dies, and with it the freedom that made
-  everything else fall out. The hard part of this problem is not nesting,
-  not disjointness, and not size — it is that one universal.
+  everything else fall out. Whatever makes the full problem hard, it is not
+  nesting, disjointness or size on their own — it needs that one universal.
 
 - **A machine-checked core.** The most recent phase rebuilt the sound
   half of the argument inside a **proof assistant** (Lean) — software
@@ -407,24 +423,25 @@ stating plainly.
   just described the machine now contains the *whole* result — a decision procedure,
   not just a sound half — and it has been attacked three times by independent
   cold reviewers without a counterexample. What it does **not** contain, for
-  the full problem, is the one hard theorem — F6, bounded width — which is
-  *stated* precisely but deliberately left unproven, because proving it is
-  the open mathematics, and faking it with an assumption would defeat the
+  the full problem, is F6, bounded width, or the steps that would lead from
+  it to a decision procedure. They appear only as the *conditions* of
+  conditional theorems, deliberately left unproven, because proving them is
+  the open mathematics, and faking them with an assumption would defeat the
   point.
 
-- **A precise map of the frontier.** Perhaps the most durable output: we
-  now know *exactly* where the difficulty is. It is not spread across the
-  whole problem — it is concentrated into one crisp statement (horizontal
-  width stays bounded). Everything
-  else is either settled or mechanically checked. A future solver — human
-  or machine — doesn't have to understand the whole edifice; they have to
-  crack one well-posed lemma about horizontal crowds.
+- **A precise map of the frontier.** Perhaps the most durable output: for
+  the approach this project took, we know *exactly* where the difficulty
+  is. It is concentrated into one crisp statement (horizontal width stays
+  bounded) and the steps that link it to a decision procedure; the rest of
+  the approach is settled or mechanically checked. A future solver on this
+  route doesn't have to understand the whole edifice; they have to crack one
+  well-posed statement about horizontal crowds. A different route might
+  avoid it altogether.
 
 That last point is the real deliverable if the decidability question
-itself never resolves: **the problem has been reduced, honestly and
-checkably, to its irreducible core, and that core has been explained
-plainly enough to hand to someone new.** Twenty rounds ago the difficulty
-was a fog. Now it has an address.
+itself never resolves: **the difficulty of this approach has been located
+precisely, and explained plainly enough to hand to someone new.** Twenty
+rounds ago the difficulty was a fog. Now it has an address.
 
 ---
 
@@ -434,8 +451,8 @@ Regions in space relate in five ways, and those relations *compose* —
 but composition forces things only in one direction (down into parts,
 not up into wholes). That asymmetry splits every arrangement into a tame
 vertical axis (nesting, which infinite-loops away neatly) and a wild
-horizontal axis (side-by-side crowds). The whole decidability question is
-whether those horizontal crowds must stay small. They *look* like they
+horizontal axis (side-by-side crowds). For the approach taken here, the
+decidability question is whether those horizontal crowds must stay small. They *look* like they
 must — every attempt to force a big crowd produces only "shadow"
 relationships that cost nothing — but the clean argument for it keeps
 failing because it measures the wrong axis: it uses nesting-depth to bound
@@ -443,19 +460,18 @@ crowd-width, and crowds don't add depth. Chasing it from the other side
 revealed why it's so stubborn: a big crowd is easy to *draw* but seems
 impossible to *force*, because side-by-side chains loop back on themselves
 just like nested ones — and stopping the loop would need rigid coordinates
-the five relations are too loose to pin. So "build a runaway crowd" and
-"prove none exists" turn out to be one question, and it's the very same
-looseness that stops anyone proving the problem *undecidable* (you can't
-pin a computation-grid either). The project has machine-verified everything
-*except* that one bounded-crowd fact, stated it precisely, gathered real
-evidence it's true, and shown it to be the single knife's-edge question
-sitting between decidability and undecidability. One thing *did* fall:
+the five relations seem too loose to pin. So "build a runaway crowd" and
+"prove none exists" look like one question, and the same looseness is what
+has stopped anyone proving the problem *undecidable* (nobody has pinned a
+computation-grid either). The project machine-checked the parts of its
+approach around that bounded-crowd fact and gathered real evidence that it
+is true. One thing *did* fall:
 remove a single construct — the ability to say "everything I partially
 overlap satisfies this" — and the problem becomes decidable, with a
 machine-checked procedure to prove it, which is the sharpest available
-statement of where the difficulty actually lives. Whether the remaining
-question falls one way or the other is the open problem; that we now know
-it's the *only* open problem — one fact, two faces — is the achievement.
+statement of where the difficulty actually lives. Whether the crowd fact
+holds is the open question for this approach; whether it is the only way to
+the answer, nobody knows.
 
 ---
 
@@ -466,6 +482,8 @@ full-logic soundness pipeline), and `RCC5NormalForm.lean`. It is deliberately
 informal; where it and the formal artifacts disagree, the formal artifacts
 win.*
 
-*Last revised 2026-08-29. The full problem is still open; §§1–9 are unchanged
-by the fragment result, because F6 is forced by exactly the construct the
-fragment removes.*
+*Last revised 2026-09-14, to state the F6 claims as claims about one approach
+(following a cold review of the overview paper) and to correct §9's "overlap
+is never forced". The full problem is still open; §§1–9 are otherwise
+unchanged by the fragment result, because F6 only matters where the construct
+the fragment removes occurs.*
