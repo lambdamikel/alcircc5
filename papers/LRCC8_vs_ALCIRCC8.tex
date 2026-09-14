@@ -52,7 +52,7 @@
   Claude performed the comparative analysis and wrote this report.
   Contact: miacwess@gmail.com.}}
 
-\date{April 2026}
+\date{April 2026; revised September 2026}
 
 \begin{document}
 \maketitle
@@ -69,7 +69,7 @@ sets in~$\reals^2$ to enforce a \emph{grid coincidence condition}
 ($R_X \circ R_Y = R_Y \circ R_X$) that the abstract composition-table semantics
 of $\ALCIRCC{8}$ cannot guarantee.  This coincidence obstruction was first
 identified by Wessel in~2002, who constructed explicit RCC8 grid models but
-showed that no concept term can force the coincidence at the level of abstract
+found no concept term that forces the coincidence at the level of abstract
 models.
 
 The analysis reveals that Wessel's 2002/2003 technical report independently
@@ -99,7 +99,7 @@ $\PSPACE$-hard for $\ALCIRCC{5}$ and $\EXPTIME$-hard for
 $\ALCIRCC{8}$~\cite{Wessel2003}.  The decidability of $\ALCIRCC{5}$ and
 $\ALCIRCC{8}$ was left as an open problem and remains open to this day.
 
-Independently, Lutz and Wolter~\cite{LutzWolter2006} studied \emph{modal
+Lutz and Wolter~\cite{LutzWolter2006} later studied \emph{modal
 logics of topological relations}, denoted $\LRCC{8}$, $\LRCC{5}$, etc.  These
 logics have the same \emph{syntax} as the $\ALCIRCC{}$ family but are
 interpreted over \emph{topological models}: the domain elements are regular
@@ -121,8 +121,8 @@ certain pairs of regions coincide (to close the grid), and this coincidence is
 guaranteed by the geometry of~$\reals^2$ but not by the composition table
 alone.  Wessel identified exactly this obstruction in~\cite{Wessel2003},
 Section~4.4.3, and gave explicit constructions showing that the grid can be
-built as an RCC8 network but cannot be \emph{enforced} by a concept term in the
-abstract semantics.
+built as an RCC8 network, while finding no concept term that \emph{enforces} it
+in the abstract semantics.
 
 The purpose of this note is threefold:
 \begin{enumerate}
@@ -268,9 +268,10 @@ $TPP/NTPP$ and $a \wedge b$ / $a \wedge \neg b$ in place of
 $\mathit{even}$/$\mathit{odd}$.
 
 Lutz and Wolter credit this technique to Marx and Reynolds~\cite{MarxReynolds1999}
-and Reynolds and Zakharyaschev~\cite{ReynoldsZakharyaschev2001}.  They do not
-reference Wessel's even-odd chain construction~\cite{Wessel2003}, despite
-citing Wessel's earlier workshop paper~\cite{Wessel2001}.
+and Reynolds and Zakharyaschev~\cite{ReynoldsZakharyaschev2001}, where it
+originates.  They do not mention Wessel's even-odd chain in that connection,
+although they cite his 2001 workshop paper~\cite{Wessel2001}, in which it first
+appears, elsewhere in their paper.
 
 \begin{remark}
   Wessel's even-odd chain appears in his DL Workshop 2001 paper~\cite{Wessel2001}
@@ -424,7 +425,7 @@ We now make the non-transfer argument precise.
   model.  The underlying obstruction is the one Wessel identified: any faithful
   grid encoding ultimately needs the coincidence
   $R_X \circ R_Y = R_Y \circ R_X$ (condition~\ref{g:coinc}), and abstract RCC8
-  cannot force it---the composition table allows too many relations
+  does not force it---the composition table alone allows too many relations
   $\{PO, EQ, TPP, NTPP, TPPI, NTPPI\}$ at the coincidence point (Figure~11).
 
   Therefore, $C_\mathcal{D}$ being $\ALCIRCC{8}$-satisfiable does not
@@ -626,11 +627,13 @@ This characterization is incomplete in several respects:
 
 \begin{enumerate}
   \item \textbf{``No results'':}
-    Even the cited paper~\cite{Wessel2001} contains undecidability results
-    for $\mathcal{ALC}_{\mathcal{RA}^\ominus}$ (ALC with role axioms in
-    the non-disjoint-roles variant, via reduction from non-empty CFG
-    intersection).  The uncited technical
-    report~\cite{Wessel2003} goes significantly further: it proves
+    The cited paper~\cite{Wessel2001} already contains undecidability results
+    for a closely related family, $\mathcal{ALC}_{\mathcal{RA}^\ominus}$ (ALC
+    with role axioms in the non-disjoint-roles variant, via reduction from
+    non-empty CFG intersection), though not for the RCC8-based logics
+    themselves.  The uncited technical
+    report~\cite{Wessel2003} goes significantly further, for exactly those
+    logics: it proves
     decidability of $\ALCIRCC{1}$, $\ALCIRCC{2}$, and $\ALCIRCC{3}$;
     establishes $\PSPACE$-hardness of $\ALCIRCC{5}$ and $\EXPTIME$-hardness
     of $\ALCIRCC{8}$; gives a complete axiomatization in hybrid modal logic;
@@ -642,16 +645,18 @@ This characterization is incomplete in several respects:
     as Wessel's even-odd chain~\cite{Wessel2003}.  Lutz and Wolter credit it
     to Marx--Reynolds~\cite{MarxReynolds1999} and
     Reynolds--Zakharyaschev~\cite{ReynoldsZakharyaschev2001}, who used similar
-    techniques in temporal logic.  Wessel's application of the technique to
-    RCC8 description logics---which predates Lutz--Wolter by three to four
-    years---is not acknowledged.
+    techniques in temporal logic, and crediting a technique to its origin is
+    standard.  What goes unmentioned is its earlier application to RCC8
+    description logics---three to four years before Lutz--Wolter, in the 2001
+    paper they cite and in the report.
 
   \item \textbf{The grid construction and coincidence obstruction:}
     Wessel's Figure~10~\cite{Wessel2003} constructs explicit $n \times n$
     grid models from RCC8 networks and shows they are composition-consistent.
     His Figure~11 identifies the coincidence obstruction: the composition
-    table allows multiple relations at the diagonal point, so the grid
-    cannot be enforced by a concept term.  These are the same issues Lutz and
+    table allows multiple relations at the diagonal point, and no concept term
+    enforcing the grid was found (``we have found no way to \emph{enforce} the
+    depicted model(s) by means of a concept term'').  These are the same issues Lutz and
     Wolter must address (and solve, but only in the topological setting).
     The prior analysis is not cited.
 
