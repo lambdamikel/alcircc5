@@ -8424,3 +8424,58 @@ copy was calibrated instead, and the links now point at it.
 
 **Bylines.** Kept as they are ("with AI assistants: …"), Michael's decision. A
 release tag follows this staleness pass.
+
+## 2026-09-14 (closing) — the release, and the project put to rest
+
+**The release.** `release-2026-09-14` is an annotated tag on `9b2a9f4`. It was
+first cut at `8b4e908`, right after the staleness pass, and moved with Michael's
+agreement once the README had caught up: a 2026-09-14 news entry, and a Status
+section rebuilt as one subsection per major revision, newest first, with no quote
+boxes and no prose restating an entry. The tag carries the overview (56pp), the
+fragment paper (17pp), the slides (43), both explainers, and the Lean sources,
+which are unchanged since `certified-fragment-2026-08-29` apart from comment
+spelling. Bylines stay "with AI assistants: …". The one placeholder left before
+arXiv is the affiliation `LambdaMikel@Home`.
+
+**Where it rests.**
+
+- *Settled:* the ∀PO-free fragment of ALCI_RCC5 is decidable, by a decision
+  procedure the Lean kernel checks end to end (`decidableSat_cone`,
+  `decidableFSat`, `decidableSetSat`), with fragment membership the only
+  hypothesis — three cold reviews of the formalization and a fourth, source-level
+  audit, no counterexample. By Lutz & Wolter's Theorem 24 it holds for
+  substructures of regular closed regions of ℝⁿ as well.
+- *Certified surround for the full logic:* the soundness pipeline, the
+  faithfulness of the Hintikka abstraction, the RCC5 normal form in both
+  directions, and a conditional reduction whose premise is open.
+- *Open:* decidability of full ALCI_RCC5 (and ALCI_RCC8); for the principal
+  certificate route, F6 and the two argued steps from it to that premise; whether
+  identity-selector minors are F6's only obstruction; and the cone scheme's
+  architectural ∀PO gap, with `C_bad` and `C_joint` as its witnesses.
+- *Leads left for whoever resumes:* control states carrying a complete RCC5 matrix
+  among simultaneously live witnesses (pair-matrix mosaics); regular or automatic
+  presentations, for which the event-structure reading of the normal form points
+  to a literature; and the two-copy encoding as a single strict order, which lands
+  near two-variable logic with one transitive relation (decidable, Szwast &
+  Tendera 2013) but needs an involution keeping the copies synchronized. Any
+  candidate must reject `C_bad` and accept `C_sat`.
+
+**How to pick it up again.** Start from the tag. Read `CLAUDE.md`'s head status,
+the overview's conclusion, the fragment paper, and `ASSEMBLY_DESIGN.md`
+§§267–298; for the prior art, the Lutz–Wolter PDF in `papers/` — all of it, not
+only the decidability results.
+
+**What the last stretch taught.** A prior-art check has to compare every result
+a paper claims against the closest comparator, not just the headline: the
+project checked decidability and missed that its Π⁰₁ observation was Lutz &
+Wolter's Theorem 28. Calibration can overshoot as easily as the claims it
+corrects — removing a false campaign-wide sentence took a true one about the
+reasoner with it until Michael asked. Archived packets are records of what was
+sent, and a link that points into one is not a licence to edit it. And a
+reviewer's recommendation can be adopted with full credit without adopting its
+prose: the fragment paper follows GPT-5.6 Sol's outline and was written afresh
+from the Lean sources.
+
+The project is put to rest here, to be taken up again when AI systems are capable
+enough to attack the remaining open problems directly — in Michael's estimate,
+perhaps a year from now.
