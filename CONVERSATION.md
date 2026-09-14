@@ -8515,3 +8515,17 @@ longer say the idea *determined* what a signature records; they say the signatur
 fits the same picture, as a correspondence rather than a documented design step.
 (The addendum above describes that as the idea's "organizing principle"; read it
 in this light.)
+
+**Addendum 3 (same day): the Lutz–Wolter citation record.** Checked against
+their reference list: Lutz and Wolter do cite Düntsch–Wang–McCloskey (2001),
+twice, and credit Bennett (1998) and Renz (2002) for the key step of their
+representation theorem; Li–Ying (2003) is not in their references. They also
+cite Wessel's DL 2001 paper, writing that such logics were "further considered"
+there and that "to the best of our knowledge no results have been obtained so
+far" — report7, which they do not cite, is where results of that kind had been
+obtained. The overview's priority paragraph now says so, and the analysis paper
+`LRCC8_vs_ALCIRCC8` was reworded to match the other documents (no claim of
+independence it cannot establish; "found no concept term that forces" the grid
+rather than "showed none can"; the 2001 paper credited for the even-odd chain;
+crediting Marx–Reynolds called standard). Michael's decision: the papers make
+no statement either way about what Lutz and Wolter knew of report7.
