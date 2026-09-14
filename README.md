@@ -8,16 +8,16 @@ problem stated there, alongside the earlier
 [report4](papers/report4.pdf)–[report6](papers/report6.pdf)). This
 repository documents a sustained, adversarially-reviewed attack on it,
 conducted by AI assistants under human direction. The full question is
-**still open**, and the attack on it is machine-checked only in part — the
-soundness pipeline is kernel-checked in Lean 4, the keystone (F6) is not. **One
+**still open**, and the attack on it is machine-checked only in part. **One
 _sub_-question is settled outright: for the ∀PO-free fragment there is now a
-decision procedure the Lean kernel checks end to end.**
+decision procedure the Lean kernel checks end to end** — written up on its own in
+[**`papers/pofree_fragment_arxiv.pdf`**](papers/pofree_fragment_arxiv.pdf).
 
 <p align="center">
   <img src="papers/report7_figure10_grid.png" width="760" alt="An RCC8 network isomorphic to a 3x3 grid (Wessel 2002/2003, report7 Figure 10)">
 </p>
 
-<p align="center"><em>Wessel's 2002/2003 construction of an RCC8 network isomorphic to an n×n grid (<a href="papers/report7.pdf">report7</a>, Fig. 10) — found by a Lisp enumerator program and rendered with CLIM (MCL), not drawn by hand. Such grid models <strong>exist</strong> — yet no concept term can <strong>force</strong> one. That gap (the "coincidence obstruction") is exactly why the problem has resisted both a decidability and an undecidability proof for two decades.</em></p>
+<p align="center"><em>Wessel's 2002/2003 construction of an RCC8 network isomorphic to an n×n grid (<a href="papers/report7.pdf">report7</a>, Fig. 10) — found by a Lisp enumerator program and rendered with CLIM (MCL), not drawn by hand. Such grid models <strong>exist</strong> — yet no concept term is known that <strong>forces</strong> one. That gap (the "coincidence obstruction") is exactly why the problem has resisted both a decidability and an undecidability proof for two decades.</em></p>
 
 > **Disclaimer.** The papers and code here were produced by AI assistants
 > (Claude Opus 4.6/4.7/4.8, Claude Fable 5 and Claude Opus 5 / Anthropic;
@@ -36,8 +36,19 @@ decision procedure the Lean kernel checks end to end.**
 It is self-contained: the history (Cohn 1993, Wessel 2002/2003, Lutz &
 Wolter 2006), why every known undecidability reduction fails, why concrete
 domains do not settle it, the approaches tried route by route, the
-machine-checked reduction to a single keystone, the decidable fragment, the
-reasoners, and an honest account of the AI-assisted methodology.
+machine-checked conditional reduction together with the steps of it that are
+only argued, the decidable fragment, the reasoners, and an honest account of the
+AI-assisted methodology.
+
+**Want only the finished result?** The ∀PO-free fragment has a focused,
+self-contained paper —
+[**`papers/pofree_fragment_arxiv.pdf`**](papers/pofree_fragment_arxiv.pdf) ·
+[source](papers/pofree_fragment_arxiv.tex): the ordered-disjoint normal form, the
+cone scheme, both correctness directions, the Lean formalization, and its
+provenance. The split into two papers follows the recommendation of a cold review
+by GPT-5.6 Sol (September 2026), archived with its own draft of such a paper in
+[`papers/gpt-5.6-latest-overview-paper-review-and-recommendation/`](papers/gpt-5.6-latest-overview-paper-review-and-recommendation/);
+the paper here was written afresh from the Lean artifact.
 
 **Prefer slides?** A talk version of the same material is in
 [**`papers/talk_ALCIRCC5.pdf`**](papers/talk_ALCIRCC5.pdf) ·
@@ -72,11 +83,15 @@ dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 ## Status (2026-08-29): the ∀PO-free fragment is decided in Lean — raw input, concrete semantics, three cold reviews, no counterexample; the full logic stays open
 
 Decidability of **full** ALCI_RCC5 (and ALCI_RCC8) **remains open**. After ~30
-repair rounds and 17 adversarial reviews (of twenty to date) the
+repair rounds and 17 adversarial reviews (of twenty-one to date) the
 *full-logic* certificate
-architecture reached a genuine local optimum: the local algebra is exhausted,
-the soundness side is machine-checked, and the entire remaining difficulty *of
-that certificate architecture* compresses into one well-posed lemma (F6). That
+architecture reached a genuine local optimum: the local algebra it needed is
+characterized, the soundness side is machine-checked, and the remaining
+difficulty *of that certificate architecture* is located at a width property
+(F6) — with two steps between F6 and a decision procedure argued, not proved.
+Two published results bear on all of this and are now credited in the paper:
+Lutz & Wolter (2006) already prove that ALCI_RCC5 is recursively enumerable
+(Thm 28) and representable by regular closed regions (Thms 23–24). That
 line of attack is **paused** (git tag `arxiv-candidate-2026-07-18`); what a
 future attack needs is recorded in the paper's concluding section and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/).
@@ -318,21 +333,26 @@ by `∀PO`, which the fragment removes.
   [`wp88`](verification/python/wp88_canonical_representation.py)); and — since
   2026-08-29 — a **decision procedure for the ∀PO-free fragment**, end to end
   (see the last bullet, and the box above).
-- **The positive result *for the full logic*** is a *conditional* decidability
-  theorem: **if** the *live* (non-shadow) width of models is bounded by a
-  computable function of the concept — property **F6** — **then** satisfiability
-  is decidable, and the soundness half of that reduction is machine-checked.
+- **The positive result *for the full logic*** is a *conditional* reduction:
+  **if** a verified finite checker is complete for some computable list of
+  candidate certificates per concept, **then** satisfiability is decidable — that
+  implication and the checker's soundness are machine-checked. The route to the
+  premise runs through property **F6** (a computable bound on the *live*,
+  non-shadow width of models) and a refined uniformization, and those two steps
+  are argued, not proved.
   (For the ∀PO-free fragment the result is *unconditional*; last bullet.)
-- **Open (the keystone):** F6 itself — equivalently, that every satisfiable
-  concept admits a *bounded* finite certificate. This is the standing open
-  mathematics.
-- **The problem is Π⁰₁ (a later observation).** Satisfiability is finitely
-  first-order axiomatizable, so by Gödel completeness its complement is
+- **Open (the keystone of this architecture):** F6 itself, and the steps from it
+  to a complete certificate enumeration. Its failure would refute this route,
+  not decidability.
+- **The problem is Π⁰₁** — which is Lutz & Wolter's Theorem 28 (2006), not a new
+  observation, though the project first presented it as one. Satisfiability is
+  finitely first-order axiomatizable, so by Gödel completeness its complement is
   recursively enumerable and SAT sits at **Π⁰₁** — the domino problem's own
   level. Decidability therefore needs only *qualitative* F6 (every satisfiable
   concept has *some* finite certificate — **no computable bound**): dovetail a
-  certificate enumeration against an FO-refutation enumeration. The reduction
-  is machine-checked ([`formal/SemiDecidability.lean`](formal/SemiDecidability.lean)),
+  certificate enumeration against an FO-refutation enumeration. The generic
+  dovetailing combinator is machine-checked with its hypotheses as fields
+  ([`formal/SemiDecidability.lean`](formal/SemiDecidability.lean)),
   and the bound returns for free a posteriori. This *reshapes* the keystone —
   retiring the width-accounting burden — but does **not** settle it: qualitative
   F6 is untouched.
@@ -385,8 +405,8 @@ Nebel 1999): path-consistent atomic networks are globally consistent.
 
 Alongside the theory, the project ships a working **cover-tree tableau
 reasoner** ([`src/cover_tree_tableau.py`](src/cover_tree_tableau.py)) —
-cross-validated on 911 concepts against an independent oracle with **zero
-mismatches**, and never once contradicted anywhere in the campaign. Its most
+agreeing with an independent oracle across a **911-case** suite (99 labelled
+cases, 812 comparison runs) with **zero mismatches**. Its most
 satisfying test spans 23 years: it recomputes, in 2026, the exact GIS
 concept taxonomy that a **prototype reasoner** computed in Wessel's 2003
 report (report7, §4.3.1: "actually computed by a working prototype system")
