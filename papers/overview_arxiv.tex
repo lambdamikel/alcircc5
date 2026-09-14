@@ -665,7 +665,7 @@ vertical, and vertical chains loop. Everything hard is horizontal---and,
 crucially, while \emph{individual} horizontal edges can be pinned (by the
 joint closure of several constraints, Remark~\ref{rem:pojoint}), no concept
 is known to \emph{force an unboundedly wide rigid} horizontal pattern.
-Whether one can is exactly F6. A decision procedure must record only the
+Whether one can is, in substance, what F6 asks. A decision procedure must record only the
 horizontal branching it cannot reconstruct:
 
 \begin{definition}[Shadows, live width, and F6]\label{def:f6}
@@ -3130,11 +3130,13 @@ in \texttt{papers/rcc5\_local\_amalgamation\_theory}; the reasoners under
 full audit trail in \texttt{CONVERSATION.md} and \texttt{OUTDATED.md};
 and GPT-5.6~Pro's canonical-representation note is
 \texttt{papers/final\_paper\_gpt\_5.6\_review/ALCI\_RCC5\_F6\_technical\_note.pdf}~\cite{GPT56TechNote}.
-The repository is at \url{https://github.com/lambdamikel/alcircc5}. The
-Lean artifact described here is the one frozen at the git tag
-\texttt{certified-fragment-2026-08-29}, which differs from the current
-sources only in the spelling of comments; for reproducibility cite that tag
-(or a commit hash), not the mutable \texttt{master} branch. It supersedes
+The repository is at \url{https://github.com/lambdamikel/alcircc5}. This
+version of the paper, its companion paper, and the Lean artifact they
+describe are frozen at the git tag \texttt{release-2026-09-14}; its Lean
+sources differ from those at the earlier tag
+\texttt{certified-fragment-2026-08-29} only in the spelling of comments. For
+reproducibility cite \texttt{release-2026-09-14} (or its commit hash), not
+the mutable \texttt{master} branch. It supersedes
 \texttt{arxiv-candidate-2026-07-18}, which predates the $\forall\PO$-free
 fragment's certification (\S\ref{ssec:conescheme}) and the cold reviews of
 it. Filenames below are relative to the repository root.
@@ -3172,8 +3174,8 @@ Static F6; automatic-cover; full decidability & Open & --- (no proof claimed) & 
 \end{tabular}
 \caption{Result-to-artifact map. Statuses are those of
 Table~\ref{tab:status}. Every Lean name listed was checked to resolve in the
-named file at tag \texttt{certified-fragment-2026-08-29} and in the current
-sources; filenames are
+named file at tag \texttt{release-2026-09-14} (and at
+\texttt{certified-fragment-2026-08-29}); filenames are
 relative to the repository root. Note the split between the fragment rows:
 the fragment \emph{theorem} is certified, by a route that uses neither the
 $K(C_0)$ bound nor the extraction argument, while those two \emph{arguments}

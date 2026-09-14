@@ -1,4 +1,4 @@
-# Approach: The Lean formalization and the reduction to F6
+# Approach: The Lean formalization line and F6
 
 **Idea.** Move the load-bearing soundness argument into the Lean 4 kernel,
 which refuses to accept a gap — removing the "prose proof assumed the hard
@@ -64,20 +64,22 @@ Hintikka-realizability); and a **non-oracular, decision-grade reduction**
 whose one remaining premise is a computable, complete enumeration of bounded
 finite certificates.
 
-**What remains open.** That premise is exactly **F6** (bounded live width) —
-the completeness direction, the open mathematics — now sharpened to the
-*identity-selector-minor dichotomy*, with the uniformization property W2′
-folded into it.
+**What remains open.** That premise. The route to it this line pursued runs
+through **F6** (bounded live width) and a refined uniformization W2′, and both
+steps are argued, not proved: F6 ⇒? refined W2′ ⇒? complete enumeration
+⇒(Lean) decision. That identity-selector minors are the *only* way F6 can fail
+is a conjecture with finite-network evidence.
 
-**The problem is Π⁰₁ (a later observation).** The composition-table semantics
+**The problem is Π⁰₁** — Lutz & Wolter's Theorem 28 (2006), which the project
+rederived and at first presented as new. The composition-table semantics
 is finitely first-order axiomatizable and ALCI embeds by the standard
 translation over arbitrary carriers, so by Gödel completeness UNSAT is r.e.
 and SAT sits at **Π⁰₁** — the domino problem's level. Hence decidability needs
 only *qualitative* F6 (every satisfiable concept has *some* finite certificate,
 **no computable bound**): dovetail a certificate enumeration against an
-FO-refutation enumeration. `formal/SemiDecidability.lean` formalizes that
-reduction (`decidableSat`), and `quantitative_free` recovers the bound a
-posteriori. This reshapes the keystone — retiring the width-accounting
+FO-refutation enumeration. `formal/SemiDecidability.lean` formalizes the
+generic dovetailing combinator (`decidableSat`), with its four premises as
+hypothesis fields, and `quantitative_free` recovers the bound a posteriori. This reshapes the keystone — retiring the width-accounting
 obligations — but does **not** settle it: qualitative F6 is untouched, and the
 Proposition adds one external theorem (Gödel completeness). See
 [`../../LEAN.md`](../../LEAN.md) § "The Π⁰₁ observation."
@@ -88,7 +90,7 @@ Lean) is in [`../../LEAN.md`](../../LEAN.md).
 
 **Artifacts**
 - [`formal/Round19Transport.lean`](../../formal/Round19Transport.lean) — the normative development
-- [`formal/SemiDecidability.lean`](../../formal/SemiDecidability.lean) — the Π⁰₁ / dovetailing reduction
+- [`formal/SemiDecidability.lean`](../../formal/SemiDecidability.lean) — the generic dovetailing combinator (premises as hypotheses)
 - [width-barrier status report and F6/W2′ analysis](../../papers/fable5_width_barrier/)
 
 **Probes:** WP34 (Lean mirror), WP39–WP44 (F6/W2′ cold attacks), WP84 (Π⁰₁ FO

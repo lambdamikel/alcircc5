@@ -36,17 +36,28 @@ paper; those abstract the Lean work and point here.
 > 5. **Three independent cold reviews** (2026-08-29) attacked the trusted base,
 >    completeness and soundness; none found a counterexample or a defect in the
 >    fragment result. The remaining caveat is complexity, not correctness:
->    decidable, **not runnable**. Full-logic decidability (F6) stays open.
+>    decidable, **not runnable**. Full-logic decidability stays open.
+> 6. **2026-09-14.** A fourth, source-level review (GPT-5.6 Sol) found no Lean
+>    defect. Prior art now credited: Lutz & Wolter (2006) Thm 23 (RCC5 structures
+>    are representable by regions — `satisfiable_iff_set` is a machine-checked
+>    special case), Thm 24 (so the fragment result also holds for substructures
+>    of regular closed regions of ℝⁿ), and Thm 28 (r.e. — the "Π⁰₁ observation"
+>    below is theirs). The fragment has its own paper,
+>    `papers/pofree_fragment_arxiv.pdf`. `Round19Transport`'s decision theorem is
+>    a *conditional* whose premise is open; F6 is the argued, unformalized route
+>    to that premise, not the premise itself.
 >
-> **For the current state, read `ASSEMBLY_DESIGN.md` §§266–269** and the head
+> **For the current state, read `ASSEMBLY_DESIGN.md` §§266–298** and the head
 > status paragraph of `CLAUDE.md`, not this file.
 
-**One-line status:** the *soundness* half of the decidability argument
-and the *faithfulness* of the finite Hintikka abstraction are
+**One-line status (full logic):** the *soundness* half of the decidability
+argument and the *faithfulness* of the finite Hintikka abstraction are
 kernel-checked (zero `sorry`); a *decision-grade, non-oracular* reduction
-is certified down to a single open premise, which is exactly the open
-mathematics (bounded width, F6). Nothing here proves decidability of the
-full logic. Standing label: **strongly supported, not certified.**
+is certified down to a single open premise — a complete enumeration of
+certificates for a fixed checker — to which bounded width (F6) is the argued
+but unformalized route. Nothing here proves decidability of the full logic.
+Standing label for the full logic: **strongly supported, not certified**; the
+∀PO-free fragment is machine-certified (box above).
 
 ## The artifacts
 
@@ -166,7 +177,8 @@ added.
   proves passing ⟹ `Satisfiable`; `decidableSat_of_finScheme` derives
   `Decidable` from a fixed enumeration + a completeness premise *about the
   fixed checker*. Because the checker forces exhibiting a real certificate,
-  the premise is not oracle-inhabitable — it is exactly F6 ∧ W2′.
+  the premise is not oracle-inhabitable; the route to it that the project
+  pursued is F6 ∧ W2′, argued but not formalized.
   `finAccept_nonvacuous` witnesses that the checker genuinely accepts.
 - **R30 — F4 fixed.** `SCat.net_r3` was over-checking degenerate
   fresh-port triples (reading junk diagonal values), a completeness-side
@@ -181,7 +193,9 @@ formalized modulo a single adequacy hypothesis).
 ## The Π⁰₁ observation (2026-07-17)
 
 A late observation, separate from the normative development and new to the
-project record: **SAT(ALCI_RCC5) is Π⁰₁.** The abstract composition-table
+project record — though **not new**: Lutz & Wolter proved it in 2006 (LMCS
+2(2:5), Theorem 28, for L_RCC5(RS), which is ALCI_RCC5), which the project
+missed until 2026-09-14. **SAT(ALCI_RCC5) is Π⁰₁.** The abstract composition-table
 semantics is finitely first-order axiomatizable (exactly-one-atom per pair,
 EQ = identity, converse coherence, composition closure — all universal FO
 sentences over the finite table), and ALCI embeds by the standard translation
@@ -925,8 +939,9 @@ It kernel-checks the soundness pipeline, the abstraction's faithfulness,
 and the shape of a non-oracular decision procedure; it does **not** prove
 decidability **of the full logic**. The single remaining premise of the
 decision-grade reduction — a computable, complete enumeration of bounded
-finite certificates — is exactly F6 ∧ W2′, the open mathematics, unmoved
-by any amount of the formalization above. Rounds 26–30 are themselves
+finite certificates — is open; the route to it argued here goes through
+F6 ∧ W2′, the open mathematics, unmoved by any amount of the formalization
+above. Rounds 26–30 are themselves
 unreviewed; on this project's ledger, presume a future review finds
 something in them.
 

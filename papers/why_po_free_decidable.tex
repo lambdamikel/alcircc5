@@ -26,10 +26,11 @@
 \large A Guide for the Tableau-Minded}
 \author{Michael Wessel --- with Claude Opus~4.8 and Claude Opus~5
 (Anthropic)\thanks{Opus~4.8 wrote this explainer in July 2026; Opus~5 revised
-it in August after the fragment was machine-certified. The routes it describes
+it in August after the fragment was machine-certified, and in September after
+a further cold review. The routes it describes
 are due to several models and are attributed individually in
 \S\ref{sec:ledger}.}}
-\date{2026-08-29}
+\date{2026-08-29, revised 2026-09-14}
 
 \begin{document}
 \maketitle
@@ -62,11 +63,20 @@ bound, so the two arguments here remain theorem-level and independently
 worth reading. Three independent cold reviews (2026-08-29) attacked the
 trusted base, completeness, and soundness respectively, and \textbf{none
 found a counterexample or a defect in the fragment result}. \emph{Full-logic}
-decidability (F6) stays \textbf{open} --- forced by $\forall\PO$, which the
-fragment removes. One caveat is complexity, not correctness: the procedure
-is decidable but \textbf{not runnable}, the signature space being doubly
-exponential. This supersedes the 2026-08-06 ``three of four quadrants''
-status; see \code{ASSEMBLY\_DESIGN.md} \S\S267--297.}}
+decidability stays \textbf{open}. One caveat is complexity, not correctness:
+the procedure is decidable but \textbf{not runnable}, the signature space being
+doubly exponential. This supersedes the 2026-08-06 ``three of four quadrants''
+status; see \code{ASSEMBLY\_DESIGN.md} \S\S267--297.
+
+\smallskip
+\textbf{Update (2026-09-14):} the certified result now has its own focused
+paper, \code{papers/pofree\_fragment\_arxiv.pdf}. Two published theorems of Lutz
+and Wolter (2006) are credited there and here: every RCC5 structure is
+representable by regions (their Theorem~23, of which the certified
+abstract-versus-sets equivalence is a special case), and the logic coincides
+with its substructure logic over regular closed regions of $\mathbb{R}^n$
+(Theorem~24), so the fragment result holds verbatim in that topological
+reading too.}}
 \end{center}
 
 \section{The claim}\label{sec:claim}
@@ -102,8 +112,8 @@ Read the fine print, because it is generous. The fragment
 
 The \emph{only} thing removed is the universal restriction over partial
 overlap. That is a strikingly thin excision, and the whole story of
-this document is why the difficulty of the full logic is concentrated
-in exactly that one constructor.
+this document is why the difficulty that has defeated every full-logic
+attempt is concentrated in exactly that one constructor.
 
 A calibration point that matters: the fragment is \textbf{not} a toy
 that dodges the hard diagnostics. The concept
@@ -152,7 +162,8 @@ relations to \emph{the whole graph built so far} (Fact~1), which no
 fixed-arity local summary captures. The project tried subset blocking,
 triangle blocking, quadruple types, profile blocking, double blocking
 --- each fails on a concrete diagnostic. This is not a technicality; it
-is the open problem of the full logic (the width bound F6) in disguise.
+is the same obstruction the full logic's open width question (F6) runs
+into.
 
 So the fragment result has to earn its termination some other way. That
 way is the \emph{finite-certificate architecture}, and it is worth
@@ -239,11 +250,13 @@ recoverable. What must be bounded is the number of \textbf{live} edges:
 genuinely free choices attached to each part of the certificate. The
 conjecture that every satisfiable $\ALCIRCC$ concept admits a
 presentation of computably bounded live width is \textbf{F6} --- the
-single open keystone of the full problem, machine-formalized as the
-hypothesis of a certified conditional theorem. \textbf{The
-$\forall\PO$-free fragment is precisely the place where a live width
-bound is actually proved} rather than conjectured. That is what ``a
-fragment result'' means in this project: F6, inhabited.
+open keystone of the project's principal full-logic certificate route. It
+is \emph{not} itself a Lean hypothesis: the certified conditional theorem
+assumes a complete enumeration of certificates, and F6 is the argued but
+unformalized route to that premise. \textbf{The $\forall\PO$-free fragment
+is the place where a live-width bound is proved} (at theorem level, by
+both routes below) rather than conjectured --- though the route that
+finally certified the fragment needs no width bound at all.
 
 With the architecture fixed, both proofs of the fragment theorem can be
 stated in one sentence each:
@@ -768,9 +781,10 @@ needs its $\forall\PO$ conjunct to force the loop closure --- it, too,
 lives outside. Everything that has ever been \emph{hard} here has a
 $\forall\PO$ in it.
 
-\paragraph{The connection to the open problem is exact.} The full-logic
-keystone F6 asks for a computable live-width bound. Both routes above
-\emph{prove} one for the fragment (Route~1 explicitly: $K(C_0)$). And
+\paragraph{The connection to the open problem is close.} F6, the keystone
+of the full-logic certificate route, asks for a computable live-width bound.
+Both routes above \emph{prove} one for the fragment, at theorem level
+(Route~1 explicitly: $K(C_0)$). And
 the fragment theorem is itself the sharpest available evidence about
 where the full problem's difficulty lives: remove \emph{one}
 constructor --- the universal over the one relation the singleton cells
@@ -996,7 +1010,12 @@ Composition/converse tables; the singleton and $\PO$ cells of
 derived from set semantics in every probe\\[0.3em]
 RCC5 normal form (network $\Leftrightarrow$ ordered-disjoint),
 arbitrary domains & \textbf{Certified}, both directions
-(\code{RCC5NormalForm.lean} $+$ canonical representation)\\[0.3em]
+(\code{RCC5NormalForm.lean}, \code{odNet\_frame} in \code{POFreeLift.lean},
+canonical representation)\\[0.3em]
+Abstract $=$ set satisfiability, \emph{full} logic & \textbf{Certified}
+(\code{satisfiable\_iff\_set}); a special case of Lutz--Wolter Thm.~23. By
+their Thm.~24 the fragment result also holds for substructures of regular
+closed regions of $\mathbb{R}^n$ (cited, not formalized)\\[0.3em]
 Chain-unfolding lift (finite CC certificate $\Rightarrow$ CC infinite
 unfolding) & \textbf{Certified} (\code{POFreeLift.lean}, zero
 sorries)\\[0.3em]
@@ -1028,9 +1047,10 @@ point, and a fresh-occurrence unfolding) --- on raw input and under
 concrete set semantics & \textbf{Certified} (2026-08-29,
 \code{POFreeLift.lean}: \code{decidableFSat}, \code{decidableSat\_cone},
 \code{decidableSetSat}; fragment membership the only hypothesis, zero
-sorries). Cold-reviewed three times without a counterexample; \emph{not}
-certified in this project's stricter sense --- see the ledger. Decidable,
-\emph{not} runnable: the signature space is doubly exponential\\[0.3em]
+sorries). Cold-reviewed three times without a counterexample, and audited
+at source level by a fourth review (2026-09-14) that found no defect.
+Decidable, \emph{not} runnable: the signature space is doubly
+exponential\\[0.3em]
 The two \emph{arguments} of this paper ($K(C_0)$ bound, extraction,
 assembly --- Routes 1 and 2) & \textbf{Theorem-level} --- argued, twice,
 independently; \emph{not} end-to-end formalized. The certified route above
@@ -1088,8 +1108,8 @@ and no single composition ever forces $\PO$. Consequently universal
 obligations over $\DR/\PP/\PPI$ are trackable --- they propagate
 deterministically in a closed finite vocabulary --- while $\forall\PO$
 obligations must chase neighbors the algebra refuses to pin down; a
-concrete satisfiable concept with one $\forall\PO$ provably defeats the
-finite constant-interface certificate via ``wandering witnesses'' that
+concrete satisfiable concept with one $\forall\PO$ provably defeats that
+route's constant-interface certificate via ``wandering witnesses'' that
 each overlap a chain only transiently. Ban $\forall\PO$ and both known
 proof shapes close: the \emph{two-tier quotient} folds each infinite
 chain into a kernel whose witnesses' relations stabilize and are
@@ -1108,15 +1128,17 @@ with a fresh-occurrence unfolding --- which is the one that carried the
 theorem all the way into the kernel: since 2026-08-29 the fragment has a
 machine-certified \emph{decision procedure}, on raw input and under concrete
 set semantics, with fragment membership its only hypothesis, and three
-independent cold reviews of it found no counterexample. The fragment is
-exactly the region where the open keystone F6 --- bound the live width --- is
-a theorem instead of a conjecture, and its boundary, one constructor wide, is
-drawn by the composition table itself.
+independent cold reviews of it found no counterexample. On the fragment the
+live-width bound that the full logic's certificate route needs (F6) is a
+theorem rather than a conjecture --- though the certified procedure turns out
+not to need it --- and the fragment's boundary, one constructor wide, is drawn
+by the composition table itself.
 
 \bigskip
 \begin{center}
 \fbox{\parbox{0.92\textwidth}{\small\itshape
-Companions: \code{WHY\_ITS\_HARD.md} (the full problem, non-technical),
+Companions: \code{papers/pofree\_fragment\_arxiv.pdf} (the certified result,
+as a focused paper), \code{WHY\_ITS\_HARD.md} (the full problem, non-technical),
 \code{papers/two\_tier\_quotient\_ALCIRCC5.tex} (Route~1 in full),
 \code{papers/po\_free\_fragment\_ALCIRCC5.tex} (the fragment note),
 \code{papers/rcc5\_local\_amalgamation\_theory.tex} (Route~2's local

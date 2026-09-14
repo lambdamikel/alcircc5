@@ -1,8 +1,10 @@
 # Why the ∀PO-Free Fragment Is Decidable — A Guide for the Tableau-Minded
 
 > **📄 The full explainer is the typeset PDF:
-> [`why_po_free_decidable.pdf`](why_po_free_decidable.pdf)** (~15 pp) ·
-> [LaTeX source](why_po_free_decidable.tex)
+> [`why_po_free_decidable.pdf`](why_po_free_decidable.pdf)** (~18 pp) ·
+> [LaTeX source](why_po_free_decidable.tex). The certified result itself is
+> written up as a focused paper:
+> [`pofree_fragment_arxiv.pdf`](pofree_fragment_arxiv.pdf).
 >
 > To keep the project's prose in **one** place (the no-redundancy principle),
 > this Markdown file is a high-level pointer, not a second copy. Everything
@@ -25,17 +27,19 @@ ALCI_RCC5 models are complete graphs with a composition law, and they are
 legitimately infinite — so deciding satisfiability means bounding the free
 ("live") content of a **finite certificate** for a possibly-infinite model.
 The composition table transports DR/PP/PPI deterministically along the
-part-of order (four singleton cells), but it **never forces PO** by any single
-composition. That one algebraic asymmetry is the whole story: universal
-obligations over DR/PP/PPI are trackable in a finite vocabulary, whereas a
-single `∀PO` sends witnesses "wandering" in a way that provably defeats the
-finite certificate. **Ban `∀PO` and both known proof routes close** — the
-two-tier quotient (chain-and-phase) and the ordered-disjoint normal form
-(structural). The fragment is exactly the region where the open full-logic
-keystone F6 ("bound the live width") is a *theorem* rather than a conjecture,
-and its boundary is one constructor wide. The PDF develops all of this.
+part-of order (four singleton cells), but **no single composition forces PO**
+(several constraints together can). That algebraic asymmetry is the heart of
+the story: universal obligations over DR/PP/PPI are trackable in a finite
+vocabulary, whereas a single `∀PO` sends witnesses "wandering" in a way that
+provably defeats the two-tier route's finite certificate. **Ban `∀PO` and both
+argued proof routes close** — the two-tier quotient (chain-and-phase) and the
+ordered-disjoint normal form (structural). On the fragment, the live-width
+bound that the full logic's certificate route needs (F6) is a *theorem* rather
+than a conjecture — though the procedure that was finally certified needs no
+width bound at all — and the boundary is one constructor wide. The PDF develops
+all of this.
 
-## Current status (2026-08-29)
+## Current status (2026-09-14)
 
 **Certified decidable across all four quadrants**, including the mixing one
 (∃PO + ∃PP) that was open when this note was first written. Three capstones in
@@ -67,12 +71,19 @@ completed, and cold attack refuted the architecture it needed.
 
 **Three independent cold reviews** (2026-08-29) attacked the trusted base, the
 completeness direction and the soundness direction. None found a counterexample
-or a defect in the fragment result. The one remaining caveat is complexity, not
-correctness: the procedure is **decidable but not runnable** — the signature
-space is doubly exponential.
+or a defect in the fragment result, and a fourth, source-level review
+(2026-09-09) found no defect in the Lean. The one remaining caveat is
+complexity, not correctness: the procedure is **decidable but not runnable** —
+the signature space is doubly exponential.
 
-*Full-logic* decidability (F6) stays **open** — it is forced by `∀PO`, which the
-fragment removes.
+**Prior art, credited (2026-09-14).** Lutz & Wolter (2006) already prove that
+every RCC5 structure is representable by regions (Theorem 23) — so the certified
+abstract-versus-sets equivalence is a machine-checked special case — and that
+the logic coincides with its substructure logic over regular closed regions of
+ℝⁿ (Theorem 24), so the fragment result holds verbatim there too. Neither says
+anything about decidability.
+
+*Full-logic* decidability stays **open**.
 
 The precise, per-claim breakdown (Lean-certified vs. machine-checked vs. argued)
 is the PDF's "What is certified…" section; the step-by-step provenance is
@@ -82,8 +93,8 @@ is the PDF's "What is certified…" section; the step-by-step provenance is
 
 1. The claim, and the setting — why complete-graph models block naive tableaux
 2. The certificate architecture — finite blueprints for infinite models
-3. The algebraic heart — four forced composition cells, and the PO that is
-   never forced
+3. The algebraic heart — four forced composition cells, and the PO that no
+   single cell forces
 4. **Route 1** — the two-tier quotient (chain-and-phase), and exactly where
    PO breaks it
 5. **Route 2** — the ordered-disjoint normal form (structural), and why its

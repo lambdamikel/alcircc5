@@ -8373,3 +8373,54 @@ does not test better; it removes the obligation.
 reading them*, after the mechanical sweeps had come back clean. A postmortem
 placed before the thing it dissects, and a "the next remark says…" pointing
 backwards after a move, are both invisible to LaTeX.
+
+## 2026-09-14 — the 21st review (GPT-5.6 Sol): the Lean holds, the framing did not; the split into two papers
+
+**The review.** Michael supplied a cold review by GPT-5.6 Sol of the overview
+paper and the Lean sources at commit `795b270`, together with its own draft of a
+focused fragment paper (`papers/gpt-5.6-latest-overview-paper-review-and-recommendation/`,
+now committed unmodified with a README). Verdict: the ∀PO-free result is
+"technically real" — every capstone line number it cited was exact, and it found
+no Lean defect — but the overview needed a major rewrite, and the fragment
+should be split off into its own paper.
+
+**What was checked before anything was changed.** Each finding was verified
+against the text. Confirmed: the title's "Reducing It to One Keystone"; a status
+section still describing the fragment in its superseded three-quadrant form;
+artifact rows marking "F6 ⇒ decidability" and the Π⁰₁ dovetail as Lean-certified
+(the Lean certifies conditionals whose premises it does not contain); an
+identity-selector "iff" stated as theorem-level; a grid caption saying no concept
+can force one; patchwork credited with resisting grids (RCC8 has it and its
+logics are undecidable); ALCRP(D) ignored in the concrete-domain comparison. Off
+target: `C_dir` is accepted only by a control with ∀PO erased — the shipped
+operator refutes it in round one. `C_bad` turned out to be verbatim the `CPO` of
+the first cone-scheme review. `C_joint` is new; both are accepted by the
+full-logic test, confirmed by exhibiting three-signature post-fixed families.
+
+**Prior art the project had missed.** Reading the Lutz–Wolter PDF against the
+review's pointers: Theorem 28 proves L_RCC5(RS) — this logic — recursively
+enumerable, so the "Π⁰₁ observation" of 2026-07-17 is theirs; Theorem 23
+represents RCC5 structures by regions, so `satisfiable_iff_set` is a
+machine-checked special case; Theorem 24 makes the fragment result hold for
+substructures of regular closed regions of ℝⁿ. The 2026-09-02 novelty check had
+compared only decidability claims. None of it touches the fragment's
+decidability.
+
+**What changed.** The overview was recalibrated throughout (now 56pp). The
+fragment got its own paper, `papers/pofree_fragment_arxiv.tex` (17pp), written
+afresh from the Lean sources rather than adapted from the draft — Michael's call:
+credit GPT-5.6 Sol for the split, the outline and the cone-scheme design, and
+write it in the project's own voice. The slides, README, LEAN.md, the approach
+overviews (plus a new `approaches/ConeScheme/`), the technical explainer and the
+plain-language guide followed.
+
+**Two corrections along the way.** Michael asked whether the reasoner was no
+longer empirically sound: it is — no verdict it has returned has ever been shown
+wrong; an earlier pass had dropped that sentence while removing a campaign-wide
+claim that was false for other procedures, which overcorrected. And the first
+edit to `WHY_ITS_HARD.md` went to the archived July packet copy, because the
+README linked there; the archive was restored byte for byte, the maintained root
+copy was calibrated instead, and the links now point at it.
+
+**Bylines.** Kept as they are ("with AI assistants: …"), Michael's decision. A
+release tag follows this staleness pass.

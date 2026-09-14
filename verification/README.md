@@ -8,6 +8,15 @@ The work-package mapping follows GPT-5.5's [verification recommendations documen
 
 The Lean targets L1–L7 from GPT-5.5's verification recommendations are not yet attempted.
 
+> **Scope of this file (note, 2026-09-14).** This README documents the early work
+> packages and their round-by-round companions. It is not a complete catalogue: the
+> probe set now runs to 94 scripts (`python/wp1…wp135`), and the later ones — the
+> F6/W2′ attacks, the regular-cover pivot, the fragment certification campaign and
+> the cone-scheme probes `wp133`–`wp135` — are described in their docstrings, in
+> [`../CLAUDE.md`](../CLAUDE.md), and in [`../ASSEMBLY_DESIGN.md`](../ASSEMBLY_DESIGN.md).
+> The Lean work has long since superseded the L1–L7 list above; see
+> [`../LEAN.md`](../LEAN.md).
+
 ## Layout
 
 - [`python/`](python/) — verification scripts (one per work package or work-package group)

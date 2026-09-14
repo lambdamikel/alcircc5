@@ -186,7 +186,7 @@ by `∀PO`, which the fragment removes.
 > The project's standing **strongly supported, not certified** applies to the
 > **full logic** and to the two unformalized *arguments* for this theorem — and
 > so does the ledger presumption below (a defect or overclaim in all but two of
-> twenty reviews). Earlier versions of this box applied both to the fragment
+> twenty-one reviews). Earlier versions of this box applied both to the fragment
 > result as well. That was wrong: the ledger is overwhelmingly a record of the
 > full-logic architecture, and none of the three reviews of this result found a
 > defect in it.

@@ -13,7 +13,8 @@ forests up to satisfiability).
 decide an *existential-projection* language — a valid abstraction is a pair
 (tree, enrichment), only part of which is on the automaton's tape — and the
 local monitors can accept a tree with no globally consistent labelling. The
-missing coherence-forcing step is exactly the open keystone **F6**.
+missing coherence-forcing step leads back to the width question the later
+Lean line calls **F6**.
 
 Full treatment: overview paper, §"The no-automata certificate, and the
 automata route".
@@ -25,6 +26,6 @@ automata route".
 
 **Probes:** WP13–WP16 in [`verification/python/`](../../verification/python/).
 
-**Result.** Cleanly reduces the whole problem to Theorem B / F6 using
-standard external tools (patchwork property; Vardi parity-automaton
+**Result.** Cleanly isolates this route's remaining gap as Theorem B (≈ F6),
+using standard external tools (patchwork property; Vardi parity-automaton
 emptiness), but the adequacy keystone is unproved.

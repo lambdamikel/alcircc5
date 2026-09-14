@@ -15,5 +15,7 @@ photograph).
 
 **Result.** Sound and repeatedly re-verified. It is a *normal form*, not by
 itself a decision procedure: it does not bound the width of the presentation
-— bounding that width is exactly the open keystone F6 (see
-[`../Lean_F6/`](../Lean_F6/Overview.md)).
+— bounding that width is the open keystone F6 of the certificate route (see
+[`../Lean_F6/`](../Lean_F6/Overview.md)). The certified fragment route keeps
+this idea's *shape* — vertical skeleton, horizontal completion — but not its
+machinery ([`../ConeScheme/`](../ConeScheme/Overview.md)).

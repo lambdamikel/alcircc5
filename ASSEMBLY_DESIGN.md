@@ -15,11 +15,13 @@ under-designed (the round-19/20 lesson).*
 > `decidableSat_cone` (NNF) and `decidableSetSat` (concrete set semantics) in
 > [`formal/POFreeLift.lean`](formal/POFreeLift.lean), fragment membership the
 > only hypothesis in each, zero `sorry`. Three independent cold reviews found
-> no counterexample.
-> Full-logic decidability (F6) remains **open**.
+> no counterexample; a fourth, source-level review (2026-09-09) found no Lean
+> defect (§298).
+> Full-logic decidability remains **open**.
 >
 > **Where to read.** The route that certified it is the **cone scheme**,
-> §§267–297 — start at §267. Everything before §267 records architectures that
+> §§267–298 — start at §267. The focused write-up is
+> [`papers/pofree_fragment_arxiv.pdf`](papers/pofree_fragment_arxiv.pdf). Everything before §267 records architectures that
 > were tried and, in the borrowing case, **refuted**; §§248–265 in particular
 > are retired (the theorems are true, the architecture is not viable). The
 > sections are kept because the reasoning is the audit trail, not because they
@@ -17210,3 +17212,41 @@ docstring.
 
 Build: 45,375 lines, 2,362 declarations, exit 0, 0 errors / 0 warnings / 0 sorries.
 Twenty reviews, a defect or overclaim in all but two.
+
+### §298 — the FOURTH review (GPT-5.6 Sol, 2026-09-09): the Lean holds; the prose did not; prior art we had missed
+
+Review and its draft fragment paper: `papers/gpt-5.6-latest-overview-paper-review-and-recommendation/`
+(of commit 795b270). A source-level audit, not a build — every capstone line number it cited
+(`coneScheme_complete` 42317 … `decidableSetSat` 44976) is exact, no `native_decide` in this file,
+910 `#print axioms`. **No Lean defect.** Its findings were about how the overview described the
+Lean, and were verified against the text and applied (overview recalibrated; companion paper
+`papers/pofree_fragment_arxiv.tex` written afresh). Two things belong in this log.
+
+**The four boundary concepts, checked against the SHIPPED control layer** (a transcription of
+`supportB`/`sigOkB`/`compatB` incl. §291's `PO` clause/`pruneSig`; acceptance certified by exhibiting a
+post-fixed family `X ⊆ pruneSig X` with `C₀` in a root type, which lies in the gfp by `gfp_greatest`):
+
+| Concept | Status | Shipped operator |
+|---|---|---|
+| `C_dir = ∀PO.A ⊓ ∃PO.¬A` | UNSAT | **refuted in round 1** — the PO target needs `A` and `¬A`; same argument as `cpo_refuted_at_one`. The review's "accepted" was for a control with `∀PO` erased. |
+| `C_bad = ∃PPI.(∃PP.A) ⊓ ∀PP.¬A ⊓ ∀PPI.¬A ⊓ ¬A ⊓ ∀PO.¬A` | UNSAT (`comp(ppi,pp)` = {EQ,PP,PPI,PO}, all killed) | **accepted** (3-signature family). Verbatim round 1's `CPO` — the §292 architectural gap. |
+| `C_joint = ∃PP.(∀PPI.A ⊓ ∀PO.A) ⊓ ∃PO.¬A` | UNSAT (`comp(ppi,po)` = {PPI,PO}, both force `A`) | **accepted** (3-signature family). New: the gap persists with an explicit `∃PO`, because the obligation sits on the sibling pair. |
+| `C_sat = ∃PP.(A ⊓ ∀PO.A) ⊓ ∃PP.¬A` | SAT (`x < z < y`) | accepted, as `coneScheme_complete` requires — and it refutes the naive repair "witnesses pairwise PO-compatible". |
+
+So `coneScheme_unsat_full` stays exactly as recorded in §292: sound, one-sided, blind to obligations
+from non-singleton compositions. Worth adding `C_joint` as a kernel regression beside `Cpo` when the
+file is next touched.
+
+**Prior art (Lutz & Wolter 2006, LMCS 2(2:5), local PDF).** Thm 23: every general RCC5 structure is
+isomorphic to one of regular closed regions (countable ones in ℝⁿ) — so §295's `satisfiable_iff_set` is a
+machine-checked special case, and §295's "honest limit: arbitrary sets, not regular closed sets" is
+superseded. Thm 24: L_RCC5(RS) = L^S_RCC5(ℝⁿ, ℝⁿ_reg), so the fragment result holds verbatim for
+substructures of regular closed regions (full structures are a different, undecidable logic — their
+Cor 26). Thm 28: these logics are r.e. — the "Π⁰₁ observation" (LEAN.md, 2026-07-17) is theirs. None of
+it touches decidability of the fragment: they prove no RCC5 decidability result. (Their conclusion calls
+r.e.-ness of L_RCC5(RS) open, contradicting Thm 28; the remark after Thm 28 limits the open question to
+full structures.)
+
+Rebuilt for the companion paper on Lean 4.33.1: 37 s, 0 errors / 0 warnings / 0 sorries; capstones
+`[propext, Classical.choice, Quot.sound]`; `pofree_nnfP`, `cpo_unsat` axiom-free.
+Twenty-one reviews, a defect or overclaim in all but two.

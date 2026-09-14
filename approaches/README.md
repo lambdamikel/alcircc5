@@ -28,11 +28,15 @@ Approaches, in rough order tried:
 5. [**`Automata_Parity/`**](Automata_Parity/Overview.md) — the two-way
    parity tree-automaton route that "consumed" the split forests
    (Theorems A/B/C).
-6. [**`Lean_F6/`**](Lean_F6/Overview.md) — the Lean formalization line
-   culminating in the conditional decidability theorem and the reduction to
-   F6 (see also [`../LEAN.md`](../LEAN.md)).
+6. [**`Lean_F6/`**](Lean_F6/Overview.md) — the Lean formalization line:
+   a certified conditional reduction for the full logic, whose premise is
+   argued (via F6) but not proved (see also [`../LEAN.md`](../LEAN.md)).
 7. [**`RegularCovers/`**](RegularCovers/Overview.md) — the regular-cover
    pivot; the certified RCC5 normal form; the same ∀PO-free result.
+8. [**`ConeScheme/`**](ConeScheme/Overview.md) — the route that
+   **certified** the ∀PO-free fragment: a finite control graph, a monotone
+   elimination, and a fresh-occurrence unfolding (2026-08-28/29). Written up
+   on its own in [`../papers/pofree_fragment_arxiv.pdf`](../papers/pofree_fragment_arxiv.pdf).
 
 Full state before this reorganization is preserved in the git tag
 `pre-restructure-2026-07-16` and (locally) in `_backup_2026-07-16/`.

@@ -30,8 +30,13 @@ the chain-unfolding lift is now kernel-checked in
 `unf_is_frame`), and two independent decision procedures agree on the
 fragment with zero mismatches ([`wp86`](../../verification/python/wp86_two_tier_lift_check.py),
 [`wp87`](../../verification/python/wp87_po_free_end_to_end.py)). Full
-end-to-end certification (the model-of-C₀ layer + completeness extraction)
-remains open.
+end-to-end certification along *these* lines was never completed: the
+extraction architecture it needed was refuted in August 2026. The fragment was
+then certified end to end by a different route — see
+[`../ConeScheme/`](../ConeScheme/Overview.md) and the focused paper
+[`papers/pofree_fragment_arxiv.pdf`](../../papers/pofree_fragment_arxiv.pdf).
+A genuine gap in this route's own proof (Step 2's double limit) was found and
+repaired on 2026-08-28; the theorem and bound were unaffected.
 
 Full treatment: overview paper, §"Finite-model and reduction attempts"
 (Theorem: the ∀PO-free fragment is decidable).
@@ -42,4 +47,6 @@ Full treatment: overview paper, §"Finite-model and reduction attempts"
 - [Original quasimodel paper (retracted)](../../papers/decidability_ALCIRCC5.pdf)
 
 **Result.** The ∀PO-free / PO-coherent fragment is **decidable** (with a
-2-ExpTime quotient bound); the full logic is not settled by this route.
+2-ExpTime quotient bound, theorem-level); the ∀PO-free case is now
+machine-certified by the cone scheme; the full logic is not settled by this
+route.
