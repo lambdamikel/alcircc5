@@ -3,7 +3,9 @@
 %%
 %% "Can Agentic AI Settle a 20-Year-Old Open Problem?"
 %% Based on papers/overview_arxiv.tex.  Revised 2026-08-29 for the
-%% forall-PO-free fragment's certification and the three cold reviews.
+%% forall-PO-free fragment's certification and the three cold reviews;
+%% revised 2026-09-14 per GPT-5.6 Sol's cold review (claim calibration,
+%% Lutz-Wolter credits, the companion fragment paper).
 %% Build:  pdflatex talk_ALCIRCC5.tex  (twice, for the progress bar)
 %% ====================================================================
 \documentclass[aspectratio=169,11pt]{beamer}
@@ -63,7 +65,7 @@
 \author{Michael Wessel\\[2pt]
   {\small with AI assistants: Claude Opus~4.6--4.8, Fable~5, Opus~5 (Anthropic);\\
   GPT-5.4, 5.4~Pro, 5.5, 5.6~Pro, 5.6~Sol (OpenAI)}}
-\date{August 2026}
+\date{September 2026}
 
 \begin{document}
 
@@ -77,9 +79,8 @@
         and left their central decidability question \alert{open}. It still is.
   \item In 2026 I directed a \alert{five-month AI campaign} on it:
         frontier models, adversarial review, machine verification.
-  \item The \alert{full} question is \alert{not settled} --- but it is
-        \emph{reduced} to \alert{one well-posed lemma}, with an exact
-        arithmetical address ($\Pi^0_1$) on the way.
+  \item The \alert{full} question is \alert{not settled}; we know exactly
+        where our main route is stuck (a width property, F6).
   \item A \alert{sub-question is settled}: drop $\forall\PO$ and the logic is
         \alert{decidable}, by a procedure the \alert{Lean kernel checks}.
 \end{itemize}
@@ -186,8 +187,9 @@ $c$ with $\textsf{Hamburg}\ \PP\ c$:
         \hfill $\comp(\PO,\PP)=\{\PO,\PP\}$
   \item Alster overlaps no country ($\forall\PO.\neg\textsf{Country}$)
         $\;\Rightarrow\; \textsf{Alster}\ \PP\ c$
-  \item Alster's only country-superpart is Germany
-        $\;\Rightarrow\; c=\textsf{Germany}$
+  \item every country Alster lies in is a \textsf{Germany}
+        ($\forall\PP.(\neg\textsf{Country}\sqcup\textsf{Germany})$)
+        $\;\Rightarrow\; c$ is one
 \end{itemize}
 So Hamburg \emph{is} a German city --- and every hidden fact reduces to
 \alert{concept satisfiability}: $C\sqsubseteq D$ iff $C\sqcap\neg D$ unsat.
@@ -326,7 +328,7 @@ disjointnesses below it, for free. What resists: $\PO$, and the upward direction
 \end{frame}
 
 %% ==================================================================== 11
-\begin{frame}{Shadows, live width, and the one property that matters}
+\begin{frame}{Shadows, live width, and the property our route turns on}
 \begin{itemize}
   \item An edge is a \alert{shadow} if composition already forces it from
         edges you have --- it costs a decision procedure \emph{nothing}.
@@ -334,14 +336,14 @@ disjointnesses below it, for free. What resists: $\PO$, and the upward direction
         \emph{non-shadow} edges there: the genuine branching that must be recorded.
 \end{itemize}
 \vfill
-\begin{block}{Property F6 (the keystone of everything)}
+\begin{block}{Property F6 (the keystone of the certificate route)}
   Is the live width of models bounded by a computable function of the
   input concept?
 \end{block}
 \vfill
 \begin{center}
-  \textbf{If yes} $\Rightarrow$ finite certificate space $\Rightarrow$
-  \alert{satisfiability is decidable}.
+  \textbf{If yes} (and two argued steps are proved) $\Rightarrow$ finite
+  certificate space $\Rightarrow$ \alert{satisfiability is decidable}.
 \end{center}
 \end{frame}
 
@@ -353,18 +355,18 @@ disjointnesses below it, for free. What resists: $\PO$, and the upward direction
   lab/.style={font=\scriptsize, align=center}]
   \node[box, fill=petrol!12, very thick] (f6) at (0,0)
     {\textbf{F6}\\ can a concept force\\ \emph{unbounded rigid}\\ \emph{horizontal structure}?};
-  \node[box, fill=good!15] (dec) at (-4.6,0) {\textbf{NO}\\ $\Rightarrow$ \textbf{decidable}};
-  \node[box, fill=openc!20] (und) at (4.5,0) {\textbf{YES}\\ $\Rightarrow$ dominoes\\ $\Rightarrow$ \textbf{undecidable}};
+  \node[box, fill=good!15] (dec) at (-4.6,0) {\textbf{NO}\\ $\Rightarrow$ \textbf{decidable}\\ \scriptsize (by our route)};
+  \node[box, fill=openc!20] (und) at (4.5,0) {\textbf{YES}\\ $\Rightarrow$ our route fails;\\ \scriptsize undecidable \emph{if} it\\ \scriptsize yields a grid};
   \draw[-{Latex}, thick] (f6) -- (dec);
   \draw[-{Latex}, thick] (f6) -- (und);
-  \node[lab, good] at (-2.65,1.35) {bound the\\ looseness};
-  \node[lab, warm] at (2.7,1.35) {circumvent\\ the looseness};
+  \node[lab, good] at (-2.65,1.6) {bound the\\ looseness};
+  \node[lab, warm] at (2.7,1.6) {circumvent\\ the looseness};
 \end{tikzpicture}
 \end{center}
 \vfill
 The \emph{same} looseness of the composition table blocks \alert{both}
-proofs. That is \emph{why} neither direction has been settled in twenty
-years --- it is one question seen from two sides.
+proofs --- a \emph{shared} obstruction, not a theorem that either answer
+settles the problem. That is why neither direction has moved in twenty years.
 \end{frame}
 
 %% ==================================================================== 13
@@ -398,7 +400,7 @@ and drawn with CLIM (MCL), not by hand. The models are \emph{out there}.}
 \end{frame}
 
 %% ==================================================================== 15
-\begin{frame}{\dots but no concept can \emph{force} them: the coincidence obstruction}
+\begin{frame}{\dots but no known concept \emph{forces} them: the coincidence obstruction}
 \begin{center}
 \includegraphics[width=.55\textwidth]{report7_figure11_coincidence.png}
 \end{center}
@@ -447,19 +449,19 @@ March--July 2026.
 \column{.48\textwidth}
 \begin{itemize}
   \item $\sim$4 months, $\sim$\alert{30 repair rounds}
-  \item \alert{20 adversarial reviews} --- a defect or overclaim found in
+  \item \alert{21 adversarial reviews} --- a defect or overclaim found in
         \emph{all but two}
   \item \alert{94} self-contained verification probes (each re-derives the
         algebra from set semantics)
   \item 5 Lean files, $\sim$\alert{51{,}000 lines}, \alert{zero \texttt{sorry}}
-  \item 2 working reasoners, cross-validated on \alert{911 concepts}
+  \item 2 working reasoners, cross-validated on a \alert{911-case} suite
 \end{itemize}
 \column{.48\textwidth}
-\begin{block}{The single most telling number}
-  Across \emph{all} rounds and reviews,
-  \alert{no accepted-but-unsatisfiable concept was ever found}.
-  Every defect was a gap in an \emph{argument} ---
-  never a counterexample to the intended theorem.
+\begin{block}{The most telling pattern}
+  Unsatisfiable concepts \emph{were} accepted --- by manuscripts as
+  literally written. Every such case traced to a
+  \alert{missing clause in an argument}, never to a counterexample to the
+  conjecture itself.
 \end{block}
 \medskip
 {\small That is why the label is \emph{strongly supported} --- and why it is
@@ -480,12 +482,12 @@ repeats an ancestor's type.
         \; is \textbf{unsatisfiable} --- any procedure that ignores forced
         edges wrongly accepts it.
   \item Dormant $\forall$'s reawaken blocked nodes; no fixed-arity local
-        summary (types, triangles, quadruples, profiles, \dots) is ever enough.
+        summary we tried (types, triangles, quadruples, profiles, \dots) was enough.
 \end{itemize}
 \vfill
 \begin{center}
 \alert{Lesson: in a total-relation logic, ``local'' does not exist.}\\
-What may be reused depends on the whole graph. (That is F6 in disguise.)
+Whether a node may be reused depends on the whole graph --- a \emph{global} condition no local test sees.
 \end{center}
 \end{frame}
 
@@ -549,7 +551,8 @@ instead of an acceptance condition. (This is what got formalized.)
     Most reviews broke a \emph{prose} proof --- typically at a
     step that was \emph{assumed}, not proved. The kernel cannot be talked
     past. After the move, reviews stopped finding soundness defects and
-    started finding only \emph{interface} gaps --- which were then closed.
+    found \emph{interface} gaps and overclaims instead --- each closed or
+    withdrawn.
   \end{block}
 \end{columns}
 \end{frame}
@@ -571,34 +574,34 @@ Result & Meaning & File\\
 \textcolor{good}{\textbf{RCC5 normal form}} (both dir.) &
   network $\Leftrightarrow$ order + disjointness &
   \texttt{RCC5NormalForm}\\
-\textcolor{good}{\textbf{Forcing reduction}} &
-  F6 fails $\Leftrightarrow$ a concept forces crowds &
+\textcolor{openc}{\textbf{Forcing reduction}} (cond.) &
+  F6 fails $\Leftrightarrow$ forced crowds, \emph{if} adequacy &
   \texttt{ForcingReduction}\\
-\textcolor{good}{\textbf{Dovetail schema}} &
-  qualitative F6 $\Rightarrow$ decidable &
+\textcolor{openc}{\textbf{Dovetail schema}} (cond.) &
+  qual.\ F6 $\Rightarrow$ decidable, \emph{if} searches complete &
   \texttt{SemiDecidability}\\
 \midrule
 \textcolor{good}{\textbf{$\forall\PO$-free decided}} \tiny(2026-08-29) &
   \normalsize a \emph{decision procedure}, raw input &
   \texttt{POFreeLift}\\
 \textcolor{good}{\textbf{Abstract $=$ concrete}} &
-  composition table $\Leftrightarrow$ real sets &
+  composition table $\Leftrightarrow$ real sets (cf.\ L\&W Thm~23) &
   \texttt{POFreeLift}\\
 \bottomrule
 \end{tabular}
 \end{center}
 \vfill
-What is \alert{deliberately not} in the kernel: the open completeness
-premise itself (F6). It is \emph{stated}, never axiomatized --- the honest
-boundary between what is proved and what is conjectured.
+\alert{Not} in the kernel: F6 itself, and the steps from it to a complete
+certificate search. They appear only as \emph{hypotheses} of conditional
+theorems --- never axiomatized, never proved.
 \end{frame}
 
 %% ==================================================================== 23
-\begin{frame}{The main theorem (conditional, soundness certified)}
-\begin{block}{Conditional decidability}
-  \textbf{If} F6 holds --- live width bounded by a computable function of
-  the concept --- \textbf{then} $\ALCIRCC{5}$ concept satisfiability is
-  \alert{decidable}.
+\begin{frame}{The full-logic theorem (conditional; its premise is open)}
+\begin{block}{Conditional decidability --- what the kernel actually checks}
+  \textbf{If} a verified finite checker is complete for some computable list
+  of candidate certificates per concept, \textbf{then} $\ALCIRCC{5}$ concept
+  satisfiability is \alert{decidable}.
 \end{block}
 \vfill
 \begin{itemize}
@@ -608,14 +611,16 @@ boundary between what is proved and what is conjectured.
   \item The certificate checker is a real \alert{executable Boolean function}
         --- no oracle anywhere (a previous version had a hidden one;
         a cold review caught it; it was rebuilt).
-  \item Everything that remains open is the \alert{antecedent} --- F6.
+  \item Open: the \alert{premise}. Our route to it has two \emph{argued, unproved}
+        steps: F6 $\overset{?}{\Rightarrow}$ refined W2$'$
+        $\overset{?}{\Rightarrow}$ complete lists.
 \end{itemize}
 \end{frame}
 
 %% ==================================================================== 24
 \begin{frame}{Unconditional win \#1: a decidable fragment --- now \emph{certified}}
 \begin{block}{Theorem ($\forall\PO$-free fragment), machine-checked 2026-08-29}
-  Concepts with \alert{no $\forall\PO$ subformula} are \alert{decidable}.
+  Concepts whose NNF has \alert{no $\forall\PO$} are \alert{decidable}.
   In Lean, with fragment membership the \emph{only} hypothesis:
   \smallskip
   {\scriptsize\texttt{decidableFSat} (raw input) \quad
@@ -628,9 +633,10 @@ boundary between what is proved and what is conjectured.
         \alert{all} part-of modalities --- an expressive spatial fragment.
   \item On \alert{raw} input the condition is \emph{polarity-sensitive}: no
         $\forall\PO$ positively, no $\exists\PO$ \emph{negatively}.
-  \item Reached \alert{three} times by three routes; the third
-        (GPT-5.6~Sol's \emph{cone scheme}) is the one that certified.
-  \item \alert{Decidable $\neq$ runnable} --- doubly exponential.
+  \item Argued by two routes, \alert{certified} by a third ---
+        GPT-5.6~Sol's \emph{cone scheme}. Now its own paper.
+  \item Concept satisfiability only (not closed under negation);
+        \alert{decidable $\neq$ runnable} --- doubly exponential.
 \end{itemize}
 \end{frame}
 
@@ -658,19 +664,18 @@ boundary between what is proved and what is conjectured.
 \begin{frame}{Is the fragment new? What the literature actually says}
 \begin{block}{Lutz \& Wolter 2006 --- the one place anyone gestured at this}
   They leave $L_{\mathrm{RCC5}}(\mathit{RS})$ --- \emph{exactly} this logic ---
-  explicitly \alert{open}, and ask for ``a decidable and still useful
-  variant''. Among the routes they float: ``giving up some of the
-  relations\dots\ dropping $\PO$ still results in a useful formalism''.
+  \alert{open}, and float: ``giving up some of the relations\dots\ dropping
+  $\PO$ still results in a useful formalism''.
 \end{block}
 \begin{itemize}
-  \item But that sentence defends \alert{usefulness}, not decidability ---
-        no proof, no sketch, no conjecture. The work they cite in support
-        has a \emph{single} inclusion modality.
+  \item That sentence defends \alert{usefulness}, not decidability ---
+        no proof, no sketch, no conjecture.
   \item Our restriction is \alert{weaker}: $\PO$ stays in the language.
         $\exists\PO$ is kept; only $\forall\PO$ goes.
-  \item Wessel's own 2003 report did canvass restricted fragments --- but
-        strictly stronger ones, all working by restoring the \alert{finite
-        model property}, which this fragment provably lacks.
+  \item What they \emph{did} prove about it --- r.e., representable by
+        regions (Thms~23, 24, 28) --- says nothing about decidability.
+  \item Wessel's 2003 report canvassed \emph{stronger} restrictions, all
+        restoring the \alert{finite model property} --- which this fragment lacks.
 \end{itemize}
 \vfill
 \begin{center}
@@ -693,14 +698,15 @@ priority claim.
 \vfill
 Every RCC5 model, anywhere, \emph{is} just: a hierarchy + a
 downward-inherited ``keeps-apart'' relation + overlap as the leftover.
-The ``$\Rightarrow$'' is a 150-line kernel proof (\texttt{propext} only);
-the ``$\Leftarrow$'' is GPT-5.6~Pro's \alert{canonical set representation},
-also kernel-checked for arbitrary domains --- the structural fact both major
-proof routes silently relied on, now a certified biconditional.
+Both directions are kernel-checked for arbitrary domains, the
+``$\Leftarrow$'' with GPT-5.6~Pro's \alert{canonical set representation}.
+That RCC5 structures are representable by regions at all is
+\alert{Lutz \& Wolter's} Thm~23 (2006); what is new is this form, the
+explicit construction, and the kernel proofs.
 \end{frame}
 
 %% ==================================================================== 26
-\begin{frame}{A late surprise: the problem's exact address is $\Pi^0_1$}
+\begin{frame}{A rediscovery: the problem's address is $\Pi^0_1$}
 \begin{columns}[T]
 \column{.54\textwidth}
 \begin{center}
@@ -724,8 +730,8 @@ proof routes silently relied on, now a certified biconditional.
         by G\"odel completeness, \emph{un}satisfiability is enumerable.
   \item So SAT is \alert{co-r.e.} ($\Pi^0_1$) --- the domino problem's
         \emph{ceiling} (membership; we don't claim hardness).
-  \item Nobody in the project --- or the reviews --- had noticed for four
-        months. Machine-cross-checked; the reduction is in Lean.
+  \item \alert{Not new}: Lutz \& Wolter, 2006 (Thm~28). We rederived it
+        and at first claimed it --- since corrected.
 \end{itemize}
 \end{columns}
 \end{frame}
@@ -750,8 +756,8 @@ A $\Pi^0_1$ problem is decidable \emph{iff} SAT is also enumerable. So run
 \end{tikzpicture}
 \end{center}
 \begin{itemize}
-  \item Needed now: only \alert{qualitative} F6 --- \emph{some} finite
-        certificate per satisfiable concept, \alert{no computable bound}.
+  \item For this route, needed: only \alert{qualitative} F6 --- \emph{some}
+        finite certificate per satisfiable concept, \alert{no computable bound}.
   \item The bound the reviewers kept demanding (and that kept breaking)
         comes back \alert{for free, afterwards} --- a theorem of the schema.
 \end{itemize}
@@ -773,13 +779,13 @@ prefix classes & \xmark & unbounded $\forall\exists$ alternation, FMP\\
 guarded / clique-guarded & \xmark & \alert{totality} is the one unguardable axiom\\
 unary/guarded negation & \xmark & finite model property; totality again\\
 guarded + transitivity & \xmark & undecidable outside guards\\
+FO$^2$ + 1 transitive rel. & \textbf{?} & decidable; a 2-copy encoding \emph{nearly} fits\\
 \bottomrule
 \end{tabular}
 \end{center}
 \vfill
-Every failure traces to the same fact: \alert{every pair is related}, so
-models are maximally non-local --- exactly the obstruction F6 names.
-The FO view rediscovers the project's wall from classical model theory.
+The failure that matters traces to one fact: \alert{every pair is related},
+so models are maximally non-local --- the obstruction F6 names.
 \end{frame}
 
 %% ==================================================================== 29
@@ -788,16 +794,17 @@ The FO view rediscovers the project's wall from classical model theory.
 \begin{itemize}
   \item The \alert{cover-tree tableau} ($\sim$350 lines of Python):
         exact-occurrence blocking on the split-forest foundation.
-  \item Cross-validated against an independent oracle on
-        \alert{911 concepts --- zero mismatches}; $775/775$ structured
-        decomposition tests; never once contradicted in the whole campaign.
+  \item A \alert{911-case suite} (99 labelled, 812 oracle comparisons) ---
+        \alert{zero mismatches}; $775/775$ decomposition tests; \alert{no verdict
+        ever shown wrong}. One latent gap, found by code review (April), fixed
+        without changing a verdict.
   \item Decides correctly even the known trap (the strong-$\EQ$ $\PO$-loop)
         that fools type-based procedures.
 \end{itemize}
 \vfill
 \begin{center}
-A running algorithm and a kernel-checked proof, \alert{pointing the same
-way} --- the strongest evidence short of a certificate.
+A running algorithm and a kernel-checked surround, \alert{pointing the same
+way} --- evidence, not a proof.
 \end{center}
 \end{frame}
 
@@ -880,13 +887,14 @@ to call it was the human's --- \alert{we cannot automate that}.
   \item \textbf{Cold review beats hot review.} A \emph{fresh} session with no
         memory of the construction found what warm reviewers missed ---
         every time it mattered. Make it a standard step.
-  \item \textbf{Don't trust --- verify.} Every load-bearing claim was
-        cross-checked mechanically: 94 probes that re-derive the algebra
-        from set semantics, and ultimately the Lean kernel. The machine
-        checks are the ground truth, \alert{not the model's confidence}.
+  \item \textbf{Don't trust --- verify.} We cross-checked load-bearing claims
+        mechanically: 94 probes that re-derive the algebra from set
+        semantics, and ultimately the Lean kernel. The machine checks are
+        the ground truth, \alert{not the model's confidence}.
   \item \textbf{Label honestly.} \emph{Strongly supported} $\neq$
-        \emph{certified}. Overclaiming happened twice; cold review caught
-        both; the claims were withdrawn --- \alert{on the record}.
+        \emph{certified}. Overclaims kept slipping in --- most recently in our
+        own status tables --- and cold reviews kept catching them; each was
+        withdrawn \alert{on the record}.
 \end{enumerate}
 \vfill
 {\small The full timestamped conversation log is public --- every idea,
@@ -904,7 +912,7 @@ defect, and repair traceable to its origin, human or model.}
         declining to use them is simply unwise.
   \item Saying exactly this was a stated purpose of the work. Its first
         outing (DL 2026) was rejected without engaging either the
-        mathematics or the message --- so it is now on arXiv,
+        mathematics or the message --- so it goes out
         \alert{in the open}, with the full audit trail.
 \end{itemize}
 \vfill
@@ -924,31 +932,33 @@ adversarial review, honest labels --- matter more than ever.}
 \textbf{Level} & \textbf{Results} & \textbf{What it means}\\
 \midrule
 \textcolor{good}{\textbf{Lean-certified}} &
-  \textbf{$\forall\PO$-free decidability} (raw input, NNF, concrete sets);
-  abstract $=$ concrete sat.; soundness pipeline; abstraction faithfulness;
-  RCC5 normal form (both dir.); F6\,$\Rightarrow$\,decidable; $\Pi^0_1$
-  dovetail &
-  kernel-checked, with a stated axiom footprint\\
+  \textbf{$\forall\PO$-free decidability} (raw, NNF, sets); abstract $=$
+  concrete; soundness pipeline; faithfulness; normal form; conditional
+  reductions \emph{as conditionals} &
+  kernel-checked, stated axioms\\
+\addlinespace
+\textbf{Published} &
+  $\Pi^0_1$ membership; representation by regions (Lutz \& Wolter 2006,
+  Thms~23, 24, 28) &
+  an external theorem, cited\\
 \addlinespace
 \textbf{Theorem-level} &
-  the \emph{two arguments} for the fragment ($K(C_0)$ bound, extraction);
-  identity-selector characterization; W2$'$ folds into F6 &
-  proof in a work package, often with probes\\
+  the fragment's two \emph{arguments} ($K(C_0)$, extraction); W2$'$ refinement &
+  proof in a work package\\
 \addlinespace
 \textbf{Empirical} &
-  cover-tree tableau; 911-concept cross-validation; model verifier &
+  cover-tree tableau; 911-case suite; model verifier &
   test evidence, not a decision theorem\\
 \addlinespace
 \textcolor{openc}{\textbf{Open}} &
-  static F6; completeness of the certificate scheme; automatic-cover
-  property; full decidability &
+  F6; whether identity-selector minors are its only obstruction;
+  completeness of the certificate scheme; full decidability &
   no proof claimed\\
 \bottomrule
 \end{tabular}
 \end{center}
 \vfill
-{\small Four levels kept rigorously distinct --- conflating them is the
-easiest way to misread the project.}
+
 \end{frame}
 
 %% ==================================================================== 35
@@ -956,15 +966,16 @@ easiest way to misread the project.}
 \begin{center}
 \begin{tikzpicture}[font=\small]
   \node[draw, rounded corners=3pt, fill=petrol!12, inner sep=8pt, align=center] (q)
-    {\textbf{One well-posed question}\\[2pt]
-     can a concept force unbounded\\ \emph{identity-selector} structure?};
+    {\textbf{Full decidability: open}\\[2pt]
+     our route's crux: can a concept force\\ unbounded \emph{identity-selector}
+     structure? \scriptsize(conjectured)};
 \end{tikzpicture}
 \end{center}
 \begin{itemize}
-  \item NO $\Rightarrow$ decidable, YES $\Rightarrow$ the undecidability
-        route opens --- certified machinery waits on \alert{both} sides.
+  \item NO $\Rightarrow$ our route can close; YES $\Rightarrow$ it fails, and
+        undecidability would still need a grid.
   \item One \alert{sub-problem off the pile}: drop $\forall\PO$ and it is
-        decided, in the kernel --- three cold reviews, no counterexample.
+        decided, in the kernel --- three cold reviews; now its own paper.
   \item Reproducible: 5 Lean files ($\sim$51k lines, 0 \texttt{sorry}), 94
         probes, 2 reasoners, full log.
 \end{itemize}
@@ -1022,16 +1033,17 @@ probe; matches the certified Lean table cell for cell.}
 \begin{frame}{Backup: the sharpened F6 --- identity-selector minors}
 \begin{itemize}
   \item The naive ways to force width (shell half-graphs, prefix pumps,
-        $\PO$-gaps) all \alert{collapse} to finite catalogues --- machine-checked.
+        $\PO$-gaps) all \alert{collapse} to finite catalogues --- probe-checked.
   \item The sharp obstruction: $n$ pairs $(L_i, U_i)$, each kept apart by a
         \alert{private} selector $A_i$ and by nothing else --- the selector
         incidence matrix is the $n\times n$ \emph{identity}.
-  \item A finite catalogue can hold only boundedly many private selectors,
-        so: \textbf{F6 fails iff some concept forces such minors for every $n$.}
+  \item A finite catalogue can hold only boundedly many private selectors.
+        \textbf{Conjecture:} F6 fails iff some concept forces such minors for
+        every $n$.
   \item Bare RCC5 networks with unbounded such structure \emph{exist}
         (machine-checked) --- so any F6 proof must use
         \emph{$\ALCIRCC{}$-forceability}, not RCC5 consistency alone.
-        The uniformization side-condition (W2$'$) provably folds into F6.
+        The uniformization side-condition (W2$'$) is argued to fold into F6.
 \end{itemize}
 \end{frame}
 

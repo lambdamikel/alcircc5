@@ -406,7 +406,8 @@ Nebel 1999): path-consistent atomic networks are globally consistent.
 Alongside the theory, the project ships a working **cover-tree tableau
 reasoner** ([`src/cover_tree_tableau.py`](src/cover_tree_tableau.py)) —
 agreeing with an independent oracle across a **911-case** suite (99 labelled
-cases, 812 comparison runs) with **zero mismatches**. Its most
+cases, 812 comparison runs) with **zero mismatches**, and no verdict of it has
+ever been shown wrong. Its most
 satisfying test spans 23 years: it recomputes, in 2026, the exact GIS
 concept taxonomy that a **prototype reasoner** computed in Wessel's 2003
 report (report7, §4.3.1: "actually computed by a working prototype system")
