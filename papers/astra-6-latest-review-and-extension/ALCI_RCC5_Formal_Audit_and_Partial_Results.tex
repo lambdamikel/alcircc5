@@ -1,0 +1,800 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in,headheight=14pt]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\definecolor{inkblue}{RGB}{25,60,95}
+\hypersetup{colorlinks=true,linkcolor=inkblue,citecolor=inkblue,urlcolor=inkblue,
+  pdftitle={ALCI RCC5: Formal Audit and Partial Results},
+  pdfauthor={OpenAI Codex; prepared for Michael Wessel}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textsc{ALCI\_RCC5: audit and partial results}}
+\fancyhead[R]{\small 7 October 2026}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 1pt}
+\setlist{itemsep=2pt,topsep=4pt}
+\setcounter{tocdepth}{1}
+\newcommand{\logic}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
+\newcommand{\EQ}{\mathsf{EQ}}
+\newcommand{\PP}{\mathsf{PP}}
+\newcommand{\PPI}{\mathsf{PPI}}
+\newcommand{\PO}{\mathsf{PO}}
+\newcommand{\DR}{\mathsf{DR}}
+\newcommand{\Rel}{\mathcal R}
+\newcommand{\Sat}{\operatorname{Sat}}
+\newcommand{\er}{\operatorname{erase}}
+\newcommand{\cl}{\operatorname{cl}}
+\newcommand{\cone}{\operatorname{cone}}
+\newcommand{\Bod}{\operatorname{Bod}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\inc}{\mathrel{\|}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\title{\vspace{-1.2em}\textbf{\logic: Audit of the Decidability Claim\\[3pt]
+and Two Partial Results Beyond the\\[3pt]
+\texorpdfstring{$\forall\PO$}{forall-PO}-Free Fragment}}
+\author{Technical report prepared for Michael Wessel\\
+\small OpenAI Codex}
+\date{7 October 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\begin{abstract}
+This report examines the current project snapshot supplied as
+\texttt{alcircc5-master(1).zip}, using its main Markdown pages and their
+current paper and Lean references. No gap was found in the present
+$\forall\PO$-free concept-satisfiability argument or in the inspected
+dependencies of its Lean capstones. This was a source audit, not a fresh Lean
+kernel run. Unrestricted \logic\ remains unresolved.
+
+Two mathematical results are proved. First, for a fixed strict part order,
+disjointness has a unique largest admissible interpretation: two points are
+disjoint exactly when they have no common lower bound. Principal down-sets
+realize it, and the transformation preserves every NNF concept without
+$\exists\PO$ or $\forall\DR$. Second, for NNF concepts without
+$\exists\PP$, $\exists\PO$, or $\forall\DR$, replacing each
+$\forall\PO$ restriction by $\top$ preserves satisfiability. A fresh
+downward witness forest proves the second result and yields a decidable
+syntactic extension of the certified fragment. Explicit counterexamples
+delimit both constructions. These new proofs have not been formalized in Lean
+and do not decide the unrestricted logic.
+The report concludes with a separately identified, subjective outlook on
+the prospect of an AI-assisted resolution over the next two to five years.
+\end{abstract}
+
+\section{Scope and conclusions}
+\label{sec:scope}
+
+The authoritative status documents for this review are the supplied
+\path{README.md}, the approach pages for the cone scheme and Lean/F6, and
+the current sources \path{papers/pofree_fragment_arxiv.tex} and
+\path{papers/overview_arxiv.tex}. The relevant formal development is
+\path{formal/POFreeLift.lean}. Historical failures were used only to
+identify a potential source of error; they were not treated as current proofs.
+
+The subject is \emph{single-concept satisfiability} under the abstract RCC5
+composition-table semantics with strong equality. The roles are the five
+atomic RCC5 relations. The report does not assert a decision result for
+general TBoxes or for a fixed domain containing \emph{all} regions of a
+particular space. All syntactic restrictions below are imposed after
+conversion to negation normal form (NNF).
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.37\linewidth}Y@{}}
+\toprule
+Claim & Assessment in this review\\
+\midrule
+$\forall\PO$-free satisfiability & No gap found in the current proof or
+inspected Lean dependencies. No fresh kernel build was performed.\\
+Full unrestricted satisfiability & Still open. The certificate-completeness
+premise required by the full-language reduction is unproved.\\
+Principal-down-set normalization & Proved here for the NNF fragment
+without $\exists\PO$ and $\forall\DR$. No decidability conclusion for
+that whole fragment.\\
+PO erasure & Proved here when $\exists\PP$, $\exists\PO$, and
+$\forall\DR$ are absent. Gives a decidable syntactic extension.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The two new results are relative to the established RCC5 semantics. They
+are mathematical results of this review, not claims of literature priority.
+They have been independently checked for the relation orientations and
+boundary cases, but have not been added to the Lean artifact.
+
+\section{Semantics and the order presentation}
+\label{sec:semantics}
+
+Let $\Rel=\{\EQ,\PP,\PPI,\PO,\DR\}$. An RCC5 frame has a nonempty
+carrier $W$ and a total relation labelling $\rho:W^2\to\Rel$, with
+identity as $\EQ$, the usual converse operation, and the RCC5 composition
+condition. Here $x\,\PP\,y$ means that $x$ is a \emph{proper part of}
+$y$; thus a $\PP$ witness is a superpart and a $\PPI$ witness is a part.
+
+An interpretation adds a valuation $V(A)\subseteq W$ for each concept name.
+NNF concepts have grammar
+\[
+C ::= \top\mid\bot\mid A\mid\neg A\mid C\sqcap C\mid C\sqcup C
+       \mid\exists R.C\mid\forall R.C,\qquad R\in\Rel.
+\]
+The modal clauses are
+\begin{align*}
+\mathcal M,x\models\exists R.D
+ &\iff \exists y\in W\,[\rho(x,y)=R\ \land\ \mathcal M,y\models D],\\
+\mathcal M,x\models\forall R.D
+ &\iff \forall y\in W\,[\rho(x,y)=R\ \Longrightarrow\ \mathcal M,y\models D].
+\end{align*}
+Satisfiability means truth at a point of some such interpretation.
+
+\begin{definition}[Ordered-disjoint structure]
+An ordered-disjoint structure is $(W,<,\#)$ where $<$ is a strict partial
+order and $\#$ is symmetric and irreflexive, with the following properties.
+Writing $\leq$ for the reflexive closure of $<$,
+\begin{align}
+x<y&\ \Longrightarrow\ \neg(x\#y),\label{eq:separate}\\
+x\#y,\quad u\leq x,\quad v\leq y
+ &\ \Longrightarrow\ u\#v.\label{eq:downward}
+\end{align}
+Its induced labelling gives $\EQ$ to equality, $\PP$ to $<$,
+$\PPI$ to $>$, $\DR$ to $\#$, and $\PO$ to the remaining pairs.
+\end{definition}
+
+\begin{theorem}[Established RCC5 normal form]
+\label{thm:normal}
+The induced labelling of every ordered-disjoint structure is an RCC5
+frame. Conversely, reading $<$ as $\PP$ and $\#$ as $\DR$ in any
+strong-EQ RCC5 frame yields an ordered-disjoint structure with the original
+labelling. The abstract frames and families of nonempty, pairwise distinct
+sets have the same concept satisfiability.
+\end{theorem}
+
+This theorem is an established input, proved in the current project
+\cite{fragment,lean}. Transitivity comes from
+$\PP\circ\PP=\{\PP\}$; downward inheritance follows from
+$\PP\circ\DR=\{\DR\}$ and $\DR\circ\PPI=\{\DR\}$.
+The converse is the checked composition-table case analysis. The project's
+general set representation retains overlap even when no common part is
+represented in the carrier; this distinction will matter below.
+
+Under set semantics, the domain is a chosen family of nonempty sets.
+Equality, strict inclusion, converse inclusion and disjointness interpret
+the first four applicable cases; $\PO$ means nonempty intersection and
+incomparability under inclusion. A shared point of the ambient set universe
+need not itself occur as a named region in the domain.
+
+\section{Audit of the existing decidability argument}
+\label{sec:audit}
+
+\subsection{Finite signatures and unconditional completeness}
+
+For a fixed NNF concept $C_0$, the current cone procedure takes support
+types $T\subseteq\cl(C_0)$ and signatures $q=(T,S)$, where $S$ is a set
+of candidate types allowed strictly below $q$. Let
+$\cone(q)=\{T\}\cup S$ and
+$\Bod_R(T)=\{D:\forall R.D\in T\}$.
+Static admissibility checks the local Boolean and EQ conditions, and
+for each $U\in S$ requires
+\[
+\Bod_{\PP}(U)\subseteq T,
+\qquad
+\Bod_{\PPI}(T)\subseteq U.
+\]
+A target $q'=(T',S')$ for a non-EQ demand $\exists R.D\in T$ must
+contain $D$ in $T'$ and satisfy the appropriate compatibility condition:
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}lY@{}}
+\toprule
+$R$ & Compatibility condition\\
+\midrule
+$\PP$ & $\cone(q)\subseteq S'$.\\
+$\PPI$ & $\cone(q')\subseteq S$.\\
+$\DR$ & For all $U\in\cone(q)$ and $U'\in\cone(q')$,
+$\Bod_{\DR}(U)\subseteq U'$ and $\Bod_{\DR}(U')\subseteq U$.\\
+$\PO$ & $\Bod_{\PO}(T)\subseteq T'$ and
+$\Bod_{\PO}(T')\subseteq T$.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+Pruning removes signatures that lack a compatible target for some demand.
+The operator is monotone and reductive on a finite initial signature set.
+
+In any actual model, take the complete closure type of a point and the set
+of closure types realized at its proper parts. These signatures are
+statically admissible and support one another using the model's witnesses.
+They consequently survive every pruning round. This direction does
+\emph{not} assume $\forall\PO$-freeness. The checked declaration is
+\code{coneScheme\_complete}.
+
+\subsection{Fresh occurrences and fragment soundness}
+
+The converse unfolds the surviving finite control states to fresh
+occurrences. Part births generate a strict order; DR births generate
+disjointness together with all its downward consequences. Residual pairs
+are PO. The height and vertical-component invariants establish a genuine
+ordered-disjoint structure. Cone propagation handles all PP and PPI
+universals, and the cross-cone test at every DR birth handles all DR
+universals. Witness children serve existential demands.
+
+The truth lemma uses the fragment hypothesis precisely when it excludes
+$\forall\PO.D$ from occurrence labels. Most PO pairs were not created
+as witness edges: they are residual pairs between branches. A universal
+over PO would constrain these pairs too. This step appears in
+\code{unf\_truth}, and gives \code{coneScheme\_sound}. The finite
+fixed point then yields \code{decidableSat\_cone}.
+
+The audit found no missing premise in this current argument. In
+particular, the DR test compares entire downward cones, and the unfolding
+does not equate two occurrences simply because their signatures agree.
+Both details are necessary. The source also proves normalization from raw
+negation in both polarities. The raw fragment excludes positive
+$\forall\PO$ and negative $\exists\PO$; merely checking the spelling
+of modalities before NNF would be incorrect.
+
+\subsection{Verification strength and limits}
+
+The audit inspected the capstone statements and their proof dependencies,
+the semantics, the raw polarity test, and the abstract-to-set equivalence.
+No executable \code{sorry}, \code{admit}, or new user axiom was identified
+in the current formal files. A separate finite enumeration recovered all
+25 displayed RCC5 composition cells from nonempty subsets of a
+four-element universe.
+
+Lean was unavailable in the review environment, and the archive contained
+no compiled \code{.olean} artifacts. Accordingly, this report does not
+claim an independent kernel recompilation or fresh axiom output. The
+repository reports such certification; the present review found no
+source-level defect in the relevant argument. The theorem
+\code{satisfiable\_iff\_set} concerns arbitrary set families. The
+paper's further regular-closed-region corollary uses the representation
+theorems of Lutz and Wolter \cite{lutzwolter} externally.
+
+\section{Maximal disjointness and principal down-sets}
+\label{sec:downsets}
+
+Fix a nonempty strict partial order $(W,<)$. Write $x\inc y$ when $x,y$
+are incomparable under its reflexive closure. Define
+\begin{equation}
+x\mathrel{\#_{\max}}y
+\quad\Longleftrightarrow\quad
+\neg\exists z\in W\ (z\leq x\ \land\ z\leq y).
+\label{eq:maxdr}
+\end{equation}
+
+\begin{lemma}[Largest admissible disjointness]
+\label{lem:maxdr}
+The relation $\#_{\max}$ is the unique largest relation, under inclusion,
+which makes $(W,<,\#)$ an ordered-disjoint structure.
+\end{lemma}
+\begin{proof}
+Symmetry is immediate. Irreflexivity holds because $x$ is a lower bound
+of $x,x$. If $x\leq y$, then $x$ is a common lower bound, so comparable
+pairs are not in $\#_{\max}$. For downward inheritance, suppose
+$x\#_{\max}y$, $u\leq x$ and $v\leq y$. A common lower bound of $u,v$
+would, by transitivity, be a common lower bound of $x,y$, a contradiction.
+Thus $\#_{\max}$ is admissible.
+
+If $\#$ is any admissible relation and $x\#y$, a common lower bound
+$z\leq x,y$ would yield $z\#z$ by downward inheritance, contradicting
+irreflexivity. Hence $\#\subseteq\#_{\max}$, proving maximality and
+uniqueness of the largest relation.
+\end{proof}
+
+For each $x\in W$, put $P_x=\{z\in W:z\leq x\}$.
+
+\begin{lemma}[Exact set representation]
+\label{lem:principal}
+The family $(P_x)_{x\in W}$ consists of nonempty, pairwise distinct sets,
+and
+\[
+P_x\subseteq P_y\iff x\leq y,
+\qquad
+P_x\cap P_y=\varnothing\iff x\#_{\max}y.
+\]
+Consequently its RCC5 labelling preserves the order and gives
+\begin{equation}
+\PO_{\min}(x,y)
+\quad\Longleftrightarrow\quad
+x\inc y\ \land\ \exists z\in W\ (z\leq x\land z\leq y).
+\label{eq:minpo}
+\end{equation}
+\end{lemma}
+\begin{proof}
+The element $x$ belongs to $P_x$. If $x\leq y$, transitivity gives
+$P_x\subseteq P_y$; conversely, that inclusion puts $x$ in $P_y$.
+Equality of the two sets therefore implies $x\leq y$ and $y\leq x$,
+hence $x=y$. Their intersection consists exactly of the common lower
+bounds. The RCC5 set clauses now give~\eqref{eq:minpo}.
+\end{proof}
+
+For an RCC5 interpretation $\mathcal M$, let $\mathcal M_{\max}$ be its
+principal-down-set interpretation, identified with the same index set $W$,
+and with the same unary valuations. Its order is unchanged and its
+disjointness is $\#_{\max}$.
+
+\begin{theorem}[Truth preservation under maximal disjointness]
+\label{thm:normalization}
+Let $C$ be an NNF concept with no occurrence of $\exists\PO$ or
+$\forall\DR$, including inside modal bodies. For every RCC5
+interpretation $\mathcal M$ and $x\in W$,
+\[
+\mathcal M,x\models C\quad\Longrightarrow\quad
+\mathcal M_{\max},x\models C.
+\]
+Therefore satisfiability for this fragment can be restricted to
+principal-down-set interpretations.
+\end{theorem}
+\begin{proof}
+Lemmas~\ref{lem:maxdr}--\ref{lem:principal} show that EQ, PP and PPI are
+unchanged, old DR edges remain DR, and only old PO edges can change, each
+either remaining PO or becoming DR. Induct on $C$. Literals, constants and
+Boolean connectives follow from the unchanged valuation and the induction
+hypothesis. For EQ, PP and PPI modalities, use their unchanged successor
+sets and the induction hypothesis on the body. An old DR existential
+witness is still a DR witness and still satisfies its body. Every new PO
+successor was an old PO successor, so a PO universal continues to hold by
+the induction hypothesis. The two modal cases that could fail are
+precisely the two excluded constructors. The normalized interpretation is
+itself an RCC5 interpretation, giving the converse implication for
+\emph{existence} of a satisfying model without any additional argument.
+\end{proof}
+
+\begin{remark}[Normalization is not yet a decision procedure]
+The order can still force PO. For example,
+\[
+\exists\PP.(A\sqcap\forall\PP.A)
+\ \sqcap\
+\exists\PP.(\neg A\sqcap\forall\PP.\neg A)
+\]
+forces distinct incomparable superparts $a,b$ of the root: either order
+between them violates one of the PP universals. Their shared proper part
+excludes DR, so they must be PO. The normal form retains such overlaps.
+\end{remark}
+
+\section{A decidable fragment by erasing PO universals}
+\label{sec:erasure}
+
+\begin{definition}[The downward-witness fragment]
+Let $\mathcal D$ be the class of NNF concepts with no occurrences of
+$\exists\PP$, $\exists\PO$ or $\forall\DR$. All other constructors
+are permitted, including nested $\forall\PO$.
+Define $\er$ recursively by
+\[
+\er(\forall\PO.D)=\top,
+\]
+and homomorphically on every other constructor. In particular, an erased
+PO restriction loses its entire body. Then $\er(C)$ is $\forall\PO$-free
+and $|\er(C)|\leq |C|$.
+\end{definition}
+
+\begin{lemma}[PO-empty witness-forest property]
+\label{lem:forest}
+Every satisfiable NNF concept $E$ without $\forall\PO$, $\exists\PP$,
+$\exists\PO$, or $\forall\DR$ has a countable model in which PO is empty.
+\end{lemma}
+\begin{proof}
+Let $\mathcal M,x_0\models E$. We construct occurrences in finitely
+many stages per depth. Each occurrence $u$ carries a source point
+$f(u)\in W^{\mathcal M}$. Begin with $u_0$ and $f(u_0)=x_0$.
+For each already generated occurrence $u$ and every existential
+subformula occurrence $e=\exists R.D$ of $E$ with
+$\mathcal M,f(u)\models e$ and $R\neq\EQ$, choose a witness $y$ in
+$\mathcal M$ and generate a fresh occurrence $u\cdot e$ with
+$f(u\cdot e)=y$. There are finitely many such requirements per occurrence,
+so the set $U$ of all generated finite histories is countable. The only
+non-EQ roles needing witnesses are PPI and DR.
+
+Retain the parent edge between $u$ and $u\cdot e$ only when $e$ has role
+PPI, and put $u\cdot e<u$. A DR child starts a new component with no
+vertical edge to its generating occurrence. The transitive closure of
+these retained edges is a strict order. Its components are downward
+rooted trees: every non-root has exactly one immediate superpart, and
+every point has a finite chain of ancestors to its component root.
+
+Set $u\#v$ exactly when $u,v$ are incomparable. This is downward
+hereditary. Indeed, if $u',v'$ lie below incomparable $u,v$ but are
+comparable, one of $u',v'$ lies below both $u,v$. Its ancestors form a
+chain, forcing $u,v$ to be comparable, a contradiction. Thus the order
+and $\#$ form an ordered-disjoint structure, with no residual PO pairs.
+Equivalently, the principal down-sets of its nodes are nested along
+branches and disjoint between incomparable nodes, directly supplying a
+set representation. Let $\mathcal N$ be this frame with
+$u\in V^{\mathcal N}(A)$ iff $f(u)\in V^{\mathcal M}(A)$.
+
+Whenever $u<v$ in $\mathcal N$, the source points satisfy
+$f(u)\,\PP\,f(v)$ in $\mathcal M$: each edge has this property by
+the selected PPI witness, and the property composes transitively. Hence
+the map $f$ preserves every new PP and PPI edge in its original direction.
+It also preserves equality. A generated DR child lies in a fresh
+component and therefore is DR from its generating point.
+
+We now prove simultaneously, for every subformula $D$ of $E$ and every
+occurrence $u$, the implication
+\begin{equation}
+\mathcal M,f(u)\models D\quad\Longrightarrow\quad
+\mathcal N,u\models D.
+\label{eq:truthtransfer}
+\end{equation}
+Induct on $D$. Literals and Boolean cases follow from the pulled-back
+valuation and the induction hypothesis. Non-EQ existential cases are
+served by their generated children, whose sources satisfy the body.
+EQ modalities reduce to the body at the same point. For a PP or PPI
+universal, each new successor has the same relation between its source
+points, so the old universal and the induction hypothesis apply. No other
+universal or existential case remains under the stated restrictions.
+Applying~\eqref{eq:truthtransfer} to $E$ at $u_0$ proves the result.
+\end{proof}
+
+\begin{theorem}[PO-erasure equivalence]
+\label{thm:erasure}
+For every $C\in\mathcal D$,
+\[
+\Sat(C)\quad\Longleftrightarrow\quad\Sat(\er(C)).
+\]
+\end{theorem}
+\begin{proof}
+In NNF all compound constructors are monotone in their concept arguments.
+Replacing an entire $\forall\PO$ subformula by $\top$ therefore
+preserves satisfaction, proving the forward implication.
+
+Conversely, $\er(C)$ satisfies the hypotheses of Lemma~\ref{lem:forest}.
+If it is satisfiable, it has a model $\mathcal N$ with empty PO. In any
+such model, for every concept $D$ and every point $u$,
+\[
+\mathcal N,u\models D\quad\Longleftrightarrow\quad
+\mathcal N,u\models\er(D).
+\]
+This follows by structural induction: a PO universal and its replacement
+$\top$ are both true, and all remaining constructors commute with
+erasure. In particular, the point satisfying $\er(C)$ satisfies $C$.
+\end{proof}
+
+\begin{corollary}[Effective extension of the existing decision result]
+\label{cor:decision}
+Satisfiability for $\mathcal D$ is decidable. So is satisfiability for
+the union of $\mathcal D$ with the published $\forall\PO$-free fragment.
+This union is a strict syntactic extension of that fragment.
+\end{corollary}
+\begin{proof}
+Both syntactic membership tests are effective. For $C\in\mathcal D$,
+compute $\er(C)$ and apply the established $\forall\PO$-free decision
+procedure. Use the established procedure directly on the original
+fragment. The formula $\forall\PO.A$ belongs to $\mathcal D$ but is
+not $\forall\PO$-free.
+\end{proof}
+
+This extension does not add an irreducible PO-universal satisfiability
+constraint: those restrictions are erasable within $\mathcal D$. It is
+nevertheless a decision theorem about inputs outside the original
+syntactic fragment. Its new model-construction proof is not yet Lean
+checked. The same doubly exponential upper bound stated for the literal
+cone procedure applies after erasure, since erasure does not increase size;
+no new lower bound is asserted.
+
+\section{Counterexamples delimiting the constructions}
+\label{sec:boundaries}
+
+Each excluded constructor in Theorem~\ref{thm:erasure} is necessary for
+that unrestricted erasure rule. In the following examples, erasure is
+satisfiable while the original concept is unsatisfiable.
+
+\subsection{Permitting an existential PO restriction}
+
+The immediate example is
+\[
+C_{\exists\PO}=\exists\PO.\top\sqcap\forall\PO.\bot.
+\]
+It is unsatisfiable, whereas its erasure $\exists\PO.\top$ is
+satisfied by two overlapping, incomparable sets.
+
+There is also a sharper boundary for Theorem~\ref{thm:normalization}:
+\begin{equation}
+C_{\mathrm{optional}}=
+\forall\PPI.A\sqcap\exists\PO.(\forall\PPI.\neg A).
+\label{eq:optional}
+\end{equation}
+The two-region domain $x=\{0,1\}$, $y=\{1,2\}$ satisfies this at $x$;
+neither region has a represented proper part. In any satisfying model,
+a common lower bound of $x$ and its PO witness $y$ would be a strict
+part of both, forcing both $A$ and $\neg A$. Thus the overlap must
+lack a represented common part. Such a pair is DR under principal
+down-sets. Consequently~\eqref{eq:optional} has no principal-down-set
+model at all.
+
+\subsection{Permitting an existential PP restriction}
+
+Consider
+\begin{align}
+C_{\exists\PP}={}&
+\exists\PP.(A\sqcap\forall\PP.A\sqcap\forall\PO.A)
+\notag\\[-2pt]
+&\sqcap\exists\PP.(\neg A\sqcap\forall\PP.\neg A).
+\label{eq:ppboundary}
+\end{align}
+At a putative root $x$, choose the witnesses $a,b$ with $A(a)$ and
+$\neg A(b)$. They are distinct. If $a\,\PP\,b$, the universal at
+$a$ forces $A(b)$; if $b\,\PP\,a$, the universal at $b$ forces
+$\neg A(a)$. They cannot be DR because their shared proper part $x$
+would then be disjoint from itself. Thus $a\,\PO\,b$, but the PO
+universal at $a$ again forces $A(b)$, a contradiction.
+
+Its erasure has the three-region model
+\[
+x=\{0\},\qquad a=\{0,1\},\qquad b=\{0,2\},\qquad V(A)=\{a\}.
+\]
+The two PP universals are vacuous at the maximal regions $a,b$. This
+shows why upward witnesses can prevent a PO-empty forest construction.
+
+\subsection{Permitting a universal DR restriction}
+
+Consider
+\begin{align}
+C_{\forall\DR}={}&
+\exists\PPI.(A\sqcap\forall\PPI.A\sqcap\forall\DR.A
+                         \sqcap\forall\PO.A)
+\notag\\[-2pt]
+&\sqcap\exists\PPI.(\neg A\sqcap\forall\PPI.\neg A).
+\label{eq:drboundary}
+\end{align}
+Its two proper-part witnesses $a,b$ are distinct. If $a<b$, the PPI
+universal at $b$ contradicts $A(a)$; if $b<a$, the PPI universal at
+$a$ contradicts $\neg A(b)$. A DR relation contradicts the DR
+universal at $a$, and a PO relation contradicts its PO universal.
+Every RCC5 value is excluded, so the concept is unsatisfiable.
+
+The erasure has the model
+\[
+x=\{0,1,2\},\qquad a=\{0,1\},\qquad b=\{1,2\},\qquad V(A)=\{a\}.
+\]
+All displayed PPI and DR universals at $a,b$ are vacuous. Moreover,
+\emph{every} model of this erased concept forces $a,b$ to be PO:
+the preceding case split still excludes EQ, PP, PPI and DR. A common
+lower bound would satisfy both $A$ and $\neg A$ by their PPI universals.
+Thus the erased concept also has no principal-down-set model. This proves
+that admitting arbitrary $\forall\DR$ breaks the normalization theorem
+even if $\exists\PO$ remains absent.
+
+\section{Consequences for the unrestricted problem}
+\label{sec:full}
+
+The new normalization distinguishes two sources of overlap. For fixed
+order, an incomparable pair with a represented common lower bound is
+necessarily PO; this overlap survives every admissible choice of DR.
+Other PO pairs are optional relative to the order, although concepts
+can require them, as~\eqref{eq:optional} and the erased form
+of~\eqref{eq:drboundary} demonstrate. A complete construction for the
+unrestricted language must accommodate both kinds and the universal
+constraints on all resulting pairs.
+
+The current cone scheme has no such complete joint control. Its
+full-language completeness direction provides a sound UNSAT test, but
+acceptance is not sufficient. The current focused paper records
+\begin{align*}
+C_{\mathrm{bad}}={}&\exists\PPI.(\exists\PP.A)
+  \sqcap\forall\PP.\neg A\sqcap\forall\PPI.\neg A
+  \sqcap\neg A\sqcap\forall\PO.\neg A,\\
+C_{\mathrm{joint}}={}&
+\exists\PP.(\forall\PPI.A\sqcap\forall\PO.A)
+  \sqcap\exists\PO.\neg A.
+\end{align*}
+Both are unsatisfiable but accepted by that one-sided test. The first
+excludes all four possible relations between the root and an $A$-point
+sharing a part; the second excludes both possibilities in
+$\PPI\circ\PO=\{\PPI,\PO\}$ between its two witnesses.
+
+On the separate full-language certificate route, the current state is
+\[
+\begin{aligned}
+\text{F6}
+&\ \overset{?}{\Longrightarrow}\ \text{refined uniformization}\\
+&\ \overset{?}{\Longrightarrow}\ \text{complete candidate lists}
+\ \Longrightarrow\ \text{decidability}.
+\end{aligned}
+\]
+Only the last implication, with the required premise supplied, is the
+certified conditional decision result described by the current overview.
+The two new theorems do not discharge either question-marked implication.
+
+The next useful target is a finite representation theorem, or a
+counterexample to a precisely defined representation scheme, that handles
+forced common-part overlaps together with required optional overlaps.
+A pair-matrix extension must coordinate the relations among witnesses;
+checking its success on $C_{\mathrm{bad}}$ and $C_{\mathrm{joint}}$ is a
+necessary diagnostic, not a completeness proof. Conversely, disproving
+a particular width bound would not by itself establish undecidability;
+that would require a reduction from an undecidable problem.
+
+\textbf{Final assessment.} The present $\forall\PO$-free argument
+survived this audit. The new results give a controlled order-only
+normalization and a further decidable syntactic slice. No proof of
+decidability or undecidability of unrestricted \logic\ was obtained.
+
+\section{Outlook: could more capable AI resolve the problem soon?}
+\label{sec:outlook}
+
+\paragraph{Judgment and horizon.}
+Taking ``near future'' to mean approximately the next two to five years,
+my assessment is \textbf{moderately optimistic}, with substantial
+uncertainty. I think an AI-assisted resolution in that interval is
+plausible enough to justify a focused research effort. I would not treat
+it as a likely deliverable on a fixed schedule. This is a subjective
+assessment of the research situation, not a calibrated forecast of future
+model capabilities. The evidence supports optimism about further useful
+results more strongly than it supports a timetable for a full solution.
+
+\paragraph{Reasons for optimism.}
+This project already has an unusually useful starting point for future
+models: a precise open question, a certified structural normal form, a
+certified decidable fragment, explicit counterexamples to attractive
+repairs, and a map of the current proof obligations. The fragment result
+shows that a change in model construction can remove difficulties that
+repeated local repairs had not resolved. A better model may find another
+such change, recognize an applicable theorem in an adjacent field, or
+discover a reduction whose required structure differs from the familiar
+grid attempts. The short normalization and erasure arguments here also
+show that there are still tractable structural consequences to extract
+from the present framework; their modest scope should not be mistaken
+for evidence that the final step is close.
+
+Models with better mathematical reasoning, more reliable long-context
+work, and better use of executable search and proof assistants could
+explore these alternatives more systematically. In particular, finite
+countermodel search can reject proposed local invariants cheaply, while
+a proof assistant can prevent an accepted formal argument from silently
+assuming its own completeness premise. A well-maintained record of failed
+lemmas would help future attempts spend their effort on different ideas.
+
+\paragraph{Reasons for caution.}
+The remaining task is a finite-to-global existence or representation
+problem, or an undecidability reduction. The project has not exposed a
+missing routine calculation whose completion merely requires a larger
+computation. A proposed finite state must still capture all relevant
+interactions of an unbounded model. More fluent explanations, larger
+bounded tests, and repeated agreement among similar models do not
+establish that property. Closely related models can share the same
+mistaken abstraction, so their agreement is weaker evidence than a
+checked proof or a concrete counterexample.
+
+Nor does the number of historical failures reliably measure how far the
+problem is from a solution. A new invariant could shorten the argument
+dramatically; equally, the surviving obstruction might resist several
+further generations of models. The current evidence does not justify a
+confident preference between eventual decidability and undecidability.
+The decidable fragments give positive structure without resolving the
+expressive power added by the unrestricted interactions.
+
+\paragraph{What would increase my confidence.}
+I would update the forecast substantially after a model produces one of
+three concrete advances: a complete finite or automatic representation
+theorem for the unrestricted semantics; a provably terminating procedure
+whose soundness and completeness cover the full language; or a faithful
+reduction from a known undecidable problem. The decisive intermediate
+lemmas should be formalized early, with semantic adequacy and both
+directions of any reduction reviewed independently. A polished proposed
+proof that postpones its main completeness lemma would provide little
+reason to update the forecast.
+
+My practical expectation is therefore that increasingly capable AI,
+combined with sustained human direction and formal checking, makes this
+a worthwhile target for continued work. I am hopeful about a resolution
+within a few years, but the present report supplies no mathematical basis
+for promising one. The part of the workflow most likely to help is a
+cycle of distinct structural hypotheses, adversarial counterexamples,
+and early certification of the lemmas that survive.
+
+\appendix
+\section{Source map and finite checks}
+\label{app:evidence}
+
+The following references are to the supplied snapshot, not to an assumed
+future state of the public repository. Line numbers are approximate
+navigation aids; declaration names are the more stable identifiers.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.47\linewidth}Y@{}}
+\toprule
+Current artifact or declaration & Location in the supplied source\\
+\midrule
+Ordered-disjoint normal form & Fragment paper, lines 318--443.\\
+Cone definitions and correctness & Fragment paper, lines 444--693 and 814--917.\\
+Full-language open premises & Overview, lines 2373--2418.\\
+\code{coneScheme\_complete} & \code{POFreeLift.lean}, near line 42317.\\
+\code{unf\_truth} & Same file, near lines 44006--44050.\\
+\code{coneScheme\_sound} & Same file, near line 44093.\\
+\code{decidableSat\_cone} & Same file, near line 44196.\\
+\code{decidableFSat} & Same file, near line 44589.\\
+\code{satisfiable\_iff\_set} & Same file, near line 44948.\\
+\code{decidableSetSat} & Same file, near line 44976.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Two finite checks supported the review. First, enumerating all triples
+of nonempty subsets of a four-element universe gave exactly the 25
+composition-table cells printed in the current fragment paper. Second,
+enumerating the 41 ordered-disjoint frames on three labelled points and
+all eight valuations of $A$ tested the boundary formulas in
+Section~\ref{sec:boundaries}. Counting satisfying combinations of frame,
+valuation and designated root gave:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Boundary concept & Erased formula & Original formula\\
+\midrule
+$C_{\exists\PO}$ & 480 & 0\\
+$C_{\exists\PP}$ & 12 & 0\\
+$C_{\forall\DR}$ & 12 & 0\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These counts are finite corroboration. The all-cardinality
+unsatisfiability claims follow from the explicit relation case splits,
+and the normalization and erasure theorems follow from their proofs,
+not from bounded search. No kernel certification of the new results is
+claimed.
+
+\begin{thebibliography}{9}
+\small
+\bibitem{project}
+\textit{ALCI\_RCC5 decidability project}.
+Supplied snapshot \texttt{alcircc5-master(1).zip}, reviewed
+7 October 2026. Current status sources: \path{README.md},
+\path{approaches/ConeScheme/Overview.md}, and
+\path{approaches/Lean_F6/Overview.md}.
+Public repository: \url{https://github.com/lambdamikel/alcircc5}.
+
+\bibitem{fragment}
+\textit{Current focused paper on the $\forall\PO$-free fragment}.
+In the supplied project snapshot:
+\path{papers/pofree_fragment_arxiv.tex} and its PDF.
+
+\bibitem{overview}
+\textit{Current project overview paper}.
+In the supplied project snapshot:
+\path{papers/overview_arxiv.tex} and its PDF.
+
+\bibitem{lean}
+\textit{Current Lean development}.
+In the supplied project snapshot: \path{formal/POFreeLift.lean}.
+Full-language conditional pipeline:
+\path{formal/Round19Transport.lean}.
+
+\bibitem{lutzwolter}
+C.~Lutz and F.~Wolter.
+Modal logics of topological relations.
+\textit{Logical Methods in Computer Science}, 2(2:5):1--41, 2006.
+\url{https://doi.org/10.2168/LMCS-2(2:5)2006}.
+
+\bibitem{wessel}
+M.~Wessel.
+\textit{Qualitative spatial reasoning with the ALCI\_RCC family:
+first results and unanswered questions}.
+Technical Report FBI-HH-M-324/03, Universit\"at Hamburg, 2002/2003.
+Included in the supplied snapshot as \path{papers/report7.pdf}.
+\end{thebibliography}
+\end{document}
