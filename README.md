@@ -82,7 +82,7 @@ dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 
 ## Status
 
-**Where things stand (2026-09-14).** Decidability of **full** ALCI_RCC5 (and
+**Where things stand (2026-10-08).** Decidability of **full** ALCI_RCC5 (and
 ALCI_RCC8) **remains open**. The **∀PO-free fragment is decided**, by a decision
 procedure checked end to end in Lean with fragment membership as its only
 hypothesis, and written up on its own in
@@ -95,9 +95,48 @@ not proved. SAT is Π⁰₁ (Lutz & Wolter 2006, Thm 28), so for that route
 *qualitative* F6 would suffice: some finite certificate for each satisfiable
 concept, with no computable bound. The full-logic line of attack has been paused since July
 2026; what a future attack needs is recorded in the overview's conclusion and in
-[`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/). Cite the
-release **`release-2026-09-14`**. Each major revision is recorded below, newest
-first.
+[`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/). A 2026-10-08
+harvest from the 22nd review extended the decided fragment to a slice
+*containing* `∀PO` (the PO-erasure fragment 𝒟, Lean-certified). Cite the
+release **`release-2026-09-14`** (moved to include the harvest). Each major
+revision is recorded below, newest first.
+
+### 2026-10-08 — The 22nd review (Astra 6): audit passed, and a certified extension of the fragment
+
+- **The review** ([archived, with verification notes](papers/astra-6-latest-review-and-extension/)):
+  an 11-page audit of the ∀PO-free argument plus two new theorems, by Astra 6,
+  of the release-2026-09-14 snapshot. Verdict on the certified fragment:
+  **no gap found** — the first review of it with nothing to correct, in the
+  artifact or its presentation. (A source audit; no kernel run, stated so.)
+- **Its two theorems, verified here.** Both proofs hand-checked (correct as
+  written) and probed:
+  [`wp136`](verification/python/wp136_astra6_audit_probe.py) reproduces every
+  number in the report's appendix and tests both theorems exhaustively on
+  small models with negative controls — all checks pass.
+- **PO-erasure, now Lean-certified** (`formal/POFreeLift.lean` §299): for NNF
+  concepts with no `∃PP`, `∃PO` or `∀DR` — **`∀PO` permitted** — erasing every
+  `∀PO.D` to `⊤` preserves satisfiability (`erase_equisat`), by a PO-empty
+  witness forest whose disjointness is incomparability. Composing with the
+  certified procedure decides this fragment 𝒟 (`decidableSat_dfrag`,
+  `decidableSetSat_dfrag`) — **the first decidable slice containing `∀PO`**,
+  a strict syntactic extension of the ∀PO-free fragment, with `∀PO.A` witnessed satisfiable
+  (`allpo_satisfiable`) and an in-𝒟 clash refuted (`dfrag_clash_unsat`). Modest by the review's own account: 𝒟's
+  `∀PO` constraints are provably toothless, and `C_bad`/`C_joint` lie outside
+  𝒟 — the architectural gap and F6 are untouched.
+- **Maximal disjointness** (§300): for a fixed order, the largest admissible
+  disjointness is "no common lower bound", realized exactly by principal
+  down-sets (`odMax`, `odMax_largest`, `pdown_*` — Lean). The review's
+  interpretation-level corollary — satisfiability for concepts without
+  `∃PO`/`∀DR` restricts to principal-down-set models — stays theorem-level,
+  probe-corroborated. New vocabulary for the open problem: overlap splits
+  into *forced by a represented common part* versus *optional*, with
+  `C_optional` a concept satisfiable only when overlap has **no** represented
+  common part — so down-set representations provably do not suffice in
+  general.
+- **Ledger: twenty-two reviews, a defect or overclaim in all but three.**
+- The project stays otherwise at rest; the freeze was lifted for this bounded
+  harvest because the review's results were small, checkable and worth
+  certifying at the project's standard before promotion.
 
 ### 2026-09-14 — A fourth review, two papers, and a release tag
 

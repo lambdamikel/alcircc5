@@ -45100,6 +45100,654 @@ theorem cdchain_setSat : SetSatisfiable Cdchain := by
 
 theorem cdchain_satisfiable : Satisfiable Cdchain := setSat_sound cdchain_setSat
 
+/-! #### §299 — THE PO-ERASURE EXTENSION (the Astra 6 review's Theorem 5.4)
+
+The 2026-10-07 external review (`papers/astra-6-latest-review-and-extension/`)
+proved, in prose: for NNF concepts with NO `∃PP`, NO `∃PO` and NO `∀DR` — but
+with `∀PO` PERMITTED — replacing every `∀PO.D` by `⊤` preserves satisfiability.
+Composing the erasure with `decidableSat_cone` then decides a STRICT syntactic
+extension of the `∀PO`-free fragment.  This section is that proof, formalized.
+
+The backward direction is a PO-EMPTY forest: witness words whose entries serve
+only `∃PPI` and `∃DR` demands.  `PPI` births descend inside a component; `DR`
+births open a new one; DISJOINTNESS IS INCOMPARABILITY — legitimate here, and
+only here, because the unique-parent geometry makes incomparability downward
+hereditary, so the residual `PO` is EMPTY and every erased `∀PO` is vacuous.
+Each excluded constructor is necessary (`wp136`, mirroring the review's own
+counterexamples): `∃PO` (`Cpo` itself), `∃PP` and `∀DR` all break erasure. -/
+
+/-- The downward-witness fragment `𝒟`: no `∃PP`, no `∃PO`, no `∀DR`.
+    `∀PO` is PERMITTED — that is the whole point. -/
+def DFrag : Concept → Prop
+  | .top => True
+  | .bot => True
+  | .atom _ => True
+  | .natom _ => True
+  | .and c d => DFrag c ∧ DFrag d
+  | .or c d => DFrag c ∧ DFrag d
+  | .ex r c => r ≠ pp ∧ r ≠ po ∧ DFrag c
+  | .all r c => r ≠ dr ∧ DFrag c
+
+/-- Decidable membership, mirroring `pofreeB`. -/
+def dfragB : Concept → Bool
+  | .top => true
+  | .bot => true
+  | .atom _ => true
+  | .natom _ => true
+  | .and c d => dfragB c && dfragB d
+  | .or c d => dfragB c && dfragB d
+  | .ex r c => decide (r ≠ pp) && decide (r ≠ po) && dfragB c
+  | .all r c => decide (r ≠ dr) && dfragB c
+
+theorem dfragB_iff (c : Concept) : dfragB c = true ↔ DFrag c := by
+  induction c with
+  | top => simp [dfragB, DFrag]
+  | bot => simp [dfragB, DFrag]
+  | atom => simp [dfragB, DFrag]
+  | natom => simp [dfragB, DFrag]
+  | and c d hc hd => simp [dfragB, DFrag, hc, hd]
+  | or c d hc hd => simp [dfragB, DFrag, hc, hd]
+  | ex r c hc => simp [dfragB, DFrag, hc, and_assoc]
+  | all r c hc => simp [dfragB, DFrag, hc]
+
+/-- Erase every `∀PO` restriction, body and all. -/
+def eraseAllPo : Concept → Concept
+  | .top => .top
+  | .bot => .bot
+  | .atom a => .atom a
+  | .natom a => .natom a
+  | .and c d => .and (eraseAllPo c) (eraseAllPo d)
+  | .or c d => .or (eraseAllPo c) (eraseAllPo d)
+  | .ex r c => .ex r (eraseAllPo c)
+  | .all .eq c => .all .eq (eraseAllPo c)
+  | .all .pp c => .all .pp (eraseAllPo c)
+  | .all .ppi c => .all .ppi (eraseAllPo c)
+  | .all .dr c => .all .dr (eraseAllPo c)
+  | .all .po _ => .top
+
+/-- Erasure lands in the certified fragment. -/
+theorem pofree_eraseAllPo : ∀ C, DFrag C → POFree (eraseAllPo C) := by
+  intro C
+  induction C with
+  | top => intro _; trivial
+  | bot => intro _; trivial
+  | atom a => intro _; trivial
+  | natom a => intro _; trivial
+  | and c d ihc ihd => intro h; exact ⟨ihc h.1, ihd h.2⟩
+  | or c d ihc ihd => intro h; exact ⟨ihc h.1, ihd h.2⟩
+  | ex r c ih => intro h; exact ih h.2.2
+  | all r c ih =>
+      intro h
+      cases r with
+      | eq => exact ⟨by decide, ih h.2⟩
+      | pp => exact ⟨by decide, ih h.2⟩
+      | ppi => exact ⟨by decide, ih h.2⟩
+      | dr => exact absurd rfl h.1
+      | po => trivial
+
+/-- Erasure stays inside `𝒟`. -/
+theorem dfrag_eraseAllPo : ∀ C, DFrag C → DFrag (eraseAllPo C) := by
+  intro C
+  induction C with
+  | top => intro _; trivial
+  | bot => intro _; trivial
+  | atom a => intro _; trivial
+  | natom a => intro _; trivial
+  | and c d ihc ihd => intro h; exact ⟨ihc h.1, ihd h.2⟩
+  | or c d ihc ihd => intro h; exact ⟨ihc h.1, ihd h.2⟩
+  | ex r c ih => intro h; exact ⟨h.1, h.2.1, ih h.2.2⟩
+  | all r c ih =>
+      intro h
+      cases r with
+      | eq => exact ⟨by decide, ih h.2⟩
+      | pp => exact ⟨by decide, ih h.2⟩
+      | ppi => exact ⟨by decide, ih h.2⟩
+      | dr => exact absurd rfl h.1
+      | po => trivial
+
+/-- **Forward direction, no fragment hypothesis**: NNF is monotone and `⊤` is
+    weakest, so erasure only ever weakens. -/
+theorem sat_eraseAllPo {α : Type} (I : Interp α) :
+    ∀ (C : Concept) (x : α), sat I x C → sat I x (eraseAllPo C) := by
+  intro C
+  induction C with
+  | top => intro x h; exact h
+  | bot => intro x h; exact h
+  | atom a => intro x h; exact h
+  | natom a => intro x h; exact h
+  | and c d ihc ihd => intro x h; exact ⟨ihc x h.1, ihd x h.2⟩
+  | or c d ihc ihd =>
+      intro x h
+      rcases h with h | h
+      · exact Or.inl (ihc x h)
+      · exact Or.inr (ihd x h)
+  | ex r c ih =>
+      intro x h
+      obtain ⟨y, hy, hr, hc⟩ := h
+      exact ⟨y, hy, hr, ih y hc⟩
+  | all r c ih =>
+      intro x h
+      cases r with
+      | eq => intro y hy hr; exact ih y (h y hy hr)
+      | pp => intro y hy hr; exact ih y (h y hy hr)
+      | ppi => intro y hy hr; exact ih y (h y hy hr)
+      | dr => intro y hy hr; exact ih y (h y hy hr)
+      | po => exact trivial
+
+/-- **Erasure is invisible in a PO-empty interpretation**: with no `PO` edge on
+    the domain, every `∀PO` restriction is vacuous. -/
+theorem sat_of_eraseAllPo_no_po {α : Type} {I : Interp α}
+    (hnp : ∀ x y, I.dom x → I.dom y → I.rho x y ≠ po) :
+    ∀ (C : Concept) (x : α), I.dom x → sat I x (eraseAllPo C) → sat I x C := by
+  intro C
+  induction C with
+  | top => intro x _ h; exact h
+  | bot => intro x _ h; exact h
+  | atom a => intro x _ h; exact h
+  | natom a => intro x _ h; exact h
+  | and c d ihc ihd => intro x hx h; exact ⟨ihc x hx h.1, ihd x hx h.2⟩
+  | or c d ihc ihd =>
+      intro x hx h
+      rcases h with h | h
+      · exact Or.inl (ihc x hx h)
+      · exact Or.inr (ihd x hx h)
+  | ex r c ih =>
+      intro x hx h
+      obtain ⟨y, hy, hr, hc⟩ := h
+      exact ⟨y, hy, hr, ih y hy hc⟩
+  | all r c ih =>
+      intro x hx h
+      cases r with
+      | eq => intro y hy hr; exact ih y hy (h y hy hr)
+      | pp => intro y hy hr; exact ih y hy (h y hy hr)
+      | ppi => intro y hy hr; exact ih y hy (h y hy hr)
+      | dr => intro y hy hr; exact ih y hy (h y hy hr)
+      | po => intro y hy hr; exact absurd hr (hnp x y hx hy)
+
+/-! ##### The PO-empty witness forest -/
+
+/-- A forest occurrence: the word of `(role, body)` demands served, most recent
+    first.  Only `PPI` and `DR` entries are ever generated. -/
+abbrev FOcc := List (Atom × Concept)
+
+/-- All entries of a word are `PPI` births. -/
+def allPpi (p : FOcc) : Prop := ∀ e ∈ p, e.1 = ppi
+
+/-- The forest order: strictly below means reachable by stripping a non-empty
+    all-`PPI` prefix.  No transitive closure is needed — the order is the
+    suffix relation itself, so irreflexivity and transitivity are list facts. -/
+def fLt (u v : FOcc) : Prop := ∃ p, p ≠ [] ∧ u = p ++ v ∧ allPpi p
+
+theorem fLt_irrefl (u : FOcc) : ¬ fLt u u := by
+  rintro ⟨p, hp, he, -⟩
+  have hlen := congrArg List.length he
+  rw [List.length_append] at hlen
+  cases p with
+  | nil => exact hp rfl
+  | cons e p' => rw [List.length_cons] at hlen; omega
+
+theorem fLt_trans {u v w : FOcc} (h1 : fLt u v) (h2 : fLt v w) : fLt u w := by
+  obtain ⟨p, hp, hep, hpp⟩ := h1
+  obtain ⟨q, hq, heq, hpq⟩ := h2
+  refine ⟨p ++ q, ?_, ?_, ?_⟩
+  · intro h
+    cases p with
+    | nil => exact hp rfl
+    | cons e p' => exact nomatch h
+  · rw [hep, heq, List.append_assoc]
+  · intro e he
+    rcases List.mem_append.mp he with h | h
+    · exact hpp e h
+    · exact hpq e h
+
+/-- Disjointness is INCOMPARABILITY — exactly the residual, so `PO` is empty. -/
+def fDj (u v : FOcc) : Prop := u ≠ v ∧ ¬ fLt u v ∧ ¬ fLt v u
+
+theorem focc_cons_ne_nil (e : Atom × Concept) (l : FOcc) : e :: l ≠ [] :=
+  fun h => nomatch h
+
+/-- A `PPI` birth is one step down the forest order. -/
+theorem fLt_cons_ppi (D : Concept) (u : FOcc) : fLt ((ppi, D) :: u) u := by
+  refine ⟨[(ppi, D)], focc_cons_ne_nil _ _, rfl, ?_⟩
+  intro e he
+  cases he with
+  | head => rfl
+  | tail _ h => exact nomatch h
+
+/-- Two suffixes of one list are comparable as suffixes. -/
+theorem append_suffix_cases {β : Type} :
+    ∀ (a b s t : List β), a ++ s = b ++ t →
+      (∃ c, b = a ++ c ∧ s = c ++ t) ∨ (∃ c, a = b ++ c ∧ t = c ++ s)
+  | [], b, s, t, h => Or.inl ⟨b, rfl, h⟩
+  | e :: a', [], s, t, h => Or.inr ⟨e :: a', rfl, h.symm⟩
+  | e :: a', f :: b', s, t, h => by
+      injection h with h1 h2
+      subst h1
+      rcases append_suffix_cases a' b' s t h2 with ⟨c, hb, hs⟩ | ⟨c, ha, ht⟩
+      · exact Or.inl ⟨c, by rw [List.cons_append, hb], hs⟩
+      · exact Or.inr ⟨c, by rw [List.cons_append, ha], ht⟩
+
+/-- The core of downward heredity: incomparability survives descending along
+    all-`PPI` prefixes, because every word's `PPI`-ancestors form a chain. -/
+theorem not_fLt_of_fDj {x y : FOcc} (h : fDj x y) :
+    ∀ (p q : FOcc), allPpi p → allPpi q → ¬ fLt (p ++ x) (q ++ y) := by
+  obtain ⟨hne, hnl, hnr⟩ := h
+  rintro p q hp hq ⟨r, -, he, hr⟩
+  have he' : p ++ x = (r ++ q) ++ y := by rw [he, List.append_assoc]
+  have hrq : allPpi (r ++ q) := by
+    intro e hme
+    rcases List.mem_append.mp hme with hm | hm
+    · exact hr e hm
+    · exact hq e hm
+  rcases append_suffix_cases p (r ++ q) x y he' with ⟨c, hb, hs⟩ | ⟨c, ha, ht⟩
+  · cases c with
+    | nil => exact hne (by simpa using hs)
+    | cons f c' =>
+        refine hnl ⟨f :: c', focc_cons_ne_nil f c', hs, ?_⟩
+        intro e hme
+        have : e ∈ p ++ (f :: c') := List.mem_append.mpr (Or.inr hme)
+        rw [← hb] at this
+        exact hrq e this
+  · cases c with
+    | nil =>
+        have hyx : y = x := by simpa using ht
+        exact hne hyx.symm
+    | cons f c' =>
+        refine hnr ⟨f :: c', focc_cons_ne_nil f c', ht, ?_⟩
+        intro e hme
+        have : e ∈ (r ++ q) ++ (f :: c') := List.mem_append.mpr (Or.inr hme)
+        rw [← ha] at this
+        exact hp e this
+
+theorem fDj_append {x y : FOcc} (h : fDj x y) :
+    ∀ (p q : FOcc), allPpi p → allPpi q → fDj (p ++ x) (q ++ y) := by
+  intro p q hp hq
+  refine ⟨?_, not_fLt_of_fDj h p q hp hq,
+    not_fLt_of_fDj ⟨fun he => h.1 he.symm, h.2.2, h.2.1⟩ q p hq hp⟩
+  intro he
+  obtain ⟨hne, hnl, hnr⟩ := h
+  rcases append_suffix_cases p q x y he with ⟨c, hb, hs⟩ | ⟨c, ha, ht⟩
+  · cases c with
+    | nil => exact hne (by simpa using hs)
+    | cons f c' =>
+        refine hnl ⟨f :: c', focc_cons_ne_nil f c', hs, ?_⟩
+        intro e hme
+        have : e ∈ p ++ (f :: c') := List.mem_append.mpr (Or.inr hme)
+        rw [← hb] at this
+        exact hq e this
+  · cases c with
+    | nil =>
+        have hyx : y = x := by simpa using ht
+        exact hne hyx.symm
+    | cons f c' =>
+        refine hnr ⟨f :: c', focc_cons_ne_nil f c', ht, ?_⟩
+        intro e hme
+        have : e ∈ q ++ (f :: c') := List.mem_append.mpr (Or.inr hme)
+        rw [← ha] at this
+        exact hp e this
+
+theorem le_prefix {u x : FOcc} (h : u = x ∨ fLt u x) :
+    ∃ p, allPpi p ∧ u = p ++ x := by
+  rcases h with h | ⟨p, -, he, hp⟩
+  · refine ⟨[], ?_, ?_⟩
+    · intro e he
+      exact nomatch he
+    · rw [List.nil_append]
+      exact h
+  · exact ⟨p, hp, he⟩
+
+/-- **The forest's ordered-disjoint structure.**  Compare `gOD` (§281): there,
+    disjointness was the downward closure of `DR` births and `PO` the residual;
+    here the residual itself is the disjointness, which is admissible precisely
+    because the order is a forest of unique-parent chains. -/
+def fOD : ODStruct FOcc where
+  lt := fLt
+  disj := fDj
+  ltIrr := fLt_irrefl
+  ltTr := fun _ _ _ h1 h2 => fLt_trans h1 h2
+  djSym := fun _ _ h => ⟨fun he => h.1 he.symm, h.2.2, h.2.1⟩
+  djIrr := fun _ h => h.1 rfl
+  ltNotDj := fun _ _ hl h => h.2.1 hl
+  djDown := by
+    intro x y x' y' hxy hx hy
+    obtain ⟨p, hp, hep⟩ := le_prefix hx
+    obtain ⟨q, hq, heq⟩ := le_prefix hy
+    rw [hep, heq]
+    exact fDj_append hxy p q hp hq
+
+/-- The residual `PO` of the forest is EMPTY. -/
+theorem fOD_no_po (u v : FOcc) : odNet fOD u v ≠ po := by
+  by_cases h1 : u = v
+  · subst h1; rw [odNet_self]; decide
+  · by_cases h2 : fLt u v
+    · rw [odNet_lt fOD h2]; decide
+    · by_cases h3 : fLt v u
+      · rw [odNet_gt fOD h3]; decide
+      · rw [odNet_dj fOD ⟨h1, h2, h3⟩]; decide
+
+/-- `frame_rcc5`, over an arbitrary domain predicate. -/
+theorem frame_rcc5_dom {V : Type} (P : V → Prop) (N : V → V → Atom)
+    (h : Frame N) (val : Nat → V → Prop) : RCC5Interp ⟨P, N, val⟩ where
+  refl_eq := fun x _ => h.refl_eq x
+  eq_id := fun x y _ _ hxy => h.eq_id x y hxy
+  conv_ := fun x y _ _ => h.conv_ x y
+  comp_ := fun x y z _ _ _ => h.comp_ x y z
+
+section ForestUnfold
+
+variable {α : Type} (I : Interp α) (x0 : α)
+
+open Classical in
+/-- Pick a witness for `∃r.D` at `x`, if there is one. -/
+noncomputable def fpick (x : α) (r : Atom) (D : Concept) : α :=
+  if h : ∃ y, I.dom y ∧ I.rho x y = r ∧ sat I y D then h.choose else x
+
+open Classical in
+theorem fpick_spec {x : α} {r : Atom} {D : Concept} (h : sat I x (.ex r D)) :
+    I.dom (fpick I x r D) ∧ I.rho x (fpick I x r D) = r ∧
+      sat I (fpick I x r D) D := by
+  have hex : ∃ y, I.dom y ∧ I.rho x y = r ∧ sat I y D := h
+  unfold fpick
+  rw [dif_pos hex]
+  exact hex.choose_spec
+
+/-- The source point of a word: follow the chosen witnesses from `x0`. -/
+noncomputable def fsrc : FOcc → α
+  | [] => x0
+  | (r, D) :: w => fpick I (fsrc w) r D
+
+/-- The generated words: each entry serves a `PPI` or `DR` demand that is TRUE
+    at its parent's source — the lemma's "fresh downward witness forest". -/
+inductive FGen : FOcc → Prop
+  | root : FGen []
+  | step {w : FOcc} {r : Atom} {D : Concept} :
+      FGen w → (r = ppi ∨ r = dr) → sat I (fsrc I x0 w) (.ex r D) →
+      FGen ((r, D) :: w)
+
+theorem fgen_tail {w : FOcc} {e : Atom × Concept}
+    (h : FGen I x0 (e :: w)) : FGen I x0 w := by
+  cases h with
+  | step hw _ _ => exact hw
+
+theorem fgen_append : ∀ (p : FOcc) {v : FOcc}, FGen I x0 (p ++ v) → FGen I x0 v
+  | [], _, h => h
+  | _ :: p', _, h => fgen_append p' (fgen_tail I x0 h)
+
+theorem fsrc_dom (_hI : RCC5Interp I) (hx0 : I.dom x0) :
+    ∀ {u : FOcc}, FGen I x0 u → I.dom (fsrc I x0 u) := by
+  intro u h
+  induction h with
+  | root => exact hx0
+  | step _ _ hsat _ => exact (fpick_spec I hsat).1
+
+/-- Sources ascend along the forest order by genuine `PP` steps: each `PPI`
+    birth is a model `PP` edge read upward, and `comp(PP,PP) = {PP}` composes
+    them along the chain. -/
+theorem fsrc_lt_pp (hI : RCC5Interp I) (hx0 : I.dom x0) :
+    ∀ (p : FOcc) (v : FOcc), p ≠ [] → allPpi p → FGen I x0 (p ++ v) →
+      I.rho (fsrc I x0 (p ++ v)) (fsrc I x0 v) = pp := by
+  intro p
+  induction p with
+  | nil => intro v hp; exact absurd rfl hp
+  | cons e p' ih =>
+      intro v _ hppi hgen
+      obtain ⟨r, D⟩ := e
+      have hr : r = ppi := hppi (r, D) (List.Mem.head _)
+      subst hr
+      have hw : FGen I x0 (p' ++ v) := fgen_tail I x0 hgen
+      have hsat : sat I (fsrc I x0 (p' ++ v)) (.ex ppi D) := by
+        cases hgen with
+        | step _ _ hs => exact hs
+      have hdw : I.dom (fsrc I x0 (p' ++ v)) := fsrc_dom I x0 hI hx0 hw
+      have hspec := fpick_spec I hsat
+      have hstep : I.rho (fsrc I x0 ((ppi, D) :: (p' ++ v)))
+          (fsrc I x0 (p' ++ v)) = pp := by
+        have hc := hI.conv_ (fsrc I x0 (p' ++ v))
+          (fpick I (fsrc I x0 (p' ++ v)) ppi D) hdw hspec.1
+        rw [hspec.2.1] at hc
+        exact hc
+      cases p' with
+      | nil => exact hstep
+      | cons f p'' =>
+          have hmid := ih v (fun h => nomatch h)
+            (fun e' he' => hppi e' (List.Mem.tail _ he')) hw
+          have hdu : I.dom (fsrc I x0 ((ppi, D) :: (f :: p'' ++ v))) :=
+            (fpick_spec I hsat).1
+          have hdv : I.dom (fsrc I x0 v) :=
+            fsrc_dom I x0 hI hx0 (fgen_append I x0 (f :: p'') hw)
+          have hcomp := hI.comp_ (fsrc I x0 ((ppi, D) :: (f :: p'' ++ v)))
+            (fsrc I x0 (f :: p'' ++ v)) (fsrc I x0 v) hdu hdw hdv
+          rw [hstep, hmid] at hcomp
+          simp [comp] at hcomp
+          exact hcomp
+
+/-- The forest interpretation: generated words as the domain, the forest's
+    `odNet` as the relation, valuations pulled back along the source map. -/
+noncomputable def forestInterp : Interp FOcc :=
+  ⟨FGen I x0, odNet fOD, fun a u => I.val a (fsrc I x0 u)⟩
+
+open Classical in
+theorem forestInterp_rcc5 : RCC5Interp (forestInterp I x0) :=
+  frame_rcc5_dom (FGen I x0) (odNet fOD) (odNet_frame fOD) _
+
+/-- **The truth transfer** (the review's (5.1)): truth at the source implies
+    truth at the occurrence, for every concept of the erased fragment.  The
+    excluded constructors are used exactly once each: `∃PP`/`∃PO` have no
+    generated children, `∀DR` would see the whole incomparability relation, and
+    `∀PO` would inspect the residual — which is empty, but the hypothesis is
+    what certifies there is nothing else to check. -/
+theorem forest_truth (hI : RCC5Interp I) (hx0 : I.dom x0) :
+    ∀ (D : Concept), DFrag D → POFree D → ∀ (u : FOcc), FGen I x0 u →
+      sat I (fsrc I x0 u) D → sat (forestInterp I x0) u D := by
+  intro D
+  induction D with
+  | top => intro _ _ u _ _; exact trivial
+  | bot => intro _ _ u _ h; exact h.elim
+  | atom a => intro _ _ u _ h; exact h
+  | natom a => intro _ _ u _ h; exact h
+  | and c d ihc ihd =>
+      rintro ⟨hc, hd⟩ ⟨pc, pd⟩ u hu ⟨h1, h2⟩
+      exact ⟨ihc hc pc u hu h1, ihd hd pd u hu h2⟩
+  | or c d ihc ihd =>
+      rintro ⟨hc, hd⟩ ⟨pc, pd⟩ u hu (h | h)
+      · exact Or.inl (ihc hc pc u hu h)
+      · exact Or.inr (ihd hd pd u hu h)
+  | ex r c ih =>
+      rintro ⟨hrp, hro, hc⟩ pc u hu hsat
+      cases r with
+      | pp => exact absurd rfl hrp
+      | po => exact absurd rfl hro
+      | eq =>
+          obtain ⟨y, hy, hr, hcy⟩ := hsat
+          have he : fsrc I x0 u = y :=
+            hI.eq_id (fsrc I x0 u) y (fsrc_dom I x0 hI hx0 hu) hy hr
+          rw [← he] at hcy
+          exact ⟨u, hu, odNet_self fOD u, ih hc pc u hu hcy⟩
+      | ppi =>
+          have hgen : FGen I x0 ((ppi, c) :: u) :=
+            FGen.step hu (Or.inl rfl) hsat
+          have hlt : fLt ((ppi, c) :: u) u := fLt_cons_ppi c u
+          exact ⟨(ppi, c) :: u, hgen, odNet_gt fOD hlt,
+            ih hc pc _ hgen (fpick_spec I hsat).2.2⟩
+      | dr =>
+          have hgen : FGen I x0 ((dr, c) :: u) :=
+            FGen.step hu (Or.inr rfl) hsat
+          have hne : u ≠ (dr, c) :: u := by
+            intro h
+            have hlen := congrArg List.length h
+            rw [List.length_cons] at hlen
+            omega
+          have hn1 : ¬ fLt u ((dr, c) :: u) := by
+            rintro ⟨p, -, he, -⟩
+            have hlen := congrArg List.length he
+            rw [List.length_append, List.length_cons] at hlen
+            omega
+          have hn2 : ¬ fLt ((dr, c) :: u) u := by
+            rintro ⟨p, hp, he, hppi⟩
+            cases p with
+            | nil => exact hp rfl
+            | cons f p' =>
+                have h1 : (dr, c) = f := by injection he
+                have h2 : f.1 = ppi := hppi f (List.Mem.head _)
+                rw [← h1] at h2
+                exact nomatch h2
+          exact ⟨(dr, c) :: u, hgen, odNet_dj fOD ⟨hne, hn1, hn2⟩,
+            ih hc pc _ hgen (fpick_spec I hsat).2.2⟩
+  | all r c ih =>
+      rintro ⟨hrd, hc⟩ hpf u hu hsat
+      cases r with
+      | dr => exact absurd rfl hrd
+      | po => exact absurd rfl hpf.1
+      | eq =>
+          intro v hv hrel
+          have he : u = v := odNet_eq_inv fOD hrel
+          subst he
+          have hdu : I.dom (fsrc I x0 u) := fsrc_dom I x0 hI hx0 hu
+          exact ih hc hpf.2 u hu (hsat (fsrc I x0 u) hdu (hI.refl_eq _ hdu))
+      | pp =>
+          intro v hv hrel
+          have hlt : fLt u v := odNet_pp_inv fOD hrel
+          obtain ⟨p, hp, he, hppi⟩ := hlt
+          have hpp : I.rho (fsrc I x0 u) (fsrc I x0 v) = pp := by
+            rw [he]
+            exact fsrc_lt_pp I x0 hI hx0 p v hp hppi (he ▸ hu)
+          exact ih hc hpf.2 v hv
+            (hsat (fsrc I x0 v) (fsrc_dom I x0 hI hx0 hv) hpp)
+      | ppi =>
+          intro v hv hrel
+          have hlt : fLt v u := odNet_ppi_inv fOD hrel
+          obtain ⟨p, hp, he, hppi⟩ := hlt
+          have hpp : I.rho (fsrc I x0 v) (fsrc I x0 u) = pp := by
+            rw [he]
+            exact fsrc_lt_pp I x0 hI hx0 p u hp hppi (he ▸ hv)
+          have hconv := hI.conv_ (fsrc I x0 v) (fsrc I x0 u)
+            (fsrc_dom I x0 hI hx0 hv) (fsrc_dom I x0 hI hx0 hu)
+          rw [hpp] at hconv
+          exact ih hc hpf.2 v hv
+            (hsat (fsrc I x0 v) (fsrc_dom I x0 hI hx0 hv) hconv)
+
+end ForestUnfold
+
+/-- **THE PO-ERASURE EQUIVALENCE** (the review's Theorem 5.4): on `𝒟`, erasing
+    every `∀PO` preserves satisfiability in BOTH directions. -/
+theorem erase_equisat (C : Concept) (h : DFrag C) :
+    Satisfiable C ↔ Satisfiable (eraseAllPo C) := by
+  constructor
+  · rintro ⟨α, I, hI, x, hx, hsat⟩
+    exact ⟨α, I, hI, x, hx, sat_eraseAllPo I C x hsat⟩
+  · rintro ⟨α, I, hI, x, hx, hsat⟩
+    have hd : DFrag (eraseAllPo C) := dfrag_eraseAllPo C h
+    have hp : POFree (eraseAllPo C) := pofree_eraseAllPo C h
+    have htr : sat (forestInterp I x) [] (eraseAllPo C) :=
+      forest_truth I x hI hx (eraseAllPo C) hd hp [] FGen.root hsat
+    refine ⟨FOcc, forestInterp I x, forestInterp_rcc5 I x, [], FGen.root, ?_⟩
+    exact sat_of_eraseAllPo_no_po
+      (fun u v _ _ => fOD_no_po u v) C [] FGen.root htr
+
+/-- **THE EXTENDED DECISION PROCEDURE**: `𝒟` is decided by erasing and running
+    the certified `∀PO`-free procedure.  A strict syntactic extension —
+    `∀PO.A ∈ 𝒟` is not `∀PO`-free. -/
+def decidableSat_dfrag (C0 : Concept) (h : DFrag C0) :
+    Decidable (Satisfiable C0) :=
+  @decidable_of_iff _ _ (erase_equisat C0 h).symm
+    (decidableSat_cone (eraseAllPo C0) (pofree_eraseAllPo C0 h))
+
+/-- The same, under concrete set semantics, via §295's equivalence. -/
+def decidableSetSat_dfrag (C0 : Concept) (h : DFrag C0) :
+    Decidable (SetSatisfiable C0) :=
+  @decidable_of_iff _ _ (satisfiable_iff_set C0) (decidableSat_dfrag C0 h)
+
+/-- The strictness witness: `∀PO.A` is in `𝒟` and outside the fragment. -/
+theorem allpo_dfrag : DFrag (.all po (.atom 0)) := ⟨by decide, trivial⟩
+
+theorem allpo_not_pofree : ¬ POFree (.all po (.atom 0)) := fun h => h.1 rfl
+
+/-- Non-vacuity: `∀PO.A` is satisfiable — the one-point interpretation has no
+    `PO` edge, so the restriction is vacuous. -/
+theorem allpo_satisfiable : Satisfiable (.all po (.atom 0)) := by
+  refine ⟨Unit, ⟨fun _ => True, fun _ _ => eq, fun _ _ => True⟩,
+    ⟨fun _ _ => rfl, fun x y _ _ _ => rfl, fun _ _ _ _ => rfl,
+     fun _ _ _ _ _ _ => List.Mem.head _⟩, (), trivial, ?_⟩
+  intro y _ hy
+  exact nomatch hy
+
+/-- And the extension still refutes: an in-𝒟 clash is unsatisfiable. -/
+theorem dfrag_clash_unsat : ¬ Satisfiable (.and (.atom 0) (.natom 0)) := by
+  rintro ⟨α, I, hI, x, hx, hsat⟩
+  exact hsat.2 hsat.1
+
+/-! #### §300 — MAXIMAL DISJOINTNESS AND PRINCIPAL DOWN-SETS (the review's §4)
+
+For a FIXED strict order there is a unique LARGEST admissible disjointness:
+no common lower bound.  Principal down-sets realize exactly it.  This is the
+order-level half of the review's normalization theorem; the interpretation-level
+truth-preservation statement (for concepts without `∃PO` and `∀DR`) remains
+prose + probe (`wp136`), recorded as theorem-level. -/
+
+/-- The same order, with disjointness maximized: no common lower bound. -/
+def odMax {N : Type} (O : ODStruct N) : ODStruct N where
+  lt := O.lt
+  disj := fun x y => ¬ ∃ z, (z = x ∨ O.lt z x) ∧ (z = y ∨ O.lt z y)
+  ltIrr := O.ltIrr
+  ltTr := O.ltTr
+  djSym := fun x y h ⟨z, hz1, hz2⟩ => h ⟨z, hz2, hz1⟩
+  djIrr := fun x h => h ⟨x, Or.inl rfl, Or.inl rfl⟩
+  ltNotDj := fun x y hl h => h ⟨x, Or.inl rfl, Or.inr hl⟩
+  djDown := by
+    rintro x y x' y' hxy hx hy ⟨z, hz1, hz2⟩
+    have le_trans : ∀ {a b c : N}, (a = b ∨ O.lt a b) → (b = c ∨ O.lt b c) →
+        (a = c ∨ O.lt a c) := by
+      rintro a b c (rfl | h1) (rfl | h2)
+      · exact Or.inl rfl
+      · exact Or.inr h2
+      · exact Or.inr h1
+      · exact Or.inr (O.ltTr a b c h1 h2)
+    exact hxy ⟨z, le_trans hz1 hx, le_trans hz2 hy⟩
+
+/-- **Maximality** (the review's Lemma 4.1): every admissible disjointness over
+    the same order is contained in `odMax`'s. -/
+theorem odMax_largest {N : Type} (O O' : ODStruct N)
+    (hlt : ∀ a b, O'.lt a b ↔ O.lt a b) :
+    ∀ x y, O'.disj x y → (odMax O).disj x y := by
+  rintro x y hd ⟨z, hz1, hz2⟩
+  have hz1' : z = x ∨ O'.lt z x := hz1.imp id (hlt z x).mpr
+  have hz2' : z = y ∨ O'.lt z y := hz2.imp id (hlt z y).mpr
+  exact O'.djIrr z (O'.djDown x y z z hd hz1' hz2')
+
+/-- The principal down-set of `x`, as a predicate. -/
+def pdown {N : Type} (O : ODStruct N) (x : N) : N → Prop :=
+  fun z => z = x ∨ O.lt z x
+
+theorem pdown_self {N : Type} (O : ODStruct N) (x : N) : pdown O x x :=
+  Or.inl rfl
+
+/-- Down-set inclusion is exactly the order (the review's Lemma 4.2, first half). -/
+theorem pdown_subset_iff {N : Type} (O : ODStruct N) (x y : N) :
+    (∀ z, pdown O x z → pdown O y z) ↔ (x = y ∨ O.lt x y) := by
+  constructor
+  · intro h; exact h x (pdown_self O x)
+  · rintro (rfl | hxy) z hz
+    · exact hz
+    · rcases hz with rfl | hzx
+      · exact Or.inr hxy
+      · exact Or.inr (O.ltTr z x y hzx hxy)
+
+/-- Down-set disjointness is exactly maximal disjointness (second half). -/
+theorem pdown_disjoint_iff {N : Type} (O : ODStruct N) (x y : N) :
+    (∀ z, ¬ (pdown O x z ∧ pdown O y z)) ↔ (odMax O).disj x y :=
+  ⟨fun h ⟨z, h1, h2⟩ => h z ⟨h1, h2⟩, fun h z ⟨h1, h2⟩ => h ⟨z, h1, h2⟩⟩
+
+/-- Down-sets are pairwise distinct (injectivity without extensionality). -/
+theorem pdown_inj {N : Type} (O : ODStruct N) {x y : N}
+    (h : ∀ z, pdown O x z ↔ pdown O y z) : x = y := by
+  have h1 := (pdown_subset_iff O x y).mp (fun z hz => (h z).mp hz)
+  have h2 := (pdown_subset_iff O y x).mp (fun z hz => (h z).mpr hz)
+  rcases h1 with rfl | h1
+  · rfl
+  · rcases h2 with he | h2
+    · exact he.symm
+    · exact absurd (O.ltTr x y x h1 h2) (O.ltIrr x)
+
 end POFreeLift
 #print axioms POFreeLift.blocks_len_le
 #print axioms POFreeLift.mixedPath_len_le
@@ -45373,3 +46021,12 @@ end POFreeLift
 #print axioms POFreeLift.cpo_refuted_at_one
 #print axioms POFreeLift.erase_cpo_satisfiable
 #print axioms POFreeLift.allBodies_po_nil_of_pofree
+#print axioms POFreeLift.erase_equisat
+#print axioms POFreeLift.decidableSat_dfrag
+#print axioms POFreeLift.decidableSetSat_dfrag
+#print axioms POFreeLift.forest_truth
+#print axioms POFreeLift.allpo_satisfiable
+#print axioms POFreeLift.dfrag_clash_unsat
+#print axioms POFreeLift.odMax_largest
+#print axioms POFreeLift.pdown_disjoint_iff
+#print axioms POFreeLift.pdown_inj

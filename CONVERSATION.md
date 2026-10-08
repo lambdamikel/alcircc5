@@ -8529,3 +8529,50 @@ independence it cannot establish; "found no concept term that forces" the grid
 rather than "showed none can"; the 2001 paper credited for the even-odd chain;
 crediting Marx–Reynolds called standard). Michael's decision: the papers make
 no statement either way about what Lutz and Wolter knew of report7.
+
+## 2026-10-08 — the 22nd review (Astra 6): audit passed; a bounded harvest, then back to rest
+
+**The review.** Michael supplied an 11-page report by Astra 6 (served through
+OpenAI Codex, whose name is on the PDF byline; authorship per Michael, recorded
+in the archive README), dated 2026-10-07, of the release-2026-09-14 snapshot:
+`papers/astra-6-latest-review-and-extension/`. Three parts: an audit of the
+∀PO-free decidability argument (verdict: **no gap found** — an accurate,
+honestly-scoped source audit, no kernel run claimed); two new prose theorems;
+and an explicitly subjective outlook on AI-assisted resolution. It is the
+first review of the certified fragment to find nothing to correct — in the
+artifact or in its presentation. Ledger: twenty-two reviews, a defect or
+overclaim in all but three.
+
+**Verification before opinion.** Both proofs were checked by hand (correct as
+written — the forest lemma's load-bearing step, that incomparability is
+downward-hereditary in a unique-parent forest, holds) and probed:
+`wp136_astra6_audit_probe.py` reproduces every number in the report's appendix
+(41 OD frames on 3 points; boundary tables 480/0, 12/0, 12/0) and tests both
+theorems against exhaustive small-model search with negative controls. All
+checks pass.
+
+**The harvest, per Michael's instruction to implement the recommendations.**
+The freeze was lifted for one bounded step: `POFreeLift.lean` gained §299 —
+the PO-erasure theorem formalized end to end (`DFrag`, `eraseAllPo`,
+`erase_equisat`, capstones `decidableSat_dfrag` / `decidableSetSat_dfrag`),
+via a PO-empty witness forest in which disjointness is incomparability,
+legitimate because the unique-parent geometry makes incomparability downward
+hereditary. The fragment 𝒟 (no ∃PP, ∃PO, ∀DR; **∀PO permitted**) is thereby
+decided — the first decidable slice containing ∀PO, a strict extension of the
+certified fragment, with `∀PO.A` witnessed satisfiable. §300 certifies the
+order-level maximal-disjointness result (`odMax`, `odMax_largest`,
+`pdown_subset_iff`, `pdown_disjoint_iff`): for a fixed order the largest
+admissible disjointness is "no common lower bound", realized exactly by
+principal down-sets. The interpretation-level normalization theorem stays
+theorem-level, probe-corroborated — labelled so.
+
+**Weighting, recorded honestly.** The erasure extension is modest — the
+review itself says 𝒟's ∀PO constraints are provably erasable, and
+`C_bad`/`C_joint` lie outside 𝒟, so the architectural gap and F6 are
+untouched. The more durable contribution is the forced-vs-optional overlap
+split with `C_optional` (satisfiable only when some overlap has no
+represented common part): down-set representations provably do not suffice
+in general, and the split feeds the pair-matrix mosaic lead.
+
+**The tag `release-2026-09-14` was moved** to include the archive, wp136, the
+Lean extension and this entry, per Michael. The project returns to rest.

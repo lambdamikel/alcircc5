@@ -47,6 +47,16 @@ paper; those abstract the Lean work and point here.
 >    `papers/pofree_fragment_arxiv.pdf`. `Round19Transport`'s decision theorem is
 >    a *conditional* whose premise is open; F6 is the argued, unformalized route
 >    to that premise, not the premise itself.
+> 7. **2026-10-08.** A 22nd review (Astra 6) audited the fragment argument and
+>    found **no gap**; its PO-erasure theorem is now formalized here as §299:
+>    `decidableSat_dfrag` / `decidableSetSat_dfrag` decide the fragment 𝒟
+>    (no `∃PP`/`∃PO`/`∀DR`, **`∀PO` permitted**) by erasing `∀PO` and running
+>    `decidableSat_cone` — the first decidable slice containing `∀PO`, via a
+>    PO-empty witness forest whose disjointness is incomparability
+>    (`erase_equisat`, `forest_truth`). §300 adds the order-level
+>    maximal-disjointness lemmas (`odMax`, `odMax_largest`, `pdown_*`).
+>    Verified against the review by `wp136`; archive in
+>    `papers/astra-6-latest-review-and-extension/`.
 >
 > **For the current state, read `ASSEMBLY_DESIGN.md` §§266–298** and the head
 > status paragraph of `CLAUDE.md`, not this file.

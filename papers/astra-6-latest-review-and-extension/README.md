@@ -37,10 +37,13 @@ product it was served through). The 22nd review on the project's ledger.
   exactly as claimed; `C_optional` confirmed).
 - **The erasure theorem is now Lean-certified**: `formal/POFreeLift.lean`
   §299 (`erase_equisat`, `decidableSat_dfrag`, `decidableSetSat_dfrag`), by a
-  PO-empty witness forest whose disjointness is incomparability. §300
+  PO-empty witness forest whose disjointness is incomparability; non-vacuity
+  `allpo_satisfiable` (zero axioms), refutation `dfrag_clash_unsat`. §300
   certifies the order-level half of the maximal-disjointness result
-  (`odMax`, `odMax_largest`, `pdown_*`). The interpretation-level
-  normalization theorem remains theorem-level, probe-corroborated.
+  (`odMax`, `odMax_largest`, `pdown_subset_iff`, `pdown_disjoint_iff`,
+  `pdown_inj` — all zero axioms). The interpretation-level normalization
+  theorem remains theorem-level, probe-corroborated (`wp136` B). Built on the
+  pinned Lean 4.33.1; capstone axioms `propext`/`Classical.choice`/`Quot.sound`.
 
 ## Assessment adopted into the project record
 
