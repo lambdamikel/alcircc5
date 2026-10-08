@@ -449,11 +449,11 @@ March--July 2026.
 \column{.48\textwidth}
 \begin{itemize}
   \item $\sim$4 months, $\sim$\alert{30 repair rounds}
-  \item \alert{21 adversarial reviews} --- a defect or overclaim found in
-        \emph{all but two}
-  \item \alert{94} self-contained verification probes (each re-derives the
+  \item \alert{22 adversarial reviews} --- a defect or overclaim found in
+        all but \emph{three} (the 22nd found nothing to correct)
+  \item \alert{95} self-contained verification probes (each re-derives the
         algebra from set semantics)
-  \item 5 Lean files, $\sim$\alert{51{,}000 lines}, \alert{zero \texttt{sorry}}
+  \item 5 Lean files, $\sim$\alert{52{,}000 lines}, \alert{zero \texttt{sorry}}
   \item 2 working reasoners, cross-validated on a \alert{911-case} suite
 \end{itemize}
 \column{.48\textwidth}
@@ -583,6 +583,9 @@ Result & Meaning & File\\
 \midrule
 \textcolor{good}{\textbf{$\forall\PO$-free decided}} \tiny(2026-08-29) &
   \normalsize a \emph{decision procedure}, raw input &
+  \texttt{POFreeLift}\\
+\textcolor{good}{\textbf{PO-erasure ext.}} \tiny(2026-10-08) &
+  \normalsize decides a slice \emph{with} $\forall\PO$ &
   \texttt{POFreeLift}\\
 \textcolor{good}{\textbf{Abstract $=$ concrete}} &
   composition table $\Leftrightarrow$ real sets (cf.\ L\&W Thm~23) &
@@ -842,7 +845,7 @@ not a tree.)}
 \begin{itemize}
   \item months-long rigorous formal development, $\sim$30 rounds
   \item genuinely useful \emph{adversarial} review (with machine-checked witnesses)
-  \item a $\sim$51{,}000-line kernel-checked Lean development
+  \item a $\sim$52{,}000-line kernel-checked Lean development
   \item working, validated software
 \end{itemize}
 \column{.48\textwidth}
@@ -891,7 +894,7 @@ to call it was the human's --- \alert{we cannot automate that}.
         memory of the construction found what warm reviewers missed ---
         every time it mattered. Make it a standard step.
   \item \textbf{Don't trust --- verify.} We cross-checked load-bearing claims
-        mechanically: 94 probes that re-derive the algebra from set
+        mechanically: 95 probes that re-derive the algebra from set
         semantics, and ultimately the Lean kernel. The machine checks are
         the ground truth, \alert{not the model's confidence}.
   \item \textbf{Label honestly.} \emph{Strongly supported} $\neq$
@@ -929,15 +932,16 @@ adversarial review, honest labels --- matter more than ever.}
 \begin{frame}{The results, by verification level}
 \begin{center}
 \scriptsize
-\renewcommand{\arraystretch}{1.05}
+\renewcommand{\arraystretch}{0.98}
 \begin{tabular}{@{}p{2.3cm}p{6.1cm}p{2.6cm}@{}}
 \toprule
 \textbf{Level} & \textbf{Results} & \textbf{What it means}\\
 \midrule
 \textcolor{good}{\textbf{Lean-certified}} &
-  \textbf{$\forall\PO$-free decidability} (raw, NNF, sets); abstract $=$
-  concrete; soundness pipeline; faithfulness; normal form; conditional
-  reductions \emph{as conditionals} &
+  \textbf{$\forall\PO$-free decidability} (raw, NNF, sets; $+$ the
+  PO-erasure slice \emph{containing} $\forall\PO$); abstract $=$ concrete;
+  soundness pipeline; faithfulness; normal form; conditional reductions
+  \emph{as conditionals} &
   kernel-checked, stated axioms\\
 \addlinespace
 \textbf{Published} &
@@ -977,9 +981,10 @@ adversarial review, honest labels --- matter more than ever.}
 \begin{itemize}
   \item NO $\Rightarrow$ our route can close; YES $\Rightarrow$ it fails, and
         undecidability would still need a grid.
-  \item One \alert{sub-problem off the pile}: drop $\forall\PO$ and it is
-        decided, in the kernel --- three cold reviews; now its own paper.
-  \item Reproducible: 5 Lean files ($\sim$51k lines, 0 \texttt{sorry}), 94
+  \item One \alert{sub-problem off the pile}: $\forall\PO$ dropped ---
+        decided in the kernel (own paper); extended 2026-10 to a slice
+        \alert{containing} $\forall\PO$.
+  \item Reproducible: 5 Lean files ($\sim$52k lines, 0 \texttt{sorry}), 95
         probes, 2 reasoners, full log.
 \end{itemize}
 \vfill

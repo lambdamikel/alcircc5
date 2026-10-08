@@ -8576,3 +8576,24 @@ in general, and the split feeds the pair-matrix mosaic lead.
 
 **The tag `release-2026-09-14` was moved** to include the archive, wp136, the
 Lean extension and this entry, per Michael. The project returns to rest.
+
+**Addendum (same day): the articles, synced.** Michael asked whether the papers
+had been updated — they had not, and one sentence in both had just been made
+false by the tag move ("the Lean sources differ from `certified-fragment-2026-08-29`
+only in the spelling of comments"; they now add §§299–300). Synced: the
+fragment paper (now 20pp) gains §7.4 "An extension: concepts whose ∀PO
+restrictions are erasable" — theorem, proof sketch, Lean names, necessity of
+each exclusion, the normalization behind it — plus the Astra 6 review as its
+fifth review, a provenance bullet, theorem-map rows, corrected build
+instructions (pinned toolchains) and figures, and one abstract sentence. The
+overview (now 57pp) gains the fifth-review-and-extension paragraph in the
+cone-scheme section, status- and artifact-table rows, the roster and
+acknowledgment credit for Astra 6, ledger counts (22 reviews, all but three),
+95 probes, and the corrected tag sentence. The slides (43pp): counts, a
+certified-table row, the levels table, the closing slide — edited slides
+rendered and checked. The explainers (`why_po_free_decidable` 19pp,
+`WHY_PO_FREE_IS_DECIDABLE.md`, `WHY_ITS_HARD.md` §11) and
+`approaches/ConeScheme` gain calibrated extension notes. Unchanged on purpose:
+`two_tier_quotient`, `po_free_fragment_ALCIRCC5`, `LRCC8_vs_ALCIRCC8` and all
+archived packets — the extension does not touch their content. The tag was
+moved once more to include the sync.

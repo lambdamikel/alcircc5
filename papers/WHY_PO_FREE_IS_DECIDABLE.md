@@ -39,7 +39,7 @@ than a conjecture — though the procedure that was finally certified needs no
 width bound at all — and the boundary is one constructor wide. The PDF develops
 all of this.
 
-## Current status (2026-09-14)
+## Current status (2026-10-08)
 
 **Certified decidable across all four quadrants**, including the mixing one
 (∃PO + ∃PP) that was open when this note was first written. Three capstones in
@@ -83,6 +83,16 @@ abstract-versus-sets equivalence is a machine-checked special case — and that
 the logic coincides with its substructure logic over regular closed regions of
 ℝⁿ (Theorem 24), so the fragment result holds verbatim there too. Neither says
 anything about decidability.
+
+**Extension (2026-10-08).** An external review by Astra 6 proved — and the
+artifact now certifies (`erase_equisat`, `decidableSat_dfrag`, §299) — that
+the boundary moves past `∀PO`-freeness itself: concepts *containing* `∀PO`
+are also decided, provided `∃PP`, `∃PO` and `∀DR` are absent, by erasing each
+`∀PO.D` to `⊤` and running the certified procedure. Inside that fragment the
+`∀PO` restrictions are provably vacuous (the witness forest has *no* PO pair
+at all), so this is a calibrated extension, not a dent in the boundary story:
+each excluded constructor is necessary (`wp136`), and the full-logic
+obstruction is untouched.
 
 *Full-logic* decidability stays **open**.
 

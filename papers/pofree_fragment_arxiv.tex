@@ -66,7 +66,7 @@
 \small with AI assistants:\\
 \small Claude Opus~4.6, Opus~4.7, Opus~4.8, Fable~5, Opus~5 \;(Anthropic)\\
 \small GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol \;(OpenAI)}
-\date{September 2026}
+\date{September 2026; revised October 2026}
 
 \begin{document}
 \maketitle
@@ -97,9 +97,13 @@ and the equivalence of the abstract semantics with a semantics of plain
 sets---is formalized in Lean~4 as an executable decision procedure with no
 \texttt{sorry} and fragment membership as its only hypothesis. By a
 representation theorem of Lutz and Wolter the result also holds for
-substructure semantics over regular closed regions of $\reals^n$. The search
-space is doubly exponential, so the contribution is a decidability theorem,
-not a practical reasoner.
+substructure semantics over regular closed regions of $\reals^n$. An October
+2026 revision adds a certified extension, following an external review by
+Astra~6: concepts that do contain $\forall\PO$ are also decided, provided
+$\exists\PP$, $\exists\PO$ and $\forall\DR$ are absent, by erasing each
+$\forall\PO$ restriction --- the first decidable slice containing
+$\forall\PO$. The search space is doubly exponential, so the contribution is
+a decidability theorem, not a practical reasoner.
 \end{abstract}
 
 \medskip
@@ -875,6 +879,52 @@ substructure may omit, and the corresponding logics are different; for RCC5
 they are undecidable~\cite[Cor.~26]{LutzWolter2006}. The corollary is also
 external to the formalization, which proves the set version only.
 
+\subsection{An extension: concepts whose \texorpdfstring{$\forall\PO$}{forall-PO} restrictions are erasable}
+\label{ssec:erasure}
+
+An external review by Astra~6 (October 2026)~\cite{Astra6Review} proved that
+the boundary can be pushed past $\forall\PO$-freeness itself, and the proof is
+now part of the formalization. Let $\mathcal D$ be the NNF concepts with no
+occurrence of $\exists\PP$, $\exists\PO$ or $\forall\DR$ --- but with
+$\forall\PO$ \emph{permitted} --- and let $\mathrm{er}(C)$ replace every
+subformula $\forall\PO.D$ by $\top$.
+
+\begin{theorem}[PO-erasure~\cite{Astra6Review}; Lean: \code{erase\_equisat}]
+\label{thm:erasure}
+For every $C\in\mathcal D$, $C$ is satisfiable iff $\mathrm{er}(C)$ is.
+Hence satisfiability on $\mathcal D$ is decidable
+(\code{decidableSat\_dfrag}, \code{decidableSetSat\_dfrag}): erase, then run
+the procedure of Theorem~\ref{thm:main} on the $\forall\PO$-free result.
+\end{theorem}
+
+The forward direction is monotonicity. The backward direction builds, from any
+model of $\mathrm{er}(C)$, a witness forest in which \emph{PO is empty}: only
+$\exists\PPI$ and $\exists\DR$ demands generate children, the order is the
+ancestor relation of the resulting unique-parent forest, and disjointness is
+\emph{incomparability} --- admissible here, and only here, because in such a
+forest incomparability is downward hereditary (a common descendant of two
+nodes would place both on one ancestor chain). With no $\PO$ pair on the
+domain, every erased $\forall\PO$ is vacuous, so the model satisfies $C$
+itself. This is a split forest in the sense of \S\ref{ssec:splitforest} with
+the overlap stripped out entirely.
+
+The extension is a strict syntactic one --- $\forall\PO.A\in\mathcal D$ is not
+$\forall\PO$-free (\code{allpo\_dfrag}, \code{allpo\_not\_pofree},
+\code{allpo\_satisfiable}) --- but a calibrated one: inside $\mathcal D$ the
+$\forall\PO$ restrictions are provably toothless, which is exactly what the
+construction shows. Each excluded constructor is necessary. With $\exists\PO$,
+$\exists\PO.\top\sqcap\forall\PO.\bot$ is unsatisfiable while its erasure is
+not; the review's witnesses for $\exists\PP$ and $\forall\DR$
+(\texttt{wp136}) force two witnesses into a $\PO$ relation that a surviving
+$\forall\PO$ then contradicts, so erasure fails there too. The review also
+proved a normalization theorem behind this: for a \emph{fixed} order, the
+largest admissible disjointness relates exactly the pairs with no common
+lower bound, and principal down-sets realize it (Lean: \code{odMax},
+\code{odMax\_largest}, \code{pdown\_subset\_iff},
+\code{pdown\_disjoint\_iff}); its interpretation-level corollary --- concepts
+without $\exists\PO$ and $\forall\DR$ can be evaluated over principal
+down-sets --- is not formalized and rests on the review's proof and our probe.
+
 \subsection{A one-sided test for the full logic}
 \label{ssec:full}
 
@@ -923,7 +973,7 @@ witnesses, not only along the edges that created them.
 The development is written in Lean~4 core, without mathlib, and lives in
 \texttt{formal/POFreeLift.lean}, with the forward normal form and the core of
 $\eta$ also in \texttt{formal/RCC5NormalForm.lean}~\cite{Artifact}. The file is
-cumulative---$45{,}375$ lines, most of them earlier routes
+cumulative---$46{,}032$ lines, most of them earlier routes
 (\S\ref{sec:reflection})---and the cone scheme with its extensions occupies its
 last few thousand lines. The development log \texttt{ASSEMBLY\_DESIGN.md},
 \S\S267--297, records it step by step.
@@ -969,6 +1019,12 @@ Raw formulas, Theorem~\ref{thm:raw} & \code{nnfP\_correct}, \code{pofree\_nnfP},
 Set semantics & \code{decidableSetSat}\\
 Refutation, Corollary~\ref{cor:unsat} & \code{coneScheme\_unsat\_full},
   \code{cpo\_refuted\_at\_one}\\
+PO-erasure, Theorem~\ref{thm:erasure} & \code{DFrag}, \code{eraseAllPo},
+  \code{forest\_truth}, \code{erase\_equisat}, \code{decidableSat\_dfrag},
+  \code{decidableSetSat\_dfrag}\\
+Maximal disjointness (order level), \S\ref{ssec:erasure} & \code{odMax},
+  \code{odMax\_largest}, \code{pdown\_subset\_iff}, \code{pdown\_disjoint\_iff},
+  \code{pdown\_inj}\\
 \bottomrule
 \end{tabular}
 \caption{Results and their Lean declarations, all in
@@ -985,9 +1041,11 @@ The capstones have these types:
 
 \subsection{Checking it}
 
-The file builds with Lean~4.33.1 in under a minute
-(\texttt{cd formal \&\& lean POFreeLift.lean}), with no errors, warnings or
-\texttt{sorry}; earlier builds used 4.32.0. The source contains no
+The file builds with Lean~4.33.1 and 4.32.0 in under a minute each
+(\texttt{cd formal \&\& elan run leanprover/lean4:v4.33.1 lean
+POFreeLift.lean}), with no errors, warnings or \texttt{sorry}. Newer
+toolchains (4.34+) deprecate idioms the file uses; build with the pinned
+versions. The source contains no
 \texttt{axiom} declaration, no \texttt{native\_decide}, and no \texttt{unsafe},
 \texttt{partial} or \texttt{implemented\_by}. The capstones depend on the axioms
 \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}. Classical
@@ -1040,6 +1098,11 @@ source level by a fourth~\cite{GPT56SolReview}.
   \item The fourth, by GPT-5.6~Sol, located every capstone of the decision
     chain in the source and found no hidden hypothesis; its findings concerned
     how the companion overview described the result.
+  \item A fifth, by Astra~6 (October 2026)~\cite{Astra6Review}, audited the
+    argument of this paper and its inspected Lean dependencies and found
+    \emph{no gap} --- the first review with nothing to correct --- and
+    contributed the extension of \S\ref{ssec:erasure}, which we verified
+    (\texttt{wp136}) and then formalized.
 \end{itemize}
 No review found a counterexample to the theorem.
 
@@ -1190,6 +1253,11 @@ specifically.
     non-$\EQ$ demand to a fresh occurrence~\cite{GPT56Sol}. Later, in a cold
     review of the overview, it recommended separating this result into a
     focused paper and wrote a draft of one~\cite{GPT56SolReview}.
+  \item \textbf{Astra~6} audited the argument (October 2026, finding no gap)
+    and proved the PO-erasure extension and the maximal-disjointness
+    normalization in prose~\cite{Astra6Review}; this project verified both
+    (\texttt{wp136}) and carried the erasure theorem and the order-level
+    normalization lemmas into the Lean artifact (\S\ref{ssec:erasure}).
   \item \textbf{Three fresh model sessions} reviewed the formalization cold
     (\S\ref{ssec:reviews}); their findings are incorporated.
 \end{itemize}
@@ -1209,9 +1277,11 @@ against the control layer; and it records provenance in full.
 \url{https://github.com/lambdamikel/alcircc5}. The formal files are
 \texttt{formal/POFreeLift.lean} and \texttt{formal/RCC5NormalForm.lean}. This
 paper, the overview, and the Lean artifact are frozen at git tag
-\texttt{release-2026-09-14}; its Lean sources differ from those at the earlier
-tag \texttt{certified-fragment-2026-08-29} only in the spelling of comments.
-Cite the tag or its commit hash rather than the \texttt{master} branch. The review and draft are in
+\texttt{release-2026-09-14} (moved 2026-10-08 to include the erasure
+extension); relative to \texttt{certified-fragment-2026-08-29} the Lean
+sources add \S\S299--300 and differ otherwise only in the spelling of
+comments. Cite the tag or its commit hash rather than the \texttt{master}
+branch. The review and draft are in
 \texttt{papers/gpt-5.6-latest-overview-paper-review-and-recommendation/}, and
 the overview is \texttt{papers/overview\_arxiv.tex}.
 
@@ -1324,6 +1394,16 @@ GPT-5.6 Sol (OpenAI), prompted by M.\ Wessel.
   $\ALCIRCC{5}$: the cone-scheme blueprint.
 \newblock Technical report, August 2026.
 \newblock Directory \texttt{papers/cone\_scheme\_plan/}.
+
+\bibitem{Astra6Review}
+Astra 6 (OpenAI), prompted by M.\ Wessel.
+\newblock $\mathcal{ALCI}_{\mathrm{RCC5}}$: audit of the decidability claim
+  and two partial results beyond the $\forall\PO$-free fragment.
+\newblock Technical report, 7~October 2026.
+\newblock Directory
+  \texttt{papers/astra-6-latest-review-and-extension/}, archived with
+  verification notes; theorems formalized in
+  \texttt{formal/POFreeLift.lean} \S\S299--300.
 
 \bibitem{GPT56SolReview}
 GPT-5.6 Sol (OpenAI), prompted by M.\ Wessel.

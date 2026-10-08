@@ -39,5 +39,11 @@ compositions (e.g. `C_bad`, `C_joint`) are out of its reach.
 **Probes:** WP133–WP135 in [`verification/python/`](../../verification/python/).
 
 **Result.** The ∀PO-free fragment is **decidable, with a kernel-checked decision
-procedure**. Decidable is not runnable: the signature space is doubly
+procedure** — and, since 2026-10-08, extended by a certified corollary
+(`erase_equisat`, `decidableSat_dfrag`, §299) to the PO-erasure fragment 𝒟,
+which *contains* `∀PO` (no `∃PP`/`∃PO`/`∀DR`): the first decidable slice with
+`∀PO`, via a PO-empty witness forest whose disjointness is incomparability.
+Contributed by the Astra 6 review
+([archive](../../papers/astra-6-latest-review-and-extension/)), verified by
+`wp136`. Decidable is not runnable: the signature space is doubly
 exponential.

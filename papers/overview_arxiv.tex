@@ -14,7 +14,7 @@
 \usepackage{xcolor}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
   pdftitle={Can Agentic AI Settle a 20-Year-Old Description Logic Problem? On the Decidability of ALCI-RCC5: a Machine-Checked Decidable Fragment and a Map of What Remains Open},
-  pdfauthor={Michael Wessel (with AI assistants: Claude Opus 4.6-4.8, Claude Fable 5, Claude Opus 5/Anthropic and GPT-5.4, GPT-5.4 Pro, GPT-5.5, GPT-5.6 Pro, GPT-5.6 Sol/OpenAI)},
+  pdfauthor={Michael Wessel (with AI assistants: Claude Opus 4.6-4.8, Claude Fable 5, Claude Opus 5/Anthropic and GPT-5.4, GPT-5.4 Pro, GPT-5.5, GPT-5.6 Pro, GPT-5.6 Sol, Astra 6/OpenAI)},
   pdfsubject={Description logics; qualitative spatial reasoning; decidability of concept satisfiability},
   pdfkeywords={description logics, ALCI, RCC5, region connection calculus, qualitative spatial reasoning, decidability, concept satisfiability, patchwork property, Lean, interactive theorem proving, AI-assisted mathematics}}
 
@@ -75,7 +75,7 @@ Decidable Fragment and a Map of What Remains Open}
 \small LambdaMikel@Home \quad\textbullet\quad \texttt{miacwess@gmail.com}\\[0.45em]
 \small with AI assistants:\\
 \small Claude Opus~4.6, Opus~4.7, Opus~4.8, Fable~5, Opus~5 \;(Anthropic)\\
-\small GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol \;(OpenAI)}
+\small GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol, Astra~6 \;(OpenAI)}
 \date{September 2026}
 
 \begin{document}
@@ -147,8 +147,8 @@ methodologies $\rightarrow$ Spatial and physical reasoning.
 
 The mathematical content of this paper was produced by AI assistants
 (Anthropic's Claude Opus~4.6, 4.7 and 4.8, Claude Fable~5 and Claude
-Opus~5; and OpenAI's GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro and
-GPT-5.6~Sol), prompted, steered, and
+Opus~5; and OpenAI's GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro,
+GPT-5.6~Sol and Astra~6), prompted, steered, and
 reviewed by Wessel, who posed the problem,
 supplied the central intuitions and directions, orchestrated the
 review--repair cycles, and takes responsibility for the framing.
@@ -432,8 +432,9 @@ taxonomy of Wessel's original report (\S\ref{sec:reasoners}). It is
 evidence, not a decision theorem.
 
 \paragraph{The honest bottom line.} After roughly thirty repair rounds and
-twenty-one adversarial reviews, one fragment is settled with a
-kernel-checked decision procedure; the local RCC5 algebra the proof attempts
+twenty-two adversarial reviews, one fragment is settled with a
+kernel-checked decision procedure --- and, since October 2026, extended by a
+certified corollary to a slice containing $\forall\PO$; the local RCC5 algebra the proof attempts
 needed is characterized, and its normal form certified; and the remaining
 difficulty of the principal certificate architecture is located precisely,
 with the steps that are still only argued marked as such. We offer the work
@@ -455,8 +456,10 @@ them is the single easiest way to misread the project.
 \midrule
 \emph{Lean-certified} & the decision procedure for the \emph{whole}
 $\forall\PO$-free fragment, on raw input and under set semantics
-(\code{decidableFSat}, \code{decidableSat\_cone}, \code{decidableSetSat});
-the one-sided full-logic \textsc{unsat} test; the both-direction
+(\code{decidableFSat}, \code{decidableSat\_cone}, \code{decidableSetSat})
+and its PO-erasure extension to the fragment $\mathcal D$, which contains
+$\forall\PO$ (\code{decidableSat\_dfrag}); the one-sided full-logic
+\textsc{unsat} test; the both-direction
 ordered-disjoint normal form; certificate soundness; finite-\emph{type}
 Hintikka faithfulness; the conditional reductions of
 \S\ref{ssec:approach-lean}, \emph{as conditionals} & kernel-checked theorem
@@ -1873,7 +1876,28 @@ project's own probes and prose. All are corrected. A fourth review
 (GPT-5.6~Sol, 2026-09-09)~\cite{GPT56SolReview}, of the Lean sources and this
 overview together rather than of a build, located every capstone of the
 decision chain in the source and found no defect in it; its findings concerned
-how this paper stated its claims, and are corrected in this version.
+how this paper stated its claims, and are corrected in this version. A fifth
+(Astra~6, 2026-10-07)~\cite{Astra6Review} audited the argument end to end and
+found \emph{no gap} --- the first review of this result with nothing to
+correct --- and proved an extension that is now formalized: on the fragment
+$\mathcal D$ of concepts with no $\exists\PP$, $\exists\PO$ or $\forall\DR$
+--- $\forall\PO$ \emph{permitted} --- erasing every $\forall\PO.D$ to $\top$
+preserves satisfiability, so composing the erasure with
+\code{decidableSat\_cone} decides $\mathcal D$
+(\code{erase\_equisat}, \code{decidableSat\_dfrag}): the first decidable
+slice containing $\forall\PO$, by a PO-empty witness forest whose
+disjointness is incomparability. The extension is calibrated by its own
+counterexamples --- each excluded constructor is necessary, and
+$C_{\mathrm{bad}}$, $C_{\mathrm{joint}}$ lie outside $\mathcal D$, so the
+architectural gap below is untouched. The same review's order-level
+normalization --- for a fixed order the largest admissible disjointness
+relates exactly the pairs with no common lower bound, realized by principal
+down-sets (\code{odMax}, \code{odMax\_largest}, \code{pdown\_*}) --- splits
+overlap into \emph{forced by a represented common part} versus
+\emph{optional}, with a concept (\texttt{wp136}) satisfiable only when some
+overlap has \emph{no} represented common part; that split is new vocabulary
+for the full-logic problem and feeds the pair-matrix mosaic lead of
+\S\ref{sec:conclusion}.
 
 The honest label, and it differs from this paper's standing one: the
 $\forall\PO$-free fragment is \emph{machine-certified} --- the Lean kernel
@@ -2713,7 +2737,7 @@ table and test harness, so this is cross-validation with some common-mode
 risk, not two wholly independent oracles; and the model verifier confirms
 explicit \emph{finite} SAT witnesses, not UNSAT verdicts or infinite-model
 SAT. Beyond
-the reasoners, $94$ self-contained verification work packages
+the reasoners, $95$ self-contained verification work packages
 (\texttt{verification/python/}, WP1--WP135) cross-check the finite
 combinatorial content of every proof route against the RCC5 composition
 table \emph{re-derived from finite set semantics}, so the underlying
@@ -2818,8 +2842,9 @@ to inspection.
 finding: a \emph{cold} reviewer consistently found defects that a
 \emph{warm} reviewer (primed by the construction) missed---including, on
 this project, unsoundness proofs and scope errors that two hot audits had
-passed over. Across twenty-one reviews, a defect or overclaim was found in
-all but two. We recommend cold, cross-lineage adversarial review as a
+passed over. Across twenty-two reviews, a defect or overclaim was found in
+all but three --- the twenty-second, an audit of the certified fragment by
+Astra~6, was the first to find nothing to correct. We recommend cold, cross-lineage adversarial review as a
 default intermediate step in AI-assisted mathematics, not an optional
 one.
 
@@ -3050,8 +3075,10 @@ the crispest target, qualitative F6, is decidability itself in other clothes.
 concepts---and, since 2026-08-29, a \emph{machine-certified decision
 procedure} for it (\code{decidableFSat}, \code{decidableSat\_cone},
 \code{decidableSetSat}), covering all four quadrants, taking raw input, sound
-and complete for concrete set semantics, and attacked by three independent
-cold reviews without a counterexample; (ii) a machine-\emph{certified} RCC5
+and complete for concrete set semantics, attacked by three independent
+cold reviews without a counterexample, audited clean by a fourth, and
+extended (2026-10-08, certified) to the erasable-$\forall\PO$ fragment
+$\mathcal D$ --- the first decidable slice containing $\forall\PO$; (ii) a machine-\emph{certified} RCC5
 normal form; (iii) a
 machine-checked \emph{conditional} reduction for the full logic (complete
 finite candidate lists for a verified checker $\Rightarrow$ decidable), whose
@@ -3147,8 +3174,10 @@ and GPT-5.6~Pro's canonical-representation note is
 The repository is at \url{https://github.com/lambdamikel/alcircc5}. This
 version of the paper, its companion paper, and the Lean artifact they
 describe are frozen at the git tag \texttt{release-2026-09-14}; its Lean
-sources differ from those at the earlier tag
-\texttt{certified-fragment-2026-08-29} only in the spelling of comments. For
+sources extend those at the earlier tag
+\texttt{certified-fragment-2026-08-29} by \S\S299--300 (the certified
+PO-erasure extension, 2026-10-08) and differ otherwise only in the spelling
+of comments. For
 reproducibility cite \texttt{release-2026-09-14} (or its commit hash), not
 the mutable \texttt{master} branch. It supersedes
 \texttt{arxiv-candidate-2026-07-18}, which predates the $\forall\PO$-free
@@ -3178,6 +3207,9 @@ $\forall\PO$-free \textbf{decidability}, NNF input & Lean-certified & \texttt{PO
 \quad\ldots under \emph{concrete set} semantics & Lean-certified & \texttt{POFreeLift.lean}: \code{decidableSetSat} & ---\\
 Abstract $=$ concrete satisfiability (\emph{full} logic) & Lean-certified (a case of \cite[Thm.~23]{LutzWolter2006}) & \texttt{POFreeLift.lean}: \code{satisfiable\_iff\_set} & ---\\
 One-sided \textsc{unsat} test (\emph{full} logic) & Lean-certified & \texttt{POFreeLift.lean}: \code{coneScheme\_unsat\_full} & \texttt{wp134}\\
+PO-erasure extension ($\mathcal D$, contains $\forall\PO$) & Lean-certified & \texttt{POFreeLift.lean}: \code{erase\_equisat}, \code{decidableSat\_dfrag} & \texttt{wp136}\\
+Maximal disjointness / principal down-sets (order level) & Lean-certified & \texttt{POFreeLift.lean}: \code{odMax\_largest}, \code{pdown\_disjoint\_iff} & \texttt{wp136}\\
+Normalization truth-preservation (no $\exists\PO$/$\forall\DR$) & Theorem-level & the archived Astra~6 review, \S4 & \texttt{wp136}\\
 Completeness of the cone scheme & Lean-certified & \texttt{POFreeLift.lean}: \code{coneScheme\_complete} & \texttt{wp135}\\
 \addlinespace
 The two \emph{arguments} for the fragment ($K(C_0)$, extraction) & Theorem-level & \texttt{papers/po\_free\_fragment\_ALCIRCC5}; the certified route above is a \emph{third}, and uses neither & \texttt{wp87}\\
@@ -3230,7 +3262,11 @@ GPT-5.6~Sol also wrote the most recent cold review of this
 overview~\cite{GPT56SolReview}, which recommended splitting the finished
 fragment result into a focused paper and supplied a first draft of one; the
 companion paper~\cite{PofreeFragmentPaper} was then written afresh by
-Claude~Opus~5 from the Lean artifact, following that recommendation. The $\forall\PO$-free (PO-coherent) fragment
+Claude~Opus~5 from the Lean artifact, following that recommendation.
+\textbf{Astra~6} audited the certified fragment (October 2026, finding no
+gap) and contributed the PO-erasure extension and the maximal-disjointness
+normalization~\cite{Astra6Review}; Claude~Fable~5 verified both and carried
+them into the Lean artifact. The $\forall\PO$-free (PO-coherent) fragment
 of \S\ref{ssec:approach-finite} has a specific lineage worth recording: the
 human author seeded it with the \emph{PP-kernel} idea (collapse
 same-type occurrences on a $\PP$-chain into a kernel node with a reflexive
@@ -3768,6 +3804,16 @@ GPT-5.6 Sol (OpenAI), prompted by M.\ Wessel.
   \S\S267--297, with capstones \code{decidableFSat},
   \code{decidableSat\_cone}, \code{decidableSetSat} in
   \texttt{formal/POFreeLift.lean}.
+
+\bibitem{Astra6Review}
+Astra 6 (OpenAI), prompted by M.\ Wessel.
+\newblock $\ALCIRCC{5}$: audit of the decidability claim and two partial
+  results beyond the $\forall\PO$-free fragment.
+\newblock Technical report, 7~October 2026.
+\newblock Directory
+  \texttt{papers/astra-6-latest-review-and-extension/} (archived with
+  verification notes); the erasure theorem and the order-level normalization
+  are formalized in \texttt{formal/POFreeLift.lean} \S\S299--300.
 
 \bibitem{GPT56SolReview}
 GPT-5.6 Sol (OpenAI), prompted by M.\ Wessel.

@@ -30,7 +30,7 @@ it in August after the fragment was machine-certified, and in September after
 a further cold review. The routes it describes
 are due to several models and are attributed individually in
 \S\ref{sec:ledger}.}}
-\date{2026-08-29, revised 2026-09-14}
+\date{2026-08-29, revised 2026-09-14 and 2026-10-08}
 
 \begin{document}
 \maketitle
@@ -76,7 +76,17 @@ representable by regions (their Theorem~23, of which the certified
 abstract-versus-sets equivalence is a special case), and the logic coincides
 with its substructure logic over regular closed regions of $\mathbb{R}^n$
 (Theorem~24), so the fragment result holds verbatim in that topological
-reading too.}}
+reading too.
+
+\smallskip
+\textbf{Update (2026-10-08):} an external review by Astra~6 proved, and the
+artifact now certifies (\code{erase\_equisat}, \code{decidableSat\_dfrag},
+\S299), a strict extension: concepts \emph{containing} $\forall\PO$ are also
+decided, provided $\exists\PP$, $\exists\PO$ and $\forall\DR$ are absent ---
+erase each $\forall\PO.D$ to $\top$ and run the certified procedure. Inside
+that fragment the $\forall\PO$ restrictions are provably vacuous (the witness
+forest has no $\PO$ pair at all), so the boundary story of this explainer is
+unchanged: $\forall\PO$ is harmless exactly where it cannot bite.}}
 \end{center}
 
 \section{The claim}\label{sec:claim}
@@ -1053,6 +1063,11 @@ sorries). Cold-reviewed three times without a counterexample, and audited
 at source level by a fourth review (2026-09-14) that found no defect.
 Decidable, \emph{not} runnable: the signature space is doubly
 exponential\\[0.3em]
+PO-erasure extension: the fragment $\mathcal D$ (no $\exists\PP$,
+$\exists\PO$, $\forall\DR$; $\forall\PO$ \emph{permitted}) is decidable by
+erasing $\forall\PO$ & \textbf{Certified} (2026-10-08,
+\code{erase\_equisat}, \code{decidableSat\_dfrag}; contributed by the
+Astra~6 review, verified by \code{wp136})\\[0.3em]
 The two \emph{arguments} of this paper ($K(C_0)$ bound, extraction,
 assembly --- Routes 1 and 2) & \textbf{Theorem-level} --- argued, twice,
 independently; \emph{not} end-to-end formalized. The certified route above

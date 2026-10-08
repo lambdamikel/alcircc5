@@ -386,8 +386,10 @@ the *project* has produced something real along the way, and it's worth
 stating plainly.
 
 - **An adversarial method.** Every proposed proof was handed to a fresh,
-  skeptical reviewer whose job was to break it. Across twenty-one such reviews,
-  all but two found a genuine flaw — usually a place where an argument
+  skeptical reviewer whose job was to break it. Across twenty-two such reviews,
+  all but three found a genuine flaw --- and the twenty-second, an external
+  audit of the decided fragment (October 2026), was the first to find nothing
+  to correct at all — usually a place where an argument
   *assumed* the hard thing instead of establishing it. A
   recurring lesson: a **cold** reviewer (one with no memory of how the
   proof was built) consistently found flaws that a warm reviewer, primed
@@ -400,6 +402,12 @@ stating plainly.
   machine-checked decision procedure whose only hypothesis is membership in
   that fragment (it has its own paper,
   [`papers/pofree_fragment_arxiv.pdf`](papers/pofree_fragment_arxiv.pdf)).
+  An October 2026 review by Astra 6 then pushed the line a little further, and
+  the machine checks that too: descriptions *may* say "every region
+  overlapping this one is such-and-such" after all, provided they never ask
+  for an overlapping or containing witness and never universally constrain
+  disjoint regions --- because then the overlap statements are provably
+  toothless and can be erased.
   That is not a side result; it is the sharpest statement available of where
   the difficulty of the full problem lives, and the reason is worth one
   sentence. Whenever the composition rules leave a pair's relation open, you
