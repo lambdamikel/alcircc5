@@ -169,6 +169,33 @@ Report: [`reports/wp26_round15_cluster_quasimodels.txt`](reports/wp26_round15_cl
 
 
 
+### `python/wp137_poset_bridge_probe.py` — the poset bridge (2026-11-11)
+
+Companion to [`formal/PosetBridge.lean`](../formal/PosetBridge.lean) and
+[`papers/poset_bridge/`](../papers/poset_bridge/README.md). Derives the RCC5
+table from set semantics and re-checks, by brute force, what the Lean file
+proves: (A) the table; (B) every strict partial order on ≤ 5 points is a closed
+network when every incomparable pair is read `PO` (4,473 orders), and every
+closed atomic network on ≤ 4 points has a strict-partial-order `PP`-reduct whose
+incomparable pairs are exactly its `PO`-or-`DR` pairs (962 networks); (C) truth
+transfers pointwise, both ways, on 6,000 random models with random concepts,
+with two negative controls (a bare `∀PO` and a bare `∃DR` do **not** transfer);
+(D) the ℤ-spiral satisfies Marzec & Tendera's spiral, no strict partial order on
+≤ 6 points does (built-in DPLL; ≤ 9 points if `python-sat` is installed), and
+the controls for that search fire; (E) `K2` is satisfiable in an explicit
+three-region set model, and the **cover-tree tableau answers UNSAT on it** while
+the quasimodel oracle answers SAT; `C_cyc` has no model on ≤ 4 points and gains
+one when its `∀PO` conjuncts are erased.
+
+Run: `python3 python/wp137_poset_bridge_probe.py` (about 30 s)
+Report: [`reports/wp137_poset_bridge_probe.txt`](reports/wp137_poset_bridge_probe.txt)
+
+Part E imports the two reasoners from `src/`; a PASS there means *the tableau's
+wrong verdict is reproduced*, in the same sense as WP15's PASS.
+
+
+
+
 ## Reproducing the reports
 
 ```
