@@ -6244,6 +6244,11 @@ duplicated 70-line proof was deleted rather than kept in parallel.
 
 ### 51.1 The cap has NO internal disjointness — forced, not chosen
 
+⚠ **CORRECTED (cold review, F2 — see §67.2).** The argument below establishes
+**no cap↔cap `DR`** and nothing more. "A cap is always poset-shaped" is false as
+stated, and `amDisj` **is** a simplification: a cap can be `DR` to a base node
+(`odAmalgDR`, `witness_frame`).
+
 Two cap nodes both sit above the whole closure `U`, so `djDown` would push their
 disjointness down onto `U`'s elements and make them disjoint from *themselves*.
 So `amDisj` is not a simplification: **a cap is always poset-shaped**

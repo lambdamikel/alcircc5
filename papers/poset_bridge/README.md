@@ -59,9 +59,10 @@ Three places in the repository rely on this sentence or a variant of it:
 (`papers/pofree_fragment_arxiv.tex` §Related work, and again in its discussion;
 `papers/overview_arxiv.tex` conclusion, "a decidable logic"; `CONVERSATION.md`
 2026-09-14, "decidable, Szwast & Tendera 2013". It entered through GPT-5.6 Sol's
-review, which states it the same way; that archive is left as it is. The two
-papers are corrected in the same change set; the `CONVERSATION.md` entry is
-history and stays, with a new entry after it.)
+review, which states it the same way; that archive is left as it is, with an
+erratum in its folder's README. The two papers are corrected in the same change
+set; the `CONVERSATION.md` entry is history and stays, with a new entry after
+it. The public record of both corrections is [`ERRATA.md`](../../ERRATA.md).)
 
 The record is:
 
@@ -311,6 +312,16 @@ Consequences for the text:
   The accurate statement: its SAT answers are still unrefuted; it is
   **incomplete** on concepts whose horizontal witnesses must be nested, with
   `K2` as the witness.
+* The wrong direction is UNSAT, and subsumption is tested as unsatisfiability.
+  So the tableau's subsumption verdicts are evidence only where something
+  independent agrees. The GIS taxonomy still matches the 2003 result edge for
+  edge, and `wp87`'s agreement inside the ∀PO-free fragment is unaffected: the
+  failure needs a `∀PO` between the two witnesses, and without one `PO` is
+  always admissible between them.
+* The tableau paper's "key insight" — `PP` is not an open sibling cross-edge —
+  is true of nodes that are in sibling subtrees. It does not license treating
+  two `DR`/`PO` witnesses of one node as siblings, which is what the
+  implementation does. The paper now carries an erratum box.
 * The 911-case agreement with the oracle did not exercise this pattern. That is
   the same lesson the April gap taught, from the other side: there the suite
   missed an unsoundness, here an incompleteness.

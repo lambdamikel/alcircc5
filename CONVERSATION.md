@@ -8686,3 +8686,50 @@ survives `DR` is untried. (iii) The natural next theorem is decidability for
 existence of a suitable disjointness relation is a four-point condition, of
 which `C_bad` is the simplest instance. (iv) The people to ask are the authors
 of the cited papers.
+
+## 2026-11-11 (later) — "anything we need to retract?": the audit, and `ERRATA.md`
+
+Michael's question after the entry above. Answered by searching the whole
+repository for every statement the day's findings contradict, and for every
+statement of the earlier cold review of the mixed quadrant that might still
+stand uncorrected.
+
+**Two statements were wrong and had been published.** Both are in
+[`ERRATA.md`](ERRATA.md), with where each stood and what each changes.
+
+* E1 — the withdrawn Szwast–Tendera theorem, cited as standing (overview,
+  fragment paper, the 2026-09-14 entry here; origin: the archived GPT-5.6 Sol
+  review). No theorem used it; it was a lead, and as a lead it is gone.
+* E2 — "no verdict of the cover-tree tableau has ever been shown wrong". The
+  tableau is incomplete (`K2`). The audit found the claim's root one level
+  down, in the tableau paper itself: its "key insight" is true of nodes in
+  sibling subtrees and was applied to two witnesses of one node, which need not
+  be siblings. That paper now carries an erratum box. The reasoner is not
+  fixed; its header documents the defect.
+
+**A consequence that had not been said.** The wrong direction is UNSAT, and
+subsumption is tested as unsatisfiability. So the tableau's subsumption
+verdicts are evidence only where something independent agrees. The 911-suite
+count, the GIS agreement and `wp87` remain true as stated, and `wp87` also in
+substance: the failure needs a `∀PO`.
+
+**Found sound.** Every Lean-certified result; the claims about infinity (the
+`PP`-tower was never called the only source); the design record's retractions
+from the mixed-quadrant review, which were already made — one in-place marker
+was missing at §51.1 and is added.
+
+**Not tested, and worth testing first.** Whether the certificate format of
+`Round19Transport.lean` admits a certificate for the spiral. The spiral is
+satisfiable, has only infinite models and asks for no proper part or superpart;
+in its ℤ-model no three regions are pairwise incomparable. If it has a finite
+certificate, F6 has passed a
+test it had not met. If it has none, qualitative F6 is false for this
+certificate format. Nobody has looked.
+
+**Left to Michael.** Tag `release-2026-09-14` still points at the uncorrected
+papers.
+
+**A build trap, recorded.** The first rebuild of the PDFs in this session used
+a TeX installation without `cm-super`; pdfTeX then substitutes bitmap fonts
+without an error, and the page counts do not change. Caught by comparing font
+lists against the committed PDFs, and rebuilt.

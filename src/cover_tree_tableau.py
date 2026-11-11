@@ -25,6 +25,25 @@ The main difference from the quasimodel reasoner:
   - This correctly handles the 7 "cyclic-model" concepts that lack
     tree models but are satisfiable.
 
+KNOWN INCOMPLETENESS (found 2026-11-11; not fixed here):
+  The sibling check treats any two DR/PO witnesses of one node as siblings
+  and admits only {DR,PO} between them. Two such witnesses can be NESTED,
+  and a concept can force that. The procedure then answers UNSAT on a
+  satisfiable concept:
+
+      K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B) ⊓ ∃PO.(B ⊓ ¬A)
+
+  Model: r = {1,3}, a = {1,4}, b = {1,4,5}; A at a, B at b; r PO a, r PO b,
+  a PP b. Lean: `k2_sat` in formal/PosetBridge.lean. Reproduction and the
+  control (drop ∀DR.¬B and the answer is SAT): verification/python/
+  wp137_poset_bridge_probe.py, part E. So an UNSAT answer -- and therefore
+  a subsumption verdict -- is not evidence by itself. This particular
+  failure needs a ∀PO and a ∀DR acting between two horizontal witnesses of
+  one node: without a ∀PO, PO is always admissible between them. No wrong
+  SAT answer is known. Admitting PP/PPI in the pairwise check is NOT a fix
+  by itself: three witnesses can be forced into a cycle a ⊂ b ⊂ c ⊂ a that
+  no pairwise test sees.
+
 Usage:
   python3 cover_tree_tableau.py              # run built-in tests
   python3 cover_tree_tableau.py --verbose    # detailed output

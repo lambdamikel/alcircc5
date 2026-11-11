@@ -862,8 +862,9 @@ certification pass itself.
   argument enforces full composition closure, and the soundness crux
   --- the chain-unfolding lift --- was kernel-checked
   (\code{POFreeLift.lean}, zero sorries). Additionally, two
-  \emph{independent} decision procedures (the cover-tree tableau and
-  the quasimodel reasoner) were run on 244 random and curated
+  \emph{independent} reasoners (the cover-tree tableau and
+  the quasimodel reasoner; neither is a proven decision procedure, and the
+  tableau is now known to be incomplete outside the fragment) were run on 244 random and curated
   $\forall\PO$-free concepts with zero mismatches (\code{wp87}) --- a
   clean cross-validation, because the quasimodel oracle's one known
   blind spot needs a $\forall\PO$ and so cannot arise in the fragment.

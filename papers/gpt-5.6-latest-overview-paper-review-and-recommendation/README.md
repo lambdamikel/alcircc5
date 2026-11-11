@@ -46,3 +46,17 @@ repository commit `795b270` (the state of 2026-09-03). They are kept here unmodi
 - Finding O5 quotes a sentence that is not verbatim in the paper, but its substance was right: the
   overview's conclusion claimed no rejected-but-satisfiable or accepted-but-unsatisfiable concept
   was ever exhibited, which the project's own record contradicts.
+
+## Erratum (2026-11-11): one citation in the review is to a withdrawn theorem
+
+The review's related-work discussion says that Szwast and Tendera "prove decidability" of
+two-variable logic with one transitive relation (STACS 2013), and offers it as a comparator
+for the two-layer encoding. That theorem was **withdrawn by its authors** in 2018
+(arXiv:1804.09447): only the fragment with transitively guarded witnesses is decided, finite
+satisfiability is decidable (Pratt-Hartmann 2018), and general satisfiability is open, also
+for a single partial order (Marzec & Tendera, J. Logic Comput. 2026).
+
+We adopted the sentence without checking it, in both papers and in the 2026-09-14 closing
+entry of `CONVERSATION.md`. The papers are corrected; the review itself is left as written.
+Nothing else in the review depends on it. See [`../poset_bridge/`](../poset_bridge/README.md)
+and [`../../ERRATA.md`](../../ERRATA.md).

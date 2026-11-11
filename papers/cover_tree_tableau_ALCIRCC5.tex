@@ -86,6 +86,34 @@ counterexamples} across 12.2\,M enumerated models.  The results are
 theoretical proposals and serves as computational evidence.}}
 \end{center}
 
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{Erratum (11~November 2026).}\; The procedure described here is
+\emph{incomplete}.  The concept
+\[
+  K_2 \;=\; \exists\PO.(A \sqcap \forall\PO.\neg B \sqcap
+  \forall\DR.\neg B) \;\sqcap\; \exists\PO.(B \sqcap \neg A)
+\]
+is satisfiable---by three regions $r$ and $a \subset b$, both overlapping
+$r$, with $A$ at $a$ and $B$ at $b$---and the implementation answers
+\textsc{unsat}.  The cause is the sibling check of
+\S\ref{sec:sibling}: it treats any two $\DR/\PO$ witnesses of one node as
+lying in sibling subtrees, and so admits only $\DR$ and $\PO$ between them.
+Two such witnesses may be nested, and here they must be.  The ``key
+insight'' of the abstract is therefore sound for nodes that \emph{are} in
+sibling subtrees, but it does not license the restriction of
+equation~\eqref{eq:sibling-compat}.  No wrong \textsc{sat} answer is known;
+the 911-concept suite does not contain the pattern.  Machine-checked:
+\texttt{k2\_sat} in \texttt{formal/PosetBridge.lean}; reproduction in
+\texttt{verification/python/wp137\_poset\_bridge\_probe.py}, part~E.
+
+Separately, the sentence in \S\ref{sec:proof-status} that satisfiability
+``is decidable'' records the project's position in spring~2026 and was
+withdrawn long before this erratum: decidability of full $\ALCIRCC{5}$ is
+\emph{open}.  For the current status see the repository's
+\texttt{README.md} and \texttt{ERRATA.md}.}}
+\end{center}
+
 \begin{abstract}
 We present an implementation of a cover-tree tableau decision procedure
 for concept satisfiability in $\ALCIRCC{5}$, the description logic
@@ -353,6 +381,9 @@ ancestor/descendant positions in the cover tree, \emph{not}
 in sibling positions.  Only $\DR/\PO$ witnesses are siblings.
 Therefore equation~\eqref{eq:sibling-compat} restricts both the
 composition and the safe set to $\{\DR,\PO\}$.
+\emph{(Erratum, November 2026: this inference is not valid---two
+$\DR/\PO$ witnesses of one node need not be siblings of each other; they
+may be nested.  See the erratum on the first page.)}
 
 \subsection{Phase 4: Tree-cross interaction (composition propagation)}
 \label{sec:singleton}

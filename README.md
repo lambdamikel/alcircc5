@@ -146,6 +146,11 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
 - Probe: [`wp137`](verification/python/wp137_poset_bridge_probe.py) — the bridge
   re-checked by brute force against a table derived from set semantics, the
   spiral's finite non-models, and both reasoners on `K2`; 27/27 pass.
+- **Errata.** The two corrections above, where each statement stood, what each
+  changes and what was checked and found sound are recorded in
+  [`ERRATA.md`](ERRATA.md). The tableau paper carries an erratum box; the
+  reasoner itself is not fixed, and its header says so. Tag `release-2026-09-14`
+  predates these corrections.
 - **Untouched:** F6, bare `∀PO` (`C_bad`, `C_joint`), and how `DR`'s downward
   closure interacts with `∀PO`. The papers were corrected, not re-synced: their
   status tables do not yet list the two imported slices.
