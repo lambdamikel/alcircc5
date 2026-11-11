@@ -8733,3 +8733,40 @@ papers.
 a TeX installation without `cm-super`; pdfTeX then substitutes bitmap fonts
 without an error, and the page counts do not change. Caught by comparing font
 lists against the committed PDFs, and rebuilt.
+
+## 2026-11-11 (later still) — "is the cover-tree tableau fixable?"
+
+Michael's question, and his rejoinder to the first answer: "well, sound and
+complete and not terminating."
+
+**This defect is fixable, and a repair is in the tree behind a flag.**
+`check_satisfiability(C, nested_witnesses=True)`, off by default: two `DR`/`PO`
+witnesses of one node may be nested, and the witnesses of each node are checked
+jointly for one composition-closed atomic network. Pairwise would not do — once
+nesting is admitted, `a ⊂ b`, `b ⊂ c`, `c ⊂ a` pass pair by pair. `wp138`: `K2`
+and `K2dr` accepted; 35/35 built-in and 911/911 suite verdicts unchanged; and a
+differential test against exact ground truth, 400 concepts, no error. An earlier
+462-concept run at a larger size cap found two more concepts on which the
+shipped tableau is wrong, both mixing a `DR` and a `PO` witness. The default is
+unchanged, so nothing written about the shipped procedure becomes false.
+
+**The tableau as a decision procedure is not fixable by a patch**, and
+Michael's rejoinder says exactly where the line is. Of sound, complete and
+terminating:
+
+* *sound and complete, not terminating* is available in principle.
+  Unsatisfiability is recursively enumerable (Lutz & Wolter, Theorem 28) and
+  finite models can be enumerated; a blocking-free tableau over explicit
+  networks, expanded fairly and allowed to reuse nodes, would be such a
+  procedure by the usual argument. It would return on every unsatisfiable
+  concept and on every concept with a finite model, and run forever exactly on
+  the satisfiable concepts whose models are all infinite. Nobody has built it
+  here. It would be a useful reference: the project has no runnable reasoner
+  today whose UNSAT answers can be trusted on their own (the certified
+  `coneScheme_unsat_full` is sound but does not run beyond toy sizes).
+* *sound, complete and terminating* is decidability, and by the bridge it would
+  settle two-variable logic over partial orders. Termination is blocking, and
+  blocking is the open problem.
+* the cover-tree tableau is *terminating*, because it searches for a set of
+  types and not for a model. That is where completeness went, and why its
+  repair is a matter of making it less incomplete.

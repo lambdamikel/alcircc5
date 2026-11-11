@@ -25,7 +25,8 @@ The main difference from the quasimodel reasoner:
   - This correctly handles the 7 "cyclic-model" concepts that lack
     tree models but are satisfiable.
 
-KNOWN INCOMPLETENESS (found 2026-11-11; not fixed here):
+KNOWN INCOMPLETENESS (found 2026-11-11; the default is unchanged -- an
+experimental repair is behind check_satisfiability(..., nested_witnesses=True)):
   The sibling check treats any two DR/PO witnesses of one node as siblings
   and admits only {DR,PO} between them. Two such witnesses can be NESTED,
   and a concept can force that. The procedure then answers UNSAT on a
@@ -83,9 +84,18 @@ def modal_depth(C):
 # Cover-Tree Tableau Decision Procedure
 # ══════════════════════════════════════════════════════════════
 
-def check_satisfiability(C0, verbose=False):
+def check_satisfiability(C0, verbose=False, nested_witnesses=False):
     """
     Check satisfiability of concept C0 using the cover-tree tableau.
+
+    nested_witnesses=False (default) is the procedure as shipped and as
+    documented in the paper. nested_witnesses=True is an EXPERIMENTAL repair
+    of the sibling check (step 6): two DR/PO witnesses of one node may also
+    be nested (PP/PPI), and the witnesses of each node are checked JOINTLY
+    for a composition-closed atomic network instead of pair by pair. It
+    removes the wrong verdict on K2 (see the module docstring). It is not
+    proved sound or complete; evidence: verification/python/
+    wp138_tableau_nested_witnesses.py.
 
     Algorithm:
     1. Compute closure, types, safe relations (same as quasimodel)
@@ -140,6 +150,10 @@ def check_satisfiability(C0, verbose=False):
     for i in range(n):
         tree_demands[i] = [(R, D) for R, D in demands[i] if R in (PP, PPI)]
         cross_demands[i] = [(R, D) for R, D in demands[i] if R in (DR, PO)]
+
+    # Relations admitted between two cross witnesses of one node (step 6).
+    # Shipped: {DR,PO}. Experimental: every proper relation.
+    SIB = frozenset({DR, PO, PP, PPI}) if nested_witnesses else frozenset({DR, PO})
 
     # ── Step 4: Demand closure check ──────────────────────────
     def check_demand_closure(T):
@@ -241,13 +255,13 @@ def check_satisfiability(C0, verbose=False):
                             # if parent -INV[Rm]-> jm and parent -Rmp-> jmp_c,
                             # then jm -?-> jmp_c with ? in comp(INV[Rm], Rmp).
                             # Restricted to {DR,PO}:
-                            comp_set = COMP[(INV[Rm], Rmp)] & frozenset({DR, PO})
+                            comp_set = COMP[(INV[Rm], Rmp)] & SIB
                             found = False
                             for jmp_c in candidates[mp]:
                                 if jm == jmp_c and Rm == Rmp:
                                     found = True
                                     break
-                                if comp_set & safe_cross[(jm, jmp_c)]:
+                                if comp_set & safe[(jm, jmp_c)]:
                                     found = True
                                     break
                             if not found:
@@ -262,9 +276,62 @@ def check_satisfiability(C0, verbose=False):
                             return False
 
             # Backtracking search for a valid assignment
+            def joint_ok(assignment):
+                """Experimental (nested_witnesses): is there ONE composition-
+                closed atomic network on the chosen witnesses? Nodes are the
+                distinct (witness type, role) pairs; the centre is implicit,
+                its triangles being the domains themselves."""
+                nodes = []
+                for slot, jm in enumerate(assignment):
+                    key = (jm, cdems[slot][0])
+                    if key not in nodes:
+                        nodes.append(key)
+                m = len(nodes)
+                if m <= 1:
+                    return True
+                pairs = [(u, v) for u in range(m) for v in range(u + 1, m)]
+                dom = {}
+                for (u, v) in pairs:
+                    ju, Ru = nodes[u]
+                    jv, Rv = nodes[v]
+                    back = COMP[(INV[Rv], Ru)] & safe[(jv, ju)] & SIB
+                    d = [r for r in (DR, PO, PP, PPI)
+                         if r in SIB and r in COMP[(INV[Ru], Rv)]
+                         and r in safe[(ju, jv)] and INV[r] in back]
+                    if not d:
+                        return False
+                    dom[(u, v)] = d
+                rho = {}
+
+                def rel(u, v):
+                    return rho[(u, v)] if u < v else INV[rho[(v, u)]]
+
+                def consistent(u, v):
+                    for w in range(m):
+                        if w == u or w == v:
+                            continue
+                        a = (min(u, w), max(u, w))
+                        b = (min(w, v), max(w, v))
+                        if a in rho and b in rho:
+                            if rel(u, v) not in COMP[(rel(u, w), rel(w, v))]:
+                                return False
+                    return True
+
+                def go(idx):
+                    if idx == len(pairs):
+                        return True
+                    u, v = pairs[idx]
+                    for r in dom[(u, v)]:
+                        rho[(u, v)] = r
+                        if consistent(u, v) and go(idx + 1):
+                            return True
+                        del rho[(u, v)]
+                    return False
+                return go(0)
+
             def bt_search(slot, assignment):
                 if slot == k:
-                    return True
+                    return joint_ok(assignment) if nested_witnesses else True
                 Rm = cdems[slot][0]
                 for jm in candidates[slot]:
                     ok = True
@@ -273,13 +340,13 @@ def check_satisfiability(C0, verbose=False):
                         Rmp = cdems[prev_slot][0]
                         if jm == jmp_val and Rm == Rmp:
                             continue
-                        comp_set = COMP[(INV[Rm], Rmp)] & frozenset({DR, PO})
-                        if not (comp_set & safe_cross[(jm, jmp_val)]):
+                        comp_set = COMP[(INV[Rm], Rmp)] & SIB
+                        if not (comp_set & safe[(jm, jmp_val)]):
                             ok = False
                             break
                         # Also check reverse
-                        comp_set_rev = COMP[(INV[Rmp], Rm)] & frozenset({DR, PO})
-                        if not (comp_set_rev & safe_cross[(jmp_val, jm)]):
+                        comp_set_rev = COMP[(INV[Rmp], Rm)] & SIB
+                        if not (comp_set_rev & safe[(jmp_val, jm)]):
                             ok = False
                             break
                     if ok:

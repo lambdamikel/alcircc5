@@ -196,6 +196,30 @@ wrong verdict is reproduced*, in the same sense as WP15's PASS.
 
 
 
+### `python/wp138_tableau_nested_witnesses.py` — the tableau's sibling check and an experimental repair (2026-11-11)
+
+Companion to [`ERRATA.md`](../ERRATA.md), E2. The cover-tree tableau rejects the
+satisfiable `K2` because its sibling check admits only `DR`/`PO` between two
+horizontal witnesses of one node. `check_satisfiability(C, nested_witnesses=True)`
+— **off by default** — also admits nesting and checks the witnesses of each node
+jointly for one composition-closed atomic network.
+
+Part A: the default still rejects `K2` and `K2dr` (so `wp137` E6 and the
+documents describing the shipped procedure stay accurate). Part B: with the flag,
+`K2`, `K2dr` and two further concepts are accepted, a control with no admissible
+relation is rejected, and the 35 built-in tests and the 911-case suite give the
+verdicts they gave before. Part C: a differential test with **exact** ground
+truth — for conjunctions of at most three existentials without nested
+existentials, a satisfiable concept has a model on at most four points, so
+exhaustive search over the 916 closed atomic networks decides it — on 400 random
+concepts: flagged tableau, shipped tableau and oracle all agree with the truth.
+At the default size cap the sample contains no concept on which the shipped
+tableau errs (`K2`'s closure is larger); a 462-concept run at the larger cap found
+two, which part B lists. **14/14 pass**, about a minute and a half.
+
+Evidence, not a proof: the tested class has no nested existentials and no
+infinite models, and neither reasoner returns on `C_cyc` or the spiral.
+
 ## Reproducing the reports
 
 ```

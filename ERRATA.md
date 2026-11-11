@@ -72,7 +72,7 @@ tableau is **incomplete**. No wrong SAT answer is known.
 | `papers/cover_tree_tableau_ALCIRCC5.tex` (abstract's "key insight"; the sibling check) | erratum box on page 1 and a note at the step |
 | `papers/why_po_free_decidable.tex` ("two independent decision procedures") | corrected to "reasoners" |
 | `approaches/Tableaux/Overview.md` | corrected |
-| `src/cover_tree_tableau.py` | **not fixed**; the defect is documented in its header |
+| `src/cover_tree_tableau.py` | **default not changed**; the defect is documented in its header. An experimental repair is behind `check_satisfiability(C, nested_witnesses=True)` (`wp138`) |
 | `CLAUDE.md`, status paragraph of 2026-09-14 | history; superseded by the 2026-11-11 paragraph |
 | the PDFs inside tag `release-2026-09-14` | **not corrected** — the tag predates this |
 
@@ -91,7 +91,12 @@ tableau is **incomplete**. No wrong SAT answer is known.
   one `PO` is always admissible between them.
 * Admitting `PP`/`PPI` in the pairwise check would not repair the tableau:
   three witnesses can be forced into a cycle `a ⊂ b ⊂ c ⊂ a` that no pairwise
-  test sees (`ccyc_unsat` is the vertical version).
+  test sees (`ccyc_unsat` is the vertical version). The experimental repair
+  therefore checks the witnesses of each node jointly. It removes this wrong
+  verdict and changes no verdict of the 35 built-in tests or the 911-case
+  suite; that is evidence, not a proof. A terminating procedure that is sound
+  and complete for the full logic would decide the open problem of E1, so no
+  patch makes the tableau a decision procedure.
 
 ### Checked and found not to need correction
 

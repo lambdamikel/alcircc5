@@ -14,7 +14,9 @@ empirically validated — and, since 2026-11-11, **known to be incomplete**: it
 answers UNSAT on the satisfiable concept
 `K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B) ⊓ ∃PO.(B ⊓ ¬A)`, whose two overlap-witnesses
 must be nested. Treating two `DR`/`PO` witnesses of one node as siblings is the
-step that loses models. No wrong SAT answer is known.
+step that loses models. No wrong SAT answer is known. An experimental repair
+(`nested_witnesses=True`, off by default; `wp138`) lets such witnesses be nested
+and checks the witnesses of each node jointly.
 
 Full treatment: overview paper, §"Naive tableaux and blocking" and
 §"Current implementation: reasoners".

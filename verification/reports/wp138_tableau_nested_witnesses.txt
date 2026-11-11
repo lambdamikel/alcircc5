@@ -1,0 +1,39 @@
+============================================================================
+WP138 -- cover-tree tableau: the sibling check and an experimental repair
+============================================================================
+
+Part A -- the default is the shipped procedure
+  [PASS] A1 default rejects K2 (the documented wrong verdict)
+  [PASS] A2 default rejects K2dr
+  [PASS] A3 ground truth: K2 and K2dr are satisfiable (3-point search)
+
+Part B -- nested_witnesses=True
+  [PASS] B1 accepts K2
+  [PASS] B2 accepts K2dr
+  [PASS] B3 accepts the control (no forall-DR)
+  [PASS] B4 rejects K2x (no admissible relation); ground truth UNSAT
+  [PASS] B5 accepts F1 and F2 (found by part C); shipped rejects both; both satisfiable
+  [PASS] B6 the 35 built-in tests under the flag  -- Results: 35 passed, 0 failed out of 35
+  [PASS] B7 the 911-case suite under the flag  -- OVERALL: 911 tests Mismatches (CT ≠ QM): 0
+
+Part C -- differential test with exact ground truth (400 concepts, seed 20261111, closure <= 20)
+  closed atomic networks on 1..4 points: [1, 4, 41, 916]
+  ... 50 concepts, 61s
+  ... 100 concepts, 64s
+  ... 150 concepts, 69s
+  ... 200 concepts, 73s
+  ... 250 concepts, 77s
+  ... 300 concepts, 82s
+  ... 350 concepts, 90s
+  ... 400 concepts, 93s
+  verdicts as (shipped, flagged, oracle, TRUTH):
+      S S S S  x 360
+      U U U U  x 40
+  [PASS] C1 the flagged tableau agrees with the truth on every concept  -- 0 wrong of 400
+  [PASS] C2 the shipped tableau never accepts an unsatisfiable concept; its errors are false UNSAT  -- 0 wrong of 400
+  [PASS] C3 the oracle agrees with the truth on every concept  -- 0 wrong of 400
+  [PASS] C4 the sample is not one-sided  -- 360 satisfiable, 40 unsatisfiable
+
+============================================================================
+14/14 checks pass   (93s)
+============================================================================
