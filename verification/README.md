@@ -220,6 +220,29 @@ two, which part B lists. **14/14 pass**, about a minute and a half.
 Evidence, not a proof: the tested class has no nested existentials and no
 infinite models, and neither reasoner returns on `C_cyc` or the spiral.
 
+### `python/wp139_midelora_reference.py` — the MiDeLoRa calculus as a reference reasoner (2026-11-11)
+
+Companion to [`papers/midelora_calculus/`](../papers/midelora_calculus/README.md).
+[`src/midelora_tableau.py`](../src/midelora_tableau.py) is a complete-graph ABox
+tableau after the ALCI_RA_JEPD prover of M. Wessel's MiDeLoRa: every two nodes
+are related by one base relation, the composition table is checked on every
+triangle, the ∃-rule may reuse an existing successor, and there is no blocking.
+The note proves it sound and complete for strong EQ; it does not terminate on
+satisfiable concepts whose models are all infinite.
+
+The probe is the evidence for the implementation. A: the composition table it
+derives from sets is stable in the universe size, equals MiDeLoRa's `rcc5-rolebox`
+in all 25 cells, and equals the existing reasoner's table on proper relations.
+B: 19 named concepts with independently known status — `K2`, `C_cyc` (on which
+neither other reasoner returns), the gate (`C_bad`, `C_joint`, `C_dir`, `C_sat`),
+the strong-EQ PO-loop, MiDeLoRa's own tests, the 4-colour spiral — all as
+expected, every model re-checked by an independent function. C: exact ground
+truth on 1,000 random concepts under strong EQ and 300 under weak EQ, no error.
+D: the 911-case suite, **every concept decided** (775 SAT with verified models,
+136 UNSAT), no disagreement with the oracle, the tableau or the labels. E: on
+four concepts with only infinite models the answer is `UNKNOWN`, as it must be.
+F: `K2x` separates strong from weak EQ. **33/33 pass**, about three minutes.
+
 ## Reproducing the reports
 
 ```

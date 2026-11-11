@@ -146,6 +146,19 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
 - Probe: [`wp137`](verification/python/wp137_poset_bridge_probe.py) — the bridge
   re-checked by brute force against a table derived from set semantics, the
   spiral's finite non-models, and both reasoners on `K2`; 27/27 pass.
+- **A sound and complete reasoner that does not terminate.** The tableau of
+  Wessel's MiDeLoRa (dissertation 2008, §6.2.7.2 and §6.4.4) relates every two
+  nodes and checks the composition table on every triangle. With its EQ
+  treatment fixed to strong EQ it is proved sound and complete — UNSAT on every
+  unsatisfiable concept, a finite model wherever one exists, no answer exactly
+  where every model is infinite
+  ([`papers/midelora_calculus/`](papers/midelora_calculus/README.md); a paper
+  proof). [`src/midelora_tableau.py`](src/midelora_tableau.py) implements it:
+  it decides all 911 suite concepts in agreement with both other reasoners,
+  refutes `C_cyc`, `C_bad` and `C_joint` and accepts `C_sat` and `K2` in
+  milliseconds, and is exact on 1,000 concepts with known truth (`wp139`,
+  33/33). This does not move decidability: termination is blocking, and
+  blocking is the open problem.
 - **Errata.** The two corrections above, where each statement stood, what each
   changes and what was checked and found sound are recorded in
   [`ERRATA.md`](ERRATA.md). The tableau paper carries an erratum box; the

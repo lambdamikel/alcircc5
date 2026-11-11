@@ -1,0 +1,52 @@
+==============================================================================
+WP139 -- the MiDeLoRa calculus as a reference reasoner
+==============================================================================
+
+Part A -- the composition table
+  [PASS] A1 derived from sets: the same table for universes of 4, 5 and 6 points
+  [PASS] A2 equal to MiDeLoRa's rcc5-rolebox, all 25 cells
+  [PASS] A3 equal on proper relations to the table of alcircc5_reasoner.py
+
+Part B -- named concepts (strong EQ); every SAT answer's model is re-checked
+  [PASS] B  K2: SAT  -- SAT, 3 nodes, 3 closed leaves, 0.00s; Lean k2_sat
+  [PASS] B  K2dr: SAT  -- SAT, 3 nodes, 3 closed leaves, 0.00s; set model, wp137 E2
+  [PASS] B  K2x: UNSAT  -- UNSAT, 3 nodes, 5 closed leaves, 0.00s; no relation left between two distinct witnesses
+  [PASS] B  C_cyc: UNSAT  -- UNSAT, 4 nodes, 8 closed leaves, 0.00s; Lean ccyc_unsat
+  [PASS] B  C_cyc erased: SAT  -- SAT, 4 nodes, 3 closed leaves, 0.00s; Lean ccycErased_sat
+  [PASS] B  H3cyc: UNSAT  -- UNSAT, 4 nodes, 10 closed leaves, 0.00s; a < b < c < a
+  [PASS] B  H3chain: SAT  -- SAT, 4 nodes, 14 closed leaves, 0.00s; a < b < c
+  [PASS] B  C_bad: UNSAT  -- UNSAT, 3 nodes, 4 closed leaves, 0.00s; overview, gate
+  [PASS] B  C_joint: UNSAT  -- UNSAT, 3 nodes, 2 closed leaves, 0.00s; overview, gate
+  [PASS] B  C_dir: UNSAT  -- UNSAT, 2 nodes, 1 closed leaves, 0.00s; Lean cpo_unsat
+  [PASS] B  C_sat: SAT  -- SAT, 3 nodes, 2 closed leaves, 0.00s; overview, gate
+  [PASS] B  C_force: UNSAT  -- UNSAT, 3 nodes, 1 closed leaves, 0.00s; comp(PP,DR) = {DR}
+  [PASS] B  C_recursive: SAT  -- SAT, 2 nodes, 0 closed leaves, 0.00s; 5th review
+  [PASS] B  C_optional: SAT  -- SAT, 2 nodes, 0 closed leaves, 0.00s; Astra 6
+  [PASS] B  PO-loop: SAT  -- SAT, 2 nodes, 0 closed leaves, 0.00s; the witness must be the root itself
+  [PASS] B  MiDeLoRa: EPO^4.c, c excluded everywhere incl. EQ: UNSAT  -- UNSAT, 5 nodes, 239 closed leaves, 0.01s; prover/examples.lisp
+  [PASS] B  MiDeLoRa: the same with AEQ.d: SAT  -- SAT, 2 nodes, 0 closed leaves, 0.00s; prover/examples.lisp
+  [PASS] B  MiDeLoRa: EPP.EPP.c & APP.e: SAT  -- SAT, 3 nodes, 0 closed leaves, 0.00s; prover/examples.lisp
+  [PASS] B  spiral, 4 colours: SAT  -- SAT, 4 nodes, 10 closed leaves, 0.55s; a 4-point model, wp137 D4
+
+Part C -- exact ground truth
+  [PASS] C1 strong EQ: 1,000 concepts, the reasoner equals the truth on each  -- 0 wrong; 634 satisfiable, 366 unsatisfiable; no UNKNOWN: True
+  [PASS] C2 weak EQ (MiDeLoRa as implemented): 300 concepts, the reasoner equals the weak truth  -- 0 wrong; 190 weakly satisfiable
+
+Part D -- the 911-case suite
+  [PASS] D1 all 911 concepts are decided (no UNKNOWN)  -- 775 SAT, 136 UNSAT
+  [PASS] D2 every SAT answer carries a model that passes the independent check
+  [PASS] D3 agreement with the oracle, the cover-tree tableau and the suite's labels  -- disagreements: oracle 0, tableau 0, labels 0
+
+Part E -- concepts with only infinite models: no answer, as it must be
+  [PASS] E  EPP.T & APP.EPP.T: UNKNOWN up to 5 nodes  -- UNKNOWN (node bound); 0 closed leaves, 1 cut; 0.0s
+  [PASS] E  EPPI.T & APPI.EPPI.T: UNKNOWN up to 5 nodes  -- UNKNOWN (node bound); 0 closed leaves, 1 cut; 0.0s
+  [PASS] E  Cdchain = EDR.ADR.EPPI.A: UNKNOWN up to 5 nodes  -- UNKNOWN (node bound); 0 closed leaves, 1 cut; 0.0s
+  [PASS] E  spiral, 5 colours: UNKNOWN up to 4 nodes  -- UNKNOWN (node bound); 1128 closed leaves, 880 cut; 14.9s
+
+Part F -- strong against weak EQ
+  [PASS] F1 K2x: UNSAT under strong EQ, SAT under weak EQ, by two witnesses that are EQ
+  [PASS] F2 on the sample of C2, UNSAT under weak EQ implies UNSAT under strong EQ
+
+==============================================================================
+33/33 checks pass   (185s)
+==============================================================================

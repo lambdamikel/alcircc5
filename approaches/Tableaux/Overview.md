@@ -21,6 +21,16 @@ and checks the witnesses of each node jointly.
 Full treatment: overview paper, §"Naive tableaux and blocking" and
 §"Current implementation: reasoners".
 
+**A tableau that is sound and complete, and does not terminate (2026-11-11).**
+Dropping termination, the default method does work: the complete-graph ABox
+tableau of Wessel's MiDeLoRa — every two nodes related, the table checked on
+every triangle, witnesses reusable, no blocking — is sound and complete under
+strong EQ ([`papers/midelora_calculus/`](../../papers/midelora_calculus/README.md),
+[`src/midelora_tableau.py`](../../src/midelora_tableau.py), `wp139`). It answers
+on every unsatisfiable concept and on every concept with a finite model. What
+blocking would have to add is termination on the rest, and that is the open
+problem.
+
 **Manuscripts**
 - [Cover-tree tableau paper](../../papers/cover_tree_tableau_ALCIRCC5.pdf)
 - [GPT-5.4 cover-tree tableau (v1 theory)](../../papers/trees/alcircc5_cover_tree_tableau_needall_patched.pdf)

@@ -8770,3 +8770,53 @@ terminating:
 * the cover-tree tableau is *terminating*, because it searches for a set of
   types and not for a model. That is where completeness went, and why its
   repair is a matter of making it less incomplete.
+
+## 2026-11-11 (evening) — the MiDeLoRa calculus: sound, complete, not terminating
+
+Michael: "why can't we just take the tableau from the dissertation and show that
+it is sound and complete for UNSAT but doesn't terminate?" — and, when asked
+which EQ it implemented, "I think I had the option for both; check the
+implementation on the MiDeLoRa GitHub."
+
+**What the sources say.** The dissertation (TUHH 2008, German) has the rules in
+§6.2.7.2 and the provers in §6.4.4; `github.com/lambdamikel/midelora` has the
+code. The ALCI_RA_JEPD prover completes every pair of individuals with the full
+disjunction of base relations, enumerates atomic configurations under a
+relational consistency test, and runs the usual rules with no blocking. Reuse of
+existing successors is an option (`*reuse-nodes-p*`). EQ is the reflexive role
+and may hold between two different nodes without their labels being merged —
+weak EQ. The strong-EQ merge (`eq-collapse`, `join-nodes`) is in the substrate
+and the prover does not call it. So "both" was half right: reuse is an option
+in the prover; strong EQ is a tool that was never wired in.
+
+**The theorem** ([`papers/midelora_calculus/`](papers/midelora_calculus/README.md)).
+With EQ fixed to identity — no EQ between different nodes, reuse always on — the
+calculus is sound and complete: a finite closed tableau exists exactly for the
+unsatisfiable concepts, and a finite model is found whenever one exists. The
+proof is short. A model guides a branch that never closes; this is where strong
+EQ and reuse are needed, and it is the only place. Conversely a fair branch that
+never closes has a Hintikka frame as its limit, and König's lemma turns "no
+model" into "finite tableau". The procedure runs forever exactly on the
+satisfiable concepts whose models are all infinite.
+
+**The reasoner** (`src/midelora_tableau.py`, `wp139` 33/33). It decides all 911
+suite concepts, with a verified finite model for each of the 775 satisfiable
+ones, and agrees with both other reasoners throughout. It refutes `C_cyc`
+at once — the concept neither other reasoner returned on in ten minutes — and
+passes the gate. On 1,000 concepts with exact ground truth it makes no error.
+
+**Three things worth keeping.**
+
+* The complete graph is the point. The cover-tree tableau went wrong on `K2`
+  because it related two witnesses of one node by assumption. MiDeLoRa relates
+  every pair by search, which is why a 2005 design gets `K2` right.
+* `examples.lisp` already tests the strong-EQ PO-loop, the pattern this project
+  later recorded as the quasimodel oracle's blind spot, and carries the comment
+  that ALCI_RCC5 with `⊤ ⊑ ∀PO.⊥` has the tree model property.
+* The dissertation says (p. 156) that Lutz and Wolter showed ALCI_RCC5 and
+  ALCI_RCC8 undecidable, and gives that as the reason for no blocking. For this
+  semantics that is not established; the note records it as outdated.
+
+**What it is not.** Not a step toward decidability — unsatisfiability was known
+to be recursively enumerable. Not Lean-checked, apart from the Hintikka step.
+Not fast. And not MiDeLoRa run: the Lisp was read, not executed.
