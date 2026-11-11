@@ -801,9 +801,11 @@ so models are maximally non-local --- the obstruction F6 names.
   \item The \alert{cover-tree tableau} ($\sim$350 lines of Python):
         exact-occurrence blocking on the split-forest foundation.
   \item A \alert{911-case suite} (99 labelled, 812 oracle comparisons) ---
-        \alert{zero mismatches}; $775/775$ decomposition tests; \alert{no verdict
-        ever shown wrong}. One latent gap, found by code review (April), fixed
-        without changing a verdict.
+        \alert{zero mismatches}; $775/775$ decomposition tests. One latent gap,
+        found by code review (April), fixed without changing a verdict.
+  \item \alert{One wrong verdict} (found Nov.\ 2026): it rejects a satisfiable
+        concept whose two overlap-witnesses must be \emph{nested}. Incomplete,
+        not unsound.
   \item Decides correctly even the known trap (the strong-$\EQ$ $\PO$-loop)
         that fools type-based procedures.
 \end{itemize}

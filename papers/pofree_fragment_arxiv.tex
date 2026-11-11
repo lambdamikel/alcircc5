@@ -1166,8 +1166,9 @@ simultaneously live demands, whose completeness is where a bound on joint width
 would have to be proved; regular or automatic presentations of models; and a
 recasting of ordered-disjoint structures as a single strict order on two copies
 of the domain, which brings the problem close to two-variable logic with one
-transitive relation~\cite{SzwastTendera2013} but adds an involution that keeps
-the copies synchronized. The last two were suggested by GPT-5.6~Sol's
+transitive relation---whose general satisfiability problem is itself
+open~\cite{SzwastTendera2018,MarzecTendera2026}---and adds an involution that
+keeps the copies synchronized. The last two were suggested by GPT-5.6~Sol's
 review~\cite{GPT56SolReview}. Any candidate must reject $C_{\mathrm{bad}}$ and
 accept $C_{\mathrm{sat}}$.
 
@@ -1213,9 +1214,16 @@ relation.
 
 \paragraph{Event structures and two-variable logic.} The ordered-disjoint normal
 form matches the order and conflict skeleton of prime event
-structures~\cite{NielsenPlotkinWinskel1981}. Two-variable first-order logic with
-one transitive relation is decidable~\cite{SzwastTendera2013}; whether the
-synchronized two-copy encoding of \S\ref{sec:reflection} can use that is open.
+structures~\cite{NielsenPlotkinWinskel1981}. For two-variable first-order logic
+with one transitive relation, decidability was
+claimed~\cite{SzwastTendera2013} and then withdrawn~\cite{SzwastTendera2018}:
+it holds for transitively guarded witnesses and for finite
+satisfiability~\cite{PrattHartmann2018}, and is open in general, also for a
+single partial order~\cite{MarzecTendera2026}. The unary case of that open
+problem is a syntactic fragment of $\ALCIRCC5$ lying outside the one decided
+here (\texttt{formal/PosetBridge.lean}, \code{poset\_bridge}), so the
+synchronized two-copy encoding of \S\ref{sec:reflection} would at best relate
+two open problems.
 
 \paragraph{Formalization.} The proof is checked in Lean~4~\cite{Lean4}. Its
 cumulative development, including the refuted routes, is public.
@@ -1354,6 +1362,25 @@ I.\ Shapirovsky and V.\ Shehtman.
 W.\ Szwast and L.\ Tendera.
 \newblock $\mathrm{FO}^2$ with one transitive relation is decidable.
 \newblock In \emph{Proc.\ STACS 2013}, LIPIcs~20, pages 317--328, 2013.
+
+\bibitem{SzwastTendera2018}
+W.\ Szwast and L.\ Tendera.
+\newblock On the satisfiability problem for fragments of two-variable logic
+  with one transitive relation.
+\newblock arXiv:1804.09447, 2018 (v3, 2019). Withdraws the main claim
+  of~\cite{SzwastTendera2013}.
+
+\bibitem{PrattHartmann2018}
+I.\ Pratt-Hartmann.
+\newblock Finite satisfiability for two-variable, first-order logic with one
+  transitive relation is decidable.
+\newblock \emph{Mathematical Logic Quarterly}, 64(3):218--248, 2018.
+  arXiv:1707.05558.
+
+\bibitem{MarzecTendera2026}
+D.\ Marzec and L.\ Tendera.
+\newblock On two-variable first-order logic with a partial order.
+\newblock \emph{Journal of Logic and Computation}, 36(2):exaf068, 2026.
 
 \bibitem{Wessel2003}
 M.\ Wessel.

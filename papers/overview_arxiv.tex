@@ -110,7 +110,8 @@ obstruction that the known grid-style undecidability attempts meet, not a
 proven reduction of the problem to a single lemma; (iv) a \emph{prototype
 reasoner}---a cover-tree tableau that reproduces, $23$ years on, the GIS
 concept taxonomy of the original report and agrees with an independent
-oracle across a $911$-case suite, with no verdict ever shown wrong; and (v)
+oracle across a $911$-case suite, though it is now known to reject one
+satisfiable concept (\S\ref{sec:reasoners}); and (v)
 an honest map of the routes
 tried, the dead ends, and the missing hard pieces. The fragment result is
 also published on its own, as a focused companion paper. We also report,
@@ -426,10 +427,11 @@ $\Pi^0_1$ placement as a new observation; it is not
 \paragraph{Empirical evidence.} A prototype reasoner (the cover-tree
 tableau; no completeness theorem is claimed) agrees with an independent
 oracle across a $911$-case suite---$99$ labelled regression cases and $812$
-comparison runs---no verdict it has returned has ever been shown wrong, and
+comparison runs---and
 it reproduces, $23$ years later, the GIS subsumption
 taxonomy of Wessel's original report (\S\ref{sec:reasoners}). It is
-evidence, not a decision theorem.
+evidence, not a decision theorem, and it is incomplete: it rejects the
+satisfiable concept $K_2$ of \S\ref{sec:reasoners}.
 
 \paragraph{The honest bottom line.} After roughly thirty repair rounds and
 twenty-two adversarial reviews, one fragment is settled with a
@@ -2650,9 +2652,18 @@ a genuine gap in it: its cross-interaction check handled only singleton
 compositions, so it could accept unsatisfiable concepts whose conflict runs
 through a non-singleton cell. The fix left all $911$ verdicts
 unchanged---which shows that the suite had not exercised the pattern, not
-that the gap was harmless. No verdict the tableau has returned, before or
-after the fix, has been shown wrong: its one recurring disagreement with the
-oracle, on the strong-$\EQ$ $\PO$-loop, is the oracle's blind spot.
+that the gap was harmless. Until November~2026 no verdict of the tableau had
+been shown wrong; its one recurring disagreement with the
+oracle, on the strong-$\EQ$ $\PO$-loop, is the oracle's blind spot. One now
+has been. The concept
+$K_2=\exists\PO.(A\sqcap\forall\PO.\neg B\sqcap\forall\DR.\neg B)\sqcap
+\exists\PO.(B\sqcap\neg A)$ is satisfiable---three regions $r$ and
+$a\subset b$, both overlapping $r$; \code{k2\_sat} in
+\texttt{formal/PosetBridge.lean}---and the tableau answers \textsc{unsat},
+because it admits only $\DR$ and $\PO$ between two horizontally generated
+witnesses of one node, and these two must be nested (\texttt{wp137},
+part~E). The tableau is therefore \emph{incomplete}; its \textsc{sat}
+answers remain unrefuted.
 
 \begin{figure}[p]
 \centering
@@ -3019,9 +3030,22 @@ be recast as a single strict partial order on two copies of its domain, with
 disjointness recorded as edges from the left copy to the right. The order's
 transitivity and the downward inheritance of disjointness then both become
 transitivity of that one order, which moves the question near two-variable
-logic with one transitive relation, a decidable
-logic~\cite{SzwastTendera2013}---but the encoding also needs an involution
-that keeps the two copies synchronized, and that theorem does not cover it.
+logic with one transitive relation---but the encoding also needs an involution
+that keeps the two copies synchronized, and the general satisfiability problem
+for that logic is itself open: the decidability claim
+of~\cite{SzwastTendera2013} was withdrawn by its
+authors~\cite{SzwastTendera2018}, finite satisfiability is
+decidable~\cite{PrattHartmann2018}, and the case of a single partial order is
+still a conjecture~\cite{MarzecTendera2026}. The relationship in fact runs the
+other way, and exactly. Concepts that use $\exists\DR$ only inside
+$\exists\PO.C\sqcup\exists\DR.C$ and $\forall\PO$ only inside
+$\forall\PO.C\sqcap\forall\DR.C$ cannot see how incomparability splits into
+overlap and disjointness, and their satisfiability problem \emph{is} that of
+two-variable logic over strict partial orders with unary predicates
+(\code{poset\_bridge} and \code{patsys\_to\_rcc5} in
+\texttt{formal/PosetBridge.lean}; note in \texttt{papers/poset\_bridge/}).
+A decision procedure for $\ALCIRCC5$ would therefore settle the unary case of
+that open problem; the full logic is at least as hard as it.
 Third, the event-structure reading of the normal form
 (\S\ref{ssec:approach-regcov}) opens the literature on regular unfoldings. The
 gate is the pair of boundary concepts of \S\ref{ssec:conescheme}: any new local
@@ -3085,8 +3109,8 @@ finite candidate lists for a verified checker $\Rightarrow$ decidable), whose
 premise is open and whose argued route from F6 is displayed step by step;
 (iv) a \emph{working, empirically validated prototype reasoner}---the
 cover-tree tableau (\S\ref{sec:reasoners}), agreeing with an independent
-quasimodel oracle across a $911$-case suite, with no verdict ever shown
-wrong, and reproducing $23$ years later
+quasimodel oracle across a $911$-case suite, known to be incomplete
+(\S\ref{sec:reasoners}), and reproducing $23$ years later
 the full GIS subsumption taxonomy of Wessel's original report ($21/21$);
 (v) a sharp \emph{map} of the problem with a named toolbox; and
 (vi) a candid \emph{methodology} for adversarial AI-assisted mathematics.
@@ -3104,8 +3128,9 @@ an independent implementation everywhere it has been tested and reproduces
 a two-decade-old published taxonomy. Neither proves decidability, and we
 do not claim more for the evidence than it supports: the retracted quasimodel
 reasoner did reject a satisfiable concept, manuscripts as written did accept
-unsatisfiable ones, and the tableau---no verdict of which has been shown
-wrong---carried for a time a latent gap that its suite did not exercise. What the record shows is that every such failure traced to a
+unsatisfiable ones, and the tableau carried for a time a latent gap that its
+suite did not exercise and rejects a satisfiable concept that the suite did not
+contain. What the record shows is that every such failure traced to a
 specific, repairable defect, and none to a counterexample to the conjecture
 that the full logic is decidable.
 
@@ -3367,6 +3392,25 @@ M.\ Nielsen, G.\ Plotkin, and G.\ Winskel.
 W.\ Szwast and L.\ Tendera.
 \newblock $\mathrm{FO}^2$ with one transitive relation is decidable.
 \newblock In \emph{Proc.\ STACS 2013}, LIPIcs~20, pages 317--328, 2013.
+
+\bibitem{SzwastTendera2018}
+W.\ Szwast and L.\ Tendera.
+\newblock On the satisfiability problem for fragments of two-variable logic
+  with one transitive relation.
+\newblock arXiv:1804.09447, 2018 (v3, 2019). Withdraws the main claim
+  of~\cite{SzwastTendera2013}.
+
+\bibitem{PrattHartmann2018}
+I.\ Pratt-Hartmann.
+\newblock Finite satisfiability for two-variable, first-order logic with one
+  transitive relation is decidable.
+\newblock \emph{Mathematical Logic Quarterly}, 64(3):218--248, 2018.
+  arXiv:1707.05558.
+
+\bibitem{MarzecTendera2026}
+D.\ Marzec and L.\ Tendera.
+\newblock On two-variable first-order logic with a partial order.
+\newblock \emph{Journal of Logic and Computation}, 36(2):exaf068, 2026.
 
 %% --- Concrete-domain approaches (related, expressively incomparable) ---
 
