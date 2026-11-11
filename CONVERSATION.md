@@ -8597,3 +8597,92 @@ rendered and checked. The explainers (`why_po_free_decidable` 19pp,
 `two_tier_quotient`, `po_free_fragment_ALCIRCC5`, `LRCC8_vs_ALCIRCC8` and all
 archived packets — the extension does not touch their content. The tag was
 moved once more to include the sync.
+
+## 2026-11-11 — the poset bridge: an open problem of two-variable logic inside the full logic
+
+*One outside session (Claude Fable 5.2, in the Claude app, at Michael's request:
+"see if you can advance the current state of the decidability status for the
+full logic"). Unreviewed. Full note: `papers/poset_bridge/README.md`.*
+
+**What was asked, and the honest answer.** Whether the full-logic status could
+be advanced. It was not settled. Five things around it moved.
+
+**How it went.** The closing entry of 2026-09-14 lists, among the leads, a
+two-copy encoding that "lands near two-variable logic with one transitive
+relation (decidable, Szwast & Tendera 2013)". Checking that citation before
+building on it: the theorem does not exist. Szwast and Tendera withdrew the
+claim in 2018 (arXiv:1804.09447 — the proof's Claim 10 is flawed; decidability
+holds only for transitively guarded witnesses, and the full problem "remains
+open"); Pratt-Hartmann decided *finite* satisfiability the same year; and
+Marzec and Tendera (J. Logic Comput. 36(2), online January 2026) still only
+*conjecture* the case of one partial order, proving it without "entanglements".
+The sentence had entered through the 21st review and been copied into both
+papers and the closing entry.
+
+Reading Marzec and Tendera's fragment — unary predicates, one strict partial
+order, universal constraints "an α and a β are never incomparable", witnesses
+"every α has an incomparable β" — the direction of the relationship reversed.
+In an RCC5 structure `PP` is a strict partial order whose incomparable pairs are
+exactly the `PO ∪ DR` pairs, and a strict partial order with every incomparable
+pair declared `PO` is an ordered-disjoint structure with empty disjointness. So
+their logic is not something ALCI_RCC5 might be encoded *into*; it is a
+syntactic fragment *of* ALCI_RCC5: the concepts that use `∃DR` only inside
+`∃PO.C ⊔ ∃DR.C` and `∀PO` only inside `∀PO.C ⊓ ∀DR.C`.
+
+**What is now in the repository.**
+
+- `formal/PosetBridge.lean` (1,354 lines; imports `POFreeLift`, so its
+  `Satisfiable` is the artifact's; 0 sorries). `poset_bridge`: the tense logic
+  of strict partial orders with an incomparability modality is equisatisfiable
+  with its embedding into ALCI_RCC5; `poset_bridge_fin`: the same for finite
+  models; `patsys_to_rcc5`: two-variable pattern systems over a strict partial
+  order (type-expanded Scott normal form; Marzec–Tendera's basic normal form is
+  of this shape) reduce to concept satisfiability; `decidablePSat_of_full`: a
+  decision procedure for the full logic decides the poset logic.
+- By import through the bridge (theorem-level): the fragment with vertical
+  witnesses only is decidable in 2-NExpTime — the first decided slice in which a
+  `∀PO` constraint changes the answer (`ccyc_unsat` against `ccycErased_sat`:
+  three proper superparts forced into a cycle) — and finite satisfiability for
+  the whole fragment is decidable in 2-NExpTime. `C_bad` and `C_joint`, whose
+  `∀PO` is bare, are outside it.
+- `spiralConcept_sat`, `spiralConcept_infinite`, `spiralConcept_noExVert`: an
+  infinity axiom with no `∃PP` and no `∃PPI`. The order-theoretic core is
+  `walk_inj`: consecutive members incomparable, members two and three apart
+  comparable ⟹ injective.
+- `k2_sat`, and `wp137` part E: the cover-tree tableau answers UNSAT on the
+  satisfiable `K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B) ⊓ ∃PO.(B ⊓ ¬A)`.
+- `verification/python/wp137_poset_bridge_probe.py`: 27/27.
+- Corrections in the overview (five sentences on the tableau's record, one on
+  the withdrawn theorem, three references), the fragment paper (two sentences,
+  three references), the slides (one item), the README and `CLAUDE.md`.
+
+**Found by running, not by reading.** The tableau's wrong verdict came from
+running the project's reasoners on concepts the bridge produces. The spiral
+concept was too large for either (146 closure members), so the test was reduced
+to the smallest instance of the same mechanism — two horizontal witnesses that
+may be neither `PO` nor `DR` — and the tableau failed on it in 0.3 s. Its
+header states the assumption that fails: "only {DR,PO} remain open between
+sibling subtrees." `K2` is `C_sat` moved sideways: `C_sat`, in the record since
+September as the concept that rules out the obvious repair of the cone scheme,
+has two `PP`-witnesses that must be nested; `K2` has two `PO`-witnesses that
+must be.
+
+**Weighting, recorded honestly.** The bridge is two short inductions; its value
+is in what it connects. It says the full problem contains a problem that
+specialists in two-variable logic have worked on since 2013 without closing,
+which is the first external yardstick this project has had for the difficulty
+of F6-like questions — and it says so about a sublanguage with no `∃PP`, no
+`∃PPI` and no use of the composition table's non-determinism. The imported
+slices rest on published proofs this session did not check. Nothing here bears
+on bare `∀PO`, on `C_bad` and `C_joint` as written, or on how `DR`'s downward
+closure interacts with `∀PO`; and there is no reduction in the other direction.
+
+**For whoever resumes.** (i) The gate for a full-logic architecture grows by
+two concepts: accept `K2` and the spiral. (ii) Marzec and Tendera's
+finite-antichain theorem is a normal form pointing the opposite way from the
+split forest — maximally comparable instead of maximally `PO` — and whether it
+survives `DR` is untried. (iii) The natural next theorem is decidability for
+*all* concepts with vertical witnesses only; it is not a corollary, because the
+existence of a suitable disjointness relation is a four-point condition, of
+which `C_bad` is the simplest instance. (iv) The people to ask are the authors
+of the cited papers.

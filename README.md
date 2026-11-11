@@ -99,7 +99,56 @@ concept, with no computable bound. The full-logic line of attack has been paused
 harvest from the 22nd review extended the decided fragment to a slice
 *containing* `∀PO` (the PO-erasure fragment 𝒟, Lean-certified). Cite the
 release **`release-2026-09-14`** (moved to include the harvest). Each major
-revision is recorded below, newest first.
+revision is recorded below, newest first. **Since then (2026-11-11):** the full
+logic is shown to contain the unary case of an open problem of two-variable
+logic — see the first entry.
+
+### 2026-11-11 — The poset bridge: an open problem of two-variable logic sits inside the full logic
+
+*Unreviewed. Produced in one outside session at Michael's request (Claude
+Fable 5.2); the project is otherwise at rest. The note, with every claim at its
+exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
+
+- **Full-logic decidability is still open.** What changed is the map around it.
+- **A cited theorem had been withdrawn.** Both papers and the 2026-09-14 closing
+  entry called two-variable logic with one transitive relation "decidable"
+  (Szwast & Tendera, STACS 2013). The authors withdrew that claim in 2018
+  (arXiv:1804.09447); only the transitively-guarded fragment and *finite*
+  satisfiability (Pratt-Hartmann 2018) are decided, and the case of a single
+  partial order is still a conjecture (Marzec & Tendera, J. Logic Comput. 2026).
+  Corrected in the overview and the fragment paper.
+- **The bridge, Lean-checked** ([`formal/PosetBridge.lean`](formal/PosetBridge.lean),
+  importing the certified artifact; 0 sorries): the concepts that use `∃DR` only
+  inside `∃PO.C ⊔ ∃DR.C` and `∀PO` only inside `∀PO.C ⊓ ∀DR.C` cannot see how
+  incomparability splits into overlap and disjointness, and their
+  satisfiability problem **is** that of two-variable logic over strict partial
+  orders with unary predicates (`poset_bridge`, `patsys_to_rcc5`; finite models
+  too, `poset_bridge_fin`; the passage from an arbitrary two-variable sentence
+  to the normal form the Lean theorem speaks about is textbook and not
+  formalized). So a decision procedure for ALCI_RCC5 would settle
+  the unary case of that open problem (`decidablePSat_of_full`), and the full
+  logic is at least as hard as it.
+- **Two decided slices by import** (through the bridge, not kernel-checked beyond
+  it): that fragment with vertical witnesses only (2-NExpTime, Szwast & Tendera
+  2018) — the first decided slice in which a `∀PO` constraint can change the
+  answer (`ccyc_unsat` against `ccycErased_sat`) — and finite satisfiability for
+  all of it (2-NExpTime, Pratt-Hartmann 2018). `C_bad` and `C_joint` are not in
+  it: their `∀PO` is bare.
+- **An infinity axiom with no `∃PP` and no `∃PPI`** (`spiralConcept_sat`,
+  `spiralConcept_infinite`, `spiralConcept_noExVert`): Marzec & Tendera's
+  spiral, read in RCC5.
+- **A wrong verdict of the cover-tree tableau.** `K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B)
+  ⊓ ∃PO.(B ⊓ ¬A)` has a three-region model (`k2_sat`); the tableau answers
+  UNSAT, because it admits only `DR`/`PO` between two horizontal witnesses of one
+  node and these two must be nested. The tableau is **incomplete**; its SAT
+  answers remain unrefuted. The sentence "no verdict … has ever been shown wrong"
+  is corrected in this README, the overview and the slides.
+- Probe: [`wp137`](verification/python/wp137_poset_bridge_probe.py) — the bridge
+  re-checked by brute force against a table derived from set semantics, the
+  spiral's finite non-models, and both reasoners on `K2`; 27/27 pass.
+- **Untouched:** F6, bare `∀PO` (`C_bad`, `C_joint`), and how `DR`'s downward
+  closure interacts with `∀PO`. The papers were corrected, not re-synced: their
+  status tables do not yet list the two imported slices.
 
 ### 2026-10-08 — The 22nd review (Astra 6): audit passed, and a certified extension of the fragment
 
@@ -179,6 +228,8 @@ revision is recorded below, newest first.
 - **The reasoner's record, stated precisely:** no verdict of the cover-tree
   tableau has ever been shown wrong. A campaign-wide claim that *no* procedure
   had ever been caught out was false for others, and is gone.
+  *(Superseded 2026-11-11: the tableau rejects the satisfiable `K2`; see the
+  entry above.)*
 - **Everything synced, then tagged:** the slides, both explainers, `LEAN.md`,
   `WHY_ITS_HARD.md` and the approach overviews (with a new
   [`approaches/ConeScheme/`](approaches/ConeScheme/Overview.md)), then tagged
@@ -433,8 +484,9 @@ Nebel 1999): path-consistent atomic networks are globally consistent.
 Alongside the theory, the project ships a working **cover-tree tableau
 reasoner** ([`src/cover_tree_tableau.py`](src/cover_tree_tableau.py)) —
 agreeing with an independent oracle across a **911-case** suite (99 labelled
-cases, 812 comparison runs) with **zero mismatches**, and no verdict of it has
-ever been shown wrong. Its most
+cases, 812 comparison runs) with **zero mismatches**. It is incomplete: it
+rejects the satisfiable concept `K2`, whose two overlap-witnesses must be nested
+(found 2026-11-11; see Status). Its SAT answers are unrefuted. Its most
 satisfying test spans 23 years: it recomputes, in 2026, the exact GIS
 concept taxonomy that a **prototype reasoner** computed in Wessel's 2003
 report (report7, §4.3.1: "actually computed by a working prototype system")
@@ -493,6 +545,13 @@ Check the Lean development (Lean 4.32.0 via `elan`; no mathlib):
 
 ```
 cd formal && lean Round19Transport.lean   # see LEAN.md for all artifacts
+```
+
+The poset bridge imports the certified artifact, so it builds in two steps
+(Lean 4.33.1):
+
+```
+cd formal && lean -o POFreeLift.olean POFreeLift.lean && LEAN_PATH=. lean PosetBridge.lean
 ```
 
 The self-contained verification probes are in
