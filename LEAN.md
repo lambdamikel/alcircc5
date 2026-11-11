@@ -1056,3 +1056,46 @@ presumption (a future cold review finds something) applies to them in
 full. The design and per-step provenance live in `ASSEMBLY_DESIGN.md`
 §§17–25; the campaign log is in the auto-memory
 `pofree-certification-campaign.md`.
+
+## `PosetBridge.lean` (2026-11-11) — two-variable logic over partial orders, inside the logic
+
+*Unreviewed. Note: `papers/poset_bridge/README.md`.*
+
+The first file in `formal/` that **imports** the certified artifact instead of
+copying its definitions, so that its theorems are about the same `Concept`,
+`sat`, `RCC5Interp` and `Satisfiable` as `decidableSat_cone`. Two-step build
+(Lean 4.33.1):
+
+```
+cd formal
+lean -o POFreeLift.olean POFreeLift.lean     # ~1 min; *.olean is git-ignored
+LEAN_PATH=. lean PosetBridge.lean            # ~2 s
+```
+
+1,354 lines, exit 0, 0 errors / 0 warnings / 0 sorries, no `axiom`, no
+`native_decide`.
+
+| declaration | statement | axioms |
+|---|---|---|
+| `poset_bridge` | `PSatisfiable c ↔ Satisfiable (emb c)` — the tense logic of strict partial orders with incomparability, embedded by `∃∥ ↦ ∃PO ⊔ ∃DR`, `∀∥ ↦ ∀PO ⊓ ∀DR` | propext, Classical.choice, Quot.sound |
+| `poset_bridge_fin` | the same for finite models | same |
+| `patsys_to_rcc5` | a two-variable pattern system over a strict partial order is satisfiable iff its concept is | same |
+| `decidablePSat_of_full`, `decidablePatSat_of_full` | a decision procedure for the full logic decides the poset logic | same |
+| `decidablePSat_noAllInc` | the certified `∀PO`-free procedure decides the `∀∥`-free poset logic | same |
+| `walk_inj` | consecutive members incomparable, members two and three apart comparable ⟹ the sequence is injective | propext, Quot.sound |
+| `spiral_sat`, `spiral_infinite` | Marzec–Tendera's spiral: satisfiable, every model infinite | propext, Classical.choice, Quot.sound |
+| `spiralConcept_sat`, `spiralConcept_infinite`, `spiralConcept_noExVert` | the same in ALCI_RCC5, with no `∃PP` and no `∃PPI` | same / none for the last |
+| `k2_sat`, `k2_witnesses_nested` | `K2` is satisfiable; its two witnesses are never `PO` or `DR` | same / none |
+| `ccyc_unsat`, `ccycErased_sat` | `C_cyc` (three proper superparts forced into a cycle) is unsatisfiable, and satisfiable once its `∀PO` conjuncts are erased | same |
+
+How the two directions go. *Up*: a strict partial order is an `ODStruct` with
+empty disjointness (`odOf`), so `odNet_frame` gives the RCC5 frame and every
+incomparable pair reads `PO` (`truth_up`). *Down*: on the domain of any RCC5
+model, `PP` is a strict partial order (`spoOf` — irreflexive by reflexive-EQ,
+transitive by `comp pp pp = [pp]`) whose incomparable pairs are exactly the
+`PO`-or-`DR` pairs (`inc_of_po_or_dr`, `po_or_dr_of_inc`), and truth transfers
+(`truth_down`). Both are one-directional truth lemmas; NNF makes that enough.
+
+What is **not** formalized: Scott normal form and the expansion over 1-types
+(the step from an arbitrary two-variable sentence to a `PatSys`), and the
+published decidability theorems that the note imports through the bridge.
