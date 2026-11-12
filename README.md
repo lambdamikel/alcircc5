@@ -103,10 +103,11 @@ harvest from the 22nd review extended the decided fragment to a slice
 of an open problem of two-variable logic; the cover-tree tableau is found
 incomplete; a cited theorem about two-variable logic turned out to have been
 withdrawn; and the documents were re-synced the same day, which turned up a
-third erratum. See the first entry below and [`ERRATA.md`](ERRATA.md). The tag
-**`release-2026-09-14`** (commit `52d392e`, including the October harvest)
-predates all of this, and its PDFs carry the statements the errata correct:
-cite a release tag or commit that contains the revision you read. Each major
+third erratum. See the first entry below and [`ERRATA.md`](ERRATA.md). Cite the
+release **`release-2026-11-11`**, which contains the corrected documents. The
+earlier tag `release-2026-09-14` (commit `52d392e`, including the October
+harvest) is left in place; its PDFs carry the statements the errata correct.
+Each major
 revision is recorded below, newest first.
 
 ### 2026-11-11 — The poset bridge: an open problem of two-variable logic sits inside the full logic
@@ -643,8 +644,12 @@ nested-witness flag, wp139 the reference reasoner).
 ## Author
 
 Michael Wessel (miacwess@gmail.com), who introduced the ALCI_RCC family in
-his doctoral work at the University of Hamburg (DFG project "Description
-Logics and Spatial Reasoning", grant NE 279/8-1). The mathematical
+the first phase of his doctoral work, at the University of Hamburg (DFG project
+"Description Logics and Spatial Reasoning", grant NE 279/8-1), where the
+decidability question studied here was left open. He completed his doctorate
+in 2008 at Hamburg University of Technology (TUHH), on the practical side:
+ontology-based information systems and the MiDeLoRa reasoner, whose tableau
+calculus is the reference reasoner of this repository. The mathematical
 development was carried out by the AI assistants named above under his
 direction; the division of labour is auditable in
 [CONVERSATION.md](CONVERSATION.md).

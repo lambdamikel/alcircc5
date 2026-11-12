@@ -8929,3 +8929,13 @@ between such witnesses.
 **Not done.** No new tag. The recommendation is to cut one rather than move
 `release-2026-09-14`, since `ERRATA.md` refers to that tag's PDFs as
 uncorrected. Everything added today remains unreviewed.
+
+**Addendum, the same evening.** Michael decided the open points: Claude
+Fable 5.2 stays on the papers' lists of assistants, and the corrected state
+gets a new tag, `release-2026-11-11`; the tag `release-2026-09-14` is left
+where it is. He also explained the two universities: he began his doctorate at
+the University of Hamburg, on the theory, where the decidability of ALCI_RCC5
+stayed open, and then started afresh at TUHH on the practical side, which is
+where the 2008 dissertation and MiDeLoRa come from. The README and the
+overview's acknowledgments now say so. The second phase is where the reference
+reasoner of this repository comes from.

@@ -180,5 +180,6 @@ whose UNSAT answers rest on a completeness proof — a paper proof, unreviewed.
 
 * Nothing here has been posted to arXiv, and the DL 2026 abstract was rejected;
   it is archived as submitted.
-* Tag `release-2026-09-14` still points at the uncorrected papers. Moving it, or
-  cutting a new tag, is Michael's decision.
+* Tag `release-2026-09-14` still points at the uncorrected papers, and is left
+  there. The corrected documents carry the new tag `release-2026-11-11`
+  (Michael's decision, 2026-11-11).

@@ -3617,14 +3617,15 @@ tag \texttt{release-2026-09-14} marks the two papers and the Lean artifact as
 they stood on 2026-10-08; its Lean sources extend those at the earlier tag
 \texttt{certified-fragment-2026-08-29} by \S\S299--300 (the certified
 PO-erasure extension) and differ otherwise only in the spelling of comments.
-\emph{This version of the paper is later than that tag.} The material of
-November 2026---\texttt{ERRATA.md}, \texttt{formal/PosetBridge.lean},
+\emph{This version of the paper is later than that tag} and carries the tag
+\texttt{release-2026-11-11}. The material of November
+2026---\texttt{ERRATA.md}, \texttt{formal/PosetBridge.lean},
 \texttt{src/midelora\_tableau.py}, the probes
 \texttt{wp137}--\texttt{wp139}, and the corresponding corrections to both
-papers---was added after it, and the PDFs inside that tag still carry the
-statements that \texttt{ERRATA.md} corrects. For reproducibility cite a
-release tag or a commit hash that contains the revision you read, not the
-mutable \texttt{master} branch. The tag supersedes
+papers---was added after the earlier tag, whose PDFs still carry the
+statements that \texttt{ERRATA.md} corrects. For reproducibility cite
+\texttt{release-2026-11-11} (or its commit hash), not the mutable
+\texttt{master} branch. The September tag supersedes
 \texttt{arxiv-candidate-2026-07-18}, which predates the $\forall\PO$-free
 fragment's certification (\S\ref{ssec:conescheme}) and the cold reviews of
 it. Filenames below are relative to the repository root.
@@ -3712,11 +3713,14 @@ formalized and the cited proof not checked here.}
 \clearpage
 \section*{Acknowledgments}
 
-The $\ALCIRCC{}$ family was introduced by Wessel in his
-doctoral work at the University of Hamburg, under the DFG project
+The $\ALCIRCC{}$ family was introduced by Wessel in the first phase of his
+doctoral work, at the University of Hamburg, under the DFG project
 ``Description Logics and Spatial Reasoning'' (grant NE~279/8-1); the author
 was additionally supported by a \emph{Grundstipendium} of the University of
-Hamburg from 1999 to 2001. The
+Hamburg from 1999 to 2001. The decidability question was left open there. He
+completed his doctorate in 2008 at Hamburg University of Technology, on the
+practical side of the subject~\cite{Wessel2008}; the tableau of that
+dissertation is the reference reasoner of \S\ref{sec:reasoners}. The
 present investigation was carried out by AI assistants---Claude
 Opus~4.6, 4.7 and 4.8, Claude Fable~5 and~5.2 and Claude Opus~5 (Anthropic),
 and GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol and Astra~6
