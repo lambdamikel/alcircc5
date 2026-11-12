@@ -51,7 +51,7 @@ beyond the bridge. In the other direction the certified procedure decides the
 **Result.** The ∀PO-free fragment is **decidable, with a kernel-checked decision
 procedure** — and, since 2026-10-08, extended by a certified corollary
 (`erase_equisat`, `decidableSat_dfrag`, §299) to the PO-erasure fragment 𝒟,
-which *contains* `∀PO` (no `∃PP`/`∃PO`/`∀DR`): the first decided slice whose
+which *contains* `∀PO` (no `∃PP`/`∃PO`/`∀DR`): the first *certified* slice whose
 syntax contains `∀PO` (there the `∀PO` constraints are provably erasable), via a PO-empty witness forest whose disjointness is incomparability.
 Contributed by the Astra 6 review
 ([archive](../../papers/astra-6-latest-review-and-extension/)), verified by

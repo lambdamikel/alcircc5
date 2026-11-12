@@ -2012,9 +2012,11 @@ preserves satisfiability, so composing the erasure with
 (\code{erase\_equisat}, \code{decidableSat\_dfrag}): the first certified
 decidable slice containing $\forall\PO$, by a PO-empty witness forest whose
 disjointness is incomparability. In $\mathcal D$ every $\forall\PO$ is, by
-this very theorem, erasable; a decided slice in which a $\forall\PO$
-constraint can change the answer was obtained in November 2026, by import
-rather than by a certified proof (\S\ref{ssec:bridge}). The extension is
+this very theorem, erasable. Decided slices in which a $\forall\PO$
+constraint can change the answer exist too, without a certified proof: the
+coarser logic $\ALCIRCC3$, decided in 2003, is one when read inside
+$\ALCIRCC5$, and a second was obtained in November 2026 by import
+(\S\ref{ssec:bridge}). The extension is
 calibrated by its own counterexamples --- each exclusion is necessary for the
 erasure argument, and $C_{\mathrm{bad}}$, $C_{\mathrm{joint}}$ lie outside
 $\mathcal D$, so the architectural gap above is untouched. The same review's order-level
@@ -2878,6 +2880,32 @@ conflict is the cycle. (b)~Finite satisfiability of $\mathcal L_{\parallel}$ is
 decidable in 2-\textsc{NExpTime}~\cite{PrattHartmann2018}. Neither slice
 contains $C_{\mathrm{bad}}$ or $C_{\mathrm{joint}}$, whose $\forall\PO$ is
 bare.
+
+\paragraph{The other coarsening: $\ALCIRCC3$.} $\mathcal L_{\parallel}$ merges
+$\PO$ with $\DR$ and keeps the order. Wessel's $\ALCIRCC3$ merges $\PO$, $\PP$
+and $\PPI$ into one relation $\mathsf{ONE}$, ``overlapping but not equal'', and
+keeps $\DR$: it forgets the order and keeps disjointness. The two stand in the
+same relation to $\ALCIRCC5$. Read the merged role as a defined role,
+$\exists\mathsf{ONE}.C=\exists\PO.C\sqcup\exists\PP.C\sqcup\exists\PPI.C$ and
+dually. Then an $\ALCIRCC3$ concept is satisfiable if and only if its
+translation is satisfiable in $\ALCIRCC5$. Merging the three relations of an
+RCC5 model gives an RCC3 model. Conversely the RCC3 table constrains no triple
+of distinct regions, so an RCC3 model is an arbitrary graph of $\mathsf{ONE}$
+and $\DR$ edges, and labelling every $\mathsf{ONE}$ edge $\PO$ gives an RCC5
+structure, because every $\{\PO,\DR\}$-labelled graph is closed under the
+table. (This is an elementary argument, supported by the probe
+\texttt{wp140}; it is not formalized and has not been reviewed.) So
+$\ALCIRCC3$, which the 2003 report decides by translation into two-variable
+logic with equality~\cite[\S4.3]{Wessel2003}, is a decided slice of
+$\ALCIRCC5$. It is the oldest one, and a $\forall\PO$ restriction changes the
+answer in it: $\exists\mathsf{ONE}.A\sqcap\forall\mathsf{ONE}.\neg A$ is
+unsatisfiable and becomes satisfiable when its $\forall\PO$ conjunct is erased.
+Both coarsenings go through two-variable logic. Without the order the class of
+structures is two-variable definable, and the logic is decidable. With the
+order it is not, and the question is the open one above. In both, the
+structure that realizes a coarse model labels the merged pairs $\PO$: the
+relation that nothing but $\forall\PO$ can object to
+(\S\ref{ssec:conescheme}) is again what makes the reading work.
 
 \paragraph{Infinity without a vertical witness.} That a concept can have only
 infinite models without mentioning $\PP$ or $\PPI$ at all is not new. Wessel's

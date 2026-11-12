@@ -258,6 +258,22 @@ D: the 911-case suite, **every concept decided** (775 SAT with verified models,
 four concepts with only infinite models the answer is `UNKNOWN`, as it must be.
 F: `K2x` separates strong from weak EQ. **33/33 pass**, about three minutes.
 
+### `python/wp140_rcc3_as_fragment.py` — ALCI_RCC3 as a fragment of ALCI_RCC5 (2026-11-11)
+
+ALCI_RCC3 merges `PO`, `PP`, `PPI` into `ONE`. Read `ONE` as a defined role of
+RCC5; the probe supports the claim that an ALCI_RCC3 concept is satisfiable iff
+its translation is satisfiable in ALCI_RCC5. **A**: all 1,096 `{PO,DR}`
+labellings of complete graphs on 3–5 points are closed under the RCC5 table.
+**C**: 400 random ALCI_RCC3 concepts — a brute force over all RCC3 structures
+on ≤ 3 points never finds a model of a concept whose translation the reference
+reasoner refutes, and every model the reasoner returns for a translation is,
+with `PO`/`PP`/`PPI` merged, an RCC3 model of the concept. **D**:
+`∃ONE.A ⊓ ∀ONE.¬A` is unsatisfiable, and satisfiable with its `∀PO` conjunct
+erased. A probe, not a proof; the argument is elementary and not formalized.
+
+- **Run:** `python3 wp140_rcc3_as_fragment.py` (a few seconds)
+- **Report:** [`reports/wp140_rcc3_as_fragment.txt`](reports/wp140_rcc3_as_fragment.txt)
+
 ## Reproducing the reports
 
 ```

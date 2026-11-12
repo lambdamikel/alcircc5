@@ -9006,3 +9006,23 @@ wrong: the five-predicate infinity axiom is already in Szwast and Tendera's
 build on it. The overview, the fragment paper, the README, the note and the
 open letter now say so. This project's part is the reading in RCC5 and the
 Lean proof.
+
+**Sixth addendum — ALCI_RCC3, and a fifth erratum.** Michael asked whether any
+of this relates to the coarser ALCI_RCC3 of his report. It does, closely.
+RCC3 glues `PO`, `PP` and `PPI` into one relation and keeps `DR`; the fragment
+of the bridge glues `PO` and `DR` and keeps the order. One forgets the order,
+the other forgets disjointness. Both sit inside ALCI_RCC5 in the same way:
+read the glued relation as a defined role, and satisfiability is the same
+whether one works in the coarse logic or in RCC5 (for RCC3 this is an
+elementary argument, checked by `wp140`, not formalized). And both go through
+two-variable logic. Without the order the class of structures is two-variable
+definable, and the 2003 report decides ALCI_RCC3 that way. With the order,
+transitivity comes in, and the logic is the open one. So the bridge is the
+2003 method one step further, and the step is exactly where it stops working.
+
+The consequence for today's text: ALCI_RCC3 is a decided slice of ALCI_RCC5 in
+which a `∀PO` conjunct changes the answer, and it is twenty-three years old.
+"The first decidable slice containing `∀PO`" (October, of the fragment 𝒟) and
+"the first decided slice in which `∀PO` can change the answer" (today, of the
+imported slice) were both wrong as stated. 𝒟 is the first *certified* one; the
+imported slice is the first that keeps the order visible. `ERRATA.md`, E5.

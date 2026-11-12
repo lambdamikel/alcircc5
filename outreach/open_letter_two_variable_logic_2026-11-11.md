@@ -86,8 +86,12 @@ If this is right, three things follow.
    not checked your proofs and claim nothing about them.
    * From the decidability of the fragment with transitive witnesses (Szwast
      and Tendera, J. Log. Comput. 2019): the formulas above with proper-part
-     witnesses only are decidable in 2-NExpTime. It is the first decided slice
-     of ALCI_RCC5 in which a [PO] constraint can change the answer.
+     witnesses only are decidable in 2-NExpTime. In that slice a [PO]
+     constraint can change the answer. (My own ALCI_RCC3 of 2003 is an older
+     slice of that kind. It glues overlap and the two part relations into one
+     relation instead, keeps disjointness, and is decidable through plain
+     two-variable logic with equality. Yours keeps the order, which is what
+     takes it out of plain two-variable logic.)
    * From finite satisfiability over a partial order (Pratt-Hartmann, Math.
      Log. Quart. 2018): finite satisfiability of the formulas above is
      decidable in 2-NExpTime. Lutz and Wolter name the finite companions of

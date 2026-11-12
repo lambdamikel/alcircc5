@@ -213,7 +213,10 @@ is unsatisfiable: its three witnesses satisfy `a ⊂ b ⊂ c ⊂ a`. Each pair i
 compatible on its own; the conflict is the cycle. Erase the three `∀PO`
 conjuncts and it is satisfiable, by three pairwise overlapping regions
 (`ccyc_unsat`, `ccycErased_sat`; `wp137` E4, E5). So this is the first decided
-slice of ALCI_RCC5 in which a `∀PO` constraint can change the answer. It also
+slice of ALCI_RCC5 in which a `∀PO` constraint can change the answer.
+*(Not the first; corrected the same day, `ERRATA.md` E5. ALCI_RCC3, decided in
+Wessel's 2003 report, is equisatisfiable with a syntactic fragment of
+ALCI_RCC5 in which a `∀PO` conjunct changes the answer; `wp140`.)* It also
 contains the coupled form of `C_sat`, `∃PP.(A ⊓ ∀PO.A ⊓ ∀DR.A) ⊓ ∃PP.¬A`.
 
 It does **not** contain `C_bad` or `C_joint`, whose `∀PO` is bare. Coupling

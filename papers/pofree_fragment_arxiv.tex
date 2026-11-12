@@ -1039,9 +1039,13 @@ Q\sqcap\forall\PPI.\neg Q$, the concept
 $C_{\mathrm{cyc}}=\exists\PP.W(A,B)\sqcap\exists\PP.W(B,C)\sqcap
 \exists\PP.W(C,A)$ lies in~(a) and is unsatisfiable, because its three
 witnesses would be nested in a cycle; erasing its three $\forall\PO$ conjuncts
-makes it satisfiable (\code{ccyc\_unsat}, \code{ccycErased\_sat}). So (a) is
-the first decided slice in which a $\forall\PO$ restriction can change the
-answer.
+makes it satisfiable (\code{ccyc\_unsat}, \code{ccycErased\_sat}). So in (a)
+a $\forall\PO$ restriction can change the answer. That is also true of an
+older decided slice: Wessel's $\ALCIRCC3$, which merges $\PO$, $\PP$ and $\PPI$
+into one relation and was decided in 2003 through two-variable logic with
+equality~\cite[\S4.3]{Wessel2003}, is equisatisfiable with the concepts of
+$\ALCIRCC{5}$ that use those three relations only merged (an elementary
+argument, probe \texttt{wp140}; not formalized).
 
 Two more concepts mark the boundary.
 $K_2=\exists\PO.(A\sqcap\forall\PO.\neg B\sqcap\forall\DR.\neg B)\sqcap

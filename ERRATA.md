@@ -209,6 +209,38 @@ Marzec & Tendera name it and build on it. Neither the spiral nor that axiom is
 a concept of this project: the project's own contribution is the reading in
 RCC5 and the Lean proof.
 
+### E5. "The first decided slice in which a `∀PO` constraint can change the answer" — not the first; ALCI_RCC3 (2003) is one
+
+*Found the same evening, when Michael Wessel asked how his coarser logic
+ALCI_RCC3 relates to all this.*
+
+**What we said.** On 2026-10-08, of the PO-erasure fragment 𝒟: "the first
+decidable slice containing `∀PO`". On 2026-11-11, of the slice imported through
+the poset bridge: "the first decided slice in which a `∀PO` constraint can
+change the answer".
+
+**What is true.** ALCI_RCC3 merges `PO`, `PP` and `PPI` into one relation,
+`ONE`. Read `ONE` as a defined role of RCC5; then an ALCI_RCC3 concept is
+satisfiable iff its translation is satisfiable in ALCI_RCC5. One direction
+merges the three relations of a model. The other uses that the RCC3 table
+constrains no triple of distinct regions, so an RCC3 model is an arbitrary
+graph of `ONE` and `DR` edges, and that every `{PO,DR}`-labelled graph is an
+RCC5 structure. So ALCI_RCC3 — decided in report7, §4.3, through two-variable
+logic with equality — is a decided slice of ALCI_RCC5, the oldest, and in it
+`∃ONE.A ⊓ ∀ONE.¬A` is unsatisfiable while erasing its `∀PO` conjunct makes it
+satisfiable. The argument is elementary and is supported by `wp140`; it is not
+formalized and not reviewed.
+
+So 𝒟 is the first *certified* slice containing `∀PO`, and its `∀PO`
+constraints are vacuous; the imported slice is a second decided slice in which
+`∀PO` matters, and the first that keeps the part-of order visible.
+
+**Where it stood.** The fragment paper §7.5, the slides, `WHY_ITS_HARD.md`, the
+README (the entry of 2026-11-11, corrected; the entry of 2026-10-08, marked),
+`LEAN.md`, the cone-scheme page, the bridge note (marked), and the open letter:
+corrected. The overview said "first certified", which stands, and now has a
+paragraph on ALCI_RCC3.
+
 ### Checked and found not to need correction
 
 * **The certified results.** The ∀PO-free fragment, the PO-erasure fragment 𝒟,

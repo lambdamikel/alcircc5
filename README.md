@@ -137,7 +137,7 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   logic is at least as hard as it.
 - **Two decided slices by import** (through the bridge, not kernel-checked beyond
   it): that fragment with vertical witnesses only (2-NExpTime, Szwast & Tendera
-  2018) — the first decided slice in which a `∀PO` constraint can change the
+  2018) — a decided slice in which a `∀PO` constraint can change the
   answer (`ccyc_unsat` against `ccycErased_sat`) — and finite satisfiability for
   all of it (2-NExpTime, Pratt-Hartmann 2018). `C_bad` and `C_joint` are not in
   it: their `∀PO` is bare.
@@ -187,7 +187,7 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   one downward-closed relation, and five questions.
 - **Untouched:** F6, bare `∀PO` (`C_bad`, `C_joint`), and how `DR`'s downward
   closure interacts with `∀PO`.
-- **The documents, re-synced (same day).** The overview (69 pp; a new
+- **The documents, re-synced (same day).** The overview (70 pp; a new
   subsection on the bridge, a subsection on MiDeLoRa with the calculus and its
   soundness-and-completeness proof typeset, a corrected reasoner section,
   status and artifact tables), the fragment paper (22 pp; a new subsection on
@@ -217,7 +217,7 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   `∀PO.D` to `⊤` preserves satisfiability (`erase_equisat`), by a PO-empty
   witness forest whose disjointness is incomparability. Composing with the
   certified procedure decides this fragment 𝒟 (`decidableSat_dfrag`,
-  `decidableSetSat_dfrag`) — **the first decidable slice containing `∀PO`**,
+  `decidableSetSat_dfrag`) — **the first decidable slice containing `∀PO`** *(qualified 2026-11-11, `ERRATA.md` E5: the first* certified *one; ALCI_RCC3, decided in 2003, is a slice containing `∀PO` in the same sense)*,
   a strict syntactic extension of the ∀PO-free fragment, with `∀PO.A` witnessed satisfiable
   (`allpo_satisfiable`) and an in-𝒟 clash refuted (`dfrag_clash_unsat`). Modest by the review's own account: 𝒟's
   `∀PO` constraints are provably toothless, and `C_bad`/`C_joint` lie outside
@@ -521,7 +521,7 @@ RCC*k* relation sets coarsen as *k* decreases; RCC1–3 are decidable
 | ALCI (no RCC) | arbitrary roles | PSpace-complete (no TBox); ExpTime-complete with TBoxes |
 | ALCI_RCC1 | {SR} | decidable; NP-complete (≡ S5) |
 | ALCI_RCC2 | {DR, O} | decidable; NP-hard, in PSpace |
-| ALCI_RCC3 | {DR, ONE, EQ} | decidable; NP-hard |
+| ALCI_RCC3 | {DR, ONE, EQ} | decidable; NP-hard. Read with ONE = PO ∪ PP ∪ PPI it is a decided slice of ALCI_RCC5 (`wp140`), the oldest, and one in which `∀PO` matters |
 | ALCI_RCC5, ∀PO-free | RCC5 without ∀PO | **decidable** (this project; Lean-certified) |
 | ALCI_RCC5, fragment 𝒟 | no ∃PP/∃PO/∀DR; ∀PO allowed | **decidable** (Lean-certified) |
 | ALCI_RCC5, L∥ with vertical witnesses only | see [`papers/poset_bridge/`](papers/poset_bridge/README.md) | decidable, in 2-NExpTime (by import through the poset bridge; unreviewed) |
@@ -627,7 +627,8 @@ LEAN_PATH=. $L PosetBridge.lean                 # imports it
 The verification probes are in
 [`verification/python/`](verification/python/) (WP1–WP139; the latest —
 wp136 audit of the Astra 6 review, wp137 the poset bridge, wp138 the tableau's
-nested-witness flag, wp139 the reference reasoner).
+nested-witness flag, wp139 the reference reasoner, wp140 ALCI_RCC3 as a
+fragment of ALCI_RCC5).
 
 ## Repository map
 

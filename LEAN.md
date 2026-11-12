@@ -52,7 +52,7 @@ paper; those abstract the Lean work and point here.
 >    found **no gap**; its PO-erasure theorem is now formalized here as §299:
 >    `decidableSat_dfrag` / `decidableSetSat_dfrag` decide the fragment 𝒟
 >    (no `∃PP`/`∃PO`/`∀DR`, **`∀PO` permitted**) by erasing `∀PO` and running
->    `decidableSat_cone` — the first decided slice whose syntax contains `∀PO`
+>    `decidableSat_cone` — the first *certified* slice whose syntax contains `∀PO`
 >    (its `∀PO` constraints are erasable; a slice in which a `∀PO` constraint
 >    can change the answer is decided only by import through the poset bridge,
 >    item 8), via a PO-empty witness forest whose disjointness is incomparability

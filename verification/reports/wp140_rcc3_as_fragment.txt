@@ -1,0 +1,10 @@
+Part A -- {PO,DR}-labelled graphs are RCC5 networks
+  [PASS] all 1096 labellings on 3..5 points are composition-closed  -- 0 violations
+Part C -- random ALCI_RCC3 concepts against the translation
+  [PASS] no RCC3 model on <= 3 points for a concept whose translation is refuted  -- 0 contradictions
+  [PASS] every model of a translation, with PO/PP/PPI merged, is an RCC3 model of the concept  -- 0 failures; 377 SAT, 23 UNSAT, 0 UNKNOWN, 0s
+Part D -- ALL PO is not vacuous in the RCC3 slice
+  [PASS] EX ONE.A & ALL ONE.~A is unsatisfiable  -- UNSAT
+  [PASS] with its ALL PO conjunct erased it is satisfiable  -- SAT
+
+ALL PASS

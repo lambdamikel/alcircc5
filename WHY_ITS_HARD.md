@@ -465,8 +465,11 @@ stating plainly.
   decidability is open, so the full problem contains a known open problem. Two
   corners are decided by theorems from that literature — when only containers
   and parts are asked for, and when only finite arrangements are wanted. Those
-  two are imported, not machine-checked here. They include the first decided
-  case in which an "everything I overlap" statement changes the answer.
+  two are imported, not machine-checked here. In the first of them an
+  "everything I overlap" statement changes the answer. The oldest decided case
+  of that kind is the coarser three-relation logic of the 2003 report, which
+  glues "overlaps", "part of" and "contains" into one relation: it sits inside
+  the five-relation language in the same way, and was decided back then.
 
 - **A machine-checked core.** The most recent phase rebuilt the sound
   half of the argument inside a **proof assistant** (Lean) — software
