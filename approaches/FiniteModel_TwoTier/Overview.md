@@ -7,7 +7,9 @@ model by type.
 satisfiable concepts require infinite models — and the quasimodel /
 type-elimination procedure over-eliminates (incompleteness, not
 unsoundness). Finiteness is simply the wrong target. Infinity can even be
-forced without any `∃PP`/`∃PPI` (`spiralConcept`, `formal/PosetBridge.lean`).
+forced without any `∃PP`/`∃PPI` — report7 (2003, §5.2, Figure 12) already
+gave such a concept, and `spiralConcept` (`formal/PosetBridge.lean`) is a
+Lean-checked second one.
 *Finite* satisfiability is a separate question; for the fragment L∥ it is
 decidable in 2-NExpTime by import (Pratt-Hartmann 2018 through the poset
 bridge; not Lean-checked beyond the bridge).

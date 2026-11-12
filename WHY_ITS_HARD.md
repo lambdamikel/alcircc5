@@ -306,6 +306,12 @@ to be nested, the nesting can only run one way, and so the chain never
 returns. It is not a crowd: at most two of its regions are ever side by side.
 So it leaves the width question where it was. What it shows is that infinity
 can be forced by *forbidding* relations, not only by asking for containers.
+That is not a new discovery. The 2003 report that posed this problem already
+contains such a description (its Figure 12): it mentions neither "part of" nor
+"contains", and forces an endless ladder by ruling out the other possibilities
+at each step. The five-colour one is a second example, taken from the
+literature on two-variable logic, and the first to be machine-checked. The
+earlier version of this guide overlooked both.
 
 This last point is no longer just a hunch. An outside reviewer of this work
 (itself an AI, from a different lab) checked it *exhaustively*: following any

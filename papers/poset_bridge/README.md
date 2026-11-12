@@ -274,6 +274,13 @@ integers with `a < b` iff `a + 2 ≤ b`, coloured mod 5. With four colours inste
 of five there is a four-point model (`wp137` D4): the odd cycle matters, because
 a pentagon of comparabilities has no transitive orientation (D5).
 
+*(The next sentence is wrong; corrected the same day, `ERRATA.md` E4. Wessel's
+2003 report, §5.2 and Figure 12, already gives a concept that mentions neither
+`PP` nor `PPI` and has only infinite models:
+`∃DR.⊤ ⊓ ∀DR.(∃PO.∃DR.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C)`. What is new here is that the
+spiral lies inside L∥ — it never separates `PO` from `DR` and does not use the
+downward closure of `DR` — and that its infiniteness is Lean-checked.)*
+
 The project's known infinity axioms all ask for a proper superpart or a proper
 part. This one asks only for overlaps (or disjoint regions) and then *forbids*
 overlap and disjointness two steps on. The chain is forced by exclusion.

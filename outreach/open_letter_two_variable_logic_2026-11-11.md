@@ -94,9 +94,11 @@ If this is right, three things follow.
      the answer was there in 2018.
    * From the spiral of Marzec and Tendera: an RCC5 concept all of whose
      models are infinite and
-     which asks for no proper part and no proper superpart. Until now every
-     infinity axiom I knew for this logic asked for one. The Lean file proves
-     that every model contains an infinite sequence of distinct regions.
+     which asks for no proper part and no proper superpart. My 2003 report
+     has one concept of that kind, built by excluding relations; the spiral is
+     a second, and unlike mine it never separates overlap from disjointness.
+     The Lean file proves that every model contains an infinite sequence of
+     distinct regions.
 
 ## What the full logic adds, in your terms
 

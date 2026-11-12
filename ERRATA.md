@@ -158,6 +158,50 @@ verdict that has to be trusted, use the reference reasoner
 (`src/midelora_tableau.py`), whose SAT answers come with a checkable model and
 whose UNSAT answers rest on a completeness proof — a paper proof, unreviewed.
 
+### E4. "The known infinity axioms all ask for a proper part or a proper superpart" — false since 2003
+
+*Pointed out by Michael Wessel on the evening of the same day, on reading the
+re-synced documents.*
+
+**What we said.** In the note on the poset bridge, and from there in the
+overview, the slides, the explainer, `WHY_ITS_HARD.md`, the README and the open
+letter: that the spiral is the first infinity axiom for this logic that asks
+for no proper part and no proper superpart, or that the possibility was new in
+November 2026.
+
+**What is true.** Wessel's 2003 report (report7, §5.2 and Figure 12) gives
+
+```
+∃DR.⊤ ⊓ ∀DR.( ∃PO.∃DR.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C )
+```
+
+which mentions neither `PP` nor `PPI`, in existentials or universals, and has
+only infinite models; the report says so in as many words, against its own
+earlier conjecture. The mechanism is the one the spiral uses: where
+composition leaves a choice, here `comp(PO,DR) = {DR,PO,PPI}`, universals
+exclude all but the nested option, and `comp(DR,PPI) = {DR}` makes the pattern
+repeat. The reference reasoner finds no model of this concept on up to seven
+nodes.
+
+What is new about the spiral is narrower: it lies inside the fragment L∥, so it
+never separates `PO` from `DR` and does not use the downward closure of `DR`;
+the direction of the nesting it forces is not fixed by the table; and its
+infiniteness is checked in Lean.
+
+**Where it stood.**
+
+| place | state |
+|---|---|
+| `papers/overview_arxiv.tex` (§7.8 and four other places) | corrected; the 2003 concept is now stated and credited, and the spiral has a figure |
+| `papers/pofree_fragment_arxiv.tex` §7.5; `papers/talk_ALCIRCC5.tex` (the November slide); `papers/why_po_free_decidable.tex` | corrected |
+| `WHY_ITS_HARD.md`, `README.md` | corrected |
+| `outreach/open_letter_two_variable_logic_2026-11-11.md` ("Until now every infinity axiom I knew …") | corrected |
+| `papers/poset_bridge/README.md` §5 | marked in place |
+
+**What it changes.** No theorem. It removes a novelty claim, and it is the
+second time in one day that a statement about this project's own record was
+written without reading the record: the report is in the repository.
+
 ### Checked and found not to need correction
 
 * **The certified results.** The ∀PO-free fragment, the PO-erasure fragment 𝒟,
@@ -170,8 +214,9 @@ whose UNSAT answers rest on a completeness proof — a paper proof, unreviewed.
   models are infinite without any `∃PP`/`∃PPI`. That is a natural next test, and
   it is open.
 * **The claims about infinity.** "No finite model property" is stated with a
-  `PP`-tower as its example, never as the only source. The spiral is a second
-  source; nothing published excluded it.
+  `PP`-tower as its example, never as the only source. *(This entry called the
+  spiral "a second source". The 2003 report already had one without `PP` or
+  `PPI`; see E4.)*
 * **The design record's own retractions** (`ASSEMBLY_DESIGN.md` §67–§68, from the
   cold review of the mixed quadrant) were already made. One in-place marker was
   missing, at §51.1, and has been added.

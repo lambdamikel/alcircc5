@@ -141,7 +141,11 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   answer (`ccyc_unsat` against `ccycErased_sat`) — and finite satisfiability for
   all of it (2-NExpTime, Pratt-Hartmann 2018). `C_bad` and `C_joint` are not in
   it: their `∀PO` is bare.
-- **An infinity axiom with no `∃PP` and no `∃PPI`** (`spiralConcept_sat`,
+- **An infinity axiom with no `∃PP` and no `∃PPI`, inside that fragment.** Not
+  the first without those roles: report7 (2003, §5.2, Figure 12) already gives
+  a concept that mentions neither `PP` nor `PPI` and has only infinite models,
+  by excluding the other relations where composition leaves a choice. This one
+  never separates `PO` from `DR`, and is Lean-checked (`spiralConcept_sat`,
   `spiralConcept_infinite`, `spiralConcept_noExVert`): Marzec & Tendera's
   spiral, read in RCC5.
 - **A wrong verdict of the cover-tree tableau.** `K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B)

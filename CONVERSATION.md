@@ -8973,3 +8973,25 @@ full problem in their terms — two-variable logic with unary predicates over a
 strict partial order with one further relation that is downward closed — asks
 five questions, and acknowledges the citation error of E1. It says that the
 work is AI-produced and unreviewed. Sending it is Michael's step.
+
+**Fourth addendum — a fourth erratum, pointed out by Michael.** He asked for an
+illustration of the spiral and added: *"we knew of infinite concepts that don't
+explicitly ask for PP or PPI before, by clashing out relations."* He is right,
+and it is in his own report of 2003 (§5.2, Figure 12):
+`∃DR.⊤ ⊓ ∀DR.(∃PO.∃DR.C ⊓ ∀PO.¬C ⊓ ∀DR.¬C)` mentions neither role and has only
+infinite models, because `comp(PO,DR)` leaves `DR`, `PO` and `PPI`, the two
+universals exclude the first two, and `comp(DR,PPI) = {DR}` makes the pattern
+repeat. The report says this against its own earlier conjecture that `PP` and
+`PPI` were needed. The cloud session's note had written that "the project's
+known infinity axioms all ask for a proper superpart or a proper part", and the
+re-sync carried the claim into the overview, the slides, the explainer,
+`WHY_ITS_HARD.md`, the README and — in Michael's own voice — the open letter.
+All are corrected (`ERRATA.md`, E4). What remains new about the spiral is
+narrower: it never separates overlap from disjointness, so it lives in the
+fragment the bridge is about; the direction of its nesting is not fixed by the
+table; and it is machine-checked. The overview now states the 2003 concept
+next to it and has a figure of the spiral: the order on seven regions, and
+regions on a line that realize it. The tag was moved once more.
+
+This is the same failure as E3 a few hours earlier: a statement about what the
+project knew, written without reading what the project had written.
