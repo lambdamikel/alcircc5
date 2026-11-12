@@ -174,6 +174,12 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   [`ERRATA.md`](ERRATA.md). The tableau paper carries an erratum box; the
   reasoner itself is not fixed, and its header says so. Tag `release-2026-09-14`
   predates these corrections.
+- **An open letter** to the authors of the papers on two-variable logic with
+  one transitive relation (Tendera, Marzec, Szwast, Pratt-Hartmann):
+  [`outreach/open_letter_two_variable_logic_2026-11-11.md`](outreach/open_letter_two_variable_logic_2026-11-11.md)
+  — the bridge in their vocabulary, what their theorems give this project,
+  the full problem restated as two-variable logic over a partial order with
+  one downward-closed relation, and five questions.
 - **Untouched:** F6, bare `∀PO` (`C_bad`, `C_joint`), and how `DR`'s downward
   closure interacts with `∀PO`.
 - **The documents, re-synced (same day).** The overview (69 pp; a new

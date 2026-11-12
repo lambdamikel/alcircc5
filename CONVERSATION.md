@@ -8963,3 +8963,13 @@ that the test file contains the strong-EQ PO-loop is not right as stated; the
 nearest test is a chain of four PO steps to a concept excluded under all five
 relations. The report of 2003 said the prototype's calculus "can be shown to be
 sound and complete". The section is that proof, twenty-three years on.
+
+**Third addendum.** At Michael's request an open letter to the authors of the
+two-variable papers — Lidia Tendera, Dariusz Marzec, Wiesław Szwast and Ian
+Pratt-Hartmann — was written and placed in the repository
+(`outreach/open_letter_two_variable_logic_2026-11-11.md`). It states the bridge
+in their notation, lists what their theorems give this project, restates the
+full problem in their terms — two-variable logic with unary predicates over a
+strict partial order with one further relation that is downward closed — asks
+five questions, and acknowledges the citation error of E1. It says that the
+work is AI-produced and unreviewed. Sending it is Michael's step.
