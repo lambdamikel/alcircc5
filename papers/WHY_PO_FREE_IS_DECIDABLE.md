@@ -107,7 +107,9 @@ one textbook normal-form step is not formalized). General satisfiability of
 that logic is open, so the full logic contains an open problem of two-variable
 logic; no reduction the other way is known. Through that bridge two slices
 containing `∀PO` are decided by published theorems, not by this project and
-not in Lean, and in one of them a `∀PO` conjunct can change the answer. A
+not in Lean, and in one of them a `∀PO` conjunct can change the answer. (So
+it can in the oldest decided slice of all: ALCI_RCC3 of the 2003 report, read
+inside RCC5 with `PO`, `PP`, `PPI` glued together; `wp140`.) A
 Lean-checked concept with no `∃PP` and no `∃PPI` has only infinite models. The
 cover-tree tableau is incomplete (it answers UNSAT on a satisfiable concept
 that contains `∀PO`), and a cited theorem on two-variable logic had been

@@ -847,12 +847,17 @@ the obstruction is where it is. It is not the whole of what is decidable.
 unreviewed).} The checks above show that $\forall\PO$-freeness is where
 \emph{this argument} stops: the maximally-$\PO$ completion is available
 exactly when nothing can object to a $\PO$ edge. They do not show that
-decidability stops there. Two slices containing $\forall\PO$ are decidable:
-the erasure fragment of the honesty note, where $\forall\PO$ is vacuous, and
---- by import of a published theorem on two-variable logic, not by this
-project and not in Lean --- the concepts that use $\forall\PO$ only as
+decidability stops there. Three slices containing $\forall\PO$ are decidable.
+The oldest is Wessel's coarser logic $\mathcal{ALCI}_{\mathrm{RCC3}}$ of 2003, read
+inside RCC5: the concepts that use $\PO$, $\PP$ and $\PPI$ only glued together,
+decided through two-variable logic with equality (the reading is an elementary
+argument, probe \code{wp140}; not formalized). The second is the erasure
+fragment of the honesty note, where $\forall\PO$ is vacuous. The third ---
+by import of a published theorem on two-variable logic, not by this
+project and not in Lean --- is the concepts that use $\forall\PO$ only as
 $\forall\PO.C\sqcap\forall\DR.C$ and have neither $\exists\PO$ nor
-$\exists\DR$. In the second a $\forall\PO$ conjunct can change the answer:
+$\exists\DR$. In the first and the third a $\forall\PO$ conjunct can change
+the answer. In the third:
 three superpart witnesses can be forced into a cycle of nestings that no
 pairwise test sees ($C_{\mathrm{cyc}}$; Lean: \code{ccyc\_unsat},
 \code{ccycErased\_sat}). What lies just outside also has an exact name now:
