@@ -8820,3 +8820,37 @@ passes the gate. On 1,000 concepts with exact ground truth it makes no error.
 **What it is not.** Not a step toward decidability — unsatisfiability was known
 to be recursively enumerable. Not Lean-checked, apart from the Hintikka step.
 Not fast. And not MiDeLoRa run: the Lisp was read, not executed.
+
+## 2026-11-11 (night) — the handoff applied
+
+The four entries above were written by a cloud session that could read the
+repository and not write to it. Its work reached the repository as a package in
+`papers/fable-5.2/`: a git bundle of eight commits on `52d392e`, a handoff note,
+checksums. A local session of the same model applied it.
+
+**What was done.** The bundle was verified and applied as a fast-forward of
+`master` to `085aaa2`, and pushed unchanged. Before the push the handoff's whole
+check list was run on a clean worktree: both Lean builds on 4.33.1 (0 errors,
+0 warnings, the 16 axiom lines as listed), the tableau's 35 tests, the reference
+reasoner's examples, `wp137` (26/26 and one skip — `python-sat` is not installed
+here), `wp138` (14/14), `wp139` (33/33; the run the producing session had to
+interrupt), and the five PDFs.
+
+**What was checked beyond the list.** The two errata, since they retract
+published sentences. E1 against the sources: the arXiv record of 1804.09447
+withdraws the 2013 claim in its own abstract; Marzec and Tendera's workshop
+paper says the same, defines the spiral as `spiralSys` does, and ends by calling
+the unary case critical and believed decidable; the journal version exists as
+cited. E2 on the code as shipped at `52d392e`: the tableau answers UNSAT on `K2`
+and the oracle SAT, and the three-region model is a model. The Lean definitions
+and capstone statements of `PosetBridge.lean` were read and say what the note
+says; the two paper proofs were read and no error was found.
+
+**What that is worth.** Less than a review. The same model read its own
+lineage's work with the project's context loaded, and this project's ledger is
+clear about which kind of reading finds defects. The work stays labelled
+unreviewed. The record is `papers/fable-5.2/README.md`.
+
+**Not done, on purpose.** The tag `release-2026-09-14` still points at
+`52d392e`, whose PDFs contain both errata. That and the other four decisions the
+handoff reserves for Michael are open.

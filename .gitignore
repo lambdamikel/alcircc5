@@ -11,3 +11,6 @@ _backup_2026-07-16/
 PAPER_REWRITE_NOTES.md
 reorganization.txt
 *.olean
+
+# The 2026-11-11 handoff zip: its bundle is commits b85b614..085aaa2 (see papers/fable-5.2/README.md)
+papers/fable-5.2/*.zip
