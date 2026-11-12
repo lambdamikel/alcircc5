@@ -156,14 +156,6 @@ common part cannot be disjoint.
    treats the incomparable witnesses of one element as unrelated to each other
    gets the second wrong; one of my own reasoners did.
 
-## A correction I owe you
-
-Until this month the papers in the repository cited the 2013 STACS result as a
-decidability theorem. The sentence came from a review of our work, and we took
-it over without checking the later literature. It is corrected, and the
-correction is recorded in `ERRATA.md` (E1). The 2019 paper says exactly what
-the 2013 argument does and does not give, and I should have read it first.
-
 ## What this rests on
 
 * The work was produced by AI assistants under my direction. I posed the

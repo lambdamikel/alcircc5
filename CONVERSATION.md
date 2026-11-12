@@ -9036,3 +9036,8 @@ a different fragment has exactly the satisfiability problem of two-variable
 logic over a strict partial order with unary predicates, and that the bridge
 is a few days old and unreviewed. Whether an answer comes is now out of the
 project's hands.
+
+Afterwards, at Michael's request, the letter's section "A correction I owe
+you" was removed, as it had been from the email. The correction itself is
+unchanged in `ERRATA.md` (E1), to which the letter's list of links still
+points.
