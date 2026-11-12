@@ -32,6 +32,7 @@ python3 decomposition_test.py          # cover-tree decomposition test
 python3 model_verifier.py             # independent model verification
 python3 alcircc5_reasoner.py          # quasimodel reasoner (built-in tests)
 python3 gis_taxonomy.py               # GIS taxonomy (18 concepts, ~190s)
+python3 midelora_tableau.py           # reference reasoner: complete-graph tableau, no blocking (a few examples)
 ```
 
 Two LaTeX passes are needed to resolve `\ref` and `\cite` cross-references. The bibliography uses `thebibliography` (inline), not BibTeX.
@@ -210,6 +211,10 @@ Six Python work packages under `verification/python/` cross-check the finite com
 - `papers/LRCC8_vs_ALCIRCC8.tex` -- Why the Lutz-Wolter undecidability of L_RCC8 does not transfer to ALCI_RCC8; documents priority claims relative to Wessel's 2002/2003 report.
 - `src/cover_tree_tableau.py` -- Cover-tree tableau implementation (~350 lines).
 - `src/alcircc5_reasoner.py` -- Quasimodel-based reasoner (cross-validation oracle; see caveat above).
+- `src/midelora_tableau.py` -- **the reference reasoner** (2026-11-11, ~380 lines): a Python re-implementation of the complete-graph tableau of Wessel's MiDeLoRa (dissertation 2008, §6.2.7.2/§6.4.4), EQ fixed to identity (`eq='weak'` = MiDeLoRa as implemented). Sound and complete, NOT terminating (no blocking): `check(C, max_nodes=…)` returns SAT with a model, UNSAT, or UNKNOWN at the node bound. Proof (paper, UNREVIEWED): `papers/midelora_calculus/README.md`; probe `wp139` (33/33). Use it, not the cover-tree tableau, when an UNSAT verdict has to be trusted — the tableau is incomplete (`ERRATA.md` E2, `K2`).
+- `ERRATA.md` -- the public record of corrections to published statements (E1: the withdrawn Szwast–Tendera theorem; E2: the tableau's incompleteness). Check it before repeating a claim about either.
+- `formal/PosetBridge.lean` + `papers/poset_bridge/README.md` -- the poset bridge (2026-11-11, UNREVIEWED): two-variable logic over strict partial orders with unary predicates embeds into ALCI_RCC5. Imports `POFreeLift`; build order is in the 2026-11-11 status paragraph.
+- `papers/fable-5.2/` -- the 2026-11-11 handoff as received, and the receiving session's record of what it checked.
 - `src/decomposition_test.py` -- Cover-tree decomposition test (775/775 = 100%).
 - `src/stress_test_cover_tree.py` -- Cross-validation suite (911 concepts, 0 mismatches post-fix).
 - `src/gis_taxonomy.py` -- GIS taxonomy computation (18 concepts, 21/21 subsumptions from report7.pdf).

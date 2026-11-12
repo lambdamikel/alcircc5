@@ -511,6 +511,17 @@ report (report7, §4.3.1: "actually computed by a working prototype system")
 — all **21/21** subsumptions, multiple inheritance and all. Two reasoners,
 23 years apart, agreeing edge for edge.
 
+Since 2026-11-11 there is also a **reference reasoner**
+([`src/midelora_tableau.py`](src/midelora_tableau.py)): a Python
+re-implementation of the complete-graph tableau of Wessel's MiDeLoRa
+(dissertation 2008, §6.2.7.2 and §6.4.4), with EQ fixed to identity. It is the
+one reasoner here whose UNSAT answers rest on a completeness proof
+([`papers/midelora_calculus/`](papers/midelora_calculus/README.md); a paper
+proof, unreviewed). It has no blocking and so does not terminate on concepts
+all of whose models are infinite; it returns `UNKNOWN` at a node bound instead.
+It accepts `K2`, and agrees with the tableau and the oracle on all 911 suite
+concepts (`wp139`).
+
 The 2003 original ([report7](papers/report7.pdf), Figure 6):
 
 <p align="center">
@@ -557,6 +568,7 @@ cd src
 python3 cover_tree_tableau.py        # cover-tree tableau (built-in tests)
 python3 stress_test_cover_tree.py    # cross-validation vs the quasimodel oracle (911 concepts)
 python3 gis_taxonomy.py              # reproduces the 2003 GIS taxonomy (21/21)
+python3 midelora_tableau.py          # reference reasoner (complete-graph tableau; a few examples)
 ```
 
 Check the Lean development (Lean 4.32.0 via `elan`; no mathlib):
@@ -573,9 +585,9 @@ cd formal && lean -o POFreeLift.olean POFreeLift.lean && LEAN_PATH=. lean PosetB
 ```
 
 The self-contained verification probes are in
-[`verification/python/`](verification/python/) (WP1–WP88; the latest —
-wp84 Π⁰₁ transcription, wp85 multi-path forcing, wp86 two-tier lift,
-wp87 ∀PO-free end-to-end cross-check).
+[`verification/python/`](verification/python/) (WP1–WP139; the latest —
+wp136 audit of the Astra 6 review, wp137 the poset bridge, wp138 the tableau's
+nested-witness flag, wp139 the reference reasoner).
 
 ## Repository map
 
@@ -583,10 +595,13 @@ wp87 ∀PO-free end-to-end cross-check).
   primary deliverable**; other papers are per-approach manuscripts (linked
   from the hubs).
 - [`src/`](src/) — the reasoners (cover-tree tableau, quasimodel oracle,
-  model verifier).
-- [`formal/`](formal/) — the Lean 4 development (`Round19Transport.lean`,
-  `RCC5NormalForm.lean`, `ForcingReduction.lean`); history in
-  [LEAN.md](LEAN.md).
+  the MiDeLoRa-style reference reasoner, model verifier).
+- [`formal/`](formal/) — the Lean 4 development (`POFreeLift.lean`, the
+  certified fragment; `PosetBridge.lean`, which imports it;
+  `Round19Transport.lean`, `RCC5NormalForm.lean`, `ForcingReduction.lean`,
+  `SemiDecidability.lean`); history in [LEAN.md](LEAN.md).
+- [ERRATA.md](ERRATA.md) — corrections to statements this repository has
+  published.
 - [`verification/python/`](verification/python/) — the WP probe ledger.
 - [`approaches/`](approaches/) — per-technique hubs.
 - [CONVERSATION.md](CONVERSATION.md) — the dated audit trail (who contributed

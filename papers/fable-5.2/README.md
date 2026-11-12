@@ -70,6 +70,17 @@ compute and print, and do nothing else.
 * **The two paper proofs, read.** The bridge (note §2) and the calculus
   (`midelora_calculus`, Lemmas 1 and 2 and the theorem) were read through and no
   error was found.
+* **The note's claims about MiDeLoRa's source, checked** against the public
+  repository `lambdamikel/midelora` at commit `3218297`. `eq-collapse` and
+  `join-nodes` are defined in `thematic-substrate/jepd-substrate4.lisp`
+  (lines 232 and 246) and are called only from a demonstration at the end of
+  that file; `eq-edge-p` has no other user, so the prover treats an EQ edge
+  between two nodes like any other edge and never shares their labels. The
+  prover's main loop in `prover/alci-ra-jepd-prover.lisp` is completion,
+  enumeration, deterministic expansion, or-expansion, some-expansion, success:
+  no blocking step. `*reuse-nodes-p*` defaults to `nil`. `+rcc5-rolebox+`
+  declares `eq` reflexive. (The source files are Latin-1; a UTF-8 text search
+  skips them silently.) MiDeLoRa was still not run.
 * **The diffs to the live documents, read**: the four `.tex` files, the README,
   `CLAUDE.md`. The corrections say what `ERRATA.md` says they say.
 
