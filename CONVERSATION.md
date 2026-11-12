@@ -8995,3 +8995,14 @@ regions on a line that realize it. The tag was moved once more.
 
 This is the same failure as E3 a few hours earlier: a statement about what the
 project knew, written without reading what the project had written.
+
+**Fifth addendum.** Michael then asked whether the spiral itself was a concept
+found earlier, in which case it should be mentioned. It was not. Neither the
+2003 report nor anything in this repository before today contains it; the
+report's concept of §5.2 is a different one that works the same way. Checking
+where the spiral does come from showed that the documents had its credit
+wrong: the five-predicate infinity axiom is already in Szwast and Tendera's
+2019 paper (Section 5, Corollary 5.2), and Marzec and Tendera name it and
+build on it. The overview, the fragment paper, the README, the note and the
+open letter now say so. This project's part is the reading in RCC5 and the
+Lean proof.

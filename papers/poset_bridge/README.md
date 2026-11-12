@@ -251,6 +251,10 @@ Where the slices now stand:
 
 ## 5. The spiral: infinity without a vertical witness
 
+*(Credit, added later the same day: the five-predicate infinity axiom is
+already in Szwast & Tendera, J. Log. Comput. 2019, Section 5, Corollary 5.2;
+Marzec & Tendera name it the spiral and build on it.)*
+
 Marzec & Tendera's `Φ_spiral`, as a pattern system on five predicates
 `A₀ … A₄` (indices mod 5):
 

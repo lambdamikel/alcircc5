@@ -202,6 +202,13 @@ infiniteness is checked in Lean.
 second time in one day that a statement about this project's own record was
 written without reading the record: the report is in the repository.
 
+**A credit corrected at the same time.** The documents credited the spiral to
+Marzec & Tendera alone. The five-predicate infinity axiom at its core is
+already in Szwast & Tendera (J. Log. Comput. 2019, Section 5, Corollary 5.2);
+Marzec & Tendera name it and build on it. Neither the spiral nor that axiom is
+a concept of this project: the project's own contribution is the reading in
+RCC5 and the Lean proof.
+
 ### Checked and found not to need correction
 
 * **The certified results.** The ∀PO-free fragment, the PO-erasure fragment 𝒟,

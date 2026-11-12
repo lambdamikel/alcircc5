@@ -146,8 +146,9 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   a concept that mentions neither `PP` nor `PPI` and has only infinite models,
   by excluding the other relations where composition leaves a choice. This one
   never separates `PO` from `DR`, and is Lean-checked (`spiralConcept_sat`,
-  `spiralConcept_infinite`, `spiralConcept_noExVert`): Marzec & Tendera's
-  spiral, read in RCC5.
+  `spiralConcept_infinite`, `spiralConcept_noExVert`): the spiral of Marzec & Tendera — at its core
+  an infinity axiom of Szwast & Tendera (2019, §5) — read in RCC5. It is not a
+  concept of this project.
 - **A wrong verdict of the cover-tree tableau.** `K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B)
   ⊓ ∃PO.(B ⊓ ¬A)` has a three-region model (`k2_sat`); the tableau answers
   UNSAT, because it admits only `DR`/`PO` between two horizontal witnesses of one

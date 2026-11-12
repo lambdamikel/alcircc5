@@ -92,8 +92,9 @@ If this is right, three things follow.
      decidable in 2-NExpTime. Lutz and Wolter name the finite companions of
      their logics among their open problems; as I read them, for this slice
      the answer was there in 2018.
-   * From the spiral of Marzec and Tendera: an RCC5 concept all of whose
-     models are infinite and
+   * From the infinity axiom of Szwast and Tendera (2019, Section 5), which
+     Marzec and Tendera call the spiral: an RCC5 concept all of whose models
+     are infinite and
      which asks for no proper part and no proper superpart. My 2003 report
      has one concept of that kind, built by excluding relations; the spiral is
      a second, and unlike mine it never separates overlap from disjointness.
