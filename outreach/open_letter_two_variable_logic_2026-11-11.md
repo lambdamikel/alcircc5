@@ -16,7 +16,8 @@ where it is wrong, or that it is already known.
 ## Who is writing
 
 Between 2001 and 2003 I introduced a family of description logics, ALCI_RCC,
-whose roles are the base relations of the region connection calculus. For the
+whose roles are the base relations of the region connection calculus
+([report of 2003](https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/papers/report7.pdf)). For the
 member with the five RCC5 relations — equal, proper part, has proper part,
 partially overlapping, disjoint — I could prove neither decidability nor
 undecidability of concept satisfiability, and the question has been open since.
@@ -96,7 +97,7 @@ If this is right, three things follow.
      Marzec and Tendera call the spiral: an RCC5 concept all of whose models
      are infinite and
      which asks for no proper part and no proper superpart. My 2003 report
-     has one concept of that kind, built by excluding relations; the spiral is
+     (Section 5.2, Figure 12) has one concept of that kind, built by excluding relations; the spiral is
      a second, and unlike mine it never separates overlap from disjointness.
      The Lean file proves that every model contains an infinite sequence of
      distinct regions.
@@ -183,6 +184,42 @@ by brute force on small structures; all at the tag `release-2026-11-11`.
 
 I would be grateful for any reaction, including "this is folklore" and "this
 is wrong, and here is why".
+
+## Links
+
+From this project, all at the tag `release-2026-11-11`:
+
+* M. Wessel, *Qualitative spatial reasoning with the ALCI_RCC family — first
+  results and unanswered questions*, Technical Report FBI-HH-M-324/03,
+  University of Hamburg, 2002/2003:
+  <https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/papers/report7.pdf>
+* The note on the bridge:
+  <https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/papers/poset_bridge/README.md>
+* The Lean file:
+  <https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/formal/PosetBridge.lean>
+* The brute-force probe:
+  <https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/verification/python/wp137_poset_bridge_probe.py>
+* The overview paper (the bridge is §7.8; first-order fragments are §5):
+  <https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/papers/overview_arxiv.pdf>
+* The paper on the decided fragment:
+  <https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/papers/pofree_fragment_arxiv.pdf>
+* The errata:
+  <https://github.com/lambdamikel/alcircc5/blob/release-2026-11-11/ERRATA.md>
+
+Cited above:
+
+* C. Lutz, F. Wolter, *Modal logics of topological relations*, LMCS 2(2:5),
+  2006: <https://doi.org/10.2168/LMCS-2(2:5)2006>
+* W. Szwast, L. Tendera, *On the satisfiability problem for fragments of
+  two-variable logic with one transitive relation*, J. Log. Comput. 29(6),
+  2019: <https://doi.org/10.1093/logcom/exz012> (arXiv:1804.09447)
+* I. Pratt-Hartmann, *Finite satisfiability for two-variable, first-order
+  logic with one transitive relation is decidable*, Math. Log. Quart. 64(3),
+  2018: <https://arxiv.org/abs/1707.05558>
+* D. Marzec, L. Tendera, *On two-variable first-order logic with a partial
+  order*, CILC 2024: <https://ceur-ws.org/Vol-3733/paper5.pdf>; journal
+  version, J. Log. Comput. 36(2), 2026:
+  <https://doi.org/10.1093/logcom/exaf068>
 
 With respect,
 
